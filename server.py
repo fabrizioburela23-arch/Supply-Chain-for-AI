@@ -54,7 +54,7 @@ def _safe_get(url, timeout=HTTP_TIMEOUT):
     try:
         r = requests.get(url, timeout=timeout)
         if r.status_code != 200:
-            log.warning('upstream %s %s', r.status_code, url[:100]); return None, f'upstream {r.status_code}'
+            return None, f'upstream {r.status_code}'
         return r.json(), None
     except requests.exceptions.Timeout:
         return None, 'timeout'
@@ -194,24 +194,39 @@ def earnings(ticker):
 
 
 # ----------------------------------------------------------------------------
+# Debug temporal — ver respuesta raw de Finnhub /stock/metric
+# ----------------------------------------------------------------------------
+@app.route('/api/debug/fh/<ticker>')
+def debug_fh(ticker):
+    if not FINNHUB:
+        return jsonify({'error': 'no key'})
+    fh, err = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
+    return jsonify({'err': err, 'type': type(fh).__name__,
+                    'keys': list(fh.keys()) if isinstance(fh, dict) else None,
+                    'metric_type': type(fh.get('metric')).__name__ if isinstance(fh, dict) else None,
+                    'metric_sample': dict(list(fh['metric'].items())[:5]) if isinstance(fh, dict) and isinstance(fh.get('metric'), dict) else fh})
+
+
+# ----------------------------------------------------------------------------
 # FMP — fundamentales, precio objetivo, ratings, insiders
 # ----------------------------------------------------------------------------
 @app.route('/api/fundamentals/<ticker>')
-@cache.cached(timeout=86400)  # 24h
+@cache.cached(timeout=86400)  # 24h — los fundamentales cambian poco
 def fundamentals(ticker):
     metrics = []
     targets = []
     ratings = []
-    # P/E y EV/EBITDA: Finnhub /stock/metric disponible en plan gratuito
+    # Métricas (P/E, EV/EBITDA): Finnhub /stock/metric disponible en plan gratuito
     if FINNHUB:
-        fh, _ = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
+        fh, fh_err = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
+        log.warning('fh_debug err=%s type=%s keys=%s', fh_err, type(fh).__name__, list(fh.keys()) if isinstance(fh, dict) else 'N/A')
         if fh and isinstance(fh.get('metric'), dict):
             m = fh['metric']
             pe = m.get('peTTM') or m.get('peBasicExclExtraTTM')
             ev = m.get('evEbitdaTTM') or m.get('evEbitdaAnnual')
             metrics = [{'peRatio': round(float(pe), 2) if pe else None,
                         'enterpriseValueOverEBITDA': round(float(ev), 2) if ev else None}]
-    # Precio objetivo y ratings: FMP (estos endpoints sí funcionan con el plan actual)
+    # Precio objetivo y ratings de analistas: FMP (plan actual soporta estos endpoints)
     if FMP:
         targets, _ = _safe_get(f'https://financialmodelingprep.com/stable/price-target-consensus?symbol={ticker}&apikey={FMP}')
         grades_raw, _ = _safe_get(f'https://financialmodelingprep.com/stable/grades?symbol={ticker}&limit=20&apikey={FMP}')
@@ -318,9 +333,4 @@ def marketstack_proxy():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5050))
-    print(f'🚀 Del Silicio a la IA v8 — Backend en http://0.0.0.0:{port}')
-    print(f"   Finnhub:     {'✅' if FINNHUB else '❌  (configura FINNHUB_KEY en .env)'}")
-    print(f"   FMP:         {'✅' if FMP else '❌  (configura FMP_KEY en .env)'}")
-    print(f"   Claude:      {'✅' if CLAUDE else '❌  (configura CLAUDE_KEY en .env)'}  modelo: {AI_MODEL}")
-    print(f"   Marketstack: {'✅' if MSTACK else '❌  (configura MARKETSTACK_KEY en .env)'}")
     app.run(host='0.0.0.0', port=port, debug=False)
