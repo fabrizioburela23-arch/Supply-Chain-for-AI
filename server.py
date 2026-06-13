@@ -295,5 +295,5 @@ if __name__ == '__main__':
     print(f"   FMP:         {'✅' if FMP else '❌  (configura FMP_KEY en .env)'}")
     print(f"   Claude:      {'✅' if CLAUDE else '❌  (configura CLAUDE_KEY en .env)'}  modelo: {AI_MODEL}")
     print(f"   Marketstack: {'✅' if MSTACK else '❌  (configura MARKETSTACK_KEY en .env)'}")
-        port = int(os.getenv('PORT', 5050))
+    port = int(os.getenv('PORT', 5050))
     app.run(host='0.0.0.0', port=port, debug=False)
