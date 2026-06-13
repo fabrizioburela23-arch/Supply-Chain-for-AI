@@ -5042,7 +5042,7 @@ Object.assign(I18N.en, {
 });
 
 /* ---------- §B · Modo de operación + claves ---------- */
-const SERVER_MODE = (location.port === '5050');
+const SERVER_MODE = (location.protocol !== 'file:');
 const BASE = SERVER_MODE ? location.origin : '';
 const health = { server:SERVER_MODE, finnhub:false, fmp:false, claude:false, marketstack:false };
 
