@@ -201,18 +201,40 @@ def earnings(ticker):
 def fundamentals(ticker):
     if not FMP:
         return jsonify({'metrics': [], 'priceTarget': [], 'ratings': []})
-    metrics, _ = _safe_get(f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?limit=1&apikey={FMP}')
-    targets, _ = _safe_get(f'https://financialmodelingprep.com/api/v4/price-target-consensus?symbol={ticker}&apikey={FMP}')
-    ratings, _ = _safe_get(f'https://financialmodelingprep.com/api/v3/analyst-stock-recommendations/{ticker}?limit=5&apikey={FMP}')
-    return jsonify({'metrics': metrics or [], 'priceTarget': targets or [], 'ratings': ratings or []})
-
-
-@app.route('/api/insiders/<ticker>')
+    metrics, _ = _safe_get(f'https://financialmodelingprep.com/stable/key-metrics?symbol={ticker}?limit=1&apikey={FMP}')
+    targets, _ = _safe_get(f'https://financialmodelingprep.com/stable/price-target-consensus?symbol={ticker}&apikey={FMP}')
+    grades_raw, _ = _safe_get(f'https://financialmodelingprep.com/stable/grades?symbol={ticker}&limit=20&apikey={FMP}')
+    # Normalizar metrics: agregar los nombres de campo que usa el frontend
+    if isinstance(metrics, list) and metrics:
+        m = metrics[0]
+        ey = m.get('earningsYield')
+        if ey and ey > 0:
+            m['peRatio'] = round(1.0 / ey, 2)
+        m['enterpriseValueOverEBITDA'] = m.get('evToEBITDA')
+    # Agregar grades individuales al formato de conteo que usa el frontend
+    ratings = []
+    if isinstance(grades_raw, list) and grades_raw:
+        strong_buy_kw = {'strong buy'}
+        buy_kw = {'buy', 'outperform', 'overweight', 'accumulate', 'add', 'positive'}
+        strong_sell_kw = {'strong sell'}
+        sell_kw = {'sell', 'underperform', 'underweight', 'reduce', 'negative'}
+        b = sb = s = ss = h = 0
+        for g in grades_raw:
+            grade = (g.get('newGrade') or '').lower()
+            if any(k in grade for k in strong_buy_kw): sb += 1
+            elif any(k in grade for k in buy_kw): b += 1
+            elif any(k in grade for k in strong_sell_kw): ss += 1
+            elif any(k in grade for k in sell_kw): s += 1
+            else: h += 1
+        ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
+                    'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
+                    'analystRatingsHold': h}]
+    return jsonify({'metrics': metrics or [], 'priceTarget': targets or [], 'ratings': ratings}).route('/api/insiders/<ticker>')
 @cache.cached(timeout=86400)
 def insiders(ticker):
     if not FMP:
         return jsonify([])
-    data, err = _safe_get(f'https://financialmodelingprep.com/api/v4/insider-trading?symbol={ticker}&limit=10&apikey={FMP}')
+    data, err = _safe_get(f'https://financialmodelingprep.com/stable/insider-trading?symbol={ticker}&limit=10&apikey={FMP}')
     if err or not isinstance(data, list):
         return jsonify([])
     return jsonify(data)
