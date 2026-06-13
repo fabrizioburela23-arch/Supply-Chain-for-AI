@@ -197,39 +197,43 @@ def earnings(ticker):
 # FMP — fundamentales, precio objetivo, ratings, insiders
 # ----------------------------------------------------------------------------
 @app.route('/api/fundamentals/<ticker>')
-@cache.cached(timeout=86400)  # 24h — los fundamentales cambian poco
+@cache.cached(timeout=86400)  # 24h
 def fundamentals(ticker):
-    if not FMP:
-        return jsonify({'metrics': [], 'priceTarget': [], 'ratings': []})
-    metrics, _ = _safe_get(f'https://financialmodelingprep.com/stable/ratios?symbol={ticker}&limit=1&apikey={FMP}')
-    targets, _ = _safe_get(f'https://financialmodelingprep.com/stable/price-target-consensus?symbol={ticker}&apikey={FMP}')
-    grades_raw, _ = _safe_get(f'https://financialmodelingprep.com/stable/grades?symbol={ticker}&limit=20&apikey={FMP}')
-    # Normalizar metrics: agregar los nombres de campo que usa el frontend
-    if isinstance(metrics, list) and metrics:
-        m = metrics[0]
-        pe = m.get('priceEarningsRatio')
-        if pe and pe > 0:
-            m['peRatio'] = round(float(pe), 2)
-        m['enterpriseValueOverEBITDA'] = m.get('enterpriseValueMultiple') or m.get('evToEBITDA')
-    # Agregar grades individuales al formato de conteo que usa el frontend
+    metrics = []
+    targets = []
     ratings = []
-    if isinstance(grades_raw, list) and grades_raw:
-        strong_buy_kw = {'strong buy'}
-        buy_kw = {'buy', 'outperform', 'overweight', 'accumulate', 'add', 'positive'}
-        strong_sell_kw = {'strong sell'}
-        sell_kw = {'sell', 'underperform', 'underweight', 'reduce', 'negative'}
-        b = sb = s = ss = h = 0
-        for g in grades_raw:
-            grade = (g.get('newGrade') or '').lower()
-            if any(k in grade for k in strong_buy_kw): sb += 1
-            elif any(k in grade for k in buy_kw): b += 1
-            elif any(k in grade for k in strong_sell_kw): ss += 1
-            elif any(k in grade for k in sell_kw): s += 1
-            else: h += 1
-        ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
-                    'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
-                    'analystRatingsHold': h}]
-    return jsonify({'metrics': metrics or [], 'priceTarget': targets or [], 'ratings': ratings})
+    # P/E y EV/EBITDA: Finnhub /stock/metric disponible en plan gratuito
+    if FINNHUB:
+        fh, _ = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
+        if fh and isinstance(fh.get('metric'), dict):
+            m = fh['metric']
+            pe = m.get('peTTM') or m.get('peBasicExclExtraTTM')
+            ev = m.get('evEbitdaTTM') or m.get('evEbitdaAnnual')
+            metrics = [{'peRatio': round(float(pe), 2) if pe else None,
+                        'enterpriseValueOverEBITDA': round(float(ev), 2) if ev else None}]
+    # Precio objetivo y ratings: FMP (estos endpoints sí funcionan con el plan actual)
+    if FMP:
+        targets, _ = _safe_get(f'https://financialmodelingprep.com/stable/price-target-consensus?symbol={ticker}&apikey={FMP}')
+        grades_raw, _ = _safe_get(f'https://financialmodelingprep.com/stable/grades?symbol={ticker}&limit=20&apikey={FMP}')
+        if isinstance(grades_raw, list) and grades_raw:
+            strong_buy_kw = {'strong buy'}
+            buy_kw = {'buy', 'outperform', 'overweight', 'accumulate', 'add', 'positive'}
+            strong_sell_kw = {'strong sell'}
+            sell_kw = {'sell', 'underperform', 'underweight', 'reduce', 'negative'}
+            b = sb = s = ss = h = 0
+            for g in grades_raw:
+                grade = (g.get('newGrade') or '').lower()
+                if any(k in grade for k in strong_buy_kw): sb += 1
+                elif any(k in grade for k in buy_kw): b += 1
+                elif any(k in grade for k in strong_sell_kw): ss += 1
+                elif any(k in grade for k in sell_kw): s += 1
+                else: h += 1
+            ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
+                        'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
+                        'analystRatingsHold': h}]
+    return jsonify({'metrics': metrics, 'priceTarget': targets or [], 'ratings': ratings})
+
+
 @app.route('/api/insiders/<ticker>')
 @cache.cached(timeout=86400)
 def insiders(ticker):
