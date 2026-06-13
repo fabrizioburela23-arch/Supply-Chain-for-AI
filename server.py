@@ -54,7 +54,7 @@ def _safe_get(url, timeout=HTTP_TIMEOUT):
     try:
         r = requests.get(url, timeout=timeout)
         if r.status_code != 200:
-            return None, f'upstream {r.status_code}'
+            log.warning('upstream %s %s', r.status_code, url[:100]); return None, f'upstream {r.status_code}'
         return r.json(), None
     except requests.exceptions.Timeout:
         return None, 'timeout'
