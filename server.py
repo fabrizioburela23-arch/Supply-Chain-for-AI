@@ -211,8 +211,13 @@ def debug_fh(ticker):
 # FMP — fundamentales, precio objetivo, ratings, insiders
 # ----------------------------------------------------------------------------
 @app.route('/api/fundamentals/<ticker>')
-@cache.cached(timeout=86400)  # 24h — los fundamentales cambian poco
 def fundamentals(ticker):
+    # Cache manual: no cachear si los datos vienen vacíos (evita envenenar 24h con errores de rate-limit)
+    cache_key = f'fund_{ticker}'
+    hit = cache.get(cache_key)
+    if hit is not None:
+        return jsonify(hit)
+
     metrics = []
     targets = []
     ratings = []
@@ -246,7 +251,11 @@ def fundamentals(ticker):
             ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
                         'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
                         'analystRatingsHold': h}]
-    return jsonify({'metrics': metrics, 'priceTarget': targets or [], 'ratings': ratings})
+    result = {'metrics': metrics, 'priceTarget': targets or [], 'ratings': ratings}
+    # Solo cachear si obtuvimos algo — errores transitorios no deben quedarse 24h
+    if metrics or targets or ratings:
+        cache.set(cache_key, result, timeout=86400)
+    return jsonify(result)
 
 
 @app.route('/api/insiders/<ticker>')
@@ -328,4 +337,9 @@ def marketstack_proxy():
         timeout=12)
     if err:
         return jsonify({'error': err}), 502
-    ret
+    return jsonify(data)
+
+
+if __name__ == '__main__':
+    port = int(os.getenv('PORT', 5050))
+    app.run(host='0.0.0.0', port=port, debug=False)
