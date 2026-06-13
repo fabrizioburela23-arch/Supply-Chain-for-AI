@@ -229,7 +229,8 @@ def fundamentals(ticker):
         ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
                     'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
                     'analystRatingsHold': h}]
-    return jsonify({'metrics': metrics or [], 'priceTarget': targets or [], 'ratings': ratings}).route('/api/insiders/<ticker>')
+    return jsonify({'metrics': metrics or [], 'priceTarget': targets or [], 'ratings': ratings})
+  @app.route('/api/insiders/<ticker>')
 @cache.cached(timeout=86400)
 def insiders(ticker):
     if not FMP:
