@@ -290,10 +290,10 @@ def marketstack_proxy():
 
 
 if __name__ == '__main__':
-    print('🚀 Del Silicio a la IA v8 — Backend en http://localhost:5050')
+    port = int(os.getenv('PORT', 5050))
+    print(f'🚀 Del Silicio a la IA v8 — Backend en http://0.0.0.0:{port}')
     print(f"   Finnhub:     {'✅' if FINNHUB else '❌  (configura FINNHUB_KEY en .env)'}")
     print(f"   FMP:         {'✅' if FMP else '❌  (configura FMP_KEY en .env)'}")
     print(f"   Claude:      {'✅' if CLAUDE else '❌  (configura CLAUDE_KEY en .env)'}  modelo: {AI_MODEL}")
     print(f"   Marketstack: {'✅' if MSTACK else '❌  (configura MARKETSTACK_KEY en .env)'}")
-    port = int(os.getenv('PORT', 5050))
     app.run(host='0.0.0.0', port=port, debug=False)
