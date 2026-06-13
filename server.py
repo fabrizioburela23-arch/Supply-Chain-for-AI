@@ -201,16 +201,16 @@ def earnings(ticker):
 def fundamentals(ticker):
     if not FMP:
         return jsonify({'metrics': [], 'priceTarget': [], 'ratings': []})
-    metrics, _ = _safe_get(f'https://financialmodelingprep.com/stable/key-metrics?symbol={ticker}?limit=1&apikey={FMP}')
+    metrics, _ = _safe_get(f'https://financialmodelingprep.com/stable/ratios?symbol={ticker}&limit=1&apikey={FMP}')
     targets, _ = _safe_get(f'https://financialmodelingprep.com/stable/price-target-consensus?symbol={ticker}&apikey={FMP}')
     grades_raw, _ = _safe_get(f'https://financialmodelingprep.com/stable/grades?symbol={ticker}&limit=20&apikey={FMP}')
     # Normalizar metrics: agregar los nombres de campo que usa el frontend
     if isinstance(metrics, list) and metrics:
         m = metrics[0]
-        ey = m.get('earningsYield')
-        if ey and ey > 0:
-            m['peRatio'] = round(1.0 / ey, 2)
-        m['enterpriseValueOverEBITDA'] = m.get('evToEBITDA')
+        pe = m.get('priceEarningsRatio')
+        if pe and pe > 0:
+            m['peRatio'] = round(float(pe), 2)
+        m['enterpriseValueOverEBITDA'] = m.get('enterpriseValueMultiple') or m.get('evToEBITDA')
     # Agregar grades individuales al formato de conteo que usa el frontend
     ratings = []
     if isinstance(grades_raw, list) and grades_raw:
