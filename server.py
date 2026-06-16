@@ -1,5 +1,5 @@
 """
-server.py — Del Silicio a la IA v8
+server.py — Khipu Finance v1
 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 
 Corre con:   python server.py
@@ -30,7 +30,7 @@ app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 min por defecto
 cache = Cache(app)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
-log = logging.getLogger('eco')
+log = logging.getLogger('khipu')
 
 FINNHUB  = os.getenv('FINNHUB_KEY', '')
 FMP      = os.getenv('FMP_KEY', '')
@@ -81,9 +81,9 @@ def service_worker():
 
 _MANIFEST = (
     '{'
-    '"name":"Del Silicio a la IA","short_name":"EcoIA","display":"standalone",'
+    '"name":"Khipu Finance","short_name":"KhipuFi","display":"standalone",'
     '"start_url":"/","scope":"/","background_color":"#F4F1EA","theme_color":"#1A1813",'
-    '"description":"Inteligencia de inversion sobre la cadena de valor de la IA",'
+    '"description":"Inteligencia financiera sobre la cadena de valor global de IA, semiconductores y espacio",'
     '"icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]'
     '}'
 )
