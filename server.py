@@ -14,11 +14,21 @@ Modo de operación:
 """
 import os
 import time
+import uuid
 import logging
 import requests
-from datetime import date, timedelta
+from functools import wraps
+from datetime import date, datetime, timedelta
 from flask import Flask, jsonify, send_file, request
 from flask_caching import Cache
+
+# PyJWT es opcional: si no está instalado, la API pública /v1/* queda deshabilitada
+# pero el resto del servidor (proxy de datos, voz Bixby, RAG) sigue funcionando.
+try:
+    import jwt
+    _HAS_JWT = True
+except Exception:  # noqa: BLE001
+    _HAS_JWT = False
 
 # --- Config ---
 from dotenv import load_dotenv
@@ -39,6 +49,14 @@ MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 # Modelo de Claude para los análisis. Haiku 4.5 es barato y rápido (~$0.001/análisis);
 # sube a claude-opus-4-8 para máxima calidad. Cambiable sin tocar código.
 AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
+
+# Servicios adicionales (Khipu Finance v1)
+MIROFISH_URL        = os.getenv('MIROFISH_URL', 'http://localhost:8000')
+ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
+ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
+AV_KEY              = os.getenv('ALPHA_VANTAGE_KEY', '')
+RAG_URL             = os.getenv('RAG_URL', 'http://localhost:5051')
+SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
 
 HTTP_TIMEOUT = 8
 
@@ -113,16 +131,32 @@ def icon():
 
 
 # ----------------------------------------------------------------------------
-# Health check / data-health
+# Health check / data-health (extendido: incluye MiroFish, RAG, ElevenLabs)
 # ----------------------------------------------------------------------------
 @app.route('/api/health')
 def health():
+    mf_ok = rag_ok = False
+    try:
+        mf_ok = requests.get(f'{MIROFISH_URL}/api/health', timeout=2).ok
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        rag_ok = requests.get(f'{RAG_URL}/stats', timeout=2).ok
+    except Exception:  # noqa: BLE001
+        pass
     return jsonify({
         'server': True,
+        'app': 'Khipu Finance',
+        'assistant': 'Bixby',
         'finnhub': bool(FINNHUB),
         'fmp': bool(FMP),
         'claude': bool(CLAUDE),
         'marketstack': bool(MSTACK),
+        'elevenlabs': bool(ELEVENLABS_KEY),
+        'alpha_vantage': bool(AV_KEY),
+        'mirofish': mf_ok,
+        'rag': rag_ok,
+        'jwt_api': _HAS_JWT,
         'ai_model': AI_MODEL,
         'ts': int(time.time()),
     })
@@ -338,6 +372,277 @@ def marketstack_proxy():
     if err:
         return jsonify({'error': err}), 502
     return jsonify(data)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# KHIPU FINANCE v1 — Backend ampliado
+# Space APIs · GDELT · SEC EDGAR · MiroFish · Bixby voice · RAG · API pública JWT
+# ════════════════════════════════════════════════════════════════════════════
+
+# ── Space APIs (Launch Library 2 — gratis) ──────────────────────────────────
+@app.route('/api/space/launches')
+@cache.cached(timeout=3600)
+def space_launches():
+    """Próximos lanzamientos espaciales, mapeados a nodos de Khipu."""
+    data, err = _safe_get(
+        'https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=10&format=json', timeout=12)
+    if err:
+        return jsonify({'error': err}), 502
+    launches = data.get('results', [])
+
+    def khipu_nodes(launch):
+        name = ((launch.get('name', '') or '') +
+                (launch.get('launch_service_provider') or {}).get('name', '')).lower()
+        nodes = []
+        if 'spacex' in name:    nodes.append('SpaceX')
+        if 'rocket lab' in name: nodes.append('RocketLab')
+        if 'starlink' in name:  nodes.extend(['SpaceX', 'T_Mobile'])
+        if 'planet' in name:    nodes.append('PlanetLabs')
+        if 'ast' in name or 'bluebird' in name: nodes.append('AST_SpaceMobile')
+        if 'oneweb' in name:    nodes.append('EutelsatOneWeb')
+        return list(set(nodes))
+
+    return jsonify([{
+        'id': l.get('id'), 'name': l.get('name'), 'net': l.get('net'),
+        'provider': (l.get('launch_service_provider') or {}).get('name'),
+        'rocket': (l.get('rocket') or {}).get('configuration', {}).get('name'),
+        'status': (l.get('status') or {}).get('name'),
+        'probability': l.get('probability'),
+        'khipu_nodes': khipu_nodes(l),
+    } for l in launches])
+
+
+# ── GDELT News (gratis, global, multi-idioma) ────────────────────────────────
+@app.route('/api/news/gdelt/<company_name>')
+@cache.cached(timeout=1800)
+def news_gdelt(company_name):
+    url = (f'https://api.gdeltproject.org/api/v2/doc/doc?query={company_name}'
+           f'&mode=artlist&maxrecords=20&format=json&sort=datedesc')
+    data, err = _safe_get(url, timeout=12)
+    if err or not isinstance(data, dict):
+        return jsonify([])
+    return jsonify([{
+        'headline': a.get('title'), 'url': a.get('url'), 'source': a.get('domain'),
+        'datetime': a.get('seendate'), 'language': a.get('language'),
+        'sentiment': float(a.get('tone', 0) or 0), 'source_api': 'GDELT',
+    } for a in (data.get('articles', []) or [])[:20]])
+
+
+# ── SEC EDGAR (financieros oficiales, gratis) ────────────────────────────────
+_CIK_MAP = {
+    'NVDA': '1045810', 'AAPL': '320193', 'MSFT': '789019', 'GOOGL': '1652044',
+    'AMZN': '1018724', 'META': '1326801', 'AVGO': '1649989', 'AMD': '2488', 'INTC': '50863',
+    'ASML': '937394', 'MU': '723254', 'LRCX': '707549', 'KLAC': '319201', 'AMAT': '796343',
+    'TSLA': '1318605', 'ANET': '1313925', 'VRT': '1837240', 'MPWR': '1280452',
+    'PLTR': '1321655', 'CRWV': '1971311', 'RKLB': '1819994', 'ASTS': '1780312',
+    'IRDM': '1418819', 'GSAT': '1366868', 'PL': '1836833', 'MP': '1801368',
+    'MBLY': '1910139', 'TEM': '1717115', 'MSCI': '1408198', 'KTOS': '1069258',
+}
+
+
+@app.route('/api/fundamentals/<ticker>/sec')
+@cache.cached(timeout=86400)
+def fundamentals_sec(ticker):
+    """SEC EDGAR — datos oficiales 10-K/20-F, completamente gratis."""
+    cik = _CIK_MAP.get(ticker.upper())
+    if not cik:
+        return jsonify({'error': f'CIK not mapped for {ticker}'}), 404
+    facts, err = _safe_get(
+        f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik.zfill(10)}.json', timeout=15)
+    if err:
+        return jsonify({'error': err}), 502
+    us_gaap = facts.get('facts', {}).get('us-gaap', {})
+    revenues = (us_gaap.get('RevenueFromContractWithCustomerExcludingAssessedTax', {})
+                or us_gaap.get('Revenues', {}) or {})
+    rev_data = revenues.get('units', {}).get('USD', [])
+    annual = [r for r in rev_data if r.get('form') in ('10-K', '20-F')]
+    latest_rev = max(annual, key=lambda x: x.get('end', ''), default={})
+    ni_data = us_gaap.get('NetIncomeLoss', {}).get('units', {}).get('USD', [])
+    latest_ni = max([r for r in ni_data if r.get('form') in ('10-K', '20-F')],
+                    key=lambda x: x.get('end', ''), default={})
+    return jsonify({
+        'ticker': ticker, 'cik': cik, 'source': 'SEC EDGAR (official)',
+        'revenue_latest': {'value': latest_rev.get('val'), 'period': latest_rev.get('end')},
+        'net_income_latest': {'value': latest_ni.get('val'), 'period': latest_ni.get('end')},
+        'filings_url': f'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=10-K',
+    })
+
+
+# ── MiroFish proxy (simulaciones multi-agente) ───────────────────────────────
+@app.route('/api/mirofish/<path:endpoint>', methods=['GET', 'POST', 'DELETE'])
+def mirofish_proxy(endpoint):
+    url = f'{MIROFISH_URL}/api/{endpoint}'
+    try:
+        if request.method == 'GET':
+            r = requests.get(url, params=request.args, timeout=120)
+        elif request.method == 'POST':
+            if request.content_type and 'multipart' in request.content_type:
+                r = requests.post(url, files=request.files, data=request.form, timeout=120)
+            else:
+                r = requests.post(url, json=request.get_json(silent=True), timeout=120)
+        else:
+            r = requests.delete(url, timeout=30)
+        try:
+            return jsonify(r.json()), r.status_code
+        except Exception:  # noqa: BLE001
+            return r.text, r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e), 'mirofish_url': MIROFISH_URL}), 502
+
+
+# ── Bixby voice — sesión firmada de ElevenLabs ───────────────────────────────
+@app.route('/api/voice/session', methods=['POST'])
+def voice_session():
+    if not ELEVENLABS_KEY:
+        return jsonify({'error': 'ELEVENLABS_KEY not configured'}), 400
+    data = request.get_json(silent=True) or {}
+    agent_id = data.get('agent_id') or ELEVENLABS_AGENT_ID
+    if not agent_id:
+        return jsonify({'error': 'agent_id required'}), 400
+    try:
+        r = requests.get(
+            'https://api.elevenlabs.io/v1/convai/conversation/get_signed_url',
+            params={'agent_id': agent_id},
+            headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+
+# ── RAG proxy (Second Brain) ─────────────────────────────────────────────────
+@app.route('/api/rag/<path:endpoint>', methods=['GET', 'POST'])
+def rag_proxy(endpoint):
+    url = f'{RAG_URL}/{endpoint}'
+    try:
+        if request.method == 'GET':
+            r = requests.get(url, params=request.args, timeout=15)
+        else:
+            r = requests.post(url, json=request.get_json(silent=True), timeout=30)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e), 'note': 'RAG server offline'}), 502
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# API PÚBLICA v1 — autenticación JWT por tiers (modelo de negocio)
+# ════════════════════════════════════════════════════════════════════════════
+TIER_DAY_LIMITS = {'free': 100, 'starter': 5000, 'pro': 25000, 'business': 100000, 'enterprise': None}
+
+
+def generate_khipu_key(user_id, tier='starter'):
+    payload = {'sub': user_id, 'tier': tier, 'iat': datetime.utcnow(), 'jti': str(uuid.uuid4())}
+    return 'kfi_' + jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+
+
+def validate_khipu_key(key):
+    if not key or not key.startswith('kfi_'):
+        return None, 'Invalid key format'
+    try:
+        return jwt.decode(key[4:], SECRET_KEY, algorithms=['HS256']), None
+    except Exception as e:  # noqa: BLE001
+        return None, str(e)
+
+
+def khipu_auth(min_tier='free'):
+    order = list(TIER_DAY_LIMITS.keys())
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not _HAS_JWT:
+                return jsonify({'error': 'Public API disabled (PyJWT not installed)'}), 503
+            key = request.headers.get('X-KHIPU-Key') or request.args.get('api_key')
+            payload, err = validate_khipu_key(key)
+            if err:
+                return jsonify({'error': err, 'docs': '/docs'}), 401
+            tier = payload.get('tier', 'free')
+            if order.index(tier) < order.index(min_tier):
+                return jsonify({'error': f'Requires {min_tier} tier', 'upgrade': '/pricing'}), 403
+            request.khipu_user = payload
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+@app.route('/v1/nodes', methods=['GET'])
+@khipu_auth('free')
+def api_nodes():
+    return jsonify({'count': 450, 'note': 'Full node data in the JS bundle. Use /v1/nodes/{id}/live for details.'})
+
+
+@app.route('/v1/nodes/<node_id>/live', methods=['GET'])
+@khipu_auth('starter')
+def api_node_live(node_id):
+    ticker = request.args.get('ticker')
+    quote = {}
+    if ticker and FINNHUB:
+        q, _ = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
+        if q and q.get('c'):
+            quote = {'price': q['c'], 'prev_close': q['pc'],
+                     'change_pct': (q['c'] - q['pc']) / q['pc'] * 100 if q['pc'] else 0}
+    return jsonify({'node_id': node_id, 'quote': quote, 'status': 'live' if quote else 'no_data'})
+
+
+@app.route('/v1/risk/portfolio', methods=['POST'])
+@khipu_auth('starter')
+def api_portfolio_risk():
+    """VaR + CVaR del portfolio del cliente (Alpha Vantage históricos)."""
+    data = request.get_json(silent=True) or {}
+    positions = data.get('positions', {})
+    if not positions:
+        return jsonify({'error': 'positions required',
+                        'format': '{"NVDA":{"shares":10,"buy_price":450}}'}), 400
+    try:
+        import numpy as np
+    except Exception:  # noqa: BLE001
+        return jsonify({'error': 'numpy not installed on server'}), 503
+
+    returns_by_ticker = {}
+    for ticker in list(positions.keys())[:10]:
+        try:
+            r, _ = _safe_get(
+                f'https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY_ADJUSTED'
+                f'&symbol={ticker}&apikey={AV_KEY}', timeout=10)
+            ts = (r or {}).get('Weekly Adjusted Time Series', {})
+            prices = [float(v['5. adjusted close']) for k, v in sorted(ts.items(), reverse=True)][:52]
+            if len(prices) > 4:
+                returns_by_ticker[ticker] = [(prices[i] - prices[i + 1]) / prices[i + 1]
+                                             for i in range(len(prices) - 1)]
+        except Exception:  # noqa: BLE001
+            pass
+    if not returns_by_ticker:
+        return jsonify({'error': 'Could not fetch historical data. Check ALPHA_VANTAGE_KEY.'}), 400
+
+    pv = sum(p['shares'] * p['buy_price'] for p in positions.values())
+    portfolio_returns = []
+    for ticker, pos in positions.items():
+        if ticker not in returns_by_ticker:
+            continue
+        weight = (pos['shares'] * pos['buy_price']) / pv
+        portfolio_returns.append([x * weight for x in returns_by_ticker[ticker]])
+    if not portfolio_returns:
+        return jsonify({'error': 'Insufficient data'}), 400
+
+    min_len = min(len(r) for r in portfolio_returns)
+    combined = np.sum([r[:min_len] for r in portfolio_returns], axis=0)
+    mu, sigma = float(np.mean(combined)), float(np.std(combined))
+    var_1w = abs((mu - 1.645 * sigma) * pv)
+    var_1m = var_1w * np.sqrt(4)
+    cvar = abs(float(np.mean(combined[combined <= np.percentile(combined, 5)])) * pv)
+    sharpe = float((mu / sigma) * np.sqrt(52)) if sigma else 0
+    cum = np.cumprod(1 + combined)
+    peak = np.maximum.accumulate(cum)
+    mdd = float(abs(np.min((cum - peak) / peak)))
+
+    return jsonify({
+        'portfolio_value': round(pv, 2),
+        'var_95': {'weekly_usd': round(var_1w, 2), 'monthly_usd': round(var_1m, 2),
+                   'pct': round(var_1w / pv * 100, 2)},
+        'cvar_95': {'usd': round(cvar, 2), 'pct': round(cvar / pv * 100, 2)},
+        'sharpe_ratio': round(sharpe, 3),
+        'max_drawdown_pct': round(mdd * 100, 2),
+        'risk_level': 'BAJO' if var_1w / pv < 0.03 else 'MODERADO' if var_1w / pv < 0.06 else 'ALTO',
+    })
 
 
 if __name__ == '__main__':
