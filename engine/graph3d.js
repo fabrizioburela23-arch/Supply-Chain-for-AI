@@ -1,0 +1,436 @@
+// engine/graph3d.js — Motor de visualización 3D Three.js para Khipu Finance
+// Renderiza los 450+ nodos como esferas en el espacio, con tamaño por market cap,
+// links de colores, raycast para hover/click, y highlight de stress-test en 3D.
+//
+// Depende de variables globales de app.html:
+//   NODES, LINKS, NODE_BY_ID, CATS, MKT, lid, computeNodeRadius, computeNRS
+// Y de helpers definidos al final de este archivo (getCatColorHex, getLinkColorHex...)
+
+class KhipuGraph3D {
+  constructor(containerId) {
+    this.container = document.getElementById(containerId);
+    this.canvas = document.getElementById('graph-canvas');
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(
+      60, (this.canvas?.clientWidth || 1) / (this.canvas?.clientHeight || 1), 0.1, 10000
+    );
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+    this.nodeMeshes = new Map();   // id → THREE.Mesh
+    this.linkLines = [];
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
+    this.selected = null;
+    this.hovered = null;
+    this.clock = new THREE.Clock();
+    this.active = false;
+    this._mouseMoved = false;
+    this._prevMouse = { x: 0, y: 0 };
+    this._spherical = new THREE.Spherical(600, Math.PI / 3, Math.PI / 4);
+  }
+
+  init() {
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    this.renderer.shadowMap.enabled = false;
+
+    // Luces
+    this.scene.add(new THREE.AmbientLight(0x223366, 0.7));
+    const p1 = new THREE.PointLight(0x52B1FF, 1.5, 1400);
+    p1.position.set(300, 300, 300);
+    this.scene.add(p1);
+    const p2 = new THREE.PointLight(0x3DE0C8, 1.0, 900);
+    p2.position.set(-300, -150, 150);
+    this.scene.add(p2);
+
+    this._addGrid();
+    this._addStarfield();
+    this._setupPointerControls();
+
+    window.addEventListener('resize', () => this._onResize());
+    this.canvas.addEventListener('mousemove', e => this._onMouseMove(e));
+    this.canvas.addEventListener('click', e => this._onClick(e));
+    this.canvas.addEventListener('wheel', e => this._onWheel(e), { passive: true });
+
+    this.camera.position.setFromSpherical(this._spherical);
+    this.camera.lookAt(0, 0, 0);
+
+    this.active = true;
+    this._animate();
+
+    const svg = document.getElementById('graph');
+    if (svg) svg.style.display = 'none';
+  }
+
+  loadData(nodes, links) {
+    this.nodeMeshes.forEach(m => this.scene.remove(m));
+    this.linkLines.forEach(l => this.scene.remove(l));
+    this.nodeMeshes.clear();
+    this.linkLines = [];
+
+    nodes.forEach(n => {
+      const mesh = this._createNodeMesh(n);
+      this.nodeMeshes.set(n.id, mesh);
+      this.scene.add(mesh);
+    });
+
+    this._initForce3D(nodes, links);
+  }
+
+  _createNodeMesh(node) {
+    const radius = (typeof computeNodeRadius === 'function' ? computeNodeRadius(node.id) : 0) || (node.big ? 16 : 9);
+    const color = new THREE.Color(getCatColorHex(node.cat));
+
+    const geo = node.big
+      ? new THREE.IcosahedronGeometry(radius, 2)
+      : new THREE.SphereGeometry(radius, 16, 12);
+
+    const mat = new THREE.MeshPhongMaterial({
+      color, emissive: color, emissiveIntensity: 0.25,
+      transparent: true, opacity: 0.9, shininess: 80,
+    });
+
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.userData = { nodeId: node.id, node, baseRadius: radius };
+
+    // Anillo portfolio
+    if (node.port) {
+      const rc = node.port.includes('C1+C2') ? 0xA78BFF
+        : node.port === 'C1' ? 0xD9A520 : 0x52B1FF;
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius + 3, 0.5, 8, 48),
+        new THREE.MeshBasicMaterial({ color: rc, transparent: true, opacity: 0.9 })
+      );
+      mesh.add(ring);
+    }
+
+    // Anillo pre-IPO
+    if (node.preipo) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(radius + 4, 0.35, 6, 32),
+        new THREE.MeshBasicMaterial({ color: 0xC99BFF, transparent: true, opacity: 0.7 })
+      );
+      ring.rotation.x = Math.PI / 3;
+      mesh.add(ring);
+    }
+
+    const label = this._makeLabel(node.label, color);
+    label.position.y = radius + 6;
+    mesh.add(label);
+
+    return mesh;
+  }
+
+  _makeLabel(text, color) {
+    const cv = document.createElement('canvas');
+    cv.width = 256; cv.height = 56;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = `#${new THREE.Color(color).getHexString()}`;
+    ctx.font = '500 18px "Archivo", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const short = text.length > 15 ? text.slice(0, 14) + '…' : text;
+    ctx.fillText(short, 128, 28);
+    const tex = new THREE.CanvasTexture(cv);
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85 });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(28, 7, 1);
+    return sprite;
+  }
+
+  _createLinkLine(link, nodes) {
+    const src = nodes.find(n => n.id === lid(link.source));
+    const dst = nodes.find(n => n.id === lid(link.target));
+    if (!src || !dst) return null;
+
+    const color = getLinkColorHex(link.type || 'supply');
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(6);
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+    const mat = new THREE.LineBasicMaterial({
+      color: new THREE.Color(color), transparent: true,
+      opacity: 0.15 + (link.w || 1) * 0.04,
+    });
+
+    const line = new THREE.Line(geo, mat);
+    line.userData = { link, src, dst };
+    return line;
+  }
+
+  _initForce3D(nodes, links) {
+    nodes.forEach(n => { if (n.z == null) n.z = (Math.random() - 0.5) * 400; });
+
+    links.forEach(l => {
+      const line = this._createLinkLine(l, nodes);
+      if (line) { this.linkLines.push(line); this.scene.add(line); }
+    });
+
+    // Engancharse a la simulación D3 existente si está disponible
+    if (typeof sim !== 'undefined' && sim && sim.on) {
+      sim.on('tick.3d', () => this._onSimTick(nodes));
+    } else {
+      // Fallback: layout estático esférico distribuido
+      this._staticLayout(nodes);
+    }
+  }
+
+  _staticLayout(nodes) {
+    const R = 420;
+    nodes.forEach((n, i) => {
+      const phi = Math.acos(-1 + (2 * i) / nodes.length);
+      const theta = Math.sqrt(nodes.length * Math.PI) * phi;
+      n.x = R * Math.cos(theta) * Math.sin(phi);
+      n.y = R * Math.sin(theta) * Math.sin(phi);
+      n.z = R * Math.cos(phi);
+      const mesh = this.nodeMeshes.get(n.id);
+      if (mesh) mesh.position.set(n.x, n.y, n.z);
+    });
+    this._updateLinkPositions();
+  }
+
+  _onSimTick(nodes) {
+    nodes.forEach(n => {
+      if (n.vz == null) n.vz = 0;
+      const fz = -n.z * 0.005;
+      n.vz = (n.vz + fz) * 0.85;
+      n.z = (n.z || 0) + n.vz;
+    });
+
+    nodes.forEach(n => {
+      const mesh = this.nodeMeshes.get(n.id);
+      if (mesh) mesh.position.set(n.x || 0, n.y || 0, n.z || 0);
+    });
+
+    this._updateLinkPositions();
+  }
+
+  _updateLinkPositions() {
+    this.linkLines.forEach(line => {
+      const { src, dst } = line.userData;
+      const pos = line.geometry.attributes.position.array;
+      pos[0] = src.x || 0; pos[1] = src.y || 0; pos[2] = src.z || 0;
+      pos[3] = dst.x || 0; pos[4] = dst.y || 0; pos[5] = dst.z || 0;
+      line.geometry.attributes.position.needsUpdate = true;
+    });
+  }
+
+  _animate() {
+    if (!this.active) return;
+    requestAnimationFrame(() => this._animate());
+    const t = this.clock.getElapsedTime();
+
+    if (this.selected) {
+      const mesh = this.nodeMeshes.get(this.selected);
+      if (mesh) mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
+    }
+
+    this.nodeMeshes.forEach(mesh => { mesh.rotation.y += 0.002; });
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  selectNode(id) {
+    if (this.selected) {
+      const prev = this.nodeMeshes.get(this.selected);
+      if (prev) { prev.material.emissiveIntensity = 0.25; prev.scale.setScalar(1); }
+    }
+    this.selected = id;
+    const mesh = this.nodeMeshes.get(id);
+    if (mesh) {
+      mesh.material.emissiveIntensity = 1.0;
+      this._flyTo(mesh.position.clone());
+    }
+  }
+
+  morphNodeSize(nodeId) {
+    const mesh = this.nodeMeshes.get(nodeId);
+    if (!mesh) return;
+    const targetR = (typeof computeNodeRadius === 'function' ? computeNodeRadius(nodeId) : 0) || mesh.userData.baseRadius;
+    const currentR = mesh.userData.baseRadius || 9;
+    if (Math.abs(targetR - currentR) < 0.5) return;
+
+    mesh.userData.baseRadius = targetR;
+    const newGeo = new THREE.SphereGeometry(targetR, 16, 12);
+    mesh.geometry.dispose();
+    mesh.geometry = newGeo;
+
+    const perfColor = getDailyPerformanceHex(nodeId);
+    if (perfColor) {
+      mesh.material.emissive.setHex(perfColor);
+      mesh.material.emissiveIntensity = 0.8;
+      setTimeout(() => {
+        mesh.material.emissive.copy(mesh.material.color);
+        mesh.material.emissiveIntensity = 0.25;
+      }, 2000);
+    }
+  }
+
+  highlightStress(failedId, affectedSet) {
+    this.nodeMeshes.forEach((mesh, id) => {
+      if (id === failedId) {
+        mesh.material.color.setHex(0xFF2222);
+        mesh.material.emissive.setHex(0xFF0000);
+        mesh.material.emissiveIntensity = 2.0;
+        mesh.scale.setScalar(1.3);
+      } else if (affectedSet.has(id)) {
+        mesh.material.opacity = 0.85;
+        mesh.material.emissiveIntensity = 0.5;
+      } else {
+        mesh.material.opacity = 0.12;
+      }
+    });
+    this.linkLines.forEach(line => {
+      const sl = lid(line.userData.link.source);
+      const tl = lid(line.userData.link.target);
+      if (sl === failedId || tl === failedId) {
+        line.material.color.setHex(0xFF2222);
+        line.material.opacity = 0.9;
+      }
+    });
+  }
+
+  resetHighlight() {
+    this.nodeMeshes.forEach((mesh, id) => {
+      const n = NODE_BY_ID[id];
+      if (n) {
+        const c = new THREE.Color(getCatColorHex(n.cat));
+        mesh.material.color.copy(c);
+        mesh.material.emissive.copy(c);
+        mesh.material.emissiveIntensity = 0.25;
+        mesh.material.opacity = 0.9;
+        mesh.scale.setScalar(1);
+      }
+    });
+    this.linkLines.forEach(line => {
+      const c = new THREE.Color(getLinkColorHex(line.userData.link.type || 'supply'));
+      line.material.color.copy(c);
+      line.material.opacity = 0.2;
+    });
+  }
+
+  _flyTo(targetPos, duration = 1200) {
+    const start = this.camera.position.clone();
+    const end = targetPos.clone().add(new THREE.Vector3(0, 0, 120));
+    const t0 = performance.now();
+    const fly = () => {
+      const p = Math.min(1, (performance.now() - t0) / duration);
+      const ease = 1 - Math.pow(1 - p, 3);
+      this.camera.position.lerpVectors(start, end, ease);
+      this.camera.lookAt(targetPos);
+      if (p < 1) requestAnimationFrame(fly);
+    };
+    fly();
+  }
+
+  _setupPointerControls() {
+    this.canvas.addEventListener('mousedown', e => {
+      this._mouseMoved = false;
+      this._prevMouse = { x: e.clientX, y: e.clientY };
+    });
+    this.canvas.addEventListener('mousemove', e => {
+      if (!e.buttons) return;
+      const dx = e.clientX - this._prevMouse.x;
+      const dy = e.clientY - this._prevMouse.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) {
+        this._mouseMoved = true;
+        this._spherical.theta -= dx * 0.004;
+        this._spherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, this._spherical.phi + dy * 0.004));
+        this._prevMouse = { x: e.clientX, y: e.clientY };
+        this.camera.position.setFromSpherical(this._spherical);
+        this.camera.lookAt(0, 0, 0);
+      }
+    });
+  }
+
+  _onWheel(e) {
+    this._spherical.radius = Math.max(80, Math.min(2200, this._spherical.radius + e.deltaY * 0.5));
+    this.camera.position.setFromSpherical(this._spherical);
+    this.camera.lookAt(0, 0, 0);
+  }
+
+  _onMouseMove(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const meshes = [...this.nodeMeshes.values()];
+    const hits = this.raycaster.intersectObjects(meshes, false);
+    const newHover = hits.length > 0 ? hits[0].object.userData.nodeId : null;
+    if (newHover !== this.hovered) {
+      this.hovered = newHover;
+      this.canvas.style.cursor = newHover ? 'pointer' : 'grab';
+    }
+  }
+
+  _onClick(e) {
+    if (this._mouseMoved) return;
+    if (this.hovered && typeof window.jumpTo === 'function') {
+      window.jumpTo(this.hovered);
+      this.selectNode(this.hovered);
+    }
+  }
+
+  _addGrid() {
+    const grid = new THREE.GridHelper(2400, 60, 0x1A2030, 0x1A2030);
+    grid.material.opacity = 0.2;
+    grid.material.transparent = true;
+    grid.position.y = -240;
+    this.scene.add(grid);
+  }
+
+  _addStarfield() {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(3000);
+    for (let i = 0; i < 3000; i++) pos[i] = (Math.random() - 0.5) * 4000;
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    this.scene.add(new THREE.Points(geo,
+      new THREE.PointsMaterial({ color: 0x334466, size: 0.8 })
+    ));
+  }
+
+  _onResize() {
+    if (!this.canvas.clientWidth) return;
+    const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
+  }
+
+  destroy() {
+    this.active = false;
+    const svg = document.getElementById('graph');
+    if (svg) svg.style.display = '';
+  }
+}
+
+// ── Helpers de color ─────────────────────────────────────────────────────────
+// getCatColorHex: devuelve el color CSS de la categoría (reutiliza catColor de app.html)
+function getCatColorHex(cat) {
+  if (typeof catColor === 'function') {
+    try { const v = catColor(cat); if (v) return v; } catch {}
+  }
+  const meta = (typeof CATS !== 'undefined' && CATS[cat]) || (typeof CATS_NEW !== 'undefined' && CATS_NEW[cat]) || {};
+  const val = getComputedStyle(document.documentElement)
+    .getPropertyValue(meta.cssVar || '--c-fabless').trim();
+  return val || '#52B1FF';
+}
+
+function getLinkColorHex(type) {
+  const LINK_HEX = {
+    supply: '#4E8B1E', fab: '#0F8C5F', license: '#6B5DD3', cloud: '#0A6CA8',
+    invest: '#B8880D', deploy: '#0E7A6E', partner: '#8A857A',
+  };
+  return LINK_HEX[type] || '#4E8B1E';
+}
+
+function getDailyPerformanceHex(nodeId) {
+  const n = NODE_BY_ID[nodeId];
+  if (!n || !n.mkt || typeof MKT === 'undefined') return null;
+  const q = MKT.quotes[n.mkt];
+  if (!q || q.close == null || q.prev == null) return null;
+  const chg = (q.close - q.prev) / q.prev;
+  if (chg > 0.03) return 0x00FF66;
+  if (chg < -0.03) return 0xFF3333;
+  return null;
+}
+
+window.KhipuGraph3D = KhipuGraph3D;
