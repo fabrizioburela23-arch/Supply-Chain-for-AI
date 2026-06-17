@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV RAG_PORT=5051
+ENV PORT=8080
 ENV CHROMA_PATH=/data/chroma
-EXPOSE 5051
+EXPOSE 8080
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5051", "--workers", "2", "--timeout", "120", "rag_server:app_rag"]
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT} --workers 2 --timeout 120 rag_server:app_rag"]

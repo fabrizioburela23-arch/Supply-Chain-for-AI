@@ -17,9 +17,62 @@
 | Simulación | MiroFish (multi-agent) · LiteLLM proxy → Claude |
 | Infra | Docker Compose · Redis · Service Worker (PWA) |
 
-## Inicio rápido
+## Deploy en Railway (recomendado para producción)
 
-### Con Docker Compose (recomendado)
+Railway despliega los 3 servicios desde el mismo repositorio.
+
+### Paso 1 — Crear el proyecto
+En [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo** → selecciona `supply-chain-for-ai`.
+
+### Paso 2 — Crear los 3 servicios
+
+| Servicio | Root Directory | Descripción |
+|----------|---------------|-------------|
+| **khipu** | `/` (raíz) | App principal Flask |
+| **rag** | `rag/` | ChromaDB Second Brain |
+| **litellm** | `litellm/` | Proxy OpenAI → Claude |
+
+Para cada servicio adicional (rag, litellm): en el proyecto Railway → **+ New Service → GitHub Repo** → mismo repo → cambia el **Root Directory** al subdirectorio correspondiente.
+
+### Paso 3 — Variables de entorno
+
+**Servicio `khipu`** (app principal):
+```
+SECRET_KEY=<python -c "import secrets; print(secrets.token_hex(32))">
+ANTHROPIC_KEY=sk-ant-...
+FINNHUB_KEY=...
+FMP_KEY=...
+MARKETSTACK_KEY=...
+AV_KEY=...
+RAG_URL=${{rag.RAILWAY_PRIVATE_DOMAIN}}
+MIROFISH_URL=${{litellm.RAILWAY_PRIVATE_DOMAIN}}
+LITELLM_MASTER_KEY=khipu-litellm-key
+```
+
+**Servicio `rag`**:
+```
+ANTHROPIC_KEY=sk-ant-...
+CHROMA_PATH=/data/chroma
+```
+> Añade un **Volume** en Railway montado en `/data/chroma` para persistir la base vectorial.
+
+**Servicio `litellm`**:
+```
+ANTHROPIC_API_KEY=sk-ant-...
+LITELLM_MASTER_KEY=khipu-litellm-key
+```
+
+### Paso 4 — Variables de referencia entre servicios
+En Railway, las variables `${{rag.RAILWAY_PRIVATE_DOMAIN}}` y `${{litellm.RAILWAY_PRIVATE_DOMAIN}}` se resuelven automáticamente con el hostname interno de cada servicio. Railway conecta los servicios en red privada sin exponerlos al público.
+
+### Paso 5 — Deploy
+Railway detecta los `railway.toml` en cada directorio y despliega automáticamente. La app principal queda accesible en `https://tu-proyecto.railway.app`.
+
+---
+
+## Inicio rápido local
+
+### Con Docker Compose
 ```bash
 cp .env.example .env
 # Edita .env con tus API keys
