@@ -395,6 +395,15 @@ class KhipuGraph3D {
     this.renderer.setSize(w, h);
   }
 
+  pause() { this.active = false; }
+
+  resume() {
+    if (!this.active) {
+      this.active = true;
+      this._animate();
+    }
+  }
+
   destroy() {
     this.active = false;
     const svg = document.getElementById('graph');
