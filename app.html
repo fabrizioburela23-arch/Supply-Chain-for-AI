@@ -4015,16 +4015,25 @@ if (typeof NODES_SPACEX !== 'undefined') {
     }
   });
 }
+// Node ID aliases — maps common alternate names to canonical IDs in NODES
+const NODE_ID_ALIAS = {
+  'AWS': 'Amazon', 'Azure': 'Microsoft', 'NVIDIA': 'Nvidia',
+  'GCP': 'Alphabet', 'Google': 'Alphabet', 'Meta': 'MetaPlatforms',
+  'Texas_Instruments': 'TexasInstruments', 'TI': 'TexasInstruments',
+  'STMicro': 'STMicroelectronics', 'Xilinx': 'AMD', // Acquired by AMD
+  'BoozAllen': 'Booz_Allen', 'CACI_Int': 'CACI',
+};
+function _resolveId(id) { return NODE_ID_ALIAS[id] || id; }
 if (typeof LINKS_EXPAND !== 'undefined') {
   LINKS_EXPAND.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push(l); }
-    else { RAW_LINKS.push([l.s, l.t, l.w||2, l.rel||'', l.type||'supply']); }
+    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
+    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
   });
 }
 if (typeof LINKS_SPACEX !== 'undefined') {
   LINKS_SPACEX.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push(l); }
-    else { RAW_LINKS.push([l.s, l.t, l.w||2, l.rel||'', l.type||'supply']); }
+    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
+    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
   });
 }
 
