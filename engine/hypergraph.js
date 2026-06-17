@@ -127,7 +127,7 @@ class TemporalHypergraph {
     const maxT = this.timeline[this.timeline.length - 1].t;
     const cutoffT = minT + pos * (maxT - minT);
 
-    const yearLabel = document.getElementById('timeline-year');
+    const yearLabel = document.getElementById('hg-year-label') || document.getElementById('timeline-year');
     if (yearLabel) {
       const d = new Date(cutoffT);
       yearLabel.textContent = pos >= 0.99 ? 'HOY' : d.getFullYear() + '/' + (d.getMonth() + 1);
@@ -159,15 +159,21 @@ class TemporalHypergraph {
       if (pos >= 1.0) return;
       pos += 0.005;
       this.setTimelinePosition(Math.min(1, pos));
-      const slider = document.getElementById('timeline-slider');
-      if (slider) slider.value = Math.round(pos * 100);
+      const slider = document.getElementById('hg-year') || document.getElementById('timeline-slider');
+      if (slider) {
+        if (slider.id === 'hg-year') {
+          slider.value = 2015 + Math.round(pos * 15);
+        } else {
+          slider.value = Math.round(pos * 100);
+        }
+      }
       setTimeout(step, speedMs);
     };
     step();
   }
 
   _updateTimelineUI() {
-    const ctrl = document.getElementById('timeline-ctrl');
+    const ctrl = document.getElementById('hypergraph-timeline') || document.getElementById('timeline-ctrl');
     if (ctrl && this.hyperedges.length > 0) ctrl.style.display = 'flex';
   }
 
