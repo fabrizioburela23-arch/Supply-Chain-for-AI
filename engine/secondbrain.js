@@ -32,7 +32,7 @@ class SecondBrain {
     el.innerHTML = `
       <div style="padding:16px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-          <span style="width:12px;height:12px;border-radius:50%;background:${getCatColorHex(n.cat)};flex-shrink:0"></span>
+          <span style="width:12px;height:12px;border-radius:50%;background:${typeof getCatColorHex==='function'?getCatColorHex(n.cat):typeof catColor==='function'?catColor(n.cat):'#888'};flex-shrink:0"></span>
           <h3 style="font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin:0">${esc(n.label)}</h3>
           <span style="font-size:11px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">${esc((n.ticker || '').split(' · ')[0] || '')}</span>
         </div>
