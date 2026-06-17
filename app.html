@@ -1042,6 +1042,24 @@ footer .disc{line-height:1.4}
   <div class="boot-bar"><i></i></div>
   <div class="boot-log" id="boot-log">› inicializando grafo · 137 nodos · 546 conexiones</div>
 </div>
+<script>
+// Hard fallback: always dismiss #boot after 3s even if main JS crashes
+(function(){
+  function _dismissBoot(){
+    var b=document.getElementById('boot');
+    if(!b||!b.parentNode) return;
+    b.style.transition='opacity .6s ease, visibility .6s';
+    b.classList.add('gone');
+    setTimeout(function(){ if(b.parentNode) b.parentNode.removeChild(b); }, 700);
+  }
+  setTimeout(_dismissBoot, 3000);
+  // Also dismiss khipu-loader if main script never ran
+  setTimeout(function(){
+    var l=document.getElementById('khipu-loader');
+    if(l&&l.parentNode){ l.style.opacity='0'; setTimeout(function(){ if(l.parentNode) l.parentNode.removeChild(l); },600); }
+  }, 7000);
+})();
+</script>
 <div class="app">
   <header>
     <div class="brand">
