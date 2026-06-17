@@ -6878,7 +6878,20 @@ async function initSpaceTab() {
   const countEl = document.getElementById('space-node-count');
   if (countEl) countEl.textContent = spaceNodes.length;
   const compEl = document.getElementById('space-companies-list');
-  if (compEl) compEl.innerHTML = spaceNodes.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--c-${n.cat},#888)"></span><span style="font-weight:600;font-size:12px">${esc(n.label)}</span><span style="font-size:10px;color:var(--ink-3);margin-left:auto">${esc((n.ticker||'').split(' · ')[0])}</span></div>`).join('');
+  let _spaceFilter = null;
+  function renderSpaceCompanies() {
+    if (!compEl) return;
+    const filtered = _spaceFilter ? spaceNodes.filter(n => n.cat === _spaceFilter) : spaceNodes;
+    compEl.innerHTML = filtered.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--c-${n.cat},#888)"></span><span style="font-weight:600;font-size:12px">${esc(n.label)}</span><span style="font-size:10px;color:var(--ink-3);margin-left:auto">${esc((n.ticker||'').split(' · ')[0])}</span></div>`).join('') || '<div style="color:var(--ink-3);font-size:12px;padding:12px 0">Sin empresas en esta categoría</div>';
+  }
+  // Category chips
+  const chipCats = [...new Set(spaceNodes.map(n=>n.cat))];
+  const chipContainer = document.createElement('div');
+  chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
+  chipContainer.innerHTML = `<button onclick="_spaceFilter=null;renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(c=>c.style.background='var(--surface)')" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface-2)">Todas</button>` + chipCats.map(c=>`<button class="space-chip" data-cat="${c}" onclick="_spaceFilter='${c}';renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(b=>b.style.background='var(--surface)');this.style.background='var(--surface-2)'" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--c-${c},#888)"></span>${c.replace('_',' ')}</button>`).join('');
+  if (compEl && compEl.parentElement) compEl.parentElement.insertBefore(chipContainer, compEl);
+  window.renderSpaceCompanies = renderSpaceCompanies;
+  renderSpaceCompanies();
   if (_spaceInited) return;
   _spaceInited = true;
   const launchEl = document.getElementById('launches-list');
