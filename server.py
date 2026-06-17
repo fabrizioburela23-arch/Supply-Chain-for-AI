@@ -391,8 +391,10 @@ def marketstack_proxy():
     if not MSTACK:
         return jsonify({'error': 'no MARKETSTACK_KEY'}), 400
     symbols = request.args.get('symbols', '')
+    from_date = request.args.get('date_from', (date.today() - timedelta(days=9)).isoformat())
     data, err = _safe_get(
-        f'https://api.marketstack.com/v2/eod/latest?access_key={MSTACK}&symbols={symbols}',
+        f'https://api.marketstack.com/v2/eod?access_key={MSTACK}'
+        f'&symbols={symbols}&date_from={from_date}&limit=1000&sort=DESC',
         timeout=12)
     if err:
         return jsonify({'error': err}), 502
@@ -607,6 +609,69 @@ def rag_proxy(endpoint):
         return jsonify({'error': str(e), 'note': 'RAG server offline'}), 502
 
 
+@app.route('/api/portfolio-risk', methods=['POST'])
+def api_portfolio_risk_internal():
+    """VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser)."""
+    data = request.get_json(silent=True) or {}
+    positions = data.get('positions', {})
+    if not positions:
+        return jsonify({'error': 'positions required',
+                        'format': '{"NVDA":{"shares":10,"buy_price":450}}'}), 400
+    if not AV_KEY:
+        return jsonify({'error': 'AV_KEY not configured on server. Add ALPHA_VANTAGE_KEY to .env'}), 400
+    try:
+        import numpy as np
+    except Exception:
+        return jsonify({'error': 'numpy not installed on server'}), 503
+
+    returns_by_ticker = {}
+    for ticker in list(positions.keys())[:10]:
+        try:
+            r, _ = _safe_get(
+                f'https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY_ADJUSTED'
+                f'&symbol={ticker}&apikey={AV_KEY}', timeout=10)
+            ts = (r or {}).get('Weekly Adjusted Time Series', {})
+            prices = [float(v['5. adjusted close']) for k, v in sorted(ts.items(), reverse=True)][:52]
+            if len(prices) > 4:
+                returns_by_ticker[ticker] = [(prices[i] - prices[i + 1]) / prices[i + 1]
+                                             for i in range(len(prices) - 1)]
+        except Exception:
+            pass
+    if not returns_by_ticker:
+        return jsonify({'error': 'Could not fetch historical data. Check AV_KEY on server.'}), 400
+
+    pv = sum(p['shares'] * p['buy_price'] for p in positions.values())
+    portfolio_returns = []
+    for ticker, pos in positions.items():
+        if ticker not in returns_by_ticker:
+            continue
+        weight = (pos['shares'] * pos['buy_price']) / pv
+        portfolio_returns.append([x * weight for x in returns_by_ticker[ticker]])
+    if not portfolio_returns:
+        return jsonify({'error': 'Insufficient data'}), 400
+
+    min_len = min(len(r) for r in portfolio_returns)
+    combined = np.sum([r[:min_len] for r in portfolio_returns], axis=0)
+    mu, sigma = float(np.mean(combined)), float(np.std(combined))
+    var_1w = abs((mu - 1.645 * sigma) * pv)
+    var_1m = var_1w * np.sqrt(4)
+    cvar = abs(float(np.mean(combined[combined <= np.percentile(combined, 5)])) * pv)
+    sharpe = float((mu / sigma) * np.sqrt(52)) if sigma else 0
+    cum = np.cumprod(1 + combined)
+    peak = np.maximum.accumulate(cum)
+    mdd = float(abs(np.min((cum - peak) / peak)))
+
+    return jsonify({
+        'portfolio_value': round(pv, 2),
+        'var_95': {'weekly_usd': round(var_1w, 2), 'monthly_usd': round(var_1m, 2),
+                   'pct': round(var_1w / pv * 100, 2)},
+        'cvar_95': {'usd': round(cvar, 2), 'pct': round(cvar / pv * 100, 2)},
+        'sharpe_ratio': round(sharpe, 3),
+        'max_drawdown_pct': round(mdd * 100, 2),
+        'risk_level': 'BAJO' if var_1w / pv < 0.03 else 'MODERADO' if var_1w / pv < 0.06 else 'ALTO',
+    })
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # API PÚBLICA v1 — autenticación JWT por tiers (modelo de negocio)
 # ════════════════════════════════════════════════════════════════════════════
@@ -669,6 +734,7 @@ def api_docs():
         'version': '1.0.0',
         'endpoints': {
             'POST /v1/auth/key': 'Issue API key (body: {user_id, tier})',
+            'POST /api/portfolio-risk': 'VaR/CVaR/Sharpe for portfolio (no auth, internal)',
             'GET  /v1/nodes': 'Node universe metadata [free]',
             'GET  /v1/nodes/<id>/live': 'Live quote + fundamentals for a node [starter]',
             'POST /v1/risk/portfolio': 'VaR/CVaR/Sharpe for portfolio [starter]',

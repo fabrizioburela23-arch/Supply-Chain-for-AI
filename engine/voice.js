@@ -32,7 +32,9 @@ const BixbyVoice = {
   async connect() {
     const elKey = (typeof Keys !== 'undefined' && Keys.get('elevenlabs')) || localStorage.getItem('key_elevenlabs');
     const agentId = localStorage.getItem('elevenlabs_agent_id');
-    if (!elKey && !agentId) {
+    const isServerMode = typeof SERVER_MODE !== 'undefined' && SERVER_MODE;
+    // In server mode, keys live in .env — no client key required
+    if (!isServerMode && !elKey && !agentId) {
       this._setStatus('Configura ElevenLabs (key + Agent ID) en ⚙ para activar Bixby', true);
       if (window.V8?.openSettings) window.V8.openSettings();
       return;

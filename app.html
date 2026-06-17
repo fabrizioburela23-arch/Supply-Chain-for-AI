@@ -4153,6 +4153,7 @@ var LINKS = RAW_LINKS
     return ok;
   })
   .map(([s,t,w,rel,type])=>({source:s,target:t,w,rel,type:type||'supply'}));
+window.LINKS = LINKS;
 
 const lid = v => (typeof v==='object' && v!==null) ? v.id : v;
 
@@ -5550,31 +5551,45 @@ function quoteOf(n){ return n.mkt ? MKT.quotes[n.mkt] : null; }
 
 function setStatus(msg){ document.getElementById('mk-status').textContent=msg; }
 
+function _processMktData(j){
+  if(j.error) throw new Error(j.error.message||j.error.code||'API error');
+  const q={};
+  (j.data||[]).forEach(row=>{
+    const s=(row.symbol||'').toUpperCase(); if(!s||row.close==null) return;
+    if(!q[s]) q[s]={close:row.close, date:(row.date||'').slice(0,10)};
+    else if(q[s].prev==null) q[s].prev=row.close;
+  });
+  if(!Object.keys(q).length) throw new Error('Sin datos / no data');
+  MKT.quotes=q; MKT.ts=Date.now();
+  localStorage.setItem('eco_quotes',JSON.stringify(q));
+  localStorage.setItem('eco_quotes_ts',String(MKT.ts));
+}
 async function fetchQuotes(){
-  const key=localStorage.getItem('eco_msk');
-  if(!key){ setStatus('⚠ '+t('mk_nokey')); document.getElementById('mk-keyrow').style.display='flex'; return; }
   if(MKT.loading) return;
   MKT.loading=true;
   const btn=document.getElementById('mk-refresh'); btn.disabled=true;
   setStatus(t('mk_loading'));
+  const syms=[...new Set(NODES.filter(n=>n.mkt).map(n=>n.mkt))];
+  // Try server-side proxy first (uses Marketstack key from .env on Railway)
+  if(SERVER_MODE){
+    try{
+      const r=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
+      if(r.ok){
+        const j=await r.json();
+        if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); return; }
+      }
+    }catch{}
+  }
+  // Fallback: direct call with localStorage key
+  const key=localStorage.getItem('eco_msk');
+  if(!key){ setStatus('⚠ '+t('mk_nokey')); document.getElementById('mk-keyrow').style.display='flex'; MKT.loading=false; btn.disabled=false; return; }
   try{
-    const syms=[...new Set(NODES.filter(n=>n.mkt).map(n=>n.mkt))];
     const from=new Date(Date.now()-9*864e5).toISOString().slice(0,10);
     const url='https://api.marketstack.com/v2/eod?access_key='+encodeURIComponent(key)
       +'&symbols='+encodeURIComponent(syms.join(','))+'&date_from='+from+'&limit=1000&sort=DESC';
     const r=await fetch(url);
     const j=await r.json();
-    if(j.error) throw new Error(j.error.message||j.error.code||'API error');
-    const q={};
-    (j.data||[]).forEach(row=>{
-      const s=(row.symbol||'').toUpperCase(); if(!s||row.close==null) return;
-      if(!q[s]) q[s]={close:row.close, date:(row.date||'').slice(0,10)};
-      else if(q[s].prev==null) q[s].prev=row.close;
-    });
-    if(!Object.keys(q).length) throw new Error('Sin datos / no data');
-    MKT.quotes=q; MKT.ts=Date.now();
-    localStorage.setItem('eco_quotes',JSON.stringify(q));
-    localStorage.setItem('eco_quotes_ts',String(MKT.ts));
+    _processMktData(j);
   }catch(e){
     setStatus('⚠ '+t('mk_err')+': '+String(e.message).slice(0,80));
     MKT.loading=false; btn.disabled=false;
@@ -5782,7 +5797,10 @@ Object.assign(I18N.en, {
 });
 
 /* ---------- §B · Modo de operación + claves ---------- */
-const SERVER_MODE = (location.port === '5050');
+const SERVER_MODE = (
+  location.port === '5050' || location.port === '8080' ||
+  (!!location.hostname && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')
+);
 const BASE = SERVER_MODE ? location.origin : '';
 const health = { server:SERVER_MODE, finnhub:false, fmp:false, claude:false, marketstack:false };
 
@@ -6985,9 +7003,8 @@ function initSimTab() {
       const posMap = {};
       positions.forEach(([id,p]) => { const n=NODE_BY_ID[id]; const tk=n?.mkt||id; if(tk&&p.sh>0) posMap[tk]={shares:p.sh,buy_price:p.bp}; });
       if (!Object.keys(posMap).length) { toast('Sin tickers válidos en el portfolio'); return; }
-      const apiKey = localStorage.getItem('khipu_api_key') || '';
-      const resp = await fetch('/v1/risk/portfolio', {
-        method:'POST', headers:{'Content-Type':'application/json','X-KHIPU-Key':apiKey},
+      const resp = await fetch('/api/portfolio-risk', {
+        method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({positions: posMap})
       });
       if (!resp.ok) { const err=await resp.json(); throw new Error(err.error||resp.statusText); }
@@ -7009,17 +7026,17 @@ async function initSpaceTab() {
   const countEl = document.getElementById('space-node-count');
   if (countEl) countEl.textContent = spaceNodes.length;
   const compEl = document.getElementById('space-companies-list');
-  let _spaceFilter = null;
+  window._spaceFilter = null;
   function renderSpaceCompanies() {
     if (!compEl) return;
-    const filtered = _spaceFilter ? spaceNodes.filter(n => n.cat === _spaceFilter) : spaceNodes;
+    const filtered = window._spaceFilter ? spaceNodes.filter(n => n.cat === window._spaceFilter) : spaceNodes;
     compEl.innerHTML = filtered.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--c-${n.cat},#888)"></span><span style="font-weight:600;font-size:12px">${esc(n.label)}</span><span style="font-size:10px;color:var(--ink-3);margin-left:auto">${esc((n.ticker||'').split(' · ')[0])}</span></div>`).join('') || '<div style="color:var(--ink-3);font-size:12px;padding:12px 0">Sin empresas en esta categoría</div>';
   }
   // Category chips
   const chipCats = [...new Set(spaceNodes.map(n=>n.cat))];
   const chipContainer = document.createElement('div');
   chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
-  chipContainer.innerHTML = `<button onclick="_spaceFilter=null;renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(c=>c.style.background='var(--surface)')" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface-2)">Todas</button>` + chipCats.map(c=>`<button class="space-chip" data-cat="${c}" onclick="_spaceFilter='${c}';renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(b=>b.style.background='var(--surface)');this.style.background='var(--surface-2)'" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--c-${c},#888)"></span>${c.replace('_',' ')}</button>`).join('');
+  chipContainer.innerHTML = `<button onclick="window._spaceFilter=null;window.renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(c=>c.style.background='var(--surface)')" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface-2)">Todas</button>` + chipCats.map(c=>`<button class="space-chip" data-cat="${c}" onclick="window._spaceFilter='${c}';window.renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(b=>b.style.background='var(--surface)');this.style.background='var(--surface-2)'" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--c-${c},#888)"></span>${c.replace('_',' ')}</button>`).join('');
   if (compEl && compEl.parentElement) compEl.parentElement.insertBefore(chipContainer, compEl);
   window.renderSpaceCompanies = renderSpaceCompanies;
   renderSpaceCompanies();
@@ -7035,7 +7052,7 @@ async function loadLaunches(el) {
     const resp = await fetch('/api/space/launches');
     if (!resp.ok) throw new Error(resp.statusText);
     const data = await resp.json();
-    const launches = data.results||data.launches||[];
+    const launches = Array.isArray(data) ? data : (data.results||data.launches||[]);
     if (!launches.length) { el.innerHTML='<div style="color:var(--ink-3);font-size:12px">Sin lanzamientos próximos disponibles</div>'; return; }
     el.innerHTML = launches.slice(0,8).map(l=>{
       const d=l.net?new Date(l.net):null;
