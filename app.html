@@ -4024,6 +4024,7 @@ nodeSel.on('mouseover.tooltip',(event,d)=>{
     ${meta.revenue_2025?`<div style="font-size:11px;color:var(--ink-2)">💰 ${esc(meta.revenue_2025)} &nbsp;·&nbsp; 👥 ${meta.employees?meta.employees.toLocaleString():'—'}</div>`:''}
     <div style="font-size:11px;color:var(--ink-3);margin-top:4px">↑ ${inp} ${t('tt_sup')} &nbsp;·&nbsp; ↓ ${out} ${t('tt_cli')}</div>
     ${meta.risk&&meta.risk!=='low'?`<div style="font-size:10px;color:${riskColor};margin-top:4px;font-weight:600;text-transform:uppercase">⚠ ${t('tt_risk')}: ${esc(meta.risk)}</div>`:''}
+    ${(function(){try{const nrs=computeNRS(d.id);const nc=nrs<30?'#22c55e':nrs<60?'#f59e0b':'#ef4444';return `<div style="font-size:10px;margin-top:4px;display:flex;align-items:center;gap:5px"><span style="color:var(--ink-3)">NRS</span><span style="font-weight:700;color:${nc}">${nrs}</span><span style="color:var(--ink-3)">/100</span></div>`;}catch(e){return '';}})()}
   `;
   positionTooltip(event);
 });
@@ -5292,12 +5293,13 @@ function renderMarket(keepStatus){
   const tbl=document.getElementById('mk-table');
   tbl.innerHTML=`<thead><tr>
     <th>${t('th_co')}</th><th>${t('th_price')}</th><th>${t('th_chg')}</th>
-    <th>${t('th_sh')}</th><th>${t('th_bp')}</th><th>${t('th_val')}</th><th>${t('th_pnl')}</th><th></th>
+    <th>${t('th_sh')}</th><th>${t('th_bp')}</th><th>${t('th_val')}</th><th>${t('th_pnl')}</th><th title="NEXUS Risk Score 0-100">NRS</th><th></th>
   </tr></thead><tbody>`+rows.map(n=>{
     const q=quoteOf(n), p=MKT.pos[n.id];
     const chg=(q&&q.prev!=null&&q.close!=null)?(q.close-q.prev)/q.prev:null;
     const val=(p&&q&&q.close!=null)?p.sh*q.close:null;
     const pnlP=(p&&q&&q.close!=null&&p.bp)?(q.close-p.bp)/p.bp:null;
+    const nrs=(function(){try{const v=computeNRS(n.id);const c=v<30?'#22c55e':v<60?'#f59e0b':'#ef4444';return `<span style="font-weight:700;color:${c}">${v}</span>`;}catch(e){return '<span class="td-dim">—</span>';}})();
     if(MKT.editing===n.id){
       return `<tr><td onclick="goMap('${n.id}')">${esc(n.label)} <span class="tk">${esc(n.mkt||'')}</span></td>
         <td>${q?'$'+fmtN(q.close):'—'}</td>
@@ -5307,7 +5309,7 @@ function renderMarket(keepStatus){
           <button class="pos-btn" onclick="posSave('${n.id}')">✓</button>
           <button class="pos-btn" onclick="posDel('${n.id}')">🗑</button>
           <button class="pos-btn" onclick="posCancel()">✕</button>
-        </div></td><td></td></tr>`;
+        </div></td><td>${nrs}</td><td></td></tr>`;
     }
     return `<tr data-ticker="${esc(n.mkt||'')}"${q&&q.live?' data-live="1"':''}>
       <td onclick="goMap('${n.id}')">${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></td>
@@ -5317,6 +5319,7 @@ function renderMarket(keepStatus){
       <td>${p?'$'+fmtN(p.bp):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-val">${val!=null?'$'+fmtN(val):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-pnl ${pnlP==null?'td-dim':pnlP>=0?'td-up':'td-down'}">${fmtPct(pnlP)}</td>
+      <td>${nrs}</td>
       <td><button class="pos-btn" onclick="posEdit('${n.id}')">${p?t('mk_edit'):t('mk_add')}</button></td>
     </tr>`;
   }).join('')+'</tbody>';
