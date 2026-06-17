@@ -966,6 +966,14 @@ footer .disc{line-height:1.4}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<div id="khipu-loader" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#0a0d14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
+  <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:#3DE0C8;letter-spacing:-.02em">Khipu Finance</div>
+  <div style="font-size:13px;color:#6b7280;margin-top:-10px">Cadena de Valor Global · IA · Espacio · Semiconductores</div>
+  <div style="width:220px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:8px">
+    <div id="loader-bar" style="height:100%;background:linear-gradient(90deg,#3DE0C8,#9B4FE8);border-radius:2px;width:0%;transition:width .3s ease"></div>
+  </div>
+  <div id="loader-text" style="font-size:11px;color:#6b7280;font-family:'JetBrains Mono',monospace">Cargando nodos...</div>
+</div>
 <div id="boot">
   <span class="boot-mark">
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -4067,6 +4075,10 @@ let pathfinderMode=false, pathSrc=null, pathDst=null, pathActive=false;
 let pathNodes=new Set(), pathLinkKeys=new Set();
 function isPathLink(l){ return pathLinkKeys.has(lid(l.source)+'>'+lid(l.target)); }
 
+// Loading progress
+const _loaderBar = document.getElementById('loader-bar');
+const _loaderText = document.getElementById('loader-text');
+if (_loaderBar) { _loaderBar.style.width = '30%'; _loaderText.textContent = 'Construyendo grafo (' + NODES.length + ' nodos)...'; }
 // With 450+ nodes, reduce charge and increase decay for smoother convergence
 const _nodeCount = NODES.length;
 const _chargeStr = _nodeCount > 300 ? -180 : _nodeCount > 150 ? -220 : -280;
@@ -5549,6 +5561,14 @@ window.goMap=id=>{ switchTab('map'); setTimeout(()=>jumpTo(id),80); };
 /* ===================== Init v7 ===================== */
 renderBand();
 applyLang();
+
+// Hide loader
+const _loader = document.getElementById('khipu-loader');
+if (_loader) {
+  if (_loaderBar) _loaderBar.style.width = '100%';
+  if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
+  setTimeout(() => { _loader.style.opacity = '0'; setTimeout(() => _loader.remove(), 500); }, 400);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    v8 · CAPA DE PRODUCTO — datos en vivo, IA, fundamentales, portfolio, alertas
