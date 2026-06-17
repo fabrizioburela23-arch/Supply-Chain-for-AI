@@ -4148,6 +4148,25 @@ function isPathLink(l){ return pathLinkKeys.has(lid(l.source)+'>'+lid(l.target))
 const _loaderBar = document.getElementById('loader-bar');
 const _loaderText = document.getElementById('loader-text');
 if (_loaderBar) { _loaderBar.style.width = '30%'; _loaderText.textContent = 'Construyendo grafo (' + NODES.length + ' nodos)...'; }
+
+// SAFETY: Hard fallback registered HERE (before any potentially-crashing code)
+// so that even if D3 setup throws, the loader will dismiss after 6s.
+(function(){
+  const _ldr = document.getElementById('khipu-loader');
+  if (!_ldr) return;
+  window._khipuLoaderDismiss = function(){
+    if (!_ldr.parentNode) return;
+    _ldr.style.transition = 'opacity .5s';
+    _ldr.style.opacity = '0';
+    setTimeout(function(){ if (_ldr.parentNode) _ldr.parentNode.removeChild(_ldr); }, 550);
+  };
+  window._khipuLoaderFallback = setTimeout(function(){
+    if (document.getElementById('khipu-loader')) {
+      if (_loaderText) _loaderText.textContent = 'Listo (' + NODES.length + ' nodos)';
+      window._khipuLoaderDismiss();
+    }
+  }, 6000);
+})();
 // With 450+ nodes, reduce charge and increase decay for smoother convergence
 const _nodeCount = NODES.length;
 const _chargeStr = _nodeCount > 300 ? -180 : _nodeCount > 150 ? -220 : -280;
@@ -5640,23 +5659,15 @@ window.posDel=id=>{ delete MKT.pos[id]; savePos(); MKT.editing=null; renderMarke
 window.goMap=id=>{ switchTab('map'); setTimeout(()=>jumpTo(id),80); };
 
 /* ===================== Init v7 ===================== */
-// Safety: guarantee loader dismisses even if renderBand/applyLang throw
-(function _initSafe(){
-  const _loader = document.getElementById('khipu-loader');
-  function _dismissLoader(){
-    if (!_loader || !_loader.parentNode) return;
-    if (_loaderBar) _loaderBar.style.width = '100%';
-    if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
-    _loader.style.opacity = '0';
-    setTimeout(() => { if (_loader.parentNode) _loader.parentNode.removeChild(_loader); }, 500);
-  }
-  // Hard fallback: dismiss after 4s no matter what
-  const _loaderFallback = setTimeout(_dismissLoader, 4000);
-  try { renderBand(); } catch(e) { console.error('[khipu] renderBand error:', e); }
-  try { applyLang(); } catch(e) { console.error('[khipu] applyLang error:', e); }
-  clearTimeout(_loaderFallback);
-  _dismissLoader();
-})();
+try { renderBand(); } catch(e) { console.error('[khipu] renderBand:', e); }
+try { applyLang(); } catch(e) { console.error('[khipu] applyLang:', e); }
+// Cancel fallback timer and dismiss now
+if (typeof window._khipuLoaderFallback !== 'undefined') clearTimeout(window._khipuLoaderFallback);
+if (typeof window._khipuLoaderDismiss === 'function') {
+  if (_loaderBar) _loaderBar.style.width = '100%';
+  if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
+  setTimeout(window._khipuLoaderDismiss, 200);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    v8 · CAPA DE PRODUCTO — datos en vivo, IA, fundamentales, portfolio, alertas
