@@ -52,6 +52,7 @@ AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
 
 # Servicios adicionales (Khipu Finance v1)
 MIROFISH_URL        = os.getenv('MIROFISH_URL', 'http://localhost:8000')
+MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
 ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
 AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
@@ -511,19 +512,28 @@ def fundamentals_sec(ticker):
 
 
 # ── MiroFish proxy (simulaciones multi-agente) ───────────────────────────────
+def _mf_headers():
+    h = {'Content-Type': 'application/json'}
+    if MIROFISH_TOKEN:
+        h['Authorization'] = f'Bearer {MIROFISH_TOKEN}'
+    return h
+
 @app.route('/api/mirofish/<path:endpoint>', methods=['GET', 'POST', 'DELETE'])
 def mirofish_proxy(endpoint):
     url = f'{MIROFISH_URL}/api/{endpoint}'
+    hdrs = _mf_headers()
     try:
         if request.method == 'GET':
-            r = requests.get(url, params=request.args, timeout=120)
+            r = requests.get(url, params=request.args, headers=hdrs, timeout=120)
         elif request.method == 'POST':
             if request.content_type and 'multipart' in request.content_type:
-                r = requests.post(url, files=request.files, data=request.form, timeout=120)
+                r = requests.post(url, files=request.files, data=request.form,
+                                  headers={k: v for k, v in hdrs.items() if k != 'Content-Type'},
+                                  timeout=120)
             else:
-                r = requests.post(url, json=request.get_json(silent=True), timeout=120)
+                r = requests.post(url, json=request.get_json(silent=True), headers=hdrs, timeout=120)
         else:
-            r = requests.delete(url, timeout=30)
+            r = requests.delete(url, headers=hdrs, timeout=30)
         try:
             return jsonify(r.json()), r.status_code
         except Exception:  # noqa: BLE001
