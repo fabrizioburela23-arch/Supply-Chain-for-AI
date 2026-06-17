@@ -72,12 +72,20 @@ class SecondBrain {
     }
   }
 
+  _nrsInfo(nodeId) {
+    const v = (typeof computeNRS === 'function') ? computeNRS(nodeId) : 50;
+    const total = typeof v === 'object' ? (v.total || 50) : v;
+    const color = total >= 70 ? '#ef4444' : total >= 40 ? '#f59e0b' : '#22c55e';
+    const label = total >= 70 ? 'ALTO' : total >= 40 ? 'MEDIO' : 'BAJO';
+    return { total, color, label };
+  }
+
   async _renderMarket(nodeId, el) {
     const n = NODE_BY_ID[nodeId];
     const meta = NODE_META[nodeId] || {};
     const q = n.mkt ? (MKT.quotes[n.mkt] || {}) : {};
     const chg = (q.close != null && q.prev) ? (q.close - q.prev) / q.prev : null;
-    const nrs = computeNRS(nodeId);
+    const nrs = this._nrsInfo(nodeId);
 
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -202,7 +210,17 @@ class SecondBrain {
     const inDeg = LINKS.filter(l => lid(l.target) === nodeId).length;
     const outDeg = LINKS.filter(l => lid(l.source) === nodeId).length;
     const cascade = (typeof computeDownstream === 'function') ? computeDownstream(nodeId) : new Set();
-    const nrs = computeNRS(nodeId);
+    const nrs = this._nrsInfo(nodeId);
+    // NRS breakdown derived from factors
+    const n = NODE_BY_ID[nodeId] || {};
+    const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
+    const geo = geoMap[n.country] ?? 15;
+    const chain = Math.min(25, LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length * 2.5);
+    const margin = n.margin != null ? n.margin : 0.15;
+    const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
+    const fundamental = Math.min(15, (n.preipo ? 10 : 0) + ((n.growth || '').includes('🔴') ? 5 : (n.growth || '').includes('🟡') ? 2 : 0));
+    const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
+    const breakdown = { 'Geo': Math.round(geo), 'Cadena': Math.round(chain), 'Mercado': market, 'Fundamental': fundamental, 'Concentración': concentration };
 
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
@@ -212,11 +230,11 @@ class SecondBrain {
         <div class="sb-card"><div class="sb-l">Clientes</div><div class="sb-v">${outDeg}</div></div>
       </div>
       <div style="margin-bottom:12px"><h4 style="font-size:12px;margin:0 0 6px">Desglose NRS Risk Score</h4>
-        ${Object.entries(nrs.breakdown).map(([k, v]) =>
+        ${Object.entries(breakdown).map(([k, v]) =>
           `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px">
-            <span style="color:var(--ink-2);text-transform:capitalize">${k}</span>
+            <span style="color:var(--ink-2)">${k}</span>
             <div style="display:flex;align-items:center;gap:6px">
-              <div style="width:${v * 3}px;height:5px;background:${nrs.color};border-radius:2px"></div>
+              <div style="width:${Math.round(v * 3)}px;height:5px;background:${nrs.color};border-radius:2px"></div>
               <span style="font-family:'JetBrains Mono',monospace;font-size:11px">${v}</span>
             </div></div>`).join('')}
       </div>
