@@ -2386,8 +2386,9 @@ function computeNodeRadius(nodeId) {
   let cap_B = MKT_CAP_EST[nodeId] || 0.5;
 
   // Si hay precio en vivo y shares conocidos → calcular market cap real
-  if (typeof MKT !== 'undefined' && n.mkt) {
-    const q = MKT.quotes ? MKT.quotes[n.mkt] : null;
+  // window.MKT bypasses TDZ (const MKT declared later at line ~5539)
+  if (window.MKT && n.mkt) {
+    const q = window.MKT.quotes ? window.MKT.quotes[n.mkt] : null;
     const shares = SHARES_OUTSTANDING_B[n.mkt];
     if (q && q.close && shares) {
       cap_B = q.close * shares;
@@ -2412,7 +2413,7 @@ function computeNRS(nodeId) {
   const geo = geoMap[n.country] ?? 15;
 
   // Chain risk (0-25): node degree / centrality proxy
-  const degree = (typeof LINKS !== 'undefined') ? LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length : 0;
+  const degree = window.LINKS ? window.LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length : 0;
   const chain = Math.min(25, degree * 2.5);
 
   // Market risk (0-20): volatility proxy from margin
@@ -4144,7 +4145,7 @@ if (typeof LINKS_SPACEX !== 'undefined') {
   });
 }
 
-const LINKS = RAW_LINKS
+var LINKS = RAW_LINKS
   .filter(([s,t,w])=>s!==t && w>0)
   .filter(([s,t])=>{
     const ok=NODE_BY_ID[s]&&NODE_BY_ID[t];
@@ -5536,7 +5537,7 @@ function renderGeoPanel(){
 document.querySelectorAll('.tabs .tab').forEach(b=>{ b.onclick=()=>switchTab(b.dataset.tab); });
 
 /* ===================== Mercado en vivo (Marketstack v2) ===================== */
-const MKT = {
+var MKT = {
   quotes: JSON.parse(localStorage.getItem('eco_quotes')||'{}'),
   ts: Number(localStorage.getItem('eco_quotes_ts'))||null,
   pos: JSON.parse(localStorage.getItem('eco_pos')||'{}'),
