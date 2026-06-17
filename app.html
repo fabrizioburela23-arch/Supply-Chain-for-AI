@@ -6759,6 +6759,33 @@ async function loadLaunches(el) {
     }).join('');
   } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
 }
+
+// ── NexusCore: simulation orchestrator ───────────────────────────────────────
+window.nexusCore = {
+  async runPreset(presetId) {
+    if (!window.ScenarioBuilder || !window.MiroFishClient) {
+      toast('Motor de simulación no disponible'); return;
+    }
+    switchTab('simulation');
+    await new Promise(r => setTimeout(r, 200));
+    const btn = document.querySelector(`.sim-preset-btn[data-preset="${presetId}"]`);
+    if (btn) btn.click();
+  },
+  async runPresetForNode(nodeId, mode) {
+    switchTab('simulation');
+    await new Promise(r => setTimeout(r, 200));
+    const n = NODE_BY_ID[nodeId];
+    if (!n) return;
+    const txt = document.getElementById('sim-custom-text');
+    const nodeInp = document.getElementById('sim-custom-nodes');
+    if (txt) txt.value = mode === 'collapse'
+      ? `Colapso catastrófico de ${n.label}: quiebra repentina, interrupción total de producción. ¿Qué empresas sufren más?`
+      : `Éxito masivo de ${n.label}: breakthrough tecnológico, cuota de mercado se triplica. ¿Quién gana y quién pierde?`;
+    if (nodeInp) nodeInp.value = nodeId;
+    const runBtn = document.getElementById('sim-run-btn');
+    if (runBtn) runBtn.click();
+  },
+};
 </script>
 </body>
 </html>

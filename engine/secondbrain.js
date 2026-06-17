@@ -198,7 +198,7 @@ class SecondBrain {
         <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
           <button onclick="window.nexusCore?.runPresetForNode('${nodeId}','collapse')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)">💥 Simular colapso de ${esc(n.label)}</button>
           <button onclick="window.nexusCore?.runPresetForNode('${nodeId}','boom')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)">🚀 Simular éxito masivo de ${esc(n.label)}</button>
-          <button onclick="window.switchTab&&window.switchTab('sim')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink-2)">🔬 Ver todas las simulaciones</button>
+          <button onclick="window.switchTab&&window.switchTab('simulation')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink-2)">🔬 Ver todas las simulaciones</button>
         </div>
       </div>
       <div id="sim-mini-result-${nodeId}"></div>
