@@ -35,7 +35,7 @@ COLLECTIONS = {
     'user_docs':   chroma_client.get_or_create_collection('khipu_user_docs'),
 }
 
-CLAUDE_KEY = os.getenv('CLAUDE_KEY', '')
+CLAUDE_KEY = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
 AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
 
 _claude = None
