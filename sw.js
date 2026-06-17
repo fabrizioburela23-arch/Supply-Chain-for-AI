@@ -1,9 +1,10 @@
 /* Khipu Finance v1 — Service Worker
    App-shell cache-first + API network-first con fallback a caché (uso offline).
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v1';
+const CACHE = 'khipu-finance-v2';
 const SHELL = ['/', '/app.html',
   '/nodes/nodes_spacex.js', '/nodes/nodes_expand.js', '/nodes/nodes_expand2.js',
+  '/nodes/links_all.js', '/nodes/links_expand.js',
   '/engine/graph3d.js', '/engine/hypergraph.js', '/engine/voice.js',
   '/engine/secondbrain.js', '/sim/mirofish_client.js', '/sim/scenario_builder.js',
 ];
