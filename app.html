@@ -5309,7 +5309,11 @@ function switchTab(tab){
   else if(isGeo){ renderGeoPanel(); }
   else if(isSim){ initSimTab(); }
   else if(isSpace){ initSpaceTab(); }
-  else { renderMarket(); }
+  else {
+    if(SERVER_MODE){ document.getElementById('mk-key-btn').style.display='none'; document.getElementById('mk-keyrow').style.display='none'; }
+    renderMarket();
+    if(SERVER_MODE && !MKT.ts){ fetchQuotes(); }
+  }
 }
 
 /* ===================== v7 · M6: betweenness centrality real (Brandes) ===================== */
@@ -5580,10 +5584,19 @@ async function fetchQuotes(){
       }
     }catch{}
   }
-  // Fallback: direct call with localStorage key
-  const key=localStorage.getItem('eco_msk');
-  if(!key){ setStatus('⚠ '+t('mk_nokey')); document.getElementById('mk-keyrow').style.display='flex'; MKT.loading=false; btn.disabled=false; return; }
-  try{
+  // Fall back to client-side Marketstack key
+  try {
+    const key = localStorage.getItem('eco_msk');
+    if (!key) {
+      if (SERVER_MODE) {
+        setStatus('⚠ Sin datos de mercado — agrega MARKETSTACK_KEY al servidor');
+      } else {
+        setStatus('⚠ ' + t('mk_nokey'));
+        document.getElementById('mk-keyrow').style.display = 'flex';
+      }
+      MKT.loading = false; btn.disabled = false;
+      return;
+    }
     const from=new Date(Date.now()-9*864e5).toISOString().slice(0,10);
     const url='https://api.marketstack.com/v2/eod?access_key='+encodeURIComponent(key)
       +'&symbols='+encodeURIComponent(syms.join(','))+'&date_from='+from+'&limit=1000&sort=DESC';
@@ -6616,6 +6629,13 @@ V8.Keys=Keys; V8.health=health; V8.prefs=prefs;
   setupPWA();
   DataHealth.render();
   applyLangV8();
+  // En server mode: ocultar UI de keys del browser
+  if(SERVER_MODE){
+    const mkKeyBtn=document.getElementById('mk-key-btn');
+    if(mkKeyBtn) mkKeyBtn.style.display='none';
+    const mkKeyRow=document.getElementById('mk-keyrow');
+    if(mkKeyRow) mkKeyRow.style.display='none';
+  }
   // arranca precios en vivo (si hay clave + pref activa)
   LivePrices.start();
   // arranca polling de alertas de precio cada 60s
@@ -7231,10 +7251,10 @@ async function loadLaunches(el) {
       const dStr=d?d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):'—';
       const daysTo=d?Math.round((d-Date.now())/86400000):null;
       const badge=daysTo!=null?`<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${daysTo<3?'rgba(214,59,59,.12)':'rgba(61,224,200,.1)'};color:${daysTo<3?'var(--danger)':'var(--ink-2)'}">${daysTo>0?'T-'+daysTo+'d':'Lanzado'}</span>`:'';
-      const rocket=l.rocket?.configuration?.name||l.vehicle||'—';
-      const pad=l.pad?.name||'—';
-      const khipuId=l.khipu_node;
-      return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-weight:700;font-size:12px">${esc(l.name||l.mission||'Misión')}</span>${badge}${khipuId?`<button onclick="switchTab('map');setTimeout(()=>jumpTo('${khipuId}'),80)" style="font-size:10px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--violet)">Ver nodo</button>`:''}</div><div style="font-size:11px;color:var(--ink-3)">${esc(rocket)} · ${esc(pad)} · ${dStr}</div></div>`;
+      const rocket=l.rocket||l.vehicle||'—';
+      const provider=l.provider||'—';
+      const khipuId=(l.khipu_nodes&&l.khipu_nodes[0])||l.khipu_node||null;
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-weight:700;font-size:12px">${esc(l.name||'Misión')}</span>${badge}${khipuId?`<button onclick="switchTab('map');setTimeout(()=>jumpTo('${khipuId}'),80)" style="font-size:10px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--violet)">Ver nodo</button>`:''}</div><div style="font-size:11px;color:var(--ink-3)">${esc(provider)} · ${esc(rocket)} · ${dStr}</div></div>`;
     }).join('');
   } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
 }
