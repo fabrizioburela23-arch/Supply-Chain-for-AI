@@ -130,6 +130,31 @@ def icon():
     return app.response_class(_ICON, mimetype='image/svg+xml')
 
 
+# Serve JS modules — nodes/, engine/, sim/ are not in Flask's static folder
+_JS_DIRS = ('nodes', 'engine', 'sim')
+
+@app.route('/nodes/<path:filename>')
+def serve_nodes(filename):
+    from flask import send_from_directory
+    resp = send_from_directory('nodes', filename, mimetype='application/javascript')
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+@app.route('/engine/<path:filename>')
+def serve_engine(filename):
+    from flask import send_from_directory
+    resp = send_from_directory('engine', filename, mimetype='application/javascript')
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+@app.route('/sim/<path:filename>')
+def serve_sim(filename):
+    from flask import send_from_directory
+    resp = send_from_directory('sim', filename, mimetype='application/javascript')
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+
 # ----------------------------------------------------------------------------
 # Health check / data-health (extendido: incluye MiroFish, RAG, ElevenLabs)
 # ----------------------------------------------------------------------------
