@@ -2309,7 +2309,7 @@ function computeNRS(nodeId) {
   const geo = geoMap[n.country] ?? 15;
 
   // Chain risk (0-25): node degree / centrality proxy
-  const degree = (typeof LINKS !== 'undefined') ? LINKS.filter(l => l.s === nodeId || l.t === nodeId).length : 0;
+  const degree = (typeof LINKS !== 'undefined') ? LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length : 0;
   const chain = Math.min(25, degree * 2.5);
 
   // Market risk (0-20): volatility proxy from margin
@@ -4014,10 +4014,16 @@ if (typeof NODES_SPACEX !== 'undefined') {
   });
 }
 if (typeof LINKS_EXPAND !== 'undefined') {
-  LINKS_EXPAND.forEach(l => RAW_LINKS.push(l));
+  LINKS_EXPAND.forEach(l => {
+    if (Array.isArray(l)) { RAW_LINKS.push(l); }
+    else { RAW_LINKS.push([l.s, l.t, l.w||2, l.rel||'', l.type||'supply']); }
+  });
 }
 if (typeof LINKS_SPACEX !== 'undefined') {
-  LINKS_SPACEX.forEach(l => RAW_LINKS.push(l));
+  LINKS_SPACEX.forEach(l => {
+    if (Array.isArray(l)) { RAW_LINKS.push(l); }
+    else { RAW_LINKS.push([l.s, l.t, l.w||2, l.rel||'', l.type||'supply']); }
+  });
 }
 
 const LINKS = RAW_LINKS
