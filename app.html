@@ -957,8 +957,11 @@ footer .disc{line-height:1.4}
   .dark .graph-wrap{animation:none}
 }
 </style>
+<script src="nodes/nodes_expand.js"></script>
 <script src="nodes/nodes_spacex.js"></script>
 <script src="nodes/links_all.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 <div id="boot">
@@ -1008,6 +1011,7 @@ footer .disc{line-height:1.4}
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
+      <button class="icon-btn" id="toggle-3d-btn" title="Alternar vista 2D / 3D" style="width:auto;padding:0 10px;font-size:11px;font-weight:700" onclick="window._toggle3D && window._toggle3D()">3D</button>
       <button id="bixby-btn" class="icon-btn" title="Hablar con Bixby · Khipu Finance AI"
   style="background:var(--surface);border-color:var(--violet);color:var(--violet);font-size:13px;width:auto;padding:0 12px;gap:6px;display:flex;align-items:center"
   onclick="window.BixbyVoice?.toggle()">
@@ -1066,6 +1070,14 @@ footer .disc{line-height:1.4}
         <button id="zoom-fit" style="font-size:13px">⤢</button>
       </div>
       <svg id="graph"></svg>
+      <canvas id="graph-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;"></canvas>
+      <div id="hypergraph-timeline" style="display:none;position:absolute;bottom:60px;left:50%;transform:translateX(-50%);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 16px;align-items:center;gap:10px;box-shadow:var(--shadow)">
+        <span style="font-size:11px;font-weight:700;color:var(--ink-2)">Hipergrafos Temporales</span>
+        <input type="range" id="hg-year" min="2015" max="2030" value="2026" step="1" style="width:140px;cursor:pointer">
+        <span id="hg-year-label" style="font-size:12px;font-weight:600;color:var(--ink);min-width:32px">2026</span>
+        <button id="hg-add" style="font-size:11px;padding:4px 10px;border:1px solid var(--violet);border-radius:4px;background:var(--surface);color:var(--violet);cursor:pointer;font-weight:600">+ Evento</button>
+        <button id="hg-toggle" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:pointer">Ocultar</button>
+      </div>
       <div class="stress-banner" id="stress-banner">
         <span class="sb-dot"></span>
         <span id="stress-text"></span>
@@ -2108,8 +2120,8 @@ function computeNodeRadius(nodeId) {
   if (typeof MKT !== 'undefined' && n.mkt) {
     const q = MKT.quotes ? MKT.quotes[n.mkt] : null;
     const shares = SHARES_OUTSTANDING_B[n.mkt];
-    if (q && q.c && shares) {
-      cap_B = q.c * shares;
+    if (q && q.close && shares) {
+      cap_B = q.close * shares;
     }
   }
 
@@ -2120,6 +2132,35 @@ function computeNodeRadius(nodeId) {
   const MIN_R = n.preipo ? 4 : (n.big ? 10 : 5);
   const MAX_R = n.big ? 23 : 19;
   return Math.round(MIN_R + normalized * (MAX_R - MIN_R));
+}
+
+function computeNRS(nodeId) {
+  const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
+  if (!n) return 50;
+
+  // Geo risk (0-30): based on country
+  const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
+  const geo = geoMap[n.country] ?? 15;
+
+  // Chain risk (0-25): node degree / centrality proxy
+  const degree = (typeof LINKS !== 'undefined') ? LINKS.filter(l => l.s === nodeId || l.t === nodeId).length : 0;
+  const chain = Math.min(25, degree * 2.5);
+
+  // Market risk (0-20): volatility proxy from margin
+  const margin = n.margin != null ? n.margin : 0.15;
+  const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
+
+  // Fundamental risk (0-15): preipo penalty + growth signal
+  const preipo_pen = n.preipo ? 10 : 0;
+  const growth_str = (n.growth || '').toLowerCase();
+  const growth_pen = growth_str.includes('🔴') ? 5 : (growth_str.includes('🟡') ? 2 : 0);
+  const fundamental = Math.min(15, preipo_pen + growth_pen);
+
+  // Concentration risk (0-10): single-country dependency
+  const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
+
+  const nrs = Math.round(geo + chain + market + fundamental + concentration);
+  return Math.min(100, Math.max(0, nrs));
 }
 
 const NODE_META = {
@@ -3785,6 +3826,13 @@ function getLinkColor(type) {
 // Cargar nodos expandidos (SpaceX ecosystem)
 // Nota: en producción estos se cargarán como módulos <script> separados
 // Por ahora los incluimos inline para mantener compatibilidad
+if (typeof NODES_EXPAND !== 'undefined') {
+  NODES_EXPAND.forEach(n => {
+    if (!NODES.find(existing => existing.id === n.id)) {
+      NODES.push(n);
+    }
+  });
+}
 if (typeof NODES_SPACEX !== 'undefined') {
   NODES_SPACEX.forEach(n => {
     if (!NODES.find(existing => existing.id === n.id)) {
@@ -6146,6 +6194,20 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 // Fin capa v8 / v8.1
 // ═══════════════════════════════════════════════════════════════
 </script>
+<!-- Second Brain Panel -->
+<div id="second-brain-panel" style="display:none;position:fixed;top:0;right:0;width:400px;height:100vh;z-index:500;background:var(--surface);border-left:1px solid var(--line);box-shadow:-4px 0 24px rgba(0,0,0,.12);overflow-y:auto;transition:transform .3s ease">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink)">🧠 Second Brain</div>
+      <div id="sb-company-name" style="font-size:11px;color:var(--ink-3);margin-top:2px">—</div>
+    </div>
+    <button onclick="document.getElementById('second-brain-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:18px;line-height:1">✕</button>
+  </div>
+  <div id="sb-content" style="padding:16px 20px">
+    <div style="color:var(--ink-3);font-size:13px;text-align:center;padding:40px 0">Selecciona una empresa en el grafo</div>
+  </div>
+</div>
+
 <!-- Bixby Voice Status -->
 <div id="bixby-status" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   z-index:1000;background:var(--surface);border:1px solid var(--violet);border-radius:20px;
@@ -6158,5 +6220,134 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <style>
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
+
+<!-- Khipu Finance Engine -->
+<script src="engine/graph3d.js"></script>
+<script src="engine/hypergraph.js"></script>
+<script src="engine/voice.js"></script>
+<script src="engine/secondbrain.js"></script>
+<script src="sim/mirofish_client.js"></script>
+<script src="sim/scenario_builder.js"></script>
+
+<script>
+// ── Khipu Core Coordinator ──────────────────────────────────────
+(function initKhipuCore() {
+  'use strict';
+
+  // 2D/3D toggle
+  let _is3D = false;
+  let _graph3d = null;
+  let _hypergraph = null;
+  let _secondBrain = null;
+
+  window._toggle3D = function() {
+    _is3D = !_is3D;
+    const svg = document.getElementById('graph');
+    const canvas = document.getElementById('graph-canvas');
+    const btn = document.getElementById('toggle-3d-btn');
+    const timeline = document.getElementById('hypergraph-timeline');
+    if (_is3D) {
+      svg.style.display = 'none';
+      canvas.style.display = 'block';
+      timeline.style.display = 'flex';
+      btn.style.background = 'var(--violet)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--violet)';
+      if (!_graph3d && window.KhipuGraph3D) {
+        _graph3d = new KhipuGraph3D('graph-canvas', window.NODES || [], window.RAW_LINKS || []);
+      } else if (_graph3d) {
+        _graph3d.resume && _graph3d.resume();
+      }
+      if (!_hypergraph && window.TemporalHypergraph) {
+        _hypergraph = new TemporalHypergraph(_graph3d);
+        _hypergraph.seedHistoricalEvents();
+      }
+    } else {
+      svg.style.display = '';
+      canvas.style.display = 'none';
+      timeline.style.display = 'none';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      if (_graph3d) _graph3d.pause && _graph3d.pause();
+    }
+  };
+
+  // Hypergraph timeline slider
+  document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('hg-year');
+    const label = document.getElementById('hg-year-label');
+    if (slider) {
+      slider.addEventListener('input', function() {
+        label.textContent = this.value;
+        if (_hypergraph) _hypergraph.setYear && _hypergraph.setYear(+this.value);
+      });
+    }
+    const hgAdd = document.getElementById('hg-add');
+    if (hgAdd) {
+      hgAdd.addEventListener('click', function() {
+        const year = +(document.getElementById('hg-year')?.value || 2026);
+        const name = prompt('Nombre del evento hipervínculo:');
+        if (!name) return;
+        const nodeIds = prompt('IDs de nodos afectados (separados por coma):');
+        if (!nodeIds) return;
+        if (_hypergraph) {
+          _hypergraph.addEvent({ id: 'evt_' + Date.now(), name, year, nodes: nodeIds.split(',').map(s => s.trim()), type: 'custom' });
+        }
+      });
+    }
+    const hgToggle = document.getElementById('hg-toggle');
+    if (hgToggle) {
+      hgToggle.addEventListener('click', function() {
+        const tl = document.getElementById('hypergraph-timeline');
+        if (tl) tl.style.display = 'none';
+      });
+    }
+
+    // Second Brain init
+    if (window.SecondBrain) {
+      _secondBrain = new SecondBrain('sb-content');
+      window._secondBrain = _secondBrain;
+    }
+  });
+
+  // Hook into renderDetail to add NRS badge + Second Brain button
+  const _origRender = window.renderDetail;
+  if (typeof _origRender === 'function') {
+    window.renderDetail = function(id) {
+      _origRender(id);
+      // NRS badge
+      try {
+        const nrs = computeNRS(id);
+        let existing = document.getElementById('khipu-nrs-badge');
+        if (!existing) {
+          existing = document.createElement('div');
+          existing.id = 'khipu-nrs-badge';
+          existing.style.cssText = 'margin:8px 0;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;gap:10px;font-size:12px';
+          const detail = document.getElementById('detail');
+          if (detail) detail.insertBefore(existing, detail.firstChild);
+        }
+        const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>`;
+      } catch(e) {}
+    };
+  }
+
+  // Open Second Brain panel
+  window._openSecondBrain = function(nodeId) {
+    const panel = document.getElementById('second-brain-panel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    const nameEl = document.getElementById('sb-company-name');
+    const n = window.NODE_BY_ID && window.NODE_BY_ID[nodeId];
+    if (nameEl) nameEl.textContent = n ? n.label : nodeId;
+    if (window._secondBrain) window._secondBrain.open(nodeId);
+  };
+
+  // Expose NRS globally for Bixby/MiroFish
+  window.computeNRS = computeNRS;
+
+})();
+</script>
 </body>
 </html>
