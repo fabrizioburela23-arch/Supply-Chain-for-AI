@@ -5756,7 +5756,8 @@ const KEY_DEFS=[
   {svc:'fmp',     label:'Financial Modeling Prep', url:'https://site.financialmodelingprep.com/developer/docs', hint:'financialmodelingprep.com'},
   {svc:'claude',  label:'Claude / Anthropic', url:'https://console.anthropic.com', hint:'console.anthropic.com'},
   {svc:'marketstack', label:'Marketstack', url:'https://marketstack.com', hint:'marketstack.com (EOD)'},
-  {svc:'elevenlabs', label:'ElevenLabs (Bixby Voice)', url:'https://elevenlabs.io/app/settings/api-keys', hint:'elevenlabs.io'},
+  {svc:'elevenlabs', label:'ElevenLabs API Key (Bixby)', url:'https://elevenlabs.io/app/settings/api-keys', hint:'elevenlabs.io'},
+  {svc:'elevenlabs_agent_id', label:'ElevenLabs Agent ID (Bixby)', url:'https://elevenlabs.io/app/conversational-ai', hint:'elevenlabs.io/app/conversational-ai', storageKey:'elevenlabs_agent_id'},
   {svc:'av',      label:'Alpha Vantage (VaR/CVaR)', url:'https://www.alphavantage.co/support/#api-key', hint:'alphavantage.co'},
 ];
 const Settings = {
@@ -5774,9 +5775,10 @@ const Settings = {
         ?'Keys are configured on the server (.env). Health below.':'Las claves se configuran en el servidor (.env). Estado abajo.')+'</div>';
     } else {
       wrap.innerHTML=KEY_DEFS.map(kd=>{
-        const cur = kd.svc==='marketstack'?Keys.marketstack():Keys.get(kd.svc);
+        const storageKey = kd.storageKey;
+        const cur = storageKey ? localStorage.getItem(storageKey) : (kd.svc==='marketstack'?Keys.marketstack():Keys.get(kd.svc));
         const masked = cur?'••••••••••••':'';
-        return `<div class="key-field" data-svc="${kd.svc}">
+        return `<div class="key-field" data-svc="${kd.svc}"${storageKey?' data-storkey="'+storageKey+'"':''}>
           <label>${kd.label}</label>
           <div class="key-row">
             <input type="password" placeholder="${cur?masked:'API key…'}" autocomplete="off">
@@ -5788,13 +5790,17 @@ const Settings = {
         </div>`;
       }).join('');
       wrap.querySelectorAll('.key-field').forEach(f=>{
-        const svc=f.dataset.svc, input=f.querySelector('input'), st=f.querySelector('.key-status');
-        const save=()=>{ const v=input.value.trim(); if(!v) return; if(svc==='marketstack') localStorage.setItem('eco_msk',v); else Keys.set(svc,v);
+        const svc=f.dataset.svc, storkey=f.dataset.storkey, input=f.querySelector('input'), st=f.querySelector('.key-status');
+        const save=()=>{ const v=input.value.trim(); if(!v) return;
+          if(storkey){ localStorage.setItem(storkey,v); }
+          else if(svc==='marketstack') localStorage.setItem('eco_msk',v);
+          else Keys.set(svc,v);
           input.value=''; input.placeholder='••••••••••••'; st.className='key-status ok'; st.textContent='✓'; afterKeysChange(); };
         input.addEventListener('keydown',e=>{ if(e.key==='Enter') save(); });
         input.addEventListener('blur',()=>{ if(input.value.trim()) save(); });
-        f.querySelector('[data-act="test"]').onclick=()=>{ if(input.value.trim()) save(); Settings.testKey(svc,st); };
-        f.querySelector('[data-act="clear"]').onclick=()=>{ if(svc==='marketstack') localStorage.removeItem('eco_msk'); else Keys.set(svc,'');
+        f.querySelector('[data-act="test"]').onclick=()=>{ if(input.value.trim()) save(); if(!storkey) Settings.testKey(svc,st); };
+        f.querySelector('[data-act="clear"]').onclick=()=>{ if(storkey){ localStorage.removeItem(storkey); }
+          else if(svc==='marketstack') localStorage.removeItem('eco_msk'); else Keys.set(svc,'');
           input.value=''; input.placeholder='API key…'; st.className='key-status'; st.textContent=''; afterKeysChange(); };
       });
     }
