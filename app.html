@@ -961,6 +961,7 @@ footer .disc{line-height:1.4}
 <script src="nodes/nodes_expand2.js"></script>
 <script src="nodes/nodes_spacex.js"></script>
 <script src="nodes/links_all.js"></script>
+<script src="nodes/links_expand.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -1026,6 +1027,8 @@ footer .disc{line-height:1.4}
     <button class="tab" data-tab="market" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
     <button class="tab" data-tab="analysis" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
     <button class="tab" data-tab="geo" id="tab-geo">🌐 <span data-i18n="tab_geo">Geopolítica</span></button>
+    <button class="tab" data-tab="simulation" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
+    <button class="tab" data-tab="space" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -1230,11 +1233,136 @@ footer .disc{line-height:1.4}
 </section>
 
   <footer>
-    <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). Toda métrica de rentabilidad es margen sobre ventas. No constituye asesoría financiera.</span>
+    <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
-    <span class="mono" style="white-space:nowrap">v8.1 · Terminal · Datos en vivo · IA · Portfolio · Alertas</span>
+    <span class="mono" style="white-space:nowrap">Khipu Finance v1 · 450 nodos · NRS · Bixby AI · 3D · RAG</span>
   </footer>
 </div>
+
+<!-- ═══ Simulation Tab ════════════════════════════════════════════════ -->
+<section id="simulation-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
+  <div style="max-width:1100px;margin:0 auto;padding:28px 24px 40px">
+    <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px">🧬 Simulación de Escenarios</h2>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Motor MiroFish · IA multi-agente · Escenarios geopolíticos y de mercado sobre la cadena de valor global</p>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">
+      <!-- Scenario presets -->
+      <div>
+        <div class="mkt-tablewrap" style="padding:16px">
+          <div class="mkt-sec-head">Escenarios Predefinidos</div>
+          <div id="sim-presets" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <button class="sim-preset-btn" data-preset="taiwan_conflict" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--danger)">⚔️ Conflicto Taiwan</div>
+              <div style="color:var(--ink-3);margin-top:2px">Bloqueo naval + interrupción TSMC</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="china_chip_ban_total" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--gold)">🚫 Ban Total de Chips a China</div>
+              <div style="color:var(--ink-3);margin-top:2px">Expansión export controls H100/H200</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="hbm_shortage_2027" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--violet)">💾 Escasez HBM 2027</div>
+              <div style="color:var(--ink-3);margin-top:2px">Demanda AI supera oferta SK Hynix</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="openai_ipo_impact" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--blue)">📊 IPO OpenAI</div>
+              <div style="color:var(--ink-3);margin-top:2px">Impacto en valoraciones del ecosistema AI</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="starshield_reveal" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:#FF6B35">🛰 Starshield Reveal</div>
+              <div style="color:var(--ink-3);margin-top:2px">Revelación de contratos mil. SpaceX</div>
+            </button>
+          </div>
+          <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
+            <div class="mkt-sec-head" style="margin-bottom:8px">Escenario personalizado</div>
+            <textarea id="sim-custom-text" placeholder="Describe el escenario..." style="width:100%;height:80px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;resize:vertical;font-family:inherit"></textarea>
+            <input id="sim-custom-nodes" placeholder="Nodos afectados (IDs separados por coma)" style="width:100%;margin-top:6px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
+          </div>
+          <button id="sim-run-btn" style="width:100%;margin-top:12px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
+        </div>
+        <!-- Portfolio Risk -->
+        <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
+          <div class="mkt-sec-head">Riesgo de Cartera (VaR/CVaR)</div>
+          <div style="margin-top:10px;font-size:12px;color:var(--ink-3)">Selecciona empresas de tu cartera en Mercado y calcula el riesgo:</div>
+          <button id="var-calc-btn" style="width:100%;margin-top:10px;padding:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">📊 Calcular VaR / CVaR</button>
+          <div id="var-results" style="margin-top:10px;font-size:12px;display:none">
+            <div id="var-loading" style="color:var(--ink-3)">Calculando...</div>
+            <div id="var-content" style="display:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">VaR 95%</div>
+                  <div id="var-95" style="font-size:18px;font-weight:800;color:var(--danger)">—</div>
+                </div>
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">CVaR 95%</div>
+                  <div id="cvar-95" style="font-size:18px;font-weight:800;color:var(--danger)">—</div>
+                </div>
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">Sharpe (1Y)</div>
+                  <div id="sharpe-ratio" style="font-size:18px;font-weight:800;color:var(--blue)">—</div>
+                </div>
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">Max Drawdown</div>
+                  <div id="max-drawdown" style="font-size:18px;font-weight:800;color:var(--gold)">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Simulation output -->
+      <div class="mkt-tablewrap" style="padding:16px;min-height:500px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="mkt-sec-head" style="margin:0">Resultados de Simulación</div>
+          <div id="sim-status" style="font-size:11px;padding:4px 10px;border-radius:12px;background:var(--surface-2);color:var(--ink-3)">Sin ejecutar</div>
+        </div>
+        <div id="sim-output" style="font-size:13px;color:var(--ink-3);padding:20px 0;text-align:center">
+          Selecciona un escenario y pulsa ▶ para iniciar la simulación multi-agente
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Space Tab ═════════════════════════════════════════════════════ -->
+<section id="space-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
+  <div style="max-width:1100px;margin:0 auto;padding:28px 24px 40px">
+    <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px">🚀 Economía del Espacio</h2>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Lanzamientos, constelaciones satelitales y empresas espaciales en la cadena de valor global</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- Upcoming launches -->
+      <div class="mkt-tablewrap" style="padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="mkt-sec-head" style="margin:0">Próximos Lanzamientos</div>
+          <button id="space-refresh" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:pointer">↺ Actualizar</button>
+        </div>
+        <div id="launches-list" style="font-size:13px;color:var(--ink-3)">Cargando lanzamientos...</div>
+      </div>
+      <!-- Space companies in graph -->
+      <div class="mkt-tablewrap" style="padding:16px">
+        <div class="mkt-sec-head" style="margin-bottom:12px">Empresas Espaciales en Khipu</div>
+        <div id="space-companies-list" style="font-size:12px"></div>
+      </div>
+    </div>
+    <!-- Space market stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px">
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Mercado Total 2026</div>
+        <div style="font-size:20px;font-weight:800;color:var(--ink)">$630B</div>
+      </div>
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Constelaciones Activas</div>
+        <div style="font-size:20px;font-weight:800;color:var(--blue)">12+</div>
+      </div>
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Satélites en Órbita LEO</div>
+        <div style="font-size:20px;font-weight:800;color:#FF6B35)">7,200+</div>
+      </div>
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Nodos Espaciales en Khipu</div>
+        <div id="space-node-count" style="font-size:20px;font-weight:800;color:var(--violet)">—</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ===== v8: Panel de Configuración ===== -->
 <div class="settings-overlay" id="settings-overlay"></div>
@@ -3848,6 +3976,9 @@ if (typeof NODES_SPACEX !== 'undefined') {
     }
   });
 }
+if (typeof LINKS_EXPAND !== 'undefined') {
+  LINKS_EXPAND.forEach(l => RAW_LINKS.push(l));
+}
 if (typeof LINKS_SPACEX !== 'undefined') {
   LINKS_SPACEX.forEach(l => RAW_LINKS.push(l));
 }
@@ -4957,6 +5088,7 @@ function switchTab(tab){
   activeTab=tab;
   document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const isMap=tab==='map', isAnalysis=tab==='analysis', isGeo=tab==='geo';
+  const isSim=tab==='simulation', isSpace=tab==='space';
   document.querySelector('main').style.display = isMap?'flex':'none';
   document.getElementById('toolbar').style.display = isMap?'flex':'none';
   document.getElementById('market').style.display = tab==='market'?'block':'none';
@@ -4964,7 +5096,16 @@ function switchTab(tab){
   if(anEl) anEl.style.display = isAnalysis?'block':'none';
   const geoEl=document.getElementById('geo-panel');
   if(geoEl) geoEl.style.display = isGeo?'block':'none';
-  if(isMap){ resize(); } else if(isAnalysis){ renderAnalysis(); } else if(isGeo){ renderGeoPanel(); } else { renderMarket(); }
+  const simEl=document.getElementById('simulation-panel');
+  if(simEl) simEl.style.display = isSim?'block':'none';
+  const spaceEl=document.getElementById('space-panel');
+  if(spaceEl) spaceEl.style.display = isSpace?'block':'none';
+  if(isMap){ resize(); }
+  else if(isAnalysis){ renderAnalysis(); }
+  else if(isGeo){ renderGeoPanel(); }
+  else if(isSim){ initSimTab(); }
+  else if(isSpace){ initSpaceTab(); }
+  else { renderMarket(); }
 }
 
 /* ===================== v7 · M6: betweenness centrality real (Brandes) ===================== */
@@ -5560,8 +5701,10 @@ function tr(k,vars){ let s=t(k); if(vars) for(const v in vars) s=s.replace('{'+v
 const KEY_DEFS=[
   {svc:'finnhub', label:'Finnhub', url:'https://finnhub.io/register', hint:'finnhub.io'},
   {svc:'fmp',     label:'Financial Modeling Prep', url:'https://site.financialmodelingprep.com/developer/docs', hint:'financialmodelingprep.com'},
-  {svc:'claude',  label:'Claude (Anthropic)', url:'https://console.anthropic.com', hint:'console.anthropic.com'},
+  {svc:'claude',  label:'Claude / Anthropic', url:'https://console.anthropic.com', hint:'console.anthropic.com'},
   {svc:'marketstack', label:'Marketstack', url:'https://marketstack.com', hint:'marketstack.com (EOD)'},
+  {svc:'elevenlabs', label:'ElevenLabs (Bixby Voice)', url:'https://elevenlabs.io/app/settings/api-keys', hint:'elevenlabs.io'},
+  {svc:'av',      label:'Alpha Vantage (VaR/CVaR)', url:'https://www.alphavantage.co/support/#api-key', hint:'alphavantage.co'},
 ];
 const Settings = {
   open(){ $('settings-overlay').classList.add('show'); $('settings-panel').classList.add('show'); this.render(); },
