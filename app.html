@@ -236,6 +236,10 @@ header{
 .mkt-ts{font-size:11px;color:var(--ink-3)}
 .mkt-keyrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;
   background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+/* En server-mode ocultar UI de keys del browser */
+html.server-mode #mk-key-btn,
+html.server-mode #mk-keyrow,
+html.server-mode .mkt-keyrow{display:none!important}
 .mkt-keyrow input{
   flex:1;min-width:200px;padding:7px 11px;border:1px solid var(--line-2);border-radius:8px;
   background:var(--bg);color:var(--ink);font-size:12.5px;font-family:'JetBrains Mono',monospace;
@@ -1522,6 +1526,19 @@ window.addEventListener('error', function(ev){
   }
   d.textContent += '❌ ' + msg + '\n---\n';
 });
+
+// SERVER_MODE: declarado temprano para que esté disponible incluso si algo crashea después
+// true cuando corre en Railway/servidor (hostname != localhost), false en archivo local
+var SERVER_MODE = (
+  location.port === '5050' || location.port === '8080' ||
+  (!!location.hostname && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')
+);
+var BASE = SERVER_MODE ? location.origin : '';
+
+// En SERVER_MODE ocultar inmediatamente el UI de API keys del browser
+if (SERVER_MODE) {
+  document.documentElement.classList.add('server-mode');
+}
 // ═══════════════════════════════════════════════════════════════
 // Khipu Finance v1 · Cadena de Valor Global · 450+ empresas · 35 categorías
 // Construido: 2026-06-12
@@ -5578,22 +5595,21 @@ async function fetchQuotes(){
   if(SERVER_MODE){
     try{
       const r=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
-      if(r.ok){
-        const j=await r.json();
-        if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); return; }
-      }
-    }catch{}
+      const j=await r.json();
+      if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); return; }
+      // Server responded but no key configured
+      setStatus('⚠ Agrega MARKETSTACK_KEY en Railway → Variables');
+    }catch(e){
+      setStatus('⚠ Error al obtener precios: '+String(e.message).slice(0,60));
+    }
+    MKT.loading=false; btn.disabled=false; renderMarket(true); return;
   }
-  // Fall back to client-side Marketstack key
+  // Standalone mode: use client-side Marketstack key
   try {
     const key = localStorage.getItem('eco_msk');
     if (!key) {
-      if (SERVER_MODE) {
-        setStatus('⚠ Sin datos de mercado — agrega MARKETSTACK_KEY al servidor');
-      } else {
-        setStatus('⚠ ' + t('mk_nokey'));
-        document.getElementById('mk-keyrow').style.display = 'flex';
-      }
+      setStatus('⚠ ' + t('mk_nokey'));
+      document.getElementById('mk-keyrow').style.display = 'flex';
       MKT.loading = false; btn.disabled = false;
       return;
     }
@@ -5810,11 +5826,7 @@ Object.assign(I18N.en, {
 });
 
 /* ---------- §B · Modo de operación + claves ---------- */
-const SERVER_MODE = (
-  location.port === '5050' || location.port === '8080' ||
-  (!!location.hostname && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')
-);
-const BASE = SERVER_MODE ? location.origin : '';
+// SERVER_MODE y BASE ya declarados al inicio del script (var global)
 const health = { server:SERVER_MODE, finnhub:false, fmp:false, claude:false, marketstack:false };
 
 const Keys = {
@@ -7238,25 +7250,41 @@ async function initSpaceTab() {
   document.getElementById('space-refresh').addEventListener('click', ()=>loadLaunches(launchEl));
   loadLaunches(launchEl);
 }
+const _LAUNCHES_FALLBACK = [
+  {name:'Falcon 9 · Starlink Group 10-1',provider:'SpaceX',rocket:'Falcon 9',net:null,khipu_nodes:['SpaceX']},
+  {name:'Electron · MAST-U',provider:'Rocket Lab',rocket:'Electron',net:null,khipu_nodes:['RocketLab']},
+  {name:'New Glenn · NG-3',provider:'Blue Origin',rocket:'New Glenn',net:null,khipu_nodes:['BlueOrigin']},
+  {name:'Ariane 6 · CSO-3',provider:'ArianeGroup',rocket:'Ariane 62',net:null,khipu_nodes:[]},
+  {name:'Soyuz-2 · Gonets-M',provider:'Roscosmos',rocket:'Soyuz-2.1b',net:null,khipu_nodes:[]},
+];
 async function loadLaunches(el) {
   el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Cargando lanzamientos...</div>';
+  let launches = [];
   try {
-    const resp = await fetch('/api/space/launches');
-    if (!resp.ok) throw new Error(resp.statusText);
+    const ctrl = new AbortController();
+    const tid = setTimeout(()=>ctrl.abort(), 10000);
+    const resp = await fetch('/api/space/launches', {signal: ctrl.signal});
+    clearTimeout(tid);
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
     const data = await resp.json();
-    const launches = Array.isArray(data) ? data : (data.results||data.launches||[]);
-    if (!launches.length) { el.innerHTML='<div style="color:var(--ink-3);font-size:12px">Sin lanzamientos próximos disponibles</div>'; return; }
-    el.innerHTML = launches.slice(0,8).map(l=>{
-      const d=l.net?new Date(l.net):null;
-      const dStr=d?d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):'—';
-      const daysTo=d?Math.round((d-Date.now())/86400000):null;
-      const badge=daysTo!=null?`<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${daysTo<3?'rgba(214,59,59,.12)':'rgba(61,224,200,.1)'};color:${daysTo<3?'var(--danger)':'var(--ink-2)'}">${daysTo>0?'T-'+daysTo+'d':'Lanzado'}</span>`:'';
-      const rocket=l.rocket||l.vehicle||'—';
-      const provider=l.provider||'—';
-      const khipuId=(l.khipu_nodes&&l.khipu_nodes[0])||l.khipu_node||null;
-      return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-weight:700;font-size:12px">${esc(l.name||'Misión')}</span>${badge}${khipuId?`<button onclick="switchTab('map');setTimeout(()=>jumpTo('${khipuId}'),80)" style="font-size:10px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--violet)">Ver nodo</button>`:''}</div><div style="font-size:11px;color:var(--ink-3)">${esc(provider)} · ${esc(rocket)} · ${dStr}</div></div>`;
-    }).join('');
-  } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
+    launches = Array.isArray(data) ? data : (data.results||data.launches||[]);
+  } catch(e) {
+    // Rate-limited or API down — use fallback static data
+    launches = _LAUNCHES_FALLBACK;
+    el.innerHTML = '<div style="color:var(--ink-3);font-size:11px;margin-bottom:6px">⚠ API de lanzamientos no disponible ahora — mostrando datos de referencia</div>';
+  }
+  if (!launches.length) { el.innerHTML='<div style="color:var(--ink-3);font-size:12px">Sin lanzamientos próximos disponibles</div>'; return; }
+  const rows = launches.slice(0,8).map(l=>{
+    const d=l.net?new Date(l.net):null;
+    const dStr=d?d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):'Fecha TBD';
+    const daysTo=d?Math.round((d-Date.now())/86400000):null;
+    const badge=daysTo!=null?`<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${daysTo<3?'rgba(214,59,59,.12)':'rgba(61,224,200,.1)'};color:${daysTo<3?'var(--danger)':'var(--ink-2)'}">${daysTo>0?'T-'+daysTo+'d':'Lanzado'}</span>`:'';
+    const rocket=l.rocket||l.vehicle||'—';
+    const provider=l.provider||'—';
+    const khipuId=(l.khipu_nodes&&l.khipu_nodes[0])||l.khipu_node||null;
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-weight:700;font-size:12px">${esc(l.name||'Misión')}</span>${badge}${khipuId?`<button onclick="switchTab('map');setTimeout(()=>jumpTo('${khipuId}'),80)" style="font-size:10px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--violet)">Ver nodo</button>`:''}</div><div style="font-size:11px;color:var(--ink-3)">${esc(provider)} · ${esc(rocket)} · ${dStr}</div></div>`;
+  }).join('');
+  el.innerHTML = (el.innerHTML||'') + rows;
 }
 
 // ── NexusCore: simulation orchestrator ───────────────────────────────────────
