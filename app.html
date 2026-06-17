@@ -6687,7 +6687,9 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       btn.style.color = '#fff';
       btn.style.borderColor = 'var(--violet)';
       if (!_graph3d && window.KhipuGraph3D) {
-        _graph3d = new KhipuGraph3D('graph-canvas', window.NODES || [], window.RAW_LINKS || []);
+        _graph3d = new KhipuGraph3D('graph-canvas');
+        _graph3d.init();
+        _graph3d.loadData(window.NODES || [], window.LINKS || []);
         window.khipuGraph3D = _graph3d;
         if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
         else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
