@@ -1545,6 +1545,14 @@ const CATS_NEW = {
   ai_finance:    {label:'IA Finanzas',            en:'Finance AI',     cssVar:'--c-ai_finance',    x:.90},
   ai_auto:       {label:'IA Automotriz',          en:'Automotive AI',  cssVar:'--c-ai_auto',       x:.92},
   ai_agents:     {label:'Agentes IA',             en:'AI Agents',      cssVar:'--c-ai_agents',     x:.95},
+  // Categories used in expanded node files that were missing:
+  equip:         {label:'Equipamiento',           en:'Equipment',      cssVar:'--c-equip',         x:.22},
+  memory:        {label:'Memoria',                en:'Memory',         cssVar:'--c-memory',        x:.30},
+  networking:    {label:'Networking',             en:'Networking',     cssVar:'--c-networking',    x:.75},
+  quantum_hw:    {label:'Quantum HW',             en:'Quantum HW',     cssVar:'--c-quantum_hw',    x:.09},
+  eda:           {label:'EDA / Software CAD',     en:'EDA / CAD SW',   cssVar:'--c-eda',           x:.20},
+  substrates:    {label:'Sustratos',              en:'Substrates',     cssVar:'--c-substrates',    x:.13},
+  optics:        {label:'Óptica',                 en:'Optics',         cssVar:'--c-optics',        x:.26},
 };
 Object.assign(CATS, CATS_NEW);
 
@@ -1568,13 +1576,14 @@ function countryColor(k){
 }
 
 function catColor(cat){
+  if (!CATS[cat]) return '#888';
   return getComputedStyle(document.documentElement).getPropertyValue(CATS[cat].cssVar).trim() || '#888';
 }
 
 /* ---- i18n base ---- */
 let LANG = localStorage.getItem('eco_lang')||'es';
 if(localStorage.getItem('eco_theme')!=='light') document.body.classList.add('dark'); /* v8.1: terminal dark por defecto */
-const catLabel = k => LANG==='en' ? CATS[k].en : CATS[k].label;
+const catLabel = k => CATS[k] ? (LANG==='en' ? CATS[k].en : CATS[k].label) : (k||'?');
 const countryLabel = k => (COUNTRIES[k]||COUNTRIES.RestoMundo)[LANG==='en'?'en':'es'];
 const nf = (d,f) => (LANG==='en' && d[f+'_en']) ? d[f+'_en'] : d[f];
 
@@ -4154,7 +4163,7 @@ function setForces(){
     sim.force('x', d3.forceX(d=>(COUNTRIES[d.country]||COUNTRIES.RestoMundo).x*W).strength(.55))
        .force('y', d3.forceY(d=>(COUNTRIES[d.country]||COUNTRIES.RestoMundo).y*H).strength(.55));
   } else {
-    sim.force('x', d3.forceX(d=>CATS[d.cat].x*W).strength(.5))
+    sim.force('x', d3.forceX(d=>(CATS[d.cat]||CATS.aisoft).x*W).strength(.5))
        .force('y', d3.forceY(H/2).strength(.07));
   }
 }
@@ -5631,16 +5640,23 @@ window.posDel=id=>{ delete MKT.pos[id]; savePos(); MKT.editing=null; renderMarke
 window.goMap=id=>{ switchTab('map'); setTimeout(()=>jumpTo(id),80); };
 
 /* ===================== Init v7 ===================== */
-renderBand();
-applyLang();
-
-// Hide loader
-const _loader = document.getElementById('khipu-loader');
-if (_loader) {
-  if (_loaderBar) _loaderBar.style.width = '100%';
-  if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
-  setTimeout(() => { _loader.style.opacity = '0'; setTimeout(() => _loader.remove(), 500); }, 400);
-}
+// Safety: guarantee loader dismisses even if renderBand/applyLang throw
+(function _initSafe(){
+  const _loader = document.getElementById('khipu-loader');
+  function _dismissLoader(){
+    if (!_loader || !_loader.parentNode) return;
+    if (_loaderBar) _loaderBar.style.width = '100%';
+    if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
+    _loader.style.opacity = '0';
+    setTimeout(() => { if (_loader.parentNode) _loader.parentNode.removeChild(_loader); }, 500);
+  }
+  // Hard fallback: dismiss after 4s no matter what
+  const _loaderFallback = setTimeout(_dismissLoader, 4000);
+  try { renderBand(); } catch(e) { console.error('[khipu] renderBand error:', e); }
+  try { applyLang(); } catch(e) { console.error('[khipu] applyLang error:', e); }
+  clearTimeout(_loaderFallback);
+  _dismissLoader();
+})();
 
 /* ═══════════════════════════════════════════════════════════════════════════
    v8 · CAPA DE PRODUCTO — datos en vivo, IA, fundamentales, portfolio, alertas
