@@ -41,8 +41,14 @@ const BixbyVoice = {
     if (!this.audioCtx) await this.init();
     if (this.audioCtx?.state === 'suspended') this.audioCtx.resume();
 
+    // Fetch Bixby system prompt from server (non-blocking — fallback to null)
+    const base = (typeof BASE !== 'undefined') ? BASE : '';
     try {
-      const base = (typeof BASE !== 'undefined') ? BASE : '';
+      const pr = await fetch(`${base}/api/voice/bixby-prompt`);
+      if (pr.ok) { const pd = await pr.json(); this._systemPrompt = pd.system_prompt || null; }
+    } catch { this._systemPrompt = null; }
+
+    try {
       const r = await fetch(`${base}/api/voice/session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,11 +88,11 @@ const BixbyVoice = {
   _sendInitContext() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const ctx = this._buildContext();
+    const payload = { custom_llm_extra_body: { khipu_context: ctx } };
+    if (this._systemPrompt) payload.agent = { prompt: { prompt: this._systemPrompt } };
     this.ws.send(JSON.stringify({
       type: 'conversation_initiation_client_data',
-      conversation_initiation_client_data: {
-        custom_llm_extra_body: { khipu_context: ctx },
-      },
+      conversation_initiation_client_data: payload,
     }));
   },
 
@@ -250,10 +256,13 @@ const BixbyVoice = {
       }
       case 'get_portfolio_risk': {
         const ids = Object.keys((MKT && MKT.pos) || {});
-        const scores = ids.map(id => ({ label: NODE_BY_ID[id]?.label, nrs: computeNRS(id) }));
-        const avg = scores.length ? Math.round(scores.reduce((s, x) => s + x.nrs.total, 0) / scores.length) : 0;
+        const scores = ids.map(id => {
+          const v = typeof computeNRS === 'function' ? computeNRS(id) : 50;
+          return { label: NODE_BY_ID[id]?.label || id, nrs: v };
+        });
+        const avg = scores.length ? Math.round(scores.reduce((s, x) => s + x.nrs, 0) / scores.length) : 0;
         respond({ portfolio_count: scores.length, avg_nrs: avg,
-          companies: scores.map(x => ({ label: x.label, nrs: x.nrs.total, level: x.nrs.label })) });
+          companies: scores.map(x => ({ label: x.label, nrs: x.nrs, level: x.nrs >= 70 ? 'high' : x.nrs >= 40 ? 'medium' : 'low' })) });
         break;
       }
       case 'search_second_brain': {
@@ -264,6 +273,33 @@ const BixbyVoice = {
         }).then(r => r.json()).then(d => {
           respond({ success: true, answer: (d.answer || '').slice(0, 500), sources_count: d.context_used });
         }).catch(() => respond({ success: false, error: 'RAG unavailable' }));
+        break;
+      }
+      case 'get_company_info': {
+        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n) {
+          const q = (typeof MKT !== 'undefined' && n.mkt) ? MKT.quotes[n.mkt] : null;
+          respond({
+            id: n.id, label: n.label, ticker: n.mkt || null,
+            category: (typeof catLabel === 'function') ? catLabel(n.cat) : n.cat,
+            geo: n.loc || n.country || null,
+            price: q?.close || null, change_pct: (q?.close && q?.prev) ? ((q.close - q.prev) / q.prev * 100).toFixed(2) : null,
+            role: n.role || null,
+          });
+        } else respond({ success: false, error: 'Company not found' });
+        break;
+      }
+      case 'get_risk_score': {
+        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n && typeof computeNRS === 'function') {
+          try {
+            const nrs = computeNRS(n.id);
+            respond({ success: true, company: n.label, nrs: nrs,
+              level: nrs >= 70 ? 'high' : nrs >= 40 ? 'medium' : 'low' });
+          } catch(e) { respond({ success: false, error: e.message }); }
+        } else respond({ success: false, error: 'Company not found or NRS unavailable' });
         break;
       }
       default:

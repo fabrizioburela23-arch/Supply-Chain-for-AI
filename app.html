@@ -5517,6 +5517,7 @@ function renderMarket(keepStatus){
   }).join('')+'</tbody>';
   if(typeof V8!=='undefined' && V8.market) V8.market.afterRender();
   if(typeof renderNrsTop10==='function') renderNrsTop10();
+  if(typeof initGdelt==='function') initGdelt();
 }
 window.posEdit=id=>{ MKT.editing=id; renderMarket(true); };
 window.posCancel=()=>{ MKT.editing=null; renderMarket(true); };
@@ -6596,54 +6597,39 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 })();
 
 // ── GDELT News Search ─────────────────────────────────────────────────────────
-(function() {
-  let _gdeltInited = false;
-  function initGdelt() {
-    if (_gdeltInited) return;
-    _gdeltInited = true;
-    const btn = document.getElementById('gdelt-search');
-    const inp = document.getElementById('gdelt-query');
-    const out = document.getElementById('gdelt-results');
-    if (!btn || !inp || !out) return;
-    async function doSearch() {
-      const q = inp.value.trim();
-      if (!q) return;
-      out.innerHTML = '<span style="color:var(--ink-3)">Buscando…</span>';
-      try {
-        const r = await fetch('/api/news/gdelt/' + encodeURIComponent(q));
-        if (!r.ok) throw new Error(r.statusText);
-        const data = await r.json();
-        const articles = data.articles || data.results || [];
-        if (!articles.length) { out.innerHTML = '<span style="color:var(--ink-3)">Sin resultados para "'+esc(q)+'"</span>'; return; }
-        out.innerHTML = articles.slice(0, 8).map(a => {
-          const title = esc(a.title || a.url || 'Artículo');
-          const src = esc(a.domain || a.source || '');
-          const ts = a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$1-$2-$3T$4:$5:$6Z')).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '';
-          const url = a.url || '#';
-          return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
-        }).join('');
-      } catch(e) {
-        out.innerHTML = '<span style="color:var(--danger)">Error: '+esc(e.message)+'</span>';
-      }
+let _gdeltInited = false;
+function initGdelt() {
+  if (_gdeltInited) return;
+  _gdeltInited = true;
+  const btn = document.getElementById('gdelt-search');
+  const inp = document.getElementById('gdelt-query');
+  const out = document.getElementById('gdelt-results');
+  if (!btn || !inp || !out) return;
+  async function doSearch() {
+    const q = inp.value.trim();
+    if (!q) return;
+    out.innerHTML = '<span style="color:var(--ink-3)">Buscando…</span>';
+    try {
+      const r = await fetch('/api/news/gdelt/' + encodeURIComponent(q));
+      if (!r.ok) throw new Error(r.statusText);
+      const data = await r.json();
+      const articles = data.articles || data.results || [];
+      if (!articles.length) { out.innerHTML = '<span style="color:var(--ink-3)">Sin resultados para "'+esc(q)+'"</span>'; return; }
+      out.innerHTML = articles.slice(0, 8).map(a => {
+        const title = esc(a.title || a.url || 'Artículo');
+        const src = esc(a.domain || a.source || '');
+        const ts = a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$1-$2-$3T$4:$5:$6Z')).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '';
+        const url = a.url || '#';
+        return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
+      }).join('');
+    } catch(e) {
+      out.innerHTML = '<span style="color:var(--danger)">Error: '+esc(e.message)+'</span>';
     }
-    btn.addEventListener('click', doSearch);
-    inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
   }
-  // Hook into switchTab market
-  const _origSwitch = window.switchTab;
-  if (typeof _origSwitch === 'function') {
-    window.switchTab = function(tab) {
-      _origSwitch(tab);
-      if (tab === 'market') { setTimeout(initGdelt, 100); setTimeout(renderNrsTop10, 200); }
-    };
-  }
-  // Also init if market tab is already active
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof activeTab !== 'undefined' && activeTab === 'market') { initGdelt(); renderNrsTop10(); }
-  });
-  // Expose for manual call
-  window.initGdelt = initGdelt;
-})();
+  btn.addEventListener('click', doSearch);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+}
+window.initGdelt = initGdelt;
 
 // ── NRS Top 10 ───────────────────────────────────────────────────────────────
 function renderNrsTop10() {
