@@ -6626,6 +6626,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       if (!_hypergraph && window.TemporalHypergraph) {
         _hypergraph = new TemporalHypergraph(_graph3d);
         _hypergraph.seedHistoricalEvents();
+        window._hypergraph = _hypergraph; // expose for GDELT auto-hyperedge
       }
     } else {
       svg.style.display = '';
@@ -6726,6 +6727,9 @@ function initGdelt() {
   async function doSearch() {
     const q = inp.value.trim();
     if (!q) return;
+    // Save to history
+    const _hist = JSON.parse(localStorage.getItem('gdelt_history') || '[]');
+    if (!_hist.includes(q)) { _hist.unshift(q); localStorage.setItem('gdelt_history', JSON.stringify(_hist.slice(0,10))); }
     out.innerHTML = '<span style="color:var(--ink-3)">Buscando…</span>';
     try {
       const r = await fetch('/api/news/gdelt/' + encodeURIComponent(q));
@@ -6740,12 +6744,36 @@ function initGdelt() {
         const url = a.url || '#';
         return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
       }).join('');
+      // Auto-create hyperedge in TemporalHypergraph if 3D is active
+      if (window._hypergraph && articles.length >= 2) {
+        const affectedNodes = [];
+        (window.NODES || []).forEach(n => {
+          const needle = (n.label || '').toLowerCase();
+          const hasHit = articles.slice(0, 5).some(a => (a.title || '').toLowerCase().includes(needle) || needle.length > 4 && (a.title||'').toLowerCase().includes(needle.slice(0,5)));
+          if (hasHit) affectedNodes.push(n.id);
+        });
+        if (affectedNodes.length >= 2) {
+          const topArticle = articles[0];
+          window._hypergraph.fromNewsItem(
+            { headline: topArticle.title, summary: topArticle.title, url: topArticle.url, datetime: Date.now()/1000 },
+            affectedNodes.slice(0, 15)
+          );
+        }
+      }
     } catch(e) {
       out.innerHTML = '<span style="color:var(--danger)">Error: '+esc(e.message)+'</span>';
     }
   }
   btn.addEventListener('click', doSearch);
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  // Load saved searches
+  const _gdeltHistory = JSON.parse(localStorage.getItem('gdelt_history') || '[]');
+  if (_gdeltHistory.length) {
+    const hist = document.createElement('div');
+    hist.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px';
+    hist.innerHTML = _gdeltHistory.slice(0,5).map(h => `<button onclick="document.getElementById('gdelt-query').value='${esc(h)}';initGdelt&&document.getElementById('gdelt-search').click()" style="padding:2px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:10px;cursor:pointer;color:var(--ink-3)">${esc(h)}</button>`).join('');
+    out.parentElement.insertBefore(hist, out);
+  }
 }
 window.initGdelt = initGdelt;
 
