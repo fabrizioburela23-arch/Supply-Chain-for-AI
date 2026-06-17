@@ -86,7 +86,10 @@ def _safe_get(url, timeout=HTTP_TIMEOUT):
 # ----------------------------------------------------------------------------
 @app.route('/')
 def index():
-    return send_file('app.html')
+    resp = send_file('app.html')
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    return resp
 
 
 # --- PWA: Service Worker + manifest (solo útiles en modo servidor / http) ---
