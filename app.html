@@ -6502,6 +6502,109 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   window.computeNRS = computeNRS;
 
 })();
+
+// ── Simulation Tab ───────────────────────────────────────────────────────────
+let _simInited = false;
+function initSimTab() {
+  if (_simInited) return;
+  _simInited = true;
+  document.querySelectorAll('.sim-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sim-preset-btn').forEach(b => { b.style.borderColor=''; b.style.borderWidth=''; });
+      btn.style.borderColor = 'var(--violet)'; btn.style.borderWidth = '2px';
+      if (window.ScenarioBuilder) {
+        const seed = ScenarioBuilder.getPreset(btn.dataset.preset);
+        if (seed) document.getElementById('sim-custom-text').value = seed.description || seed.title || btn.dataset.preset;
+      }
+    });
+  });
+  document.getElementById('sim-run-btn').addEventListener('click', async () => {
+    const text = document.getElementById('sim-custom-text').value.trim();
+    const nodeStr = document.getElementById('sim-custom-nodes').value.trim();
+    const output = document.getElementById('sim-output');
+    const status = document.getElementById('sim-status');
+    if (!text) { toast('Escribe un escenario o selecciona un preset'); return; }
+    status.textContent = '🔄 Ejecutando...'; status.style.background = 'rgba(155,79,232,.1)'; status.style.color = 'var(--violet)';
+    output.innerHTML = '<div style="color:var(--ink-3);text-align:center;padding:30px">Analizando con IA...</div>';
+    try {
+      const resp = await fetch('/api/ai/analyze', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          system: 'Eres un analista experto en cadenas de valor de semiconductores, IA y espacio. Analiza el escenario y proporciona: 1) Empresas más afectadas (con % impacto estimado), 2) Efectos dominó en la cadena de suministro, 3) Oportunidades de inversión ante el escenario, 4) Recomendaciones de gestión de riesgo. Sé específico y cuantitativo.',
+          prompt: `ESCENARIO: ${text}\nNodos relevantes: ${nodeStr||'toda la cadena de valor semiconductores/IA/espacio'}`,
+          max_tokens: 1500
+        })
+      });
+      if (!resp.ok) throw new Error('API error ' + resp.status);
+      const d = await resp.json();
+      const txt = (d.result||d.error||'Sin respuesta').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      output.innerHTML = `<div style="line-height:1.8;font-size:13px;white-space:pre-wrap">${txt}</div><div style="margin-top:12px;font-size:10px;color:var(--ink-3)">Modelo: ${d.model||'Claude'} · ${new Date().toLocaleTimeString()}</div>`;
+      status.textContent = '✅ Completado'; status.style.background = 'rgba(34,197,94,.1)'; status.style.color = '#22c55e';
+    } catch(e) {
+      output.innerHTML = `<div style="color:var(--danger);padding:16px">Error: ${e.message}. Asegúrate de tener configurada la clave Claude en ⚙.</div>`;
+      status.textContent = '❌ Error'; status.style.background = 'rgba(214,59,59,.1)'; status.style.color = 'var(--danger)';
+    }
+  });
+  document.getElementById('var-calc-btn').addEventListener('click', async () => {
+    const positions = Object.entries(MKT.pos || {});
+    if (!positions.length) { toast('Agrega posiciones en la pestaña Mercado'); return; }
+    const varResults = document.getElementById('var-results');
+    const varLoading = document.getElementById('var-loading');
+    const varContent = document.getElementById('var-content');
+    varResults.style.display = 'block'; varLoading.style.display = 'block'; varContent.style.display = 'none';
+    try {
+      const portfolio = positions.map(([id,p]) => { const n=NODE_BY_ID[id]; return {ticker:n?.mkt||id,shares:p.sh,buy_price:p.bp}; }).filter(p=>p.ticker&&p.shares>0);
+      const apiKey = localStorage.getItem('khipu_api_key') || '';
+      const resp = await fetch('/v1/risk/portfolio', {
+        method:'POST', headers:{'Content-Type':'application/json','X-KHIPU-Key':apiKey},
+        body: JSON.stringify({portfolio})
+      });
+      if (!resp.ok) { const err=await resp.json(); throw new Error(err.error||resp.statusText); }
+      const data = await resp.json();
+      varLoading.style.display = 'none'; varContent.style.display = 'block';
+      document.getElementById('var-95').textContent = data.var_95_pct!=null?(data.var_95_pct*100).toFixed(1)+'%':'—';
+      document.getElementById('cvar-95').textContent = data.cvar_95_pct!=null?(data.cvar_95_pct*100).toFixed(1)+'%':'—';
+      document.getElementById('sharpe-ratio').textContent = data.sharpe!=null?data.sharpe.toFixed(2):'—';
+      document.getElementById('max-drawdown').textContent = data.max_drawdown_pct!=null?(data.max_drawdown_pct*100).toFixed(1)+'%':'—';
+    } catch(e) { varLoading.textContent = 'Error: '+e.message; varLoading.style.color='var(--danger)'; }
+  });
+}
+
+// ── Space Tab ────────────────────────────────────────────────────────────────
+let _spaceInited = false;
+async function initSpaceTab() {
+  const spaceCategories = ['space_launch','satellite','earth_obs'];
+  const spaceNodes = (window.NODES||[]).filter(n=>spaceCategories.includes(n.cat));
+  const countEl = document.getElementById('space-node-count');
+  if (countEl) countEl.textContent = spaceNodes.length;
+  const compEl = document.getElementById('space-companies-list');
+  if (compEl) compEl.innerHTML = spaceNodes.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--c-${n.cat},#888)"></span><span style="font-weight:600;font-size:12px">${esc(n.label)}</span><span style="font-size:10px;color:var(--ink-3);margin-left:auto">${esc((n.ticker||'').split(' · ')[0])}</span></div>`).join('');
+  if (_spaceInited) return;
+  _spaceInited = true;
+  const launchEl = document.getElementById('launches-list');
+  document.getElementById('space-refresh').addEventListener('click', ()=>loadLaunches(launchEl));
+  loadLaunches(launchEl);
+}
+async function loadLaunches(el) {
+  el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Cargando lanzamientos...</div>';
+  try {
+    const resp = await fetch('/api/space/launches');
+    if (!resp.ok) throw new Error(resp.statusText);
+    const data = await resp.json();
+    const launches = data.results||data.launches||[];
+    if (!launches.length) { el.innerHTML='<div style="color:var(--ink-3);font-size:12px">Sin lanzamientos próximos disponibles</div>'; return; }
+    el.innerHTML = launches.slice(0,8).map(l=>{
+      const d=l.net?new Date(l.net):null;
+      const dStr=d?d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):'—';
+      const daysTo=d?Math.round((d-Date.now())/86400000):null;
+      const badge=daysTo!=null?`<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${daysTo<3?'rgba(214,59,59,.12)':'rgba(61,224,200,.1)'};color:${daysTo<3?'var(--danger)':'var(--ink-2)'}">${daysTo>0?'T-'+daysTo+'d':'Lanzado'}</span>`:'';
+      const rocket=l.rocket?.configuration?.name||l.vehicle||'—';
+      const pad=l.pad?.name||'—';
+      const khipuId=l.khipu_node;
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-weight:700;font-size:12px">${esc(l.name||l.mission||'Misión')}</span>${badge}${khipuId?`<button onclick="switchTab('map');setTimeout(()=>jumpTo('${khipuId}'),80)" style="font-size:10px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--violet)">Ver nodo</button>`:''}</div><div style="font-size:11px;color:var(--ink-3)">${esc(rocket)} · ${esc(pad)} · ${dStr}</div></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
+}
 </script>
 </body>
 </html>
