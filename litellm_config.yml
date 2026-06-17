@@ -1,0 +1,48 @@
+# LiteLLM proxy config — routes OpenAI-format requests to Claude
+# Used by MiroFish (and any OpenAI SDK client) to avoid needing an OpenAI key.
+#
+# Docs: https://docs.litellm.ai/docs/proxy/configs
+
+model_list:
+  # Default: Claude Sonnet for general use (best cost/performance)
+  - model_name: gpt-4o
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gpt-4
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: gpt-4-turbo
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  # Opus for deep analysis / MiroFish scenario generation
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-sonnet
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-opus
+    litellm_params:
+      model: anthropic/claude-opus-4-8
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+litellm_settings:
+  # Enable streaming for real-time MiroFish simulation updates
+  drop_params: true
+  success_callback: []
+  failure_callback: []
+
+general_settings:
+  master_key: ${LITELLM_MASTER_KEY:-khipu-litellm-key}
+  # Allow all models by default (restrict in production)
+  allowed_routes: ["/chat/completions", "/completions", "/embeddings", "/models", "/health"]

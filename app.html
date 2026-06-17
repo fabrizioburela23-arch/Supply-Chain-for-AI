@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Del Silicio a la IA v7 · Cadena de Valor Global 2026 — Ecosistema Enriquecido</title>
+<title>Khipu Finance · Inteligencia Financiera Global 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -20,6 +20,30 @@
   --c-cloud:#0A6CA8; --c-ailab:#8B2FA8; --c-robotics_physical:#A0521E; --c-aisoft:#0E7A6E;
   --gold:#D9A520; --blue:#3E8FE8; --violet:#9B4FE8; --preipo:#C77DFF; --danger:#D63B3B;
   --shadow:0 1px 2px rgba(26,24,19,.04),0 4px 16px rgba(26,24,19,.06);
+  /* Space & Connectivity */
+  --c-space_launch: #FF6B35;
+  --c-satellite: #74C8DA;
+  --c-earth_obs: #4BD693;
+  --c-rare_earth: #C2A44E;
+  --c-battery_mat: #88E06A;
+
+  /* AI Verticals */
+  --c-ai_defense: #FF5B6B;
+  --c-ai_auto: #52CDFF;
+  --c-ai_health: #FF78C4;
+  --c-ai_finance: #9B8AF0;
+  --c-ai_agents: #FFBB52;
+
+  /* Infrastructure */
+  --c-cdn_edge: #3DBCAA;
+  --c-dc_reit: #8B7FE8;
+  --c-hpc_super: #52B1FF;
+
+  /* Advanced Silicon */
+  --c-asic_custom: #FF9B5C;
+  --c-edge_ai: #F0A24A;
+  --c-photonics_si: #C58BFF;
+  --c-neuromorphic: #34D1BF;
 }
 .dark{
   --bg:#14130F; --surface:#1C1B16; --surface-2:#26241D; --ink:#F0EDE3; --ink-2:#B5B0A4;
@@ -32,6 +56,23 @@
   --c-cloud:#4FA8E0; --c-ailab:#D070E8; --c-robotics_physical:#E89050; --c-aisoft:#40B8A8;
   --danger:#F06060;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.4);
+  --c-space_launch: #FF8B55;
+  --c-satellite: #94E8FA;
+  --c-earth_obs: #6BF6B3;
+  --c-rare_earth: #E2C46E;
+  --c-battery_mat: #A8F08A;
+  --c-ai_defense: #FF7B8B;
+  --c-ai_auto: #72EDFF;
+  --c-ai_health: #FF98E4;
+  --c-ai_finance: #BBAAFF;
+  --c-ai_agents: #FFDB72;
+  --c-cdn_edge: #5DDCCA;
+  --c-dc_reit: #ABAFFB;
+  --c-hpc_super: #72D1FF;
+  --c-asic_custom: #FFBB7C;
+  --c-edge_ai: #F0C06A;
+  --c-photonics_si: #E578FF;
+  --c-neuromorphic: #54F1DF;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
@@ -916,8 +957,23 @@ footer .disc{line-height:1.4}
   .dark .graph-wrap{animation:none}
 }
 </style>
+<script src="nodes/nodes_expand.js"></script>
+<script src="nodes/nodes_expand2.js"></script>
+<script src="nodes/nodes_spacex.js"></script>
+<script src="nodes/links_all.js"></script>
+<script src="nodes/links_expand.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<div id="khipu-loader" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#0a0d14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
+  <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:#3DE0C8;letter-spacing:-.02em">Khipu Finance</div>
+  <div style="font-size:13px;color:#6b7280;margin-top:-10px">Cadena de Valor Global · IA · Espacio · Semiconductores</div>
+  <div style="width:220px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:8px">
+    <div id="loader-bar" style="height:100%;background:linear-gradient(90deg,#3DE0C8,#9B4FE8);border-radius:2px;width:0%;transition:width .3s ease"></div>
+  </div>
+  <div id="loader-text" style="font-size:11px;color:#6b7280;font-family:'JetBrains Mono',monospace">Cargando nodos...</div>
+</div>
 <div id="boot">
   <span class="boot-mark">
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -929,7 +985,7 @@ footer .disc{line-height:1.4}
       <circle cx="52" cy="66" r="11" fill="#3DE0C8"/>
     </svg>
   </span>
-  <div class="boot-title">Del Silicio a la IA</div>
+  <div class="boot-title">Khipu Finance</div>
   <div class="boot-bar"><i></i></div>
   <div class="boot-log" id="boot-log">› inicializando grafo · 137 nodos · 546 conexiones</div>
 </div>
@@ -947,8 +1003,8 @@ footer .disc{line-height:1.4}
         </svg>
       </span>
       <div class="brand-text">
-        <h1>Del Silicio a la IA</h1>
-        <span class="sub">Cadena de valor global 2026 · 126 empresas · 480+ conexiones · 7 tipos de relación</span>
+        <h1>Khipu Finance</h1>
+        <span class="sub">Cadena de Valor Global 2026</span>
       </div>
     </div>
     <div class="metrics">
@@ -965,6 +1021,12 @@ footer .disc{line-height:1.4}
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
+      <button class="icon-btn" id="toggle-3d-btn" title="Alternar vista 2D / 3D" style="width:auto;padding:0 10px;font-size:11px;font-weight:700" onclick="window._toggle3D && window._toggle3D()">3D</button>
+      <button id="bixby-btn" class="icon-btn" title="Hablar con Bixby · Khipu Finance AI"
+  style="background:var(--surface);border-color:var(--violet);color:var(--violet);font-size:13px;width:auto;padding:0 12px;gap:6px;display:flex;align-items:center"
+  onclick="window.BixbyVoice?.toggle()">
+  🎙️ <span style="font-weight:700;font-size:11px">Bixby</span>
+</button>
     </div>
   </header>
 
@@ -973,6 +1035,8 @@ footer .disc{line-height:1.4}
     <button class="tab" data-tab="market" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
     <button class="tab" data-tab="analysis" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
     <button class="tab" data-tab="geo" id="tab-geo">🌐 <span data-i18n="tab_geo">Geopolítica</span></button>
+    <button class="tab" data-tab="simulation" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
+    <button class="tab" data-tab="space" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -1018,6 +1082,14 @@ footer .disc{line-height:1.4}
         <button id="zoom-fit" style="font-size:13px">⤢</button>
       </div>
       <svg id="graph"></svg>
+      <canvas id="graph-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;"></canvas>
+      <div id="hypergraph-timeline" style="display:none;position:absolute;bottom:60px;left:50%;transform:translateX(-50%);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 16px;align-items:center;gap:10px;box-shadow:var(--shadow)">
+        <span style="font-size:11px;font-weight:700;color:var(--ink-2)">Hipergrafos Temporales</span>
+        <input type="range" id="hg-year" min="2015" max="2030" value="2026" step="1" style="width:140px;cursor:pointer">
+        <span id="hg-year-label" style="font-size:12px;font-weight:600;color:var(--ink);min-width:32px">2026</span>
+        <button id="hg-add" style="font-size:11px;padding:4px 10px;border:1px solid var(--violet);border-radius:4px;background:var(--surface);color:var(--violet);cursor:pointer;font-weight:600">+ Evento</button>
+        <button id="hg-toggle" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:pointer">Ocultar</button>
+      </div>
       <div class="stress-banner" id="stress-banner">
         <span class="sb-dot"></span>
         <span id="stress-text"></span>
@@ -1076,6 +1148,7 @@ footer .disc{line-height:1.4}
           <button data-f="all" class="active" data-i18n="mk_fall">Todas</button>
         </div>
         <button class="mkt-btn" id="mk-refresh">⟳ <span data-i18n="mk_refresh">Actualizar precios</span></button>
+        <button id="export-btn" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer" title="Exportar datos">⬇ CSV</button>
         <span class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</span>
         <span class="mkt-ts" id="mk-ts"></span>
         <button class="mkt-export" id="mk-export" title="Exportar portfolio a CSV">⬇ <span data-i18n="mk_export">Exportar</span></button>
@@ -1089,6 +1162,24 @@ footer .disc{line-height:1.4}
       </div>
       <div class="mkt-tablewrap"><table class="mkt-table" id="mk-table"></table></div>
       <p class="mkt-foot" data-i18n="mk_foot">Precios fin-de-día (EOD) de Marketstack v2 en una sola llamada por actualización. Empresas sin listado en EE.UU. (privadas o solo bolsa local) aparecen sin cotización.</p>
+
+      <!-- GDELT Global News -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mkt-tablewrap" style="padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="mkt-sec-head" style="margin:0">📰 Noticias Globales (GDELT)</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="gdelt-query" placeholder="Empresa o tema…" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);font-size:11px;width:140px">
+              <button id="gdelt-search" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer">Buscar</button>
+            </div>
+          </div>
+          <div id="gdelt-results" style="font-size:12px;color:var(--ink-3)">Escribe una empresa y busca noticias globales en tiempo real</div>
+        </div>
+        <div class="mkt-tablewrap" style="padding:16px">
+          <div class="mkt-sec-head" style="margin-bottom:12px">⚡ NRS Top 10 — Mayor Riesgo</div>
+          <div id="nrs-top-list" style="font-size:12px"></div>
+        </div>
+      </div>
     </div>
   </section>
 <section id="analysis-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
@@ -1169,11 +1260,136 @@ footer .disc{line-height:1.4}
 </section>
 
   <footer>
-    <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). Toda métrica de rentabilidad es margen sobre ventas. No constituye asesoría financiera.</span>
+    <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
-    <span class="mono" style="white-space:nowrap">v8.1 · Terminal · Datos en vivo · IA · Portfolio · Alertas</span>
+    <span class="mono" style="white-space:nowrap">Khipu Finance v1 · 450 nodos · NRS · Bixby AI · 3D · RAG</span>
   </footer>
 </div>
+
+<!-- ═══ Simulation Tab ════════════════════════════════════════════════ -->
+<section id="simulation-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
+  <div style="max-width:1100px;margin:0 auto;padding:28px 24px 40px">
+    <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px">🧬 Simulación de Escenarios</h2>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Motor MiroFish · IA multi-agente · Escenarios geopolíticos y de mercado sobre la cadena de valor global</p>
+    <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">
+      <!-- Scenario presets -->
+      <div>
+        <div class="mkt-tablewrap" style="padding:16px">
+          <div class="mkt-sec-head">Escenarios Predefinidos</div>
+          <div id="sim-presets" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <button class="sim-preset-btn" data-preset="taiwan_conflict" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--danger)">⚔️ Conflicto Taiwan</div>
+              <div style="color:var(--ink-3);margin-top:2px">Bloqueo naval + interrupción TSMC</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="china_chip_ban_total" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--gold)">🚫 Ban Total de Chips a China</div>
+              <div style="color:var(--ink-3);margin-top:2px">Expansión export controls H100/H200</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="hbm_shortage_2027" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--violet)">💾 Escasez HBM 2027</div>
+              <div style="color:var(--ink-3);margin-top:2px">Demanda AI supera oferta SK Hynix</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="openai_ipo_impact" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:var(--blue)">📊 IPO OpenAI</div>
+              <div style="color:var(--ink-3);margin-top:2px">Impacto en valoraciones del ecosistema AI</div>
+            </button>
+            <button class="sim-preset-btn" data-preset="starshield_reveal" style="text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;line-height:1.4">
+              <div style="font-weight:700;color:#FF6B35">🛰 Starshield Reveal</div>
+              <div style="color:var(--ink-3);margin-top:2px">Revelación de contratos mil. SpaceX</div>
+            </button>
+          </div>
+          <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
+            <div class="mkt-sec-head" style="margin-bottom:8px">Escenario personalizado</div>
+            <textarea id="sim-custom-text" data-i18n-placeholder="sim_placeholder" placeholder="Describe el escenario..." style="width:100%;height:80px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;resize:vertical;font-family:inherit"></textarea>
+            <input id="sim-custom-nodes" placeholder="Nodos afectados (IDs separados por coma)" style="width:100%;margin-top:6px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
+          </div>
+          <button id="sim-run-btn" data-i18n="sim_run" style="width:100%;margin-top:12px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
+        </div>
+        <!-- Portfolio Risk -->
+        <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
+          <div class="mkt-sec-head">Riesgo de Cartera (VaR/CVaR)</div>
+          <div style="margin-top:10px;font-size:12px;color:var(--ink-3)">Selecciona empresas de tu cartera en Mercado y calcula el riesgo:</div>
+          <button id="var-calc-btn" style="width:100%;margin-top:10px;padding:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">📊 Calcular VaR / CVaR</button>
+          <div id="var-results" style="margin-top:10px;font-size:12px;display:none">
+            <div id="var-loading" style="color:var(--ink-3)">Calculando...</div>
+            <div id="var-content" style="display:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">VaR 95%</div>
+                  <div id="var-95" style="font-size:18px;font-weight:800;color:var(--danger)">—</div>
+                </div>
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">CVaR 95%</div>
+                  <div id="cvar-95" style="font-size:18px;font-weight:800;color:var(--danger)">—</div>
+                </div>
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">Sharpe (1Y)</div>
+                  <div id="sharpe-ratio" style="font-size:18px;font-weight:800;color:var(--blue)">—</div>
+                </div>
+                <div style="padding:10px;background:var(--surface-2);border-radius:6px;text-align:center">
+                  <div style="font-size:10px;color:var(--ink-3)">Max Drawdown</div>
+                  <div id="max-drawdown" style="font-size:18px;font-weight:800;color:var(--gold)">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Simulation output -->
+      <div class="mkt-tablewrap" style="padding:16px;min-height:500px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="mkt-sec-head" style="margin:0">Resultados de Simulación</div>
+          <div id="sim-status" style="font-size:11px;padding:4px 10px;border-radius:12px;background:var(--surface-2);color:var(--ink-3)">Sin ejecutar</div>
+        </div>
+        <div id="sim-output" style="font-size:13px;color:var(--ink-3);padding:20px 0;text-align:center">
+          Selecciona un escenario y pulsa ▶ para iniciar la simulación multi-agente
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Space Tab ═════════════════════════════════════════════════════ -->
+<section id="space-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
+  <div style="max-width:1100px;margin:0 auto;padding:28px 24px 40px">
+    <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px">🚀 Economía del Espacio</h2>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Lanzamientos, constelaciones satelitales y empresas espaciales en la cadena de valor global</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <!-- Upcoming launches -->
+      <div class="mkt-tablewrap" style="padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="mkt-sec-head" data-i18n="space_launches" style="margin:0">Próximos Lanzamientos</div>
+          <button id="space-refresh" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:pointer">↺ Actualizar</button>
+        </div>
+        <div id="launches-list" style="font-size:13px;color:var(--ink-3)">Cargando lanzamientos...</div>
+      </div>
+      <!-- Space companies in graph -->
+      <div class="mkt-tablewrap" style="padding:16px">
+        <div class="mkt-sec-head" data-i18n="space_companies" style="margin-bottom:12px">Empresas Espaciales en Khipu</div>
+        <div id="space-companies-list" style="font-size:12px"></div>
+      </div>
+    </div>
+    <!-- Space market stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px">
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Mercado Total 2026</div>
+        <div style="font-size:20px;font-weight:800;color:var(--ink)">$630B</div>
+      </div>
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Constelaciones Activas</div>
+        <div style="font-size:20px;font-weight:800;color:var(--blue)">12+</div>
+      </div>
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Satélites en Órbita LEO</div>
+        <div style="font-size:20px;font-weight:800;color:#FF6B35)">7,200+</div>
+      </div>
+      <div class="mkt-card" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Nodos Espaciales en Khipu</div>
+        <div id="space-node-count" style="font-size:20px;font-weight:800;color:var(--violet)">—</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ===== v8: Panel de Configuración ===== -->
 <div class="settings-overlay" id="settings-overlay"></div>
@@ -1194,6 +1410,25 @@ footer .disc{line-height:1.4}
     <label class="pref-row"><input type="checkbox" id="pref-aicache"> <span id="pref-aicache-l">Guardar análisis de IA en caché (24h)</span></label>
   </div>
 
+  <div class="settings-sec">🔐 Khipu Finance API Key</div>
+  <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Para usar VaR/CVaR y la API v1, genera una clave JWT:</div>
+  <div style="padding:0 20px 12px;display:flex;gap:8px">
+    <select id="kfi-tier" style="flex:1;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
+      <option value="free">free</option>
+      <option value="starter" selected>starter</option>
+      <option value="pro">pro</option>
+    </select>
+    <button id="kfi-gen-btn" class="key-btn" style="flex:1">Generar clave</button>
+  </div>
+  <div id="kfi-result" style="padding:0 20px 12px;font-size:11px;color:var(--ink-3);word-break:break-all;display:none"></div>
+
+  <div class="settings-sec">🧠 ChromaDB / RAG</div>
+  <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Indexa todos los nodos en la base vectorial de Second Brain para búsqueda semántica y contexto de Bixby:</div>
+  <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center">
+    <button id="rag-index-btn" class="key-btn" style="flex:1">Indexar todos los nodos</button>
+    <span id="rag-index-status" style="font-size:11px;color:var(--ink-3)"></span>
+  </div>
+
   <div class="settings-sec" id="set-data-h">🗑 Datos</div>
   <div class="danger-btns">
     <button class="key-btn" id="data-clear-quotes">Borrar caché de precios</button>
@@ -1205,7 +1440,7 @@ footer .disc{line-height:1.4}
 <div id="hover-tooltip"></div>
 <script>
 // ═══════════════════════════════════════════════════════════════
-// Ecosistema IA v7 · Del Silicio a la IA · Cadena de Valor Global
+// Khipu Finance v1 · Cadena de Valor Global · 450+ empresas · 35 categorías
 // Construido: 2026-06-12
 // Nodos: 132+ | Links: 530+ | Tipos de relación: 7 | Pestañas: 4
 // Mejoras M1-M10 implementadas
@@ -1237,6 +1472,28 @@ const CATS = {
   robotics_physical: {label:'IA Física / Robótica',   en:'Physical AI / Robotics',cssVar:'--c-robotics_physical',x:.95},
   aisoft:            {label:'Software IA',            en:'AI Software',          cssVar:'--c-aisoft',            x:.98},
 };
+
+// Nuevas categorías para nodos expandidos
+const CATS_NEW = {
+  space_launch:  {label:'Lanzamiento Espacial', en:'Space Launch',    cssVar:'--c-space_launch',  x:.01},
+  satellite:     {label:'Satélites / LEO',       en:'Satellite / LEO', cssVar:'--c-satellite',     x:.03},
+  earth_obs:     {label:'Observación Terrestre', en:'Earth Obs',      cssVar:'--c-earth_obs',     x:.05},
+  rare_earth:    {label:'Tierras Raras',          en:'Rare Earth',     cssVar:'--c-rare_earth',    x:.03},
+  battery_mat:   {label:'Baterías/Materiales',   en:'Battery Matls',  cssVar:'--c-battery_mat',   x:.07},
+  asic_custom:   {label:'ASICs Custom',           en:'Custom ASICs',   cssVar:'--c-asic_custom',   x:.52},
+  edge_ai:       {label:'Edge AI Silicon',        en:'Edge AI',        cssVar:'--c-edge_ai',       x:.54},
+  photonics_si:  {label:'Fotónica Si',            en:'Si Photonics',   cssVar:'--c-photonics_si',  x:.57},
+  dc_reit:       {label:'DC REITs',               en:'DC REITs',       cssVar:'--c-dc_reit',       x:.82},
+  cdn_edge:      {label:'CDN / Edge DC',          en:'CDN / Edge DC',  cssVar:'--c-cdn_edge',      x:.84},
+  hpc_super:     {label:'HPC / Supercomputación', en:'HPC / Supercomp',cssVar:'--c-hpc_super',     x:.80},
+  neuromorphic:  {label:'Neuromórfica',           en:'Neuromorphic',   cssVar:'--c-neuromorphic',  x:.07},
+  ai_defense:    {label:'IA Defensa',             en:'Defense AI',     cssVar:'--c-ai_defense',    x:.88},
+  ai_health:     {label:'IA Salud',               en:'Health AI',      cssVar:'--c-ai_health',     x:.89},
+  ai_finance:    {label:'IA Finanzas',            en:'Finance AI',     cssVar:'--c-ai_finance',    x:.90},
+  ai_auto:       {label:'IA Automotriz',          en:'Automotive AI',  cssVar:'--c-ai_auto',       x:.92},
+  ai_agents:     {label:'Agentes IA',             en:'AI Agents',      cssVar:'--c-ai_agents',     x:.95},
+};
+Object.assign(CATS, CATS_NEW);
 
 /* Países para la vista geopolítica: cluster propio + color propio */
 const COUNTRIES = {
@@ -1997,6 +2254,89 @@ const RAW_LINKS = [
 
 
 const NODE_BY_ID = Object.fromEntries(NODES.map(n=>[n.id,n]));
+
+// Shares outstanding en billones (para computar market cap en vivo)
+const SHARES_OUTSTANDING_B = {
+  'NVDA': 24.5, 'MSFT': 7.44, 'AAPL': 15.0, 'GOOGL': 12.1, 'AMZN': 10.7, 'META': 2.53,
+  'ORCL': 2.76, 'CRWV': 1.0,
+  'AVGO': 4.73, 'AMD': 1.62, 'INTC': 4.25, 'QCOM': 1.12, 'ARM': 1.05,
+  'TSM': 5.18, 'ASML': 0.395,
+  'MU': 1.11,
+  'LRCX': 1.38, 'KLAC': 1.40, 'AMAT': 8.55, 'ANET': 3.1,
+  'VRT': 3.84, 'MPWR': 0.047, 'ETN': 4.0, 'GEV': 1.37, 'CEG': 0.32,
+  'DELL': 1.33, 'HPE': 1.28,
+  'RKLB': 4.5, 'ASTS': 2.3, 'IRDM': 0.135, 'GSAT': 1.9, 'PL': 0.25,
+  'VSAT': 0.145, 'BKSY': 0.075,
+  'CSCO': 4.06,
+  'NOC': 0.153, 'LHX': 0.19, 'RTX': 1.34, 'GD': 0.28, 'KTOS': 0.18, 'PLTR': 2.1,
+  'MBLY': 0.42, 'AUR': 1.68, 'LAZR': 0.36,
+  'HXL': 0.121, 'ATI': 0.15, 'CRS': 0.043, 'MP': 0.17,
+  'ALB': 0.117, 'SQM': 0.28,
+  'TEM': 0.18, 'RXRX': 0.22,
+  'MSCI': 0.08, 'PENG': 0.07,
+  'MXL': 0.075, 'SITS': 0.014,
+  'TMUS': 1.19, 'MOG': 0.045, 'PH': 1.28,
+};
+
+function computeNodeRadius(nodeId) {
+  const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
+  if (!n) return 9;
+
+  // Market cap base estimado
+  const MKT_CAP_EST = {
+    'SpaceX': 350, 'Anthropic': 61, 'OpenAI': 300, 'xAI': 40,
+    'Anduril': 28, 'ScaleAI': 13.8, 'ElevenLabs': 3.3, 'AlphaSense': 4,
+    'Cohere': 2.2, 'ShieldAI': 2.7, 'BlueOrigin': 15, 'ICEYE': 0.5,
+  };
+
+  let cap_B = MKT_CAP_EST[nodeId] || 0.5;
+
+  // Si hay precio en vivo y shares conocidos → calcular market cap real
+  if (typeof MKT !== 'undefined' && n.mkt) {
+    const q = MKT.quotes ? MKT.quotes[n.mkt] : null;
+    const shares = SHARES_OUTSTANDING_B[n.mkt];
+    if (q && q.close && shares) {
+      cap_B = q.close * shares;
+    }
+  }
+
+  // Escala logarítmica
+  const logCap = Math.log10(Math.max(0.05, cap_B));
+  const normalized = Math.min(1, Math.max(0, (logCap + 1.3) / 4.8));
+
+  const MIN_R = n.preipo ? 4 : (n.big ? 10 : 5);
+  const MAX_R = n.big ? 23 : 19;
+  return Math.round(MIN_R + normalized * (MAX_R - MIN_R));
+}
+
+function computeNRS(nodeId) {
+  const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
+  if (!n) return 50;
+
+  // Geo risk (0-30): based on country
+  const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
+  const geo = geoMap[n.country] ?? 15;
+
+  // Chain risk (0-25): node degree / centrality proxy
+  const degree = (typeof LINKS !== 'undefined') ? LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length : 0;
+  const chain = Math.min(25, degree * 2.5);
+
+  // Market risk (0-20): volatility proxy from margin
+  const margin = n.margin != null ? n.margin : 0.15;
+  const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
+
+  // Fundamental risk (0-15): preipo penalty + growth signal
+  const preipo_pen = n.preipo ? 10 : 0;
+  const growth_str = (n.growth || '').toLowerCase();
+  const growth_pen = growth_str.includes('🔴') ? 5 : (growth_str.includes('🟡') ? 2 : 0);
+  const fundamental = Math.min(15, preipo_pen + growth_pen);
+
+  // Concentration risk (0-10): single-country dependency
+  const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
+
+  const nrs = Math.round(geo + chain + market + fundamental + concentration);
+  return Math.min(100, Math.max(0, nrs));
+}
 
 const NODE_META = {
   "IBMQuantum": {
@@ -3644,18 +3984,66 @@ const NODE_META = {
 };
 
 const LINK_TYPE_COLORS = {
-  supply:  {light:'#4E8B1E', dark:'#9BCF5E'},
-  fab:     {light:'#0F8C5F', dark:'#43C896'},
-  license: {light:'#6B5DD3', dark:'#A99EEC'},
-  cloud:   {light:'#0A6CA8', dark:'#4FA8E0'},
-  invest:  {light:'#B8880D', dark:'#D9A520'},
-  deploy:  {light:'#0E7A6E', dark:'#40B8A8'},
-  partner: {light:'#8A857A', dark:'#B5B0A4'},
+  supply:   {light:'#4E8B1E', dark:'#9BCF5E'},
+  fab:      {light:'#0F8C5F', dark:'#43C896'},
+  license:  {light:'#6B5DD3', dark:'#A99EEC'},
+  cloud:    {light:'#0A6CA8', dark:'#4FA8E0'},
+  invest:   {light:'#B8880D', dark:'#D9A520'},
+  deploy:   {light:'#0E7A6E', dark:'#40B8A8'},
+  partner:  {light:'#8A857A', dark:'#B5B0A4'},
+  customer: {light:'#C25E12', dark:'#EF8B40'},
+  owns:     {light:'#7C3AED', dark:'#A855F7'},
 };
 
 function getLinkColor(type) {
   const theme = document.body.classList.contains('dark') ? 'dark' : 'light';
   return (LINK_TYPE_COLORS[type] || LINK_TYPE_COLORS.supply)[theme];
+}
+
+// Cargar nodos expandidos (SpaceX ecosystem)
+// Nota: en producción estos se cargarán como módulos <script> separados
+// Por ahora los incluimos inline para mantener compatibilidad
+if (typeof NODES_EXPAND !== 'undefined') {
+  NODES_EXPAND.forEach(n => {
+    if (!NODES.find(existing => existing.id === n.id)) {
+      NODES.push(n);
+    }
+  });
+}
+if (typeof NODES_EXPAND2 !== 'undefined') {
+  NODES_EXPAND2.forEach(n => {
+    if (!NODES.find(existing => existing.id === n.id)) {
+      NODES.push(n);
+    }
+  });
+}
+if (typeof NODES_SPACEX !== 'undefined') {
+  NODES_SPACEX.forEach(n => {
+    if (!NODES.find(existing => existing.id === n.id)) {
+      NODES.push(n);
+    }
+  });
+}
+// Node ID aliases — maps common alternate names to canonical IDs in NODES
+const NODE_ID_ALIAS = {
+  'AWS': 'Amazon', 'Azure': 'Microsoft', 'NVIDIA': 'Nvidia',
+  'GCP': 'Alphabet', 'Google': 'Alphabet', 'Meta': 'MetaPlatforms',
+  'Texas_Instruments': 'TexasInstruments', 'TI': 'TexasInstruments',
+  'STMicro': 'STMicroelectronics', 'Xilinx': 'AMD', // Acquired by AMD
+  'BoozAllen': 'Booz_Allen', 'CACI_Int': 'CACI',
+};
+function _resolveId(id) { return NODE_ID_ALIAS[id] || id; }
+if (typeof LINKS_EXPAND !== 'undefined') {
+  LINKS_EXPAND.forEach(l => {
+    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
+    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
+  });
+}
+if (typeof LINKS_SPACEX !== 'undefined') {
+  LINKS_SPACEX.forEach(l => {
+    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
+    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
+  });
 }
 
 const LINKS = RAW_LINKS
@@ -3688,11 +4076,19 @@ let pathfinderMode=false, pathSrc=null, pathDst=null, pathActive=false;
 let pathNodes=new Set(), pathLinkKeys=new Set();
 function isPathLink(l){ return pathLinkKeys.has(lid(l.source)+'>'+lid(l.target)); }
 
+// Loading progress
+const _loaderBar = document.getElementById('loader-bar');
+const _loaderText = document.getElementById('loader-text');
+if (_loaderBar) { _loaderBar.style.width = '30%'; _loaderText.textContent = 'Construyendo grafo (' + NODES.length + ' nodos)...'; }
+// With 450+ nodes, reduce charge and increase decay for smoother convergence
+const _nodeCount = NODES.length;
+const _chargeStr = _nodeCount > 300 ? -180 : _nodeCount > 150 ? -220 : -280;
+const _alphaDecay = _nodeCount > 300 ? 0.04 : 0.02;
 const sim = d3.forceSimulation(NODES)
   .force('link', d3.forceLink(LINKS).id(d=>d.id).distance(d=>60+d.w*4).strength(.3))
-  .force('charge', d3.forceManyBody().strength(-280))
+  .force('charge', d3.forceManyBody().strength(_chargeStr).distanceMax(400))
   .force('collide', d3.forceCollide(d=>d.big?36:24))
-  .alphaDecay(.02).velocityDecay(.38);
+  .alphaDecay(_alphaDecay).velocityDecay(.38);
 
 function setForces(){
   if(viewMode==='geo'){
@@ -3838,6 +4234,7 @@ nodeSel.on('mouseover.tooltip',(event,d)=>{
     ${meta.revenue_2025?`<div style="font-size:11px;color:var(--ink-2)">💰 ${esc(meta.revenue_2025)} &nbsp;·&nbsp; 👥 ${meta.employees?meta.employees.toLocaleString():'—'}</div>`:''}
     <div style="font-size:11px;color:var(--ink-3);margin-top:4px">↑ ${inp} ${t('tt_sup')} &nbsp;·&nbsp; ↓ ${out} ${t('tt_cli')}</div>
     ${meta.risk&&meta.risk!=='low'?`<div style="font-size:10px;color:${riskColor};margin-top:4px;font-weight:600;text-transform:uppercase">⚠ ${t('tt_risk')}: ${esc(meta.risk)}</div>`:''}
+    ${(function(){try{const nrs=computeNRS(d.id);const nc=nrs<30?'#22c55e':nrs<60?'#f59e0b':'#ef4444';return `<div style="font-size:10px;margin-top:4px;display:flex;align-items:center;gap:5px"><span style="color:var(--ink-3)">NRS</span><span style="font-weight:700;color:${nc}">${nrs}</span><span style="color:var(--ink-3)">/100</span></div>`;}catch(e){return '';}})()}
   `;
   positionTooltip(event);
 });
@@ -4556,9 +4953,12 @@ setTimeout(resize,60);
 /* ===================== i18n ===================== */
 const I18N = {
 es: {
-  sub:'Cadena de valor global 2026 · 137 empresas · 540+ conexiones · 7 tipos de relación',
+  sub:'Cadena de valor global 2026 · 450+ empresas · 900+ conexiones · 35 categorías',
   tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo',
   tab_analysis:'Análisis de Red', tab_geo:'Geopolítica',
+  tab_sim:'Simulación', tab_space:'Espacio',
+  sim_preset_btn:'Preset', sim_run:'▶ Ejecutar Simulación', sim_placeholder:'Describe el escenario...',
+  space_launches:'Próximos Lanzamientos', space_companies:'Empresas Espaciales en Khipu',
   f_link:'Vínculo',
   lt_all:'Todos', lt_supply:'Suministro', lt_fab:'Fabricación', lt_license:'Licencia IP',
   lt_cloud:'Cloud/SaaS', lt_invest:'Inversión', lt_deploy:'Despliegue', lt_partner:'Partnership',
@@ -4608,9 +5008,12 @@ es: {
   mk_add:'+ Posición', mk_edit:'✎', mk_npos:'—',
 },
 en: {
-  sub:'Global value chain 2026 · 137 companies · 540+ links · 7 relation types',
+  sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
   tab_map:'Chain Map', tab_market:'Live Market',
   tab_analysis:'Network Analysis', tab_geo:'Geopolitics',
+  tab_sim:'Simulation', tab_space:'Space Economy',
+  sim_preset_btn:'Preset', sim_run:'▶ Run Simulation', sim_placeholder:'Describe the scenario...',
+  space_launches:'Upcoming Launches', space_companies:'Space Companies in Khipu',
   f_link:'Link type',
   lt_all:'All', lt_supply:'Supply', lt_fab:'Fabrication', lt_license:'IP License',
   lt_cloud:'Cloud/SaaS', lt_invest:'Investment', lt_deploy:'Deployment', lt_partner:'Partnership',
@@ -4710,6 +5113,11 @@ function applyLang(){
     document.getElementById('stress-text').innerHTML=stressText(NODE_BY_ID[stressId]);
   }
   renderMarket();
+  // i18n: simulation + space tab dynamic strings
+  const simRunBtn=document.getElementById('sim-run-btn'); if(simRunBtn) simRunBtn.textContent=t('sim_run');
+  const simTxt=document.getElementById('sim-custom-text'); if(simTxt) simTxt.placeholder=t('sim_placeholder');
+  // data-i18n-placeholder support
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder=t(el.dataset.i18nPlaceholder); });
 }
 document.getElementById('lang-toggle').onclick=()=>{
   LANG = LANG==='es'?'en':'es';
@@ -4762,6 +5170,7 @@ function switchTab(tab){
   activeTab=tab;
   document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const isMap=tab==='map', isAnalysis=tab==='analysis', isGeo=tab==='geo';
+  const isSim=tab==='simulation', isSpace=tab==='space';
   document.querySelector('main').style.display = isMap?'flex':'none';
   document.getElementById('toolbar').style.display = isMap?'flex':'none';
   document.getElementById('market').style.display = tab==='market'?'block':'none';
@@ -4769,7 +5178,16 @@ function switchTab(tab){
   if(anEl) anEl.style.display = isAnalysis?'block':'none';
   const geoEl=document.getElementById('geo-panel');
   if(geoEl) geoEl.style.display = isGeo?'block':'none';
-  if(isMap){ resize(); } else if(isAnalysis){ renderAnalysis(); } else if(isGeo){ renderGeoPanel(); } else { renderMarket(); }
+  const simEl=document.getElementById('simulation-panel');
+  if(simEl) simEl.style.display = isSim?'block':'none';
+  const spaceEl=document.getElementById('space-panel');
+  if(spaceEl) spaceEl.style.display = isSpace?'block':'none';
+  if(isMap){ resize(); }
+  else if(isAnalysis){ renderAnalysis(); }
+  else if(isGeo){ renderGeoPanel(); }
+  else if(isSim){ initSimTab(); }
+  else if(isSpace){ initSpaceTab(); }
+  else { renderMarket(); }
 }
 
 /* ===================== v7 · M6: betweenness centrality real (Brandes) ===================== */
@@ -5106,12 +5524,13 @@ function renderMarket(keepStatus){
   const tbl=document.getElementById('mk-table');
   tbl.innerHTML=`<thead><tr>
     <th>${t('th_co')}</th><th>${t('th_price')}</th><th>${t('th_chg')}</th>
-    <th>${t('th_sh')}</th><th>${t('th_bp')}</th><th>${t('th_val')}</th><th>${t('th_pnl')}</th><th></th>
+    <th>${t('th_sh')}</th><th>${t('th_bp')}</th><th>${t('th_val')}</th><th>${t('th_pnl')}</th><th title="NEXUS Risk Score 0-100">NRS</th><th></th>
   </tr></thead><tbody>`+rows.map(n=>{
     const q=quoteOf(n), p=MKT.pos[n.id];
     const chg=(q&&q.prev!=null&&q.close!=null)?(q.close-q.prev)/q.prev:null;
     const val=(p&&q&&q.close!=null)?p.sh*q.close:null;
     const pnlP=(p&&q&&q.close!=null&&p.bp)?(q.close-p.bp)/p.bp:null;
+    const nrs=(function(){try{const v=computeNRS(n.id);const c=v<30?'#22c55e':v<60?'#f59e0b':'#ef4444';return `<span style="font-weight:700;color:${c}">${v}</span>`;}catch(e){return '<span class="td-dim">—</span>';}})();
     if(MKT.editing===n.id){
       return `<tr><td onclick="goMap('${n.id}')">${esc(n.label)} <span class="tk">${esc(n.mkt||'')}</span></td>
         <td>${q?'$'+fmtN(q.close):'—'}</td>
@@ -5121,7 +5540,7 @@ function renderMarket(keepStatus){
           <button class="pos-btn" onclick="posSave('${n.id}')">✓</button>
           <button class="pos-btn" onclick="posDel('${n.id}')">🗑</button>
           <button class="pos-btn" onclick="posCancel()">✕</button>
-        </div></td><td></td></tr>`;
+        </div></td><td>${nrs}</td><td></td></tr>`;
     }
     return `<tr data-ticker="${esc(n.mkt||'')}"${q&&q.live?' data-live="1"':''}>
       <td onclick="goMap('${n.id}')">${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></td>
@@ -5131,10 +5550,13 @@ function renderMarket(keepStatus){
       <td>${p?'$'+fmtN(p.bp):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-val">${val!=null?'$'+fmtN(val):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-pnl ${pnlP==null?'td-dim':pnlP>=0?'td-up':'td-down'}">${fmtPct(pnlP)}</td>
+      <td>${nrs}</td>
       <td><button class="pos-btn" onclick="posEdit('${n.id}')">${p?t('mk_edit'):t('mk_add')}</button></td>
     </tr>`;
   }).join('')+'</tbody>';
   if(typeof V8!=='undefined' && V8.market) V8.market.afterRender();
+  if(typeof renderNrsTop10==='function') renderNrsTop10();
+  if(typeof initGdelt==='function') initGdelt();
 }
 window.posEdit=id=>{ MKT.editing=id; renderMarket(true); };
 window.posCancel=()=>{ MKT.editing=null; renderMarket(true); };
@@ -5149,6 +5571,14 @@ window.goMap=id=>{ switchTab('map'); setTimeout(()=>jumpTo(id),80); };
 /* ===================== Init v7 ===================== */
 renderBand();
 applyLang();
+
+// Hide loader
+const _loader = document.getElementById('khipu-loader');
+if (_loader) {
+  if (_loaderBar) _loaderBar.style.width = '100%';
+  if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
+  setTimeout(() => { _loader.style.opacity = '0'; setTimeout(() => _loader.remove(), 500); }, 400);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    v8 · CAPA DE PRODUCTO — datos en vivo, IA, fundamentales, portfolio, alertas
@@ -5363,8 +5793,11 @@ function tr(k,vars){ let s=t(k); if(vars) for(const v in vars) s=s.replace('{'+v
 const KEY_DEFS=[
   {svc:'finnhub', label:'Finnhub', url:'https://finnhub.io/register', hint:'finnhub.io'},
   {svc:'fmp',     label:'Financial Modeling Prep', url:'https://site.financialmodelingprep.com/developer/docs', hint:'financialmodelingprep.com'},
-  {svc:'claude',  label:'Claude (Anthropic)', url:'https://console.anthropic.com', hint:'console.anthropic.com'},
+  {svc:'claude',  label:'Claude / Anthropic', url:'https://console.anthropic.com', hint:'console.anthropic.com'},
   {svc:'marketstack', label:'Marketstack', url:'https://marketstack.com', hint:'marketstack.com (EOD)'},
+  {svc:'elevenlabs', label:'ElevenLabs API Key (Bixby)', url:'https://elevenlabs.io/app/settings/api-keys', hint:'elevenlabs.io'},
+  {svc:'elevenlabs_agent_id', label:'ElevenLabs Agent ID (Bixby)', url:'https://elevenlabs.io/app/conversational-ai', hint:'elevenlabs.io/app/conversational-ai', storageKey:'elevenlabs_agent_id'},
+  {svc:'av',      label:'Alpha Vantage (VaR/CVaR)', url:'https://www.alphavantage.co/support/#api-key', hint:'alphavantage.co'},
 ];
 const Settings = {
   open(){ $('settings-overlay').classList.add('show'); $('settings-panel').classList.add('show'); this.render(); },
@@ -5381,9 +5814,10 @@ const Settings = {
         ?'Keys are configured on the server (.env). Health below.':'Las claves se configuran en el servidor (.env). Estado abajo.')+'</div>';
     } else {
       wrap.innerHTML=KEY_DEFS.map(kd=>{
-        const cur = kd.svc==='marketstack'?Keys.marketstack():Keys.get(kd.svc);
+        const storageKey = kd.storageKey;
+        const cur = storageKey ? localStorage.getItem(storageKey) : (kd.svc==='marketstack'?Keys.marketstack():Keys.get(kd.svc));
         const masked = cur?'••••••••••••':'';
-        return `<div class="key-field" data-svc="${kd.svc}">
+        return `<div class="key-field" data-svc="${kd.svc}"${storageKey?' data-storkey="'+storageKey+'"':''}>
           <label>${kd.label}</label>
           <div class="key-row">
             <input type="password" placeholder="${cur?masked:'API key…'}" autocomplete="off">
@@ -5395,13 +5829,17 @@ const Settings = {
         </div>`;
       }).join('');
       wrap.querySelectorAll('.key-field').forEach(f=>{
-        const svc=f.dataset.svc, input=f.querySelector('input'), st=f.querySelector('.key-status');
-        const save=()=>{ const v=input.value.trim(); if(!v) return; if(svc==='marketstack') localStorage.setItem('eco_msk',v); else Keys.set(svc,v);
+        const svc=f.dataset.svc, storkey=f.dataset.storkey, input=f.querySelector('input'), st=f.querySelector('.key-status');
+        const save=()=>{ const v=input.value.trim(); if(!v) return;
+          if(storkey){ localStorage.setItem(storkey,v); }
+          else if(svc==='marketstack') localStorage.setItem('eco_msk',v);
+          else Keys.set(svc,v);
           input.value=''; input.placeholder='••••••••••••'; st.className='key-status ok'; st.textContent='✓'; afterKeysChange(); };
         input.addEventListener('keydown',e=>{ if(e.key==='Enter') save(); });
         input.addEventListener('blur',()=>{ if(input.value.trim()) save(); });
-        f.querySelector('[data-act="test"]').onclick=()=>{ if(input.value.trim()) save(); Settings.testKey(svc,st); };
-        f.querySelector('[data-act="clear"]').onclick=()=>{ if(svc==='marketstack') localStorage.removeItem('eco_msk'); else Keys.set(svc,'');
+        f.querySelector('[data-act="test"]').onclick=()=>{ if(input.value.trim()) save(); if(!storkey) Settings.testKey(svc,st); };
+        f.querySelector('[data-act="clear"]').onclick=()=>{ if(storkey){ localStorage.removeItem(storkey); }
+          else if(svc==='marketstack') localStorage.removeItem('eco_msk'); else Keys.set(svc,'');
           input.value=''; input.placeholder='API key…'; st.className='key-status'; st.textContent=''; afterKeysChange(); };
       });
     }
@@ -5444,6 +5882,50 @@ $('data-clear-quotes').onclick=()=>{ localStorage.removeItem('eco_quotes'); loca
 $('data-clear-ai').onclick=()=>{ Object.keys(localStorage).filter(k=>k.startsWith('ai_analysis_')).forEach(k=>localStorage.removeItem(k));
   toast(LANG==='en'?'AI analysis cleared':'Análisis IA borrados'); if(selected) renderDetail(selected); };
 $('data-clear-cache').onclick=()=>{ idb.clear(); toast(LANG==='en'?'Data cache cleared':'Caché de datos vaciada'); };
+
+// Khipu API key generation
+document.getElementById('kfi-gen-btn').addEventListener('click', async () => {
+  const tier = document.getElementById('kfi-tier').value;
+  const result = document.getElementById('kfi-result');
+  try {
+    const resp = await fetch('/v1/auth/key', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_id: 'browser_'+Date.now(), tier}) });
+    const data = await resp.json();
+    if (data.api_key) {
+      localStorage.setItem('khipu_api_key', data.api_key);
+      result.style.display = 'block';
+      result.innerHTML = `<span style="color:var(--ink-2)">✓ Clave ${tier} generada y guardada</span><br><span style="color:var(--ink-3)">${data.api_key.substring(0,24)}…</span>`;
+    } else { result.style.display='block'; result.textContent='Error: '+(data.error||'desconocido'); }
+  } catch(e) { result.style.display='block'; result.textContent='Error: '+e.message; }
+});
+
+// RAG batch indexer
+document.getElementById('rag-index-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('rag-index-btn');
+  const status = document.getElementById('rag-index-status');
+  btn.disabled = true; btn.textContent = 'Indexando…';
+  status.textContent = '';
+  try {
+    const nodes = (window.NODES || []).map(n => ({
+      id: n.id, label: n.label, cat: n.cat, ticker: n.mkt || n.ticker || '',
+      geo: n.geo || '', big: !!n.big, desc: n.desc || ''
+    }));
+    const resp = await fetch('/api/rag/index-batch', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(nodes)
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      status.style.color = 'var(--green, #22c55e)';
+      status.textContent = `✓ ${data.indexed}/${data.total} nodos`;
+    } else {
+      status.style.color = 'var(--danger)';
+      status.textContent = 'Error: ' + (data.error || resp.statusText);
+    }
+  } catch(e) {
+    status.style.color = 'var(--danger)';
+    status.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Indexar todos los nodos';
+});
 
 /* ════════════════ §F · PRECIOS EN VIVO (Feature 1) + portfolio (Feature 7) ════════════════ */
 const LivePrices = {
@@ -5531,6 +6013,26 @@ const LivePrices = {
   setPill(on){ const el=$('live-pill'); if(el) el.classList.toggle('on',!!on); }
 };
 V8.market = { afterRender(){ LivePrices.setPill(LivePrices.connected); } };
+
+/* Export all nodes CSV */
+document.getElementById('export-btn')?.addEventListener('click', () => {
+  const rows = [['ID','Empresa','Ticker','Categoría','País','Precio','Cambio%','NRS','Acciones','P.Compra','Valor','P&L%']];
+  (window.NODES || []).forEach(n => {
+    const q = n.mkt ? (MKT.quotes[n.mkt] || {}) : {};
+    const p = MKT.pos[n.id];
+    const chg = (q.close && q.prev) ? ((q.close-q.prev)/q.prev*100).toFixed(2) : '';
+    const nrs = (typeof computeNRS==='function') ? computeNRS(n.id) : '';
+    const val = (p && q.close) ? (p.sh * q.close).toFixed(2) : '';
+    const pnl = (p && q.close && p.bp) ? (((q.close-p.bp)/p.bp)*100).toFixed(2) : '';
+    rows.push([n.id, n.label, n.mkt||'', n.cat, n.country||'', q.close||'', chg, nrs, p?p.sh:'', p?p.bp:'', val, pnl]);
+  });
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'khipu-finance-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  if (typeof toast === 'function') toast('CSV exportado · ' + (window.NODES||[]).length + ' empresas');
+});
 
 /* Export CSV (Feature 7) */
 $('mk-export').onclick=()=>{
@@ -5762,6 +6264,8 @@ Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con est
   }
 };
 
+window.V8detail = V8detail;
+
 /* sentimiento por palabras clave */
 function sentiment(headline){
   const h=(headline||'').toLowerCase();
@@ -5821,6 +6325,52 @@ const Alerts = {
     el.querySelectorAll('.ar-del').forEach(btn=>btn.onclick=()=>{ this.remove(+btn.dataset.i); this.renderInDetail(id,tk); });
   }
 };
+
+/* ════════════════ §H2 · PRICE ALERTS POLLING (Feature 8b) ════════════════ */
+const PriceAlerts = {
+  check() {
+    const alerts = JSON.parse(localStorage.getItem('khipu_alerts') || '[]');
+    alerts.forEach(a => {
+      const q = MKT.quotes[a.ticker];
+      if (!q || q.close == null) return;
+      const triggered = (a.dir === 'above' && q.close >= a.price) || (a.dir === 'below' && q.close <= a.price);
+      if (triggered && !a.fired) {
+        a.fired = true;
+        this.notify(a, q.close);
+      }
+      if (!triggered) a.fired = false; // reset so it can fire again
+    });
+    localStorage.setItem('khipu_alerts', JSON.stringify(alerts));
+  },
+  notify(alert, price) {
+    const msg = `${alert.ticker} ${alert.dir === 'above' ? '▲' : '▼'} $${price.toFixed(2)} (alerta: $${alert.price})`;
+    if (typeof toast === 'function') toast(msg);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Khipu Finance · Alerta de precio', { body: msg, icon: '/icon.svg' });
+    }
+    // Also fire via existing Alerts system for banner display
+    try {
+      const n = nodeByTicker && nodeByTicker[alert.ticker];
+      const label = n ? n.label : alert.ticker;
+      const dir = alert.dir === 'above' ? (LANG==='en'?'rose above':'superó') : (LANG==='en'?'fell below':'bajó de');
+      const txt = `<b>${label}</b> ${dir} <b>$${alert.price}</b> → $${price.toFixed(2)}`;
+      const b = document.getElementById('alert-banner');
+      if (b) {
+        document.getElementById('alert-banner-text').innerHTML = txt;
+        b.classList.add('show');
+        document.getElementById('alert-banner-dismiss').onclick = () => b.classList.remove('show');
+        setTimeout(() => b.classList.remove('show'), 12000);
+      }
+    } catch(e) {}
+  },
+  requestPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  },
+  start() { this.requestPermission(); setInterval(() => this.check(), 60000); }
+};
+window.PriceAlerts = PriceAlerts;
 
 /* ════════════════ §I · CORONA DE EARNINGS PRÓXIMOS (Feature 3) ════════════════ */
 const V8earnings = {
@@ -5930,8 +6480,11 @@ V8.Keys=Keys; V8.health=health; V8.prefs=prefs;
   applyLangV8();
   // arranca precios en vivo (si hay clave + pref activa)
   LivePrices.start();
+  // arranca polling de alertas de precio cada 60s
+  PriceAlerts.start();
   // reevalúa alertas con lo que haya cacheado al cargar
   Object.entries(MKT.quotes||{}).forEach(([tk,q])=>{ if(q&&q.close!=null) Alerts.check(tk,q.close); });
+  PriceAlerts.check(); // también evalúa khipu_alerts al iniciar
   console.log('%cv8 listo','color:#9B4FE8;font-weight:700', SERVER_MODE?'· modo servidor':'· modo standalone',
     '· keys:', {finnhub:Keys.has('finnhub'),fmp:Keys.has('fmp'),claude:Keys.has('claude'),marketstack:Keys.has('marketstack')});
 })();
@@ -6007,6 +6560,400 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 // ═══════════════════════════════════════════════════════════════
 // Fin capa v8 / v8.1
 // ═══════════════════════════════════════════════════════════════
+</script>
+<!-- Second Brain Panel -->
+<div id="second-brain-panel" style="display:none;position:fixed;top:0;right:0;width:400px;height:100vh;z-index:500;background:var(--surface);border-left:1px solid var(--line);box-shadow:-4px 0 24px rgba(0,0,0,.12);overflow-y:auto;transition:transform .3s ease">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink)">🧠 Second Brain</div>
+      <div id="sb-company-name" style="font-size:11px;color:var(--ink-3);margin-top:2px">—</div>
+    </div>
+    <button onclick="document.getElementById('second-brain-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:18px;line-height:1">✕</button>
+  </div>
+  <div id="sb-content" style="padding:16px 20px">
+    <div style="color:var(--ink-3);font-size:13px;text-align:center;padding:40px 0">Selecciona una empresa en el grafo</div>
+  </div>
+</div>
+
+<!-- Bixby Voice Status -->
+<div id="bixby-status" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:1000;background:var(--surface);border:1px solid var(--violet);border-radius:20px;
+  padding:10px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)">
+  <span id="bixby-led" style="width:8px;height:8px;border-radius:50%;background:var(--violet);
+    animation:pulse 1s infinite"></span>
+  <span id="bixby-text" style="font-size:13px;font-weight:600;color:var(--ink)">Bixby escuchando...</span>
+  <button onclick="window.BixbyVoice?.stop()" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:16px">✕</button>
+</div>
+<style>
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sim-preset-btn:hover { background: var(--surface-2) !important; border-color: var(--violet) !important; }
+.dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }
+.dark #simulation-panel, .dark #space-panel { background: var(--bg); }
+.dark #sim-output { color: var(--ink-2); }
+</style>
+
+<!-- Khipu Finance Engine -->
+<script src="engine/graph3d.js"></script>
+<script src="engine/hypergraph.js"></script>
+<script src="engine/voice.js"></script>
+<script src="engine/secondbrain.js"></script>
+<script src="sim/mirofish_client.js"></script>
+<script src="sim/scenario_builder.js"></script>
+
+<script>
+// ── Khipu Core Coordinator ──────────────────────────────────────
+(function initKhipuCore() {
+  'use strict';
+
+  // 2D/3D toggle
+  let _is3D = false;
+  let _graph3d = null;
+  let _hypergraph = null;
+  let _secondBrain = null;
+
+  window._toggle3D = function() {
+    _is3D = !_is3D;
+    const svg = document.getElementById('graph');
+    const canvas = document.getElementById('graph-canvas');
+    const btn = document.getElementById('toggle-3d-btn');
+    const timeline = document.getElementById('hypergraph-timeline');
+    if (_is3D) {
+      svg.style.display = 'none';
+      canvas.style.display = 'block';
+      timeline.style.display = 'flex';
+      btn.style.background = 'var(--violet)';
+      btn.style.color = '#fff';
+      btn.style.borderColor = 'var(--violet)';
+      if (!_graph3d && window.KhipuGraph3D) {
+        _graph3d = new KhipuGraph3D('graph-canvas', window.NODES || [], window.RAW_LINKS || []);
+        window.khipuGraph3D = _graph3d;
+        if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
+        else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
+      } else if (_graph3d) {
+        _graph3d.resume && _graph3d.resume();
+      }
+      if (!_hypergraph && window.TemporalHypergraph) {
+        _hypergraph = new TemporalHypergraph(_graph3d);
+        _hypergraph.seedHistoricalEvents();
+        window._hypergraph = _hypergraph; // expose for GDELT auto-hyperedge
+      }
+    } else {
+      svg.style.display = '';
+      canvas.style.display = 'none';
+      timeline.style.display = 'none';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      if (_graph3d) _graph3d.pause && _graph3d.pause();
+    }
+  };
+
+  // Hypergraph timeline slider
+  document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('hg-year');
+    const label = document.getElementById('hg-year-label');
+    if (slider) {
+      slider.addEventListener('input', function() {
+        label.textContent = this.value;
+        if (_hypergraph) _hypergraph.setYear && _hypergraph.setYear(+this.value);
+      });
+    }
+    const hgAdd = document.getElementById('hg-add');
+    if (hgAdd) {
+      hgAdd.addEventListener('click', function() {
+        const year = +(document.getElementById('hg-year')?.value || 2026);
+        const name = prompt('Nombre del evento hipervínculo:');
+        if (!name) return;
+        const nodeIds = prompt('IDs de nodos afectados (separados por coma):');
+        if (!nodeIds) return;
+        if (_hypergraph) {
+          _hypergraph.addEvent({ id: 'evt_' + Date.now(), name, year, nodes: nodeIds.split(',').map(s => s.trim()), type: 'custom' });
+        }
+      });
+    }
+    const hgToggle = document.getElementById('hg-toggle');
+    if (hgToggle) {
+      hgToggle.addEventListener('click', function() {
+        const tl = document.getElementById('hypergraph-timeline');
+        if (tl) tl.style.display = 'none';
+      });
+    }
+
+    // Second Brain init
+    if (window.SecondBrain) {
+      _secondBrain = new SecondBrain(_graph3d);
+      window._secondBrain = _secondBrain;
+    }
+  });
+
+  // Hook into renderDetail to add NRS badge + Second Brain button
+  const _origRender = window.renderDetail;
+  if (typeof _origRender === 'function') {
+    window.renderDetail = function(id) {
+      _origRender(id);
+      // NRS badge
+      try {
+        const nrs = computeNRS(id);
+        let existing = document.getElementById('khipu-nrs-badge');
+        if (!existing) {
+          existing = document.createElement('div');
+          existing.id = 'khipu-nrs-badge';
+          existing.style.cssText = 'margin:8px 0;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);display:flex;align-items:center;gap:10px;font-size:12px';
+          const detail = document.getElementById('detail');
+          if (detail) detail.insertBefore(existing, detail.firstChild);
+        }
+        const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>`;
+      } catch(e) {}
+    };
+  }
+
+  // Open Second Brain panel
+  window._openSecondBrain = function(nodeId) {
+    const panel = document.getElementById('second-brain-panel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    const nameEl = document.getElementById('sb-company-name');
+    const n = window.NODE_BY_ID && window.NODE_BY_ID[nodeId];
+    if (nameEl) nameEl.textContent = n ? n.label : nodeId;
+    if (window._secondBrain) window._secondBrain.showNodeLayers(nodeId);
+  };
+
+  // Expose NRS globally for Bixby/MiroFish
+  window.computeNRS = computeNRS;
+
+})();
+
+// ── GDELT News Search ─────────────────────────────────────────────────────────
+let _gdeltInited = false;
+function initGdelt() {
+  if (_gdeltInited) return;
+  _gdeltInited = true;
+  const btn = document.getElementById('gdelt-search');
+  const inp = document.getElementById('gdelt-query');
+  const out = document.getElementById('gdelt-results');
+  if (!btn || !inp || !out) return;
+  async function doSearch() {
+    const q = inp.value.trim();
+    if (!q) return;
+    // Save to history
+    const _hist = JSON.parse(localStorage.getItem('gdelt_history') || '[]');
+    if (!_hist.includes(q)) { _hist.unshift(q); localStorage.setItem('gdelt_history', JSON.stringify(_hist.slice(0,10))); }
+    out.innerHTML = '<span style="color:var(--ink-3)">Buscando…</span>';
+    try {
+      const r = await fetch('/api/news/gdelt/' + encodeURIComponent(q));
+      if (!r.ok) throw new Error(r.statusText);
+      const data = await r.json();
+      const articles = data.articles || data.results || [];
+      if (!articles.length) { out.innerHTML = '<span style="color:var(--ink-3)">Sin resultados para "'+esc(q)+'"</span>'; return; }
+      out.innerHTML = articles.slice(0, 8).map(a => {
+        const title = esc(a.title || a.url || 'Artículo');
+        const src = esc(a.domain || a.source || '');
+        const ts = a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$1-$2-$3T$4:$5:$6Z')).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '';
+        const url = a.url || '#';
+        return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
+      }).join('');
+      // Auto-create hyperedge in TemporalHypergraph if 3D is active
+      if (window._hypergraph && articles.length >= 2) {
+        const affectedNodes = [];
+        (window.NODES || []).forEach(n => {
+          const needle = (n.label || '').toLowerCase();
+          const hasHit = articles.slice(0, 5).some(a => (a.title || '').toLowerCase().includes(needle) || needle.length > 4 && (a.title||'').toLowerCase().includes(needle.slice(0,5)));
+          if (hasHit) affectedNodes.push(n.id);
+        });
+        if (affectedNodes.length >= 2) {
+          const topArticle = articles[0];
+          window._hypergraph.fromNewsItem(
+            { headline: topArticle.title, summary: topArticle.title, url: topArticle.url, datetime: Date.now()/1000 },
+            affectedNodes.slice(0, 15)
+          );
+        }
+      }
+    } catch(e) {
+      out.innerHTML = '<span style="color:var(--danger)">Error: '+esc(e.message)+'</span>';
+    }
+  }
+  btn.addEventListener('click', doSearch);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  // Load saved searches
+  const _gdeltHistory = JSON.parse(localStorage.getItem('gdelt_history') || '[]');
+  if (_gdeltHistory.length) {
+    const hist = document.createElement('div');
+    hist.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px';
+    hist.innerHTML = _gdeltHistory.slice(0,5).map(h => `<button onclick="document.getElementById('gdelt-query').value='${esc(h)}';initGdelt&&document.getElementById('gdelt-search').click()" style="padding:2px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:10px;cursor:pointer;color:var(--ink-3)">${esc(h)}</button>`).join('');
+    out.parentElement.insertBefore(hist, out);
+  }
+}
+window.initGdelt = initGdelt;
+
+// ── NRS Top 10 ───────────────────────────────────────────────────────────────
+function renderNrsTop10() {
+  const el = document.getElementById('nrs-top-list');
+  if (!el) return;
+  try {
+    const scored = (window.NODES || []).map(n => {
+      try { return { n, v: computeNRS(n.id) }; } catch(e) { return null; }
+    }).filter(Boolean).sort((a, b) => b.v - a.v).slice(0, 10);
+    if (!scored.length) { el.innerHTML = '<span style="color:var(--ink-3)">Sin datos de riesgo</span>'; return; }
+    el.innerHTML = scored.map((item, i) => {
+      const { n, v } = item;
+      const color = v >= 70 ? '#ef4444' : v >= 50 ? '#f59e0b' : '#22c55e';
+      const bar = Math.round(v);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)">
+        <span style="font-size:10px;color:var(--ink-3);width:14px;text-align:right">${i+1}</span>
+        <span style="font-weight:600;font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.label)}</span>
+        <div style="width:60px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden"><div style="width:${bar}%;height:100%;background:${color};border-radius:3px"></div></div>
+        <span style="font-weight:700;font-size:12px;color:${color};min-width:24px;text-align:right">${bar}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<span style="color:var(--ink-3)">Calculando…</span>'; }
+}
+window.renderNrsTop10 = renderNrsTop10;
+
+// ── Simulation Tab ───────────────────────────────────────────────────────────
+let _simInited = false;
+function initSimTab() {
+  if (_simInited) return;
+  _simInited = true;
+  document.querySelectorAll('.sim-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sim-preset-btn').forEach(b => { b.style.borderColor=''; b.style.borderWidth=''; });
+      btn.style.borderColor = 'var(--violet)'; btn.style.borderWidth = '2px';
+      if (window.ScenarioBuilder && ScenarioBuilder.PRESETS) {
+        const preset = ScenarioBuilder.PRESETS[btn.dataset.preset];
+        if (preset) document.getElementById('sim-custom-text').value = preset.description || preset.title || btn.dataset.preset;
+      }
+    });
+  });
+  document.getElementById('sim-run-btn').addEventListener('click', async () => {
+    const text = document.getElementById('sim-custom-text').value.trim();
+    const nodeStr = document.getElementById('sim-custom-nodes').value.trim();
+    const output = document.getElementById('sim-output');
+    const status = document.getElementById('sim-status');
+    if (!text) { toast('Escribe un escenario o selecciona un preset'); return; }
+    status.textContent = '🔄 Ejecutando...'; status.style.background = 'rgba(155,79,232,.1)'; status.style.color = 'var(--violet)';
+    output.innerHTML = '<div style="color:var(--ink-3);text-align:center;padding:30px">Analizando con IA...</div>';
+    try {
+      const resp = await fetch('/api/ai/analyze', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          system: 'Eres un analista experto en cadenas de valor de semiconductores, IA y espacio. Analiza el escenario y proporciona: 1) Empresas más afectadas (con % impacto estimado), 2) Efectos dominó en la cadena de suministro, 3) Oportunidades de inversión ante el escenario, 4) Recomendaciones de gestión de riesgo. Sé específico y cuantitativo.',
+          prompt: `ESCENARIO: ${text}\nNodos relevantes: ${nodeStr||'toda la cadena de valor semiconductores/IA/espacio'}`,
+          max_tokens: 1500
+        })
+      });
+      if (!resp.ok) throw new Error('API error ' + resp.status);
+      const d = await resp.json();
+      const txt = (d.result||d.error||'Sin respuesta').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      output.innerHTML = `<div style="line-height:1.8;font-size:13px;white-space:pre-wrap">${txt}</div><div style="margin-top:12px;font-size:10px;color:var(--ink-3)">Modelo: ${d.model||'Claude'} · ${new Date().toLocaleTimeString()}</div>`;
+      status.textContent = '✅ Completado'; status.style.background = 'rgba(34,197,94,.1)'; status.style.color = '#22c55e';
+    } catch(e) {
+      output.innerHTML = `<div style="color:var(--danger);padding:16px">Error: ${e.message}. Asegúrate de tener configurada la clave Claude en ⚙.</div>`;
+      status.textContent = '❌ Error'; status.style.background = 'rgba(214,59,59,.1)'; status.style.color = 'var(--danger)';
+    }
+  });
+  document.getElementById('var-calc-btn').addEventListener('click', async () => {
+    const positions = Object.entries(MKT.pos || {});
+    if (!positions.length) { toast('Agrega posiciones en la pestaña Mercado'); return; }
+    const varResults = document.getElementById('var-results');
+    const varLoading = document.getElementById('var-loading');
+    const varContent = document.getElementById('var-content');
+    varResults.style.display = 'block'; varLoading.style.display = 'block'; varContent.style.display = 'none';
+    try {
+      const posMap = {};
+      positions.forEach(([id,p]) => { const n=NODE_BY_ID[id]; const tk=n?.mkt||id; if(tk&&p.sh>0) posMap[tk]={shares:p.sh,buy_price:p.bp}; });
+      if (!Object.keys(posMap).length) { toast('Sin tickers válidos en el portfolio'); return; }
+      const apiKey = localStorage.getItem('khipu_api_key') || '';
+      const resp = await fetch('/v1/risk/portfolio', {
+        method:'POST', headers:{'Content-Type':'application/json','X-KHIPU-Key':apiKey},
+        body: JSON.stringify({positions: posMap})
+      });
+      if (!resp.ok) { const err=await resp.json(); throw new Error(err.error||resp.statusText); }
+      const data = await resp.json();
+      varLoading.style.display = 'none'; varContent.style.display = 'block';
+      document.getElementById('var-95').textContent = data.var_95?.pct!=null?data.var_95.pct.toFixed(1)+'%':'—';
+      document.getElementById('cvar-95').textContent = data.cvar_95?.pct!=null?data.cvar_95.pct.toFixed(1)+'%':'—';
+      document.getElementById('sharpe-ratio').textContent = data.sharpe_ratio!=null?data.sharpe_ratio.toFixed(2):'—';
+      document.getElementById('max-drawdown').textContent = data.max_drawdown_pct!=null?data.max_drawdown_pct.toFixed(1)+'%':'—';
+    } catch(e) { varLoading.textContent = 'Error: '+e.message; varLoading.style.color='var(--danger)'; }
+  });
+}
+
+// ── Space Tab ────────────────────────────────────────────────────────────────
+let _spaceInited = false;
+async function initSpaceTab() {
+  const spaceCategories = ['space_launch','satellite','earth_obs'];
+  const spaceNodes = (window.NODES||[]).filter(n=>spaceCategories.includes(n.cat));
+  const countEl = document.getElementById('space-node-count');
+  if (countEl) countEl.textContent = spaceNodes.length;
+  const compEl = document.getElementById('space-companies-list');
+  let _spaceFilter = null;
+  function renderSpaceCompanies() {
+    if (!compEl) return;
+    const filtered = _spaceFilter ? spaceNodes.filter(n => n.cat === _spaceFilter) : spaceNodes;
+    compEl.innerHTML = filtered.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--c-${n.cat},#888)"></span><span style="font-weight:600;font-size:12px">${esc(n.label)}</span><span style="font-size:10px;color:var(--ink-3);margin-left:auto">${esc((n.ticker||'').split(' · ')[0])}</span></div>`).join('') || '<div style="color:var(--ink-3);font-size:12px;padding:12px 0">Sin empresas en esta categoría</div>';
+  }
+  // Category chips
+  const chipCats = [...new Set(spaceNodes.map(n=>n.cat))];
+  const chipContainer = document.createElement('div');
+  chipContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
+  chipContainer.innerHTML = `<button onclick="_spaceFilter=null;renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(c=>c.style.background='var(--surface)')" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface-2)">Todas</button>` + chipCats.map(c=>`<button class="space-chip" data-cat="${c}" onclick="_spaceFilter='${c}';renderSpaceCompanies();document.querySelectorAll('.space-chip').forEach(b=>b.style.background='var(--surface)');this.style.background='var(--surface-2)'" style="padding:3px 10px;border:1px solid var(--line);border-radius:10px;font-size:11px;cursor:pointer;background:var(--surface);display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:var(--c-${c},#888)"></span>${c.replace('_',' ')}</button>`).join('');
+  if (compEl && compEl.parentElement) compEl.parentElement.insertBefore(chipContainer, compEl);
+  window.renderSpaceCompanies = renderSpaceCompanies;
+  renderSpaceCompanies();
+  if (_spaceInited) return;
+  _spaceInited = true;
+  const launchEl = document.getElementById('launches-list');
+  document.getElementById('space-refresh').addEventListener('click', ()=>loadLaunches(launchEl));
+  loadLaunches(launchEl);
+}
+async function loadLaunches(el) {
+  el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Cargando lanzamientos...</div>';
+  try {
+    const resp = await fetch('/api/space/launches');
+    if (!resp.ok) throw new Error(resp.statusText);
+    const data = await resp.json();
+    const launches = data.results||data.launches||[];
+    if (!launches.length) { el.innerHTML='<div style="color:var(--ink-3);font-size:12px">Sin lanzamientos próximos disponibles</div>'; return; }
+    el.innerHTML = launches.slice(0,8).map(l=>{
+      const d=l.net?new Date(l.net):null;
+      const dStr=d?d.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):'—';
+      const daysTo=d?Math.round((d-Date.now())/86400000):null;
+      const badge=daysTo!=null?`<span style="padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${daysTo<3?'rgba(214,59,59,.12)':'rgba(61,224,200,.1)'};color:${daysTo<3?'var(--danger)':'var(--ink-2)'}">${daysTo>0?'T-'+daysTo+'d':'Lanzado'}</span>`:'';
+      const rocket=l.rocket?.configuration?.name||l.vehicle||'—';
+      const pad=l.pad?.name||'—';
+      const khipuId=l.khipu_node;
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><span style="font-weight:700;font-size:12px">${esc(l.name||l.mission||'Misión')}</span>${badge}${khipuId?`<button onclick="switchTab('map');setTimeout(()=>jumpTo('${khipuId}'),80)" style="font-size:10px;padding:2px 7px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--violet)">Ver nodo</button>`:''}</div><div style="font-size:11px;color:var(--ink-3)">${esc(rocket)} · ${esc(pad)} · ${dStr}</div></div>`;
+    }).join('');
+  } catch(e) { el.innerHTML=`<div style="color:var(--danger);font-size:12px">Error: ${e.message}</div>`; }
+}
+
+// ── NexusCore: simulation orchestrator ───────────────────────────────────────
+window.nexusCore = {
+  async runPreset(presetId) {
+    if (!window.ScenarioBuilder || !window.MiroFishClient) {
+      toast('Motor de simulación no disponible'); return;
+    }
+    switchTab('simulation');
+    await new Promise(r => setTimeout(r, 200));
+    const btn = document.querySelector(`.sim-preset-btn[data-preset="${presetId}"]`);
+    if (btn) btn.click();
+  },
+  async runPresetForNode(nodeId, mode) {
+    switchTab('simulation');
+    await new Promise(r => setTimeout(r, 200));
+    const n = NODE_BY_ID[nodeId];
+    if (!n) return;
+    const txt = document.getElementById('sim-custom-text');
+    const nodeInp = document.getElementById('sim-custom-nodes');
+    if (txt) txt.value = mode === 'collapse'
+      ? `Colapso catastrófico de ${n.label}: quiebra repentina, interrupción total de producción. ¿Qué empresas sufren más?`
+      : `Éxito masivo de ${n.label}: breakthrough tecnológico, cuota de mercado se triplica. ¿Quién gana y quién pierde?`;
+    if (nodeInp) nodeInp.value = nodeId;
+    const runBtn = document.getElementById('sim-run-btn');
+    if (runBtn) runBtn.click();
+  },
+};
 </script>
 </body>
 </html>
