@@ -1148,6 +1148,7 @@ footer .disc{line-height:1.4}
           <button data-f="all" class="active" data-i18n="mk_fall">Todas</button>
         </div>
         <button class="mkt-btn" id="mk-refresh">⟳ <span data-i18n="mk_refresh">Actualizar precios</span></button>
+        <button id="export-btn" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer" title="Exportar datos">⬇ CSV</button>
         <span class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</span>
         <span class="mkt-ts" id="mk-ts"></span>
         <button class="mkt-export" id="mk-export" title="Exportar portfolio a CSV">⬇ <span data-i18n="mk_export">Exportar</span></button>
@@ -6003,6 +6004,26 @@ const LivePrices = {
   setPill(on){ const el=$('live-pill'); if(el) el.classList.toggle('on',!!on); }
 };
 V8.market = { afterRender(){ LivePrices.setPill(LivePrices.connected); } };
+
+/* Export all nodes CSV */
+document.getElementById('export-btn')?.addEventListener('click', () => {
+  const rows = [['ID','Empresa','Ticker','Categoría','País','Precio','Cambio%','NRS','Acciones','P.Compra','Valor','P&L%']];
+  (window.NODES || []).forEach(n => {
+    const q = n.mkt ? (MKT.quotes[n.mkt] || {}) : {};
+    const p = MKT.pos[n.id];
+    const chg = (q.close && q.prev) ? ((q.close-q.prev)/q.prev*100).toFixed(2) : '';
+    const nrs = (typeof computeNRS==='function') ? computeNRS(n.id) : '';
+    const val = (p && q.close) ? (p.sh * q.close).toFixed(2) : '';
+    const pnl = (p && q.close && p.bp) ? (((q.close-p.bp)/p.bp)*100).toFixed(2) : '';
+    rows.push([n.id, n.label, n.mkt||'', n.cat, n.country||'', q.close||'', chg, nrs, p?p.sh:'', p?p.bp:'', val, pnl]);
+  });
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'khipu-finance-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  if (typeof toast === 'function') toast('CSV exportado · ' + (window.NODES||[]).length + ' empresas');
+});
 
 /* Export CSV (Feature 7) */
 $('mk-export').onclick=()=>{
