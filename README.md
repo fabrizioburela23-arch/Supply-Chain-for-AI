@@ -1,103 +1,106 @@
-# Del Silicio a la IA · v8
+# Khipu Finance 🌐
 
-Herramienta de **inteligencia de inversión** sobre la cadena de valor global de la IA:
-137 empresas reales, 540+ conexiones, grafo D3 interactivo, y ahora **datos en vivo,
-fundamentales, noticias, análisis con IA, portfolio real y alertas**.
+**Bloomberg Terminal + Jarvis de IA** para la cadena de valor global de semiconductores, IA y espacio.
 
-Funciona de dos maneras:
-
-| Modo | Cómo | API keys | Para quién |
-|------|------|----------|------------|
-| **Standalone** | Abre `app.html` en el navegador | Las ingresas en el panel ⚙ (se guardan en tu navegador) | Uso personal rápido |
-| **Servidor** | `python server.py` → `http://localhost:5050` | Viven en `.env` (nunca en el browser) | Distribución / producción |
-
-La app detecta sola en qué modo corre (mira si el puerto es `5050`) y enruta sus
-llamadas al proxy del servidor o directo a las APIs.
+> 450+ empresas · 900+ conexiones · 35 categorías · NRS Risk Score · Bixby AI Voice · 3D Graph · RAG Second Brain
 
 ---
 
-## Modo standalone (sin instalar nada)
+## Stack
 
-1. Doble clic en `app.html`.
-2. Abre el panel **⚙ Configuración** (arriba a la derecha).
-3. Pega tus API keys (Finnhub, FMP, Claude). Cada una tiene un botón **Probar**.
-4. Listo: precios en vivo, noticias, fundamentales y análisis IA quedan activos.
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | HTML/CSS/JS vanilla · D3.js v7 · Three.js r128 · Chart.js 4 |
+| Backend | Flask 3 · Python 3.11 · Gunicorn |
+| AI / Voz | Claude (Anthropic) · ElevenLabs Conversational AI (Bixby) |
+| RAG | ChromaDB · Flask microservice (puerto 5051) |
+| Simulación | MiroFish (multi-agent) · LiteLLM proxy → Claude |
+| Infra | Docker Compose · Redis · Service Worker (PWA) |
 
-> Las keys se guardan **solo en tu navegador** (`localStorage`), nunca dentro del
-> archivo ni se envían a ningún servidor nuestro. Finnhub y FMP permiten llamadas
-> directas desde el browser (CORS); Claude se llama con el header oficial
-> `anthropic-dangerous-direct-browser-access`.
+## Inicio rápido
 
----
-
-## Modo servidor (recomendado para producción)
-
+### Con Docker Compose (recomendado)
 ```bash
-pip install flask requests python-dotenv flask-caching anthropic
-cp .env.example .env          # y rellena tus claves
-python server.py              # http://localhost:5050
+cp .env.example .env
+# Edita .env con tus API keys
+docker-compose up -d
+# Abre http://localhost:5000
 ```
 
-El servidor:
-- Sirve `app.html`.
-- Proxea Finnhub / FMP / Marketstack / Claude (las keys quedan en el servidor).
-- Cachea respuestas en memoria (`flask-caching`) para no gastar llamadas.
-- Expone `/api/*` y un `/api/health` para la barra de estado de la app.
-
-Para abrir el WebSocket de precios en vivo, el frontend pide el token a
-`/api/ws-token` y conecta directo a Finnhub (Flask no proxea WebSockets sin libs extra).
-
----
-
-## Cómo obtener cada API key
-
-| API | Para qué | Free tier | Registro |
-|-----|----------|-----------|----------|
-| **Finnhub** | Precios real-time (WebSocket), noticias, earnings | 60 req/min · WS 50 símbolos | <https://finnhub.io/register> |
-| **Financial Modeling Prep** | Fundamentales, DCF, precio objetivo, insiders | 250 req/día | <https://site.financialmodelingprep.com/developer/docs> |
-| **Anthropic Claude** | Análisis IA, síntesis de noticias, riesgo de cadena | pay-as-you-go (~$0.001/análisis) | <https://console.anthropic.com> |
-| **Marketstack** | Precios EOD históricos (de v7) | 100 req/mes | <https://marketstack.com> |
-
----
-
-## Qué feature necesita qué API
-
-| Feature | Finnhub | FMP | Claude | Marketstack |
-|---------|:------:|:---:|:------:|:-----------:|
-| Precios en vivo (WebSocket) | ✅ | | | |
-| Noticias por empresa | ✅ | | | |
-| Próximo earnings + corona en el grafo | ✅ | | | |
-| Fundamentales (P/E, EV/EBITDA, precio obj., insiders) | | ✅ | | |
-| ✨ Análisis con IA | recom. | recom. | ✅ | |
-| 📰 Resumen de noticias IA | ✅ | | ✅ | |
-| Análisis de impacto del stress-test con IA | | | ✅ | |
-| Portfolio personal con P&L real | ✅ | | | |
-| Alertas de precio | ✅ | | | |
-| Precios EOD (compatibilidad v7) | | | | ✅ |
-
-Sin ninguna key, la app **sigue funcionando**: el grafo, el stress-test, el
-pathfinder, la geopolítica y el análisis de red son 100% locales. Las features de
-datos en vivo muestran un estado «configura tu key en ⚙» y degradan con elegancia.
-
----
-
-## Archivos
-
-```
-Del_Silicio_IA_v8/
-├── app.html        ← la app completa (un solo archivo, D3 desde CDN)
-├── server.py       ← backend proxy opcional (~200 líneas, Flask)
-├── .env.example    ← plantilla de variables de entorno
-└── README.md       ← este archivo
+### Solo servidor Python
+```bash
+pip install -r requirements.txt
+cp .env.example .env && nano .env
+python server.py
 ```
 
-## PWA / offline
+### Sin servidor (modo standalone)
+Abre `app.html` directamente en el navegador. Configura las API keys en ⚙ Configuración.
 
-En modo servidor, la app se puede **instalar** como aplicación de escritorio/móvil
-(Service Worker embebido + Web App Manifest) y muestra los últimos datos cacheados
-cuando no hay conexión, con un indicador «📴 Offline» en la cabecera.
+## Variables de entorno
 
----
+| Variable | Requerida | Descripción |
+|----------|-----------|-------------|
+| `SECRET_KEY` | ✅ | Clave JWT para la API v1 |
+| `FINNHUB_KEY` | ✅ | Precios en tiempo real (free tier OK) |
+| `ANTHROPIC_KEY` | ✅ | Claude para análisis IA y Bixby |
+| `ELEVENLABS_KEY` | Bixby | ElevenLabs Conversational AI |
+| `ELEVENLABS_AGENT_ID` | Bixby | ID del agente Bixby en ElevenLabs |
+| `AV_KEY` | VaR/CVaR | Alpha Vantage (free tier) |
+| `FMP_KEY` | Opciones | Financial Modeling Prep |
+| `MARKETSTACK_KEY` | Opciones | Marketstack EOD |
+| `RAG_URL` | Docker | URL del microservicio RAG (auto en Docker) |
+| `MIROFISH_URL` | Simulación | URL de MiroFish / LiteLLM proxy |
 
-*Análisis informativo basado en datos públicos y estimaciones. No constituye
-asesoría financiera.*
+## Arquitectura
+
+```
+Browser (app.html)
+├── D3.js force graph (2D) — 450+ nodos
+├── Three.js 3D graph (toggle con botón 3D)
+├── TemporalHypergraph — hiperedges de eventos
+├── SecondBrain panel — 5 capas RAG
+├── BixbyVoice — ElevenLabs WebSocket
+└── MiroFishClient — simulaciones multi-agente
+
+Flask server (server.py :5000)
+├── /api/* — proxies de Finnhub, FMP, GDELT, Space, Claude
+├── /v1/* — API pública con JWT auth (tiers)
+└── /api/rag/* — proxy al microservicio RAG
+
+RAG server (rag/rag_server.py :5051)
+└── ChromaDB — 5 colecciones vectoriales
+
+LiteLLM proxy (:4000)
+└── OpenAI SDK → Claude (para MiroFish)
+```
+
+## Funcionalidades principales
+
+- **Grafo 2D/3D**: 450+ empresas con zoom, filtros, stress-test cascada, pathfinder
+- **NRS Risk Score**: Puntuación 0-100 compuesta (geo + cadena + mercado + fundamental + concentración)
+- **Bixby**: Asistente de voz IA — navega el grafo, ejecuta stress-tests, consulta Second Brain por voz
+- **Second Brain**: Panel RAG con 5 capas (mercado, noticias, tesis, simulación, red)
+- **VaR/CVaR**: Cálculo de riesgo de portfolio con datos históricos Alpha Vantage
+- **Simulaciones**: 5 presets geopolíticos via MiroFish multi-agent
+- **GDELT News**: Búsqueda de noticias globales en tiempo real con auto-hiperedges en 3D
+- **Alertas de precio**: Notificaciones del sistema cuando un ticker cruza un umbral
+- **API pública v1**: JWT auth por tiers (free/starter/pro/business/enterprise)
+
+## Nodos incluidos
+
+| Categoría | Ejemplos |
+|-----------|---------|
+| Foundry / IDM | TSMC, Samsung, Intel, GlobalFoundries |
+| Fabless | Nvidia, AMD, Qualcomm, Broadcom, Apple Silicon |
+| Equipamiento | ASML, Applied Materials, Lam Research, KLA |
+| Cloud / NeoClouds | AWS, Azure, Google Cloud, CoreWeave, Lambda Labs |
+| AI Labs | OpenAI, Anthropic, DeepMind, xAI, Mistral |
+| Espacio | SpaceX, Rocket Lab, Planet Labs, AST SpaceMobile |
+| AI Defense | Anduril, Shield AI, Palantir, L3Harris |
+| Memoría | SK Hynix, Micron, Samsung Memory |
+| Quantum | IBM Quantum, IonQ, Rigetti, D-Wave |
+
+## Licencia
+
+Datos compilados de fuentes públicas y estimaciones de analistas (jun. 2026).
