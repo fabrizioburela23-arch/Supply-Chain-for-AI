@@ -4186,6 +4186,8 @@ if (_loaderBar) { _loaderBar.style.width = '30%'; _loaderText.textContent = 'Con
   }, 6000);
 })();
 // With 450+ nodes, reduce charge and increase decay for smoother convergence
+window._khipuInitError = null;
+try {
 const _nodeCount = NODES.length;
 const _chargeStr = _nodeCount > 300 ? -180 : _nodeCount > 150 ? -220 : -280;
 const _alphaDecay = _nodeCount > 300 ? 0.04 : 0.02;
@@ -4958,6 +4960,15 @@ document.getElementById('m-companies').textContent=NODES.length;
 document.getElementById('m-links').textContent=LINKS.length;
 document.getElementById('m-stages').textContent=new Set(NODES.map(n=>n.cat)).size;
 document.getElementById('m-preipo').textContent=NODES.filter(n=>n.preipo).length;
+} catch(_initErr) {
+  window._khipuInitError = _initErr;
+  console.error('[khipu] D3 init crash:', _initErr);
+  // Show error visibly in the graph area so we can debug without devtools
+  var _errDiv = document.createElement('div');
+  _errDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a0505;border:2px solid #ef4444;color:#fca5a5;padding:24px 32px;border-radius:12px;z-index:8888;max-width:600px;font-family:monospace;font-size:13px;white-space:pre-wrap';
+  _errDiv.textContent = '❌ Khipu init error:\n' + _initErr.message + '\n\n' + (_initErr.stack||'').split('\n').slice(0,6).join('\n');
+  document.body.appendChild(_errDiv);
+}
 
 /* ===================== Header: tema y reset ===================== */
 document.getElementById('theme-toggle').onclick=()=>{
