@@ -6502,6 +6502,9 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       btn.style.borderColor = 'var(--violet)';
       if (!_graph3d && window.KhipuGraph3D) {
         _graph3d = new KhipuGraph3D('graph-canvas', window.NODES || [], window.RAW_LINKS || []);
+        window.khipuGraph3D = _graph3d;
+        if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
+        else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
       } else if (_graph3d) {
         _graph3d.resume && _graph3d.resume();
       }
@@ -6553,7 +6556,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 
     // Second Brain init
     if (window.SecondBrain) {
-      _secondBrain = new SecondBrain('sb-content');
+      _secondBrain = new SecondBrain(_graph3d);
       window._secondBrain = _secondBrain;
     }
   });
@@ -6588,7 +6591,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     const nameEl = document.getElementById('sb-company-name');
     const n = window.NODE_BY_ID && window.NODE_BY_ID[nodeId];
     if (nameEl) nameEl.textContent = n ? n.label : nodeId;
-    if (window._secondBrain) window._secondBrain.open(nodeId);
+    if (window._secondBrain) window._secondBrain.showNodeLayers(nodeId);
   };
 
   // Expose NRS globally for Bixby/MiroFish

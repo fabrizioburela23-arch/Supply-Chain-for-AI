@@ -26,26 +26,30 @@ class SecondBrain {
   async showNodeLayers(nodeId) {
     this.activeNodeId = nodeId;
     const n = NODE_BY_ID[nodeId];
-    const el = document.getElementById('second-brain-panel');
-    if (!el || !n) return;
+    const panel = document.getElementById('second-brain-panel');
+    if (!n) return;
+    if (panel) panel.style.display = 'block';
+    const nameEl = document.getElementById('sb-company-name');
+    if (nameEl) nameEl.textContent = n.label + (n.mkt ? ' · ' + n.mkt.split(' · ')[0] : '');
+
+    const el = document.getElementById('sb-content');
+    if (!el) return;
 
     el.innerHTML = `
-      <div style="padding:16px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-          <span style="width:12px;height:12px;border-radius:50%;background:${typeof getCatColorHex==='function'?getCatColorHex(n.cat):typeof catColor==='function'?catColor(n.cat):'#888'};flex-shrink:0"></span>
-          <h3 style="font-family:'Fraunces',serif;font-size:17px;font-weight:600;margin:0">${esc(n.label)}</h3>
-          <span style="font-size:11px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">${esc((n.ticker || '').split(' · ')[0] || '')}</span>
-        </div>
-        <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap">
-          ${[['📊', 'Mercado', 1], ['📰', 'Noticias', 2], ['💡', 'Tesis', 3], ['🔮', 'Simulación', 4], ['🕸️', 'Red', 5]]
-            .map(([icon, label, layer]) =>
-              `<button class="sb-chip${this.activeLayer === layer ? ' active' : ''}"
-                onclick="window.secondBrain.setNodeLayer('${nodeId}',${layer})"
-                style="padding:5px 10px;font-size:12px;border:1px solid var(--line-2);border-radius:7px;background:${this.activeLayer === layer ? 'var(--surface-2)' : 'var(--surface)'};color:var(--ink-2);cursor:pointer">${icon} ${label}</button>`
-            ).join('')}
-        </div>
-        <div id="brain-layer-content"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${typeof getCatColorHex==='function'?getCatColorHex(n.cat):typeof catColor==='function'?catColor(n.cat):'#888'};flex-shrink:0"></span>
+        <span style="font-size:13px;font-weight:700">${esc(n.label)}</span>
+        <span style="font-size:11px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">${esc((n.ticker || '').split(' · ')[0] || '')}</span>
       </div>
+      <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap">
+        ${[['📊', 'Mercado', 1], ['📰', 'Noticias', 2], ['💡', 'Tesis', 3], ['🔮', 'Simulación', 4], ['🕸️', 'Red', 5]]
+          .map(([icon, label, layer]) =>
+            `<button class="sb-chip${this.activeLayer === layer ? ' active' : ''}"
+              onclick="window._secondBrain&&window._secondBrain.setNodeLayer('${nodeId}',${layer})"
+              style="padding:5px 10px;font-size:12px;border:1px solid var(--line-2);border-radius:7px;background:${this.activeLayer === layer ? 'var(--surface-2)' : 'var(--surface)'};color:var(--ink-2);cursor:pointer">${icon} ${label}</button>`
+          ).join('')}
+      </div>
+      <div id="brain-layer-content"></div>
     `;
     await this._renderLayerContent(nodeId, this.activeLayer);
   }
