@@ -1153,6 +1153,24 @@ footer .disc{line-height:1.4}
       </div>
       <div class="mkt-tablewrap"><table class="mkt-table" id="mk-table"></table></div>
       <p class="mkt-foot" data-i18n="mk_foot">Precios fin-de-día (EOD) de Marketstack v2 en una sola llamada por actualización. Empresas sin listado en EE.UU. (privadas o solo bolsa local) aparecen sin cotización.</p>
+
+      <!-- GDELT Global News -->
+      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="mkt-tablewrap" style="padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="mkt-sec-head" style="margin:0">📰 Noticias Globales (GDELT)</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="gdelt-query" placeholder="Empresa o tema…" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);font-size:11px;width:140px">
+              <button id="gdelt-search" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer">Buscar</button>
+            </div>
+          </div>
+          <div id="gdelt-results" style="font-size:12px;color:var(--ink-3)">Escribe una empresa y busca noticias globales en tiempo real</div>
+        </div>
+        <div class="mkt-tablewrap" style="padding:16px">
+          <div class="mkt-sec-head" style="margin-bottom:12px">⚡ NRS Top 10 — Mayor Riesgo</div>
+          <div id="nrs-top-list" style="font-size:12px"></div>
+        </div>
+      </div>
     </div>
   </section>
 <section id="analysis-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
@@ -1394,6 +1412,13 @@ footer .disc{line-height:1.4}
     <button id="kfi-gen-btn" class="key-btn" style="flex:1">Generar clave</button>
   </div>
   <div id="kfi-result" style="padding:0 20px 12px;font-size:11px;color:var(--ink-3);word-break:break-all;display:none"></div>
+
+  <div class="settings-sec">🧠 ChromaDB / RAG</div>
+  <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Indexa todos los nodos en la base vectorial de Second Brain para búsqueda semántica y contexto de Bixby:</div>
+  <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center">
+    <button id="rag-index-btn" class="key-btn" style="flex:1">Indexar todos los nodos</button>
+    <span id="rag-index-status" style="font-size:11px;color:var(--ink-3)"></span>
+  </div>
 
   <div class="settings-sec" id="set-data-h">🗑 Datos</div>
   <div class="danger-btns">
@@ -5491,6 +5516,7 @@ function renderMarket(keepStatus){
     </tr>`;
   }).join('')+'</tbody>';
   if(typeof V8!=='undefined' && V8.market) V8.market.afterRender();
+  if(typeof renderNrsTop10==='function') renderNrsTop10();
 }
 window.posEdit=id=>{ MKT.editing=id; renderMarket(true); };
 window.posCancel=()=>{ MKT.editing=null; renderMarket(true); };
@@ -5816,6 +5842,35 @@ document.getElementById('kfi-gen-btn').addEventListener('click', async () => {
       result.innerHTML = `<span style="color:var(--ink-2)">✓ Clave ${tier} generada y guardada</span><br><span style="color:var(--ink-3)">${data.api_key.substring(0,24)}…</span>`;
     } else { result.style.display='block'; result.textContent='Error: '+(data.error||'desconocido'); }
   } catch(e) { result.style.display='block'; result.textContent='Error: '+e.message; }
+});
+
+// RAG batch indexer
+document.getElementById('rag-index-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('rag-index-btn');
+  const status = document.getElementById('rag-index-status');
+  btn.disabled = true; btn.textContent = 'Indexando…';
+  status.textContent = '';
+  try {
+    const nodes = (window.NODES || []).map(n => ({
+      id: n.id, label: n.label, cat: n.cat, ticker: n.mkt || n.ticker || '',
+      geo: n.geo || '', big: !!n.big, desc: n.desc || ''
+    }));
+    const resp = await fetch('/api/rag/index-batch', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(nodes)
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      status.style.color = 'var(--green, #22c55e)';
+      status.textContent = `✓ ${data.indexed}/${data.total} nodos`;
+    } else {
+      status.style.color = 'var(--danger)';
+      status.textContent = 'Error: ' + (data.error || resp.statusText);
+    }
+  } catch(e) {
+    status.style.color = 'var(--danger)';
+    status.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Indexar todos los nodos';
 });
 
 /* ════════════════ §F · PRECIOS EN VIVO (Feature 1) + portfolio (Feature 7) ════════════════ */
@@ -6539,6 +6594,80 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   window.computeNRS = computeNRS;
 
 })();
+
+// ── GDELT News Search ─────────────────────────────────────────────────────────
+(function() {
+  let _gdeltInited = false;
+  function initGdelt() {
+    if (_gdeltInited) return;
+    _gdeltInited = true;
+    const btn = document.getElementById('gdelt-search');
+    const inp = document.getElementById('gdelt-query');
+    const out = document.getElementById('gdelt-results');
+    if (!btn || !inp || !out) return;
+    async function doSearch() {
+      const q = inp.value.trim();
+      if (!q) return;
+      out.innerHTML = '<span style="color:var(--ink-3)">Buscando…</span>';
+      try {
+        const r = await fetch('/api/news/gdelt/' + encodeURIComponent(q));
+        if (!r.ok) throw new Error(r.statusText);
+        const data = await r.json();
+        const articles = data.articles || data.results || [];
+        if (!articles.length) { out.innerHTML = '<span style="color:var(--ink-3)">Sin resultados para "'+esc(q)+'"</span>'; return; }
+        out.innerHTML = articles.slice(0, 8).map(a => {
+          const title = esc(a.title || a.url || 'Artículo');
+          const src = esc(a.domain || a.source || '');
+          const ts = a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$1-$2-$3T$4:$5:$6Z')).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '';
+          const url = a.url || '#';
+          return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
+        }).join('');
+      } catch(e) {
+        out.innerHTML = '<span style="color:var(--danger)">Error: '+esc(e.message)+'</span>';
+      }
+    }
+    btn.addEventListener('click', doSearch);
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  }
+  // Hook into switchTab market
+  const _origSwitch = window.switchTab;
+  if (typeof _origSwitch === 'function') {
+    window.switchTab = function(tab) {
+      _origSwitch(tab);
+      if (tab === 'market') { setTimeout(initGdelt, 100); setTimeout(renderNrsTop10, 200); }
+    };
+  }
+  // Also init if market tab is already active
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof activeTab !== 'undefined' && activeTab === 'market') { initGdelt(); renderNrsTop10(); }
+  });
+  // Expose for manual call
+  window.initGdelt = initGdelt;
+})();
+
+// ── NRS Top 10 ───────────────────────────────────────────────────────────────
+function renderNrsTop10() {
+  const el = document.getElementById('nrs-top-list');
+  if (!el) return;
+  try {
+    const scored = (window.NODES || []).map(n => {
+      try { return { n, v: computeNRS(n.id) }; } catch(e) { return null; }
+    }).filter(Boolean).sort((a, b) => b.v - a.v).slice(0, 10);
+    if (!scored.length) { el.innerHTML = '<span style="color:var(--ink-3)">Sin datos de riesgo</span>'; return; }
+    el.innerHTML = scored.map((item, i) => {
+      const { n, v } = item;
+      const color = v >= 70 ? '#ef4444' : v >= 50 ? '#f59e0b' : '#22c55e';
+      const bar = Math.round(v);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line);cursor:pointer" onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)">
+        <span style="font-size:10px;color:var(--ink-3);width:14px;text-align:right">${i+1}</span>
+        <span style="font-weight:600;font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.label)}</span>
+        <div style="width:60px;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden"><div style="width:${bar}%;height:100%;background:${color};border-radius:3px"></div></div>
+        <span style="font-weight:700;font-size:12px;color:${color};min-width:24px;text-align:right">${bar}</span>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<span style="color:var(--ink-3)">Calculando…</span>'; }
+}
+window.renderNrsTop10 = renderNrsTop10;
 
 // ── Simulation Tab ───────────────────────────────────────────────────────────
 let _simInited = false;

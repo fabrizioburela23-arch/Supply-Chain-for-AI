@@ -490,6 +490,30 @@ def mirofish_proxy(endpoint):
         return jsonify({'error': str(e), 'mirofish_url': MIROFISH_URL}), 502
 
 
+# ── Bixby voice — system prompt for ElevenLabs agent configuration ──────────
+BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI voice assistant for Khipu Finance — a Bloomberg Terminal-style intelligence platform for the global semiconductor, AI, and space supply chain covering 450+ companies.
+
+Your capabilities:
+- Navigate to companies on the graph: use navigate_to_company({company_id})
+- Run stress tests to simulate company failures: use run_stress_test({company_id})
+- Launch MiroFish simulations for geopolitical scenarios: use run_simulation({scenario_text})
+- Query the Second Brain RAG for company intelligence: use search_second_brain({query})
+- Get portfolio risk metrics (VaR/CVaR): use get_portfolio_risk()
+
+Key knowledge:
+- Supply chain categories: fabless, foundry, equipment, memory, ASIC, photonics, AI defense, space launch, satellite, DC REITs, CDN/edge, neuromorphic, battery materials, rare earth
+- Key companies: TSMC (foundry leader), NVIDIA (AI GPU), ASML (EUV monopoly), Anthropic (Claude AI), SpaceX (launch), Palantir (defense AI), Cloudflare (CDN), Equinix (DC REIT)
+- NRS (NEXUS Risk Score): 0-100 composite risk score based on geo, chain, market, fundamental, concentration factors
+- Always speak in the same language as the user (Spanish or English)
+
+Be concise, analytical, and actionable. You are a financial intelligence co-pilot, not a general assistant."""
+
+@app.route('/api/voice/bixby-prompt', methods=['GET'])
+def bixby_system_prompt():
+    """Returns Bixby's system prompt for ElevenLabs agent configuration."""
+    return jsonify({'system_prompt': BIXBY_SYSTEM_PROMPT, 'agent_name': 'Bixby', 'platform': 'Khipu Finance'})
+
+
 # ── Bixby voice — sesión firmada de ElevenLabs ───────────────────────────────
 @app.route('/api/voice/session', methods=['POST'])
 def voice_session():
@@ -507,6 +531,26 @@ def voice_session():
         return jsonify(r.json()), r.status_code
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200]}), 502
+
+
+# ── RAG auto-indexer — index node list into Second Brain ────────────────────
+@app.route('/api/rag/index-batch', methods=['POST'])
+def rag_index_batch():
+    """Accepts a JSON array of nodes and indexes them all into the RAG."""
+    nodes = request.get_json(silent=True) or []
+    if not isinstance(nodes, list):
+        return jsonify({'error': 'Expected JSON array of nodes'}), 400
+    indexed, errors = 0, []
+    for node in nodes:
+        try:
+            r = requests.post(f'{RAG_URL}/index/company', json=node, timeout=30)
+            if r.ok:
+                indexed += 1
+            else:
+                errors.append({'id': node.get('id'), 'error': r.text[:100]})
+        except Exception as e:  # noqa: BLE001
+            errors.append({'id': node.get('id'), 'error': str(e)[:100]})
+    return jsonify({'indexed': indexed, 'total': len(nodes), 'errors': errors[:10]})
 
 
 # ── RAG proxy (Second Brain) ─────────────────────────────────────────────────
