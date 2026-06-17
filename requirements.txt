@@ -7,3 +7,4 @@ gunicorn>=21.2.0
 # Khipu Finance v1 — API pública (JWT) y métricas de riesgo (VaR/CVaR)
 pyjwt>=2.8.0
 numpy>=1.26.0
+pytest>=7.4.0
