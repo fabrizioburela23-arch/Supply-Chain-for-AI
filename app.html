@@ -1383,6 +1383,18 @@ footer .disc{line-height:1.4}
     <label class="pref-row"><input type="checkbox" id="pref-aicache"> <span id="pref-aicache-l">Guardar análisis de IA en caché (24h)</span></label>
   </div>
 
+  <div class="settings-sec">🔐 Khipu Finance API Key</div>
+  <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Para usar VaR/CVaR y la API v1, genera una clave JWT:</div>
+  <div style="padding:0 20px 12px;display:flex;gap:8px">
+    <select id="kfi-tier" style="flex:1;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
+      <option value="free">free</option>
+      <option value="starter" selected>starter</option>
+      <option value="pro">pro</option>
+    </select>
+    <button id="kfi-gen-btn" class="key-btn" style="flex:1">Generar clave</button>
+  </div>
+  <div id="kfi-result" style="padding:0 20px 12px;font-size:11px;color:var(--ink-3);word-break:break-all;display:none"></div>
+
   <div class="settings-sec" id="set-data-h">🗑 Datos</div>
   <div class="danger-btns">
     <button class="key-btn" id="data-clear-quotes">Borrar caché de precios</button>
@@ -1394,7 +1406,7 @@ footer .disc{line-height:1.4}
 <div id="hover-tooltip"></div>
 <script>
 // ═══════════════════════════════════════════════════════════════
-// Ecosistema IA v7 · Del Silicio a la IA · Cadena de Valor Global
+// Khipu Finance v1 · Cadena de Valor Global · 450+ empresas · 35 categorías
 // Construido: 2026-06-12
 // Nodos: 132+ | Links: 530+ | Tipos de relación: 7 | Pestañas: 4
 // Mejoras M1-M10 implementadas
@@ -4013,11 +4025,15 @@ let pathfinderMode=false, pathSrc=null, pathDst=null, pathActive=false;
 let pathNodes=new Set(), pathLinkKeys=new Set();
 function isPathLink(l){ return pathLinkKeys.has(lid(l.source)+'>'+lid(l.target)); }
 
+// With 450+ nodes, reduce charge and increase decay for smoother convergence
+const _nodeCount = NODES.length;
+const _chargeStr = _nodeCount > 300 ? -180 : _nodeCount > 150 ? -220 : -280;
+const _alphaDecay = _nodeCount > 300 ? 0.04 : 0.02;
 const sim = d3.forceSimulation(NODES)
   .force('link', d3.forceLink(LINKS).id(d=>d.id).distance(d=>60+d.w*4).strength(.3))
-  .force('charge', d3.forceManyBody().strength(-280))
+  .force('charge', d3.forceManyBody().strength(_chargeStr).distanceMax(400))
   .force('collide', d3.forceCollide(d=>d.big?36:24))
-  .alphaDecay(.02).velocityDecay(.38);
+  .alphaDecay(_alphaDecay).velocityDecay(.38);
 
 function setForces(){
   if(viewMode==='geo'){
@@ -4882,9 +4898,10 @@ setTimeout(resize,60);
 /* ===================== i18n ===================== */
 const I18N = {
 es: {
-  sub:'Cadena de valor global 2026 · 137 empresas · 540+ conexiones · 7 tipos de relación',
+  sub:'Cadena de valor global 2026 · 450+ empresas · 900+ conexiones · 35 categorías',
   tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo',
   tab_analysis:'Análisis de Red', tab_geo:'Geopolítica',
+  tab_sim:'Simulación', tab_space:'Espacio',
   f_link:'Vínculo',
   lt_all:'Todos', lt_supply:'Suministro', lt_fab:'Fabricación', lt_license:'Licencia IP',
   lt_cloud:'Cloud/SaaS', lt_invest:'Inversión', lt_deploy:'Despliegue', lt_partner:'Partnership',
@@ -4934,9 +4951,10 @@ es: {
   mk_add:'+ Posición', mk_edit:'✎', mk_npos:'—',
 },
 en: {
-  sub:'Global value chain 2026 · 137 companies · 540+ links · 7 relation types',
+  sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
   tab_map:'Chain Map', tab_market:'Live Market',
   tab_analysis:'Network Analysis', tab_geo:'Geopolitics',
+  tab_sim:'Simulation', tab_space:'Space Economy',
   f_link:'Link type',
   lt_all:'All', lt_supply:'Supply', lt_fab:'Fabrication', lt_license:'IP License',
   lt_cloud:'Cloud/SaaS', lt_invest:'Investment', lt_deploy:'Deployment', lt_partner:'Partnership',
@@ -5785,6 +5803,21 @@ $('data-clear-ai').onclick=()=>{ Object.keys(localStorage).filter(k=>k.startsWit
   toast(LANG==='en'?'AI analysis cleared':'Análisis IA borrados'); if(selected) renderDetail(selected); };
 $('data-clear-cache').onclick=()=>{ idb.clear(); toast(LANG==='en'?'Data cache cleared':'Caché de datos vaciada'); };
 
+// Khipu API key generation
+document.getElementById('kfi-gen-btn').addEventListener('click', async () => {
+  const tier = document.getElementById('kfi-tier').value;
+  const result = document.getElementById('kfi-result');
+  try {
+    const resp = await fetch('/v1/auth/key', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({user_id: 'browser_'+Date.now(), tier}) });
+    const data = await resp.json();
+    if (data.api_key) {
+      localStorage.setItem('khipu_api_key', data.api_key);
+      result.style.display = 'block';
+      result.innerHTML = `<span style="color:var(--ink-2)">✓ Clave ${tier} generada y guardada</span><br><span style="color:var(--ink-3)">${data.api_key.substring(0,24)}…</span>`;
+    } else { result.style.display='block'; result.textContent='Error: '+(data.error||'desconocido'); }
+  } catch(e) { result.style.display='block'; result.textContent='Error: '+e.message; }
+});
+
 /* ════════════════ §F · PRECIOS EN VIVO (Feature 1) + portfolio (Feature 7) ════════════════ */
 const LivePrices = {
   ws:null, connected:false, poll:null, seeded:false, subs:[],
@@ -6373,6 +6406,10 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 </div>
 <style>
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sim-preset-btn:hover { background: var(--surface-2) !important; border-color: var(--violet) !important; }
+.dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }
+.dark #simulation-panel, .dark #space-panel { background: var(--bg); }
+.dark #sim-output { color: var(--ink-2); }
 </style>
 
 <!-- Khipu Finance Engine -->
@@ -6512,9 +6549,9 @@ function initSimTab() {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.sim-preset-btn').forEach(b => { b.style.borderColor=''; b.style.borderWidth=''; });
       btn.style.borderColor = 'var(--violet)'; btn.style.borderWidth = '2px';
-      if (window.ScenarioBuilder) {
-        const seed = ScenarioBuilder.getPreset(btn.dataset.preset);
-        if (seed) document.getElementById('sim-custom-text').value = seed.description || seed.title || btn.dataset.preset;
+      if (window.ScenarioBuilder && ScenarioBuilder.PRESETS) {
+        const preset = ScenarioBuilder.PRESETS[btn.dataset.preset];
+        if (preset) document.getElementById('sim-custom-text').value = preset.description || preset.title || btn.dataset.preset;
       }
     });
   });
