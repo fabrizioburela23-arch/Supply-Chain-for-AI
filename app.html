@@ -6276,6 +6276,52 @@ const Alerts = {
   }
 };
 
+/* ════════════════ §H2 · PRICE ALERTS POLLING (Feature 8b) ════════════════ */
+const PriceAlerts = {
+  check() {
+    const alerts = JSON.parse(localStorage.getItem('khipu_alerts') || '[]');
+    alerts.forEach(a => {
+      const q = MKT.quotes[a.ticker];
+      if (!q || q.close == null) return;
+      const triggered = (a.dir === 'above' && q.close >= a.price) || (a.dir === 'below' && q.close <= a.price);
+      if (triggered && !a.fired) {
+        a.fired = true;
+        this.notify(a, q.close);
+      }
+      if (!triggered) a.fired = false; // reset so it can fire again
+    });
+    localStorage.setItem('khipu_alerts', JSON.stringify(alerts));
+  },
+  notify(alert, price) {
+    const msg = `${alert.ticker} ${alert.dir === 'above' ? '▲' : '▼'} $${price.toFixed(2)} (alerta: $${alert.price})`;
+    if (typeof toast === 'function') toast(msg);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('Khipu Finance · Alerta de precio', { body: msg, icon: '/icon.svg' });
+    }
+    // Also fire via existing Alerts system for banner display
+    try {
+      const n = nodeByTicker && nodeByTicker[alert.ticker];
+      const label = n ? n.label : alert.ticker;
+      const dir = alert.dir === 'above' ? (LANG==='en'?'rose above':'superó') : (LANG==='en'?'fell below':'bajó de');
+      const txt = `<b>${label}</b> ${dir} <b>$${alert.price}</b> → $${price.toFixed(2)}`;
+      const b = document.getElementById('alert-banner');
+      if (b) {
+        document.getElementById('alert-banner-text').innerHTML = txt;
+        b.classList.add('show');
+        document.getElementById('alert-banner-dismiss').onclick = () => b.classList.remove('show');
+        setTimeout(() => b.classList.remove('show'), 12000);
+      }
+    } catch(e) {}
+  },
+  requestPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  },
+  start() { this.requestPermission(); setInterval(() => this.check(), 60000); }
+};
+window.PriceAlerts = PriceAlerts;
+
 /* ════════════════ §I · CORONA DE EARNINGS PRÓXIMOS (Feature 3) ════════════════ */
 const V8earnings = {
   applyCorona(id){
@@ -6384,8 +6430,11 @@ V8.Keys=Keys; V8.health=health; V8.prefs=prefs;
   applyLangV8();
   // arranca precios en vivo (si hay clave + pref activa)
   LivePrices.start();
+  // arranca polling de alertas de precio cada 60s
+  PriceAlerts.start();
   // reevalúa alertas con lo que haya cacheado al cargar
   Object.entries(MKT.quotes||{}).forEach(([tk,q])=>{ if(q&&q.close!=null) Alerts.check(tk,q.close); });
+  PriceAlerts.check(); // también evalúa khipu_alerts al iniciar
   console.log('%cv8 listo','color:#9B4FE8;font-weight:700', SERVER_MODE?'· modo servidor':'· modo standalone',
     '· keys:', {finnhub:Keys.has('finnhub'),fmp:Keys.has('fmp'),claude:Keys.has('claude'),marketstack:Keys.has('marketstack')});
 })();
