@@ -44,7 +44,7 @@ log = logging.getLogger('khipu')
 
 FINNHUB  = os.getenv('FINNHUB_KEY', '')
 FMP      = os.getenv('FMP_KEY', '')
-CLAUDE   = os.getenv('CLAUDE_KEY', '')
+CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
 MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 # Modelo de Claude para los análisis. Haiku 4.5 es barato y rápido (~$0.001/análisis);
 # sube a claude-opus-4-8 para máxima calidad. Cambiable sin tocar código.
@@ -54,7 +54,7 @@ AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
 MIROFISH_URL        = os.getenv('MIROFISH_URL', 'http://localhost:8000')
 ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
-AV_KEY              = os.getenv('ALPHA_VANTAGE_KEY', '')
+AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
 RAG_URL             = os.getenv('RAG_URL', 'http://localhost:5051')
 SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
 
@@ -562,6 +562,43 @@ def khipu_auth(min_tier='free'):
             return f(*args, **kwargs)
         return wrapper
     return decorator
+
+
+@app.route('/v1/auth/key', methods=['POST'])
+def api_issue_key():
+    """Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise."""
+    if not _HAS_JWT:
+        return jsonify({'error': 'PyJWT not installed — JWT API disabled'}), 503
+    body = request.get_json(silent=True) or {}
+    user_id = body.get('user_id') or body.get('email') or str(uuid.uuid4())
+    tier = body.get('tier', 'free')
+    if tier not in TIER_DAY_LIMITS:
+        return jsonify({'error': f'Unknown tier. Valid: {list(TIER_DAY_LIMITS.keys())}'}), 400
+    key = generate_khipu_key(user_id, tier)
+    return jsonify({'api_key': key, 'tier': tier, 'user_id': user_id, 'note': 'Pass as X-KHIPU-Key header or ?api_key= query param'})
+
+
+@app.route('/docs', methods=['GET'])
+def api_docs():
+    return jsonify({
+        'name': 'Khipu Finance API v1',
+        'version': '1.0.0',
+        'endpoints': {
+            'POST /v1/auth/key': 'Issue API key (body: {user_id, tier})',
+            'GET  /v1/nodes': 'Node universe metadata [free]',
+            'GET  /v1/nodes/<id>/live': 'Live quote + fundamentals for a node [starter]',
+            'POST /v1/risk/portfolio': 'VaR/CVaR/Sharpe for portfolio [starter]',
+            'GET  /api/space/launches': 'Upcoming space launches (Launch Library 2)',
+            'GET  /api/news/gdelt/<company>': 'Global news via GDELT',
+            'GET  /api/fundamentals/<ticker>/sec': 'SEC EDGAR fundamentals (US companies)',
+            'GET  /api/voice/session': 'Bixby ElevenLabs signed session URL',
+            'POST /api/rag/<path>': 'Second Brain RAG proxy',
+            'ANY  /api/mirofish/<path>': 'MiroFish simulation proxy',
+            'GET  /api/health': 'Service health check',
+        },
+        'tiers': list(TIER_DAY_LIMITS.keys()),
+        'auth': 'X-KHIPU-Key header or ?api_key= param',
+    })
 
 
 @app.route('/v1/nodes', methods=['GET'])
