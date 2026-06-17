@@ -12,4 +12,4 @@ ENV RAG_PORT=5051
 ENV CHROMA_PATH=/data/chroma
 EXPOSE 5051
 
-CMD ["python", "rag_server.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5051", "--workers", "2", "--timeout", "120", "rag_server:app_rag"]
