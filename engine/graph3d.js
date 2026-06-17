@@ -29,8 +29,13 @@ class KhipuGraph3D {
   }
 
   init() {
+    // Canvas may have 0×0 if still display:none — use parent dimensions as fallback
+    const w = this.canvas.clientWidth || this.container?.clientWidth || window.innerWidth;
+    const h = this.canvas.clientHeight || this.container?.clientHeight || window.innerHeight;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
+    this.renderer.setSize(w, h);
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
     this.renderer.shadowMap.enabled = false;
 
     // Luces
@@ -138,8 +143,10 @@ class KhipuGraph3D {
   }
 
   _createLinkLine(link, nodes) {
-    const src = nodes.find(n => n.id === lid(link.source));
-    const dst = nodes.find(n => n.id === lid(link.target));
+    // O(1) lookup via NODE_BY_ID instead of O(n) find
+    const nbi = (typeof NODE_BY_ID !== 'undefined') ? NODE_BY_ID : null;
+    const src = nbi ? nbi[lid(link.source)] : nodes.find(n => n.id === lid(link.source));
+    const dst = nbi ? nbi[lid(link.target)] : nodes.find(n => n.id === lid(link.target));
     if (!src || !dst) return null;
 
     const color = getLinkColorHex(link.type || 'supply');
@@ -425,8 +432,9 @@ function getCatColorHex(cat) {
 
 function getLinkColorHex(type) {
   const LINK_HEX = {
-    supply: '#4E8B1E', fab: '#0F8C5F', license: '#6B5DD3', cloud: '#0A6CA8',
-    invest: '#B8880D', deploy: '#0E7A6E', partner: '#8A857A',
+    supply:   '#4E8B1E', fab:      '#0F8C5F', license:  '#6B5DD3',
+    cloud:    '#0A6CA8', invest:   '#B8880D', deploy:   '#0E7A6E',
+    partner:  '#8A857A', customer: '#C25E12', owns:     '#7C3AED',
   };
   return LINK_HEX[type] || '#4E8B1E';
 }
