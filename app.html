@@ -6705,19 +6705,21 @@ function initSimTab() {
     const varContent = document.getElementById('var-content');
     varResults.style.display = 'block'; varLoading.style.display = 'block'; varContent.style.display = 'none';
     try {
-      const portfolio = positions.map(([id,p]) => { const n=NODE_BY_ID[id]; return {ticker:n?.mkt||id,shares:p.sh,buy_price:p.bp}; }).filter(p=>p.ticker&&p.shares>0);
+      const posMap = {};
+      positions.forEach(([id,p]) => { const n=NODE_BY_ID[id]; const tk=n?.mkt||id; if(tk&&p.sh>0) posMap[tk]={shares:p.sh,buy_price:p.bp}; });
+      if (!Object.keys(posMap).length) { toast('Sin tickers válidos en el portfolio'); return; }
       const apiKey = localStorage.getItem('khipu_api_key') || '';
       const resp = await fetch('/v1/risk/portfolio', {
         method:'POST', headers:{'Content-Type':'application/json','X-KHIPU-Key':apiKey},
-        body: JSON.stringify({portfolio})
+        body: JSON.stringify({positions: posMap})
       });
       if (!resp.ok) { const err=await resp.json(); throw new Error(err.error||resp.statusText); }
       const data = await resp.json();
       varLoading.style.display = 'none'; varContent.style.display = 'block';
-      document.getElementById('var-95').textContent = data.var_95_pct!=null?(data.var_95_pct*100).toFixed(1)+'%':'—';
-      document.getElementById('cvar-95').textContent = data.cvar_95_pct!=null?(data.cvar_95_pct*100).toFixed(1)+'%':'—';
-      document.getElementById('sharpe-ratio').textContent = data.sharpe!=null?data.sharpe.toFixed(2):'—';
-      document.getElementById('max-drawdown').textContent = data.max_drawdown_pct!=null?(data.max_drawdown_pct*100).toFixed(1)+'%':'—';
+      document.getElementById('var-95').textContent = data.var_95?.pct!=null?data.var_95.pct.toFixed(1)+'%':'—';
+      document.getElementById('cvar-95').textContent = data.cvar_95?.pct!=null?data.cvar_95.pct.toFixed(1)+'%':'—';
+      document.getElementById('sharpe-ratio').textContent = data.sharpe_ratio!=null?data.sharpe_ratio.toFixed(2):'—';
+      document.getElementById('max-drawdown').textContent = data.max_drawdown_pct!=null?data.max_drawdown_pct.toFixed(1)+'%':'—';
     } catch(e) { varLoading.textContent = 'Error: '+e.message; varLoading.style.color='var(--danger)'; }
   });
 }
