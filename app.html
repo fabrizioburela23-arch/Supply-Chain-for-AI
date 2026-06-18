@@ -4821,10 +4821,13 @@ function renderDetail(id){
   document.getElementById('detail').innerHTML=`
     <div class="d-cat-bar" style="background:${col}"></div>
     <div class="d-head">
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="d-name">${esc(d.label)}</div>
         <div class="d-ticker mono">${esc(d.ticker)}</div>
       </div>
+      <button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')"
+        title="Second Brain — análisis completo"
+        style="flex-shrink:0;padding:5px 10px;border:1px solid var(--violet);border-radius:6px;background:none;color:var(--violet);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🧠 Brain</button>
     </div>
     <div class="d-badges">
       <span class="badge badge-cat"><span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block"></span>${catLabel(d.cat)}</span>
@@ -4852,6 +4855,18 @@ function renderDetail(id){
       <div class="gl">${t('d_growth')}</div>
       <div class="gv">${esc(nf(d,'growth'))}</div>
     </div>
+    ${d.mkt && !isPreipoTicker(d.ticker) ? `
+    <div class="d-section" id="stock-chart-section-${id}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h3 style="margin:0">Precio histórico (90d)</h3>
+        <div style="display:flex;gap:4px">
+          <button id="chart-line-${id}" onclick="setChartMode('${id}','line')" style="padding:2px 9px;font-size:10px;border:1px solid var(--violet);border-radius:4px;background:var(--violet);color:#fff;cursor:pointer;transition:.15s">Línea</button>
+          <button id="chart-candle-${id}" onclick="setChartMode('${id}','candle')" style="padding:2px 9px;font-size:10px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--ink-3);cursor:pointer;transition:.15s">Velas</button>
+        </div>
+      </div>
+      <canvas id="stock-canvas-${id}" style="width:100%;height:110px;border-radius:6px;display:block"></canvas>
+      <div id="stock-info-${id}" style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ink-3)"></div>
+    </div>` : ''}
     <div class="d-section">
       <h3>${t('d_role')}</h3>
       <p>${esc(nf(d,'role'))}</p>
@@ -4878,9 +4893,162 @@ function renderDetail(id){
   document.getElementById('detail').style.display='block';
   document.getElementById('panel-empty').style.display='none';
   document.getElementById('panel').scrollTop=0;
+  if (d.mkt && !isPreipoTicker(d.ticker)) {
+    requestAnimationFrame(() => loadStockChart(id, d.mkt));
+  }
 }
 window.stressBtn=function(id){ activateStress(id); };
 window.clearStressBtn=function(){ clearStress(); };
+
+/* ===================== Stock Chart ===================== */
+const _stockCache = {};   // ticker → candle data
+const _chartModes = {};   // nodeId → 'line' | 'candle'
+
+function setChartMode(nodeId, mode) {
+  _chartModes[nodeId] = mode;
+  const node = NODE_BY_ID[nodeId];
+  if (node && _stockCache[node.mkt]) drawStockChart(nodeId, _stockCache[node.mkt], mode);
+  const btn = (id, on) => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.style.background = on ? 'var(--violet)' : 'none';
+    b.style.color = on ? '#fff' : 'var(--ink-3)';
+    b.style.borderColor = on ? 'var(--violet)' : 'var(--line)';
+  };
+  btn(`chart-line-${nodeId}`,   mode === 'line');
+  btn(`chart-candle-${nodeId}`, mode === 'candle');
+}
+window.setChartMode = setChartMode;
+
+async function loadStockChart(nodeId, ticker) {
+  _chartModes[nodeId] = _chartModes[nodeId] || 'line';
+  const canvas = document.getElementById(`stock-canvas-${nodeId}`);
+  if (!canvas) return;
+
+  if (_stockCache[ticker]) {
+    drawStockChart(nodeId, _stockCache[ticker], _chartModes[nodeId]);
+    return;
+  }
+
+  const W = canvas.offsetWidth || 260, H = 110;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const isDark = document.documentElement.classList.contains('dark');
+  ctx.fillStyle = isDark ? '#26241D' : '#EFEBE1';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = isDark ? '#827D72' : '#8A857A';
+  ctx.font = '11px Archivo,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Cargando ' + ticker + '…', W / 2, H / 2);
+
+  try {
+    const r = await fetch(`/api/candles/${encodeURIComponent(ticker)}`);
+    const data = await r.json();
+    if (!r.ok || data.s !== 'ok' || !data.c || !data.c.length) throw new Error('no_data');
+    _stockCache[ticker] = data;
+    drawStockChart(nodeId, data, _chartModes[nodeId]);
+    const info = document.getElementById(`stock-info-${nodeId}`);
+    if (info) {
+      const last = data.c[data.c.length - 1];
+      const prev = data.c[data.c.length - 2] || last;
+      const chg = ((last - prev) / prev * 100).toFixed(2);
+      const color = chg >= 0 ? '#22c55e' : '#ef4444';
+      info.innerHTML = `<span>Último: <b>$${last.toFixed(2)}</b></span><span style="color:${color}">${chg >= 0 ? '+' : ''}${chg}%</span><span>${data.c.length}d de datos</span>`;
+    }
+  } catch(e) {
+    const c2 = document.getElementById(`stock-canvas-${nodeId}`);
+    if (!c2) return;
+    const ctx2 = c2.getContext('2d');
+    const isDk = document.documentElement.classList.contains('dark');
+    ctx2.fillStyle = isDk ? '#26241D' : '#EFEBE1';
+    ctx2.fillRect(0, 0, c2.width, c2.height);
+    ctx2.fillStyle = isDk ? '#827D72' : '#8A857A';
+    ctx2.font = '11px Archivo,sans-serif';
+    ctx2.textAlign = 'center';
+    ctx2.fillText('Sin datos históricos', c2.width / 2, c2.height / 2);
+  }
+}
+window.loadStockChart = loadStockChart;
+
+function drawStockChart(nodeId, data, mode) {
+  const canvas = document.getElementById(`stock-canvas-${nodeId}`);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || 260;
+  const H = canvas.offsetHeight || 110;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const { o: opens, c: closes, h: highs, l: lows, t: times } = data;
+  const n = closes.length;
+  if (!n) return;
+  const pad = { t: 6, r: 6, b: 18, l: 40 };
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  const prices = mode === 'candle' ? [...highs, ...lows] : closes;
+  const minP = Math.min(...prices), maxP = Math.max(...prices);
+  const rng = maxP - minP || 1;
+  const xS = i => pad.l + (i / (n - 1)) * cW;
+  const yS = p => pad.t + cH - ((p - minP) / rng) * cH;
+  const isDark = document.documentElement.classList.contains('dark');
+
+  ctx.fillStyle = isDark ? '#26241D' : '#EFEBE1';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = isDark ? '#322F27' : '#DDD8CC';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 3; i++) {
+    const y = pad.t + (cH / 3) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+  }
+  // Y labels
+  ctx.fillStyle = isDark ? '#827D72' : '#8A857A';
+  ctx.font = '8px JetBrains Mono,monospace';
+  ctx.textAlign = 'right';
+  for (let i = 0; i <= 3; i++) {
+    const p = minP + (rng / 3) * (3 - i);
+    ctx.fillText('$' + p.toFixed(0), pad.l - 3, pad.t + (cH / 3) * i + 3);
+  }
+
+  if (mode === 'line') {
+    const isUp = closes[n - 1] >= closes[0];
+    const lc = isUp ? '#22c55e' : '#ef4444';
+    const grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+    grad.addColorStop(0, isUp ? 'rgba(34,197,94,.22)' : 'rgba(239,68,68,.22)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath();
+    closes.forEach((c, i) => i === 0 ? ctx.moveTo(xS(i), yS(c)) : ctx.lineTo(xS(i), yS(c)));
+    ctx.lineTo(xS(n - 1), H - pad.b); ctx.lineTo(xS(0), H - pad.b); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    closes.forEach((c, i) => i === 0 ? ctx.moveTo(xS(i), yS(c)) : ctx.lineTo(xS(i), yS(c)));
+    ctx.strokeStyle = lc; ctx.lineWidth = 1.5; ctx.stroke();
+  } else {
+    const bW = Math.max(1, (cW / n) * 0.6);
+    for (let i = 0; i < n; i++) {
+      const x = xS(i);
+      const up = closes[i] >= opens[i];
+      ctx.strokeStyle = ctx.fillStyle = up ? '#22c55e' : '#ef4444';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(x, yS(highs[i])); ctx.lineTo(x, yS(lows[i])); ctx.stroke();
+      const top = yS(Math.max(opens[i], closes[i]));
+      ctx.fillRect(x - bW / 2, top, bW, Math.max(1, yS(Math.min(opens[i], closes[i])) - top));
+    }
+  }
+  // X date labels
+  if (times && times.length) {
+    ctx.fillStyle = isDark ? '#827D72' : '#8A857A';
+    ctx.font = '8px JetBrains Mono,monospace';
+    ctx.textAlign = 'center';
+    [0, Math.floor(n / 3), Math.floor((2 * n) / 3), n - 1].forEach(i => {
+      if (i >= n) return;
+      const d = new Date(times[i] * 1000);
+      ctx.fillText(`${d.getMonth() + 1}/${d.getDate()}`, xS(i), H - pad.b + 11);
+    });
+  }
+}
 
 /* ===================== Selector de vista ===================== */
 function applyView(mode){
@@ -6760,29 +6928,79 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 // ═══════════════════════════════════════════════════════════════
 </script>
 <!-- Second Brain Panel -->
-<div id="second-brain-panel" style="display:none;position:fixed;top:0;right:0;width:400px;height:100vh;z-index:500;background:var(--surface);border-left:1px solid var(--line);box-shadow:-4px 0 24px rgba(0,0,0,.12);overflow-y:auto;transition:transform .3s ease">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1">
-    <div>
-      <div style="font-size:13px;font-weight:700;color:var(--ink)">🧠 Second Brain</div>
-      <div id="sb-company-name" style="font-size:11px;color:var(--ink-3);margin-top:2px">—</div>
+<div id="second-brain-panel" style="display:none;position:fixed;top:0;right:0;width:420px;height:100vh;z-index:500;background:var(--surface);border-left:1px solid var(--line);box-shadow:-4px 0 32px rgba(0,0,0,.16);overflow-y:auto;transition:transform .3s ease">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1;backdrop-filter:blur(8px)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet),#52B1FF);display:flex;align-items:center;justify-content:center;font-size:14px">🧠</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink)">Second Brain · Khipu</div>
+        <div id="sb-company-name" style="font-size:10px;color:var(--ink-3);margin-top:1px;font-family:'JetBrains Mono',monospace">—</div>
+      </div>
     </div>
-    <button onclick="document.getElementById('second-brain-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:18px;line-height:1">✕</button>
+    <button onclick="document.getElementById('second-brain-panel').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:18px;line-height:1;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center" onmouseenter="this.style.background='var(--surface-2)'" onmouseleave="this.style.background='none'">✕</button>
   </div>
-  <div id="sb-content" style="padding:16px 20px">
-    <div style="color:var(--ink-3);font-size:13px;text-align:center;padding:40px 0">Selecciona una empresa en el grafo</div>
+  <div id="sb-content" style="padding:16px 18px">
+    <div style="text-align:center;padding:48px 0 32px">
+      <div style="font-size:32px;margin-bottom:12px">🧠</div>
+      <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:6px">Knowledge Graph Empresarial</div>
+      <div style="font-size:12px;color:var(--ink-3);line-height:1.6;max-width:280px;margin:0 auto">
+        Selecciona cualquier empresa en el grafo para ver su análisis completo: mercado en vivo, noticias, tesis de inversión, simulación de riesgo y posición en la red.
+      </div>
+      <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
+        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">📊 Precio en vivo</span>
+        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">📰 Noticias RAG</span>
+        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">💡 Tesis IA</span>
+        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">🔮 Simulación</span>
+        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">🕸️ Red de dependencias</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Bixby Voice Status -->
-<div id="bixby-status" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-  z-index:1000;background:var(--surface);border:1px solid var(--violet);border-radius:20px;
-  padding:10px 20px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)">
-  <span id="bixby-led" style="width:8px;height:8px;border-radius:50%;background:var(--violet);
-    animation:pulse 1s infinite"></span>
-  <span id="bixby-text" style="font-size:13px;font-weight:600;color:var(--ink)">Bixby escuchando...</span>
-  <button onclick="window.BixbyVoice?.stop()" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:16px">✕</button>
+<!-- Bixby Voice — Jarvis UI -->
+<div id="bixby-status" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:1000;pointer-events:none">
+  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);pointer-events:all;
+    background:linear-gradient(160deg,rgba(20,19,15,.97),rgba(28,27,22,.99));
+    border:1px solid rgba(155,79,232,.45);border-bottom:none;border-radius:22px 22px 0 0;
+    padding:22px 36px 18px;min-width:300px;max-width:90vw;
+    box-shadow:0 -10px 50px rgba(155,79,232,.18),0 -4px 20px rgba(0,0,0,.4)">
+    <!-- animated rings -->
+    <div style="display:flex;justify-content:center;margin-bottom:14px">
+      <div style="position:relative;width:66px;height:66px">
+        <div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(155,79,232,.55);animation:bixby-ring 1.6s ease-in-out infinite"></div>
+        <div style="position:absolute;inset:9px;border-radius:50%;border:1.5px solid rgba(82,177,255,.45);animation:bixby-ring 1.6s ease-in-out .4s infinite"></div>
+        <div style="position:absolute;inset:18px;border-radius:50%;border:1px solid rgba(155,79,232,.35);animation:bixby-ring 1.6s ease-in-out .8s infinite"></div>
+        <div style="position:absolute;inset:25px;border-radius:50%;background:linear-gradient(135deg,#9B4FE8,#52B1FF);
+          display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">✦</div>
+      </div>
+    </div>
+    <!-- audio visualizer -->
+    <div id="bixby-viz" style="display:flex;align-items:flex-end;justify-content:center;gap:3px;height:28px;margin-bottom:12px">
+      <div class="bvbar" style="animation-delay:.00s"></div><div class="bvbar" style="animation-delay:.07s"></div>
+      <div class="bvbar" style="animation-delay:.14s"></div><div class="bvbar" style="animation-delay:.21s"></div>
+      <div class="bvbar" style="animation-delay:.10s"></div><div class="bvbar" style="animation-delay:.05s"></div>
+      <div class="bvbar" style="animation-delay:.18s"></div><div class="bvbar" style="animation-delay:.12s"></div>
+      <div class="bvbar" style="animation-delay:.03s"></div><div class="bvbar" style="animation-delay:.16s"></div>
+      <div class="bvbar" style="animation-delay:.09s"></div><div class="bvbar" style="animation-delay:.22s"></div>
+    </div>
+    <!-- status text -->
+    <div style="text-align:center">
+      <div style="font-size:10px;font-weight:600;letter-spacing:.12em;color:rgba(155,79,232,.7);text-transform:uppercase;margin-bottom:3px">BIXBY · KHIPU AI</div>
+      <div id="bixby-text" style="font-size:13px;font-weight:600;color:#F0EDE3;font-family:'Archivo',sans-serif;min-height:18px">Iniciando…</div>
+    </div>
+    <button onclick="window.BixbyVoice?.stop()" title="Cerrar Bixby"
+      style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;
+        color:rgba(240,237,227,.35);font-size:15px;line-height:1;transition:.15s"
+      onmouseenter="this.style.color='rgba(240,237,227,.8)'" onmouseleave="this.style.color='rgba(240,237,227,.35)'">✕</button>
+  </div>
 </div>
+<!-- legacy element kept so voice.js can reference it without errors -->
+<span id="bixby-led" style="display:none"></span>
 <style>
+@keyframes bixby-ring { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.1);opacity:1} }
+@keyframes bixby-bar  { 0%{height:3px;opacity:.3} 100%{height:22px;opacity:1} }
+.bvbar { width:3px;border-radius:2px;background:var(--violet);min-height:3px;
+  animation:bixby-bar .55s ease-in-out infinite alternate; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 .sim-preset-btn:hover { background: var(--surface-2) !important; border-color: var(--violet) !important; }
 .dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }

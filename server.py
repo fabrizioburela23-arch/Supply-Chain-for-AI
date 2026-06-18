@@ -304,6 +304,23 @@ def batch_quotes():
     return jsonify(results)
 
 
+@app.route('/api/candles/<ticker>')
+@cache.cached(timeout=1800)
+def candles(ticker):
+    """Returns 90 days of daily OHLCV candles for charting."""
+    if not FINNHUB:
+        return jsonify({'error': 'no FINNHUB_KEY', 's': 'no_data'}), 400
+    import time as _time
+    to_ts   = int(_time.time())
+    from_ts = to_ts - 90 * 86400
+    data, err = _safe_get(
+        f'https://finnhub.io/api/v1/stock/candle?symbol={ticker}'
+        f'&resolution=D&from={from_ts}&to={to_ts}&token={FINNHUB}')
+    if err or not data or data.get('s') == 'no_data':
+        return jsonify({'error': err or 'no_data', 's': 'no_data'}), 404
+    return jsonify(data)
+
+
 @app.route('/api/news/<ticker>')
 @cache.cached(timeout=1800)  # 30 min
 def company_news(ticker):

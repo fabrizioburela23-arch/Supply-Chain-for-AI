@@ -180,13 +180,37 @@ class KhipuGraph3D {
   }
 
   _staticLayout(nodes) {
-    const R = 420;
-    nodes.forEach((n, i) => {
-      const phi = Math.acos(-1 + (2 * i) / nodes.length);
-      const theta = Math.sqrt(nodes.length * Math.PI) * phi;
-      n.x = R * Math.cos(theta) * Math.sin(phi);
-      n.y = R * Math.sin(theta) * Math.sin(phi);
-      n.z = R * Math.cos(phi);
+    // Category-cluster layout: each category gets a center on a large sphere,
+    // nodes scatter within their cluster — gives genuine 3D brain-like depth.
+    const catMap = {};
+    nodes.forEach(n => { const c = n.cat || 'fabless'; (catMap[c] = catMap[c] || []).push(n); });
+    const cats = Object.keys(catMap);
+    const CLUSTER_R = 300;  // radius of cluster-center sphere
+    const SCATTER   = 85;   // scatter radius within each cluster
+
+    // Cluster centers: Fibonacci on outer sphere
+    const centers = {};
+    cats.forEach((cat, i) => {
+      const phi   = Math.acos(-1 + (2 * i) / cats.length);
+      const theta = Math.sqrt(cats.length * Math.PI) * phi;
+      centers[cat] = {
+        x: CLUSTER_R * Math.cos(theta) * Math.sin(phi),
+        y: CLUSTER_R * Math.sin(theta) * Math.sin(phi),
+        z: CLUSTER_R * Math.cos(phi),
+      };
+    });
+
+    // Fast deterministic hash for consistent positions across reloads
+    const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h; };
+
+    nodes.forEach(n => {
+      const c  = centers[n.cat || 'fabless'] || { x: 0, y: 0, z: 0 };
+      const hx = hash(n.id);
+      const hy = hash(n.id + '__y');
+      const hz = hash(n.id + '__z');
+      n.x = c.x + ((hx & 0xFFFF) / 0xFFFF - 0.5) * 2 * SCATTER;
+      n.y = c.y + ((hy & 0xFFFF) / 0xFFFF - 0.5) * 2 * SCATTER;
+      n.z = c.z + ((hz & 0xFFFF) / 0xFFFF - 0.5) * 2 * SCATTER;
       const mesh = this.nodeMeshes.get(n.id);
       if (mesh) mesh.position.set(n.x, n.y, n.z);
     });
