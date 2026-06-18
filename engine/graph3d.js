@@ -253,10 +253,21 @@ class KhipuGraph3D {
       if (mesh) mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
     }
 
-    // Rotate the whole graph as a brain — gives 3D depth perception
-    // Stop auto-rotation while user is dragging (mouse button held)
+    // Rotate the whole graph as a brain — gives 3D depth perception.
+    // When Bixby is speaking/listening, window.__bixbyEnergy (0..1) drives a
+    // Jarvis-like reaction: the brain spins faster and pulses with the voice.
     if (!this._dragging) {
-      this._graphGroup.rotation.y += 0.0006;
+      let speed = 0.0006;
+      const energy = (typeof window !== 'undefined' && window.__bixbyEnergy) || 0;
+      if (energy > 0) {
+        speed += energy * 0.006;
+        window.__bixbyEnergy = energy * 0.94; // smooth decay
+        const s = 1 + energy * 0.04;
+        this._graphGroup.scale.setScalar(s);
+      } else if (this._graphGroup.scale.x !== 1) {
+        this._graphGroup.scale.setScalar(1);
+      }
+      this._graphGroup.rotation.y += speed;
     }
 
     this.renderer.render(this.scene, this.camera);

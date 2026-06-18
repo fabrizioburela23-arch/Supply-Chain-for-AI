@@ -245,6 +245,10 @@ const BixbyVoice = {
     const bars = document.querySelectorAll('#bixby-viz .bvbar');
     if (!bars.length) return;
     const level = Math.min(1, rms * 6); // scale up; speech RMS is small
+    // Jarvis effect: the brain also reacts to the user's voice
+    if (level > 0.08 && typeof window !== 'undefined') {
+      window.__bixbyEnergy = Math.max(window.__bixbyEnergy || 0, level);
+    }
     bars.forEach((b, i) => {
       // pseudo-random spread so bars look lively, scaled by real level
       const jitter = 0.4 + 0.6 * Math.abs(Math.sin(now / 120 + i));
@@ -295,6 +299,8 @@ const BixbyVoice = {
 
   _enqueueAudio(b64chunk) {
     this.audioQueue.push(b64chunk);
+    // Jarvis effect: make the 3D brain react while Bixby speaks
+    if (typeof window !== 'undefined') window.__bixbyEnergy = 1;
     if (!this.isPlaying) this._playNext();
   },
 
