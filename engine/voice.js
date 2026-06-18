@@ -64,10 +64,13 @@ const BixbyVoice = {
       this.ws = new WebSocket(signedUrl);
       this.ws.onopen = () => {
         this.isConnected = true;
-        this._showOverlay('Bixby conectado — iniciando…');
+        this._showOverlay('Bixby conectado — pidiendo micrófono…');
         this._sendInitContext();
-        // Don't start mic here — wait for conversation_initiation_metadata from server
-        // which confirms the session is ready to receive audio
+        // Start the mic right away so the browser shows the permission prompt
+        // immediately on the user gesture. ElevenLabs buffers our chunks until
+        // the session is ready; we don't need to wait for the metadata event.
+        // (We also retry on conversation_initiation_metadata as a safety net.)
+        if (!this._micStream) this._startMic();
       };
       this.ws.onmessage = e => this._handleMessage(JSON.parse(e.data));
       this.ws.onerror = () => { this._setStatus('Error de conexión con Bixby', true); this.disconnect(); };
@@ -83,10 +86,13 @@ const BixbyVoice = {
     // Stop ScriptProcessor mic path
     try { this._micSource?.disconnect(); } catch {}
     try { this._micProcessor?.disconnect(); } catch {}
+    try { this._micMute?.disconnect(); } catch {}
     try { this._micStream?.getTracks().forEach(t => t.stop()); } catch {}
     this._micSource = null;
     this._micProcessor = null;
+    this._micMute = null;
     this._micStream = null;
+    this._micStarting = false;
     // Stop MediaRecorder path (legacy fallback)
     try { this.mediaRecorder?.stop(); } catch {}
     this.mediaRecorder = null;
@@ -99,21 +105,31 @@ const BixbyVoice = {
   _sendInitContext() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const ctx = this._buildContext();
-    // ElevenLabs ConvAI expects conversation_config_override structure.
-    // input_audio_format must be declared so ElevenLabs knows we're sending PCM 16kHz.
-    const configOverride = {
-      audio: { input_audio_format: 'pcm_16000' },
-    };
-    if (this._systemPrompt) {
-      configOverride.agent = { prompt: { prompt: this._systemPrompt } };
-    }
-    this.ws.send(JSON.stringify({
+    // ElevenLabs ConvAI initiation message — fields go at the TOP LEVEL of the
+    // message (NOT nested under a conversation_initiation_client_data key).
+    // The agent's audio formats (input pcm_16000) are set in the dashboard;
+    // we don't override them here (override needs to be enabled per-agent and
+    // an invalid field can reject the whole init).
+    const msg = {
       type: 'conversation_initiation_client_data',
-      conversation_initiation_client_data: {
-        conversation_config_override: configOverride,
-        custom_llm_extra_body: { khipu_context: ctx },
+      custom_llm_extra_body: { khipu_context: ctx },
+      dynamic_variables: {
+        selected_company: ctx.selected_company?.label || 'ninguna',
+        active_tab: ctx.active_tab || 'mapa',
+        total_nodes: ctx.total_nodes || 0,
       },
-    }));
+    };
+    // Only send a prompt/language override if we actually have a prompt.
+    // (If the agent doesn't allow overrides ElevenLabs just ignores it.)
+    const override = {};
+    if (this._systemPrompt) {
+      override.agent = {
+        prompt: { prompt: this._systemPrompt },
+        language: (typeof LANG !== 'undefined') ? LANG : 'es',
+      };
+    }
+    if (Object.keys(override).length) msg.conversation_config_override = override;
+    this.ws.send(JSON.stringify(msg));
   },
 
   _buildContext() {
@@ -139,13 +155,17 @@ const BixbyVoice = {
   },
 
   async _startMic() {
+    if (this._micStarting || this._micStream) return; // guard against double-start
+    this._micStarting = true;
     const TARGET_RATE = 16000;
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('getUserMedia no disponible (¿HTTPS?)');
+      }
       // ElevenLabs ConvAI requires raw PCM 16-bit 16kHz mono — NOT webm/opus from MediaRecorder.
       // We use ScriptProcessor to capture Float32 samples, downsample to 16kHz, and send Int16 PCM.
-      // Note: getUserMedia sampleRate constraint is often ignored by browsers; we downsample explicitly.
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
         video: false,
       });
 
@@ -156,13 +176,20 @@ const BixbyVoice = {
       const srcNode = this.audioCtx.createMediaStreamSource(stream);
       // ScriptProcessor is deprecated but universally supported; AudioWorklet requires HTTPS+module
       const processor = this.audioCtx.createScriptProcessor(4096, 1, 1);
+      this._chunksSent = 0;
 
       processor.onaudioprocess = (ev) => {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
         const f32 = ev.inputBuffer.getChannelData(0);
+
+        // Drive the Jarvis visualizer with live mic level (RMS)
+        let sum = 0;
+        for (let i = 0; i < f32.length; i++) sum += f32[i] * f32[i];
+        this._setMicLevel(Math.sqrt(sum / f32.length));
+
         let i16;
         if (actualRate !== TARGET_RATE) {
-          // Downsample via nearest-neighbor (step ≈ 2.756 for 44100→16000)
+          // Downsample via averaging window (better than nearest-neighbor for VAD)
           const step = actualRate / TARGET_RATE;
           const outLen = Math.floor(f32.length / step);
           i16 = new Int16Array(outLen);
@@ -181,27 +208,59 @@ const BixbyVoice = {
         let bin = '';
         for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
         this.ws.send(JSON.stringify({ user_audio_chunk: btoa(bin) }));
+        this._chunksSent++;
       };
 
       srcNode.connect(processor);
-      processor.connect(this.audioCtx.destination);
+      // ScriptProcessor must connect to destination to fire onaudioprocess in
+      // some browsers. Route through a muted gain so we don't create feedback.
+      const mute = this.audioCtx.createGain();
+      mute.gain.value = 0;
+      processor.connect(mute);
+      mute.connect(this.audioCtx.destination);
+
       this._micSrc = srcNode;
       this._micSource = srcNode;
       this._micProcessor = processor;
+      this._micMute = mute;
       this._micStream = stream;
       this.mediaRecorder = null;
+      this._micStarting = false;
+      this._showOverlay('🎙️ Bixby te escucha — habla');
     } catch (e) {
-      this._setStatus('Micrófono no disponible: ' + e.message, true);
-      this.disconnect();
+      this._micStarting = false;
+      const msg = (e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError'))
+        ? 'Permiso de micrófono denegado — actívalo en el navegador'
+        : 'Micrófono no disponible: ' + (e?.message || e);
+      this._setStatus(msg, true);
+      // Keep the WS open so the agent can still talk; just no mic input.
     }
+  },
+
+  // Map RMS mic level (0..~0.3) to the height of the visualizer bars
+  _setMicLevel(rms) {
+    const now = performance.now();
+    if (now - (this._lastVizUpdate || 0) < 60) return; // throttle to ~16fps
+    this._lastVizUpdate = now;
+    const bars = document.querySelectorAll('#bixby-viz .bvbar');
+    if (!bars.length) return;
+    const level = Math.min(1, rms * 6); // scale up; speech RMS is small
+    bars.forEach((b, i) => {
+      // pseudo-random spread so bars look lively, scaled by real level
+      const jitter = 0.4 + 0.6 * Math.abs(Math.sin(now / 120 + i));
+      const h = 3 + level * 22 * jitter;
+      b.style.height = h.toFixed(1) + 'px';
+      b.style.animationPlayState = level > 0.05 ? 'paused' : 'running';
+    });
   },
 
   _handleMessage(msg) {
     switch (msg.type) {
       case 'conversation_initiation_metadata': {
-        // Server confirmed session is ready — now safe to start microphone
-        this._showOverlay('Bixby listo — ¡Habla!');
-        if (!this._micStream) this._startMic();
+        // Server confirmed session is ready. Mic normally started on ws.onopen;
+        // this is a safety net in case the permission prompt was dismissed/raced.
+        if (!this._micStream && !this._micStarting) this._startMic();
+        else this._showOverlay('🎙️ Bixby te escucha — habla');
         break;
       }
       case 'audio': {
