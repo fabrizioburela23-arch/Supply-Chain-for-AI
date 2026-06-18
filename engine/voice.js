@@ -68,8 +68,14 @@ const BixbyVoice = {
     const base = (typeof BASE !== 'undefined') ? BASE : '';
     try {
       const pr = await fetch(`${base}/api/voice/bixby-prompt`);
-      if (pr.ok) { const pd = await pr.json(); this._systemPrompt = pd.system_prompt || null; }
-    } catch { this._systemPrompt = null; }
+      if (pr.ok) {
+        const pd = await pr.json();
+        this._systemPrompt = pd.system_prompt || null;
+        // Server sets allow_override: true only when the ElevenLabs agent has
+        // "Allow overrides" enabled in its dashboard settings.
+        this._allowPromptOverride = !!pd.allow_override;
+      }
+    } catch { this._systemPrompt = null; this._allowPromptOverride = false; }
 
     let signedUrl;
     try {
@@ -93,31 +99,49 @@ const BixbyVoice = {
 
     this.ws.onopen = () => {
       this.isConnected = true;
-      this._sendInitContext();
       this._showOverlay('Bixby — iniciando sesión…');
+      this._sendInitContext();
       this._startMicWithStream(preStream);
     };
 
     this.ws.onmessage = e => {
       try { this._handleMessage(JSON.parse(e.data)); } catch {}
     };
-    this.ws.onerror = () => {
-      this._setStatus('Error de conexión con Bixby', true);
-      this.disconnect();
+    this.ws.onerror = (ev) => {
+      // onerror fires before onclose — don't call disconnect() here because
+      // that triggers ws.close() → onclose fires again and double-hides.
+      this._setStatus('Error de red con Bixby — reintenta', true);
     };
-    this.ws.onclose = () => {
+    this.ws.onclose = (ev) => {
+      // Skip if disconnect() already cleaned up (isConnected already false)
+      if (!this.isConnected && !this._micStream) return;
       this.isConnected = false;
-      this._hideOverlay();
+      this._stopMic();
+      this.ws = null;
+      this.audioQueue = [];
+      this.isPlaying = false;
+      if (ev.code === 1000 || ev.code === 1001) {
+        this._hideOverlay();
+      } else {
+        // Unexpected close — show reason so user can diagnose
+        const reason = ev.reason
+          ? ev.reason.slice(0, 120)
+          : `Bixby desconectado (código ${ev.code})`;
+        this._setStatus(reason, true);
+      }
     };
   },
 
   disconnect() {
-    try { this.ws?.close(); } catch {}
-    this.ws = null;
-    this._stopMic();
     this.isConnected = false;
+    this._stopMic();
     this.audioQueue = [];
     this.isPlaying = false;
+    if (this.ws) {
+      // Closing with code 1000 (normal) prevents onclose from showing an error
+      try { this.ws.close(1000, 'user disconnected'); } catch {}
+      this.ws = null;
+    }
     this._hideOverlay();
   },
 
@@ -227,23 +251,30 @@ const BixbyVoice = {
   _sendInitContext() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const ctx = this._buildContext();
+    // ElevenLabs ConvAI init message — dynamic_variables must be strings
     const msg = {
       type: 'conversation_initiation_client_data',
-      custom_llm_extra_body: { khipu_context: ctx },
       dynamic_variables: {
         selected_company: ctx.selected_company?.label || 'ninguna',
         active_tab: ctx.active_tab || 'mapa',
-        total_nodes: ctx.total_nodes || 0,
+        total_nodes: String(ctx.total_nodes || 0),
+        portfolio_count: String(ctx.portfolio_count || 0),
+        stress_active: ctx.stress_active ? 'sí' : 'no',
+        stressed_company: ctx.stressed_company || 'ninguna',
       },
     };
-    const override = {};
-    if (this._systemPrompt) {
-      override.agent = {
-        prompt: { prompt: this._systemPrompt },
-        language: (typeof LANG !== 'undefined') ? LANG : 'es',
+    // Prompt override only works if the ElevenLabs agent has "Allow overrides" on.
+    // Sending it when overrides are OFF causes ElevenLabs to close the WebSocket.
+    // Only attach it when the server explicitly provides a prompt AND override is
+    // enabled (checked via the allow_override flag in the bixby-prompt response).
+    if (this._systemPrompt && this._allowPromptOverride) {
+      msg.conversation_config_override = {
+        agent: {
+          prompt: { prompt: this._systemPrompt },
+          language: (typeof LANG !== 'undefined') ? LANG : 'es',
+        },
       };
     }
-    if (Object.keys(override).length) msg.conversation_config_override = override;
     this.ws.send(JSON.stringify(msg));
   },
 

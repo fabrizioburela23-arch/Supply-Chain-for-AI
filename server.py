@@ -730,7 +730,17 @@ Be concise, analytical, and actionable. You are a financial intelligence co-pilo
 @app.route('/api/voice/bixby-prompt', methods=['GET'])
 def bixby_system_prompt():
     """Returns Bixby's system prompt for ElevenLabs agent configuration."""
-    return jsonify({'system_prompt': BIXBY_SYSTEM_PROMPT, 'agent_name': 'Bixby', 'platform': 'Khipu Finance'})
+    # allow_override: set ELEVENLABS_ALLOW_OVERRIDE=true in Railway env vars ONLY
+    # if your ElevenLabs agent dashboard has "Allow overrides" turned ON.
+    # Sending a prompt override when overrides are OFF causes ElevenLabs to close
+    # the WebSocket immediately.
+    allow_override = os.getenv('ELEVENLABS_ALLOW_OVERRIDE', 'false').lower() == 'true'
+    return jsonify({
+        'system_prompt': BIXBY_SYSTEM_PROMPT,
+        'agent_name': 'Bixby',
+        'platform': 'Khipu Finance',
+        'allow_override': allow_override,
+    })
 
 
 # ── Bixby voice — sesión firmada de ElevenLabs ───────────────────────────────
