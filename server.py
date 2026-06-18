@@ -56,7 +56,7 @@ MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
 
 # Servicios adicionales (Khipu Finance v1)
-MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-production-a64e.up.railway.app')
+MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-fika.up.railway.app')
 MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
 ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
