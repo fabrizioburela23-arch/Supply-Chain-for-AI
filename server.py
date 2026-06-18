@@ -307,18 +307,71 @@ def batch_quotes():
 @app.route('/api/candles/<ticker>')
 @cache.cached(timeout=1800)
 def candles(ticker):
-    """Returns 90 days of daily OHLCV candles for charting."""
-    if not FINNHUB:
-        return jsonify({'error': 'no FINNHUB_KEY', 's': 'no_data'}), 400
+    """90 days of daily OHLCV candles for charting.
+
+    Tries Finnhub → FMP → Stooq (Stooq is free / no key) so the chart works
+    regardless of which paid API tier is configured. Always returns the
+    Finnhub-style shape {s,c,o,h,l,t} the frontend expects.
+    """
     import time as _time
-    to_ts   = int(_time.time())
-    from_ts = to_ts - 90 * 86400
-    data, err = _safe_get(
-        f'https://finnhub.io/api/v1/stock/candle?symbol={ticker}'
-        f'&resolution=D&from={from_ts}&to={to_ts}&token={FINNHUB}')
-    if err or not data or data.get('s') == 'no_data':
-        return jsonify({'error': err or 'no_data', 's': 'no_data'}), 404
-    return jsonify(data)
+    to_ts = int(_time.time())
+    from_ts = to_ts - 95 * 86400
+
+    # 1) Finnhub (paid tier — free tier returns 403 on /stock/candle)
+    if FINNHUB:
+        data, err = _safe_get(
+            f'https://finnhub.io/api/v1/stock/candle?symbol={ticker}'
+            f'&resolution=D&from={from_ts}&to={to_ts}&token={FINNHUB}')
+        if not err and data and data.get('s') == 'ok' and data.get('c'):
+            return jsonify(data)
+
+    # 2) FMP historical EOD
+    if FMP:
+        fmp, err = _safe_get(
+            f'https://financialmodelingprep.com/api/v3/historical-price-full/'
+            f'{ticker}?serietype=line&timeseries=95&apikey={FMP}')
+        hist = (fmp or {}).get('historical') if isinstance(fmp, dict) else None
+        if hist:
+            hist = list(reversed(hist))  # FMP returns newest-first
+            out = {'s': 'ok',
+                   'c': [h.get('close') for h in hist],
+                   'o': [h.get('open', h.get('close')) for h in hist],
+                   'h': [h.get('high', h.get('close')) for h in hist],
+                   'l': [h.get('low', h.get('close')) for h in hist],
+                   't': [int(_time.mktime(_time.strptime(h['date'], '%Y-%m-%d')))
+                         for h in hist if h.get('date')]}
+            if out['c']:
+                return jsonify(out)
+
+    # 3) Stooq — free, no key. US tickers use the .US suffix.
+    try:
+        import csv as _csv
+        import io as _io
+        sym = ticker.lower()
+        if '.' not in sym:
+            sym += '.us'
+        r = requests.get(f'https://stooq.com/q/d/l/?s={sym}&i=d', timeout=10)
+        if r.status_code == 200 and r.text and 'Date' in r.text:
+            rows = list(_csv.DictReader(_io.StringIO(r.text)))
+            rows = rows[-90:]
+            if rows:
+                out = {'s': 'ok', 'c': [], 'o': [], 'h': [], 'l': [], 't': []}
+                for row in rows:
+                    try:
+                        out['o'].append(float(row['Open']))
+                        out['h'].append(float(row['High']))
+                        out['l'].append(float(row['Low']))
+                        out['c'].append(float(row['Close']))
+                        out['t'].append(int(_time.mktime(
+                            _time.strptime(row['Date'], '%Y-%m-%d'))))
+                    except (ValueError, KeyError):
+                        continue
+                if out['c']:
+                    return jsonify(out)
+    except Exception:  # noqa: BLE001
+        pass
+
+    return jsonify({'error': 'no_data', 's': 'no_data'}), 404
 
 
 @app.route('/api/news/<ticker>')
