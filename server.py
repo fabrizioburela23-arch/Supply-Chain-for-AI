@@ -56,7 +56,7 @@ MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
 
 # Servicios adicionales (Khipu Finance v1)
-MIROFISH_URL        = os.getenv('MIROFISH_URL', 'http://localhost:8000')
+MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-production-a64e.up.railway.app')
 MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
 ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
@@ -603,6 +603,17 @@ def _mf_headers():
     if MIROFISH_TOKEN:
         h['Authorization'] = f'Bearer {MIROFISH_TOKEN}'
     return h
+
+
+@app.route('/api/mirofish/health', methods=['GET'])
+def mirofish_health():
+    """MiroFish health is at /health (root), not /api/health — special case."""
+    try:
+        r = requests.get(f'{MIROFISH_URL}/health', headers=_mf_headers(), timeout=5)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'status': 'offline', 'error': str(e)[:120], 'mirofish_url': MIROFISH_URL}), 502
+
 
 @app.route('/api/mirofish/<path:endpoint>', methods=['GET', 'POST', 'DELETE'])
 def mirofish_proxy(endpoint):
