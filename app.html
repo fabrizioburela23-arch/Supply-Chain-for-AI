@@ -1337,7 +1337,7 @@ footer .disc{line-height:1.4}
   <footer>
     <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
-    <span class="mono" style="white-space:nowrap">Khipu Finance v1 · 450 nodos · NRS · Bixby AI · 3D · RAG</span>
+    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipu Finance v1 · … nodos · NRS · Bixby AI · 3D · RAG</span>
   </footer>
 
 <!-- ═══ Simulation Tab ════════════════════════════════════════════════ -->
@@ -6693,6 +6693,8 @@ const $=id=>document.getElementById(id);
   const linkCount = (typeof LINKS !== 'undefined') ? LINKS.length : '…';
   const lines=[`› grafo · ${nodeCount} nodos · ${linkCount} conexiones`,
     '› cargando capa de mercado en vivo…','› motor de análisis IA listo','› ✓ terminal operativo'];
+  const footerEl = document.getElementById('footer-nodecount');
+  if (footerEl) footerEl.textContent = `Khipu Finance v1 · ${nodeCount} nodos · NRS · Bixby AI · 3D · RAG`;
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
   setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);
 })();
@@ -7239,6 +7241,10 @@ function initSimTab() {
     } catch(e) { varLoading.textContent = 'Error: '+e.message; varLoading.style.color='var(--danger)'; }
   });
 }
+
+// ── Utility: HTML escaping (used by space + sim tabs) ────────────────────────
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+window.esc = esc;
 
 // ── Space Tab ────────────────────────────────────────────────────────────────
 let _spaceInited = false;

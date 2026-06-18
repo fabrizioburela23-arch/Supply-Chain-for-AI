@@ -26,6 +26,8 @@ class KhipuGraph3D {
     this._mouseMoved = false;
     this._prevMouse = { x: 0, y: 0 };
     this._spherical = new THREE.Spherical(600, Math.PI / 3, Math.PI / 4);
+    // Group that holds all nodes + links — rotates as one brain
+    this._graphGroup = new THREE.Group();
   }
 
   init() {
@@ -47,6 +49,7 @@ class KhipuGraph3D {
     p2.position.set(-300, -150, 150);
     this.scene.add(p2);
 
+    this.scene.add(this._graphGroup);
     this._addGrid();
     this._addStarfield();
     this._setupPointerControls();
@@ -67,15 +70,15 @@ class KhipuGraph3D {
   }
 
   loadData(nodes, links) {
-    this.nodeMeshes.forEach(m => this.scene.remove(m));
-    this.linkLines.forEach(l => this.scene.remove(l));
+    this.nodeMeshes.forEach(m => this._graphGroup.remove(m));
+    this.linkLines.forEach(l => this._graphGroup.remove(l));
     this.nodeMeshes.clear();
     this.linkLines = [];
 
     nodes.forEach(n => {
       const mesh = this._createNodeMesh(n);
       this.nodeMeshes.set(n.id, mesh);
-      this.scene.add(mesh);
+      this._graphGroup.add(mesh);
     });
 
     this._initForce3D(nodes, links);
@@ -87,7 +90,7 @@ class KhipuGraph3D {
 
     const geo = node.big
       ? new THREE.IcosahedronGeometry(radius, 2)
-      : new THREE.SphereGeometry(radius, 16, 12);
+      : new THREE.SphereGeometry(radius, 10, 8);
 
     const mat = new THREE.MeshPhongMaterial({
       color, emissive: color, emissiveIntensity: 0.25,
@@ -156,7 +159,7 @@ class KhipuGraph3D {
 
     const mat = new THREE.LineBasicMaterial({
       color: new THREE.Color(color), transparent: true,
-      opacity: 0.15 + (link.w || 1) * 0.04,
+      opacity: 0.28 + (link.w || 1) * 0.06,
     });
 
     const line = new THREE.Line(geo, mat);
@@ -165,20 +168,15 @@ class KhipuGraph3D {
   }
 
   _initForce3D(nodes, links) {
-    nodes.forEach(n => { if (n.z == null) n.z = (Math.random() - 0.5) * 400; });
-
     links.forEach(l => {
       const line = this._createLinkLine(l, nodes);
-      if (line) { this.linkLines.push(line); this.scene.add(line); }
+      if (line) { this.linkLines.push(line); this._graphGroup.add(line); }
     });
 
-    // Engancharse a la simulación D3 existente si está disponible
-    if (typeof sim !== 'undefined' && sim && sim.on) {
-      sim.on('tick.3d', () => this._onSimTick(nodes));
-    } else {
-      // Fallback: layout estático esférico distribuido
-      this._staticLayout(nodes);
-    }
+    // Always use Fibonacci spherical layout for true 3D depth.
+    // D3's force sim only produces 2D (x,y) positions for the SVG graph
+    // and would flatten the 3D view to a plane.
+    this._staticLayout(nodes);
   }
 
   _staticLayout(nodes) {
@@ -231,7 +229,12 @@ class KhipuGraph3D {
       if (mesh) mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
     }
 
-    this.nodeMeshes.forEach(mesh => { mesh.rotation.y += 0.002; });
+    // Rotate the whole graph as a brain — gives 3D depth perception
+    // Stop auto-rotation while user is dragging (mouse button held)
+    if (!this._dragging) {
+      this._graphGroup.rotation.y += 0.0006;
+    }
+
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -331,6 +334,7 @@ class KhipuGraph3D {
   _setupPointerControls() {
     this.canvas.addEventListener('mousedown', e => {
       this._mouseMoved = false;
+      this._dragging = false;
       this._prevMouse = { x: e.clientX, y: e.clientY };
     });
     this.canvas.addEventListener('mousemove', e => {
@@ -339,6 +343,7 @@ class KhipuGraph3D {
       const dy = e.clientY - this._prevMouse.y;
       if (Math.abs(dx) + Math.abs(dy) > 3) {
         this._mouseMoved = true;
+        this._dragging = true;
         this._spherical.theta -= dx * 0.004;
         this._spherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, this._spherical.phi + dy * 0.004));
         this._prevMouse = { x: e.clientX, y: e.clientY };
@@ -346,6 +351,7 @@ class KhipuGraph3D {
         this.camera.lookAt(0, 0, 0);
       }
     });
+    this.canvas.addEventListener('mouseup', () => { this._dragging = false; });
   }
 
   _onWheel(e) {

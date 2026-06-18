@@ -64,9 +64,10 @@ const BixbyVoice = {
       this.ws = new WebSocket(signedUrl);
       this.ws.onopen = () => {
         this.isConnected = true;
-        this._showOverlay('Bixby conectado — ¡Habla!');
+        this._showOverlay('Bixby conectado — iniciando…');
         this._sendInitContext();
-        this._startMic();
+        // Don't start mic here — wait for conversation_initiation_metadata from server
+        // which confirms the session is ready to receive audio
       };
       this.ws.onmessage = e => this._handleMessage(JSON.parse(e.data));
       this.ws.onerror = () => { this._setStatus('Error de conexión con Bixby', true); this.disconnect(); };
@@ -98,11 +99,20 @@ const BixbyVoice = {
   _sendInitContext() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     const ctx = this._buildContext();
-    const payload = { custom_llm_extra_body: { khipu_context: ctx } };
-    if (this._systemPrompt) payload.agent = { prompt: { prompt: this._systemPrompt } };
+    // ElevenLabs ConvAI expects conversation_config_override structure.
+    // input_audio_format must be declared so ElevenLabs knows we're sending PCM 16kHz.
+    const configOverride = {
+      audio: { input_audio_format: 'pcm_16000' },
+    };
+    if (this._systemPrompt) {
+      configOverride.agent = { prompt: { prompt: this._systemPrompt } };
+    }
     this.ws.send(JSON.stringify({
       type: 'conversation_initiation_client_data',
-      conversation_initiation_client_data: payload,
+      conversation_initiation_client_data: {
+        conversation_config_override: configOverride,
+        custom_llm_extra_body: { khipu_context: ctx },
+      },
     }));
   },
 
@@ -188,6 +198,12 @@ const BixbyVoice = {
 
   _handleMessage(msg) {
     switch (msg.type) {
+      case 'conversation_initiation_metadata': {
+        // Server confirmed session is ready — now safe to start microphone
+        this._showOverlay('Bixby listo — ¡Habla!');
+        if (!this._micStream) this._startMic();
+        break;
+      }
       case 'audio': {
         const chunk = msg.audio_event?.audio_base_64;
         if (chunk) this._enqueueAudio(chunk);
