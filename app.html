@@ -1017,6 +1017,7 @@ footer .disc{line-height:1.4}
 <script src="nodes/nodes_expand.js"></script>
 <script src="nodes/nodes_expand2.js"></script>
 <script src="nodes/nodes_spacex.js"></script>
+<script src="nodes/nodes_expand3.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -4131,6 +4132,13 @@ if (typeof NODES_EXPAND2 !== 'undefined') {
 }
 if (typeof NODES_SPACEX !== 'undefined') {
   NODES_SPACEX.forEach(n => {
+    if (!NODES.find(existing => existing.id === n.id)) {
+      NODES.push(n);
+    }
+  });
+}
+if (typeof NODES_EXPAND3 !== 'undefined') {
+  NODES_EXPAND3.forEach(n => {
     if (!NODES.find(existing => existing.id === n.id)) {
       NODES.push(n);
     }
