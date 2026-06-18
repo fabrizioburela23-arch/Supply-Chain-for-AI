@@ -28,6 +28,7 @@ class KhipuGraph3D {
     this._spherical = new THREE.Spherical(600, Math.PI / 3, Math.PI / 4);
     // Group that holds all nodes + links — rotates as one brain
     this._graphGroup = new THREE.Group();
+    this._target = new THREE.Vector3(0, 0, 0); // orbit/pan center
   }
 
   init() {
@@ -243,6 +244,17 @@ class KhipuGraph3D {
     });
   }
 
+  _applySpherical() {
+    this.camera.position.setFromSpherical(this._spherical).add(this._target);
+    this.camera.lookAt(this._target);
+  }
+
+  _resetView() {
+    this._spherical = new THREE.Spherical(600, Math.PI / 3, Math.PI / 4);
+    this._target.set(0, 0, 0);
+    this._applySpherical();
+  }
+
   _animate() {
     if (!this.active) return;
     requestAnimationFrame(() => this._animate());
@@ -253,21 +265,20 @@ class KhipuGraph3D {
       if (mesh) mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
     }
 
-    // Rotate the whole graph as a brain — gives 3D depth perception.
-    // When Bixby is speaking/listening, window.__bixbyEnergy (0..1) drives a
-    // Jarvis-like reaction: the brain spins faster and pulses with the voice.
+    // Auto-rotation: advance camera theta (not group rotation) so user orbit
+    // stays continuous — no jump when the user grabs then releases the graph.
     if (!this._dragging) {
       let speed = 0.0006;
       const energy = (typeof window !== 'undefined' && window.__bixbyEnergy) || 0;
       if (energy > 0) {
         speed += energy * 0.006;
-        window.__bixbyEnergy = energy * 0.94; // smooth decay
-        const s = 1 + energy * 0.04;
-        this._graphGroup.scale.setScalar(s);
+        window.__bixbyEnergy = energy * 0.94;
+        this._graphGroup.scale.setScalar(1 + energy * 0.04);
       } else if (this._graphGroup.scale.x !== 1) {
         this._graphGroup.scale.setScalar(1);
       }
-      this._graphGroup.rotation.y += speed;
+      this._spherical.theta += speed;
+      this._applySpherical();
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -352,50 +363,189 @@ class KhipuGraph3D {
     });
   }
 
-  _flyTo(targetPos, duration = 1200) {
-    const start = this.camera.position.clone();
-    const end = targetPos.clone().add(new THREE.Vector3(0, 0, 120));
+  _flyTo(targetPos, duration = 1100) {
+    const startCam    = this.camera.position.clone();
+    const startTarget = this._target.clone();
+    // Approach from current direction at a comfortable distance
+    const dir = startCam.clone().sub(startTarget).normalize();
+    const dist = Math.min(this._spherical.radius * 0.45, 280);
+    const endCam = targetPos.clone().add(dir.multiplyScalar(dist));
     const t0 = performance.now();
     const fly = () => {
-      const p = Math.min(1, (performance.now() - t0) / duration);
-      const ease = 1 - Math.pow(1 - p, 3);
-      this.camera.position.lerpVectors(start, end, ease);
-      this.camera.lookAt(targetPos);
-      if (p < 1) requestAnimationFrame(fly);
+      const p    = Math.min(1, (performance.now() - t0) / duration);
+      const ease = 1 - Math.pow(1 - p, 3); // cubic ease-out
+      this.camera.position.lerpVectors(startCam, endCam, ease);
+      this._target.lerpVectors(startTarget, targetPos, ease);
+      this.camera.lookAt(this._target);
+      if (p < 1) {
+        requestAnimationFrame(fly);
+      } else {
+        // Sync spherical so subsequent orbit works from new position
+        const diff = this.camera.position.clone().sub(this._target);
+        this._spherical.setFromVector3(diff);
+      }
     };
     fly();
   }
 
   _setupPointerControls() {
+    // ── Mouse ──────────────────────────────────────────────────────────────────
     this.canvas.addEventListener('mousedown', e => {
       this._mouseMoved = false;
-      this._dragging = false;
-      this._prevMouse = { x: e.clientX, y: e.clientY };
+      this._dragging   = true;
+      this._isPan      = e.button === 2 || e.shiftKey;
+      this._prevMouse  = { x: e.clientX, y: e.clientY };
+      clearTimeout(this._rotResumeTimer);
+      // Prevent text selection while dragging
+      e.preventDefault();
     });
+
     this.canvas.addEventListener('mousemove', e => {
       if (!e.buttons) return;
       const dx = e.clientX - this._prevMouse.x;
       const dy = e.clientY - this._prevMouse.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) {
+      if (Math.abs(dx) + Math.abs(dy) > 2) {
         this._mouseMoved = true;
-        this._dragging = true;
-        this._spherical.theta -= dx * 0.004;
-        this._spherical.phi = Math.max(0.15, Math.min(Math.PI - 0.15, this._spherical.phi + dy * 0.004));
+        if (this._isPan) {
+          // Shift+drag / right-drag: pan the orbit centre
+          const panSpeed = this._spherical.radius * 0.00065;
+          const right = new THREE.Vector3()
+            .crossVectors(
+              this.camera.getWorldDirection(new THREE.Vector3()),
+              new THREE.Vector3(0, 1, 0)
+            ).normalize();
+          this._target.addScaledVector(right, -dx * panSpeed);
+          this._target.y += dy * panSpeed;
+        } else {
+          // Left-drag: orbit
+          this._spherical.theta -= dx * 0.005;
+          this._spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08,
+            this._spherical.phi + dy * 0.005));
+        }
         this._prevMouse = { x: e.clientX, y: e.clientY };
-        this.camera.position.setFromSpherical(this._spherical);
-        this.camera.lookAt(0, 0, 0);
+        this._applySpherical();
       }
     });
-    this.canvas.addEventListener('mouseup', () => { this._dragging = false; });
+
+    this.canvas.addEventListener('mouseup', () => {
+      // Resume auto-rotation 2.5 s after last interaction
+      clearTimeout(this._rotResumeTimer);
+      this._rotResumeTimer = setTimeout(() => { this._dragging = false; }, 2500);
+    });
+
+    // Right-click: pan mode, suppress context menu
+    this.canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Double-click: reset view
+    this.canvas.addEventListener('dblclick', () => this._resetView());
+
+    // ── Touch ──────────────────────────────────────────────────────────────────
+    const touch = (fn) => this.canvas.addEventListener(fn.name.replace('_on', '').toLowerCase()
+      .replace('touch', 'touch'), fn, { passive: false });
+
+    this.canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      this._dragging = true;
+      clearTimeout(this._rotResumeTimer);
+      if (e.touches.length === 1) {
+        this._prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      } else if (e.touches.length === 2) {
+        this._pinchDist = Math.hypot(
+          e.touches[1].clientX - e.touches[0].clientX,
+          e.touches[1].clientY - e.touches[0].clientY
+        );
+        // Mid-point for pan reference
+        this._prevMouse = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        const dx = e.touches[0].clientX - this._prevMouse.x;
+        const dy = e.touches[0].clientY - this._prevMouse.y;
+        this._spherical.theta -= dx * 0.007;
+        this._spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08,
+          this._spherical.phi + dy * 0.007));
+        this._prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        this._applySpherical();
+      } else if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[1].clientX - e.touches[0].clientX,
+          e.touches[1].clientY - e.touches[0].clientY
+        );
+        if (this._pinchDist) {
+          this._spherical.radius = Math.max(80, Math.min(2200,
+            this._spherical.radius + (this._pinchDist - dist) * 1.8));
+          this._applySpherical();
+        }
+        this._pinchDist = dist;
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchend', e => {
+      e.preventDefault();
+      if (e.touches.length === 0) {
+        clearTimeout(this._rotResumeTimer);
+        this._rotResumeTimer = setTimeout(() => { this._dragging = false; }, 2500);
+      }
+    }, { passive: false });
+
+    // ── Keyboard ───────────────────────────────────────────────────────────────
+    window.addEventListener('keydown', e => {
+      if (!this.active) return;
+      // Only when nothing else has focus (not a text input)
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      const spd = 0.06;
+      let moved = false;
+      if (e.key === 'ArrowLeft')       { this._spherical.theta -= spd; moved = true; }
+      if (e.key === 'ArrowRight')      { this._spherical.theta += spd; moved = true; }
+      if (e.key === 'ArrowUp')         { this._spherical.phi = Math.max(0.08, this._spherical.phi - spd); moved = true; }
+      if (e.key === 'ArrowDown')       { this._spherical.phi = Math.min(Math.PI - 0.08, this._spherical.phi + spd); moved = true; }
+      if (e.key === '+' || e.key === '=') { this._spherical.radius = Math.max(80, this._spherical.radius - 55); moved = true; }
+      if (e.key === '-')               { this._spherical.radius = Math.min(2200, this._spherical.radius + 55); moved = true; }
+      if (e.key === 'r' || e.key === 'R') { this._resetView(); moved = true; }
+      if (moved) {
+        this._dragging = true;
+        clearTimeout(this._rotResumeTimer);
+        this._rotResumeTimer = setTimeout(() => { this._dragging = false; }, 2500);
+        this._applySpherical();
+        e.preventDefault();
+      }
+    });
+
+    // Show nav hint on first activation
+    this._showNavHint();
+  }
+
+  _showNavHint() {
+    if (this._hintShown) return;
+    this._hintShown = true;
+    const hint = document.createElement('div');
+    hint.style.cssText = [
+      'position:absolute', 'bottom:70px', 'left:50%', 'transform:translateX(-50%)',
+      'background:rgba(0,0,0,.7)', 'color:#ccc', 'font-size:11px',
+      'padding:6px 14px', 'border-radius:20px', 'pointer-events:none',
+      'z-index:50', 'white-space:nowrap', 'transition:opacity .5s',
+      'font-family:"JetBrains Mono",monospace',
+    ].join(';');
+    hint.textContent = 'Arrastra · Scroll/pinch para zoom · Shift+drag para desplazar · R resetear';
+    this.canvas.parentElement?.appendChild(hint);
+    setTimeout(() => { hint.style.opacity = '0'; }, 3500);
+    setTimeout(() => hint.remove(), 4100);
   }
 
   _onWheel(e) {
-    this._spherical.radius = Math.max(80, Math.min(2200, this._spherical.radius + e.deltaY * 0.5));
-    this.camera.position.setFromSpherical(this._spherical);
-    this.camera.lookAt(0, 0, 0);
+    this._spherical.radius = Math.max(80, Math.min(2200, this._spherical.radius + e.deltaY * 0.6));
+    this._applySpherical();
   }
 
   _onMouseMove(e) {
+    if (e.buttons) return; // skip raycasting while dragging
     const rect = this.canvas.getBoundingClientRect();
     this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
