@@ -4728,6 +4728,7 @@ window.jumpTo=function(id){
 function pfLabel(p){return p==='C1+C2'?t('pf_both'):p==='C1'?t('pf_c1'):p==='C2'?t('pf_c2'):'';}
 function pfClass(p){return p==='C1+C2'?'both':p==='C1'?'c1':p==='C2'?'c2':'';}
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+window.esc = esc;
 const isPreipoTicker=t=>/pre-ipo/i.test(t||'');
 
 function fmtMargin(m){
@@ -7478,10 +7479,6 @@ function initSimTab() {
     } catch(e) { varLoading.textContent = 'Error: '+e.message; varLoading.style.color='var(--danger)'; }
   });
 }
-
-// ── Utility: HTML escaping (used by space + sim tabs) ────────────────────────
-function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-window.esc = esc;
 
 // ── Space Tab ────────────────────────────────────────────────────────────────
 let _spaceInited = false;
