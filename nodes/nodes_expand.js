@@ -40,23 +40,6 @@ var NODES_EXPAND = [
     "mkt": "RTX"
   },
   {
-    "id": "BoozAllen",
-    "label": "Booz Allen Hamilton",
-    "ticker": "BAH · NYSE",
-    "cat": "ai_defense",
-    "port": "",
-    "role": "Consultoría de IA para defensa y seguridad nacional",
-    "supplies": "Soluciones analíticas, ciberseguridad, modernización TI para DoD/IC",
-    "moat": "Clearances de alto nivel; relaciones de 100+ años con agencias federales",
-    "loc": "EE.UU.",
-    "country": "EEUU",
-    "growth": "🟢 Revenue $10B+; IA misión crítica",
-    "margin": 0.10,
-    "capex_2026": "~$0.2B",
-    "backlog_status": "Estable",
-    "mkt": "BAH"
-  },
-  {
     "id": "Leidos",
     "label": "Leidos Holdings",
     "ticker": "LDOS · NYSE",

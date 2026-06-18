@@ -1020,6 +1020,7 @@ footer .disc{line-height:1.4}
 <script src="nodes/nodes_expand3.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
+<script src="nodes/links_connect.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -4165,6 +4166,10 @@ const NODE_ID_ALIAS = {
   'Texas_Instruments': 'TexasInstruments', 'TI': 'TexasInstruments',
   'STMicro': 'STMicroelectronics', 'Xilinx': 'AMD',
   'BoozAllen': 'Booz_Allen', 'CACI_Int': 'CACI',
+  // Recover dropped link endpoints that reference real companies by alt names
+  'SK Hynix': 'SKHynix', 'Western Digital': 'Western_Digital',
+  'Alibaba Cloud': 'AlibabaCloud', 'Microsoft Azure': 'Microsoft',
+  'Softbank': 'SoftBank', 'Facebook': 'Meta', 'Apple (memoria)': 'Apple',
 };
 function _resolveId(id) { return NODE_ID_ALIAS[id] || id; }
 if (typeof LINKS_EXPAND !== 'undefined') {
@@ -4175,6 +4180,12 @@ if (typeof LINKS_EXPAND !== 'undefined') {
 }
 if (typeof LINKS_SPACEX !== 'undefined') {
   LINKS_SPACEX.forEach(l => {
+    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
+    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
+  });
+}
+if (typeof LINKS_CONNECT !== 'undefined') {
+  LINKS_CONNECT.forEach(l => {
     if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
     else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
   });
