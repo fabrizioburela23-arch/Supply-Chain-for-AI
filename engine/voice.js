@@ -79,6 +79,14 @@ const BixbyVoice = {
   disconnect() {
     try { this.ws?.close(); } catch {}
     this.ws = null;
+    // Stop ScriptProcessor mic path
+    try { this._micSource?.disconnect(); } catch {}
+    try { this._micProcessor?.disconnect(); } catch {}
+    try { this._micStream?.getTracks().forEach(t => t.stop()); } catch {}
+    this._micSource = null;
+    this._micProcessor = null;
+    this._micStream = null;
+    // Stop MediaRecorder path (legacy fallback)
     try { this.mediaRecorder?.stop(); } catch {}
     this.mediaRecorder = null;
     this.isConnected = false;
@@ -121,16 +129,19 @@ const BixbyVoice = {
   },
 
   async _startMic() {
+    const TARGET_RATE = 16000;
     try {
       // ElevenLabs ConvAI requires raw PCM 16-bit 16kHz mono — NOT webm/opus from MediaRecorder.
-      // We use ScriptProcessor to capture Float32 samples and convert to Int16 before sending.
+      // We use ScriptProcessor to capture Float32 samples, downsample to 16kHz, and send Int16 PCM.
+      // Note: getUserMedia sampleRate constraint is often ignored by browsers; we downsample explicitly.
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 },
         video: false,
       });
 
       if (!this.audioCtx) await this.init();
       if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+      const actualRate = this.audioCtx.sampleRate; // typically 44100 or 48000
 
       const srcNode = this.audioCtx.createMediaStreamSource(stream);
       // ScriptProcessor is deprecated but universally supported; AudioWorklet requires HTTPS+module
@@ -139,10 +150,22 @@ const BixbyVoice = {
       processor.onaudioprocess = (ev) => {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
         const f32 = ev.inputBuffer.getChannelData(0);
-        const i16 = new Int16Array(f32.length);
-        for (let i = 0; i < f32.length; i++) {
-          const s = Math.max(-1, Math.min(1, f32[i]));
-          i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        let i16;
+        if (actualRate !== TARGET_RATE) {
+          // Downsample via nearest-neighbor (step ≈ 2.756 for 44100→16000)
+          const step = actualRate / TARGET_RATE;
+          const outLen = Math.floor(f32.length / step);
+          i16 = new Int16Array(outLen);
+          for (let i = 0; i < outLen; i++) {
+            const s = Math.max(-1, Math.min(1, f32[Math.floor(i * step)]));
+            i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
+        } else {
+          i16 = new Int16Array(f32.length);
+          for (let i = 0; i < f32.length; i++) {
+            const s = Math.max(-1, Math.min(1, f32[i]));
+            i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          }
         }
         const bytes = new Uint8Array(i16.buffer);
         let bin = '';
@@ -153,16 +176,10 @@ const BixbyVoice = {
       srcNode.connect(processor);
       processor.connect(this.audioCtx.destination);
       this._micSrc = srcNode;
+      this._micSource = srcNode;
       this._micProcessor = processor;
       this._micStream = stream;
-
-      // Expose a stop() method matching the old mediaRecorder interface
-      this.mediaRecorder = {
-        stop: () => {
-          try { processor.disconnect(); srcNode.disconnect(); } catch {}
-          stream.getTracks().forEach(t => t.stop());
-        },
-      };
+      this.mediaRecorder = null;
     } catch (e) {
       this._setStatus('Micrófono no disponible: ' + e.message, true);
       this.disconnect();
