@@ -1013,6 +1013,33 @@ footer .disc{line-height:1.4}
   *{animation-duration:.001ms !important;animation-iteration-count:1 !important}
   .dark .graph-wrap{animation:none}
 }
+
+/* ── Tab transition animations ───────────────────────────────────────── */
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.tab-anim-in{animation:tabFadeIn .18s ease-out forwards}
+
+/* ── Graph3D loading overlay ─────────────────────────────────────────── */
+#graph3d-loader{
+  position:absolute;inset:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:var(--bg);gap:12px;pointer-events:none;
+  transition:opacity .4s;
+}
+#graph3d-loader.hidden{opacity:0}
+#graph3d-loader .g3d-spinner{
+  width:40px;height:40px;border-radius:50%;
+  border:3px solid rgba(61,224,200,.15);
+  border-top-color:#3DE0C8;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Per-component shimmer skeletons ─────────────────────────────────── */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.shimmer{
+  background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface) 50%,var(--surface-2) 75%);
+  background-size:800px 100%;animation:shimmer 1.4s infinite;border-radius:4px;
+}
 </style>
 <script src="nodes/nodes_expand.js"></script>
 <script src="nodes/nodes_expand2.js"></script>
@@ -1160,6 +1187,10 @@ footer .disc{line-height:1.4}
       </div>
       <svg id="graph"></svg>
       <canvas id="graph-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;"></canvas>
+      <div id="graph3d-loader" style="display:none">
+        <div class="g3d-spinner"></div>
+        <div style="font-size:12px;color:var(--ink-3);font-family:'JetBrains Mono',monospace" id="graph3d-loader-text">Inicializando grafo 3D…</div>
+      </div>
       <div id="hypergraph-timeline" style="display:none;position:absolute;bottom:60px;left:50%;transform:translateX(-50%);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 16px;align-items:center;gap:10px;box-shadow:var(--shadow)">
         <span style="font-size:11px;font-weight:700;color:var(--ink-2)">Hipergrafos Temporales</span>
         <input type="range" id="hg-year" min="2015" max="2030" value="2026" step="1" style="width:140px;cursor:pointer">
@@ -4227,10 +4258,14 @@ let pathfinderMode=false, pathSrc=null, pathDst=null, pathActive=false;
 let pathNodes=new Set(), pathLinkKeys=new Set();
 function isPathLink(l){ return pathLinkKeys.has(lid(l.source)+'>'+lid(l.target)); }
 
-// Loading progress
+// Loading progress — helper used throughout scripts[1]
 const _loaderBar = document.getElementById('loader-bar');
 const _loaderText = document.getElementById('loader-text');
-if (_loaderBar) { _loaderBar.style.width = '30%'; _loaderText.textContent = 'Construyendo grafo (' + NODES.length + ' nodos)...'; }
+function _ldrSet(pct, text) {
+  if (_loaderBar) _loaderBar.style.width = pct + '%';
+  if (_loaderText && text) _loaderText.textContent = text;
+}
+_ldrSet(25, `Procesando ${NODES.length} nodos · ${LINKS.length} conexiones…`);
 
 // SAFETY: Hard fallback registered HERE (before any potentially-crashing code)
 // so that even if D3 setup throws, the loader will dismiss after 6s.
@@ -4250,6 +4285,7 @@ if (_loaderBar) { _loaderBar.style.width = '30%'; _loaderText.textContent = 'Con
     }
   }, 6000);
 })();
+_ldrSet(40, `Iniciando simulación de fuerzas (${NODES.length} nodos)…`);
 // With 450+ nodes, reduce charge and increase decay for smoother convergence
 const _nodeCount = NODES.length;
 const _chargeStr = _nodeCount > 300 ? -180 : _nodeCount > 150 ? -220 : -280;
@@ -5155,19 +5191,84 @@ window.submitTradeOrder = submitTradeOrder;
 
 /* ===================== MiroFish — contexto del grafo ===================== */
 function _injectGraphContext() {
+  const cl = (cat) => typeof catLabel === 'function' ? catLabel(cat) : cat;
+
+  // 1. Category breakdown
   const cats = {};
   NODES.forEach(n => { cats[n.cat] = (cats[n.cat] || 0) + 1; });
-  const topCats = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 6)
-    .map(([c, n]) => `${typeof catLabel === 'function' ? catLabel(c) : c} (${n})`).join(', ');
-  const topNodes = NODES.slice(0, 25).map(n => n.label + (n.mkt ? ` [${n.mkt}]` : '')).join(', ');
-  const ctx = [
-    `KHIPU FINANCE — red global de ${NODES.length} empresas y ${LINKS ? LINKS.length : '1200+'} conexiones.`,
-    `Sectores: ${topCats}.`,
-    `Empresas destacadas: ${topNodes}.`,
-    `Fecha de análisis: ${new Date().toLocaleDateString('es-ES')}.`,
-  ].join('\n');
+  const catSummary = Object.entries(cats).sort((a, b) => b[1] - a[1])
+    .map(([c, n]) => `${cl(c)}: ${n}`).join(' | ');
+
+  // 2. All nodes (compact CSV): Label [TICKER] | Category
+  const allNodes = NODES.map(n =>
+    `${n.label}${n.mkt ? ' [' + n.mkt + ']' : ''} | ${cl(n.cat)}`
+  ).join('\n');
+
+  // 3. Top 40 by NRS risk score
+  let nrsLines = '';
+  if (typeof computeNRS === 'function') {
+    try {
+      const scored = NODES.map(n => ({ n, nrs: computeNRS(n.id) }))
+        .sort((a, b) => b.nrs - a.nrs).slice(0, 40);
+      nrsLines = 'TOP 40 POR RIESGO (NRS 0-100):\n' +
+        scored.map(({ n, nrs }) =>
+          `  ${n.label}${n.mkt ? ' [' + n.mkt + ']' : ''}: NRS=${nrs} | ${cl(n.cat)}`
+        ).join('\n');
+    } catch {}
+  }
+
+  // 4. Top 60 links by weight
+  const linkLines = 'CONEXIONES PRINCIPALES:\n' +
+    (LINKS || []).sort((a, b) => (b.w || 1) - (a.w || 1)).slice(0, 60)
+      .map(l => {
+        const src = NODE_BY_ID[lid(l.source)]?.label || lid(l.source);
+        const tgt = NODE_BY_ID[lid(l.target)]?.label || lid(l.target);
+        return `  ${src} → ${tgt} [${l.type || l.rel || 'supply'}]`;
+      }).join('\n');
+
+  // 5. Live market prices
+  const priceLines = Object.entries(MKT.quotes || {}).filter(([, q]) => q.close)
+    .slice(0, 100).map(([t, q]) => {
+      const chg = q.prev ? ((q.close - q.prev) / q.prev * 100).toFixed(1) : '?';
+      return `  ${t}: $${q.close.toFixed(2)} (${chg}%)`;
+    });
+  const priceSec = priceLines.length ? 'PRECIOS DE MERCADO:\n' + priceLines.join('\n') : '';
+
+  // 6. Portfolio if any
+  const posList = Object.entries(MKT.pos || {});
+  const portSec = posList.length ? 'PORTFOLIO ACTUAL:\n' + posList.map(([id, p]) => {
+    const n = NODE_BY_ID[id];
+    const q = n?.mkt ? MKT.quotes[n.mkt] : null;
+    const nrs = typeof computeNRS === 'function' ? computeNRS(id) : '?';
+    const pnl = q?.close ? ((q.close - p.bp) * p.sh).toFixed(0) : '?';
+    return `  ${n?.label || id} [${n?.mkt || ''}]: ${p.sh}acc × $${p.bp} → $${q?.close?.toFixed(2) || '?'} | P&L:$${pnl} | NRS:${nrs}`;
+  }).join('\n') : '';
+
+  const parts = [
+    `═══ KHIPU FINANCE — BASE DE DATOS COMPLETA ═══`,
+    `Fecha: ${new Date().toLocaleString('es-ES')}`,
+    `Red: ${NODES.length} empresas · ${(LINKS || []).length} conexiones de supply chain`,
+    ``,
+    `SECTORES: ${catSummary}`,
+    ``,
+    `DIRECTORIO COMPLETO (${NODES.length} empresas):`,
+    allNodes,
+    ``,
+    nrsLines,
+    ``,
+    linkLines,
+    priceSec ? `\n${priceSec}` : '',
+    portSec ? `\n${portSec}` : '',
+  ].filter(x => x !== '');
+
+  const ctx = parts.join('\n');
   const el = document.getElementById('sim-context-text');
-  if (el) { el.value = ctx; toast('Contexto del grafo cargado'); }
+  if (el) {
+    el.value = ctx;
+    el.style.height = '140px';
+    const kb = Math.round(ctx.length / 1024);
+    toast(`📊 ${NODES.length} empresas · ${(LINKS||[]).length} conexiones · ${priceLines.length} precios · ${kb}KB`);
+  }
 }
 window._injectGraphContext = _injectGraphContext;
 
@@ -5628,6 +5729,18 @@ function switchTab(tab){
   if(simEl) simEl.style.display = isSim?'block':'none';
   const spaceEl=document.getElementById('space-panel');
   if(spaceEl) spaceEl.style.display = isSpace?'block':'none';
+  // Animate the panel that just became visible
+  const _tabEls = [
+    isMap && document.querySelector('main'),
+    tab==='market' && document.getElementById('market'),
+    isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
+  ].filter(Boolean);
+  _tabEls.forEach(el => {
+    el.classList.remove('tab-anim-in');
+    void el.offsetWidth; // force reflow
+    el.classList.add('tab-anim-in');
+    setTimeout(() => el.classList.remove('tab-anim-in'), 220);
+  });
   if(isMap){ resize(); }
   else if(isAnalysis){ renderAnalysis(); }
   else if(isGeo){ renderGeoPanel(); }
@@ -6041,13 +6154,15 @@ window.posDel=id=>{ delete MKT.pos[id]; savePos(); MKT.editing=null; renderMarke
 window.goMap=id=>{ switchTab('map'); setTimeout(()=>jumpTo(id),80); };
 
 /* ===================== Init v7 ===================== */
+_ldrSet(82, 'Renderizando interfaz…');
 try { renderBand(); } catch(e) { console.error('[khipu] renderBand:', e); }
+_ldrSet(90, 'Aplicando idioma y temas…');
 try { applyLang(); } catch(e) { console.error('[khipu] applyLang:', e); }
 // Cancel fallback timer and dismiss now
 if (typeof window._khipuLoaderFallback !== 'undefined') clearTimeout(window._khipuLoaderFallback);
 if (typeof window._khipuLoaderDismiss === 'function') {
   if (_loaderBar) _loaderBar.style.width = '100%';
-  if (_loaderText) _loaderText.textContent = NODES.length + ' nodos · ' + LINKS.length + ' conexiones listos';
+  if (_loaderText) _loaderText.textContent = `${NODES.length} nodos · ${LINKS.length} conexiones · listo`;
   setTimeout(window._khipuLoaderDismiss, 200);
 }
 
@@ -7162,12 +7277,21 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       btn.style.color = '#fff';
       btn.style.borderColor = 'var(--violet)';
       if (!_graph3d && window.KhipuGraph3D) {
-        _graph3d = new KhipuGraph3D('graph-canvas');
-        _graph3d.init();
-        _graph3d.loadData(window.NODES || [], window.LINKS || []);
-        window.khipuGraph3D = _graph3d;
-        if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
-        else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
+        // Show loading overlay while Three.js initializes
+        const g3dLdr = document.getElementById('graph3d-loader');
+        if (g3dLdr) { g3dLdr.style.display = 'flex'; g3dLdr.classList.remove('hidden'); }
+        setTimeout(() => {
+          _graph3d = new KhipuGraph3D('graph-canvas');
+          _graph3d.init();
+          _graph3d.loadData(window.NODES || [], window.LINKS || []);
+          window.khipuGraph3D = _graph3d;
+          if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
+          else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
+          // Hide loader once first frame is likely rendered (~600ms)
+          setTimeout(() => {
+            if (g3dLdr) { g3dLdr.classList.add('hidden'); setTimeout(() => { g3dLdr.style.display = 'none'; }, 450); }
+          }, 600);
+        }, 50); // brief yield so spinner renders before heavy work
       } else if (_graph3d) {
         _graph3d.resume && _graph3d.resume();
       }

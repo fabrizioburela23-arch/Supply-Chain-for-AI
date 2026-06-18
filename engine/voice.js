@@ -271,23 +271,64 @@ const BixbyVoice = {
 
   _buildContext() {
     const sel = (typeof selected !== 'undefined' && selected) ? NODE_BY_ID[selected] : null;
-    const portfolio = Object.keys((typeof MKT !== 'undefined' && MKT.pos) || {}).length;
+    const positions = Object.entries((typeof MKT !== 'undefined' && MKT.pos) || {});
     const hasStress = typeof stressId !== 'undefined' && !!stressId;
+
+    let topRisk = [];
+    if (typeof computeNRS === 'function' && typeof NODES !== 'undefined') {
+      try {
+        topRisk = NODES.map(n => ({ id: n.id, label: n.label, ticker: n.mkt || null, nrs: computeNRS(n.id) }))
+          .sort((a, b) => b.nrs - a.nrs).slice(0, 10);
+      } catch {}
+    }
+
+    let selLinks = [];
+    if (sel && typeof LINKS !== 'undefined') {
+      try {
+        selLinks = LINKS.filter(l => lid(l.source) === sel.id || lid(l.target) === sel.id)
+          .slice(0, 8).map(l => ({
+            from: NODE_BY_ID[lid(l.source)]?.label,
+            to: NODE_BY_ID[lid(l.target)]?.label,
+            type: l.type || l.rel,
+          }));
+      } catch {}
+    }
+
+    const portfolio = positions.map(([id, p]) => {
+      const n = NODE_BY_ID[id];
+      const q = n?.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[n.mkt] : null) : null;
+      return {
+        id, label: n?.label || id, ticker: n?.mkt || null,
+        shares: p.sh, buy_price: p.bp,
+        current_price: q?.close || null,
+        nrs: typeof computeNRS === 'function' ? computeNRS(id) : null,
+      };
+    });
+
+    // Category breakdown
+    const cats = {};
+    if (typeof NODES !== 'undefined') NODES.forEach(n => { cats[n.cat] = (cats[n.cat] || 0) + 1; });
+
     return {
-      app: 'Khipu Finance',
-      assistant: 'Bixby',
-      selected_company: sel ? {
-        id: sel.id, label: sel.label, ticker: sel.mkt,
-        cat: (typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat),
-        nrs: (typeof computeNRS === 'function' ? computeNRS(sel.id) : null),
-        price: sel.mkt ? (MKT.quotes[sel.mkt]?.close || null) : null,
-      } : null,
-      portfolio_count: portfolio,
-      stress_active: hasStress,
-      stressed_company: hasStress ? NODE_BY_ID[stressId]?.label : null,
-      total_nodes: (typeof NODES !== 'undefined') ? NODES.length : 0,
+      app: 'Khipu Finance', assistant: 'Bixby',
       active_tab: (typeof activeTab !== 'undefined') ? activeTab : null,
       language: (typeof LANG !== 'undefined') ? LANG : 'es',
+      total_nodes: (typeof NODES !== 'undefined') ? NODES.length : 0,
+      total_links: (typeof LINKS !== 'undefined') ? LINKS.length : 0,
+      categories: cats,
+      selected_company: sel ? {
+        id: sel.id, label: sel.label, ticker: sel.mkt || null,
+        category: typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat,
+        nrs: typeof computeNRS === 'function' ? computeNRS(sel.id) : null,
+        price: sel.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt]?.close || null : null) : null,
+        role: sel.role || null,
+        supply_chain_links: selLinks,
+      } : null,
+      portfolio,
+      portfolio_count: positions.length,
+      stress_active: hasStress,
+      stressed_company: hasStress ? { id: stressId, label: NODE_BY_ID[stressId]?.label } : null,
+      top_risk_companies: topRisk,
     };
   },
 
@@ -363,12 +404,41 @@ const BixbyVoice = {
     const nav    = text.match(/\[NAV:([A-Za-z0-9_]+)\]/);
     const stress = text.match(/\[STRESS:([A-Za-z0-9_]+)\]/);
     const sim    = text.match(/\[SIM:([a-z_]+)\]/);
-    if (nav    && typeof jumpTo === 'function') jumpTo(nav[1]);
+    const tab    = text.match(/\[TAB:([a-z]+)\]/);
+    const chart  = text.match(/\[CHART:([A-Za-z0-9._^[\]]+)\]/);
+    const trade  = text.match(/\[TRADE:([A-Za-z0-9._^[\]]+)\]/);
+    const sb     = text.match(/\[SECOND_BRAIN:([A-Za-z0-9_]+)\]/);
+    const nrsTop = /\[NRS_TOP\]/.test(text);
+    const filter = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
+
+    if (tab && typeof switchTab === 'function') switchTab(tab[1]);
+    if (nav && typeof jumpTo === 'function') jumpTo(nav[1]);
     if (stress) {
       const n = NODES.find(n => n.mkt === stress[1] || n.id === stress[1]);
       if (n && typeof activateStress === 'function') activateStress(n.id);
     }
     if (sim && window.nexusCore?.runPreset) window.nexusCore.runPreset(sim[1]);
+    if (chart) {
+      const n = NODES.find(n => n.mkt === chart[1] || n.id === chart[1]);
+      if (n) {
+        if (typeof jumpTo === 'function') jumpTo(n.id);
+        if (n.mkt && typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
+      }
+    }
+    if (trade) {
+      const n = NODES.find(n => n.mkt === trade[1] || n.id === trade[1]);
+      if (n?.mkt && typeof openTradeModal === 'function') setTimeout(() => openTradeModal(n.id, n.mkt, n.label), 400);
+    }
+    if (sb) {
+      const n = NODES.find(n => n.id === sb[1]);
+      if (n && typeof window._openSecondBrain === 'function') setTimeout(() => window._openSecondBrain(n.id), 300);
+    }
+    if (nrsTop && typeof switchTab === 'function') switchTab('analysis');
+    if (filter) {
+      const catKey = filter[1].toLowerCase();
+      const match = (typeof CATS !== 'undefined') ? Object.entries(CATS).find(([k]) => k === catKey || k.includes(catKey)) : null;
+      if (match && typeof setFilter === 'function') setFilter(match[0]);
+    }
   },
 
   _handleToolCall(event) {
@@ -462,6 +532,105 @@ const BixbyVoice = {
               level: nrs >= 70 ? 'high' : nrs >= 40 ? 'medium' : 'low' });
           } catch(e) { respond({ success: false, error: e.message }); }
         } else respond({ success: false, error: 'Company not found or NRS unavailable' });
+        break;
+      }
+      case 'switch_tab': {
+        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space'];
+        const t = params.tab || '';
+        if (validTabs.includes(t) && typeof switchTab === 'function') {
+          switchTab(t);
+          respond({ success: true, tab: t });
+        } else respond({ success: false, error: `Tab inválida: ${t}` });
+        break;
+      }
+      case 'show_chart': {
+        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n?.mkt) {
+          if (typeof jumpTo === 'function') jumpTo(n.id);
+          if (typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
+          respond({ success: true, company: n.label, ticker: n.mkt });
+        } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
+        break;
+      }
+      case 'get_market_summary': {
+        const quotes = Object.entries((typeof MKT !== 'undefined' ? MKT.quotes : {}) || {})
+          .filter(([, q]) => q.close)
+          .map(([t, q]) => ({
+            ticker: t,
+            price: q.close,
+            change_pct: (q.close && q.prev) ? ((q.close - q.prev) / q.prev * 100).toFixed(2) : null,
+          }));
+        respond({ total_tickers: quotes.length, quotes });
+        break;
+      }
+      case 'list_companies': {
+        const catFilter = (params.category || '').toLowerCase();
+        const filtered = NODES.filter(n =>
+          !catFilter ||
+          n.cat === params.category ||
+          (typeof catLabel === 'function' && catLabel(n.cat).toLowerCase().includes(catFilter))
+        ).slice(0, params.limit || 50);
+        respond({
+          count: filtered.length,
+          companies: filtered.map(n => ({
+            id: n.id, label: n.label, ticker: n.mkt || null,
+            category: typeof catLabel === 'function' ? catLabel(n.cat) : n.cat,
+          })),
+        });
+        break;
+      }
+      case 'get_supply_chain_links': {
+        const n = NODES.find(n => n.id === params.company_id || n.mkt === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n) {
+          const allLinks = (typeof LINKS !== 'undefined' ? LINKS : [])
+            .filter(l => lid(l.source) === n.id || lid(l.target) === n.id);
+          const upstream   = allLinks.filter(l => lid(l.target) === n.id)
+            .map(l => ({ company: NODE_BY_ID[lid(l.source)]?.label, type: l.type || l.rel }));
+          const downstream = allLinks.filter(l => lid(l.source) === n.id)
+            .map(l => ({ company: NODE_BY_ID[lid(l.target)]?.label, type: l.type || l.rel }));
+          respond({
+            company: n.label, ticker: n.mkt || null,
+            upstream_count: upstream.length, downstream_count: downstream.length,
+            upstream: upstream.slice(0, 15), downstream: downstream.slice(0, 15),
+          });
+        } else respond({ success: false, error: 'Empresa no encontrada' });
+        break;
+      }
+      case 'get_nrs_top10': {
+        if (typeof computeNRS !== 'function') { respond({ success: false, error: 'NRS no disponible' }); break; }
+        const top = NODES.map(n => ({
+          id: n.id, label: n.label, ticker: n.mkt || null, nrs: computeNRS(n.id),
+        })).sort((a, b) => b.nrs - a.nrs).slice(0, 10);
+        respond({ companies: top });
+        break;
+      }
+      case 'open_second_brain': {
+        const n = NODES.find(n => n.id === params.company_id || n.mkt === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n) {
+          if (typeof window._openSecondBrain === 'function') window._openSecondBrain(n.id);
+          respond({ success: true, company: n.label });
+        } else respond({ success: false, error: 'Empresa no encontrada' });
+        break;
+      }
+      case 'get_news': {
+        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n?.mkt) {
+          const base = (typeof BASE !== 'undefined') ? BASE : '';
+          fetch(`${base}/api/news/${n.mkt}`)
+            .then(r => r.json())
+            .then(data => {
+              const articles = Array.isArray(data) ? data.slice(0, 5) : [];
+              respond({
+                success: true, company: n.label, ticker: n.mkt,
+                articles: articles.map(a => ({ headline: a.headline, source: a.source, sentiment: a.sentiment })),
+              });
+            })
+            .catch(() => respond({ success: false, error: 'Error fetching news' }));
+        } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
         break;
       }
       default:
