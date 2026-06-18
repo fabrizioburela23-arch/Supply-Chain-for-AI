@@ -1378,6 +1378,11 @@ footer .disc{line-height:1.4}
             <div class="mkt-sec-head" style="margin-bottom:8px">Escenario personalizado</div>
             <textarea id="sim-custom-text" data-i18n-placeholder="sim_placeholder" placeholder="Describe el escenario..." style="width:100%;height:80px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;resize:vertical;font-family:inherit"></textarea>
             <input id="sim-custom-nodes" placeholder="Nodos afectados (IDs separados por coma)" style="width:100%;margin-top:6px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;margin-bottom:4px">
+              <span style="font-size:11px;color:var(--ink-3)">Contexto adicional (noticias, informes, datos)</span>
+              <button onclick="_injectGraphContext()" style="font-size:10px;padding:2px 8px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--violet);cursor:pointer">📊 Cargar grafo</button>
+            </div>
+            <textarea id="sim-context-text" placeholder="Pega aquí noticias, reportes o datos financieros. MiroFish los incluirá como contexto para la simulación." style="width:100%;height:56px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:11px;resize:vertical;font-family:inherit;color:var(--ink-2)"></textarea>
           </div>
           <button id="sim-run-btn" data-i18n="sim_run" style="width:100%;margin-top:12px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
         </div>
@@ -4898,6 +4903,10 @@ function renderDetail(id){
       ${connHTML(downstream,'down')}
       ${(!upstream.length&&!downstream.length)?`<p style="font-size:12px;color:var(--ink-3)">${t('d_noconn')}</p>`:''}
     </div>
+    ${d.mkt && !isPreipoTicker(d.mkt) ? `
+    <div style="padding:0 16px 10px">
+      <button onclick="openTradeModal('${id}','${d.mkt}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #22c55e;border-radius:6px;background:none;color:#22c55e;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(34,197,94,.12)'" onmouseout="this.style.background='none'">💹 Operar ${esc(d.label)}</button>
+    </div>` : ''}
     ${stressId===id
       ? `<button class="stress-btn" onclick="clearStressBtn()">⟲ ${t('d_restore')}</button>`
       : `<button class="stress-btn" onclick="stressBtn('${d.id}')">💥 ${t('d_collapse')} ${esc(d.label)}</button>`}
@@ -5061,6 +5070,106 @@ function drawStockChart(nodeId, data, mode) {
     });
   }
 }
+
+/* ===================== Trading — Alpaca ===================== */
+let _tradeModalTicker = null, _tradeModalSide = 'buy';
+
+function openTradeModal(nodeId, ticker, label) {
+  _tradeModalTicker = ticker;
+  document.getElementById('trade-modal-title').textContent = 'Operar: ' + label;
+  document.getElementById('trade-modal').style.display = 'flex';
+  document.getElementById('trade-modal-status').textContent = '';
+  setTradeSide('buy');
+  const q = MKT.quotes[ticker];
+  const price = q?.close || q?.live || null;
+  document.getElementById('trade-modal-price').textContent =
+    price ? `Precio actual: $${price.toFixed(2)}` : `Ticker: ${ticker}`;
+  updateTradeEstimate();
+  fetch('/api/trade/account').then(r => r.json()).then(d => {
+    const el = document.getElementById('trade-modal-account');
+    if (!el) return;
+    if (d.buying_power)
+      el.textContent = `Cuenta Paper: $${parseFloat(d.buying_power).toLocaleString('es-ES',{minimumFractionDigits:2})} disponibles`;
+    else if (d.error === 'ALPACA_KEY not configured')
+      el.textContent = '⚠️ Alpaca no configurado — añade ALPACA_KEY en Railway';
+    else if (d.error)
+      el.textContent = d.error;
+  }).catch(() => {});
+}
+function setTradeSide(side) {
+  _tradeModalSide = side;
+  const buy = document.getElementById('trade-buy-btn'), sell = document.getElementById('trade-sell-btn');
+  if (!buy || !sell) return;
+  buy.style.background  = side === 'buy'  ? '#22c55e' : 'none';
+  buy.style.color       = side === 'buy'  ? '#fff' : 'var(--ink-3)';
+  buy.style.border      = side === 'buy'  ? 'none' : '1px solid var(--line)';
+  sell.style.background = side === 'sell' ? '#ef4444' : 'none';
+  sell.style.color      = side === 'sell' ? '#fff' : 'var(--ink-3)';
+  sell.style.border     = side === 'sell' ? 'none' : '1px solid var(--line)';
+  updateTradeEstimate();
+}
+function updateTradeEstimate() {
+  const qty = parseFloat(document.getElementById('trade-qty')?.value || 1);
+  const q = MKT.quotes[_tradeModalTicker || ''];
+  const price = q?.close || q?.live || null;
+  const el = document.getElementById('trade-estimated');
+  if (!el) return;
+  if (price && qty > 0) {
+    el.textContent = `Estimado: ${qty} × $${price.toFixed(2)} ≈ $${(price * qty).toLocaleString('es-ES',{minimumFractionDigits:2})} (precio aprox.)`;
+  } else {
+    el.textContent = 'Introduce cantidad para ver el estimado';
+  }
+}
+async function submitTradeOrder() {
+  const ticker = _tradeModalTicker;
+  const qty    = parseFloat(document.getElementById('trade-qty').value);
+  const side   = _tradeModalSide;
+  const otype  = document.getElementById('trade-type').value;
+  const status = document.getElementById('trade-modal-status');
+  if (!ticker || !qty || qty <= 0) { status.textContent = 'Introduce ticker y cantidad válidos'; return; }
+  status.style.color = 'var(--ink-3)'; status.textContent = 'Enviando orden…';
+  document.getElementById('trade-submit-btn').disabled = true;
+  try {
+    const r = await fetch('/api/trade/order', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ symbol: ticker, qty, side, type: otype, time_in_force: 'day' }),
+    });
+    const d = await r.json();
+    if (d.id || d.status === 'accepted' || d.status === 'pending_new') {
+      status.style.color = '#22c55e';
+      status.textContent = `✅ Orden ${side} ${qty}x ${ticker} — ${d.status || 'accepted'}`;
+      toast(`Orden ${side} enviada: ${qty}x ${ticker}`);
+    } else {
+      status.style.color = 'var(--danger)';
+      status.textContent = '❌ ' + (d.message || d.error || JSON.stringify(d).slice(0, 100));
+    }
+  } catch(e) {
+    status.style.color = 'var(--danger)'; status.textContent = '❌ ' + e.message;
+  }
+  document.getElementById('trade-submit-btn').disabled = false;
+}
+window.openTradeModal = openTradeModal;
+window.setTradeSide = setTradeSide;
+window.updateTradeEstimate = updateTradeEstimate;
+window.submitTradeOrder = submitTradeOrder;
+
+/* ===================== MiroFish — contexto del grafo ===================== */
+function _injectGraphContext() {
+  const cats = {};
+  NODES.forEach(n => { cats[n.cat] = (cats[n.cat] || 0) + 1; });
+  const topCats = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    .map(([c, n]) => `${typeof catLabel === 'function' ? catLabel(c) : c} (${n})`).join(', ');
+  const topNodes = NODES.slice(0, 25).map(n => n.label + (n.mkt ? ` [${n.mkt}]` : '')).join(', ');
+  const ctx = [
+    `KHIPU FINANCE — red global de ${NODES.length} empresas y ${LINKS ? LINKS.length : '1200+'} conexiones.`,
+    `Sectores: ${topCats}.`,
+    `Empresas destacadas: ${topNodes}.`,
+    `Fecha de análisis: ${new Date().toLocaleDateString('es-ES')}.`,
+  ].join('\n');
+  const el = document.getElementById('sim-context-text');
+  if (el) { el.value = ctx; toast('Contexto del grafo cargado'); }
+}
+window._injectGraphContext = _injectGraphContext;
 
 /* ===================== Selector de vista ===================== */
 function applyView(mode){
@@ -7287,6 +7396,10 @@ async function _runMiroFishPipeline(text, presetId, output, status) {
       bar(15);
     }
 
+    // 1b. Append custom context from the textarea (news, reports, data)
+    const extraCtx = document.getElementById('sim-context-text')?.value?.trim() || '';
+    if (extraCtx) seed = extraCtx + '\n\n' + seed;
+
     // 2. Build graph
     _simSetStatus(status, '🔄 Construyendo grafo...', 'violet');
     log('🕸 Construyendo grafo de agentes...');
@@ -7577,5 +7690,31 @@ window.nexusCore = {
   },
 };
 </script>
+
+<!-- ── Trade modal ──────────────────────────────────────────────────────── -->
+<div id="trade-modal" style="display:none;position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:14px;padding:24px 22px 20px;width:330px;max-width:92vw;box-shadow:0 8px 48px rgba(0,0,0,.45);position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 id="trade-modal-title" style="margin:0;font-size:14px;font-weight:700">Orden de trading</h3>
+      <button onclick="document.getElementById('trade-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-3);line-height:1;width:28px;height:28px">✕</button>
+    </div>
+    <div id="trade-modal-price" style="font-size:12px;color:var(--ink-3);margin-bottom:10px"></div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="trade-buy-btn"  onclick="setTradeSide('buy')"  style="flex:1;padding:9px;background:#22c55e;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">Comprar</button>
+      <button id="trade-sell-btn" onclick="setTradeSide('sell')" style="flex:1;padding:9px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--ink-3);font-size:13px;cursor:pointer">Vender</button>
+    </div>
+    <label style="font-size:11px;color:var(--ink-3);display:block;margin-bottom:4px">Cantidad (acciones)</label>
+    <input id="trade-qty" type="number" min="1" step="1" value="1" oninput="updateTradeEstimate()" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);font-size:14px;margin-bottom:10px">
+    <label style="font-size:11px;color:var(--ink-3);display:block;margin-bottom:4px">Tipo de orden</label>
+    <select id="trade-type" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);font-size:13px;margin-bottom:10px">
+      <option value="market">Market (precio de mercado)</option>
+      <option value="limit">Limit (precio límite)</option>
+    </select>
+    <div id="trade-estimated" style="font-size:11px;color:var(--ink-3);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:7px"></div>
+    <button id="trade-submit-btn" onclick="submitTradeOrder()" style="width:100%;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">Confirmar orden</button>
+    <div id="trade-modal-status" style="margin-top:8px;font-size:12px;text-align:center;min-height:18px"></div>
+    <div id="trade-modal-account" style="margin-top:10px;font-size:11px;color:var(--ink-3);text-align:center;border-top:1px solid var(--line);padding-top:8px"></div>
+  </div>
+</div>
 </body>
 </html>

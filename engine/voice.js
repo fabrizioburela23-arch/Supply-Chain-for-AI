@@ -95,13 +95,15 @@ const BixbyVoice = {
     }
 
     // ── Step 4: open WebSocket and wire up audio ───────────────────────────────
+    this._preStream = preStream;
     this.ws = new WebSocket(signedUrl);
 
     this.ws.onopen = () => {
       this.isConnected = true;
       this._showOverlay('Bixby — iniciando sesión…');
       this._sendInitContext();
-      this._startMicWithStream(preStream);
+      // Mic starts on conversation_initiation_metadata (not here)
+      // ElevenLabs requires that exchange before audio can be sent
     };
 
     this.ws.onmessage = e => {
@@ -135,10 +137,13 @@ const BixbyVoice = {
   disconnect() {
     this.isConnected = false;
     this._stopMic();
+    if (this._preStream) {
+      try { this._preStream.getTracks().forEach(t => t.stop()); } catch {}
+      this._preStream = null;
+    }
     this.audioQueue = [];
     this.isPlaying = false;
     if (this.ws) {
-      // Closing with code 1000 (normal) prevents onclose from showing an error
       try { this.ws.close(1000, 'user disconnected'); } catch {}
       this.ws = null;
     }
@@ -250,23 +255,9 @@ const BixbyVoice = {
 
   _sendInitContext() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    const ctx = this._buildContext();
-    // ElevenLabs ConvAI init message — dynamic_variables must be strings
-    const msg = {
-      type: 'conversation_initiation_client_data',
-      dynamic_variables: {
-        selected_company: ctx.selected_company?.label || 'ninguna',
-        active_tab: ctx.active_tab || 'mapa',
-        total_nodes: String(ctx.total_nodes || 0),
-        portfolio_count: String(ctx.portfolio_count || 0),
-        stress_active: ctx.stress_active ? 'sí' : 'no',
-        stressed_company: ctx.stressed_company || 'ninguna',
-      },
-    };
-    // Prompt override only works if the ElevenLabs agent has "Allow overrides" on.
-    // Sending it when overrides are OFF causes ElevenLabs to close the WebSocket.
-    // Only attach it when the server explicitly provides a prompt AND override is
-    // enabled (checked via the allow_override flag in the bixby-prompt response).
+    // Minimal init — dynamic_variables require agent config in ElevenLabs dashboard
+    // and cause a close if the placeholders don't exist in the agent's system prompt
+    const msg = { type: 'conversation_initiation_client_data' };
     if (this._systemPrompt && this._allowPromptOverride) {
       msg.conversation_config_override = {
         agent: {
@@ -303,8 +294,12 @@ const BixbyVoice = {
   _handleMessage(msg) {
     switch (msg.type) {
       case 'conversation_initiation_metadata':
-        // Session confirmed — mic was already started on ws.onopen
+        // Session confirmed — NOW safe to start sending audio
         this._showOverlay('🎙️ Bixby te escucha — habla');
+        if (this._preStream) {
+          this._startMicWithStream(this._preStream);
+          this._preStream = null;
+        }
         break;
       case 'audio': {
         const chunk = msg.audio_event?.audio_base_64;

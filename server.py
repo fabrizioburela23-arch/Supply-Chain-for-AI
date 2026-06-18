@@ -63,6 +63,9 @@ ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
 AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
 RAG_URL             = os.getenv('RAG_URL', 'http://localhost:5051')
 SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
+ALPACA_KEY          = os.getenv('ALPACA_KEY', '')
+ALPACA_SECRET       = os.getenv('ALPACA_SECRET', '')
+ALPACA_BASE         = os.getenv('ALPACA_BASE', 'https://paper-api.alpaca.markets')
 
 if SECRET_KEY == 'khipu-dev-secret-change-me':
     log.warning('⚠️  SECRET_KEY is default — set SECRET_KEY env var in Railway before going live')
@@ -343,7 +346,45 @@ def candles(ticker):
             if out['c']:
                 return jsonify(out)
 
-    # 3) Stooq — free, no key. US tickers use the .US suffix.
+    # 3) Yahoo Finance — unofficial but reliable from server IPs, no key needed
+    try:
+        yf_url = (f'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}'
+                  f'?interval=1d&range=3mo')
+        yf_r = requests.get(yf_url,
+                             headers={'User-Agent': 'Mozilla/5.0 (compatible; Khipu/1.0)'},
+                             timeout=12)
+        if yf_r.status_code == 200:
+            ydata = yf_r.json()
+            result = ((ydata.get('chart') or {}).get('result') or [None])[0]
+            if result:
+                ts      = result.get('timestamp', [])
+                q_block = (result.get('indicators') or {}).get('quote', [{}])[0]
+                opens   = q_block.get('open', [])
+                highs   = q_block.get('high', [])
+                lows    = q_block.get('low', [])
+                closes  = q_block.get('close', [])
+                if ts and closes:
+                    valid = [(t, o, h, l, c) for t, o, h, l, c
+                             in zip(ts,
+                                    opens  or [None]*len(ts),
+                                    highs  or [None]*len(ts),
+                                    lows   or [None]*len(ts),
+                                    closes)
+                             if c is not None]
+                    if valid:
+                        out = {
+                            's': 'ok',
+                            't': [v[0] for v in valid],
+                            'o': [v[1] if v[1] is not None else v[4] for v in valid],
+                            'h': [v[2] if v[2] is not None else v[4] for v in valid],
+                            'l': [v[3] if v[3] is not None else v[4] for v in valid],
+                            'c': [v[4] for v in valid],
+                        }
+                        return jsonify(out)
+    except Exception:  # noqa: BLE001
+        pass
+
+    # 4) Stooq — free, no key. US tickers use the .US suffix.
     try:
         import csv as _csv
         import io as _io
@@ -372,6 +413,70 @@ def candles(ticker):
         pass
 
     return jsonify({'error': 'no_data', 's': 'no_data'}), 404
+
+
+# ── Alpaca paper/live trading ─────────────────────────────────────────────────
+def _alpaca_hdrs():
+    return {
+        'APCA-API-KEY-ID': ALPACA_KEY,
+        'APCA-API-SECRET-KEY': ALPACA_SECRET,
+        'Content-Type': 'application/json',
+    }
+
+@app.route('/api/trade/account', methods=['GET'])
+def trade_account():
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/account',
+                         headers=_alpaca_hdrs(), timeout=10)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+@app.route('/api/trade/positions', methods=['GET'])
+def trade_positions():
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/positions',
+                         headers=_alpaca_hdrs(), timeout=10)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+@app.route('/api/trade/orders', methods=['GET'])
+def trade_orders():
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/orders?status=all&limit=20',
+                         headers=_alpaca_hdrs(), timeout=10)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+@app.route('/api/trade/order', methods=['POST'])
+@rate_limit(20, 60)
+def trade_order():
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    data   = request.get_json(silent=True) or {}
+    ticker = (data.get('symbol') or '').upper().strip()
+    qty    = data.get('qty')
+    side   = data.get('side', 'buy')
+    otype  = data.get('type', 'market')
+    tif    = data.get('time_in_force', 'day')
+    if not ticker or not qty or side not in ('buy', 'sell'):
+        return jsonify({'error': 'symbol, qty y side (buy|sell) son requeridos'}), 400
+    body = {'symbol': ticker, 'qty': str(qty), 'side': side,
+            'type': otype, 'time_in_force': tif}
+    try:
+        r = requests.post(f'{ALPACA_BASE}/v2/orders',
+                          headers=_alpaca_hdrs(), json=body, timeout=15)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
 
 
 @app.route('/api/news/<ticker>')
