@@ -16,10 +16,13 @@ import os
 import time
 import uuid
 import logging
+import hashlib
+import hmac
 import requests
+from collections import defaultdict
 from functools import wraps
 from datetime import date, datetime, timedelta
-from flask import Flask, jsonify, send_file, request
+from flask import Flask, jsonify, send_file, request, abort
 from flask_caching import Cache
 
 # PyJWT es opcional: si no está instalado, la API pública /v1/* queda deshabilitada
@@ -37,6 +40,7 @@ load_dotenv()  # Lee .env: FINNHUB_KEY, FMP_KEY, CLAUDE_KEY, MARKETSTACK_KEY, AI
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 min por defecto
+app.config['MAX_CONTENT_LENGTH'] = 64 * 1024  # 64 KB max request body
 cache = Cache(app)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
@@ -59,7 +63,50 @@ AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
 RAG_URL             = os.getenv('RAG_URL', 'http://localhost:5051')
 SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
 
+if SECRET_KEY == 'khipu-dev-secret-change-me':
+    log.warning('⚠️  SECRET_KEY is default — set SECRET_KEY env var in Railway before going live')
+
 HTTP_TIMEOUT = 8
+
+# ── Simple in-process rate limiter ──────────────────────────────────────────
+_rate_buckets: dict = defaultdict(list)
+
+def _rate_limit(key: str, limit: int, window: int) -> bool:
+    """Returns True if request is allowed. key=ip+endpoint, limit=max calls, window=seconds."""
+    now = time.time()
+    bucket = _rate_buckets[key]
+    _rate_buckets[key] = [t for t in bucket if now - t < window]
+    if len(_rate_buckets[key]) >= limit:
+        return False
+    _rate_buckets[key].append(now)
+    return True
+
+def rate_limit(limit: int, window: int = 3600):
+    """Decorator: limit calls per IP. limit=max, window=seconds (default 1 hour)."""
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            ip = request.headers.get('X-Forwarded-For', request.remote_addr or 'unknown').split(',')[0].strip()
+            key = f'{ip}:{f.__name__}'
+            if not _rate_limit(key, limit, window):
+                log.warning('Rate limit hit: %s %s', ip, f.__name__)
+                return jsonify({'error': 'Rate limit exceeded. Try again later.'}), 429
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+@app.after_request
+def _add_security_headers(resp):
+    resp.headers['X-Content-Type-Options'] = 'nosniff'
+    resp.headers['X-Frame-Options'] = 'DENY'
+    resp.headers['X-XSS-Protection'] = '1; mode=block'
+    resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    resp.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=(self)'
+    # HSTS only on HTTPS (Railway)
+    if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
+        resp.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return resp
 
 
 @app.after_request
@@ -195,9 +242,39 @@ def health():
 # Finnhub — precios, noticias, earnings, WebSocket token
 # ----------------------------------------------------------------------------
 @app.route('/api/ws-token')
+@rate_limit(limit=30, window=60)  # 30 tokens per minute per IP
 def ws_token():
-    """El frontend necesita el token para abrir el WebSocket directamente
-    (los WebSockets no se proxean fácilmente en Flask sin la lib websockets)."""
+    """Returns a short-lived signed token the browser uses to open the Finnhub WebSocket.
+    The token expires in 30 seconds and is HMAC-signed so it cannot be forged.
+    The browser must exchange it for the real key at connect time via /api/ws-key."""
+    if not FINNHUB:
+        return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    expires = int(time.time()) + 30
+    payload = f'ws:{expires}'
+    sig = hmac.new(SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()[:16]
+    return jsonify({'session_token': f'{expires}.{sig}', 'expires_in': 30})
+
+
+@app.route('/api/ws-key', methods=['POST'])
+@rate_limit(limit=30, window=60)
+def ws_key():
+    """Validates a session_token and returns the real Finnhub key. Token must be fresh (<30s)."""
+    if not FINNHUB:
+        return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    data = request.get_json(silent=True) or {}
+    token = data.get('session_token', '')
+    try:
+        parts = token.split('.')
+        expires = int(parts[0])
+        sig = parts[1]
+    except (ValueError, IndexError):
+        return jsonify({'error': 'invalid token'}), 401
+    if time.time() > expires:
+        return jsonify({'error': 'token expired'}), 401
+    payload = f'ws:{expires}'
+    expected = hmac.new(SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()[:16]
+    if not hmac.compare_digest(sig, expected):
+        return jsonify({'error': 'invalid token signature'}), 401
     return jsonify({'token': FINNHUB})
 
 
@@ -355,15 +432,18 @@ def _claude_complete(system, prompt, max_tokens):
 
 
 @app.route('/api/ai/analyze', methods=['POST'])
+@rate_limit(limit=30, window=3600)   # 30 AI analyses per hour per IP
 def ai_analyze():
     if not CLAUDE:
         return jsonify({'error': 'no CLAUDE_KEY'}), 400
     data = request.get_json(force=True, silent=True) or {}
+    # Clamp max_tokens to avoid runaway costs
+    max_tok = min(int(data.get('max_tokens', 1000)), 2000)
     try:
         text, model = _claude_complete(
             data.get('system', ''),
             data.get('prompt', ''),
-            int(data.get('max_tokens', 1000)),
+            max_tok,
         )
         return jsonify({'result': text, 'model': model})
     except Exception as e:  # noqa: BLE001
@@ -371,15 +451,17 @@ def ai_analyze():
 
 
 @app.route('/api/ai/news-digest', methods=['POST'])
+@rate_limit(limit=60, window=3600)   # 60 news digests per hour per IP
 def news_digest():
     if not CLAUDE:
         return jsonify({'error': 'no CLAUDE_KEY'}), 400
     data = request.get_json(force=True, silent=True) or {}
+    max_tok = min(int(data.get('max_tokens', 400)), 800)
     try:
         text, model = _claude_complete(
             data.get('system', ''),
             data.get('prompt', ''),
-            int(data.get('max_tokens', 400)),
+            max_tok,
         )
         return jsonify({'result': text, 'model': model})
     except Exception as e:  # noqa: BLE001

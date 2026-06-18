@@ -108,7 +108,7 @@ const BixbyVoice = {
       selected_company: sel ? {
         id: sel.id, label: sel.label, ticker: sel.mkt,
         cat: (typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat),
-        nrs: (typeof computeNRS === 'function' ? computeNRS(sel.id).total : null),
+        nrs: (typeof computeNRS === 'function' ? computeNRS(sel.id) : null),
         price: sel.mkt ? (MKT.quotes[sel.mkt]?.close || null) : null,
       } : null,
       portfolio_count: portfolio,
@@ -122,20 +122,47 @@ const BixbyVoice = {
 
   async _startMic() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-      this.mediaRecorder.ondataavailable = e => {
-        if (e.data.size > 0 && this.ws?.readyState === WebSocket.OPEN) {
-          e.data.arrayBuffer().then(buf => {
-            let bin = '';
-            const bytes = new Uint8Array(buf);
-            for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-            const b64 = btoa(bin);
-            this.ws.send(JSON.stringify({ user_audio_chunk: b64 }));
-          });
+      // ElevenLabs ConvAI requires raw PCM 16-bit 16kHz mono — NOT webm/opus from MediaRecorder.
+      // We use ScriptProcessor to capture Float32 samples and convert to Int16 before sending.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        video: false,
+      });
+
+      if (!this.audioCtx) await this.init();
+      if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
+
+      const srcNode = this.audioCtx.createMediaStreamSource(stream);
+      // ScriptProcessor is deprecated but universally supported; AudioWorklet requires HTTPS+module
+      const processor = this.audioCtx.createScriptProcessor(4096, 1, 1);
+
+      processor.onaudioprocess = (ev) => {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        const f32 = ev.inputBuffer.getChannelData(0);
+        const i16 = new Int16Array(f32.length);
+        for (let i = 0; i < f32.length; i++) {
+          const s = Math.max(-1, Math.min(1, f32[i]));
+          i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
         }
+        const bytes = new Uint8Array(i16.buffer);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        this.ws.send(JSON.stringify({ user_audio_chunk: btoa(bin) }));
       };
-      this.mediaRecorder.start(250);
+
+      srcNode.connect(processor);
+      processor.connect(this.audioCtx.destination);
+      this._micSrc = srcNode;
+      this._micProcessor = processor;
+      this._micStream = stream;
+
+      // Expose a stop() method matching the old mediaRecorder interface
+      this.mediaRecorder = {
+        stop: () => {
+          try { processor.disconnect(); srcNode.disconnect(); } catch {}
+          stream.getTracks().forEach(t => t.stop());
+        },
+      };
     } catch (e) {
       this._setStatus('Micrófono no disponible: ' + e.message, true);
       this.disconnect();

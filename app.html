@@ -1044,7 +1044,7 @@ footer .disc{line-height:1.4}
   </span>
   <div class="boot-title">Khipu Finance</div>
   <div class="boot-bar"><i></i></div>
-  <div class="boot-log" id="boot-log">› inicializando grafo · 137 nodos · 546 conexiones</div>
+  <div class="boot-log" id="boot-log">› inicializando grafo…</div>
 </div>
 <script>
 // Hard fallback: always dismiss #boot after 3s even if main JS crashes
@@ -4140,12 +4140,22 @@ if (typeof NODES_SPACEX !== 'undefined') {
 NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
 window.NODES = NODES;
 
-// Node ID aliases — maps common alternate names to canonical IDs in NODES
+// Node ID aliases — maps alternate/legacy IDs to canonical node IDs
 const NODE_ID_ALIAS = {
-  'AWS': 'Amazon', 'Azure': 'Microsoft', 'NVIDIA': 'Nvidia',
-  'GCP': 'Alphabet', 'Google': 'Alphabet', 'Meta': 'MetaPlatforms',
+  // Cloud aliases
+  'AWS': 'Amazon', 'Azure': 'Microsoft', 'GCP': 'Alphabet', 'Google': 'Alphabet',
+  // Chip companies — canonical ID mismatch fixes
+  'NVIDIA': 'Nvidia',
+  'Lam_Research': 'Lam',             // links_expand uses Lam_Research, node is Lam
+  'Applied_Materials': 'AMAT',       // links_expand uses Applied_Materials, node is AMAT
+  'Tokyo_Electron': 'TEL',           // links_expand uses Tokyo_Electron, node is TEL
+  'SK_Hynix': 'SKHynix',             // links_expand uses SK_Hynix, node is SKHynix
+  'MetaPlatforms': 'Meta',           // links_expand uses MetaPlatforms, node is Meta
+  'Electron': 'RocketLab',           // Electron is RocketLab's rocket; maps to company node
+  'Alibaba': 'AlibabaCloud',         // parent; maps to Alibaba Cloud node
+  // Other normalization
   'Texas_Instruments': 'TexasInstruments', 'TI': 'TexasInstruments',
-  'STMicro': 'STMicroelectronics', 'Xilinx': 'AMD', // Acquired by AMD
+  'STMicro': 'STMicroelectronics', 'Xilinx': 'AMD',
   'BoozAllen': 'Booz_Allen', 'CACI_Int': 'CACI',
 };
 function _resolveId(id) { return NODE_ID_ALIAS[id] || id; }
@@ -5934,7 +5944,13 @@ const DataLayer = {
     return block?block.text:'';
   },
   async wsToken(){
-    if(SERVER_MODE){ const j=await this._json(BASE+'/api/ws-token'); return j.token; }
+    if(SERVER_MODE){
+      // Two-step exchange: get a short-lived session token, then exchange for the real key
+      const sess=await this._json(BASE+'/api/ws-token');
+      if(!sess.session_token) return null;
+      const j=await fetch(BASE+'/api/ws-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_token:sess.session_token})}).then(r=>r.json());
+      return j.token||null;
+    }
     return Keys.get('finnhub');
   },
   async _cached(key, ttl, fetcher){
@@ -6673,7 +6689,9 @@ const $=id=>document.getElementById(id);
 (function boot(){
   const el=$('boot'); if(!el) return;
   const log=$('boot-log');
-  const lines=['› inicializando grafo · 137 nodos · 546 conexiones',
+  const nodeCount = (typeof NODES !== 'undefined') ? NODES.length : '…';
+  const linkCount = (typeof LINKS !== 'undefined') ? LINKS.length : '…';
+  const lines=[`› grafo · ${nodeCount} nodos · ${linkCount} conexiones`,
     '› cargando capa de mercado en vivo…','› motor de análisis IA listo','› ✓ terminal operativo'];
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
   setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);

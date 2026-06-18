@@ -289,6 +289,23 @@ var NODES_EXPAND2 = [
   {"id":"Moog","label":"Moog Inc.","ticker":"MOG.A · NYSE","cat":"ai_defense","country":"EEUU","mkt":"MOG.A","geo":"EEUU","big":false,"desc":"Precision motion control for defense and space","role":"Moog Inc. — control de movimiento de precisión para defensa, espacio y aviación; actuadores críticos en misiles y satélites","growth":"🟢 +15% e. 2026; defense spending","margin":0.15},
   {"id":"AWS_Ground","label":"Amazon Ground Station","ticker":"AMZN · Nasdaq","cat":"space_launch","country":"EEUU","mkt":"AMZN","geo":"EEUU","big":false,"desc":"AWS ground station network for satellite data downlink","role":"Amazon Ground Station — red de estaciones terrestres de AWS para descarga de datos de satélites en tiempo real","growth":"🟢 crecimiento con constelaciones LEO","margin":null},
 
+  // ── Aerospace & Defense (needed for supply chain links) ─────────────────────
+  {"id":"Boeing","label":"Boeing","ticker":"BA · NYSE","cat":"ai_defense","country":"EEUU","mkt":"BA","geo":"EEUU","big":true,"desc":"Global aerospace and defense manufacturer","role":"Boeing — mayor fabricante aeroespacial de EE.UU.; aviones comerciales (737, 787), defensa (F-15, Apache) y espacio (SLS)","growth":"🟡 recuperación producción 737 MAX; cartera de defensa estable","margin":0.04},
+  {"id":"Airbus","label":"Airbus","ticker":"AIR · Euronext","cat":"ai_defense","country":"Francia","mkt":"EADSY","geo":"Europa","big":true,"desc":"European aerospace and defense manufacturer","role":"Airbus — líder europeo en aeronáutica; A320/A350 para aviación civil, Eurofighter y satélites militares","growth":"🟢 +10% e. 2026; demanda civil récord y defensa EU","margin":0.06},
+  {"id":"Northrop","label":"Northrop Grumman","ticker":"NOC · NYSE","cat":"ai_defense","country":"EEUU","mkt":"NOC","geo":"EEUU","big":true,"desc":"Defense and space systems contractor","role":"Northrop Grumman — contratista de defensa y espacio; B-21 Raider, GBSD, satélites clasificados y sistemas C4ISR","growth":"🟢 +12% e. 2026; ciclo GBSD y B-21","margin":0.11},
+  {"id":"Aerojet","label":"Aerojet Rocketdyne","ticker":"AJRD · NYSE","cat":"space_launch","country":"EEUU","mkt":"L3HJRD","geo":"EEUU","big":false,"desc":"Rocket propulsion and missile systems","role":"Aerojet Rocketdyne — propulsión de cohetes y misiles (RS-25 para SLS, RL10 para Atlas/Vulcan, motores hipersónicos)","growth":"🟢 +20% e. 2026; SLS, misiles hipersónicos y GBSD","margin":0.09},
+  {"id":"GE_Aerospace","label":"GE Aerospace","ticker":"GE · NYSE","cat":"power","country":"EEUU","mkt":"GE","geo":"EEUU","big":true,"desc":"Aviation engines and defense propulsion systems","role":"GE Aerospace — motores de aviación comercial (LEAP, GEnx) y defensa (F414, F110); líder en propulsión global","growth":"🟢 +15% e. 2026; mantenimiento flota global y aumento tráfico aéreo","margin":0.22},
+
+  // ── Automotive / Industrial ──────────────────────────────────────────────────
+  {"id":"Stellantis","label":"Stellantis","ticker":"STLA · NYSE","cat":"ai_auto","country":"PaisesBajos","mkt":"STLA","geo":"Europa","big":true,"desc":"Global automaker and EV transition","role":"Stellantis — grupo automovilístico global (Jeep, Ram, Peugeot, Fiat); transición EV con plataforma STLA Frame; cliente clave de SiC (Wolfspeed)","growth":"🟡 transición EV lenta; presión márgenes","margin":0.07},
+
+  // ── Financial Exchanges & Fintech ────────────────────────────────────────────
+  {"id":"NASDAQ","label":"Nasdaq Exchange","ticker":"NDAQ · Nasdaq","cat":"ai_finance","country":"EEUU","mkt":"NDAQ","geo":"EEUU","big":false,"desc":"Electronic stock exchange and financial technology","role":"Nasdaq — bolsa electrónica global y proveedor de tecnología financiera; listado de la mayoría de empresas tech del grafo","growth":"🟢 +10% e. 2026; trading volumes y SaaS financiero","margin":0.35},
+  {"id":"CBOE","label":"CBOE Global Markets","ticker":"CBOE · CBOE","cat":"ai_finance","country":"EEUU","mkt":"CBOE","geo":"EEUU","big":false,"desc":"Options and derivatives exchange","role":"CBOE Global Markets — mayor bolsa de opciones del mundo; VIX index y productos derivados sobre índices tech","growth":"🟢 +8% e. 2026; volatilidad en mercados AI","margin":0.33},
+
+  // ── Enterprise Software ──────────────────────────────────────────────────────
+  {"id":"Salesforce","label":"Salesforce","ticker":"CRM · NYSE","cat":"aisoft","country":"EEUU","mkt":"CRM","geo":"EEUU","big":true,"desc":"CRM and AI enterprise software platform","role":"Salesforce — plataforma CRM líder y Einstein AI; Agentforce para agentes autónomos empresariales; cliente de GPU cloud","growth":"🟢 +15% e. 2026; Agentforce AI momentum","margin":0.31},
+
 ];
 
 
