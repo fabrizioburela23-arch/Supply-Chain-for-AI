@@ -1205,6 +1205,204 @@ def api_portfolio_risk():
     })
 
 
+# ── /api/quotes/live — batch quotes with pct change ──────────────────────────
+@app.route('/api/quotes/live', methods=['POST'])
+@rate_limit(limit=60, window=60)
+def quotes_live():
+    """Batch live quotes with pct change. Body: {"tickers": ["NVDA","TSM",...]}.
+    Tries Finnhub first, falls back to Yahoo Finance per ticker.
+    Returns {ticker: {close, prev, live, pct, vol}}.
+    """
+    data = request.get_json(silent=True) or {}
+    tickers = [str(t).upper().strip() for t in (data.get('tickers') or []) if t]
+    tickers = tickers[:100]
+    if not tickers:
+        return jsonify({'error': 'tickers required'}), 400
+
+    results = {}
+    for tk in tickers:
+        q = None
+        # 1) Finnhub
+        if FINNHUB:
+            fh, err = _safe_get(
+                f'https://finnhub.io/api/v1/quote?symbol={tk}&token={FINNHUB}', timeout=4)
+            if fh and fh.get('c') and fh.get('pc'):
+                close = fh['c']
+                prev  = fh['pc']
+                live  = fh.get('c', close)
+                pct   = (live - prev) / prev * 100 if prev else 0
+                q = {'close': close, 'prev': prev, 'live': live, 'pct': round(pct, 3),
+                     'vol': fh.get('v', 0)}
+        # 2) Yahoo Finance fallback
+        if q is None:
+            try:
+                yf_url = (f'https://query1.finance.yahoo.com/v8/finance/chart/{tk}'
+                          f'?interval=1d&range=5d')
+                yf_r = requests.get(yf_url,
+                                    headers={'User-Agent': 'Mozilla/5.0 (compatible; Khipu/1.0)'},
+                                    timeout=6)
+                if yf_r.status_code == 200:
+                    ydata = yf_r.json()
+                    result = ((ydata.get('chart') or {}).get('result') or [None])[0]
+                    if result:
+                        meta   = result.get('meta', {})
+                        closes = (result.get('indicators', {}).get('quote', [{}])[0]
+                                  .get('close', []))
+                        closes = [c for c in closes if c is not None]
+                        if len(closes) >= 2:
+                            close = closes[-1]
+                            prev  = closes[-2]
+                            live  = meta.get('regularMarketPrice', close)
+                            pct   = (live - prev) / prev * 100 if prev else 0
+                            vol   = meta.get('regularMarketVolume', 0)
+                            q = {'close': close, 'prev': prev, 'live': live,
+                                 'pct': round(pct, 3), 'vol': vol}
+            except Exception:  # noqa: BLE001
+                pass
+        if q:
+            results[tk] = q
+
+    return jsonify(results)
+
+
+# ── /api/macro/fred — FRED macro indicators ───────────────────────────────────
+@app.route('/api/macro/fred')
+@cache.cached(timeout=3600, query_string=True)
+def macro_fred():
+    """Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS
+    Returns last 30 data points per series.
+    """
+    import csv as _csv
+    import io as _io
+
+    series_param = request.args.get('series', 'T10Y2Y,FEDFUNDS,DGS10')
+    series_ids = [s.strip() for s in series_param.split(',') if s.strip()][:8]
+    out = {}
+    for sid in series_ids:
+        try:
+            r = requests.get(
+                f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}',
+                headers={'User-Agent': 'Mozilla/5.0 (compatible; Khipu/1.0)'},
+                timeout=10)
+            if r.status_code == 200 and r.text:
+                rows = list(_csv.reader(_io.StringIO(r.text)))
+                data_rows = [(row[0], row[1]) for row in rows[1:]
+                             if len(row) >= 2 and row[1] not in ('.', '')]
+                data_rows = data_rows[-30:]
+                out[sid] = [{'date': d, 'value': float(v)} for d, v in data_rows]
+        except Exception:  # noqa: BLE001
+            out[sid] = []
+    return jsonify(out)
+
+
+# ── /api/investors/13f/<ticker> — SEC 13F institutional holders ───────────────
+_13f_cache: dict = {}
+
+
+@app.route('/api/investors/13f/<ticker>')
+def investors_13f(ticker):
+    """Top institutional holders from SEC EDGAR 13F filings. Cached 24h."""
+    ticker = ticker.upper()
+    cached = _13f_cache.get(ticker)
+    if cached and time.time() - cached['ts'] < 86400:
+        return jsonify(cached['data'])
+
+    today = datetime.utcnow().date()
+    start = today - timedelta(days=90)
+    from urllib.parse import quote as _urlquote
+    url = (
+        f'https://efts.sec.gov/LATEST/search-index?q=%22{_urlquote(ticker)}%22'
+        f'&dateRange=custom&startdt={start.isoformat()}&enddt={today.isoformat()}&forms=13F-HR'
+    )
+    try:
+        r = requests.get(url,
+                         headers={'User-Agent': 'Khipu Finance research@khipu.finance',
+                                  'Accept': 'application/json'},
+                         timeout=12)
+        if r.status_code != 200:
+            return jsonify({'error': f'SEC returned {r.status_code}'}), 502
+        data = r.json()
+        hits = (data.get('hits') or {}).get('hits', [])
+        holders = []
+        seen = set()
+        for h in hits[:20]:
+            src = h.get('_source', {})
+            disp = src.get('display_names', [])
+            filer = src.get('entity_name') or (disp[0] if disp else None)
+            if not filer or filer in seen:
+                continue
+            seen.add(filer)
+            holders.append({
+                'name': filer,
+                'filed': src.get('period_of_report') or src.get('file_date'),
+                'form': src.get('form_type', '13F-HR'),
+                'cik': src.get('entity_id'),
+            })
+            if len(holders) >= 10:
+                break
+        result = {'ticker': ticker, 'holders': holders, 'source': 'SEC EDGAR'}
+        _13f_cache[ticker] = {'ts': time.time(), 'data': result}
+        return jsonify(result)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+
+# ── /api/supply-chain/trade-flows — UN Comtrade bilateral trade data ──────────
+@app.route('/api/supply-chain/trade-flows')
+@cache.cached(timeout=86400, query_string=True)
+def trade_flows():
+    """UN Comtrade public preview API — bilateral semiconductor trade.
+    ?reporter=USA&partner=CHN&product=8542 (optional filters)
+    HS codes: 8541 semiconductors, 8542 ICs, 8471 computers, 8473 computer parts
+    """
+    reporter = request.args.get('reporter', 'USA')
+    partner  = request.args.get('partner', 'CHN')
+    product  = request.args.get('product', '')
+
+    _ISO_NUM = {
+        'USA': '842', 'CHN': '156', 'TWN': '490', 'KOR': '410',
+        'JPN': '392', 'DEU': '276', 'GBR': '826', 'NLD': '528',
+        'SGP': '702', 'IND': '356', 'MEX': '484', 'MYS': '458',
+    }
+    reporter_code = _ISO_NUM.get(reporter.upper(), reporter)
+    partner_code  = _ISO_NUM.get(partner.upper(), partner)
+
+    hs_codes = [product] if product else ['8541', '8542', '8471', '8473']
+    combined = []
+    for hs in hs_codes:
+        url = (
+            f'https://comtradeapi.un.org/public/v1/preview/C/A/HS'
+            f'?reporterCode={reporter_code}&partnerCode={partner_code}'
+            f'&cmdCode={hs}&period=2023'
+        )
+        try:
+            r = requests.get(url,
+                             headers={'User-Agent': 'Mozilla/5.0 (compatible; Khipu/1.0)'},
+                             timeout=15)
+            if r.status_code == 200:
+                j = r.json()
+                for item in (j.get('data') or [])[:5]:
+                    combined.append({
+                        'hs_code': hs,
+                        'reporter': item.get('reporterDesc', reporter),
+                        'partner': item.get('partnerDesc', partner),
+                        'flow': item.get('flowDesc', ''),
+                        'value_usd': item.get('primaryValue'),
+                        'quantity': item.get('netWgt'),
+                        'year': item.get('period'),
+                    })
+        except Exception:  # noqa: BLE001
+            pass
+
+    return jsonify({
+        'reporter': reporter,
+        'partner': partner,
+        'hs_codes': hs_codes,
+        'flows': combined,
+        'source': 'UN Comtrade public preview',
+    })
+
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5050))
     app.run(host='0.0.0.0', port=port, debug=False)

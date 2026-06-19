@@ -1135,6 +1135,11 @@ footer .disc{line-height:1.4}
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
       <button class="icon-btn" id="toggle-3d-btn" title="Alternar vista 2D / 3D" style="width:auto;padding:0 10px;font-size:11px;font-weight:700" onclick="window._toggle3D && window._toggle3D()">3D</button>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <span id="live-status-dot" style="width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .5s,box-shadow .5s"></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.1em">LIVE</span>
+        <span id="live-countdown" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2)">···</span>
+      </div>
       <button id="bixby-btn" title="Hablar con Bixby · Khipu Finance AI" onclick="window.BixbyVoice?.toggle()"
   style="position:relative;display:flex;align-items:center;gap:7px;padding:0 14px;height:32px;border-radius:999px;
     border:1px solid rgba(138,90,255,.5);background:rgba(138,90,255,.08);
@@ -1358,6 +1363,60 @@ footer .disc{line-height:1.4}
     <div class="mkt-tablewrap">
       <div class="mkt-sec-head">Nodos aislados (sin conexiones de salida)</div>
       <div id="an-isolated" style="padding:14px 16px;font-size:13px">Calculando...</div>
+    </div>
+
+    <!-- ── Investor Tools ──────────────────────────────────────────────────── -->
+    <div style="margin-top:24px">
+      <h3 style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em">Herramientas de Inversor</h3>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <!-- Price Targets -->
+        <div class="mkt-tablewrap">
+          <div class="mkt-sec-head">PRICE TARGETS · CONSENSO ANALISTAS</div>
+          <div style="padding:14px 16px" id="investor-pt-wrap">
+            <div style="color:var(--ink-3);font-size:12px">Selecciona un nodo en el mapa para ver el consenso de precio objetivo</div>
+          </div>
+        </div>
+
+        <!-- FRED Macro Gauges -->
+        <div class="mkt-tablewrap">
+          <div class="mkt-sec-head">MACRO · FRED INDICATORS</div>
+          <div style="padding:14px 16px" id="fred-macro-wrap">
+            <div style="color:var(--ink-3);font-size:12px">Cargando indicadores macro...</div>
+          </div>
+          <div style="padding:4px 16px 10px">
+            <button onclick="loadFredMacro()" style="font-size:10px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--ink-3)">Actualizar FRED</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- SEC 13F Institutional Holders -->
+        <div class="mkt-tablewrap">
+          <div class="mkt-sec-head">TENEDORES INSTITUCIONALES · SEC 13F</div>
+          <div style="padding:14px 16px" id="investor-13f-wrap">
+            <div style="color:var(--ink-3);font-size:12px">Selecciona un nodo con ticker para ver tenedores 13F</div>
+          </div>
+        </div>
+
+        <!-- Trade Flows -->
+        <div class="mkt-tablewrap">
+          <div class="mkt-sec-head">FLUJOS COMERCIALES · UN COMTRADE</div>
+          <div style="padding:14px 16px" id="trade-flows-wrap">
+            <div style="color:var(--ink-3);font-size:12px">Cargando flujos de comercio semiconductor...</div>
+          </div>
+          <div style="padding:4px 16px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="tf-reporter" style="font-size:10px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2)">
+              <option value="USA">USA</option><option value="TWN">Taiwan</option><option value="KOR">Korea</option><option value="JPN">Japan</option><option value="DEU">Germany</option>
+            </select>
+            <span style="font-size:10px;color:var(--ink-3)">→</span>
+            <select id="tf-partner" style="font-size:10px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2)">
+              <option value="CHN">China</option><option value="USA">USA</option><option value="TWN">Taiwan</option><option value="KOR">Korea</option><option value="JPN">Japan</option>
+            </select>
+            <button onclick="loadTradeFlows()" style="font-size:10px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--ink-3)">Cargar</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -7872,6 +7931,274 @@ window.nexusCore = {
     if (runBtn) runBtn.click();
   },
 };
+
+// ── Live Data Manager ──────────────────────────────────────────────────────────
+(function initLiveData() {
+  'use strict';
+
+  const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 min
+  let _countdown = REFRESH_INTERVAL / 1000;
+
+  function _allTickers() {
+    if (typeof NODES === 'undefined') return [];
+    return [...new Set(NODES.filter(n => n.mkt).map(n => n.mkt))].slice(0, 100);
+  }
+
+  async function refreshLiveData() {
+    const tickers = _allTickers();
+    if (!tickers.length) return;
+    try {
+      const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
+        ? '' : (localStorage.getItem('base_url') || '');
+      const res = await fetch(`${BASE}/api/quotes/live`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tickers}),
+      });
+      if (!res.ok) { _setLiveStatus('error'); return; }
+      const quotesMap = await res.json();
+
+      // Update MKT.quotes
+      if (typeof MKT !== 'undefined') {
+        Object.entries(quotesMap).forEach(([tk, q]) => { MKT.quotes[tk] = q; });
+      }
+
+      // Update 3D graph colors
+      const updater = window._graph3d_updateLiveColors;
+      if (updater) updater(quotesMap);
+
+      // Re-render market table if active
+      if (typeof renderMarket === 'function') renderMarket();
+
+      // Update header metrics
+      _updateHeaderMetrics(quotesMap);
+
+      _setLiveStatus('live');
+    } catch(e) {
+      _setLiveStatus('error');
+    }
+    _countdown = REFRESH_INTERVAL / 1000;
+  }
+
+  function _updateHeaderMetrics(quotesMap) {
+    const portfolio = JSON.parse(localStorage.getItem('portfolio') || '{}');
+    let totalPL = 0, totalVal = 0;
+    Object.entries(portfolio).forEach(([tk, pos]) => {
+      const q = quotesMap[tk];
+      if (!q || !pos.shares) return;
+      const price = q.live || q.close;
+      totalVal += price * pos.shares;
+      totalPL  += (price - (pos.buy_price || price)) * pos.shares;
+    });
+    const plEl = document.getElementById('metric-pl');
+    if (plEl && totalVal > 0) {
+      plEl.textContent = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(0);
+      plEl.style.color = totalPL >= 0 ? '#00ff88' : '#ff4444';
+    }
+  }
+
+  function _setLiveStatus(state) {
+    const el = document.getElementById('live-status-dot');
+    if (!el) return;
+    if (state === 'live') {
+      el.style.background   = '#00ff88';
+      el.style.boxShadow    = '0 0 6px #00ff88';
+    } else {
+      el.style.background   = '#ff4444';
+      el.style.boxShadow    = '0 0 6px #ff4444';
+    }
+  }
+
+  function _startCountdown() {
+    const el = document.getElementById('live-countdown');
+    setInterval(() => {
+      _countdown--;
+      if (_countdown <= 0) refreshLiveData();
+      if (el) el.textContent = _countdown > 0 ? `${_countdown}s` : '···';
+    }, 1000);
+  }
+
+  function _init() {
+    if (typeof NODES === 'undefined' || !NODES.length) {
+      setTimeout(_init, 1000);
+      return;
+    }
+    refreshLiveData();
+    _startCountdown();
+  }
+
+  window._refreshLiveData = refreshLiveData;
+  setTimeout(_init, 3000);
+})();
+
+// ── Investor Tools: FRED macro + 13F + Trade Flows + Price Targets ─────────────
+async function loadFredMacro() {
+  const el = document.getElementById('fred-macro-wrap');
+  if (!el) return;
+  el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Cargando FRED...</div>';
+  try {
+    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
+      ? '' : (localStorage.getItem('base_url') || '');
+    const r = await fetch(`${BASE}/api/macro/fred?series=T10Y2Y,FEDFUNDS,DGS10`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const labels = {T10Y2Y: '10Y-2Y Spread', FEDFUNDS: 'Fed Funds', DGS10: '10Y Treasury'};
+    const rows = Object.entries(data).map(([sid, pts]) => {
+      const last = pts.length ? pts[pts.length - 1] : null;
+      const prev = pts.length > 1 ? pts[pts.length - 2] : null;
+      const val  = last ? last.value.toFixed(2) : '—';
+      const chg  = (last && prev) ? (last.value - prev.value) : null;
+      const chgStr = chg != null ? (chg >= 0 ? `+${chg.toFixed(2)}` : chg.toFixed(2)) : '';
+      const chgColor = chg == null ? 'var(--ink-3)' : chg >= 0 ? '#22c55e' : '#ef4444';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
+        <span style="font-size:11px;color:var(--ink-2)">${labels[sid] || sid}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">${val}%</span>
+        <span style="font-size:10px;color:${chgColor}">${chgStr}</span>
+      </div>`;
+    }).join('');
+    el.innerHTML = rows || '<div style="color:var(--ink-3);font-size:12px">Sin datos</div>';
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--danger);font-size:12px">Error: ${esc(e.message)}</div>`;
+  }
+}
+window.loadFredMacro = loadFredMacro;
+
+async function loadInvestor13F(ticker) {
+  const el = document.getElementById('investor-13f-wrap');
+  if (!el || !ticker) return;
+  el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Buscando en SEC EDGAR 13F...</div>';
+  try {
+    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
+      ? '' : (localStorage.getItem('base_url') || '');
+    const r = await fetch(`${BASE}/api/investors/13f/${encodeURIComponent(ticker)}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const holders = data.holders || [];
+    if (!holders.length) {
+      el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Sin filings 13F recientes para ' + esc(ticker) + '</div>';
+      return;
+    }
+    el.innerHTML = holders.map((h, i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--ink-1)">${esc(h.name)}</div>
+          <div style="font-size:10px;color:var(--ink-3)">${esc(h.form)} · ${esc(h.filed || '')}</div>
+        </div>
+        <span style="font-size:10px;color:var(--ink-3)">#${i + 1}</span>
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--danger);font-size:12px">Error: ${esc(e.message)}</div>`;
+  }
+}
+window.loadInvestor13F = loadInvestor13F;
+
+async function loadTradeFlows() {
+  const el = document.getElementById('trade-flows-wrap');
+  if (!el) return;
+  const reporter = document.getElementById('tf-reporter')?.value || 'USA';
+  const partner  = document.getElementById('tf-partner')?.value  || 'CHN';
+  el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Consultando UN Comtrade...</div>';
+  try {
+    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
+      ? '' : (localStorage.getItem('base_url') || '');
+    const r = await fetch(`${BASE}/api/supply-chain/trade-flows?reporter=${reporter}&partner=${partner}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    const flows = data.flows || [];
+    if (!flows.length) {
+      el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Sin datos de flujo disponibles.</div>';
+      return;
+    }
+    const HS_NAMES = {'8541': 'Semiconductores', '8542': 'Circuitos integrados', '8471': 'Computadoras', '8473': 'Partes PC'};
+    el.innerHTML = flows.map(f => {
+      const val = f.value_usd ? '$' + (f.value_usd / 1e9).toFixed(2) + 'B' : '—';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)">
+        <div>
+          <div style="font-size:11px;font-weight:600">${esc(HS_NAMES[f.hs_code] || 'HS ' + f.hs_code)}</div>
+          <div style="font-size:10px;color:var(--ink-3)">${esc(f.flow)} · ${f.year || '2023'}</div>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--violet)">${val}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--danger);font-size:12px">Error: ${esc(e.message)}</div>`;
+  }
+}
+window.loadTradeFlows = loadTradeFlows;
+
+// Hook renderDetail to update investor tools panel
+(function() {
+  const _origRD = window.renderDetail;
+  window.renderDetail = function(id) {
+    if (_origRD) _origRD.apply(this, arguments);
+    const n = (typeof NODE_BY_ID !== 'undefined') ? NODE_BY_ID[id] : null;
+    if (!n) return;
+
+    // Price targets panel
+    const ptWrap = document.getElementById('investor-pt-wrap');
+    if (ptWrap && n.mkt) {
+      const q = (typeof MKT !== 'undefined' && MKT.quotes) ? MKT.quotes[n.mkt] : null;
+      const current = q ? (q.live || q.close) : null;
+      ptWrap.innerHTML = `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:12px">
+          <div style="font-size:9px;letter-spacing:0.1em;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:8px">PRICE TARGETS · CONSENSO</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600" id="pt-consensus">—</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4)">Consenso analistas</div>
+              ${current ? `<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px">Precio actual: <span style="color:var(--neon)">${current.toFixed(2)}</span></div>` : ''}
+            </div>
+            <div style="text-align:right">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:13px" id="pt-high">High: —</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:13px" id="pt-low">Low: —</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4)" id="pt-analysts">— analistas</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--ink-3)">Empresa: <b>${esc(n.label)}</b> (${esc(n.mkt)})</div>
+        </div>`;
+      // Fetch FMP price target if available
+      const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
+        ? '' : (localStorage.getItem('base_url') || '');
+      fetch(`${BASE}/api/fundamentals/${n.mkt}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (!data) return;
+          const pt = data.priceTarget || data.targetHigh || data.targetLow;
+          if (pt || data.targetConsensus) {
+            const cons = document.getElementById('pt-consensus');
+            const high = document.getElementById('pt-high');
+            const low  = document.getElementById('pt-low');
+            const ana  = document.getElementById('pt-analysts');
+            if (cons) cons.textContent = data.targetConsensus ? '$' + data.targetConsensus : '—';
+            if (high) high.textContent = data.targetHigh ? 'High: $' + data.targetHigh : 'High: —';
+            if (low)  low.textContent  = data.targetLow  ? 'Low: $'  + data.targetLow  : 'Low: —';
+            if (ana)  ana.textContent  = data.numberOfAnalysts ? data.numberOfAnalysts + ' analistas' : '—';
+          }
+        })
+        .catch(() => {});
+    } else if (ptWrap) {
+      ptWrap.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Nodo sin ticker de mercado</div>';
+    }
+
+    // 13F holders
+    if (n.mkt) loadInvestor13F(n.mkt);
+  };
+})();
+
+// Auto-load investor tools when analysis tab is activated
+(function() {
+  const _origST = window.switchTab;
+  if (!_origST) return;
+  window.switchTab = function(tab) {
+    _origST.apply(this, arguments);
+    if (tab === 'analysis') {
+      setTimeout(() => {
+        loadFredMacro();
+        loadTradeFlows();
+      }, 200);
+    }
+  };
+})();
 </script>
 
 <!-- ── Trade modal ──────────────────────────────────────────────────────── -->

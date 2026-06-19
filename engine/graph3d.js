@@ -602,6 +602,42 @@ class KhipuGraph3D {
     }
   }
 
+  // ── Live coloring by market performance ──────────────────────────────────────
+  updateLiveColors(quotesMap) {
+    // quotesMap = { ticker: { close, prev, live, pct } }
+    if (!this.nodeMeshes || !this.nodeMeshes.size) return;
+    this.nodeMeshes.forEach((mesh, id) => {
+      const node = (typeof NODE_BY_ID !== 'undefined') ? NODE_BY_ID[id] : null;
+      if (!node || !node.mkt) return;
+      const q = quotesMap[node.mkt];
+      if (!q) return;
+      const pct = q.pct != null ? q.pct : ((q.live - q.prev) / q.prev * 100);
+      if (isNaN(pct)) return;
+      // color: red(-5%) -> grey(0) -> green(+5%)
+      let color;
+      if (pct > 3)       color = 0x00ff88;
+      else if (pct > 1)  color = 0x44cc77;
+      else if (pct > 0)  color = 0x229966;
+      else if (pct > -1) color = 0xcc4444;
+      else if (pct > -3) color = 0xff4444;
+      else               color = 0xff2222;
+      if (mesh.material) {
+        mesh.material.color.setHex(color);
+        mesh.material.emissive.setHex(color);
+        mesh.material.emissiveIntensity = 0.35;
+      }
+      // pulse ring if > 2% move
+      if (Math.abs(pct) > 2) {
+        mesh.children.forEach(child => {
+          if (child.isMesh && child.geometry && child.geometry.type === 'TorusGeometry') {
+            child.material.color.setHex(pct > 0 ? 0x00ff88 : 0xff2222);
+            child.material.opacity = 0.8;
+          }
+        });
+      }
+    });
+  }
+
   destroy() {
     this.active = false;
     const svg = document.getElementById('graph');
@@ -642,3 +678,13 @@ function getDailyPerformanceHex(nodeId) {
 }
 
 window.KhipuGraph3D = KhipuGraph3D;
+
+// Expose live-color updater — wired up when 3D graph is instantiated
+// (See initKhipuCore in app.html which sets window.khipuGraph3D)
+Object.defineProperty(window, '_graph3d_updateLiveColors', {
+  get() {
+    const g = window.khipuGraph3D;
+    return g ? (q) => g.updateLiveColors(q) : null;
+  },
+  configurable: true,
+});
