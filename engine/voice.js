@@ -648,18 +648,46 @@ const BixbyVoice = {
 
   _showOverlay(text) {
     const el = document.getElementById('bixby-status');
-    if (el) { el.style.display = 'flex'; this._setStatus(text); }
+    if (el) { el.style.display = 'block'; this._setStatus(text); }
+    const btn = document.getElementById('bixby-btn');
+    if (btn) btn.classList.add('bixby-active');
   },
   _hideOverlay() {
     const el = document.getElementById('bixby-status');
     if (el) el.style.display = 'none';
+    const btn = document.getElementById('bixby-btn');
+    if (btn) btn.classList.remove('bixby-active');
+    this._setBadge('OFF', false);
+  },
+  _setBadge(label, active) {
+    const b = document.getElementById('bixby-state-badge');
+    if (!b) return;
+    b.textContent = label;
+    if (active) {
+      b.style.background = 'rgba(0,204,255,.15)';
+      b.style.color = '#00ccff';
+      b.style.borderColor = 'rgba(0,204,255,.4)';
+    } else {
+      b.style.background = 'rgba(138,90,255,.2)';
+      b.style.color = '#cabeff';
+      b.style.borderColor = 'rgba(138,90,255,.3)';
+    }
   },
   _setStatus(text, isError) {
     const t = document.getElementById('bixby-text');
     if (t) t.textContent = text;
+    // update badge based on text content
+    const badge = document.getElementById('bixby-state-badge');
+    if (badge && text) {
+      const lower = text.toLowerCase();
+      if (lower.includes('escucha') || lower.includes('habla')) this._setBadge('ESCUCHANDO', true);
+      else if (lower.includes('conectando') || lower.includes('iniciando') || lower.includes('sesión')) this._setBadge('CONECTANDO', false);
+      else if (lower.includes('bixby:') || lower.includes('speaking')) this._setBadge('HABLANDO', true);
+      else if (isError) this._setBadge('ERROR', false);
+    }
     if (isError) {
       const el = document.getElementById('bixby-status');
-      if (el) el.style.display = 'flex';
+      if (el) el.style.display = 'block';
       if (typeof toast === 'function') toast(text);
     }
   },

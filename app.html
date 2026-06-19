@@ -1126,10 +1126,15 @@ footer .disc{line-height:1.4}
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
       <button class="icon-btn" id="toggle-3d-btn" title="Alternar vista 2D / 3D" style="width:auto;padding:0 10px;font-size:11px;font-weight:700" onclick="window._toggle3D && window._toggle3D()">3D</button>
-      <button id="bixby-btn" class="icon-btn" title="Hablar con Bixby · Khipu Finance AI"
-  style="background:var(--surface);border-color:var(--violet);color:var(--violet);font-size:13px;width:auto;padding:0 12px;gap:6px;display:flex;align-items:center"
-  onclick="window.BixbyVoice?.toggle()">
-  🎙️ <span style="font-weight:700;font-size:11px">Bixby</span>
+      <button id="bixby-btn" title="Hablar con Bixby · Khipu Finance AI" onclick="window.BixbyVoice?.toggle()"
+  style="position:relative;display:flex;align-items:center;gap:7px;padding:0 14px;height:32px;border-radius:999px;
+    border:1px solid rgba(138,90,255,.5);background:rgba(138,90,255,.08);
+    color:#cabeff;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;
+    transition:background .2s,border-color .2s,box-shadow .2s;font-family:'Geist','Inter',sans-serif;
+    box-shadow:0 0 12px rgba(138,90,255,.15)">
+  <span id="bixby-btn-orb" style="width:8px;height:8px;border-radius:50%;background:#8e5aff;
+    box-shadow:0 0 6px #8e5aff;flex-shrink:0;transition:background .3s,box-shadow .3s"></span>
+  <span>BIXBY</span>
 </button>
     </div>
   </header>
@@ -7193,50 +7198,95 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   </div>
 </div>
 
-<!-- Bixby Voice — Jarvis UI -->
-<div id="bixby-status" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:1000;pointer-events:none">
-  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);pointer-events:all;
-    background:linear-gradient(160deg,rgba(20,19,15,.97),rgba(28,27,22,.99));
-    border:1px solid rgba(155,79,232,.45);border-bottom:none;border-radius:22px 22px 0 0;
-    padding:22px 36px 18px;min-width:300px;max-width:90vw;
-    box-shadow:0 -10px 50px rgba(155,79,232,.18),0 -4px 20px rgba(0,0,0,.4)">
-    <!-- animated rings -->
-    <div style="display:flex;justify-content:center;margin-bottom:14px">
-      <div style="position:relative;width:66px;height:66px">
-        <div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(155,79,232,.55);animation:bixby-ring 1.6s ease-in-out infinite"></div>
-        <div style="position:absolute;inset:9px;border-radius:50%;border:1.5px solid rgba(82,177,255,.45);animation:bixby-ring 1.6s ease-in-out .4s infinite"></div>
-        <div style="position:absolute;inset:18px;border-radius:50%;border:1px solid rgba(155,79,232,.35);animation:bixby-ring 1.6s ease-in-out .8s infinite"></div>
-        <div style="position:absolute;inset:25px;border-radius:50%;background:linear-gradient(135deg,#9B4FE8,#52B1FF);
-          display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff">✦</div>
+<!-- Bixby Voice — Obsidian Glass UI -->
+<div id="bixby-status" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none">
+  <div id="bixby-panel" style="pointer-events:all;position:relative;
+    background:rgba(14,12,18,.85);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
+    border:1px solid rgba(138,90,255,.3);border-radius:24px;
+    padding:24px 28px 20px;min-width:320px;max-width:92vw;
+    box-shadow:0 8px 60px rgba(138,90,255,.2),0 2px 20px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07);
+    font-family:'Geist','Inter',sans-serif">
+
+    <!-- close -->
+    <button onclick="window.BixbyVoice?.stop()" title="Cerrar Bixby"
+      style="position:absolute;top:12px;right:14px;width:24px;height:24px;border-radius:50%;
+        background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);cursor:pointer;
+        color:rgba(202,190,255,.5);font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;
+        transition:background .15s,color .15s"
+      onmouseenter="this.style.background='rgba(255,255,255,.12)';this.style.color='#cabeff'"
+      onmouseleave="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(202,190,255,.5)'">✕</button>
+
+    <!-- orb + rings -->
+    <div style="display:flex;justify-content:center;margin-bottom:18px">
+      <div style="position:relative;width:80px;height:80px;display:flex;align-items:center;justify-content:center">
+        <!-- outer glow -->
+        <div style="position:absolute;inset:-8px;border-radius:50%;background:conic-gradient(from 0deg,#3622ca,#b4b0ff,#8e5aff,#3622ca);
+          animation:bixby-spin 3s linear infinite;opacity:.4;filter:blur(8px)"></div>
+        <!-- conic ring -->
+        <div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#3622ca,#cabeff,#8e5aff,#3622ca);
+          animation:bixby-spin 3s linear infinite;padding:2px">
+          <div style="width:100%;height:100%;border-radius:50%;background:rgba(14,12,18,.95)"></div>
+        </div>
+        <!-- pulse rings -->
+        <div id="bixby-ring1" style="position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(138,90,255,.4);animation:bixby-pulse 2s ease-in-out infinite"></div>
+        <div id="bixby-ring2" style="position:absolute;inset:10px;border-radius:50%;border:1px solid rgba(0,204,255,.3);animation:bixby-pulse 2s ease-in-out .5s infinite"></div>
+        <!-- core -->
+        <div style="position:relative;z-index:1;width:36px;height:36px;border-radius:50%;
+          background:linear-gradient(135deg,#8e5aff 0%,#00ccff 100%);
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 0 20px rgba(138,90,255,.5)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="white"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="19" x2="12" y2="23" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
       </div>
     </div>
+
+    <!-- label + state badge -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(202,190,255,.5);text-transform:uppercase">BIXBY · KHIPU AI</span>
+      <span id="bixby-state-badge" style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+        padding:2px 7px;border-radius:999px;background:rgba(138,90,255,.2);color:#cabeff;border:1px solid rgba(138,90,255,.3)">CONECTANDO</span>
+    </div>
+
     <!-- audio visualizer -->
-    <div id="bixby-viz" style="display:flex;align-items:flex-end;justify-content:center;gap:3px;height:28px;margin-bottom:12px">
+    <div id="bixby-viz" style="display:flex;align-items:flex-end;justify-content:center;gap:2.5px;height:26px;margin-bottom:12px">
       <div class="bvbar" style="animation-delay:.00s"></div><div class="bvbar" style="animation-delay:.07s"></div>
       <div class="bvbar" style="animation-delay:.14s"></div><div class="bvbar" style="animation-delay:.21s"></div>
       <div class="bvbar" style="animation-delay:.10s"></div><div class="bvbar" style="animation-delay:.05s"></div>
       <div class="bvbar" style="animation-delay:.18s"></div><div class="bvbar" style="animation-delay:.12s"></div>
       <div class="bvbar" style="animation-delay:.03s"></div><div class="bvbar" style="animation-delay:.16s"></div>
       <div class="bvbar" style="animation-delay:.09s"></div><div class="bvbar" style="animation-delay:.22s"></div>
+      <div class="bvbar" style="animation-delay:.06s"></div><div class="bvbar" style="animation-delay:.19s"></div>
+      <div class="bvbar" style="animation-delay:.13s"></div>
     </div>
-    <!-- status text -->
-    <div style="text-align:center">
-      <div style="font-size:10px;font-weight:600;letter-spacing:.12em;color:rgba(155,79,232,.7);text-transform:uppercase;margin-bottom:3px">BIXBY · KHIPU AI</div>
-      <div id="bixby-text" style="font-size:13px;font-weight:600;color:#F0EDE3;font-family:'Archivo',sans-serif;min-height:18px">Iniciando…</div>
+
+    <!-- transcript -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;
+      padding:10px 14px;min-height:42px;display:flex;align-items:center">
+      <div id="bixby-text" style="font-size:13px;font-weight:500;color:#e2e2e4;line-height:1.5;
+        font-family:'Geist','Inter',sans-serif;width:100%;text-align:center">Iniciando…</div>
     </div>
-    <button onclick="window.BixbyVoice?.stop()" title="Cerrar Bixby"
-      style="position:absolute;top:10px;right:12px;background:none;border:none;cursor:pointer;
-        color:rgba(240,237,227,.35);font-size:15px;line-height:1;transition:.15s"
-      onmouseenter="this.style.color='rgba(240,237,227,.8)'" onmouseleave="this.style.color='rgba(240,237,227,.35)'">✕</button>
+
+    <!-- metallic top edge -->
+    <div style="position:absolute;top:0;left:16px;right:16px;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(202,190,255,.3),transparent);border-radius:1px"></div>
   </div>
 </div>
 <!-- legacy element kept so voice.js can reference it without errors -->
 <span id="bixby-led" style="display:none"></span>
 <style>
-@keyframes bixby-ring { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.1);opacity:1} }
-@keyframes bixby-bar  { 0%{height:3px;opacity:.3} 100%{height:22px;opacity:1} }
-.bvbar { width:3px;border-radius:2px;background:var(--violet);min-height:3px;
+@keyframes bixby-spin  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes bixby-pulse { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.08);opacity:.9} }
+@keyframes bixby-bar   { 0%{height:3px;opacity:.25} 100%{height:22px;opacity:1} }
+.bvbar { width:2.5px;border-radius:2px;background:linear-gradient(to top,#8e5aff,#00ccff);min-height:3px;
   animation:bixby-bar .55s ease-in-out infinite alternate; }
+/* Bixby btn states */
+#bixby-btn:hover { background:rgba(138,90,255,.18)!important;border-color:rgba(138,90,255,.8)!important;box-shadow:0 0 18px rgba(138,90,255,.3)!important; }
+#bixby-btn.bixby-active { background:rgba(138,90,255,.22)!important;border-color:#8e5aff!important;box-shadow:0 0 24px rgba(138,90,255,.45)!important; }
+#bixby-btn.bixby-active #bixby-btn-orb { background:#00ccff!important;box-shadow:0 0 8px #00ccff!important;animation:bixby-pulse .9s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 .sim-preset-btn:hover { background: var(--surface-2) !important; border-color: var(--violet) !important; }
 .dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }
