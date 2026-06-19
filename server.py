@@ -906,6 +906,29 @@ def bixby_system_prompt():
     })
 
 
+# ── Bixby voice — activar allow_override en el agente ElevenLabs ─────────────
+@app.route('/api/voice/enable-override', methods=['POST'])
+def voice_enable_override():
+    """Llama a la API de ElevenLabs para activar allow_override en el agente Bixby."""
+    if not ELEVENLABS_KEY:
+        return jsonify({'error': 'ELEVENLABS_KEY not configured'}), 400
+    agent_id = request.get_json(silent=True, force=True).get('agent_id') if request.data else None
+    agent_id = agent_id or ELEVENLABS_AGENT_ID
+    if not agent_id:
+        return jsonify({'error': 'agent_id required'}), 400
+    try:
+        r = requests.patch(
+            f'https://api.elevenlabs.io/v1/convai/agents/{agent_id}',
+            headers={'xi-api-key': ELEVENLABS_KEY, 'Content-Type': 'application/json'},
+            json={'conversation_config': {'agent': {'prompt': {'allow_override': True}}}},
+            timeout=10)
+        if r.ok:
+            return jsonify({'success': True, 'agent_id': agent_id, 'message': 'allow_override activado'})
+        return jsonify({'success': False, 'status': r.status_code, 'detail': r.text[:300]}), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+
 # ── Bixby voice — sesión firmada de ElevenLabs ───────────────────────────────
 @app.route('/api/voice/session', methods=['POST'])
 def voice_session():
