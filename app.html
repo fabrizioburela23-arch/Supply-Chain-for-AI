@@ -9,17 +9,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <style>
+
 :root{
+  /* [UPGRADE] EDITORIAL: tokens base re-tematizados a papel claro (alto contraste, cálido) */
   --bg:#F1ECE2; --surface:#FBF9F4; --surface-2:#E9E2D4; --ink:#1B1714; --ink-2:rgba(27,23,20,0.60);
   --ink-3:rgba(27,23,20,0.40); --line:rgba(27,23,20,0.11); --line-2:rgba(27,23,20,0.18); --accent:#6D28D9;
-  --font-display:'Fraunces',Georgia,serif;
   --c-quantum_hw:#7B2FBE; --c-quantum_infra:#4B5FC2;
   --c-eda:#6B5DD3; --c-equip:#4E8B1E; --c-optics:#9A6310; --c-materials:#B5790F;
   --c-chemicals:#C0521F; --c-foundry:#0F8C5F; --c-fabless:#1B6DB5; --c-memory:#C32B3C;
   --c-substrates:#B5316F; --c-servers:#4C3FA0; --c-networking:#0C7370;
   --c-connectivity_infra:#3C7A89; --c-power:#8A4410;
   --c-cloud:#0A6CA8; --c-ailab:#8B2FA8; --c-robotics_physical:#A0521E; --c-aisoft:#0E7A6E;
-  --gold:#9A6B0C; --blue:#0E76A6; --violet:#6D28D9; --preipo:#7C5BD9; --danger:#BC3A24;
+  --gold:#9A6B0C; --blue:#0E76A6; --violet:#6D28D9; --preipo:#7C5BD9; --danger:#BC3A24; /* [UPGRADE] profundizados para legibilidad sobre papel */
   --shadow:0 1px 2px rgba(27,23,20,.05),0 14px 40px rgba(27,23,20,.10);
   /* Space & Connectivity */
   --c-space_launch: #FF6B35;
@@ -47,6 +48,7 @@
   --c-neuromorphic: #34D1BF;
 }
 .dark{
+  /* [UPGRADE] EDITORIAL INK: tema oscuro re-tematizado a papel nocturno cálido (antes near-black neutro) */
   --bg:#15120C; --surface:#1F1B13; --surface-2:#2B241A; --ink:#F1EAD9; --ink-2:rgba(241,234,217,0.57);
   --ink-3:rgba(241,234,217,0.34); --line:rgba(241,234,217,0.10); --line-2:rgba(241,234,217,0.18); --accent:#A78BFA;
   --font-display:'Fraunces',Georgia,serif;
@@ -56,7 +58,7 @@
   --c-substrates:#E875AC; --c-servers:#A99EEC; --c-networking:#3FB5A8;
   --c-connectivity_infra:#74B6C6; --c-power:#D8862A;
   --c-cloud:#4FA8E0; --c-ailab:#D070E8; --c-robotics_physical:#E89050; --c-aisoft:#40B8A8;
-  --gold:#E0B25C; --blue:#5FC6E8; --violet:#A78BFA; --preipo:#C9B6FF; --danger:#FF6B5C;
+  --gold:#E0B25C; --blue:#5FC6E8; --violet:#A78BFA; --preipo:#C9B6FF; --danger:#FF6B5C; /* [UPGRADE] ink: variantes oscuras (antes heredaban los tokens claros del :root) */
   --shadow:0 2px 10px rgba(0,0,0,.5),0 18px 50px rgba(0,0,0,.6);
   --c-space_launch: #FF8B55;
   --c-satellite: #94E8FA;
@@ -556,11 +558,11 @@ footer .disc{line-height:1.4}
     border-radius:20px 20px 0 0;z-index:50;max-height:none;
     transform:translateY(101%);transition:transform .32s cubic-bezier(.32,.72,0,1);
     box-shadow:0 -10px 34px rgba(0,0,0,.2);
-    -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;overscroll-behavior:contain; /* [UPGRADE] momentum scroll iOS + sin rebote al borde */
   }
   .panel.open{transform:translateY(0)}
-  .panel.half{transform:translateY(42%)}
-  .panel.dragging{transition:none}
+  .panel.half{transform:translateY(42%)} /* [UPGRADE] snap point intermedio */
+  .panel.dragging{transition:none} /* [UPGRADE] el sheet sigue el dedo durante el arrastre */
   .sheet-handle{
     width:42px;height:4px;border-radius:3px;background:var(--line-2);
     margin:9px auto 0;flex-shrink:0;
@@ -610,6 +612,7 @@ footer .disc{line-height:1.4}
   box-shadow:0 4px 24px rgba(0,0,0,.15);
   pointer-events:none;
   display:none;
+  opacity:1;transition:opacity .14s ease; /* [UPGRADE] fade-in suave tras el delay de 200ms */
   max-width:260px;
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
@@ -652,6 +655,23 @@ footer .disc{line-height:1.4}
 /* ===== v7 · M5: pestaña geopolítica ===== */
 .geo-bubble{cursor:pointer}
 .geo-bubble:hover{stroke-width:2.5px !important}
+/* [UPGRADE] Mapa mundial interactivo (tab Geopolítica) */
+#geo-world svg{display:block}
+.wm-sphere{fill:var(--surface-2);fill-opacity:.35;stroke:var(--line);stroke-width:.5}
+.wm-country{fill:var(--ink);fill-opacity:.06;stroke:var(--line-2);stroke-width:.4;transition:fill-opacity .2s,fill .2s;cursor:pointer}
+.wm-country:hover{fill-opacity:.18}
+.wm-country.on{fill-opacity:.85 !important;stroke:var(--ink);stroke-width:.7}
+.wm-arc{fill:none;opacity:.9;stroke-linecap:round;stroke-dasharray:5 6;animation:wmFlow 1s linear infinite}
+@keyframes wmFlow{to{stroke-dashoffset:-22}}
+.wm-pin-main{stroke:var(--surface);stroke-width:2}
+.wm-pin{opacity:.9}
+#geo-world-btns{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 12px}
+.wm-btn{display:flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line-2);border-radius:2px;background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
+.wm-btn:hover{background:var(--surface-2);color:var(--ink)}
+.wm-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.wm-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.wm-ct{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.7}
+.wm-clear{color:var(--ink-3)}
 .geo-region-rect{fill:var(--surface);stroke:var(--line-2);stroke-width:1}
 .geo-region-label{font-family:'Fraunces',serif;font-weight:600;fill:var(--ink-2)}
 @media(max-width:820px){
@@ -717,6 +737,14 @@ footer .disc{line-height:1.4}
 
 /* ----- Panel detalle: secciones v8 ----- */
 .v8-sec{margin:16px 0}
+/* [UPGRADE] Panel de detalle: secciones colapsables (reduce densidad) */
+.v8-collapsible > .v8-sec-h{cursor:pointer;user-select:none}
+.v8-collapsible > .v8-sec-h::after{content:'⌄';margin-left:auto;font-size:14px;color:var(--ink-3);opacity:.7;transition:transform .22s ease;line-height:1}
+.v8-collapsible > .v8-sec-h .v8-chips{margin-left:0}
+.v8-sec.collapsed > .v8-sec-h::after{transform:rotate(-90deg)}
+.v8-sec.collapsed > *:not(.v8-sec-h){display:none !important}
+.v8-sec:not(.collapsed) > *:not(.v8-sec-h){animation:v8Reveal .22s ease}
+@keyframes v8Reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .v8-sec-h{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);
   margin-bottom:9px;display:flex;align-items:center;gap:8px;font-weight:700}
 .v8-sec-h .v8-chips{margin-left:auto;display:flex;gap:4px}
@@ -870,22 +898,23 @@ footer .disc{line-height:1.4}
    Todo va gateado en .dark (el tema por defecto). El tema claro queda editorial.
    ═══════════════════════════════════════════════════════════════════════════ */
 .dark{
-  --bg:#080A0F; --surface:#0E1119; --surface-2:#161B27; --ink:#E9EDF7; --ink-2:#98A3BC; --ink-3:#586079;
-  --line:#1A2030; --line-2:#283145; --accent:#E9EDF7;
-  --gold:#F2C744; --blue:#52B1FF; --violet:#A78BFF; --preipo:#C99BFF; --danger:#FF5B6B;
+  /* [UPGRADE] EDITORIAL INK · papel nocturno cálido (antes terminal azul-gris near-black) */
+  --bg:#15120C; --surface:#1F1B13; --surface-2:#2B241A; --ink:#F1EAD9; --ink-2:#B6AC97; --ink-3:#7C7461;
+  --line:#2A241A; --line-2:#3A3225; --accent:#A78BFA;
+  --gold:#E0B25C; --blue:#5FC6E8; --violet:#A78BFF; --preipo:#C9B6FF; --danger:#FF6B5C;
   /* categorías reforzadas para neón sobre near-black */
   --c-quantum_hw:#C18BFF; --c-quantum_infra:#8DA0FF; --c-eda:#A99BFF; --c-equip:#88E06A; --c-optics:#F0B24A;
   --c-materials:#F2C744; --c-chemicals:#FF9B5C; --c-foundry:#34E6A4; --c-fabless:#52B1FF; --c-memory:#FF6478;
   --c-substrates:#FF7DC0; --c-servers:#A99BFF; --c-networking:#3DE0C8; --c-connectivity_infra:#74C8DA;
   --c-power:#F0A24A; --c-cloud:#52B1FF; --c-ailab:#C58BFF; --c-robotics_physical:#FF9B5C; --c-aisoft:#3DE0C8;
-  --neon:#3DE0C8; --neon-2:#52B1FF; --neon-3:#A78BFF;
+  --neon:#A78BFA; --neon-2:#E0B25C; --neon-3:#C9B6FF; /* [UPGRADE] ink: violeta + ámbar (antes teal/azul terminal) */
   --up:#34E6A4; --down:#FF5B6B;
   --shadow:0 2px 10px rgba(0,0,0,.55),0 14px 44px rgba(0,0,0,.6);
 }
 /* tipografía: el terminal respira más, números en mono */
 .dark body{ background:
-  radial-gradient(1100px 520px at 78% -10%, rgba(82,177,255,.06), transparent 60%),
-  radial-gradient(900px 480px at 12% 108%, rgba(61,224,200,.05), transparent 60%),
+  radial-gradient(1100px 520px at 78% -10%, rgba(167,139,250,.08), transparent 60%),
+  radial-gradient(900px 480px at 12% 108%, rgba(224,178,92,.05), transparent 60%),
   var(--bg); }
 .dark .mono,.dark .metric .v,.dark .mkt-table td,.dark .fin-card .fv,.dark .fund-card .fv{font-feature-settings:'tnum' 1}
 
@@ -966,9 +995,10 @@ footer .disc{line-height:1.4}
   background:radial-gradient(120% 100% at 50% 50%, transparent 58%, rgba(0,0,0,.45));}
 .dark #graph{position:relative;z-index:1}
 /* nodos / enlaces vivos */
+/* [UPGRADE] flujo de energía en las conexiones + glow del nodo focal — ahora en AMBOS temas */
 .n-core{transition:filter .2s}
 .node-glow .n-core{filter:drop-shadow(0 0 8px var(--accent))}
-.dark .node-glow .n-core{filter:drop-shadow(0 0 8px var(--accent))}
+/* [UPGRADE] flujo ambiental direccional por la cadena (lento, sutil) */
 line.chain-live{stroke-dasharray:1.5 10;animation:chainDrift 3s linear infinite}
 @keyframes chainDrift{to{stroke-dashoffset:-23}}
 line.flowing{stroke-dasharray:6 8;stroke-width:2.4px;animation:linkFlow .85s linear infinite}
@@ -1060,97 +1090,155 @@ line.flowing{stroke-dasharray:6 8;stroke-width:2.4px;animation:linkFlow .85s lin
   background-size:800px 100%;animation:shimmer 1.4s infinite;border-radius:4px;
 }
 
-/* ════════ WORLD MAP — geo interactivo ════════ */
-#geo-world svg{display:block}
-.wm-sphere{fill:var(--surface-2);fill-opacity:.35;stroke:var(--line);stroke-width:.5}
-.wm-country{fill:var(--ink);fill-opacity:.06;stroke:var(--line-2);stroke-width:.4;transition:fill-opacity .2s,fill .2s;cursor:pointer}
-.wm-country:hover{fill-opacity:.18}
-.wm-country.on{fill-opacity:.85!important;stroke:var(--ink);stroke-width:.7}
-.wm-arc{fill:none;opacity:.9;stroke-linecap:round;stroke-dasharray:5 6;animation:wmFlow 1s linear infinite}
-@keyframes wmFlow{to{stroke-dashoffset:-22}}
-.wm-pin-main{stroke:var(--surface);stroke-width:2}
-.wm-pin{opacity:.9}
-#geo-world-btns{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 12px}
-.wm-btn{display:flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line-2);border-radius:2px;background:var(--surface);color:var(--ink-2);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s}
-.wm-btn:hover{background:var(--surface-2);color:var(--ink)}
-.wm-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.wm-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.wm-ct{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.7}
-.wm-clear{color:var(--ink-3)}
-.geo-region-rect{fill:var(--surface);stroke:var(--line-2);stroke-width:1}
-.geo-region-label{font-family:'Fraunces',serif;font-weight:600;fill:var(--ink-2)}
 
-/* ════════ PANEL COLLAPSIBLE — v8 ════════ */
-.v8-collapsible > .v8-sec-h{cursor:pointer;user-select:none}
-.v8-collapsible > .v8-sec-h::after{content:'⌄';margin-left:auto;font-size:14px;color:var(--ink-3);opacity:.7;transition:transform .22s ease;line-height:1}
-.v8-sec.collapsed > .v8-sec-h::after{transform:rotate(-90deg)}
-.v8-sec.collapsed > *:not(.v8-sec-h){display:none!important}
-.v8-sec:not(.collapsed) > *:not(.v8-sec-h){animation:v8Reveal .22s ease}
-@keyframes v8Reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@keyframes bixby-spin  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes bixby-pulse { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.08);opacity:.9} }
+@keyframes bixby-bar   { 0%{height:3px;opacity:.25} 100%{height:22px;opacity:1} }
+.bvbar { width:2.5px;border-radius:2px;background:linear-gradient(to top,#8e5aff,#00ccff);min-height:3px;
+  animation:bixby-bar .55s ease-in-out infinite alternate; }
+/* Bixby btn states */
+#bixby-btn:hover { background:rgba(138,90,255,.18)!important;border-color:rgba(138,90,255,.8)!important;box-shadow:0 0 18px rgba(138,90,255,.3)!important; }
+#bixby-btn.bixby-active { background:rgba(138,90,255,.22)!important;border-color:#8e5aff!important;box-shadow:0 0 24px rgba(138,90,255,.45)!important; }
+#bixby-btn.bixby-active #bixby-btn-orb { background:#00ccff!important;box-shadow:0 0 8px #00ccff!important;animation:bixby-pulse .9s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sim-preset-btn:hover { background: var(--surface-2) !important; border-color: var(--violet) !important; }
+.dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }
+.dark #simulation-panel, .dark #space-panel { background: var(--bg); }
+.dark #sim-output { color: var(--ink-2); }
 
-/* ════════ CAPA EDITORIAL — integrado desde Khipu Design ════════ */
-/* Fraunces serif para titulares display */
-.brand h1,.brand .name,.d-name,.panel-empty h2,.settings-head h2,.metric .v,
-.fund-card .fv,.ai-verdict .av-label,.boot-title{font-family:var(--font-display,Georgia,serif)}
+/* ════════════════════════════════════════════════════════════════════════
+   [UPGRADE] CAPA EDITORIAL · revista financiera en papel (nuevo tema por defecto)
+   Reskin completo bajo body:not(.dark) para no tocar el terminal oscuro.
+   Tipografía display: Fraunces (serif) · UI: Geist · datos: JetBrains Mono.
+   ════════════════════════════════════════════════════════════════════════ */
+body:not(.dark){ --font-display:'Fraunces',Georgia,serif; }
+body:not(.dark){ background:
+  radial-gradient(120% 80% at 50% -10%, #FFFDF8 0%, transparent 55%),
+  var(--bg); }
 
-/* DARK MODE — papel nocturno cálido */
+/* — Tipografía editorial: serif de alto contraste en titulares — */
+body:not(.dark) .brand .name{font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:-.015em;
+  background:none;-webkit-text-fill-color:var(--ink);color:var(--ink)}
+body:not(.dark) .brand h1{font-family:var(--font-display);text-transform:none;letter-spacing:-.01em;font-weight:600;font-size:17px}
+body:not(.dark) .brand .sub{border-color:var(--line-2);color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase;font-size:9.5px}
+body:not(.dark) .d-name{font-family:var(--font-display);font-weight:600;letter-spacing:-.015em;font-size:27px}
+body:not(.dark) .panel-empty h2{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;font-size:26px;line-height:1.12}
+body:not(.dark) .settings-head h2{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em}
+body:not(.dark) section h2[style*="Fraunces"]{font-weight:600}
+body:not(.dark) .metric .v{font-family:var(--font-display);font-weight:600;font-size:21px;letter-spacing:-.01em}
+body:not(.dark) .metric .l{letter-spacing:.14em}
+
+/* — Chrome: cabecera, toolbar, tabs, footer en papel translúcido — */
+body:not(.dark) header{background:rgba(251,249,244,.80);border-bottom:1px solid var(--line);
+  -webkit-backdrop-filter:saturate(1.4) blur(18px);backdrop-filter:saturate(1.4) blur(18px);
+  box-shadow:0 1px 0 rgba(27,23,20,.02)}
+body:not(.dark) .toolbar{background:rgba(248,245,238,.74)}
+body:not(.dark) .tabs{background:rgba(248,245,238,.66);border-bottom:1px solid var(--line)}
+body:not(.dark) footer{background:rgba(251,249,244,.84);border-top:1px solid var(--line)}
+body:not(.dark) .band{background:rgba(251,249,244,.80)}
+
+/* tabs: subrayado de acento que se expande (micro-interacción editorial) */
+body:not(.dark) .tab{position:relative;color:var(--ink-3)}
+body:not(.dark) .tab:hover{color:var(--ink-2)}
+body:not(.dark) .tab.active{color:var(--ink);border-bottom-color:transparent}
+body:not(.dark) .tab::after{content:'';position:absolute;left:50%;right:50%;bottom:-1px;height:2px;
+  background:var(--accent);border-radius:2px;transition:left .26s cubic-bezier(.22,.61,.36,1),right .26s cubic-bezier(.22,.61,.36,1)}
+body:not(.dark) .tab.active::after{left:13px;right:13px}
+body:not(.dark) .tab:hover::after{left:20px;right:20px}
+
+/* — Controles: búsqueda, sugerencias, segmentos — */
+body:not(.dark) .search-wrap input{background:#FFFFFF;color:var(--ink);border:1px solid var(--line-2);border-radius:3px}
+body:not(.dark) .search-wrap input::placeholder{color:var(--ink-3)}
+body:not(.dark) .search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,40,217,.14);background:#fff}
+body:not(.dark) .sugg{background:rgba(251,249,244,.98);border:1px solid var(--line-2);border-radius:4px;
+  box-shadow:0 12px 40px rgba(27,23,20,.16);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+body:not(.dark) .seg{border:1px solid var(--line-2);border-radius:3px}
+body:not(.dark) .seg button + button{border-left:1px solid var(--line-2)}
+body:not(.dark) .seg button.active{background:var(--ink);color:var(--bg)}
+
+/* — Lienzo del grafo: papel con retícula de puntos tinta + viñeta cálida — */
+body:not(.dark) .graph-wrap{background:var(--bg);
+  background-image:radial-gradient(rgba(27,23,20,.06) 1px, transparent 0);background-size:30px 30px}
+body:not(.dark) .graph-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(125% 95% at 50% 42%, transparent 60%, rgba(27,23,20,.07))}
+body:not(.dark) #graph{position:relative;z-index:1}
+body:not(.dark) .node-label{fill:var(--ink);text-shadow:0 1px 2px rgba(255,253,248,.95),0 0 2px rgba(255,253,248,.9);stroke:rgba(255,253,248,.95)}
+body:not(.dark) .region-label{fill:rgba(27,23,20,.13)}
+
+/* — Panel de detalle — */
+body:not(.dark) .panel{background:rgba(251,249,244,.94);border-left:1px solid var(--line);
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+body:not(.dark) .v8-sec-h{color:var(--ink-3);border-bottom:1px solid var(--line);padding-bottom:6px;letter-spacing:.1em}
+
+/* — Tarjetas / tablas: realce al hover editorial — */
+body:not(.dark) .mkt-card,body:not(.dark) .mkt-tablewrap,body:not(.dark) .mkt-keyrow,
+body:not(.dark) .fund-card,body:not(.dark) .fin-card,body:not(.dark) .pos-box{
+  background:#FFFFFF;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,23,20,.04)}
+body:not(.dark) .mkt-card{position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s,border-color .2s}
+body:not(.dark) .mkt-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent);opacity:0;transition:opacity .2s}
+body:not(.dark) .mkt-card:hover{box-shadow:0 10px 30px rgba(27,23,20,.10);transform:translateY(-2px);border-color:var(--line-2)}
+body:not(.dark) .mkt-card:hover::before{opacity:.85}
+body:not(.dark) .mkt-table tr:hover td{background:rgba(109,40,217,.05)}
+
+/* — Barras de desplazamiento — */
+body:not(.dark) ::-webkit-scrollbar-thumb{background:rgba(27,23,20,.20)}
+body:not(.dark) ::-webkit-scrollbar-thumb:hover{background:rgba(27,23,20,.34)}
+
+/* ══ Movimiento expresivo (solo transform/opacity · sin coste de layout) ══ */
+@keyframes edTabIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes edRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes edChrome{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+/* transición entre tabs: cada sección reanima al pasar de display:none → visible */
+body:not(.dark) #analysis-panel,body:not(.dark) #geo-panel,
+body:not(.dark) #simulation-panel,body:not(.dark) #space-panel,
+body:not(.dark) .market{animation:edTabIn .42s cubic-bezier(.22,.61,.36,1)}
+/* panel de detalle: las secciones entran escalonadas al elegir empresa */
+body:not(.dark) .detail > *{animation:edRise .4s both cubic-bezier(.22,.61,.36,1)}
+body:not(.dark) .detail > *:nth-child(2){animation-delay:.04s}
+body:not(.dark) .detail > *:nth-child(3){animation-delay:.08s}
+body:not(.dark) .detail > *:nth-child(4){animation-delay:.12s}
+body:not(.dark) .detail > *:nth-child(n+5){animation-delay:.16s}
+/* entrada de la barra superior al cargar */
+body:not(.dark) header,body:not(.dark) .toolbar{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
+body:not(.dark) .toolbar{animation-delay:.06s}
+@media(prefers-reduced-motion:reduce){
+  body:not(.dark) *{animation:none!important}
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   [UPGRADE] PALETA OSCURA · rediseño "ink" (papel nocturno cálido) — mismo lenguaje
+   editorial que el claro: serif display, subrayado de acento, lift en tarjetas.
+   ═════════════════════════════════════════════════════════════════════ */
 .dark header{background:linear-gradient(180deg,rgba(38,32,22,.55),rgba(18,15,10,.86));box-shadow:0 1px 0 rgba(167,139,250,.07)}
 .dark .tabs{background:linear-gradient(180deg,rgba(31,27,19,.72),rgba(18,15,10,.9))}
 .dark .toolbar,.dark .band{background:linear-gradient(180deg,rgba(31,27,19,.55),rgba(18,15,10,.75))}
 .dark footer{background:rgba(18,15,10,.85)}
-.dark .brand .name{background:none;-webkit-text-fill-color:var(--ink);color:var(--ink);font-weight:600;font-size:20px;letter-spacing:-.015em}
-.dark .d-name{background:none;-webkit-text-fill-color:var(--ink);color:var(--ink);font-weight:600;letter-spacing:-.015em;font-size:27px}
-.dark .metric .v{font-weight:600;font-size:21px;letter-spacing:-.01em}
-/* tab underline expansion */
+/* titulares serif también en oscuro */
+.dark .brand .name{font-family:var(--font-display);font-weight:600;font-size:20px;letter-spacing:-.015em;background:none;-webkit-text-fill-color:var(--ink);color:var(--ink)}
+.dark .d-name{font-family:var(--font-display);font-weight:600;letter-spacing:-.015em;font-size:27px;background:none;-webkit-text-fill-color:var(--ink);color:var(--ink)}
+.dark .panel-empty h2{font-family:var(--font-display);font-weight:600;letter-spacing:-.01em;font-size:26px;line-height:1.12}
+.dark .metric .v{font-family:var(--font-display);font-weight:600;font-size:21px;letter-spacing:-.01em}
+.dark .settings-head h2{font-family:var(--font-display);font-weight:600}
+/* subrayado de acento que se expande, igual que en claro */
 .dark .tab{position:relative}
-.dark .tab.active{border-bottom-color:transparent}
-.dark .tab::after{content:'';position:absolute;left:50%;right:50%;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;transition:left .26s cubic-bezier(.22,.61,.36,1),right .26s cubic-bezier(.22,.61,.36,1)}
+.dark .tab.active{border-bottom-color:transparent;text-shadow:none}
+.dark .tab::after{content:'';position:absolute;left:50%;right:50%;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;
+  transition:left .26s cubic-bezier(.22,.61,.36,1),right .26s cubic-bezier(.22,.61,.36,1)}
 .dark .tab.active::after{left:13px;right:13px}
 .dark .tab:hover::after{left:20px;right:20px}
+/* tarjetas: filo de acento a la izquierda (mismo gesto que en claro) */
 .dark .mkt-card::before{background:var(--accent);left:0;top:0;bottom:0;right:auto;width:2px;height:auto}
+/* lienzo del grafo: retícula y viñeta cálidas */
 .dark .graph-wrap::after{background:radial-gradient(125% 95% at 50% 42%, transparent 58%, rgba(0,0,0,.42))}
-/* staggered panel entry animations */
-@keyframes edTabIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@keyframes edRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@keyframes edChrome{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+/* transición entre pestañas + entrada escalonada de la ficha (igual que en claro) */
 .dark #analysis-panel,.dark #geo-panel,.dark #simulation-panel,.dark #space-panel,.dark .market{animation:edTabIn .42s cubic-bezier(.22,.61,.36,1)}
 .dark .detail > *{animation:edRise .4s both cubic-bezier(.22,.61,.36,1)}
 .dark .detail > *:nth-child(2){animation-delay:.04s}
 .dark .detail > *:nth-child(3){animation-delay:.08s}
 .dark .detail > *:nth-child(4){animation-delay:.12s}
 .dark .detail > *:nth-child(n+5){animation-delay:.16s}
-.dark header,.dark .toolbar{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
-.dark .toolbar{animation-delay:.06s}
+@media(prefers-reduced-motion:reduce){ .dark *{animation:none!important} }
 
-/* LIGHT MODE — revista financiera en papel */
-body:not(.dark){background:radial-gradient(120% 80% at 50% -10%, #FFFDF8 0%, transparent 55%),var(--bg)}
-body:not(.dark) header{background:rgba(251,249,244,.80);border-bottom:1px solid var(--line);-webkit-backdrop-filter:saturate(1.4) blur(18px);backdrop-filter:saturate(1.4) blur(18px)}
-body:not(.dark) .tabs{background:rgba(248,245,238,.66);border-bottom:1px solid var(--line)}
-body:not(.dark) .toolbar,.body:not(.dark) .band{background:rgba(248,245,238,.74)}
-body:not(.dark) footer{background:rgba(251,249,244,.84);border-top:1px solid var(--line)}
-body:not(.dark) .brand .name{background:none;-webkit-text-fill-color:var(--ink);color:var(--ink);font-weight:600;font-size:20px;letter-spacing:-.015em}
-body:not(.dark) .brand h1{text-transform:none;letter-spacing:-.01em;font-weight:600;font-size:17px}
-body:not(.dark) .d-name{font-weight:600;letter-spacing:-.015em;font-size:27px;background:none;-webkit-text-fill-color:var(--ink);color:var(--ink)}
-body:not(.dark) .metric .v{font-weight:600;font-size:21px;letter-spacing:-.01em}
-body:not(.dark) .panel{background:rgba(251,249,244,.94);border-left:1px solid var(--line);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
-body:not(.dark) .graph-wrap{background-image:radial-gradient(rgba(27,23,20,.06) 1px, transparent 0);background-size:30px 30px}
-body:not(.dark) .search-wrap input{background:#FFF;color:var(--ink);border:1px solid var(--line-2)}
-body:not(.dark) .search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,40,217,.14)}
-body:not(.dark) .mkt-card,body:not(.dark) .fund-card,body:not(.dark) .fin-card{background:#FFF;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,23,20,.04)}
-body:not(.dark) .mkt-card:hover{box-shadow:0 10px 30px rgba(27,23,20,.10);transform:translateY(-2px)}
-body:not(.dark) .tab::after{content:'';position:absolute;left:50%;right:50%;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;transition:left .26s cubic-bezier(.22,.61,.36,1),right .26s cubic-bezier(.22,.61,.36,1)}
-body:not(.dark) .tab{position:relative}
-body:not(.dark) .tab.active{border-bottom-color:transparent}
-body:not(.dark) .tab.active::after{left:13px;right:13px}
-body:not(.dark) .tab:hover::after{left:20px;right:20px}
-body:not(.dark) #analysis-panel,body:not(.dark) #geo-panel,body:not(.dark) #simulation-panel,body:not(.dark) #space-panel,body:not(.dark) .market{animation:edTabIn .42s cubic-bezier(.22,.61,.36,1)}
-body:not(.dark) .detail > *{animation:edRise .4s both cubic-bezier(.22,.61,.36,1)}
-body:not(.dark) .detail > *:nth-child(2){animation-delay:.04s}
-body:not(.dark) .detail > *:nth-child(3){animation-delay:.08s}
-body:not(.dark) .detail > *:nth-child(4){animation-delay:.12s}
-body:not(.dark) .detail > *:nth-child(n+5){animation-delay:.16s}
-body:not(.dark) header{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
-@media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 <script src="nodes/nodes_expand.js"></script>
 <script src="nodes/nodes_expand2.js"></script>
@@ -1417,6 +1505,12 @@ body:not(.dark) header{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
     <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Análisis de Red</h2>
     <p id="an-subtitle" style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Métricas topológicas en tiempo real · 7 tipos de relación · grafo dirigido</p>
 
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="mkt-sec-head" style="margin:0;display:flex;align-items:center;gap:8px">✦ Insights automáticos <span style="font-size:10px;color:var(--ink-3);font-weight:400;letter-spacing:.04em;text-transform:none">— lecturas generadas desde la topología de la red</span></div>
+      <button id="an-insights-refresh" onclick="renderAnalysis()" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink-2);cursor:pointer;font-family:inherit">↻ Recalcular</button>
+    </div>
+    <div id="an-insights" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:26px"></div>
+
     <div id="analysis-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px">
       <div class="mkt-card"><div class="ml">Nodos</div><div class="mv" id="an-nodes">—</div></div>
       <div class="mkt-card"><div class="ml">Conexiones</div><div class="mv" id="an-links">—</div></div>
@@ -1467,77 +1561,51 @@ body:not(.dark) header{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
       <div class="mkt-sec-head">Nodos aislados (sin conexiones de salida)</div>
       <div id="an-isolated" style="padding:14px 16px;font-size:13px">Calculando...</div>
     </div>
-
-    <!-- ── Investor Tools ──────────────────────────────────────────────────── -->
-    <div style="margin-top:24px">
-      <h3 style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em">Herramientas de Inversor</h3>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <!-- Price Targets -->
-        <div class="mkt-tablewrap">
-          <div class="mkt-sec-head">PRICE TARGETS · CONSENSO ANALISTAS</div>
-          <div style="padding:14px 16px" id="investor-pt-wrap">
-            <div style="color:var(--ink-3);font-size:12px">Selecciona un nodo en el mapa para ver el consenso de precio objetivo</div>
-          </div>
-        </div>
-
-        <!-- FRED Macro Gauges -->
-        <div class="mkt-tablewrap">
-          <div class="mkt-sec-head">MACRO · FRED INDICATORS</div>
-          <div style="padding:14px 16px" id="fred-macro-wrap">
-            <div style="color:var(--ink-3);font-size:12px">Cargando indicadores macro...</div>
-          </div>
-          <div style="padding:4px 16px 10px">
-            <button onclick="loadFredMacro()" style="font-size:10px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--ink-3)">Actualizar FRED</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <!-- SEC 13F Institutional Holders -->
-        <div class="mkt-tablewrap">
-          <div class="mkt-sec-head">TENEDORES INSTITUCIONALES · SEC 13F</div>
-          <div style="padding:14px 16px" id="investor-13f-wrap">
-            <div style="color:var(--ink-3);font-size:12px">Selecciona un nodo con ticker para ver tenedores 13F</div>
-          </div>
-        </div>
-
-        <!-- Trade Flows -->
-        <div class="mkt-tablewrap">
-          <div class="mkt-sec-head">FLUJOS COMERCIALES · UN COMTRADE</div>
-          <div style="padding:14px 16px" id="trade-flows-wrap">
-            <div style="color:var(--ink-3);font-size:12px">Cargando flujos de comercio semiconductor...</div>
-          </div>
-          <div style="padding:4px 16px 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <select id="tf-reporter" style="font-size:10px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2)">
-              <option value="USA">USA</option><option value="TWN">Taiwan</option><option value="KOR">Korea</option><option value="JPN">Japan</option><option value="DEU">Germany</option>
-            </select>
-            <span style="font-size:10px;color:var(--ink-3)">→</span>
-            <select id="tf-partner" style="font-size:10px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2)">
-              <option value="CHN">China</option><option value="USA">USA</option><option value="TWN">Taiwan</option><option value="KOR">Korea</option><option value="JPN">Japan</option>
-            </select>
-            <button onclick="loadTradeFlows()" style="font-size:10px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:none;cursor:pointer;color:var(--ink-3)">Cargar</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </section>
 
 <section id="geo-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
-  <div style="max-width:1180px;margin:0 auto;padding:28px 24px 40px">
+  <div style="max-width:1320px;margin:0 auto;padding:24px 24px 40px">
     <h2 id="geo-title" style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
-    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Mapa esquemático por regiones · tamaño = capitalización de mercado · borde = riesgo geopolítico · clic = ver en el mapa</p>
-    <div id="geo-grid" style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
-      <div class="mkt-tablewrap" style="padding:14px"><div id="geo-map"></div></div>
-      <div class="mkt-tablewrap">
-        <div class="mkt-sec-head" id="geo-rank-title">Top 8 · Riesgo sistémico por país</div>
-        <table class="mkt-table"><thead><tr>
-          <th style="text-align:left" id="geo-th-country">País</th>
-          <th style="text-align:right" id="geo-th-co">Empresas</th>
-          <th style="text-align:right">Score</th>
-        </tr></thead><tbody id="geo-ranking"></tbody></table>
-        <p id="geo-rank-note" style="padding:10px 16px;font-size:10.5px;color:var(--ink-3);line-height:1.5">Score = Σ (grado de entrada × riesgo) de las empresas del país. Riesgo: critical=4 · high=3 · medium=2 · low=1.</p>
+    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">La cadena de valor ordenada por geografía · clic en un país o empresa · simula shocks y capas de inversión/noticias</p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px 22px;align-items:center;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Capa</span>
+        <div id="geo-layer-seg" class="seg">
+          <button data-layer="geo" class="active">◉ Geopolítica</button>
+          <button data-layer="invest">$ Inversión</button>
+          <button data-layer="news">📰 Noticias</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Escenario</span>
+        <div id="geo-scen-seg" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div id="geo-sev-wrap" style="display:none;align-items:center;gap:8px">
+        <span style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Severidad</span>
+        <input id="geo-sev" type="range" min="20" max="100" value="70" style="width:120px;accent-color:var(--danger)">
+        <span id="geo-sev-val" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--ink-2)">70%</span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start">
+      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden">
+        <div id="geo-hero" style="width:100%;min-height:520px"></div>
+        <div id="geo-hero-legend" style="position:absolute;left:14px;bottom:12px;display:flex;gap:14px;flex-wrap:wrap;pointer-events:none;font-size:10.5px;color:var(--ink-2);background:rgba(10,14,20,.5);backdrop-filter:blur(4px);padding:6px 11px;border-radius:8px"></div>
+        <div id="geo-hero-tip" style="position:absolute;pointer-events:none;display:none;z-index:5;background:rgba(12,17,24,.94);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:11.5px;max-width:230px"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div id="geo-readout-dynamic" class="mkt-tablewrap" style="padding:16px;min-height:120px"></div>
+        <div class="mkt-tablewrap">
+          <div class="mkt-sec-head" id="geo-rank-title">Riesgo sistémico por país</div>
+          <table class="mkt-table"><thead><tr>
+            <th style="text-align:left" id="geo-th-country">País</th>
+            <th style="text-align:right" id="geo-th-co">Empresas</th>
+            <th style="text-align:right">Score</th>
+          </tr></thead><tbody id="geo-ranking"></tbody></table>
+          <p id="geo-rank-note" style="padding:10px 16px;font-size:10.5px;color:var(--ink-3);line-height:1.5">Score = Σ (grado de entrada × riesgo) de las empresas del país. Clic en una fila para enfocarla en el mapa.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1710,7 +1778,29 @@ body:not(.dark) header{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
 <section id="space-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
   <div style="max-width:1100px;margin:0 auto;padding:28px 24px 40px">
     <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px">🚀 Economía del Espacio</h2>
-    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Lanzamientos, constelaciones satelitales y empresas espaciales en la cadena de valor global</p>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:18px">Constelaciones en órbita, cadencia de lanzamientos y la conexión silicio → satélite</p>
+
+    <!-- ORBITAL HERO -->
+    <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;margin-bottom:16px;background:radial-gradient(130% 130% at 50% -10%, #122036 0%, #0a1120 55%, #06080f 100%)">
+      <canvas id="space-orbit" style="width:100%;height:360px;display:block"></canvas>
+      <div id="space-orbit-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:6px"></div>
+      <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">Órbita LEO · constelaciones activas (ilustrativo) · clic para aislar</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <!-- LAUNCH CADENCE -->
+      <div class="mkt-tablewrap" style="padding:16px">
+        <div class="mkt-sec-head">Cadencia de lanzamientos 2026 · por proveedor</div>
+        <div id="space-cadence" style="margin-top:14px"></div>
+      </div>
+      <!-- CHIP → SAT -->
+      <div class="mkt-tablewrap" style="padding:16px">
+        <div class="mkt-sec-head">Del silicio al satélite</div>
+        <div id="space-chipchain" style="margin-top:12px;font-size:12px"></div>
+      </div>
+    </div>
+    <!-- METRIC CARDS -->
+    <div id="space-metric-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;margin-bottom:16px"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <!-- Upcoming launches -->
       <div class="mkt-tablewrap" style="padding:16px">
