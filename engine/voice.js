@@ -401,15 +401,16 @@ const BixbyVoice = {
   },
 
   _onAgentResponse(text) {
-    const nav    = text.match(/\[NAV:([A-Za-z0-9_]+)\]/);
-    const stress = text.match(/\[STRESS:([A-Za-z0-9_]+)\]/);
-    const sim    = text.match(/\[SIM:([a-z_]+)\]/);
-    const tab    = text.match(/\[TAB:([a-z]+)\]/);
-    const chart  = text.match(/\[CHART:([A-Za-z0-9._^[\]]+)\]/);
-    const trade  = text.match(/\[TRADE:([A-Za-z0-9._^[\]]+)\]/);
-    const sb     = text.match(/\[SECOND_BRAIN:([A-Za-z0-9_]+)\]/);
-    const nrsTop = /\[NRS_TOP\]/.test(text);
-    const filter = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
+    const nav      = text.match(/\[NAV:([A-Za-z0-9_]+)\]/);
+    const stress   = text.match(/\[STRESS:([A-Za-z0-9_]+)\]/);
+    const sim      = text.match(/\[SIM:([a-z_]+)\]/);
+    const tab      = text.match(/\[TAB:([a-z]+)\]/);
+    const chart    = text.match(/\[CHART:([A-Za-z0-9._^[\]]+)\]/);
+    const trade    = text.match(/\[TRADE:([A-Za-z0-9._^[\]]+)\]/);
+    const terminal = text.match(/\[TERMINAL:([A-Za-z0-9._^[\]]+)\]/);
+    const sb       = text.match(/\[SECOND_BRAIN:([A-Za-z0-9_]+)\]/);
+    const nrsTop   = /\[NRS_TOP\]/.test(text);
+    const filter   = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
 
     if (tab && typeof switchTab === 'function') switchTab(tab[1]);
     if (nav && typeof jumpTo === 'function') jumpTo(nav[1]);
@@ -428,6 +429,9 @@ const BixbyVoice = {
     if (trade) {
       const n = NODES.find(n => n.mkt === trade[1] || n.id === trade[1]);
       if (n?.mkt && typeof openTradeModal === 'function') setTimeout(() => openTradeModal(n.id, n.mkt, n.label), 400);
+    }
+    if (terminal) {
+      if (window._termOpenTicker) window._termOpenTicker(terminal[1]);
     }
     if (sb) {
       const n = NODES.find(n => n.id === sb[1]);
@@ -551,6 +555,24 @@ const BixbyVoice = {
           if (typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
           respond({ success: true, company: n.label, ticker: n.mkt });
         } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
+        break;
+      }
+      case 'open_terminal': {
+        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n?.mkt) {
+          if (window._termOpenTicker) window._termOpenTicker(n.mkt);
+          respond({ success: true, company: n.label, ticker: n.mkt, action: 'Terminal abierto' });
+        } else respond({ success: false, error: 'Empresa no encontrada' });
+        break;
+      }
+      case 'place_trade': {
+        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
+          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        if (n?.mkt && typeof openTradeModal === 'function') {
+          setTimeout(() => openTradeModal(n.id, n.mkt, n.label), 300);
+          respond({ success: true, company: n.label, ticker: n.mkt, note: 'Modal de trading abierto — el usuario debe confirmar la orden' });
+        } else respond({ success: false, error: 'Empresa no encontrada o trading no disponible' });
         break;
       }
       case 'get_market_summary': {
