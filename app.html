@@ -5250,87 +5250,7 @@ function drawStockChart(nodeId, data, mode) {
   }
 }
 
-/* ===================== Trading — Alpaca ===================== */
-let _tradeModalTicker = null, _tradeModalSide = 'buy';
-
-function openTradeModal(nodeId, ticker, label) {
-  _tradeModalTicker = ticker;
-  document.getElementById('trade-modal-title').textContent = 'Operar: ' + label;
-  document.getElementById('trade-modal').style.display = 'flex';
-  document.getElementById('trade-modal-status').textContent = '';
-  setTradeSide('buy');
-  const q = MKT.quotes[ticker];
-  const price = q?.close || q?.live || null;
-  document.getElementById('trade-modal-price').textContent =
-    price ? `Precio actual: $${price.toFixed(2)}` : `Ticker: ${ticker}`;
-  updateTradeEstimate();
-  fetch('/api/trade/account').then(r => r.json()).then(d => {
-    const el = document.getElementById('trade-modal-account');
-    if (!el) return;
-    if (d.buying_power)
-      el.textContent = `Cuenta Paper: $${parseFloat(d.buying_power).toLocaleString('es-ES',{minimumFractionDigits:2})} disponibles`;
-    else if (d.error === 'ALPACA_KEY not configured')
-      el.textContent = '⚠️ Alpaca no configurado — añade ALPACA_KEY en Railway';
-    else if (d.error)
-      el.textContent = d.error;
-  }).catch(() => {});
-}
-function setTradeSide(side) {
-  _tradeModalSide = side;
-  const buy = document.getElementById('trade-buy-btn'), sell = document.getElementById('trade-sell-btn');
-  if (!buy || !sell) return;
-  buy.style.background  = side === 'buy'  ? '#22c55e' : 'none';
-  buy.style.color       = side === 'buy'  ? '#fff' : 'var(--ink-3)';
-  buy.style.border      = side === 'buy'  ? 'none' : '1px solid var(--line)';
-  sell.style.background = side === 'sell' ? '#ef4444' : 'none';
-  sell.style.color      = side === 'sell' ? '#fff' : 'var(--ink-3)';
-  sell.style.border     = side === 'sell' ? 'none' : '1px solid var(--line)';
-  updateTradeEstimate();
-}
-function updateTradeEstimate() {
-  const qty = parseFloat(document.getElementById('trade-qty')?.value || 1);
-  const q = MKT.quotes[_tradeModalTicker || ''];
-  const price = q?.close || q?.live || null;
-  const el = document.getElementById('trade-estimated');
-  if (!el) return;
-  if (price && qty > 0) {
-    el.textContent = `Estimado: ${qty} × $${price.toFixed(2)} ≈ $${(price * qty).toLocaleString('es-ES',{minimumFractionDigits:2})} (precio aprox.)`;
-  } else {
-    el.textContent = 'Introduce cantidad para ver el estimado';
-  }
-}
-async function submitTradeOrder() {
-  const ticker = _tradeModalTicker;
-  const qty    = parseFloat(document.getElementById('trade-qty').value);
-  const side   = _tradeModalSide;
-  const otype  = document.getElementById('trade-type').value;
-  const status = document.getElementById('trade-modal-status');
-  if (!ticker || !qty || qty <= 0) { status.textContent = 'Introduce ticker y cantidad válidos'; return; }
-  status.style.color = 'var(--ink-3)'; status.textContent = 'Enviando orden…';
-  document.getElementById('trade-submit-btn').disabled = true;
-  try {
-    const r = await fetch('/api/trade/order', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ symbol: ticker, qty, side, type: otype, time_in_force: 'day' }),
-    });
-    const d = await r.json();
-    if (d.id || d.status === 'accepted' || d.status === 'pending_new') {
-      status.style.color = '#22c55e';
-      status.textContent = `✅ Orden ${side} ${qty}x ${ticker} — ${d.status || 'accepted'}`;
-      toast(`Orden ${side} enviada: ${qty}x ${ticker}`);
-    } else {
-      status.style.color = 'var(--danger)';
-      status.textContent = '❌ ' + (d.message || d.error || JSON.stringify(d).slice(0, 100));
-    }
-  } catch(e) {
-    status.style.color = 'var(--danger)'; status.textContent = '❌ ' + e.message;
-  }
-  document.getElementById('trade-submit-btn').disabled = false;
-}
-window.openTradeModal = openTradeModal;
-window.setTradeSide = setTradeSide;
-window.updateTradeEstimate = updateTradeEstimate;
-window.submitTradeOrder = submitTradeOrder;
+/* openTradeModal is defined at bottom of file in the Trade Panel block */
 
 /* ===================== MiroFish — contexto del grafo ===================== */
 function _injectGraphContext() {
@@ -8591,30 +8511,486 @@ window.loadTradeFlows = loadTradeFlows;
 })();
 </script>
 
-<!-- ── Trade modal ──────────────────────────────────────────────────────── -->
-<div id="trade-modal" style="display:none;position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.55);align-items:center;justify-content:center">
-  <div style="background:var(--surface);border-radius:14px;padding:24px 22px 20px;width:330px;max-width:92vw;box-shadow:0 8px 48px rgba(0,0,0,.45);position:relative">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3 id="trade-modal-title" style="margin:0;font-size:14px;font-weight:700">Orden de trading</h3>
-      <button onclick="document.getElementById('trade-modal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-3);line-height:1;width:28px;height:28px">✕</button>
-    </div>
-    <div id="trade-modal-price" style="font-size:12px;color:var(--ink-3);margin-bottom:10px"></div>
-    <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button id="trade-buy-btn"  onclick="setTradeSide('buy')"  style="flex:1;padding:9px;background:#22c55e;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">Comprar</button>
-      <button id="trade-sell-btn" onclick="setTradeSide('sell')" style="flex:1;padding:9px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--ink-3);font-size:13px;cursor:pointer">Vender</button>
-    </div>
-    <label style="font-size:11px;color:var(--ink-3);display:block;margin-bottom:4px">Cantidad (acciones)</label>
-    <input id="trade-qty" type="number" min="1" step="1" value="1" oninput="updateTradeEstimate()" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);font-size:14px;margin-bottom:10px">
-    <label style="font-size:11px;color:var(--ink-3);display:block;margin-bottom:4px">Tipo de orden</label>
-    <select id="trade-type" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);font-size:13px;margin-bottom:10px">
-      <option value="market">Market (precio de mercado)</option>
-      <option value="limit">Limit (precio límite)</option>
-    </select>
-    <div id="trade-estimated" style="font-size:11px;color:var(--ink-3);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:7px"></div>
-    <button id="trade-submit-btn" onclick="submitTradeOrder()" style="width:100%;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer">Confirmar orden</button>
-    <div id="trade-modal-status" style="margin-top:8px;font-size:12px;text-align:center;min-height:18px"></div>
-    <div id="trade-modal-account" style="margin-top:10px;font-size:11px;color:var(--ink-3);text-align:center;border-top:1px solid var(--line);padding-top:8px"></div>
+<!-- ── Professional Trade Panel ──────────────────────────────────────────── -->
+<div id="trade-panel" style="display:none;position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px)">
+<style>
+#trade-panel .tp-col { display:flex;flex-direction:column;gap:10px;overflow:hidden }
+#trade-panel .tp-card { background:rgba(14,14,14,0.95);border:1px solid rgba(255,255,255,0.07);border-radius:4px;padding:14px }
+#trade-panel .tp-label { font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(229,226,225,0.45);margin-bottom:4px }
+#trade-panel .tp-input { width:100%;padding:7px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:2px;color:#e5e2e1;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;box-sizing:border-box }
+#trade-panel .tp-input:focus { border-color:var(--violet) }
+#trade-panel .tp-select { width:100%;padding:7px 10px;background:rgba(14,14,14,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:2px;color:#e5e2e1;font-size:12px;outline:none;box-sizing:border-box }
+#trade-panel .tp-btn { padding:8px 14px;border:none;border-radius:2px;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:.05em;transition:opacity .15s }
+#trade-panel .tp-btn:hover { opacity:.85 }
+#trade-panel .tp-btn-buy  { background:#16a34a;color:#fff }
+#trade-panel .tp-btn-sell { background:#dc2626;color:#fff }
+#trade-panel .tp-btn-neutral { background:rgba(255,255,255,0.08);color:#e5e2e1;border:1px solid rgba(255,255,255,0.12) }
+#trade-panel .tp-btn-violet { background:var(--violet);color:#fff }
+#trade-panel .tp-row { display:flex;gap:8px;align-items:center }
+#trade-panel .tp-sep { border:none;border-top:1px solid rgba(255,255,255,0.06);margin:8px 0 }
+#trade-panel .tp-mono { font-family:'JetBrains Mono',monospace }
+#trade-panel .tp-agent-log { height:220px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.6;background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.06);border-radius:2px;padding:8px }
+#trade-panel .tp-blotter { height:160px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:10px }
+#trade-panel .tp-pos-table { width:100%;border-collapse:collapse }
+#trade-panel .tp-pos-table th { font-size:9px;letter-spacing:.06em;color:rgba(229,226,225,0.4);text-align:left;padding:4px 6px;text-transform:uppercase }
+#trade-panel .tp-pos-table td { font-size:11px;padding:5px 6px;border-top:1px solid rgba(255,255,255,0.04) }
+#tp-side-buy-btn.active  { background:#16a34a!important;color:#fff!important }
+#tp-side-sell-btn.active { background:#dc2626!important;color:#fff!important }
+.tp-log-info    { color:#a8a8b3 }
+.tp-log-success { color:#4ade80 }
+.tp-log-warn    { color:#fbbf24 }
+.tp-log-error   { color:#f87171 }
+</style>
+
+<!-- header bar -->
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(6,6,6,0.98)">
+  <div style="display:flex;align-items:center;gap:14px">
+    <span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);font-weight:700">KHIPU TRADING</span>
+    <span id="tp-ticker-badge" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:#e5e2e1;background:rgba(142,90,255,0.15);border:1px solid rgba(142,90,255,0.3);padding:2px 10px;border-radius:2px">—</span>
+    <span id="tp-price-badge" style="font-family:'JetBrains Mono',monospace;font-size:15px;color:#e5e2e1">—</span>
+    <span id="tp-chg-badge" style="font-family:'JetBrains Mono',monospace;font-size:12px"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="tp-account-info" style="font-size:11px;color:rgba(229,226,225,0.5);font-family:'JetBrains Mono',monospace"></span>
+    <span id="tp-paper-badge" style="font-size:10px;background:rgba(255,204,0,0.15);color:#FFCC00;border:1px solid rgba(255,204,0,0.3);padding:2px 8px;border-radius:2px;letter-spacing:.08em">PAPER</span>
+    <button onclick="closeTradePanelFn()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:#e5e2e1;border-radius:2px;padding:5px 12px;cursor:pointer;font-size:12px">✕ Cerrar</button>
   </div>
 </div>
+
+<!-- 3-column body -->
+<div style="display:grid;grid-template-columns:1fr 340px 340px;gap:12px;padding:14px 16px;height:calc(100vh - 56px);overflow:hidden;box-sizing:border-box">
+
+  <!-- COL 1: Chart + Positions + Blotter -->
+  <div class="tp-col">
+    <!-- mini chart -->
+    <div class="tp-card" style="flex:0 0 auto">
+      <div class="tp-label" id="tp-chart-label">Gráfico — 1D</div>
+      <canvas id="tp-chart" height="160" style="width:100%;height:160px"></canvas>
+    </div>
+    <!-- positions -->
+    <div class="tp-card" style="flex:1;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span class="tp-label" style="margin:0">Posiciones abiertas</span>
+        <button onclick="_tpRefreshPositions()" class="tp-btn tp-btn-neutral" style="font-size:10px;padding:3px 8px">↻ Refresh</button>
+      </div>
+      <div class="tp-blotter">
+        <table class="tp-pos-table">
+          <thead><tr><th>Ticker</th><th>Qty</th><th>Entrada</th><th>Precio</th><th>P&L</th><th>%</th></tr></thead>
+          <tbody id="tp-positions-body"><tr><td colspan="6" style="color:rgba(229,226,225,0.3);text-align:center;padding:20px">—</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- order blotter -->
+    <div class="tp-card" style="flex:1;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span class="tp-label" style="margin:0">Órdenes recientes</span>
+        <button onclick="_tpRefreshBlotter()" class="tp-btn tp-btn-neutral" style="font-size:10px;padding:3px 8px">↻ Refresh</button>
+      </div>
+      <div class="tp-blotter" id="tp-blotter-body" style="height:120px;font-size:10px;line-height:1.7;color:rgba(229,226,225,0.7)">—</div>
+    </div>
+  </div>
+
+  <!-- COL 2: Order Entry -->
+  <div class="tp-col" style="overflow-y:auto">
+    <div class="tp-card">
+      <div class="tp-label">Dirección</div>
+      <div class="tp-row">
+        <button id="tp-side-buy-btn"  onclick="setTradePanelSide('buy')"  class="tp-btn tp-btn-buy active"  style="flex:1">COMPRAR</button>
+        <button id="tp-side-sell-btn" onclick="setTradePanelSide('sell')" class="tp-btn tp-btn-sell" style="flex:1;background:rgba(220,38,38,0.12);color:#f87171;border:1px solid rgba(220,38,38,0.3)">VENDER</button>
+      </div>
+    </div>
+
+    <div class="tp-card">
+      <div class="tp-label">Tipo de orden</div>
+      <select id="tp-order-type" class="tp-select" onchange="updateTradePanelRisk()">
+        <option value="market">Market — ejecución inmediata</option>
+        <option value="limit">Limit — precio específico</option>
+        <option value="stop">Stop — precio de corte</option>
+        <option value="trailing_stop">Trailing Stop — % del precio</option>
+      </select>
+    </div>
+
+    <div class="tp-card" id="tp-limit-row" style="display:none">
+      <div class="tp-label">Precio límite</div>
+      <input id="tp-limit-price" type="number" step="0.01" class="tp-input" placeholder="0.00" oninput="updateTradePanelRisk()">
+    </div>
+    <div class="tp-card" id="tp-stop-row" style="display:none">
+      <div class="tp-label">Stop price</div>
+      <input id="tp-stop-price" type="number" step="0.01" class="tp-input" placeholder="0.00" oninput="updateTradePanelRisk()">
+    </div>
+    <div class="tp-card" id="tp-trail-row" style="display:none">
+      <div class="tp-label">Trailing %</div>
+      <input id="tp-trail-pct" type="number" step="0.1" min="0.1" max="20" value="2" class="tp-input" oninput="updateTradePanelRisk()">
+    </div>
+
+    <div class="tp-card">
+      <div class="tp-label">Cantidad (acciones)</div>
+      <input id="tp-qty" type="number" min="1" step="1" value="1" class="tp-input" oninput="updateTradePanelRisk()">
+      <div class="tp-row" style="margin-top:8px;gap:6px">
+        <button onclick="setTradePanelQtyPct(10)" class="tp-btn tp-btn-neutral" style="flex:1;font-size:10px;padding:4px">10%</button>
+        <button onclick="setTradePanelQtyPct(25)" class="tp-btn tp-btn-neutral" style="flex:1;font-size:10px;padding:4px">25%</button>
+        <button onclick="setTradePanelQtyPct(50)" class="tp-btn tp-btn-neutral" style="flex:1;font-size:10px;padding:4px">50%</button>
+        <button onclick="setTradePanelQtyPct(100)" class="tp-btn tp-btn-neutral" style="flex:1;font-size:10px;padding:4px">MAX</button>
+      </div>
+    </div>
+
+    <div class="tp-card">
+      <div class="tp-label">Vigencia (TIF)</div>
+      <select id="tp-tif" class="tp-select">
+        <option value="day">Day — vence al cierre</option>
+        <option value="gtc">GTC — hasta cancelar</option>
+        <option value="ioc">IOC — inmediata o cancela</option>
+        <option value="fok">FOK — completa o cancela</option>
+      </select>
+    </div>
+
+    <div class="tp-card" style="background:rgba(142,90,255,0.05);border-color:rgba(142,90,255,0.2)">
+      <div class="tp-label">Calculadora de riesgo</div>
+      <div id="tp-risk-info" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:rgba(229,226,225,0.8)">—</div>
+    </div>
+
+    <button id="tp-submit-btn" onclick="submitTradePanelOrder()" class="tp-btn tp-btn-violet" style="width:100%;padding:12px;font-size:13px;letter-spacing:.08em">
+      ENVIAR ORDEN
+    </button>
+    <div id="tp-order-status" style="text-align:center;font-size:12px;min-height:20px;font-family:'JetBrains Mono',monospace;color:rgba(229,226,225,0.7)"></div>
+  </div>
+
+  <!-- COL 3: AI Agent -->
+  <div class="tp-col" style="overflow-y:auto">
+    <div class="tp-card" style="background:rgba(0,204,255,0.03);border-color:rgba(0,204,255,0.15)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-size:12px;font-weight:700;color:#00CCFF;letter-spacing:.05em">AI AGENT</span>
+        <span id="tp-agent-badge" style="font-size:10px;padding:2px 8px;border-radius:2px;background:rgba(255,255,255,0.06);color:rgba(229,226,225,0.5);letter-spacing:.06em">OFFLINE</span>
+      </div>
+
+      <div class="tp-label">Modo</div>
+      <select id="tp-agent-mode" class="tp-select" style="margin-bottom:10px">
+        <option value="manual">Manual — solo analiza, no ejecuta</option>
+        <option value="auto">Auto — analiza y ejecuta órdenes</option>
+      </select>
+
+      <div class="tp-label">Intervalo de análisis</div>
+      <select id="tp-agent-interval" class="tp-select" style="margin-bottom:10px">
+        <option value="5">5 minutos</option>
+        <option value="15" selected>15 minutos</option>
+        <option value="30">30 minutos</option>
+        <option value="60">1 hora</option>
+      </select>
+
+      <div class="tp-row" style="gap:6px;margin-bottom:10px">
+        <div style="flex:1">
+          <div class="tp-label">Max posición %</div>
+          <input id="tp-agent-maxpos" type="number" step="0.5" min="0.5" max="20" value="5" class="tp-input">
+        </div>
+        <div style="flex:1">
+          <div class="tp-label">Stop-loss %</div>
+          <input id="tp-agent-sl" type="number" step="0.5" min="0.5" max="20" value="3" class="tp-input">
+        </div>
+      </div>
+      <div class="tp-label">Pérdida diaria máx %</div>
+      <input id="tp-agent-maxloss" type="number" step="0.5" min="0.5" max="10" value="2" class="tp-input" style="margin-bottom:12px">
+
+      <div class="tp-row" style="gap:8px">
+        <button id="tp-agent-start-btn" onclick="toggleTradingAgent()" class="tp-btn" style="flex:1;background:rgba(0,204,255,0.15);color:#00CCFF;border:1px solid rgba(0,204,255,0.3)">▶ INICIAR</button>
+        <button onclick="_tpRefreshAgentStatus()" class="tp-btn tp-btn-neutral" style="font-size:10px;padding:6px 10px">↻</button>
+      </div>
+    </div>
+
+    <div class="tp-card" style="flex:1">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span class="tp-label" style="margin:0">Log de decisiones</span>
+        <span id="tp-agent-last-run" style="font-size:9px;color:rgba(229,226,225,0.35);font-family:'JetBrains Mono',monospace"></span>
+      </div>
+      <div id="tp-agent-log" class="tp-agent-log">
+        <span style="color:rgba(229,226,225,0.3)">El agente no está activo. Inicia para ver análisis en tiempo real.</span>
+      </div>
+    </div>
+
+    <div class="tp-card" style="background:rgba(255,204,0,0.03);border-color:rgba(255,204,0,0.12)">
+      <div class="tp-label">Universo de activos</div>
+      <div id="tp-universe-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:6px"></div>
+      <div style="margin-top:8px;font-size:10px;color:rgba(229,226,225,0.35)">Los activos analizados son los del grafo con ticker de mercado</div>
+    </div>
+  </div>
+
+</div><!-- end 3-col -->
+</div><!-- end trade-panel -->
+
+<script>
+/* ===== Professional Trade Panel ===== */
+(function(){
+  let _tp = { ticker:'', label:'', side:'buy', price:0, prev:0, buyingPower:0, agentRunning:false, chart:null };
+
+  window.openTradeModal = function(nodeId, ticker, label) {
+    openTradePanelFn(nodeId, ticker, label);
+  };
+
+  window.openTradePanelFn = function(nodeId, ticker, label) {
+    _tp.ticker = ticker; _tp.label = label || ticker;
+    const q = MKT.quotes[ticker] || {};
+    _tp.price = parseFloat(q.live || q.close || 0) || 0;
+    _tp.prev  = parseFloat(q.prev || 0) || 0;
+    const pct = _tp.prev > 0 ? (_tp.price - _tp.prev) / _tp.prev * 100 : 0;
+
+    document.getElementById('tp-ticker-badge').textContent = ticker;
+    document.getElementById('tp-price-badge').textContent = _tp.price > 0 ? '$' + _tp.price.toFixed(2) : '—';
+    const chgEl = document.getElementById('tp-chg-badge');
+    chgEl.textContent = _tp.prev > 0 ? (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%' : '';
+    chgEl.style.color = pct >= 0 ? '#4ade80' : '#f87171';
+
+    document.getElementById('trade-panel').style.display = 'block';
+    setTradePanelSide('buy');
+    updateTradePanelRisk();
+    _tpLoadAccount();
+    _tpLoadChart(ticker);
+    _tpRefreshPositions();
+    _tpRefreshBlotter();
+    _tpRefreshAgentStatus();
+    _tpBuildUniverseChips();
+  };
+
+  window.closeTradePanelFn = function() {
+    document.getElementById('trade-panel').style.display = 'none';
+  };
+
+  window.setTradePanelSide = function(side) {
+    _tp.side = side;
+    const buy  = document.getElementById('tp-side-buy-btn');
+    const sell = document.getElementById('tp-side-sell-btn');
+    if (side === 'buy') {
+      buy.className  = 'tp-btn tp-btn-buy active';
+      sell.className = 'tp-btn tp-btn-sell';
+      sell.style.background = 'rgba(220,38,38,0.12)'; sell.style.color = '#f87171'; sell.style.border = '1px solid rgba(220,38,38,0.3)';
+    } else {
+      sell.className = 'tp-btn tp-btn-sell active';
+      sell.style.background = '#dc2626'; sell.style.color = '#fff'; sell.style.border = 'none';
+      buy.className  = 'tp-btn tp-btn-buy';
+      buy.style.background  = 'rgba(22,163,74,0.12)'; buy.style.color = '#4ade80'; buy.style.border = '1px solid rgba(22,163,74,0.3)';
+    }
+    document.getElementById('tp-submit-btn').style.background = side === 'buy' ? '#16a34a' : '#dc2626';
+    updateTradePanelRisk();
+  };
+
+  window.updateTradePanelRisk = function() {
+    const otype = document.getElementById('tp-order-type').value;
+    document.getElementById('tp-limit-row').style.display = otype === 'limit' ? '' : 'none';
+    document.getElementById('tp-stop-row').style.display  = otype === 'stop'  ? '' : 'none';
+    document.getElementById('tp-trail-row').style.display = otype === 'trailing_stop' ? '' : 'none';
+
+    const qty   = parseFloat(document.getElementById('tp-qty').value) || 0;
+    const price = _tp.price || 0;
+    const total = qty * price;
+    const pct   = _tp.buyingPower > 0 ? (total / _tp.buyingPower * 100) : 0;
+    const sl    = parseFloat(document.getElementById('tp-agent-sl')?.value || 3);
+    const loss  = total * sl / 100;
+    const rInfo = document.getElementById('tp-risk-info');
+    if (rInfo) rInfo.innerHTML =
+      `Qty: <b>${qty}</b> × $${price.toFixed(2)}<br>` +
+      `Total: <b>$${total.toLocaleString('en-US',{minimumFractionDigits:2})}</b><br>` +
+      `% Capital: <b style="color:${pct>10?'#f87171':'#4ade80'}">${pct.toFixed(1)}%</b><br>` +
+      `Stop-loss ($${sl}%): <b style="color:#f87171">-$${loss.toFixed(2)}</b>`;
+  };
+
+  window.setTradePanelQtyPct = function(pct) {
+    if (!_tp.price || !_tp.buyingPower) return;
+    const notional = _tp.buyingPower * pct / 100;
+    const qty = Math.max(1, Math.floor(notional / _tp.price));
+    document.getElementById('tp-qty').value = qty;
+    updateTradePanelRisk();
+  };
+
+  window.submitTradePanelOrder = async function() {
+    const ticker = _tp.ticker;
+    const qty    = parseFloat(document.getElementById('tp-qty').value);
+    const side   = _tp.side;
+    const otype  = document.getElementById('tp-order-type').value;
+    const tif    = document.getElementById('tp-tif').value;
+    const status = document.getElementById('tp-order-status');
+    if (!ticker || !qty || qty <= 0) { status.style.color='#f87171'; status.textContent='Introduce cantidad válida'; return; }
+
+    const body = { symbol: ticker, qty, side, type: otype, time_in_force: tif };
+    if (otype === 'limit')         body.limit_price  = parseFloat(document.getElementById('tp-limit-price').value);
+    if (otype === 'stop')          body.stop_price   = parseFloat(document.getElementById('tp-stop-price').value);
+    if (otype === 'trailing_stop') body.trail_percent = parseFloat(document.getElementById('tp-trail-pct').value);
+
+    status.style.color = 'rgba(229,226,225,0.6)'; status.textContent = 'Enviando…';
+    document.getElementById('tp-submit-btn').disabled = true;
+    try {
+      const r = await fetch('/api/trade/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      const d = await r.json();
+      if (d.id || d.status === 'accepted' || d.status === 'pending_new') {
+        status.style.color = '#4ade80';
+        status.textContent = `✓ ${side.toUpperCase()} ${qty}× ${ticker} — ${d.status || 'accepted'}`;
+        if (typeof toast === 'function') toast(`Orden ${side} enviada: ${qty}× ${ticker}`);
+        setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); }, 2000);
+      } else {
+        status.style.color = '#f87171';
+        status.textContent = '✗ ' + (d.message || d.error || JSON.stringify(d).slice(0,80));
+      }
+    } catch(e) { status.style.color='#f87171'; status.textContent='✗ ' + e.message; }
+    document.getElementById('tp-submit-btn').disabled = false;
+  };
+
+  async function _tpLoadAccount() {
+    try {
+      const d = await fetch('/api/trade/account').then(r=>r.json());
+      if (d.buying_power) {
+        _tp.buyingPower = parseFloat(d.buying_power);
+        document.getElementById('tp-account-info').textContent =
+          'BP: $' + _tp.buyingPower.toLocaleString('en-US',{maximumFractionDigits:0}) +
+          ' | Equity: $' + parseFloat(d.equity||0).toLocaleString('en-US',{maximumFractionDigits:0});
+        updateTradePanelRisk();
+      } else if (d.error) {
+        document.getElementById('tp-account-info').textContent = d.error;
+      }
+    } catch(e) {}
+  }
+
+  async function _tpLoadChart(ticker) {
+    const canvas = document.getElementById('tp-chart');
+    if (!canvas) return;
+    if (_tp.chart) { _tp.chart.destroy(); _tp.chart = null; }
+    document.getElementById('tp-chart-label').textContent = `${ticker} — 1D (intraday)`;
+    try {
+      // Use Yahoo Finance intraday via existing chart endpoint
+      const r = await fetch(`/api/chart/${ticker}?range=1d&interval=5m`);
+      if (!r.ok) return;
+      const data = await r.json();
+      const labels = (data.labels||data.timestamps||[]).map(t=>{ const d=new Date(t*1000); return d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(); });
+      const prices = data.closes || data.prices || [];
+      if (!prices.length) return;
+      const color = prices[prices.length-1] >= prices[0] ? '#4ade80' : '#f87171';
+      const ctx = canvas.getContext('2d');
+      _tp.chart = new Chart(ctx, {
+        type:'line',
+        data: { labels, datasets: [{ data: prices, borderColor: color, borderWidth: 1.5, pointRadius: 0,
+          fill: true, backgroundColor: ctx => {
+            const g = ctx.chart.ctx.createLinearGradient(0,0,0,160);
+            g.addColorStop(0, color + '33'); g.addColorStop(1, 'transparent');
+            return g;
+          }}] },
+        options: { animation:false, plugins:{legend:{display:false}},
+          scales:{ x:{ticks:{font:{size:9},maxRotation:0,color:'rgba(229,226,225,0.4)'},grid:{color:'rgba(255,255,255,0.04)'}},
+                   y:{ticks:{font:{size:9},color:'rgba(229,226,225,0.4)'},grid:{color:'rgba(255,255,255,0.04)'}} } }
+      });
+    } catch(e) {}
+  }
+
+  window._tpRefreshPositions = async function() {
+    const tbody = document.getElementById('tp-positions-body');
+    if (!tbody) return;
+    try {
+      const d = await fetch('/api/trade/positions/detail').then(r=>r.json());
+      if (!Array.isArray(d) || !d.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:rgba(229,226,225,0.3);text-align:center;padding:16px">Sin posiciones abiertas</td></tr>';
+        return;
+      }
+      tbody.innerHTML = d.map(p => {
+        const plColor = p.unrealized >= 0 ? '#4ade80' : '#f87171';
+        return `<tr>
+          <td class="tp-mono" style="color:#e5e2e1;font-weight:600">${p.symbol}</td>
+          <td class="tp-mono">${p.qty}</td>
+          <td class="tp-mono">$${p.avg_entry.toFixed(2)}</td>
+          <td class="tp-mono">$${p.current.toFixed(2)}</td>
+          <td class="tp-mono" style="color:${plColor}">${p.unrealized >= 0 ? '+' : ''}$${p.unrealized.toFixed(2)}</td>
+          <td class="tp-mono" style="color:${plColor}">${p.unrealized_pct >= 0 ? '+' : ''}${p.unrealized_pct.toFixed(2)}%</td>
+        </tr>`;
+      }).join('');
+    } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="color:#f87171;text-align:center">Error</td></tr>'; }
+  };
+
+  window._tpRefreshBlotter = async function() {
+    const el = document.getElementById('tp-blotter-body');
+    if (!el) return;
+    try {
+      const d = await fetch('/api/trade/history').then(r=>r.json());
+      if (!Array.isArray(d) || !d.length) { el.textContent = 'Sin órdenes recientes'; return; }
+      el.innerHTML = d.slice(0,20).map(o => {
+        const ts = new Date(o.created_at||'').toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+        const sColor = o.side === 'buy' ? '#4ade80' : '#f87171';
+        const stColor = o.status === 'filled' ? '#4ade80' : o.status === 'canceled' ? 'rgba(229,226,225,0.35)' : '#fbbf24';
+        return `<div style="display:flex;gap:8px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+          <span style="color:rgba(229,226,225,0.4);min-width:36px">${ts}</span>
+          <span style="color:${sColor};min-width:28px;font-weight:700">${o.side?.toUpperCase()}</span>
+          <span style="color:#e5e2e1;min-width:48px">${o.symbol}</span>
+          <span style="color:rgba(229,226,225,0.7);min-width:32px">${parseFloat(o.qty||o.filled_qty||0).toFixed(0)}x</span>
+          <span style="color:${stColor}">${o.status}</span>
+        </div>`;
+      }).join('');
+    } catch(e) { el.textContent = 'Error al cargar órdenes'; }
+  };
+
+  window._tpRefreshAgentStatus = async function() {
+    try {
+      const d = await fetch('/api/trade/agent/status').then(r=>r.json());
+      _tp.agentRunning = d.running;
+      const badge = document.getElementById('tp-agent-badge');
+      const btn   = document.getElementById('tp-agent-start-btn');
+      if (badge) {
+        badge.textContent = d.running ? (d.mode === 'auto' ? 'AUTO' : 'ANÁLISIS') : 'OFFLINE';
+        badge.style.background = d.running ? 'rgba(0,204,255,0.15)' : 'rgba(255,255,255,0.06)';
+        badge.style.color      = d.running ? '#00CCFF' : 'rgba(229,226,225,0.5)';
+        badge.style.border     = d.running ? '1px solid rgba(0,204,255,0.3)' : '1px solid rgba(255,255,255,0.1)';
+      }
+      if (btn) {
+        btn.textContent = d.running ? '■ DETENER' : '▶ INICIAR';
+        btn.style.background = d.running ? 'rgba(220,38,38,0.15)' : 'rgba(0,204,255,0.15)';
+        btn.style.color = d.running ? '#f87171' : '#00CCFF';
+        btn.style.border = d.running ? '1px solid rgba(220,38,38,0.3)' : '1px solid rgba(0,204,255,0.3)';
+      }
+      const lastEl = document.getElementById('tp-agent-last-run');
+      if (lastEl && d.last_run) lastEl.textContent = 'Last: ' + d.last_run.split(' ')[1];
+
+      const logEl = document.getElementById('tp-agent-log');
+      if (logEl && d.log && d.log.length) {
+        logEl.innerHTML = d.log.slice().reverse().map(entry => {
+          const cls = 'tp-log-' + (entry.level || 'info');
+          const ticker = entry.ticker ? `<b style="color:#e5e2e1">${entry.ticker}</b> ` : '';
+          const action = entry.action ? `<span style="color:${entry.action==='buy'?'#4ade80':entry.action==='sell'?'#f87171':'#a8a8b3'}">[${entry.action?.toUpperCase()}]</span> ` : '';
+          const conf   = entry.confidence != null ? `<span style="color:rgba(229,226,225,0.4)">(${entry.confidence}%)</span> ` : '';
+          const exec   = entry.executed ? `<span style="color:#4ade80">✓ ejecutado</span>` : '';
+          const msg    = entry.msg ? `<span>${entry.msg}</span>` : '';
+          return `<div class="${cls}" style="border-bottom:1px solid rgba(255,255,255,0.04);padding:2px 0">
+            <span style="color:rgba(229,226,225,0.3)">${entry.ts} </span>${ticker}${action}${conf}<span style="color:rgba(229,226,225,0.6)">${entry.reason||''}</span>${exec}${msg}
+          </div>`;
+        }).join('');
+        logEl.scrollTop = 0;
+      }
+    } catch(e) {}
+  };
+
+  window.toggleTradingAgent = async function() {
+    if (_tp.agentRunning) {
+      await fetch('/api/trade/agent/stop', {method:'POST'});
+      setTimeout(_tpRefreshAgentStatus, 500);
+    } else {
+      const body = {
+        mode:             document.getElementById('tp-agent-mode').value,
+        interval_min:     parseInt(document.getElementById('tp-agent-interval').value),
+        max_pos_pct:      parseFloat(document.getElementById('tp-agent-maxpos').value),
+        stop_loss_pct:    parseFloat(document.getElementById('tp-agent-sl').value),
+        max_daily_loss_pct: parseFloat(document.getElementById('tp-agent-maxloss').value),
+        universe: NODES.filter(n=>n.mkt).map(n=>n.mkt).filter(Boolean).slice(0,30),
+      };
+      await fetch('/api/trade/agent/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      setTimeout(_tpRefreshAgentStatus, 800);
+    }
+  };
+
+  function _tpBuildUniverseChips() {
+    const el = document.getElementById('tp-universe-chips');
+    if (!el) return;
+    const tickers = NODES.filter(n=>n.mkt).map(n=>n.mkt).filter(Boolean).slice(0,30);
+    el.innerHTML = tickers.map(t =>
+      `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:rgba(229,226,225,0.7)">${t}</span>`
+    ).join('');
+  }
+
+  // legacy compat
+  window.setTradeSide = window.setTradePanelSide;
+  window.updateTradeEstimate = window.updateTradePanelRisk;
+  window.submitTradeOrder = window.submitTradePanelOrder;
+})();
+</script>
 </body>
 </html>

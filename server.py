@@ -13,6 +13,7 @@ Modo de operación:
   - El frontend detecta el puerto 5050 y enruta sus fetch a /api/* automáticamente
 """
 import os
+import json
 import time
 import uuid
 import logging
@@ -1406,6 +1407,284 @@ def trade_flows():
         'flows': combined,
         'source': 'UN Comtrade public preview',
     })
+
+
+# ── AI Trading Agent ─────────────────────────────────────────────────────────
+
+_AGENT: dict = {
+    'running': False,
+    'mode': 'manual',          # 'manual' | 'auto'
+    'interval_min': 15,
+    'universe': ['NVDA','TSM','AMD','INTC','ASML','AMAT','QCOM','AVGO','MU','TSLA'],
+    'max_pos_pct': 5.0,        # max % of equity per position
+    'max_daily_loss_pct': 2.0, # daily circuit-breaker
+    'stop_loss_pct': 3.0,      # per-position stop
+    'log': [],
+    'thread': None,
+    'last_run': None,
+    'status': 'stopped',
+    'daily_pnl_pct': 0.0,
+}
+
+def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> dict:
+    """Ask Claude to analyze one ticker and recommend action."""
+    pct = ((price - prev) / prev * 100) if prev else 0
+    prompt = (
+        f"You are a quantitative trading analyst. Analyze {ticker}:\n"
+        f"- Price: ${price:.2f} (prev close: ${prev:.2f}, change: {pct:+.2f}%)\n"
+        f"- News sentiment score: {sentiment:.2f} (range -10 to +10)\n\n"
+        f"Respond in JSON only, no markdown:\n"
+        f'{{ "action": "buy"|"sell"|"hold", "confidence": 0-100, '
+        f'"reason": "1-sentence reason", "size_pct": 1-5 }}'
+    )
+    try:
+        client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+        msg = client.messages.create(
+            model=AI_MODEL,
+            max_tokens=200,
+            messages=[{'role': 'user', 'content': prompt}],
+        )
+        raw = msg.content[0].text.strip()
+        # strip markdown if present
+        if raw.startswith('```'):
+            raw = raw.split('```')[1]
+            if raw.startswith('json'):
+                raw = raw[4:]
+        return json.loads(raw)
+    except Exception as e:  # noqa: BLE001
+        return {'action': 'hold', 'confidence': 0, 'reason': str(e)[:80], 'size_pct': 0}
+
+
+def _agent_get_positions() -> dict:
+    if not ALPACA_KEY:
+        return {}
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/positions', headers=_alpaca_hdrs(), timeout=10)
+        if r.status_code == 200:
+            return {p['symbol']: p for p in r.json()}
+    except Exception:  # noqa: BLE001
+        pass
+    return {}
+
+
+def _agent_get_equity() -> float:
+    if not ALPACA_KEY:
+        return 0.0
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
+        if r.status_code == 200:
+            return float(r.json().get('equity', 0) or 0)
+    except Exception:  # noqa: BLE001
+        pass
+    return 0.0
+
+
+def _agent_place(ticker: str, side: str, notional: float) -> dict:
+    """Place a notional-dollar market order."""
+    body = {
+        'symbol': ticker,
+        'notional': f'{notional:.2f}',
+        'side': side,
+        'type': 'market',
+        'time_in_force': 'day',
+    }
+    r = requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(), json=body, timeout=15)
+    return r.json()
+
+
+def _agent_run_cycle():
+    """One analysis + execution cycle for all tickers in universe."""
+    log_entries = _AGENT['log']
+    equity = _agent_get_equity()
+    if equity <= 0 and ALPACA_KEY:
+        log_entries.append({'ts': time.strftime('%H:%M:%S'), 'msg': '⚠️ Could not fetch equity', 'level': 'warn'})
+        return
+
+    # check daily circuit-breaker
+    if _AGENT['daily_pnl_pct'] <= -_AGENT['max_daily_loss_pct']:
+        log_entries.append({'ts': time.strftime('%H:%M:%S'),
+                            'msg': f'🛑 Daily loss limit hit ({_AGENT["daily_pnl_pct"]:.2f}%) — no new trades',
+                            'level': 'warn'})
+        return
+
+    positions = _agent_get_positions()
+
+    for ticker in _AGENT['universe']:
+        if not _AGENT['running']:
+            break
+        # get price from Finnhub
+        price, prev, sentiment = 0.0, 0.0, 0.0
+        try:
+            r = requests.get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}', timeout=8)
+            q = r.json()
+            price = float(q.get('c') or 0)
+            prev  = float(q.get('pc') or 0)
+        except Exception:  # noqa: BLE001
+            pass
+
+        # lightweight GDELT sentiment
+        try:
+            gurl = (f'https://api.gdeltproject.org/api/v2/doc/doc?query={ticker}'
+                    f'&mode=tonechart&format=json&maxrecords=5')
+            gr = requests.get(gurl, timeout=6)
+            gdata = gr.json()
+            tones = [float(x.get('avgtone', 0) or 0) for x in (gdata.get('tonechart') or [])[:5]]
+            sentiment = sum(tones) / len(tones) if tones else 0.0
+        except Exception:  # noqa: BLE001
+            pass
+
+        if price <= 0:
+            continue
+
+        analysis = _agent_analyze(ticker, price, prev, sentiment)
+        action     = analysis.get('action', 'hold')
+        confidence = int(analysis.get('confidence', 0))
+        reason     = analysis.get('reason', '')
+        size_pct   = min(float(analysis.get('size_pct', 1)), _AGENT['max_pos_pct'])
+
+        entry = {
+            'ts': time.strftime('%H:%M:%S'),
+            'ticker': ticker,
+            'price': price,
+            'action': action,
+            'confidence': confidence,
+            'reason': reason,
+            'executed': False,
+            'level': 'info',
+        }
+
+        if _AGENT['mode'] == 'auto' and ALPACA_KEY and action != 'hold' and confidence >= 65:
+            notional = equity * size_pct / 100
+            notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100))
+            try:
+                result = _agent_place(ticker, action, notional)
+                entry['executed'] = True
+                entry['order_id'] = result.get('id', '')[:12]
+                entry['notional'] = notional
+                entry['level'] = 'success'
+            except Exception as e:  # noqa: BLE001
+                entry['exec_error'] = str(e)[:60]
+                entry['level'] = 'error'
+
+        log_entries.append(entry)
+        # keep last 100 entries
+        if len(log_entries) > 100:
+            _AGENT['log'] = log_entries[-100:]
+            log_entries = _AGENT['log']
+
+    _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _agent_thread_fn():
+    _AGENT['status'] = 'running'
+    while _AGENT['running']:
+        try:
+            _agent_run_cycle()
+        except Exception as e:  # noqa: BLE001
+            _AGENT['log'].append({'ts': time.strftime('%H:%M:%S'), 'msg': f'Cycle error: {e}', 'level': 'error'})
+        interval = max(1, _AGENT['interval_min']) * 60
+        for _ in range(interval):
+            if not _AGENT['running']:
+                break
+            time.sleep(1)
+    _AGENT['status'] = 'stopped'
+
+
+@app.route('/api/trade/agent/start', methods=['POST'])
+def agent_start():
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    data = request.get_json(silent=True) or {}
+    if data.get('mode'):          _AGENT['mode']             = data['mode']
+    if data.get('interval_min'):  _AGENT['interval_min']     = int(data['interval_min'])
+    if data.get('universe'):      _AGENT['universe']         = data['universe']
+    if data.get('max_pos_pct'):   _AGENT['max_pos_pct']      = float(data['max_pos_pct'])
+    if data.get('max_daily_loss_pct'): _AGENT['max_daily_loss_pct'] = float(data['max_daily_loss_pct'])
+    if data.get('stop_loss_pct'): _AGENT['stop_loss_pct']   = float(data['stop_loss_pct'])
+
+    if _AGENT['running']:
+        return jsonify({'status': 'already_running'})
+
+    _AGENT['running'] = True
+    _AGENT['daily_pnl_pct'] = 0.0
+    t = threading.Thread(target=_agent_thread_fn, daemon=True)
+    _AGENT['thread'] = t
+    t.start()
+    return jsonify({'status': 'started', 'mode': _AGENT['mode']})
+
+
+@app.route('/api/trade/agent/stop', methods=['POST'])
+def agent_stop():
+    _AGENT['running'] = False
+    return jsonify({'status': 'stopping'})
+
+
+@app.route('/api/trade/agent/status', methods=['GET'])
+def agent_status():
+    return jsonify({
+        'running': _AGENT['running'],
+        'status': _AGENT['status'],
+        'mode': _AGENT['mode'],
+        'interval_min': _AGENT['interval_min'],
+        'universe': _AGENT['universe'],
+        'max_pos_pct': _AGENT['max_pos_pct'],
+        'max_daily_loss_pct': _AGENT['max_daily_loss_pct'],
+        'stop_loss_pct': _AGENT['stop_loss_pct'],
+        'last_run': _AGENT['last_run'],
+        'daily_pnl_pct': _AGENT['daily_pnl_pct'],
+        'log': _AGENT['log'][-20:],
+    })
+
+
+@app.route('/api/trade/agent/config', methods=['POST'])
+def agent_config():
+    data = request.get_json(silent=True) or {}
+    if 'mode'               in data: _AGENT['mode']             = data['mode']
+    if 'interval_min'       in data: _AGENT['interval_min']     = int(data['interval_min'])
+    if 'max_pos_pct'        in data: _AGENT['max_pos_pct']      = float(data['max_pos_pct'])
+    if 'max_daily_loss_pct' in data: _AGENT['max_daily_loss_pct'] = float(data['max_daily_loss_pct'])
+    if 'stop_loss_pct'      in data: _AGENT['stop_loss_pct']    = float(data['stop_loss_pct'])
+    return jsonify({'status': 'updated', **{k: _AGENT[k] for k in
+                    ['mode','interval_min','max_pos_pct','max_daily_loss_pct','stop_loss_pct']}})
+
+
+@app.route('/api/trade/history', methods=['GET'])
+def trade_history():
+    if not ALPACA_KEY:
+        return jsonify([])
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/orders?status=all&limit=50&direction=desc',
+                         headers=_alpaca_hdrs(), timeout=10)
+        return jsonify(r.json()), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
+
+
+@app.route('/api/trade/positions/detail', methods=['GET'])
+def trade_positions_detail():
+    if not ALPACA_KEY:
+        return jsonify([])
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/positions', headers=_alpaca_hdrs(), timeout=10)
+        positions = r.json()
+        if not isinstance(positions, list):
+            return jsonify(positions), r.status_code
+        enriched = []
+        for p in positions:
+            enriched.append({
+                'symbol':      p.get('symbol'),
+                'qty':         float(p.get('qty') or 0),
+                'side':        p.get('side', 'long'),
+                'avg_entry':   float(p.get('avg_entry_price') or 0),
+                'current':     float(p.get('current_price') or 0),
+                'market_val':  float(p.get('market_value') or 0),
+                'unrealized':  float(p.get('unrealized_pl') or 0),
+                'unrealized_pct': float(p.get('unrealized_plpc') or 0) * 100,
+                'cost_basis':  float(p.get('cost_basis') or 0),
+            })
+        return jsonify(enriched)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 502
 
 
 if __name__ == '__main__':
