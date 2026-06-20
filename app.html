@@ -6,20 +6,21 @@
 <title>Khipu Finance · Inteligencia Financiera Global 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <style>
 :root{
-  --bg:#0a0a0a; --surface:rgba(14,14,14,0.95); --surface-2:rgba(26,26,26,0.9); --ink:#e5e2e1; --ink-2:rgba(229,226,225,0.55);
-  --ink-3:rgba(229,226,225,0.3); --line:rgba(255,255,255,0.07); --line-2:rgba(255,255,255,0.12); --accent:#8E5AFF;
+  --bg:#F1ECE2; --surface:#FBF9F4; --surface-2:#E9E2D4; --ink:#1B1714; --ink-2:rgba(27,23,20,0.60);
+  --ink-3:rgba(27,23,20,0.40); --line:rgba(27,23,20,0.11); --line-2:rgba(27,23,20,0.18); --accent:#6D28D9;
+  --font-display:'Fraunces',Georgia,serif;
   --c-quantum_hw:#7B2FBE; --c-quantum_infra:#4B5FC2;
   --c-eda:#6B5DD3; --c-equip:#4E8B1E; --c-optics:#9A6310; --c-materials:#B5790F;
   --c-chemicals:#C0521F; --c-foundry:#0F8C5F; --c-fabless:#1B6DB5; --c-memory:#C32B3C;
   --c-substrates:#B5316F; --c-servers:#4C3FA0; --c-networking:#0C7370;
   --c-connectivity_infra:#3C7A89; --c-power:#8A4410;
   --c-cloud:#0A6CA8; --c-ailab:#8B2FA8; --c-robotics_physical:#A0521E; --c-aisoft:#0E7A6E;
-  --gold:#FFD700; --blue:#00CCFF; --violet:#8E5AFF; --preipo:#cabeff; --danger:#FF3B30;
-  --shadow:0 4px 40px rgba(0,0,0,0.8);
+  --gold:#9A6B0C; --blue:#0E76A6; --violet:#6D28D9; --preipo:#7C5BD9; --danger:#BC3A24;
+  --shadow:0 1px 2px rgba(27,23,20,.05),0 14px 40px rgba(27,23,20,.10);
   /* Space & Connectivity */
   --c-space_launch: #FF6B35;
   --c-satellite: #74C8DA;
@@ -46,16 +47,17 @@
   --c-neuromorphic: #34D1BF;
 }
 .dark{
-  --bg:#000000; --surface:rgba(10,10,10,0.9); --surface-2:rgba(18,18,18,0.95); --ink:#ffffff; --ink-2:rgba(255,255,255,0.5);
-  --ink-3:rgba(255,255,255,0.28); --line:rgba(255,255,255,0.06); --line-2:rgba(255,255,255,0.1); --accent:#8E5AFF;
+  --bg:#15120C; --surface:#1F1B13; --surface-2:#2B241A; --ink:#F1EAD9; --ink-2:rgba(241,234,217,0.57);
+  --ink-3:rgba(241,234,217,0.34); --line:rgba(241,234,217,0.10); --line-2:rgba(241,234,217,0.18); --accent:#A78BFA;
+  --font-display:'Fraunces',Georgia,serif;
   --c-quantum_hw:#BD8AF0; --c-quantum_infra:#93A3F0;
   --c-eda:#A99EEC; --c-equip:#9BCF5E; --c-optics:#D89A3E; --c-materials:#E5A52A;
   --c-chemicals:#EE8B5A; --c-foundry:#43C896; --c-fabless:#62A8EE; --c-memory:#EE6577;
   --c-substrates:#E875AC; --c-servers:#A99EEC; --c-networking:#3FB5A8;
   --c-connectivity_infra:#74B6C6; --c-power:#D8862A;
   --c-cloud:#4FA8E0; --c-ailab:#D070E8; --c-robotics_physical:#E89050; --c-aisoft:#40B8A8;
-  --danger:#FF3B30;
-  --shadow:0 4px 60px rgba(0,0,0,0.95);
+  --gold:#E0B25C; --blue:#5FC6E8; --violet:#A78BFA; --preipo:#C9B6FF; --danger:#FF6B5C;
+  --shadow:0 2px 10px rgba(0,0,0,.5),0 18px 50px rgba(0,0,0,.6);
   --c-space_launch: #FF8B55;
   --c-satellite: #94E8FA;
   --c-earth_obs: #6BF6B3;
@@ -1049,6 +1051,70 @@ footer .disc{line-height:1.4}
   background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface) 50%,var(--surface-2) 75%);
   background-size:800px 100%;animation:shimmer 1.4s infinite;border-radius:4px;
 }
+
+/* ════════ CAPA EDITORIAL — integrado desde Khipu Design ════════ */
+/* Fraunces serif para titulares display */
+.brand h1,.brand .name,.d-name,.panel-empty h2,.settings-head h2,.metric .v,
+.fund-card .fv,.ai-verdict .av-label,.boot-title{font-family:var(--font-display,Georgia,serif)}
+
+/* DARK MODE — papel nocturno cálido */
+.dark header{background:linear-gradient(180deg,rgba(38,32,22,.55),rgba(18,15,10,.86));box-shadow:0 1px 0 rgba(167,139,250,.07)}
+.dark .tabs{background:linear-gradient(180deg,rgba(31,27,19,.72),rgba(18,15,10,.9))}
+.dark .toolbar,.dark .band{background:linear-gradient(180deg,rgba(31,27,19,.55),rgba(18,15,10,.75))}
+.dark footer{background:rgba(18,15,10,.85)}
+.dark .brand .name{background:none;-webkit-text-fill-color:var(--ink);color:var(--ink);font-weight:600;font-size:20px;letter-spacing:-.015em}
+.dark .d-name{background:none;-webkit-text-fill-color:var(--ink);color:var(--ink);font-weight:600;letter-spacing:-.015em;font-size:27px}
+.dark .metric .v{font-weight:600;font-size:21px;letter-spacing:-.01em}
+/* tab underline expansion */
+.dark .tab{position:relative}
+.dark .tab.active{border-bottom-color:transparent}
+.dark .tab::after{content:'';position:absolute;left:50%;right:50%;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;transition:left .26s cubic-bezier(.22,.61,.36,1),right .26s cubic-bezier(.22,.61,.36,1)}
+.dark .tab.active::after{left:13px;right:13px}
+.dark .tab:hover::after{left:20px;right:20px}
+.dark .mkt-card::before{background:var(--accent);left:0;top:0;bottom:0;right:auto;width:2px;height:auto}
+.dark .graph-wrap::after{background:radial-gradient(125% 95% at 50% 42%, transparent 58%, rgba(0,0,0,.42))}
+/* staggered panel entry animations */
+@keyframes edTabIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes edRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes edChrome{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.dark #analysis-panel,.dark #geo-panel,.dark #simulation-panel,.dark #space-panel,.dark .market{animation:edTabIn .42s cubic-bezier(.22,.61,.36,1)}
+.dark .detail > *{animation:edRise .4s both cubic-bezier(.22,.61,.36,1)}
+.dark .detail > *:nth-child(2){animation-delay:.04s}
+.dark .detail > *:nth-child(3){animation-delay:.08s}
+.dark .detail > *:nth-child(4){animation-delay:.12s}
+.dark .detail > *:nth-child(n+5){animation-delay:.16s}
+.dark header,.dark .toolbar{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
+.dark .toolbar{animation-delay:.06s}
+
+/* LIGHT MODE — revista financiera en papel */
+body:not(.dark){background:radial-gradient(120% 80% at 50% -10%, #FFFDF8 0%, transparent 55%),var(--bg)}
+body:not(.dark) header{background:rgba(251,249,244,.80);border-bottom:1px solid var(--line);-webkit-backdrop-filter:saturate(1.4) blur(18px);backdrop-filter:saturate(1.4) blur(18px)}
+body:not(.dark) .tabs{background:rgba(248,245,238,.66);border-bottom:1px solid var(--line)}
+body:not(.dark) .toolbar,.body:not(.dark) .band{background:rgba(248,245,238,.74)}
+body:not(.dark) footer{background:rgba(251,249,244,.84);border-top:1px solid var(--line)}
+body:not(.dark) .brand .name{background:none;-webkit-text-fill-color:var(--ink);color:var(--ink);font-weight:600;font-size:20px;letter-spacing:-.015em}
+body:not(.dark) .brand h1{text-transform:none;letter-spacing:-.01em;font-weight:600;font-size:17px}
+body:not(.dark) .d-name{font-weight:600;letter-spacing:-.015em;font-size:27px;background:none;-webkit-text-fill-color:var(--ink);color:var(--ink)}
+body:not(.dark) .metric .v{font-weight:600;font-size:21px;letter-spacing:-.01em}
+body:not(.dark) .panel{background:rgba(251,249,244,.94);border-left:1px solid var(--line);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+body:not(.dark) .graph-wrap{background-image:radial-gradient(rgba(27,23,20,.06) 1px, transparent 0);background-size:30px 30px}
+body:not(.dark) .search-wrap input{background:#FFF;color:var(--ink);border:1px solid var(--line-2)}
+body:not(.dark) .search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,40,217,.14)}
+body:not(.dark) .mkt-card,body:not(.dark) .fund-card,body:not(.dark) .fin-card{background:#FFF;border:1px solid var(--line);box-shadow:0 1px 2px rgba(27,23,20,.04)}
+body:not(.dark) .mkt-card:hover{box-shadow:0 10px 30px rgba(27,23,20,.10);transform:translateY(-2px)}
+body:not(.dark) .tab::after{content:'';position:absolute;left:50%;right:50%;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;transition:left .26s cubic-bezier(.22,.61,.36,1),right .26s cubic-bezier(.22,.61,.36,1)}
+body:not(.dark) .tab{position:relative}
+body:not(.dark) .tab.active{border-bottom-color:transparent}
+body:not(.dark) .tab.active::after{left:13px;right:13px}
+body:not(.dark) .tab:hover::after{left:20px;right:20px}
+body:not(.dark) #analysis-panel,body:not(.dark) #geo-panel,body:not(.dark) #simulation-panel,body:not(.dark) #space-panel,body:not(.dark) .market{animation:edTabIn .42s cubic-bezier(.22,.61,.36,1)}
+body:not(.dark) .detail > *{animation:edRise .4s both cubic-bezier(.22,.61,.36,1)}
+body:not(.dark) .detail > *:nth-child(2){animation-delay:.04s}
+body:not(.dark) .detail > *:nth-child(3){animation-delay:.08s}
+body:not(.dark) .detail > *:nth-child(4){animation-delay:.12s}
+body:not(.dark) .detail > *:nth-child(n+5){animation-delay:.16s}
+body:not(.dark) header{animation:edChrome .5s both cubic-bezier(.22,.61,.36,1)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
 <script src="nodes/nodes_expand.js"></script>
 <script src="nodes/nodes_expand2.js"></script>
