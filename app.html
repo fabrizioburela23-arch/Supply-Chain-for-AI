@@ -1160,6 +1160,7 @@ footer .disc{line-height:1.4}
     <button class="tab" data-tab="geo" id="tab-geo">🌐 <span data-i18n="tab_geo">Geopolítica</span></button>
     <button class="tab" data-tab="simulation" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
     <button class="tab" data-tab="space" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
+    <button class="tab" data-tab="terminal" id="tab-terminal">⬛ <span>Terminal</span></button>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -1529,6 +1530,75 @@ footer .disc{line-height:1.4}
         <div id="sim-output" style="font-size:13px;color:var(--ink-3);padding:20px 0;text-align:center">
           Selecciona un escenario y pulsa ▶ para iniciar la simulación multi-agente
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Terminal Tab — Multi-chart drag & drop ═════════════════════ -->
+<section id="terminal-panel" style="display:none;flex:1;min-height:0;overflow:hidden;background:#000;font-family:'Geist',sans-serif">
+  <div style="display:flex;height:100%;overflow:hidden">
+
+    <!-- LEFT: Company list -->
+    <div id="term-sidebar" style="width:260px;min-width:260px;border-right:1px solid rgba(255,255,255,0.07);
+      background:rgba(6,6,6,0.95);display:flex;flex-direction:column;overflow:hidden">
+
+      <!-- Search -->
+      <div style="padding:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <div style="position:relative">
+          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.25);font-size:12px">⌕</span>
+          <input id="term-search" placeholder="Buscar empresa / ticker…"
+            style="width:100%;padding:7px 10px 7px 28px;background:rgba(255,255,255,0.04);
+              border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:#fff;
+              font-size:12px;font-family:'JetBrains Mono',monospace;outline:none"
+            oninput="window._termFilter(this.value)">
+        </div>
+      </div>
+
+      <!-- Category filter chips -->
+      <div id="term-cats" style="display:flex;gap:4px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.05);overflow:hidden"></div>
+
+      <!-- Company list -->
+      <div id="term-list" style="flex:1;overflow-y:auto;padding:4px 0"></div>
+    </div>
+
+    <!-- RIGHT: Chart grid -->
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+
+      <!-- Toolbar -->
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;
+        border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.6);flex-shrink:0">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3)">LAYOUT</span>
+        <div style="display:flex;gap:2px">
+          <button onclick="window._termSetLayout(1)" class="term-layout-btn" data-l="1" title="1 panel"
+            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">1</button>
+          <button onclick="window._termSetLayout(2)" class="term-layout-btn" data-l="2" title="2 paneles"
+            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">2</button>
+          <button onclick="window._termSetLayout(4)" class="term-layout-btn active-layout" data-l="4" title="4 paneles"
+            style="width:26px;height:22px;background:rgba(142,90,255,0.3);border:1px solid rgba(142,90,255,0.5);
+              border-radius:2px;color:#cabeff;font-size:10px;cursor:pointer">4</button>
+          <button onclick="window._termSetLayout(6)" class="term-layout-btn" data-l="6" title="6 paneles"
+            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">6</button>
+          <button onclick="window._termSetLayout(9)" class="term-layout-btn" data-l="9" title="9 paneles"
+            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">9</button>
+        </div>
+        <div style="width:1px;height:16px;background:rgba(255,255,255,0.08)"></div>
+        <button onclick="window._termClearAll()"
+          style="padding:3px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+            border-radius:2px;color:rgba(255,255,255,0.4);font-size:10px;font-family:'JetBrains Mono',monospace;
+            cursor:pointer;letter-spacing:0.05em">LIMPIAR</button>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2)">
+          Arrastrá empresas al panel →
+        </span>
+      </div>
+
+      <!-- Grid -->
+      <div id="term-grid" style="flex:1;display:grid;grid-template-columns:1fr 1fr;
+        grid-template-rows:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);overflow:hidden">
       </div>
     </div>
   </div>
@@ -5790,7 +5860,7 @@ function switchTab(tab){
   activeTab=tab;
   document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const isMap=tab==='map', isAnalysis=tab==='analysis', isGeo=tab==='geo';
-  const isSim=tab==='simulation', isSpace=tab==='space';
+  const isSim=tab==='simulation', isSpace=tab==='space', isTerm=tab==='terminal';
   document.querySelector('main').style.display = isMap?'flex':'none';
   document.getElementById('toolbar').style.display = isMap?'flex':'none';
   document.getElementById('market').style.display = tab==='market'?'block':'none';
@@ -5802,15 +5872,17 @@ function switchTab(tab){
   if(simEl) simEl.style.display = isSim?'block':'none';
   const spaceEl=document.getElementById('space-panel');
   if(spaceEl) spaceEl.style.display = isSpace?'block':'none';
-  // Animate the panel that just became visible
+  const termEl=document.getElementById('terminal-panel');
+  if(termEl) termEl.style.display = isTerm?'flex':'none';
+  // Animate
   const _tabEls = [
     isMap && document.querySelector('main'),
     tab==='market' && document.getElementById('market'),
-    isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
+    isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl, isTerm && termEl,
   ].filter(Boolean);
   _tabEls.forEach(el => {
     el.classList.remove('tab-anim-in');
-    void el.offsetWidth; // force reflow
+    void el.offsetWidth;
     el.classList.add('tab-anim-in');
     setTimeout(() => el.classList.remove('tab-anim-in'), 220);
   });
@@ -5819,6 +5891,7 @@ function switchTab(tab){
   else if(isGeo){ renderGeoPanel(); }
   else if(isSim){ initSimTab(); }
   else if(isSpace){ initSpaceTab(); }
+  else if(isTerm){ initTerminalTab(); }
   else {
     if(SERVER_MODE){ document.getElementById('mk-key-btn').style.display='none'; document.getElementById('mk-keyrow').style.display='none'; }
     renderMarket();
@@ -7360,6 +7433,38 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 .dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }
 .dark #simulation-panel, .dark #space-panel { background: var(--bg); }
 .dark #sim-output { color: var(--ink-2); }
+
+/* ── Terminal multi-chart ── */
+#term-list .term-item {
+  display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:grab;
+  border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s;
+  user-select:none;
+}
+#term-list .term-item:hover { background:rgba(255,255,255,0.05); }
+#term-list .term-item:active { cursor:grabbing; }
+#term-list .term-item.dragging { opacity:0.4; }
+.term-cell {
+  background:#080808;position:relative;display:flex;flex-direction:column;
+  overflow:hidden;transition:box-shadow .15s;
+}
+.term-cell.drag-over { box-shadow:inset 0 0 0 2px #8e5aff; }
+.term-cell-empty {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;color:rgba(255,255,255,0.1);font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:0.1em;gap:8px;
+}
+.term-cell-header {
+  display:flex;align-items:center;gap:8px;padding:6px 10px;
+  border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;
+}
+.term-tf-btn {
+  padding:2px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:2px;color:rgba(255,255,255,0.35);cursor:pointer;transition:all .1s;
+}
+.term-tf-btn.active { background:rgba(142,90,255,0.2);border-color:rgba(142,90,255,0.5);color:#cabeff; }
+.term-tf-btn:hover { color:rgba(255,255,255,0.7); }
+.term-chart-wrap { flex:1;position:relative;min-height:0;padding:4px; }
 </style>
 
 <!-- Khipu Finance Engine -->
@@ -7834,6 +7939,267 @@ function initSimTab() {
     } catch(e) { varLoading.textContent = 'Error: '+e.message; varLoading.style.color='var(--danger)'; }
   });
 }
+
+// ── Terminal Tab — Multi-chart Bloomberg-style ─────────────────────────────
+const _term = {
+  layout: 4,
+  cells: [],      // array of {nodeId, ticker, tf, chartInst}
+  inited: false,
+};
+
+function initTerminalTab() {
+  if (!_term.inited) {
+    _term.inited = true;
+    _termBuildSidebar();
+  }
+  _termSetLayout(_term.layout, true);
+}
+
+function _termBuildSidebar() {
+  const nodes = (window.NODES || []).filter(n => n.mkt).sort((a,b) => a.label.localeCompare(b.label));
+
+  // Category chips
+  const cats = [...new Set(nodes.map(n => n.cat))].slice(0, 12);
+  const catEl = document.getElementById('term-cats');
+  if (catEl) {
+    catEl.innerHTML = `<button onclick="window._termFilter('')" style="padding:2px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;
+      background:rgba(142,90,255,0.2);border:1px solid rgba(142,90,255,0.4);border-radius:2px;color:#cabeff;cursor:pointer;letter-spacing:0.05em">ALL</button>` +
+      cats.map(c => `<button onclick="window._termFilter('',\'${c}\')" style="padding:2px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;
+        background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:2px;
+        color:rgba(255,255,255,0.4);cursor:pointer;letter-spacing:0.05em"
+        title="${c}">${c.replace(/_/g,' ').toUpperCase().slice(0,8)}</button>`).join('');
+  }
+
+  _termRenderList(nodes);
+}
+
+function _termRenderList(nodes) {
+  const el = document.getElementById('term-list');
+  if (!el) return;
+  el.innerHTML = nodes.map(n => {
+    const q = MKT?.quotes?.[n.mkt] || {};
+    const price = q.live || q.close || 0;
+    const pct = price && q.prev ? ((price - q.prev) / q.prev * 100) : 0;
+    const pctStr = pct ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '—';
+    const pctColor = pct > 0 ? '#00ff88' : pct < 0 ? '#ff4444' : 'rgba(255,255,255,0.3)';
+    const catColor = `var(--c-${n.cat}, #888)`;
+    return `<div class="term-item" draggable="true"
+        data-id="${n.id}" data-mkt="${n.mkt}"
+        ondragstart="window._termDragStart(event,\'${n.id}\',\'${n.mkt}\')"
+        ondragend="this.classList.remove('dragging')"
+        title="Arrastrá al panel">
+      <span style="width:6px;height:6px;border-radius:50%;background:${catColor};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:#e5e2e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.label}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3)">${n.mkt}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#e5e2e1">${price ? '$'+price.toFixed(2) : '—'}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pctColor}">${pctStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window._termFilter = function(query, cat) {
+  let nodes = (window.NODES || []).filter(n => n.mkt);
+  if (cat) nodes = nodes.filter(n => n.cat === cat);
+  if (query) {
+    const q = query.toLowerCase();
+    nodes = nodes.filter(n => n.label.toLowerCase().includes(q) || n.mkt.toLowerCase().includes(q));
+  }
+  nodes.sort((a,b) => a.label.localeCompare(b.label));
+  _termRenderList(nodes);
+};
+
+window._termSetLayout = function(n, silent) {
+  _term.layout = n;
+  // Update buttons
+  document.querySelectorAll('.term-layout-btn').forEach(b => {
+    const isActive = +b.dataset.l === n;
+    b.style.background = isActive ? 'rgba(142,90,255,0.3)' : 'rgba(255,255,255,0.06)';
+    b.style.borderColor = isActive ? 'rgba(142,90,255,0.5)' : 'rgba(255,255,255,0.1)';
+    b.style.color = isActive ? '#cabeff' : 'rgba(255,255,255,0.5)';
+  });
+  // Update grid
+  const grid = document.getElementById('term-grid');
+  if (!grid) return;
+  const cols = n <= 1 ? 1 : n <= 2 ? 2 : n <= 4 ? 2 : 3;
+  const rows = n <= 1 ? 1 : n <= 2 ? 1 : n <= 4 ? 2 : n <= 6 ? 2 : 3;
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+
+  // Preserve existing assignments
+  const existing = _term.cells.slice(0, n);
+  _term.cells = [];
+  grid.innerHTML = '';
+  for (let i = 0; i < n; i++) {
+    const cell = _termMakeCell(i);
+    grid.appendChild(cell);
+    _term.cells.push({ nodeId: null, ticker: null, tf: '1M', chartInst: null });
+    if (existing[i]?.nodeId) {
+      setTimeout(() => _termLoadCell(i, existing[i].nodeId, existing[i].ticker, existing[i].tf), 50);
+    }
+  }
+};
+
+function _termMakeCell(idx) {
+  const div = document.createElement('div');
+  div.className = 'term-cell';
+  div.dataset.idx = idx;
+  div.innerHTML = `<div class="term-cell-empty">
+    <span style="font-size:22px;opacity:0.2">⬛</span>
+    <span>Arrastrá una empresa aquí</span>
+  </div>`;
+  div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
+  div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+  div.addEventListener('drop', e => {
+    e.preventDefault();
+    div.classList.remove('drag-over');
+    const id = e.dataTransfer.getData('nodeId');
+    const mkt = e.dataTransfer.getData('ticker');
+    if (id && mkt) _termLoadCell(idx, id, mkt, _term.cells[idx]?.tf || '1M');
+  });
+  return div;
+}
+
+window._termDragStart = function(e, id, mkt) {
+  e.dataTransfer.setData('nodeId', id);
+  e.dataTransfer.setData('ticker', mkt);
+  e.currentTarget.classList.add('dragging');
+};
+
+async function _termLoadCell(idx, nodeId, ticker, tf) {
+  const grid = document.getElementById('term-grid');
+  if (!grid) return;
+  const cell = grid.children[idx];
+  if (!cell) return;
+
+  _term.cells[idx] = { nodeId, ticker, tf, chartInst: null };
+
+  const node = (window.NODES || []).find(n => n.id === nodeId);
+  const q = MKT?.quotes?.[ticker] || {};
+  const price = q.live || q.close || 0;
+  const pct = price && q.prev ? ((price - q.prev) / q.prev * 100) : 0;
+  const pctColor = pct > 0 ? '#00ff88' : pct < 0 ? '#ff4444' : 'rgba(255,255,255,0.4)';
+  const catColor = node ? `var(--c-${node.cat}, #8e5aff)` : '#8e5aff';
+  const tfs = ['1D','1W','1M','3M','1Y'];
+
+  cell.innerHTML = `
+    <div class="term-cell-header">
+      <span style="width:5px;height:5px;border-radius:50%;background:${catColor};flex-shrink:0"></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#fff;flex:1">${ticker}</span>
+      <span style="font-size:10px;color:rgba(255,255,255,0.5);margin-right:4px">${node?.label || ''}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fff;margin-right:6px">${price ? '$'+price.toFixed(2) : '—'}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pctColor};margin-right:8px">${pct?(pct>0?'+':'')+pct.toFixed(2)+'%':'—'}</span>
+      <div style="display:flex;gap:2px;margin-right:8px">
+        ${tfs.map(t=>`<button class="term-tf-btn${t===tf?' active':''}" onclick="window._termChangeTf(${idx},'${t}')">${t}</button>`).join('')}
+      </div>
+      <button onclick="window._termClearCell(${idx})"
+        style="width:18px;height:18px;border-radius:2px;background:rgba(255,255,255,0.06);
+          border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);font-size:10px;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+    </div>
+    <div class="term-chart-wrap">
+      <canvas id="term-canvas-${idx}" style="width:100%;height:100%"></canvas>
+      <div id="term-loading-${idx}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+        font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:0.1em">
+        CARGANDO…
+      </div>
+    </div>`;
+
+  // Load chart data
+  try {
+    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE) ? '' : (localStorage.getItem('base_url') || '');
+    const rangeMap = {'1D':'1d','1W':'5d','1M':'1mo','3M':'3mo','1Y':'1y'};
+    const res = await fetch(`${BASE}/api/candles/${ticker}?range=${rangeMap[tf]||'1mo'}&interval=${tf==='1D'?'5m':tf==='1W'?'30m':'1d'}`);
+    const data = await res.json();
+    const loader = document.getElementById(`term-loading-${idx}`);
+    if (loader) loader.style.display = 'none';
+
+    const canvas = document.getElementById(`term-canvas-${idx}`);
+    if (!canvas || !data.c?.length) return;
+
+    if (_term.cells[idx]?.chartInst) {
+      _term.cells[idx].chartInst.destroy();
+    }
+
+    const labels = data.t ? data.t.map(t => {
+      const d = new Date(t * 1000);
+      return tf === '1D' ? d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})
+           : d.toLocaleDateString('es',{month:'short',day:'numeric'});
+    }) : data.c.map((_,i)=>i);
+
+    const color = pct >= 0 ? '#00ff88' : '#ff4444';
+    const inst = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          data: data.c,
+          borderColor: color,
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          backgroundColor: (ctx) => {
+            const g = ctx.chart.ctx.createLinearGradient(0,0,0,ctx.chart.height);
+            g.addColorStop(0, color.replace(')', ',0.15)').replace('rgb','rgba'));
+            g.addColorStop(1, color.replace(')', ',0)').replace('rgb','rgba'));
+            return g;
+          },
+          tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: {
+          backgroundColor: 'rgba(10,10,10,0.9)', borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1, titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.6)',
+          titleFont: { family: 'JetBrains Mono', size: 10 },
+          bodyFont: { family: 'JetBrains Mono', size: 11 },
+          callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(2) }
+        }},
+        scales: {
+          x: { display: false },
+          y: {
+            position: 'right',
+            grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+            ticks: { color: 'rgba(255,255,255,0.25)', font: { family: 'JetBrains Mono', size: 9 },
+              maxTicksLimit: 4, callback: v => '$'+v.toFixed(0) }
+          }
+        }
+      }
+    });
+    if (_term.cells[idx]) _term.cells[idx].chartInst = inst;
+  } catch(e) {
+    const loader = document.getElementById(`term-loading-${idx}`);
+    if (loader) { loader.textContent = 'Sin datos'; loader.style.color = 'rgba(255,80,80,0.5)'; }
+  }
+}
+
+window._termChangeTf = function(idx, tf) {
+  const c = _term.cells[idx];
+  if (!c?.nodeId) return;
+  if (c.chartInst) { c.chartInst.destroy(); c.chartInst = null; }
+  _termLoadCell(idx, c.nodeId, c.ticker, tf);
+};
+
+window._termClearCell = function(idx) {
+  if (_term.cells[idx]?.chartInst) _term.cells[idx].chartInst.destroy();
+  _term.cells[idx] = { nodeId: null, ticker: null, tf: '1M', chartInst: null };
+  const grid = document.getElementById('term-grid');
+  if (!grid) return;
+  const old = grid.children[idx];
+  if (old) {
+    const fresh = _termMakeCell(idx);
+    grid.replaceChild(fresh, old);
+  }
+};
+
+window._termClearAll = function() {
+  const n = _term.layout;
+  for (let i = 0; i < n; i++) _termClearCell(i);
+};
 
 // ── Space Tab ────────────────────────────────────────────────────────────────
 let _spaceInited = false;
