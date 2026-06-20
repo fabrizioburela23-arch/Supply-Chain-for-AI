@@ -344,7 +344,10 @@ const BixbyVoice = {
         break;
       case 'audio': {
         const chunk = msg.audio_event?.audio_base_64;
-        if (chunk) this._enqueueAudio(chunk);
+        if (chunk) {
+          if (window.setBixbyThinking) window.setBixbyThinking(false);
+          this._enqueueAudio(chunk);
+        }
         break;
       }
       case 'agent_response': {
@@ -357,7 +360,10 @@ const BixbyVoice = {
       }
       case 'user_transcript': {
         const t = msg.user_transcription_event?.user_transcript || '';
-        if (t) this._showOverlay('Tú: ' + t.slice(0, 80));
+        if (t) {
+          this._showOverlay('Tú: ' + t.slice(0, 80));
+          if (window.setBixbyThinking) window.setBixbyThinking(true);
+        }
         break;
       }
       case 'client_tool_call':
@@ -698,14 +704,26 @@ const BixbyVoice = {
   _setStatus(text, isError) {
     const t = document.getElementById('bixby-text');
     if (t) t.textContent = text;
-    // update badge based on text content
+    // update badge + thinking widget based on text content
     const badge = document.getElementById('bixby-state-badge');
     if (badge && text) {
       const lower = text.toLowerCase();
-      if (lower.includes('escucha') || lower.includes('habla')) this._setBadge('ESCUCHANDO', true);
-      else if (lower.includes('conectando') || lower.includes('iniciando') || lower.includes('sesión')) this._setBadge('CONECTANDO', false);
-      else if (lower.includes('bixby:') || lower.includes('speaking')) this._setBadge('HABLANDO', true);
-      else if (isError) this._setBadge('ERROR', false);
+      if (lower.includes('escucha') || lower.includes('habla')) {
+        this._setBadge('ESCUCHANDO', true);
+        if (window.setBixbyThinking) window.setBixbyThinking(false);
+      } else if (lower.includes('conectando') || lower.includes('iniciando') || lower.includes('sesión')) {
+        this._setBadge('CONECTANDO', false);
+        if (window.setBixbyThinking) window.setBixbyThinking(false);
+      } else if (lower.includes('bixby:') || lower.includes('speaking')) {
+        this._setBadge('HABLANDO', true);
+        if (window.setBixbyThinking) window.setBixbyThinking(false);
+      } else if (lower.includes('procesando') || lower.includes('pensando') || lower.includes('tú:')) {
+        this._setBadge('PENSANDO', true);
+        if (window.setBixbyThinking) window.setBixbyThinking(true);
+      } else if (isError) {
+        this._setBadge('ERROR', false);
+        if (window.setBixbyThinking) window.setBixbyThinking(false);
+      }
     }
     if (isError) {
       const el = document.getElementById('bixby-status');
