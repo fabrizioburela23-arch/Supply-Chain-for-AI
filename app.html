@@ -7978,8 +7978,9 @@ function _termRenderList(nodes) {
   if (!el) return;
   el.innerHTML = nodes.map(n => {
     const q = MKT?.quotes?.[n.mkt] || {};
-    const price = q.live || q.close || 0;
-    const pct = price && q.prev ? ((price - q.prev) / q.prev * 100) : 0;
+    const price = parseFloat(q.live || q.close || 0) || 0;
+    const prev = parseFloat(q.prev || 0) || 0;
+    const pct = price && prev ? ((price - prev) / prev * 100) : 0;
     const pctStr = pct ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '—';
     const pctColor = pct > 0 ? '#00ff88' : pct < 0 ? '#ff4444' : 'rgba(255,255,255,0.3)';
     const catColor = `var(--c-${n.cat}, #888)`;
@@ -8079,8 +8080,9 @@ async function _termLoadCell(idx, nodeId, ticker, tf) {
 
   const node = (window.NODES || []).find(n => n.id === nodeId);
   const q = MKT?.quotes?.[ticker] || {};
-  const price = q.live || q.close || 0;
-  const pct = price && q.prev ? ((price - q.prev) / q.prev * 100) : 0;
+  const price = parseFloat(q.live || q.close || 0) || 0;
+  const prev = parseFloat(q.prev || 0) || 0;
+  const pct = price && prev ? ((price - prev) / prev * 100) : 0;
   const pctColor = pct > 0 ? '#00ff88' : pct < 0 ? '#ff4444' : 'rgba(255,255,255,0.4)';
   const catColor = node ? `var(--c-${node.cat}, #8e5aff)` : '#8e5aff';
   const tfs = ['1D','1W','1M','3M','1Y'];
