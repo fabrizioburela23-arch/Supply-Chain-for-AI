@@ -431,9 +431,12 @@ def trade_account():
     try:
         r = requests.get(f'{ALPACA_BASE}/v2/account',
                          headers=_alpaca_hdrs(), timeout=10)
-        return jsonify(r.json()), r.status_code
+        try:
+            return jsonify(r.json()), r.status_code
+        except Exception:
+            return jsonify({'error': f'Alpaca HTTP {r.status_code}', 'body': r.text[:300]}), 502
     except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 502
+        return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
 
 @app.route('/api/trade/positions', methods=['GET'])
 def trade_positions():
