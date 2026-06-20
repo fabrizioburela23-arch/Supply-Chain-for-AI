@@ -1331,15 +1331,14 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <span id="live-countdown" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2)">···</span>
       </div>
       <button id="bixby-btn" title="Hablar con Bixby · Khipu Finance AI" onclick="window.BixbyVoice?.toggle()"
-  style="position:relative;display:flex;align-items:center;gap:7px;padding:0 14px;height:32px;border-radius:999px;
-    border:1px solid rgba(138,90,255,.5);background:rgba(138,90,255,.08);
-    color:#cabeff;font-size:11px;font-weight:700;letter-spacing:.06em;cursor:pointer;
-    transition:background .2s,border-color .2s,box-shadow .2s;font-family:'Geist','Inter',sans-serif;
-    box-shadow:0 0 12px rgba(138,90,255,.15)">
-  <span id="bixby-btn-orb" style="position:relative;width:24px;height:24px;border-radius:50%;background:#06040f;overflow:hidden;flex-shrink:0;box-shadow:0 0 8px rgba(138,90,255,.4)">
-    <canvas id="bixby-btn-canvas" width="24" height="24" style="position:absolute;inset:0;display:block"></canvas>
+  style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;
+    border-radius:12px;border:1px solid rgba(138,90,255,.4);background:rgba(138,90,255,.06);
+    color:#cabeff;cursor:pointer;transition:background .2s,border-color .2s,box-shadow .2s;
+    font-family:'Geist','Inter',sans-serif;box-shadow:0 0 12px rgba(138,90,255,.12)">
+  <span id="bixby-btn-orb" style="position:relative;width:32px;height:32px;border-radius:50%;background:#06040f;overflow:hidden;flex-shrink:0;box-shadow:0 0 10px rgba(138,90,255,.45)">
+    <canvas id="bixby-btn-canvas" width="32" height="32" style="position:absolute;inset:0;display:block"></canvas>
   </span>
-  <span>BIXBY</span>
+  <span style="font-size:8px;font-weight:700;letter-spacing:.12em;line-height:1">BIXBY</span>
 </button>
     </div>
   </header>
@@ -7458,51 +7457,35 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   </div>
 </div>
 
-<!-- Bixby Voice — Obsidian Glass UI -->
-<div id="bixby-status" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none">
-  <div id="bixby-panel" style="pointer-events:all;position:relative;
-    background:rgba(14,12,18,.85);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
-    border:1px solid rgba(138,90,255,.3);border-radius:24px;
-    padding:24px 28px 20px;min-width:320px;max-width:92vw;
-    box-shadow:0 8px 60px rgba(138,90,255,.2),0 2px 20px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07);
-    font-family:'Geist','Inter',sans-serif">
-
-    <!-- close -->
-    <button onclick="window.BixbyVoice?.stop()" title="Cerrar Bixby"
-      style="position:absolute;top:12px;right:14px;width:24px;height:24px;border-radius:50%;
-        background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);cursor:pointer;
-        color:rgba(202,190,255,.5);font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;
-        transition:background .15s,color .15s"
-      onmouseenter="this.style.background='rgba(255,255,255,.12)';this.style.color='#cabeff'"
-      onmouseleave="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(202,190,255,.5)'">✕</button>
+<!-- Bixby Voice — Floating Orb (no box, no background) -->
+<div id="bixby-status" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:none">
+  <div id="bixby-panel" style="pointer-events:all;display:flex;flex-direction:column;align-items:center;gap:14px;font-family:'Geist','Inter',sans-serif">
 
     <!-- plasma orb -->
-    <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:14px;gap:10px">
-      <div style="position:relative;width:160px;height:160px;border-radius:50%;background:#04020d;
-        box-shadow:0 0 40px rgba(80,60,255,.25),0 0 80px rgba(0,180,255,.1),inset 0 0 30px rgba(0,0,0,.8)">
-        <canvas id="bixby-orb-canvas" width="160" height="160" style="display:block;border-radius:50%"></canvas>
-        <!-- thinking ring (shown when processing) -->
-        <div id="bixby-think-ring" style="display:none;position:absolute;inset:-4px;border-radius:50%;
-          border:2px solid transparent;
-          background:linear-gradient(#04020d,#04020d) padding-box,
-          conic-gradient(from 0deg,#00ccff,#8e5aff,#00ccff) border-box;
-          animation:bixby-spin 1.2s linear infinite"></div>
-      </div>
-      <!-- thinking label -->
-      <div id="bixby-think-label" style="display:none;font-size:10px;font-weight:700;letter-spacing:.16em;
-        color:rgba(0,204,255,.7);text-transform:uppercase;font-family:'Geist','Inter',sans-serif;
-        animation:bixby-pulse 1.4s ease-in-out infinite">ANALIZANDO…</div>
+    <div style="position:relative;width:200px;height:200px;border-radius:50%;
+      box-shadow:0 0 60px rgba(80,60,255,.2),0 0 120px rgba(0,180,255,.08)">
+      <canvas id="bixby-orb-canvas" width="200" height="200" style="display:block;border-radius:50%"></canvas>
+      <!-- thinking ring -->
+      <div id="bixby-think-ring" style="display:none;position:absolute;inset:-5px;border-radius:50%;
+        border:2px solid transparent;
+        background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,0)) padding-box,
+        conic-gradient(from 0deg,#00ccff,#8e5aff,#00ccff) border-box;
+        animation:bixby-spin 1s linear infinite"></div>
     </div>
 
-    <!-- label + state badge -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
-      <span style="font-size:10px;font-weight:700;letter-spacing:.14em;color:rgba(202,190,255,.5);text-transform:uppercase">BIXBY · KHIPU AI</span>
-      <span id="bixby-state-badge" style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-        padding:2px 7px;border-radius:999px;background:rgba(138,90,255,.2);color:#cabeff;border:1px solid rgba(138,90,255,.3)">CONECTANDO</span>
-    </div>
+    <!-- thinking label -->
+    <div id="bixby-think-label" style="display:none;font-size:10px;font-weight:700;letter-spacing:.18em;
+      color:#00ccff;text-transform:uppercase;text-shadow:0 0 12px rgba(0,204,255,.8);
+      animation:bixby-pulse 1.4s ease-in-out infinite">ANALIZANDO…</div>
 
-    <!-- audio visualizer -->
-    <div id="bixby-viz" style="display:flex;align-items:flex-end;justify-content:center;gap:2.5px;height:26px;margin-bottom:12px">
+    <!-- state badge -->
+    <span id="bixby-state-badge" style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+      padding:3px 10px;border-radius:999px;background:rgba(138,90,255,.18);color:#cabeff;
+      border:1px solid rgba(138,90,255,.35);backdrop-filter:blur(8px);
+      text-shadow:0 0 8px rgba(138,90,255,.5)">CONECTANDO</span>
+
+    <!-- audio visualizer bars -->
+    <div id="bixby-viz" style="display:flex;align-items:flex-end;justify-content:center;gap:3px;height:28px">
       <div class="bvbar" style="animation-delay:.00s"></div><div class="bvbar" style="animation-delay:.07s"></div>
       <div class="bvbar" style="animation-delay:.14s"></div><div class="bvbar" style="animation-delay:.21s"></div>
       <div class="bvbar" style="animation-delay:.10s"></div><div class="bvbar" style="animation-delay:.05s"></div>
@@ -7513,16 +7496,26 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       <div class="bvbar" style="animation-delay:.13s"></div>
     </div>
 
-    <!-- transcript -->
-    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;
-      padding:10px 14px;min-height:42px;display:flex;align-items:center">
-      <div id="bixby-text" style="font-size:13px;font-weight:500;color:#e2e2e4;line-height:1.5;
-        font-family:'Geist','Inter',sans-serif;width:100%;text-align:center">Iniciando…</div>
+    <!-- transcript text -->
+    <div id="bixby-text" style="font-size:13px;font-weight:500;color:rgba(226,226,228,.9);line-height:1.5;
+      max-width:280px;text-align:center;
+      text-shadow:0 1px 12px rgba(0,0,0,.9),0 0 24px rgba(0,0,0,.8)">Iniciando…</div>
+
+    <!-- controls: hang up -->
+    <div style="display:flex;gap:12px;align-items:center">
+      <button onclick="window.BixbyVoice?.stop()" title="Colgar"
+        style="width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;
+          background:rgba(214,59,59,.85);backdrop-filter:blur(8px);
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 0 20px rgba(214,59,59,.4);transition:transform .15s,box-shadow .15s"
+        onmouseenter="this.style.transform='scale(1.1)';this.style.boxShadow='0 0 30px rgba(214,59,59,.6)'"
+        onmouseleave="this.style.transform='scale(1)';this.style.boxShadow='0 0 20px rgba(214,59,59,.4)'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+          <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/>
+        </svg>
+      </button>
     </div>
 
-    <!-- metallic top edge -->
-    <div style="position:absolute;top:0;left:16px;right:16px;height:1px;
-      background:linear-gradient(90deg,transparent,rgba(202,190,255,.3),transparent);border-radius:1px"></div>
   </div>
 </div>
 <!-- legacy element kept so voice.js can reference it without errors -->
@@ -7653,8 +7646,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   }
 
   function init(){
-    register('bixby-btn-canvas', 24);
-    register('bixby-orb-canvas',160);
+    register('bixby-btn-canvas', 32);
+    register('bixby-orb-canvas',200);
   }
 
   /* expose for voice.js to call setBixbyThinking(true/false) */
@@ -8453,11 +8446,104 @@ window._termOpenTicker = function(ticker) {
 
 // ── Space Tab ────────────────────────────────────────────────────────────────
 let _spaceInited = false;
+function initSpaceOrbitCanvas() {
+  const canvas = document.getElementById('space-orbit');
+  if (!canvas || canvas._orbInited) return;
+  canvas._orbInited = true;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const W = canvas.offsetWidth||800, H = canvas.offsetHeight||360;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const cx = W/2, cy = H/2;
+  const EARTH_R = Math.min(W,H)*0.13;
+
+  // Constellation orbits
+  const ORBITS = [
+    {name:'Starlink',  color:'#00d4ff', r:EARTH_R*1.55, inc:53, sats:18, speed:0.0028, phase:0},
+    {name:'OneWeb',    color:'#a855f7', r:EARTH_R*1.80, inc:87, sats:12, speed:0.0020, phase:1.1},
+    {name:'Amazon LEO',color:'#f59e0b', r:EARTH_R*2.05, inc:51, sats:10, speed:0.0015, phase:2.3},
+    {name:'GPS',       color:'#22c55e', r:EARTH_R*2.60, inc:55, sats: 6, speed:0.0009, phase:0.7},
+    {name:'GEO Belt',  color:'#f97316', r:EARTH_R*3.20, inc: 0, sats: 5, speed:0.0004, phase:0.4},
+  ];
+
+  const legendEl = document.getElementById('space-orbit-legend');
+  if (legendEl) {
+    legendEl.innerHTML = ORBITS.map(o=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(180,200,230,.8)"><span style="width:20px;height:2px;border-radius:2px;background:${o.color};display:block;opacity:.7"></span>${o.name}</div>`).join('');
+  }
+
+  let t = 0, raf;
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+
+    // Stars
+    ctx.fillStyle='rgba(150,180,255,.04)';
+    if (!draw._stars) {
+      draw._stars=[];
+      for(let i=0;i<120;i++) draw._stars.push([Math.random()*W, Math.random()*H, Math.random()*1.2+.2]);
+    }
+    draw._stars.forEach(([sx,sy,sr])=>{ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();});
+
+    // Orbit ellipses
+    ORBITS.forEach(o=>{
+      const inclRad = o.inc*Math.PI/180;
+      const rx = o.r, ry = o.r*Math.abs(Math.cos(inclRad))+1;
+      ctx.beginPath();
+      ctx.ellipse(cx,cy,rx,Math.max(ry,o.r*0.12),0,0,Math.PI*2);
+      ctx.strokeStyle = o.color;
+      ctx.globalAlpha = 0.18;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+
+    // Earth
+    const earthGrad = ctx.createRadialGradient(cx-EARTH_R*.25,cy-EARTH_R*.25,EARTH_R*.1, cx,cy,EARTH_R);
+    earthGrad.addColorStop(0,'#3b82f6');
+    earthGrad.addColorStop(0.45,'#1d4ed8');
+    earthGrad.addColorStop(0.8,'#1e3a5f');
+    earthGrad.addColorStop(1,'#0a1628');
+    ctx.beginPath(); ctx.arc(cx,cy,EARTH_R,0,Math.PI*2);
+    ctx.fillStyle=earthGrad; ctx.fill();
+    // atmosphere glow
+    const atmGrad = ctx.createRadialGradient(cx,cy,EARTH_R*.9,cx,cy,EARTH_R*1.25);
+    atmGrad.addColorStop(0,'rgba(59,130,246,.25)');
+    atmGrad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(cx,cy,EARTH_R*1.25,0,Math.PI*2);
+    ctx.fillStyle=atmGrad; ctx.fill();
+
+    // Satellites
+    ORBITS.forEach(o=>{
+      const inclRad = o.inc*Math.PI/180;
+      const ry = o.r*Math.abs(Math.cos(inclRad))+1;
+      for(let i=0;i<o.sats;i++){
+        const ang = o.phase + t*o.speed + (i/o.sats)*Math.PI*2;
+        const sx = cx + o.r*Math.cos(ang);
+        const sy = cy + Math.max(ry,o.r*.12)*Math.sin(ang);
+        // glow
+        ctx.beginPath(); ctx.arc(sx,sy,3.5,0,Math.PI*2);
+        ctx.fillStyle=o.color; ctx.shadowBlur=8; ctx.shadowColor=o.color; ctx.fill();
+        // dot
+        ctx.beginPath(); ctx.arc(sx,sy,1.5,0,Math.PI*2);
+        ctx.fillStyle='#fff'; ctx.shadowBlur=0; ctx.fill();
+      }
+    });
+
+    t++;
+    raf = requestAnimationFrame(draw);
+  }
+  draw();
+  canvas._stopOrbit = ()=>{ cancelAnimationFrame(raf); canvas._orbInited=false; };
+}
+
 async function initSpaceTab() {
   const spaceCategories = ['space_launch','satellite','earth_obs'];
   const spaceNodes = (window.NODES||[]).filter(n=>spaceCategories.includes(n.cat));
   const countEl = document.getElementById('space-node-count');
   if (countEl) countEl.textContent = spaceNodes.length;
+  // Init orbit canvas on every tab visit (canvas may not have dimensions until visible)
+  setTimeout(initSpaceOrbitCanvas, 80);
   const compEl = document.getElementById('space-companies-list');
   // Re-render companies list on every tab visit (data may have changed)
   function renderSpaceCompanies() {
