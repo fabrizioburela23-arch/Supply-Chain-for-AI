@@ -391,7 +391,7 @@ var NODES_EXPAND = [
     "margin": -0.40,
     "capex_2026": "~$0.02B",
     "backlog_status": "Early",
-    "mkt": "BRN"
+    "mkt": "BRN.AX"
   },
   {
     "id": "SpiNNcloud",
@@ -463,7 +463,7 @@ var NODES_EXPAND = [
     "margin": 0.35,
     "capex_2026": "~$5.0B",
     "backlog_status": "Récord",
-    "mkt": "QTS"
+    "mkt": "BX"
   },
   {
     "id": "CyrusOne",
@@ -480,7 +480,7 @@ var NODES_EXPAND = [
     "margin": 0.30,
     "capex_2026": "~$2.0B",
     "backlog_status": "Expansión",
-    "mkt": "CYRUSONE"
+    "mkt": "KKR"
   },
   {
     "id": "DataBank",
@@ -514,7 +514,7 @@ var NODES_EXPAND = [
     "margin": 0.40,
     "capex_2026": "~$1.0B",
     "backlog_status": "Expansión",
-    "mkt": "SWITCH"
+    "mkt": "DBRG"
   },
 
   // ── CDN / EDGE ───────────────────────────────────────────────────
@@ -961,7 +961,7 @@ var NODES_EXPAND = [
     "margin": 0.05,
     "capex_2026": "~$0.5B",
     "backlog_status": "Integración",
-    "mkt": "ETL"
+    "mkt": "ETL.PA"
   },
   {
     "id": "SpireGlobal",
@@ -1300,7 +1300,7 @@ var NODES_EXPAND = [
     "margin": 0.25,
     "capex_2026": "~$0.4B",
     "backlog_status": "Expansión",
-    "mkt": "LYC"
+    "mkt": "LYC.AX"
   },
   {
     "id": "EnergyFuels",

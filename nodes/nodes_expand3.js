@@ -139,7 +139,7 @@ var NODES_EXPAND3 = [
    "role":"Software de diseño PCB Altium Designer; la herramienta más usada en PCB profesional.",
    "supplies":"Altium Designer (EDA PCB), Altium 365 (cloud collaboration), NEXUS (enterprise).",
    "moat":"Estándar de facto en PCB design para ingenieros hardware: 30K+ empresas.",
-   "loc":"Australia","country":"Australia","growth":"🟢 Adquirida por Renesas $5.9B 2024","margin":null,"mkt":""},
+   "loc":"Australia","country":"Australia","growth":"🟢 Adquirida por Renesas $5.9B 2024","margin":null,"mkt":"6723.T"},
   {"id":"Photronics","label":"Photronics","ticker":"PLAB · Nasdaq","cat":"eda",
    "role":"Fabricante de fotomáscaras (photomasks) para litografía semiconductor avanzada.",
    "supplies":"Fotomáscaras para 7nm/5nm/3nm a TSMC, Samsung, GlobalFoundries; flat panel display masks.",

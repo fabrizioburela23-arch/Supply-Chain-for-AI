@@ -133,7 +133,7 @@ const NODES_SPACEX = [
 {"id":"Lynas","label":"Lynas Rare Earths","ticker":"LYC · ASX","cat":"rare_earth",
 "role":"Segundo mayor productor de tierras raras fuera de China; procesa en Malasia y Texas.",
 "moat":"Único productor de escala fuera de China capaz de suministrar a EE.UU. y Europa.",
-"loc":"Australia/Malasia/EE.UU.","country":"RestoMundo","growth":"🔵 +25%","margin":0.15,"founded":2003,"employees":1500,"revenue_2025":"~$900M","geo_risk":"Australia — aliada pero exposición a Malasia"},
+"loc":"Australia/Malasia/EE.UU.","country":"RestoMundo","growth":"🔵 +25%","margin":0.15,"founded":2003,"employees":1500,"revenue_2025":"~$900M","geo_risk":"Australia — aliada pero exposición a Malasia","mkt":"LYC.AX"},
 
 {"id":"Albemarle","label":"Albemarle","ticker":"ALB · NYSE","cat":"battery_mat","mkt":"ALB",
 "role":"Mayor productor mundial de litio; insumo crítico para baterías de vehículos eléctricos y storage.",
