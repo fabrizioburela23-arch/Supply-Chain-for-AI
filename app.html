@@ -6197,10 +6197,10 @@ function renderGeoPanel(){
     });
   });
   svg+='</svg>';
-  document.getElementById('geo-map').innerHTML=svg;
+  document.getElementById('geo-hero').innerHTML=svg;
 
   /* interacción burbujas: tooltip + salto al mapa */
-  document.querySelectorAll('#geo-map .geo-bubble').forEach(c=>{
+  document.querySelectorAll('#geo-hero .geo-bubble').forEach(c=>{
     const id=c.dataset.id, n=NODE_BY_ID[id], meta=NODE_META[id]||{};
     c.addEventListener('click',()=>{ tooltipEl.style.display='none'; goMap(id); });
     c.addEventListener('mouseenter',ev=>{
