@@ -12,6 +12,8 @@ class TemporalHypergraph {
     this.timeline = [];
     this.visualObjects = [];   // { sphere, line, he }
     this.currentPosition = 1.0; // 0=oldest, 1=present
+    this.pendingRender = [];   // hyperedges waiting for 3D to be ready
+    this._pulseAnimIds = [];   // requestAnimationFrame IDs for pulse animations
   }
 
   addHyperedge(he) {
@@ -19,6 +21,7 @@ class TemporalHypergraph {
     this.timeline.push({ t: new Date(he.timestamp).getTime(), id: he.id });
     this.timeline.sort((a, b) => a.t - b.t);
     if (this.graph3d?.active) this._render3D(he);
+    else this.pendingRender.push(he);
     this._updateTimelineUI();
     this.save();
   }
@@ -39,7 +42,7 @@ class TemporalHypergraph {
 
     const color = this._heColor(he.type);
     const severity = Math.min(10, Math.max(1, he.severity || 5));
-    const opacity = 0.04 + severity * 0.006;
+    const opacity = 0.12 + severity * 0.02;
 
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(maxR, 24, 16),
@@ -52,6 +55,15 @@ class TemporalHypergraph {
     sphere.position.copy(centroid);
     sphere.userData = { hyperedge: he, type: 'he_sphere' };
     this.graph3d.scene.add(sphere);
+
+    const wireframeGeo = new THREE.SphereGeometry(maxR, 16, 10);
+    const wireframeMesh = new THREE.Mesh(wireframeGeo, new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color), wireframe: true, transparent: true, opacity: 0.35
+    }));
+    wireframeMesh.position.copy(centroid);
+    this.graph3d.scene.add(wireframeMesh);
+
+    this._startPulse(sphere, wireframeMesh, opacity);
 
     affectedMeshes.forEach(m => {
       const geo = new THREE.BufferGeometry().setFromPoints([centroid, m.position]);
@@ -79,6 +91,39 @@ class TemporalHypergraph {
         mesh.material.emissiveIntensity = origEmissive;
       }, 1200);
     });
+  }
+
+  _startPulse(sphere, wireframeMesh, baseOpacity) {
+    const amplitude = 0.04;
+    const period = 2000; // ~2 seconds
+    const start = performance.now();
+    const animate = (now) => {
+      const t = (now - start) / period;
+      const pulse = Math.sin(t * 2 * Math.PI) * amplitude;
+      if (sphere.material) sphere.material.opacity = Math.max(0, baseOpacity + pulse);
+      if (wireframeMesh.material) wireframeMesh.material.opacity = Math.max(0, 0.35 + pulse * 0.5);
+      const id = requestAnimationFrame(animate);
+      this._pulseAnimIds.push(id);
+    };
+    const id = requestAnimationFrame(animate);
+    this._pulseAnimIds.push(id);
+    this.visualObjects.push({ sphere, wireframeMesh, _pulse: true });
+  }
+
+  renderPending() {
+    const pending = this.pendingRender.splice(0);
+    pending.forEach(he => this._render3D(he));
+  }
+
+  destroy() {
+    this._pulseAnimIds.forEach(id => cancelAnimationFrame(id));
+    this._pulseAnimIds = [];
+    this.visualObjects.forEach(o => {
+      if (o.sphere && this.graph3d?.scene) this.graph3d.scene.remove(o.sphere);
+      if (o.wireframeMesh && this.graph3d?.scene) this.graph3d.scene.remove(o.wireframeMesh);
+      if (o.line && this.graph3d?.scene) this.graph3d.scene.remove(o.line);
+    });
+    this.visualObjects = [];
   }
 
   _heColor(type) {
@@ -138,7 +183,7 @@ class TemporalHypergraph {
       const visible = heT <= cutoffT;
       const objs = this.visualObjects.filter(o => o.he.id === he.id);
       objs.forEach(o => {
-        if (o.sphere) o.sphere.material.opacity = visible ? (0.04 + (he.severity || 5) * 0.006) : 0;
+        if (o.sphere) o.sphere.material.opacity = visible ? (0.12 + (he.severity || 5) * 0.02) : 0;
         if (o.line) o.line.material.opacity = visible ? 0.5 : 0;
       });
     });
@@ -196,7 +241,18 @@ class TemporalHypergraph {
         title: 'Starlink Direct-to-Cell Launch', severity: 6,
         nodes_affected: ['SpaceX', 'T_Mobile', 'AST_SpaceMobile'].filter(id => NODE_BY_ID[id]) },
     ];
-    SEED.forEach(he => { if (he.nodes_affected.length >= 2) this.addHyperedge(he); });
+    SEED.forEach(he => {
+      if (he.nodes_affected.length < 2) {
+        // Fallback: find nodes of a similar category from the first known affected node
+        const firstKnown = he.nodes_affected[0];
+        const cat = firstKnown && NODE_BY_ID[firstKnown]?.cat;
+        const fallback = Object.keys(NODE_BY_ID).filter(id =>
+          !he.nodes_affected.includes(id) && (cat ? NODE_BY_ID[id]?.cat === cat : true)
+        ).slice(0, 4 - he.nodes_affected.length);
+        he.nodes_affected = [...he.nodes_affected, ...fallback];
+      }
+      if (he.nodes_affected.length >= 2) this.addHyperedge(he);
+    });
   }
 
   save() {

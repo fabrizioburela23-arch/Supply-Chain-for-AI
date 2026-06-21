@@ -1801,6 +1801,14 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <div id="term-grid" style="flex:1;display:grid;grid-template-columns:1fr 1fr;
         grid-template-rows:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);overflow:hidden">
       </div>
+
+      <!-- Command bar Bloomberg-style -->
+      <div id="term-cmdbar" style="padding:8px 14px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.85);display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(142,90,255,0.8);font-weight:700">KHIPU&gt;</span>
+        <input id="term-cmd" placeholder="NVDA Equity · TSMC US · /sim taiwan · /geo taiwan · /chart NVDA AMD 6M…"
+          style="flex:1;background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fff;letter-spacing:.02em">
+        <span id="term-cmd-hint" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.2)">↵ ejecutar</span>
+      </div>
     </div>
   </div>
 </section>
@@ -6499,9 +6507,9 @@ function renderGeoPanel(){
   const scenEl=document.getElementById('geo-scen-seg');
   if(scenEl&&!scenEl.children.length){
     [
-      {label:'⚔️ Taiwan', keys:['Taiwan','Taiwán'], detail:'Bloqueo TSMC — impacto global en semiconductores'},
-      {label:'🚫 China Ban', keys:['China'], detail:'Export controls totales — SMIC, Huawei, YMTC'},
-      {label:'💾 HBM Shortage', keys:['Corea','Taiwan'], detail:'Escasez HBM — Nvidia bloqueada, AI servers parados'},
+      {label:'⚔️ Taiwan', keys:['Taiwan','Taiwán'], detail:'Bloqueo TSMC — impacto global en semiconductores', presetId:'taiwan_conflict'},
+      {label:'🚫 China Ban', keys:['China'], detail:'Export controls totales — SMIC, Huawei, YMTC', presetId:'china_chip_ban_total'},
+      {label:'💾 HBM Shortage', keys:['Corea','Taiwan'], detail:'Escasez HBM — Nvidia bloqueada, AI servers parados', presetId:'hbm_shortage_2027'},
     ].forEach(sc=>{
       const btn=document.createElement('button');
       btn.className='chip'; btn.textContent=sc.label;
@@ -6511,10 +6519,8 @@ function renderGeoPanel(){
         const keySet=new Set(sc.keys);
         // Highlight nodes in these regions in the main graph
         const affectedIds=NODES.filter(n=>keySet.has(n.country||'')).map(n=>n.id);
-        if(affectedIds.length&&typeof activateStress==='function'){
-          activateStress(affectedIds[0]);
-          if(typeof toast==='function') toast(`Simulando: ${sc.label} — ${affectedIds.length} nodos afectados`);
-        }
+        window.nexusCore?.runPreset(sc.presetId);
+        if(typeof toast==='function') toast(`Simulando: ${sc.label} — ${affectedIds.length} nodos afectados`);
         // Also highlight in current card grid
         document.querySelectorAll('#geo-cards-grid > div').forEach((card,i)=>{
           const blk=GEO_BLOCKS[i];
@@ -8212,6 +8218,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
           _graph3d = new KhipuGraph3D('graph-canvas');
           _graph3d.init();
           _graph3d.loadData(window.NODES || [], window.LINKS || []);
+          _hypergraph?.renderPending();
           window.khipuGraph3D = _graph3d;
           if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
           else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
@@ -8601,6 +8608,10 @@ function initSimTab() {
         const preset = ScenarioBuilder.PRESETS[btn.dataset.preset];
         if (preset) document.getElementById('sim-custom-text').value = preset.description || preset.title || btn.dataset.preset;
       }
+      clearTimeout(btn._autoRun);
+      btn._autoRun = setTimeout(() => {
+        document.getElementById('sim-run-btn')?.click();
+      }, 250);
     });
   });
 
