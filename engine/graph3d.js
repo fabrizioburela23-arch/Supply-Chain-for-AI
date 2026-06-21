@@ -668,7 +668,9 @@ class KhipuGraph3D {
         `<span style="color:#f97316">⬇ ${downstream} clientes</span>` +
         (catLabel ? `<span style="margin-left:auto;color:#7a9cc4">${catLabel}</span>` : '') +
       `</div>` +
-      (n.growth ? `<div style="font-size:10px;color:#9ab;margin-top:6px;line-height:1.3">${n.growth}</div>` : '');
+      (n.growth ? `<div style="font-size:10px;color:#9ab;margin-top:6px;line-height:1.3">${n.growth}</div>` : '') +
+      (n.mkt && window._tickerWarnings && window._tickerWarnings.has(newHover) ?
+        `<div style="font-size:10px;color:#f59e0b;margin-top:5px;border-top:1px solid rgba(80,120,180,.2);padding-top:5px">⚠ Sin datos de mercado · ticker puede haber cambiado</div>` : '');
 
     // Position tooltip (avoid going off screen)
     const tw = 220, th = 110;

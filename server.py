@@ -667,6 +667,42 @@ def marketstack_proxy():
     return jsonify(data)
 
 
+@app.route('/api/ipo_calendar')
+@cache.cached(timeout=3600)
+def ipo_calendar():
+    """IPO calendar from Finnhub — last 90 days + next 30 days"""
+    if not FINNHUB:
+        return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    from_d = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+    to_d   = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+    data, err = _safe_get(
+        f'https://finnhub.io/api/v1/calendar/ipo?from={from_d}&to={to_d}&token={FINNHUB}',
+        timeout=8)
+    if err:
+        return jsonify({'error': err}), 502
+    return jsonify(data)
+
+
+@app.route('/api/company_news')
+@cache.cached(timeout=1800, query_string=True)
+def company_news():
+    """Recent news for a ticker — last 7 days, max 8 items"""
+    ticker = request.args.get('symbol', '').upper().strip()
+    if not ticker:
+        return jsonify({'error': 'symbol required'}), 400
+    if not FINNHUB:
+        return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    from_d = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+    to_d   = datetime.now().strftime('%Y-%m-%d')
+    data, err = _safe_get(
+        f'https://finnhub.io/api/v1/company-news?symbol={ticker}&from={from_d}&to={to_d}&token={FINNHUB}',
+        timeout=8)
+    if err:
+        return jsonify({'error': err}), 502
+    items = data if isinstance(data, list) else []
+    return jsonify(items[:8])
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # KHIPU FINANCE v1 — Backend ampliado
 # Space APIs · GDELT · SEC EDGAR · MiroFish · Bixby voice · RAG · API pública JWT

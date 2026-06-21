@@ -1467,6 +1467,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           <button data-f="all" class="active" data-i18n="mk_fall">Todas</button>
         </div>
         <button class="mkt-btn" id="mk-refresh">⟳ <span data-i18n="mk_refresh">Actualizar precios</span></button>
+        <button id="mk-events-btn" onclick="loadCorporateEvents()" style="padding:5px 10px;border:1px solid rgba(80,120,180,.3);border-radius:5px;background:none;color:#7a9cc4;font-size:11px;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(80,120,180,.1)'" onmouseout="this.style.background='none'">📰 Eventos</button>
         <button id="export-btn" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer" title="Exportar datos">⬇ CSV</button>
         <span class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</span>
         <span class="mkt-ts" id="mk-ts"></span>
@@ -1479,6 +1480,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <button class="mkt-btn ghost" id="mk-key-clear" data-i18n="mk_clear">Borrar</button>
         <span class="mkt-hint" data-i18n="mk_keyhint">Se guarda solo en este navegador (localStorage), nunca en el archivo.</span>
       </div>
+      <div id="mk-events-panel" style="display:none;margin-bottom:12px;background:rgba(8,15,28,.6);border:1px solid rgba(60,100,160,.25);border-radius:8px;padding:12px 16px;font-size:11px;line-height:1.5"></div>
       <div class="mkt-tablewrap"><table class="mkt-table" id="mk-table"></table></div>
       <p class="mkt-foot" data-i18n="mk_foot">Precios fin-de-día (EOD) de Marketstack v2 en una sola llamada por actualización. Empresas sin listado en EE.UU. (privadas o solo bolsa local) aparecen sin cotización.</p>
 
@@ -6400,7 +6402,7 @@ async function fetchQuotes(){
     try{
       const r=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
       const j=await r.json();
-      if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); return; }
+      if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); validateTickers(); return; }
       // Server responded but no key configured
       setStatus('⚠ Agrega MARKETSTACK_KEY en Railway → Variables');
     }catch(e){
@@ -6431,8 +6433,89 @@ async function fetchQuotes(){
   }
   MKT.loading=false; btn.disabled=false;
   renderMarket();
+  validateTickers();
 }
 document.getElementById('mk-refresh').onclick=fetchQuotes;
+
+/* ── Ticker validation: flag nodes with mkt but no quote ── */
+async function validateTickers(){
+  const missing=NODES.filter(n=>n.mkt&&!MKT.quotes[n.mkt]&&!n.preipo);
+  if(!missing.length) return;
+  if(!window._tickerWarnings) window._tickerWarnings=new Set();
+  missing.forEach(n=>{
+    window._tickerWarnings.add(n.id);
+    document.querySelectorAll(`[data-ticker="${n.mkt}"]`).forEach(row=>{
+      if(!row.querySelector('.tk-warn')){
+        const td=row.querySelector('td');
+        if(td) td.insertAdjacentHTML('beforeend',' <span class="tk-warn" title="Sin datos de mercado · ticker puede haber cambiado" style="color:#f59e0b;font-size:10px;cursor:help">⚠</span>');
+      }
+    });
+  });
+  if(!SERVER_MODE) return;
+  try{
+    const r=await fetch(BASE+'/api/ipo_calendar');
+    const data=await r.json();
+    const ipos=data.ipoCalendar||[];
+    const preIpoNodes=NODES.filter(n=>n.preipo);
+    const matches=[];
+    ipos.forEach(ipo=>{
+      const name=(ipo.name||'').toLowerCase();
+      preIpoNodes.forEach(n=>{
+        const l=n.label.toLowerCase();
+        if(name.includes(l.split(' ')[0])||l.includes((ipo.name||'').split(' ')[0].toLowerCase()))
+          matches.push({node:n,ipo});
+      });
+    });
+    if(matches.length) _showEventsAlert(matches.map(m=>
+      `📋 <strong>${m.node.label}</strong> — IPO detectada: <span style="color:#22c55e;font-weight:700">${m.ipo.symbol||'?'}</span> · ${m.ipo.date||''} · $${m.ipo.price||'?'}/sh`
+    ));
+  }catch(e){/* silent */}
+}
+function _showEventsAlert(items){
+  if(!items.length) return;
+  const old=document.getElementById('events-alert-bar'); if(old) old.remove();
+  const bar=document.createElement('div');
+  bar.id='events-alert-bar';
+  bar.style.cssText='position:fixed;bottom:48px;left:50%;transform:translateX(-50%);z-index:800;background:rgba(8,15,28,.96);border:1px solid rgba(34,197,94,.35);border-radius:10px;padding:10px 16px;min-width:360px;max-width:560px;box-shadow:0 4px 20px rgba(0,0,0,.6);backdrop-filter:blur(8px);font-size:11px;animation:fadeUp .3s ease';
+  bar.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;color:#22c55e;font-size:12px">🔔 Eventos Corporativos Detectados</span><button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#7a9cc4;font-size:16px;cursor:pointer;line-height:1">×</button></div>'
+    +items.map(i=>`<div style="margin-bottom:5px;line-height:1.4;color:#c8daf0">${i}</div>`).join('')
+    +`<div style="margin-top:8px;font-size:10px;color:#5b8ab8">Fuente: Finnhub IPO Calendar · ${new Date().toLocaleDateString()}</div>`;
+  document.body.appendChild(bar);
+  setTimeout(()=>{if(bar.parentNode)bar.remove();},30000);
+}
+async function loadCorporateEvents(){
+  const panel=document.getElementById('mk-events-panel'); if(!panel) return;
+  if(panel.style.display!=='none'){panel.style.display='none';return;}
+  panel.style.display='block';
+  panel.innerHTML='<div style="color:#7a9cc4">Cargando eventos…</div>';
+  if(!SERVER_MODE){panel.innerHTML='<div style="color:#7a9cc4;font-size:11px">Feed de eventos disponible en modo servidor (Railway con FINNHUB_KEY).</div>';return;}
+  try{
+    const r=await fetch(BASE+'/api/ipo_calendar');
+    const data=await r.json();
+    const ipos=(data.ipoCalendar||[]).slice(0,18);
+    const now=new Date();
+    if(!ipos.length){panel.innerHTML='<div style="color:#7a9cc4">No se encontraron IPOs en el rango consultado.</div>';return;}
+    panel.innerHTML=
+      `<div style="font-weight:700;color:#e8edf5;margin-bottom:8px;font-size:12px">📋 IPOs Recientes / Próximas — Finnhub Calendar</div>`
+      +`<div style="display:grid;gap:5px">`
+      +ipos.map(e=>{
+        const d=new Date(e.date||'');
+        const isPast=d<now;
+        const matched=NODES.find(n=>{
+          const l=n.label.toLowerCase(), nm=(e.name||'').toLowerCase();
+          return nm.includes(l.split(' ')[0])||l.includes((e.name||'').split(' ')[0].toLowerCase());
+        });
+        return `<div style="display:flex;align-items:center;gap:10px;padding:5px 8px;border-radius:5px;background:${matched?'rgba(34,197,94,.08)':'rgba(255,255,255,.03)'};border:1px solid ${matched?'rgba(34,197,94,.2)':'rgba(60,80,120,.15)'}">`
+          +`<span style="font-family:monospace;color:${matched?'#22c55e':'#5b8ab8'};font-size:11px;font-weight:700;min-width:60px">${e.symbol||'—'}</span>`
+          +`<span style="color:#c8daf0;flex:1">${e.name||''}</span>`
+          +(e.price?`<span style="color:#f59e0b;font-size:10px">$${e.price}/sh</span>`:'')
+          +`<span style="font-size:10px;color:${isPast?'#5b8ab8':'#22c55e'}">${isPast?'✓':'→'} ${isNaN(d)?'':d.toLocaleDateString()}</span>`
+          +(matched?`<span onclick="jumpTo('${matched.id}')" style="cursor:pointer;color:#7ab2e8;font-size:10px;text-decoration:underline;flex-shrink:0">ver nodo</span>`:'')
+          +`</div>`;
+      }).join('')
+      +`</div><div style="margin-top:8px;font-size:10px;color:#5b8ab8">Fuente: Finnhub · ${new Date().toLocaleString()}</div>`;
+  }catch(e){panel.innerHTML=`<div style="color:#ef4444">Error: ${e.message}</div>`;}
+}
 
 /* API key UI */
 document.getElementById('mk-key-btn').onclick=()=>{
