@@ -97,16 +97,17 @@ class TemporalHypergraph {
     const amplitude = 0.04;
     const period = 2000; // ~2 seconds
     const start = performance.now();
+    let cancelled = false;
     const animate = (now) => {
+      if (cancelled) return;
       const t = (now - start) / period;
       const pulse = Math.sin(t * 2 * Math.PI) * amplitude;
       if (sphere.material) sphere.material.opacity = Math.max(0, baseOpacity + pulse);
       if (wireframeMesh.material) wireframeMesh.material.opacity = Math.max(0, 0.35 + pulse * 0.5);
-      const id = requestAnimationFrame(animate);
-      this._pulseAnimIds.push(id);
+      requestAnimationFrame(animate);
     };
-    const id = requestAnimationFrame(animate);
-    this._pulseAnimIds.push(id);
+    requestAnimationFrame(animate);
+    this._pulseAnimIds.push(() => { cancelled = true; });
     this.visualObjects.push({ sphere, wireframeMesh, _pulse: true });
   }
 
@@ -116,7 +117,7 @@ class TemporalHypergraph {
   }
 
   destroy() {
-    this._pulseAnimIds.forEach(id => cancelAnimationFrame(id));
+    this._pulseAnimIds.forEach(cancel => cancel());
     this._pulseAnimIds = [];
     this.visualObjects.forEach(o => {
       if (o.sphere && this.graph3d?.scene) this.graph3d.scene.remove(o.sphere);
