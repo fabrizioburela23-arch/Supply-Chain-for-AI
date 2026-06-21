@@ -1351,6 +1351,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <button class="tab" data-tab="simulation" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
     <button class="tab" data-tab="space" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
     <button class="tab" data-tab="terminal" id="tab-terminal">⬛ <span>Terminal</span></button>
+    <button class="tab" data-tab="canvas" id="tab-canvas">✦ <span>Canvas IA</span></button>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -1842,6 +1843,59 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     </div>
   </div>
 </section>
+
+<!-- ===== Bixby Canvas IA (Fase 1) ===== -->
+<section id="canvas-panel" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden;background:var(--bg)">
+  <style>
+    .cv-card{min-width:320px;flex:1 1 340px;max-width:700px;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:18px 20px;position:relative;box-shadow:0 2px 14px rgba(0,0,0,.13);transition:box-shadow .18s}
+    .cv-card:hover{box-shadow:0 4px 24px rgba(0,0,0,.2)}
+    .cv-card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
+    .cv-card-title{font-size:14px;font-weight:700;color:var(--ink-1);line-height:1.3}
+    .cv-card-sub{font-size:12px;color:var(--ink-3);margin-top:2px;line-height:1.45}
+    .cv-card-close{background:none;border:none;color:var(--ink-3);cursor:pointer;font-size:17px;padding:0 0 0 10px;line-height:1;flex-shrink:0;opacity:.6;transition:opacity .12s}
+    .cv-card-close:hover{opacity:1}
+    .cv-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .cv-bar-label{font-size:11px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 0 140px}
+    .cv-bar-track{flex:1;background:rgba(100,120,160,.12);border-radius:4px;height:16px;position:relative;overflow:hidden}
+    .cv-bar-fill{position:absolute;left:0;top:0;bottom:0;border-radius:4px;transition:width .5s ease}
+    .cv-bar-val{font-size:11px;color:var(--ink-3);white-space:nowrap;flex:0 0 54px;text-align:right;font-family:'JetBrains Mono',monospace}
+    .cv-tbl{width:100%;border-collapse:collapse;font-size:12px}
+    .cv-tbl th{padding:6px 8px;text-align:left;color:var(--ink-3);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--line)}
+    .cv-tbl td{padding:6px 8px;border-bottom:1px solid rgba(100,120,180,.07);color:var(--ink-1)}
+    .cv-tbl tr:last-child td{border-bottom:none}
+    .cv-tbl tr:hover td{background:rgba(100,140,220,.05)}
+    .cv-spinner{width:32px;height:32px;border:3px solid rgba(96,165,250,.2);border-top-color:#60a5fa;border-radius:50%;animation:cvSpin .7s linear infinite}
+    @keyframes cvSpin{to{transform:rotate(360deg)}}
+    .cv-pill-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+    .cv-pill{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:default}
+    #canvas-cards:empty::after{content:'';display:none}
+    .cv-heatmap-cell{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;border-radius:4px;cursor:default;transition:transform .1s}
+    .cv-heatmap-cell:hover{transform:scale(1.1);z-index:2}
+  </style>
+
+  <!-- Cards grid -->
+  <div id="canvas-cards" style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-wrap:wrap;gap:16px;align-content:flex-start;min-height:0">
+    <!-- filled by JS -->
+  </div>
+
+  <!-- Query input bar -->
+  <div style="border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;background:var(--surface);align-items:center;flex-shrink:0">
+    <div style="flex:1;display:flex;gap:8px;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:0 14px;transition:border-color .15s" id="cv-input-wrap">
+      <span style="color:#60a5fa;font-size:16px;flex-shrink:0">✦</span>
+      <input id="canvas-query" type="text" autocomplete="off"
+        placeholder="Pregunta al Canvas IA... Ej: 'Top 15 por NRS score', 'Radar comparando NVIDIA vs TSMC vs ASML'"
+        style="flex:1;background:transparent;border:none;outline:none;padding:11px 0;font-size:14px;color:var(--ink-1);font-family:inherit"
+        onkeydown="if(event.key==='Enter')canvasGenerate()"
+        onfocus="document.getElementById('cv-input-wrap').style.borderColor='#60a5fa'"
+        onblur="document.getElementById('cv-input-wrap').style.borderColor=''">
+    </div>
+    <button id="canvas-send" onclick="canvasGenerate()"
+      style="padding:10px 22px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;letter-spacing:.01em;transition:opacity .15s">
+      <span id="canvas-send-txt">✦ Generar</span>
+    </button>
+  </div>
+</section>
+
 </div><!-- /.app -->
 
 <!-- ===== v8: Panel de Configuración ===== -->
@@ -6010,6 +6064,7 @@ function switchTab(tab){
   document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const isMap=tab==='map', isAnalysis=tab==='analysis', isGeo=tab==='geo';
   const isSim=tab==='simulation', isSpace=tab==='space', isTerm=tab==='terminal';
+  const isCanvas=tab==='canvas';
   document.querySelector('main').style.display = isMap?'flex':'none';
   document.getElementById('toolbar').style.display = isMap?'flex':'none';
   document.getElementById('market').style.display = tab==='market'?'block':'none';
@@ -6023,11 +6078,14 @@ function switchTab(tab){
   if(spaceEl) spaceEl.style.display = isSpace?'block':'none';
   const termEl=document.getElementById('terminal-panel');
   if(termEl) termEl.style.display = isTerm?'flex':'none';
+  const cvEl=document.getElementById('canvas-panel');
+  if(cvEl) cvEl.style.display = isCanvas?'flex':'none';
   // Animate
   const _tabEls = [
     isMap && document.querySelector('main'),
     tab==='market' && document.getElementById('market'),
-    isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl, isTerm && termEl,
+    isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
+    isTerm && termEl, isCanvas && cvEl,
   ].filter(Boolean);
   _tabEls.forEach(el => {
     el.classList.remove('tab-anim-in');
@@ -6041,6 +6099,7 @@ function switchTab(tab){
   else if(isSim){ initSimTab(); }
   else if(isSpace){ initSpaceTab(); }
   else if(isTerm){ initTerminalTab(); }
+  else if(isCanvas){ initCanvasTab(); }
   else {
     if(SERVER_MODE){ document.getElementById('mk-key-btn').style.display='none'; document.getElementById('mk-keyrow').style.display='none'; }
     renderMarket();
@@ -9730,6 +9789,424 @@ window.loadTradeFlows = loadTradeFlows;
   window.setTradeSide = window.setTradePanelSide;
   window.updateTradeEstimate = window.updateTradePanelRisk;
   window.submitTradeOrder = window.submitTradePanelOrder;
+})();
+</script>
+
+<!-- ===== Bixby Canvas IA — renderer ===== -->
+<script>
+(function(){
+'use strict';
+
+/* ── palette & helpers ── */
+const CV_PAL = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80',
+                '#e879f9','#22d3ee','#fbbf24','#86efac'];
+function cvCol(i){ return CV_PAL[i % CV_PAL.length]; }
+function cvEsc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function cvFmt(v){
+  if(v==null) return '—';
+  if(typeof v==='boolean') return v?'Sí':'No';
+  if(typeof v!=='number') return String(v);
+  if(Math.abs(v)>=1e9) return (v/1e9).toFixed(1)+'B';
+  if(Math.abs(v)>=1e6) return (v/1e6).toFixed(1)+'M';
+  if(Math.abs(v)>=1e3) return (v/1e3).toFixed(1)+'K';
+  return v % 1===0 ? String(v) : v.toFixed(2);
+}
+
+/* ── empty state ── */
+function _cvShowWelcome(){
+  const el=document.getElementById('canvas-cards');
+  if(!el||el.children.length) return;
+  el.innerHTML=`<div data-cv-empty style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;gap:18px;padding:40px 20px;text-align:center">
+    <div style="font-size:52px;opacity:.35">✦</div>
+    <div style="font-size:20px;font-weight:700;color:var(--ink-1)">Canvas IA</div>
+    <div style="font-size:13px;color:var(--ink-3);max-width:460px;line-height:1.65">
+      Pregunta en lenguaje natural y el Canvas genera una visualización interactiva sobre la cadena de suministro.<br><br>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:4px">
+        ${['Top 15 por NRS score','Radar NVIDIA vs TSMC vs ASML','Treemap categorías por empresa','Scatter margen vs crecimiento','Tabla empresas de cartera C1','Heatmap riesgo por país y categoría']
+          .map(q=>`<span onclick="document.getElementById('canvas-query').value='${q}';document.getElementById('canvas-query').focus()" style="font-size:11px;padding:5px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;cursor:pointer;color:var(--ink-2);transition:background .15s" onmouseover="this.style.background='rgba(96,165,250,.12)'" onmouseout="this.style.background='var(--surface-2)'">${q}</span>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+window.initCanvasTab = function(){
+  _cvShowWelcome();
+};
+
+/* ── main generator ── */
+let _cvBusy=false;
+window.canvasGenerate = async function(){
+  if(_cvBusy) return;
+  const input=document.getElementById('canvas-query');
+  const query=(input.value||'').trim();
+  if(!query){ input.focus(); return; }
+
+  _cvBusy=true;
+  const btn=document.getElementById('canvas-send');
+  const btnTxt=document.getElementById('canvas-send-txt');
+  btnTxt.textContent='⟳ Generando…';
+  btn.disabled=true;
+
+  /* build compact context */
+  const nodeCtx=(window.NODES||[]).slice(0,300).map(n=>({
+    id:n.id, label:n.label, cat:n.cat, mkt:n.mkt||null,
+    margin:n.margin??null, growth:n.growth||null, port:n.port||null,
+    country:n.country||null, preipo:n.preipo||null,
+    nrs: typeof computeNRS==='function' ? computeNRS(n.id) : null,
+  }));
+  const quotesCtx={};
+  for(const [t,q] of Object.entries((window.MKT||{}).quotes||{})){
+    if(q) quotesCtx[t]={close:q.close,prev:q.prev};
+  }
+
+  /* create placeholder card */
+  const cardId='cv-'+Date.now();
+  const cardsEl=document.getElementById('canvas-cards');
+  const emptyEl=cardsEl.querySelector('[data-cv-empty]');
+  if(emptyEl) emptyEl.remove();
+
+  cardsEl.insertAdjacentHTML('afterbegin',`
+    <div id="${cardId}" class="cv-card">
+      <div class="cv-card-hdr">
+        <div><div class="cv-card-title">${cvEsc(query)}</div><div class="cv-card-sub">Generando visualización…</div></div>
+        <button class="cv-card-close" onclick="document.getElementById('${cardId}').remove()">✕</button>
+      </div>
+      <div style="height:180px;display:flex;align-items:center;justify-content:center"><div class="cv-spinner"></div></div>
+    </div>`);
+  cardsEl.scrollTop=0;
+
+  try{
+    let spec, model;
+    if(window.SERVER_MODE){
+      const r=await fetch('/api/canvas/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({query,context:{nodes:nodeCtx,quotes:quotesCtx,selected_id:window._selectedNode||null}})});
+      const d=await r.json();
+      if(d.error) throw new Error(d.error);
+      spec=d.spec; model=d.model;
+    } else {
+      const key=(window.Keys&&(Keys.get('anthropic')||Keys.get('ANTHROPIC_KEY')))||'';
+      if(!key) throw new Error('Configura tu Anthropic API key en ⚙ Ajustes para usar Canvas IA en modo standalone');
+      spec=await _cvStandalone(query,nodeCtx,quotesCtx,key);
+      model='claude-haiku-4-5-20251001';
+    }
+    _cvRenderCard(cardId,query,spec,model);
+    input.value='';
+  } catch(e){
+    const card=document.getElementById(cardId);
+    if(card) card.innerHTML=`
+      <div class="cv-card-hdr">
+        <div class="cv-card-title">${cvEsc(query)}</div>
+        <button class="cv-card-close" onclick="document.getElementById('${cardId}').remove()">✕</button>
+      </div>
+      <div style="padding:20px;text-align:center;color:#f87171;font-size:13px">⚠ ${cvEsc(e.message)}</div>`;
+  } finally{
+    _cvBusy=false;
+    btnTxt.textContent='✦ Generar';
+    btn.disabled=false;
+  }
+};
+
+/* ── standalone mode: call Anthropic API directly from browser ── */
+const _CV_SYS=`You are Khipu Finance's Canvas AI — semiconductor/AI/space supply chain expert.
+Given a query and context JSON, return ONLY valid JSON (no fences):
+{"type":"bar|line|bubble|treemap|heatmap|radar|scatter|table","title":"...","subtitle":"...","data":[…],"config":{…}}
+bar:[{label,value,color?}] config:{unit?}  |  treemap:[{label,value,color?,cat?}]  |
+radar:[{label,values:[0-100,…]}] config:{axes:[…]}  |  scatter:[{label,x,y,color?}] config:{x_label,y_label}  |
+bubble:[{id,label,x,y,r,color?}] config:{x_label,y_label,r_label}  |
+heatmap:[{row,col,value}] config:{rows:[…],cols:[…],unit?}  |  table:[{…}] config:{columns:[…]}
+Rules: bar max 20 items sorted desc; table max 15 rows; radar 4-8 axes; heatmap ≤10x10; choose best type.`;
+
+async function _cvStandalone(query,nodes,quotes,key){
+  const ctx=JSON.stringify({nodes:nodes.slice(0,150),quotes});
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,
+      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1800,
+      system:_CV_SYS,messages:[{role:'user',content:`USER QUERY: ${query}\n\nCONTEXT:\n${ctx}`}]})});
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
+  const text=(d.content||[])[0]?.text||'';
+  const cleaned=text.replace(/^```(?:json)?\s*|\s*```$/g,'').trim();
+  return JSON.parse(cleaned);
+}
+
+/* ── card renderer ── */
+function _cvRenderCard(cardId,query,spec,model){
+  const card=document.getElementById(cardId);
+  if(!card) return;
+  const typeLabels={bar:'Barras',line:'Línea',bubble:'Burbuja',treemap:'Treemap',
+                    heatmap:'Heatmap',radar:'Radar',scatter:'Dispersión',table:'Tabla'};
+  card.innerHTML=`
+    <div class="cv-card-hdr">
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+          <span style="font-size:10px;padding:2px 8px;background:rgba(96,165,250,.15);color:#60a5fa;border-radius:20px;font-weight:700;flex-shrink:0">${cvEsc(typeLabels[spec.type]||spec.type)}</span>
+          <div class="cv-card-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cvEsc(spec.title||query)}</div>
+        </div>
+        <div class="cv-card-sub">${cvEsc(spec.subtitle||'')}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <span style="font-size:9px;color:var(--ink-4);opacity:.5;font-family:'JetBrains Mono',monospace">${cvEsc((model||'').split('-').slice(0,2).join('-'))}</span>
+        <button class="cv-card-close" onclick="document.getElementById('${cardId}').remove()">✕</button>
+      </div>
+    </div>
+    <div id="${cardId}-body" style="margin-top:14px"></div>`;
+  const body=document.getElementById(cardId+'-body');
+  try{
+    const fn={bar:_cvBar,line:_cvLine,treemap:_cvTreemap,heatmap:_cvHeatmap,
+               radar:_cvRadar,scatter:_cvScatter,bubble:_cvBubble,table:_cvTable}[spec.type];
+    if(fn) fn(body,spec); else body.innerHTML=`<pre style="font-size:10px;overflow:auto;max-height:300px">${cvEsc(JSON.stringify(spec,null,2))}</pre>`;
+  } catch(e){ body.innerHTML=`<div style="color:#f87171;font-size:12px">Render error: ${cvEsc(e.message)}</div>`; }
+}
+
+/* ── BAR (horizontal) ── */
+function _cvBar(el,spec){
+  const data=spec.data||[];
+  if(!data.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  const max=Math.max(...data.map(d=>Math.abs(d.value||0)))||1;
+  const unit=spec.config?.unit||'';
+  el.innerHTML=data.slice(0,20).map((d,i)=>{
+    const pct=Math.abs((d.value||0)/max*100).toFixed(1);
+    const col=d.color||cvCol(i);
+    const neg=(d.value||0)<0;
+    return `<div class="cv-bar-row">
+      <div class="cv-bar-label" title="${cvEsc(d.label)}">${cvEsc(d.label)}</div>
+      <div class="cv-bar-track"><div class="cv-bar-fill" style="width:${pct}%;background:${neg?'#f87171':col};opacity:.85"></div></div>
+      <div class="cv-bar-val">${neg?'−':''}${cvFmt(Math.abs(d.value||0))}${unit}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── LINE ── */
+function _cvLine(el,spec){
+  const data=spec.data||[];
+  if(!data.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  const W=560, H=200, PAD={t:10,r:20,b:40,l:50};
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  const seriesLabels=spec.config?.series_labels||data.map((_,i)=>`Serie ${i+1}`);
+  // each item in data = {label, values:[n,…]}
+  // flatten to x-axis labels from first item's length
+  const labels=data[0]?.values?.map((_,i)=>String(i))||[];
+  const allVals=data.flatMap(d=>d.values||[]);
+  const minV=Math.min(0,...allVals), maxV=Math.max(...allVals)||1;
+  const xS=i=>PAD.l+i/(Math.max(labels.length-1,1))*cw;
+  const yS=v=>PAD.t+ch-(v-minV)/(maxV-minV||1)*ch;
+  const paths=data.map((d,si)=>{
+    const pts=(d.values||[]).map((v,i)=>`${xS(i).toFixed(1)},${yS(v).toFixed(1)}`).join(' L');
+    return `<polyline points="M ${pts}" fill="none" stroke="${d.color||cvCol(si)}" stroke-width="2.5" stroke-linejoin="round" style="stroke:${d.color||cvCol(si)}"/>`;
+  });
+  const xTicks=labels.filter((_,i)=>i%Math.max(1,Math.floor(labels.length/6))===0);
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
+    ${xTicks.map((_,i)=>{const xi=labels.indexOf(_); return `<text x="${xS(xi).toFixed(1)}" y="${H-4}" font-size="10" fill="var(--ink-4)" text-anchor="middle">${cvEsc(_)}</text>`;}).join('')}
+    ${[0,0.25,0.5,0.75,1].map(t=>{const v=minV+(maxV-minV)*t; return `<line x1="${PAD.l}" x2="${W-PAD.r}" y1="${yS(v).toFixed(1)}" y2="${yS(v).toFixed(1)}" stroke="rgba(100,120,160,.15)" stroke-width="1"/><text x="${PAD.l-4}" y="${(yS(v)+4).toFixed(1)}" font-size="10" fill="var(--ink-4)" text-anchor="end">${cvFmt(v)}</text>`;}).join('')}
+    ${paths.join('')}
+    ${data.map((d,si)=>`<circle cx="${xS((d.values||[]).length-1).toFixed(1)}" cy="${yS((d.values||[]).slice(-1)[0]??0).toFixed(1)}" r="3.5" fill="${d.color||cvCol(si)}"/>`).join('')}
+  </svg>
+  <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;justify-content:center">
+    ${data.map((d,si)=>`<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-2)"><span style="width:14px;height:3px;background:${d.color||cvCol(si)};border-radius:2px;display:inline-block"></span>${cvEsc(seriesLabels[si]||d.label||'')}</span>`).join('')}
+  </div>`;
+}
+
+/* ── TREEMAP (recursive HTML) ── */
+function _cvTreemap(el,spec){
+  const raw=spec.data||[];
+  if(!raw.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  const total=raw.reduce((s,d)=>s+(d.value||0),0)||1;
+  const sorted=[...raw].sort((a,b)=>(b.value||0)-(a.value||0));
+  // simple squarified-ish: row layout
+  const H=260;
+  el.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:2px;width:100%;height:${H}px;overflow:hidden;border-radius:6px">
+    ${sorted.map((d,i)=>{
+      const pct=((d.value||0)/total*100).toFixed(2);
+      const col=d.color||cvCol(i);
+      const txt=pct>4?`<div style="font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)">${cvEsc(d.label)}</div><div style="font-size:10px;color:rgba(255,255,255,.75)">${cvFmt(d.value)}</div>`:'';
+      return `<div title="${cvEsc(d.label)}: ${cvFmt(d.value)}" style="flex:${pct} ${pct}%;min-width:${Math.max(pct,2)}px;height:${H}px;background:${col};opacity:.88;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:default;transition:opacity .15s;overflow:hidden;padding:4px;text-align:center" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='.88'">${txt}</div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ── HEATMAP (SVG grid) ── */
+function _cvHeatmap(el,spec){
+  const data=spec.data||[];
+  const rows=spec.config?.rows||[...new Set(data.map(d=>d.row))];
+  const cols=spec.config?.cols||[...new Set(data.map(d=>d.col))];
+  const unit=spec.config?.unit||'';
+  if(!rows.length||!cols.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  const vals=data.map(d=>d.value??0);
+  const minV=Math.min(...vals), maxV=Math.max(...vals)||1;
+  const CELL=44, LPAD=90, THEAD=28;
+  const W=LPAD+cols.length*CELL, H=THEAD+rows.length*CELL;
+  const heat=Object.fromEntries(data.map(d=>[`${d.row}||${d.col}`,d.value??0]));
+  function lerp(t){ // blue → red
+    const stops=[[96,165,250],[52,211,153],[245,158,11],[248,113,113]];
+    const si=Math.min(Math.floor(t*3),2);
+    const f=t*3-si;
+    const a=stops[si],b=stops[si+1];
+    return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+  }
+  const cells=rows.flatMap((r,ri)=>cols.map((c,ci)=>{
+    const v=heat[`${r}||${c}`]??null;
+    const t=v!=null?(v-minV)/(maxV-minV||1):0;
+    const bg=v!=null?lerp(t):'rgba(100,120,160,.05)';
+    const tx=t>.5?'rgba(255,255,255,.9)':'rgba(10,20,40,.85)';
+    return `<rect x="${LPAD+ci*CELL}" y="${THEAD+ri*CELL}" width="${CELL-2}" height="${CELL-2}" rx="3" fill="${bg}" opacity=".9">
+      <title>${cvEsc(r)} × ${cvEsc(c)}: ${v!=null?cvFmt(v)+''+unit:'—'}</title></rect>
+      <text x="${LPAD+ci*CELL+CELL/2-1}" y="${THEAD+ri*CELL+CELL/2+4}" font-size="10" fill="${tx}" text-anchor="middle">${v!=null?cvFmt(v):'—'}</text>`;
+  }));
+  el.innerHTML=`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="min-width:${W}px;display:block">
+    ${cols.map((c,ci)=>`<text x="${LPAD+ci*CELL+CELL/2-1}" y="${THEAD-6}" font-size="10" fill="var(--ink-3)" text-anchor="middle">${cvEsc(String(c).slice(0,8))}</text>`).join('')}
+    ${rows.map((r,ri)=>`<text x="${LPAD-6}" y="${THEAD+ri*CELL+CELL/2+4}" font-size="10" fill="var(--ink-3)" text-anchor="end">${cvEsc(String(r).slice(0,14))}</text>`).join('')}
+    ${cells.join('')}
+  </svg></div>`;
+}
+
+/* ── RADAR (Canvas 2D polar) ── */
+function _cvRadar(el,spec){
+  const data=spec.data||[];
+  const axes=spec.config?.axes||[];
+  if(!data.length||!axes.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  const SZ=300, CX=SZ/2, CY=SZ/2, R=110;
+  const N=axes.length, step=2*Math.PI/N;
+  const id='cv-radar-'+Math.random().toString(36).slice(2,7);
+  el.innerHTML=`<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <canvas id="${id}" width="${SZ}" height="${SZ}" style="flex-shrink:0;max-width:${SZ}px;width:100%;height:auto"></canvas>
+    <div style="display:flex;flex-direction:column;gap:8px;padding-top:10px">
+      ${data.map((s,si)=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)"><span style="width:12px;height:12px;border-radius:50%;background:${cvCol(si)};flex-shrink:0;display:inline-block"></span>${cvEsc(s.label||'')}</div>`).join('')}
+    </div>
+  </div>`;
+  requestAnimationFrame(()=>{
+    const cv=document.getElementById(id);
+    if(!cv) return;
+    const ctx=cv.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    cv.width=SZ*dpr; cv.height=SZ*dpr; cv.style.width=SZ+'px'; cv.style.height=SZ+'px';
+    ctx.scale(dpr,dpr);
+    // grid rings
+    for(let r=1;r<=5;r++){
+      ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const a=i*step-Math.PI/2;
+        const x=CX+Math.cos(a)*R*(r/5), y=CY+Math.sin(a)*R*(r/5);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle='rgba(100,130,180,.15)'; ctx.lineWidth=1; ctx.stroke();
+    }
+    // spokes + labels
+    for(let i=0;i<N;i++){
+      const a=i*step-Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(CX,CY);
+      ctx.lineTo(CX+Math.cos(a)*R,CY+Math.sin(a)*R);
+      ctx.strokeStyle='rgba(100,130,180,.2)'; ctx.lineWidth=1; ctx.stroke();
+      const lx=CX+Math.cos(a)*(R+18), ly=CY+Math.sin(a)*(R+18);
+      ctx.font='bold 10px system-ui,sans-serif'; ctx.fillStyle='rgba(180,200,230,.8)';
+      ctx.textAlign=Math.abs(lx-CX)<10?'center':lx>CX?'left':'right';
+      ctx.textBaseline='middle';
+      (axes[i]||'').split(' ').forEach((w,wi)=>ctx.fillText(w,lx,ly+wi*12));
+    }
+    // series polygons
+    data.forEach((s,si)=>{
+      const vals=s.values||[];
+      const col=cvCol(si);
+      ctx.beginPath();
+      for(let i=0;i<N;i++){
+        const v=Math.max(0,Math.min(100,vals[i]??0))/100;
+        const a=i*step-Math.PI/2;
+        const x=CX+Math.cos(a)*R*v, y=CY+Math.sin(a)*R*v;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle=col.replace(')',',0.12)').replace('rgb','rgba'); ctx.fill();
+      // dots
+      for(let i=0;i<N;i++){
+        const v=Math.max(0,Math.min(100,vals[i]??0))/100;
+        const a=i*step-Math.PI/2;
+        ctx.beginPath(); ctx.arc(CX+Math.cos(a)*R*v,CY+Math.sin(a)*R*v,3.5,0,2*Math.PI);
+        ctx.fillStyle=col; ctx.fill();
+      }
+    });
+  });
+}
+
+/* ── SCATTER / BUBBLE (Canvas 2D) ── */
+function _cvScatter(el,spec){ _cvScatterBase(el,spec,false); }
+function _cvBubble(el,spec){ _cvScatterBase(el,spec,true); }
+function _cvScatterBase(el,spec,isBubble){
+  const data=spec.data||[];
+  if(!data.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  const W=560, H=260, PAD={t:16,r:20,b:40,l:60};
+  const xs=data.map(d=>d.x??0), ys=data.map(d=>d.y??0);
+  const rs=isBubble?data.map(d=>d.r??1):null;
+  const minX=Math.min(...xs), maxX=Math.max(...xs)||1;
+  const minY=Math.min(...ys), maxY=Math.max(...ys)||1;
+  const maxR=isBubble?Math.max(...rs)||1:1;
+  const sx=v=>PAD.l+(v-minX)/(maxX-minX||1)*(W-PAD.l-PAD.r);
+  const sy=v=>PAD.t+(1-(v-minY)/(maxY-minY||1))*(H-PAD.t-PAD.b);
+  const id='cv-sc-'+Math.random().toString(36).slice(2,7);
+  const xlabel=spec.config?.x_label||'X', ylabel=spec.config?.y_label||'Y', rlabel=spec.config?.r_label||'';
+  el.innerHTML=`<div style="position:relative"><canvas id="${id}" width="${W}" height="${H}" style="width:100%;height:auto;display:block"></canvas>
+  <div style="font-size:10px;color:var(--ink-3);text-align:center;margin-top:2px">${cvEsc(xlabel)}</div></div>`;
+  requestAnimationFrame(()=>{
+    const cv=document.getElementById(id);
+    if(!cv) return;
+    const ctx=cv.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    cv.width=W*dpr; cv.height=H*dpr; cv.style.width=W+'px'; cv.style.height=H+'px';
+    ctx.scale(dpr,dpr);
+    // grid
+    for(let t=0;t<=4;t++){
+      const v=minY+(maxY-minY)*t/4;
+      const y=sy(v);
+      ctx.strokeStyle='rgba(100,130,180,.13)'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+      ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='10px system-ui'; ctx.fillStyle='rgba(150,170,210,.7)'; ctx.textAlign='right'; ctx.textBaseline='middle';
+      ctx.fillText(cvFmt(v),PAD.l-5,y);
+    }
+    ctx.font='10px system-ui'; ctx.fillStyle='rgba(150,170,210,.7)'; ctx.textAlign='center';
+    for(let t=0;t<=4;t++){
+      const v=minX+(maxX-minX)*t/4;
+      ctx.fillText(cvFmt(v),sx(v),H-PAD.b+14);
+    }
+    // y-axis label
+    ctx.save(); ctx.translate(12,(H)/2); ctx.rotate(-Math.PI/2);
+    ctx.textAlign='center'; ctx.fillText(ylabel,0,0); ctx.restore();
+    // points
+    data.forEach((d,i)=>{
+      const x=sx(d.x??0), y=sy(d.y??0);
+      const r=isBubble?Math.max(4,Math.min(28,((d.r||1)/maxR)*28)):5;
+      const col=d.color||cvCol(i);
+      ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI);
+      ctx.fillStyle=col.replace(')',',0.65)').replace('rgb','rgba'); ctx.fill();
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.stroke();
+      if(r>8){
+        ctx.font=`bold 9px system-ui`; ctx.fillStyle='rgba(230,240,255,.9)';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText((d.label||'').slice(0,8),x,y);
+      }
+    });
+  });
+}
+
+/* ── TABLE ── */
+function _cvTable(el,spec){
+  const data=spec.data||[];
+  const cols=spec.config?.columns||Object.keys(data[0]||{});
+  if(!data.length||!cols.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
+  el.innerHTML=`<div style="overflow-x:auto;max-height:320px;overflow-y:auto">
+    <table class="cv-tbl">
+      <thead><tr>${cols.map(c=>`<th>${cvEsc(c)}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${data.slice(0,15).map(row=>`<tr>${cols.map(c=>`<td>${cvEsc(cvFmt(row[c]))}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ── expose to global (used by inline onclick) ── */
+window.canvasGenerate = window.canvasGenerate;
+
 })();
 </script>
 </body>

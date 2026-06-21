@@ -745,6 +745,73 @@ def news_digest():
         return jsonify({'error': str(e)[:200]}), 500
 
 
+# ── Bixby Canvas — AI-generated chart specs (Fase 1) ────────────────────────
+_CANVAS_SYSTEM = """\
+You are Khipu Finance's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
+Given a user query and a JSON context with node data and market quotes, produce a single-screen
+data visualization spec. Respond ONLY with valid JSON — no markdown fences, no explanation.
+
+Supported types and their data schemas:
+• bar     – data:[{label,value,color?}]              config:{unit?,axis_label?}
+• line    – data:[{label,values:[n,…],color?}]       config:{unit?,series_labels:[…]}
+• bubble  – data:[{id,label,x,y,r,color?}]           config:{x_label,y_label,r_label}
+• treemap – data:[{label,value,color?,cat?}]          config:{}
+• heatmap – data:[{row,col,value}]                   config:{rows:[…],cols:[…],unit?}
+• radar   – data:[{label,values:[0-100,…]}]           config:{axes:[…]}  (≤3 series, 4-8 axes)
+• scatter – data:[{label,x,y,color?}]                config:{x_label,y_label}
+• table   – data:[{col:val,…}]                       config:{columns:[…]}
+
+Always respond with exactly:
+{"type":"<type>","title":"<concise title>","subtitle":"<1 sentence insight>","data":[…],"config":{…}}
+
+Rules:
+- bar: sort by value descending, max 20 items.
+- table: max 15 rows; only the most relevant columns.
+- radar: axes normalized 0-100; each data item is one company/series.
+- heatmap: ≤10 rows, ≤10 cols.
+- Use node data from context — do NOT invent prices or market caps not provided.
+- nrs field in nodes is already a 0-100 score (Node Risk/Resilience Score).
+- Choose the most insightful chart type for the query.
+- Colors palette: #60a5fa #34d399 #f59e0b #f87171 #a78bfa #38bdf8 #fb923c #4ade80
+"""
+
+_CV_PALETTE = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80']
+
+@app.route('/api/canvas/generate', methods=['POST'])
+@rate_limit(limit=20, window=3600)
+def canvas_generate():
+    if not CLAUDE:
+        return jsonify({'error': 'ANTHROPIC_KEY not configured on server'}), 400
+    body = request.get_json(force=True, silent=True) or {}
+    query = str(body.get('query', ''))[:500].strip()
+    if not query:
+        return jsonify({'error': 'query is required'}), 400
+    ctx = body.get('context', {})
+    nodes_raw = ctx.get('nodes') or []
+    quotes_raw = ctx.get('quotes') or {}
+    nodes_compact = [
+        { k: n.get(k) for k in ('id','label','cat','mkt','margin','growth',
+                                  'port','country','preipo','nrs') }
+        for n in nodes_raw[:200]
+    ]
+    ctx_str = json.dumps({'nodes': nodes_compact, 'quotes': quotes_raw,
+                          'selected': ctx.get('selected_id')}, ensure_ascii=False)
+    prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
+    try:
+        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1800)
+        # strip accidental markdown fences
+        cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', text.strip())
+        spec = json.loads(cleaned)
+        valid_types = {'bar','line','bubble','treemap','heatmap','radar','scatter','table'}
+        if spec.get('type') not in valid_types:
+            return jsonify({'error': f'invalid type: {spec.get("type")}', 'raw': cleaned[:300]}), 502
+        return jsonify({'spec': spec, 'model': model})
+    except json.JSONDecodeError:
+        return jsonify({'error': 'model returned non-JSON', 'raw': (text or '')[:400]}), 502
+    except Exception as e:   # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 500
+
+
 # ----------------------------------------------------------------------------
 # Marketstack proxy (compatibilidad con v7)
 # ----------------------------------------------------------------------------
