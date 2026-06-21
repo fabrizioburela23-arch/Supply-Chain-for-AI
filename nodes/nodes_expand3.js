@@ -297,7 +297,7 @@ var NODES_EXPAND3 = [
    "role":"JV Vedanta-Foxconn para primera fab de chips en India (Gujarat); 28nm process.",
    "supplies":"Chips para India market: consumer electronics, IoT, telecom.",
    "moat":"PLI scheme incentivos + Foxconn process knowhow; primer mover en India fab.",
-   "loc":"India","country":"India","growth":"🔵 Planta 2025-2026; India chip sovereignty","margin":null,"preipo":true,"mkt":""},
+   "loc":"India","country":"India","growth":"🔵 Planta 2025-2026; India chip sovereignty","margin":null,"preipo":true,"mkt":"VEDL.NS"},
 
   // ── AI Inference / Emerging Chips ───────────────────────────────────────
   {"id":"Etched","label":"Etched AI","ticker":"No cotiza","cat":"asic_custom",
