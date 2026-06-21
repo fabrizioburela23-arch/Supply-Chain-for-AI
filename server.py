@@ -13,6 +13,7 @@ Modo de operación:
   - El frontend detecta el puerto 5050 y enruta sus fetch a /api/* automáticamente
 """
 import os
+import re
 import json
 import time
 import uuid
@@ -73,6 +74,50 @@ if SECRET_KEY == 'khipu-dev-secret-change-me':
 
 HTTP_TIMEOUT = 8
 
+# ── Security config (Fase 2 — endurecimiento a producto) ────────────────────
+# La CSP solo se aplica cuando el server sirve la app (modo servidor). En
+# standalone puro (file://) no hay server, así que estas cabeceras no afectan
+# ese modo. Todas son ajustables por env para poder desactivar al instante.
+CSP_ENABLED            = os.getenv('CSP_ENABLED', 'true').lower() == 'true'
+CSP_REPORT_ONLY        = os.getenv('CSP_REPORT_ONLY', 'false').lower() == 'true'
+ENABLE_DEBUG_ENDPOINTS = os.getenv('ENABLE_DEBUG_ENDPOINTS', 'false').lower() == 'true'
+
+# Content-Security-Policy: restringe el origen de los scripts a los CDNs reales
+# que usa la app (d3 y three.js desde cdnjs, chart.js desde jsdelivr) y bloquea
+# framing, plugins y manipulación de <base>. connect-src queda en https:/wss:
+# porque la app abre WebSockets directos a Finnhub/ElevenLabs y, en standalone,
+# el navegador habla directo con varias APIs. 'unsafe-inline' es necesario: la
+# app usa estilos y manejadores onclick inline en miles de elementos.
+# upgrade-insecure-requests se añade aparte, solo bajo HTTPS (no rompe dev local).
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+        "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' data: https://fonts.gstatic.com; "
+    "img-src 'self' data: blob: https:; "
+    "connect-src 'self' https: wss:; "
+    "worker-src 'self' blob:; "
+    "frame-src 'self'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "object-src 'none'"
+)
+
+# Tickers válidos: letras, dígitos y los símbolos reales de mercado (., -, ^, =, :).
+# Bloquea inyección de parámetros (&token=, ?, espacios) en las URLs upstream.
+_TICKER_RE = re.compile(r'^[A-Za-z0-9.\-^=:]{1,15}$')
+
+def _safe_ticker(raw):
+    """Valida y normaliza un ticker. Devuelve el símbolo en mayúsculas, o None si
+    es inválido. Defensa contra inyección en las llamadas a Finnhub/FMP/etc."""
+    if not raw:
+        return None
+    t = str(raw).strip().upper()
+    return t if _TICKER_RE.match(t) else None
+
+
 # ── Simple in-process rate limiter ──────────────────────────────────────────
 _rate_buckets: dict = defaultdict(list)
 
@@ -108,9 +153,31 @@ def _add_security_headers(resp):
     resp.headers['X-XSS-Protection'] = '1; mode=block'
     resp.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     resp.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=(self)'
+    resp.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
+    is_https = request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https'
+    if CSP_ENABLED:
+        csp = CONTENT_SECURITY_POLICY
+        # upgrade-insecure-requests solo bajo HTTPS — en http://localhost rompería /api/*
+        if is_https:
+            csp += '; upgrade-insecure-requests'
+        header = 'Content-Security-Policy-Report-Only' if CSP_REPORT_ONLY else 'Content-Security-Policy'
+        resp.headers[header] = csp
     # HSTS only on HTTPS (Railway)
-    if request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https':
+    if is_https:
         resp.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return resp
+
+
+# ── CORS: la API pública /v1/* es para terceros (auth por API key) → se permite
+# cualquier origen. El resto (/api/* interno) queda same-origin: sin cabeceras
+# CORS el navegador bloquea las llamadas cross-origin, que es lo seguro. ─────
+@app.after_request
+def _add_cors_for_public_api(resp):
+    if request.path.startswith('/v1/'):
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-KHIPU-Key'
+        resp.headers['Access-Control-Max-Age'] = '86400'
     return resp
 
 
@@ -284,10 +351,14 @@ def ws_key():
 
 
 @app.route('/api/quote/<ticker>')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
 def quote(ticker):
     if not FINNHUB:
         return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker'}), 400
     data, err = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
     if err:
         return jsonify({'error': err}), 502
@@ -295,11 +366,12 @@ def quote(ticker):
 
 
 @app.route('/api/quotes')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
 def batch_quotes():
     if not FINNHUB:
         return jsonify({'error': 'no FINNHUB_KEY'}), 400
-    tickers = [t for t in request.args.get('symbols', '').split(',') if t]
+    tickers = [s for s in (_safe_ticker(t) for t in request.args.get('symbols', '').split(',')) if s]
     results = {}
     for t in tickers[:60]:  # límite de cortesía por request
         data, err = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={t}&token={FINNHUB}', timeout=4)
@@ -309,6 +381,7 @@ def batch_quotes():
 
 
 @app.route('/api/candles/<ticker>')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=1800)
 def candles(ticker):
     """90 days of daily OHLCV candles for charting.
@@ -317,6 +390,9 @@ def candles(ticker):
     regardless of which paid API tier is configured. Always returns the
     Finnhub-style shape {s,c,o,h,l,t} the frontend expects.
     """
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker', 's': 'no_data'}), 400
     import time as _time
     to_ts = int(_time.time())
     from_ts = to_ts - 95 * 86400
@@ -484,9 +560,13 @@ def trade_order():
 
 
 @app.route('/api/news/<ticker>')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=1800)  # 30 min
 def company_news(ticker):
     if not FINNHUB:
+        return jsonify([])
+    ticker = _safe_ticker(ticker)
+    if not ticker:
         return jsonify([])
     today = date.today().isoformat()
     month_ago = (date.today() - timedelta(days=30)).isoformat()
@@ -499,9 +579,13 @@ def company_news(ticker):
 
 
 @app.route('/api/earnings/<ticker>')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=3600)
 def earnings(ticker):
     if not FINNHUB:
+        return jsonify({'earningsCalendar': []})
+    ticker = _safe_ticker(ticker)
+    if not ticker:
         return jsonify({'earningsCalendar': []})
     frm = (date.today() - timedelta(days=120)).isoformat()
     to = (date.today() + timedelta(days=120)).isoformat()
@@ -518,6 +602,11 @@ def earnings(ticker):
 # ----------------------------------------------------------------------------
 @app.route('/api/debug/fh/<ticker>')
 def debug_fh(ticker):
+    if not ENABLE_DEBUG_ENDPOINTS:
+        abort(404)
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker'}), 400
     if not FINNHUB:
         return jsonify({'error': 'no key'})
     fh, err = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
@@ -531,7 +620,11 @@ def debug_fh(ticker):
 # FMP — fundamentales, precio objetivo, ratings, insiders
 # ----------------------------------------------------------------------------
 @app.route('/api/fundamentals/<ticker>')
+@rate_limit(limit=120, window=60)
 def fundamentals(ticker):
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker'}), 400
     # Cache manual: no cachear si los datos vienen vacíos (evita envenenar 24h con errores de rate-limit)
     cache_key = f'fund_{ticker}'
     hit = cache.get(cache_key)
@@ -544,7 +637,7 @@ def fundamentals(ticker):
     # Métricas (P/E, EV/EBITDA): Finnhub /stock/metric disponible en plan gratuito
     if FINNHUB:
         fh, fh_err = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
-        log.warning('fh_debug err=%s type=%s keys=%s', fh_err, type(fh).__name__, list(fh.keys()) if isinstance(fh, dict) else 'N/A')
+        log.debug('fh err=%s type=%s', fh_err, type(fh).__name__)
         if fh and isinstance(fh.get('metric'), dict):
             m = fh['metric']
             pe = m.get('peTTM') or m.get('peBasicExclExtraTTM')
@@ -579,8 +672,12 @@ def fundamentals(ticker):
 
 
 @app.route('/api/insiders/<ticker>')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=86400)
 def insiders(ticker):
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify([])
     if not FMP:
         return jsonify([])
     data, err = _safe_get(f'https://financialmodelingprep.com/stable/insider-trading?symbol={ticker}&limit=10&apikey={FMP}')
@@ -652,11 +749,12 @@ def news_digest():
 # Marketstack proxy (compatibilidad con v7)
 # ----------------------------------------------------------------------------
 @app.route('/api/marketstack')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=3600, query_string=True)
 def marketstack_proxy():
     if not MSTACK:
         return jsonify({'error': 'no MARKETSTACK_KEY'}), 400
-    symbols = request.args.get('symbols', '')
+    symbols = ','.join(s for s in (_safe_ticker(t) for t in request.args.get('symbols', '').split(',')) if s)
     from_date = request.args.get('date_from', (date.today() - timedelta(days=9)).isoformat())
     data, err = _safe_get(
         f'https://api.marketstack.com/v2/eod?access_key={MSTACK}'
@@ -668,6 +766,7 @@ def marketstack_proxy():
 
 
 @app.route('/api/ipo_calendar')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=3600)
 def ipo_calendar():
     """IPO calendar from Finnhub — last 90 days + next 30 days"""
@@ -684,12 +783,15 @@ def ipo_calendar():
 
 
 @app.route('/api/company_news')
+@rate_limit(limit=120, window=60)
 @cache.cached(timeout=1800, query_string=True)
-def company_news():
-    """Recent news for a ticker — last 7 days, max 8 items"""
-    ticker = request.args.get('symbol', '').upper().strip()
+def company_news_recent():
+    """Recent news for a ticker — last 7 days, max 8 items.
+    Nota: nombre distinto a company_news() (/api/news/<ticker>) para no colisionar
+    el endpoint de Flask, que se deriva del nombre de la función."""
+    ticker = _safe_ticker(request.args.get('symbol', ''))
     if not ticker:
-        return jsonify({'error': 'symbol required'}), 400
+        return jsonify({'error': 'invalid or missing symbol'}), 400
     if not FINNHUB:
         return jsonify({'error': 'no FINNHUB_KEY'}), 400
     from_d = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
@@ -710,6 +812,7 @@ def company_news():
 
 # ── Space APIs (Launch Library 2 — gratis) ──────────────────────────────────
 @app.route('/api/space/launches')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=3600)
 def space_launches():
     """Próximos lanzamientos espaciales, mapeados a nodos de Khipu."""
@@ -743,9 +846,12 @@ def space_launches():
 
 # ── GDELT News (gratis, global, multi-idioma) ────────────────────────────────
 @app.route('/api/news/gdelt/<company_name>')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=1800)
 def news_gdelt(company_name):
-    url = (f'https://api.gdeltproject.org/api/v2/doc/doc?query={company_name}'
+    from urllib.parse import quote as _urlq
+    company_name = re.sub(r'[^A-Za-z0-9 ._-]', '', company_name)[:60]
+    url = (f'https://api.gdeltproject.org/api/v2/doc/doc?query={_urlq(company_name)}'
            f'&mode=artlist&maxrecords=20&format=json&sort=datedesc')
     data, err = _safe_get(url, timeout=12)
     if err or not isinstance(data, dict):
@@ -785,10 +891,14 @@ _CIK_MAP = {
 
 
 @app.route('/api/fundamentals/<ticker>/sec')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=86400)
 def fundamentals_sec(ticker):
     """SEC EDGAR — datos oficiales 10-K/20-F, completamente gratis."""
-    cik = _CIK_MAP.get(ticker.upper())
+    safe = _safe_ticker(ticker)
+    if not safe:
+        return jsonify({'error': 'invalid ticker'}), 400
+    cik = _CIK_MAP.get(safe)
     if not cik:
         return jsonify({'error': f'CIK not mapped for {ticker}'}), 404
     facts, err = _safe_get(
@@ -1028,6 +1138,7 @@ def rag_proxy(endpoint):
 
 
 @app.route('/api/portfolio-risk', methods=['POST'])
+@rate_limit(limit=20, window=3600)
 def api_portfolio_risk_internal():
     """VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser)."""
     data = request.get_json(silent=True) or {}
@@ -1178,7 +1289,7 @@ def api_nodes():
 @app.route('/v1/nodes/<node_id>/live', methods=['GET'])
 @khipu_auth('starter')
 def api_node_live(node_id):
-    ticker = request.args.get('ticker')
+    ticker = _safe_ticker(request.args.get('ticker'))
     quote = {}
     if ticker and FINNHUB:
         q, _ = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
@@ -1259,7 +1370,7 @@ def quotes_live():
     Returns {ticker: {close, prev, live, pct, vol}}.
     """
     data = request.get_json(silent=True) or {}
-    tickers = [str(t).upper().strip() for t in (data.get('tickers') or []) if t]
+    tickers = [s for s in (_safe_ticker(t) for t in (data.get('tickers') or [])) if s]
     tickers = tickers[:100]
     if not tickers:
         return jsonify({'error': 'tickers required'}), 400
@@ -1312,6 +1423,7 @@ def quotes_live():
 
 # ── /api/macro/fred — FRED macro indicators ───────────────────────────────────
 @app.route('/api/macro/fred')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=3600, query_string=True)
 def macro_fred():
     """Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS
@@ -1321,7 +1433,8 @@ def macro_fred():
     import io as _io
 
     series_param = request.args.get('series', 'T10Y2Y,FEDFUNDS,DGS10')
-    series_ids = [s.strip() for s in series_param.split(',') if s.strip()][:8]
+    series_ids = [s.strip() for s in series_param.split(',')
+                  if s.strip() and re.match(r'^[A-Za-z0-9]{1,20}$', s.strip())][:8]
     out = {}
     for sid in series_ids:
         try:
@@ -1345,9 +1458,12 @@ _13f_cache: dict = {}
 
 
 @app.route('/api/investors/13f/<ticker>')
+@rate_limit(limit=60, window=60)
 def investors_13f(ticker):
     """Top institutional holders from SEC EDGAR 13F filings. Cached 24h."""
-    ticker = ticker.upper()
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker'}), 400
     cached = _13f_cache.get(ticker)
     if cached and time.time() - cached['ts'] < 86400:
         return jsonify(cached['data'])
@@ -1394,6 +1510,7 @@ def investors_13f(ticker):
 
 # ── /api/supply-chain/trade-flows — UN Comtrade bilateral trade data ──────────
 @app.route('/api/supply-chain/trade-flows')
+@rate_limit(limit=60, window=60)
 @cache.cached(timeout=86400, query_string=True)
 def trade_flows():
     """UN Comtrade public preview API — bilateral semiconductor trade.
@@ -1403,14 +1520,16 @@ def trade_flows():
     reporter = request.args.get('reporter', 'USA')
     partner  = request.args.get('partner', 'CHN')
     product  = request.args.get('product', '')
+    if product and not re.match(r'^\d{2,6}$', product):
+        product = ''
 
     _ISO_NUM = {
         'USA': '842', 'CHN': '156', 'TWN': '490', 'KOR': '410',
         'JPN': '392', 'DEU': '276', 'GBR': '826', 'NLD': '528',
         'SGP': '702', 'IND': '356', 'MEX': '484', 'MYS': '458',
     }
-    reporter_code = _ISO_NUM.get(reporter.upper(), reporter)
-    partner_code  = _ISO_NUM.get(partner.upper(), partner)
+    reporter_code = _ISO_NUM.get(reporter.upper(), re.sub(r'[^A-Za-z0-9]', '', reporter)[:6])
+    partner_code  = _ISO_NUM.get(partner.upper(), re.sub(r'[^A-Za-z0-9]', '', partner)[:6])
 
     hs_codes = [product] if product else ['8541', '8542', '8471', '8473']
     combined = []
@@ -1477,7 +1596,8 @@ def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> 
         f'"reason": "1-sentence reason", "size_pct": 1-5 }}'
     )
     try:
-        client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+        import anthropic
+        client = anthropic.Anthropic(api_key=CLAUDE)
         msg = client.messages.create(
             model=AI_MODEL,
             max_tokens=200,
@@ -1630,6 +1750,7 @@ def _agent_thread_fn():
 
 
 @app.route('/api/trade/agent/start', methods=['POST'])
+@rate_limit(limit=10, window=60)
 def agent_start():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
@@ -1653,6 +1774,7 @@ def agent_start():
 
 
 @app.route('/api/trade/agent/stop', methods=['POST'])
+@rate_limit(limit=20, window=60)
 def agent_stop():
     _AGENT['running'] = False
     return jsonify({'status': 'stopping'})
@@ -1676,6 +1798,7 @@ def agent_status():
 
 
 @app.route('/api/trade/agent/config', methods=['POST'])
+@rate_limit(limit=20, window=60)
 def agent_config():
     data = request.get_json(silent=True) or {}
     if 'mode'               in data: _AGENT['mode']             = data['mode']
