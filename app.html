@@ -8674,7 +8674,51 @@ function initTerminalTab() {
     _termBuildSidebar();
   }
   _termSetLayout(_term.layout, true);
+  _initTermCmdBar();
 }
+
+function _initTermCmdBar() {
+  const input = document.getElementById('term-cmd');
+  if (!input || input._wired) return;
+  input._wired = true;
+  input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const cmd = input.value.trim(); if (!cmd) return;
+    input.value = '';
+    _execTermCmd(cmd);
+  });
+}
+
+function _execTermCmd(cmd) {
+  const lower = cmd.toLowerCase();
+  // /sim <preset>
+  if (lower.startsWith('/sim ')) {
+    const presetMap = { taiwan: 'taiwan_conflict', china: 'china_chip_ban_total', hbm: 'hbm_shortage_2027', openai: 'openai_ipo_impact', star: 'starshield_reveal' };
+    const key = Object.keys(presetMap).find(k => lower.includes(k));
+    if (key) { window.nexusCore?.runPreset(presetMap[key]); return; }
+  }
+  // /geo <region>
+  if (lower.startsWith('/geo')) { switchTab('geo'); return; }
+  // /chart TICKER1 TICKER2 TIMEFRAME
+  if (lower.startsWith('/chart') || lower.match(/[A-Z]{2,5}\s/)) {
+    const tickers = cmd.match(/[A-Z]{2,6}/g) || [];
+    tickers.slice(0,4).forEach((tk,i) => {
+      const n = NODES.find(n => n.mkt === tk || n.id === tk);
+      if (n && _term.cells[i]) { _termLoadCell(_term.cells[i], n.id); }
+    });
+    return;
+  }
+  // ticker lookup: NVDA, TSMC, etc
+  const tk = cmd.trim().toUpperCase().split(' ')[0];
+  const n = NODES.find(nd => (nd.mkt||'').split('·')[0].trim() === tk || nd.id === tk || nd.label.toUpperCase() === tk);
+  if (n) { window._termLoadToFirstEmpty(n.id); return; }
+  // fallback: open Claude analysis
+  switchTab('analysis');
+  const ai = document.getElementById('ai-input');
+  if (ai) { ai.value = cmd; document.getElementById('ai-ask-btn')?.click(); }
+}
+
+window._termLoadToFirstEmpty = function(nodeId) { const emptyCell = _term.cells.find(c => !c.nodeId); if (emptyCell) _termLoadCell(emptyCell, nodeId); else if (_term.cells[0]) _termLoadCell(_term.cells[0], nodeId); };
 
 function _termBuildSidebar() {
   const nodes = (window.NODES || []).filter(n => n.mkt).sort((a,b) => a.label.localeCompare(b.label));
