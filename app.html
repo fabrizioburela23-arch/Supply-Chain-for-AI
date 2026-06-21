@@ -6586,6 +6586,8 @@ function _processMktData(j){
   MKT.quotes=q; MKT.ts=Date.now();
   localStorage.setItem('eco_quotes',JSON.stringify(q));
   localStorage.setItem('eco_quotes_ts',String(MKT.ts));
+  // Keep Terminal sidebar in sync whenever quotes are refreshed
+  if (typeof window._termRefreshPrices === 'function') window._termRefreshPrices();
 }
 async function fetchQuotes(){
   if(MKT.loading) return;
@@ -8675,8 +8677,10 @@ function initSimTab() {
 // ── Terminal Tab — Multi-chart Bloomberg-style ─────────────────────────────
 const _term = {
   layout: 4,
-  cells: [],      // array of {nodeId, ticker, tf, chartInst}
+  cells: [],       // array of {nodeId, ticker, tf, chartInst}
   inited: false,
+  _lastQuery: '',  // last sidebar filter query
+  _lastCat: '',    // last sidebar category filter
 };
 
 function initTerminalTab() {
@@ -8686,6 +8690,12 @@ function initTerminalTab() {
   }
   _termSetLayout(_term.layout, true);
   _initTermCmdBar();
+  // If quotes are absent or stale (>10 min), refresh them now so the sidebar
+  // can show live prices.  MKT.ts is null until the first successful fetch.
+  const STALE_MS = 10 * 60 * 1000;
+  if (!MKT.ts || Date.now() - MKT.ts > STALE_MS) {
+    if (typeof fetchQuotes === 'function') fetchQuotes();
+  }
 }
 
 function _initTermCmdBar() {
@@ -8775,10 +8785,28 @@ function _termBuildSidebar() {
   _termRenderList(nodes);
 }
 
+// Re-render sidebar prices after a quote refresh without a full rebuild.
+// Called by _processMktData so any tab that triggers fetchQuotes()
+// (Market refresh, Terminal auto-fetch, etc.) keeps the Terminal in sync.
+window._termRefreshPrices = function() {
+  if (!_term.inited) return; // Terminal never opened — nothing to update
+  const filter = document.getElementById('term-search')?.value || _term._lastQuery || '';
+  window._termFilter(filter, _term._lastCat || '');
+};
+
 function _termRenderList(nodes) {
   const el = document.getElementById('term-list');
   if (!el) return;
-  el.innerHTML = nodes.map(n => {
+  // Banner: show how many have live prices
+  const withPrice = nodes.filter(n => { const q=MKT?.quotes?.[n.mkt]||{}; return parseFloat(q.live||q.close||0)>0; }).length;
+  const quotesLoaded = MKT?.ts;
+  const banner = quotesLoaded
+    ? (withPrice === 0
+        ? `<div style="padding:6px 10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:#f59e0b;background:rgba(245,158,11,.08);border-bottom:1px solid rgba(245,158,11,.2)">⚠ Sin precios — verificá MARKETSTACK_KEY en Railway</div>`
+        : `<div style="padding:4px 10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.25)">💹 ${withPrice}/${nodes.length} con cotización · EOD</div>`)
+    : `<div style="padding:4px 10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.2)">⟳ Cargando precios…</div>`;
+
+  el.innerHTML = banner + nodes.map(n => {
     const q = MKT?.quotes?.[n.mkt] || {};
     const price = parseFloat(q.live || q.close || 0) || 0;
     const prev = parseFloat(q.prev || 0) || 0;
@@ -8790,7 +8818,7 @@ function _termRenderList(nodes) {
         data-id="${n.id}" data-mkt="${n.mkt}"
         ondragstart="window._termDragStart(event,\'${n.id}\',\'${n.mkt}\')"
         ondragend="this.classList.remove('dragging')"
-        title="Arrastrá al panel">
+        title="Arrastrá al panel · ${n.mkt}">
       <span style="width:6px;height:6px;border-radius:50%;background:${catColor};flex-shrink:0"></span>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:600;color:#e5e2e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.label}</div>
@@ -8805,6 +8833,8 @@ function _termRenderList(nodes) {
 }
 
 window._termFilter = function(query, cat) {
+  _term._lastQuery = query || '';
+  _term._lastCat = cat || '';
   let nodes = (window.NODES || []).filter(n => n.mkt);
   if (cat) nodes = nodes.filter(n => n.cat === cat);
   if (query) {
