@@ -1324,7 +1324,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
-      <button class="icon-btn" id="toggle-3d-btn" title="Alternar vista 2D / 3D" style="width:auto;padding:0 10px;font-size:11px;font-weight:700" onclick="window._toggle3D && window._toggle3D()">3D</button>
+      <button class="icon-btn" id="toggle-3d-btn" title="Vista 3D + Hipergrafos temporales — esferas históricas sobre el grafo" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="window._toggle3D && window._toggle3D()">🕸 3D</button>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <span id="live-status-dot" style="width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .5s,box-shadow .5s"></span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.1em">LIVE</span>
@@ -1569,16 +1569,17 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </section>
 
 <section id="geo-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
-  <div style="max-width:1320px;margin:0 auto;padding:24px 24px 40px">
-    <h2 id="geo-title" style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
-    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Cadena de valor global · tamaño = cap. de mercado · borde rojo = riesgo crítico · clic → grafo · <span style="color:#f59e0b;font-size:11px">⚡ datos 2025-2026, verifica tickers en tiempo real</span></p>
+  <div style="max-width:1200px;margin:0 auto;padding:24px 24px 40px">
+    <h2 id="geo-title" style="font-family:\'Fraunces\',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
+    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Riesgo sistémico por región · NRS promedio · exposición de cartera · clic en región para ver empresas</p>
 
-    <div style="display:flex;flex-wrap:wrap;gap:16px 22px;align-items:center;margin-bottom:14px">
+    <!-- Controls -->
+    <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-bottom:18px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Capa</span>
         <div id="geo-layer-seg" class="seg">
-          <button data-layer="geo" class="active">◉ Geopolítica</button>
-          <button data-layer="invest">$ Inversión</button>
+          <button data-layer="geo" class="active">◉ Riesgo</button>
+          <button data-layer="invest">$ Cartera</button>
           <button data-layer="news">📰 Noticias</button>
         </div>
       </div>
@@ -1586,32 +1587,26 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Escenario</span>
         <div id="geo-scen-seg" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
-      <div id="geo-sev-wrap" style="display:none;align-items:center;gap:8px">
-        <span style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Severidad</span>
-        <input id="geo-sev" type="range" min="20" max="100" value="70" style="width:120px;accent-color:var(--danger)">
-        <span id="geo-sev-val" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--ink-2)">70%</span>
-      </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start">
-      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;min-height:520px">
-        <canvas id="geo-world-bg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
-        <div id="geo-hero" style="position:relative;width:100%;min-height:520px;z-index:1;background:transparent"></div>
-        <div id="geo-hero-legend" style="position:absolute;left:14px;bottom:12px;display:flex;gap:14px;flex-wrap:wrap;pointer-events:none;font-size:10.5px;color:var(--ink-2);background:rgba(10,14,20,.5);backdrop-filter:blur(4px);padding:6px 11px;border-radius:8px"></div>
-        <div id="geo-hero-tip" style="position:absolute;pointer-events:none;display:none;z-index:5;background:rgba(12,17,24,.94);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:11.5px;max-width:230px"></div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div id="geo-readout-dynamic" class="mkt-tablewrap" style="padding:16px;min-height:120px"></div>
-        <div class="mkt-tablewrap">
-          <div class="mkt-sec-head" id="geo-rank-title">Riesgo sistémico por país</div>
-          <table class="mkt-table"><thead><tr>
-            <th style="text-align:left" id="geo-th-country">País</th>
-            <th style="text-align:right" id="geo-th-co">Empresas</th>
-            <th style="text-align:right">Score</th>
-          </tr></thead><tbody id="geo-ranking"></tbody></table>
-          <p id="geo-rank-note" style="padding:10px 16px;font-size:10.5px;color:var(--ink-3);line-height:1.5">Score = Σ (grado de entrada × riesgo) de las empresas del país. Clic en una fila para enfocarla en el mapa.</p>
-        </div>
-      </div>
+    <!-- Regional dashboard cards -->
+    <div id="geo-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:20px"></div>
+
+    <!-- Expanded region detail -->
+    <div id="geo-expanded" style="display:none" class="mkt-tablewrap">
+      <div style="padding:16px" id="geo-expanded-inner"></div>
+    </div>
+
+    <!-- Systemic risk ranking -->
+    <div class="mkt-tablewrap" style="margin-top:16px">
+      <div class="mkt-sec-head" id="geo-rank-title">Ranking de riesgo sistémico</div>
+      <table class="mkt-table"><thead><tr>
+        <th style="text-align:left">Región</th>
+        <th style="text-align:right">Empresas</th>
+        <th style="text-align:right">NRS avg</th>
+        <th style="text-align:right">Score</th>
+        <th style="text-align:right">Cartera</th>
+      </tr></thead><tbody id="geo-ranking"></tbody></table>
     </div>
   </div>
 </section>
@@ -6312,264 +6307,243 @@ function _drawWorldMap(ctx, W, H) {
 }
 
 function renderGeoPanel(){
-  const svgW=1000, svgH=560;
+  /* ── Region definitions — countries grouped into 7 geo blocks ── */
+  const GEO_BLOCKS=[
+    {id:'usa',    flag:'🇺🇸', name:'EE.UU.',     keys:['EEUU'],                               accent:'#2E6FB7', risk:'high'},
+    {id:'taiwan', flag:'🇹🇼', name:'Taiwán',      keys:['Taiwan','Taiwán'],                    accent:'#18A05A', risk:'critical'},
+    {id:'china',  flag:'🇨🇳', name:'China',        keys:['China'],                              accent:'#C8392F', risk:'critical'},
+    {id:'japan',  flag:'🇯🇵', name:'Japón',        keys:['Japon','Japón'],                      accent:'#C2185B', risk:'high'},
+    {id:'korea',  flag:'🇰🇷', name:'Corea Sur',    keys:['Corea'],                              accent:'#6B5DD3', risk:'high'},
+    {id:'europe', flag:'🇪🇺', name:'Europa',        keys:['ReinoUnido','PaisesBajos','Alemania','Francia','RestoEuropa','Israel','India','Alemania'], accent:'#5F6B52', risk:'low'},
+    {id:'row',    flag:'🌐',  name:'Resto del mundo',keys:['RestoMundo'],                        accent:'#8A857A', risk:'medium'},
+  ];
 
-  /* ── Cluster positions in the schematic map (normalized 0-1) ──
-     Spread so clusters don't overlap even at 30+ nodes each.
-     Roughly geographic (US left, Europe upper-centre, Asia right). */
-  const CPOS={
-    EEUU:        {x:.12, y:.42},
-    ReinoUnido:  {x:.38, y:.16},
-    PaisesBajos: {x:.44, y:.10},
-    Alemania:    {x:.51, y:.17},
-    Francia:     {x:.44, y:.28},
-    RestoEuropa: {x:.58, y:.12},
-    Israel:      {x:.58, y:.32},
-    India:       {x:.68, y:.55},
-    Japon:       {x:.88, y:.24},
-    Corea:       {x:.84, y:.38},
-    Taiwan:      {x:.80, y:.52},
-    China:       {x:.73, y:.34},
-    RestoMundo:  {x:.25, y:.72},
-  };
-  const cx = k => ((CPOS[k]||CPOS.RestoMundo).x * svgW);
-  const cy = k => ((CPOS[k]||CPOS.RestoMundo).y * svgH);
-  const MAX_NODES = 22; // cap per cluster to avoid overflow
+  const activeLayer=document.querySelector('#geo-layer-seg button.active')?.dataset?.layer||'geo';
 
-  /* ── Active layer ── */
-  const activeLayer = document.querySelector('#geo-layer-seg button.active')?.dataset?.layer || 'geo';
-
-  /* ── Draw world map background ── */
-  const bg=document.getElementById('geo-world-bg');
-  if(bg){
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    const W=bg.parentElement.offsetWidth||svgW, H=svgH;
-    bg.width=W*dpr; bg.height=H*dpr; bg.style.height=H+'px';
-    const ctx=bg.getContext('2d'); ctx.scale(dpr,dpr);
-    _drawWorldMap(ctx,W,H);
-  }
-
-  /* ── Compute in-degree for risk ranking ── */
+  /* ── Compute node metrics per block ── */
   const inDeg={};
   LINKS.forEach(l=>{ const tg=lid(l.target); inDeg[tg]=(inDeg[tg]||0)+1; });
-  const riskScore={critical:4,high:3,medium:2,low:1};
 
-  /* ── Group and size nodes ── */
-  const countryGroups={};
-  NODES.forEach(n=>{
-    const country=n.country||'RestoMundo';
-    if(!countryGroups[country]) countryGroups[country]=[];
-    const meta=NODE_META[n.id]||{};
-    let r;
-    if(activeLayer==='invest'){
-      const nrs=typeof computeNRS==='function'?computeNRS(n.id):50;
-      r=Math.max(5,Math.min(18,nrs*.18));
-    } else {
-      const cap=(typeof meta.mktcap_b==='number')?meta.mktcap_b:1;
-      r=Math.max(4,Math.min(18,Math.sqrt(cap)*1.5));
-    }
-    countryGroups[country].push({n,r,risk:meta.risk||'low',meta});
+  GEO_BLOCKS.forEach(blk=>{
+    const keySet=new Set(blk.keys);
+    blk.nodes=NODES.filter(n=>keySet.has(n.country||'RestoMundo'));
+    blk.count=blk.nodes.length;
+    const nrsArr=blk.nodes.map(n=>typeof computeNRS==='function'?computeNRS(n.id):50);
+    blk.avgNRS=nrsArr.length?Math.round(nrsArr.reduce((a,b)=>a+b,0)/nrsArr.length):50;
+    blk.portNodes=blk.nodes.filter(n=>n.port==='C1'||n.port==='C2');
+    blk.riskScore=blk.nodes.reduce((s,n)=>{
+      const meta=NODE_META[n.id]||{};
+      return s+(inDeg[n.id]||0)*({critical:4,high:3,medium:2,low:1}[meta.risk||'low']||1);
+    },0);
+    // Top nodes by (in-degree × criticality), capped at 8
+    blk.topNodes=[...blk.nodes]
+      .sort((a,b)=>((inDeg[b.id]||0)+(NODE_META[b.id]?.risk==='critical'?20:0))
+                  -((inDeg[a.id]||0)+(NODE_META[a.id]?.risk==='critical'?20:0)))
+      .slice(0,8);
+    blk.criticalCount=blk.nodes.filter(n=>NODE_META[n.id]?.risk==='critical').length;
+    blk.highCount=blk.nodes.filter(n=>NODE_META[n.id]?.risk==='high').length;
   });
 
-  /* ── Circle-pack each cluster (centred at origin) ── */
-  function packGroup(items){
-    items.sort((a,b)=>b.r-a.r);
-    const cols=Math.max(1,Math.ceil(Math.sqrt(items.length*1.4)));
-    const colW=(items[0]?.r||6)*2+4;
-    let x=0,y=0,rowH=0;
-    items.forEach(it=>{
-      if(x+it.r*2>cols*colW){x=0;y+=rowH+4;rowH=0;}
-      it.lx=x+it.r; it.ly=y+it.r; x+=it.r*2+4; rowH=Math.max(rowH,it.r*2);
-    });
-    const totalW=cols*colW, totalH=y+rowH;
-    items.forEach(it=>{it.lx-=totalW/2; it.ly-=totalH/2;});
-  }
-  Object.values(countryGroups).forEach(g=>packGroup(g.slice(0,MAX_NODES)));
-
-  /* ── Node fill colour by layer ── */
-  function nodeFillColor(it){
-    if(activeLayer==='invest'){
-      const port=(it.n.port||'').toUpperCase();
-      if(port==='C1') return '#f59e0b';
-      if(port==='C2') return '#3b82f6';
-      return 'rgba(120,140,170,.35)';
-    }
-    if(activeLayer==='news'){
-      return 'rgba(96,165,250,.50)';
-    }
-    return catColor(it.n.cat);
+  /* ── NRS badge colour ── */
+  function nrsColor(n){ return n<40?'#f87171':n<60?'#f59e0b':'#34d399'; }
+  function riskChip(r){
+    const m={critical:['CRÍTICO','#ef4444'],high:['ALTO','#f59e0b'],medium:['MEDIO','#60a5fa'],low:['BAJO','#34d399']};
+    const [lbl,col]=m[r]||m.medium;
+    return `<span style="font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;background:${col}22;color:${col};border:1px solid ${col}44">${lbl}</span>`;
   }
 
-  /* ── Build SVG ── */
-  let svg=`<svg width="100%" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">`;
+  /* ── Build cards ── */
+  const grid=document.getElementById('geo-cards-grid');
+  if(!grid) return;
 
-  // Region labels + connection lines + bubble clusters
-  Object.entries(countryGroups).forEach(([country,items])=>{
-    const ox=cx(country), oy=cy(country);
-    const shown=items.slice(0,MAX_NODES);
-    const hidden=items.length-shown.length;
-    packGroup(shown);
+  if(activeLayer==='geo'){
+    grid.innerHTML=GEO_BLOCKS.map(blk=>`
+      <div onclick="window._geoExpand('${blk.id}')" style="background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;transition:box-shadow .15s;border-left:3px solid ${blk.accent}" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.18)'" onmouseout="this.style.boxShadow=''">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:20px;line-height:1">${blk.flag}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-top:4px">${esc(blk.name)}</div>
+          </div>
+          <div>${riskChip(blk.risk)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div style="background:var(--surface);border-radius:6px;padding:7px;text-align:center">
+            <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Empresas</div>
+            <div style="font-size:20px;font-weight:800;color:${blk.accent}">${blk.count}</div>
+          </div>
+          <div style="background:var(--surface);border-radius:6px;padding:7px;text-align:center">
+            <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">NRS avg</div>
+            <div style="font-size:20px;font-weight:800;color:${nrsColor(blk.avgNRS)}">${blk.avgNRS}</div>
+          </div>
+        </div>
+        ${blk.criticalCount||blk.highCount?`<div style="font-size:10px;color:var(--ink-3);margin-bottom:6px">⚠ ${blk.criticalCount} críticos · ${blk.highCount} altos</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          ${blk.topNodes.slice(0,5).map(n=>`<span style="font-size:10px;padding:2px 7px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink-2);cursor:pointer" onclick="event.stopPropagation();goMap('${n.id}')">${esc(n.label)}</span>`).join('')}
+        </div>
+      </div>`).join('');
 
-    // Soft region glow
-    const tint=countryColor(country);
-    svg+=`<circle cx="${ox.toFixed(0)}" cy="${oy.toFixed(0)}" r="48" fill="${tint}" fill-opacity=".07" pointer-events="none"/>`;
+  } else if(activeLayer==='invest'){
+    const hasPortfolio=GEO_BLOCKS.some(b=>b.portNodes.length>0);
+    grid.innerHTML=GEO_BLOCKS.map(blk=>{
+      const c1=blk.nodes.filter(n=>n.port==='C1');
+      const c2=blk.nodes.filter(n=>n.port==='C2');
+      const hasPos=c1.length||c2.length;
+      return `<div onclick="window._geoExpand('${blk.id}')" style="background:var(--surface-2);border:1px solid ${hasPos?blk.accent:'var(--line)'};border-radius:12px;padding:16px;cursor:pointer;opacity:${hasPos?1:.55};transition:all .15s" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.18)'" onmouseout="this.style.boxShadow=''">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+          <span style="font-size:18px">${blk.flag}</span>
+          <div style="font-size:13px;font-weight:700;color:var(--ink-1)">${esc(blk.name)}</div>
+          ${hasPos?`<span style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;background:${blk.accent}22;color:${blk.accent}">● EXPOSICIÓN</span>`:''}
+        </div>
+        ${c1.length?`<div style="margin-bottom:6px"><div style="font-size:9px;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">C1 · Corto plazo (${c1.length})</div><div style="display:flex;flex-wrap:wrap;gap:3px">${c1.map(n=>`<span style="font-size:10px;padding:2px 7px;background:rgba(245,158,11,.12);border:1px solid #f59e0b44;border-radius:10px;color:#f59e0b;cursor:pointer" onclick="event.stopPropagation();goMap('${n.id}')">${esc(n.label)}</span>`).join('')}</div></div>`:''}
+        ${c2.length?`<div style="margin-bottom:6px"><div style="font-size:9px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">C2 · Mediano plazo (${c2.length})</div><div style="display:flex;flex-wrap:wrap;gap:3px">${c2.map(n=>`<span style="font-size:10px;padding:2px 7px;background:rgba(59,130,246,.12);border:1px solid #3b82f644;border-radius:10px;color:#3b82f6;cursor:pointer" onclick="event.stopPropagation();goMap('${n.id}')">${esc(n.label)}</span>`).join('')}</div></div>`:''}
+        ${!hasPos?`<div style="font-size:11px;color:var(--ink-3);text-align:center;padding:10px 0">Sin posiciones</div>`:''}
+      </div>`;
+    }).join('');
 
-    // Country label
-    const labelY=(oy-28).toFixed(0);
-    const cLabel=(COUNTRIES[country]||COUNTRIES.RestoMundo)[LANG==='en'?'en':'es'];
-    svg+=`<text x="${ox.toFixed(0)}" y="${labelY}" text-anchor="middle" font-size="10.5" font-weight="700" fill="${tint}" font-family="Archivo,sans-serif" pointer-events="none" opacity=".9">${esc(cLabel)} <tspan font-weight="400" opacity=".6">${shown.length}${hidden?'+':''}</tspan></text>`;
-
-    // Bubbles
-    shown.forEach(it=>{
-      const bx=(ox+it.lx).toFixed(1), by=(oy+it.ly).toFixed(1);
-      const stroke=it.risk==='critical'?'#ef4444':it.risk==='high'?'#f59e0b':'none';
-      const sw=it.risk==='critical'?2:it.risk==='high'?1.5:0;
-      const fill=nodeFillColor(it);
-      const opacity=activeLayer==='invest'&&!(it.n.port)?0.45:0.88;
-      svg+=`<circle class="geo-bubble" data-id="${it.n.id}" cx="${bx}" cy="${by}" r="${it.r}" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer" onclick="window._geoClick('${it.n.id}')" onmouseenter="window._geoEnter(event,'${it.n.id}')" onmouseleave="window._geoLeave()"></circle>`;
-      if(it.r>=12){
-        svg+=`<text x="${bx}" y="${(parseFloat(by)+3.5).toFixed(1)}" text-anchor="middle" font-size="${Math.min(9,it.r*.52)}" font-weight="600" fill="#fff" pointer-events="none" font-family="Archivo,sans-serif">${esc(it.n.label.slice(0,Math.floor(it.r/3)+1))}</text>`;
-      }
-    });
-    // "+N" overflow badge
-    if(hidden>0){
-      svg+=`<text x="${(ox+30).toFixed(0)}" y="${(oy+28).toFixed(0)}" font-size="9" fill="${tint}" opacity=".7" font-family="Archivo,sans-serif">+${hidden}</text>`;
-    }
-  });
-
-  // Legend for 'invest' layer
-  if(activeLayer==='invest'){
-    svg+=`<rect x="10" y="${svgH-46}" width="200" height="40" rx="6" fill="rgba(8,14,26,.75)"/>
-      <circle cx="26" cy="${svgH-30}" r="6" fill="#f59e0b" opacity=".9"/>
-      <text x="36" y="${svgH-26}" font-size="10" fill="rgba(200,215,240,.8)" font-family="Archivo,sans-serif">Cartera C1</text>
-      <circle cx="96" cy="${svgH-30}" r="6" fill="#3b82f6" opacity=".9"/>
-      <text x="106" y="${svgH-26}" font-size="10" fill="rgba(200,215,240,.8)" font-family="Archivo,sans-serif">Cartera C2</text>
-      <circle cx="164" cy="${svgH-30}" r="6" fill="rgba(120,140,170,.4)"/>
-      <text x="174" y="${svgH-26}" font-size="10" fill="rgba(200,215,240,.8)" font-family="Archivo,sans-serif">Sin posición</text>`;
+  } else if(activeLayer==='news'){
+    grid.innerHTML=GEO_BLOCKS.filter(b=>b.count>0).map(blk=>`
+      <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <span style="font-size:18px">${blk.flag}</span>
+          <div style="font-size:13px;font-weight:700;color:var(--ink-1)">${esc(blk.name)}</div>
+          <span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${blk.count} emp.</span>
+        </div>
+        <div id="geo-news-${blk.id}" style="font-size:11px;color:var(--ink-3);min-height:40px">
+          <button onclick="window._geoLoadNews('${blk.id}')" style="font-size:11px;padding:5px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;cursor:pointer;width:100%">📰 Cargar noticias</button>
+        </div>
+      </div>`).join('');
   }
 
-  svg+='</svg>';
-  document.getElementById('geo-hero').innerHTML=svg;
-  // Make the hero container match svgH
-  const hero=document.getElementById('geo-hero');
-  if(hero) hero.style.minHeight=svgH+'px';
-  const wrap=hero?.parentElement;
-  if(wrap) wrap.style.minHeight=svgH+'px';
-
-  /* ── Tooltip handlers ── */
-  window._geoClick=function(id){ goMap(id); };
-  window._geoEnter=function(ev,id){
-    const n=NODE_BY_ID[id]; if(!n) return;
-    const meta=NODE_META[id]||{};
-    const q=(typeof MKT!=='undefined'&&n.mkt)?MKT.quotes[n.mkt]:null;
-    const price=q&&q.close!=null?'$'+Number(q.close).toFixed(2):'';
-    const nrs=typeof computeNRS==='function'?computeNRS(id):null;
-    const tip=document.getElementById('geo-hero-tip');
-    if(!tip) return;
-    tip.style.display='block';
-    tip.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:9px;height:9px;border-radius:50%;background:${catColor(n.cat)};flex-shrink:0"></span><strong>${esc(n.label)}</strong></div>`
-      +(n.mkt?`<div style="font-size:10px;font-family:monospace;color:#5b8ab8;margin-bottom:3px">${n.mkt}${price?' · '+price:''}</div>`:'')
-      +`<div style="font-size:10.5px;color:var(--ink-2)">📍 ${esc(n.loc||n.country||'')}</div>`
-      +(nrs!=null?`<div style="font-size:10px;color:var(--ink-3);margin-top:3px">NRS: <strong style="color:${nrs<40?'#f87171':nrs<65?'#f59e0b':'#34d399'}">${Math.round(nrs)}</strong></div>`:'')
-      +(meta.risk&&meta.risk!=='low'?`<div style="font-size:10px;margin-top:3px;font-weight:600;color:${meta.risk==='critical'?'#ef4444':'#f59e0b'}">⚠ Riesgo: ${esc(meta.risk)}</div>`:'')
-      +`<div style="font-size:9.5px;color:var(--ink-3);margin-top:5px">Clic → ver en grafo</div>`;
-    const rect=ev.currentTarget.closest('svg').getBoundingClientRect();
-    const px=ev.clientX-rect.left+14, py=ev.clientY-rect.top-40;
-    tip.style.left=Math.min(px,rect.width-250)+'px';
-    tip.style.top=Math.max(8,py)+'px';
-  };
-  window._geoLeave=function(){ const t=document.getElementById('geo-hero-tip');if(t)t.style.display='none'; };
-
-  /* ── Risk ranking table ── */
-  const agg={};
-  NODES.forEach(n=>{
-    const meta=NODE_META[n.id]||{};
-    const c=COUNTRIES[n.country]?n.country:'RestoMundo';
-    if(!agg[c]) agg[c]={score:0,count:0};
-    agg[c].score+=(inDeg[n.id]||0)*(riskScore[meta.risk||'low']||1);
-    agg[c].count++;
-  });
-  const top=Object.entries(agg).sort((a,b)=>b[1].score-a[1].score).slice(0,8);
-  document.getElementById('geo-ranking').innerHTML=top.map(([c,v])=>`
-    <tr style="cursor:pointer" onclick="window._geoFocusCountry('${c}')">
-      <td style="font-weight:600"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${countryColor(c)};margin-right:7px"></span>${countryLabel(c)}</td>
-      <td style="text-align:right">${v.count}</td>
-      <td style="text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace">${v.score}</td>
+  /* ── Ranking table ── */
+  const sorted=[...GEO_BLOCKS].filter(b=>b.count>0).sort((a,b)=>b.riskScore-a.riskScore);
+  document.getElementById('geo-ranking').innerHTML=sorted.map(blk=>`
+    <tr style="cursor:pointer" onclick="window._geoExpand('${blk.id}')">
+      <td style="font-weight:600"><span style="font-size:14px;margin-right:6px">${blk.flag}</span>${esc(blk.name)}</td>
+      <td style="text-align:right">${blk.count}</td>
+      <td style="text-align:right;font-weight:700;color:${nrsColor(blk.avgNRS)}">${blk.avgNRS}</td>
+      <td style="text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace">${blk.riskScore}</td>
+      <td style="text-align:right">${blk.portNodes.length?`<span style="color:${blk.accent};font-weight:700">${blk.portNodes.length}</span>`:'—'}</td>
     </tr>`).join('');
-  window._geoFocusCountry=function(c){
-    document.querySelectorAll('.geo-bubble').forEach(el=>{
-      const n=NODE_BY_ID[el.dataset.id]; if(!n) return;
-      const match=(n.country||'RestoMundo')===c;
-      el.style.opacity=match?'1':'0.12';
-    });
-    setTimeout(()=>document.querySelectorAll('.geo-bubble').forEach(el=>el.style.opacity=''),1800);
+
+  /* ── Expand handler ── */
+  window._geoExpand=function(blockId){
+    const blk=GEO_BLOCKS.find(b=>b.id===blockId); if(!blk) return;
+    const exp=document.getElementById('geo-expanded');
+    const inner=document.getElementById('geo-expanded-inner');
+    if(!exp||!inner) return;
+    const isOpen=exp.style.display!=='none'&&inner.dataset.open===blockId;
+    if(isOpen){ exp.style.display='none'; return; }
+    inner.dataset.open=blockId;
+    exp.style.display='block';
+    exp.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+    const nrsArr=blk.nodes.map(n=>typeof computeNRS==='function'?computeNRS(n.id):50);
+    const nrsDist={low:0,mid:0,high:0};
+    nrsArr.forEach(v=>{ if(v<40)nrsDist.low++; else if(v<70)nrsDist.mid++; else nrsDist.high++; });
+    const topConn=[...blk.nodes].sort((a,b)=>(inDeg[b.id]||0)-(inDeg[a.id]||0)).slice(0,12);
+
+    inner.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <span style="font-size:28px">${blk.flag}</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--ink-1)">${esc(blk.name)}</div>
+          <div style="font-size:11px;color:var(--ink-3)">${blk.count} empresas · NRS promedio ${blk.avgNRS} · ${blk.criticalCount} críticas</div>
+        </div>
+        <button onclick="document.getElementById('geo-expanded').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--ink-3);font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+        <div style="padding:10px;background:var(--surface);border-radius:8px;text-align:center">
+          <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase">NRS bajo (&lt;40)</div>
+          <div style="font-size:22px;font-weight:800;color:#f87171">${nrsDist.low}</div>
+        </div>
+        <div style="padding:10px;background:var(--surface);border-radius:8px;text-align:center">
+          <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase">NRS medio</div>
+          <div style="font-size:22px;font-weight:800;color:#f59e0b">${nrsDist.mid}</div>
+        </div>
+        <div style="padding:10px;background:var(--surface);border-radius:8px;text-align:center">
+          <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase">NRS alto (&gt;70)</div>
+          <div style="font-size:22px;font-weight:800;color:#34d399">${nrsDist.high}</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Nodos más conectados</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${topConn.map(n=>{
+          const nrs=typeof computeNRS==='function'?Math.round(computeNRS(n.id)):50;
+          const col=nrsColor(nrs);
+          return `<span onclick="goMap('${n.id}')" title="NRS: ${nrs} · Conexiones: ${inDeg[n.id]||0}" style="font-size:11px;padding:4px 10px;background:var(--surface);border:1px solid var(--line);border-left:3px solid ${col};border-radius:8px;cursor:pointer;color:var(--ink-1)">${esc(n.label)} <span style="color:${col};font-weight:700">${nrs}</span></span>`;
+        }).join('')}
+      </div>`;
   };
 
-  /* ── Readout dynamic ── */
-  const dynEl=document.getElementById('geo-readout-dynamic');
-  if(dynEl){
-    if(activeLayer==='invest'){
-      const c1=NODES.filter(n=>n.port==='C1').length, c2=NODES.filter(n=>n.port==='C2').length;
-      dynEl.innerHTML=`<div style="padding:8px 0;font-size:12px;color:var(--ink-2)">
-        <strong>Vista Inversión</strong> — oro = Cartera C1 (${c1} empresas), azul = Cartera C2 (${c2} empresas), tamaño = NRS score.<br>
-        <span style="color:var(--ink-3);font-size:11px">Clic en una empresa para verla en el grafo.</span></div>`;
-    } else if(activeLayer==='news'){
-      dynEl.innerHTML=`<div style="padding:8px 0;font-size:12px;color:var(--ink-2)">
-        <strong>Vista Noticias</strong> — selecciona una empresa en el mapa para ver sus noticias recientes en el Terminal.<br>
-        <span style="color:var(--ink-3);font-size:11px">Tip: usa el botón ⬛ Terminal → busca la empresa → 📰 Noticias.</span></div>`;
-    } else {
-      dynEl.innerHTML=`<div style="padding:8px 0;font-size:12px;color:var(--ink-2)">
-        <strong>Vista Geopolítica</strong> — color = categoría, borde rojo = riesgo crítico, borde naranja = alto. Clic en un país en la tabla para destacarlo.<br>
-        <span style="color:var(--ink-3);font-size:11px">Top nodos mostrados por país (máx. ${MAX_NODES}). Clic en cualquier empresa → grafo.</span></div>`;
-    }
-  }
+  /* ── News loader ── */
+  window._geoLoadNews=async function(blockId){
+    const blk=GEO_BLOCKS.find(b=>b.id===blockId); if(!blk) return;
+    const el=document.getElementById(`geo-news-${blockId}`);
+    if(!el) return;
+    el.innerHTML='<div style="color:var(--ink-3);font-size:11px">Cargando noticias…</div>';
+    try{
+      // fetch GDELT for top 2 companies in block
+      const company=blk.topNodes[0]?.label||blk.name;
+      const r=await fetch(`${BASE||''}/api/news/gdelt/${encodeURIComponent(company)}`);
+      const arts=await r.json();
+      if(!arts||!arts.length){ el.innerHTML='<div style="font-size:11px;color:var(--ink-3)">Sin noticias recientes</div>'; return; }
+      el.innerHTML=arts.slice(0,4).map(a=>`
+        <div style="border-bottom:1px solid var(--line);padding:6px 0;last-child:border:none">
+          <a href="${esc(a.url||'#')}" target="_blank" rel="noopener" style="font-size:11px;color:var(--ink-1);text-decoration:none;display:block;line-height:1.4">${esc((a.title||a.headline||'').slice(0,80))}</a>
+          <div style="font-size:10px;color:var(--ink-3);margin-top:2px">${esc(company)} · ${a.date||''} · ${a.source||''}</div>
+        </div>`).join('');
+    }catch(e){ el.innerHTML=`<div style="font-size:11px;color:#f87171">Error: ${e.message}</div>`; }
+  };
 
-  /* ── Scenario buttons (one-time build) ── */
+  /* ── Scenario buttons (build once) ── */
   const scenEl=document.getElementById('geo-scen-seg');
   if(scenEl&&!scenEl.children.length){
-    const SCENS=[
-      {id:'taiwan',   label:'⚔️ Taiwan',  nodes:['TSMC','AMAT','KLAC','ASMLHolding','Nvidia'], color:'#ef4444'},
-      {id:'china_ban',label:'🚫 China Ban',nodes:['Nvidia','AMD','Intel','Qualcomm','ASML'],    color:'#f59e0b'},
-      {id:'hbm',      label:'💾 HBM 2027', nodes:['SKHynix','Micron','Samsung','Nvidia'],        color:'#a78bfa'},
-    ];
-    SCENS.forEach(sc=>{
+    [
+      {label:'⚔️ Taiwan', keys:['Taiwan','Taiwán'], detail:'Bloqueo TSMC — impacto global en semiconductores'},
+      {label:'🚫 China Ban', keys:['China'], detail:'Export controls totales — SMIC, Huawei, YMTC'},
+      {label:'💾 HBM Shortage', keys:['Corea','Taiwan'], detail:'Escasez HBM — Nvidia bloqueada, AI servers parados'},
+    ].forEach(sc=>{
       const btn=document.createElement('button');
-      btn.className='chip';
-      btn.style.cssText=`font-size:11px;padding:3px 10px;border:1px solid ${sc.color}40;color:${sc.color};`;
-      btn.textContent=sc.label;
+      btn.className='chip'; btn.textContent=sc.label;
+      btn.style.cssText='font-size:11px;padding:3px 10px;border:1px solid rgba(239,68,68,.4);color:#ef4444;';
+      btn.title=sc.detail;
       btn.onclick=()=>{
-        // Highlight affected nodes in the geo map
-        const affected=new Set(sc.nodes);
-        document.querySelectorAll('.geo-bubble').forEach(el=>{
-          const n=NODE_BY_ID[el.dataset.id];
-          const hit=n&&(affected.has(n.id)||affected.has(n.label));
-          el.style.stroke=hit?sc.color:'';
-          el.style.strokeWidth=hit?'3':'';
-          el.style.filter=hit?`drop-shadow(0 0 6px ${sc.color})`:'';
-          el.style.opacity=hit?'1':'0.2';
+        const keySet=new Set(sc.keys);
+        // Highlight nodes in these regions in the main graph
+        const affectedIds=NODES.filter(n=>keySet.has(n.country||'')).map(n=>n.id);
+        if(affectedIds.length&&typeof activateStress==='function'){
+          activateStress(affectedIds[0]);
+          if(typeof toast==='function') toast(`Simulando: ${sc.label} — ${affectedIds.length} nodos afectados`);
+        }
+        // Also highlight in current card grid
+        document.querySelectorAll('#geo-cards-grid > div').forEach((card,i)=>{
+          const blk=GEO_BLOCKS[i];
+          const affected=blk&&blk.keys.some(k=>sc.keys.includes(k));
+          card.style.opacity=affected?'1':'0.3';
+          card.style.transform=affected?'scale(1.02)':'';
         });
         setTimeout(()=>{
-          document.querySelectorAll('.geo-bubble').forEach(el=>{
-            el.style.stroke=''; el.style.strokeWidth=''; el.style.filter=''; el.style.opacity='';
-          });
+          document.querySelectorAll('#geo-cards-grid > div').forEach(c=>{c.style.opacity='';c.style.transform='';});
         }, 2500);
       };
       scenEl.appendChild(btn);
     });
   }
 
-  /* ── Wire layer buttons → re-render (fixes the tab click bug) ── */
+  /* ── Wire layer tabs → re-render ── */
   if(!renderGeoPanel._layersWired){
     renderGeoPanel._layersWired=true;
     document.querySelectorAll('#geo-layer-seg button').forEach(btn=>{
       btn.onclick=()=>{
         document.querySelectorAll('#geo-layer-seg button').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
-        renderGeoPanel();  // ← re-render with new layer
+        document.getElementById('geo-expanded').style.display='none';
+        renderGeoPanel();
       };
     });
   }
 }
+
 document.querySelectorAll('.tabs .tab').forEach(b=>{ b.onclick=()=>switchTab(b.dataset.tab); });
 
 /* ===================== Mercado en vivo (Marketstack v2) ===================== */
@@ -8272,7 +8246,12 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     if (slider) {
       slider.addEventListener('input', function() {
         label.textContent = this.value;
-        if (_hypergraph) _hypergraph.setYear && _hypergraph.setYear(+this.value);
+        const yr = +this.value;
+        if (label) label.textContent = yr >= (+slider.max||2030) ? 'HOY' : String(yr);
+        if (_hypergraph && _hypergraph.setTimelinePosition) {
+          const pos = (yr - (+slider.min||2015)) / ((+slider.max||2030) - (+slider.min||2015));
+          _hypergraph.setTimelinePosition(Math.max(0, Math.min(1, pos)));
+        }
       });
     }
     const hgAdd = document.getElementById('hg-add');
