@@ -8218,6 +8218,11 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
           _graph3d = new KhipuGraph3D('graph-canvas');
           _graph3d.init();
           _graph3d.loadData(window.NODES || [], window.LINKS || []);
+          // The hypergraph was constructed before _graph3d existed (it captured
+          // null), so re-point its graph reference before draining the queue —
+          // otherwise renderPending() dereferences a null scene and no hyperedge
+          // spheres ever appear.
+          if (_hypergraph) _hypergraph.graph3d = _graph3d;
           _hypergraph?.renderPending();
           window.khipuGraph3D = _graph3d;
           if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
@@ -8604,10 +8609,16 @@ function initSimTab() {
       document.querySelectorAll('.sim-preset-btn').forEach(b => { b.style.borderColor=''; b.style.borderWidth=''; });
       btn.style.borderColor = 'var(--violet)'; btn.style.borderWidth = '2px';
       btn.dataset.active = '1';
+      let scenarioText = '';
       if (window.ScenarioBuilder && ScenarioBuilder.PRESETS) {
         const preset = ScenarioBuilder.PRESETS[btn.dataset.preset];
-        if (preset) document.getElementById('sim-custom-text').value = preset.description || preset.title || btn.dataset.preset;
+        if (preset) scenarioText = preset.description || preset.title || preset.question || '';
       }
+      // Fallback to the button's own descriptive text so the textarea is never
+      // empty — otherwise the auto-run below aborts on the `if(!text)` guard.
+      if (!scenarioText) scenarioText = btn.textContent.replace(/\s+/g, ' ').trim();
+      const txtEl = document.getElementById('sim-custom-text');
+      if (txtEl) txtEl.value = scenarioText;
       clearTimeout(btn._autoRun);
       btn._autoRun = setTimeout(() => {
         document.getElementById('sim-run-btn')?.click();
@@ -8690,35 +8701,61 @@ function _initTermCmdBar() {
 }
 
 function _execTermCmd(cmd) {
-  const lower = cmd.toLowerCase();
+  const lower = cmd.toLowerCase().trim();
+  const NDS = window.NODES || [];
+  const findNode = sym => NDS.find(n =>
+    n.id === sym || n.mkt === sym ||
+    (n.mkt || '').split('·')[0].trim().toUpperCase() === sym ||
+    (n.label || '').toUpperCase() === sym);
+
   // /sim <preset>
-  if (lower.startsWith('/sim ')) {
+  if (lower.startsWith('/sim')) {
     const presetMap = { taiwan: 'taiwan_conflict', china: 'china_chip_ban_total', hbm: 'hbm_shortage_2027', openai: 'openai_ipo_impact', star: 'starshield_reveal' };
     const key = Object.keys(presetMap).find(k => lower.includes(k));
-    if (key) { window.nexusCore?.runPreset(presetMap[key]); return; }
-  }
-  // /geo <region>
-  if (lower.startsWith('/geo')) { switchTab('geo'); return; }
-  // /chart TICKER1 TICKER2 TIMEFRAME
-  if (lower.startsWith('/chart') || lower.match(/[A-Z]{2,5}\s/)) {
-    const tickers = cmd.match(/[A-Z]{2,6}/g) || [];
-    tickers.slice(0,4).forEach((tk,i) => {
-      const n = NODES.find(n => n.mkt === tk || n.id === tk);
-      if (n && _term.cells[i]) { _termLoadCell(_term.cells[i], n.id); }
-    });
+    if (key && window.nexusCore?.runPreset) { window.nexusCore.runPreset(presetMap[key]); return; }
+    if (typeof toast === 'function') toast('Presets: taiwan · china · hbm · openai · star');
     return;
   }
-  // ticker lookup: NVDA, TSMC, etc
-  const tk = cmd.trim().toUpperCase().split(' ')[0];
-  const n = NODES.find(nd => (nd.mkt||'').split('·')[0].trim() === tk || nd.id === tk || nd.label.toUpperCase() === tk);
-  if (n) { window._termLoadToFirstEmpty(n.id); return; }
-  // fallback: open Claude analysis
+  // /geo
+  if (lower.startsWith('/geo')) { switchTab('geo'); return; }
+
+  // /chart TK1 TK2 …  — or 2+ bare uppercase tickers ("NVDA AMD")
+  const upperTickers = cmd.match(/\b[A-Z]{2,6}\b/g) || [];
+  if (lower.startsWith('/chart') || upperTickers.length >= 2) {
+    const syms = (lower.startsWith('/chart')
+      ? (cmd.replace(/\/chart/i, '').match(/\b[A-Z]{2,6}\b/g) || [])
+      : upperTickers);
+    let loaded = 0;
+    syms.slice(0, _term.cells.length || 4).forEach((sym, i) => {
+      const n = findNode(sym);
+      if (n && _term.cells[i] !== undefined) {
+        _termLoadCell(i, n.id, n.mkt || sym, _term.cells[i]?.tf || '1M');
+        loaded++;
+      }
+    });
+    if (!loaded && typeof toast === 'function') toast('Sin tickers reconocidos: ' + syms.join(', '));
+    return;
+  }
+
+  // Single ticker lookup: NVDA, TSMC, "NVDA Equity"…
+  const sym = (cmd.trim().toUpperCase().split(/\s+/)[0]) || '';
+  const n = findNode(sym);
+  if (n) { window._termLoadToFirstEmpty(n.id, n.mkt); return; }
+
+  // Fallback: send to Claude analysis
   switchTab('analysis');
   const ai = document.getElementById('ai-input');
   if (ai) { ai.value = cmd; document.getElementById('ai-ask-btn')?.click(); }
+  else if (typeof toast === 'function') toast('Comando no reconocido: ' + cmd);
 }
 
-window._termLoadToFirstEmpty = function(nodeId) { const emptyCell = _term.cells.find(c => !c.nodeId); if (emptyCell) _termLoadCell(emptyCell, nodeId); else if (_term.cells[0]) _termLoadCell(_term.cells[0], nodeId); };
+window._termLoadToFirstEmpty = function(nodeId, ticker) {
+  const node = (window.NODES || []).find(n => n.id === nodeId);
+  const tk = ticker || node?.mkt || nodeId;
+  let idx = _term.cells.findIndex(c => !c.nodeId);
+  if (idx < 0) idx = 0; // grid full → overwrite first panel
+  _termLoadCell(idx, nodeId, tk, _term.cells[idx]?.tf || '1M');
+};
 
 function _termBuildSidebar() {
   const nodes = (window.NODES || []).filter(n => n.mkt).sort((a,b) => a.label.localeCompare(b.label));
@@ -9211,10 +9248,15 @@ window.nexusCore = {
     switchTab('simulation');
     await new Promise(r => setTimeout(r, 300));
     const btn = document.querySelector(`.sim-preset-btn[data-preset="${presetId}"]`);
-    if (btn) btn.click();
-    // Trigger run after preset is selected
-    await new Promise(r => setTimeout(r, 100));
-    document.getElementById('sim-run-btn')?.click();
+    if (btn) {
+      // Clicking the preset selects it, fills the textarea AND auto-runs
+      // (see the .sim-preset-btn handler). Don't also click sim-run-btn here
+      // or the simulation fires twice.
+      btn.click();
+    } else {
+      await new Promise(r => setTimeout(r, 100));
+      document.getElementById('sim-run-btn')?.click();
+    }
   },
   async runPresetForNode(nodeId, mode) {
     switchTab('simulation');

@@ -10,10 +10,10 @@ class TemporalHypergraph {
     this.graph3d = graph3d;
     this.hyperedges = [];
     this.timeline = [];
-    this.visualObjects = [];   // { sphere, line, he }
+    this.visualObjects = [];   // { he, sphere, wireframeMesh, lines, baseOpacity, visible }
     this.currentPosition = 1.0; // 0=oldest, 1=present
     this.pendingRender = [];   // hyperedges waiting for 3D to be ready
-    this._pulseAnimIds = [];   // requestAnimationFrame IDs for pulse animations
+    this._pulseAnimIds = [];   // cancel functions that stop each pulse loop
   }
 
   addHyperedge(he) {
@@ -63,8 +63,7 @@ class TemporalHypergraph {
     wireframeMesh.position.copy(centroid);
     this.graph3d.scene.add(wireframeMesh);
 
-    this._startPulse(sphere, wireframeMesh, opacity);
-
+    const lines = [];
     affectedMeshes.forEach(m => {
       const geo = new THREE.BufferGeometry().setFromPoints([centroid, m.position]);
       const mat = new THREE.LineBasicMaterial({
@@ -72,8 +71,15 @@ class TemporalHypergraph {
       });
       const line = new THREE.Line(geo, mat);
       this.graph3d.scene.add(line);
-      this.visualObjects.push({ sphere, line, he });
+      lines.push(line);
     });
+
+    // One consolidated visual record per hyperedge (sphere + wireframe + lines).
+    // `visible` gates the pulse so the timeline can hide future events without
+    // the pulse animation immediately overriding the hidden opacity.
+    const record = { he, sphere, wireframeMesh, lines, baseOpacity: opacity, visible: true };
+    this.visualObjects.push(record);
+    this._startPulse(record);
 
     this._flashNodes(he.nodes_affected, color);
   }
@@ -93,22 +99,25 @@ class TemporalHypergraph {
     });
   }
 
-  _startPulse(sphere, wireframeMesh, baseOpacity) {
+  _startPulse(record) {
     const amplitude = 0.04;
     const period = 2000; // ~2 seconds
     const start = performance.now();
     let cancelled = false;
     const animate = (now) => {
       if (cancelled) return;
-      const t = (now - start) / period;
-      const pulse = Math.sin(t * 2 * Math.PI) * amplitude;
-      if (sphere.material) sphere.material.opacity = Math.max(0, baseOpacity + pulse);
-      if (wireframeMesh.material) wireframeMesh.material.opacity = Math.max(0, 0.35 + pulse * 0.5);
+      // Only pulse while the record is visible — otherwise the timeline's
+      // hidden state (opacity 0) would be clobbered every frame.
+      if (record.visible) {
+        const t = (now - start) / period;
+        const pulse = Math.sin(t * 2 * Math.PI) * amplitude;
+        if (record.sphere?.material) record.sphere.material.opacity = Math.max(0, record.baseOpacity + pulse);
+        if (record.wireframeMesh?.material) record.wireframeMesh.material.opacity = Math.max(0, 0.35 + pulse * 0.5);
+      }
       requestAnimationFrame(animate);
     };
     requestAnimationFrame(animate);
     this._pulseAnimIds.push(() => { cancelled = true; });
-    this.visualObjects.push({ sphere, wireframeMesh, _pulse: true });
   }
 
   renderPending() {
@@ -119,10 +128,14 @@ class TemporalHypergraph {
   destroy() {
     this._pulseAnimIds.forEach(cancel => cancel());
     this._pulseAnimIds = [];
+    const scene = this.graph3d?.scene;
     this.visualObjects.forEach(o => {
-      if (o.sphere && this.graph3d?.scene) this.graph3d.scene.remove(o.sphere);
-      if (o.wireframeMesh && this.graph3d?.scene) this.graph3d.scene.remove(o.wireframeMesh);
-      if (o.line && this.graph3d?.scene) this.graph3d.scene.remove(o.line);
+      if (scene) {
+        if (o.sphere) scene.remove(o.sphere);
+        if (o.wireframeMesh) scene.remove(o.wireframeMesh);
+        (o.lines || []).forEach(line => scene.remove(line));
+        if (o.line) scene.remove(o.line); // legacy shape tolerance
+      }
     });
     this.visualObjects = [];
   }
@@ -182,10 +195,11 @@ class TemporalHypergraph {
     this.hyperedges.forEach(he => {
       const heT = new Date(he.timestamp).getTime();
       const visible = heT <= cutoffT;
-      const objs = this.visualObjects.filter(o => o.he.id === he.id);
-      objs.forEach(o => {
-        if (o.sphere) o.sphere.material.opacity = visible ? (0.12 + (he.severity || 5) * 0.02) : 0;
-        if (o.line) o.line.material.opacity = visible ? 0.5 : 0;
+      this.visualObjects.filter(o => o.he && o.he.id === he.id).forEach(o => {
+        o.visible = visible;  // gates the pulse loop
+        if (o.sphere) o.sphere.material.opacity = visible ? o.baseOpacity : 0;
+        if (o.wireframeMesh) o.wireframeMesh.material.opacity = visible ? 0.35 : 0;
+        (o.lines || []).forEach(line => { if (line.material) line.material.opacity = visible ? 0.5 : 0; });
       });
     });
 
