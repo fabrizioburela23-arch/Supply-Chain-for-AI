@@ -1666,6 +1666,13 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           </div>
           <button id="sim-run-btn" data-i18n="sim_run" style="width:100%;margin-top:12px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
         </div>
+        <!-- Hypergraph card -->
+        <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
+          <div class="mkt-sec-head">🕸 Hipergrafos Temporales</div>
+          <p style="font-size:12px;color:var(--ink-3);margin:8px 0">Visualiza eventos históricos como hiper-aristas sobre el grafo 3D con timeline interactivo.</p>
+          <button id="sim-hg-btn" onclick="_activateHypergraph()" style="width:100%;padding:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--violet)">🕸 Activar en Mapa 3D</button>
+          <div id="sim-hg-status" style="font-size:11px;color:var(--ink-3);margin-top:6px;display:none"></div>
+        </div>
         <!-- Portfolio Risk -->
         <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
           <div class="mkt-sec-head">Riesgo de Cartera (VaR/CVaR)</div>
@@ -1697,13 +1704,37 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         </div>
       </div>
       <!-- Simulation output -->
-      <div class="mkt-tablewrap" style="padding:16px;min-height:500px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div class="mkt-sec-head" style="margin:0">Resultados de Simulación</div>
-          <div id="sim-status" style="font-size:11px;padding:4px 10px;border-radius:12px;background:var(--surface-2);color:var(--ink-3)">Sin ejecutar</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <!-- Aladdin preflight card -->
+        <div id="sim-preflight-card" style="display:none" class="mkt-tablewrap">
+          <div style="padding:14px 16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div style="font-size:13px;font-weight:700;color:var(--ink-1)">⚡ Análisis Pre-vuelo</div>
+              <div id="sim-pf-status" style="font-size:10px;padding:3px 9px;border-radius:12px;background:rgba(96,165,250,.15);color:#60a5fa;font-weight:600">Aladdin 2.0</div>
+            </div>
+            <div id="sim-pf-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"></div>
+            <div id="sim-pf-nodes" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px"></div>
+            <div id="sim-pf-insight" style="display:none;margin-top:10px;padding:10px;background:var(--surface-2);border-radius:6px;font-size:12px;color:var(--ink-2);line-height:1.5;border-left:3px solid #60a5fa"></div>
+          </div>
         </div>
-        <div id="sim-output" style="font-size:13px;color:var(--ink-3);padding:20px 0;text-align:center">
-          Selecciona un escenario y pulsa ▶ para iniciar la simulación multi-agente
+        <!-- Main results -->
+        <div class="mkt-tablewrap" style="padding:16px;min-height:500px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="mkt-sec-head" style="margin:0">Resultados de Simulación</div>
+            <div id="sim-status" style="font-size:11px;padding:4px 10px;border-radius:12px;background:var(--surface-2);color:var(--ink-3)">Sin ejecutar</div>
+          </div>
+          <div id="sim-output" style="font-size:13px;color:var(--ink-3);padding:20px 0;text-align:center">
+            Selecciona un escenario y pulsa ▶ para iniciar la simulación multi-agente
+          </div>
+          <!-- MiroFish report chat -->
+          <div id="sim-report-chat" style="display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+            <div class="mkt-sec-head" style="margin-bottom:8px">💬 Chat con el Informe</div>
+            <div id="sim-chat-msgs" style="max-height:200px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:8px"></div>
+            <div style="display:flex;gap:8px">
+              <input id="sim-chat-input" type="text" placeholder="Pregunta sobre el informe..." style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;font-family:inherit">
+              <button id="sim-chat-send" style="padding:8px 14px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Enviar</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -9789,6 +9820,289 @@ window.loadTradeFlows = loadTradeFlows;
   window.setTradeSide = window.setTradePanelSide;
   window.updateTradeEstimate = window.updateTradePanelRisk;
   window.submitTradeOrder = window.submitTradePanelOrder;
+})();
+</script>
+
+<!-- ===== Aladdin 2.0 — Preflight & Hypergraph ===== -->
+<script>
+(function(){
+'use strict';
+
+/* ── Preflight debounce wiring ── */
+let _pfTimer = null;
+let _pfCurrentText = '';
+let _pfReportId = null;   // MiroFish report ID for chat
+
+function _simWirePreflight() {
+  const ta = document.getElementById('sim-custom-text');
+  if (!ta || ta._pfWired) return;
+  ta._pfWired = true;
+  ta.addEventListener('input', () => {
+    clearTimeout(_pfTimer);
+    const text = ta.value.trim();
+    if (text.length < 10) { _hidePreflight(); return; }
+    _pfTimer = setTimeout(() => _runPreflight(text), 750);
+  });
+}
+
+function _hidePreflight() {
+  const card = document.getElementById('sim-preflight-card');
+  if (card) card.style.display = 'none';
+}
+
+/* ── Core preflight analysis (client-side BFS) ── */
+async function _runPreflight(text) {
+  const card = document.getElementById('sim-preflight-card');
+  const body = document.getElementById('sim-pf-body');
+  const nodesEl = document.getElementById('sim-pf-nodes');
+  const insightEl = document.getElementById('sim-pf-insight');
+  if (!card) return;
+  card.style.display = 'block';
+  body.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--ink-3);padding:10px;font-size:12px">Analizando escenario…</div>';
+  nodesEl.innerHTML = '';
+  insightEl.style.display = 'none';
+
+  // 1. Find nodes mentioned in text
+  const textLower = text.toLowerCase();
+  const mentioned = (window.NODES || []).filter(n => {
+    if (textLower.includes(n.label.toLowerCase())) return true;
+    if (n.id && textLower.includes(n.id.toLowerCase())) return true;
+    if (n.mkt && textLower.includes(n.mkt.toLowerCase())) return true;
+    return false;
+  });
+
+  // 2. BFS cascade up to 3 hops
+  const linkMap = {};
+  (window.LINKS || []).forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    (linkMap[s] = linkMap[s] || []).push(t);
+    (linkMap[t] = linkMap[t] || []).push(s);
+  });
+  const affected = new Set(mentioned.map(n => n.id));
+  let frontier = mentioned.map(n => n.id);
+  for (let hop = 0; hop < 3; hop++) {
+    const next = [];
+    frontier.forEach(id => {
+      (linkMap[id] || []).forEach(nb => { if (!affected.has(nb)) { affected.add(nb); next.push(nb); } });
+    });
+    frontier = next;
+    if (!frontier.length) break;
+  }
+  const affectedNodes = [...affected].map(id => (window.NODE_BY_ID||{})[id]).filter(Boolean);
+
+  // 3. Compute metrics
+  const cats = {};
+  affectedNodes.forEach(n => cats[n.cat] = (cats[n.cat]||0)+1);
+  const topCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const portfolioExposed = affectedNodes.filter(n => (window.MKT?.pos||{})[n.id]?.sh > 0);
+  const nrsScores = affectedNodes.map(n => typeof computeNRS === 'function' ? computeNRS(n.id) : 50);
+  const avgNRS = nrsScores.length ? Math.round(nrsScores.reduce((a,b)=>a+b,0)/nrsScores.length) : 50;
+  const contextTokens = Math.ceil(text.length / 4) + affectedNodes.length * 12;
+  const totalTokens = Math.round(contextTokens * 2.2);
+  const costUsd = totalTokens * 0.00000025;
+
+  // 4. Render stats
+  const nrsColor = avgNRS < 40 ? '#f87171' : avgNRS < 65 ? '#f59e0b' : '#34d399';
+  body.innerHTML = [
+    { label: 'Nodos afectados', value: affectedNodes.length, sub: `${mentioned.length} directos · ${affectedNodes.length-mentioned.length} cascada`, color: '#60a5fa' },
+    { label: 'NRS promedio', value: avgNRS, sub: 'Resiliencia de nodos afectados', color: nrsColor },
+    { label: 'Posiciones expuestas', value: portfolioExposed.length, sub: portfolioExposed.length ? portfolioExposed.map(n=>n.label).slice(0,2).join(', ')+'…' : 'Sin posiciones abiertas', color: portfolioExposed.length ? '#f59e0b' : 'var(--ink-3)' },
+    { label: 'Tokens estimados', value: totalTokens >= 1000 ? (totalTokens/1000).toFixed(1)+'K' : totalTokens, sub: `~$${costUsd < 0.01 ? costUsd.toFixed(4) : costUsd.toFixed(2)} USD`, color: 'var(--ink-2)' },
+    { label: 'Tiempo estimado', value: affectedNodes.length > 80 ? '2-4 min' : '1-2 min', sub: window.SERVER_MODE ? 'con MiroFish/Claude' : 'modo Claude', color: 'var(--ink-2)' },
+    { label: 'Categorías', value: topCats.length, sub: topCats.map(([c,n])=>`${c.replace(/_/g,' ')} (${n})`).slice(0,2).join(' · '), color: '#a78bfa' },
+  ].map(m => `<div style="padding:10px;background:var(--surface-2);border-radius:8px">
+    <div style="font-size:10px;color:var(--ink-3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${m.label}</div>
+    <div style="font-size:20px;font-weight:800;color:${m.color}">${m.value}</div>
+    <div style="font-size:10px;color:var(--ink-3);margin-top:2px;line-height:1.3">${m.sub}</div>
+  </div>`).join('');
+
+  // 5. Top affected node chips
+  const topNodes = affectedNodes
+    .sort((a,b) => (typeof computeNRS==='function' ? computeNRS(a.id) - computeNRS(b.id) : 0))
+    .slice(0, 12);
+  nodesEl.innerHTML = `<div style="width:100%;font-size:10px;color:var(--ink-3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em">Nodos más expuestos</div>` +
+    topNodes.map(n => {
+      const nrs = typeof computeNRS==='function' ? computeNRS(n.id) : 50;
+      const col = nrs < 35 ? '#f87171' : nrs < 60 ? '#f59e0b' : '#34d399';
+      return `<span onclick="switchTab('map');setTimeout(()=>jumpTo('${n.id}'),80)"
+        style="font-size:11px;padding:3px 9px;background:var(--surface-2);border:1px solid var(--line);
+        border-radius:12px;cursor:pointer;color:var(--ink-2);border-left:3px solid ${col}"
+        title="NRS: ${nrs}">${n.label}</span>`;
+    }).join('');
+
+  // 6. Optional AI insight (async, non-blocking)
+  _fetchPreflightInsight(text, affectedNodes.length, avgNRS, topCats);
+}
+
+async function _fetchPreflightInsight(text, nodeCount, avgNRS, topCats) {
+  const insightEl = document.getElementById('sim-pf-insight');
+  if (!insightEl) return;
+  if (!window.SERVER_MODE) return; // skip in standalone (no key available here)
+
+  try {
+    const catStr = topCats.map(([c,n])=>`${c}(${n})`).join(', ');
+    const prompt = `Semiconductor/AI/space supply chain scenario:\n"${text.slice(0,300)}"\n\nGraph impact: ${nodeCount} nodes affected, avg NRS resilience ${avgNRS}/100, categories: ${catStr}.\n\nIn 2 sentences: what is the primary risk vector and which node category is most exposed?`;
+    const r = await fetch('/api/ai/analyze', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: 'You are a supply chain risk analyst. Reply in exactly 2 sentences.', prompt, max_tokens: 120 })
+    });
+    const d = await r.json();
+    if (d.result) {
+      insightEl.style.display = 'block';
+      insightEl.textContent = '💡 ' + d.result;
+    }
+  } catch {}
+}
+
+/* ── Hypergraph activation ── */
+window._activateHypergraph = function() {
+  const status = document.getElementById('sim-hg-status');
+  if (status) { status.style.display = 'block'; status.textContent = 'Activando…'; }
+
+  switchTab('map');
+
+  setTimeout(() => {
+    try {
+      const g3d = window._graph3d;
+      if (!window.TemporalHypergraph) {
+        if (status) status.textContent = '⚠ hypergraph.js no cargado';
+        return;
+      }
+      if (!window._hypergraph) {
+        if (!g3d) {
+          // Trigger 3D mode first
+          const btn3d = document.getElementById('btn-3d');
+          if (btn3d) btn3d.click();
+          setTimeout(() => window._activateHypergraph(), 600);
+          return;
+        }
+        window._hypergraph = new TemporalHypergraph(g3d);
+      }
+      window._hypergraph.seedHistoricalEvents();
+      _showHypergraphTimeline();
+      if (status) { status.style.display = 'block'; status.textContent = '✓ Activo — eventos históricos cargados (ver Mapa 3D)'; status.style.color='#34d399'; }
+    } catch(e) {
+      if (status) { status.textContent = 'Error: ' + e.message; status.style.color='#f87171'; }
+    }
+  }, 350);
+};
+
+function _showHypergraphTimeline() {
+  if (document.getElementById('hg-timeline-ctrl')) return;
+  const ctrl = document.createElement('div');
+  ctrl.id = 'hg-timeline-ctrl';
+  ctrl.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:800;background:rgba(8,14,28,.92);border:1px solid rgba(80,130,200,.35);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:14px;backdrop-filter:blur(10px);min-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.4)';
+  ctrl.innerHTML = `
+    <span style="font-size:12px;font-weight:700;color:#60a5fa;white-space:nowrap">🕸 Hipergrafos</span>
+    <input id="hg-timeline-slider" type="range" min="0" max="100" value="100" style="flex:1;accent-color:#a78bfa">
+    <span id="hg-year-label" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#a78bfa;min-width:48px;text-align:center">HOY</span>
+    <button onclick="window._hypergraph&&window._hypergraph.playTimeline()" title="Reproducir timeline"
+      style="background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">▶</button>
+    <button onclick="document.getElementById('hg-timeline-ctrl').remove()" title="Cerrar"
+      style="background:none;border:none;color:rgba(150,170,220,.5);font-size:16px;cursor:pointer;padding:0">✕</button>`;
+  document.body.appendChild(ctrl);
+
+  document.getElementById('hg-timeline-slider').addEventListener('input', function() {
+    if (window._hypergraph) window._hypergraph.setTimelinePosition(this.value / 100);
+  });
+}
+
+/* ── Simulation result renderer (structured output + MiroFish chat) ── */
+window._renderSimResult = function(data, mode) {
+  const output = document.getElementById('sim-output');
+  const status = document.getElementById('sim-status');
+  if (!output) return;
+
+  if (mode === 'mirofish' && data.report) {
+    _pfReportId = data.report_id || null;
+    const report = data.report;
+    output.innerHTML = `
+      <div style="text-align:left">
+        <div style="font-size:14px;font-weight:700;color:var(--ink-1);margin-bottom:12px">${report.title || 'Informe de Simulación'}</div>
+        <div style="font-size:13px;color:var(--ink-2);line-height:1.7;white-space:pre-wrap">${report.content || report.summary || JSON.stringify(report,null,2)}</div>
+        ${data.cascade_nodes?.length ? `
+        <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
+          <div style="font-size:11px;color:var(--ink-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Nodos en cascada</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            ${data.cascade_nodes.slice(0,15).map(id=>{const n=(window.NODE_BY_ID||{})[id];return n?`<span onclick="jumpTo('${id}');switchTab('map')" style="font-size:11px;padding:3px 9px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;cursor:pointer;color:var(--ink-2)">${n.label}</span>`:''}).join('')}
+          </div>
+        </div>` : ''}
+      </div>`;
+    // Wire chat
+    if (_pfReportId) {
+      const chatEl = document.getElementById('sim-report-chat');
+      if (chatEl) {
+        chatEl.style.display = 'block';
+        document.getElementById('sim-chat-send').onclick = _sendReportChat;
+        document.getElementById('sim-chat-input').onkeydown = e => { if(e.key==='Enter') _sendReportChat(); };
+      }
+    }
+    if (status) { status.textContent = '✓ MiroFish completo'; status.style.color='#34d399'; }
+
+    // Build hyperedge from simulation result
+    _ingestSimAsHyperedge(data);
+  } else if (mode === 'claude' && data.text) {
+    output.innerHTML = `<div style="text-align:left;font-size:13px;color:var(--ink-2);line-height:1.75;white-space:pre-wrap">${data.text}</div>`;
+    if (status) { status.textContent = '✓ Claude completo'; status.style.color='#34d399'; }
+  }
+};
+
+async function _sendReportChat() {
+  if (!_pfReportId) return;
+  const input = document.getElementById('sim-chat-input');
+  const msgs = document.getElementById('sim-chat-msgs');
+  const msg = (input?.value||'').trim();
+  if (!msg) return;
+  input.value = '';
+  msgs.insertAdjacentHTML('beforeend', `<div style="font-size:12px;color:var(--ink-2);padding:6px 10px;background:rgba(96,165,250,.08);border-radius:6px;align-self:flex-end;max-width:90%">${msg}</div>`);
+  msgs.insertAdjacentHTML('beforeend', `<div id="chat-thinking" style="font-size:12px;color:var(--ink-3);padding:6px;font-style:italic">Pensando…</div>`);
+  msgs.scrollTop = msgs.scrollHeight;
+  try {
+    const r = await fetch('/api/mirofish/report/chat', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ report_id: _pfReportId, message: msg }) });
+    const d = await r.json();
+    document.getElementById('chat-thinking')?.remove();
+    const reply = d.data?.response || d.response || JSON.stringify(d);
+    msgs.insertAdjacentHTML('beforeend', `<div style="font-size:12px;color:var(--ink-1);padding:6px 10px;background:var(--surface-2);border-radius:6px;max-width:92%;line-height:1.55">${reply}</div>`);
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch(e) {
+    document.getElementById('chat-thinking')?.remove();
+    msgs.insertAdjacentHTML('beforeend', `<div style="font-size:12px;color:#f87171">Error: ${e.message}</div>`);
+  }
+}
+
+function _ingestSimAsHyperedge(simData) {
+  if (!window.TemporalHypergraph) return;
+  try {
+    if (!window._hypergraph) return;
+    const he = {
+      id: 'he_sim_' + Date.now(),
+      type: 'simulation',
+      timestamp: new Date().toISOString(),
+      title: simData.scenario_title || 'Simulación MiroFish',
+      description: (simData.report?.summary || '').slice(0, 200),
+      severity: 7,
+      nodes_affected: (simData.cascade_nodes || []).slice(0, 20),
+      node_impacts: {},
+      duration_days: 90,
+    };
+    if (he.nodes_affected.length >= 2) window._hypergraph.addHyperedge(he);
+  } catch {}
+}
+
+/* ── Wire preflight when sim tab activates ── */
+const _origInitSimTab = window.initSimTab;
+window.initSimTab = function() {
+  _origInitSimTab && _origInitSimTab();
+  setTimeout(_simWirePreflight, 100);
+};
+
+// Also wire immediately if sim tab was already inited
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(_simWirePreflight, 1500);
+});
+
 })();
 </script>
 
