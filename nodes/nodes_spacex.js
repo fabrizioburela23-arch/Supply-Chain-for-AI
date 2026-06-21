@@ -2,7 +2,7 @@
 
 const NODES_SPACEX = [
 
-{"id":"SpaceX","label":"SpaceX","ticker":"Pre-IPO ~$350B (Musk)","cat":"space_launch",
+{"id":"SpaceX","label":"SpaceX","ticker":"No cotiza · privada ~$350B (Musk)","cat":"space_launch",
 "port":"","preipo":true,"big":true,
 "role":"Mayor empresa privada de lanzamiento espacial; opera Starlink (6,000+ satélites LEO), Starshield (defensa) y desarrolla Starship para colonización lunar/marciana.",
 "role_en":"World's largest private launch company; operates Starlink (6,000+ LEO satellites), Starshield (defense) and develops Starship for lunar/Martian colonization.",

@@ -1568,7 +1568,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <section id="geo-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
   <div style="max-width:1320px;margin:0 auto;padding:24px 24px 40px">
     <h2 id="geo-title" style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
-    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">La cadena de valor ordenada por geografía · clic en un país o empresa · simula shocks y capas de inversión/noticias</p>
+    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Cadena de valor global · tamaño = cap. de mercado · borde rojo = riesgo crítico · clic → grafo · <span style="color:#f59e0b;font-size:11px">⚡ datos 2025-2026, verifica tickers en tiempo real</span></p>
 
     <div style="display:flex;flex-wrap:wrap;gap:16px 22px;align-items:center;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px">
@@ -1591,8 +1591,9 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 350px;gap:16px;align-items:start">
-      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden">
-        <div id="geo-hero" style="width:100%;min-height:520px"></div>
+      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;min-height:520px">
+        <canvas id="geo-world-bg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
+        <div id="geo-hero" style="position:relative;width:100%;min-height:520px;z-index:1;background:transparent"></div>
         <div id="geo-hero-legend" style="position:absolute;left:14px;bottom:12px;display:flex;gap:14px;flex-wrap:wrap;pointer-events:none;font-size:10.5px;color:var(--ink-2);background:rgba(10,14,20,.5);backdrop-filter:blur(4px);padding:6px 11px;border-radius:8px"></div>
         <div id="geo-hero-tip" style="position:absolute;pointer-events:none;display:none;z-index:5;background:rgba(12,17,24,.94);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:11.5px;max-width:230px"></div>
       </div>
@@ -5276,10 +5277,42 @@ function renderDetail(id){
       ${connHTML(downstream,'down')}
       ${(!upstream.length&&!downstream.length)?`<p style="font-size:12px;color:var(--ink-3)">${t('d_noconn')}</p>`:''}
     </div>
-    ${d.mkt && !isPreipoTicker(d.mkt) ? `
-    <div style="padding:0 16px 10px">
-      <button onclick="openTradeModal('${id}','${d.mkt}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #22c55e;border-radius:6px;background:none;color:#22c55e;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(34,197,94,.12)'" onmouseout="this.style.background='none'">💹 Operar ${esc(d.label)}</button>
-    </div>` : ''}
+    ${(()=>{
+      const ip=typeof INVEST_PATH!=='undefined'?INVEST_PATH[id]:null;
+      // Direct ticker
+      if(d.mkt && !isPreipoTicker(d.mkt)){
+        const hasProxy = ip && ip.parent && ip.ticker === d.mkt;
+        const parentNote = hasProxy ? `<div style="font-size:10px;color:#7a9cc4;margin-top:4px">Vía ${ip.parent} · ${ip.note}</div>` : '';
+        return `<div style="padding:0 16px 10px">
+          <button onclick="openTradeModal('${id}','${d.mkt}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #22c55e;border-radius:6px;background:none;color:#22c55e;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(34,197,94,.12)'" onmouseout="this.style.background='none'">💹 Operar ${d.mkt} ${hasProxy?'('+ip.parent+')':''}</button>
+          ${parentNote}
+        </div>`;
+      }
+      // No direct ticker but has invest path
+      if(ip){
+        if(ip.ticker){
+          return `<div style="padding:0 16px 10px">
+            <div style="font-size:10px;color:#f59e0b;margin-bottom:6px;font-weight:600">⚡ Inversión indirecta disponible</div>
+            <button onclick="openTradeModal('${id}','${ip.ticker}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #f59e0b;border-radius:6px;background:none;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(245,158,11,.1)'" onmouseout="this.style.background='none'">📊 Operar vía ${ip.parent} (${ip.ticker})</button>
+            <div style="font-size:10px;color:#7a9cc4;margin-top:5px;line-height:1.4">${ip.note}</div>
+          </div>`;
+        }
+        if(ip.etf){
+          return `<div style="padding:0 16px 10px">
+            <div style="font-size:10px;color:#7a9cc4;margin-bottom:6px;font-weight:600">📡 Exposición vía ETF</div>
+            <button onclick="openTradeModal('${id}','${ip.etf}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #7a9cc4;border-radius:6px;background:none;color:#7a9cc4;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(122,156,196,.1)'" onmouseout="this.style.background='none'">📊 ${ip.etfName} (${ip.etf})</button>
+            <div style="font-size:10px;color:#5b8ab8;margin-top:5px;line-height:1.4">${ip.note}</div>
+          </div>`;
+        }
+        return `<div style="padding:0 16px 10px;font-size:10.5px;color:var(--ink-3);line-height:1.5;background:rgba(20,25,38,.4);border-radius:6px;border:1px solid var(--line)">
+          <div style="font-weight:600;color:var(--ink-2);margin-bottom:3px">Empresa privada / Pre-IPO</div>
+          ${ip.note}
+        </div>`;
+      }
+      // Pre-IPO without path
+      if(d.preipo) return `<div style="padding:0 16px 10px;font-size:10.5px;color:var(--ink-3)">Empresa privada · No cotiza en bolsa actualmente</div>`;
+      return '';
+    })()}
     ${stressId===id
       ? `<button class="stress-btn" onclick="clearStressBtn()">⟲ ${t('d_restore')}</button>`
       : `<button class="stress-btn" onclick="stressBtn('${d.id}')">💥 ${t('d_collapse')} ${esc(d.label)}</button>`}
@@ -6146,80 +6179,143 @@ const GEO_REGIONS={
   korea: {es:'Corea del Sur',   en:'South Korea',   tint:'#6B5DD3'},
   row:   {es:'Resto del mundo', en:'Rest of World', tint:'#8A857A'},
 };
+/* ── World map drawing ── */
+function _drawWorldMap(ctx, W, H) {
+  ctx.clearRect(0,0,W,H);
+  // Ocean
+  ctx.fillStyle='#060c18'; ctx.fillRect(0,0,W,H);
+  // Graticule
+  ctx.strokeStyle='rgba(40,80,140,.07)'; ctx.lineWidth=0.5;
+  for(let lng=-180;lng<=180;lng+=30){const x=(lng+180)/360*W;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let lat=-90;lat<=90;lat+=30){const y=(90-lat)/180*H;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // Continent polygons [lng,lat] (very simplified)
+  const CONT=[
+    [[-168,71],[-52,71],[-52,15],[-83,9],[-105,9],[-120,21],[-125,49],[-168,49]], // N.America
+    [[-82,12],[-35,12],[-35,-56],[-76,-56],[-82,12]],  // S.America
+    [[-11,72],[40,72],[40,36],[-11,36]],                 // Europe
+    [[-17,37],[51,37],[51,-34],[-17,-34]],               // Africa
+    [[25,72],[145,72],[145,5],[55,5],[55,37],[25,37]],   // Asia
+    [[113,-10],[153,-10],[153,-44],[113,-44]],            // Australia
+  ];
+  ctx.fillStyle='rgba(18,42,28,.35)'; ctx.strokeStyle='rgba(40,100,60,.18)'; ctx.lineWidth=0.7;
+  CONT.forEach(pts=>{
+    ctx.beginPath();
+    pts.forEach(([lng,lat],i)=>{const x=(lng+180)/360*W,y=(90-lat)/180*H;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  });
+  // Key country highlights
+  const CTRY=[
+    {box:[-130,50,-60,24],color:'rgba(46,111,183,.12)'},   // USA
+    {box:[-12,72,40,35],color:'rgba(95,107,82,.10)'},        // Europe
+    {box:[72,54,135,18],color:'rgba(200,57,47,.10)'},        // China+E.Asia
+    {box:[119,26,123,22],color:'rgba(24,160,90,.15)'},       // Taiwan
+    {box:[128,38,131,33],color:'rgba(107,93,211,.12)'},      // Korea
+    {box:[130,45,145,31],color:'rgba(194,24,91,.10)'},       // Japan
+  ];
+  CTRY.forEach(({box:[x1,y1,x2,y2],color})=>{
+    const px=(x1+180)/360*W, py=(90-y1)/180*H;
+    const pw=(x2-x1)/360*W, ph=(y1-y2)/180*H;
+    ctx.fillStyle=color; ctx.fillRect(px,py,pw,ph);
+  });
+}
+
 function renderGeoPanel(){
+  /* ── Country → lat/lng centers ── */
+  const CTRLNGLAT={
+    EEUU:[-98,39],      Europa:[10,50],      Japón:[138,37],    Japon:[138,37],
+    Corea:[128,36],     Taiwán:[121,24],     Taiwan:[121,24],   China:[105,35],
+    Israel:[35,31],     India:[77,20],       ReinoUnido:[-3,55],Alemania:[10,51],
+    Francia:[2,46],     PaisesBajos:[5,52],  RestoEuropa:[20,48],RestoMundo:[20,20],
+  };
+  const svgW=960, svgH=520;
+  const proj=(lng,lat)=>({x:(lng+180)/360*svgW, y:(90-lat)/180*svgH});
+
+  /* ── Draw world map background ── */
+  const bg=document.getElementById('geo-world-bg');
+  if(bg){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const W=bg.parentElement.offsetWidth||svgW, H=svgH;
+    bg.width=W*dpr; bg.height=H*dpr; bg.style.height=H+'px';
+    const ctx=bg.getContext('2d'); ctx.scale(dpr,dpr);
+    _drawWorldMap(ctx,W,H);
+  }
+
+  /* ── Group nodes by country ── */
   const inDeg={};
   LINKS.forEach(l=>{ const tg=lid(l.target); inDeg[tg]=(inDeg[tg]||0)+1; });
   const riskScore={critical:4,high:3,medium:2,low:1};
-
-  /* burbujas por región */
-  const groups={usa:[],europe:[],china:[],taiwan:[],japan:[],korea:[],row:[]};
+  const countryGroups={};
   NODES.forEach(n=>{
+    const country=n.country||'RestoMundo';
+    if(!countryGroups[country]) countryGroups[country]=[];
     const meta=NODE_META[n.id]||{};
     const cap=(typeof meta.mktcap_b==='number')?meta.mktcap_b:1;
-    const r=Math.max(6,Math.min(40,Math.sqrt(cap)*2.5));
-    groups[GEO_REGION_OF[n.country]||'row'].push({n,r,risk:meta.risk||'low',meta});
+    const r=Math.max(4,Math.min(20,Math.sqrt(cap)*1.7));
+    countryGroups[country].push({n,r,risk:meta.risk||'low',meta});
   });
-  const pad=10, labelH=26;
-  function pack(items,w){
+
+  /* ── Circle-pack each country cluster, center at origin ── */
+  function packGroup(items){
     items.sort((a,b)=>b.r-a.r);
-    let x=pad, y=pad+labelH, rowH=0;
+    const cols=Math.max(1,Math.ceil(Math.sqrt(items.length*1.4)));
+    const colW=items.length>0?(items[0].r*2+5):20;
+    let x=0,y=0,rowH=0;
     items.forEach(it=>{
-      if(x+it.r*2>w-pad){ x=pad; y+=rowH+6; rowH=0; }
-      it.x=x+it.r; it.y=y+it.r; x+=it.r*2+6; rowH=Math.max(rowH,it.r*2);
+      if(x+it.r*2>cols*colW){x=0;y+=rowH+5;rowH=0;}
+      it.lx=x+it.r; it.ly=y+it.r; x+=it.r*2+5; rowH=Math.max(rowH,it.r*2);
     });
-    return y+rowH+pad;
+    const totalW=cols*colW, totalH=y+rowH;
+    items.forEach(it=>{it.lx-=totalW/2; it.ly-=totalH/2;});
   }
-  const COLS=[['usa'],['europe','row'],['china','taiwan'],['japan','korea']];
-  const COLW=[310,240,240,240], COLGAP=14;
-  const boxes={};
-  COLS.forEach((col,ci)=>{
-    let y=0;
-    const x=COLW.slice(0,ci).reduce((a,b)=>a+b,0)+ci*COLGAP;
-    col.forEach(rk=>{
-      const h=Math.max(74,pack(groups[rk],COLW[ci]));
-      boxes[rk]={x,y,w:COLW[ci],h};
-      y+=h+COLGAP;
-    });
-  });
-  const svgW=COLW.reduce((a,b)=>a+b,0)+COLGAP*(COLS.length-1);
-  const svgH=Math.max(...COLS.map((col,ci)=>col.reduce((a,rk)=>a+boxes[rk].h,0)+(col.length-1)*COLGAP));
-  const langKey=LANG==='en'?'en':'es';
-  let svg='<svg width="100%" viewBox="0 0 '+svgW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg">';
-  Object.entries(boxes).forEach(([rk,b])=>{
-    const reg=GEO_REGIONS[rk];
-    svg+=`<rect class="geo-region-rect" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="14" style="stroke:${reg.tint};stroke-opacity:.45"/>`;
-    svg+=`<text class="geo-region-label" x="${b.x+12}" y="${b.y+19}" font-size="14" style="fill:${reg.tint}">${reg[langKey]} <tspan font-size="10" style="fill:var(--ink-3)" font-family="JetBrains Mono,monospace">${groups[rk].length}</tspan></text>`;
-    groups[rk].forEach(it=>{
-      const stroke=it.risk==='critical'?'var(--danger)':it.risk==='high'?'var(--gold)':'none';
+  Object.values(countryGroups).forEach(packGroup);
+
+  /* ── Build SVG ── */
+  let svg=`<svg width="100%" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
+
+  // Country label + bubble cluster per country
+  Object.entries(countryGroups).forEach(([country,items])=>{
+    const ll=CTRLNGLAT[country]||CTRLNGLAT.RestoMundo;
+    const {x:cx,y:cy}=proj(ll[0],ll[1]);
+    const tint=GEO_REGIONS[GEO_REGION_OF[country]||'row']?.tint||'#7a9cc4';
+    const cnt=items.length;
+    // label
+    svg+=`<text x="${cx.toFixed(0)}" y="${(cy-32).toFixed(0)}" text-anchor="middle" font-size="10" font-weight="700" fill="${tint}" font-family="Archivo,sans-serif" pointer-events="none" opacity=".8">${esc(country)} <tspan font-weight="400" opacity=".6">${cnt}</tspan></text>`;
+    // bubbles
+    items.forEach(it=>{
+      const bx=(cx+it.lx).toFixed(1), by=(cy+it.ly).toFixed(1);
+      const stroke=it.risk==='critical'?'#ef4444':it.risk==='high'?'#f59e0b':'none';
       const sw=it.risk==='critical'?2:it.risk==='high'?1.5:0;
-      svg+=`<circle class="geo-bubble" data-id="${it.n.id}" cx="${b.x+it.x}" cy="${b.y+it.y}" r="${it.r}" fill="${catColor(it.n.cat)}" fill-opacity=".85" stroke="${stroke}" stroke-width="${sw}"></circle>`;
-      if(it.r>=15) svg+=`<text x="${b.x+it.x}" y="${b.y+it.y+3}" text-anchor="middle" font-size="${Math.min(11,it.r*.5)}" font-weight="600" fill="#fff" pointer-events="none" font-family="Archivo,sans-serif">${esc(it.n.label.slice(0,Math.floor(it.r/3)))}</text>`;
+      svg+=`<circle class="geo-bubble" data-id="${it.n.id}" cx="${bx}" cy="${by}" r="${it.r}" fill="${catColor(it.n.cat)}" fill-opacity=".88" stroke="${stroke}" stroke-width="${sw}" style="cursor:pointer;transition:r .15s" onclick="window._geoClick('${it.n.id}')" onmouseenter="window._geoEnter(event,'${it.n.id}')" onmouseleave="window._geoLeave()"></circle>`;
+      if(it.r>=13) svg+=`<text x="${bx}" y="${(parseFloat(by)+3.5).toFixed(1)}" text-anchor="middle" font-size="${Math.min(9,it.r*.5)}" font-weight="600" fill="#fff" pointer-events="none" font-family="Archivo,sans-serif">${esc(it.n.label.slice(0,Math.floor(it.r/3)+1))}</text>`;
     });
   });
   svg+='</svg>';
   document.getElementById('geo-hero').innerHTML=svg;
 
-  /* interacción burbujas: tooltip + salto al mapa */
-  document.querySelectorAll('#geo-hero .geo-bubble').forEach(c=>{
-    const id=c.dataset.id, n=NODE_BY_ID[id], meta=NODE_META[id]||{};
-    c.addEventListener('click',()=>{ tooltipEl.style.display='none'; goMap(id); });
-    c.addEventListener('mouseenter',ev=>{
-      tooltipEl.style.display='block';
-      tooltipEl.innerHTML=`
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-          <span style="width:10px;height:10px;border-radius:50%;background:${catColor(n.cat)};flex-shrink:0"></span>
-          <strong>${esc(n.label)}</strong>
-        </div>
-        <div style="font-size:11px;color:var(--ink-2)">${meta.mktcap_b&&typeof meta.mktcap_b==='number'?'$'+meta.mktcap_b+'B':t('b_priv')}</div>
-        ${meta.risk?`<div style="font-size:10px;margin-top:3px;font-weight:600;text-transform:uppercase;color:${meta.risk==='critical'?'var(--danger)':meta.risk==='high'?'var(--gold)':'var(--ink-3)'}">⚠ ${t('tt_risk')}: ${esc(meta.risk)}</div>`:''}
-      `;
-      positionTooltip(ev);
-    });
-    c.addEventListener('mousemove',positionTooltip);
-    c.addEventListener('mouseleave',()=>{ tooltipEl.style.display='none'; });
-  });
+  /* ── Inline interaction handlers (reliable in dynamic SVG) ── */
+  window._geoClick=function(id){ goMap(id); };
+  window._geoEnter=function(ev,id){
+    const n=NODE_BY_ID[id]; if(!n) return;
+    const meta=NODE_META[id]||{};
+    const q=(typeof MKT!=='undefined'&&n.mkt)?MKT.quotes[n.mkt]:null;
+    const price=q&&q.close!=null?'$'+Number(q.close).toFixed(2):'';
+    const tip=document.getElementById('geo-hero-tip');
+    if(!tip) return;
+    tip.style.display='block';
+    tip.innerHTML=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span style="width:9px;height:9px;border-radius:50%;background:${catColor(n.cat)};flex-shrink:0"></span><strong>${esc(n.label)}</strong></div>`
+      +(n.mkt?`<div style="font-size:10px;font-family:monospace;color:#5b8ab8;margin-bottom:3px">${n.mkt}${price?' · '+price:''}</div>`:'')
+      +`<div style="font-size:10.5px;color:var(--ink-2)">${meta.mktcap_b&&typeof meta.mktcap_b==='number'?'$'+meta.mktcap_b+'B cap · ':''}📍 ${esc(n.loc||n.country||'')}</div>`
+      +(meta.risk?`<div style="font-size:10px;margin-top:3px;font-weight:600;color:${meta.risk==='critical'?'#ef4444':meta.risk==='high'?'#f59e0b':'#888'}">⚠ Riesgo: ${esc(meta.risk)}</div>`:'')
+      +`<div style="font-size:9.5px;color:var(--ink-3);margin-top:4px">Clic → ver en grafo</div>`;
+    // Position near cursor but within geo panel
+    const rect=ev.currentTarget.closest('svg').getBoundingClientRect();
+    const px=ev.clientX-rect.left+14, py=ev.clientY-rect.top-40;
+    tip.style.left=Math.min(px,rect.width-250)+'px';
+    tip.style.top=Math.max(8,py)+'px';
+  };
+  window._geoLeave=function(){ const t=document.getElementById('geo-hero-tip');if(t)t.style.display='none'; };
 
-  /* ranking: riesgo sistémico por país = Σ(inDeg × riskScore) */
+  /* ── Ranking ── */
   const agg={};
   NODES.forEach(n=>{
     const meta=NODE_META[n.id]||{};
@@ -6230,11 +6326,31 @@ function renderGeoPanel(){
   });
   const top=Object.entries(agg).sort((a,b)=>b[1].score-a[1].score).slice(0,8);
   document.getElementById('geo-ranking').innerHTML=top.map(([c,v])=>`
-    <tr>
+    <tr style="cursor:pointer" onclick="document.querySelectorAll('[data-country=\\'${c}\\']').forEach(el=>el.dispatchEvent(new MouseEvent('click')))">
       <td style="font-weight:600"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${countryColor(c)};margin-right:7px"></span>${countryLabel(c)}</td>
       <td style="text-align:right">${v.count}</td>
       <td style="text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace">${v.score}</td>
     </tr>`).join('');
+
+  /* ── Wire layer buttons (one time) ── */
+  if(!renderGeoPanel._layersWired){
+    renderGeoPanel._layersWired=true;
+    document.querySelectorAll('#geo-layer-seg button').forEach(btn=>{
+      btn.onclick=()=>{
+        document.querySelectorAll('#geo-layer-seg button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const layer=btn.dataset.layer;
+        const dynEl=document.getElementById('geo-readout-dynamic');
+        if(layer==='invest'){
+          if(dynEl) dynEl.innerHTML='<div style="padding:8px 0;font-size:12px;color:var(--ink-2)"><strong>Capa Inversión</strong> — tamaño = cap. de mercado, borde rojo = riesgo crítico, color = categoría. Clic en cualquier empresa para ver su ruta de inversión.</div>';
+        } else if(layer==='news'){
+          if(dynEl) dynEl.innerHTML='<div style="padding:8px 0;font-size:12px;color:var(--ink-2)"><strong>Capa Noticias</strong> — noticias recientes por región. Usa el Terminal (Bixby) para obtener noticias en tiempo real sobre cualquier empresa.</div>';
+        } else {
+          if(dynEl) dynEl.innerHTML='';
+        }
+      };
+    });
+  }
 }
 document.querySelectorAll('.tabs .tab').forEach(b=>{ b.onclick=()=>switchTab(b.dataset.tab); });
 
@@ -6386,6 +6502,47 @@ const LOGO_DOMAIN = {
   Trimble_Inc:'trimble.com', Rockwell_Automation:'rockwellautomation.com',
   Cerebras:'cerebras.net', Groq_AI:'groq.com',
 };
+/* ── Rutas de inversión para empresas privadas / adquiridas ── */
+const INVEST_PATH={
+  // Subsidiarias — invertir vía empresa matriz
+  Waymo:{ticker:'GOOGL',parent:'Alphabet (Google)',note:'División de conducción autónoma 100% de Alphabet'},
+  Zoox:{ticker:'AMZN',parent:'Amazon',note:'Subsidiaria de Amazon adquirida en 2020'},
+  DeepMind:{ticker:'GOOGL',parent:'Alphabet (Google)',note:'División de investigación IA de Alphabet'},
+  Kensho:{ticker:'SPGI',parent:'S&P Global',note:'Adquirida por S&P Global (2018) por $550M'},
+  Quantinuum:{ticker:'HON',parent:'Honeywell',note:'JV computación cuántica (Honeywell 54%)'},
+  IntelLoihi:{ticker:'INTC',parent:'Intel',note:'Proyecto neuromorphic de Intel'},
+  OracleCloud:{ticker:'ORCL',parent:'Oracle',note:'División cloud de Oracle'},
+  AlibabaCloud:{ticker:'BABA',parent:'Alibaba Group',note:'División cloud de Alibaba'},
+  // Adquiridas — invertir vía acquirer
+  HashiCorp:{ticker:'IBM',parent:'IBM',note:'Adquirida por IBM (2024) por $6.4B'},
+  ArcadiumLithium:{ticker:'RIO',parent:'Rio Tinto',note:'Adquirida por Rio Tinto (2024) por $6.7B'},
+  Ansys:{ticker:'SNPS',parent:'Synopsys',note:'Adquirida por Synopsys (2024) por $35B'},
+  Graphcore:{ticker:'9984.T',parent:'SoftBank Group (Tokio)',note:'Adquirida por SoftBank (2024)'},
+  Lightsource_BP:{ticker:'BP.L',parent:'BP (LSE)',note:'BP posee 50% de Lightsource bp'},
+  Agility:{ticker:'AMZN',parent:'Amazon',note:'Amazon es socio exclusivo y principal deploy partner'},
+  Vedanta_Semi:{ticker:'VEDL.NS',parent:'Vedanta Limited (NSE)',note:'JV Vedanta (51%) + Foxconn (49%) para fab en India'},
+  QTS:{ticker:'BX',parent:'Blackstone',note:'Adquirida por Blackstone REIT (2021)'},
+  CYRUSONE:{ticker:'KKR',parent:'KKR',note:'Adquirida por KKR & GIP (2022)'},
+  SWITCH:{ticker:'DBRG',parent:'DigitalBridge',note:'Adquirida por DigitalBridge (2022)'},
+  Altium:{ticker:'6723.T',parent:'Renesas (Tokio)',note:'Adquirida por Renesas (2024) por $5.9B'},
+  Cepton:{ticker:'7276.T',parent:'KOITO Manufacturing (Tokio)',note:'Adquirida por KOITO (2023)'},
+  // Privadas con exposición vía inversores cotizados
+  OpenAI:{ticker:'MSFT',parent:'Microsoft (14% stake)',note:'OpenAI privada — Microsoft es inversor principal ($13B)'},
+  Anthropic:{ticker:'GOOGL',parent:'Alphabet ($300M+)',note:'Privada — Google y Amazon son principales inversores. AMZN hasta $4B'},
+  SpaceX:{etf:'ARKX',etfName:'ARK Space Exploration ETF',note:'SpaceX privada — exposición indirecta vía ARKX o fondos de capital privado'},
+  StarLink:{etf:'ARKX',etfName:'ARK Space Exploration ETF',note:'Filial de SpaceX (privada) — misma ruta de inversión indirecta'},
+  Mistral:{note:'Privada (FR). Inversores: Andreessen Horowitz, Lightspeed. Sin exposición bursátil directa. Pre-IPO'},
+  Databricks:{note:'Pre-IPO. Valoración ~$62B (2024). IPO anticipada. Sin ticker actual'},
+  Scale_AI:{note:'Pre-IPO. Valoración $13.8B. Contratos DoD/OpenAI. IPO pendiente'},
+  HuggingFace:{note:'Pre-IPO. Valoración $4.5B. Inversores: Salesforce, Google, NVIDIA. Sin ticker'},
+  Cohere_AI:{note:'Pre-IPO. Valoración $5B. Enterprise AI. Sin ticker actual'},
+  Figure:{note:'Pre-IPO. Valoración $2.6B. Backed: Microsoft, OpenAI, Nvidia, Bezos. Sin ticker'},
+  Tenstorrent:{note:'Pre-IPO. $100M ronda. Samsung + LG partnership. Sin ticker'},
+  Groq_AI:{note:'Pre-IPO. $640M Series D. $2.8B valoración. Sin ticker'},
+  Cerebras:{ticker:'CBRS',parent:'Cerebras Systems (Nasdaq)',note:'IPO realizada en Nasdaq 2024 bajo ticker CBRS'},
+  Ampere_Computing:{note:'Pre-IPO. $1.5B ARR. OCI + Azure + GCP. IPO planeada ~2025-2026'},
+};
+
 function marketRows(){
   let list=NODES.filter(n=>n.mkt||MKT.pos[n.id]);
   if(MKT.filter==='pos') list=list.filter(n=>MKT.pos[n.id]);
