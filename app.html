@@ -1397,6 +1397,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
       <svg id="graph"></svg>
       <canvas id="graph-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;"></canvas>
+      <div id="g3d-tooltip" style="display:none;position:fixed;z-index:950;pointer-events:none;background:rgba(8,12,20,.93);border:1px solid rgba(60,100,160,.4);border-radius:10px;padding:10px 14px;min-width:210px;max-width:280px;backdrop-filter:blur(10px);box-shadow:0 4px 24px rgba(0,0,0,.7);font-family:Archivo,sans-serif"></div>
       <div id="graph3d-loader" style="display:none">
         <div class="g3d-spinner"></div>
         <div style="font-size:12px;color:var(--ink-3);font-family:'JetBrains Mono',monospace" id="graph3d-loader-text">Inicializando grafo 3D…</div>
@@ -1782,8 +1783,9 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 
     <!-- ORBITAL HERO -->
     <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;margin-bottom:16px;background:radial-gradient(130% 130% at 50% -10%, #122036 0%, #0a1120 55%, #06080f 100%)">
-      <canvas id="space-orbit" style="width:100%;height:360px;display:block"></canvas>
+      <canvas id="space-orbit" style="width:100%;height:360px;display:block;cursor:crosshair"></canvas>
       <div id="space-orbit-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:6px"></div>
+      <div id="space-const-panel" style="display:none;position:absolute;top:14px;right:14px;background:rgba(8,14,24,.92);border:1px solid rgba(80,130,200,.35);border-radius:10px;padding:14px 16px;min-width:220px;max-width:260px;backdrop-filter:blur(8px);z-index:10"></div>
       <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">Órbita LEO · constelaciones activas (ilustrativo) · clic para aislar</div>
     </div>
 
@@ -6258,6 +6260,14 @@ function _processMktData(j){
     if(!q[s]) q[s]={close:row.close, date:(row.date||'').slice(0,10)};
     else if(q[s].prev==null) q[s].prev=row.close;
   });
+  // Alias: map 'MDB.XNGS' → 'MDB' for our known tickers
+  const _knownMkt = new Set((typeof NODES!=='undefined'?NODES:[]).filter(n=>n.mkt).map(n=>n.mkt));
+  Object.keys(q).forEach(sym=>{
+    if(sym.includes('.')){
+      const base=sym.split('.')[0];
+      if(_knownMkt.has(base)&&!q[base]) q[base]=q[sym];
+    }
+  });
   if(!Object.keys(q).length) throw new Error('Sin datos / no data');
   MKT.quotes=q; MKT.ts=Date.now();
   localStorage.setItem('eco_quotes',JSON.stringify(q));
@@ -6330,6 +6340,52 @@ document.querySelectorAll('#mkt-filter button').forEach(b=>{
   };
 });
 
+// Logo domains por node id (Clearbit Logo API)
+const LOGO_DOMAIN = {
+  NVIDIA:'nvidia.com', AMD:'amd.com', Intel:'intel.com', TSMC:'tsmc.com', Samsung:'samsung.com',
+  Qualcomm:'qualcomm.com', Broadcom:'broadcom.com', Marvell:'marvell.com', Micron:'micron.com',
+  SK_Hynix:'skhynix.com', WesternDigital:'westerndigital.com', Seagate:'seagate.com',
+  ASML:'asml.com', Applied_Materials:'appliedmaterials.com', Lam_Research:'lamresearch.com',
+  KLA:'kla.com', Tokyo_Electron:'tel.com', Synopsys:'synopsys.com', Cadence:'cadence.com',
+  NXPI:'nxp.com', TI:'ti.com', STMicro:'st.com', Infineon:'infineon.com',
+  Renesas:'renesas.com', Murata:'murata.com', TDK:'tdk.com', Kyocera:'kyocera.com',
+  AWS:'amazon.com', Google_Cloud:'cloud.google.com', Azure:'microsoft.com',
+  OracleCloud:'oracle.com', AlibabaCloud:'alibabacloud.com', IBMCloud:'ibm.com',
+  OpenAI:'openai.com', Anthropic:'anthropic.com', Meta_AI:'meta.com',
+  Mistral:'mistral.ai', Stability_AI:'stability.ai', DeepMind:'deepmind.com',
+  xAI:'x.ai', Cohere_AI:'cohere.com', HuggingFace:'huggingface.co',
+  TSMC_Advanced:'tsmc.com', GlobalFoundries:'gf.com', UMC:'umc.com', SMIC:'smics.com',
+  Samsung_Foundry:'samsung.com', TowerSemi:'towersemi.com',
+  SpaceX:'spacex.com', RocketLab:'rocketlabusa.com', ULA:'ulalaunch.com',
+  Northrop:'northropgrumman.com', Lockheed:'lockheedmartin.com', Raytheon:'rtx.com',
+  Boeing:'boeing.com', Airbus:'airbus.com', L3Harris:'l3harris.com',
+  Palantir:'palantir.com', C3AI:'c3.ai', Datadog:'datadoghq.com',
+  CrowdStrike:'crowdstrike.com', SentinelOne:'sentinelone.com', PaloAltoNetworks:'paloaltonetworks.com',
+  MongoDB:'mongodb.com', Elastic:'elastic.co', Snowflake:'snowflake.com',
+  Cloudflare:'cloudflare.com', Twilio:'twilio.com', HashiCorp:'hashicorp.com',
+  Databricks:'databricks.com', Scale_AI:'scale.com',
+  Mobileye:'mobileye.com', Waymo:'waymo.com',
+  Tesla:'tesla.com', Rivian:'rivian.com', Lucid:'lucidmotors.com',
+  CATL:'catl.com', QuantumScape:'quantumscape.com', SolidPower:'solidpowerbattery.com',
+  Coherent:'ii-vi.com', Lumentum:'lumentum.com', ViaviSolutions:'viavi.com',
+  Satellogic:'satellogic.com', SpireGlobal:'spire.com', PlanetLabs:'planet.com',
+  DigitalBridge:'digitalbridge.com', Equinix:'equinix.com', IronMountain:'ironmountain.com',
+  Viasat:'viasat.com', ViaSat:'viasat.com', OneWeb:'oneweb.net',
+  NexTracker:'nextracker.com', Array_Technologies:'arraytechinc.com',
+  EnergyFuels:'energyfuels.com', Lynas:'lynasrareearths.com',
+  PiedmontLithium:'piedmontlithium.com', SigmaLithium:'sigmalithium.com',
+  Wolfspeed:'wolfspeed.com', onsemi:'onsemi.com',
+  Entegris:'entegris.com', Cabot_Micro:'cabotmicro.com', Dupont:'dupont.com',
+  Sherwin:'sherwin-williams.com', JSR:'jsr.co.jp', ShinEtsu:'shinetsu.co.jp',
+  Sumco:'sumco.co.jp', Siltronic:'siltronic.com',
+  AXT:'axt.com', IQE:'iqep.com', Coherus:'coherus.com',
+  FormFactor:'formfactor.com', Teradyne:'teradyne.com', OntoInnovation:'ontoinnovation.com',
+  Advantest:'advantest.com', Cohu:'cohu.com',
+  CirrusLogic:'cirrus.com', Semtech:'semtech.com', Lattice_Semiconductor:'latticesemi.com',
+  Cirrus_Logic:'cirrus.com', GenDigital:'gendigital.com', Verint:'verint.com',
+  Trimble_Inc:'trimble.com', Rockwell_Automation:'rockwellautomation.com',
+  Cerebras:'cerebras.net', Groq_AI:'groq.com',
+};
 function marketRows(){
   let list=NODES.filter(n=>n.mkt||MKT.pos[n.id]);
   if(MKT.filter==='pos') list=list.filter(n=>MKT.pos[n.id]);
@@ -6375,7 +6431,7 @@ function renderMarket(keepStatus){
     const pnlP=(p&&q&&q.close!=null&&p.bp)?(q.close-p.bp)/p.bp:null;
     const nrs=(function(){try{const v=computeNRS(n.id);const c=v<30?'#22c55e':v<60?'#f59e0b':'#ef4444';return `<span style="font-weight:700;color:${c}">${v}</span>`;}catch(e){return '<span class="td-dim">—</span>';}})();
     if(MKT.editing===n.id){
-      return `<tr><td onclick="goMap('${n.id}')">${esc(n.label)} <span class="tk">${esc(n.mkt||'')}</span></td>
+      return `<tr><td onclick="goMap('${n.id}')" style="display:flex;align-items:center;gap:6px">${LOGO_DOMAIN[n.id]?`<img src="https://logo.clearbit.com/${LOGO_DOMAIN[n.id]}?size=32" style="width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#fff" onerror="this.style.display='none'" loading="lazy">`:'<span style="width:20px;flex-shrink:0"></span>'}<span>${esc(n.label)} <span class="tk">${esc(n.mkt||'')}</span></span></td>
         <td>${q?'$'+fmtN(q.close):'—'}</td>
         <td colspan="5"><div class="pos-edit">
           <input id="pe-sh" type="number" min="0" step="any" placeholder="${t('th_sh')}" value="${p?p.sh:''}">
@@ -6386,7 +6442,7 @@ function renderMarket(keepStatus){
         </div></td><td>${nrs}</td><td></td></tr>`;
     }
     return `<tr data-ticker="${esc(n.mkt||'')}"${q&&q.live?' data-live="1"':''}>
-      <td onclick="goMap('${n.id}')">${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></td>
+      <td onclick="goMap('${n.id}')" style="display:flex;align-items:center;gap:6px">${LOGO_DOMAIN[n.id]?`<img src="https://logo.clearbit.com/${LOGO_DOMAIN[n.id]}?size=32" style="width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#fff" onerror="this.style.display='none'" loading="lazy">`:'<span style="width:20px;flex-shrink:0"></span>'}<span>${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></span></td>
       <td class="mk-c-price">${q&&q.close!=null?'$'+fmtN(q.close):'<span class="td-dim">—</span>'}</td>
       <td class="mk-c-chg ${chg==null?'td-dim':chg>=0?'td-up':'td-down'}">${fmtPct(chg)}</td>
       <td>${p?fmtN(p.sh,0):'<span class="td-dim">—</span>'}</td>
@@ -8461,17 +8517,69 @@ function initSpaceOrbitCanvas() {
 
   // Constellation orbits
   const ORBITS = [
-    {name:'Starlink',  color:'#00d4ff', r:EARTH_R*1.55, inc:53, sats:18, speed:0.0028, phase:0},
-    {name:'OneWeb',    color:'#a855f7', r:EARTH_R*1.80, inc:87, sats:12, speed:0.0020, phase:1.1},
-    {name:'Amazon LEO',color:'#f59e0b', r:EARTH_R*2.05, inc:51, sats:10, speed:0.0015, phase:2.3},
-    {name:'GPS',       color:'#22c55e', r:EARTH_R*2.60, inc:55, sats: 6, speed:0.0009, phase:0.7},
-    {name:'GEO Belt',  color:'#f97316', r:EARTH_R*3.20, inc: 0, sats: 5, speed:0.0004, phase:0.4},
+    {name:'Starlink',     company:'SpaceX',           ticker:'Privado',  color:'#00d4ff', r:EARTH_R*1.55, inc:53, sats:18, speed:0.0028, phase:0,
+     alt:'340–570 km (LEO)', total:'5,900+ activos', purpose:'Banda ancha global para consumidores y empresas', status:'✅ Operativo', nodeId:'StarLink'},
+    {name:'OneWeb',       company:'Eutelsat OneWeb',  ticker:'ETL.PA',   color:'#a855f7', r:EARTH_R*1.80, inc:87, sats:12, speed:0.0020, phase:1.1,
+     alt:'1,200 km (LEO)', total:'648 satélites', purpose:'Conectividad enterprise, gobierno y conectividad polar', status:'✅ Operativo', nodeId:'OneWeb'},
+    {name:'Amazon Kuiper',company:'Amazon',           ticker:'AMZN',     color:'#f59e0b', r:EARTH_R*2.05, inc:51, sats:10, speed:0.0015, phase:2.3,
+     alt:'590–630 km (LEO)', total:'3,236 planificados', purpose:'Banda ancha consumidor y AWS Edge Computing', status:'🚀 En despliegue 2024-2027', nodeId:'Amazon_Kuiper'},
+    {name:'GPS III',      company:'Lockheed Martin / DoD', ticker:'LMT', color:'#22c55e', r:EARTH_R*2.60, inc:55, sats:6, speed:0.0009, phase:0.7,
+     alt:'20,200 km (MEO)', total:'31 satélites activos', purpose:'Navegación y posicionamiento global civil y militar', status:'✅ Operativo (GPS III activo)', nodeId:'Lockheed'},
+    {name:'GEO Belt',     company:'Intelsat/SES/Viasat', ticker:'VSAT', color:'#f97316', r:EARTH_R*3.20, inc:0, sats:5, speed:0.0004, phase:0.4,
+     alt:'35,786 km (GEO)', total:'~550 satélites GEO totales', purpose:'TV broadcasting, VSAT corporativo, backhaul regional', status:'✅ Operativo', nodeId:'Viasat'},
   ];
 
   const legendEl = document.getElementById('space-orbit-legend');
   if (legendEl) {
-    legendEl.innerHTML = ORBITS.map(o=>`<div style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(180,200,230,.8)"><span style="width:20px;height:2px;border-radius:2px;background:${o.color};display:block;opacity:.7"></span>${o.name}</div>`).join('');
+    legendEl.innerHTML = ORBITS.map((o,i)=>
+      `<div data-orbit="${i}" style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(180,200,230,.8);cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .15s" onmouseenter="this.style.background='rgba(80,130,200,.15)'" onmouseleave="this.style.background=''" onclick="window._spaceConstClick(${i})">` +
+        `<span style="width:20px;height:2px;border-radius:2px;background:${o.color};display:block;opacity:.7"></span>` +
+        `<span>${o.name}</span>` +
+        `<span style="margin-left:auto;font-size:9px;color:rgba(140,170,210,.6)">${o.total.split(' ')[0]}</span>` +
+      `</div>`
+    ).join('');
   }
+
+  // Click handler for constellation info panel
+  window._spaceConstClick = function(idx) {
+    const o = ORBITS[idx];
+    if (!o) return;
+    const panel = document.getElementById('space-const-panel');
+    if (!panel) return;
+    panel.style.display = 'block';
+    panel.innerHTML =
+      `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">` +
+        `<div><div style="font-weight:700;color:#e8edf5;font-size:13px">${o.name}</div>` +
+        `<div style="font-size:10px;color:#5b8ab8;margin-top:2px">${o.company}</div></div>` +
+        `<button onclick="document.getElementById('space-const-panel').style.display='none'" style="background:none;border:none;color:#7a9cc4;font-size:16px;cursor:pointer;padding:0;line-height:1">×</button>` +
+      `</div>` +
+      `<div style="display:grid;gap:6px;font-size:11px">` +
+        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Altitud</span><span style="color:#c8daf0;font-weight:600">${o.alt}</span></div>` +
+        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Satélites</span><span style="color:#c8daf0;font-weight:600">${o.total}</span></div>` +
+        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Ticker</span><span style="color:#${o.ticker==='Privado'?'f59e0b':'22c55e'};font-weight:700;font-family:monospace">${o.ticker}</span></div>` +
+        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Estado</span><span style="color:#c8daf0">${o.status}</span></div>` +
+        `<div style="margin-top:4px;padding-top:8px;border-top:1px solid rgba(80,120,180,.2);color:#8ab;line-height:1.4">${o.purpose}</div>` +
+      `</div>` +
+      (o.nodeId && typeof jumpTo === 'function' ?
+        `<button onclick="switchTab('map');setTimeout(()=>jumpTo('${o.nodeId}'),120)" style="margin-top:10px;width:100%;padding:6px;background:rgba(30,80,160,.3);border:1px solid rgba(60,120,220,.3);border-radius:6px;color:#7ab2e8;font-size:10px;cursor:pointer">Ver en grafo →</button>` : '');
+  };
+
+  // Canvas click detection
+  canvas.addEventListener('click', function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width / rect.width / (window.devicePixelRatio||1));
+    const my = (e.clientY - rect.top) * (canvas.height / rect.height / (window.devicePixelRatio||1));
+    let best = -1, bestDist = Infinity;
+    ORBITS.forEach((o, i) => {
+      const inclRad = o.inc * Math.PI / 180;
+      const ry = o.r * Math.abs(Math.cos(inclRad)) + 1;
+      // Ellipse distance approximation
+      const dx = mx - cx, dy = my - cy;
+      const d = Math.abs(Math.sqrt((dx/o.r)**2 + (dy/Math.max(ry,o.r*.12))**2) - 1) * o.r;
+      if (d < bestDist && d < 18) { bestDist = d; best = i; }
+    });
+    if (best >= 0) window._spaceConstClick(best);
+  });
 
   let t = 0, raf;
   function draw() {

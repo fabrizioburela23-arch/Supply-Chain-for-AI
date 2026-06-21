@@ -344,6 +344,76 @@ class KhipuGraph3D {
     });
   }
 
+  _highlightChain(nodeId) {
+    if (!nodeId || typeof LINKS === 'undefined') return;
+    const upstream = new Set(), downstream = new Set();
+    LINKS.forEach(l => {
+      const s = typeof lid === 'function' ? lid(l.source) : (l.source && l.source.id ? l.source.id : l.source);
+      const t = typeof lid === 'function' ? lid(l.target) : (l.target && l.target.id ? l.target.id : l.target);
+      if (t === nodeId) upstream.add(s);
+      if (s === nodeId) downstream.add(t);
+    });
+
+    this.nodeMeshes.forEach((mesh, id) => {
+      if (id === nodeId) {
+        mesh.material.emissiveIntensity = 1.2;
+        mesh.material.opacity = 1;
+      } else if (upstream.has(id)) {
+        mesh.material.color.setHex(0x22c55e);
+        mesh.material.emissive.setHex(0x22c55e);
+        mesh.material.emissiveIntensity = 0.9;
+        mesh.material.opacity = 1;
+      } else if (downstream.has(id)) {
+        mesh.material.color.setHex(0xf97316);
+        mesh.material.emissive.setHex(0xf97316);
+        mesh.material.emissiveIntensity = 0.9;
+        mesh.material.opacity = 1;
+      } else {
+        mesh.material.opacity = 0.09;
+        mesh.material.emissiveIntensity = 0.03;
+      }
+    });
+
+    this.linkLines.forEach(line => {
+      const ldata = line.userData.link;
+      if (!ldata) return;
+      const s = typeof lid === 'function' ? lid(ldata.source) : (ldata.source && ldata.source.id ? ldata.source.id : ldata.source);
+      const t = typeof lid === 'function' ? lid(ldata.target) : (ldata.target && ldata.target.id ? ldata.target.id : ldata.target);
+      if (s === nodeId) {
+        line.material.color.setHex(0xf97316);
+        line.material.opacity = 0.95;
+      } else if (t === nodeId) {
+        line.material.color.setHex(0x22c55e);
+        line.material.opacity = 0.95;
+      } else {
+        line.material.opacity = 0.03;
+      }
+    });
+    this._chainHighlighted = nodeId;
+  }
+
+  _clearChainHighlight() {
+    if (!this._chainHighlighted) return;
+    this.nodeMeshes.forEach((mesh, id) => {
+      const node = typeof NODE_BY_ID !== 'undefined' ? NODE_BY_ID[id] : null;
+      if (node) {
+        const raw = getCatColorHex(node.cat);
+        const hex = parseInt(raw.replace('#', ''), 16) || 0x4488cc;
+        mesh.material.color.setHex(hex);
+        mesh.material.emissive.setHex(hex);
+      }
+      mesh.material.opacity = 1;
+      mesh.material.emissiveIntensity = 0.25;
+    });
+    this.linkLines.forEach(line => {
+      const lt = line.userData.link && line.userData.link.type;
+      const raw = getLinkColorHex(lt);
+      line.material.color.setHex(parseInt(raw.replace('#',''), 16) || 0x4e8b1e);
+      line.material.opacity = 0.35;
+    });
+    this._chainHighlighted = null;
+  }
+
   resetHighlight() {
     this.nodeMeshes.forEach((mesh, id) => {
       const n = NODE_BY_ID[id];
@@ -545,7 +615,7 @@ class KhipuGraph3D {
   }
 
   _onMouseMove(e) {
-    if (e.buttons) return; // skip raycasting while dragging
+    if (e.buttons) return;
     const rect = this.canvas.getBoundingClientRect();
     this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -557,13 +627,69 @@ class KhipuGraph3D {
       this.hovered = newHover;
       this.canvas.style.cursor = newHover ? 'pointer' : 'grab';
     }
+
+    // ── Tooltip ────────────────────────────────────────────────────────────────
+    const tip = document.getElementById('g3d-tooltip');
+    if (!tip) return;
+    if (!newHover) { tip.style.display = 'none'; return; }
+    const n = (typeof NODE_BY_ID !== 'undefined') ? NODE_BY_ID[newHover] : null;
+    if (!n) { tip.style.display = 'none'; return; }
+
+    const q = (typeof MKT !== 'undefined' && n.mkt) ? MKT.quotes[n.mkt] : null;
+    const price = q && q.close != null ? '$' + Number(q.close).toFixed(2) : null;
+    const chg = (q && q.close != null && q.prev != null) ? ((q.close - q.prev) / q.prev * 100) : null;
+    const chgColor = chg == null ? '' : chg >= 0 ? '#22c55e' : '#ef4444';
+    let nrs = null;
+    try { if (typeof computeNRS === 'function') nrs = computeNRS(newHover); } catch(e){}
+    const nrsColor = nrs == null ? '#7a9cc4' : nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
+
+    let upstream = 0, downstream = 0;
+    if (typeof LINKS !== 'undefined') {
+      LINKS.forEach(l => {
+        const s = typeof lid === 'function' ? lid(l.source) : (l.source && l.source.id ? l.source.id : l.source);
+        const t = typeof lid === 'function' ? lid(l.target) : (l.target && l.target.id ? l.target.id : l.target);
+        if (t === newHover) upstream++;
+        if (s === newHover) downstream++;
+      });
+    }
+
+    const catMeta = (typeof CATS !== 'undefined' && n.cat && CATS[n.cat]) || {};
+    const catLabel = catMeta.label || n.cat || '';
+    tip.innerHTML =
+      `<div style="font-size:12px;font-weight:700;color:#e8edf5;margin-bottom:4px;line-height:1.3">${n.label}</div>` +
+      (n.ticker ? `<div style="font-size:10px;color:#5b8ab8;margin-bottom:8px;font-family:'JetBrains Mono',monospace">${n.ticker}</div>` : '') +
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">` +
+        (price ? `<span style="font-size:13px;font-weight:700;color:#d1e8ff">${price}</span>` : '') +
+        (chg != null ? `<span style="font-size:11px;color:${chgColor};font-weight:600">${chg>=0?'+':''}${chg.toFixed(2)}%</span>` : '') +
+        `<span style="margin-left:auto;font-size:10px;color:#7a9cc4">NRS <strong style="color:${nrsColor}">${nrs != null ? nrs : '—'}</strong></span>` +
+      `</div>` +
+      `<div style="display:flex;gap:12px;font-size:10px;color:#5b8ab8;border-top:1px solid rgba(80,120,180,.2);padding-top:7px;margin-top:2px">` +
+        `<span style="color:#22c55e">⬆ ${upstream} prov.</span>` +
+        `<span style="color:#f97316">⬇ ${downstream} clientes</span>` +
+        (catLabel ? `<span style="margin-left:auto;color:#7a9cc4">${catLabel}</span>` : '') +
+      `</div>` +
+      (n.growth ? `<div style="font-size:10px;color:#9ab;margin-top:6px;line-height:1.3">${n.growth}</div>` : '');
+
+    // Position tooltip (avoid going off screen)
+    const tw = 220, th = 110;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let tx = e.clientX + 18, ty = e.clientY - 40;
+    if (tx + tw > vw - 10) tx = e.clientX - tw - 10;
+    if (ty + th > vh - 10) ty = vh - th - 10;
+    if (ty < 10) ty = 10;
+    tip.style.left = tx + 'px';
+    tip.style.top = ty + 'px';
+    tip.style.display = 'block';
   }
 
   _onClick(e) {
     if (this._mouseMoved) return;
-    if (this.hovered && typeof window.jumpTo === 'function') {
-      window.jumpTo(this.hovered);
+    if (this.hovered) {
+      if (typeof window.jumpTo === 'function') window.jumpTo(this.hovered);
       this.selectNode(this.hovered);
+      this._highlightChain(this.hovered);
+    } else {
+      this._clearChainHighlight();
     }
   }
 
