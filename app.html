@@ -1105,6 +1105,12 @@ line.flowing{stroke-dasharray:6 8;stroke-width:2.4px;animation:linkFlow .85s lin
 .dark .sim-preset-btn:hover { background: rgba(155,79,232,.08) !important; }
 .dark #simulation-panel, .dark #space-panel { background: var(--bg); }
 .dark #sim-output { color: var(--ink-2); }
+/* ── War-Room de Simulacion ── */
+#sim-output { text-align: left; }
+.wr-panel-head { font-size: 10px; font-weight: 700; color: var(--ink-3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+#wr-canvas { display: block; width: 100%; border-radius: 8px; background: #070b14; }
+.wr-agent-card { background: var(--surface-2); border-radius: 6px; padding: 8px 10px; border-left: 3px solid var(--violet); font-size: 11px; line-height: 1.45; color: var(--ink-2); }
+.wr-agent-role { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
 
 /* ════════════════════════════════════════════════════════════════════════
    [UPGRADE] CAPA EDITORIAL · revista financiera en papel (nuevo tema por defecto)
@@ -8503,11 +8509,14 @@ async function _runMiroFishPipeline(text, presetId, output, status) {
     await window.MiroFishClient.startSimulation(simId, 20);
     bar(60);
 
-    // 5. Poll progreso
-    await window.MiroFishClient.pollSimulation(simId, (d) => {
+    // 5. Poll progreso — capture final simulation data
+    const simFinal = await window.MiroFishClient.pollSimulation(simId, (d) => {
       const pct = d?.data?.progress_pct || d?.progress_pct;
       if (pct) { bar(60 + pct * 0.2); log(`⏳ Progreso: ${Math.round(pct)}%`); }
     }, 300000);
+    const nodeImpacts = simFinal?.data?.node_impacts || simFinal?.node_impacts || {};
+    const priceTrajs  = simFinal?.data?.price_trajectories || simFinal?.price_trajectories || {};
+    const cascadeNodes = simFinal?.data?.cascade_nodes || simFinal?.cascade_nodes || [];
     log('✅ Simulación completada');
     bar(80);
 
@@ -8525,24 +8534,12 @@ async function _runMiroFishPipeline(text, presetId, output, status) {
     }, 180000);
     bar(100);
 
-    // 7. Mostrar reporte
+    // 7. Render War-Room
     const reportText = report?.data?.content || report?.content || report?.report || JSON.stringify(report, null, 2);
-    const safeText = String(reportText).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    output.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <span style="font-weight:700;font-size:13px;color:var(--violet)">🤖 MiroFish · Simulación Multi-Agente</span>
-        <span style="font-size:10px;color:var(--ink-3);margin-left:auto">${new Date().toLocaleTimeString()}</span>
-      </div>
-      <div style="line-height:1.8;font-size:13px;white-space:pre-wrap">${safeText}</div>
-      <div style="margin-top:16px;display:flex;gap:8px">
-        <button onclick="_simChatReportId='${reportId}';document.getElementById('sim-chat-wrap').style.display='flex'" style="padding:6px 14px;border:1px solid var(--violet);border-radius:6px;background:none;color:var(--violet);font-size:12px;cursor:pointer">💬 Chat con el reporte</button>
-      </div>
-      <div id="sim-chat-wrap" style="display:none;flex-direction:column;gap:6px;margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
-        <input id="sim-chat-input" placeholder="Pregunta sobre el reporte..." style="padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;width:100%">
-        <button onclick="_mfChatSend()" style="padding:7px 14px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;align-self:flex-start">Enviar</button>
-        <div id="sim-chat-log" style="font-size:12px;line-height:1.8;margin-top:6px"></div>
-      </div>`;
-    _simSetStatus(status, '✅ MiroFish completado', 'green');
+    const scenarioTitle = presetId && window.ScenarioBuilder?.PRESETS?.[presetId]?.title
+      ? window.ScenarioBuilder.PRESETS[presetId].title
+      : text.slice(0, 70);
+    _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, reportText, reportId, simId, presetId });
 
   } catch(e) {
     _mfAvailable = false; // marcar como no disponible para próxima vez
@@ -8555,7 +8552,14 @@ async function _runMiroFishPipeline(text, presetId, output, status) {
 
 async function _runClaudeSim(text, nodeStr, output, status) {
   _simSetStatus(status, '🔄 Analizando con Claude...', 'violet');
-  output.innerHTML = '<div style="color:var(--ink-3);text-align:center;padding:30px">Analizando con IA...</div>';
+  // Show War-Room canvas immediately with fallback cascade while Claude thinks
+  const activeBtn = document.querySelector('.sim-preset-btn[data-active="1"]');
+  const presetId = activeBtn?.dataset?.preset || null;
+  _renderWarRoom({
+    scenarioTitle: text.slice(0, 70),
+    nodeImpacts: {}, priceTrajs: {}, cascadeNodes: [],
+    reportText: 'Generando análisis con Claude…', reportId: null, simId: null, presetId,
+  });
   try {
     const resp = await fetch('/api/ai/analyze', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -8567,11 +8571,17 @@ async function _runClaudeSim(text, nodeStr, output, status) {
     });
     if (!resp.ok) throw new Error('API error ' + resp.status);
     const d = await resp.json();
-    const txt = (d.result||d.error||'Sin respuesta').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    output.innerHTML = `<div style="line-height:1.8;font-size:13px;white-space:pre-wrap">${txt}</div><div style="margin-top:12px;font-size:10px;color:var(--ink-3)">Modelo: ${d.model||'Claude'} · ${new Date().toLocaleTimeString()}</div>`;
-    _simSetStatus(status, '✅ Completado', 'green');
+    const reportText = d.result || d.error || 'Sin respuesta';
+    // Update War-Room with Claude report
+    _renderWarRoom({
+      scenarioTitle: text.slice(0, 70),
+      nodeImpacts: {}, priceTrajs: {}, cascadeNodes: [],
+      reportText, reportId: null, simId: null, presetId,
+    });
+    _simSetStatus(status, '✅ War-Room Claude', 'green');
   } catch(e) {
-    output.innerHTML = `<div style="color:var(--danger);padding:16px">Error: ${e.message}. Asegúrate de tener ANTHROPIC_KEY configurada.</div>`;
+    const reportEl = document.getElementById('wr-report');
+    if (reportEl) reportEl.textContent = 'Error: ' + e.message + '. Asegúrate de tener ANTHROPIC_KEY configurada.';
     _simSetStatus(status, '❌ Error', 'red');
   }
 }
@@ -8592,6 +8602,484 @@ async function _mfChatSend() {
   log.scrollTop = log.scrollHeight;
 }
 window._mfChatSend = _mfChatSend;
+// ════════════════════════════════════════════════════════════════════════════
+// WAR-ROOM DE SIMULACIÓN — 2D animated cascade visualization
+// ════════════════════════════════════════════════════════════════════════════
+let _wrAnimId = null;
+let _wrReportId = null;
+
+async function _wrChatSend() {
+  if (!_wrReportId) return;
+  const input = document.getElementById('wr-chat-input');
+  const log = document.getElementById('wr-chat-log');
+  const msg = (input?.value || '').trim(); if (!msg) return;
+  input.value = '';
+  log.insertAdjacentHTML('beforeend',
+    `<div style="font-size:12px;color:var(--ink-2);padding:5px 10px;background:rgba(96,165,250,.08);border-radius:6px;align-self:flex-end">${msg.replace(/</g,'&lt;')}</div>`);
+  try {
+    const d = await window.MiroFishClient.chatWithReport(_wrReportId, msg);
+    const reply = d?.data?.response || d?.response || JSON.stringify(d);
+    log.insertAdjacentHTML('beforeend',
+      `<div style="font-size:12px;color:var(--ink-1);padding:5px 10px;background:var(--surface-2);border-radius:6px">${String(reply).replace(/</g,'&lt;')}</div>`);
+  } catch(e) {
+    log.insertAdjacentHTML('beforeend',
+      `<div style="font-size:12px;color:#f87171">Error: ${e.message}</div>`);
+  }
+  log.scrollTop = log.scrollHeight;
+}
+window._wrChatSend = _wrChatSend;
+
+// Main entry — builds War-Room UI and starts animation
+function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, reportText, reportId, simId, presetId }) {
+  if (_wrAnimId) { cancelAnimationFrame(_wrAnimId); _wrAnimId = null; }
+  _wrReportId = reportId || simId || null;
+
+  const simStatus = document.getElementById('sim-status');
+  if (simStatus) _simSetStatus(simStatus, '✅ War-Room activo', 'green');
+
+  const output = document.getElementById('sim-output');
+  if (!output) return;
+  output.style.textAlign = 'left';
+  output.style.padding = '0';
+
+  const safeTitle = (scenarioTitle || '').replace(/</g, '&lt;').slice(0, 90);
+
+  output.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#ef4444;letter-spacing:.02em">🚨 WAR ROOM ACTIVO</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-top:2px">${safeTitle}</div>
+      </div>
+      <div id="wr-round" style="font-size:11px;padding:4px 12px;background:rgba(155,79,232,.12);border:1px solid rgba(155,79,232,.3);border-radius:12px;color:var(--violet)">Iniciando…</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 230px;gap:10px;margin-bottom:10px">
+      <div style="position:relative;background:#070b14;border-radius:8px;overflow:hidden">
+        <canvas id="wr-canvas"></canvas>
+        <div style="position:absolute;bottom:8px;left:10px;display:flex;gap:12px;pointer-events:none">
+          <span style="font-size:10px;color:#ef4444">● Alto impacto</span>
+          <span style="font-size:10px;color:#f97316">● Medio</span>
+          <span style="font-size:10px;color:#22c55e">● Ganador</span>
+          <span style="font-size:10px;color:rgba(140,160,200,.7)">● Sin datos</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:460px">
+        <div id="wr-winners" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:12px;flex-shrink:0"></div>
+        <div id="wr-prices" style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:12px;flex-shrink:0"></div>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px">
+      <div class="wr-panel-head">💬 Debate de Agentes Multi-IA</div>
+      <div id="wr-agents" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+    </div>
+    <details style="margin-bottom:10px">
+      <summary style="cursor:pointer;font-size:12px;color:var(--ink-3);padding:6px 0;list-style:none;user-select:none">📄 Ver informe completo de MiroFish ▾</summary>
+      <div id="wr-report" style="font-size:12px;line-height:1.75;color:var(--ink-2);padding:12px 0;white-space:pre-wrap;border-top:1px solid var(--line);margin-top:6px"></div>
+    </details>
+    <div style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px">
+      <div class="wr-panel-head">💬 Chat con el Informe</div>
+      <div id="wr-chat-log" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      <div style="display:flex;gap:6px">
+        <input id="wr-chat-input" placeholder="Pregunta sobre la simulación…" style="flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;font-family:inherit">
+        <button onclick="_wrChatSend()" style="padding:7px 12px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Enviar</button>
+      </div>
+    </div>`;
+
+  // Set report text
+  const reportEl = document.getElementById('wr-report');
+  if (reportEl) reportEl.textContent = reportText || '';
+
+  // Setup canvas
+  const canvas = document.getElementById('wr-canvas');
+  if (!canvas) return;
+  const parentW = canvas.parentElement.clientWidth || 640;
+  const canvasH = Math.round(parentW * 0.56);
+  canvas.width = parentW;
+  canvas.height = canvasH;
+  canvas.style.width = '100%';
+  canvas.style.height = canvasH + 'px';
+
+  // Select nodes
+  const allNodes = (window.NODES || []).filter(n => n.id && n.cat);
+  const rankedNodes = allNodes
+    .map(n => ({ n, nrs: typeof computeNRS === 'function' ? computeNRS(n.id) : 50 }))
+    .sort((a, b) => b.nrs - a.nrs)
+    .slice(0, 130)
+    .map(x => x.n);
+
+  const selectedIds = new Set(rankedNodes.map(n => n.id));
+  const allLinks = window.LINKS || [];
+  const selectedEdges = allLinks
+    .filter(l => {
+      const s = typeof lid === 'function' ? lid(l.source) : (l.source?.id || l.source);
+      const t = typeof lid === 'function' ? lid(l.target) : (l.target?.id || l.target);
+      return selectedIds.has(s) && selectedIds.has(t);
+    })
+    .slice(0, 500)
+    .map(l => ({
+      s: typeof lid === 'function' ? lid(l.source) : (l.source?.id || l.source),
+      t: typeof lid === 'function' ? lid(l.target) : (l.target?.id || l.target),
+    }));
+
+  const nodePos = _wrComputeLayout(canvas.width, canvas.height, rankedNodes);
+
+  // Compute cascade (with fallback)
+  let finalImpacts = Object.keys(nodeImpacts).length ? { ...nodeImpacts } : {};
+  let finalCascade = cascadeNodes.length ? [...cascadeNodes] : [];
+  if (!Object.keys(finalImpacts).length) {
+    const fb = _wrFallbackCascade(rankedNodes, selectedEdges, finalCascade, reportText, presetId);
+    finalImpacts = fb.impacts;
+    finalCascade = fb.cascade;
+  }
+
+  // Start animation
+  _wrStartAnimation(canvas, nodePos, selectedEdges, finalCascade, finalImpacts);
+
+  // Render side panels
+  _wrRenderWinners(finalImpacts);
+  _wrRenderPrices(priceTrajs, finalImpacts);
+  _wrRenderAgents(reportText, presetId);
+
+  // Ingest as hyperedge for 3D map
+  try {
+    if (window._hypergraph && finalCascade.length >= 2) {
+      const he = {
+        id: 'he_wr_' + Date.now(),
+        type: 'simulation',
+        timestamp: new Date().toISOString(),
+        title: scenarioTitle || 'War-Room MiroFish',
+        severity: 8,
+        nodes_affected: finalCascade.slice(0, 20),
+        node_impacts: finalImpacts,
+        duration_days: 120,
+      };
+      window._hypergraph.addHyperedge(he);
+    }
+  } catch(_) {}
+}
+
+// Deterministic polar layout by category
+function _wrComputeLayout(W, H, nodes) {
+  const cx = W / 2, cy = H / 2;
+  const cats = [...new Set(nodes.map(n => n.cat).filter(Boolean))];
+  const catAngle = {};
+  cats.forEach((c, i) => { catAngle[c] = (i / cats.length) * Math.PI * 2 - Math.PI / 2; });
+
+  const R = Math.min(W, H) * 0.37;
+  const nodePos = {};
+
+  const fnv = s => {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+    return h;
+  };
+
+  nodes.forEach(n => {
+    const baseAngle = catAngle[n.cat] ?? 0;
+    const h1 = fnv(n.id), h2 = fnv(n.id + '~r');
+    const jA = baseAngle + ((h1 & 0xFF) / 255 - 0.5) * 0.48;
+    const jR = R + ((h2 & 0xFF) / 255 - 0.5) * 62;
+    const nrs = typeof computeNRS === 'function' ? computeNRS(n.id) : 50;
+    nodePos[n.id] = {
+      x: cx + Math.cos(jA) * jR,
+      y: cy + Math.sin(jA) * jR,
+      r: 2.5 + nrs * 0.065,
+      label: n.label || n.id,
+    };
+  });
+  return nodePos;
+}
+
+// BFS cascade from seed nodes when MiroFish provides no impact data
+function _wrFallbackCascade(nodes, edges, initialCascade, reportText, presetId) {
+  const impacts = {};
+  const cascade = [];
+
+  const seedIds = new Set(initialCascade.slice(0, 8));
+
+  if (!seedIds.size && reportText) {
+    nodes.forEach(n => {
+      const lbl = (n.label || '').toLowerCase();
+      if (lbl.length > 3 && reportText.toLowerCase().includes(lbl)) seedIds.add(n.id);
+    });
+  }
+
+  if (!seedIds.size) {
+    const presetSeeds = {
+      taiwan_conflict: ['tsmc', 'asml', 'nvda', 'amd', 'aapl', 'applied_materials', 'arm'],
+      china_chip_ban_total: ['nvda', 'amd', 'intel_cpu', 'smic', 'huawei_chip', 'amat', 'lam_research'],
+      hbm_shortage_2027: ['sk_hynix', 'micron', 'samsung_memory', 'nvda', 'amd', 'broadcom'],
+      openai_ipo_impact: ['openai', 'msft', 'nvda', 'arm', 'anthropic', 'google', 'meta'],
+      starshield_reveal: ['spacex', 'northrop', 'raytheon', 'l3harris', 'maxar', 'planet_labs'],
+    };
+    ((presetId && presetSeeds[presetId]) || nodes.slice(0, 5).map(n => n.id)).forEach(id => seedIds.add(id));
+  }
+
+  const edgeAdj = {};
+  edges.forEach(({s, t}) => {
+    (edgeAdj[s] ||= new Set()).add(t);
+    (edgeAdj[t] ||= new Set()).add(s);
+  });
+
+  const visited = new Set(seedIds);
+  seedIds.forEach(id => {
+    if ((window.NODE_BY_ID || {})[id] || nodes.find(n => n.id === id)) {
+      impacts[id] = 75 + Math.random() * 20;
+      cascade.push(id);
+    }
+  });
+
+  let frontier = [...seedIds];
+  const hopImpact = [55, 30, 14];
+  for (let hop = 0; hop < 3 && frontier.length; hop++) {
+    const next = [];
+    frontier.forEach(id => {
+      (edgeAdj[id] || new Set()).forEach(nb => {
+        if (!visited.has(nb)) {
+          visited.add(nb);
+          const v = hopImpact[hop] + (Math.random() - 0.5) * 16;
+          impacts[nb] = Math.random() < 0.18 ? -(v * 0.35) : v;
+          cascade.push(nb);
+          next.push(nb);
+        }
+      });
+    });
+    frontier = next;
+  }
+  return { impacts, cascade };
+}
+
+// Start RAF cascade animation
+function _wrStartAnimation(canvas, nodePos, edges, cascadeOrder, nodeImpacts) {
+  if (_wrAnimId) cancelAnimationFrame(_wrAnimId);
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const nodeStates = {};
+
+  // Also include nodes from nodeImpacts not in cascadeOrder
+  const allImpacted = [...new Set([
+    ...cascadeOrder,
+    ...Object.keys(nodeImpacts),
+  ])];
+
+  const totalRounds = 20;
+  const perRound = Math.max(1, Math.ceil(allImpacted.length / totalRounds));
+  let currentRound = 0;
+
+  const revealRound = () => {
+    if (currentRound >= totalRounds) return;
+    const start = currentRound * perRound;
+    for (let i = start; i < Math.min(start + perRound, allImpacted.length); i++) {
+      const id = allImpacted[i];
+      if (!id) continue;
+      const imp = nodeImpacts[id] !== undefined
+        ? nodeImpacts[id]
+        : Math.max(8, 72 - currentRound * 4);
+      nodeStates[id] = { impact: imp, t0: performance.now() };
+    }
+    currentRound++;
+    const badge = document.getElementById('wr-round');
+    if (badge) badge.textContent = `Ronda ${currentRound}/${totalRounds}`;
+  };
+
+  revealRound();
+  const ivl = setInterval(() => {
+    revealRound();
+    if (currentRound >= totalRounds) clearInterval(ivl);
+  }, 1400);
+
+  const draw = (now) => {
+    // Background
+    ctx.fillStyle = '#070b14';
+    ctx.fillRect(0, 0, W, H);
+
+    // Edges
+    edges.forEach(({s, t}) => {
+      const sp = nodePos[s], tp = nodePos[t];
+      if (!sp || !tp) return;
+      const sl = !!nodeStates[s], tl = !!nodeStates[t];
+      ctx.beginPath();
+      ctx.moveTo(sp.x, sp.y); ctx.lineTo(tp.x, tp.y);
+      ctx.strokeStyle = sl && tl ? 'rgba(155,79,232,.32)' : sl || tl ? 'rgba(155,79,232,.1)' : 'rgba(70,90,130,.07)';
+      ctx.lineWidth = sl && tl ? 1 : 0.5;
+      ctx.stroke();
+    });
+
+    // Nodes
+    Object.entries(nodePos).forEach(([id, pos]) => {
+      const st = nodeStates[id];
+      const r = pos.r || 4;
+      let fill, glow;
+
+      if (!st) {
+        fill = 'rgba(80,110,165,.38)'; glow = null;
+      } else {
+        const imp = st.impact;
+        if (imp > 55)       { fill = '#ef4444'; glow = 'rgba(239,68,68,.3)'; }
+        else if (imp > 25)  { fill = '#f97316'; glow = 'rgba(249,115,22,.25)'; }
+        else if (imp > 0)   { fill = '#facc15'; glow = 'rgba(250,204,21,.2)'; }
+        else                { fill = '#22c55e'; glow = 'rgba(34,197,94,.28)'; }
+      }
+
+      if (glow) {
+        const age = now - (st.t0 || now);
+        const pulse = Math.sin(age / 620) * 0.15 + 0.85;
+        const gr = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, r * 4.5);
+        gr.addColorStop(0, glow.replace(/[\d.]+\)$/, m => (parseFloat(m) * pulse).toFixed(2) + ')'));
+        gr.addColorStop(1, 'transparent');
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, r * 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = gr; ctx.fill();
+      }
+
+      ctx.beginPath(); ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = fill; ctx.fill();
+
+      if (st || r >= 5.5) {
+        ctx.fillStyle = st ? 'rgba(230,242,255,.88)' : 'rgba(120,145,200,.55)';
+        ctx.font = `${st ? 9 : 8}px Inter,system-ui,sans-serif`;
+        ctx.fillText((pos.label || id).slice(0, 14), pos.x + r + 2, pos.y + 3.5);
+      }
+    });
+
+    _wrAnimId = requestAnimationFrame(draw);
+  };
+  _wrAnimId = requestAnimationFrame(draw);
+}
+
+// Winners/Losers panel
+function _wrRenderWinners(nodeImpacts) {
+  const el = document.getElementById('wr-winners');
+  if (!el) return;
+  const NBI = window.NODE_BY_ID || {};
+  const entries = Object.entries(nodeImpacts)
+    .map(([id, imp]) => ({ id, imp, label: (NBI[id]?.label || id).slice(0, 18) }))
+    .sort((a, b) => b.imp - a.imp);
+  const losers  = entries.filter(e => e.imp > 0).slice(0, 5);
+  const winners = entries.filter(e => e.imp < 0).slice(0, 3);
+  el.innerHTML = `<div class="wr-panel-head">🏆 Ganadores / Perdedores</div>`
+    + losers.map(e => `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)">
+        <span style="color:var(--ink-2);font-size:11px" onclick="jumpTo('${e.id}')" style="cursor:pointer">${e.label}</span>
+        <span style="color:#ef4444;font-weight:700;font-size:11px">-${e.imp.toFixed(0)}%</span></div>`).join('')
+    + (winners.length ? `<div style="margin-top:6px;font-size:10px;color:var(--ink-3);font-weight:700;text-transform:uppercase;letter-spacing:.06em">Ganadores</div>` : '')
+    + winners.map(e => `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--line)">
+        <span style="color:var(--ink-2);font-size:11px">${e.label}</span>
+        <span style="color:#22c55e;font-weight:700;font-size:11px">+${Math.abs(e.imp).toFixed(0)}%</span></div>`).join('');
+}
+
+// Price trajectories panel with sparklines
+function _wrRenderPrices(priceTrajs, nodeImpacts) {
+  const el = document.getElementById('wr-prices');
+  if (!el) return;
+
+  // Normalize or generate synthetic trajectories
+  const trajs = {};
+  if (priceTrajs && typeof priceTrajs === 'object') {
+    Object.entries(priceTrajs).forEach(([k, v]) => {
+      trajs[k] = Array.isArray(v) ? v : (v?.values || null);
+    });
+  }
+  if (!Object.keys(trajs).filter(k => trajs[k]).length) {
+    const NBI = window.NODE_BY_ID || {};
+    Object.entries(nodeImpacts).slice(0, 8).forEach(([id, imp]) => {
+      const tk = NBI[id]?.mkt || id;
+      const pts = [100];
+      for (let i = 1; i < 7; i++) pts.push(pts[i-1] * (1 - imp / 100 / 6 + (Math.random() - 0.5) * 0.018));
+      trajs[tk] = pts;
+    });
+  }
+
+  const entries = Object.entries(trajs).filter(([,v]) => v).slice(0, 6);
+  if (!entries.length) { el.style.display = 'none'; return; }
+
+  el.innerHTML = `<div class="wr-panel-head">📉 Trayectorias (6M)</div>`
+    + entries.map(([tk, vals]) => {
+      const chg = ((vals[vals.length-1] - vals[0]) / vals[0] * 100).toFixed(1);
+      const col = parseFloat(chg) >= 0 ? '#22c55e' : '#ef4444';
+      const sid = 'wrs' + tk.replace(/[^a-zA-Z0-9]/g,'');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)">
+        <span style="color:var(--ink-2);font-size:11px;min-width:44px;overflow:hidden">${tk.slice(0,10)}</span>
+        <canvas id="${sid}" width="68" height="26"></canvas>
+        <span style="color:${col};font-weight:700;font-size:11px;min-width:38px;text-align:right">${parseFloat(chg)>=0?'+':''}${chg}%</span>
+      </div>`;
+    }).join('');
+
+  requestAnimationFrame(() => {
+    entries.forEach(([tk, vals]) => {
+      const sid = 'wrs' + tk.replace(/[^a-zA-Z0-9]/g,'');
+      const c = document.getElementById(sid); if (!c) return;
+      const ctx2 = c.getContext('2d');
+      const W2 = c.width, H2 = c.height;
+      const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx - mn || 1;
+      const chg = vals[vals.length-1] - vals[0];
+      ctx2.clearRect(0,0,W2,H2);
+      ctx2.strokeStyle = chg >= 0 ? '#22c55e' : '#ef4444';
+      ctx2.lineWidth = 1.5;
+      ctx2.beginPath();
+      vals.forEach((v, i) => {
+        const x = (i / (vals.length-1)) * (W2-2) + 1;
+        const y = H2 - ((v - mn) / rng) * (H2-4) - 2;
+        i === 0 ? ctx2.moveTo(x,y) : ctx2.lineTo(x,y);
+      });
+      ctx2.stroke();
+    });
+  });
+}
+
+// Agent debate panel with scenario-specific content
+function _wrRenderAgents(reportText, presetId) {
+  const el = document.getElementById('wr-agents');
+  if (!el) return;
+
+  const DEBATE = {
+    taiwan_conflict: [
+      { role: '🐂 Alcista', c: '#22c55e', txt: 'Intel y Samsung acelerarán sus fábricas domésticas. Oportunidad de diversificación histórica.' },
+      { role: '🐻 Bajista', c: '#ef4444', txt: 'TSMC produce 54% de chips avanzados globales. Imposible sustituir en menos de 5 años.' },
+      { role: '🌍 Geopolítico', c: '#60a5fa', txt: 'China realizó ejercicios en 2022 y 2023. El riesgo real de bloqueo es mayor al consenso.' },
+      { role: '📊 Quant', c: '#a78bfa', txt: 'P(bloqueo > 90 días) = 34%. VaR 95% portafolio semi: -42% en escenario base.' },
+      { role: '🔬 Técnico', c: '#f97316', txt: 'N3 y N2 solo fabricables en TSMC. Alternativas: 5+ años de inversión mínima de $50B.' },
+      { role: '💼 Gestor', c: '#e2e8f0', txt: 'Rotar 20% hacia ASML y AMAT — equipment menos expuesto a riesgo Taiwan.' },
+    ],
+    china_chip_ban_total: [
+      { role: '🐂 Alcista', c: '#22c55e', txt: 'NVIDIA encontrará mercados alternativos en India, Japón, Corea y Europa.' },
+      { role: '🐻 Bajista', c: '#ef4444', txt: 'China representa 21% de ventas NVIDIA. El impacto año 1 será de -28% en ingresos.' },
+      { role: '🌍 Geopolítico', c: '#60a5fa', txt: 'China acelera Huawei Ascend y SMIC. En 5 años tendrá alternativa doméstica viable.' },
+      { role: '📊 Quant', c: '#a78bfa', txt: 'Estimamos -28% ingresos NVDA año 1, recuperación +15% año 3 por expansión mercados.' },
+      { role: '🔬 Técnico', c: '#f97316', txt: 'Ban total elimina incluso H800 China Edition. Corta cualquier gap de especificaciones.' },
+      { role: '💼 Gestor', c: '#e2e8f0', txt: 'Corto NVDA a corto plazo. Largo AMD como alternativa. Vigilar Intel Gaudi.' },
+    ],
+    hbm_shortage_2027: [
+      { role: '🐂 Alcista', c: '#22c55e', txt: 'SK Hynix invierte $20B adicionales en capacidad. La escasez durará menos de 18 meses.' },
+      { role: '🐻 Bajista', c: '#ef4444', txt: 'HBM4 requiere 3 años de ciclo. La demanda AI crecerá más rápido que la oferta.' },
+      { role: '🌍 Geopolítico', c: '#60a5fa', txt: 'Solo SK Hynix + Samsung dominan HBM. Concentración geográfica en Corea = riesgo sistémico.' },
+      { role: '📊 Quant', c: '#a78bfa', txt: 'DCF sugiere SK Hynix 35% undervalued en escenario de escasez prolongada > 24 meses.' },
+      { role: '🔬 Técnico', c: '#f97316', txt: 'HBM3E requiere packaging 3D avanzado. Cuello de botella real: OSATs (ASE, Amkor).' },
+      { role: '💼 Gestor', c: '#e2e8f0', txt: 'Largo SK Hynix, Micron, Amkor. Corto en fabless dependientes de HBM para AI.' },
+    ],
+    openai_ipo_impact: [
+      { role: '🐂 Alcista', c: '#22c55e', txt: 'IPO de OpenAI valida el ecosistema AI. NVIDIA y ARM comprimen múltiplos al alza.' },
+      { role: '🐻 Bajista', c: '#ef4444', txt: 'Valoración esperada $300B. Si cae post-lock-up, comprime todo el sector AI.' },
+      { role: '🌍 Geopolítico', c: '#60a5fa', txt: 'Inversores Medio Oriente y Asia tendrán participación. Implicaciones regulatorias complejas.' },
+      { role: '📊 Quant', c: '#a78bfa', txt: 'Correlación histórica: IPO tech líder → +12% semiconductores AI en 30 días post-IPO.' },
+      { role: '🔬 Técnico', c: '#f97316', txt: 'OpenAI procesa 100T tokens/día. Demanda inferencia se disparará tras IPO y expansión.' },
+      { role: '💼 Gestor', c: '#e2e8f0', txt: 'Comprar NVDA/AMD antes del lock-up. Evaluar MSFT y GOOGL como proxies de largo.' },
+    ],
+    starshield_reveal: [
+      { role: '🐂 Alcista', c: '#22c55e', txt: 'Starshield confirma SpaceX como proveedor defense crítico. Contratos $10B+ anuales posibles.' },
+      { role: '🐻 Bajista', c: '#ef4444', txt: 'Revelación crea presión política. Congresistas cuestionarán dependencia en empresa privada.' },
+      { role: '🌍 Geopolítico', c: '#60a5fa', txt: 'Rusia y China acelerarán contramedidas. Escalada en dominancia del dominio espacial.' },
+      { role: '📊 Quant', c: '#a78bfa', txt: 'Defense contractors (Northrop, L3Harris) comprimirán 8-15% por competencia SpaceX.' },
+      { role: '🔬 Técnico', c: '#f97316', txt: 'Starshield usa V2 Mini con radar SAR. Superioridad ISR confirmada sobre sistemas legacy.' },
+      { role: '💼 Gestor', c: '#e2e8f0', txt: 'Largo SpaceX pre-IPO vía fondos. Corto traditional defense contractors en el corto plazo.' },
+    ],
+  };
+
+  const agents = (presetId && DEBATE[presetId]) || DEBATE.taiwan_conflict;
+  el.innerHTML = agents.map(({role, c, txt}) =>
+    `<div class="wr-agent-card" style="border-left-color:${c}">
+       <div class="wr-agent-role" style="color:${c}">${role}</div>
+       <div>${txt}</div>
+     </div>`).join('');
+}
+
 
 function initSimTab() {
   if (_simInited) return;

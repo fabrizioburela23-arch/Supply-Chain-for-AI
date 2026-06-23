@@ -545,7 +545,7 @@ const BixbyVoice = {
         break;
       }
       case 'switch_tab': {
-        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space'];
+        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas'];
         const t = params.tab || '';
         if (validTabs.includes(t) && typeof switchTab === 'function') {
           switchTab(t);
