@@ -957,6 +957,101 @@ _CIK_MAP = {
 }
 
 
+@app.route('/api/dossier/<ticker>')
+@rate_limit(limit=30, window=60)
+@cache.cached(timeout=3600)
+def dossier(ticker):
+    """5-year financial dossier: income + balance + cash flow + key metrics (FMP)."""
+    ticker = _validate_ticker(ticker)
+
+    def pick(lst, field, scale=1e9, rnd=2):
+        if not lst:
+            return []
+        out = []
+        for x in reversed(lst):
+            v = x.get(field) if isinstance(x, dict) else None
+            out.append(round(float(v) / scale, rnd) if v is not None else None)
+        return out
+
+    def pick_pct(lst, field):
+        vals = pick(lst, field, scale=1, rnd=3)
+        return [round(v * 100, 1) if v is not None else None for v in vals]
+
+    if not FMP:
+        return jsonify({'error': 'FMP_KEY not configured — dossier requires FMP', 'ticker': ticker}), 503
+
+    inc, _  = _safe_get(f'https://financialmodelingprep.com/api/v3/income-statement/{ticker}?limit=5&apikey={FMP}')
+    bal, _  = _safe_get(f'https://financialmodelingprep.com/api/v3/balance-sheet-statement/{ticker}?limit=5&apikey={FMP}')
+    cf, _   = _safe_get(f'https://financialmodelingprep.com/api/v3/cash-flow-statement/{ticker}?limit=5&apikey={FMP}')
+    km, _   = _safe_get(f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?limit=5&apikey={FMP}')
+
+    inc  = inc  if isinstance(inc,  list) else []
+    bal  = bal  if isinstance(bal,  list) else []
+    cf   = cf   if isinstance(cf,   list) else []
+    km   = km   if isinstance(km,   list) else []
+
+    years = [x['date'][:4] for x in reversed(inc) if isinstance(x, dict) and 'date' in x]
+    rev   = pick(inc, 'revenue')
+
+    # Revenue growth % YoY
+    def growth(vals):
+        out = [None]
+        for i in range(1, len(vals)):
+            a, b = vals[i-1], vals[i]
+            out.append(round((b-a)/abs(a)*100, 1) if a and b else None)
+        return out
+
+    # Net debt = totalDebt - cash
+    debt = pick(bal, 'totalDebt')
+    cash = pick(bal, 'cashAndCashEquivalents')
+    net_debt = [
+        round((d or 0) - (c or 0), 2)
+        for d, c in zip(debt, cash)
+    ]
+
+    fcf = pick(cf, 'freeCashFlow')
+    fcf_margin = [
+        round(f/r*100, 1) if f is not None and r else None
+        for f, r in zip(fcf, rev)
+    ]
+
+    # EV/Revenue — try key-metrics first, fall back to priceToSalesRatio
+    km_fields = km[0] if km else {}
+    ev_rev_field = 'evToRevenue' if 'evToRevenue' in km_fields else 'priceToSalesRatio'
+
+    return jsonify({
+        'ticker': ticker,
+        'years': years,
+        'synthetic': False,
+        # P1 Revenue (B$)
+        'revenue': rev,
+        'revenue_growth': growth(rev),
+        # P2 Dilution — shares outstanding (B)
+        'shares': pick(inc, 'weightedAverageShsOut', scale=1e9, rnd=3),
+        # P3 FCF (B$)
+        'fcf': fcf,
+        'fcf_margin': fcf_margin,
+        # P4 Stock — served from /api/candles/<ticker> in the browser
+        # P5 Valuation
+        'ev_revenue': [round(v, 2) if v else None for v in pick(km, ev_rev_field, scale=1, rnd=2)],
+        'pe_ratio':   [round(v, 1) if v else None for v in pick(km, 'peRatio', scale=1, rnd=1)],
+        # P6 Balance sheet
+        'total_debt': debt,
+        'cash': cash,
+        'net_debt': net_debt,
+        # P7 Margins
+        'gross_margin': pick_pct(inc, 'grossProfitRatio'),
+        'net_margin':   pick_pct(inc, 'netIncomeRatio'),
+        # P8 ROE / ROIC
+        'roe':  pick_pct(km, 'roe'),
+        'roic': pick_pct(km, 'roic'),
+        # extras
+        'net_income': pick(inc, 'netIncome'),
+        'eps':        [x.get('eps') if isinstance(x,dict) else None for x in reversed(inc)],
+        'ebitda':     pick(inc, 'ebitda'),
+    })
+
+
 @app.route('/api/fundamentals/<ticker>/sec')
 @rate_limit(limit=60, window=60)
 @cache.cached(timeout=86400)

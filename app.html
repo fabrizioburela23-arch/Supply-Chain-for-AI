@@ -1111,6 +1111,14 @@ line.flowing{stroke-dasharray:6 8;stroke-width:2.4px;animation:linkFlow .85s lin
 #wr-canvas { display: block; width: 100%; border-radius: 8px; background: #070b14; }
 .wr-agent-card { background: var(--surface-2); border-radius: 6px; padding: 8px 10px; border-left: 3px solid var(--violet); font-size: 11px; line-height: 1.45; color: var(--ink-2); }
 .wr-agent-role { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
+/* ── Dossier Financiero ── */
+.dossier-panel { background:var(--surface-2);border-radius:8px;padding:10px 12px;position:relative }
+.dossier-panel canvas { display:block;width:100%;margin-top:6px }
+.dossier-phead { font-size:9px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em }
+.dossier-pval  { font-size:16px;font-weight:800;color:var(--ink-1);margin:3px 0 }
+.dossier-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer }
+.dossier-badge .rm { opacity:.6;font-size:12px;margin-left:2px }
+@media(max-width:760px){#dossier-panels{grid-template-columns:repeat(2,1fr)!important}}
 
 /* ════════════════════════════════════════════════════════════════════════
    [UPGRADE] CAPA EDITORIAL · revista financiera en papel (nuevo tema por defecto)
@@ -1571,6 +1579,38 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <div class="mkt-sec-head">Nodos aislados (sin conexiones de salida)</div>
       <div id="an-isolated" style="padding:14px 16px;font-size:13px">Calculando...</div>
     </div>
+
+    <!-- ═══ Dossier Financiero ══════════════════════════════════════════════ -->
+    <div class="mkt-tablewrap" style="margin-top:24px;padding:0;overflow:visible" id="dossier-wrap">
+      <div style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="mkt-sec-head" style="margin:0;font-size:13px">📊 Dossier Financiero</div>
+          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">Análisis 5 años · Compara hasta 3 empresas · FMP + síntesis</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <div id="dossier-badges" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+          <div style="position:relative">
+            <input id="dossier-search" placeholder="Empresa o ticker…" autocomplete="off"
+              style="padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;width:170px;font-family:inherit"
+              oninput="_dossierAutocomplete(this.value)" onkeydown="if(event.key==='Enter')_dossierLoad()">
+            <div id="dossier-ac" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;z-index:200;max-height:180px;overflow-y:auto;margin-top:2px"></div>
+          </div>
+          <button onclick="_dossierLoad()" style="padding:6px 12px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Analizar</button>
+        </div>
+      </div>
+      <!-- 8-panel grid -->
+      <div id="dossier-panels" style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;min-height:80px">
+        <div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">
+          Busca una empresa para ver su dossier financiero completo
+        </div>
+      </div>
+      <!-- Actions bar -->
+      <div id="dossier-actions" style="display:none;padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="_dossierToWarRoom()" style="padding:6px 13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">🚨 Stress en War-Room</button>
+        <button onclick="_dossierAddCompare()" id="dossier-compare-btn" style="padding:6px 13px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:6px;font-size:12px;cursor:pointer">+ Comparar empresa</button>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -8319,7 +8359,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
           if (detail) detail.insertBefore(existing, detail.firstChild);
         }
         const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
-        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>`;
+        const mkt = (window.NODE_BY_ID||{})[id]?.mkt || '';
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>${mkt ? `<button onclick="window._openDossier&&window._openDossier('${id}','${mkt}')" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>` : ''}`;
       } catch(e) {}
     };
   }
@@ -9080,6 +9121,442 @@ function _wrRenderAgents(reportText, presetId) {
      </div>`).join('');
 }
 
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// DOSSIER FINANCIERO — 8 paneles, comparación hasta 3 empresas
+// ════════════════════════════════════════════════════════════════════════════
+const _dossier = {
+  slots: [],          // [{nodeId, ticker, label, color, data}] up to 3
+  COLORS: ['#7c3aed','#ef4444','#22c55e'],
+  LABELS: { revenue:'Revenue ($B)', shares:'Dilution (B acc)', fcf:'FCF ($B)',
+    stock:'Precio acción', ev_revenue:'EV/Revenue', pe_ratio:'P/E Ratio',
+    gross_margin:'Márgenes (%)', roe:'ROE / ROIC (%)' },
+};
+
+// ── Autocomplete ─────────────────────────────────────────────────────────────
+function _dossierAutocomplete(q) {
+  const box = document.getElementById('dossier-ac');
+  if (!box) return;
+  q = q.toLowerCase().trim();
+  if (q.length < 2) { box.style.display = 'none'; return; }
+  const hits = (window.NODES || [])
+    .filter(n => n.mkt && (
+      (n.label||'').toLowerCase().includes(q) ||
+      (n.mkt||'').toLowerCase().includes(q) ||
+      n.id.toLowerCase().includes(q)))
+    .slice(0, 8);
+  if (!hits.length) { box.style.display = 'none'; return; }
+  box.innerHTML = hits.map(n =>
+    `<div onclick="_dossierPickAC('${n.id}','${n.mkt}','${(n.label||n.id).replace(/'/g,"\\'")}');event.stopPropagation()"
+      style="padding:7px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background=''">
+      <span>${n.label||n.id}</span>
+      <span style="font-size:10px;color:var(--ink-3)">${n.mkt}</span>
+    </div>`).join('');
+  box.style.display = 'block';
+}
+
+function _dossierPickAC(nodeId, ticker, label) {
+  const inp = document.getElementById('dossier-search');
+  if (inp) inp.value = label;
+  document.getElementById('dossier-ac').style.display = 'none';
+  _dossierLoadCompany(nodeId, ticker, label);
+}
+
+function _dossierLoad() {
+  document.getElementById('dossier-ac').style.display = 'none';
+  const q = (document.getElementById('dossier-search')?.value || '').trim().toLowerCase();
+  if (!q) return;
+  const n = (window.NODES || []).find(nd =>
+    nd.mkt && ((nd.mkt||'').toLowerCase() === q ||
+    (nd.label||'').toLowerCase().includes(q) ||
+    nd.id.toLowerCase().includes(q)));
+  if (n) _dossierLoadCompany(n.id, n.mkt, n.label || n.id);
+  else if (typeof toast === 'function') toast('Empresa no encontrada con ticker/nombre: ' + q);
+}
+document.addEventListener('click', () => { const b=document.getElementById('dossier-ac'); if(b)b.style.display='none'; });
+
+function _dossierAddCompare() {
+  const inp = document.getElementById('dossier-search');
+  if (inp) { inp.value = ''; inp.focus(); }
+}
+
+// ── Load company dossier ─────────────────────────────────────────────────────
+async function _dossierLoadCompany(nodeId, ticker, label) {
+  const slot = _dossier.slots.findIndex(s => s.nodeId === nodeId);
+  const idx  = slot >= 0 ? slot : (_dossier.slots.length < 3 ? _dossier.slots.length : 0);
+  const color = _dossier.COLORS[idx];
+  _dossier.slots[idx] = { nodeId, ticker, label, color, data: null };
+  _dossierRenderBadges();
+
+  const panels = document.getElementById('dossier-panels');
+  if (idx === 0) {
+    panels.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">
+      Cargando dossier de ${label}…</div>`;
+  }
+
+  // Try FMP endpoint, fall back to synthetic
+  let data;
+  try {
+    const r = await fetch(`/api/dossier/${encodeURIComponent(ticker)}`);
+    data = r.ok ? await r.json() : null;
+  } catch { data = null; }
+
+  if (!data || data.error) {
+    data = _dossierSynthetic(nodeId, ticker, label);
+  }
+  _dossier.slots[idx].data = data;
+  _dossierRenderPanels();
+
+  const actions = document.getElementById('dossier-actions');
+  if (actions) actions.style.display = 'flex';
+}
+
+// ── Synthetic dossier when FMP is unavailable ────────────────────────────────
+function _dossierSynthetic(nodeId, ticker, label) {
+  const meta = (window.NODE_META || {})[nodeId] || {};
+  const node = (window.NODE_BY_ID || {})[nodeId] || {};
+  const quote = (window.MKT?.quotes || {})[ticker] || {};
+
+  // Parse revenue_2025 from meta
+  const revStr = String(meta.revenue_2025 || '');
+  let rev25 = parseFloat(revStr.replace(/[^0-9.]/g,'')) || 5;
+  if (revStr.includes('M') && !revStr.includes('B')) rev25 /= 1000;
+
+  // Category-based growth (CAGR 2021-2025)
+  const cat = node.cat || '';
+  const cagr = {
+    gpu:0.38, ai_lab:0.55, memory:0.22, networking:0.28, cloud:0.26,
+    hyperscaler:0.24, fab:0.18, equipment:0.20, eda:0.14, datacenter:0.30,
+    space:0.20, defense:0.12, software:0.22, automotive:0.18,
+  }[cat] || 0.18;
+
+  const years5 = ['2021','2022','2023','2024','2025'];
+  const revenue = years5.map((_,i) => parseFloat((rev25 / Math.pow(1+cagr, 4-i)).toFixed(2)));
+
+  // Margins by category
+  const gm = { gpu:0.56, ai_lab:0.72, memory:0.45, networking:0.62, cloud:0.68,
+    hyperscaler:0.52, fab:0.48, equipment:0.45, eda:0.75, datacenter:0.55,
+    space:0.28, defense:0.22, software:0.70 }[cat] || 0.50;
+  const nm = gm * 0.35 + (Math.random()-0.5)*0.04;
+  const fcfM = nm * 1.05 + (Math.random()-0.5)*0.04;
+
+  const fcf = revenue.map(r => parseFloat((r * (fcfM + (Math.random()-0.5)*0.03)).toFixed(2)));
+  const gross_margin = years5.map((_,i) => parseFloat(((gm - 0.04 + i*0.01 + (Math.random()-0.5)*0.01)*100).toFixed(1)));
+  const net_margin   = years5.map((_,i) => parseFloat(((nm - 0.03 + i*0.008)*100).toFixed(1)));
+  const fcf_margin   = fcf.map((f,i) => parseFloat((f/revenue[i]*100).toFixed(1)));
+
+  const baseShares = (meta.mktcap_b && quote.close)
+    ? parseFloat(((meta.mktcap_b||5) / (quote.close||100) * 1e9 / 1e9).toFixed(3))
+    : 0.5 + Math.random()*2;
+  const shares = years5.map((_,i) => parseFloat((baseShares * (1 + (3-i)*0.02)).toFixed(3)));
+
+  const mktcap = typeof meta.mktcap_b === 'number' ? meta.mktcap_b : parseFloat(String(meta.mktcap_b||'5').replace(/[^0-9.]/g,'')) || 5;
+  const ev_revenue = revenue.map((r,i) => parseFloat(((mktcap * Math.pow(1.15, 4-i)) / Math.max(r,0.1)).toFixed(1)));
+  const roe  = years5.map((_,i) => parseFloat(((15 + i*2 + (Math.random()-0.5)*4)).toFixed(1)));
+  const roic = roe.map(r => parseFloat((r * 0.8).toFixed(1)));
+
+  return {
+    ticker, years: years5, synthetic: true,
+    revenue,
+    revenue_growth: [null, ...revenue.slice(1).map((b,i)=>parseFloat(((b-revenue[i])/Math.abs(revenue[i])*100).toFixed(1)))],
+    shares, fcf, fcf_margin, gross_margin, net_margin,
+    ev_revenue, pe_ratio: ev_revenue.map(v => parseFloat((v*2.5).toFixed(1))),
+    roe, roic,
+    net_income: revenue.map(r => parseFloat((r*nm).toFixed(2))),
+    total_debt: revenue.map(r => parseFloat((r*0.4).toFixed(2))),
+    cash: revenue.map(r => parseFloat((r*0.25).toFixed(2))),
+  };
+}
+
+// ── Render badges ─────────────────────────────────────────────────────────────
+function _dossierRenderBadges() {
+  const el = document.getElementById('dossier-badges');
+  if (!el) return;
+  el.innerHTML = _dossier.slots.map((s,i) =>
+    `<span class="dossier-badge" style="background:${s.color}22;border:1px solid ${s.color}55;color:${s.color}">
+       ${s.label.split(' ')[0]} <span class="rm" onclick="_dossierRemove(${i});event.stopPropagation()">✕</span>
+     </span>`).join('');
+}
+
+function _dossierRemove(idx) {
+  _dossier.slots.splice(idx, 1);
+  _dossierRenderBadges();
+  if (_dossier.slots.length) _dossierRenderPanels();
+  else {
+    document.getElementById('dossier-panels').innerHTML =
+      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">Busca una empresa para ver su dossier</div>';
+    document.getElementById('dossier-actions').style.display = 'none';
+  }
+}
+
+// ── Render all 8 panels ──────────────────────────────────────────────────────
+function _dossierRenderPanels() {
+  const panels = document.getElementById('dossier-panels');
+  if (!panels || !_dossier.slots.some(s => s.data)) return;
+
+  const mainSlot = _dossier.slots.find(s => s.data);
+  const years = mainSlot.data.years || ['2021','2022','2023','2024','2025'];
+  const synth = _dossier.slots.every(s => s.data?.synthetic);
+
+  const mkPanel = (id, head, valStr) =>
+    `<div class="dossier-panel">
+       <div class="dossier-phead">${head}${synth ? ' <span style="opacity:.5">est.</span>':''}</div>
+       <div class="dossier-pval" id="dp-val-${id}">${valStr}</div>
+       <canvas id="dp-${id}" height="90"></canvas>
+     </div>`;
+
+  const fmtB = (v) => v !== null && v !== undefined ? (v >= 0 ? '+' : '') + v.toFixed(1) + 'B' : '—';
+  const fmtPct = (v) => v !== null && v !== undefined ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '—';
+
+  const d0 = mainSlot.data;
+  const lastRev  = d0.revenue?.at(-1);
+  const lastFcf  = d0.fcf?.at(-1);
+  const lastGm   = d0.gross_margin?.at(-1);
+  const lastRoe  = d0.roe?.at(-1);
+  const lastEv   = d0.ev_revenue?.at(-1);
+  const lastShares = d0.shares?.at(-1);
+
+  panels.innerHTML =
+    mkPanel('revenue',    'Revenue',      lastRev  ? '$' + lastRev.toFixed(1) + 'B'    : '—') +
+    mkPanel('shares',     'Dilución',     lastShares ? lastShares.toFixed(2) + 'B acc.' : '—') +
+    mkPanel('fcf',        'Free Cash Flow', lastFcf ? (lastFcf>=0?'+':'') + lastFcf.toFixed(1) + 'B' : '—') +
+    mkPanel('margins',    'Márgenes',     lastGm   ? lastGm.toFixed(0) + '% bruto'     : '—') +
+    mkPanel('ev',         'EV/Revenue',   lastEv   ? lastEv.toFixed(1) + 'x'           : '—') +
+    mkPanel('balance',    'Balance',      '—') +
+    mkPanel('margins2',   'Margen Neto',  lastGm   ? lastGm.toFixed(0) + '% / FCF'    : '—') +
+    mkPanel('roe',        'ROE / ROIC',   lastRoe  ? lastRoe.toFixed(1) + '%'          : '—');
+
+  requestAnimationFrame(() => {
+    // Collect series for each panel
+    const series = (field) => _dossier.slots.map(s => ({ vals: s.data?.[field] || [], color: s.color }));
+
+    _dsDrawBars('dp-revenue',  series('revenue'),      years, { unit:'$B', zeroBase:true });
+    _dsDrawBars('dp-shares',   series('shares'),       years, { unit:'B', zeroBase:true });
+    _dsDrawBars('dp-fcf',      series('fcf'),          years, { unit:'B', zeroBase:false });
+    _dsDrawLines('dp-margins', [
+      ..._dossier.slots.map(s => ({ vals: s.data?.gross_margin||[], color: s.color, dash:false })),
+      ..._dossier.slots.map(s => ({ vals: s.data?.fcf_margin||[], color: s.color, dash:true })),
+    ], years, { unit:'%' });
+    _dsDrawLines('dp-ev',      series('ev_revenue'),   years, { unit:'x' });
+    _dsDrawBalance('dp-balance');
+    _dsDrawLines('dp-margins2',[
+      ..._dossier.slots.map(s => ({ vals: s.data?.gross_margin||[], color: s.color, dash:false })),
+      ..._dossier.slots.map(s => ({ vals: s.data?.net_margin||[], color: s.color, dash:true })),
+    ], years, { unit:'%' });
+    _dsDrawLines('dp-roe', [
+      ..._dossier.slots.map(s => ({ vals: s.data?.roe||[], color: s.color, dash:false })),
+      ..._dossier.slots.map(s => ({ vals: s.data?.roic||[], color: s.color, dash:true })),
+    ], years, { unit:'%' });
+  });
+}
+
+// ── Canvas drawing helpers ────────────────────────────────────────────────────
+function _dsSetup(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 24;
+  const H = 90;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W, H };
+}
+
+function _dsDrawBars(id, series, years, opts = {}) {
+  const canvas = document.getElementById(id); if (!canvas) return;
+  const { ctx, W, H } = _dsSetup(canvas);
+  const { unit='', zeroBase=true } = opts;
+  const PAD = { top:16, right:4, bottom:18, left:28 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+
+  // Flatten all values
+  const allVals = series.flatMap(s => s.vals).filter(v => v !== null && v !== undefined);
+  if (!allVals.length) return;
+  const rawMin = zeroBase ? Math.min(0, ...allVals) : Math.min(...allVals);
+  const rawMax = Math.max(...allVals);
+  const range = rawMax - rawMin || 1;
+
+  // Y axis labels
+  ctx.fillStyle = 'rgba(120,140,180,.6)';
+  ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign = 'right';
+  [0, 0.5, 1].forEach(t => {
+    const v = rawMin + t * range;
+    const y = PAD.top + cH - (t * cH);
+    ctx.fillText(Math.abs(v) >= 1 ? v.toFixed(0) : v.toFixed(1), PAD.left - 3, y + 3);
+    ctx.strokeStyle = 'rgba(100,120,160,.08)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+cW, y); ctx.stroke();
+  });
+
+  const nSeries = series.length;
+  const nYears = years.length;
+  const groupW = cW / nYears;
+  const barW = Math.min(groupW / (nSeries + 1), 16);
+
+  series.forEach((s, si) => {
+    s.vals.forEach((v, i) => {
+      if (v === null || v === undefined) return;
+      const x = PAD.left + groupW * i + groupW / (nSeries + 1) * (si + 0.5);
+      const barH = Math.abs(v - rawMin) / range * cH;
+      const y = PAD.top + cH - ((v - rawMin) / range * cH);
+      ctx.fillStyle = v >= 0 ? s.color : '#ef4444';
+      ctx.globalAlpha = si === 0 ? 1 : 0.75;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, barW, barH > 1 ? barH : 1, 2);
+      else ctx.rect(x, y, barW, barH > 1 ? barH : 1);
+      ctx.fill();
+    });
+  });
+  ctx.globalAlpha = 1;
+
+  // X labels
+  ctx.fillStyle = 'rgba(100,120,160,.7)';
+  ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign = 'center';
+  years.forEach((yr, i) => {
+    ctx.fillText(yr.slice(2), PAD.left + groupW * i + groupW / 2, H - 3);
+  });
+}
+
+function _dsDrawLines(id, series, years, opts = {}) {
+  const canvas = document.getElementById(id); if (!canvas) return;
+  const { ctx, W, H } = _dsSetup(canvas);
+  const { unit = '' } = opts;
+  const PAD = { top: 14, right: 6, bottom: 18, left: 28 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+
+  const allVals = series.flatMap(s => s.vals).filter(v => v !== null && v !== undefined);
+  if (!allVals.length) return;
+  const rawMin = Math.min(...allVals);
+  const rawMax = Math.max(...allVals);
+  const range = rawMax - rawMin || 1;
+
+  // Grid
+  [0, 0.5, 1].forEach(t => {
+    const v = rawMin + t * range;
+    const y = PAD.top + cH - t * cH;
+    ctx.fillStyle = 'rgba(120,140,180,.55)';
+    ctx.font = '8px Inter,sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText((v >= 100 ? v.toFixed(0) : v.toFixed(1)) + unit, PAD.left - 3, y + 3);
+    ctx.strokeStyle = 'rgba(100,120,160,.07)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+cW, y); ctx.stroke();
+  });
+
+  series.forEach(s => {
+    if (!s.vals.length) return;
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = s.dash ? 1 : 1.5;
+    ctx.globalAlpha = s.dash ? 0.55 : 1;
+    if (s.dash) ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    let started = false;
+    s.vals.forEach((v, i) => {
+      if (v === null || v === undefined) return;
+      const x = PAD.left + (i / (years.length - 1 || 1)) * cW;
+      const y = PAD.top + cH - ((v - rawMin) / range) * cH;
+      started ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      started = true;
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+  });
+
+  ctx.fillStyle = 'rgba(100,120,160,.7)';
+  ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign = 'center';
+  years.forEach((yr, i) => {
+    ctx.fillText(yr.slice(2), PAD.left + (i / (years.length - 1 || 1)) * cW, H - 3);
+  });
+}
+
+function _dsDrawBalance(id) {
+  const canvas = document.getElementById(id); if (!canvas) return;
+  const { ctx, W, H } = _dsSetup(canvas);
+  const PAD = { top:14, right:6, bottom:18, left:28 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+
+  // Stacked: cash (green) vs debt (red) per slot per year
+  const years = (_dossier.slots.find(s=>s.data)?.data?.years) || [];
+  const allVals = _dossier.slots.flatMap(s => [
+    ...(s.data?.total_debt||[]), ...(s.data?.cash||[])
+  ]).filter(v => v != null);
+  if (!allVals.length) return;
+  const maxV = Math.max(...allVals) || 1;
+
+  const nSeries = _dossier.slots.length;
+  const groupW = cW / years.length;
+  const barW = Math.min(groupW / (nSeries + 1), 14);
+
+  ctx.fillStyle = 'rgba(120,140,180,.55)';
+  ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(maxV.toFixed(0)+'B', PAD.left-3, PAD.top+3);
+  ctx.fillText('0', PAD.left-3, PAD.top+cH+3);
+
+  _dossier.slots.forEach((s, si) => {
+    (s.data?.total_debt||[]).forEach((d, i) => {
+      if (d == null) return;
+      const x = PAD.left + groupW*i + groupW/(nSeries+1)*(si+0.5);
+      const debtH = (d/maxV)*cH;
+      ctx.fillStyle = '#ef444488';
+      ctx.fillRect(x, PAD.top+cH-debtH, barW, debtH);
+    });
+    (s.data?.cash||[]).forEach((c, i) => {
+      if (c == null) return;
+      const x = PAD.left + groupW*i + groupW/(nSeries+1)*(si+0.5);
+      const cashH = (c/maxV)*cH;
+      ctx.fillStyle = s.color + '99';
+      ctx.fillRect(x+barW/2, PAD.top+cH-cashH, barW/2, cashH);
+    });
+  });
+
+  ctx.fillStyle = 'rgba(100,120,160,.7)';
+  ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign = 'center';
+  years.forEach((yr, i) => {
+    ctx.fillText(yr.slice(2), PAD.left+groupW*i+groupW/2, H-3);
+  });
+
+  // Legend
+  ctx.fillStyle = '#ef4444'; ctx.fillRect(PAD.left, 4, 8, 4);
+  ctx.fillStyle = 'rgba(124,58,237,.8)'; ctx.fillRect(PAD.left+12, 4, 8, 4);
+  ctx.fillStyle = 'rgba(120,140,180,.7)'; ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign='left'; ctx.fillText('Deuda', PAD.left+22, 9);
+  ctx.fillText('Caja', PAD.left+34, 9);
+}
+
+// ── War-Room from dossier ─────────────────────────────────────────────────────
+function _dossierToWarRoom() {
+  const companies = _dossier.slots.filter(s=>s.data).map(s=>s.label).join(', ');
+  const tickers   = _dossier.slots.filter(s=>s.data).map(s=>s.ticker).join(' ');
+  const txt = `Análisis de impacto en la cadena de valor: ${companies} (${tickers}). Evalúa vulnerabilidades, concentración de riesgo, y escenarios de shock para estas empresas.`;
+  switchTab('simulation');
+  setTimeout(() => {
+    const ta = document.getElementById('sim-custom-text');
+    const ni = document.getElementById('sim-custom-nodes');
+    if (ta) ta.value = txt;
+    if (ni) ni.value = _dossier.slots.map(s=>s.nodeId).join(',');
+    document.getElementById('sim-run-btn')?.click();
+  }, 350);
+}
+
+// Public: open dossier from node panel
+window._openDossier = function(nodeId, ticker) {
+  switchTab('analysis');
+  const n = (window.NODE_BY_ID||{})[nodeId];
+  if (n) setTimeout(() => _dossierLoadCompany(nodeId, ticker||n.mkt, n.label||nodeId), 300);
+};
 
 function initSimTab() {
   if (_simInited) return;
