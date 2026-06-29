@@ -1131,6 +1131,26 @@ line.flowing{stroke-dasharray:6 8;stroke-width:2.4px;animation:linkFlow .85s lin
 .dossier-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer }
 .dossier-badge .rm { opacity:.6;font-size:12px;margin-left:2px }
 @media(max-width:760px){#dossier-panels{grid-template-columns:repeat(2,1fr)!important}}
+/* ── Panel de empresa privada (pre-IPO) ── */
+.preipo-panel{margin:10px 0 6px;border:1px solid rgba(168,130,255,.35);border-radius:10px;padding:12px 14px;background:linear-gradient(180deg,rgba(124,58,237,.06),transparent)}
+.preipo-panel .pp-head{font-size:10px;font-weight:800;letter-spacing:.08em;color:#a78bfa;margin-bottom:10px}
+.preipo-panel .pp-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.preipo-panel .pp-kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
+.preipo-panel .pp-kl{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+.preipo-panel .pp-kv{font-size:14px;font-weight:800;color:var(--ink-1);margin-top:2px}
+.preipo-panel .pp-sec{margin-top:9px}
+.preipo-panel .pp-sl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:5px}
+.preipo-panel .pp-invs{display:flex;flex-wrap:wrap;gap:5px}
+.preipo-panel .pp-inv{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
+.preipo-panel .pp-inv-link{cursor:pointer;border-color:rgba(96,165,250,.4);color:#60a5fa}
+.preipo-panel .pp-inv-link:hover{background:rgba(96,165,250,.12)}
+.preipo-panel .pp-round{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px solid var(--line);font-size:11px}
+.preipo-panel .pp-amt{font-weight:800;color:#34d399;font-family:'JetBrains Mono',monospace}
+.preipo-panel .pp-rnd{color:var(--ink-1);font-weight:600}
+.preipo-panel .pp-date{color:var(--ink-3);margin-left:auto}
+.preipo-panel .pp-lead{color:var(--ink-3);font-size:10px}
+.preipo-panel .pp-ms{display:flex;gap:8px;padding:3px 0;font-size:11px;color:var(--ink-2)}
+.preipo-panel .pp-ms-date{color:#a78bfa;font-weight:700;font-family:'JetBrains Mono',monospace;flex-shrink:0;min-width:38px}
 
 /* ════════════════════════════════════════════════════════════════════════
    [UPGRADE] CAPA EDITORIAL · revista financiera en papel (nuevo tema por defecto)
@@ -1272,6 +1292,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/nodes_expand3.js"></script>
 <script src="nodes/nodes_nuclear.js"></script>
 <script src="nodes/nodes_expand4.js"></script>
+<script src="nodes/preipo_intel.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
 <script src="nodes/links_connect.js"></script>
@@ -5443,6 +5464,7 @@ function renderDetail(id){
       <span class="badge badge-loc">📍 ${esc(d.loc)}</span>
     </div>
     ${pfBtns}
+    ${d.preipo ? renderPreipoPanel(d) : ''}
     <div class="fin-grid">
       <div class="fin-card">
         <div class="fl">${t('d_margin')}</div>
@@ -6701,6 +6723,33 @@ const fmtN=(v,dec=2)=> v==null||isNaN(v) ? '—' : Number(v).toLocaleString('en-
 const fmtPct=v=> v==null||isNaN(v) ? '—' : (v>=0?'+':'')+ (v*100).toFixed(2)+'%';
 function savePos(){ localStorage.setItem('eco_pos',JSON.stringify(MKT.pos)); }
 function quoteOf(n){ return n.mkt ? MKT.quotes[n.mkt] : null; }
+
+/* ── Panel de empresa privada (pre-IPO) — Fase 4 ──────────────────────────── */
+function renderPreipoPanel(d){
+  const intel = (window.PREIPO_INTEL||{})[d.id] || {};
+  const val = intel.valuation || (/[$~]\d|\bB\b|valuation/i.test(d.ticker||'') ? d.ticker : (d.ticker||'—'));
+  const raised = intel.total_raised || '—';
+  const ipo = intel.ipo_timeline || (d.growth||'').replace(/^[^A-Za-z0-9$]+/,'') || '—';
+  const invChip = name => {
+    const n = NODE_BY_ID[name];
+    return n ? `<button class="pp-inv pp-inv-link" onclick="jumpTo('${n.id}')" title="Ver ${esc(n.label)}">${esc(n.label)}</button>`
+             : `<span class="pp-inv">${esc(name)}</span>`;
+  };
+  const investors = (intel.investors||[]).map(invChip).join('');
+  const rounds = (intel.rounds||[]).map(r=>`<div class="pp-round"><span class="pp-amt">${esc(r.amount||'')}</span><span class="pp-rnd">${esc(r.round||'')}</span><span class="pp-date">${esc(r.date||'')}</span>${r.lead?`<span class="pp-lead">${esc(r.lead)}</span>`:''}</div>`).join('');
+  const milestones = (intel.milestones||[]).map(m=>`<div class="pp-ms"><span class="pp-ms-date">${esc(m.date||'')}</span><span>${esc(m.event)}</span></div>`).join('');
+  return `<div class="preipo-panel">
+    <div class="pp-head">🔒 ${LANG==='en'?'PRIVATE COMPANY':'EMPRESA PRIVADA'}</div>
+    <div class="pp-kpis">
+      <div class="pp-kpi"><div class="pp-kl">${LANG==='en'?'Valuation':'Valoración'}</div><div class="pp-kv" style="font-size:13px">${esc(val)}</div></div>
+      <div class="pp-kpi"><div class="pp-kl">${LANG==='en'?'Total raised':'Levantado'}</div><div class="pp-kv">${esc(raised)}</div></div>
+      <div class="pp-kpi"><div class="pp-kl">IPO</div><div class="pp-kv" style="font-size:11px">${esc(ipo)}</div></div>
+    </div>
+    ${investors?`<div class="pp-sec"><div class="pp-sl">${LANG==='en'?'Key investors':'Inversores clave'}</div><div class="pp-invs">${investors}</div></div>`:''}
+    ${rounds?`<div class="pp-sec"><div class="pp-sl">${LANG==='en'?'Funding rounds':'Rondas de financiación'}</div>${rounds}</div>`:''}
+    ${milestones?`<div class="pp-sec"><div class="pp-sl">${LANG==='en'?'Recent milestones':'Hitos recientes'}</div>${milestones}</div>`:''}
+  </div>`;
+}
 
 /* ── Carteras editables: capa de usuario sobre el `port` estático ──────────── */
 var USER_PORTFOLIOS = JSON.parse(localStorage.getItem('eco_user_pf')||'{}');
