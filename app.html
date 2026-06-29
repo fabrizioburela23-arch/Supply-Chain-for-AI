@@ -462,8 +462,12 @@ footer .disc{line-height:1.4}
 .node-label.big{font-size:12px;font-weight:700}
 .dark .node-label{text-shadow:0 1px 3px rgba(0,0,0,.8);stroke:rgba(8,11,16,.92)}
 .region-label{
-  font-family:'Geist',sans-serif;font-size:30px;font-weight:600;letter-spacing:.05em;
+  font-family:'Geist',sans-serif;font-size:30px;font-weight:800;letter-spacing:.04em;
   pointer-events:none;
+  paint-order:stroke;
+  stroke:rgba(3,6,14,.72);
+  stroke-width:5px;
+  stroke-linejoin:round;
 }
 .panel-card{
   background:var(--surface);
@@ -1183,7 +1187,7 @@ body:not(.dark) .graph-wrap::after{content:'';position:absolute;inset:0;pointer-
   background:radial-gradient(125% 95% at 50% 42%, transparent 60%, rgba(27,23,20,.07))}
 body:not(.dark) #graph{position:relative;z-index:1}
 body:not(.dark) .node-label{fill:var(--ink);text-shadow:0 1px 2px rgba(255,253,248,.95),0 0 2px rgba(255,253,248,.9);stroke:rgba(255,253,248,.95)}
-body:not(.dark) .region-label{fill:rgba(27,23,20,.13)}
+body:not(.dark) .region-label{stroke:rgba(255,255,255,.9);stroke-width:5px}
 
 /* — Panel de detalle — */
 body:not(.dark) .panel{background:rgba(251,249,244,.94);border-left:1px solid var(--line);
@@ -4770,6 +4774,8 @@ const root = svg.append('g');
 const regionLayer = root.append('g');
 const linkLayer = root.append('g');
 const nodeLayer = root.append('g');
+// Las etiquetas de país van POR ENCIMA de los nodos para que se lean (sin bloquear clics)
+regionLayer.raise().style('pointer-events','none');
 
 const zoom = d3.zoom().scaleExtent([.3,3.5]).on('zoom',e=>root.attr('transform',e.transform));
 svg.call(zoom);
@@ -5763,7 +5769,7 @@ function applyView(mode){
   document.querySelectorAll('#view-seg button').forEach(b=>b.classList.toggle('active',b.dataset.view===mode));
   setForces();
   positionRegionLabels();
-  regionLabels.transition().duration(450).style('opacity',mode==='geo'?0.45:0);
+  regionLabels.transition().duration(450).style('opacity',mode==='geo'?0.92:0);
   recolorNodes();
   renderLegend();
   renderBand();
