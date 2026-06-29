@@ -1,16 +1,25 @@
-/* Khipu Finance v1 — Service Worker
-   App-shell cache-first + API network-first con fallback a caché (uso offline).
+/* Khipu Finance — Service Worker
+   Código propio (HTML/JS/CSS same-origin) y API: NETWORK-FIRST → siempre la
+   última versión cuando hay red, con caché solo como respaldo offline.
+   CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v2';
+const CACHE = 'khipu-finance-v4';
 const SHELL = ['/', '/app.html',
   '/nodes/nodes_spacex.js', '/nodes/nodes_expand.js', '/nodes/nodes_expand2.js',
-  '/nodes/links_all.js', '/nodes/links_expand.js',
+  '/nodes/nodes_expand3.js', '/nodes/links_all.js', '/nodes/links_expand.js',
+  '/nodes/links_connect.js',
   '/engine/graph3d.js', '/engine/hypergraph.js', '/engine/voice.js',
-  '/engine/secondbrain.js', '/sim/mirofish_client.js', '/sim/scenario_builder.js',
+  '/engine/secondbrain.js', '/engine/geo_coords.js', '/engine/planetarium.js',
+  '/engine/geoglobe.js', '/engine/canvas-data.js', '/engine/command_center.js',
+  '/sim/mirofish_client.js', '/sim/scenario_builder.js',
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // Precarga del shell pero no falla la instalación si algo no está
+  e.waitUntil(
+    caches.open(CACHE).then(c => Promise.allSettled(SHELL.map(u => c.add(u))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -24,21 +33,20 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
-  const url = req.url;
-  const isData = url.includes('/api/') || url.includes('finnhub.io') ||
-                 url.includes('financialmodelingprep.com') || url.includes('marketstack.com');
+  let sameOrigin = false;
+  try { sameOrigin = new URL(req.url).origin === self.location.origin; } catch (_) {}
 
-  if (isData) {
-    // network-first: intenta la red, cae a caché si falla (offline)
+  if (sameOrigin) {
+    // Código propio + API → network-first (siempre lo último online; caché = offline)
     e.respondWith(
       fetch(req).then(res => {
         const clone = res.clone();
         caches.open(CACHE).then(c => c.put(req, clone)).catch(() => {});
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(() => caches.match(req).then(m => m || Response.error()))
     );
   } else {
-    // app shell + CDN: cache-first, rellena en segundo plano
+    // CDNs externos inmutables → cache-first
     e.respondWith(
       caches.match(req).then(cached => cached || fetch(req).then(res => {
         const clone = res.clone();
