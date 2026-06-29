@@ -52,14 +52,14 @@
 
       // ── Tierra ──────────────────────────────────────────────────────────
       const geo = new THREE.SphereGeometry(R, 64, 64);
-      const mat = new THREE.MeshPhongMaterial({ color: 0x14233f, shininess: 12 });
+      const mat = new THREE.MeshPhongMaterial({ color: 0x3a6bb0, emissive: 0x21406b, shininess: 16 });
       this.earth = new THREE.Mesh(geo, mat);
       this.world.add(this.earth);
 
       const loader = new THREE.TextureLoader();
       loader.setCrossOrigin('anonymous');
       loader.load(TEX + 'earth-blue-marble.jpg',
-        (t) => { mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; },
+        (t) => { mat.map = t; mat.emissiveMap = t; mat.color.set(0xffffff); mat.emissive.set(0x9aa6b8); mat.needsUpdate = true; },
         undefined, () => {/* fallback: queda el azul sólido */ });
       loader.load(TEX + 'earth-topology.png',
         (t) => { mat.bumpMap = t; mat.bumpScale = 1.2; mat.needsUpdate = true; }, undefined, () => {});
@@ -74,8 +74,8 @@
       this.scene.add(this._starfield());
 
       // ── Luces ───────────────────────────────────────────────────────────
-      this.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-      const sun = new THREE.DirectionalLight(0xffffff, 1.1);
+      this.scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+      const sun = new THREE.DirectionalLight(0xffffff, 0.7);
       sun.position.set(-1, 0.4, 1).multiplyScalar(500);
       this.scene.add(sun);
 

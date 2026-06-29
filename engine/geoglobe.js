@@ -54,22 +54,26 @@
       this.scene.add(this.world);
 
       // Tierra
-      const mat = new THREE.MeshPhongMaterial({ color: 0x2a4a73, shininess: 14 });
+      const mat = new THREE.MeshPhongMaterial({ color: 0x3a6bb0, emissive: 0x21406b, shininess: 18 });
       this.earth = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 64), mat);
       this.world.add(this.earth);
       const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
-      // Blue Marble (color real) como principal → países se distinguen por geografía
+      // Blue Marble (color real) como principal; emissiveMap → se auto-ilumina y no queda negra
       loader.load(TEX + 'earth-blue-marble.jpg',
-        t => { mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
+        t => { mat.map = t; mat.emissiveMap = t; mat.color.set(0xffffff); mat.emissive.set(0x9aa6b8); mat.needsUpdate = true; },
+        undefined, () => {});
       loader.load(TEX + 'earth-topology.png',
         t => { mat.bumpMap = t; mat.bumpScale = 1.4; mat.needsUpdate = true; }, undefined, () => {});
 
-      const halo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.03, 48, 48),
-        new THREE.MeshBasicMaterial({ color: 0x3a6ea5, transparent: true, opacity: 0.14, side: THREE.BackSide }));
+      const halo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.04, 48, 48),
+        new THREE.MeshBasicMaterial({ color: 0x5aa0e6, transparent: true, opacity: 0.28, side: THREE.BackSide }));
       this.world.add(halo);
+      const glow = new THREE.Mesh(new THREE.SphereGeometry(R * 1.12, 48, 48),
+        new THREE.MeshBasicMaterial({ color: 0x3a78c8, transparent: true, opacity: 0.10, side: THREE.BackSide }));
+      this.world.add(glow);
 
-      this.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-      const d = new THREE.DirectionalLight(0xffffff, 0.9); d.position.set(-1, 0.5, 1).multiplyScalar(400);
+      this.scene.add(new THREE.AmbientLight(0xffffff, 1.25));
+      const d = new THREE.DirectionalLight(0xffffff, 0.55); d.position.set(-1, 0.5, 1).multiplyScalar(400);
       this.scene.add(d);
       this.scene.add(this._stars());
 
