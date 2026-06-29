@@ -208,7 +208,8 @@ class KhipuGraph3D {
       if (mesh) mesh.position.set(n.x, n.y, n.z);
     });
     this._updateLinkPositions();
-    this._addAxes(SPAN_X, SPAN_Y, SPAN_Z);
+    // Los ejes/medidores los provee el Scatter de inversión (khipuScatter),
+    // que se auto-activa al entrar a 3D. No añadimos aquí otra capa de ejes.
   }
 
   _bigLabel(text, color, scale) {

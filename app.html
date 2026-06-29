@@ -1453,11 +1453,11 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <svg id="graph"></svg>
       <canvas id="graph-canvas" style="display:none;position:absolute;inset:0;width:100%;height:100%;z-index:5;"></canvas>
       <div id="graph3d-legend" style="display:none;position:absolute;top:14px;left:14px;z-index:7;background:rgba(8,12,22,.86);border:1px solid rgba(80,130,200,.3);border-radius:10px;padding:12px 14px;backdrop-filter:blur(8px);font-size:11px;color:#cfe2f5;max-width:240px;pointer-events:none">
-        <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:#9bd1ff;margin-bottom:8px">MAPA 3D · CADENA × RIESGO × REGIÓN</div>
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:18px;height:3px;background:#ff7a7a;border-radius:2px;flex-shrink:0"></span><span><b>Eje X</b> · cadena: proveedor → cliente</span></div>
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:18px;height:3px;background:#6ee7a8;border-radius:2px;flex-shrink:0"></span><span><b>Eje Y</b> · riesgo: frágil ↓ / resiliente ↑</span></div>
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px"><span style="width:18px;height:3px;background:#7fb4ff;border-radius:2px;flex-shrink:0"></span><span><b>Eje Z</b> · región: Asia ↔ Occidente</span></div>
-        <div style="font-size:10px;color:rgba(180,200,225,.6)">Arrastra para rotar · rueda para zoom</div>
+        <div style="font-size:10px;font-weight:800;letter-spacing:.06em;color:#9bd1ff;margin-bottom:8px">SCATTER 3D · INVERSIÓN</div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:18px;height:3px;background:#4fc3f7;border-radius:2px;flex-shrink:0"></span><span><b>Eje X</b> · tiempo al mercado: hoy → largo plazo</span></div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:18px;height:3px;background:#a5d6a7;border-radius:2px;flex-shrink:0"></span><span><b>Eje Y</b> · tamaño: micro-cap → mega-cap</span></div>
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px"><span style="width:18px;height:3px;background:#ff8a65;border-radius:2px;flex-shrink:0"></span><span><b>Eje Z</b> · riesgo financiero: bajo → alto</span></div>
+        <div style="font-size:10px;color:rgba(180,200,225,.6)">Pasa el ratón sobre una empresa (medidores abajo) · arrastra para rotar</div>
       </div>
       <div id="g3d-tooltip" style="display:none;position:fixed;z-index:950;pointer-events:none;background:rgba(8,12,20,.93);border:1px solid rgba(60,100,160,.4);border-radius:10px;padding:10px 14px;min-width:210px;max-width:280px;backdrop-filter:blur(10px);box-shadow:0 4px 24px rgba(0,0,0,.7);font-family:Archivo,sans-serif"></div>
       <div id="graph3d-loader" style="display:none">
@@ -8532,6 +8532,11 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
           if (_hypergraph) _hypergraph.graph3d = _graph3d;
           _hypergraph?.renderPending();
           window.khipuGraph3D = _graph3d;
+          // Auto-activar el Scatter de inversión (la vista 3D útil: tiempo × tamaño × riesgo)
+          setTimeout(() => { try {
+            if (window._khipuScatter && !window._khipuScatter.isActive()) window._khipuScatter.activate(_graph3d);
+            const _sb = document.getElementById('scatter-3d-btn'); if (_sb) { _sb.style.background = 'var(--accent,#4fc3f7)'; _sb.style.color = '#000'; }
+          } catch (e) {} }, 140);
           if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
           else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
           // Hide loader once first frame is likely rendered (~600ms)
@@ -8541,6 +8546,10 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         }, 50); // brief yield so spinner renders before heavy work
       } else if (_graph3d) {
         _graph3d.resume && _graph3d.resume();
+        setTimeout(() => { try {
+          if (window._khipuScatter && !window._khipuScatter.isActive()) window._khipuScatter.activate(_graph3d);
+          const _sb = document.getElementById('scatter-3d-btn'); if (_sb) { _sb.style.background = 'var(--accent,#4fc3f7)'; _sb.style.color = '#000'; }
+        } catch (e) {} }, 60);
       }
       if (!_hypergraph && window.TemporalHypergraph) {
         _hypergraph = new TemporalHypergraph(_graph3d);
@@ -8556,6 +8565,10 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       btn.style.color = '';
       btn.style.borderColor = '';
       if (_graph3d) _graph3d.pause && _graph3d.pause();
+      try {
+        if (window._khipuScatter && window._khipuScatter.isActive()) window._khipuScatter.deactivate(_graph3d);
+        const _sb = document.getElementById('scatter-3d-btn'); if (_sb) { _sb.style.background = ''; _sb.style.color = ''; }
+      } catch (e) {}
     }
   };
 
@@ -12243,11 +12256,12 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
       const g = (node.growth || '').toLowerCase();
       return (g.includes('pre-ipo') || g.includes('privada')) ? 0.85 : 0.70;
     }
-    return node.margin > 30 ? 0.10
-         : node.margin > 15 ? 0.25
-         : node.margin >  0 ? 0.45
-         : node.margin > -1 ? 0.62
-         : Math.min(0.93, 0.63 + Math.abs(node.margin) * 0.025);
+    const m = node.margin * 100;   // margin viene como fracción (0.49 = 49%)
+    return m > 30 ? 0.10
+         : m > 15 ? 0.25
+         : m >  0 ? 0.45
+         : m > -50 ? 0.65
+         : 0.88;
   }
 
   function semXYZ(node) {
@@ -12340,7 +12354,7 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     const zn = riskNorm(node);
     setGauge('kg-z-fill', zn * 100);
     const rLabel = zn < 0.20 ? 'Muy bajo' : zn < 0.38 ? 'Bajo' : zn < 0.55 ? 'Moderado' : zn < 0.75 ? 'Alto' : 'Muy alto';
-    setText('kg-z-val', rLabel + (node.margin != null ? ' (' + node.margin.toFixed(1) + '%)' : ' (sin datos)'));
+    setText('kg-z-val', rLabel + (node.margin != null ? ' (' + (node.margin * 100).toFixed(0) + '% margen)' : ' (sin datos)'));
     const label  = node.label || node.ticker || node.id || '—';
     const ticker = node.ticker ? node.ticker.split(/[·\s]/)[0] : '';
     nameEl.innerHTML = '<b>' + label + '</b>' + (ticker ? '<span class="kg-ticker">· ' + ticker + '</span>' : '') + (node.cat ? '<span class="kg-cat">' + node.cat + '</span>' : '');
@@ -12444,7 +12458,7 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     obs.observe(document.body, {childList:true, subtree:true}); insertButton();
   }
 
-  window._khipuScatter = { activate: activateScatter, deactivate: deactivateScatter, getInst };
+  window._khipuScatter = { activate: activateScatter, deactivate: deactivateScatter, getInst, isActive: () => _scatterActive };
 })();
 </script>
 
