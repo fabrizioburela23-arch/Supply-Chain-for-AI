@@ -181,41 +181,62 @@ class KhipuGraph3D {
   }
 
   _staticLayout(nodes) {
-    // Category-cluster layout: each category gets a center on a large sphere,
-    // nodes scatter within their cluster — gives genuine 3D brain-like depth.
-    const catMap = {};
-    nodes.forEach(n => { const c = n.cat || 'fabless'; (catMap[c] = catMap[c] || []).push(n); });
-    const cats = Object.keys(catMap);
-    const CLUSTER_R = 300;  // radius of cluster-center sphere
-    const SCATTER   = 85;   // scatter radius within each cluster
-
-    // Cluster centers: Fibonacci on outer sphere
-    const centers = {};
-    cats.forEach((cat, i) => {
-      const phi   = Math.acos(-1 + (2 * i) / cats.length);
-      const theta = Math.sqrt(cats.length * Math.PI) * phi;
-      centers[cat] = {
-        x: CLUSTER_R * Math.cos(theta) * Math.sin(phi),
-        y: CLUSTER_R * Math.sin(theta) * Math.sin(phi),
-        z: CLUSTER_R * Math.cos(phi),
-      };
-    });
-
-    // Fast deterministic hash for consistent positions across reloads
+    // Layout SEMÁNTICO: cada eje significa algo real.
+    //  X = posición en la cadena de valor (upstream proveedor → downstream cliente)
+    //  Y = riesgo NRS (frágil abajo ↔ resiliente arriba)
+    //  Z = región geográfica (Asia ↔ Occidente)
+    const SPAN_X = 360, SPAN_Y = 220, SPAN_Z = 320;
+    const CATS_REF = (typeof CATS !== 'undefined' && CATS) ? CATS : (window.CATS || {});
+    const REGION_Z = {
+      Taiwan: -3, 'Taiwán': -3, China: -2.3, Corea: -1.5, Japon: -0.7, Japan: -0.7,
+      India: 0.2, RestoMundo: 0.9, Israel: 1.3, EEUU: 2.1, Canada: 2.5,
+      Europa: 3, Alemania: 3, Francia: 3, PaisesBajos: 3, ReinoUnido: 3, RestoEuropa: 3,
+    };
     const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h; };
+    const jit = (seed, amp) => ((hash(seed) & 0xFFFF) / 0xFFFF - 0.5) * 2 * amp;
 
     nodes.forEach(n => {
-      const c  = centers[n.cat || 'fabless'] || { x: 0, y: 0, z: 0 };
-      const hx = hash(n.id);
-      const hy = hash(n.id + '__y');
-      const hz = hash(n.id + '__z');
-      n.x = c.x + ((hx & 0xFFFF) / 0xFFFF - 0.5) * 2 * SCATTER;
-      n.y = c.y + ((hy & 0xFFFF) / 0xFFFF - 0.5) * 2 * SCATTER;
-      n.z = c.z + ((hz & 0xFFFF) / 0xFFFF - 0.5) * 2 * SCATTER;
+      const cat = CATS_REF[n.cat];
+      const catX = (cat && cat.x != null) ? cat.x : 0.5;
+      let nrs = 50;
+      try { if (typeof computeNRS === 'function') nrs = computeNRS(n.id); } catch (e) {}
+      const zk = (REGION_Z[n.country] != null) ? REGION_Z[n.country] : 0;
+      n.x = (catX - 0.5) * 2 * SPAN_X + jit(n.id + 'x', 26);
+      n.y = (nrs / 100 - 0.5) * 2 * SPAN_Y + jit(n.id + 'y', 18);
+      n.z = (zk / 3) * SPAN_Z + jit(n.id + 'z', 30);
       const mesh = this.nodeMeshes.get(n.id);
       if (mesh) mesh.position.set(n.x, n.y, n.z);
     });
     this._updateLinkPositions();
+    this._addAxes(SPAN_X, SPAN_Y, SPAN_Z);
+  }
+
+  _axisLabel(text, color, scale) {
+    const s = this._makeLabel(text, color);
+    s.material.opacity = 0.95;
+    s.scale.set((scale || 1) * 46, (scale || 1) * 10, 1);
+    return s;
+  }
+
+  _addAxes(sx, sy, sz) {
+    if (this._axes) { this._graphGroup.remove(this._axes); this._axes = null; }
+    const g = new THREE.Group();
+    const line = (a, b, color) => {
+      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]);
+      return new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.35 }));
+    };
+    g.add(line([-sx, 0, 0], [sx, 0, 0], 0xff7a7a));   // X cadena
+    g.add(line([0, -sy, 0], [0, sy, 0], 0x6ee7a8));   // Y riesgo
+    g.add(line([0, 0, -sz], [0, 0, sz], 0x7fb4ff));   // Z región
+    const lbl = (txt, col, pos, sc) => { const s = this._axisLabel(txt, col, sc); s.position.set(...pos); g.add(s); };
+    lbl('Proveedor (upstream)', 0xff9a9a, [-sx - 26, 0, 0]);
+    lbl('Cliente (downstream)', 0xff9a9a, [sx + 26, 0, 0]);
+    lbl('Resiliente · NRS↑', 0x9af0c0, [0, sy + 20, 0]);
+    lbl('Frágil · NRS↓', 0x9af0c0, [0, -sy - 20, 0]);
+    lbl('Asia', 0xa9cbff, [0, 0, -sz - 24]);
+    lbl('Occidente', 0xa9cbff, [0, 0, sz + 24]);
+    this._axes = g;
+    this._graphGroup.add(g);
   }
 
   _onSimTick(nodes) {

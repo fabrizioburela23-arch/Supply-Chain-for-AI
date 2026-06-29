@@ -2191,6 +2191,7 @@ const CATS_NEW = {
   uranium:       {label:'Uranio',                  en:'Uranium',        cssVar:'--c-uranium',       x:.68},
 };
 Object.assign(CATS, CATS_NEW);
+window.CATS = CATS;  // expuesto para el layout semántico del grafo 3D
 
 /* Países para la vista geopolítica: cluster propio + color propio */
 const COUNTRIES = {
