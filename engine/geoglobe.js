@@ -54,13 +54,15 @@
       this.scene.add(this.world);
 
       // Tierra
-      const mat = new THREE.MeshPhongMaterial({ color: 0x16273f, shininess: 10 });
+      const mat = new THREE.MeshPhongMaterial({ color: 0x2a4a73, shininess: 14 });
       this.earth = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 64), mat);
       this.world.add(this.earth);
       const loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
-      loader.load(TEX + 'earth-dark.jpg', t => { mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; },
-        undefined, () => loader.load(TEX + 'earth-blue-marble.jpg',
-          t => { mat.map = t; mat.color.set(0xbfd0e6); mat.needsUpdate = true; }, undefined, () => {}));
+      // Blue Marble (color real) como principal → países se distinguen por geografía
+      loader.load(TEX + 'earth-blue-marble.jpg',
+        t => { mat.map = t; mat.color.set(0xffffff); mat.needsUpdate = true; }, undefined, () => {});
+      loader.load(TEX + 'earth-topology.png',
+        t => { mat.bumpMap = t; mat.bumpScale = 1.4; mat.needsUpdate = true; }, undefined, () => {});
 
       const halo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.03, 48, 48),
         new THREE.MeshBasicMaterial({ color: 0x3a6ea5, transparent: true, opacity: 0.14, side: THREE.BackSide }));
@@ -140,6 +142,37 @@
         ring.position.copy(v); ring.lookAt(0, 0, 0); chk.add(ring);
       });
       this.world.add(chk); this.chokepoints = chk;
+
+      this._addRegionLabels();
+    }
+
+    _addRegionLabels() {
+      const REGIONS = [
+        ['EE.UU.', 39, -98], ['China', 33, 110], ['Taiwán', 24, 121],
+        ['Japón', 37, 139], ['Corea', 37, 127], ['Europa', 50, 9],
+        ['India', 22, 79], ['Israel', 31, 35],
+      ];
+      const grp = new THREE.Group();
+      REGIONS.forEach(([name, lat, lng]) => {
+        const s = this._textSprite(name);
+        const v = lv(lat, lng, R * 1.13);
+        s.position.copy(v);
+        grp.add(s);
+      });
+      this.world.add(grp); this.labels = grp;
+    }
+
+    _textSprite(text) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+      const ctx = c.getContext('2d');
+      ctx.font = 'bold 30px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(2,8,20,.85)'; ctx.strokeText(text, 128, 34);
+      ctx.fillStyle = '#eaf2ff'; ctx.fillText(text, 128, 34);
+      const tex = new THREE.CanvasTexture(c);
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+      spr.scale.set(26, 6.5, 1);
+      return spr;
     }
 
     _bind() {
