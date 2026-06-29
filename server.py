@@ -948,6 +948,9 @@ Rules:
 - heatmap: ≤10 rows, ≤10 cols.
 - Use node data from context — do NOT invent prices or market caps not provided.
 - nrs field in nodes is already a 0-100 score (Node Risk/Resilience Score).
+- context.live = {SYMBOL:{price,change_pct}} holds REAL live market prices. When the query
+  is about price / today's change / comparison of listed companies, USE these real values
+  (price in USD, change_pct in %). Never invent a price when context.live has it.
 - Choose the most insightful chart type for the query.
 - Colors palette: #60a5fa #34d399 #f59e0b #f87171 #a78bfa #38bdf8 #fb923c #4ade80
 """
@@ -971,8 +974,10 @@ def canvas_generate():
                                   'port','country','preipo','nrs') }
         for n in nodes_raw[:200]
     ]
+    live_raw = ctx.get('live') or {}
     ctx_str = json.dumps({'nodes': nodes_compact, 'quotes': quotes_raw,
-                          'selected': ctx.get('selected_id')}, ensure_ascii=False)
+                          'live': live_raw, 'selected': ctx.get('selected_id')},
+                         ensure_ascii=False)
     prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
     try:
         text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1800)

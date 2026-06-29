@@ -8337,6 +8337,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/geo_coords.js"></script>
 <script src="engine/planetarium.js"></script>
 <script src="engine/geoglobe.js"></script>
+<script src="engine/canvas-data.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
@@ -11627,9 +11628,12 @@ window.canvasGenerate = async function(){
 
   try{
     let spec, model;
+    /* enriquecer con precios en vivo si la consulta menciona empresas */
+    let live=null;
+    if(window.canvasEnrichData){ try{ const en=await window.canvasEnrichData(query); live=(en&&en.live)||null; }catch(e){} }
     if(window.SERVER_MODE){
       const r=await fetch('/api/canvas/generate',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({query,context:{nodes:nodeCtx,quotes:quotesCtx,selected_id:window._selectedNode||null}})});
+        body:JSON.stringify({query,context:{nodes:nodeCtx,quotes:quotesCtx,live,selected_id:window._selectedNode||null}})});
       const d=await r.json();
       if(d.error) throw new Error(d.error);
       spec=d.spec; model=d.model;
