@@ -7441,7 +7441,9 @@ $('settings-overlay').onclick=()=>Settings.close();
 
 /* ── Estado del Sistema — diagnóstico en vivo ──────────────────────────── */
 const DIAG_META = {
-  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'Canvas IA · análisis de Bixby · fallback del War-Room' },
+  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'IA principal · Canvas · Bixby · análisis' },
+  gemini:     { icon:'◆',  name:'Google Gemini',        why:'Canal de respaldo de IA (alterna si Claude falla)' },
+  nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)' },
   elevenlabs: { icon:'🎙', name:'Bixby / ElevenLabs',  why:'Voz conversacional — preguntar por voz' },
   mirofish:   { icon:'🧬', name:'MiroFish',            why:'Motor multi-agente real del War-Room' },
   rag:        { icon:'🧠', name:'Second Brain (RAG)',  why:'Búsqueda semántica · contexto de Bixby' },
@@ -7481,7 +7483,7 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','elevenlabs','mirofish','rag','finnhub','market_extra'];
+    const order = ['claude','gemini','nvidia','elevenlabs','mirofish','rag','finnhub','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');

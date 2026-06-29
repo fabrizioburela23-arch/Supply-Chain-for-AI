@@ -57,6 +57,15 @@ MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 # sube a claude-opus-4-8 para máxima calidad. Cambiable sin tocar código.
 AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
 
+# ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──
+# Si un canal falla (o no tiene key), pasa al siguiente automáticamente.
+# NVIDIA NIM (build.nvidia.com) y Gemini tienen tier gratis útil para el MVP.
+GEMINI_KEY   = os.getenv('GEMINI_KEY') or os.getenv('GOOGLE_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
+NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
+AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
+
 # Servicios adicionales (Khipu Finance v1)
 MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-fika.up.railway.app')
 MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
@@ -299,6 +308,8 @@ def health():
         'finnhub': bool(FINNHUB),
         'fmp': bool(FMP),
         'claude': bool(CLAUDE),
+        'gemini': bool(GEMINI_KEY),
+        'nvidia': bool(NVIDIA_KEY),
         'marketstack': bool(MSTACK),
         'elevenlabs': bool(ELEVENLABS_KEY),
         'alpha_vantage': bool(AV_KEY),
@@ -346,6 +357,34 @@ def _diag_claude():
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': 'Key presente pero la API rechazó la llamada: ' + _diag_redact(e)}
+
+
+def _diag_gemini():
+    if not GEMINI_KEY:
+        return {'configured': False, 'ok': False,
+                'detail': 'GEMINI_KEY no está. (Opcional) Canal de respaldo de IA — Google Gemini.'}
+    t0 = time.time()
+    try:
+        txt, model = _complete_gemini('', 'ping', 1)
+        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': f'Key válida — {model} respondió.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'Gemini rechazó la llamada: ' + _diag_redact(e)}
+
+
+def _diag_nvidia():
+    if not NVIDIA_KEY:
+        return {'configured': False, 'ok': False,
+                'detail': 'NVIDIA_KEY no está. (Opcional) Canal de respaldo de IA — NVIDIA NIM (gratis para MVP).'}
+    t0 = time.time()
+    try:
+        txt, model = _complete_nvidia('', 'ping', 1)
+        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': f'Key válida — {model} respondió.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'NVIDIA rechazó la llamada: ' + _diag_redact(e)}
 
 
 def _diag_elevenlabs():
@@ -462,6 +501,8 @@ def diagnostics():
 
     services = {
         'claude':     _diag_claude(),
+        'gemini':     _diag_gemini(),
+        'nvidia':     _diag_nvidia(),
         'elevenlabs': _diag_elevenlabs(),
         'mirofish':   _diag_mirofish(),
         'rag':        _diag_rag(),
@@ -867,16 +908,13 @@ def insiders(ticker):
 # Claude — análisis de empresa / impacto de cadena / síntesis de noticias
 # Un único endpoint genérico {system, prompt, max_tokens} sirve a las features 5, 6 y 9.
 # ----------------------------------------------------------------------------
-def _claude_complete(system, prompt, max_tokens):
+def _complete_claude(system, prompt, max_tokens):
     import anthropic
     client = anthropic.Anthropic(api_key=CLAUDE)
     msg = client.messages.create(
-        model=AI_MODEL,
-        max_tokens=max_tokens,
-        system=system or '',
+        model=AI_MODEL, max_tokens=max_tokens, system=system or '',
         messages=[{'role': 'user', 'content': prompt or ''}],
     )
-    # content es una lista de bloques; tomamos el primer bloque de texto
     text = ''
     for block in msg.content:
         if getattr(block, 'type', None) == 'text':
@@ -885,11 +923,72 @@ def _claude_complete(system, prompt, max_tokens):
     return text, msg.model
 
 
+def _complete_gemini(system, prompt, max_tokens):
+    body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
+            'generationConfig': {'maxOutputTokens': max_tokens, 'temperature': 0.6}}
+    r = requests.post(
+        f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}',
+        json=body, timeout=45)
+    if not r.ok:
+        raise RuntimeError(f'Gemini HTTP {r.status_code}')
+    cands = (r.json() or {}).get('candidates') or []
+    if not cands:
+        raise RuntimeError('Gemini sin candidates')
+    text = ''.join(p.get('text', '') for p in cands[0].get('content', {}).get('parts', []))
+    return text, 'gemini:' + GEMINI_MODEL
+
+
+def _complete_nvidia(system, prompt, max_tokens):
+    body = {'model': NVIDIA_MODEL, 'max_tokens': max_tokens, 'temperature': 0.6,
+            'messages': [{'role': 'system', 'content': system or ''},
+                         {'role': 'user', 'content': prompt or ''}]}
+    r = requests.post('https://integrate.api.nvidia.com/v1/chat/completions',
+                      headers={'Authorization': f'Bearer {NVIDIA_KEY}', 'Accept': 'application/json'},
+                      json=body, timeout=45)
+    if not r.ok:
+        raise RuntimeError(f'NVIDIA HTTP {r.status_code}')
+    return (r.json()['choices'][0]['message']['content']), 'nvidia:' + NVIDIA_MODEL
+
+
+_AI_PROVIDERS = {
+    'claude': (lambda: bool(CLAUDE), _complete_claude),
+    'gemini': (lambda: bool(GEMINI_KEY), _complete_gemini),
+    'nvidia': (lambda: bool(NVIDIA_KEY), _complete_nvidia),
+}
+
+
+def _ai_configured():
+    return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
+
+
+def _ai_complete(system, prompt, max_tokens=1000):
+    """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
+    pasa al siguiente. Devuelve (texto, etiqueta_modelo)."""
+    errors = []
+    for name in AI_ORDER:
+        prov = _AI_PROVIDERS.get(name)
+        if not prov or not prov[0]():
+            continue
+        try:
+            text, model = prov[1](system, prompt, max_tokens)
+            if text and text.strip():
+                return text, model
+            errors.append(f'{name}: respuesta vacía')
+        except Exception as e:  # noqa: BLE001
+            errors.append(f'{name}: {str(e)[:80]}')
+    raise RuntimeError('Ningún proveedor de IA respondió. ' + ('; '.join(errors) or 'sin keys configuradas'))
+
+
+# Compat: las features existentes llaman _claude_complete → ahora multi-proveedor.
+def _claude_complete(system, prompt, max_tokens):
+    return _ai_complete(system, prompt, max_tokens)
+
+
 @app.route('/api/ai/analyze', methods=['POST'])
 @rate_limit(limit=30, window=3600)   # 30 AI analyses per hour per IP
 def ai_analyze():
-    if not CLAUDE:
-        return jsonify({'error': 'no CLAUDE_KEY'}), 400
+    if not _ai_configured():
+        return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
     data = request.get_json(force=True, silent=True) or {}
     # Clamp max_tokens to avoid runaway costs
     max_tok = min(int(data.get('max_tokens', 1000)), 2000)
@@ -907,8 +1006,8 @@ def ai_analyze():
 @app.route('/api/ai/news-digest', methods=['POST'])
 @rate_limit(limit=60, window=3600)   # 60 news digests per hour per IP
 def news_digest():
-    if not CLAUDE:
-        return jsonify({'error': 'no CLAUDE_KEY'}), 400
+    if not _ai_configured():
+        return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
     data = request.get_json(force=True, silent=True) or {}
     max_tok = min(int(data.get('max_tokens', 400)), 800)
     try:
@@ -960,8 +1059,8 @@ _CV_PALETTE = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb9
 @app.route('/api/canvas/generate', methods=['POST'])
 @rate_limit(limit=20, window=3600)
 def canvas_generate():
-    if not CLAUDE:
-        return jsonify({'error': 'ANTHROPIC_KEY not configured on server'}), 400
+    if not _ai_configured():
+        return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
     body = request.get_json(force=True, silent=True) or {}
     query = str(body.get('query', ''))[:500].strip()
     if not query:
@@ -1024,10 +1123,10 @@ Reglas:
 @app.route('/api/ai/command', methods=['POST'])
 @rate_limit(limit=40, window=3600)
 def ai_command():
-    if not CLAUDE:
-        return jsonify({'error': 'ANTHROPIC_KEY not configured on server',
-                        'answer': 'No tengo configurada la clave de Claude en el servidor, '
-                                  'por eso no puedo razonar tu pedido todavía.', 'actions': []}), 400
+    if not _ai_configured():
+        return jsonify({'error': 'no AI provider configured',
+                        'answer': 'No tengo ninguna IA configurada en el servidor '
+                                  '(Claude, Gemini o NVIDIA). Añade al menos una key.', 'actions': []}), 400
     body = request.get_json(force=True, silent=True) or {}
     query = str(body.get('query', ''))[:400].strip()
     if not query:
@@ -1491,8 +1590,8 @@ def _extract_section(text, markers, length=3500):
 @cache.cached(timeout=86400)
 def company_research(ticker):
     """Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza."""
-    if not CLAUDE:
-        return jsonify({'error': 'ANTHROPIC_KEY not configured on server'}), 400
+    if not _ai_configured():
+        return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
     safe = _safe_ticker(ticker)
     if not safe:
         return jsonify({'error': 'invalid ticker'}), 400
