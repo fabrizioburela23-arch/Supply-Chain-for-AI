@@ -12274,6 +12274,28 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     return { x, y, z: (zn - 0.5) * SPREAD + (Math.random() - 0.5) * 16 };
   }
 
+  function capOf(node) {
+    const tk = (node.ticker || '').split(/[·\s]/)[0].trim().toUpperCase();
+    return CAP_B[tk] ?? (node.margin > 0 ? 8 : 1);
+  }
+  const FILTERS = {
+    all:      () => true,
+    gems:     n => (TTM[n.cat] ?? 5) <= 1 && riskNorm(n) < 0.55 && capOf(n) < 200,
+    lowrisk:  n => riskNorm(n) < 0.38,
+    emerging: n => (TTM[n.cat] ?? 5) >= 3,
+    highrisk: n => riskNorm(n) > 0.60,
+  };
+  function applyScatterFilter(key) {
+    const pred = FILTERS[key] || FILTERS.all;
+    const inst = getInst(); if (!inst) return;
+    inst.nodeMeshes.forEach(mesh => {
+      const node = mesh.userData && mesh.userData.node; if (!node) return;
+      const on = pred(node);
+      if (mesh.material) { mesh.material.transparent = true; mesh.material.opacity = on ? 0.95 : 0.05; }
+      (mesh.children || []).forEach(ch => { ch.visible = on; });
+    });
+  }
+
   const GAUGE_STYLE = `
     #kg-panel {
       position:fixed; bottom:52px; left:16px; z-index:9999;
@@ -12285,8 +12307,13 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     }
     #kg-panel .kg-title {
       font-size:13px; font-weight:700; color:#eee;
-      margin-bottom:12px; display:flex; align-items:center; gap:6px;
+      margin-bottom:10px; display:flex; align-items:center; gap:6px;
     }
+    #kg-filters { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; pointer-events:auto; }
+    #kg-filters .kgf { font-size:10px; padding:3px 8px; border-radius:12px; border:1px solid #2a4a5a;
+      background:rgba(255,255,255,.04); color:#bcd; cursor:pointer; transition:.12s; }
+    #kg-filters .kgf:hover { background:rgba(79,195,247,.18); }
+    #kg-filters .kgf.on { background:#4fc3f7; color:#022; border-color:#4fc3f7; font-weight:700; }
     .kg-axis { margin-bottom:10px; }
     .kg-axis-name { font-size:10.5px; color:#8aa; margin-bottom:4px; display:flex; align-items:center; gap:5px; }
     .kg-track { position:relative; height:9px; background:rgba(255,255,255,.07); border-radius:5px; overflow:hidden; }
@@ -12311,7 +12338,14 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     if (el) return el;
     el = document.createElement('div'); el.id = 'kg-panel';
     el.innerHTML = `
-      <div class="kg-title">📊 Scatter 3D — Ejes semánticos</div>
+      <div class="kg-title">📊 Scatter 3D — Inversión</div>
+      <div id="kg-filters">
+        <span class="kgf on" data-f="all">Todas</span>
+        <span class="kgf" data-f="gems">💎 Oportunidades</span>
+        <span class="kgf" data-f="lowrisk">🛡 Bajo riesgo</span>
+        <span class="kgf" data-f="emerging">🚀 Tech temprana</span>
+        <span class="kgf" data-f="highrisk">⚠ Alto riesgo</span>
+      </div>
       <div class="kg-axis">
         <div class="kg-axis-name"><span style="color:#4fc3f7;font-size:14px">━</span> X &nbsp;Tiempo al mercado</div>
         <div class="kg-track"><div class="kg-fill" id="kg-x-fill" style="background:linear-gradient(90deg,#1976d2,#4fc3f7)"></div></div>
@@ -12329,7 +12363,13 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
       </div>
       <div id="kg-node-name">Pasa el ratón sobre un nodo</div>
     `;
-    document.body.appendChild(el); return el;
+    document.body.appendChild(el);
+    el.querySelectorAll('#kg-filters .kgf').forEach(c => c.addEventListener('click', () => {
+      el.querySelectorAll('#kg-filters .kgf').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+      applyScatterFilter(c.dataset.f);
+    }));
+    return el;
   }
 
   function setGauge(id, pct) { const el = document.getElementById(id); if (el) el.style.width = Math.max(0, Math.min(100, pct)) + '%'; }
@@ -12419,6 +12459,8 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     _scatterActive = false;
     if (_origSimTick) { inst._onSimTick = _origSimTick; _origSimTick = null; }
     _savedPositions.forEach((pos, mesh) => mesh.position.copy(pos)); _savedPositions.clear();
+    // restaurar opacidad/visibilidad por si había un filtro activo
+    inst.nodeMeshes.forEach(mesh => { if (mesh.material) mesh.material.opacity = 0.9; (mesh.children || []).forEach(ch => ch.visible = true); });
     if (_axisGroup) { inst.scene.remove(_axisGroup); _axisGroup = null; }
     teardownHover(inst);
     const panel = document.getElementById('kg-panel'); if (panel) panel.remove();
