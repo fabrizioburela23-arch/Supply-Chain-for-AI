@@ -337,7 +337,7 @@ def health():
         pass
     return jsonify({
         'server': True,
-        'app': 'Khipu Finance',
+        'app': 'Khipus AI Finance Inteligence',
         'assistant': 'Bixby',
         'finnhub': bool(FINNHUB),
         'fmp': bool(FMP),

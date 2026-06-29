@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Khipu Finance · Inteligencia Financiera Global 2026</title>
+<title>Khipus AI Finance Inteligence · 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1302,7 +1302,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </head>
 <body>
 <div id="khipu-loader" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#0a0d14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
-  <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:#3DE0C8;letter-spacing:-.02em">Khipu Finance</div>
+  <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:#3DE0C8;letter-spacing:-.02em">Khipus AI Finance Inteligence</div>
   <div style="font-size:13px;color:#6b7280;margin-top:-10px">Cadena de Valor Global · IA · Espacio · Semiconductores</div>
   <div style="width:220px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:8px">
     <div id="loader-bar" style="height:100%;background:linear-gradient(90deg,#3DE0C8,#9B4FE8);border-radius:2px;width:0%;transition:width .3s ease"></div>
@@ -1320,7 +1320,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <circle cx="52" cy="66" r="11" fill="#3DE0C8"/>
     </svg>
   </span>
-  <div class="boot-title">Khipu Finance</div>
+  <div class="boot-title">Khipus AI Finance Inteligence</div>
   <div class="boot-bar"><i></i></div>
   <div class="boot-log" id="boot-log">› inicializando grafo…</div>
 </div>
@@ -1356,7 +1356,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         </svg>
       </span>
       <div class="brand-text">
-        <h1>Khipu Finance</h1>
+        <h1>Khipus AI Finance Inteligence</h1>
         <span class="sub">Cadena de Valor Global 2026</span>
       </div>
     </div>
@@ -1717,7 +1717,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   <footer>
     <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
-    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipu Finance v1 · … nodos · NRS · Bixby AI · 3D · RAG</span>
+    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipus AI Finance Inteligence · … nodos · NRS · Bixby AI · 3D · RAG</span>
   </footer>
 
 <!-- ═══ Simulation Tab ════════════════════════════════════════════════ -->
@@ -2077,7 +2077,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <label class="pref-row"><input type="checkbox" id="pref-aicache"> <span id="pref-aicache-l">Guardar análisis de IA en caché (24h)</span></label>
   </div>
 
-  <div class="settings-sec">🔐 Khipu Finance API Key</div>
+  <div class="settings-sec">🔐 Khipus AI Finance API Key</div>
   <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Para usar VaR/CVaR y la API v1, genera una clave JWT:</div>
   <div style="padding:0 20px 12px;display:flex;gap:8px">
     <select id="kfi-tier" style="flex:1;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
@@ -7993,7 +7993,7 @@ const PriceAlerts = {
     const msg = `${alert.ticker} ${alert.dir === 'above' ? '▲' : '▼'} $${price.toFixed(2)} (alerta: $${alert.price})`;
     if (typeof toast === 'function') toast(msg);
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Khipu Finance · Alerta de precio', { body: msg, icon: '/icon.svg' });
+      new Notification('Khipus AI Finance · Alerta de precio', { body: msg, icon: '/icon.svg' });
     }
     // Also fire via existing Alerts system for banner display
     try {
@@ -8162,7 +8162,7 @@ const $=id=>document.getElementById(id);
   const lines=[`› grafo · ${nodeCount} nodos · ${linkCount} conexiones`,
     '› cargando capa de mercado en vivo…','› motor de análisis IA listo','› ✓ terminal operativo'];
   const footerEl = document.getElementById('footer-nodecount');
-  if (footerEl) footerEl.textContent = `Khipu Finance v1 · ${nodeCount} nodos · NRS · Bixby AI · 3D · RAG`;
+  if (footerEl) footerEl.textContent = `Khipus AI Finance Inteligence · ${nodeCount} nodos · NRS · Bixby AI · 3D · RAG`;
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
   setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);
 })();
