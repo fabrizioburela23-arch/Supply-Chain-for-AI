@@ -1381,15 +1381,18 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.1em">LIVE</span>
         <span id="live-countdown" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2)">···</span>
       </div>
-      <button id="bixby-btn" title="Hablar con Bixby · Khipu Finance AI" onclick="window.BixbyVoice?.toggle()"
-  style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;
-    border-radius:12px;border:1px solid rgba(138,90,255,.4);background:rgba(138,90,255,.06);
+      <button id="bixby-btn" title="Bixby — pregúntale lo que sea (voz o texto · ⌘K)" onclick="window.BixbyCC&&window.BixbyCC.toggle()"
+  style="position:relative;display:flex;flex-direction:row;align-items:center;gap:9px;padding:5px 15px 5px 7px;
+    border-radius:16px;border:1px solid rgba(138,90,255,.45);background:rgba(138,90,255,.08);
     color:#cabeff;cursor:pointer;transition:background .2s,border-color .2s,box-shadow .2s;
-    font-family:'Geist','Inter',sans-serif;box-shadow:0 0 12px rgba(138,90,255,.12)">
-  <span id="bixby-btn-orb" style="position:relative;width:32px;height:32px;border-radius:50%;background:#06040f;overflow:hidden;flex-shrink:0;box-shadow:0 0 10px rgba(138,90,255,.45)">
-    <canvas id="bixby-btn-canvas" width="32" height="32" style="position:absolute;inset:0;display:block"></canvas>
+    font-family:'Geist','Inter',sans-serif;box-shadow:0 0 14px rgba(138,90,255,.16)">
+  <span id="bixby-btn-orb" style="position:relative;width:40px;height:40px;border-radius:50%;background:#06040f;overflow:hidden;flex-shrink:0;box-shadow:0 0 12px rgba(138,90,255,.5)">
+    <canvas id="bixby-btn-canvas" width="40" height="40" style="position:absolute;inset:0;display:block"></canvas>
   </span>
-  <span style="font-size:8px;font-weight:700;letter-spacing:.12em;line-height:1">BIXBY</span>
+  <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.12">
+    <span style="font-size:12.5px;font-weight:800;letter-spacing:.03em">Bixby</span>
+    <span style="font-size:9px;opacity:.72;font-weight:600">pregúntame ⌘K</span>
+  </span>
 </button>
     </div>
   </header>
@@ -8417,7 +8420,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   }
 
   function init(){
-    register('bixby-btn-canvas', 32);
+    register('bixby-btn-canvas', 40);
     register('bixby-orb-canvas',200);
   }
 

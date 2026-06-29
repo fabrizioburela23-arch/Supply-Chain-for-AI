@@ -1,7 +1,8 @@
 // engine/command_center.js — Bixby Command Center (Khipu Finance)
-// Guía discreta: por defecto solo un ORBE en la esquina (no tapa nada). Al
-// hacer clic se abre la barra + feed; se colapsa de nuevo. Escribe O habla;
-// Bixby ejecuta y muestra la respuesta inline. El orbe nunca obstruye.
+// UN SOLO Bixby: el botón original del header lo abre. NO hay orbe flotante.
+// El panel (input + feed de resultados) aparece como dropdown arriba-derecha,
+// en su espacio dedicado, sin tapar el contenido de abajo.
+// Escribe O habla; Bixby ejecuta y muestra la respuesta inline.
 // Reutiliza: switchTab, jumpTo, activateStress, nexusCore.runPreset,
 // _openSecondBrain, canvasGenerate (_cvRenderCard) y BixbyVoice (voz).
 // Endpoint: /api/ai/command. Expone window.BixbyCC.
@@ -10,26 +11,25 @@
   'use strict';
 
   const css = `
-  #bcc-root{position:fixed;right:20px;bottom:20px;z-index:980;
-    font-family:'Geist','Inter',system-ui,sans-serif;display:flex;flex-direction:column;
-    align-items:flex-end;gap:12px;pointer-events:none}
-  #bcc-panel{display:none;flex-direction:column;gap:10px;width:min(420px,92vw);pointer-events:auto}
-  #bcc-root.open #bcc-panel{display:flex}
-  #bcc-feed{display:flex;flex-direction:column;gap:10px;max-height:54vh;overflow-y:auto}
+  #bcc-root{position:fixed;top:60px;right:14px;z-index:1100;width:min(430px,94vw);
+    display:none;flex-direction:column;gap:10px;font-family:'Geist','Inter',system-ui,sans-serif}
+  #bcc-root.open{display:flex;animation:bccDrop .2s cubic-bezier(.2,.8,.2,1)}
+  @keyframes bccDrop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  #bcc-feed{display:flex;flex-direction:column;gap:10px;max-height:62vh;overflow-y:auto}
   #bcc-feed:empty{display:none}
-  .bcc-card{background:rgba(12,16,28,.95);border:1px solid rgba(120,150,220,.22);border-radius:14px;
+  .bcc-card{background:rgba(12,16,28,.96);border:1px solid rgba(120,150,220,.22);border-radius:14px;
     padding:14px 16px;box-shadow:0 10px 40px rgba(0,0,0,.45);backdrop-filter:blur(14px);
     -webkit-backdrop-filter:blur(14px);color:#e7eefb;animation:bccIn .26s cubic-bezier(.2,.8,.2,1)}
-  @keyframes bccIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+  @keyframes bccIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
   .bcc-card .bcc-q{font-size:11px;color:#8fa6d4;margin-bottom:6px;display:flex;align-items:center;gap:6px}
   .bcc-card .bcc-a{font-size:14px;line-height:1.5;color:#eef3fc}
   .bcc-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .bcc-chip{font-size:11px;padding:4px 10px;border-radius:20px;background:rgba(80,120,210,.18);
     border:1px solid rgba(120,150,220,.3);color:#bcd0f5;display:flex;align-items:center;gap:5px}
   .bcc-chip.go{cursor:pointer}.bcc-chip.go:hover{background:rgba(80,120,210,.35)}
-  #bcc-bar{display:flex;align-items:center;gap:8px;pointer-events:auto;
-    background:linear-gradient(180deg,rgba(18,22,38,.97),rgba(10,12,22,.97));
-    border:1px solid rgba(130,100,255,.4);border-radius:26px;padding:7px 8px 7px 14px;
+  #bcc-bar{display:flex;align-items:center;gap:8px;
+    background:linear-gradient(180deg,rgba(18,22,38,.98),rgba(10,12,22,.98));
+    border:1px solid rgba(130,100,255,.45);border-radius:18px;padding:8px 8px 8px 14px;
     box-shadow:0 12px 48px rgba(0,0,0,.5),0 0 26px rgba(130,100,255,.16)}
   #bcc-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#eef3fc;
     font-size:14px;font-family:inherit;padding:6px 2px}
@@ -38,29 +38,13 @@
     display:flex;align-items:center;justify-content:center;font-size:14px;transition:transform .15s,opacity .15s}
   .bcc-mini:hover{transform:scale(1.08)}
   #bcc-mic{background:rgba(130,100,255,.18);color:#cabeff;border:1px solid rgba(130,100,255,.4)}
+  #bcc-mic.on{background:rgba(130,100,255,.5);color:#fff;animation:bccMic 1.1s ease-in-out infinite}
+  @keyframes bccMic{0%,100%{box-shadow:0 0 0 0 rgba(130,100,255,.5)}50%{box-shadow:0 0 0 7px rgba(130,100,255,0)}}
   #bcc-send{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff}
   #bcc-collapse{background:rgba(255,255,255,.06);color:#9fb0d0}
-  /* Orbe FAB siempre visible */
-  #bcc-orb{pointer-events:auto;width:54px;height:54px;border-radius:50%;cursor:pointer;position:relative;
-    background:radial-gradient(circle at 35% 30%,#c4b5ff,#7c3aed 55%,#3b1d8f);
-    box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 22px rgba(130,100,255,.6);
-    transition:transform .15s;display:flex;align-items:center;justify-content:center}
-  #bcc-orb:hover{transform:scale(1.07)}
-  #bcc-orb::after{content:'';position:absolute;inset:0;border-radius:50%;
-    box-shadow:0 0 0 0 rgba(130,100,255,.5);animation:bccRing 2.6s ease-out infinite}
-  #bcc-root.open #bcc-orb::after{animation:none}
-  @keyframes bccRing{0%{box-shadow:0 0 0 0 rgba(130,100,255,.5)}70%{box-shadow:0 0 0 14px rgba(130,100,255,0)}100%{box-shadow:0 0 0 0 rgba(130,100,255,0)}}
-  #bcc-orb.listening{animation:bccPulse 1.1s ease-in-out infinite}
-  #bcc-orb.thinking{animation:bccSpin 1s linear infinite}
-  @keyframes bccPulse{0%,100%{box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 18px rgba(130,100,255,.7)}50%{box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 34px 8px rgba(130,100,255,.95)}}
-  @keyframes bccSpin{to{filter:hue-rotate(360deg)}}
-  #bcc-orb .bcc-spark{color:#fff;font-size:22px;line-height:1;filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}
-  /* Burbuja de bienvenida (guía) */
-  #bcc-welcome{pointer-events:auto;max-width:240px;background:rgba(12,16,28,.96);border:1px solid rgba(130,100,255,.4);
-    border-radius:14px;padding:12px 14px;color:#e7eefb;font-size:12.5px;line-height:1.5;
-    box-shadow:0 10px 36px rgba(0,0,0,.5);position:relative;animation:bccIn .3s ease}
-  #bcc-welcome b{color:#cabeff}
-  #bcc-welcome .x{position:absolute;top:6px;right:9px;cursor:pointer;color:#7e8db0;font-size:13px}
+  /* feedback en el botón original del header */
+  #bixby-btn.bcc-on{background:rgba(138,90,255,.16)!important;box-shadow:0 0 0 2px rgba(138,90,255,.45),0 0 18px rgba(138,90,255,.4)!important}
+  #bixby-btn.bcc-thinking #bixby-btn-orb{box-shadow:0 0 18px 4px rgba(138,90,255,.9)!important}
   `;
 
   const CC = {
@@ -71,65 +55,56 @@
       const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
       const root = document.createElement('div'); root.id = 'bcc-root';
       root.innerHTML = `
-        <div id="bcc-panel">
-          <div id="bcc-feed"></div>
-          <div id="bcc-bar">
-            <input id="bcc-input" type="text" autocomplete="off"
-              placeholder="Pregúntale a Bixby… (⌘K)">
-            <button id="bcc-mic" class="bcc-mini" title="Hablar (voz)">🎙</button>
-            <button id="bcc-send" class="bcc-mini" title="Enviar">➤</button>
-            <button id="bcc-collapse" class="bcc-mini" title="Minimizar">⌄</button>
-          </div>
-        </div>
-        <div id="bcc-orb" title="Bixby — tu guía (clic para abrir)"><span class="bcc-spark">✦</span></div>`;
-      document.body.appendChild(root);
-      this.root = root;
+        <div id="bcc-feed"></div>
+        <div id="bcc-bar">
+          <input id="bcc-input" type="text" autocomplete="off" placeholder="Pregúntale a Bixby… (⌘K)">
+          <button id="bcc-mic" class="bcc-mini" title="Hablar por voz">🎙</button>
+          <button id="bcc-send" class="bcc-mini" title="Enviar">➤</button>
+          <button id="bcc-collapse" class="bcc-mini" title="Cerrar">✕</button>
+        </div>`;
+      document.body.appendChild(root); this.root = root;
 
       const input = document.getElementById('bcc-input');
       input.addEventListener('keydown', e => { if (e.key === 'Enter') this.submit(input.value); });
       document.getElementById('bcc-send').addEventListener('click', () => this.submit(input.value));
       document.getElementById('bcc-mic').addEventListener('click', () => this._toggleVoice());
       document.getElementById('bcc-collapse').addEventListener('click', () => this.setOpen(false));
-      document.getElementById('bcc-orb').addEventListener('click', () => this.setOpen(!this.open));
+
+      // El botón ORIGINAL del header es el único disparador de Bixby
+      const hb = document.getElementById('bixby-btn');
+      if (hb) hb.onclick = (e) => { e.preventDefault(); this.toggle(); };
 
       window.addEventListener('keydown', e => {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setOpen(true); this.focus(); }
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setOpen(true); }
         if (e.key === 'Escape' && this.open) this.setOpen(false);
       });
+      // clic fuera cierra el dropdown
+      document.addEventListener('click', e => {
+        if (!this.open) return;
+        if (this.root.contains(e.target)) return;
+        if (hb && hb.contains(e.target)) return;
+        this.setOpen(false);
+      });
       window.BixbyCCsetState = (s) => this.setOrbState(s);
-
-      this._maybeWelcome();
     },
 
+    toggle() { if (!this.inited) this.init(); this.setOpen(!this.open); },
+
     setOpen(v) {
+      if (!this.inited) this.init();
       this.open = v;
       this.root.classList.toggle('open', v);
-      this._dismissWelcome();
+      const hb = document.getElementById('bixby-btn'); if (hb) hb.classList.toggle('bcc-on', v);
       if (v) setTimeout(() => this.focus(), 60);
     },
 
     focus() { const i = document.getElementById('bcc-input'); if (i) { i.focus(); i.select(); } },
 
-    _maybeWelcome() {
-      try { if (localStorage.getItem('bcc_welcomed')) return; } catch (e) {}
-      const b = document.createElement('div'); b.id = 'bcc-welcome';
-      b.innerHTML = `<span class="x">✕</span><b>👋 Soy Bixby, tu guía.</b><br>
-        Pídeme que te muestre algo: <i>"compara NVIDIA, TSMC y ASML"</i> o
-        <i>"qué pasa si cae TSMC"</i>. Abro el tab, genero el dato y te lo explico.`;
-      this.root.insertBefore(b, this.root.lastChild);
-      b.querySelector('.x').addEventListener('click', (e) => { e.stopPropagation(); this._dismissWelcome(); });
-    },
-    _dismissWelcome() {
-      const b = document.getElementById('bcc-welcome');
-      if (b) b.remove();
-      try { localStorage.setItem('bcc_welcomed', '1'); } catch (e) {}
-    },
-
     setOrbState(s) {
-      const orb = document.getElementById('bcc-orb'); if (!orb) return;
-      orb.classList.remove('listening', 'thinking');
-      if (s === 'listening') orb.classList.add('listening');
-      if (s === 'thinking') orb.classList.add('thinking');
+      const hb = document.getElementById('bixby-btn');
+      const mic = document.getElementById('bcc-mic');
+      if (hb) hb.classList.toggle('bcc-thinking', s === 'thinking');
+      if (mic) mic.classList.toggle('on', s === 'listening');
     },
 
     _toggleVoice() {
