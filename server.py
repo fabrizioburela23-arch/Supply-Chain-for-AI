@@ -1320,7 +1320,9 @@ _CIK_MAP = {
 @cache.cached(timeout=3600)
 def dossier(ticker):
     """5-year financial dossier: income + balance + cash flow + key metrics (FMP)."""
-    ticker = _validate_ticker(ticker)
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker'}), 400
 
     def pick(lst, field, scale=1e9, rnd=2):
         if not lst:

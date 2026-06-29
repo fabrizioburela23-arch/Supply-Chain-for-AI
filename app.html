@@ -5122,14 +5122,14 @@ function _refreshStylesCore(){
 function selectNode(id){
   if(!NODE_BY_ID[id]) return;
   if(pathActive||pathfinderMode) clearPath(true); /* v7 · M4 */
-  selected=id;
+  selected=id; window._selectedNode=id; /* contexto para el Command Center */
   nodeSel.select('.n-core').attr('r',d=>d.id===id?computeNodeRadius(d.id)+3:computeNodeRadius(d.id));
   refreshStyles();
   renderDetail(id);
 }
 
 function deselect(){
-  selected=null; hovered=null;
+  selected=null; hovered=null; window._selectedNode=null;
   nodeSel.select('.n-core').attr('r',d=>computeNodeRadius(d.id));
   refreshStyles();
   document.getElementById('detail').style.display='none';
@@ -5192,7 +5192,7 @@ function stressText(d){
 function activateStress(id){
   const d=NODE_BY_ID[id]; if(!d) return;
   stressId=id;
-  selected=id;
+  selected=id; window._selectedNode=id;
   stressAffected=computeDownstream(id);
   nodeSel.select('.n-core').attr('r',n=>n.id===id?computeNodeRadius(n.id)+3:computeNodeRadius(n.id));
   document.getElementById('stress-text').innerHTML=stressText(d);
