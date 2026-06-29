@@ -12,7 +12,8 @@
   const R = 100;                 // radio del globo en unidades de mundo
   const EARTH_KM = 6371;
   const KM = R / EARTH_KM;       // escala km → mundo
-  const TEX = 'https://unpkg.com/three-globe/example/img/';
+  // Texturas servidas desde el propio servidor (/vendor) para no depender de CDNs
+  const TEX = ((typeof BASE !== 'undefined' && BASE) ? BASE : '') + '/vendor/';
 
   const latLng = (lat, lng, r) =>
     (window.GeoCoords ? window.GeoCoords.latLngToVec3(lat, lng, r)

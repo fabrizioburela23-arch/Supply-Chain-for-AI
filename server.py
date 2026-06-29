@@ -287,6 +287,40 @@ def serve_sim(filename):
     return resp
 
 
+# ── /vendor — proxy de librerías y texturas externas (mismo origen) ──────────
+# Sirve d3/three/chart/satellite y las texturas de la Tierra desde el propio
+# servidor, para que la app funcione en redes que bloquean cdnjs/jsdelivr/unpkg.
+_VENDOR_MAP = {
+    'd3.min.js':            'https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js',
+    'three.min.js':         'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'chart.umd.min.js':     'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+    'satellite.min.js':     'https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js',
+    'earth-blue-marble.jpg':'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+    'earth-topology.png':   'https://unpkg.com/three-globe/example/img/earth-topology.png',
+    'earth-dark.jpg':       'https://unpkg.com/three-globe/example/img/earth-dark.jpg',
+}
+
+
+@app.route('/vendor/<path:name>')
+@cache.cached(timeout=604800)  # 7 días
+def vendor(name):
+    url = _VENDOR_MAP.get(name)
+    if not url:
+        return jsonify({'error': 'unknown vendor asset'}), 404
+    try:
+        r = requests.get(url, timeout=25, headers={'User-Agent': 'KhipuFinance/1.0'})
+        if not r.ok:
+            return jsonify({'error': f'upstream {r.status_code}'}), 502
+        ctype = (r.headers.get('Content-Type') or '').split(';')[0] or \
+            ('application/javascript' if name.endswith('.js') else 'application/octet-stream')
+        resp = app.response_class(r.content, mimetype=ctype)
+        resp.headers['Cache-Control'] = 'public, max-age=604800'
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:120]}), 502
+
+
 # ----------------------------------------------------------------------------
 # Health check / data-health (extendido: incluye MiroFish, RAG, ElevenLabs)
 # ----------------------------------------------------------------------------

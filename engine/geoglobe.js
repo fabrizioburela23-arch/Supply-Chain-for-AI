@@ -10,7 +10,8 @@
   if (!THREE) { console.warn('[GeoGlobe] THREE no disponible'); return; }
 
   const R = 100;
-  const TEX = 'https://unpkg.com/three-globe/example/img/';
+  // Texturas servidas desde el propio servidor (/vendor) para no depender de CDNs
+  const TEX = ((typeof BASE !== 'undefined' && BASE) ? BASE : '') + '/vendor/';
 
   // Chokepoints reales del comercio (lat, lon, riesgo)
   const CHOKEPOINTS = [

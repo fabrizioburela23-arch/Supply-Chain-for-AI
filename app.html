@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="/vendor/d3.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js'"></script>
 <style>
 
 :root{
@@ -1296,9 +1296,9 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
 <script src="nodes/links_connect.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js"></script>
+<script src="/vendor/three.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'"></script>
+<script src="/vendor/chart.umd.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'"></script>
+<script src="/vendor/satellite.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js'"></script>
 </head>
 <body>
 <div id="khipu-loader" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#0a0d14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
@@ -8882,7 +8882,9 @@ async function _runClaudeSim(text, nodeStr, output, status) {
     _simSetStatus(status, '✅ War-Room Claude', 'green');
   } catch(e) {
     const reportEl = document.getElementById('wr-report');
-    if (reportEl) reportEl.textContent = 'Error: ' + e.message + '. Asegúrate de tener ANTHROPIC_KEY configurada.';
+    if (reportEl) reportEl.innerHTML = 'No se pudo ejecutar la simulación: ' + esc(e.message) +
+      '.<br><br>Revisa el panel 🩺 <b>Estado del Sistema</b>: necesitas al menos una IA en verde ' +
+      '(Claude, Gemini o NVIDIA). Si Claude está rojo, añade GEMINI_KEY o NVIDIA_KEY como respaldo.';
     _simSetStatus(status, '❌ Error', 'red');
   }
 }
@@ -11278,35 +11280,58 @@ window.loadTradeFlows = loadTradeFlows;
   };
 
   window.submitTradePanelOrder = async function() {
-    const ticker = _tp.ticker;
-    const qty    = parseFloat(document.getElementById('tp-qty').value);
-    const side   = _tp.side;
-    const otype  = document.getElementById('tp-order-type').value;
-    const tif    = document.getElementById('tp-tif').value;
+    const ticker = _tp && _tp.ticker;
+    const qtyEl = document.getElementById('tp-qty');
+    const qty   = parseFloat(qtyEl && qtyEl.value);
+    const side  = (_tp && _tp.side) || 'buy';
+    const otypeEl = document.getElementById('tp-order-type');
+    const otype = (otypeEl && otypeEl.value) || 'market';
+    const tifEl = document.getElementById('tp-tif');
+    const tif   = (tifEl && tifEl.value) || 'day';
     const status = document.getElementById('tp-order-status');
-    if (!ticker || !qty || qty <= 0) { status.style.color='#f87171'; status.textContent='Introduce cantidad válida'; return; }
+    const setS = (color, html) => { if (status) { status.style.color = color; status.innerHTML = html; } };
+    if (!ticker || !qty || qty <= 0) { setS('#f87171', 'Introduce una cantidad válida'); return; }
 
     const body = { symbol: ticker, qty, side, type: otype, time_in_force: tif };
-    if (otype === 'limit')         body.limit_price  = parseFloat(document.getElementById('tp-limit-price').value);
-    if (otype === 'stop')          body.stop_price   = parseFloat(document.getElementById('tp-stop-price').value);
-    if (otype === 'trailing_stop') body.trail_percent = parseFloat(document.getElementById('tp-trail-pct').value);
+    if (otype === 'limit')         body.limit_price   = parseFloat(document.getElementById('tp-limit-price')?.value);
+    if (otype === 'stop')          body.stop_price    = parseFloat(document.getElementById('tp-stop-price')?.value);
+    if (otype === 'trailing_stop') body.trail_percent = parseFloat(document.getElementById('tp-trail-pct')?.value);
 
-    status.style.color = 'rgba(229,226,225,0.6)'; status.textContent = 'Enviando…';
-    document.getElementById('tp-submit-btn').disabled = true;
+    setS('rgba(229,226,225,0.6)', 'Enviando…');
+    const btn = document.getElementById('tp-submit-btn'); if (btn) btn.disabled = true;
+
+    let realOk = false;
     try {
       const r = await fetch('/api/trade/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-      const d = await r.json();
+      const d = await r.json().catch(() => ({ error: 'respuesta inválida del servidor' }));
       if (d.id || d.status === 'accepted' || d.status === 'pending_new') {
-        status.style.color = '#4ade80';
-        status.textContent = `✓ ${side.toUpperCase()} ${qty}× ${ticker} — ${d.status || 'accepted'}`;
+        realOk = true;
+        setS('#4ade80', `✓ ${side.toUpperCase()} ${qty}× ${ticker} — ${d.status || 'accepted'} (real)`);
         if (typeof toast === 'function') toast(`Orden ${side} enviada: ${qty}× ${ticker}`);
         setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); }, 2000);
-      } else {
-        status.style.color = '#f87171';
-        status.textContent = '✗ ' + (d.message || d.error || JSON.stringify(d).slice(0,80));
       }
-    } catch(e) { status.style.color='#f87171'; status.textContent='✗ ' + e.message; }
-    document.getElementById('tp-submit-btn').disabled = false;
+    } catch (e) { /* cae a operación simulada */ }
+
+    if (!realOk) {
+      // Fallback: operación SIMULADA (paper) en el portafolio local — siempre funciona
+      const node = (window.NODES || []).find(n => n.mkt === ticker);
+      const q = (window.MKT && MKT.quotes && MKT.quotes[ticker]) || {};
+      const px = q.close || q.live || q.prev || 0;
+      if (node && px > 0) {
+        const cur = (MKT.pos[node.id]) || { sh: 0, bp: px };
+        const newSh = side === 'sell' ? Math.max(0, (cur.sh || 0) - qty) : (cur.sh || 0) + qty;
+        const bp = side === 'sell' ? (cur.bp || px)
+          : (((cur.sh || 0) * (cur.bp || px) + qty * px) / Math.max(1, newSh));
+        if (newSh <= 0) delete MKT.pos[node.id]; else MKT.pos[node.id] = { sh: newSh, bp };
+        if (typeof savePos === 'function') savePos();
+        if (typeof renderMarket === 'function' && typeof activeTab !== 'undefined' && activeTab === 'market') renderMarket(true);
+        setS('#fbbf24', `✓ Operación <b>simulada</b> (paper): ${side.toUpperCase()} ${qty}× ${ticker} @ $${px.toFixed(2)} — añadida a tu portafolio.<br><span style="font-size:10px;opacity:.7">El trading real requiere Alpaca configurado (revisa 🩺).</span>`);
+        if (typeof toast === 'function') toast(`Paper: ${side} ${qty}× ${ticker}`);
+      } else {
+        setS('#f87171', `No se pudo operar ${ticker}: sin precio disponible todavía. El trading real requiere Alpaca (revisa el panel 🩺).`);
+      }
+    }
+    if (btn) btn.disabled = false;
   };
 
   async function _tpLoadAccount() {
