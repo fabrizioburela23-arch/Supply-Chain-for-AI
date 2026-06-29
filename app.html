@@ -5038,7 +5038,7 @@ function neighborsOf(id){
 function passesFilters(d){
   if(!d) return false;
   let vis=true;
-  if(activePF) vis = (d.port||'').includes(activePF);
+  if(activePF) vis = inPortfolio(d, activePF);
   if(activeCat) vis = vis && d.cat===activeCat;
   if(activeCountry) vis = vis && d.country===activeCountry;
   if(searchTerm) vis = vis && (d.label+' '+d.ticker+' '+d.id).toLowerCase().includes(searchTerm);
@@ -5326,6 +5326,12 @@ function renderDetail(id){
   };
 
   const pf = d.port ? `<span class="badge badge-pf ${pfClass(d.port)}">★ ${pfLabel(d.port)}</span>` : '';
+  const _c1=inPortfolio(d,'C1'), _c2=inPortfolio(d,'C2');
+  const _pfBtn=(p,on,col,ttl)=>`<button onclick="togglePortfolio('${d.id}','${p}')" title="${ttl}" style="font-size:10px;padding:3px 11px;border-radius:20px;cursor:pointer;font-weight:700;border:1px solid ${col};background:${on?col:'transparent'};color:${on?'#fff':col};transition:all .12s">${on?'★':'+'} ${p}</button>`;
+  const pfBtns = `<div style="display:flex;gap:6px;margin:8px 0 2px;align-items:center;flex-wrap:wrap">
+    <span style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em">${LANG==='en'?'Portfolio':'Cartera'}</span>
+    ${_pfBtn('C1',_c1,'#d4a017',LANG==='en'?'Portfolio 1 (short term)':'Cartera 1 (corto plazo)')}
+    ${_pfBtn('C2',_c2,'#3b82f6',LANG==='en'?'Portfolio 2 (medium term)':'Cartera 2 (mediano plazo)')}</div>`;
   const preipoBadge = d.preipo
     ? `<span class="badge badge-preipo">◌ ${isPreipoTicker(d.ticker)?t('b_preipo'):t('b_priv')}</span>` : '';
   const riskBadge = d.risk ? `<span class="badge badge-risk">⚠ ${t('b_risk')}</span>` : '';
@@ -5390,6 +5396,7 @@ function renderDetail(id){
       ${riskBadge}
       <span class="badge badge-loc">📍 ${esc(d.loc)}</span>
     </div>
+    ${pfBtns}
     <div class="fin-grid">
       <div class="fin-card">
         <div class="fl">${t('d_margin')}</div>
@@ -6469,8 +6476,8 @@ function renderGeoPanel(){
   } else if(activeLayer==='invest'){
     const hasPortfolio=GEO_BLOCKS.some(b=>b.portNodes.length>0);
     grid.innerHTML=GEO_BLOCKS.map(blk=>{
-      const c1=blk.nodes.filter(n=>n.port==='C1');
-      const c2=blk.nodes.filter(n=>n.port==='C2');
+      const c1=blk.nodes.filter(n=>inPortfolio(n,'C1'));
+      const c2=blk.nodes.filter(n=>inPortfolio(n,'C2'));
       const hasPos=c1.length||c2.length;
       return `<div onclick="window._geoExpand('${blk.id}')" style="background:var(--surface-2);border:1px solid ${hasPos?blk.accent:'var(--line)'};border-radius:12px;padding:16px;cursor:pointer;opacity:${hasPos?1:.55};transition:all .15s" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.18)'" onmouseout="this.style.boxShadow=''">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
@@ -6639,6 +6646,38 @@ const fmtN=(v,dec=2)=> v==null||isNaN(v) ? '—' : Number(v).toLocaleString('en-
 const fmtPct=v=> v==null||isNaN(v) ? '—' : (v>=0?'+':'')+ (v*100).toFixed(2)+'%';
 function savePos(){ localStorage.setItem('eco_pos',JSON.stringify(MKT.pos)); }
 function quoteOf(n){ return n.mkt ? MKT.quotes[n.mkt] : null; }
+
+/* ── Carteras editables: capa de usuario sobre el `port` estático ──────────── */
+var USER_PORTFOLIOS = JSON.parse(localStorage.getItem('eco_user_pf')||'{}');
+['C1','C2'].forEach(k=>{ if(!USER_PORTFOLIOS[k]) USER_PORTFOLIOS[k]={add:[],rm:[]}; });
+function saveUserPF(){ localStorage.setItem('eco_user_pf', JSON.stringify(USER_PORTFOLIOS)); }
+function inPortfolio(n, pf){
+  if(!n||!pf) return false;
+  const u=USER_PORTFOLIOS[pf]||{add:[],rm:[]};
+  if(u.rm && u.rm.indexOf(n.id)>=0) return false;        // removida por el usuario
+  if((n.port||'').includes(pf)) return true;             // estática
+  return !!(u.add && u.add.indexOf(n.id)>=0);            // añadida por el usuario
+}
+window.togglePortfolio=function(id, pf){
+  const node=NODE_BY_ID[id]; if(!node) return;
+  const u=USER_PORTFOLIOS[pf]||(USER_PORTFOLIOS[pf]={add:[],rm:[]});
+  if(!u.add) u.add=[]; if(!u.rm) u.rm=[];
+  const wasIn=inPortfolio(node, pf);
+  const isStatic=(node.port||'').includes(pf);
+  if(wasIn){                                             // quitar
+    if(isStatic){ if(u.rm.indexOf(id)<0) u.rm.push(id); }
+    else { const i=u.add.indexOf(id); if(i>=0) u.add.splice(i,1); }
+  } else {                                               // añadir
+    if(isStatic){ const i=u.rm.indexOf(id); if(i>=0) u.rm.splice(i,1); }
+    else { if(u.add.indexOf(id)<0) u.add.push(id); }
+  }
+  saveUserPF();
+  if(typeof invalidateFilterCache==='function') invalidateFilterCache();
+  if(typeof refreshStyles==='function') refreshStyles();
+  if(typeof selected!=='undefined' && selected && typeof renderDetail==='function') renderDetail(selected);
+  if(typeof activeTab!=='undefined' && activeTab==='market' && typeof renderMarket==='function') renderMarket(true);
+  if(typeof toast==='function') toast((wasIn?(LANG==='en'?'Removed from ':'Quitada de '):(LANG==='en'?'Added to ':'Añadida a '))+pf);
+};
 
 function setStatus(msg){ document.getElementById('mk-status').textContent=msg; }
 
@@ -6903,7 +6942,7 @@ const INVEST_PATH={
 function marketRows(){
   let list=NODES.filter(n=>n.mkt||MKT.pos[n.id]);
   if(MKT.filter==='pos') list=list.filter(n=>MKT.pos[n.id]);
-  else if(MKT.filter==='C1'||MKT.filter==='C2') list=list.filter(n=>(n.port||'').includes(MKT.filter));
+  else if(MKT.filter==='C1'||MKT.filter==='C2') list=list.filter(n=>inPortfolio(n, MKT.filter));
   return list.sort((a,b)=>{
     const pa=MKT.pos[a.id]?0:1, pb=MKT.pos[b.id]?0:1;
     return pa-pb || a.label.localeCompare(b.label);
