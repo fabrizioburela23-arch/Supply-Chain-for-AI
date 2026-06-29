@@ -8596,7 +8596,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         }
         const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
         const mkt = (window.NODE_BY_ID||{})[id]?.mkt || '';
-        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>${mkt ? `<button onclick="window._openDossier&&window._openDossier('${id}','${mkt}')" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>` : ''}`;
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>${mkt ? `<button onclick="window._openDossier&&window._openDossier('${id}','${mkt}')" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>` : ''}${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
       } catch(e) {}
     };
   }
@@ -9792,6 +9792,47 @@ window._openDossier = function(nodeId, ticker) {
   switchTab('analysis');
   const n = (window.NODE_BY_ID||{})[nodeId];
   if (n) setTimeout(() => _dossierLoadCompany(nodeId, ticker||n.mkt, n.label||nodeId), 300);
+};
+
+/* ── Research SEC 10-K (Fase 2): modal con síntesis de Claude ──────────────── */
+window._openResearch = async function(ticker, nodeId){
+  ticker = (ticker||'').split(/[ ·]/)[0].trim();
+  if(!ticker) return;
+  let ov = document.getElementById('research-overlay');
+  if(!ov){
+    ov = document.createElement('div'); ov.id='research-overlay';
+    ov.style.cssText='position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+    ov.onclick=e=>{ if(e.target===ov) ov.remove(); };
+    document.body.appendChild(ov);
+  }
+  const rh='font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin:14px 0 6px';
+  ov.innerHTML = `<div style="background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;max-height:85vh;overflow:auto;padding:22px 24px;box-shadow:0 12px 48px rgba(0,0,0,.45)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="font-family:'Fraunces',serif;font-size:18px;margin:0">📄 Research SEC · ${esc(ticker)}</h2>
+      <button onclick="document.getElementById('research-overlay').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-3)">✕</button>
+    </div>
+    <p style="font-size:11.5px;color:var(--ink-3);margin:4px 0 8px">Análisis del último 10-K/20-F oficial de SEC EDGAR, sintetizado por Claude.</p>
+    <div id="research-body"><div style="padding:34px;text-align:center;color:var(--ink-3);font-size:13px">⟳ Descargando filing de SEC EDGAR y analizando…<br><span style="font-size:11px;opacity:.7">(puede tardar 10-20s la primera vez)</span></div></div>
+  </div>`;
+  try{
+    const base=(typeof BASE!=='undefined')?BASE:'';
+    const r = await fetch(`${base}/api/company/research/${encodeURIComponent(ticker)}`);
+    const d = await r.json();
+    const body = document.getElementById('research-body'); if(!body) return;
+    if(d.error){ body.innerHTML=`<div style="padding:16px;color:#f59e0b;font-size:13px">⚠ ${esc(d.error)}</div>`; return; }
+    const a=d.analysis||{};
+    const sevCol=s=>/alta|high/i.test(s)?'#f87171':/media|med/i.test(s)?'#f59e0b':'#34d399';
+    const bullets=arr=>(arr||[]).map(x=>`<div style="font-size:12.5px;line-height:1.45;margin-bottom:5px;padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--blue)">•</span>${esc(x)}</div>`).join('');
+    body.innerHTML = `
+      <div style="font-size:11px;color:var(--ink-3);margin-bottom:6px">${esc(d.form_type||'')} · ${esc(d.filing_date||'')} · <a href="${d.source_url}" target="_blank" rel="noopener" style="color:var(--blue)">ver filing ↗</a></div>
+      ${(a.resumen&&a.resumen.length)?`<div style="${rh}">Resumen del negocio</div>${bullets(a.resumen)}`:''}
+      ${(a.riesgos&&a.riesgos.length)?`<div style="${rh}">Riesgos clave</div>${a.riesgos.map(rk=>`<div style="display:flex;gap:8px;align-items:baseline;padding:4px 0"><span style="font-size:9px;font-weight:800;color:${sevCol(rk.severidad||'')};min-width:46px">${esc((rk.severidad||'').toUpperCase())}</span><span style="font-size:12.5px;line-height:1.4">${esc(rk.riesgo||'')}</span></div>`).join('')}`:''}
+      ${(a.tendencias&&a.tendencias.length)?`<div style="${rh}">Tendencias (MD&A)</div>${bullets(a.tendencias)}`:''}
+      ${(a.confianza&&a.confianza.score!=null)?`<div style="margin-top:14px;padding:12px;background:var(--surface-2);border-radius:8px;display:flex;align-items:center;gap:12px"><div style="font-size:24px;font-weight:800;color:var(--ink-1)">${esc(a.confianza.score)}<span style="font-size:13px;color:var(--ink-3)">/10</span></div><div style="font-size:12px;color:var(--ink-2)">${esc(a.confianza.justificacion||'Confianza inversor')}</div></div>`:''}`;
+  }catch(e){
+    const body=document.getElementById('research-body');
+    if(body) body.innerHTML=`<div style="padding:16px;color:#f87171;font-size:13px">No se pudo cargar: ${esc(e.message||e)}</div>`;
+  }
 };
 
 function initSimTab() {

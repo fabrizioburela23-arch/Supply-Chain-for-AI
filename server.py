@@ -1444,6 +1444,108 @@ def fundamentals_sec(ticker):
     })
 
 
+# ── SEC 10-K Research — síntesis del filing con Claude (Fase 2) ───────────────
+_SEC_UA = os.getenv('SEC_USER_AGENT', 'Khipu Finance research@khipu.finance')
+_SEC_TICKERS = {'data': None, 'ts': 0.0}
+
+
+def _resolve_cik(ticker):
+    t = (ticker or '').upper()
+    if t in _CIK_MAP:
+        return _CIK_MAP[t].zfill(10)
+    now = time.time()
+    if not _SEC_TICKERS['data'] or now - _SEC_TICKERS['ts'] > 86400:
+        try:
+            r = requests.get('https://www.sec.gov/files/company_tickers.json',
+                             headers={'User-Agent': _SEC_UA}, timeout=12)
+            if r.ok:
+                m = {}
+                for row in r.json().values():
+                    m[str(row.get('ticker', '')).upper()] = str(row.get('cik_str', '')).zfill(10)
+                _SEC_TICKERS['data'] = m
+                _SEC_TICKERS['ts'] = now
+        except Exception:  # noqa: BLE001
+            pass
+    return (_SEC_TICKERS['data'] or {}).get(t)
+
+
+def _strip_html(html):
+    html = re.sub(r'(?is)<(script|style|table)[^>]*>.*?</\1>', ' ', html)
+    text = re.sub(r'(?s)<[^>]+>', ' ', html)
+    text = re.sub(r'&#160;|&nbsp;', ' ', text)
+    text = re.sub(r'&amp;', '&', text)
+    return re.sub(r'[ \t ]+', ' ', re.sub(r'\n\s*\n+', '\n', text)).strip()
+
+
+def _extract_section(text, markers, length=3500):
+    low = text.lower()
+    for mk in markers:
+        i = low.find(mk.lower())
+        if i >= 0:
+            return text[i:i + length]
+    return ''
+
+
+@app.route('/api/company/research/<ticker>')
+@rate_limit(limit=15, window=3600)
+@cache.cached(timeout=86400)
+def company_research(ticker):
+    """Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza."""
+    if not CLAUDE:
+        return jsonify({'error': 'ANTHROPIC_KEY not configured on server'}), 400
+    safe = _safe_ticker(ticker)
+    if not safe:
+        return jsonify({'error': 'invalid ticker'}), 400
+    cik = _resolve_cik(safe)
+    if not cik:
+        return jsonify({'error': f'No SEC filings found for {safe} (foreign/private?)'}), 404
+    try:
+        sub = requests.get(f'https://data.sec.gov/submissions/CIK{cik}.json',
+                           headers={'User-Agent': _SEC_UA}, timeout=15)
+        if not sub.ok:
+            return jsonify({'error': f'SEC submissions HTTP {sub.status_code}'}), 502
+        recent = sub.json().get('filings', {}).get('recent', {})
+        forms = recent.get('form', [])
+        idx = next((i for i, f in enumerate(forms) if f in ('10-K', '20-F')), None)
+        if idx is None:
+            return jsonify({'error': f'No 10-K/20-F on file for {safe}'}), 404
+        accession = recent['accessionNumber'][idx].replace('-', '')
+        primary = recent['primaryDocument'][idx]
+        form_type = forms[idx]
+        fdate = recent['filingDate'][idx]
+        doc_url = f'https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession}/{primary}'
+        doc = requests.get(doc_url, headers={'User-Agent': _SEC_UA}, timeout=20)
+        if not doc.ok:
+            return jsonify({'error': f'SEC document HTTP {doc.status_code}'}), 502
+        text = _strip_html(doc.text)
+        business = _extract_section(text, ['Item 1. Business', 'Item 1.Business', 'Overview'], 2800)
+        risks = _extract_section(text, ['Item 1A. Risk Factors', 'Risk Factors'], 4200)
+        mdna = _extract_section(text, ['Item 7. Management', "Management's Discussion", 'Results of Operations'], 4200)
+        if not (risks or mdna or business):
+            return jsonify({'error': 'No se pudieron extraer secciones del filing',
+                            'source_url': doc_url}), 502
+        prompt = (f'Analiza el filing {form_type} de {safe} ({fdate}). Responde en español, conciso.\n\n'
+                  f'NEGOCIO:\n{business}\n\nFACTORES DE RIESGO:\n{risks}\n\nMD&A:\n{mdna}')
+        system = (
+            'Eres un analista financiero senior. A partir de las secciones del filing SEC, '
+            'responde SOLO con JSON válido (sin markdown):\n'
+            '{"resumen":["3 bullets del negocio"],'
+            '"riesgos":[{"riesgo":"...","severidad":"Alta|Media|Baja"}],'
+            '"tendencias":["bullets de MD&A: ingresos, márgenes, guidance"],'
+            '"confianza":{"score":0-10,"justificacion":"1 frase"}}')
+        out, model = _claude_complete(system, prompt, max_tokens=1400)
+        cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', (out or '').strip())
+        try:
+            analysis = json.loads(cleaned)
+        except json.JSONDecodeError:
+            analysis = {'resumen': [out[:600] if out else 'Sin análisis'], 'riesgos': [],
+                        'tendencias': [], 'confianza': {}}
+        return jsonify({'ticker': safe, 'form_type': form_type, 'filing_date': fdate,
+                        'analysis': analysis, 'source_url': doc_url, 'model': model})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:200]}), 500
+
+
 # ── MiroFish proxy (simulaciones multi-agente) ───────────────────────────────
 def _mf_headers():
     h = {'Content-Type': 'application/json'}
