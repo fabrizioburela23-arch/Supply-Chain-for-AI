@@ -989,6 +989,72 @@ def canvas_generate():
         return jsonify({'error': str(e)[:200]}), 500
 
 
+# ── Bixby Command Center — interpreta comando libre → respuesta + acciones ────
+_COMMAND_SYSTEM = """\
+Eres Bixby, el copiloto de IA del terminal financiero Khipu Finance (semiconductores, IA y espacio).
+El usuario te habla o escribe en lenguaje natural y tú controlas la app y respondes como analista.
+Responde SOLO con JSON válido (sin markdown, sin explicación fuera del JSON):
+
+{"answer":"<respuesta breve y útil en español, 1-3 frases, tono de analista senior>",
+ "actions":[{"type":"<tipo>","arg":"<valor>"}]}
+
+Tipos de acción válidos:
+• switch_tab   arg ∈ {map, market, analysis, geo, simulation, space, terminal, canvas}
+• navigate     arg = node_id exacto (centra esa empresa en el grafo)
+• stress       arg = node_id exacto (lanza cascada de fallo de esa empresa)
+• simulate     arg = preset_id ∈ {taiwan_conflict, china_chip_ban_total, hbm_shortage_2027, openai_ipo_impact, starshield_reveal}
+• chart        arg = una instrucción en lenguaje natural para generar un gráfico/tabla con los datos (ej "compara márgenes de NVIDIA, TSMC y ASML")
+• second_brain arg = node_id (abre el panel de inteligencia de esa empresa)
+
+Reglas:
+- Usa SIEMPRE node_id exactos de la lista del contexto (no inventes ids).
+- Si el usuario pide ver/comparar/graficar datos → usa una acción "chart" (el front la renderiza).
+- Si pide "analiza X", "navega a X", "qué pasa si cae X" → navigate / stress sobre ese id.
+- Si pide una simulación o escenario geopolítico → simulate con el preset más cercano.
+- Si es solo una pregunta de conocimiento, responde en "answer" y deja actions vacío (o un switch_tab útil).
+- answer SIEMPRE en español, concreto, sin relleno. Máximo 3 frases.
+"""
+
+
+@app.route('/api/ai/command', methods=['POST'])
+@rate_limit(limit=40, window=3600)
+def ai_command():
+    if not CLAUDE:
+        return jsonify({'error': 'ANTHROPIC_KEY not configured on server',
+                        'answer': 'No tengo configurada la clave de Claude en el servidor, '
+                                  'por eso no puedo razonar tu pedido todavía.', 'actions': []}), 400
+    body = request.get_json(force=True, silent=True) or {}
+    query = str(body.get('query', ''))[:400].strip()
+    if not query:
+        return jsonify({'error': 'query is required'}), 400
+    nodes_raw = body.get('nodes') or []
+    # contexto compacto: id, label, ticker — suficiente para mapear nombres a ids
+    nodes_compact = [{'id': n.get('id'), 'label': n.get('label'),
+                      'ticker': (n.get('ticker') or n.get('mkt') or '')}
+                     for n in nodes_raw[:400]]
+    ctx_str = json.dumps({'nodes': nodes_compact, 'selected': body.get('selected')},
+                         ensure_ascii=False)
+    prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}'
+    try:
+        text, model = _claude_complete(_COMMAND_SYSTEM, prompt, max_tokens=700)
+        cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', (text or '').strip())
+        data = json.loads(cleaned)
+        if not isinstance(data, dict):
+            raise ValueError('not an object')
+        actions = data.get('actions') or []
+        # saneo: solo tipos conocidos
+        valid = {'switch_tab', 'navigate', 'stress', 'simulate', 'chart', 'second_brain'}
+        actions = [a for a in actions if isinstance(a, dict) and a.get('type') in valid]
+        return jsonify({'answer': str(data.get('answer', ''))[:600],
+                        'actions': actions[:4], 'model': model})
+    except json.JSONDecodeError:
+        # Si Claude no devolvió JSON, al menos devolvemos su texto como respuesta.
+        return jsonify({'answer': (text or 'No pude interpretar eso.')[:600], 'actions': []})
+    except Exception as e:   # noqa: BLE001
+        return jsonify({'error': str(e)[:200],
+                        'answer': 'Tuve un problema procesando ese pedido.', 'actions': []}), 500
+
+
 # ----------------------------------------------------------------------------
 # Marketstack proxy (compatibilidad con v7)
 # ----------------------------------------------------------------------------
