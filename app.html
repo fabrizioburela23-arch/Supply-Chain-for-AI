@@ -1619,7 +1619,17 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <section id="geo-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
   <div style="max-width:1200px;margin:0 auto;padding:24px 24px 40px">
     <h2 id="geo-title" style="font-family:\'Fraunces\',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
-    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Riesgo sistémico por región · NRS promedio · exposición de cartera · clic en región para ver empresas</p>
+    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Mapa 3D del riesgo geopolítico · empresas por región real · rutas de la cadena de suministro · chokepoints · datos por región abajo</p>
+
+    <!-- Globo geopolítico 3D — vista principal -->
+    <div id="geo-globe-wrap" style="margin-bottom:18px">
+      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% -10%, #0e1a30 0%, #08101e 55%, #05070d 100%)">
+        <canvas id="geo-globe-canvas" style="width:100%;height:560px;display:block;cursor:grab"></canvas>
+        <div id="geo-globe-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:5px;font-size:11px"></div>
+        <div id="geo-globe-info" style="display:none;position:absolute;top:14px;right:14px;background:rgba(8,14,24,.93);border:1px solid rgba(80,130,200,.35);border-radius:10px;padding:14px 16px;min-width:210px;max-width:250px;backdrop-filter:blur(8px);z-index:10"></div>
+        <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">🌐 Empresas por región real · arcos = cadena de suministro · ◉ chokepoints · arrastra/rueda/clic</div>
+      </div>
+    </div>
 
     <!-- Controls -->
     <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-bottom:18px">
@@ -1629,7 +1639,6 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           <button data-layer="geo" class="active">◉ Riesgo</button>
           <button data-layer="invest">$ Cartera</button>
           <button data-layer="news">📰 Noticias</button>
-          <button data-layer="globe">🌐 Globo 3D</button>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1638,15 +1647,6 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
     </div>
 
-    <!-- Globo geopolítico 3D -->
-    <div id="geo-globe-wrap" style="display:none;margin-bottom:18px">
-      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% -10%, #0e1a30 0%, #08101e 55%, #05070d 100%)">
-        <canvas id="geo-globe-canvas" style="width:100%;height:560px;display:block;cursor:grab"></canvas>
-        <div id="geo-globe-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:5px;font-size:11px"></div>
-        <div id="geo-globe-info" style="display:none;position:absolute;top:14px;right:14px;background:rgba(8,14,24,.93);border:1px solid rgba(80,130,200,.35);border-radius:10px;padding:14px 16px;min-width:210px;max-width:250px;backdrop-filter:blur(8px);z-index:10"></div>
-        <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">🌐 Empresas por región real · arcos = cadena de suministro · ◉ chokepoints · arrastra/rueda/clic</div>
-      </div>
-    </div>
     <!-- Regional dashboard cards -->
     <div id="geo-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:20px"></div>
 
@@ -6401,23 +6401,8 @@ function renderGeoPanel(){
 
   const activeLayer=document.querySelector('#geo-layer-seg button.active')?.dataset?.layer||'geo';
 
-  /* ── Capa Globo 3D: mostrar globo, ocultar dashboard 2D ── */
-  const _ggWrap=document.getElementById('geo-globe-wrap');
-  const _ggGrid=document.getElementById('geo-cards-grid');
-  const _ggRank=document.getElementById('geo-ranking')?.closest('.mkt-tablewrap');
-  const _ggExp=document.getElementById('geo-expanded');
-  if(activeLayer==='globe'){
-    if(_ggWrap) _ggWrap.style.display='block';
-    if(_ggGrid) _ggGrid.style.display='none';
-    if(_ggRank) _ggRank.style.display='none';
-    if(_ggExp) _ggExp.style.display='none';
-    setTimeout(()=>window._initGeoGlobe&&window._initGeoGlobe(),60);
-    return;
-  } else {
-    if(_ggWrap) _ggWrap.style.display='none';
-    if(_ggGrid) _ggGrid.style.display='';
-    if(_ggRank) _ggRank.style.display='';
-  }
+  /* ── Globo 3D: vista principal, siempre visible al entrar a Geopolítica ── */
+  setTimeout(()=>window._initGeoGlobe&&window._initGeoGlobe(),60);
 
   /* ── Compute node metrics per block ── */
   const inDeg={};
