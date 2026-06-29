@@ -1629,6 +1629,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           <button data-layer="geo" class="active">◉ Riesgo</button>
           <button data-layer="invest">$ Cartera</button>
           <button data-layer="news">📰 Noticias</button>
+          <button data-layer="globe">🌐 Globo 3D</button>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -1637,6 +1638,15 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
     </div>
 
+    <!-- Globo geopolítico 3D -->
+    <div id="geo-globe-wrap" style="display:none;margin-bottom:18px">
+      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% -10%, #0e1a30 0%, #08101e 55%, #05070d 100%)">
+        <canvas id="geo-globe-canvas" style="width:100%;height:560px;display:block;cursor:grab"></canvas>
+        <div id="geo-globe-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:5px;font-size:11px"></div>
+        <div id="geo-globe-info" style="display:none;position:absolute;top:14px;right:14px;background:rgba(8,14,24,.93);border:1px solid rgba(80,130,200,.35);border-radius:10px;padding:14px 16px;min-width:210px;max-width:250px;backdrop-filter:blur(8px);z-index:10"></div>
+        <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">🌐 Empresas por región real · arcos = cadena de suministro · ◉ chokepoints · arrastra/rueda/clic</div>
+      </div>
+    </div>
     <!-- Regional dashboard cards -->
     <div id="geo-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:20px"></div>
 
@@ -6391,6 +6401,24 @@ function renderGeoPanel(){
 
   const activeLayer=document.querySelector('#geo-layer-seg button.active')?.dataset?.layer||'geo';
 
+  /* ── Capa Globo 3D: mostrar globo, ocultar dashboard 2D ── */
+  const _ggWrap=document.getElementById('geo-globe-wrap');
+  const _ggGrid=document.getElementById('geo-cards-grid');
+  const _ggRank=document.getElementById('geo-ranking')?.closest('.mkt-tablewrap');
+  const _ggExp=document.getElementById('geo-expanded');
+  if(activeLayer==='globe'){
+    if(_ggWrap) _ggWrap.style.display='block';
+    if(_ggGrid) _ggGrid.style.display='none';
+    if(_ggRank) _ggRank.style.display='none';
+    if(_ggExp) _ggExp.style.display='none';
+    setTimeout(()=>window._initGeoGlobe&&window._initGeoGlobe(),60);
+    return;
+  } else {
+    if(_ggWrap) _ggWrap.style.display='none';
+    if(_ggGrid) _ggGrid.style.display='';
+    if(_ggRank) _ggRank.style.display='';
+  }
+
   /* ── Compute node metrics per block ── */
   const inDeg={};
   LINKS.forEach(l=>{ const tg=lid(l.target); inDeg[tg]=(inDeg[tg]||0)+1; });
@@ -8308,6 +8336,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/secondbrain.js"></script>
 <script src="engine/geo_coords.js"></script>
 <script src="engine/planetarium.js"></script>
+<script src="engine/geoglobe.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
@@ -10360,6 +10389,54 @@ function telCell(label, val) {
   return `<div style="background:rgba(10,18,32,.6);border:1px solid rgba(80,130,200,.2);border-radius:7px;padding:7px 9px">
     <div style="font-size:9px;color:rgba(180,200,225,.55);text-transform:uppercase;letter-spacing:.05em">${label}</div>
     <div style="font-size:13px;color:#9bd1ff;font-weight:700;font-family:'JetBrains Mono',monospace">${val}</div></div>`;
+}
+
+// ── Globo geopolítico 3D ────────────────────────────────────────────────────
+window._initGeoGlobe = function() {
+  const canvas = document.getElementById('geo-globe-canvas');
+  if (!canvas) return;
+  if (!window.THREE || !window.KhipuGeoGlobe || !window.GeoCoords) {
+    canvas.parentElement.insertAdjacentHTML('beforeend',
+      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9bd1ff;font-size:13px">El globo 3D necesita Three.js (revisa conexión)</div>');
+    return;
+  }
+  if (window._geoGlobe) { try { window._geoGlobe._resize(); } catch(e){} return; }
+  try {
+    window._geoGlobe = new window.KhipuGeoGlobe('geo-globe-canvas');
+    window._geoGlobe.init();
+    window._geoGlobe.loadData();
+    renderGeoGlobeLegend();
+    if (!window._geoSatListener) {
+      window._geoSatListener = true;
+      window.addEventListener('khipu-geo-selected', e => renderGeoInfoCard(e.detail));
+    }
+  } catch(e) { console.warn('GeoGlobe init falló:', e); }
+};
+function renderGeoGlobeLegend() {
+  const el = document.getElementById('geo-globe-legend');
+  if (!el) return;
+  el.innerHTML = `<div style="font-size:10px;letter-spacing:.08em;color:rgba(180,200,225,.6);text-transform:uppercase;margin-bottom:2px">Riesgo NRS</div>` +
+    [['#34d399','Resiliente (60+)'],['#f59e0b','Medio (40-60)'],['#f87171','Frágil (<40)']]
+      .map(([c,l])=>`<div style="display:flex;align-items:center;gap:7px;color:#cfe2f5"><span style="width:8px;height:8px;border-radius:50%;background:${c};box-shadow:0 0 6px ${c}"></span>${l}</div>`).join('') +
+    `<div style="font-size:10px;letter-spacing:.08em;color:rgba(180,200,225,.6);text-transform:uppercase;margin:6px 0 2px">Chokepoints</div>` +
+    `<div style="display:flex;align-items:center;gap:7px;color:#cfe2f5"><span style="width:8px;height:8px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 6px #ff3b3b"></span>Taiwán · Malaca · Ormuz…</div>`;
+}
+function renderGeoInfoCard(d) {
+  const el = document.getElementById('geo-globe-info');
+  if (!el) return;
+  const col = d.nrs<40?'#f87171':d.nrs<60?'#f59e0b':'#34d399';
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <b style="font-size:13px;color:#fff">${esc(d.label)}</b>
+      <span onclick="document.getElementById('geo-globe-info').style.display='none'" style="cursor:pointer;color:rgba(180,200,225,.6)">✕</span>
+    </div>
+    <div style="font-size:11px;color:#9fb4d6;margin-bottom:8px">${esc(d.ticker||'')} · ${esc(d.region||'')}</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.max(4,d.nrs)}%;background:${col}"></div></div>
+      <span style="font-size:13px;font-weight:700;color:${col};font-family:'JetBrains Mono',monospace">${d.nrs}</span>
+    </div>
+    <button onclick="switchTab('map');setTimeout(()=>jumpTo('${d.id}'),80)" style="width:100%;padding:7px;background:linear-gradient(90deg,#2a5298,#1e3c72);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer">🔗 Ver en el grafo</button>`;
 }
 
 const _LAUNCHES_FALLBACK = [
