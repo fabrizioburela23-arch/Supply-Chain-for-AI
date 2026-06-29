@@ -1755,7 +1755,15 @@ body:not(.dark) .toolbar{animation-delay:.06s}
             </div>
             <textarea id="sim-context-text" placeholder="Pega aquí noticias, reportes o datos financieros. MiroFish los incluirá como contexto para la simulación." style="width:100%;height:56px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:11px;resize:vertical;font-family:inherit;color:var(--ink-2)"></textarea>
           </div>
-          <button id="sim-run-btn" data-i18n="sim_run" style="width:100%;margin-top:12px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap">
+            <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Motor de simulación</span>
+            <div id="sim-engine-seg" class="seg">
+              <button data-engine="simple" class="active" title="Sistema de agentes con IA (Claude/Gemini/NVIDIA) — funciona con cualquier proveedor">🤖 IA Simple</button>
+              <button data-engine="mirofish" title="Motor multi-agente real MiroFish">🧬 MiroFish</button>
+            </div>
+            <span id="sim-engine-hint" style="font-size:10px;color:var(--ink-3)"></span>
+          </div>
+          <button id="sim-run-btn" data-i18n="sim_run" style="width:100%;margin-top:10px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
         </div>
         <!-- Hypergraph card -->
         <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
@@ -9885,15 +9893,33 @@ function initSimTab() {
     if (!text) { toast('Escribe un escenario o selecciona un preset'); return; }
 
     document.getElementById('sim-run-btn').disabled = true;
-    const mfOk = await _checkMiroFish();
+    const engine = document.querySelector('#sim-engine-seg button.active')?.dataset?.engine || 'simple';
 
-    if (mfOk) {
-      const ok = await _runMiroFishPipeline(text, presetId, output, status);
-      if (!ok) await _runClaudeSim(text, nodeStr, output, status); // fallback
+    if (engine === 'mirofish') {
+      const mfOk = await _checkMiroFish();
+      if (mfOk) {
+        const ok = await _runMiroFishPipeline(text, presetId, output, status);
+        if (!ok) { _simSetStatus('run', 'MiroFish falló — usando IA Simple', '#f59e0b'); await _runClaudeSim(text, nodeStr, output, status); }
+      } else {
+        _simSetStatus('run', 'MiroFish no disponible — usando IA Simple', '#f59e0b');
+        await _runClaudeSim(text, nodeStr, output, status);
+      }
     } else {
-      await _runClaudeSim(text, nodeStr, output, status);
+      await _runClaudeSim(text, nodeStr, output, status);   // motor IA Simple (multi-proveedor)
     }
     document.getElementById('sim-run-btn').disabled = false;
+  });
+
+  // Selector de motor + pista de estado
+  document.querySelectorAll('#sim-engine-seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#sim-engine-seg button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      const hint = document.getElementById('sim-engine-hint');
+      if (hint) hint.textContent = b.dataset.engine === 'mirofish'
+        ? 'Motor multi-agente real (cae a IA Simple si no responde)'
+        : 'Agentes con IA · funciona con cualquier proveedor';
+    });
   });
   document.getElementById('var-calc-btn').addEventListener('click', async () => {
     const positions = Object.entries(MKT.pos || {});
