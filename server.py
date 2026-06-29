@@ -1088,6 +1088,116 @@ def space_launches():
     } for l in launches])
 
 
+# ── CelesTrak TLE — satélites reales para el Planeta 3D ───────────────────────
+# Grupos de CelesTrak → (nombre visible, nodo Khipu vinculado, color hex)
+_SAT_GROUPS = [
+    ('starlink',      'Starlink',        'SpaceX',           '#ff7a45'),
+    ('oneweb',        'OneWeb',          'EutelsatOneWeb',   '#36cfc9'),
+    ('planet',        'Planet Labs',     'PlanetLabs',       '#73d13d'),
+    ('spire',         'Spire Global',    'Spire',            '#9254de'),
+    ('iridium-NEXT',  'Iridium NEXT',    'Iridium',          '#40a9ff'),
+    ('globalstar',    'Globalstar',      'Globalstar',       '#f759ab'),
+    ('ses',           'SES / O3b',       'SES',              '#ffc53d'),
+    ('gps-ops',       'GPS',             None,               '#bfbfbf'),
+    ('galileo',       'Galileo',         None,               '#597ef7'),
+    ('beidou',        'BeiDou',          None,               '#ff4d4f'),
+    ('stations',      'Estaciones (ISS/CSS)', None,          '#ffffff'),
+]
+# Tope de satélites RENDERIZADOS por grupo (los conteos reportados son los reales).
+_SAT_RENDER_CAP = {'starlink': 1200, 'oneweb': 400, 'planet': 250, '_default': 220}
+
+
+def _parse_tle_text(txt):
+    """Parsea formato TLE de 3 líneas → [{name,l1,l2}]."""
+    out = []
+    lines = [ln.rstrip() for ln in txt.splitlines() if ln.strip()]
+    i = 0
+    while i + 2 < len(lines) + 1:
+        if i + 2 >= len(lines):
+            break
+        name, l1, l2 = lines[i], lines[i + 1], lines[i + 2]
+        if l1.startswith('1 ') and l2.startswith('2 '):
+            out.append({'name': name.strip(), 'l1': l1, 'l2': l2})
+            i += 3
+        else:
+            i += 1
+    return out
+
+
+@app.route('/api/space/tle')
+@rate_limit(limit=20, window=3600)
+@cache.cached(timeout=86400)  # CelesTrak actualiza ~1/día
+def space_tle():
+    """Satélites reales por constelación (CelesTrak). Muestrea para rendimiento
+    pero reporta los conteos REALES. Si CelesTrak no responde, fallback sintético."""
+    constellations = []
+    sats = []
+    any_ok = False
+    for idx, (group, label, node, color) in enumerate(_SAT_GROUPS):
+        try:
+            url = f'https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle'
+            r = requests.get(url, timeout=12, headers={'User-Agent': 'KhipuFinance/1.0'})
+            if not r.ok or not r.text or '<' in r.text[:1]:
+                raise RuntimeError(f'HTTP {r.status_code}')
+            parsed = _parse_tle_text(r.text)
+            if not parsed:
+                raise RuntimeError('sin TLEs')
+            any_ok = True
+            real_count = len(parsed)
+            cap = _SAT_RENDER_CAP.get(group, _SAT_RENDER_CAP['_default'])
+            if real_count > cap:
+                step = real_count / cap
+                sampled = [parsed[int(k * step)] for k in range(cap)]
+            else:
+                sampled = parsed
+            for s in sampled:
+                sats.append({'n': s['name'], 'l1': s['l1'], 'l2': s['l2'], 'c': idx})
+            constellations.append({
+                'name': label, 'count': real_count, 'rendered': len(sampled),
+                'node': node, 'color': color,
+            })
+        except Exception as e:  # noqa: BLE001
+            constellations.append({
+                'name': label, 'count': 0, 'rendered': 0,
+                'node': node, 'color': color, 'error': str(e)[:60],
+            })
+
+    if not any_ok:
+        # Fallback sintético (p.ej. red sin egress a CelesTrak): órbitas plausibles.
+        return jsonify(_fallback_tle())
+
+    total = sum(c['count'] for c in constellations)
+    return jsonify({'constellations': constellations, 'sats': sats,
+                    'total_real': total, 'rendered': len(sats), 'source': 'celestrak'})
+
+
+def _fallback_tle():
+    """Datos sintéticos cuando CelesTrak no es alcanzable — la demo nunca queda vacía."""
+    import math
+    groups = [('Starlink', 'SpaceX', '#ff7a45', 7134, 550, 53.0),
+              ('OneWeb', 'EutelsatOneWeb', '#36cfc9', 648, 1200, 87.9),
+              ('Planet Labs', 'PlanetLabs', '#73d13d', 200, 475, 97.4),
+              ('Iridium NEXT', 'Iridium', '#40a9ff', 75, 780, 86.4),
+              ('GPS', None, '#bfbfbf', 31, 20180, 55.0)]
+    constellations, sats = [], []
+    for idx, (label, node, color, real, alt_km, inc) in enumerate(groups):
+        rendered = min(real, 200 if label == 'Starlink' else 80)
+        constellations.append({'name': label, 'count': real, 'rendered': rendered,
+                               'node': node, 'color': color})
+        # genera líneas TLE plausibles distribuyendo RAAN/anomalía
+        for k in range(rendered):
+            raan = (360.0 * k / rendered) % 360
+            ma = (137.5 * k) % 360
+            mm = 86400.0 / (2 * math.pi * math.sqrt(((6371 + alt_km) * 1000) ** 3 / 3.986e14))
+            l1 = f'1 {10000 + idx * 1000 + k:05d}U 24001A   24001.00000000  .00000000  00000-0  00000-0 0  9990'
+            l2 = (f'2 {10000 + idx * 1000 + k:05d} {inc:8.4f} {raan:8.4f} 0001000 '
+                  f'  0.0000 {ma:8.4f} {mm:11.8f}00000')
+            sats.append({'n': f'{label}-{k}', 'l1': l1, 'l2': l2, 'c': idx})
+    return {'constellations': constellations, 'sats': sats,
+            'total_real': sum(c['count'] for c in constellations),
+            'rendered': len(sats), 'source': 'fallback'}
+
+
 # ── GDELT News (gratis, global, multi-idioma) ────────────────────────────────
 @app.route('/api/news/gdelt/<company_name>')
 @rate_limit(limit=60, window=60)

@@ -1263,6 +1263,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/links_connect.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js"></script>
 </head>
 <body>
 <div id="khipu-loader" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#0a0d14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
@@ -1868,10 +1869,10 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 
     <!-- ORBITAL HERO -->
     <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;margin-bottom:16px;background:radial-gradient(130% 130% at 50% -10%, #122036 0%, #0a1120 55%, #06080f 100%)">
-      <canvas id="space-orbit" style="width:100%;height:360px;display:block;cursor:crosshair"></canvas>
-      <div id="space-orbit-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:6px"></div>
+      <canvas id="space-orbit" style="width:100%;height:520px;display:block;cursor:grab"></canvas>
+      <div id="space-orbit-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:5px;max-height:480px;overflow:auto"></div>
       <div id="space-const-panel" style="display:none;position:absolute;top:14px;right:14px;background:rgba(8,14,24,.92);border:1px solid rgba(80,130,200,.35);border-radius:10px;padding:14px 16px;min-width:220px;max-width:260px;backdrop-filter:blur(8px);z-index:10"></div>
-      <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">Órbita LEO · constelaciones activas (ilustrativo) · clic para aislar</div>
+      <div id="space-orbit-caption" style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">🌍 Cargando satélites reales (CelesTrak)… · arrastra para rotar · rueda para zoom · clic en un satélite</div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -8305,6 +8306,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/hypergraph.js"></script>
 <script src="engine/voice.js"></script>
 <script src="engine/secondbrain.js"></script>
+<script src="engine/geo_coords.js"></script>
+<script src="engine/planetarium.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
 
@@ -10246,8 +10249,8 @@ async function initSpaceTab() {
   const spaceNodes = (window.NODES||[]).filter(n=>spaceCategories.includes(n.cat));
   const countEl = document.getElementById('space-node-count');
   if (countEl) countEl.textContent = spaceNodes.length;
-  // Init orbit canvas on every tab visit (canvas may not have dimensions until visible)
-  setTimeout(initSpaceOrbitCanvas, 80);
+  // Planeta 3D con satélites reales (fallback al canvas 2D si Three.js no está)
+  setTimeout(initSpacePlanet, 60);
   const compEl = document.getElementById('space-companies-list');
   // Re-render companies list on every tab visit (data may have changed)
   function renderSpaceCompanies() {
@@ -10274,6 +10277,90 @@ async function initSpaceTab() {
   if (refreshBtn && launchEl) refreshBtn.addEventListener('click', ()=>loadLaunches(launchEl));
   if (launchEl) loadLaunches(launchEl);
 }
+// ── Planeta 3D satelital ──────────────────────────────────────────────────
+let _planetReq = false;
+async function initSpacePlanet() {
+  const canvas = document.getElementById('space-orbit');
+  if (!canvas) return;
+  // Sin Three.js o sin el módulo → fallback al canvas 2D ilustrativo
+  if (!window.THREE || !window.Planetarium) { try { initSpaceOrbitCanvas(); } catch(e){} return; }
+
+  if (window._planet) { try { window._planet._resize(); } catch(e){} return; }
+  try {
+    window._planet = new window.Planetarium('space-orbit');
+    window._planet.init();
+  } catch (e) { console.warn('Planetarium init falló:', e); try { initSpaceOrbitCanvas(); } catch(_){} return; }
+
+  // Telemetría al hacer click en un satélite (una sola vez)
+  if (!window._satListener) {
+    window._satListener = true;
+    window.addEventListener('khipu-sat-selected', (e) => renderSatCard(e.detail));
+  }
+
+  if (_planetReq) return; _planetReq = true;
+  const cap = document.getElementById('space-orbit-caption');
+  try {
+    const base = (typeof BASE!=='undefined') ? BASE : '';
+    const r = await fetch(`${base}/api/space/tle`);
+    const data = await r.json();
+    window._planet.loadConstellations(data);
+    renderConstellationLegend(data);
+    const fmt = n => (n>=1000? (n/1000).toFixed(n>=10000?0:1)+'k' : n);
+    if (cap) cap.innerHTML = `🛰 <b style="color:#9bd1ff">${fmt(data.total_real||0)}</b> satélites reales · ${data.source==='fallback'?'<span style="color:#e6a23c">datos de respaldo</span>':'CelesTrak en vivo'} · arrastra · rueda · clic`;
+  } catch (e) {
+    console.warn('TLE fetch falló:', e);
+    if (cap) cap.textContent = '⚠ No se pudieron cargar los satélites (revisa conexión)';
+    _planetReq = false;
+  }
+}
+
+function renderConstellationLegend(data) {
+  const el = document.getElementById('space-orbit-legend');
+  if (!el) return;
+  const cons = (data.constellations||[]).filter(c=>c.count>0);
+  el.innerHTML = `<div style="font-size:10px;letter-spacing:.08em;color:rgba(180,200,225,.6);text-transform:uppercase;margin-bottom:2px">Constelaciones</div>` +
+    cons.map(c=>{
+      const fmt = n => (n>=1000? n.toLocaleString('en-US') : n);
+      return `<div class="const-row" data-name="${esc(c.name)}" onclick="toggleConstellation('${esc(c.name)}')" style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:3px 7px;border-radius:6px;background:rgba(10,18,32,.55);border:1px solid rgba(80,130,200,.18);transition:background .12s" onmouseover="this.style.background='rgba(20,34,56,.8)'" onmouseout="this.style.background='rgba(10,18,32,.55)'">
+        <span style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;box-shadow:0 0 6px ${c.color}"></span>
+        <span style="font-size:11px;color:#cfe2f5;font-weight:600">${esc(c.name)}</span>
+        <span style="font-size:10px;color:rgba(180,200,225,.65);margin-left:auto;font-family:'JetBrains Mono',monospace">${fmt(c.count)}</span>
+      </div>`;
+    }).join('') +
+    `<div onclick="toggleConstellation(null)" style="font-size:10px;color:rgba(155,209,255,.7);cursor:pointer;text-align:center;padding:3px;margin-top:2px">↺ ver todas</div>`;
+}
+window.toggleConstellation = function(name){
+  if (!window._planet) return;
+  const cur = window._planet._filter;
+  window._planet.setFilter(cur===name ? null : name);
+};
+
+function renderSatCard(d) {
+  const wrap = document.getElementById('space-const-panel');
+  if (!wrap) return;
+  const node = d.node && (window.NODE_BY_ID||{})[d.node];
+  wrap.style.display = 'block';
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:50%;background:${d.color};box-shadow:0 0 8px ${d.color}"></span><b style="font-size:12px;color:#dcebfa">${esc(d.constellation)}</b></div>
+      <span onclick="document.getElementById('space-const-panel').style.display='none'" style="cursor:pointer;color:rgba(180,200,225,.6);font-size:14px">✕</span>
+    </div>
+    <div style="font-size:13px;color:#fff;font-weight:700;margin-bottom:8px;word-break:break-word">${esc(d.name||'Satélite')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+      ${telCell('Altitud', d.altKm!=null? d.altKm.toFixed(0)+' km':'—')}
+      ${telCell('Velocidad', d.vel!=null? d.vel.toFixed(2)+' km/s':'—')}
+      ${telCell('Latitud', d.lat!=null? d.lat.toFixed(2)+'°':'—')}
+      ${telCell('Longitud', d.lon!=null? d.lon.toFixed(2)+'°':'—')}
+    </div>
+    ${node ? `<button onclick="switchTab('map');setTimeout(()=>jumpTo('${d.node}'),80)" style="margin-top:12px;width:100%;padding:7px;background:linear-gradient(90deg,#2a5298,#1e3c72);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer">📡 Ver ${esc(node.label)} en el grafo</button>` : ''}
+  `;
+}
+function telCell(label, val) {
+  return `<div style="background:rgba(10,18,32,.6);border:1px solid rgba(80,130,200,.2);border-radius:7px;padding:7px 9px">
+    <div style="font-size:9px;color:rgba(180,200,225,.55);text-transform:uppercase;letter-spacing:.05em">${label}</div>
+    <div style="font-size:13px;color:#9bd1ff;font-weight:700;font-family:'JetBrains Mono',monospace">${val}</div></div>`;
+}
+
 const _LAUNCHES_FALLBACK = [
   {name:'Falcon 9 · Starlink Group 10-1',provider:'SpaceX',rocket:'Falcon 9',net:null,khipu_nodes:['SpaceX']},
   {name:'Electron · MAST-U',provider:'Rocket Lab',rocket:'Electron',net:null,khipu_nodes:['RocketLab']},
