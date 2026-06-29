@@ -1336,6 +1336,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn mobile-only" id="m-filter-btn" title="Filtros" aria-label="Filtros">☰</button>
       <button class="icon-btn" id="lang-toggle" title="Español / English" style="width:auto;padding:0 10px;font-size:11px;font-weight:700">EN</button>
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
+      <button class="icon-btn" id="diag-btn" title="Estado del sistema — prueba en vivo de keys y servicios" aria-label="Estado del sistema" onclick="window.openDiagnostics&&window.openDiagnostics()">🩺</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
       <button class="icon-btn" id="toggle-3d-btn" title="Vista 3D + Hipergrafos temporales — esferas históricas sobre el grafo" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="window._toggle3D && window._toggle3D()">🕸 3D</button>
@@ -1979,6 +1980,21 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </div><!-- /.app -->
 
 <!-- ===== v8: Panel de Configuración ===== -->
+<!-- ── Estado del Sistema (diagnóstico en vivo) ──────────────────────────── -->
+<div class="settings-overlay" id="diag-overlay" onclick="window.closeDiagnostics&&window.closeDiagnostics()"></div>
+<aside class="settings-panel" id="diag-panel" aria-label="Estado del sistema" style="width:480px">
+  <div class="settings-head">
+    <h2>🩺 Estado del Sistema</h2>
+    <button class="icon-btn" id="diag-close" aria-label="Cerrar" onclick="window.closeDiagnostics&&window.closeDiagnostics()">✕</button>
+  </div>
+  <p class="settings-sub">Prueba <b>en vivo</b> cada API key y servicio del servidor — no solo si existen, sino si <b>de verdad responden</b>. Las keys nunca se muestran.</p>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+    <button class="key-btn" id="diag-refresh" onclick="window.openDiagnostics&&window.openDiagnostics(true)" style="flex:0 0 auto">↻ Re-probar</button>
+    <span id="diag-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+  </div>
+  <div id="diag-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando diagnóstico…</div></div>
+</aside>
+
 <div class="settings-overlay" id="settings-overlay"></div>
 <aside class="settings-panel" id="settings-panel" aria-label="Configuración">
   <div class="settings-head">
@@ -7262,6 +7278,64 @@ function afterKeysChange(){
 $('settings-btn').onclick=()=>Settings.open();
 $('settings-close').onclick=()=>Settings.close();
 $('settings-overlay').onclick=()=>Settings.close();
+
+/* ── Estado del Sistema — diagnóstico en vivo ──────────────────────────── */
+const DIAG_META = {
+  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'Canvas IA · análisis de Bixby · fallback del War-Room' },
+  elevenlabs: { icon:'🎙', name:'Bixby / ElevenLabs',  why:'Voz conversacional — preguntar por voz' },
+  mirofish:   { icon:'🧬', name:'MiroFish',            why:'Motor multi-agente real del War-Room' },
+  rag:        { icon:'🧠', name:'Second Brain (RAG)',  why:'Búsqueda semántica · contexto de Bixby' },
+  finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo del terminal' },
+  market_extra:{icon:'🗂', name:'Fuentes de respaldo', why:'FMP · MarketStack · AlphaVantage' },
+};
+function _diagDot(s){
+  const ok = s.ok, conf = s.configured;
+  if(ok)        return {c:'#1db954', t:'OPERATIVO'};
+  if(!conf)     return {c:'#888',    t:'NO CONFIGURADO'};
+  return {c:'#e23b3b', t:'FALLA'};
+}
+function _diagCard(key, s){
+  const m = DIAG_META[key] || {icon:'•', name:key, why:''};
+  const d = _diagDot(s);
+  const lat = (s.latency_ms!=null) ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3)">${s.latency_ms}ms</span>` : '';
+  return `<div style="border:1px solid var(--line);border-left:3px solid ${d.c};border-radius:8px;padding:12px 14px;margin-bottom:10px;background:var(--surface-2,rgba(255,255,255,.02))">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px">
+      <span style="width:9px;height:9px;border-radius:50%;background:${d.c};box-shadow:0 0 8px ${d.c};flex-shrink:0"></span>
+      <span style="font-size:14px">${m.icon}</span>
+      <b style="font-size:13.5px;flex:1">${m.name}</b>
+      <span style="font-size:9px;font-weight:800;letter-spacing:.06em;color:${d.c}">${d.t}</span>
+      ${lat}
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);margin:2px 0 6px;padding-left:18px">${m.why}</div>
+    <div style="font-size:12px;color:var(--ink-2,var(--ink));padding-left:18px;line-height:1.45">${(s.detail||'').replace(/</g,'&lt;')}</div>
+  </div>`;
+}
+window.openDiagnostics = async function(fresh){
+  $('diag-overlay').classList.add('show');
+  $('diag-panel').classList.add('show');
+  const body = $('diag-body'), sum = $('diag-summary');
+  if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Re-probando servicios en vivo…</div>';
+  sum.textContent = '';
+  try{
+    const base = (typeof BASE!=='undefined') ? BASE : '';
+    const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const order = ['claude','elevenlabs','mirofish','rag','finnhub','market_extra'];
+    body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
+    const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
+    const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
+    sum.innerHTML = `<b style="color:${c}">${ok}/${tot} operativos</b> · modelo IA: <code style="font-size:10px">${d.ai_model||'?'}</code>${d.cached?' · <span style="opacity:.6">caché</span>':''}`;
+  }catch(e){
+    body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">
+      No se pudo obtener el diagnóstico: ${String(e.message||e)}.<br><br>
+      <span style="color:var(--ink-3)">Probablemente el servidor no está corriendo en modo servidor, o estás abriendo el archivo directamente (modo standalone). El diagnóstico en vivo requiere el backend Flask.</span></div>`;
+  }
+};
+window.closeDiagnostics = function(){
+  $('diag-overlay').classList.remove('show');
+  $('diag-panel').classList.remove('show');
+};
 $('pref-live').onchange=e=>{ const p=prefs(); p.live=e.target.checked; savePrefs(p); LivePrices.restart(); DataHealth.render(); };
 $('pref-notif').onchange=e=>{ const p=prefs(); p.notif=e.target.checked; savePrefs(p);
   if(e.target.checked && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); };

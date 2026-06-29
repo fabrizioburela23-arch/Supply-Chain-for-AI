@@ -311,6 +311,183 @@ def health():
 
 
 # ----------------------------------------------------------------------------
+# Diagnóstico EN VIVO — prueba real de cada integración (no solo bool(key))
+# Cada check hace una llamada ligera y reporta ok / latencia / error real.
+# NUNCA expone el valor de las keys; los errores se sanitizan.
+# ----------------------------------------------------------------------------
+_DIAG_CACHE = {'ts': 0.0, 'data': None}
+_DIAG_TTL = 60  # segundos
+
+
+def _diag_redact(text):
+    """Quita cualquier valor de key que pudiera aparecer en un mensaje de error."""
+    s = str(text)[:200]
+    for secret in (CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, MIROFISH_TOKEN, SECRET_KEY):
+        if secret and len(secret) > 6 and secret in s:
+            s = s.replace(secret, '••••')
+    return s
+
+
+def _diag_claude():
+    if not CLAUDE:
+        return {'configured': False, 'ok': False,
+                'detail': 'ANTHROPIC_KEY no está en las variables del servidor (Railway). '
+                          'Sin ella: Canvas IA, análisis de Bixby y el fallback del War-Room fallan.'}
+    t0 = time.time()
+    try:
+        import anthropic
+        client = anthropic.Anthropic(api_key=CLAUDE)
+        msg = client.messages.create(
+            model=AI_MODEL, max_tokens=1,
+            messages=[{'role': 'user', 'content': 'ping'}],
+        )
+        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': f'Key válida — modelo {msg.model} respondió.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'Key presente pero la API rechazó la llamada: ' + _diag_redact(e)}
+
+
+def _diag_elevenlabs():
+    if not ELEVENLABS_KEY:
+        return {'configured': False, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
+                'detail': 'ELEVENLABS_KEY no está en el servidor. Bixby (voz) no podrá conectar.'}
+    t0 = time.time()
+    try:
+        r = requests.get('https://api.elevenlabs.io/v1/user',
+                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=8)
+        lat = int((time.time() - t0) * 1000)
+        if not r.ok:
+            return {'configured': True, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
+                    'latency_ms': lat,
+                    'detail': f'Key inválida o sin permisos (HTTP {r.status_code}).'}
+        agent_ok = None
+        if ELEVENLABS_AGENT_ID:
+            try:
+                ra = requests.get(
+                    f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
+                    headers={'xi-api-key': ELEVENLABS_KEY}, timeout=8)
+                agent_ok = ra.ok
+            except Exception:  # noqa: BLE001
+                agent_ok = False
+        if not ELEVENLABS_AGENT_ID:
+            detail = 'Key válida, pero falta ELEVENLABS_AGENT_ID — Bixby no sabe a qué agente conectar.'
+            ok = False
+        elif agent_ok:
+            detail = 'Key válida y agente encontrado. Bixby debería conectar.'
+            ok = True
+        else:
+            detail = 'Key válida, pero el ELEVENLABS_AGENT_ID no existe o no es accesible con esta key.'
+            ok = False
+        return {'configured': True, 'ok': ok, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
+                'agent_ok': agent_ok, 'latency_ms': lat, 'detail': detail}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
+                'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'No se pudo contactar ElevenLabs: ' + _diag_redact(e)}
+
+
+def _diag_mirofish():
+    """Prueba ambas rutas (/api/health y /health) porque hubo inconsistencia histórica."""
+    t0 = time.time()
+    last = ''
+    for path in ('/api/health', '/health'):
+        try:
+            r = requests.get(f'{MIROFISH_URL}{path}', headers=_mf_headers(), timeout=6)
+            if r.ok:
+                return {'configured': True, 'ok': True, 'token_set': bool(MIROFISH_TOKEN),
+                        'latency_ms': int((time.time() - t0) * 1000), 'working_path': path,
+                        'detail': f'MiroFish vivo en {path}. War-Room puede usar el motor real.'}
+            last = f'{path} → HTTP {r.status_code}'
+        except Exception as e:  # noqa: BLE001
+            last = f'{path} → ' + _diag_redact(e)
+    hint = '' if MIROFISH_TOKEN else ' (no hay MIROFISH_TOKEN configurado — puede requerir auth).'
+    return {'configured': True, 'ok': False, 'token_set': bool(MIROFISH_TOKEN),
+            'latency_ms': int((time.time() - t0) * 1000),
+            'detail': f'MiroFish no responde OK: {last}.{hint} El War-Room usará el fallback de Claude.'}
+
+
+def _diag_rag():
+    t0 = time.time()
+    try:
+        r = requests.get(f'{RAG_URL}/stats', timeout=5)
+        lat = int((time.time() - t0) * 1000)
+        if r.ok:
+            n = ''
+            try:
+                n = f" ({r.json().get('count', '?')} docs indexados)"
+            except Exception:  # noqa: BLE001
+                pass
+            return {'configured': True, 'ok': True, 'latency_ms': lat,
+                    'detail': f'Second Brain / ChromaDB vivo{n}.'}
+        return {'configured': True, 'ok': False, 'latency_ms': lat,
+                'detail': f'RAG respondió HTTP {r.status_code}.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': bool(RAG_URL), 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'RAG (ChromaDB) no responde: ' + _diag_redact(e) +
+                          '. Búsqueda semántica de Bixby limitada.'}
+
+
+def _diag_finnhub():
+    if not FINNHUB:
+        return {'configured': False, 'ok': False,
+                'detail': 'FINNHUB_KEY no está. Los precios en vivo del terminal no cargarán.'}
+    t0 = time.time()
+    try:
+        r = requests.get(f'https://finnhub.io/api/v1/quote?symbol=AAPL&token={FINNHUB}', timeout=6)
+        lat = int((time.time() - t0) * 1000)
+        if r.ok:
+            c = (r.json() or {}).get('c')
+            if isinstance(c, (int, float)) and c > 0:
+                return {'configured': True, 'ok': True, 'latency_ms': lat,
+                        'detail': f'Key válida — cotización AAPL ${c} OK.'}
+            return {'configured': True, 'ok': False, 'latency_ms': lat,
+                    'detail': 'Key responde pero sin datos (¿límite de plan agotado?).'}
+        return {'configured': True, 'ok': False, 'latency_ms': lat,
+                'detail': f'Finnhub HTTP {r.status_code} — key inválida o rate-limited.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'No se pudo contactar Finnhub: ' + _diag_redact(e)}
+
+
+@app.route('/api/diagnostics')
+@rate_limit(limit=20, window=300)
+def diagnostics():
+    now = time.time()
+    fresh = request.args.get('fresh') == '1'
+    if not fresh and _DIAG_CACHE['data'] and (now - _DIAG_CACHE['ts'] < _DIAG_TTL):
+        out = dict(_DIAG_CACHE['data'])
+        out['cached'] = True
+        return jsonify(out)
+
+    services = {
+        'claude':     _diag_claude(),
+        'elevenlabs': _diag_elevenlabs(),
+        'mirofish':   _diag_mirofish(),
+        'rag':        _diag_rag(),
+        'finnhub':    _diag_finnhub(),
+    }
+    # Secundarias: solo presencia (no gastamos llamadas externas extra)
+    _extra_names = [n for n, v in (('FMP', FMP), ('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]
+    services['market_extra'] = {
+        'configured': bool(_extra_names),
+        'ok': bool(_extra_names),
+        'detail': ('Fuentes de respaldo activas: ' + ', '.join(_extra_names) + '.') if _extra_names
+                  else 'Ninguna fuente de respaldo configurada (el mercado depende solo de Finnhub).',
+    }
+
+    n_ok = sum(1 for s in services.values() if s.get('ok'))
+    out = {
+        'ts': int(now), 'cached': False, 'ai_model': AI_MODEL,
+        'jwt_api': _HAS_JWT, 'services': services,
+        'summary': {'ok': n_ok, 'total': len(services)},
+    }
+    _DIAG_CACHE['ts'] = now
+    _DIAG_CACHE['data'] = out
+    return jsonify(out)
+
+
+# ----------------------------------------------------------------------------
 # Finnhub — precios, noticias, earnings, WebSocket token
 # ----------------------------------------------------------------------------
 @app.route('/api/ws-token')
