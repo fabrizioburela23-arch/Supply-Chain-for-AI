@@ -1146,7 +1146,9 @@ Tipos de acción válidos:
 
 Reglas:
 - Usa SIEMPRE node_id exactos de la lista del contexto (no inventes ids).
-- Si el usuario pide ver/comparar/graficar datos → usa una acción "chart" (el front la renderiza).
+- Si el pedido menciona canvas, gráfico, graficar, dashboard, tabla, comparar, "muéstrame los datos",
+  "top N", ranking, márgenes, riesgo de varias empresas → SIEMPRE devuelve una acción "chart" con
+  el arg en lenguaje natural describiendo qué graficar. NO te limites a responder en texto.
 - Si pide "analiza X", "navega a X", "qué pasa si cae X" → navigate / stress sobre ese id.
 - Si pide una simulación o escenario geopolítico → simulate con el preset más cercano.
 - Si es solo una pregunta de conocimiento, responde en "answer" y deja actions vacío (o un switch_tab útil).

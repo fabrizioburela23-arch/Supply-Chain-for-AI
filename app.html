@@ -12194,8 +12194,8 @@ function _cvTable(el,spec){
   </div>`;
 }
 
-/* ── expose to global (used by inline onclick) ── */
-window.canvasGenerate = window.canvasGenerate;
+/* ── expose to global (used by inline onclick + Bixby command center) ── */
+window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos inline
 
 })();
 </script>
