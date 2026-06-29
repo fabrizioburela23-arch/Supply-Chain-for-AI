@@ -211,30 +211,53 @@ class KhipuGraph3D {
     this._addAxes(SPAN_X, SPAN_Y, SPAN_Z);
   }
 
-  _axisLabel(text, color, scale) {
-    const s = this._makeLabel(text, color);
-    s.material.opacity = 0.95;
-    s.scale.set((scale || 1) * 46, (scale || 1) * 10, 1);
-    return s;
+  _bigLabel(text, color, scale) {
+    const cv = document.createElement('canvas');
+    cv.width = 512; cv.height = 64;
+    const ctx = cv.getContext('2d');
+    ctx.font = '700 26px "Archivo", sans-serif';
+    ctx.fillStyle = `#${new THREE.Color(color).getHexString()}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,.85)'; ctx.shadowBlur = 6;
+    ctx.fillText(text, 256, 34);
+    const tex = new THREE.CanvasTexture(cv);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.96, depthTest: false }));
+    const s = scale || 1;
+    sprite.scale.set(120 * s, 15 * s, 1);
+    return sprite;
   }
 
   _addAxes(sx, sy, sz) {
     if (this._axes) { this._graphGroup.remove(this._axes); this._axes = null; }
     const g = new THREE.Group();
-    const line = (a, b, color) => {
+    const line = (a, b, color, op) => {
       const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]);
-      return new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.35 }));
+      return new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: op == null ? 0.45 : op }));
     };
     g.add(line([-sx, 0, 0], [sx, 0, 0], 0xff7a7a));   // X cadena
     g.add(line([0, -sy, 0], [0, sy, 0], 0x6ee7a8));   // Y riesgo
     g.add(line([0, 0, -sz], [0, 0, sz], 0x7fb4ff));   // Z región
-    const lbl = (txt, col, pos, sc) => { const s = this._axisLabel(txt, col, sc); s.position.set(...pos); g.add(s); };
-    lbl('Proveedor (upstream)', 0xff9a9a, [-sx - 26, 0, 0]);
-    lbl('Cliente (downstream)', 0xff9a9a, [sx + 26, 0, 0]);
-    lbl('Resiliente · NRS↑', 0x9af0c0, [0, sy + 20, 0]);
-    lbl('Frágil · NRS↓', 0x9af0c0, [0, -sy - 20, 0]);
-    lbl('Asia', 0xa9cbff, [0, 0, -sz - 24]);
-    lbl('Occidente', 0xa9cbff, [0, 0, sz + 24]);
+
+    // Piso de referencia (grid en el plano XZ) para dar profundidad espacial
+    try {
+      const grid = new THREE.GridHelper(Math.max(sx, sz) * 2, 16, 0x33507a, 0x1d2c46);
+      grid.position.y = -sy;
+      grid.material.transparent = true; grid.material.opacity = 0.22;
+      g.add(grid);
+    } catch (e) {}
+
+    const lbl = (txt, col, pos, sc) => { const s = this._bigLabel(txt, col, sc); s.position.set(...pos); g.add(s); };
+    // Títulos de eje
+    lbl('CADENA: proveedor → cliente', 0xff9a9a, [0, -sy - 48, sz + 6], 1.4);
+    lbl('REGIÓN', 0xa9cbff, [0, sy + 34, -sz - 6], 1.4);
+    // Ticks de riesgo (eje Y) al costado izquierdo
+    lbl('Resiliente · NRS 100', 0x9af0c0, [-sx - 70, sy, 0], 0.85);
+    lbl('Riesgo medio · 50', 0x9af0c0, [-sx - 70, 0, 0], 0.85);
+    lbl('Frágil · NRS 0', 0xffb0b0, [-sx - 70, -sy, 0], 0.85);
+    // Ticks de región (eje Z) sobre el piso
+    [['Taiwán', -3], ['China', -2.3], ['Japón', -0.7], ['India', 0.2], ['EE.UU.', 2.1], ['Europa', 3]]
+      .forEach(([name, zk]) => lbl(name, 0xb8d4ff, [-sx - 30, -sy + 10, (zk / 3) * sz], 0.7));
+
     this._axes = g;
     this._graphGroup.add(g);
   }
