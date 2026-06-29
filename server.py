@@ -1105,7 +1105,7 @@ def canvas_generate():
     nodes_compact = [
         { k: n.get(k) for k in ('id','label','cat','mkt','margin','growth',
                                   'port','country','preipo','nrs') }
-        for n in nodes_raw[:200]
+        for n in nodes_raw[:500]
     ]
     live_raw = ctx.get('live') or {}
     ctx_str = json.dumps({'nodes': nodes_compact, 'quotes': quotes_raw,
@@ -1171,7 +1171,7 @@ def ai_command():
     # contexto compacto: id, label, ticker — suficiente para mapear nombres a ids
     nodes_compact = [{'id': n.get('id'), 'label': n.get('label'),
                       'ticker': (n.get('ticker') or n.get('mkt') or '')}
-                     for n in nodes_raw[:400]]
+                     for n in nodes_raw[:800]]
     ctx_str = json.dumps({'nodes': nodes_compact, 'selected': body.get('selected')},
                          ensure_ascii=False)
     prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}'
@@ -1757,6 +1757,9 @@ Analysis:
 - Launch simulation: [SIM:taiwan_conflict] [SIM:china_chip_ban_total] [SIM:hbm_shortage_2027] [SIM:openai_ipo_impact] [SIM:starshield_reveal]
 - Show top risk companies: [NRS_TOP]
 - Filter market by category: [FILTER:category]  e.g. [FILTER:gpu]
+- Generate a data visualization / chart / table in Canvas IA: [CANVAS:natural-language request]
+  e.g. [CANVAS:compara márgenes de NVIDIA, TSMC y ASML] · [CANVAS:top 10 empresas por riesgo NRS]
+  This RENDERS the chart automatically — use it whenever the user asks to graph, compare or visualize data.
 
 ## CLIENT TOOLS — call these for live data
 - navigate_to_company(company_name, ticker): jump to company on map
@@ -1819,7 +1822,7 @@ NVIDIA, TSMC, ASML, Apple, Qualcomm, AMD, Intel, Samsung, SK_Hynix, Micron, Broa
 - When asked about simulation/war-room: explain the scenario briefly → [SIM:preset_id] to launch
 - When narrating War-Room results: describe the cascade ("TSMC absorbs the first shock, then NVIDIA suppliers cascade..."), name winners and losers with % estimates
 - When asked for Terminal view: [TAB:terminal] → [TERMINAL:ticker]
-- When asked about Canvas: [TAB:canvas] → tell user to describe what chart they want
+- When asked to chart/compare/visualize/tabulate data: emit [CANVAS:<what to chart>] and it renders automatically (do NOT just ask the user to describe it). e.g. [CANVAS:compara NVIDIA, TSMC y ASML por margen y riesgo]
 - Always issue command tokens alongside speech — never just speak without acting
 - Confirm navigation out loud: "Navegando a NVIDIA en el mapa..."
 - Be concise (2-3 sentences of analysis) then act immediately — no over-explanation

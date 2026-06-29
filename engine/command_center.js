@@ -117,7 +117,7 @@
     },
 
     _nodesCtx() {
-      return (window.NODES || []).slice(0, 400).map(n => ({
+      return (window.NODES || []).slice(0, 800).map(n => ({
         id: n.id, label: n.label, ticker: n.ticker || n.mkt || '',
       }));
     },
@@ -213,7 +213,7 @@
         const base = (typeof BASE !== 'undefined') ? BASE : '';
         let live = null;
         if (window.canvasEnrichData) { try { const en = await window.canvasEnrichData(query); live = (en && en.live) || null; } catch (e) {} }
-        const nodeCtx = (window.NODES || []).slice(0, 300).map(n => ({
+        const nodeCtx = (window.NODES || []).slice(0, 600).map(n => ({
           id: n.id, label: n.label, cat: n.cat, mkt: n.mkt || null,
           margin: n.margin ?? null, growth: n.growth || null, port: n.port || null,
           country: n.country || null, preipo: n.preipo || null,

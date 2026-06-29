@@ -11848,7 +11848,7 @@ window.canvasGenerate = async function(){
   btn.disabled=true;
 
   /* build compact context */
-  const nodeCtx=(window.NODES||[]).slice(0,300).map(n=>({
+  const nodeCtx=(window.NODES||[]).slice(0,600).map(n=>({
     id:n.id, label:n.label, cat:n.cat, mkt:n.mkt||null,
     margin:n.margin??null, growth:n.growth||null, port:n.port||null,
     country:n.country||null, preipo:n.preipo||null,

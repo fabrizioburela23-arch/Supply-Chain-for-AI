@@ -415,6 +415,7 @@ const BixbyVoice = {
     const trade    = text.match(/\[TRADE:([A-Za-z0-9._^[\]]+)\]/);
     const terminal = text.match(/\[TERMINAL:([A-Za-z0-9._^[\]]+)\]/);
     const sb       = text.match(/\[SECOND_BRAIN:([A-Za-z0-9_]+)\]/);
+    const canvas   = text.match(/\[CANVAS:([^\]]+)\]/);
     const nrsTop   = /\[NRS_TOP\]/.test(text);
     const filter   = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
 
@@ -442,6 +443,13 @@ const BixbyVoice = {
     if (sb) {
       const n = NODES.find(n => n.id === sb[1]);
       if (n && typeof window._openSecondBrain === 'function') setTimeout(() => window._openSecondBrain(n.id), 300);
+    }
+    if (canvas && typeof switchTab === 'function') {
+      switchTab('canvas');
+      setTimeout(() => {
+        const qi = document.getElementById('canvas-query');
+        if (qi) { qi.value = canvas[1].trim(); if (typeof window.canvasGenerate === 'function') window.canvasGenerate(); }
+      }, 280);
     }
     if (nrsTop && typeof switchTab === 'function') switchTab('analysis');
     if (filter) {
