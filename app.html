@@ -26,6 +26,9 @@
   --c-space_launch: #FF6B35;
   --c-satellite: #74C8DA;
   --c-earth_obs: #4BD693;
+  --c-nuclear_smr: #84CC16;
+  --c-nuclear_fusion: #EAB308;
+  --c-uranium: #F97316;
   --c-rare_earth: #C2A44E;
   --c-battery_mat: #88E06A;
 
@@ -63,6 +66,9 @@
   --c-space_launch: #FF8B55;
   --c-satellite: #94E8FA;
   --c-earth_obs: #6BF6B3;
+  --c-nuclear_smr: #A3E635;
+  --c-nuclear_fusion: #FACC15;
+  --c-uranium: #FB923C;
   --c-rare_earth: #E2C46E;
   --c-battery_mat: #A8F08A;
   --c-ai_defense: #FF7B8B;
@@ -1258,6 +1264,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/nodes_expand2.js"></script>
 <script src="nodes/nodes_spacex.js"></script>
 <script src="nodes/nodes_expand3.js"></script>
+<script src="nodes/nodes_nuclear.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
 <script src="nodes/links_connect.js"></script>
@@ -2139,6 +2146,9 @@ const CATS_NEW = {
   eda:           {label:'EDA / Software CAD',     en:'EDA / CAD SW',   cssVar:'--c-eda',           x:.20},
   substrates:    {label:'Sustratos',              en:'Substrates',     cssVar:'--c-substrates',    x:.13},
   optics:        {label:'Óptica',                 en:'Optics',         cssVar:'--c-optics',        x:.26},
+  nuclear_smr:   {label:'Nuclear · SMR',           en:'Nuclear · SMR',  cssVar:'--c-nuclear_smr',   x:.70},
+  nuclear_fusion:{label:'Nuclear · Fusión',        en:'Nuclear · Fusion',cssVar:'--c-nuclear_fusion',x:.72},
+  uranium:       {label:'Uranio',                  en:'Uranium',        cssVar:'--c-uranium',       x:.68},
 };
 Object.assign(CATS, CATS_NEW);
 
@@ -4682,6 +4692,13 @@ if (typeof NODES_EXPAND3 !== 'undefined') {
     }
   });
 }
+if (typeof NODES_NUCLEAR !== 'undefined') {
+  NODES_NUCLEAR.forEach(n => {
+    if (!NODES.find(existing => existing.id === n.id)) {
+      NODES.push(n);
+    }
+  });
+}
 // Sync NODE_BY_ID with all newly merged nodes so LINKS filter works correctly
 NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
 window.NODES = NODES;
@@ -4723,6 +4740,12 @@ if (typeof LINKS_SPACEX !== 'undefined') {
 }
 if (typeof LINKS_CONNECT !== 'undefined') {
   LINKS_CONNECT.forEach(l => {
+    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
+    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
+  });
+}
+if (typeof LINKS_NUCLEAR !== 'undefined') {
+  LINKS_NUCLEAR.forEach(l => {
     if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
     else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
   });
