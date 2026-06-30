@@ -142,6 +142,8 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: text, nodes: this._nodesCtx(), selected: sel }),
         });
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) throw new Error(r.status >= 500 ? 'Servidor reiniciándose (¿despliegue en curso?). Reintenta en ~1 min.' : 'Respuesta inesperada (HTTP ' + r.status + ')');
         const d = await r.json();
         ans.textContent = d.answer || (d.error ? '⚠ ' + d.error : 'Listo.');
         if (Array.isArray(d.actions) && d.actions.length) await this._runActions(d.actions, card);
@@ -225,6 +227,8 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, context: { nodes: nodeCtx, quotes: quotesCtx, live } }),
         });
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) throw new Error(r.status >= 500 ? 'Servidor reiniciándose (¿despliegue?). Reintenta en ~1 min.' : 'Respuesta inesperada (HTTP ' + r.status + ')');
         const d = await r.json();
         if (d.error) throw new Error(d.error);
         window._cvRenderCard(cardId, query, d.spec, d.model);

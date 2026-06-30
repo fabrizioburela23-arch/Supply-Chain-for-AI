@@ -11883,6 +11883,12 @@ window.canvasGenerate = async function(){
     if(window.SERVER_MODE){
       const r=await fetch('/api/canvas/generate',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({query,context:{nodes:nodeCtx,quotes:quotesCtx,live,selected_id:window._selectedNode||null}})});
+      const ct=r.headers.get('content-type')||'';
+      if(!ct.includes('application/json')){
+        throw new Error(r.status>=500||r.status===502||r.status===503
+          ? 'El servidor está reiniciándose (¿despliegue en curso?). Reintenta en ~1 min.'
+          : 'Respuesta inesperada del servidor (HTTP '+r.status+').');
+      }
       const d=await r.json();
       if(d.error) throw new Error(d.error);
       spec=d.spec; model=d.model;

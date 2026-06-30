@@ -1091,7 +1091,7 @@ Rules:
 _CV_PALETTE = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80']
 
 @app.route('/api/canvas/generate', methods=['POST'])
-@rate_limit(limit=20, window=3600)
+@rate_limit(limit=60, window=3600)
 def canvas_generate():
     if not _ai_configured():
         return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
@@ -1153,11 +1153,14 @@ Reglas:
 - Si pide una simulación o escenario geopolítico → simulate con el preset más cercano.
 - Si es solo una pregunta de conocimiento, responde en "answer" y deja actions vacío (o un switch_tab útil).
 - answer SIEMPRE en español, concreto, sin relleno. Máximo 3 frases.
+- NUNCA difieras ("ahorita lo hago", "un momento", "lo preparo"): si el pedido implica una
+  acción, DEVUÉLVELA YA en "actions" en esta misma respuesta. El answer describe lo que YA hiciste,
+  no lo que harás. Si piden graficar/comparar/ver datos, incluye SIEMPRE una acción "chart".
 """
 
 
 @app.route('/api/ai/command', methods=['POST'])
-@rate_limit(limit=40, window=3600)
+@rate_limit(limit=80, window=3600)
 def ai_command():
     if not _ai_configured():
         return jsonify({'error': 'no AI provider configured',
