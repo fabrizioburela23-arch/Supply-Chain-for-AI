@@ -2042,11 +2042,14 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   </div>
 </section>
 
+<!-- ===== Grafo de Conocimiento Temporal (reemplaza el 3D) — DENTRO de .app para
+     heredar el layout flex igual que canvas-panel; si va fuera, fluye debajo de
+     .app (pantalla completa) y queda fuera de la vista ===== -->
+<section id="tkg-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
+
 </div><!-- /.app -->
 
 <!-- ===== v8: Panel de Configuración ===== -->
-<!-- ===== Grafo de Conocimiento Temporal (reemplaza el 3D) ===== -->
-<section id="tkg-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 
 <!-- ── Estado del Sistema (diagnóstico en vivo) ──────────────────────────── -->
 <div class="settings-overlay" id="diag-overlay" onclick="window.closeDiagnostics&&window.closeDiagnostics()"></div>

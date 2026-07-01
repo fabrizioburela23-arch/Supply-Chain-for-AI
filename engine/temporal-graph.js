@@ -39,35 +39,48 @@
       out.push(f);
     };
 
-    // 1) Hechos curados
-    (window.TEMPORAL_SEED_FACTS || []).forEach(f => push({ ...f }));
+    // 1) Hechos curados — cada uno en su propio try para que uno malo no rompa todo
+    try {
+      (window.TEMPORAL_SEED_FACTS || []).forEach(f => { try { push({ ...f }); } catch (e) {} });
+    } catch (e) {}
 
     // 2) Rondas de financiación (PREIPO_INTEL) → hechos con fecha
-    const PI = window.PREIPO_INTEL || {};
-    Object.entries(PI).forEach(([id, intel]) => {
-      (intel.rounds || []).forEach((r, i) => {
-        push({
-          id: `tf_fund_${id}_${i}`, subject: id, predicate: `${r.round || 'ronda'} · ${r.amount || ''}`,
-          object: r.lead || '', object_type: (NB[r.lead] ? 'node' : 'literal'),
-          valid_from: r.date || '2024', valid_until: null, source: 'preipo', confidence: 0.85,
-          group: `g_fund_${id}`, meta: { headline: `${(NB[id] && NB[id].label) || id}: ${r.round || ''} ${r.amount || ''}`, impact: 5 },
+    try {
+      const PI = window.PREIPO_INTEL || {};
+      Object.entries(PI).forEach(([id, intel]) => {
+        const rounds = (intel && Array.isArray(intel.rounds)) ? intel.rounds : [];
+        rounds.forEach((r, i) => {
+          if (!r) return;
+          try {
+            push({
+              id: `tf_fund_${id}_${i}`, subject: id, predicate: `${r.round || 'ronda'} · ${r.amount || ''}`,
+              object: r.lead || '', object_type: (NB[r.lead] ? 'node' : 'literal'),
+              valid_from: r.date || '2024', valid_until: null, source: 'preipo', confidence: 0.85,
+              group: `g_fund_${id}`, meta: { headline: `${(NB[id] && NB[id].label) || id}: ${r.round || ''} ${r.amount || ''}`, impact: 5 },
+            });
+          } catch (e) {}
         });
       });
-    });
+    } catch (e) {}
 
     // 3) Cadena de suministro (LINKS más fuertes) → aristas
-    const links = [...(window.LINKS || [])].sort((a, b) => (b.w || 0) - (a.w || 0)).slice(0, 34);
-    const lid = v => (typeof v === 'object' && v !== null) ? v.id : v;
-    links.forEach((l, i) => {
-      const s = lid(l.source), t = lid(l.target);
-      if (!NB[s] || !NB[t]) return;
-      if (out.some(f => f._isEdge && f.subject === s && f.object === t)) return; // no duplicar con curados
-      push({
-        id: `tf_link_${i}`, subject: s, predicate: l.rel || l.type || 'abastece a', object: t, object_type: 'node',
-        valid_from: '2022-01-01', valid_until: null, source: 'link', confidence: 0.7,
-        group: 'g_supply', meta: { headline: `${(NB[s] && NB[s].label) || s} → ${(NB[t] && NB[t].label) || t}`, impact: Math.min(9, (l.w || 2) + 2) },
+    try {
+      const lid = v => (v && typeof v === 'object') ? v.id : v;
+      const links = [...(window.LINKS || [])].sort((a, b) => ((b && b.w) || 0) - ((a && a.w) || 0)).slice(0, 34);
+      links.forEach((l, i) => {
+        if (!l) return;
+        try {
+          const s = lid(l.source), t = lid(l.target);
+          if (!NB[s] || !NB[t]) return;
+          if (out.some(f => f._isEdge && f.subject === s && f.object === t)) return; // no duplicar con curados
+          push({
+            id: `tf_link_${i}`, subject: s, predicate: l.rel || l.type || 'abastece a', object: t, object_type: 'node',
+            valid_from: '2022-01-01', valid_until: null, source: 'link', confidence: 0.7,
+            group: 'g_supply', meta: { headline: `${(NB[s] && NB[s].label) || s} → ${(NB[t] && NB[t].label) || t}`, impact: Math.min(9, (l.w || 2) + 2) },
+          });
+        } catch (e) {}
       });
-    });
+    } catch (e) {}
     return out;
   }
 
@@ -89,6 +102,7 @@
     if (_built) { _resize(); return; }
     if (typeof d3 === 'undefined') { panel.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-3)">D3 no disponible (revisa conexión).</div>'; return; }
     _built = true;
+    try {
     _facts = deriveFacts();
     const froms = _facts.map(f => f._from).filter(Boolean);
     _minMs = froms.length ? Math.min(...froms) : Date.parse('2019-01-01');
@@ -149,10 +163,20 @@
     });
     panel.querySelector('#tkg-play').addEventListener('click', _togglePlay);
 
-    _buildGraph();
-    _applySearch();
-    _refresh();
+    // El dibujo del grafo en su propio try: si el SVG falla, la UI (título,
+    // línea de tiempo, lista de Hechos) sigue viva.
+    try { _buildGraph(); _applySearch(); _refresh(); }
+    catch (e) { try { console.error('[TKG] buildGraph', e); } catch (_) {} }
     _checkBackendStore();
+    } catch (err) {
+      _built = false;  // permitir reintento al volver a la pestaña
+      const msg = (err && err.message) ? err.message : String(err);
+      const stack = (err && err.stack) ? err.stack.slice(0, 500) : '';
+      panel.innerHTML = '<div style="max-width:900px;margin:0 auto;padding:30px 24px;color:#f87171;'
+        + 'font-family:monospace;font-size:12.5px;white-space:pre-wrap;line-height:1.5">'
+        + '◈ Grafo Temporal — no pudo iniciar:\n\n' + esc(msg) + '\n\n' + esc(stack) + '</div>';
+      try { console.error('[TKG] init error', err); } catch (e) {}
+    }
   };
 
   function _svgW(svgEl) {
