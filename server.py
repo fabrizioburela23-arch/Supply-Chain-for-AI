@@ -50,6 +50,15 @@ cache = Cache(app)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
 log = logging.getLogger('khipu')
 
+# ── Ontología (Fase 1, opcional) — /api/ontology/* ───────────────────────────
+# Registro defensivo: si sqlalchemy no está instalado aún (deploy en curso) o
+# DATABASE_URL no está configurada, el resto de la app sigue funcionando igual.
+try:
+    from ontology.api import ontology_bp
+    app.register_blueprint(ontology_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Ontología no registrada (opcional): %s', _e)
+
 FINNHUB  = os.getenv('FINNHUB_KEY', '')
 FMP      = os.getenv('FMP_KEY', '')
 CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
@@ -534,6 +543,28 @@ def _diag_rag():
                           '. Búsqueda semántica de Bixby limitada.'}
 
 
+def _diag_ontologia():
+    """Ontología (Postgres, Fase 1 del roadmap): fuente única de verdad de
+    objetos/vínculos con historia bitemporal. Feature opcional — si
+    DATABASE_URL no está configurada, el resto de la app sigue igual."""
+    try:
+        from ontology.db import ontology_available
+        if not ontology_available():
+            return {'configured': False, 'ok': True,
+                    'detail': 'Ontología no configurada (opcional). Añade el plugin de Postgres en '
+                              'Railway y DATABASE_URL para activar /api/ontology/*.'}
+        from ontology.db import session_scope
+        from ontology.models import ObjectRecord, LinkRecord, Event
+        with session_scope() as s:
+            n_obj = s.query(ObjectRecord).count()
+            n_link = s.query(LinkRecord).count()
+            n_ev = s.query(Event).count()
+        return {'configured': True, 'ok': True,
+                'detail': f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'detail': 'Ontología configurada pero no conecta: ' + _diag_redact(e)}
+
+
 def _diag_grafo():
     mode = _temporal_mode()
     if mode == 'native':
@@ -603,6 +634,7 @@ def diagnostics():
         'rag':        _diag_rag(),
         'finnhub':    _diag_finnhub(),
         'grafo':      _diag_grafo(),
+        'ontologia':  _diag_ontologia(),
     }
     # Secundarias: solo presencia (no gastamos llamadas externas extra)
     _extra_names = [n for n, v in (('FMP', FMP), ('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]

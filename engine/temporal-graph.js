@@ -143,6 +143,7 @@
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
           <h2 style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;margin:0">◈ Grafo de Conocimiento Temporal</h2>
           <span id="tkg-store" style="font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3)">memoria: nativa</span>
+          <span id="tkg-ontology-badge" style="display:none;font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--violet);color:var(--violet)"></span>
         </div>
         <p style="font-size:12.5px;color:var(--ink-3);margin:0 0 14px">Cada hecho tiene una <b>ventana de validez</b>. Mueve la línea de tiempo (o dale ▶) para ver cómo las relaciones aparecen, están vigentes o expiran.</p>
 
@@ -831,6 +832,31 @@
           }
         }
         if (d.store === 'neo4j' && d.neo4j_connected) _seedBackend(base);
+      }).catch(() => {});
+    } catch (e) {}
+    _checkOntologyStatus();
+  }
+
+  // Fase 1 del roadmap de ontología: /api/ontology/graph?as_of= es la fuente
+  // de verdad bitemporal en Postgres (si está configurada). Por ahora la
+  // consultamos como VERIFICACIÓN cruzada (no reemplaza window.NODE_BY_ID/
+  // LINKS, de los que dependen 7 pestañas más de la app) — un swap completo
+  // del catálogo es un cambio de mayor riesgo que se hace en su propia sesión
+  // con regresión de toda la app, no el mismo día de una demo en vivo.
+  function _checkOntologyStatus() {
+    try {
+      const base = (typeof BASE !== 'undefined') ? BASE : '';
+      fetch(`${base}/api/ontology/status`).then(r => r.ok ? r.json() : null).then(d => {
+        if (!d) return;
+        const el = document.getElementById('tkg-ontology-badge');
+        if (!el) return;
+        if (d.configured && d.ok) {
+          el.style.display = 'inline-flex';
+          el.textContent = `◈ ontología: ${d.objects} objetos · ${d.links} vínculos · ${d.events} eventos`;
+          el.title = 'Postgres (fuente única de verdad, Fase 1) — GET /api/ontology/graph?as_of=';
+        } else {
+          el.style.display = 'none';
+        }
       }).catch(() => {});
     } catch (e) {}
   }

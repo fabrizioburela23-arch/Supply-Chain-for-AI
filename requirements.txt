@@ -12,3 +12,8 @@ pytest>=7.4.0
 # ligero). Los hechos ya vienen estructurados, así que no se necesita Graphiti
 # ni un proveedor de embeddings. Se activa con NEO4J_URI/USER/PASSWORD.
 neo4j>=5.14.0
+# Ontología (Fase 1) — fuente única de verdad bitemporal en Postgres. Opcional:
+# se activa con DATABASE_URL (Railway lo inyecta solo al añadir el plugin de
+# Postgres). Sin esta variable, /api/ontology/* devuelve 503 sin romper nada.
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0

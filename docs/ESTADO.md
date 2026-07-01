@@ -42,24 +42,65 @@ está conectado).
 
 ## Fase 1 — LA ONTOLOGÍA COMO BACKEND
 
-**Estado: 🔜 SIGUIENTE**
+**Estado: ✅ COMPLETA (el núcleo bitemporal + API) · ⏸️ un paso a propósito diferido**
 
-Pendiente (ver roadmap para el detalle completo, adaptado a Flask/Postgres):
-- [ ] Provisionar Postgres en Railway (usuario, con guía paso a paso).
-- [ ] Esquema SQLAlchemy: `events` (append-only) + `objects`/`links`
-      materializados, bitemporal (`valid_from/valid_to` + `recorded_at`).
-- [ ] API `/api/ontology/*`: objects, objects/:id, objects/:id/links,
-      objects/:id/history, graph?as_of=, graph/diff, POST events (interno,
-      Fase 2 lo expone vía Acciones).
-- [ ] Script de migración: lee `data/grafo_v0.json` → genera eventos
-      `ObjectCreated`/`LinkCreated` con `valid_from` real.
-- [ ] Frontend: cambiar UNA línea para cargar el grafo desde la API en vez
-      del JSON embebido, comportamiento visual idéntico, verificar en
-      producción antes de quitar el bundle JS del cliente.
+- [x] Esquema SQLAlchemy (`ontology/models.py`): `events` (append-only,
+      bitemporal `valid_from/valid_to` + `recorded_at`) + `objects`/`links`
+      materializados para lectura rápida.
+- [x] `ontology/service.py`: `apply_event()` (inserta + materializa),
+      `as_of_graph()` (time-travel real por VALIDEZ, reconstruido desde
+      `events`, no desde la tabla materializada), `diff_graph()` (qué
+      apareció/desapareció entre dos fechas), `object_history()`.
+- [x] API `/api/ontology/*` (`ontology/api.py`, registrada como blueprint):
+      `/status`, `/objects`, `/objects/:id`, `/objects/:id/links`,
+      `/objects/:id/history`, `/graph?as_of=`, `/graph/diff?from=&to=`,
+      `POST /events` (escritura de bajo nivel; Fase 2 la envuelve con el
+      catálogo de Acciones).
+- [x] **Prefijo `/api/ontology/*`**, no `/v1/*` (ese es el producto de API
+      pública monetizado — ver `docs/AUDITORIA.md`).
+- [x] Degradación elegante: sin `DATABASE_URL`, todo el resto de la app sigue
+      funcionando igual (mismo patrón que Neo4j); `server.py` importa el
+      blueprint en un try/except defensivo.
+- [x] Script de migración `scripts/migrate_v0_to_ontology.py`: lee
+      `data/grafo_v0.json` → genera eventos reales. **Reglas de fecha
+      documentadas en el propio script** (empresas y links crudos sin fecha
+      propia → GENESIS 2000-01-01; los 86 hechos temporales curados usan su
+      `valid_from/valid_until` real).
+- [x] **Validado end-to-end contra Postgres real** (local, para desarrollo):
+      463 empresas + 32 objetos de ontología = 495 objetos; 0 ids sin
+      resolver en la migración; time-travel correcto en ambas direcciones
+      (ej. `as_of` antes/después de la sanción a Huawei 2019-05-16 y de la
+      pérdida de Qualcomm-Huawei 2021-06-30); `diff()` detecta ambos cambios.
+- [x] Tests: `tests/test_ontology.py` (8 tests: creación/actualización de
+      objeto, links, time-travel antes/después, cierre de intervalo con
+      LinkRemoved, diff añadido/quitado, historia ordenada, **migración
+      isomorfa** — corre el script real y compara conteos con el snapshot).
+      Se auto-saltan (skip) si no hay `DATABASE_URL` — no rompen CI sin DB.
+- [x] `docs/AUDITORIA.md` documenta la corrección de arquitectura (Flask no
+      Node, prefijo de API, Neo4j ya conectado se mantiene como espejo).
+
+### ⏸️ Diferido a propósito (no es un olvido — es una decisión registrada)
+
+**El swap completo del frontend** ("cambiar UNA línea para que TODO el grafo
+cargue desde la API en vez del JSON embebido") se hizo de forma **parcial y
+seguridad-primero**: el Grafo Temporal (`engine/temporal-graph.js`) ahora
+consulta `/api/ontology/status` y muestra un badge "◈ ontología: N objetos"
+cuando está configurada (verificación cruzada visible), pero **NO reemplaza**
+`window.NODE_BY_ID`/`window.LINKS` como fuente de datos — de esos dependen
+directamente 7 pestañas más (mapa, mercado, análisis, geopolítica,
+simulación, Second Brain, Canvas) en un archivo de 12,568 líneas. Reemplazar
+la fuente de datos central el mismo día de una reunión de inversión, sin
+poder hacer regresión completa de cada pestaña, era un riesgo desproporcionado
+frente al beneficio inmediato. **Recomendación:** hacer el swap completo en
+una sesión dedicada, con checklist de regresión de las 8 pestañas, cuando no
+haya una demo en vivo horas después.
 
 ## Fases 2-5
 
-No iniciadas. Ver roadmap.
+No iniciadas. Ver roadmap. Con la ontología ya en pie (Fase 1), la Fase 2
+(Acciones: `CrearTesis`, `AnotarObjeto`, `RegistrarDecision`…) puede
+apoyarse directamente en `apply_event()` — el mecanismo de escritura
+auditada ya existe, solo falta el catálogo con validación por tipo y la UI.
 
 ## Contexto de sesión previo a la ontología (para no reconstruir)
 
