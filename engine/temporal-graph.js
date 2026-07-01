@@ -148,9 +148,15 @@
     _checkBackendStore();
   };
 
+  function _svgW(svgEl) {
+    return (svgEl && svgEl.clientWidth) ||
+           (svgEl && svgEl.parentElement && svgEl.parentElement.clientWidth) ||
+           (typeof window !== 'undefined' && Math.min(window.innerWidth - 60, 1150)) || 960;
+  }
+
   function _buildGraph() {
     const svgEl = document.getElementById('tkg-svg'); if (!svgEl) return;
-    const w = svgEl.clientWidth || 900, h = 520;
+    const w = _svgW(svgEl), h = 520;
     const edges = _facts.filter(f => f._isEdge);
     const ids = new Set(); edges.forEach(e => { ids.add(e.subject); ids.add(e.object); });
     const NB = window.NODE_BY_ID || {};
@@ -174,7 +180,7 @@
     _nodeSel.append('title').text(d => d.label);
     _labelSel = _root.append('g').selectAll('text').data(nodes).join('text')
       .text(d => d.label.length > 16 ? d.label.slice(0, 15) + '…' : d.label)
-      .attr('font-size', '10px').attr('fill', 'var(--ink-2)').attr('text-anchor', 'middle').attr('dy', -11)
+      .attr('font-size', '10px').attr('fill', '#9fb0d0').attr('text-anchor', 'middle').attr('dy', -11)
       .style('pointer-events', 'none');
 
     _sim = d3.forceSimulation(nodes)
@@ -187,6 +193,11 @@
         _nodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
         _labelSel.attr('x', d => d.x).attr('y', d => d.y);
       });
+
+    // El panel puede estar recién mostrado (clientWidth=0 en el primer build):
+    // re-centra cuando el layout ya midió el ancho real.
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_resize);
+    setTimeout(_resize, 350);
   }
 
   function _refresh() {
@@ -245,7 +256,14 @@
   }
   function _stopPlay() { if (_playTimer) { clearInterval(_playTimer); _playTimer = null; } const btn = document.getElementById('tkg-play'); if (btn) btn.textContent = '▶'; }
 
-  function _resize() { if (_sim && _svg) { const svgEl = document.getElementById('tkg-svg'); if (svgEl) { const w = svgEl.clientWidth || 900; _sim.force('center', d3.forceCenter(w / 2, 260)); _sim.alpha(0.3).restart(); } } }
+  function _resize() {
+    if (!_sim || !_svg) return;
+    const svgEl = document.getElementById('tkg-svg'); if (!svgEl) return;
+    const w = _svgW(svgEl);
+    const h = svgEl.clientHeight || 520;
+    _sim.force('center', d3.forceCenter(w / 2, h / 2));
+    _sim.alpha(0.4).restart();
+  }
 
   // Si el backend expone el grafo (Graphiti/Neo4j), lo indicamos en el badge.
   function _checkBackendStore() {
