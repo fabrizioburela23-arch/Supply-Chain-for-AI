@@ -166,7 +166,15 @@
     // El dibujo del grafo en su propio try: si el SVG falla, la UI (título,
     // línea de tiempo, lista de Hechos) sigue viva.
     try { _buildGraph(); _applySearch(); _refresh(); }
-    catch (e) { try { console.error('[TKG] buildGraph', e); } catch (_) {} }
+    catch (e) {
+      try { console.error('[TKG] buildGraph', e); } catch (_) {}
+      try {
+        const viz = document.getElementById('tkg-viz');
+        if (viz) viz.innerHTML = '<div style="padding:24px;color:#f87171;font-family:monospace;'
+          + 'font-size:12px;white-space:pre-wrap;line-height:1.5">Grafo: error al dibujar →\n'
+          + esc((e && e.message) || String(e)) + '\n\n' + esc((e && e.stack ? e.stack.slice(0, 400) : '')) + '</div>';
+      } catch (_) {}
+    }
     _checkBackendStore();
     } catch (err) {
       _built = false;  // permitir reintento al volver a la pestaña
@@ -193,6 +201,16 @@
     const NB = window.NODE_BY_ID || {};
     const nodes = [...ids].map(id => ({ id, label: (NB[id] && NB[id].label) || id, cat: NB[id] && NB[id].cat }));
     const links = edges.map(e => ({ ...e, source: e.subject, target: e.object }));
+
+    // Diagnóstico visible: cuántos hechos/aristas/nodos hay realmente.
+    const dbg = document.getElementById('tkg-store');
+    if (dbg) dbg.title = `hechos:${_facts.length} · aristas:${edges.length} · nodos:${nodes.length} · NODE_BY_ID:${Object.keys(NB).length}`;
+    if (!nodes.length) {
+      _svg = d3.select(svgEl); _svg.selectAll('*').remove();
+      _svg.append('text').attr('x', 24).attr('y', 44).attr('fill', '#f87171').attr('font-size', '13px')
+        .text(`Sin relaciones para dibujar — hechos:${_facts.length} aristas:${edges.length} (NODE_BY_ID:${Object.keys(NB).length}).`);
+      return;
+    }
 
     _svg = d3.select(svgEl); _svg.selectAll('*').remove();
     _root = _svg.append('g');
@@ -226,9 +244,32 @@
       });
 
     // El panel puede estar recién mostrado (clientWidth=0 en el primer build):
-    // re-centra cuando el layout ya midió el ancho real.
+    // re-centra cuando el layout ya midió el ancho real, y encuadra los nodos
+    // (fit-to-view) cuando la simulación ya los posicionó, por si quedaron fuera.
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_resize);
     setTimeout(_resize, 350);
+    setTimeout(_fitView, 1100);
+    setTimeout(_fitView, 2200);
+  }
+
+  // Encuadra todos los nodos dentro del SVG (por si el force los dejó fuera de vista).
+  function _fitView() {
+    if (!_svg || !_nodeSel || !_root) return;
+    const svgEl = document.getElementById('tkg-svg'); if (!svgEl) return;
+    const w = _svgW(svgEl), h = svgEl.clientHeight || 520;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, n = 0;
+    _nodeSel.each(d => {
+      if (d == null || d.x == null || d.y == null || !isFinite(d.x) || !isFinite(d.y)) return;
+      n++; minX = Math.min(minX, d.x); minY = Math.min(minY, d.y);
+      maxX = Math.max(maxX, d.x); maxY = Math.max(maxY, d.y);
+    });
+    if (!n || !isFinite(minX)) return;
+    const gw = Math.max(1, maxX - minX), gh = Math.max(1, maxY - minY);
+    const pad = 60;
+    const scale = Math.max(0.3, Math.min(2.2, Math.min((w - pad) / gw, (h - pad) / gh)));
+    const tx = w / 2 - scale * (minX + maxX) / 2;
+    const ty = h / 2 - scale * (minY + maxY) / 2;
+    _root.attr('transform', `translate(${tx},${ty}) scale(${scale})`);
   }
 
   // _applySearch: SOLO cuando cambia la búsqueda. Precalcula el match de cada
