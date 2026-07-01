@@ -67,10 +67,23 @@ NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
 NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
 
-# ── Grafo de Conocimiento Temporal (Graphiti/Neo4j opcional) ────────────────
-NEO4J_URI      = os.getenv('NEO4J_URI', '')
-NEO4J_USER     = os.getenv('NEO4J_USER', 'neo4j')
-NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', '')
+# ── Grafo de Conocimiento Temporal (Neo4j opcional) ─────────────────────────
+def _clean_env(v):
+    """Limpia un valor de variable de entorno: quita espacios/saltos de línea y
+    comillas que se cuelan al pegar en el panel de Railway (causa típica de un
+    'Unauthorized' de Neo4j aunque la contraseña sea 'correcta')."""
+    v = (v or '').strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
+        v = v[1:-1].strip()
+    return v
+
+# Guardamos también los valores crudos para detectar si venían con espacios.
+_NEO4J_URI_RAW      = os.getenv('NEO4J_URI', '')
+_NEO4J_USER_RAW     = os.getenv('NEO4J_USER', 'neo4j')
+_NEO4J_PASSWORD_RAW = os.getenv('NEO4J_PASSWORD', '')
+NEO4J_URI      = _clean_env(_NEO4J_URI_RAW)
+NEO4J_USER     = _clean_env(_NEO4J_USER_RAW) or 'neo4j'
+NEO4J_PASSWORD = _clean_env(_NEO4J_PASSWORD_RAW)
 _TEMPORAL_FACTS = []          # store nativo en memoria (episodios ingeridos)
 
 
@@ -527,17 +540,26 @@ def _diag_grafo():
         return {'configured': True, 'ok': True,
                 'detail': 'Grafo de Conocimiento Temporal en modo NATIVO (client-side + memoria). '
                           'Añade NEO4J_URI/USER/PASSWORD para memoria persistente en Neo4j.'}
-    # neo4j mode → probar conexión
+    # neo4j mode → probar conexión. Mostramos usuario + host (seguros) para
+    # depurar el Unauthorized sin exponer la contraseña.
+    host = ''
+    try:
+        host = NEO4J_URI.split('://', 1)[-1].split('@')[-1].split('/')[0]
+    except Exception:  # noqa: BLE001
+        host = '(uri inválida)'
+    ctx = f' [usuario={NEO4J_USER} · host={host} · pw={len(NEO4J_PASSWORD)} car.]'
+    warn = ''
+    if _NEO4J_PASSWORD_RAW != _NEO4J_PASSWORD_RAW.strip():
+        warn += ' ⚠ la contraseña tenía espacios (ya la limpié, pero revísala).'
     t0 = time.time()
     try:
-        from neo4j import GraphDatabase
-        drv = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-        drv.verify_connectivity(); drv.close()
+        drv = _get_neo4j_driver()
+        drv.verify_connectivity()
         return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'Neo4j conectado — memoria temporal persistente activa.'}
+                'detail': 'Neo4j conectado — memoria temporal persistente activa.' + ctx}
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e)}
+                'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e) + ctx + warn}
 
 
 def _diag_finnhub():
@@ -1782,6 +1804,22 @@ def grafo_estado():
         # el usuario puso alguna var pero no todas / falta el driver
         payload['hint'] = ('NEO4J incompleto: revisa que NEO4J_URI, NEO4J_USER y '
                            'NEO4J_PASSWORD estén las 3 puestas y que el deploy incluya el driver neo4j.')
+    # Metadatos SEGUROS para depurar el Unauthorized (nada de contraseña).
+    if NEO4J_URI or NEO4J_PASSWORD:
+        host = ''
+        try:
+            host = NEO4J_URI.split('://', 1)[-1].split('@')[-1].split('/')[0]
+        except Exception:  # noqa: BLE001
+            host = '(uri inválida)'
+        payload['diag'] = {
+            'user': NEO4J_USER,
+            'uri_host': host,
+            'uri_scheme': (NEO4J_URI.split('://', 1)[0] if '://' in NEO4J_URI else '(sin esquema)'),
+            'pw_len': len(NEO4J_PASSWORD),
+            'pw_had_spaces': _NEO4J_PASSWORD_RAW != _NEO4J_PASSWORD_RAW.strip(),
+            'uri_had_spaces': _NEO4J_URI_RAW != _NEO4J_URI_RAW.strip(),
+            'user_had_spaces': _NEO4J_USER_RAW != _NEO4J_USER_RAW.strip(),
+        }
     return jsonify(payload)
 
 
