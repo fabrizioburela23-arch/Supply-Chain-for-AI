@@ -12,6 +12,15 @@
   let _linkSel = null, _nodeSel = null, _labelSel = null;
   let _minMs = 0, _maxMs = 0, _dateMs = 0, _playTimer = null, _tab = 'viz';
   let _search = '';
+  // Etapa 2/3: filtros por tipo, color de arista, y motor de microsimulación
+  let _hiddenTypes = new Set();       // tipos de objeto ocultos por el usuario
+  let _edgeColorMode = 'time';        // 'time' (validez) | 'rel' (tipo de relación)
+  let _simMode = false;               // clic en nodo = disparar shock
+  let _shock = null;                  // { origin, affected:Set, byType:{} } o null
+  let _nodeType = {};                 // id -> tipo (Company/Tech/…)
+  let _impactAdj = {};                // id -> [ {to, rel} ] para propagar el shock
+  let _searchNodes = new Set(), _searchAll = true;
+  const lidOf = v => (v && typeof v === 'object') ? v.id : v;
 
   const COL = { vigente: '#4ade80', expirado: '#6b7280', futuro: '#3a3a5e', node: '#a78bfa' };
 
@@ -150,6 +159,18 @@
 
         <div id="tkg-typelegend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
 
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <div class="seg" id="tkg-edgemode">
+            <button data-m="time" class="active">⏱ color por tiempo</button>
+            <button data-m="rel">🔗 color por relación</button>
+          </div>
+          <button id="tkg-simbtn" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">⚡ Modo simulación</button>
+          <button id="tkg-reset" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;display:none">↺ Reiniciar</button>
+          <span id="tkg-simhint" style="font-size:11px;color:var(--ink-3)"></span>
+        </div>
+
+        <div id="tkg-impact" style="display:none;margin-bottom:10px"></div>
+
         <div id="tkg-viz">
           <div style="position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%, rgba(124,58,237,.06), transparent 60%),var(--bg)">
             <svg id="tkg-svg" style="width:100%;height:520px;display:block;cursor:grab"></svg>
@@ -182,6 +203,15 @@
     });
     panel.querySelector('#tkg-play').addEventListener('click', _togglePlay);
 
+    // Etapa 2: color de arista por tiempo vs por tipo de relación
+    panel.querySelectorAll('#tkg-edgemode button').forEach(b => b.addEventListener('click', () => {
+      panel.querySelectorAll('#tkg-edgemode button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active'); _edgeColorMode = b.dataset.m; _refresh();
+    }));
+    // Etapa 3: modo simulación (clic en nodo = shock) y reinicio
+    panel.querySelector('#tkg-simbtn').addEventListener('click', () => _toggleSimMode());
+    panel.querySelector('#tkg-reset').addEventListener('click', () => _clearShock());
+
     // El dibujo del grafo en su propio try: si el SVG falla, la UI (título,
     // línea de tiempo, lista de Hechos) sigue viva.
     _renderTypeLegend();
@@ -213,9 +243,18 @@
     const types = (window.ONTOLOGY && window.ONTOLOGY.types) || { Company: { label: 'Empresa', color: COL.node, icon: '🏢' } };
     el.innerHTML = Object.keys(types).map(k => {
       const t = types[k];
-      return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:3px 9px">
+      const off = _hiddenTypes.has(k);
+      return `<span data-type="${k}" title="Clic para mostrar/ocultar este tipo"
+        style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;cursor:pointer;user-select:none;
+        color:${off ? 'var(--ink-3)' : 'var(--ink-2)'};background:var(--surface-2);border:1px solid var(--line);
+        border-radius:20px;padding:3px 9px;opacity:${off ? 0.45 : 1};${off ? 'text-decoration:line-through' : ''}">
         <span style="width:9px;height:9px;border-radius:50%;background:${t.color};flex-shrink:0"></span>${t.icon || ''} ${esc(t.label)}</span>`;
     }).join('');
+    el.querySelectorAll('[data-type]').forEach(chip => chip.addEventListener('click', () => {
+      const k = chip.dataset.type;
+      if (_hiddenTypes.has(k)) _hiddenTypes.delete(k); else _hiddenTypes.add(k);
+      _renderTypeLegend(); _applyFilters();
+    }));
   }
 
   function _svgW(svgEl) {
@@ -235,6 +274,14 @@
       return { id, label: (e && e.label) || id, type: (e && e.type) || 'Company', cat: e && e.cat };
     });
     const links = edges.map(e => ({ ...e, source: e.subject, target: e.object }));
+
+    // Índices para filtros y microsimulación
+    _nodeType = {}; nodes.forEach(n => { _nodeType[n.id] = n.type; });
+    _impactAdj = {};
+    edges.forEach(f => {
+      const ie = _impactEdges(f); if (!ie) return;
+      (_impactAdj[ie[0]] = _impactAdj[ie[0]] || []).push({ to: ie[1], fact: f });
+    });
 
     // Diagnóstico visible: cuántos hechos/aristas/nodos hay realmente.
     const dbg = document.getElementById('tkg-store');
@@ -257,6 +304,7 @@
       .attr('fill', d => entityColor(d)).attr('stroke', '#0a0a14').attr('stroke-width', 1.5)
       .style('cursor', 'pointer')
       .on('click', (ev, d) => {
+        if (_simMode) { _runShock(d.id); return; }   // modo simulación: dispara shock
         // solo las empresas existen en el mapa; los objetos de ontología no
         if (d.type && d.type !== 'Company') return;
         if (typeof switchTab === 'function') switchTab('map');
@@ -312,37 +360,151 @@
     _root.attr('transform', `translate(${tx},${ty}) scale(${scale})`);
   }
 
-  // _applySearch: SOLO cuando cambia la búsqueda. Precalcula el match de cada
-  // arista (d._match) y las opacidades de nodos una vez, en vez de recalcular
-  // O(nodos×hechos) en cada tick de tiempo.
+  // _applySearch: SOLO al cambiar la búsqueda. Precalcula el conjunto de nodos
+  // relevantes y el match por arista, luego repinta.
   function _applySearch() {
+    _searchAll = !_search;
+    _searchNodes = new Set();
+    if (!_searchAll) _facts.forEach(f => { if (f._isEdge && matchesSearch(f)) { _searchNodes.add(f.subject); _searchNodes.add(f.object); } });
     if (_linkSel) _linkSel.each(function (d) { d._match = matchesSearch(d); });
-    if (_nodeSel) {
-      const rel = new Set();
-      _facts.forEach(f => { if (f._isEdge && matchesSearch(f)) { rel.add(f.subject); rel.add(f.object); } });
-      _nodeSel.attr('opacity', d => rel.has(d.id) ? 1 : 0.15);
-    }
+    _refresh();
   }
 
-  // _refresh: dependiente del TIEMPO (slider/play). Barato: solo recolorea las
-  // aristas según su estado en _dateMs; el match de búsqueda viene precalculado.
+  // Filtros por tipo → simplemente repintar (la lógica vive en _refresh).
+  function _applyFilters() { _refresh(); }
+
+  const _typeHidden = id => _hiddenTypes.has(_nodeType[id] || 'Company');
+
+  function _edgeStroke(d) {
+    if (_shock) {
+      const a = _shock.affected.has(lidOf(d.source)), b = _shock.affected.has(lidOf(d.target));
+      return (a && b) ? '#ef4444' : '#3a3a5e';
+    }
+    if (_edgeColorMode === 'rel') {
+      const r = window.ONTOLOGY && window.ONTOLOGY.rels && window.ONTOLOGY.rels[d.rel];
+      return (r && r.color) || '#6b7280';
+    }
+    const st = status(d, _dateMs);
+    return st === 'vigente' ? COL.vigente : st === 'expirado' ? COL.expirado : COL.futuro;
+  }
+  function _edgeOpacity(d) {
+    if (_shock) {
+      const a = _shock.affected.has(lidOf(d.source)), b = _shock.affected.has(lidOf(d.target));
+      return (a && b) ? 0.9 : 0.05;
+    }
+    const st = status(d, _dateMs);
+    if (d._match === false) return 0.05;
+    return st === 'vigente' ? 0.8 : st === 'expirado' ? 0.32 : 0.1;
+  }
+
+  // _refresh: repinta nodos y aristas según tiempo, búsqueda, filtros y shock.
   function _refresh() {
     _updateDateLabel();
+    if (_nodeSel) {
+      _nodeSel
+        .attr('display', d => _typeHidden(d.id) ? 'none' : null)
+        .attr('fill', d => (_shock && d.id === _shock.origin) ? '#ef4444' : entityColor(d))
+        .attr('stroke', d => (_shock && _shock.affected.has(d.id)) ? '#ef4444' : '#0a0a14')
+        .attr('stroke-width', d => (_shock && _shock.affected.has(d.id)) ? 2.5 : 1.5)
+        .attr('opacity', d => {
+          if (_typeHidden(d.id)) return 0;
+          if (_shock) return _shock.affected.has(d.id) ? 1 : 0.12;
+          if (!_searchAll && !_searchNodes.has(d.id)) return 0.15;
+          return 1;
+        });
+    }
+    if (_labelSel) {
+      _labelSel
+        .attr('display', d => _typeHidden(d.id) ? 'none' : null)
+        .attr('opacity', d => {
+          if (_shock) return _shock.affected.has(d.id) ? 1 : 0.1;
+          if (!_searchAll && !_searchNodes.has(d.id)) return 0.2;
+          return 0.9;
+        });
+    }
     if (_linkSel) {
       _linkSel
-        .attr('stroke', d => { const st = status(d, _dateMs); return st === 'vigente' ? COL.vigente : st === 'expirado' ? COL.expirado : COL.futuro; })
-        .attr('stroke-opacity', d => { const st = status(d, _dateMs); if (d._match === false) return 0.05; return st === 'vigente' ? 0.85 : st === 'expirado' ? 0.35 : 0.1; })
+        .attr('display', d => (_typeHidden(lidOf(d.source)) || _typeHidden(lidOf(d.target))) ? 'none' : null)
+        .attr('stroke', _edgeStroke)
+        .attr('stroke-opacity', _edgeOpacity)
         .attr('stroke-dasharray', d => status(d, _dateMs) === 'vigente' ? null : '4,4');
     }
     if (_tab === 'facts') _renderFacts();
+  }
+
+  // ── Microsimulación: shock que se propaga por dependencias vigentes ──────────
+  // Dirección de impacto de una arista: "si FROM cae/actúa, TO se ve afectado".
+  function _impactEdges(f) {
+    const rel = f.rel;
+    if (rel === 'usa' || rel === 'depende') return [f.object, f.subject]; // el sujeto depende del objeto
+    if (rel === 'compite' || rel === 'domina') return null;               // no es dependencia dura
+    return [f.subject, f.object]; // fabrica/abastece/controla/energiza/alberga/sanciona/restringe/ (o sin rel)
+  }
+
+  function _runShock(originId) {
+    if (!_impactAdj) return;
+    const affected = new Set([originId]);
+    const order = [{ id: originId, depth: 0 }];
+    let frontier = [originId], depth = 0;
+    while (frontier.length && depth < 6) {
+      depth++;
+      const next = [];
+      frontier.forEach(id => {
+        (_impactAdj[id] || []).forEach(({ to, fact }) => {
+          if (status(fact, _dateMs) !== 'vigente') return;   // solo relaciones vigentes en la fecha
+          if (_typeHidden(to)) return;
+          if (!affected.has(to)) { affected.add(to); next.push(to); order.push({ id: to, depth }); }
+        });
+      });
+      frontier = next;
+    }
+    const byType = {};
+    affected.forEach(id => { const t = _nodeType[id] || 'Company'; byType[t] = (byType[t] || 0) + 1; });
+    _shock = { origin: originId, affected, byType, order };
+    _refresh();
+    _renderImpact();
+  }
+
+  function _clearShock() { _shock = null; _renderImpact(); _refresh(); }
+
+  function _toggleSimMode() {
+    _simMode = !_simMode;
+    const btn = document.getElementById('tkg-simbtn');
+    const hint = document.getElementById('tkg-simhint');
+    if (btn) { btn.style.background = _simMode ? 'var(--violet)' : 'none'; btn.style.color = _simMode ? '#fff' : 'var(--violet)'; }
+    if (hint) hint.textContent = _simMode ? '⚡ clic en cualquier nodo para simular su caída (según la fecha actual)' : '';
+    if (_nodeSel) _nodeSel.style('cursor', _simMode ? 'crosshair' : 'pointer');
+  }
+
+  function _renderImpact() {
+    const el = document.getElementById('tkg-impact');
+    const reset = document.getElementById('tkg-reset');
+    if (!el) return;
+    if (!_shock) { el.style.display = 'none'; el.innerHTML = ''; if (reset) reset.style.display = 'none'; return; }
+    const originLabel = (resolveEntity(_shock.origin) || {}).label || _shock.origin;
+    const total = _shock.affected.size - 1;
+    const types = (window.ONTOLOGY && window.ONTOLOGY.types) || {};
+    const chips = Object.keys(_shock.byType).map(t => {
+      const meta = types[t] || { label: t, color: COL.node };
+      return `<span style="font-size:11px;color:${meta.color};background:${meta.color}18;border:1px solid ${meta.color}44;border-radius:12px;padding:2px 8px">${esc(meta.label)}: ${_shock.byType[t]}</span>`;
+    }).join(' ');
+    const list = _shock.order.filter(o => o.id !== _shock.origin).slice(0, 18)
+      .map(o => { const e = resolveEntity(o.id) || {}; return `<span title="ola ${o.depth}" style="font-size:11px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:2px 7px">${esc(e.label || o.id)}</span>`; }).join(' ');
+    const extra = _shock.order.length > 19 ? ` <span style="font-size:11px;color:var(--ink-3)">+${_shock.order.length - 19} más</span>` : '';
+    el.style.display = 'block';
+    if (reset) reset.style.display = 'inline-block';
+    el.innerHTML = `<div style="border:1px solid #ef444455;background:#ef44440d;border-radius:12px;padding:12px 14px">
+      <div style="font-size:13.5px;color:var(--ink-1);font-weight:700;margin-bottom:6px">⚡ Shock: <span style="color:#ef4444">${esc(originLabel)}</span> cae en ${fmtDate(_dateMs)}</div>
+      <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px"><b>${total}</b> entidades afectadas en cascada · ${chips}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">${list}${extra}</div>
+    </div>`;
   }
 
   function _renderFacts() {
     const el = document.getElementById('tkg-facts'); if (!el) return;
     const rows = _facts.filter(matchesSearch).map(f => ({ f, st: status(f, _dateMs) }))
       .sort((a, b) => (b.f._from || 0) - (a.f._from || 0));
-    const NB = window.NODE_BY_ID || {};
-    const lbl = id => (NB[id] && NB[id].label) || id;
+    const lbl = id => { const e = resolveEntity(id); return (e && e.label) || id; };
     const badge = st => {
       const c = st === 'vigente' ? COL.vigente : st === 'expirado' ? COL.expirado : '#8a7de0';
       const t = st === 'vigente' ? 'VIGENTE' : st === 'expirado' ? 'EXPIRADO' : 'FUTURO';
