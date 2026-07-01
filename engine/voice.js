@@ -703,9 +703,14 @@ const BixbyVoice = {
 
   // Ejecuta una acción visual pesada FUERA del hilo crítico del WebSocket, para
   // no bloquear el procesamiento/agendado del audio mientras Bixby habla.
+  // OJO: requestAnimationFrame se CONGELA en pestañas ocultas. Si la pestaña
+  // está en background usamos setTimeout (sí dispara), para que ni las acciones
+  // ni el respond() de run_stress_test queden colgados y cuelguen a ElevenLabs.
   _defer(fn) {
-    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { try { fn(); } catch {} });
-    else setTimeout(() => { try { fn(); } catch {} }, 0);
+    const run = () => { try { fn(); } catch {} };
+    if (typeof document !== 'undefined' && document.hidden) { setTimeout(run, 0); return; }
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else setTimeout(run, 0);
   },
 
   updateContext() {

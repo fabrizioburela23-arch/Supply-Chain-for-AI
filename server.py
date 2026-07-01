@@ -386,7 +386,8 @@ _DIAG_TTL = 60  # segundos
 def _diag_redact(text):
     """Quita cualquier valor de key que pudiera aparecer en un mensaje de error."""
     s = str(text)[:200]
-    for secret in (CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, MIROFISH_TOKEN, SECRET_KEY):
+    for secret in (CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, MIROFISH_TOKEN, SECRET_KEY,
+                   NEO4J_PASSWORD, NEO4J_URI):
         if secret and len(secret) > 6 and secret in s:
             s = s.replace(secret, '••••')
     return s
@@ -1757,9 +1758,12 @@ def grafo_estado():
     connected = False
     err = None
     if mode == 'neo4j':
-        # cachear el resultado 60s para no pingar Aura en cada apertura de pestaña
+        # cache asimétrico: éxito 60s (no pingar Aura en cada apertura), fallo 8s
+        # (para que el badge se recupere pronto tras un cold-start de Aura, sin
+        # quedar rojo 60s). verify_connectivity tiene timeout corto (ver driver).
         c = _neo4j_estado_cache
-        if c['ok'] is not None and (time.time() - c['ts']) < 60:
+        ttl = 60 if c['ok'] else 8
+        if c['ok'] is not None and (time.time() - c['ts']) < ttl:
             connected, err = c['ok'], c['err']
         else:
             try:
@@ -1854,9 +1858,14 @@ def _get_neo4j_driver():
     global _neo4j_driver, _neo4j_ready
     if _neo4j_driver is None:
         from neo4j import GraphDatabase
+        # timeouts cortos: si Aura está dormida/caída, verify_connectivity falla
+        # rápido en vez de colgar los 2 workers de gunicorn ~30s.
         _neo4j_driver = GraphDatabase.driver(
             NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD),
-            max_connection_lifetime=600)
+            max_connection_lifetime=600,
+            connection_timeout=5,
+            connection_acquisition_timeout=10,
+            max_transaction_retry_time=8)
     if not _neo4j_ready:
         try:
             with _neo4j_driver.session() as s:
