@@ -8696,6 +8696,9 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 
   // Expose NRS globally for Bixby/MiroFish
   window.computeNRS = computeNRS;
+  // Expose quote loader so the Grafo Temporal / ontología puede precargar precios en vivo
+  if (typeof fetchQuotes === 'function') window.fetchQuotes = fetchQuotes;
+  if (typeof catLabel === 'function') window.catLabel = catLabel;
 
 })();
 

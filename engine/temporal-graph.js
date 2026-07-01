@@ -20,6 +20,7 @@
   let _nodeType = {};                 // id -> tipo (Company/Tech/…)
   let _impactAdj = {};                // id -> [ {to, rel} ] para propagar el shock
   let _searchNodes = new Set(), _searchAll = true;
+  let _objOpen = null;                // id del objeto abierto en la ficha lateral
   const lidOf = v => (v && typeof v === 'object') ? v.id : v;
 
   const COL = { vigente: '#4ade80', expirado: '#6b7280', futuro: '#3a3a5e', node: '#a78bfa' };
@@ -177,8 +178,9 @@
             <div style="position:absolute;bottom:10px;left:14px;display:flex;gap:14px;font-size:10px;color:var(--ink-3)">
               <span><span style="display:inline-block;width:16px;height:3px;background:${COL.vigente};vertical-align:middle;border-radius:2px"></span> vigente</span>
               <span><span style="display:inline-block;width:16px;height:0;border-top:2px dashed ${COL.expirado};vertical-align:middle"></span> expirado</span>
-              <span style="color:var(--ink-3)">clic en nodo → verlo en el mapa</span>
+              <span style="color:var(--ink-3)">clic en nodo → ficha del objeto</span>
             </div>
+            <div id="tkg-objpanel" style="position:absolute;top:0;right:0;width:min(370px,90%);height:100%;background:rgba(9,11,20,.98);border-left:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);overflow-y:auto;transform:translateX(101%);transition:transform .22s cubic-bezier(.2,.8,.2,1);z-index:6"></div>
           </div>
         </div>
         <div id="tkg-facts" style="display:none"></div>
@@ -226,6 +228,10 @@
       } catch (_) {}
     }
     _checkBackendStore();
+    // precargar precios en vivo para las fichas de objeto (A: datos vivos)
+    if (window.SERVER_MODE && window.MKT && !window.MKT.ts && typeof window.fetchQuotes === 'function') {
+      try { window.fetchQuotes(); } catch (e) {}
+    }
     } catch (err) {
       _built = false;  // permitir reintento al volver a la pestaña
       const msg = (err && err.message) ? err.message : String(err);
@@ -305,10 +311,7 @@
       .style('cursor', 'pointer')
       .on('click', (ev, d) => {
         if (_simMode) { _runShock(d.id); return; }   // modo simulación: dispara shock
-        // solo las empresas existen en el mapa; los objetos de ontología no
-        if (d.type && d.type !== 'Company') return;
-        if (typeof switchTab === 'function') switchTab('map');
-        if (typeof jumpTo === 'function') setTimeout(() => jumpTo(d.id), 90);
+        _openObject(d.id);                            // explorar: abre la ficha del objeto
       })
       .call(d3.drag()
         .on('start', (ev, d) => { if (!ev.active) _sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
@@ -523,6 +526,143 @@
         </div>
       </div>`).join('') : '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Sin hechos que coincidan.</div>';
   }
+
+  // ── Ficha de objeto (ontología "clic") con datos VIVOS + IA + noticias ──────
+  function _base() { return (typeof BASE !== 'undefined') ? BASE : ''; }
+  function _liveQuote(mkt) {
+    if (!mkt || !window.MKT || !window.MKT.quotes) return null;
+    const q = window.MKT.quotes[mkt]; if (!q || q.close == null) return null;
+    const pct = (q.prev ? ((q.close - q.prev) / q.prev * 100) : null);
+    return { close: q.close, prev: q.prev, pct };
+  }
+  function _relFactsOf(id) {
+    return _facts.filter(f => f._isEdge && (f.subject === id || f.object === id));
+  }
+
+  function _closeObject() {
+    const p = document.getElementById('tkg-objpanel');
+    if (p) p.style.transform = 'translateX(101%)';
+    _objOpen = null;
+  }
+
+  function _openObject(id) {
+    const p = document.getElementById('tkg-objpanel'); if (!p) return;
+    _objOpen = id;
+    const e = resolveEntity(id) || { id, label: id, type: 'Company' };
+    const NB = window.NODE_BY_ID || {};
+    const node = NB[id];
+    const isCompany = e.type === 'Company';
+    const mkt = node && node.mkt;
+    const q = _liveQuote(mkt);
+    const nrs = (isCompany && typeof window.computeNRS === 'function') ? window.computeNRS(id) : null;
+    const types = (window.ONTOLOGY && window.ONTOLOGY.types) || {};
+    const tmeta = types[e.type] || { label: e.type, color: COL.node, icon: '' };
+
+    // upstream / downstream (empresas)
+    let up = [], down = [];
+    if (isCompany && window.LINKS) {
+      window.LINKS.forEach(l => {
+        const s = lidOf(l.source), t = lidOf(l.target);
+        if (t === id && NB[s]) up.push({ id: s, label: (NB[s].label || s), rel: l.rel || l.type });
+        if (s === id && NB[t]) down.push({ id: t, label: (NB[t].label || t), rel: l.rel || l.type });
+      });
+    }
+    up = up.slice(0, 8); down = down.slice(0, 8);
+    const rounds = (window.PREIPO_INTEL && window.PREIPO_INTEL[id] && window.PREIPO_INTEL[id].rounds) || [];
+
+    const priceHtml = q
+      ? `<div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 8px">
+           <span style="font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--ink-1)">$${q.close.toFixed(2)}</span>
+           ${q.pct != null ? `<span style="font-size:13px;font-weight:700;color:${q.pct >= 0 ? '#43C896' : '#FF6B5C'}">${q.pct >= 0 ? '▲' : '▼'} ${Math.abs(q.pct).toFixed(2)}%</span>` : ''}
+           <span class="live-pill on" style="margin-left:auto"><span class="live-dot"></span>LIVE</span>
+         </div>`
+      : (isCompany ? `<div style="font-size:12px;color:var(--preipo);margin:2px 0 8px">${node && node.preipo ? '◆ Pre-IPO / privada' : (mkt ? 'sin cotización en vivo' : 'no cotiza')}${node && node.ticker ? ' · ' + esc(node.ticker) : ''}</div>` : '');
+
+    const nrsHtml = nrs != null
+      ? `<div style="margin:6px 0 10px">
+           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3)"><span>Riesgo NRS</span><span style="color:${nrs >= 70 ? '#FF6B5C' : nrs >= 40 ? '#E0B25C' : '#43C896'};font-weight:700">${nrs}/100</span></div>
+           <div style="height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${nrs}%;background:${nrs >= 70 ? '#FF6B5C' : nrs >= 40 ? '#E0B25C' : '#43C896'}"></div></div>
+         </div>` : '';
+
+    const chipRow = (arr, dir) => arr.length ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${arr.map(x => `<span title="${esc(x.rel || '')}" onclick="window.__tkgOpenObj&&window.__tkgOpenObj('${x.id}')" style="cursor:pointer;font-size:10.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px 7px">${dir}${esc(x.label)}</span>`).join('')}</div>` : '<div style="font-size:11px;color:var(--ink-3);margin-top:3px">—</div>';
+
+    const rels = _relFactsOf(id).slice(0, 8);
+    const relHtml = !isCompany && rels.length ? `<div style="margin-top:10px"><div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Relaciones</div>${rels.map(f => { const other = f.subject === id ? f.object : f.subject; const oe = resolveEntity(other) || {}; return `<div style="font-size:11.5px;color:var(--ink-2);padding:2px 0">${esc((f.meta && f.meta.headline) || (f.subject === id ? f.predicate + ' → ' + (oe.label || other) : (oe.label || other) + ' ' + f.predicate))}</div>`; }).join('')}</div>` : '';
+
+    p.innerHTML = `
+      <div style="padding:16px 16px 24px">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:4px">
+          <div style="flex:1">
+            <div style="font-size:10px;color:${tmeta.color};font-weight:700;letter-spacing:.5px;text-transform:uppercase">${tmeta.icon || ''} ${esc(tmeta.label)}</div>
+            <div style="font-size:17px;font-weight:800;color:var(--ink-1);line-height:1.2">${esc(e.label)}</div>
+          </div>
+          <button id="tkg-obj-close" style="flex-shrink:0;background:none;border:none;color:var(--ink-3);font-size:18px;cursor:pointer;line-height:1">✕</button>
+        </div>
+        ${priceHtml}${nrsHtml}
+        ${isCompany && node ? `<div style="font-size:11px;color:var(--ink-3);margin-bottom:8px">${[node.country, (typeof window.catLabel === 'function' ? window.catLabel(node.cat) : node.cat)].filter(Boolean).map(esc).join(' · ')}</div>` : ''}
+        ${isCompany && node && (node.role || node.role_en) ? `<div style="font-size:12px;color:var(--ink-2);line-height:1.45;margin-bottom:10px">${esc((node.role || node.role_en || '').slice(0, 220))}</div>` : ''}
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px">
+          <button id="tkg-obj-shock" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid #ef444488;background:#ef44441a;color:#ff8a8a;cursor:pointer">⚡ Simular caída</button>
+          ${isCompany ? `<button id="tkg-obj-map" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🗺 Ver en mapa</button>` : ''}
+          <button id="tkg-obj-ai" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">🧠 Bixby analiza</button>
+          ${isCompany ? `<button id="tkg-obj-news" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">📰 Noticias</button>` : ''}
+        </div>
+        ${isCompany ? `
+          <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px">Depende de (upstream)</div>${chipRow(up, '↑ ')}
+          <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-top:8px">Le abastece a (downstream)</div>${chipRow(down, '↓ ')}` : ''}
+        ${rounds.length ? `<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-top:10px">Rondas</div>${rounds.slice(0, 5).map(r => `<div style="font-size:11.5px;color:var(--ink-2);padding:2px 0">${esc((r.round || '') + ' · ' + (r.amount || '') + ' · ' + (r.date || '') + (r.lead ? ' · ' + r.lead : ''))}</div>`).join('')}` : ''}
+        ${relHtml}
+        <div id="tkg-obj-ai-out" style="margin-top:12px"></div>
+        <div id="tkg-obj-news-out" style="margin-top:10px"></div>
+      </div>`;
+    p.style.transform = 'translateX(0)';
+    p.scrollTop = 0;
+
+    p.querySelector('#tkg-obj-close').onclick = _closeObject;
+    const bShock = p.querySelector('#tkg-obj-shock'); if (bShock) bShock.onclick = () => { _runShock(id); };
+    const bMap = p.querySelector('#tkg-obj-map'); if (bMap) bMap.onclick = () => { if (typeof switchTab === 'function') switchTab('map'); if (typeof jumpTo === 'function') setTimeout(() => jumpTo(id), 90); };
+    const bAi = p.querySelector('#tkg-obj-ai'); if (bAi) bAi.onclick = () => _objAnalyze(id, e.label, mkt);
+    const bNews = p.querySelector('#tkg-obj-news'); if (bNews) bNews.onclick = () => _objNews(id, e.label, mkt);
+  }
+
+  function _objAnalyze(id, label, mkt) {
+    const out = document.getElementById('tkg-obj-ai-out'); if (!out) return;
+    out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">🧠 Bixby analizando…</div>';
+    const e = resolveEntity(id) || {};
+    const NB = window.NODE_BY_ID || {};
+    const n = NB[id] || {};
+    const q = _liveQuote(mkt);
+    const ctx = { label, type: e.type, ticker: mkt || null, country: n.country || null,
+      price: q ? q.close : null, change_pct: q && q.pct != null ? +q.pct.toFixed(2) : null,
+      nrs: typeof window.computeNRS === 'function' ? window.computeNRS(id) : null,
+      role: (n.role || '').slice(0, 300) };
+    const sys = 'Eres Bixby, analista senior de inversión en la cadena de deep-tech (semiconductores, IA, espacio, nuclear). Responde en español, conciso y accionable, SIN markdown.';
+    const prompt = `Da un análisis de inversión de "${label}" en 4-6 frases: su rol en la cadena, 1-2 riesgos clave, 1 catalizador, y qué vigilar. Usa los datos si ayudan.\nDATOS: ${JSON.stringify(ctx)}`;
+    fetch(`${_base()}/api/ai/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system: sys, prompt, max_tokens: 420 }) })
+      .then(r => r.ok ? r.json() : null).then(d => {
+        if (d && d.result) out.innerHTML = `<div style="border:1px solid rgba(124,58,237,.35);background:rgba(124,58,237,.08);border-radius:10px;padding:11px 12px;font-size:12.5px;line-height:1.5;color:var(--ink-1)"><b style="color:var(--violet)">🧠 Bixby</b> <span style="font-size:10px;color:var(--ink-3)">${esc(d.model || '')}</span><br>${esc(d.result)}</div>`;
+        else out.innerHTML = `<div style="font-size:12px;color:#f87171">${esc((d && d.error) || 'No pude analizar ahora.')}</div>`;
+      }).catch(() => { out.innerHTML = '<div style="font-size:12px;color:#f87171">Error de red al analizar.</div>'; });
+  }
+
+  function _objNews(id, label, mkt) {
+    const out = document.getElementById('tkg-obj-news-out'); if (!out) return;
+    out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">📰 buscando noticias…</div>';
+    const url = mkt ? `${_base()}/api/news/${encodeURIComponent(mkt)}` : `${_base()}/api/news/gdelt/${encodeURIComponent(label)}`;
+    fetch(url).then(r => r.ok ? r.json() : null).then(d => {
+      const arr = Array.isArray(d) ? d : (d && Array.isArray(d.articles) ? d.articles : []);
+      if (!arr.length) { out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">Sin noticias recientes.</div>'; return; }
+      out.innerHTML = `<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Noticias</div>` +
+        arr.slice(0, 6).map(a => {
+          const h = a.headline || a.title || ''; const src = a.source || ''; const u = a.url || a.link || '#';
+          const sent = a.sentiment;
+          const dot = sent != null ? `<span style="color:${sent > 0 ? '#43C896' : sent < 0 ? '#FF6B5C' : 'var(--ink-3)'}">●</span> ` : '';
+          return `<a href="${esc(u)}" target="_blank" rel="noopener" style="display:block;font-size:11.5px;color:var(--ink-2);text-decoration:none;padding:5px 0;border-bottom:1px solid var(--line);line-height:1.35">${dot}${esc(h)}${src ? ` <span style="color:var(--ink-3)">· ${esc(src)}</span>` : ''}</a>`;
+        }).join('');
+    }).catch(() => { out.innerHTML = '<div style="font-size:12px;color:#f87171">Error al cargar noticias.</div>'; });
+  }
+  // permitir navegar entre objetos desde los chips upstream/downstream
+  window.__tkgOpenObj = function (id) { try { _openObject(id); } catch (e) {} };
 
   function _updateDateLabel() { const el = document.getElementById('tkg-datelbl'); if (el) el.textContent = fmtDate(_dateMs); const s = document.getElementById('tkg-time'); if (s && +s.value !== _dateMs) s.value = _dateMs; }
 
