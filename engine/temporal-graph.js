@@ -18,7 +18,9 @@
   let _simMode = false;               // clic en nodo = disparar shock
   let _shock = null;                  // { origin, affected:Set, byType:{} } o null
   let _nodeType = {};                 // id -> tipo (Company/Tech/…)
-  let _impactAdj = {};                // id -> [ {to, rel} ] para propagar el shock
+  let _impactAdj = {};                // id -> [ {to, fact} ] : si id cae, 'to' se afecta
+  let _impactRev = {};                // id -> [ {to, fact} ] : id depende de 'to' (upstream)
+  let _allNodeIds = [];               // ids presentes en el grafo
   let _searchNodes = new Set(), _searchAll = true;
   let _objOpen = null;                // id del objeto abierto en la ficha lateral
   const lidOf = v => (v && typeof v === 'object') ? v.id : v;
@@ -166,10 +168,13 @@
             <button data-m="rel">🔗 color por relación</button>
           </div>
           <button id="tkg-simbtn" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">⚡ Modo simulación</button>
+          <button id="tkg-chokepoints" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🏛 Chokepoints</button>
+          <button id="tkg-exposure" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🎯 Mi exposición</button>
           <button id="tkg-reset" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;display:none">↺ Reiniciar</button>
           <span id="tkg-simhint" style="font-size:11px;color:var(--ink-3)"></span>
         </div>
 
+        <div id="tkg-insights" style="display:none;margin-bottom:10px"></div>
         <div id="tkg-impact" style="display:none;margin-bottom:10px"></div>
 
         <div id="tkg-viz">
@@ -213,6 +218,9 @@
     // Etapa 3: modo simulación (clic en nodo = shock) y reinicio
     panel.querySelector('#tkg-simbtn').addEventListener('click', () => _toggleSimMode());
     panel.querySelector('#tkg-reset').addEventListener('click', () => _clearShock());
+    // Lote 2 (insights de inversión)
+    panel.querySelector('#tkg-chokepoints').addEventListener('click', () => _runChokepoints());
+    panel.querySelector('#tkg-exposure').addEventListener('click', () => _runExposure());
 
     // El dibujo del grafo en su propio try: si el SVG falla, la UI (título,
     // línea de tiempo, lista de Hechos) sigue viva.
@@ -283,11 +291,13 @@
 
     // Índices para filtros y microsimulación
     _nodeType = {}; nodes.forEach(n => { _nodeType[n.id] = n.type; });
-    _impactAdj = {};
+    _impactAdj = {}; _impactRev = {};
     edges.forEach(f => {
       const ie = _impactEdges(f); if (!ie) return;
-      (_impactAdj[ie[0]] = _impactAdj[ie[0]] || []).push({ to: ie[1], fact: f });
+      (_impactAdj[ie[0]] = _impactAdj[ie[0]] || []).push({ to: ie[1], fact: f });   // si ie[0] cae → ie[1] afectado
+      (_impactRev[ie[1]] = _impactRev[ie[1]] || []).push({ to: ie[0], fact: f });    // ie[1] depende de ie[0]
     });
+    _allNodeIds = nodes.map(n => n.id);
 
     // Diagnóstico visible: cuántos hechos/aristas/nodos hay realmente.
     const dbg = document.getElementById('tkg-store');
@@ -463,9 +473,116 @@
     }
     const byType = {};
     affected.forEach(id => { const t = _nodeType[id] || 'Company'; byType[t] = (byType[t] || 0) + 1; });
-    _shock = { origin: originId, affected, byType, order };
+    _shock = { origin: originId, affected, byType, order, port: _portfolioAtRisk(affected) };
     _refresh();
     _renderImpact();
+  }
+
+  // ── Portafolio (B): valor por posición desde MKT.pos + MKT.quotes ────────────
+  function _portfolio() {
+    const pos = (window.MKT && window.MKT.pos) || {};
+    const NB = window.NODE_BY_ID || {};
+    const out = [];
+    Object.keys(pos).forEach(id => {
+      const p = pos[id] || {}; const n = NB[id];
+      const q = (n && n.mkt && window.MKT.quotes) ? window.MKT.quotes[n.mkt] : null;
+      const price = q && q.close != null ? q.close : (p.bp || null);
+      const sh = p.sh || p.shares || 0;
+      const val = (price != null && sh) ? price * sh : 0;
+      out.push({ id, label: (n && n.label) || id, value: val });
+    });
+    const total = out.reduce((s, x) => s + x.value, 0);
+    return { holdings: out, total };
+  }
+  function _portfolioAtRisk(affected) {
+    const pf = _portfolio();
+    if (!pf.total) return null;
+    const hit = pf.holdings.filter(h => affected.has(h.id) && h.value > 0);
+    const atRisk = hit.reduce((s, x) => s + x.value, 0);
+    return { atRisk, total: pf.total, pct: pf.total ? (atRisk / pf.total * 100) : 0, hit };
+  }
+  const _money = v => v >= 1e9 ? '$' + (v / 1e9).toFixed(1) + 'B' : v >= 1e6 ? '$' + (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? '$' + (v / 1e3).toFixed(1) + 'K' : '$' + Math.round(v);
+
+  // Exposición: para cada posición, sube por sus dependencias (upstream) y agrega.
+  function _runExposure() {
+    const el = document.getElementById('tkg-insights'); if (!el) return;
+    const pf = _portfolio();
+    if (!pf.holdings.length) {
+      el.style.display = 'block';
+      el.innerHTML = `<div style="border:1px solid var(--line);background:var(--surface-2);border-radius:12px;padding:12px 14px;font-size:12.5px;color:var(--ink-2)">No tienes posiciones. Agrega empresas a tu portafolio (pestaña <b>Mercado</b>) y vuelve para ver a qué riesgos ocultos estás expuesto.</div>`;
+      return;
+    }
+    const NB = window.NODE_BY_ID || {};
+    const expCount = {};   // dep id -> nº de posiciones expuestas
+    const expVal = {};     // dep id -> valor expuesto
+    const ctryVal = {};    // país -> valor
+    pf.holdings.forEach(h => {
+      // BFS upstream desde la posición
+      const seen = new Set([h.id]); let fr = [h.id], depth = 0;
+      while (fr.length && depth < 6) {
+        depth++; const nx = [];
+        fr.forEach(id => (_impactRev[id] || []).forEach(({ to, fact }) => {
+          if (status(fact, _dateMs) !== 'vigente') return;
+          if (!seen.has(to)) { seen.add(to); nx.push(to); }
+        }));
+        fr = nx;
+      }
+      seen.forEach(dep => {
+        if (dep === h.id) return;
+        expCount[dep] = (expCount[dep] || 0) + 1;
+        expVal[dep] = (expVal[dep] || 0) + h.value;
+      });
+      // exposición geográfica por país del holding y de sus dependencias-empresa
+      [h.id, ...seen].forEach(x => { const c = NB[x] && NB[x].country; if (c) ctryVal[c] = (ctryVal[c] || 0) + h.value / (seen.size || 1); });
+    });
+    const topDeps = Object.keys(expCount).map(id => ({ id, n: expCount[id], val: expVal[id], e: resolveEntity(id) || { label: id } }))
+      .sort((a, b) => b.val - a.val || b.n - a.n).slice(0, 10);
+    const topCtry = Object.keys(ctryVal).map(c => ({ c, val: ctryVal[c] })).sort((a, b) => b.val - a.val).slice(0, 5);
+    const chip = (label, sub, color) => `<span style="display:inline-flex;flex-direction:column;gap:1px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:5px 9px;margin:0 5px 5px 0">
+        <span style="font-size:11.5px;color:var(--ink-1);font-weight:600">${esc(label)}</span><span style="font-size:10px;color:${color || 'var(--ink-3)'}">${esc(sub)}</span></span>`;
+    el.style.display = 'block';
+    el.innerHTML = `<div style="border:1px solid rgba(67,200,150,.35);background:rgba(67,200,150,.06);border-radius:12px;padding:12px 14px">
+      <div style="font-size:13.5px;font-weight:700;color:var(--ink-1);margin-bottom:2px">🎯 Exposición de tu portafolio <span style="font-size:11px;color:var(--ink-3);font-weight:400">· ${_money(pf.total)} en ${pf.holdings.length} posiciones · ${fmtDate(_dateMs)}</span></div>
+      <div style="font-size:11px;color:var(--ink-3);margin:8px 0 3px">Depende (oculto) de:</div>
+      <div>${topDeps.map(d => chip(d.e.label, `${_money(d.val)} · ${d.n} posición${d.n > 1 ? 'es' : ''}`, '#43C896')).join('') || '<span style="font-size:12px;color:var(--ink-3)">sin dependencias mapeadas</span>'}</div>
+      <div style="font-size:11px;color:var(--ink-3);margin:8px 0 3px">Exposición geográfica:</div>
+      <div>${topCtry.map(c => chip(c.c, _money(c.val), '#E0B25C')).join('') || '—'}</div>
+    </div>`;
+  }
+
+  // Chokepoints: para cada nodo, tamaño de su cascada de impacto (centralidad).
+  function _runChokepoints() {
+    const el = document.getElementById('tkg-insights'); if (!el) return;
+    const casSize = id => {
+      const seen = new Set([id]); let fr = [id], depth = 0;
+      while (fr.length && depth < 6) {
+        depth++; const nx = [];
+        fr.forEach(x => (_impactAdj[x] || []).forEach(({ to, fact }) => {
+          if (status(fact, _dateMs) !== 'vigente') return;
+          if (!seen.has(to)) { seen.add(to); nx.push(to); }
+        }));
+        fr = nx;
+      }
+      return seen.size - 1;
+    };
+    const ranked = _allNodeIds.map(id => ({ id, e: resolveEntity(id) || { label: id }, n: casSize(id) }))
+      .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 12);
+    const types = (window.ONTOLOGY && window.ONTOLOGY.types) || {};
+    el.style.display = 'block';
+    el.innerHTML = `<div style="border:1px solid rgba(251,146,60,.35);background:rgba(251,146,60,.06);border-radius:12px;padding:12px 14px">
+      <div style="font-size:13.5px;font-weight:700;color:var(--ink-1);margin-bottom:6px">🏛 Chokepoints sistémicos <span style="font-size:11px;color:var(--ink-3);font-weight:400">· quién arrastra a más si cae (${fmtDate(_dateMs)})</span></div>
+      <div style="display:flex;flex-direction:column;gap:3px">${ranked.map((x, i) => {
+        const tm = types[_nodeType[x.id] || 'Company'] || { color: COL.node };
+        return `<div style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="window.__tkgOpenObj&&window.__tkgOpenObj('${x.id}')">
+          <span style="font-size:11px;color:var(--ink-3);width:18px">${i + 1}.</span>
+          <span style="width:8px;height:8px;border-radius:50%;background:${tm.color};flex-shrink:0"></span>
+          <span style="flex:1;font-size:12px;color:var(--ink-1)">${esc(x.e.label)}</span>
+          <span style="flex-shrink:0;font-size:11px;color:#fb923c;font-weight:700">${x.n} afectados</span>
+          <span style="flex-shrink:0;width:${Math.min(120, x.n * 9)}px;height:5px;background:#fb923c55;border-radius:3px"></span>
+        </div>`;
+      }).join('')}</div>
+      <div style="font-size:10.5px;color:var(--ink-3);margin-top:6px">Clic en cualquiera para su ficha. Tip: mueve la fecha y recalcula — los chokepoints cambian con el tiempo.</div>
+    </div>`;
   }
 
   function _clearShock() { _shock = null; _renderImpact(); _refresh(); }
@@ -496,9 +613,16 @@
     const extra = _shock.order.length > 19 ? ` <span style="font-size:11px;color:var(--ink-3)">+${_shock.order.length - 19} más</span>` : '';
     el.style.display = 'block';
     if (reset) reset.style.display = 'inline-block';
+    const port = _shock.port;
+    const portHtml = port
+      ? `<div style="font-size:12.5px;margin:2px 0 8px;padding:7px 10px;border-radius:8px;background:${port.pct >= 30 ? 'rgba(255,107,92,.12)' : 'rgba(224,178,92,.1)'};border:1px solid ${port.pct >= 30 ? '#FF6B5C55' : '#E0B25C55'}">
+           💼 Tu portafolio en riesgo: <b style="color:${port.pct >= 30 ? '#FF6B5C' : '#E0B25C'}">${_money(port.atRisk)} (${port.pct.toFixed(0)}%)</b>
+           ${port.hit.length ? ` · ${port.hit.slice(0, 6).map(h => esc(h.label)).join(', ')}` : ''}</div>`
+      : '';
     el.innerHTML = `<div style="border:1px solid #ef444455;background:#ef44440d;border-radius:12px;padding:12px 14px">
       <div style="font-size:13.5px;color:var(--ink-1);font-weight:700;margin-bottom:6px">⚡ Shock: <span style="color:#ef4444">${esc(originLabel)}</span> cae en ${fmtDate(_dateMs)}</div>
       <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px"><b>${total}</b> entidades afectadas en cascada · ${chips}</div>
+      ${portHtml}
       <div style="display:flex;flex-wrap:wrap;gap:5px">${list}${extra}</div>
     </div>`;
   }
