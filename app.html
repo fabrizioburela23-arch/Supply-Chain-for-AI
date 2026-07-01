@@ -11858,12 +11858,18 @@ window.canvasGenerate = async function(){
   btn.disabled=true;
 
   /* build compact context */
-  const nodeCtx=(window.NODES||[]).slice(0,600).map(n=>({
-    id:n.id, label:n.label, cat:n.cat, mkt:n.mkt||null,
-    margin:n.margin??null, growth:n.growth||null, port:n.port||null,
-    country:n.country||null, preipo:n.preipo||null,
-    nrs: typeof computeNRS==='function' ? computeNRS(n.id) : null,
-  }));
+  const nodeCtx=(window.NODES||[]).slice(0,600).map(n=>{
+    /* compacto: omitir campos nulos para no inflar el body (límite del servidor) */
+    const o={id:n.id, label:n.label, cat:n.cat};
+    if(n.mkt) o.mkt=n.mkt;
+    if(n.margin!=null) o.margin=n.margin;
+    if(n.growth!=null) o.growth=n.growth;
+    if(n.port!=null) o.port=n.port;
+    if(n.country) o.country=n.country;
+    if(n.preipo!=null) o.preipo=n.preipo;
+    if(typeof computeNRS==='function'){ const s=computeNRS(n.id); if(s!=null) o.nrs=s; }
+    return o;
+  });
   const quotesCtx={};
   for(const [t,q] of Object.entries((window.MKT||{}).quotes||{})){
     if(q) quotesCtx[t]={close:q.close,prev:q.prev};

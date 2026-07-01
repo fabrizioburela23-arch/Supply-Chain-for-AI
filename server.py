@@ -43,7 +43,8 @@ load_dotenv()  # Lee .env: FINNHUB_KEY, FMP_KEY, CLAUDE_KEY, MARKETSTACK_KEY, AI
 app = Flask(__name__)
 app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 min por defecto
-app.config['MAX_CONTENT_LENGTH'] = 64 * 1024  # 64 KB max request body
+app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024  # 1 MB — el contexto de Canvas
+# (catálogo de ~460 empresas + quotes) supera 64 KB; sigue acotado y con rate-limit.
 cache = Cache(app)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
