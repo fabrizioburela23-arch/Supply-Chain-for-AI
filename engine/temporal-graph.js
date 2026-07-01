@@ -18,6 +18,22 @@
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const catColor = cat => { try { return (typeof getCatColorHex === 'function' && getCatColorHex(cat)) || COL.node; } catch (e) { return COL.node; } };
 
+  // Resuelve una entidad desde el catálogo de empresas (NODE_BY_ID) o desde la
+  // ontología (ONTOLOGY._byId). Devuelve {id,label,type,cat} o null.
+  function resolveEntity(id) {
+    const NB = window.NODE_BY_ID || {};
+    if (NB[id]) return { id, label: NB[id].label || id, type: 'Company', cat: NB[id].cat };
+    const O = (window.ONTOLOGY && window.ONTOLOGY._byId) || {};
+    if (O[id]) return { id, label: O[id].label || id, type: O[id].type, cat: null };
+    return null;
+  }
+  // Color de un nodo según su tipo (empresa → color de categoría; objeto → color del tipo).
+  function entityColor(n) {
+    if (!n || n.type === 'Company' || !n.type) return catColor(n && n.cat);
+    const t = window.ONTOLOGY && window.ONTOLOGY.types && window.ONTOLOGY.types[n.type];
+    return (t && t.color) || COL.node;
+  }
+
   function toMs(s) {
     if (!s) return null;
     const p = String(s).trim();
@@ -35,7 +51,8 @@
     const push = f => {
       f._from = toMs(f.valid_from);
       f._until = f.valid_until ? toMs(f.valid_until) : null;
-      f._isEdge = f.object_type === 'node' && !!NB[f.subject] && !!NB[f.object];
+      // arista válida si AMBOS extremos resuelven (empresa u objeto de ontología)
+      f._isEdge = f.object_type === 'node' && !!resolveEntity(f.subject) && !!resolveEntity(f.object);
       out.push(f);
     };
 
@@ -131,6 +148,8 @@
           <span id="tkg-datelbl" style="flex-shrink:0;min-width:96px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--ink-1)"></span>
         </div>
 
+        <div id="tkg-typelegend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+
         <div id="tkg-viz">
           <div style="position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%, rgba(124,58,237,.06), transparent 60%),var(--bg)">
             <svg id="tkg-svg" style="width:100%;height:520px;display:block;cursor:grab"></svg>
@@ -165,6 +184,7 @@
 
     // El dibujo del grafo en su propio try: si el SVG falla, la UI (título,
     // línea de tiempo, lista de Hechos) sigue viva.
+    _renderTypeLegend();
     try { _buildGraph(); _applySearch(); _refresh(); }
     catch (e) {
       try { console.error('[TKG] buildGraph', e); } catch (_) {}
@@ -187,6 +207,17 @@
     }
   };
 
+  // Leyenda de tipos de objeto (empresa, tecnología, política, país, energía…).
+  function _renderTypeLegend() {
+    const el = document.getElementById('tkg-typelegend'); if (!el) return;
+    const types = (window.ONTOLOGY && window.ONTOLOGY.types) || { Company: { label: 'Empresa', color: COL.node, icon: '🏢' } };
+    el.innerHTML = Object.keys(types).map(k => {
+      const t = types[k];
+      return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:3px 9px">
+        <span style="width:9px;height:9px;border-radius:50%;background:${t.color};flex-shrink:0"></span>${t.icon || ''} ${esc(t.label)}</span>`;
+    }).join('');
+  }
+
   function _svgW(svgEl) {
     return (svgEl && svgEl.clientWidth) ||
            (svgEl && svgEl.parentElement && svgEl.parentElement.clientWidth) ||
@@ -199,7 +230,10 @@
     const edges = _facts.filter(f => f._isEdge);
     const ids = new Set(); edges.forEach(e => { ids.add(e.subject); ids.add(e.object); });
     const NB = window.NODE_BY_ID || {};
-    const nodes = [...ids].map(id => ({ id, label: (NB[id] && NB[id].label) || id, cat: NB[id] && NB[id].cat }));
+    const nodes = [...ids].map(id => {
+      const e = resolveEntity(id);
+      return { id, label: (e && e.label) || id, type: (e && e.type) || 'Company', cat: e && e.cat };
+    });
     const links = edges.map(e => ({ ...e, source: e.subject, target: e.object }));
 
     // Diagnóstico visible: cuántos hechos/aristas/nodos hay realmente.
@@ -219,9 +253,15 @@
     _linkSel = _root.append('g').selectAll('line').data(links).join('line')
       .attr('stroke-width', 1.6).attr('stroke-linecap', 'round');
     _nodeSel = _root.append('g').selectAll('circle').data(nodes).join('circle')
-      .attr('r', 7).attr('fill', d => catColor(d.cat)).attr('stroke', '#0a0a14').attr('stroke-width', 1.5)
+      .attr('r', d => d.type && d.type !== 'Company' ? 9 : 7)   // objetos de ontología un poco más grandes
+      .attr('fill', d => entityColor(d)).attr('stroke', '#0a0a14').attr('stroke-width', 1.5)
       .style('cursor', 'pointer')
-      .on('click', (ev, d) => { if (typeof switchTab === 'function') switchTab('map'); if (typeof jumpTo === 'function') setTimeout(() => jumpTo(d.id), 90); })
+      .on('click', (ev, d) => {
+        // solo las empresas existen en el mapa; los objetos de ontología no
+        if (d.type && d.type !== 'Company') return;
+        if (typeof switchTab === 'function') switchTab('map');
+        if (typeof jumpTo === 'function') setTimeout(() => jumpTo(d.id), 90);
+      })
       .call(d3.drag()
         .on('start', (ev, d) => { if (!ev.active) _sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
         .on('drag', (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
