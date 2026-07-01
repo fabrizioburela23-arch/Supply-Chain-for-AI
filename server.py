@@ -74,16 +74,16 @@ NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', '')
 _TEMPORAL_FACTS = []          # store nativo en memoria (episodios ingeridos)
 
 
-def _graphiti_available():
+def _neo4j_available():
     try:
-        import graphiti_core  # noqa: F401
+        import neo4j  # noqa: F401  (driver oficial, ligero)
         return True
     except Exception:  # noqa: BLE001
         return False
 
 
 def _temporal_mode():
-    return 'neo4j' if (NEO4J_URI and NEO4J_PASSWORD and _graphiti_available()) else 'native'
+    return 'neo4j' if (NEO4J_URI and NEO4J_PASSWORD and _neo4j_available()) else 'native'
 
 # Servicios adicionales (Khipu Finance v1)
 MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-fika.up.railway.app')
@@ -525,7 +525,7 @@ def _diag_grafo():
     if mode == 'native':
         return {'configured': True, 'ok': True,
                 'detail': 'Grafo de Conocimiento Temporal en modo NATIVO (client-side + memoria). '
-                          'Añade NEO4J_URI/USER/PASSWORD + graphiti-core para memoria persistente.'}
+                          'Añade NEO4J_URI/USER/PASSWORD para memoria persistente en Neo4j.'}
     # neo4j mode → probar conexión
     t0 = time.time()
     try:
@@ -533,7 +533,7 @@ def _diag_grafo():
         drv = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
         drv.verify_connectivity(); drv.close()
         return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'Graphiti + Neo4j conectado — memoria temporal persistente activa.'}
+                'detail': 'Neo4j conectado — memoria temporal persistente activa.'}
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e)}
@@ -1789,11 +1789,36 @@ def grafo_ingest():
     persisted = 'native'
     if _temporal_mode() == 'neo4j':
         try:
-            _graphiti_add_episode(fact)
+            _neo4j_add_fact(fact)
             persisted = 'neo4j'
-        except Exception:  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
+            app.logger.warning('neo4j add_fact falló: %s', str(e)[:160])
             persisted = 'native (neo4j falló)'
     return jsonify({'status': 'ok', 'id': fact['id'], 'persisted': persisted})
+
+
+@app.route('/api/grafo/seed', methods=['POST'])
+@rate_limit(limit=20, window=3600)
+def grafo_seed():
+    """Carga masiva de hechos (el cliente empuja su catálogo derivado una vez
+    cuando detecta Neo4j). Idempotente: MERGE por id, no duplica."""
+    if _temporal_mode() != 'neo4j':
+        return jsonify({'error': 'neo4j no configurado', 'store': 'native'}), 400
+    b = request.get_json(force=True, silent=True) or {}
+    facts = b.get('facts') or []
+    if not isinstance(facts, list):
+        return jsonify({'error': 'facts debe ser una lista'}), 400
+    ok, fail = 0, 0
+    for f in facts[:1000]:
+        if not isinstance(f, dict) or not f.get('subject') or not f.get('id'):
+            fail += 1
+            continue
+        try:
+            _neo4j_add_fact(f)
+            ok += 1
+        except Exception:  # noqa: BLE001
+            fail += 1
+    return jsonify({'status': 'ok', 'persisted': ok, 'failed': fail, 'store': 'neo4j'})
 
 
 @app.route('/api/grafo/facts')
@@ -1805,29 +1830,70 @@ def grafo_facts():
     return jsonify({'facts': facts[-500:], 'store': _temporal_mode()})
 
 
-def _graphiti_add_episode(fact):
-    """Persiste un hecho en Graphiti+Neo4j (async envuelto en sync). Opcional."""
-    import asyncio
-    from graphiti_core import Graphiti  # type: ignore
-    from graphiti_core.nodes import EpisodeType  # type: ignore
-    from datetime import datetime, timezone
+_neo4j_driver = None
+_neo4j_ready = False
 
-    async def _run():
-        g = Graphiti(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)
+
+def _get_neo4j_driver():
+    """Driver singleton + constraints creadas una sola vez (idempotente)."""
+    global _neo4j_driver, _neo4j_ready
+    if _neo4j_driver is None:
+        from neo4j import GraphDatabase
+        _neo4j_driver = GraphDatabase.driver(
+            NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD),
+            max_connection_lifetime=600)
+    if not _neo4j_ready:
         try:
-            body = f"{fact['subject']} {fact['predicate']} {fact['object']}".strip()
-            await g.add_episode(
-                name=fact['subject'][:80], episode_body=body,
-                source_description=f"Khipus · {fact['source']}",
-                reference_time=datetime.now(timezone.utc), source=EpisodeType.text,
-                group_id=fact.get('group', 'khipus'),
-            )
-        finally:
-            try:
-                await g.close()
-            except Exception:  # noqa: BLE001
-                pass
-    asyncio.run(_run())
+            with _neo4j_driver.session() as s:
+                s.run('CREATE CONSTRAINT khipu_entity_id IF NOT EXISTS '
+                      'FOR (e:Entity) REQUIRE e.id IS UNIQUE')
+                s.run('CREATE CONSTRAINT khipu_fact_id IF NOT EXISTS '
+                      'FOR (f:Fact) REQUIRE f.id IS UNIQUE')
+            _neo4j_ready = True
+        except Exception:  # noqa: BLE001
+            pass  # sin constraints igual funciona (MERGE deduplica de todos modos)
+    return _neo4j_driver
+
+
+# Cypher: un hecho = un nodo Fact colgado del sujeto; si el objeto es entidad,
+# también lo enlaza. Guarda la ventana de validez (valid_from → valid_until).
+_FACT_CYPHER = """
+MERGE (s:Entity {id:$subject})
+  ON CREATE SET s.label=$subject_label
+  ON MATCH  SET s.label=coalesce(s.label,$subject_label)
+MERGE (f:Fact {id:$fact_id})
+  SET f.subject=$subject, f.predicate=$predicate, f.object=$object,
+      f.object_type=$object_type, f.valid_from=$valid_from, f.valid_until=$valid_until,
+      f.source=$source, f.confidence=$confidence, f.group=$group,
+      f.headline=$headline
+MERGE (s)-[:ASSERTS]->(f)
+WITH f
+FOREACH (_ IN CASE WHEN $is_edge THEN [1] ELSE [] END |
+  MERGE (o:Entity {id:$object})
+    ON CREATE SET o.label=$object_label
+  MERGE (f)-[:ABOUT]->(o)
+)
+"""
+
+
+def _neo4j_add_fact(fact):
+    """Persiste un hecho temporal directamente en Neo4j (idempotente)."""
+    drv = _get_neo4j_driver()
+    NB = None  # el server no tiene el catálogo JS; usamos el id como label si no hay
+    is_edge = fact.get('object_type') == 'node' and bool(fact.get('object'))
+    params = {
+        'subject': fact['subject'], 'subject_label': fact.get('subject_label') or fact['subject'],
+        'fact_id': fact['id'], 'predicate': fact.get('predicate', ''),
+        'object': fact.get('object', ''), 'object_type': fact.get('object_type', 'literal'),
+        'object_label': fact.get('object_label') or fact.get('object', ''),
+        'valid_from': fact.get('valid_from'), 'valid_until': fact.get('valid_until'),
+        'source': fact.get('source', 'ingest'), 'confidence': float(fact.get('confidence') or 0.8),
+        'group': fact.get('group', 'g_ingest'),
+        'headline': (fact.get('meta') or {}).get('headline', ''),
+        'is_edge': is_edge,
+    }
+    with drv.session() as s:
+        s.run(_FACT_CYPHER, **params)
 
 
 # ── MiroFish proxy (simulaciones multi-agente) ───────────────────────────────

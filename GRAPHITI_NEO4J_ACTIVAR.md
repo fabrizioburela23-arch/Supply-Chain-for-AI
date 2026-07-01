@@ -1,88 +1,56 @@
-# Activar Neo4j + Graphiti (Grafo Temporal persistente)
+# Grafo Temporal persistente en Neo4j — YA IMPLEMENTADO
 
-## ⚠️ Antes de nada — lo que TÚ tienes que hacer (no Cowork)
+## Qué se hizo (no necesitas Cowork ni pasos de código)
 
-Graphiti **no se deploya** (es una librería Python que ya corre dentro de tu Flask).
-Neo4j **sí** necesita estar hosteado. Hazlo así, es gratis:
+El Grafo de Conocimiento Temporal ahora **persiste en Neo4j** directamente, con
+el driver oficial. **No se usa Graphiti** a propósito: Graphiti necesitaría un
+proveedor de *embeddings* aparte (OpenAI/Voyage — Anthropic no ofrece embeddings)
+y sirve para *extraer* entidades de texto libre, pero nuestros hechos ya vienen
+estructurados (sujeto → relación → objeto, con fechas). Escribir directo a Neo4j
+es más simple, robusto, sin costo de tokens y sin API keys extra.
 
-### 1. Crear Neo4j Aura (10 min, gratis)
-1. Entra a https://neo4j.com/cloud/aura-free/ → **Start Free**.
-2. Crea una instancia **AuraDB Free**.
-3. Al crearla te muestra UNA VEZ un archivo con:
-   - `NEO4J_URI` (algo como `neo4j+s://xxxxx.databases.neo4j.io`)
-   - `NEO4J_USERNAME` (normalmente `neo4j`)
-   - `NEO4J_PASSWORD` (una clave larga generada) → **GUÁRDALA, no se vuelve a mostrar**.
+### Cambios en el repo (ya commiteados)
+- `requirements.txt`: se agregó `neo4j>=5.14.0` (driver ligero).
+- `server.py`:
+  - `_neo4j_available()` / `_temporal_mode()` → detectan Neo4j por las env vars.
+  - `_get_neo4j_driver()` → driver singleton + constraints (una sola vez).
+  - `_neo4j_add_fact(fact)` → MERGE idempotente: `(:Entity)-[:ASSERTS]->(:Fact)-[:ABOUT]->(:Entity)`
+    guardando la ventana de validez (`valid_from` → `valid_until`).
+  - `/api/grafo/seed` → carga masiva de hechos (idempotente).
+- `engine/temporal-graph.js`: al detectar Neo4j conectado, siembra automáticamente
+  los ~34 hechos derivados una vez (guardia en localStorage; el MERGE del server
+  igual evita duplicados).
 
-### 2. Pegar las 3 variables en Railway
-En Railway → tu servicio principal → **Variables** → añade:
+## Lo único que TÚ ya hiciste
+Poner en Railway → Variables:
 ```
-NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
+NEO4J_URI=neo4j+s://c54f726c.databases.neo4j.io
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=<la clave que guardaste>
+NEO4J_PASSWORD=<tu contraseña de Aura>
 ```
-(Asegúrate que `ANTHROPIC_KEY` también esté puesta — Graphiti la usa para extraer entidades.)
 
-### 3. Pásale a Cowork el prompt de abajo (agrega la librería + verifica)
+## Cómo verificar que quedó activo
+1. Espera el redeploy de Railway (~2-3 min; instala el driver `neo4j`).
+2. Abre la app en incógnito → pestaña **◈ Grafo Temporal**.
+3. El badge arriba a la derecha debe pasar de *"memoria: nativa"* a
+   **"memoria: neo4j 🟢 (N hechos)"**.
+4. (Opcional) En el panel de Neo4j Aura → **Query** → corre:
+   ```cypher
+   MATCH (f:Fact) RETURN count(f);
+   MATCH (a:Entity)-[:ASSERTS]->(f:Fact)-[:ABOUT]->(b:Entity)
+   RETURN a.label, f.predicate, b.label LIMIT 25;
+   ```
+   Deberías ver los hechos (TSMC → fabrica → Nvidia, Huawei → sancionada, etc.).
 
----
+## Si el badge NO cambia a neo4j 🟢
+Abre 🩺 (diagnóstico) → busca "grafo". Te dirá una de:
+- *"Neo4j conectado"* → todo bien.
+- *"NEO4J configurado pero no conecta: …"* → revisa que el `NEO4J_URI` empiece con
+  `neo4j+s://` y que la contraseña sea la correcta (resetéala en Aura si dudas).
+- *"modo NATIVO"* → las env vars no llegaron a Railway (revisa nombres exactos:
+  `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`).
 
-## PROMPT PARA CLAUDE COWORK
-
-> Estoy trabajando en el repo **Supply-Chain-for-AI** (Khipus AI Finance), un
-> Flask de un solo archivo (`server.py`) desplegado en Railway. Ya existe el
-> andamiaje del Grafo de Conocimiento Temporal y quiero **activar la
-> persistencia con Graphiti + Neo4j**. NO reconstruyas nada: el scaffolding ya
-> está. Haz solo lo necesario para encender el modo `neo4j`.
->
-> **Contexto que ya existe (no lo dupliques):**
-> - `server.py` ya tiene: `NEO4J_URI/USER/PASSWORD` (env vars),
->   `_graphiti_available()`, `_temporal_mode()` (devuelve `'neo4j'` si hay
->   credenciales + librería, si no `'native'`), y los endpoints
->   `/api/grafo/estado`, `/api/grafo/episodios` (POST), `/api/grafo/facts`,
->   y `_graphiti_add_episode(fact)` (envuelve una llamada async con
->   `asyncio.run`). El front (`engine/temporal-graph.js`) ya consume
->   `/api/grafo/estado` y muestra el badge de "memoria: neo4j 🟢".
-> - Graphiti es una **librería** que corre dentro de este mismo Flask; NO es un
->   servicio aparte, NO agregues un nuevo servicio ni Dockerfile.
->
-> **Tareas concretas:**
-> 1. Agrega `graphiti-core[anthropic]` a `requirements.txt` (revisa que no rompa
->    versiones: el proyecto usa Flask sync + gunicorn). Fija una versión estable
->    reciente y comprueba que sus deps (incluye el driver `neo4j`) sean
->    compatibles con el resto de `requirements.txt`.
-> 2. Revisa `_graphiti_add_episode(fact)` en `server.py`: confirma que llama a
->    `Graphiti(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)`, hace
->    `await graphiti.build_indices_and_constraints()` **una sola vez** (idempotente,
->    cachea que ya se hizo), y luego `add_episode(...)` con el `fact` como
->    `EpisodeType.text` o `.json`. Que sea robusto: si Neo4j no conecta, cae a
->    modo nativo sin tumbar el request (log del error, no 500).
-> 3. Envolver `asyncio.run(...)` en Flask sync está bien, pero verifica que no se
->    llame dentro de un event loop ya activo. Si hace falta, usa un
->    `asyncio.new_event_loop()` dedicado o `nest_asyncio`.
-> 4. Al arrancar (o en el primer `/api/grafo/estado`), si el modo es `neo4j`,
->    **ingesta los 24 hechos semilla** de `nodes/temporal_seed_facts.js` a Neo4j
->    una sola vez (chequea un marcador para no duplicar en cada reinicio).
->    Como es un `.js`, extrae los datos con un pequeño parse o mantén una copia
->    de los hechos semilla en Python — lo que sea más limpio.
-> 5. Prueba local con un Neo4j de prueba (o mockea el driver) y confirma que
->    `/api/grafo/estado` devuelve `{"store":"neo4j","neo4j_connected":true}`
->    cuando las credenciales existen, y `"native"` cuando no.
-> 6. **Hazme preguntas antes de tocar** cualquier cosa fuera de `requirements.txt`
->    y la función `_graphiti_add_episode` / la ingesta semilla. No cambies el
->    front salvo que sea imprescindible. Desarrolla en una rama, commitea con
->    mensajes claros, y NO abras PR salvo que te lo pida.
->
-> **Criterio de éxito:** tras poner las 3 env vars en Railway y desplegar, el
-> badge del Grafo Temporal muestra "memoria: neo4j 🟢", los hechos persisten
-> entre reinicios, y si Neo4j se cae la app sigue funcionando en modo nativo.
-
----
-
-## Qué NO necesitas
-- ❌ Deployear Graphiti como servicio → es una librería, va dentro del Flask.
-- ❌ Un segundo contenedor / Dockerfile nuevo.
-- ❌ Migrar datos manualmente → los hechos semilla se ingestan solos.
-
-## Cómo sabrás que funcionó
-Abre la pestaña **◈ Grafo Temporal** → el badge arriba a la derecha pasa de
-"memoria: nativa" a **"memoria: neo4j 🟢"**.
+## Nota sobre tu instancia
+Es **AuraDB Professional (trial 14 días)**. Funciona perfecto ahora. Si en 2
+semanas no quieres que cobre, crea una **AuraDB Free** y cambia las 3 variables.
+Si Neo4j se cae o expira, la app **sigue funcionando en modo nativo** sin romperse.

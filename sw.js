@@ -3,7 +3,7 @@
    última versión cuando hay red, con caché solo como respaldo offline.
    CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v9';
+const CACHE = 'khipu-finance-v10';
 const SHELL = ['/', '/app.html',
   '/nodes/nodes_spacex.js', '/nodes/nodes_expand.js', '/nodes/nodes_expand2.js',
   '/nodes/nodes_expand3.js', '/nodes/links_all.js', '/nodes/links_expand.js',

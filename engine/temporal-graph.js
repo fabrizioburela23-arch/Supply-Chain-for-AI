@@ -265,13 +265,41 @@
     _sim.alpha(0.4).restart();
   }
 
-  // Si el backend expone el grafo (Graphiti/Neo4j), lo indicamos en el badge.
+  // Si el backend expone el grafo (Neo4j), lo indicamos en el badge y, la
+  // primera vez que detectamos Neo4j conectado, sembramos los hechos derivados.
   function _checkBackendStore() {
     try {
       const base = (typeof BASE !== 'undefined') ? BASE : '';
       fetch(`${base}/api/grafo/estado`).then(r => r.ok ? r.json() : null).then(d => {
-        if (d && d.store) { const el = document.getElementById('tkg-store'); if (el) el.textContent = 'memoria: ' + d.store + (d.neo4j_connected ? ' 🟢' : ''); }
+        if (!d || !d.store) return;
+        const el = document.getElementById('tkg-store');
+        if (el) el.textContent = 'memoria: ' + d.store + (d.neo4j_connected ? ' 🟢' : '');
+        if (d.store === 'neo4j' && d.neo4j_connected) _seedBackend(base);
       }).catch(() => {});
     } catch (e) {}
+  }
+
+  function _seedBackend(base) {
+    // solo una vez por navegador (el MERGE del server igual es idempotente)
+    try { if (localStorage.getItem('tkg_seeded_neo4j') === '1') return; } catch (e) {}
+    const NB = window.NODE_BY_ID || {};
+    const payload = (_facts || []).map(f => ({
+      id: f.id, subject: f.subject, subject_label: (NB[f.subject] && NB[f.subject].label) || f.subject,
+      predicate: f.predicate, object: f.object, object_type: f.object_type,
+      object_label: (NB[f.object] && NB[f.object].label) || f.object,
+      valid_from: f.valid_from || null, valid_until: f.valid_until || null,
+      source: f.source, confidence: f.confidence, group: f.group, meta: f.meta || {},
+    }));
+    if (!payload.length) return;
+    fetch(`${base}/api/grafo/seed`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facts: payload }),
+    }).then(r => r.ok ? r.json() : null).then(res => {
+      if (res && res.status === 'ok') {
+        try { localStorage.setItem('tkg_seeded_neo4j', '1'); } catch (e) {}
+        const el = document.getElementById('tkg-store');
+        if (el) el.textContent = 'memoria: neo4j 🟢 (' + res.persisted + ' hechos)';
+      }
+    }).catch(() => {});
   }
 })();
