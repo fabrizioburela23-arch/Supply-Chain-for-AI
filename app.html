@@ -1375,7 +1375,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn" id="diag-btn" title="Estado del sistema — prueba en vivo de keys y servicios" aria-label="Estado del sistema" onclick="window.openDiagnostics&&window.openDiagnostics()">🩺</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
-      <button class="icon-btn" id="toggle-3d-btn" title="Vista 3D + Hipergrafos temporales — esferas históricas sobre el grafo" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="window._toggle3D && window._toggle3D()">🕸 3D</button>
+      <button class="icon-btn" id="toggle-3d-btn" title="Grafo de Conocimiento Temporal — línea de tiempo interactiva de hechos con validez" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="switchTab('tkg')">◈ Temporal</button>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <span id="live-status-dot" style="width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .5s,box-shadow .5s"></span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.1em">LIVE</span>
@@ -1406,6 +1406,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <button class="tab" data-tab="space" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
     <button class="tab" data-tab="terminal" id="tab-terminal">⬛ <span>Terminal</span></button>
     <button class="tab" data-tab="canvas" id="tab-canvas">✦ <span>Canvas IA</span></button>
+    <button class="tab" data-tab="tkg" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -2044,6 +2045,9 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </div><!-- /.app -->
 
 <!-- ===== v8: Panel de Configuración ===== -->
+<!-- ===== Grafo de Conocimiento Temporal (reemplaza el 3D) ===== -->
+<section id="tkg-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
+
 <!-- ── Estado del Sistema (diagnóstico en vivo) ──────────────────────────── -->
 <div class="settings-overlay" id="diag-overlay" onclick="window.closeDiagnostics&&window.closeDiagnostics()"></div>
 <aside class="settings-panel" id="diag-panel" aria-label="Estado del sistema" style="width:480px">
@@ -6274,7 +6278,7 @@ function switchTab(tab){
   document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const isMap=tab==='map', isAnalysis=tab==='analysis', isGeo=tab==='geo';
   const isSim=tab==='simulation', isSpace=tab==='space', isTerm=tab==='terminal';
-  const isCanvas=tab==='canvas';
+  const isCanvas=tab==='canvas', isTkg=tab==='tkg';
   document.querySelector('main').style.display = isMap?'flex':'none';
   document.getElementById('toolbar').style.display = isMap?'flex':'none';
   document.getElementById('market').style.display = tab==='market'?'block':'none';
@@ -6290,12 +6294,14 @@ function switchTab(tab){
   if(termEl) termEl.style.display = isTerm?'flex':'none';
   const cvEl=document.getElementById('canvas-panel');
   if(cvEl) cvEl.style.display = isCanvas?'flex':'none';
+  const tkgEl=document.getElementById('tkg-panel');
+  if(tkgEl) tkgEl.style.display = isTkg?'block':'none';
   // Animate
   const _tabEls = [
     isMap && document.querySelector('main'),
     tab==='market' && document.getElementById('market'),
     isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
-    isTerm && termEl, isCanvas && cvEl,
+    isTerm && termEl, isCanvas && cvEl, isTkg && tkgEl,
   ].filter(Boolean);
   _tabEls.forEach(el => {
     el.classList.remove('tab-anim-in');
@@ -6310,6 +6316,7 @@ function switchTab(tab){
   else if(isSpace){ initSpaceTab(); }
   else if(isTerm){ initTerminalTab(); }
   else if(isCanvas){ initCanvasTab(); }
+  else if(isTkg){ if(typeof initTKGTab==='function') initTKGTab(); }
   else {
     if(SERVER_MODE){ document.getElementById('mk-key-btn').style.display='none'; document.getElementById('mk-keyrow').style.display='none'; }
     renderMarket();
@@ -8487,6 +8494,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/planetarium.js"></script>
 <script src="engine/geoglobe.js"></script>
 <script src="engine/canvas-data.js"></script>
+<script src="nodes/temporal_seed_facts.js"></script>
+<script src="engine/temporal-graph.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
