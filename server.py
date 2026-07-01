@@ -66,6 +66,24 @@ NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
 NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
 
+# ── Grafo de Conocimiento Temporal (Graphiti/Neo4j opcional) ────────────────
+NEO4J_URI      = os.getenv('NEO4J_URI', '')
+NEO4J_USER     = os.getenv('NEO4J_USER', 'neo4j')
+NEO4J_PASSWORD = os.getenv('NEO4J_PASSWORD', '')
+_TEMPORAL_FACTS = []          # store nativo en memoria (episodios ingeridos)
+
+
+def _graphiti_available():
+    try:
+        import graphiti_core  # noqa: F401
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _temporal_mode():
+    return 'neo4j' if (NEO4J_URI and NEO4J_PASSWORD and _graphiti_available()) else 'native'
+
 # Servicios adicionales (Khipu Finance v1)
 MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-fika.up.railway.app')
 MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
@@ -501,6 +519,25 @@ def _diag_rag():
                           '. Búsqueda semántica de Bixby limitada.'}
 
 
+def _diag_grafo():
+    mode = _temporal_mode()
+    if mode == 'native':
+        return {'configured': True, 'ok': True,
+                'detail': 'Grafo de Conocimiento Temporal en modo NATIVO (client-side + memoria). '
+                          'Añade NEO4J_URI/USER/PASSWORD + graphiti-core para memoria persistente.'}
+    # neo4j mode → probar conexión
+    t0 = time.time()
+    try:
+        from neo4j import GraphDatabase
+        drv = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        drv.verify_connectivity(); drv.close()
+        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'Graphiti + Neo4j conectado — memoria temporal persistente activa.'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e)}
+
+
 def _diag_finnhub():
     if not FINNHUB:
         return {'configured': False, 'ok': False,
@@ -541,6 +578,7 @@ def diagnostics():
         'mirofish':   _diag_mirofish(),
         'rag':        _diag_rag(),
         'finnhub':    _diag_finnhub(),
+        'grafo':      _diag_grafo(),
     }
     # Secundarias: solo presencia (no gastamos llamadas externas extra)
     _extra_names = [n for n, v in (('FMP', FMP), ('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]
@@ -1682,6 +1720,91 @@ def company_research(ticker):
                         'analysis': analysis, 'source_url': doc_url, 'model': model})
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200]}), 500
+
+
+# ── Grafo de Conocimiento Temporal — /api/grafo/* ────────────────────────────
+# El panel funciona 100% en el cliente (deriva hechos de NODES/LINKS/PREIPO).
+# Estos endpoints añaden persistencia/ingesta y el upgrade opcional a Graphiti+Neo4j.
+@app.route('/api/grafo/estado')
+def grafo_estado():
+    mode = _temporal_mode()
+    connected = False
+    if mode == 'neo4j':
+        try:
+            # ping ligero al driver (no bloquea el arranque si falla)
+            from neo4j import GraphDatabase  # graphiti trae neo4j como dependencia
+            drv = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+            drv.verify_connectivity()
+            drv.close()
+            connected = True
+        except Exception:  # noqa: BLE001
+            connected = False
+    return jsonify({'store': mode, 'neo4j_connected': connected,
+                    'facts_count': len(_TEMPORAL_FACTS)})
+
+
+@app.route('/api/grafo/episodios', methods=['POST'])
+@rate_limit(limit=120, window=3600)
+def grafo_ingest():
+    """Ingesta un hecho/episodio temporal. En modo nativo lo guarda en memoria;
+    si Graphiti+Neo4j está configurado, lo persiste allí (best-effort)."""
+    b = request.get_json(force=True, silent=True) or {}
+    subject = str(b.get('subject', '') or b.get('name', ''))[:120]
+    if not subject:
+        return jsonify({'error': 'subject/name requerido'}), 400
+    fact = {
+        'id': 'ep_' + hashlib.md5((subject + str(b.get('valid_from', ''))).encode()).hexdigest()[:10],
+        'subject': subject, 'predicate': str(b.get('predicate', ''))[:120],
+        'object': str(b.get('object', ''))[:200], 'object_type': b.get('object_type', 'literal'),
+        'valid_from': b.get('valid_from') or None, 'valid_until': b.get('valid_until') or None,
+        'source': b.get('source', 'ingest'), 'confidence': b.get('confidence', 0.8),
+        'group': b.get('group', 'g_ingest'), 'meta': b.get('meta', {}),
+    }
+    _TEMPORAL_FACTS.append(fact)
+    if len(_TEMPORAL_FACTS) > 2000:
+        del _TEMPORAL_FACTS[:len(_TEMPORAL_FACTS) - 2000]  # cap memoria
+    persisted = 'native'
+    if _temporal_mode() == 'neo4j':
+        try:
+            _graphiti_add_episode(fact)
+            persisted = 'neo4j'
+        except Exception:  # noqa: BLE001
+            persisted = 'native (neo4j falló)'
+    return jsonify({'status': 'ok', 'id': fact['id'], 'persisted': persisted})
+
+
+@app.route('/api/grafo/facts')
+def grafo_facts():
+    subject = request.args.get('subject')
+    facts = _TEMPORAL_FACTS
+    if subject:
+        facts = [f for f in facts if f.get('subject') == subject or f.get('object') == subject]
+    return jsonify({'facts': facts[-500:], 'store': _temporal_mode()})
+
+
+def _graphiti_add_episode(fact):
+    """Persiste un hecho en Graphiti+Neo4j (async envuelto en sync). Opcional."""
+    import asyncio
+    from graphiti_core import Graphiti  # type: ignore
+    from graphiti_core.nodes import EpisodeType  # type: ignore
+    from datetime import datetime, timezone
+
+    async def _run():
+        g = Graphiti(NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD)
+        try:
+            body = f"{fact['subject']} {fact['predicate']} {fact['object']}".strip()
+            await g.add_episode(
+                name=fact['subject'][:80], episode_body=body,
+                source_description=f"Khipus · {fact['source']}",
+                reference_time=datetime.now(timezone.utc), source=EpisodeType.text,
+                group_id=fact.get('group', 'khipus'),
+            )
+        finally:
+            try:
+                await g.close()
+            except Exception:  # noqa: BLE001
+                pass
+    asyncio.run(_run())
 
 
 # ── MiroFish proxy (simulaciones multi-agente) ───────────────────────────────
