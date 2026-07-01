@@ -4790,6 +4790,9 @@ if (typeof NODES_EXPAND4 !== 'undefined') {
 // Sync NODE_BY_ID with all newly merged nodes so LINKS filter works correctly
 NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
 window.NODES = NODES;
+// Exponer NODE_BY_ID al scope global: muchos módulos (grafo temporal, etc.) leen
+// window.NODE_BY_ID. Sin esto quedaba undefined → el Grafo Temporal veía 0 aristas.
+window.NODE_BY_ID = NODE_BY_ID;
 
 // Node ID aliases — maps alternate/legacy IDs to canonical node IDs
 const NODE_ID_ALIAS = {
