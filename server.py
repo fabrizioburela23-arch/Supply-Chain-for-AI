@@ -1056,6 +1056,29 @@ def _claude_complete(system, prompt, max_tokens):
     return _ai_complete(system, prompt, max_tokens)
 
 
+def _extract_json(text):
+    """Extrae un objeto JSON de la respuesta del modelo aunque venga con fences
+    markdown o rodeado de texto explicativo (Gemini/NVIDIA a veces lo hacen).
+    Devuelve el dict/list ya parseado o lanza json.JSONDecodeError."""
+    raw = (text or '').strip()
+    # 1) quitar fences ```json … ```
+    cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', raw).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+    # 2) recortar del primer { (o [) al último } (o ]) correspondiente
+    for open_c, close_c in (('{', '}'), ('[', ']')):
+        i, j = cleaned.find(open_c), cleaned.rfind(close_c)
+        if i != -1 and j != -1 and j > i:
+            try:
+                return json.loads(cleaned[i:j + 1])
+            except json.JSONDecodeError:
+                continue
+    # 3) sin remedio → propagar el error para que el caller lo maneje
+    return json.loads(cleaned)
+
+
 @app.route('/api/ai/analyze', methods=['POST'])
 @rate_limit(limit=30, window=3600)   # 30 AI analyses per hour per IP
 def ai_analyze():
@@ -1152,12 +1175,12 @@ def canvas_generate():
     prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
     try:
         text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1800)
-        # strip accidental markdown fences
-        cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', text.strip())
-        spec = json.loads(cleaned)
+        # extrae el JSON aunque venga con fences o texto alrededor
+        spec = _extract_json(text)
         valid_types = {'bar','line','bubble','treemap','heatmap','radar','scatter','table'}
-        if spec.get('type') not in valid_types:
-            return jsonify({'error': f'invalid type: {spec.get("type")}', 'raw': cleaned[:300]}), 502
+        if not isinstance(spec, dict) or spec.get('type') not in valid_types:
+            return jsonify({'error': f'invalid type: {spec.get("type") if isinstance(spec, dict) else type(spec).__name__}',
+                            'raw': (text or '')[:300]}), 502
         return jsonify({'spec': spec, 'model': model})
     except json.JSONDecodeError:
         return jsonify({'error': 'model returned non-JSON', 'raw': (text or '')[:400]}), 502
@@ -1218,8 +1241,7 @@ def ai_command():
     prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}'
     try:
         text, model = _claude_complete(_COMMAND_SYSTEM, prompt, max_tokens=700)
-        cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', (text or '').strip())
-        data = json.loads(cleaned)
+        data = _extract_json(text)
         if not isinstance(data, dict):
             raise ValueError('not an object')
         actions = data.get('actions') or []
