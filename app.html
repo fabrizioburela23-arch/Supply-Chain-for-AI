@@ -3022,7 +3022,30 @@ function computeNodeRadius(nodeId) {
   return Math.round(MIN_R + normalized * (MAX_R - MIN_R));
 }
 
+// ── NRS memoizado ────────────────────────────────────────────────────────────
+// computeNRS se llama cientos de veces por render (análisis, voz, stress). El
+// grado (degree) se sacaba filtrando TODO window.LINKS en cada llamada → O(L)
+// por nodo → O(N·L) por pantalla. Precalculamos el grado una vez y cacheamos el
+// score por nodo. Llama window._invalidateNRS() si LINKS cambia.
+let _nrsDegree = null;                 // Map nodeId -> grado en LINKS
+const _nrsCache = new Map();           // nodeId -> score 0-100
+function _buildNrsDegree() {
+  const m = new Map();
+  const L = window.LINKS || [];
+  for (const l of L) {
+    const s = lid(l.source), t = lid(l.target);
+    m.set(s, (m.get(s) || 0) + 1);
+    if (t !== s) m.set(t, (m.get(t) || 0) + 1);
+  }
+  return m;
+}
+function _invalidateNRS() { _nrsCache.clear(); _nrsDegree = null; }
+window._invalidateNRS = _invalidateNRS;
+
 function computeNRS(nodeId) {
+  const hit = _nrsCache.get(nodeId);
+  if (hit !== undefined) return hit;
+
   const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
   if (!n) return 50;
 
@@ -3030,8 +3053,9 @@ function computeNRS(nodeId) {
   const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
   const geo = geoMap[n.country] ?? 15;
 
-  // Chain risk (0-25): node degree / centrality proxy
-  const degree = window.LINKS ? window.LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length : 0;
+  // Chain risk (0-25): node degree / centrality proxy (grado precalculado 1 vez)
+  if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
+  const degree = _nrsDegree ? (_nrsDegree.get(nodeId) || 0) : 0;
   const chain = Math.min(25, degree * 2.5);
 
   // Market risk (0-20): volatility proxy from margin
@@ -3048,7 +3072,9 @@ function computeNRS(nodeId) {
   const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
 
   const nrs = Math.round(geo + chain + market + fundamental + concentration);
-  return Math.min(100, Math.max(0, nrs));
+  const val = Math.min(100, Math.max(0, nrs));
+  if (window.LINKS) _nrsCache.set(nodeId, val);  // cachear solo cuando el grafo ya cargó
+  return val;
 }
 
 const NODE_META = {

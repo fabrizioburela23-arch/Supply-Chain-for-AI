@@ -1748,22 +1748,37 @@ def company_research(ticker):
 # ── Grafo de Conocimiento Temporal — /api/grafo/* ────────────────────────────
 # El panel funciona 100% en el cliente (deriva hechos de NODES/LINKS/PREIPO).
 # Estos endpoints añaden persistencia/ingesta y el upgrade opcional a Graphiti+Neo4j.
+_neo4j_estado_cache = {'ok': None, 'ts': 0, 'err': None}
+
+
 @app.route('/api/grafo/estado')
 def grafo_estado():
     mode = _temporal_mode()
     connected = False
+    err = None
     if mode == 'neo4j':
-        try:
-            # ping ligero al driver (no bloquea el arranque si falla)
-            from neo4j import GraphDatabase  # graphiti trae neo4j como dependencia
-            drv = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
-            drv.verify_connectivity()
-            drv.close()
-            connected = True
-        except Exception:  # noqa: BLE001
-            connected = False
-    return jsonify({'store': mode, 'neo4j_connected': connected,
-                    'facts_count': len(_TEMPORAL_FACTS)})
+        # cachear el resultado 60s para no pingar Aura en cada apertura de pestaña
+        c = _neo4j_estado_cache
+        if c['ok'] is not None and (time.time() - c['ts']) < 60:
+            connected, err = c['ok'], c['err']
+        else:
+            try:
+                drv = _get_neo4j_driver()          # reusa el singleton
+                drv.verify_connectivity()
+                connected, err = True, None
+            except Exception as e:  # noqa: BLE001
+                connected = False
+                err = _diag_redact(e)
+            c['ok'], c['ts'], c['err'] = connected, time.time(), err
+    payload = {'store': mode, 'neo4j_connected': connected,
+               'facts_count': len(_TEMPORAL_FACTS)}
+    if not connected and mode == 'neo4j' and err:
+        payload['error'] = err            # el badge/diag puede mostrar el porqué
+    elif mode == 'native' and (NEO4J_URI or NEO4J_PASSWORD):
+        # el usuario puso alguna var pero no todas / falta el driver
+        payload['hint'] = ('NEO4J incompleto: revisa que NEO4J_URI, NEO4J_USER y '
+                           'NEO4J_PASSWORD estén las 3 puestas y que el deploy incluya el driver neo4j.')
+    return jsonify(payload)
 
 
 @app.route('/api/grafo/episodios', methods=['POST'])

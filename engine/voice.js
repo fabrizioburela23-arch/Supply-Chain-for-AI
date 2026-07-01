@@ -120,8 +120,7 @@ const BixbyVoice = {
       this.isConnected = false;
       this._stopMic();
       this.ws = null;
-      this.audioQueue = [];
-      this.isPlaying = false;
+      this._stopScheduled();
       if (ev.code === 1000 || ev.code === 1001) {
         this._hideOverlay();
       } else {
@@ -141,8 +140,7 @@ const BixbyVoice = {
       try { this._preStream.getTracks().forEach(t => t.stop()); } catch {}
       this._preStream = null;
     }
-    this.audioQueue = [];
-    this.isPlaying = false;
+    this._stopScheduled();
     if (this.ws) {
       try { this.ws.close(1000, 'user disconnected'); } catch {}
       this.ws = null;
@@ -370,7 +368,7 @@ const BixbyVoice = {
         this._handleToolCall(msg.client_tool_call);
         break;
       case 'interruption':
-        this.audioQueue = []; this.isPlaying = false;
+        this._stopScheduled();
         break;
       case 'ping':
         if (msg.ping_event?.event_id != null && this.ws?.readyState === WebSocket.OPEN) {
@@ -380,30 +378,53 @@ const BixbyVoice = {
     }
   },
 
+  // Reproducción SIN CORTES: cada chunk se agenda contiguo al anterior usando un
+  // cursor de tiempo del AudioContext (_playCursor). Así el audio suena seguido
+  // aunque el hilo principal se trabe un instante (p.ej. al mostrar una empresa),
+  // porque el buffer ya quedó agendado en el hilo de audio. No dependemos de
+  // onended (que corre en el hilo principal y llega tarde bajo jank).
   _enqueueAudio(b64chunk) {
-    this.audioQueue.push(b64chunk);
     if (typeof window !== 'undefined') window.__bixbyEnergy = 1;
-    if (!this.isPlaying) this._playNext();
+    this._scheduleChunk(b64chunk);
   },
 
-  async _playNext() {
-    if (!this.audioQueue.length) { this.isPlaying = false; return; }
-    this.isPlaying = true;
-    const chunk = this.audioQueue.shift();
+  _scheduleChunk(b64chunk) {
+    const ctx = this.audioCtx;
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { try { ctx.resume(); } catch {} }
+    let buffer;
     try {
-      if (this.audioCtx?.state === 'suspended') await this.audioCtx.resume();
-      const bytes = Uint8Array.from(atob(chunk), c => c.charCodeAt(0));
+      const bytes = Uint8Array.from(atob(b64chunk), c => c.charCodeAt(0));
       const pcm = new Int16Array(bytes.buffer);
       const f32 = new Float32Array(pcm.length);
       for (let i = 0; i < pcm.length; i++) f32[i] = pcm[i] / 32768;
-      const buffer = this.audioCtx.createBuffer(1, f32.length, 16000);
+      buffer = ctx.createBuffer(1, f32.length, 16000);
       buffer.getChannelData(0).set(f32);
-      const src = this.audioCtx.createBufferSource();
-      src.buffer = buffer;
-      src.connect(this.audioCtx.destination);
-      src.onended = () => this._playNext();
-      src.start();
-    } catch { this._playNext(); }
+    } catch { return; }
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(ctx.destination);
+    const now = ctx.currentTime;
+    let start = this._playCursor || 0;
+    if (start < now + 0.02) start = now + 0.02;  // colchón anti-glitch si nos atrasamos
+    try { src.start(start); } catch { return; }
+    this._playCursor = start + buffer.duration;
+    this.isPlaying = true;
+    (this._activeSources || (this._activeSources = [])).push(src);
+    src.onended = () => {
+      const i = this._activeSources.indexOf(src);
+      if (i >= 0) this._activeSources.splice(i, 1);
+      if (!this._activeSources.length) { this.isPlaying = false; this._playCursor = 0; }
+    };
+  },
+
+  // Corta TODO el audio agendado (para interrupciones y desconexión).
+  _stopScheduled() {
+    (this._activeSources || []).forEach(s => { try { s.stop(); } catch {} });
+    this._activeSources = [];
+    this._playCursor = 0;
+    this.isPlaying = false;
+    this.audioQueue = [];
   },
 
   _onAgentResponse(text) {
@@ -419,11 +440,11 @@ const BixbyVoice = {
     const nrsTop   = /\[NRS_TOP\]/.test(text);
     const filter   = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
 
-    if (tab && typeof switchTab === 'function') switchTab(tab[1]);
-    if (nav && typeof jumpTo === 'function') jumpTo(nav[1]);
+    if (tab && typeof switchTab === 'function') this._defer(() => switchTab(tab[1]));
+    if (nav && typeof jumpTo === 'function') this._defer(() => jumpTo(nav[1]));
     if (stress) {
       const n = NODES.find(n => n.mkt === stress[1] || n.id === stress[1]);
-      if (n && typeof activateStress === 'function') activateStress(n.id);
+      if (n && typeof activateStress === 'function') this._defer(() => activateStress(n.id));
     }
     if (sim && window.nexusCore?.runPreset) window.nexusCore.runPreset(sim[1]);
     if (chart) {
@@ -478,20 +499,26 @@ const BixbyVoice = {
         const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
           || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
         if (n) {
-          if (typeof jumpTo === 'function') jumpTo(n.id);
-          if (window.khipuGraph3D?.active) window.khipuGraph3D.selectNode(n.id);
-          this.updateContext();
-          respond({ success: true, company: n.label, ticker: n.mkt });
+          respond({ success: true, company: n.label, ticker: n.mkt });  // responde YA
+          this._defer(() => {                                            // visual diferido
+            if (typeof jumpTo === 'function') jumpTo(n.id);
+            if (window.khipuGraph3D?.active) window.khipuGraph3D.selectNode(n.id);
+            this._updateContextSoon();
+          });
         } else respond({ success: false, error: 'Company not found' });
         break;
       }
       case 'run_stress_test': {
         const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker);
         if (n && typeof activateStress === 'function') {
-          activateStress(n.id);
-          const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
-          respond({ success: true, company: n.label, affected_count: cascade,
-            affected_pct: Math.round(cascade / NODES.length * 100) });
+          // cascada pesada diferida; respondemos DENTRO del defer para leer el
+          // conteo real ya calculado (no antes de que activateStress corra).
+          this._defer(() => {
+            try { activateStress(n.id); } catch {}
+            const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
+            respond({ success: true, company: n.label, affected_count: cascade,
+              affected_pct: Math.round(cascade / NODES.length * 100) });
+          });
         } else respond({ success: false, error: 'Company not found' });
         break;
       }
@@ -556,7 +583,7 @@ const BixbyVoice = {
         const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas'];
         const t = params.tab || '';
         if (validTabs.includes(t) && typeof switchTab === 'function') {
-          switchTab(t);
+          this._defer(() => { try { switchTab(t); } catch {} });
           respond({ success: true, tab: t });
         } else respond({ success: false, error: `Tab inválida: ${t}` });
         break;
@@ -646,7 +673,7 @@ const BixbyVoice = {
         const n = NODES.find(n => n.id === params.company_id || n.mkt === params.ticker
           || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
         if (n) {
-          if (typeof window._openSecondBrain === 'function') window._openSecondBrain(n.id);
+          if (typeof window._openSecondBrain === 'function') this._defer(() => window._openSecondBrain(n.id));
           respond({ success: true, company: n.label });
         } else respond({ success: false, error: 'Empresa no encontrada' });
         break;
@@ -674,12 +701,26 @@ const BixbyVoice = {
     }
   },
 
+  // Ejecuta una acción visual pesada FUERA del hilo crítico del WebSocket, para
+  // no bloquear el procesamiento/agendado del audio mientras Bixby habla.
+  _defer(fn) {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { try { fn(); } catch {} });
+    else setTimeout(() => { try { fn(); } catch {} }, 0);
+  },
+
   updateContext() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify({
       type: 'contextual_update',
       text: `[CONTEXT_UPDATE] ${JSON.stringify(this._buildContext())}`,
     }));
+  },
+
+  // Versión con debounce: construir el contexto mapea ~460 nodos; si varios
+  // tool-calls llegan seguidos, lo hacemos una sola vez y diferido.
+  _updateContextSoon() {
+    if (this._ctxTimer) clearTimeout(this._ctxTimer);
+    this._ctxTimer = setTimeout(() => { this._ctxTimer = null; this.updateContext(); }, 400);
   },
 
   _showOverlay(text) {

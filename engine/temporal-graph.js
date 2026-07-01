@@ -131,7 +131,7 @@
       </div>`;
 
     // wire
-    panel.querySelector('#tkg-search').addEventListener('input', e => { _search = e.target.value; _refresh(); });
+    panel.querySelector('#tkg-search').addEventListener('input', e => { _search = e.target.value; _applySearch(); _refresh(); });
     panel.querySelectorAll('#tkg-tabseg button').forEach(b => b.addEventListener('click', () => {
       panel.querySelectorAll('#tkg-tabseg button').forEach(x => x.classList.remove('active'));
       b.classList.add('active'); _tab = b.dataset.t;
@@ -140,10 +140,17 @@
       if (_tab === 'viz') { _resize(); _refresh(); } else _renderFacts();
     }));
     const slider = panel.querySelector('#tkg-time');
-    slider.addEventListener('input', e => { _dateMs = +e.target.value; _stopPlay(); _refresh(); });
+    // throttle con rAF: arrastrar el slider dispara muchos 'input'; coalescemos a 1 por frame
+    let _sliderRAF = 0;
+    slider.addEventListener('input', e => {
+      _dateMs = +e.target.value; _stopPlay();
+      if (_sliderRAF) return;
+      _sliderRAF = requestAnimationFrame(() => { _sliderRAF = 0; _refresh(); });
+    });
     panel.querySelector('#tkg-play').addEventListener('click', _togglePlay);
 
     _buildGraph();
+    _applySearch();
     _refresh();
     _checkBackendStore();
   };
@@ -200,19 +207,27 @@
     setTimeout(_resize, 350);
   }
 
+  // _applySearch: SOLO cuando cambia la búsqueda. Precalcula el match de cada
+  // arista (d._match) y las opacidades de nodos una vez, en vez de recalcular
+  // O(nodos×hechos) en cada tick de tiempo.
+  function _applySearch() {
+    if (_linkSel) _linkSel.each(function (d) { d._match = matchesSearch(d); });
+    if (_nodeSel) {
+      const rel = new Set();
+      _facts.forEach(f => { if (f._isEdge && matchesSearch(f)) { rel.add(f.subject); rel.add(f.object); } });
+      _nodeSel.attr('opacity', d => rel.has(d.id) ? 1 : 0.15);
+    }
+  }
+
+  // _refresh: dependiente del TIEMPO (slider/play). Barato: solo recolorea las
+  // aristas según su estado en _dateMs; el match de búsqueda viene precalculado.
   function _refresh() {
     _updateDateLabel();
     if (_linkSel) {
       _linkSel
         .attr('stroke', d => { const st = status(d, _dateMs); return st === 'vigente' ? COL.vigente : st === 'expirado' ? COL.expirado : COL.futuro; })
-        .attr('stroke-opacity', d => { const st = status(d, _dateMs); const m = matchesSearch(d); if (!m) return 0.05; return st === 'vigente' ? 0.85 : st === 'expirado' ? 0.35 : 0.1; })
+        .attr('stroke-opacity', d => { const st = status(d, _dateMs); if (d._match === false) return 0.05; return st === 'vigente' ? 0.85 : st === 'expirado' ? 0.35 : 0.1; })
         .attr('stroke-dasharray', d => status(d, _dateMs) === 'vigente' ? null : '4,4');
-    }
-    if (_nodeSel) {
-      _nodeSel.attr('opacity', d => {
-        const rel = _facts.some(f => f._isEdge && (f.subject === d.id || f.object === d.id) && matchesSearch(f));
-        return rel ? 1 : 0.15;
-      });
     }
     if (_tab === 'facts') _renderFacts();
   }
@@ -273,7 +288,17 @@
       fetch(`${base}/api/grafo/estado`).then(r => r.ok ? r.json() : null).then(d => {
         if (!d || !d.store) return;
         const el = document.getElementById('tkg-store');
-        if (el) el.textContent = 'memoria: ' + d.store + (d.neo4j_connected ? ' 🟢' : '');
+        if (el) {
+          if (d.store === 'neo4j' && d.neo4j_connected) {
+            el.textContent = 'memoria: neo4j 🟢';
+          } else if (d.store === 'neo4j') {
+            el.textContent = 'neo4j ⚠ sin conexión';
+            el.title = d.error || 'No conecta con Neo4j';
+          } else {
+            el.textContent = 'memoria: nativa';
+            if (d.hint) el.title = d.hint;
+          }
+        }
         if (d.store === 'neo4j' && d.neo4j_connected) _seedBackend(base);
       }).catch(() => {});
     } catch (e) {}
