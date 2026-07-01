@@ -3,7 +3,7 @@
    última versión cuando hay red, con caché solo como respaldo offline.
    CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v12';
+const CACHE = 'khipu-finance-v13';
 const SHELL = ['/', '/app.html',
   '/nodes/nodes_spacex.js', '/nodes/nodes_expand.js', '/nodes/nodes_expand2.js',
   '/nodes/nodes_expand3.js', '/nodes/links_all.js', '/nodes/links_expand.js',
@@ -12,6 +12,7 @@ const SHELL = ['/', '/app.html',
   '/engine/secondbrain.js', '/engine/geo_coords.js', '/engine/planetarium.js',
   '/engine/geoglobe.js', '/engine/canvas-data.js', '/engine/command_center.js',
   '/engine/temporal-graph.js', '/nodes/temporal_seed_facts.js',
+  '/nodes/temporal_seed_facts2.js',
   '/sim/mirofish_client.js', '/sim/scenario_builder.js',
 ];
 

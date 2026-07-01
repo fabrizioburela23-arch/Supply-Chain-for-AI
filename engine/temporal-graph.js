@@ -306,7 +306,7 @@
 
   function _seedBackend(base) {
     // solo una vez por navegador (el MERGE del server igual es idempotente)
-    try { if (localStorage.getItem('tkg_seeded_neo4j') === '1') return; } catch (e) {}
+    try { if (localStorage.getItem('tkg_seeded_neo4j_v2') === '1') return; } catch (e) {}
     const NB = window.NODE_BY_ID || {};
     const payload = (_facts || []).map(f => ({
       id: f.id, subject: f.subject, subject_label: (NB[f.subject] && NB[f.subject].label) || f.subject,
@@ -321,7 +321,7 @@
       body: JSON.stringify({ facts: payload }),
     }).then(r => r.ok ? r.json() : null).then(res => {
       if (res && res.status === 'ok') {
-        try { localStorage.setItem('tkg_seeded_neo4j', '1'); } catch (e) {}
+        try { localStorage.setItem('tkg_seeded_neo4j_v2', '1'); } catch (e) {}
         const el = document.getElementById('tkg-store');
         if (el) el.textContent = 'memoria: neo4j 🟢 (' + res.persisted + ' hechos)';
       }
