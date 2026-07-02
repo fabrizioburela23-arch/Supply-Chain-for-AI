@@ -269,6 +269,17 @@ a{color:inherit;text-decoration:none}
 .ya-ev{opacity:0;transition:opacity .4s}
 .ya-ev.on{opacity:1}
 
+/* hero: mapa + flujo del año */
+.map-geo{position:relative}
+.hero-flow{border-top:1px solid var(--line);background:var(--card);padding:10px 14px 11px}
+.hf-cap{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--ink2);min-height:28px;line-height:1.35}
+.hf-cap .hf-month{flex:none;font-weight:700;font-size:.68rem;color:#fff;background:var(--grad);padding:.2rem .6rem;border-radius:999px;font-family:'JetBrains Mono'}
+.hero-flow svg{display:block;width:100%;height:auto;margin-top:5px}
+.hf-controls{display:flex;align-items:center;gap:10px;margin-top:6px}
+.hf-controls button{width:30px;height:30px;border-radius:50%;border:none;background:var(--grad);color:#fff;cursor:pointer;font-size:.7rem;display:grid;place-items:center;flex:none;transition:.2s}
+.hf-controls button:hover{transform:scale(1.08)}
+.hf-controls input{flex:1;accent-color:var(--purple);height:3px;cursor:pointer}
+
 /* opportunity */
 .opp{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:820px){.opp{grid-template-columns:1fr 1fr}}@media(max-width:520px){.opp{grid-template-columns:1fr}}
@@ -330,7 +341,8 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       </div>
 
       <!-- WORLD MAP -->
-      <div class="map-stage rv in rv-d2" aria-label="Ruta de Asia a Bolivia">
+      <div class="map-stage rv in rv-d2" aria-label="Ruta de Asia a Bolivia y flujo del año 1">
+        <div class="map-geo">
         <svg viewBox="0 0 2754 1398" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="routeG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#29abe2"/><stop offset="55%" stop-color="#6b2c91"/><stop offset="100%" stop-color="#e6007e"/></linearGradient></defs><g fill="#c0c0c0" stroke="#ffffff" stroke-width="0.8" fill-rule="evenodd">
 
 	
@@ -3444,18 +3456,18 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
  */
 -->
 
-</g><path id="route" d="M1975,560 C 1750,900 1450,1180 1150,1150 C 980,1130 860,1000 857,828" fill="none" stroke="url(#routeG)" stroke-width="6" stroke-linecap="round" stroke-dasharray="3 20"/><g><circle cx="1975" cy="560" r="40" fill="#29abe2" opacity=".22"><animate attributeName="r" values="26;52;26" dur="3s" repeatCount="indefinite"/></circle><circle cx="1975" cy="560" r="15" fill="#29abe2"/></g><circle cx="840" cy="843" r="11" fill="#6b2c91"/><g><circle cx="857" cy="825" r="46" fill="#e6007e" opacity=".2"><animate attributeName="r" values="28;56;28" dur="2.6s" repeatCount="indefinite"/></circle><circle cx="857" cy="825" r="17" fill="#e6007e"/><circle cx="857" cy="825" r="17" fill="none" stroke="#e6007e" stroke-width="3"><animate attributeName="r" values="17;64" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.6s" repeatCount="indefinite"/></circle></g><g><g transform="translate(-42,-36) scale(3)"><path d="M3 16 h22 l-3.5 7 H6.5 z" fill="#6b2c91"/><rect x="10" y="8" width="10" height="8" fill="#8e44ad"/><rect x="12.5" y="3" width="2" height="13" fill="#9a98ad"/><path d="M14.5 4 l8 4.5 -8 3.5 z" fill="#e6007e"/></g><animateMotion dur="9s" repeatCount="indefinite" rotate="auto"><mpath href="#route"/></animateMotion></g><circle r="6" fill="#e6007e"><animateMotion dur="9s" begin="-1.5s" repeatCount="indefinite"><mpath href="#route"/></animateMotion><animate attributeName="opacity" values="0;.9;0" dur="1.6s" repeatCount="indefinite"/></circle><circle r="5" fill="#29abe2"><animateMotion dur="9s" begin="-3.2s" repeatCount="indefinite"><mpath href="#route"/></animateMotion><animate attributeName="opacity" values="0;.8;0" dur="1.6s" repeatCount="indefinite"/></circle></svg>
+</g><path id="route" d="M1975,560 C 1750,900 1450,1180 1150,1150 C 980,1130 860,1000 857,828" fill="none" stroke="url(#routeG)" stroke-width="6" stroke-linecap="round" stroke-dasharray="3 20"/><g><circle cx="1975" cy="560" r="40" fill="#29abe2" opacity=".22"><animate attributeName="r" values="26;52;26" dur="3s" repeatCount="indefinite"/></circle><circle cx="1975" cy="560" r="15" fill="#29abe2"/></g><circle cx="840" cy="843" r="11" fill="#6b2c91"/><g><circle cx="857" cy="825" r="46" fill="#e6007e" opacity=".2"><animate attributeName="r" values="28;56;28" dur="2.6s" repeatCount="indefinite"/></circle><circle cx="857" cy="825" r="17" fill="#e6007e"/><circle cx="857" cy="825" r="17" fill="none" stroke="#e6007e" stroke-width="3"><animate attributeName="r" values="17;64" dur="2.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0" dur="2.6s" repeatCount="indefinite"/></circle></g><g id="hShip" opacity="0"><g transform="translate(-42,-36) scale(3)"><path d="M3 16 h22 l-3.5 7 H6.5 z" fill="#6b2c91"/><rect x="10" y="8" width="10" height="8" fill="#8e44ad"/><rect x="12.5" y="3" width="2" height="13" fill="#9a98ad"/><path d="M14.5 4 l8 4.5 -8 3.5 z" fill="#e6007e"/></g></g><circle id="hCoin" r="16" fill="#e6007e" stroke="#fff" stroke-width="4" opacity="0"/><circle id="hRing" cx="857" cy="825" r="20" fill="none" stroke="#e6007e" stroke-width="8" opacity="0"/></svg>
         <span class="route-label" style="left:60%;top:30%;color:var(--cyan)">&#9679; Origen &middot; Asia</span>
         <span class="route-label" style="left:17%;top:49%;color:var(--magenta)">&#9733; Bolivia &middot; La Paz</span>
         <span class="route-label" style="left:10%;top:66%;color:var(--purple)">Arica</span>
-        <div class="cycle-bar">
-          <span class="step"><span class="dot" style="background:var(--purple)"></span>Pedido</span>
-          <span class="arr">→</span>
-          <span class="step"><span class="dot" style="background:var(--cyan)"></span>Tránsito marítimo</span>
-          <span class="arr">→</span>
-          <span class="step"><span class="dot" style="background:var(--magenta)"></span>Llegada Bolivia</span>
-          <span class="arr">→</span>
-          <span class="re">+20 días → nuevo pedido ↻</span>
+        </div>
+        <div class="hero-flow">
+          <div class="hf-cap"><span class="hf-month" id="hfMonth">Mes 0,0</span><span id="hfCap">Semanas 0–3: muestras y gira comercial — se busca el primer pedido.</span></div>
+          <svg id="hfStrip" viewBox="0 0 760 168" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Año 1 en miniatura: ingresos por mes, pagos y caja neta"></svg>
+          <div class="hf-controls">
+            <button id="hfPlay" aria-label="Reproducir o pausar">⏸</button>
+            <input type="range" id="hfScrub" min="0" max="1200" value="0" aria-label="Mes del año">
+          </div>
         </div>
       </div>
     </div>
@@ -3464,7 +3476,7 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       <div class="hs rv"><div class="stat txt-pur"><span class="count" data-to="7">0</span></div><small>Especias importadas directo de Asia</small></div>
       <div class="hs rv rv-d1"><div class="stat txt-mag"><span class="count" data-to="78" data-suf="%">0%</span></div><small>Hasta tan barato vs. mayorista (mostaza)</small></div>
       <div class="hs rv rv-d2"><div class="stat txt-cyan"><span class="count" data-to="25" data-suf="×">0×</span></div><small>Brecha máxima vs. góndola (comino)</small></div>
-      <div class="hs rv rv-d3"><div class="stat txt-green"><span class="count" data-to="35" data-suf="K">0K</span></div><small>Frascos de 60 g del lote a supermercado</small></div>
+      <div class="hs rv rv-d3"><div class="stat txt-green"><span class="count" data-to="28" data-suf=" ton">0 ton</span></div><small>Plan año 1: 4 contenedores · 100% mayoreo B2B</small></div>
     </div>
   </div>
 </header>
@@ -3571,7 +3583,7 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
     <div class="grid g4" style="margin-top:44px">
       <div class="card kpi hoverable rv"><div class="ico" style="background:var(--magenta)"></div><div class="lab txt-mag">Brecha vs. góndola</div><div class="stat txt-mag">25×</div><small>Comino: Bs 36/kg origen vs. Bs 900/kg en supermercado</small></div>
       <div class="card kpi hoverable rv rv-d1"><div class="ico" style="background:var(--purple)"></div><div class="lab txt-pur">Ahorro vs. mayorista</div><div class="stat txt-pur">−78%</div><small>Mostaza directa de India frente al mayorista local</small></div>
-      <div class="card kpi hoverable rv rv-d2"><div class="ico" style="background:var(--cyan)"></div><div class="lab txt-cyan">Canales</div><div class="stat txt-cyan">3</div><small>Mayoreo (70%) y supermercado (30%) desde un contenedor</small></div>
+      <div class="card kpi hoverable rv rv-d2"><div class="ico" style="background:var(--cyan)"></div><div class="lab txt-cyan">Primera etapa</div><div class="stat txt-cyan">100%</div><small>Del contenedor a mayoreo y B2B en bolsas de 1 kg; retail en etapa 2</small></div>
       <div class="card kpi hoverable rv rv-d3"><div class="ico" style="background:var(--green)"></div><div class="lab txt-green">Ventaja en</div><div class="stat txt-green">6 / 7</div><small>De las especias, importar de India gana al mayorista</small></div>
     </div>
 
@@ -3583,8 +3595,8 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       </div>
       <div class="psb-row">
         <div class="psb-cell prob"><div class="tag">⚠ Problema</div><h4>Reposición lenta y rígida</h4><p>Pocos proveedores, largos tiempos y poca diversificación.</p></div>
-        <div class="psb-cell sol"><div class="tag">◆ Solución</div><h4>Stock + fraccionado propio</h4><p>El lote se acondiciona en bolsas de 1 kg y frascos de 60 g bajo demanda.</p></div>
-        <div class="psb-cell ben"><div class="tag">✓ Beneficio</div><h4>Doble canal a la vez</h4><p>Mayoreo y supermercado abastecidos desde el mismo contenedor.</p></div>
+        <div class="psb-cell sol"><div class="tag">◆ Solución</div><h4>Stock + fraccionado propio</h4><p>El lote se acondiciona en bolsas de 1 kg para venta por kilo, bajo demanda.</p></div>
+        <div class="psb-cell ben"><div class="tag">✓ Beneficio</div><h4>Canal enfocado</h4><p>Mayoreo y B2B primero; el retail entra en etapa 2 con la marca validada.</p></div>
       </div>
     </div>
   </div>
@@ -3625,8 +3637,8 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       <div class="cmp-row"><div class="feat">Abastecimiento</div><div class="us"><span class="tick">✓</span> Directo de GMAC EXIM, India</div><div class="them"><span class="cross">✕</span> Vía 2–3 intermediarios</div></div>
       <div class="cmp-row"><div class="feat">Precio (mismo producto)</div><div class="us"><span class="tick">✓</span> Hasta −78% vs. mayorista</div><div class="them"><span class="cross">✕</span> Sobreprecio de cadena</div></div>
       <div class="cmp-row"><div class="feat">Origen y calidad</div><div class="us"><span class="tick">✓</span> Especia pura, origen indio</div><div class="them"><span class="cross">✕</span> Calidad media, marca premium</div></div>
-      <div class="cmp-row"><div class="feat">Formatos</div><div class="us"><span class="tick">✓</span> Bolsa 1 kg + frasco 60 g a medida</div><div class="them"><span class="cross">✕</span> Catálogo cerrado</div></div>
-      <div class="cmp-row"><div class="feat">Cobertura de canal</div><div class="us"><span class="tick">✓</span> Mayoreo + supermercado a la vez</div><div class="them"><span class="cross">✕</span> Un solo canal</div></div>
+      <div class="cmp-row"><div class="feat">Formatos</div><div class="us"><span class="tick">✓</span> Bolsa de 1 kg a medida (frascos en etapa 2)</div><div class="them"><span class="cross">✕</span> Catálogo cerrado</div></div>
+      <div class="cmp-row"><div class="feat">Cobertura de canal</div><div class="us"><span class="tick">✓</span> Mayoreo + B2B enfocados, retail después</div><div class="them"><span class="cross">✕</span> Un solo canal</div></div>
       <div class="cmp-row"><div class="feat">Reposición</div><div class="us"><span class="tick">✓</span> Ciclo planificado con re-pedido</div><div class="them"><span class="cross">✕</span> Reposición lenta</div></div>
     </div>
   </div>
@@ -3648,10 +3660,10 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
         <div id="costAcc"></div>
 
         <div class="acc">
-          <div class="acc-head"><span class="dot" style="background:var(--magenta)"></span><h4>Empaque del lote</h4><span class="sum">Bs 117.250<small>$11.843</small></span><span class="car">▾</span></div>
+          <div class="acc-head"><span class="dot" style="background:var(--magenta)"></span><h4>Empaque del lote · 100% mayoreo</h4><span class="sum">Bs 17.500<small>$1.768</small></span><span class="car">▾</span></div>
           <div class="acc-body"><div class="acc-inner">
-            <div class="li"><span>35.000 frascos 60 g × Bs 3 (30% retail)</span><span class="v">Bs 105.000 <small>$10.606</small></span></div>
-            <div class="li"><span>4.900 bolsas 1 kg × Bs 2,5 (70% mayoreo)</span><span class="v">Bs 12.250 <small>$1.237</small></span></div>
+            <div class="li"><span>7.000 bolsas de 1 kg × Bs 2,5 (venta por kg · B2B)</span><span class="v">Bs 17.500 <small>$1.768</small></span></div>
+            <div class="li"><span>Frascos de 60 g (retail)</span><span class="v">etapa 2 · no incluido</span></div>
           </div></div>
         </div>
       </div>
@@ -3668,8 +3680,8 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
 
         <div class="total-card card" style="margin-bottom:18px">
           <div class="lab txt-pur" style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em">Inversión del primer contenedor</div>
-          <div class="stat txt-pur" style="margin:10px 0 2px">Bs 406.800</div>
-          <div style="font-weight:700;color:var(--ink2)">≈ $41.091 USD <span class="txt-muted" style="font-weight:500;font-size:.85rem">· mercadería + empaque</span></div>
+          <div class="stat txt-pur" style="margin:10px 0 2px">Bs 307.050</div>
+          <div style="font-weight:700;color:var(--ink2)">≈ $31.015 USD <span class="txt-muted" style="font-weight:500;font-size:.85rem">· mercadería + empaque mayorista (bolsas de 1 kg)</span></div>
         </div>
 
         <div class="note-box note-cyan" style="margin-bottom:14px">
@@ -3678,7 +3690,7 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
         </div>
         <div class="note-box note-amber">
           <span style="font-size:1.1rem">⚙️</span>
-          <div><b>A considerar — máquina empacadora de frascos.</b> Para fraccionar 35.000 frascos conviene evaluar una empacadora desde China, en un rango de <b>$8.000 a $13.000</b> puesta aquí. No está en el presupuesto base; es una inversión opcional que acelera el empaque.</div>
+          <div><b>A considerar — máquina empacadora (etapa 2).</b> Cuando entre el canal retail (frascos de 60 g), conviene evaluar una empacadora desde China, en un rango de <b>$8.000 a $13.000</b> puesta aquí. No aplica a la primera inversión, que va 100% en bolsas de 1 kg.</div>
         </div>
       </div>
     </div>
@@ -3690,27 +3702,21 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
   <div class="wrap">
     <div class="rv">
       <span class="eyebrow">06 · Fraccionamiento</span>
-      <h2 class="h-sec">Un contenedor, <span class="txt-cyan">dos formatos.</span></h2>
-      <p class="lead">De cada tonelada, el 70% se mueve a granel en bolsas de 1 kg para mayoreo y el 30% se fracciona en frascos de 60 g para supermercado (con fines ilustrativos).</p>
+      <h2 class="h-sec">Un contenedor, <span class="txt-cyan">un formato: mayoreo.</span></h2>
+      <p class="lead">En la primera inversión todo el contenedor se fracciona en bolsas de 1 kg para vender por kilo a mayoristas y B2B. El formato frasco (retail) queda para la etapa 2, cuando el mayoreo ya rote.</p>
     </div>
 
     <div class="pack-split rv" style="margin-top:42px">
-      <div class="card pack hoverable"><span class="pct txt-cyan">70%</span>
-        <div class="big txt-cyan">4.900</div>
-        <div class="unit txt-cyan">bolsas de 1 kg · mayoreo</div>
-        <div class="calc">7.000 kg × 70% = 4.900 kg<br>÷ 1 kg = 4.900 bolsas<br>× Bs 2,5 = <b style="color:var(--ink)">Bs 12.250 ($1.237)</b></div>
+      <div class="card pack hoverable"><span class="pct txt-cyan">100%</span>
+        <div class="big txt-cyan">7.000</div>
+        <div class="unit txt-cyan">bolsas de 1 kg · mayoreo y B2B</div>
+        <div class="calc">7.000 kg ÷ 1 kg = 7.000 bolsas<br>× Bs 2,5 = <b style="color:var(--ink)">Bs 17.500 ($1.768)</b><br>venta por kg, directa a mayoristas</div>
       </div>
-      <div class="card pack hoverable"><span class="pct txt-mag">30%</span>
-        <div class="big txt-mag">35.000</div>
-        <div class="unit txt-mag">frascos de 60 g · supermercado</div>
-        <div class="calc">7.000 kg × 30% = 2.100 kg<br>÷ 60 g = 35.000 frascos<br>× Bs 3 = <b style="color:var(--ink)">Bs 105.000 ($10.606)</b></div>
+      <div class="card pack hoverable" style="opacity:.78"><span class="pct txt-mag">E2</span>
+        <div class="big txt-mag">Etapa 2</div>
+        <div class="unit txt-mag">frascos de 60 g · retail</div>
+        <div class="calc">El fraccionado retail no está en la primera inversión.<br>Entra cuando el canal mayorista ya rota,<br>con la brecha de góndola (hasta 25×) como upside.</div>
       </div>
-    </div>
-
-    <div class="card card-pad rv rv-d1" style="margin-top:18px">
-      <h3 style="font-size:1rem;margin-bottom:4px">Margen del frasco de 60 g (retail)</h3>
-      <p class="txt-muted" style="font-size:.84rem;margin-bottom:16px">Costo aproximado por frasco (especia + envase) frente al precio de góndola de referencia. Sólo donde hay dato de supermercado.</p>
-      <div class="grid g4" id="jarGrid" style="gap:12px"></div>
     </div>
   </div>
 </section>
@@ -3786,12 +3792,12 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       <h3 style="font-size:1.15rem;margin-bottom:6px">Focos comerciales a identificar</h3>
       <p class="txt-muted" style="font-size:.88rem;margin-bottom:18px">Mapa de prospección de la primera etapa, por segmento y plaza. El canal supermercado (frascos de 60 g) entra en una etapa posterior, con la marca ya validada en B2B.</p>
       <div class="grid g3">
-        <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🏪</div><h4 style="font-size:1rem;margin-bottom:5px">Mercados mayoristas · La Paz y El Alto</h4><p class="txt-muted" style="font-size:.85rem">Puestos de especias y abarrotes de alto volumen: el primer canal del 70% a granel en bolsas de 1 kg.</p></div>
+        <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🏪</div><h4 style="font-size:1rem;margin-bottom:5px">Mercados mayoristas · La Paz y El Alto</h4><p class="txt-muted" style="font-size:.85rem">Puestos de especias y abarrotes de alto volumen: todo el contenedor va a granel en bolsas de 1 kg, venta por kilo.</p></div>
         <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">⛰️</div><h4 style="font-size:1rem;margin-bottom:5px">Plaza Oruro</h4><p class="txt-muted" style="font-size:.85rem">Mayoristas y ferias comerciales; plaza doblemente estratégica por la internación vía su aduana.</p></div>
         <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🍽️</div><h4 style="font-size:1rem;margin-bottom:5px">Restaurantes y hoteles</h4><p class="txt-muted" style="font-size:.85rem">Alta cocina y cadenas: compra recurrente de especia pura de origen. Varios chefs ya piden co-crear líneas propias con estas especias.</p></div>
         <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🏭</div><h4 style="font-size:1rem;margin-bottom:5px">Industria alimenticia</h4><p class="txt-muted" style="font-size:.85rem">Embutidos, snacks, salsas y sazonadores por volumen. Interés inicial —por formalizar—: <b style="color:var(--ink)">Toba</b> (chili flakes) y <b style="color:var(--ink)">Del Valle</b> (condimentos); objetivo: <b style="color:var(--ink)">Sofía</b>.</p></div>
         <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🚚</div><h4 style="font-size:1rem;margin-bottom:5px">Distribuidores regionales</h4><p class="txt-muted" style="font-size:.85rem">Cochabamba y Santa Cruz a través de distribuidores establecidos, sin montar estructura propia; gira de muestras de 4–5 días en agenda.</p></div>
-        <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🛒</div><h4 style="font-size:1rem;margin-bottom:5px">Retail / supermercados · etapa 2</h4><p class="txt-muted" style="font-size:.85rem">Los 35.000 frascos de 60 g entran después, cuando el mayoreo ya rota y financia la operación.</p></div>
+        <div class="card card-pad hoverable"><div style="font-size:1.3rem;margin-bottom:8px">🛒</div><h4 style="font-size:1rem;margin-bottom:5px">Retail / supermercados · etapa 2</h4><p class="txt-muted" style="font-size:.85rem">El formato frasco de 60 g no está en la primera inversión: entra después, cuando el mayoreo ya rota y financia la operación.</p></div>
       </div>
     </div>
 
@@ -3825,10 +3831,10 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
         <div>
           <div class="total-card card" style="margin-bottom:16px">
             <div class="lab txt-pur" style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em">Inversión de arranque · primera etapa</div>
-            <div class="stat txt-pur" style="margin:10px 0 2px;font-size:2rem">≈ Bs 416.500</div>
-            <div style="font-weight:700;color:var(--ink2)">≈ $42.070 USD <span class="txt-muted" style="font-weight:500;font-size:.85rem">· contenedor 1 + muestras + gira comercial</span></div>
+            <div class="stat txt-pur" style="margin:10px 0 2px;font-size:2rem">≈ Bs 316.700</div>
+            <div style="font-weight:700;color:var(--ink2)">≈ $31.990 USD <span class="txt-muted" style="font-weight:500;font-size:.85rem">· contenedor 1 + muestras + gira comercial</span></div>
             <div style="margin-top:14px">
-              <div class="li"><span>Contenedor 1 · mercadería + empaque</span><span class="v">Bs 406.800 <small>$41.091</small></span></div>
+              <div class="li"><span>Contenedor 1 · mercadería + bolsas de 1 kg</span><span class="v">Bs 307.050 <small>$31.015</small></span></div>
               <div class="li"><span>Courier de muestras · 2 envíos DHL (facturado)</span><span class="v">Bs 4.267 <small>$431</small></span></div>
               <div class="li"><span>Gira comercial SCZ + CBBA · 5 días, 1 pers. (estimado)</span><span class="v">≈ Bs 5.400 <small>$545</small></span></div>
               <div class="li"><span>Operación mensual (depósito, personal, transporte)</span><span class="v">Bs 6.280 <small>$634</small>/mes</span></div>
@@ -3855,15 +3861,26 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
             <table>
               <thead><tr><th>Ciclo</th><th>Orden</th><th>Llegada</th><th>Inversión</th><th>Acumulado</th></tr></thead>
               <tbody>
-                <tr><td><span class="sp-dot" style="background:var(--purple)"></span>Ciclo 1</td><td>Mes 1</td><td>Mes 3</td><td class="ind">406.800</td><td class="may">406.800</td></tr>
-                <tr><td><span class="sp-dot" style="background:var(--magenta)"></span>Ciclo 2</td><td>Mes 3,5</td><td>Mes 5,5</td><td class="ind">406.800</td><td class="may">813.600</td></tr>
-                <tr><td><span class="sp-dot" style="background:var(--cyan)"></span>Ciclo 3</td><td>Mes 6</td><td>Mes 8</td><td class="ind">406.800</td><td class="may">1.220.400</td></tr>
-                <tr><td><span class="sp-dot" style="background:var(--green)"></span>Ciclo 4</td><td>Mes 8,5</td><td>Mes 10,5</td><td class="ind">406.800</td><td class="may">1.627.200</td></tr>
+                <tr><td><span class="sp-dot" style="background:var(--purple)"></span>Ciclo 1</td><td>Mes 1</td><td>Mes 3</td><td class="ind">307.050</td><td class="may">307.050</td></tr>
+                <tr><td><span class="sp-dot" style="background:var(--magenta)"></span>Ciclo 2</td><td>Mes 3,5</td><td>Mes 5,5</td><td class="ind">307.050</td><td class="may">614.100</td></tr>
+                <tr><td><span class="sp-dot" style="background:var(--cyan)"></span>Ciclo 3</td><td>Mes 6</td><td>Mes 8</td><td class="ind">307.050</td><td class="may">921.150</td></tr>
+                <tr><td><span class="sp-dot" style="background:var(--green)"></span>Ciclo 4</td><td>Mes 8,5</td><td>Mes 10,5</td><td class="ind">307.050</td><td class="may">1.228.200</td></tr>
               </tbody>
             </table>
           </div>
-          <p class="txt-muted" style="font-size:.8rem;margin-top:12px;line-height:1.6">Valores en Bs; cada orden se coloca 20 días después de la llegada anterior. <b style="color:var(--ink)">Capital pico ≈ 2 contenedores en curso ≈ Bs 813.600 ($82.182)</b>: el retorno de los ciclos 1–2 financia parcialmente los ciclos 3–4. Acumulado bruto del año si ningún retorno se reinvirtiera: Bs 1.627.200 ($164.364).</p>
+          <p class="txt-muted" style="font-size:.8rem;margin-top:12px;line-height:1.6">Valores en Bs; cada orden se coloca 20 días después de la llegada anterior. <b style="color:var(--ink)">Capital pico ≈ 2 contenedores en curso ≈ Bs 614.100 ($62.030)</b>: el retorno de los ciclos 1–2 financia parcialmente los ciclos 3–4.</p>
         </div>
+      </div>
+
+      <!-- totales del año 1 -->
+      <div class="total-card card" style="margin-top:18px">
+        <div class="lab txt-pur" style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em">Totales del año 1 · escenario base (4 ciclos, 100% mayoreo)</div>
+        <div class="grid g3" style="margin-top:14px;gap:14px">
+          <div><div class="stat txt-mag" style="font-size:1.7rem">Bs 1.313.200</div><div style="font-weight:700;color:var(--ink2);font-size:.9rem">≈ $132.650 · inversión total del año</div><small class="txt-muted" style="font-size:.76rem">4 contenedores Bs 1.228.200 + operación 12 meses Bs 75.360 + muestras y gira Bs 9.667</small></div>
+          <div><div class="stat txt-green" style="font-size:1.7rem">Bs 2.240.000</div><div style="font-weight:700;color:var(--ink2);font-size:.9rem">≈ $226.263 · ingresos del año</div><small class="txt-muted" style="font-size:.76rem">Venta 100% a precio mayorista de referencia (≈ Bs 746 mil por contenedor, ~3 de 4 vendidos al cierre)</small></div>
+          <div><div class="stat txt-pur" style="font-size:1.7rem">+ Bs 926.800</div><div style="font-weight:700;color:var(--ink2);font-size:.9rem">≈ $93.620 · caja neta al cierre</div><small class="txt-muted" style="font-size:.76rem">El 4º contenedor queda en stock vendiéndose al arrancar el año 2</small></div>
+        </div>
+        <p class="txt-muted" style="font-size:.76rem;margin-top:12px">La inversión que hay que tener disponible no es el total del año: con las ventas reinvirtiéndose, el requerimiento real es el capital pico de ≈ Bs 614.100 ($62.030) más el arranque de primera etapa.</p>
       </div>
     </div>
 
@@ -3891,7 +3908,7 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       </div>
       <div class="note-box note-amber" style="margin-top:14px">
         <span style="font-size:1.1rem">💡</span>
-        <div><b>Cómo leerlo.</b> Con carta de crédito, el pago a India sale <b>al zarpar el barco</b> (contra documentos: Bs 220.820 por ciclo) y la nacionalización + empaque se pagan <b>al llegar</b> (Bs 185.990). Las ventas de cada ciclo financian el siguiente: la caja toca su punto más bajo cerca del mes 3 y desde ahí el modelo se autofinancia. Si las ventas fueran más lentas, el respaldo necesario sube hacia el pico de 2 contenedores (Bs 813.600). Con el plan B (30% de anticipo), parte del pago se adelanta al momento de la orden.</div>
+        <div><b>Cómo leerlo.</b> Con carta de crédito, el pago a India sale <b>al zarpar el barco</b> (contra documentos: Bs 220.820 por ciclo) y la nacionalización + bolsas de 1 kg se pagan <b>al llegar</b> (Bs 86.230). Las ventas de cada ciclo financian el siguiente: la caja toca su punto más bajo (≈ −Bs 270 mil) hacia el mes 4 y cruza a positivo cerca del mes 7. Si las ventas fueran más lentas, el respaldo necesario sube hacia el pico de 2 contenedores (Bs 614.100). Con el plan B (30% de anticipo), parte del pago se adelanta al momento de la orden.</div>
       </div>
     </div>
   </div>
@@ -3910,7 +3927,7 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       <div class="chart-legend" id="chartLegend"></div>
       <div class="chart-wrap"><svg id="chart" viewBox="0 0 920 420" xmlns="http://www.w3.org/2000/svg"></svg></div>
       <div class="scen-cards" id="scenCards"></div>
-      <p class="pnote">Modelo <b>ilustrativo</b> re-basado al plan Mayoristas + B2B: muestras → primer pedido a 3 semanas → primer contenedor vendido desde el mes 3. Asume venta del 70% a precio mayorista de referencia y del 30% a precio de góndola (canal que entra más tarde), con la mezcla de las 7 especias (ingreso potencial ≈ Bs 1,17 M por contenedor). Las cifras se ajustarán con los precios de venta reales, los viáticos/presupuesto comercial por definir y el histórico de rotación.</p>
+      <p class="pnote">Modelo <b>ilustrativo</b> del plan Mayoristas + B2B: muestras → primer pedido a 3 semanas → primer contenedor vendido desde el mes 3. Asume venta del <b>100% a precio mayorista de referencia</b> en bolsas de 1 kg, con la mezcla de las 7 especias (ingreso potencial ≈ Bs 746 mil por contenedor). El canal retail (frascos, con brecha de góndola de hasta 25×) queda como upside de la etapa 2 y no está en estas curvas. Las cifras se ajustarán con los precios de venta reales y el histórico de rotación.</p>
     </div>
   </div>
 </section>
@@ -3942,7 +3959,7 @@ footer{border-top:1px solid var(--line);padding:52px 0 38px;background:var(--bg2
       <h2>Del campo indio a la mesa boliviana. <span class="grad-t">Directo.</span></h2>
       <p class="lead center">Una cadena lista, una brecha de precio enorme y un ciclo de abastecimiento que se sostiene solo. El modelo, en cuatro números.</p>
       <div class="close-stat">
-        <div class="cs"><div class="stat txt-pur"><span class="count" data-to="41" data-pre="$" data-suf="K">$0K</span></div><small>Inversión por contenedor</small></div>
+        <div class="cs"><div class="stat txt-pur"><span class="count" data-to="133" data-pre="$" data-suf="K">$0K</span></div><small>Inversión total · año 1 (4 ciclos + gastos)</small></div>
         <div class="cs"><div class="stat txt-mag"><span class="count" data-to="78" data-suf="%">0%</span></div><small>Ahorro máx. vs. mayorista</small></div>
         <div class="cs"><div class="stat txt-cyan"><span class="count" data-to="4">0</span></div><small>Ciclos de 7 ton · año 1</small></div>
         <div class="cs"><div class="stat txt-green"><span class="count" data-to="3" data-suf=" sem">0 sem</span></div><small>De muestras al 1er pedido</small></div>
@@ -4005,18 +4022,6 @@ document.getElementById('ptable').innerHTML=`<table><thead><tr>
     <td class="save" style="color:${win?'var(--green)':'var(--magenta)'}">${win?'−'+save+'%':'+'+Math.abs(save)+'%'}</td>
   </tr>`;}).join('')}</tbody></table>`;
 
-/* jar margin grid (only with super price) */
-document.getElementById('jarGrid').innerHTML=P.filter(p=>p.sup).map(p=>{
-  const cost=(p.ind*0.06)+3; // especia 60g + frasco
-  const price=p.sup*0.06;
-  const mult=(price/cost).toFixed(1);
-  return `<div class="card card-pad hoverable" style="padding:16px;text-align:center">
-    <div style="font-weight:700;font-size:.95rem">${p.n}</div>
-    <div class="mono" style="font-size:.78rem;color:var(--muted);margin:8px 0">costo ≈ Bs ${cost.toFixed(1)}</div>
-    <div class="stat txt-mag" style="font-size:1.6rem">Bs ${price.toFixed(1)}</div>
-    <div style="font-size:.74rem;color:var(--muted)">góndola · <b style="color:var(--green)">${mult}×</b></div>
-  </div>`;}).join('');
-
 /* cost accordion: per-product mercadería */
 document.getElementById('costAcc').innerHTML=`
   <div class="acc">
@@ -4043,7 +4048,7 @@ const TL=[
   {t:"Desaduanización en Arica",time:"2–4 días",dep:"Documentación completa",freq:"each",risk:"Aforo físico puede extender plazos.",transit:true},
   {t:"Internación a Bolivia",time:"3–5 días",dep:"Flete terrestre + inspección",freq:"each",risk:"Control en frontera.",transit:true},
   {t:"Recepción en depósito",time:"1–2 días",dep:"Almacén alquilado (La Paz)",freq:"each",risk:"Verificación de cantidades y calidad."},
-  {t:"Fraccionado y empaque",time:"continuo",dep:"Bolsas 1 kg + frascos 60 g",freq:"each",risk:"Capacidad de empaque (evaluar máquina)."},
+  {t:"Fraccionado y empaque",time:"continuo",dep:"Bolsas de 1 kg (mayoreo B2B)",freq:"each",risk:"Capacidad de empaque; la empacadora de frascos recién aplica en etapa 2."},
   {t:"+20 días → nuevo pedido",time:"día 20",dep:"Tras la llegada",freq:"each",risk:"Regla de arranque hasta tener histórico de rotación."},
 ];
 document.getElementById('timeline').innerHTML=TL.map(i=>`
@@ -4060,22 +4065,22 @@ document.querySelectorAll('.tl-card').forEach(c=>c.addEventListener('click',()=>
 
 /* growth chart */
 const SC=[
-  {nm:'Conservador',c:'#29abe2',cont:'3 ciclos · 21 ton',cli:'1er pedido sem. 4 · retail mes 9',
-   d:[0,30,120,280,480,700,940,1190,1450,1780,2150,2580]},
-  {nm:'Base · plan',c:'#6b2c91',cont:'4 ciclos · 28 ton',cli:'1er pedido sem. 3 · retail mes 6',
-   d:[0,40,170,390,660,960,1290,1650,2040,2480,2980,3520]},
-  {nm:'Optimista',c:'#e6007e',cont:'5–6 ciclos · 35–42 ton',cli:'1er pedido sem. 2 · retail mes 4',
-   d:[0,60,240,540,900,1310,1760,2260,2810,3440,4140,4900]},
+  {nm:'Conservador',c:'#29abe2',cont:'3 ciclos · 21 ton',cli:'1er pedido sem. 4 · 100% mayoreo',
+   d:[0,20,75,180,305,445,600,760,920,1130,1370,1640]},
+  {nm:'Base · plan',c:'#6b2c91',cont:'4 ciclos · 28 ton',cli:'1er pedido sem. 3 · 100% mayoreo',
+   d:[0,25,110,250,420,610,820,1050,1300,1580,1900,2240]},
+  {nm:'Optimista',c:'#e6007e',cont:'5–6 ciclos · 35–42 ton',cli:'1er pedido sem. 2 · 100% mayoreo',
+   d:[0,40,155,345,570,835,1120,1440,1790,2190,2630,3120]},
 ];
-const W=920,H=420,pad={l:64,r:58,t:20,b:46},maxY=5000;
+const W=920,H=420,pad={l:64,r:58,t:20,b:46},maxY=3200;
 const px=i=>pad.l+(W-pad.l-pad.r)*(i/11);
 const py=v=>H-pad.b-(H-pad.t-pad.b)*(v/maxY);
 const off={};
 function drawChart(){
   let g=`<g stroke="#e8e6f1" stroke-width="1">`;
-  for(let v=0;v<=5000;v+=1000){g+=`<line x1="${pad.l}" y1="${py(v)}" x2="${W-pad.r}" y2="${py(v)}"/>`;}
+  for(let v=0;v<=3200;v+=800){g+=`<line x1="${pad.l}" y1="${py(v)}" x2="${W-pad.r}" y2="${py(v)}"/>`;}
   g+=`</g><g fill="#9a98ad" font-size="12" font-family="JetBrains Mono">`;
-  for(let v=0;v<=5000;v+=1000){g+=`<text x="${pad.l-10}" y="${py(v)+4}" text-anchor="end">${v}</text>`;}
+  for(let v=0;v<=3200;v+=800){g+=`<text x="${pad.l-10}" y="${py(v)+4}" text-anchor="end">${v}</text>`;}
   for(let m=0;m<12;m++){g+=`<text x="${px(m)}" y="${H-pad.b+22}" text-anchor="middle">${m+1}</text>`;}
   g+=`<text x="${pad.l-46}" y="${pad.t+6}" fill="#6c6a80" font-size="11">Bs miles</text></g>`;
   SC.forEach((s,si)=>{
@@ -4110,15 +4115,15 @@ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 /* --- datos (Bs en miles) --- */
 const CYC=[{id:1,order:1,ship:1.75,arrive:3},{id:2,order:3.5,ship:4.25,arrive:5.5},
            {id:3,order:6,ship:6.75,arrive:8},{id:4,order:8.5,ship:9.25,arrive:10.5}];
-const CIF=220.82,NAT=185.99,OPX=6.28;
-const RPTS=[[0,0],[1,0],[2,40],[3,170],[4,390],[5,660],[6,960],[7,1290],[8,1650],[9,2040],[10,2480],[11,2980],[12,3520]];
+const CIF=220.82,NAT=86.23,OPX=6.28,INIT=9.67;
+const RPTS=[[0,0],[1,0],[2,25],[3,110],[4,250],[5,420],[6,610],[7,820],[8,1050],[9,1300],[10,1580],[11,1900],[12,2240]];
 const lerp=(pts,q)=>{if(q<=pts[0][0])return pts[0][1];for(let i=1;i<pts.length;i++){if(q<=pts[i][0]){const a=pts[i-1],b=pts[i];return a[1]+(b[1]-a[1])*(q-a[0])/(b[0]-a[0]);}}return pts[pts.length-1][1];};
 const EVS=[];CYC.forEach(c=>{EVS.push({t:c.ship,amt:CIF,k:'cif',cy:c.id});EVS.push({t:c.arrive,amt:NAT,k:'nat',cy:c.id});});
-const spent=q=>EVS.reduce((s,e)=>s+(q>=e.t?e.amt:0),0)+OPX*Math.max(0,q);
+const spent=q=>EVS.reduce((s,e)=>s+(q>=e.t?e.amt:0),0)+OPX*Math.max(0,q)+INIT;
 const cash=q=>lerp(RPTS,q)-spent(q);
 let minT=0,minV=0;for(let q=0;q<=12.001;q+=0.02){const v=cash(q);if(v<minV){minV=v;minT=q;}}
 const IN=[],OUT=[],END=[];
-for(let m=1;m<=12;m++){IN.push(lerp(RPTS,m)-lerp(RPTS,m-1));let o=OPX;EVS.forEach(e=>{if(e.t>m-1&&e.t<=m)o+=e.amt;});OUT.push(o);END.push(cash(m));}
+for(let m=1;m<=12;m++){IN.push(lerp(RPTS,m)-lerp(RPTS,m-1));let o=OPX+(m===1?INIT:0);EVS.forEach(e=>{if(e.t>m-1&&e.t<=m)o+=e.amt;});OUT.push(o);END.push(cash(m));}
 const f0=n=>Math.round(n).toLocaleString('es-BO'),f1=n=>n.toLocaleString('es-BO',{minimumFractionDigits:1,maximumFractionDigits:1});
 
 /* --- geometría --- */
@@ -4126,8 +4131,8 @@ const VW=960,VH=620,L=56,R=14,mw=(VW-L-R)/12;
 const X=q=>L+(VW-L-R)*q/12;
 const SEA={top:40,bot:144,bar:100,barH:12};
 const ROW={cif:168,nat:192};
-const BAR={y0:230,y1:344,max:600};
-const CSH={y0:376,y1:576,min:-400,max:2000};
+const BAR={y0:230,y1:344,max:400};
+const CSH={y0:376,y1:576,min:-400,max:1200};
 const bY=v=>BAR.y1-(BAR.y1-BAR.y0)*v/BAR.max;
 const cY=v=>CSH.y1-(CSH.y1-CSH.y0)*(v-CSH.min)/(CSH.max-CSH.min);
 const zeroY=cY(0);
@@ -4146,9 +4151,9 @@ s+=`<text x="${L}" y="${CSH.y0-8}" font-size="10" font-weight="800" letter-spaci
 /* grilla mensual */
 for(let m=0;m<=12;m++){s+=`<line x1="${X(m)}" y1="${BAR.y0-2}" x2="${X(m)}" y2="${CSH.y1}" stroke="#161320" opacity=".045"/>`;}
 /* ejes ingresos */
-[[0,'0'],[300,'300'],[600,'600']].forEach(([v,l])=>{s+=`<line x1="${L}" y1="${bY(v)}" x2="${VW-R}" y2="${bY(v)}" stroke="#e8e6f1"/><text x="${L-7}" y="${bY(v)+3.5}" font-size="9.5" font-family="JetBrains Mono" fill="#9a98ad" text-anchor="end">${l}</text>`;});
+[[0,'0'],[200,'200'],[400,'400']].forEach(([v,l])=>{s+=`<line x1="${L}" y1="${bY(v)}" x2="${VW-R}" y2="${bY(v)}" stroke="#e8e6f1"/><text x="${L-7}" y="${bY(v)+3.5}" font-size="9.5" font-family="JetBrains Mono" fill="#9a98ad" text-anchor="end">${l}</text>`;});
 /* ejes caja */
-[[-400,'−400'],[1000,'1.000'],[2000,'2.000']].forEach(([v,l])=>{s+=`<line x1="${L}" y1="${cY(v)}" x2="${VW-R}" y2="${cY(v)}" stroke="#e8e6f1"/><text x="${L-7}" y="${cY(v)+3.5}" font-size="9.5" font-family="JetBrains Mono" fill="#9a98ad" text-anchor="end">${l}</text>`;});
+[[-400,'−400'],[600,'600'],[1200,'1.200']].forEach(([v,l])=>{s+=`<line x1="${L}" y1="${cY(v)}" x2="${VW-R}" y2="${cY(v)}" stroke="#e8e6f1"/><text x="${L-7}" y="${cY(v)+3.5}" font-size="9.5" font-family="JetBrains Mono" fill="#9a98ad" text-anchor="end">${l}</text>`;});
 s+=`<line x1="${L}" y1="${zeroY}" x2="${VW-R}" y2="${zeroY}" stroke="#161320" opacity=".22" stroke-width="1.2"/><text x="${L-7}" y="${zeroY+3.5}" font-size="9.5" font-family="JetBrains Mono" fill="#6c6a80" text-anchor="end">0</text>`;
 /* meses */
 s+=`<text x="${L-8}" y="596" font-size="9" font-weight="800" letter-spacing=".08em" fill="#9a98ad" text-anchor="end">MES</text>`;
@@ -4207,24 +4212,24 @@ const CAPS=[
  [1,'<b>Mes 1 · pedido en firme.</b> Se abre la carta de crédito a GMAC EXIM y se avisa al contacto para la internación por Aduana Interior Oruro. La LC compromete, pero aún no desembolsa.'],
  [1.75,'<b>Zarpa el contenedor 1.</b> La carta de crédito paga contra documentos de embarque: salen <b>Bs 220.820</b> ($22.305). ~35 días de navegación hacia Arica.'],
  [2.4,'<b>Tránsito marítimo.</b> Mientras el barco cruza el océano, entran los primeros anticipos de preventa de los pedidos comprometidos.'],
- [3,`<b>Mes 3 · llega el ciclo 1</b> vía Aduana Oruro: se pagan gravamen + IVA + logística + empaque (<b>Bs 185.990</b>) y el mayoreo empieza a rotar. La caja toca su punto más bajo: <b>≈ −Bs ${f0(-minV)} mil</b>.`],
+ [3,'<b>Mes 3 · llega el ciclo 1</b> vía Aduana Oruro: se pagan gravamen + IVA + logística + bolsas de 1 kg (<b>Bs 86.230</b>) y arranca la venta por kilo a mayoristas y B2B.'],
  [3.5,'<b>Regla +20 días.</b> Con el ciclo 1 recién vendiéndose, ya se ordena el ciclo 2: así el stock nunca se corta.'],
- [4.25,'<b>Zarpa el ciclo 2</b> → la LC paga otros Bs 220.820. Las ventas del ciclo 1 ya amortiguan la salida.'],
- [5.5,'<b>Llega el ciclo 2</b> (Bs 185.990 de nacionalización). Las ventas acumuladas casi devuelven la caja a cero.'],
- [6,'<b>Mes 6 · se ordena el ciclo 3.</b> De aquí en adelante las ventas financian los pedidos: la caja se mantiene en positivo.'],
- [6.75,'<b>Zarpa el ciclo 3</b> → Bs 220.820. La caja sigue en verde: el modelo ya se autofinancia.'],
- [8,'<b>Llega el ciclo 3</b> (Bs 185.990). Con el mayoreo rodando, el canal retail (frascos de 60 g) puede entrar en escena.'],
+ [4.25,`<b>Zarpa el ciclo 2</b> → la LC paga otros Bs 220.820. Aquí la caja toca su punto más bajo: <b>≈ −Bs ${f0(-minV)} mil</b>, el respaldo mínimo que hay que tener.`],
+ [5.5,'<b>Llega el ciclo 2</b> (Bs 86.230 de nacionalización y bolsas). Las ventas acumuladas van cerrando el bache de caja.'],
+ [6,'<b>Mes 6 · se ordena el ciclo 3.</b> Las ventas ya cubren la mayor parte de cada nuevo pedido.'],
+ [7.2,'<b>La caja cruza a positivo.</b> De aquí en adelante el modelo se autofinancia con sus propias ventas.'],
+ [8,'<b>Llega el ciclo 3</b> (Bs 86.230). Con el mayoreo rodando, el canal retail (frascos) queda listo para la etapa 2.'],
  [8.5,'<b>Se ordena el ciclo 4</b>, el último del año 1.'],
  [9.25,'<b>Zarpa el ciclo 4</b> → Bs 220.820, cubierto por las ventas del propio año.'],
- [10.5,'<b>Llega el ciclo 4</b> (Bs 185.990): stock asegurado para cerrar el año y arrancar el año 2.'],
- [11.4,`<b>Cierre del año 1.</b> Ingresos ≈ <b>Bs 3,52 M</b> · pagos a India y aduana ≈ Bs 1,63 M + operación. Caja neta final: <b>+Bs ${f0(cash(12))} mil</b>, lista para escalar el año 2.`]
+ [10.5,'<b>Llega el ciclo 4</b> (Bs 86.230): stock asegurado para cerrar el año y arrancar el año 2.'],
+ [11.4,`<b>Cierre del año 1.</b> Ingresos ≈ <b>Bs 2,24 M</b> · inversión total del año ≈ Bs 1,31 M (contenedores + operación + muestras y gira). Caja neta final: <b>+Bs ${f0(cash(12))} mil</b>, lista para escalar el año 2.`]
 ];
 let capIdx=-1;
 
 /* --- tabla accesible --- */
 let th=`<table><thead><tr><th>Mes</th><th>Ingresos</th><th>Pagos</th><th>Caja fin de mes</th></tr></thead><tbody>`;
 for(let m=1;m<=12;m++){th+=`<tr><td>Mes ${m}</td><td>${f0(IN[m-1])}</td><td>−${f0(OUT[m-1])}</td><td style="color:${END[m-1]<0?'var(--magenta)':'var(--green)'}">${END[m-1]<0?'−':'+'}${f0(Math.abs(END[m-1]))}</td></tr>`;}
-th+=`<tr><td><b>Año 1</b></td><td><b>${f0(lerp(RPTS,12))}</b></td><td><b>−${f0(spent(12))}</b></td><td><b style="color:var(--green)">+${f0(cash(12))}</b></td></tr></tbody></table><p class="txt-muted" style="font-size:.74rem;margin-top:8px">Miles de Bs · escenario base · pagos: CIF al zarpar (LC) + nacionalización/empaque al llegar + operación mensual.</p>`;
+th+=`<tr><td><b>Año 1</b></td><td><b>${f0(lerp(RPTS,12))}</b></td><td><b>−${f0(spent(12))}</b></td><td><b style="color:var(--green)">+${f0(cash(12))}</b></td></tr></tbody></table><p class="txt-muted" style="font-size:.74rem;margin-top:8px">Miles de Bs · escenario base 100% mayoreo · pagos: CIF al zarpar (LC) + nacionalización y bolsas al llegar + operación mensual. El mes 1 incluye además muestras y gira (Bs 9,7 mil).</p>`;
 tableEl.insertAdjacentHTML('beforeend',th);
 
 /* --- render --- */
@@ -4289,6 +4294,107 @@ svg.addEventListener('pointermove',e=>{
   tip.style.left=tx+'px';tip.style.top=(e.clientY-cr.top-14)+'px';tip.style.opacity=1;
 });
 svg.addEventListener('pointerleave',()=>{tip.style.opacity=0;hov.setAttribute('opacity',0);});
+})();
+
+/* ===== hero: mundito + año 1 sincronizados ===== */
+(function(){
+const strip=document.getElementById('hfStrip'),route=document.getElementById('route');
+if(!strip||!route)return;
+const ship=document.getElementById('hShip'),coin=document.getElementById('hCoin'),ring=document.getElementById('hRing'),
+      playBtn=document.getElementById('hfPlay'),scrub=document.getElementById('hfScrub'),
+      monthEl=document.getElementById('hfMonth'),capEl=document.getElementById('hfCap');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const RL=route.getTotalLength();
+
+/* datos — mantener en sincronía con la animación de la sección Plan B2B */
+const CYC=[{order:1,ship:1.75,arrive:3},{order:3.5,ship:4.25,arrive:5.5},{order:6,ship:6.75,arrive:8},{order:8.5,ship:9.25,arrive:10.5}];
+const CIF=220.82,NAT=86.23,OPX=6.28,INIT=9.67;
+const RPTS=[[0,0],[1,0],[2,25],[3,110],[4,250],[5,420],[6,610],[7,820],[8,1050],[9,1300],[10,1580],[11,1900],[12,2240]];
+const lerp=q=>{if(q<=0)return 0;for(let i=1;i<RPTS.length;i++){if(q<=RPTS[i][0]){const a=RPTS[i-1],b=RPTS[i];return a[1]+(b[1]-a[1])*(q-a[0])/(b[0]-a[0]);}}return RPTS[RPTS.length-1][1];};
+const EVS=[];CYC.forEach(c=>{EVS.push({t:c.ship,k:'cif'});EVS.push({t:c.arrive,k:'nat'});});
+const cash=q=>lerp(q)-EVS.reduce((s,e)=>s+(q>=e.t?(e.k==='cif'?CIF:NAT):0),0)-OPX*Math.max(0,q)-INIT;
+const IN=[];for(let m=1;m<=12;m++)IN.push(lerp(m)-lerp(m-1));
+
+/* tira compacta del año */
+const SW=760,L=30,Rm=8,mw=(SW-L-Rm)/12,X=q=>L+(SW-L-Rm)*q/12;
+const B={y0:14,y1:62,max:400},C={y0:80,y1:146,min:-400,max:1200};
+const bY=v=>B.y1-(B.y1-B.y0)*v/B.max,cY=v=>C.y1-(C.y1-C.y0)*(v-C.min)/(C.max-C.min),z=cY(0);
+let s=`<defs><clipPath id="hfClip"><rect id="hfClipR" x="0" y="0" width="0" height="168"/></clipPath>
+<clipPath id="hfA"><rect x="0" y="${C.y0-4}" width="${SW}" height="${z-C.y0+4}"/></clipPath>
+<clipPath id="hfB"><rect x="0" y="${z}" width="${SW}" height="${C.y1-z+4}"/></clipPath></defs>`;
+s+=`<text x="${L}" y="10" font-size="8.5" font-weight="800" letter-spacing=".08em" fill="#9a98ad">INGRESOS / MES (miles de Bs)</text>`;
+s+=`<text x="${L}" y="76" font-size="8.5" font-weight="800" letter-spacing=".08em" fill="#9a98ad">CAJA NETA ACUMULADA · ● PAGOS A INDIA/ADUANA</text>`;
+for(let m=0;m<=12;m++){s+=`<line x1="${X(m)}" y1="12" x2="${X(m)}" y2="148" stroke="#161320" opacity=".05"/>`;}
+s+=`<line x1="${L}" y1="${B.y1}" x2="${SW-Rm}" y2="${B.y1}" stroke="#e8e6f1"/>`;
+s+=`<line x1="${L}" y1="${z}" x2="${SW-Rm}" y2="${z}" stroke="#161320" opacity=".2"/><text x="${L-4}" y="${z+3}" font-size="8" font-family="JetBrains Mono" fill="#9a98ad" text-anchor="end">0</text>`;
+for(let m=1;m<=12;m++){s+=`<text x="${X(m-.5)}" y="161" font-size="8.5" font-family="JetBrains Mono" fill="#9a98ad" text-anchor="middle">${m}</text>`;}
+s+=`<g clip-path="url(#hfClip)">`;
+IN.forEach((v,i)=>{if(v<=0)return;const y=bY(v);s+=`<rect x="${X(i)+3}" y="${y}" width="${mw-6}" height="${B.y1-y}" rx="2.5" fill="#2faa6a" opacity=".85"/>`;});
+let lp='';for(let q=0;q<=12.001;q+=.06){lp+=(q?'L':'M')+X(Math.min(12,q)).toFixed(1)+','+cY(cash(q)).toFixed(1)+' ';}
+const ap=lp+`L${X(12)},${z} L${X(0)},${z} Z`;
+s+=`<g clip-path="url(#hfA)"><path d="${ap}" fill="#2faa6a" opacity=".12"/></g><g clip-path="url(#hfB)"><path d="${ap}" fill="#e6007e" opacity=".16"/></g>`;
+s+=`<path d="${lp}" fill="none" stroke="#2c2940" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+EVS.forEach(e=>{s+=`<circle cx="${X(e.t)}" cy="70" r="2.6" fill="#e6007e"/>`;});
+s+=`</g><line id="hfCur" x1="${L}" y1="10" x2="${L}" y2="150" stroke="#6b2c91" stroke-width="1.4" opacity=".8"/>`;
+strip.innerHTML=s;
+const clipR=document.getElementById('hfClipR'),cur=document.getElementById('hfCur');
+
+const CAPS=[
+ [0,'Semanas 0–3: muestras y gira comercial — se busca el primer pedido.'],
+ [1,'Mes 1 · pedido en firme → se abre la carta de crédito y se avisa al contacto (vía Oruro).'],
+ [1.75,'Zarpa el ciclo 1 desde India → la LC paga Bs 220,8 mil contra documentos.'],
+ [3,'Llega a Bolivia vía Aduana Oruro → Bs 86 mil de nacionalización y bolsas · empieza la venta por kg.'],
+ [3.5,'Regla +20 días: se ordena el ciclo 2 mientras el 1 se vende.'],
+ [4.25,'Zarpa el ciclo 2 → punto más bajo de la caja (≈ −Bs 270 mil).'],
+ [5.5,'Llega el ciclo 2 · las ventas van cerrando el bache de caja.'],
+ [7.2,'La caja cruza a positivo: las ventas ya financian los pedidos.'],
+ [9.25,'Ciclo 4 cubierto por las ventas del propio año.'],
+ [11.2,'Cierre año 1: Bs 2,24 M vendidos · inversión total Bs 1,31 M · caja +Bs 0,93 M.']
+];
+let capIdx=-1;
+const f1=n=>n.toLocaleString('es-BO',{minimumFractionDigits:1,maximumFractionDigits:1});
+
+let t=reduced?12:0,playing=false,last=0,userTook=false;
+function render(){
+  clipR.setAttribute('width',X(Math.max(0,t)));
+  cur.setAttribute('x1',X(t));cur.setAttribute('x2',X(t));
+  /* barco navegando el mundito */
+  let f=null,dock=false;
+  for(const c of CYC){if(t>=c.ship&&t<=c.arrive){f=(t-c.ship)/(c.arrive-c.ship);break;}if(t>=c.order&&t<c.ship){f=0;dock=true;break;}}
+  if(f!==null){const p=route.getPointAtLength(RL*f);ship.setAttribute('transform',`translate(${p.x},${p.y})`);ship.setAttribute('opacity',dock?'.55':'1');}
+  else ship.setAttribute('opacity','0');
+  /* moneda Bolivia→India al pagar CIF · anillo en Bolivia al nacionalizar */
+  let cs=false,rs=false;
+  for(const e of EVS){const p=(t-e.t)/0.3;
+    if(p>0&&p<1){
+      if(e.k==='cif'&&!cs){const pt=route.getPointAtLength(RL*(1-p));coin.setAttribute('cx',pt.x);coin.setAttribute('cy',pt.y);coin.setAttribute('opacity',(1-p*.4)*.95);cs=true;}
+      if(e.k==='nat'&&!rs){ring.setAttribute('r',20+55*p);ring.setAttribute('opacity',(1-p)*.9);rs=true;}
+    }}
+  if(!cs)coin.setAttribute('opacity','0');
+  if(!rs)ring.setAttribute('opacity','0');
+  let ci=0;for(let i=0;i<CAPS.length;i++){if(t>=CAPS[i][0])ci=i;}
+  if(ci!==capIdx){capIdx=ci;capEl.textContent=CAPS[ci][1];}
+  monthEl.textContent='Mes '+f1(t);
+  scrub.value=Math.round(t*100);
+}
+function frame(ts){if(!playing)return;if(!last)last=ts;
+  t+=Math.min(.1,(ts-last)/1000)*12/28;last=ts;
+  if(t>=12){t=12;render();playing=false;playBtn.textContent='↻';
+    if(!userTook)setTimeout(()=>{if(!userTook&&!playing){t=0;play();}},2400);return;}
+  render();requestAnimationFrame(frame);}
+function play(){if(t>=12)t=0;playing=true;last=0;playBtn.textContent='⏸';requestAnimationFrame(frame);}
+function pause(){playing=false;playBtn.textContent='▶';}
+playBtn.addEventListener('click',()=>{userTook=true;playing?pause():play();});
+scrub.addEventListener('input',()=>{userTook=true;pause();t=scrub.value/100;render();});
+render();
+if(!reduced){
+  play();
+  const hio=new IntersectionObserver(es=>es.forEach(en=>{
+    if(!en.isIntersecting){if(playing)pause();}
+    else if(!playing&&!userTook){if(t>=12)t=0;play();}
+  }),{threshold:.25});
+  hio.observe(strip);
+}else{playBtn.textContent='▶';}
 })();
 
 /* reveal + counters + nav (shared observers) */
