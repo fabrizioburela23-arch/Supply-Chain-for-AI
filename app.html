@@ -1374,6 +1374,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
       <button class="icon-btn" id="diag-btn" title="Estado del sistema — prueba en vivo de keys y servicios" aria-label="Estado del sistema" onclick="window.openDiagnostics&&window.openDiagnostics()">🩺</button>
       <button class="icon-btn" id="registro-btn" title="Registro de Acciones — tesis, decisiones y anotaciones auditadas" aria-label="Registro de Acciones" onclick="window.openRegistro&&window.openRegistro()">📋</button>
+      <button class="icon-btn" id="propuestas-btn" title="Propuestas de agentes — revisar, aprobar o rechazar" aria-label="Propuestas de agentes" onclick="window.openPropuestas&&window.openPropuestas()">🔔</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
       <button class="icon-btn" id="toggle-3d-btn" title="Grafo de Conocimiento Temporal — línea de tiempo interactiva de hechos con validez" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="switchTab('tkg')">◈ Temporal</button>
@@ -2080,6 +2081,22 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <button class="key-btn" id="registro-refresh" onclick="window.openRegistro&&window.openRegistro(true)" style="flex:0 0 auto">↻ Actualizar</button>
   </div>
   <div id="registro-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando registro…</div></div>
+</aside>
+
+<!-- ── Propuestas de Agentes (Fase 3 de la ontología) ────────────────────── -->
+<div class="settings-overlay" id="propuestas-overlay" onclick="window.closePropuestas&&window.closePropuestas()"></div>
+<aside class="settings-panel" id="propuestas-panel" aria-label="Propuestas de agentes" style="width:520px">
+  <div class="settings-head">
+    <h2>🔔 Propuestas de Agentes</h2>
+    <button class="icon-btn" id="propuestas-close" aria-label="Cerrar" onclick="window.closePropuestas&&window.closePropuestas()">✕</button>
+  </div>
+  <p class="settings-sub">4 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <button class="key-btn" id="propuestas-run" onclick="window.runAgentes&&window.runAgentes()" style="flex:0 0 auto">🔍 Revisar ahora</button>
+    <button class="key-btn" id="propuestas-refresh" onclick="window.openPropuestas&&window.openPropuestas(true)" style="flex:0 0 auto">↻ Actualizar</button>
+    <span id="propuestas-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+  </div>
+  <div id="propuestas-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando propuestas…</div></div>
 </aside>
 
 <div class="settings-overlay" id="settings-overlay"></div>
@@ -7629,6 +7646,121 @@ window.closeRegistro = function(){
   $('registro-panel').classList.remove('show');
 };
 (function(){ const f=$('registro-filter-actor'); if(f) f.addEventListener('keydown', e=>{ if(e.key==='Enter') window.openRegistro(true); }); })();
+
+/* ── Propuestas de Agentes (Fase 3 — ontología) ─────────────────────────── */
+const AGENT_META = {
+  centinela_nrs:{icon:'🛰',label:'Centinela NRS'}, lector_gdelt:{icon:'📰',label:'Lector GDELT'},
+  guardian_cartera:{icon:'💼',label:'Guardián de Cartera'}, cartografo:{icon:'🗺',label:'Cartógrafo'},
+};
+const PROPOSAL_FIELD_LABELS = {
+  nivel:'Nivel NRS', razon:'Razón', stance:'Postura', confidence:'Confianza', rationale:'Razonamiento',
+  decision:'Decisión', texto:'Nota', ticker:'Ticker', delta:'Delta (unidades)', tipo:'Tipo de vínculo',
+};
+function _getActorGlobal(){
+  try{
+    let a = localStorage.getItem('khipu_actor');
+    if(!a){ a = (window.prompt('¿Cómo te identificamos?') || '').trim(); if(a) localStorage.setItem('khipu_actor', a); }
+    return a || 'anónimo';
+  }catch(e){ return 'anónimo'; }
+}
+function _propuestaCard(p){
+  const m = AGENT_META[p.agent] || {icon:'🤖', label:p.agent};
+  const objLabel = (window.NODE_BY_ID && window.NODE_BY_ID[p.object_id] && window.NODE_BY_ID[p.object_id].label) || p.object_id || '';
+  const conf = p.confidence!=null ? Math.round(p.confidence*100)+'%' : '—';
+  const fields = Object.keys(p.payload||{}).filter(k=>!['company_id','object_id','ticker'].includes(k) || k==='ticker');
+  const fieldsHtml = fields.map(k=>{
+    const v = p.payload[k];
+    const label = PROPOSAL_FIELD_LABELS[k] || k;
+    const isLong = typeof v === 'string' && v.length > 40;
+    return `<div style="margin-bottom:6px">
+      <label style="font-size:10px;color:var(--ink-3);display:block;margin-bottom:2px">${esc(label)}</label>
+      ${isLong
+        ? `<textarea data-k="${esc(k)}" class="prop-field" rows="2" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-1);font-size:12px">${esc(String(v))}</textarea>`
+        : `<input data-k="${esc(k)}" class="prop-field" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-1);font-size:12px" value="${esc(String(v))}">`}
+    </div>`;
+  }).join('');
+  return `<div class="prop-card" data-id="${p.id}" data-action-type="${esc(p.action_type)}" style="border:1px solid var(--line);border-left:3px solid #8a5aff;border-radius:8px;padding:12px 14px;margin-bottom:11px;background:var(--surface-2,rgba(255,255,255,.02))">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:14px">${m.icon}</span>
+      <b style="font-size:13px;flex:1">${m.label}${objLabel?' · '+esc(objLabel):''}</b>
+      <span style="font-size:10px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">conf. ${conf}</span>
+    </div>
+    <div style="font-size:12px;color:var(--ink-2);margin:4px 0 8px;line-height:1.4">${esc(p.explanation||'')}</div>
+    ${fieldsHtml}
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <button class="prop-approve" style="font-size:12px;padding:6px 12px;border-radius:7px;border:none;background:#43C896;color:#04241a;font-weight:700;cursor:pointer">✓ Aprobar</button>
+      <button class="prop-reject" style="font-size:12px;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:none;color:var(--ink-2);cursor:pointer">✗ Rechazar</button>
+      <span class="prop-status" style="font-size:11px;color:var(--ink-3)"></span>
+    </div>
+  </div>`;
+}
+window.openPropuestas = async function(fresh){
+  $('propuestas-overlay').classList.add('show');
+  $('propuestas-panel').classList.add('show');
+  const body = $('propuestas-body');
+  if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
+  try{
+    const base = (typeof BASE!=='undefined') ? BASE : '';
+    const r = await fetch(`${base}/api/ontology/agents/proposals?status=pending`);
+    if(!r.ok){
+      if(r.status===503){ body.innerHTML = '<div style="padding:20px;color:var(--ink-3);font-size:13px">La ontología no está configurada en este servidor (falta Postgres).</div>'; return; }
+      throw new Error('HTTP '+r.status);
+    }
+    const d = await r.json();
+    $('propuestas-summary').textContent = `${d.count} pendiente${d.count===1?'':'s'}`;
+    if(!d.proposals || !d.proposals.length){
+      body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Sin propuestas pendientes. Dale a "🔍 Revisar ahora" para que los agentes analicen la ontología.</div>';
+      return;
+    }
+    body.innerHTML = d.proposals.map(_propuestaCard).join('');
+    body.querySelectorAll('.prop-card').forEach(card=>{
+      const id = card.dataset.id;
+      card.querySelector('.prop-approve').onclick = () => _resolveProposal(card, id, 'approve');
+      card.querySelector('.prop-reject').onclick = () => _resolveProposal(card, id, 'reject');
+    });
+  }catch(e){
+    body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">No se pudo cargar: ${String(e.message||e)}</div>`;
+  }
+};
+function _resolveProposal(card, id, verb){
+  const status = card.querySelector('.prop-status');
+  status.textContent = verb==='approve' ? 'aprobando…' : 'rechazando…'; status.style.color='var(--ink-3)';
+  const base = (typeof BASE!=='undefined') ? BASE : '';
+  const body = { actor: _getActorGlobal() };
+  if(verb==='approve'){
+    const edits = {};
+    card.querySelectorAll('.prop-field').forEach(el=>{
+      const k = el.dataset.k;
+      const raw = el.value;
+      edits[k] = (k==='confidence' || k==='nivel' || k==='delta') && raw!=='' && !isNaN(raw) ? parseFloat(raw) : raw;
+    });
+    body.edits = edits;
+  }
+  fetch(`${base}/api/ontology/agents/proposals/${id}/${verb}`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body),
+  }).then(r=>r.json().then(d=>({ok:r.ok,d}))).then(({ok,d})=>{
+    if(ok){ status.textContent = verb==='approve' ? '✓ aprobado' : '✗ rechazado'; status.style.color = verb==='approve' ? '#43C896' : 'var(--ink-3)';
+      setTimeout(()=>{ card.style.opacity='0.4'; card.style.pointerEvents='none'; }, 300);
+    } else { status.textContent = '⚠ '+(d.error||'error'); status.style.color='#f87171'; }
+  }).catch(()=>{ status.textContent='⚠ error de red'; status.style.color='#f87171'; });
+}
+window.runAgentes = function(){
+  const summary = $('propuestas-summary');
+  summary.textContent = 'revisando…';
+  const base = (typeof BASE!=='undefined') ? BASE : '';
+  fetch(`${base}/api/ontology/agents/run`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' })
+    .then(r=>r.json()).then(d=>{
+      if(d.status==='ok'){
+        const total = Object.values(d.summary||{}).reduce((s,a)=>s+(a.proposals||0),0);
+        summary.textContent = `${total} propuesta${total===1?'':'s'} nueva${total===1?'':'s'}`;
+        window.openPropuestas(true);
+      } else { summary.textContent = '⚠ ' + (d.error||'error'); }
+    }).catch(()=>{ summary.textContent = '⚠ error de red'; });
+};
+window.closePropuestas = function(){
+  $('propuestas-overlay').classList.remove('show');
+  $('propuestas-panel').classList.remove('show');
+};
 $('pref-live').onchange=e=>{ const p=prefs(); p.live=e.target.checked; savePrefs(p); LivePrices.restart(); DataHealth.render(); };
 $('pref-notif').onchange=e=>{ const p=prefs(); p.notif=e.target.checked; savePrefs(p);
   if(e.target.checked && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); };
@@ -8134,6 +8266,44 @@ const PriceAlerts = {
 };
 window.PriceAlerts = PriceAlerts;
 
+/* ── Alertas de la Ontología (Fase 4) — persistentes en Postgres, creadas por
+   el lenguaje KHIPU ("ALERT NVDA PX > 150", "ALERT REGION taiwan NEWS").
+   Distintas de PriceAlerts de arriba (esas son solo-precio, solo-localStorage,
+   por comparación rápida desde el detalle de una acción). Estas viven en el
+   servidor, sobreviven a cambiar de dispositivo, y soportan NRS + noticias
+   por región. Se limitan a notificar UNA VEZ por sesión de navegador por
+   alerta (evita spam si la condición sigue vigente en cada sondeo). ─────── */
+const OntologyAlerts = {
+  _notified: new Set(),
+  async check() {
+    if (!(prefs().notif)) return;
+    let actor; try { actor = localStorage.getItem('khipu_actor'); } catch (e) { actor = null; }
+    if (!actor) return; // sin identidad aún no ha creado ninguna alerta
+    try {
+      const base = (typeof BASE !== 'undefined') ? BASE : '';
+      const r = await fetch(`${base}/api/ontology/alerts/check?owner=${encodeURIComponent(actor)}`);
+      if (!r.ok) return; // 503 = ontología no configurada; silencioso, no es un error del usuario
+      const d = await r.json();
+      (d.fired || []).forEach(f => {
+        if (this._notified.has(f.id)) return;
+        this._notified.add(f.id);
+        this._notify(f);
+      });
+    } catch (e) {}
+  },
+  _notify(f) {
+    const msg = f.detail || JSON.stringify(f.rule);
+    if (typeof toast === 'function') toast('🔔 ' + msg);
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification('Khipus AI Finance · Alerta', { body: msg, icon: '/icon.svg' }); } catch (e) {}
+    }
+  },
+  start() { setTimeout(() => this.check(), 8000); setInterval(() => this.check(), 120000); },
+};
+window.OntologyAlerts = OntologyAlerts;
+if (document.readyState === 'complete' || document.readyState === 'interactive') OntologyAlerts.start();
+else window.addEventListener('DOMContentLoaded', () => OntologyAlerts.start());
+
 /* ════════════════ §I · CORONA DE EARNINGS PRÓXIMOS (Feature 3) ════════════════ */
 const V8earnings = {
   applyCorona(id){
@@ -8607,6 +8777,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="nodes/ontology.js"></script>
 <script src="nodes/ontology_facts.js"></script>
 <script src="engine/temporal-graph.js"></script>
+<script src="engine/khipu_lang.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>

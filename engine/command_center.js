@@ -136,6 +136,17 @@
       const ans = card.querySelector('.bcc-a');
 
       try {
+        // Fase 4: lenguaje KHIPU — comandos exactos tipo "NVDA SUP" se resuelven
+        // localmente, SIN llamar a la IA (más rápido, cero costo de tokens).
+        // Si no calza con la gramática, tryParse devuelve null y seguimos con Bixby normal.
+        const khipuResult = (window.KHIPU && window.KHIPU.tryParse) ? window.KHIPU.tryParse(text) : null;
+        if (khipuResult) {
+          const r = await khipuResult;
+          ans.textContent = (r && r.answer) || 'Listo.';
+          if (r && Array.isArray(r.actions) && r.actions.length) await this._runActions(r.actions, card);
+          return;
+        }
+
         const base = (typeof BASE !== 'undefined') ? BASE : '';
         const sel = window._selectedNode || null;
         const r = await fetch(`${base}/api/ai/command`, {
@@ -189,6 +200,12 @@
             this._chip(acts, `🧬 Simular: ${arg}`);
           } else if (a.type === 'second_brain' && window._openSecondBrain) {
             window._openSecondBrain(arg); this._chip(acts, `🧠 ${this._label(arg)}`);
+          } else if (a.type === 'tkg_object') {
+            // Fase 4 (lenguaje KHIPU): abre la ficha de objeto del Grafo Temporal
+            // (tiene precio en vivo, NRS, upstream/downstream, noticias, acciones).
+            if (window.switchTab) window.switchTab('tkg');
+            setTimeout(() => { if (window.__tkgOpenObj) window.__tkgOpenObj(arg); }, 200);
+            this._chip(acts, `◈ ${this._label(arg)}`);
           } else if (a.type === 'chart') {
             this._chip(acts, `📊 generando gráfico…`);
             await this._chartInline(arg, card);

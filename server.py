@@ -696,6 +696,14 @@ def ws_key():
     return jsonify({'token': FINNHUB})
 
 
+def _fetch_quote_raw(ticker):
+    """Cotización cruda de Finnhub para un ticker ya saneado. Devuelve
+    (data, error) — reusada por la ruta HTTP y por el evaluador de alertas
+    (ontology/agents.py) para no duplicar la llamada. El caller debe checar
+    FINNHUB antes de llamar (aquí asumimos que la key existe)."""
+    return _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
+
+
 @app.route('/api/quote/<ticker>')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
@@ -705,7 +713,7 @@ def quote(ticker):
     ticker = _safe_ticker(ticker)
     if not ticker:
         return jsonify({'error': 'invalid ticker'}), 400
-    data, err = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
+    data, err = _fetch_quote_raw(ticker)
     if err:
         return jsonify({'error': err}), 502
     return jsonify(data)

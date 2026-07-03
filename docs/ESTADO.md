@@ -135,14 +135,103 @@ haya una demo en vivo horas después.
       sesión — con auditoría de quién lo corrigió y por qué, en vez de un
       edit manual silencioso en el código fuente.
 
-## Fases 3-5
+## Fase 3 — AGENTES QUE PROPONEN, HUMANO QUE APRUEBA
 
-No iniciadas. Ver roadmap:
-- Fase 3 (Agentes que proponen, humano aprueba) puede apoyarse en
-  `execute_action()` + una cola `proposed_actions` — el catálogo de
-  Acciones de Fase 2 ya es lo que un agente ejecutaría tras la aprobación.
-- Fase 4 (lenguaje KHIPU + alertas) y Fase 5 (linaje de datos) no dependen
-  de nada pendiente de Fase 1/2 — pueden arrancar cuando se priorice.
+**Estado: ✅ COMPLETA**
+
+- [x] `ontology/agents.py`: contrato `observe(session)->signals` /
+      `propose(session, signal)->dict|None`. 4 agentes v1 (no 5 — Cronista se
+      implementó como reporte de solo-lectura, ver abajo, no como agente que
+      propone Acciones):
+      - **Centinela NRS**: recalcula riesgo (fórmula geo+grado+margen+
+        concentración, réplica server-side de `computeNRS`) y propone
+        `MarcarRiesgo` si cruza el umbral (70).
+      - **Lector GDELT**: muestrea las 5 empresas más conectadas, busca
+        noticias reales vía GDELT, propone `AnotarObjeto` con resumen (IA).
+      - **Guardián de Cartera**: deriva holdings de `PositionAdjustment`
+        (Fase 2) — **limitación honesta documentada**: el portafolio
+        "real" del usuario vive en `localStorage`, este agente solo ve
+        posiciones registradas EN la ontología vía la Acción
+        `AjustarPosicion`.
+      - **Cartógrafo**: detecta empresas sin ningún vínculo vigente
+        (nodos aislados), propone `AnotarObjeto` señalando la brecha.
+- [x] Runtime: **sin scheduler interno** (gunicorn 2 workers duplicaría cada
+      corrida) — `POST /api/ontology/agents/run` bajo demanda (botón manual
+      o cron externo), con deduplicación por agente+tipo+objeto+ventana de
+      tiempo para no repetir la misma propuesta en cada corrida.
+- [x] Cola de aprobación: `ProposedAction` (pending/approved/rejected).
+      `GET /api/ontology/agents/proposals`, `POST .../approve` (ejecuta la
+      Acción real, actor='<agente> → aprobado por <humano>'),
+      `POST .../reject`. Doble-aprobación bloqueada (409).
+- [x] **Cronista** (Brief Matinal): `GET /api/ontology/agents/brief` —
+      resumen en lenguaje natural de acciones + propuestas + nuevos
+      vínculos en las últimas N horas. Informativo, sin cola de aprobación.
+- [x] UI: botón **"🔔 Propuestas"** (overlay) — lista, permite EDITAR los
+      campos antes de aprobar (inputs editables en cada card), Aprobar/
+      Rechazar, botón "🔍 Revisar ahora" dispara `agents/run`.
+- [x] Tests: `tests/test_ontology_agents.py` (7 tests) — Centinela detecta
+      riesgo alto, Cartógrafo detecta aislamiento, dedupe entre corridas,
+      aprobar ejecuta la Acción, rechazar no ejecuta nada, brief matinal,
+      endpoints Flask.
+- [x] Bug encontrado y corregido en el camino: la fórmula NRS (heredada del
+      cliente, `app.html:computeNRS`) no tiene límite inferior en el término
+      de margen — empresas pre-revenue con márgenes muy negativos (ej.
+      Rigetti -2.5) inflaban el score muy por encima de 100 antes de
+      truncar. En la réplica server-side SÍ se acotó `[0,20]`; **el cliente
+      original conserva el mismo comportamiento sin corregir** — se dejó así
+      a propósito (no se tocó una fórmula que el usuario ve en producción
+      sin que lo pida), queda anotado aquí como candidato a revisar.
+
+## Fase 4 — LENGUAJE DE COMANDOS + MOTOR DE ALERTAS
+
+**Estado: ✅ COMPLETA**
+
+- [x] `engine/khipu_lang.js`: parser de `<ENTIDAD> <FUNCIÓN> [ARGS]`.
+      Se intenta ANTES de llamar a la IA en `command_center.js` (Bixby) — si
+      no calza con la gramática, `tryParse()` devuelve `null` y Bixby sigue
+      su flujo normal de lenguaje natural. Comandos exactos no gastan tokens
+      ni tiempo de red a Claude.
+      - `<TICKER> DES/GP/SUP/CLI/RISK/NEWS/SIM/FA/THESIS [texto]` — cada uno
+        despacha a funcionalidad YA CONSTRUIDA (Second Brain, mapa,
+        `__tkgOpenObj` del Grafo Temporal, `activateStress`,
+        `/api/fundamentals`, o crea una tesis vía `/api/ontology/actions/CrearTesis`).
+      - `PORT VAR` / `PORT PL` — usa `/api/portfolio-risk` y las posiciones
+        de `MKT.pos` (localStorage) + cotizaciones cacheadas.
+      - `GRAPH ASOF <fecha>` / `GRAPH DIFF <Nd>` — mueve la línea de tiempo
+        del Grafo Temporal (nuevo hook `window.__tkgSetDate`) o consulta
+        `/api/ontology/graph/diff`.
+      - `ALERT <TICKER> PX|NRS > <valor>` / `ALERT REGION <región> NEWS` /
+        `ALERT LIST` — crea/lista alertas en la ontología.
+      - Resolución de entidad case-insensitive por id o por ticker (`.mkt`).
+- [x] Motor de alertas: modelo `Alert` (Postgres) + `ontology.agents.
+      evaluate_alert()`/`check_alerts()` — soporta `price` (Finnhub, reusa
+      `server._fetch_quote_raw`, extraído de la ruta `/api/quote/<ticker>`
+      con el mismo cambio ya cubierto por los smoke tests existentes),
+      `nrs` (override o calculado), `news_region` (anotaciones recientes
+      que mencionan la región). CRUD: `POST/GET/DELETE /api/ontology/alerts`,
+      evaluación bajo demanda: `GET /api/ontology/alerts/check`.
+- [x] Cliente: `OntologyAlerts` (en `app.html`) sondea cada 2 min (si el
+      usuario activó notificaciones en Preferencias) y dispara
+      `Notification` del navegador — **deduplicado por sesión** (una alerta
+      no vuelve a notificar mientras la pestaña siga abierta, para no
+      spamear si la condición sigue vigente). Coexiste con el `PriceAlerts`
+      preexistente (cliente, solo-precio, solo-localStorage) sin
+      reemplazarlo — resuelven necesidades distintas.
+- [x] Tests: `tests/test_ontology_alerts.py` (5 tests) — dispara con NRS
+      alto, no dispara bajo el umbral, no truena sin `FINNHUB_KEY`, CRUD +
+      evaluación completa vía API, rechaza métrica inválida.
+- [x] Verificado en Node (sin DOM) el parser completo: reconoce comandos
+      válidos, devuelve `null` para lenguaje natural (sin falsos positivos
+      con frases como "comprar 10 NVDA"), maneja bien la ausencia de
+      `__tkgSetDate`/red sin romper.
+
+## Fase 5
+
+No iniciada. Ver roadmap — buena parte de sus entregables (precios en vivo,
+fundamentales, diagnóstico de pipelines) ya existían antes de esta sesión de
+ontología; falta específicamente el linaje visible (tooltip ⓘ fuente/
+antigüedad) y extender 🩺 con staleness. El "dato alternativo nuevo" (fabs o
+CelesTrak↔contratos) el roadmap mismo lo marca como sesión aparte al final.
 
 ## Contexto de sesión previo a la ontología (para no reconstruir)
 

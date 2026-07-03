@@ -900,6 +900,18 @@
   }
   // permitir navegar entre objetos desde los chips upstream/downstream
   window.__tkgOpenObj = function (id) { try { _openObject(id); } catch (e) {} };
+  // Fase 4 (lenguaje KHIPU): mover la línea de tiempo a una fecha desde afuera
+  // (ej. "GRAPH ASOF 2020-01-01"). Si el panel aún no se construyó, lo hace primero.
+  window.__tkgSetDate = function (msOrDateStr) {
+    try {
+      if (!_built && typeof window.initTKGTab === 'function') window.initTKGTab();
+      const ms = typeof msOrDateStr === 'number' ? msOrDateStr : toMs(msOrDateStr);
+      if (ms == null || isNaN(ms)) return false;
+      _dateMs = Math.max(_minMs || ms, Math.min(_maxMs || ms, ms));
+      _stopPlay(); _refresh();
+      return true;
+    } catch (e) { return false; }
+  };
 
   function _updateDateLabel() { const el = document.getElementById('tkg-datelbl'); if (el) el.textContent = fmtDate(_dateMs); const s = document.getElementById('tkg-time'); if (s && +s.value !== _dateMs) s.value = _dateMs; }
 

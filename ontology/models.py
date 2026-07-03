@@ -89,3 +89,41 @@ class LinkRecord(Base):
         Index('ix_links_pair', 'source_id', 'target_id', 'rel_type'),
         Index('ix_links_validity', 'valid_from', 'valid_to'),
     )
+
+
+class ProposedAction(Base):
+    """Fase 3 — cola de aprobación. Un agente observa la ontología, detecta
+    una señal y PROPONE una Acción del catálogo (ontology/actions.py); nada se
+    ejecuta hasta que un humano aprueba. Al aprobar, se ejecuta como una
+    Acción normal (auditada, con actor='<agente>, aprobado por <humano>')."""
+    __tablename__ = 'proposed_actions'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent = Column(String(60), nullable=False, index=True)
+    action_type = Column(String(40), nullable=False)
+    payload = Column(JSONB, nullable=False, default=dict)   # campos listos para execute_action()
+    object_id = Column(String(120), nullable=True, index=True)
+    confidence = Column(Float, nullable=True)
+    explanation = Column(Text, nullable=True)                # razonamiento en lenguaje natural
+    status = Column(String(20), nullable=False, default='pending', index=True)  # pending/approved/rejected/expired
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    resolved_by = Column(String(120), nullable=True)
+
+    __table_args__ = (
+        Index('ix_proposed_status_agent', 'status', 'agent'),
+    )
+
+
+class Alert(Base):
+    """Fase 4 — regla de alerta. rule = {entity, metric, op, value} para
+    precio/NRS, o {region, event_type} para noticias por región."""
+    __tablename__ = 'alerts'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    owner = Column(String(120), nullable=False, index=True)   # quién la creó
+    rule = Column(JSONB, nullable=False)
+    channel = Column(String(30), nullable=False, default='browser')
+    is_active = Column(Boolean, nullable=False, default=True)
+    last_fired_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
