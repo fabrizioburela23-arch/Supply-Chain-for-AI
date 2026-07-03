@@ -1372,9 +1372,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn mobile-only" id="m-filter-btn" title="Filtros" aria-label="Filtros">☰</button>
       <button class="icon-btn" id="lang-toggle" title="Español / English" style="width:auto;padding:0 10px;font-size:11px;font-weight:700">EN</button>
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
-      <button class="icon-btn" id="diag-btn" title="Estado del sistema — prueba en vivo de keys y servicios" aria-label="Estado del sistema" onclick="window.openDiagnostics&&window.openDiagnostics()">🩺</button>
-      <button class="icon-btn" id="registro-btn" title="Registro de Acciones — tesis, decisiones y anotaciones auditadas" aria-label="Registro de Acciones" onclick="window.openRegistro&&window.openRegistro()">📋</button>
-      <button class="icon-btn" id="propuestas-btn" title="Propuestas de agentes — revisar, aprobar o rechazar" aria-label="Propuestas de agentes" onclick="window.openPropuestas&&window.openPropuestas()">🔔</button>
+      <button class="icon-btn" id="sistema-btn" title="Sistema — diagnóstico en vivo, registro de decisiones y propuestas de agentes" aria-label="Sistema" onclick="window.openSistema&&window.openSistema()">🩺</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
       <button class="icon-btn" id="toggle-3d-btn" title="Grafo de Conocimiento Temporal — línea de tiempo interactiva de hechos con validez" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="switchTab('tkg')">◈ Temporal</button>
@@ -2055,50 +2053,46 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 
 <!-- ===== v8: Panel de Configuración ===== -->
 
-<!-- ── Estado del Sistema (diagnóstico en vivo) ──────────────────────────── -->
-<div class="settings-overlay" id="diag-overlay" onclick="window.closeDiagnostics&&window.closeDiagnostics()"></div>
-<aside class="settings-panel" id="diag-panel" aria-label="Estado del sistema" style="width:480px">
+<!-- ── ⚙ Sistema: Diagnóstico + Registro + Propuestas, unificado ──────────── -->
+<div class="settings-overlay" id="sistema-overlay" onclick="window.closeSistema&&window.closeSistema()"></div>
+<aside class="settings-panel" id="sistema-panel" aria-label="Sistema" style="width:520px">
   <div class="settings-head">
-    <h2>🩺 Estado del Sistema</h2>
-    <button class="icon-btn" id="diag-close" aria-label="Cerrar" onclick="window.closeDiagnostics&&window.closeDiagnostics()">✕</button>
+    <h2 id="sistema-title">🩺 Estado del Sistema</h2>
+    <button class="icon-btn" id="sistema-close" aria-label="Cerrar" onclick="window.closeSistema&&window.closeSistema()">✕</button>
   </div>
-  <p class="settings-sub">Prueba <b>en vivo</b> cada API key y servicio del servidor — no solo si existen, sino si <b>de verdad responden</b>. Las keys nunca se muestran.</p>
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
-    <button class="key-btn" id="diag-refresh" onclick="window.openDiagnostics&&window.openDiagnostics(true)" style="flex:0 0 auto">↻ Re-probar</button>
-    <span id="diag-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+  <div class="seg" id="sistema-tabseg" style="margin-bottom:14px">
+    <button data-t="diag" class="active">🩺 Diagnóstico</button>
+    <button data-t="registro">📋 Registro</button>
+    <button data-t="propuestas">🔔 Propuestas</button>
   </div>
-  <div id="diag-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando diagnóstico…</div></div>
-</aside>
 
-<!-- ── Registro de Acciones (Fase 2 de la ontología) ─────────────────────── -->
-<div class="settings-overlay" id="registro-overlay" onclick="window.closeRegistro&&window.closeRegistro()"></div>
-<aside class="settings-panel" id="registro-panel" aria-label="Registro de Acciones" style="width:480px">
-  <div class="settings-head">
-    <h2>📋 Registro de Acciones</h2>
-    <button class="icon-btn" id="registro-close" aria-label="Cerrar" onclick="window.closeRegistro&&window.closeRegistro()">✕</button>
+  <div id="sistema-diag">
+    <p class="settings-sub">Prueba <b>en vivo</b> cada API key y servicio del servidor — no solo si existen, sino si <b>de verdad responden</b>. Las keys nunca se muestran.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+      <button class="key-btn" id="diag-refresh" onclick="window.openDiagnostics&&window.openDiagnostics(true)" style="flex:0 0 auto">↻ Re-probar</button>
+      <span id="diag-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+    </div>
+    <div id="diag-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando diagnóstico…</div></div>
   </div>
-  <p class="settings-sub">Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.</p>
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-    <input id="registro-filter-actor" placeholder="Filtrar por autor…" style="flex:1;min-width:140px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:12.5px">
-    <button class="key-btn" id="registro-refresh" onclick="window.openRegistro&&window.openRegistro(true)" style="flex:0 0 auto">↻ Actualizar</button>
-  </div>
-  <div id="registro-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando registro…</div></div>
-</aside>
 
-<!-- ── Propuestas de Agentes (Fase 3 de la ontología) ────────────────────── -->
-<div class="settings-overlay" id="propuestas-overlay" onclick="window.closePropuestas&&window.closePropuestas()"></div>
-<aside class="settings-panel" id="propuestas-panel" aria-label="Propuestas de agentes" style="width:520px">
-  <div class="settings-head">
-    <h2>🔔 Propuestas de Agentes</h2>
-    <button class="icon-btn" id="propuestas-close" aria-label="Cerrar" onclick="window.closePropuestas&&window.closePropuestas()">✕</button>
+  <div id="sistema-registro" style="display:none">
+    <p class="settings-sub">Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <input id="registro-filter-actor" placeholder="Filtrar por autor…" style="flex:1;min-width:140px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:12.5px">
+      <button class="key-btn" id="registro-refresh" onclick="window.openRegistro&&window.openRegistro(true)" style="flex:0 0 auto">↻ Actualizar</button>
+    </div>
+    <div id="registro-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando registro…</div></div>
   </div>
-  <p class="settings-sub">4 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
-  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-    <button class="key-btn" id="propuestas-run" onclick="window.runAgentes&&window.runAgentes()" style="flex:0 0 auto">🔍 Revisar ahora</button>
-    <button class="key-btn" id="propuestas-refresh" onclick="window.openPropuestas&&window.openPropuestas(true)" style="flex:0 0 auto">↻ Actualizar</button>
-    <span id="propuestas-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+
+  <div id="sistema-propuestas" style="display:none">
+    <p class="settings-sub">4 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <button class="key-btn" id="propuestas-run" onclick="window.runAgentes&&window.runAgentes()" style="flex:0 0 auto">🔍 Revisar ahora</button>
+      <button class="key-btn" id="propuestas-refresh" onclick="window.openPropuestas&&window.openPropuestas(true)" style="flex:0 0 auto">↻ Actualizar</button>
+      <span id="propuestas-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+    </div>
+    <div id="propuestas-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando propuestas…</div></div>
   </div>
-  <div id="propuestas-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando propuestas…</div></div>
 </aside>
 
 <div class="settings-overlay" id="settings-overlay"></div>
@@ -7568,8 +7562,6 @@ function _diagCard(key, s){
   </div>`;
 }
 window.openDiagnostics = async function(fresh){
-  $('diag-overlay').classList.add('show');
-  $('diag-panel').classList.add('show');
   const body = $('diag-body'), sum = $('diag-summary');
   if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Re-probando servicios en vivo…</div>';
   sum.textContent = '';
@@ -7589,10 +7581,7 @@ window.openDiagnostics = async function(fresh){
       <span style="color:var(--ink-3)">Probablemente el servidor no está corriendo en modo servidor, o estás abriendo el archivo directamente (modo standalone). El diagnóstico en vivo requiere el backend Flask.</span></div>`;
   }
 };
-window.closeDiagnostics = function(){
-  $('diag-overlay').classList.remove('show');
-  $('diag-panel').classList.remove('show');
-};
+window.closeDiagnostics = function(){ window.closeSistema && window.closeSistema(); };
 
 /* ── Registro de Acciones (Fase 2 — ontología) ──────────────────────────── */
 function _registroActionMeta(a){
@@ -7623,8 +7612,6 @@ function _registroCard(a){
   </div>`;
 }
 window.openRegistro = async function(fresh){
-  $('registro-overlay').classList.add('show');
-  $('registro-panel').classList.add('show');
   const body = $('registro-body');
   if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
   try{
@@ -7646,10 +7633,7 @@ window.openRegistro = async function(fresh){
     body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">No se pudo cargar el registro: ${String(e.message||e)}</div>`;
   }
 };
-window.closeRegistro = function(){
-  $('registro-overlay').classList.remove('show');
-  $('registro-panel').classList.remove('show');
-};
+window.closeRegistro = function(){ window.closeSistema && window.closeSistema(); };
 (function(){ const f=$('registro-filter-actor'); if(f) f.addEventListener('keydown', e=>{ if(e.key==='Enter') window.openRegistro(true); }); })();
 
 /* ── Propuestas de Agentes (Fase 3 — ontología) ─────────────────────────── */
@@ -7700,8 +7684,6 @@ function _propuestaCard(p){
   </div>`;
 }
 window.openPropuestas = async function(fresh){
-  $('propuestas-overlay').classList.add('show');
-  $('propuestas-panel').classList.add('show');
   const body = $('propuestas-body');
   if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
   try{
@@ -7762,10 +7744,32 @@ window.runAgentes = function(){
       } else { summary.textContent = '⚠ ' + (d.error||'error'); }
     }).catch(()=>{ summary.textContent = '⚠ error de red'; });
 };
-window.closePropuestas = function(){
-  $('propuestas-overlay').classList.remove('show');
-  $('propuestas-panel').classList.remove('show');
+window.closePropuestas = function(){ window.closeSistema && window.closeSistema(); };
+
+/* ── ⚙ Sistema: overlay unificado (Diagnóstico / Registro / Propuestas) ──── */
+let _sistemaTab = 'diag';
+function _switchSistemaTab(t){
+  _sistemaTab = t;
+  document.querySelectorAll('#sistema-tabseg button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  $('sistema-diag').style.display = t==='diag' ? 'block' : 'none';
+  $('sistema-registro').style.display = t==='registro' ? 'block' : 'none';
+  $('sistema-propuestas').style.display = t==='propuestas' ? 'block' : 'none';
+  const titles = {diag:'🩺 Estado del Sistema', registro:'📋 Registro de Acciones', propuestas:'🔔 Propuestas de Agentes'};
+  $('sistema-title').textContent = titles[t];
+  if(t==='diag') window.openDiagnostics();
+  else if(t==='registro') window.openRegistro();
+  else if(t==='propuestas') window.openPropuestas();
+}
+window.openSistema = function(tab){
+  $('sistema-overlay').classList.add('show');
+  $('sistema-panel').classList.add('show');
+  _switchSistemaTab(tab || _sistemaTab);
 };
+window.closeSistema = function(){
+  $('sistema-overlay').classList.remove('show');
+  $('sistema-panel').classList.remove('show');
+};
+document.querySelectorAll('#sistema-tabseg button').forEach(b=>b.addEventListener('click', ()=>_switchSistemaTab(b.dataset.t)));
 $('pref-live').onchange=e=>{ const p=prefs(); p.live=e.target.checked; savePrefs(p); LivePrices.restart(); DataHealth.render(); };
 $('pref-notif').onchange=e=>{ const p=prefs(); p.notif=e.target.checked; savePrefs(p);
   if(e.target.checked && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); };

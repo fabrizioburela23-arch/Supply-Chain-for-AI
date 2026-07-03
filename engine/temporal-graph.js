@@ -168,10 +168,14 @@
             <button data-m="time" class="active">⏱ color por tiempo</button>
             <button data-m="rel">🔗 color por relación</button>
           </div>
+          <button id="tkg-adv-toggle" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;margin-left:auto">🔬 Análisis avanzado ▾</button>
+        </div>
+
+        <div id="tkg-advanced-row" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px">
           <button id="tkg-simbtn" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">⚡ Modo simulación</button>
-          <button id="tkg-chokepoints" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🏛 Chokepoints</button>
-          <button id="tkg-exposure" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🎯 Mi exposición</button>
-          <button id="tkg-reset" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;display:none">↺ Reiniciar</button>
+          <button id="tkg-chokepoints" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink-2);cursor:pointer">🏛 Chokepoints</button>
+          <button id="tkg-exposure" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink-2);cursor:pointer">🎯 Mi exposición</button>
+          <button id="tkg-reset" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink-2);cursor:pointer;display:none">↺ Reiniciar</button>
           <span id="tkg-simhint" style="font-size:11px;color:var(--ink-3)"></span>
         </div>
 
@@ -222,6 +226,18 @@
     // Lote 2 (insights de inversión)
     panel.querySelector('#tkg-chokepoints').addEventListener('click', () => _runChokepoints());
     panel.querySelector('#tkg-exposure').addEventListener('click', () => _runExposure());
+
+    // Simplicidad por defecto: las herramientas avanzadas (simulación, chokepoints,
+    // exposición) empiezan ocultas — un clic las revela para quien las quiera.
+    panel.querySelector('#tkg-adv-toggle').addEventListener('click', () => {
+      const row = panel.querySelector('#tkg-advanced-row');
+      const btn = panel.querySelector('#tkg-adv-toggle');
+      const show = row.style.display === 'none';
+      row.style.display = show ? 'flex' : 'none';
+      btn.textContent = show ? '🔬 Análisis avanzado ▴' : '🔬 Análisis avanzado ▾';
+      btn.style.color = show ? 'var(--violet)' : 'var(--ink-2)';
+      btn.style.borderColor = show ? 'var(--violet)' : 'var(--line)';
+    });
 
     // El dibujo del grafo en su propio try: si el SVG falla, la UI (título,
     // línea de tiempo, lista de Hechos) sigue viva.
