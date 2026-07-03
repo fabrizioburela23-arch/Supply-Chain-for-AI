@@ -1409,6 +1409,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <button class="tab" data-tab="terminal" id="tab-terminal">⬛ <span>Terminal</span></button>
     <button class="tab" data-tab="canvas" id="tab-canvas">✦ <span>Canvas IA</span></button>
     <button class="tab" data-tab="tkg" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
+    <button class="tab" data-tab="guia" id="tab-guia">❓ <span>Guía</span></button>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -2048,6 +2049,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
      heredar el layout flex igual que canvas-panel; si va fuera, fluye debajo de
      .app (pantalla completa) y queda fuera de la vista ===== -->
 <section id="tkg-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
+<section id="guia-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 
 </div><!-- /.app -->
 
@@ -6343,7 +6345,7 @@ function switchTab(tab){
   document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   const isMap=tab==='map', isAnalysis=tab==='analysis', isGeo=tab==='geo';
   const isSim=tab==='simulation', isSpace=tab==='space', isTerm=tab==='terminal';
-  const isCanvas=tab==='canvas', isTkg=tab==='tkg';
+  const isCanvas=tab==='canvas', isTkg=tab==='tkg', isGuia=tab==='guia';
   document.querySelector('main').style.display = isMap?'flex':'none';
   document.getElementById('toolbar').style.display = isMap?'flex':'none';
   document.getElementById('market').style.display = tab==='market'?'block':'none';
@@ -6361,12 +6363,14 @@ function switchTab(tab){
   if(cvEl) cvEl.style.display = isCanvas?'flex':'none';
   const tkgEl=document.getElementById('tkg-panel');
   if(tkgEl) tkgEl.style.display = isTkg?'block':'none';
+  const guiaEl=document.getElementById('guia-panel');
+  if(guiaEl) guiaEl.style.display = isGuia?'block':'none';
   // Animate
   const _tabEls = [
     isMap && document.querySelector('main'),
     tab==='market' && document.getElementById('market'),
     isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
-    isTerm && termEl, isCanvas && cvEl, isTkg && tkgEl,
+    isTerm && termEl, isCanvas && cvEl, isTkg && tkgEl, isGuia && guiaEl,
   ].filter(Boolean);
   _tabEls.forEach(el => {
     el.classList.remove('tab-anim-in');
@@ -6382,6 +6386,7 @@ function switchTab(tab){
   else if(isTerm){ initTerminalTab(); }
   else if(isCanvas){ initCanvasTab(); }
   else if(isTkg){ if(typeof initTKGTab==='function') initTKGTab(); }
+  else if(isGuia){ if(typeof initGuiaTab==='function') initGuiaTab(); }
   else {
     if(SERVER_MODE){ document.getElementById('mk-key-btn').style.display='none'; document.getElementById('mk-keyrow').style.display='none'; }
     renderMarket();
@@ -8778,6 +8783,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="nodes/ontology_facts.js"></script>
 <script src="engine/temporal-graph.js"></script>
 <script src="engine/khipu_lang.js"></script>
+<script src="engine/guide.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
