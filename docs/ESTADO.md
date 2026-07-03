@@ -225,13 +225,31 @@ haya una demo en vivo horas después.
       con frases como "comprar 10 NVDA"), maneja bien la ausencia de
       `__tkgSetDate`/red sin romper.
 
-## Fase 5
+## Fase 5 — PROFUNDIDAD DE DATO + LINAJE
 
-No iniciada. Ver roadmap — buena parte de sus entregables (precios en vivo,
-fundamentales, diagnóstico de pipelines) ya existían antes de esta sesión de
-ontología; falta específicamente el linaje visible (tooltip ⓘ fuente/
-antigüedad) y extender 🩺 con staleness. El "dato alternativo nuevo" (fabs o
-CelesTrak↔contratos) el roadmap mismo lo marca como sesión aparte al final.
+**Estado: ✅ COMPLETA (alcance recortado a propósito, ver nota)**
+
+Buena parte de los entregables de esta fase (precios en vivo, fundamentales
+FMP, diagnóstico de pipelines) ya existían antes de esta sesión de
+ontología — no se reconstruyeron. Lo que sí se añadió:
+
+- [x] Ficha de objeto (Grafo Temporal): linaje visible con ⓘ —
+      precio: "Finnhub/FMP · hace Ns/min/h"; NRS: "calculado (fórmula)" o,
+      si se fijó vía la Acción `MarcarRiesgo`, "fijado manualmente por
+      <quién> — <razón>" (consulta aparte a `/api/ontology/objects/<id>`,
+      no bloquea el render inicial de la ficha).
+- [x] 🩺 diagnóstico → "Ontología": ahora incluye el evento más reciente
+      (fecha + fuente) — primera señal de "qué tan fresca" está la ontología.
+- ⏸️ **Diferido a propósito**: el "dato alternativo nuevo" (calendario de
+  capex/fabs, o cruce CelesTrak↔contratos de lanzamiento) — el roadmap
+  mismo lo marca como "sesión aparte al final", no parte de la secuencia
+  principal. WebSocket de precios en tiempo real tampoco se implementó
+  (la infraestructura de polling ya existente cubre la necesidad sin
+  añadir una pieza de infraestructura nueva el mismo día).
+
+## Roadmap completo: Fases 0-5 implementadas (con las notas de alcance de
+## arriba). Ver también la sección "Fase 3" para el detalle del framework de
+## agentes y "Fase 4" para el lenguaje KHIPU + alertas.
 
 ## Contexto de sesión previo a la ontología (para no reconstruir)
 

@@ -559,8 +559,10 @@ def _diag_ontologia():
             n_obj = s.query(ObjectRecord).count()
             n_link = s.query(LinkRecord).count()
             n_ev = s.query(Event).count()
+            last_ev = s.query(Event).order_by(Event.recorded_at.desc()).first()
+        lineage = f' · último evento: {last_ev.recorded_at.strftime("%Y-%m-%d %H:%M UTC")} ({last_ev.source})' if last_ev else ''
         return {'configured': True, 'ok': True,
-                'detail': f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.'}
+                'detail': f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.{lineage}'}
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'detail': 'Ontología configurada pero no conecta: ' + _diag_redact(e)}
 

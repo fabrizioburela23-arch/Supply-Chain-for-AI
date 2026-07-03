@@ -695,18 +695,27 @@
     up = up.slice(0, 8); down = down.slice(0, 8);
     const rounds = (window.PREIPO_INTEL && window.PREIPO_INTEL[id] && window.PREIPO_INTEL[id].rounds) || [];
 
+    // Linaje (Fase 5): de dónde sale el dato y qué tan viejo es.
+    const _ageStr = ms => {
+      const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
+      if (s < 60) return `hace ${s}s`;
+      if (s < 3600) return `hace ${Math.round(s / 60)}min`;
+      return `hace ${Math.round(s / 3600)}h`;
+    };
+    const priceLineage = (window.MKT && window.MKT.ts) ? `Finnhub/FMP · ${_ageStr(window.MKT.ts)}` : '';
     const priceHtml = q
-      ? `<div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 8px">
+      ? `<div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 2px">
            <span style="font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--ink-1)">$${q.close.toFixed(2)}</span>
            ${q.pct != null ? `<span style="font-size:13px;font-weight:700;color:${q.pct >= 0 ? '#43C896' : '#FF6B5C'}">${q.pct >= 0 ? '▲' : '▼'} ${Math.abs(q.pct).toFixed(2)}%</span>` : ''}
-           <span class="live-pill on" style="margin-left:auto"><span class="live-dot"></span>LIVE</span>
-         </div>`
+           <span class="live-pill on" style="margin-left:auto" title="${esc(priceLineage)}"><span class="live-dot"></span>LIVE</span>
+         </div>${priceLineage ? `<div style="font-size:10px;color:var(--ink-3);margin-bottom:8px">ⓘ ${esc(priceLineage)}</div>` : '<div style="margin-bottom:8px"></div>'}`
       : (isCompany ? `<div style="font-size:12px;color:var(--preipo);margin:2px 0 8px">${node && node.preipo ? '◆ Pre-IPO / privada' : (mkt ? 'sin cotización en vivo' : 'no cotiza')}${node && node.ticker ? ' · ' + esc(node.ticker) : ''}</div>` : '');
 
     const nrsHtml = nrs != null
-      ? `<div style="margin:6px 0 10px">
+      ? `<div style="margin:6px 0 4px">
            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3)"><span>Riesgo NRS</span><span style="color:${nrs >= 70 ? '#FF6B5C' : nrs >= 40 ? '#E0B25C' : '#43C896'};font-weight:700">${nrs}/100</span></div>
            <div style="height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${nrs}%;background:${nrs >= 70 ? '#FF6B5C' : nrs >= 40 ? '#E0B25C' : '#43C896'}"></div></div>
+           <div id="tkg-obj-nrs-lineage" style="font-size:10px;color:var(--ink-3);margin-top:3px">ⓘ calculado (geo + cadena + margen + concentración)</div>
          </div>` : '';
 
     const chipRow = (arr, dir) => arr.length ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${arr.map(x => `<span title="${esc(x.rel || '')}" onclick="window.__tkgOpenObj&&window.__tkgOpenObj('${x.id}')" style="cursor:pointer;font-size:10.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px 7px">${dir}${esc(x.label)}</span>`).join('')}</div>` : '<div style="font-size:11px;color:var(--ink-3);margin-top:3px">—</div>';
@@ -753,6 +762,21 @@
     const bNews = p.querySelector('#tkg-obj-news'); if (bNews) bNews.onclick = () => _objNews(id, e.label, mkt);
     const bAction = p.querySelector('#tkg-obj-action'); if (bAction) bAction.onclick = () => _toggleActionForm(id, isCompany, e.label);
     _renderActionLog(id);
+    if (isCompany) _loadNrsLineage(id);
+  }
+
+  // Linaje del NRS (Fase 5): si la ontología tiene un nrs_override (fijado vía
+  // la Acción MarcarRiesgo), lo mostramos con quién y por qué en vez del texto
+  // genérico "calculado". Consulta aparte para no bloquear el render inicial.
+  function _loadNrsLineage(id) {
+    const el = document.getElementById('tkg-obj-nrs-lineage'); if (!el) return;
+    fetch(`${_base()}/api/ontology/objects/${encodeURIComponent(id)}`)
+      .then(r => r.ok ? r.json() : null).then(d => {
+        const props = d && d.properties; if (!props || props.nrs_override == null) return;
+        const who = props.nrs_override_by ? ' por ' + props.nrs_override_by : '';
+        const why = props.nrs_override_reason ? ' — ' + props.nrs_override_reason : '';
+        el.textContent = `ⓘ fijado manualmente${who}${why}`;
+      }).catch(() => {});
   }
 
   // ── Acciones (Fase 2): escritura humana auditada — CrearTesis, Anotar,
