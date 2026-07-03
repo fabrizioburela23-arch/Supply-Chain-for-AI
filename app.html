@@ -7504,6 +7504,7 @@ const DIAG_META = {
   rag:        { icon:'🧠', name:'Second Brain (RAG)',  why:'Búsqueda semántica · contexto de Bixby' },
   finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo del terminal' },
   grafo:      { icon:'◈',  name:'Grafo Temporal',       why:'Memoria temporal (nativa · Neo4j opcional)' },
+  ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', why:'Fuente única de verdad · eventos bitemporales' },
   market_extra:{icon:'🗂', name:'Fuentes de respaldo', why:'FMP · MarketStack · AlphaVantage' },
 };
 function _diagDot(s){
@@ -7539,7 +7540,7 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','gemini','nvidia','elevenlabs','mirofish','rag','finnhub','grafo','market_extra'];
+    const order = ['claude','gemini','nvidia','elevenlabs','mirofish','rag','finnhub','grafo','ontologia','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
