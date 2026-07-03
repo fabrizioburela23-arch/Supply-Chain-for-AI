@@ -1373,6 +1373,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn" id="lang-toggle" title="Español / English" style="width:auto;padding:0 10px;font-size:11px;font-weight:700">EN</button>
       <button class="icon-btn" id="theme-toggle" title="Modo claro/oscuro">◐</button>
       <button class="icon-btn" id="diag-btn" title="Estado del sistema — prueba en vivo de keys y servicios" aria-label="Estado del sistema" onclick="window.openDiagnostics&&window.openDiagnostics()">🩺</button>
+      <button class="icon-btn" id="registro-btn" title="Registro de Acciones — tesis, decisiones y anotaciones auditadas" aria-label="Registro de Acciones" onclick="window.openRegistro&&window.openRegistro()">📋</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
       <button class="icon-btn" id="toggle-3d-btn" title="Grafo de Conocimiento Temporal — línea de tiempo interactiva de hechos con validez" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="switchTab('tkg')">◈ Temporal</button>
@@ -2064,6 +2065,21 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <span id="diag-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
   </div>
   <div id="diag-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando diagnóstico…</div></div>
+</aside>
+
+<!-- ── Registro de Acciones (Fase 2 de la ontología) ─────────────────────── -->
+<div class="settings-overlay" id="registro-overlay" onclick="window.closeRegistro&&window.closeRegistro()"></div>
+<aside class="settings-panel" id="registro-panel" aria-label="Registro de Acciones" style="width:480px">
+  <div class="settings-head">
+    <h2>📋 Registro de Acciones</h2>
+    <button class="icon-btn" id="registro-close" aria-label="Cerrar" onclick="window.closeRegistro&&window.closeRegistro()">✕</button>
+  </div>
+  <p class="settings-sub">Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.</p>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <input id="registro-filter-actor" placeholder="Filtrar por autor…" style="flex:1;min-width:140px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:12.5px">
+    <button class="key-btn" id="registro-refresh" onclick="window.openRegistro&&window.openRegistro(true)" style="flex:0 0 auto">↻ Actualizar</button>
+  </div>
+  <div id="registro-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando registro…</div></div>
 </aside>
 
 <div class="settings-overlay" id="settings-overlay"></div>
@@ -7555,6 +7571,64 @@ window.closeDiagnostics = function(){
   $('diag-overlay').classList.remove('show');
   $('diag-panel').classList.remove('show');
 };
+
+/* ── Registro de Acciones (Fase 2 — ontología) ──────────────────────────── */
+function _registroActionMeta(a){
+  const M = {
+    CrearTesis:{icon:'📋',label:'Tesis'}, MarcarRiesgo:{icon:'⚠',label:'Riesgo marcado'},
+    RegistrarDecision:{icon:'🗳',label:'Decisión'}, AnotarObjeto:{icon:'✎',label:'Anotación'},
+    ProponerVinculo:{icon:'🔗',label:'Vínculo propuesto'}, ConfirmarVinculo:{icon:'✓',label:'Vínculo confirmado'},
+    RechazarVinculo:{icon:'✗',label:'Vínculo rechazado'}, AjustarPosicion:{icon:'📊',label:'Posición ajustada'},
+    CorregirDato:{icon:'✒',label:'Dato corregido'},
+  };
+  return M[a] || {icon:'•', label:a||'Acción'};
+}
+function _registroCard(a){
+  const m = _registroActionMeta(a.action);
+  const p = a.payload||{};
+  const detail = p.rationale || p.razon || p.decision || p.texto || (p.campo ? `${p.campo}: ${p.valor_anterior} → ${p.valor_nuevo}` : '') || '';
+  const objId = a.object_id || a.target_id || '';
+  const objLabel = (window.NODE_BY_ID && window.NODE_BY_ID[objId] && window.NODE_BY_ID[objId].label) || objId;
+  const when = a.recorded_at ? new Date(a.recorded_at).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  return `<div style="border:1px solid var(--line);border-left:3px solid #43C896;border-radius:8px;padding:11px 14px;margin-bottom:9px;background:var(--surface-2,rgba(255,255,255,.02))">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+      <span style="font-size:13px">${m.icon}</span>
+      <b style="font-size:13px;flex:1">${m.label}${objLabel?' · '+esc(objLabel):''}</b>
+      <span style="font-size:10px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">${when}</span>
+    </div>
+    <div style="font-size:11px;color:var(--ink-3);padding-left:21px">por <b style="color:var(--ink-2)">${esc(a.actor||'')}</b></div>
+    ${detail?`<div style="font-size:12px;color:var(--ink-2);padding-left:21px;margin-top:4px;line-height:1.4">${esc(String(detail).slice(0,240))}</div>`:''}
+  </div>`;
+}
+window.openRegistro = async function(fresh){
+  $('registro-overlay').classList.add('show');
+  $('registro-panel').classList.add('show');
+  const body = $('registro-body');
+  if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
+  try{
+    const base = (typeof BASE!=='undefined') ? BASE : '';
+    const actor = ($('registro-filter-actor').value||'').trim();
+    const qs = actor ? `?actor=${encodeURIComponent(actor)}&limit=100` : '?limit=100';
+    const r = await fetch(`${base}/api/ontology/actions${qs}`);
+    if(!r.ok){
+      if(r.status===503){ body.innerHTML = '<div style="padding:20px;color:var(--ink-3);font-size:13px">La ontología no está configurada en este servidor (falta Postgres). El Registro se activa solo cuando existe.</div>'; return; }
+      throw new Error('HTTP '+r.status);
+    }
+    const d = await r.json();
+    if(!d.actions || !d.actions.length){
+      body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Sin acciones registradas todavía. Abre una empresa en ◈ Grafo Temporal → ＋ Acción para crear la primera tesis o anotación.</div>';
+      return;
+    }
+    body.innerHTML = d.actions.map(_registroCard).join('');
+  }catch(e){
+    body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">No se pudo cargar el registro: ${String(e.message||e)}</div>`;
+  }
+};
+window.closeRegistro = function(){
+  $('registro-overlay').classList.remove('show');
+  $('registro-panel').classList.remove('show');
+};
+(function(){ const f=$('registro-filter-actor'); if(f) f.addEventListener('keydown', e=>{ if(e.key==='Enter') window.openRegistro(true); }); })();
 $('pref-live').onchange=e=>{ const p=prefs(); p.live=e.target.checked; savePrefs(p); LivePrices.restart(); DataHealth.render(); };
 $('pref-notif').onchange=e=>{ const p=prefs(); p.notif=e.target.checked; savePrefs(p);
   if(e.target.checked && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); };

@@ -95,12 +95,54 @@ frente al beneficio inmediato. **Recomendación:** hacer el swap completo en
 una sesión dedicada, con checklist de regresión de las 8 pestañas, cuando no
 haya una demo en vivo horas después.
 
-## Fases 2-5
+## Fase 2 — ACCIONES: WRITE-BACK AUDITADO
 
-No iniciadas. Ver roadmap. Con la ontología ya en pie (Fase 1), la Fase 2
-(Acciones: `CrearTesis`, `AnotarObjeto`, `RegistrarDecision`…) puede
-apoyarse directamente en `apply_event()` — el mecanismo de escritura
-auditada ya existe, solo falta el catálogo con validación por tipo y la UI.
+**Estado: ✅ COMPLETA**
+
+- [x] `ontology/actions.py`: catálogo de 9 Acciones con validación Pydantic
+      (equivalente a Zod del roadmap): `CrearTesis`, `AnotarObjeto`,
+      `MarcarRiesgo`, `ProponerVinculo`, `ConfirmarVinculo`, `RechazarVinculo`,
+      `RegistrarDecision`, `AjustarPosicion`, `CorregirDato`.
+- [x] Cada Acción ejecuta su efecto de dominio con eventos normales
+      (`ObjectCreated`/`Updated`, `LinkCreated`) Y deja siempre un evento
+      `ActionExecuted` — el rastro auditable (`actor` obligatorio: "toda
+      Acción queda atribuida a alguien").
+- [x] `execute_action()`: punto de entrada único, valida con el esquema del
+      catálogo y rechaza actor vacío u objeto inexistente antes de escribir
+      nada (rollback automático vía `session_scope`).
+- [x] API: `POST /api/ontology/actions/<tipo>` (body: `{actor, ...campos}`),
+      `GET /api/ontology/actions?actor=&type=&object_id=` (para el Registro).
+- [x] Tests: `tests/test_ontology_actions.py` (10 tests: creación de tesis +
+      vínculo automático, rechazo de stance/actor inválidos, objeto
+      inexistente, `MarcarRiesgo` actualiza propiedades, propuesta→confirmación
+      de vínculo, propuesta→rechazo cierra el intervalo de validez, decisión +
+      ajuste de posición vinculados, corrección de dato con antes/después
+      auditado, registro filtrable y ordenado). 36/36 tests totales del repo.
+- [x] **UI real** (no solo backend):
+      - Botón **"＋ Acción"** en la ficha de objeto del Grafo Temporal
+        (`engine/temporal-graph.js`): formulario compacto según el tipo de
+        objeto (empresas: crear tesis / marcar riesgo / registrar decisión /
+        anotar; objetos de ontología: solo anotar). Pide el nombre del autor
+        una vez (se recuerda en `localStorage`) — sin sistema de login, fuera
+        de alcance de esta fase.
+      - Panel **"📋 Registro"** (overlay global, mismo patrón que 🩺
+        diagnóstico): timeline de todas las Acciones ejecutadas, filtrable
+        por autor, con ícono/etiqueta por tipo y el detalle (razón/rationale).
+      - Debajo de cada ficha de objeto: mini-registro de las últimas acciones
+        sobre ESE objeto específico.
+- [x] **Validado con un caso real**: se usó `CorregirDato` para arreglar el
+      dato de SpaceX (`preipo: true → false`) que motivó gran parte de esta
+      sesión — con auditoría de quién lo corrigió y por qué, en vez de un
+      edit manual silencioso en el código fuente.
+
+## Fases 3-5
+
+No iniciadas. Ver roadmap:
+- Fase 3 (Agentes que proponen, humano aprueba) puede apoyarse en
+  `execute_action()` + una cola `proposed_actions` — el catálogo de
+  Acciones de Fase 2 ya es lo que un agente ejecutaría tras la aprobación.
+- Fase 4 (lenguaje KHIPU + alertas) y Fase 5 (linaje de datos) no dependen
+  de nada pendiente de Fase 1/2 — pueden arrancar cuando se priorice.
 
 ## Contexto de sesión previo a la ontología (para no reconstruir)
 

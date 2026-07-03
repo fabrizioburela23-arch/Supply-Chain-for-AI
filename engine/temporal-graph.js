@@ -731,7 +731,10 @@
           ${isCompany ? `<button id="tkg-obj-map" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🗺 Ver en mapa</button>` : ''}
           <button id="tkg-obj-ai" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">🧠 Bixby analiza</button>
           ${isCompany ? `<button id="tkg-obj-news" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">📰 Noticias</button>` : ''}
+          <button id="tkg-obj-action" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid #43C89688;background:rgba(67,200,150,.10);color:#43C896;cursor:pointer">＋ Acción</button>
         </div>
+        <div id="tkg-obj-action-form" style="display:none;margin:0 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)"></div>
+        <div id="tkg-obj-action-log" style="margin:0 0 4px"></div>
         ${isCompany ? `
           <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px">Depende de (upstream)</div>${chipRow(up, '↑ ')}
           <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-top:8px">Le abastece a (downstream)</div>${chipRow(down, '↓ ')}` : ''}
@@ -748,6 +751,115 @@
     const bMap = p.querySelector('#tkg-obj-map'); if (bMap) bMap.onclick = () => { if (typeof switchTab === 'function') switchTab('map'); if (typeof jumpTo === 'function') setTimeout(() => jumpTo(id), 90); };
     const bAi = p.querySelector('#tkg-obj-ai'); if (bAi) bAi.onclick = () => _objAnalyze(id, e.label, mkt);
     const bNews = p.querySelector('#tkg-obj-news'); if (bNews) bNews.onclick = () => _objNews(id, e.label, mkt);
+    const bAction = p.querySelector('#tkg-obj-action'); if (bAction) bAction.onclick = () => _toggleActionForm(id, isCompany, e.label);
+    _renderActionLog(id);
+  }
+
+  // ── Acciones (Fase 2): escritura humana auditada — CrearTesis, Anotar,
+  // MarcarRiesgo, RegistrarDecision. Cada una pide actor (se recuerda en este
+  // navegador) y queda en el Registro con quién/cuándo/por qué.
+  function _getActor() {
+    try {
+      let a = localStorage.getItem('khipu_actor');
+      if (!a) { a = (window.prompt('¿Cómo te identificamos en el Registro de Acciones? (tu nombre)') || '').trim(); if (a) localStorage.setItem('khipu_actor', a); }
+      return a || 'anónimo';
+    } catch (e) { return 'anónimo'; }
+  }
+
+  const ACTION_FIELDS = {
+    CrearTesis: [
+      { k: 'stance', label: 'Postura', type: 'select', options: [['long', 'Alcista (long)'], ['short', 'Bajista (short)'], ['watch', 'Vigilar'], ['avoid', 'Evitar']] },
+      { k: 'confidence', label: 'Confianza (0-1)', type: 'number', step: '0.05', min: 0, max: 1, value: 0.7 },
+      { k: 'rationale', label: 'Razonamiento', type: 'textarea' },
+    ],
+    MarcarRiesgo: [
+      { k: 'nivel', label: 'Nivel NRS (0-100)', type: 'number', min: 0, max: 100, value: 50 },
+      { k: 'razon', label: 'Razón', type: 'textarea' },
+    ],
+    RegistrarDecision: [
+      { k: 'decision', label: 'Decisión', type: 'textarea' },
+    ],
+    AnotarObjeto: [
+      { k: 'texto', label: 'Nota', type: 'textarea' },
+    ],
+  };
+
+  function _toggleActionForm(id, isCompany, label) {
+    const form = document.getElementById('tkg-obj-action-form'); if (!form) return;
+    const open = form.style.display !== 'none';
+    if (open) { form.style.display = 'none'; return; }
+    const types = isCompany ? ['CrearTesis', 'MarcarRiesgo', 'RegistrarDecision', 'AnotarObjeto'] : ['AnotarObjeto'];
+    const typeLabels = { CrearTesis: '📋 Crear tesis', MarcarRiesgo: '⚠ Marcar riesgo', RegistrarDecision: '🗳 Registrar decisión', AnotarObjeto: '✎ Anotar' };
+    form.innerHTML = `
+      <select id="tkg-act-type" style="width:100%;margin-bottom:8px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-1);font-size:12px">
+        ${types.map(t => `<option value="${t}">${typeLabels[t]}</option>`).join('')}
+      </select>
+      <div id="tkg-act-fields"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <button id="tkg-act-submit" style="font-size:12px;padding:6px 12px;border-radius:7px;border:none;background:#43C896;color:#04241a;font-weight:700;cursor:pointer">Guardar</button>
+        <span id="tkg-act-status" style="font-size:11.5px;color:var(--ink-3)"></span>
+      </div>`;
+    form.style.display = 'block';
+    const sel = form.querySelector('#tkg-act-type');
+    const renderFields = () => {
+      const fields = ACTION_FIELDS[sel.value] || [];
+      form.querySelector('#tkg-act-fields').innerHTML = fields.map(f => {
+        const base = `id="tkg-f-${f.k}" style="width:100%;margin-bottom:6px;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-1);font-size:12px"`;
+        if (f.type === 'select') return `<label style="font-size:10.5px;color:var(--ink-3)">${f.label}</label><select ${base}>${f.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select>`;
+        if (f.type === 'textarea') return `<label style="font-size:10.5px;color:var(--ink-3)">${f.label}</label><textarea ${base} rows="2"></textarea>`;
+        return `<label style="font-size:10.5px;color:var(--ink-3)">${f.label}</label><input ${base} type="number" step="${f.step || '1'}" min="${f.min}" max="${f.max}" value="${f.value != null ? f.value : ''}">`;
+      }).join('');
+    };
+    sel.addEventListener('change', renderFields);
+    renderFields();
+    form.querySelector('#tkg-act-submit').onclick = () => _submitAction(id, sel.value, form);
+  }
+
+  function _submitAction(id, actionType, form) {
+    const status = form.querySelector('#tkg-act-status');
+    const fields = ACTION_FIELDS[actionType] || [];
+    const body = { actor: _getActor() };
+    if (actionType === 'CrearTesis') body.company_id = id;
+    if (actionType === 'MarcarRiesgo') body.company_id = id;
+    if (actionType === 'RegistrarDecision') body.company_id = id;
+    if (actionType === 'AnotarObjeto') body.object_id = id;
+    fields.forEach(f => {
+      const el = form.querySelector(`#tkg-f-${f.k}`);
+      if (!el) return;
+      body[f.k] = f.type === 'number' ? parseFloat(el.value) : el.value;
+    });
+    status.textContent = 'guardando…'; status.style.color = 'var(--ink-3)';
+    const base = _base();
+    fetch(`${base}/api/ontology/actions/${actionType}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+      if (ok) {
+        status.textContent = '✓ guardado'; status.style.color = '#43C896';
+        form.style.display = 'none';
+        _renderActionLog(id);
+      } else {
+        status.textContent = '⚠ ' + (d.error || 'error'); status.style.color = '#f87171';
+      }
+    }).catch(() => { status.textContent = '⚠ error de red'; status.style.color = '#f87171'; });
+  }
+
+  function _renderActionLog(id) {
+    const el = document.getElementById('tkg-obj-action-log'); if (!el) return;
+    const base = _base();
+    fetch(`${base}/api/ontology/actions?object_id=${encodeURIComponent(id)}&limit=6`)
+      .then(r => r.ok ? r.json() : null).then(d => {
+        if (!d || !d.actions || !d.actions.length) { el.innerHTML = ''; return; }
+        el.innerHTML = `<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px">Registro</div>` +
+          d.actions.map(a => {
+            const when = a.recorded_at ? new Date(a.recorded_at).toLocaleDateString('es', { day: '2-digit', month: 'short' }) : '';
+            const p = a.payload || {};
+            const detail = p.rationale || p.razon || p.decision || p.texto || '';
+            return `<div style="font-size:11.5px;color:var(--ink-2);padding:3px 0;line-height:1.4">
+              <b style="color:#43C896">${esc(a.action || '')}</b> · ${esc(a.actor || '')} · <span style="color:var(--ink-3)">${when}</span>
+              ${detail ? '<br><span style="color:var(--ink-3)">' + esc(String(detail).slice(0, 140)) + '</span>' : ''}
+            </div>`;
+          }).join('');
+      }).catch(() => { el.innerHTML = ''; });
   }
 
   function _objAnalyze(id, label, mkt) {

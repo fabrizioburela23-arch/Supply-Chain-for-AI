@@ -138,6 +138,47 @@ def graph_diff():
         return jsonify(diff_graph(s, from_dt, to_dt))
 
 
+def _action_event_to_dict(e):
+    p = e.payload or {}
+    return {'id': str(e.id), 'action': p.get('action'), 'object_id': e.object_id,
+            'target_id': e.target_id, 'payload': p, 'actor': e.actor, 'source': e.source,
+            'recorded_at': e.recorded_at.isoformat() if e.recorded_at else None}
+
+
+@ontology_bp.route('/actions', methods=['GET'])
+@_require_db
+def actions_list():
+    """Panel '📋 Registro': timeline de Acciones ejecutadas, filtrable."""
+    from ontology.actions import list_actions
+    actor = request.args.get('actor')
+    action_type = request.args.get('type')
+    object_id = request.args.get('object_id')
+    limit = int(request.args.get('limit', 100))
+    with session_scope() as s:
+        events = list_actions(s, actor=actor, action_type=action_type, object_id=object_id, limit=limit)
+        return jsonify({'count': len(events), 'actions': [_action_event_to_dict(e) for e in events]})
+
+
+@ontology_bp.route('/actions/<action_type>', methods=['POST'])
+@_require_db
+def actions_execute(action_type):
+    """Catálogo de Acciones (Fase 2): CrearTesis, AnotarObjeto, MarcarRiesgo,
+    ProponerVinculo, Confirmar/RechazarVinculo, RegistrarDecision,
+    AjustarPosicion, CorregirDato. Body: {actor, ...campos del esquema}."""
+    from ontology.actions import execute_action, ActionError
+    body = request.get_json(force=True, silent=True) or {}
+    actor = body.pop('actor', None)
+    body.pop('action', None)  # por si el cliente reenvía el nombre dentro del body
+    try:
+        with session_scope() as s:
+            result = execute_action(s, action_type, body, actor)
+            return jsonify({'status': 'ok', 'action': action_type, 'result': result})
+    except ActionError as e:
+        return jsonify({'error': str(e)}), 400
+    except OntologyError as e:
+        return jsonify({'error': str(e)}), 400
+
+
 @ontology_bp.route('/events', methods=['POST'])
 @_require_db
 def events_create():
