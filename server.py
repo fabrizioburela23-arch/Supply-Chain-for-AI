@@ -118,6 +118,11 @@ SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
 ALPACA_KEY          = os.getenv('ALPACA_KEY', '')
 ALPACA_SECRET       = os.getenv('ALPACA_SECRET', '')
 ALPACA_BASE         = os.getenv('ALPACA_BASE', 'https://paper-api.alpaca.markets')
+# PIN que protege TODAS las rutas /api/trade/* (operan dinero real vía Alpaca).
+# Sin TRADE_PIN configurado, el trading queda DESHABILITADO (seguro por defecto).
+TRADE_PIN           = os.getenv('TRADE_PIN', '')
+# Secreto de administrador para emitir claves /v1 de tiers de pago.
+KHIPU_ADMIN_SECRET  = os.getenv('KHIPU_ADMIN_SECRET', '')
 
 if SECRET_KEY == 'khipu-dev-secret-change-me':
     log.warning('⚠️  SECRET_KEY is default — set SECRET_KEY env var in Railway before going live')
@@ -856,7 +861,28 @@ def _alpaca_hdrs():
         'Content-Type': 'application/json',
     }
 
+
+def _trade_auth(f):
+    """Exige el PIN de trading (header X-Trade-Pin == env TRADE_PIN).
+
+    Estas rutas mueven dinero real en Alpaca y exponen datos de la cuenta:
+    sin este guard, cualquiera con la URL pública puede operar. Sin TRADE_PIN
+    en el entorno el trading queda deshabilitado por completo."""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not TRADE_PIN:
+            return jsonify({'error': 'Trading deshabilitado — configura TRADE_PIN en Railway',
+                            'code': 'trading_disabled'}), 403
+        pin = request.headers.get('X-Trade-Pin', '')
+        if not hmac.compare_digest(pin, TRADE_PIN):
+            return jsonify({'error': 'PIN de trading incorrecto o faltante',
+                            'code': 'invalid_pin'}), 401
+        return f(*args, **kwargs)
+    return wrapper
+
+
 @app.route('/api/trade/account', methods=['GET'])
+@_trade_auth
 def trade_account():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
@@ -871,6 +897,7 @@ def trade_account():
         return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
 
 @app.route('/api/trade/positions', methods=['GET'])
+@_trade_auth
 def trade_positions():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
@@ -882,6 +909,7 @@ def trade_positions():
         return jsonify({'error': str(e)[:200]}), 502
 
 @app.route('/api/trade/orders', methods=['GET'])
+@_trade_auth
 def trade_orders():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
@@ -894,6 +922,7 @@ def trade_orders():
 
 @app.route('/api/trade/order', methods=['POST'])
 @rate_limit(20, 60)
+@_trade_auth
 def trade_order():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
@@ -2356,6 +2385,12 @@ def api_issue_key():
     tier = body.get('tier', 'free')
     if tier not in TIER_DAY_LIMITS:
         return jsonify({'error': f'Unknown tier. Valid: {list(TIER_DAY_LIMITS.keys())}'}), 400
+    # Solo el tier 'free' es de autoservicio; los de pago exigen la credencial
+    # de administrador (antes cualquiera podía emitirse una clave enterprise)
+    if tier != 'free':
+        admin = request.headers.get('X-Admin-Secret', '')
+        if not KHIPU_ADMIN_SECRET or not hmac.compare_digest(admin, KHIPU_ADMIN_SECRET):
+            return jsonify({'error': 'Paid tiers require admin credential (X-Admin-Secret)'}), 403
     key = generate_khipu_key(user_id, tier)
     return jsonify({'api_key': key, 'tier': tier, 'user_id': user_id, 'note': 'Pass as X-KHIPU-Key header or ?api_key= query param'})
 
@@ -2730,16 +2765,16 @@ def _agent_get_positions() -> dict:
     return {}
 
 
-def _agent_get_equity() -> float:
+def _agent_get_account() -> dict:
     if not ALPACA_KEY:
-        return 0.0
+        return {}
     try:
         r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
         if r.status_code == 200:
-            return float(r.json().get('equity', 0) or 0)
+            return r.json() or {}
     except Exception:  # noqa: BLE001
         pass
-    return 0.0
+    return {}
 
 
 def _agent_place(ticker: str, side: str, notional: float) -> dict:
@@ -2758,10 +2793,17 @@ def _agent_place(ticker: str, side: str, notional: float) -> dict:
 def _agent_run_cycle():
     """One analysis + execution cycle for all tickers in universe."""
     log_entries = _AGENT['log']
-    equity = _agent_get_equity()
+    account = _agent_get_account()
+    equity = float(account.get('equity', 0) or 0)
     if equity <= 0 and ALPACA_KEY:
         log_entries.append({'ts': time.strftime('%H:%M:%S'), 'msg': '⚠️ Could not fetch equity', 'level': 'warn'})
         return
+
+    # P&L real del día desde Alpaca (equity vs cierre de ayer) — sin esto el
+    # circuit-breaker de abajo nunca puede saltar
+    last_equity = float(account.get('last_equity', 0) or 0)
+    if last_equity > 0:
+        _AGENT['daily_pnl_pct'] = (equity - last_equity) / last_equity * 100
 
     # check daily circuit-breaker
     if _AGENT['daily_pnl_pct'] <= -_AGENT['max_daily_loss_pct']:
@@ -2771,6 +2813,29 @@ def _agent_run_cycle():
         return
 
     positions = _agent_get_positions()
+
+    # stop-loss por posición: cierra las que exceden la pérdida configurada
+    if _AGENT['mode'] == 'auto':
+        for sym, p in list(positions.items()):
+            try:
+                pl_pct = float(p.get('unrealized_plpc') or 0) * 100
+                qty = float(p.get('qty') or 0)
+            except (TypeError, ValueError):
+                continue
+            if qty and pl_pct <= -_AGENT['stop_loss_pct']:
+                try:
+                    body = {'symbol': sym, 'qty': str(abs(qty)),
+                            'side': 'sell' if qty > 0 else 'buy',
+                            'type': 'market', 'time_in_force': 'day'}
+                    requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(),
+                                  json=body, timeout=15)
+                    log_entries.append({'ts': time.strftime('%H:%M:%S'), 'ticker': sym,
+                                        'msg': f'🛑 Stop-loss {pl_pct:.1f}% — posición cerrada',
+                                        'level': 'warn'})
+                    positions.pop(sym, None)
+                except Exception as e:  # noqa: BLE001
+                    log_entries.append({'ts': time.strftime('%H:%M:%S'), 'ticker': sym,
+                                        'msg': f'Stop-loss error: {str(e)[:60]}', 'level': 'error'})
 
     for ticker in _AGENT['universe']:
         if not _AGENT['running']:
@@ -2855,6 +2920,7 @@ def _agent_thread_fn():
 
 @app.route('/api/trade/agent/start', methods=['POST'])
 @rate_limit(limit=10, window=60)
+@_trade_auth
 def agent_start():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
@@ -2879,12 +2945,14 @@ def agent_start():
 
 @app.route('/api/trade/agent/stop', methods=['POST'])
 @rate_limit(limit=20, window=60)
+@_trade_auth
 def agent_stop():
     _AGENT['running'] = False
     return jsonify({'status': 'stopping'})
 
 
 @app.route('/api/trade/agent/status', methods=['GET'])
+@_trade_auth
 def agent_status():
     return jsonify({
         'running': _AGENT['running'],
@@ -2903,6 +2971,7 @@ def agent_status():
 
 @app.route('/api/trade/agent/config', methods=['POST'])
 @rate_limit(limit=20, window=60)
+@_trade_auth
 def agent_config():
     data = request.get_json(silent=True) or {}
     if 'mode'               in data: _AGENT['mode']             = data['mode']
@@ -2915,6 +2984,7 @@ def agent_config():
 
 
 @app.route('/api/trade/history', methods=['GET'])
+@_trade_auth
 def trade_history():
     if not ALPACA_KEY:
         return jsonify([])
@@ -2927,6 +2997,7 @@ def trade_history():
 
 
 @app.route('/api/trade/positions/detail', methods=['GET'])
+@_trade_auth
 def trade_positions_detail():
     if not ALPACA_KEY:
         return jsonify([])

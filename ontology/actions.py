@@ -173,7 +173,15 @@ def _resolver_vinculo(session, inp: ResolverVinculoInput, actor, resolution):
     props[f'{resolution}_by'] = actor
     link.properties = props
     if resolution == 'rejected':
-        link.valid_to = _utcnow()  # deja de estar vigente desde ahora
+        # El cierre va como EVENTO (no mutación directa): sin LinkRemoved en el
+        # log, el replay as_of mostraba los vínculos rechazados como vigentes
+        # para siempre. apply_event materializa el valid_to por nosotros.
+        apply_event(session, 'LinkRemoved', {
+            'rel_type': link.rel_type,
+            'properties': {'reason': 'rejected', 'rejected_by': actor,
+                           'link_id': inp.link_id},
+        }, valid_from=_utcnow(), source='manual', actor=actor,
+            object_id=link.source_id, target_id=link.target_id)
     _log_action(session, 'ConfirmarVinculo' if resolution == 'confirmed' else 'RechazarVinculo',
                 link.source_id, link.target_id, {'link_id': inp.link_id, 'resolution': resolution}, actor)
     return {'link_id': inp.link_id, 'status': resolution}

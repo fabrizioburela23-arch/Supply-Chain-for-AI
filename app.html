@@ -11596,6 +11596,29 @@ window.loadTradeFlows = loadTradeFlows;
     updateTradePanelRisk();
   };
 
+  // ── PIN de trading ────────────────────────────────────────────────────────
+  // El server exige X-Trade-Pin (env TRADE_PIN) en todas las rutas /api/trade/*.
+  // Se pide UNA vez al usuario en una acción interactiva y se recuerda.
+  function _tradePin(interactive) {
+    let pin = localStorage.getItem('khipu_trade_pin') || '';
+    if (!pin && interactive) {
+      pin = prompt('PIN de trading (el valor de TRADE_PIN configurado en Railway):') || '';
+      if (pin) localStorage.setItem('khipu_trade_pin', pin);
+    }
+    return pin;
+  }
+  async function _tradeFetch(url, opts, interactive) {
+    const o = Object.assign({}, opts);
+    o.headers = Object.assign({}, o.headers, { 'X-Trade-Pin': _tradePin(interactive) });
+    let r = await fetch(url, o);
+    if (r.status === 401 && interactive) {
+      localStorage.removeItem('khipu_trade_pin');
+      o.headers['X-Trade-Pin'] = _tradePin(true);
+      r = await fetch(url, o);
+    }
+    return r;
+  }
+
   window.submitTradePanelOrder = async function() {
     const ticker = _tp && _tp.ticker;
     const qtyEl = document.getElementById('tp-qty');
@@ -11619,7 +11642,7 @@ window.loadTradeFlows = loadTradeFlows;
 
     let realOk = false;
     try {
-      const r = await fetch('/api/trade/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      const r = await _tradeFetch('/api/trade/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }, true);
       const d = await r.json().catch(() => ({ error: 'respuesta inválida del servidor' }));
       if (d.id || d.status === 'accepted' || d.status === 'pending_new') {
         realOk = true;
@@ -11653,7 +11676,7 @@ window.loadTradeFlows = loadTradeFlows;
 
   async function _tpLoadAccount() {
     try {
-      const d = await fetch('/api/trade/account').then(r=>r.json());
+      const d = await _tradeFetch('/api/trade/account').then(r=>r.json());
       if (d.buying_power) {
         _tp.buyingPower = parseFloat(d.buying_power);
         document.getElementById('tp-account-info').textContent =
@@ -11700,7 +11723,7 @@ window.loadTradeFlows = loadTradeFlows;
     const tbody = document.getElementById('tp-positions-body');
     if (!tbody) return;
     try {
-      const d = await fetch('/api/trade/positions/detail').then(r=>r.json());
+      const d = await _tradeFetch('/api/trade/positions/detail').then(r=>r.json());
       if (!Array.isArray(d) || !d.length) {
         tbody.innerHTML = '<tr><td colspan="6" style="color:rgba(229,226,225,0.3);text-align:center;padding:16px">Sin posiciones abiertas</td></tr>';
         return;
@@ -11723,7 +11746,7 @@ window.loadTradeFlows = loadTradeFlows;
     const el = document.getElementById('tp-blotter-body');
     if (!el) return;
     try {
-      const d = await fetch('/api/trade/history').then(r=>r.json());
+      const d = await _tradeFetch('/api/trade/history').then(r=>r.json());
       if (!Array.isArray(d) || !d.length) { el.textContent = 'Sin órdenes recientes'; return; }
       el.innerHTML = d.slice(0,20).map(o => {
         const ts = new Date(o.created_at||'').toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
@@ -11742,7 +11765,7 @@ window.loadTradeFlows = loadTradeFlows;
 
   window._tpRefreshAgentStatus = async function() {
     try {
-      const d = await fetch('/api/trade/agent/status').then(r=>r.json());
+      const d = await _tradeFetch('/api/trade/agent/status').then(r=>r.json());
       _tp.agentRunning = d.running;
       const badge = document.getElementById('tp-agent-badge');
       const btn   = document.getElementById('tp-agent-start-btn');
@@ -11781,7 +11804,7 @@ window.loadTradeFlows = loadTradeFlows;
 
   window.toggleTradingAgent = async function() {
     if (_tp.agentRunning) {
-      await fetch('/api/trade/agent/stop', {method:'POST'});
+      await _tradeFetch('/api/trade/agent/stop', {method:'POST'}, true);
       setTimeout(_tpRefreshAgentStatus, 500);
     } else {
       const body = {
@@ -11792,7 +11815,7 @@ window.loadTradeFlows = loadTradeFlows;
         max_daily_loss_pct: parseFloat(document.getElementById('tp-agent-maxloss').value),
         universe: NODES.filter(n=>n.mkt).map(n=>n.mkt).filter(Boolean).slice(0,30),
       };
-      await fetch('/api/trade/agent/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+      await _tradeFetch('/api/trade/agent/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}, true);
       setTimeout(_tpRefreshAgentStatus, 800);
     }
   };

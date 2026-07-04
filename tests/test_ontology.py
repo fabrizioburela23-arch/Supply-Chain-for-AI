@@ -106,6 +106,89 @@ def test_link_removed_closes_interval(db):
     assert ('Supplier', 'ACME') not in removed_pairs
 
 
+def test_wildcard_removal_matches_replay(db):
+    """Regresión: un LinkRemoved SIN rel_type cierra todos los rel del par en la
+    tabla materializada — el replay (as_of) debe hacer LO MISMO. Antes el replay
+    indexaba la remoción por (s,t,None) y nunca casaba, divergiendo de tablas."""
+    from ontology.db import session_scope
+    from ontology.service import apply_event, as_of_graph, _parse_dt
+    from ontology.models import LinkRecord
+
+    with session_scope() as s:
+        apply_event(s, 'ObjectCreated', {'label': 'W1', 'type': 'Company'},
+                    valid_from='2000-01-01', source='test', actor='pytest', object_id='W1')
+        apply_event(s, 'ObjectCreated', {'label': 'W2', 'type': 'Company'},
+                    valid_from='2000-01-01', source='test', actor='pytest', object_id='W2')
+        apply_event(s, 'LinkCreated', {'rel_type': 'supply'},
+                    valid_from='2020-01-01', source='test', actor='pytest',
+                    object_id='W1', target_id='W2')
+        apply_event(s, 'LinkRemoved', {},  # sin rel_type: comodín
+                    valid_from='2022-01-01', source='test', actor='pytest',
+                    object_id='W1', target_id='W2')
+    with session_scope() as s:
+        replay_pairs = {(l['source'], l['target'])
+                        for l in as_of_graph(s, _parse_dt('2023-01-01'))['links']}
+        live_rows = s.query(LinkRecord).filter(
+            LinkRecord.source_id == 'W1', LinkRecord.target_id == 'W2',
+            LinkRecord.valid_to.is_(None)).count()
+    assert ('W1', 'W2') not in replay_pairs   # el replay también lo ve cerrado
+    assert live_rows == 0                     # y la tabla materializada igual
+
+
+def test_recreated_link_after_removal_is_active(db):
+    """Regresión: una remoción solo mata creaciones ANTERIORES. Si el vínculo se
+    re-crea después de removido, vuelve a estar vigente (antes el replay lo
+    mataba para siempre con cualquier remoción pasada)."""
+    from ontology.db import session_scope
+    from ontology.service import apply_event, as_of_graph, _parse_dt
+
+    with session_scope() as s:
+        apply_event(s, 'ObjectCreated', {'label': 'R1', 'type': 'Company'},
+                    valid_from='2000-01-01', source='test', actor='pytest', object_id='R1')
+        apply_event(s, 'ObjectCreated', {'label': 'R2', 'type': 'Company'},
+                    valid_from='2000-01-01', source='test', actor='pytest', object_id='R2')
+        apply_event(s, 'LinkCreated', {'rel_type': 'supply'}, valid_from='2018-01-01',
+                    source='test', actor='pytest', object_id='R1', target_id='R2')
+        apply_event(s, 'LinkRemoved', {'rel_type': 'supply'}, valid_from='2019-01-01',
+                    source='test', actor='pytest', object_id='R1', target_id='R2')
+        apply_event(s, 'LinkCreated', {'rel_type': 'supply'}, valid_from='2021-01-01',
+                    source='test', actor='pytest', object_id='R1', target_id='R2')
+    with session_scope() as s:
+        during_gap = {(l['source'], l['target'])
+                      for l in as_of_graph(s, _parse_dt('2020-01-01'))['links']}
+        after_recreate = {(l['source'], l['target'])
+                          for l in as_of_graph(s, _parse_dt('2022-01-01'))['links']}
+    assert ('R1', 'R2') not in during_gap
+    assert ('R1', 'R2') in after_recreate
+
+
+def test_rejected_link_replay_isomorphic(db):
+    """Regresión Fase 2: RechazarVinculo debe emitir LinkRemoved (evento), no
+    solo mutar la tabla. El replay as_of(hoy) y la tabla materializada tienen
+    que contar la MISMA historia tras el rechazo."""
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.service import apply_event, as_of_graph
+    from ontology.models import LinkRecord
+
+    with session_scope() as s:
+        for oid in ('P1', 'P2'):
+            apply_event(s, 'ObjectCreated', {'label': oid, 'type': 'Company'},
+                        valid_from='2000-01-01', source='test', actor='pytest', object_id=oid)
+        r = execute_action(s, 'ProponerVinculo',
+                            {'from_id': 'P1', 'to_id': 'P2', 'tipo': 'supply'}, actor='ana')
+        link_id = r['link_id']
+    with session_scope() as s:
+        execute_action(s, 'RechazarVinculo', {'link_id': link_id}, actor='bob')
+    with session_scope() as s:
+        replay_pairs = {(l['source'], l['target']) for l in as_of_graph(s)['links']}
+        live_rows = s.query(LinkRecord).filter(
+            LinkRecord.source_id == 'P1', LinkRecord.target_id == 'P2',
+            LinkRecord.valid_to.is_(None)).count()
+    assert ('P1', 'P2') not in replay_pairs
+    assert live_rows == 0
+
+
 def test_diff_detects_added_and_removed(db):
     """diff() compara dos INSTANTÁNEAS (qué está vigente en from vs en to), no
     'todo lo que pasó en el medio'. El vínculo Supplier→ACME vivió 2020-06→2022-06:

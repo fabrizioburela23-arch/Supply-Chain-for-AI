@@ -175,12 +175,14 @@ def _links_active_at(session, as_of_dt):
             Event.valid_from <= as_of_dt,
         )
     ).all()
-    # índice de remociones por (source,target,rel_type) → fecha de remoción más reciente <= as_of
-    removed_at = {}
+    # remociones por (source,target): lista de (fecha, rel). rel=None actúa de
+    # COMODÍN (igual que _materialize, que sin rel_type cierra todos los rel de
+    # ese par) — antes un LinkRemoved sin rel cerraba en tablas pero no casaba
+    # nada aquí, y el replay divergía de la vista materializada.
+    removals = {}
     for ev in removed:
         rel = (ev.payload or {}).get('rel_type') or (ev.payload or {}).get('type')
-        key = (ev.object_id, ev.target_id, rel)
-        removed_at[key] = max(removed_at.get(key, ev.valid_from), ev.valid_from)
+        removals.setdefault((ev.object_id, ev.target_id), []).append((ev.valid_from, rel))
 
     active = []
     for ev in created:
@@ -189,9 +191,11 @@ def _links_active_at(session, as_of_dt):
         # ¿este evento propio ya expiró (valid_to) antes de as_of?
         if ev.valid_to is not None and ev.valid_to <= as_of_dt:
             continue
-        key = (ev.object_id, ev.target_id, rel)
-        rm = removed_at.get(key)
-        if rm is not None and rm <= as_of_dt:
+        # una remoción solo mata creaciones ANTERIORES a ella: si el vínculo se
+        # re-creó después de la remoción, sigue vigente en as_of.
+        rms = removals.get((ev.object_id, ev.target_id), [])
+        if any(rm_rel in (None, rel) and ev.valid_from <= rm_at <= as_of_dt
+               for rm_at, rm_rel in rms):
             continue
         active.append({
             'source': ev.object_id, 'target': ev.target_id, 'rel_type': rel,
