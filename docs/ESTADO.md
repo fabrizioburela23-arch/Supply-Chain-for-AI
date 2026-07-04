@@ -7,6 +7,79 @@ correcciones de arquitectura respecto al roadmap original (backend real =
 Flask/Python, no Node; `/v1/*` ya es la API pública monetizada; Neo4j Aura ya
 está conectado).
 
+---
+
+# REDISEÑO MAYOR 2026-07 — mapa único con capas + motor de matrices
+
+Decisiones de Fabrizio (2026-07-03, no reabrir sin razón nueva): UN solo mapa
+con capas activables; app final de 4 pestañas (MAPA/MERCADO/INSIGHTS/GUÍA) con
+Bixby/terminal flotante; motor de predicción INTERNO (adiós MiroFish) centrado
+en insights de inversión; matrices numéricas por tipo de relación moduladas
+por hiperaristas (todo bitemporal en la ontología); 40 categorías → ~9
+macro-sectores sin perder detalle; SOLO Railway (se elimina el modo
+standalone); frecuencia de actualización configurable con automático APAGADO
+por defecto; gasto de IA moderado; despliegue por etapas siempre verde;
+limpieza agresiva de código muerto.
+
+Auditoría multi-agente completa del repo hecha el 2026-07-03 (9 lectores):
+hallazgos clave — 7 renderers de mapa independientes; 4 propagaciones de shock
+inconsistentes; 31 empresas duplicadas; direcciones de arista opuestas
+(546 vs 577); 67% de pesos w en default; ~700+ líneas visuales muertas;
+rag/ y litellm/ nunca desplegados; hypergraph.js con node_impacts siempre
+vacío (el slot del motor nuevo); contrato MiroFish a replicar =
+{node_impacts, cascade_nodes, price_trajectories, report, chat, progress_pct}.
+
+## Etapa 0 — Seguridad y cimientos: ✅ CÓDIGO COMPLETO (2026-07-03)
+
+- [x] /api/trade/* (11 rutas) protegidas con PIN (X-Trade-Pin == env
+      TRADE_PIN); sin TRADE_PIN el trading queda deshabilitado. El panel de
+      trading pide el PIN una vez (localStorage.khipu_trade_pin). ANTES:
+      cualquiera con la URL podía operar la cuenta Alpaca real.
+- [x] /v1/auth/key: tiers de pago exigen X-Admin-Secret (KHIPU_ADMIN_SECRET).
+- [x] Auto-trader: daily_pnl_pct real (equity vs last_equity de Alpaca) →
+      el circuit-breaker diario ya puede saltar; stop-loss por posición
+      implementado (cierra posiciones bajo el umbral). Antes: decorativos.
+- [x] gunicorn 2 workers → 1 worker + 8 threads (el estado en memoria vivía
+      duplicado y divergía por worker).
+- [x] Ontología, 2 bugs de replay corregidos: RechazarVinculo ahora emite
+      LinkRemoved (antes mutaba tablas sin evento → time-travel mostraba
+      vínculos rechazados como vigentes); _links_active_at casa remociones
+      comodín (sin rel_type) y respeta re-creaciones. +3 tests de regresión
+      (isomorfismo replay==tablas). **51/51 tests contra Postgres real.**
+- [x] sw.js SHELL sincronizado (faltaban 3 nodes/* y 4 vendor) + bump v28.
+- [ ] PENDIENTE (paso manual de Fabrizio): variable TRADE_PIN en Railway
+      (y KHIPU_ADMIN_SECRET si va a emitir claves de pago).
+- Diferido a Etapa 1: extraer _ai_complete/_fetch_quote_raw a core/ (rompe
+  la dependencia circular ontology→server).
+
+## Etapas siguientes (plan en las tareas de la sesión)
+
+1. **Etapa 1 — Limpieza masiva**: borrar muerto/roto confirmado por la
+   auditoría (nodes_core.js, rag/, litellm/, PriceAlerts no-op, 9 rutas sin
+   caller, stack 3D semi-huérfano...), consolidar duplicados (3 pipelines de
+   quotes, 3 sistemas de alertas), quitar modo standalone.
+2. **Etapa 2 — Datos limpios**: resolución de entidades (31 duplicados),
+   dirección única de aristas, taxonomía tipada, pesos re-derivados (LLM
+   batch), datos fuera del monolito → JSON servido, swap frontend a la API.
+3. **Etapa 3 — Motor de matrices + hiperaristas**: blueprint matrix/ (NumPy,
+   sparse por rel_type, snapshots con watermark, computed_metrics para NRS
+   servido), hiperaristas como Factor+affects (cero cambio de esquema),
+   UN kernel de propagación, agente MatrixSentinel → ProposedAction.
+4. **Etapa 4 — Mapa unificado con capas**: 7 renderers → 2 motores
+   (grafo 2D + globo), LayerRegistry, 4 pestañas, 9 macro-sectores, un solo
+   store de estado, borrar stack 3D conservando datos, regenerar Guía+Bixby.
+5. **Etapa 5 — Predicciones internas + INSIGHTS**: kernel de matrices +
+   presets como hiperaristas nombradas, War-Room como visualización,
+   pestaña INSIGHTS (feed + brief + panel junto al mapa), control único de
+   frecuencia (manual por defecto).
+
+Entorno de desarrollo local (Windows, PC de Fabrizio, instalado 2026-07-03):
+Python 3.11 (winget) + PostgreSQL 16 (winget, postgres/devpass, DB
+khipus_test). Correr tests completos:
+`DATABASE_URL=postgresql://postgres:devpass@localhost:5432/khipus_test pytest tests/ -q`
+
+---
+
 ## Decisiones tomadas (no reabrir sin razón nueva)
 
 1. **Base de datos de la ontología: Postgres en Railway.** Neo4j Aura se

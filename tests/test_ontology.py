@@ -176,7 +176,8 @@ def test_rejected_link_replay_isomorphic(db):
             apply_event(s, 'ObjectCreated', {'label': oid, 'type': 'Company'},
                         valid_from='2000-01-01', source='test', actor='pytest', object_id=oid)
         r = execute_action(s, 'ProponerVinculo',
-                            {'from_id': 'P1', 'to_id': 'P2', 'tipo': 'supply'}, actor='ana')
+                            {'from_id': 'P1', 'to_id': 'P2', 'tipo': 'supply',
+                             'fuente': 'test'}, actor='ana')
         link_id = r['link_id']
     with session_scope() as s:
         execute_action(s, 'RechazarVinculo', {'link_id': link_id}, actor='bob')
@@ -229,7 +230,7 @@ def test_migration_is_isomorphic_with_grafo_v0():
     graph_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'grafo_v0.json')
     if not os.path.exists(graph_path):
         pytest.skip('data/grafo_v0.json no existe — correr scripts/export_graph_v0.js primero')
-    with open(graph_path) as f:
+    with open(graph_path, encoding='utf-8') as f:  # Windows default es cp1252
         g = json.load(f)
 
     from ontology.db import init_schema, session_scope, _get_engine
@@ -240,7 +241,8 @@ def test_migration_is_isomorphic_with_grafo_v0():
 
     script = os.path.join(os.path.dirname(__file__), '..', 'scripts', 'migrate_v0_to_ontology.py')
     result = subprocess.run([sys.executable, script, '--reset'], capture_output=True, text=True,
-                             env={**os.environ, 'DATABASE_URL': DATABASE_URL})
+                             env={**os.environ, 'DATABASE_URL': DATABASE_URL,
+                                  'PYTHONIOENCODING': 'utf-8'})  # los prints con emoji revientan en cp1252 (Windows)
     assert result.returncode == 0, result.stderr
 
     expected_objects = len(g['nodes']) + len((g.get('ontology') or {}).get('objects', []))
