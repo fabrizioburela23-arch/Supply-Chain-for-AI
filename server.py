@@ -59,22 +59,16 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Ontología no registrada (opcional): %s', _e)
 
-FINNHUB  = os.getenv('FINNHUB_KEY', '')
-FMP      = os.getenv('FMP_KEY', '')
-CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
-MSTACK   = os.getenv('MARKETSTACK_KEY', '')
-# Modelo de Claude para los análisis. Haiku 4.5 es barato y rápido (~$0.001/análisis);
-# sube a claude-opus-4-8 para máxima calidad. Cambiable sin tocar código.
-AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
+# Config compartida server/ontology (keys de IA, Finnhub, timeout) → core/config.py
+# Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
+from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,
+                         GEMINI_MODEL, HTTP_TIMEOUT, NVIDIA_KEY, NVIDIA_MODEL)
+from core.http import _safe_get, _safe_ticker
+from core.ai import _ai_complete, _ai_configured, _claude_complete, _extract_json
+from core.quotes import _fetch_quote_raw
 
-# ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──
-# Si un canal falla (o no tiene key), pasa al siguiente automáticamente.
-# NVIDIA NIM (build.nvidia.com) y Gemini tienen tier gratis útil para el MVP.
-GEMINI_KEY   = os.getenv('GEMINI_KEY') or os.getenv('GOOGLE_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
-NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
-NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
-AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
+FMP      = os.getenv('FMP_KEY', '')
+MSTACK   = os.getenv('MARKETSTACK_KEY', '')
 
 # ── Grafo de Conocimiento Temporal (Neo4j opcional) ─────────────────────────
 def _clean_env(v):
@@ -125,8 +119,6 @@ KHIPU_ADMIN_SECRET  = os.getenv('KHIPU_ADMIN_SECRET', '')
 if SECRET_KEY == 'khipu-dev-secret-change-me':
     log.warning('⚠️  SECRET_KEY is default — set SECRET_KEY env var in Railway before going live')
 
-HTTP_TIMEOUT = 8
-
 # ── Security config (Fase 2 — endurecimiento a producto) ────────────────────
 # La CSP solo se aplica cuando el server sirve la app (modo servidor). En
 # standalone puro (file://) no hay server, así que estas cabeceras no afectan
@@ -156,19 +148,6 @@ CONTENT_SECURITY_POLICY = (
     "form-action 'self'; "
     "object-src 'none'"
 )
-
-# Tickers válidos: letras, dígitos y los símbolos reales de mercado (., -, ^, =, :).
-# Bloquea inyección de parámetros (&token=, ?, espacios) en las URLs upstream.
-_TICKER_RE = re.compile(r'^[A-Za-z0-9.\-^=:]{1,15}$')
-
-def _safe_ticker(raw):
-    """Valida y normaliza un ticker. Devuelve el símbolo en mayúsculas, o None si
-    es inválido. Defensa contra inyección en las llamadas a Finnhub/FMP/etc."""
-    if not raw:
-        return None
-    t = str(raw).strip().upper()
-    return t if _TICKER_RE.match(t) else None
-
 
 # ── Simple in-process rate limiter ──────────────────────────────────────────
 _rate_buckets: dict = defaultdict(list)
@@ -237,19 +216,6 @@ def _add_cors_for_public_api(resp):
 def _log_request(resp):
     log.info('%s %s -> %s', request.method, request.path, resp.status_code)
     return resp
-
-
-def _safe_get(url, timeout=HTTP_TIMEOUT):
-    """GET con manejo de errores uniforme. Devuelve (json, error)."""
-    try:
-        r = requests.get(url, timeout=timeout)
-        if r.status_code != 200:
-            return None, f'upstream {r.status_code}'
-        return r.json(), None
-    except requests.exceptions.Timeout:
-        return None, 'timeout'
-    except Exception as e:  # noqa: BLE001
-        return None, str(e)[:120]
 
 
 # ----------------------------------------------------------------------------
@@ -673,14 +639,6 @@ def ws_key():
     return jsonify({'token': FINNHUB})
 
 
-def _fetch_quote_raw(ticker):
-    """Cotización cruda de Finnhub para un ticker ya saneado. Devuelve
-    (data, error) — reusada por la ruta HTTP y por el evaluador de alertas
-    (ontology/agents.py) para no duplicar la llamada. El caller debe checar
-    FINNHUB antes de llamar (aquí asumimos que la key existe)."""
-    return _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
-
-
 @app.route('/api/quote/<ticker>')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
@@ -999,108 +957,10 @@ def insiders(ticker):
 
 
 # ----------------------------------------------------------------------------
-# Claude — análisis de empresa / impacto de cadena / síntesis de noticias
-# Un único endpoint genérico {system, prompt, max_tokens} sirve a las features 5, 6 y 9.
+# IA — análisis de empresa / impacto de cadena / síntesis de noticias.
+# La cascada multi-proveedor (Claude→Gemini→NVIDIA) vive en core/ai.py,
+# compartida con los agentes de la ontología. Aquí solo quedan las rutas.
 # ----------------------------------------------------------------------------
-def _complete_claude(system, prompt, max_tokens):
-    import anthropic
-    client = anthropic.Anthropic(api_key=CLAUDE)
-    msg = client.messages.create(
-        model=AI_MODEL, max_tokens=max_tokens, system=system or '',
-        messages=[{'role': 'user', 'content': prompt or ''}],
-    )
-    text = ''
-    for block in msg.content:
-        if getattr(block, 'type', None) == 'text':
-            text = block.text
-            break
-    return text, msg.model
-
-
-def _complete_gemini(system, prompt, max_tokens):
-    body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
-            'generationConfig': {'maxOutputTokens': max_tokens, 'temperature': 0.6}}
-    r = requests.post(
-        f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}',
-        json=body, timeout=45)
-    if not r.ok:
-        raise RuntimeError(f'Gemini HTTP {r.status_code}')
-    cands = (r.json() or {}).get('candidates') or []
-    if not cands:
-        raise RuntimeError('Gemini sin candidates')
-    text = ''.join(p.get('text', '') for p in cands[0].get('content', {}).get('parts', []))
-    return text, 'gemini:' + GEMINI_MODEL
-
-
-def _complete_nvidia(system, prompt, max_tokens):
-    body = {'model': NVIDIA_MODEL, 'max_tokens': max_tokens, 'temperature': 0.6,
-            'messages': [{'role': 'system', 'content': system or ''},
-                         {'role': 'user', 'content': prompt or ''}]}
-    r = requests.post('https://integrate.api.nvidia.com/v1/chat/completions',
-                      headers={'Authorization': f'Bearer {NVIDIA_KEY}', 'Accept': 'application/json'},
-                      json=body, timeout=45)
-    if not r.ok:
-        raise RuntimeError(f'NVIDIA HTTP {r.status_code}')
-    return (r.json()['choices'][0]['message']['content']), 'nvidia:' + NVIDIA_MODEL
-
-
-_AI_PROVIDERS = {
-    'claude': (lambda: bool(CLAUDE), _complete_claude),
-    'gemini': (lambda: bool(GEMINI_KEY), _complete_gemini),
-    'nvidia': (lambda: bool(NVIDIA_KEY), _complete_nvidia),
-}
-
-
-def _ai_configured():
-    return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
-
-
-def _ai_complete(system, prompt, max_tokens=1000):
-    """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
-    pasa al siguiente. Devuelve (texto, etiqueta_modelo)."""
-    errors = []
-    for name in AI_ORDER:
-        prov = _AI_PROVIDERS.get(name)
-        if not prov or not prov[0]():
-            continue
-        try:
-            text, model = prov[1](system, prompt, max_tokens)
-            if text and text.strip():
-                return text, model
-            errors.append(f'{name}: respuesta vacía')
-        except Exception as e:  # noqa: BLE001
-            errors.append(f'{name}: {str(e)[:80]}')
-    raise RuntimeError('Ningún proveedor de IA respondió. ' + ('; '.join(errors) or 'sin keys configuradas'))
-
-
-# Compat: las features existentes llaman _claude_complete → ahora multi-proveedor.
-def _claude_complete(system, prompt, max_tokens):
-    return _ai_complete(system, prompt, max_tokens)
-
-
-def _extract_json(text):
-    """Extrae un objeto JSON de la respuesta del modelo aunque venga con fences
-    markdown o rodeado de texto explicativo (Gemini/NVIDIA a veces lo hacen).
-    Devuelve el dict/list ya parseado o lanza json.JSONDecodeError."""
-    raw = (text or '').strip()
-    # 1) quitar fences ```json … ```
-    cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', raw).strip()
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        pass
-    # 2) recortar del primer { (o [) al último } (o ]) correspondiente
-    for open_c, close_c in (('{', '}'), ('[', ']')):
-        i, j = cleaned.find(open_c), cleaned.rfind(close_c)
-        if i != -1 and j != -1 and j > i:
-            try:
-                return json.loads(cleaned[i:j + 1])
-            except json.JSONDecodeError:
-                continue
-    # 3) sin remedio → propagar el error para que el caller lo maneje
-    return json.loads(cleaned)
-
-
 @app.route('/api/ai/analyze', methods=['POST'])
 @rate_limit(limit=30, window=3600)   # 30 AI analyses per hour per IP
 def ai_analyze():

@@ -38,12 +38,13 @@ def _recently_proposed(session, agent, action_type, object_id, hours=24):
 
 
 def _ai_explain(prompt, fallback):
-    """Genera la explicación en lenguaje natural con el mismo patrón
-    multi-proveedor del servidor (_ai_complete). Si falla, usa un fallback
+    """Genera la explicación en lenguaje natural con la cascada multi-proveedor
+    compartida (core/ai.py — antes vivía en server.py, lo que creaba una
+    dependencia circular ontology→server). Si falla, usa un fallback
     determinista — un agente nunca debe bloquearse por la IA."""
     try:
-        import server  # el módulo Flask ya expone _ai_complete
-        text, _model = server._ai_complete(
+        from core.ai import _ai_complete
+        text, _model = _ai_complete(
             'Eres un analista senior de riesgo de cadena de suministro. Responde en '
             'español, 1-2 frases, concreto y sin relleno.', prompt, max_tokens=200)
         return text.strip() if text else fallback
@@ -331,13 +332,14 @@ def brief_matinal(session, hours=24):
 # Acciones) — es una notificación, no una escritura de dominio.
 
 def _get_live_price(ticker):
-    """Precio en vivo vía Finnhub, reusando server._fetch_quote_raw (mismo
-    helper que /api/quote/<ticker>). Devuelve None si no hay key o falla."""
+    """Precio en vivo vía Finnhub, reusando core.quotes._fetch_quote_raw (el
+    mismo helper que /api/quote/<ticker>). Devuelve None si no hay key o falla."""
     try:
-        import server
-        if not server.FINNHUB:
+        from core.config import FINNHUB
+        from core.quotes import _fetch_quote_raw
+        if not FINNHUB:
             return None
-        data, err = server._fetch_quote_raw(ticker)
+        data, err = _fetch_quote_raw(ticker)
         if err or not data or not data.get('c'):
             return None
         return float(data['c'])
