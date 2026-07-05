@@ -1,6 +1,6 @@
 // engine/secondbrain.js — Second Brain de 5 capas para Khipu Finance
 // Al seleccionar una empresa, abre un panel con 5 capas de conocimiento:
-//   1. Mercado (precio + sparkline + NRS)   2. Noticias (+ RAG insight)
+//   1. Mercado (precio + sparkline + NRS)   2. Noticias
 //   3. Tesis (catalizadores + riesgos + IA)  4. Simulación (presets MiroFish)
 //   5. Red (betweenness + cascada + desglose NRS)
 //
@@ -13,14 +13,6 @@ class SecondBrain {
     this.graph3d = graph3d;
     this.activeLayer = 1;
     this.activeNodeId = null;
-  }
-
-  _rag(path, body) {
-    const base = (typeof BASE !== 'undefined') ? BASE : '';
-    return fetch(`${base}/api/rag/${path}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
   }
 
   async showNodeLayers(nodeId) {
@@ -146,17 +138,7 @@ class SecondBrain {
     try {
       let news = n.mkt && typeof Keys !== 'undefined' && Keys.has('finnhub') ? await DataLayer.news(n.mkt) : [];
 
-      let ragInsight = '';
-      try {
-        const ragR = await this._rag('query/ai', {
-          query: `Latest news and market sentiment for ${n.label}`,
-          system: 'Summarize key recent developments in 2 sentences.',
-        });
-        if (ragR.ok) { const rj = await ragR.json(); ragInsight = rj.answer || ''; }
-      } catch {}
-
       el.innerHTML = `
-        ${ragInsight ? `<div style="background:var(--surface-2);border-radius:8px;padding:10px;font-size:12.5px;margin-bottom:10px"><b>🧠 RAG:</b> ${esc(ragInsight)}</div>` : ''}
         ${news.length === 0 ? '<div style="color:var(--ink-3);font-size:12px">Sin noticias disponibles</div>' :
           news.slice(0, 8).map(item => {
             const s = (typeof sentiment === 'function') ? sentiment(item.headline) : { cls: '', icon: '' };
@@ -167,11 +149,6 @@ class SecondBrain {
               <div style="font-size:12.5px;color:var(--ink);line-height:1.4">${esc(item.headline)}</div></a>`;
           }).join('')}
       `;
-
-      // Indexar noticias en RAG para futuras consultas (best-effort)
-      if (news.length > 0) {
-        this._rag('index/news', { items: news.map(i => ({ ...i, related: n.mkt })) }).catch(() => {});
-      }
     } catch (e) {
       el.innerHTML = `<div style="color:var(--down,#FF6577);font-size:12px">${esc(String(e.message))}</div>`;
     }

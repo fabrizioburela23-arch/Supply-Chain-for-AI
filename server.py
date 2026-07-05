@@ -25,11 +25,11 @@ import requests
 from collections import defaultdict
 from functools import wraps
 from datetime import date, datetime, timedelta
-from flask import Flask, jsonify, send_file, request, abort
+from flask import Flask, jsonify, send_file, request
 from flask_caching import Cache
 
 # PyJWT es opcional: si no está instalado, la API pública /v1/* queda deshabilitada
-# pero el resto del servidor (proxy de datos, voz Bixby, RAG) sigue funcionando.
+# pero el resto del servidor (proxy de datos, voz Bixby) sigue funcionando.
 try:
     import jwt
     _HAS_JWT = True
@@ -93,7 +93,6 @@ _NEO4J_PASSWORD_RAW = os.getenv('NEO4J_PASSWORD', '')
 NEO4J_URI      = _clean_env(_NEO4J_URI_RAW)
 NEO4J_USER     = _clean_env(_NEO4J_USER_RAW) or 'neo4j'
 NEO4J_PASSWORD = _clean_env(_NEO4J_PASSWORD_RAW)
-_TEMPORAL_FACTS = []          # store nativo en memoria (episodios ingeridos)
 
 
 def _neo4j_available():
@@ -113,7 +112,6 @@ MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
 ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
 AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
-RAG_URL             = os.getenv('RAG_URL', 'http://localhost:5051')
 SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
 ALPACA_KEY          = os.getenv('ALPACA_KEY', '')
 ALPACA_SECRET       = os.getenv('ALPACA_SECRET', '')
@@ -135,7 +133,6 @@ HTTP_TIMEOUT = 8
 # ese modo. Todas son ajustables por env para poder desactivar al instante.
 CSP_ENABLED            = os.getenv('CSP_ENABLED', 'true').lower() == 'true'
 CSP_REPORT_ONLY        = os.getenv('CSP_REPORT_ONLY', 'false').lower() == 'true'
-ENABLE_DEBUG_ENDPOINTS = os.getenv('ENABLE_DEBUG_ENDPOINTS', 'false').lower() == 'true'
 
 # Content-Security-Policy: restringe el origen de los scripts a los CDNs reales
 # que usa la app (d3 y three.js desde cdnjs, chart.js desde jsdelivr) y bloquea
@@ -368,17 +365,13 @@ def vendor(name):
 
 
 # ----------------------------------------------------------------------------
-# Health check / data-health (extendido: incluye MiroFish, RAG, ElevenLabs)
+# Health check / data-health (extendido: incluye MiroFish, ElevenLabs)
 # ----------------------------------------------------------------------------
 @app.route('/api/health')
 def health():
-    mf_ok = rag_ok = False
+    mf_ok = False
     try:
         mf_ok = requests.get(f'{MIROFISH_URL}/api/health', timeout=2).ok
-    except Exception:  # noqa: BLE001
-        pass
-    try:
-        rag_ok = requests.get(f'{RAG_URL}/stats', timeout=2).ok
     except Exception:  # noqa: BLE001
         pass
     return jsonify({
@@ -394,7 +387,6 @@ def health():
         'elevenlabs': bool(ELEVENLABS_KEY),
         'alpha_vantage': bool(AV_KEY),
         'mirofish': mf_ok,
-        'rag': rag_ok,
         'jwt_api': _HAS_JWT,
         'ai_model': AI_MODEL,
         'ts': int(time.time()),
@@ -527,27 +519,6 @@ def _diag_mirofish():
             'detail': f'MiroFish no responde OK: {last}.{hint} El War-Room usará el fallback de Claude.'}
 
 
-def _diag_rag():
-    t0 = time.time()
-    try:
-        r = requests.get(f'{RAG_URL}/stats', timeout=5)
-        lat = int((time.time() - t0) * 1000)
-        if r.ok:
-            n = ''
-            try:
-                n = f" ({r.json().get('count', '?')} docs indexados)"
-            except Exception:  # noqa: BLE001
-                pass
-            return {'configured': True, 'ok': True, 'latency_ms': lat,
-                    'detail': f'Second Brain / ChromaDB vivo{n}.'}
-        return {'configured': True, 'ok': False, 'latency_ms': lat,
-                'detail': f'RAG respondió HTTP {r.status_code}.'}
-    except Exception as e:  # noqa: BLE001
-        return {'configured': bool(RAG_URL), 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'RAG (ChromaDB) no responde: ' + _diag_redact(e) +
-                          '. Búsqueda semántica de Bixby limitada.'}
-
-
 def _diag_ontologia():
     """Ontología (Postgres, Fase 1 del roadmap): fuente única de verdad de
     objetos/vínculos con historia bitemporal. Feature opcional — si
@@ -638,7 +609,6 @@ def diagnostics():
         'nvidia':     _diag_nvidia(),
         'elevenlabs': _diag_elevenlabs(),
         'mirofish':   _diag_mirofish(),
-        'rag':        _diag_rag(),
         'finnhub':    _diag_finnhub(),
         'grafo':      _diag_grafo(),
         'ontologia':  _diag_ontologia(),
@@ -896,30 +866,6 @@ def trade_account():
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
 
-@app.route('/api/trade/positions', methods=['GET'])
-@_trade_auth
-def trade_positions():
-    if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
-    try:
-        r = requests.get(f'{ALPACA_BASE}/v2/positions',
-                         headers=_alpaca_hdrs(), timeout=10)
-        return jsonify(r.json()), r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 502
-
-@app.route('/api/trade/orders', methods=['GET'])
-@_trade_auth
-def trade_orders():
-    if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
-    try:
-        r = requests.get(f'{ALPACA_BASE}/v2/orders?status=all&limit=20',
-                         headers=_alpaca_hdrs(), timeout=10)
-        return jsonify(r.json()), r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 502
-
 @app.route('/api/trade/order', methods=['POST'])
 @rate_limit(20, 60)
 @_trade_auth
@@ -980,25 +926,6 @@ def earnings(ticker):
     if err:
         return jsonify({'earningsCalendar': []})
     return jsonify(data)
-
-
-# ----------------------------------------------------------------------------
-# Debug temporal — ver respuesta raw de Finnhub /stock/metric
-# ----------------------------------------------------------------------------
-@app.route('/api/debug/fh/<ticker>')
-def debug_fh(ticker):
-    if not ENABLE_DEBUG_ENDPOINTS:
-        abort(404)
-    ticker = _safe_ticker(ticker)
-    if not ticker:
-        return jsonify({'error': 'invalid ticker'}), 400
-    if not FINNHUB:
-        return jsonify({'error': 'no key'})
-    fh, err = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
-    return jsonify({'err': err, 'type': type(fh).__name__,
-                    'keys': list(fh.keys()) if isinstance(fh, dict) else None,
-                    'metric_type': type(fh.get('metric')).__name__ if isinstance(fh, dict) else None,
-                    'metric_sample': dict(list(fh['metric'].items())[:5]) if isinstance(fh, dict) and isinstance(fh.get('metric'), dict) else fh})
 
 
 # ----------------------------------------------------------------------------
@@ -1193,24 +1120,6 @@ def ai_analyze():
         return jsonify({'error': str(e)[:200]}), 500
 
 
-@app.route('/api/ai/news-digest', methods=['POST'])
-@rate_limit(limit=60, window=3600)   # 60 news digests per hour per IP
-def news_digest():
-    if not _ai_configured():
-        return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
-    data = request.get_json(force=True, silent=True) or {}
-    max_tok = min(int(data.get('max_tokens', 400)), 800)
-    try:
-        text, model = _claude_complete(
-            data.get('system', ''),
-            data.get('prompt', ''),
-            max_tok,
-        )
-        return jsonify({'result': text, 'model': model})
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 500
-
-
 # ── Bixby Canvas — AI-generated chart specs (Fase 1) ────────────────────────
 _CANVAS_SYSTEM = """\
 You are Khipu Finance's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
@@ -1390,32 +1299,9 @@ def ipo_calendar():
     return jsonify(data)
 
 
-@app.route('/api/company_news')
-@rate_limit(limit=120, window=60)
-@cache.cached(timeout=1800, query_string=True)
-def company_news_recent():
-    """Recent news for a ticker — last 7 days, max 8 items.
-    Nota: nombre distinto a company_news() (/api/news/<ticker>) para no colisionar
-    el endpoint de Flask, que se deriva del nombre de la función."""
-    ticker = _safe_ticker(request.args.get('symbol', ''))
-    if not ticker:
-        return jsonify({'error': 'invalid or missing symbol'}), 400
-    if not FINNHUB:
-        return jsonify({'error': 'no FINNHUB_KEY'}), 400
-    from_d = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    to_d   = datetime.now().strftime('%Y-%m-%d')
-    data, err = _safe_get(
-        f'https://finnhub.io/api/v1/company-news?symbol={ticker}&from={from_d}&to={to_d}&token={FINNHUB}',
-        timeout=8)
-    if err:
-        return jsonify({'error': err}), 502
-    items = data if isinstance(data, list) else []
-    return jsonify(items[:8])
-
-
 # ════════════════════════════════════════════════════════════════════════════
 # KHIPU FINANCE v1 — Backend ampliado
-# Space APIs · GDELT · SEC EDGAR · MiroFish · Bixby voice · RAG · API pública JWT
+# Space APIs · GDELT · SEC EDGAR · MiroFish · Bixby voice · API pública JWT
 # ════════════════════════════════════════════════════════════════════════════
 
 # ── Space APIs (Launch Library 2 — gratis) ──────────────────────────────────
@@ -1705,38 +1591,6 @@ def dossier(ticker):
     })
 
 
-@app.route('/api/fundamentals/<ticker>/sec')
-@rate_limit(limit=60, window=60)
-@cache.cached(timeout=86400)
-def fundamentals_sec(ticker):
-    """SEC EDGAR — datos oficiales 10-K/20-F, completamente gratis."""
-    safe = _safe_ticker(ticker)
-    if not safe:
-        return jsonify({'error': 'invalid ticker'}), 400
-    cik = _CIK_MAP.get(safe)
-    if not cik:
-        return jsonify({'error': f'CIK not mapped for {ticker}'}), 404
-    facts, err = _safe_get(
-        f'https://data.sec.gov/api/xbrl/companyfacts/CIK{cik.zfill(10)}.json', timeout=15)
-    if err:
-        return jsonify({'error': err}), 502
-    us_gaap = facts.get('facts', {}).get('us-gaap', {})
-    revenues = (us_gaap.get('RevenueFromContractWithCustomerExcludingAssessedTax', {})
-                or us_gaap.get('Revenues', {}) or {})
-    rev_data = revenues.get('units', {}).get('USD', [])
-    annual = [r for r in rev_data if r.get('form') in ('10-K', '20-F')]
-    latest_rev = max(annual, key=lambda x: x.get('end', ''), default={})
-    ni_data = us_gaap.get('NetIncomeLoss', {}).get('units', {}).get('USD', [])
-    latest_ni = max([r for r in ni_data if r.get('form') in ('10-K', '20-F')],
-                    key=lambda x: x.get('end', ''), default={})
-    return jsonify({
-        'ticker': ticker, 'cik': cik, 'source': 'SEC EDGAR (official)',
-        'revenue_latest': {'value': latest_rev.get('val'), 'period': latest_rev.get('end')},
-        'net_income_latest': {'value': latest_ni.get('val'), 'period': latest_ni.get('end')},
-        'filings_url': f'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=10-K',
-    })
-
-
 # ── SEC 10-K Research — síntesis del filing con Claude (Fase 2) ───────────────
 _SEC_UA = os.getenv('SEC_USER_AGENT', 'Khipu Finance research@khipu.finance')
 _SEC_TICKERS = {'data': None, 'ts': 0.0}
@@ -1867,8 +1721,7 @@ def grafo_estado():
                 connected = False
                 err = _diag_redact(e)
             c['ok'], c['ts'], c['err'] = connected, time.time(), err
-    payload = {'store': mode, 'neo4j_connected': connected,
-               'facts_count': len(_TEMPORAL_FACTS)}
+    payload = {'store': mode, 'neo4j_connected': connected}
     if not connected and mode == 'neo4j' and err:
         payload['error'] = err            # el badge/diag puede mostrar el porqué
     elif mode == 'native' and (NEO4J_URI or NEO4J_PASSWORD):
@@ -1894,37 +1747,6 @@ def grafo_estado():
     return jsonify(payload)
 
 
-@app.route('/api/grafo/episodios', methods=['POST'])
-@rate_limit(limit=120, window=3600)
-def grafo_ingest():
-    """Ingesta un hecho/episodio temporal. En modo nativo lo guarda en memoria;
-    si Graphiti+Neo4j está configurado, lo persiste allí (best-effort)."""
-    b = request.get_json(force=True, silent=True) or {}
-    subject = str(b.get('subject', '') or b.get('name', ''))[:120]
-    if not subject:
-        return jsonify({'error': 'subject/name requerido'}), 400
-    fact = {
-        'id': 'ep_' + hashlib.md5((subject + str(b.get('valid_from', ''))).encode()).hexdigest()[:10],
-        'subject': subject, 'predicate': str(b.get('predicate', ''))[:120],
-        'object': str(b.get('object', ''))[:200], 'object_type': b.get('object_type', 'literal'),
-        'valid_from': b.get('valid_from') or None, 'valid_until': b.get('valid_until') or None,
-        'source': b.get('source', 'ingest'), 'confidence': b.get('confidence', 0.8),
-        'group': b.get('group', 'g_ingest'), 'meta': b.get('meta', {}),
-    }
-    _TEMPORAL_FACTS.append(fact)
-    if len(_TEMPORAL_FACTS) > 2000:
-        del _TEMPORAL_FACTS[:len(_TEMPORAL_FACTS) - 2000]  # cap memoria
-    persisted = 'native'
-    if _temporal_mode() == 'neo4j':
-        try:
-            _neo4j_add_fact(fact)
-            persisted = 'neo4j'
-        except Exception as e:  # noqa: BLE001
-            app.logger.warning('neo4j add_fact falló: %s', str(e)[:160])
-            persisted = 'native (neo4j falló)'
-    return jsonify({'status': 'ok', 'id': fact['id'], 'persisted': persisted})
-
-
 @app.route('/api/grafo/seed', methods=['POST'])
 @rate_limit(limit=20, window=3600)
 def grafo_seed():
@@ -1947,15 +1769,6 @@ def grafo_seed():
         except Exception:  # noqa: BLE001
             fail += 1
     return jsonify({'status': 'ok', 'persisted': ok, 'failed': fail, 'store': 'neo4j'})
-
-
-@app.route('/api/grafo/facts')
-def grafo_facts():
-    subject = request.args.get('subject')
-    facts = _TEMPORAL_FACTS
-    if subject:
-        facts = [f for f in facts if f.get('subject') == subject or f.get('object') == subject]
-    return jsonify({'facts': facts[-500:], 'store': _temporal_mode()})
 
 
 _neo4j_driver = None
@@ -2121,7 +1934,6 @@ Analysis:
 - list_companies(category, limit): list companies by sector
 - get_supply_chain_links(company_id, company_name): upstream/downstream connections
 - get_news(company_name, ticker): recent news with sentiment score
-- search_second_brain(query): search the intelligence knowledge base
 - switch_tab(tab): navigate to any of the 8 tabs
 - show_chart(ticker, company_name): display stock chart in map panel sidebar
 - open_terminal(ticker, company_name): open Terminal tab with multi-chart Bloomberg view
@@ -2194,29 +2006,6 @@ def bixby_system_prompt():
     })
 
 
-# ── Bixby voice — activar allow_override en el agente ElevenLabs ─────────────
-@app.route('/api/voice/enable-override', methods=['POST'])
-def voice_enable_override():
-    """Llama a la API de ElevenLabs para activar allow_override en el agente Bixby."""
-    if not ELEVENLABS_KEY:
-        return jsonify({'error': 'ELEVENLABS_KEY not configured'}), 400
-    agent_id = request.get_json(silent=True, force=True).get('agent_id') if request.data else None
-    agent_id = agent_id or ELEVENLABS_AGENT_ID
-    if not agent_id:
-        return jsonify({'error': 'agent_id required'}), 400
-    try:
-        r = requests.patch(
-            f'https://api.elevenlabs.io/v1/convai/agents/{agent_id}',
-            headers={'xi-api-key': ELEVENLABS_KEY, 'Content-Type': 'application/json'},
-            json={'conversation_config': {'agent': {'prompt': {'allow_override': True}}}},
-            timeout=10)
-        if r.ok:
-            return jsonify({'success': True, 'agent_id': agent_id, 'message': 'allow_override activado'})
-        return jsonify({'success': False, 'status': r.status_code, 'detail': r.text[:300]}), r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 502
-
-
 # ── Bixby voice — sesión firmada de ElevenLabs ───────────────────────────────
 @app.route('/api/voice/session', methods=['POST'])
 def voice_session():
@@ -2234,40 +2023,6 @@ def voice_session():
         return jsonify(r.json()), r.status_code
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200]}), 502
-
-
-# ── RAG auto-indexer — index node list into Second Brain ────────────────────
-@app.route('/api/rag/index-batch', methods=['POST'])
-def rag_index_batch():
-    """Accepts a JSON array of nodes and indexes them all into the RAG."""
-    nodes = request.get_json(silent=True) or []
-    if not isinstance(nodes, list):
-        return jsonify({'error': 'Expected JSON array of nodes'}), 400
-    indexed, errors = 0, []
-    for node in nodes:
-        try:
-            r = requests.post(f'{RAG_URL}/index/company', json=node, timeout=30)
-            if r.ok:
-                indexed += 1
-            else:
-                errors.append({'id': node.get('id'), 'error': r.text[:100]})
-        except Exception as e:  # noqa: BLE001
-            errors.append({'id': node.get('id'), 'error': str(e)[:100]})
-    return jsonify({'indexed': indexed, 'total': len(nodes), 'errors': errors[:10]})
-
-
-# ── RAG proxy (Second Brain) ─────────────────────────────────────────────────
-@app.route('/api/rag/<path:endpoint>', methods=['GET', 'POST'])
-def rag_proxy(endpoint):
-    url = f'{RAG_URL}/{endpoint}'
-    try:
-        if request.method == 'GET':
-            r = requests.get(url, params=request.args, timeout=15)
-        else:
-            r = requests.post(url, json=request.get_json(silent=True), timeout=30)
-        return jsonify(r.json()), r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e), 'note': 'RAG server offline'}), 502
 
 
 @app.route('/api/portfolio-risk', methods=['POST'])
@@ -2408,9 +2163,7 @@ def api_docs():
             'POST /v1/risk/portfolio': 'VaR/CVaR/Sharpe for portfolio [starter]',
             'GET  /api/space/launches': 'Upcoming space launches (Launch Library 2)',
             'GET  /api/news/gdelt/<company>': 'Global news via GDELT',
-            'GET  /api/fundamentals/<ticker>/sec': 'SEC EDGAR fundamentals (US companies)',
             'GET  /api/voice/session': 'Bixby ElevenLabs signed session URL',
-            'POST /api/rag/<path>': 'Second Brain RAG proxy',
             'ANY  /api/mirofish/<path>': 'MiroFish simulation proxy',
             'GET  /api/health': 'Service health check',
         },

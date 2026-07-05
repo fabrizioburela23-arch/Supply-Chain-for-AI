@@ -51,41 +51,7 @@
   --c-photonics_si: #C58BFF;
   --c-neuromorphic: #34D1BF;
 }
-.dark{
-  /* [UPGRADE] EDITORIAL INK: tema oscuro re-tematizado a papel nocturno cálido (antes near-black neutro) */
-  --bg:#15120C; --surface:#1F1B13; --surface-2:#2B241A; --ink:#F1EAD9; --ink-2:rgba(241,234,217,0.57);
-  --ink-3:rgba(241,234,217,0.34); --line:rgba(241,234,217,0.10); --line-2:rgba(241,234,217,0.18); --accent:#A78BFA;
-  --font-display:'Fraunces',Georgia,serif;
-  --c-quantum_hw:#BD8AF0; --c-quantum_infra:#93A3F0;
-  --c-eda:#A99EEC; --c-equip:#9BCF5E; --c-optics:#D89A3E; --c-materials:#E5A52A;
-  --c-chemicals:#EE8B5A; --c-foundry:#43C896; --c-fabless:#62A8EE; --c-memory:#EE6577;
-  --c-substrates:#E875AC; --c-servers:#A99EEC; --c-networking:#3FB5A8;
-  --c-connectivity_infra:#74B6C6; --c-power:#D8862A;
-  --c-cloud:#4FA8E0; --c-ailab:#D070E8; --c-robotics_physical:#E89050; --c-aisoft:#40B8A8;
-  --gold:#E0B25C; --blue:#5FC6E8; --violet:#A78BFA; --preipo:#C9B6FF; --danger:#FF6B5C; /* [UPGRADE] ink: variantes oscuras (antes heredaban los tokens claros del :root) */
-  --shadow:0 2px 10px rgba(0,0,0,.5),0 18px 50px rgba(0,0,0,.6);
-  --c-space_launch: #FF8B55;
-  --c-space_infra: #5AA0F0;
-  --c-satellite: #94E8FA;
-  --c-earth_obs: #6BF6B3;
-  --c-nuclear_smr: #A3E635;
-  --c-nuclear_fusion: #FACC15;
-  --c-uranium: #FB923C;
-  --c-rare_earth: #E2C46E;
-  --c-battery_mat: #A8F08A;
-  --c-ai_defense: #FF7B8B;
-  --c-ai_auto: #72EDFF;
-  --c-ai_health: #FF98E4;
-  --c-ai_finance: #BBAAFF;
-  --c-ai_agents: #FFDB72;
-  --c-cdn_edge: #5DDCCA;
-  --c-dc_reit: #ABAFFB;
-  --c-hpc_super: #72D1FF;
-  --c-asic_custom: #FFBB7C;
-  --c-edge_ai: #F0C06A;
-  --c-photonics_si: #E578FF;
-  --c-neuromorphic: #54F1DF;
-}
+/* Paleta .dark unificada: vive en el bloque TERMINAL FINTECH SKIN (v8.1) más abajo. */
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -913,12 +879,20 @@ footer .disc{line-height:1.4}
   /* [UPGRADE] EDITORIAL INK · papel nocturno cálido (antes terminal azul-gris near-black) */
   --bg:#15120C; --surface:#1F1B13; --surface-2:#2B241A; --ink:#F1EAD9; --ink-2:#B6AC97; --ink-3:#7C7461;
   --line:#2A241A; --line-2:#3A3225; --accent:#A78BFA;
+  --font-display:'Fraunces',Georgia,serif;
   --gold:#E0B25C; --blue:#5FC6E8; --violet:#A78BFF; --preipo:#C9B6FF; --danger:#FF6B5C;
   /* categorías reforzadas para neón sobre near-black */
   --c-quantum_hw:#C18BFF; --c-quantum_infra:#8DA0FF; --c-eda:#A99BFF; --c-equip:#88E06A; --c-optics:#F0B24A;
   --c-materials:#F2C744; --c-chemicals:#FF9B5C; --c-foundry:#34E6A4; --c-fabless:#52B1FF; --c-memory:#FF6478;
   --c-substrates:#FF7DC0; --c-servers:#A99BFF; --c-networking:#3DE0C8; --c-connectivity_infra:#74C8DA;
   --c-power:#F0A24A; --c-cloud:#52B1FF; --c-ailab:#C58BFF; --c-robotics_physical:#FF9B5C; --c-aisoft:#3DE0C8;
+  /* categorías extra (space · nuclear · AI verticals · infra) — antes en el primer bloque .dark */
+  --c-space_launch:#FF8B55; --c-space_infra:#5AA0F0; --c-satellite:#94E8FA; --c-earth_obs:#6BF6B3;
+  --c-nuclear_smr:#A3E635; --c-nuclear_fusion:#FACC15; --c-uranium:#FB923C; --c-rare_earth:#E2C46E;
+  --c-battery_mat:#A8F08A; --c-ai_defense:#FF7B8B; --c-ai_auto:#72EDFF; --c-ai_health:#FF98E4;
+  --c-ai_finance:#BBAAFF; --c-ai_agents:#FFDB72; --c-cdn_edge:#5DDCCA; --c-dc_reit:#ABAFFB;
+  --c-hpc_super:#72D1FF; --c-asic_custom:#FFBB7C; --c-edge_ai:#F0C06A; --c-photonics_si:#E578FF;
+  --c-neuromorphic:#54F1DF;
   --neon:#A78BFA; --neon-2:#E0B25C; --neon-3:#C9B6FF; /* [UPGRADE] ink: violeta + ámbar (antes teal/azul terminal) */
   --up:#34E6A4; --down:#FF5B6B;
   --shadow:0 2px 10px rgba(0,0,0,.55),0 14px 44px rgba(0,0,0,.6);
@@ -1719,7 +1693,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   <footer>
     <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
-    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipus AI Finance Inteligence · … nodos · NRS · Bixby AI · 3D · RAG</span>
+    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipus AI Finance Inteligence · … nodos · NRS · Bixby AI · 3D</span>
   </footer>
 
 <!-- ═══ Simulation Tab ════════════════════════════════════════════════ -->
@@ -1774,13 +1748,6 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           </div>
           <button id="sim-run-btn" data-i18n="sim_run" style="width:100%;margin-top:10px;padding:10px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">▶ Ejecutar Simulación</button>
         </div>
-        <!-- Hypergraph card -->
-        <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
-          <div class="mkt-sec-head">🕸 Hipergrafos Temporales</div>
-          <p style="font-size:12px;color:var(--ink-3);margin:8px 0">Visualiza eventos históricos como hiper-aristas sobre el grafo 3D con timeline interactivo.</p>
-          <button id="sim-hg-btn" onclick="_activateHypergraph()" style="width:100%;padding:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--violet)">🕸 Activar en Mapa 3D</button>
-          <div id="sim-hg-status" style="font-size:11px;color:var(--ink-3);margin-top:6px;display:none"></div>
-        </div>
         <!-- Portfolio Risk -->
         <div class="mkt-tablewrap" style="padding:16px;margin-top:12px">
           <div class="mkt-sec-head">Riesgo de Cartera (VaR/CVaR)</div>
@@ -1833,15 +1800,6 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           </div>
           <div id="sim-output" style="font-size:13px;color:var(--ink-3);padding:20px 0;text-align:center">
             Selecciona un escenario y pulsa ▶ para iniciar la simulación multi-agente
-          </div>
-          <!-- MiroFish report chat -->
-          <div id="sim-report-chat" style="display:none;margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
-            <div class="mkt-sec-head" style="margin-bottom:8px">💬 Chat con el Informe</div>
-            <div id="sim-chat-msgs" style="max-height:200px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:8px"></div>
-            <div style="display:flex;gap:8px">
-              <input id="sim-chat-input" type="text" placeholder="Pregunta sobre el informe..." style="flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px;font-family:inherit">
-              <button id="sim-chat-send" style="padding:8px 14px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Enviar</button>
-            </div>
           </div>
         </div>
       </div>
@@ -2124,13 +2082,6 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <button id="kfi-gen-btn" class="key-btn" style="flex:1">Generar clave</button>
   </div>
   <div id="kfi-result" style="padding:0 20px 12px;font-size:11px;color:var(--ink-3);word-break:break-all;display:none"></div>
-
-  <div class="settings-sec">🧠 ChromaDB / RAG</div>
-  <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Indexa todos los nodos en la base vectorial de Second Brain para búsqueda semántica y contexto de Bixby:</div>
-  <div style="padding:0 20px 12px;display:flex;gap:8px;align-items:center">
-    <button id="rag-index-btn" class="key-btn" style="flex:1">Indexar todos los nodos</button>
-    <span id="rag-index-status" style="font-size:11px;color:var(--ink-3)"></span>
-  </div>
 
   <div class="settings-sec" id="set-data-h">🗑 Datos</div>
   <div class="danger-btns">
@@ -6521,46 +6472,6 @@ const GEO_REGIONS={
   korea: {es:'Corea del Sur',   en:'South Korea',   tint:'#6B5DD3'},
   row:   {es:'Resto del mundo', en:'Rest of World', tint:'#8A857A'},
 };
-/* ── World map drawing ── */
-function _drawWorldMap(ctx, W, H) {
-  ctx.clearRect(0,0,W,H);
-  // Ocean
-  ctx.fillStyle='#060c18'; ctx.fillRect(0,0,W,H);
-  // Graticule
-  ctx.strokeStyle='rgba(40,80,140,.07)'; ctx.lineWidth=0.5;
-  for(let lng=-180;lng<=180;lng+=30){const x=(lng+180)/360*W;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let lat=-90;lat<=90;lat+=30){const y=(90-lat)/180*H;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  // Continent polygons [lng,lat] (very simplified)
-  const CONT=[
-    [[-168,71],[-52,71],[-52,15],[-83,9],[-105,9],[-120,21],[-125,49],[-168,49]], // N.America
-    [[-82,12],[-35,12],[-35,-56],[-76,-56],[-82,12]],  // S.America
-    [[-11,72],[40,72],[40,36],[-11,36]],                 // Europe
-    [[-17,37],[51,37],[51,-34],[-17,-34]],               // Africa
-    [[25,72],[145,72],[145,5],[55,5],[55,37],[25,37]],   // Asia
-    [[113,-10],[153,-10],[153,-44],[113,-44]],            // Australia
-  ];
-  ctx.fillStyle='rgba(18,42,28,.35)'; ctx.strokeStyle='rgba(40,100,60,.18)'; ctx.lineWidth=0.7;
-  CONT.forEach(pts=>{
-    ctx.beginPath();
-    pts.forEach(([lng,lat],i)=>{const x=(lng+180)/360*W,y=(90-lat)/180*H;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-  });
-  // Key country highlights
-  const CTRY=[
-    {box:[-130,50,-60,24],color:'rgba(46,111,183,.12)'},   // USA
-    {box:[-12,72,40,35],color:'rgba(95,107,82,.10)'},        // Europe
-    {box:[72,54,135,18],color:'rgba(200,57,47,.10)'},        // China+E.Asia
-    {box:[119,26,123,22],color:'rgba(24,160,90,.15)'},       // Taiwan
-    {box:[128,38,131,33],color:'rgba(107,93,211,.12)'},      // Korea
-    {box:[130,45,145,31],color:'rgba(194,24,91,.10)'},       // Japan
-  ];
-  CTRY.forEach(({box:[x1,y1,x2,y2],color})=>{
-    const px=(x1+180)/360*W, py=(90-y1)/180*H;
-    const pw=(x2-x1)/360*W, ph=(y1-y2)/180*H;
-    ctx.fillStyle=color; ctx.fillRect(px,py,pw,ph);
-  });
-}
-
 function renderGeoPanel(){
   /* ── Region definitions — countries grouped into 7 geo blocks ── */
   const GEO_BLOCKS=[
@@ -7533,7 +7444,6 @@ const DIAG_META = {
   nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)' },
   elevenlabs: { icon:'🎙', name:'Bixby / ElevenLabs',  why:'Voz conversacional — preguntar por voz' },
   mirofish:   { icon:'🧬', name:'MiroFish',            why:'Motor multi-agente real del War-Room' },
-  rag:        { icon:'🧠', name:'Second Brain (RAG)',  why:'Búsqueda semántica · contexto de Bixby' },
   finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo del terminal' },
   grafo:      { icon:'◈',  name:'Grafo Temporal',       why:'Memoria temporal (nativa · Neo4j opcional)' },
   ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', why:'Fuente única de verdad · eventos bitemporales' },
@@ -7570,7 +7480,7 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','gemini','nvidia','elevenlabs','mirofish','rag','finnhub','grafo','ontologia','market_extra'];
+    const order = ['claude','gemini','nvidia','elevenlabs','mirofish','finnhub','grafo','ontologia','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
@@ -7793,35 +7703,6 @@ document.getElementById('kfi-gen-btn').addEventListener('click', async () => {
       result.innerHTML = `<span style="color:var(--ink-2)">✓ Clave ${tier} generada y guardada</span><br><span style="color:var(--ink-3)">${data.api_key.substring(0,24)}…</span>`;
     } else { result.style.display='block'; result.textContent='Error: '+(data.error||'desconocido'); }
   } catch(e) { result.style.display='block'; result.textContent='Error: '+e.message; }
-});
-
-// RAG batch indexer
-document.getElementById('rag-index-btn').addEventListener('click', async () => {
-  const btn = document.getElementById('rag-index-btn');
-  const status = document.getElementById('rag-index-status');
-  btn.disabled = true; btn.textContent = 'Indexando…';
-  status.textContent = '';
-  try {
-    const nodes = (window.NODES || []).map(n => ({
-      id: n.id, label: n.label, cat: n.cat, ticker: n.mkt || n.ticker || '',
-      geo: n.geo || '', big: !!n.big, desc: n.desc || ''
-    }));
-    const resp = await fetch('/api/rag/index-batch', {
-      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(nodes)
-    });
-    const data = await resp.json();
-    if (resp.ok) {
-      status.style.color = 'var(--green, #22c55e)';
-      status.textContent = `✓ ${data.indexed}/${data.total} nodos`;
-    } else {
-      status.style.color = 'var(--danger)';
-      status.textContent = 'Error: ' + (data.error || resp.statusText);
-    }
-  } catch(e) {
-    status.style.color = 'var(--danger)';
-    status.textContent = 'Error: ' + e.message;
-  }
-  btn.disabled = false; btn.textContent = 'Indexar todos los nodos';
 });
 
 /* ════════════════ §F · PRECIOS EN VIVO (Feature 1) + portfolio (Feature 7) ════════════════ */
@@ -8229,59 +8110,11 @@ const Alerts = {
   }
 };
 
-/* ════════════════ §H2 · PRICE ALERTS POLLING (Feature 8b) ════════════════ */
-const PriceAlerts = {
-  check() {
-    const alerts = JSON.parse(localStorage.getItem('khipu_alerts') || '[]');
-    alerts.forEach(a => {
-      const q = MKT.quotes[a.ticker];
-      if (!q || q.close == null) return;
-      const triggered = (a.dir === 'above' && q.close >= a.price) || (a.dir === 'below' && q.close <= a.price);
-      if (triggered && !a.fired) {
-        a.fired = true;
-        this.notify(a, q.close);
-      }
-      if (!triggered) a.fired = false; // reset so it can fire again
-    });
-    localStorage.setItem('khipu_alerts', JSON.stringify(alerts));
-  },
-  notify(alert, price) {
-    const msg = `${alert.ticker} ${alert.dir === 'above' ? '▲' : '▼'} $${price.toFixed(2)} (alerta: $${alert.price})`;
-    if (typeof toast === 'function') toast(msg);
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Khipus AI Finance · Alerta de precio', { body: msg, icon: '/icon.svg' });
-    }
-    // Also fire via existing Alerts system for banner display
-    try {
-      const n = nodeByTicker && nodeByTicker[alert.ticker];
-      const label = n ? n.label : alert.ticker;
-      const dir = alert.dir === 'above' ? (LANG==='en'?'rose above':'superó') : (LANG==='en'?'fell below':'bajó de');
-      const txt = `<b>${label}</b> ${dir} <b>$${alert.price}</b> → $${price.toFixed(2)}`;
-      const b = document.getElementById('alert-banner');
-      if (b) {
-        document.getElementById('alert-banner-text').innerHTML = txt;
-        b.classList.add('show');
-        document.getElementById('alert-banner-dismiss').onclick = () => b.classList.remove('show');
-        setTimeout(() => b.classList.remove('show'), 12000);
-      }
-    } catch(e) {}
-  },
-  requestPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  },
-  start() { this.requestPermission(); setInterval(() => this.check(), 60000); }
-};
-window.PriceAlerts = PriceAlerts;
-
 /* ── Alertas de la Ontología (Fase 4) — persistentes en Postgres, creadas por
    el lenguaje KHIPU ("ALERT NVDA PX > 150", "ALERT REGION taiwan NEWS").
-   Distintas de PriceAlerts de arriba (esas son solo-precio, solo-localStorage,
-   por comparación rápida desde el detalle de una acción). Estas viven en el
-   servidor, sobreviven a cambiar de dispositivo, y soportan NRS + noticias
-   por región. Se limitan a notificar UNA VEZ por sesión de navegador por
-   alerta (evita spam si la condición sigue vigente en cada sondeo). ─────── */
+   Viven en el servidor, sobreviven a cambiar de dispositivo, y soportan NRS +
+   noticias por región. Se limitan a notificar UNA VEZ por sesión de navegador
+   por alerta (evita spam si la condición sigue vigente en cada sondeo). ──── */
 const OntologyAlerts = {
   _notified: new Set(),
   async check() {
@@ -8428,11 +8261,8 @@ V8.Keys=Keys; V8.health=health; V8.prefs=prefs;
   }
   // arranca precios en vivo (si hay clave + pref activa)
   LivePrices.start();
-  // arranca polling de alertas de precio cada 60s
-  PriceAlerts.start();
   // reevalúa alertas con lo que haya cacheado al cargar
   Object.entries(MKT.quotes||{}).forEach(([tk,q])=>{ if(q&&q.close!=null) Alerts.check(tk,q.close); });
-  PriceAlerts.check(); // también evalúa khipu_alerts al iniciar
   console.log('%cv8 listo','color:#9B4FE8;font-weight:700', SERVER_MODE?'· modo servidor':'· modo standalone',
     '· keys:', {finnhub:Keys.has('finnhub'),fmp:Keys.has('fmp'),claude:Keys.has('claude'),marketstack:Keys.has('marketstack')});
 })();
@@ -8456,7 +8286,7 @@ const $=id=>document.getElementById(id);
   const lines=[`› grafo · ${nodeCount} nodos · ${linkCount} conexiones`,
     '› cargando capa de mercado en vivo…','› motor de análisis IA listo','› ✓ terminal operativo'];
   const footerEl = document.getElementById('footer-nodecount');
-  if (footerEl) footerEl.textContent = `Khipus AI Finance Inteligence · ${nodeCount} nodos · NRS · Bixby AI · 3D · RAG`;
+  if (footerEl) footerEl.textContent = `Khipus AI Finance Inteligence · ${nodeCount} nodos · NRS · Bixby AI · 3D`;
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
   setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);
 })();
@@ -8534,7 +8364,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       </div>
       <div style="margin-top:20px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
         <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">📊 Precio en vivo</span>
-        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">📰 Noticias RAG</span>
+        <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">📰 Noticias</span>
         <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">💡 Tesis IA</span>
         <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">🔮 Simulación</span>
         <span style="padding:4px 10px;border:1px solid var(--line);border-radius:10px;font-size:10px;color:var(--ink-3)">🕸️ Red de dependencias</span>
@@ -8755,7 +8585,6 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     init();
 
   /* re-init when bixby panel shown */
-  const _orig = window.BixbyVoice;
   Object.defineProperty(window,'BixbyVoice',{
     set(v){ _bv=v; },
     get(){ return _bv; }, configurable:true
@@ -9206,22 +9035,6 @@ async function _runClaudeSim(text, nodeStr, output, status) {
   }
 }
 
-let _simChatReportId = null;
-async function _mfChatSend() {
-  if (!_simChatReportId) return;
-  const input = document.getElementById('sim-chat-input');
-  const log = document.getElementById('sim-chat-log');
-  const msg = input.value.trim(); if (!msg) return;
-  input.value = '';
-  log.innerHTML += `<div><strong>Tú:</strong> ${msg.replace(/</g,'&lt;')}</div>`;
-  try {
-    const d = await window.MiroFishClient.chatWithReport(_simChatReportId, msg);
-    const reply = d?.data?.response || d?.response || JSON.stringify(d);
-    log.innerHTML += `<div><strong style="color:var(--violet)">MiroFish:</strong> ${String(reply).replace(/</g,'&lt;')}</div>`;
-  } catch(e) { log.innerHTML += `<div style="color:var(--danger)">Error: ${e.message}</div>`; }
-  log.scrollTop = log.scrollHeight;
-}
-window._mfChatSend = _mfChatSend;
 // ════════════════════════════════════════════════════════════════════════════
 // WAR-ROOM DE SIMULACIÓN — 2D animated cascade visualization
 // ════════════════════════════════════════════════════════════════════════════
@@ -10662,155 +10475,13 @@ window._termOpenTicker = function(ticker) {
 
 // ── Space Tab ────────────────────────────────────────────────────────────────
 let _spaceInited = false;
-function initSpaceOrbitCanvas() {
-  const canvas = document.getElementById('space-orbit');
-  if (!canvas || canvas._orbInited) return;
-  canvas._orbInited = true;
-  const dpr = Math.min(window.devicePixelRatio||1, 2);
-  const W = canvas.offsetWidth||800, H = canvas.offsetHeight||360;
-  canvas.width = W*dpr; canvas.height = H*dpr;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const cx = W/2, cy = H/2;
-  const EARTH_R = Math.min(W,H)*0.13;
-
-  // Constellation orbits
-  const ORBITS = [
-    {name:'Starlink',     company:'SpaceX',           ticker:'Privado',  color:'#00d4ff', r:EARTH_R*1.55, inc:53, sats:18, speed:0.0028, phase:0,
-     alt:'340–570 km (LEO)', total:'5,900+ activos', purpose:'Banda ancha global para consumidores y empresas', status:'✅ Operativo', nodeId:'StarLink'},
-    {name:'OneWeb',       company:'Eutelsat OneWeb',  ticker:'ETL.PA',   color:'#a855f7', r:EARTH_R*1.80, inc:87, sats:12, speed:0.0020, phase:1.1,
-     alt:'1,200 km (LEO)', total:'648 satélites', purpose:'Conectividad enterprise, gobierno y conectividad polar', status:'✅ Operativo', nodeId:'OneWeb'},
-    {name:'Amazon Kuiper',company:'Amazon',           ticker:'AMZN',     color:'#f59e0b', r:EARTH_R*2.05, inc:51, sats:10, speed:0.0015, phase:2.3,
-     alt:'590–630 km (LEO)', total:'3,236 planificados', purpose:'Banda ancha consumidor y AWS Edge Computing', status:'🚀 En despliegue 2024-2027', nodeId:'Amazon_Kuiper'},
-    {name:'GPS III',      company:'Lockheed Martin / DoD', ticker:'LMT', color:'#22c55e', r:EARTH_R*2.60, inc:55, sats:6, speed:0.0009, phase:0.7,
-     alt:'20,200 km (MEO)', total:'31 satélites activos', purpose:'Navegación y posicionamiento global civil y militar', status:'✅ Operativo (GPS III activo)', nodeId:'Lockheed'},
-    {name:'GEO Belt',     company:'Intelsat/SES/Viasat', ticker:'VSAT', color:'#f97316', r:EARTH_R*3.20, inc:0, sats:5, speed:0.0004, phase:0.4,
-     alt:'35,786 km (GEO)', total:'~550 satélites GEO totales', purpose:'TV broadcasting, VSAT corporativo, backhaul regional', status:'✅ Operativo', nodeId:'Viasat'},
-  ];
-
-  const legendEl = document.getElementById('space-orbit-legend');
-  if (legendEl) {
-    legendEl.innerHTML = ORBITS.map((o,i)=>
-      `<div data-orbit="${i}" style="display:flex;align-items:center;gap:6px;font-size:10px;color:rgba(180,200,230,.8);cursor:pointer;padding:2px 4px;border-radius:4px;transition:background .15s" onmouseenter="this.style.background='rgba(80,130,200,.15)'" onmouseleave="this.style.background=''" onclick="window._spaceConstClick(${i})">` +
-        `<span style="width:20px;height:2px;border-radius:2px;background:${o.color};display:block;opacity:.7"></span>` +
-        `<span>${o.name}</span>` +
-        `<span style="margin-left:auto;font-size:9px;color:rgba(140,170,210,.6)">${o.total.split(' ')[0]}</span>` +
-      `</div>`
-    ).join('');
-  }
-
-  // Click handler for constellation info panel
-  window._spaceConstClick = function(idx) {
-    const o = ORBITS[idx];
-    if (!o) return;
-    const panel = document.getElementById('space-const-panel');
-    if (!panel) return;
-    panel.style.display = 'block';
-    panel.innerHTML =
-      `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">` +
-        `<div><div style="font-weight:700;color:#e8edf5;font-size:13px">${o.name}</div>` +
-        `<div style="font-size:10px;color:#5b8ab8;margin-top:2px">${o.company}</div></div>` +
-        `<button onclick="document.getElementById('space-const-panel').style.display='none'" style="background:none;border:none;color:#7a9cc4;font-size:16px;cursor:pointer;padding:0;line-height:1">×</button>` +
-      `</div>` +
-      `<div style="display:grid;gap:6px;font-size:11px">` +
-        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Altitud</span><span style="color:#c8daf0;font-weight:600">${o.alt}</span></div>` +
-        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Satélites</span><span style="color:#c8daf0;font-weight:600">${o.total}</span></div>` +
-        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Ticker</span><span style="color:#${o.ticker==='Privado'?'f59e0b':'22c55e'};font-weight:700;font-family:monospace">${o.ticker}</span></div>` +
-        `<div style="display:flex;justify-content:space-between"><span style="color:#7a9cc4">Estado</span><span style="color:#c8daf0">${o.status}</span></div>` +
-        `<div style="margin-top:4px;padding-top:8px;border-top:1px solid rgba(80,120,180,.2);color:#8ab;line-height:1.4">${o.purpose}</div>` +
-      `</div>` +
-      (o.nodeId && typeof jumpTo === 'function' ?
-        `<button onclick="switchTab('map');setTimeout(()=>jumpTo('${o.nodeId}'),120)" style="margin-top:10px;width:100%;padding:6px;background:rgba(30,80,160,.3);border:1px solid rgba(60,120,220,.3);border-radius:6px;color:#7ab2e8;font-size:10px;cursor:pointer">Ver en grafo →</button>` : '');
-  };
-
-  // Canvas click detection
-  canvas.addEventListener('click', function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width / (window.devicePixelRatio||1));
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height / (window.devicePixelRatio||1));
-    let best = -1, bestDist = Infinity;
-    ORBITS.forEach((o, i) => {
-      const inclRad = o.inc * Math.PI / 180;
-      const ry = o.r * Math.abs(Math.cos(inclRad)) + 1;
-      // Ellipse distance approximation
-      const dx = mx - cx, dy = my - cy;
-      const d = Math.abs(Math.sqrt((dx/o.r)**2 + (dy/Math.max(ry,o.r*.12))**2) - 1) * o.r;
-      if (d < bestDist && d < 18) { bestDist = d; best = i; }
-    });
-    if (best >= 0) window._spaceConstClick(best);
-  });
-
-  let t = 0, raf;
-  function draw() {
-    ctx.clearRect(0,0,W,H);
-
-    // Stars
-    ctx.fillStyle='rgba(150,180,255,.04)';
-    if (!draw._stars) {
-      draw._stars=[];
-      for(let i=0;i<120;i++) draw._stars.push([Math.random()*W, Math.random()*H, Math.random()*1.2+.2]);
-    }
-    draw._stars.forEach(([sx,sy,sr])=>{ctx.beginPath();ctx.arc(sx,sy,sr,0,Math.PI*2);ctx.fill();});
-
-    // Orbit ellipses
-    ORBITS.forEach(o=>{
-      const inclRad = o.inc*Math.PI/180;
-      const rx = o.r, ry = o.r*Math.abs(Math.cos(inclRad))+1;
-      ctx.beginPath();
-      ctx.ellipse(cx,cy,rx,Math.max(ry,o.r*0.12),0,0,Math.PI*2);
-      ctx.strokeStyle = o.color;
-      ctx.globalAlpha = 0.18;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    });
-
-    // Earth
-    const earthGrad = ctx.createRadialGradient(cx-EARTH_R*.25,cy-EARTH_R*.25,EARTH_R*.1, cx,cy,EARTH_R);
-    earthGrad.addColorStop(0,'#3b82f6');
-    earthGrad.addColorStop(0.45,'#1d4ed8');
-    earthGrad.addColorStop(0.8,'#1e3a5f');
-    earthGrad.addColorStop(1,'#0a1628');
-    ctx.beginPath(); ctx.arc(cx,cy,EARTH_R,0,Math.PI*2);
-    ctx.fillStyle=earthGrad; ctx.fill();
-    // atmosphere glow
-    const atmGrad = ctx.createRadialGradient(cx,cy,EARTH_R*.9,cx,cy,EARTH_R*1.25);
-    atmGrad.addColorStop(0,'rgba(59,130,246,.25)');
-    atmGrad.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(cx,cy,EARTH_R*1.25,0,Math.PI*2);
-    ctx.fillStyle=atmGrad; ctx.fill();
-
-    // Satellites
-    ORBITS.forEach(o=>{
-      const inclRad = o.inc*Math.PI/180;
-      const ry = o.r*Math.abs(Math.cos(inclRad))+1;
-      for(let i=0;i<o.sats;i++){
-        const ang = o.phase + t*o.speed + (i/o.sats)*Math.PI*2;
-        const sx = cx + o.r*Math.cos(ang);
-        const sy = cy + Math.max(ry,o.r*.12)*Math.sin(ang);
-        // glow
-        ctx.beginPath(); ctx.arc(sx,sy,3.5,0,Math.PI*2);
-        ctx.fillStyle=o.color; ctx.shadowBlur=8; ctx.shadowColor=o.color; ctx.fill();
-        // dot
-        ctx.beginPath(); ctx.arc(sx,sy,1.5,0,Math.PI*2);
-        ctx.fillStyle='#fff'; ctx.shadowBlur=0; ctx.fill();
-      }
-    });
-
-    t++;
-    raf = requestAnimationFrame(draw);
-  }
-  draw();
-  canvas._stopOrbit = ()=>{ cancelAnimationFrame(raf); canvas._orbInited=false; };
-}
 
 async function initSpaceTab() {
   const spaceCategories = ['space_launch','satellite','earth_obs'];
   const spaceNodes = (window.NODES||[]).filter(n=>spaceCategories.includes(n.cat));
   const countEl = document.getElementById('space-node-count');
   if (countEl) countEl.textContent = spaceNodes.length;
-  // Planeta 3D con satélites reales (fallback al canvas 2D si Three.js no está)
+  // Planeta 3D con satélites reales
   setTimeout(initSpacePlanet, 60);
   const compEl = document.getElementById('space-companies-list');
   // Re-render companies list on every tab visit (data may have changed)
@@ -10843,14 +10514,13 @@ let _planetReq = false;
 async function initSpacePlanet() {
   const canvas = document.getElementById('space-orbit');
   if (!canvas) return;
-  // Sin Three.js o sin el módulo → fallback al canvas 2D ilustrativo
-  if (!window.THREE || !window.Planetarium) { try { initSpaceOrbitCanvas(); } catch(e){} return; }
+  if (!window.THREE || !window.Planetarium) return;
 
   if (window._planet) { try { window._planet._resize(); } catch(e){} return; }
   try {
     window._planet = new window.Planetarium('space-orbit');
     window._planet.init();
-  } catch (e) { console.warn('Planetarium init falló:', e); try { initSpaceOrbitCanvas(); } catch(_){} return; }
+  } catch (e) { console.warn('Planetarium init falló:', e); return; }
 
   // Telemetría al hacer click en un satélite (una sola vez)
   if (!window._satListener) {
@@ -11077,31 +10747,11 @@ window.nexusCore = {
       // Re-render market table if active
       if (typeof renderMarket === 'function') renderMarket();
 
-      // Update header metrics
-      _updateHeaderMetrics(quotesMap);
-
       _setLiveStatus('live');
     } catch(e) {
       _setLiveStatus('error');
     }
     _countdown = REFRESH_INTERVAL / 1000;
-  }
-
-  function _updateHeaderMetrics(quotesMap) {
-    const portfolio = JSON.parse(localStorage.getItem('portfolio') || '{}');
-    let totalPL = 0, totalVal = 0;
-    Object.entries(portfolio).forEach(([tk, pos]) => {
-      const q = quotesMap[tk];
-      if (!q || !pos.shares) return;
-      const price = q.live || q.close;
-      totalVal += price * pos.shares;
-      totalPL  += (price - (pos.buy_price || price)) * pos.shares;
-    });
-    const plEl = document.getElementById('metric-pl');
-    if (plEl && totalVal > 0) {
-      plEl.textContent = (totalPL >= 0 ? '+' : '') + totalPL.toFixed(0);
-      plEl.style.color = totalPL >= 0 ? '#00ff88' : '#ff4444';
-    }
   }
 
   function _setLiveStatus(state) {
@@ -11829,10 +11479,6 @@ window.loadTradeFlows = loadTradeFlows;
     ).join('');
   }
 
-  // legacy compat
-  window.setTradeSide = window.setTradePanelSide;
-  window.updateTradeEstimate = window.updateTradePanelRisk;
-  window.submitTradeOrder = window.submitTradePanelOrder;
 })();
 </script>
 
@@ -11844,7 +11490,6 @@ window.loadTradeFlows = loadTradeFlows;
 /* ── Preflight debounce wiring ── */
 let _pfTimer = null;
 let _pfCurrentText = '';
-let _pfReportId = null;   // MiroFish report ID for chat
 
 function _simWirePreflight() {
   const ta = document.getElementById('sim-custom-text');
@@ -11965,142 +11610,6 @@ async function _fetchPreflightInsight(text, nodeCount, avgNRS, topCats) {
       insightEl.style.display = 'block';
       insightEl.textContent = '💡 ' + d.result;
     }
-  } catch {}
-}
-
-/* ── Hypergraph activation ── */
-window._activateHypergraph = function() {
-  const status = document.getElementById('sim-hg-status');
-  if (status) { status.style.display = 'block'; status.textContent = 'Activando…'; }
-
-  switchTab('map');
-
-  setTimeout(() => {
-    try {
-      const g3d = window._graph3d;
-      if (!window.TemporalHypergraph) {
-        if (status) status.textContent = '⚠ hypergraph.js no cargado';
-        return;
-      }
-      if (!window._hypergraph) {
-        if (!g3d) {
-          // Trigger 3D mode first
-          const btn3d = document.getElementById('btn-3d');
-          if (btn3d) btn3d.click();
-          setTimeout(() => window._activateHypergraph(), 600);
-          return;
-        }
-        window._hypergraph = new TemporalHypergraph(g3d);
-      }
-      window._hypergraph.seedHistoricalEvents();
-      _showHypergraphTimeline();
-      if (status) { status.style.display = 'block'; status.textContent = '✓ Activo — eventos históricos cargados (ver Mapa 3D)'; status.style.color='#34d399'; }
-    } catch(e) {
-      if (status) { status.textContent = 'Error: ' + e.message; status.style.color='#f87171'; }
-    }
-  }, 350);
-};
-
-function _showHypergraphTimeline() {
-  if (document.getElementById('hg-timeline-ctrl')) return;
-  const ctrl = document.createElement('div');
-  ctrl.id = 'hg-timeline-ctrl';
-  ctrl.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:800;background:rgba(8,14,28,.92);border:1px solid rgba(80,130,200,.35);border-radius:12px;padding:12px 20px;display:flex;align-items:center;gap:14px;backdrop-filter:blur(10px);min-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.4)';
-  ctrl.innerHTML = `
-    <span style="font-size:12px;font-weight:700;color:#60a5fa;white-space:nowrap">🕸 Hipergrafos</span>
-    <input id="hg-timeline-slider" type="range" min="0" max="100" value="100" style="flex:1;accent-color:#a78bfa">
-    <span id="hg-year-label" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#a78bfa;min-width:48px;text-align:center">HOY</span>
-    <button onclick="window._hypergraph&&window._hypergraph.playTimeline()" title="Reproducir timeline"
-      style="background:rgba(167,139,250,.2);border:1px solid rgba(167,139,250,.4);color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">▶</button>
-    <button onclick="document.getElementById('hg-timeline-ctrl').remove()" title="Cerrar"
-      style="background:none;border:none;color:rgba(150,170,220,.5);font-size:16px;cursor:pointer;padding:0">✕</button>`;
-  document.body.appendChild(ctrl);
-
-  document.getElementById('hg-timeline-slider').addEventListener('input', function() {
-    if (window._hypergraph) window._hypergraph.setTimelinePosition(this.value / 100);
-  });
-}
-
-/* ── Simulation result renderer (structured output + MiroFish chat) ── */
-window._renderSimResult = function(data, mode) {
-  const output = document.getElementById('sim-output');
-  const status = document.getElementById('sim-status');
-  if (!output) return;
-
-  if (mode === 'mirofish' && data.report) {
-    _pfReportId = data.report_id || null;
-    const report = data.report;
-    output.innerHTML = `
-      <div style="text-align:left">
-        <div style="font-size:14px;font-weight:700;color:var(--ink-1);margin-bottom:12px">${report.title || 'Informe de Simulación'}</div>
-        <div style="font-size:13px;color:var(--ink-2);line-height:1.7;white-space:pre-wrap">${report.content || report.summary || JSON.stringify(report,null,2)}</div>
-        ${data.cascade_nodes?.length ? `
-        <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px">
-          <div style="font-size:11px;color:var(--ink-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Nodos en cascada</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${data.cascade_nodes.slice(0,15).map(id=>{const n=(window.NODE_BY_ID||{})[id];return n?`<span onclick="jumpTo('${id}');switchTab('map')" style="font-size:11px;padding:3px 9px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;cursor:pointer;color:var(--ink-2)">${n.label}</span>`:''}).join('')}
-          </div>
-        </div>` : ''}
-      </div>`;
-    // Wire chat
-    if (_pfReportId) {
-      const chatEl = document.getElementById('sim-report-chat');
-      if (chatEl) {
-        chatEl.style.display = 'block';
-        document.getElementById('sim-chat-send').onclick = _sendReportChat;
-        document.getElementById('sim-chat-input').onkeydown = e => { if(e.key==='Enter') _sendReportChat(); };
-      }
-    }
-    if (status) { status.textContent = '✓ MiroFish completo'; status.style.color='#34d399'; }
-
-    // Build hyperedge from simulation result
-    _ingestSimAsHyperedge(data);
-  } else if (mode === 'claude' && data.text) {
-    output.innerHTML = `<div style="text-align:left;font-size:13px;color:var(--ink-2);line-height:1.75;white-space:pre-wrap">${data.text}</div>`;
-    if (status) { status.textContent = '✓ Claude completo'; status.style.color='#34d399'; }
-  }
-};
-
-async function _sendReportChat() {
-  if (!_pfReportId) return;
-  const input = document.getElementById('sim-chat-input');
-  const msgs = document.getElementById('sim-chat-msgs');
-  const msg = (input?.value||'').trim();
-  if (!msg) return;
-  input.value = '';
-  msgs.insertAdjacentHTML('beforeend', `<div style="font-size:12px;color:var(--ink-2);padding:6px 10px;background:rgba(96,165,250,.08);border-radius:6px;align-self:flex-end;max-width:90%">${msg}</div>`);
-  msgs.insertAdjacentHTML('beforeend', `<div id="chat-thinking" style="font-size:12px;color:var(--ink-3);padding:6px;font-style:italic">Pensando…</div>`);
-  msgs.scrollTop = msgs.scrollHeight;
-  try {
-    const r = await fetch('/api/mirofish/report/chat', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ report_id: _pfReportId, message: msg }) });
-    const d = await r.json();
-    document.getElementById('chat-thinking')?.remove();
-    const reply = d.data?.response || d.response || JSON.stringify(d);
-    msgs.insertAdjacentHTML('beforeend', `<div style="font-size:12px;color:var(--ink-1);padding:6px 10px;background:var(--surface-2);border-radius:6px;max-width:92%;line-height:1.55">${reply}</div>`);
-    msgs.scrollTop = msgs.scrollHeight;
-  } catch(e) {
-    document.getElementById('chat-thinking')?.remove();
-    msgs.insertAdjacentHTML('beforeend', `<div style="font-size:12px;color:#f87171">Error: ${e.message}</div>`);
-  }
-}
-
-function _ingestSimAsHyperedge(simData) {
-  if (!window.TemporalHypergraph) return;
-  try {
-    if (!window._hypergraph) return;
-    const he = {
-      id: 'he_sim_' + Date.now(),
-      type: 'simulation',
-      timestamp: new Date().toISOString(),
-      title: simData.scenario_title || 'Simulación MiroFish',
-      description: (simData.report?.summary || '').slice(0, 200),
-      severity: 7,
-      nodes_affected: (simData.cascade_nodes || []).slice(0, 20),
-      node_impacts: {},
-      duration_days: 90,
-    };
-    if (he.nodes_affected.length >= 2) window._hypergraph.addHyperedge(he);
   } catch {}
 }
 
@@ -12768,11 +12277,10 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     _raycaster = null; _mouse3D = null; _mouseCB = null; _hoveredMesh = null;
   }
 
-  let _scatterActive = false, _origSimTick = null, _axisGroup = null, _savedPositions = new Map();
+  let _scatterActive = false, _axisGroup = null, _savedPositions = new Map();
 
   function activateScatter(inst) {
     _scatterActive = true;
-    _origSimTick = inst._onSimTick.bind(inst); inst._onSimTick = () => {};
     _savedPositions.clear();
     inst.nodeMeshes.forEach((mesh) => {
       const node = mesh.userData?.node; if (!node) return;
@@ -12788,7 +12296,6 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
       const mat = new T.LineBasicMaterial({color:c,transparent:true,opacity:0.75});
       const geo = new T.BufferGeometry().setFromPoints([new T.Vector3(...d.map(v=>v*-HALF)),new T.Vector3(...d.map(v=>v*HALF))]);
       _axisGroup.add(new T.Line(geo,mat));
-      if (typeof inst._axisLabel === 'function') { inst._axisLabel(hi,d.map(v=>v*(HALF+12)),c); inst._axisLabel(lo,d.map(v=>v*(-HALF-12)),c); }
     });
     inst.scene.add(_axisGroup);
     createPanel(); setupHover(inst);
@@ -12796,7 +12303,6 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
 
   function deactivateScatter(inst) {
     _scatterActive = false;
-    if (_origSimTick) { inst._onSimTick = _origSimTick; _origSimTick = null; }
     _savedPositions.forEach((pos, mesh) => mesh.position.copy(pos)); _savedPositions.clear();
     // restaurar opacidad/visibilidad por si había un filtro activo
     inst.nodeMeshes.forEach(mesh => { if (mesh.material) mesh.material.opacity = 0.9; (mesh.children || []).forEach(ch => ch.visible = true); });

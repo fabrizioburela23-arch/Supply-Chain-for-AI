@@ -119,12 +119,11 @@ def test_ai_analyze_no_key(client):
     assert r.content_type.startswith('application/json')
 
 
-# ── RAG proxy (service not running → graceful JSON error) ─────────────────
+# ── RAG proxy eliminado (Etapa 1) — la ruta ya no debe existir ─────────────
 
-def test_rag_stats_graceful(client):
+def test_rag_proxy_removed(client):
     r = client.get('/api/rag/stats')
-    assert r.status_code in (200, 500, 502, 503)
-    assert r.content_type.startswith('application/json')
+    assert r.status_code == 404
 
 
 # ── VaR / CVaR portfolio risk (JWT-protected in production) ───────────────
@@ -155,7 +154,7 @@ def test_docs_returns_json(client):
 
 def test_static_node_files_exist():
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for fname in ['nodes/nodes_core.js', 'nodes/nodes_expand.js',
+    for fname in ['nodes/nodes_expand.js',
                   'nodes/nodes_expand2.js', 'nodes/links_expand.js']:
         path = os.path.join(base, fname)
         assert os.path.exists(path), f"Missing: {fname}"

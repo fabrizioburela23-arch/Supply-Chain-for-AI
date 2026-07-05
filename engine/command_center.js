@@ -85,7 +85,6 @@
         if (hb && hb.contains(e.target)) return;
         this.setOpen(false);
       });
-      window.BixbyCCsetState = (s) => this.setOrbState(s);
     },
 
     toggle() { if (!this.inited) this.init(); this.setOpen(!this.open); },

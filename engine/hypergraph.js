@@ -23,7 +23,6 @@ class TemporalHypergraph {
     if (this.graph3d?.active) this._render3D(he);
     else this.pendingRender.push(he);
     this._updateTimelineUI();
-    this.save();
   }
 
   _render3D(he) {
@@ -268,19 +267,6 @@ class TemporalHypergraph {
       }
       if (he.nodes_affected.length >= 2) this.addHyperedge(he);
     });
-  }
-
-  save() {
-    try {
-      localStorage.setItem('khipu_hyperedges', JSON.stringify(this.hyperedges.slice(-100)));
-    } catch {}
-  }
-
-  load() {
-    try {
-      const saved = JSON.parse(localStorage.getItem('khipu_hyperedges') || '[]');
-      saved.forEach(he => this.addHyperedge(he));
-    } catch {}
   }
 }
 

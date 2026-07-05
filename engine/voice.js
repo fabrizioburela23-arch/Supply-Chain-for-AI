@@ -541,16 +541,6 @@ const BixbyVoice = {
           companies: scores.map(x => ({ label: x.label, nrs: x.nrs, level: x.nrs >= 70 ? 'high' : x.nrs >= 40 ? 'medium' : 'low' })) });
         break;
       }
-      case 'search_second_brain': {
-        const base = (typeof BASE !== 'undefined') ? BASE : '';
-        fetch(`${base}/api/rag/query/ai`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: params.query || '' }),
-        }).then(r => r.json()).then(d => {
-          respond({ success: true, answer: (d.answer || '').slice(0, 500), sources_count: d.context_used });
-        }).catch(() => respond({ success: false, error: 'RAG unavailable' }));
-        break;
-      }
       case 'get_company_info': {
         const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
           || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));

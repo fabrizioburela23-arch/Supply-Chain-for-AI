@@ -212,73 +212,6 @@ class KhipuGraph3D {
     // que se auto-activa al entrar a 3D. No añadimos aquí otra capa de ejes.
   }
 
-  _bigLabel(text, color, scale) {
-    const cv = document.createElement('canvas');
-    cv.width = 512; cv.height = 64;
-    const ctx = cv.getContext('2d');
-    ctx.font = '700 26px "Archivo", sans-serif';
-    ctx.fillStyle = `#${new THREE.Color(color).getHexString()}`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,.85)'; ctx.shadowBlur = 6;
-    ctx.fillText(text, 256, 34);
-    const tex = new THREE.CanvasTexture(cv);
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.96, depthTest: false }));
-    const s = scale || 1;
-    sprite.scale.set(120 * s, 15 * s, 1);
-    return sprite;
-  }
-
-  _addAxes(sx, sy, sz) {
-    if (this._axes) { this._graphGroup.remove(this._axes); this._axes = null; }
-    const g = new THREE.Group();
-    const line = (a, b, color, op) => {
-      const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a), new THREE.Vector3(...b)]);
-      return new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: op == null ? 0.45 : op }));
-    };
-    g.add(line([-sx, 0, 0], [sx, 0, 0], 0xff7a7a));   // X cadena
-    g.add(line([0, -sy, 0], [0, sy, 0], 0x6ee7a8));   // Y riesgo
-    g.add(line([0, 0, -sz], [0, 0, sz], 0x7fb4ff));   // Z región
-
-    // Piso de referencia (grid en el plano XZ) para dar profundidad espacial
-    try {
-      const grid = new THREE.GridHelper(Math.max(sx, sz) * 2, 16, 0x33507a, 0x1d2c46);
-      grid.position.y = -sy;
-      grid.material.transparent = true; grid.material.opacity = 0.22;
-      g.add(grid);
-    } catch (e) {}
-
-    const lbl = (txt, col, pos, sc) => { const s = this._bigLabel(txt, col, sc); s.position.set(...pos); g.add(s); };
-    // Títulos de eje
-    lbl('CADENA: proveedor → cliente', 0xff9a9a, [0, -sy - 48, sz + 6], 1.4);
-    lbl('REGIÓN', 0xa9cbff, [0, sy + 34, -sz - 6], 1.4);
-    // Ticks de riesgo (eje Y) al costado izquierdo
-    lbl('Resiliente · NRS 100', 0x9af0c0, [-sx - 70, sy, 0], 0.85);
-    lbl('Riesgo medio · 50', 0x9af0c0, [-sx - 70, 0, 0], 0.85);
-    lbl('Frágil · NRS 0', 0xffb0b0, [-sx - 70, -sy, 0], 0.85);
-    // Ticks de región (eje Z) sobre el piso
-    [['Taiwán', -3], ['China', -2.3], ['Japón', -0.7], ['India', 0.2], ['EE.UU.', 2.1], ['Europa', 3]]
-      .forEach(([name, zk]) => lbl(name, 0xb8d4ff, [-sx - 30, -sy + 10, (zk / 3) * sz], 0.7));
-
-    this._axes = g;
-    this._graphGroup.add(g);
-  }
-
-  _onSimTick(nodes) {
-    nodes.forEach(n => {
-      if (n.vz == null) n.vz = 0;
-      const fz = -n.z * 0.005;
-      n.vz = (n.vz + fz) * 0.85;
-      n.z = (n.z || 0) + n.vz;
-    });
-
-    nodes.forEach(n => {
-      const mesh = this.nodeMeshes.get(n.id);
-      if (mesh) mesh.position.set(n.x || 0, n.y || 0, n.z || 0);
-    });
-
-    this._updateLinkPositions();
-  }
-
   _updateLinkPositions() {
     this.linkLines.forEach(line => {
       const { src, dst } = line.userData;
@@ -340,53 +273,6 @@ class KhipuGraph3D {
       mesh.material.emissiveIntensity = 1.0;
       this._flyTo(mesh.position.clone());
     }
-  }
-
-  morphNodeSize(nodeId) {
-    const mesh = this.nodeMeshes.get(nodeId);
-    if (!mesh) return;
-    const targetR = (typeof computeNodeRadius === 'function' ? computeNodeRadius(nodeId) : 0) || mesh.userData.baseRadius;
-    const currentR = mesh.userData.baseRadius || 9;
-    if (Math.abs(targetR - currentR) < 0.5) return;
-
-    mesh.userData.baseRadius = targetR;
-    const newGeo = new THREE.SphereGeometry(targetR, 16, 12);
-    mesh.geometry.dispose();
-    mesh.geometry = newGeo;
-
-    const perfColor = getDailyPerformanceHex(nodeId);
-    if (perfColor) {
-      mesh.material.emissive.setHex(perfColor);
-      mesh.material.emissiveIntensity = 0.8;
-      setTimeout(() => {
-        mesh.material.emissive.copy(mesh.material.color);
-        mesh.material.emissiveIntensity = 0.25;
-      }, 2000);
-    }
-  }
-
-  highlightStress(failedId, affectedSet) {
-    this.nodeMeshes.forEach((mesh, id) => {
-      if (id === failedId) {
-        mesh.material.color.setHex(0xFF2222);
-        mesh.material.emissive.setHex(0xFF0000);
-        mesh.material.emissiveIntensity = 2.0;
-        mesh.scale.setScalar(1.3);
-      } else if (affectedSet.has(id)) {
-        mesh.material.opacity = 0.85;
-        mesh.material.emissiveIntensity = 0.5;
-      } else {
-        mesh.material.opacity = 0.12;
-      }
-    });
-    this.linkLines.forEach(line => {
-      const sl = lid(line.userData.link.source);
-      const tl = lid(line.userData.link.target);
-      if (sl === failedId || tl === failedId) {
-        line.material.color.setHex(0xFF2222);
-        line.material.opacity = 0.9;
-      }
-    });
   }
 
   _highlightChain(nodeId) {
@@ -457,25 +343,6 @@ class KhipuGraph3D {
       line.material.opacity = 0.35;
     });
     this._chainHighlighted = null;
-  }
-
-  resetHighlight() {
-    this.nodeMeshes.forEach((mesh, id) => {
-      const n = NODE_BY_ID[id];
-      if (n) {
-        const c = new THREE.Color(getCatColorHex(n.cat));
-        mesh.material.color.copy(c);
-        mesh.material.emissive.copy(c);
-        mesh.material.emissiveIntensity = 0.25;
-        mesh.material.opacity = 0.9;
-        mesh.scale.setScalar(1);
-      }
-    });
-    this.linkLines.forEach(line => {
-      const c = new THREE.Color(getLinkColorHex(line.userData.link.type || 'supply'));
-      line.material.color.copy(c);
-      line.material.opacity = 0.2;
-    });
   }
 
   _flyTo(targetPos, duration = 1100) {
@@ -555,9 +422,6 @@ class KhipuGraph3D {
     this.canvas.addEventListener('dblclick', () => this._resetView());
 
     // ── Touch ──────────────────────────────────────────────────────────────────
-    const touch = (fn) => this.canvas.addEventListener(fn.name.replace('_on', '').toLowerCase()
-      .replace('touch', 'touch'), fn, { passive: false });
-
     this.canvas.addEventListener('touchstart', e => {
       e.preventDefault();
       this._dragging = true;
@@ -837,17 +701,6 @@ function getLinkColorHex(type) {
     partner:  '#8A857A', customer: '#C25E12', owns:     '#7C3AED',
   };
   return LINK_HEX[type] || '#4E8B1E';
-}
-
-function getDailyPerformanceHex(nodeId) {
-  const n = NODE_BY_ID[nodeId];
-  if (!n || !n.mkt || typeof MKT === 'undefined') return null;
-  const q = MKT.quotes[n.mkt];
-  if (!q || q.close == null || q.prev == null) return null;
-  const chg = (q.close - q.prev) / q.prev;
-  if (chg > 0.03) return 0x00FF66;
-  if (chg < -0.03) return 0xFF3333;
-  return null;
 }
 
 window.KhipuGraph3D = KhipuGraph3D;
