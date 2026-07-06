@@ -52,12 +52,32 @@ vacío (el slot del motor nuevo); contrato MiroFish a replicar =
 - Diferido a Etapa 1: extraer _ai_complete/_fetch_quote_raw a core/ (rompe
   la dependencia circular ontology→server).
 
-## Etapas siguientes (plan en las tareas de la sesión)
+## Etapa 1 — Limpieza masiva: ✅ COMPLETA (2026-07-05, 4 batches publicados)
 
-1. **Etapa 1 — Limpieza masiva**: borrar muerto/roto confirmado por la
-   auditoría (nodes_core.js, rag/, litellm/, PriceAlerts no-op, 9 rutas sin
-   caller, stack 3D semi-huérfano...), consolidar duplicados (3 pipelines de
-   quotes, 3 sistemas de alertas), quitar modo standalone.
+- [x] Batch 1 (a2b09ff, −2,200 ln): rag/ + litellm/ + redis compose +
+      nodes_core.js + PriceAlerts no-op + cadena Aladdin muerta + _mfChatSend
+      + _drawWorldMap + _activateHypergraph roto + botón 🕸 + timeline
+      duplicado + initSpaceOrbitCanvas + métodos muertos de graph3d +
+      hypergraph save/load + 9 rutas Flask sin caller + paleta .dark
+      duplicada + docs stale → docs/archive/.
+- [x] Batch 2 (c24e85b): paquete core/ (config/http/ai/quotes) — server.py y
+      ontology/agents.py importan de ahí; dependencia circular
+      ontology→server ROTA (prerrequisito del motor de matrices).
+- [x] Batch 3 (41beb40, −281 ln): modo standalone ELIMINADO — SERVER_MODE
+      constante true, DataLayer solo-server, fuera todas las llamadas
+      directas del navegador a Finnhub/FMP/Anthropic/Marketstack y el UI de
+      keys (⚙ solo preferencias + salud). voice.js y secondbrain.js migrados
+      al proxy. Smoke test real en navegador local: arranque limpio.
+- [x] Batch 4: /v1/risk/portfolio y /api/portfolio-risk comparten
+      _portfolio_risk_impl (antes duplicado verbatim de ~60 ln, contrato /v1
+      intacto); _fetch_quote_raw(timeout=) reutilizado en los 3 loops batch;
+      CLAUDE.md y este archivo actualizados.
+- ⏸️ Diferido A PROPÓSITO a Etapa 4: consolidar los 3 pipelines de quotes del
+  cliente (fetchQuotes/LivePrices/initLiveData) y los 2 sistemas de alertas
+  vivos — el store único del mapa unificado los subsume; consolidarlos dos
+  veces sería trabajo tirado.
+
+## Etapas siguientes (plan en las tareas de la sesión)
 2. **Etapa 2 — Datos limpios**: resolución de entidades (31 duplicados),
    dirección única de aristas, taxonomía tipada, pesos re-derivados (LLM
    batch), datos fuera del monolito → JSON servido, swap frontend a la API.

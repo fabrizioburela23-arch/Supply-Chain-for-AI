@@ -10,11 +10,17 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 
 ## Arquitectura
 
-- `app.html` (~12,800 líneas): TODA la UI en un archivo, 8 bloques `<script>`
+- `app.html` (~12,300 líneas): TODA la UI en un archivo, 8 bloques `<script>`
   inline. Tabs: map, market, analysis, geo, simulation, space, terminal,
   canvas, tkg (◈ Grafo Temporal), guia (❓ Guía).
-- `server.py` (~2,960 líneas): Flask sync + gunicorn 2 workers. Proxy de todas
-  las APIs externas (las keys nunca llegan al browser en SERVER_MODE).
+- `server.py` (~2,500 líneas): Flask sync + gunicorn **1 worker + 8 threads**
+  (NO subir workers: el estado en memoria — caché, rate limits, agente de
+  trading — divergiría entre workers). Proxy de todas las APIs externas.
+- `core/` (paquete Python): helpers compartidos server/ontology —
+  `config.py` (keys IA/Finnhub/timeout), `http.py` (_safe_get/_safe_ticker),
+  `ai.py` (cascada Claude→Gemini→NVIDIA + _extract_json), `quotes.py`
+  (_fetch_quote_raw). Rompe la dependencia circular ontology→server; el
+  futuro motor de matrices también importa de aquí.
 - `ontology/` (paquete Python): ontología Palantir-style —
   `models.py` (events bitemporal + objects/links materializados +
   ProposedAction + Alert), `service.py` (apply_event, as_of_graph, diff_graph),
@@ -29,8 +35,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js.
 - `scripts/`: export_graph_v0.js (snapshot) · migrate_v0_to_ontology.py.
 - `data/grafo_v0.json`: snapshot de migración (463 nodos / 1163 links).
-- `sim/`: mirofish_client.js, scenario_builder.js. `rag/`: microservicio
-  ChromaDB (aún SIN desplegar).
+- `sim/`: mirofish_client.js, scenario_builder.js.
+- ELIMINADOS en la limpieza 2026-07 (no recrear): `rag/` (nunca desplegado),
+  `litellm/`, `nodes/nodes_core.js` (duplicado), el modo standalone completo
+  y el stack de keys en el navegador.
 
 ## Dos bases de datos — roles distintos, NO fusionar
 
@@ -68,8 +76,11 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   alimentan el Grafo Temporal cliente.
 - Acciones de ontología: `actor` SIEMPRE obligatorio; el nombre del usuario se
   guarda en `localStorage.khipu_actor`.
-- Keys del browser (modo standalone): localStorage vía Keys.set/Keys.get —
-  NUNCA en el código. En SERVER_MODE viven en env vars del server.
+- **API keys: SOLO en el server** (env vars de Railway). El modo standalone y
+  el UI de keys en el navegador se ELIMINARON (2026-07); `SERVER_MODE` es
+  constante `true` (se conserva la var porque engine/*.js la consulta) y
+  `Keys.has(svc)` solo refleja `/api/health`. El PIN de trading del usuario
+  vive en `localStorage.khipu_trade_pin` (header `X-Trade-Pin`).
 
 ## Funciones globales clave
 
@@ -112,11 +123,13 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
    `git checkout main && git merge --ff-only` → push AMBAS ramas (con
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
-   `python3 -m py_compile server.py`; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (48 tests; los de ontología se
-   auto-saltan sin DATABASE_URL). Para correrlos completos hay Postgres local:
-   `service postgresql start`, DB `khipus_ontology`, postgres/devpass, poblar
-   con `python3 scripts/migrate_v0_to_ontology.py --reset`.
+   `py_compile` de los .py tocados; los 8 bloques inline de app.html con
+   `new vm.Script()`; `pytest tests/ -q` (51 tests; los de ontología se
+   auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
+   completo instalado (2026-07): Python 3.11
+   (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
+   PostgreSQL 16 local — correr TODO con:
+   `DATABASE_URL=postgresql://postgres:devpass@localhost:5432/khipus_test pytest tests/ -q`
 
 ## Variables de entorno
 
@@ -124,16 +137,19 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 SECRET_KEY, FINNHUB_KEY, ANTHROPIC_KEY, GEMINI_KEY, NVIDIA_KEY, AI_ORDER,
 ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_ALLOW_OVERRIDE,
 AV_KEY, FMP_KEY, MARKETSTACK_KEY, ALPACA_KEY/SECRET/BASE,
-RAG_URL (RAG sin desplegar), MIROFISH_URL,
+TRADE_PIN            ← SIN esto el trading queda deshabilitado (X-Trade-Pin)
+KHIPU_ADMIN_SECRET   ← emite claves /v1 de tiers de pago (X-Admin-Secret)
+MIROFISH_URL, MIROFISH_TOKEN,
 NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,   ← Grafo Temporal persistente
 DATABASE_URL                              ← Ontología (Postgres en Railway)
 ```
 
 ## Multi-IA
 
-`_ai_complete()` intenta AI_ORDER (claude,gemini,nvidia) en cascada;
+`core.ai._ai_complete()` intenta AI_ORDER (claude,gemini,nvidia) en cascada;
 `_claude_complete` es alias compat. `AI_MODEL` default: claude-haiku-4-5.
 `_extract_json()` tolera JSON envuelto en prosa/fences (Gemini/NVIDIA).
+server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 
 ## Errores comunes
 

@@ -663,7 +663,7 @@ def batch_quotes():
     tickers = [s for s in (_safe_ticker(t) for t in request.args.get('symbols', '').split(',')) if s]
     results = {}
     for t in tickers[:60]:  # límite de cortesía por request
-        data, err = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={t}&token={FINNHUB}', timeout=4)
+        data, err = _fetch_quote_raw(t, timeout=4)
         if data:
             results[t] = data
     return jsonify(results)
@@ -1885,21 +1885,14 @@ def voice_session():
         return jsonify({'error': str(e)[:200]}), 502
 
 
-@app.route('/api/portfolio-risk', methods=['POST'])
-@rate_limit(limit=20, window=3600)
-def api_portfolio_risk_internal():
-    """VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser)."""
-    data = request.get_json(silent=True) or {}
-    positions = data.get('positions', {})
-    if not positions:
-        return jsonify({'error': 'positions required',
-                        'format': '{"NVDA":{"shares":10,"buy_price":450}}'}), 400
-    if not AV_KEY:
-        return jsonify({'error': 'AV_KEY not configured on server. Add ALPHA_VANTAGE_KEY to .env'}), 400
+def _portfolio_risk_impl(positions, no_data_msg):
+    """Cálculo VaR/CVaR/Sharpe/MaxDD compartido por /api/portfolio-risk (interno)
+    y /v1/risk/portfolio (API pública JWT — contrato INTOCABLE, antes era un
+    duplicado verbatim de ~60 líneas). Devuelve (payload_dict, status)."""
     try:
         import numpy as np
-    except Exception:
-        return jsonify({'error': 'numpy not installed on server'}), 503
+    except Exception:  # noqa: BLE001
+        return {'error': 'numpy not installed on server'}, 503
 
     returns_by_ticker = {}
     for ticker in list(positions.keys())[:10]:
@@ -1912,10 +1905,10 @@ def api_portfolio_risk_internal():
             if len(prices) > 4:
                 returns_by_ticker[ticker] = [(prices[i] - prices[i + 1]) / prices[i + 1]
                                              for i in range(len(prices) - 1)]
-        except Exception:
+        except Exception:  # noqa: BLE001
             pass
     if not returns_by_ticker:
-        return jsonify({'error': 'Could not fetch historical data. Check AV_KEY on server.'}), 400
+        return {'error': no_data_msg}, 400
 
     pv = sum(p['shares'] * p['buy_price'] for p in positions.values())
     portfolio_returns = []
@@ -1925,7 +1918,7 @@ def api_portfolio_risk_internal():
         weight = (pos['shares'] * pos['buy_price']) / pv
         portfolio_returns.append([x * weight for x in returns_by_ticker[ticker]])
     if not portfolio_returns:
-        return jsonify({'error': 'Insufficient data'}), 400
+        return {'error': 'Insufficient data'}, 400
 
     min_len = min(len(r) for r in portfolio_returns)
     combined = np.sum([r[:min_len] for r in portfolio_returns], axis=0)
@@ -1938,7 +1931,7 @@ def api_portfolio_risk_internal():
     peak = np.maximum.accumulate(cum)
     mdd = float(abs(np.min((cum - peak) / peak)))
 
-    return jsonify({
+    return {
         'portfolio_value': round(pv, 2),
         'var_95': {'weekly_usd': round(var_1w, 2), 'monthly_usd': round(var_1m, 2),
                    'pct': round(var_1w / pv * 100, 2)},
@@ -1946,7 +1939,23 @@ def api_portfolio_risk_internal():
         'sharpe_ratio': round(sharpe, 3),
         'max_drawdown_pct': round(mdd * 100, 2),
         'risk_level': 'BAJO' if var_1w / pv < 0.03 else 'MODERADO' if var_1w / pv < 0.06 else 'ALTO',
-    })
+    }, 200
+
+
+@app.route('/api/portfolio-risk', methods=['POST'])
+@rate_limit(limit=20, window=3600)
+def api_portfolio_risk_internal():
+    """VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser)."""
+    data = request.get_json(silent=True) or {}
+    positions = data.get('positions', {})
+    if not positions:
+        return jsonify({'error': 'positions required',
+                        'format': '{"NVDA":{"shares":10,"buy_price":450}}'}), 400
+    if not AV_KEY:
+        return jsonify({'error': 'AV_KEY not configured on server. Add ALPHA_VANTAGE_KEY to .env'}), 400
+    payload, status = _portfolio_risk_impl(
+        positions, 'Could not fetch historical data. Check AV_KEY on server.')
+    return jsonify(payload), status
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -2044,7 +2053,7 @@ def api_node_live(node_id):
     ticker = _safe_ticker(request.args.get('ticker'))
     quote = {}
     if ticker and FINNHUB:
-        q, _ = _safe_get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}')
+        q, _ = _fetch_quote_raw(ticker)
         if q and q.get('c'):
             quote = {'price': q['c'], 'prev_close': q['pc'],
                      'change_pct': (q['c'] - q['pc']) / q['pc'] * 100 if q['pc'] else 0}
@@ -2054,63 +2063,16 @@ def api_node_live(node_id):
 @app.route('/v1/risk/portfolio', methods=['POST'])
 @khipu_auth('starter')
 def api_portfolio_risk():
-    """VaR + CVaR del portfolio del cliente (Alpha Vantage históricos)."""
+    """VaR + CVaR del portfolio del cliente (Alpha Vantage históricos).
+    Contrato público INTOCABLE — mismo cálculo compartido en _portfolio_risk_impl."""
     data = request.get_json(silent=True) or {}
     positions = data.get('positions', {})
     if not positions:
         return jsonify({'error': 'positions required',
                         'format': '{"NVDA":{"shares":10,"buy_price":450}}'}), 400
-    try:
-        import numpy as np
-    except Exception:  # noqa: BLE001
-        return jsonify({'error': 'numpy not installed on server'}), 503
-
-    returns_by_ticker = {}
-    for ticker in list(positions.keys())[:10]:
-        try:
-            r, _ = _safe_get(
-                f'https://www.alphavantage.co/query?function=TIME_SERIES_WEEKLY_ADJUSTED'
-                f'&symbol={ticker}&apikey={AV_KEY}', timeout=10)
-            ts = (r or {}).get('Weekly Adjusted Time Series', {})
-            prices = [float(v['5. adjusted close']) for k, v in sorted(ts.items(), reverse=True)][:52]
-            if len(prices) > 4:
-                returns_by_ticker[ticker] = [(prices[i] - prices[i + 1]) / prices[i + 1]
-                                             for i in range(len(prices) - 1)]
-        except Exception:  # noqa: BLE001
-            pass
-    if not returns_by_ticker:
-        return jsonify({'error': 'Could not fetch historical data. Check ALPHA_VANTAGE_KEY.'}), 400
-
-    pv = sum(p['shares'] * p['buy_price'] for p in positions.values())
-    portfolio_returns = []
-    for ticker, pos in positions.items():
-        if ticker not in returns_by_ticker:
-            continue
-        weight = (pos['shares'] * pos['buy_price']) / pv
-        portfolio_returns.append([x * weight for x in returns_by_ticker[ticker]])
-    if not portfolio_returns:
-        return jsonify({'error': 'Insufficient data'}), 400
-
-    min_len = min(len(r) for r in portfolio_returns)
-    combined = np.sum([r[:min_len] for r in portfolio_returns], axis=0)
-    mu, sigma = float(np.mean(combined)), float(np.std(combined))
-    var_1w = abs((mu - 1.645 * sigma) * pv)
-    var_1m = var_1w * np.sqrt(4)
-    cvar = abs(float(np.mean(combined[combined <= np.percentile(combined, 5)])) * pv)
-    sharpe = float((mu / sigma) * np.sqrt(52)) if sigma else 0
-    cum = np.cumprod(1 + combined)
-    peak = np.maximum.accumulate(cum)
-    mdd = float(abs(np.min((cum - peak) / peak)))
-
-    return jsonify({
-        'portfolio_value': round(pv, 2),
-        'var_95': {'weekly_usd': round(var_1w, 2), 'monthly_usd': round(var_1m, 2),
-                   'pct': round(var_1w / pv * 100, 2)},
-        'cvar_95': {'usd': round(cvar, 2), 'pct': round(cvar / pv * 100, 2)},
-        'sharpe_ratio': round(sharpe, 3),
-        'max_drawdown_pct': round(mdd * 100, 2),
-        'risk_level': 'BAJO' if var_1w / pv < 0.03 else 'MODERADO' if var_1w / pv < 0.06 else 'ALTO',
-    })
+    payload, status = _portfolio_risk_impl(
+        positions, 'Could not fetch historical data. Check ALPHA_VANTAGE_KEY.')
+    return jsonify(payload), status
 
 
 # ── /api/quotes/live — batch quotes with pct change ──────────────────────────
@@ -2132,8 +2094,7 @@ def quotes_live():
         q = None
         # 1) Finnhub
         if FINNHUB:
-            fh, err = _safe_get(
-                f'https://finnhub.io/api/v1/quote?symbol={tk}&token={FINNHUB}', timeout=4)
+            fh, err = _fetch_quote_raw(tk, timeout=4)
             if fh and fh.get('c') and fh.get('pc'):
                 close = fh['c']
                 prev  = fh['pc']
