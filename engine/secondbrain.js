@@ -106,11 +106,9 @@ class SecondBrain {
 
   async _drawSparkline(nodeId, ticker) {
     try {
-      const now = Math.floor(Date.now() / 1000);
-      const from = now - 90 * 86400;
-      const r = await DataLayer._json(
-        `https://finnhub.io/api/v1/stock/candle?symbol=${ticker}&resolution=W&from=${from}&to=${now}&token=${Keys.get('finnhub')}`
-      );
+      // Velas vía el proxy del server (misma forma {s,c,o,h,l,t} de Finnhub);
+      // la key nunca llega al navegador.
+      const r = await DataLayer._json(`/api/candles/${encodeURIComponent(ticker)}`);
       if (!r?.c?.length) return;
       const cv = document.getElementById(`sparkline-${nodeId}`);
       if (!cv) return;

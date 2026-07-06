@@ -26,14 +26,9 @@ const BixbyVoice = {
   stop() { this.disconnect(); },
 
   async connect() {
-    const isServerMode = typeof SERVER_MODE !== 'undefined' && SERVER_MODE;
-    const elKey = (typeof Keys !== 'undefined' && Keys.get('elevenlabs')) || localStorage.getItem('key_elevenlabs');
+    // La key de ElevenLabs vive en el server (.env); agent_id opcional es solo
+    // una preferencia local que el server puede aceptar como override.
     const agentId = localStorage.getItem('elevenlabs_agent_id');
-    if (!isServerMode && !elKey && !agentId) {
-      this._setStatus('Configura ElevenLabs (key + Agent ID) en ⚙ para activar Bixby', true);
-      if (window.V8?.openSettings) window.V8.openSettings();
-      return;
-    }
 
     // ── Step 1: request microphone NOW while the user gesture is still active ──
     // Mobile browsers (Chrome Android, Safari iOS) revoke the gesture context

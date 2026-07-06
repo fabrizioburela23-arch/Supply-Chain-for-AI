@@ -217,16 +217,6 @@ header{
 .mkt-btn.ghost:hover{color:var(--ink);background:var(--surface-2)}
 .mkt-btn:disabled{opacity:.45;cursor:wait}
 .mkt-ts{font-size:11px;color:var(--ink-3)}
-.mkt-keyrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;
-  background:var(--surface);border:1px solid var(--line);border-radius:2px;padding:10px 12px}
-/* En server-mode ocultar UI de keys del browser */
-html.server-mode #mk-key-btn,
-html.server-mode #mk-keyrow,
-html.server-mode .mkt-keyrow{display:none!important}
-.mkt-keyrow input{
-  flex:1;min-width:200px;padding:7px 11px;border:1px solid var(--line-2);border-radius:2px;
-  background:var(--bg);color:var(--ink);font-size:12.5px;font-family:'JetBrains Mono',monospace;
-}
 .mkt-keyrow input:focus{outline:none;border-color:var(--blue)}
 .mkt-hint{font-size:10.5px;color:var(--ink-3);width:100%}
 .mkt-tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:2px;overflow-x:auto}
@@ -1510,13 +1500,6 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <span class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</span>
         <span class="mkt-ts" id="mk-ts"></span>
         <button class="mkt-export" id="mk-export" title="Exportar portfolio a CSV">⬇ <span data-i18n="mk_export">Exportar</span></button>
-        <button class="mkt-btn ghost" id="mk-key-btn">🔑 <span data-i18n="mk_key">API key</span></button>
-      </div>
-      <div class="mkt-keyrow" id="mk-keyrow" style="display:none">
-        <input type="password" id="mk-key-input" placeholder="Marketstack access_key…" autocomplete="off">
-        <button class="mkt-btn" id="mk-key-save" data-i18n="mk_save">Guardar</button>
-        <button class="mkt-btn ghost" id="mk-key-clear" data-i18n="mk_clear">Borrar</button>
-        <span class="mkt-hint" data-i18n="mk_keyhint">Se guarda solo en este navegador (localStorage), nunca en el archivo.</span>
       </div>
       <div id="mk-events-panel" style="display:none;margin-bottom:12px;background:rgba(8,15,28,.6);border:1px solid rgba(60,100,160,.25);border-radius:8px;padding:12px 16px;font-size:11px;line-height:1.5"></div>
       <div class="mkt-tablewrap"><table class="mkt-table" id="mk-table"></table></div>
@@ -2106,18 +2089,13 @@ window.addEventListener('error', function(ev){
   d.textContent += '❌ ' + msg + '\n---\n';
 });
 
-// SERVER_MODE: declarado temprano para que esté disponible incluso si algo crashea después
-// true cuando corre en Railway/servidor (hostname != localhost), false en archivo local
-var SERVER_MODE = (
-  location.port === '5050' || location.port === '8080' ||
-  (!!location.hostname && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')
-);
-var BASE = SERVER_MODE ? location.origin : '';
-
-// En SERVER_MODE ocultar inmediatamente el UI de API keys del browser
-if (SERVER_MODE) {
-  document.documentElement.classList.add('server-mode');
-}
+// Solo-Railway (decisión 2026-07-03): la app SIEMPRE corre servida por server.py.
+// El antiguo modo standalone (doble clic en app.html, API keys en el navegador)
+// se eliminó — las keys viven únicamente en el servidor (.env / Railway).
+// La variable se conserva porque engine/*.js la consulta (window.SERVER_MODE).
+var SERVER_MODE = true;
+var BASE = location.origin;
+document.documentElement.classList.add('server-mode');
 // ═══════════════════════════════════════════════════════════════
 // Khipu Finance v1 · Cadena de Valor Global · 450+ empresas · 35 categorías
 // Construido: 2026-06-12
@@ -6333,9 +6311,8 @@ function switchTab(tab){
   else if(isTkg){ if(typeof initTKGTab==='function') initTKGTab(); }
   else if(isGuia){ if(typeof initGuiaTab==='function') initGuiaTab(); }
   else {
-    if(SERVER_MODE){ document.getElementById('mk-key-btn').style.display='none'; document.getElementById('mk-keyrow').style.display='none'; }
     renderMarket();
-    if(SERVER_MODE && !MKT.ts){ fetchQuotes(); }
+    if(!MKT.ts){ fetchQuotes(); }
   }
 }
 
@@ -6815,43 +6792,17 @@ async function fetchQuotes(){
   const btn=document.getElementById('mk-refresh'); btn.disabled=true;
   setStatus(t('mk_loading'));
   const syms=[...new Set(NODES.filter(n=>n.mkt).map(n=>n.mkt))];
-  // Try server-side proxy first (uses Marketstack key from .env on Railway)
-  if(SERVER_MODE){
-    try{
-      const r=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
-      const j=await r.json();
-      if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); validateTickers(); return; }
-      // Server responded but no key configured
-      setStatus('⚠ Agrega MARKETSTACK_KEY en Railway → Variables');
-    }catch(e){
-      setStatus('⚠ Error al obtener precios: '+String(e.message).slice(0,60));
-    }
-    MKT.loading=false; btn.disabled=false; renderMarket(true); return;
-  }
-  // Standalone mode: use client-side Marketstack key
-  try {
-    const key = localStorage.getItem('eco_msk');
-    if (!key) {
-      setStatus('⚠ ' + t('mk_nokey'));
-      document.getElementById('mk-keyrow').style.display = 'flex';
-      MKT.loading = false; btn.disabled = false;
-      return;
-    }
-    const from=new Date(Date.now()-9*864e5).toISOString().slice(0,10);
-    const url='https://api.marketstack.com/v2/eod?access_key='+encodeURIComponent(key)
-      +'&symbols='+encodeURIComponent(syms.join(','))+'&date_from='+from+'&limit=1000&sort=DESC';
-    const r=await fetch(url);
+  // Proxy del server (usa MARKETSTACK_KEY del .env en Railway)
+  try{
+    const r=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
     const j=await r.json();
-    _processMktData(j);
+    if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); validateTickers(); return; }
+    // Server responded but no key configured
+    setStatus('⚠ Agrega MARKETSTACK_KEY en Railway → Variables');
   }catch(e){
-    setStatus('⚠ '+t('mk_err')+': '+String(e.message).slice(0,80));
-    MKT.loading=false; btn.disabled=false;
-    renderMarket(true);
-    return;
+    setStatus('⚠ Error al obtener precios: '+String(e.message).slice(0,60));
   }
-  MKT.loading=false; btn.disabled=false;
-  renderMarket();
-  validateTickers();
+  MKT.loading=false; btn.disabled=false; renderMarket(true);
 }
 document.getElementById('mk-refresh').onclick=fetchQuotes;
 
@@ -6869,7 +6820,6 @@ async function validateTickers(){
       }
     });
   });
-  if(!SERVER_MODE) return;
   try{
     const r=await fetch(BASE+'/api/ipo_calendar');
     const data=await r.json();
@@ -6906,7 +6856,6 @@ async function loadCorporateEvents(){
   if(panel.style.display!=='none'){panel.style.display='none';return;}
   panel.style.display='block';
   panel.innerHTML='<div style="color:#7a9cc4">Cargando eventos…</div>';
-  if(!SERVER_MODE){panel.innerHTML='<div style="color:#7a9cc4;font-size:11px">Feed de eventos disponible en modo servidor (Railway con FINNHUB_KEY).</div>';return;}
   try{
     const r=await fetch(BASE+'/api/ipo_calendar');
     const data=await r.json();
@@ -6934,19 +6883,6 @@ async function loadCorporateEvents(){
       +`</div><div style="margin-top:8px;font-size:10px;color:#5b8ab8">Fuente: Finnhub · ${new Date().toLocaleString()}</div>`;
   }catch(e){panel.innerHTML=`<div style="color:#ef4444">Error: ${e.message}</div>`;}
 }
-
-/* API key UI */
-document.getElementById('mk-key-btn').onclick=()=>{
-  const row=document.getElementById('mk-keyrow');
-  row.style.display = row.style.display==='none'?'flex':'none';
-};
-document.getElementById('mk-key-save').onclick=()=>{
-  const v=document.getElementById('mk-key-input').value.trim();
-  if(v){ localStorage.setItem('eco_msk',v); document.getElementById('mk-key-input').value=''; document.getElementById('mk-keyrow').style.display='none'; setStatus('✓ '+t('mk_keysaved')); }
-};
-document.getElementById('mk-key-clear').onclick=()=>{
-  localStorage.removeItem('eco_msk'); setStatus(t('mk_nokey'));
-};
 
 /* Filtro de tabla */
 document.querySelectorAll('#mkt-filter button').forEach(b=>{
@@ -7223,16 +7159,10 @@ Object.assign(I18N.en, {
 // SERVER_MODE y BASE ya declarados al inicio del script (var global)
 const health = { server:SERVER_MODE, finnhub:false, fmp:false, claude:false, marketstack:false };
 
+// Las API keys viven SOLO en el servidor (.env/Railway). El navegador únicamente
+// conoce el estado de salud que reporta /api/health.
 const Keys = {
-  get(svc){ // finnhub | fmp | claude
-    return localStorage.getItem('key_'+svc) || '';
-  },
-  set(svc,v){ v ? localStorage.setItem('key_'+svc,v) : localStorage.removeItem('key_'+svc); },
-  marketstack(){ return localStorage.getItem('eco_msk') || ''; },
-  has(svc){
-    if(svc==='marketstack') return SERVER_MODE ? health.marketstack : !!this.marketstack();
-    return SERVER_MODE ? !!health[svc] : !!this.get(svc);
-  }
+  has(svc){ return !!health[svc]; }
 };
 
 /* ---------- §C · Caché IndexedDB (TTL) ---------- */
@@ -7259,9 +7189,8 @@ const today = () => new Date().toISOString().slice(0,10);
 const daysAgo = n => new Date(Date.now()-n*864e5).toISOString().slice(0,10);
 
 const DataLayer = {
-  serverMode: SERVER_MODE,
+  serverMode: true,   // compat: siempre servida por server.py (solo-Railway)
   async health(){
-    if(!SERVER_MODE) return health;
     try{ const r=await fetch(BASE+'/api/health'); const j=await r.json();
       Object.assign(health,j); }catch(e){}
     return health;
@@ -7269,73 +7198,37 @@ const DataLayer = {
   async _json(url, opts){ const r=await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); },
 
   async quote(ticker){ // {c, pc}
-    if(SERVER_MODE) return this._json(BASE+'/api/quote/'+encodeURIComponent(ticker));
-    const k=Keys.get('finnhub'); if(!k) throw new Error('no key');
-    return this._json('https://finnhub.io/api/v1/quote?symbol='+encodeURIComponent(ticker)+'&token='+k);
+    return this._json(BASE+'/api/quote/'+encodeURIComponent(ticker));
   },
   async news(ticker){
-    return DataLayer._cached('news_'+ticker, 1800000, async ()=>{
-      if(SERVER_MODE) return this._json(BASE+'/api/news/'+encodeURIComponent(ticker));
-      const k=Keys.get('finnhub'); if(!k) throw new Error('no key');
-      const arr=await this._json('https://finnhub.io/api/v1/company-news?symbol='+encodeURIComponent(ticker)+
-        '&from='+daysAgo(30)+'&to='+today()+'&token='+k);
-      return Array.isArray(arr)?arr.slice(0,20):[];
-    });
+    return DataLayer._cached('news_'+ticker, 1800000, ()=>
+      this._json(BASE+'/api/news/'+encodeURIComponent(ticker)));
   },
   async earnings(ticker){
-    return DataLayer._cached('earn_'+ticker, 3600000, async ()=>{
-      if(SERVER_MODE) return this._json(BASE+'/api/earnings/'+encodeURIComponent(ticker));
-      const k=Keys.get('finnhub'); if(!k) throw new Error('no key');
-      return this._json('https://finnhub.io/api/v1/calendar/earnings?symbol='+encodeURIComponent(ticker)+
-        '&from='+daysAgo(120)+'&to='+daysAgo(-120)+'&token='+k);
-    });
+    return DataLayer._cached('earn_'+ticker, 3600000, ()=>
+      this._json(BASE+'/api/earnings/'+encodeURIComponent(ticker)));
   },
   async fundamentals(ticker){
-    return DataLayer._cached('fund_'+ticker, 86400000, async ()=>{
-      if(SERVER_MODE) return this._json(BASE+'/api/fundamentals/'+encodeURIComponent(ticker));
-      const k=Keys.get('fmp'); if(!k) throw new Error('no key');
-      const b='https://financialmodelingprep.com/api/';
-      const [metrics,priceTarget,ratings]=await Promise.all([
-        this._json(b+'v3/key-metrics/'+ticker+'?limit=1&apikey='+k).catch(()=>[]),
-        this._json(b+'v4/price-target-consensus?symbol='+ticker+'&apikey='+k).catch(()=>[]),
-        this._json(b+'v3/analyst-stock-recommendations/'+ticker+'?limit=5&apikey='+k).catch(()=>[]),
-      ]);
-      return {metrics,priceTarget,ratings};
-    });
+    return DataLayer._cached('fund_'+ticker, 86400000, ()=>
+      this._json(BASE+'/api/fundamentals/'+encodeURIComponent(ticker)));
   },
   async insiders(ticker){
-    return DataLayer._cached('ins_'+ticker, 86400000, async ()=>{
-      if(SERVER_MODE) return this._json(BASE+'/api/insiders/'+encodeURIComponent(ticker));
-      const k=Keys.get('fmp'); if(!k) throw new Error('no key');
-      const a=await this._json('https://financialmodelingprep.com/api/v4/insider-trading?symbol='+ticker+'&limit=10&apikey='+k);
-      return Array.isArray(a)?a:[];
-    });
+    return DataLayer._cached('ins_'+ticker, 86400000, ()=>
+      this._json(BASE+'/api/insiders/'+encodeURIComponent(ticker)));
   },
   async aiComplete(system, prompt, maxTokens){ // → texto
     maxTokens = maxTokens||900;
-    if(SERVER_MODE){
-      const j=await this._json(BASE+'/api/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({system,prompt,max_tokens:maxTokens})});
-      if(j.error) throw new Error(j.error);
-      return j.result;
-    }
-    const k=Keys.get('claude'); if(!k) throw new Error('no key');
-    const j=await this._json('https://api.anthropic.com/v1/messages',{method:'POST',headers:{
-      'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:maxTokens,system,messages:[{role:'user',content:prompt}]})});
-    const block=(j.content||[]).find(b=>b.type==='text');
-    return block?block.text:'';
+    const j=await this._json(BASE+'/api/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({system,prompt,max_tokens:maxTokens})});
+    if(j.error) throw new Error(j.error);
+    return j.result;
   },
   async wsToken(){
-    if(SERVER_MODE){
-      // Two-step exchange: get a short-lived session token, then exchange for the real key
-      const sess=await this._json(BASE+'/api/ws-token');
-      if(!sess.session_token) return null;
-      const j=await fetch(BASE+'/api/ws-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_token:sess.session_token})}).then(r=>r.json());
-      return j.token||null;
-    }
-    return Keys.get('finnhub');
+    // Two-step exchange: get a short-lived session token, then exchange for the real key
+    const sess=await this._json(BASE+'/api/ws-token');
+    if(!sess.session_token) return null;
+    const j=await fetch(BASE+'/api/ws-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_token:sess.session_token})}).then(r=>r.json());
+    return j.token||null;
   },
   async _cached(key, ttl, fetcher){
     const c=await idb.get(key); if(c!=null) return c;
@@ -7353,71 +7246,22 @@ function relTime(sec){ const d=Date.now()/1000-sec; if(d<3600) return Math.max(1
 function tr(k,vars){ let s=t(k); if(vars) for(const v in vars) s=s.replace('{'+v+'}',vars[v]); return s; }
 
 /* ════════════════ §E · PANEL DE CONFIGURACIÓN (Feature 11) ════════════════ */
-const KEY_DEFS=[
-  {svc:'finnhub', label:'Finnhub', url:'https://finnhub.io/register', hint:'finnhub.io'},
-  {svc:'fmp',     label:'Financial Modeling Prep', url:'https://site.financialmodelingprep.com/developer/docs', hint:'financialmodelingprep.com'},
-  {svc:'claude',  label:'Claude / Anthropic', url:'https://console.anthropic.com', hint:'console.anthropic.com'},
-  {svc:'marketstack', label:'Marketstack', url:'https://marketstack.com', hint:'marketstack.com (EOD)'},
-  {svc:'elevenlabs', label:'ElevenLabs API Key (Bixby)', url:'https://elevenlabs.io/app/settings/api-keys', hint:'elevenlabs.io'},
-  {svc:'elevenlabs_agent_id', label:'ElevenLabs Agent ID (Bixby)', url:'https://elevenlabs.io/app/conversational-ai', hint:'elevenlabs.io/app/conversational-ai', storageKey:'elevenlabs_agent_id'},
-  {svc:'av',      label:'Alpha Vantage (VaR/CVaR)', url:'https://www.alphavantage.co/support/#api-key', hint:'alphavantage.co'},
-];
+// Las API keys se configuran SOLO en Railway (.env del server) — aquí quedan
+// las preferencias del usuario y el estado de salud de los servicios.
 const Settings = {
   open(){ $('settings-overlay').classList.add('show'); $('settings-panel').classList.add('show'); this.render(); },
   close(){ $('settings-overlay').classList.remove('show'); $('settings-panel').classList.remove('show'); },
   render(){
     $('set-title').textContent=t('set_title');
-    $('set-sub').textContent=SERVER_MODE?t('set_sub_server'):t('set_sub');
+    $('set-sub').textContent=t('set_sub_server');
     $('set-keys-h').textContent=t('set_keys'); $('set-prefs-h').textContent=t('set_prefs'); $('set-data-h').textContent=t('set_data');
     $('pref-live-l').textContent=t('pref_live'); $('pref-notif-l').textContent=t('pref_notif'); $('pref-aicache-l').textContent=t('pref_aicache');
     $('data-clear-quotes').textContent=t('clear_quotes'); $('data-clear-ai').textContent=t('clear_ai'); $('data-clear-cache').textContent=t('clear_cache');
-    const wrap=$('settings-keys');
-    if(SERVER_MODE){
-      wrap.innerHTML='<div class="v8-need-key">'+(LANG==='en'
-        ?'Keys are configured on the server (.env). Health below.':'Las claves se configuran en el servidor (.env). Estado abajo.')+'</div>';
-    } else {
-      wrap.innerHTML=KEY_DEFS.map(kd=>{
-        const storageKey = kd.storageKey;
-        const cur = storageKey ? localStorage.getItem(storageKey) : (kd.svc==='marketstack'?Keys.marketstack():Keys.get(kd.svc));
-        const masked = cur?'••••••••••••':'';
-        return `<div class="key-field" data-svc="${kd.svc}"${storageKey?' data-storkey="'+storageKey+'"':''}>
-          <label>${kd.label}</label>
-          <div class="key-row">
-            <input type="password" placeholder="${cur?masked:'API key…'}" autocomplete="off">
-            <button class="key-btn" data-act="test">${t('test')}</button>
-            <button class="key-btn" data-act="clear">✕</button>
-          </div>
-          <a class="key-link" href="${kd.url}" target="_blank" rel="noopener">→ ${kd.hint}</a>
-          <div class="key-status${cur?' ok':''}">${cur?'✓':''}</div>
-        </div>`;
-      }).join('');
-      wrap.querySelectorAll('.key-field').forEach(f=>{
-        const svc=f.dataset.svc, storkey=f.dataset.storkey, input=f.querySelector('input'), st=f.querySelector('.key-status');
-        const save=()=>{ const v=input.value.trim(); if(!v) return;
-          if(storkey){ localStorage.setItem(storkey,v); }
-          else if(svc==='marketstack') localStorage.setItem('eco_msk',v);
-          else Keys.set(svc,v);
-          input.value=''; input.placeholder='••••••••••••'; st.className='key-status ok'; st.textContent='✓'; afterKeysChange(); };
-        input.addEventListener('keydown',e=>{ if(e.key==='Enter') save(); });
-        input.addEventListener('blur',()=>{ if(input.value.trim()) save(); });
-        f.querySelector('[data-act="test"]').onclick=()=>{ if(input.value.trim()) save(); if(!storkey) Settings.testKey(svc,st); };
-        f.querySelector('[data-act="clear"]').onclick=()=>{ if(storkey){ localStorage.removeItem(storkey); }
-          else if(svc==='marketstack') localStorage.removeItem('eco_msk'); else Keys.set(svc,'');
-          input.value=''; input.placeholder='API key…'; st.className='key-status'; st.textContent=''; afterKeysChange(); };
-      });
-    }
+    $('settings-keys').innerHTML='<div class="v8-need-key">'+(LANG==='en'
+      ?'Keys are configured on the server (Railway → Variables). Health below.'
+      :'Las claves se configuran en el servidor (Railway → Variables). Estado abajo.')+'</div>';
     const P=prefs();
     $('pref-live').checked=P.live; $('pref-notif').checked=P.notif; $('pref-aicache').checked=P.aicache;
-  },
-  async testKey(svc, st){
-    st.className='key-status test'; st.textContent=t('test_ing');
-    try{
-      if(svc==='finnhub'){ await DataLayer.quote('AAPL'); }
-      else if(svc==='fmp'){ await DataLayer.fundamentals('AAPL'); }
-      else if(svc==='claude'){ await DataLayer.aiComplete('You are a test.', 'Reply with the single word OK.', 16); }
-      else if(svc==='marketstack'){ if(!Keys.marketstack()) throw new Error('empty'); }
-      st.className='key-status ok'; st.textContent=t('test_ok');
-    }catch(e){ st.className='key-status err'; st.textContent=t('test_err')+': '+String(e.message||e).slice(0,40); }
   }
 };
 V8.openSettings = ()=>Settings.open();
@@ -7426,11 +7270,6 @@ function prefs(){
   return Object.assign({live:true, notif:false, aicache:true}, JSON.parse(localStorage.getItem('eco_prefs')||'{}'));
 }
 function savePrefs(p){ localStorage.setItem('eco_prefs', JSON.stringify(p)); }
-
-function afterKeysChange(){
-  DataLayer.health().then(()=>{ DataHealth.render(); LivePrices.restart(); if(activeTab==='market') renderMarket(true);
-    if(selected) renderDetail(selected); });
-}
 
 /* listeners settings */
 $('settings-btn').onclick=()=>Settings.open();
@@ -8252,19 +8091,12 @@ V8.Keys=Keys; V8.health=health; V8.prefs=prefs;
   setupPWA();
   DataHealth.render();
   applyLangV8();
-  // En server mode: ocultar UI de keys del browser
-  if(SERVER_MODE){
-    const mkKeyBtn=document.getElementById('mk-key-btn');
-    if(mkKeyBtn) mkKeyBtn.style.display='none';
-    const mkKeyRow=document.getElementById('mk-keyrow');
-    if(mkKeyRow) mkKeyRow.style.display='none';
-  }
   // arranca precios en vivo (si hay clave + pref activa)
   LivePrices.start();
   // reevalúa alertas con lo que haya cacheado al cargar
   Object.entries(MKT.quotes||{}).forEach(([tk,q])=>{ if(q&&q.close!=null) Alerts.check(tk,q.close); });
-  console.log('%cv8 listo','color:#9B4FE8;font-weight:700', SERVER_MODE?'· modo servidor':'· modo standalone',
-    '· keys:', {finnhub:Keys.has('finnhub'),fmp:Keys.has('fmp'),claude:Keys.has('claude'),marketstack:Keys.has('marketstack')});
+  console.log('%cv8 listo','color:#9B4FE8;font-weight:700','· servido por Railway',
+    '· salud:', {finnhub:Keys.has('finnhub'),fmp:Keys.has('fmp'),claude:Keys.has('claude'),marketstack:Keys.has('marketstack')});
 })();
 
 })();
@@ -10366,7 +10198,7 @@ async function _termLoadCell(idx, nodeId, ticker, tf) {
 
   // Load chart data
   try {
-    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE) ? '' : (localStorage.getItem('base_url') || '');
+    const BASE = '';
     const rangeMap = {'1D':'1d','1W':'5d','1M':'1mo','3M':'3mo','1Y':'1y'};
     const res = await fetch(`${BASE}/api/candles/${ticker}?range=${rangeMap[tf]||'1mo'}&interval=${tf==='1D'?'5m':tf==='1W'?'30m':'1d'}`);
     const data = await res.json();
@@ -10725,8 +10557,7 @@ window.nexusCore = {
     const tickers = _allTickers();
     if (!tickers.length) return;
     try {
-      const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
-        ? '' : (localStorage.getItem('base_url') || '');
+      const BASE = '';
       const res = await fetch(`${BASE}/api/quotes/live`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -10794,8 +10625,7 @@ async function loadFredMacro() {
   if (!el) return;
   el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Cargando FRED...</div>';
   try {
-    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
-      ? '' : (localStorage.getItem('base_url') || '');
+    const BASE = '';
     const r = await fetch(`${BASE}/api/macro/fred?series=T10Y2Y,FEDFUNDS,DGS10`);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
@@ -10825,8 +10655,7 @@ async function loadInvestor13F(ticker) {
   if (!el || !ticker) return;
   el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Buscando en SEC EDGAR 13F...</div>';
   try {
-    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
-      ? '' : (localStorage.getItem('base_url') || '');
+    const BASE = '';
     const r = await fetch(`${BASE}/api/investors/13f/${encodeURIComponent(ticker)}`);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
@@ -10856,8 +10685,7 @@ async function loadTradeFlows() {
   const partner  = document.getElementById('tf-partner')?.value  || 'CHN';
   el.innerHTML = '<div style="color:var(--ink-3);font-size:12px">Consultando UN Comtrade...</div>';
   try {
-    const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
-      ? '' : (localStorage.getItem('base_url') || '');
+    const BASE = '';
     const r = await fetch(`${BASE}/api/supply-chain/trade-flows?reporter=${reporter}&partner=${partner}`);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
@@ -10914,8 +10742,7 @@ window.loadTradeFlows = loadTradeFlows;
           <div style="margin-top:8px;font-size:10px;color:var(--ink-3)">Empresa: <b>${esc(n.label)}</b> (${esc(n.mkt)})</div>
         </div>`;
       // Fetch FMP price target if available
-      const BASE = (typeof SERVER_MODE !== 'undefined' && SERVER_MODE)
-        ? '' : (localStorage.getItem('base_url') || '');
+      const BASE = '';
       fetch(`${BASE}/api/fundamentals/${n.mkt}`)
         .then(r => r.ok ? r.json() : null)
         .then(data => {
@@ -11567,7 +11394,7 @@ async function _runPreflight(text) {
     { label: 'NRS promedio', value: avgNRS, sub: 'Resiliencia de nodos afectados', color: nrsColor },
     { label: 'Posiciones expuestas', value: portfolioExposed.length, sub: portfolioExposed.length ? portfolioExposed.map(n=>n.label).slice(0,2).join(', ')+'…' : 'Sin posiciones abiertas', color: portfolioExposed.length ? '#f59e0b' : 'var(--ink-3)' },
     { label: 'Tokens estimados', value: totalTokens >= 1000 ? (totalTokens/1000).toFixed(1)+'K' : totalTokens, sub: `~$${costUsd < 0.01 ? costUsd.toFixed(4) : costUsd.toFixed(2)} USD`, color: 'var(--ink-2)' },
-    { label: 'Tiempo estimado', value: affectedNodes.length > 80 ? '2-4 min' : '1-2 min', sub: window.SERVER_MODE ? 'con MiroFish/Claude' : 'modo Claude', color: 'var(--ink-2)' },
+    { label: 'Tiempo estimado', value: affectedNodes.length > 80 ? '2-4 min' : '1-2 min', sub: 'con MiroFish/Claude', color: 'var(--ink-2)' },
     { label: 'Categorías', value: topCats.length, sub: topCats.map(([c,n])=>`${c.replace(/_/g,' ')} (${n})`).slice(0,2).join(' · '), color: '#a78bfa' },
   ].map(m => `<div style="padding:10px;background:var(--surface-2);border-radius:8px">
     <div style="font-size:10px;color:var(--ink-3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${m.label}</div>
@@ -11596,7 +11423,6 @@ async function _runPreflight(text) {
 async function _fetchPreflightInsight(text, nodeCount, avgNRS, topCats) {
   const insightEl = document.getElementById('sim-pf-insight');
   if (!insightEl) return;
-  if (!window.SERVER_MODE) return; // skip in standalone (no key available here)
 
   try {
     const catStr = topCats.map(([c,n])=>`${c}(${n})`).join(', ');
@@ -11722,24 +11548,17 @@ window.canvasGenerate = async function(){
     /* enriquecer con precios en vivo si la consulta menciona empresas */
     let live=null;
     if(window.canvasEnrichData){ try{ const en=await window.canvasEnrichData(query); live=(en&&en.live)||null; }catch(e){} }
-    if(window.SERVER_MODE){
-      const r=await fetch('/api/canvas/generate',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({query,context:{nodes:nodeCtx,quotes:quotesCtx,live,selected_id:window._selectedNode||null}})});
-      const ct=r.headers.get('content-type')||'';
-      if(!ct.includes('application/json')){
-        throw new Error(r.status>=500||r.status===502||r.status===503
-          ? 'El servidor está reiniciándose (¿despliegue en curso?). Reintenta en ~1 min.'
-          : 'Respuesta inesperada del servidor (HTTP '+r.status+').');
-      }
-      const d=await r.json();
-      if(d.error) throw new Error(d.error);
-      spec=d.spec; model=d.model;
-    } else {
-      const key=(window.Keys&&(Keys.get('anthropic')||Keys.get('ANTHROPIC_KEY')))||'';
-      if(!key) throw new Error('Configura tu Anthropic API key en ⚙ Ajustes para usar Canvas IA en modo standalone');
-      spec=await _cvStandalone(query,nodeCtx,quotesCtx,key);
-      model='claude-haiku-4-5-20251001';
+    const r=await fetch('/api/canvas/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query,context:{nodes:nodeCtx,quotes:quotesCtx,live,selected_id:window._selectedNode||null}})});
+    const ct=r.headers.get('content-type')||'';
+    if(!ct.includes('application/json')){
+      throw new Error(r.status>=500||r.status===502||r.status===503
+        ? 'El servidor está reiniciándose (¿despliegue en curso?). Reintenta en ~1 min.'
+        : 'Respuesta inesperada del servidor (HTTP '+r.status+').');
     }
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    spec=d.spec; model=d.model;
     _cvRenderCard(cardId,query,spec,model);
     input.value='';
   } catch(e){
@@ -11756,30 +11575,6 @@ window.canvasGenerate = async function(){
     btn.disabled=false;
   }
 };
-
-/* ── standalone mode: call Anthropic API directly from browser ── */
-const _CV_SYS=`You are Khipu Finance's Canvas AI — semiconductor/AI/space supply chain expert.
-Given a query and context JSON, return ONLY valid JSON (no fences):
-{"type":"bar|line|bubble|treemap|heatmap|radar|scatter|table","title":"...","subtitle":"...","data":[…],"config":{…}}
-bar:[{label,value,color?}] config:{unit?}  |  treemap:[{label,value,color?,cat?}]  |
-radar:[{label,values:[0-100,…]}] config:{axes:[…]}  |  scatter:[{label,x,y,color?}] config:{x_label,y_label}  |
-bubble:[{id,label,x,y,r,color?}] config:{x_label,y_label,r_label}  |
-heatmap:[{row,col,value}] config:{rows:[…],cols:[…],unit?}  |  table:[{…}] config:{columns:[…]}
-Rules: bar max 20 items sorted desc; table max 15 rows; radar 4-8 axes; heatmap ≤10x10; choose best type.`;
-
-async function _cvStandalone(query,nodes,quotes,key){
-  const ctx=JSON.stringify({nodes:nodes.slice(0,150),quotes});
-  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,
-      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1800,
-      system:_CV_SYS,messages:[{role:'user',content:`USER QUERY: ${query}\n\nCONTEXT:\n${ctx}`}]})});
-  const d=await r.json();
-  if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
-  const text=(d.content||[])[0]?.text||'';
-  const cleaned=text.replace(/^```(?:json)?\s*|\s*```$/g,'').trim();
-  return JSON.parse(cleaned);
-}
 
 /* ── card renderer ── */
 function _cvRenderCard(cardId,query,spec,model){
