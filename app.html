@@ -2129,6 +2129,23 @@ function catColor(cat){
   return getComputedStyle(document.documentElement).getPropertyValue(CATS[cat].cssVar).trim() || '#888';
 }
 
+// ── Macro-sectores NEXUS (Etapa 4): 40 categorías → 9 colores vivos ──────────
+// SECTORS9 y CAT_TO_SECTOR viven en nodes/nodes_seed.js; se exponen para el
+// X-Ray, el globo y el resto de motores.
+window.SECTORS9 = (typeof SECTORS9 !== 'undefined') ? SECTORS9 : {};
+window.CAT_TO_SECTOR = (typeof CAT_TO_SECTOR !== 'undefined') ? CAT_TO_SECTOR : {};
+function sectorColorFor(cat){
+  var s = window.SECTORS9[(window.CAT_TO_SECTOR[cat]) || 'cloud_ia'];
+  return s ? s.color : '#00E0FF';
+}
+function sectorLabelFor(cat){
+  var s = window.SECTORS9[(window.CAT_TO_SECTOR[cat]) || 'cloud_ia'];
+  return s ? (LANG==='en' ? s.en : s.label) : 'Cloud & IA';
+}
+// Por defecto el mapa colorea por MACRO-SECTOR (9 colores limpios); el detalle
+// de las 40 categorías se recupera con el toggle de la leyenda.
+let colorMode = localStorage.getItem('eco_colormode') || 'sector';
+
 /* ---- i18n base ---- */
 let LANG = localStorage.getItem('eco_lang')||'es';
 if(localStorage.getItem('eco_theme')!=='light') document.body.classList.add('dark'); /* v8.1: terminal dark por defecto */
@@ -2390,7 +2407,10 @@ function setForces(){
   }
 }
 
-function nodeFill(d){ return viewMode==='geo' ? countryColor(d.country) : catColor(d.cat); }
+function nodeFill(d){
+  if(viewMode==='geo') return countryColor(d.country);
+  return colorMode==='sector' ? sectorColorFor(d.cat) : catColor(d.cat);
+}
 function recolorNodes(){ nodeSel.select('.n-core').attr('fill',d=>nodeFill(d)); }
 
 /* Etiquetas de país (vista geopolítica) */
@@ -3430,11 +3450,30 @@ function renderLegend(){
   if(viewMode==='geo'){
     legend.innerHTML=`<div class="lt">${t('lg_countries')}</div>`+
       Object.keys(COUNTRIES).map(k=>`<div class="legend-row"><span class="ld" style="background:${countryColor(k)}"></span>${countryLabel(k)}</div>`).join('');
+  } else if(colorMode==='sector'){
+    // 9 macro-sectores + toggle a las 40 categorías (el detalle no se pierde)
+    legend.innerHTML=`<div class="lt" style="display:flex;justify-content:space-between;align-items:center">`+
+      `<span>${LANG==='en'?'Sectors':'Sectores'}</span>`+
+      `<span onclick="_toggleColorMode()" style="cursor:pointer;color:#00E0FF;font-size:8.5px;letter-spacing:.06em" title="Ver las 40 categorías">▸ ${LANG==='en'?'detail':'detalle'}</span></div>`+
+      Object.keys(window.SECTORS9).map(k=>{
+        const s=window.SECTORS9[k];
+        return `<div class="legend-row"><span class="ld" style="background:${s.color};box-shadow:0 0 6px ${s.color}"></span>${LANG==='en'?s.en:s.label}</div>`;
+      }).join('');
   } else {
-    legend.innerHTML=`<div class="lt">${t('lg_stages')}</div>`+
+    legend.innerHTML=`<div class="lt" style="display:flex;justify-content:space-between;align-items:center">`+
+      `<span>${t('lg_stages')}</span>`+
+      `<span onclick="_toggleColorMode()" style="cursor:pointer;color:#00E0FF;font-size:8.5px;letter-spacing:.06em" title="Agrupar en 9 sectores">◂ ${LANG==='en'?'sectors':'sectores'}</span></div>`+
       Object.keys(CATS).map(k=>`<div class="legend-row"><span class="ld" style="background:${catColor(k)}"></span>${catLabel(k)}</div>`).join('');
   }
 }
+window._toggleColorMode=function(){
+  colorMode = colorMode==='sector' ? 'cat' : 'sector';
+  localStorage.setItem('eco_colormode', colorMode);
+  recolorNodes();
+  renderLegend();
+  if(typeof renderBand==='function') renderBand();
+  if(selected) renderDetail(selected);
+};
 /* renderLegend() se invoca desde applyLang() en el init de la app */
 
 document.getElementById('m-companies').textContent=NODES.length;
