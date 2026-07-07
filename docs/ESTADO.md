@@ -112,6 +112,45 @@ relación · 9 macro-sectores · dirección ÚNICA (source PROVEE a target).**
   profunda (dependency-share por fundamentals) queda para la ingesta (12k) y
   el motor de matrices, que los recalculará con datos vivos.
 
+## Etapa 3 — Motor de matrices + hiperaristas: ✅ NÚCLEO COMPLETO (2026-07-07)
+
+Paquete **matrix/** (opcional y defensivo, como ontology/ — sin DATABASE_URL
+responde 503 y la app sigue). Importa de core/ y de la ontología; NO toca
+server.py salvo el registro del blueprint.
+
+- [x] `matrix/engine.py`:
+  - `build_matrices(session, as_of=)`: una matriz N×N por rel_type (9 tipos)
+    desde los links VIGENTES o, con `as_of`, reconstruidos por VALIDEZ desde
+    events (time-travel real, reusa `_links_active_at`). A[i,j] = i PROVEE a j
+    (convención canónica Etapa 2); partner reflejado simétrico.
+  - `active_factors()`: HIPERARISTAS = objetos type='Factor' + links 'affects'
+    (weight = coeficiente). Cero cambio de esquema — reusa ObjectCreated/
+    LinkCreated, así heredan bitemporalidad, auditoría y time-travel.
+  - `fragility()` + `propagate()`: UN kernel de propagación de shocks
+    (reemplaza las 4 implementaciones BFS divergentes del cliente).
+    Modelo económico: transmisión normalizada POR TIPO de relación (un
+    proveedor ÚNICO en su tipo transmite ~todo el shock; ser 1 de N pega
+    poco), combinada por criticidad (fab≈supply > invest); impacto = máximo
+    por ruta (no suma). Las hiperaristas aumentan la FRAGILIDAD del afectado
+    (se aplica tras normalizar — por eso no se cancela).
+  - `compute_metrics()`: grado in/out ponderado + tamaño de cascada +
+    ranking de chokepoints por nodo.
+- [x] `matrix/api.py` (blueprint /api/matrix/*): `/status`, `/<rel_type>`,
+  `POST /impact {shock, magnitude, damping, max_hops, rel_weights, as_of}`,
+  `/metrics`. Registrado defensivo en server.py.
+- [x] Tests `tests/test_matrix.py` (5): verdades de cadena en las matrices,
+  propagación TSMC→clientes con hops, hiperarista amplifica + time-travel la
+  desactiva, chokepoints, endpoints HTTP. **56/56 tests totales.**
+- [x] Validado end-to-end contra Postgres real: los chokepoints detectados
+  son los reales de la industria — TSMC(265), PDF_Solutions, ARM, Amazon,
+  Broadcom, Synopsys. El NRS server-side (computeNRS réplica) sigue en
+  ontology/agents.py; la unificación NRS↔matriz (computed_metrics servido)
+  se hará al conectar el frontend (Etapa 4/5).
+- ⏸️ Diferido: tabla cache `matrix_snapshots` con watermark (hoy se computa
+  on-demand; N≈440 → <30ms por matriz, no urge). Agente MatrixSentinel →
+  ProposedAction cuando un chokepoint cruza umbral: se cablea en Etapa 5
+  junto con el resto de auto-insights.
+
 ## Etapas siguientes (plan en las tareas de la sesión)
 2. **Etapa 2 — Datos limpios**: resolución de entidades (31 duplicados),
    dirección única de aristas, taxonomía tipada, pesos re-derivados (LLM

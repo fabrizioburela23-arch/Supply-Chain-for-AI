@@ -59,6 +59,13 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Ontología no registrada (opcional): %s', _e)
 
+# ── Motor de matrices (Etapa 3, opcional) — /api/matrix/* ────────────────────
+try:
+    from matrix.api import matrix_bp
+    app.register_blueprint(matrix_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Motor de matrices no registrado (opcional): %s', _e)
+
 # Config compartida server/ontology (keys de IA, Finnhub, timeout) → core/config.py
 # Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
 from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,

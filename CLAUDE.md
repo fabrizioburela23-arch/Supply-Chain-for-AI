@@ -18,11 +18,15 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 - `server.py` (~2,500 líneas): Flask sync + gunicorn **1 worker + 8 threads**
   (NO subir workers: el estado en memoria — caché, rate limits, agente de
   trading — divergiría entre workers). Proxy de todas las APIs externas.
-- `core/` (paquete Python): helpers compartidos server/ontology —
+- `core/` (paquete Python): helpers compartidos server/ontology/matrix —
   `config.py` (keys IA/Finnhub/timeout), `http.py` (_safe_get/_safe_ticker),
   `ai.py` (cascada Claude→Gemini→NVIDIA + _extract_json), `quotes.py`
-  (_fetch_quote_raw). Rompe la dependencia circular ontology→server; el
-  futuro motor de matrices también importa de aquí.
+  (_fetch_quote_raw). Rompe la dependencia circular ontology→server.
+- `matrix/` (paquete Python, opcional): motor de matrices — `engine.py`
+  (build_matrices por rel_type + as_of, active_factors=hiperaristas,
+  fragility, propagate=EL kernel de shocks, compute_metrics/chokepoints),
+  `api.py` (blueprint /api/matrix/*: status, /<rel_type>, POST /impact,
+  /metrics). Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503.
 - `ontology/` (paquete Python): ontología Palantir-style —
   `models.py` (events bitemporal + objects/links materializados +
   ProposedAction + Alert), `service.py` (apply_event, as_of_graph, diff_graph),
