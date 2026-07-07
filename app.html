@@ -2432,8 +2432,31 @@ window._liveRecolorByImpact = function(impactMap){
     return computeNodeRadius(d.id) * (1 + Math.min(0.5, imp/200));  // crecen los golpeados
   });
 };
-window._liveResetColors = function(){ recolorNodes(); nodeSel.select('.n-core').attr('r',d=>computeNodeRadius(d.id)); };
+window._liveResetColors = function(){
+  recolorNodes();
+  nodeSel.select('.n-core').attr('r',d=>computeNodeRadius(d.id));
+  linkSel.style('stroke',l=>getLinkColor(l.type)).style('stroke-opacity',.22)
+    .style('stroke-width',l=>Math.max(0.6,(l.w||2)*0.45));
+};
 window._liveSelectedNode = function(){ return selected; };
+// Tiñe las CONEXIONES que transmiten el daño (ambos extremos golpeados)
+window._liveTintLinks = function(impactMap){
+  linkSel
+    .style('stroke', l=>{
+      const si=impactMap.get(lid(l.source))||0, ti=impactMap.get(lid(l.target))||0;
+      const f=Math.min(si,ti)/100;
+      return f>0.03 ? _mixHex('#3a4664','#FF4D6A',Math.min(1,f*1.6)) : getLinkColor(l.type);
+    })
+    .style('stroke-opacity', l=>{
+      const f=Math.min(impactMap.get(lid(l.source))||0, impactMap.get(lid(l.target))||0)/100;
+      return f>0.03 ? 0.25+f*0.65 : 0.10;
+    })
+    .style('stroke-width', l=>{
+      const f=Math.min(impactMap.get(lid(l.source))||0, impactMap.get(lid(l.target))||0)/100;
+      const base=Math.max(0.6,(l.w||2)*0.45);
+      return f>0.03 ? base+f*2.4 : base;
+    });
+};
 
 /* Etiquetas de país (vista geopolítica) */
 const regionLabels = regionLayer.selectAll('text')

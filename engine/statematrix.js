@@ -68,8 +68,10 @@
 
   // Propaga un shock. shocks: {id: {salud?, riesgo?...}} valores IMPUESTOS.
   // factors: [{members:{id:coef}, severity}] → fragilidad. Devuelve
-  // {state: Map(id->vector), impact: Map(id->0..100)} tras `iters` iteraciones.
-  KhipuStateCore.prototype.simulate = function (shocks, factors, iters, damping) {
+  // {state: Map(id->vector), impact: Map(id->0..100), frames?} tras `iters`
+  // iteraciones. trackHops=true añade frames: un Map acumulado por salto
+  // (la "película" de la cascada para animarla en el mapa).
+  KhipuStateCore.prototype.simulate = function (shocks, factors, iters, damping, trackHops) {
     iters = iters || 8; damping = damping == null ? 0.6 : damping;
     var N = this.N, incoming = this.incoming, base = this.base, ids = this.ids, idx = this.idx;
 
@@ -94,6 +96,8 @@
     // suma ni el estado estacionario) → decae con los saltos, no satura.
     var cur = dmg.slice();
     var total = dmg.slice();
+    var frames = trackHops ? [] : null;
+    if (frames) frames.push(_frame(total, ids));
     for (var it = 0; it < iters; it++) {
       var nxt = new Float64Array(N);
       for (var j = 0; j < N; j++) {
@@ -108,6 +112,7 @@
       }
       for (var t = 0; t < N; t++) if (nxt[t] > total[t]) total[t] = nxt[t];
       cur = nxt;
+      if (frames) frames.push(_frame(total, ids));
     }
 
     // materializar vectores de estado finales
@@ -127,8 +132,16 @@
       state.set(ids[n], st);
       impact.set(ids[n], Math.round(d2 * 100));
     }
-    return { state: state, impact: impact };
+    return { state: state, impact: impact, frames: frames };
   };
+
+  function _frame(total, ids) {
+    var f = new Map();
+    for (var n = 0; n < total.length; n++) {
+      if (total[n] > 0.005) f.set(ids[n], Math.round(total[n] * 100));
+    }
+    return f;
+  }
 
   // señales derivadas (baratas, por nodo)
   function _senal(s) {
@@ -171,10 +184,10 @@
     },
     core: function () { return _core || this.build(); },
     baseline: function (id) { var c = this.core(); var i = c && c.idx[id]; return (i != null) ? c.base[i] : null; },
-    // simula: shocks={id:{salud}}, factors=[{members,severity}]
-    simulate: function (shocks, factors, iters, damping) {
+    // simula: shocks={id:{salud}}, factors=[{members,severity}], trackHops=película
+    simulate: function (shocks, factors, iters, damping, trackHops) {
       var c = this.core(); if (!c) return { state: new Map(), impact: new Map() };
-      return c.simulate(shocks, factors, iters, damping);
+      return c.simulate(shocks, factors, iters, damping, trackHops);
     },
     REL_W: REL_W,
   };
