@@ -3,8 +3,11 @@
 // (valid_from → valid_until; null = vigente hoy). Datos reales de la cadena de
 // suministro de semis / IA / espacio / nuclear, con fechas reales.
 // object_type: 'node' (arista entre entidades) | 'literal' (atributo del sujeto).
+// CONCAT (no asignación): así el orden de carga de los 3 archivos de hechos
+// (este, temporal_seed_facts2.js, ontology_facts.js) da igual — antes,
+// reordenar los <script> perdía 58-81 hechos en silencio.
 
-window.TEMPORAL_SEED_FACTS = [
+window.TEMPORAL_SEED_FACTS = (window.TEMPORAL_SEED_FACTS || []).concat([
   // ── Controles de exportación / geopolítica ────────────────────────────────
   { id:'tf_huawei_entitylist', subject:'Huawei', predicate:'sancionada · US Entity List', object:'Entity List', object_type:'literal',
     valid_from:'2019-05-16', valid_until:null, source:'hypergraph', confidence:1.0, group:'g_huawei_2019',
@@ -90,4 +93,4 @@ window.TEMPORAL_SEED_FACTS = [
   { id:'tf_sandisk_spinoff', subject:'SanDisk', predicate:'IPO / separada de', object:'Western_Digital', object_type:'node',
     valid_from:'2025-05-01', valid_until:null, source:'preipo', confidence:0.9, group:'g_corp',
     meta:{ headline:'SanDisk se independiza (NAND pure-play)', impact:5 } },
-];
+]);
