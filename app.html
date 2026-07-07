@@ -2243,7 +2243,37 @@ function computeNRS(nodeId) {
   return val;
 }
 
+// Descomposición término a término del NRS — la usa el X-Ray para mostrar
+// "por qué N": misma fórmula que computeNRS, devuelta desglosada.
+function computeNRSBreakdown(nodeId) {
+  const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
+  if (!n) return null;
+  const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
+  const geo = geoMap[n.country] ?? 15;
+  if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
+  const degree = _nrsDegree ? (_nrsDegree.get(nodeId) || 0) : 0;
+  const chain = Math.min(25, degree * 2.5);
+  const margin = n.margin != null ? n.margin : 0.15;
+  const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
+  const growth_str = (n.growth || '').toLowerCase();
+  const fundamental = Math.min(15, (n.preipo ? 10 : 0) + (growth_str.includes('🔴') ? 5 : growth_str.includes('🟡') ? 2 : 0));
+  const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
+  return {
+    total: Math.min(100, Math.max(0, Math.round(geo + chain + market + fundamental + concentration))),
+    terms: [
+      { key: 'Geopolítica', val: geo, max: 30, hot: geo >= 20, detail: n.country || '—' },
+      { key: 'Cadena', val: Math.round(chain), max: 25, hot: chain >= 20, detail: 'grado ' + degree },
+      { key: 'Margen', val: market, max: 20, hot: market >= 14, detail: n.margin != null ? Math.round(n.margin * 100) + '%' : 's/d' },
+      { key: 'Fundamental', val: fundamental, max: 15, hot: fundamental >= 10, detail: n.preipo ? 'pre-IPO' : 'pública' },
+      { key: 'Concentración', val: concentration, max: 10, hot: concentration >= 10, detail: n.country || '—' },
+    ],
+  };
+}
+window.computeNRSBreakdown = computeNRSBreakdown;
+window.computeNRS = computeNRS;
+
 // (movido a nodes/nodes_seed.js) — const NODE_META
+window.NODE_META = NODE_META;  // el X-Ray lee mktcap/founded/geo_risk
 
 const LINK_TYPE_COLORS = {
   supply:   {light:'#4E8B1E', dark:'#9BCF5E'},
@@ -2938,9 +2968,9 @@ function renderDetail(id){
         <div class="d-name">${esc(d.label)}</div>
         <div class="d-ticker mono">${esc(d.ticker)}</div>
       </div>
-      <button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')"
-        title="Second Brain — análisis completo"
-        style="flex-shrink:0;padding:5px 10px;border:1px solid var(--violet);border-radius:6px;background:none;color:var(--violet);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🧠 Brain</button>
+      <button onclick="window.openXRay&&window.openXRay('${id}')"
+        title="X-Ray — desarmar la empresa: riesgo, hilos, onda de impacto"
+        style="flex-shrink:0;padding:5px 10px;border:1px solid #00E0FF;border-radius:6px;background:none;color:#00E0FF;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🔬 X-Ray</button>
     </div>
     <div class="d-badges">
       <span class="badge badge-cat"><span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block"></span>${catLabel(d.cat)}</span>
@@ -5840,6 +5870,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/temporal-graph.js"></script>
 <script src="engine/khipu_lang.js"></script>
 <script src="engine/guide.js"></script>
+<script src="engine/xray.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
