@@ -2413,6 +2413,28 @@ function nodeFill(d){
 }
 function recolorNodes(){ nodeSel.select('.n-core').attr('fill',d=>nodeFill(d)); }
 
+// ── Hooks de simulación VIVA (engine/livesim.js) ────────────────────────────
+// Recolorea los nodos por impacto 0-100 (color base → rojo), sin re-render.
+function _mixHex(a,b,t){
+  a=a.replace('#',''); b=b.replace('#','');
+  if(a.length===3) a=a.replace(/./g,'$&$&'); if(b.length===3) b=b.replace(/./g,'$&$&');
+  const ar=parseInt(a.slice(0,2),16),ag=parseInt(a.slice(2,4),16),ab=parseInt(a.slice(4,6),16);
+  const br=parseInt(b.slice(0,2),16),bg=parseInt(b.slice(2,4),16),bb=parseInt(b.slice(4,6),16);
+  const m=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
+  return '#'+m(ar,br)+m(ag,bg)+m(ab,bb);
+}
+window._liveRecolorByImpact = function(impactMap){
+  nodeSel.select('.n-core').attr('fill', d=>{
+    const imp = impactMap ? (impactMap.get(d.id)||0) : 0;
+    return imp<=0 ? nodeFill(d) : _mixHex(nodeFill(d),'#FF4D6A',Math.min(1,imp/100));
+  }).attr('r', d=>{
+    const imp = impactMap ? (impactMap.get(d.id)||0) : 0;
+    return computeNodeRadius(d.id) * (1 + Math.min(0.5, imp/200));  // crecen los golpeados
+  });
+};
+window._liveResetColors = function(){ recolorNodes(); nodeSel.select('.n-core').attr('r',d=>computeNodeRadius(d.id)); };
+window._liveSelectedNode = function(){ return selected; };
+
 /* Etiquetas de país (vista geopolítica) */
 const regionLabels = regionLayer.selectAll('text')
   .data(Object.keys(COUNTRIES)).join('text')
@@ -5913,6 +5935,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/xray.js"></script>
 <script src="engine/insights.js"></script>
 <script src="engine/statematrix.js"></script>
+<script src="engine/livesim.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>

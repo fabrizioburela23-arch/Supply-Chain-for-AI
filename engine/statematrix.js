@@ -89,22 +89,31 @@
       if (idx[id] != null) { var d = 1 - clamp01(shocks[id].salud != null ? shocks[id].salud : 0); dmg[idx[id]] = d; forced[idx[id]] = d; }
     });
 
+    // Propagación con DECAIMIENTO por distancia (idéntica a matrix/engine.py):
+    // el impacto de cada nodo = MÁXIMO alcanzado por cualquier ruta (no la
+    // suma ni el estado estacionario) → decae con los saltos, no satura.
     var cur = dmg.slice();
+    var total = dmg.slice();
     for (var it = 0; it < iters; it++) {
       var nxt = new Float64Array(N);
       for (var j = 0; j < N; j++) {
         if (forced[j] != null) { nxt[j] = forced[j]; continue; }
-        var acc = 0, inc = incoming[j];
-        for (var e = 0; e < inc.length; e++) acc += inc[e].w * cur[inc[e].i];
-        nxt[j] = clamp01(damping * acc * frag[j]);
+        // "eslabón más débil": el daño de j = su dependencia MÁS crítica dañada
+        // (no la suma). Pierdes tu única fab → caes, tengas 20 proveedores o no.
+        // La diversificación ya está en la normalización por-tipo (2 fabs → 0,5
+        // c/u). Combinar por MAX decae limpio por distancia y no satura.
+        var mx = 0, inc = incoming[j];
+        for (var e = 0; e < inc.length; e++) { var c = inc[e].w * cur[inc[e].i]; if (c > mx) mx = c; }
+        nxt[j] = clamp01(damping * mx * frag[j]);
       }
+      for (var t = 0; t < N; t++) if (nxt[t] > total[t]) total[t] = nxt[t];
       cur = nxt;
     }
 
     // materializar vectores de estado finales
     var state = new Map(), impact = new Map();
     for (var n = 0; n < N; n++) {
-      var b = base[n], d2 = cur[n];
+      var b = base[n], d2 = total[n];
       if (d2 <= 0.001 && forced[n] == null) { state.set(ids[n], b); continue; }
       var salud = clamp01(b.salud - d2);
       var riesgo = clamp01(b.riesgo + d2 * 0.7);
