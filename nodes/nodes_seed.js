@@ -2478,9 +2478,66 @@ const NODE_ID_ALIAS = {
   'STMicro': 'STMicroelectronics', 'Xilinx': 'AMD',
   'BoozAllen': 'Booz_Allen', 'CACI_Int': 'CACI',
   // Recover dropped link endpoints that reference real companies by alt names
-  'SK Hynix': 'SKHynix', 'Western Digital': 'Western_Digital',
+  'SK Hynix': 'SKHynix', 'Western Digital': 'WesternDigital',
   'Alibaba Cloud': 'AlibabaCloud', 'Microsoft Azure': 'Microsoft',
   'Softbank': 'SoftBank', 'Facebook': 'Meta', 'Apple (memoria)': 'Apple',
+
+  // ── RESOLUCIÓN DE ENTIDADES (2026-07, Etapa 2) ────────────────────────────
+  // Cada clave es un id DUPLICADO de la misma empresa: el merge absorbe sus
+  // campos faltantes en el canónico, redirige sus links y lo quita de NODES.
+  // NODE_BY_ID conserva la clave alias apuntando al nodo canónico (compat:
+  // hechos temporales, presets y jumpTo con ids viejos siguen funcionando).
+  'Arm_Holdings': 'ARM',
+  'Oxford_Instruments': 'OxfordInstruments',
+  'Ansys': 'Synopsys',                    // adquirida por Synopsys (2025)
+  'Siemens_EDA': 'SiemensEDA',
+  'ASML_EUV': 'ASML',                     // línea de producto
+  'IntelLoihi': 'Intel', 'Intel_Loihi': 'Intel',   // chip de investigación
+  'GlobalFoundries': 'GF',
+  'NVidia_Networking': 'Nvidia', 'NVIDIA_NIM': 'Nvidia',  // divisiones
+  'Qualcomm_Infra': 'Qualcomm',
+  'ASEGroup': 'ASE',
+  'BroadcomASIC': 'Broadcom',
+  'MonolithicPower': 'MPWR', 'Monolithic_Power': 'MPWR',
+  'EatonCorp': 'Eaton',
+  'CrayHPE': 'HPE', 'HPE_Cray': 'HPE',
+  'Supermicro_Liquid': 'SuperMicro',
+  'Quanta_Computer': 'Quanta',
+  'AWS_Ground': 'Amazon',                 // AWS Ground Station = servicio de Amazon
+  'OracleCloud': 'Oracle',
+  'Palantir_Gov': 'Palantir',
+  'Groq_AI': 'Groq',
+  'Western_Digital': 'WesternDigital',
+  'C3ai': 'C3AI',
+  'Ampere_Computing': 'AmpereComputing',
+  'EsperantoTech': 'Esperanto', 'Esperanto_Tech': 'Esperanto',
+  'ViaviSolutions': 'Viavi',
+  'Mobileye_Auto': 'Mobileye',
+  'Luminar_Lidar': 'Luminar',
+  'TempusAI': 'Tempus',
+  'ButterflyNetwork': 'Butterfly',
+  'InsilicoBio': 'Insilico',
+  'CognitionAI': 'Cognition',
+  'AdeptAI': 'Adept',
+  'EutelsatOneWeb': 'Eutelsat',           // fusionadas (2023)
+  'Spire_Global': 'SpireGlobal',
+  'LatticeSemi': 'Lattice', 'Lattice_Semiconductor': 'Lattice',
+  'MaxLinear_Optical': 'MaxLinear',
+  'Silicon_Labs': 'SiliconLabs',
+  'Energy_Fuels': 'EnergyFuels',
+  'Relativity': 'RelativitySpace',
+  'Allegro_Micro': 'Allegro',
+  'CEVA': 'Ceva',
+  'Indie_Semi': 'Indie',
+  'Cohere_NLP': 'Cohere', 'Cohere_AI': 'Cohere',
+  'ViaSatCom': 'Viasat',
+  'Onto_Innovation': 'OntoInnovation',
+  'Cabot_Micro': 'CMC_Materials',         // Cabot Micro se renombró CMC Materials
+  'TowerSemi': 'TowerSemiconductor',
+  'Kratos': 'Kratos_Defense',
+  'Scale_AI': 'ScaleAI',
+  // NO fusionados a propósito (colisión de ticker, no duplicado): HashiCorp≠IBM,
+  // Qwen≠AlibabaCloud, Aerojet⊂L3Harris, Altium⊂Renesas, Agility≠Amazon.
 };
 
 const LOGO_DOMAIN = {

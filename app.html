@@ -2261,61 +2261,54 @@ function getLinkColor(type) {
   return (LINK_TYPE_COLORS[type] || LINK_TYPE_COLORS.supply)[theme];
 }
 
-// Cargar nodos expandidos (SpaceX ecosystem)
-// Nota: en producción estos se cargarán como módulos <script> separados
-// Por ahora los incluimos inline para mantener compatibilidad
-if (typeof NODES_EXPAND !== 'undefined') {
-  NODES_EXPAND.forEach(n => {
-    if (!NODES.find(existing => existing.id === n.id)) {
-      NODES.push(n);
-    }
-  });
+// ── Merge del catálogo con RESOLUCIÓN DE ENTIDADES (Etapa 2, 2026-07) ──────
+// NODE_ID_ALIAS es la tabla canónica: un id alias es un duplicado de la misma
+// empresa. Reglas: (1) el canónico absorbe los campos que le falten del
+// duplicado, (2) el duplicado NO entra a NODES, (3) NODE_BY_ID conserva la
+// clave alias apuntando al nodo canónico (ids viejos siguen resolviendo).
+function _resolveId(id) {
+  let cur = id, hops = 0;
+  while (NODE_ID_ALIAS[cur] !== undefined && hops++ < 5) cur = NODE_ID_ALIAS[cur];
+  return cur;
 }
-if (typeof NODES_EXPAND2 !== 'undefined') {
-  NODES_EXPAND2.forEach(n => {
-    if (!NODES.find(existing => existing.id === n.id)) {
-      NODES.push(n);
+function _absorbNode(n) {
+  const cid = _resolveId(n.id);
+  const existing = NODE_BY_ID[cid];
+  if (existing) {
+    if (existing !== n) {
+      for (const k in n) {
+        if (k === 'id') continue;
+        if (existing[k] == null || existing[k] === '') existing[k] = n[k];
+      }
+      if (n.id !== cid) NODE_BY_ID[n.id] = existing;  // alias → nodo canónico
     }
-  });
+    return;
+  }
+  n.id = cid;
+  NODE_BY_ID[cid] = n;
+  if (!NODES.includes(n)) NODES.push(n);
 }
-if (typeof NODES_SPACEX !== 'undefined') {
-  NODES_SPACEX.forEach(n => {
-    if (!NODES.find(existing => existing.id === n.id)) {
-      NODES.push(n);
-    }
-  });
+// El seed también pasa por resolución (por si contiene ids alias)
+NODES.slice().forEach(n => {
+  const cid = _resolveId(n.id);
+  if (cid !== n.id && NODE_BY_ID[cid]) {
+    const idx = NODES.indexOf(n);
+    if (idx >= 0) NODES.splice(idx, 1);
+    _absorbNode(n);
+  } else { NODE_BY_ID[n.id] = n; }
+});
+for (const arr of [typeof NODES_EXPAND !== 'undefined' ? NODES_EXPAND : null,
+                   typeof NODES_EXPAND2 !== 'undefined' ? NODES_EXPAND2 : null,
+                   typeof NODES_SPACEX !== 'undefined' ? NODES_SPACEX : null,
+                   typeof NODES_EXPAND3 !== 'undefined' ? NODES_EXPAND3 : null,
+                   typeof NODES_NUCLEAR !== 'undefined' ? NODES_NUCLEAR : null,
+                   typeof NODES_EXPAND4 !== 'undefined' ? NODES_EXPAND4 : null]) {
+  if (arr) arr.forEach(_absorbNode);
 }
-if (typeof NODES_EXPAND3 !== 'undefined') {
-  NODES_EXPAND3.forEach(n => {
-    if (!NODES.find(existing => existing.id === n.id)) {
-      NODES.push(n);
-    }
-  });
-}
-if (typeof NODES_NUCLEAR !== 'undefined') {
-  NODES_NUCLEAR.forEach(n => {
-    if (!NODES.find(existing => existing.id === n.id)) {
-      NODES.push(n);
-    }
-  });
-}
-if (typeof NODES_EXPAND4 !== 'undefined') {
-  NODES_EXPAND4.forEach(n => {
-    if (!NODES.find(existing => existing.id === n.id)) {
-      NODES.push(n);
-    }
-  });
-}
-// Sync NODE_BY_ID with all newly merged nodes so LINKS filter works correctly
-NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
 window.NODES = NODES;
 // Exponer NODE_BY_ID al scope global: muchos módulos (grafo temporal, etc.) leen
 // window.NODE_BY_ID. Sin esto quedaba undefined → el Grafo Temporal veía 0 aristas.
 window.NODE_BY_ID = NODE_BY_ID;
-
-// Node ID aliases — maps alternate/legacy IDs to canonical node IDs
-// (movido a nodes/nodes_seed.js) — const NODE_ID_ALIAS
-function _resolveId(id) { return NODE_ID_ALIAS[id] || id; }
 if (typeof LINKS_EXPAND !== 'undefined') {
   LINKS_EXPAND.forEach(l => {
     if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
@@ -2347,14 +2340,29 @@ if (typeof LINKS_EXPAND4 !== 'undefined') {
   });
 }
 
-var LINKS = RAW_LINKS
-  .filter(([s,t,w])=>s!==t && w>0)
-  .filter(([s,t])=>{
-    const ok=NODE_BY_ID[s]&&NODE_BY_ID[t];
-    if(!ok) console.warn('Link descartado por id inexistente:',s,'→',t);
-    return ok;
-  })
-  .map(([s,t,w,rel,type])=>({source:s,target:t,w,rel,type:type||'supply'}));
+// Tubería de links: resolver alias (TODOS, incluido el seed) → filtrar
+// self-loops/ids inexistentes DESPUÉS de resolver → dedupe (s,t,type):
+// se queda el mayor peso y la descripción más rica.
+var LINKS = (function(){
+  const seen = new Map();
+  RAW_LINKS.forEach(([s0,t0,w,rel,type])=>{
+    const s=_resolveId(s0), t=_resolveId(t0);
+    if(s===t || !(w>0)) return;
+    if(!NODE_BY_ID[s]||!NODE_BY_ID[t]){ console.warn('Link descartado por id inexistente:',s0,'→',t0); return; }
+    // canónico del nodo (por si el alias apunta a un nodo cuyo id cambió)
+    const sid=NODE_BY_ID[s].id, tid=NODE_BY_ID[t].id;
+    if(sid===tid) return;
+    const key=sid+'→'+tid+'·'+(type||'supply');
+    const prev=seen.get(key);
+    if(prev){
+      if((w||2)>prev.w) prev.w=w||2;
+      if((rel||'').length>(prev.rel||'').length) prev.rel=rel||'';
+    } else {
+      seen.set(key,{source:sid,target:tid,w:w||2,rel:rel||'',type:type||'supply'});
+    }
+  });
+  return [...seen.values()];
+})();
 window.LINKS = LINKS;
 
 const lid = v => (typeof v==='object' && v!==null) ? v.id : v;

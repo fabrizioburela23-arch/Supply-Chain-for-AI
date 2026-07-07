@@ -230,6 +230,10 @@ var LINKS_CONNECT = [
   {s:"Qualcomm_Infra",  t:"TSMC",          w:3, rel:"Chips de infraestructura 5G en TSMC",            type:"fab"},
   {s:"Qualcomm_Infra",  t:"Ericsson",      w:2, rel:"Soluciones RAN 5G",                              type:"partner"},
 
+
+  // ── Propiedad corporativa (colisiones de ticker detectadas en Etapa 2) ────
+  {s:"L3Harris",        t:"Aerojet",       w:4, rel:"Adquirió Aerojet Rocketdyne (2023, $4.7B)",  type:"owns"},
+  {s:"Renesas",         t:"Altium",        w:3, rel:"Adquirió Altium (2024, $5.9B)",             type:"owns"},
 ];
 
 if (typeof window !== 'undefined') window.LINKS_CONNECT = LINKS_CONNECT;
