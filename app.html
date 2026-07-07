@@ -1261,6 +1261,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
 <script src="nodes/links_connect.js"></script>
+<script src="nodes/merge_graph.js"></script>
 <script src="/vendor/three.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'"></script>
 <script src="/vendor/chart.umd.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'"></script>
 <script src="/vendor/satellite.min.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/satellite.js@4.1.4/dist/satellite.min.js'"></script>
@@ -2261,108 +2262,31 @@ function getLinkColor(type) {
   return (LINK_TYPE_COLORS[type] || LINK_TYPE_COLORS.supply)[theme];
 }
 
-// ── Merge del catálogo con RESOLUCIÓN DE ENTIDADES (Etapa 2, 2026-07) ──────
-// NODE_ID_ALIAS es la tabla canónica: un id alias es un duplicado de la misma
-// empresa. Reglas: (1) el canónico absorbe los campos que le falten del
-// duplicado, (2) el duplicado NO entra a NODES, (3) NODE_BY_ID conserva la
-// clave alias apuntando al nodo canónico (ids viejos siguen resolviendo).
-function _resolveId(id) {
-  let cur = id, hops = 0;
-  while (NODE_ID_ALIAS[cur] !== undefined && hops++ < 5) cur = NODE_ID_ALIAS[cur];
-  return cur;
-}
-function _absorbNode(n) {
-  const cid = _resolveId(n.id);
-  const existing = NODE_BY_ID[cid];
-  if (existing) {
-    if (existing !== n) {
-      for (const k in n) {
-        if (k === 'id') continue;
-        if (existing[k] == null || existing[k] === '') existing[k] = n[k];
-      }
-      if (n.id !== cid) NODE_BY_ID[n.id] = existing;  // alias → nodo canónico
-    }
-    return;
-  }
-  n.id = cid;
-  NODE_BY_ID[cid] = n;
-  if (!NODES.includes(n)) NODES.push(n);
-}
-// El seed también pasa por resolución (por si contiene ids alias)
-NODES.slice().forEach(n => {
-  const cid = _resolveId(n.id);
-  if (cid !== n.id && NODE_BY_ID[cid]) {
-    const idx = NODES.indexOf(n);
-    if (idx >= 0) NODES.splice(idx, 1);
-    _absorbNode(n);
-  } else { NODE_BY_ID[n.id] = n; }
+// ── Merge del catálogo: UNA sola implementación en nodes/merge_graph.js ─────
+// (resolución de entidades + absorción + redirección de links + dedupe).
+// La usa también scripts/export_graph_v0.js — no duplicar lógica aquí.
+const _mergeResult = buildKhipusGraph({
+  NODES, NODE_BY_ID, NODE_ID_ALIAS, RAW_LINKS,
+  expansions: [typeof NODES_EXPAND !== 'undefined' ? NODES_EXPAND : null,
+               typeof NODES_EXPAND2 !== 'undefined' ? NODES_EXPAND2 : null,
+               typeof NODES_SPACEX !== 'undefined' ? NODES_SPACEX : null,
+               typeof NODES_EXPAND3 !== 'undefined' ? NODES_EXPAND3 : null,
+               typeof NODES_NUCLEAR !== 'undefined' ? NODES_NUCLEAR : null,
+               typeof NODES_EXPAND4 !== 'undefined' ? NODES_EXPAND4 : null],
+  linkArrays: [typeof LINKS_EXPAND !== 'undefined' ? LINKS_EXPAND : null,
+               typeof LINKS_SPACEX !== 'undefined' ? LINKS_SPACEX : null,
+               typeof LINKS_CONNECT !== 'undefined' ? LINKS_CONNECT : null,
+               typeof LINKS_NUCLEAR !== 'undefined' ? LINKS_NUCLEAR : null,
+               typeof LINKS_EXPAND4 !== 'undefined' ? LINKS_EXPAND4 : null],
+  warn: m => console.warn(m),
 });
-for (const arr of [typeof NODES_EXPAND !== 'undefined' ? NODES_EXPAND : null,
-                   typeof NODES_EXPAND2 !== 'undefined' ? NODES_EXPAND2 : null,
-                   typeof NODES_SPACEX !== 'undefined' ? NODES_SPACEX : null,
-                   typeof NODES_EXPAND3 !== 'undefined' ? NODES_EXPAND3 : null,
-                   typeof NODES_NUCLEAR !== 'undefined' ? NODES_NUCLEAR : null,
-                   typeof NODES_EXPAND4 !== 'undefined' ? NODES_EXPAND4 : null]) {
-  if (arr) arr.forEach(_absorbNode);
-}
+const _resolveId = _mergeResult.resolveId;
 window.NODES = NODES;
 // Exponer NODE_BY_ID al scope global: muchos módulos (grafo temporal, etc.) leen
 // window.NODE_BY_ID. Sin esto quedaba undefined → el Grafo Temporal veía 0 aristas.
 window.NODE_BY_ID = NODE_BY_ID;
-if (typeof LINKS_EXPAND !== 'undefined') {
-  LINKS_EXPAND.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
-    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
-  });
-}
-if (typeof LINKS_SPACEX !== 'undefined') {
-  LINKS_SPACEX.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
-    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
-  });
-}
-if (typeof LINKS_CONNECT !== 'undefined') {
-  LINKS_CONNECT.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
-    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
-  });
-}
-if (typeof LINKS_NUCLEAR !== 'undefined') {
-  LINKS_NUCLEAR.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
-    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
-  });
-}
-if (typeof LINKS_EXPAND4 !== 'undefined') {
-  LINKS_EXPAND4.forEach(l => {
-    if (Array.isArray(l)) { RAW_LINKS.push([_resolveId(l[0]), _resolveId(l[1]), l[2]||2, l[3]||'', l[4]||'supply']); }
-    else { RAW_LINKS.push([_resolveId(l.s), _resolveId(l.t), l.w||2, l.rel||'', l.type||'supply']); }
-  });
-}
-
-// Tubería de links: resolver alias (TODOS, incluido el seed) → filtrar
-// self-loops/ids inexistentes DESPUÉS de resolver → dedupe (s,t,type):
-// se queda el mayor peso y la descripción más rica.
-var LINKS = (function(){
-  const seen = new Map();
-  RAW_LINKS.forEach(([s0,t0,w,rel,type])=>{
-    const s=_resolveId(s0), t=_resolveId(t0);
-    if(s===t || !(w>0)) return;
-    if(!NODE_BY_ID[s]||!NODE_BY_ID[t]){ console.warn('Link descartado por id inexistente:',s0,'→',t0); return; }
-    // canónico del nodo (por si el alias apunta a un nodo cuyo id cambió)
-    const sid=NODE_BY_ID[s].id, tid=NODE_BY_ID[t].id;
-    if(sid===tid) return;
-    const key=sid+'→'+tid+'·'+(type||'supply');
-    const prev=seen.get(key);
-    if(prev){
-      if((w||2)>prev.w) prev.w=w||2;
-      if((rel||'').length>(prev.rel||'').length) prev.rel=rel||'';
-    } else {
-      seen.set(key,{source:sid,target:tid,w:w||2,rel:rel||'',type:type||'supply'});
-    }
-  });
-  return [...seen.values()];
-})();
+// Los links de expansión y la tubería final viven en buildKhipusGraph (nodes/merge_graph.js).
+var LINKS = _mergeResult.LINKS;
 window.LINKS = LINKS;
 
 const lid = v => (typeof v==='object' && v!==null) ? v.id : v;

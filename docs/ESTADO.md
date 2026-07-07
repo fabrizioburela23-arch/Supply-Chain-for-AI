@@ -77,6 +77,41 @@ vacío (el slot del motor nuevo); contrato MiroFish a replicar =
   vivos — el store único del mapa unificado los subsume; consolidarlos dos
   veces sería trabajo tirado.
 
+## Etapa 2 — Datos limpios: ✅ COMPLETA (2026-07-06, 5 batches publicados)
+
+**El grafo canónico ahora es: 407 empresas · 1,028 links · 9 tipos de
+relación · 9 macro-sectores · dirección ÚNICA (source PROVEE a target).**
+
+- [x] Batch 1 (e73be4f): ~2,550 líneas de datos inline salen de app.html →
+      nodes/nodes_seed.js (extracción determinista, isomorfa 463/1163).
+      Hechos temporales concat-safe (el orden de <script> ya no pierde datos).
+- [x] Batch 2a (0df080b): RESOLUCIÓN DE ENTIDADES — 56 ids duplicados
+      fusionados (463→407). NODE_ID_ALIAS = tabla canónica; el merge absorbe
+      campos, redirige links, y NODE_BY_ID[alias] → nodo canónico (ids viejos
+      siguen resolviendo). Dedupe (s,t,type). NO fusionados (ticker≠entidad):
+      HashiCorp≠IBM, Qwen≠AlibabaCloud, Aerojet⊂L3Harris, Altium⊂Renesas.
+- [x] Batch 2b (f9a4282): DIRECCIÓN ÚNICA — 1,168 filas reescritas
+      físicamente, 425 volteadas, 66 re-tipadas (customer→supply,
+      investor→invest → 9 tipos). Adjudicación arista por arista
+      (clasificador de categorías+verbos en español + revisión manual de 375
+      ambiguas + auditoría de 286 flips). 10/10 verdades de cadena en
+      navegador; la cascada de TSMC ahora alcanza 112 empresas (incl. Nvidia
+      y Apple — antes invisibles por direcciones opuestas).
+- [x] Batch 3: MACRO-SECTORES — SECTORS9 + CAT_TO_SECTOR (40 cats → 9
+      sectores con los colores NEXUS) en nodes_seed.js; 5 países faltantes
+      añadidos a COUNTRIES (Israel/Australia/Europa/India/Canadá) + typo
+      Japan→Japon; pase de pesos por señal textual (7×w6 monopolios,
+      10×w5 principales, 5×w1 pilotos).
+- [x] Batch 3 (cont.): MERGE ÚNICO — nodes/merge_graph.js
+      (buildKhipusGraph) usado por app.html Y por el exportador; el
+      export_graph_v0.js por rangos de línea hardcodeados fue reemplazado.
+      data/grafo_v0.json regenerado canónico (407/1028/9 sectores) y
+      migración a Postgres validada end-to-end (439 objetos, 0 ids sin
+      resolver, 85 hechos fechados). 51/51 tests.
+- ⏸️ Los pesos siguen siendo un prior débil (mayoría w=2): la re-derivación
+  profunda (dependency-share por fundamentals) queda para la ingesta (12k) y
+  el motor de matrices, que los recalculará con datos vivos.
+
 ## Etapas siguientes (plan en las tareas de la sesión)
 2. **Etapa 2 — Datos limpios**: resolución de entidades (31 duplicados),
    dirección única de aristas, taxonomía tipada, pesos re-derivados (LLM

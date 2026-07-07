@@ -34,7 +34,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   ontology.js/ontology_facts.js (tipos y hechos tipados) +
   temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js.
 - `scripts/`: export_graph_v0.js (snapshot) · migrate_v0_to_ontology.py.
-- `data/grafo_v0.json`: snapshot de migración (463 nodos / 1163 links).
+- `data/grafo_v0.json`: snapshot canónico (407 nodos / 1,028 links) — se
+  regenera con `node scripts/export_graph_v0.js` (usa nodes/merge_graph.js,
+  la MISMA implementación de merge que el navegador; nunca duplicar).
 - `sim/`: mirofish_client.js, scenario_builder.js.
 - ELIMINADOS en la limpieza 2026-07 (no recrear): `rag/` (nunca desplegado),
   `litellm/`, `nodes/nodes_core.js` (duplicado), el modo standalone completo

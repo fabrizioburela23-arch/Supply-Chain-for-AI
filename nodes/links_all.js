@@ -13,7 +13,7 @@ const LINKS_SPACEX = [
   ['MaxLinear','SpaceX',4,'SoCs de demodulación para Starlink v3','supply'],
   ['SiTime','SpaceX',2,'Osciladores MEMS para satélites Starlink','supply'],
   ['SpaceX','T_Mobile',4,'Starlink Direct-to-Cell $12B acuerdo','cloud'],
-  ['SpaceX','Iridium',3,'Lanzó toda la constelación Iridium NEXT','supply'],
+  ['SpaceX','Iridium',6,'Lanzó toda la constelación Iridium NEXT','supply'],
   ['SpaceX','RocketLab',1,'Competencia directa en smallsat','partner'],
   ['RocketLab','PlanetLabs',3,'Lanzamientos dedicados de sats Dove','supply'],
   ['RocketLab','BlackSky',2,'Lanzamientos dedicados','supply'],

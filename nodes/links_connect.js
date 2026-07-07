@@ -64,7 +64,7 @@ var LINKS_CONNECT = [
   ['Samsung','Cohu',2,'Equipos de handling y test','supply'],
   ['Onto_Innovation','TSMC',2,'Metrología e inspección óptica','supply'],
   ['Onto_Innovation','Samsung',2,'Inspección de packaging avanzado','supply'],
-  ['Ultra_Clean','AMAT',3,'Subsistemas y módulos críticos','supply'],
+  ['Ultra_Clean','AMAT',5,'Subsistemas y módulos críticos','supply'],
   ['Lam','Ultra_Clean',3,'Componentes para equipos de grabado','supply'],
   ['TSMC','Allegro_Micro',2,'Sensores de corriente en TSMC','fab'],
   ['Tesla','Allegro_Micro',2,'Sensores Hall para motores','supply'],
