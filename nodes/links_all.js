@@ -1,58 +1,38 @@
 // nodes/links_all.js — Links del ecosistema SpaceX y conexiones expandidas
 
 const LINKS_SPACEX = [
-  // SpaceX ← Materiales
+  // ── CANONIZADO (Etapa 2, 2026-07): source PROVEE a target; customer→supply,
+  // investor→invest. Direcciones adjudicadas arista por arista (clasificador +
+  // revisión manual). Formato uniforme [s, t, w, rel, type]. ──
   ['Hexcel','SpaceX',4,'Fibra de carbono para fuselaje Starship','supply'],
   ['TorayIndustries','SpaceX',4,'Fibra de carbono T800/T1100 para cohetes','supply'],
   ['AlleghenyTech','SpaceX',3,'Aleaciones Ti/Ni para motores Raptor','supply'],
   ['CarpenterTech','SpaceX',2,'Aceros especiales para estructuras','supply'],
   ['ParkerHannifin','SpaceX',2,'Sistemas hidráulicos ground systems','supply'],
   ['Moog','SpaceX',3,'Actuadores de vuelo y TVC','supply'],
-
-  // SpaceX ← Semiconductores
   ['MaxLinear','SpaceX',4,'SoCs de demodulación para Starlink v3','supply'],
   ['SiTime','SpaceX',2,'Osciladores MEMS para satélites Starlink','supply'],
-
-  // SpaceX → Clientes
   ['SpaceX','T_Mobile',4,'Starlink Direct-to-Cell $12B acuerdo','cloud'],
   ['SpaceX','Iridium',3,'Lanzó toda la constelación Iridium NEXT','supply'],
   ['SpaceX','RocketLab',1,'Competencia directa en smallsat','partner'],
-
-  // Rocket Lab
   ['RocketLab','PlanetLabs',3,'Lanzamientos dedicados de sats Dove','supply'],
   ['RocketLab','BlackSky',2,'Lanzamientos dedicados','supply'],
   ['RocketLab','AST_SpaceMobile',2,'Lanzamientos BlueBird sats','supply'],
-
-  // Constelaciones satelitales
   ['Globalstar','AST_SpaceMobile',1,'Competencia DTC','partner'],
   ['AST_SpaceMobile','T_Mobile',3,'Direct-to-Cell partnership','supply'],
-
-  // Earth Observation
-  ['PlanetLabs','AWS_Ground',3,'Downlink via AWS Ground Station','cloud'],
-  ['ICEYE','RocketLab',2,'Lanzamientos de SAR sats','supply'],
-
-  // Ground segment
+  ['AWS_Ground','PlanetLabs',3,'Downlink via AWS Ground Station','cloud'],
+  ['RocketLab','ICEYE',2,'Lanzamientos de SAR sats','supply'],
   ['Kratos_Defense','SpaceX',3,'Ground software Starshield','supply'],
   ['AWS_Ground','PlanetLabs',3,'Downlink servicio','cloud'],
   ['AWS_Ground','ICEYE',2,'Downlink servicio','cloud'],
-
-  // Tierras raras → cadena
   ['MP_Materials','Lynas',1,'Competencia estratégica en tierras raras','partner'],
   ['Albemarle','SQM',1,'Competencia en litio Atacama','partner'],
-
-  // AI Defense
   ['Anduril','ShieldAI',1,'Sistemas complementarios DoD','partner'],
   ['SpaceX','Anduril',2,'Starshield + Lattice integration DoD','partner'],
   ['Kratos_Defense','Anduril',1,'Sistemas complementarios DoD','partner'],
-
-  // AI Auto
   ['Mobileye','AuroraInnovation',1,'Competencia ADAS L2+ vs L4','partner'],
   ['Luminar','AuroraInnovation',2,'Luminar lidar en Aurora Driver','supply'],
-
-  // AI Finance
   ['MSCI','AlphaSense',1,'Datos MSCI en plataforma AlphaSense','supply'],
-
-  // AI Agents
   ['ElevenLabs','Cohere',1,'ElevenLabs soporta Cohere como LLM opción','partner'],
   ['ScaleAI','ElevenLabs',1,'Datos de training para TTS','supply'],
   ['ScaleAI','Cohere',2,'Datos de entrenamiento LLM','supply'],

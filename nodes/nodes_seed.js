@@ -218,24 +218,9 @@ const NODES = [
 ];
 
 const RAW_LINKS = [
-
-  /* ---- Capa cuántica ---- */
-  /* ---- EDA / IP ---- */
-  /* ---- Óptica ---- */
-  /* ---- Equipamiento ---- */
-  /* ---- Materiales ---- */
-  /* ---- Foundry ---- */
-  /* ---- Fabless/Diseño ---- */
-  /* ---- Memoria ---- */
-  /* ---- Substrates/Packaging ---- */
-  /* ---- Networking ---- */
-  /* ---- Power ---- */
-  /* ---- Conectividad ---- */
-  /* ---- Servidores/ODM ---- */
-  /* ---- Cloud ---- */
-  /* ---- AI Labs ---- */
-  /* ---- Robótica ---- */
-  /* ---- AI Software ---- */
+  // ── CANONIZADO (Etapa 2, 2026-07): source PROVEE a target; customer→supply,
+  // investor→invest. Direcciones adjudicadas arista por arista (clasificador +
+  // revisión manual). Formato uniforme [s, t, w, rel, type]. ──
   ['Bluefors','IBMQuantum',3,'Criostatos de dilución para qubits superconductores','supply'],
   ['Bluefors','Rigetti',2,'Criostatos de dilución (~10 mK)','supply'],
   ['Bluefors','PsiQuantum',3,'Criogenia a escala industrial para fotónica','supply'],
@@ -597,36 +582,36 @@ const RAW_LINKS = [
   ['Nvidia','Unitree',2,'Jetson para humanoides G1/H2','supply'],
   ['Nvidia','Apptronik',2,'Cómputo embarcado para Apollo','supply'],
   ['Alphabet','Apptronik',2,'Inversor (Google) y modelos Gemini','cloud'],
-  ['IBMQuantum','QuantumMachines',2,'Usa controladores OPX para orquestar sus qubits','supply'],
+  ['QuantumMachines','IBMQuantum',2,'Usa controladores OPX para orquestar sus qubits','supply'],
   ['IBMQuantum','Microsoft',2,'Acceso a QPUs IBM vía Azure Quantum','cloud'],
   ['IBMQuantum','Amazon',1,'Acceso a QPUs IBM vía AWS Braket','cloud'],
   ['IBMQuantum','Alphabet',1,'Integración Google Cloud Quantum Computing Service','cloud'],
-  ['PsiQuantum','GF',4,'GlobalFoundries fabrica sus chips fotónicos cuánticos en CMOS','fab'],
-  ['PsiQuantum','Microsoft',2,'Colaboración en simulación cuántica y acceso nube','cloud'],
+  ['GF','PsiQuantum',4,'GlobalFoundries fabrica sus chips fotónicos cuánticos en CMOS','fab'],
+  ['Microsoft','PsiQuantum',2,'Colaboración en simulación cuántica y acceso nube','cloud'],
   ['IBMQuantum','Rapidus',3,'Tecnología de proceso 2nm bajo licencia de IBM Research','license'],
   ['Rapidus','AMAT',2,'Equipos de deposición y CMP para la fab de Chitose','supply'],
   ['Rapidus','TEL',2,'Pistas fotorresistencia para proceso EUV en Chitose','fab'],
-  ['xAI','Nvidia',5,'Colossus Memphis: 200K GPUs H100/H200 — mayor clúster IA privado','supply'],
-  ['xAI','Oracle',3,'Infraestructura cloud OCI para entrenamiento Grok','cloud'],
-  ['xAI','SuperMicro',3,'Servidores de rack para clúster Colossus','supply'],
+  ['Nvidia','xAI',5,'Colossus Memphis: 200K GPUs H100/H200 — mayor clúster IA privado','supply'],
+  ['Oracle','xAI',3,'Infraestructura cloud OCI para entrenamiento Grok','cloud'],
+  ['SuperMicro','xAI',3,'Servidores de rack para clúster Colossus','supply'],
   ['xAI','Tesla',2,'Implementa Grok en los vehículos y la plataforma de Tesla','supply'],
-  ['xAI','Dell',2,'Servidores PowerEdge para edge inference de Grok','supply'],
-  ['Mistral','Microsoft',3,'Acuerdo Azure: los modelos Mistral corren en Azure AI Studio','cloud'],
-  ['Mistral','Amazon',2,'Modelos Mistral disponibles en Amazon Bedrock','cloud'],
-  ['Mistral','Nvidia',2,'Entrenamiento en clusters H100/H200 para Mistral Large 2','supply'],
-  ['Meta','Nvidia',5,'Mayor comprador individual de H100/H200: >600K GPUs en 2024–25','supply'],
-  ['Meta','TSMC',4,'Fabrica sus ASICs MTIA (Meta Training & Inference Accelerator)','fab'],
-  ['Meta','Broadcom',3,'Co-desarrollo del ASIC MTIA2 para inferencia IA a escala','supply'],
-  ['Meta','Amazon',2,'Usa AWS para algunos workloads de datos y redundancia','cloud'],
-  ['Meta','Equinix',2,'Interconexión en datacenters Equinix para backbone global','cloud'],
-  ['DeepSeek','Nvidia',3,'Entrenamiento en H800/H100 antes de restricciones; ahora H20','supply'],
-  ['DeepSeek','HiSilicon',3,'Migración a chips Ascend 910B de Huawei ante sanciones EE.UU.','supply'],
-  ['DeepSeek','SMIC',2,'Dependencia indirecta de SMIC para chips Ascend de HiSilicon','supply'],
-  ['Tesla','TSMC',4,'Fabrica los chips Dojo D1, HW4 y FSD en TSMC 7nm/5nm','fab'],
-  ['Tesla','Samsung',2,'Produce chips FSD en nodos maduros Samsung (secundario)','supply'],
-  ['Tesla','Nvidia',2,'Usa GPUs Nvidia para entrenamiento de modelos FSD (pre-Dojo)','supply'],
-  ['Tesla','onsemi',3,'Mayor cliente de onsemi en SiC para inversores del tren eléctrico','supply'],
-  ['Tesla','Broadcom',2,'Chipsets de red y conectividad para los vehículos Tesla','supply'],
+  ['Dell','xAI',2,'Servidores PowerEdge para edge inference de Grok','supply'],
+  ['Microsoft','Mistral',3,'Acuerdo Azure: los modelos Mistral corren en Azure AI Studio','cloud'],
+  ['Amazon','Mistral',2,'Modelos Mistral disponibles en Amazon Bedrock','cloud'],
+  ['Nvidia','Mistral',2,'Entrenamiento en clusters H100/H200 para Mistral Large 2','supply'],
+  ['Nvidia','Meta',5,'Mayor comprador individual de H100/H200: >600K GPUs en 2024–25','supply'],
+  ['TSMC','Meta',4,'Fabrica sus ASICs MTIA (Meta Training & Inference Accelerator)','fab'],
+  ['Broadcom','Meta',3,'Co-desarrollo del ASIC MTIA2 para inferencia IA a escala','supply'],
+  ['Amazon','Meta',2,'Usa AWS para algunos workloads de datos y redundancia','cloud'],
+  ['Equinix','Meta',2,'Interconexión en datacenters Equinix para backbone global','cloud'],
+  ['Nvidia','DeepSeek',3,'Entrenamiento en H800/H100 antes de restricciones; ahora H20','supply'],
+  ['HiSilicon','DeepSeek',3,'Migración a chips Ascend 910B de Huawei ante sanciones EE.UU.','supply'],
+  ['SMIC','DeepSeek',2,'Dependencia indirecta de SMIC para chips Ascend de HiSilicon','supply'],
+  ['TSMC','Tesla',4,'Fabrica los chips Dojo D1, HW4 y FSD en TSMC 7nm/5nm','fab'],
+  ['Samsung','Tesla',2,'Produce chips FSD en nodos maduros Samsung (secundario)','supply'],
+  ['Nvidia','Tesla',2,'Usa GPUs Nvidia para entrenamiento de modelos FSD (pre-Dojo)','supply'],
+  ['onsemi','Tesla',3,'Mayor cliente de onsemi en SiC para inversores del tren eléctrico','supply'],
+  ['Broadcom','Tesla',2,'Chipsets de red y conectividad para los vehículos Tesla','supply'],
   ['Figure','Nvidia',3,'OpenRobotics: procesador IA Jetson Thor para cerebro del robot 02','supply'],
   ['Figure','Microsoft',2,'Partnership estratégico y acceso a Azure OpenAI para Figure 02','license'],
   ['Figure','OpenAI',3,'Integración de GPT-4o para razonamiento del robot Figure 02','supply'],
@@ -634,35 +619,35 @@ const RAW_LINKS = [
   ['BostonDynamics','Amazon',2,'Piloto de Stretch en centros logísticos de Amazon','cloud'],
   ['OneX','Nvidia',2,'Plataforma Jetson para procesamiento visual de NEO Gamma','supply'],
   ['OneX','Amazon',1,'Piloto industrial en almacenes Amazon Europa','cloud'],
-  ['Unitree','HiSilicon',3,'Módulos Ascend 310 de Huawei en robots G1/H1 para visión IA','supply'],
-  ['Unitree','Nvidia',2,'Usa Jetson AGX Orin en modelos premium para mercado internacional','supply'],
-  ['Unitree','SMIC',2,'Dependencia indirecta chips domésticos vía Huawei','supply'],
+  ['HiSilicon','Unitree',3,'Módulos Ascend 310 de Huawei en robots G1/H1 para visión IA','supply'],
+  ['Nvidia','Unitree',2,'Usa Jetson AGX Orin en modelos premium para mercado internacional','supply'],
+  ['SMIC','Unitree',2,'Dependencia indirecta chips domésticos vía Huawei','supply'],
   ['Apptronik','Nvidia',3,'Plataforma Jetson Thor para el sistema nervioso IA de Apollo','supply'],
   ['Apptronik','Amazon',2,'Piloto de robots Apollo en centros de fulfillment de Amazon','cloud'],
   ['Apptronik','Alphabet',1,'Google como inversor estratégico y cliente piloto de Apollo','cloud'],
   ['Palantir','Amazon',3,'AIP corre sobre AWS — mayor proveedor de infra de Palantir','license'],
   ['Palantir','Microsoft',3,'AIP disponible en Azure; contrato MSFT US Gov (JEDI/JWCC)','license'],
   ['Palantir','Oracle',2,'Implementaciones AIP sobre OCI para clientes gubernamentales','license'],
-  ['Palantir','Dell',2,'Dispositivos edge (MetaConstellation) con hardware Dell PowerEdge','supply'],
-  ['CrowdStrike','Amazon',3,'Falcon corre en AWS — infraestructura primaria de CrowdStrike','cloud'],
-  ['CrowdStrike','Microsoft',2,'Integración profunda con Azure Sentinel y Microsoft 365 Defender','cloud'],
-  ['CrowdStrike','Nvidia',1,'Usa GPUs Nvidia para detección de amenazas con IA en tiempo real','supply'],
-  ['Snowflake','Amazon',4,'~60% de la infra Snowflake corre sobre AWS (multirregión)','cloud'],
-  ['Snowflake','Microsoft',3,'Snowflake sobre Azure — segunda nube más grande de su mix','cloud'],
-  ['Snowflake','Alphabet',2,'Snowflake sobre Google Cloud — tercer proveedor del mix','cloud'],
+  ['Dell','Palantir',2,'Dispositivos edge (MetaConstellation) con hardware Dell PowerEdge','supply'],
+  ['Amazon','CrowdStrike',3,'Falcon corre en AWS — infraestructura primaria de CrowdStrike','cloud'],
+  ['Microsoft','CrowdStrike',2,'Integración profunda con Azure Sentinel y Microsoft 365 Defender','cloud'],
+  ['Nvidia','CrowdStrike',1,'Usa GPUs Nvidia para detección de amenazas con IA en tiempo real','supply'],
+  ['Amazon','Snowflake',4,'~60% de la infra Snowflake corre sobre AWS (multirregión)','cloud'],
+  ['Microsoft','Snowflake',3,'Snowflake sobre Azure — segunda nube más grande de su mix','cloud'],
+  ['Alphabet','Snowflake',2,'Snowflake sobre Google Cloud — tercer proveedor del mix','cloud'],
   ['Snowflake','Nvidia',2,'Snowflake Cortex AI usa GPUs Nvidia para modelos in-database','supply'],
   ['Microsoft','OpenAI',5,'Inversión acumulada $13B — Azure es el único cloud de OpenAI','invest'],
   ['Amazon','Anthropic',4,'Inversión $4B — AWS es la nube primaria de Anthropic (Bedrock)','invest'],
   ['Alphabet','Anthropic',3,'Inversión $500M — Google Cloud como nube alternativa de Anthropic','invest'],
   ['Nvidia','CoreWeave',4,'Financiación masiva + suministro de 100K+ GPUs en 2023','invest'],
-  ['OpenAI','Microsoft',5,'GPT-4/o1 corre exclusivamente en Azure (Microsoft es el único proveedor cloud)','cloud'],
+  ['Microsoft','OpenAI',5,'GPT-4/o1 corre exclusivamente en Azure (Microsoft es el único proveedor cloud)','cloud'],
   ['OpenAI','Nvidia',4,'ChatGPT usa clusters de H100/H200 para inferencia a 100M+ usuarios','supply'],
-  ['Anthropic','Amazon',5,'Claude corre en AWS Bedrock — Amazon es el socio cloud primario','cloud'],
-  ['Anthropic','Alphabet',2,'Claude disponible en Google Cloud Vertex AI como segunda nube','cloud'],
-  ['Anthropic','Nvidia',3,'Entrenamiento de Claude 3/4 en clusters H100 a gran escala','supply'],
+  ['Amazon','Anthropic',5,'Claude corre en AWS Bedrock — Amazon es el socio cloud primario','cloud'],
+  ['Alphabet','Anthropic',2,'Claude disponible en Google Cloud Vertex AI como segunda nube','cloud'],
+  ['Nvidia','Anthropic',3,'Entrenamiento de Claude 3/4 en clusters H100 a gran escala','supply'],
   ['Qwen','Nvidia',3,'Alibaba usa clusters H800/H20 para entrenamiento Qwen 2.5/3','supply'],
-  ['Qwen','TSMC',2,'Alibaba fabrica ASICs Hanguang 800 para inferencia en TSMC','fab'],
-  ['Qwen','SMIC',2,'Alternativa chips domésticos vía SMIC para reducir dependencia','supply'],
+  ['TSMC','Qwen',2,'Alibaba fabrica ASICs Hanguang 800 para inferencia en TSMC','fab'],
+  ['SMIC','Qwen',2,'Alternativa chips domésticos vía SMIC para reducir dependencia','supply'],
   ['Arista','Microsoft',3,'Switches 400/800G para la red interna de Azure DC','cloud'],
   ['Arista','Alphabet',3,'Switches de red para centros de datos de Google','cloud'],
   ['Arista','Amazon',3,'Infraestructura de red para la red interna de AWS','cloud'],
@@ -690,7 +675,7 @@ const RAW_LINKS = [
   ['TSMC','AMD',5,'Fabrica Instinct MI300X, EPYC Turin en N3/N4 — cliente 2º por volumen','fab'],
   ['TSMC','Apple',5,'Fabrica A18/M4 Pro en N3E — Apple es el 1º cliente por ingresos','fab'],
   ['Samsung','SKHynix',2,'Compite en DRAM/NAND — referencia de proceso para HBM4','fab'],
-  ['GF','ARM',1,'GlobalFoundries usa arquitectura ARM en nodos maduros FD-SOI','license'],
+  ['ARM','GF',1,'GlobalFoundries usa arquitectura ARM en nodos maduros FD-SOI','license'],
   ['Corning','SubCom',3,'Fibra óptica para cables submarinos de SubCom','supply'],
   ['Corning','NEC',2,'Fibra óptica para sistemas de cable submarino de NEC','supply'],
   ['SubCom','Amazon',3,'Instala cables submarinos para la red global AWS (p.ej. CURIE)','cloud'],
@@ -709,12 +694,10 @@ const RAW_LINKS = [
   ['Meta','OpenAI',1,'Competencia directa; Meta ofrece Llama como open source frente a OpenAI','partner'],
   ['Mistral','OpenAI',1,'Competencia directa europea; modelos open-weights frente a GPT-4','partner'],
   ['Tesla','OpenAI',1,'Elon Musk co-fundó OpenAI; ahora competidores directos','supply'],
-  ['Figure','OpenAI',2,'Figure integra modelos multimodales de OpenAI en Figure 02','supply'],
+  ['OpenAI','Figure',2,'Figure integra modelos multimodales de OpenAI en Figure 02','supply'],
   ['BostonDynamics','OpenAI',1,'Boston Dynamics usa GPT-4V para comprensión semántica de entornos','supply'],
   ['Microsoft','Anthropic',2,'Microsoft invierte adicionalmente en Anthropic; Claude en Copilot','invest'],
   ['Oracle','OpenAI',2,'OpenAI acuerdo multi-cloud OCI para capacidad adicional de inferencia','cloud'],
-
-  /* ===== v7 · M1: despliegues (deploy) ===== */
   ['Unitree','SAIC',2,'Despliega robots G1 en línea de producción de SAIC (fabrica ~5M coches/año)','deploy'],
   ['BostonDynamics','Hyundai',3,'Atlas y Spot desplegados en la Metaplant de Hyundai en Georgia para logística y ensamblaje','deploy'],
   ['Figure','BMW',3,'Robots Figure 02 desplegados en planta BMW Spartanburg — primer cliente industrial','deploy'],
@@ -722,16 +705,14 @@ const RAW_LINKS = [
   ['Apptronik','Amazon',2,'Apollo en piloto en centros de fulfillment Amazon GXO','deploy'],
   ['Palantir','Dell',2,'AIP Edge desplegado en dispositivos MetaConstellation con hardware Dell PowerEdge','deploy'],
   ['CrowdStrike','Dell',3,'Falcon desplegado como EDR estándar en todos los endpoints Dell Technologies','deploy'],
-  ['Snowflake','Nvidia',2,'Snowflake Cortex AI desplegado como capa analítica sobre clusters GPU de Nvidia','deploy'],
-  ['Microsoft','OpenAI',3,'Copilot desplegado en suite M365 de 400M+ usuarios enterprise','deploy'],
+  ['Nvidia','Snowflake',2,'Snowflake Cortex AI desplegado como capa analítica sobre clusters GPU de Nvidia','deploy'],
+  ['OpenAI','Microsoft',3,'Copilot desplegado en suite M365 de 400M+ usuarios enterprise','deploy'],
   ['OpenAI','Microsoft',2,'ChatGPT Enterprise desplegado en stack IT de Fortune 500 vía Microsoft','deploy'],
   ['Palantir','Amazon',3,'AIP desplegado sobre infraestructura AWS para contratos DoD y CIA','deploy'],
   ['CrowdStrike','Microsoft',3,'Falcon integrado como XDR nativo en Azure Sentinel y Microsoft 365 Defender','deploy'],
-  ['Snowflake','Amazon',2,'Data Cloud desplegado en producción sobre infraestructura AWS multi-región','deploy'],
+  ['Amazon','Snowflake',2,'Data Cloud desplegado en producción sobre infraestructura AWS multi-región','deploy'],
   ['Figure','Microsoft',2,'Figure 02 con OpenAI integrado desplegado en pilotos Microsoft manufacturing','deploy'],
   ['BostonDynamics','Alphabet',1,'Spot desplegado en campus de Google para inspección de infraestructura','deploy'],
-
-  /* ===== v7 · M1: inversiones (invest) ===== */
   ['SoftBank','ARM',5,'SoftBank propietario del ~90% de ARM tras adquisición 2016 por $32B','invest'],
   ['Samsung','QuantumMachines',2,'Samsung invierte en ronda Series B de QuantumMachines','invest'],
   ['Intel','IonQ',2,'Intel Capital invirtió en IonQ antes de su salida a bolsa vía SPAC','invest'],
@@ -744,8 +725,6 @@ const RAW_LINKS = [
   ['SoftBank','Nvidia',2,'SoftBank históricamente uno de los mayores accionistas de Nvidia vía fondos Vision','invest'],
   ['SoftBank','OpenAI',5,'SoftBank lidera la ronda de $40B en OpenAI (2025) y el proyecto Stargate','invest'],
   ['Nvidia','PsiQuantum',2,'Nvidia entre los inversores de la ronda de $1B+ de PsiQuantum (2025)','invest'],
-
-  /* ===== v7 · M1: partnerships (partner) ===== */
   ['ARM','TSMC',4,'PDK optimizado para cada nodo TSMC (N3, N2) — ARM como IP preferente de TSMC','partner'],
   ['ARM','Samsung',3,'Exynos basado en arquitectura ARM v9 — acuerdo de proceso preferencial','partner'],
   ['Synopsys','TSMC',4,'Reference flow N3/N2: Synopsys entrega el flujo EDA certificado para TSMC','partner'],
@@ -756,8 +735,6 @@ const RAW_LINKS = [
   ['HPE','Nvidia',4,'HPE Cray EX con módulos Nvidia GH200 para supercomputadoras HPC e IA','partner'],
   ['CoreWeave','Microsoft',4,'GPU cloud dedicada a Microsoft: 23,000+ GPUs H100 reservados para Azure AI','partner'],
   ['Nebius','Nvidia',3,'Nebius como cloud partner exclusivo de Nvidia en Europa — GPU clusters H100/H200','partner'],
-
-  /* ===== v7 · M8: links de los nuevos nodos ===== */
   ['SMIC','Huawei',4,'SMIC fabrica chips Kirin y Ascend 910B para Huawei en 7nm sin EUV','fab'],
   ['HiSilicon','Huawei',5,'HiSilicon es la división de diseño de chips de Huawei — relación matriz-filial','supply'],
   ['YMTC','Huawei',3,'YMTC suministra NAND flash para smartphones y SSD Huawei','supply'],
@@ -770,7 +747,7 @@ const RAW_LINKS = [
   ['MediaTek','Xiaomi',3,'Xiaomi usa Dimensity 9300/9400 en modelos premium y mid-range','supply'],
   ['TSMC','Groq',4,'TSMC fabrica el LPU GroqChip en proceso 14nm','fab'],
   ['Synopsys','Groq',2,'Groq usa herramientas EDA Synopsys para diseño del LPU','license'],
-  ['Amazon','Groq',2,'GroqCloud disponible como opción de inferencia en AWS Marketplace','cloud'],
+  ['Groq','Amazon',2,'GroqCloud disponible como opción de inferencia en AWS Marketplace','cloud'],
   ['Groq','OpenAI',1,'Groq compite directamente con OpenAI en inference serving — más rápido en tokens/s','partner'],
   ['Groq','Microsoft',1,'Groq disponible en Azure AI Studio como inferencia alternativa','cloud'],
   ['TSMC','SambaNova',3,'TSMC fabrica el chip RDU de SambaNova en 7nm','fab'],
@@ -788,10 +765,8 @@ const RAW_LINKS = [
   ['Nvidia','Naver',3,'Naver usa GPUs H100 para entrenamiento de HyperCLOVA X','supply'],
   ['Naver','Samsung',2,'Naver Cloud es plataforma preferida para Samsung en Corea','cloud'],
   ['Naver','Alphabet',1,'Naver compite con Google en búsqueda coreana — también colabora en APIs','partner'],
-
-  /* ===== v7 · nodos de soporte: conexiones adicionales ===== */
   ['Qualcomm','Xiaomi',3,'Snapdragon 8 Elite en los buques insignia de Xiaomi','supply'],
-  ['Xiaomi','Unitree',1,'Xiaomi y Unitree compiten en robótica de consumo china — CyberDog frente a Go2','partner']
+  ['Xiaomi','Unitree',1,'Xiaomi y Unitree compiten en robótica de consumo china — CyberDog frente a Go2','partner'],
 ];
 
 const SHARES_OUTSTANDING_B = {

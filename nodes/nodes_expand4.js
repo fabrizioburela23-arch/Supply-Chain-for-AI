@@ -51,10 +51,13 @@ var NODES_EXPAND4 = [
 window.NODES_EXPAND4 = NODES_EXPAND4;
 
 var LINKS_EXPAND4 = [
-  {s:"IntuitiveMachines", t:"SpaceX",     w:2, rel:"lanza en Falcon 9",        type:"supply"},
-  {s:"AxiomSpace",        t:"SpaceX",     w:3, rel:"misiones en Crew Dragon",  type:"supply"},
-  {s:"Redwire",           t:"PlanetLabs", w:2, rel:"estructuras/componentes",  type:"supply"},
-  {s:"Redwire",           t:"AST_SpaceMobile", w:2, rel:"componentes",          type:"supply"},
-  {s:"SierraSpace",       t:"BlueOrigin", w:2, rel:"Orbital Reef (estación)",  type:"partner"},
+  // ── CANONIZADO (Etapa 2, 2026-07): source PROVEE a target; customer→supply,
+  // investor→invest. Direcciones adjudicadas arista por arista (clasificador +
+  // revisión manual). Formato uniforme [s, t, w, rel, type]. ──
+  ['SpaceX','IntuitiveMachines',2,'lanza en Falcon 9','supply'],
+  ['SpaceX','AxiomSpace',3,'misiones en Crew Dragon','supply'],
+  ['Redwire','PlanetLabs',2,'estructuras/componentes','supply'],
+  ['Redwire','AST_SpaceMobile',2,'componentes','supply'],
+  ['SierraSpace','BlueOrigin',2,'Orbital Reef (estación)','partner'],
 ];
 window.LINKS_EXPAND4 = LINKS_EXPAND4;

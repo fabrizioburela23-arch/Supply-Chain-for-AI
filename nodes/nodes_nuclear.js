@@ -132,16 +132,19 @@ window.NODES_NUCLEAR = NODES_NUCLEAR;
 
 // Links inter-sector: PPAs nucleares con hyperscalers + cadena de uranio
 var LINKS_NUCLEAR = [
-  {s:"Oklo",              t:"Meta",       w:3, rel:"PPA energía 24/7",      type:"ppa"},
-  {s:"TerraPower",        t:"Meta",       w:3, rel:"8 plantas Natrium",     type:"ppa"},
-  {s:"TerraPower",        t:"Nvidia",     w:2, rel:"inversor (Serie E)",    type:"investor"},
-  {s:"Xenergy",           t:"Amazon",     w:3, rel:"PPA 5+ GW",            type:"ppa"},
-  {s:"Helion",            t:"Microsoft",  w:3, rel:"PPA fusión 50 MW",      type:"ppa"},
-  {s:"CommonwealthFusion",t:"Alphabet",   w:2, rel:"PPA fusión",           type:"ppa"},
-  {s:"KairosPower",       t:"Alphabet",   w:2, rel:"PPA 500 MW",           type:"ppa"},
-  {s:"TAETechnologies",   t:"Alphabet",   w:1, rel:"socio cómputo/ML",     type:"partner"},
-  {s:"Cameco",            t:"Oklo",        w:2, rel:"suministro combustible",type:"supply"},
-  {s:"Cameco",            t:"NuScale",     w:2, rel:"suministro combustible",type:"supply"},
-  {s:"UraniumEnergy",     t:"Xenergy",     w:2, rel:"suministro combustible",type:"supply"},
+  // ── CANONIZADO (Etapa 2, 2026-07): source PROVEE a target; customer→supply,
+  // investor→invest. Direcciones adjudicadas arista por arista (clasificador +
+  // revisión manual). Formato uniforme [s, t, w, rel, type]. ──
+  ['Oklo','Meta',3,'PPA energía 24/7','ppa'],
+  ['TerraPower','Meta',3,'8 plantas Natrium','ppa'],
+  ['Nvidia','TerraPower',2,'inversor (Serie E)','invest'],
+  ['Xenergy','Amazon',3,'PPA 5+ GW','ppa'],
+  ['Helion','Microsoft',3,'PPA fusión 50 MW','ppa'],
+  ['CommonwealthFusion','Alphabet',2,'PPA fusión','ppa'],
+  ['KairosPower','Alphabet',2,'PPA 500 MW','ppa'],
+  ['TAETechnologies','Alphabet',1,'socio cómputo/ML','partner'],
+  ['Cameco','Oklo',2,'suministro combustible','supply'],
+  ['Cameco','NuScale',2,'suministro combustible','supply'],
+  ['UraniumEnergy','Xenergy',2,'suministro combustible','supply'],
 ];
 window.LINKS_NUCLEAR = LINKS_NUCLEAR;
