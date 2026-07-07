@@ -3900,6 +3900,7 @@ function renderAnalysis(){
   });
   const anSub=document.getElementById('an-subtitle');
   if(anSub) anSub.textContent=t('an_sub').replace('{n}',NODES.length).replace('{l}',LINKS.length);
+  if(typeof window.renderKhipuInsights==='function') window.renderKhipuInsights();  // llena #an-insights
   document.getElementById('an-nodes').textContent=NODES.length;
   document.getElementById('an-links').textContent=LINKS.length;
   document.getElementById('an-density').textContent=((LINKS.length/(NODES.length*(NODES.length-1)))*100).toFixed(2)+'%';
@@ -5910,6 +5911,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/khipu_lang.js"></script>
 <script src="engine/guide.js"></script>
 <script src="engine/xray.js"></script>
+<script src="engine/insights.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
