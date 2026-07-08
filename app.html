@@ -1363,17 +1363,25 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     </div>
   </header>
 
-  <nav class="tabs">
-    <button class="tab active" data-tab="map" id="tab-map">⬡ <span data-i18n="tab_map">Mapa de la Cadena</span></button>
-    <button class="tab" data-tab="market" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
-    <button class="tab" data-tab="analysis" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
-    <button class="tab" data-tab="geo" id="tab-geo">🌐 <span data-i18n="tab_geo">Geopolítica</span></button>
-    <button class="tab" data-tab="simulation" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
-    <button class="tab" data-tab="space" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
-    <button class="tab" data-tab="terminal" id="tab-terminal">⬛ <span>Terminal</span></button>
-    <button class="tab" data-tab="canvas" id="tab-canvas">✦ <span>Canvas IA</span></button>
-    <button class="tab" data-tab="tkg" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
-    <button class="tab" data-tab="guia" id="tab-guia">❓ <span>Guía</span></button>
+  <nav class="tabs" id="nav4">
+    <div class="ptabs" id="ptabs">
+      <button class="ptab active" data-group="mapa">🗺️ <span>Mapa</span></button>
+      <button class="ptab" data-group="mercado">📈 <span>Mercado</span></button>
+      <button class="ptab" data-group="insights">💡 <span>Insights</span></button>
+      <button class="ptab" data-group="guia">❓ <span>Guía</span></button>
+    </div>
+    <div class="stabs" id="stabs">
+      <button class="tab active" data-tab="map" data-group="mapa" id="tab-map">⬡ <span data-i18n="tab_map">Cadena</span></button>
+      <button class="tab" data-tab="geo" data-group="mapa" id="tab-geo">🌐 <span data-i18n="tab_geo">Geopolítica</span></button>
+      <button class="tab" data-tab="space" data-group="mapa" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
+      <button class="tab" data-tab="tkg" data-group="mapa" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
+      <button class="tab" data-tab="simulation" data-group="mapa" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
+      <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
+      <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
+      <button class="tab" data-tab="canvas" data-group="insights" id="tab-canvas">✦ <span>Canvas IA</span></button>
+      <button class="tab" data-tab="terminal" data-group="insights" id="tab-terminal">⬛ <span>Terminal</span></button>
+      <button class="tab" data-tab="guia" data-group="guia" id="tab-guia">❓ <span>Guía</span></button>
+    </div>
   </nav>
 
   <div class="toolbar" id="toolbar">
@@ -5961,6 +5969,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/livesim.js"></script>
 <script src="engine/layers.js"></script>
 <script src="engine/brief.js"></script>
+<script src="engine/nav4.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
