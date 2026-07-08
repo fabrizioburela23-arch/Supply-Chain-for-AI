@@ -1545,6 +1545,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     </div>
     <div id="an-insights" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:26px"></div>
 
+    <div id="an-matrix" style="margin-bottom:26px"></div>
+
     <div id="analysis-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px">
       <div class="mkt-card"><div class="ml">Nodos</div><div class="mv" id="an-nodes">—</div></div>
       <div class="mkt-card"><div class="ml">Conexiones</div><div class="mv" id="an-links">—</div></div>
@@ -3956,6 +3958,7 @@ function renderAnalysis(){
   const anSub=document.getElementById('an-subtitle');
   if(anSub) anSub.textContent=t('an_sub').replace('{n}',NODES.length).replace('{l}',LINKS.length);
   if(typeof window.renderKhipuInsights==='function') window.renderKhipuInsights();  // llena #an-insights
+  if(typeof window.renderMatrixView==='function') window.renderMatrixView();        // llena #an-matrix (las 9 matrices)
   document.getElementById('an-nodes').textContent=NODES.length;
   document.getElementById('an-links').textContent=LINKS.length;
   document.getElementById('an-density').textContent=((LINKS.length/(NODES.length*(NODES.length-1)))*100).toFixed(2)+'%';
@@ -5972,6 +5975,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/layers.js"></script>
 <script src="engine/brief.js"></script>
 <script src="engine/compare.js"></script>
+<script src="engine/matrixview.js"></script>
 <script src="engine/nav4.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
