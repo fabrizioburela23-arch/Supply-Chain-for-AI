@@ -114,9 +114,12 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 
 ## Lenguaje KHIPU (engine/khipu_lang.js)
 
-`<TICKER|id> DES/GP/SUP/CLI/RISK/NEWS/SIM/FA/THESIS [texto]` ·
+`<TICKER|id> DES/GP/SUP/CLI/RISK/NEWS/SIM/FA/THESIS/XRAY [texto]` ·
 `PORT VAR/PL` · `GRAPH ASOF <fecha>` / `GRAPH DIFF <Nd>` ·
-`ALERT <ticker> PX|NRS > <valor>` / `ALERT REGION <región> NEWS` / `ALERT LIST`.
+`ALERT <ticker> PX|NRS > <valor>` / `ALERT REGION <región> NEWS` / `ALERT LIST` ·
+`COMPARE <A> <B>` (comparador) · `SHOCK <ticker> [sev]` (sim en vivo) ·
+`INSIGHTS` / `MATRIX` (pestaña Análisis). Acciones nuevas en command_center:
+xray, compare, insights, livesim.
 
 ## ScenarioBuilder / categorías
 

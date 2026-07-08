@@ -31,8 +31,8 @@
     return byId || byTicker || null;
   }
 
-  const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS']);
-  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT']);
+  const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY']);
+  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX']);
 
   function tryParse(text) {
     const raw = (text || '').trim();
@@ -75,6 +75,8 @@
         return { answer: `${label} — noticias (abre 📰 en su ficha).`, actions: [{ type: 'tkg_object', arg: id }] };
       case 'SIM':
         return { answer: `Simulando la caída de ${label}.`, actions: [{ type: 'stress', arg: id }] };
+      case 'XRAY':
+        return { answer: `Desarmando a ${label} — riesgo, hilos e impacto.`, actions: [{ type: 'xray', arg: id }] };
       case 'FA':
         return _fetchFundamentals(entity);
       case 'THESIS': {
@@ -116,7 +118,24 @@
     if (kw === 'PORT') return _handlePort(args);
     if (kw === 'GRAPH') return _handleGraph(args);
     if (kw === 'ALERT') return _handleAlert(args);
+    if (kw === 'COMPARE') return _handleCompare(args);
+    if (kw === 'SHOCK') return _handleShock(args);
+    if (kw === 'INSIGHTS') return { answer: 'Abriendo insights automáticos de la red.', actions: [{ type: 'insights' }] };
+    if (kw === 'MATRIX') return { answer: 'Abriendo las 9 matrices de relación.', actions: [{ type: 'insights' }] };
     return null;
+  }
+
+  function _handleCompare(args) {
+    const a = resolveEntity(args[0] || ''), b = resolveEntity(args[1] || '');
+    if (!a || !b) return { answer: 'Uso: COMPARE <A> <B> — dos tickers o ids conocidos.', actions: [] };
+    return { answer: `Comparando ${a.label} vs ${b.label}.`, actions: [{ type: 'compare', arg: { a: a.id, b: b.id } }] };
+  }
+
+  function _handleShock(args) {
+    const e = resolveEntity(args[0] || '');
+    if (!e) return { answer: 'Uso: SHOCK <TICKER> [severidad] — simula su caída en vivo en el mapa.', actions: [] };
+    const sev = parseInt(args[1], 10);
+    return { answer: `Simulando en vivo la caída de ${e.label}.`, actions: [{ type: 'livesim', arg: { id: e.id, sev: isNaN(sev) ? 100 : sev } }] };
   }
 
   async function _handlePort(args) {

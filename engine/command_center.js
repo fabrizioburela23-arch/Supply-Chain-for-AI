@@ -208,6 +208,22 @@
           } else if (a.type === 'chart') {
             this._chip(acts, `📊 generando gráfico…`);
             await this._chartInline(arg, card);
+          } else if (a.type === 'xray' && window.openXRay) {
+            window.openXRay(arg); this._chip(acts, `🔬 X-Ray: ${this._label(arg)}`, () => window.openXRay(arg));
+          } else if (a.type === 'compare' && window.openCompare) {
+            window.openCompare(arg.a, arg.b); this._chip(acts, `⇄ ${this._label(arg.a)} vs ${this._label(arg.b)}`);
+          } else if (a.type === 'insights' && window.switchTab) {
+            window.switchTab('analysis'); this._chip(acts, `💡 Insights`);
+          } else if (a.type === 'livesim') {
+            if (window.switchTab) window.switchTab('map');
+            setTimeout(() => {
+              try {
+                if (window.jumpTo) window.jumpTo(arg.id);
+                if (!document.getElementById('ls-panel') || !document.getElementById('ls-panel').classList.contains('show')) window._lsToggle && window._lsToggle();
+                if (window._liveSelectedNode && window.KhipuState) { /* el usuario puede añadir; disparamos vía preset simple */ }
+              } catch (e) {}
+            }, 200);
+            this._chip(acts, `◉ Simular: ${this._label(arg.id)}`);
           }
         } catch (e) { /* una acción que falla no rompe las demás */ }
       }
