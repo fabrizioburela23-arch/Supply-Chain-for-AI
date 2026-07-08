@@ -36,6 +36,11 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   (parser de comandos), guide.js (Guía), voice.js (Bixby voz/ElevenLabs),
   command_center.js (Bixby texto), graph3d.js, geoglobe.js, planetarium.js,
   secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js.
+  REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
+  (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
+  livesim.js (simulación en vivo sobre el mapa), layers.js (capas del mapa),
+  insights.js (tarjetas #an-insights), brief.js (brief matinal). Todos leen
+  window.NODES/LINKS/computeNRS/SECTORS9 y degradan sin DATABASE_URL.
 - `nodes/`: catálogo de empresas (nodes_*.js) + links (links_*.js) +
   ontology.js/ontology_facts.js (tipos y hechos tipados) +
   temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js.

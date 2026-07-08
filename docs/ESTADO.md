@@ -151,6 +151,48 @@ server.py salvo el registro del blueprint.
   ProposedAction cuando un chokepoint cruza umbral: se cablea en Etapa 5
   junto con el resto de auto-insights.
 
+## Etapa 4 — Mapa unificado con capas: 🔄 EN CURSO (batches publicados)
+
+- [x] Batch 1 (51c9f21): mapa por 9 MACRO-SECTORES NEXUS (40 colores → 9,
+      colorMode='sector' por defecto, toggle "▸ detalle" a las 40 en la
+      leyenda; SECTORS9/CAT_TO_SECTOR/sectorColorFor en window).
+- [x] Batch 2 (6225eb5): SISTEMA DE CAPAS (engine/layers.js) — botón "◱ Capas"
+      arriba-izq del mapa; enciende/apaga conexiones, nombres, anillos de
+      riesgo, marcas ⚠/IPO, países vía hoja CSS dedicada (instantáneo, sin
+      re-render); persiste en localStorage; window._layersApply re-aplica.
+- ⏸️ PENDIENTE: unificar los 7 renderers en 2 motores (grafo+globo), las 4
+      pestañas finales, y el globo unificado (geoglobe+planetarium).
+
+## Etapa 5 — Predicciones + Insights: 🔄 EN CURSO
+
+- [x] Batch 1 (33438e3): INSIGHTS automáticos (engine/insights.js) — llena el
+      slot #an-insights (chokepoints ponderados de /api/matrix/metrics con
+      fallback cliente, riesgo, factores, geo); tarjetas con chips clicables.
+- [x] Batch 2 (ec4aebe): BRIEF MATINAL (engine/brief.js) — overlay al abrir
+      (1×/día, casilla silenciar, ❓ flotante para reabrir); chokepoint +
+      riesgo + factores + conclusión IA (opcional, degrada). Salta al mapa.
+- ⏸️ PENDIENTE: adiós MiroFish (reemplazo interno completo), pestaña INSIGHTS
+      con historial navegable, control de frecuencia visible.
+
+## Wow desplegados (fuera de la secuencia de etapas)
+
+- [x] **X-Ray de empresa** (engine/xray.js, 026d23e): overlay que desarma
+      cualquier empresa — anatomía, NRS término a término, hilos clicables,
+      onda de impacto (motor de matrices con fallback), acciones. Botón 🔬 en
+      la ficha. Primera pieza con piel NEXUS.
+- [x] **Motor de estados reactivo** (engine/statematrix.js, dffd5a6): vector
+      de estado por nodo (salud/riesgo/momentum propagan; valor/crecim/señal/
+      potencial derivan) + matrices de acoplamiento dispersas + kernel
+      "eslabón más débil" (MAX, decae por distancia). 100% cliente, ~7ms/sim,
+      60fps. Núcleo puro testeable en Node. MISMOS pesos que matrix/engine.py.
+- [x] **Simulación EN VIVO v2** (engine/livesim.js, 08d6ee0): botón "◉ En
+      vivo" en el mapa → escenarios/severidad → nodos Y conexiones se tiñen en
+      tiempo real; capital $ expuesto, impacto en cartera, desglose por sector,
+      GANADORES (rivales que capturan demanda), y ▶ reproducir cascada
+      (frames por salto). rAF con fallback setTimeout (pestaña oculta).
+- [x] Artifact "El Sistema de Matrices" (fuera del repo): las 9 matrices
+      reales interactivas — heatmaps, vector de estado, propagación.
+
 ## Etapas siguientes (plan en las tareas de la sesión)
 2. **Etapa 2 — Datos limpios**: resolución de entidades (31 duplicados),
    dirección única de aristas, taxonomía tipada, pesos re-derivados (LLM
