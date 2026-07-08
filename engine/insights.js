@@ -92,7 +92,48 @@
       }
     }
 
-    // 3) concentración geográfica
+    // 3) OPORTUNIDADES: resilientes con potencial (bajo riesgo + crecimiento +
+    //    valoración atractiva), que NO son chokepoints frágiles
+    if (typeof window.computeNRS === 'function') {
+      var opps = NODES.map(function (n) {
+        var nrs = window.computeNRS(n.id);
+        var g = (n.growth || '').toLowerCase();
+        var growth = g.indexOf('🟢') >= 0 ? 2 : g.indexOf('🟡') >= 0 ? 1 : 0;
+        var margin = n.margin != null ? n.margin : 0;
+        // score: recompensa margen alto + crecimiento, penaliza riesgo
+        var score = growth * 22 + Math.min(30, margin * 60) + (50 - nrs) * 0.5;
+        return { id: n.id, score: score, nrs: nrs, margin: margin, growth: growth };
+      }).filter(function (x) { return x.nrs < 55 && x.growth >= 1 && x.margin > 0.15; })
+        .sort(function (a, b) { return b.score - a.score; });
+      if (opps.length) {
+        out.push({ kind: 'oport', tag: 'estructural', nodes: opps.slice(0, 4).map(function (x) { return x.id; }),
+          text: '<b>' + opps.length + '</b> empresas combinan riesgo bajo, crecimiento y margen sano. Destaca <b>' + esc(nm(opps[0].id)) +
+            '</b> (NRS ' + opps[0].nrs + ', margen ' + Math.round(opps[0].margin * 100) + '%).',
+          action: "window.openXRay&&window.openXRay('" + opps[0].id + "')", actionLabel: 'abrir X-Ray' });
+      }
+    }
+
+    // 4) PANORAMA POR SECTOR: cuál es el más frágil y el más fuerte
+    if (typeof window.computeNRS === 'function' && window.SECTORS9) {
+      var sec = {};
+      NODES.forEach(function (n) {
+        var s = (window.CAT_TO_SECTOR || {})[n.cat] || 'cloud_ia';
+        (sec[s] = sec[s] || { sum: 0, n: 0 });
+        sec[s].sum += window.computeNRS(n.id); sec[s].n++;
+      });
+      var rows = Object.keys(sec).filter(function (s) { return sec[s].n >= 3; })
+        .map(function (s) { return { s: s, avg: sec[s].sum / sec[s].n, n: sec[s].n }; })
+        .sort(function (a, b) { return b.avg - a.avg; });
+      if (rows.length >= 2) {
+        var frag = rows[0], fuerte = rows[rows.length - 1];
+        var lbl = function (s) { return (window.SECTORS9[s] || {}).label || s; };
+        out.push({ kind: 'geo', tag: 'panorama sectorial', nodes: [],
+          text: 'Sector más frágil: <b>' + esc(lbl(frag.s)) + '</b> (NRS medio ' + Math.round(frag.avg) + '). El más sólido: <b>' +
+            esc(lbl(fuerte.s)) + '</b> (' + Math.round(fuerte.avg) + ').' });
+      }
+    }
+
+    // 5) concentración geográfica
     var byCountry = {};
     NODES.forEach(function (n) { if (n.country) byCountry[n.country] = (byCountry[n.country] || 0) + 1; });
     var tw = (byCountry['Taiwan'] || 0), cn = (byCountry['China'] || 0);
