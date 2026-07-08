@@ -213,7 +213,7 @@
       if (isFinite(cap) && cap > 0) totalCap += cap * (x.v / 100);
       if (pos[x.id]) portHit += x.v;
     });
-    var top = arr.slice(0, 8).map(function (x) {
+    var top = arr.slice(0, 6).map(function (x) {
       var node = window.NODE_BY_ID[x.id]; if (!node) return '';
       return '<div class="xr-victim" onclick="window._xrayJump(\'' + esc(x.id) + '\')">' +
         '<span class="xr-dot" style="width:7px;height:7px;background:' + sectorColor(node.cat) + '"></span>' +
@@ -221,6 +221,17 @@
         '<span class="vbar"><i style="width:' + Math.round(x.v) + '%"></i></span>' +
         '<span class="vp xr-mono">' + Math.round(x.v) + '%</span></div>';
     }).join('');
+    // GANADORES: rivales del caído (misma categoría, poco afectados) que capturan la demanda
+    var winners = computeWinners(id, impacts);
+    var winHTML = winners.length ? '<div class="xr-h" style="margin:13px 0 6px;color:#2BE38B">Quién gana ↑</div>' +
+      winners.map(function (w) {
+        var node = window.NODE_BY_ID[w.id];
+        return '<div class="xr-victim" onclick="window._xrayJump(\'' + esc(w.id) + '\')">' +
+          '<span class="xr-dot" style="width:7px;height:7px;background:' + sectorColor(node.cat) + '"></span>' +
+          '<span class="vn">' + esc(node.label) + '</span>' +
+          '<span class="vbar" style="background:rgba(43,227,139,.15)"><i style="width:' + w.up * 2 + '%;background:#2BE38B"></i></span>' +
+          '<span class="vp xr-mono" style="color:#2BE38B">+' + w.up + '%</span></div>';
+      }).join('') : '';
     var el = document.getElementById('xr-impact');
     if (!el) return;
     el.innerHTML =
@@ -228,7 +239,26 @@
         '<div class="icell"><b>' + arr.length + '</b><span>empresas</span></div>' +
         '<div class="icell"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>cap expuesta</span></div>' +
         '<div class="icell"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>tu cartera</span></div>' +
-      '</div>' + top;
+      '</div>' +
+      '<div class="xr-h" style="margin:2px 0 6px">Quién sufre ↓</div>' + top + winHTML;
+  }
+
+  // rivales (misma categoría) poco afectados que capturan la demanda huérfana
+  function computeWinners(shockId, impacts) {
+    var dn = window.NODE_BY_ID[shockId]; if (!dn) return [];
+    var damaged = [];
+    Object.keys(impacts).forEach(function (k) { if (impacts[k] >= 40) damaged.push({ id: k, v: impacts[k] }); });
+    var gains = {};
+    damaged.forEach(function (d) {
+      var d0 = window.NODE_BY_ID[d.id]; if (!d0) return;
+      (window.NODES || []).forEach(function (n) {
+        if (n.id === d.id || n.cat !== d0.cat) return;
+        if ((impacts[n.id] || 0) > 15) return;
+        gains[n.id] = (gains[n.id] || 0) + d.v / 100;
+      });
+    });
+    return Object.keys(gains).map(function (id) { return { id: id, up: Math.min(45, Math.round(gains[id] * 14)) }; })
+      .filter(function (x) { return x.up >= 5; }).sort(function (a, b) { return b.up - a.up; }).slice(0, 4);
   }
 
   function loadImpact(id, n) {
