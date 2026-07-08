@@ -48,14 +48,19 @@
       var type = l.type || 'supply';
       (byType[type] = byType[type] || []).push({ i: i, j: j, w: l.w || 2, type: type });
     });
+    // customers[i] = [{j,w}] (i provee a j) → para propagar AUGE hacia arriba:
+    // si a mi cliente le explota la demanda, yo (su proveedor) me beneficio,
+    // en proporción a cuánto de mi salida va a él (normalizado por fila).
+    var customers = []; for (var c = 0; c < N; c++) customers.push([]);
     Object.keys(byType).forEach(function (type) {
       var edges = byType[type];
-      var colSum = new Float64Array(N);
-      edges.forEach(function (e) { colSum[e.j] += e.w; });
+      var colSum = new Float64Array(N);   // por columna (dependencia entrante)
+      var rowSum = new Float64Array(N);   // por fila (salida del proveedor)
+      edges.forEach(function (e) { colSum[e.j] += e.w; rowSum[e.i] += e.w; });
       var crit = REL_W[type] != null ? REL_W[type] : 0.5;
       edges.forEach(function (e) {
-        var norm = e.w / (colSum[e.j] || 1) * crit;
-        incoming[e.j].push({ i: e.i, w: norm });
+        incoming[e.j].push({ i: e.i, w: e.w / (colSum[e.j] || 1) * crit });
+        customers[e.i].push({ i: e.j, w: e.w / (rowSum[e.i] || 1) * crit });
       });
     });
 
@@ -63,7 +68,7 @@
     var base = nodes.map(function (n) { return opts.baselineFn(n); });
 
     this.idx = idx; this.ids = ids; this.N = N;
-    this.incoming = incoming; this.base = base; this.nodes = nodes;
+    this.incoming = incoming; this.customers = customers; this.base = base; this.nodes = nodes;
   }
 
   // Propaga un shock. shocks: {id: {salud?, riesgo?...}} valores IMPUESTOS.
@@ -71,9 +76,14 @@
   // {state: Map(id->vector), impact: Map(id->0..100), frames?} tras `iters`
   // iteraciones. trackHops=true añade frames: un Map acumulado por salto
   // (la "película" de la cascada para animarla en el mapa).
-  KhipuStateCore.prototype.simulate = function (shocks, factors, iters, damping, trackHops) {
+  KhipuStateCore.prototype.simulate = function (shocks, factors, iters, damping, trackHops, opts) {
     iters = iters || 8; damping = damping == null ? 0.6 : damping;
-    var N = this.N, incoming = this.incoming, base = this.base, ids = this.ids, idx = this.idx;
+    opts = opts || {};
+    var dir = opts.direction || 'down';          // 'down' = daño baja por la cadena; 'up' = auge sube a proveedores
+    var kind = opts.kind || 'collapse';          // collapse | demand | price | sanction
+    var N = this.N, base = this.base, ids = this.ids, idx = this.idx;
+    // 'up' propaga por customers (a mi cliente le explota la demanda → yo gano)
+    var adj = dir === 'up' ? this.customers : this.incoming;
 
     // fragilidad por hiperaristas
     var frag = new Float64Array(N); for (var f = 0; f < N; f++) frag[f] = 1;
@@ -106,7 +116,7 @@
         // (no la suma). Pierdes tu única fab → caes, tengas 20 proveedores o no.
         // La diversificación ya está en la normalización por-tipo (2 fabs → 0,5
         // c/u). Combinar por MAX decae limpio por distancia y no satura.
-        var mx = 0, inc = incoming[j];
+        var mx = 0, inc = adj[j];
         for (var e = 0; e < inc.length; e++) { var c = inc[e].w * cur[inc[e].i]; if (c > mx) mx = c; }
         nxt[j] = clamp01(damping * mx * frag[j]);
       }
@@ -115,24 +125,28 @@
       if (frames) frames.push(_frame(total, ids));
     }
 
-    // materializar vectores de estado finales
+    // materializar vectores de estado finales según el TIPO de golpe
     var state = new Map(), impact = new Map();
+    var up = dir === 'up';
     for (var n = 0; n < N; n++) {
       var b = base[n], d2 = total[n];
       if (d2 <= 0.001 && forced[n] == null) { state.set(ids[n], b); continue; }
-      var salud = clamp01(b.salud - d2);
-      var riesgo = clamp01(b.riesgo + d2 * 0.7);
-      var momentum = clamp01(b.momentum - d2 * 0.8);
-      var st = {
-        salud: salud, riesgo: riesgo, momentum: momentum,
-        valor: b.valor, crecim: b.crecim,
-      };
-      st.senal = _senal(st);              // -1..1 (venta..compra)
-      st.potencial = _potencial(st);      // -1..1 (bajista..alcista)
+      var st;
+      if (up) {                    // AUGE / demanda: sube salud+momentum, baja riesgo
+        st = { salud: clamp01(b.salud + d2 * 0.2), riesgo: clamp01(b.riesgo - d2 * 0.4),
+               momentum: clamp01(b.momentum + d2 * 0.9), valor: b.valor, crecim: clamp01(b.crecim + d2 * 0.4) };
+      } else if (kind === 'price') { // SHOCK DE PRECIO: golpea margen/valoración y momentum, no colapsa la salud
+        st = { salud: clamp01(b.salud - d2 * 0.3), riesgo: clamp01(b.riesgo + d2 * 0.4),
+               momentum: clamp01(b.momentum - d2 * 0.6), valor: clamp01(b.valor + d2 * 0.5), crecim: b.crecim };
+      } else {                     // CORTE / colapso / sanción: daño operativo
+        st = { salud: clamp01(b.salud - d2), riesgo: clamp01(b.riesgo + d2 * 0.7),
+               momentum: clamp01(b.momentum - d2 * 0.8), valor: b.valor, crecim: b.crecim };
+      }
+      st.senal = _senal(st); st.potencial = _potencial(st);
       state.set(ids[n], st);
-      impact.set(ids[n], Math.round(d2 * 100));
+      impact.set(ids[n], Math.round(d2 * 100));   // magnitud 0..100 (la dirección la sabe quien llama)
     }
-    return { state: state, impact: impact, frames: frames };
+    return { state: state, impact: impact, frames: frames, direction: dir, kind: kind };
   };
 
   function _frame(total, ids) {
@@ -184,10 +198,19 @@
     },
     core: function () { return _core || this.build(); },
     baseline: function (id) { var c = this.core(); var i = c && c.idx[id]; return (i != null) ? c.base[i] : null; },
-    // simula: shocks={id:{salud}}, factors=[{members,severity}], trackHops=película
-    simulate: function (shocks, factors, iters, damping, trackHops) {
+    // simula: shocks={id:{salud}}, factors, trackHops=película, opts={direction,kind}
+    simulate: function (shocks, factors, iters, damping, trackHops, opts) {
       var c = this.core(); if (!c) return { state: new Map(), impact: new Map() };
-      return c.simulate(shocks, factors, iters, damping, trackHops);
+      return c.simulate(shocks, factors, iters, damping, trackHops, opts);
+    },
+    // helpers de selección de objetivos para el constructor de escenarios
+    idsInSector: function (sec) {
+      return (window.NODES || []).filter(function (n) {
+        return ((window.CAT_TO_SECTOR || {})[n.cat] || 'cloud_ia') === sec;
+      }).map(function (n) { return n.id; });
+    },
+    idsInCountry: function (country) {
+      return (window.NODES || []).filter(function (n) { return n.country === country; }).map(function (n) { return n.id; });
     },
     REL_W: REL_W,
   };

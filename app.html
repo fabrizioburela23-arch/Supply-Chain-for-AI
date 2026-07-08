@@ -2431,13 +2431,14 @@ function _mixHex(a,b,t){
   const m=(x,y)=>Math.round(x+(y-x)*t).toString(16).padStart(2,'0');
   return '#'+m(ar,br)+m(ag,bg)+m(ab,bb);
 }
-window._liveRecolorByImpact = function(impactMap){
+window._liveRecolorByImpact = function(impactMap, dir){
+  const tint = dir==='up' ? '#2BE38B' : '#FF4D6A';   // auge=verde, daño=rojo
   nodeSel.select('.n-core').attr('fill', d=>{
     const imp = impactMap ? (impactMap.get(d.id)||0) : 0;
-    return imp<=0 ? nodeFill(d) : _mixHex(nodeFill(d),'#FF4D6A',Math.min(1,imp/100));
+    return imp<=0 ? nodeFill(d) : _mixHex(nodeFill(d),tint,Math.min(1,imp/100));
   }).attr('r', d=>{
     const imp = impactMap ? (impactMap.get(d.id)||0) : 0;
-    return computeNodeRadius(d.id) * (1 + Math.min(0.5, imp/200));  // crecen los golpeados
+    return computeNodeRadius(d.id) * (1 + Math.min(0.5, imp/200));  // crecen los afectados
   });
 };
 window._liveResetColors = function(){
@@ -2448,12 +2449,13 @@ window._liveResetColors = function(){
 };
 window._liveSelectedNode = function(){ return selected; };
 // Tiñe las CONEXIONES que transmiten el daño (ambos extremos golpeados)
-window._liveTintLinks = function(impactMap){
+window._liveTintLinks = function(impactMap, dir){
+  const tint = dir==='up' ? '#2BE38B' : '#FF4D6A';
   linkSel
     .style('stroke', l=>{
       const si=impactMap.get(lid(l.source))||0, ti=impactMap.get(lid(l.target))||0;
       const f=Math.min(si,ti)/100;
-      return f>0.03 ? _mixHex('#3a4664','#FF4D6A',Math.min(1,f*1.6)) : getLinkColor(l.type);
+      return f>0.03 ? _mixHex('#3a4664',tint,Math.min(1,f*1.6)) : getLinkColor(l.type);
     })
     .style('stroke-opacity', l=>{
       const f=Math.min(impactMap.get(lid(l.source))||0, impactMap.get(lid(l.target))||0)/100;
