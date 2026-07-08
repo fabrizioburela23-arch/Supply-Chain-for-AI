@@ -193,6 +193,35 @@ server.py salvo el registro del blueprint.
 - [x] Artifact "El Sistema de Matrices" (fuera del repo): las 9 matrices
       reales interactivas — heatmaps, vector de estado, propagación.
 
+## Ampliaciones 2026-07 (tras feedback "simulaciones muy cerradas, más info")
+
+- [x] **Simulación EN VIVO v3** (livesim.js): constructor de escenarios —
+      4 TIPOS de golpe (corte↓, demanda↑=auge/verde, precio, sanción; el motor
+      statematrix propaga en 2 direcciones vía adyacencia customers) +
+      OBJETIVOS libres (presets, sector entero, país entero, empresas elegidas
+      con "＋ añadir del mapa"). 💾 Guardar + 📁 Historial que reproduce.
+- [x] **Guardar simulaciones** (matrix/api.py): POST/GET
+      /api/matrix/simulations → objetos ontología type='Simulation' (fecha,
+      bitemporal). Requiere Postgres.
+- [x] **Comparar dos empresas** (compare.js): overlay lado a lado (NRS,
+      margen, cap, conexiones, NRS término a término), ganador resaltado.
+      Botón "⇄ Comparar" en el X-Ray.
+- [x] **X-Ray enriquecido**: "Quién sufre ↓" + "Quién GANA ↑" (rivales que
+      capturan demanda).
+- [x] **Insights más ricos** (insights.js): OPORTUNIDADES (resilientes con
+      potencial) + panorama por sector (más frágil/más sólido).
+- [x] **Las 9 matrices dentro de la app** (matrixview.js): small-multiples +
+      heatmap grande con tooltip, en la pestaña Análisis, 100% cliente.
+
+## Pendiente que necesita a Fabrizio / decisión
+
+- ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con
+      duplicados). El motor y el guardado funcionan, pero para los 407
+      canónicos limpios hay que re-migrar en prod (1 comando; requiere el
+      DATABASE_URL de Railway — no accesible desde el entorno de desarrollo).
+- ⏸️ Ingesta a 12k: decisión de gasto de IA para el enriquecimiento.
+- ⏸️ SaaS: decisión de producto (gratis vs pago, pasarela).
+
 ## Etapas siguientes (plan en las tareas de la sesión)
 2. **Etapa 2 — Datos limpios**: resolución de entidades (31 duplicados),
    dirección única de aristas, taxonomía tipada, pesos re-derivados (LLM
