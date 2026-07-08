@@ -177,6 +177,7 @@
         '<div id="xr-impact"><div class="xr-loading">Calculando propagación…</div></div></div>' +
       '<div class="xr-btns">' +
         '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ Ver onda en el mapa</span>' +
+        (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ Comparar</span>' : '') +
         (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ En el tiempo</span>' : '') +
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\');window._xrayClose()">🧠 Análisis IA</span>' : '') +
       '</div>';
@@ -287,6 +288,7 @@
   window._xrayClose = close;
   window._xrayShock = function (id) { window._xrayJump(id); setTimeout(function () { if (typeof window.activateStress === 'function') window.activateStress(id); }, 220); };
   window._xrayTKG = function (id) { close(); if (typeof window.switchTab === 'function') window.switchTab('tkg'); setTimeout(function () { if (window.__tkgOpenObj) window.__tkgOpenObj(id); }, 200); };
+  window._xrayCompare = function (id) { close(); if (window.openCompare) window.openCompare(id); };
   window.openXRay = function (id) { render(id); };
 
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
