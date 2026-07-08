@@ -256,7 +256,10 @@
       + '<div id="ls-stats"></div><div id="ls-sect"></div>'
       + '<div id="ls-cols"><div><div class="lsh" id="ls-victh">Más afectadas</div><div id="ls-vict"></div></div>'
       +   '<div><div class="lsh" id="ls-winh">Ganadores ↑</div><div id="ls-win"></div></div></div>'
-      + '<div id="ls-play"><button id="ls-playbtn">▶ Reproducir cascada</button><span id="ls-hop"></span></div>';
+      + '<div id="ls-play"><button id="ls-playbtn">▶ Reproducir cascada</button><span id="ls-hop"></span></div>'
+      + '<div id="ls-save" style="display:flex;gap:7px"><button id="ls-savebtn" style="flex:1;padding:6px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:rgba(122,158,255,.1);border:1px solid rgba(122,158,255,.3);color:#c8d0e0">💾 Guardar</button>'
+      +   '<button id="ls-histbtn" style="flex:1;padding:6px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:rgba(122,158,255,.1);border:1px solid rgba(122,158,255,.3);color:#c8d0e0">📁 Historial</button></div>'
+      + '<div id="ls-hist" style="display:none;flex-direction:column;gap:3px;margin-top:2px"></div>';
     wrap.appendChild(btn); wrap.appendChild(panel);
 
     panel.querySelectorAll('#ls-types .ls-chip').forEach(function (c) {
@@ -285,8 +288,61 @@
     var sev = panel.querySelector('#ls-sev');
     sev.oninput = function () { severity = +sev.value; document.getElementById('ls-sevv').textContent = severity + '%'; schedule(); };
     panel.querySelector('#ls-playbtn').onclick = function () { playing ? stopCascade() : playCascade(); };
+    panel.querySelector('#ls-savebtn').onclick = saveSim;
+    panel.querySelector('#ls-histbtn').onclick = toggleHist;
     renderPicks();
   }
+
+  function saveSim() {
+    if (!lastResult) { run(); if (!lastResult) return; }
+    var ty = T();
+    var top = [];
+    lastResult.impact.forEach(function (v, id) { if (targets.indexOf(id) < 0) top.push({ id: id, v: v }); });
+    top.sort(function (a, b) { return b.v - a.v; });
+    var btn = document.getElementById('ls-savebtn');
+    if (btn) btn.textContent = 'Guardando…';
+    fetch('/api/matrix/simulations', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actor: localStorage.getItem('khipu_actor') || 'anónimo',
+        name: ty.desc + ' · ' + targets.slice(0, 2).map(nm).join(', ') + (targets.length > 2 ? '…' : ''),
+        targets: targets, kind: ty.kind, direction: ty.dir, severity: severity,
+        affected: top.length, top: top.slice(0, 8),
+      }),
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (btn) { btn.textContent = d && d.id ? '✓ Guardada' : '⚠ requiere Postgres'; setTimeout(function () { btn.textContent = '💾 Guardar'; }, 1600); }
+    }).catch(function () { if (btn) { btn.textContent = '⚠ sin conexión'; setTimeout(function () { btn.textContent = '💾 Guardar'; }, 1600); } });
+  }
+
+  function toggleHist() {
+    var el = document.getElementById('ls-hist');
+    if (el.style.display === 'flex') { el.style.display = 'none'; return; }
+    el.style.display = 'flex'; el.innerHTML = '<div style="font-size:10px;color:#7C87A3">Cargando historial…</div>';
+    fetch('/api/matrix/simulations?limit=20').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d || !d.simulations) { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">Historial requiere Postgres (Railway).</div>'; return; }
+      if (!d.simulations.length) { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">Sin simulaciones guardadas aún.</div>'; return; }
+      el.innerHTML = d.simulations.map(function (s) {
+        var when = ''; try { when = new Date(s.saved_at).toLocaleDateString('es', { day: 'numeric', month: 'short' }); } catch (e) {}
+        return '<div class="ls-v" style="border:1px solid rgba(122,158,255,.1);border-radius:7px;padding:5px 8px" ' +
+          'onclick=\'window._lsReplay(' + JSON.stringify(JSON.stringify({ targets: s.targets, kind: s.kind, dir: s.direction, sev: s.severity })) + ')\'>' +
+          '<span style="max-width:150px">' + esc(s.label || 'sim') + '</span>' +
+          '<span class="p" style="color:#7C87A3">' + when + '</span></div>';
+      }).join('');
+    }).catch(function () { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">No se pudo cargar.</div>'; });
+  }
+
+  window._lsReplay = function (json) {
+    try {
+      var s = JSON.parse(json);
+      var ty = TYPES.find(function (t) { return t.kind === s.kind && t.dir === s.dir; }) || TYPES[0];
+      typeId = ty.id; syncTypeChips();
+      severity = s.sev != null ? s.sev : 100;
+      var sv = document.getElementById('ls-sev'); if (sv) { sv.value = severity; document.getElementById('ls-sevv').textContent = severity + '%'; }
+      document.querySelectorAll('#ls-presets .ls-chip').forEach(function (o) { o.classList.remove('on'); });
+      setTargets(s.targets || ['TSMC']);
+      document.getElementById('ls-hist').style.display = 'none';
+    } catch (e) {}
+  };
 
   window._lsToggle = toggle;
   if (document.querySelector('.graph-wrap')) mount(); else document.addEventListener('DOMContentLoaded', mount);
