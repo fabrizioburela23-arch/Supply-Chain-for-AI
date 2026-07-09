@@ -66,6 +66,20 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Motor de matrices no registrado (opcional): %s', _e)
 
+# ── Re-migración de la ontología por variable de entorno (para Fabrizio) ──────
+# Poner REMIGRATE_ON_BOOT=1 en Railway → al reiniciar, re-crea la ontología con
+# los datos canónicos limpios (407). DESTRUCTIVO (borra objetos/eventos de la
+# ontología, incl. tesis/sims/alertas guardadas). Se corre UNA vez y luego se
+# quita la variable. Nunca bloquea el arranque (todo en try/except).
+if os.getenv('REMIGRATE_ON_BOOT', '').strip() in ('1', 'true', 'yes'):
+    try:
+        from scripts.migrate_v0_to_ontology import run_migration
+        log.warning('REMIGRATE_ON_BOOT activo — re-migrando la ontología a los 407 canónicos…')
+        run_migration(reset=True, log=lambda m: log.warning('  [remigrate] %s', m))
+        log.warning('REMIGRATE_ON_BOOT: listo. QUITA la variable REMIGRATE_ON_BOOT de Railway ahora.')
+    except Exception as _e:  # noqa: BLE001
+        log.error('REMIGRATE_ON_BOOT falló (la app sigue): %s', _e)
+
 # Config compartida server/ontology (keys de IA, Finnhub, timeout) → core/config.py
 # Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
 from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,

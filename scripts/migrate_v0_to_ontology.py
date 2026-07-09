@@ -43,13 +43,24 @@ def main():
     ap.add_argument('--reset', action='store_true', help='DROP + CREATE de las tablas antes de migrar (destructivo)')
     ap.add_argument('--graph', default=os.path.join(os.path.dirname(__file__), '..', 'data', 'grafo_v0.json'))
     args = ap.parse_args()
+    ok = run_migration(reset=args.reset, dry_run=args.dry_run, graph_path=args.graph)
+    if not ok:
+        sys.exit(1)
+
+
+def run_migration(reset=False, dry_run=False, graph_path=None, log=print):
+    """Núcleo reutilizable de la migración v0 → ontología. Lo llama main() (CLI)
+    y el hook REMIGRATE_ON_BOOT del server (para re-migrar producción sin CLI).
+    `log`: función de progreso (print o logger.info). reset=True es DESTRUCTIVO
+    (DROP de tablas). Devuelve True si migró (o dry-run), False si falló."""
+    graph_path = graph_path or os.path.join(os.path.dirname(__file__), '..', 'data', 'grafo_v0.json')
 
     from ontology.db import ontology_available, init_schema, session_scope, _get_engine
     if not ontology_available():
-        print('❌ DATABASE_URL no está configurada. Exporta la variable antes de correr esta migración.')
-        sys.exit(1)
+        log('❌ DATABASE_URL no está configurada.')
+        return False
 
-    with open(args.graph, 'r', encoding='utf-8') as f:
+    with open(graph_path, 'r', encoding='utf-8') as f:
         g = json.load(f)
 
     nodes = g['nodes']
@@ -57,21 +68,21 @@ def main():
     ontology_objects = (g.get('ontology') or {}).get('objects', [])
     temporal_facts = g.get('temporal_facts') or []
 
-    print(f'Snapshot: {len(nodes)} empresas, {len(links)} links crudos, '
-          f'{len(ontology_objects)} objetos de ontología, {len(temporal_facts)} hechos temporales')
+    log(f'Snapshot: {len(nodes)} empresas, {len(links)} links crudos, '
+        f'{len(ontology_objects)} objetos de ontología, {len(temporal_facts)} hechos temporales')
 
-    if args.dry_run:
+    if dry_run:
         edges_in_facts = [f for f in temporal_facts if f.get('object_type') == 'node']
-        print(f'[dry-run] Se crearían: {len(nodes) + len(ontology_objects)} objetos, '
-              f'{len(links)} links base (GENESIS) + {len(edges_in_facts)} links con fecha real (hechos temporales)')
-        return
+        log(f'[dry-run] Se crearían: {len(nodes) + len(ontology_objects)} objetos, '
+            f'{len(links)} links base (GENESIS) + {len(edges_in_facts)} links con fecha real')
+        return True
 
     from ontology.models import Base
     from ontology.service import apply_event
 
     engine = _get_engine()
-    if args.reset:
-        print('⚠️  --reset: eliminando tablas existentes…')
+    if reset:
+        log('⚠️  --reset: eliminando tablas existentes…')
         Base.metadata.drop_all(engine)
     init_schema()
 
@@ -79,21 +90,18 @@ def main():
     known_ids = {n['id'] for n in nodes} | {o['id'] for o in ontology_objects}
 
     with session_scope() as s:
-        # 1) Objetos: empresas
         for n in nodes:
             props = {k: v for k, v in n.items() if k not in ('id', 'label')}
             apply_event(s, 'ObjectCreated', {'label': n.get('label') or n['id'], 'type': 'Company', 'properties': props},
                         valid_from=GENESIS, source='migration_v0', actor='script:migrate_v0_to_ontology',
                         object_id=n['id'])
-        # 2) Objetos: entidades de ontología (Tech/Policy/Country/Energy/Material/Product/Org)
         for o in ontology_objects:
             apply_event(s, 'ObjectCreated', {'label': o.get('label') or o['id'], 'type': o.get('type', 'Org'), 'properties': {}},
                         valid_from=GENESIS, source='migration_v0', actor='script:migrate_v0_to_ontology',
                         object_id=o['id'])
         s.flush()
-        print(f'✅ {len(nodes) + len(ontology_objects)} objetos creados ({time.time()-t0:.1f}s)')
+        log(f'✅ {len(nodes) + len(ontology_objects)} objetos creados ({time.time()-t0:.1f}s)')
 
-        # 3) Links base (sin fecha propia → GENESIS)
         skipped = 0
         for l in links:
             src, tgt = l.get('source'), l.get('target')
@@ -106,9 +114,8 @@ def main():
                         valid_from=GENESIS, source='migration_v0_links', actor='script:migrate_v0_to_ontology',
                         object_id=src, target_id=tgt)
         s.flush()
-        print(f'✅ {len(links) - skipped} links base creados ({skipped} saltados por ids no resueltos) ({time.time()-t0:.1f}s)')
+        log(f'✅ {len(links) - skipped} links base creados ({skipped} saltados) ({time.time()-t0:.1f}s)')
 
-        # 4) Hechos temporales curados con fecha real (valor añadido del time-travel)
         edges = [f for f in temporal_facts if f.get('object_type') == 'node']
         skipped_t = 0
         for f in edges:
@@ -124,9 +131,10 @@ def main():
                         source='migration_v0_temporal', actor='script:migrate_v0_to_ontology',
                         object_id=subj, target_id=obj)
         s.flush()
-        print(f'✅ {len(edges) - skipped_t} hechos temporales con fecha real creados ({skipped_t} saltados) ({time.time()-t0:.1f}s)')
+        log(f'✅ {len(edges) - skipped_t} hechos temporales creados ({skipped_t} saltados) ({time.time()-t0:.1f}s)')
 
-    print(f'🎉 Migración completa en {time.time()-t0:.1f}s')
+    log(f'🎉 Migración completa en {time.time()-t0:.1f}s')
+    return True
 
 
 if __name__ == '__main__':
