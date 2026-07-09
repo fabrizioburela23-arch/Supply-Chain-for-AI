@@ -1809,6 +1809,16 @@ Analysis:
   e.g. [CANVAS:compara márgenes de NVIDIA, TSMC y ASML] · [CANVAS:top 10 empresas por riesgo NRS]
   This RENDERS the chart automatically — use it whenever the user asks to graph, compare or visualize data.
 
+Palantir-grade actions (2026-07 — prefer these, they are the platform's superpowers):
+- 🔬 Open X-RAY of a company (disassembles its soul: NRS term by term, dependency threads, who suffers ↓ and who WINS ↑ if it falls, $ exposed): [XRAY:company_id]  e.g. [XRAY:TSMC] [XRAY:NVIDIA]
+  Use this whenever the user asks "why is X risky", "what depends on X", "what happens if X falls", "analyze X deeply", "desármame X".
+- ◉ Run a LIVE shock/boom on the map (recolours the whole graph in real time — red=harm, green=boom): [SHOCK:company_id:kind]
+  kind is one of: collapse (a cut/failure ↓) · demand (a boom ↑) · price (price shock) · sanction (sanctions ↓). e.g. [SHOCK:TSMC:collapse] [SHOCK:NVIDIA:demand]
+  Use this whenever the user asks "what if X is cut/sanctioned", "simulate a boom in X", "cae X".
+- ⇄ COMPARE two companies side by side: [COMPARE:id_a,id_b]  e.g. [COMPARE:NVIDIA,AMD] [COMPARE:TSMC,Samsung]
+- 💡 Surface OPPORTUNITIES (resilient companies: low risk + growth + healthy margin): [OPPS]
+- Show the INSIGHTS brain + the 9 relation MATRICES: [INSIGHTS]
+
 ## CLIENT TOOLS — call these for live data
 - navigate_to_company(company_name, ticker): jump to company on map
 - get_company_info(company_name, ticker): full company details including price, NRS, supply chain
@@ -1826,6 +1836,11 @@ Analysis:
 - open_terminal(ticker, company_name): open Terminal tab with multi-chart Bloomberg view
 - place_trade(ticker, company_name): open trade modal to buy/sell
 - open_second_brain(company_id, company_name): open AI intelligence panel for company
+- open_xray(company_name, ticker): open the X-Ray dossier (NRS breakdown, threads, impact wave)
+- run_live_simulation(company_name, ticker, kind, severity): live shock/boom on the map; kind=collapse|demand|price|sanction; returns affected count + most_impacted
+- compare_companies(company_a, company_b): side-by-side comparison; returns NRS of each and which has lower risk
+- get_opportunities(): resilient companies with upside (low NRS + growth + healthy margin)
+- show_insights(): open the Insights brain + relation matrices
 
 ## DOMAIN KNOWLEDGE — DEEP EXPERTISE
 

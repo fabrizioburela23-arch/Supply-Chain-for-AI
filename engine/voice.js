@@ -434,6 +434,11 @@ const BixbyVoice = {
     const canvas   = text.match(/\[CANVAS:([^\]]+)\]/);
     const nrsTop   = /\[NRS_TOP\]/.test(text);
     const filter   = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
+    const xray     = text.match(/\[XRAY:([A-Za-z0-9_]+)\]/);
+    const compare  = text.match(/\[COMPARE:([A-Za-z0-9_]+),([A-Za-z0-9_]+)\]/);
+    const shock    = text.match(/\[SHOCK:([A-Za-z0-9_]+)(?::([a-z]+))?\]/);
+    const opps     = /\[OPPS\]/.test(text);
+    const insights = /\[INSIGHTS\]/.test(text);
 
     if (tab && typeof switchTab === 'function') this._defer(() => switchTab(tab[1]));
     if (nav && typeof jumpTo === 'function') this._defer(() => jumpTo(nav[1]));
@@ -473,6 +478,49 @@ const BixbyVoice = {
       const match = (typeof CATS !== 'undefined') ? Object.entries(CATS).find(([k]) => k === catKey || k.includes(catKey)) : null;
       if (match && typeof setFilter === 'function') setFilter(match[0]);
     }
+    // ── Tokens nuevos (X-Ray, comparar, shock/sim en vivo, oportunidades, insights) ──
+    if (xray) {
+      const n = this._resolveNode(xray[1]);
+      if (n && window.openXRay) this._defer(() => window.openXRay(n.id));
+    }
+    if (compare && window.openCompare) {
+      const a = this._resolveNode(compare[1]);
+      const b = this._resolveNode(compare[2]);
+      if (a && b) this._defer(() => window.openCompare(a.id, b.id));
+    }
+    if (shock && window.KhipuState) {
+      const n = this._resolveNode(shock[1]);
+      if (n) {
+        const kind = ['collapse', 'demand', 'price', 'sanction'].includes(shock[2]) ? shock[2] : 'collapse';
+        const dir = kind === 'demand' ? 'up' : 'down';
+        this._defer(() => {
+          try {
+            const r = window.KhipuState.simulate({ [n.id]: { salud: 0 } }, [], 8, 0.6, false, { direction: dir, kind });
+            if (typeof switchTab === 'function') switchTab('map');
+            if (typeof jumpTo === 'function') jumpTo(n.id);
+            if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
+          } catch (_) {}
+        });
+      }
+    }
+    if ((opps || insights) && typeof switchTab === 'function') {
+      this._defer(() => { switchTab('analysis'); if (window.renderKhipuInsights) window.renderKhipuInsights(); });
+    }
+  },
+
+  // Resuelve una empresa desde lo que diga el agente (id, ticker o nombre),
+  // tolerante a mayúsculas/minúsculas — Bixby no conoce el casing exacto de
+  // los ids (ej. dice "NVIDIA" pero el id real es "Nvidia", ticker "NVDA").
+  _resolveNode(q) {
+    if (q == null || typeof NODES === 'undefined') return null;
+    const s = String(q).trim();
+    if (!s) return null;
+    const lc = s.toLowerCase();
+    return NODES.find(n => n.id === s || n.mkt === s)                        // exacto (rápido)
+      || NODES.find(n => (n.id || '').toLowerCase() === lc || (n.mkt || '').toLowerCase() === lc)  // id/ticker sin casing
+      || NODES.find(n => (n.label || '').toLowerCase() === lc)              // nombre exacto
+      || NODES.find(n => (n.label || '').toLowerCase().includes(lc))        // nombre contiene
+      || null;
   },
 
   _handleToolCall(event) {
@@ -679,6 +727,62 @@ const BixbyVoice = {
             })
             .catch(() => respond({ success: false, error: 'Error fetching news' }));
         } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
+        break;
+      }
+      // ── Herramientas nuevas (2026-07): X-Ray, sim en vivo, comparar, insights ──
+      case 'open_xray': {
+        const n = this._resolveNode(params.ticker || params.company_name);
+        if (n && window.openXRay) {
+          respond({ success: true, company: n.label });
+          this._defer(() => window.openXRay(n.id));
+        } else respond({ success: false, error: 'Company not found' });
+        break;
+      }
+      case 'run_live_simulation': {
+        // params: {ticker/company_name, kind?: collapse|demand|price|sanction, severity?}
+        const n = this._resolveNode(params.ticker || params.company_name);
+        if (n && window.KhipuState) {
+          const kind = ['collapse', 'demand', 'price', 'sanction'].includes(params.kind) ? params.kind : 'collapse';
+          const dir = kind === 'demand' ? 'up' : 'down';
+          const sev = Math.max(0, Math.min(100, +params.severity || 100));
+          try {
+            const r = window.KhipuState.simulate({ [n.id]: { salud: 1 - sev / 100 } }, [], 8, 0.6, false, { direction: dir, kind });
+            let affected = 0, top = [];
+            r.impact.forEach((v, id) => { if (id !== n.id) { affected++; top.push({ id, v }); } });
+            top.sort((a, b) => b.v - a.v);
+            respond({ success: true, company: n.label, kind, direction: dir, affected,
+              most_impacted: top.slice(0, 5).map(x => ({ company: (NODE_BY_ID[x.id] || {}).label || x.id, impact_pct: Math.round(x.v) })) });
+            this._defer(() => { if (typeof switchTab === 'function') switchTab('map'); if (jumpTo) jumpTo(n.id); if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); });
+          } catch (e) { respond({ success: false, error: 'sim failed' }); }
+        } else respond({ success: false, error: 'Company not found' });
+        break;
+      }
+      case 'compare_companies': {
+        const a = this._resolveNode(params.a || params.company_a), b = this._resolveNode(params.b || params.company_b);
+        if (a && b && window.openCompare) {
+          const nrsA = computeNRS ? computeNRS(a.id) : 50, nrsB = computeNRS ? computeNRS(b.id) : 50;
+          respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB,
+            lower_risk: nrsA < nrsB ? a.label : b.label });
+          this._defer(() => window.openCompare(a.id, b.id));
+        } else respond({ success: false, error: 'One or both companies not found' });
+        break;
+      }
+      case 'get_opportunities': {
+        // empresas resilientes con potencial (mismo criterio que los insights)
+        const opps = NODES.map(n => {
+          const nrs = computeNRS ? computeNRS(n.id) : 50;
+          const g = (n.growth || '').toLowerCase();
+          const growth = g.indexOf('🟢') >= 0 ? 2 : g.indexOf('🟡') >= 0 ? 1 : 0;
+          const margin = n.margin != null ? n.margin : 0;
+          return { label: n.label, nrs, margin: Math.round(margin * 100), score: growth * 22 + Math.min(30, margin * 60) + (50 - nrs) * 0.5, growth, marginRaw: margin };
+        }).filter(x => x.nrs < 55 && x.growth >= 1 && x.marginRaw > 0.15).sort((a, b) => b.score - a.score).slice(0, 6);
+        respond({ success: true, count: opps.length, opportunities: opps.map(o => ({ company: o.label, nrs: o.nrs, margin_pct: o.margin })) });
+        this._defer(() => { if (typeof switchTab === 'function') switchTab('analysis'); });
+        break;
+      }
+      case 'show_insights': case 'show_matrices': {
+        respond({ success: true });
+        this._defer(() => { if (typeof switchTab === 'function') switchTab('analysis'); if (window.renderKhipuInsights) window.renderKhipuInsights(); });
         break;
       }
       default:
