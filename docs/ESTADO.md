@@ -212,6 +212,18 @@ server.py salvo el registro del blueprint.
       potencial) + panorama por sector (más frágil/más sólido).
 - [x] **Las 9 matrices dentro de la app** (matrixview.js): small-multiples +
       heatmap grande con tooltip, en la pestaña Análisis, 100% cliente.
+- [x] **Bixby agente de voz total** (voice.js + server.py, 589cabd): Bixby ya
+      dispara las funciones nuevas por voz. Camino de TOKENS en su propio texto
+      (no requiere configurar herramientas en el panel de ElevenLabs, igual que
+      NAV/TAB/STRESS): `[XRAY:id]` · `[COMPARE:a,b]` · `[SHOCK:id:kind]`
+      (collapse|demand|price|sanction) · `[OPPS]` · `[INSIGHTS]`. Además client
+      tools nuevos en `_handleToolCall` (open_xray, run_live_simulation,
+      compare_companies, get_opportunities, show_insights) por si algún día se
+      registran en ElevenLabs — devuelven datos reales. Resolvedor
+      `_resolveNode` case-insensitive (id/ticker/nombre): Bixby dice "NVIDIA"
+      pero el id real es "Nvidia" (NVDA). BIXBY_SYSTEM_PROMPT enseña cuándo usar
+      cada token. Verificado en navegador con 407 empresas (X-Ray poblado,
+      SHOCK TSMC→252 afectados, COMPARE TSMC vs Samsung).
 
 ## Pendiente que necesita a Fabrizio / decisión
 
