@@ -868,6 +868,15 @@ const BixbyVoice = {
         if (window.setBixbyThinking) window.setBixbyThinking(false);
       }
     }
+    // reflejar el estado en la Cabina de Bixby (si está abierta)
+    if (window.BixbyCockpit && window.BixbyCockpit.setState && text) {
+      const lo = text.toLowerCase();
+      const mode = (lo.includes('procesando') || lo.includes('pensando') || lo.includes('tú:')) ? 'think'
+        : (lo.includes('escucha') || lo.includes('habla') || lo.includes('bixby:')) ? 'live' : '';
+      const label = lo.includes('bixby:') ? 'Hablando' : lo.includes('escucha') ? 'Escuchando'
+        : mode === 'think' ? 'Pensando' : lo.includes('conectando') || lo.includes('iniciando') ? 'Conectando' : 'Listo';
+      window.BixbyCockpit.setState(mode, label);
+    }
     if (isError) {
       const el = document.getElementById('bixby-status');
       if (el) el.style.display = 'block';

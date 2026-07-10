@@ -1347,7 +1347,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.1em">LIVE</span>
         <span id="live-countdown" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2)">···</span>
       </div>
-      <button id="bixby-btn" title="Bixby — pregúntale lo que sea (voz o texto · ⌘K)" onclick="window.BixbyCC&&window.BixbyCC.toggle()"
+      <button id="bixby-btn" title="Bixby — pantalla completa: pídele lo que sea por voz o texto (⌘K)" onclick="window.BixbyCockpit?window.BixbyCockpit.open():(window.BixbyCC&&window.BixbyCC.toggle())"
   style="position:relative;display:flex;flex-direction:row;align-items:center;gap:9px;padding:5px 15px 5px 7px;
     border-radius:16px;border:1px solid rgba(138,90,255,.45);background:rgba(138,90,255,.08);
     color:#cabeff;cursor:pointer;transition:background .2s,border-color .2s,box-shadow .2s;
@@ -5857,9 +5857,10 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     const {ctx, size} = o;
     const cx = size/2, cy = size/2;
     const small = size < 40;
-    const pts   = small ? 600 : 2400;
+    // el detalle escala con el tamaño: no gastar 2400 puntos en un orbe de 64px
+    const pts   = small ? 600 : size < 110 ? 1100 : 2400;
     const lw    = small ? 0.4 : 0.75;
-    const blur  = small ? 3   : 9;
+    const blur  = small ? 3   : size < 110 ? 6 : 9;
 
     ctx.clearRect(0, 0, size, size);
 
@@ -5898,7 +5899,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 
   function loop(){
     phase += 0.003*speed;
-    targets.forEach(drawOrb);
+    // solo dibujar orbes VISIBLES (el de 200px oculto o la cabina cerrada no gastan CPU)
+    for (let k=0;k<targets.length;k++){ const o=targets[k]; if(o.canvas.offsetParent!==null) drawOrb(o); }
     requestAnimationFrame(loop);
   }
 
@@ -5916,6 +5918,9 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     register('bixby-btn-canvas', 40);
     register('bixby-orb-canvas',200);
   }
+
+  /* expuesto para la Cabina de Bixby: registrar un orbe grande a cualquier tamaño */
+  window.registerBixbyOrb = register;
 
   /* expose for voice.js to call setBixbyThinking(true/false) */
   window.setBixbyThinking = function(on){
@@ -5977,6 +5982,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/compare.js"></script>
 <script src="engine/matrixview.js"></script>
 <script src="engine/nav4.js"></script>
+<script src="engine/cockpit.js"></script>
 <script src="engine/command_center.js"></script>
 <script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>

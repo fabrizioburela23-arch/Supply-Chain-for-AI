@@ -72,10 +72,12 @@
 
       // El botón ORIGINAL del header es el único disparador de Bixby
       const hb = document.getElementById('bixby-btn');
-      if (hb) hb.onclick = (e) => { e.preventDefault(); this.toggle(); };
+      // El botón de Bixby abre la CABINA a pantalla completa (voz + texto + escenario).
+      // Si la cabina no está cargada, cae al command center de texto (compat).
+      if (hb) hb.onclick = (e) => { e.preventDefault(); if (window.BixbyCockpit) window.BixbyCockpit.open(); else this.toggle(); };
 
       window.addEventListener('keydown', e => {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setOpen(true); }
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); if (window.BixbyCockpit) window.BixbyCockpit.open(); else this.setOpen(true); }
         if (e.key === 'Escape' && this.open) this.setOpen(false);
       });
       // clic fuera cierra el dropdown
