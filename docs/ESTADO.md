@@ -224,6 +224,28 @@ server.py salvo el registro del blueprint.
       pero el id real es "Nvidia" (NVDA). BIXBY_SYSTEM_PROMPT enseña cuándo usar
       cada token. Verificado en navegador con 407 empresas (X-Ray poblado,
       SHOCK TSMC→252 afectados, COMPARE TSMC vs Samsung).
+- [x] **Cabina de Bixby — modo pantalla completa** (engine/cockpit.js, 0660527):
+      Bixby deja de ser un botón y SE VUELVE la pantalla. El botón de Bixby y
+      ⌘K abren una vista full-screen: orbe/logo arriba + una barra para pedir
+      por texto o 🎙 voz + un ESCENARIO grande abajo. El enrutador `ask(texto)`
+      manda lo que pides a escenas: X-Ray a pantalla completa · simulación de
+      shock (víctimas+ganadores+sectores, KhipuState) · comparar 2 empresas
+      lado a lado · insights (riesgo+oportunidades) · lienzo de datos (Canvas
+      IA) · lienzo en blanco. Voz y texto van al MISMO escenario (xray.js
+      detecta la cabina abierta y pinta ahí, no en el cajón).
+      - xray.js refactor: `buildXRayHTML(id,{full})` reusable (cajón lateral Y
+        escenario). Modo full = TODOS los hilos (no 6) + multi-columna +
+        fundamentales + ranking de riesgo + desglose por tipo de relación.
+        Onda de impacto INSTANTÁNEA con KhipuState (~7ms) → arregla "tarda
+        mucho". CSS scoped a `.xray-scope` (antes `#xray`).
+      - Responde al feedback de Fabrizio: "no me destripa la empresa" (muestra
+        TODO), "tarda mucho" (instantáneo), "no hay modo Bixby pantalla entera".
+      - Orbe plasma optimizado: el bucle salta canvas invisibles y escala el
+        detalle al tamaño (antes dibujaba el orbe oculto de 200px en cada frame).
+      - PENDIENTE conocido: el system prompt con los tokens nuevos solo llega a
+        Bixby si ELEVENLABS_ALLOW_OVERRIDE=true + "Allow overrides" ON en el
+        panel de ElevenLabs. La cabina por TEXTO funciona siempre (no depende
+        de eso). La cabina por VOZ ejecuta acciones vía los tokens de voice.js.
 
 ## Pendiente que necesita a Fabrizio / decisión
 
