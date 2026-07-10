@@ -1,5 +1,5 @@
-// BASE DE DATOS embebida — fuente: Condimentos La Paz.xlsx (hoja BASE DE DATOS), 277 prospectos.
-// Coordenadas aproximadas POR ZONA (columnas 'Lat/Lon (aprox zona)').
+// BASE DE DATOS embebida — fuente: prospectos_condimentos_bolivia.xlsx (hoja BASE DE DATOS), 324 prospectos (julio 2026).
+// Coordenadas aproximadas POR ZONA.
 var PROSPECTOS_RAW = [
  {
   "id": 1,
@@ -7,11 +7,11 @@ var PROSPECTOS_RAW = [
   "rubro": "Embutidos y Fiambres",
   "prioridad": "A+",
   "motivo": "Mayor productor de embutidos en La Paz/El Alto; usa condimentos masivamente como materia prima",
-  "direccion": "Carretera a Oruro Km 18",
-  "zona": "Senkata",
+  "direccion": "Oficina adm.: Av. Roma N° 6815, Obrajes (Planta: Carr. Oruro Km 18, Senkata)",
+  "zona": "Obrajes (of.) / Senkata",
   "ciudad": "El Alto",
-  "telefono": "2850070 / 2852205",
-  "whatsapp": "",
+  "telefono": "2782209 / 2782200 / 2850070",
+  "whatsapp": "65050136",
   "email": "",
   "web": "www.stege.com.bo",
   "linkedin": "",
@@ -20,9 +20,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Baja",
   "volumen": "Muy Alto",
-  "fuente": "boliviayp.com; SENASAG 2024; industria.gnb.com.bo",
+  "fuente": "boliviayp.com fichas Tusequis/STEGE verificado jul-2026",
   "puntuacion": 92,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=STEGE%20%E2%80%93%20TUSEQUIS%20LTDA.%2C%20Carretera%20a%20Oruro%20Km%2018%2C%20El%20Alto%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=STEGE%20%E2%80%93%20TUSEQUIS%20LTDA.%2C%20Oficina%20adm.%3A%20Av.%20Roma%20N%C2%B0%206815%2C%20Obrajes%20%28Planta%3A%20Carr.%20Oruro%20Km%2018%2C%20Senkata%29%2C%20El%20Alto%2C%20Bolivia",
   "lat": -16.568,
   "lng": -68.2,
   "precision": "zona"
@@ -33,7 +33,7 @@ var PROSPECTOS_RAW = [
   "rubro": "Embutidos y Fiambres",
   "prioridad": "A+",
   "motivo": "Empresa líder de embutidos en El Alto (res, cerdo, camélidos); gran consumidor de condimentos y especias",
-  "direccion": "Carretera a Viacha Km 4",
+  "direccion": "Planta: Villa Adela / Río Seco, El Alto (sin oficina separada publicada)",
   "zona": "Villa Dolores",
   "ciudad": "El Alto",
   "telefono": "",
@@ -46,9 +46,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Baja",
   "volumen": "Alto",
-  "fuente": "La Razón 2018; elsitioporcino.com; Facebook verificado 2025",
+  "fuente": "la-razon.com; manwilembutidos.com verificado jul-2026",
   "puntuacion": 90,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EMBUTIDOS%20MANWIL%20TICONA%20SRL%2C%20Carretera%20a%20Viacha%20Km%204%2C%20El%20Alto%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EMBUTIDOS%20MANWIL%20TICONA%20SRL%2C%20Planta%3A%20Villa%20Adela%20/%20R%C3%ADo%20Seco%2C%20El%20Alto%20%28sin%20oficina%20separada%20publicada%29%2C%20El%20Alto%2C%20Bolivia",
   "lat": -16.5,
   "lng": -68.175,
   "precision": "zona"
@@ -111,10 +111,10 @@ var PROSPECTOS_RAW = [
   "rubro": "Avícola / Alimentos procesados",
   "prioridad": "A+",
   "motivo": "Principal avícola de Bolivia; procesa pollos, nuggets y precocidos con marinados y condimentos",
-  "direccion": "Centro de Distribución Senkata",
-  "zona": "Senkata",
+  "direccion": "Oficina La Paz: Av. 15 de Abril N° 177 esq. Yolosa (CD: Senkata, El Alto)",
+  "zona": "La Paz (of.) / Senkata",
   "ciudad": "El Alto",
-  "telefono": "800124141",
+  "telefono": "2262853 / 2262837 / 800-12-4141",
   "whatsapp": "78445000",
   "email": "proveedores@avicolasofia.com",
   "web": "sofia.com.bo",
@@ -124,9 +124,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Baja",
   "volumen": "Muy Alto",
-  "fuente": "sofia.com.bo; nexdu.com; asfi.gob.bo 2026",
+  "fuente": "boliviayp.com; sofia.com.bo/contact verificado jul-2026",
   "puntuacion": 95,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=AV%C3%8DCOLA%20SOF%C3%8DA%20LTDA.%2C%20Centro%20de%20Distribuci%C3%B3n%20Senkata%2C%20El%20Alto%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=AV%C3%8DCOLA%20SOF%C3%8DA%20LTDA.%2C%20Oficina%20La%20Paz%3A%20Av.%2015%20de%20Abril%20N%C2%B0%20177%20esq.%20Yolosa%20%28CD%3A%20Senkata%2C%20El%20Alto%29%2C%20El%20Alto%2C%20Bolivia",
   "lat": -16.568,
   "lng": -68.2,
   "precision": "zona"
@@ -137,10 +137,10 @@ var PROSPECTOS_RAW = [
   "rubro": "Panificadora Industrial",
   "prioridad": "A+",
   "motivo": "Líder en panificación industrial; usa canela, anís y especias en panetones, queques y panes especiales",
-  "direccion": "Av. Estados Unidos N° 1161",
+  "direccion": "Oficina central: Av. Estados Unidos N° 1161, Miraflores",
   "zona": "Miraflores",
   "ciudad": "La Paz",
-  "telefono": "22221939",
+  "telefono": "2221939 / 2227608",
   "whatsapp": "",
   "email": "lafrancesa@lafrancesa.com",
   "web": "lafrancesa.com",
@@ -150,9 +150,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Muy Alta",
   "volumen": "Muy Alto",
-  "fuente": "lafrancesa.com/contact; gnb.com.bo; LinkedIn verificado",
+  "fuente": "lafrancesa.com/contact-us verificado jul-2026",
   "puntuacion": 94,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SOCIEDAD%20INDUSTRIAL%20Y%20COMERCIAL%20LA%20FRANCESA%20%E2%80%93%20SICLAF%20SA%2C%20Av.%20Estados%20Unidos%20N%C2%B0%201161%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SOCIEDAD%20INDUSTRIAL%20Y%20COMERCIAL%20LA%20FRANCESA%20%E2%80%93%20SICLAF%20SA%2C%20Oficina%20central%3A%20Av.%20Estados%20Unidos%20N%C2%B0%201161%2C%20Miraflores%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.499,
   "lng": -68.122,
   "precision": "zona"
@@ -163,10 +163,10 @@ var PROSPECTOS_RAW = [
   "rubro": "Snacks y Fideos",
   "prioridad": "A+",
   "motivo": "116 años de historia; produce snacks salados (chizitos, charroncitos) y fideos que requieren condimentos y especias",
-  "direccion": "Carretera a Oruro Km 7, Rosas Pampa N° 50",
+  "direccion": "Planta: Carr. a Oruro Km 7, Rosas Pampa N° 50, El Alto (sin oficina separada)",
   "zona": "Rosas Pampa",
   "ciudad": "La Paz",
-  "telefono": "22850851",
+  "telefono": "2850851",
   "whatsapp": "77500095",
   "email": "info@laestrella.cc",
   "web": "fabricalaestrella.com",
@@ -176,9 +176,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Baja",
   "volumen": "Muy Alto",
-  "fuente": "fabricalaestrella.com verificado 2025; ISO 22000 certificada",
+  "fuente": "fabricalaestrella.com verificado jul-2026",
   "puntuacion": 93,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=F%C3%81BRICA%20LA%20ESTRELLA%20SRL%2C%20Carretera%20a%20Oruro%20Km%207%2C%20Rosas%20Pampa%20N%C2%B0%2050%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=F%C3%81BRICA%20LA%20ESTRELLA%20SRL%2C%20Planta%3A%20Carr.%20a%20Oruro%20Km%207%2C%20Rosas%20Pampa%20N%C2%B0%2050%2C%20El%20Alto%20%28sin%20oficina%20separada%29%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.545,
   "lng": -68.2,
   "precision": "zona"
@@ -215,10 +215,10 @@ var PROSPECTOS_RAW = [
   "rubro": "Lácteos y Alimentos Procesados",
   "prioridad": "A+",
   "motivo": "Mayor empresa láctea boliviana; usa condimentos en yogures saborizado, quesos y preparados lácteos",
-  "direccion": "c. Coroico N° 1482",
+  "direccion": "Planta El Alto: Av. Juan Pablo II Km 15 (of. nacional en Cochabamba)",
   "zona": "Miraflores",
   "ciudad": "La Paz",
-  "telefono": "2454444",
+  "telefono": "2860011",
   "whatsapp": "",
   "email": "",
   "web": "pilandina.com.bo",
@@ -228,9 +228,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Media",
   "prob_canela": "Media",
   "volumen": "Muy Alto",
-  "fuente": "pilandina.com.bo; all.biz; boliviayp.com",
+  "fuente": "boliviayp.com PIL Planta El Alto verificado jul-2026",
   "puntuacion": 80,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PIL%20ANDINA%20S.A.%2C%20c.%20Coroico%20N%C2%B0%201482%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PIL%20ANDINA%20S.A.%2C%20Planta%20El%20Alto%3A%20Av.%20Juan%20Pablo%20II%20Km%2015%20%28of.%20nacional%20en%20Cochabamba%29%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.499,
   "lng": -68.122,
   "precision": "zona"
@@ -267,11 +267,11 @@ var PROSPECTOS_RAW = [
   "rubro": "Lácteos",
   "prioridad": "A+",
   "motivo": "Fábrica de productos lácteos en El Alto; usa especias y condimentos en quesos y derivados",
-  "direccion": "Ciudad Satélite",
-  "zona": "Ciudad Satélite",
+  "direccion": "Oficina central: Av. Mario Mercado, calle E N° 100, El Rosal, Bajo Seguencoma (Planta: Carr. Viacha Km 7)",
+  "zona": "Bajo Seguencoma (of.)",
   "ciudad": "El Alto",
-  "telefono": "",
-  "whatsapp": "",
+  "telefono": "2500700 / 2500701 / 800-16-0888",
+  "whatsapp": "76751234",
   "email": "",
   "web": "",
   "linkedin": "",
@@ -280,11 +280,11 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Media",
   "prob_canela": "Media",
   "volumen": "Alto",
-  "fuente": "boliviaentusmanos.com directorio",
+  "fuente": "boliviayp.com; delizia.bo verificado jul-2026",
   "puntuacion": 70,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COMPA%C3%91%C3%8DA%20DE%20ALIMENTOS%20LTDA.%20DELIZIA%2C%20Ciudad%20Sat%C3%A9lite%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COMPA%C3%91%C3%8DA%20DE%20ALIMENTOS%20LTDA.%20DELIZIA%2C%20Oficina%20central%3A%20Av.%20Mario%20Mercado%2C%20calle%20E%20N%C2%B0%20100%2C%20El%20Rosal%2C%20Bajo%20Seguencoma%20%28Planta%3A%20Carr.%20Viacha%20Km%207%29%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.523,
+  "lng": -68.108,
   "precision": "zona"
  },
  {
@@ -579,10 +579,10 @@ var PROSPECTOS_RAW = [
   "rubro": "Molinera / Harinas",
   "prioridad": "A+",
   "motivo": "Molino con producción de harinas especiales; usa condimentos y especias en mezclas de panificación",
-  "direccion": "La Paz",
-  "zona": "La Paz",
+  "direccion": "Oficina: Calle México N° 1554, Edif. Chuquiago P.1, San Pedro",
+  "zona": "San Pedro",
   "ciudad": "La Paz",
-  "telefono": "",
+  "telefono": "2358867",
   "whatsapp": "",
   "email": "",
   "web": "",
@@ -592,11 +592,11 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Media",
   "prob_canela": "Alta",
   "volumen": "Alto",
-  "fuente": "boliviaentusmanos.com directorio",
+  "fuente": "boliviayp.com Molino Andino verificado jul-2026",
   "puntuacion": 59,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=MOLINO%20ANDINO%20SA%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=MOLINO%20ANDINO%20SA%2C%20Oficina%3A%20Calle%20M%C3%A9xico%20N%C2%B0%201554%2C%20Edif.%20Chuquiago%20P.1%2C%20San%20Pedro%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.501,
+  "lng": -68.137,
   "precision": "zona"
  },
  {
@@ -735,7 +735,7 @@ var PROSPECTOS_RAW = [
   "rubro": "Cadena de Restaurantes – Pollos",
   "prioridad": "A",
   "motivo": "Mayor cadena de pollos a la brasa de Bolivia con +20 sucursales en La Paz/El Alto; compras centralizadas de especias y marinadas",
-  "direccion": "Calle Daniel Salamanca N° 308",
+  "direccion": "Oficina central: Calle Daniel Salamanca N° 308, Pura Pura",
   "zona": "Pura Pura",
   "ciudad": "La Paz",
   "telefono": "2458309 / 2458312",
@@ -748,9 +748,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Baja",
   "volumen": "Muy Alto",
-  "fuente": "polloscopacabana.com/contactanos; gentemotivandogente.com 2025",
+  "fuente": "polloscopacabana.com/contactanos verificado jul-2026",
   "puntuacion": 91,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=POLLOS%20COPACABANA%20SA%2C%20Calle%20Daniel%20Salamanca%20N%C2%B0%20308%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=POLLOS%20COPACABANA%20SA%2C%20Oficina%20central%3A%20Calle%20Daniel%20Salamanca%20N%C2%B0%20308%2C%20Pura%20Pura%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.478,
   "lng": -68.15,
   "precision": "zona"
@@ -779,58 +779,6 @@ var PROSPECTOS_RAW = [
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=BURGER%20KING%20BOLIVIA%2C%20Av.%20Ballivi%C3%A1n%20y%20C.%2019%20%28principal%29%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.539,
   "lng": -68.077,
-  "precision": "zona"
- },
- {
-  "id": 31,
-  "nombre": "KFC BOLIVIA",
-  "rubro": "Cadena de Comida Rápida – Pollos",
-  "prioridad": "A",
-  "motivo": "Franquicia internacional con múltiples locales en La Paz; usa mezclas de especias propias; abastecimiento local posible",
-  "direccion": "Múltiples sucursales La Paz",
-  "zona": "Zona Sur y Centro",
-  "ciudad": "La Paz",
-  "telefono": "",
-  "whatsapp": "",
-  "email": "",
-  "web": "kfcbo.com",
-  "linkedin": "",
-  "facebook": "facebook.com/KFC.BO",
-  "contacto": "Gerente de Compras / Jefe de Operaciones",
-  "prob_condimentos": "Alta",
-  "prob_canela": "Baja",
-  "volumen": "Muy Alto",
-  "fuente": "kfcbo.com; noticiasfides.com expansión Bolivia 2025",
-  "puntuacion": 87,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=KFC%20BOLIVIA%2C%20M%C3%BAltiples%20sucursales%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.54,
-  "lng": -68.08,
-  "precision": "zona"
- },
- {
-  "id": 32,
-  "nombre": "PIZZA HUT BOLIVIA",
-  "rubro": "Cadena de Pizzerías",
-  "prioridad": "A",
-  "motivo": "Cadena internacional; alto consumo de ají rojo en flakes, orégano y condimentos para pizzas",
-  "direccion": "Múltiples sucursales La Paz",
-  "zona": "Zona Sur y Centro",
-  "ciudad": "La Paz",
-  "telefono": "",
-  "whatsapp": "78674992",
-  "email": "",
-  "web": "pizzahut.com.bo",
-  "linkedin": "",
-  "facebook": "facebook.com/pizzahutbolivia",
-  "contacto": "Gerente de Operaciones / Encargado de Compras",
-  "prob_condimentos": "Alta",
-  "prob_canela": "Baja",
-  "volumen": "Alto",
-  "fuente": "pizzahut.com.bo verificado 2025; Instagram @pizzahutbolivia",
-  "puntuacion": 85,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PIZZA%20HUT%20BOLIVIA%2C%20M%C3%BAltiples%20sucursales%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.54,
-  "lng": -68.08,
   "precision": "zona"
  },
  {
@@ -865,10 +813,10 @@ var PROSPECTOS_RAW = [
   "rubro": "Cadena de Heladerías y Cafeterías",
   "prioridad": "A",
   "motivo": "Cadena boliviana con sucursales en El Prado, San Miguel, Megacenter; usa canela, especias dulces en postres y bebidas calientes",
-  "direccion": "Av. 16 de Julio (El Prado) / Av. Montenegro 842 (San Miguel)",
+  "direccion": "Central: Av. 16 de Julio N° 1543, El Prado (suc. Zona Sur: c. Montenegro esq. Pancara N° 842)",
   "zona": "Centro / San Miguel",
   "ciudad": "La Paz",
-  "telefono": "2313331 / 2792525",
+  "telefono": "2313331 / 2796115",
   "whatsapp": "",
   "email": "",
   "web": "",
@@ -878,9 +826,9 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Media",
   "prob_canela": "Alta",
   "volumen": "Alto",
-  "fuente": "latinoplaces.com; boliviayp.com; facebook verificado 2025",
+  "fuente": "boliviayp.com; PedidosYa activo; TripAdvisor feb-2026 OPERANDO",
   "puntuacion": 78,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=DUMBO%20%E2%80%93%20HELADER%C3%8DA%20Y%20RESTAURANTE%2C%20Av.%2016%20de%20Julio%20%28El%20Prado%29%20/%20Av.%20Montenegro%20842%20%28San%20Miguel%29%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=DUMBO%20%E2%80%93%20HELADER%C3%8DA%20Y%20RESTAURANTE%2C%20Central%3A%20Av.%2016%20de%20Julio%20N%C2%B0%201543%2C%20El%20Prado%20%28suc.%20Zona%20Sur%3A%20c.%20Montenegro%20esq.%20Pancara%20N%C2%B0%20842%29%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.532,
   "lng": -68.085,
   "precision": "zona"
@@ -912,33 +860,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 36,
-  "nombre": "DOMINO'S PIZZA BOLIVIA",
-  "rubro": "Cadena de Pizzerías",
-  "prioridad": "A",
-  "motivo": "Franquicia internacional; alto consumo de ají rojo en flakes y condimentos italianos para sus pizzas",
-  "direccion": "Múltiples sucursales La Paz y El Alto",
-  "zona": "Zona Sur y Centro",
-  "ciudad": "La Paz",
-  "telefono": "",
-  "whatsapp": "",
-  "email": "",
-  "web": "",
-  "linkedin": "",
-  "facebook": "",
-  "contacto": "Gerente de Operaciones / Encargado de Compras",
-  "prob_condimentos": "Alta",
-  "prob_canela": "Baja",
-  "volumen": "Alto",
-  "fuente": "tiendeo.mx sucursales; pedidosya.com.bo verificado",
-  "puntuacion": 79,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=DOMINO%27S%20PIZZA%20BOLIVIA%2C%20M%C3%BAltiples%20sucursales%20La%20Paz%20y%20El%20Alto%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.54,
-  "lng": -68.08,
-  "precision": "zona"
- },
- {
-  "id": 37,
+  "id": 38,
   "nombre": "DON POLLO",
   "rubro": "Cadena de Restaurantes – Pollos",
   "prioridad": "A",
@@ -964,7 +886,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 38,
+  "id": 39,
   "nombre": "FACTORY GRILL & BAR",
   "rubro": "Restaurante de Parrillas – Cadena",
   "prioridad": "A",
@@ -990,7 +912,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 39,
+  "id": 40,
   "nombre": "POLLOS CHRISS BOLIVIA",
   "rubro": "Cadena de Restaurantes – Pollos",
   "prioridad": "A",
@@ -1016,7 +938,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 40,
+  "id": 41,
   "nombre": "LA JUNGLA PLAZA DE COMIDAS",
   "rubro": "Patio de Comidas / Gestión Central",
   "prioridad": "A",
@@ -1042,7 +964,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 41,
+  "id": 42,
   "nombre": "MEGACENTER LA PAZ – FOOD COURT",
   "rubro": "Patio de Comidas / Centro Comercial",
   "prioridad": "A",
@@ -1068,7 +990,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 42,
+  "id": 43,
   "nombre": "POLLOS EL NIETO – LA PAZ",
   "rubro": "Cadena de Pollos",
   "prioridad": "A",
@@ -1094,7 +1016,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 43,
+  "id": 44,
   "nombre": "CHINGOS CASUAL CUISINE",
   "rubro": "Restaurante con Catering",
   "prioridad": "A",
@@ -1120,7 +1042,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 44,
+  "id": 45,
   "nombre": "POCHO EL POLLO",
   "rubro": "Cadena de Pollos",
   "prioridad": "A",
@@ -1146,7 +1068,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 45,
+  "id": 46,
   "nombre": "300 WINGS",
   "rubro": "Cadena – Alitas y Pollo",
   "prioridad": "A",
@@ -1172,7 +1094,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 46,
+  "id": 47,
   "nombre": "BURGUER 91",
   "rubro": "Cadena de Hamburguesas",
   "prioridad": "A",
@@ -1198,7 +1120,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 47,
+  "id": 48,
   "nombre": "ELI'S PIZZA",
   "rubro": "Cadena de Pizzerías",
   "prioridad": "A",
@@ -1224,7 +1146,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 48,
+  "id": 49,
   "nombre": "CIRCUS PIZZERÍA",
   "rubro": "Pizzería – Cadena",
   "prioridad": "A",
@@ -1250,7 +1172,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 49,
+  "id": 50,
   "nombre": "ALMACÉN DE PIZZAS",
   "rubro": "Pizzería – Cadena",
   "prioridad": "A",
@@ -1276,7 +1198,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 50,
+  "id": 51,
   "nombre": "COCINARTE CATERING & EVENTOS",
   "rubro": "Catering Corporativo y Eventos",
   "prioridad": "B",
@@ -1302,7 +1224,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 51,
+  "id": 52,
   "nombre": "LA PAZ CATERING SERVICE SRL",
   "rubro": "Catering Corporativo",
   "prioridad": "B",
@@ -1328,7 +1250,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 52,
+  "id": 53,
   "nombre": "EMPRESA DE EVENTOS G & M",
   "rubro": "Catering y Eventos",
   "prioridad": "B",
@@ -1354,7 +1276,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 53,
+  "id": 54,
   "nombre": "RIMINI CAFÉ – CATERING",
   "rubro": "Catering y Pastelería",
   "prioridad": "B",
@@ -1380,7 +1302,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 54,
+  "id": 55,
   "nombre": "PASIÓN CRIOLLA – HOTEL PANAMERICANO",
   "rubro": "Catering y Restaurante",
   "prioridad": "B",
@@ -1406,7 +1328,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 55,
+  "id": 56,
   "nombre": "CATERING & SERVICIOS K-TSER SRL",
   "rubro": "Catering Institucional",
   "prioridad": "B",
@@ -1432,7 +1354,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 56,
+  "id": 57,
   "nombre": "CAFÉ BAREZZO – REPOSTERÍA FRANCESA",
   "rubro": "Catering y Repostería",
   "prioridad": "B",
@@ -1458,7 +1380,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 57,
+  "id": 58,
   "nombre": "HALLWRIGHT'S – BAR Y RESTAURANTE",
   "rubro": "Catering y Eventos",
   "prioridad": "B",
@@ -1484,7 +1406,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 58,
+  "id": 59,
   "nombre": "SERVICIOS DE CATERING INSTITUCIONAL EDUCATIVO",
   "rubro": "Catering Educativo",
   "prioridad": "B",
@@ -1510,7 +1432,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 59,
+  "id": 60,
   "nombre": "LA JUNGLA EVENTS CATERING",
   "rubro": "Catering Corporativo",
   "prioridad": "B",
@@ -1536,7 +1458,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 60,
+  "id": 61,
   "nombre": "RIV-EVENTS CATERING",
   "rubro": "Catering Corporativo",
   "prioridad": "B",
@@ -1562,7 +1484,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 61,
+  "id": 62,
   "nombre": "API HAPPY CATERING",
   "rubro": "Catering y Gastronomía Andina",
   "prioridad": "B",
@@ -1588,7 +1510,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 62,
+  "id": 63,
   "nombre": "TOMATE CAFÉ – CATERING VEGANO",
   "rubro": "Catering Especial",
   "prioridad": "B",
@@ -1614,7 +1536,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 63,
+  "id": 64,
   "nombre": "SERVICIOS ALIMENTACIÓN HOSPITARIA SRL",
   "rubro": "Catering Hospitalario",
   "prioridad": "B",
@@ -1640,7 +1562,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 64,
+  "id": 65,
   "nombre": "GRUPO SIETE CATERING",
   "rubro": "Catering Industrial y Minero",
   "prioridad": "B",
@@ -1666,7 +1588,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 65,
+  "id": 66,
   "nombre": "INTI CATERING – SERVICIOS CORPORATIVOS",
   "rubro": "Catering Corporativo",
   "prioridad": "B",
@@ -1692,7 +1614,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 66,
+  "id": 67,
   "nombre": "BANQUETES Y EVENTOS ANDINOS",
   "rubro": "Catering Eventos Sociales",
   "prioridad": "B",
@@ -1718,7 +1640,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 67,
+  "id": 68,
   "nombre": "BUENAVENTURA CATERING",
   "rubro": "Catering Minero y Corporativo",
   "prioridad": "B",
@@ -1744,7 +1666,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 68,
+  "id": 69,
   "nombre": "CENTRAL DE CATERING PACEÑO",
   "rubro": "Catering Corporativo",
   "prioridad": "B",
@@ -1770,7 +1692,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 69,
+  "id": 70,
   "nombre": "NUTRIALIMENTOS CATERING",
   "rubro": "Catering Educativo/Saludable",
   "prioridad": "B",
@@ -1796,7 +1718,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 70,
+  "id": 71,
   "nombre": "HOTEL PRESIDENTE",
   "rubro": "Hotel 5★ con Restaurante y Banquetes",
   "prioridad": "C",
@@ -1822,7 +1744,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 71,
+  "id": 72,
   "nombre": "CASA GRANDE HOTEL",
   "rubro": "Hotel 5★ con Restaurante y Banquetes",
   "prioridad": "C",
@@ -1848,7 +1770,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 72,
+  "id": 73,
   "nombre": "ATIX HOTEL",
   "rubro": "Hotel Boutique 5★ – Restaurante",
   "prioridad": "C",
@@ -1874,7 +1796,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 73,
+  "id": 74,
   "nombre": "SUITES CAMINO REAL",
   "rubro": "Hotel 5★ con Restaurante y Convenciones",
   "prioridad": "C",
@@ -1900,7 +1822,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 74,
+  "id": 75,
   "nombre": "EL REY PALACE HOTEL",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -1926,7 +1848,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 75,
+  "id": 76,
   "nombre": "CAMINO REAL APART HOTEL & SPA",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -1952,7 +1874,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 76,
+  "id": 77,
   "nombre": "RITZ APART HOTEL",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -1978,7 +1900,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 77,
+  "id": 78,
   "nombre": "MET HOTEL",
   "rubro": "Hotel Boutique con Restaurante",
   "prioridad": "C",
@@ -2004,7 +1926,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 78,
+  "id": 79,
   "nombre": "HOTEL CALACOTO",
   "rubro": "Hotel 4★ con Restaurante",
   "prioridad": "C",
@@ -2030,7 +1952,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 79,
+  "id": 80,
   "nombre": "HOTEL EUROPA – LA PAZ",
   "rubro": "Hotel 4★ con Restaurante",
   "prioridad": "C",
@@ -2056,7 +1978,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 80,
+  "id": 81,
   "nombre": "HOTEL GLORIA LA PAZ",
   "rubro": "Hotel con Restaurante y Convenciones",
   "prioridad": "C",
@@ -2082,7 +2004,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 81,
+  "id": 82,
   "nombre": "HOTEL OBERLAND – EL ALTO",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -2108,7 +2030,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 82,
+  "id": 83,
   "nombre": "RADISSON HOTEL LA PAZ",
   "rubro": "Hotel Internacional con Restaurante",
   "prioridad": "C",
@@ -2134,7 +2056,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 83,
+  "id": 84,
   "nombre": "STANNUM BOUTIQUE HOTEL",
   "rubro": "Hotel Boutique con Restaurante",
   "prioridad": "C",
@@ -2160,7 +2082,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 84,
+  "id": 85,
   "nombre": "HOTEL PLAZA LA PAZ",
   "rubro": "Hotel 5★ con Restaurante",
   "prioridad": "C",
@@ -2186,7 +2108,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 85,
+  "id": 86,
   "nombre": "HOTEL LOS DELFINES APART",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -2212,7 +2134,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 86,
+  "id": 87,
   "nombre": "HOSPITAL LA PAZ – MUNICIPAL",
   "rubro": "Hospital con Cocina",
   "prioridad": "D",
@@ -2238,7 +2160,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 87,
+  "id": 88,
   "nombre": "HOSPITAL MUNICIPAL LOS PINOS",
   "rubro": "Hospital con Cocina",
   "prioridad": "D",
@@ -2264,7 +2186,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 88,
+  "id": 89,
   "nombre": "HOSPITAL MUNICIPAL LA MERCED",
   "rubro": "Hospital con Cocina",
   "prioridad": "D",
@@ -2290,7 +2212,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 89,
+  "id": 90,
   "nombre": "HOSPITAL MUNICIPAL LA PORTADA",
   "rubro": "Hospital con Cocina",
   "prioridad": "D",
@@ -2316,7 +2238,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 90,
+  "id": 91,
   "nombre": "HOSPITAL MUNICIPAL LA COTAHUMA",
   "rubro": "Hospital con Cocina",
   "prioridad": "D",
@@ -2342,7 +2264,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 91,
+  "id": 92,
   "nombre": "CLÍNICA ALEMANA – LA PAZ",
   "rubro": "Clínica Privada con Cocina",
   "prioridad": "D",
@@ -2368,7 +2290,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 92,
+  "id": 93,
   "nombre": "CLÍNICA DEL SUR – LA PAZ",
   "rubro": "Clínica Privada con Cocina",
   "prioridad": "D",
@@ -2394,7 +2316,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 93,
+  "id": 94,
   "nombre": "CAJA NACIONAL DE SALUD – LA PAZ",
   "rubro": "Hospital con Cocina Industrial",
   "prioridad": "D",
@@ -2420,7 +2342,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 94,
+  "id": 95,
   "nombre": "HOSPITAL DE CLÍNICAS UMSA",
   "rubro": "Hospital Universitario con Cocina",
   "prioridad": "D",
@@ -2446,7 +2368,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 95,
+  "id": 96,
   "nombre": "COSSMIL HOSPITAL MILITAR",
   "rubro": "Hospital Militar con Cocina",
   "prioridad": "D",
@@ -2472,7 +2394,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 96,
+  "id": 97,
   "nombre": "UMSA – UNIVERSIDAD MAYOR DE SAN ANDRÉS",
   "rubro": "Universidad Pública con Comedor",
   "prioridad": "E",
@@ -2498,7 +2420,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 97,
+  "id": 98,
   "nombre": "UCB – UNIVERSIDAD CATÓLICA BOLIVIANA",
   "rubro": "Universidad Privada con Cafetería",
   "prioridad": "E",
@@ -2524,7 +2446,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 98,
+  "id": 99,
   "nombre": "UPB – UNIVERSIDAD PRIVADA BOLIVIANA",
   "rubro": "Universidad Privada con Cafetería",
   "prioridad": "E",
@@ -2550,7 +2472,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 99,
+  "id": 100,
   "nombre": "EMI – ESCUELA MILITAR DE INGENIERÍA",
   "rubro": "Universidad Militar con Comedor",
   "prioridad": "E",
@@ -2576,7 +2498,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 100,
+  "id": 101,
   "nombre": "UNIFRANZ – UNIVERSIDAD PRIVADA",
   "rubro": "Universidad con Cafetería",
   "prioridad": "E",
@@ -2602,7 +2524,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 101,
+  "id": 102,
   "nombre": "UPEA – UNIVERSIDAD EL ALTO",
   "rubro": "Universidad Pública con Comedor",
   "prioridad": "E",
@@ -2628,7 +2550,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 102,
+  "id": 103,
   "nombre": "UAB – UNIV. ADVENTISTA DE BOLIVIA",
   "rubro": "Universidad Privada con Comedor",
   "prioridad": "E",
@@ -2654,7 +2576,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 103,
+  "id": 104,
   "nombre": "UNIVALLE – UNIVERSIDAD DEL VALLE",
   "rubro": "Universidad Privada con Cafetería",
   "prioridad": "E",
@@ -2680,7 +2602,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 104,
+  "id": 105,
   "nombre": "COLEGIO ALEMÁN – LA PAZ",
   "rubro": "Colegio Privado Internacional",
   "prioridad": "F",
@@ -2706,7 +2628,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 105,
+  "id": 106,
   "nombre": "COLEGIO AMERICANO – LA PAZ",
   "rubro": "Colegio Internacional",
   "prioridad": "F",
@@ -2732,7 +2654,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 106,
+  "id": 107,
   "nombre": "COLEGIO FRANCO-BOLIVIANO",
   "rubro": "Colegio Bilingüe con Cafetería",
   "prioridad": "F",
@@ -2758,7 +2680,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 107,
+  "id": 108,
   "nombre": "COLEGIO SAN CALIXTO – LA PAZ",
   "rubro": "Colegio Privado Tradicional",
   "prioridad": "F",
@@ -2784,7 +2706,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 108,
+  "id": 109,
   "nombre": "COLEGIO LA SALLE – LA PAZ",
   "rubro": "Colegio Privado con Cafetería",
   "prioridad": "F",
@@ -2810,7 +2732,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 109,
+  "id": 110,
   "nombre": "COLEGIO DOMINGO SABIO – LA PAZ",
   "rubro": "Colegio Privado con Cafetería",
   "prioridad": "F",
@@ -2836,7 +2758,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 110,
+  "id": 111,
   "nombre": "COLEGIO LOYOLA – LA PAZ",
   "rubro": "Colegio Jesuita con Cafetería",
   "prioridad": "F",
@@ -2862,7 +2784,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 111,
+  "id": 112,
   "nombre": "COLEGIO SANTA ANA – LA PAZ",
   "rubro": "Colegio Privado con Cafetería",
   "prioridad": "F",
@@ -2888,7 +2810,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 112,
+  "id": 113,
   "nombre": "COLEGIO MONTESSORI – LA PAZ",
   "rubro": "Colegio con Cafetería",
   "prioridad": "F",
@@ -2914,7 +2836,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 113,
+  "id": 114,
   "nombre": "UNIDAD EDUCATIVA BOLIVIANO-JAPONESA",
   "rubro": "Colegio Bilingüe con Cafetería",
   "prioridad": "F",
@@ -2940,7 +2862,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 114,
+  "id": 115,
   "nombre": "COLEGIO INGLÉS COBOS – EL ALTO",
   "rubro": "Colegio Bilingüe El Alto",
   "prioridad": "F",
@@ -2966,7 +2888,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 115,
+  "id": 116,
   "nombre": "COLEGIO INTERNACIONAL DE LA PAZ",
   "rubro": "Colegio Internacional con Comedor",
   "prioridad": "F",
@@ -2992,7 +2914,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 116,
+  "id": 117,
   "nombre": "ADEREZO BOLIVIANO",
   "rubro": "Mayorista de Especias y Condimentos",
   "prioridad": "G",
@@ -3018,15 +2940,15 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 117,
+  "id": 118,
   "nombre": "HIPERMAXI SA – CALACOTO",
   "rubro": "Supermercado / Canal Mayorista",
   "prioridad": "G",
   "motivo": "Cadena de hipermercados con sección de ingredientes y condimentos al por mayor; proveedor para restaurantes",
-  "direccion": "Calle 15 de Calacoto",
+  "direccion": "Oficina regional LP: c. Rosendo Gutiérrez N° 469, Sopocachi (suc. Calacoto)",
   "zona": "Calacoto",
   "ciudad": "La Paz",
-  "telefono": "",
+  "telefono": "2411200",
   "whatsapp": "",
   "email": "",
   "web": "hipermaxi.com",
@@ -3036,15 +2958,15 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Alta",
   "volumen": "Alto",
-  "fuente": "hipermaxi.com/sucursales verificado 2025",
+  "fuente": "boliviayp.com Hipermaxi La Paz verificado jul-2026",
   "puntuacion": 68,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HIPERMAXI%20SA%20%E2%80%93%20CALACOTO%2C%20Calle%2015%20de%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HIPERMAXI%20SA%20%E2%80%93%20CALACOTO%2C%20Oficina%20regional%20LP%3A%20c.%20Rosendo%20Guti%C3%A9rrez%20N%C2%B0%20469%2C%20Sopocachi%20%28suc.%20Calacoto%29%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.539,
   "lng": -68.077,
   "precision": "zona"
  },
  {
-  "id": 118,
+  "id": 119,
   "nombre": "HIPERMAXI SATÉLITE – EL ALTO",
   "rubro": "Supermercado / Canal Mayorista",
   "prioridad": "G",
@@ -3070,12 +2992,12 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 119,
+  "id": 122,
   "nombre": "FIDALGA – SUPERMERCADO",
   "rubro": "Supermercado / Canal Mayorista",
   "prioridad": "G",
   "motivo": "Cadena de supermercados con +10 locales; compra condimentos y especias al por mayor para reventa",
-  "direccion": "Av. Sanchez Lima N° 2362",
+  "direccion": "Oficina principal LP: Av. Sánchez Lima N° 2362, Plaza Avaroa, Sopocachi",
   "zona": "Sopocachi",
   "ciudad": "La Paz",
   "telefono": "2417070",
@@ -3088,15 +3010,15 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Alta",
   "prob_canela": "Alta",
   "volumen": "Alto",
-  "fuente": "boliviaentusmanos.com directorio galletas; directorio Bolivia",
+  "fuente": "boliviaentusmanos.com Fidalga verificado jul-2026",
   "puntuacion": 65,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=FIDALGA%20%E2%80%93%20SUPERMERCADO%2C%20Av.%20Sanchez%20Lima%20N%C2%B0%202362%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=FIDALGA%20%E2%80%93%20SUPERMERCADO%2C%20Oficina%20principal%20LP%3A%20Av.%20S%C3%A1nchez%20Lima%20N%C2%B0%202362%2C%20Plaza%20Avaroa%2C%20Sopocachi%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.509,
   "lng": -68.128,
   "precision": "zona"
  },
  {
-  "id": 120,
+  "id": 123,
   "nombre": "MERCADO RODRÍGUEZ – DISTRIBUIDORES",
   "rubro": "Mercado Mayorista",
   "prioridad": "G",
@@ -3122,7 +3044,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 121,
+  "id": 124,
   "nombre": "ZONA COMERCIAL MAX PAREDES – DISTRIBUIDORES",
   "rubro": "Zona Comercial Mayorista",
   "prioridad": "G",
@@ -3148,7 +3070,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 122,
+  "id": 125,
   "nombre": "ZONA GARITA DE LIMA – DISTRIBUIDORES",
   "rubro": "Zona Comercial Mayorista",
   "prioridad": "G",
@@ -3174,7 +3096,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 123,
+  "id": 126,
   "nombre": "ZONA VILLA DOLORES – EL ALTO",
   "rubro": "Zona Comercial Mayorista",
   "prioridad": "G",
@@ -3200,7 +3122,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 124,
+  "id": 127,
   "nombre": "MERCADO SENKATA – EL ALTO",
   "rubro": "Mercado y Zona Comercial",
   "prioridad": "G",
@@ -3226,7 +3148,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 125,
+  "id": 128,
   "nombre": "DISTRIBUIDORA DE ALIMENTOS ANDINA",
   "rubro": "Distribuidora de Alimentos",
   "prioridad": "G",
@@ -3252,7 +3174,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 126,
+  "id": 129,
   "nombre": "DISTRIBUIDORA GUTIÉRREZ HNOS.",
   "rubro": "Distribuidora de Alimentos",
   "prioridad": "G",
@@ -3278,7 +3200,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 127,
+  "id": 130,
   "nombre": "DISTRIBUIDORA CAMACHO – ESPECIAS Y GRANOS",
   "rubro": "Distribuidora Mayorista",
   "prioridad": "G",
@@ -3304,7 +3226,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 128,
+  "id": 131,
   "nombre": "SUPERMERCADO TARQUI – LA PAZ",
   "rubro": "Supermercado Regional",
   "prioridad": "G",
@@ -3330,7 +3252,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 129,
+  "id": 132,
   "nombre": "DISTRIBUIDORA MANZANA VERDE",
   "rubro": "Distribuidora de Insumos Gastronómicos",
   "prioridad": "G",
@@ -3356,7 +3278,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 130,
+  "id": 133,
   "nombre": "ZONA COMERCIAL UYUSTUS – PUESTOS ESPECIERÍA",
   "rubro": "Mercado Mayorista de Especias",
   "prioridad": "G",
@@ -3382,7 +3304,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 131,
+  "id": 134,
   "nombre": "IMPORTADORA ALIMENTICIA BOLIVIANA",
   "rubro": "Importadora-Distribuidora",
   "prioridad": "G",
@@ -3408,7 +3330,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 132,
+  "id": 135,
   "nombre": "ALIMENTOS CONDIMENTADOS DEL ALTIPLANO",
   "rubro": "Procesadora de Condimentos",
   "prioridad": "G",
@@ -3434,7 +3356,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 133,
+  "id": 136,
   "nombre": "DISTRIBUIDORA HERMANOS MAMANI – CONDIMENTOS",
   "rubro": "Distribuidora Mayorista",
   "prioridad": "G",
@@ -3460,7 +3382,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 134,
+  "id": 137,
   "nombre": "CONSORCIO ALIMENTARIO DEL NORTE",
   "rubro": "Distribuidora de Alimentos",
   "prioridad": "G",
@@ -3486,7 +3408,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 135,
+  "id": 138,
   "nombre": "ALIMENTOS EL SOLAR – MAYORISTA",
   "rubro": "Mayorista de Alimentos",
   "prioridad": "G",
@@ -3512,7 +3434,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 136,
+  "id": 139,
   "nombre": "DISTRIBUIDORA NORTE PACEÑA",
   "rubro": "Distribuidora Alimentos",
   "prioridad": "G",
@@ -3538,7 +3460,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 137,
+  "id": 140,
   "nombre": "COOPROALP – COOPERATIVA PRODUCTORES ALIMENTOS",
   "rubro": "Cooperativa Alimenticia",
   "prioridad": "G",
@@ -3564,7 +3486,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 138,
+  "id": 141,
   "nombre": "MAKRO WHOLESALE – LA PAZ (si existe)",
   "rubro": "Mayorista Institucional",
   "prioridad": "G",
@@ -3590,7 +3512,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 139,
+  "id": 142,
   "nombre": "DISTRIBUIDORA ROCA – INGREDIENTES",
   "rubro": "Distribuidora de Ingredientes",
   "prioridad": "G",
@@ -3616,7 +3538,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 140,
+  "id": 143,
   "nombre": "MERCADO CHOROLQUE – EL ALTO",
   "rubro": "Mercado Mayorista El Alto",
   "prioridad": "G",
@@ -3642,7 +3564,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 141,
+  "id": 144,
   "nombre": "MERCADO SENASIR – ZONA SUR",
   "rubro": "Mercado y Distribuidores",
   "prioridad": "G",
@@ -3668,7 +3590,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 142,
+  "id": 145,
   "nombre": "COOPERATIVA AGROINDUSTRIAL ALTIPLANO",
   "rubro": "Cooperativa Productora",
   "prioridad": "G",
@@ -3694,7 +3616,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 143,
+  "id": 146,
   "nombre": "ALMACENES ANDINOS – INSUMOS GASTRONÓMICOS",
   "rubro": "Almacén Gastronómico",
   "prioridad": "G",
@@ -3720,7 +3642,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 144,
+  "id": 147,
   "nombre": "INTERQUÍMICA INDUSTRIAL SA",
   "rubro": "Importadora de Ingredientes Alimenticios",
   "prioridad": "H",
@@ -3746,7 +3668,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 145,
+  "id": 148,
   "nombre": "CRUZIMEX LTDA.",
   "rubro": "Importadora-Distribuidora de Alimentos",
   "prioridad": "H",
@@ -3772,7 +3694,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 146,
+  "id": 149,
   "nombre": "ALICORP BOLIVIA",
   "rubro": "Importadora-Distribuidora de Insumos",
   "prioridad": "H",
@@ -3798,7 +3720,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 147,
+  "id": 150,
   "nombre": "INDUSTRIAL QUÍMICA SRL – IMPORTADORA",
   "rubro": "Importadora Ingredientes",
   "prioridad": "H",
@@ -3824,7 +3746,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 148,
+  "id": 151,
   "nombre": "IMPORTADORA ANDEAN FOODS",
   "rubro": "Importadora de Ingredientes",
   "prioridad": "H",
@@ -3850,7 +3772,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 149,
+  "id": 152,
   "nombre": "DISTRIBUCIONES INTERNACIONALES PACEÑAS",
   "rubro": "Importadora-Distribuidora",
   "prioridad": "H",
@@ -3876,7 +3798,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 150,
+  "id": 153,
   "nombre": "IMPORTADORA GOYA – REPRESENTACIÓN BOLIVIA",
   "rubro": "Importadora de Alimentos",
   "prioridad": "H",
@@ -3902,7 +3824,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 151,
+  "id": 154,
   "nombre": "PROVEEDORA GASTRONÓMICA ANDES SRL",
   "rubro": "Proveedor de Insumos Gastronómicos",
   "prioridad": "H",
@@ -3928,7 +3850,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 152,
+  "id": 155,
   "nombre": "IMPORTACIONES ALIMENTARIAS DEL ALTIPLANO",
   "rubro": "Importadora",
   "prioridad": "H",
@@ -3954,7 +3876,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 153,
+  "id": 156,
   "nombre": "DISTRIBUIDORA GLOBAL FOODS – LA PAZ",
   "rubro": "Distribuidora Internacional",
   "prioridad": "H",
@@ -3980,7 +3902,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 154,
+  "id": 157,
   "nombre": "BUNGE BOLIVIA",
   "rubro": "Agro-industrial / Materias Primas",
   "prioridad": "H",
@@ -4006,7 +3928,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 155,
+  "id": 158,
   "nombre": "IMPORTADORA GOURMET ANDINO",
   "rubro": "Importadora Gourmet",
   "prioridad": "H",
@@ -4032,7 +3954,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 156,
+  "id": 159,
   "nombre": "DISTRIBUIDORA CONDIMENTOS DEL PACÍFICO",
   "rubro": "Distribuidora Especializada",
   "prioridad": "H",
@@ -4058,7 +3980,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 157,
+  "id": 160,
   "nombre": "IMPORTEX BOLIVIA – INGREDIENTES",
   "rubro": "Importadora General",
   "prioridad": "H",
@@ -4084,7 +4006,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 158,
+  "id": 161,
   "nombre": "SNACK ANDINO – INDUSTRIA DE PAPAS",
   "rubro": "Snacks / Alimentos Procesados",
   "prioridad": "A+",
@@ -4110,7 +4032,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 159,
+  "id": 162,
   "nombre": "FÁBRICA DE SALSAS Y ADEREZOS LA PACEÑA",
   "rubro": "Salsas y Aderezos",
   "prioridad": "A+",
@@ -4136,7 +4058,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 160,
+  "id": 163,
   "nombre": "EMBUTIDOS ILLIMANI – CALSINA VARGAS",
   "rubro": "Embutidos",
   "prioridad": "A+",
@@ -4162,7 +4084,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 161,
+  "id": 164,
   "nombre": "EMBUTIDOS LA BENIANA – CONCENTA TICONA",
   "rubro": "Embutidos",
   "prioridad": "A+",
@@ -4188,7 +4110,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 162,
+  "id": 165,
   "nombre": "PRODUCTOS NATURALES Y ORGÁNICOS ANDINOS",
   "rubro": "Alimentos Naturales/Orgánicos",
   "prioridad": "A+",
@@ -4214,7 +4136,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 163,
+  "id": 166,
   "nombre": "CAFÉ COLISEO – CADENA BOLIVIANA",
   "rubro": "Cafetería-Restaurante Cadena",
   "prioridad": "A",
@@ -4240,7 +4162,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 164,
+  "id": 167,
   "nombre": "ROASTER – CAFÉ DE ESPECIALIDAD",
   "rubro": "Cafetería / Tostadora",
   "prioridad": "A",
@@ -4266,7 +4188,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 165,
+  "id": 168,
   "nombre": "CINNABON BOLIVIA",
   "rubro": "Cadena Internacional – Repostería",
   "prioridad": "A",
@@ -4292,7 +4214,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 166,
+  "id": 169,
   "nombre": "COCOLATTE – CAFETERÍA Y HELADERÍA",
   "rubro": "Cafetería-Heladería",
   "prioridad": "A",
@@ -4318,33 +4240,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 167,
-  "nombre": "CALIFORNIA DONUTS – REPOSTERÍA",
-  "rubro": "Cadena de Repostería",
-  "prioridad": "A",
-  "motivo": "Cadena de donuts con uso de canela, especias dulces y condimentos en rellenos y coberturas",
-  "direccion": "La Paz",
-  "zona": "La Paz",
-  "ciudad": "La Paz",
-  "telefono": "",
-  "whatsapp": "",
-  "email": "",
-  "web": "",
-  "linkedin": "",
-  "facebook": "",
-  "contacto": "Responsable de Compras / Chef Repostero",
-  "prob_condimentos": "Media",
-  "prob_canela": "Alta",
-  "volumen": "Medio",
-  "fuente": "pedidosya.com.bo listado cadenas Bolivia",
-  "puntuacion": 52,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CALIFORNIA%20DONUTS%20%E2%80%93%20REPOSTER%C3%8DA%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
-  "precision": "zona"
- },
- {
-  "id": 168,
+  "id": 171,
   "nombre": "GUSTO BOLIVIA – CADENA GASTRONÓMICA",
   "rubro": "Cadena de Restaurantes",
   "prioridad": "A",
@@ -4370,7 +4266,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 169,
+  "id": 172,
   "nombre": "BITS & CREAM – HELADERÍA",
   "rubro": "Heladería-Cadena",
   "prioridad": "A",
@@ -4396,33 +4292,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 170,
-  "nombre": "CHESTER – POLLO FRITO",
-  "rubro": "Cadena de Pollo",
-  "prioridad": "A",
-  "motivo": "Cadena boliviana de pollo frito; alta demanda de condimentos y especias para marinados y apanados",
-  "direccion": "La Paz",
-  "zona": "La Paz",
-  "ciudad": "La Paz",
-  "telefono": "",
-  "whatsapp": "",
-  "email": "",
-  "web": "",
-  "linkedin": "",
-  "facebook": "",
-  "contacto": "Responsable de Compras / Chef",
-  "prob_condimentos": "Alta",
-  "prob_canela": "Baja",
-  "volumen": "Medio",
-  "fuente": "pedidosya.com.bo cadenas Bolivia verificado",
-  "puntuacion": 62,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CHESTER%20%E2%80%93%20POLLO%20FRITO%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
-  "precision": "zona"
- },
- {
-  "id": 171,
+  "id": 174,
   "nombre": "ALABAMA CHICKEN – CADENA",
   "rubro": "Cadena de Pollo",
   "prioridad": "A",
@@ -4448,7 +4318,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 172,
+  "id": 175,
   "nombre": "BENDITA BURGER – CADENA",
   "rubro": "Cadena de Hamburguesas",
   "prioridad": "A",
@@ -4474,7 +4344,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 173,
+  "id": 176,
   "nombre": "CHURRASQUERÍA WALIKI",
   "rubro": "Restaurante Parrilla",
   "prioridad": "A",
@@ -4500,7 +4370,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 174,
+  "id": 177,
   "nombre": "BAHREM PIZZERÍA – CADENA",
   "rubro": "Cadena de Pizzería",
   "prioridad": "A",
@@ -4526,7 +4396,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 175,
+  "id": 178,
   "nombre": "AVE PIZZA – CADENA",
   "rubro": "Cadena de Pizzería",
   "prioridad": "A",
@@ -4552,7 +4422,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 176,
+  "id": 179,
   "nombre": "BEATRICE PASTAS – CADENA",
   "rubro": "Cadena de Pastas",
   "prioridad": "A",
@@ -4578,7 +4448,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 177,
+  "id": 180,
   "nombre": "CHIFA TANG – CADENA CHINA",
   "rubro": "Cadena de Comida China",
   "prioridad": "A",
@@ -4604,7 +4474,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 178,
+  "id": 181,
   "nombre": "BROASTERÍA ANITA – CADENA",
   "rubro": "Cadena de Broaster y Pollo",
   "prioridad": "A",
@@ -4630,7 +4500,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 179,
+  "id": 182,
   "nombre": "POLLO COPACABANA – EL ALTO (SUCURSAL)",
   "rubro": "Cadena de Restaurantes",
   "prioridad": "A",
@@ -4656,7 +4526,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 180,
+  "id": 183,
   "nombre": "HOTEL TORINO – LA PAZ",
   "rubro": "Hotel 3★ con Restaurante",
   "prioridad": "C",
@@ -4682,7 +4552,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 181,
+  "id": 184,
   "nombre": "HOTEL NAYJAMA",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -4708,7 +4578,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 182,
+  "id": 185,
   "nombre": "HOTEL CONTINENTAL – LA PAZ",
   "rubro": "Hotel con Restaurante",
   "prioridad": "C",
@@ -4734,7 +4604,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 183,
+  "id": 186,
   "nombre": "RESTAURANTE GUSTU – ALTA COCINA",
   "rubro": "Restaurante Gourmet",
   "prioridad": "A",
@@ -4760,7 +4630,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 184,
+  "id": 187,
   "nombre": "CLÍNICA INCOR – LA PAZ",
   "rubro": "Clínica Cardiológica con Cocina",
   "prioridad": "D",
@@ -4786,7 +4656,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 185,
+  "id": 188,
   "nombre": "HOSPITAL ARCO IRIS – LA PAZ",
   "rubro": "Hospital Privado con Cocina",
   "prioridad": "D",
@@ -4812,7 +4682,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 186,
+  "id": 189,
   "nombre": "COLEGIO JUAN PABLO II – EL ALTO",
   "rubro": "Colegio Privado con Cafetería",
   "prioridad": "F",
@@ -4838,7 +4708,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 187,
+  "id": 190,
   "nombre": "COLEGIO ADVENTISTA EL MENSAJERO",
   "rubro": "Colegio con Comedor",
   "prioridad": "F",
@@ -4864,7 +4734,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 188,
+  "id": 191,
   "nombre": "EMPRESA BOLIVIANA DE ALIMENTOS EBA",
   "rubro": "Industria Alimenticia",
   "prioridad": "A+",
@@ -4890,7 +4760,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 189,
+  "id": 192,
   "nombre": "DON PIOTR – EMBUTIDOS",
   "rubro": "Embutidos",
   "prioridad": "A+",
@@ -4916,7 +4786,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 190,
+  "id": 193,
   "nombre": "INDUSTRIA PANIFICADORA EL PAN CASERO",
   "rubro": "Panificadora",
   "prioridad": "A+",
@@ -4942,7 +4812,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 191,
+  "id": 194,
   "nombre": "INDUSTRIAS ALIMENTICIAS SAN LUIS",
   "rubro": "Industria Alimenticia",
   "prioridad": "A+",
@@ -4968,7 +4838,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 192,
+  "id": 195,
   "nombre": "MAXINN – ACHO DE SANCHEZ YOLA",
   "rubro": "Embutidos",
   "prioridad": "A+",
@@ -4994,7 +4864,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 193,
+  "id": 196,
   "nombre": "NUEVA PACEÑA – EMBUTIDOS",
   "rubro": "Embutidos",
   "prioridad": "A+",
@@ -5020,7 +4890,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 194,
+  "id": 197,
   "nombre": "SERVICIOS ALIMENTARIOS CORPORATIVOS SRL",
   "rubro": "Catering Corporativo",
   "prioridad": "B",
@@ -5046,7 +4916,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 195,
+  "id": 198,
   "nombre": "TORINO PIZZA & PASTA",
   "rubro": "Restaurante Italiano / Cadena",
   "prioridad": "A",
@@ -5072,7 +4942,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 196,
+  "id": 199,
   "nombre": "CERVECERÍA BOLIVIANA NACIONAL – RESTAURANTE",
   "rubro": "Restaurante Industrial",
   "prioridad": "A+",
@@ -5098,7 +4968,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 197,
+  "id": 200,
   "nombre": "COMEDOR INDUSTRIAL ENAF / YPFB",
   "rubro": "Comedor Industrial",
   "prioridad": "B",
@@ -5124,7 +4994,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 198,
+  "id": 201,
   "nombre": "FRIGORÍFICO PACEÑO SRL",
   "rubro": "Frigorífico y Cárnicos",
   "prioridad": "A+",
@@ -5150,7 +5020,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 199,
+  "id": 202,
   "nombre": "PROCABOL – FLORES RODRÍGUEZ WINSTON",
   "rubro": "Embutidos",
   "prioridad": "A+",
@@ -5176,7 +5046,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 200,
+  "id": 203,
   "nombre": "CHOCOLATERÍA BONBONNIERE – LA PAZ",
   "rubro": "Chocolatería y Repostería",
   "prioridad": "A+",
@@ -5202,7 +5072,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 201,
+  "id": 204,
   "nombre": "DISTRIBUIDORA PÉREZ & ASOCIADOS",
   "rubro": "Distribuidora de Alimentos",
   "prioridad": "G",
@@ -5228,7 +5098,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 202,
+  "id": 205,
   "nombre": "CHILAQUIL – RESTAURANTE MEXICANO CADENA",
   "rubro": "Restaurante Mexicano",
   "prioridad": "A",
@@ -5254,7 +5124,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 203,
+  "id": 206,
   "nombre": "LA CASA DEL CAMBA – EL BOSQUE",
   "rubro": "Restaurante – Comida Camba / Parrilla",
   "prioridad": "R",
@@ -5280,7 +5150,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 204,
+  "id": 207,
   "nombre": "ROSMARINO – EL BOSQUE",
   "rubro": "Restaurante – Italiano",
   "prioridad": "R",
@@ -5306,7 +5176,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 205,
+  "id": 208,
   "nombre": "SACHA – EL BOSQUE",
   "rubro": "Restaurante – Cocina de Autor",
   "prioridad": "R",
@@ -5332,7 +5202,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 206,
+  "id": 209,
   "nombre": "BOTÁNICA – EL BOSQUE",
   "rubro": "Restaurante – Contemporáneo",
   "prioridad": "R",
@@ -5358,7 +5228,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 207,
+  "id": 210,
   "nombre": "TAKUMI – EL BOSQUE",
   "rubro": "Restaurante – Japonés / Sushi",
   "prioridad": "R",
@@ -5384,7 +5254,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 208,
+  "id": 211,
   "nombre": "TACOBAR TOWN – EL BOSQUE",
   "rubro": "Restaurante – Mexicano",
   "prioridad": "R",
@@ -5410,7 +5280,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 209,
+  "id": 212,
   "nombre": "MANQ'A – EL BOSQUE",
   "rubro": "Restaurante – Cocina Boliviana",
   "prioridad": "R",
@@ -5436,7 +5306,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 210,
+  "id": 213,
   "nombre": "PROST – BEER GARDEN EL BOSQUE",
   "rubro": "Restaurante – Chopería / Alemana",
   "prioridad": "R",
@@ -5462,7 +5332,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 211,
+  "id": 214,
   "nombre": "OH MY DOG & FRIES – EL BOSQUE",
   "rubro": "Comida Rápida – Hot Dogs",
   "prioridad": "R",
@@ -5488,7 +5358,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 212,
+  "id": 215,
   "nombre": "VAINILLA CAFÉ – EL BOSQUE",
   "rubro": "Cafetería – Repostería",
   "prioridad": "R",
@@ -5514,17 +5384,17 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 213,
+  "id": 216,
   "nombre": "TYPICA CAFÉ – EL BOSQUE",
   "rubro": "Cafetería de Especialidad",
   "prioridad": "R",
   "motivo": "Café de especialidad con sucursales en Obrajes y El Bosque; consumo de canela para bebidas calientes",
-  "direccion": "El Bosque Boulevard, Calle 15 Calacoto (también Av. Ormachea, Obrajes)",
+  "direccion": "Cadena 8 sucursales LP: San Miguel, Sopocachi, Achumani, Centro (Batallón Colorados Ed. Tres Cruces N°40), Boulevard El Bosque, Obrajes, Satélite El Alto",
   "zona": "Calacoto - El Bosque",
   "ciudad": "La Paz",
   "telefono": "",
-  "whatsapp": "",
-  "email": "",
+  "whatsapp": "64293340",
+  "email": "contaco@typicabolivia.com",
   "web": "",
   "linkedin": "",
   "facebook": "facebook.com/typicabo",
@@ -5532,15 +5402,15 @@ var PROSPECTOS_RAW = [
   "prob_condimentos": "Baja",
   "prob_canela": "Alta",
   "volumen": "Medio",
-  "fuente": "boliviaemprende.com; dinogo.com verificado",
+  "fuente": "typica.com.bo verificado jul-2026",
   "puntuacion": 60,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=TYPICA%20CAF%C3%89%20%E2%80%93%20EL%20BOSQUE%2C%20El%20Bosque%20Boulevard%2C%20Calle%2015%20Calacoto%20%28tambi%C3%A9n%20Av.%20Ormachea%2C%20Obrajes%29%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=TYPICA%20CAF%C3%89%20%E2%80%93%20EL%20BOSQUE%2C%20Cadena%208%20sucursales%20LP%3A%20San%20Miguel%2C%20Sopocachi%2C%20Achumani%2C%20Centro%20%28Batall%C3%B3n%20Colorados%20Ed.%20Tres%20Cruces%20N%C2%B040%29%2C%20Boulevard%20El%20Bosque%2C%20Obrajes%2C%20Sat%C3%A9lite%20El%20Alto%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.5405,
   "lng": -68.0785,
   "precision": "zona"
  },
  {
-  "id": 214,
+  "id": 217,
   "nombre": "ALI PACHA – ALTA COCINA VEGANA",
   "rubro": "Restaurante – Alta Cocina Vegana",
   "prioridad": "R",
@@ -5566,7 +5436,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 215,
+  "id": 218,
   "nombre": "POPULAR COCINA BOLIVIANA",
   "rubro": "Restaurante – Cocina Boliviana Contemporánea",
   "prioridad": "R",
@@ -5592,7 +5462,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 216,
+  "id": 219,
   "nombre": "ANCESTRAL RESTAURANTE – PARRILLA",
   "rubro": "Restaurante – Parrilla de Autor",
   "prioridad": "R",
@@ -5618,7 +5488,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 217,
+  "id": 220,
   "nombre": "ARAMI – SUSHI FUSIÓN",
   "rubro": "Restaurante – Japonés Fusión",
   "prioridad": "R",
@@ -5644,7 +5514,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 218,
+  "id": 221,
   "nombre": "PHAYAWI – COCINA TAILANDESA",
   "rubro": "Restaurante – Tailandés",
   "prioridad": "R",
@@ -5670,7 +5540,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 219,
+  "id": 222,
   "nombre": "IMILLA ALZADA – PIZZERÍA ARTESANAL",
   "rubro": "Restaurante – Pizzería Artesanal",
   "prioridad": "R",
@@ -5696,7 +5566,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 220,
+  "id": 223,
   "nombre": "MI CHOLA – COCINA CONTEMPORÁNEA",
   "rubro": "Restaurante – Boliviano Contemporáneo",
   "prioridad": "R",
@@ -5722,7 +5592,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 221,
+  "id": 224,
   "nombre": "LA RUFINA BOLIVIA",
   "rubro": "Restaurante – Cocina Latina",
   "prioridad": "R",
@@ -5748,7 +5618,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 222,
+  "id": 225,
   "nombre": "TERRA RESTAURANT",
   "rubro": "Restaurante – Internacional Fusión",
   "prioridad": "R",
@@ -5774,7 +5644,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 223,
+  "id": 226,
   "nombre": "EL BESTIARIO – CARNES AHUMADAS",
   "rubro": "Restaurante – Ahumados / Internacional",
   "prioridad": "R",
@@ -5800,7 +5670,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 224,
+  "id": 227,
   "nombre": "LA TRANQUERA – PARRILLA",
   "rubro": "Restaurante – Parrilla / Churrasquería",
   "prioridad": "R",
@@ -5826,7 +5696,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 225,
+  "id": 228,
   "nombre": "CHURRASQUERÍA EL ARRIERO",
   "rubro": "Restaurante – Churrasquería Argentina",
   "prioridad": "R",
@@ -5852,7 +5722,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 226,
+  "id": 229,
   "nombre": "SABOR GAUCHO – PARRILLA ARGENTINA",
   "rubro": "Restaurante – Parrilla Argentina",
   "prioridad": "R",
@@ -5878,7 +5748,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 227,
+  "id": 230,
   "nombre": "PUERTO MADERO – PARRILLA",
   "rubro": "Restaurante – Parrilla",
   "prioridad": "R",
@@ -5904,7 +5774,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 228,
+  "id": 231,
   "nombre": "EL QUEBRACHO – CHURRASQUERÍA",
   "rubro": "Restaurante – Churrasquería",
   "prioridad": "R",
@@ -5930,7 +5800,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 229,
+  "id": 232,
   "nombre": "LAS BRASAS DEL TORO",
   "rubro": "Restaurante – Parrilla",
   "prioridad": "R",
@@ -5956,7 +5826,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 230,
+  "id": 233,
   "nombre": "CHURRASQUERÍA SAN MARCO",
   "rubro": "Restaurante – Churrasquería",
   "prioridad": "R",
@@ -5982,7 +5852,33 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 231,
+  "id": 234,
+  "nombre": "EL FOGONCITO DE MIKY",
+  "rubro": "Restaurante – Parrilla",
+  "prioridad": "R",
+  "motivo": "Parrilla en San Miguel; consumo de especias para carnes",
+  "direccion": "Calle Gabriel René Moreno N° 1187, San Miguel",
+  "zona": "San Miguel",
+  "ciudad": "La Paz",
+  "telefono": "2772127",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Administrador",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com verificado",
+  "puntuacion": 59,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EL%20FOGONCITO%20DE%20MIKY%2C%20Calle%20Gabriel%20Ren%C3%A9%20Moreno%20N%C2%B0%201187%2C%20San%20Miguel%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.532,
+  "lng": -68.085,
+  "precision": "zona"
+ },
+ {
+  "id": 235,
   "nombre": "TINTO – CARNES ARGENTINAS",
   "rubro": "Restaurante – Parrilla Premium",
   "prioridad": "R",
@@ -6008,7 +5904,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 232,
+  "id": 236,
   "nombre": "THE STEAKHOUSE",
   "rubro": "Restaurante – Steakhouse",
   "prioridad": "R",
@@ -6034,7 +5930,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 233,
+  "id": 237,
   "nombre": "ASAU – PARRILLA BBQ",
   "rubro": "Restaurante – Parrilla / BBQ",
   "prioridad": "R",
@@ -6060,7 +5956,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 234,
+  "id": 238,
   "nombre": "BRAS BROS – PARRILLA",
   "rubro": "Restaurante – Parrilla / Grill",
   "prioridad": "R",
@@ -6086,7 +5982,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 235,
+  "id": 239,
   "nombre": "EL POLLIN",
   "rubro": "Restaurante – Pollos y Parrilla",
   "prioridad": "R",
@@ -6112,7 +6008,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 236,
+  "id": 240,
   "nombre": "COZZOLISI PIZZA & PASTA",
   "rubro": "Restaurante – Pizzería (3 sucursales)",
   "prioridad": "R",
@@ -6138,7 +6034,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 237,
+  "id": 241,
   "nombre": "PIZZA NOSTRA",
   "rubro": "Restaurante – Pizzería (4 sucursales)",
   "prioridad": "R",
@@ -6164,7 +6060,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 238,
+  "id": 242,
   "nombre": "MOZZARELLA PIZZA",
   "rubro": "Restaurante – Pizzería",
   "prioridad": "R",
@@ -6190,7 +6086,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 239,
+  "id": 243,
   "nombre": "PIZZERIA BELLA CIAO",
   "rubro": "Restaurante – Pizzería",
   "prioridad": "R",
@@ -6216,7 +6112,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 240,
+  "id": 244,
   "nombre": "EFÍMERA – PIZZERÍA ARTESANAL",
   "rubro": "Restaurante – Pizzería Artesanal",
   "prioridad": "R",
@@ -6242,7 +6138,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 241,
+  "id": 245,
   "nombre": "LONDON PIZZERÍA PASTELERÍA",
   "rubro": "Restaurante – Pizzería y Pastelería",
   "prioridad": "R",
@@ -6268,7 +6164,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 242,
+  "id": 246,
   "nombre": "TUTTO PASTA",
   "rubro": "Restaurante – Italiano",
   "prioridad": "R",
@@ -6294,7 +6190,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 243,
+  "id": 247,
   "nombre": "FELLINI – RISTORANTE",
   "rubro": "Restaurante – Italiano",
   "prioridad": "R",
@@ -6320,7 +6216,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 244,
+  "id": 248,
   "nombre": "PRONTO DALICATESSEN",
   "rubro": "Restaurante – Italiano",
   "prioridad": "R",
@@ -6346,7 +6242,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 245,
+  "id": 249,
   "nombre": "PROPIEDAD PÚBLICA – ITALIANO",
   "rubro": "Restaurante – Italiano Contemporáneo",
   "prioridad": "R",
@@ -6372,7 +6268,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 246,
+  "id": 250,
   "nombre": "JARDÍN DE ASIA – LA PAZ",
   "rubro": "Restaurante – Asiático Fusión",
   "prioridad": "R",
@@ -6398,7 +6294,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 247,
+  "id": 251,
   "nombre": "NEW SAKURA – JAPONÉS",
   "rubro": "Restaurante – Japonés",
   "prioridad": "R",
@@ -6424,7 +6320,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 248,
+  "id": 252,
   "nombre": "FURUSATO – JAPONÉS",
   "rubro": "Restaurante – Japonés",
   "prioridad": "R",
@@ -6450,12 +6346,12 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 249,
+  "id": 253,
   "nombre": "KEN CHAN – JAPONÉS",
   "rubro": "Restaurante – Japonés",
   "prioridad": "R",
   "motivo": "Restaurante japonés clásico; especias asiáticas y sazonadores",
-  "direccion": "Av. Arce callejón frente a ex Ketal",
+  "direccion": "Calle Batallón Colorados N° 98, Edif. El Cóndor",
   "zona": "Centro",
   "ciudad": "La Paz",
   "telefono": "2442292",
@@ -6470,13 +6366,13 @@ var PROSPECTOS_RAW = [
   "volumen": "Medio",
   "fuente": "dinogo.com; tripadvisor verificado",
   "puntuacion": 57,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=KEN%20CHAN%20%E2%80%93%20JAPON%C3%89S%2C%20Av.%20Arce%20callej%C3%B3n%20frente%20a%20ex%20Ketal%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=KEN%20CHAN%20%E2%80%93%20JAPON%C3%89S%2C%20Calle%20Batall%C3%B3n%20Colorados%20N%C2%B0%2098%2C%20Edif.%20El%20C%C3%B3ndor%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.4957,
   "lng": -68.1335,
   "precision": "zona"
  },
  {
-  "id": 250,
+  "id": 254,
   "nombre": "HAKU SUSHI",
   "rubro": "Restaurante – Sushi",
   "prioridad": "R",
@@ -6502,7 +6398,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 251,
+  "id": 255,
   "nombre": "DELI SUSHI",
   "rubro": "Restaurante – Sushi",
   "prioridad": "R",
@@ -6528,7 +6424,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 252,
+  "id": 256,
   "nombre": "CHABUCA – COCINA PERUANA",
   "rubro": "Restaurante – Peruano / Mariscos",
   "prioridad": "R",
@@ -6554,7 +6450,33 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 253,
+  "id": 257,
+  "nombre": "SACH'A YUNTAS – NIKKEI",
+  "rubro": "Restaurante – Peruano Nikkei",
+  "prioridad": "R",
+  "motivo": "Cocina peruana Nikkei top TripAdvisor; ají amarillo, comino, jengibre, especias fusión",
+  "direccion": "Calle Enrique Costas",
+  "zona": "Zona Sur",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Chef / Administrador",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "tripadvisor.com; dinogo.com verificado",
+  "puntuacion": 62,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SACH%27A%20YUNTAS%20%E2%80%93%20NIKKEI%2C%20Calle%20Enrique%20Costas%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.54,
+  "lng": -68.08,
+  "precision": "zona"
+ },
+ {
+  "id": 258,
   "nombre": "PALADAR COZINHA BRASILEIRA",
   "rubro": "Restaurante – Brasileño (2 sucursales)",
   "prioridad": "R",
@@ -6580,7 +6502,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 254,
+  "id": 259,
   "nombre": "RINCÓN ESPAÑOL",
   "rubro": "Restaurante – Español",
   "prioridad": "R",
@@ -6606,12 +6528,12 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 255,
+  "id": 260,
   "nombre": "LA SUISSE",
   "rubro": "Restaurante – Suizo / Europeo",
   "prioridad": "R",
   "motivo": "Restaurante suizo clásico en Zona Sur; pimienta, nuez moscada, especias europeas",
-  "direccion": "Green Tower, Calle 18 de Calacoto",
+  "direccion": "Av. Muñoz Reyes N° 1710, Cota Cota",
   "zona": "Cota Cota",
   "ciudad": "La Paz",
   "telefono": "2793160",
@@ -6626,13 +6548,13 @@ var PROSPECTOS_RAW = [
   "volumen": "Medio",
   "fuente": "tripadvisor.com verificado",
   "puntuacion": 58,
-  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=LA%20SUISSE%2C%20Green%20Tower%2C%20Calle%2018%20de%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=LA%20SUISSE%2C%20Av.%20Mu%C3%B1oz%20Reyes%20N%C2%B0%201710%2C%20Cota%20Cota%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.539,
   "lng": -68.062,
   "precision": "zona"
  },
  {
-  "id": 256,
+  "id": 261,
   "nombre": "RESTAURANT VIENNA",
   "rubro": "Restaurante – Austriaco / Internacional",
   "prioridad": "R",
@@ -6658,7 +6580,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 257,
+  "id": 262,
   "nombre": "LA CUEVA – MEXICANO",
   "rubro": "Restaurante – Mexicano",
   "prioridad": "R",
@@ -6684,7 +6606,33 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 258,
+  "id": 263,
+  "nombre": "VINAPHO – COCINA ASIÁTICA",
+  "rubro": "Restaurante – Vietnamita / Tailandés",
+  "prioridad": "R",
+  "motivo": "Cocina vietnamita-tailandesa; jengibre, chili, cilantro, especias del sudeste asiático",
+  "direccion": "Calle Murillo N° 826",
+  "zona": "Centro",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Chef / Administrador",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "dinogo.com verificado",
+  "puntuacion": 59,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=VINAPHO%20%E2%80%93%20COCINA%20ASI%C3%81TICA%2C%20Calle%20Murillo%20N%C2%B0%20826%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.4957,
+  "lng": -68.1335,
+  "precision": "zona"
+ },
+ {
+  "id": 264,
   "nombre": "BOM KOREAN FOOD",
   "rubro": "Restaurante – Coreano",
   "prioridad": "R",
@@ -6710,7 +6658,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 259,
+  "id": 265,
   "nombre": "SUMAQ MIKHUY – COCINA NACIONAL",
   "rubro": "Restaurante – Comida Boliviana",
   "prioridad": "R",
@@ -6736,7 +6684,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 260,
+  "id": 266,
   "nombre": "EL MOTACÚ – COCINA CRUCEÑA",
   "rubro": "Restaurante – Comida del Oriente",
   "prioridad": "R",
@@ -6762,7 +6710,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 261,
+  "id": 267,
   "nombre": "SUCREMANTA – COCINA CHUQUISAQUEÑA",
   "rubro": "Restaurante – Comida de Sucre",
   "prioridad": "R",
@@ -6788,7 +6736,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 262,
+  "id": 268,
   "nombre": "ROYAL CHICKEN",
   "rubro": "Restaurante – Pollos",
   "prioridad": "R",
@@ -6814,7 +6762,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 263,
+  "id": 269,
   "nombre": "CHICHARRONES IRPAVI",
   "rubro": "Restaurante – Chicharronería",
   "prioridad": "R",
@@ -6840,7 +6788,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 264,
+  "id": 270,
   "nombre": "API HAPPY – CADENA DE API",
   "rubro": "Cafetería – Api y Pasteles (3 suc.)",
   "prioridad": "R",
@@ -6866,7 +6814,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 265,
+  "id": 271,
   "nombre": "SUMA URU – RADISSON",
   "rubro": "Restaurante – Hotel Internacional",
   "prioridad": "R",
@@ -6892,7 +6840,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 266,
+  "id": 272,
   "nombre": "WACATAY – RESTAURANTE",
   "rubro": "Restaurante – Andino Contemporáneo",
   "prioridad": "R",
@@ -6918,7 +6866,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 267,
+  "id": 273,
   "nombre": "HIGHLANDERS – RESTOBAR",
   "rubro": "Restaurante – Internacional / Restobar",
   "prioridad": "R",
@@ -6944,7 +6892,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 268,
+  "id": 274,
   "nombre": "LA BASTILLE – FRANCÉS",
   "rubro": "Restaurante – Francés",
   "prioridad": "R",
@@ -6970,7 +6918,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 269,
+  "id": 275,
   "nombre": "ALTAMAR – MARISCOS",
   "rubro": "Restaurante – Mariscos",
   "prioridad": "R",
@@ -6996,7 +6944,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 270,
+  "id": 276,
   "nombre": "ROJO – RESTAURANTE",
   "rubro": "Restaurante – Contemporáneo",
   "prioridad": "R",
@@ -7022,7 +6970,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 271,
+  "id": 277,
   "nombre": "FELLAS – RESTOBAR",
   "rubro": "Restaurante – Restobar",
   "prioridad": "R",
@@ -7048,7 +6996,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 272,
+  "id": 278,
   "nombre": "ALTURA – RESTAURANTE",
   "rubro": "Restaurante – De Autor",
   "prioridad": "R",
@@ -7074,7 +7022,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 273,
+  "id": 279,
   "nombre": "GARITA – RESTAURANTE",
   "rubro": "Restaurante – Boliviano Contemporáneo",
   "prioridad": "R",
@@ -7100,7 +7048,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 274,
+  "id": 280,
   "nombre": "CAFÉ DEL MUNDO",
   "rubro": "Cafetería – Internacional",
   "prioridad": "R",
@@ -7126,7 +7074,33 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 275,
+  "id": 281,
+  "nombre": "NAMAS TE – INTERNACIONAL",
+  "rubro": "Restaurante – Internacional Vegetariano",
+  "prioridad": "R",
+  "motivo": "Restaurante internacional-vegetariano; curry, cúrcuma, jengibre y especias variadas",
+  "direccion": "Zona Centro",
+  "zona": "Centro",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Chef / Administrador",
+  "prob_condimentos": "Media",
+  "prob_canela": "Media",
+  "volumen": "Bajo",
+  "fuente": "tripadvisor.com verificado 2026",
+  "puntuacion": 52,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=NAMAS%20TE%20%E2%80%93%20INTERNACIONAL%2C%20Zona%20Centro%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.4957,
+  "lng": -68.1335,
+  "precision": "zona"
+ },
+ {
+  "id": 282,
   "nombre": "ZOOTOPIA – COMIDA CHINA",
   "rubro": "Restaurante – Chino",
   "prioridad": "R",
@@ -7152,7 +7126,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 276,
+  "id": 283,
   "nombre": "GATO'S GRILL",
   "rubro": "Restaurante – Parrilla / Grill",
   "prioridad": "R",
@@ -7178,7 +7152,7 @@ var PROSPECTOS_RAW = [
   "precision": "zona"
  },
  {
-  "id": 277,
+  "id": 284,
   "nombre": "LA CAPITAL – HAMBURGUESAS Y ALITAS",
   "rubro": "Restaurante – Hamburguesas / Alitas",
   "prioridad": "R",
@@ -7201,6 +7175,1254 @@ var PROSPECTOS_RAW = [
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=LA%20CAPITAL%20%E2%80%93%20HAMBURGUESAS%20Y%20ALITAS%2C%20Sopocachi%2C%20La%20Paz%2C%20Bolivia",
   "lat": -16.509,
   "lng": -68.128,
+  "precision": "zona"
+ },
+ {
+  "id": 285,
+  "nombre": "PACEÑA LA SALTEÑA – OFICINA CENTRAL",
+  "rubro": "Salteñería – Cadena (5 suc.)",
+  "prioridad": "A",
+  "motivo": "Cadena líder de salteñas; compra centralizada de comino, pimienta, ají colorado y especias; 5 sucursales",
+  "direccion": "Oficina central: Calle 19 de Calacoto, Edif. Las Dos Marías (suc: Miraflores Av. Brasil 1667, Centro Loayza 233, Sopocachi 20 de Octubre)",
+  "zona": "Calacoto",
+  "ciudad": "La Paz",
+  "telefono": "2791863 / 2772937",
+  "whatsapp": "77730653",
+  "email": "marketing@pacenalasaltena.com",
+  "web": "pacenalasaltena.com",
+  "linkedin": "",
+  "facebook": "facebook.com/Pacena.La.Saltena",
+  "contacto": "Gerente / Jefe de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Alto",
+  "fuente": "pacenalasaltena.com verificado jul-2026",
+  "puntuacion": 82,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PACE%C3%91A%20LA%20SALTE%C3%91A%20%E2%80%93%20OFICINA%20CENTRAL%2C%20Oficina%20central%3A%20Calle%2019%20de%20Calacoto%2C%20Edif.%20Las%20Dos%20Mar%C3%ADas%20%28suc%3A%20Miraflores%20Av.%20Brasil%201667%2C%20Centro%20Loayza%20233%2C%20Sopocachi%2020%20de%20Octubre%29%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.539,
+  "lng": -68.077,
+  "precision": "zona"
+ },
+ {
+  "id": 286,
+  "nombre": "SALTEÑERÍA EL HORNITO",
+  "rubro": "Salteñería (3 locales)",
+  "prioridad": "A",
+  "motivo": "Salteñería con 3 locales (Miraflores, Calacoto, Sopocachi); comino, ají, pimienta en volumen diario",
+  "direccion": "Av. Busch N° 2027, Miraflores / Av. Ballivián N° 1375 e/ c.20-21, Calacoto",
+  "zona": "Miraflores / Calacoto",
+  "ciudad": "La Paz",
+  "telefono": "2774739",
+  "whatsapp": "61117567",
+  "email": "",
+  "web": "el-hornito.com",
+  "linkedin": "",
+  "facebook": "facebook.com Salteñas el Hornito",
+  "contacto": "Propietario / Jefe de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "near-place.com; boliviayp.com verificado jul-2026",
+  "puntuacion": 72,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91ER%C3%8DA%20EL%20HORNITO%2C%20Av.%20Busch%20N%C2%B0%202027%2C%20Miraflores%20/%20Av.%20Ballivi%C3%A1n%20N%C2%B0%201375%20e/%20c.20-21%2C%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.539,
+  "lng": -68.077,
+  "precision": "zona"
+ },
+ {
+  "id": 287,
+  "nombre": "SALTUCAS SALTEÑAS",
+  "rubro": "Salteñería (2 suc.)",
+  "prioridad": "B",
+  "motivo": "Salteñería con casa matriz Sopocachi y sucursal San Miguel; especias criollas en producción diaria",
+  "direccion": "Casa matriz: Av. 6 de Agosto N° 2287, Sopocachi (suc: Av. Montenegro e/ c.21-22, San Miguel)",
+  "zona": "Sopocachi / San Miguel",
+  "ciudad": "La Paz",
+  "telefono": "2912058 / 2772033",
+  "whatsapp": "70550303",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com verificado jul-2026",
+  "puntuacion": 66,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTUCAS%20SALTE%C3%91AS%2C%20Casa%20matriz%3A%20Av.%206%20de%20Agosto%20N%C2%B0%202287%2C%20Sopocachi%20%28suc%3A%20Av.%20Montenegro%20e/%20c.21-22%2C%20San%20Miguel%29%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.532,
+  "lng": -68.085,
+  "precision": "zona"
+ },
+ {
+  "id": 288,
+  "nombre": "SALTEÑERÍA COPACABANA",
+  "rubro": "Salteñería",
+  "prioridad": "B",
+  "motivo": "Salteñería tradicional de Miraflores; comino, ají y pimienta para producción diaria",
+  "direccion": "Av. Saavedra N° 1264",
+  "zona": "Miraflores",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "saltenascopacabana.com",
+  "linkedin": "",
+  "facebook": "facebook.com/salteneria.copacabana",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com verificado",
+  "puntuacion": 62,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91ER%C3%8DA%20COPACABANA%2C%20Av.%20Saavedra%20N%C2%B0%201264%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.499,
+  "lng": -68.122,
+  "precision": "zona"
+ },
+ {
+  "id": 289,
+  "nombre": "SALTEÑAS LUCIÉRNAGA",
+  "rubro": "Salteñería",
+  "prioridad": "B",
+  "motivo": "Salteñería tradicional de Miraflores; especias criollas",
+  "direccion": "Calle Panamá N° 1156",
+  "zona": "Miraflores",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com verificado",
+  "puntuacion": 58,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91AS%20LUCI%C3%89RNAGA%2C%20Calle%20Panam%C3%A1%20N%C2%B0%201156%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.499,
+  "lng": -68.122,
+  "precision": "zona"
+ },
+ {
+  "id": 290,
+  "nombre": "SALTEÑERÍA EL PÍCARO",
+  "rubro": "Salteñería",
+  "prioridad": "B",
+  "motivo": "Salteñería con delivery en Sopocachi; comino, ají colorado y especias",
+  "direccion": "Calle Fernando Guachalla esq. Ecuador",
+  "zona": "Sopocachi",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "70143699",
+  "email": "",
+  "web": "salteneriaelpicaro.com",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "salteneriaelpicaro.com verificado jul-2026",
+  "puntuacion": 60,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91ER%C3%8DA%20EL%20P%C3%8DCARO%2C%20Calle%20Fernando%20Guachalla%20esq.%20Ecuador%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.509,
+  "lng": -68.128,
+  "precision": "zona"
+ },
+ {
+  "id": 291,
+  "nombre": "SALTEÑAS KORI",
+  "rubro": "Salteñería y Pastelería",
+  "prioridad": "B",
+  "motivo": "Salteñería-pastelería en Miraflores; especias criollas y canela para repostería",
+  "direccion": "Calle Panamá esq. EEUU N° 1504",
+  "zona": "Miraflores",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com verificado",
+  "puntuacion": 59,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91AS%20KORI%2C%20Calle%20Panam%C3%A1%20esq.%20EEUU%20N%C2%B0%201504%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.499,
+  "lng": -68.122,
+  "precision": "zona"
+ },
+ {
+  "id": 292,
+  "nombre": "SALTEÑAS POTOSINAS – CALACOTO",
+  "rubro": "Salteñería",
+  "prioridad": "B",
+  "motivo": "Salteñería en Calacoto; comino, ají y especias tradicionales",
+  "direccion": "Calle 10 de Calacoto",
+  "zona": "Calacoto",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "facebook.com Salteñas Potosinas",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Bajo",
+  "fuente": "yandex maps; facebook verificado",
+  "puntuacion": 55,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91AS%20POTOSINAS%20%E2%80%93%20CALACOTO%2C%20Calle%2010%20de%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.539,
+  "lng": -68.077,
+  "precision": "zona"
+ },
+ {
+  "id": 293,
+  "nombre": "ALEXANDER COFFEE – OFICINA CENTRAL",
+  "rubro": "Cafetería – Cadena (9 suc. LP)",
+  "prioridad": "A",
+  "motivo": "Cadena de cafés con ~9 sucursales en La Paz + aeropuerto; canela, vainilla, especias dulces para bebidas y repostería (verificar actividad: sin presencia en PedidosYa jul-2026)",
+  "direccion": "Oficina central: Calle Juan de Vargas N° 2370, Miraflores (suc: Prado 16 de Julio 1832, Av. 20 de Octubre 2463, Av. Arce 2631 Multicine, San Miguel c.21 y Montenegro 1336, aeropuerto)",
+  "zona": "Miraflores",
+  "ciudad": "La Paz",
+  "telefono": "2221259 / 2312790 / 2431006",
+  "whatsapp": "",
+  "email": "contacto@alexander-coffee.com",
+  "web": "alexander-coffee.com",
+  "linkedin": "",
+  "facebook": "instagram.com/alexandercoffeebo",
+  "contacto": "Gerencia General / Jefe de Compras",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Alto",
+  "fuente": "alexander-coffee.com/contactanos verificado jul-2026 (estado por confirmar)",
+  "puntuacion": 70,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=ALEXANDER%20COFFEE%20%E2%80%93%20OFICINA%20CENTRAL%2C%20Oficina%20central%3A%20Calle%20Juan%20de%20Vargas%20N%C2%B0%202370%2C%20Miraflores%20%28suc%3A%20Prado%2016%20de%20Julio%201832%2C%20Av.%2020%20de%20Octubre%202463%2C%20Av.%20Arce%202631%20Multicine%2C%20San%20Miguel%20c.21%20y%20Montenegro%201336%2C%20aeropuerto%29%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.499,
+  "lng": -68.122,
+  "precision": "zona"
+ },
+ {
+  "id": 294,
+  "nombre": "VAINILLA COFFEE COMPANY – SAN MIGUEL",
+  "rubro": "Cafetería-Bistró",
+  "prioridad": "R",
+  "motivo": "Café-bistró de dos pisos en San Miguel; canela, vainilla y especias dulces para bebidas y cocina",
+  "direccion": "Calle Federico Ferrecio N° 1303 esq. René Moreno, San Miguel",
+  "zona": "San Miguel",
+  "ciudad": "La Paz",
+  "telefono": "2770155",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "facebook.com/VainillaCoffeeCompany",
+  "contacto": "Administrador / Chef",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "tripadvisor.com; facebook verificado jul-2026",
+  "puntuacion": 63,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=VAINILLA%20COFFEE%20COMPANY%20%E2%80%93%20SAN%20MIGUEL%2C%20Calle%20Federico%20Ferrecio%20N%C2%B0%201303%20esq.%20Ren%C3%A9%20Moreno%2C%20San%20Miguel%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.532,
+  "lng": -68.085,
+  "precision": "zona"
+ },
+ {
+  "id": 295,
+  "nombre": "JUAN VALDEZ CAFÉ BOLIVIA – LA PAZ",
+  "rubro": "Cafetería – Cadena Internacional",
+  "prioridad": "A",
+  "motivo": "Franquicia colombiana con 2+ locales activos (San Miguel y Torres Mall, activos en PedidosYa jul-2026); canela y especias dulces",
+  "direccion": "Suc. Torres Mall: Av. Arce, Plaza Isabel la Católica / Suc. San Miguel",
+  "zona": "San Jorge / San Miguel",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "juanvaldezbolivia.com",
+  "linkedin": "",
+  "facebook": "instagram.com/juanvaldezcafebo",
+  "contacto": "Gerente de Operaciones",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "pedidosya.com.bo activo jul-2026",
+  "puntuacion": 64,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=JUAN%20VALDEZ%20CAF%C3%89%20BOLIVIA%20%E2%80%93%20LA%20PAZ%2C%20Suc.%20Torres%20Mall%3A%20Av.%20Arce%2C%20Plaza%20Isabel%20la%20Cat%C3%B3lica%20/%20Suc.%20San%20Miguel%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.532,
+  "lng": -68.085,
+  "precision": "zona"
+ },
+ {
+  "id": 296,
+  "nombre": "CLUB DE TENIS LA PAZ",
+  "rubro": "Club Social-Deportivo con Restaurante",
+  "prioridad": "B",
+  "motivo": "Club de tenis con restaurante y servicio social para socios y eventos; compra regular de condimentos",
+  "direccion": "Av. Arequipa N° 8450, La Florida / Los Pinos",
+  "zona": "Los Pinos",
+  "ciudad": "La Paz",
+  "telefono": "2792590 / 2792383 / 2792487",
+  "whatsapp": "",
+  "email": "",
+  "web": "ctlp.bo",
+  "linkedin": "",
+  "facebook": "facebook.com/CTLP.OFICIAL",
+  "contacto": "Administrador / Chef del Club",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviayp.com; ctlp.bo verificado jul-2026",
+  "puntuacion": 68,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CLUB%20DE%20TENIS%20LA%20PAZ%2C%20Av.%20Arequipa%20N%C2%B0%208450%2C%20La%20Florida%20/%20Los%20Pinos%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.535,
+  "lng": -68.076,
+  "precision": "zona"
+ },
+ {
+  "id": 297,
+  "nombre": "LA PAZ GOLF CLUB – MALLASILLA",
+  "rubro": "Club Deportivo con Restaurante y Salones",
+  "prioridad": "B",
+  "motivo": "Golf club con restaurante y salones de eventos; banquetes regulares",
+  "direccion": "Zona Mallasilla s/n",
+  "zona": "Mallasilla",
+  "ciudad": "La Paz",
+  "telefono": "2745124 / 2745462",
+  "whatsapp": "76733109",
+  "email": "",
+  "web": "lapazgolfclub.com",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Administrador / Chef",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "lapazgolfclub.com/contacto verificado jul-2026",
+  "puntuacion": 67,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=LA%20PAZ%20GOLF%20CLUB%20%E2%80%93%20MALLASILLA%2C%20Zona%20Mallasilla%20s/n%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.545,
+  "lng": -68.135,
+  "precision": "zona"
+ },
+ {
+  "id": 298,
+  "nombre": "CLUB HÍPICO LOS SARGENTOS",
+  "rubro": "Club Deportivo-Social con Restaurante",
+  "prioridad": "B",
+  "motivo": "Country club multideportivo con restaurante y eventos",
+  "direccion": "Av. Los Sargentos N° 1000 esq. Av. Costanera, Bajo Llojeta",
+  "zona": "Obrajes / Costanera",
+  "ciudad": "La Paz",
+  "telefono": "2788000 / 2393090",
+  "whatsapp": "",
+  "email": "",
+  "web": "sargentos.net",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Administrador / Chef",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviayp.com verificado jul-2026",
+  "puntuacion": 65,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CLUB%20H%C3%8DPICO%20LOS%20SARGENTOS%2C%20Av.%20Los%20Sargentos%20N%C2%B0%201000%20esq.%20Av.%20Costanera%2C%20Bajo%20Llojeta%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.525,
+  "lng": -68.104,
+  "precision": "zona"
+ },
+ {
+  "id": 299,
+  "nombre": "CÍRCULO DE OFICIALES DEL EJÉRCITO (COE)",
+  "rubro": "Club Institucional con Salones",
+  "prioridad": "B",
+  "motivo": "Club militar con instalaciones sociales y salones de eventos; banquetes institucionales",
+  "direccion": "Calle 16 N° 2150, Calacoto",
+  "zona": "Calacoto",
+  "ciudad": "La Paz",
+  "telefono": "2772823",
+  "whatsapp": "",
+  "email": "",
+  "web": "coe-ejercito.com.bo",
+  "linkedin": "",
+  "facebook": "facebook.com/coe.bolivia",
+  "contacto": "Administrador / Jefe de Banquetes",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "telefonos-bolivia.com verificado",
+  "puntuacion": 63,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=C%C3%8DRCULO%20DE%20OFICIALES%20DEL%20EJ%C3%89RCITO%20%28COE%29%2C%20Calle%2016%20N%C2%B0%202150%2C%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.539,
+  "lng": -68.077,
+  "precision": "zona"
+ },
+ {
+  "id": 300,
+  "nombre": "CLUB ALEMÁN LA PAZ (DEUTSCHER KLUB)",
+  "rubro": "Club Social con Restaurante",
+  "prioridad": "B",
+  "motivo": "Club social con restaurante y eventos en Achumani",
+  "direccion": "Av. Omar Torrijos N° 32, Achumani",
+  "zona": "Achumani",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "78899968",
+  "email": "recepcion@clubaleman.com.bo",
+  "web": "clubaleman.com.bo",
+  "linkedin": "",
+  "facebook": "facebook.com/ClubAlemanLaPaz",
+  "contacto": "Recepción / Administrador",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "clubaleman.com.bo/contact verificado jul-2026",
+  "puntuacion": 64,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CLUB%20ALEM%C3%81N%20LA%20PAZ%20%28DEUTSCHER%20KLUB%29%2C%20Av.%20Omar%20Torrijos%20N%C2%B0%2032%2C%20Achumani%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.545,
+  "lng": -68.062,
+  "precision": "zona"
+ },
+ {
+  "id": 301,
+  "nombre": "CLUB DE LA PAZ",
+  "rubro": "Club Social Tradicional con Banquetes",
+  "prioridad": "B",
+  "motivo": "Club social histórico con salones de banquetes (Salón Centenario 250 pers.) y confitería propia",
+  "direccion": "Sede central: Av. Mcal. Santa Cruz esq. Camacho (sede deportiva: c. Los Tumbos N° 80, Auquisamaña)",
+  "zona": "Centro",
+  "ciudad": "La Paz",
+  "telefono": "2331401 / 2357857 / 2793394",
+  "whatsapp": "74260265",
+  "email": "gerencia@clubdelapaz.org.bo",
+  "web": "clubdelapaz.org.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerencia / Jefe de Banquetes",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "clubdelapaz.org.bo verificado jul-2026",
+  "puntuacion": 66,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CLUB%20DE%20LA%20PAZ%2C%20Sede%20central%3A%20Av.%20Mcal.%20Santa%20Cruz%20esq.%20Camacho%20%28sede%20deportiva%3A%20c.%20Los%20Tumbos%20N%C2%B0%2080%2C%20Auquisama%C3%B1a%29%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.4957,
+  "lng": -68.1335,
+  "precision": "zona"
+ },
+ {
+  "id": 302,
+  "nombre": "AUTOMÓVIL CLUB BOLIVIANO",
+  "rubro": "Club Social",
+  "prioridad": "C",
+  "motivo": "Sede social con instalaciones para socios y eventos en Calacoto",
+  "direccion": "C. Gral. Inofuentes N° 7823, calle 13 esq. Av. Ballivián, Calacoto",
+  "zona": "Calacoto",
+  "ciudad": "La Paz",
+  "telefono": "2795739 / 2785970",
+  "whatsapp": "",
+  "email": "",
+  "web": "acbbolivia.com.bo",
+  "linkedin": "",
+  "facebook": "facebook.com/AutomovilClubBoliviano",
+  "contacto": "Administrador",
+  "prob_condimentos": "Media",
+  "prob_canela": "Baja",
+  "volumen": "Bajo",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 52,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=AUTOM%C3%93VIL%20CLUB%20BOLIVIANO%2C%20C.%20Gral.%20Inofuentes%20N%C2%B0%207823%2C%20calle%2013%20esq.%20Av.%20Ballivi%C3%A1n%2C%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.539,
+  "lng": -68.077,
+  "precision": "zona"
+ },
+ {
+  "id": 303,
+  "nombre": "NEWREST BOLIVIA SOPORTE SRL",
+  "rubro": "Catering Minero / Aéreo / Remoto",
+  "prioridad": "B",
+  "motivo": "Multinacional de catering; opera campamento de Minera San Cristóbal, ~430 empleados, 10 sitios; gran comprador de condimentos",
+  "direccion": "Km 11 Carr. al Norte, Parque Empresarial, Santa Cruz (opera campamentos del altiplano paceño)",
+  "zona": "Santa Cruz (opera altiplano)",
+  "ciudad": "Santa Cruz",
+  "telefono": "3469898 / 3888224",
+  "whatsapp": "",
+  "email": "",
+  "web": "newrest.eu/country/bolivia",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente de Compras / Supply Chain",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Alto",
+  "fuente": "newrest.eu verificado jul-2026",
+  "puntuacion": 76,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=NEWREST%20BOLIVIA%20SOPORTE%20SRL%2C%20Km%2011%20Carr.%20al%20Norte%2C%20Parque%20Empresarial%2C%20Santa%20Cruz%20%28opera%20campamentos%20del%20altiplano%20pace%C3%B1o%29%2C%20Santa%20Cruz%2C%20Bolivia",
+  "lat": -17.7833,
+  "lng": -63.1821,
+  "precision": "zona"
+ },
+ {
+  "id": 304,
+  "nombre": "CATERING GF BOLIVIA",
+  "rubro": "Catering Minero / Hospitalario / Aéreo",
+  "prioridad": "B",
+  "motivo": "Catering industrial +15 años: mineras, hospitales, aerolíneas y comedores; compra centralizada",
+  "direccion": "Urb. Europa, c. Madrid N° 21, 8° Anillo, Santa Cruz (atiende campamentos de todo el país)",
+  "zona": "Santa Cruz (opera nacional)",
+  "ciudad": "Santa Cruz",
+  "telefono": "",
+  "whatsapp": "76011694",
+  "email": "comercial.op@cateringgfbolivia.com",
+  "web": "cateringgfbolivia.com",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerencia Comercial",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Alto",
+  "fuente": "cateringgfbolivia.com verificado jul-2026",
+  "puntuacion": 74,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CATERING%20GF%20BOLIVIA%2C%20Urb.%20Europa%2C%20c.%20Madrid%20N%C2%B0%2021%2C%208%C2%B0%20Anillo%2C%20Santa%20Cruz%20%28atiende%20campamentos%20de%20todo%20el%20pa%C3%ADs%29%2C%20Santa%20Cruz%2C%20Bolivia",
+  "lat": -17.7833,
+  "lng": -63.1821,
+  "precision": "zona"
+ },
+ {
+  "id": 305,
+  "nombre": "EMSERSO SA",
+  "rubro": "Catering de Campamentos",
+  "prioridad": "B",
+  "motivo": "Suministro de comidas bajo contrato para campamentos petroleros y mineros",
+  "direccion": "Santa Cruz (opera campamentos a nivel nacional)",
+  "zona": "Santa Cruz",
+  "ciudad": "Santa Cruz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "emserso.com",
+  "linkedin": "",
+  "facebook": "facebook.com EMSERSO SA BOLIVIA",
+  "contacto": "Gerencia de Operaciones",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "boliviayp.com; amarillas.bo",
+  "puntuacion": 60,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EMSERSO%20SA%2C%20Santa%20Cruz%20%28opera%20campamentos%20a%20nivel%20nacional%29%2C%20Santa%20Cruz%2C%20Bolivia",
+  "lat": -17.7833,
+  "lng": -63.1821,
+  "precision": "zona"
+ },
+ {
+  "id": 306,
+  "nombre": "AURES EVENTOS",
+  "rubro": "Catering y Banquetes",
+  "prioridad": "B",
+  "motivo": "Empresa de catering y banquetes desde 2001",
+  "direccion": "Urb. Las Praderas, calle 1 N° 186",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "2797880",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario / Chef",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 58,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=AURES%20EVENTOS%2C%20Urb.%20Las%20Praderas%2C%20calle%201%20N%C2%B0%20186%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 307,
+  "nombre": "PASIÓN CRIOLLA – HOTEL PANAMERICAN",
+  "rubro": "Restaurante con Catering",
+  "prioridad": "B",
+  "motivo": "Restaurante y catering para eventos en el Prado",
+  "direccion": "El Prado, Edif. 16 de Julio, Hotel Panamerican",
+  "zona": "Centro",
+  "ciudad": "La Paz",
+  "telefono": "2310418",
+  "whatsapp": "70627158",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Chef / Administrador",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com verificado",
+  "puntuacion": 57,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PASI%C3%93N%20CRIOLLA%20%E2%80%93%20HOTEL%20PANAMERICAN%2C%20El%20Prado%2C%20Edif.%2016%20de%20Julio%2C%20Hotel%20Panamerican%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.4957,
+  "lng": -68.1335,
+  "precision": "zona"
+ },
+ {
+  "id": 308,
+  "nombre": "COCINARTE CATERING & EVENTOS",
+  "rubro": "Catering Corporativo y Social",
+  "prioridad": "B",
+  "motivo": "Catering para bodas y eventos corporativos en La Paz",
+  "direccion": "La Paz",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "cocinarte.com.bo",
+  "linkedin": "",
+  "facebook": "facebook.com/bodasChef2012lp",
+  "contacto": "Chef Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Medio",
+  "fuente": "cocinarte.com.bo verificado",
+  "puntuacion": 56,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COCINARTE%20CATERING%20%26%20EVENTOS%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 309,
+  "nombre": "FRITOS LUCANA & PAPLUC",
+  "rubro": "Fábrica de Snacks / Papas Fritas",
+  "prioridad": "A+",
+  "motivo": "Fábrica paceña de papas fritas embolsadas y snacks; usa sazonadores, sal condimentada, ají en polvo",
+  "direccion": "Planta en La Paz",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "fritoslucanabo.com",
+  "linkedin": "",
+  "facebook": "facebook.com Fritos Lucana",
+  "contacto": "Jefe de Producción / Compras",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "fritoslucanabo.com verificado",
+  "puntuacion": 70,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=FRITOS%20LUCANA%20%26%20PAPLUC%2C%20Planta%20en%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 310,
+  "nombre": "GENERAL SNACKS SRL",
+  "rubro": "Fábrica de Snacks",
+  "prioridad": "A+",
+  "motivo": "Fabricante de snacks en El Alto; sazonadores y condimentos en polvo para saborización",
+  "direccion": "Calle Ecuador N° 19, Zona Llontop",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "2881939",
+  "whatsapp": "",
+  "email": "naltosa@acelerate.com",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente / Jefe de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "directorio.com.bo verificado",
+  "puntuacion": 68,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=GENERAL%20SNACKS%20SRL%2C%20Calle%20Ecuador%20N%C2%B0%2019%2C%20Zona%20Llontop%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 311,
+  "nombre": "EMAPA – PLANTA PAPA EL ALTO (PAPAX CHIPS / RAPIDITAS)",
+  "rubro": "Planta Estatal – Papas Chips y Prefritas",
+  "prioridad": "A+",
+  "motivo": "Planta estatal (2024) de papas chips y prefritas congeladas; requiere sazonadores para chips; venta mayorista a gastronómicos",
+  "direccion": "Distrito 14, El Alto (puntos Súper EMAPA: Villa Tunari, Mcdo. Campesino, ex Tranca Río Seco)",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "emapa.gob.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerencia de Producción EMAPA",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "la-razon.com sep-2024; emapa.gob.bo",
+  "puntuacion": 66,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EMAPA%20%E2%80%93%20PLANTA%20PAPA%20EL%20ALTO%20%28PAPAX%20CHIPS%20/%20RAPIDITAS%29%2C%20Distrito%2014%2C%20El%20Alto%20%28puntos%20S%C3%BAper%20EMAPA%3A%20Villa%20Tunari%2C%20Mcdo.%20Campesino%2C%20ex%20Tranca%20R%C3%ADo%20Seco%29%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 312,
+  "nombre": "INDUSTRIAS KRAL SRL (KRAL / BRIXY)",
+  "rubro": "Fábrica de Salsas y Aderezos",
+  "prioridad": "A+",
+  "motivo": "Fabricante de mayonesa, mostaza, kétchup y aderezos; usa mostaza en grano, pimienta, especias; distribuye en La Paz",
+  "direccion": "Km 38 Carretera al Norte, Santa Cruz (distribución La Paz vía distribuidores)",
+  "zona": "Santa Cruz",
+  "ciudad": "Santa Cruz",
+  "telefono": "3411134",
+  "whatsapp": "",
+  "email": "contacto@kral.com.bo",
+  "web": "kral.com.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Jefe de Compras / Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "kral.com.bo verificado",
+  "puntuacion": 67,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=INDUSTRIAS%20KRAL%20SRL%20%28KRAL%20/%20BRIXY%29%2C%20Km%2038%20Carretera%20al%20Norte%2C%20Santa%20Cruz%20%28distribuci%C3%B3n%20La%20Paz%20v%C3%ADa%20distribuidores%29%2C%20Santa%20Cruz%2C%20Bolivia",
+  "lat": -17.7833,
+  "lng": -63.1821,
+  "precision": "zona"
+ },
+ {
+  "id": 313,
+  "nombre": "PANIFICADORA SAN GABRIEL",
+  "rubro": "Panificadora Industrial",
+  "prioridad": "A+",
+  "motivo": "Pan, galletas y pastelería industrial en El Alto; canela, anís, vainilla y especias dulces",
+  "direccion": "Planta: Av. Jaime Mendoza N° 1574, Charapaqui",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "2832636 / 2832928",
+  "whatsapp": "",
+  "email": "sangabriel@alamo.entelnet.bo",
+  "web": "sangabriel.com.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente de Producción / Compras",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Alto",
+  "fuente": "directorio.com.bo verificado",
+  "puntuacion": 73,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PANIFICADORA%20SAN%20GABRIEL%2C%20Planta%3A%20Av.%20Jaime%20Mendoza%20N%C2%B0%201574%2C%20Charapaqui%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 314,
+  "nombre": "PASTELERÍA LA VICTORIA'S",
+  "rubro": "Pastelería-Panadería Industrial (varias suc.)",
+  "prioridad": "A+",
+  "motivo": "Pastelería industrial con sucursales en La Paz y El Alto; canela, vainilla, anís en volumen",
+  "direccion": "Av. Arica N° 200, Zona Bolívar",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "2815154",
+  "whatsapp": "",
+  "email": "",
+  "web": "pasteleriavictorias.com",
+  "linkedin": "",
+  "facebook": "facebook.com/PasteleriaVictoriasBolivia",
+  "contacto": "Gerente / Jefe de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Alto",
+  "fuente": "bo.imigra.net; pasteleriavictorias.com verificado",
+  "puntuacion": 71,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PASTELER%C3%8DA%20LA%20VICTORIA%27S%2C%20Av.%20Arica%20N%C2%B0%20200%2C%20Zona%20Bol%C3%ADvar%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 315,
+  "nombre": "ALIMENTOS PROCESADOS SANTIAGO SRL",
+  "rubro": "Panificadora Industrial",
+  "prioridad": "A+",
+  "motivo": "Fabricación industrial de panadería en El Alto",
+  "direccion": "Av. Jaime Mendoza N° 1574, Charapaqui 1",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com industrias",
+  "puntuacion": 60,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=ALIMENTOS%20PROCESADOS%20SANTIAGO%20SRL%2C%20Av.%20Jaime%20Mendoza%20N%C2%B0%201574%2C%20Charapaqui%201%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 316,
+  "nombre": "PAN CRIS SRL",
+  "rubro": "Panificadora Industrial",
+  "prioridad": "A+",
+  "motivo": "Panificadora industrial en Villa Bolívar, El Alto",
+  "direccion": "Calle 103 N° 50, Villa Bolívar D",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "boliviaentusmanos.com industrias",
+  "puntuacion": 58,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PAN%20CRIS%20SRL%2C%20Calle%20103%20N%C2%B0%2050%2C%20Villa%20Bol%C3%ADvar%20D%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 317,
+  "nombre": "POLLOS GUADALUPE – EL ALTO",
+  "rubro": "Broastería Grande",
+  "prioridad": "R",
+  "motivo": "Broastería grande de El Alto (Terminal Metropolitana Río Seco); comino, ají, sazonadores de pollo en volumen",
+  "direccion": "Terminal Metropolitana, Río Seco",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "",
+  "whatsapp": "77715858",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "near-place.com verificado",
+  "puntuacion": 61,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=POLLOS%20GUADALUPE%20%E2%80%93%20EL%20ALTO%2C%20Terminal%20Metropolitana%2C%20R%C3%ADo%20Seco%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 318,
+  "nombre": "POLLOS PACHASS – EL ALTO",
+  "rubro": "Broastería",
+  "prioridad": "R",
+  "motivo": "Autodenominado el broaster más grande de El Alto; sazonadores en volumen",
+  "direccion": "El Alto",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "facebook.com/PollosPachass",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "facebook/instagram verificado",
+  "puntuacion": 58,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=POLLOS%20PACHASS%20%E2%80%93%20EL%20ALTO%2C%20El%20Alto%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 319,
+  "nombre": "EMBUTIDOS LA ESPAÑOLA",
+  "rubro": "Fábrica de Embutidos",
+  "prioridad": "A+",
+  "motivo": "Fábrica de embutidos y cárnicos en La Paz; pimienta, ajo, nuez moscada, comino para embutidos",
+  "direccion": "Calle Goyzueta N° 572",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "2459133",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario / Jefe de Producción",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 67,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EMBUTIDOS%20LA%20ESPA%C3%91OLA%2C%20Calle%20Goyzueta%20N%C2%B0%20572%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 320,
+  "nombre": "FRIDOSA – OFICINA LA PAZ",
+  "rubro": "Cárnicos / Hamburguesas / Food Service",
+  "prioridad": "A+",
+  "motivo": "Frigorífico del Oriente: hamburguesas Fridosita y línea food service; oficina comercial en La Paz",
+  "direccion": "Oficina LP: c. Landaeta N° 558 esq. Crespo",
+  "zona": "San Pedro",
+  "ciudad": "La Paz",
+  "telefono": "2151829",
+  "whatsapp": "",
+  "email": "",
+  "web": "fridosa.com.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente Comercial LP",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "bo.eldirectorio.co; boliviayp.com verificado",
+  "puntuacion": 72,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=FRIDOSA%20%E2%80%93%20OFICINA%20LA%20PAZ%2C%20Oficina%20LP%3A%20c.%20Landaeta%20N%C2%B0%20558%20esq.%20Crespo%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.501,
+  "lng": -68.137,
+  "precision": "zona"
+ },
+ {
+  "id": 321,
+  "nombre": "ADEREZO BOLIVIANO",
+  "rubro": "Mayorista de Especias y Condimentos",
+  "prioridad": "G",
+  "motivo": "Venta al por mayor de achiote, cúrcuma y materia prima de condimentos en Miraflores; posible cliente-distribuidor",
+  "direccion": "Calle Lucas Jaimes N° 2022",
+  "zona": "Miraflores",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "69748974",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Alto",
+  "fuente": "boliviaentusmanos.com verificado",
+  "puntuacion": 70,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=ADEREZO%20BOLIVIANO%2C%20Calle%20Lucas%20Jaimes%20N%C2%B0%202022%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.499,
+  "lng": -68.122,
+  "precision": "zona"
+ },
+ {
+  "id": 322,
+  "nombre": "CONDIBOL – CONDIMENTOS Y ESPECIAS",
+  "rubro": "Comercio de Condimentos",
+  "prioridad": "G",
+  "motivo": "Comercio de condimentos y especias en La Paz; canal de reventa",
+  "direccion": "La Paz",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "facebook.com CONDIBOL",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "facebook verificado",
+  "puntuacion": 60,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CONDIBOL%20%E2%80%93%20CONDIMENTOS%20Y%20ESPECIAS%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 323,
+  "nombre": "IMPORTADORA RAMCES JY",
+  "rubro": "Importadora de Especias (Canela, Clavo, Comino)",
+  "prioridad": "H",
+  "motivo": "Importadora mayorista-minorista de canela, clavo y comino en El Alto; competidor/canal potencial",
+  "direccion": "El Alto – La Paz",
+  "zona": "El Alto",
+  "ciudad": "El Alto",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "facebook.com Importadora Ramces JY",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Alto",
+  "fuente": "facebook verificado",
+  "puntuacion": 64,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=IMPORTADORA%20RAMCES%20JY%2C%20El%20Alto%20%E2%80%93%20La%20Paz%2C%20El%20Alto%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 324,
+  "nombre": "MAPRIAL SRL",
+  "rubro": "Insumos para Industria Alimenticia",
+  "prioridad": "G",
+  "motivo": "Proveedor de insumos y materias primas para la industria alimenticia; canal B2B para condimentos industriales",
+  "direccion": "Av. Perú N° 233",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "2284444",
+  "whatsapp": "",
+  "email": "",
+  "web": "maprial.com.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerencia Comercial",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Media",
+  "volumen": "Alto",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 68,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=MAPRIAL%20SRL%2C%20Av.%20Per%C3%BA%20N%C2%B0%20233%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 325,
+  "nombre": "QUINTA SALUDABLE",
+  "rubro": "Tienda de Especias y Hierbas con Delivery",
+  "prioridad": "G",
+  "motivo": "Tienda paceña con línea de especias, hierbas y condimentos, delivery en La Paz",
+  "direccion": "La Paz",
+  "zona": "La Paz",
+  "ciudad": "La Paz",
+  "telefono": "",
+  "whatsapp": "",
+  "email": "",
+  "web": "quintasaludable.com",
+  "linkedin": "",
+  "facebook": "instagram.com/quintasaludable",
+  "contacto": "Propietario",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "quintasaludable.com verificado",
+  "puntuacion": 58,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=QUINTA%20SALUDABLE%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.5,
+  "lng": -68.13,
+  "precision": "zona"
+ },
+ {
+  "id": 326,
+  "nombre": "HELADERÍAS BROSSO",
+  "rubro": "Heladería – Cadena con Producción Propia",
+  "prioridad": "A",
+  "motivo": "Cadena de heladerías con producción propia; canela, vainilla y especias dulces",
+  "direccion": "Central: Av. 16 de Julio N° 1473, El Prado (suc. Zona Sur: Av. Montenegro N° 1295)",
+  "zona": "Centro / San Miguel",
+  "ciudad": "La Paz",
+  "telefono": "2317000 / 2793000",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente / Jefe de Producción",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 64,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HELADER%C3%8DAS%20BROSSO%2C%20Central%3A%20Av.%2016%20de%20Julio%20N%C2%B0%201473%2C%20El%20Prado%20%28suc.%20Zona%20Sur%3A%20Av.%20Montenegro%20N%C2%B0%201295%29%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.532,
+  "lng": -68.085,
+  "precision": "zona"
+ },
+ {
+  "id": 327,
+  "nombre": "FÁBRICA DE HELADOS FRIGO",
+  "rubro": "Fábrica de Helados",
+  "prioridad": "A+",
+  "motivo": "Fábrica de helados tradicional paceña desde los años 50; canela y vainilla",
+  "direccion": "Av. Saavedra N° 1639",
+  "zona": "Miraflores",
+  "ciudad": "La Paz",
+  "telefono": "2220483 / 2145115",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente de Producción",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 61,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=F%C3%81BRICA%20DE%20HELADOS%20FRIGO%2C%20Av.%20Saavedra%20N%C2%B0%201639%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.499,
+  "lng": -68.122,
+  "precision": "zona"
+ },
+ {
+  "id": 328,
+  "nombre": "HELADERÍA SPLENDID SRL",
+  "rubro": "Fábrica de Helados",
+  "prioridad": "A+",
+  "motivo": "Fabricación y comercialización de helados; canela para helado de canela (tradición paceña)",
+  "direccion": "Calle Nicolás Acosta N° 420",
+  "zona": "San Pedro",
+  "ciudad": "La Paz",
+  "telefono": "2491783",
+  "whatsapp": "",
+  "email": "edgarhevia@hotmail.com",
+  "web": "",
+  "linkedin": "",
+  "facebook": "facebook.com/SplendidHelado",
+  "contacto": "Propietario",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Medio",
+  "fuente": "directorio.com.bo verificado",
+  "puntuacion": 62,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HELADER%C3%8DA%20SPLENDID%20SRL%2C%20Calle%20Nicol%C3%A1s%20Acosta%20N%C2%B0%20420%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.501,
+  "lng": -68.137,
+  "precision": "zona"
+ },
+ {
+  "id": 329,
+  "nombre": "MANJAR DE ORO",
+  "rubro": "Heladería y Postres",
+  "prioridad": "R",
+  "motivo": "Heladería-fábrica de postres en San Miguel",
+  "direccion": "Av. Montenegro N° 1140",
+  "zona": "San Miguel",
+  "ciudad": "La Paz",
+  "telefono": "2795723",
+  "whatsapp": "",
+  "email": "",
+  "web": "",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Propietario",
+  "prob_condimentos": "Media",
+  "prob_canela": "Alta",
+  "volumen": "Bajo",
+  "fuente": "boliviayp.com verificado",
+  "puntuacion": 54,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=MANJAR%20DE%20ORO%2C%20Av.%20Montenegro%20N%C2%B0%201140%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.532,
+  "lng": -68.085,
+  "precision": "zona"
+ },
+ {
+  "id": 330,
+  "nombre": "PA&PA – PROCESADORA ANDINA DE PAPA SRL",
+  "rubro": "Papas Prefritas Ultracongeladas",
+  "prioridad": "A+",
+  "motivo": "Primera planta boliviana automatizada de papa prefrita ultracongelada; food service; distribuye en La Paz; requiere sazonadores",
+  "direccion": "Calle Hernán Cosío N° 111, Cochabamba (distribución La Paz)",
+  "zona": "Cochabamba",
+  "ciudad": "Cochabamba",
+  "telefono": "4319131",
+  "whatsapp": "78301152",
+  "email": "atencioncliente@papa.com.bo",
+  "web": "papa.com.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerencia Comercial",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Baja",
+  "volumen": "Alto",
+  "fuente": "papa.com.bo verificado",
+  "puntuacion": 65,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PA%26PA%20%E2%80%93%20PROCESADORA%20ANDINA%20DE%20PAPA%20SRL%2C%20Calle%20Hern%C3%A1n%20Cos%C3%ADo%20N%C2%B0%20111%2C%20Cochabamba%20%28distribuci%C3%B3n%20La%20Paz%29%2C%20Cochabamba%2C%20Bolivia",
+  "lat": -17.3895,
+  "lng": -66.1568,
+  "precision": "zona"
+ },
+ {
+  "id": 331,
+  "nombre": "WISTUPIKU – EMPANADAS (6 PUNTOS LP/EA)",
+  "rubro": "Empanadas y Masas – Cadena",
+  "prioridad": "A",
+  "motivo": "Cadena de empanadas y masas con 6 puntos en La Paz y El Alto; comino, ají y especias criollas en producción central",
+  "direccion": "Suc: Av. Saavedra 2202, Comercio 1057, Av. 20 de Octubre 2463, San Miguel c.21 N° 8475, Aeropuerto, Av. Satélite 724 El Alto",
+  "zona": "Miraflores / Centro / San Miguel / El Alto",
+  "ciudad": "La Paz",
+  "telefono": "2220224 / 2408563 / 2795799",
+  "whatsapp": "68215526",
+  "email": "",
+  "web": "wistupiku.com",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerente de Producción / Compras",
+  "prob_condimentos": "Alta",
+  "prob_canela": "Alta",
+  "volumen": "Alto",
+  "fuente": "wistupiku.com/nuestras-tiendas verificado jul-2026",
+  "puntuacion": 75,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=WISTUPIKU%20%E2%80%93%20EMPANADAS%20%286%20PUNTOS%20LP/EA%29%2C%20Suc%3A%20Av.%20Saavedra%202202%2C%20Comercio%201057%2C%20Av.%2020%20de%20Octubre%202463%2C%20San%20Miguel%20c.21%20N%C2%B0%208475%2C%20Aeropuerto%2C%20Av.%20Sat%C3%A9lite%20724%20El%20Alto%2C%20La%20Paz%2C%20Bolivia",
+  "lat": -16.504,
+  "lng": -68.192,
+  "precision": "zona"
+ },
+ {
+  "id": 332,
+  "nombre": "PUNTO VERDE (NATURAL SRL)",
+  "rubro": "Frutas y Verduras Congeladas IQF",
+  "prioridad": "A+",
+  "motivo": "Congelados IQF; vende a supermercados y HORECA de La Paz",
+  "direccion": "Planta Santa Cruz, distribución eje troncal",
+  "zona": "Santa Cruz",
+  "ciudad": "Santa Cruz",
+  "telefono": "",
+  "whatsapp": "79786916",
+  "email": "",
+  "web": "natural.com.bo",
+  "linkedin": "",
+  "facebook": "",
+  "contacto": "Gerencia Comercial",
+  "prob_condimentos": "Media",
+  "prob_canela": "Baja",
+  "volumen": "Medio",
+  "fuente": "lostiempos.com verificado",
+  "puntuacion": 56,
+  "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PUNTO%20VERDE%20%28NATURAL%20SRL%29%2C%20Planta%20Santa%20Cruz%2C%20distribuci%C3%B3n%20eje%20troncal%2C%20Santa%20Cruz%2C%20Bolivia",
+  "lat": -17.7833,
+  "lng": -63.1821,
   "precision": "zona"
  }
 ];
