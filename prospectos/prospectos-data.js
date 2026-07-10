@@ -1,5 +1,7 @@
 // BASE DE DATOS embebida — fuente: prospectos_condimentos_bolivia.xlsx (hoja BASE DE DATOS), 324 prospectos (julio 2026).
-// Coordenadas aproximadas POR ZONA.
+// Coordenadas aproximadas POR ZONA; zonas compuestas ('Sopocachi / Calacoto') se ubican
+// en su primera zona específica; barrios fusionados por el Excel se separaron con
+// centroides curados (Ciudad Satélite, El Prado, Ceja, etc.).
 var PROSPECTOS_RAW = [
  {
   "id": 1,
@@ -23,8 +25,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviayp.com fichas Tusequis/STEGE verificado jul-2026",
   "puntuacion": 92,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=STEGE%20%E2%80%93%20TUSEQUIS%20LTDA.%2C%20Oficina%20adm.%3A%20Av.%20Roma%20N%C2%B0%206815%2C%20Obrajes%20%28Planta%3A%20Carr.%20Oruro%20Km%2018%2C%20Senkata%29%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.568,
-  "lng": -68.2,
+  "lat": -16.525,
+  "lng": -68.104,
   "precision": "zona"
  },
  {
@@ -101,8 +103,8 @@ var PROSPECTOS_RAW = [
   "fuente": "bo.eldirectorio.co; SENASAG 2024; industria.gnb.com.bo",
   "puntuacion": 83,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=EMBUTIDOS%20LA%20ESPA%C3%91OLA%2C%20Goizueta%20N%C2%B0%20558%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.486,
+  "lng": -68.145,
   "precision": "zona"
  },
  {
@@ -205,8 +207,8 @@ var PROSPECTOS_RAW = [
   "fuente": "bo.eldirectorio.co; boliviayp.com; agronews.com.bo",
   "puntuacion": 86,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=INDUSTRIAS%20ALIMENTICIAS%20FAGAL%20SRL%20%E2%80%93%20MABEL%27S%2C%20Av.%20Diego%20de%20Oca%C3%B1a%20N%C2%B0%2051%20esq.%20Av.%20Del%20Polic%C3%ADa%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.54,
+  "lng": -68.08,
   "precision": "zona"
  },
  {
@@ -257,8 +259,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com; soalpro.com verificado",
   "puntuacion": 75,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SOALPRO%20SRL%2C%20Av.%20Jaime%20Mendoza%20N%C2%B0%201574%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -309,8 +311,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com directorio",
   "puntuacion": 68,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=INDUSTRIA%20DE%20ALIMENTOS%20INAL%20LTDA.%2C%20Ciudad%20Sat%C3%A9lite%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -335,8 +337,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com directorio galletas",
   "puntuacion": 65,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PAN%20CRIS%20SRL%2C%20c.%20103%20N%C2%B0%2050%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -361,8 +363,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com verificado; 30 plantas La Paz 2023",
   "puntuacion": 72,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CHOCOLATES%20EL%20CEIBO%2C%20Av.%20Juan%20Pablo%20II%20N%C2%B0%202560%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -517,8 +519,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com directorio galletas/Bolivia",
   "puntuacion": 63,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SOCIEDAD%20ALIMENTOS%20PROCESADOS%20SANTIAGO%20SRL%2C%20Av.%20Jaime%20Mendoza%20N%C2%B0%201574%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -829,8 +831,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviayp.com; PedidosYa activo; TripAdvisor feb-2026 OPERANDO",
   "puntuacion": 78,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=DUMBO%20%E2%80%93%20HELADER%C3%8DA%20Y%20RESTAURANTE%2C%20Central%3A%20Av.%2016%20de%20Julio%20N%C2%B0%201543%2C%20El%20Prado%20%28suc.%20Zona%20Sur%3A%20c.%20Montenegro%20esq.%20Pancara%20N%C2%B0%20842%29%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.532,
-  "lng": -68.085,
+  "lat": -16.4957,
+  "lng": -68.1335,
   "precision": "zona"
  },
  {
@@ -881,8 +883,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com directorio restaurantes La Paz",
   "puntuacion": 72,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=DON%20POLLO%2C%20Av.%20Garc%C3%ADa%20Lanza%2C%20C.%2011%20N%C2%B0%2099%20%28Achumani%29%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.545,
+  "lng": -68.062,
   "precision": "zona"
  },
  {
@@ -1323,8 +1325,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com directorio catering",
   "puntuacion": 63,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PASI%C3%93N%20CRIOLLA%20%E2%80%93%20HOTEL%20PANAMERICANO%2C%20Prado%2C%20Edificio%2016%20de%20Julio%20%E2%80%93%20Hotel%20Panamericano%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.4993,
+  "lng": -68.1332,
   "precision": "zona"
  },
  {
@@ -2103,8 +2105,8 @@ var PROSPECTOS_RAW = [
   "fuente": "tripadvisor 5★; hotelplaza.com.bo verificado",
   "puntuacion": 73,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HOTEL%20PLAZA%20LA%20PAZ%2C%20Av.%2016%20de%20Julio%20%28El%20Prado%29%20N%C2%B0%201789%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.4993,
+  "lng": -68.1332,
   "precision": "zona"
  },
  {
@@ -2233,8 +2235,8 @@ var PROSPECTOS_RAW = [
   "fuente": "lapaz.bo/hospitales verificado 2025",
   "puntuacion": 45,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HOSPITAL%20MUNICIPAL%20LA%20PORTADA%2C%20Av.%20La%20Florida%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.4849,
+  "lng": -68.1553,
   "precision": "zona"
  },
  {
@@ -2259,8 +2261,8 @@ var PROSPECTOS_RAW = [
   "fuente": "lapaz.bo/hospitales verificado 2025",
   "puntuacion": 43,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HOSPITAL%20MUNICIPAL%20LA%20COTAHUMA%2C%20Av.%20Jaimes%20Freire%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.5107,
+  "lng": -68.1494,
   "precision": "zona"
  },
  {
@@ -2415,8 +2417,8 @@ var PROSPECTOS_RAW = [
   "fuente": "umsa.bo verificado; facebook verificado 2025",
   "puntuacion": 60,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=UMSA%20%E2%80%93%20UNIVERSIDAD%20MAYOR%20DE%20SAN%20ANDR%C3%89S%2C%20Av.%20Villaz%C3%B3n%20N%C2%B0%201995%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.499,
-  "lng": -68.122,
+  "lat": -16.504,
+  "lng": -68.131,
   "precision": "zona"
  },
  {
@@ -2545,8 +2547,8 @@ var PROSPECTOS_RAW = [
   "fuente": "upea.edu.bo; sector universitario El Alto",
   "puntuacion": 50,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=UPEA%20%E2%80%93%20UNIVERSIDAD%20EL%20ALTO%2C%20Ciudad%20Sat%C3%A9lite%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -2753,8 +2755,8 @@ var PROSPECTOS_RAW = [
   "fuente": "unidadeducativa.net colegios privados La Paz",
   "puntuacion": 42,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COLEGIO%20DOMINGO%20SABIO%20%E2%80%93%20LA%20PAZ%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.486,
+  "lng": -68.145,
   "precision": "zona"
  },
  {
@@ -2779,8 +2781,8 @@ var PROSPECTOS_RAW = [
   "fuente": "directorio colegios privados La Paz",
   "puntuacion": 42,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COLEGIO%20LOYOLA%20%E2%80%93%20LA%20PAZ%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.54,
+  "lng": -68.08,
   "precision": "zona"
  },
  {
@@ -2857,8 +2859,8 @@ var PROSPECTOS_RAW = [
   "fuente": "unidadeducativa.net El Alto privados",
   "puntuacion": 38,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=UNIDAD%20EDUCATIVA%20BOLIVIANO-JAPONESA%2C%20El%20Alto%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -2883,8 +2885,8 @@ var PROSPECTOS_RAW = [
   "fuente": "unidadeducativa.net El Alto privados",
   "puntuacion": 36,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COLEGIO%20INGL%C3%89S%20COBOS%20%E2%80%93%20EL%20ALTO%2C%20El%20Alto%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -2987,8 +2989,8 @@ var PROSPECTOS_RAW = [
   "fuente": "hipermaxi.com/la-paz/hipermaxi-satelite-el-alto verificado",
   "puntuacion": 65,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HIPERMAXI%20SAT%C3%89LITE%20%E2%80%93%20EL%20ALTO%2C%20Ciudad%20Sat%C3%A9lite%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -3195,8 +3197,8 @@ var PROSPECTOS_RAW = [
   "fuente": "Sector mayoristas La Paz; directorio empresas",
   "puntuacion": 52,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=DISTRIBUIDORA%20GUTI%C3%89RREZ%20HNOS.%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.493,
-  "lng": -68.144,
+  "lat": -16.486,
+  "lng": -68.145,
   "precision": "zona"
  },
  {
@@ -3403,8 +3405,8 @@ var PROSPECTOS_RAW = [
   "fuente": "iicca.edu.bo comercio El Alto; directorio empresas",
   "puntuacion": 46,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CONSORCIO%20ALIMENTARIO%20DEL%20NORTE%2C%20El%20Alto%20/%20Norte%20La%20Paz%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5065,
+  "lng": -68.185,
   "precision": "zona"
  },
  {
@@ -3585,8 +3587,8 @@ var PROSPECTOS_RAW = [
   "fuente": "pdfcoffee.com mercados La Paz Bolivia",
   "puntuacion": 48,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=MERCADO%20SENASIR%20%E2%80%93%20ZONA%20SUR%2C%20Zona%20Sur%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.539,
-  "lng": -68.077,
+  "lat": -16.525,
+  "lng": -68.104,
   "precision": "zona"
  },
  {
@@ -4339,8 +4341,8 @@ var PROSPECTOS_RAW = [
   "fuente": "pedidosya.com.bo cadenas Bolivia",
   "puntuacion": 55,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=BENDITA%20BURGER%20%E2%80%93%20CADENA%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.539,
-  "lng": -68.077,
+  "lat": -16.509,
+  "lng": -68.128,
   "precision": "zona"
  },
  {
@@ -4703,8 +4705,8 @@ var PROSPECTOS_RAW = [
   "fuente": "unidadeducativa.net El Alto privados",
   "puntuacion": 36,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=COLEGIO%20JUAN%20PABLO%20II%20%E2%80%93%20EL%20ALTO%2C%20El%20Alto%2C%20El%20Alto%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.5196,
+  "lng": -68.166,
   "precision": "zona"
  },
  {
@@ -4937,8 +4939,8 @@ var PROSPECTOS_RAW = [
   "fuente": "pedidosya.com.bo listado La Paz; sector restaurantes",
   "puntuacion": 55,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=TORINO%20PIZZA%20%26%20PASTA%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.532,
-  "lng": -68.085,
+  "lat": -16.509,
+  "lng": -68.128,
   "precision": "zona"
  },
  {
@@ -5015,8 +5017,8 @@ var PROSPECTOS_RAW = [
   "fuente": "dnb.com directorio animal slaughtering La Paz",
   "puntuacion": 55,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=FRIGOR%C3%8DFICO%20PACE%C3%91O%20SRL%2C%20La%20Paz%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.5,
-  "lng": -68.13,
+  "lat": -16.486,
+  "lng": -68.145,
   "precision": "zona"
  },
  {
@@ -5691,8 +5693,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com; restweekbolivia.com verificado",
   "puntuacion": 74,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=LA%20TRANQUERA%20%E2%80%93%20PARRILLA%2C%20Calle%20Capit%C3%A1n%20Ravelo%20N%C2%B0%202123%20%28suc.%20Zona%20Sur%29%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.54,
-  "lng": -68.08,
+  "lat": -16.509,
+  "lng": -68.128,
   "precision": "zona"
  },
  {
@@ -5717,8 +5719,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviayp.com; nexdu.com verificado",
   "puntuacion": 73,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CHURRASQUER%C3%8DA%20EL%20ARRIERO%2C%20Av.%206%20de%20Agosto%20N%C2%B0%202535%20%28suc.%20Zona%20Sur%3A%20Av.%20Montenegro%29%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.539,
-  "lng": -68.077,
+  "lat": -16.509,
+  "lng": -68.128,
   "precision": "zona"
  },
  {
@@ -6497,8 +6499,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com verificado (2 sucursales)",
   "puntuacion": 64,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=PALADAR%20COZINHA%20BRASILEIRA%2C%20Av.%20Saavedra%20N%C2%B0%201948%2C%20Miraflores%20/%20Av.%20Montenegro%20N%C2%B0%20858%2C%20San%20Miguel%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.532,
-  "lng": -68.085,
+  "lat": -16.499,
+  "lng": -68.122,
   "precision": "zona"
  },
  {
@@ -7069,8 +7071,8 @@ var PROSPECTOS_RAW = [
   "fuente": "tripadvisor.com verificado 2026",
   "puntuacion": 59,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=CAF%C3%89%20DEL%20MUNDO%2C%20Calle%20Sag%C3%A1rnaga%20N%C2%B0%20213%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.496,
-  "lng": -68.139,
+  "lat": -16.4957,
+  "lng": -68.1335,
   "precision": "zona"
  },
  {
@@ -7225,8 +7227,8 @@ var PROSPECTOS_RAW = [
   "fuente": "near-place.com; boliviayp.com verificado jul-2026",
   "puntuacion": 72,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTE%C3%91ER%C3%8DA%20EL%20HORNITO%2C%20Av.%20Busch%20N%C2%B0%202027%2C%20Miraflores%20/%20Av.%20Ballivi%C3%A1n%20N%C2%B0%201375%20e/%20c.20-21%2C%20Calacoto%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.539,
-  "lng": -68.077,
+  "lat": -16.499,
+  "lng": -68.122,
   "precision": "zona"
  },
  {
@@ -7251,8 +7253,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviaentusmanos.com verificado jul-2026",
   "puntuacion": 66,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=SALTUCAS%20SALTE%C3%91AS%2C%20Casa%20matriz%3A%20Av.%206%20de%20Agosto%20N%C2%B0%202287%2C%20Sopocachi%20%28suc%3A%20Av.%20Montenegro%20e/%20c.21-22%2C%20San%20Miguel%29%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.532,
-  "lng": -68.085,
+  "lat": -16.509,
+  "lng": -68.128,
   "precision": "zona"
  },
  {
@@ -7459,8 +7461,8 @@ var PROSPECTOS_RAW = [
   "fuente": "pedidosya.com.bo activo jul-2026",
   "puntuacion": 64,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=JUAN%20VALDEZ%20CAF%C3%89%20BOLIVIA%20%E2%80%93%20LA%20PAZ%2C%20Suc.%20Torres%20Mall%3A%20Av.%20Arce%2C%20Plaza%20Isabel%20la%20Cat%C3%B3lica%20/%20Suc.%20San%20Miguel%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.532,
-  "lng": -68.085,
+  "lat": -16.515,
+  "lng": -68.123,
   "precision": "zona"
  },
  {
@@ -8265,8 +8267,8 @@ var PROSPECTOS_RAW = [
   "fuente": "boliviayp.com verificado",
   "puntuacion": 64,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=HELADER%C3%8DAS%20BROSSO%2C%20Central%3A%20Av.%2016%20de%20Julio%20N%C2%B0%201473%2C%20El%20Prado%20%28suc.%20Zona%20Sur%3A%20Av.%20Montenegro%20N%C2%B0%201295%29%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.532,
-  "lng": -68.085,
+  "lat": -16.4957,
+  "lng": -68.1335,
   "precision": "zona"
  },
  {
@@ -8395,8 +8397,8 @@ var PROSPECTOS_RAW = [
   "fuente": "wistupiku.com/nuestras-tiendas verificado jul-2026",
   "puntuacion": 75,
   "gmaps_link": "https://www.google.com/maps/search/?api=1&query=WISTUPIKU%20%E2%80%93%20EMPANADAS%20%286%20PUNTOS%20LP/EA%29%2C%20Suc%3A%20Av.%20Saavedra%202202%2C%20Comercio%201057%2C%20Av.%2020%20de%20Octubre%202463%2C%20San%20Miguel%20c.21%20N%C2%B0%208475%2C%20Aeropuerto%2C%20Av.%20Sat%C3%A9lite%20724%20El%20Alto%2C%20La%20Paz%2C%20Bolivia",
-  "lat": -16.504,
-  "lng": -68.192,
+  "lat": -16.499,
+  "lng": -68.122,
   "precision": "zona"
  },
  {
