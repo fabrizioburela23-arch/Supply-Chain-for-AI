@@ -3,7 +3,7 @@
    última versión cuando hay red, con caché solo como respaldo offline.
    CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v52';
+const CACHE = 'khipu-finance-v53';
 // SHELL = exactamente los <script src> de app.html + la propia app.
 // Si añades/quitas un <script src>, refleja el cambio aquí Y bumpea CACHE.
 const SHELL = ['/', '/app.html',
@@ -47,12 +47,14 @@ self.addEventListener('fetch', e => {
 
   if (sameOrigin) {
     // Código propio + API → network-first (siempre lo último online; caché = offline)
+    // ignoreSearch: el server versiona los <script src> con ?v=N — el fallback
+    // offline debe encontrar el archivo aunque la query cambie.
     e.respondWith(
       fetch(req).then(res => {
         const clone = res.clone();
         caches.open(CACHE).then(c => c.put(req, clone)).catch(() => {});
         return res;
-      }).catch(() => caches.match(req).then(m => m || Response.error()))
+      }).catch(() => caches.match(req, { ignoreSearch: true }).then(m => m || Response.error()))
     );
   } else {
     // CDNs externos inmutables → cache-first

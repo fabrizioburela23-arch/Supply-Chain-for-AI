@@ -346,7 +346,9 @@ const BixbyVoice = {
       case 'agent_response': {
         const text = msg.agent_response_event?.agent_response || '';
         if (text) {
-          this._showOverlay('Bixby: ' + text.slice(0, 80));
+          // El usuario NUNCA debe ver los tokens internos ([XRAY:...], [NAV:...])
+          const clean = this._cleanSpeech(text);
+          if (clean) this._showOverlay('Bixby: ' + clean.slice(0, 80));
           this._onAgentResponse(text);
         }
         break;
@@ -506,6 +508,15 @@ const BixbyVoice = {
     if ((opps || insights) && typeof switchTab === 'function') {
       this._defer(() => { switchTab('analysis'); if (window.renderKhipuInsights) window.renderKhipuInsights(); });
     }
+  },
+
+  // Quita los tokens de comando internos del texto hablado/mostrado.
+  // Bixby los emite para actuar, pero el usuario jamás debe verlos ni oírlos.
+  _cleanSpeech(text) {
+    return String(text || '')
+      .replace(/\[[A-Z_]+:[^\]]*\]/g, '')   // [NAV:x] [XRAY:x] [SHOCK:x:y] [CANVAS:...]
+      .replace(/\[[A-Z_]+\]/g, '')          // [NRS_TOP] [OPPS] [INSIGHTS]
+      .replace(/\s{2,}/g, ' ').trim();
   },
 
   // Resuelve una empresa desde lo que diga el agente (id, ticker o nombre),
@@ -752,7 +763,12 @@ const BixbyVoice = {
             top.sort((a, b) => b.v - a.v);
             respond({ success: true, company: n.label, kind, direction: dir, affected,
               most_impacted: top.slice(0, 5).map(x => ({ company: (NODE_BY_ID[x.id] || {}).label || x.id, impact_pct: Math.round(x.v) })) });
-            this._defer(() => { if (typeof switchTab === 'function') switchTab('map'); if (jumpTo) jumpTo(n.id); if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); });
+            this._defer(() => {
+              if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('sim', { id: n.id, kind }); return; }
+              if (typeof switchTab === 'function') switchTab('map');
+              if (jumpTo) jumpTo(n.id);
+              if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
+            });
           } catch (e) { respond({ success: false, error: 'sim failed' }); }
         } else respond({ success: false, error: 'Company not found' });
         break;
@@ -763,7 +779,10 @@ const BixbyVoice = {
           const nrsA = computeNRS ? computeNRS(a.id) : 50, nrsB = computeNRS ? computeNRS(b.id) : 50;
           respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB,
             lower_risk: nrsA < nrsB ? a.label : b.label });
-          this._defer(() => window.openCompare(a.id, b.id));
+          this._defer(() => {
+            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('compare', { a: a.id, b: b.id }); return; }
+            window.openCompare(a.id, b.id);
+          });
         } else respond({ success: false, error: 'One or both companies not found' });
         break;
       }
@@ -782,7 +801,31 @@ const BixbyVoice = {
       }
       case 'show_insights': case 'show_matrices': {
         respond({ success: true });
-        this._defer(() => { if (typeof switchTab === 'function') switchTab('analysis'); if (window.renderKhipuInsights) window.renderKhipuInsights(); });
+        this._defer(() => {
+          if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('insights'); return; }
+          if (typeof switchTab === 'function') switchTab('analysis');
+          if (window.renderKhipuInsights) window.renderKhipuInsights();
+        });
+        break;
+      }
+      case 'create_visualization': {
+        // dibuja un gráfico/tabla por IA (Canvas) con lo que pida el usuario
+        const q = (params.query || params.description || '').trim();
+        if (!q) { respond({ success: false, error: 'query required' }); break; }
+        respond({ success: true, rendering: q });
+        this._defer(() => {
+          if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('canvas', q); return; }
+          if (typeof switchTab === 'function') switchTab('canvas');
+          setTimeout(() => {
+            const qi = document.getElementById('canvas-query');
+            if (qi) { qi.value = q; if (typeof window.canvasGenerate === 'function') window.canvasGenerate(); }
+          }, 280);
+        });
+        break;
+      }
+      case 'open_cockpit': {
+        respond({ success: true });
+        this._defer(() => { if (window.BixbyCockpit) window.BixbyCockpit.open(); });
         break;
       }
       default:

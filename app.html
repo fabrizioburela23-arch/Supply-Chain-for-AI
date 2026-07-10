@@ -5577,6 +5577,17 @@ function setupPWA(){
   }
   if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
     navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    // Auto-actualización: cuando un SW nuevo toma control (versión nueva
+    // desplegada), recargamos UNA vez para que el usuario vea lo último sin
+    // tener que abrir incógnito ni Ctrl+Shift+R. Guardas anti-bucle:
+    // solo si ya había un controller (no en la primera instalación).
+    const hadController = !!navigator.serviceWorker.controller;
+    let _swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || _swReloaded) return;
+      _swReloaded = true;
+      location.reload();
+    });
   }
   const upd=()=>{ const on=navigator.onLine; $('offline-badge').classList.toggle('show',!on); DataHealth.render(); };
   window.addEventListener('online',upd); window.addEventListener('offline',upd); upd();

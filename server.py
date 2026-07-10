@@ -242,9 +242,43 @@ def _log_request(resp):
 # ----------------------------------------------------------------------------
 # Servir la app
 # ----------------------------------------------------------------------------
+# Fix definitivo del "no veo los cambios": app.html se sirve SIEMPRE fresco
+# (no-cache) y el server le inyecta ?v=<versión del SW> a cada <script src>.
+# Al bumpear sw.js (regla de despliegue #1) cambian TODAS las URLs de JS →
+# el navegador baja el código nuevo aunque tuviera el viejo cacheado 1h.
+_APP_HTML_CACHE = {'ver': None, 'html': None, 'mtime': None}
+
+
+def _sw_version():
+    """Lee la versión del caché del Service Worker (khipu-finance-vN) de sw.js."""
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sw.js'), 'r', encoding='utf-8') as f:
+            m = re.search(r'khipu-finance-v(\d+)', f.read(2048))
+        return m.group(1) if m else '0'
+    except Exception:  # noqa: BLE001
+        return '0'
+
+
+def _versioned_app_html():
+    base = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(base, 'app.html')
+    ver = _sw_version()
+    try:
+        mtime = os.path.getmtime(path)
+    except Exception:  # noqa: BLE001
+        mtime = None
+    if _APP_HTML_CACHE['html'] is None or _APP_HTML_CACHE['ver'] != ver or _APP_HTML_CACHE['mtime'] != mtime:
+        with open(path, 'r', encoding='utf-8') as f:
+            html = f.read()
+        html = re.sub(r'src="((?:engine|nodes|sim|vendor)/[^"?]+\.js)"',
+                      lambda m: 'src="' + m.group(1) + '?v=' + ver + '"', html)
+        _APP_HTML_CACHE.update(ver=ver, html=html, mtime=mtime)
+    return _APP_HTML_CACHE['html']
+
+
 @app.route('/')
 def index():
-    resp = send_file('app.html')
+    resp = app.response_class(_versioned_app_html(), mimetype='text/html')
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     resp.headers['Pragma'] = 'no-cache'
     return resp
@@ -1766,7 +1800,14 @@ def mirofish_proxy(endpoint):
 
 
 # ── Bixby voice — system prompt for ElevenLabs agent configuration ──────────
-BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Khipus AI Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space and nuclear supply chain covering 407 canonical companies and 1,028 typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, and read the matrix chokepoints.
+BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Khipus AI Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
+
+## GOLDEN RULES OF SPEECH (CRITICAL — NEVER BREAK THESE)
+- You act by CALLING YOUR CLIENT TOOLS. Tools are silent and instant.
+- NEVER say, spell, read aloud or mention any command, token, tool name, bracket, code or internal id. The user must never hear anything technical — no "open_xray", no "[XRAY:...]", no "puedes escribir TSMC XRAY". Nothing of the sort, ever.
+- NEVER tell the user to type a command, press a key or click a button to get something — just DO it yourself with your tools and narrate the RESULT naturally.
+- Speak like a sharp human analyst: "Aquí tienes la radiografía de Nvidia — su mayor riesgo es la dependencia de TSMC…". Never like a machine.
+- Company names: pass them to tools as plain names or tickers (e.g. "Nvidia", "NVDA", "TSMC") — the app resolves them, any casing works.
 
 ## TURN-TAKING / PATIENCE (IMPORTANT)
 - When an action, analysis or lookup takes a few seconds, briefly say "dame un momento, lo estoy preparando" and then WAIT calmly for it.
@@ -1786,61 +1827,26 @@ The 10 old panels are now grouped under 4 primary tabs. Underneath, switch_tab s
 - ⇄ COMPARE two companies side by side.
 - ☀️ BRIEF: the daily intelligence summary shown on open.
 
-## KHIPU COMMAND BAR — you can tell the user to type these (fast, no AI round-trip)
-<TICKER> XRAY · <TICKER> SIM · SHOCK <ticker> [severity] · COMPARE <A> <B> · INSIGHTS · MATRIX · PORT VAR/PL · GRAPH ASOF <date> · ALERT <ticker> PX|NRS > <value>
+## YOUR TOOLS — when to call each (silently; results come back to you as data)
+Analysis superpowers (prefer these — they are the platform's wow):
+- open_xray(company_name): the user asks ANYTHING deep about one company — "desármame X", "why is X risky", "what depends on X", "analyze X". Opens the full X-Ray dossier on screen. Then narrate the 2-3 most interesting findings.
+- run_live_simulation(company_name, kind, severity): "what if X falls / is sanctioned / booms". kind = collapse | demand | price | sanction. Returns affected count + most impacted; the screen shows the full wave. Narrate: how many companies, who suffers most, who WINS.
+- compare_companies(company_a, company_b): "compare X and Y". Returns both NRS + which has lower risk. Screen shows them side by side.
+- get_opportunities(): "where do I invest", "opportunities". Returns resilient companies (low risk + growth + margin).
+- create_visualization(query): the user asks to chart / graph / tabulate ANYTHING — pass a natural-language description (e.g. "márgenes de Nvidia, TSMC y ASML") and it renders automatically.
+- show_insights(): opens the insights brain + the 9 relation matrices.
+- run_stress_test(ticker): classic failure cascade on the map.
+- run_simulation(scenario_id): war-room presets: taiwan_conflict, china_chip_ban_total, hbm_shortage_2027, openai_ipo_impact, starshield_reveal.
 
-## COMMAND TOKENS — issue these in your responses to control the app
-The user never sees these tokens. You output them silently alongside your speech.
+Data lookups:
+- get_company_info(company_name) · get_risk_score(company_name) · get_news(company_name)
+- get_market_summary() · get_portfolio_risk() · list_companies(category, limit) · get_supply_chain_links(company_name)
 
-Navigation:
-- Switch tab: [TAB:map] [TAB:market] [TAB:analysis] [TAB:geo] [TAB:simulation] [TAB:space] [TAB:terminal] [TAB:canvas]
-- Jump to company on graph: [NAV:company_id]  e.g. [NAV:NVIDIA] [NAV:TSMC]
-- Open Second Brain panel: [SECOND_BRAIN:company_id]
-- Show stock chart: [CHART:ticker]  e.g. [CHART:NVDA] [CHART:TSM]
-- Open trade modal: [TRADE:ticker]  e.g. [TRADE:NVDA]
-- Open Terminal tab with company chart: [TERMINAL:ticker]  e.g. [TERMINAL:NVDA]
+Navigation & UI:
+- navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|tkg|guia)
+- show_chart(ticker) · open_terminal(ticker) · place_trade(ticker) · open_second_brain(company_name) · open_cockpit()
 
-Analysis:
-- Run stress cascade: [STRESS:company_id]
-- Launch simulation: [SIM:taiwan_conflict] [SIM:china_chip_ban_total] [SIM:hbm_shortage_2027] [SIM:openai_ipo_impact] [SIM:starshield_reveal]
-- Show top risk companies: [NRS_TOP]
-- Filter market by category: [FILTER:category]  e.g. [FILTER:gpu]
-- Generate a data visualization / chart / table in Canvas IA: [CANVAS:natural-language request]
-  e.g. [CANVAS:compara márgenes de NVIDIA, TSMC y ASML] · [CANVAS:top 10 empresas por riesgo NRS]
-  This RENDERS the chart automatically — use it whenever the user asks to graph, compare or visualize data.
-
-Palantir-grade actions (2026-07 — prefer these, they are the platform's superpowers):
-- 🔬 Open X-RAY of a company (disassembles its soul: NRS term by term, dependency threads, who suffers ↓ and who WINS ↑ if it falls, $ exposed): [XRAY:company_id]  e.g. [XRAY:TSMC] [XRAY:NVIDIA]
-  Use this whenever the user asks "why is X risky", "what depends on X", "what happens if X falls", "analyze X deeply", "desármame X".
-- ◉ Run a LIVE shock/boom on the map (recolours the whole graph in real time — red=harm, green=boom): [SHOCK:company_id:kind]
-  kind is one of: collapse (a cut/failure ↓) · demand (a boom ↑) · price (price shock) · sanction (sanctions ↓). e.g. [SHOCK:TSMC:collapse] [SHOCK:NVIDIA:demand]
-  Use this whenever the user asks "what if X is cut/sanctioned", "simulate a boom in X", "cae X".
-- ⇄ COMPARE two companies side by side: [COMPARE:id_a,id_b]  e.g. [COMPARE:NVIDIA,AMD] [COMPARE:TSMC,Samsung]
-- 💡 Surface OPPORTUNITIES (resilient companies: low risk + growth + healthy margin): [OPPS]
-- Show the INSIGHTS brain + the 9 relation MATRICES: [INSIGHTS]
-
-## CLIENT TOOLS — call these for live data
-- navigate_to_company(company_name, ticker): jump to company on map
-- get_company_info(company_name, ticker): full company details including price, NRS, supply chain
-- get_risk_score(company_name, ticker): NRS score (0-100) with breakdown
-- get_nrs_top10(): top 10 highest risk companies right now
-- run_stress_test(ticker): simulate failure cascade from that company
-- run_simulation(scenario_id): launch War-Room MiroFish geopolitical scenario
-- get_portfolio_risk(): VaR/CVaR for current positions
-- get_market_summary(): all current market prices with % change
-- list_companies(category, limit): list companies by sector
-- get_supply_chain_links(company_id, company_name): upstream/downstream connections
-- get_news(company_name, ticker): recent news with sentiment score
-- switch_tab(tab): navigate to any of the 8 tabs
-- show_chart(ticker, company_name): display stock chart in map panel sidebar
-- open_terminal(ticker, company_name): open Terminal tab with multi-chart Bloomberg view
-- place_trade(ticker, company_name): open trade modal to buy/sell
-- open_second_brain(company_id, company_name): open AI intelligence panel for company
-- open_xray(company_name, ticker): open the X-Ray dossier (NRS breakdown, threads, impact wave)
-- run_live_simulation(company_name, ticker, kind, severity): live shock/boom on the map; kind=collapse|demand|price|sanction; returns affected count + most_impacted
-- compare_companies(company_a, company_b): side-by-side comparison; returns NRS of each and which has lower risk
-- get_opportunities(): resilient companies with upside (low NRS + growth + healthy margin)
-- show_insights(): open the Insights brain + relation matrices
+You may receive [CONTEXT_UPDATE] {json} messages — silent app-state snapshots (selected company, portfolio, top risks). Use them to be sharper; never read them aloud or acknowledge them.
 
 ## DOMAIN KNOWLEDGE — DEEP EXPERTISE
 
@@ -1874,23 +1880,117 @@ War-Room scenarios (5 presets):
 4. openai_ipo_impact — NVDA/ARM multiple expansion, entire AI ecosystem re-rating
 5. starshield_reveal — SpaceX defense revenue confirmed, traditional contractors compressed
 
-## COMPANY IDs for commands
-NVIDIA, TSMC, ASML, Apple, Qualcomm, AMD, Intel, Samsung, SK_Hynix, Micron, Broadcom, AMAT, KLA, Lam_Research, ARM_Holdings, MediaTek, Marvell, Synopsys, Cadence, NXP, Renesas, STMicro, Texas_Instruments, Infineon, Wolfspeed, SpaceX, Maxar_Technologies, Planet_Labs, Spire_Global, RocketLab, Iridium, Viasat, Palantir, Cloudflare, Equinix, IBM, Microsoft, Amazon, Google, Meta, Anthropic, OpenAI, Mistral_AI, Cohere, Cerebras, Groq_Inc, IonQ, Rigetti, D_Wave, MP_Materials, Mobileye, Luminar, Onsemi, Entegris
-
 ## ANALYST BEHAVIOR RULES
 - You are a financial analyst first, voice assistant second. Give real insight, not just navigation.
-- When asked about a company: get_company_info → give key stats → [NAV:id] to show it
-- When asked about risk: get_risk_score or get_nrs_top10 → explain WHY → [NRS_TOP]
-- When asked about simulation/war-room: explain the scenario briefly → [SIM:preset_id] to launch
-- When narrating War-Room results: describe the cascade ("TSMC absorbs the first shock, then NVIDIA suppliers cascade..."), name winners and losers with % estimates
-- When asked for Terminal view: [TAB:terminal] → [TERMINAL:ticker]
-- When asked to chart/compare/visualize/tabulate data: emit [CANVAS:<what to chart>] and it renders automatically (do NOT just ask the user to describe it). e.g. [CANVAS:compara NVIDIA, TSMC y ASML por margen y riesgo]
-- Always issue command tokens alongside speech — never just speak without acting
-- Confirm navigation out loud: "Navegando a NVIDIA en el mapa..."
-- Be concise (2-3 sentences of analysis) then act immediately — no over-explanation
-- Match user language exactly (Spanish/English/mixed — follow their lead)
-- When asked investment questions, give a real take: "TSMC es un buy en debilidad porque..." not just facts
+- ACT FIRST, TALK SECOND: on almost every user request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never just speak without acting, and never ask permission to act.
+- Deep question about ONE company → open_xray + your sharpest take ("Su talón de Aquiles es…").
+- "What if…" questions → run_live_simulation, then narrate: how many affected, the 2-3 biggest victims, who wins.
+- War-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…"), name winners and losers with % estimates.
+- Charts: create_visualization — never ask the user to describe the chart format, just render something smart.
+- Confirm actions naturally and briefly: "Aquí la tienes…", "Mira el mapa — se tiñe en rojo…".
+- Be concise (2-3 sentences of analysis) then act immediately — no over-explanation.
+- Match user language exactly (Spanish/English/mixed — follow their lead). Default to Spanish.
+- When asked investment questions, give a real take: "TSMC es un buy en debilidad porque..." not just facts. Always add that it is analysis, not financial advice, when giving direct buy/sell takes.
 - You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
+
+
+# ── Bixby — client tools registradas en el agente de ElevenLabs vía API ──────
+# Cada entrada espeja un `case` de _handleToolCall en engine/voice.js.
+# El agente las llama en silencio (el usuario nunca oye nombres de herramientas).
+def _bixby_client_tools():
+    def T(name, desc, props=None, required=None):
+        return {
+            'type': 'client', 'name': name, 'description': desc,
+            'expects_response': True,
+            'parameters': {'type': 'object',
+                           'properties': props or {},
+                           'required': required or []},
+        }
+    S = lambda d: {'type': 'string', 'description': d}  # noqa: E731
+    N = lambda d: {'type': 'number', 'description': d}  # noqa: E731
+    company = {'company_name': S('Company name or ticker, any casing (e.g. "Nvidia", "NVDA", "tsmc")')}
+    return [
+        T('open_xray', 'Open the full X-Ray dossier of a company (NRS breakdown, dependency threads, impact wave: who suffers and who wins if it falls). Use for ANY deep question about one company.', company, ['company_name']),
+        T('run_live_simulation', 'Run a live shock/boom simulation on the supply-chain map. Returns affected count and most impacted companies.', dict(company, kind=S('collapse | demand | price | sanction (default collapse)'), severity=N('0-100, default 100')), ['company_name']),
+        T('compare_companies', 'Compare two companies side by side. Returns NRS of each and which has lower risk.', {'company_a': S('First company name/ticker'), 'company_b': S('Second company name/ticker')}, ['company_a', 'company_b']),
+        T('get_opportunities', 'Resilient companies with upside: low risk + growth + healthy margin.'),
+        T('create_visualization', 'Render a chart/table from a natural-language description of what to visualize.', {'query': S('What to chart, in natural language (e.g. "márgenes de Nvidia, TSMC y ASML")')}, ['query']),
+        T('show_insights', 'Open the insights brain and the 9 relation matrices.'),
+        T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
+        T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
+        T('get_company_info', 'Full company details: price, NRS risk, sector, supply chain.', company, ['company_name']),
+        T('get_risk_score', 'NRS risk score (0-100) of a company with breakdown.', company, ['company_name']),
+        T('get_news', 'Recent news with sentiment for a company.', company, ['company_name']),
+        T('get_market_summary', 'All current market prices with % change.'),
+        T('get_portfolio_risk', 'VaR/CVaR risk of the user portfolio.'),
+        T('list_companies', 'List companies, optionally by category.', {'category': S('Category filter (optional)'), 'limit': N('Max results (default 10)')}),
+        T('get_supply_chain_links', 'Upstream/downstream supply-chain connections of a company.', company, ['company_name']),
+        T('navigate_to_company', 'Jump to a company on the map.', company, ['company_name']),
+        T('switch_tab', 'Switch app tab.', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | tkg | guia')}, ['tab']),
+        T('show_chart', 'Show the stock chart of a ticker in the side panel.', {'ticker': S('Ticker')}, ['ticker']),
+        T('open_terminal', 'Open the multi-chart Bloomberg-style terminal on a ticker.', {'ticker': S('Ticker')}, ['ticker']),
+        T('place_trade', 'Open the buy/sell trade modal for a ticker (the user confirms manually).', {'ticker': S('Ticker')}, ['ticker']),
+        T('open_second_brain', 'Open the AI intelligence panel for a company.', company, ['company_name']),
+        T('open_cockpit', 'Open the full-screen Bixby cockpit view.'),
+    ]
+
+
+def _sync_bixby_agent():
+    """Empuja el cerebro de Bixby (system prompt + client tools + idioma) al
+    agente de ElevenLabs vía PATCH — así Fabrizio no configura nada a mano.
+    Idempotente; si el esquema de tools no es aceptado, reintenta solo-prompt."""
+    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
+        return {'ok': False, 'error': 'ELEVENLABS_KEY / ELEVENLABS_AGENT_ID no configurados'}
+    url = f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}'
+    hdrs = {'xi-api-key': ELEVENLABS_KEY, 'Content-Type': 'application/json'}
+    full = {'conversation_config': {'agent': {
+        'prompt': {'prompt': BIXBY_SYSTEM_PROMPT, 'tools': _bixby_client_tools()},
+        'language': 'es',
+    }}}
+    try:
+        r = requests.patch(url, json=full, headers=hdrs, timeout=25)
+        if r.status_code < 400:
+            # verificación: ¿cuántas tools quedaron registradas?
+            n_tools = None
+            try:
+                chk = requests.get(url, headers={'xi-api-key': ELEVENLABS_KEY}, timeout=15).json()
+                n_tools = len((((chk.get('conversation_config') or {}).get('agent') or {})
+                               .get('prompt') or {}).get('tools') or [])
+            except Exception:  # noqa: BLE001
+                pass
+            return {'ok': True, 'mode': 'full', 'status': r.status_code, 'tools_registered': n_tools}
+        # fallback: algunos planes/versiones del API rechazan tools inline
+        detail = (r.text or '')[:400]
+        slim = {'conversation_config': {'agent': {'prompt': {'prompt': BIXBY_SYSTEM_PROMPT}, 'language': 'es'}}}
+        r2 = requests.patch(url, json=slim, headers=hdrs, timeout=25)
+        return {'ok': r2.status_code < 400, 'mode': 'prompt_only', 'status': r2.status_code,
+                'tools_error': detail}
+    except Exception as e:  # noqa: BLE001
+        return {'ok': False, 'error': str(e)[:300]}
+
+
+@app.route('/api/voice/sync-agent', methods=['GET', 'POST'])
+def voice_sync_agent():
+    """Sincroniza el agente de ElevenLabs con el cerebro definido aquí."""
+    res = _sync_bixby_agent()
+    return jsonify(res), (200 if res.get('ok') else 502)
+
+
+# Auto-sync al arrancar (BIXBY_AUTOSYNC=0 para desactivar). En background para
+# no retrasar el boot; idempotente aunque los 2 workers de gunicorn lo llamen.
+if os.getenv('BIXBY_AUTOSYNC', '1').strip().lower() not in ('0', 'false', 'no'):
+    def _bixby_autosync():
+        time.sleep(4)
+        res = _sync_bixby_agent()
+        if res.get('ok'):
+            log.info('Bixby sincronizado con ElevenLabs (%s, tools=%s)', res.get('mode'), res.get('tools_registered'))
+        else:
+            log.warning('Bixby autosync falló (la app sigue): %s', res)
+    try:
+        if ELEVENLABS_KEY and ELEVENLABS_AGENT_ID:
+            threading.Thread(target=_bixby_autosync, daemon=True).start()
+    except Exception as _e:  # noqa: BLE001
+        log.warning('Bixby autosync no arrancó: %s', _e)
 
 @app.route('/api/voice/bixby-prompt', methods=['GET'])
 def bixby_system_prompt():
