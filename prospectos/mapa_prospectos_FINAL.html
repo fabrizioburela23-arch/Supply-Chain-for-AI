@@ -766,8 +766,6 @@ svg.leaflet-image-layer.leaflet-interactive path {
     --st-interesado:#9333ea;
     --st-cotizado:#db2777;
     --st-compra_confirmada:#16a34a;
-    --st-cliente:#0f766e;
-    --st-en_pausa:#8a8781;
     --st-no_interesa:#d03b3b;
 
     --gold:#c9a227;
@@ -799,7 +797,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   }
   header::after{
     content:""; position:absolute; left:0; right:0; bottom:-3px; height:3px;
-    background:linear-gradient(90deg, var(--brand), var(--st-cliente));
+    background:linear-gradient(90deg, var(--brand), var(--st-compra_confirmada));
     opacity:.55;
   }
   header h1{ font-size:16px; margin:0; white-space:nowrap; font-weight:700; }
@@ -1098,8 +1096,6 @@ window.addEventListener("error", function(ev){
       <button class="chip" data-val="interesado"><span class="dot" style="background:var(--st-interesado)"></span>Interesado</button>
       <button class="chip" data-val="cotizado"><span class="dot" style="background:var(--st-cotizado)"></span>Cotizado</button>
       <button class="chip" data-val="compra_confirmada"><span class="dot" style="background:var(--st-compra_confirmada)"></span>Compra confirmada</button>
-      <button class="chip" data-val="cliente"><span class="dot" style="background:var(--st-cliente)"></span>Cliente</button>
-      <button class="chip" data-val="en_pausa"><span class="dot" style="background:var(--st-en_pausa)"></span>En pausa</button>
       <button class="chip" data-val="no_interesa"><span class="dot" style="background:var(--st-no_interesa)"></span>No interesa</button>
     </div>
     <span class="filter-label">Calidad</span>
@@ -1178,8 +1174,6 @@ window.addEventListener("error", function(ev){
           <option value="interesado">Interesado</option>
           <option value="cotizado">Cotizado (propuesta enviada)</option>
           <option value="compra_confirmada">Compra confirmada</option>
-          <option value="cliente">Cliente</option>
-          <option value="en_pausa">En pausa</option>
           <option value="no_interesa">No interesa</option>
         </select>
       </div>
@@ -9661,8 +9655,8 @@ var PROSPECTOS_RAW = [
 
   var TRACKING_KEY = "fika_prospectos_seguimiento";
 
-  // Embudo de ventas completo: pendiente → contactado → visitado → interesado →
-  // cotizado → compra confirmada → cliente. "En pausa" y "No interesa" son salidas.
+  // Embudo de ventas: pendiente → contactado → visitado → interesado →
+  // cotizado → compra confirmada. "No interesa" es la salida.
   var ESTADOS = {
     pendiente:         {label:"Pendiente",         color:"var(--st-pendiente)",         hex:"#f59e0b"},
     contactado:        {label:"Contactado",        color:"var(--st-contactado)",        hex:"#2a78d6"},
@@ -9670,11 +9664,11 @@ var PROSPECTOS_RAW = [
     interesado:        {label:"Interesado",        color:"var(--st-interesado)",        hex:"#9333ea"},
     cotizado:          {label:"Cotizado",          color:"var(--st-cotizado)",          hex:"#db2777"},
     compra_confirmada: {label:"Compra confirmada", color:"var(--st-compra_confirmada)", hex:"#16a34a"},
-    cliente:           {label:"Cliente",           color:"var(--st-cliente)",           hex:"#0f766e"},
-    en_pausa:          {label:"En pausa",          color:"var(--st-en_pausa)",          hex:"#8a8781"},
     no_interesa:       {label:"No interesa",       color:"var(--st-no_interesa)",       hex:"#d03b3b"}
   };
-  var ESTADO_ORDER = ["pendiente","contactado","visitado","interesado","cotizado","compra_confirmada","cliente","en_pausa","no_interesa"];
+  var ESTADO_ORDER = ["pendiente","contactado","visitado","interesado","cotizado","compra_confirmada","no_interesa"];
+  // Estados retirados: lo ya guardado se traduce solo (cliente→compra confirmada).
+  var ESTADO_LEGACY = { cliente:"compra_confirmada", en_pausa:"pendiente" };
 
   var PRIORIDAD_SIZE = { "A+":15, "A":13, "B":11, "C":10, "D":10, "E":10, "F":10, "G":12, "H":10, "R":9 };
   var PRIORIDAD_BADGE = { "A+":"#a3811c", "A":"#c9a227", "B":"#d8c98a", "C":"#b8b2a4", "D":"#b8b2a4", "E":"#b8b2a4", "F":"#b8b2a4", "G":"#7a9c59", "H":"#b8b2a4", "R":"#8fa8c8" };
@@ -9872,9 +9866,10 @@ var PROSPECTOS_RAW = [
     return CITY_CENTER[p.ciudad] || CITY_CENTER["La Paz"];
   }
 
-  // Varios prospectos "aproximados" comparten exactamente el mismo centroide y quedaban
-  // apilados (se veía UN punto donde había diez). Los separamos en una espiral corta
-  // (~30-300 m) para que cada lugar tenga su propio marcador visible.
+  // Los prospectos que comparten la misma coordenada de zona se reparten en ANILLOS
+  // concéntricos ordenados: el de mayor puntuación queda al centro exacto de la zona
+  // y el resto lo rodea en círculos (8, 16, 24... por anillo, ~68 m entre anillos).
+  // Se ve ordenado y comunica lo que es: un grupo de la misma zona, no ubicaciones al azar.
   function computePositions(list){
     var groups = {};
     list.forEach(function(p){
@@ -9886,13 +9881,21 @@ var PROSPECTOS_RAW = [
     Object.keys(groups).forEach(function(key){
       var g = groups[key];
       var ll = baseLatLng(g[0]);
+      if(g.length === 1){ pos[g[0].id] = ll; return; }
+      g.sort(function(a,b){ return (b.puntuacion||0) - (a.puntuacion||0); });
       var latRad = ll[0] * Math.PI / 180;
-      g.forEach(function(p, i){
-        if(i === 0){ pos[p.id] = ll; return; }
-        var ang = i * 2.39996323; // ángulo áureo: reparte sin superponer
-        var r = 0.00028 * Math.sqrt(i);
-        pos[p.id] = [ ll[0] + r * Math.cos(ang), ll[1] + r * Math.sin(ang) / Math.cos(latRad) ];
-      });
+      var STEP = 0.00062;
+      pos[g[0].id] = ll;
+      var idx = 1, ring = 0;
+      while(idx < g.length){
+        ring++;
+        var enEsteAnillo = Math.min(8 * ring, g.length - idx);
+        for(var k = 0; k < enEsteAnillo; k++, idx++){
+          var ang = (2 * Math.PI * k) / enEsteAnillo - Math.PI / 2;
+          var r = STEP * ring;
+          pos[g[idx].id] = [ ll[0] + r * Math.cos(ang), ll[1] + r * Math.sin(ang) / Math.cos(latRad) ];
+        }
+      }
     });
     return pos;
   }
@@ -9907,7 +9910,11 @@ var PROSPECTOS_RAW = [
   }
   function saveTracking(){ localStorage.setItem(TRACKING_KEY, JSON.stringify(tracking)); }
   function getTrack(id){ return tracking[id] || {estado:"pendiente", fecha:"", notas:""}; }
-  function getEstado(id){ return getTrack(id).estado || "pendiente"; }
+  function getEstado(id){
+    var e = getTrack(id).estado || "pendiente";
+    if(ESTADO_LEGACY[e]) e = ESTADO_LEGACY[e];
+    return ESTADOS[e] ? e : "pendiente";
+  }
 
   // ---------- STATE ----------
   var state = { ciudad:"Todas", prioridad:"Todas", estado:"Todos", calidad:"Todas", search:"", vista:"todos" };
@@ -9987,7 +9994,7 @@ var PROSPECTOS_RAW = [
       var el = L.DomUtil.create("div", "map-legend");
       el.innerHTML = '<b>Estado</b>' + ESTADO_ORDER.map(function(k){
         return '<span><i style="background:'+ESTADOS[k].hex+'"></i>'+ESTADOS[k].label+'</span>';
-      }).join("") + '<span class="leg-note">Tamaño del punto = prioridad</span>';
+      }).join("") + '<span class="leg-note">Tamaño = prioridad · Anillos = misma zona<\/span><span class="leg-note">(el mejor puntuado, al centro)<\/span>';
       return el;
     }
   });
@@ -10339,7 +10346,7 @@ var PROSPECTOS_RAW = [
     renderFichaProductos();
 
     var track = getTrack(id);
-    document.getElementById("f-estado").value = track.estado || "pendiente";
+    document.getElementById("f-estado").value = getEstado(id);
     document.getElementById("f-fecha").value = track.fecha || "";
     document.getElementById("f-notas").value = track.notas || "";
 
@@ -10424,7 +10431,7 @@ var PROSPECTOS_RAW = [
       var track = getTrack(p.id);
       var oferta = buildOferta(p);
       var flag = dataFlag(p);
-      lines.push([p.id,p.nombre,p.rubro,p.prioridad,p.puntuacion,p.ciudad,p.zona,getDireccion(p),p.contacto,p.telefono,p.whatsapp,p.email,p.web,p.motivo,p.fuente,ESTADOS[track.estado||"pendiente"].label,track.fecha||"",track.notas||"",(track.productos||[]).map(function(pr){return pr.n+(pr.kg?" ("+pr.kg+" kg/mes)":"");}).join("; "),prodTotalKg(track.productos||[]),oferta.label,flag?(flag.level==="error"?"Incorrecto":"Por verificar"):"OK",flag?flag.motivo:""].map(csvEscape).join(","));
+      lines.push([p.id,p.nombre,p.rubro,p.prioridad,p.puntuacion,p.ciudad,p.zona,getDireccion(p),p.contacto,p.telefono,p.whatsapp,p.email,p.web,p.motivo,p.fuente,ESTADOS[getEstado(p.id)].label,track.fecha||"",track.notas||"",(track.productos||[]).map(function(pr){return pr.n+(pr.kg?" ("+pr.kg+" kg/mes)":"");}).join("; "),prodTotalKg(track.productos||[]),oferta.label,flag?(flag.level==="error"?"Incorrecto":"Por verificar"):"OK",flag?flag.motivo:""].map(csvEscape).join(","));
     });
     downloadFile("fika_prospectos_reporte.csv", lines.join("\n"), "text/csv;charset=utf-8;");
   });
