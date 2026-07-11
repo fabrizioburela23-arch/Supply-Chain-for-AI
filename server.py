@@ -741,35 +741,51 @@ def batch_quotes():
 # el Second Brain) — este es OTRO endpoint con las series anuales de 6 años.
 @app.route('/api/findossier/<ticker>')
 @rate_limit(limit=60, window=3600)
-@cache.cached(timeout=86400)   # 24h: los estados financieros anuales no cambian intradía
 def fin_dossier(ticker):
     """Series anuales para el dossier financiero de una empresa:
     crecimiento de ingresos, dilución, FCF, márgenes, deuda/capital, ROE y
     EV/Ventas. Fuente: FMP (estados anuales, ~5 años). Sin FMP_KEY responde
-    {available:false} y el cliente lo muestra con gracia."""
+    {available:false} y el cliente lo muestra con gracia.
+    Caché MANUAL solo de éxitos — un rate-limit de FMP no debe quedar
+    envenenado 24h (mismo patrón que /api/fundamentals)."""
     ticker = _safe_ticker(ticker)
     if not ticker:
         return jsonify({'error': 'invalid ticker'}), 400
     if not FMP:
         return jsonify({'available': False, 'reason': 'FMP_KEY no configurada'})
+    _ck = f'findossier_{ticker}'
+    _hit = cache.get(_ck)
+    if _hit is not None:
+        return jsonify(_hit)
 
     # FMP "stable" primero (los planes nuevos NO soportan /api/v3 — el resto
     # del server ya usa /stable/); v3 como respaldo para planes antiguos.
+    _last_err = {}
+
     def _fmp(resource):
         data, err = _safe_get(
             f'https://financialmodelingprep.com/stable/{resource}?symbol={ticker}&limit=6&apikey={FMP}')
         if isinstance(data, list) and data:
             return data
+        if isinstance(data, dict):
+            _last_err[resource] = str(data.get('Error Message') or data.get('message') or data)[:150]
+        elif err:
+            _last_err[resource] = str(err)[:150]
         data, err = _safe_get(
             f'https://financialmodelingprep.com/api/v3/{resource}/{ticker}?limit=6&apikey={FMP}')
-        return data if isinstance(data, list) else []
+        if isinstance(data, list) and data:
+            return data
+        if isinstance(data, dict):
+            _last_err[resource] = str(data.get('Error Message') or data.get('message') or data)[:150]
+        return []
 
     inc = _fmp('income-statement')
     cfs = _fmp('cash-flow-statement')
     bal = _fmp('balance-sheet-statement')
     km = _fmp('key-metrics')
     if not inc:
-        return jsonify({'available': False, 'reason': 'sin estados financieros para este ticker/plan'})
+        return jsonify({'available': False,
+                        'reason': _last_err.get('income-statement', 'sin estados financieros para este ticker/plan')})
 
     def by_year(rows):
         out = {}
@@ -821,7 +837,9 @@ def fin_dossier(ticker):
         series['ev_to_sales'].append(round(evs, 1) if evs is not None else None)
         prev_rev, prev_fcf, prev_sh = rev, fcf, sh
 
-    return jsonify({'available': True, 'ticker': ticker, **series})
+    payload = {'available': True, 'ticker': ticker, **series}
+    cache.set(_ck, payload, timeout=86400)   # solo éxitos, 24h
+    return jsonify(payload)
 
 
 @app.route('/api/candles/<ticker>')
