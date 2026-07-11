@@ -323,6 +323,20 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       de la terminal, en el X-Ray, ruta "dossier de X" y tool open_dossier.
       OJO: /api/fundamentals/<t> YA existía (P/E+ratings del Second Brain) —
       por eso el nuevo se llama findossier.
+- [x] **Feedback 3** (23c3dac): get_company_info devuelve la FICHA COMPLETA
+      (empleados/fundación/ingresos/cap/moat/geo_risk/desc/grados) — Bixby ya
+      no dice "no sé" con datos que la app tiene; el CONTEXT_UPDATE de la
+      empresa seleccionada también. Anti-glitch: al adoptar/devolver el grafo
+      de la Cabina se re-encuadra con fitToView() (quedaba clavado en una
+      empresa).
+- [x] **Fluidez** (6af5db0): flask-compress+brotli (~73% menos descarga:
+      muestra 1,362KB→388KB; OJO: flask-compress salta streaming y
+      send_from_directory streamea — _js_cache_headers bufferiza con
+      get_data()); JS versionado (?v=N) → Cache-Control immutable 1 año
+      (recargas sin bajar código); fundido de 160ms al cambiar pestaña
+      (nav4) y escena de Cabina (prefers-reduced-motion respetado).
+      REDIS: no necesario — 1 worker + 8 threads (Dockerfile), caché interno
+      ya compartido; con REDIS_URL se activa solo.
 
 ## Pendiente que necesita a Fabrizio / decisión
 
