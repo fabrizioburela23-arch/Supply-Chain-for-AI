@@ -310,6 +310,19 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
 - **Bixby sync VERIFICADO en producción**: ok:true, mode:full, 22 tools
   registradas (tras el fix del modelo TTS flash v2.5 para agentes en español
   — 652cb7e). Bixby ya no dice comandos.
+- [x] **Etapa G** (4de15f9, feedback 2 con referencia investingvisuals):
+      1) localcharts.js — gráficos DETERMINISTAS sin IA para pedidos comunes
+      (0 ms; la IA solo para lo exótico); enganchado en Cabina y Canvas.
+      2) La Cabina ADOPTA el grafo (<main>) y la terminal (#terminal-panel)
+      EN su escenario (placeholder + devolución al salir) + barra de 8
+      botones; tools de voz enrutadas dentro (antes cambiaban una pestaña
+      tapada por el overlay). 3) Pestaña 💡 Insights → 🖥️ Terminal (abre la
+      terminal por defecto). 4) Dossier financiero: /api/findossier/<t>
+      (FMP stable→v3, series anuales 6y, caché 24h) + fincard.js (overlay
+      NEXUS con 8 small-multiples Chart.js); botón 📊 DOSSIER en las celdas
+      de la terminal, en el X-Ray, ruta "dossier de X" y tool open_dossier.
+      OJO: /api/fundamentals/<t> YA existía (P/E+ratings del Second Brain) —
+      por eso el nuevo se llama findossier.
 
 ## Pendiente que necesita a Fabrizio / decisión
 
