@@ -242,8 +242,136 @@ class Cartografo:
         }
 
 
-AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo()]
+# ── Agente 5: Radar de Empresas ──────────────────────────────────────────────
+# Vigila: noticias (GDELT) de los nodos más conectados. Detecta EMPRESAS NUEVAS
+# relevantes para la cadena y propone IncorporarEmpresa — con el ciclo
+# automático (auto_cycle) el grafo se mantiene relevante SOLO, todo auditado
+# en la ontología (actor agent:auto) y reversible con RetirarEmpresa.
+
+RADAR_CATS = ['fabless', 'foundry', 'equip', 'materials', 'chemicals', 'cloud',
+              'ailab', 'aisoft', 'ai_agents', 'robotics_physical', 'power_ipp',
+              'uranium', 'nuclear_fusion', 'rare_earth', 'space_infra',
+              'satellite', 'networking', 'dc_reit', 'hpc_super', 'osat',
+              'defense_prime', 'quantum_hw']
+
+
+def _slug(label):
+    import re as _re
+    return _re.sub(r'[^A-Za-z0-9]+', '-', str(label)).strip('-').lower()[:60] or 'x'
+
+
+class RadarEmpresas:
+    name = 'radar_empresas'
+    SAMPLE = 4
+
+    def observe(self, session):
+        rows = session.execute(
+            select(LinkRecord.source_id, sqlfunc.count(LinkRecord.id).label('deg'))
+            .where(LinkRecord.valid_to.is_(None)).group_by(LinkRecord.source_id)
+            .order_by(sqlfunc.count(LinkRecord.id).desc()).limit(self.SAMPLE)
+        ).all()
+        ids = [r[0] for r in rows]
+        companies = session.scalars(select(ObjectRecord).where(ObjectRecord.id.in_(ids))).all() if ids else []
+        return [{'company': c} for c in companies]
+
+    def propose(self, session, signal):
+        c = signal['company']
+        try:
+            import requests as _rq
+            r = _rq.get('https://api.gdeltproject.org/api/v2/doc/doc',
+                        params={'query': c.label, 'mode': 'artlist', 'maxrecords': 6, 'format': 'json'},
+                        timeout=6)
+            arts = (r.json() or {}).get('articles', []) if r.ok else []
+        except Exception:  # noqa: BLE001
+            arts = []
+        titles = '; '.join(a.get('title', '') for a in arts[:6] if a.get('title'))
+        if not titles:
+            return None
+        try:
+            from core.ai import _ai_complete, _extract_json
+            text, _m = _ai_complete(
+                'Eres el radar de un grafo curado de la cadena de suministro de IA, semiconductores, '
+                'espacio, energía y defensa. Respondes SOLO JSON válido, sin markdown.',
+                f'Titulares recientes sobre {c.label}: {titles}\n\n'
+                '¿Alguno menciona una empresa CONCRETA (proveedor, cliente, rival o socio) relevante '
+                'para esta cadena que probablemente NO esté aún en un grafo de ~555 empresas curadas '
+                '(las gigantes obvias YA están)? Responde exactamente:\n'
+                '{"empresa": {"nombre": "...", "pais": "...", '
+                f'"cat": "<una de: {", ".join(RADAR_CATS)}>", '
+                '"relacion": "supply|partner|cloud|license|invest", "resumen": "<1 frase>"}}\n'
+                'o {"empresa": null} si ninguna aplica.', max_tokens=300)
+            data = _extract_json(text) or {}
+        except Exception:  # noqa: BLE001
+            return None
+        emp = data.get('empresa') if isinstance(data, dict) else None
+        if not emp or not emp.get('nombre'):
+            return None
+        nombre = str(emp['nombre']).strip()[:120]
+        sid = _slug(nombre)
+        # ¿ya existe (por id o por label, sin casing)?
+        if session.get(ObjectRecord, sid):
+            return None
+        if session.scalars(select(ObjectRecord).where(
+                sqlfunc.lower(ObjectRecord.label) == nombre.lower())).first():
+            return None
+        if _recently_proposed(session, self.name, 'IncorporarEmpresa', sid, hours=72):
+            return None
+        cat = emp.get('cat') if emp.get('cat') in RADAR_CATS else 'aisoft'
+        rel = emp.get('relacion') if emp.get('relacion') in ('supply', 'partner', 'cloud', 'license', 'invest') else 'partner'
+        razon = str(emp.get('resumen') or f'Detectada en noticias de {c.label}')[:600]
+        return {
+            'action_type': 'IncorporarEmpresa', 'object_id': sid, 'confidence': 0.6,
+            'payload': {'company_id': sid, 'label': nombre, 'cat': cat,
+                        'country': str(emp.get('pais') or '')[:40],
+                        'link_to': c.id, 'rel_type': rel,
+                        'link_rel': f'detectada por radar en noticias de {c.label}',
+                        'razon': razon, 'fuente': 'radar_gdelt'},
+            'explanation': f'📡 {nombre}: {razon}',
+        }
+
+
+AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas()]
 AGENTS_BY_NAME = {a.name: a for a in AGENTS}
+
+# ── Ciclo automático (elección de Fabrizio 2026-07-10): las propuestas SEGURAS
+# se aplican solas con actor 'agent:auto' — auditadas y reversibles. Lo que
+# toca dinero (AjustarPosicion) SIEMPRE queda pendiente para el humano.
+SAFE_AUTO = {'AnotarObjeto', 'MarcarRiesgo', 'ProponerVinculo', 'IncorporarEmpresa'}
+AUTO_MIN_CONFIDENCE = 0.55
+
+
+def auto_cycle(session, actor='agent:auto'):
+    """run_agents + auto-aprobación de lo seguro. Devuelve qué se aplicó."""
+    from ontology.actions import execute_action
+    summary = run_agents(session)
+    session.flush()
+    pending = session.scalars(
+        select(ProposedAction).where(ProposedAction.status == 'pending')
+        .order_by(ProposedAction.created_at.desc()).limit(60)).all()
+    applied, left = [], 0
+    for p in pending:
+        if p.action_type not in SAFE_AUTO or (p.confidence or 0) < AUTO_MIN_CONFIDENCE:
+            left += 1
+            continue
+        # SAVEPOINT por propuesta: una acción que falle en SQL no aborta el ciclo
+        sp = session.begin_nested()
+        try:
+            execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}')
+            sp.commit()
+            p.status = 'approved'
+            p.resolved_at = _utcnow()
+            p.resolved_by = actor
+            applied.append({'agent': p.agent, 'action': p.action_type,
+                            'object': p.object_id, 'explanation': (p.explanation or '')[:160]})
+        except Exception as e:  # noqa: BLE001 — una propuesta inválida no tumba el ciclo
+            try:
+                sp.rollback()
+            except Exception:  # noqa: BLE001
+                pass
+            p.status = 'rejected'
+            p.resolved_at = _utcnow()
+            p.resolved_by = f'{actor} (error: {str(e)[:80]})'
+    return {'agents': summary, 'auto_applied': applied, 'left_for_human': left}
 
 
 def run_agents(session, only=None, max_proposals_per_agent=8):
@@ -254,6 +382,9 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
     for agent in agents:
         t0 = _time.time()
         created = 0
+        # SAVEPOINT por agente: si un agente falla a nivel SQL, el error NO
+        # envenena la transacción de los demás (InFailedSqlTransaction).
+        sp = session.begin_nested()
         try:
             signals = agent.observe(session)
             for sig in signals[:max_proposals_per_agent * 3]:  # margen por si muchas se dedupan
@@ -261,7 +392,7 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
                     break
                 try:
                     proposal = agent.propose(session, sig)
-                except Exception as e:  # noqa: BLE001 — un agente roto no debe tumbar a los demás
+                except Exception:  # noqa: BLE001 — un agente roto no debe tumbar a los demás
                     proposal = None
                 if not proposal:
                     continue
@@ -273,9 +404,14 @@ def run_agents(session, only=None, max_proposals_per_agent=8):
                 )
                 session.add(pa)
                 created += 1
+            sp.commit()
             summary[agent.name] = {'ok': True, 'signals': len(signals), 'proposals': created,
                                     'ms': int((_time.time() - t0) * 1000)}
         except Exception as e:  # noqa: BLE001
+            try:
+                sp.rollback()
+            except Exception:  # noqa: BLE001
+                pass
             summary[agent.name] = {'ok': False, 'error': str(e)[:200], 'ms': int((_time.time() - t0) * 1000)}
     return summary
 

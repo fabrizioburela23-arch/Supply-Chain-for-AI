@@ -247,6 +247,55 @@ server.py salvo el registro del blueprint.
         panel de ElevenLabs. La cabina por TEXTO funciona siempre (no depende
         de eso). La cabina por VOZ ejecuta acciones vía los tokens de voice.js.
 
+## Sesión "modo máximo" 2026-07-10 (feedback: perfeccionar Bixby, 555 empresas, vivo, 3D)
+
+Decisiones de Fabrizio (AskUserQuestion): sync ElevenLabs automático vía API ·
+altas/bajas de empresas automáticas con registro reversible · caché interno
+Redis-ready · el 3D nuevo REEMPLAZA al actual.
+
+- [x] **Etapa A** (e92cf6e): fix DEFINITIVO del "veo lo mismo" — index() inyecta
+      `?v=<versión SW>` en cada `<script src>` (bump de sw.js → URLs nuevas →
+      código fresco siempre) + auto-reload en controllerchange (una vez, con
+      guardas). Bixby 100% silencioso: BIXBY_SYSTEM_PROMPT reescrito (GOLDEN
+      RULES: jamás decir comandos/tokens/herramientas, actuar y narrar),
+      `_bixby_client_tools()` (23 tools) + `_sync_bixby_agent()` + POST
+      /api/voice/sync-agent con autosync al boot (BIXBY_AUTOSYNC=0 apaga);
+      voice.js `_cleanSpeech()` limpia tokens del transcript; tools nuevas
+      create_visualization y open_cockpit; sim/compare/insights van al
+      escenario de la Cabina si está abierta.
+- [x] **Etapa B** (35734dd): informe de Fabrizio ingerido → **555 empresas,
+      1,623 links, 0 huérfanos, 43 categorías** (antes 407/1,028/88 huérfanos).
+      scripts/ingest_enrichment_md.py = parser determinista REUTILIZABLE para
+      futuros informes (resolución de entidades + fuzzy + mapeo de categorías;
+      3 cats nuevas: power_ipp/osat/defense_prime). Verificación adversarial
+      con Workflow (18 agentes, 626 links revisados, 126 direcciones
+      corregidas a la canónica). data/grafo_v0.json regenerado — para llevar
+      producción a 555 hace falta correr REMIGRATE_ON_BOOT (pendiente de
+      Fabrizio, pasos ya entregados).
+- [x] **Etapa C** (35734dd): caché — REDIS_URL → RedisCache automático (cero
+      pasos); canvas 30min/consulta; ai/analyze 30min; matrix/metrics TTL 5min
+      (corría una propagación POR NODO por request). Bug real corregido:
+      node_index excluye Simulation/Factor (simulaciones guardadas se colaban
+      como filas fantasma en las matrices).
+- [x] **Etapa D**: la app se mantiene relevante SOLA. Acciones nuevas
+      IncorporarEmpresa/RetirarEmpresa (auditadas, reversibles) en
+      ontology/actions.py. Agente 5 📡 RadarEmpresas (ontology/agents.py):
+      lee GDELT de los nodos más conectados, la IA detecta empresas nuevas
+      relevantes y las incorpora con link al grafo. auto_cycle(): las
+      propuestas SEGURAS (anotar/marcar riesgo/proponer vínculo/incorporar)
+      se auto-aprueban con actor 'agent:auto'; lo que toca dinero queda para
+      el humano. POST /api/ontology/agents/cycle corre en HILO de background
+      (GDELT+IA tardan 30-60s; jamás atar un worker) — responde al instante
+      con la última corrida. engine/live.js: latido de insights (invalida NRS
+      y re-dibuja al llegar precios), dispara el ciclo cada 10 min, badge
+      "● EN VIVO" en el pie + toasts del radar. Robustez: SAVEPOINT por
+      agente y por propuesta (un fallo SQL ya no envenena la transacción —
+      bug real InFailedSqlTransaction visto en pruebas). Verificado local con
+      Postgres migrado a 555: ciclo aplicó 6 propuestas solo (MarcarRiesgo
+      SMIC/Lenovo/Foxconn/Quanta/Huawei por agent:auto), endpoint 320ms.
+- [ ] **Etapa E**: 3D "videojuego" (reemplaza al actual).
+- [ ] **Etapa F**: 4 capas (reflejo/precognitiva/consciente/deep research).
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con

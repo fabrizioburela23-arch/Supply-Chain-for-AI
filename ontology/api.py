@@ -200,6 +200,55 @@ def agents_run():
         return jsonify({'status': 'ok', 'summary': summary})
 
 
+# Ciclo en vivo: corre en un HILO de background (GDELT + IA tardan 30-60s —
+# jamás atar un worker síncrono de gunicorn a eso). El endpoint responde al
+# instante con el último resultado y lanza una corrida nueva si toca; el
+# cliente (engine/live.js) recoge el resultado en su siguiente poll.
+_cycle_state = {'running': False, 'last': None, 'last_at': 0.0}
+
+
+def _cycle_bg():
+    import time as _t
+    from ontology.agents import auto_cycle, check_alerts
+    try:
+        with session_scope() as s:
+            result = auto_cycle(s)
+            try:
+                fired = check_alerts(s)
+            except Exception:  # noqa: BLE001
+                fired = []
+        _cycle_state['last'] = {'status': 'ok', 'auto_applied': result['auto_applied'],
+                                'left_for_human': result['left_for_human'],
+                                'agents': result['agents'], 'alerts_fired': fired}
+    except Exception as e:  # noqa: BLE001
+        _cycle_state['last'] = {'status': 'error', 'error': str(e)[:300]}
+    finally:
+        _cycle_state['last_at'] = _t.time()
+        _cycle_state['running'] = False
+
+
+@ontology_bp.route('/agents/cycle', methods=['POST'])
+@_require_db
+def agents_cycle():
+    """Ciclo EN VIVO (elección de Fabrizio 2026-07-10: automático + reversible):
+    corre los 5 agentes, auto-aprueba las propuestas SEGURAS (anotar, marcar
+    riesgo, proponer vínculo, incorporar empresa — actor 'agent:auto'), deja lo
+    que toca dinero para el humano, y evalúa las alertas. El grafo se mantiene
+    relevante solo; todo queda auditado en la ontología."""
+    import threading as _th
+    import time as _t
+    force = bool((request.get_json(force=True, silent=True) or {}).get('force'))
+    started = False
+    if not _cycle_state['running'] and (force or _t.time() - _cycle_state['last_at'] > 300):
+        _cycle_state['running'] = True
+        _th.Thread(target=_cycle_bg, daemon=True).start()
+        started = True
+    return jsonify({'status': 'ok', 'started_new_run': started,
+                    'running': _cycle_state['running'],
+                    'last_at': _cycle_state['last_at'],
+                    'last': _cycle_state['last']})
+
+
 @ontology_bp.route('/agents/proposals', methods=['GET'])
 @_require_db
 def agents_proposals_list():

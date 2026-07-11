@@ -81,6 +81,29 @@ class CorregirDatoInput(BaseModel):
     fuente: str = Field(min_length=1, max_length=200)
 
 
+class IncorporarEmpresaInput(BaseModel):
+    """Alta de una empresa nueva detectada en vivo (Radar). Reversible con
+    RetirarEmpresa; todo queda como eventos inmutables."""
+    company_id: str = Field(min_length=2, max_length=80)
+    label: str = Field(min_length=2, max_length=120)
+    cat: str = Field(default='aisoft', max_length=40)
+    country: str = Field(default='', max_length=40)
+    role: str = Field(default='', max_length=500)
+    link_to: Optional[str] = None          # nodo existente con el que se relaciona
+    rel_type: str = Field(default='partner', max_length=20)
+    link_rel: str = Field(default='', max_length=300)
+    razon: str = Field(min_length=1, max_length=1000)
+    fuente: str = Field(default='radar', max_length=200)
+
+
+class RetirarEmpresaInput(BaseModel):
+    """Baja lógica (reversible): marca retired=true; el objeto y su historia
+    quedan intactos en la ontología."""
+    company_id: str
+    razon: str = Field(min_length=1, max_length=1000)
+    restaurar: bool = False                # true = deshacer el retiro
+
+
 # ── Handlers: reciben (session, input_validado, actor) → dict de resultado ──
 
 def _log_action(session, action_type, object_id, target_id, payload, actor, source='manual'):
@@ -255,6 +278,49 @@ def corregir_dato(session, inp: CorregirDatoInput, actor):
             'valor_anterior': valor_anterior, 'valor_nuevo': inp.valor_nuevo}
 
 
+def incorporar_empresa(session, inp: IncorporarEmpresaInput, actor):
+    """Alta viva de empresa (Radar/humano). Crea el objeto + link opcional al
+    grafo. Falla si el id ya existe (usar CorregirDato para actualizar)."""
+    if session.get(ObjectRecord, inp.company_id):
+        raise ActionError(f'la empresa ya existe: {inp.company_id}')
+    props = {k: v for k, v in {'cat': inp.cat, 'country': inp.country,
+                               'role': inp.role, 'added_live': True}.items() if v}
+    apply_event(session, 'ObjectCreated',
+                {'label': inp.label, 'type': 'Company', 'properties': props},
+                valid_from=_utcnow(), source=inp.fuente, actor=actor,
+                object_id=inp.company_id)
+    link = None
+    if inp.link_to:
+        if not session.get(ObjectRecord, inp.link_to):
+            raise ActionError(f'link_to no existe: {inp.link_to}')
+        apply_event(session, 'LinkCreated',
+                    {'rel_type': inp.rel_type or 'partner', 'weight': 1,
+                     'properties': {'rel_label': inp.link_rel or inp.razon[:120],
+                                    'proposed': True}},
+                    valid_from=_utcnow(), source=inp.fuente, actor=actor,
+                    object_id=inp.company_id, target_id=inp.link_to)
+        link = {'from': inp.company_id, 'to': inp.link_to, 'rel_type': inp.rel_type}
+    _log_action(session, 'IncorporarEmpresa', inp.company_id, inp.link_to, {
+        'label': inp.label, 'cat': inp.cat, 'razon': inp.razon, 'fuente': inp.fuente,
+    }, actor, source=inp.fuente)
+    return {'company_id': inp.company_id, 'label': inp.label, 'link': link}
+
+
+def retirar_empresa(session, inp: RetirarEmpresaInput, actor):
+    """Baja lógica reversible: properties.retired = true/false. La historia
+    completa queda en events — nada se borra jamás."""
+    obj = _require_object(session, inp.company_id)
+    retired = not inp.restaurar
+    apply_event(session, 'ObjectUpdated',
+                {'properties': {'retired': retired, 'retired_razon': inp.razon}},
+                valid_from=_utcnow(), source='radar', actor=actor,
+                object_id=inp.company_id)
+    _log_action(session, 'RetirarEmpresa', inp.company_id, None, {
+        'razon': inp.razon, 'restaurar': inp.restaurar,
+    }, actor, source='radar')
+    return {'company_id': inp.company_id, 'retired': retired}
+
+
 # ── Catálogo: nombre → (esquema Pydantic, handler) ───────────────────────────
 ACTION_CATALOG = {
     'CrearTesis':        (CrearTesisInput, crear_tesis),
@@ -266,6 +332,8 @@ ACTION_CATALOG = {
     'RegistrarDecision':  (RegistrarDecisionInput, registrar_decision),
     'AjustarPosicion':    (AjustarPosicionInput, ajustar_posicion),
     'CorregirDato':       (CorregirDatoInput, corregir_dato),
+    'IncorporarEmpresa':  (IncorporarEmpresaInput, incorporar_empresa),
+    'RetirarEmpresa':     (RetirarEmpresaInput, retirar_empresa),
 }
 
 
