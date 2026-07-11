@@ -788,7 +788,12 @@ def fin_dossier(ticker):
         # El plan FMP de producción devuelve 402 en statements (2026-07-11).
         def _av(fn):
             data, _e = _safe_get(f'https://www.alphavantage.co/query?function={fn}&symbol={ticker}&apikey={AV_KEY}')
-            return (data or {}).get('annualReports') or [] if isinstance(data, dict) else []
+            if isinstance(data, dict):
+                note = data.get('Note') or data.get('Information') or data.get('Error Message')
+                if note:
+                    _last_err['av_' + fn] = str(note)[:160]
+                return data.get('annualReports') or []
+            return []
 
         inc_av, bal_av, cfs_av = _av('INCOME_STATEMENT'), _av('BALANCE_SHEET'), _av('CASH_FLOW')
         if inc_av:
@@ -863,7 +868,13 @@ def fin_dossier(ticker):
         prev_rev, prev_fcf, prev_sh = rev, fcf, sh
 
     payload = {'available': True, 'ticker': ticker, **series}
-    cache.set(_ck, payload, timeout=86400)   # solo éxitos, 24h
+    if _last_err:
+        payload['partial'] = {k: v for k, v in _last_err.items()}   # diagnóstico visible
+    # caché: 24h si llegó el paquete completo; si balance/FCF vinieron vacíos
+    # (rate-limit transitorio) NO cachear — que el próximo intento lo complete
+    complete = any(v is not None for v in series['dilution']) and any(v is not None for v in series['fcf'])
+    if complete:
+        cache.set(_ck, payload, timeout=86400)
     return jsonify(payload)
 
 
