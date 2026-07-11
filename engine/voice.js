@@ -550,11 +550,12 @@ const BixbyVoice = {
 
     switch (tool_name) {
       case 'navigate_to_company': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveNode(params.ticker || params.company_name);
         if (n) {
           respond({ success: true, company: n.label, ticker: n.mkt });  // responde YA
           this._defer(() => {                                            // visual diferido
+            // con la Cabina abierta: el grafo aparece EN la pantalla de Bixby
+            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('graph', n.id); return; }
             if (typeof jumpTo === 'function') jumpTo(n.id);
             if (window.khipuGraph3D?.active) window.khipuGraph3D.selectNode(n.id);
             this._updateContextSoon();
@@ -624,30 +625,46 @@ const BixbyVoice = {
         break;
       }
       case 'switch_tab': {
-        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas'];
+        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'tkg', 'guia'];
         const t = params.tab || '';
-        if (validTabs.includes(t) && typeof switchTab === 'function') {
-          this._defer(() => { try { switchTab(t); } catch {} });
-          respond({ success: true, tab: t });
-        } else respond({ success: false, error: `Tab inválida: ${t}` });
+        if (!validTabs.includes(t)) { respond({ success: false, error: `Tab inválida: ${t}` }); break; }
+        respond({ success: true, tab: t });
+        this._defer(() => {
+          // con la Cabina abierta: el grafo y la terminal se muestran DENTRO
+          // de la pantalla de Bixby; el resto cierra la Cabina primero (antes
+          // el cambio quedaba tapado por el overlay y "no hacía nada").
+          if (window.BixbyCockpit?.isOpen()) {
+            if (t === 'map') { window.BixbyCockpit.stage('graph'); return; }
+            if (t === 'terminal') { window.BixbyCockpit.stage('terminal'); return; }
+            if (t === 'analysis') { window.BixbyCockpit.stage('insights'); return; }
+            if (t === 'canvas') { window.BixbyCockpit.stage('canvas'); return; }
+            window.BixbyCockpit.close();
+          }
+          try { switchTab(t); } catch {}
+        });
         break;
       }
       case 'show_chart': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveNode(params.ticker || params.company_name);
         if (n?.mkt) {
-          if (typeof jumpTo === 'function') jumpTo(n.id);
-          if (typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
           respond({ success: true, company: n.label, ticker: n.mkt });
+          this._defer(() => {
+            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('terminal', { ticker: n.mkt }); return; }
+            if (typeof jumpTo === 'function') jumpTo(n.id);
+            if (typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
+          });
         } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
         break;
       }
       case 'open_terminal': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveNode(params.ticker || params.company_name);
         if (n?.mkt) {
-          if (window._termOpenTicker) window._termOpenTicker(n.mkt);
-          respond({ success: true, company: n.label, ticker: n.mkt, action: 'Terminal abierto' });
+          respond({ success: true, company: n.label, ticker: n.mkt, action: 'Terminal abierta en pantalla' });
+          this._defer(() => {
+            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('terminal', { ticker: n.mkt }); return; }
+            if (typeof switchTab === 'function') switchTab('terminal');
+            setTimeout(() => { if (window._termOpenTicker) window._termOpenTicker(n.mkt); }, 250);
+          });
         } else respond({ success: false, error: 'Empresa no encontrada' });
         break;
       }
@@ -826,6 +843,15 @@ const BixbyVoice = {
       case 'open_cockpit': {
         respond({ success: true });
         this._defer(() => { if (window.BixbyCockpit) window.BixbyCockpit.open(); });
+        break;
+      }
+      case 'open_dossier': {
+        // dossier financiero estilo investingvisuals (ingresos/dilución/FCF/ROE…)
+        const n = this._resolveNode(params.ticker || params.company_name);
+        if (n && n.mkt) {
+          respond({ success: true, company: n.label, ticker: n.mkt });
+          this._defer(() => { if (window.openFinCard) window.openFinCard(n.mkt); });
+        } else respond({ success: false, error: 'Empresa sin ticker o no encontrada' });
         break;
       }
       case 'deep_analysis': {

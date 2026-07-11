@@ -65,7 +65,15 @@
 .bcp-iconbtn:hover{border-color:rgba(0,224,255,.5);color:#00E0FF}
 #bcp-mic.on{background:rgba(214,59,59,.85);border-color:#d63b3b;color:#fff;box-shadow:0 0 18px rgba(214,59,59,.45);animation:bcpPulse 1.1s ease-in-out infinite}
 #bcp-close{margin-left:6px}
+#bcp-actions{display:flex;gap:7px;flex-wrap:wrap;padding:9px 22px 0;flex-shrink:0}
+.bcp-act{font-size:11.5px;padding:6px 13px;border-radius:9px;cursor:pointer;color:#9BA6C4;
+  background:rgba(11,18,34,.6);border:1px solid rgba(122,158,255,.16);transition:all .13s;
+  font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+.bcp-act:hover{color:#E8EDFB;border-color:rgba(0,224,255,.45);transform:translateY(-1px)}
+.bcp-act.on{color:#00E0FF;border-color:rgba(0,224,255,.5);background:rgba(0,224,255,.08)}
 #bcp-stage{flex:1;overflow-y:auto;padding:22px;position:relative}
+.bcp-embed{height:calc(100vh - 250px);min-height:420px;display:flex;flex-direction:column;
+  border:1px solid rgba(122,158,255,.18);border-radius:14px;overflow:hidden;background:#04060B;position:relative}
 /* estado vacío / lienzo */
 #bcp-empty{max-width:820px;margin:4vh auto 0;text-align:center}
 #bcp-empty h2{font-size:26px;font-weight:750;margin:0 0 8px;background:linear-gradient(90deg,#E8EDFB,#9BA6C4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -130,8 +138,40 @@
         '</div>' +
         '<button class="bcp-iconbtn" id="bcp-close" title="Cerrar (Esc)">✕</button>' +
       '</div>' +
+      // Barra de BOTONES (pedido de Fabrizio): todo lo que Bixby puede
+      // mostrar, a un clic — el grafo y la terminal viven DENTRO del escenario.
+      '<div id="bcp-actions">' +
+        '<button class="bcp-act" data-act="graph">🗺️ Grafo</button>' +
+        '<button class="bcp-act" data-act="terminal">🖥️ Terminal</button>' +
+        '<button class="bcp-act" data-act="xray">🔬 X-Ray</button>' +
+        '<button class="bcp-act" data-act="sim">◉ Simular</button>' +
+        '<button class="bcp-act" data-act="compare">⇄ Comparar</button>' +
+        '<button class="bcp-act" data-act="insights">💡 Oportunidades</button>' +
+        '<button class="bcp-act" data-act="deep">🧠 Investigar</button>' +
+        '<button class="bcp-act" data-act="canvas">✦ Gráfico</button>' +
+      '</div>' +
       '<div id="bcp-stage"></div>';
     document.body.appendChild(ov);
+
+    ov.querySelectorAll('.bcp-act').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var act = b.getAttribute('data-act');
+        var input = document.getElementById('bcp-input');
+        // acciones directas
+        if (act === 'graph') return stage('graph');
+        if (act === 'terminal') return stage('terminal');
+        if (act === 'insights') return stage('insights');
+        if (act === 'canvas') return stage('canvas');
+        // acciones que necesitan una empresa → prellenar la barra (enseña la sintaxis)
+        var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null;
+        var name = sel && window.NODE_BY_ID && window.NODE_BY_ID[sel] ? window.NODE_BY_ID[sel].label : '';
+        if (act === 'xray') { if (name) return stage('xray', sel); input.value = 'desármame '; }
+        if (act === 'sim') { if (name) return stage('sim', { id: sel, kind: 'collapse' }); input.value = '¿qué pasa si cae '; }
+        if (act === 'compare') { input.value = 'compara ' + (name ? name + ' y ' : ''); }
+        if (act === 'deep') { input.value = 'investiga '; }
+        input.focus();
+      });
+    });
 
     var input = ov.querySelector('#bcp-input');
     ov.querySelector('#bcp-send').addEventListener('click', function () { submit(); });
@@ -162,18 +202,85 @@
     else { window.BixbyVoice.toggle && window.BixbyVoice.toggle(); if (btn) btn.classList.add('on'); setState('live', 'Escuchando'); }
   }
 
+  // ── ADOPCIÓN de paneles reales: el grafo y la terminal se MUEVEN al
+  // escenario de la Cabina (con un placeholder para devolverlos intactos al
+  // salir). Así Bixby los muestra EN SU PANTALLA, no te lleva a otra pestaña.
+  var _adopted = [];
+
+  function restoreAdopted() {
+    while (_adopted.length) {
+      var a = _adopted.pop();
+      try {
+        a.el.style.display = a.prevDisplay;
+        if (a.ph.parentNode) a.ph.parentNode.replaceChild(a.el, a.ph);
+      } catch (e) {}
+    }
+    try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+  }
+
+  function adoptInto(container, el, displayMode) {
+    if (!el || !el.parentNode) return false;
+    var ph = document.createComment('bcp-placeholder');
+    _adopted.push({ el: el, ph: ph, prevDisplay: el.style.display });
+    el.parentNode.replaceChild(ph, el);
+    container.appendChild(el);
+    el.style.display = displayMode || 'flex';
+    setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 60);
+    return true;
+  }
+
+  function markActive(act) {
+    document.querySelectorAll('.bcp-act').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-act') === act);
+    });
+  }
+
   // ══ ESCENARIO ══
   function stage(kind, arg) {
     ensureShell();
     var s = document.getElementById('bcp-stage');
     if (!s) return;
+    restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
+    markActive(kind === 'graph' || kind === 'terminal' || kind === 'insights' || kind === 'canvas' || kind === 'deep' ? kind : null);
     if (kind === 'xray') return stageXRay(s, arg);
     if (kind === 'compare') return stageCompare(s, arg);
     if (kind === 'sim') return stageSim(s, arg);
     if (kind === 'insights') return stageInsights(s);
     if (kind === 'canvas') return stageCanvas(s, arg);
     if (kind === 'deep') return stageDeep(s, arg);
+    if (kind === 'graph') return stageGraph(s, arg);
+    if (kind === 'terminal') return stageTerminal(s, arg);
     return stageEmpty(s);
+  }
+
+  // ── el GRAFO en vivo, dentro de la Cabina ──
+  function stageGraph(s, focusId) {
+    s.innerHTML = backBar('Grafo en vivo') + '<div class="bcp-embed" id="bcp-embed-graph"></div>';
+    var main = document.querySelector('main');
+    if (!adoptInto(s.querySelector('#bcp-embed-graph'), main, 'flex')) {
+      s.innerHTML += '<div class="bcp-loading">No se pudo montar el grafo</div>';
+      return;
+    }
+    if (focusId) {
+      var n = resolveNode(focusId);
+      if (n) setTimeout(function () { try { if (typeof jumpTo === 'function') jumpTo(n.id); } catch (e) {} }, 200);
+    }
+  }
+
+  // ── la TERMINAL Bloomberg, dentro de la Cabina ──
+  function stageTerminal(s, arg) {
+    arg = arg || {};
+    s.innerHTML = backBar('Terminal') + '<div class="bcp-embed" id="bcp-embed-term"></div>';
+    var term = document.getElementById('terminal-panel');
+    if (!adoptInto(s.querySelector('#bcp-embed-term'), term, 'flex')) {
+      s.innerHTML += '<div class="bcp-loading">No se pudo montar la terminal</div>';
+      return;
+    }
+    try { if (typeof window.initTerminalTab === 'function') window.initTerminalTab(); } catch (e) {}
+    var tk = arg.ticker || arg;
+    if (tk && typeof tk === 'string') {
+      setTimeout(function () { try { if (window._termOpenTicker) window._termOpenTicker(tk); } catch (e) {} }, 250);
+    }
   }
 
   function backBar(label) {
@@ -423,6 +530,9 @@
       '<div id="' + cardId + '" class="cv-card"><div class="cv-card-hdr"><div><div class="cv-card-title">' + esc(query) +
       '</div><div class="cv-card-sub">Generando…</div></div></div>' +
       '<div style="height:180px;display:flex;align-items:center;justify-content:center"><div class="cv-spinner"></div></div></div>');
+    // 1º: generador LOCAL determinista (0 ms, 0 errores) — la IA solo para lo exótico
+    var local = window.KhipuLocalCharts && window.KhipuLocalCharts.try(query);
+    if (local && window._cvRenderCard) { window._cvRenderCard(cardId, query, local, 'local ⚡ instantáneo'); return; }
     try {
       var nodeCtx = (window.NODES || []).slice(0, 600).map(function (n) {
         var o = { id: n.id, label: n.label, cat: n.cat };
@@ -476,6 +586,21 @@
     // 2.5) investigación profunda (Capa 4): planear→reunir→simular→sintetizar
     if (/investiga|a fondo|an[aá]lisis profundo|profundiza|\bdeep\b|tesis (de|sobre)/.test(low)) {
       stage('deep', text); return;
+    }
+
+    // 2.55) dossier financiero (ingresos, dilución, FCF, márgenes, ROE…)
+    var dosM = low.match(/(?:dossier|fundamentales|financieros)\s+(?:de\s+)?(.+)/);
+    if (dosM && window.openFinCard) {
+      var dn = resolveNode(dosM[1].replace(/\?+$/, '').trim());
+      if (dn) { window.openFinCard(dn.mkt || dn.id); return; }
+    }
+
+    // 2.6) el grafo o la terminal, DENTRO de la pantalla de Bixby
+    if (/^(mu[eé]strame |ver |abre |abrir )?(el )?(grafo|mapa)\b/.test(low)) { stage('graph'); return; }
+    var termM = low.match(/^(mu[eé]strame |ver |abre |abrir )?(la )?terminal(?:\s+(?:de|con)\s+(.+))?/);
+    if (termM) {
+      var tn = termM[3] ? resolveNode(termM[3].replace(/\?+$/, '').trim()) : null;
+      stage('terminal', tn ? { ticker: tn.mkt || tn.id } : {}); return;
     }
 
     // 3) oportunidades / insights
@@ -542,6 +667,7 @@
     setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
   }
   function close() {
+    restoreAdopted();   // devolver grafo/terminal a su sitio original
     var ov = document.getElementById('bcp-ov');
     if (ov) ov.classList.remove('show');
     open = false;

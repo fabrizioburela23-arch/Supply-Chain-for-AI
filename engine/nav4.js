@@ -13,7 +13,9 @@
 (function () {
   'use strict';
 
-  var GROUP_DEFAULT = { mapa: 'map', mercado: 'market', insights: 'analysis', guia: 'guia' };
+  // 2026-07-11 (Fabrizio): la pestaña se llama TERMINAL y abre la terminal
+  // por defecto ("no me parece que la terminal esté en insights").
+  var GROUP_DEFAULT = { mapa: 'map', mercado: 'market', insights: 'terminal', guia: 'guia' };
   var TAB_GROUP = {};   // se llena leyendo data-group del DOM
 
   function ensureStyles() {

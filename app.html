@@ -1368,7 +1368,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <div class="ptabs" id="ptabs">
       <button class="ptab active" data-group="mapa">🗺️ <span>Mapa</span></button>
       <button class="ptab" data-group="mercado">📈 <span>Mercado</span></button>
-      <button class="ptab" data-group="insights">💡 <span>Insights</span></button>
+      <button class="ptab" data-group="insights">🖥️ <span>Terminal</span></button>
       <button class="ptab" data-group="guia">❓ <span>Guía</span></button>
     </div>
     <div class="stabs" id="stabs">
@@ -5996,6 +5996,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/compare.js"></script>
 <script src="engine/matrixview.js"></script>
 <script src="engine/nav4.js"></script>
+<script src="engine/localcharts.js"></script>
+<script src="engine/fincard.js"></script>
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
 <script src="engine/command_center.js"></script>
@@ -7726,6 +7728,12 @@ async function _termLoadCell(idx, nodeId, ticker, tf) {
       <div style="display:flex;gap:2px;margin-right:8px">
         ${tfs.map(t=>`<button class="term-tf-btn${t===tf?' active':''}" onclick="window._termChangeTf(${idx},'${t}')">${t}</button>`).join('')}
       </div>
+      <button onclick="window.openFinCard&&window.openFinCard('${ticker}')" title="Dossier financiero: ingresos, dilución, FCF, márgenes, ROE…"
+        style="padding:2px 10px;background:rgba(0,224,255,0.08);border:1px solid rgba(0,224,255,0.35);
+          border-radius:2px;color:#00E0FF;font-size:9px;font-family:'JetBrains Mono',monospace;
+          letter-spacing:0.08em;cursor:pointer;transition:background .15s;margin-right:6px"
+        onmouseover="this.style.background='rgba(0,224,255,0.18)'"
+        onmouseout="this.style.background='rgba(0,224,255,0.08)'">📊 DOSSIER</button>
       <button onclick="openTradeModal('${nodeId}','${ticker}','${(node?.label||ticker).replace(/'/g,"\\'")}')"
         style="padding:2px 10px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.35);
           border-radius:2px;color:#00ff88;font-size:9px;font-family:'JetBrains Mono',monospace;
@@ -9091,6 +9099,16 @@ window.canvasGenerate = async function(){
       <div style="height:180px;display:flex;align-items:center;justify-content:center"><div class="cv-spinner"></div></div>
     </div>`);
   cardsEl.scrollTop=0;
+
+  /* 1º: generador LOCAL determinista (0 ms, sin IA) — arregla "tardan mucho
+     y muchas veces no los hace bien" para los pedidos comunes */
+  const _localSpec = window.KhipuLocalCharts && window.KhipuLocalCharts.try(query);
+  if (_localSpec) {
+    _cvRenderCard(cardId, query, _localSpec, 'local ⚡ instantáneo');
+    input.value='';
+    _cvBusy=false; btnTxt.textContent='✦ Generar'; btn.disabled=false;
+    return;
+  }
 
   try{
     let spec, model;

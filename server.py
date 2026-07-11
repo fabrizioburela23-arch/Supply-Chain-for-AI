@@ -736,6 +736,94 @@ def batch_quotes():
     return jsonify(results)
 
 
+# ── Series anuales para el DOSSIER financiero (estilo investingvisuals) ─────
+# OJO: /api/fundamentals/<t> ya existe (P/E + price targets + ratings, lo usa
+# el Second Brain) — este es OTRO endpoint con las series anuales de 6 años.
+@app.route('/api/findossier/<ticker>')
+@rate_limit(limit=60, window=3600)
+@cache.cached(timeout=86400)   # 24h: los estados financieros anuales no cambian intradía
+def fin_dossier(ticker):
+    """Series anuales para el dossier financiero de una empresa:
+    crecimiento de ingresos, dilución, FCF, márgenes, deuda/capital, ROE y
+    EV/Ventas. Fuente: FMP (estados anuales, ~5 años). Sin FMP_KEY responde
+    {available:false} y el cliente lo muestra con gracia."""
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker'}), 400
+    if not FMP:
+        return jsonify({'available': False, 'reason': 'FMP_KEY no configurada'})
+
+    # FMP "stable" primero (los planes nuevos NO soportan /api/v3 — el resto
+    # del server ya usa /stable/); v3 como respaldo para planes antiguos.
+    def _fmp(resource):
+        data, err = _safe_get(
+            f'https://financialmodelingprep.com/stable/{resource}?symbol={ticker}&limit=6&apikey={FMP}')
+        if isinstance(data, list) and data:
+            return data
+        data, err = _safe_get(
+            f'https://financialmodelingprep.com/api/v3/{resource}/{ticker}?limit=6&apikey={FMP}')
+        return data if isinstance(data, list) else []
+
+    inc = _fmp('income-statement')
+    cfs = _fmp('cash-flow-statement')
+    bal = _fmp('balance-sheet-statement')
+    km = _fmp('key-metrics')
+    if not inc:
+        return jsonify({'available': False, 'reason': 'sin estados financieros para este ticker/plan'})
+
+    def by_year(rows):
+        out = {}
+        for r in (rows if isinstance(rows, list) else []):
+            y = str(r.get('calendarYear') or r.get('date', ''))[:4]
+            if y.isdigit():
+                out[y] = r
+        return out
+
+    yi, yc, yb, yk = by_year(inc), by_year(cfs), by_year(bal), by_year(km)
+    years = sorted(yi.keys())[-6:]
+
+    def _f(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    series = {'years': [], 'revenue': [], 'revenue_growth': [], 'gross_margin': [],
+              'fcf': [], 'fcf_margin': [], 'fcf_growth': [], 'dilution': [],
+              'de_ratio': [], 'roe': [], 'ev_to_sales': []}
+    prev_rev = prev_fcf = prev_sh = None
+    for y in years:
+        i, c, b, k = yi.get(y, {}), yc.get(y, {}), yb.get(y, {}), yk.get(y, {})
+        rev = _f(i.get('revenue'))
+        fcf = _f(c.get('freeCashFlow'))
+        sh = _f(i.get('weightedAverageShsOut')) or _f(i.get('weightedAverageShsOutDil'))
+        debt = _f(b.get('totalDebt'))
+        eq = _f(b.get('totalStockholdersEquity')) or _f(b.get('totalEquity'))
+        # márgenes/ratios: usar el campo directo si está, si no calcular del crudo
+        gm = _f(i.get('grossProfitRatio'))
+        if gm is None and rev and _f(i.get('grossProfit')) is not None:
+            gm = _f(i.get('grossProfit')) / rev
+        roe = _f(k.get('roe')) or _f(k.get('returnOnEquity'))
+        if roe is None and eq and _f(i.get('netIncome')) is not None:
+            roe = _f(i.get('netIncome')) / eq
+        evs = _f(k.get('evToSales')) or _f(k.get('enterpriseValueOverRevenue')) \
+            or _f(k.get('evToRevenue'))
+        series['years'].append(y)
+        series['revenue'].append(rev)
+        series['revenue_growth'].append(round((rev / prev_rev - 1) * 100, 1) if rev and prev_rev else None)
+        series['gross_margin'].append(round(gm * 100, 1) if gm is not None else None)
+        series['fcf'].append(fcf)
+        series['fcf_margin'].append(round(fcf / rev * 100, 1) if fcf is not None and rev else None)
+        series['fcf_growth'].append(round((fcf / prev_fcf - 1) * 100, 1) if fcf and prev_fcf and prev_fcf > 0 else None)
+        series['dilution'].append(round((sh / prev_sh - 1) * 100, 2) if sh and prev_sh else None)
+        series['de_ratio'].append(round(debt / eq, 3) if debt is not None and eq else None)
+        series['roe'].append(round(roe * 100, 1) if roe is not None else None)
+        series['ev_to_sales'].append(round(evs, 1) if evs is not None else None)
+        prev_rev, prev_fcf, prev_sh = rev, fcf, sh
+
+    return jsonify({'available': True, 'ticker': ticker, **series})
+
+
 @app.route('/api/candles/<ticker>')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=1800)
@@ -1873,6 +1961,8 @@ Data lookups:
 Navigation & UI:
 - navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|tkg|guia)
 - show_chart(ticker) · open_terminal(ticker) · place_trade(ticker) · open_second_brain(company_name) · open_cockpit()
+- open_dossier(company_name): the FINANCIAL DOSSIER card (revenue growth, dilution, FCF, stock, EV/Sales, debt, margins, ROE). Use when the user asks for "fundamentales", "dossier", or a financial overview of one listed company.
+When the full-screen cockpit is open, the graph and the terminal render INSIDE it automatically — navigate_to_company and open_terminal show them on the cockpit stage, never in a hidden tab.
 
 You may receive [CONTEXT_UPDATE] {json} messages — silent app-state snapshots (selected company, portfolio, top risks). Use them to be sharper; never read them aloud or acknowledge them.
 
@@ -1961,6 +2051,7 @@ def _bixby_client_tools():
         T('open_second_brain', 'Open the AI intelligence panel for a company.', company, ['company_name']),
         T('open_cockpit', 'Open the full-screen Bixby cockpit view.'),
         T('deep_analysis', 'Run a multi-step DEEP investigation (plan → context → simulation → synthesis) for a complex investment question. Takes 30-90 seconds; the full analysis appears on screen — tell the user you are investigating and it will appear shortly.', {'question': S('The complete question, in the user language')}, ['question']),
+        T('open_dossier', 'Open the FINANCIAL DOSSIER card of a listed company: revenue growth, dilution, free cash flow, stock, EV/Sales valuation, debt/equity, margins and ROE (investingvisuals-style small multiples).', company, ['company_name']),
     ]
 
 
