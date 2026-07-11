@@ -293,8 +293,23 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       bug real InFailedSqlTransaction visto en pruebas). Verificado local con
       Postgres migrado a 555: ciclo aplicó 6 propuestas solo (MarcarRiesgo
       SMIC/Lenovo/Foxconn/Quanta/Huawei por agent:auto), endpoint 320ms.
-- [ ] **Etapa E**: 3D "videojuego" (reemplaza al actual).
-- [ ] **Etapa F**: 4 capas (reflejo/precognitiva/consciente/deep research).
+- [x] **Etapa E** (49b60e7): 3D cinemático — halos aditivos por nodo (pseudo-
+      bloom, laten con NRS), 1,623 aristas CURVAS (bezier 11 pts), 260
+      partículas de flujo por las aristas fuertes, niebla FogExp2, respiración
+      de cámara, auto-ajuste de rendimiento (modo ligero < 28fps). 66 fps.
+- [x] **Etapa F**: arquitectura de 4 capas FORMALIZADA (docs/ARQUITECTURA_
+      CAPAS.md). Capa 2: core/semantic.py — build_context() = subgrafo
+      hiper-filtrado (foco + vecinos top + chokepoints) desde data/grafo_v0
+      .json (555, caché de módulo), extract_companies() sin IA, resolve_ids
+      (id/ticker/label). Capa 4: POST /api/deep/analyze + GET /api/deep/status
+      (server.py _deep_run, hilo background): PLAN (IA) → REUNIR (capa 2) →
+      SIMULAR (matrices con hiperaristas) → SINTETIZAR (tesis/evidencia/
+      riesgos/vigilar). Cabina: escena stageDeep con pasos en vivo + polling
+      2.5s (chip "Investigación profunda", regex investiga/a fondo/tesis).
+      Bixby: tool deep_analysis (23+1 registradas vía sync).
+- **Bixby sync VERIFICADO en producción**: ok:true, mode:full, 22 tools
+  registradas (tras el fix del modelo TTS flash v2.5 para agentes en español
+  — 652cb7e). Bixby ya no dice comandos.
 
 ## Pendiente que necesita a Fabrizio / decisión
 

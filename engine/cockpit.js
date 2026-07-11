@@ -172,6 +172,7 @@
     if (kind === 'sim') return stageSim(s, arg);
     if (kind === 'insights') return stageInsights(s);
     if (kind === 'canvas') return stageCanvas(s, arg);
+    if (kind === 'deep') return stageDeep(s, arg);
     return stageEmpty(s);
   }
 
@@ -187,6 +188,7 @@
       ['compara ', 'Nvidia y AMD', 'Dos empresas'],
       ['muéstrame ', 'oportunidades', 'Dónde invertir'],
       ['gráfico: ', 'márgenes de NVIDIA, TSMC y ASML', 'Lienzo de datos'],
+      ['investiga ', 'la energía nuclear para datacenters', 'Investigación profunda'],
       ['', 'lienzo en blanco', 'Empezar de cero'],
     ];
     s.innerHTML = '<div id="bcp-empty"><h2>Soy Bixby. Pregúntame lo que sea.</h2>' +
@@ -334,6 +336,67 @@
       '</div></div>';
   }
 
+  // ── Investigación profunda (Capa 4): planear→reunir→simular→sintetizar ──
+  var _deepTimer = null;
+
+  function stageDeep(s, question) {
+    if (_deepTimer) { clearInterval(_deepTimer); _deepTimer = null; }
+    question = (question || '').trim();
+    s.innerHTML = backBar('Investigación profunda') +
+      '<div class="bcp-inner" style="max-width:820px">' +
+        '<div class="bcp-simhd"><span class="big">🧠 ' + esc(question || 'Análisis profundo') + '</span></div>' +
+        '<div id="bcp-deep-steps" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px"></div>' +
+        '<div id="bcp-deep-result"></div>' +
+      '</div>';
+    if (!question) return;
+    setState('think', 'Investigando');
+
+    fetch((window.BASE || '') + '/api/deep/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: question }),
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      if (d.error) { renderDeepError(d.error); return; }
+      _deepTimer = setInterval(pollDeep, 2500);
+      pollDeep();
+    }).catch(function () { renderDeepError('No se pudo conectar con el servidor'); });
+
+    function renderDeepError(msg) {
+      var el = document.getElementById('bcp-deep-result');
+      if (el) el.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc(msg) + '</div>';
+      setState('', 'Listo');
+    }
+
+    function pollDeep() {
+      fetch((window.BASE || '') + '/api/deep/status').then(function (r) { return r.json(); }).then(function (d) {
+        var stepsEl = document.getElementById('bcp-deep-steps');
+        if (!stepsEl) { clearInterval(_deepTimer); _deepTimer = null; return; }  // salieron de la escena
+        stepsEl.innerHTML = (d.steps || []).map(function (st, i) {
+          var last = i === d.steps.length - 1 && d.running;
+          return '<div style="display:flex;gap:9px;align-items:baseline;font-size:12.5px;color:#9BA6C4">' +
+            '<span style="color:' + (last ? '#FFB300' : '#2BE38B') + '">' + (last ? '◌' : '✓') + '</span>' +
+            '<span><b style="color:#E8EDFB">' + esc(st.paso) + '</b> — ' + esc(st.detalle || '') + '</span></div>';
+        }).join('');
+        if (!d.running && d.result) {
+          clearInterval(_deepTimer); _deepTimer = null;
+          setState('', 'Listo');
+          var el = document.getElementById('bcp-deep-result');
+          if (!el) return;
+          if (d.result.error) { renderDeepError(d.result.error); return; }
+          var simHTML = d.result.sim ?
+            '<div class="bcp-grid3" style="margin:14px 0">' +
+              '<div class="bcp-stat"><b style="color:#FF4D6A">' + d.result.sim.afectadas + '</b><span>afectadas si cae ' + esc(d.result.sim.shock) + '</span></div>' +
+              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:14px">' + esc((d.result.focos || []).join(', ').slice(0, 40) || '—') + '</b><span>foco</span></div>' +
+              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:13px">' + esc(d.result.model || '') + '</b><span>modelo</span></div>' +
+            '</div>' : '';
+          el.innerHTML = simHTML +
+            '<div style="border:1px solid rgba(122,158,255,.16);border-radius:14px;background:rgba(11,18,34,.55);' +
+              'padding:18px 20px;font-size:14px;line-height:1.65;color:#E8EDFB;white-space:pre-wrap">' +
+              esc(d.result.answer || '') + '</div>';
+        }
+      }).catch(function () {});
+    }
+  }
+
   // ── Canvas / lienzo (gráfico o tabla por IA) ──
   function stageCanvas(s, query) {
     s.innerHTML = backBar('Lienzo') +
@@ -408,6 +471,11 @@
     if (/^(l[ií]enzo|canvas)\b/.test(low) || /lienzo en blanco/.test(low)) { stage('canvas'); return; }
     if (/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\b[:\s]/.test(low) || low.indexOf('gráfico:') >= 0) {
       stage('canvas', text.replace(/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\s*:?\s*/i, '')); return;
+    }
+
+    // 2.5) investigación profunda (Capa 4): planear→reunir→simular→sintetizar
+    if (/investiga|a fondo|an[aá]lisis profundo|profundiza|\bdeep\b|tesis (de|sobre)/.test(low)) {
+      stage('deep', text); return;
     }
 
     // 3) oportunidades / insights

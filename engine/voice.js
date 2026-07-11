@@ -828,6 +828,17 @@ const BixbyVoice = {
         this._defer(() => { if (window.BixbyCockpit) window.BixbyCockpit.open(); });
         break;
       }
+      case 'deep_analysis': {
+        // Capa 4: investigación profunda multi-paso — el resultado se pinta
+        // en el escenario de la Cabina (tarda 30-90s; Bixby avisa y espera)
+        const q = (params.question || '').trim();
+        if (!q) { respond({ success: false, error: 'question required' }); break; }
+        respond({ success: true, started: true, eta_seconds: 60 });
+        this._defer(() => {
+          if (window.BixbyCockpit) { window.BixbyCockpit.open(); window.BixbyCockpit.stage('deep', q); }
+        });
+        break;
+      }
       default:
         respond({ success: false, error: `Unknown tool: ${tool_name}` });
     }

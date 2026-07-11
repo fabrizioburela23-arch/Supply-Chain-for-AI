@@ -1960,6 +1960,7 @@ def _bixby_client_tools():
         T('place_trade', 'Open the buy/sell trade modal for a ticker (the user confirms manually).', {'ticker': S('Ticker')}, ['ticker']),
         T('open_second_brain', 'Open the AI intelligence panel for a company.', company, ['company_name']),
         T('open_cockpit', 'Open the full-screen Bixby cockpit view.'),
+        T('deep_analysis', 'Run a multi-step DEEP investigation (plan → context → simulation → synthesis) for a complex investment question. Takes 30-90 seconds; the full analysis appears on screen — tell the user you are investigating and it will appear shortly.', {'question': S('The complete question, in the user language')}, ['question']),
     ]
 
 
@@ -2044,6 +2045,117 @@ if os.getenv('BIXBY_AUTOSYNC', '1').strip().lower() not in ('0', 'false', 'no'):
             threading.Thread(target=_bixby_autosync, daemon=True).start()
     except Exception as _e:  # noqa: BLE001
         log.warning('Bixby autosync no arrancó: %s', _e)
+
+
+# ══ CAPA 4 — INVESTIGACIÓN PROFUNDA (arquitectura de 4 capas, 2026-07-10) ═══
+# Capa 1 (refleja): KHIPU parser + proxies + client tools de Bixby.
+# Capa 2 (preconsciente): caché + core/semantic.py (subgrafo hiper-filtrado).
+# Capa 3 (consciente): _ai_complete con SOLO el contexto relevante.
+# Capa 4 (esta): bucle multi-paso para preguntas complejas — planear → reunir
+# (capa 2) → simular (matrices) → sintetizar. Corre en background (30-90s);
+# el cliente hace polling a /api/deep/status. Ver docs/ARQUITECTURA_CAPAS.md.
+_deep_state = {'running': False, 'steps': [], 'result': None,
+               'question': None, 'started_at': 0.0}
+
+
+def _deep_run(question, company_ids):
+    from core.semantic import build_context, extract_companies
+    steps = _deep_state['steps']
+
+    def step(nombre, detalle=''):
+        steps.append({'paso': nombre, 'detalle': detalle})
+
+    try:
+        # 1) PLAN (consciente, barato)
+        step('plan', 'Descomponiendo la pregunta en sub-análisis…')
+        plan = []
+        try:
+            ptxt, _m = _ai_complete(
+                'Eres un analista jefe. Responde SOLO un JSON: {"subpreguntas": ["...", "..."]} '
+                '(2-3 sub-análisis concretos y verificables).',
+                f'Pregunta del inversor: {question}', max_tokens=250)
+            plan = (_extract_json(ptxt) or {}).get('subpreguntas') or []
+        except Exception:  # noqa: BLE001
+            pass
+        if plan:
+            step('plan_listo', ' · '.join(str(p)[:80] for p in plan[:3]))
+
+        # 2) REUNIR — capa preconsciente: subgrafo hiper-filtrado
+        ids = company_ids or extract_companies(question)
+        ctx = build_context(ids, question)
+        focos = [f['empresa'].get('label') or f['empresa'].get('id') for f in ctx['foco']]
+        step('contexto', f'Subgrafo activo: {", ".join(focos) if focos else "global"} '
+                         f'({ctx["universo"]["empresas"]} empresas en el universo)')
+
+        # 3) SIMULAR — matrices del servidor (si hay DB); evidencia numérica real
+        sim = None
+        try:
+            from ontology.db import ontology_available, session_scope
+            if ontology_available() and ids:
+                from matrix.engine import build_matrices, propagate, active_factors, fragility
+                with session_scope() as s:
+                    mats, idx, all_ids = build_matrices(s)
+                    factors = active_factors(s)
+                    frag = fragility(idx, factors)
+                    shock = [i for i in ids if i in idx][:1]
+                    if shock:
+                        impacts, cascade = propagate(mats, idx, all_ids, shock, frag=frag)
+                        top = sorted(((k, v) for k, v in impacts.items() if k not in shock),
+                                     key=lambda kv: -kv[1])[:8]
+                        sim = {'shock': shock[0], 'afectadas': max(len(impacts) - 1, 0),
+                               'top_impactadas': [{'id': k, 'pct': round(v, 1)} for k, v in top],
+                               'factores_activos': [f['label'] for f in factors]}
+                        step('simulación', f'Si cae {shock[0]}: {sim["afectadas"]} empresas '
+                                           f'afectadas; peor golpe {top[0][0] if top else "—"}')
+        except Exception:  # noqa: BLE001
+            step('simulación', 'Motor de matrices no disponible — análisis sin propagación numérica')
+
+        # 4) SINTETIZAR — capa consciente con TODA la evidencia
+        step('síntesis', 'Redactando el análisis final…')
+        evidencia = json.dumps({'contexto': ctx, 'simulacion': sim, 'plan': plan},
+                               ensure_ascii=False)[:14000]
+        final, model = _ai_complete(
+            'Eres el analista jefe de Khipus AI Finance Intelligence. Escribe en español, '
+            'para un inversor exigente: 1) TESIS en 2-3 frases; 2) EVIDENCIA con los números '
+            'del contexto/simulación (cita empresas y porcentajes REALES del JSON, jamás '
+            'inventes); 3) RIESGOS (2-3 bullets); 4) QUÉ VIGILAR (2-3 señales concretas). '
+            'Máximo ~350 palabras. Cierra con: "Análisis, no asesoría financiera."',
+            f'Pregunta: {question}\n\nEVIDENCIA (JSON):\n{evidencia}', max_tokens=1200)
+        _deep_state['result'] = {'answer': final, 'model': model, 'plan': plan,
+                                 'sim': sim, 'focos': focos}
+        step('listo', 'Análisis completo')
+    except Exception as e:  # noqa: BLE001
+        _deep_state['result'] = {'error': str(e)[:300]}
+        step('error', str(e)[:120])
+    finally:
+        _deep_state['running'] = False
+
+
+@app.route('/api/deep/analyze', methods=['POST'])
+@rate_limit(limit=20, window=3600)
+def deep_analyze():
+    """Arranca una investigación profunda (Capa 4). Una a la vez por worker."""
+    if not _ai_configured():
+        return jsonify({'error': 'no AI provider configured'}), 400
+    body = request.get_json(force=True, silent=True) or {}
+    question = str(body.get('question', ''))[:600].strip()
+    if not question:
+        return jsonify({'error': 'question is required'}), 400
+    if _deep_state['running']:
+        return jsonify({'status': 'busy', 'question': _deep_state['question']}), 409
+    from core.semantic import resolve_ids
+    ids = resolve_ids(body.get('companies') or [])
+    _deep_state.update(running=True, steps=[], result=None,
+                       question=question, started_at=time.time())
+    threading.Thread(target=_deep_run, args=(question, ids), daemon=True).start()
+    return jsonify({'status': 'started', 'question': question})
+
+
+@app.route('/api/deep/status')
+def deep_status():
+    return jsonify({'running': _deep_state['running'], 'question': _deep_state['question'],
+                    'steps': _deep_state['steps'], 'result': _deep_state['result'],
+                    'seconds': int(time.time() - _deep_state['started_at']) if _deep_state['started_at'] else 0})
 
 @app.route('/api/voice/bixby-prompt', methods=['GET'])
 def bixby_system_prompt():
