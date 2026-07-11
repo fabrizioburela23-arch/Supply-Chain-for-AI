@@ -783,6 +783,31 @@ def fin_dossier(ticker):
     cfs = _fmp('cash-flow-statement')
     bal = _fmp('balance-sheet-statement')
     km = _fmp('key-metrics')
+    if not inc and AV_KEY:
+        # Respaldo: Alpha Vantage (el plan gratis SÍ incluye estados anuales).
+        # El plan FMP de producción devuelve 402 en statements (2026-07-11).
+        def _av(fn):
+            data, _e = _safe_get(f'https://www.alphavantage.co/query?function={fn}&symbol={ticker}&apikey={AV_KEY}')
+            return (data or {}).get('annualReports') or [] if isinstance(data, dict) else []
+
+        inc_av, bal_av, cfs_av = _av('INCOME_STATEMENT'), _av('BALANCE_SHEET'), _av('CASH_FLOW')
+        if inc_av:
+            def _y(r):
+                return str(r.get('fiscalDateEnding', ''))[:4]
+            sh_by_year = {_y(r): r.get('commonStockSharesOutstanding') for r in bal_av}
+            inc = [{'calendarYear': _y(r), 'revenue': r.get('totalRevenue'),
+                    'grossProfit': r.get('grossProfit'), 'netIncome': r.get('netIncome'),
+                    'weightedAverageShsOut': sh_by_year.get(_y(r))} for r in inc_av[:6]]
+            bal = [{'calendarYear': _y(r), 'totalDebt': r.get('shortLongTermDebtTotal'),
+                    'totalStockholdersEquity': r.get('totalShareholderEquity')} for r in bal_av[:6]]
+            cfs = []
+            for r in cfs_av[:6]:
+                try:
+                    fcf_v = float(r.get('operatingCashflow') or 0) - float(r.get('capitalExpenditures') or 0)
+                except (TypeError, ValueError):
+                    fcf_v = None
+                cfs.append({'calendarYear': _y(r), 'freeCashFlow': fcf_v})
+            km = []   # AV no trae EV/Ventas — ese mini-gráfico queda vacío
     if not inc:
         return jsonify({'available': False,
                         'reason': _last_err.get('income-statement', 'sin estados financieros para este ticker/plan')})
