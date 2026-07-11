@@ -41,10 +41,22 @@ from dotenv import load_dotenv
 load_dotenv()  # Lee .env: FINNHUB_KEY, FMP_KEY, CLAUDE_KEY, MARKETSTACK_KEY, AI_MODEL
 
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'SimpleCache'
+# Caché: interno (SimpleCache, por worker) por defecto; si existe REDIS_URL
+# (plugin de Railway) se usa Redis automáticamente — compartido entre workers
+# y sobrevive reinicios. Cero configuración manual: solo añadir la variable.
+if os.getenv('REDIS_URL'):
+    try:
+        import redis as _redis_probe  # noqa: F401
+        app.config['CACHE_TYPE'] = 'RedisCache'
+        app.config['CACHE_REDIS_URL'] = os.getenv('REDIS_URL')
+        app.config['CACHE_KEY_PREFIX'] = 'khipu:'
+    except Exception:  # noqa: BLE001
+        app.config['CACHE_TYPE'] = 'SimpleCache'
+else:
+    app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5 min por defecto
 app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024  # 1 MB — el contexto de Canvas
-# (catálogo de ~460 empresas + quotes) supera 64 KB; sigue acotado y con rate-limit.
+# (catálogo de ~555 empresas + quotes) supera 64 KB; sigue acotado y con rate-limit.
 cache = Cache(app)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
@@ -1024,12 +1036,20 @@ def ai_analyze():
     data = request.get_json(force=True, silent=True) or {}
     # Clamp max_tokens to avoid runaway costs
     max_tok = min(int(data.get('max_tokens', 1000)), 2000)
+    # caché 30 min por (system+prompt): el mismo análisis no paga otra llamada IA
+    _ck = 'aian:' + hashlib.sha256(
+        (str(data.get('system', '')) + '\x00' + str(data.get('prompt', ''))).encode('utf-8')
+    ).hexdigest()[:24]
+    _hit = cache.get(_ck)
+    if _hit:
+        return jsonify({'result': _hit['result'], 'model': _hit['model'], 'cached': True})
     try:
         text, model = _claude_complete(
             data.get('system', ''),
             data.get('prompt', ''),
             max_tok,
         )
+        cache.set(_ck, {'result': text, 'model': model}, timeout=1800)
         return jsonify({'result': text, 'model': model})
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200]}), 500
@@ -1088,6 +1108,12 @@ def canvas_generate():
         for n in nodes_raw[:500]
     ]
     live_raw = ctx.get('live') or {}
+    # caché por consulta (30 min): la misma pregunta no debe pagar otra llamada
+    # de IA de varios segundos. Si hay precios en vivo en juego, TTL corto (2 min).
+    _ck = 'canvas:' + hashlib.sha256(query.lower().encode('utf-8')).hexdigest()[:24]
+    _hit = cache.get(_ck)
+    if _hit:
+        return jsonify({'spec': _hit['spec'], 'model': _hit['model'], 'cached': True})
     ctx_str = json.dumps({'nodes': nodes_compact, 'quotes': quotes_raw,
                           'live': live_raw, 'selected': ctx.get('selected_id')},
                          ensure_ascii=False)
@@ -1100,6 +1126,8 @@ def canvas_generate():
         if not isinstance(spec, dict) or spec.get('type') not in valid_types:
             return jsonify({'error': f'invalid type: {spec.get("type") if isinstance(spec, dict) else type(spec).__name__}',
                             'raw': (text or '')[:300]}), 502
+        cache.set(_ck, {'spec': spec, 'model': model},
+                  timeout=(120 if live_raw else 1800))
         return jsonify({'spec': spec, 'model': model})
     except json.JSONDecodeError:
         return jsonify({'error': 'model returned non-JSON', 'raw': (text or '')[:400]}), 502

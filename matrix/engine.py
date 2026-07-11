@@ -36,9 +36,15 @@ def _utcnow():
 
 
 def node_index(session):
-    """Índice estable id→posición (orden alfabético de ids de objetos)."""
+    """Índice estable id→posición (orden alfabético de ids de objetos).
+
+    Excluye tipos que NO son nodos del grafo económico: 'Simulation' (historial
+    de simulaciones guardadas) y 'Factor' (hiperaristas moduladoras) — antes se
+    colaban como filas/columnas fantasma en las matrices."""
     ids = [r for (r,) in session.execute(
-        select(ObjectRecord.id).order_by(ObjectRecord.id)).all()]
+        select(ObjectRecord.id)
+        .where(ObjectRecord.type.notin_(('Simulation', 'Factor')))
+        .order_by(ObjectRecord.id)).all()]
     return {oid: i for i, oid in enumerate(ids)}, ids
 
 

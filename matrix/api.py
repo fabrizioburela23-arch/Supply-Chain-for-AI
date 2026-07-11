@@ -3,9 +3,28 @@
 Igual que la ontología: opcional y defensivo — sin DATABASE_URL responde 503
 y el resto de la app sigue intacta. NO tocar /v1/* (API monetizada).
 """
+import json
+import time
+
 from flask import Blueprint, jsonify, request
 
 matrix_bp = Blueprint('matrix', __name__, url_prefix='/api/matrix')
+
+# ── caché TTL por worker (metrics corre UNA propagación POR NODO — pesado) ──
+_TTL_CACHE = {}
+
+
+def _ttl_get(key, ttl):
+    e = _TTL_CACHE.get(key)
+    if e and time.time() - e[0] < ttl:
+        return e[1]
+    return None
+
+
+def _ttl_set(key, value):
+    if len(_TTL_CACHE) > 200:   # sanidad: nunca crecer sin límite
+        _TTL_CACHE.clear()
+    _TTL_CACHE[key] = (time.time(), value)
 
 
 def _db():
@@ -133,11 +152,18 @@ def matrix_metrics():
     scope = _db()
     if scope is None:
         return jsonify({'error': 'DATABASE_URL no configurada'}), 503
+    as_of = request.args.get('as_of')
+    ck = 'metrics:' + (as_of or 'now')
+    hit = _ttl_get(ck, ttl=300)
+    if hit is not None:
+        return jsonify(hit)
     from matrix.engine import compute_metrics
     with scope() as s:
-        metrics, factors = compute_metrics(s, as_of=request.args.get('as_of'))
+        metrics, factors = compute_metrics(s, as_of=as_of)
     top = sorted(metrics.items(), key=lambda kv: kv[1]['chokepoint_rank'])[:25]
-    return jsonify({'nodes': len(metrics),
-                    'factors_active': [f['label'] for f in factors],
-                    'chokepoints_top25': [{'id': k, **v} for k, v in top],
-                    'metrics': metrics})
+    payload = {'nodes': len(metrics),
+               'factors_active': [f['label'] for f in factors],
+               'chokepoints_top25': [{'id': k, **v} for k, v in top],
+               'metrics': metrics}
+    _ttl_set(ck, payload)
+    return jsonify(payload)

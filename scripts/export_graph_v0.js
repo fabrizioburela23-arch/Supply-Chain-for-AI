@@ -19,6 +19,7 @@ const DATA_FILES = [
   'nodes/nodes_seed.js',
   'nodes/nodes_expand.js', 'nodes/nodes_expand2.js', 'nodes/nodes_spacex.js',
   'nodes/nodes_expand3.js', 'nodes/nodes_nuclear.js', 'nodes/nodes_expand4.js',
+  'nodes/nodes_expand5.js',
   'nodes/preipo_intel.js',
   'nodes/links_all.js', 'nodes/links_expand.js', 'nodes/links_connect.js',
   'nodes/temporal_seed_facts.js', 'nodes/temporal_seed_facts2.js',
@@ -40,9 +41,9 @@ const result = g('buildKhipusGraph')({
   NODE_ID_ALIAS: g('NODE_ID_ALIAS'),
   RAW_LINKS: g('RAW_LINKS'),
   expansions: ['NODES_EXPAND', 'NODES_EXPAND2', 'NODES_SPACEX', 'NODES_EXPAND3',
-               'NODES_NUCLEAR', 'NODES_EXPAND4'].map(g),
+               'NODES_NUCLEAR', 'NODES_EXPAND4', 'NODES_EXPAND5'].map(g),
   linkArrays: ['LINKS_EXPAND', 'LINKS_SPACEX', 'LINKS_CONNECT', 'LINKS_NUCLEAR',
-               'LINKS_EXPAND4'].map(g),
+               'LINKS_EXPAND4', 'LINKS_EXPAND5'].map(g),
   warn: m => console.warn('⚠', m),
 });
 
