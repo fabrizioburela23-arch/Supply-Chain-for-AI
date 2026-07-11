@@ -2096,7 +2096,7 @@ def _bixby_client_tools():
         T('show_insights', 'Open the insights brain and the 9 relation matrices.'),
         T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
         T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
-        T('get_company_info', 'Full company details: price, NRS risk, sector, supply chain.', company, ['company_name']),
+        T('get_company_info', 'EVERYTHING the app knows about one company: live price, NRS risk, sector, country, EMPLOYEES, FOUNDED year, REVENUE, market cap, margin, growth, moat, geo risk, description, supplier/customer counts. ALWAYS call this before saying you do not know a fact about a company.', company, ['company_name']),
         T('get_risk_score', 'NRS risk score (0-100) of a company with breakdown.', company, ['company_name']),
         T('get_news', 'Recent news with sentiment for a company.', company, ['company_name']),
         T('get_market_summary', 'All current market prices with % change.'),

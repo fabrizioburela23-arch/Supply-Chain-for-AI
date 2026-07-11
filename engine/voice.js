@@ -309,14 +309,23 @@ const BixbyVoice = {
       total_nodes: (typeof NODES !== 'undefined') ? NODES.length : 0,
       total_links: (typeof LINKS !== 'undefined') ? LINKS.length : 0,
       categories: cats,
-      selected_company: sel ? {
-        id: sel.id, label: sel.label, ticker: sel.mkt || null,
-        category: typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat,
-        nrs: typeof computeNRS === 'function' ? computeNRS(sel.id) : null,
-        price: sel.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt]?.close || null : null) : null,
-        role: sel.role || null,
-        supply_chain_links: selLinks,
-      } : null,
+      selected_company: sel ? (function () {
+        const m = (window.NODE_META || {})[sel.id] || {};
+        return {
+          id: sel.id, label: sel.label, ticker: sel.mkt || null,
+          category: typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat,
+          nrs: typeof computeNRS === 'function' ? computeNRS(sel.id) : null,
+          price: sel.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt]?.close || null : null) : null,
+          role: sel.role || null,
+          // la ficha completa: Bixby debe saber lo que la pantalla muestra
+          employees: m.employees || null, founded: m.founded || null,
+          revenue: m.revenue_2025 || null, market_cap_billions: m.mktcap_b || null,
+          geo_risk: m.geo_risk || null, country: sel.country || null,
+          margin_pct: sel.margin != null ? Math.round(sel.margin * 100) : null,
+          growth: sel.growth || null,
+          supply_chain_links: selLinks,
+        };
+      })() : null,
       portfolio,
       portfolio_count: positions.length,
       stress_active: hasStress,
@@ -597,17 +606,40 @@ const BixbyVoice = {
         break;
       }
       case 'get_company_info': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        // TODO lo que la app sabe de la empresa — Bixby nunca debe decir
+        // "no sé" si el dato está en la ficha (feedback real: empleados de TSMC)
+        const n = this._resolveNode(params.ticker || params.company_name);
         if (n) {
           const q = (typeof MKT !== 'undefined' && n.mkt) ? MKT.quotes[n.mkt] : null;
+          const meta = (window.NODE_META || {})[n.id] || {};
+          let inDeg = 0, outDeg = 0;
+          try {
+            (window.LINKS || []).forEach(l => {
+              const s = lid(l.source), t = lid(l.target);
+              if (t === n.id) inDeg++;
+              if (s === n.id) outDeg++;
+            });
+          } catch (e) {}
           respond({
             id: n.id, label: n.label, ticker: n.mkt || null,
             category: (typeof catLabel === 'function') ? catLabel(n.cat) : n.cat,
-            geo: n.loc || n.country || null,
+            country: n.country || n.loc || null,
             price: q?.close || null,
             change_pct: (q?.close && q?.prev) ? ((q.close - q.prev) / q.prev * 100).toFixed(2) : null,
+            nrs_risk: (typeof computeNRS === 'function') ? computeNRS(n.id) : null,
             role: n.role || null,
+            supplies: n.supplies || null,
+            moat: n.moat || null,
+            growth: n.growth || null,
+            margin_pct: n.margin != null ? Math.round(n.margin * 100) : null,
+            employees: meta.employees || null,
+            founded: meta.founded || null,
+            revenue: meta.revenue_2025 || null,
+            market_cap_billions: meta.mktcap_b || null,
+            geo_risk: meta.geo_risk || null,
+            description: meta.desc || null,
+            suppliers_count: inDeg, customers_count: outDeg,
+            is_preipo: !!n.preipo,
           });
         } else respond({ success: false, error: 'Company not found' });
         break;

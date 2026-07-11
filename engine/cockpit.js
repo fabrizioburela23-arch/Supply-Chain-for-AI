@@ -208,14 +208,23 @@
   var _adopted = [];
 
   function restoreAdopted() {
+    var hadGraph = false;
     while (_adopted.length) {
       var a = _adopted.pop();
       try {
+        if (a.el.tagName === 'MAIN') hadGraph = true;
         a.el.style.display = a.prevDisplay;
         if (a.ph.parentNode) a.ph.parentNode.replaceChild(a.el, a.ph);
       } catch (e) {}
     }
     try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+    // anti-glitch (feedback real): el grafo volvía clavado/zoomeado en una
+    // empresa — al devolverlo, re-encuadramos la vista completa
+    if (hadGraph) {
+      setTimeout(function () {
+        try { if (typeof fitToView === 'function') fitToView(); } catch (e) {}
+      }, 150);
+    }
   }
 
   function adoptInto(container, el, displayMode) {
@@ -261,9 +270,13 @@
       s.innerHTML += '<div class="bcp-loading">No se pudo montar el grafo</div>';
       return;
     }
+    // re-encuadrar al tamaño del escenario (si no, entra con el zoom que traía)
+    setTimeout(function () {
+      try { if (typeof fitToView === 'function' && !focusId) fitToView(); } catch (e) {}
+    }, 180);
     if (focusId) {
       var n = resolveNode(focusId);
-      if (n) setTimeout(function () { try { if (typeof jumpTo === 'function') jumpTo(n.id); } catch (e) {} }, 200);
+      if (n) setTimeout(function () { try { if (typeof jumpTo === 'function') jumpTo(n.id); } catch (e) {} }, 220);
     }
   }
 
