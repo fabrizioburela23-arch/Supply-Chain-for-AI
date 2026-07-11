@@ -795,7 +795,13 @@ def fin_dossier(ticker):
                 return data.get('annualReports') or []
             return []
 
-        inc_av, bal_av, cfs_av = _av('INCOME_STATEMENT'), _av('BALANCE_SHEET'), _av('CASH_FLOW')
+        # AV free = 1 request/segundo — espaciar las 3 llamadas (total ~2.4s,
+        # tolerable: el dossier completo queda cacheado 24h por ticker)
+        inc_av = _av('INCOME_STATEMENT')
+        time.sleep(1.2)
+        bal_av = _av('BALANCE_SHEET')
+        time.sleep(1.2)
+        cfs_av = _av('CASH_FLOW')
         if inc_av:
             def _y(r):
                 return str(r.get('fiscalDateEnding', ''))[:4]
