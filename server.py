@@ -1966,17 +1966,42 @@ def _bixby_client_tools():
 def _sync_bixby_agent():
     """Empuja el cerebro de Bixby (system prompt + client tools + idioma) al
     agente de ElevenLabs vía PATCH — así Fabrizio no configura nada a mano.
-    Idempotente; si el esquema de tools no es aceptado, reintenta solo-prompt."""
+    Idempotente; si el esquema de tools no es aceptado, reintenta solo-prompt.
+
+    OJO (bug real 2026-07): ElevenLabs exige que los agentes NO-ingleses usen
+    un modelo TTS turbo/flash v2.5 — si el agente quedó en otro modelo, el
+    PATCH con language='es' devuelve 400. Por eso: leemos la config actual,
+    PRESERVAMOS la voz elegida y solo corregimos el model_id si hace falta."""
     if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
         return {'ok': False, 'error': 'ELEVENLABS_KEY / ELEVENLABS_AGENT_ID no configurados'}
     url = f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}'
     hdrs = {'xi-api-key': ELEVENLABS_KEY, 'Content-Type': 'application/json'}
-    full = {'conversation_config': {'agent': {
-        'prompt': {'prompt': BIXBY_SYSTEM_PROMPT, 'tools': _bixby_client_tools()},
-        'language': 'es',
-    }}}
+
+    # 1) leer config actual para preservar voz y decidir el modelo TTS
+    tts_patch = None
     try:
-        r = requests.patch(url, json=full, headers=hdrs, timeout=25)
+        cur = requests.get(url, headers={'xi-api-key': ELEVENLABS_KEY}, timeout=15).json()
+        cur_tts = ((cur.get('conversation_config') or {}).get('tts') or {})
+        model = str(cur_tts.get('model_id') or '')
+        if 'v2_5' not in model and 'v3' not in model:
+            # modelo incompatible con agentes en español → flash v2.5 (baja latencia)
+            tts_patch = {'model_id': 'eleven_flash_v2_5'}
+            if cur_tts.get('voice_id'):
+                tts_patch['voice_id'] = cur_tts['voice_id']   # conservar SU voz
+    except Exception:  # noqa: BLE001
+        tts_patch = {'model_id': 'eleven_flash_v2_5'}
+
+    def _payload(with_tools):
+        agent_cfg = {'prompt': {'prompt': BIXBY_SYSTEM_PROMPT}, 'language': 'es'}
+        if with_tools:
+            agent_cfg['prompt']['tools'] = _bixby_client_tools()
+        cc = {'agent': agent_cfg}
+        if tts_patch:
+            cc['tts'] = tts_patch
+        return {'conversation_config': cc}
+
+    try:
+        r = requests.patch(url, json=_payload(True), headers=hdrs, timeout=25)
         if r.status_code < 400:
             # verificación: ¿cuántas tools quedaron registradas?
             n_tools = None
@@ -1986,13 +2011,13 @@ def _sync_bixby_agent():
                                .get('prompt') or {}).get('tools') or [])
             except Exception:  # noqa: BLE001
                 pass
-            return {'ok': True, 'mode': 'full', 'status': r.status_code, 'tools_registered': n_tools}
+            return {'ok': True, 'mode': 'full', 'status': r.status_code, 'tools_registered': n_tools,
+                    'tts_fixed': bool(tts_patch)}
         # fallback: algunos planes/versiones del API rechazan tools inline
         detail = (r.text or '')[:400]
-        slim = {'conversation_config': {'agent': {'prompt': {'prompt': BIXBY_SYSTEM_PROMPT}, 'language': 'es'}}}
-        r2 = requests.patch(url, json=slim, headers=hdrs, timeout=25)
+        r2 = requests.patch(url, json=_payload(False), headers=hdrs, timeout=25)
         return {'ok': r2.status_code < 400, 'mode': 'prompt_only', 'status': r2.status_code,
-                'tools_error': detail}
+                'tools_error': detail, 'prompt_error': None if r2.status_code < 400 else (r2.text or '')[:400]}
     except Exception as e:  # noqa: BLE001
         return {'ok': False, 'error': str(e)[:300]}
 
