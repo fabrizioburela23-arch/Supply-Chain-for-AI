@@ -50,6 +50,9 @@ class KhipuGraph3D {
     p2.position.set(-300, -150, 150);
     this.scene.add(p2);
 
+    // Niebla exponencial: profundidad de videojuego (lo lejano se desvanece)
+    this.scene.fog = new THREE.FogExp2(0x05070e, 0.00055);
+
     this.scene.add(this._graphGroup);
     this._addGrid();
     this._addStarfield();
@@ -100,6 +103,22 @@ class KhipuGraph3D {
 
     const mesh = new THREE.Mesh(geo, mat);
     mesh.userData = { nodeId: node.id, node, baseRadius: radius };
+
+    // Halo aditivo (pseudo-bloom estilo videojuego): un sprite con gradiente
+    // radial en blending aditivo — los nodos BRILLAN sin postprocesado.
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: KhipuGraph3D._haloTexture(), color,
+      transparent: true, opacity: 0.55,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    const hs = radius * 3.4;
+    halo.scale.set(hs, hs, 1);
+    mesh.add(halo);
+    mesh.userData.halo = halo;
+    mesh.userData.pulsePhase = (node.id.charCodeAt(0) || 0) * 0.7; // desfase por nodo
+    let nrs = 50;
+    try { if (typeof computeNRS === 'function') nrs = computeNRS(node.id); } catch (e) {}
+    mesh.userData.pulseSpeed = 0.8 + (nrs / 100) * 1.6;   // los frágiles laten más rápido
 
     // Anillo portfolio
     if (node.port) {
@@ -154,8 +173,11 @@ class KhipuGraph3D {
     if (!src || !dst) return null;
 
     const color = getLinkColorHex(link.type || 'supply');
+    // Arista CURVA (bezier cuadrática muestreada): 11 puntos en vez de 2 —
+    // el grafo se ve orgánico/vectorial, no una malla de alambres rectos.
+    const SEGS = 10;
     const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(6);
+    const pos = new Float32Array((SEGS + 1) * 3);
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
 
     const mat = new THREE.LineBasicMaterial({
@@ -164,8 +186,24 @@ class KhipuGraph3D {
     });
 
     const line = new THREE.Line(geo, mat);
-    line.userData = { link, src, dst };
+    line.userData = { link, src, dst, segs: SEGS };
     return line;
+  }
+
+  // textura compartida del halo (una sola para los 555 nodos)
+  static _haloTexture() {
+    if (KhipuGraph3D._haloTex) return KhipuGraph3D._haloTex;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const ctx = cv.getContext('2d');
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,0.85)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.28)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    KhipuGraph3D._haloTex = new THREE.CanvasTexture(cv);
+    return KhipuGraph3D._haloTex;
   }
 
   _initForce3D(nodes, links) {
@@ -213,13 +251,67 @@ class KhipuGraph3D {
   }
 
   _updateLinkPositions() {
+    // curva bezier cuadrática: punto de control = punto medio elevado
+    // perpendicular a la arista (altura proporcional a su longitud)
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
     this.linkLines.forEach(line => {
-      const { src, dst } = line.userData;
+      const { src, dst, segs } = line.userData;
+      a.set(src.x || 0, src.y || 0, src.z || 0);
+      b.set(dst.x || 0, dst.y || 0, dst.z || 0);
+      const lift = a.distanceTo(b) * 0.14;
+      c.copy(a).add(b).multiplyScalar(0.5);
+      c.y += lift;   // arco hacia arriba — se lee como flujo, no como malla
       const pos = line.geometry.attributes.position.array;
-      pos[0] = src.x || 0; pos[1] = src.y || 0; pos[2] = src.z || 0;
-      pos[3] = dst.x || 0; pos[4] = dst.y || 0; pos[5] = dst.z || 0;
+      const n = segs || 10;
+      for (let i = 0; i <= n; i++) {
+        const t = i / n, mt = 1 - t;
+        pos[i * 3]     = mt * mt * a.x + 2 * mt * t * c.x + t * t * b.x;
+        pos[i * 3 + 1] = mt * mt * a.y + 2 * mt * t * c.y + t * t * b.y;
+        pos[i * 3 + 2] = mt * mt * a.z + 2 * mt * t * c.z + t * t * b.z;
+      }
       line.geometry.attributes.position.needsUpdate = true;
+      line.geometry.computeBoundingSphere();
     });
+    this._buildFlowParticles();
+  }
+
+  // Partículas de FLUJO: puntitos aditivos que viajan por las aristas fuertes
+  // (w>=3) — la cadena de suministro se VE fluyendo, como un videojuego.
+  _buildFlowParticles() {
+    if (this._flowGroup) { this._graphGroup.remove(this._flowGroup); }
+    this._flowGroup = new THREE.Group();
+    this._flowParticles = [];
+    const strong = this.linkLines.filter(l => (l.userData.link.w || 0) >= 3).slice(0, 260);
+    strong.forEach(line => {
+      const color = new THREE.Color(getLinkColorHex(line.userData.link.type || 'supply'));
+      const p = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: KhipuGraph3D._haloTexture(), color,
+        transparent: true, opacity: 0.9,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+      p.scale.set(4.5, 4.5, 1);
+      p.userData = { line, t: Math.random(), speed: 0.15 + Math.random() * 0.2 };
+      this._flowGroup.add(p);
+      this._flowParticles.push(p);
+    });
+    this._graphGroup.add(this._flowGroup);
+  }
+
+  // posición sobre la curva de una arista (mismo bezier que _updateLinkPositions)
+  _pointOnLink(line, t, out) {
+    const { src, dst } = line.userData;
+    const ax = src.x || 0, ay = src.y || 0, az = src.z || 0;
+    const bx = dst.x || 0, by = dst.y || 0, bz = dst.z || 0;
+    const dx = bx - ax, dy = by - ay, dz = bz - az;
+    const lift = Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.14;
+    const cx = (ax + bx) / 2, cy = (ay + by) / 2 + lift, cz = (az + bz) / 2;
+    const mt = 1 - t;
+    out.set(
+      mt * mt * ax + 2 * mt * t * cx + t * t * bx,
+      mt * mt * ay + 2 * mt * t * cy + t * t * by,
+      mt * mt * az + 2 * mt * t * cz + t * t * bz
+    );
+    return out;
   }
 
   _applySpherical() {
@@ -236,11 +328,45 @@ class KhipuGraph3D {
   _animate() {
     if (!this.active) return;
     requestAnimationFrame(() => this._animate());
-    const t = this.clock.getElapsedTime();
+    // OJO: getElapsedTime() consume getDelta() internamente en three.js — usar
+    // SOLO getDelta() y acumular nosotros, o dt sería siempre ~0.
+    const dt = Math.min(this.clock.getDelta(), 0.1);
+    this._elapsed = (this._elapsed || 0) + dt;
+    const t = this._elapsed;
+
+    // Monitor de rendimiento: media móvil del frame; si cae de ~28fps
+    // apagamos halos+partículas (modo ligero) y los reactivamos si se recupera.
+    this._frameEMA = (this._frameEMA || 16) * 0.95 + dt * 1000 * 0.05;
+    const lite = this._frameEMA > 36;
+    if (lite !== this._liteMode) {
+      this._liteMode = lite;
+      if (this._flowGroup) this._flowGroup.visible = !lite;
+      this.nodeMeshes.forEach(m => { if (m.userData.halo) m.userData.halo.visible = !lite; });
+    }
 
     if (this.selected) {
       const mesh = this.nodeMeshes.get(this.selected);
       if (mesh) mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
+    }
+
+    // Pulso de halos: cada nodo late con su propio desfase; los frágiles, más
+    // rápido. Barato: solo tocamos opacity del sprite (555/frame).
+    if (!this._liteMode) {
+      this.nodeMeshes.forEach(m => {
+        const h = m.userData.halo;
+        if (h) h.material.opacity = 0.4 + 0.22 * Math.sin(t * m.userData.pulseSpeed + m.userData.pulsePhase);
+      });
+      // partículas de flujo avanzando por las curvas
+      if (this._flowParticles) {
+        const v = this._flowV || (this._flowV = new THREE.Vector3());
+        for (let i = 0; i < this._flowParticles.length; i++) {
+          const p = this._flowParticles[i];
+          p.userData.t += p.userData.speed * dt;
+          if (p.userData.t > 1) p.userData.t -= 1;
+          this._pointOnLink(p.userData.line, p.userData.t, v);
+          p.position.copy(v);
+        }
+      }
     }
 
     // Auto-rotation: advance camera theta (not group rotation) so user orbit
@@ -256,6 +382,8 @@ class KhipuGraph3D {
         this._graphGroup.scale.setScalar(1);
       }
       this._spherical.theta += speed;
+      // respiración cinemática: la cámara oscila apenas el radio — vida sutil
+      this._spherical.radius += Math.sin(t * 0.4) * 0.05;
       this._applySpherical();
     }
 
