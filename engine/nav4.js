@@ -38,12 +38,22 @@
       + '.stabs.g-mapa .tab[data-group="mapa"],'
       + '.stabs.g-mercado .tab[data-group="mercado"],'
       + '.stabs.g-insights .tab[data-group="insights"],'
-      + '.stabs.g-guia .tab[data-group="guia"]{display:inline-flex;align-items:center;gap:5px}';
+      + '.stabs.g-guia .tab[data-group="guia"]{display:inline-flex;align-items:center;gap:5px}'
+      /* fluidez: fundido sutil al cambiar de pestaña (solo opacity — no
+         transform: main contiene SVG/fixed y un transform lo rompería) */
+      + '@keyframes panelIn{from{opacity:.4}to{opacity:1}}'
+      + '.panel-in{animation:panelIn .16s ease}'
+      + '@media(prefers-reduced-motion:reduce){.panel-in{animation:none}}';
     var st = document.createElement('style'); st.id = 'nav4-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
 
   function groupOf(tab) { return TAB_GROUP[tab] || 'mapa'; }
+
+  // panel visible de cada tab — para el fundido de fluidez
+  var PANEL_OF = { map: 'main', market: '#market', analysis: '#analysis-panel',
+    geo: '#geo-panel', simulation: '#simulation-panel', space: '#space-panel',
+    terminal: '#terminal-panel', canvas: '#canvas-panel', tkg: '#tkg-panel', guia: '#guia-panel' };
 
   function syncTo(tab) {
     var grp = groupOf(tab);
@@ -55,6 +65,11 @@
       var count = stabs.querySelectorAll('.tab[data-group="' + grp + '"]').length;
       stabs.classList.toggle('hide', count <= 1);
     }
+    // fluidez: fundido sutil del panel que entra (re-disparable)
+    try {
+      var el = document.querySelector(PANEL_OF[tab] || 'x');
+      if (el) { el.classList.remove('panel-in'); void el.offsetWidth; el.classList.add('panel-in'); }
+    } catch (e) {}
   }
 
   function mount() {

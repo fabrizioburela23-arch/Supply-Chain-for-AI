@@ -59,6 +59,19 @@ app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024  # 1 MB — el contexto de Canvas
 # (catálogo de ~555 empresas + quotes) supera 64 KB; sigue acotado y con rate-limit.
 cache = Cache(app)
 
+# Fluidez: comprimir HTML/JS/JSON al vuelo (brotli/gzip) — el código de la app
+# pesa ~1.9 MB sin comprimir; con esto baja ~75%. Defensivo: si el paquete no
+# está instalado aún (deploy en curso), el server arranca igual sin comprimir.
+try:
+    from flask_compress import Compress
+    app.config['COMPRESS_MIMETYPES'] = ['text/html', 'text/css', 'application/json',
+                                        'application/javascript', 'text/javascript',
+                                        'image/svg+xml']
+    app.config['COMPRESS_MIN_SIZE'] = 1024
+    Compress(app)
+except Exception as _e:  # noqa: BLE001
+    logging.getLogger('khipu').warning('flask-compress no disponible (%s) — sin compresión', _e)
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
 log = logging.getLogger('khipu')
 
@@ -341,19 +354,32 @@ def icon():
 # Serve JS modules — nodes/, engine/, sim/ are not in Flask's static folder
 _APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
+def _js_cache_headers(resp):
+    """URLs versionadas (?v=N, las inyecta index()) → inmutables 1 año: las
+    recargas no vuelven a bajar NADA de código. Sin versión → 1h como antes.
+    flask-compress salta respuestas en streaming (is_streamed) y
+    send_from_directory SIEMPRE streamea — bufferizamos el archivo en memoria
+    (get_data) para que comprima; son archivos de decenas/cientos de KB."""
+    resp.direct_passthrough = False
+    resp.get_data()   # materializa la respuesta → is_streamed=False → comprime
+    if request.args.get('v'):
+        resp.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    else:
+        resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+
 @app.route('/nodes/<path:filename>')
 def serve_nodes(filename):
     from flask import send_from_directory
     resp = send_from_directory(os.path.join(_APP_DIR, 'nodes'), filename, mimetype='application/javascript')
-    resp.headers['Cache-Control'] = 'public, max-age=3600'
-    return resp
+    return _js_cache_headers(resp)
 
 @app.route('/engine/<path:filename>')
 def serve_engine(filename):
     from flask import send_from_directory
     resp = send_from_directory(os.path.join(_APP_DIR, 'engine'), filename, mimetype='application/javascript')
-    resp.headers['Cache-Control'] = 'public, max-age=3600'
-    return resp
+    return _js_cache_headers(resp)
 
 @app.route('/sim/<path:filename>')
 def serve_sim(filename):

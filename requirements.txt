@@ -2,6 +2,10 @@ flask>=3.0.0
 requests>=2.31.0
 python-dotenv>=1.0.0
 flask-caching>=2.1.0
+# Fluidez: gzip/brotli de HTML/JS/JSON — ~75% menos transferencia (el catálogo
+# de 555 empresas + app.html pesan ~1.9 MB sin comprimir).
+flask-compress>=1.14
+brotli>=1.1.0
 anthropic>=0.40.0
 gunicorn>=21.2.0
 # Khipu Finance v1 — API pública (JWT) y métricas de riesgo (VaR/CVaR)

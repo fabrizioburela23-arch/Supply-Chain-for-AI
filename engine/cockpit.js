@@ -72,6 +72,9 @@
 .bcp-act:hover{color:#E8EDFB;border-color:rgba(0,224,255,.45);transform:translateY(-1px)}
 .bcp-act.on{color:#00E0FF;border-color:rgba(0,224,255,.5);background:rgba(0,224,255,.08)}
 #bcp-stage{flex:1;overflow-y:auto;padding:22px;position:relative}
+@keyframes bcpStageIn{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+#bcp-stage>*{animation:bcpStageIn .16s ease}
+@media(prefers-reduced-motion:reduce){#bcp-stage>*{animation:none}}
 .bcp-embed{height:calc(100vh - 250px);min-height:420px;display:flex;flex-direction:column;
   border:1px solid rgba(122,158,255,.18);border-radius:14px;overflow:hidden;background:#04060B;position:relative}
 /* estado vacío / lienzo */
