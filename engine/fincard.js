@@ -137,38 +137,72 @@
           return;
         }
         var Y = d.years || [];
+        var has = function (a) { return Array.isArray(a) && a.some(function (v) { return v != null; }); };
+        var revB = (d.revenue || []).map(function (v) { return v != null ? Math.round(v / 1e8) / 10 : null; });
+        var fcfB = (d.fcf || []).map(function (v) { return v != null ? Math.round(v / 1e8) / 10 : null; });
+
+        // GARANTÍA "nunca una celda vacía" (feedback real): cada indicador
+        // tiene un plan B con datos reales; si ni eso, una nota clara.
+        var CELLS = [
+          has(d.revenue_growth)
+            ? { t: '💵 Crecimiento de ingresos', d: 'variación anual, %', r: function (id) { lineChart(id, Y, d.revenue_growth, '%'); } }
+            : { t: '💵 Ingresos', d: 'miles de millones USD por año', r: has(revB) ? function (id) { barChart(id, Y, revB, '$B'); } : null },
+          has(d.dilution)
+            ? { t: '🩸 Dilución', d: 'cambio de acciones en circulación, % (menos es mejor)', r: function (id) { barChart(id, Y, d.dilution, '%', posnegInv); } }
+            : { t: '🩸 Acciones en circulación', d: 'miles de millones de acciones', r: has(d.shares) ? function (id) { lineChart(id, Y, d.shares, 'B'); } : null },
+          has(d.fcf_growth)
+            ? { t: '💰 Free cash flow', d: 'crecimiento anual, %', r: function (id) { lineChart(id, Y, d.fcf_growth, '%'); } }
+            : { t: '💰 Free cash flow', d: 'miles de millones USD por año', r: has(fcfB) ? function (id) { barChart(id, Y, fcfB, '$B', posneg); } : null },
+          { t: '📈 Acción', d: 'últimos ~90 días', r: 'candles' },
+          has(d.ev_to_sales)
+            ? { t: '🏷️ Valuación', d: 'EV / Ventas', r: function (id) { lineChart(id, Y, d.ev_to_sales, 'x'); } }
+            : { t: '🏷️ Margen bruto anual', d: 'evolución del margen bruto, %', r: has(d.gross_margin) ? function (id) { lineChart(id, Y, d.gross_margin, '%'); } : null },
+          { t: '🏦 Balance', d: 'deuda / capital (menos es mejor)', r: has(d.de_ratio) ? function (id) { barChart(id, Y, d.de_ratio, '', function (v) { return v == null ? INK : v > 1 ? DOWN : NEON; }); } : null },
+          { t: '🧮 Márgenes', d: 'bruto vs FCF, último año, %', r: 'margins' },
+          { t: '♻️ Return on equity', d: 'ROE anual, %', r: has(d.roe) ? function (id) { barChart(id, Y, d.roe, '%', posneg); } : null },
+        ];
+
         fc.querySelector('.fc-note').outerHTML =
           '<div class="fc-grid">' +
-            cell('💵 Crecimiento de ingresos', 'variación anual, %', 'fc-rev') +
-            cell('🩸 Dilución', 'cambio de acciones en circulación, % (menos es mejor)', 'fc-dil') +
-            cell('💰 Free cash flow', 'crecimiento anual, %', 'fc-fcf') +
-            cell('📈 Acción', 'últimos ~90 días', 'fc-px') +
-            cell('🏷️ Valuación', 'EV / Ventas (forward-ish)', 'fc-ev') +
-            cell('🏦 Balance', 'deuda / capital (menos es mejor)', 'fc-de') +
-            cell('🧮 Márgenes', 'bruto vs FCF, último año, %', 'fc-mg') +
-            cell('♻️ Return on equity', 'ROE anual, %', 'fc-roe') +
+            CELLS.map(function (c, i) { return cell(c.t, c.d, 'fc-c' + i); }).join('') +
           '</div>' +
           '<div class="fc-foot"><span>Khipus AI Finance Intelligence · análisis, no asesoría financiera</span>' +
-          '<span>fuente: FMP + mercado en vivo</span></div>';
+          '<span>fuente: estados financieros + mercado en vivo</span></div>';
 
-        lineChart('fc-rev', Y, d.revenue_growth, '%');
-        barChart('fc-dil', Y, d.dilution, '%', posnegInv);
-        lineChart('fc-fcf', Y, d.fcf_growth, '%');
-        lineChart('fc-ev', Y, d.ev_to_sales, 'x');
-        barChart('fc-de', Y, d.de_ratio, '', function (v) { return v == null ? INK : v > 1 ? DOWN : NEON; });
-        barChart('fc-roe', Y, d.roe, '%', posneg);
-        // márgenes: bruto vs FCF del último año con dato
-        var gm = null, fm = null;
-        for (var i = Y.length - 1; i >= 0; i--) { if (gm == null && d.gross_margin[i] != null) gm = d.gross_margin[i]; if (fm == null && d.fcf_margin[i] != null) fm = d.fcf_margin[i]; }
-        barChart('fc-mg', ['Margen bruto', 'Margen FCF'], [gm, fm], '%', function (v) { return v == null ? INK : v >= 0 ? NEON : DOWN; });
-        // precio ~90d
+        CELLS.forEach(function (c, i) {
+          var id = 'fc-c' + i;
+          if (typeof c.r === 'function') { c.r(id); return; }
+          if (c.r === 'margins') {
+            var gm = null, fm = null;
+            for (var k = Y.length - 1; k >= 0; k--) {
+              if (gm == null && d.gross_margin[k] != null) gm = d.gross_margin[k];
+              if (fm == null && d.fcf_margin[k] != null) fm = d.fcf_margin[k];
+            }
+            if (gm != null || fm != null) {
+              barChart(id, ['Margen bruto', 'Margen FCF'], [gm, fm], '%', function (v) { return v == null ? INK : v >= 0 ? NEON : DOWN; });
+              return;
+            }
+            c.r = null;
+          }
+          if (c.r == null) {
+            var el = document.getElementById(id);
+            if (el) el.parentNode.innerHTML = '<div class="fc-t">' + c.t + '</div>' +
+              '<div class="fc-note" style="padding:26px 8px">El proveedor no publica este dato para esta empresa.</div>';
+          }
+        });
+        // precio ~90d (celda 4 = fc-c3); si no hay velas → nota clara
         fetch((window.BASE || '') + '/api/candles/' + encodeURIComponent(ticker))
           .then(function (r) { return r.json(); })
           .then(function (c) {
-            if (!c || c.s !== 'ok' || !c.c) return;
+            if (!c || c.s !== 'ok' || !c.c || !c.c.length) {
+              var el = document.getElementById('fc-c3');
+              if (el) el.parentNode.innerHTML = '<div class="fc-t">📈 Acción</div>' +
+                '<div class="fc-note" style="padding:26px 8px">Sin datos de mercado para este ticker.</div>';
+              return;
+            }
             var labels = (c.t || []).map(function (ts) { var dt = new Date(ts * 1000); return (dt.getMonth() + 1) + '/' + dt.getDate(); });
             var up = c.c[c.c.length - 1] >= c.c[0];
-            lineChart('fc-px', labels, c.c, '', up ? UP : DOWN);
+            lineChart('fc-c3', labels, c.c, '', up ? UP : DOWN);
           }).catch(function () {});
       })
       .catch(function () {

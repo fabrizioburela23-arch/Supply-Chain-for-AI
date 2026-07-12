@@ -868,7 +868,7 @@ def fin_dossier(ticker):
 
     series = {'years': [], 'revenue': [], 'revenue_growth': [], 'gross_margin': [],
               'fcf': [], 'fcf_margin': [], 'fcf_growth': [], 'dilution': [],
-              'de_ratio': [], 'roe': [], 'ev_to_sales': []}
+              'de_ratio': [], 'roe': [], 'ev_to_sales': [], 'shares': []}
     prev_rev = prev_fcf = prev_sh = None
     for y in years:
         i, c, b, k = yi.get(y, {}), yc.get(y, {}), yb.get(y, {}), yk.get(y, {})
@@ -894,6 +894,7 @@ def fin_dossier(ticker):
         series['fcf_margin'].append(round(fcf / rev * 100, 1) if fcf is not None and rev else None)
         series['fcf_growth'].append(round((fcf / prev_fcf - 1) * 100, 1) if fcf and prev_fcf and prev_fcf > 0 else None)
         series['dilution'].append(round((sh / prev_sh - 1) * 100, 2) if sh and prev_sh else None)
+        series['shares'].append(round(sh / 1e9, 3) if sh else None)
         series['de_ratio'].append(round(debt / eq, 3) if debt is not None and eq else None)
         series['roe'].append(round(roe * 100, 1) if roe is not None else None)
         series['ev_to_sales'].append(round(evs, 1) if evs is not None else None)
