@@ -2371,6 +2371,28 @@ def deep_analyze():
 _DIAGS = []
 
 
+def _diag_persist(entry):
+    """Persistir en Postgres si está disponible — el buffer en memoria se
+    borra con CADA deploy y perdíamos los reportes del usuario (pasó 3 veces)."""
+    try:
+        from ontology.db import ontology_available, _get_engine
+        if not ontology_available():
+            return
+        from sqlalchemy import text as _sqltext
+        eng = _get_engine()
+        with eng.begin() as c:
+            c.execute(_sqltext(
+                'CREATE TABLE IF NOT EXISTS client_diags '
+                '(id SERIAL PRIMARY KEY, ts TIMESTAMPTZ DEFAULT now(), '
+                'kind TEXT, ver TEXT, ua TEXT, data TEXT)'))
+            c.execute(_sqltext(
+                'INSERT INTO client_diags (kind, ver, ua, data) VALUES (:k, :v, :u, :d)'),
+                {'k': entry['kind'], 'v': entry['ver'], 'u': entry['ua'],
+                 'd': json.dumps(entry['data'], ensure_ascii=False)})
+    except Exception:  # noqa: BLE001 — el diagnóstico jamás rompe nada
+        pass
+
+
 @app.route('/api/diag', methods=['POST'])
 @rate_limit(limit=30, window=300)
 def client_diag():
@@ -2385,12 +2407,28 @@ def client_diag():
     _DIAGS.append(entry)
     del _DIAGS[:-80]
     log.warning('DIAG %s %s %s', entry['kind'], entry['data'], entry['ua'][:60])
+    _diag_persist(entry)
     return jsonify({'ok': True})
 
 
 @app.route('/api/diag/recent')
 def client_diag_recent():
-    return jsonify({'count': len(_DIAGS), 'diags': _DIAGS[-50:]})
+    rows = []
+    try:
+        from ontology.db import ontology_available, _get_engine
+        if ontology_available():
+            from sqlalchemy import text as _sqltext
+            eng = _get_engine()
+            with eng.connect() as c:
+                rs = c.execute(_sqltext(
+                    'SELECT ts, kind, ver, ua, data FROM client_diags ORDER BY id DESC LIMIT 50'))
+                for r in rs:
+                    rows.append({'ts': str(r[0])[:19], 'kind': r[1], 'ver': r[2],
+                                 'ua': r[3], 'data': json.loads(r[4] or '{}')})
+    except Exception:  # noqa: BLE001
+        pass
+    combined = rows if rows else _DIAGS[-50:]
+    return jsonify({'count': len(combined), 'diags': combined, 'persistent': bool(rows)})
 
 
 @app.route('/api/deep/status')

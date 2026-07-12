@@ -53,6 +53,13 @@
 .td-rating span{height:100%}
 #td-reopen{position:absolute;right:10px;top:10px;z-index:8;padding:6px 12px;border-radius:8px;cursor:pointer;
   border:1px solid rgba(0,224,255,.35);background:rgba(8,14,24,.9);color:#00E0FF;font-size:11px;font-weight:700;display:none}
+/* MÓVIL: el panel de datos pasa a overlay de pantalla completa, la lista de
+   empresas se angosta y el grid usa una sola columna (auditoría 375px) */
+@media(max-width:760px){
+  #term-data{position:absolute;inset:0;width:100%;min-width:0;z-index:12}
+  #term-sidebar{width:150px!important;min-width:150px!important}
+  #term-grid{grid-template-columns:1fr!important}
+}
 `;
     var st = document.createElement('style'); st.id = 'td-styles'; st.textContent = css;
     document.head.appendChild(st);
@@ -85,8 +92,9 @@
     };
     document.getElementById('td-close').onclick = function () { setOpen(false); };
     reopen.onclick = function () { setOpen(true); };
-    var saved = '1';
-    try { saved = localStorage.getItem('kh_termdata') || '1'; } catch (e) {}
+    var saved = null;
+    try { saved = localStorage.getItem('kh_termdata'); } catch (e) {}
+    if (saved == null) saved = window.innerWidth < 760 ? '0' : '1';   // móvil: cerrado por defecto
     setOpen(saved !== '0');
     return true;
   }
