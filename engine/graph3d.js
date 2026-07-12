@@ -50,8 +50,10 @@ class KhipuGraph3D {
     p2.position.set(-300, -150, 150);
     this.scene.add(p2);
 
-    // Niebla exponencial: profundidad de videojuego (lo lejano se desvanece)
-    this.scene.fog = new THREE.FogExp2(0x05070e, 0.00055);
+    // Niebla exponencial MUY sutil, adaptativa al zoom (_animate la ajusta):
+    // da profundidad sin BORRAR los nodos lejanos (feedback real: "no se
+    // muestran todos los nodos, se borran si lo mueves").
+    this.scene.fog = new THREE.FogExp2(0x05070e, 0.00022);
 
     this.scene.add(this._graphGroup);
     this._addGrid();
@@ -282,6 +284,7 @@ class KhipuGraph3D {
     this._linkMerged = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
       vertexColors: true, transparent: true, opacity: 0.55, depthWrite: false,
     }));
+    this._linkMerged.frustumCulled = false;   // el grafo entero, SIEMPRE visible
     this._graphGroup.add(this._linkMerged);
     this._buildFlowParticles();
   }
@@ -350,17 +353,24 @@ class KhipuGraph3D {
     this._elapsed = (this._elapsed || 0) + dt;
     const t = this._elapsed;
 
-    // Monitor de rendimiento: media móvil del frame; si cae de ~28fps
-    // apagamos halos+partículas Y bajamos el pixel ratio (modo ligero);
-    // se reactiva todo al recuperarse.
+    // Monitor de rendimiento: media móvil del frame; si cae de ~20fps
+    // bajamos pixel ratio y apagamos partículas (modo ligero). Los HALOS
+    // NUNCA se apagan: son el brillo de los nodos y esconderlos parecía
+    // "borrar" empresas al mover la cámara (feedback real).
     this._frameEMA = (this._frameEMA || 16) * 0.95 + dt * 1000 * 0.05;
-    const lite = this._frameEMA > 36;
+    const lite = this._frameEMA > 50;
     if (lite !== this._liteMode) {
       this._liteMode = lite;
       if (this._flowPoints) this._flowPoints.visible = !lite;
-      this.nodeMeshes.forEach(m => { if (m.userData.halo) m.userData.halo.visible = !lite; });
       this.renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 2));
       this._onResize();
+    }
+
+    // Niebla ADAPTATIVA: siempre sutil respecto al zoom actual — da
+    // profundidad pero jamás borra el lado lejano del grafo.
+    if (this.scene.fog) {
+      const d = 0.26 / Math.max(this._spherical.radius, 200);
+      this.scene.fog.density = Math.max(0.00010, Math.min(0.00035, d));
     }
 
     // Zoom SUAVE: la rueda fija un objetivo y el radio se acerca con easing
@@ -391,15 +401,16 @@ class KhipuGraph3D {
       }
     }
 
+    // Pulso de halos + refuerzo del nodo bajo el cursor (SIEMPRE — los halos
+    // son parte de la identidad visual de cada nodo)
+    this.nodeMeshes.forEach(m => {
+      const h = m.userData.halo;
+      if (!h) return;
+      const hovered = m.userData.nodeId === this.hovered;
+      h.material.opacity = hovered ? 0.92
+        : 0.4 + 0.22 * Math.sin(t * m.userData.pulseSpeed + m.userData.pulsePhase);
+    });
     if (!this._liteMode) {
-      // Pulso de halos + refuerzo del nodo bajo el cursor
-      this.nodeMeshes.forEach(m => {
-        const h = m.userData.halo;
-        if (!h) return;
-        const hovered = m.userData.nodeId === this.hovered;
-        h.material.opacity = hovered ? 0.92
-          : 0.4 + 0.22 * Math.sin(t * m.userData.pulseSpeed + m.userData.pulsePhase);
-      });
       // partículas: UNA nube — solo actualizamos el buffer de posiciones
       if (this._flowPoints && this._flowState) {
         const v = this._flowV || (this._flowV = new THREE.Vector3());
@@ -415,21 +426,25 @@ class KhipuGraph3D {
       }
     }
 
-    // LOD de ETIQUETAS (cada ~8 frames): solo se ven las cercanas a la
-    // cámara, las grandes, la seleccionada/hover y la cadena resaltada —
-    // adiós a la nube de 555 letreros (ruido + overdraw).
+    // LOD de ETIQUETAS (cada ~8 frames): GENEROSO — el usuario quiere ver
+    // todo. Las etiquetas nunca "desaparecen" de golpe: se DESVANECEN por
+    // distancia; solo las muy lejanas en zoom muy cercano se apagan.
     this._lodTick = (this._lodTick || 0) + 1;
     if (this._lodTick % 8 === 0) {
       const camPos = this.camera.position;
-      const near = Math.max(300, this._spherical.radius * 0.62);
+      const near = Math.max(750, this._spherical.radius * 1.15);
       this.nodeMeshes.forEach(m => {
         const lbl = m.userData.labelSprite;
         if (!lbl) return;
         const important = m.userData.nodeId === this.selected
           || m.userData.nodeId === this.hovered
           || (this._chainSet && this._chainSet.has(m.userData.nodeId))
-          || m.userData.baseRadius >= 14;
-        lbl.visible = important || m.position.distanceTo(camPos) < near;
+          || m.userData.baseRadius >= 12;
+        const dist = m.position.distanceTo(camPos);
+        lbl.visible = important || dist < near;
+        // fundido suave por distancia (nada de "pop")
+        lbl.material.opacity = important ? 0.95
+          : Math.max(0.3, Math.min(0.85, 1.15 - dist / near));
       });
     }
 
