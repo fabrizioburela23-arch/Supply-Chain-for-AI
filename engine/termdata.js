@@ -125,12 +125,14 @@
         kv('Ingresos', esc(m.revenue_2025 || '—')) +
         kv('Market cap', m.mktcap_b ? '$' + m.mktcap_b + 'B' : (n.preipo ? 'Pre-IPO' : '—')) +
         kv('Margen', n.margin != null ? Math.round(n.margin * 100) + '%' : '—') +
-        kv('Riesgo NRS', '<b style="color:' + nrsCol + '">' + fmt(nrs) + '</b>/100') +
+        kv('Riesgo NRS' + (window.explainChip ? window.explainChip('nrs') : ''),
+           '<b style="color:' + nrsCol + '">' + fmt(nrs) + '</b>/100') +
         kv('Vínculos', cadena.up.length + ' prov · ' + cadena.down.length + ' clientes') +
       '</div>' +
       '<div class="td-sec" id="td-val"><div class="td-h">Valuación & Analistas</div><div class="td-empty">Cargando…</div></div>' +
       '<div class="td-sec" id="td-fund"><div class="td-h">Fundamentales anuales <span class="u">fuente: estados financieros</span></div><div class="td-empty">Cargando…</div></div>' +
-      '<div class="td-sec"><div class="td-h">Cadena de suministro <span class="u">peso 1-5</span></div>' + chainHTML(cadena) + '</div>';
+      '<div class="td-sec"><div class="td-h">Cadena de suministro <span class="u">peso 1-5</span>' +
+        (window.explainChip ? window.explainChip('w') : '') + '</div>' + chainHTML(cadena) + '</div>';
 
     // ── 2. VALUACIÓN & ANALISTAS (API, caché 24h) ──
     fetch((window.BASE || '') + '/api/fundamentals/' + encodeURIComponent(ticker))

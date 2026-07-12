@@ -1379,8 +1379,9 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab" data-tab="space" data-group="mapa" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
       <button class="tab" data-tab="tkg" data-group="mapa" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
       <button class="tab" data-tab="simulation" data-group="mapa" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
-      <button class="tab" id="tab-3d" data-group="mapa" title="Universo 3D — todas las empresas en el espacio" onclick="window._go3D&&window._go3D()">🪐 <span>3D</span></button>
+      <button class="tab" id="tab-3d" data-group="mapa" title="Universo 3D (beta) — todas las empresas en el espacio" onclick="window._go3D&&window._go3D()">🪐 <span>3D <sup style="font-size:8px;color:#FFB300">β</sup></span></button>
       <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
+      <button class="tab" data-tab="crypto" data-group="mercado" id="tab-crypto">₿ <span>Cripto</span></button>
       <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
       <button class="tab" data-tab="canvas" data-group="insights" id="tab-canvas">✦ <span>Canvas IA</span></button>
       <button class="tab" data-tab="terminal" data-group="insights" id="tab-terminal">⬛ <span>Terminal</span></button>
@@ -1534,7 +1535,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           <div id="gdelt-results" style="font-size:12px;color:var(--ink-3)">Escribe una empresa y busca noticias globales en tiempo real</div>
         </div>
         <div class="mkt-tablewrap" style="padding:16px">
-          <div class="mkt-sec-head" style="margin-bottom:12px">⚡ NRS Top 10 — Mayor Riesgo</div>
+          <div class="mkt-sec-head" style="margin-bottom:12px"><span data-i18n="nrs_top10">⚡ NRS Top 10 — Mayor Riesgo</span><span onclick="window.explainMetric&&window.explainMetric('nrs')" title="¿Qué es el NRS?" style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid rgba(0,224,255,.45);color:#00E0FF;font-size:10px;font-weight:700;cursor:pointer;margin-left:6px;vertical-align:middle">?</span></div>
           <div id="nrs-top-list" style="font-size:12px"></div>
         </div>
       </div>
@@ -2007,6 +2008,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
      .app (pantalla completa) y queda fuera de la vista ===== -->
 <section id="tkg-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 <section id="guia-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
+<section id="crypto-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 
 </div><!-- /.app -->
 
@@ -3701,6 +3703,11 @@ es: {
   mk_loading:'Consultando…', mk_err:'Error', mk_cached:'caché local',
   th_co:'Empresa', th_price:'Precio', th_chg:'Día %', th_sh:'Acciones', th_bp:'P. compra', th_val:'Valor', th_pnl:'P&L %', th_act:'',
   mk_add:'+ Posición', mk_edit:'✎', mk_npos:'—',
+  nrs_top10:'⚡ NRS Top 10 — Mayor Riesgo',
+  cr_title:'₿ Cripto — Top por capitalización', cr_sub:'Datos en vivo de CoinGecko · clic en una moneda para ver su detalle',
+  cr_th_coin:'Moneda', cr_th_price:'Precio', cr_th_24h:'24h %', cr_th_7d:'7d %', cr_th_mcap:'Market cap', cr_th_vol:'Volumen 24h',
+  cr_loading:'Cargando mercado cripto…', cr_err:'No se pudo cargar el mercado cripto. Reintenta en unos segundos.',
+  cr_back:'← Volver a la lista', cr_supply:'En circulación', cr_maxsupply:'Suministro máximo', cr_ath:'Máximo histórico', cr_atl:'Mínimo histórico', cr_rank:'Ranking',
 },
 en: {
   sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
@@ -3756,6 +3763,11 @@ en: {
   mk_loading:'Fetching…', mk_err:'Error', mk_cached:'local cache',
   th_co:'Company', th_price:'Price', th_chg:'Day %', th_sh:'Shares', th_bp:'Buy price', th_val:'Value', th_pnl:'P&L %', th_act:'',
   mk_add:'+ Position', mk_edit:'✎', mk_npos:'—',
+  nrs_top10:'⚡ NRS Top 10 — Highest Risk',
+  cr_title:'₿ Crypto — Top by market cap', cr_sub:'Live data from CoinGecko · click a coin to see its detail',
+  cr_th_coin:'Coin', cr_th_price:'Price', cr_th_24h:'24h %', cr_th_7d:'7d %', cr_th_mcap:'Market cap', cr_th_vol:'24h volume',
+  cr_loading:'Loading crypto market…', cr_err:'Could not load the crypto market. Retry in a few seconds.',
+  cr_back:'← Back to list', cr_supply:'Circulating supply', cr_maxsupply:'Max supply', cr_ath:'All-time high', cr_atl:'All-time low', cr_rank:'Rank',
 },
 };
 function t(k){ return (I18N[LANG]&&I18N[LANG][k])||I18N.es[k]||k; }
@@ -3895,12 +3907,16 @@ function switchTab(tab){
   if(tkgEl) tkgEl.style.display = isTkg?'block':'none';
   const guiaEl=document.getElementById('guia-panel');
   if(guiaEl) guiaEl.style.display = isGuia?'block':'none';
+  const isCrypto=tab==='crypto';
+  const cryEl=document.getElementById('crypto-panel');
+  if(cryEl) cryEl.style.display = isCrypto?'block':'none';
   // Animate
   const _tabEls = [
     isMap && document.querySelector('main'),
     tab==='market' && document.getElementById('market'),
     isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
     isTerm && termEl, isCanvas && cvEl, isTkg && tkgEl, isGuia && guiaEl,
+    isCrypto && cryEl,
   ].filter(Boolean);
   _tabEls.forEach(el => {
     el.classList.remove('tab-anim-in');
@@ -3917,6 +3933,7 @@ function switchTab(tab){
   else if(isCanvas){ initCanvasTab(); }
   else if(isTkg){ if(typeof initTKGTab==='function') initTKGTab(); }
   else if(isGuia){ if(typeof initGuiaTab==='function') initGuiaTab(); }
+  else if(isCrypto){ if(window.KhipuCrypto) window.KhipuCrypto.init(); }
   else {
     renderMarket();
     if(!MKT.ts){ fetchQuotes(); }
@@ -4544,7 +4561,7 @@ function renderMarket(keepStatus){
   const tbl=document.getElementById('mk-table');
   tbl.innerHTML=`<thead><tr>
     <th>${t('th_co')}</th><th>${t('th_price')}</th><th>${t('th_chg')}</th>
-    <th>${t('th_sh')}</th><th>${t('th_bp')}</th><th>${t('th_val')}</th><th>${t('th_pnl')}</th><th title="NEXUS Risk Score 0-100">NRS</th><th></th>
+    <th>${t('th_sh')}</th><th>${t('th_bp')}</th><th>${t('th_val')}</th><th>${t('th_pnl')}</th><th title="NEXUS Risk Score 0-100" onclick="window.explainMetric&&window.explainMetric('nrs')" style="cursor:help">NRS ?</th><th></th>
   </tr></thead><tbody>`+rows.map(n=>{
     const q=quoteOf(n), p=MKT.pos[n.id];
     const chg=(q&&q.prev!=null&&q.close!=null)?(q.close-q.prev)/q.prev:null;
@@ -6048,6 +6065,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/localcharts.js"></script>
 <script src="engine/fincard.js"></script>
 <script src="engine/termdata.js"></script>
+<script src="engine/explain.js"></script>
+<script src="engine/crypto.js"></script>
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
 <script src="engine/command_center.js"></script>
@@ -6292,7 +6311,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         }
         const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
         const mkt = (window.NODE_BY_ID||{})[id]?.mkt || '';
-        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span><span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto'}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>${mkt ? `<button onclick="window._openDossier&&window._openDossier('${id}','${mkt}')" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>` : ''}${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
+        const nrsLbl = LANG==='en' ? (nrs<30?'Low risk':nrs<60?'Medium risk':'High risk') : (nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto');
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span>${window.explainChip?window.explainChip('nrs'):''}<span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrsLbl}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>${mkt ? `<button onclick="window._openDossier&&window._openDossier('${id}','${mkt}')" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>` : ''}${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
       } catch(e) {}
     };
   }

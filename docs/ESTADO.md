@@ -411,6 +411,42 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       PRECIO HISTÓRICO async desde /api/candles ("precio de Nvidia" o solo
       "AMD" → línea 90d, ~300ms). tryAsync() en Cabina y Canvas.
 
+## Etapa H — Feedback 7 (2026-07-12): explicabilidad + regla bilingüe + cripto
+
+Feedback de Fabrizio: (a) 3D sigue fallando en SU equipo tras 3-4 rondas +
+comparar 2 empresas no le funcionó → simplificar; (b) un inversionista
+preguntó "¿qué es el NRS?" y la app no lo explica; (c) REGLA NUEVA
+PERMANENTE: todo en ES+EN vía botón de idioma (está en CLAUDE.md);
+(d) 12k empresas era un número lanzado — pidió recomendación; (e) pegó el
+prompt del "módulo de datos Bloomberg-depth" (adapters, cripto, Alpaca paper).
+
+- [x] **CLAUDE.md**: regla bilingüe + regla de explicabilidad (permanentes).
+- [x] **engine/explain.js** (nuevo): `explainMetric(key)` — modal bilingüe
+      que explica NRS (4 componentes con puntos), peso w, chokepoint, VaR y
+      dilución en lenguaje simple con ejemplos (TSMC, ASML). `explainChip(key)`
+      devuelve el botoncito "?" reutilizable. Cableado en: X-Ray (cabecera
+      NRS), Terminal→📋 Datos (fila Riesgo NRS + cabecera cadena), Mercado
+      (NRS Top 10 + th del portafolio), badge NRS de la ficha del mapa.
+      FAQ de la Guía actualizada con "¿Qué es el NRS?".
+- [x] **3D → beta**: chip 🪐 marcado "β" (no iterar más hasta leer
+      /api/diag/recent con beacons reales de su equipo — tarea #20).
+- [x] **Módulo de datos Fase 1 — cripto** (del prompt que pegó, adaptado al
+      stack Python): `core/providers/` (patrón adapter, esquema unificado
+      CryptoAsset) + `coingecko.py` (SIN API key; COINGECKO_KEY opcional por
+      env — NUNCA hardcodear, regla verbatim del usuario). Endpoints:
+      `/api/crypto/markets` (cache 120s), `/api/crypto/<id>` (300s),
+      `/api/crypto/<id>/history` (600s). UI: sub-tab **₿ Cripto** en Mercado
+      (engine/crypto.js, bilingüe vía claves cr_* de I18N): top 100 con
+      precio/24h/7d/mcap/volumen, detalle con gráfico Chart.js 90d + ficha.
+      Verificado en local: BTC/ETH datos reales, 100 filas, ES↔EN, 0 errores
+      de consola. PENDIENTE Fase 2: adapter FMP equities unificado
+      (CompanyProfile), Alpaca paper trading (keys ya en Railway env),
+      stub bloomberg_sapi.
+- [x] sw.js → **v74** (+ explain.js y crypto.js en SHELL).
+- Recomendación de tamaño dada a Fabrizio: ~2.000-3.000 empresas curadas en
+  el grafo + búsqueda on-demand de CUALQUIER ticker público vía el módulo de
+  datos (la cobertura deja de ser el límite del producto).
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con

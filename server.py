@@ -1109,6 +1109,53 @@ def company_news(ticker):
     return jsonify(data[:20])
 
 
+# ── Cripto (core/providers/coingecko.py — adapter, esquema CryptoAsset) ──────
+
+@app.route('/api/crypto/markets')
+@rate_limit(limit=60, window=60)
+@cache.cached(timeout=120, query_string=True)
+def crypto_markets():
+    from core.providers import coingecko
+    per_page = request.args.get('per_page', 100)
+    page = request.args.get('page', 1)
+    try:
+        data, err = coingecko.list_markets(per_page=per_page, page=page)
+    except Exception as e:  # noqa: BLE001
+        data, err = None, str(e)[:120]
+    if err:
+        return jsonify({'error': err}), 502
+    return jsonify({'assets': data, 'source': 'coingecko'})
+
+
+@app.route('/api/crypto/<coin_id>')
+@rate_limit(limit=60, window=60)
+@cache.cached(timeout=300)
+def crypto_detail(coin_id):
+    from core.providers import coingecko
+    try:
+        data, err = coingecko.get_asset(coin_id)
+    except Exception as e:  # noqa: BLE001
+        data, err = None, str(e)[:120]
+    if err:
+        return jsonify({'error': err}), 502 if err != 'id inválido' else 400
+    return jsonify(data)
+
+
+@app.route('/api/crypto/<coin_id>/history')
+@rate_limit(limit=60, window=60)
+@cache.cached(timeout=600, query_string=True)
+def crypto_history(coin_id):
+    from core.providers import coingecko
+    days = request.args.get('days', 90)
+    try:
+        data, err = coingecko.get_history(coin_id, days=days)
+    except Exception as e:  # noqa: BLE001
+        data, err = None, str(e)[:120]
+    if err:
+        return jsonify({'error': err}), 502 if err != 'id inválido' else 400
+    return jsonify(data)
+
+
 @app.route('/api/earnings/<ticker>')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=3600)

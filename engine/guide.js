@@ -14,7 +14,7 @@
 
   const TAB_ROWS = [
     ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, ◈ Grafo Temporal, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom.'],
-    ['📈 Mercado', 'Precios en tiempo real y tu portafolio (lo que compras/vendes se guarda en este navegador).'],
+    ['📈 Mercado', 'Precios en tiempo real y tu portafolio (lo que compras/vendes se guarda en este navegador). Sub-modo ₿ Cripto: las 100 criptomonedas más grandes, con detalle y gráfico de 90 días.'],
     ['🖥️ Terminal', 'Vista estilo Bloomberg: hasta 4 gráficos lado a lado + el panel 📋 Datos a la derecha (ficha, valuación, analistas, fundamentales anuales y cadena de cada empresa). Sub-modos: Terminal, Análisis y Canvas IA.'],
     ['❓ Guía', 'Esta página.'],
   ];
@@ -110,6 +110,8 @@
 
         ${SEC('Preguntas frecuentes', `
           <div style="display:flex;flex-direction:column;gap:14px">
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Qué es el NRS?</div>
+              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">La nota de riesgo de cada empresa, de 0 (segura) a 100 (frágil). Suma geopolítica, dependencia de la cadena, salud del negocio y sector. Donde veas NRS hay un botoncito <b style="color:#00E0FF">?</b> que te lo explica con ejemplos — igual que el peso de las conexiones, el VaR y la dilución.</div></div>
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Se pierden mis datos si cierro el navegador?</div>
               <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Tu portafolio (compras/ventas) vive en este navegador. Tus tesis, anotaciones y decisiones (＋ Acción) se guardan en el servidor — sobreviven aunque cambies de computadora.</div></div>
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿La app se actualiza sola?</div>

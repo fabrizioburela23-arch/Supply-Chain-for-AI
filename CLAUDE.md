@@ -188,3 +188,11 @@ server.py y ontology/agents.py importan de core/ — no redefinir en el server.
   con "qué hacer ahora" concreto. La pestaña ❓ Guía de la app existe para él.
 - La interfaz debe tender a SIMPLIFICARSE: antes de añadir un botón/ícono
   nuevo, evaluar fusionarlo con uno existente (pidió esto explícitamente).
+- **REGLA BILINGÜE (2026-07-12, pedido explícito)**: TODO texto de UI nuevo
+  debe existir en español E inglés, conmutado por el botón de idioma
+  (`LANG`/`t()`/`I18N` en app.html; módulos engine/* usan su propio dict
+  {es,en} leyendo `window.LANG` o `localStorage.eco_lang`). Nunca shippear
+  strings solo en un idioma.
+- **EXPLICABILIDAD (2026-07-12)**: la app la usan inversionistas NO expertos —
+  toda métrica (NRS, VaR, w, chokepoint…) debe tener su "?" que la explique
+  en lenguaje simple (engine/explain.js, `window.explainMetric(key)`).

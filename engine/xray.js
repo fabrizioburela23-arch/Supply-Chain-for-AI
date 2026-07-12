@@ -206,7 +206,8 @@
       '</div>';
 
     var nrsSection =
-      '<div class="xr-sect"><div class="xr-h"><span>Riesgo NRS — por qué ' + (bd ? bd.total : '?') + '</span>' +
+      '<div class="xr-sect"><div class="xr-h"><span>Riesgo NRS — por qué ' + (bd ? bd.total : '?') +
+        (window.explainChip ? window.explainChip('nrs') : '') + '</span>' +
         '<span class="v xr-mono" style="color:' + (bd && bd.total >= 60 ? '#FF4D6A' : bd && bd.total >= 35 ? '#FFB300' : '#2BE38B') + '">' +
         (bd ? bd.total : '?') + '/100</span></div>' + nrsHTML +
         (rank ? '<div class="xr-lin" style="margin-top:8px">Ranking de riesgo: <b style="color:#E8EDFB">#' + rank.rank + '</b> de ' + rank.of + ' empresas</div>' : '') +
