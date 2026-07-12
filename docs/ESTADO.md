@@ -347,6 +347,14 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       además baja pixelRatio a 1. Medido: ~3.500 → 1.377 draw calls (-61%).
       OJO: _linkRecs/_linkMerged/_flowPoints/_pointOnRec reemplazan a
       linkLines/_createLinkLine/_pointOnLink (linkLines queda [] legado).
+- [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
+      IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
+      (solo las mencionadas, o top 80 + sector_summary agregado; quotes
+      filtradas; max_tokens 1200). +7 patrones locales sin IA en
+      localcharts.js: proveedores/clientes de X (grafo), empleados,
+      fundación, scatter riesgo-vs-margen, treemap sectores, mi cartera, y
+      PRECIO HISTÓRICO async desde /api/candles ("precio de Nvidia" o solo
+      "AMD" → línea 90d, ~300ms). tryAsync() en Cabina y Canvas.
 
 ## Pendiente que necesita a Fabrizio / decisión
 
