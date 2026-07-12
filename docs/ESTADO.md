@@ -347,6 +347,19 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       además baja pixelRatio a 1. Medido: ~3.500 → 1.377 draw calls (-61%).
       OJO: _linkRecs/_linkMerged/_flowPoints/_pointOnRec reemplazan a
       linkLines/_createLinkLine/_pointOnLink (linkLines queda [] legado).
+- [x] **3D "otro planeta" + UI limpia** (926239a): la CAUSA de "no se ven
+      todos" era el Scatter de inversión AUTO-ACTIVÁNDOSE al entrar al 3D
+      (reposicionaba a sus ejes y su filtro dejaba nodos en opacity 0.05
+      escondiendo hijos). Ya no se auto-activa: vista semántica con las 555
+      SIEMPRE. Scatter = lente opcional en HUD [🕸 Cadena | 🎯 Inversión]
+      dentro del 3D. Sub-pestaña 🪐 3D en grupo Mapa (window._go3D);
+      eliminados el botón header "◈ Temporal" (duplicado de la sub-pestaña
+      ◈ — "hay 2 temporal") y el botón clonado del scatter. Halos GPU: los
+      555 sprites → UNA nube Points+ShaderMaterial (pulso/hover/tamaño en
+      vertex shader; posiciones sync con meshes por frame; setHaloDim/
+      setAllHalos para scatter y cadena). Atmósfera: doble campo de
+      estrellas + 4 nebulosas + resplandor central. Draw calls acumulado:
+      ~3.500 → 1.043 (-70%).
 - [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
       IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
       (solo las mencionadas, o top 80 + sector_summary agregado; quotes
