@@ -549,6 +549,11 @@
     // 1º: generador LOCAL determinista (0 ms, 0 errores) — la IA solo para lo exótico
     var local = window.KhipuLocalCharts && window.KhipuLocalCharts.try(query);
     if (local && window._cvRenderCard) { window._cvRenderCard(cardId, query, local, 'local ⚡ instantáneo'); return; }
+    // 2º: patrones locales con datos del servidor (precio histórico, ~300ms)
+    if (window.KhipuLocalCharts && window.KhipuLocalCharts.tryAsync) {
+      var localA = await window.KhipuLocalCharts.tryAsync(query);
+      if (localA && window._cvRenderCard) { window._cvRenderCard(cardId, query, localA, 'local ⚡ sin IA'); return; }
+    }
     try {
       var nodeCtx = (window.NODES || []).slice(0, 600).map(function (n) {
         var o = { id: n.id, label: n.label, cat: n.cat };

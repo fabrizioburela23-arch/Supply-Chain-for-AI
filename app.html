@@ -9109,6 +9109,16 @@ window.canvasGenerate = async function(){
     _cvBusy=false; btnTxt.textContent='✦ Generar'; btn.disabled=false;
     return;
   }
+  /* 2º: patrones locales con datos del servidor (precio histórico, ~300ms) */
+  if (window.KhipuLocalCharts && window.KhipuLocalCharts.tryAsync) {
+    const _localA = await window.KhipuLocalCharts.tryAsync(query);
+    if (_localA) {
+      _cvRenderCard(cardId, query, _localA, 'local ⚡ sin IA');
+      input.value='';
+      _cvBusy=false; btnTxt.textContent='✦ Generar'; btn.disabled=false;
+      return;
+    }
+  }
 
   try{
     let spec, model;

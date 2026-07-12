@@ -1276,11 +1276,45 @@ def canvas_generate():
     ctx = body.get('context', {})
     nodes_raw = ctx.get('nodes') or []
     quotes_raw = ctx.get('quotes') or {}
-    nodes_compact = [
-        { k: n.get(k) for k in ('id','label','cat','mkt','margin','growth',
-                                  'port','country','preipo','nrs') }
-        for n in nodes_raw[:500]
-    ]
+
+    # ── ADELGAZAR EL CONTEXTO (fix "los gráficos tardan full") ───────────────
+    # Antes: las 555 empresas completas viajaban a la IA (~150 KB de prompt →
+    # generación lenta). Ahora (Capa 2): si la consulta menciona empresas, solo
+    # esas + un resumen por sector; si no, el top relevante + el resumen.
+    # Los pedidos comunes ya ni llegan aquí (engine/localcharts.js, 0 ms).
+    _clip = lambda n: {k: n.get(k) for k in ('id', 'label', 'cat', 'mkt', 'margin',  # noqa: E731
+                                             'growth', 'port', 'country', 'preipo', 'nrs')}
+    mentioned = []
+    try:
+        from core.semantic import extract_companies
+        mset = set(extract_companies(query, limit=12))
+        if mset:
+            mentioned = [n for n in nodes_raw if n.get('id') in mset]
+    except Exception:  # noqa: BLE001
+        pass
+    if mentioned:
+        nodes_compact = [_clip(n) for n in mentioned[:40]]
+    else:
+        ranked = sorted(nodes_raw, key=lambda n: -(n.get('nrs') or 0))[:60]
+        ranked += [n for n in nodes_raw if n.get('port') and n not in ranked][:20]
+        nodes_compact = [_clip(n) for n in ranked[:80]]
+    # resumen agregado por sector (para consultas panorámicas sin 555 filas)
+    sector_summary = {}
+    for n in nodes_raw:
+        s = n.get('cat') or '?'
+        agg = sector_summary.setdefault(s, {'n': 0, 'nrs_sum': 0, 'nrs_n': 0, 'margin_sum': 0, 'margin_n': 0})
+        agg['n'] += 1
+        if n.get('nrs') is not None:
+            agg['nrs_sum'] += n['nrs']; agg['nrs_n'] += 1
+        if n.get('margin') is not None:
+            agg['margin_sum'] += n['margin']; agg['margin_n'] += 1
+    sector_summary = {k: {'empresas': v['n'],
+                          'nrs_prom': round(v['nrs_sum'] / v['nrs_n'], 1) if v['nrs_n'] else None,
+                          'margen_prom': round(v['margin_sum'] / v['margin_n'], 2) if v['margin_n'] else None}
+                      for k, v in sector_summary.items()}
+    # quotes: solo de las empresas incluidas
+    _tks = {n.get('mkt') for n in nodes_compact if n.get('mkt')}
+    quotes_raw = {t: q for t, q in quotes_raw.items() if t in _tks}
     live_raw = ctx.get('live') or {}
     # caché por consulta (30 min): la misma pregunta no debe pagar otra llamada
     # de IA de varios segundos. Si hay precios en vivo en juego, TTL corto (2 min).
@@ -1288,12 +1322,13 @@ def canvas_generate():
     _hit = cache.get(_ck)
     if _hit:
         return jsonify({'spec': _hit['spec'], 'model': _hit['model'], 'cached': True})
-    ctx_str = json.dumps({'nodes': nodes_compact, 'quotes': quotes_raw,
-                          'live': live_raw, 'selected': ctx.get('selected_id')},
+    ctx_str = json.dumps({'nodes': nodes_compact, 'sector_summary': sector_summary,
+                          'quotes': quotes_raw, 'live': live_raw,
+                          'selected': ctx.get('selected_id')},
                          ensure_ascii=False)
     prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
     try:
-        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1800)
+        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1200)
         # extrae el JSON aunque venga con fences o texto alrededor
         spec = _extract_json(text)
         valid_types = {'bar','line','bubble','treemap','heatmap','radar','scatter','table'}

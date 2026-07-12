@@ -149,12 +149,130 @@
       }
     }
 
+    // ── 8) proveedores / clientes de X (nativo del grafo) ──
+    var pc = q.match(/(proveedor(?:es)?|clientes?)\s+(?:de|del)\s+(.+)/);
+    if (pc && window.LINKS) {
+      var pcn = companiesIn(pc[2]);
+      if (pcn.length) {
+        var anchor = pcn[0], wantProv = pc[1].indexOf('proveedor') === 0;
+        var lid2 = function (v) { return (typeof v === 'object' && v) ? v.id : v; };
+        var rows8 = [];
+        window.LINKS.forEach(function (l) {
+          var s = lid2(l.source), t = lid2(l.target);
+          if (wantProv && t === anchor.id && window.NODE_BY_ID[s]) rows8.push([window.NODE_BY_ID[s].label, l.w || 1]);
+          if (!wantProv && s === anchor.id && window.NODE_BY_ID[t]) rows8.push([window.NODE_BY_ID[t].label, l.w || 1]);
+        });
+        rows8.sort(function (a, b) { return b[1] - a[1]; });
+        if (rows8.length) {
+          return bar((wantProv ? 'Proveedores de ' : 'Clientes de ') + anchor.label + ' (' + rows8.length + ')',
+            'Peso de criticidad del vínculo (1-5)', rows8.slice(0, 14), 'w');
+        }
+      }
+    }
+
+    // ── 9) empleados ──
+    if (/emplead/.test(q)) {
+      comps = companiesIn(q);
+      var pool9 = comps.length ? comps
+        : NODES.filter(function (n) { return meta(n.id).employees; })
+            .sort(function (a, b) { return (meta(b.id).employees || 0) - (meta(a.id).employees || 0); }).slice(0, topN(q, 10));
+      var rows9 = pool9.filter(function (n) { return meta(n.id).employees; })
+        .map(function (n) { return [n.label, meta(n.id).employees]; });
+      if (rows9.length) return bar('Empleados', 'Plantilla según la ficha de cada empresa', rows9, '');
+    }
+
+    // ── 10) fundación / más antiguas ──
+    if (/fundad|antig/.test(q)) {
+      comps = companiesIn(q);
+      var pool10 = comps.length ? comps
+        : NODES.filter(function (n) { return meta(n.id).founded; })
+            .sort(function (a, b) { return (meta(a.id).founded || 3000) - (meta(b.id).founded || 3000); }).slice(0, topN(q, 12));
+      var rows10 = pool10.filter(function (n) { return meta(n.id).founded; })
+        .map(function (n) { return [n.label, meta(n.id).founded]; });
+      if (rows10.length) return bar('Año de fundación', 'Las más antiguas del catálogo', rows10, '');
+    }
+
+    // ── 11) scatter riesgo vs margen ──
+    if (/(riesgo|nrs).*(margen|márgenes)|(margen|márgenes).*(riesgo|nrs)|scatter|dispersi[oó]n/.test(q)) {
+      var pts = NODES.filter(function (n) { return n.margin != null && cap(n.id); })
+        .sort(function (a, b) { return cap(b.id) - cap(a.id); }).slice(0, 40)
+        .map(function (n) { return { label: n.label, x: Math.round(n.margin * 100), y: nrs(n.id) || 0 }; });
+      if (pts.length >= 5) {
+        return { type: 'scatter', title: 'Riesgo vs Margen', subtitle: 'Top 40 por capitalización · abajo-derecha = mejor',
+          data: pts, config: { x_label: 'Margen %', y_label: 'Riesgo NRS' } };
+      }
+    }
+
+    // ── 12) treemap por sector ──
+    if (/treemap|mapa de (?:sectores|capital)/.test(q)) {
+      var S12 = window.SECTORS9 || {}, M12 = window.CAT_TO_SECTOR || {};
+      var agg12 = {};
+      NODES.forEach(function (n) {
+        var s = M12[n.cat] || 'cloud_ia';
+        agg12[s] = (agg12[s] || 0) + (cap(n.id) || 0);
+      });
+      return { type: 'treemap', title: 'Capitalización por sector', subtitle: 'Miles de millones USD',
+        data: Object.keys(agg12).map(function (k) {
+          return { label: (S12[k] || {}).label || k, value: Math.round(agg12[k]), color: (S12[k] || {}).color };
+        }).filter(function (d) { return d.value > 0; }), config: {} };
+    }
+
+    // ── 13) mi cartera ──
+    if (/cartera|portafolio|portfolio|mis posiciones/.test(q)) {
+      var pos = (window.MKT || {}).pos || {};
+      var rows13 = Object.keys(pos).map(function (k) {
+        var n = NODES.find(function (x) { return x.id === k || x.mkt === k; });
+        var tk = (n && n.mkt) || k;
+        var qq = ((window.MKT || {}).quotes || {})[tk] || {};
+        var qty = typeof pos[k] === 'object' ? (pos[k].qty || pos[k].shares || 0) : pos[k];
+        return { Empresa: (n && n.label) || k, Ticker: tk, Cantidad: qty,
+                 'Precio': qq.close != null ? '$' + Number(qq.close).toFixed(2) : '—',
+                 'Valor': qq.close != null && qty ? '$' + Math.round(qq.close * qty).toLocaleString() : '—' };
+      });
+      if (rows13.length) {
+        return { type: 'table', title: 'Mi cartera', subtitle: rows13.length + ' posiciones · precios en vivo',
+          data: rows13, config: { columns: ['Empresa', 'Ticker', 'Cantidad', 'Precio', 'Valor'] } };
+      }
+    }
+
     return null;   // no es un pedido común → que lo intente la IA (con caché)
+  }
+
+  // ── patrones ASÍNCRONOS (velas del servidor, cacheadas — sin IA) ──────────
+  function tryAsync(query) {
+    var q = ' ' + String(query || '').toLowerCase().trim() + ' ';
+    // precio histórico: "precio de nvidia", "evolución de TSMC", o la consulta
+    // ES simplemente una empresa listada
+    var m = q.match(/(?:precio|cotizaci[oó]n|evoluci[oó]n|hist[oó]rico|velas|acci[oó]n)\s+(?:de|del)?\s*(.+)/);
+    var target = m ? m[1].replace(/[¿?¡!.]/g, '').trim() : String(query || '').trim();
+    var comps = companiesIn(target);
+    var n = comps.length === 1 ? comps[0] : null;
+    if (!n && !m) return Promise.resolve(null);
+    if (!n || !n.mkt) return Promise.resolve(null);
+    if (!m && target.length > 30) return Promise.resolve(null);   // consulta larga: no es "solo una empresa"
+    return fetch((window.BASE || '') + '/api/candles/' + encodeURIComponent(n.mkt))
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (!c || c.s !== 'ok' || !c.c || c.c.length < 5) return null;
+        var up = c.c[c.c.length - 1] >= c.c[0];
+        var pct = ((c.c[c.c.length - 1] / c.c[0] - 1) * 100).toFixed(1);
+        return { type: 'line',
+          title: n.label + ' (' + n.mkt + ') — ~90 días',
+          subtitle: (up ? '▲ +' : '▼ ') + pct + '% en el periodo · fuente: mercado en vivo',
+          data: [{ label: n.mkt, values: c.c.map(function (v) { return Math.round(v * 100) / 100; }),
+                   color: up ? '#34d399' : '#f87171' }],
+          config: { series_labels: [n.mkt], unit: '$' } };
+      })
+      .catch(function () { return null; });
   }
 
   window.KhipuLocalCharts = {
     try: function (query) {
       try { return trySpec(query); } catch (e) { return null; }
+    },
+    // patrones que necesitan datos del servidor (velas) — igual sin IA, ~300ms
+    tryAsync: function (query) {
+      try { return tryAsync(query); } catch (e) { return Promise.resolve(null); }
     },
   };
 })();
