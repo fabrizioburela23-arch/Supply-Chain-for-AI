@@ -71,6 +71,10 @@ class KhipuGraph3D {
     this.active = true;
     this._animate();
 
+    // auto-chequeo visual: si a los 2s la pantalla sigue negra (pestaña
+    // visible), degradar automáticamente — jamás dejar al usuario sin nada
+    setTimeout(() => this._selfCheck(0), 2000);
+
     const svg = document.getElementById('graph');
     if (svg) svg.style.display = 'none';
   }
@@ -381,6 +385,77 @@ class KhipuGraph3D {
     this._graphGroup.add(this._haloPoints);
   }
 
+  // ── AUTO-REPARACIÓN (feedback real "no se ve nada"): si el shader de halos
+  // no compila en la GPU del usuario (móviles/integradas), caemos a un
+  // PointsMaterial estándar; si aun así el render falla, modo ultra-seguro. ──
+  _haloFallback() {
+    if (!this._haloPoints) return;
+    try {
+      const geo = this._haloPoints.geometry;
+      this._graphGroup.remove(this._haloPoints);
+      geo.setAttribute('color', geo.getAttribute('aColor'));   // PointsMaterial usa 'color'
+      this._haloPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+        map: KhipuGraph3D._haloTexture(), vertexColors: true, size: 24,
+        transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending,
+        depthWrite: false, sizeAttenuation: true,
+      }));
+      this._haloPoints.frustumCulled = false;
+      this._haloMat = null;   // _animate deja de tocar uniforms
+      this._graphGroup.add(this._haloPoints);
+    } catch (e) {
+      this._haloPoints = null;
+      this._haloMat = null;
+    }
+  }
+
+  _ultraSafeMode(reason) {
+    // lo mínimo que SIEMPRE se ve: esferas + aristas. Fuera shaders/extras.
+    try { if (this._haloPoints) { this._graphGroup.remove(this._haloPoints); this._haloPoints = null; this._haloMat = null; } } catch (e) {}
+    try { if (this._flowPoints) { this._flowPoints.visible = false; } } catch (e) {}
+    try { this.scene.fog = null; } catch (e) {}
+    this._notify('3D en modo compatible' + (reason ? ' — ' + String(reason).slice(0, 70) : ''));
+  }
+
+  _notify(msg) {
+    if (this._notified) return;
+    this._notified = true;
+    try { if (typeof toast === 'function') toast('🪐 ' + msg); } catch (e) {}
+  }
+
+  // Auto-chequeo visual: 2s tras arrancar, renderiza y LEE píxeles. Si todo
+  // está negro en una pestaña visible → degradar automáticamente y avisar.
+  _selfCheck(attempt) {
+    if (!this.active || (typeof document !== 'undefined' && document.hidden)) return;
+    try {
+      this.renderer.render(this.scene, this.camera);   // frame fresco en este mismo tick
+      const gl = this.renderer.getContext();
+      const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
+      if (!w || !h) return;
+      let lit = 0;
+      const p = new Uint8Array(4);
+      for (let i = 0; i < 60; i++) {
+        gl.readPixels(Math.floor(w * (0.15 + 0.012 * i)), Math.floor(h * (0.3 + 0.006 * i)),
+          1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p);
+        if (p[0] + p[1] + p[2] > 20) lit++;
+      }
+      if (lit > 0) return;   // se ve — todo bien
+      // PANTALLA NEGRA: degradar por pasos
+      let gpu = '';
+      try {
+        const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+        if (dbg) gpu = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)).slice(0, 60);
+      } catch (e) {}
+      if ((attempt || 0) === 0 && this._haloMat) {
+        this._haloFallback();
+        setTimeout(() => this._selfCheck(1), 1500);
+      } else {
+        this._ultraSafeMode(gpu);
+        // último recurso: re-encuadrar por si la cámara quedó fuera
+        this._resetView();
+      }
+    } catch (e) {}
+  }
+
   // atenúa/restaura el halo de UN nodo (lo usan el scatter y el resaltado)
   setHaloDim(nodeId, dim) {
     if (!this._haloPoints || !this._haloIndex) return;
@@ -488,9 +563,12 @@ class KhipuGraph3D {
     // los meshes (así siguen a los nodos aunque el scatter o el hipergrafo
     // los muevan). El pulso y el hover los calcula el shader — CPU casi cero.
     if (this._haloPoints) {
-      this._haloMat.uniforms.uTime.value = t;
-      const hi = this.hovered != null && this._haloIndex ? this._haloIndex.get(this.hovered) : null;
-      this._haloMat.uniforms.uHover.value = hi != null ? hi : -1;
+      // uniforms solo si el shader sigue vivo (el fallback compatible los quita)
+      if (this._haloMat) {
+        this._haloMat.uniforms.uTime.value = t;
+        const hi = this.hovered != null && this._haloIndex ? this._haloIndex.get(this.hovered) : null;
+        this._haloMat.uniforms.uHover.value = hi != null ? hi : -1;
+      }
       const hp = this._haloPoints.geometry.attributes.position.array;
       let hj = 0;
       this.nodeMeshes.forEach(m => {
@@ -555,7 +633,19 @@ class KhipuGraph3D {
       this._applySpherical();
     }
 
-    this.renderer.render(this.scene, this.camera);
+    // render INMORTAL: si algo revienta en la GPU del usuario, degradamos por
+    // pasos en vez de morir en negro y en silencio ("no se ve nada" real)
+    try {
+      this.renderer.render(this.scene, this.camera);
+      this._renderFails = 0;
+    } catch (e) {
+      this._renderFails = (this._renderFails || 0) + 1;
+      if (this._renderFails === 2 && this._haloMat) {
+        this._haloFallback();
+      } else if (this._renderFails === 5) {
+        this._ultraSafeMode(e.message || e);
+      }
+    }
   }
 
   selectNode(id) {
@@ -1002,6 +1092,7 @@ class KhipuGraph3D {
     if (!this.active) {
       this.active = true;
       this._animate();
+      setTimeout(() => this._selfCheck(0), 2000);   // re-chequeo visual al volver
     }
   }
 
