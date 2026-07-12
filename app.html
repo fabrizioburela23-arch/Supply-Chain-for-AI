@@ -3708,7 +3708,8 @@ es: {
   cr_th_coin:'Moneda', cr_th_price:'Precio', cr_th_24h:'24h %', cr_th_7d:'7d %', cr_th_mcap:'Market cap', cr_th_vol:'Volumen 24h',
   cr_loading:'Cargando mercado cripto…', cr_err:'No se pudo cargar el mercado cripto. Reintenta en unos segundos.',
   cr_back:'← Volver a la lista', cr_supply:'En circulación', cr_maxsupply:'Suministro máximo', cr_ath:'Máximo histórico', cr_atl:'Mínimo histórico', cr_rank:'Ranking',
-  cr_view_map:'Mapa', cr_view_list:'Lista', cr_all:'Todas', cr_empty:'Ninguna moneda del top 100 en esta categoría.',
+  cr_view_map:'Mapa', cr_view_list:'Lista', cr_view_bub:'Burbujas', cr_all:'Todas', cr_empty:'Ninguna moneda del top 100 en esta categoría.',
+  cr_bub_hint:'tamaño = capitalización · color = 24h · toca una burbuja', cr_open_card:'Ver ficha completa',
   cr_dossier:'Expediente', cr_dossier_t:'Expediente Khipus',
   cr_b_what:'¿Qué es?', cr_b_mech:'Cómo funciona', cr_b_tok:'Tokenomics', cr_b_cats:'Catalizadores', cr_b_risks:'Riesgos', cr_b_pos:'Posicionamiento',
   cr_disclaimer:'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.',
@@ -3772,7 +3773,8 @@ en: {
   cr_th_coin:'Coin', cr_th_price:'Price', cr_th_24h:'24h %', cr_th_7d:'7d %', cr_th_mcap:'Market cap', cr_th_vol:'24h volume',
   cr_loading:'Loading crypto market…', cr_err:'Could not load the crypto market. Retry in a few seconds.',
   cr_back:'← Back to list', cr_supply:'Circulating supply', cr_maxsupply:'Max supply', cr_ath:'All-time high', cr_atl:'All-time low', cr_rank:'Rank',
-  cr_view_map:'Map', cr_view_list:'List', cr_all:'All', cr_empty:'No top-100 coin in this category.',
+  cr_view_map:'Map', cr_view_list:'List', cr_view_bub:'Bubbles', cr_all:'All', cr_empty:'No top-100 coin in this category.',
+  cr_bub_hint:'size = market cap · color = 24h · tap a bubble', cr_open_card:'Open full card',
   cr_dossier:'Dossier', cr_dossier_t:'Khipus Dossier',
   cr_b_what:'What is it?', cr_b_mech:'How it works', cr_b_tok:'Tokenomics', cr_b_cats:'Catalysts', cr_b_risks:'Risks', cr_b_pos:'Positioning',
   cr_disclaimer:'Informational context, not investment advice. Analysis layer: Jul 2026 · live prices from CoinGecko.',
@@ -6054,6 +6056,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 
 <!-- Khipu Finance Engine -->
 <script src="engine/graph3d.js"></script>
+<script src="engine/universe2d.js"></script>
 <script src="engine/hypergraph.js"></script>
 <script src="engine/resolve.js"></script>
 <script src="engine/voice.js"></script>
@@ -6165,6 +6168,26 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     }
   };
 
+  // Respaldo TOTAL sin WebGL (engine/universe2d.js): si el 3D real no puede
+  // pintar en ESTE equipo, el universo se dibuja igual en Canvas 2D.
+  function _startUniverse2D(reason) {
+    if (!window.KhipuUniverse2D) return false;
+    try {
+      if (_graph3d && _graph3d.pause) _graph3d.pause();
+      const svg2 = document.getElementById('graph');
+      const cnv2 = document.getElementById('graph-canvas');
+      if (svg2) svg2.style.display = 'none';
+      if (cnv2) cnv2.style.display = 'block';
+      window.KhipuUniverse2D.init('graph-canvas');
+      window.KhipuUniverse2D.loadData(window.NODES || [], window.LINKS || []);
+      window._diag && window._diag('universe2d_fallback', { reason: String(reason || '').slice(0, 60) });
+      return true;
+    } catch (e) {
+      window._diag && window._diag('universe2d_fail', { err: String(e && e.message || e).slice(0, 120) });
+      return false;
+    }
+  }
+
   function _toggle3DInner() {
     _is3D = !_is3D;
     const svg = document.getElementById('graph');
@@ -6204,6 +6227,16 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
             if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
             else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
             window._diag && window._diag('3d_init_ok', { nodes: _graph3d.nodeMeshes.size });
+            // Pantalla negra detectada por _selfCheck → escalar al universo 2D
+            // (el modo ultra-seguro del 3D es el último peldaño WebGL; si aun
+            // así no se ve, el 2D SIEMPRE se ve).
+            try {
+              const _origUltra = _graph3d._ultraSafeMode.bind(_graph3d);
+              _graph3d._ultraSafeMode = (r) => {
+                try { _origUltra(r); } catch (e2) {}
+                _startUniverse2D('3d_black:' + (r || ''));
+              };
+            } catch (e3) {}
             // Hide loader once first frame is likely rendered (~600ms)
             setTimeout(() => {
               if (g3dLdr) { g3dLdr.classList.add('hidden'); setTimeout(() => { g3dLdr.style.display = 'none'; }, 450); }
@@ -6212,6 +6245,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
             window._diag && window._diag('3d_init_fail', { err: String(e && e.message || e).slice(0, 180) });
             _graph3d = null;
             if (g3dLdr) { g3dLdr.classList.add('hidden'); g3dLdr.style.display = 'none'; }
+            // el motor WebGL no pudo — pero el universo 2D SIEMPRE puede
+            if (_startUniverse2D('3d_init_fail')) return;
             if (typeof toast === 'function') {
               toast('⚠ El 3D no pudo iniciar en este equipo: ' + String(e && e.message || e).slice(0, 90) +
                     ' — En Chrome: Configuración → Sistema → activa "aceleración de gráficos".');
@@ -6221,6 +6256,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         }, 50); // brief yield so spinner renders before heavy work
       } else if (_graph3d) {
         _graph3d.resume && _graph3d.resume();
+        if (window.KhipuUniverse2D && window.KhipuUniverse2D.isActive()) window.KhipuUniverse2D.resume();
       }
       if (!_hypergraph && window.TemporalHypergraph) {
         _hypergraph = new TemporalHypergraph(_graph3d);
@@ -6235,6 +6271,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       const hud = document.getElementById('g3d-mode');
       if (hud) hud.style.display = 'none';
       if (_graph3d) _graph3d.pause && _graph3d.pause();
+      try { if (window.KhipuUniverse2D) window.KhipuUniverse2D.pause(); } catch (e) {}
       try {
         if (window._khipuScatter && window._khipuScatter.isActive()) window._khipuScatter.deactivate(_graph3d);
       } catch (e) {}
@@ -6254,6 +6291,12 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       } catch (e) {}
       if (!ok) {
         window._diag && window._diag('webgl_missing', {});
+        // sin WebGL: el universo 2D entra igual — nunca más "no pasa nada"
+        if (typeof activeTab !== 'undefined' && activeTab !== 'map' && typeof switchTab === 'function') switchTab('map');
+        _is3D = true;
+        const chipW = document.getElementById('tab-3d'); if (chipW) chipW.classList.add('active');
+        if (_startUniverse2D('webgl_missing')) return;
+        _is3D = false; if (chipW) chipW.classList.remove('active');
         if (typeof toast === 'function') {
           toast('⚠ Tu navegador tiene los gráficos 3D desactivados. En Chrome: Configuración → Sistema → activa "Usar aceleración de gráficos" y reinicia el navegador.');
         }

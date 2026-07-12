@@ -3,9 +3,12 @@
    - Datos VIVOS: /api/crypto/* (server → core/providers/coingecko.py).
    - Capa ESTÁTICA: window.CRYPTO_INTEL + window.CRYPTO_CATS
      (nodes/crypto_intel*.js, expediente jul-2026, refrescar cada 3-6 meses).
-   Tres vistas: 🗺 Mapa (categorías explicadas — para ENTENDER el mercado),
-   ☰ Lista (top 100 con filtros por tesis), y Detalle (gráfico 90d + ficha
-   del expediente con advertencias ⚠). Bilingüe ES/EN (regla del proyecto).
+   Vistas (elección de Fabrizio 2026-07-12, maqueta "Burbujas vivas"):
+     🫧 Burbujas — canvas con física suave: tamaño = market cap, color = 24h%,
+        anillo rojo punteado = ⚠ del expediente. Tap = tarjeta con "Ver ficha".
+     ☰ Lista — top 100 con filtros por tesis del expediente (badges 📋/⚠).
+     Detalle — gráfico 90d + Expediente Khipus de 6 bloques + banner ⚠.
+   Bilingüe ES/EN (regla del proyecto).
    ============================================================================ */
 (function () {
   'use strict';
@@ -13,8 +16,9 @@
   var LOADED_AT = 0;      // timestamp del último fetch de la lista
   var ASSETS = [];        // CryptoAsset[] vivos (top 100)
   var CHART = null;       // instancia Chart.js de la vista detalle
-  var VIEW = null;        // 'map' | 'list' (persistido)
+  var VIEW = null;        // 'bubbles' | 'list' (persistido)
   var FILTER = null;      // null | catKey
+  var BUB = null;         // estado del canvas de burbujas {ctx, items, raf…}
 
   var CAT_ORDER = ['store', 'l1', 'stable', 'payments', 'defi', 'perps', 'exchange', 'rwa', 'ai', 'privacy', 'meme'];
 
@@ -27,7 +31,8 @@
   }
   function view() {
     if (VIEW) return VIEW;
-    try { VIEW = localStorage.getItem('kh_cryptoview') || 'map'; } catch (e) { VIEW = 'map'; }
+    try { VIEW = localStorage.getItem('kh_cryptoview') || 'bubbles'; } catch (e) { VIEW = 'bubbles'; }
+    if (VIEW !== 'list' && VIEW !== 'bubbles') VIEW = 'bubbles';   // migra 'map' viejo
     return VIEW;
   }
   function intelOf(a) {
@@ -64,13 +69,24 @@
     var n = v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : Math.round(v).toLocaleString();
     return n + (sym ? ' ' + sym : '');
   }
+  function pctCol(p) {
+    if (p == null || Math.abs(p) < 0.05) return '#5C6784';
+    var t = Math.min(Math.abs(p) / 6, 1);
+    return p > 0
+      ? 'rgb(' + Math.round(43 - 20 * t) + ',227,' + Math.round(139 - 60 * t) + ')'
+      : 'rgb(255,' + Math.round(77 + 40 * (1 - t)) + ',' + Math.round(106 + 40 * (1 - t)) + ')';
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]; }); }
 
   function panel() { return document.getElementById('crypto-panel'); }
+  function filtered() {
+    if (!FILTER) return ASSETS;
+    return ASSETS.filter(function (a) { var it = intelOf(a); return it && (it.tags || [it.cat]).indexOf(FILTER) >= 0; });
+  }
 
   // ── cabecera común (título + conmutador de vista + refresh) ──
   function headerHTML() {
-    var isMap = view() === 'map';
+    var v = view();
     var seg = function (id, txt, on) {
       return '<button onclick="window.KhipuCrypto.setView(\'' + id + '\')" style="padding:5px 13px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;' +
         'border:1px solid ' + (on ? 'rgba(0,224,255,.45)' : 'transparent') + ';background:' + (on ? 'rgba(0,224,255,.12)' : 'none') + ';color:' + (on ? '#00E0FF' : '#7C87A3') + '">' + txt + '</button>';
@@ -78,12 +94,12 @@
     return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">' +
       '<h2 style="margin:0;font-size:19px">' + T('cr_title', '₿ Cripto') + '</h2>' +
       '<div style="display:flex;gap:2px;background:rgba(21,28,45,.6);border-radius:9px;padding:2px">' +
-        seg('map', '🗺 ' + T('cr_view_map', 'Mapa'), isMap) + seg('list', '☰ ' + T('cr_view_list', 'Lista'), !isMap) + '</div>' +
+        seg('bubbles', '🫧 ' + T('cr_view_bub', 'Burbujas'), v === 'bubbles') + seg('list', '☰ ' + T('cr_view_list', 'Lista'), v === 'list') + '</div>' +
       '<button onclick="window.KhipuCrypto.refresh()" title="Refresh" style="margin-left:auto;padding:5px 12px;border-radius:7px;border:1px solid rgba(0,224,255,.3);background:rgba(0,224,255,.08);color:#00E0FF;cursor:pointer;font-size:12px">⟳</button></div>' +
-      '<div style="color:#7C87A3;font-size:12px;margin-bottom:12px">' + T('cr_sub', 'Datos en vivo de CoinGecko · clic en una moneda para ver su detalle') + '</div>';
+      '<div style="color:#7C87A3;font-size:12px;margin-bottom:10px">' + T('cr_sub', 'Datos en vivo de CoinGecko · clic en una moneda para ver su detalle') + '</div>';
   }
 
-  // chips de categoría (filtro en vista lista)
+  // chips de categoría (filtran ambas vistas) + blurb educativo al filtrar
   function chipsHTML() {
     if (!window.CRYPTO_CATS) return '';
     var mk = function (key, txt, on) {
@@ -95,7 +111,13 @@
       var c = catInfo(k); if (!c) return;
       h += mk(k, c.icon + ' ' + catLabel(k), FILTER === k);
     });
-    return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">' + h + '</div>';
+    var blurb = '';
+    if (FILTER) {
+      var ci = catInfo(FILTER);
+      if (ci) blurb = '<div style="margin:8px 0 0;padding:8px 13px;border-radius:9px;background:rgba(0,224,255,.06);border:1px solid rgba(0,224,255,.18);color:#9AB8D8;font-size:12px;line-height:1.5">' +
+        ci.icon + ' ' + esc(lang() === 'en' ? (ci.ben || '') : (ci.bes || '')) + '</div>';
+    }
+    return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + h + '</div>' + blurb;
   }
 
   function badges(a) {
@@ -105,11 +127,17 @@
     return h;
   }
 
+  function baseCSS() {
+    return '<style>#crypto-panel td{padding:8px 6px;border-bottom:1px solid rgba(122,158,255,.08)}' +
+      '#crypto-panel tbody tr:hover{background:rgba(0,224,255,.05)}' +
+      '@media(max-width:760px){#crypto-panel .cr-hide-m{display:none}}</style>';
+  }
+
   // ── vista LISTA ──
   function renderList() {
+    stopBubbles();
     var p = panel(); if (!p) return;
-    var list = ASSETS;
-    if (FILTER) list = ASSETS.filter(function (a) { var it = intelOf(a); return it && (it.tags || [it.cat]).indexOf(FILTER) >= 0; });
+    var list = filtered();
     var rows = list.map(function (a) {
       return '<tr onclick="window.KhipuCrypto.openDetail(\'' + esc(a.id) + '\')" style="cursor:pointer">' +
         '<td style="color:#7C87A3;text-align:right;padding-right:10px">' + (a.rank || '—') + '</td>' +
@@ -124,7 +152,7 @@
     }).join('');
     p.innerHTML =
       '<div style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">' + headerHTML() + chipsHTML() +
-        '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
+        '<div style="overflow-x:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
           '<thead><tr style="color:#7C87A3;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">' +
             '<th style="text-align:right;padding:6px 10px 6px 0">#</th>' +
             '<th style="text-align:left;padding:6px 0">' + T('cr_th_coin', 'Moneda') + '</th>' +
@@ -138,54 +166,155 @@
         '</div></div>' + baseCSS();
   }
 
-  // ── vista MAPA (categorías explicadas — el "entender el mercado") ──
-  function renderMap() {
+  // ── vista BURBUJAS (elección de Fabrizio — estilo CryptoBubbles) ──
+  function stopBubbles() {
+    if (BUB && BUB.raf) cancelAnimationFrame(BUB.raf);
+    BUB = null;
+  }
+  function renderBubbles() {
+    stopBubbles();
     var p = panel(); if (!p) return;
-    var I = window.CRYPTO_INTEL || {};
-    var bySym = {}; ASSETS.forEach(function (a) { bySym[(a.symbol || '').toUpperCase()] = a; if (a.id) bySym['#' + a.id] = a; });
-    var cards = CAT_ORDER.map(function (key) {
-      var c = catInfo(key); if (!c) return '';
-      var members = [];
-      for (var id in I) {
-        var it = I[id];
-        if ((it.tags || [it.cat]).indexOf(key) < 0) continue;
-        members.push({ id: id, it: it, live: bySym['#' + id] || bySym[it.ticker] || null });
-      }
-      if (!members.length) return '';
-      members.sort(function (a, b) { return (a.it.rank || 999) - (b.it.rank || 999); });
-      var chips = members.map(function (m) {
-        var pct = m.live ? m.live.change_24h_pct : null;
-        var col = pct == null ? '#7C87A3' : pct >= 0 ? '#2BE38B' : '#FF4D6A';
-        return '<button onclick="window.KhipuCrypto.openDetail(\'' + esc(m.id) + '\')" style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;margin:0 6px 6px 0;' +
-          'border-radius:8px;border:1px solid rgba(122,158,255,.16);background:rgba(13,19,33,.7);cursor:pointer;font-size:11.5px;color:#E8EDFB">' +
-          '<b>' + esc(m.it.ticker) + '</b>' +
-          (pct != null ? '<span style="color:' + col + ';font-weight:600">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span>' : '') +
-          (m.it.warn ? '<span title="' + esc(lang() === 'en' ? m.it.warn.en : m.it.warn.es) + '">⚠️</span>' : '') + '</button>';
-      }).join('');
-      return '<div style="border:1px solid rgba(122,158,255,.14);border-radius:14px;padding:16px 16px 10px;background:linear-gradient(180deg,rgba(13,19,35,.85),rgba(8,12,22,.85))">' +
-        '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><span style="font-size:17px">' + c.icon + '</span>' +
-          '<b style="font-size:14px">' + esc(catLabel(key)) + '</b>' +
-          '<span style="margin-left:auto;color:#7C87A3;font-size:10.5px">' + members.length + '</span></div>' +
-        '<div style="color:#9AA6C4;font-size:11.5px;line-height:1.5;margin-bottom:10px">' + esc(lang() === 'en' ? (c.ben || '') : (c.bes || '')) + '</div>' +
-        '<div>' + chips + '</div></div>';
-    }).join('');
     p.innerHTML =
-      '<div style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">' + headerHTML() +
-        (cards ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">' + cards + '</div>' +
-          '<div style="margin-top:16px;color:#5C6784;font-size:10.5px;line-height:1.5">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div>'
-        : '<div style="padding:50px;text-align:center;color:#7C87A3;font-size:13px">' + T('cr_loading', 'Cargando mercado cripto…') + '</div>') +
-      '</div>' + baseCSS();
+      '<div style="max-width:1100px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;height:calc(100% - 10px);box-sizing:border-box">' +
+        headerHTML() + chipsHTML() +
+        '<div id="cr-bub-stage" style="position:relative;flex:1;min-height:340px;margin-top:12px;border:1px solid rgba(122,158,255,.14);' +
+          'border-radius:14px;background:radial-gradient(700px 380px at 50% -80px,#0B1428 0%,#05070E 60%);overflow:hidden">' +
+          '<canvas id="cr-bub" style="display:block;width:100%;height:100%;cursor:pointer;touch-action:none"></canvas>' +
+          '<div id="cr-bub-tip" style="position:absolute;display:none;z-index:5;background:rgba(8,14,26,.97);border:1px solid rgba(0,224,255,.35);' +
+            'border-radius:10px;padding:10px 13px;font-size:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:230px"></div>' +
+          '<div style="position:absolute;left:12px;bottom:9px;font-size:10px;color:#5C6784;pointer-events:none">' +
+            T('cr_bub_hint', 'tamaño = capitalización · color = 24h · toca una burbuja') + '</div>' +
+        '</div>' +
+        '<div style="margin-top:10px;color:#5C6784;font-size:10.5px">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div>' +
+      '</div>';
+    initBubbles();
   }
 
-  function baseCSS() {
-    return '<style>#crypto-panel td{padding:8px 6px;border-bottom:1px solid rgba(122,158,255,.08)}' +
-      '#crypto-panel tbody tr:hover{background:rgba(0,224,255,.05)}' +
-      '@media(max-width:760px){#crypto-panel .cr-hide-m{display:none}}</style>';
+  function initBubbles() {
+    var cv = document.getElementById('cr-bub');
+    var tip = document.getElementById('cr-bub-tip');
+    var stage = document.getElementById('cr-bub-stage');
+    if (!cv || !ASSETS.length) return;
+    var ctx = cv.getContext('2d');
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function fit() {
+      var r = stage.getBoundingClientRect();
+      cv.width = Math.max(1, r.width * dpr); cv.height = Math.max(1, r.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    fit();
+    var list = filtered().slice(0, 100);
+    if (!list.length) return;
+    var W = function () { return cv.clientWidth || 300; }, H = function () { return cv.clientHeight || 300; };
+    var maxM = Math.sqrt(list[0].market_cap || 1);
+    var small = W() < 520;
+    var items = list.map(function (a) {
+      var rel = Math.sqrt(Math.max(a.market_cap || 1, 1)) / maxM;
+      var r = (small ? 9 : 12) + rel * (small ? 34 : 56);
+      return { a: a, it: intelOf(a), r: r,
+        x: r + Math.random() * Math.max(20, W() - 2 * r), y: r + Math.random() * Math.max(20, H() - 2 * r),
+        vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35 };
+    });
+    var reduce = false;
+    try { reduce = matchMedia('(prefers-reduced-motion:reduce)').matches; } catch (e) {}
+    var drag = null;
+    function step() {
+      var w = W(), h = H();
+      for (var i = 0; i < items.length; i++) {
+        var b = items[i]; if (b === drag) continue;
+        b.x += b.vx; b.y += b.vy; b.vx *= .995; b.vy *= .995;
+        if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx); } if (b.x > w - b.r) { b.x = w - b.r; b.vx = -Math.abs(b.vx); }
+        if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy); } if (b.y > h - b.r) { b.y = h - b.r; b.vy = -Math.abs(b.vy); }
+      }
+      for (var i2 = 0; i2 < items.length; i2++) for (var j = i2 + 1; j < items.length; j++) {
+        var A = items[i2], B = items[j];
+        var dx = B.x - A.x, dy = B.y - A.y, d = Math.sqrt(dx * dx + dy * dy) || 1, min = A.r + B.r + 1.5;
+        if (d < min) {
+          var f = (min - d) / d * .5, fx = dx * f, fy = dy * f;
+          A.x -= fx * .5; A.y -= fy * .5; B.x += fx * .5; B.y += fy * .5;
+          A.vx -= fx * .02; A.vy -= fy * .02; B.vx += fx * .02; B.vy += fy * .02;
+        }
+      }
+    }
+    function draw() {
+      var w = W(), h = H(); ctx.clearRect(0, 0, w, h);
+      for (var i = 0; i < items.length; i++) {
+        var b = items[i], a = b.a, col = pctCol(a.change_24h_pct);
+        ctx.save();
+        ctx.shadowColor = col; ctx.shadowBlur = Math.min(24, Math.abs(a.change_24h_pct || 0) * 4 + 5);
+        var g = ctx.createRadialGradient(b.x - b.r * .3, b.y - b.r * .35, b.r * .1, b.x, b.y, b.r);
+        g.addColorStop(0, 'rgba(20,30,52,.95)'); g.addColorStop(1, 'rgba(8,12,24,.92)');
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fillStyle = g; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke();
+        ctx.restore();
+        if (b.it && b.it.warn) {   // anillo rojo punteado del expediente
+          ctx.save(); ctx.strokeStyle = '#FF4D6A'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 3.5, 0, 7); ctx.stroke(); ctx.restore();
+        }
+        ctx.fillStyle = '#E8EDFB'; ctx.textAlign = 'center';
+        ctx.font = '700 ' + Math.max(8, b.r * .38) + 'px ui-monospace,Consolas,monospace';
+        ctx.fillText(a.symbol || '', b.x, b.y + 1);
+        if (b.r > 22) {
+          ctx.fillStyle = col; ctx.font = '600 ' + Math.max(8, b.r * .25) + 'px ui-monospace,monospace';
+          var pc = a.change_24h_pct;
+          ctx.fillText(pc != null ? (pc > 0 ? '+' : '') + pc.toFixed(1) + '%' : '', b.x, b.y + b.r * .44);
+        }
+      }
+    }
+    function loop() {
+      if (!BUB || BUB.cv !== cv) return;                 // vista cambiada
+      if (!document.hidden && cv.offsetParent !== null) { // solo si visible
+        if (!reduce) step();
+        draw();
+      }
+      BUB.raf = requestAnimationFrame(loop);
+    }
+    BUB = { cv: cv, raf: 0 };
+    loop();
+    var onResize = function () { fit(); };
+    window.addEventListener('resize', onResize);
+
+    function pick(x, y) {
+      for (var i = items.length - 1; i >= 0; i--) {
+        var b = items[i];
+        if (Math.sqrt((b.x - x) * (b.x - x) + (b.y - y) * (b.y - y)) <= b.r + 2) return b;
+      }
+      return null;
+    }
+    function showTip(b, x, y) {
+      var a = b.a, col = pctCol(a.change_24h_pct);
+      tip.innerHTML = '<b style="font-size:13px">' + esc(a.name) + '</b> <span style="color:#7C87A3">' + esc(a.symbol) + '</span><br>' +
+        '<span style="font-weight:700">' + fmtPrice(a.price) + '</span> · <span style="color:' + col + ';font-weight:600">' +
+        (a.change_24h_pct != null ? (a.change_24h_pct > 0 ? '+' : '') + a.change_24h_pct.toFixed(2) + '%' : '—') + '</span>' +
+        '<span style="color:#7C87A3"> · ' + fmtBig(a.market_cap) + '</span>' +
+        (b.it && b.it.warn ? '<div style="color:#FF8FA3;font-size:11px;margin-top:3px">' + esc(lang() === 'en' ? b.it.warn.en : b.it.warn.es) + '</div>' : '') +
+        '<button onclick="window.KhipuCrypto.openDetail(\'' + esc(a.id) + '\')" style="margin-top:7px;width:100%;padding:5px 0;border-radius:7px;' +
+          'border:1px solid rgba(0,224,255,.4);background:rgba(0,224,255,.1);color:#00E0FF;cursor:pointer;font-size:11.5px;font-weight:600">📋 ' +
+          T('cr_open_card', 'Ver ficha completa') + '</button>';
+      tip.style.display = 'block';
+      var r = stage.getBoundingClientRect();
+      tip.style.left = Math.min(x + 14, Math.max(6, r.width - 240)) + 'px';
+      tip.style.top = Math.max(6, Math.min(y - 40, r.height - 130)) + 'px';
+      clearTimeout(tip._t); tip._t = setTimeout(function () { tip.style.display = 'none'; }, 5000);
+    }
+    cv.addEventListener('pointerdown', function (e) {
+      var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+      var b = pick(x, y);
+      if (b) { drag = b; try { cv.setPointerCapture(e.pointerId); } catch (err) {} showTip(b, x, y); }
+      else tip.style.display = 'none';
+    });
+    cv.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      var r = cv.getBoundingClientRect();
+      drag.x = e.clientX - r.left; drag.y = e.clientY - r.top; drag.vx = 0; drag.vy = 0;
+    });
+    cv.addEventListener('pointerup', function () { drag = null; });
   }
 
-  function renderCurrent() { if (view() === 'map') renderMap(); else renderList(); }
+  function renderCurrent() { if (view() === 'bubbles') renderBubbles(); else renderList(); }
 
   function renderMsg(html) {
+    stopBubbles();
     var p = panel(); if (!p) return;
     p.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#7C87A3;font-size:13px">' + html + '</div>';
   }
@@ -222,6 +351,7 @@
 
   // ── vista DETALLE ──
   function renderDetail(a) {
+    stopBubbles();
     var p = panel(); if (!p) return;
     var it = intelOf(a);
     var kv = function (k, v) {
@@ -285,19 +415,18 @@
           ASSETS = d.assets; LOADED_AT = Date.now(); renderCurrent();
         })
         .catch(function () {
-          // sin red/API: la vista mapa aún sirve con la capa estática
-          if (!ASSETS.length && view() === 'map' && window.CRYPTO_INTEL) renderMap();
-          else if (!ASSETS.length) renderMsg(T('cr_err', 'No se pudo cargar el mercado cripto. Reintenta en unos segundos.'));
+          if (!ASSETS.length) renderMsg(T('cr_err', 'No se pudo cargar el mercado cripto. Reintenta en unos segundos.'));
         });
     },
     refresh: function () { LOADED_AT = 0; ASSETS = []; window.KhipuCrypto.init(); },
     back: function () { window.KhipuCrypto.init(true); },
     setView: function (v) {
-      VIEW = v === 'list' ? 'list' : 'map';
+      VIEW = v === 'list' ? 'list' : 'bubbles';
       try { localStorage.setItem('kh_cryptoview', VIEW); } catch (e) {}
       renderCurrent();
     },
-    setFilter: function (k) { FILTER = k || null; if (view() !== 'list') { VIEW = 'list'; } renderList(); },
+    setFilter: function (k) { FILTER = k || null; renderCurrent(); },
+    stop: stopBubbles,
     openDetail: function (id) {
       renderMsg(T('cr_loading', 'Cargando mercado cripto…'));
       fetch('/api/crypto/' + encodeURIComponent(id))

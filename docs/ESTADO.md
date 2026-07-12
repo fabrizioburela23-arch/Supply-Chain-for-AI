@@ -506,6 +506,41 @@ en silencio y _selfCheck ignoraba buffer 0×0) = pantalla negra sin error.
       pytest 56 passed. Verificación en vivo local: resolver 8/8, _surface,
       caché/prefetch de charts, mapa cripto, detalle EN con banner Aster.
 
+## Etapa K — Burbujas cripto + universo 2D + caso Opera (2026-07-12, sw v77)
+
+Feedback: "lo de cripto quisiera algo más visual, investiga alternativas y
+propónme cosas" + "el 3D sigue sin dar, hay que hacer algo".
+
+- Investigación: CryptoBubbles (burbujas), Coin360/TradingView (mosaico
+  térmico). Artifact con 3 maquetas interactivas (burbujas / mosaico /
+  galaxia): https://claude.ai/code/artifact/d8f2317b-11ca-42af-b999-f0a9bc15c59f
+  **Fabrizio eligió 🫧 BURBUJAS VIVAS.**
+- [x] engine/crypto.js: vista Burbujas como DEFAULT (canvas, física suave,
+      tamaño=√mcap, color=24h%, anillo rojo punteado=⚠ del expediente,
+      drag, tap=tarjeta con "Ver ficha"→detalle). Vistas: Burbujas|Lista
+      (la vista tarjetas "Mapa" se eliminó — regla de simplificar; los blurbs
+      educativos ahora aparecen al filtrar por categoría). rAF se pausa con
+      document.hidden o panel oculto.
+- [x] engine/universe2d.js (agente, ~700 líneas): respaldo TOTAL del 3D en
+      Canvas 2D puro — mismo layout semántico (X=cadena, Y=NRS, Z=parallax
+      3 capas), 555 nodos + 1600 links a 60fps, estrellas+nebulosas, glow
+      pre-renderizado, clic=cadena verde/naranja, doble clic=jumpTo, pan/
+      zoom/pellizco, modo lite si cae de 22fps, vigilante 0×0. OJO: si
+      three.js ya reclamó #graph-canvas crea gemelo #graph-canvas-2d encima
+      (un canvas solo admite UN tipo de contexto — hueco real descubierto).
+- [x] app.html: _startUniverse2D(reason) + 3 enganches: catch de init 3D
+      (3d_init_fail→2D), webgl_missing en _go3D (entra el 2D igual, nunca
+      más "no pasa nada"), y monkey-patch de _ultraSafeMode (pantalla negra
+      del selfcheck → escala a 2D). Beacons: universe2d_fallback/fail/on.
+- **CASO OPERA (dato de Fabrizio vía AskUserQuestion)**: prueba el 3D en una
+  COMPUTADORA DE ESCRITORIO CON OPERA — no la laptop Chrome v74. Esa Opera
+  corre copia vieja (0 beacons, sin cripto, 3D viejo). Instrucciones dadas:
+  ventana privada → verificar pie v77 → si funciona, borrar datos del sitio
+  en la Opera normal. Sus beacons desde Opera confirmarán (tarea #20).
+- [x] Gates: node --check, 8 bloques inline, 0 errores consola; verificado
+      en vivo: burbujas dibujadas y dimensionadas, universe2d init/focus/
+      destroy OK.
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con
