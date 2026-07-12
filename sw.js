@@ -3,7 +3,7 @@
    última versión cuando hay red, con caché solo como respaldo offline.
    CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v67';
+const CACHE = 'khipu-finance-v68';
 // SHELL = exactamente los <script src> de app.html + la propia app.
 // Si añades/quitas un <script src>, refleja el cambio aquí Y bumpea CACHE.
 const SHELL = ['/', '/app.html',
@@ -20,7 +20,7 @@ const SHELL = ['/', '/app.html',
   '/engine/geoglobe.js', '/engine/canvas-data.js', '/engine/command_center.js',
   '/engine/temporal-graph.js', '/nodes/temporal_seed_facts.js',
   '/nodes/temporal_seed_facts2.js', '/nodes/ontology.js', '/nodes/ontology_facts.js',
-  '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/insights.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js',
+  '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/insights.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js', '/engine/termdata.js',
   '/sim/mirofish_client.js', '/sim/scenario_builder.js',
 ];
 

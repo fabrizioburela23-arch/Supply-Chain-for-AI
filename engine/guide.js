@@ -1,5 +1,6 @@
 // engine/guide.js — pestaña "❓ Guía": explica la app en lenguaje simple.
 // Sin jerga técnica. Expone window.initGuiaTab (mismo patrón que initTKGTab).
+// Actualizada 2026-07-12 (pedido de Fabrizio: "la guía está desactualizada").
 
 (function () {
   'use strict';
@@ -12,22 +13,28 @@
     </div>`;
 
   const TAB_ROWS = [
-    ['🗺 Mapa de la Cadena', 'El grafo 3D de las 463 empresas. Arrastra, haz zoom, y clic en cualquier empresa para ver su ficha.'],
-    ['📈 Mercado en Vivo', 'Precios en tiempo real y tu portafolio (lo que compras/vendes se guarda en este navegador).'],
-    ['📊 Análisis de Red', 'Rankings: quién es más crítico, quién concentra más riesgo.'],
-    ['🌍 Geopolítica', 'El mismo mapa, pero coloreado por país y tensiones comerciales.'],
-    ['🧬 Simulación', 'Corre escenarios completos (ej. "conflicto en Taiwán") y mide el impacto en toda la cadena.'],
-    ['🚀 Espacio', 'Satélites reales en órbita y las empresas que los operan.'],
-    ['⌨ Terminal', 'Vista estilo Bloomberg — cotizaciones y gráficos lado a lado.'],
-    ['🎨 Canvas IA', 'Pide un gráfico en lenguaje natural ("compara márgenes de Nvidia y AMD") y la IA lo dibuja.'],
-    ['◈ Grafo Temporal', 'La novedad: una "máquina del tiempo" de la cadena de suministro. Ver sección de abajo.'],
+    ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, ◈ Grafo Temporal, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom.'],
+    ['📈 Mercado', 'Precios en tiempo real y tu portafolio (lo que compras/vendes se guarda en este navegador).'],
+    ['🖥️ Terminal', 'Vista estilo Bloomberg: hasta 4 gráficos lado a lado + el panel 📋 Datos a la derecha (ficha, valuación, analistas, fundamentales anuales y cadena de cada empresa). Sub-modos: Terminal, Análisis y Canvas IA.'],
+    ['❓ Guía', 'Esta página.'],
+  ];
+
+  const WOW_ROWS = [
+    ['🎙 Cabina de Bixby', 'Toca el botón Bixby (o Ctrl+K): pantalla completa con botones para TODO — Grafo, Terminal, X-Ray, Simular, Comparar, Oportunidades, Investigar y Gráficos. Escribe o habla en español normal.'],
+    ['🔬 X-Ray', 'En la ficha de cualquier empresa: la "desarma" por completo — por qué tiene ese riesgo, todos sus hilos (de quién depende y a quién provee), y la onda de impacto si cae (quién sufre y quién GANA).'],
+    ['📊 Dossier financiero', 'En la Terminal, cada empresa tiene un botón 📊 DOSSIER: 8 mini-gráficos con crecimiento de ingresos, dilución, free cash flow, acción, valuación, deuda, márgenes y ROE.'],
+    ['◉ Simulación en vivo', 'En el mapa, botón "◉ En vivo": elige un tipo de golpe (corte, auge, precio, sanción) y un objetivo (empresa, sector o país entero) — el mapa se tiñe en tiempo real y ves ganadores y perdedores.'],
+    ['🪐 Universo 3D', 'Las 555 empresas flotando en el espacio con nebulosas: X = posición en la cadena, Y = riesgo, Z = región. Clic en una empresa y su cadena se ilumina (verde = le provee, naranja = le compra). Arriba a la derecha puedes cambiar a la lente 🎯 Inversión.'],
+    ['🧠 Investigación profunda', 'Dile a Bixby "investiga la energía nuclear para datacenters" (o cualquier pregunta grande): planifica, reúne el contexto, simula en las matrices y te escribe una tesis con números reales. Tarda ~1 minuto.'],
+    ['📡 Radar en vivo', 'La app se mantiene al día SOLA: cada ~10 minutos los agentes leen noticias, recalculan riesgos y hasta incorporan empresas nuevas al grafo (todo auditado y reversible). Verás "● EN VIVO" en el pie.'],
+    ['✦ Gráficos al instante', 'Pide "top 10 por riesgo", "márgenes de Nvidia y TSMC", "proveedores de ASML" o "precio de AMD" — salen al instante, sin esperar a la IA (etiqueta "local ⚡").'],
   ];
 
   const KHIPU_ROWS = [
-    ['TSMC DES', 'abre la ficha de TSMC'],
-    ['NVDA RISK', 'muestra el riesgo de Nvidia'],
-    ['TSMC SUP', 'quién le abastece a TSMC'],
-    ['TSMC SIM', 'simula qué pasa si TSMC cae'],
+    ['TSMC XRAY', 'desarma TSMC (el X-Ray completo)'],
+    ['SHOCK NVDA', 'simula qué pasa si Nvidia cae'],
+    ['COMPARE NVDA AMD', 'compara dos empresas lado a lado'],
+    ['INSIGHTS', 'abre el panel de oportunidades y riesgo'],
     ['NVDA THESIS me gusta por su moat', 'guarda esa idea como tesis'],
     ['PORT VAR', 'el riesgo (VaR) de tu portafolio'],
     ['GRAPH ASOF 2020-01-01', 'ver la cadena como era en esa fecha'],
@@ -47,54 +54,52 @@
         <div style="margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--violet)">Guía rápida</div>
         <h2 style="font-family:'Fraunces',serif;font-size:27px;font-weight:700;margin:0 0 8px">¿Qué es Khipus AI Finance Intelligence?</h2>
         <p style="font-size:14px;line-height:1.6;color:var(--ink-2);margin:0 0 36px;max-width:70ch">
-          Un terminal financiero para invertir en la cadena de suministro de semiconductores, IA y espacio —
-          463 empresas conectadas por sus relaciones reales (quién fabrica, quién abastece, quién depende de quién).
-          Puedes ver precios en vivo, simular crisis geopolíticas, y ahora también <b>registrar tus decisiones de inversión</b>
-          con fecha y motivo, para no olvidar por qué compraste o vendiste algo.
+          Un terminal financiero para invertir en la cadena de suministro de la IA — <b>555 empresas</b> de
+          semiconductores, inteligencia artificial, espacio, energía nuclear, robótica y defensa, conectadas por sus
+          <b>1.600+ relaciones reales</b> (quién fabrica, quién abastece, quién depende de quién). Precios en vivo,
+          simulaciones de crisis, radiografías de empresas, y un asistente (Bixby) que lo ejecuta todo por ti.
         </p>
 
-        ${SEC('Tus 9 pestañas', `
+        ${SEC('Las 4 pestañas', `
           <div style="display:flex;flex-direction:column;gap:10px">
             ${TAB_ROWS.map(([name, desc]) => `
+              <div style="display:flex;gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)">
+                <div style="flex:0 0 150px;font-size:13px;font-weight:700;color:var(--ink-1)">${esc(name)}</div>
+                <div style="flex:1;font-size:12.5px;color:var(--ink-3);line-height:1.5">${esc(desc)}</div>
+              </div>`).join('')}
+          </div>`)}
+
+        ${SEC('Los superpoderes', `
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${WOW_ROWS.map(([name, desc]) => `
               <div style="display:flex;gap:14px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line)">
                 <div style="flex:0 0 190px;font-size:13px;font-weight:700;color:var(--ink-1)">${esc(name)}</div>
                 <div style="flex:1;font-size:12.5px;color:var(--ink-3);line-height:1.5">${esc(desc)}</div>
               </div>`).join('')}
           </div>`)}
 
-        ${SEC('Bixby, tu asistente', `
+        ${SEC('Bixby: pídeselo y lo hace', `
           <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 8px">
-            El botón <b>Bixby</b> (arriba a la derecha) abre un cuadro donde puedes <b>escribir o hablar</b> en español normal.
-            Ejemplos: <i>"muéstrame el riesgo de TSMC"</i>, <i>"simula qué pasa si China corta las tierras raras"</i>,
-            <i>"grafica los márgenes de los 5 fabricantes más grandes"</i>.
+            Toca <b>Bixby</b> (arriba a la derecha) o presiona <b>Ctrl+K</b>: se abre su pantalla completa.
+            Escríbele o háblale en español normal — <i>"desármame Nvidia"</i>, <i>"¿qué pasa si cae TSMC?"</i>,
+            <i>"compara Nvidia y AMD"</i>, <i>"dossier de Apple"</i>, <i>"precio de AMD"</i>,
+            <i>"investiga la energía nuclear para datacenters"</i>, <i>"muéstrame la terminal"</i>.
+            Bixby lo ejecuta y te muestra el resultado en su propio escenario.
           </p>
           <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0">
-            Bixby entiende lenguaje natural Y comandos cortos (ver la tabla de "Comandos rápidos" más abajo) —
-            los comandos cortos responden al instante, sin esperar a la IA.
+            Por voz sabe también los datos de cada empresa (empleados, ingresos, fundación, riesgo…) —
+            pregúntale lo que quieras mientras miras el mapa.
           </p>`)}
 
-        ${SEC('◈ Grafo Temporal — la novedad', `
+        ${SEC('◈ Grafo Temporal — la máquina del tiempo', `
           <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 10px">
-            Es un mapa que además <b>recuerda el tiempo</b>: cada relación entre empresas tiene una fecha en que empezó
-            (y a veces una fecha en que terminó). Mueve la línea de tiempo y verás cómo la cadena de suministro
-            cambió con los años — sanciones, escaseces, nuevos acuerdos.
-          </p>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
-            <div style="font-size:12.5px;color:var(--ink-2)"><b style="color:var(--ink-1)">⚡ Simular caída</b> — clic en una empresa y ves qué otras empresas se ven arrastradas si esa cae (por ejemplo, cuánto arrastra ASML si le pasa algo).</div>
-            <div style="font-size:12.5px;color:var(--ink-2)"><b style="color:var(--ink-1)">🏛 Chokepoints</b> — el ranking de qué empresas son más peligrosas de perder (más arrastran si caen).</div>
-            <div style="font-size:12.5px;color:var(--ink-2)"><b style="color:var(--ink-1)">🎯 Mi exposición</b> — si tienes posiciones, te dice a qué riesgos ocultos estás expuesto sin saberlo.</div>
-            <div style="font-size:12.5px;color:var(--ink-2)"><b style="color:var(--ink-1)">＋ Acción</b> (dentro de la ficha de cada empresa) — crea una tesis de inversión, marca un riesgo, o simplemente anota algo. Queda guardado con fecha y tu nombre.</div>
-          </div>`)}
-
-        ${SEC('Guardar tus decisiones', `
-          <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 8px">
-            <b>📋 Registro</b> (arriba) muestra todo lo que has anotado o decidido — como un diario de inversión.
-            <b>🔔 Propuestas</b> muestra sugerencias automáticas (ej. "esta empresa subió de riesgo") que tú apruebas o rechazas —
-            nada se guarda sin que tú lo confirmes.
+            Cada relación entre empresas tiene fecha de inicio (y a veces de fin). Mueve la línea de tiempo y verás
+            cómo la cadena cambió con los años — sanciones, escaseces, nuevos acuerdos. Dentro de la ficha de cada
+            empresa, <b>＋ Acción</b> te deja crear tesis, marcar riesgos o anotar — con fecha y tu nombre, para siempre.
           </p>`)}
 
         ${SEC('Comandos rápidos (opcional)', `
-          <p style="font-size:12.5px;color:var(--ink-3);margin:0 0 12px">Escríbelos en el cuadro de Bixby — no hace falta usarlos, pero son más rápidos que escribir una pregunta completa.</p>
+          <p style="font-size:12.5px;color:var(--ink-3);margin:0 0 12px">Escríbelos en la Cabina de Bixby — responden al instante, sin esperar a la IA.</p>
           <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
             ${KHIPU_ROWS.map(([cmd, desc], i) => `
               <div style="display:flex;gap:14px;align-items:center;padding:9px 14px;${i % 2 ? 'background:var(--surface-2)' : ''}">
@@ -107,10 +112,12 @@
           <div style="display:flex;flex-direction:column;gap:14px">
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Se pierden mis datos si cierro el navegador?</div>
               <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Tu portafolio (compras/ventas) vive en este navegador. Tus tesis, anotaciones y decisiones (＋ Acción) se guardan en el servidor — sobreviven aunque cambies de computadora.</div></div>
-            <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Necesito usar el Grafo Temporal o los comandos?</div>
-              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">No — son opcionales. La app funciona perfecto solo con el Mapa, Mercado y Bixby.</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿La app se actualiza sola?</div>
+              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Sí. Cuando hay versión nueva, si acabas de abrirla se actualiza sola; si estás trabajando, aparece un avisito "⬆ Nueva versión" abajo a la derecha — la tocas cuando quieras.</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Y si el 3D no se ve en mi equipo?</div>
+              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">El 3D se auto-diagnostica: si tu tarjeta gráfica no soporta algún efecto, baja solo a un modo compatible y te lo avisa. Siempre verás las empresas.</div></div>
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Qué hago si algo no responde?</div>
-              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Abre 🩺 (arriba) — te dice en vivo qué servicio falló y por qué, sin mostrar ninguna clave.</div></div>
+              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Abre 🩺 Sistema (arriba) — te dice en vivo qué servicio falló y por qué, sin mostrar ninguna clave.</div></div>
           </div>`)}
       </div>`;
   };

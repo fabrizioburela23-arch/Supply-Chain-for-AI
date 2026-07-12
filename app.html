@@ -5588,12 +5588,32 @@ function setupPWA(){
     // desplegada), recargamos UNA vez para que el usuario vea lo último sin
     // tener que abrir incógnito ni Ctrl+Shift+R. Guardas anti-bucle:
     // solo si ya había un controller (no en la primera instalación).
+    // Actualización de versión SIN molestar (feedback real: "se reinicia a
+    // cada rato" — el auto-reload interrumpía al usuario en cada deploy):
+    // - página recién abierta (<10s): recarga silenciosa (no interrumpe nada)
+    // - en medio del uso: un avisito clicable; el usuario decide cuándo
+    // - anti-bucle: máx. 1 recarga automática por minuto (sessionStorage)
     const hadController = !!navigator.serviceWorker.controller;
-    let _swReloaded = false;
+    let _swHandled = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!hadController || _swReloaded) return;
-      _swReloaded = true;
-      location.reload();
+      if (!hadController || _swHandled) return;
+      _swHandled = true;
+      const last = +(sessionStorage.getItem('kh_upd_ts') || 0);
+      if (performance.now() < 10000 && Date.now() - last > 60000) {
+        sessionStorage.setItem('kh_upd_ts', String(Date.now()));
+        location.reload();
+        return;
+      }
+      if (document.getElementById('kh-upd-pill')) return;
+      const pill = document.createElement('button');
+      pill.id = 'kh-upd-pill';
+      pill.textContent = '⬆ Nueva versión lista — toca para actualizar';
+      pill.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:12000;cursor:pointer;' +
+        'padding:10px 16px;border-radius:999px;border:1px solid rgba(0,224,255,.5);' +
+        'background:rgba(8,14,24,.95);color:#00E0FF;font-size:12.5px;font-weight:700;' +
+        'font-family:Inter,system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.45)';
+      pill.onclick = () => { sessionStorage.setItem('kh_upd_ts', String(Date.now())); location.reload(); };
+      document.body.appendChild(pill);
     });
   }
   const upd=()=>{ const on=navigator.onLine; $('offline-badge').classList.toggle('show',!on); DataHealth.render(); };
@@ -6002,6 +6022,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/nav4.js"></script>
 <script src="engine/localcharts.js"></script>
 <script src="engine/fincard.js"></script>
+<script src="engine/termdata.js"></script>
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
 <script src="engine/command_center.js"></script>
@@ -7762,6 +7783,8 @@ async function _termLoadCell(idx, nodeId, ticker, tf) {
   if (!cell) return;
 
   _term.cells[idx] = { nodeId, ticker, tf, chartInst: null };
+  // panel de datos (📋): ficha + valuación + fundamentales + cadena
+  try { window.TermData?.load(nodeId, ticker); } catch (e) {}
 
   const node = (window.NODES || []).find(n => n.id === nodeId);
   const q = MKT?.quotes?.[ticker] || {};
