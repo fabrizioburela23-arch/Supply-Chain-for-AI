@@ -75,9 +75,11 @@ class KhipuGraph3D {
 
   loadData(nodes, links) {
     this.nodeMeshes.forEach(m => this._graphGroup.remove(m));
-    this.linkLines.forEach(l => this._graphGroup.remove(l));
     this.nodeMeshes.clear();
-    this.linkLines = [];
+    this.linkLines = [];   // legado: las aristas viven en _linkMerged (1 geometría)
+    if (this._linkMerged) { this._graphGroup.remove(this._linkMerged); this._linkMerged = null; }
+    if (this._flowPoints) { this._graphGroup.remove(this._flowPoints); this._flowPoints = null; }
+    if (this._hlGroup) { this._graphGroup.remove(this._hlGroup); this._hlGroup = null; }
 
     nodes.forEach(n => {
       const mesh = this._createNodeMesh(n);
@@ -144,6 +146,7 @@ class KhipuGraph3D {
     const label = this._makeLabel(node.label, color);
     label.position.y = radius + 6;
     mesh.add(label);
+    mesh.userData.labelSprite = label;   // el LOD de etiquetas lo enciende/apaga
 
     return mesh;
   }
@@ -165,29 +168,20 @@ class KhipuGraph3D {
     return sprite;
   }
 
-  _createLinkLine(link, nodes) {
-    // O(1) lookup via NODE_BY_ID instead of O(n) find
+  // ── Aristas: UNA sola geometría fusionada (antes 1.623 draw calls, ahora 1).
+  // Cada arista es una bezier de 10 segmentos como LineSegments con color por
+  // vértice (el peso modula el brillo). El resaltado de cadena usa líneas
+  // dedicadas encima (solo ~decenas), no toca la base.
+  _buildLinkRecords(links, nodes) {
     const nbi = (typeof NODE_BY_ID !== 'undefined') ? NODE_BY_ID : null;
-    const src = nbi ? nbi[lid(link.source)] : nodes.find(n => n.id === lid(link.source));
-    const dst = nbi ? nbi[lid(link.target)] : nodes.find(n => n.id === lid(link.target));
-    if (!src || !dst) return null;
-
-    const color = getLinkColorHex(link.type || 'supply');
-    // Arista CURVA (bezier cuadrática muestreada): 11 puntos en vez de 2 —
-    // el grafo se ve orgánico/vectorial, no una malla de alambres rectos.
-    const SEGS = 10;
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array((SEGS + 1) * 3);
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-
-    const mat = new THREE.LineBasicMaterial({
-      color: new THREE.Color(color), transparent: true,
-      opacity: 0.28 + (link.w || 1) * 0.06,
+    this._linkRecs = [];
+    links.forEach(link => {
+      const src = nbi ? nbi[lid(link.source)] : nodes.find(n => n.id === lid(link.source));
+      const dst = nbi ? nbi[lid(link.target)] : nodes.find(n => n.id === lid(link.target));
+      if (!src || !dst) return;
+      const hex = parseInt(getLinkColorHex(link.type || 'supply').replace('#', ''), 16) || 0x4e8b1e;
+      this._linkRecs.push({ link, src, dst, hex, w: link.w || 1 });
     });
-
-    const line = new THREE.Line(geo, mat);
-    line.userData = { link, src, dst, segs: SEGS };
-    return line;
   }
 
   // textura compartida del halo (una sola para los 555 nodos)
@@ -207,10 +201,7 @@ class KhipuGraph3D {
   }
 
   _initForce3D(nodes, links) {
-    links.forEach(l => {
-      const line = this._createLinkLine(l, nodes);
-      if (line) { this.linkLines.push(line); this._graphGroup.add(line); }
-    });
+    this._buildLinkRecords(links, nodes);
 
     // Always use Fibonacci spherical layout for true 3D depth.
     // D3's force sim only produces 2D (x,y) positions for the SVG graph
@@ -251,57 +242,80 @@ class KhipuGraph3D {
   }
 
   _updateLinkPositions() {
-    // curva bezier cuadrática: punto de control = punto medio elevado
-    // perpendicular a la arista (altura proporcional a su longitud)
-    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
-    this.linkLines.forEach(line => {
-      const { src, dst, segs } = line.userData;
-      a.set(src.x || 0, src.y || 0, src.z || 0);
-      b.set(dst.x || 0, dst.y || 0, dst.z || 0);
-      const lift = a.distanceTo(b) * 0.14;
-      c.copy(a).add(b).multiplyScalar(0.5);
-      c.y += lift;   // arco hacia arriba — se lee como flujo, no como malla
-      const pos = line.geometry.attributes.position.array;
-      const n = segs || 10;
-      for (let i = 0; i <= n; i++) {
-        const t = i / n, mt = 1 - t;
-        pos[i * 3]     = mt * mt * a.x + 2 * mt * t * c.x + t * t * b.x;
-        pos[i * 3 + 1] = mt * mt * a.y + 2 * mt * t * c.y + t * t * b.y;
-        pos[i * 3 + 2] = mt * mt * a.z + 2 * mt * t * c.z + t * t * b.z;
+    // Reconstruye LA geometría fusionada de todas las aristas (bezier
+    // cuadrática muestreada: punto de control = punto medio elevado).
+    const SEGS = 10;
+    const recs = this._linkRecs || [];
+    const nSeg = recs.length * SEGS;               // segmentos totales
+    const pos = new Float32Array(nSeg * 2 * 3);    // 2 vértices por segmento
+    const col = new Float32Array(nSeg * 2 * 3);
+    const c = new THREE.Color();
+    let o = 0;
+    const px = new Float32Array(SEGS + 1), py = new Float32Array(SEGS + 1), pz = new Float32Array(SEGS + 1);
+    recs.forEach(rec => {
+      const ax = rec.src.x || 0, ay = rec.src.y || 0, az = rec.src.z || 0;
+      const bx = rec.dst.x || 0, by = rec.dst.y || 0, bz = rec.dst.z || 0;
+      const dxx = bx - ax, dyy = by - ay, dzz = bz - az;
+      const lift = Math.sqrt(dxx * dxx + dyy * dyy + dzz * dzz) * 0.14;
+      const cx = (ax + bx) / 2, cy = (ay + by) / 2 + lift, cz = (az + bz) / 2;
+      for (let i = 0; i <= SEGS; i++) {
+        const t = i / SEGS, mt = 1 - t;
+        px[i] = mt * mt * ax + 2 * mt * t * cx + t * t * bx;
+        py[i] = mt * mt * ay + 2 * mt * t * cy + t * t * by;
+        pz[i] = mt * mt * az + 2 * mt * t * cz + t * t * bz;
       }
-      line.geometry.attributes.position.needsUpdate = true;
-      line.geometry.computeBoundingSphere();
+      // el peso modula el BRILLO del color (LineBasicMaterial no tiene alpha
+      // por vértice): w1 tenue → w5 vivo
+      c.setHex(rec.hex).multiplyScalar(0.45 + Math.min(rec.w, 5) * 0.13);
+      for (let i = 0; i < SEGS; i++) {
+        pos[o] = px[i];     pos[o + 1] = py[i];     pos[o + 2] = pz[i];
+        pos[o + 3] = px[i + 1]; pos[o + 4] = py[i + 1]; pos[o + 5] = pz[i + 1];
+        col[o] = c.r; col[o + 1] = c.g; col[o + 2] = c.b;
+        col[o + 3] = c.r; col[o + 4] = c.g; col[o + 5] = c.b;
+        o += 6;
+      }
     });
+    if (this._linkMerged) this._graphGroup.remove(this._linkMerged);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this._linkMerged = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0.55, depthWrite: false,
+    }));
+    this._graphGroup.add(this._linkMerged);
     this._buildFlowParticles();
   }
 
-  // Partículas de FLUJO: puntitos aditivos que viajan por las aristas fuertes
-  // (w>=3) — la cadena de suministro se VE fluyendo, como un videojuego.
+  // Partículas de FLUJO: UNA nube de puntos (antes 260 sprites = 260 draw
+  // calls; ahora 1). Viajan por las aristas fuertes (w>=3).
   _buildFlowParticles() {
-    if (this._flowGroup) { this._graphGroup.remove(this._flowGroup); }
-    this._flowGroup = new THREE.Group();
-    this._flowParticles = [];
-    const strong = this.linkLines.filter(l => (l.userData.link.w || 0) >= 3).slice(0, 260);
-    strong.forEach(line => {
-      const color = new THREE.Color(getLinkColorHex(line.userData.link.type || 'supply'));
-      const p = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: KhipuGraph3D._haloTexture(), color,
-        transparent: true, opacity: 0.9,
-        blending: THREE.AdditiveBlending, depthWrite: false,
-      }));
-      p.scale.set(4.5, 4.5, 1);
-      p.userData = { line, t: Math.random(), speed: 0.15 + Math.random() * 0.2 };
-      this._flowGroup.add(p);
-      this._flowParticles.push(p);
+    if (this._flowPoints) this._graphGroup.remove(this._flowPoints);
+    const strong = (this._linkRecs || []).filter(r => r.w >= 3).slice(0, 300);
+    this._flowState = strong.map(rec => ({ rec, t: Math.random(), speed: 0.15 + Math.random() * 0.2 }));
+    const n = this._flowState.length;
+    const pos = new Float32Array(n * 3);
+    const col = new Float32Array(n * 3);
+    const c = new THREE.Color();
+    this._flowState.forEach((f, i) => {
+      c.setHex(f.rec.hex);
+      col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
     });
-    this._graphGroup.add(this._flowGroup);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    this._flowPoints = new THREE.Points(geo, new THREE.PointsMaterial({
+      map: KhipuGraph3D._haloTexture(), vertexColors: true, size: 6,
+      transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending,
+      depthWrite: false, sizeAttenuation: true,
+    }));
+    this._flowPoints.frustumCulled = false;   // los puntos se mueven cada frame
+    this._graphGroup.add(this._flowPoints);
   }
 
-  // posición sobre la curva de una arista (mismo bezier que _updateLinkPositions)
-  _pointOnLink(line, t, out) {
-    const { src, dst } = line.userData;
-    const ax = src.x || 0, ay = src.y || 0, az = src.z || 0;
-    const bx = dst.x || 0, by = dst.y || 0, bz = dst.z || 0;
+  // posición sobre la curva de una arista (mismo bezier que la geometría)
+  _pointOnRec(rec, t, out) {
+    const ax = rec.src.x || 0, ay = rec.src.y || 0, az = rec.src.z || 0;
+    const bx = rec.dst.x || 0, by = rec.dst.y || 0, bz = rec.dst.z || 0;
     const dx = bx - ax, dy = by - ay, dz = bz - az;
     const lift = Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.14;
     const cx = (ax + bx) / 2, cy = (ay + by) / 2 + lift, cz = (az + bz) / 2;
@@ -321,6 +335,8 @@ class KhipuGraph3D {
 
   _resetView() {
     this._spherical = new THREE.Spherical(600, Math.PI / 3, Math.PI / 4);
+    this._radiusTarget = 600;
+    this._velTheta = 0; this._velPhi = 0;
     this._target.set(0, 0, 0);
     this._applySpherical();
   }
@@ -335,38 +351,86 @@ class KhipuGraph3D {
     const t = this._elapsed;
 
     // Monitor de rendimiento: media móvil del frame; si cae de ~28fps
-    // apagamos halos+partículas (modo ligero) y los reactivamos si se recupera.
+    // apagamos halos+partículas Y bajamos el pixel ratio (modo ligero);
+    // se reactiva todo al recuperarse.
     this._frameEMA = (this._frameEMA || 16) * 0.95 + dt * 1000 * 0.05;
     const lite = this._frameEMA > 36;
     if (lite !== this._liteMode) {
       this._liteMode = lite;
-      if (this._flowGroup) this._flowGroup.visible = !lite;
+      if (this._flowPoints) this._flowPoints.visible = !lite;
       this.nodeMeshes.forEach(m => { if (m.userData.halo) m.userData.halo.visible = !lite; });
+      this.renderer.setPixelRatio(lite ? 1 : Math.min(window.devicePixelRatio, 2));
+      this._onResize();
+    }
+
+    // Zoom SUAVE: la rueda fija un objetivo y el radio se acerca con easing
+    if (this._radiusTarget != null && Math.abs(this._radiusTarget - this._spherical.radius) > 0.4) {
+      this._spherical.radius += (this._radiusTarget - this._spherical.radius) * 0.16;
+      this._applySpherical();
+    }
+
+    // INERCIA de órbita: al soltar el arrastre, el giro continúa y decae
+    if (!this._buttonsDown && (Math.abs(this._velTheta || 0) > 0.00035 || Math.abs(this._velPhi || 0) > 0.00035)) {
+      this._spherical.theta += this._velTheta;
+      this._spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08, this._spherical.phi + this._velPhi));
+      this._velTheta *= 0.93;
+      this._velPhi *= 0.93;
+      this._applySpherical();
     }
 
     if (this.selected) {
       const mesh = this.nodeMeshes.get(this.selected);
-      if (mesh) mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
-    }
-
-    // Pulso de halos: cada nodo late con su propio desfase; los frágiles, más
-    // rápido. Barato: solo tocamos opacity del sprite (555/frame).
-    if (!this._liteMode) {
-      this.nodeMeshes.forEach(m => {
-        const h = m.userData.halo;
-        if (h) h.material.opacity = 0.4 + 0.22 * Math.sin(t * m.userData.pulseSpeed + m.userData.pulsePhase);
-      });
-      // partículas de flujo avanzando por las curvas
-      if (this._flowParticles) {
-        const v = this._flowV || (this._flowV = new THREE.Vector3());
-        for (let i = 0; i < this._flowParticles.length; i++) {
-          const p = this._flowParticles[i];
-          p.userData.t += p.userData.speed * dt;
-          if (p.userData.t > 1) p.userData.t -= 1;
-          this._pointOnLink(p.userData.line, p.userData.t, v);
-          p.position.copy(v);
+      if (mesh) {
+        mesh.scale.setScalar(1 + 0.08 * Math.sin(t * 3));
+        // anillo de selección: orbita el nodo elegido
+        if (this._selRing) {
+          this._selRing.position.copy(mesh.position);
+          this._selRing.rotation.y = t * 0.9;
+          this._selRing.rotation.x = Math.PI / 3 + Math.sin(t * 0.7) * 0.2;
         }
       }
+    }
+
+    if (!this._liteMode) {
+      // Pulso de halos + refuerzo del nodo bajo el cursor
+      this.nodeMeshes.forEach(m => {
+        const h = m.userData.halo;
+        if (!h) return;
+        const hovered = m.userData.nodeId === this.hovered;
+        h.material.opacity = hovered ? 0.92
+          : 0.4 + 0.22 * Math.sin(t * m.userData.pulseSpeed + m.userData.pulsePhase);
+      });
+      // partículas: UNA nube — solo actualizamos el buffer de posiciones
+      if (this._flowPoints && this._flowState) {
+        const v = this._flowV || (this._flowV = new THREE.Vector3());
+        const arr = this._flowPoints.geometry.attributes.position.array;
+        for (let i = 0; i < this._flowState.length; i++) {
+          const f = this._flowState[i];
+          f.t += f.speed * dt;
+          if (f.t > 1) f.t -= 1;
+          this._pointOnRec(f.rec, f.t, v);
+          arr[i * 3] = v.x; arr[i * 3 + 1] = v.y; arr[i * 3 + 2] = v.z;
+        }
+        this._flowPoints.geometry.attributes.position.needsUpdate = true;
+      }
+    }
+
+    // LOD de ETIQUETAS (cada ~8 frames): solo se ven las cercanas a la
+    // cámara, las grandes, la seleccionada/hover y la cadena resaltada —
+    // adiós a la nube de 555 letreros (ruido + overdraw).
+    this._lodTick = (this._lodTick || 0) + 1;
+    if (this._lodTick % 8 === 0) {
+      const camPos = this.camera.position;
+      const near = Math.max(300, this._spherical.radius * 0.62);
+      this.nodeMeshes.forEach(m => {
+        const lbl = m.userData.labelSprite;
+        if (!lbl) return;
+        const important = m.userData.nodeId === this.selected
+          || m.userData.nodeId === this.hovered
+          || (this._chainSet && this._chainSet.has(m.userData.nodeId))
+          || m.userData.baseRadius >= 14;
+        lbl.visible = important || m.position.distanceTo(camPos) < near;
+      });
     }
 
     // Auto-rotation: advance camera theta (not group rotation) so user orbit
@@ -399,7 +463,21 @@ class KhipuGraph3D {
     const mesh = this.nodeMeshes.get(id);
     if (mesh) {
       mesh.material.emissiveIntensity = 1.0;
+      // anillo de selección orbitando el nodo (se crea una vez)
+      if (!this._selRing) {
+        this._selRing = new THREE.Mesh(
+          new THREE.TorusGeometry(1, 0.05, 8, 48),
+          new THREE.MeshBasicMaterial({ color: 0x00E0FF, transparent: true, opacity: 0.85,
+                                        blending: THREE.AdditiveBlending, depthWrite: false })
+        );
+        this._graphGroup.add(this._selRing);
+      }
+      const r = (mesh.userData.baseRadius || 10) + 6;
+      this._selRing.scale.setScalar(r);
+      this._selRing.visible = true;
       this._flyTo(mesh.position.clone());
+    } else if (this._selRing) {
+      this._selRing.visible = false;
     }
   }
 
@@ -433,21 +511,30 @@ class KhipuGraph3D {
       }
     });
 
-    this.linkLines.forEach(line => {
-      const ldata = line.userData.link;
-      if (!ldata) return;
-      const s = typeof lid === 'function' ? lid(ldata.source) : (ldata.source && ldata.source.id ? ldata.source.id : ldata.source);
-      const t = typeof lid === 'function' ? lid(ldata.target) : (ldata.target && ldata.target.id ? ldata.target.id : ldata.target);
-      if (s === nodeId) {
-        line.material.color.setHex(0xf97316);
-        line.material.opacity = 0.95;
-      } else if (t === nodeId) {
-        line.material.color.setHex(0x22c55e);
-        line.material.opacity = 0.95;
-      } else {
-        line.material.opacity = 0.03;
+    // Aristas: la base fusionada se atenúa a casi nada y la CADENA se dibuja
+    // encima con líneas dedicadas (decenas, no miles) — verde entra, naranja sale.
+    if (this._linkMerged) this._linkMerged.material.opacity = 0.05;
+    if (this._hlGroup) this._graphGroup.remove(this._hlGroup);
+    this._hlGroup = new THREE.Group();
+    const SEGS = 10;
+    (this._linkRecs || []).forEach(rec => {
+      const s = rec.src.id, t = rec.dst.id;
+      if (s !== nodeId && t !== nodeId) return;
+      const color = s === nodeId ? 0xf97316 : 0x22c55e;   // provee→naranja, recibe←verde
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array((SEGS + 1) * 3);
+      const v = new THREE.Vector3();
+      for (let i = 0; i <= SEGS; i++) {
+        this._pointOnRec(rec, i / SEGS, v);
+        pos[i * 3] = v.x; pos[i * 3 + 1] = v.y; pos[i * 3 + 2] = v.z;
       }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      this._hlGroup.add(new THREE.Line(geo, new THREE.LineBasicMaterial({
+        color, transparent: true, opacity: 0.95,
+      })));
     });
+    this._graphGroup.add(this._hlGroup);
+    this._chainSet = new Set([nodeId, ...upstream, ...downstream]);  // etiquetas LOD
     this._chainHighlighted = nodeId;
   }
 
@@ -464,12 +551,9 @@ class KhipuGraph3D {
       mesh.material.opacity = 1;
       mesh.material.emissiveIntensity = 0.25;
     });
-    this.linkLines.forEach(line => {
-      const lt = line.userData.link && line.userData.link.type;
-      const raw = getLinkColorHex(lt);
-      line.material.color.setHex(parseInt(raw.replace('#',''), 16) || 0x4e8b1e);
-      line.material.opacity = 0.35;
-    });
+    if (this._linkMerged) this._linkMerged.material.opacity = 0.55;
+    if (this._hlGroup) { this._graphGroup.remove(this._hlGroup); this._hlGroup = null; }
+    this._chainSet = null;
     this._chainHighlighted = null;
   }
 
@@ -493,6 +577,7 @@ class KhipuGraph3D {
         // Sync spherical so subsequent orbit works from new position
         const diff = this.camera.position.clone().sub(this._target);
         this._spherical.setFromVector3(diff);
+        this._radiusTarget = this._spherical.radius;   // el zoom suave parte de aquí
       }
     };
     fly();
@@ -503,6 +588,8 @@ class KhipuGraph3D {
     this.canvas.addEventListener('mousedown', e => {
       this._mouseMoved = false;
       this._dragging   = true;
+      this._buttonsDown = true;
+      this._velTheta = 0; this._velPhi = 0;   // la inercia arranca de cero
       this._isPan      = e.button === 2 || e.shiftKey;
       this._prevMouse  = { x: e.clientX, y: e.clientY };
       clearTimeout(this._rotResumeTimer);
@@ -527,10 +614,12 @@ class KhipuGraph3D {
           this._target.addScaledVector(right, -dx * panSpeed);
           this._target.y += dy * panSpeed;
         } else {
-          // Left-drag: orbit
+          // Left-drag: orbit (y memoriza la velocidad para la INERCIA al soltar)
           this._spherical.theta -= dx * 0.005;
           this._spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08,
             this._spherical.phi + dy * 0.005));
+          this._velTheta = -dx * 0.005 * 0.5;
+          this._velPhi = dy * 0.005 * 0.5;
         }
         this._prevMouse = { x: e.clientX, y: e.clientY };
         this._applySpherical();
@@ -538,6 +627,7 @@ class KhipuGraph3D {
     });
 
     this.canvas.addEventListener('mouseup', () => {
+      this._buttonsDown = false;   // desde aquí actúa la inercia
       // Resume auto-rotation 2.5 s after last interaction
       clearTimeout(this._rotResumeTimer);
       this._rotResumeTimer = setTimeout(() => { this._dragging = false; }, 2500);
@@ -553,6 +643,8 @@ class KhipuGraph3D {
     this.canvas.addEventListener('touchstart', e => {
       e.preventDefault();
       this._dragging = true;
+      this._buttonsDown = true;
+      this._velTheta = 0; this._velPhi = 0;
       clearTimeout(this._rotResumeTimer);
       if (e.touches.length === 1) {
         this._prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -577,6 +669,8 @@ class KhipuGraph3D {
         this._spherical.theta -= dx * 0.007;
         this._spherical.phi = Math.max(0.08, Math.min(Math.PI - 0.08,
           this._spherical.phi + dy * 0.007));
+        this._velTheta = -dx * 0.007 * 0.5;
+        this._velPhi = dy * 0.007 * 0.5;
         this._prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         this._applySpherical();
       } else if (e.touches.length === 2) {
@@ -587,6 +681,7 @@ class KhipuGraph3D {
         if (this._pinchDist) {
           this._spherical.radius = Math.max(80, Math.min(2200,
             this._spherical.radius + (this._pinchDist - dist) * 1.8));
+          this._radiusTarget = this._spherical.radius;
           this._applySpherical();
         }
         this._pinchDist = dist;
@@ -596,6 +691,7 @@ class KhipuGraph3D {
     this.canvas.addEventListener('touchend', e => {
       e.preventDefault();
       if (e.touches.length === 0) {
+        this._buttonsDown = false;   // desde aquí actúa la inercia
         clearTimeout(this._rotResumeTimer);
         this._rotResumeTimer = setTimeout(() => { this._dragging = false; }, 2500);
       }
@@ -613,8 +709,8 @@ class KhipuGraph3D {
       if (e.key === 'ArrowRight')      { this._spherical.theta += spd; moved = true; }
       if (e.key === 'ArrowUp')         { this._spherical.phi = Math.max(0.08, this._spherical.phi - spd); moved = true; }
       if (e.key === 'ArrowDown')       { this._spherical.phi = Math.min(Math.PI - 0.08, this._spherical.phi + spd); moved = true; }
-      if (e.key === '+' || e.key === '=') { this._spherical.radius = Math.max(80, this._spherical.radius - 55); moved = true; }
-      if (e.key === '-')               { this._spherical.radius = Math.min(2200, this._spherical.radius + 55); moved = true; }
+      if (e.key === '+' || e.key === '=') { this._spherical.radius = Math.max(80, this._spherical.radius - 55); this._radiusTarget = this._spherical.radius; moved = true; }
+      if (e.key === '-')               { this._spherical.radius = Math.min(2200, this._spherical.radius + 55); this._radiusTarget = this._spherical.radius; moved = true; }
       if (e.key === 'r' || e.key === 'R') { this._resetView(); moved = true; }
       if (moved) {
         this._dragging = true;
@@ -647,8 +743,9 @@ class KhipuGraph3D {
   }
 
   _onWheel(e) {
-    this._spherical.radius = Math.max(80, Math.min(2200, this._spherical.radius + e.deltaY * 0.6));
-    this._applySpherical();
+    // zoom SUAVE: fija el objetivo; _animate acerca el radio con easing
+    const base = this._radiusTarget != null ? this._radiusTarget : this._spherical.radius;
+    this._radiusTarget = Math.max(80, Math.min(2200, base + e.deltaY * 0.8));
   }
 
   _onMouseMove(e) {
