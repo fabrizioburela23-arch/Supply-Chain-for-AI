@@ -337,6 +337,16 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       (nav4) y escena de Cabina (prefers-reduced-motion respetado).
       REDIS: no necesario — 1 worker + 8 threads (Dockerfile), caché interno
       ya compartido; con REDIS_URL se activa solo.
+- [x] **3D perfeccionado** (14a865c): aristas fusionadas en UNA LineSegments
+      con color por vértice (1.623 Line → 1 draw call; resaltado de cadena =
+      base atenuada + ~155 líneas dedicadas encima); partículas de flujo en
+      UNA nube Points; etiquetas LOD (19 visibles de 555: cercanas/grandes/
+      seleccionada/hover/cadena, refresco cada 8 frames); inercia de órbita
+      al soltar (decae 0.93, mouse y táctil); zoom de rueda con easing;
+      anillo de selección orbitando; halo reforzado en hover; modo ligero
+      además baja pixelRatio a 1. Medido: ~3.500 → 1.377 draw calls (-61%).
+      OJO: _linkRecs/_linkMerged/_flowPoints/_pointOnRec reemplazan a
+      linkLines/_createLinkLine/_pointOnLink (linkLines queda [] legado).
 
 ## Pendiente que necesita a Fabrizio / decisión
 
