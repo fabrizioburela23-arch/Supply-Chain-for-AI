@@ -6040,6 +6040,19 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   let _hypergraph = null;
   let _secondBrain = null;
 
+  // ── Diagnóstico remoto: beacons técnicos (GPU/WebGL/errores) para poder
+  // depurar "no pasa nada" sin ver la pantalla del usuario. Máx 8 por sesión.
+  let _diagCount = 0;
+  window._diag = function (kind, data) {
+    try {
+      if (_diagCount++ > 8) return;
+      fetch('/api/diag', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, ver: 'v68+', ua: navigator.userAgent, data: data || {} }),
+      }).catch(() => {});
+    } catch (e) {}
+  };
+
   // ── HUD de VISTA del 3D: [🕸 Cadena] [🎯 Inversión] ──────────────────────
   // El Scatter de inversión YA NO se auto-activa (escondía nodos sin datos de
   // mercado — feedback real "no se ven todos"). Ahora es una LENTE opcional.
@@ -6111,22 +6124,38 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         const g3dLdr = document.getElementById('graph3d-loader');
         if (g3dLdr) { g3dLdr.style.display = 'flex'; g3dLdr.classList.remove('hidden'); }
         setTimeout(() => {
-          _graph3d = new KhipuGraph3D('graph-canvas');
-          _graph3d.init();
-          _graph3d.loadData(window.NODES || [], window.LINKS || []);
-          // The hypergraph was constructed before _graph3d existed (it captured
-          // null), so re-point its graph reference before draining the queue —
-          // otherwise renderPending() dereferences a null scene and no hyperedge
-          // spheres ever appear.
-          if (_hypergraph) _hypergraph.graph3d = _graph3d;
-          _hypergraph?.renderPending();
-          window.khipuGraph3D = _graph3d;
-          if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
-          else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
-          // Hide loader once first frame is likely rendered (~600ms)
-          setTimeout(() => {
-            if (g3dLdr) { g3dLdr.classList.add('hidden'); setTimeout(() => { g3dLdr.style.display = 'none'; }, 450); }
-          }, 600);
+          // HUECO REAL tapado (feedback "no pasa nada"): si WebGLRenderer
+          // revienta aquí (aceleración de hardware apagada, GPU bloqueada),
+          // este setTimeout quedaba SIN protección → cargador girando para
+          // siempre, sin aviso. Ahora: aviso claro + beacon + volver al 2D.
+          try {
+            _graph3d = new KhipuGraph3D('graph-canvas');
+            _graph3d.init();
+            _graph3d.loadData(window.NODES || [], window.LINKS || []);
+            // The hypergraph was constructed before _graph3d existed (it captured
+            // null), so re-point its graph reference before draining the queue —
+            // otherwise renderPending() dereferences a null scene and no hyperedge
+            // spheres ever appear.
+            if (_hypergraph) _hypergraph.graph3d = _graph3d;
+            _hypergraph?.renderPending();
+            window.khipuGraph3D = _graph3d;
+            if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
+            else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
+            window._diag && window._diag('3d_init_ok', { nodes: _graph3d.nodeMeshes.size });
+            // Hide loader once first frame is likely rendered (~600ms)
+            setTimeout(() => {
+              if (g3dLdr) { g3dLdr.classList.add('hidden'); setTimeout(() => { g3dLdr.style.display = 'none'; }, 450); }
+            }, 600);
+          } catch (e) {
+            window._diag && window._diag('3d_init_fail', { err: String(e && e.message || e).slice(0, 180) });
+            _graph3d = null;
+            if (g3dLdr) { g3dLdr.classList.add('hidden'); g3dLdr.style.display = 'none'; }
+            if (typeof toast === 'function') {
+              toast('⚠ El 3D no pudo iniciar en este equipo: ' + String(e && e.message || e).slice(0, 90) +
+                    ' — En Chrome: Configuración → Sistema → activa "aceleración de gráficos".');
+            }
+            if (_is3D) _toggle3DInner();   // volver al 2D limpio
+          }
         }, 50); // brief yield so spinner renders before heavy work
       } else if (_graph3d) {
         _graph3d.resume && _graph3d.resume();
@@ -6152,6 +6181,23 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 
   // La sub-pestaña 🪐 3D del grupo Mapa: entra al mapa y alterna el universo 3D
   window._go3D = function() {
+    window._diag && window._diag('3d_click', { is3D: _is3D, tab: (typeof activeTab !== 'undefined' ? activeTab : '?') });
+    // pre-chequeo: ¿este navegador PUEDE hacer WebGL? (aceleración apagada =
+    // el motor revienta al crearse y "no pasa nada" — feedback real)
+    if (!_is3D) {
+      let ok = false;
+      try {
+        const c = document.createElement('canvas');
+        ok = !!(c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl'));
+      } catch (e) {}
+      if (!ok) {
+        window._diag && window._diag('webgl_missing', {});
+        if (typeof toast === 'function') {
+          toast('⚠ Tu navegador tiene los gráficos 3D desactivados. En Chrome: Configuración → Sistema → activa "Usar aceleración de gráficos" y reinicia el navegador.');
+        }
+        return;
+      }
+    }
     if (typeof activeTab !== 'undefined' && activeTab !== 'map' && typeof switchTab === 'function') {
       switchTab('map');
       if (!_is3D) window._toggle3D();

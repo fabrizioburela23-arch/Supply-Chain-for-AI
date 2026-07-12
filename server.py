@@ -2363,6 +2363,35 @@ def deep_analyze():
     return jsonify({'status': 'started', 'question': question})
 
 
+# ── Diagnóstico remoto de clientes (para depurar "no pasa nada" sin ver la
+# pantalla del usuario): el navegador envía beacons (GPU, WebGL, errores del
+# 3D) a un buffer en memoria que se puede leer desde /api/diag/recent. Sin
+# datos personales: solo user-agent, GPU y el error técnico. ──
+_DIAGS = []
+
+
+@app.route('/api/diag', methods=['POST'])
+@rate_limit(limit=30, window=300)
+def client_diag():
+    b = request.get_json(silent=True) or {}
+    entry = {
+        'ts': datetime.now().isoformat(timespec='seconds'),
+        'kind': str(b.get('kind', ''))[:40],
+        'ver': str(b.get('ver', ''))[:20],
+        'ua': str(b.get('ua', ''))[:160],
+        'data': {k: str(v)[:200] for k, v in (b.get('data') or {}).items()} if isinstance(b.get('data'), dict) else {},
+    }
+    _DIAGS.append(entry)
+    del _DIAGS[:-80]
+    log.warning('DIAG %s %s %s', entry['kind'], entry['data'], entry['ua'][:60])
+    return jsonify({'ok': True})
+
+
+@app.route('/api/diag/recent')
+def client_diag_recent():
+    return jsonify({'count': len(_DIAGS), 'diags': _DIAGS[-50:]})
+
+
 @app.route('/api/deep/status')
 def deep_status():
     return jsonify({'running': _deep_state['running'], 'question': _deep_state['question'],

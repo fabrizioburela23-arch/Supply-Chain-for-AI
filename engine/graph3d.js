@@ -438,13 +438,15 @@ class KhipuGraph3D {
           1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p);
         if (p[0] + p[1] + p[2] > 20) lit++;
       }
-      if (lit > 0) return;   // se ve — todo bien
-      // PANTALLA NEGRA: degradar por pasos
       let gpu = '';
       try {
         const dbg = gl.getExtension('WEBGL_debug_renderer_info');
         if (dbg) gpu = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)).slice(0, 60);
       } catch (e) {}
+      // beacon de diagnóstico: qué GPU y cuántos píxeles se ven realmente
+      if (window._diag) window._diag('3d_selfcheck', { lit: lit + '/60', attempt: attempt || 0, gpu });
+      if (lit > 0) return;   // se ve — todo bien
+      // PANTALLA NEGRA: degradar por pasos
       if ((attempt || 0) === 0 && this._haloMat) {
         this._haloFallback();
         setTimeout(() => this._selfCheck(1), 1500);
