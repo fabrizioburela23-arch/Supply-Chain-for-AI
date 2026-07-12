@@ -1342,7 +1342,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="icon-btn" id="sistema-btn" title="Sistema — diagnóstico en vivo, registro de decisiones y propuestas de agentes" aria-label="Sistema" onclick="window.openSistema&&window.openSistema()">🩺</button>
       <button class="icon-btn" id="settings-btn" title="Configuración / API keys" aria-label="Configuración">⚙</button>
       <button class="icon-btn" id="reset-btn" title="Reiniciar vista">⟲</button>
-      <button class="icon-btn" id="toggle-3d-btn" title="Grafo de Conocimiento Temporal — línea de tiempo interactiva de hechos con validez" style="width:auto;padding:0 10px;font-size:11px;font-weight:700;letter-spacing:.03em" onclick="switchTab('tkg')">◈ Temporal</button>
+      <!-- (botón "◈ Temporal" eliminado 2026-07-12: duplicaba la sub-pestaña
+           ◈ Grafo Temporal del grupo Mapa — pedido de Fabrizio "hay 2 temporal") -->
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <span id="live-status-dot" style="width:6px;height:6px;border-radius:50%;background:#555;flex-shrink:0;transition:background .5s,box-shadow .5s"></span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.1em">LIVE</span>
@@ -1377,6 +1378,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab" data-tab="space" data-group="mapa" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
       <button class="tab" data-tab="tkg" data-group="mapa" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
       <button class="tab" data-tab="simulation" data-group="mapa" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
+      <button class="tab" id="tab-3d" data-group="mapa" title="Universo 3D — todas las empresas en el espacio" onclick="window._go3D&&window._go3D()">🪐 <span>3D</span></button>
       <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
       <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
       <button class="tab" data-tab="canvas" data-group="insights" id="tab-canvas">✦ <span>Canvas IA</span></button>
@@ -6015,21 +6017,58 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   let _hypergraph = null;
   let _secondBrain = null;
 
+  // ── HUD de VISTA del 3D: [🕸 Cadena] [🎯 Inversión] ──────────────────────
+  // El Scatter de inversión YA NO se auto-activa (escondía nodos sin datos de
+  // mercado — feedback real "no se ven todos"). Ahora es una LENTE opcional.
+  function _ensure3DModeHUD() {
+    let hud = document.getElementById('g3d-mode');
+    if (hud) return hud;
+    hud = document.createElement('div');
+    hud.id = 'g3d-mode';
+    hud.style.cssText = 'position:absolute;top:14px;right:14px;z-index:9;display:flex;gap:6px;' +
+      'background:rgba(8,12,22,.82);border:1px solid rgba(80,130,200,.3);border-radius:10px;padding:5px;backdrop-filter:blur(8px)';
+    const mk = (id, txt, title) => `<button id="${id}" title="${title}" style="border:none;cursor:pointer;font-size:11px;font-weight:700;` +
+      `padding:5px 12px;border-radius:7px;background:transparent;color:#9bb;transition:all .13s;font-family:inherit">${txt}</button>`;
+    hud.innerHTML = mk('g3d-mode-chain', '🕸 Cadena', 'Vista semántica: TODAS las empresas (X=cadena de valor, Y=riesgo, Z=región)') +
+                    mk('g3d-mode-invest', '🎯 Inversión', 'Lente de inversión: tiempo al mercado × tamaño × riesgo (con filtros)');
+    document.querySelector('.graph-wrap')?.appendChild(hud);
+    const paint = (investOn) => {
+      const c = document.getElementById('g3d-mode-chain'), i = document.getElementById('g3d-mode-invest');
+      if (c) { c.style.background = investOn ? 'transparent' : 'rgba(0,224,255,.18)'; c.style.color = investOn ? '#9bb' : '#00E0FF'; }
+      if (i) { i.style.background = investOn ? 'rgba(79,195,247,.2)' : 'transparent'; i.style.color = investOn ? '#4fc3f7' : '#9bb'; }
+    };
+    document.getElementById('g3d-mode-chain').onclick = () => {
+      try {
+        if (window._khipuScatter?.isActive()) window._khipuScatter.deactivate(_graph3d);
+        // volver al layout semántico con TODO visible
+        _graph3d._staticLayout(window.NODES || []);
+        _graph3d._updateLinkPositions();
+        _graph3d._clearChainHighlight && _graph3d._clearChainHighlight();
+      } catch (e) {}
+      paint(false);
+    };
+    document.getElementById('g3d-mode-invest').onclick = () => {
+      try { if (window._khipuScatter && !window._khipuScatter.isActive()) window._khipuScatter.activate(_graph3d); } catch (e) {}
+      paint(true);
+    };
+    paint(false);
+    return hud;
+  }
+
   window._toggle3D = function() {
     _is3D = !_is3D;
     const svg = document.getElementById('graph');
     const canvas = document.getElementById('graph-canvas');
-    const btn = document.getElementById('toggle-3d-btn');
     const timeline = document.getElementById('hypergraph-timeline');
     const legend3d = document.getElementById('graph3d-legend');
+    const chip = document.getElementById('tab-3d');
+    if (chip) chip.classList.toggle('active', _is3D);
     if (_is3D) {
       svg.style.display = 'none';
       canvas.style.display = 'block';
       timeline.style.display = 'flex';
       if (legend3d) legend3d.style.display = 'block';
-      btn.style.background = 'var(--violet)';
-      btn.style.color = '#fff';
-      btn.style.borderColor = 'var(--violet)';
+      _ensure3DModeHUD().style.display = 'flex';
       if (!_graph3d && window.KhipuGraph3D) {
         // Show loading overlay while Three.js initializes
         const g3dLdr = document.getElementById('graph3d-loader');
@@ -6045,11 +6084,6 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
           if (_hypergraph) _hypergraph.graph3d = _graph3d;
           _hypergraph?.renderPending();
           window.khipuGraph3D = _graph3d;
-          // Auto-activar el Scatter de inversión (la vista 3D útil: tiempo × tamaño × riesgo)
-          setTimeout(() => { try {
-            if (window._khipuScatter && !window._khipuScatter.isActive()) window._khipuScatter.activate(_graph3d);
-            const _sb = document.getElementById('scatter-3d-btn'); if (_sb) { _sb.style.background = 'var(--accent,#4fc3f7)'; _sb.style.color = '#000'; }
-          } catch (e) {} }, 140);
           if (window._secondBrain) window._secondBrain.graph3d = _graph3d;
           else if (window.SecondBrain) { window._secondBrain = new SecondBrain(_graph3d); }
           // Hide loader once first frame is likely rendered (~600ms)
@@ -6059,10 +6093,6 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         }, 50); // brief yield so spinner renders before heavy work
       } else if (_graph3d) {
         _graph3d.resume && _graph3d.resume();
-        setTimeout(() => { try {
-          if (window._khipuScatter && !window._khipuScatter.isActive()) window._khipuScatter.activate(_graph3d);
-          const _sb = document.getElementById('scatter-3d-btn'); if (_sb) { _sb.style.background = 'var(--accent,#4fc3f7)'; _sb.style.color = '#000'; }
-        } catch (e) {} }, 60);
       }
       if (!_hypergraph && window.TemporalHypergraph) {
         _hypergraph = new TemporalHypergraph(_graph3d);
@@ -6074,15 +6104,23 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       canvas.style.display = 'none';
       timeline.style.display = 'none';
       if (legend3d) legend3d.style.display = 'none';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.style.borderColor = '';
+      const hud = document.getElementById('g3d-mode');
+      if (hud) hud.style.display = 'none';
       if (_graph3d) _graph3d.pause && _graph3d.pause();
       try {
         if (window._khipuScatter && window._khipuScatter.isActive()) window._khipuScatter.deactivate(_graph3d);
-        const _sb = document.getElementById('scatter-3d-btn'); if (_sb) { _sb.style.background = ''; _sb.style.color = ''; }
       } catch (e) {}
     }
+  };
+
+  // La sub-pestaña 🪐 3D del grupo Mapa: entra al mapa y alterna el universo 3D
+  window._go3D = function() {
+    if (typeof activeTab !== 'undefined' && activeTab !== 'map' && typeof switchTab === 'function') {
+      switchTab('map');
+      if (!_is3D) window._toggle3D();
+      return;
+    }
+    window._toggle3D();
   };
 
   // Hypergraph timeline slider
@@ -9513,6 +9551,8 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
       const on = pred(node);
       if (mesh.material) { mesh.material.transparent = true; mesh.material.opacity = on ? 0.95 : 0.05; }
       (mesh.children || []).forEach(ch => { ch.visible = on; });
+      // los halos ya no son hijos del mesh (nube GPU) — sincronizar el filtro
+      if (inst.setHaloDim) inst.setHaloDim(node.id, !on);
     });
   }
 
@@ -9678,6 +9718,7 @@ window._cvRenderCard = _cvRenderCard;   // permite a Bixby renderizar gráficos 
     _savedPositions.forEach((pos, mesh) => mesh.position.copy(pos)); _savedPositions.clear();
     // restaurar opacidad/visibilidad por si había un filtro activo
     inst.nodeMeshes.forEach(mesh => { if (mesh.material) mesh.material.opacity = 0.9; (mesh.children || []).forEach(ch => ch.visible = true); });
+    if (inst.setAllHalos) inst.setAllHalos(1);   // restaurar la nube GPU de halos
     if (_axisGroup) { inst.scene.remove(_axisGroup); _axisGroup = null; }
     teardownHover(inst);
     const panel = document.getElementById('kg-panel'); if (panel) panel.remove();

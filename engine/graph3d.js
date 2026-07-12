@@ -82,6 +82,7 @@ class KhipuGraph3D {
     if (this._linkMerged) { this._graphGroup.remove(this._linkMerged); this._linkMerged = null; }
     if (this._flowPoints) { this._graphGroup.remove(this._flowPoints); this._flowPoints = null; }
     if (this._hlGroup) { this._graphGroup.remove(this._hlGroup); this._hlGroup = null; }
+    if (this._haloPoints) { this._graphGroup.remove(this._haloPoints); this._haloPoints = null; }
 
     nodes.forEach(n => {
       const mesh = this._createNodeMesh(n);
@@ -90,6 +91,7 @@ class KhipuGraph3D {
     });
 
     this._initForce3D(nodes, links);
+    this._buildHaloPoints();
   }
 
   _createNodeMesh(node) {
@@ -108,17 +110,10 @@ class KhipuGraph3D {
     const mesh = new THREE.Mesh(geo, mat);
     mesh.userData = { nodeId: node.id, node, baseRadius: radius };
 
-    // Halo aditivo (pseudo-bloom estilo videojuego): un sprite con gradiente
-    // radial en blending aditivo — los nodos BRILLAN sin postprocesado.
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: KhipuGraph3D._haloTexture(), color,
-      transparent: true, opacity: 0.55,
-      blending: THREE.AdditiveBlending, depthWrite: false,
-    }));
-    const hs = radius * 3.4;
-    halo.scale.set(hs, hs, 1);
-    mesh.add(halo);
-    mesh.userData.halo = halo;
+    // Halo: ya NO es un sprite por nodo (555 draw calls + 555 escrituras de
+    // opacity por frame). Ahora TODOS los halos viven en UNA nube de puntos
+    // con shader (ver _buildHaloPoints) — el pulso lo calcula la GPU.
+    mesh.userData.haloColor = color.clone();
     mesh.userData.pulsePhase = (node.id.charCodeAt(0) || 0) * 0.7; // desfase por nodo
     let nrs = 50;
     try { if (typeof computeNRS === 'function') nrs = computeNRS(node.id); } catch (e) {}
@@ -315,6 +310,94 @@ class KhipuGraph3D {
     this._graphGroup.add(this._flowPoints);
   }
 
+  // ── Halos GPU: UNA nube de puntos con shader (antes 555 sprites = 555
+  // draw calls + 555 escrituras de opacity por frame en CPU). El pulso, el
+  // hover y el tamaño en pantalla los calcula el vertex shader. ──
+  _buildHaloPoints() {
+    if (this._haloPoints) this._graphGroup.remove(this._haloPoints);
+    const meshes = [...this.nodeMeshes.values()];
+    const n = meshes.length;
+    const pos = new Float32Array(n * 3);
+    const col = new Float32Array(n * 3);
+    const size = new Float32Array(n);
+    const phase = new Float32Array(n);
+    const speed = new Float32Array(n);
+    const alpha = new Float32Array(n).fill(1);
+    const index = new Float32Array(n);
+    this._haloIndex = new Map();
+    meshes.forEach((m, i) => {
+      this._haloIndex.set(m.userData.nodeId, i);
+      const c = m.userData.haloColor || new THREE.Color(0x00e0ff);
+      col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+      size[i] = (m.userData.baseRadius || 9) * 3.4;
+      phase[i] = m.userData.pulsePhase || 0;
+      speed[i] = m.userData.pulseSpeed || 1;
+      index[i] = i;
+      pos[i * 3] = m.position.x; pos[i * 3 + 1] = m.position.y; pos[i * 3 + 2] = m.position.z;
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+    geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+    geo.setAttribute('aSpeed', new THREE.BufferAttribute(speed, 1));
+    geo.setAttribute('aAlpha', new THREE.BufferAttribute(alpha, 1));
+    geo.setAttribute('aIndex', new THREE.BufferAttribute(index, 1));
+    this._haloMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uTex: { value: KhipuGraph3D._haloTexture() },
+        uHover: { value: -1 },
+        uScale: { value: (this.canvas.clientHeight || 800) * 0.9 },
+      },
+      vertexShader: [
+        'attribute vec3 aColor;',
+        'attribute float aSize; attribute float aPhase; attribute float aSpeed;',
+        'attribute float aAlpha; attribute float aIndex;',
+        'uniform float uTime; uniform float uHover; uniform float uScale;',
+        'varying vec3 vColor; varying float vAlpha;',
+        'void main(){',
+        '  vColor = aColor;',
+        '  float pulse = 0.40 + 0.22 * sin(uTime * aSpeed + aPhase);',
+        '  float isHover = step(abs(aIndex - uHover), 0.5);',
+        '  vAlpha = min(aAlpha * (pulse + isHover * 0.5), 0.95);',
+        '  vec4 mv = modelViewMatrix * vec4(position, 1.0);',
+        '  gl_PointSize = min(aSize * (1.0 + isHover * 0.35) * (uScale / -mv.z), 220.0);',
+        '  gl_Position = projectionMatrix * mv;',
+        '}',
+      ].join('\n'),
+      fragmentShader: [
+        'uniform sampler2D uTex;',
+        'varying vec3 vColor; varying float vAlpha;',
+        'void main(){',
+        '  vec4 t = texture2D(uTex, gl_PointCoord);',
+        '  gl_FragColor = vec4(vColor * t.rgb * vAlpha, t.a * vAlpha);',
+        '}',
+      ].join('\n'),
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    });
+    this._haloPoints = new THREE.Points(geo, this._haloMat);
+    this._haloPoints.frustumCulled = false;
+    this._graphGroup.add(this._haloPoints);
+  }
+
+  // atenúa/restaura el halo de UN nodo (lo usan el scatter y el resaltado)
+  setHaloDim(nodeId, dim) {
+    if (!this._haloPoints || !this._haloIndex) return;
+    const i = this._haloIndex.get(nodeId);
+    if (i == null) return;
+    const a = this._haloPoints.geometry.attributes.aAlpha;
+    a.array[i] = dim ? 0.06 : 1;
+    a.needsUpdate = true;
+  }
+
+  setAllHalos(alphaValue) {
+    if (!this._haloPoints) return;
+    const a = this._haloPoints.geometry.attributes.aAlpha;
+    a.array.fill(alphaValue);
+    a.needsUpdate = true;
+  }
+
   // posición sobre la curva de una arista (mismo bezier que la geometría)
   _pointOnRec(rec, t, out) {
     const ax = rec.src.x || 0, ay = rec.src.y || 0, az = rec.src.z || 0;
@@ -401,15 +484,21 @@ class KhipuGraph3D {
       }
     }
 
-    // Pulso de halos + refuerzo del nodo bajo el cursor (SIEMPRE — los halos
-    // son parte de la identidad visual de cada nodo)
-    this.nodeMeshes.forEach(m => {
-      const h = m.userData.halo;
-      if (!h) return;
-      const hovered = m.userData.nodeId === this.hovered;
-      h.material.opacity = hovered ? 0.92
-        : 0.4 + 0.22 * Math.sin(t * m.userData.pulseSpeed + m.userData.pulsePhase);
-    });
+    // Halos GPU: solo actualizamos uniforms + sincronizamos posiciones con
+    // los meshes (así siguen a los nodos aunque el scatter o el hipergrafo
+    // los muevan). El pulso y el hover los calcula el shader — CPU casi cero.
+    if (this._haloPoints) {
+      this._haloMat.uniforms.uTime.value = t;
+      const hi = this.hovered != null && this._haloIndex ? this._haloIndex.get(this.hovered) : null;
+      this._haloMat.uniforms.uHover.value = hi != null ? hi : -1;
+      const hp = this._haloPoints.geometry.attributes.position.array;
+      let hj = 0;
+      this.nodeMeshes.forEach(m => {
+        hp[hj] = m.position.x; hp[hj + 1] = m.position.y; hp[hj + 2] = m.position.z;
+        hj += 3;
+      });
+      this._haloPoints.geometry.attributes.position.needsUpdate = true;
+    }
     if (!this._liteMode) {
       // partículas: UNA nube — solo actualizamos el buffer de posiciones
       if (this._flowPoints && this._flowState) {
@@ -550,6 +639,9 @@ class KhipuGraph3D {
     });
     this._graphGroup.add(this._hlGroup);
     this._chainSet = new Set([nodeId, ...upstream, ...downstream]);  // etiquetas LOD
+    // halos: se apagan los ajenos a la cadena — foco total
+    this.setAllHalos(0.06);
+    this._chainSet.forEach(id => this.setHaloDim(id, false));
     this._chainHighlighted = nodeId;
   }
 
@@ -568,6 +660,7 @@ class KhipuGraph3D {
     });
     if (this._linkMerged) this._linkMerged.material.opacity = 0.55;
     if (this._hlGroup) { this._graphGroup.remove(this._hlGroup); this._hlGroup = null; }
+    this.setAllHalos(1);
     this._chainSet = null;
     this._chainHighlighted = null;
   }
@@ -853,13 +946,46 @@ class KhipuGraph3D {
   }
 
   _addStarfield() {
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(3000);
-    for (let i = 0; i < 3000; i++) pos[i] = (Math.random() - 0.5) * 4000;
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    this.scene.add(new THREE.Points(geo,
-      new THREE.PointsMaterial({ color: 0x334466, size: 0.8 })
-    ));
+    // ── ATMÓSFERA "otro planeta": doble campo de estrellas + nebulosas +
+    // resplandor central. Todo aditivo y estático — costo casi nulo. ──
+    // capa lejana: polvo estelar tenue
+    const g1 = new THREE.BufferGeometry();
+    const p1 = new Float32Array(3600);
+    for (let i = 0; i < 3600; i++) p1[i] = (Math.random() - 0.5) * 4200;
+    g1.setAttribute('position', new THREE.BufferAttribute(p1, 3));
+    this.scene.add(new THREE.Points(g1, new THREE.PointsMaterial({ color: 0x2c3c5e, size: 0.8 })));
+    // capa cercana: estrellas cian brillantes, pocas
+    const g2 = new THREE.BufferGeometry();
+    const p2 = new Float32Array(900);
+    for (let i = 0; i < 900; i++) p2[i] = (Math.random() - 0.5) * 2800;
+    g2.setAttribute('position', new THREE.BufferAttribute(p2, 3));
+    this.scene.add(new THREE.Points(g2, new THREE.PointsMaterial({
+      color: 0x6fd6ff, size: 1.6, transparent: true, opacity: 0.75,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    })));
+    // nebulosas: manchas de color enormes y lejanas (violeta / cian / magenta)
+    const nebulaTex = KhipuGraph3D._haloTexture();
+    [[0x5a2da8, -1600, 500, -1500, 2600, 0.10],
+     [0x0e5a80, 1500, -300, -1700, 2200, 0.12],
+     [0x8a2d6e, 300, 900, 1600, 1900, 0.08],
+     [0x1a3a8a, -900, -800, 1400, 2400, 0.09]].forEach(([hex, x, y, z, s, op]) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: nebulaTex, color: hex, transparent: true, opacity: op,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+      sp.position.set(x, y, z);
+      sp.scale.set(s, s, 1);
+      sp.renderOrder = -2;
+      this.scene.add(sp);
+    });
+    // resplandor central: el "sol" del universo Khipus detrás del grafo
+    const core = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: nebulaTex, color: 0x1a6a9a, transparent: true, opacity: 0.30,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    core.scale.set(560, 560, 1);
+    core.renderOrder = -1;
+    this.scene.add(core);
   }
 
   _onResize() {
