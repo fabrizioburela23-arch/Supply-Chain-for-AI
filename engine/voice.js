@@ -451,39 +451,35 @@ const BixbyVoice = {
     const opps     = /\[OPPS\]/.test(text);
     const insights = /\[INSIGHTS\]/.test(text);
 
-    if (tab && typeof switchTab === 'function') this._defer(() => switchTab(tab[1]));
-    if (nav && typeof jumpTo === 'function') this._defer(() => jumpTo(nav[1]));
+    if (tab) this._defer(() => this._show('tab', tab[1]));
+    if (nav) {
+      const n = this._resolveNode(nav[1]);
+      if (n) this._defer(() => this._show('graph', n.id));
+    }
     if (stress) {
-      const n = NODES.find(n => n.mkt === stress[1] || n.id === stress[1]);
-      if (n && typeof activateStress === 'function') this._defer(() => activateStress(n.id));
+      const n = this._resolveNode(stress[1]);
+      if (n) this._defer(() => this._show('stress', n.id));
     }
     if (sim && window.nexusCore?.runPreset) window.nexusCore.runPreset(sim[1]);
     if (chart) {
-      const n = NODES.find(n => n.mkt === chart[1] || n.id === chart[1]);
-      if (n) {
-        if (typeof jumpTo === 'function') jumpTo(n.id);
-        if (n.mkt && typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
-      }
+      const n = this._resolveNode(chart[1]);
+      if (n) this._defer(() => this._show('chart', { id: n.id, ticker: n.mkt }));
     }
     if (trade) {
-      const n = NODES.find(n => n.mkt === trade[1] || n.id === trade[1]);
-      if (n?.mkt && typeof openTradeModal === 'function') setTimeout(() => openTradeModal(n.id, n.mkt, n.label), 400);
+      const n = this._resolveNode(trade[1]);
+      if (n?.mkt) this._defer(() => this._show('trade', { id: n.id, ticker: n.mkt, label: n.label }));
     }
     if (terminal) {
-      if (window._termOpenTicker) window._termOpenTicker(terminal[1]);
+      this._defer(() => this._show('terminal', { ticker: terminal[1] }));
     }
     if (sb) {
-      const n = NODES.find(n => n.id === sb[1]);
-      if (n && typeof window._openSecondBrain === 'function') setTimeout(() => window._openSecondBrain(n.id), 300);
+      const n = this._resolveNode(sb[1]);
+      if (n) this._defer(() => this._show('secondbrain', n.id));
     }
-    if (canvas && typeof switchTab === 'function') {
-      switchTab('canvas');
-      setTimeout(() => {
-        const qi = document.getElementById('canvas-query');
-        if (qi) { qi.value = canvas[1].trim(); if (typeof window.canvasGenerate === 'function') window.canvasGenerate(); }
-      }, 280);
+    if (canvas) {
+      this._defer(() => this._show('canvas', canvas[1].trim()));
     }
-    if (nrsTop && typeof switchTab === 'function') switchTab('analysis');
+    if (nrsTop) this._defer(() => this._show('insights'));
     if (filter) {
       const catKey = filter[1].toLowerCase();
       const match = (typeof CATS !== 'undefined') ? Object.entries(CATS).find(([k]) => k === catKey || k.includes(catKey)) : null;
@@ -492,12 +488,12 @@ const BixbyVoice = {
     // ── Tokens nuevos (X-Ray, comparar, shock/sim en vivo, oportunidades, insights) ──
     if (xray) {
       const n = this._resolveNode(xray[1]);
-      if (n && window.openXRay) this._defer(() => window.openXRay(n.id));
+      if (n) this._defer(() => this._show('xray', n.id));
     }
-    if (compare && window.openCompare) {
+    if (compare) {
       const a = this._resolveNode(compare[1]);
       const b = this._resolveNode(compare[2]);
-      if (a && b) this._defer(() => window.openCompare(a.id, b.id));
+      if (a && b) this._defer(() => this._show('compare', { a: a.id, b: b.id }));
     }
     if (shock && window.KhipuState) {
       const n = this._resolveNode(shock[1]);
@@ -507,15 +503,15 @@ const BixbyVoice = {
         this._defer(() => {
           try {
             const r = window.KhipuState.simulate({ [n.id]: { salud: 0 } }, [], 8, 0.6, false, { direction: dir, kind });
-            if (typeof switchTab === 'function') switchTab('map');
-            if (typeof jumpTo === 'function') jumpTo(n.id);
-            if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
+            this._show('sim', { id: n.id, kind, after: () => {
+              if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
+            } });
           } catch (_) {}
         });
       }
     }
-    if ((opps || insights) && typeof switchTab === 'function') {
-      this._defer(() => { switchTab('analysis'); if (window.renderKhipuInsights) window.renderKhipuInsights(); });
+    if (opps || insights) {
+      this._defer(() => this._show('insights'));
     }
   },
 
@@ -528,19 +524,63 @@ const BixbyVoice = {
       .replace(/\s{2,}/g, ' ').trim();
   },
 
-  // Resuelve una empresa desde lo que diga el agente (id, ticker o nombre),
-  // tolerante a mayúsculas/minúsculas — Bixby no conoce el casing exacto de
-  // los ids (ej. dice "NVIDIA" pero el id real es "Nvidia", ticker "NVDA").
+  // Resuelve una empresa desde lo que diga el agente (id, ticker o nombre).
+  // Usa el resolutor robusto compartido (engine/resolve.js): sin acentos,
+  // alias de transcripción de voz ("en vidia" → Nvidia), typos (Levenshtein).
+  // La búsqueda débil de antes queda solo de fallback si resolve.js no cargó.
   _resolveNode(q) {
     if (q == null || typeof NODES === 'undefined') return null;
     const s = String(q).trim();
     if (!s) return null;
+    if (window.KhipuResolve) {
+      const r = window.KhipuResolve.find(s);
+      if (r && r.node) return r.node;
+    }
     const lc = s.toLowerCase();
     return NODES.find(n => n.id === s || n.mkt === s)                        // exacto (rápido)
       || NODES.find(n => (n.id || '').toLowerCase() === lc || (n.mkt || '').toLowerCase() === lc)  // id/ticker sin casing
       || NODES.find(n => (n.label || '').toLowerCase() === lc)              // nombre exacto
       || NODES.find(n => (n.label || '').toLowerCase().includes(lc))        // nombre contiene
       || null;
+  },
+
+  // Prueba ticker → nombre → id (los tools de ElevenLabs mandan cualquiera).
+  _resolveAny(params) {
+    params = params || {};
+    return this._resolveNode(params.ticker) || this._resolveNode(params.company_name)
+      || this._resolveNode(params.company_id) || null;
+  },
+
+  // Respuesta bilingüe de "no encontrado" CON sugerencias, para que Bixby
+  // las DIGA en voz alta ("¿Quisiste decir NVIDIA, AMD o Micron?") en vez
+  // del seco "Company not found" (feedback real del usuario).
+  _notFound(q) {
+    if (window.KhipuResolve) {
+      const nf = window.KhipuResolve.notFound(q == null ? '' : q);
+      return { success: false, error: nf.spoken, did_you_mean: nf.suggestions.map(s => s.label) };
+    }
+    return { success: false, error: 'Company not found' };
+  },
+
+  // Muestra un resultado AL FRENTE, siempre: dentro de la Cabina si está
+  // abierta, o cambiando a la pestaña dueña y cerrando overlays que tapen.
+  // Un solo camino compartido (window._surface, engine/resolve.js).
+  _show(kind, arg) {
+    if (window._surface) return window._surface(kind, arg);
+    // fallback mínimo si resolve.js no cargó (comportamiento anterior)
+    try {
+      if (kind === 'xray' && window.openXRay) window.openXRay(arg);
+      else if (kind === 'compare' && window.openCompare && arg) window.openCompare(arg.a, arg.b);
+      else if (kind === 'graph' && typeof jumpTo === 'function') jumpTo(arg);
+      else if (kind === 'insights' && typeof switchTab === 'function') switchTab('analysis');
+      else if (kind === 'tab' && typeof switchTab === 'function') switchTab(arg);
+      else if (kind === 'terminal' && window._termOpenTicker && arg) window._termOpenTicker(arg.ticker || arg);
+      else if (kind === 'dossier' && window.openFinCard) window.openFinCard(arg);
+      else if (kind === 'secondbrain' && window._openSecondBrain) window._openSecondBrain(arg);
+      else if (kind === 'stress' && typeof activateStress === 'function') activateStress(arg);
+      else return false;
+      return true;
+    } catch (e) { return false; }
   },
 
   _handleToolCall(event) {
@@ -559,31 +599,33 @@ const BixbyVoice = {
 
     switch (tool_name) {
       case 'navigate_to_company': {
-        const n = this._resolveNode(params.ticker || params.company_name);
+        const n = this._resolveAny(params);
         if (n) {
           respond({ success: true, company: n.label, ticker: n.mkt });  // responde YA
           this._defer(() => {                                            // visual diferido
-            // con la Cabina abierta: el grafo aparece EN la pantalla de Bixby
-            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('graph', n.id); return; }
-            if (typeof jumpTo === 'function') jumpTo(n.id);
+            this._show('graph', n.id);   // Cabina o mapa, siempre AL FRENTE
             if (window.khipuGraph3D?.active) window.khipuGraph3D.selectNode(n.id);
             this._updateContextSoon();
           });
-        } else respond({ success: false, error: 'Company not found' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'run_stress_test': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker);
+        const n = this._resolveAny(params);
         if (n && typeof activateStress === 'function') {
           // cascada pesada diferida; respondemos DENTRO del defer para leer el
           // conteo real ya calculado (no antes de que activateStress corra).
           this._defer(() => {
-            try { activateStress(n.id); } catch {}
-            const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
-            respond({ success: true, company: n.label, affected_count: cascade,
-              affected_pct: Math.round(cascade / NODES.length * 100) });
+            try { this._show('stress', n.id); } catch {}
+            // _surface difiere activateStress (~200-320ms); leemos el conteo
+            // real después de que la cascada ya corrió.
+            setTimeout(() => {
+              const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
+              respond({ success: true, company: n.label, affected_count: cascade,
+                affected_pct: Math.round(cascade / NODES.length * 100) });
+            }, 600);
           });
-        } else respond({ success: false, error: 'Company not found' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'run_simulation': {
@@ -608,7 +650,7 @@ const BixbyVoice = {
       case 'get_company_info': {
         // TODO lo que la app sabe de la empresa — Bixby nunca debe decir
         // "no sé" si el dato está en la ficha (feedback real: empleados de TSMC)
-        const n = this._resolveNode(params.ticker || params.company_name);
+        const n = this._resolveAny(params);
         if (n) {
           const q = (typeof MKT !== 'undefined' && n.mkt) ? MKT.quotes[n.mkt] : null;
           const meta = (window.NODE_META || {})[n.id] || {};
@@ -641,19 +683,18 @@ const BixbyVoice = {
             suppliers_count: inDeg, customers_count: outDeg,
             is_preipo: !!n.preipo,
           });
-        } else respond({ success: false, error: 'Company not found' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'get_risk_score': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveAny(params);
         if (n && typeof computeNRS === 'function') {
           try {
             const nrs = computeNRS(n.id);
             respond({ success: true, company: n.label, nrs,
               level: nrs >= 70 ? 'high' : nrs >= 40 ? 'medium' : 'low' });
           } catch(e) { respond({ success: false, error: e.message }); }
-        } else respond({ success: false, error: 'Company not found or NRS unavailable' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'switch_tab': {
@@ -661,52 +702,33 @@ const BixbyVoice = {
         const t = params.tab || '';
         if (!validTabs.includes(t)) { respond({ success: false, error: `Tab inválida: ${t}` }); break; }
         respond({ success: true, tab: t });
-        this._defer(() => {
-          // con la Cabina abierta: el grafo y la terminal se muestran DENTRO
-          // de la pantalla de Bixby; el resto cierra la Cabina primero (antes
-          // el cambio quedaba tapado por el overlay y "no hacía nada").
-          if (window.BixbyCockpit?.isOpen()) {
-            if (t === 'map') { window.BixbyCockpit.stage('graph'); return; }
-            if (t === 'terminal') { window.BixbyCockpit.stage('terminal'); return; }
-            if (t === 'analysis') { window.BixbyCockpit.stage('insights'); return; }
-            if (t === 'canvas') { window.BixbyCockpit.stage('canvas'); return; }
-            window.BixbyCockpit.close();
-          }
-          try { switchTab(t); } catch {}
-        });
+        // _surface enruta: Cabina abierta → escenario propio; cerrada →
+        // switchTab con overlays cerrados (antes quedaba tapado y "no hacía nada").
+        this._defer(() => this._show('tab', t));
         break;
       }
       case 'show_chart': {
-        const n = this._resolveNode(params.ticker || params.company_name);
+        const n = this._resolveAny(params);
         if (n?.mkt) {
           respond({ success: true, company: n.label, ticker: n.mkt });
-          this._defer(() => {
-            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('terminal', { ticker: n.mkt }); return; }
-            if (typeof jumpTo === 'function') jumpTo(n.id);
-            if (typeof loadStockChart === 'function') setTimeout(() => loadStockChart(n.id, n.mkt), 350);
-          });
-        } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
+          this._defer(() => this._show('chart', { id: n.id, ticker: n.mkt }));
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'open_terminal': {
-        const n = this._resolveNode(params.ticker || params.company_name);
+        const n = this._resolveAny(params);
         if (n?.mkt) {
           respond({ success: true, company: n.label, ticker: n.mkt, action: 'Terminal abierta en pantalla' });
-          this._defer(() => {
-            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('terminal', { ticker: n.mkt }); return; }
-            if (typeof switchTab === 'function') switchTab('terminal');
-            setTimeout(() => { if (window._termOpenTicker) window._termOpenTicker(n.mkt); }, 250);
-          });
-        } else respond({ success: false, error: 'Empresa no encontrada' });
+          this._defer(() => this._show('terminal', { ticker: n.mkt }));
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'place_trade': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveAny(params);
         if (n?.mkt && typeof openTradeModal === 'function') {
-          setTimeout(() => openTradeModal(n.id, n.mkt, n.label), 300);
+          this._defer(() => this._show('trade', { id: n.id, ticker: n.mkt, label: n.label }));
           respond({ success: true, company: n.label, ticker: n.mkt, note: 'Modal de trading abierto — el usuario debe confirmar la orden' });
-        } else respond({ success: false, error: 'Empresa no encontrada o trading no disponible' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'get_market_summary': {
@@ -737,8 +759,7 @@ const BixbyVoice = {
         break;
       }
       case 'get_supply_chain_links': {
-        const n = NODES.find(n => n.id === params.company_id || n.mkt === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveAny(params);
         if (n) {
           const allLinks = (typeof LINKS !== 'undefined' ? LINKS : [])
             .filter(l => lid(l.source) === n.id || lid(l.target) === n.id);
@@ -751,7 +772,7 @@ const BixbyVoice = {
             upstream_count: upstream.length, downstream_count: downstream.length,
             upstream: upstream.slice(0, 15), downstream: downstream.slice(0, 15),
           });
-        } else respond({ success: false, error: 'Empresa no encontrada' });
+        } else respond(this._notFound(params.ticker || params.company_name || params.company_id));
         break;
       }
       case 'get_nrs_top10': {
@@ -763,17 +784,15 @@ const BixbyVoice = {
         break;
       }
       case 'open_second_brain': {
-        const n = NODES.find(n => n.id === params.company_id || n.mkt === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveAny(params);
         if (n) {
-          if (typeof window._openSecondBrain === 'function') this._defer(() => window._openSecondBrain(n.id));
+          this._defer(() => this._show('secondbrain', n.id));
           respond({ success: true, company: n.label });
-        } else respond({ success: false, error: 'Empresa no encontrada' });
+        } else respond(this._notFound(params.ticker || params.company_name || params.company_id));
         break;
       }
       case 'get_news': {
-        const n = NODES.find(n => n.mkt === params.ticker || n.id === params.ticker
-          || n.label.toLowerCase().includes((params.company_name || '').toLowerCase()));
+        const n = this._resolveAny(params);
         if (n?.mkt) {
           const base = (typeof BASE !== 'undefined') ? BASE : '';
           fetch(`${base}/api/news/${n.mkt}`)
@@ -786,21 +805,21 @@ const BixbyVoice = {
               });
             })
             .catch(() => respond({ success: false, error: 'Error fetching news' }));
-        } else respond({ success: false, error: 'Empresa o ticker no encontrado' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       // ── Herramientas nuevas (2026-07): X-Ray, sim en vivo, comparar, insights ──
       case 'open_xray': {
-        const n = this._resolveNode(params.ticker || params.company_name);
-        if (n && window.openXRay) {
+        const n = this._resolveAny(params);
+        if (n && (window.openXRay || window.BixbyCockpit)) {
           respond({ success: true, company: n.label });
-          this._defer(() => window.openXRay(n.id));
-        } else respond({ success: false, error: 'Company not found' });
+          this._defer(() => this._show('xray', n.id));
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'run_live_simulation': {
         // params: {ticker/company_name, kind?: collapse|demand|price|sanction, severity?}
-        const n = this._resolveNode(params.ticker || params.company_name);
+        const n = this._resolveAny(params);
         if (n && window.KhipuState) {
           const kind = ['collapse', 'demand', 'price', 'sanction'].includes(params.kind) ? params.kind : 'collapse';
           const dir = kind === 'demand' ? 'up' : 'down';
@@ -812,27 +831,21 @@ const BixbyVoice = {
             top.sort((a, b) => b.v - a.v);
             respond({ success: true, company: n.label, kind, direction: dir, affected,
               most_impacted: top.slice(0, 5).map(x => ({ company: (NODE_BY_ID[x.id] || {}).label || x.id, impact_pct: Math.round(x.v) })) });
-            this._defer(() => {
-              if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('sim', { id: n.id, kind }); return; }
-              if (typeof switchTab === 'function') switchTab('map');
-              if (jumpTo) jumpTo(n.id);
+            this._defer(() => this._show('sim', { id: n.id, kind, after: () => {
               if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
-            });
+            } }));
           } catch (e) { respond({ success: false, error: 'sim failed' }); }
-        } else respond({ success: false, error: 'Company not found' });
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'compare_companies': {
         const a = this._resolveNode(params.a || params.company_a), b = this._resolveNode(params.b || params.company_b);
-        if (a && b && window.openCompare) {
+        if (a && b && (window.openCompare || window.BixbyCockpit)) {
           const nrsA = computeNRS ? computeNRS(a.id) : 50, nrsB = computeNRS ? computeNRS(b.id) : 50;
           respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB,
             lower_risk: nrsA < nrsB ? a.label : b.label });
-          this._defer(() => {
-            if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('compare', { a: a.id, b: b.id }); return; }
-            window.openCompare(a.id, b.id);
-          });
-        } else respond({ success: false, error: 'One or both companies not found' });
+          this._defer(() => this._show('compare', { a: a.id, b: b.id }));
+        } else respond(this._notFound(!a ? (params.a || params.company_a) : (params.b || params.company_b)));
         break;
       }
       case 'get_opportunities': {
@@ -845,16 +858,12 @@ const BixbyVoice = {
           return { label: n.label, nrs, margin: Math.round(margin * 100), score: growth * 22 + Math.min(30, margin * 60) + (50 - nrs) * 0.5, growth, marginRaw: margin };
         }).filter(x => x.nrs < 55 && x.growth >= 1 && x.marginRaw > 0.15).sort((a, b) => b.score - a.score).slice(0, 6);
         respond({ success: true, count: opps.length, opportunities: opps.map(o => ({ company: o.label, nrs: o.nrs, margin_pct: o.margin })) });
-        this._defer(() => { if (typeof switchTab === 'function') switchTab('analysis'); });
+        this._defer(() => this._show('insights'));
         break;
       }
       case 'show_insights': case 'show_matrices': {
         respond({ success: true });
-        this._defer(() => {
-          if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('insights'); return; }
-          if (typeof switchTab === 'function') switchTab('analysis');
-          if (window.renderKhipuInsights) window.renderKhipuInsights();
-        });
+        this._defer(() => this._show('insights'));
         break;
       }
       case 'create_visualization': {
@@ -862,14 +871,7 @@ const BixbyVoice = {
         const q = (params.query || params.description || '').trim();
         if (!q) { respond({ success: false, error: 'query required' }); break; }
         respond({ success: true, rendering: q });
-        this._defer(() => {
-          if (window.BixbyCockpit?.isOpen()) { window.BixbyCockpit.stage('canvas', q); return; }
-          if (typeof switchTab === 'function') switchTab('canvas');
-          setTimeout(() => {
-            const qi = document.getElementById('canvas-query');
-            if (qi) { qi.value = q; if (typeof window.canvasGenerate === 'function') window.canvasGenerate(); }
-          }, 280);
-        });
+        this._defer(() => this._show('canvas', q));
         break;
       }
       case 'open_cockpit': {
@@ -879,11 +881,13 @@ const BixbyVoice = {
       }
       case 'open_dossier': {
         // dossier financiero estilo investingvisuals (ingresos/dilución/FCF/ROE…)
-        const n = this._resolveNode(params.ticker || params.company_name);
+        // _show('dossier') lo sube POR ENCIMA de la Cabina si está abierta
+        // (z 6500 vs 7000 — antes quedaba atrás y "no se veía").
+        const n = this._resolveAny(params);
         if (n && n.mkt) {
           respond({ success: true, company: n.label, ticker: n.mkt });
-          this._defer(() => { if (window.openFinCard) window.openFinCard(n.mkt); });
-        } else respond({ success: false, error: 'Empresa sin ticker o no encontrada' });
+          this._defer(() => this._show('dossier', n.mkt));
+        } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
       case 'deep_analysis': {
@@ -892,9 +896,7 @@ const BixbyVoice = {
         const q = (params.question || '').trim();
         if (!q) { respond({ success: false, error: 'question required' }); break; }
         respond({ success: true, started: true, eta_seconds: 60 });
-        this._defer(() => {
-          if (window.BixbyCockpit) { window.BixbyCockpit.open(); window.BixbyCockpit.stage('deep', q); }
-        });
+        this._defer(() => this._show('deep', q));
         break;
       }
       default:

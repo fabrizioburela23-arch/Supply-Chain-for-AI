@@ -110,7 +110,8 @@ if os.getenv('REMIGRATE_ON_BOOT', '').strip() in ('1', 'true', 'yes'):
 from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,
                          GEMINI_MODEL, HTTP_TIMEOUT, NVIDIA_KEY, NVIDIA_MODEL)
 from core.http import _safe_get, _safe_ticker
-from core.ai import _ai_complete, _ai_configured, _claude_complete, _extract_json
+from core.ai import (_ai_complete, _ai_configured, _claude_complete,
+                     _complete_gemini, _complete_nvidia, _extract_json)
 from core.quotes import _fetch_quote_raw
 
 FMP      = os.getenv('FMP_KEY', '')
@@ -1256,11 +1257,14 @@ def ai_analyze():
     if not _ai_configured():
         return jsonify({'error': 'no AI provider configured (Claude/Gemini/NVIDIA)'}), 400
     data = request.get_json(force=True, silent=True) or {}
-    # Clamp max_tokens to avoid runaway costs
-    max_tok = min(int(data.get('max_tokens', 1000)), 2000)
-    # caché 30 min por (system+prompt): el mismo análisis no paga otra llamada IA
+    # IA híbrida: el cliente puede pedir tier='deep' (Sonnet 5) para análisis
+    # que importan (tesis, X-Ray/SecondBrain); todo lo demás queda 'fast' (Haiku).
+    tier = 'deep' if str(data.get('tier', '')).strip().lower() == 'deep' else 'fast'
+    # Clamp max_tokens to avoid runaway costs (deep permite más presupuesto)
+    max_tok = min(int(data.get('max_tokens', 1000)), 3000 if tier == 'deep' else 2000)
+    # caché 30 min por (tier+system+prompt): el mismo análisis no paga otra llamada IA
     _ck = 'aian:' + hashlib.sha256(
-        (str(data.get('system', '')) + '\x00' + str(data.get('prompt', ''))).encode('utf-8')
+        (tier + '\x00' + str(data.get('system', '')) + '\x00' + str(data.get('prompt', ''))).encode('utf-8')
     ).hexdigest()[:24]
     _hit = cache.get(_ck)
     if _hit:
@@ -1270,6 +1274,7 @@ def ai_analyze():
             data.get('system', ''),
             data.get('prompt', ''),
             max_tok,
+            tier=tier,
         )
         cache.set(_ck, {'result': text, 'model': model}, timeout=1800)
         return jsonify({'result': text, 'model': model})
@@ -1376,7 +1381,8 @@ def canvas_generate():
                          ensure_ascii=False)
     prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
     try:
-        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1200)
+        # Canvas IA = análisis que importa → tier 'deep' (Sonnet 5)
+        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1600, tier='deep')
         # extrae el JSON aunque venga con fences o texto alrededor
         spec = _extract_json(text)
         valid_types = {'bar','line','bubble','treemap','heatmap','radar','scatter','table'}
@@ -2092,7 +2098,8 @@ BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Khipus AI Fi
 - NEVER say, spell, read aloud or mention any command, token, tool name, bracket, code or internal id. The user must never hear anything technical — no "open_xray", no "[XRAY:...]", no "puedes escribir TSMC XRAY". Nothing of the sort, ever.
 - NEVER tell the user to type a command, press a key or click a button to get something — just DO it yourself with your tools and narrate the RESULT naturally.
 - Speak like a sharp human analyst: "Aquí tienes la radiografía de Nvidia — su mayor riesgo es la dependencia de TSMC…". Never like a machine.
-- Company names: pass them to tools as plain names or tickers (e.g. "Nvidia", "NVDA", "TSMC") — the app resolves them, any casing works.
+- Company names: pass them to tools as plain names or tickers (e.g. "Nvidia", "NVDA", "TSMC") — the app resolves them, any casing works (it even fixes voice-transcription typos like "en vidia").
+- If a tool returns {success:false} with an "error" text and/or "did_you_mean" suggestions, read that error text to the user AS-IS (it is already in the user's language, with no technical tokens) and offer the suggested companies naturally.
 
 ## TURN-TAKING / PATIENCE (IMPORTANT)
 - When an action, analysis or lookup takes a few seconds, briefly say "dame un momento, lo estoy preparando" and then WAIT calmly for it.
@@ -2100,9 +2107,9 @@ BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Khipus AI Fi
 - Keep spoken replies short and to the point.
 
 ## APP STRUCTURE — 4 PRIMARY TABS (2026-07 redesign, NEXUS skin)
-The 10 old panels are now grouped under 4 primary tabs. Underneath, switch_tab still targets the old tab ids (map, market, analysis, geo, simulation, space, terminal, canvas, tkg, guia).
+The 10 old panels are now grouped under 4 primary tabs. Underneath, switch_tab still targets the old tab ids (map, market, analysis, geo, simulation, space, terminal, canvas, tkg, guia, crypto).
 1. 🗺️ MAPA — the unified graph. Nodes coloured by 9 MACRO-SECTORS (toggle to 40 categories in the legend). Sub-modes: Cadena (map) · Geopolítica (geo) · Espacio (space) · Grafo Temporal (tkg) · Simulación (simulation). Map controls: "◱ Capas" (toggle layers: links, labels, risk rings, marks, countries) and "◉ En vivo" (LIVE simulation panel — see below).
-2. 📈 MERCADO — live prices, portfolio, P&L.
+2. 📈 MERCADO — live prices, portfolio, P&L. Sub-mode ₿ Cripto (switch_tab 'crypto'): top-100 crypto market live (CoinGecko) + the curated "Expediente Khipus" dossier of the top 50 (what it is, mechanism, tokenomics, catalysts, risks, positioning, warning badges on politically-exposed or concentrated assets).
 3. 💡 INSIGHTS — the "brain": auto-insight cards (chokepoints, risk, OPPORTUNITIES, sector panorama), the 9 relation MATRICES (heatmaps), topology metrics. Sub-modes: Análisis · Canvas IA · Terminal.
 4. ❓ GUÍA — help.
 
@@ -2374,13 +2381,16 @@ def _deep_run(question, company_ids):
         step('síntesis', 'Redactando el análisis final…')
         evidencia = json.dumps({'contexto': ctx, 'simulacion': sim, 'plan': plan},
                                ensure_ascii=False)[:14000]
+        # Síntesis final = lo que importa → tier 'deep' (Sonnet 5) con más presupuesto.
+        # (El PLAN del paso 1 queda 'fast': es barato y no necesita profundidad.)
         final, model = _ai_complete(
             'Eres el analista jefe de Khipus AI Finance Intelligence. Escribe en español, '
             'para un inversor exigente: 1) TESIS en 2-3 frases; 2) EVIDENCIA con los números '
             'del contexto/simulación (cita empresas y porcentajes REALES del JSON, jamás '
             'inventes); 3) RIESGOS (2-3 bullets); 4) QUÉ VIGILAR (2-3 señales concretas). '
             'Máximo ~350 palabras. Cierra con: "Análisis, no asesoría financiera."',
-            f'Pregunta: {question}\n\nEVIDENCIA (JSON):\n{evidencia}', max_tokens=1200)
+            f'Pregunta: {question}\n\nEVIDENCIA (JSON):\n{evidencia}',
+            max_tokens=2400, tier='deep')
         _deep_state['result'] = {'answer': final, 'model': model, 'plan': plan,
                                  'sim': sim, 'focos': focos}
         step('listo', 'Análisis completo')

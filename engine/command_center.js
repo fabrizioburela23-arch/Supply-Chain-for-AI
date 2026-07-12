@@ -123,10 +123,44 @@
       }));
     },
 
+    // resuelve un id/ticker/nombre que venga de la IA al id REAL del grafo
+    // (resolutor robusto compartido de engine/resolve.js; deja pasar si no hay)
+    _rid(x) {
+      if (x == null) return x;
+      if ((window.NODE_BY_ID || {})[x]) return x;
+      if (window.KhipuResolve) {
+        const r = window.KhipuResolve.find(x);
+        if (r && r.node) return r.node.id;
+      }
+      return x;
+    },
+
+    // mensaje bilingüe "no encontré X" + sugerencias clicables en el feed
+    _notFoundCard(card, q) {
+      const nf = window.KhipuResolve ? window.KhipuResolve.notFound(q) : null;
+      const en = ((window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en');
+      const div = document.createElement('div');
+      div.style.cssText = 'margin-top:8px;font-size:12.5px;color:#f6a0b5';
+      div.textContent = nf ? (en ? nf.en : nf.es)
+        : (en ? `I couldn't find "${q}".` : `No encontré «${q}».`);
+      card.appendChild(div);
+      if (nf && nf.suggestions.length) {
+        const acts = document.createElement('div'); acts.className = 'bcc-acts'; card.appendChild(acts);
+        nf.suggestions.forEach(n => {
+          this._chip(acts, `🎯 ${n.label}`, () => {
+            if (window._surface) window._surface('xray', n.id);
+            else if (window.openXRay) window.openXRay(n.id);
+          });
+        });
+      }
+    },
+
     async submit(text) {
       text = (text || '').trim();
       if (!text || this.busy) { if (!text) this.focus(); return; }
       this.busy = true; this.setOpen(true);
+      // cerrar overlays que taparían la respuesta (X-Ray, dossier, comparador…)
+      if (window._surface) { try { window._surface('clear'); } catch (e) {} }
       const input = document.getElementById('bcc-input');
       const send = document.getElementById('bcc-send');
       if (input) input.value = '';
@@ -182,50 +216,77 @@
 
     async _runActions(actions, card) {
       const acts = document.createElement('div'); acts.className = 'bcc-acts'; card.appendChild(acts);
+      // superficie compartida: Cabina abierta → su escenario; si no → pestaña
+      // dueña al frente con overlays cerrados (engine/resolve.js)
+      const surf = (kind, arg) => { if (window._surface) return window._surface(kind, arg); return false; };
       for (const a of actions) {
-        const arg = a.arg;
+        let arg = a.arg;
         try {
           if (a.type === 'switch_tab' && window.switchTab) {
-            window.switchTab(arg); this._chip(acts, `📂 ${arg}`);
+            if (!surf('tab', arg)) window.switchTab(arg);
+            this._chip(acts, `📂 ${arg}`);
           } else if (a.type === 'navigate' && window.jumpTo) {
-            if (window.switchTab) window.switchTab('map');
-            setTimeout(() => window.jumpTo(arg), 120);
-            this._chip(acts, `🎯 ${this._label(arg)}`, () => { window.switchTab('map'); setTimeout(() => window.jumpTo(arg), 80); });
+            arg = this._rid(arg);
+            if (!(window.NODE_BY_ID || {})[arg]) { this._notFoundCard(card, a.arg); continue; }
+            if (!surf('graph', arg)) {
+              if (window.switchTab) window.switchTab('map');
+              setTimeout(() => window.jumpTo(arg), 120);
+            }
+            this._chip(acts, `🎯 ${this._label(arg)}`, () => { if (!surf('graph', arg)) { window.switchTab('map'); setTimeout(() => window.jumpTo(arg), 80); } });
           } else if (a.type === 'stress' && window.activateStress) {
-            if (window.switchTab) window.switchTab('map');
-            setTimeout(() => window.activateStress(arg), 150);
+            arg = this._rid(arg);
+            if (!(window.NODE_BY_ID || {})[arg]) { this._notFoundCard(card, a.arg); continue; }
+            if (!surf('stress', arg)) {
+              if (window.switchTab) window.switchTab('map');
+              setTimeout(() => window.activateStress(arg), 150);
+            }
             this._chip(acts, `🚨 Stress: ${this._label(arg)}`);
           } else if (a.type === 'simulate') {
             if (window.switchTab) window.switchTab('simulation');
             setTimeout(() => { try { window.nexusCore && window.nexusCore.runPreset && window.nexusCore.runPreset(arg); } catch (e) {} }, 200);
             this._chip(acts, `🧬 Simular: ${arg}`);
           } else if (a.type === 'second_brain' && window._openSecondBrain) {
-            window._openSecondBrain(arg); this._chip(acts, `🧠 ${this._label(arg)}`);
+            arg = this._rid(arg);
+            if (!surf('secondbrain', arg)) window._openSecondBrain(arg);
+            this._chip(acts, `🧠 ${this._label(arg)}`);
           } else if (a.type === 'tkg_object') {
             // Fase 4 (lenguaje KHIPU): abre la ficha de objeto del Grafo Temporal
             // (tiene precio en vivo, NRS, upstream/downstream, noticias, acciones).
+            arg = this._rid(arg);
             if (window.switchTab) window.switchTab('tkg');
             setTimeout(() => { if (window.__tkgOpenObj) window.__tkgOpenObj(arg); }, 200);
             this._chip(acts, `◈ ${this._label(arg)}`);
           } else if (a.type === 'chart') {
             this._chip(acts, `📊 generando gráfico…`);
             await this._chartInline(arg, card);
-          } else if (a.type === 'xray' && window.openXRay) {
-            window.openXRay(arg); this._chip(acts, `🔬 X-Ray: ${this._label(arg)}`, () => window.openXRay(arg));
-          } else if (a.type === 'compare' && window.openCompare) {
-            window.openCompare(arg.a, arg.b); this._chip(acts, `⇄ ${this._label(arg.a)} vs ${this._label(arg.b)}`);
+          } else if (a.type === 'xray' && (window.openXRay || window._surface)) {
+            arg = this._rid(arg);
+            if (!(window.NODE_BY_ID || {})[arg]) { this._notFoundCard(card, a.arg); continue; }
+            if (!surf('xray', arg)) window.openXRay(arg);
+            this._chip(acts, `🔬 X-Ray: ${this._label(arg)}`, () => { if (!surf('xray', arg)) window.openXRay(arg); });
+          } else if (a.type === 'compare' && (window.openCompare || window._surface)) {
+            const ca = this._rid(arg.a), cb = this._rid(arg.b);
+            if (!(window.NODE_BY_ID || {})[ca]) { this._notFoundCard(card, arg.a); continue; }
+            if (!(window.NODE_BY_ID || {})[cb]) { this._notFoundCard(card, arg.b); continue; }
+            if (!surf('compare', { a: ca, b: cb })) window.openCompare(ca, cb);
+            this._chip(acts, `⇄ ${this._label(ca)} vs ${this._label(cb)}`);
           } else if (a.type === 'insights' && window.switchTab) {
-            window.switchTab('analysis'); this._chip(acts, `💡 Insights`);
+            if (!surf('insights')) window.switchTab('analysis');
+            this._chip(acts, `💡 Insights`);
           } else if (a.type === 'livesim') {
-            if (window.switchTab) window.switchTab('map');
-            setTimeout(() => {
+            const lid2 = this._rid(arg.id);
+            if (!(window.NODE_BY_ID || {})[lid2]) { this._notFoundCard(card, arg.id); continue; }
+            const openLsPanel = () => {
               try {
-                if (window.jumpTo) window.jumpTo(arg.id);
-                if (!document.getElementById('ls-panel') || !document.getElementById('ls-panel').classList.contains('show')) window._lsToggle && window._lsToggle();
-                if (window._liveSelectedNode && window.KhipuState) { /* el usuario puede añadir; disparamos vía preset simple */ }
+                const p = document.getElementById('ls-panel');
+                if ((!p || !p.classList.contains('show')) && window._lsToggle) window._lsToggle();
               } catch (e) {}
-            }, 200);
-            this._chip(acts, `◉ Simular: ${this._label(arg.id)}`);
+            };
+            if (!surf('sim', { id: lid2, kind: arg.kind || 'collapse', after: openLsPanel })) {
+              if (window.switchTab) window.switchTab('map');
+              setTimeout(() => { try { if (window.jumpTo) window.jumpTo(lid2); openLsPanel(); } catch (e) {} }, 200);
+            }
+            this._chip(acts, `◉ Simular: ${this._label(lid2)}`);
           }
         } catch (e) { /* una acción que falla no rompe las demás */ }
       }

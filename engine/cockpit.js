@@ -23,8 +23,15 @@
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  // resuelve empresa desde id/ticker/nombre (reusa el de voice.js si está)
+  // idioma para los textos de la Cabina (regla bilingüe)
+  function ckLang() {
+    try { return (window.LANG || localStorage.getItem('eco_lang') || 'es'); } catch (e) { return 'es'; }
+  }
+
+  // resuelve empresa desde id/ticker/nombre — resolutor robusto compartido
+  // (engine/resolve.js: alias de voz, sin acentos, fuzzy); búsqueda débil de fallback
   function resolveNode(q) {
+    if (window.KhipuResolve) { var r = window.KhipuResolve.find(q); if (r && r.node) return r.node; }
     if (window.BixbyVoice && window.BixbyVoice._resolveNode) { var n = window.BixbyVoice._resolveNode(q); if (n) return n; }
     if (q == null || typeof NODES === 'undefined') return null;
     var s = String(q).trim(); if (!s) return null; var lc = s.toLowerCase();
@@ -324,8 +331,26 @@
     });
   }
 
+  // ── "no encontré esa empresa": mensaje bilingüe + sugerencias clicables ──
+  function stageNotFound(s, query) {
+    var nf = window.KhipuResolve ? window.KhipuResolve.notFound(query) : null;
+    var en = ckLang() === 'en';
+    var title = en ? ('I couldn\'t find "' + query + '"') : ('No encontré «' + query + '»');
+    var sugg = (nf && nf.suggestions) || [];
+    s.innerHTML = backBar(en ? 'Not found' : 'No encontrada') +
+      '<div id="bcp-empty"><h2>' + esc(title) + '</h2>' +
+      '<p>' + (sugg.length ? (en ? 'Did you mean one of these?' : '¿Quisiste decir alguna de estas?')
+        : (en ? 'Try the ticker (e.g. NVDA) or the full name.' : 'Prueba con el ticker (ej. NVDA) o el nombre completo.')) + '</p>' +
+      (sugg.length ? '<div class="bcp-chips">' + sugg.map(function (n) {
+        return '<span class="bcp-chip" data-id="' + esc(n.id) + '"><span class="k">' + esc(n.mkt || n.id) + '</span>' + esc(n.label) + '</span>';
+      }).join('') + '</div>' : '') + '</div>';
+    s.querySelectorAll('.bcp-chip').forEach(function (el) {
+      el.addEventListener('click', function () { stage('xray', el.getAttribute('data-id')); });
+    });
+  }
+
   function stageXRay(s, id) {
-    var n = resolveNode(id); if (!n) { stageEmpty(s); return; }
+    var n = resolveNode(id); if (!n) { stageNotFound(s, id); return; }
     if (!window.buildXRayHTML) { s.innerHTML = '<div class="bcp-loading">X-Ray no disponible</div>'; return; }
     s.innerHTML = backBar('Radiografía') +
       '<div class="bcp-inner"><div id="bcp-xray" class="xray-scope xr-full">' + window.buildXRayHTML(n.id, { full: true }) + '</div></div>';
@@ -336,7 +361,8 @@
   function stageCompare(s, arg) {
     arg = arg || {};
     var a = resolveNode(arg.a), b = arg.b ? resolveNode(arg.b) : null;
-    if (!a) { stageEmpty(s); return; }
+    if (!a) { stageNotFound(s, arg.a || ''); return; }
+    if (arg.b && !b) { stageNotFound(s, arg.b); return; }
     if (!b) b = pickRival(a);   // si solo dieron una, comparamos vs su rival natural
     if (!b) { stageXRay(s, a.id); return; }
     s.innerHTML = backBar('Comparar') +
@@ -363,7 +389,7 @@
 
   function stageSim(s, arg) {
     arg = arg || {};
-    var n = resolveNode(arg.id); if (!n) { stageEmpty(s); return; }
+    var n = resolveNode(arg.id); if (!n) { stageNotFound(s, arg.id || ''); return; }
     var kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(arg.kind) >= 0 ? arg.kind : 'collapse';
     var dir = kind === 'demand' ? 'up' : 'down';
     var kindLabel = { collapse: 'Corte / caída', demand: 'Auge de demanda', price: 'Shock de precio', sanction: 'Sanción' }[kind];
@@ -610,10 +636,15 @@
     }
 
     // 2.55) dossier financiero (ingresos, dilución, FCF, márgenes, ROE…)
+    // vía _surface: con la Cabina abierta lo sube POR ENCIMA (z), no atrás
     var dosM = low.match(/(?:dossier|fundamentales|financieros)\s+(?:de\s+)?(.+)/);
     if (dosM && window.openFinCard) {
       var dn = resolveNode(dosM[1].replace(/\?+$/, '').trim());
-      if (dn) { window.openFinCard(dn.mkt || dn.id); return; }
+      if (dn) {
+        if (window._surface) { window._surface('dossier', dn.mkt || dn.id); return; }
+        window.openFinCard(dn.mkt || dn.id); return;
+      }
+      stageNotFound(document.getElementById('bcp-stage'), dosM[1].replace(/\?+$/, '').trim()); return;
     }
 
     // 2.6) el grafo o la terminal, DENTRO de la pantalla de Bixby
@@ -632,17 +663,26 @@
     var cmp = low.match(/compar[ao]?r?\s+(.+?)\s+(?:y|vs|versus|con|contra)\s+(.+)/);
     if (cmp) { stage('compare', { a: cmp[1], b: cmp[2] }); return; }
 
-    // 5) simular / caída
+    // 5) simular / caída — si el nombre no resuelve, decirlo CON sugerencias
     var sim = low.match(/(?:qu[eé] pasa si cae|si cae|cae|colaps|corte de|corta[nr]?|sanci[oó]n(?:a[nr]?)?|prohib|auge de|boom de|demanda de|simula[nr]?|shock)\s+(.+)/);
     if (sim) {
       var kind = /auge|boom|demanda/.test(low) ? 'demand' : /sanci|prohib/.test(low) ? 'sanction' : /precio/.test(low) ? 'price' : 'collapse';
       var target = sim[1].replace(/\?+$/, '').trim();
       var nn = resolveNode(target);
       if (nn) { stage('sim', { id: nn.id, kind: kind }); return; }
+      stageNotFound(document.getElementById('bcp-stage'), target); return;
     }
 
-    // 6) desármame / radiografía / x-ray / analiza  → X-Ray
-    var xr = low.match(/(?:des[aá]rma(?:me)?|radiograf[ií]a|x-?ray|destripa(?:me)?|anal[ií]za|abre|mu[eé]strame)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
+    // 6) desármame / radiografía / x-ray → X-Ray; el nombre es claramente una
+    //    empresa: si no resuelve, mensaje con sugerencias (no "no existe")
+    var xrStrong = low.match(/(?:des[aá]rma(?:me)?|radiograf[ií]a|x-?ray|destripa(?:me)?)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
+    if (xrStrong) {
+      var nxs = resolveNode(xrStrong[1].replace(/\?+$/, '').trim());
+      if (nxs) { stage('xray', nxs.id); return; }
+      stageNotFound(document.getElementById('bcp-stage'), xrStrong[1].replace(/\?+$/, '').trim()); return;
+    }
+    // verbos genéricos (analiza/abre/muéstrame): si no resuelven, seguimos al fallback
+    var xr = low.match(/(?:anal[ií]za|abre|mu[eé]strame)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
     if (xr) { var nx = resolveNode(xr[1].replace(/\?+$/, '').trim()); if (nx) { stage('xray', nx.id); return; } }
 
     // 7) ¿el texto ES una empresa? → X-Ray directo

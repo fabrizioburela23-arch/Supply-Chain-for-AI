@@ -14,7 +14,7 @@
 
   const TAB_ROWS = [
     ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, ◈ Grafo Temporal, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom.'],
-    ['📈 Mercado', 'Precios en tiempo real y tu portafolio (lo que compras/vendes se guarda en este navegador). Sub-modo ₿ Cripto: las 100 criptomonedas más grandes, con detalle y gráfico de 90 días.'],
+    ['📈 Mercado', 'Precios en tiempo real y tu portafolio. Sub-modo ₿ Cripto: el mercado cripto explicado — vista Mapa por categorías (qué es cada familia de monedas, en simple), top 100 en vivo, y el Expediente Khipus de las 50 grandes: qué es, cómo funciona, riesgos y catalizadores de cada una, con advertencias ⚠ en las monedas delicadas.'],
     ['🖥️ Terminal', 'Vista estilo Bloomberg: hasta 4 gráficos lado a lado + el panel 📋 Datos a la derecha (ficha, valuación, analistas, fundamentales anuales y cadena de cada empresa). Sub-modos: Terminal, Análisis y Canvas IA.'],
     ['❓ Guía', 'Esta página.'],
   ];

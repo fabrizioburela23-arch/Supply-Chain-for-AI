@@ -111,6 +111,19 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   llamar a la IA en command_center.js (devuelve null si no es comando).
 - `window._openSecondBrain(nodeId)` · `window.BixbyVoice.toggle()` ·
   `window.nexusCore.runPreset(presetId)`.
+- `window.KhipuResolve.find(texto)` (engine/resolve.js): resolutor robusto de
+  empresas (aliases de transcripción de voz, fuzzy, sugerencias top-3) —
+  TODO camino de entrada de nombres (voice/command_center/cockpit/khipu_lang)
+  pasa por él. `KhipuResolve.notFound(q)` da el mensaje bilingüe.
+- `window._surface(kind, arg)`: lo que Bixby muestra queda SIEMPRE al frente
+  (dentro de la Cabina si está abierta; si no, switchTab + cierra overlays).
+  No mostrar resultados sin pasar por _surface.
+- `window.CRYPTO_INTEL` + `window.CRYPTO_CATS` (nodes/crypto_intel*.js):
+  expediente cripto Top 50 bilingüe, capa estática jul-2026 (refrescar cada
+  3-6 meses). UI en engine/crypto.js — tab 'crypto', vistas Mapa/Lista/Detalle.
+- Actualizaciones de versión SIEMPRE silenciosas: _showUpdatePill ya NO
+  muestra aviso (recarga al abrir o al ocultar pestaña — pedido explícito).
+  No reintroducir pills/avisos de versión.
 
 ## Lenguaje KHIPU (engine/khipu_lang.js)
 
@@ -160,10 +173,17 @@ NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,   ← Grafo Temporal persistente
 DATABASE_URL                              ← Ontología (Postgres en Railway)
 ```
 
-## Multi-IA
+## Multi-IA — HÍBRIDA (2026-07-12)
 
-`core.ai._ai_complete()` intenta AI_ORDER (claude,gemini,nvidia) en cascada;
-`_claude_complete` es alias compat. `AI_MODEL` default: claude-haiku-4-5.
+`core.ai._ai_complete(system, prompt, max_tokens, tier='fast')` intenta
+AI_ORDER (claude,gemini,nvidia) en cascada; `_claude_complete` es alias
+compat. Dos niveles (el tier SOLO cambia el modelo Claude; Gemini/NVIDIA lo
+ignoran): `AI_MODEL_FAST` (env, default AI_MODEL → claude-haiku-4-5) para
+comandos/noticias/alertas/radar; `AI_MODEL_DEEP` (env, default
+claude-sonnet-5) para síntesis de deep research, tesis/veredicto IA, Canvas,
+War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
+(el tier forma parte de la cache key). Cliente:
+`DataLayer.aiComplete(system, prompt, maxTokens, tier)`.
 `_extract_json()` tolera JSON envuelto en prosa/fences (Gemini/NVIDIA).
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 

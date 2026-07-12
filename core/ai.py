@@ -8,15 +8,17 @@ import re
 
 import requests
 
-from core.config import (AI_MODEL, AI_ORDER, CLAUDE, GEMINI_KEY, GEMINI_MODEL,
-                         NVIDIA_KEY, NVIDIA_MODEL)
+from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, CLAUDE,
+                         GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY, NVIDIA_MODEL)
 
 
-def _complete_claude(system, prompt, max_tokens):
+def _complete_claude(system, prompt, max_tokens, tier='fast'):
     import anthropic
     client = anthropic.Anthropic(api_key=CLAUDE)
+    # Híbrido: el tier SOLO cambia el modelo de Claude (misma ANTHROPIC_KEY).
+    model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
     msg = client.messages.create(
-        model=AI_MODEL, max_tokens=max_tokens, system=system or '',
+        model=model, max_tokens=max_tokens, system=system or '',
         messages=[{'role': 'user', 'content': prompt or ''}],
     )
     text = ''
@@ -27,7 +29,7 @@ def _complete_claude(system, prompt, max_tokens):
     return text, msg.model
 
 
-def _complete_gemini(system, prompt, max_tokens):
+def _complete_gemini(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
             'generationConfig': {'maxOutputTokens': max_tokens, 'temperature': 0.6}}
     r = requests.post(
@@ -42,7 +44,7 @@ def _complete_gemini(system, prompt, max_tokens):
     return text, 'gemini:' + GEMINI_MODEL
 
 
-def _complete_nvidia(system, prompt, max_tokens):
+def _complete_nvidia(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
     body = {'model': NVIDIA_MODEL, 'max_tokens': max_tokens, 'temperature': 0.6,
             'messages': [{'role': 'system', 'content': system or ''},
                          {'role': 'user', 'content': prompt or ''}]}
@@ -65,16 +67,20 @@ def _ai_configured():
     return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
 
 
-def _ai_complete(system, prompt, max_tokens=1000):
+def _ai_complete(system, prompt, max_tokens=1000, tier='fast'):
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
-    pasa al siguiente. Devuelve (texto, etiqueta_modelo)."""
+    pasa al siguiente. Devuelve (texto, etiqueta_modelo).
+
+    tier: 'fast' (default, AI_MODEL_FAST/Haiku) o 'deep' (AI_MODEL_DEEP/Sonnet 5).
+    SOLO cambia el modelo del proveedor Claude; Gemini/NVIDIA quedan igual."""
+    tier = 'deep' if tier == 'deep' else 'fast'
     errors = []
     for name in AI_ORDER:
         prov = _AI_PROVIDERS.get(name)
         if not prov or not prov[0]():
             continue
         try:
-            text, model = prov[1](system, prompt, max_tokens)
+            text, model = prov[1](system, prompt, max_tokens, tier)
             if text and text.strip():
                 return text, model
             errors.append(f'{name}: respuesta vacía')
@@ -84,8 +90,8 @@ def _ai_complete(system, prompt, max_tokens=1000):
 
 
 # Compat: las features existentes llaman _claude_complete → ahora multi-proveedor.
-def _claude_complete(system, prompt, max_tokens):
-    return _ai_complete(system, prompt, max_tokens)
+def _claude_complete(system, prompt, max_tokens, tier='fast'):
+    return _ai_complete(system, prompt, max_tokens, tier)
 
 
 def _extract_json(text):

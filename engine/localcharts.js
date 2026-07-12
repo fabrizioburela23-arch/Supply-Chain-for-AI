@@ -1,22 +1,80 @@
 /* ============================================================================
-   engine/localcharts.js — GRÁFICOS INSTANTÁNEOS SIN IA (Etapa G, 2026-07-11)
-   Feedback de Fabrizio: "los gráficos tardan mucho y muchas veces no los hace
-   bien". Causa: TODO pasaba por el LLM (segundos + errores). Solución: los
-   pedidos comunes se resuelven AQUÍ, determinísticos, con los datos que ya
-   viven en el navegador (NODES, NODE_META, MKT, computeNRS) — 0 ms, 0 errores.
-   Solo lo exótico cae al LLM (que además ya tiene caché de 30 min).
+   engine/localcharts.js — GRÁFICOS INSTANTÁNEOS SIN IA (Etapa G, 2026-07-11;
+   Etapa I "que no tarden" 2026-07-12).
+   Feedback de Fabrizio: "los gráficos tardan full". Estrategia en 4 capas:
+   1) PATRONES LOCALES (<100 ms, 0 IA): top riesgo, márgenes, market cap,
+      sectores, países, comparar (barras lado a lado), riesgo de X (desglose
+      NRS), proveedores/clientes, empleados, fundación, scatter, treemap,
+      cartera, cripto top-10 y precio histórico (velas cacheadas).
+   2) ESQUELETO INSTANTÁNEO: si el pedido va a la IA, el card muestra al
+      instante spinner + "Generando con IA…" (bilingüe ES/EN) — nunca se
+      espera "mirando nada".
+   3) CACHÉ CLIENTE (localStorage 'kh_chartcache', TTL 1 h, LRU 30): pedir el
+      mismo gráfico dos veces = instantáneo. Se implementa interceptando
+      fetch('/api/canvas/generate') — así cubre Canvas, Cabina y Bixby sin
+      tocar sus archivos. Invalidar: window.KhipuLocalCharts.clearCache().
+   4) PREFETCH: al abrir Canvas/Cabina se precalientan /api/candles del
+      portafolio (MKT.pos) y del nodo enfocado (máx. 4, silenciosos).
 
-   API: window.KhipuLocalCharts.try(query) → spec {type,title,subtitle,data,
-   config} compatible con _cvRenderCard, o null si no es un pedido común.
+   API pública (NO romper): window.KhipuLocalCharts.try(query) → spec
+   {type,title,subtitle,data,config} compatible con _cvRenderCard, o null;
+   .tryAsync(query) → Promise<spec|null>; .clearCache(); .prefetch().
+   Resolución de empresas: usa window.KhipuResolve.find si existe (guard
+   typeof — lo construye otro módulo), con fallback a la búsqueda propia.
    ============================================================================ */
 (function () {
   'use strict';
 
   var PAL = ['#60a5fa', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#38bdf8', '#fb923c', '#4ade80'];
 
+  /* ── i18n local (regla bilingüe ES/EN — window.LANG / localStorage eco_lang) ── */
+  var I18 = {
+    es: {
+      gen: 'Generando con IA…',
+      genHint: 'suele tardar unos segundos · quedará en caché',
+      cmpTitle: 'Comparación',
+      cmpSub: 'Barra = % del máximo entre comparadas · valor real en la etiqueta · NRS: menor es mejor',
+      mRev: 'Ingresos', mMgn: 'Margen', mNrs: 'Riesgo NRS', mEmp: 'Empleados',
+      riskOf: 'Riesgo de', riskBd: 'desglose NRS', lowerBetter: 'menor es mejor',
+      cryT: 'Top 10 cripto por capitalización',
+      cryS: 'Miles de millones USD · verde = subió en 24h',
+    },
+    en: {
+      gen: 'Generating with AI…',
+      genHint: 'usually takes a few seconds · will be cached',
+      cmpTitle: 'Comparison',
+      cmpSub: 'Bar = % of max among compared · real value in label · NRS: lower is better',
+      mRev: 'Revenue', mMgn: 'Margin', mNrs: 'NRS risk', mEmp: 'Employees',
+      riskOf: 'Risk of', riskBd: 'NRS breakdown', lowerBetter: 'lower is better',
+      cryT: 'Top 10 crypto by market cap',
+      cryS: 'USD billions · green = up in 24h',
+    },
+  };
+  function L() {
+    try { return String(window.LANG || localStorage.getItem('eco_lang') || 'es').slice(0, 2) === 'en' ? 'en' : 'es'; }
+    catch (e) { return 'es'; }
+  }
+  function TT(k) { var d = I18[L()] || I18.es; return d[k] != null ? d[k] : I18.es[k]; }
+  // claves del desglose NRS (app.html las emite en ES) → EN
+  var TERM_EN = { 'Geopolítica': 'Geopolitics', 'Cadena': 'Supply chain', 'Margen': 'Margin',
+                  'Fundamental': 'Fundamentals', 'Concentración': 'Concentration' };
+
   function nrs(id) { try { return (typeof computeNRS === 'function') ? computeNRS(id) : null; } catch (e) { return null; } }
   function meta(id) { return (window.NODE_META || {})[id] || {}; }
   function cap(id) { var c = Number(meta(id).mktcap_b); return isFinite(c) && c > 0 ? c : null; }
+
+  // ingresos ($B) parseados de NODE_META.revenue_2025 ("~$21.5B", "$390M (FY2025)")
+  // Solo USD: con €/¥/£ devolvemos null para no mezclar monedas.
+  function revB(id) {
+    var s = String(meta(id).revenue_2025 || '');
+    if (!s || /[€¥£]/.test(s)) return null;
+    var m = s.match(/\$\s?([\d.,]+)\s?([TBM])/i);
+    if (!m) return null;
+    var v = parseFloat(m[1].replace(/,/g, ''));
+    if (!isFinite(v) || v <= 0) return null;
+    var u = m[2].toUpperCase();
+    return u === 'T' ? v * 1000 : u === 'M' ? v / 1000 : v;
+  }
 
   function topN(q, def) {
     var m = q.match(/top\s*(\d{1,2})/) || q.match(/(\d{1,2})\s+(?:empresas|mayores|primer)/);
@@ -24,22 +82,39 @@
     return Math.max(3, Math.min(20, n || def));
   }
 
+  // resolución por el módulo central (si existe) — SIEMPRE con guard typeof
+  function _krFind(s) {
+    try {
+      if (window.KhipuResolve && typeof window.KhipuResolve.find === 'function') {
+        var r = window.KhipuResolve.find(s);
+        if (r && r.node && r.node.id) r = r.node;
+        if (r && r.id && window.NODE_BY_ID && window.NODE_BY_ID[r.id]) return window.NODE_BY_ID[r.id];
+        if (r && r.id && r.label) return r;
+      }
+    } catch (e) {}
+    return null;
+  }
+
   // extrae empresas mencionadas ("de nvidia, tsmc y asml")
   function companiesIn(q) {
     var out = [];
     if (!window.NODES) return out;
-    var resolve = (window.BixbyVoice && window.BixbyVoice._resolveNode)
+    var fallback = (window.BixbyVoice && window.BixbyVoice._resolveNode)
       ? function (s) { return window.BixbyVoice._resolveNode(s); }
       : function (s) { s = s.toLowerCase(); return NODES.find(function (n) { return (n.label || '').toLowerCase() === s || (n.mkt || '').toLowerCase() === s || n.id.toLowerCase() === s; }); };
+    var resolve = function (s) { return _krFind(s) || fallback(s); };
+    // verbos de comando pegados al nombre ("compara nvidia") — quitarlos
+    var CMD = /^(?:comp[aá]ra(?:me|r)?|comparaci[oó]n|gr[aá]fic[ao]|graficar?|dibuja|muestra(?:me)?|ens[eé][ñn]ame|ver|riesgo|precio|margen(?:es)?|nrs)\s+/;
     // trocear por separadores típicos
     q.split(/,| y | vs\.? | versus | contra |\bcon\b/).forEach(function (part) {
       part = part.replace(/^.*?\b(?:de|del|entre)\b/, '').replace(/[¿?¡!.]/g, '').trim();
+      part = part.replace(CMD, '').trim();
       if (part.length < 2 || part.length > 40) return;
       var n = resolve(part);
       if (n && out.indexOf(n) < 0) out.push(n);
     });
-    // pasada completa por si el split no ayudó ("margen de nvidia")
-    if (!out.length) {
+    // pasada completa por si el split no ayudó ("compara nvidia y tsmc")
+    if (out.length < 2) {
       var ql = ' ' + q.toLowerCase() + ' ';
       NODES.forEach(function (n) {
         var lbl = (n.label || '').toLowerCase();
@@ -54,6 +129,35 @@
     return { type: 'bar', title: title, subtitle: subtitle,
       data: items.map(function (it, i) { return { label: it[0], value: Math.round(it[1] * 100) / 100, color: it[2] || PAL[i % PAL.length] }; }),
       config: { unit: unit || '' } };
+  }
+
+  /* ── comparación lado a lado: ingresos / margen / NRS / empleados ────────── */
+  function _compareRows(comps) {
+    var mets = [
+      { k: TT('mRev'), get: function (n) { return revB(n.id); },
+        fmt: function (v) { return '$' + (v >= 100 ? Math.round(v) : v.toFixed(1)) + 'B'; } },
+      { k: TT('mMgn'), get: function (n) { return n.margin != null ? n.margin * 100 : null; },
+        fmt: function (v) { return Math.round(v) + '%'; } },
+      { k: TT('mNrs'), get: function (n) { return nrs(n.id); },
+        fmt: function (v) { return String(Math.round(v)); } },
+      { k: TT('mEmp'), get: function (n) { var e = meta(n.id).employees; return e && e > 0 ? e : null; },
+        fmt: function (v) { return v >= 1000 ? Math.round(v / 1000) + 'k' : String(v); } },
+    ];
+    var rows = [];
+    mets.forEach(function (m) {
+      var vals = comps.map(function (n) { return m.get(n); });
+      var have = vals.filter(function (v) { return v != null && isFinite(v); });
+      if (have.length < 2) return;                       // métrica sin datos suficientes
+      var maxAbs = Math.max.apply(null, have.map(Math.abs));
+      if (!(maxAbs > 0)) return;
+      comps.forEach(function (n, ci) {
+        var v = vals[ci];
+        if (v == null || !isFinite(v)) return;
+        rows.push([m.k + ' · ' + n.label + ' — ' + m.fmt(v),
+                   Math.round(v / maxAbs * 100), PAL[ci % PAL.length]]);
+      });
+    });
+    return rows;
   }
 
   function trySpec(query) {
@@ -92,6 +196,20 @@
         return bar('Riesgo NRS: ' + comps.map(function (n) { return n.label; }).join(' · '),
           'NRS 0-100 · menor es mejor',
           comps.map(function (n) { var v = nrs(n.id) || 0; return [n.label, v, v >= 70 ? '#f87171' : v >= 40 ? '#f59e0b' : '#34d399']; }), 'NRS');
+      }
+      // 3b) "riesgo de X" (una sola empresa) → desglose del NRS por componente
+      if (comps.length === 1 && typeof window.computeNRSBreakdown === 'function') {
+        var bd = null;
+        try { bd = window.computeNRSBreakdown(comps[0].id); } catch (e) {}
+        if (bd && bd.terms && bd.terms.length) {
+          var en = L() === 'en';
+          var rowsB = bd.terms.map(function (tm) {
+            var k = en ? (TERM_EN[tm.key] || tm.key) : tm.key;
+            return [k + ' /' + tm.max + ' — ' + (tm.detail || ''), tm.val, tm.hot ? '#f87171' : '#60a5fa'];
+          });
+          return bar(TT('riskOf') + ' ' + comps[0].label + ' — ' + TT('riskBd'),
+            'NRS ' + bd.total + '/100 · ' + TT('lowerBetter'), rowsB, '');
+        }
       }
     }
 
@@ -132,9 +250,18 @@
       return bar('Empresas por país', 'Concentración geográfica del catálogo', rows6, '');
     }
 
-    // ── 7) comparación general de 2+ empresas (tabla compacta) ──
-    if (/compara|comparaci[oó]n|frente a/.test(q)) {
+    // ── 7) comparación de 2+ empresas ──
+    if (/compara|comparaci[oó]n|frente a|\bvs\b|versus/.test(q)) {
       comps = companiesIn(q);
+      // 7a) 2-4 empresas → barras lado a lado (ingresos/margen/NRS/empleados)
+      if (comps.length >= 2 && comps.length <= 4) {
+        var sideRows = _compareRows(comps);
+        if (sideRows.length >= 4) {
+          return bar(TT('cmpTitle') + ': ' + comps.map(function (n) { return n.label; }).join(' vs '),
+            TT('cmpSub'), sideRows, '%');
+        }
+      }
+      // 7b) fallback: tabla compacta (también para 5+)
       if (comps.length >= 2) {
         return { type: 'table', title: 'Comparación: ' + comps.map(function (n) { return n.label; }).join(' vs '),
           subtitle: 'Datos del catálogo en vivo',
@@ -224,7 +351,8 @@
         var n = NODES.find(function (x) { return x.id === k || x.mkt === k; });
         var tk = (n && n.mkt) || k;
         var qq = ((window.MKT || {}).quotes || {})[tk] || {};
-        var qty = typeof pos[k] === 'object' ? (pos[k].qty || pos[k].shares || 0) : pos[k];
+        // MKT.pos[id] = {sh, bp} (acciones, precio de compra) — ver savePos()
+        var qty = typeof pos[k] === 'object' ? (pos[k].sh || pos[k].qty || pos[k].shares || 0) : pos[k];
         return { Empresa: (n && n.label) || k, Ticker: tk, Cantidad: qty,
                  'Precio': qq.close != null ? '$' + Number(qq.close).toFixed(2) : '—',
                  'Valor': qq.close != null && qty ? '$' + Math.round(qq.close * qty).toLocaleString() : '—' };
@@ -238,9 +366,52 @@
     return null;   // no es un pedido común → que lo intente la IA (con caché)
   }
 
-  // ── patrones ASÍNCRONOS (velas del servidor, cacheadas — sin IA) ──────────
+  /* ══ CACHÉ EN MEMORIA: velas y cripto (para tryAsync + prefetch) ══════════ */
+  var _candles = {};                    // mkt → {t, data} | {t:0, p:Promise}
+  var CANDLE_TTL = 5 * 60 * 1000;
+  function _getCandles(mkt) {
+    var c = _candles[mkt];
+    if (c && c.data && Date.now() - c.t < CANDLE_TTL) return Promise.resolve(c.data);
+    if (c && c.p) return c.p;
+    var p = fetch((window.BASE || '') + '/api/candles/' + encodeURIComponent(mkt))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { _candles[mkt] = { t: Date.now(), data: d }; return d; })
+      .catch(function () { delete _candles[mkt]; return null; });
+    _candles[mkt] = { t: 0, p: p };
+    return p;
+  }
+
+  var _crypto = { t: 0, data: null, p: null };
+  function _getCrypto() {
+    if (_crypto.data && Date.now() - _crypto.t < 120000) return Promise.resolve(_crypto.data);
+    if (_crypto.p) return _crypto.p;
+    _crypto.p = fetch((window.BASE || '') + '/api/crypto/markets?per_page=12')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { _crypto = { t: Date.now(), data: d, p: null }; return d; })
+      .catch(function () { _crypto.p = null; return null; });
+    return _crypto.p;
+  }
+
+  // ── patrones ASÍNCRONOS (datos del servidor, cacheados — sin IA) ──────────
   function tryAsync(query) {
     var q = ' ' + String(query || '').toLowerCase().trim() + ' ';
+
+    // cripto: "cripto", "top cripto", "criptomonedas" → top 10 por market cap
+    if (/\bcriptos?\b|\bcryptos?\b|criptomonedas?/.test(q)) {
+      return _getCrypto().then(function (d) {
+        var assets = (d && d.assets) || [];
+        var rowsC = assets.filter(function (a) { return a && a.market_cap > 0; })
+          .sort(function (a, b) { return b.market_cap - a.market_cap; }).slice(0, 10)
+          .map(function (a) {
+            var up = (a.change_24h_pct || 0) >= 0;
+            return [(a.rank ? a.rank + '. ' : '') + (a.name || a.id) + ' (' + String(a.symbol || '').toUpperCase() + ')',
+                    Math.round(a.market_cap / 1e9), up ? '#34d399' : '#f87171'];
+          });
+        if (!rowsC.length) return null;
+        return bar(TT('cryT'), TT('cryS'), rowsC, '$B');
+      });
+    }
+
     // precio histórico: "precio de nvidia", "evolución de TSMC", o la consulta
     // ES simplemente una empresa listada
     var m = q.match(/(?:precio|cotizaci[oó]n|evoluci[oó]n|hist[oó]rico|velas|acci[oó]n)\s+(?:de|del)?\s*(.+)/);
@@ -250,8 +421,7 @@
     if (!n && !m) return Promise.resolve(null);
     if (!n || !n.mkt) return Promise.resolve(null);
     if (!m && target.length > 30) return Promise.resolve(null);   // consulta larga: no es "solo una empresa"
-    return fetch((window.BASE || '') + '/api/candles/' + encodeURIComponent(n.mkt))
-      .then(function (r) { return r.json(); })
+    return _getCandles(n.mkt)
       .then(function (c) {
         if (!c || c.s !== 'ok' || !c.c || c.c.length < 5) return null;
         var up = c.c[c.c.length - 1] >= c.c[0];
@@ -266,13 +436,209 @@
       .catch(function () { return null; });
   }
 
+  /* ══ 2) ESQUELETO "Generando con IA…" (bilingüe, instantáneo) ═════════════ */
+  var _cssDone = false;
+  function _injectCSS() {
+    if (_cssDone || !document.head) return;
+    _cssDone = true;
+    var st = document.createElement('style');
+    st.id = 'khlc-css';
+    st.textContent =
+      '.khlc-skel{display:flex;flex-direction:column;gap:7px;width:72%;max-width:340px}' +
+      '.khlc-skel-bar{height:9px;border-radius:5px;' +
+        'background:linear-gradient(90deg,rgba(122,158,255,.10),rgba(122,158,255,.30),rgba(122,158,255,.10));' +
+        'background-size:200% 100%;animation:khlcShimmer 1.2s linear infinite}' +
+      '@keyframes khlcShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}';
+    document.head.appendChild(st);
+  }
+
+  function _skelHTML(h) {
+    return '<div style="height:' + h + 'px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px">' +
+      '<div class="cv-spinner"></div>' +
+      '<div style="font-size:12px;color:#8fa6d4;font-weight:600">✦ ' + TT('gen') + '</div>' +
+      '<div style="font-size:10px;color:#5b6b8f">' + TT('genHint') + '</div>' +
+      '<div class="khlc-skel">' +
+        '<div class="khlc-skel-bar" style="width:92%"></div>' +
+        '<div class="khlc-skel-bar" style="width:64%"></div>' +
+        '<div class="khlc-skel-bar" style="width:78%"></div>' +
+      '</div></div>';
+  }
+
+  // localiza los cards pendientes (Canvas / Cabina / Bixby inline) y pinta el
+  // esqueleto EN EL MISMO contenedor donde aparecerá el gráfico.
+  function _showAISkeleton() {
+    try {
+      _injectCSS();
+      var cards = document.querySelectorAll('.cv-card:not([data-khlc])');
+      for (var i = 0; i < cards.length; i++) {
+        var card = cards[i];
+        var spin = card.querySelector('.cv-spinner');
+        if (spin && spin.parentElement && spin.parentElement !== card) {
+          // Canvas (app.html) y Cabina (cockpit.js): reemplazar el bloque del spinner
+          card.setAttribute('data-khlc', '1');
+          spin.parentElement.outerHTML = _skelHTML(180);
+        } else if (!spin && card.id && card.id.indexOf('bcc-cv-') === 0 && !card.querySelector('.cv-card-hdr')) {
+          // Bixby inline (command_center.js): holder sin header todavía
+          card.setAttribute('data-khlc', '1');
+          card.innerHTML = _skelHTML(130);
+        }
+      }
+    } catch (e) {}
+  }
+
+  /* ══ 3) CACHÉ CLIENTE de respuestas del Canvas IA (localStorage, LRU) ═════ */
+  var CK = 'kh_chartcache', CACHE_TTL = 60 * 60 * 1000, CACHE_MAX = 30;
+
+  function _normKey(q) {
+    var s = String(q || '').toLowerCase();
+    try { s = s.normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), ''); } catch (e) {}
+    return s.replace(/[¿?¡!.,;:'"«»()]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function _cacheLoad() {
+    try { var d = JSON.parse(localStorage.getItem(CK) || 'null'); if (d && d.items && d.items.length !== undefined) return d; } catch (e) {}
+    return { v: 1, items: [] };
+  }
+  function _cacheSave(d) { try { localStorage.setItem(CK, JSON.stringify(d)); } catch (e) { try { localStorage.removeItem(CK); } catch (e2) {} } }
+  function _cacheGet(key) {
+    var d = _cacheLoad(), now = Date.now(), hit = null, dirty = false;
+    var keep = [];
+    for (var i = 0; i < d.items.length; i++) {
+      var it = d.items[i];
+      if (now - (it.t || 0) >= CACHE_TTL) { dirty = true; continue; }   // TTL 1 h
+      if (it.k === key) { hit = it; it.last = now; dirty = true; }
+      keep.push(it);
+    }
+    d.items = keep;
+    if (dirty) _cacheSave(d);
+    return hit;
+  }
+  function _cachePut(key, spec, model) {
+    if (!key || !spec) return;
+    var d = _cacheLoad(), now = Date.now();
+    d.items = d.items.filter(function (x) { return x.k !== key && now - (x.t || 0) < CACHE_TTL; });
+    d.items.push({ k: key, t: now, last: now, spec: spec, model: model || '' });
+    while (d.items.length > CACHE_MAX) {                                // LRU: fuera el menos usado
+      var oldest = 0;
+      for (var i = 1; i < d.items.length; i++) if ((d.items[i].last || 0) < (d.items[oldest].last || 0)) oldest = i;
+      d.items.splice(oldest, 1);
+    }
+    _cacheSave(d);
+  }
+  function clearCache() {
+    try { localStorage.removeItem(CK); } catch (e) {}
+    _candles = {};
+    _crypto = { t: 0, data: null, p: null };
+    return true;
+  }
+
+  // Interceptor de fetch SOLO para POST /api/canvas/generate: sirve del caché
+  // (instantáneo) o pinta el esqueleto y guarda la respuesta. Cubre Canvas,
+  // Cabina y Bixby sin tocar sus archivos. Passthrough para todo lo demás.
+  function _wrapFetch() {
+    if (window.__khlcFetchWrapped || typeof window.fetch !== 'function') return;
+    window.__khlcFetchWrapped = true;
+    var _orig = window.fetch;
+    window.fetch = function (input, init) {
+      try {
+        var url = (typeof input === 'string') ? input : ((input && input.url) || '');
+        var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+        if (method === 'POST' && /\/api\/canvas\/generate(?:\?|$)/.test(url) &&
+            init && typeof init.body === 'string' && typeof Response === 'function') {
+          var body = null;
+          try { body = JSON.parse(init.body); } catch (e) {}
+          var key = body && body.query ? _normKey(body.query) : '';
+          if (key) {
+            var hit = _cacheGet(key);
+            if (hit && hit.spec) {
+              return Promise.resolve(new Response(
+                JSON.stringify({ spec: hit.spec, model: '⚡ ' + (hit.model || 'cache'), cached: true }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }));
+            }
+            _showAISkeleton();   // va a la IA: feedback inmediato en el card
+            return _orig.apply(this, arguments).then(function (r) {
+              try {
+                if (r && r.ok && (r.headers.get('content-type') || '').indexOf('application/json') >= 0) {
+                  r.clone().json().then(function (d) {
+                    if (d && d.spec && !d.error) _cachePut(key, d.spec, d.model);
+                  }).catch(function () {});
+                }
+              } catch (e) {}
+              return r;
+            });
+          }
+        }
+      } catch (e) {}
+      return _orig.apply(this, arguments);
+    };
+  }
+  _wrapFetch();
+
+  /* ══ 4) PREFETCH de velas al abrir Canvas / Cabina (máx. 4, silencioso) ═══ */
+  var _lastPrefetch = 0;
+  function prefetch() {
+    try {
+      if (Date.now() - _lastPrefetch < 120000) return;   // throttle 2 min
+      _lastPrefetch = Date.now();
+      var tickers = [];
+      var byId = window.NODE_BY_ID || {};
+      // nodo enfocado primero
+      var sel = window._selectedNode && byId[window._selectedNode];
+      if (sel && sel.mkt) tickers.push(sel.mkt);
+      // portafolio del usuario (MKT.pos, claves = ids de nodo)
+      var pos = (window.MKT || {}).pos || {};
+      Object.keys(pos).forEach(function (id) {
+        var n = byId[id];
+        var mkt = (n && n.mkt) || null;
+        if (mkt && tickers.indexOf(mkt) < 0) tickers.push(mkt);
+      });
+      tickers = tickers.filter(function (t) {
+        var c = _candles[t];
+        return !(c && (c.p || (c.data && Date.now() - c.t < CANDLE_TTL)));
+      }).slice(0, 4);
+      tickers.forEach(function (t) { _getCandles(t).catch(function () {}); });
+    } catch (e) {}
+  }
+
+  // enganches perezosos: switchTab('canvas') y BixbyCockpit.open se definen
+  // DESPUÉS de este archivo → reintentar hasta poder envolverlos.
+  var _hooked = { tab: false, cabin: false }, _hookTries = 0;
+  function _installHooks() {
+    try {
+      if (!_hooked.tab && typeof window.switchTab === 'function') {
+        var st = window.switchTab;
+        window.switchTab = function (tab) {
+          if (tab === 'canvas') { try { prefetch(); } catch (e) {} }
+          return st.apply(this, arguments);
+        };
+        _hooked.tab = true;
+      }
+      if (!_hooked.cabin && window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function') {
+        var op = window.BixbyCockpit.open;
+        window.BixbyCockpit.open = function () {
+          try { prefetch(); } catch (e) {}
+          return op.apply(this, arguments);
+        };
+        _hooked.cabin = true;
+      }
+    } catch (e) {}
+    if ((!_hooked.tab || !_hooked.cabin) && _hookTries++ < 40) setTimeout(_installHooks, 1500);
+  }
+  _installHooks();
+
   window.KhipuLocalCharts = {
     try: function (query) {
       try { return trySpec(query); } catch (e) { return null; }
     },
-    // patrones que necesitan datos del servidor (velas) — igual sin IA, ~300ms
+    // patrones que necesitan datos del servidor (velas/cripto) — sin IA.
+    // Si tampoco matchean → el pedido va a la IA: pintamos el esqueleto YA.
     tryAsync: function (query) {
-      try { return tryAsync(query); } catch (e) { return Promise.resolve(null); }
+      var p;
+      try { p = tryAsync(query); } catch (e) { p = Promise.resolve(null); }
+      return p.then(
+        function (spec) { if (!spec) _showAISkeleton(); return spec; },
+        function () { _showAISkeleton(); return null; });
     },
+    clearCache: clearCache,
+    prefetch: prefetch,
   };
 })();

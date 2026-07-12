@@ -447,6 +447,65 @@ prompt del "módulo de datos Bloomberg-depth" (adapters, cripto, Alpaca paper).
   el grafo + búsqueda on-demand de CUALQUIER ticker público vía el módulo de
   datos (la cobertura deja de ser el límite del producto).
 
+## Etapas I+J — Feedback 8 + Expediente Cripto (2026-07-12, sw v76)
+
+Feedback: 3D pantalla negra otra vez, Bixby no entiende "nvidia" por voz,
+resultados quedan detrás de la interfaz, gráficos lentos, quiere Sonnet 5
+(eligió HÍBRIDO), NO quiere avisos de versión (siempre lo último al abrir),
+"no veo nada de cripto". + Pegó KHIPUS_CRIPTO_TOP50_EXPEDIENTE.md.
+
+DIAGNÓSTICO CLAVE: su footer dice v74 (SÍ recibe lo último) pero sus beacons
+NUNCA llegan (canal verificado OK con beacon de prueba → puede que pruebe en
+OTRO dispositivo). Hueco real encontrado en graph3d: canvas que nace 0×0
+(pestaña oculta/carrera de layout) NUNCA se recuperaba (_onResize retornaba
+en silencio y _selfCheck ignoraba buffer 0×0) = pantalla negra sin error.
+
+- [x] **3D blindado** (graph3d.js): _ensureSized() + _startSizeWatch()
+      (reintento por rAF hasta ~20s) + ResizeObserver en canvas y padre +
+      _selfCheck v2 (buffer 0×0 → beacon '3d_zero_size' con medidas + watch;
+      document.hidden → reprograma en vez de abandonar). Beacons con versión
+      REAL (window._appVersion, antes 'v68+' hardcodeado).
+- [x] **Actualizaciones invisibles** (pedido explícito): _showUpdatePill ya
+      NO muestra pill — recarga silenciosa al abrir (<10s), con pestaña
+      oculta, o al ocultarla (visibilitychange). Anti-bucle 1/min.
+- [x] **Bixby entiende nombres** (agente A): engine/resolve.js NUEVO —
+      KhipuResolve.find() con ~150 aliases de transcripción de voz española
+      ('en vidia'/'envidia'/'video'→Nvidia, 'te ese eme ce'→TSMC), fuzzy
+      Levenshtein, sugerencias top-3; integrado en voice/command_center/
+      cockpit/khipu_lang con fallback. notFound() bilingüe (Bixby DICE las
+      sugerencias). VERIFICADO: 8/8 variantes de voz resuelven.
+- [x] **Todo al frente** (agente A): window._surface(kind,arg) — Cabina
+      abierta → renderiza EN su escenario (dossier fc-ov z→7600 sobre el
+      cockpit z7000); cerrada → cierra overlays y switchTab ANTES de pintar.
+      Todas las acciones visuales de Bixby pasan por _surface.
+- [x] **IA híbrida** (agente B): core/ai.py _ai_complete(tier='fast'|'deep');
+      AI_MODEL_FAST (haiku) / AI_MODEL_DEEP (claude-sonnet-5, env override).
+      DEEP: síntesis deep research, veredicto/tesis IA (aiComplete tier),
+      Canvas, War Room (tier:'deep' max 2500), brief matinal. FAST: todo lo
+      demás. Bonus: bug de _diag_gemini/_diag_nvidia sin import corregido.
+      Sonnet 5 intro $2/$10 MTok hasta 2026-08-31 — deep ~2-3x el costo de
+      fast, acotado a síntesis/tesis/canvas/brief. Sin cambios en Railway.
+- [x] **Gráficos rápidos** (agente D): esqueleto instantáneo bilingüe cuando
+      va a la IA; caché cliente localStorage (TTL 1h, LRU 30, interceptor
+      scoped SOLO para POST /api/canvas/generate); patrones locales nuevos
+      ('compara X y Y' barras, 'riesgo de X' desglose NRS, 'cripto' top 10);
+      prefetch de velas (nodo enfocado + portafolio, máx 4). De paso: bug de
+      'mi cartera' (leía pos.qty inexistente; forma real {sh,bp}).
+- [x] **Etapa J — Expediente Cripto Top 50** (2 agentes): nodes/crypto_intel.js
+      (+CRYPTO_CATS 11 categorías con blurbs simples bilingües) y
+      crypto_intel2.js — 50 fichas {what,mech,tok,cats,risks,pos} ES+EN,
+      50/50 ids CoinGecko VÁLIDOS (verificado contra la API). warn en:
+      zcash, monero, usd1-wlfi, aster-2, world-liberty-financial.
+      UI engine/crypto.js reescrita: vista 🗺 Mapa (tarjetas por categoría,
+      chips con 24h% y ⚠, default), ☰ Lista (filtros por tesis, badges 📋/⚠),
+      Detalle (gráfico 90d + Expediente Khipus de 6 bloques + banner ⚠ +
+      disclaimer). Fuente: KHIPUS_CRIPTO_TOP50_EXPEDIENTE.md — capa estática
+      jul-2026, REFRESCAR CADA 3-6 MESES (recordatorio del propio doc).
+- [x] Bixby prompt: sabe del tab 'crypto' + lee errores did_you_mean tal cual.
+- [x] Gates: node --check 13 archivos, py_compile 5, 8 bloques inline OK,
+      pytest 56 passed. Verificación en vivo local: resolver 8/8, _surface,
+      caché/prefetch de charts, mapa cripto, detalle EN con banner Aster.
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con

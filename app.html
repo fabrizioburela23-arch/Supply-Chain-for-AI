@@ -3708,6 +3708,10 @@ es: {
   cr_th_coin:'Moneda', cr_th_price:'Precio', cr_th_24h:'24h %', cr_th_7d:'7d %', cr_th_mcap:'Market cap', cr_th_vol:'Volumen 24h',
   cr_loading:'Cargando mercado cripto…', cr_err:'No se pudo cargar el mercado cripto. Reintenta en unos segundos.',
   cr_back:'← Volver a la lista', cr_supply:'En circulación', cr_maxsupply:'Suministro máximo', cr_ath:'Máximo histórico', cr_atl:'Mínimo histórico', cr_rank:'Ranking',
+  cr_view_map:'Mapa', cr_view_list:'Lista', cr_all:'Todas', cr_empty:'Ninguna moneda del top 100 en esta categoría.',
+  cr_dossier:'Expediente', cr_dossier_t:'Expediente Khipus',
+  cr_b_what:'¿Qué es?', cr_b_mech:'Cómo funciona', cr_b_tok:'Tokenomics', cr_b_cats:'Catalizadores', cr_b_risks:'Riesgos', cr_b_pos:'Posicionamiento',
+  cr_disclaimer:'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.',
 },
 en: {
   sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
@@ -3768,6 +3772,10 @@ en: {
   cr_th_coin:'Coin', cr_th_price:'Price', cr_th_24h:'24h %', cr_th_7d:'7d %', cr_th_mcap:'Market cap', cr_th_vol:'24h volume',
   cr_loading:'Loading crypto market…', cr_err:'Could not load the crypto market. Retry in a few seconds.',
   cr_back:'← Back to list', cr_supply:'Circulating supply', cr_maxsupply:'Max supply', cr_ath:'All-time high', cr_atl:'All-time low', cr_rank:'Rank',
+  cr_view_map:'Map', cr_view_list:'List', cr_all:'All', cr_empty:'No top-100 coin in this category.',
+  cr_dossier:'Dossier', cr_dossier_t:'Khipus Dossier',
+  cr_b_what:'What is it?', cr_b_mech:'How it works', cr_b_tok:'Tokenomics', cr_b_cats:'Catalysts', cr_b_risks:'Risks', cr_b_pos:'Positioning',
+  cr_disclaimer:'Informational context, not investment advice. Analysis layer: Jul 2026 · live prices from CoinGecko.',
 },
 };
 function t(k){ return (I18N[LANG]&&I18N[LANG][k])||I18N.es[k]||k; }
@@ -4760,10 +4768,12 @@ const DataLayer = {
     return DataLayer._cached('ins_'+ticker, 86400000, ()=>
       this._json(BASE+'/api/insiders/'+encodeURIComponent(ticker)));
   },
-  async aiComplete(system, prompt, maxTokens){ // → texto
+  async aiComplete(system, prompt, maxTokens, tier){ // → texto; tier 'deep' = Sonnet
     maxTokens = maxTokens||900;
+    const body={system,prompt,max_tokens:maxTokens};
+    if(tier) body.tier=tier;
     const j=await this._json(BASE+'/api/ai/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({system,prompt,max_tokens:maxTokens})});
+      body:JSON.stringify(body)});
     if(j.error) throw new Error(j.error);
     return j.result;
   },
@@ -5387,7 +5397,7 @@ Idioma de respuesta: ${LANG==='en'?'English':'español'}.
 Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con este formato exacto:
 {"verdict":"FUERTE COMPRA|COMPRA|MANTENER|VENDER|ALTO RIESGO","confidence":1-5,"headline":"tesis central en una línea (max 80 chars)","bull_case":"caso alcista en 2-3 oraciones","bear_case":"riesgo principal en 2-3 oraciones","key_metric":"métrica clave a vigilar","time_horizon":"horizonte (ej 18-36 meses)","catalysts":["c1","c2","c3"],"comparable":"empresa comparable conocida"}`;
     try{
-      const txt=await DataLayer.aiComplete(system, prompt, 900);
+      const txt=await DataLayer.aiComplete(system, prompt, 1400, 'deep');
       const obj=extractJSON(txt);
       if(!obj) throw new Error('respuesta no parseable');
       if(prefs().aicache && d.mkt) localStorage.setItem('ai_analysis_'+d.mkt+'_'+today(), JSON.stringify(obj));
@@ -5610,18 +5620,20 @@ function setupPWA(){
     // (a) el Service Worker al activarse una versión nueva, y
     // (b) el chequeo periódico de live.js (para navegadores que cachean de
     //     más y NUNCA disparan el SW — causa real de "sigo viendo lo viejo").
+    // Actualización SIEMPRE INVISIBLE (pedido explícito: "no quiero eso de
+    // nuevas versiones — cuando lo abres ya deberías abrir la última"):
+    // jamás un aviso, jamás recargar en la cara del usuario. Cuando se detecta
+    // versión nueva: recarga silenciosa si la página es recién abierta (<10s)
+    // o si la pestaña está oculta; si está en pleno uso, se recarga en el
+    // momento en que el usuario minimiza o cambia de pestaña. El nombre
+    // _showUpdatePill se conserva por compatibilidad (lo llama live.js).
     window._showUpdatePill = function () {
-      if (document.getElementById('kh-upd-pill')) return;
-      const pill = document.createElement('button');
-      pill.id = 'kh-upd-pill';
-      pill.textContent = '⬆ Nueva versión lista — toca para actualizar';
-      pill.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:12000;cursor:pointer;' +
-        'padding:10px 16px;border-radius:999px;border:1px solid rgba(0,224,255,.5);' +
-        'background:rgba(8,14,24,.95);color:#00E0FF;font-size:12.5px;font-weight:700;' +
-        'font-family:Inter,system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.45)';
-      pill.onclick = () => {
+      if (window._updPending) return;
+      const last = +(sessionStorage.getItem('kh_upd_ts') || 0);
+      if (Date.now() - last < 60000) return;   // anti-bucle: máx 1/min
+      window._updPending = true;
+      const doReload = () => {
         sessionStorage.setItem('kh_upd_ts', String(Date.now()));
-        // limpiar cachés del SW antes de recargar — mata el "veo lo viejo" persistente
         const done = () => location.reload();
         try {
           Promise.all([
@@ -5631,7 +5643,10 @@ function setupPWA(){
           setTimeout(done, 1500);   // pase lo que pase, recarga
         } catch (e) { done(); }
       };
-      document.body.appendChild(pill);
+      if (performance.now() < 10000 || document.hidden) { doReload(); return; }
+      document.addEventListener('visibilitychange', function onHide() {
+        if (document.hidden) { document.removeEventListener('visibilitychange', onHide); doReload(); }
+      });
     };
 
     // Actualización de versión SIN molestar (feedback real: "se reinicia a
@@ -6040,6 +6055,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <!-- Khipu Finance Engine -->
 <script src="engine/graph3d.js"></script>
 <script src="engine/hypergraph.js"></script>
+<script src="engine/resolve.js"></script>
 <script src="engine/voice.js"></script>
 <script src="engine/secondbrain.js"></script>
 <script src="engine/geo_coords.js"></script>
@@ -6066,6 +6082,8 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/fincard.js"></script>
 <script src="engine/termdata.js"></script>
 <script src="engine/explain.js"></script>
+<script src="nodes/crypto_intel.js"></script>
+<script src="nodes/crypto_intel2.js"></script>
 <script src="engine/crypto.js"></script>
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
@@ -6092,7 +6110,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
       if (_diagCount++ > 8) return;
       fetch('/api/diag', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, ver: 'v68+', ua: navigator.userAgent, data: data || {} }),
+        body: JSON.stringify({ kind, ver: window._appVersion ? 'v' + window._appVersion : 'v?', ua: navigator.userAgent, data: data || {} }),
       }).catch(() => {});
     } catch (e) {}
   };
@@ -6562,7 +6580,7 @@ async function _runClaudeSim(text, nodeStr, output, status) {
       body: JSON.stringify({
         system: 'Eres un analista experto en cadenas de valor de semiconductores, IA y espacio. Analiza el escenario y proporciona: 1) Empresas más afectadas (con % impacto estimado), 2) Efectos dominó en la cadena de suministro, 3) Oportunidades de inversión ante el escenario, 4) Recomendaciones de gestión de riesgo. Sé específico y cuantitativo.',
         prompt: `ESCENARIO: ${text}\nNodos relevantes: ${nodeStr||'toda la cadena de valor semiconductores/IA/espacio'}`,
-        max_tokens: 1500
+        max_tokens: 2500, tier: 'deep'
       })
     });
     if (!resp.ok) throw new Error('API error ' + resp.status);

@@ -61,6 +61,16 @@ class KhipuGraph3D {
     this._setupPointerControls();
 
     window.addEventListener('resize', () => this._onResize());
+    // El resize de ventana NO se dispara cuando un contenedor pasa de oculto
+    // a visible — ResizeObserver sí. Cubre el caso "canvas nace 0×0".
+    try {
+      if (typeof ResizeObserver !== 'undefined') {
+        this._ro = new ResizeObserver(() => this._onResize());
+        this._ro.observe(this.canvas);
+        if (this.canvas.parentElement) this._ro.observe(this.canvas.parentElement);
+      }
+    } catch (e) {}
+    if (!this._ensureSized()) this._startSizeWatch();
     this.canvas.addEventListener('mousemove', e => this._onMouseMove(e));
     this.canvas.addEventListener('click', e => this._onClick(e));
     this.canvas.addEventListener('wheel', e => this._onWheel(e), { passive: true });
@@ -425,12 +435,29 @@ class KhipuGraph3D {
   // Auto-chequeo visual: 2s tras arrancar, renderiza y LEE píxeles. Si todo
   // está negro en una pestaña visible → degradar automáticamente y avisar.
   _selfCheck(attempt) {
-    if (!this.active || (typeof document !== 'undefined' && document.hidden)) return;
+    if (!this.active) return;
+    if (typeof document !== 'undefined' && document.hidden) {
+      // pestaña oculta: reintentar luego, no abandonar el chequeo
+      setTimeout(() => this._selfCheck(attempt), 3000);
+      return;
+    }
     try {
       this.renderer.render(this.scene, this.camera);   // frame fresco en este mismo tick
       const gl = this.renderer.getContext();
       const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
-      if (!w || !h) return;
+      if (!w || !h) {
+        // CANVAS 0×0 — la causa silenciosa de "pantalla negra": el motor corre
+        // dentro de una caja sin tamaño. Avisar al diagnóstico y recuperar.
+        if (window._diag) {
+          window._diag('3d_zero_size', {
+            cw: this.canvas.clientWidth, ch: this.canvas.clientHeight,
+            winW: window.innerWidth, winH: window.innerHeight, attempt: attempt || 0,
+          });
+        }
+        this._startSizeWatch();
+        if ((attempt || 0) < 4) setTimeout(() => this._selfCheck((attempt || 0) + 1), 1500);
+        return;
+      }
       let lit = 0;
       const p = new Uint8Array(4);
       for (let i = 0; i < 60; i++) {
@@ -1081,11 +1108,39 @@ class KhipuGraph3D {
   }
 
   _onResize() {
-    if (!this.canvas.clientWidth) return;
+    // OJO: nunca retornar en silencio con tamaño 0 — ese era el hueco de la
+    // "pantalla negra": canvas nace 0×0 (pestaña oculta / carrera de layout)
+    // y nada volvía a dimensionarlo. Ahora reintenta hasta tener tamaño real.
+    if (!this._ensureSized()) this._startSizeWatch();
+  }
+
+  // Dimensiona el renderer al tamaño REAL del canvas. true si quedó > 0.
+  _ensureSized() {
     const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
-    this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    this.renderer.setSize(w, h);
+    if (!w || !h) return false;
+    const gl = this.renderer.getContext();
+    if (gl.drawingBufferWidth !== Math.round(w * this.renderer.getPixelRatio()) ||
+        gl.drawingBufferHeight !== Math.round(h * this.renderer.getPixelRatio())) {
+      this.camera.aspect = w / h;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(w, h);
+    }
+    return gl.drawingBufferWidth > 0 && gl.drawingBufferHeight > 0;
+  }
+
+  // Vigilante: reintenta dimensionar cada frame hasta lograrlo (máx ~20s).
+  _startSizeWatch() {
+    if (this._sizeWatchOn) return;
+    this._sizeWatchOn = true;
+    let tries = 0;
+    const tick = () => {
+      if (this._ensureSized() || tries++ > 1200 || !this.renderer) {
+        this._sizeWatchOn = false;
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   pause() { this.active = false; }

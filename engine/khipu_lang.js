@@ -28,7 +28,25 @@
       if (!byTicker && n.mkt && n.mkt.toUpperCase() === up) byTicker = n;
       if (byId && byTicker) break;
     }
-    return byId || byTicker || null;
+    if (byId || byTicker) return byId || byTicker;
+    // resolutor robusto compartido (engine/resolve.js): alias de voz, sin
+    // acentos, typos. Umbral 60 = prefijo o mejor, para no convertir lenguaje
+    // natural cualquiera en comando por un fuzzy débil.
+    if (window.KhipuResolve) {
+      const r = window.KhipuResolve.find(token);
+      if (r && r.node && r.score >= 60) return r.node;
+    }
+    return null;
+  }
+
+  // mensaje bilingüe "no encontré X" (con sugerencias) para los comandos
+  function _nfAnswer(token, fallbackEs, fallbackEn) {
+    const en = ((window.LANG || (function () { try { return localStorage.getItem('eco_lang'); } catch (e) { return null; } })() || 'es') === 'en');
+    if (window.KhipuResolve && token) {
+      const nf = window.KhipuResolve.notFound(token);
+      return en ? nf.en : nf.es;
+    }
+    return en ? fallbackEn : fallbackEs;
   }
 
   const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY']);
@@ -127,13 +145,20 @@
 
   function _handleCompare(args) {
     const a = resolveEntity(args[0] || ''), b = resolveEntity(args[1] || '');
-    if (!a || !b) return { answer: 'Uso: COMPARE <A> <B> — dos tickers o ids conocidos.', actions: [] };
+    if (!a || !b) {
+      const bad = !a ? (args[0] || '') : (args[1] || '');
+      if (bad) return { answer: _nfAnswer(bad, 'Uso: COMPARE <A> <B> — dos tickers o ids conocidos.', 'Usage: COMPARE <A> <B> — two known tickers or ids.'), actions: [] };
+      return { answer: _nfAnswer('', 'Uso: COMPARE <A> <B> — dos tickers o ids conocidos.', 'Usage: COMPARE <A> <B> — two known tickers or ids.'), actions: [] };
+    }
     return { answer: `Comparando ${a.label} vs ${b.label}.`, actions: [{ type: 'compare', arg: { a: a.id, b: b.id } }] };
   }
 
   function _handleShock(args) {
     const e = resolveEntity(args[0] || '');
-    if (!e) return { answer: 'Uso: SHOCK <TICKER> [severidad] — simula su caída en vivo en el mapa.', actions: [] };
+    if (!e) {
+      if (args[0]) return { answer: _nfAnswer(args[0], 'Uso: SHOCK <TICKER> [severidad] — simula su caída en vivo en el mapa.', 'Usage: SHOCK <TICKER> [severity] — simulates its collapse live on the map.'), actions: [] };
+      return { answer: 'Uso: SHOCK <TICKER> [severidad] — simula su caída en vivo en el mapa.', actions: [] };
+    }
     const sev = parseInt(args[1], 10);
     return { answer: `Simulando en vivo la caída de ${e.label}.`, actions: [{ type: 'livesim', arg: { id: e.id, sev: isNaN(sev) ? 100 : sev } }] };
   }

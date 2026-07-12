@@ -37,16 +37,18 @@ def _recently_proposed(session, agent, action_type, object_id, hours=24):
     return session.scalars(q).first() is not None
 
 
-def _ai_explain(prompt, fallback):
+def _ai_explain(prompt, fallback, tier='fast', max_tokens=200):
     """Genera la explicación en lenguaje natural con la cascada multi-proveedor
     compartida (core/ai.py — antes vivía en server.py, lo que creaba una
     dependencia circular ontology→server). Si falla, usa un fallback
-    determinista — un agente nunca debe bloquearse por la IA."""
+    determinista — un agente nunca debe bloquearse por la IA.
+    tier='deep' (Sonnet 5) solo para el brief matinal; los agentes quedan 'fast'."""
     try:
         from core.ai import _ai_complete
         text, _model = _ai_complete(
             'Eres un analista senior de riesgo de cadena de suministro. Responde en '
-            'español, 1-2 frases, concreto y sin relleno.', prompt, max_tokens=200)
+            'español, 1-2 frases, concreto y sin relleno.', prompt,
+            max_tokens=max_tokens, tier=tier)
         return text.strip() if text else fallback
     except Exception:
         return fallback
@@ -448,7 +450,7 @@ def brief_matinal(session, hours=24):
         text = _ai_explain(
             'Resume en 3-5 frases, en español, para un inversor que abre la app en la mañana, '
             'qué pasó en su ontología de inversión en las últimas ' + str(hours) + ' horas:\n' + '\n'.join(items[:25]),
-            None)
+            None, tier='deep', max_tokens=400)
     if not text:
         text = (f'{len(actions)} acciones registradas y {len(proposals)} propuestas de agentes '
                 f'en las últimas {hours}h.' if (actions or proposals) else
