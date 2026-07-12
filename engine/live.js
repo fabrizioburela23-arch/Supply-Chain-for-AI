@@ -51,8 +51,22 @@
 
   var lastSeenRun = 0;   // no re-notificar la misma corrida dos veces
 
+  // Detector de página VIEJA: algunos navegadores (sobre todo en celular)
+  // cachean de más y el Service Worker nunca avisa. Comparamos la versión
+  // del server con la nuestra; si difieren → avisito de actualización.
+  function versionCheck() {
+    if (!window._appVersion || !window._showUpdatePill) return;
+    fetch((window.BASE || '') + '/sw.js?vchk=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var v = (t.match(/khipu-finance-v(\d+)/) || [])[1];
+        if (v && v !== window._appVersion) window._showUpdatePill();
+      }).catch(function () {});
+  }
+
   function cycle() {
     if (document.hidden) return;
+    versionCheck();
     // el server corre el ciclo en background; esta llamada arranca una corrida
     // si toca y devuelve el resultado de la ÚLTIMA corrida terminada
     fetch((window.BASE || '') + '/api/ontology/agents/cycle', {

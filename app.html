@@ -1258,6 +1258,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/nodes_nuclear.js"></script>
 <script src="nodes/nodes_expand4.js"></script>
 <script src="nodes/nodes_expand5.js"></script>
+<script src="nodes/meta_fill.js"></script>
 <script src="nodes/preipo_intel.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
@@ -5588,6 +5589,34 @@ function setupPWA(){
     // desplegada), recargamos UNA vez para que el usuario vea lo último sin
     // tener que abrir incógnito ni Ctrl+Shift+R. Guardas anti-bucle:
     // solo si ya había un controller (no en la primera instalación).
+    // Aviso de versión nueva — clicable, nunca interrumpe. Lo disparan:
+    // (a) el Service Worker al activarse una versión nueva, y
+    // (b) el chequeo periódico de live.js (para navegadores que cachean de
+    //     más y NUNCA disparan el SW — causa real de "sigo viendo lo viejo").
+    window._showUpdatePill = function () {
+      if (document.getElementById('kh-upd-pill')) return;
+      const pill = document.createElement('button');
+      pill.id = 'kh-upd-pill';
+      pill.textContent = '⬆ Nueva versión lista — toca para actualizar';
+      pill.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:12000;cursor:pointer;' +
+        'padding:10px 16px;border-radius:999px;border:1px solid rgba(0,224,255,.5);' +
+        'background:rgba(8,14,24,.95);color:#00E0FF;font-size:12.5px;font-weight:700;' +
+        'font-family:Inter,system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.45)';
+      pill.onclick = () => {
+        sessionStorage.setItem('kh_upd_ts', String(Date.now()));
+        // limpiar cachés del SW antes de recargar — mata el "veo lo viejo" persistente
+        const done = () => location.reload();
+        try {
+          Promise.all([
+            window.caches ? caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))) : null,
+            navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.update()))) : null,
+          ]).then(done, done);
+          setTimeout(done, 1500);   // pase lo que pase, recarga
+        } catch (e) { done(); }
+      };
+      document.body.appendChild(pill);
+    };
+
     // Actualización de versión SIN molestar (feedback real: "se reinicia a
     // cada rato" — el auto-reload interrumpía al usuario en cada deploy):
     // - página recién abierta (<10s): recarga silenciosa (no interrumpe nada)
@@ -5604,16 +5633,7 @@ function setupPWA(){
         location.reload();
         return;
       }
-      if (document.getElementById('kh-upd-pill')) return;
-      const pill = document.createElement('button');
-      pill.id = 'kh-upd-pill';
-      pill.textContent = '⬆ Nueva versión lista — toca para actualizar';
-      pill.style.cssText = 'position:fixed;bottom:18px;right:18px;z-index:12000;cursor:pointer;' +
-        'padding:10px 16px;border-radius:999px;border:1px solid rgba(0,224,255,.5);' +
-        'background:rgba(8,14,24,.95);color:#00E0FF;font-size:12.5px;font-weight:700;' +
-        'font-family:Inter,system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.45)';
-      pill.onclick = () => { sessionStorage.setItem('kh_upd_ts', String(Date.now())); location.reload(); };
-      document.body.appendChild(pill);
+      window._showUpdatePill();
     });
   }
   const upd=()=>{ const on=navigator.onLine; $('offline-badge').classList.toggle('show',!on); DataHealth.render(); };
@@ -5675,7 +5695,12 @@ const $=id=>document.getElementById(id);
   const lines=[`› grafo · ${nodeCount} nodos · ${linkCount} conexiones`,
     '› cargando capa de mercado en vivo…','› motor de análisis IA listo','› ✓ terminal operativo'];
   const footerEl = document.getElementById('footer-nodecount');
-  if (footerEl) footerEl.textContent = `Khipus AI Finance Inteligence · ${nodeCount} nodos · NRS · Bixby AI · 3D`;
+  if (footerEl) {
+    // versión visible: clave para diagnosticar "sigo viendo lo viejo"
+    const vm2 = (document.querySelector('script[src*="?v="]')?.src.match(/[?&]v=(\d+)/) || [])[1];
+    footerEl.textContent = `Khipus AI Finance Inteligence · ${nodeCount} nodos · NRS · Bixby AI` + (vm2 ? ` · v${vm2}` : '');
+    window._appVersion = vm2 || null;
+  }
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
   setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);
 })();

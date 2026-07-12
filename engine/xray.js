@@ -219,7 +219,7 @@
     var btns =
       '<div class="xr-btns">' +
         '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ Ver onda en el mapa</span>' +
-        (n.mkt && window.openFinCard ? '<span class="xrb" onclick="window.openFinCard(\'' + esc(n.mkt) + '\')">📊 Dossier</span>' : '') +
+        (window.openFinCard ? '<span class="xrb" onclick="window.openFinCard(\'' + esc(n.mkt || id) + '\')">📊 Dossier</span>' : '') +
         (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ Comparar</span>' : '') +
         (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ En el tiempo</span>' : '') +
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 Análisis IA</span>' : '') +

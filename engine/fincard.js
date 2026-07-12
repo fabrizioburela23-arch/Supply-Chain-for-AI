@@ -110,11 +110,57 @@
   function posneg(v) { return v == null ? INK : v >= 0 ? UP : DOWN; }
   function posnegInv(v) { return v == null ? INK : v <= 0 ? UP : DOWN; }   // dilución: menos es mejor
 
+  // dossier de empresa PRIVADA/pre-IPO: ficha + valuación + rondas + hitos
+  // (feedback: "no todas las empresas tienen toda la info — que esté de todas")
+  function renderPrivate(n) {
+    var ov = ensureShell();
+    var fc = document.getElementById('fc');
+    var m = (window.NODE_META || {})[n.id] || {};
+    var pi = (window.PREIPO_INTEL || {})[n.id] || {};
+    var kv = function (k, v) {
+      return v ? '<div style="display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:6px 0;border-bottom:1px solid rgba(122,158,255,.08)">' +
+        '<span style="color:#7C87A3">' + esc(k) + '</span><span style="color:#E8EDFB;text-align:right">' + esc(v) + '</span></div>' : '';
+    };
+    var rounds = (pi.rounds || []).map(function (r) {
+      return '<div style="display:flex;gap:10px;font-size:11.5px;padding:5px 0;border-bottom:1px solid rgba(122,158,255,.06)">' +
+        '<span style="color:#00E0FF;font-family:monospace;flex:0 0 52px">' + esc(r.date || '') + '</span>' +
+        '<span style="color:#E8EDFB;flex:1">' + esc(r.round || '') + '</span>' +
+        '<span style="color:#2BE38B;font-family:monospace">' + esc(r.amount || '') + '</span></div>';
+    }).join('');
+    var miles = (pi.milestones || []).map(function (h) {
+      return '<div style="font-size:11.5px;padding:4px 0;color:#9BA6C4"><span style="color:#00E0FF;font-family:monospace">' + esc(h.date || '') + '</span> · ' + esc(h.event || '') + '</div>';
+    }).join('');
+    fc.innerHTML =
+      '<div class="fc-hd"><span class="fc-name">🔒 ' + esc(n.label) + '</span>' +
+        '<span class="fc-tk">empresa privada · dossier pre-IPO</span>' +
+        '<button class="fc-close" onclick="window._finCardClose()">✕</button></div>' +
+      '<div class="fc-sub">Sin estados financieros públicos — esto es lo que sabemos del catálogo e inteligencia pre-IPO</div>' +
+      '<div class="fc-grid">' +
+        '<div class="fc-cell"><div class="fc-t">🏢 Ficha</div>' +
+          kv('País', n.country) + kv('Fundada', m.founded) +
+          kv('Empleados', m.employees ? Number(m.employees).toLocaleString() : null) +
+          kv('Ingresos', m.revenue_2025) + kv('Riesgo geopolítico', m.geo_risk) + '</div>' +
+        '<div class="fc-cell"><div class="fc-t">💎 Valuación</div>' +
+          kv('Valuación', pi.valuation) + kv('Capital levantado', pi.total_raised) +
+          kv('IPO estimada', pi.ipo_timeline) +
+          kv('Inversores', (pi.investors || []).slice(0, 4).join(', ') || null) +
+          (!pi.valuation ? '<div class="fc-note" style="padding:14px 4px">Sin inteligencia pre-IPO registrada para esta empresa.</div>' : '') + '</div>' +
+        (rounds ? '<div class="fc-cell"><div class="fc-t">💸 Rondas</div>' + rounds + '</div>' : '') +
+        (miles ? '<div class="fc-cell"><div class="fc-t">🏁 Hitos</div>' + miles + '</div>' : '') +
+        ((m.desc || n.role) ? '<div class="fc-cell" style="grid-column:1/-1"><div class="fc-t">📖 Qué hace</div>' +
+          '<div style="font-size:12.5px;line-height:1.6;color:#C9D4EC;padding:4px 0">' + esc(m.desc || n.role) + '</div>' +
+          (n.moat ? '<div style="font-size:11.5px;line-height:1.55;color:#8FA0C0;padding:6px 0 0"><b style="color:#9BA6C4">Moat:</b> ' + esc(n.moat) + '</div>' : '') + '</div>' : '') +
+      '</div>' +
+      '<div class="fc-foot"><span>Khipus AI Finance Intelligence · análisis, no asesoría financiera</span><span>fuente: catálogo + inteligencia pre-IPO</span></div>';
+    ov.classList.add('show');
+  }
+
   window.openFinCard = function (idOrTicker) {
     var n = (window.BixbyVoice && window.BixbyVoice._resolveNode) ? window.BixbyVoice._resolveNode(idOrTicker) : null;
     var ticker = (n && n.mkt) || String(idOrTicker || '').toUpperCase();
     var label = (n && n.label) || ticker;
-    if (!ticker) { if (typeof toast === 'function') toast('Esa empresa no cotiza en bolsa'); return; }
+    if (n && !n.mkt) { renderPrivate(n); return; }   // privada → dossier pre-IPO
+    if (!ticker) { if (typeof toast === 'function') toast('No encuentro esa empresa'); return; }
 
     var ov = ensureShell();
     var fc = document.getElementById('fc');
