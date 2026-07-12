@@ -379,6 +379,19 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       barra buy/hold/sell) + fundamentales anuales 5y + cadena clicable.
       (3) Guía reescrita al día (555, 4 pestañas, superpoderes, KHIPU
       vigente, FAQ de actualizaciones y 3D compatible).
+- [x] **Feedback 5** (b25df9b + 5fda95b): (1) dossier "nunca una celda
+      vacía" — plan B por indicador (ingresos $B, acciones en circulación,
+      margen bruto anual…) y nota clara si el dato no existe; serie 'shares'
+      nueva en /api/findossier; verificado 8/8 celdas con Nvidia en prod.
+      (2) nodes/meta_fill.js: fichas para las 187 empresas sin metadata
+      (workflow 26 agentes con verificación cruzada) → 0/555 sin ficha.
+      (3) Dossier PRE-IPO para privadas (renderPrivate: valuación/rondas/
+      hitos de PREIPO_INTEL). (4) Detector de páginas viejas: versión
+      visible en el pie (v71) + live.js compara server vs cliente → pill
+      (que ahora limpia cachés al tocar). CAUSA RAÍZ del "3d no sirve":
+      el navegador de Fabrizio corre una versión vieja (0 beacons llegaron).
+      PENDIENTE: leer /api/diag/recent cuando Fabrizio pruebe el 3D en v71+
+      (cada deploy borra el buffer — leer ANTES de desplegar).
 - [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
       IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
       (solo las mencionadas, o top 80 + sector_summary agregado; quotes
