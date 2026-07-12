@@ -360,6 +360,13 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       setAllHalos para scatter y cadena). Atmósfera: doble campo de
       estrellas + 4 nebulosas + resplandor central. Draw calls acumulado:
       ~3.500 → 1.043 (-70%).
+      FIX POSTERIOR (54942ac, "directamente no da el 3D"): el motor SÍ
+      renderizaba — el ACCESO estaba tapado: (a) botón 🪐 extra en los
+      controles del mapa (+ − ⤢ 🪐) con estado sincronizado; (b) BUG
+      preexistente: .start-hint del panel se solapaba sobre .zoom-ctrl y
+      comía los clics (también bloqueaba + − ⤢) → z-index:30; (c) _toggle3D
+      con try/catch+toast; (d) chip 🪐 con glow; (e) "3d"/"universo" en la
+      Cabina abre el universo. Verificado con clic REAL: 83/100 píxeles.
 - [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
       IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
       (solo las mencionadas, o top 80 + sector_summary agregado; quotes
