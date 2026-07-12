@@ -392,6 +392,16 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       el navegador de Fabrizio corre una versión vieja (0 beacons llegaron).
       PENDIENTE: leer /api/diag/recent cuando Fabrizio pruebe el 3D en v71+
       (cada deploy borra el buffer — leer ANTES de desplegar).
+- [x] **Feedback 6 — camino a la versión final** (5d3ffde, v73): (1) DESC_FILL
+      — 135 descripciones por workflow de 9 agentes → 0/555 sin ficha y
+      0/555 sin desc (cobertura TOTAL de datos). (2) Terminal móvil: sidebar
+      150px, grid 1 columna, panel 📋 como overlay completo (auditoría 375px).
+      (3) /api/diag persistente en Postgres (client_diags) — los beacons ya
+      SOBREVIVEN deploys (antes se perdieron 3 veces). PARA LA VERSIÓN FINAL
+      faltan: REMIGRATE_ON_BOOT (acción de Fabrizio, BD prod sigue vieja),
+      confirmar 3D en su dispositivo (leer diag/recent — ya persistente),
+      prueba de voz Bixby end-to-end, y opcionales (workspace drag&drop,
+      unificación renderers, 12k, SaaS).
 - [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
       IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
       (solo las mencionadas, o top 80 + sector_summary agregado; quotes
