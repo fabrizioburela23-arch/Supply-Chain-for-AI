@@ -617,6 +617,7 @@
     }
 
     // 2.6) el grafo o la terminal, DENTRO de la pantalla de Bixby
+    if (/universo|\b3d\b/.test(low)) { close(); if (window._go3D) { window._go3D(); return; } }
     if (/^(mu[eé]strame |ver |abre |abrir )?(el )?(grafo|mapa)\b/.test(low)) { stage('graph'); return; }
     var termM = low.match(/^(mu[eé]strame |ver |abre |abrir )?(la )?terminal(?:\s+(?:de|con)\s+(.+))?/);
     if (termM) {

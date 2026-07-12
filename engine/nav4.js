@@ -43,7 +43,11 @@
          transform: main contiene SVG/fixed y un transform lo rompería) */
       + '@keyframes panelIn{from{opacity:.4}to{opacity:1}}'
       + '.panel-in{animation:panelIn .16s ease}'
-      + '@media(prefers-reduced-motion:reduce){.panel-in{animation:none}}';
+      + '@media(prefers-reduced-motion:reduce){.panel-in{animation:none}}'
+      /* la sub-pestaña 🪐 3D destaca (entrada principal al universo) */
+      + '#tab-3d{border:1px solid rgba(142,90,255,.35)!important;background:rgba(142,90,255,.07)}'
+      + '#tab-3d:hover{border-color:rgba(142,90,255,.7)!important;color:#cabeff!important}'
+      + '#tab-3d.active{color:#cabeff!important;background:rgba(142,90,255,.18)!important;border-color:#8e5aff!important;box-shadow:0 0 10px rgba(142,90,255,.35)}';
     var st = document.createElement('style'); st.id = 'nav4-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
