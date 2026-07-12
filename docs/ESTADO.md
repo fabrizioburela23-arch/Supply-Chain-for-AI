@@ -367,6 +367,18 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       comía los clics (también bloqueaba + − ⤢) → z-index:30; (c) _toggle3D
       con try/catch+toast; (d) chip 🪐 con glow; (e) "3d"/"universo" en la
       Cabina abre el universo. Verificado con clic REAL: 83/100 píxeles.
+      + AUTO-REPARACIÓN (23447bb): _selfCheck lee píxeles a los 2s; si negro →
+      _haloFallback (PointsMaterial estándar) → _ultraSafeMode (solo esferas+
+      aristas, sin fog/partículas, toast con GPU). Render inmortal (try/catch
+      con escalera). Verificada la escalera forzada: 48/60 píxeles en ambos.
+- [x] **Feedback 4** (fe37c28): (1) "se reinicia a cada rato" — el auto-reload
+      recargaba en CADA deploy; ahora recarga silenciosa solo <10s de abierta,
+      después un avisito clicable "⬆ Nueva versión" (anti-bucle 1/min).
+      (2) Panel 📋 Datos en la Terminal (engine/termdata.js, hook en
+      _termLoadCell): ficha + valuación/analistas (P/E, objetivo, upside,
+      barra buy/hold/sell) + fundamentales anuales 5y + cadena clicable.
+      (3) Guía reescrita al día (555, 4 pestañas, superpoderes, KHIPU
+      vigente, FAQ de actualizaciones y 3D compatible).
 - [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
       IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
       (solo las mencionadas, o top 80 + sector_summary agregado; quotes
