@@ -1061,6 +1061,8 @@ window.addEventListener("error", function(ev){
       <button class="btn btn-outline" id="btn-import-tracking">Importar seguimiento</button>
       <input type="file" id="file-import" accept="application/json" />
       <button class="btn btn-outline" id="btn-export-csv">Exportar CSV</button>
+      <button class="btn btn-primary" id="btn-import-ubic" title="Importar coordenadas reales desde Google My Maps (KML) o un CSV">📍 Importar ubicaciones</button>
+      <input type="file" id="file-import-ubic" accept=".kml,.csv,.txt,text/csv,application/vnd.google-earth.kml+xml" />
     </div>
   </header>
 
@@ -10485,6 +10487,100 @@ var PROSPECTOS_RAW = [
     };
     reader.readAsText(file);
     e.target.value = "";
+  });
+
+  // ---------- IMPORTAR UBICACIONES REALES (masivo) ----------
+  // Acepta el KML que exporta Google My Maps, o un CSV con columnas de nombre/id + lat/lng.
+  // Cada coincidencia se guarda como track.fix (igual que corregir el pin a mano), así que
+  // 324 ubicaciones entran de una sola vez en lugar de tocarlas una por una.
+  function normNombre(s){ return normalize(s).replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+  var NOMBRE_INDEX = {};
+  DATA.forEach(function(p){ NOMBRE_INDEX[normNombre(p.nombre)] = p.id; });
+
+  function csvParse(text){
+    var rows=[], row=[], cur="", q=false;
+    for(var i=0;i<text.length;i++){
+      var c=text[i];
+      if(q){ if(c==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=c; }
+      else if(c==='"') q=true;
+      else if(c===","){ row.push(cur); cur=""; }
+      else if(c==="\n"||c==="\r"){ if(c==="\r"&&text[i+1]==="\n") i++; row.push(cur); rows.push(row); row=[]; cur=""; }
+      else cur+=c;
+    }
+    if(cur!==""||row.length){ row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  function parseKML(text){
+    var out=[];
+    try{
+      var doc=new DOMParser().parseFromString(text,"text/xml");
+      var marks=doc.getElementsByTagName("Placemark");
+      for(var i=0;i<marks.length;i++){
+        var nm=marks[i].getElementsByTagName("name")[0];
+        var co=marks[i].getElementsByTagName("coordinates")[0];
+        if(!co) continue;
+        var parts=co.textContent.trim().split(/[,\s]+/).map(parseFloat);
+        out.push({ key: nm?nm.textContent.trim():"", lat:parts[1], lng:parts[0] });
+      }
+    }catch(e){}
+    return out;
+  }
+
+  function parseCSVloc(text){
+    var rows=csvParse(text);
+    if(rows.length<2) return [];
+    var head=rows[0].map(function(h){ return normalize(h); });
+    function col(){ for(var a=0;a<arguments.length;a++){ var i=head.indexOf(arguments[a]); if(i>=0) return i; } return -1; }
+    var iId=col("id"), iNom=col("nombre","empresa","empresa / nombre completo","name","title","nombre completo"),
+        iLat=col("lat","latitud","latitude","lat_final","y"),
+        iLng=col("lng","lon","long","longitud","longitude","lng_final","x");
+    var out=[];
+    for(var r=1;r<rows.length;r++){
+      var row=rows[r];
+      if(!row || (row.length===1 && !row[0])) continue;
+      out.push({
+        id: iId>=0 && row[iId]!=="" ? parseInt(row[iId],10) : null,
+        key: iNom>=0 ? row[iNom] : "",
+        lat: iLat>=0 ? parseFloat(row[iLat]) : NaN,
+        lng: iLng>=0 ? parseFloat(row[iLng]) : NaN
+      });
+    }
+    return out;
+  }
+
+  function applyLocations(pairs){
+    var ok=0, fail=[];
+    pairs.forEach(function(it){
+      var id = (it.id!=null && !isNaN(it.id)) ? it.id : NOMBRE_INDEX[normNombre(it.key||"")];
+      var p = id!=null && DATA.find(function(x){ return x.id===id; });
+      if(p && isFinite(it.lat) && isFinite(it.lng) && Math.abs(it.lat)<=90 && Math.abs(it.lng)<=180 && !(it.lat===0&&it.lng===0)){
+        var t=getTrack(id); t.fix={lat:it.lat,lng:it.lng}; tracking[id]=t; ok++;
+      } else { fail.push(it.key || ("id "+it.id)); }
+    });
+    if(ok) saveTracking();
+    renderAll();
+    if(ok) fitAll();
+    var msg = "✅ "+ok+" ubicación(es) reales aplicadas al mapa.";
+    if(fail.length) msg += "\n\n⚠ "+fail.length+" no coincidieron con ningún prospecto (revisa el nombre):\n" + fail.slice(0,12).join("\n") + (fail.length>12?"\n… y "+(fail.length-12)+" más":"");
+    alert(msg);
+  }
+
+  document.getElementById("btn-import-ubic").addEventListener("click", function(){
+    document.getElementById("file-import-ubic").click();
+  });
+  document.getElementById("file-import-ubic").addEventListener("change", function(e){
+    var file=e.target.files[0];
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(){
+      var text=String(reader.result);
+      var pairs = /<kml|<Placemark|<coordinates/i.test(text) ? parseKML(text) : parseCSVloc(text);
+      if(!pairs.length){ alert("No pude leer ubicaciones de ese archivo.\n\nDebe ser:\n• el KML que descargas de Google My Maps, o\n• un CSV con columnas de nombre (o ID) y lat / lng."); }
+      else applyLocations(pairs);
+    };
+    reader.readAsText(file);
+    e.target.value="";
   });
 
   document.getElementById("btn-export-csv").addEventListener("click", function(){
