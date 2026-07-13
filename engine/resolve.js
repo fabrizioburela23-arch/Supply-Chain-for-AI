@@ -363,8 +363,13 @@
   }
 
   function openTrade(a) {
-    // trade-panel (z 9900) queda encima de todo, incluida la Cabina
-    if (!a || !a.ticker || typeof window.openTradeModal !== 'function') return false;
+    // sin empresa → escenario del broker (cuenta/posiciones papel) en la Cabina
+    if (!a || !a.ticker) {
+      if (typeof window._openBrokerStage === 'function') { window._openBrokerStage(); return true; }
+      return false;
+    }
+    // con empresa → trade-panel (z 9900) queda encima de todo, incluida la Cabina
+    if (typeof window.openTradeModal !== 'function') return false;
     defer(function () { window.openTradeModal(a.id, a.ticker, a.label); }, 300);
     return true;
   }

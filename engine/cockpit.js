@@ -28,6 +28,38 @@
     try { return (window.LANG || localStorage.getItem('eco_lang') || 'es'); } catch (e) { return 'es'; }
   }
 
+  // ── textos bilingües del stage BRÓKER (Etapa M) ──
+  var TRB = {
+    broker:      { es: 'Bróker', en: 'Broker' },
+    account:     { es: 'Cuenta', en: 'Account' },
+    paperBadge:  { es: '🧪 SIMULADO (papel)', en: '🧪 SIMULATED (paper)' },
+    realBadge:   { es: '🔴 DINERO REAL', en: '🔴 REAL MONEY' },
+    equity:      { es: 'Valor total', en: 'Equity' },
+    cash:        { es: 'Efectivo', en: 'Cash' },
+    buyingPower: { es: 'Poder de compra', en: 'Buying power' },
+    positions:   { es: 'Posiciones', en: 'Positions' },
+    noPositions: { es: 'Sin posiciones abiertas', en: 'No open positions' },
+    orders:      { es: 'Últimas órdenes', en: 'Recent orders' },
+    noOrders:    { es: 'Sin órdenes recientes', en: 'No recent orders' },
+    refresh:     { es: '↻ Actualizar', en: '↻ Refresh' },
+    confirmTitle:{ es: 'Confirmar orden', en: 'Confirm order' },
+    confirm:     { es: '✓ Confirmar', en: '✓ Confirm' },
+    cancel:      { es: '✕ Cancelar', en: '✕ Cancel' },
+    buy:         { es: 'COMPRAR', en: 'BUY' },
+    sell:        { es: 'VENDER', en: 'SELL' },
+    units:       { es: 'unidades', en: 'units' },
+    sending:     { es: 'Enviando orden…', en: 'Sending order…' },
+    sent:        { es: '✓ Orden enviada', en: '✓ Order sent' },
+    dedup:       { es: '(ya se había enviado — no se duplicó)', en: '(already sent — not duplicated)' },
+    canceled:    { es: 'Orden cancelada — no se envió nada.', en: 'Order canceled — nothing was sent.' },
+    loading:     { es: 'Cargando cuenta del bróker…', en: 'Loading broker account…' },
+    connectErr:  { es: 'No pude conectar con el bróker.', en: 'Could not reach the broker.' },
+    amountRange: { es: 'El monto debe estar entre $1 y $100,000 por orden.', en: 'The amount must be between $1 and $100,000 per order.' },
+    marketOrder: { es: 'Orden de mercado — se ejecuta al precio actual.', en: 'Market order — executes at the current price.' },
+    resolving:   { es: 'Preparando la orden…', en: 'Preparing the order…' },
+  };
+  function tb(k) { var e = TRB[k]; if (!e) return k; return ckLang() === 'en' ? e.en : e.es; }
+
   // resuelve empresa desde id/ticker/nombre — resolutor robusto compartido
   // (engine/resolve.js: alias de voz, sin acentos, fuzzy); búsqueda débil de fallback
   function resolveNode(q) {
@@ -159,6 +191,7 @@
         '<button class="bcp-act" data-act="insights">💡 Oportunidades</button>' +
         '<button class="bcp-act" data-act="deep">🧠 Investigar</button>' +
         '<button class="bcp-act" data-act="canvas">✦ Gráfico</button>' +
+        '<button class="bcp-act" data-act="broker">💼 ' + tb('broker') + '</button>' +
       '</div>' +
       '<div id="bcp-stage"></div>';
     document.body.appendChild(ov);
@@ -172,6 +205,7 @@
         if (act === 'terminal') return stage('terminal');
         if (act === 'insights') return stage('insights');
         if (act === 'canvas') return stage('canvas');
+        if (act === 'broker') return stage('broker');
         // acciones que necesitan una empresa → prellenar la barra (enseña la sintaxis)
         var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null;
         var name = sel && window.NODE_BY_ID && window.NODE_BY_ID[sel] ? window.NODE_BY_ID[sel].label : '';
@@ -260,7 +294,8 @@
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
-    markActive(kind === 'graph' || kind === 'terminal' || kind === 'insights' || kind === 'canvas' || kind === 'deep' ? kind : null);
+    markActive(kind === 'graph' || kind === 'terminal' || kind === 'insights' || kind === 'canvas' || kind === 'deep' || kind === 'broker' ? kind : null);
+    if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'xray') return stageXRay(s, arg);
     if (kind === 'compare') return stageCompare(s, arg);
     if (kind === 'sim') return stageSim(s, arg);
@@ -319,6 +354,7 @@
       ['muéstrame ', 'oportunidades', 'Dónde invertir'],
       ['gráfico: ', 'márgenes de NVIDIA, TSMC y ASML', 'Lienzo de datos'],
       ['investiga ', 'la energía nuclear para datacenters', 'Investigación profunda'],
+      ['', ckLang() === 'en' ? 'my account' : 'mi cuenta', tb('broker')],
       ['', 'lienzo en blanco', 'Empezar de cero'],
     ];
     s.innerHTML = '<div id="bcp-empty"><h2>Soy Bixby. Pregúntame lo que sea.</h2>' +
@@ -485,6 +521,269 @@
       '</div></div>';
   }
 
+  /* ══ STAGE BRÓKER (Etapa M) — cuenta Alpaca + posiciones + órdenes +
+     tarjeta de CONFIRMACIÓN de compra/venta. Reglas innegociables:
+     badge 🧪 SIMULADO / 🔴 DINERO REAL siempre visible; NINGUNA orden se
+     envía sin clic en Confirmar (o confirmación verbal vía voice.js).
+     Reusa los helpers compartidos de voice.js: window._resolveTradeSymbol,
+     window._tradeAccountInfo y window._executeTradeOrder — NO duplicar. ══ */
+  var _bkAcct = null;         // última cuenta cargada (para el badge)
+  var _pendingOrder = null;   // orden esperando el clic en Confirmar
+
+  function badgeHTML(paper) {
+    if (paper === true) return '<span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;background:rgba(255,179,0,.14);color:#FFB300;border:1px solid rgba(255,179,0,.4)">' + tb('paperBadge') + '</span>';
+    if (paper === false) return '<span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;background:rgba(255,45,70,.16);color:#FF2D46;border:1px solid rgba(255,45,70,.55)">' + tb('realBadge') + '</span>';
+    return '';
+  }
+  function paintConfirmBadge() {
+    var el = document.getElementById('bcp-bk-cbadge');
+    if (el && _bkAcct) el.innerHTML = badgeHTML(typeof _bkAcct.paper === 'boolean' ? _bkAcct.paper : null);
+  }
+  function fmtUsd(v) { return '$' + (Number(v) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+
+  function stageBroker(s, arg) {
+    arg = arg || {};
+    var en = ckLang() === 'en';
+    s.innerHTML = backBar(tb('broker')) +
+      '<div class="bcp-inner" style="max-width:980px">' +
+        '<div id="bcp-bk-confirm"></div>' +
+        '<div id="bcp-bk-acct"><div class="bcp-loading">' + tb('loading') + '</div></div>' +
+        '<div class="bcp-two" style="margin-top:18px">' +
+          '<div><div class="bcp-lh">' + tb('positions') + '</div><div id="bcp-bk-pos"><div class="bcp-loading">…</div></div></div>' +
+          '<div><div class="bcp-lh">' + tb('orders') + '</div><div id="bcp-bk-ord"><div class="bcp-loading">…</div></div></div>' +
+        '</div>' +
+      '</div>';
+    var box = s.querySelector('#bcp-bk-confirm');
+    if (arg.confirm) renderTradeConfirm(arg.confirm);
+    else if (arg.resolving) box.innerHTML = '<div class="bcp-loading" style="text-align:left;padding:6px 0 16px">' + tb('resolving') + '</div>';
+    else if (arg.badAmount || arg.needAmount || arg.error) {
+      var msg = arg.badAmount ? tb('amountRange')
+        : arg.needAmount ? (en
+          ? 'How much? E.g. "buy $100 of ' + (arg.needAmount.label || 'Bitcoin') + '".'
+          : '¿Por cuánto? Ej.: «compra 100 dólares de ' + (arg.needAmount.label || 'Bitcoin') + '».')
+        : String(arg.error || '');
+      box.innerHTML = '<div style="color:#FFB300;font-size:13px;padding:6px 0 16px">' + esc(msg) + '</div>';
+    }
+    // no-interactivo: si falta el PIN, loadBroker pinta el formulario inline
+    // (jamás el prompt() del navegador al solo ABRIR el escenario)
+    loadBroker(false, false);
+  }
+
+  // tarjeta de confirmación — SOLO el clic en Confirmar envía la orden
+  function renderTradeConfirm(o) {
+    var box = document.getElementById('bcp-bk-confirm');
+    if (!box || !o || !o.symbol) return;
+    _pendingOrder = o;
+    var side = o.side === 'sell' ? 'sell' : 'buy';
+    var col = side === 'buy' ? UP : DOWN;
+    var amount = o.notional != null ? fmtUsd(o.notional) : ((+o.qty || 0) + ' ' + tb('units'));
+    box.innerHTML =
+      '<div style="border:1px solid ' + col + '55;border-radius:14px;background:' + col + '0d;padding:16px 18px;margin-bottom:16px">' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+          '<span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7C87A3;font-weight:700">' + tb('confirmTitle') + '</span>' +
+          '<span id="bcp-bk-cbadge"></span></div>' +
+        '<div style="font-size:19px;font-weight:750;margin-bottom:4px"><span style="color:' + col + '">' + tb(side) + '</span> ' +
+          esc(amount) + ' · ' + esc(o.label || o.symbol) +
+          ' <span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace;font-size:13px">(' + esc(o.symbol) + ')</span></div>' +
+        '<div style="font-size:11.5px;color:#7C87A3;margin-bottom:14px">' + tb('marketOrder') + '</div>' +
+        '<div style="display:flex;gap:10px">' +
+          '<button id="bcp-bk-ok" class="bcp-back" style="border-color:' + col + '66;color:' + col + ';font-weight:700">' + tb('confirm') + '</button>' +
+          '<button id="bcp-bk-no" class="bcp-back">' + tb('cancel') + '</button>' +
+        '</div><div id="bcp-bk-cstatus" style="margin-top:10px;font-size:12.5px"></div></div>';
+    paintConfirmBadge();   // pinta 🧪/🔴 en cuanto la cuenta esté cargada
+    box.querySelector('#bcp-bk-ok').addEventListener('click', confirmPendingOrder);
+    box.querySelector('#bcp-bk-no').addEventListener('click', function () {
+      _pendingOrder = null;
+      box.innerHTML = '<div style="color:#7C87A3;font-size:12.5px;padding:6px 0 16px">' + tb('canceled') + '</div>';
+      setTimeout(function () { var b = document.getElementById('bcp-bk-confirm'); if (b && !_pendingOrder) b.innerHTML = ''; }, 3000);
+    });
+  }
+
+  async function confirmPendingOrder() {
+    var o = _pendingOrder;
+    if (!o) return;
+    var ok = document.getElementById('bcp-bk-ok'), no = document.getElementById('bcp-bk-no');
+    var stEl = document.getElementById('bcp-bk-cstatus');
+    if (ok) ok.disabled = true;
+    if (no) no.disabled = true;
+    if (stEl) { stEl.style.color = '#7C87A3'; stEl.textContent = tb('sending'); }
+    var r = window._executeTradeOrder ? await window._executeTradeOrder(o)
+      : { ok: false, error: 'trading no disponible' };
+    stEl = document.getElementById('bcp-bk-cstatus');   // pudo cambiar de escena
+    if (r.ok) {
+      _pendingOrder = null;
+      if (stEl) {
+        stEl.style.color = UP;
+        stEl.textContent = tb('sent') + ' — ' + ((r.data && r.data.status) || 'accepted') + (r.dedup ? ' ' + tb('dedup') : '');
+      }
+      setTimeout(function () { loadBroker(false, true); }, 1200);
+    } else {
+      if (stEl) { stEl.style.color = DOWN; stEl.textContent = '⚠ ' + (r.error || 'error'); }
+      ok = document.getElementById('bcp-bk-ok'); no = document.getElementById('bcp-bk-no');
+      if (ok) ok.disabled = false;   // permitir reintentar o cancelar
+      if (no) no.disabled = false;
+    }
+  }
+
+  async function loadBroker(interactive, force) {
+    var acctEl = document.getElementById('bcp-bk-acct');
+    if (!acctEl) return;
+    if (!window._tradeFetch || !window._tradeAccountInfo) {
+      acctEl.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + tb('connectErr') + '</div>';
+      return;
+    }
+    var acct = await window._tradeAccountInfo(interactive !== false, !!force);
+    acctEl = document.getElementById('bcp-bk-acct');
+    if (!acctEl) return;   // salieron de la escena mientras cargaba
+    if (!acct || acct.error) {
+      var en2 = ckLang() === 'en';
+      if (acct && acct.status === 401) {
+        // falta el PIN (o es incorrecto): formulario inline — nunca prompt()
+        // del navegador (bloqueado en móvil/PWA y feo en escritorio).
+        acctEl.innerHTML =
+          '<div style="padding:16px;border:1px solid rgba(0,224,255,.25);border-radius:12px;background:rgba(0,224,255,.05)">' +
+            '<div style="font-size:13.5px;font-weight:700;margin-bottom:6px">🔒 ' + (en2 ? 'Trading PIN' : 'PIN de trading') + '</div>' +
+            '<div style="font-size:12px;color:#7C87A3;margin-bottom:10px">' +
+              (en2 ? 'Enter the PIN you set as TRADE_PIN in Railway. Asked only once per device.'
+                   : 'Ingresa el PIN que configuraste como TRADE_PIN en Railway. Se pide una sola vez por dispositivo.') + '</div>' +
+            '<div style="display:flex;gap:8px"><input id="bcp-bk-pin" type="password" inputmode="numeric" autocomplete="off" ' +
+              'style="flex:1;max-width:200px;padding:8px 12px;border-radius:8px;border:1px solid rgba(122,158,255,.3);background:rgba(8,14,26,.8);color:#E8EDFB;font-size:14px" ' +
+              'placeholder="' + (en2 ? 'PIN' : 'PIN') + '">' +
+            '<button id="bcp-bk-pin-ok" class="bcp-back" style="border-color:rgba(0,224,255,.45);color:#00E0FF;font-weight:700">' +
+              (en2 ? 'Unlock' : 'Entrar') + '</button></div></div>';
+        var pinBtn = acctEl.querySelector('#bcp-bk-pin-ok');
+        var pinInp = acctEl.querySelector('#bcp-bk-pin');
+        var submitPin = function () {
+          var v = (pinInp.value || '').trim();
+          if (!v) return;
+          try { localStorage.setItem('khipu_trade_pin', v); } catch (e) {}
+          loadBroker(false, true);
+        };
+        pinBtn.addEventListener('click', submitPin);
+        pinInp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') submitPin(); });
+        pinInp.focus();
+      } else {
+        // 403 sin TRADE_PIN → mostrar el mensaje del server TAL CUAL (ya en español)
+        acctEl.innerHTML = '<div style="color:#FF4D6A;font-size:13px;padding:14px;border:1px solid rgba(255,77,106,.3);border-radius:12px;background:rgba(255,77,106,.06)">⚠ ' +
+          esc((acct && acct.error) || tb('connectErr')) + '</div>';
+      }
+      var pe0 = document.getElementById('bcp-bk-pos'); if (pe0) pe0.innerHTML = '<div class="bcp-loading">—</div>';
+      var oe0 = document.getElementById('bcp-bk-ord'); if (oe0) oe0.innerHTML = '<div class="bcp-loading">—</div>';
+      return;
+    }
+    _bkAcct = acct;
+    paintConfirmBadge();
+    var paper = (typeof acct.paper === 'boolean') ? acct.paper : null;
+    acctEl.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">' +
+        '<span style="font-size:15px;font-weight:750">💼 ' + tb('account') + '</span>' + badgeHTML(paper) +
+        '<button class="bcp-back" style="margin-left:auto" id="bcp-bk-refresh">' + tb('refresh') + '</button></div>' +
+      '<div class="bcp-grid3">' +
+        '<div class="bcp-stat"><b style="color:' + NEON + '">' + fmtUsd(acct.equity) + '</b><span>' + tb('equity') + '</span></div>' +
+        '<div class="bcp-stat"><b>' + fmtUsd(acct.cash) + '</b><span>' + tb('cash') + '</span></div>' +
+        '<div class="bcp-stat"><b>' + fmtUsd(acct.buying_power) + '</b><span>' + tb('buyingPower') + '</span></div>' +
+      '</div>';
+    acctEl.querySelector('#bcp-bk-refresh').addEventListener('click', function () { loadBroker(true, true); });
+
+    // posiciones (símbolo · cantidad · valor · P&L% coloreado)
+    try {
+      var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false);
+      var dp = await rp.json();
+      var posEl = document.getElementById('bcp-bk-pos');
+      if (posEl) {
+        if (!Array.isArray(dp) || !dp.length) {
+          posEl.innerHTML = '<div class="bcp-loading" style="padding:12px">' + tb('noPositions') + '</div>';
+        } else {
+          posEl.innerHTML = dp.map(function (p) {
+            var pl = +p.unrealized_pct || 0;
+            var col = pl >= 0 ? UP : DOWN;
+            return '<div class="bcp-row" style="cursor:default">' +
+              '<span class="nm" style="font-family:\'JetBrains Mono\',monospace;font-weight:700">' + esc(p.symbol || '') + '</span>' +
+              '<span class="pv" style="width:auto;color:#9BA6C4">' + (+p.qty || 0).toLocaleString('en-US', { maximumFractionDigits: 4 }) + '</span>' +
+              '<span class="pv" style="width:84px">' + fmtUsd(p.market_val) + '</span>' +
+              '<span class="pv" style="color:' + col + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '%</span></div>';
+          }).join('');
+        }
+      }
+    } catch (e) { var pe = document.getElementById('bcp-bk-pos'); if (pe) pe.innerHTML = '<div class="bcp-loading">—</div>'; }
+
+    // últimas órdenes (si /api/trade/history responde)
+    try {
+      var ro = await window._tradeFetch('/api/trade/history', {}, false);
+      var od = await ro.json();
+      var ordEl = document.getElementById('bcp-bk-ord');
+      if (ordEl) {
+        if (!Array.isArray(od) || !od.length) {
+          ordEl.innerHTML = '<div class="bcp-loading" style="padding:12px">' + tb('noOrders') + '</div>';
+        } else {
+          ordEl.innerHTML = od.slice(0, 10).map(function (o) {
+            var col = o.side === 'buy' ? UP : DOWN;
+            var when = '';
+            try { when = new Date(o.created_at).toLocaleString(ckLang() === 'en' ? 'en' : 'es', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e2) {}
+            var amt = o.notional ? fmtUsd(o.notional) : (((+o.qty || +o.filled_qty || 0) || '') + '×');
+            return '<div class="bcp-row" style="cursor:default">' +
+              '<span class="pv" style="width:auto;color:#5b6580">' + esc(when) + '</span>' +
+              '<span style="color:' + col + ';font-weight:700;font-size:11px;min-width:44px">' + esc((o.side || '').toUpperCase()) + '</span>' +
+              '<span class="nm" style="font-family:\'JetBrains Mono\',monospace">' + esc(o.symbol || '') + '</span>' +
+              '<span class="pv" style="width:auto">' + esc(String(amt)) + '</span>' +
+              '<span class="pv" style="width:auto;color:#9BA6C4">' + esc(o.status || '') + '</span></div>';
+          }).join('');
+        }
+      }
+    } catch (e) { var oe = document.getElementById('bcp-bk-ord'); if (oe) oe.innerHTML = '<div class="bcp-loading">—</div>'; }
+  }
+
+  // ── comandos de compra/venta en TEXTO (compartido con command_center.js) ──
+  // "compra 100 dólares de bitcoin" · "compra $50 de eth" · "vende 20 de solana"
+  // · "buy $100 of bitcoin" · "compra bitcoin por 100 dólares".
+  // Números sueltos se interpretan como MONTO EN DÓLARES (notional).
+  // Devuelve {side, amountUsd|null, assetText} o null si no es un comando.
+  window._parseTradeCommand = function (text) {
+    var s = String(text || '').trim();
+    if (!s) return null;
+    var low = s.toLowerCase();
+    var m = low.match(/^(c[oó]mprame|compra(?:r|me)?|buy|v[eé]ndeme|vende(?:r|me)?|sell)\s+(.+)$/);
+    if (!m) return null;
+    var side = /^(v|s)/.test(m[1]) ? 'sell' : 'buy';
+    var rest = m[2].replace(/[?!.]+$/, '').trim();
+    // "$100 de bitcoin" · "100 dólares de bitcoin" · "100 de eth" · "100 usd de eth"
+    var am = rest.match(/^\$?\s*([\d][\d.,]*)\s*(?:d[oó]lares|dollars|usd|\$)?\s+(?:de|del|of|en)\s+(.+)$/);
+    if (!am) {
+      // "bitcoin por 100 dólares" · "bitcoin for $100"
+      var am2 = rest.match(/^(.+?)\s+(?:por|for)\s+\$?\s*([\d][\d.,]*)\s*(?:d[oó]lares|dollars|usd|\$)?$/);
+      if (am2) am = [am2[0], am2[2], am2[1]];
+    }
+    if (!am) {
+      // sin monto ("compra bitcoin") → la Cabina pedirá el monto
+      return { side: side, amountUsd: null, assetText: rest };
+    }
+    var rawNum = am[1].replace(/,(?=\d{3}\b)/g, '').replace(',', '.');
+    var amount = parseFloat(rawNum);
+    if (!isFinite(amount) || amount <= 0) return null;
+    var asset = (am[2] || '').trim();
+    if (!asset) return null;
+    return { side: side, amountUsd: amount, assetText: asset };
+  };
+
+  // Comando de compra/venta → Cabina en el stage broker con la tarjeta de
+  // confirmación. Lo llama ask() y también command_center.js (texto fuera de
+  // la Cabina). parsed = resultado de window._parseTradeCommand.
+  window._openBrokerConfirm = async function (parsed) {
+    if (!parsed) return false;
+    openCockpit({ kind: 'broker', arg: { resolving: true } });
+    if (!window._resolveTradeSymbol) return true;
+    var arg;
+    try {
+      var res = await window._resolveTradeSymbol(parsed.assetText);
+      if (!res.ok) arg = { error: res.error };
+      else if (parsed.amountUsd == null) arg = { needAmount: res };
+      else if (!(parsed.amountUsd >= 1 && parsed.amountUsd <= 100000)) arg = { badAmount: true };
+      else arg = { confirm: { symbol: res.symbol, side: parsed.side, notional: parsed.amountUsd, label: res.label, kind: res.kind } };
+    } catch (e) { arg = { error: String((e && e.message) || e) }; }
+    stage('broker', arg);
+    return true;
+  };
+
   // ── Investigación profunda (Capa 4): planear→reunir→simular→sintetizar ──
   var _deepTimer = null;
 
@@ -623,6 +922,19 @@
     }
 
     var low = text.toLowerCase();
+
+    // 1.5) BRÓKER (Etapa M): "compra 100 dólares de bitcoin" · "vende 20 de eth"
+    //      → tarjeta de confirmación; "mi cuenta" / "broker" / "portafolio" → cuenta
+    var tcmd = window._parseTradeCommand ? window._parseTradeCommand(text) : null;
+    if (tcmd) {
+      if (window._openBrokerConfirm) window._openBrokerConfirm(tcmd);
+      else stage('broker');
+      return;
+    }
+    if (/^(mi\s+|la\s+|my\s+)?(cuenta|br[oó]ker|broker|account)\s*$/.test(low) ||
+        /^(mi\s+|my\s+)?(portafolio|portfolio|posiciones|positions)(\s+del?\s+(br[oó]ker|broker|alpaca))?\s*$/.test(low)) {
+      stage('broker'); return;
+    }
 
     // 2) lienzo en blanco / gráfico
     if (/^(l[ií]enzo|canvas)\b/.test(low) || /lienzo en blanco/.test(low)) { stage('canvas'); return; }

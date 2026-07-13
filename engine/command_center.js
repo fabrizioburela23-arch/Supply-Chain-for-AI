@@ -171,6 +171,30 @@
       const ans = card.querySelector('.bcc-a');
 
       try {
+        // ── BRÓKER (Etapa M): compra/venta y cuenta → Cabina, stage broker.
+        // La confirmación SIEMPRE ocurre dentro de la Cabina (tarjeta con
+        // Confirmar/Cancelar) — desde aquí jamás se envía una orden directa.
+        // (La Cabina cubre la pantalla — no hay 'broker' en _surface; el
+        // helper compartido window._openBrokerConfirm la abre al frente.)
+        const enCC = ((window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en');
+        const tcmd = (window._parseTradeCommand && window._openBrokerConfirm)
+          ? window._parseTradeCommand(text) : null;
+        if (tcmd) {
+          ans.textContent = enCC
+            ? 'Opening the broker — confirm the order there.'
+            : 'Abriendo el bróker — confirma la orden ahí.';
+          window._openBrokerConfirm(tcmd);
+          return;
+        }
+        if (window.BixbyCockpit &&
+            (/^(mi\s+|la\s+|my\s+)?(cuenta|br[oó]ker|broker|account)\s*$/i.test(text) ||
+             /^(mi\s+|my\s+)?(portafolio|portfolio|posiciones|positions)(\s+del?\s+(br[oó]ker|broker|alpaca))?\s*$/i.test(text))) {
+          ans.textContent = enCC ? 'Opening your broker account…' : 'Abriendo tu cuenta del bróker…';
+          const ck = window.BixbyCockpit;
+          if (ck.isOpen && ck.isOpen()) ck.stage('broker'); else ck.open({ kind: 'broker' });
+          return;
+        }
+
         // Fase 4: lenguaje KHIPU — comandos exactos tipo "NVDA SUP" se resuelven
         // localmente, SIN llamar a la IA (más rápido, cero costo de tokens).
         // Si no calza con la gramática, tryParse devuelve null y seguimos con Bixby normal.

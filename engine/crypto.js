@@ -7,7 +7,8 @@
      🫧 Burbujas — canvas con física suave: tamaño = market cap, color = 24h%,
         anillo rojo punteado = ⚠ del expediente. Tap = tarjeta con "Ver ficha".
      ☰ Lista — top 100 con filtros por tesis del expediente (badges 📋/⚠).
-     Detalle — gráfico 90d + Expediente Khipus de 6 bloques + banner ⚠.
+     Detalle — gráfico 90d + caja 💼 Operar (broker Alpaca, /api/trade/*) +
+       Expediente Khipus de 6 bloques + banner ⚠.
    Bilingüe ES/EN (regla del proyecto).
    ============================================================================ */
 (function () {
@@ -19,12 +20,22 @@
   var VIEW = null;        // 'bubbles' | 'list' (persistido)
   var FILTER = null;      // null | catKey
   var BUB = null;         // estado del canvas de burbujas {ctx, items, raf…}
+  var TRADE = null;       // cache 1h de /api/trade/crypto/assets {ts,status,assets,paper,error,pin}
+  var TRDCTX = null;      // contexto de la caja Operar montada {pair,name,paper}
+  var TRD = null;         // orden pendiente de confirmación {pair,name,side,amt,paper}
 
   var CAT_ORDER = ['store', 'l1', 'stable', 'payments', 'defi', 'perps', 'exchange', 'rwa', 'ai', 'privacy', 'meme'];
 
   function T(k, fb) {
     try { if (typeof window.t === 'function') { var v = window.t(k); if (v && v !== k) return v; } } catch (e) {}
     return fb;
+  }
+  // T2: intenta la clave global (app.html) y si no existe cae al par local
+  // {es,en} — garantiza bilingüe aunque la clave aún no esté registrada.
+  function T2(k, es, en) {
+    var v = T(k, null);
+    if (v != null) return v;
+    return lang() === 'en' ? en : es;
   }
   function lang() {
     try { return window.LANG || localStorage.getItem('eco_lang') || 'es'; } catch (e) { return 'es'; }
@@ -349,6 +360,168 @@
       '<div style="color:#5C6784;font-size:10.5px;line-height:1.5">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div></div>';
   }
 
+  /* ── caja 💼 Operar (broker Alpaca vía /api/trade/*) ──────────────────────
+     - Catálogo cripto: UNA consulta con cache de módulo 1h, SIEMPRE con
+       window._tradeFetch(url, {}, false) — interactive=false: mirar la ficha
+       JAMÁS pide el PIN. El cache negativo por 401 se invalida si el usuario
+       guarda un PIN nuevo en otra superficie (localStorage.khipu_trade_pin).
+     - 401 (sin PIN en este navegador) → modo informativo gris.
+     - 403 (TRADE_PIN sin configurar) → mensaje del server TAL CUAL.
+     - Activo no tradeable u otros errores → la caja no se muestra.
+     - NINGUNA orden sale sin confirmación explícita (Confirmar/Cancelar).
+     - Nunca se da consejo de inversión: solo se ejecuta lo pedido. */
+  function _pinNow() { try { return localStorage.getItem('khipu_trade_pin') || ''; } catch (e) { return ''; } }
+
+  function loadTradeAssets(cb) {
+    var pin = _pinNow();
+    if (TRADE && Date.now() - TRADE.ts < 3600000 &&
+        !(TRADE.status === 401 && pin !== TRADE.pin)) { cb(TRADE); return; }
+    window._tradeFetch('/api/trade/crypto/assets', {}, false)
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          TRADE = { ts: Date.now(), status: r.status, pin: pin,
+            assets: (d && d.assets) || null, paper: !!(d && d.paper), error: (d && d.error) || '' };
+          cb(TRADE);
+        });
+      })
+      .catch(function () {
+        TRADE = { ts: Date.now(), status: -1, pin: pin, assets: null, paper: false, error: '' };
+        cb(TRADE);
+      });
+  }
+
+  function tradeBadge(paper) {
+    return paper
+      ? '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(255,179,0,.45);background:rgba(255,179,0,.1);color:#FFB300;font-size:10.5px;font-weight:700">' +
+          T2('cr_trade_paper', '🧪 SIMULADO (papel)', '🧪 SIMULATED (paper)') + '</span>'
+      : '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(255,77,106,.6);background:rgba(255,77,106,.14);color:#FF4D6A;font-size:10.5px;font-weight:800">' +
+          T2('cr_trade_real', '🔴 DINERO REAL', '🔴 REAL MONEY') + '</span>';
+  }
+
+  function tradeBoxHTML(headExtra, body) {
+    return '<div style="margin-top:22px;padding:14px 16px;border-radius:12px;border:1px solid rgba(122,158,255,.18);background:rgba(13,19,33,.55)">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<h3 style="margin:0;font-size:15px">💼 ' + T2('cr_trade_t', 'Operar', 'Trade') + '</h3>' + (headExtra || '') + '</div>' +
+      (body || '') + '</div>';
+  }
+
+  function mountTrade(a) {
+    if (typeof window._tradeFetch !== 'function') return;   // superficie sin trading
+    var sym = (a.symbol || '').toUpperCase();
+    if (!sym) return;
+    var pair = sym + '/USD';                                  // mapeo ficha → par Alpaca
+    loadTradeAssets(function (st) {
+      var el = document.getElementById('cr-trade');
+      // el usuario pudo navegar a OTRA ficha mientras cargaba el catálogo
+      if (!el || el.getAttribute('data-sym') !== sym || !st) return;
+      var gray = function (txt) { return '<div style="color:#7C87A3;font-size:11.5px;line-height:1.5">' + txt + '</div>'; };
+      if (st.status === 401) {   // sin PIN en este navegador → solo informativo
+        el.innerHTML = tradeBoxHTML('', gray(T2('cr_trade_pin_hint',
+          'Operable en el broker de papel con PIN configurado',
+          'Tradeable on the paper broker once the PIN is set')));
+        return;
+      }
+      if (st.status === 403) {   // trading deshabilitado → mensaje del server tal cual
+        el.innerHTML = tradeBoxHTML('', gray(esc(st.error || 'Trading deshabilitado — configura TRADE_PIN en Railway')));
+        return;
+      }
+      if (st.status !== 200 || !st.assets) return;   // otros errores: sin caja
+      var ok = false;
+      for (var i = 0; i < st.assets.length; i++) {
+        if (String(st.assets[i].symbol || '').toUpperCase() === pair) { ok = true; break; }
+      }
+      if (!ok) return;           // el activo no es tradeable en Alpaca: nada
+      TRDCTX = { pair: pair, name: a.name || sym, paper: !!st.paper };
+      TRD = null;
+      el.innerHTML = tradeBoxHTML(tradeBadge(st.paper),
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<label for="cr-trade-amt" style="color:#7C87A3;font-size:11.5px">' + T2('cr_trade_amt', 'Monto (USD)', 'Amount (USD)') + '</label>' +
+          '<input id="cr-trade-amt" type="number" min="1" max="100000" step="1" value="100" inputmode="decimal" ' +
+            'style="width:110px;padding:6px 9px;border-radius:8px;border:1px solid rgba(122,158,255,.3);background:rgba(8,12,24,.8);color:#E8EDFB;font-size:13px">' +
+          '<button onclick="window.KhipuCrypto.trade(\'buy\')" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:700;' +
+            'border:1px solid rgba(43,227,139,.5);background:rgba(43,227,139,.12);color:#2BE38B">' + T2('cr_trade_buy', 'Comprar', 'Buy') + '</button>' +
+          '<button onclick="window.KhipuCrypto.trade(\'sell\')" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:700;' +
+            'border:1px solid rgba(255,77,106,.5);background:rgba(255,77,106,.1);color:#FF4D6A">' + T2('cr_trade_sell', 'Vender', 'Sell') + '</button>' +
+        '</div>' +
+        '<div id="cr-trade-msg" style="margin-top:10px"></div>');
+    });
+  }
+
+  function fmtAmt(v) { return '$' + v.toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+
+  function tradeAsk(side) {
+    var msg = document.getElementById('cr-trade-msg');
+    if (!msg || !TRDCTX) return;
+    var inp = document.getElementById('cr-trade-amt');
+    var amt = parseFloat(inp && inp.value);
+    if (!isFinite(amt) || amt < 1 || amt > 100000) {
+      msg.innerHTML = '<div style="color:#FF8FA3;font-size:12px">' + T2('cr_trade_amt_err',
+        'Monto inválido: mínimo $1, máximo $100,000 por orden.',
+        'Invalid amount: minimum $1, maximum $100,000 per order.') + '</div>';
+      return;
+    }
+    amt = Math.round(amt * 100) / 100;
+    TRD = { pair: TRDCTX.pair, name: TRDCTX.name, side: side === 'sell' ? 'sell' : 'buy', amt: amt, paper: TRDCTX.paper };
+    var qk = TRD.side === 'buy'
+      ? ['cr_trade_q_buy', '¿Comprar {m} de {n} ({p})?', 'Buy {m} of {n} ({p})?']
+      : ['cr_trade_q_sell', '¿Vender {m} de {n} ({p})?', 'Sell {m} of {n} ({p})?'];
+    var amtS = fmtAmt(amt), nameS = esc(TRD.name), pairS = esc(TRD.pair);
+    // replace con función: evita los patrones especiales $&/$` del replacement
+    var q = T2(qk[0], qk[1], qk[2])
+      .replace('{m}', function () { return amtS; })
+      .replace('{n}', function () { return nameS; })
+      .replace('{p}', function () { return pairS; });
+    var note = TRD.paper
+      ? '<span style="color:#FFB300;font-weight:600"> — ' + T2('cr_trade_sim_note', 'orden simulada (papel)', 'simulated (paper) order') + '</span>'
+      : '<span style="color:#FF4D6A;font-weight:800"> — ' + T2('cr_trade_real', '🔴 DINERO REAL', '🔴 REAL MONEY') + '</span>';
+    msg.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,179,0,.35);background:rgba(255,179,0,.06);font-size:12.5px;line-height:1.6;color:#E8EDFB">' +
+      q + note +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+        '<button onclick="window.KhipuCrypto.tradeConfirm()" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;' +
+          'border:1px solid rgba(43,227,139,.55);background:rgba(43,227,139,.15);color:#2BE38B">' + T2('cr_trade_confirm', 'Confirmar', 'Confirm') + '</button>' +
+        '<button onclick="window.KhipuCrypto.tradeCancel()" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;' +
+          'border:1px solid rgba(122,158,255,.3);background:none;color:#8791AC">' + T2('cr_trade_cancel', 'Cancelar', 'Cancel') + '</button>' +
+      '</div></div>';
+  }
+
+  function tradeSend() {
+    var o = TRD; TRD = null;                        // evita doble envío
+    var msg = document.getElementById('cr-trade-msg');
+    if (!msg || !o || typeof window._tradeFetch !== 'function') return;
+    msg.innerHTML = '<div style="color:#7C87A3;font-size:12px">' + T2('cr_trade_sending', 'Enviando orden…', 'Sending order…') + '</div>';
+    window._tradeFetch('/api/trade/order', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      // cripto: el server fuerza time_in_force='gtc' — no se envía aquí
+      body: JSON.stringify({ symbol: o.pair, side: o.side, notional: o.amt, type: 'market' })
+    }, true)
+      .then(function (r) { return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); })
+      .then(function (d) {
+        var m2 = document.getElementById('cr-trade-msg'); if (!m2) return;
+        if (d && (d.id || d.status === 'accepted' || d.status === 'pending_new')) {
+          var broker = (window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function' && typeof window._surface === 'function')
+            ? ' <a onclick="window.KhipuCrypto.openBroker()" style="color:#00E0FF;font-weight:600;text-decoration:underline;cursor:pointer">' +
+                T2('cr_trade_broker', 'Ver mi broker', 'View my broker') + '</a>'
+            : '';
+          m2.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(43,227,139,.4);background:rgba(43,227,139,.07);color:#2BE38B;font-size:12.5px;line-height:1.6">' +
+            '✓ ' + T2('cr_trade_ok', 'Orden aceptada', 'Order accepted') + ' — ' +
+            (o.side === 'buy' ? T2('cr_trade_buy', 'Comprar', 'Buy') : T2('cr_trade_sell', 'Vender', 'Sell')) +
+            ' ' + fmtAmt(o.amt) + ' · ' + esc(o.pair) +
+            (d.id ? ' · id <span style="font-family:ui-monospace,Consolas,monospace;font-size:10.5px">' + esc(String(d.id)) + '</span>' : '') +
+            (d.status ? ' · ' + esc(String(d.status)) : '') + '.' + broker + '</div>';
+        } else {
+          // error del server TAL CUAL (contrato: 4xx de Alpaca se pasa directo)
+          m2.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.07);color:#FF8FA3;font-size:12.5px;line-height:1.6">' +
+            esc((d && (d.error || d.message)) || 'Error') + '</div>';
+        }
+      })
+      .catch(function () {
+        var m2 = document.getElementById('cr-trade-msg'); if (!m2) return;
+        m2.innerHTML = '<div style="color:#FF8FA3;font-size:12px">' + T2('cr_trade_neterr',
+          'No se pudo enviar la orden. Revisa tu conexión e inténtalo de nuevo.',
+          'Could not send the order. Check your connection and try again.') + '</div>';
+      });
+  }
+
   // ── vista DETALLE ──
   function renderDetail(a) {
     stopBubbles();
@@ -376,9 +549,11 @@
           kv(T('cr_ath', 'Máximo histórico'), fmtPrice(a.ath) + (athDate ? ' <span style="color:#7C87A3;font-weight:400">(' + athDate + ')</span>' : '')) +
           kv(T('cr_atl', 'Mínimo histórico'), fmtPrice(a.atl)) +
         '</div>' +
+        '<div id="cr-trade" data-sym="' + esc((a.symbol || '').toUpperCase()) + '"></div>' +
         intelHTML(it) +
         (a.description ? '<p style="margin-top:18px;font-size:13px;line-height:1.65;color:#8b96b5">' + esc(a.description) + '</p>' : '') +
       '</div>';
+    mountTrade(a);   // caja 💼 Operar (async; solo si el activo es tradeable)
     // gráfico de precio 90 días
     fetch('/api/crypto/' + encodeURIComponent(a.id) + '/history?days=90')
       .then(function (r) { return r.json(); })
@@ -427,6 +602,19 @@
     },
     setFilter: function (k) { FILTER = k || null; renderCurrent(); },
     stop: stopBubbles,
+    // ── caja 💼 Operar de la ficha (onclick inline) ──
+    trade: tradeAsk,            // muestra la confirmación inline (buy|sell)
+    tradeConfirm: tradeSend,    // envía la orden YA confirmada por el usuario
+    tradeCancel: function () {
+      TRD = null;
+      var m = document.getElementById('cr-trade-msg'); if (m) m.innerHTML = '';
+    },
+    openBroker: function () {
+      try {
+        if (window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function') window.BixbyCockpit.open();
+        if (typeof window._surface === 'function') window._surface('trade');
+      } catch (e) {}
+    },
     openDetail: function (id) {
       renderMsg(T('cr_loading', 'Cargando mercado cripto…'));
       fetch('/api/crypto/' + encodeURIComponent(id))

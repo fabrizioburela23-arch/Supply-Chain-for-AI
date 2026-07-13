@@ -1061,11 +1061,62 @@ def trade_account():
         r = requests.get(f'{ALPACA_BASE}/v2/account',
                          headers=_alpaca_hdrs(), timeout=10)
         try:
-            return jsonify(r.json()), r.status_code
+            payload = r.json()
+            # "paper": true → cuenta simulada (paper-api); false → DINERO REAL.
+            # La UI usa este flag para el badge 🧪 SIMULADO / 🔴 DINERO REAL.
+            if isinstance(payload, dict):
+                payload['paper'] = 'paper' in ALPACA_BASE
+            return jsonify(payload), r.status_code
         except Exception:
             return jsonify({'error': f'Alpaca HTTP {r.status_code}', 'body': r.text[:300]}), 502
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
+
+# ── Catálogo cripto de Alpaca (cache 1h en variable de módulo) ───────────────
+# OJO: @cache.cached NO sirve aquí — al envolver una ruta con @_trade_auth
+# cachearía también los 403/401 del guard. Patrón _13f_cache: payload +
+# timestamp en una variable de módulo (1 worker → sin divergencia de estado).
+_crypto_assets_cache: dict = {}
+
+
+def _fetch_crypto_assets():
+    """[{symbol,name}] de los pares cripto tradeables en Alpaca (p.ej.
+    'BTC/USD'). Devuelve None si el catálogo no se pudo cargar — el caller
+    decide el fallback (validación permisiva en trade_order)."""
+    if _crypto_assets_cache and time.time() - _crypto_assets_cache.get('ts', 0) < 3600:
+        return _crypto_assets_cache.get('assets')
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/assets',
+                         params={'asset_class': 'crypto', 'status': 'active'},
+                         headers=_alpaca_hdrs(), timeout=12)
+        if r.status_code != 200:
+            return None
+        raw = r.json()
+        if not isinstance(raw, list):
+            return None
+        assets = [{'symbol': a.get('symbol', ''), 'name': a.get('name') or a.get('symbol', '')}
+                  for a in raw if a.get('symbol') and a.get('tradable', True)]
+        if not assets:
+            return None
+        _crypto_assets_cache['assets'] = assets
+        _crypto_assets_cache['ts'] = time.time()
+        return assets
+    except Exception:  # noqa: BLE001
+        return None
+
+
+@app.route('/api/trade/crypto/assets', methods=['GET'])
+@rate_limit(limit=30, window=60)
+@_trade_auth
+def trade_crypto_assets():
+    """Activos cripto tradeables en Alpaca → {"assets":[{symbol,name}], "paper":bool}."""
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    assets = _fetch_crypto_assets()
+    if assets is None:
+        return jsonify({'error': 'No se pudo cargar el catálogo cripto de Alpaca'}), 502
+    return jsonify({'assets': assets, 'paper': 'paper' in ALPACA_BASE})
+
 
 @app.route('/api/trade/order', methods=['POST'])
 @rate_limit(20, 60)
@@ -1073,16 +1124,50 @@ def trade_account():
 def trade_order():
     if not ALPACA_KEY:
         return jsonify({'error': 'ALPACA_KEY not configured'}), 400
-    data   = request.get_json(silent=True) or {}
-    ticker = (data.get('symbol') or '').upper().strip()
-    qty    = data.get('qty')
-    side   = data.get('side', 'buy')
-    otype  = data.get('type', 'market')
-    tif    = data.get('time_in_force', 'day')
-    if not ticker or not qty or side not in ('buy', 'sell'):
-        return jsonify({'error': 'symbol, qty y side (buy|sell) son requeridos'}), 400
-    body = {'symbol': ticker, 'qty': str(qty), 'side': side,
-            'type': otype, 'time_in_force': tif}
+    data     = request.get_json(silent=True) or {}
+    ticker   = (data.get('symbol') or '').upper().strip()
+    qty      = data.get('qty')
+    notional = data.get('notional')
+    side     = (data.get('side') or 'buy').lower()
+    otype    = (data.get('type') or 'market').lower()
+    tif      = data.get('time_in_force', 'day')
+    if not ticker or side not in ('buy', 'sell'):
+        return jsonify({'error': 'symbol y side (buy|sell) son requeridos'}), 400
+    if otype not in ('market', 'limit'):
+        return jsonify({'error': "type debe ser 'market' o 'limit'"}), 400
+    limit_price = data.get('limit_price')
+    if otype == 'limit' and limit_price is None:
+        return jsonify({'error': 'una orden limit requiere limit_price'}), 400
+    # Exactamente UNO de qty | notional (notional = monto en USD, ej. 100 = $100)
+    if (qty is None) == (notional is None):
+        return jsonify({'error': 'envía exactamente uno de: qty O notional (monto en USD)'}), 400
+    if notional is not None:
+        try:
+            notional = float(notional)
+        except (TypeError, ValueError):
+            return jsonify({'error': 'notional debe ser numérico (monto en USD)'}), 400
+        if not (1 <= notional <= 100000):
+            return jsonify({'error': 'notional fuera de rango: mínimo $1, máximo $100,000 por orden'}), 400
+    else:
+        try:
+            if float(qty) <= 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            return jsonify({'error': 'qty debe ser un número mayor que 0'}), 400
+    if '/' in ticker:
+        # Cripto ('BTC/USD'): validar contra el catálogo de Alpaca; si el
+        # catálogo no carga, fallback PERMISIVO (que Alpaca decida el 4xx).
+        catalog = _fetch_crypto_assets()
+        if catalog is not None and ticker not in {a['symbol'] for a in catalog}:
+            return jsonify({'error': f'{ticker} no es un par cripto tradeable en Alpaca'}), 400
+        tif = 'gtc'   # Alpaca solo acepta gtc/ioc en cripto — se fuerza gtc
+    body = {'symbol': ticker, 'side': side, 'type': otype, 'time_in_force': tif}
+    if notional is not None:
+        body['notional'] = f'{notional:.2f}'
+    else:
+        body['qty'] = str(qty)
+    if otype == 'limit':
+        body['limit_price'] = str(limit_price)
     try:
         r = requests.post(f'{ALPACA_BASE}/v2/orders',
                           headers=_alpaca_hdrs(), json=body, timeout=15)
@@ -2137,6 +2222,9 @@ Data lookups:
 Navigation & UI:
 - navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|tkg|guia)
 - show_chart(ticker) · open_terminal(ticker) · place_trade(ticker) · open_second_brain(company_name) · open_cockpit()
+
+Paper trading (SIMULATED broker — strict rules in PAPER TRADING section below):
+- place_paper_trade(symbol_or_name, side, notional_usd, confirmed) · get_portfolio_status()
 - open_dossier(company_name): the FINANCIAL DOSSIER card (revenue growth, dilution, FCF, stock, EV/Sales, debt, margins, ROE). Use when the user asks for "fundamentales", "dossier", or a financial overview of one listed company.
 When the full-screen cockpit is open, the graph and the terminal render INSIDE it automatically — navigate_to_company and open_terminal show them on the cockpit stage, never in a hidden tab.
 
@@ -2173,6 +2261,13 @@ War-Room scenarios (5 presets):
 3. hbm_shortage_2027 — SK Hynix/Micron +35%, AI fabless squeezed, OSAT bottleneck
 4. openai_ipo_impact — NVDA/ARM multiple expansion, entire AI ecosystem re-rating
 5. starshield_reveal — SpaceX defense revenue confirmed, traditional contractors compressed
+
+## PAPER TRADING (SIMULATED — RULES YOU MUST NEVER BREAK)
+- place_paper_trade and get_portfolio_status operate on a SIMULATED paper-money broker. ALWAYS say clearly that the operation is simulated ("es una operación simulada, dinero de papel") — never let the user believe real money moved.
+- NEVER execute a trade without explicit verbal confirmation. The flow is ALWAYS two steps: (1) call place_paper_trade with confirmed=false — it returns an order summary WITHOUT executing; read that summary to the user (symbol, buy/sell, USD amount, simulated) and ask if they confirm. (2) ONLY after the user explicitly says yes ("sí", "confirmo", "dale", "yes"), call place_paper_trade again with the SAME parameters and confirmed=true. Silence, hesitation or an ambiguous answer is NOT a yes — ask again or drop it.
+- NEVER give investment advice around a trade: you execute exactly what the user asked and report the result. If they ask what to buy, you may give analysis but always state it is not financial advice and the decision is theirs.
+- If the tool returns an error message, read it to the user AS-IS (it is already user-friendly, in their language) and do NOT retry on your own.
+- Amounts are in US dollars (notional): minimum $1, maximum $100,000 per order.
 
 ## ANALYST BEHAVIOR RULES
 - You are a financial analyst first, voice assistant second. Give real insight, not just navigation.
@@ -2228,6 +2323,13 @@ def _bixby_client_tools():
         T('open_cockpit', 'Open the full-screen Bixby cockpit view.'),
         T('deep_analysis', 'Run a multi-step DEEP investigation (plan → context → simulation → synthesis) for a complex investment question. Takes 30-90 seconds; the full analysis appears on screen — tell the user you are investigating and it will appear shortly.', {'question': S('The complete question, in the user language')}, ['question']),
         T('open_dossier', 'Open the FINANCIAL DOSSIER card of a listed company: revenue growth, dilution, free cash flow, stock, EV/Sales valuation, debt/equity, margins and ROE (investingvisuals-style small multiples).', company, ['company_name']),
+        T('place_paper_trade', 'Execute a SIMULATED (paper-money) buy/sell order on the paper broker — never real money. MUST be called FIRST with confirmed=false: it returns an order summary WITHOUT executing; read that summary to the user and ask for confirmation. ONLY after an explicit verbal yes, call again with the same parameters and confirmed=true to execute. Never give investment advice; if the tool returns an error, read it as-is.', {
+            'symbol_or_name': S('Ticker, crypto pair or company/asset name, any casing (e.g. "NVDA", "Nvidia", "BTC/USD", "bitcoin")'),
+            'side': S('buy | sell'),
+            'notional_usd': N('Amount in US dollars (e.g. 100 = $100). Min 1, max 100000.'),
+            'confirmed': {'type': 'boolean', 'description': 'false = preview only (returns the summary to read to the user). true = EXECUTE — only allowed after the user explicitly said yes to the summary.'},
+        }, ['symbol_or_name', 'side', 'notional_usd', 'confirmed']),
+        T('get_portfolio_status', 'Status of the SIMULATED paper-broker account: cash, equity, buying power and all open positions with P&L. Use when the user asks about their paper portfolio, balance or positions.'),
     ]
 
 

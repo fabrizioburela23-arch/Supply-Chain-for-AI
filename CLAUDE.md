@@ -124,6 +124,15 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 - Actualizaciones de versión SIEMPRE silenciosas: _showUpdatePill ya NO
   muestra aviso (recarga al abrir o al ocultar pestaña — pedido explícito).
   No reintroducir pills/avisos de versión.
+- Trading (papel por defecto): TODAS las rutas /api/trade/* exigen
+  X-Trade-Pin (env TRADE_PIN; sin él → 403 y la UI muestra ese error tal
+  cual). Cliente: usar SIEMPRE `window._tradeFetch(url, opts, interactive)`
+  — nunca reimplementar el PIN. Cripto = símbolos 'BTC/USD' + notional USD;
+  el server fuerza tif='gtc'. Badge obligatorio 🧪 SIMULADO / 🔴 DINERO REAL
+  según `account.paper`. NINGUNA orden sin confirmación explícita (clic o
+  sí verbal). Bixby: place_paper_trade (flujo confirmed=false→resumen→sí→
+  confirmed=true) y get_portfolio_status; broker en Cabina:
+  `window._openBrokerStage()` / `_surface('trade')` sin arg.
 
 ## Lenguaje KHIPU (engine/khipu_lang.js)
 
@@ -153,7 +162,7 @@ xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (51 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (56 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

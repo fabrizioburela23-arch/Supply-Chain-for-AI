@@ -731,6 +731,20 @@ const BixbyVoice = {
         } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
+      // ── Trading Bixby (Etapa M): orden por voz con confirmación explícita ──
+      case 'place_paper_trade': {
+        // NUNCA envía sin confirmed=true — ver _toolPlacePaperTrade
+        this._toolPlacePaperTrade(params)
+          .then(respond)
+          .catch(e => respond({ success: false, error: 'trade tool error: ' + ((e && e.message) || e) }));
+        break;
+      }
+      case 'get_portfolio_status': {
+        this._toolPortfolioStatus(params)
+          .then(respond)
+          .catch(e => respond({ success: false, error: 'portfolio tool error: ' + ((e && e.message) || e) }));
+        break;
+      }
       case 'get_market_summary': {
         const quotes = Object.entries((typeof MKT !== 'undefined' ? MKT.quotes : {}) || {})
           .filter(([, q]) => q.close)
@@ -904,6 +918,157 @@ const BixbyVoice = {
     }
   },
 
+  // ── Trading Bixby (Etapa M) ────────────────────────────────────────────────
+  // place_paper_trade: resuelve el activo (cripto primero, luego equity vía
+  // KhipuResolve) y SOLO envía la orden cuando confirmed===true. Sin confirmar
+  // devuelve needs_confirmation con un resumen hablable (ES/EN) para que Bixby
+  // lo LEA en voz alta y pida el sí explícito del usuario. Regla innegociable:
+  // ninguna orden sale sin confirmación.
+  async _toolPlacePaperTrade(params) {
+    params = params || {};
+    const en = (((typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es')) === 'en');
+    if (!window._resolveTradeSymbol || !window._executeTradeOrder || !window._tradeFetch) {
+      return { success: false, error: en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.' };
+    }
+    const q = String(params.symbol_or_name || params.symbol || params.asset || params.company_name || '').trim();
+    if (!q) {
+      return { success: false, error: en
+        ? 'Which asset? For example: "buy $100 of Bitcoin".'
+        : 'No entendí el activo. Dime, por ejemplo: "compra 100 dólares de Bitcoin".' };
+    }
+    const res = await window._resolveTradeSymbol(q);
+    if (!res.ok) return { success: false, error: res.error, did_you_mean: res.suggestions || [] };
+
+    const side = /^(sell|vend|venta)/i.test(String(params.side || '')) ? 'sell' : 'buy';
+    let notional = (params.amount_usd != null && params.amount_usd !== '') ? Number(params.amount_usd)
+      : (params.notional_usd != null && params.notional_usd !== '') ? Number(params.notional_usd)
+      : (params.notional != null && params.notional !== '') ? Number(params.notional) : null;
+    if (notional != null && !isFinite(notional)) notional = null;
+    let qty = (params.qty != null && params.qty !== '') ? Number(params.qty) : null;
+    if (qty != null && (!isFinite(qty) || qty <= 0)) qty = null;
+    if (notional == null && qty == null) {
+      return { success: false, needs_amount: true, error: en
+        ? `How much? For example "$100 of ${res.label}".`
+        : `¿Por cuánto? Por ejemplo "100 dólares de ${res.label}".` };
+    }
+    if (notional != null && !(notional >= 1 && notional <= 100000)) {
+      return { success: false, error: en
+        ? 'The amount must be between $1 and $100,000 per order.'
+        : 'El monto debe estar entre $1 y $100,000 por orden.' };
+    }
+
+    const amountTxt = notional != null
+      ? '$' + notional.toLocaleString('en-US', { maximumFractionDigits: 2 })
+      : qty + (en ? ' units' : ' unidades');
+    const verb = side === 'buy' ? (en ? 'buy' : 'comprar') : (en ? 'sell' : 'vender');
+
+    // modo papel/real para el aviso — SIN prompt de PIN en esta fase (no bloquear)
+    let paper = null;
+    try {
+      const acct = await window._tradeAccountInfo(false);
+      if (acct && typeof acct.paper === 'boolean') paper = acct.paper;
+    } catch (e) {}
+
+    const orderObj = { symbol: res.symbol, side, label: res.label, kind: res.kind };
+    if (notional != null) orderObj.notional = notional; else orderObj.qty = qty;
+
+    const confirmed = params.confirmed === true || params.confirmed === 'true';
+    if (!confirmed) {
+      // tarjeta de confirmación visual en la Cabina (también se puede confirmar
+      // con un clic) + resumen hablable para el sí verbal. NADA se envía aquí.
+      this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({ confirm: orderObj }); });
+      const mode = paper === false
+        ? (en ? 'REAL-MONEY order' : 'Orden con DINERO REAL')
+        : paper === true ? (en ? 'PAPER (simulated) order' : 'Orden SIMULADA (papel)')
+          : (en ? 'Order' : 'Orden');
+      const summary = en
+        ? `${mode}: ${verb} ${amountTxt} of ${res.label} (${res.symbol}). Do you confirm?`
+        : `${mode}: ${verb} ${amountTxt} de ${res.label} (${res.symbol}). ¿Confirmas?`;
+      return { success: false, needs_confirmation: true, summary, symbol: res.symbol, side, amount_usd: notional, qty, paper };
+    }
+
+    // confirmed=true → enviar de verdad (con guard anti-doble-envío compartido)
+    const r = await window._executeTradeOrder(orderObj);
+    this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({}); });
+    if (!r.ok) return { success: false, error: r.error };
+    if (paper === null) {
+      try {
+        const a2 = await window._tradeAccountInfo(false);
+        if (a2 && typeof a2.paper === 'boolean') paper = a2.paper;
+      } catch (e) {}
+    }
+    if (r.dedup) {
+      return { success: true, already_sent: true, symbol: res.symbol, paper, summary: en
+        ? 'That same order was already sent a moment ago — I did not send it twice.'
+        : 'Esa misma orden ya se envió hace un momento — no la envié dos veces.' };
+    }
+    const st = (r.data && r.data.status) || 'accepted';
+    const modeDone = paper === false
+      ? (en ? 'with REAL MONEY' : 'con DINERO REAL')
+      : paper === true ? (en ? 'simulated (paper)' : 'simulada (papel)') : '';
+    const summary = en
+      ? `Done — order ${modeDone} sent: ${verb} ${amountTxt} of ${res.label}. Broker status: ${st}. It is on screen.`
+      : `Listo — orden ${modeDone} enviada: ${verb} ${amountTxt} de ${res.label}. Estado en el bróker: ${st}. La tienes en pantalla.`;
+    return { success: true, status: st, symbol: res.symbol, side, amount_usd: notional, qty, paper, summary };
+  },
+
+  // get_portfolio_status: cuenta + posiciones del bróker en texto hablable
+  // (ES/EN) y abre el stage 'broker' de la Cabina para verlo en pantalla.
+  async _toolPortfolioStatus() {
+    const en = (((typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es')) === 'en');
+    if (!window._tradeAccountInfo || !window._tradeFetch) {
+      return { success: false, error: en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.' };
+    }
+    // interactivo: puede pedir el PIN una vez (lo gestiona window._tradeFetch)
+    const acct = await window._tradeAccountInfo(true, true);
+    if (!acct || acct.error) {
+      // 403 sin TRADE_PIN → el mensaje del server ya viene en español; leerlo tal cual
+      return { success: false, error: (acct && acct.error) || (en ? 'Could not reach the broker.' : 'No pude conectar con el bróker.') };
+    }
+    let positions = [];
+    try {
+      const r = await window._tradeFetch('/api/trade/positions/detail', {}, false);
+      const d = await r.json();
+      if (Array.isArray(d)) positions = d;
+    } catch (e) {}
+
+    this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({}); });
+
+    const equity = +acct.equity || 0, cash = +acct.cash || 0, bp = +acct.buying_power || 0;
+    const fmt = v => '$' + (+v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    const pct = p => ((+p || 0) >= 0 ? '+' : '') + (+p || 0).toFixed(1) + '%';
+    let best = null, worst = null;
+    positions.forEach(p => {
+      if (!best || (+p.unrealized_pct || 0) > (+best.unrealized_pct || 0)) best = p;
+      if (!worst || (+p.unrealized_pct || 0) < (+worst.unrealized_pct || 0)) worst = p;
+    });
+    const paper = (typeof acct.paper === 'boolean') ? acct.paper : null;
+    const mode = paper === false
+      ? (en ? 'REAL-MONEY account' : 'Cuenta con DINERO REAL')
+      : paper === true ? (en ? 'Paper (simulated) account' : 'Cuenta SIMULADA (papel)')
+        : (en ? 'Broker account' : 'Cuenta del bróker');
+    let summary;
+    if (en) {
+      summary = `${mode}. Equity ${fmt(equity)}, cash ${fmt(cash)}, buying power ${fmt(bp)}. `
+        + (positions.length ? `${positions.length} open position${positions.length > 1 ? 's' : ''}.` : 'No open positions.');
+      if (best && positions.length > 1 && best !== worst) summary += ` Best: ${best.symbol} ${pct(best.unrealized_pct)}. Worst: ${worst.symbol} ${pct(worst.unrealized_pct)}.`;
+      else if (best) summary += ` ${best.symbol}: ${pct(best.unrealized_pct)}.`;
+      summary += ' It is on screen.';
+    } else {
+      summary = `${mode}. Valor total ${fmt(equity)}, efectivo ${fmt(cash)}, poder de compra ${fmt(bp)}. `
+        + (positions.length ? `Tienes ${positions.length} ${positions.length === 1 ? 'posición abierta' : 'posiciones abiertas'}.` : 'No tienes posiciones abiertas.');
+      if (best && positions.length > 1 && best !== worst) summary += ` La mejor: ${best.symbol} ${pct(best.unrealized_pct)}. La peor: ${worst.symbol} ${pct(worst.unrealized_pct)}.`;
+      else if (best) summary += ` ${best.symbol}: ${pct(best.unrealized_pct)}.`;
+      summary += ' La tienes en pantalla.';
+    }
+    return {
+      success: true, paper, equity, cash, buying_power: bp, positions_count: positions.length,
+      best: best ? { symbol: best.symbol, pnl_pct: +(+best.unrealized_pct || 0).toFixed(2) } : null,
+      worst: worst ? { symbol: worst.symbol, pnl_pct: +(+worst.unrealized_pct || 0).toFixed(2) } : null,
+      summary,
+    };
+  },
+
   // Ejecuta una acción visual pesada FUERA del hilo crítico del WebSocket, para
   // no bloquear el procesamiento/agendado del audio mientras Bixby habla.
   // OJO: requestAnimationFrame se CONGELA en pestañas ocultas. Si la pestaña
@@ -1000,3 +1165,207 @@ const BixbyVoice = {
 };
 
 window.BixbyVoice = BixbyVoice;
+
+/* ============================================================================
+   TRADING COMPARTIDO (Etapa M) — helpers usados por voice.js (tools de Bixby),
+   engine/cockpit.js (stage 'broker') y engine/command_center.js. UN solo lugar
+   para: resolver el símbolo (cripto → equity), leer la cuenta, ejecutar la
+   orden (con guard anti-doble-envío) y abrir el stage del bróker. NO duplicar.
+   Contrato server: POST /api/trade/order {symbol, side, notional|qty,
+   type:'market'} — cripto usa 'BTC/USD' y el server fuerza time_in_force=gtc.
+   Todas las rutas /api/trade/* van por window._tradeFetch (PIN X-Trade-Pin).
+   ============================================================================ */
+(function () {
+  'use strict';
+
+  function tlang() {
+    try { return (window.LANG || localStorage.getItem('eco_lang') || 'es'); } catch (e) { return 'es'; }
+  }
+  function tnorm(s) {
+    if (window.KhipuResolve && window.KhipuResolve.norm) return window.KhipuResolve.norm(s);
+    return String(s == null ? '' : s).toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  // Alias estáticos de cripto (fallback si la lista de Alpaca aún no cargó) —
+  // clave normalizada (como la dicta/escribe el usuario) → símbolo base;
+  // el par tradeable siempre es <BASE>/USD.
+  var CRYPTO_ALIAS = {
+    'btc': 'BTC', 'bitcoin': 'BTC', 'bit coin': 'BTC', 'bitcoin core': 'BTC',
+    'eth': 'ETH', 'ethereum': 'ETH', 'ether': 'ETH', 'etherium': 'ETH', 'eterium': 'ETH', 'iterium': 'ETH',
+    'sol': 'SOL', 'solana': 'SOL',
+    'doge': 'DOGE', 'dogecoin': 'DOGE', 'doge coin': 'DOGE', 'dogue coin': 'DOGE',
+    'ltc': 'LTC', 'litecoin': 'LTC', 'lite coin': 'LTC',
+    'xrp': 'XRP', 'ripple': 'XRP',
+    'ada': 'ADA', 'cardano': 'ADA',
+    'avax': 'AVAX', 'avalanche': 'AVAX',
+    'link': 'LINK', 'chainlink': 'LINK', 'chain link': 'LINK',
+    'dot': 'DOT', 'polkadot': 'DOT',
+    'shib': 'SHIB', 'shiba': 'SHIB', 'shiba inu': 'SHIB',
+    'uni': 'UNI', 'uniswap': 'UNI',
+    'aave': 'AAVE',
+    'bch': 'BCH', 'bitcoin cash': 'BCH',
+    'usdt': 'USDT', 'tether': 'USDT',
+    'usdc': 'USDC', 'usd coin': 'USDC',
+    'mkr': 'MKR', 'maker': 'MKR',
+    'crv': 'CRV', 'curve': 'CRV',
+    'xtz': 'XTZ', 'tezos': 'XTZ',
+    'bat': 'BAT', 'basic attention token': 'BAT',
+    'sushi': 'SUSHI', 'sushiswap': 'SUSHI',
+    'grt': 'GRT', 'the graph': 'GRT',
+    'pepe': 'PEPE',
+  };
+  var CRYPTO_LABEL = {
+    BTC: 'Bitcoin', ETH: 'Ethereum', SOL: 'Solana', DOGE: 'Dogecoin', LTC: 'Litecoin',
+    XRP: 'XRP', ADA: 'Cardano', AVAX: 'Avalanche', LINK: 'Chainlink', DOT: 'Polkadot',
+    SHIB: 'Shiba Inu', UNI: 'Uniswap', AAVE: 'Aave', BCH: 'Bitcoin Cash', USDT: 'Tether',
+    USDC: 'USD Coin', MKR: 'Maker', CRV: 'Curve', XTZ: 'Tezos', BAT: 'BAT',
+    SUSHI: 'SushiSwap', GRT: 'The Graph', PEPE: 'Pepe',
+  };
+
+  var _assetsCache = null;   // { ts, list: [{symbol:'BTC/USD', name:'Bitcoin'}, …] }
+  async function cryptoAssets() {
+    if (_assetsCache && (Date.now() - _assetsCache.ts) < 3600000) return _assetsCache.list;
+    if (!window._tradeFetch) return null;
+    try {
+      // interactive=false: NUNCA pedir el PIN solo para resolver un nombre
+      var r = await window._tradeFetch('/api/trade/crypto/assets', {}, false);
+      if (!r.ok) return null;
+      var d = await r.json();
+      var list = (d && Array.isArray(d.assets)) ? d.assets : null;
+      if (list && list.length) _assetsCache = { ts: Date.now(), list: list };
+      return list;
+    } catch (e) { return null; }
+  }
+
+  // window._resolveTradeSymbol(texto) → Promise<
+  //   {ok:true, kind:'crypto'|'equity', symbol:'BTC/USD'|'NVDA', label, node?} |
+  //   {ok:false, error (bilingüe, hablable), suggestions:[labels]}>
+  // Orden del contrato: cripto primero (alias estático + lista real de Alpaca),
+  // después equity vía KhipuResolve → ticker.
+  window._resolveTradeSymbol = async function (q) {
+    var en = tlang() === 'en';
+    var raw = String(q == null ? '' : q).trim().replace(/[?!.]+$/, '').trim();
+    if (!raw) return { ok: false, error: en ? 'Which asset?' : '¿Qué activo?', suggestions: [] };
+
+    // ¿ya viene como par cripto? ("BTC/USD", "eth/usd")
+    var pair = raw.toUpperCase().match(/^([A-Z0-9]{2,10})\s*\/\s*(USD[TC]?)$/);
+    if (pair) return { ok: true, kind: 'crypto', symbol: pair[1] + '/USD', label: CRYPTO_LABEL[pair[1]] || pair[1] };
+
+    var nq = tnorm(raw).replace(/^(de |del |el |la )/, '').trim();
+    if (!nq) return { ok: false, error: en ? 'Which asset?' : '¿Qué activo?', suggestions: [] };
+
+    // 1) alias estático de cripto
+    var base = CRYPTO_ALIAS[nq] || null;
+
+    // 2) lista real de activos cripto tradeables en Alpaca
+    if (!base) {
+      var assets = await cryptoAssets();
+      if (assets && assets.length) {
+        var up = nq.toUpperCase();
+        for (var i = 0; i < assets.length; i++) {
+          var sym = String(assets[i].symbol || '');
+          var b = sym.split('/')[0];
+          if (b === up || tnorm(assets[i].name || '') === nq) { base = b; break; }
+        }
+        if (!base && nq.length >= 4) {
+          for (var j = 0; j < assets.length; j++) {
+            var nm = tnorm(assets[j].name || '');
+            if (nm && (nm.indexOf(nq) === 0 || nq.indexOf(nm) === 0)) {
+              base = String(assets[j].symbol || '').split('/')[0];
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (base) return { ok: true, kind: 'crypto', symbol: base + '/USD', label: CRYPTO_LABEL[base] || base };
+
+    // 3) equity vía el resolutor compartido (alias de voz, fuzzy, sugerencias)
+    if (window.KhipuResolve) {
+      var r = window.KhipuResolve.find(raw);
+      if (r && r.node) {
+        if (r.node.mkt) return { ok: true, kind: 'equity', symbol: r.node.mkt, label: r.node.label, node: r.node };
+        return { ok: false, suggestions: [], error: en
+          ? (r.node.label + ' is not publicly traded — I cannot place orders on it.')
+          : (r.node.label + ' no cotiza en bolsa — no puedo operarla.') };
+      }
+      var nf = window.KhipuResolve.notFound(raw);
+      return { ok: false, error: nf.spoken, suggestions: (nf.suggestions || []).map(function (n) { return n.label; }) };
+    }
+    return { ok: false, error: en ? ('I could not find "' + raw + '".') : ('No encontré «' + raw + '».'), suggestions: [] };
+  };
+
+  // window._tradeAccountInfo(interactive, force) → JSON de la cuenta de Alpaca
+  // (+ campo paper) con caché de 30 s. En error devuelve {error, status}: el
+  // 403 sin TRADE_PIN trae el mensaje del server TAL CUAL (ya en español).
+  window._tradeAccountInfo = async function (interactive, force) {
+    var c = window.__tradeAcctCache;
+    if (!force && c && (Date.now() - c.ts) < 30000) return c.data;
+    if (!window._tradeFetch) return { error: 'trading no disponible' };
+    try {
+      var r = await window._tradeFetch('/api/trade/account', {}, !!interactive);
+      var d = await r.json().catch(function () { return {}; });
+      if (!r.ok) return { error: (d && d.error) || ('HTTP ' + r.status), status: r.status };
+      window.__tradeAcctCache = { ts: Date.now(), data: d };
+      return d;
+    } catch (e) { return { error: String((e && e.message) || e) }; }
+  };
+
+  // window._executeTradeOrder({symbol, side, notional?|qty?, kind?, label?})
+  // → POST /api/trade/order (PIN interactivo). Montos: $1–$100,000 por orden.
+  // Guard anti-doble-envío: la MISMA orden (símbolo+lado+monto) en <90 s no se
+  // re-envía (la voz y el clic de la Cabina pueden confirmar a la vez).
+  window._executeTradeOrder = async function (o) {
+    o = o || {};
+    var en = tlang() === 'en';
+    if (!window._tradeFetch) return { ok: false, error: 'trading no disponible' };
+    if (!o.symbol) return { ok: false, error: en ? 'Missing symbol.' : 'Falta el símbolo.' };
+    var side = o.side === 'sell' ? 'sell' : 'buy';
+    var body = { symbol: o.symbol, side: side, type: 'market' };
+    if (o.notional != null && isFinite(+o.notional)) {
+      var amt = Math.round(+o.notional * 100) / 100;
+      if (!(amt >= 1 && amt <= 100000)) {
+        return { ok: false, error: en
+          ? 'The amount must be between $1 and $100,000 per order.'
+          : 'El monto debe estar entre $1 y $100,000 por orden.' };
+      }
+      body.notional = amt;
+    } else if (o.qty != null && +o.qty > 0) {
+      body.qty = +o.qty;
+    } else {
+      return { ok: false, error: en ? 'Missing order amount.' : 'Falta el monto de la orden.' };
+    }
+    // el server fuerza gtc para cripto; day para acciones
+    body.time_in_force = (o.kind === 'crypto' || o.symbol.indexOf('/') >= 0) ? 'gtc' : 'day';
+
+    var key = body.symbol + '|' + side + '|' + (body.notional || '') + '|' + (body.qty || '');
+    var last = window.__lastTradeExec;
+    if (last && last.key === key && (Date.now() - last.ts) < 90000) {
+      return { ok: true, dedup: true, data: last.data };
+    }
+    try {
+      var r = await window._tradeFetch('/api/trade/order', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      }, true);
+      var d = await r.json().catch(function () { return { error: 'respuesta inválida del servidor' }; });
+      if (r.ok && (d.id || d.status)) {
+        window.__lastTradeExec = { key: key, ts: Date.now(), data: d };
+        window.__tradeAcctCache = null;   // la cuenta cambió — invalidar caché
+        return { ok: true, data: d };
+      }
+      return { ok: false, status: r.status, error: (d && (d.error || d.message)) || ('HTTP ' + r.status) };
+    } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+  };
+
+  // Abre el stage 'broker' de la Cabina (y abre la Cabina si está cerrada).
+  // arg: {} · {confirm:{symbol,side,notional|qty,label,kind}} · etc.
+  window._openBrokerStage = function (arg) {
+    var ck = window.BixbyCockpit;
+    if (!ck) return false;
+    try {
+      if (ck.isOpen && ck.isOpen()) ck.stage('broker', arg || {});
+      else ck.open({ kind: 'broker', arg: arg || {} });
+      return true;
+    } catch (e) { return false; }
+  };
+})();

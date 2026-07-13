@@ -8882,6 +8882,10 @@ window.loadTradeFlows = loadTradeFlows;
     }
     return r;
   }
+  // compartido: lo usan engine/crypto.js (Operar en la ficha cripto),
+  // engine/voice.js y engine/cockpit.js (broker de Bixby) — mantiene el
+  // manejo del PIN en UN solo lugar.
+  window._tradeFetch = _tradeFetch;
 
   window.submitTradePanelOrder = async function() {
     const ticker = _tp && _tp.ticker;

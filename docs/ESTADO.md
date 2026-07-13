@@ -568,6 +568,45 @@ alcanza. DECISIÓN (ni arreglar WebGL a ciegas ni borrar la feature):
      limpia en prod; quitarla después.
   3. Probar Bixby por voz end-to-end una vez.
 
+## Etapa M — Trading cripto en papel, integrado en Bixby (2026-07-13, sw v80)
+
+Pedido: "haz que se pueda tradear cripto… la idea es que todo se vaya
+integrando en el bixby y en su pantalla… super integrado". 3 agentes en
+paralelo contra contrato fijo + integración del orquestador:
+
+- [x] SERVER (server.py): /api/trade/order acepta notional (1..100000, USD)
+      o qty; símbolos cripto 'BTC/USD' → valida contra catálogo + fuerza
+      tif='gtc'; GET /api/trade/crypto/assets (cache 1h en módulo, nunca
+      cachea 401/403); /api/trade/account devuelve paper:bool; tools Bixby
+      place_paper_trade + get_portfolio_status registrados + sección PAPER
+      TRADING en el prompt (confirmación verbal obligatoria, sin consejos).
+      Los tools llegan a ElevenLabs en el próximo arranque (BIXBY_AUTOSYNC).
+- [x] BIXBY/CABINA (voice/cockpit/command_center): flujo confirmado-primero
+      (confirmed=false → resumen hablable bilingüe → sí → confirmed=true);
+      helpers compartidos _resolveTradeSymbol / _tradeAccountInfo /
+      _executeTradeOrder (clamp $1-100k, anti-doble-envío 90s) /
+      _openBrokerStage; stage 'broker' en Cabina (cuenta + badge 🧪/🔴,
+      posiciones con P&L, órdenes, botón 💼 Bróker); comandos "compra 100
+      dólares de bitcoin"/"vende 20 de solana"/"mi cuenta" por voz y texto
+      con tarjeta de confirmación. 37 asserts del harness en verde.
+- [x] FICHA CRIPTO (engine/crypto.js): caja 💼 Operar en el detalle de
+      monedas tradeables (badge, monto USD, Comprar/Vender, confirmación
+      inline, resultado con id o error verbatim, enlace al broker).
+- [x] INTEGRACIÓN (orquestador): window._tradeFetch expuesto (PIN en UN
+      lugar); FIX de contrato: voice.js ahora lee también notional_usd (el
+      server declara ese nombre — sin el fix la voz preguntaría el monto en
+      bucle); _surface('trade') SIN arg → _openBrokerStage; FIX prompt():
+      el stage broker carga NO-interactivo y en 401 pinta formulario de PIN
+      inline (nunca prompt() del navegador — bloqueado en móvil/PWA);
+      CLAUDE.md: contrato de trading + 56 tests.
+- [x] Gates: node --check ×6, py_compile, 8 bloques, pytest 56 passed.
+      Local verificado: parser sí/no-falsos-positivos, 403 sin PIN se
+      muestra verbatim sin romper, sin prompt() al abrir el broker.
+- FABRIZIO para activarlo: (1) TRADE_PIN en Railway Variables (sin él todo
+  trading queda bloqueado a propósito); (2) en app.alpaca.markets modo
+  Paper + aceptar el acuerdo de cripto si lo pide; (3) ALPACA_BASE debe
+  seguir siendo paper-api.alpaca.markets hasta probar semanas en papel.
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con
