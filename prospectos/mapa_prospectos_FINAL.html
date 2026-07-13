@@ -9685,6 +9685,7 @@ var PROSPECTOS_RAW = [
   function getDireccion(p){ return p.direccion_confirmada || p.direccion; }
 
   function dataFlag(p){
+    if(getTrack(p.id).fix) return null; // ubicación corregida en campo: dato confiable
     if(CORRECCIONES[p.id]) return CORRECCIONES[p.id];
     if(!hasValidCoords(p)){
       return { level:"warn", motivo: "Este prospecto no tenía coordenadas válidas en los datos — el marcador se colocó en el centro de " + (p.ciudad || "La Paz") + ". Confirmar la ubicación real antes de visitar." };
@@ -9862,6 +9863,8 @@ var PROSPECTOS_RAW = [
     return isFinite(lat) && isFinite(lng) && !(lat === 0 && lng === 0);
   }
   function baseLatLng(p){
+    var fix = getTrack(p.id).fix;
+    if(fix && isFinite(fix.lat) && isFinite(fix.lng)) return [Number(fix.lat), Number(fix.lng)];
     if(hasValidCoords(p)) return [Number(p.lat), Number(p.lng)];
     return CITY_CENTER[p.ciudad] || CITY_CENTER["La Paz"];
   }
@@ -9999,6 +10002,57 @@ var PROSPECTOS_RAW = [
     }
   });
   map.addControl(new LegendControl());
+
+  // ---------- CORRECCIÓN MANUAL DE UBICACIÓN ----------
+  // El Excel solo trae zona aproximada; aquí el vendedor toca el mapa y deja el
+  // pin donde el negocio está DE VERDAD. Se guarda en el tracking (localStorage,
+  // viaja con Exportar/Importar seguimiento) como track.fix = {lat, lng}.
+  var placingId = null;
+
+  function startPlacing(id){
+    placingId = id;
+    closeFicha();
+    var p = DATA.find(function(x){ return x.id === id; });
+    var mapDiv = document.getElementById("map");
+    mapDiv.style.cursor = "crosshair";
+    var b = document.createElement("div");
+    b.id = "placing-banner";
+    b.className = "map-data-warn";
+    b.style.background = "#eef6ff"; b.style.color = "#184f95"; b.style.borderColor = "#b6d4f5";
+    b.innerHTML = '🎯 Toca el punto EXACTO donde está <b>' + escapeHtml(p ? p.nombre : "") + '</b>' +
+      ' &nbsp;<button id="placing-cancel" style="border:none;background:#184f95;color:#fff;border-radius:6px;padding:4px 10px;font-weight:600;cursor:pointer;">Cancelar</button>';
+    b.addEventListener("click", function(ev){ ev.stopPropagation(); });
+    mapDiv.appendChild(b);
+    document.getElementById("placing-cancel").onclick = stopPlacing;
+  }
+
+  function stopPlacing(){
+    placingId = null;
+    document.getElementById("map").style.cursor = "";
+    var b = document.getElementById("placing-banner");
+    if(b) b.remove();
+  }
+
+  map.on("click", function(e){
+    if(placingId === null) return;
+    var id = placingId;
+    var t = getTrack(id);
+    t.fix = { lat: e.latlng.lat, lng: e.latlng.lng };
+    tracking[id] = t;
+    saveTracking();
+    stopPlacing();
+    renderAll();
+    openFicha(id);
+  });
+
+  function clearFix(id){
+    var t = getTrack(id);
+    delete t.fix;
+    tracking[id] = t;
+    saveTracking();
+    renderAll();
+    openFicha(id);
+  }
 
   if(DATA.length === 0){
     var warnDiv = document.createElement("div");
@@ -10293,7 +10347,10 @@ var PROSPECTOS_RAW = [
       '<div class="info-row"><b>Rubro:</b> '+escapeHtml(p.rubro)+'</div>'+
       '<div class="info-row"><b>Ciudad / Zona:</b> '+escapeHtml(p.ciudad)+' · '+escapeHtml(p.zona)+'</div>'+
       (getDireccion(p) ? '<div class="info-row"><b>Dirección:</b> '+escapeHtml(getDireccion(p))+'</div>' : '')+
-      '<div class="info-row"><span style="color:#d68a00;font-weight:700;">📍 Punto aproximado: centro de la zona '+escapeHtml(p.zona||p.ciudad||"")+' — confirmar en campo</span></div>'+
+      '<div class="info-row">'+(getTrack(id).fix
+        ? '<span style="color:#0ca30c;font-weight:700;">📍 Ubicación corregida en campo — punto exacto</span> &nbsp;<a href="#" id="ficha-clear-fix" style="font-size:11px;color:var(--muted);">↩ deshacer</a>'
+        : '<span style="color:#d68a00;font-weight:700;">📍 Punto aproximado: centro de la zona '+escapeHtml(p.zona||p.ciudad||"")+'</span>')+'</div>'+
+      (getTrack(id).fix ? '' : '<div class="info-row"><a href="#" id="ficha-place-btn" style="font-weight:700;color:var(--brand-dark);">🎯 Corregir ubicación — tocar el mapa donde está de verdad</a></div>')+
       (p.motivo ? '<div class="info-row"><b>Por qué es cliente potencial:</b> '+escapeHtml(p.motivo)+'</div>' : '')+
       (p.contacto ? '<div class="info-row"><b>A quién buscar:</b> '+escapeHtml(p.contacto)+'</div>' : '')+
       '<div class="info-row"><b>Volumen estimado:</b> '+escapeHtml(p.volumen||"—")+'</div>';
@@ -10352,6 +10409,11 @@ var PROSPECTOS_RAW = [
 
     document.getElementById("btn-ver-maps").onclick = function(){ window.open(p.gmaps_link, "_blank", "noopener"); };
 
+    var placeBtn = document.getElementById("ficha-place-btn");
+    if(placeBtn) placeBtn.onclick = function(ev){ ev.preventDefault(); startPlacing(id); };
+    var clearFixBtn = document.getElementById("ficha-clear-fix");
+    if(clearFixBtn) clearFixBtn.onclick = function(ev){ ev.preventDefault(); clearFix(id); };
+
     fichaOverlay.classList.add("open");
   }
 
@@ -10366,6 +10428,7 @@ var PROSPECTOS_RAW = [
       fecha: document.getElementById("f-fecha").value,
       notas: document.getElementById("f-notas").value,
       productos: fichaProductos,
+      fix: getTrack(currentId).fix,
       updatedAt: new Date().toISOString()
     };
     saveTracking();
@@ -10425,13 +10488,13 @@ var PROSPECTOS_RAW = [
   });
 
   document.getElementById("btn-export-csv").addEventListener("click", function(){
-    var header = ["ID","Nombre","Rubro","Prioridad","Puntuacion","Ciudad","Zona","Direccion","Contacto","Telefono","WhatsApp","Email","Web","Motivo_Cliente","Fuente_Verificacion","Estado","Fecha","Notas","Productos_Interes","Total_kg_mes","Categoria_Oferta","Calidad_Dato","Motivo_Revision"];
+    var header = ["ID","Nombre","Rubro","Prioridad","Puntuacion","Ciudad","Zona","Direccion","Contacto","Telefono","WhatsApp","Email","Web","Motivo_Cliente","Fuente_Verificacion","Estado","Fecha","Notas","Productos_Interes","Total_kg_mes","Lat_Final","Lng_Final","Ubicacion_Corregida","Categoria_Oferta","Calidad_Dato","Motivo_Revision"];
     var lines = [header.join(",")];
     DATA.forEach(function(p){
       var track = getTrack(p.id);
       var oferta = buildOferta(p);
       var flag = dataFlag(p);
-      lines.push([p.id,p.nombre,p.rubro,p.prioridad,p.puntuacion,p.ciudad,p.zona,getDireccion(p),p.contacto,p.telefono,p.whatsapp,p.email,p.web,p.motivo,p.fuente,ESTADOS[getEstado(p.id)].label,track.fecha||"",track.notas||"",(track.productos||[]).map(function(pr){return pr.n+(pr.kg?" ("+pr.kg+" kg/mes)":"");}).join("; "),prodTotalKg(track.productos||[]),oferta.label,flag?(flag.level==="error"?"Incorrecto":"Por verificar"):"OK",flag?flag.motivo:""].map(csvEscape).join(","));
+      lines.push([p.id,p.nombre,p.rubro,p.prioridad,p.puntuacion,p.ciudad,p.zona,getDireccion(p),p.contacto,p.telefono,p.whatsapp,p.email,p.web,p.motivo,p.fuente,ESTADOS[getEstado(p.id)].label,track.fecha||"",track.notas||"",(track.productos||[]).map(function(pr){return pr.n+(pr.kg?" ("+pr.kg+" kg/mes)":"");}).join("; "),prodTotalKg(track.productos||[]),baseLatLng(p)[0],baseLatLng(p)[1],(track.fix?"Sí":"No"),oferta.label,flag?(flag.level==="error"?"Incorrecto":"Por verificar"):"OK",flag?flag.motivo:""].map(csvEscape).join(","));
     });
     downloadFile("fika_prospectos_reporte.csv", lines.join("\n"), "text/csv;charset=utf-8;");
   });
