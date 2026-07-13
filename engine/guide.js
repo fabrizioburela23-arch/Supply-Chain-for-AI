@@ -24,7 +24,7 @@
     ['🔬 X-Ray', 'En la ficha de cualquier empresa: la "desarma" por completo — por qué tiene ese riesgo, todos sus hilos (de quién depende y a quién provee), y la onda de impacto si cae (quién sufre y quién GANA).'],
     ['📊 Dossier financiero', 'En la Terminal, cada empresa tiene un botón 📊 DOSSIER: 8 mini-gráficos con crecimiento de ingresos, dilución, free cash flow, acción, valuación, deuda, márgenes y ROE.'],
     ['◉ Simulación en vivo', 'En el mapa, botón "◉ En vivo": elige un tipo de golpe (corte, auge, precio, sanción) y un objetivo (empresa, sector o país entero) — el mapa se tiñe en tiempo real y ves ganadores y perdedores.'],
-    ['🪐 Universo 3D', 'Las 555 empresas flotando en el espacio con nebulosas: X = posición en la cadena, Y = riesgo, Z = región. Clic en una empresa y su cadena se ilumina (verde = le provee, naranja = le compra). Arriba a la derecha puedes cambiar a la lente 🎯 Inversión.'],
+    ['🪐 Universo', 'Las 555 empresas flotando en el espacio con estrellas y nebulosas: izquierda→derecha = posición en la cadena, arriba→abajo = riesgo. Clic en una empresa y su cadena se ilumina (verde = le provee, naranja = le compra); doble clic abre su ficha. Funciona en cualquier equipo, sin depender de la tarjeta gráfica.'],
     ['🧠 Investigación profunda', 'Dile a Bixby "investiga la energía nuclear para datacenters" (o cualquier pregunta grande): planifica, reúne el contexto, simula en las matrices y te escribe una tesis con números reales. Tarda ~1 minuto.'],
     ['📡 Radar en vivo', 'La app se mantiene al día SOLA: cada ~10 minutos los agentes leen noticias, recalculan riesgos y hasta incorporan empresas nuevas al grafo (todo auditado y reversible). Verás "● EN VIVO" en el pie.'],
     ['✦ Gráficos al instante', 'Pide "top 10 por riesgo", "márgenes de Nvidia y TSMC", "proveedores de ASML" o "precio de AMD" — salen al instante, sin esperar a la IA (etiqueta "local ⚡").'],
@@ -116,8 +116,8 @@
               <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Tu portafolio (compras/ventas) vive en este navegador. Tus tesis, anotaciones y decisiones (＋ Acción) se guardan en el servidor — sobreviven aunque cambies de computadora.</div></div>
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿La app se actualiza sola?</div>
               <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Sí. Cuando hay versión nueva, si acabas de abrirla se actualiza sola; si estás trabajando, aparece un avisito "⬆ Nueva versión" abajo a la derecha — la tocas cuando quieras.</div></div>
-            <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Y si el 3D no se ve en mi equipo?</div>
-              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">El 3D se auto-diagnostica: si tu tarjeta gráfica no soporta algún efecto, baja solo a un modo compatible y te lo avisa. Siempre verás las empresas.</div></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿El Universo 🪐 funciona en cualquier equipo?</div>
+              <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Sí. Desde julio 2026 el Universo se dibuja con una técnica que no depende de la tarjeta gráfica ni de configuraciones del navegador — si la app carga, el Universo se ve. Si alguna vez ves una pantalla vacía, es señal de que tu navegador guardó una copia vieja: borra los datos del sitio (candado junto a la dirección → Datos del sitio → Borrar) y recarga.</div></div>
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">¿Qué hago si algo no responde?</div>
               <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">Abre 🩺 Sistema (arriba) — te dice en vivo qué servicio falló y por qué, sin mostrar ninguna clave.</div></div>
           </div>`)}

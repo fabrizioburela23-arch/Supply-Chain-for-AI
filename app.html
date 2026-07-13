@@ -1379,7 +1379,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab" data-tab="space" data-group="mapa" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
       <button class="tab" data-tab="tkg" data-group="mapa" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
       <button class="tab" data-tab="simulation" data-group="mapa" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
-      <button class="tab" id="tab-3d" data-group="mapa" title="Universo 3D (beta) — todas las empresas en el espacio" onclick="window._go3D&&window._go3D()">🪐 <span>3D <sup style="font-size:8px;color:#FFB300">β</sup></span></button>
+      <button class="tab" id="tab-3d" data-group="mapa" title="Universo — todas las empresas en el espacio (funciona en cualquier equipo)" onclick="window._go3D&&window._go3D()">🪐 <span>Universo</span></button>
       <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
       <button class="tab" data-tab="crypto" data-group="mercado" id="tab-crypto">₿ <span>Cripto</span></button>
       <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
@@ -1430,7 +1430,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <button id="zoom-in">+</button>
         <button id="zoom-out">−</button>
         <button id="zoom-fit" style="font-size:13px">⤢</button>
-        <button id="zoom-3d" title="Universo 3D — todas las empresas en el espacio" style="font-size:13px"
+        <button id="zoom-3d" title="Universo — todas las empresas en el espacio (funciona en cualquier equipo)" style="font-size:13px"
           onclick="window._go3D&&window._go3D()">🪐</button>
       </div>
       <svg id="graph"></svg>
@@ -6279,36 +6279,37 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
   };
 
   // La sub-pestaña 🪐 3D del grupo Mapa: entra al mapa y alterna el universo 3D
+  // DECISIÓN 2026-07-12 (tras 5 rondas de "el 3D no da" — pedido de Fabrizio
+  // "lo arreglas o lo borramos"): el botón 🪐 abre SIEMPRE el Universo 2D
+  // (engine/universe2d.js, Canvas 2D puro) — no puede fallar en ninguna
+  // máquina. El motor WebGL (graph3d.js) queda accesible solo con
+  // ?webgl3d=1 en la URL, para retomarlo algún día con diagnóstico real.
   window._go3D = function() {
     window._diag && window._diag('3d_click', { is3D: _is3D, tab: (typeof activeTab !== 'undefined' ? activeTab : '?') });
-    // pre-chequeo: ¿este navegador PUEDE hacer WebGL? (aceleración apagada =
-    // el motor revienta al crearse y "no pasa nada" — feedback real)
-    if (!_is3D) {
-      let ok = false;
-      try {
-        const c = document.createElement('canvas');
-        ok = !!(c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl'));
-      } catch (e) {}
-      if (!ok) {
-        window._diag && window._diag('webgl_missing', {});
-        // sin WebGL: el universo 2D entra igual — nunca más "no pasa nada"
-        if (typeof activeTab !== 'undefined' && activeTab !== 'map' && typeof switchTab === 'function') switchTab('map');
-        _is3D = true;
-        const chipW = document.getElementById('tab-3d'); if (chipW) chipW.classList.add('active');
-        if (_startUniverse2D('webgl_missing')) return;
-        _is3D = false; if (chipW) chipW.classList.remove('active');
-        if (typeof toast === 'function') {
-          toast('⚠ Tu navegador tiene los gráficos 3D desactivados. En Chrome: Configuración → Sistema → activa "Usar aceleración de gráficos" y reinicia el navegador.');
-        }
-        return;
-      }
-    }
-    if (typeof activeTab !== 'undefined' && activeTab !== 'map' && typeof switchTab === 'function') {
-      switchTab('map');
-      if (!_is3D) window._toggle3D();
+    if (typeof activeTab !== 'undefined' && activeTab !== 'map' && typeof switchTab === 'function') switchTab('map');
+    // camino legado WebGL, solo bajo bandera explícita
+    let wantWebGL = false;
+    try { wantWebGL = new URLSearchParams(location.search).get('webgl3d') === '1'; } catch (e) {}
+    if (wantWebGL) { window._toggle3D(); return; }
+    const chipU = document.getElementById('tab-3d');
+    if (window.KhipuUniverse2D && window.KhipuUniverse2D.isActive()) {
+      // salir del universo → volver al mapa SVG
+      window.KhipuUniverse2D.destroy();
+      const svgU = document.getElementById('graph');
+      const cnvU = document.getElementById('graph-canvas');
+      if (svgU) svgU.style.display = '';
+      if (cnvU) cnvU.style.display = 'none';
+      _is3D = false;
+      if (chipU) chipU.classList.remove('active');
       return;
     }
-    window._toggle3D();
+    _is3D = true;
+    if (chipU) chipU.classList.add('active');
+    if (!_startUniverse2D('primary')) {
+      _is3D = false;
+      if (chipU) chipU.classList.remove('active');
+      if (typeof toast === 'function') toast('⚠ El universo no pudo dibujarse. Recarga la página e inténtalo de nuevo.');
+    }
   };
 
   // Hypergraph timeline slider

@@ -541,6 +541,33 @@ propónme cosas" + "el 3D sigue sin dar, hay que hacer algo".
       en vivo: burbujas dibujadas y dimensionadas, universe2d init/focus/
       destroy OK.
 
+## Etapa L — 🪐 Universo 2D como motor PRINCIPAL (2026-07-12, sw v78)
+
+Fabrizio, tras 5+ rondas: "mano no da el grafo 3d, no importa q hagas nada
+cambia, lo puedes arreglar o lo borramos nomas?". Beacons: SIGUEN en cero
+desde sus equipos → su máquina Opera corre copia vieja que ningún deploy
+alcanza. DECISIÓN (ni arreglar WebGL a ciegas ni borrar la feature):
+
+- [x] El botón 🪐 (chip + zoom) abre SIEMPRE el Universo 2D (universe2d.js,
+      Canvas puro) — no puede fallar en ningún equipo con código actual.
+      Segundo tap = volver al mapa SVG. Chip renombrado "🪐 Universo" (sin β).
+- [x] El motor WebGL (graph3d.js) NO se borró: queda tras la bandera
+      ?webgl3d=1 en la URL para retomarlo con diagnóstico real algún día.
+      Sus integraciones (hypergraph/SecondBrain/scatter) solo viven en ese
+      camino legado.
+- [x] Guía actualizada (Universo funciona en cualquier equipo; FAQ con el
+      remedio de la copia vieja: borrar datos del sitio).
+- [x] Verificado en vivo: entrar (universo activo, svg oculto, chip on,
+      beacon universe2d_fallback reason=primary v78) y salir (svg vuelve).
+      0 errores de consola.
+- CHECKLIST FINAL DE FABRIZIO (lo único que falta de SU lado):
+  1. Opera desktop: borrar datos del sitio UNA vez (candado → Datos del
+     sitio → Borrar) o probar primero en ventana privada. Sin esto esa
+     máquina seguirá congelada en la versión vieja PARA SIEMPRE.
+  2. Railway: REMIGRATE_ON_BOOT=1 (una vez) para re-migrar la ontología
+     limpia en prod; quitarla después.
+  3. Probar Bixby por voz end-to-end una vez.
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con
