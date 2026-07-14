@@ -607,6 +607,40 @@ paralelo contra contrato fijo + integración del orquestador:
   Paper + aceptar el acuerdo de cripto si lo pide; (3) ALPACA_BASE debe
   seguir siendo paper-api.alpaca.markets hasta probar semanas en papel.
 
+## Etapa N — CAUSA RAÍZ del "3D no da" ENCONTRADA Y CORREGIDA (2026-07-13, sw v84)
+
+Tras 6+ rondas, verificando EN VIVO con el panel a 1280×800 (no 0×0) y
+manejando el botón como usuario, aparecieron DOS bugs reales (NO era la caché
+de Opera, aunque eso también contribuía):
+
+1. **onclick del chip 🪐 pisado** (app.html:4327): un bucle
+   `querySelectorAll('.tabs .tab').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab))`
+   sobrescribía el onclick inline del chip. Como el chip NO tiene data-tab,
+   ejecutaba `switchTab(undefined)` → NUNCA llamaba a _go3D → "no pasa nada".
+   ESTA era la causa raíz real de todas las rondas. FIX: el bucle solo cablea
+   los que tienen data-tab (`if(b.dataset.tab)`).
+2. **Canvas 0×0**: el canvas del universo vivía dentro de <main>, que se
+   oculta al cambiar de pestaña → 0×0 → negro. FIX: el 🪐 ahora abre un
+   OVERLAY position:fixed a pantalla completa (#uni-ov con #uni-canvas),
+   SIEMPRE dimensionado, independiente de <main>/SVG/WebGL/pestañas.
+
+- [x] app.html: _ensureUniverseOverlay/_openUniverse/_closeUniverse; _go3D
+      reescrito (overlay primario; WebGL solo con ?webgl3d=1); fix del bucle
+      de onclick (4327); primer pintado con redraw().
+- [x] engine/universe2d.js: método público redraw() (pinta 1 frame sincrónico,
+      con guard U.inRedraw para NO crear loops rAF paralelos) — sirve de
+      primer pintado y de verificación cuando rAF está estrangulado.
+- **VERIFICADO objetivamente** (lo que faltó siempre): con viewport real, clic
+  REAL en el chip → overlay abre; canvas 1280×800; redraw() pinta 97.5% del
+  canvas, 90k px brillantes (estrellas+nodos), focus('Nvidia') OK; ✕ cierra y
+  desactiva. Nota de método: el panel de preview corre con document.hidden →
+  rAF casi congelado (1 tick/600ms); por eso las "pantallas negras" de mis
+  verificaciones ANTERIORES eran artefacto del panel, no del app. redraw()
+  sortea eso. En el navegador real de Fabrizio (con foco) rAF corre a 60fps.
+- Gates: node --check, 8 bloques inline OK. sw v84.
+- Opera de Fabrizio: si AÚN ve negro, es la copia vieja cacheada — borrar
+  datos del sitio una vez (sigue pendiente de su lado).
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con

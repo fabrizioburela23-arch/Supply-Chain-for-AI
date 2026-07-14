@@ -427,7 +427,9 @@
   /* ── Frame ── */
   function _frame(ts) {
     if (!U.active) return;
-    U.raf = requestAnimationFrame(_frame);
+    // redraw() invoca _frame de forma sincrónica para UN repintado: en ese caso
+    // NO reprogramar rAF (crearía loops paralelos). El loop normal sí lo hace.
+    if (!U.inRedraw) U.raf = requestAnimationFrame(_frame);
     if (!U.ctx) return;
     if (!_ensureSized()) { _startSizeWatch(); return; }
 
@@ -823,8 +825,19 @@
     _clearChain();
   }
 
+  // Pinta UN frame de forma sincrónica (repintado tras resize/visibility sin
+  // esperar a rAF; también permite verificar el dibujo en entornos donde rAF
+  // está estrangulado, p.ej. un panel de preview con document.hidden).
+  function redraw() {
+    if (!U.inited || !U.ctx) return false;
+    U.inRedraw = true;
+    try { _frame((typeof performance !== 'undefined' && performance.now) ? performance.now() : 0); return true; }
+    catch (e) { return false; }
+    finally { U.inRedraw = false; }
+  }
+
   window.KhipuUniverse2D = {
-    init, loadData, destroy, pause, resume, focus,
+    init, loadData, destroy, pause, resume, focus, redraw,
     isActive: () => !!(U.inited && U.active),
   };
 })();
