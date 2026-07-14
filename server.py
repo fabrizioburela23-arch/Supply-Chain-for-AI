@@ -2607,7 +2607,8 @@ def _bixby_client_tools():
         T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
         T('run_agent_simulation', 'Run a MULTI-AGENT (MiroFish-style) simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {
             'scenario': S('The scenario in natural language, e.g. "China prohíbe exportar HBM"'),
-            'companies': {'type': 'array', 'items': {'type': 'string'},
+            'companies': {'type': 'array',
+                          'items': {'type': 'string', 'description': 'A company name or ticker'},
                           'description': 'Seed companies/tickers to center the simulation on (optional, any casing)'},
         }, ['scenario']),
         T('deep_research', 'Run a DEEP research investigation that goes BEYOND one company — sector panorama, direct competitors, geopolitical exposure, supply-chain chokepoints and an investment thesis. Use when the user wants a thorough dossier, not a quick fact. Appears on screen; takes a few seconds.', {'company': S('Company name or ticker, any casing')}, ['company']),
