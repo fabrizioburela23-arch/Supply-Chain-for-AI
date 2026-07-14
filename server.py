@@ -975,11 +975,17 @@ def fin_dossier(ticker):
     payload = {'available': True, 'ticker': ticker, **series}
     if _last_err:
         payload['partial'] = {k: v for k, v in _last_err.items()}   # diagnóstico visible
-    # caché: 24h si llegó el paquete completo; si balance/FCF vinieron vacíos
-    # (rate-limit transitorio) NO cachear — que el próximo intento lo complete
+    # caché: 24h si el paquete está COMPLETO; 1h si es PARCIAL (FMP 402 → Alpha
+    # Vantage sin dilución/FCF). Antes un parcial NO se cacheaba → cada vista
+    # tardaba ~7s (AV con pausas de 1.2s) y la comparación de dossiers se sentía
+    # lenta. Ahora el primer acceso es lento (API externa) pero los repetidos son
+    # instantáneos, y un parcial se re-intenta en 1h por si FMP se recupera.
     complete = any(v is not None for v in series['dilution']) and any(v is not None for v in series['fcf'])
+    has_rev = any(v is not None for v in series['revenue'])
     if complete:
         cache.set(_ck, payload, timeout=86400)
+    elif has_rev:
+        cache.set(_ck, payload, timeout=3600)
     return jsonify(payload)
 
 
