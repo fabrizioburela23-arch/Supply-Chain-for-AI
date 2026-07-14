@@ -89,6 +89,15 @@
       f._until = f.valid_until ? toMs(f.valid_until) : null;
       // arista válida si AMBOS extremos resuelven (empresa u objeto de ontología)
       f._isEdge = f.object_type === 'node' && !!resolveEntity(f.subject) && !!resolveEntity(f.object);
+      // APARICIÓN TEMPORAL (fix 2026-07-14): una relación NO puede existir antes
+      // de que existan sus DOS empresas. Las aristas del backbone (LINKS) venían
+      // con valid_from=null → se trataban como "siempre presentes" y en 1929
+      // salían cientos de conexiones inexistentes. Ahora su aparición = el año de
+      // fundación más TARDÍO de sus dos extremos (window.NODE_META[id].founded).
+      if (f._isEdge) {
+        const born = Math.max(_foundedMs(f.subject) || 0, _foundedMs(f.object) || 0);
+        if (born) f._from = Math.max(f._from || 0, born);
+      }
       out.push(f);
     };
 
@@ -152,6 +161,20 @@
     if (f._until && f._until <= ms) return 'expirado';
     return 'vigente';
   }
+  // Año de fundación de una empresa (window.NODE_META[id].founded) → ms.
+  // Alimenta la "aparición temporal": una empresa/relación no se dibuja antes de
+  // existir. Sin dato → null (se trata como presente en toda la línea de tiempo).
+  function _foundedMs(id) {
+    const m = window.NODE_META && window.NODE_META[id];
+    const y = m && m.founded;
+    return (typeof y === 'number' && y > 1000 && y < 3000) ? Date.parse(y + '-06-01') : null;
+  }
+  // ¿este nodo AÚN NO existe en la fecha actual de la línea? (para ocultarlo)
+  function _notYetBorn(id) {
+    if (_shock) return false;                 // durante la cascada no ocultar por fecha
+    const fm = _foundedMs(id);
+    return fm != null && fm > _dateMs;
+  }
   function matchesSearch(f) {
     if (!_search) return true;
     const q = _search.toLowerCase();
@@ -168,7 +191,11 @@
     try {
     _facts = deriveFacts();
     const froms = _facts.map(f => f._from).filter(Boolean);
-    _minMs = froms.length ? Math.min(...froms) : Date.parse('2019-01-01');
+    // Piso en 1900: hay empresas fundadas desde 1631, pero un slider de casi 4
+    // siglos sería en su mayoría vacío. Las ~18 empresas anteriores a 1900 se
+    // tratan como "presentes desde el inicio de la línea". Así se recorre la
+    // aparición REAL (42 empresas en 1929 → 554 en 2026) sin un slider inmanejable.
+    _minMs = Math.max(Date.parse('1900-01-01'), froms.length ? Math.min(...froms) : Date.parse('2000-01-01'));
     _maxMs = Date.parse('2026-12-31');
     _dateMs = _maxMs;
 
@@ -360,9 +387,10 @@
     allEdges.forEach(e => {
       deg[e.subject] = (deg[e.subject] || 0) + 1;
       deg[e.object] = (deg[e.object] || 0) + 1;
-      // "protagonista fechado": tiene ventana de validez real. Las aristas del
-      // backbone (LINKS) van con fecha null, así que quedan fuera de este set.
-      if (e._from != null || e._until != null) { curated.add(e.subject); curated.add(e.object); }
+      // "protagonista fechado": tiene ventana de validez real EXPLÍCITA (hecho
+      // curado). Se usa valid_from ORIGINAL, no e._from — que ahora TODA arista
+      // tiene (derivado de fundación) y desvirtuaría el filtro de densidad.
+      if (e.valid_from != null || e._until != null) { curated.add(e.subject); curated.add(e.object); }
     });
     const allIds = Object.keys(deg);
 
@@ -558,7 +586,7 @@
     _updateDateLabel();
     if (_nodeSel) {
       _nodeSel
-        .attr('display', d => _typeHidden(d.id) ? 'none' : null)
+        .attr('display', d => (_typeHidden(d.id) || _notYetBorn(d.id)) ? 'none' : null)
         .attr('fill', d => {
           if (_shock) {
             if (d.id === _shock.origin) return '#ef4444';   // el que cae
@@ -581,7 +609,7 @@
     }
     if (_labelSel) {
       _labelSel
-        .attr('display', d => _typeHidden(d.id) ? 'none' : null)
+        .attr('display', d => (_typeHidden(d.id) || _notYetBorn(d.id)) ? 'none' : null)
         .attr('opacity', d => {
           if (_shock) return (_lit(d.id) || _ben(d.id)) ? 1 : 0.08;
           if (!_searchAll && !_searchNodes.has(d.id)) return 0.2;
@@ -590,7 +618,11 @@
     }
     if (_linkSel) {
       _linkSel
-        .attr('display', d => (_typeHidden(lidOf(d.source)) || _typeHidden(lidOf(d.target))) ? 'none' : null)
+        .attr('display', d => {
+          if (_typeHidden(lidOf(d.source)) || _typeHidden(lidOf(d.target))) return 'none';
+          if (!_shock && status(d, _dateMs) === 'futuro') return 'none';   // la relación aún no aparece en esta fecha
+          return null;
+        })
         .attr('stroke', _edgeStroke)
         .attr('stroke-opacity', _edgeOpacity)
         .attr('stroke-width', _edgeWidth)
