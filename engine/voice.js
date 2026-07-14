@@ -760,7 +760,7 @@ const BixbyVoice = {
         break;
       }
       case 'switch_tab': {
-        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'tkg', 'guia'];
+        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'tkg', 'guia', 'crypto'];
         const t = params.tab || '';
         if (!validTabs.includes(t)) { respond({ success: false, error: `Tab inválida: ${t}` }); break; }
         respond({ success: true, tab: t });

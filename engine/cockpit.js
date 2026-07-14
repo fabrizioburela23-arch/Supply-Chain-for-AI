@@ -229,6 +229,7 @@
         '<button class="bcp-act" data-act="deep">🧠 ' + (en0 ? 'Research' : 'Investigar') + '</button>' +
         '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
         '<button class="bcp-act" data-act="broker">💼 ' + tb('broker') + '</button>' +
+        '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
       '</div>' +
       // Pulso proactivo del portafolio (pedido de Fabrizio: que Bixby "mande" el
       // informe). Oculto por defecto; se llena al abrir SOLO si el PIN ya está
@@ -256,6 +257,7 @@
         if (act === 'insights') return stage('insights');
         if (act === 'canvas') return stage('canvas');
         if (act === 'broker') return stage('broker');
+        if (act === 'crypto') return stage('crypto');
         // acciones que necesitan una empresa → prellenar la barra (enseña la sintaxis)
         var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null;
         var name = sel && window.NODE_BY_ID && window.NODE_BY_ID[sel] ? window.NODE_BY_ID[sel].label : '';
@@ -366,8 +368,9 @@
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
-    markActive(kind === 'graph' || kind === 'terminal' || kind === 'insights' || kind === 'canvas' || kind === 'deep' || kind === 'broker' ? kind : null);
+    markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto'].indexOf(kind) >= 0 ? kind : null);
     if (kind === 'broker') return stageBroker(s, arg);
+    if (kind === 'crypto') return stageCrypto(s, arg);
     if (kind === 'xray') return stageXRay(s, arg);
     if (kind === 'compare') return stageCompare(s, arg);
     if (kind === 'agentsim') return stageAgentSim(s, arg);
@@ -397,6 +400,22 @@
       var n = resolveNode(focusId);
       if (n) setTimeout(function () { try { if (typeof jumpTo === 'function') jumpTo(n.id); } catch (e) {} }, 220);
     }
+  }
+
+  // ── CRIPTO, dentro de la Cabina. Arregla el bug (pedir cripto por voz cerraba
+  //    la Cabina y callaba a Bixby) y cumple la visión: TODO vive en Bixby. Adopta
+  //    #crypto-panel igual que el grafo/terminal (mismo panel vivo, se devuelve al
+  //    salir). ──
+  function stageCrypto(s, arg) {
+    var en = ckLang() === 'en';
+    s.innerHTML = backBar(en ? 'Crypto' : 'Cripto') + '<div class="bcp-embed" id="bcp-embed-crypto" style="overflow:auto"></div>';
+    var pane = document.getElementById('crypto-panel');
+    if (!pane || !adoptInto(s.querySelector('#bcp-embed-crypto'), pane, 'block')) {
+      s.innerHTML += '<div class="bcp-loading">' + (en ? 'Could not mount crypto' : 'No se pudo montar cripto') + '</div>';
+      return;
+    }
+    try { pane.style.minHeight = '100%'; } catch (e) {}
+    try { if (window.KhipuCrypto) window.KhipuCrypto.init(true); } catch (e) {}
   }
 
   // ── la TERMINAL Bloomberg, dentro de la Cabina ──

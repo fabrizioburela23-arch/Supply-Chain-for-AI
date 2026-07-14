@@ -2573,7 +2573,7 @@ Data lookups:
 - get_market_summary() · get_portfolio_risk() · list_companies(category, limit) · get_supply_chain_links(company_name)
 
 Navigation & UI:
-- navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|tkg|guia)
+- navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|tkg|guia|crypto)
 - show_chart(ticker) · open_terminal(ticker) · place_trade(ticker) · open_second_brain(company_name) · open_cockpit()
 
 Paper trading (SIMULATED broker — strict rules in PAPER TRADING section below):
@@ -2676,7 +2676,7 @@ def _bixby_client_tools():
         T('list_companies', 'List companies, optionally by category.', {'category': S('Category filter (optional)'), 'limit': N('Max results (default 10)')}),
         T('get_supply_chain_links', 'Upstream/downstream supply-chain connections of a company.', company, ['company_name']),
         T('navigate_to_company', 'Jump to a company on the map.', company, ['company_name']),
-        T('switch_tab', 'Switch app tab.', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | tkg | guia')}, ['tab']),
+        T('switch_tab', 'Switch app tab. Use tab="crypto" for the live crypto market + Expediente dossier — it opens INSIDE the Bixby cockpit (does not close it).', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | tkg | guia | crypto')}, ['tab']),
         T('show_chart', 'Show the stock chart of a ticker in the side panel.', {'ticker': S('Ticker')}, ['ticker']),
         T('open_terminal', 'Open the multi-chart Bloomberg-style terminal on a ticker.', {'ticker': S('Ticker')}, ['ticker']),
         T('place_trade', 'Open the buy/sell trade modal for a ticker (the user confirms manually).', {'ticker': S('Ticker')}, ['ticker']),

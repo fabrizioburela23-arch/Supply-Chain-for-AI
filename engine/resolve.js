@@ -379,6 +379,7 @@
     if (t === 'terminal') { ck.stage('terminal'); return true; }
     if (t === 'analysis') { ck.stage('insights'); return true; }
     if (t === 'canvas') { ck.stage('canvas'); return true; }
+    if (t === 'crypto') { ck.stage('crypto'); return true; }   // cripto vive DENTRO de la Cabina (no la cierra → no calla a Bixby)
     ck.close();
     tab(t);
     return true;
