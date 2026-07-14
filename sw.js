@@ -3,7 +3,7 @@
    última versión cuando hay red, con caché solo como respaldo offline.
    CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v97';
+const CACHE = 'khipu-finance-v98';
 // SHELL = exactamente los <script src> de app.html + la propia app.
 // Si añades/quitas un <script src>, refleja el cambio aquí Y bumpea CACHE.
 const SHELL = ['/', '/app.html',

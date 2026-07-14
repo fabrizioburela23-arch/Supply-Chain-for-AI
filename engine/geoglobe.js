@@ -193,6 +193,28 @@
       });
       c.addEventListener('wheel', e => { e.preventDefault(); this._dist = Math.max(140, Math.min(800, this._dist + e.deltaY * 0.4)); }, { passive: false });
       c.addEventListener('click', e => { if (!this._moved) this._pick(e); });
+      // TÁCTIL (tablet, feedback Fabrizio): 1 dedo rota · 2 dedos pellizco→zoom · tap→selecciona.
+      let _pinch = 0;
+      c.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) { this._drag = true; this._moved = false; this._last = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+        else if (e.touches.length === 2) { this._drag = false; _pinch = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+      }, { passive: false });
+      c.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if (e.touches.length === 2 && _pinch) {
+          const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          this._dist = Math.max(140, Math.min(800, this._dist + (_pinch - d) * 0.9)); _pinch = d;
+        } else if (this._drag && e.touches.length === 1) {
+          const dx = e.touches[0].clientX - this._last.x, dy = e.touches[0].clientY - this._last.y;
+          if (Math.abs(dx) + Math.abs(dy) > 3) this._moved = true;
+          this._rot.y += dx * 0.005; this._rot.x = Math.max(-1.3, Math.min(1.3, this._rot.x + dy * 0.005));
+          this._last = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      }, { passive: false });
+      c.addEventListener('touchend', e => {
+        if (this._drag && !this._moved && e.changedTouches.length) this._pick(e.changedTouches[0]);
+        this._drag = false; _pinch = 0;
+      });
     }
 
     _pick(e) {

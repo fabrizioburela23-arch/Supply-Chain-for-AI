@@ -128,8 +128,10 @@
 .bcp-iconbtn:hover{border-color:rgba(0,224,255,.5);color:#00E0FF}
 #bcp-mic.on{background:rgba(214,59,59,.85);border-color:#d63b3b;color:#fff;box-shadow:0 0 18px rgba(214,59,59,.45);animation:bcpPulse 1.1s ease-in-out infinite}
 #bcp-close{margin-left:auto}
-#bcp-actions{display:flex;gap:7px;flex-wrap:wrap;padding:9px 22px 0;flex-shrink:0}
-.bcp-act{font-size:11.5px;padding:6px 13px;border-radius:9px;cursor:pointer;color:#9BA6C4;
+#bcp-actions{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:10px 22px 2px;
+  flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+#bcp-actions::-webkit-scrollbar{display:none}
+.bcp-act{font-size:11.5px;padding:6px 13px;border-radius:10px;cursor:pointer;color:#9BA6C4;white-space:nowrap;flex-shrink:0;
   background:rgba(11,18,34,.6);border:1px solid rgba(122,158,255,.16);transition:all .13s;
   font-family:inherit;display:inline-flex;align-items:center;gap:6px}
 .bcp-act:hover{color:#E8EDFB;border-color:rgba(0,224,255,.45);transform:translateY(-1px)}
@@ -228,8 +230,12 @@
         '<button class="bcp-act" data-act="insights">💡 ' + (en0 ? 'Opportunities' : 'Oportunidades') + '</button>' +
         '<button class="bcp-act" data-act="deep">🧠 ' + (en0 ? 'Research' : 'Investigar') + '</button>' +
         '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
-        '<button class="bcp-act" data-act="broker">💼 ' + tb('broker') + '</button>' +
+        '<button class="bcp-act" data-act="broker">💼 ' + (en0 ? 'Invest' : 'Invertir') + '</button>' +
         '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
+        '<button class="bcp-act" data-act="market">📈 ' + (en0 ? 'Market' : 'Mercado') + '</button>' +
+        '<button class="bcp-act" data-act="geo">🌐 ' + (en0 ? 'Geo' : 'Geo') + '</button>' +
+        '<button class="bcp-act" data-act="space">🚀 ' + (en0 ? 'Space' : 'Espacio') + '</button>' +
+        '<button class="bcp-act" data-act="simulation">🔮 ' + (en0 ? 'Scenarios' : 'Escenarios') + '</button>' +
       '</div>' +
       '<div id="bcp-stage"></div>' +
       // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Bixby abajo").
@@ -254,6 +260,10 @@
         if (act === 'canvas') return stage('canvas');
         if (act === 'broker') return stage('broker');
         if (act === 'crypto') return stage('crypto');
+        if (act === 'market') return stage('market');
+        if (act === 'geo') return stage('geo');
+        if (act === 'space') return stage('space');
+        if (act === 'simulation') return stage('simulation');
         // acciones que necesitan una empresa → prellenar la barra (enseña la sintaxis)
         var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null;
         var name = sel && window.NODE_BY_ID && window.NODE_BY_ID[sel] ? window.NODE_BY_ID[sel].label : '';
@@ -364,7 +374,7 @@
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
-    markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto'].indexOf(kind) >= 0 ? kind : null);
+    markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia'].indexOf(kind) >= 0 ? kind : null);
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'crypto') return stageCrypto(s, arg);
     if (ADOPT_TABS[kind]) return stageAdoptTab(s, kind);
@@ -421,6 +431,11 @@
   var ADOPT_TABS = {
     tkg:  { panel: 'tkg-panel',  es: 'Grafo Temporal', en: 'Temporal Graph', init: function () { if (typeof window.initTKGTab === 'function') window.initTKGTab(); } },
     guia: { panel: 'guia-panel', es: 'Guía',           en: 'Guide',          init: function () { if (typeof window.initGuiaTab === 'function') window.initGuiaTab(); } },
+    // Integración total (feedback Fabrizio: "que todos los mapas se vean dentro de Bixby").
+    market:     { panel: 'market',           es: 'Mercado',     en: 'Market',      init: function () { try { if (typeof window.renderMarket === 'function') window.renderMarket(); if (typeof window.fetchQuotes === 'function' && !(window.MKT && window.MKT.ts)) window.fetchQuotes(); } catch (e) {} } },
+    geo:        { panel: 'geo-panel',         es: 'Geopolítica', en: 'Geopolitics', init: function () { if (typeof window.renderGeoPanel === 'function') window.renderGeoPanel(); } },
+    space:      { panel: 'space-panel',       es: 'Espacio',     en: 'Space',       init: function () { if (typeof window.initSpaceTab === 'function') window.initSpaceTab(); } },
+    simulation: { panel: 'simulation-panel',  es: 'Escenarios',  en: 'Scenarios',   init: function () { if (typeof window.initSimTab === 'function') window.initSimTab(); } },
   };
   function stageAdoptTab(s, tabId) {
     var cfg = ADOPT_TABS[tabId]; if (!cfg) return stageEmpty(s);
@@ -433,7 +448,12 @@
     }
     try { pane.style.minHeight = '100%'; } catch (e) {}
     // doble rAF: el contenedor necesita layout antes de que el init MIDA su tamaño
-    requestAnimationFrame(function () { requestAnimationFrame(function () { try { cfg.init(); } catch (e) {} }); });
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      try { cfg.init(); } catch (e) {}
+      // globos 3D (geo/space): un 2º resize por si el layout del embed aún no estaba
+      // estable en el 1er frame → evita canvas negro / mal dimensionado.
+      if (tabId === 'geo' || tabId === 'space') setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 240);
+    }); });
   }
 
   // ── la TERMINAL Bloomberg, dentro de la Cabina ──
