@@ -28,30 +28,41 @@ def _complete_claude(system, prompt, max_tokens, tier='fast'):
     for m in (model, AI_MODEL_FAST, 'claude-haiku-4-5'):
         if m and m not in candidates:
             candidates.append(m)
+
+    def _text_of(msg):
+        # el primer bloque de texto NO vacío (salta bloques de "thinking")
+        for block in msg.content:
+            if getattr(block, 'type', None) == 'text' and (block.text or '').strip():
+                return block.text
+        return ''
+
+    # CAUSA RAÍZ (2026-07-14): Sonnet 5 piensa por defecto; con presupuesto chico
+    # el pensamiento consume TODO el max_tokens y el bloque de texto sale VACÍO →
+    # la cascada lo tomaba como "sin respuesta" y usaba NVIDIA. Por modelo:
+    #  intento 1 → desactivar el pensamiento (budget normal, respuesta directa);
+    #  intento 2 → sin ese kwarg (por si el SDK es viejo) pero con MUCHO más
+    #              presupuesto, para que quepan pensamiento + respuesta.
     last_err = None
     for m in candidates:
-        # Sonnet 5 activa "pensamiento adaptativo" por defecto (consume max_tokens
-        # y puede truncar el JSON). Lo desactivamos; si un SDK viejo no conoce el
-        # kwarg (TypeError) reintentamos sin él.
-        for with_thinking in (True, False):
+        attempts = [
+            ({'thinking': {'type': 'disabled'}}, max_tokens),
+            ({}, max(int(max_tokens) * 4, 6000)),
+        ]
+        for extra, mt in attempts:
             try:
-                kw = dict(model=m, **base)
-                if with_thinking:
-                    msg = client.messages.create(thinking={'type': 'disabled'}, **kw)
-                else:
-                    msg = client.messages.create(**kw)
-                text = ''
-                for block in msg.content:
-                    if getattr(block, 'type', None) == 'text':
-                        text = block.text
-                        break
-                return text, msg.model
+                msg = client.messages.create(
+                    model=m, max_tokens=mt, system=base['system'],
+                    messages=base['messages'], **extra)
             except TypeError:
-                continue          # SDK no conoce `thinking` → reintenta sin él
+                continue           # SDK no conoce `thinking` → intento sin él
             except Exception as e:  # noqa: BLE001 — error de API con este modelo
                 last_err = e
-                break             # prueba el siguiente modelo Claude
-    raise last_err or RuntimeError('claude: sin modelos disponibles')
+                break              # prueba el siguiente modelo Claude
+            text = _text_of(msg)
+            if text.strip():
+                return text, msg.model
+            # texto vacío (el pensamiento se comió el budget) → siguiente intento
+    raise last_err or RuntimeError('claude: sin texto de ningún modelo')
 
 
 def _complete_gemini(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
