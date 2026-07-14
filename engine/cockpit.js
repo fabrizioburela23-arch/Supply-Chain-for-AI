@@ -230,6 +230,10 @@
         '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
         '<button class="bcp-act" data-act="broker">💼 ' + tb('broker') + '</button>' +
       '</div>' +
+      // Pulso proactivo del portafolio (pedido de Fabrizio: que Bixby "mande" el
+      // informe). Oculto por defecto; se llena al abrir SOLO si el PIN ya está
+      // en caché (no molesta a quien no usa el bróker). Clic → informe completo.
+      '<div id="bcp-pulse" style="display:none"></div>' +
       '<div id="bcp-stage"></div>' +
       // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Bixby abajo").
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
@@ -627,6 +631,147 @@
   }
   function fmtUsd(v) { return '$' + (Number(v) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 
+  /* ══ INFORME DE PORTAFOLIO (pedido de Fabrizio: que Bixby "mande" informes de
+     cómo va el portafolio). Rendimiento + mejor/peor + concentración por sector
+     + comentario CAUTO de Bixby (Sonnet 5, sin órdenes de compra/venta). Todo
+     sobre la cuenta de PAPEL. Reusa NODES/catLabel y los helpers de trade. ══ */
+  function _sectorOf(symbol) {
+    var en = ckLang() === 'en';
+    var sym = String(symbol || '').toUpperCase();
+    if (!sym) return en ? 'Other' : 'Otro';
+    if (sym.indexOf('/') >= 0) return en ? 'Crypto' : 'Cripto';   // "BTC/USD"
+    var n = (window.NODES || []).find(function (x) { return x.mkt && String(x.mkt).toUpperCase() === sym; });
+    if (n) return (typeof window.catLabel === 'function') ? window.catLabel(n.cat) : (n.cat || (en ? 'Other' : 'Otro'));
+    return en ? 'Other' : 'Otro';
+  }
+
+  function _computePortfolio(acct, positions) {
+    positions = Array.isArray(positions) ? positions : [];
+    var totalMV = 0, pnl = 0, cost = 0, best = null, worst = null, bySec = {};
+    positions.forEach(function (p) {
+      var mv = +p.market_val || 0, up = +p.unrealized || 0, cb = +p.cost_basis || 0, pct = +p.unrealized_pct || 0;
+      totalMV += mv; pnl += up; cost += cb;
+      if (!best || pct > (+best.unrealized_pct || 0)) best = p;
+      if (!worst || pct < (+worst.unrealized_pct || 0)) worst = p;
+      var sec = _sectorOf(p.symbol);
+      bySec[sec] = (bySec[sec] || 0) + mv;
+    });
+    var denom = totalMV > 0 ? totalMV : 1;
+    var sectors = Object.keys(bySec).map(function (k) { return { sector: k, mv: bySec[k], pct: bySec[k] / denom * 100 }; })
+      .sort(function (a, b) { return b.mv - a.mv; });
+    return {
+      totalMV: totalMV, pnl: pnl, pnlPct: cost > 0 ? (pnl / cost * 100) : 0,
+      best: best, worst: worst, sectors: sectors, n: positions.length,
+      equity: (+(acct && acct.equity)) || totalMV,
+    };
+  }
+  window._computePortfolioSummary = _computePortfolio;   // reuso desde voice.js (informe hablado)
+
+  var SEC_COLORS = ['#00E0FF', '#8E5AFF', '#FFB300', '#22D3A6', '#FF6B9D', '#5B8DEF', '#7C87A3'];
+  function renderPortfolioReport(acct, positions) {
+    var box = document.getElementById('bcp-bk-report');
+    if (!box) return;
+    var en = ckLang() === 'en';
+    var m = _computePortfolio(acct, positions);
+    if (!m.n) { box.innerHTML = ''; return; }   // sin posiciones → sin informe
+    var plCol = m.pnl >= 0 ? UP : DOWN, plSign = m.pnl >= 0 ? '+' : '';
+    var bars = m.sectors.slice(0, 5).map(function (s, i) {
+      var c = SEC_COLORS[i % SEC_COLORS.length];
+      return '<div style="margin-bottom:7px">' +
+        '<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px">' +
+          '<span style="color:#C3CBE0">' + esc(s.sector) + '</span>' +
+          '<span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace">' + s.pct.toFixed(0) + '%</span></div>' +
+        '<div style="height:7px;border-radius:5px;background:rgba(255,255,255,.06);overflow:hidden">' +
+          '<div style="height:100%;width:' + Math.max(2, s.pct).toFixed(1) + '%;background:' + c + ';border-radius:5px"></div></div></div>';
+    }).join('');
+    var chip = function (p, label, col) {
+      if (!p) return '';
+      var pct = +p.unrealized_pct || 0;
+      return '<div style="flex:1;min-width:120px;padding:9px 12px;border:1px solid ' + col + '33;border-radius:10px;background:' + col + '0c">' +
+        '<div style="font-size:10.5px;color:#7C87A3;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">' + label + '</div>' +
+        '<div style="font-size:14px;font-weight:750;font-family:\'JetBrains Mono\',monospace">' + esc(p.symbol || '—') +
+          ' <span style="color:' + col + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span></div></div>';
+    };
+    box.innerHTML =
+      '<div style="margin-top:16px;padding:16px 18px;border:1px solid rgba(122,158,255,.18);border-radius:14px;background:rgba(12,18,32,.5)">' +
+        '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px">' +
+          '<span style="font-size:14px;font-weight:750">📊 ' + (en ? 'Portfolio report' : 'Informe de portafolio') + '</span>' +
+          '<span style="margin-left:auto;font-size:12px;color:#7C87A3">' + (en ? 'Total return' : 'Rendimiento total') + '</span>' +
+          '<span style="font-size:20px;font-weight:800;color:' + plCol + ';font-family:\'JetBrains Mono\',monospace">' +
+            plSign + m.pnlPct.toFixed(2) + '%</span>' +
+          '<span style="font-size:13px;color:' + plCol + '">(' + plSign + fmtUsd(Math.abs(m.pnl)) + ')</span></div>' +
+        (m.best || m.worst ? '<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">' +
+          chip(m.best, en ? 'Best' : 'Mejor', UP) + (m.best !== m.worst ? chip(m.worst, en ? 'Worst' : 'Peor', DOWN) : '') + '</div>' : '') +
+        '<div style="font-size:11px;color:#7C87A3;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">' +
+          (en ? 'Concentration by sector' : 'Concentración por sector') + '</div>' + bars +
+        '<div id="bcp-bk-aicomment" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:12.5px;line-height:1.5;color:#C3CBE0">' +
+          '<span style="color:#7C87A3">💬 ' + (en ? 'Bixby is looking at your portfolio…' : 'Bixby está mirando tu portafolio…') + '</span></div></div>';
+    _fetchPortfolioComment(m);
+  }
+
+  async function _fetchPortfolioComment(m) {
+    var el = document.getElementById('bcp-bk-aicomment');
+    if (!el) return;
+    var en = ckLang() === 'en';
+    var payload = {
+      lang: en ? 'en' : 'es', equity: Math.round(m.equity || m.totalMV || 0),
+      pnl_pct: +m.pnlPct.toFixed(2), positions_count: m.n,
+      sectors: m.sectors.slice(0, 5).map(function (s) { return { sector: s.sector, pct: +s.pct.toFixed(1) }; }),
+      best: m.best ? { symbol: m.best.symbol, pnl_pct: +(+m.best.unrealized_pct || 0).toFixed(2) } : null,
+      worst: m.worst ? { symbol: m.worst.symbol, pnl_pct: +(+m.worst.unrealized_pct || 0).toFixed(2) } : null,
+    };
+    try {
+      var r = await fetch((window.BASE || '') + '/api/portfolio/comment', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      });
+      var d = await r.json();
+      el = document.getElementById('bcp-bk-aicomment');
+      if (!el) return;
+      el.innerHTML = (d && d.comment)
+        ? '<span style="color:#00E0FF;font-weight:700">💬 Bixby:</span> ' + esc(d.comment)
+        : '<span style="color:#7C87A3">💬 ' + (en ? 'No comment available.' : 'Sin comentario disponible.') + '</span>';
+    } catch (e) {
+      el = document.getElementById('bcp-bk-aicomment');
+      if (el) el.innerHTML = '<span style="color:#7C87A3">💬 ' + (en ? "Could not load Bixby's comment." : 'No pude cargar el comentario de Bixby.') + '</span>';
+    }
+  }
+
+  // Pulso proactivo: al abrir la Cabina, si el PIN ya está guardado, Bixby "manda"
+  // un resumen de una línea (valor + rendimiento). Silencioso si no hay PIN — no
+  // molesta a quien no usa el bróker ni dispara el prompt del PIN.
+  async function _portfolioPulse() {
+    var el = document.getElementById('bcp-pulse');
+    if (!el) return;
+    var hasPin = false;
+    try { hasPin = !!localStorage.getItem('khipu_trade_pin'); } catch (e) {}
+    if (!hasPin || !window._tradeFetch || !window._tradeAccountInfo) { el.style.display = 'none'; return; }
+    var en = ckLang() === 'en';
+    try {
+      var acct = await window._tradeAccountInfo(false, false);   // NO interactivo: nunca pide el PIN
+      if (!acct || acct.error) { el.style.display = 'none'; return; }
+      var positions = [];
+      try {
+        var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false);
+        var dp = await rp.json();
+        if (Array.isArray(dp)) positions = dp;
+      } catch (e2) {}
+      var m = _computePortfolio(acct, positions);
+      var plCol = m.pnl >= 0 ? UP : DOWN, sign = m.pnl >= 0 ? '+' : '';
+      var pf = (en ? 'Your paper portfolio' : 'Tu portafolio simulado') + ': ' + fmtUsd(m.equity);
+      var line = m.n
+        ? pf + ' · <span style="color:' + plCol + '">' + sign + m.pnlPct.toFixed(1) + '%</span> · ' +
+          m.n + ' ' + (en ? (m.n === 1 ? 'position' : 'positions') : (m.n === 1 ? 'posición' : 'posiciones'))
+        : pf + ' · ' + (en ? 'no open positions' : 'sin posiciones');
+      el.innerHTML =
+        '<div style="max-width:980px;margin:0 auto 4px;padding:8px 14px;display:flex;align-items:center;gap:10px;' +
+          'border:1px solid rgba(0,224,255,.18);border-radius:12px;background:rgba(0,224,255,.05);cursor:pointer;font-size:12.5px" ' +
+          'onclick="window.BixbyCockpit&&window.BixbyCockpit.stage(\'broker\')">' +
+          '<span>💼</span><span style="color:#C3CBE0">' + line + '</span>' +
+          '<span style="margin-left:auto;color:#00E0FF;font-weight:600;white-space:nowrap">' + (en ? 'See report →' : 'Ver informe →') + '</span></div>';
+      el.style.display = 'block';
+    } catch (e) { el.style.display = 'none'; }
+  }
+
   function stageBroker(s, arg) {
     arg = arg || {};
     var en = ckLang() === 'en';
@@ -634,6 +779,7 @@
       '<div class="bcp-inner" style="max-width:980px">' +
         '<div id="bcp-bk-confirm"></div>' +
         '<div id="bcp-bk-acct"><div class="bcp-loading">' + tb('loading') + '</div></div>' +
+        '<div id="bcp-bk-report"></div>' +
         '<div class="bcp-two" style="margin-top:18px">' +
           '<div><div class="bcp-lh">' + tb('positions') + '</div><div id="bcp-bk-pos"><div class="bcp-loading">…</div></div></div>' +
           '<div><div class="bcp-lh">' + tb('orders') + '</div><div id="bcp-bk-ord"><div class="bcp-loading">…</div></div></div>' +
@@ -791,6 +937,7 @@
           }).join('');
         }
       }
+      try { renderPortfolioReport(acct, dp); } catch (eR) {}   // informe (rendimiento + concentración + comentario)
     } catch (e) { var pe = document.getElementById('bcp-bk-pos'); if (pe) pe.innerHTML = '<div class="bcp-loading">—</div>'; }
 
     // últimas órdenes (si /api/trade/history responde)
@@ -1352,6 +1499,7 @@
     if (initial && initial.kind) stage(initial.kind, initial.arg);
     else if (!document.getElementById('bcp-stage').children.length) stage('empty');
     setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
+    try { _portfolioPulse(); } catch (e) {}   // pulso proactivo del portafolio (silencioso sin PIN)
   }
   function close() {
     restoreAdopted();   // devolver grafo/terminal a su sitio original

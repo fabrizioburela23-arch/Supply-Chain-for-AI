@@ -1153,19 +1153,31 @@ const BixbyVoice = {
       ? (en ? 'REAL-MONEY account' : 'Cuenta con DINERO REAL')
       : paper === true ? (en ? 'Paper (simulated) account' : 'Cuenta SIMULADA (papel)')
         : (en ? 'Broker account' : 'Cuenta del bróker');
+    // concentración por sector (reusa el cálculo de la Cabina) → nota cauta hablada
+    let concEn = '', concEs = '';
+    try {
+      if (window._computePortfolioSummary && positions.length) {
+        const pm = window._computePortfolioSummary(acct, positions);
+        const top = (pm.sectors && pm.sectors[0]) || null;
+        if (top && top.pct >= 40) {
+          concEn = ` Heads up: about ${Math.round(top.pct)}% is concentrated in ${top.sector} — some diversification would lower risk. Not financial advice.`;
+          concEs = ` Ojo: cerca del ${Math.round(top.pct)}% está concentrado en ${top.sector} — algo de diversificación reduciría el riesgo. No es asesoría financiera.`;
+        }
+      }
+    } catch (e) {}
     let summary;
     if (en) {
       summary = `${mode}. Equity ${fmt(equity)}, cash ${fmt(cash)}, buying power ${fmt(bp)}. `
         + (positions.length ? `${positions.length} open position${positions.length > 1 ? 's' : ''}.` : 'No open positions.');
       if (best && positions.length > 1 && best !== worst) summary += ` Best: ${best.symbol} ${pct(best.unrealized_pct)}. Worst: ${worst.symbol} ${pct(worst.unrealized_pct)}.`;
       else if (best) summary += ` ${best.symbol}: ${pct(best.unrealized_pct)}.`;
-      summary += ' It is on screen.';
+      summary += concEn + ' It is on screen.';
     } else {
       summary = `${mode}. Valor total ${fmt(equity)}, efectivo ${fmt(cash)}, poder de compra ${fmt(bp)}. `
         + (positions.length ? `Tienes ${positions.length} ${positions.length === 1 ? 'posición abierta' : 'posiciones abiertas'}.` : 'No tienes posiciones abiertas.');
       if (best && positions.length > 1 && best !== worst) summary += ` La mejor: ${best.symbol} ${pct(best.unrealized_pct)}. La peor: ${worst.symbol} ${pct(worst.unrealized_pct)}.`;
       else if (best) summary += ` ${best.symbol}: ${pct(best.unrealized_pct)}.`;
-      summary += ' La tienes en pantalla.';
+      summary += concEs + ' La tienes en pantalla.';
     }
     return {
       success: true, paper, equity, cash, buying_power: bp, positions_count: positions.length,

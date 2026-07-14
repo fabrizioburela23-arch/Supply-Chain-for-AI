@@ -3680,6 +3680,83 @@ def trade_history():
         return jsonify({'error': str(e)[:200]}), 502
 
 
+@app.route('/api/portfolio/comment', methods=['POST'])
+@rate_limit(limit=40, window=3600)
+def portfolio_comment():
+    """Comentario CAUTO de Bixby sobre el portafolio (papel). Recibe un resumen
+    AGREGADO y anónimo desde el cliente (sin datos personales: solo símbolos
+    públicos + porcentajes) y devuelve 1-2 frases prudentes: observa concentración
+    / diversificación, NUNCA una orden de compra/venta ni promesa de rendimiento.
+    Si la IA falla, devuelve un comentario determinista de respaldo (nunca 500)."""
+    body = request.get_json(force=True, silent=True) or {}
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    try:
+        equity = round(float(body.get('equity') or 0))
+    except (TypeError, ValueError):
+        equity = 0
+    pnl_pct = body.get('pnl_pct')
+    n_pos = int(body.get('positions_count') or 0)
+    sectors = body.get('sectors') or []      # [{sector, pct}]
+    best = body.get('best') or {}
+    worst = body.get('worst') or {}
+    top = sectors[0] if sectors else None
+    top_pct = 0
+    try:
+        top_pct = float(top.get('pct') or 0) if top else 0
+    except (TypeError, ValueError):
+        top_pct = 0
+
+    # Respaldo determinista (sin IA) — cauto y honesto.
+    if lang == 'en':
+        fb = 'Simulated portfolio. '
+        if top and top_pct >= 50:
+            fb += f"It leans heavily on {top.get('sector')} (~{round(top_pct)}%); some diversification would lower single-sector risk. "
+        elif n_pos <= 1:
+            fb += 'With a single position the whole outcome rides on one name; spreading across a few would reduce risk. '
+        else:
+            fb += 'Reasonably spread — keep an eye on concentration and news on your largest holdings. '
+        fb += 'This is an observation on paper money, not financial advice.'
+    else:
+        fb = 'Portafolio simulado. '
+        if top and top_pct >= 50:
+            fb += f"Está muy cargado en {top.get('sector')} (~{round(top_pct)}%); algo de diversificación reduciría el riesgo de un solo sector. "
+        elif n_pos <= 1:
+            fb += 'Con una sola posición, todo depende de un nombre; repartir en varios reduciría el riesgo. '
+        else:
+            fb += 'Razonablemente repartido — vigila la concentración y las noticias de tus mayores posiciones. '
+        fb += 'Es una observación sobre dinero de papel, no asesoría financiera.'
+
+    if not _ai_configured():
+        return jsonify({'ok': True, 'comment': fb, 'model': 'fallback'})
+
+    lang_name = 'inglés' if lang == 'en' else 'español'
+    system = (
+        'Eres Bixby, un observador financiero PRUDENTE dentro de una app educativa con '
+        'dinero de PAPEL (simulado). Comentas un portafolio en 1-2 frases, en ' + lang_name + '. '
+        'REGLAS INNEGOCIABLES: (1) NUNCA des una orden ni recomendación directa de comprar o '
+        'vender un activo concreto. (2) Puedes observar concentración, diversificación y riesgo '
+        'en términos generales. (3) NUNCA prometas rendimientos ni uses lenguaje de certeza. '
+        '(4) Cierra recordando que es dinero de papel y no es asesoría financiera. '
+        'Tono cálido, claro y breve. Devuelve SOLO el comentario, sin viñetas ni JSON.'
+    )
+    secs = ', '.join(f"{s.get('sector')} {round(float(s.get('pct') or 0))}%" for s in sectors[:4]) or '—'
+    prompt = (
+        f"Portafolio simulado. Valor total ~${equity}. Rendimiento total {pnl_pct}%. "
+        f"Posiciones abiertas: {n_pos}. Concentración por sector: {secs}. "
+        f"Mejor posición: {best.get('symbol', '—')} {best.get('pnl_pct', '')}%. "
+        f"Peor posición: {worst.get('symbol', '—')} {worst.get('pnl_pct', '')}%. "
+        "Da tu observación prudente."
+    )
+    try:
+        text, model = _ai_complete(system, prompt, max_tokens=350, tier='fast')
+        text = (text or '').strip()
+        if not text:
+            return jsonify({'ok': True, 'comment': fb, 'model': 'fallback'})
+        return jsonify({'ok': True, 'comment': text, 'model': model})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'ok': True, 'comment': fb, 'model': 'fallback', 'error': str(e)[:120]})
+
+
 @app.route('/api/trade/positions/detail', methods=['GET'])
 @_trade_auth
 def trade_positions_detail():
