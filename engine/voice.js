@@ -670,16 +670,20 @@ const BixbyVoice = {
       case 'run_stress_test': {
         const n = this._resolveAny(params);
         if (n && typeof activateStress === 'function') {
-          // cascada pesada diferida; respondemos DENTRO del defer para leer el
-          // conteo real ya calculado (no antes de que activateStress corra).
+          // LATENCIA (feedback Fabrizio): responder YA para que Bixby hable sin
+          // esperar la cascada; el conteo real se manda luego por contextual_update.
+          respond({ success: true, company: n.label,
+            note: 'Ejecutando el estrés en el mapa; los efectos aparecen en pantalla.' });
           this._defer(() => {
             try { this._show('stress', n.id); } catch {}
-            // _surface difiere activateStress (~200-320ms); leemos el conteo
-            // real después de que la cascada ya corrió.
             setTimeout(() => {
-              const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
-              respond({ success: true, company: n.label, affected_count: cascade,
-                affected_pct: Math.round(cascade / NODES.length * 100) });
+              try {
+                const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                  this.ws.send(JSON.stringify({ type: 'contextual_update',
+                    text: `[STRESS] ${n.label}: ${cascade} empresas afectadas (${Math.round(cascade / NODES.length * 100)}%).` }));
+                }
+              } catch (e) {}
             }, 600);
           });
         } else respond(this._notFound(params.ticker || params.company_name));

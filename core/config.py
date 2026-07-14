@@ -17,14 +17,14 @@ CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
 # rinde a nivel Opus en muchas tareas. Cambiable sin tocar código con AI_MODEL.
 AI_MODEL = os.getenv('AI_MODEL', 'claude-sonnet-5')
 
-# ── IA híbrida: dos niveles de modelo (2026-07-13: ambos Sonnet 5) ──────────
-# 'fast'  → comandos, resúmenes de noticias, alertas, agente de trading.
-# 'deep'  → síntesis de investigación profunda, tesis, Canvas IA, cripto IA.
-# Por pedido explícito ("usar sonnet 5 para todo") ambos tiers usan Sonnet 5
-# por defecto; se pueden sobreescribir por entorno (AI_MODEL_FAST/AI_MODEL_DEEP)
-# —p.ej. AI_MODEL_FAST=claude-haiku-4-5 para abaratar lo instantáneo—.
-# La MISMA ANTHROPIC_KEY sirve para ambos. No afecta la cascada Gemini/NVIDIA.
-AI_MODEL_FAST = os.getenv('AI_MODEL_FAST') or 'claude-sonnet-5'
+# ── IA híbrida: dos niveles de modelo ───────────────────────────────────────
+# 'fast'  → comandos, ruteo, resúmenes de noticias, alertas, agente de trading.
+# 'deep'  → síntesis de investigación profunda, tesis, Canvas IA, cripto IA, SIM.
+# 2026-07-15 (feedback Fabrizio: "Bixby tarda mucho en hablar/ejecutar"): el tier
+# 'fast' pasa a Haiku 4.5 (3-5x más rápido para clasificación+JSON trivial); el
+# 'deep' se queda en Sonnet 5 para que la calidad de la sim/investigación/cripto
+# NO cambie. Sobreescribibles por entorno. La MISMA ANTHROPIC_KEY sirve para ambos.
+AI_MODEL_FAST = os.getenv('AI_MODEL_FAST') or 'claude-haiku-4-5'
 AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5'
 
 # ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──
