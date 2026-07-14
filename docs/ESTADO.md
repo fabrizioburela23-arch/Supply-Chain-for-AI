@@ -9,6 +9,48 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-07-14 (madrugada, autónoma) — víspera de la demo · app en v95
+
+Trabajo nocturno pedido por Fabrizio ("perfecciona todo, asegúrate que corra en
+cualquier compu, no tarde mucho"). Auditoría de regresión final: **12/12 verde,
+0 bloqueadores**; carga ~1s; sin errores de consola. Cambios:
+
+- **Sim con Sonnet 5**: era un falso negativo (mi curl `-d` con acentos rompía el
+  JSON → 400 "scenario requerido"). La sim SIEMPRE razonó con claude-sonnet-5.
+  Probar SIEMPRE con `--data-binary @archivo.json`.
+- **Ontología 500** (propuestas/alertas): `init_schema()` no corría en boot →
+  tablas `proposed_actions`/`alerts` nunca creadas. Fix: `init_schema()` en boot
+  (idempotente, no destructivo). Los 3 endpoints → 200.
+- **Grafo Temporal**: empresas/conexiones ahora APARECEN por año de fundación
+  (`NODE_META[id].founded`, en 554/555 nodos). Aristas del backbone ya no salen
+  "siempre presentes"; timeline arranca en 1900.
+- **Informe de portafolio** (Cabina 💼): rendimiento + mejor/peor + concentración
+  por sector + comentario cauto (Sonnet 5, `/api/portfolio/comment`) + pulso
+  proactivo al abrir. `_computePortfolioSummary` compartido con voice.js.
+- **Cripto y más DENTRO de la Cabina** (unificación progresiva, elección de
+  Fabrizio): `stageCrypto` + adoptador genérico para `tkg`/`guia`
+  (`ADOPT_TABS`). Pedir cripto por voz ya NO cierra la Cabina (bug: `ck.close()`
+  en `surfaceTabInCockpit` para pestañas sin escenario → cortaba la voz).
+- **Bixby sabe de espacio**: tool `get_space_summary` (voz) + inyección en
+  `/api/ai/command` (texto) con conteos reales de CelesTrak (Starlink 10.734).
+  Helpers `_space_constellations`/`_space_facts_str` cacheados + piso de respaldo.
+- **Alpaca 404**: `_norm_alpaca_base` quita sufijo `/v2` y barra. Nuevo
+  `/api/trade/status` (público, sin PIN, sin secretos) para diagnosticar. Ahora
+  account → 200 (paper).
+- **Comparar fundamentals** (Cabina "Comparar" → pestaña 📊): tabla lado a lado
+  NVDA/AMD con quién gana cada fila, desde `/api/findossier`.
+- **Rendimiento**: `/api/findossier` cachea parcial 1h (antes ~7s por vista);
+  `/api/space/launches` con timeout 8s + respaldo (antes caché fría lenta).
+- 3 hallazgos de revisión adversaria corregidos: cripto mal clasificada
+  ("BTCUSD" sin barra → asset_class + sufijo USD), pnlPct 0% en cortas (|cost|),
+  comentario que decía "papel" en cuentas reales (flag `paper`).
+
+Pendiente sugerido (post-demo): adoptar space/geo (globos 3D) en la Cabina;
+aplicar migración FMP para las tablas secundarias del dossier; warm de cachés
+persistente (Redis) para que sobrevivan reinicios de Railway.
+
+---
+
 # REDISEÑO MAYOR 2026-07 — mapa único con capas + motor de matrices
 
 Decisiones de Fabrizio (2026-07-03, no reabrir sin razón nueva): UN solo mapa
