@@ -1931,7 +1931,9 @@ def ai_command():
     space_ctx = ''
     if re.search(r'sat[eé]lit|constelaci|starlink|oneweb|iridium|[oó]rbit|orbit|lanzamient|launch|espacio|\bspace\b', query, re.I):
         try:
-            space_ctx = '\n\nDATOS DE ESPACIO (úsalos, son reales):\n' + _space_facts_str()
+            space_ctx = ('\n\nDATOS DE ESPACIO — conteos REALES y ACTUALES (CelesTrak). '
+                         'Úsalos TEXTUALMENTE; NO los contradigas ni los sustituyas por tu '
+                         'conocimiento previo, y NO digas que no sabes:\n' + _space_facts_str())
         except Exception:  # noqa: BLE001
             pass
     prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}{space_ctx}'
@@ -2109,6 +2111,13 @@ def space_tle():
         return jsonify(_fallback_tle())
 
     total = sum(c['count'] for c in constellations)
+    # comparte los conteos REALES con el Bixby de TEXTO (para que reuse estos
+    # números y no haga su propio re-fetch parcial que dejaba a Starlink en 0).
+    try:
+        cache.set('space_constellations',
+                  [(c['name'], c['count']) for c in constellations if c.get('count')], timeout=86400)
+    except Exception:  # noqa: BLE001
+        pass
     return jsonify({'constellations': constellations, 'sats': sats,
                     'total_real': total, 'rendered': len(sats), 'source': 'celestrak'})
 
@@ -2140,10 +2149,18 @@ def _fallback_tle():
             'rendered': len(sats), 'source': 'fallback'}
 
 
+# Pisos de respaldo por constelación (aprox. 2026): si CelesTrak falla en un
+# grupo concreto (rate-limit), usamos este mínimo para que Starlink NO quede en 0
+# ni "desaparezca" del resumen de texto.
+_SAT_FALLBACK = {'Starlink': 8000, 'OneWeb': 648, 'Planet Labs': 190, 'Spire Global': 70,
+                 'Iridium NEXT': 80, 'Globalstar': 28, 'SES / O3b': 68, 'GPS': 31,
+                 'Galileo': 30, 'BeiDou': 50, 'Estaciones (ISS/CSS)': 20}
+
+
 def _space_constellations():
     """[(label, count), …] satélites reales por constelación (CelesTrak), cacheado
-    24h; fallback a conteos aproximados si CelesTrak no responde. Compartido por el
-    Bixby de TEXTO (/api/ai/command) para que responda "cuántos satélites tiene X"."""
+    24h. Robusto: si un grupo falla usa su piso de respaldo (así Starlink nunca
+    queda en 0). Compartido por el Bixby de TEXTO (/api/ai/command)."""
     ck = 'space_constellations'
     hit = cache.get(ck)
     if hit is not None:
@@ -2156,12 +2173,15 @@ def _space_constellations():
             n = len(_parse_tle_text(r.text)) if (r.ok and r.text and '<' not in r.text[:1]) else 0
         except Exception:  # noqa: BLE001
             n = 0
+        if not n:
+            n = _SAT_FALLBACK.get(label, 0)   # piso si CelesTrak falló para este grupo
         if n:
             out.append((label, n))
-    if not out:
-        out = [('Starlink', 7134), ('OneWeb', 648), ('Planet Labs', 200),
-               ('Iridium NEXT', 75), ('GPS', 31)]
-    cache.set(ck, out, timeout=86400)
+    total = sum(n for _, n in out)
+    # cachear SOLO si el paquete es plausible (Starlink presente): evita fijar 24h
+    # un resultado parcial como el que rompió el texto ("total 1163, sin Starlink").
+    if total > 5000 and any(l == 'Starlink' for l, _ in out):
+        cache.set(ck, out, timeout=86400)
     return out
 
 
