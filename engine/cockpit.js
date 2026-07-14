@@ -103,7 +103,16 @@
   color:#E8EDFB;font-family:'Inter',system-ui,sans-serif;animation:bcpFade .22s ease}
 #bcp-ov.show{display:flex}
 @keyframes bcpFade{from{opacity:0}to{opacity:1}}
-#bcp-top{display:flex;align-items:center;gap:16px;padding:16px 22px 12px;border-bottom:1px solid rgba(122,158,255,.12);flex-shrink:0}
+#bcp-top{display:flex;align-items:center;gap:16px;padding:16px 22px 12px;border-bottom:1px solid rgba(122,158,255,.16);flex-shrink:0;
+  background:rgba(8,12,22,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* botón primario de invertir: verde, para que "invertir" salte a la vista (feedback Fabrizio) */
+.bcp-act[data-act="broker"]{border-color:rgba(52,211,153,.5);color:#34d399;background:rgba(52,211,153,.10)}
+.bcp-act[data-act="broker"]:hover{border-color:#34d399;color:#5ff0b8}
+/* scrollbar fino y elegante en el escenario */
+#bcp-stage{scrollbar-width:thin;scrollbar-color:rgba(122,158,255,.35) transparent}
+#bcp-stage::-webkit-scrollbar{width:9px}
+#bcp-stage::-webkit-scrollbar-thumb{background:rgba(122,158,255,.28);border-radius:6px;border:2px solid transparent;background-clip:content-box}
+#bcp-stage::-webkit-scrollbar-thumb:hover{background:rgba(122,158,255,.5);background-clip:content-box}
 #bcp-orb-wrap{position:relative;width:64px;height:64px;flex-shrink:0;filter:drop-shadow(0 0 22px rgba(80,60,255,.35))}
 #bcp-orb-canvas{display:block;border-radius:50%}
 #bcp-idwrap{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -115,8 +124,9 @@
 #bcp-state.think .dot{background:#FFB300;color:#FFB300;animation:bcpPulse .7s ease-in-out infinite}
 @keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.3}}
 /* barra de chat de Bixby: AHORA ABAJO (pedido de Fabrizio: "ponla abajo") */
-#bcp-barwrap{flex-shrink:0;padding:12px 22px 16px;border-top:1px solid rgba(122,158,255,.12);
-  display:flex;justify-content:center;background:linear-gradient(0deg,rgba(5,7,14,.6),transparent)}
+#bcp-barwrap{flex-shrink:0;padding:12px 22px 16px;border-top:1px solid rgba(122,158,255,.16);
+  display:flex;justify-content:center;background:linear-gradient(0deg,rgba(5,7,14,.7),rgba(5,7,14,.2));
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 #bcp-bar{display:flex;align-items:center;gap:9px;width:100%;max-width:900px}
 #bcp-input{flex:1;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.22);border-radius:12px;
   color:#E8EDFB;font-size:14px;padding:12px 15px;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s}
@@ -931,12 +941,27 @@
         '<div style="font-size:19px;font-weight:750;margin-bottom:4px"><span style="color:' + col + '">' + tb(side) + '</span> ' +
           esc(amount) + ' · ' + esc(o.label || o.symbol) +
           ' <span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace;font-size:13px">(' + esc(o.symbol) + ')</span></div>' +
-        '<div style="font-size:11.5px;color:#7C87A3;margin-bottom:14px">' + tb('marketOrder') + '</div>' +
+        '<div style="font-size:11.5px;color:#7C87A3;margin-bottom:12px">' + tb('marketOrder') + '</div>' +
+        // chips de monto rápido (feedback Fabrizio: "más fácil invertir") — 1 toque
+        // cambia el monto, el 2º confirma. Solo para órdenes en dólares (notional).
+        (o.notional != null ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">' +
+          [100, 500, 1000, 5000].map(function (v) {
+            var on = Math.round(+o.notional) === v;
+            return '<button class="bcp-amt" data-amt="' + v + '" style="padding:6px 15px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;' +
+              'border:1px solid ' + (on ? col : 'rgba(122,158,255,.25)') + ';background:' + (on ? col + '1f' : 'transparent') + ';color:' + (on ? col : '#9BA6C4') + '">$' + v.toLocaleString('en-US') + '</button>';
+          }).join('') + '</div>' : '') +
         '<div style="display:flex;gap:10px">' +
           '<button id="bcp-bk-ok" class="bcp-back" style="border-color:' + col + '66;color:' + col + ';font-weight:700">' + tb('confirm') + '</button>' +
           '<button id="bcp-bk-no" class="bcp-back">' + tb('cancel') + '</button>' +
         '</div><div id="bcp-bk-cstatus" style="margin-top:10px;font-size:12.5px"></div></div>';
     paintConfirmBadge();   // pinta 🧪/🔴 en cuanto la cuenta esté cargada
+    box.querySelectorAll('.bcp-amt').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!_pendingOrder) return;
+        _pendingOrder.notional = +b.getAttribute('data-amt');
+        renderTradeConfirm(_pendingOrder);   // re-pinta con el nuevo monto resaltado
+      });
+    });
     box.querySelector('#bcp-bk-ok').addEventListener('click', confirmPendingOrder);
     box.querySelector('#bcp-bk-no').addEventListener('click', function () {
       _pendingOrder = null;
