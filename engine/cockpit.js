@@ -371,6 +371,7 @@
     markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto'].indexOf(kind) >= 0 ? kind : null);
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'crypto') return stageCrypto(s, arg);
+    if (ADOPT_TABS[kind]) return stageAdoptTab(s, kind);
     if (kind === 'xray') return stageXRay(s, arg);
     if (kind === 'compare') return stageCompare(s, arg);
     if (kind === 'agentsim') return stageAgentSim(s, arg);
@@ -416,6 +417,27 @@
     }
     try { pane.style.minHeight = '100%'; } catch (e) {}
     try { if (window.KhipuCrypto) window.KhipuCrypto.init(true); } catch (e) {}
+  }
+
+  // ── Unificación progresiva: más pestañas DENTRO de la Cabina (adopción del
+  //    panel vivo, igual que grafo/terminal/cripto). Así navegar a ellas por voz
+  //    ya NO cierra la Cabina ni corta a Bixby. Solo paneles DOM/SVG seguros. ──
+  var ADOPT_TABS = {
+    tkg:  { panel: 'tkg-panel',  es: 'Grafo Temporal', en: 'Temporal Graph', init: function () { if (typeof window.initTKGTab === 'function') window.initTKGTab(); } },
+    guia: { panel: 'guia-panel', es: 'Guía',           en: 'Guide',          init: function () { if (typeof window.initGuiaTab === 'function') window.initGuiaTab(); } },
+  };
+  function stageAdoptTab(s, tabId) {
+    var cfg = ADOPT_TABS[tabId]; if (!cfg) return stageEmpty(s);
+    var en = ckLang() === 'en';
+    s.innerHTML = backBar(en ? cfg.en : cfg.es) + '<div class="bcp-embed" id="bcp-embed-' + tabId + '" style="overflow:auto"></div>';
+    var pane = document.getElementById(cfg.panel);
+    if (!pane || !adoptInto(s.querySelector('#bcp-embed-' + tabId), pane, 'block')) {
+      s.innerHTML += '<div class="bcp-loading">' + (en ? 'Could not mount' : 'No se pudo montar') + '</div>';
+      return;
+    }
+    try { pane.style.minHeight = '100%'; } catch (e) {}
+    // doble rAF: el contenedor necesita layout antes de que el init MIDA su tamaño
+    requestAnimationFrame(function () { requestAnimationFrame(function () { try { cfg.init(); } catch (e) {} }); });
   }
 
   // ── la TERMINAL Bloomberg, dentro de la Cabina ──
