@@ -169,11 +169,20 @@ AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
 SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
 ALPACA_KEY          = _clean_env(os.getenv('ALPACA_KEY', ''))
 ALPACA_SECRET       = _clean_env(os.getenv('ALPACA_SECRET', ''))
-# Base de Alpaca. Normalizada (quita comillas/espacios que se cuelan al pegar en
-# Railway y la barra final): Alpaca devuelve HTTP 404 ante '//v2/account' cuando
-# ALPACA_BASE llega con '/' al final — causa real de "could not fetch equity".
-ALPACA_BASE         = (_clean_env(os.getenv('ALPACA_BASE', 'https://paper-api.alpaca.markets'))
-                       or 'https://paper-api.alpaca.markets').rstrip('/')
+# Base de Alpaca. Normalizada a prueba de errores de pegado en Railway:
+#  · quita comillas/espacios (_clean_env) y la barra final → evita '//v2/account';
+#  · añade https:// si falta el esquema;
+#  · quita el sufijo '/v2' o '/v1' si lo pegaron (→ '/v2/v2/account' = HTTP 404,
+#    causa real de "Alpaca HTTP 404 / could not fetch equity").
+def _norm_alpaca_base(v):
+    v = (_clean_env(v) or 'https://paper-api.alpaca.markets').strip().rstrip('/')
+    if not v.startswith('http'):
+        v = 'https://' + v
+    for _suf in ('/v2', '/v1'):
+        if v.endswith(_suf):
+            v = v[:-len(_suf)]
+    return v.rstrip('/') or 'https://paper-api.alpaca.markets'
+ALPACA_BASE         = _norm_alpaca_base(os.getenv('ALPACA_BASE', 'https://paper-api.alpaca.markets'))
 # PIN que protege TODAS las rutas /api/trade/* (operan dinero real vía Alpaca).
 # Sin TRADE_PIN configurado, el trading queda DESHABILITADO (seguro por defecto).
 TRADE_PIN           = os.getenv('TRADE_PIN', '')
@@ -1174,6 +1183,38 @@ def trade_account():
             return jsonify({'error': f'Alpaca HTTP {r.status_code}', 'body': r.text[:300]}), 502
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
+
+
+@app.route('/api/trade/status', methods=['GET'])
+@rate_limit(limit=30, window=60)
+def trade_status():
+    """Diagnóstico PÚBLICO no sensible del bróker (sin PIN): NO expone claves ni
+    datos de cuenta — solo si están configuradas, la base y el status HTTP del
+    endpoint de cuenta, con una pista accionable. Para depurar el 'Alpaca HTTP
+    404' desde cualquier dispositivo sin conocer el TRADE_PIN."""
+    info = {'key_set': bool(ALPACA_KEY), 'secret_set': bool(ALPACA_SECRET),
+            'base': ALPACA_BASE, 'pin_set': bool(TRADE_PIN), 'paper': 'paper' in ALPACA_BASE}
+    if not ALPACA_KEY or not ALPACA_SECRET:
+        info['ok'] = False
+        info['hint'] = 'Faltan ALPACA_KEY/ALPACA_SECRET en Railway.'
+        return jsonify(info)
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
+        info['account_status'] = r.status_code
+        info['ok'] = (r.status_code == 200)
+        if r.status_code == 200:
+            info['hint'] = 'Bróker OK.'
+        elif r.status_code in (401, 403):
+            info['hint'] = 'Claves rechazadas: revisa ALPACA_KEY/SECRET y que coincidan con la base (paper vs live).'
+        elif r.status_code == 404:
+            info['hint'] = 'URL no encontrada: ALPACA_BASE debe ser https://paper-api.alpaca.markets (sin /v2 ni barra final).'
+        else:
+            info['hint'] = f'Alpaca respondió HTTP {r.status_code}.'
+    except Exception as e:  # noqa: BLE001
+        info['ok'] = False
+        info['error'] = str(e)[:150]
+        info['hint'] = 'No se pudo conectar con Alpaca — revisa ALPACA_BASE.'
+    return jsonify(info)
 
 
 @app.route('/api/trade/diag', methods=['GET'])
@@ -3695,6 +3736,8 @@ def portfolio_comment():
     except (TypeError, ValueError):
         equity = 0
     pnl_pct = body.get('pnl_pct')
+    paper = body.get('paper')
+    is_paper = paper is not False   # None/True → papel (default SEGURO); solo False explícito = dinero real
     n_pos = int(body.get('positions_count') or 0)
     sectors = body.get('sectors') or []      # [{sector, pct}]
     best = body.get('best') or {}
@@ -3708,35 +3751,40 @@ def portfolio_comment():
 
     # Respaldo determinista (sin IA) — cauto y honesto.
     if lang == 'en':
-        fb = 'Simulated portfolio. '
+        fb = 'Simulated portfolio. ' if is_paper else 'Real-money portfolio. '
         if top and top_pct >= 50:
             fb += f"It leans heavily on {top.get('sector')} (~{round(top_pct)}%); some diversification would lower single-sector risk. "
         elif n_pos <= 1:
             fb += 'With a single position the whole outcome rides on one name; spreading across a few would reduce risk. '
         else:
             fb += 'Reasonably spread — keep an eye on concentration and news on your largest holdings. '
-        fb += 'This is an observation on paper money, not financial advice.'
+        fb += ('This is an observation on paper money, not financial advice.' if is_paper
+               else 'This is an observation on a real-money account, not financial advice.')
     else:
-        fb = 'Portafolio simulado. '
+        fb = 'Portafolio simulado. ' if is_paper else 'Portafolio con DINERO REAL. '
         if top and top_pct >= 50:
             fb += f"Está muy cargado en {top.get('sector')} (~{round(top_pct)}%); algo de diversificación reduciría el riesgo de un solo sector. "
         elif n_pos <= 1:
             fb += 'Con una sola posición, todo depende de un nombre; repartir en varios reduciría el riesgo. '
         else:
             fb += 'Razonablemente repartido — vigila la concentración y las noticias de tus mayores posiciones. '
-        fb += 'Es una observación sobre dinero de papel, no asesoría financiera.'
+        fb += ('Es una observación sobre dinero de papel, no asesoría financiera.' if is_paper
+               else 'Es una observación sobre una cuenta de dinero real, no asesoría financiera.')
 
     if not _ai_configured():
         return jsonify({'ok': True, 'comment': fb, 'model': 'fallback'})
 
     lang_name = 'inglés' if lang == 'en' else 'español'
+    money_ctx = 'dinero de PAPEL (simulado)' if is_paper else 'DINERO REAL'
+    money_close = ('es dinero de papel y no es asesoría financiera' if is_paper
+                   else 'es una cuenta de DINERO REAL y esto no es asesoría financiera')
     system = (
-        'Eres Bixby, un observador financiero PRUDENTE dentro de una app educativa con '
-        'dinero de PAPEL (simulado). Comentas un portafolio en 1-2 frases, en ' + lang_name + '. '
+        'Eres Bixby, un observador financiero PRUDENTE dentro de una app con '
+        + money_ctx + '. Comentas un portafolio en 1-2 frases, en ' + lang_name + '. '
         'REGLAS INNEGOCIABLES: (1) NUNCA des una orden ni recomendación directa de comprar o '
         'vender un activo concreto. (2) Puedes observar concentración, diversificación y riesgo '
         'en términos generales. (3) NUNCA prometas rendimientos ni uses lenguaje de certeza. '
-        '(4) Cierra recordando que es dinero de papel y no es asesoría financiera. '
+        '(4) Cierra recordando que ' + money_close + '. '
         'Tono cálido, claro y breve. Devuelve SOLO el comentario, sin viñetas ni JSON.'
     )
     secs = ', '.join(f"{s.get('sector')} {round(float(s.get('pct') or 0))}%" for s in sectors[:4]) or '—'
@@ -3771,6 +3819,7 @@ def trade_positions_detail():
         for p in positions:
             enriched.append({
                 'symbol':      p.get('symbol'),
+                'asset_class': p.get('asset_class', 'us_equity'),   # 'crypto' en posiciones cripto → sector correcto en el informe
                 'qty':         float(p.get('qty') or 0),
                 'side':        p.get('side', 'long'),
                 'avg_entry':   float(p.get('avg_entry_price') or 0),

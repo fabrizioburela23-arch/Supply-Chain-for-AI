@@ -738,11 +738,17 @@
      cómo va el portafolio). Rendimiento + mejor/peor + concentración por sector
      + comentario CAUTO de Bixby (Sonnet 5, sin órdenes de compra/venta). Todo
      sobre la cuenta de PAPEL. Reusa NODES/catLabel y los helpers de trade. ══ */
-  function _sectorOf(symbol) {
+  function _sectorOf(p) {
     var en = ckLang() === 'en';
+    var symbol = (p && p.symbol != null) ? p.symbol : p;   // acepta el objeto posición o un string
+    var ac = (p && p.asset_class) || '';
     var sym = String(symbol || '').toUpperCase();
     if (!sym) return en ? 'Other' : 'Otro';
-    if (sym.indexOf('/') >= 0) return en ? 'Crypto' : 'Cripto';   // "BTC/USD"
+    // cripto: por asset_class de Alpaca, por par con barra ("BTC/USD"), o por sufijo
+    // USD/USDT/USDC ("BTCUSD" — así lo devuelve /v2/positions, SIN barra → antes caía
+    // a "Otro" y Bixby decía "~100% en Otro" en carteras cripto).
+    if (ac === 'crypto' || sym.indexOf('/') >= 0 || /^[A-Z0-9]{2,10}(USD|USDT|USDC)$/.test(sym))
+      return en ? 'Crypto' : 'Cripto';
     var n = (window.NODES || []).find(function (x) { return x.mkt && String(x.mkt).toUpperCase() === sym; });
     if (n) return (typeof window.catLabel === 'function') ? window.catLabel(n.cat) : (n.cat || (en ? 'Other' : 'Otro'));
     return en ? 'Other' : 'Otro';
@@ -756,16 +762,19 @@
       totalMV += mv; pnl += up; cost += cb;
       if (!best || pct > (+best.unrealized_pct || 0)) best = p;
       if (!worst || pct < (+worst.unrealized_pct || 0)) worst = p;
-      var sec = _sectorOf(p.symbol);
+      var sec = _sectorOf(p);
       bySec[sec] = (bySec[sec] || 0) + mv;
     });
     var denom = totalMV > 0 ? totalMV : 1;
     var sectors = Object.keys(bySec).map(function (k) { return { sector: k, mv: bySec[k], pct: bySec[k] / denom * 100 }; })
       .sort(function (a, b) { return b.mv - a.mv; });
     return {
-      totalMV: totalMV, pnl: pnl, pnlPct: cost > 0 ? (pnl / cost * 100) : 0,
+      // |cost| en el denominador: una posición corta tiene cost_basis negativo;
+      // con `cost > 0` daba 0.00% junto a un P&L en $ ≠ 0 (incoherente).
+      totalMV: totalMV, pnl: pnl, pnlPct: Math.abs(cost) > 1e-9 ? (pnl / Math.abs(cost) * 100) : 0,
       best: best, worst: worst, sectors: sectors, n: positions.length,
       equity: (+(acct && acct.equity)) || totalMV,
+      paper: (acct && typeof acct.paper === 'boolean') ? acct.paper : null,
     };
   }
   window._computePortfolioSummary = _computePortfolio;   // reuso desde voice.js (informe hablado)
@@ -818,7 +827,7 @@
     var en = ckLang() === 'en';
     var payload = {
       lang: en ? 'en' : 'es', equity: Math.round(m.equity || m.totalMV || 0),
-      pnl_pct: +m.pnlPct.toFixed(2), positions_count: m.n,
+      pnl_pct: +m.pnlPct.toFixed(2), positions_count: m.n, paper: m.paper,
       sectors: m.sectors.slice(0, 5).map(function (s) { return { sector: s.sector, pct: +s.pct.toFixed(1) }; }),
       best: m.best ? { symbol: m.best.symbol, pnl_pct: +(+m.best.unrealized_pct || 0).toFixed(2) } : null,
       worst: m.worst ? { symbol: m.worst.symbol, pnl_pct: +(+m.worst.unrealized_pct || 0).toFixed(2) } : null,
