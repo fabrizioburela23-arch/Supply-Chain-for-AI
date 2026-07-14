@@ -110,8 +110,15 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast'):
     tier: 'fast' (default, AI_MODEL_FAST/Haiku) o 'deep' (AI_MODEL_DEEP/Sonnet 5).
     SOLO cambia el modelo del proveedor Claude; Gemini/NVIDIA quedan igual."""
     tier = 'deep' if tier == 'deep' else 'fast'
+    # "Sonnet 5 para TODO" (pedido del usuario): Claude SIEMPRE primero cuando la
+    # key existe; Gemini/NVIDIA quedan solo de respaldo si Claude cae. Esto
+    # neutraliza una variable AI_ORDER vieja en Railway (gemini,nvidia,claude)
+    # que hacía que la sim usara NVIDIA aunque Sonnet 5 funcionaba. (2026-07-14)
+    order = list(AI_ORDER)
+    if CLAUDE:
+        order = ['claude'] + [n for n in order if n != 'claude']
     errors = []
-    for name in AI_ORDER:
+    for name in order:
         prov = _AI_PROVIDERS.get(name)
         if not prov or not prov[0]():
             continue
