@@ -2007,13 +2007,20 @@ def ipo_calendar():
 # ── Space APIs (Launch Library 2 — gratis) ──────────────────────────────────
 @app.route('/api/space/launches')
 @rate_limit(limit=60, window=60)
-@cache.cached(timeout=3600)
 def space_launches():
-    """Próximos lanzamientos espaciales, mapeados a nodos de Khipu."""
+    """Próximos lanzamientos espaciales, mapeados a nodos de Khipu. Blindado para
+    la demo: timeout corto + respaldo vacío si Launch Library está lento/caído (una
+    caché fría podía tardar mucho y bloquear la pestaña Espacio). Caché manual para
+    no quedar pegado en el respaldo."""
+    ck = 'space_launches_v2'
+    hit = cache.get(ck)
+    if hit is not None:
+        return jsonify(hit)
     data, err = _safe_get(
-        'https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=10&format=json', timeout=12)
-    if err:
-        return jsonify({'error': err}), 502
+        'https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=10&format=json', timeout=8)
+    if err or not isinstance(data, dict):
+        cache.set(ck, [], timeout=90)   # respaldo breve: no bloquear, reintentar pronto
+        return jsonify([])
     launches = data.get('results', [])
 
     def khipu_nodes(launch):

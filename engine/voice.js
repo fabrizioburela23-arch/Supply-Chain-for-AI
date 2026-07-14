@@ -1238,7 +1238,8 @@ const BixbyVoice = {
         ? `About ${nf(total)} tracked satellites across ${list.length} constellations. ${top}.`
         : `Cerca de ${nf(total)} satélites rastreados en ${list.length} constelaciones. ${top}.`;
     }
-    const nextL = (lch && Array.isArray(lch.launches) && lch.launches[0]) || null;
+    // /api/space/launches devuelve un ARRAY (no {launches:[...]})
+    const nextL = Array.isArray(lch) ? lch[0] : ((lch && Array.isArray(lch.launches)) ? lch.launches[0] : null);
     if (nextL && nextL.name) summary += en ? ` Next launch: ${nextL.name}.` : ` Próximo lanzamiento: ${nextL.name}.`;
     return {
       success: true, total_satellites: total, constellations: list,
