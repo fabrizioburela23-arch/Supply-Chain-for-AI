@@ -5757,13 +5757,24 @@ const $=id=>document.getElementById(id);
     window._appVersion = vm2 || null;
   }
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
-  setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);
+
+  // Fade del splash de arranque — COORDINADO con la Cabina para que NO se vea el
+  // mapa pelado en medio (pedido de Fabrizio: "se queda en el panel principal
+  // antes de pasar a Bixby y se ve feo"). Idempotente.
+  const fadeBoot = () => {
+    if (el && !el.classList.contains('gone')) {
+      el.classList.add('gone');
+      setTimeout(() => { try { el.remove(); } catch (e) {} }, 700);
+    }
+  };
+
   // Bixby Finance: la Cabina de Bixby es la PANTALLA INICIAL (pedido 2026-07-13).
-  // Se abre sola tras el arranque, SOLO una vez por sesión (si el usuario la
-  // cerró, no vuelve a saltar). Robusto: espera a que exista la Cabina y los
-  // datos; si algo falla, la app queda en el mapa normal (nunca pantalla vacía).
+  // Se abre sola tras el arranque, SOLO una vez por sesión. Si el usuario ya
+  // aterrizó (o algo falla) se muestra el mapa con el fade normal.
   try {
-    if (!sessionStorage.getItem('kh_bixby_landed')) {
+    if (sessionStorage.getItem('kh_bixby_landed')) {
+      setTimeout(fadeBoot, 1350);   // ya aterrizó esta sesión → mapa normal
+    } else {
       let tries = 0;
       const tryLand = () => {
         tries++;
@@ -5771,13 +5782,17 @@ const $=id=>document.getElementById(id);
             && typeof NODES !== 'undefined' && NODES.length) {
           sessionStorage.setItem('kh_bixby_landed', '1');
           try { window.BixbyCockpit.open(); } catch (e) {}
+          // la Cabina (z-index 7000) ya tapa el mapa → RECIÉN AHÍ quitamos el
+          // splash. Sin flash del mapa. Un respiro para su transición de entrada.
+          setTimeout(fadeBoot, 450);
           return;
         }
-        if (tries < 40) setTimeout(tryLand, 250);   // hasta ~10s esperando
+        if (tries < 90) setTimeout(tryLand, 100);   // poll rápido, hasta ~9s
+        else fadeBoot();   // fallback: mostrar el mapa si la Cabina nunca cargó
       };
-      setTimeout(tryLand, 1500);
+      setTimeout(tryLand, 850);   // deja ver el splash un momento, luego abre ASAP
     }
-  } catch (e) {}
+  } catch (e) { setTimeout(fadeBoot, 1350); }
 })();
 
 /* ---- Contadores animados ---- */
