@@ -503,19 +503,103 @@
     if (window.wireXRay) window.wireXRay(root, n.id);
   }
 
+  /* ══ COMPARAR FUNDAMENTALES (dossier lado a lado) — pedido de Fabrizio: "el
+     dossier es súper importante". Trae /api/findossier de ambas y alinea las
+     cifras clave del último año; resalta en verde quién gana cada fila. ══ */
+  function _latest(arr) { if (!Array.isArray(arr)) return null; for (var i = arr.length - 1; i >= 0; i--) { if (arr[i] != null) return arr[i]; } return null; }
+  var FUND_ROWS = [
+    { key: 'revenue', es: 'Ingresos (últ. año)', en: 'Revenue (latest)', kind: 'usd', better: 'high' },
+    { key: 'revenue_growth', es: 'Crecimiento de ingresos', en: 'Revenue growth', kind: 'growth', better: 'high' },
+    { key: 'gross_margin', es: 'Margen bruto', en: 'Gross margin', kind: 'pct', better: 'high' },
+    { key: 'fcf_margin', es: 'Margen de flujo libre', en: 'FCF margin', kind: 'pct', better: 'high' },
+    { key: 'fcf_growth', es: 'Crecimiento del flujo libre', en: 'FCF growth', kind: 'growth', better: 'high' },
+    { key: 'roe', es: 'Retorno sobre capital (ROE)', en: 'Return on equity', kind: 'pct', better: 'high' },
+    { key: 'de_ratio', es: 'Deuda / Capital', en: 'Debt / Equity', kind: 'ratio', better: 'low' },
+    { key: 'ev_to_sales', es: 'Valuación EV / Ventas', en: 'EV / Sales', kind: 'ratiox', better: 'low' },
+    { key: 'dilution', es: 'Dilución anual', en: 'Annual dilution', kind: 'growth', better: 'low' },
+  ];
+  function _fundVal(kind, v) {
+    if (v == null) return '—';
+    if (kind === 'usd') { var a = Math.abs(v); return (v < 0 ? '-' : '') + (a >= 1e9 ? '$' + (a / 1e9).toFixed(1) + 'B' : a >= 1e6 ? '$' + (a / 1e6).toFixed(0) + 'M' : '$' + Math.round(a)); }
+    if (kind === 'growth') return (v >= 0 ? '+' : '') + (+v).toFixed(1) + '%';
+    if (kind === 'pct') return (+v).toFixed(1) + '%';
+    if (kind === 'ratiox') return (+v).toFixed(1) + 'x';
+    return (+v).toFixed(2);
+  }
+  function buildFundTable(da, db, aLabel, bLabel, en) {
+    var rows = FUND_ROWS.map(function (r) {
+      var va = _latest(da[r.key]), vb = _latest(db[r.key]), win = 0;
+      if (va != null && vb != null && va !== vb) win = (r.better === 'high') ? (va > vb ? 1 : 2) : (va < vb ? 1 : 2);
+      var cell = function (v, isWin) {
+        return '<td style="padding:8px 12px;text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:13px;' +
+          (isWin ? 'color:' + UP + ';font-weight:750;background:' + UP + '14' : 'color:#C3CBE0') + '">' + _fundVal(r.kind, v) + '</td>';
+      };
+      return '<tr style="border-top:1px solid rgba(255,255,255,.06)">' +
+        '<td style="padding:8px 12px;font-size:12.5px;color:#8791AC">' + (en ? r.en : r.es) + '</td>' +
+        cell(va, win === 1) + cell(vb, win === 2) + '</tr>';
+    }).join('');
+    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:420px">' +
+      '<thead><tr>' +
+        '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#5b6580;text-transform:uppercase;letter-spacing:.06em">' + (en ? 'Metric' : 'Métrica') + '</th>' +
+        '<th style="text-align:right;padding:8px 12px;font-size:13px;color:#00E0FF">' + esc(aLabel) + '</th>' +
+        '<th style="text-align:right;padding:8px 12px;font-size:13px;color:#8E5AFF">' + esc(bLabel) + '</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+  function stageCompareFund(aNode, bNode) {
+    var en = ckLang() === 'en';
+    var box = document.getElementById('bcp-cmp-fund');
+    if (!box) return;
+    var ta = aNode.mkt, tb2 = bNode.mkt;
+    if (!ta || !tb2) { box.innerHTML = '<div style="color:#FFB300;padding:14px;font-size:13px">' + (en ? 'One of these is private (no public fundamentals).' : 'Una de estas es privada (sin fundamentales públicos).') + '</div>'; return; }
+    box.innerHTML = '<div class="bcp-loading">' + (en ? 'Loading fundamentals…' : 'Cargando fundamentales…') + '</div>';
+    Promise.all([
+      fetch((window.BASE || '') + '/api/findossier/' + encodeURIComponent(ta)).then(function (r) { return r.json(); }).catch(function () { return { available: false }; }),
+      fetch((window.BASE || '') + '/api/findossier/' + encodeURIComponent(tb2)).then(function (r) { return r.json(); }).catch(function () { return { available: false }; }),
+    ]).then(function (res) {
+      box = document.getElementById('bcp-cmp-fund'); if (!box) return;
+      var da = res[0] || {}, db = res[1] || {};
+      if (!da.available && !db.available) { box.innerHTML = '<div style="color:#FFB300;padding:14px;font-size:13px">' + (en ? 'No fundamentals available for these two.' : 'Sin fundamentales disponibles para estas dos.') + '</div>'; return; }
+      box.innerHTML = buildFundTable(da.available ? da : {}, db.available ? db : {}, aNode.label, bNode.label, en) +
+        '<div style="margin-top:10px;font-size:10.5px;color:#5b6580">' + (en ? 'Latest available fiscal year · source FMP/Alpha Vantage · green = better in that row · not financial advice.' : 'Último año fiscal disponible · fuente FMP/Alpha Vantage · verde = mejor en esa fila · no es asesoría financiera.') + '</div>';
+    });
+  }
+
   function stageCompare(s, arg) {
     arg = arg || {};
+    var en = ckLang() === 'en';
     var a = resolveNode(arg.a), b = arg.b ? resolveNode(arg.b) : null;
     if (!a) { stageNotFound(s, arg.a || ''); return; }
     if (arg.b && !b) { stageNotFound(s, arg.b); return; }
     if (!b) b = pickRival(a);   // si solo dieron una, comparamos vs su rival natural
     if (!b) { stageXRay(s, a.id); return; }
+    var tabBtn = function (mode, on, label) {
+      return '<button class="bcp-back cmp-tab" data-cmp="' + mode + '" style="' +
+        (on ? 'border-color:#00E0FF;color:#00E0FF' : '') + '">' + label + '</button>';
+    };
     s.innerHTML = backBar('Comparar') +
-      '<div class="bcp-inner"><div class="bcp-cmp">' +
-        '<div class="xray-scope" id="bcp-cmpA">' + window.buildXRayHTML(a.id, { full: false }) + '</div>' +
-        '<div class="xray-scope" id="bcp-cmpB">' + window.buildXRayHTML(b.id, { full: false }) + '</div>' +
-      '</div></div>';
+      '<div class="bcp-inner">' +
+        '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+          tabBtn('profile', true, '🔬 ' + (en ? 'Profile' : 'Perfil')) +
+          tabBtn('fund', false, '📊 ' + (en ? 'Fundamentals' : 'Fundamentales')) +
+        '</div>' +
+        '<div id="bcp-cmp-profile"><div class="bcp-cmp">' +
+          '<div class="xray-scope" id="bcp-cmpA">' + window.buildXRayHTML(a.id, { full: false }) + '</div>' +
+          '<div class="xray-scope" id="bcp-cmpB">' + window.buildXRayHTML(b.id, { full: false }) + '</div>' +
+        '</div></div>' +
+        '<div id="bcp-cmp-fund" style="display:none"></div>' +
+      '</div>';
     if (window.wireXRay) { window.wireXRay(s.querySelector('#bcp-cmpA'), a.id); window.wireXRay(s.querySelector('#bcp-cmpB'), b.id); }
+    var loadedFund = false;
+    s.querySelectorAll('.cmp-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        s.querySelectorAll('.cmp-tab').forEach(function (x) { x.style.borderColor = ''; x.style.color = ''; });
+        btn.style.borderColor = '#00E0FF'; btn.style.color = '#00E0FF';
+        var mode = btn.getAttribute('data-cmp');
+        var pf = document.getElementById('bcp-cmp-profile'), fd = document.getElementById('bcp-cmp-fund');
+        if (mode === 'fund') { if (pf) pf.style.display = 'none'; if (fd) fd.style.display = 'block'; if (!loadedFund) { loadedFund = true; stageCompareFund(a, b); } }
+        else { if (pf) pf.style.display = ''; if (fd) fd.style.display = 'none'; }
+      });
+    });
   }
 
   // rival natural: misma categoría, mayor mkt cap, distinta empresa
