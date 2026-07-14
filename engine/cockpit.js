@@ -231,10 +231,6 @@
         '<button class="bcp-act" data-act="broker">💼 ' + tb('broker') + '</button>' +
         '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
       '</div>' +
-      // Pulso proactivo del portafolio (pedido de Fabrizio: que Bixby "mande" el
-      // informe). Oculto por defecto; se llena al abrir SOLO si el PIN ya está
-      // en caché (no molesta a quien no usa el bróker). Clic → informe completo.
-      '<div id="bcp-pulse" style="display:none"></div>' +
       '<div id="bcp-stage"></div>' +
       // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Bixby abajo").
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
@@ -868,42 +864,6 @@
       el = document.getElementById('bcp-bk-aicomment');
       if (el) el.innerHTML = '<span style="color:#7C87A3">💬 ' + (en ? "Could not load Bixby's comment." : 'No pude cargar el comentario de Bixby.') + '</span>';
     }
-  }
-
-  // Pulso proactivo: al abrir la Cabina, si el PIN ya está guardado, Bixby "manda"
-  // un resumen de una línea (valor + rendimiento). Silencioso si no hay PIN — no
-  // molesta a quien no usa el bróker ni dispara el prompt del PIN.
-  async function _portfolioPulse() {
-    var el = document.getElementById('bcp-pulse');
-    if (!el) return;
-    var hasPin = false;
-    try { hasPin = !!localStorage.getItem('khipu_trade_pin'); } catch (e) {}
-    if (!hasPin || !window._tradeFetch || !window._tradeAccountInfo) { el.style.display = 'none'; return; }
-    var en = ckLang() === 'en';
-    try {
-      var acct = await window._tradeAccountInfo(false, false);   // NO interactivo: nunca pide el PIN
-      if (!acct || acct.error) { el.style.display = 'none'; return; }
-      var positions = [];
-      try {
-        var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false);
-        var dp = await rp.json();
-        if (Array.isArray(dp)) positions = dp;
-      } catch (e2) {}
-      var m = _computePortfolio(acct, positions);
-      var plCol = m.pnl >= 0 ? UP : DOWN, sign = m.pnl >= 0 ? '+' : '';
-      var pf = (en ? 'Your paper portfolio' : 'Tu portafolio simulado') + ': ' + fmtUsd(m.equity);
-      var line = m.n
-        ? pf + ' · <span style="color:' + plCol + '">' + sign + m.pnlPct.toFixed(1) + '%</span> · ' +
-          m.n + ' ' + (en ? (m.n === 1 ? 'position' : 'positions') : (m.n === 1 ? 'posición' : 'posiciones'))
-        : pf + ' · ' + (en ? 'no open positions' : 'sin posiciones');
-      el.innerHTML =
-        '<div style="max-width:980px;margin:0 auto 4px;padding:8px 14px;display:flex;align-items:center;gap:10px;' +
-          'border:1px solid rgba(0,224,255,.18);border-radius:12px;background:rgba(0,224,255,.05);cursor:pointer;font-size:12.5px" ' +
-          'onclick="window.BixbyCockpit&&window.BixbyCockpit.stage(\'broker\')">' +
-          '<span>💼</span><span style="color:#C3CBE0">' + line + '</span>' +
-          '<span style="margin-left:auto;color:#00E0FF;font-weight:600;white-space:nowrap">' + (en ? 'See report →' : 'Ver informe →') + '</span></div>';
-      el.style.display = 'block';
-    } catch (e) { el.style.display = 'none'; }
   }
 
   function stageBroker(s, arg) {
@@ -1633,7 +1593,6 @@
     if (initial && initial.kind) stage(initial.kind, initial.arg);
     else if (!document.getElementById('bcp-stage').children.length) stage('empty');
     setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
-    try { _portfolioPulse(); } catch (e) {}   // pulso proactivo del portafolio (silencioso sin PIN)
   }
   function close() {
     restoreAdopted();   // devolver grafo/terminal a su sitio original
