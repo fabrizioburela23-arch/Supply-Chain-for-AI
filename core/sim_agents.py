@@ -454,6 +454,7 @@ def _run_impl(scenario, seeds, lang):
     model_narrative = ''
     ai_ok = False
     used_model = ''     # qué IA razonó de verdad (transparencia en la UI)
+    dbg = ['agents=%d' % len(company_agents)]
 
     for r in range(1, ROUNDS + 1):
         try:
@@ -462,10 +463,13 @@ def _run_impl(scenario, seeds, lang):
                 _round_prompt(scenario, company_agents, externals, edges, state, r, ROUNDS, lang),
                 max_tokens=1900, tier='deep')
             data = ai._extract_json(raw)
-        except Exception:  # noqa: BLE001 — una ronda que falla no rompe la demo
+        except Exception as e:  # noqa: BLE001 — una ronda que falla no rompe la demo
+            dbg.append('r%d EXC: %s' % (r, str(e)[:200]))
             break
         if not isinstance(data, dict):
+            dbg.append('r%d nodict raw=%s' % (r, str(raw)[:150]))
             break
+        dbg.append('r%d ok model=%s keys=%s' % (r, _model, list(data.keys())))
         ai_ok = True
         if _model:
             used_model = _model
@@ -490,7 +494,9 @@ def _run_impl(scenario, seeds, lang):
             model_narrative = nar
 
     if not ai_ok or not state:
-        return _fallback(scenario, seed_ids, company_agents, externals, snap, lang)
+        _res = _fallback(scenario, seed_ids, company_agents, externals, snap, lang)
+        _res['_dbg'] = dbg + ['-> fallback (ai_ok=%s state=%d)' % (ai_ok, len(state))]
+        return _res
 
     impacts = []
     for nid, v in state.items():
@@ -504,4 +510,4 @@ def _run_impl(scenario, seeds, lang):
     agents = _roster(company_agents, externals, {i['id']: i['pct'] for i in impacts}, lang)
 
     return {'ok': True, 'narrative': narrative, 'impacts': impacts,
-            'agents': agents, 'rounds': rounds_out, 'model': used_model}
+            'agents': agents, 'rounds': rounds_out, 'model': used_model, '_dbg': dbg}
