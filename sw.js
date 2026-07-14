@@ -3,7 +3,7 @@
    última versión cuando hay red, con caché solo como respaldo offline.
    CDNs externos inmutables (cdnjs/jsdelivr/unpkg/fonts): cache-first.
    Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / */
-const CACHE = 'khipu-finance-v85';
+const CACHE = 'khipu-finance-v86';
 // SHELL = exactamente los <script src> de app.html + la propia app.
 // Si añades/quitas un <script src>, refleja el cambio aquí Y bumpea CACHE.
 const SHELL = ['/', '/app.html',
@@ -15,7 +15,7 @@ const SHELL = ['/', '/app.html',
   '/nodes/nodes_expand5.js', '/nodes/meta_fill.js',
   '/nodes/preipo_intel.js',
   '/nodes/links_all.js', '/nodes/merge_graph.js', '/nodes/links_expand.js', '/nodes/links_connect.js',
-  '/engine/graph3d.js', '/engine/universe2d.js', '/engine/orb.js', '/engine/hypergraph.js', '/engine/resolve.js', '/engine/voice.js',
+  '/engine/loading.js', '/engine/graph3d.js', '/engine/universe2d.js', '/engine/orb.js', '/engine/hypergraph.js', '/engine/resolve.js', '/engine/voice.js',
   '/engine/secondbrain.js', '/engine/geo_coords.js', '/engine/planetarium.js',
   '/engine/geoglobe.js', '/engine/canvas-data.js', '/engine/command_center.js',
   '/engine/temporal-graph.js', '/nodes/temporal_seed_facts.js',

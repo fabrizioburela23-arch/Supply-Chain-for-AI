@@ -1066,10 +1066,19 @@
         '<div class="bcp-simhd"><span class="big">🧪 ' + esc(scen || title) + '</span>' +
           '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">MiroFish</span>' +
           '<span style="color:#7C87A3;font-size:12px">' + (en ? 'analysts debating…' : 'analistas debatiendo…') + '</span></div>' +
-        '<div id="bcp-ag-body"><div class="bcp-loading">' + (en ? 'Running the multi-agent simulation…' : 'Corriendo la simulación por agentes…') + '</div></div>' +
+        '<div id="bcp-ag-body"></div>' +
       '</div>';
+    // espera LARGA (Sonnet 5, ~10-30s): progreso por pasos, no un vacío
+    var _ld = window.KhipuLoading && window.KhipuLoading.staged('bcp-ag-body', {
+      title: en ? 'Multi-agent simulation' : 'Simulación por agentes',
+      accent: NEON,
+      steps: en
+        ? ['Assembling the agents (companies + government + geopolitics)', 'Round 1: the analysts debate the scenario', 'Round 2: the shock propagates through the chain', 'Estimating realistic impacts per company', 'Writing the consensus']
+        : ['Reuniendo a los agentes (empresas + gobierno + geopolítica)', 'Ronda 1: los analistas debaten el escenario', 'Ronda 2: el golpe se propaga por la cadena', 'Estimando impactos realistas por empresa', 'Redactando el consenso'],
+    });
     var p = arg.promise || fetchAgentSim(scen, arg.seeds || [], ckLang());
     p.then(function (d) {
+      if (_ld) _ld.stop();
       var body = document.getElementById('bcp-ag-body');
       if (!body) return;   // salieron de la escena
       if (!d || d.ok === false) {
@@ -1145,10 +1154,18 @@
       '<div class="bcp-inner" style="max-width:900px">' +
         '<div class="bcp-simhd"><span class="big">🧠 ' + esc(label) + '</span>' +
           '<span style="color:#7C87A3;font-size:12px">' + (en ? 'sector · competitors · geopolitics · thesis' : 'sector · competidores · geopolítica · tesis') + '</span></div>' +
-        '<div id="bcp-rs-body"><div class="bcp-loading">' + (en ? 'Researching beyond the company…' : 'Investigando más allá de la empresa…') + '</div></div>' +
+        '<div id="bcp-rs-body"></div>' +
       '</div>';
+    var _ld = window.KhipuLoading && window.KhipuLoading.staged('bcp-rs-body', {
+      title: en ? 'Deep research' : 'Investigación profunda',
+      accent: '#8e5aff',
+      steps: en
+        ? ['Mapping the sector landscape', 'Identifying direct competitors', 'Assessing geopolitical exposure', 'Finding supply-chain chokepoints', 'Writing the investment thesis']
+        : ['Mapeando el panorama del sector', 'Identificando competidores directos', 'Evaluando la exposición geopolítica', 'Buscando cuellos de botella de la cadena', 'Redactando la tesis de inversión'],
+    });
     var p = arg.promise || fetchResearch(arg.id, ckLang());
     p.then(function (d) {
+      if (_ld) _ld.stop();
       var body = document.getElementById('bcp-rs-body');
       if (!body) return;
       if (!d || d.ok === false) {
