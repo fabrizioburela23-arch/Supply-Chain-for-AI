@@ -673,6 +673,35 @@ def _diag_finnhub():
                 'detail': 'No se pudo contactar Finnhub: ' + _diag_redact(e)}
 
 
+@app.route('/api/ai/debug')
+@rate_limit(limit=20, window=300)
+def ai_debug():
+    """Depuración: ejecuta _ai_complete con un prompt real (tier configurable) y
+    reporta AI_ORDER, los modelos resueltos y el error/modelo real — sin exponer
+    claves. Para diagnosticar por qué la sim usa NVIDIA en vez de Sonnet 5."""
+    from core import ai as _ai
+    from core.config import AI_ORDER as _ORDER, AI_MODEL_FAST as _F, AI_MODEL_DEEP as _D
+    tier = 'deep' if request.args.get('tier') == 'deep' else 'fast'
+    out = {'ai_order': _ORDER, 'model_fast': _F, 'model_deep': _D, 'tier': tier}
+    # 1) el motor completo (con cascada)
+    try:
+        txt, model = _ai._ai_complete('Eres un analista. Responde SOLO JSON.',
+                                      'Devuelve {"ok":true,"n":3} y una frase de análisis.',
+                                      max_tokens=900, tier=tier)
+        out['cascade'] = {'model': model, 'text_len': len(txt or ''), 'preview': (txt or '')[:120]}
+    except Exception as e:  # noqa: BLE001
+        out['cascade'] = {'error': _diag_redact(e)}
+    # 2) Claude directo (aísla si el problema es Claude o la cascada)
+    try:
+        txt2, model2 = _ai._complete_claude('Eres un analista. Responde SOLO JSON.',
+                                            'Devuelve {"ok":true,"n":3} y una frase de análisis.',
+                                            max_tokens=900, tier=tier)
+        out['claude_direct'] = {'model': model2, 'text_len': len(txt2 or ''), 'preview': (txt2 or '')[:120]}
+    except Exception as e:  # noqa: BLE001
+        out['claude_direct'] = {'error': _diag_redact(e)}
+    return jsonify(out)
+
+
 @app.route('/api/diagnostics')
 @rate_limit(limit=20, window=300)
 def diagnostics():
