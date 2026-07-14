@@ -81,6 +81,19 @@ log = logging.getLogger('khipu')
 try:
     from ontology.api import ontology_bp
     app.register_blueprint(ontology_bp)
+    # Crea las tablas que FALTEN (idempotente, NO destructivo). Antes solo se
+    # creaban al correr la migración; las tablas `proposed_actions` y `alerts`
+    # (Fases 3-4) se añadieron después → nunca se crearon en prod → sus endpoints
+    # (agents/brief, proposals, alerts) daban HTTP 500. create_all con checkfirst
+    # SOLO crea lo que no existe: events/objects/links quedan intactos con sus
+    # datos. Bug detectado 2026-07-14 por la auditoría; el docstring de init_schema
+    # ya decía que debía llamarse en boot, pero la llamada faltaba.
+    try:
+        from ontology.db import ontology_available, init_schema
+        if ontology_available():
+            init_schema()
+    except Exception as _e2:  # noqa: BLE001
+        log.warning('init_schema (ontología) no corrió (la app sigue): %s', _e2)
 except Exception as _e:  # noqa: BLE001
     log.warning('Ontología no registrada (opcional): %s', _e)
 
