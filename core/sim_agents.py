@@ -453,6 +453,7 @@ def _run_impl(scenario, seeds, lang):
     rounds_out = []
     model_narrative = ''
     ai_ok = False
+    used_model = ''     # qué IA razonó de verdad (transparencia en la UI)
 
     for r in range(1, ROUNDS + 1):
         try:
@@ -466,6 +467,8 @@ def _run_impl(scenario, seeds, lang):
         if not isinstance(data, dict):
             break
         ai_ok = True
+        if _model:
+            used_model = _model
 
         evs = [str(e).strip() for e in (data.get('events') or []) if str(e).strip()][:8]
         if not evs:
@@ -501,4 +504,4 @@ def _run_impl(scenario, seeds, lang):
     agents = _roster(company_agents, externals, {i['id']: i['pct'] for i in impacts}, lang)
 
     return {'ok': True, 'narrative': narrative, 'impacts': impacts,
-            'agents': agents, 'rounds': rounds_out}
+            'agents': agents, 'rounds': rounds_out, 'model': used_model}

@@ -1052,7 +1052,19 @@
         (x.rationale ? '<div class="bcp-agwhy">' + esc(x.rationale) + '</div>' : '') +
       '</div>';
     }).join('') : '<div class="bcp-loading">' + (en ? 'No quantified impacts.' : 'Sin impactos cuantificados.') + '</div>';
-    return agentsHTML + narrHTML +
+    // sello del modelo que razonó (transparencia: Sonnet 5 vs respaldo sin IA)
+    var mdl = d.model ? String(d.model) : '';
+    var mLabel = /sonnet-5/i.test(mdl) ? 'Claude Sonnet 5'
+      : /haiku/i.test(mdl) ? 'Claude Haiku'
+      : /claude/i.test(mdl) ? mdl
+      : /gemini/i.test(mdl) ? 'Google Gemini'
+      : /nvidia|llama/i.test(mdl) ? 'NVIDIA' : '';
+    var modelHTML = mLabel
+      ? '<div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:3px 10px;border-radius:999px;' +
+        'border:1px solid ' + NEON + '44;background:' + NEON + '11;font-size:10.5px;color:' + NEON + '">✦ ' +
+        (en ? 'Reasoned by ' : 'Razonado por ') + esc(mLabel) + '</div>'
+      : (d.model === '' && mdl === '' ? '' : '');
+    return modelHTML + agentsHTML + narrHTML +
       '<div class="bcp-lh">' + (en ? 'Projected impact by company' : 'Impacto proyectado por empresa') + '</div>' + impactsHTML;
   }
 
