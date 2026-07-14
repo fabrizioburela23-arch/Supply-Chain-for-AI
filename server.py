@@ -1925,7 +1925,16 @@ def ai_command():
                      for n in nodes_raw[:800]]
     ctx_str = json.dumps({'nodes': nodes_compact, 'selected': body.get('selected')},
                          ensure_ascii=False)
-    prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}'
+    # Datos de ESPACIO: si preguntan por satélites/constelaciones/lanzamientos, se
+    # inyectan los conteos REALES (CelesTrak, cacheado) para que Bixby responda con
+    # números en vez de "no sé cuántos satélites tiene Starlink".
+    space_ctx = ''
+    if re.search(r'sat[eé]lit|constelaci|starlink|oneweb|iridium|[oó]rbit|orbit|lanzamient|launch|espacio|\bspace\b', query, re.I):
+        try:
+            space_ctx = '\n\nDATOS DE ESPACIO (úsalos, son reales):\n' + _space_facts_str()
+        except Exception:  # noqa: BLE001
+            pass
+    prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}{space_ctx}'
     try:
         text, model = _claude_complete(_COMMAND_SYSTEM, prompt, max_tokens=700)
         data = _extract_json(text)
@@ -2129,6 +2138,39 @@ def _fallback_tle():
     return {'constellations': constellations, 'sats': sats,
             'total_real': sum(c['count'] for c in constellations),
             'rendered': len(sats), 'source': 'fallback'}
+
+
+def _space_constellations():
+    """[(label, count), …] satélites reales por constelación (CelesTrak), cacheado
+    24h; fallback a conteos aproximados si CelesTrak no responde. Compartido por el
+    Bixby de TEXTO (/api/ai/command) para que responda "cuántos satélites tiene X"."""
+    ck = 'space_constellations'
+    hit = cache.get(ck)
+    if hit is not None:
+        return hit
+    out = []
+    for group, label, node, color in _SAT_GROUPS:
+        try:
+            r = requests.get(f'https://celestrak.org/NORAD/elements/gp.php?GROUP={group}&FORMAT=tle',
+                             timeout=10, headers={'User-Agent': 'KhipuFinance/1.0'})
+            n = len(_parse_tle_text(r.text)) if (r.ok and r.text and '<' not in r.text[:1]) else 0
+        except Exception:  # noqa: BLE001
+            n = 0
+        if n:
+            out.append((label, n))
+    if not out:
+        out = [('Starlink', 7134), ('OneWeb', 648), ('Planet Labs', 200),
+               ('Iridium NEXT', 75), ('GPS', 31)]
+    cache.set(ck, out, timeout=86400)
+    return out
+
+
+def _space_facts_str():
+    cons = _space_constellations()
+    total = sum(n for _, n in cons)
+    return (f'Total aproximado: {total} satélites rastreados en órbita. '
+            + ' · '.join(f'{lbl}: {n}' for lbl, n in cons)
+            + ' (fuente CelesTrak, se actualiza a diario).')
 
 
 # ── GDELT News (gratis, global, multi-idioma) ────────────────────────────────
@@ -2732,6 +2774,7 @@ def _bixby_client_tools():
             'confirmed': {'type': 'boolean', 'description': 'false = preview only (returns the summary to read to the user). true = EXECUTE — only allowed after the user explicitly said yes to the summary.'},
         }, ['symbol_or_name', 'side', 'notional_usd', 'confirmed']),
         T('get_portfolio_status', 'Status of the SIMULATED paper-broker account: cash, equity, buying power and all open positions with P&L. Use when the user asks about their paper portfolio, balance or positions.'),
+        T('get_space_summary', 'REAL satellite counts per constellation (Starlink, OneWeb, Planet Labs, Iridium, GPS) from CelesTrak, plus the next launch. Use WHENEVER the user asks how many satellites an operator/constellation has, or anything about satellites, space or launches. Read the returned summary and counts to the user — never say you do not know, this tool has the real number.', {'query': S('Optional operator/constellation the user asked about, e.g. "Starlink", "OneWeb". Leave empty for the overall summary.')}),
     ]
 
 

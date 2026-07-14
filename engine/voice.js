@@ -807,6 +807,12 @@ const BixbyVoice = {
           .catch(e => respond({ success: false, error: 'portfolio tool error: ' + ((e && e.message) || e) }));
         break;
       }
+      case 'get_space_summary': {
+        this._toolSpaceSummary(params)
+          .then(respond)
+          .catch(e => respond({ success: false, error: 'space tool error: ' + ((e && e.message) || e) }));
+        break;
+      }
       case 'get_market_summary': {
         const quotes = Object.entries((typeof MKT !== 'undefined' ? MKT.quotes : {}) || {})
           .filter(([, q]) => q.close)
@@ -1184,6 +1190,60 @@ const BixbyVoice = {
       best: best ? { symbol: best.symbol, pnl_pct: +(+best.unrealized_pct || 0).toFixed(2) } : null,
       worst: worst ? { symbol: worst.symbol, pnl_pct: +(+worst.unrealized_pct || 0).toFixed(2) } : null,
       summary,
+    };
+  },
+
+  // get_space_summary: satélites REALES por constelación (CelesTrak) + próximo
+  // lanzamiento. Arregla "no sé cuántos satélites tiene Starlink" — el dato SÍ
+  // existía (/api/space/tle) pero Bixby no tenía tool para leerlo. NO navega
+  // (abrir la pestaña 'space' cerraría la Cabina y cortaría la voz).
+  async _toolSpaceSummary(params) {
+    params = params || {};
+    const en = (((typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es')) === 'en');
+    const base = window.BASE || '';
+    let tle = null, lch = null;
+    try {
+      const rs = await Promise.all([
+        fetch(base + '/api/space/tle').then(r => r.json()).catch(() => null),
+        fetch(base + '/api/space/launches').then(r => r.json()).catch(() => null),
+      ]);
+      tle = rs[0]; lch = rs[1];
+    } catch (e) {
+      return { success: false, error: en ? 'Could not load space data.' : 'No pude cargar los datos de espacio.' };
+    }
+    const cons = (tle && Array.isArray(tle.constellations) ? tle.constellations : []).filter(function (c) { return (c.count || 0) > 0; });
+    if (!cons.length) return { success: false, error: en ? 'No satellite data right now.' : 'Sin datos de satélites ahora mismo.' };
+    const total = (tle && tle.total_real) || cons.reduce(function (s, c) { return s + (c.count || 0); }, 0);
+    const nf = function (n) { return Number(n || 0).toLocaleString(en ? 'en-US' : 'es-ES'); };
+    // ¿preguntó por una constelación/operador concreto?
+    const q = String(params.query || params.constellation || params.operator || '').toLowerCase().trim();
+    let focus = null;
+    if (q) {
+      focus = cons.find(function (c) {
+        const nm = (c.name || '').toLowerCase(), nd = (c.node || '').toLowerCase();
+        return nm.indexOf(q) >= 0 || nd.indexOf(q) >= 0 ||
+          (/star|spacex/.test(q) && /starlink/.test(nm)) || (/oneweb|eutel/.test(q) && /oneweb/.test(nm)) ||
+          (/planet/.test(q) && /planet/.test(nm)) || (/iridium/.test(q) && /iridium/.test(nm)) || (/gps|navstar/.test(q) && /gps/.test(nm));
+      });
+    }
+    const list = cons.map(function (c) { return { name: c.name, count: c.count }; });
+    let summary;
+    if (focus) {
+      summary = en
+        ? `${focus.name} has about ${nf(focus.count)} satellites tracked in orbit right now (source CelesTrak).`
+        : `${focus.name} tiene alrededor de ${nf(focus.count)} satélites rastreados en órbita ahora mismo (fuente CelesTrak).`;
+    } else {
+      const top = list.slice(0, 5).map(function (c) { return `${c.name} ${nf(c.count)}`; }).join(' · ');
+      summary = en
+        ? `About ${nf(total)} tracked satellites across ${list.length} constellations. ${top}.`
+        : `Cerca de ${nf(total)} satélites rastreados en ${list.length} constelaciones. ${top}.`;
+    }
+    const nextL = (lch && Array.isArray(lch.launches) && lch.launches[0]) || null;
+    if (nextL && nextL.name) summary += en ? ` Next launch: ${nextL.name}.` : ` Próximo lanzamiento: ${nextL.name}.`;
+    return {
+      success: true, total_satellites: total, constellations: list,
+      focus: focus ? { name: focus.name, count: focus.count } : null,
+      next_launch: nextL ? nextL.name : null, source: (tle && tle.source) || 'celestrak', summary,
     };
   },
 
