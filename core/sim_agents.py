@@ -510,4 +510,4 @@ def _run_impl(scenario, seeds, lang):
     agents = _roster(company_agents, externals, {i['id']: i['pct'] for i in impacts}, lang)
 
     return {'ok': True, 'narrative': narrative, 'impacts': impacts,
-            'agents': agents, 'rounds': rounds_out, 'model': used_model, '_dbg': dbg}
+            'agents': agents, 'rounds': rounds_out, 'model': used_model}
