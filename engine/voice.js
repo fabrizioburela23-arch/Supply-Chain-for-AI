@@ -116,6 +116,7 @@ const BixbyVoice = {
       this._stopMic();
       this.ws = null;
       this._stopScheduled();
+      this._orbOff();   // apaga el orbe de voz (vuelve a respirar / se destruye si era flotante)
       if (ev.code === 1000 || ev.code === 1001) {
         this._hideOverlay();
       } else {
@@ -130,6 +131,7 @@ const BixbyVoice = {
 
   disconnect() {
     this.isConnected = false;
+    this._orbOff();
     this._stopMic();
     if (this._preStream) {
       try { this._preStream.getTracks().forEach(t => t.stop()); } catch {}
@@ -233,9 +235,12 @@ const BixbyVoice = {
     const now = performance.now();
     if (now - (this._lastVizUpdate || 0) < 50) return; // ~20fps
     this._lastVizUpdate = now;
+    const level = Math.min(1, rms * 8);
+    // Orbe de voz de Bixby (engine/orb.js): energía del USUARIO (cian/teal).
+    // Se alimenta SIEMPRE, aunque no exista el visualizador de barras.
+    if (window.BixbyOrb) { try { window.BixbyOrb.setUserLevel(level); } catch (e) {} }
     const bars = document.querySelectorAll('#bixby-viz .bvbar');
     if (!bars.length) return;
-    const level = Math.min(1, rms * 8);
     if (level > 0.06 && typeof window !== 'undefined') {
       window.__bixbyEnergy = Math.max(window.__bixbyEnergy || 0, level * 0.8);
     }
@@ -244,6 +249,54 @@ const BixbyVoice = {
       b.style.height = (3 + level * 22 * jitter).toFixed(1) + 'px';
       b.style.animationPlayState = level > 0.05 ? 'paused' : 'running';
     });
+  },
+
+  // ── Orbe de voz de Bixby (engine/orb.js) ───────────────────────────────────
+  // La Cabina monta el orbe en su header y lo hace respirar; aquí solo lo
+  // ALIMENTAMOS: setUserLevel desde el micrófono (_setMicLevel) y setBixbyLevel
+  // mientras Bixby reproduce audio (_startOrbDrive). En reposo, el orbe respira.
+  _orbOn() {
+    const orb = (typeof window !== 'undefined') ? window.BixbyOrb : null;
+    if (orb) {
+      try {
+        // Si la voz se activó FUERA de la Cabina, montamos un orbe flotante
+        // propio (lo destruimos al terminar). Si la Cabina ya lo montó, no dupl.
+        if (!orb.isMounted || !orb.isMounted()) { orb.mount(); this._orbFloating = true; }
+        orb.start();
+      } catch (e) {}
+    }
+    this._startOrbDrive();
+  },
+  _orbOff() {
+    this._stopOrbDrive();
+    const orb = (typeof window !== 'undefined') ? window.BixbyOrb : null;
+    if (orb) {
+      try { orb.setUserLevel(0); orb.setBixbyLevel(0); } catch (e) {}
+      if (this._orbFloating) { try { orb.destroy(); } catch (e) {} this._orbFloating = false; }
+    }
+    this._speakLevel = 0;
+  },
+  _startOrbDrive() {
+    if (this._orbRAF) return;
+    const tick = () => {
+      if (!this.isConnected) { this._orbRAF = 0; return; }
+      const orb = (typeof window !== 'undefined') ? window.BixbyOrb : null;
+      if (orb) {
+        const ctx = this.audioCtx;
+        // "hablando" = todavía hay audio agendado por delante del cursor de reproducción
+        const speaking = !!(ctx && this._playCursor && ctx.currentTime < this._playCursor - 0.02);
+        if (speaking) {
+          const base = this._speakLevel || 0.5;
+          const osc = 0.72 + 0.28 * Math.abs(Math.sin(performance.now() / 90));
+          try { orb.setBixbyLevel(Math.min(1, base * osc)); } catch (e) {}
+        }
+      }
+      this._orbRAF = requestAnimationFrame(tick);
+    };
+    this._orbRAF = requestAnimationFrame(tick);
+  },
+  _stopOrbDrive() {
+    if (this._orbRAF) { cancelAnimationFrame(this._orbRAF); this._orbRAF = 0; }
   },
 
   _sendInitContext() {
@@ -343,6 +396,7 @@ const BixbyVoice = {
           this._startMicWithStream(this._preStream);
           this._preStream = null;
         }
+        this._orbOn();   // arranca/alimenta el orbe de voz de la Cabina
         break;
       case 'audio': {
         const chunk = msg.audio_event?.audio_base_64;
@@ -403,7 +457,10 @@ const BixbyVoice = {
       const bytes = Uint8Array.from(atob(b64chunk), c => c.charCodeAt(0));
       const pcm = new Int16Array(bytes.buffer);
       const f32 = new Float32Array(pcm.length);
-      for (let i = 0; i < pcm.length; i++) f32[i] = pcm[i] / 32768;
+      let _sum = 0;
+      for (let i = 0; i < pcm.length; i++) { const v = pcm[i] / 32768; f32[i] = v; _sum += v * v; }
+      // energía de la voz de BIXBY (violeta) para el orbe — la lee _startOrbDrive
+      this._speakLevel = Math.max(0.35, Math.min(1, Math.sqrt(_sum / (f32.length || 1)) * 5));
       buffer = ctx.createBuffer(1, f32.length, 16000);
       buffer.getChannelData(0).set(f32);
     } catch { return; }
@@ -632,6 +689,11 @@ const BixbyVoice = {
         const preset = window.ScenarioBuilder?.PRESETS?.[params.scenario_id];
         if (preset && window.nexusCore) {
           respond({ success: true, message: 'Simulation starting...', scenario: preset.title });
+          // El preset se pinta en la pestaña Simulación; si la Cabina la tapa,
+          // la cerramos para que el resultado quede VISIBLE (muestra-en-pantalla).
+          this._defer(() => {
+            try { if (window.BixbyCockpit?.isOpen && window.BixbyCockpit.isOpen()) window.BixbyCockpit.close(); } catch (e) {}
+          });
           setTimeout(() => window.nexusCore.runPreset(params.scenario_id), 500);
         } else respond({ success: false, error: 'Unknown scenario' });
         break;
@@ -911,6 +973,50 @@ const BixbyVoice = {
         if (!q) { respond({ success: false, error: 'question required' }); break; }
         respond({ success: true, started: true, eta_seconds: 60 });
         this._defer(() => this._show('deep', q));
+        break;
+      }
+      // ── Simulación POR AGENTES (MiroFish desde la terminal de Bixby) ──
+      // Corre en el servidor (varios agentes debaten) y se MUESTRA en la Cabina.
+      // Bixby narra el consenso y los mayores impactos.
+      case 'run_agent_simulation': {
+        const scenario = String(params.scenario || params.query || '').trim();
+        if (!scenario) { respond({ success: false, error: 'scenario required' }); break; }
+        const seedNames = Array.isArray(params.companies) ? params.companies
+          : (Array.isArray(params.seeds) ? params.seeds : []);
+        const seedIds = [];
+        seedNames.forEach(c => { const nn = this._resolveNode(c); if (nn && seedIds.indexOf(nn.id) < 0) seedIds.push(nn.id); });
+        const lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es');
+        if (!window._runAgentSim) { respond({ success: false, error: 'agent simulation not available' }); break; }
+        window._runAgentSim(scenario, seedIds, lang)
+          .then(d => {
+            if (!d || d.ok === false) { respond({ success: false, error: (d && d.error) || 'simulation failed' }); return; }
+            const impacts = Array.isArray(d.impacts) ? d.impacts.slice(0, 5).map(x => ({
+              company: x.label || x.id, pct: x.pct, why: x.rationale })) : [];
+            const agents = Array.isArray(d.agents) ? d.agents.map(a => a && a.name).filter(Boolean) : [];
+            respond({ success: true, on_screen: true,
+              narrative: String(d.narrative || '').slice(0, 700),
+              top_impacts: impacts, agents });
+          })
+          .catch(e => respond({ success: false, error: 'agent sim error: ' + ((e && e.message) || e) }));
+        break;
+      }
+      // ── Investigación profunda (más allá del nodo): sector, competidores,
+      // geopolítica, chokepoints y tesis. Se MUESTRA en la Cabina. ──
+      case 'deep_research': {
+        const n = this._resolveAny(params);
+        if (!n) { respond(this._notFound(params.company || params.company_name || params.ticker)); break; }
+        const lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es');
+        if (!window._openDeepResearch) { respond({ success: false, error: 'deep research not available' }); break; }
+        window._openDeepResearch(n.id, lang)
+          .then(d => {
+            if (!d || d.ok === false) { respond({ success: false, error: (d && d.error) || 'research failed' }); return; }
+            respond({ success: true, on_screen: true, company: n.label,
+              thesis: String(d.thesis || '').slice(0, 500),
+              sector: String(d.sector || '').slice(0, 300),
+              competitors: Array.isArray(d.competitors) ? d.competitors.slice(0, 6) : [],
+              chokepoints: Array.isArray(d.chokepoints) ? d.chokepoints.slice(0, 5) : [] });
+          })
+          .catch(e => respond({ success: false, error: 'research error: ' + ((e && e.message) || e) }));
         break;
       }
       default:

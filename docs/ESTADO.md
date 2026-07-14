@@ -641,6 +641,48 @@ de Opera, aunque eso también contribuía):
 - Opera de Fabrizio: si AÚN ve negro, es la copia vieja cacheada — borrar
   datos del sitio una vez (sigue pendiente de su lado).
 
+## Etapa O — Bixby Finance: 9 frentes + rebrand + Cabina inicial (2026-07-13, sw v85)
+
+Presentación mañana en OTRA máquina. Workflow de 9 agentes (archivos disjuntos)
++ integración del orquestador en app.html/sw.js. Rebrand a **Bixby Finance**.
+
+- [x] SERVER (server.py/config/ai): **Sonnet 5 en TODO** (fast y deep;
+      thinking desactivado para que no trunque el JSON/comandos); **fix Alpaca
+      404** (normaliza ALPACA_BASE con rstrip('/') — la barra final causaba
+      //v2/account) + GET /api/trade/diag; POST /api/crypto/analyze (cauto);
+      POST /api/research/deep (más allá del nodo); ruta /api/sim/agents;
+      prompt Bixby cauto con postura + tools run_agent_simulation/deep_research.
+- [x] SIM (core/sim_agents.py NUEVO): motor por AGENTES estilo MiroFish — cada
+      empresa un agente + Gobierno EE.UU./China + Geopolítica/Taiwán + Mercado
+      + sectores; 2 rondas con Sonnet 5; magnitudes REALISTAS clampeadas por
+      tamaño (mega 12% / mid 20% / small 35%) — mata el "AGI=+30% a todos";
+      fallback determinista si no hay IA (la demo nunca se cae). Verificado
+      local: ok, 5 impactos, 10 agentes.
+- [x] TIMEFRAME de la Terminal ARREGLADO (server /api/candles ignoraba
+      range/interval → siempre 90d diario): ahora Yahoo primario respeta el
+      timeframe. Verificado: 1d=79 puntos intradía vs 1y=251 diarios.
+- [x] UNIVERSE: ejes/leyenda + categoría al seleccionar. ORB (engine/orb.js
+      NUEVO): orbe de voz sin fondo, reacciona a niveles. CRYPTO-UI: botón
+      Analizar con IA + insights + carga robusta. TERMINAL: fallback 402 (nunca
+      celda vacía) + más claro + gráficos. TEMPORAL: arranca en 'Relevante'
+      (~267 nodos) con botón 'Todas (585)' + onda de shock animada. BIXBY:
+      barra de chat ABAJO, orbe conectado, muestra-en-pantalla, sim/research
+      desde su terminal, consejo cauto.
+- [x] CARTERAS SIMULADAS (engine/portfolios.js NUEVO): sub-tab 💼 Carteras en
+      Mercado; crea carteras, dinero virtual, añade cualquiera de las 555
+      empresas, P&L en vivo. Se quitaron las C1/C2 mediano/largo de la ficha →
+      botón "💼 Añadir a cartera". Verificado montando en vivo.
+- [x] REBRAND → **Bixby Finance** (solo VISIBLE: título, cabecera, boot, pie,
+      guía, prompts, dossier). Internos intactos (caché sw, localStorage,
+      globals Khipu*, /v1/*).
+- [x] **Cabina de Bixby = PANTALLA INICIAL**: abre sola tras el boot, 1 vez por
+      sesión (sessionStorage kh_bixby_landed), robusto (espera datos+cabina,
+      si falla queda en el mapa). Verificado: abre con el orbe montado.
+- [x] Gates: node --check 12 JS, 8 bloques inline, py_compile, **pytest 61
+      passed**. Local: v85, 0 errores de consola, todas las piezas cargan.
+- PENDIENTE: deploy + auditoría cross-device (dispositivo nuevo, contexto
+  limpio, barrido de botones) antes de la presentación.
+
 ## Pendiente que necesita a Fabrizio / decisión
 
 - ⚠️ **Postgres de PRODUCCIÓN tiene la migración VIEJA** (495 objetos con

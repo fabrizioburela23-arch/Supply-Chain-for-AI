@@ -154,9 +154,13 @@ ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
 AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
 SECRET_KEY          = os.getenv('SECRET_KEY', 'khipu-dev-secret-change-me')
-ALPACA_KEY          = os.getenv('ALPACA_KEY', '')
-ALPACA_SECRET       = os.getenv('ALPACA_SECRET', '')
-ALPACA_BASE         = os.getenv('ALPACA_BASE', 'https://paper-api.alpaca.markets')
+ALPACA_KEY          = _clean_env(os.getenv('ALPACA_KEY', ''))
+ALPACA_SECRET       = _clean_env(os.getenv('ALPACA_SECRET', ''))
+# Base de Alpaca. Normalizada (quita comillas/espacios que se cuelan al pegar en
+# Railway y la barra final): Alpaca devuelve HTTP 404 ante '//v2/account' cuando
+# ALPACA_BASE llega con '/' al final — causa real de "could not fetch equity".
+ALPACA_BASE         = (_clean_env(os.getenv('ALPACA_BASE', 'https://paper-api.alpaca.markets'))
+                       or 'https://paper-api.alpaca.markets').rstrip('/')
 # PIN que protege TODAS las rutas /api/trade/* (operan dinero real vía Alpaca).
 # Sin TRADE_PIN configurado, el trading queda DESHABILITADO (seguro por defecto).
 TRADE_PIN           = os.getenv('TRADE_PIN', '')
@@ -321,7 +325,7 @@ def service_worker():
 
 _MANIFEST = (
     '{'
-    '"name":"Khipu Finance","short_name":"KhipuFi","display":"standalone",'
+    '"name":"Bixby Finance","short_name":"Bixby","display":"standalone",'
     '"start_url":"/","scope":"/","background_color":"#F4F1EA","theme_color":"#1A1813",'
     '"description":"Inteligencia financiera sobre la cadena de valor global de IA, semiconductores y espacio",'
     '"icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]'
@@ -436,7 +440,7 @@ def health():
         pass
     return jsonify({
         'server': True,
-        'app': 'Khipus AI Finance Inteligence',
+        'app': 'Bixby Finance',
         'assistant': 'Bixby',
         'finnhub': bool(FINNHUB),
         'fmp': bool(FMP),
@@ -481,10 +485,12 @@ def _diag_claude():
     try:
         import anthropic
         client = anthropic.Anthropic(api_key=CLAUDE)
-        msg = client.messages.create(
-            model=AI_MODEL, max_tokens=1,
-            messages=[{'role': 'user', 'content': 'ping'}],
-        )
+        _ping = dict(model=AI_MODEL, max_tokens=1,
+                     messages=[{'role': 'user', 'content': 'ping'}])
+        try:  # Sonnet 5 piensa por defecto; el ping no lo necesita (SDK reciente)
+            msg = client.messages.create(thinking={'type': 'disabled'}, **_ping)
+        except TypeError:
+            msg = client.messages.create(**_ping)
         return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': f'Key válida — modelo {msg.model} respondió.'}
     except Exception as e:  # noqa: BLE001
@@ -914,18 +920,59 @@ def fin_dossier(ticker):
 
 @app.route('/api/candles/<ticker>')
 @rate_limit(limit=120, window=60)
-@cache.cached(timeout=1800)
+@cache.cached(timeout=1800, query_string=True)
 def candles(ticker):
-    """90 days of daily OHLCV candles for charting.
+    """OHLCV candles for charting, HONRANDO el timeframe (range/interval).
 
-    Tries Finnhub → FMP → Stooq (Stooq is free / no key) so the chart works
-    regardless of which paid API tier is configured. Always returns the
-    Finnhub-style shape {s,c,o,h,l,t} the frontend expects.
+    Fix 2026-07-13 (Fabrizio: "día/mes/año dan el mismo gráfico"): antes esto
+    ignoraba los parámetros y devolvía siempre 90 días diarios. Ahora Yahoo es
+    la fuente principal y respeta ?range= (1d,5d,1mo,3mo,6mo,1y,5y,max) e
+    ?interval= (5m,15m,30m,1d,1wk). Finnhub/FMP/Stooq quedan de respaldo diario.
+    Devuelve la forma Finnhub {s,c,o,h,l,t} que espera el frontend.
     """
     ticker = _safe_ticker(ticker)
     if not ticker:
         return jsonify({'error': 'invalid ticker', 's': 'no_data'}), 400
     import time as _time
+    # timeframe pedido (whitelist para no inyectar en la URL de Yahoo)
+    _RANGES = {'1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', 'max'}
+    _INTERVALS = {'5m', '15m', '30m', '60m', '1h', '1d', '1wk', '1mo'}
+    rng = (request.args.get('range') or '3mo').lower()
+    itv = (request.args.get('interval') or '1d').lower()
+    if rng not in _RANGES:
+        rng = '3mo'
+    if itv not in _INTERVALS:
+        itv = '1d'
+
+    # 0) Yahoo con el timeframe pedido — PRIMARIO (respeta range+interval)
+    try:
+        yf0 = requests.get(
+            f'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}'
+            f'?interval={itv}&range={rng}',
+            headers={'User-Agent': 'Mozilla/5.0 (compatible; BixbyFinance/1.0)'},
+            timeout=12)
+        if yf0.status_code == 200:
+            yd = yf0.json()
+            res0 = ((yd.get('chart') or {}).get('result') or [None])[0]
+            if res0:
+                ts0 = res0.get('timestamp', []) or []
+                qb0 = (res0.get('indicators') or {}).get('quote', [{}])[0]
+                cl0 = qb0.get('close', []) or []
+                if ts0 and cl0:
+                    op0, hi0, lo0 = qb0.get('open', []), qb0.get('high', []), qb0.get('low', [])
+                    valid0 = [(t, o, h, l, c) for t, o, h, l, c in zip(
+                        ts0, op0 or [None] * len(ts0), hi0 or [None] * len(ts0),
+                        lo0 or [None] * len(ts0), cl0) if c is not None]
+                    if valid0:
+                        return jsonify({
+                            's': 'ok', 't': [v[0] for v in valid0],
+                            'o': [v[1] if v[1] is not None else v[4] for v in valid0],
+                            'h': [v[2] if v[2] is not None else v[4] for v in valid0],
+                            'l': [v[3] if v[3] is not None else v[4] for v in valid0],
+                            'c': [v[4] for v in valid0]})
+    except Exception:  # noqa: BLE001
+        pass
+
     to_ts = int(_time.time())
     from_ts = to_ts - 95 * 86400
 
@@ -1071,6 +1118,69 @@ def trade_account():
             return jsonify({'error': f'Alpaca HTTP {r.status_code}', 'body': r.text[:300]}), 502
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
+
+
+@app.route('/api/trade/diag', methods=['GET'])
+@_trade_auth
+def trade_diag():
+    """Diagnóstico del broker Alpaca — SIN exponer claves. Prueba cada llamada
+    (cuenta, posiciones, órdenes, activos cripto, reloj) y devuelve status +
+    primeros caracteres del error de cada una. Para depurar en producción el
+    "http 404 / could not fetch equity" sin ver la pantalla del usuario."""
+    def _mask(s):
+        s = s or ''
+        if len(s) <= 6:
+            return 'set' if s else 'unset'
+        return s[:4] + '…' + s[-2:]
+
+    if not ALPACA_KEY:
+        return jsonify({'ok': False, 'base': ALPACA_BASE,
+                        'error': 'ALPACA_KEY sin configurar · ALPACA_KEY not configured',
+                        'key': _mask(ALPACA_KEY), 'secret_set': bool(ALPACA_SECRET)}), 400
+
+    probes = [
+        ('account',       '/v2/account',   None),
+        ('positions',     '/v2/positions', None),
+        ('orders',        '/v2/orders',    {'status': 'all', 'limit': 1}),
+        ('crypto_assets', '/v2/assets',    {'asset_class': 'crypto', 'status': 'active'}),
+        ('clock',         '/v2/clock',     None),
+    ]
+    checks = []
+    for name, path, params in probes:
+        entry = {'name': name, 'path': path}
+        try:
+            r = requests.get(f'{ALPACA_BASE}{path}', headers=_alpaca_hdrs(),
+                             params=params, timeout=10)
+            entry['status'] = r.status_code
+            entry['ok'] = (r.status_code == 200)
+            if r.status_code != 200:
+                entry['error'] = (r.text or '')[:160]
+            elif name == 'account':
+                # pista útil: ¿trae equity? (sin exponer montos exactos)
+                try:
+                    entry['has_equity'] = bool(float((r.json() or {}).get('equity', 0) or 0) > 0)
+                except Exception:  # noqa: BLE001
+                    entry['has_equity'] = False
+        except Exception as e:  # noqa: BLE001
+            entry['ok'] = False
+            entry['status'] = None
+            entry['error'] = str(e)[:160]
+        checks.append(entry)
+
+    account_ok = next((c['ok'] for c in checks if c['name'] == 'account'), False)
+    return jsonify({
+        'ok': bool(account_ok),
+        'base': ALPACA_BASE,
+        'paper': 'paper' in ALPACA_BASE,
+        'key': _mask(ALPACA_KEY),
+        'secret_set': bool(ALPACA_SECRET),
+        'checks': checks,
+        'hint': None if account_ok else (
+            'Si account da 404: revisa ALPACA_BASE (paper=https://paper-api.alpaca.markets, '
+            'live=https://api.alpaca.markets, sin barra final). Si da 401/403: revisa '
+            'ALPACA_KEY/ALPACA_SECRET (¿de paper o de live?). · If account 404s check '
+            'ALPACA_BASE; if 401/403 check the keys (paper vs live).'),
+    })
 
 # ── Catálogo cripto de Alpaca (cache 1h en variable de módulo) ───────────────
 # OJO: @cache.cached NO sirve aquí — al envolver una ruta con @_trade_auth
@@ -1242,6 +1352,191 @@ def crypto_history(coin_id):
     return jsonify(data)
 
 
+# ── Cripto IA — análisis CAUTO bilingüe (Sonnet 5, tier deep) ───────────────
+@app.route('/api/crypto/analyze', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+def crypto_analyze():
+    """{id?, symbol?, lang, intel?} → análisis CAUTO. Contexto: precio/mercado en
+    vivo (CoinGecko) + ficha estática opcional del cliente. Cache 10 min."""
+    if not _ai_configured():
+        return jsonify({'ok': False, 'error': 'no AI provider configured'}), 400
+    from core.providers import coingecko
+    body = request.get_json(force=True, silent=True) or {}
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    cid = coingecko.safe_coin_id(body.get('id') or '')
+    sym = (body.get('symbol') or '').strip()
+    intel = body.get('intel') if isinstance(body.get('intel'), dict) else None
+    _key = (cid or sym or '').lower()
+    if not _key:
+        return jsonify({'ok': False, 'error': 'id o symbol requerido · id or symbol required'}), 400
+    _ck = 'cryptoai:' + hashlib.sha256((lang + '\x00' + _key).encode('utf-8')).hexdigest()[:24]
+    _hit = cache.get(_ck)
+    if _hit:
+        return jsonify({**_hit, 'cached': True})
+
+    asset = None
+    try:
+        if cid:
+            asset, _ = coingecko.get_asset(cid)
+        if not asset and sym:
+            data, _ = coingecko.list_markets(per_page=250, page=1)
+            if isinstance(data, list):
+                asset = next((r for r in data if (r.get('symbol') or '').upper() == sym.upper()), None)
+    except Exception:  # noqa: BLE001
+        asset = None
+
+    _tongue = 'inglés' if lang == 'en' else 'español'
+    sys = (
+        'Eres un analista de criptomercados CAUTO de Bixby Finance. '
+        'NUNCA das un "compra"/"vende" tajante: das una POSTURA SUAVE con factores y un '
+        'nivel de confianza, y recuerdas siempre que es análisis, no asesoría financiera. '
+        'Usa los datos de mercado en vivo del contexto; no inventes cifras. '
+        'Responde SOLO con un objeto JSON válido, sin markdown, con EXACTAMENTE estas claves: '
+        '{"verdict": str, "confidence": int (1-5), "bull": str, "bear": str, '
+        '"insights": [str], "drivers": [str], "disclaimer": str}. '
+        'verdict = una frase de postura cauta. bull/bear = caso alcista/bajista en 1-2 frases. '
+        'insights = 3-5 observaciones cortas. drivers = 3-5 catalizadores/factores. '
+        f'Escribe TODO en {_tongue}.')
+    prompt = ('Analiza este cripto con cautela.\n\nDATOS (JSON):\n'
+              + json.dumps({'asset': asset, 'intel': intel}, ensure_ascii=False)[:6000])
+    try:
+        text, model = _ai_complete(sys, prompt, max_tokens=1400, tier='deep')
+        parsed = _extract_json(text)
+        if not isinstance(parsed, dict):
+            raise ValueError('respuesta no-JSON')
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'ok': False, 'error': f'IA falló · AI failed: {str(e)[:160]}'}), 502
+
+    def _slist(v):
+        if isinstance(v, list):
+            return [str(x)[:280] for x in v if str(x).strip()][:6]
+        return [str(v)[:280]] if v else []
+    try:
+        conf = max(1, min(5, int(round(float(parsed.get('confidence', 3))))))
+    except Exception:  # noqa: BLE001
+        conf = 3
+    disc_default = ('This is analysis, not financial advice. Crypto is highly volatile.'
+                    if lang == 'en' else
+                    'Esto es análisis, no asesoría financiera. El cripto es muy volátil.')
+    out = {
+        'ok': True,
+        'verdict': str(parsed.get('verdict', ''))[:400],
+        'confidence': conf,
+        'bull': str(parsed.get('bull', ''))[:700],
+        'bear': str(parsed.get('bear', ''))[:700],
+        'insights': _slist(parsed.get('insights')),
+        'drivers': _slist(parsed.get('drivers')),
+        'disclaimer': str(parsed.get('disclaimer') or disc_default)[:400],
+        'model': model,
+        'id': (asset or {}).get('id') or cid or None,
+        'symbol': (asset or {}).get('symbol') or (sym.upper() or None),
+        'price': (asset or {}).get('price'),
+    }
+    cache.set(_ck, out, timeout=600)
+    return jsonify(out)
+
+
+# ── Investigación profunda estructurada (más allá del nodo) — Sonnet 5 deep ──
+@app.route('/api/research/deep', methods=['POST'])
+@rate_limit(limit=20, window=3600)
+def research_deep():
+    """{id, lang} → informe estructurado que va MÁS ALLÁ de la empresa: sector,
+    competidores, geopolítica, chokepoints de su cadena y una tesis. Cache 15 min."""
+    if not _ai_configured():
+        return jsonify({'ok': False, 'error': 'no AI provider configured'}), 400
+    from core.semantic import build_context, resolve_ids
+    body = request.get_json(force=True, silent=True) or {}
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    raw_id = str(body.get('id') or '').strip()
+    if not raw_id:
+        return jsonify({'ok': False, 'error': 'id requerido · id required'}), 400
+    ids = resolve_ids([raw_id])
+    nid = ids[0] if ids else raw_id
+    _ck = 'researchdeep:' + hashlib.sha256((lang + '\x00' + nid).encode('utf-8')).hexdigest()[:24]
+    _hit = cache.get(_ck)
+    if _hit:
+        return jsonify({**_hit, 'cached': True})
+
+    ctx = build_context([nid], None)
+    try:
+        label = (ctx['foco'][0]['empresa'].get('label') or nid) if ctx.get('foco') else nid
+    except Exception:  # noqa: BLE001
+        label = nid
+
+    _tongue = 'inglés' if lang == 'en' else 'español'
+    sys = (
+        'Eres el analista jefe de Bixby Finance, experto en la cadena de '
+        'suministro de semiconductores, IA, espacio, energía y nuclear. Escribe una '
+        'investigación PROFUNDA que va MÁS ALLÁ de la empresa foco: panorama del sector, '
+        'competidores directos, exposición geopolítica, cuellos de botella (chokepoints) de '
+        'su cadena, riesgos y una TESIS de inversión. Usa el contexto para nombres y '
+        'relaciones reales; no inventes cifras. Responde SOLO con JSON válido (sin markdown), '
+        'con EXACTAMENTE estas claves: {"thesis": str, "sector": str, "competitors": [str], '
+        '"geopolitics": str, "chokepoints": [str], "risks": [str], "watch": [str], '
+        '"disclaimer": str}. thesis/sector/geopolitics = 2-4 frases cada uno. Las listas: '
+        f'3-6 elementos cortos. Escribe TODO en {_tongue}.')
+    prompt = (f'Empresa foco: {label} (id {nid}).\n\nCONTEXTO (JSON):\n'
+              + json.dumps(ctx, ensure_ascii=False)[:12000])
+    try:
+        text, model = _ai_complete(sys, prompt, max_tokens=2600, tier='deep')
+        parsed = _extract_json(text)
+        if not isinstance(parsed, dict):
+            raise ValueError('respuesta no-JSON')
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'ok': False, 'error': f'IA falló · AI failed: {str(e)[:160]}'}), 502
+
+    def _slist(v):
+        if isinstance(v, list):
+            return [str(x)[:280] for x in v if str(x).strip()][:8]
+        return [str(v)[:280]] if v else []
+    disc_default = ('Analysis, not financial advice.' if lang == 'en'
+                    else 'Análisis, no asesoría financiera.')
+    out = {
+        'ok': True, 'id': nid, 'label': label, 'lang': lang, 'model': model,
+        'thesis': str(parsed.get('thesis', ''))[:900],
+        'sector': str(parsed.get('sector', ''))[:900],
+        'competitors': _slist(parsed.get('competitors')),
+        'geopolitics': str(parsed.get('geopolitics', ''))[:900],
+        'chokepoints': _slist(parsed.get('chokepoints')),
+        'risks': _slist(parsed.get('risks')),
+        'watch': _slist(parsed.get('watch')),
+        'disclaimer': str(parsed.get('disclaimer') or disc_default)[:400],
+    }
+    cache.set(_ck, out, timeout=900)
+    return jsonify(out)
+
+
+# ── Simulación POR AGENTES (MiroFish-style) — la lógica vive en core.sim_agents
+# (módulo del agente SIM). Aquí SOLO la ruta: valida el body y delega, sin romper
+# el JSON si el módulo aún no existe o falla. ──────────────────────────────────
+@app.route('/api/sim/agents', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+def sim_agents_route():
+    body = request.get_json(force=True, silent=True) or {}
+    scenario = str(body.get('scenario') or '').strip()
+    if not scenario:
+        return jsonify({'ok': False, 'error': 'scenario requerido · scenario is required'}), 400
+    seeds = body.get('seeds') or []
+    if not isinstance(seeds, list):
+        return jsonify({'ok': False, 'error': 'seeds debe ser una lista · seeds must be a list'}), 400
+    seeds = [str(s) for s in seeds if str(s).strip()][:24]
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    try:
+        from core import sim_agents
+    except Exception:  # noqa: BLE001 — el módulo lo escribe el agente SIM
+        return jsonify({'ok': False,
+                        'error': 'Simulación por agentes no disponible · Agent simulation unavailable'}), 503
+    try:
+        out = sim_agents.run(scenario, seeds, lang)
+        if not isinstance(out, dict):
+            raise ValueError('sim_agents.run devolvió un tipo inesperado')
+        out.setdefault('ok', True)
+        return jsonify(out)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'ok': False,
+                        'error': f'Error en la simulación · Simulation error: {str(e)[:180]}'}), 500
+
+
 @app.route('/api/earnings/<ticker>')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=3600)
@@ -1369,7 +1664,7 @@ def ai_analyze():
 
 # ── Bixby Canvas — AI-generated chart specs (Fase 1) ────────────────────────
 _CANVAS_SYSTEM = """\
-You are Khipu Finance's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
+You are Bixby Finance's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
 Given a user query and a JSON context with node data and market quotes, produce a single-screen
 data visualization spec. Respond ONLY with valid JSON — no markdown fences, no explanation.
 
@@ -1485,7 +1780,7 @@ def canvas_generate():
 
 # ── Bixby Command Center — interpreta comando libre → respuesta + acciones ────
 _COMMAND_SYSTEM = """\
-Eres Bixby, el copiloto de IA del terminal financiero Khipu Finance (semiconductores, IA y espacio).
+Eres Bixby, el copiloto de IA del terminal financiero Bixby Finance (semiconductores, IA y espacio).
 El usuario te habla o escribe en lenguaje natural y tú controlas la app y respondes como analista.
 Responde SOLO con JSON válido (sin markdown, sin explicación fuera del JSON):
 
@@ -2176,7 +2471,7 @@ def mirofish_proxy(endpoint):
 
 
 # ── Bixby voice — system prompt for ElevenLabs agent configuration ──────────
-BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Khipus AI Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
+BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Bixby Finance — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
 
 ## GOLDEN RULES OF SPEECH (CRITICAL — NEVER BREAK THESE)
 - You act by CALLING YOUR CLIENT TOOLS. Tools are silent and instant.
@@ -2214,6 +2509,8 @@ Analysis superpowers (prefer these — they are the platform's wow):
 - show_insights(): opens the insights brain + the 9 relation matrices.
 - run_stress_test(ticker): classic failure cascade on the map.
 - run_simulation(scenario_id): war-room presets: taiwan_conflict, china_chip_ban_total, hbm_shortage_2027, openai_ipo_impact, starshield_reveal.
+- run_agent_simulation(scenario, companies): a MULTI-AGENT (MiroFish-style) simulation — several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / qué pasaría si…" questions that benefit from a debate. The full sim appears on screen; narrate the consensus, the biggest impacts, and where agents disagreed.
+- deep_research(company): a DEEP investigation that goes BEYOND one company — sector panorama, direct competitors, geopolitical exposure, supply-chain chokepoints and an investment thesis. Use when the user wants a thorough dossier, not a quick fact; it appears on screen in a few seconds.
 
 Data lookups:
 - get_company_info(company_name) · get_risk_score(company_name) · get_news(company_name)
@@ -2265,7 +2562,7 @@ War-Room scenarios (5 presets):
 ## PAPER TRADING (SIMULATED — RULES YOU MUST NEVER BREAK)
 - place_paper_trade and get_portfolio_status operate on a SIMULATED paper-money broker. ALWAYS say clearly that the operation is simulated ("es una operación simulada, dinero de papel") — never let the user believe real money moved.
 - NEVER execute a trade without explicit verbal confirmation. The flow is ALWAYS two steps: (1) call place_paper_trade with confirmed=false — it returns an order summary WITHOUT executing; read that summary to the user (symbol, buy/sell, USD amount, simulated) and ask if they confirm. (2) ONLY after the user explicitly says yes ("sí", "confirmo", "dale", "yes"), call place_paper_trade again with the SAME parameters and confirmed=true. Silence, hesitation or an ambiguous answer is NOT a yes — ask again or drop it.
-- NEVER give investment advice around a trade: you execute exactly what the user asked and report the result. If they ask what to buy, you may give analysis but always state it is not financial advice and the decision is theirs.
+- Around a TRADE you execute exactly what the user asked and report the result — you never push them to trade. If they ask what to buy you may give a CAUTIOUS stance (see below), never a blunt "buy/sell", always noting it is analysis, not formal financial advice, and the decision is theirs.
 - If the tool returns an error message, read it to the user AS-IS (it is already user-friendly, in their language) and do NOT retry on your own.
 - Amounts are in US dollars (notional): minimum $1, maximum $100,000 per order.
 
@@ -2279,7 +2576,8 @@ War-Room scenarios (5 presets):
 - Confirm actions naturally and briefly: "Aquí la tienes…", "Mira el mapa — se tiñe en rojo…".
 - Be concise (2-3 sentences of analysis) then act immediately — no over-explanation.
 - Match user language exactly (Spanish/English/mixed — follow their lead). Default to Spanish.
-- When asked investment questions, give a real take: "TSMC es un buy en debilidad porque..." not just facts. Always add that it is analysis, not financial advice, when giving direct buy/sell takes.
+- When asked investment questions, give a CAUTIOUS take WITH A STANCE — you may lean ("me inclinaría por… / sería cauto con TSMC porque…"), name the 2-3 key factors and a confidence level (alta/media/baja), but NEVER a blunt "compra/vende". ALWAYS close with a short reminder that this is analysis, not formal financial advice, and the decision is theirs. This soft-stance rule applies to stocks AND crypto.
+- You can run MiroFish-style MULTI-AGENT simulations from your own terminal (run_agent_simulation): several analyst agents debate a scenario and project realistic impacts. Reach for them on open-ended "¿qué pasaría si…? / what would happen if…" questions where a debate adds value.
 - You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
 
 
@@ -2307,6 +2605,12 @@ def _bixby_client_tools():
         T('show_insights', 'Open the insights brain and the 9 relation matrices.'),
         T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
         T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
+        T('run_agent_simulation', 'Run a MULTI-AGENT (MiroFish-style) simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {
+            'scenario': S('The scenario in natural language, e.g. "China prohíbe exportar HBM"'),
+            'companies': {'type': 'array', 'items': {'type': 'string'},
+                          'description': 'Seed companies/tickers to center the simulation on (optional, any casing)'},
+        }, ['scenario']),
+        T('deep_research', 'Run a DEEP research investigation that goes BEYOND one company — sector panorama, direct competitors, geopolitical exposure, supply-chain chokepoints and an investment thesis. Use when the user wants a thorough dossier, not a quick fact. Appears on screen; takes a few seconds.', {'company': S('Company name or ticker, any casing')}, ['company']),
         T('get_company_info', 'EVERYTHING the app knows about one company: live price, NRS risk, sector, country, EMPLOYEES, FOUNDED year, REVENUE, market cap, margin, growth, moat, geo risk, description, supplier/customer counts. ALWAYS call this before saying you do not know a fact about a company.', company, ['company_name']),
         T('get_risk_score', 'NRS risk score (0-100) of a company with breakdown.', company, ['company_name']),
         T('get_news', 'Recent news with sentiment for a company.', company, ['company_name']),
@@ -2486,7 +2790,7 @@ def _deep_run(question, company_ids):
         # Síntesis final = lo que importa → tier 'deep' (Sonnet 5) con más presupuesto.
         # (El PLAN del paso 1 queda 'fast': es barato y no necesita profundidad.)
         final, model = _ai_complete(
-            'Eres el analista jefe de Khipus AI Finance Intelligence. Escribe en español, '
+            'Eres el analista jefe de Bixby Finance. Escribe en español, '
             'para un inversor exigente: 1) TESIS en 2-3 frases; 2) EVIDENCIA con los números '
             'del contexto/simulación (cita empresas y porcentajes REALES del JSON, jamás '
             'inventes); 3) RIESGOS (2-3 bullets); 4) QUÉ VIGILAR (2-3 señales concretas). '
@@ -3041,6 +3345,7 @@ _AGENT: dict = {
     'last_run': None,
     'status': 'stopped',
     'daily_pnl_pct': 0.0,
+    'broker_error': None,      # último error de Alpaca (bilingüe) para diagnóstico
 }
 
 def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> dict:
@@ -3055,20 +3360,14 @@ def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> 
         f'"reason": "1-sentence reason", "size_pct": 1-5 }}'
     )
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=CLAUDE)
-        msg = client.messages.create(
-            model=AI_MODEL,
-            max_tokens=200,
-            messages=[{'role': 'user', 'content': prompt}],
-        )
-        raw = msg.content[0].text.strip()
-        # strip markdown if present
-        if raw.startswith('```'):
-            raw = raw.split('```')[1]
-            if raw.startswith('json'):
-                raw = raw[4:]
-        return json.loads(raw)
+        # Ruta a través de la cascada multi-proveedor (Sonnet 5 con pensamiento
+        # desactivado → respuesta inmediata; _extract_json tolera fences/prosa).
+        text, _model = _ai_complete(
+            'You are a quantitative trading analyst. Respond with a JSON object ONLY, no markdown.',
+            prompt, max_tokens=250, tier='fast')
+        out = _extract_json(text)
+        return out if isinstance(out, dict) else {'action': 'hold', 'confidence': 0,
+                                                  'reason': 'respuesta no-JSON', 'size_pct': 0}
     except Exception as e:  # noqa: BLE001
         return {'action': 'hold', 'confidence': 0, 'reason': str(e)[:80], 'size_pct': 0}
 
@@ -3087,13 +3386,18 @@ def _agent_get_positions() -> dict:
 
 def _agent_get_account() -> dict:
     if not ALPACA_KEY:
+        _AGENT['broker_error'] = 'ALPACA_KEY sin configurar · ALPACA_KEY not configured'
         return {}
     try:
         r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
         if r.status_code == 200:
+            _AGENT['broker_error'] = None
             return r.json() or {}
-    except Exception:  # noqa: BLE001
-        pass
+        # Guardamos el status y un extracto del cuerpo para depurar (p.ej. 404 por
+        # base mal configurada, 401/403 por claves inválidas).
+        _AGENT['broker_error'] = f'Alpaca /v2/account HTTP {r.status_code}: {(r.text or "")[:120]}'
+    except Exception as e:  # noqa: BLE001
+        _AGENT['broker_error'] = f'Alpaca /v2/account: {str(e)[:120]}'
     return {}
 
 
@@ -3116,7 +3420,9 @@ def _agent_run_cycle():
     account = _agent_get_account()
     equity = float(account.get('equity', 0) or 0)
     if equity <= 0 and ALPACA_KEY:
-        log_entries.append({'ts': time.strftime('%H:%M:%S'), 'msg': '⚠️ Could not fetch equity', 'level': 'warn'})
+        be = _AGENT.get('broker_error') or 'Alpaca no devolvió capital · Alpaca returned no equity'
+        log_entries.append({'ts': time.strftime('%H:%M:%S'), 'level': 'warn',
+                            'msg': f'⚠️ No se pudo leer el capital de Alpaca · Could not read Alpaca equity — {be}'})
         return
 
     # P&L real del día desde Alpaca (equity vs cierre de ayer) — sin esto el
@@ -3285,6 +3591,7 @@ def agent_status():
         'stop_loss_pct': _AGENT['stop_loss_pct'],
         'last_run': _AGENT['last_run'],
         'daily_pnl_pct': _AGENT['daily_pnl_pct'],
+        'broker_error': _AGENT.get('broker_error'),
         'log': _AGENT['log'][-20:],
     })
 

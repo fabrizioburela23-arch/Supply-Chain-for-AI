@@ -14,7 +14,7 @@
 
   const TAB_ROWS = [
     ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, ◈ Grafo Temporal, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom.'],
-    ['📈 Mercado', 'Precios en tiempo real y tu portafolio. Sub-modo ₿ Cripto: el mercado cripto explicado — vista Mapa por categorías (qué es cada familia de monedas, en simple), top 100 en vivo, y el Expediente Khipus de las 50 grandes: qué es, cómo funciona, riesgos y catalizadores de cada una, con advertencias ⚠ en las monedas delicadas.'],
+    ['📈 Mercado', 'Precios en tiempo real y tu portafolio. Sub-modo ₿ Cripto: el mercado cripto explicado — vista Mapa por categorías (qué es cada familia de monedas, en simple), top 100 en vivo, y el Expediente Bixby de las 50 grandes: qué es, cómo funciona, riesgos y catalizadores de cada una, con advertencias ⚠ en las monedas delicadas.'],
     ['🖥️ Terminal', 'Vista estilo Bloomberg: hasta 4 gráficos lado a lado + el panel 📋 Datos a la derecha (ficha, valuación, analistas, fundamentales anuales y cadena de cada empresa). Sub-modos: Terminal, Análisis y Canvas IA.'],
     ['❓ Guía', 'Esta página.'],
   ];
@@ -52,7 +52,7 @@
     panel.innerHTML = `
       <div style="max-width:820px;margin:0 auto;padding:26px 24px 60px">
         <div style="margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--violet)">Guía rápida</div>
-        <h2 style="font-family:'Fraunces',serif;font-size:27px;font-weight:700;margin:0 0 8px">¿Qué es Khipus AI Finance Intelligence?</h2>
+        <h2 style="font-family:'Fraunces',serif;font-size:27px;font-weight:700;margin:0 0 8px">¿Qué es Bixby Finance?</h2>
         <p style="font-size:14px;line-height:1.6;color:var(--ink-2);margin:0 0 36px;max-width:70ch">
           Un terminal financiero para invertir en la cadena de suministro de la IA — <b>555 empresas</b> de
           semiconductores, inteligencia artificial, espacio, energía nuclear, robótica y defensa, conectadas por sus

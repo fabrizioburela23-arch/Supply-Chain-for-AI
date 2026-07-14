@@ -38,6 +38,26 @@
       riskOf: 'Riesgo de', riskBd: 'desglose NRS', lowerBetter: 'menor es mejor',
       cryT: 'Top 10 cripto por capitalización',
       cryS: 'Miles de millones USD · verde = subió en 24h',
+      riskTopT: 'Top {n} por riesgo (NRS)', riskTopS: 'NRS 0-100 · calculado en vivo sobre el grafo',
+      mgnT: 'Márgenes', mgnTop: 'Márgenes — top del grafo', mgnS: 'Margen neto/operativo del catálogo (%)',
+      riskCmpT: 'Riesgo NRS', riskCmpS: 'NRS 0-100 · menor es mejor',
+      capT: 'Capitalización de mercado', capS: 'Miles de millones USD ($B)',
+      secRiskT: 'Riesgo medio por sector', secCntT: 'Empresas por sector',
+      secRiskS: 'NRS promedio de cada macro-sector', secCntS: 'Conteo del catálogo',
+      ctryT: 'Empresas por país', ctryS: 'Concentración geográfica del catálogo',
+      cmpTblS: 'Datos del catálogo en vivo',
+      provOf: 'Proveedores de', cliOf: 'Clientes de', pcS: 'Peso de criticidad del vínculo (1-5)',
+      empT: 'Empleados', empS: 'Plantilla según la ficha de cada empresa',
+      fndT: 'Año de fundación', fndS: 'Las más antiguas del catálogo',
+      scT: 'Riesgo vs Margen', scS: 'Top 40 por capitalización · abajo-derecha = mejor', scX: 'Margen %', scY: 'Riesgo NRS',
+      tmT: 'Capitalización por sector', tmS: 'Miles de millones USD',
+      portT: 'Mi cartera', portS: 'posiciones · precios en vivo',
+      lineDays: '~90 días', linePeriod: 'en el periodo · fuente: mercado en vivo',
+      radarT: 'Perfil comparado', radarS: '0-100 relativo entre las comparadas · más grande = mejor',
+      axRev: 'Ingresos', axMgn: 'Margen', axSafe: 'Seguridad', axEmp: 'Empleados', axCap: 'Cap.',
+      colCompany: 'Empresa', colTicker: 'Ticker', colNrs: 'NRS riesgo', colMgn: 'Margen %',
+      colCap: 'Cap $B', colCountry: 'País', colFounded: 'Fundada',
+      colQty: 'Cantidad', colPrice: 'Precio', colValue: 'Valor',
     },
     en: {
       gen: 'Generating with AI…',
@@ -48,6 +68,26 @@
       riskOf: 'Risk of', riskBd: 'NRS breakdown', lowerBetter: 'lower is better',
       cryT: 'Top 10 crypto by market cap',
       cryS: 'USD billions · green = up in 24h',
+      riskTopT: 'Top {n} by risk (NRS)', riskTopS: 'NRS 0-100 · computed live on the graph',
+      mgnT: 'Margins', mgnTop: 'Margins — top of the graph', mgnS: 'Net/operating margin from the catalog (%)',
+      riskCmpT: 'NRS risk', riskCmpS: 'NRS 0-100 · lower is better',
+      capT: 'Market capitalization', capS: 'USD billions ($B)',
+      secRiskT: 'Average risk by sector', secCntT: 'Companies by sector',
+      secRiskS: 'Average NRS of each macro-sector', secCntS: 'Catalog count',
+      ctryT: 'Companies by country', ctryS: 'Geographic concentration of the catalog',
+      cmpTblS: 'Live catalog data',
+      provOf: 'Suppliers of', cliOf: 'Customers of', pcS: 'Link criticality weight (1-5)',
+      empT: 'Employees', empS: 'Headcount per each company profile',
+      fndT: 'Year founded', fndS: 'The oldest in the catalog',
+      scT: 'Risk vs Margin', scS: 'Top 40 by market cap · bottom-right = better', scX: 'Margin %', scY: 'NRS risk',
+      tmT: 'Market cap by sector', tmS: 'USD billions',
+      portT: 'My portfolio', portS: 'positions · live prices',
+      lineDays: '~90 days', linePeriod: 'over the period · source: live market',
+      radarT: 'Compared profile', radarS: '0-100 relative among compared · bigger = better',
+      axRev: 'Revenue', axMgn: 'Margin', axSafe: 'Safety', axEmp: 'Employees', axCap: 'Cap.',
+      colCompany: 'Company', colTicker: 'Ticker', colNrs: 'NRS risk', colMgn: 'Margin %',
+      colCap: 'Cap $B', colCountry: 'Country', colFounded: 'Founded',
+      colQty: 'Qty', colPrice: 'Price', colValue: 'Value',
     },
   };
   function L() {
@@ -160,19 +200,51 @@
     return rows;
   }
 
+  /* ── perfil comparado (radar multi-métrica) — normaliza 5 ejes a 0-100
+     relativo entre las empresas comparadas · usa el renderer _cvRadar ────── */
+  function _radarSpec(comps) {
+    var get = {
+      axRev:  function (n) { return revB(n.id); },
+      axMgn:  function (n) { return n.margin != null ? Math.max(0, n.margin * 100) : null; },
+      axSafe: function (n) { var v = nrs(n.id); return v != null ? Math.max(0, 100 - v) : null; }, // menos riesgo = mejor
+      axEmp:  function (n) { var e = meta(n.id).employees; return e && e > 0 ? e : null; },
+      axCap:  function (n) { return cap(n.id); },
+    };
+    var order = ['axRev', 'axMgn', 'axSafe', 'axEmp', 'axCap'];
+    var maxByMet = {};
+    order.forEach(function (mk) {
+      var vals = comps.map(function (n) { return get[mk](n); })
+        .filter(function (v) { return v != null && isFinite(v) && v > 0; });
+      maxByMet[mk] = vals.length ? Math.max.apply(null, vals) : 0;
+    });
+    var axesUsed = order.filter(function (mk) { return maxByMet[mk] > 0; });
+    if (axesUsed.length < 3) return null;                 // sin datos suficientes → que decida otra vista
+    var data = comps.map(function (n) {
+      return { label: n.label, values: axesUsed.map(function (mk) {
+        var v = get[mk](n);
+        if (v == null || !isFinite(v) || maxByMet[mk] <= 0) return 0;
+        return Math.round(Math.max(0, v) / maxByMet[mk] * 100);   // 0-100 relativo al grupo
+      }) };
+    });
+    return { type: 'radar',
+      title: TT('radarT') + ': ' + comps.map(function (n) { return n.label; }).join(' · '),
+      subtitle: TT('radarS'),
+      data: data, config: { axes: axesUsed.map(function (mk) { return TT(mk); }) } };
+  }
+
   function trySpec(query) {
     if (!window.NODES || !NODES.length) return null;
     var q = ' ' + String(query || '').toLowerCase().trim() + ' ';
     var comps = null;
 
     // ── 1) top N por riesgo ──
-    if (/riesgo|nrs|fr[aá]gil|peligros/.test(q) && /top|mayor|m[aá]s alt|ranking|peores/.test(q)) {
+    if (/riesgo|nrs|risk|fr[aá]gil|peligros/.test(q) && /top|mayor|m[aá]s alt|ranking|peores|highest|riskiest/.test(q)) {
       var n1 = topN(q, 10);
       var rows = NODES.map(function (n) { return [n.label, nrs(n.id)]; })
         .filter(function (r) { return r[1] != null; })
         .sort(function (a, b) { return b[1] - a[1]; }).slice(0, n1)
         .map(function (r) { return [r[0], r[1], r[1] >= 70 ? '#f87171' : r[1] >= 40 ? '#f59e0b' : '#34d399']; });
-      return bar('Top ' + n1 + ' por riesgo (NRS)', 'NRS 0-100 · calculado en vivo sobre el grafo', rows, 'NRS');
+      return bar(TT('riskTopT').replace('{n}', n1), TT('riskTopS'), rows, 'NRS');
     }
 
     // ── 2) márgenes de empresas concretas ──
@@ -184,17 +256,17 @@
       var rows2 = pool.filter(function (n) { return n.margin != null; })
         .map(function (n) { return [n.label, n.margin * 100]; });
       if (rows2.length >= 2) {
-        return bar('Márgenes' + (comps.length ? ': ' + pool.map(function (n) { return n.label; }).join(' · ') : ' — top del grafo'),
-          'Margen neto/operativo del catálogo (%)', rows2, '%');
+        return bar(comps.length ? TT('mgnT') + ': ' + pool.map(function (n) { return n.label; }).join(' · ') : TT('mgnTop'),
+          TT('mgnS'), rows2, '%');
       }
     }
 
     // ── 3) riesgo de empresas concretas ──
-    if (/riesgo|nrs/.test(q)) {
+    if (/riesgo|nrs|risk/.test(q)) {
       comps = companiesIn(q);
       if (comps.length >= 2) {
-        return bar('Riesgo NRS: ' + comps.map(function (n) { return n.label; }).join(' · '),
-          'NRS 0-100 · menor es mejor',
+        return bar(TT('riskCmpT') + ': ' + comps.map(function (n) { return n.label; }).join(' · '),
+          TT('riskCmpS'),
           comps.map(function (n) { var v = nrs(n.id) || 0; return [n.label, v, v >= 70 ? '#f87171' : v >= 40 ? '#f59e0b' : '#34d399']; }), 'NRS');
       }
       // 3b) "riesgo de X" (una sola empresa) → desglose del NRS por componente
@@ -220,11 +292,11 @@
         : NODES.filter(function (n) { return cap(n.id); })
             .sort(function (a, b) { return cap(b.id) - cap(a.id); }).slice(0, topN(q, 10));
       var rows4 = pool4.filter(function (n) { return cap(n.id); }).map(function (n) { return [n.label, cap(n.id)]; });
-      if (rows4.length >= 2) return bar('Capitalización de mercado', 'Miles de millones USD ($B)', rows4, '$B');
+      if (rows4.length >= 2) return bar(TT('capT'), TT('capS'), rows4, '$B');
     }
 
     // ── 5) por sector (conteo o riesgo medio) ──
-    if (/por sector|sectores/.test(q)) {
+    if (/por sector|sectores|by sector|sectors/.test(q)) {
       var S = window.SECTORS9 || {}, M = window.CAT_TO_SECTOR || {};
       var agg = {};
       NODES.forEach(function (n) {
@@ -233,21 +305,30 @@
         agg[s].n++;
         var v = nrs(n.id); if (v != null) agg[s].sum += v;
       });
-      var wantRisk = /riesgo|nrs/.test(q);
+      var wantRisk = /riesgo|nrs|risk/.test(q);
       var rows5 = Object.keys(agg).map(function (k) {
         return [(S[k] || {}).label || k, wantRisk ? agg[k].sum / Math.max(1, agg[k].n) : agg[k].n, (S[k] || {}).color];
       }).sort(function (a, b) { return b[1] - a[1]; });
-      return bar(wantRisk ? 'Riesgo medio por sector' : 'Empresas por sector',
-        wantRisk ? 'NRS promedio de cada macro-sector' : 'Conteo del catálogo (555)', rows5, wantRisk ? 'NRS' : '');
+      return bar(wantRisk ? TT('secRiskT') : TT('secCntT'),
+        wantRisk ? TT('secRiskS') : TT('secCntS') + ' (' + NODES.length + ')', rows5, wantRisk ? 'NRS' : '');
     }
 
     // ── 6) por país ──
-    if (/por pa[ií]s|pa[ií]ses/.test(q)) {
+    if (/por pa[ií]s|pa[ií]ses|by countr|countries/.test(q)) {
       var aggP = {};
       NODES.forEach(function (n) { var c = n.country || '—'; aggP[c] = (aggP[c] || 0) + 1; });
       var rows6 = Object.keys(aggP).map(function (k) { return [k, aggP[k]]; })
         .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 12);
-      return bar('Empresas por país', 'Concentración geográfica del catálogo', rows6, '');
+      return bar(TT('ctryT'), TT('ctryS'), rows6, '');
+    }
+
+    // ── 6·radar) perfil comparado multi-métrica (radar) — bajo pedido ──
+    if (/\bradar\b|ara[ñn]a|tela de ara|perfil comparad|multi.?m[eé]tric/.test(q)) {
+      comps = companiesIn(q);
+      if (comps.length >= 2) {
+        var rspec = _radarSpec(comps.slice(0, 5));
+        if (rspec) return rspec;
+      }
     }
 
     // ── 7) comparación de 2+ empresas ──
@@ -261,27 +342,29 @@
             TT('cmpSub'), sideRows, '%');
         }
       }
-      // 7b) fallback: tabla compacta (también para 5+)
+      // 7b) fallback: tabla compacta (también para 5+) — columnas bilingües
       if (comps.length >= 2) {
-        return { type: 'table', title: 'Comparación: ' + comps.map(function (n) { return n.label; }).join(' vs '),
-          subtitle: 'Datos del catálogo en vivo',
+        var cC = TT('colCompany'), cT = TT('colTicker'), cN = TT('colNrs'),
+            cM = TT('colMgn'), cP = TT('colCap'), cY = TT('colCountry'), cF = TT('colFounded');
+        return { type: 'table', title: TT('cmpTitle') + ': ' + comps.map(function (n) { return n.label; }).join(' vs '),
+          subtitle: TT('cmpTblS'),
           data: comps.map(function (n) {
-            var m = meta(n.id);
-            return { Empresa: n.label, Ticker: n.mkt || '—', 'NRS riesgo': nrs(n.id),
-                     'Margen %': n.margin != null ? Math.round(n.margin * 100) : '—',
-                     'Cap $B': cap(n.id) || '—', 'País': n.country || '—',
-                     'Fundada': m.founded || '—' };
+            var m = meta(n.id), o = {};
+            o[cC] = n.label; o[cT] = n.mkt || '—'; o[cN] = nrs(n.id);
+            o[cM] = n.margin != null ? Math.round(n.margin * 100) : '—';
+            o[cP] = cap(n.id) || '—'; o[cY] = n.country || '—'; o[cF] = m.founded || '—';
+            return o;
           }),
-          config: { columns: ['Empresa', 'Ticker', 'NRS riesgo', 'Margen %', 'Cap $B', 'País', 'Fundada'] } };
+          config: { columns: [cC, cT, cN, cM, cP, cY, cF] } };
       }
     }
 
     // ── 8) proveedores / clientes de X (nativo del grafo) ──
-    var pc = q.match(/(proveedor(?:es)?|clientes?)\s+(?:de|del)\s+(.+)/);
+    var pc = q.match(/(proveedor(?:es)?|clientes?|suppliers?|customers?)\s+(?:de|del|of)\s+(.+)/);
     if (pc && window.LINKS) {
       var pcn = companiesIn(pc[2]);
       if (pcn.length) {
-        var anchor = pcn[0], wantProv = pc[1].indexOf('proveedor') === 0;
+        var anchor = pcn[0], wantProv = /^(?:proveedor|supplier)/.test(pc[1]);
         var lid2 = function (v) { return (typeof v === 'object' && v) ? v.id : v; };
         var rows8 = [];
         window.LINKS.forEach(function (l) {
@@ -291,8 +374,8 @@
         });
         rows8.sort(function (a, b) { return b[1] - a[1]; });
         if (rows8.length) {
-          return bar((wantProv ? 'Proveedores de ' : 'Clientes de ') + anchor.label + ' (' + rows8.length + ')',
-            'Peso de criticidad del vínculo (1-5)', rows8.slice(0, 14), 'w');
+          return bar((wantProv ? TT('provOf') : TT('cliOf')) + ' ' + anchor.label + ' (' + rows8.length + ')',
+            TT('pcS'), rows8.slice(0, 14), 'w');
         }
       }
     }
@@ -305,7 +388,7 @@
             .sort(function (a, b) { return (meta(b.id).employees || 0) - (meta(a.id).employees || 0); }).slice(0, topN(q, 10));
       var rows9 = pool9.filter(function (n) { return meta(n.id).employees; })
         .map(function (n) { return [n.label, meta(n.id).employees]; });
-      if (rows9.length) return bar('Empleados', 'Plantilla según la ficha de cada empresa', rows9, '');
+      if (rows9.length) return bar(TT('empT'), TT('empS'), rows9, '');
     }
 
     // ── 10) fundación / más antiguas ──
@@ -316,7 +399,7 @@
             .sort(function (a, b) { return (meta(a.id).founded || 3000) - (meta(b.id).founded || 3000); }).slice(0, topN(q, 12));
       var rows10 = pool10.filter(function (n) { return meta(n.id).founded; })
         .map(function (n) { return [n.label, meta(n.id).founded]; });
-      if (rows10.length) return bar('Año de fundación', 'Las más antiguas del catálogo', rows10, '');
+      if (rows10.length) return bar(TT('fndT'), TT('fndS'), rows10, '');
     }
 
     // ── 11) scatter riesgo vs margen ──
@@ -325,8 +408,8 @@
         .sort(function (a, b) { return cap(b.id) - cap(a.id); }).slice(0, 40)
         .map(function (n) { return { label: n.label, x: Math.round(n.margin * 100), y: nrs(n.id) || 0 }; });
       if (pts.length >= 5) {
-        return { type: 'scatter', title: 'Riesgo vs Margen', subtitle: 'Top 40 por capitalización · abajo-derecha = mejor',
-          data: pts, config: { x_label: 'Margen %', y_label: 'Riesgo NRS' } };
+        return { type: 'scatter', title: TT('scT'), subtitle: TT('scS'),
+          data: pts, config: { x_label: TT('scX'), y_label: TT('scY') } };
       }
     }
 
@@ -338,7 +421,7 @@
         var s = M12[n.cat] || 'cloud_ia';
         agg12[s] = (agg12[s] || 0) + (cap(n.id) || 0);
       });
-      return { type: 'treemap', title: 'Capitalización por sector', subtitle: 'Miles de millones USD',
+      return { type: 'treemap', title: TT('tmT'), subtitle: TT('tmS'),
         data: Object.keys(agg12).map(function (k) {
           return { label: (S12[k] || {}).label || k, value: Math.round(agg12[k]), color: (S12[k] || {}).color };
         }).filter(function (d) { return d.value > 0; }), config: {} };
@@ -347,19 +430,23 @@
     // ── 13) mi cartera ──
     if (/cartera|portafolio|portfolio|mis posiciones/.test(q)) {
       var pos = (window.MKT || {}).pos || {};
+      var pC = TT('colCompany'), pT = TT('colTicker'), pQ = TT('colQty'),
+          pP = TT('colPrice'), pV = TT('colValue');
       var rows13 = Object.keys(pos).map(function (k) {
         var n = NODES.find(function (x) { return x.id === k || x.mkt === k; });
         var tk = (n && n.mkt) || k;
         var qq = ((window.MKT || {}).quotes || {})[tk] || {};
         // MKT.pos[id] = {sh, bp} (acciones, precio de compra) — ver savePos()
         var qty = typeof pos[k] === 'object' ? (pos[k].sh || pos[k].qty || pos[k].shares || 0) : pos[k];
-        return { Empresa: (n && n.label) || k, Ticker: tk, Cantidad: qty,
-                 'Precio': qq.close != null ? '$' + Number(qq.close).toFixed(2) : '—',
-                 'Valor': qq.close != null && qty ? '$' + Math.round(qq.close * qty).toLocaleString() : '—' };
+        var o = {};
+        o[pC] = (n && n.label) || k; o[pT] = tk; o[pQ] = qty;
+        o[pP] = qq.close != null ? '$' + Number(qq.close).toFixed(2) : '—';
+        o[pV] = qq.close != null && qty ? '$' + Math.round(qq.close * qty).toLocaleString() : '—';
+        return o;
       });
       if (rows13.length) {
-        return { type: 'table', title: 'Mi cartera', subtitle: rows13.length + ' posiciones · precios en vivo',
-          data: rows13, config: { columns: ['Empresa', 'Ticker', 'Cantidad', 'Precio', 'Valor'] } };
+        return { type: 'table', title: TT('portT'), subtitle: rows13.length + ' ' + TT('portS'),
+          data: rows13, config: { columns: [pC, pT, pQ, pP, pV] } };
       }
     }
 
@@ -427,8 +514,8 @@
         var up = c.c[c.c.length - 1] >= c.c[0];
         var pct = ((c.c[c.c.length - 1] / c.c[0] - 1) * 100).toFixed(1);
         return { type: 'line',
-          title: n.label + ' (' + n.mkt + ') — ~90 días',
-          subtitle: (up ? '▲ +' : '▼ ') + pct + '% en el periodo · fuente: mercado en vivo',
+          title: n.label + ' (' + n.mkt + ') — ' + TT('lineDays'),
+          subtitle: (up ? '▲ +' : '▼ ') + pct + '% ' + TT('linePeriod'),
           data: [{ label: n.mkt, values: c.c.map(function (v) { return Math.round(v * 100) / 100; }),
                    color: up ? '#34d399' : '#f87171' }],
           config: { series_labels: [n.mkt], unit: '$' } };

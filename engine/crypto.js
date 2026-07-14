@@ -23,6 +23,8 @@
   var TRADE = null;       // cache 1h de /api/trade/crypto/assets {ts,status,assets,paper,error,pin}
   var TRDCTX = null;      // contexto de la caja Operar montada {pair,name,paper}
   var TRD = null;         // orden pendiente de confirmación {pair,name,side,amt,paper}
+  var DETAIL = null;      // asset de la ficha actualmente abierta (para IA / reanalizar)
+  var ANALYSIS = {};      // cache EN MEMORIA del análisis IA por id: {loading}|{data}|{error}
 
   var CAT_ORDER = ['store', 'l1', 'stable', 'payments', 'defi', 'perps', 'exchange', 'rwa', 'ai', 'privacy', 'meme'];
 
@@ -88,6 +90,52 @@
       : 'rgb(255,' + Math.round(77 + 40 * (1 - t)) + ',' + Math.round(106 + 40 * (1 - t)) + ')';
   }
   function esc(s) { return String(s == null ? '' : s).replace(/[<>&"]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]; }); }
+
+  // ── red robusta: CoinGecko a veces falla "1 o 2" — reintenta con backoff ──
+  function _wait(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+  // GET con reintentos suaves. Reintenta en error de red / 5xx / 429 (hasta `tries`
+  // veces); un 4xx (salvo 429) propaga el error del server SIN reintentar.
+  function getJSON(url, tries) {
+    tries = tries == null ? 2 : tries;
+    var n = 0;
+    function attempt() {
+      return fetch(url).then(function (r) {
+        if (!r.ok) {
+          if ((r.status >= 500 || r.status === 429) && n < tries) {
+            n++; return _wait(400 * n + Math.floor(Math.random() * 250)).then(attempt);
+          }
+          return r.json().catch(function () { return {}; }).then(function (d) {
+            var e = new Error((d && d.error) || ('HTTP ' + r.status)); e._data = d; throw e;
+          });
+        }
+        return r.json();
+      }).catch(function (err) {
+        if (!err._data && n < tries) { n++; return _wait(400 * n + Math.floor(Math.random() * 250)).then(attempt); }
+        throw err;
+      });
+    }
+    return attempt();
+  }
+  // POST JSON con reintento SOLO ante error de red (no ante 4xx/5xx del server,
+  // para no quemar el rate-limit del endpoint de IA). Devuelve el JSON parseado.
+  function postJSON(url, body, tries) {
+    tries = tries == null ? 1 : tries;
+    var n = 0;
+    function attempt() {
+      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) {
+            if (!r.ok) { var e = new Error((d && d.error) || ('HTTP ' + r.status)); e._data = d; throw e; }
+            return d;
+          });
+        })
+        .catch(function (err) {
+          if (!err._data && n < tries) { n++; return _wait(500 * n).then(attempt); }
+          throw err;
+        });
+    }
+    return attempt();
+  }
 
   function panel() { return document.getElementById('crypto-panel'); }
   function filtered() {
@@ -522,11 +570,136 @@
       });
   }
 
+  /* ── INSIGHTS rápidos (cliente): señales calculadas de los datos VIVOS + la
+        ficha estática — 3-5 bullets bilingües. No es asesoría, solo contexto. */
+  function computeInsights(a, it) {
+    var out = [], en = lang() === 'en';
+    // distancia al máximo histórico
+    if (a.ath && a.price) {
+      var d = (a.price / a.ath - 1) * 100;
+      if (d >= -5) out.push({ i: '🚀', t: en ? 'Trading near its all-time high (within ' + Math.abs(d).toFixed(0) + '%).' : 'Cerca de su máximo histórico (a ' + Math.abs(d).toFixed(0) + '%).' });
+      else if (d <= -60) out.push({ i: '📉', t: en ? 'Far below its all-time high (' + d.toFixed(0) + '%), a deep drawdown.' : 'Muy por debajo de su máximo histórico (' + d.toFixed(0) + '%), una caída profunda.' });
+      else out.push({ i: '📊', t: en ? d.toFixed(0) + '% from its all-time high.' : 'A ' + d.toFixed(0) + '% de su máximo histórico.' });
+    }
+    // rotación: volumen 24h vs capitalización
+    if (a.volume_24h && a.market_cap) {
+      var rot = a.volume_24h / a.market_cap * 100;
+      if (rot >= 15) out.push({ i: '🔥', t: en ? 'High 24h volume vs market cap (' + rot.toFixed(0) + '% turnover) — elevated activity.' : 'Volumen 24h alto vs capitalización (' + rot.toFixed(0) + '% de rotación) — actividad elevada.' });
+      else if (rot <= 2) out.push({ i: '💤', t: en ? 'Low 24h volume vs market cap (' + rot.toFixed(1) + '%) — thin activity.' : 'Volumen 24h bajo vs capitalización (' + rot.toFixed(1) + '%) — poca actividad.' });
+    }
+    // impulso corto plazo 24h vs 7d
+    if (a.change_24h_pct != null && a.change_7d_pct != null) {
+      if (a.change_24h_pct > 0 && a.change_7d_pct > 0) out.push({ i: '📈', t: en ? 'Positive momentum on both 24h and 7d.' : 'Impulso positivo en 24h y 7d.' });
+      else if (a.change_24h_pct < 0 && a.change_7d_pct < 0) out.push({ i: '🩸', t: en ? 'Negative momentum on both 24h and 7d.' : 'Impulso negativo en 24h y 7d.' });
+      else out.push({ i: '🔀', t: en ? 'Mixed short-term momentum (24h and 7d diverge).' : 'Impulso mixto de corto plazo (24h y 7d divergen).' });
+    }
+    // suministro / dilución
+    if (a.max_supply && a.circulating_supply) {
+      var pe = a.circulating_supply / a.max_supply * 100;
+      if (pe >= 90) out.push({ i: '🪙', t: en ? 'Over ' + pe.toFixed(0) + '% of max supply already circulating — low future dilution.' : 'Más del ' + pe.toFixed(0) + '% del suministro máximo ya circula — poca dilución futura.' });
+      else if (pe <= 60) out.push({ i: '⏳', t: en ? 'Only ' + pe.toFixed(0) + '% of max supply circulating — future emissions may dilute.' : 'Solo el ' + pe.toFixed(0) + '% del suministro máximo circula — emisiones futuras pueden diluir.' });
+    } else if (!a.max_supply && a.circulating_supply) {
+      out.push({ i: '♾️', t: en ? 'No hard max supply — inflation depends on protocol policy.' : 'Sin tope máximo de suministro — la inflación depende de la política del protocolo.' });
+    }
+    // riesgo del expediente estático (la capa cualitativa jul-2026)
+    if (it && it.warn) out.push({ i: '⚠️', t: en ? it.warn.en : it.warn.es });
+    return out.slice(0, 5);
+  }
+
+  function insightsHTML(a, it) {
+    var arr = computeInsights(a, it);
+    if (!arr.length) return '';
+    var rows = arr.map(function (b) {
+      return '<div style="display:flex;gap:9px;align-items:flex-start;padding:5px 0;font-size:12.5px;line-height:1.5;color:#C9D4EC">' +
+        '<span style="font-size:14px;flex:0 0 auto;line-height:1.4">' + b.i + '</span><span>' + esc(b.t) + '</span></div>';
+    }).join('');
+    return '<div style="margin-top:22px;padding:14px 16px;border-radius:12px;border:1px solid rgba(122,158,255,.18);background:rgba(13,19,33,.4)">' +
+      '<h3 style="margin:0;font-size:15px">💡 ' + T2('cr_ins_t', 'Insights rápidos', 'Quick insights') + '</h3>' +
+      '<div style="color:#7C87A3;font-size:11px;margin:2px 0 6px">' + T2('cr_ins_sub', 'Señales calculadas de los datos en vivo — contexto, no asesoría.', 'Signals computed from live data — context, not advice.') + '</div>' +
+      rows + '</div>';
+  }
+
+  /* ── ✨ Análisis con IA (POST /api/crypto/analyze, Sonnet, tono CAUTO) ───────
+        Estados por moneda en ANALYSIS[id]: sin entrada = botón; {loading} =
+        esqueleto; {error} = tarjeta de error+reintento; {data} = tarjeta. El
+        resultado se cachea en memoria por moneda (persiste al navegar y volver). */
+  function detailCSS() {
+    return '<style>@keyframes crShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}' +
+      '@keyframes crSpin{to{transform:rotate(360deg)}}' +
+      '#crypto-panel .cr-spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(201,184,255,.3);border-top-color:#C9B8FF;border-radius:50%;animation:crSpin .7s linear infinite;vertical-align:middle}' +
+      '#crypto-panel .cr-shim{border-radius:6px;background:linear-gradient(90deg,rgba(122,158,255,.08),rgba(122,158,255,.2),rgba(122,158,255,.08));background-size:200% 100%;animation:crShimmer 1.2s linear infinite}</style>';
+  }
+  function aiButtonHTML(id) {
+    return '<button onclick="window.KhipuCrypto.analyze(\'' + esc(id) + '\')" style="width:100%;padding:11px 16px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;' +
+      'border:1px solid rgba(142,90,255,.5);background:linear-gradient(135deg,rgba(142,90,255,.18),rgba(0,224,255,.1));color:#D3C4FF">' +
+      '✨ ' + T2('cr_ai_btn', 'Analizar con IA', 'Analyze with AI') + '</button>' +
+      '<div style="color:#5C6784;font-size:10.5px;margin-top:6px;text-align:center">' +
+      T2('cr_ai_hint', 'Análisis cauto con IA usando datos en vivo + expediente Khipus', 'Cautious AI analysis using live data + Khipus dossier') + '</div>';
+  }
+  function aiSkeletonHTML() {
+    var bar = function (w) { return '<div class="cr-shim" style="height:11px;width:' + w + '"></div>'; };
+    return '<div style="padding:16px;border-radius:12px;border:1px solid rgba(142,90,255,.28);background:rgba(20,16,34,.5)">' +
+      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:13px;color:#D3C4FF;font-size:13px;font-weight:700">' +
+        '✨ ' + T2('cr_ai_loading', 'Analizando con IA…', 'Analyzing with AI…') + ' <span class="cr-spin"></span></div>' +
+      bar('92%') + '<div style="height:9px"></div>' + bar('78%') + '<div style="height:9px"></div>' + bar('86%') + '<div style="height:9px"></div>' + bar('64%') + '</div>';
+  }
+  function aiErrorHTML(id, msg) {
+    return '<div style="padding:14px 16px;border-radius:12px;border:1px solid rgba(255,77,106,.35);background:rgba(255,77,106,.06)">' +
+      '<div style="color:#FF8FA3;font-size:12.5px;line-height:1.5;margin-bottom:9px">⚠️ ' + esc(msg || T2('cr_ai_err', 'No se pudo generar el análisis.', 'Could not generate the analysis.')) + '</div>' +
+      '<button onclick="window.KhipuCrypto.analyze(\'' + esc(id) + '\',true)" style="padding:6px 15px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;' +
+        'border:1px solid rgba(142,90,255,.45);background:rgba(142,90,255,.1);color:#D3C4FF">' + T2('cr_ai_retry', 'Reintentar', 'Retry') + '</button></div>';
+  }
+  function aiCardHTML(d) {
+    var conf = Math.max(1, Math.min(5, d.confidence | 0));
+    var stars = '';
+    for (var i = 1; i <= 5; i++) stars += '<span style="color:' + (i <= conf ? '#FFB300' : '#39415C') + ';font-size:15px">★</span>';
+    var caseBlock = function (icon, title, col, txt) {
+      if (!txt) return '';
+      return '<div style="flex:1;min-width:220px;border-left:3px solid ' + col + ';padding:8px 12px;background:rgba(13,19,33,.5);border-radius:0 9px 9px 0">' +
+        '<div style="font-size:11px;font-weight:700;color:' + col + ';margin-bottom:3px">' + icon + ' ' + title + '</div>' +
+        '<div style="font-size:12.5px;line-height:1.55;color:#C9D4EC">' + esc(txt) + '</div></div>';
+    };
+    var listBlock = function (icon, title, col, arr) {
+      if (!arr || !arr.length) return '';
+      var items = arr.map(function (x) { return '<li style="margin:3px 0;line-height:1.5">' + esc(x) + '</li>'; }).join('');
+      return '<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:' + col + ';margin-bottom:4px">' + icon + ' ' + title + '</div>' +
+        '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#C9D4EC">' + items + '</ul></div>';
+    };
+    return '<div style="padding:16px;border-radius:12px;border:1px solid rgba(142,90,255,.35);background:linear-gradient(160deg,rgba(24,18,40,.6),rgba(13,19,33,.5))">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
+        '<h3 style="margin:0;font-size:15px;color:#D3C4FF">✨ ' + T2('cr_ai_t', 'Análisis IA', 'AI analysis') + '</h3>' +
+        (d.cached ? '<span style="font-size:10px;color:#7C87A3">' + T2('cr_ai_cached', '· en caché', '· cached') + '</span>' : '') +
+        '<button onclick="window.KhipuCrypto.reanalyze()" title="' + T2('cr_ai_re', 'Volver a analizar', 'Re-analyze') + '" style="margin-left:auto;padding:4px 10px;border-radius:7px;cursor:pointer;font-size:12px;' +
+          'border:1px solid rgba(142,90,255,.4);background:rgba(142,90,255,.08);color:#D3C4FF">⟳</button>' +
+      '</div>' +
+      '<div style="font-size:13.5px;line-height:1.55;color:#E8EDFB;font-weight:600;margin-bottom:9px">' + esc(d.verdict) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:13px"><span style="font-size:11px;color:#7C87A3">' + T2('cr_ai_conf', 'Confianza', 'Confidence') + '</span>' + stars +
+        '<span style="font-size:11px;color:#7C87A3">' + conf + '/5</span></div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        caseBlock('📈', T2('cr_ai_bull', 'Caso alcista', 'Bull case'), '#2BE38B', d.bull) +
+        caseBlock('📉', T2('cr_ai_bear', 'Caso bajista', 'Bear case'), '#FF4D6A', d.bear) +
+      '</div>' +
+      listBlock('🚀', T2('cr_ai_drivers', 'Drivers / catalizadores', 'Drivers / catalysts'), '#52B1FF', d.drivers) +
+      listBlock('💡', T2('cr_ai_insights', 'Insights', 'Insights'), '#3DE0C8', d.insights) +
+      '<div style="margin-top:13px;color:#5C6784;font-size:10.5px;line-height:1.5">' + esc(d.disclaimer || '') + '</div>' +
+    '</div>';
+  }
+  function analyzeRender(id) {
+    var box = document.getElementById('cr-ai');
+    if (!box) return;
+    var st = ANALYSIS[id];
+    if (!st) { box.innerHTML = aiButtonHTML(id); return; }
+    if (st.loading) { box.innerHTML = aiSkeletonHTML(); return; }
+    if (st.error) { box.innerHTML = aiErrorHTML(id, st.error); return; }
+    box.innerHTML = aiCardHTML(st.data);
+  }
+
   // ── vista DETALLE ──
   function renderDetail(a) {
     stopBubbles();
     var p = panel(); if (!p) return;
     var it = intelOf(a);
+    DETAIL = a;   // ficha actual (para ✨ Analizar con IA / reanalizar)
     var kv = function (k, v) {
       return '<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(122,158,255,.08);font-size:12.5px">' +
         '<span style="color:#7C87A3">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
@@ -549,14 +722,16 @@
           kv(T('cr_ath', 'Máximo histórico'), fmtPrice(a.ath) + (athDate ? ' <span style="color:#7C87A3;font-weight:400">(' + athDate + ')</span>' : '')) +
           kv(T('cr_atl', 'Mínimo histórico'), fmtPrice(a.atl)) +
         '</div>' +
+        insightsHTML(a, it) +
+        '<div id="cr-ai" style="margin-top:16px"></div>' +
         '<div id="cr-trade" data-sym="' + esc((a.symbol || '').toUpperCase()) + '"></div>' +
         intelHTML(it) +
         (a.description ? '<p style="margin-top:18px;font-size:13px;line-height:1.65;color:#8b96b5">' + esc(a.description) + '</p>' : '') +
-      '</div>';
+      '</div>' + detailCSS();
+    analyzeRender(a.id);   // ✨ botón IA (o tarjeta cacheada si ya se analizó esta moneda)
     mountTrade(a);   // caja 💼 Operar (async; solo si el activo es tradeable)
-    // gráfico de precio 90 días
-    fetch('/api/crypto/' + encodeURIComponent(a.id) + '/history?days=90')
-      .then(function (r) { return r.json(); })
+    // gráfico de precio 90 días (con reintento suave si CoinGecko falla)
+    getJSON('/api/crypto/' + encodeURIComponent(a.id) + '/history?days=90')
       .then(function (h) {
         var prices = (h && h.prices) || [];
         if (!prices.length || typeof Chart === 'undefined') return;
@@ -583,10 +758,9 @@
       var fresh = Date.now() - LOADED_AT < 120000;
       if (ASSETS.length && (fresh || force === true)) { renderCurrent(); if (fresh && force !== true) return; }
       if (!ASSETS.length) renderMsg(T('cr_loading', 'Cargando mercado cripto…'));
-      fetch('/api/crypto/markets?per_page=100')
-        .then(function (r) { return r.json(); })
+      getJSON('/api/crypto/markets?per_page=100')
         .then(function (d) {
-          if (!d || !d.assets) throw new Error(d && d.error || 'sin datos');
+          if (!d || !d.assets || !d.assets.length) throw new Error(d && d.error || 'sin datos');
           ASSETS = d.assets; LOADED_AT = Date.now(); renderCurrent();
         })
         .catch(function () {
@@ -617,8 +791,7 @@
     },
     openDetail: function (id) {
       renderMsg(T('cr_loading', 'Cargando mercado cripto…'));
-      fetch('/api/crypto/' + encodeURIComponent(id))
-        .then(function (r) { return r.json(); })
+      getJSON('/api/crypto/' + encodeURIComponent(id))
         .then(function (a) {
           if (!a || a.error) throw new Error(a && a.error || 'sin datos');
           renderDetail(a);
@@ -630,5 +803,30 @@
           else renderMsg(T('cr_err', 'No se pudo cargar el mercado cripto. Reintenta en unos segundos.'));
         });
     },
+    // ── ✨ Análisis con IA (cauto) — cache en memoria por moneda ──
+    analyze: function (id, force) {
+      if (!id) return;
+      var prev = ANALYSIS[id];
+      if (prev && prev.data && !force) { analyzeRender(id); return; }   // ya está: solo re-pinta
+      ANALYSIS[id] = { loading: true };
+      analyzeRender(id);
+      var a = (DETAIL && DETAIL.id === id) ? DETAIL : null;
+      var body = { id: id, lang: lang() };
+      if (a) {
+        if (a.symbol) body.symbol = a.symbol;
+        var itl = intelOf(a); if (itl) body.intel = itl;   // ficha estática → más contexto
+      }
+      postJSON('/api/crypto/analyze', body, 1)
+        .then(function (d) {
+          if (!d || !d.ok) throw new Error((d && d.error) || 'error');
+          ANALYSIS[id] = { data: d };
+          analyzeRender(id);
+        })
+        .catch(function (e) {
+          ANALYSIS[id] = { error: (e && e.message) || '' };
+          analyzeRender(id);
+        });
+    },
+    reanalyze: function () { if (DETAIL && DETAIL.id) window.KhipuCrypto.analyze(DETAIL.id, true); },
   };
 })();

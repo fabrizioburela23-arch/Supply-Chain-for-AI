@@ -27,6 +27,27 @@
   function ckLang() {
     try { return (window.LANG || localStorage.getItem('eco_lang') || 'es'); } catch (e) { return 'es'; }
   }
+  function L(es, en) { return ckLang() === 'en' ? en : es; }
+
+  // Extrae empresas SEMILLA mencionadas en un texto de escenario (para la
+  // simulación por agentes): busca labels/tickers de NODES dentro del texto.
+  function extractSeeds(text) {
+    var out = [], seen = {};
+    var norm = (window.KhipuResolve && window.KhipuResolve.norm)
+      ? window.KhipuResolve.norm
+      : function (x) { return String(x == null ? '' : x).toLowerCase(); };
+    var nt = ' ' + norm(text) + ' ';
+    (window.NODES || []).forEach(function (n) {
+      if (out.length >= 8 || seen[n.id]) return;
+      var lab = norm(n.label || '');
+      if (lab && lab.length >= 3 && nt.indexOf(lab) >= 0) { seen[n.id] = 1; out.push(n.id); return; }
+      if (n.mkt) {
+        var tk = String(n.mkt).toLowerCase();
+        if (tk.length >= 2 && nt.indexOf(' ' + tk + ' ') >= 0) { seen[n.id] = 1; out.push(n.id); }
+      }
+    });
+    return out;
+  }
 
   // ── textos bilingües del stage BRÓKER (Etapa M) ──
   var TRB = {
@@ -93,7 +114,10 @@
 #bcp-state.live .dot{background:#00E0FF;color:#00E0FF;animation:bcpPulse 1.2s ease-in-out infinite}
 #bcp-state.think .dot{background:#FFB300;color:#FFB300;animation:bcpPulse .7s ease-in-out infinite}
 @keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.3}}
-#bcp-bar{flex:1;display:flex;align-items:center;gap:9px;max-width:720px;margin:0 auto}
+/* barra de chat de Bixby: AHORA ABAJO (pedido de Fabrizio: "ponla abajo") */
+#bcp-barwrap{flex-shrink:0;padding:12px 22px 16px;border-top:1px solid rgba(122,158,255,.12);
+  display:flex;justify-content:center;background:linear-gradient(0deg,rgba(5,7,14,.6),transparent)}
+#bcp-bar{display:flex;align-items:center;gap:9px;width:100%;max-width:900px}
 #bcp-input{flex:1;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.22);border-radius:12px;
   color:#E8EDFB;font-size:14px;padding:12px 15px;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s}
 #bcp-input:focus{border-color:rgba(0,224,255,.55);box-shadow:0 0 0 3px rgba(0,224,255,.1)}
@@ -103,7 +127,7 @@
   transition:all .14s}
 .bcp-iconbtn:hover{border-color:rgba(0,224,255,.5);color:#00E0FF}
 #bcp-mic.on{background:rgba(214,59,59,.85);border-color:#d63b3b;color:#fff;box-shadow:0 0 18px rgba(214,59,59,.45);animation:bcpPulse 1.1s ease-in-out infinite}
-#bcp-close{margin-left:6px}
+#bcp-close{margin-left:auto}
 #bcp-actions{display:flex;gap:7px;flex-wrap:wrap;padding:9px 22px 0;flex-shrink:0}
 .bcp-act{font-size:11.5px;padding:6px 13px;border-radius:9px;cursor:pointer;color:#9BA6C4;
   background:rgba(11,18,34,.6);border:1px solid rgba(122,158,255,.16);transition:all .13s;
@@ -154,6 +178,24 @@
 .bcp-canvaswrap{max-width:900px;margin:0 auto}
 .bcp-canvasbar{display:flex;gap:9px;margin-bottom:16px}
 .bcp-loading{color:#7C87A3;font-size:13px;font-style:italic;text-align:center;padding:40px}
+/* simulación por agentes (MiroFish) — impactos por empresa con motivo */
+.bcp-agrow{border-bottom:1px solid rgba(122,158,255,.08);padding:9px 0;cursor:pointer}
+.bcp-agrow:hover .nm{color:#00E0FF}
+.bcp-agrow-top{display:flex;align-items:center;gap:9px}
+.bcp-agrow .nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcp-agrow .bar{width:120px;height:6px;border-radius:3px;overflow:hidden;flex:none}
+.bcp-agrow .bar i{display:block;height:100%}
+.bcp-agrow .pv{font-family:'JetBrains Mono',monospace;font-size:12px;width:52px;text-align:right;flex:none}
+.bcp-agwhy{font-size:11.5px;color:#8b95b0;margin-top:4px;line-height:1.45}
+.bcp-agent{border:1px solid rgba(122,158,255,.18);border-radius:12px;padding:8px 12px;min-width:0;max-width:260px}
+.bcp-agent .an{font-size:12.5px;font-weight:700;color:#E8EDFB;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcp-agent .at{font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+.bcp-agent .as{font-size:11.5px;color:#9BA6C4;margin-top:3px;line-height:1.4}
+/* investigación profunda estructurada (sector · competidores · geopolítica · tesis) */
+.bcp-rs-sec{margin-bottom:16px}
+.bcp-rs-txt{font-size:13.5px;line-height:1.6;color:#D5DCF0}
+.bcp-rs-list{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.6;color:#C6CEE6}
+.bcp-rs-list li{margin-bottom:4px}
 `;
     var st = document.createElement('style'); st.id = 'bcp-styles'; st.textContent = css;
     document.head.appendChild(st);
@@ -167,33 +209,37 @@
     if (ov) return ov;
     ov = document.createElement('div');
     ov.id = 'bcp-ov';
+    var en0 = ckLang() === 'en';
     ov.innerHTML =
       '<div id="bcp-top">' +
         '<div id="bcp-orb-wrap"><canvas id="bcp-orb-canvas" width="64" height="64"></canvas></div>' +
         '<div id="bcp-idwrap"><div id="bcp-word">BIXBY</div>' +
-          '<div id="bcp-state"><span class="dot"></span><span class="txt">Listo</span></div></div>' +
-        '<div id="bcp-bar">' +
-          '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false" ' +
-            'placeholder="Pídele algo a Bixby…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»">' +
-          '<button class="bcp-iconbtn" id="bcp-send" title="Enviar">➤</button>' +
-          '<button class="bcp-iconbtn" id="bcp-mic" title="Hablar con Bixby">🎙</button>' +
-        '</div>' +
-        '<button class="bcp-iconbtn" id="bcp-close" title="Cerrar (Esc)">✕</button>' +
+          '<div id="bcp-state"><span class="dot"></span><span class="txt">' + (en0 ? 'Ready' : 'Listo') + '</span></div></div>' +
+        '<button class="bcp-iconbtn" id="bcp-close" title="' + (en0 ? 'Close (Esc)' : 'Cerrar (Esc)') + '">✕</button>' +
       '</div>' +
       // Barra de BOTONES (pedido de Fabrizio): todo lo que Bixby puede
       // mostrar, a un clic — el grafo y la terminal viven DENTRO del escenario.
       '<div id="bcp-actions">' +
-        '<button class="bcp-act" data-act="graph">🗺️ Grafo</button>' +
-        '<button class="bcp-act" data-act="terminal">🖥️ Terminal</button>' +
+        '<button class="bcp-act" data-act="graph">🗺️ ' + (en0 ? 'Graph' : 'Grafo') + '</button>' +
+        '<button class="bcp-act" data-act="terminal">🖥️ ' + (en0 ? 'Terminal' : 'Terminal') + '</button>' +
         '<button class="bcp-act" data-act="xray">🔬 X-Ray</button>' +
-        '<button class="bcp-act" data-act="sim">◉ Simular</button>' +
-        '<button class="bcp-act" data-act="compare">⇄ Comparar</button>' +
-        '<button class="bcp-act" data-act="insights">💡 Oportunidades</button>' +
-        '<button class="bcp-act" data-act="deep">🧠 Investigar</button>' +
-        '<button class="bcp-act" data-act="canvas">✦ Gráfico</button>' +
+        '<button class="bcp-act" data-act="sim">◉ ' + (en0 ? 'Simulate' : 'Simular') + '</button>' +
+        '<button class="bcp-act" data-act="compare">⇄ ' + (en0 ? 'Compare' : 'Comparar') + '</button>' +
+        '<button class="bcp-act" data-act="insights">💡 ' + (en0 ? 'Opportunities' : 'Oportunidades') + '</button>' +
+        '<button class="bcp-act" data-act="deep">🧠 ' + (en0 ? 'Research' : 'Investigar') + '</button>' +
+        '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
         '<button class="bcp-act" data-act="broker">💼 ' + tb('broker') + '</button>' +
       '</div>' +
-      '<div id="bcp-stage"></div>';
+      '<div id="bcp-stage"></div>' +
+      // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Bixby abajo").
+      '<div id="bcp-barwrap"><div id="bcp-bar">' +
+        '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false" ' +
+          'placeholder="' + (en0
+            ? 'Ask Bixby anything…  “break down Nvidia”  ·  “what if TSMC falls?”'
+            : 'Pídele algo a Bixby…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»') + '">' +
+        '<button class="bcp-iconbtn" id="bcp-send" title="' + (en0 ? 'Send' : 'Enviar') + '">➤</button>' +
+        '<button class="bcp-iconbtn" id="bcp-mic" title="' + (en0 ? 'Talk to Bixby' : 'Hablar con Bixby') + '">🎙</button>' +
+      '</div></div>';
     document.body.appendChild(ov);
 
     ov.querySelectorAll('.bcp-act').forEach(function (b) {
@@ -224,8 +270,30 @@
     ov.querySelector('#bcp-close').addEventListener('click', close);
     function submit() { var v = (input.value || '').trim(); if (!v) return; input.value = ''; ask(v); }
 
-    if (window.registerBixbyOrb) window.registerBixbyOrb('bcp-orb-canvas', 64);
+    mountCockpitOrb();
     return ov;
+  }
+
+  // ── Orbe de voz de Bixby (engine/orb.js) dentro de la Cabina ──
+  // Reemplaza el orbe estático del header: respira en reposo y reacciona a la
+  // voz (cian = usuario, violeta = Bixby). voice.js lo alimenta con setUserLevel
+  // / setBixbyLevel. Si orb.js no cargó, cae al orbe pequeño (registerBixbyOrb).
+  function mountCockpitOrb() {
+    var wrap = document.getElementById('bcp-orb-wrap');
+    if (!wrap) return;
+    if (window.BixbyOrb && window.BixbyOrb.mount) {
+      try {
+        var old = document.getElementById('bcp-orb-canvas');
+        if (old) old.style.display = 'none';
+        window.BixbyOrb.mount(wrap);
+        window.BixbyOrb.start();
+        return;
+      } catch (e) { /* cae al fallback */ }
+    }
+    if (window.registerBixbyOrb) window.registerBixbyOrb('bcp-orb-canvas', 64);
+  }
+  function stopCockpitOrb() {
+    if (window.BixbyOrb && window.BixbyOrb.stop) { try { window.BixbyOrb.stop(); } catch (e) {} }
   }
 
   // ── estado del orbe / badge (lo llama voice.js también) ──
@@ -298,6 +366,8 @@
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'xray') return stageXRay(s, arg);
     if (kind === 'compare') return stageCompare(s, arg);
+    if (kind === 'agentsim') return stageAgentSim(s, arg);
+    if (kind === 'research') return stageResearch(s, arg);
     if (kind === 'sim') return stageSim(s, arg);
     if (kind === 'insights') return stageInsights(s);
     if (kind === 'canvas') return stageCanvas(s, arg);
@@ -342,23 +412,39 @@
   }
 
   function backBar(label) {
-    return '<div class="bcp-stagehd"><span class="bcp-back" onclick="window.BixbyCockpit.stage(\'empty\')">← Inicio</span>' +
+    return '<div class="bcp-stagehd"><span class="bcp-back" onclick="window.BixbyCockpit.stage(\'empty\')">← ' + (ckLang() === 'en' ? 'Home' : 'Inicio') + '</span>' +
       (label ? '<span style="color:#7C87A3;font-size:12px">' + esc(label) + '</span>' : '') + '</div>';
   }
 
   function stageEmpty(s) {
-    var chips = [
+    var en = ckLang() === 'en';
+    var chips = en ? [
+      ['break down ', 'Nvidia', 'Full X-Ray'],
+      ['simulate that ', 'China bans HBM exports', 'Agent simulation'],
+      ['what if ', 'TSMC falls', 'Shock on the map'],
+      ['compare ', 'Nvidia and AMD', 'Two companies'],
+      ['show me ', 'opportunities', 'Where to invest'],
+      ['research ', 'Nvidia', 'Deep research'],
+      ['chart: ', 'margins of NVIDIA, TSMC and ASML', 'Data canvas'],
+      ['', 'my account', tb('broker')],
+      ['', 'blank canvas', 'Start from scratch'],
+    ] : [
       ['desármame ', 'Nvidia', 'Radiografía completa'],
-      ['¿qué pasa si cae ', 'TSMC?', 'Simular un shock'],
+      ['simula que ', 'China prohíbe exportar HBM', 'Sim por agentes'],
+      ['¿qué pasa si cae ', 'TSMC?', 'Shock en el mapa'],
       ['compara ', 'Nvidia y AMD', 'Dos empresas'],
       ['muéstrame ', 'oportunidades', 'Dónde invertir'],
+      ['investiga ', 'Nvidia', 'Investigación profunda'],
       ['gráfico: ', 'márgenes de NVIDIA, TSMC y ASML', 'Lienzo de datos'],
-      ['investiga ', 'la energía nuclear para datacenters', 'Investigación profunda'],
-      ['', ckLang() === 'en' ? 'my account' : 'mi cuenta', tb('broker')],
+      ['', 'mi cuenta', tb('broker')],
       ['', 'lienzo en blanco', 'Empezar de cero'],
     ];
-    s.innerHTML = '<div id="bcp-empty"><h2>Soy Bixby. Pregúntame lo que sea.</h2>' +
-      '<p>Puedo desarmar cualquier empresa, simular qué pasa si algo cae, comparar, y dibujarte los datos.</p>' +
+    var h2 = en ? "I'm Bixby. Ask me anything." : 'Soy Bixby. Pregúntame lo que sea.';
+    var pp = en
+      ? 'I can break down any company, simulate what happens if something falls, compare, and chart your data.'
+      : 'Puedo desarmar cualquier empresa, simular qué pasa si algo cae, comparar, y dibujarte los datos.';
+    s.innerHTML = '<div id="bcp-empty"><h2>' + esc(h2) + '</h2>' +
+      '<p>' + esc(pp) + '</p>' +
       '<div class="bcp-chips">' + chips.map(function (c) {
         return '<span class="bcp-chip" data-q="' + esc(c[0] + c[1]) + '"><span class="k">' + esc(c[2]) + '</span>' + esc(c[0] + c[1]) + '</span>';
       }).join('') + '</div></div>';
@@ -908,6 +994,185 @@
     }
   }
 
+  /* ══ SIMULACIÓN POR AGENTES (MiroFish desde la terminal de Bixby) ══
+     Varios agentes analistas (empresa / gobierno / geopolítica) debaten un
+     escenario y proyectan impactos REALISTAS. Server: POST /api/sim/agents
+     {scenario, seeds, lang} → {narrative, impacts:[{id,label,pct,rationale}],
+     agents:[{name,type,stance}], rounds?}. Un solo fetch: el stage y el helper
+     público (voice.js) comparten la MISMA promesa. ══ */
+  function fetchAgentSim(scenario, seeds, lang) {
+    var body = { scenario: scenario, seeds: seeds || [], lang: lang || ckLang() };
+    try {
+      return fetch((window.BASE || '') + '/api/sim/agents', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      }).then(function (r) { return r.json().catch(function () { return { ok: false, error: L('Respuesta inválida del servidor', 'Invalid server response') }; }); })
+        .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
+    } catch (e) { return Promise.resolve({ ok: false, error: String((e && e.message) || e) }); }
+  }
+
+  function agentTypeColor(type) {
+    var t = String(type || '').toLowerCase();
+    if (/gob|gover|state|estad|regul|polic|central bank|banco central/.test(t)) return VIOLET;
+    if (/geo|pol[ií]t|macro|milit|defens|nation/.test(t)) return '#FFB300';
+    return NEON; // empresa / mercado / industria
+  }
+
+  function renderAgentSim(d, en) {
+    var agents = Array.isArray(d.agents) ? d.agents : [];
+    var impacts = Array.isArray(d.impacts) ? d.impacts : [];
+    var agentsHTML = agents.length
+      ? '<div class="bcp-lh">' + (en ? 'Agents in the debate' : 'Agentes en el debate') + '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">' +
+        agents.map(function (a) {
+          var col = agentTypeColor(a.type);
+          return '<div class="bcp-agent" style="border-color:' + col + '55;background:' + col + '0d">' +
+            '<div class="an">' + esc(a.name || '') + '</div>' +
+            (a.type ? '<div class="at" style="color:' + col + '">' + esc(a.type) + '</div>' : '') +
+            (a.stance ? '<div class="as">' + esc(a.stance) + '</div>' : '') +
+          '</div>';
+        }).join('') + '</div>'
+      : '';
+    var narrHTML = d.narrative
+      ? '<div style="border:1px solid rgba(122,158,255,.16);border-radius:14px;background:rgba(11,18,34,.55);' +
+        'padding:16px 18px;font-size:14px;line-height:1.6;color:#E8EDFB;white-space:pre-wrap;margin-bottom:18px">' +
+        esc(d.narrative) + '</div>'
+      : '';
+    var impactsHTML = impacts.length ? impacts.map(function (x) {
+      var pct = (typeof x.pct === 'number') ? x.pct : (parseFloat(x.pct) || 0);
+      var col = pct >= 0 ? UP : DOWN;
+      var w = Math.min(100, Math.abs(pct));
+      var id = x.id || '';
+      return '<div class="bcp-agrow"' + (id ? ' data-id="' + esc(id) + '"' : ' style="cursor:default"') + '>' +
+        '<div class="bcp-agrow-top">' +
+          '<span class="bcp-dot" style="background:' + col + ';color:' + col + '"></span>' +
+          '<span class="nm">' + esc(x.label || id) + '</span>' +
+          '<span class="bar" style="background:' + col + '22"><i style="width:' + w + '%;background:' + col + '"></i></span>' +
+          '<span class="pv" style="color:' + col + '">' + (pct >= 0 ? '+' : '') + Math.round(pct) + '%</span>' +
+        '</div>' +
+        (x.rationale ? '<div class="bcp-agwhy">' + esc(x.rationale) + '</div>' : '') +
+      '</div>';
+    }).join('') : '<div class="bcp-loading">' + (en ? 'No quantified impacts.' : 'Sin impactos cuantificados.') + '</div>';
+    return agentsHTML + narrHTML +
+      '<div class="bcp-lh">' + (en ? 'Projected impact by company' : 'Impacto proyectado por empresa') + '</div>' + impactsHTML;
+  }
+
+  function stageAgentSim(s, arg) {
+    arg = arg || {};
+    var en = ckLang() === 'en';
+    var scen = arg.scenario || '';
+    var title = en ? 'Agent simulation' : 'Simulación por agentes';
+    s.innerHTML = backBar(title) +
+      '<div class="bcp-inner" style="max-width:1040px">' +
+        '<div class="bcp-simhd"><span class="big">🧪 ' + esc(scen || title) + '</span>' +
+          '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">MiroFish</span>' +
+          '<span style="color:#7C87A3;font-size:12px">' + (en ? 'analysts debating…' : 'analistas debatiendo…') + '</span></div>' +
+        '<div id="bcp-ag-body"><div class="bcp-loading">' + (en ? 'Running the multi-agent simulation…' : 'Corriendo la simulación por agentes…') + '</div></div>' +
+      '</div>';
+    var p = arg.promise || fetchAgentSim(scen, arg.seeds || [], ckLang());
+    p.then(function (d) {
+      var body = document.getElementById('bcp-ag-body');
+      if (!body) return;   // salieron de la escena
+      if (!d || d.ok === false) {
+        body.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc((d && d.error) || (en ? 'Simulation failed' : 'La simulación falló')) + '</div>';
+        return;
+      }
+      body.innerHTML = renderAgentSim(d, en);
+      body.querySelectorAll('.bcp-agrow[data-id]').forEach(function (el) {
+        el.addEventListener('click', function () { stage('xray', el.getAttribute('data-id')); });
+      });
+    });
+  }
+
+  // Helper público (lo llama voice.js): abre la Cabina en la sim por agentes y
+  // devuelve la promesa del resultado para que Bixby narre el consenso.
+  window._runAgentSim = function (scenario, seeds, lang) {
+    ensureShell();
+    var p = fetchAgentSim(scenario, seeds || [], lang);
+    openCockpit({ kind: 'agentsim', arg: { scenario: scenario, seeds: seeds || [], promise: p } });
+    return p || Promise.resolve({ ok: false, error: 'no fetch' });
+  };
+
+  /* ══ INVESTIGACIÓN PROFUNDA (más allá del nodo) ══
+     Server: POST /api/research/deep {id, lang} → {thesis, sector, competitors,
+     geopolitics, chokepoints, risks, watch, disclaimer}. ══ */
+  function fetchResearch(id, lang) {
+    var body = { id: id, lang: lang || ckLang() };
+    try {
+      return fetch((window.BASE || '') + '/api/research/deep', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      }).then(function (r) { return r.json().catch(function () { return { ok: false, error: L('Respuesta inválida del servidor', 'Invalid server response') }; }); })
+        .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
+    } catch (e) { return Promise.resolve({ ok: false, error: String((e && e.message) || e) }); }
+  }
+
+  function renderResearch(d, en) {
+    function block(title, txt) {
+      if (!txt) return '';
+      return '<div class="bcp-rs-sec"><div class="bcp-lh">' + esc(title) + '</div><div class="bcp-rs-txt">' + esc(txt) + '</div></div>';
+    }
+    function listBlock(title, arr, color) {
+      if (!Array.isArray(arr) || !arr.length) return '';
+      return '<div class="bcp-rs-sec"><div class="bcp-lh"' + (color ? ' style="color:' + color + '"' : '') + '>' + esc(title) + '</div><ul class="bcp-rs-list">' +
+        arr.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
+    }
+    var comp = Array.isArray(d.competitors) ? d.competitors : [];
+    var compHTML = comp.length
+      ? '<div class="bcp-rs-sec"><div class="bcp-lh">' + (en ? 'Direct competitors' : 'Competidores directos') + '</div>' +
+        '<div class="bcp-chips" style="justify-content:flex-start">' +
+        comp.map(function (c) { return '<span class="bcp-chip" data-q="' + esc(c) + '">' + esc(c) + '</span>'; }).join('') + '</div></div>'
+      : '';
+    var thesisHTML = d.thesis
+      ? '<div style="border:1px solid rgba(0,224,255,.25);border-radius:14px;background:rgba(0,224,255,.05);padding:16px 18px;margin-bottom:16px">' +
+        '<div class="bcp-lh" style="color:' + NEON + '">' + (en ? 'Investment thesis' : 'Tesis de inversión') + '</div>' +
+        '<div class="bcp-rs-txt" style="font-size:14.5px">' + esc(d.thesis) + '</div></div>'
+      : '';
+    return thesisHTML +
+      block(en ? 'Sector' : 'Sector', d.sector) +
+      compHTML +
+      block(en ? 'Geopolitics' : 'Geopolítica', d.geopolitics) +
+      listBlock(en ? 'Supply-chain chokepoints' : 'Cuellos de botella de la cadena', d.chokepoints, DOWN) +
+      listBlock(en ? 'Risks' : 'Riesgos', d.risks, DOWN) +
+      listBlock(en ? 'What to watch' : 'Qué vigilar', d.watch, NEON) +
+      (d.disclaimer ? '<div style="margin-top:14px;font-size:11px;color:#5b6580;font-style:italic">' + esc(d.disclaimer) + '</div>' : '');
+  }
+
+  function stageResearch(s, arg) {
+    arg = arg || {};
+    var en = ckLang() === 'en';
+    var n = arg.id ? resolveNode(arg.id) : null;
+    var label = (n && n.label) || arg.label || arg.id || '';
+    s.innerHTML = backBar(en ? 'Deep research' : 'Investigación profunda') +
+      '<div class="bcp-inner" style="max-width:900px">' +
+        '<div class="bcp-simhd"><span class="big">🧠 ' + esc(label) + '</span>' +
+          '<span style="color:#7C87A3;font-size:12px">' + (en ? 'sector · competitors · geopolitics · thesis' : 'sector · competidores · geopolítica · tesis') + '</span></div>' +
+        '<div id="bcp-rs-body"><div class="bcp-loading">' + (en ? 'Researching beyond the company…' : 'Investigando más allá de la empresa…') + '</div></div>' +
+      '</div>';
+    var p = arg.promise || fetchResearch(arg.id, ckLang());
+    p.then(function (d) {
+      var body = document.getElementById('bcp-rs-body');
+      if (!body) return;
+      if (!d || d.ok === false) {
+        body.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc((d && d.error) || (en ? 'Research failed' : 'La investigación falló')) + '</div>';
+        return;
+      }
+      body.innerHTML = renderResearch(d, en);
+      body.querySelectorAll('.bcp-chip[data-q]').forEach(function (el) {
+        el.addEventListener('click', function () { var rn = resolveNode(el.getAttribute('data-q')); if (rn) stage('xray', rn.id); });
+      });
+    });
+  }
+
+  // Helper público (voice.js): abre la investigación profunda en la Cabina y
+  // devuelve la promesa del informe para que Bixby narre la tesis.
+  // OJO: NO usar el nombre window._openResearch — app.html ya lo usa para el
+  // panel "📄 SEC" (10-K de EDGAR). Aquí es la investigación PROFUNDA de la Cabina.
+  window._openDeepResearch = function (id, lang) {
+    ensureShell();
+    var p = fetchResearch(id, lang);
+    openCockpit({ kind: 'research', arg: { id: id, promise: p } });
+    return p || Promise.resolve({ ok: false, error: 'no fetch' });
+  };
+
   // ══ ENRUTADOR de lo que pides (texto) ══
   function ask(text) {
     text = (text || '').trim(); if (!text) return;
@@ -942,8 +1207,17 @@
       stage('canvas', text.replace(/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\s*:?\s*/i, '')); return;
     }
 
-    // 2.5) investigación profunda (Capa 4): planear→reunir→simular→sintetizar
-    if (/investiga|a fondo|an[aá]lisis profundo|profundiza|\bdeep\b|tesis (de|sobre)/.test(low)) {
+    // 2.5) investigación profunda. Si nombra una EMPRESA → informe estructurado
+    //      (sector/competidores/geopolítica/tesis, /api/research/deep). Si es una
+    //      pregunta abierta → el bucle multi-paso (Capa 4, /api/deep/analyze).
+    var invM = low.match(/(?:investiga(?:ci[oó]n)?(?:\s+(?:de|sobre|a))?|research|reporte\s+de|informe\s+de|tesis\s+(?:de|sobre))\s+(.+)/);
+    if (invM) {
+      var invT = invM[1].replace(/\?+$/, '').trim();
+      var invN = resolveNode(invT);
+      if (invN) { stage('research', { id: invN.id }); return; }
+      stage('deep', text); return;   // pregunta abierta → multi-paso
+    }
+    if (/investiga|a fondo|an[aá]lisis profundo|profundiza|\bdeep\b/.test(low)) {
       stage('deep', text); return;
     }
 
@@ -974,6 +1248,16 @@
     // 4) comparar A y B
     var cmp = low.match(/compar[ao]?r?\s+(.+?)\s+(?:y|vs|versus|con|contra)\s+(.+)/);
     if (cmp) { stage('compare', { a: cmp[1], b: cmp[2] }); return; }
+
+    // 4.5) SIMULACIÓN POR AGENTES (MiroFish): escenarios abiertos en lenguaje
+    //      natural — "simula que China prohíbe HBM", "qué pasaría si cae Taiwán".
+    //      El "qué pasa si cae X" simple (present) sigue yendo al sim local rápido.
+    var agM = low.match(/^(?:simulate|simula(?:r|me|ci[oó]n)?|run\s+a\s+simulation(?:\s+of)?)\b\s*(?:that|the scenario|un escenario|el escenario|que|del?|:)?\s*(.+)$/)
+           || low.match(/^(?:qu[eé]\s+pasar[ií]a|what\s+would\s+happen(?:\s+if)?|what\s+if)\s+(?:si\s+|if\s+)?(.+)$/);
+    if (agM) {
+      var scen = agM[1].replace(/\?+$/, '').trim();
+      if (scen) { stage('agentsim', { scenario: scen, seeds: extractSeeds(scen) }); return; }
+    }
 
     // 5) simular / caída — si el nombre no resuelve, decirlo CON sugerencias
     var sim = low.match(/(?:qu[eé] pasa si cae|si cae|cae|colaps|corte de|corta[nr]?|sanci[oó]n(?:a[nr]?)?|prohib|auge de|boom de|demanda de|simula[nr]?|shock)\s+(.+)/);
@@ -1035,13 +1319,14 @@
     var ov = document.getElementById('bcp-ov');
     ov.classList.add('show');
     open = true;
-    if (window.registerBixbyOrb) window.registerBixbyOrb('bcp-orb-canvas', 64);
+    mountCockpitOrb();
     if (initial && initial.kind) stage(initial.kind, initial.arg);
     else if (!document.getElementById('bcp-stage').children.length) stage('empty');
     setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
   }
   function close() {
     restoreAdopted();   // devolver grafo/terminal a su sitio original
+    stopCockpitOrb();
     var ov = document.getElementById('bcp-ov');
     if (ov) ov.classList.remove('show');
     open = false;

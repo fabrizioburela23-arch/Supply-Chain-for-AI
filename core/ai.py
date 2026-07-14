@@ -17,10 +17,17 @@ def _complete_claude(system, prompt, max_tokens, tier='fast'):
     client = anthropic.Anthropic(api_key=CLAUDE)
     # Híbrido: el tier SOLO cambia el modelo de Claude (misma ANTHROPIC_KEY).
     model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
-    msg = client.messages.create(
-        model=model, max_tokens=max_tokens, system=system or '',
-        messages=[{'role': 'user', 'content': prompt or ''}],
-    )
+    # Sonnet 5 activa el "pensamiento adaptativo" por defecto: consumiría parte
+    # del presupuesto de max_tokens razonando (respuesta más lenta y, con budgets
+    # pequeños, riesgo de truncar el texto/JSON). La app se diseñó para respuestas
+    # inmediatas y deterministas, así que lo desactivamos. `thinking` es un kwarg
+    # de los SDK recientes; si uno viejo no lo conoce, reintentamos sin él.
+    kwargs = dict(model=model, max_tokens=max_tokens, system=system or '',
+                  messages=[{'role': 'user', 'content': prompt or ''}])
+    try:
+        msg = client.messages.create(thinking={'type': 'disabled'}, **kwargs)
+    except TypeError:
+        msg = client.messages.create(**kwargs)
     text = ''
     for block in msg.content:
         if getattr(block, 'type', None) == 'text':

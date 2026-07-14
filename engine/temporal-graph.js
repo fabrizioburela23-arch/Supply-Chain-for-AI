@@ -23,9 +23,33 @@
   let _allNodeIds = [];               // ids presentes en el grafo
   let _searchNodes = new Set(), _searchAll = true;
   let _objOpen = null;                // id del objeto abierto en la ficha lateral
+  // Densidad del grafo: 'core' (núcleo, hubs) | 'rel' (relevante, por defecto) |
+  // 'all' (todas las empresas). Antes solo se dibujaban ~30 nodos; ahora el
+  // backbone completo está disponible y el usuario elige cuántos ver.
+  let _density = 'rel';
+  let _nodesById = {};                // id -> datum del nodo dibujado (x/y para animar)
+  let _shockAnim = null;              // interval de la animación de cascada
   const lidOf = v => (v && typeof v === 'object') ? v.id : v;
 
   const COL = { vigente: '#4ade80', expirado: '#6b7280', futuro: '#3a3a5e', node: '#a78bfa' };
+
+  // ── i18n local (regla bilingüe ES/EN — window.LANG / localStorage eco_lang) ──
+  function _lang() {
+    try { return String(window.LANG || localStorage.getItem('eco_lang') || 'es').slice(0, 2) === 'en' ? 'en' : 'es'; }
+    catch (e) { return 'es'; }
+  }
+  const _L = {
+    core:       { es: 'Núcleo', en: 'Core' },
+    rel:        { es: 'Relevante', en: 'Key' },
+    all:        { es: 'Todas', en: 'All' },
+    density:    { es: '¿Cuántas empresas mostrar?', en: 'How many companies?' },
+    showing:    { es: 'mostrando', en: 'showing' },
+    affected:   { es: 'empresas afectadas', en: 'companies hit' },
+    benefit:    { es: 'se benefician', en: 'benefit' },
+    benefLabel: { es: '🟢 Se benefician (recogen el negocio)', en: '🟢 Beneficiaries (pick up the business)' },
+    simHintOn:  { es: '⚡ clic en cualquier nodo para simular su caída (según la fecha actual)', en: '⚡ click any node to simulate its collapse (as of the current date)' },
+  };
+  function _t(k) { const o = _L[k]; return o ? (o[_lang()] || o.es) : k; }
 
   const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const catColor = cat => { try { return (typeof getCatColorHex === 'function' && getCatColorHex(cat)) || COL.node; } catch (e) { return COL.node; } };
@@ -92,19 +116,29 @@
       });
     } catch (e) {}
 
-    // 3) Cadena de suministro (LINKS más fuertes) → aristas
+    // 3) Cadena de suministro (TODOS los LINKS) → aristas del backbone.
+    //    Antes solo se tomaban los 34 más fuertes — por eso "se veían muy pocos
+    //    nodos". Ahora convertimos TODA la red. Las aristas sin fecha se tratan
+    //    como "siempre presentes" (valid_from = null → vigentes en cualquier
+    //    punto de la línea de tiempo). El control de densidad decide cuántas se
+    //    DIBUJAN; el resto sigue vivo para chokepoints / exposición / cascada.
     try {
       const lid = v => (v && typeof v === 'object') ? v.id : v;
-      const links = [...(window.LINKS || [])].sort((a, b) => ((b && b.w) || 0) - ((a && a.w) || 0)).slice(0, 34);
+      const seenEdge = new Set();
+      out.forEach(f => { if (f._isEdge) seenEdge.add(f.subject + '␟' + f.object); });
+      const links = [...(window.LINKS || [])].sort((a, b) => ((b && b.w) || 0) - ((a && a.w) || 0));
       links.forEach((l, i) => {
         if (!l) return;
         try {
           const s = lid(l.source), t = lid(l.target);
-          if (!NB[s] || !NB[t]) return;
-          if (out.some(f => f._isEdge && f.subject === s && f.object === t)) return; // no duplicar con curados
+          if (!NB[s] || !NB[t] || s === t) return;
+          const key = s + '␟' + t;
+          if (seenEdge.has(key)) return; // no duplicar con curados / otros links
+          seenEdge.add(key);
           push({
             id: `tf_link_${i}`, subject: s, predicate: l.rel || l.type || 'abastece a', object: t, object_type: 'node',
-            valid_from: '2022-01-01', valid_until: null, source: 'link', confidence: 0.7,
+            ltype: l.type || 'supply', w: l.w || 2,
+            valid_from: null, valid_until: null, source: 'link', confidence: 0.7,
             group: 'g_supply', meta: { headline: `${(NB[s] && NB[s].label) || s} → ${(NB[t] && NB[t].label) || t}`, impact: Math.min(9, (l.w || 2) + 2) },
           });
         } catch (e) {}
@@ -161,6 +195,16 @@
           <span id="tkg-datelbl" style="flex-shrink:0;min-width:96px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--ink-1)"></span>
         </div>
 
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <span id="tkg-density-caption" style="font-size:11px;color:var(--ink-3)"></span>
+          <div class="seg" id="tkg-density">
+            <button data-d="core">◎ <span data-l>Núcleo</span></button>
+            <button data-d="rel" class="active">◈ <span data-l>Relevante</span></button>
+            <button data-d="all">⬢ <span data-l>Todas</span></button>
+          </div>
+          <span id="tkg-density-hint" style="font-size:10.5px;color:var(--ink-3)"></span>
+        </div>
+
         <div id="tkg-typelegend" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
 
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
@@ -185,6 +229,7 @@
         <div id="tkg-viz">
           <div style="position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:radial-gradient(120% 120% at 50% 0%, rgba(124,58,237,.06), transparent 60%),var(--bg)">
             <svg id="tkg-svg" style="width:100%;height:520px;display:block;cursor:grab"></svg>
+            <div id="tkg-shockcounter" style="position:absolute;top:12px;left:14px;display:none;background:rgba(22,7,7,.92);border:1px solid #ef444466;border-radius:11px;padding:8px 13px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:5;min-width:96px;box-shadow:0 6px 22px rgba(0,0,0,.4)"></div>
             <div style="position:absolute;bottom:10px;left:14px;display:flex;gap:14px;font-size:10px;color:var(--ink-3)">
               <span><span style="display:inline-block;width:16px;height:3px;background:${COL.vigente};vertical-align:middle;border-radius:2px"></span> vigente</span>
               <span><span style="display:inline-block;width:16px;height:0;border-top:2px dashed ${COL.expirado};vertical-align:middle"></span> expirado</span>
@@ -219,6 +264,14 @@
     panel.querySelectorAll('#tkg-edgemode button').forEach(b => b.addEventListener('click', () => {
       panel.querySelectorAll('#tkg-edgemode button').forEach(x => x.classList.remove('active'));
       b.classList.add('active'); _edgeColorMode = b.dataset.m; _refresh();
+    }));
+
+    // Densidad: cuántas empresas dibujar (núcleo / relevante / todas).
+    const capEl = panel.querySelector('#tkg-density-caption');
+    if (capEl) capEl.textContent = _t('density');
+    panel.querySelectorAll('#tkg-density button').forEach(b => b.addEventListener('click', () => {
+      if (_density === b.dataset.d) return;
+      _density = b.dataset.d; _rebuildGraph();
     }));
     // Etapa 3: modo simulación (clic en nodo = shock) y reinicio
     panel.querySelector('#tkg-simbtn').addEventListener('click', () => _toggleSimMode());
@@ -297,17 +350,45 @@
   function _buildGraph() {
     const svgEl = document.getElementById('tkg-svg'); if (!svgEl) return;
     const w = _svgW(svgEl), h = 520;
-    const edges = _facts.filter(f => f._isEdge);
-    const ids = new Set(); edges.forEach(e => { ids.add(e.subject); ids.add(e.object); });
     const NB = window.NODE_BY_ID || {};
+    const allEdges = _facts.filter(f => f._isEdge);
+
+    // Grado por nodo (para filtrar por relevancia) + protagonistas "curados"
+    // (nodos con hechos temporales FECHADOS) que SIEMPRE se incluyen para que la
+    // línea de tiempo conserve su narrativa aunque el filtro reduzca el resto.
+    const deg = {}; const curated = new Set();
+    allEdges.forEach(e => {
+      deg[e.subject] = (deg[e.subject] || 0) + 1;
+      deg[e.object] = (deg[e.object] || 0) + 1;
+      // "protagonista fechado": tiene ventana de validez real. Las aristas del
+      // backbone (LINKS) van con fecha null, así que quedan fuera de este set.
+      if (e._from != null || e._until != null) { curated.add(e.subject); curated.add(e.object); }
+    });
+    const allIds = Object.keys(deg);
+
+    // Cap por densidad: núcleo (hubs) / relevante (por defecto) / todas.
+    const CAPS = { core: 60, rel: 240, all: Infinity };
+    const cap = CAPS[_density] != null ? CAPS[_density] : 240;
+    let keep;
+    if (allIds.length <= cap) {
+      keep = new Set(allIds);
+    } else {
+      const ranked = allIds.slice().sort((a, b) => (deg[b] || 0) - (deg[a] || 0));
+      keep = new Set(ranked.slice(0, cap));
+      curated.forEach(id => { if (deg[id]) keep.add(id); });   // no perder protagonistas fechados
+    }
+
+    const edges = allEdges.filter(e => keep.has(e.subject) && keep.has(e.object));
+    const ids = new Set(); edges.forEach(e => { ids.add(e.subject); ids.add(e.object); });
     const nodes = [...ids].map(id => {
       const e = resolveEntity(id);
-      return { id, label: (e && e.label) || id, type: (e && e.type) || 'Company', cat: e && e.cat };
+      return { id, label: (e && e.label) || id, type: (e && e.type) || 'Company', cat: e && e.cat, deg: deg[id] || 0 };
     });
     const links = edges.map(e => ({ ...e, source: e.subject, target: e.object }));
 
-    // Índices para filtros y microsimulación
-    _nodeType = {}; nodes.forEach(n => { _nodeType[n.id] = n.type; });
+    // Índices para filtros y microsimulación (sobre lo que se DIBUJA)
+    _nodeType = {}; _nodesById = {};
+    nodes.forEach(n => { _nodeType[n.id] = n.type; _nodesById[n.id] = n; });
     _impactAdj = {}; _impactRev = {};
     edges.forEach(f => {
       const ie = _impactEdges(f); if (!ie) return;
@@ -315,25 +396,28 @@
       (_impactRev[ie[1]] = _impactRev[ie[1]] || []).push({ to: ie[0], fact: f });    // ie[1] depende de ie[0]
     });
     _allNodeIds = nodes.map(n => n.id);
+    _updateDensityLabel(allIds.length, nodes.length);
 
     // Diagnóstico visible: cuántos hechos/aristas/nodos hay realmente.
     const dbg = document.getElementById('tkg-store');
-    if (dbg) dbg.title = `hechos:${_facts.length} · aristas:${edges.length} · nodos:${nodes.length} · NODE_BY_ID:${Object.keys(NB).length}`;
+    if (dbg) dbg.title = `hechos:${_facts.length} · aristas:${edges.length}/${allEdges.length} · nodos:${nodes.length}/${allIds.length} · NODE_BY_ID:${Object.keys(NB).length}`;
     if (!nodes.length) {
       _svg = d3.select(svgEl); _svg.selectAll('*').remove();
       _svg.append('text').attr('x', 24).attr('y', 44).attr('fill', '#f87171').attr('font-size', '13px')
-        .text(`Sin relaciones para dibujar — hechos:${_facts.length} aristas:${edges.length} (NODE_BY_ID:${Object.keys(NB).length}).`);
+        .text(`Sin relaciones para dibujar — hechos:${_facts.length} aristas:${allEdges.length} (NODE_BY_ID:${Object.keys(NB).length}).`);
       return;
     }
 
     _svg = d3.select(svgEl); _svg.selectAll('*').remove();
     _root = _svg.append('g');
-    _svg.call(d3.zoom().scaleExtent([0.3, 3]).on('zoom', ev => _root.attr('transform', ev.transform)));
+    _svg.call(d3.zoom().scaleExtent([0.2, 3]).on('zoom', ev => _root.attr('transform', ev.transform)));
 
+    // Radio ligeramente mayor para hubs, para que se lea la jerarquía con muchos nodos.
+    const rOf = d => (d.type && d.type !== 'Company') ? 9 : (d.deg >= 8 ? 8.5 : d.deg >= 4 ? 7 : 5.5);
     _linkSel = _root.append('g').selectAll('line').data(links).join('line')
       .attr('stroke-width', 1.6).attr('stroke-linecap', 'round');
     _nodeSel = _root.append('g').selectAll('circle').data(nodes).join('circle')
-      .attr('r', d => d.type && d.type !== 'Company' ? 9 : 7)   // objetos de ontología un poco más grandes
+      .attr('r', rOf)
       .attr('fill', d => entityColor(d)).attr('stroke', '#0a0a14').attr('stroke-width', 1.5)
       .style('cursor', 'pointer')
       .on('click', (ev, d) => {
@@ -345,16 +429,25 @@
         .on('drag', (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
         .on('end', (ev, d) => { if (!ev.active) _sim.alphaTarget(0); d.fx = null; d.fy = null; }));
     _nodeSel.append('title').text(d => d.label);
+    // Con muchos nodos, solo etiquetamos los relevantes (hubs) para no saturar.
+    const labelMin = nodes.length > 220 ? 4 : nodes.length > 120 ? 2 : 0;
     _labelSel = _root.append('g').selectAll('text').data(nodes).join('text')
-      .text(d => d.label.length > 16 ? d.label.slice(0, 15) + '…' : d.label)
+      .text(d => (d.deg >= labelMin) ? (d.label.length > 16 ? d.label.slice(0, 15) + '…' : d.label) : '')
       .attr('font-size', '10px').attr('fill', '#9fb0d0').attr('text-anchor', 'middle').attr('dy', -11)
       .style('pointer-events', 'none');
 
+    // Fuerzas afinadas según la cantidad de nodos: con cientos, repulsión más
+    // suave + distanceMax (corta el cálculo lejano, gran ahorro) para no colapsar.
+    const N = nodes.length;
+    const charge = N > 300 ? -50 : N > 150 ? -110 : -260;
+    const dist = N > 300 ? 44 : N > 150 ? 62 : 95;
+    const coll = N > 300 ? 9 : N > 150 ? 13 : 24;
     _sim = d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id).distance(95))
-      .force('charge', d3.forceManyBody().strength(-260))
+      .force('link', d3.forceLink(links).id(d => d.id).distance(dist).strength(N > 300 ? 0.35 : 0.7))
+      .force('charge', d3.forceManyBody().strength(charge).distanceMax(N > 200 ? 340 : 1200))
       .force('center', d3.forceCenter(w / 2, h / 2))
-      .force('collide', d3.forceCollide(24))
+      .force('collide', d3.forceCollide(coll))
+      .velocityDecay(N > 300 ? 0.5 : 0.4)
       .on('tick', () => {
         _linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
         _nodeSel.attr('cx', d => d.x).attr('cy', d => d.y);
@@ -367,7 +460,28 @@
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(_resize);
     setTimeout(_resize, 350);
     setTimeout(_fitView, 1100);
-    setTimeout(_fitView, 2200);
+    setTimeout(_fitView, 2400);
+  }
+
+  // Actualiza las etiquetas del control de densidad (con conteos reales) y el
+  // hint "mostrando X/Y". Bilingüe.
+  function _updateDensityLabel(total, shown) {
+    const seg = document.getElementById('tkg-density'); if (!seg) return;
+    const CAPS = { core: 60, rel: 240, all: total };
+    seg.querySelectorAll('button').forEach(b => {
+      const d = b.dataset.d, lblEl = b.querySelector('[data-l]');
+      if (lblEl) { const n = Math.min(CAPS[d] != null ? CAPS[d] : total, total); lblEl.textContent = `${_t(d)} (${n})`; }
+      b.classList.toggle('active', d === _density);
+    });
+    const hint = document.getElementById('tkg-density-hint');
+    if (hint) hint.textContent = `${_t('showing')} ${shown}/${total}`;
+  }
+
+  // Reconstruye el grafo (cambio de densidad): limpia el shock y redibuja.
+  function _rebuildGraph() {
+    _stopShockAnim(); _shock = null; _updateShockCounter(); _renderImpact();
+    try { _buildGraph(); _applySearch(); _refresh(); }
+    catch (e) { try { console.error('[TKG] rebuild', e); } catch (_) {} }
   }
 
   // Encuadra todos los nodos dentro del SVG (por si el force los dejó fuera de vista).
@@ -405,10 +519,15 @@
 
   const _typeHidden = id => _hiddenTypes.has(_nodeType[id] || 'Company');
 
+  // Durante la cascada, "encendido" = _shock.shown (crece ola a ola). Así el
+  // repintado es PROGRESIVO y se ve avanzar la onda, no un cambio de golpe.
+  const _lit = id => _shock && _shock.shown && _shock.shown.has(id);
+  const _ben = id => _shock && _shock.benefitShown && _shock.benefitShown.has(id);
+
   function _edgeStroke(d) {
     if (_shock) {
-      const a = _shock.affected.has(lidOf(d.source)), b = _shock.affected.has(lidOf(d.target));
-      return (a && b) ? '#ef4444' : '#3a3a5e';
+      const a = _lit(lidOf(d.source)), b = _lit(lidOf(d.target));
+      return (a && b) ? '#ff5555' : '#2a2a44';
     }
     if (_edgeColorMode === 'rel') {
       const r = window.ONTOLOGY && window.ONTOLOGY.rels && window.ONTOLOGY.rels[d.rel];
@@ -419,12 +538,19 @@
   }
   function _edgeOpacity(d) {
     if (_shock) {
-      const a = _shock.affected.has(lidOf(d.source)), b = _shock.affected.has(lidOf(d.target));
-      return (a && b) ? 0.9 : 0.05;
+      const a = _lit(lidOf(d.source)), b = _lit(lidOf(d.target));
+      return (a && b) ? 0.95 : 0.04;
     }
     const st = status(d, _dateMs);
     if (d._match === false) return 0.05;
     return st === 'vigente' ? 0.8 : st === 'expirado' ? 0.32 : 0.1;
+  }
+  function _edgeWidth(d) {
+    if (_shock) {
+      const a = _lit(lidOf(d.source)), b = _lit(lidOf(d.target));
+      return (a && b) ? 3.2 : 1;   // engrosar las aristas activas de la cascada
+    }
+    return 1.6;
   }
 
   // _refresh: repinta nodos y aristas según tiempo, búsqueda, filtros y shock.
@@ -433,12 +559,22 @@
     if (_nodeSel) {
       _nodeSel
         .attr('display', d => _typeHidden(d.id) ? 'none' : null)
-        .attr('fill', d => (_shock && d.id === _shock.origin) ? '#ef4444' : entityColor(d))
-        .attr('stroke', d => (_shock && _shock.affected.has(d.id)) ? '#ef4444' : '#0a0a14')
-        .attr('stroke-width', d => (_shock && _shock.affected.has(d.id)) ? 2.5 : 1.5)
+        .attr('fill', d => {
+          if (_shock) {
+            if (d.id === _shock.origin) return '#ef4444';   // el que cae
+            if (_ben(d.id)) return '#4ade80';               // se beneficia
+            if (_lit(d.id)) return '#f87171';               // afectado (rojo claro)
+          }
+          return entityColor(d);
+        })
+        .attr('stroke', d => {
+          if (_shock) { if (_ben(d.id)) return '#4ade80'; if (_lit(d.id)) return '#ef4444'; }
+          return '#0a0a14';
+        })
+        .attr('stroke-width', d => (_shock && (_lit(d.id) || _ben(d.id))) ? 2.5 : 1.5)
         .attr('opacity', d => {
           if (_typeHidden(d.id)) return 0;
-          if (_shock) return _shock.affected.has(d.id) ? 1 : 0.12;
+          if (_shock) return (_lit(d.id) || _ben(d.id)) ? 1 : 0.1;
           if (!_searchAll && !_searchNodes.has(d.id)) return 0.15;
           return 1;
         });
@@ -447,7 +583,7 @@
       _labelSel
         .attr('display', d => _typeHidden(d.id) ? 'none' : null)
         .attr('opacity', d => {
-          if (_shock) return _shock.affected.has(d.id) ? 1 : 0.1;
+          if (_shock) return (_lit(d.id) || _ben(d.id)) ? 1 : 0.08;
           if (!_searchAll && !_searchNodes.has(d.id)) return 0.2;
           return 0.9;
         });
@@ -457,7 +593,8 @@
         .attr('display', d => (_typeHidden(lidOf(d.source)) || _typeHidden(lidOf(d.target))) ? 'none' : null)
         .attr('stroke', _edgeStroke)
         .attr('stroke-opacity', _edgeOpacity)
-        .attr('stroke-dasharray', d => status(d, _dateMs) === 'vigente' ? null : '4,4');
+        .attr('stroke-width', _edgeWidth)
+        .attr('stroke-dasharray', d => (_shock || status(d, _dateMs) === 'vigente') ? null : '4,4');
     }
     if (_tab === 'facts') _renderFacts();
   }
@@ -472,7 +609,8 @@
   }
 
   function _runShock(originId) {
-    if (!_impactAdj) return;
+    if (!_impactAdj || !_nodesById[originId]) return;   // solo nodos dibujados
+    _stopShockAnim();
     const affected = new Set([originId]);
     const order = [{ id: originId, depth: 0 }];
     let frontier = [originId], depth = 0;
@@ -482,7 +620,7 @@
       frontier.forEach(id => {
         (_impactAdj[id] || []).forEach(({ to, fact }) => {
           if (status(fact, _dateMs) !== 'vigente') return;   // solo relaciones vigentes en la fecha
-          if (_typeHidden(to)) return;
+          if (_typeHidden(to) || !_nodesById[to]) return;    // dentro de lo dibujado
           if (!affected.has(to)) { affected.add(to); next.push(to); order.push({ id: to, depth }); }
         });
       });
@@ -490,9 +628,121 @@
     }
     const byType = {};
     affected.forEach(id => { const t = _nodeType[id] || 'Company'; byType[t] = (byType[t] || 0) + 1; });
-    _shock = { origin: originId, affected, byType, order, port: _portfolioAtRisk(affected) };
-    _refresh();
-    _renderImpact();
+    const benefit = _computeBenefit(originId, affected);
+    _shock = {
+      origin: originId, affected, byType, order, benefit,
+      shown: new Set([originId]),   // crece durante la animación (repintado progresivo)
+      benefitShown: new Set(),      // se revela al final
+      maxDepth: depth,
+      port: _portfolioAtRisk(affected),
+    };
+    _animateShock();
+  }
+
+  // Beneficiarios: proveedores ALTERNATIVOS a los clientes directos del origen
+  // (si el origen cae, ellos recogen ese negocio) + rivales directos (aristas de
+  // tipo 'partner', que en estos datos son competencia). Acotado para no saturar.
+  function _computeBenefit(originId, affected) {
+    const benefit = new Map();
+    const add = (id, why) => {
+      if (!id || id === originId || affected.has(id) || _typeHidden(id) || !_nodesById[id]) return;
+      if (!benefit.has(id) && benefit.size < 40) benefit.set(id, why);
+    };
+    (_impactAdj[originId] || []).forEach(({ to: cust }) => {
+      (_impactRev[cust] || []).forEach(({ to: alt }) => add(alt, cust));
+    });
+    (_facts || []).forEach(f => {
+      if (!f._isEdge || f.ltype !== 'partner') return;
+      if (f.subject === originId) add(f.object, originId);
+      else if (f.object === originId) add(f.subject, originId);
+    });
+    return benefit;
+  }
+
+  // ── Animación cinemática de la cascada ───────────────────────────────────────
+  // Revela la onda ola a ola; por cada arista activada lanza un "pulso" que viaja
+  // del padre al hijo, y un anillo de impacto en cada nodo que cae.
+  const _SHOCK_STEP = 340;   // ms por ola
+  function _stopShockAnim() { if (_shockAnim) { clearInterval(_shockAnim); _shockAnim = null; } }
+
+  function _animateShock() {
+    if (!_shock) return;
+    const depths = {}; let maxD = 0;
+    _shock.order.forEach(o => { (depths[o.depth] = depths[o.depth] || []).push(o.id); if (o.depth > maxD) maxD = o.depth; });
+    _flashNode(_shock.origin, '#ef4444', true);
+    _refresh(); _updateShockCounter(); _renderImpact();
+    let d = 1;
+    _shockAnim = setInterval(() => {
+      if (!_shock) { _stopShockAnim(); return; }
+      if (d > maxD) {
+        _stopShockAnim();
+        _revealBenefits();
+        _refresh(); _updateShockCounter(); _renderImpact();
+        return;
+      }
+      const prevShown = new Set(_shock.shown);
+      const wave = depths[d] || [];
+      let pulses = 0;
+      wave.forEach(id => {
+        _shock.shown.add(id);
+        if (pulses < 60) {
+          const parent = (_impactRev[id] || []).map(x => x.to).find(p => prevShown.has(p));
+          if (parent) { _spawnPulse(parent, id, '#ff5555'); pulses++; }
+          _flashNode(id, '#ef4444');
+        }
+      });
+      _refresh(); _updateShockCounter();
+      d++;
+    }, _SHOCK_STEP);
+  }
+
+  function _revealBenefits() {
+    if (!_shock || !_shock.benefit) return;
+    let n = 0;
+    _shock.benefit.forEach((why, id) => {
+      _shock.benefitShown.add(id);
+      if (n < 40) { if (_nodesById[why]) _spawnPulse(why, id, '#4ade80'); _flashNode(id, '#4ade80'); n++; }
+    });
+  }
+
+  // Pulso que viaja de A → B a lo largo de la arista (onda de impacto visible).
+  function _spawnPulse(fromId, toId, color) {
+    if (!_root || typeof d3 === 'undefined') return;
+    const a = _nodesById[fromId], b = _nodesById[toId];
+    if (!a || !b || a.x == null || b.x == null || !isFinite(a.x) || !isFinite(b.x)) return;
+    const c = _root.append('circle')
+      .attr('cx', a.x).attr('cy', a.y).attr('r', 4.2).attr('fill', color)
+      .attr('opacity', 0.95).style('pointer-events', 'none');
+    c.transition().duration(500).ease(d3.easeCubicOut)
+      .attr('cx', b.x).attr('cy', b.y).attr('r', 2).attr('opacity', 0.12)
+      .on('end', () => { try { c.remove(); } catch (e) {} });
+  }
+
+  // Anillo de impacto que se expande sobre un nodo al ser alcanzado.
+  function _flashNode(id, color, big) {
+    if (!_root || typeof d3 === 'undefined') return;
+    const n = _nodesById[id]; if (!n || n.x == null || !isFinite(n.x)) return;
+    const ring = _root.append('circle')
+      .attr('cx', n.x).attr('cy', n.y).attr('r', big ? 9 : 6).attr('fill', 'none')
+      .attr('stroke', color).attr('stroke-width', big ? 3 : 2).attr('opacity', 0.9)
+      .style('pointer-events', 'none');
+    ring.transition().duration(big ? 820 : 620).ease(d3.easeCubicOut)
+      .attr('r', big ? 36 : 24).attr('opacity', 0).attr('stroke-width', 0.4)
+      .on('end', () => { try { ring.remove(); } catch (e) {} });
+  }
+
+  // Contador flotante en vivo: cuántas empresas van cayendo (y beneficiándose).
+  function _updateShockCounter() {
+    const el = document.getElementById('tkg-shockcounter'); if (!el) return;
+    if (!_shock) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    const hit = _shock.shown.size - 1;
+    const ben = _shock.benefitShown ? _shock.benefitShown.size : 0;
+    const originLabel = (resolveEntity(_shock.origin) || {}).label || _shock.origin;
+    el.style.display = 'block';
+    el.innerHTML = `<div style="font-weight:800;color:#fff;font-size:11.5px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">⚡ ${esc(originLabel)}</div>
+      <div style="font-size:22px;font-weight:800;color:#ff6b6b;line-height:1.05;font-family:'JetBrains Mono',monospace">${hit}</div>
+      <div style="font-size:9px;color:#ffc9c9;text-transform:uppercase;letter-spacing:.4px">${_t('affected')}</div>
+      ${ben ? `<div style="font-size:11px;color:#4ade80;margin-top:4px;font-weight:700">+${ben} ${_t('benefit')}</div>` : ''}`;
   }
 
   // ── Portafolio (B): valor por posición desde MKT.pos + MKT.quotes ────────────
@@ -602,14 +852,14 @@
     </div>`;
   }
 
-  function _clearShock() { _shock = null; _renderImpact(); _refresh(); }
+  function _clearShock() { _stopShockAnim(); _shock = null; _updateShockCounter(); _renderImpact(); _refresh(); }
 
   function _toggleSimMode() {
     _simMode = !_simMode;
     const btn = document.getElementById('tkg-simbtn');
     const hint = document.getElementById('tkg-simhint');
     if (btn) { btn.style.background = _simMode ? 'var(--violet)' : 'none'; btn.style.color = _simMode ? '#fff' : 'var(--violet)'; }
-    if (hint) hint.textContent = _simMode ? '⚡ clic en cualquier nodo para simular su caída (según la fecha actual)' : '';
+    if (hint) hint.textContent = _simMode ? _t('simHintOn') : '';
     if (_nodeSel) _nodeSel.style('cursor', _simMode ? 'crosshair' : 'pointer');
   }
 
@@ -636,11 +886,21 @@
            💼 Tu portafolio en riesgo: <b style="color:${port.pct >= 30 ? '#FF6B5C' : '#E0B25C'}">${_money(port.atRisk)} (${port.pct.toFixed(0)}%)</b>
            ${port.hit.length ? ` · ${port.hit.slice(0, 6).map(h => esc(h.label)).join(', ')}` : ''}</div>`
       : '';
+    // Beneficiarios (verde): quién recoge el negocio que suelta el que cae.
+    let benefHtml = '';
+    if (_shock.benefit && _shock.benefit.size) {
+      const bChips = [..._shock.benefit.keys()].slice(0, 14)
+        .map(id => { const e = resolveEntity(id) || {}; return `<span style="font-size:11px;color:#4ade80;background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.35);border-radius:10px;padding:2px 7px">${esc(e.label || id)}</span>`; }).join(' ');
+      const bExtra = _shock.benefit.size > 14 ? ` <span style="font-size:11px;color:var(--ink-3)">+${_shock.benefit.size - 14}</span>` : '';
+      benefHtml = `<div style="font-size:11.5px;color:#4ade80;font-weight:700;margin:10px 0 4px">${_t('benefLabel')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">${bChips}${bExtra}</div>`;
+    }
     el.innerHTML = `<div style="border:1px solid #ef444455;background:#ef44440d;border-radius:12px;padding:12px 14px">
       <div style="font-size:13.5px;color:var(--ink-1);font-weight:700;margin-bottom:6px">⚡ Shock: <span style="color:#ef4444">${esc(originLabel)}</span> cae en ${fmtDate(_dateMs)}</div>
       <div style="font-size:12px;color:var(--ink-2);margin-bottom:8px"><b>${total}</b> entidades afectadas en cascada · ${chips}</div>
       ${portHtml}
       <div style="display:flex;flex-wrap:wrap;gap:5px">${list}${extra}</div>
+      ${benefHtml}
     </div>`;
   }
 

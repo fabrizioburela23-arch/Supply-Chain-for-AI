@@ -12,16 +12,19 @@ load_dotenv()
 
 FINNHUB  = os.getenv('FINNHUB_KEY', '')
 CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
-# Modelo de Claude para los análisis. Haiku 4.5 es barato y rápido (~$0.001/análisis);
-# sube a claude-opus-4-8 para máxima calidad. Cambiable sin tocar código.
-AI_MODEL = os.getenv('AI_MODEL', 'claude-haiku-4-5-20251001')
+# Modelo de Claude para los análisis. Decisión del usuario (2026-07): SONNET 5
+# EN TODO — es el mejor equilibrio calidad/velocidad de la familia Sonnet y
+# rinde a nivel Opus en muchas tareas. Cambiable sin tocar código con AI_MODEL.
+AI_MODEL = os.getenv('AI_MODEL', 'claude-sonnet-5')
 
-# ── IA híbrida (2026-07-12, decisión del usuario): dos niveles de modelo ─────
-# 'fast' (Haiku) para lo instantáneo: comandos, resúmenes de noticias, alertas.
-# 'deep' (Sonnet 5) para lo que importa: síntesis de investigación profunda,
-# tesis, Canvas IA, brief matinal. La MISMA ANTHROPIC_KEY sirve para ambos.
-# Solo afecta al proveedor Claude; la cascada Gemini/NVIDIA no cambia.
-AI_MODEL_FAST = os.getenv('AI_MODEL_FAST') or AI_MODEL
+# ── IA híbrida: dos niveles de modelo (2026-07-13: ambos Sonnet 5) ──────────
+# 'fast'  → comandos, resúmenes de noticias, alertas, agente de trading.
+# 'deep'  → síntesis de investigación profunda, tesis, Canvas IA, cripto IA.
+# Por pedido explícito ("usar sonnet 5 para todo") ambos tiers usan Sonnet 5
+# por defecto; se pueden sobreescribir por entorno (AI_MODEL_FAST/AI_MODEL_DEEP)
+# —p.ej. AI_MODEL_FAST=claude-haiku-4-5 para abaratar lo instantáneo—.
+# La MISMA ANTHROPIC_KEY sirve para ambos. No afecta la cascada Gemini/NVIDIA.
+AI_MODEL_FAST = os.getenv('AI_MODEL_FAST') or 'claude-sonnet-5'
 AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5'
 
 # ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──

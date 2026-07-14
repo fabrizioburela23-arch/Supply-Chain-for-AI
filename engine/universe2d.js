@@ -33,6 +33,16 @@
     clients:   { es: 'clientes', en: 'clients' },
     hint:      { es: 'Arrastra · Rueda/pellizco = zoom · Clic = cadena · Doble clic = ficha',
                  en: 'Drag · Wheel/pinch = zoom · Click = chain · Double-click = card' },
+    // Ejes (que "se entienda"): X = cadena de valor · Y = riesgo NRS
+    axX_left:  { es: '◄ Materiales / Equipos', en: '◄ Materials / Equipment' },
+    axX_right: { es: 'Clientes / Apps ►',      en: 'Clients / Apps ►' },
+    axX_title: { es: 'Cadena de valor',        en: 'Value chain' },
+    axY_top:   { es: 'Seguro ▲',   en: 'Safe ▲' },
+    axY_bot:   { es: '▼ Frágil',   en: '▼ Fragile' },
+    axY_title: { es: 'Riesgo NRS', en: 'NRS risk' },
+    legend:    { es: 'Sectores',   en: 'Sectors' },
+    category:  { es: 'Categoría',  en: 'Category' },
+    space_tag: { es: 'Espacio / Satélite', en: 'Space / Satellite' },
   };
   const t = k => (I18N[k] ? I18N[k][_lang()] : k);
 
@@ -77,7 +87,7 @@
     nodes: [], links: [], idToIdx: new Map(),
     // arrays paralelos precalculados (posición mundo, capa, radio, color…)
     wx: null, wy: null, layer: null, baseR: null, color: null, nrs: null,
-    degUp: null, degDown: null,
+    degUp: null, degDown: null, isSpace: null,
     sx: null, sy: null, sr: null,                // posiciones de pantalla del frame
     order: [], top40: new Set(), labelCache: [],
     buckets: [],                                  // links agrupados por color/peso
@@ -86,7 +96,7 @@
     bg: null, sprites: new Map(),
     drag: false, moved: false, prev: { x: 0, y: 0 }, pinch: 0,
     frameEMA: 16, lite: false, elapsed: 0, lastTs: 0,
-    badge: null, tip: null, tipPinned: false, hint: null,
+    badge: null, tip: null, tipPinned: false, hint: null, legend: null,
     ro: null, sizeWatch: false, diagSent: false, failCount: 0,
     handlers: [],                                 // [(target, tipo, fn, opts)]
   };
@@ -118,6 +128,63 @@
     } catch (e) {}
     if (cat && CAT_FALLBACK[cat]) return CAT_FALLBACK[cat];
     return PALETTE10[_hash(String(cat || '?')) % PALETTE10.length];
+  }
+
+  /* ── Macro-sectores (9 colores vivos) — el mapa colorea por SECTOR, igual que
+        el resto de la app (colorMode='sector' por defecto). 9 colores se
+        distinguen mucho mejor que 40 categorías de tonos parecidos → "se
+        entiende". Lee window.SECTORS9 / window.CAT_TO_SECTOR (fallback local). ── */
+  const SECTORS9_FB = {
+    fabricacion: { label: 'Fabricación',         en: 'Manufacturing',        color: '#FF7A45' },
+    diseno:      { label: 'Diseño & IP',         en: 'Design & IP',          color: '#9D6BFF' },
+    equipos:     { label: 'Equipos & Materiales', en: 'Equipment & Materials', color: '#2BD9C7' },
+    infra:       { label: 'Infra física',        en: 'Physical Infra',       color: '#4D7CFE' },
+    cloud_ia:    { label: 'Cloud & IA',          en: 'Cloud & AI',           color: '#00E0FF' },
+    defensa:     { label: 'Defensa',             en: 'Defense',              color: '#FF5470' },
+    espacio:     { label: 'Espacio',             en: 'Space',                color: '#B0BFFF' },
+    energia:     { label: 'Energía & Nuclear',   en: 'Energy & Nuclear',     color: '#9BE33A' },
+    robotica:    { label: 'Robótica',            en: 'Robotics',             color: '#FF7ED4' },
+  };
+  const SECTOR_ORDER = ['fabricacion', 'diseno', 'equipos', 'infra', 'cloud_ia',
+                        'defensa', 'espacio', 'energia', 'robotica'];
+  const CAT_SECTOR_FB = {
+    foundry: 'fabricacion', memory: 'fabricacion', substrates: 'fabricacion',
+    eda: 'diseno', fabless: 'diseno', asic_custom: 'diseno', edge_ai: 'diseno',
+    photonics_si: 'diseno', neuromorphic: 'diseno', quantum_hw: 'diseno',
+    equip: 'equipos', optics: 'equipos', materials: 'equipos', chemicals: 'equipos', quantum_infra: 'equipos',
+    servers: 'infra', networking: 'infra', power: 'infra', connectivity_infra: 'infra',
+    dc_reit: 'infra', cdn_edge: 'infra', hpc_super: 'infra',
+    cloud: 'cloud_ia', ailab: 'cloud_ia', aisoft: 'cloud_ia', ai_agents: 'cloud_ia',
+    ai_health: 'cloud_ia', ai_finance: 'cloud_ia', ai_auto: 'cloud_ia',
+    ai_defense: 'defensa',
+    space_launch: 'espacio', space_infra: 'espacio', satellite: 'espacio', earth_obs: 'espacio',
+    nuclear_smr: 'energia', nuclear_fusion: 'energia', uranium: 'energia',
+    battery_mat: 'energia', rare_earth: 'energia',
+    robotics_physical: 'robotica',
+  };
+  // Categorías cuyo nodo es de espacio/satélite → marcador con forma distinta
+  const SPACE_CATS = { space_launch: 1, space_infra: 1, satellite: 1, earth_obs: 1 };
+  function _sectorKey(cat) {
+    try { const m = window.CAT_TO_SECTOR; if (m && m[cat]) return m[cat]; } catch (e) {}
+    return CAT_SECTOR_FB[cat] || 'cloud_ia';
+  }
+  function _sectorMeta(key) {
+    try { const s = window.SECTORS9; if (s && s[key]) return s[key]; } catch (e) {}
+    return SECTORS9_FB[key] || SECTORS9_FB.cloud_ia;
+  }
+  function _sectorColor(cat) {
+    const c = _sectorMeta(_sectorKey(cat)).color;
+    return (c && /^#/.test(c)) ? c : _catColor(cat);
+  }
+  function _sectorLabel(cat) {
+    const s = _sectorMeta(_sectorKey(cat));
+    return _lang() === 'en' ? (s.en || s.label) : (s.label || s.en);
+  }
+  function _catLabelOf(cat) {
+    try {
+      const C = window.CATS; if (C && C[cat]) return _lang() === 'en' ? (C[cat].en || C[cat].label) : (C[cat].label || C[cat].en);
+    } catch (e) {}
+    return String(cat || '?');
   }
   function _nrsOf(id) {
     try { if (typeof window.computeNRS === 'function') return window.computeNRS(id); } catch (e) {}
@@ -247,6 +314,37 @@
     (U.canvas.parentElement || document.body).appendChild(el);
     U.badge = el;
   }
+  /* ── Leyenda de sectores (9 colores) — esquina sup. derecha, discreta ── */
+  function _ensureLegend() {
+    const en = _lang() === 'en';
+    let rows = '';
+    for (let k = 0; k < SECTOR_ORDER.length; k++) {
+      const key = SECTOR_ORDER[k];
+      const meta = _sectorMeta(key);
+      const col = (meta.color && /^#/.test(meta.color)) ? meta.color : '#00E0FF';
+      const lbl = en ? (meta.en || meta.label) : (meta.label || meta.en);
+      const mark = key === 'espacio'
+        ? '<span style="color:#EAF2FF;font-size:9px;margin-left:2px">✦</span>' : '';
+      rows += '<div style="display:flex;align-items:center;gap:7px;margin:2px 0">' +
+        '<span style="width:9px;height:9px;border-radius:2px;flex:none;background:' + col +
+          ';box-shadow:0 0 5px ' + _hexToRgba(col, 0.65) + '"></span>' +
+        '<span style="color:#cfe2f5;white-space:nowrap">' + lbl + '</span>' + mark + '</div>';
+    }
+    const html =
+      '<div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#7a9cc4;' +
+        'margin-bottom:5px;font-weight:700">' + t('legend') + '</div>' + rows;
+    if (U.legend && U.legend.isConnected) { U.legend.innerHTML = html; return; }
+    const el = document.createElement('div');
+    el.id = 'universe2d-legend';
+    el.style.cssText = 'position:absolute;top:14px;right:14px;z-index:8;pointer-events:none;' +
+      'font:11px "Archivo",sans-serif;background:rgba(8,12,22,.74);' +
+      'border:1px solid rgba(80,130,200,.25);border-radius:10px;padding:9px 12px;' +
+      'backdrop-filter:blur(5px);max-width:190px;line-height:1.35';
+    el.innerHTML = html;
+    (U.canvas.parentElement || document.body).appendChild(el);
+    U.legend = el;
+  }
+
   function _showHint() {
     if (U.hint) return;
     const el = document.createElement('div');
@@ -278,9 +376,24 @@
     if (!n) { tip.style.display = 'none'; return; }
     const nrs = U.nrs[i];
     const nrsColor = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
+    const secColor = U.color[i] || _sectorColor(n.cat);
+    const secLabel = _sectorLabel(n.cat);
+    const catLbl = _catLabelOf(n.cat);
+    // Chip de CATEGORÍA (sector) bien visible con su color — el usuario pidió
+    // que al seleccionar un nodo aparezca su categoría.
+    const catChip =
+      '<div style="display:flex;align-items:center;gap:6px;margin-top:6px">' +
+        '<span style="width:10px;height:10px;border-radius:3px;flex:none;background:' + secColor +
+          ';box-shadow:0 0 6px ' + _hexToRgba(secColor, 0.7) + '"></span>' +
+        '<span style="font-size:11px;font-weight:700;color:' + secColor + '">' + secLabel + '</span>' +
+        (U.isSpace[i] ? '<span style="font-size:9px;color:#B0BFFF">✦</span>' : '') +
+        (catLbl && catLbl !== secLabel ?
+          '<span style="font-size:9px;color:#7a9cc4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">· ' + catLbl + '</span>' : '') +
+      '</div>';
     tip.innerHTML =
       '<div style="font-size:12px;font-weight:700;color:#e8edf5;line-height:1.3">' + (n.label || n.id) + '</div>' +
       (n.ticker ? '<div style="font-size:10px;color:#5b8ab8;font-family:\'JetBrains Mono\',monospace;margin-top:2px">' + n.ticker + '</div>' : '') +
+      catChip +
       '<div style="display:flex;gap:12px;font-size:10px;color:#7a9cc4;margin-top:6px;align-items:center">' +
         '<span>NRS <strong style="color:' + nrsColor + '">' + nrs + '</strong></span>' +
         '<span style="color:' + CHAIN_UP + '">⬆ ' + U.degUp[i] + ' ' + t('suppliers') + '</span>' +
@@ -313,6 +426,7 @@
     U.sx = new Float32Array(N); U.sy = new Float32Array(N); U.sr = new Float32Array(N);
     U.color = new Array(N); U.nrs = new Int16Array(N);
     U.degUp = new Int16Array(N); U.degDown = new Int16Array(N);
+    U.isSpace = new Uint8Array(N);
     U.nodes.forEach((n, i) => U.idToIdx.set(n.id, i));
 
     // grados (para radio fallback + tooltip)
@@ -336,7 +450,10 @@
                : REGION_Z[n.region] != null ? REGION_Z[n.region] : 0;
       U.layer[i] = zk < -1 ? 0 : zk > 1 ? 2 : 1;
       U.baseR[i] = _radiusOf(n.id, U.degUp[i] + U.degDown[i], n.big) * 0.62;
-      U.color[i] = _catColor(n.cat);
+      // Color por MACRO-SECTOR (9 colores vivos) → coherente con el mapa y la
+      // leyenda; mucho más legible que 40 categorías de tonos parecidos.
+      U.color[i] = _sectorColor(n.cat);
+      U.isSpace[i] = SPACE_CATS[n.cat] ? 1 : 0;   // marcador de forma distinta
       _sprite(U.color[i]);   // precalienta la caché de sprites
     });
 
@@ -411,6 +528,16 @@
     U.chainSet = null; U.chainUp = null; U.chainDown = null;
     U.chainLinks = [];
   }
+  // Callback público: el orquestador puede fijar KhipuUniverse2D.onSelect = fn(node)
+  // para reaccionar a la selección (guard typeof — nunca rompe si no está).
+  function _emitSelect(i) {
+    const n = U.nodes[i];
+    if (!n) return;
+    try {
+      const cb = window.KhipuUniverse2D && window.KhipuUniverse2D.onSelect;
+      if (typeof cb === 'function') cb(n);
+    } catch (e) {}
+  }
 
   /* ── Picking: nodo bajo el cursor (barrido lineal, 555 nodos = trivial) ── */
   function _pick(mx, my) {
@@ -422,6 +549,71 @@
       if (d < hit * hit && d < bestD) { bestD = d; best = i; }
     }
     return best;
+  }
+
+  /* ── Marcador de nodo de espacio/satélite: chispa de 4 puntas (✦) — forma
+        distinta al disco de las empresas terrestres, para que "se distingan". ── */
+  function _drawSpaceMarker(ctx, x, y, r, alpha) {
+    const Ro = Math.max(5, r + 2.6), Ri = Ro * 0.4;
+    ctx.globalAlpha = Math.min(1, alpha + 0.18);
+    ctx.beginPath();
+    for (let k = 0; k < 8; k++) {
+      const rad = (k % 2 === 0) ? Ro : Ri;
+      const ang = -Math.PI / 2 + k * (Math.PI / 4);
+      const px = x + Math.cos(ang) * rad, py = y + Math.sin(ang) * rad;
+      if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.lineWidth = 1.1;
+    ctx.strokeStyle = '#EAF2FF';
+    ctx.stroke();
+  }
+
+  /* ── Ejes con etiquetas bilingües (que "se entienda"): X = cadena de valor
+        (izq. materiales → der. clientes/apps) · Y = riesgo NRS (frágil abajo ↔
+        seguro arriba). Se dibujan encima de todo, con sombra dura. ── */
+  function _drawAxes(ctx, w, h) {
+    ctx.save();
+    ctx.textBaseline = 'alphabetic';
+    // marco sutil: eje Y (izquierda) + eje X (abajo)
+    ctx.strokeStyle = 'rgba(140,170,210,0.20)';
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.moveTo(38, 26); ctx.lineTo(38, h - 34);
+    ctx.moveTo(38, h - 34); ctx.lineTo(w - 12, h - 34);
+    ctx.stroke();
+
+    function _lab(txt, x, y, col, align, size, weight) {
+      ctx.font = (weight || 600) + ' ' + (size || 11) + 'px "Archivo", sans-serif';
+      ctx.textAlign = align || 'left';
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = 'rgba(4,7,14,0.92)';
+      ctx.fillText(txt, x + 1, y + 1);
+      ctx.fillStyle = col;
+      ctx.fillText(txt, x, y);
+    }
+
+    const yLab = h - 40;
+    _lab(t('axX_left'),  46,     yLab, '#9fb6d6', 'left',  11);
+    _lab(t('axX_right'), w - 14, yLab, '#9fb6d6', 'right', 11);
+    if (w >= 560) _lab(t('axX_title'), w / 2, yLab, '#c9d8ee', 'center', 11, 700);
+
+    // Eje Y rotado (se lee de abajo hacia arriba): Frágil → NRS → Seguro
+    ctx.save();
+    ctx.translate(20, h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.font = '700 11px "Archivo", sans-serif';
+    const yStr = t('axY_bot') + '   ·   ' + t('axY_title') + '   ·   ' + t('axY_top');
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = 'rgba(4,7,14,0.92)';
+    ctx.fillText(yStr, 1, 1);
+    ctx.fillStyle = '#c9d8ee';
+    ctx.fillText(yStr, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
   }
 
   /* ── Frame ── */
@@ -533,6 +725,7 @@
         ctx.globalAlpha = alpha;
         const S = r * 4;   // el sprite incluye el glow (disco sólido ≈ r)
         ctx.drawImage(_sprite(hex), x - S / 2, y - S / 2, S, S);
+        if (U.isSpace[i]) _drawSpaceMarker(ctx, x, y, r, alpha);   // chispa ✦
       }
 
       // 5) anillo del seleccionado (pulso)
@@ -573,6 +766,9 @@
           drawn++;
         }
       }
+
+      // 7) ejes con etiquetas bilingües — siempre encima (orientación clara)
+      _drawAxes(ctx, w, h);
 
       ctx.globalAlpha = 1;
       U.failCount = 0;
@@ -639,6 +835,7 @@
         _highlightChain(hit);
         U.tipPinned = true;
         _showTip(hit, e.clientX, e.clientY);
+        _emitSelect(hit);
       } else {
         _clearChain();
         _hideTip(true);
@@ -703,6 +900,7 @@
             _highlightChain(hit);
             U.tipPinned = true;
             _showTip(hit, e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            _emitSelect(hit);
           } else { _clearChain(); _hideTip(true); }
         }
         U.drag = false;
@@ -769,6 +967,7 @@
 
     _bindEvents();
     _ensureBadge();
+    _ensureLegend();
     _showHint();
     U.canvas.style.cursor = 'grab';
 
@@ -794,6 +993,7 @@
       if (!U.raf) U.raf = requestAnimationFrame(_frame);
     }
     _ensureBadge();   // refresca el idioma del aviso si LANG cambió
+    _ensureLegend();  // refresca el idioma de la leyenda de sectores
     if (!_ensureSized()) _startSizeWatch();
   }
 
@@ -804,6 +1004,7 @@
     U.camTo = { x: U.wx[i], y: U.wy[i] };
     U.zoomTo = Math.max(U.zoomTo, 1.6);
     _hideTip(true);
+    _emitSelect(i);
     return true;
   }
 
@@ -813,6 +1014,7 @@
     U.handlers = [];
     try { if (U.ro) { U.ro.disconnect(); U.ro = null; } } catch (e) {}
     try { if (U.badge) { U.badge.remove(); U.badge = null; } } catch (e) {}
+    try { if (U.legend) { U.legend.remove(); U.legend = null; } } catch (e) {}
     try { if (U.tip) { U.tip.remove(); U.tip = null; } } catch (e) {}
     try { if (U.hint) { U.hint.remove(); U.hint = null; } } catch (e) {}
     try {
@@ -839,5 +1041,8 @@
   window.KhipuUniverse2D = {
     init, loadData, destroy, pause, resume, focus, redraw,
     isActive: () => !!(U.inited && U.active),
+    // El orquestador puede fijar esto: onSelect = fn(node) — se llama al
+    // seleccionar (clic / tap / focus). Guard typeof; nunca rompe si es null.
+    onSelect: null,
   };
 })();

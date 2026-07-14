@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Khipus AI Finance Inteligence · 2026</title>
+<title>Bixby Finance · 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Geist:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1270,7 +1270,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </head>
 <body>
 <div id="khipu-loader" style="position:fixed;inset:0;z-index:9999;background:var(--bg,#0a0d14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s">
-  <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:#3DE0C8;letter-spacing:-.02em">Khipus AI Finance Inteligence</div>
+  <div style="font-family:'Fraunces',serif;font-size:28px;font-weight:700;color:#3DE0C8;letter-spacing:-.02em">Bixby Finance</div>
   <div style="font-size:13px;color:#6b7280;margin-top:-10px">Cadena de Valor Global · IA · Espacio · Semiconductores</div>
   <div style="width:220px;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:8px">
     <div id="loader-bar" style="height:100%;background:linear-gradient(90deg,#3DE0C8,#9B4FE8);border-radius:2px;width:0%;transition:width .3s ease"></div>
@@ -1288,7 +1288,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <circle cx="52" cy="66" r="11" fill="#3DE0C8"/>
     </svg>
   </span>
-  <div class="boot-title">Khipus AI Finance Inteligence</div>
+  <div class="boot-title">Bixby Finance</div>
   <div class="boot-bar"><i></i></div>
   <div class="boot-log" id="boot-log">› inicializando grafo…</div>
 </div>
@@ -1324,8 +1324,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         </svg>
       </span>
       <div class="brand-text">
-        <h1>Khipus AI Finance Inteligence</h1>
-        <span class="sub">Cadena de Valor Global 2026</span>
+        <h1>Bixby Finance</h1>
+        <span class="sub">Inteligencia de la cadena de IA</span>
       </div>
     </div>
     <div class="metrics">
@@ -1382,6 +1382,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab" id="tab-3d" data-group="mapa" title="Universo — todas las empresas en el espacio (funciona en cualquier equipo)" onclick="window._go3D&&window._go3D()">🪐 <span>Universo</span></button>
       <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
       <button class="tab" data-tab="crypto" data-group="mercado" id="tab-crypto">₿ <span>Cripto</span></button>
+      <button class="tab" data-tab="portfolios" data-group="mercado" id="tab-portfolios">💼 <span data-i18n="tab_portfolios">Carteras</span></button>
       <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
       <button class="tab" data-tab="canvas" data-group="insights" id="tab-canvas">✦ <span>Canvas IA</span></button>
       <button class="tab" data-tab="terminal" data-group="insights" id="tab-terminal">⬛ <span>Terminal</span></button>
@@ -1695,7 +1696,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   <footer>
     <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
-    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipus AI Finance Inteligence · … nodos · NRS · Bixby AI · 3D</span>
+    <span class="mono" id="footer-nodecount" style="white-space:nowrap">Bixby Finance · … nodos · NRS · Bixby AI</span>
   </footer>
 
 <!-- ═══ Simulation Tab ════════════════════════════════════════════════ -->
@@ -2009,6 +2010,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <section id="tkg-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 <section id="guia-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 <section id="crypto-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
+<section id="portfolios-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0"></section>
 
 </div><!-- /.app -->
 
@@ -2074,7 +2076,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <label class="pref-row"><input type="checkbox" id="pref-aicache"> <span id="pref-aicache-l">Guardar análisis de IA en caché (24h)</span></label>
   </div>
 
-  <div class="settings-sec">🔐 Khipus AI Finance API Key</div>
+  <div class="settings-sec">🔐 Bixby Finance API Key</div>
   <div style="padding:0 20px 12px;font-size:12px;color:var(--ink-3)">Para usar VaR/CVaR y la API v1, genera una clave JWT:</div>
   <div style="padding:0 20px 12px;display:flex;gap:8px">
     <select id="kfi-tier" style="flex:1;padding:7px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:12px">
@@ -2996,12 +2998,9 @@ function renderDetail(id){
   };
 
   const pf = d.port ? `<span class="badge badge-pf ${pfClass(d.port)}">★ ${pfLabel(d.port)}</span>` : '';
-  const _c1=inPortfolio(d,'C1'), _c2=inPortfolio(d,'C2');
-  const _pfBtn=(p,on,col,ttl)=>`<button onclick="togglePortfolio('${d.id}','${p}')" title="${ttl}" style="font-size:10px;padding:3px 11px;border-radius:20px;cursor:pointer;font-weight:700;border:1px solid ${col};background:${on?col:'transparent'};color:${on?'#fff':col};transition:all .12s">${on?'★':'+'} ${p}</button>`;
+  // Carteras simuladas propias (reemplazan C1/C2 mediano/largo — pedido de Fabrizio)
   const pfBtns = `<div style="display:flex;gap:6px;margin:8px 0 2px;align-items:center;flex-wrap:wrap">
-    <span style="font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em">${LANG==='en'?'Portfolio':'Cartera'}</span>
-    ${_pfBtn('C1',_c1,'#d4a017',LANG==='en'?'Portfolio 1 (short term)':'Cartera 1 (corto plazo)')}
-    ${_pfBtn('C2',_c2,'#3b82f6',LANG==='en'?'Portfolio 2 (medium term)':'Cartera 2 (mediano plazo)')}</div>`;
+    <button onclick="window.addToPortfolio&&window.addToPortfolio('${d.id}')" title="${LANG==='en'?'Add to one of your simulated portfolios':'Añadir a una de tus carteras simuladas'}" style="font-size:11px;padding:5px 13px;border-radius:20px;cursor:pointer;font-weight:700;border:1px solid #3DE0C8;background:transparent;color:#3DE0C8;transition:all .12s">💼 ${LANG==='en'?'Add to portfolio':'Añadir a cartera'}</button></div>`;
   const preipoBadge = d.preipo
     ? `<span class="badge badge-preipo">◌ ${isPreipoTicker(d.ticker)?t('b_preipo'):t('b_priv')}</span>` : '';
   const riskBadge = d.risk ? `<span class="badge badge-risk">⚠ ${t('b_risk')}</span>` : '';
@@ -3059,8 +3058,14 @@ function renderDetail(id){
         title="X-Ray — desarmar la empresa: riesgo, hilos, onda de impacto"
         style="flex-shrink:0;padding:5px 10px;border:1px solid #00E0FF;border-radius:6px;background:none;color:#00E0FF;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🔬 X-Ray</button>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 2px;padding:7px 11px;border-radius:9px;background:${col}1a;border:1px solid ${col}55">
+      <span style="width:10px;height:10px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0;box-shadow:0 0 8px ${col}"></span>
+      <div style="min-width:0">
+        <div style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">${LANG==='en'?'Sector · category':'Sector · categoría'}</div>
+        <div style="font-size:13px;font-weight:700;color:${col}">${esc(sectorLabelFor(d.cat))} <span style="color:var(--ink-3);font-weight:500">· ${catLabel(d.cat)}</span></div>
+      </div>
+    </div>
     <div class="d-badges">
-      <span class="badge badge-cat"><span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block"></span>${catLabel(d.cat)}</span>
       ${pf}
       ${preipoBadge}
       ${riskBadge}
@@ -3651,7 +3656,7 @@ setTimeout(resize,60);
 const I18N = {
 es: {
   sub:'Cadena de valor global 2026 · 450+ empresas · 900+ conexiones · 35 categorías',
-  tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo',
+  tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo', tab_portfolios:'Carteras',
   tab_analysis:'Análisis de Red', tab_geo:'Geopolítica',
   tab_sim:'Simulación', tab_space:'Espacio',
   sim_preset_btn:'Preset', sim_run:'▶ Ejecutar Simulación', sim_placeholder:'Describe el escenario...',
@@ -3710,13 +3715,13 @@ es: {
   cr_back:'← Volver a la lista', cr_supply:'En circulación', cr_maxsupply:'Suministro máximo', cr_ath:'Máximo histórico', cr_atl:'Mínimo histórico', cr_rank:'Ranking',
   cr_view_map:'Mapa', cr_view_list:'Lista', cr_view_bub:'Burbujas', cr_all:'Todas', cr_empty:'Ninguna moneda del top 100 en esta categoría.',
   cr_bub_hint:'tamaño = capitalización · color = 24h · toca una burbuja', cr_open_card:'Ver ficha completa',
-  cr_dossier:'Expediente', cr_dossier_t:'Expediente Khipus',
+  cr_dossier:'Expediente', cr_dossier_t:'Expediente Bixby',
   cr_b_what:'¿Qué es?', cr_b_mech:'Cómo funciona', cr_b_tok:'Tokenomics', cr_b_cats:'Catalizadores', cr_b_risks:'Riesgos', cr_b_pos:'Posicionamiento',
   cr_disclaimer:'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.',
 },
 en: {
   sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
-  tab_map:'Chain Map', tab_market:'Live Market',
+  tab_map:'Chain Map', tab_market:'Live Market', tab_portfolios:'Portfolios',
   tab_analysis:'Network Analysis', tab_geo:'Geopolitics',
   tab_sim:'Simulation', tab_space:'Space Economy',
   sim_preset_btn:'Preset', sim_run:'▶ Run Simulation', sim_placeholder:'Describe the scenario...',
@@ -3775,7 +3780,7 @@ en: {
   cr_back:'← Back to list', cr_supply:'Circulating supply', cr_maxsupply:'Max supply', cr_ath:'All-time high', cr_atl:'All-time low', cr_rank:'Rank',
   cr_view_map:'Map', cr_view_list:'List', cr_view_bub:'Bubbles', cr_all:'All', cr_empty:'No top-100 coin in this category.',
   cr_bub_hint:'size = market cap · color = 24h · tap a bubble', cr_open_card:'Open full card',
-  cr_dossier:'Dossier', cr_dossier_t:'Khipus Dossier',
+  cr_dossier:'Dossier', cr_dossier_t:'Bixby Dossier',
   cr_b_what:'What is it?', cr_b_mech:'How it works', cr_b_tok:'Tokenomics', cr_b_cats:'Catalysts', cr_b_risks:'Risks', cr_b_pos:'Positioning',
   cr_disclaimer:'Informational context, not investment advice. Analysis layer: Jul 2026 · live prices from CoinGecko.',
 },
@@ -3920,13 +3925,16 @@ function switchTab(tab){
   const isCrypto=tab==='crypto';
   const cryEl=document.getElementById('crypto-panel');
   if(cryEl) cryEl.style.display = isCrypto?'block':'none';
+  const isPf=tab==='portfolios';
+  const pfEl=document.getElementById('portfolios-panel');
+  if(pfEl) pfEl.style.display = isPf?'block':'none';
   // Animate
   const _tabEls = [
     isMap && document.querySelector('main'),
     tab==='market' && document.getElementById('market'),
     isAnalysis && anEl, isGeo && geoEl, isSim && simEl, isSpace && spaceEl,
     isTerm && termEl, isCanvas && cvEl, isTkg && tkgEl, isGuia && guiaEl,
-    isCrypto && cryEl,
+    isCrypto && cryEl, isPf && pfEl,
   ].filter(Boolean);
   _tabEls.forEach(el => {
     el.classList.remove('tab-anim-in');
@@ -3944,11 +3952,20 @@ function switchTab(tab){
   else if(isTkg){ if(typeof initTKGTab==='function') initTKGTab(); }
   else if(isGuia){ if(typeof initGuiaTab==='function') initGuiaTab(); }
   else if(isCrypto){ if(window.KhipuCrypto) window.KhipuCrypto.init(); }
+  else if(isPf){ if(window.KhipuPortfolios) window.KhipuPortfolios.mount('portfolios-panel'); }
   else {
     renderMarket();
     if(!MKT.ts){ fetchQuotes(); }
   }
 }
+
+// Desde la ficha de una empresa → llevar a Carteras con la empresa lista para añadir.
+window.addToPortfolio = function(nodeId){
+  try { window._pfPendingAdd = nodeId; } catch(e){}
+  switchTab('portfolios');
+  const n = (window.NODE_BY_ID||{})[nodeId];
+  if (typeof toast==='function' && n) toast((LANG==='en'?'Search "':'Busca «')+ (n.label||nodeId) +(LANG==='en'?'" here to add it to a portfolio.':'» aquí para añadirla a una cartera.'));
+};
 
 /* ===================== v7 · M6: betweenness centrality real (Brandes) ===================== */
 let _bcCache=null;
@@ -5536,7 +5553,7 @@ const OntologyAlerts = {
     const msg = f.detail || JSON.stringify(f.rule);
     if (typeof toast === 'function') toast('🔔 ' + msg);
     if ('Notification' in window && Notification.permission === 'granted') {
-      try { new Notification('Khipus AI Finance · Alerta', { body: msg, icon: '/icon.svg' }); } catch (e) {}
+      try { new Notification('Bixby Finance · Alerta', { body: msg, icon: '/icon.svg' }); } catch (e) {}
     }
   },
   start() { setTimeout(() => this.check(), 8000); setInterval(() => this.check(), 120000); },
@@ -5736,11 +5753,31 @@ const $=id=>document.getElementById(id);
   if (footerEl) {
     // versión visible: clave para diagnosticar "sigo viendo lo viejo"
     const vm2 = (document.querySelector('script[src*="?v="]')?.src.match(/[?&]v=(\d+)/) || [])[1];
-    footerEl.textContent = `Khipus AI Finance Inteligence · ${nodeCount} nodos · NRS · Bixby AI` + (vm2 ? ` · v${vm2}` : '');
+    footerEl.textContent = `Bixby Finance · ${nodeCount} nodos · NRS · Bixby AI` + (vm2 ? ` · v${vm2}` : '');
     window._appVersion = vm2 || null;
   }
   let i=0; const iv=setInterval(()=>{ i++; if(log&&lines[i]) log.textContent=lines[i]; if(i>=lines.length-1) clearInterval(iv); }, 300);
   setTimeout(()=>{ el.classList.add('gone'); setTimeout(()=>el.remove(),700); }, 1350);
+  // Bixby Finance: la Cabina de Bixby es la PANTALLA INICIAL (pedido 2026-07-13).
+  // Se abre sola tras el arranque, SOLO una vez por sesión (si el usuario la
+  // cerró, no vuelve a saltar). Robusto: espera a que exista la Cabina y los
+  // datos; si algo falla, la app queda en el mapa normal (nunca pantalla vacía).
+  try {
+    if (!sessionStorage.getItem('kh_bixby_landed')) {
+      let tries = 0;
+      const tryLand = () => {
+        tries++;
+        if (window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function'
+            && typeof NODES !== 'undefined' && NODES.length) {
+          sessionStorage.setItem('kh_bixby_landed', '1');
+          try { window.BixbyCockpit.open(); } catch (e) {}
+          return;
+        }
+        if (tries < 40) setTimeout(tryLand, 250);   // hasta ~10s esperando
+      };
+      setTimeout(tryLand, 1500);
+    }
+  } catch (e) {}
 })();
 
 /* ---- Contadores animados ---- */
@@ -6063,6 +6100,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/universe2d.js"></script>
 <script src="engine/hypergraph.js"></script>
 <script src="engine/resolve.js"></script>
+<script src="engine/orb.js"></script>
 <script src="engine/voice.js"></script>
 <script src="engine/secondbrain.js"></script>
 <script src="engine/geo_coords.js"></script>
@@ -6092,6 +6130,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="nodes/crypto_intel.js"></script>
 <script src="nodes/crypto_intel2.js"></script>
 <script src="engine/crypto.js"></script>
+<script src="engine/portfolios.js"></script>
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
 <script src="engine/command_center.js"></script>
