@@ -17,23 +17,41 @@ def _complete_claude(system, prompt, max_tokens, tier='fast'):
     client = anthropic.Anthropic(api_key=CLAUDE)
     # Híbrido: el tier SOLO cambia el modelo de Claude (misma ANTHROPIC_KEY).
     model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
-    # Sonnet 5 activa el "pensamiento adaptativo" por defecto: consumiría parte
-    # del presupuesto de max_tokens razonando (respuesta más lenta y, con budgets
-    # pequeños, riesgo de truncar el texto/JSON). La app se diseñó para respuestas
-    # inmediatas y deterministas, así que lo desactivamos. `thinking` es un kwarg
-    # de los SDK recientes; si uno viejo no lo conoce, reintentamos sin él.
-    kwargs = dict(model=model, max_tokens=max_tokens, system=system or '',
-                  messages=[{'role': 'user', 'content': prompt or ''}])
-    try:
-        msg = client.messages.create(thinking={'type': 'disabled'}, **kwargs)
-    except TypeError:
-        msg = client.messages.create(**kwargs)
-    text = ''
-    for block in msg.content:
-        if getattr(block, 'type', None) == 'text':
-            text = block.text
-            break
-    return text, msg.model
+    base = dict(max_tokens=max_tokens, system=system or '',
+                messages=[{'role': 'user', 'content': prompt or ''}])
+    # Lista de modelos Claude a probar EN ORDEN. Si la key no tiene acceso al
+    # modelo del tier (p.ej. claude-sonnet-5), caemos a otro modelo Claude que
+    # SÍ funcione (haiku) — SIEMPRE Claude antes de degradar a Gemini/NVIDIA,
+    # porque cualquier Claude supera al llama de respaldo para este análisis.
+    # (Bug real 2026-07-14: sonnet-5 fallaba y la cascada usaba NVIDIA.)
+    candidates = []
+    for m in (model, AI_MODEL_FAST, 'claude-haiku-4-5'):
+        if m and m not in candidates:
+            candidates.append(m)
+    last_err = None
+    for m in candidates:
+        # Sonnet 5 activa "pensamiento adaptativo" por defecto (consume max_tokens
+        # y puede truncar el JSON). Lo desactivamos; si un SDK viejo no conoce el
+        # kwarg (TypeError) reintentamos sin él.
+        for with_thinking in (True, False):
+            try:
+                kw = dict(model=m, **base)
+                if with_thinking:
+                    msg = client.messages.create(thinking={'type': 'disabled'}, **kw)
+                else:
+                    msg = client.messages.create(**kw)
+                text = ''
+                for block in msg.content:
+                    if getattr(block, 'type', None) == 'text':
+                        text = block.text
+                        break
+                return text, msg.model
+            except TypeError:
+                continue          # SDK no conoce `thinking` → reintenta sin él
+            except Exception as e:  # noqa: BLE001 — error de API con este modelo
+                last_err = e
+                break             # prueba el siguiente modelo Claude
+    raise last_err or RuntimeError('claude: sin modelos disponibles')
 
 
 def _complete_gemini(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica

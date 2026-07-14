@@ -485,14 +485,28 @@ def _diag_claude():
     try:
         import anthropic
         client = anthropic.Anthropic(api_key=CLAUDE)
-        _ping = dict(model=AI_MODEL, max_tokens=1,
-                     messages=[{'role': 'user', 'content': 'ping'}])
-        try:  # Sonnet 5 piensa por defecto; el ping no lo necesita (SDK reciente)
-            msg = client.messages.create(thinking={'type': 'disabled'}, **_ping)
-        except TypeError:
-            msg = client.messages.create(**_ping)
-        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': f'Key válida — modelo {msg.model} respondió.'}
+
+        def _ping_model(mid):
+            _p = dict(model=mid, max_tokens=1, messages=[{'role': 'user', 'content': 'ping'}])
+            try:
+                m = client.messages.create(thinking={'type': 'disabled'}, **_p)
+            except TypeError:
+                m = client.messages.create(**_p)
+            return m.model
+
+        # Prueba explícita del modelo FAST y del DEEP (sonnet-5) por separado,
+        # para diagnosticar exactamente cuál acepta la key.
+        from core.config import AI_MODEL_FAST, AI_MODEL_DEEP
+        res, oks = {}, []
+        for label, mid in (('fast', AI_MODEL_FAST), ('deep', AI_MODEL_DEEP)):
+            try:
+                res[label] = f'{mid} ✓ ({_ping_model(mid)})'
+                oks.append(label)
+            except Exception as e:  # noqa: BLE001
+                res[label] = f'{mid} ✗ ({_diag_redact(e)})'
+        detail = 'FAST: ' + res['fast'] + ' · DEEP: ' + res['deep']
+        return {'configured': True, 'ok': bool(oks), 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': detail}
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': 'Key presente pero la API rechazó la llamada: ' + _diag_redact(e)}
