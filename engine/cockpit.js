@@ -190,6 +190,11 @@
 .bcp-canvaswrap{max-width:900px;margin:0 auto}
 .bcp-canvasbar{display:flex;gap:9px;margin-bottom:16px}
 .bcp-loading{color:#7C87A3;font-size:13px;font-style:italic;text-align:center;padding:40px}
+/* icono de carga animado en TODOS los estados de carga (pedido de Fabrizio: toda
+   carga debe tener icono con animación). ::before → spinner centrado sobre el texto. */
+.bcp-loading::before{content:"";display:block;width:26px;height:26px;margin:0 auto 12px;border-radius:50%;
+  border:2.5px solid rgba(122,158,255,.18);border-top-color:#00E0FF;animation:bcpSpin .7s linear infinite}
+@keyframes bcpSpin{to{transform:rotate(360deg)}}
 /* simulación por agentes (MiroFish) — impactos por empresa con motivo */
 .bcp-agrow{border-bottom:1px solid rgba(122,158,255,.08);padding:9px 0;cursor:pointer}
 .bcp-agrow:hover .nm{color:#00E0FF}
