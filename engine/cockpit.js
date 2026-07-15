@@ -970,30 +970,35 @@
     });
   }
 
-  async function confirmPendingOrder() {
+  function confirmPendingOrder() {
     var o = _pendingOrder;
     if (!o) return;
+    var en = ckLang() === 'en';
     var ok = document.getElementById('bcp-bk-ok'), no = document.getElementById('bcp-bk-no');
     var stEl = document.getElementById('bcp-bk-cstatus');
     if (ok) ok.disabled = true;
     if (no) no.disabled = true;
-    if (stEl) { stEl.style.color = '#7C87A3'; stEl.textContent = tb('sending'); }
-    var r = window._executeTradeOrder ? await window._executeTradeOrder(o)
-      : { ok: false, error: 'trading no disponible' };
-    stEl = document.getElementById('bcp-bk-cstatus');   // pudo cambiar de escena
-    if (r.ok) {
-      _pendingOrder = null;
-      if (stEl) {
-        stEl.style.color = UP;
-        stEl.textContent = tb('sent') + ' — ' + ((r.data && r.data.status) || 'accepted') + (r.dedup ? ' ' + tb('dedup') : '');
+    // OPTIMISTA (feedback Fabrizio: "invertí y se quedó cargando"): mostramos
+    // ENVIADA ✓ al instante y ejecutamos en segundo plano; si el bróker la
+    // rechaza, avisamos claramente. Se siente inmediato.
+    _pendingOrder = null;
+    if (stEl) { stEl.style.color = UP; stEl.textContent = '✓ ' + tb('sent') + (en ? ' (confirming…)' : ' (confirmando…)'); }
+    setTimeout(function () { loadBroker(false, true); }, 900);   // refresca posiciones pronto
+    var exec = window._executeTradeOrder ? window._executeTradeOrder(o)
+      : Promise.resolve({ ok: false, error: 'trading no disponible' });
+    exec.then(function (r) {
+      var st = document.getElementById('bcp-bk-cstatus');   // pudo cambiar de escena
+      if (r && r.ok) {
+        if (st) { st.style.color = UP; st.textContent = '✓ ' + tb('sent') + ' — ' + ((r.data && r.data.status) || 'accepted') + (r.dedup ? ' ' + tb('dedup') : ''); }
+        setTimeout(function () { loadBroker(false, true); }, 1000);
+      } else if (st) {
+        st.style.color = DOWN;
+        st.textContent = '⚠ ' + (en ? 'The broker rejected it: ' : 'El bróker la rechazó: ') + ((r && r.error) || 'error');
       }
-      setTimeout(function () { loadBroker(false, true); }, 1200);
-    } else {
-      if (stEl) { stEl.style.color = DOWN; stEl.textContent = '⚠ ' + (r.error || 'error'); }
-      ok = document.getElementById('bcp-bk-ok'); no = document.getElementById('bcp-bk-no');
-      if (ok) ok.disabled = false;   // permitir reintentar o cancelar
-      if (no) no.disabled = false;
-    }
+    }).catch(function (e) {
+      var st = document.getElementById('bcp-bk-cstatus');
+      if (st) { st.style.color = DOWN; st.textContent = '⚠ ' + (en ? 'Order error: ' : 'Error en la orden: ') + ((e && e.message) || e); }
+    });
   }
 
   async function loadBroker(interactive, force) {
@@ -1235,6 +1240,33 @@
     if (query) { q.value = query; cockpitCanvas(query); } else { q.focus(); }
   }
 
+  // Respaldo determinista: SIEMPRE devuelve un gráfico útil (feedback Fabrizio:
+  // "muchas veces los gráficos que pido no los hace"). Si menciona empresas, su
+  // NRS; si no, el top por resiliencia. Nunca un error rojo.
+  function _cvFallbackSpec(query) {
+    var nodes = window.NODES || [];
+    var en = ckLang() === 'en';
+    var nrs = function (id) { try { return typeof computeNRS === 'function' ? computeNRS(id) : null; } catch (e) { return null; } };
+    var ql = ' ' + String(query || '').toLowerCase() + ' ';
+    var hits = nodes.filter(function (n) {
+      var lb = (n.label || '').toLowerCase(), mk = (n.mkt || '').toLowerCase();
+      return (lb && lb.length >= 3 && ql.indexOf(lb) >= 0) || (mk && mk.length >= 2 && ql.indexOf(' ' + mk + ' ') >= 0);
+    });
+    var picked, title, sub;
+    if (hits.length >= 1) {
+      picked = hits.slice(0, 12);
+      title = (en ? 'Resilience (NRS): ' : 'Resiliencia (NRS): ') + picked.slice(0, 4).map(function (n) { return n.label; }).join(', ') + (picked.length > 4 ? '…' : '');
+      sub = en ? 'Network Risk Score 0-100 · higher = more resilient' : 'Puntaje NRS 0-100 · más alto = más resiliente';
+    } else {
+      picked = nodes.map(function (n) { return { n: n, v: nrs(n.id) }; }).filter(function (x) { return x.v != null; })
+        .sort(function (a, b) { return b.v - a.v; }).slice(0, 12).map(function (x) { return x.n; });
+      title = en ? 'Top companies by resilience (NRS)' : 'Top empresas por resiliencia (NRS)';
+      sub = en ? 'A useful default while the exact chart was unavailable' : 'Un gráfico útil por defecto (el exacto no estuvo disponible)';
+    }
+    var data = picked.map(function (n) { var v = nrs(n.id); return { label: n.label, value: (v == null ? 50 : Math.round(v)) }; });
+    return { type: 'bar', title: title, subtitle: sub, data: data, config: { unit: '' } };
+  }
+
   async function cockpitCanvas(query) {
     var cards = document.getElementById('bcp-cv-cards');
     if (!cards) return;
@@ -1274,6 +1306,15 @@
       if (d.error) throw new Error(d.error);
       if (window._cvRenderCard) window._cvRenderCard(cardId, query, d.spec, d.model);
     } catch (e) {
+      // GRÁFICOS QUE SIEMPRE SALEN: si la IA falla/está ocupada, renderizamos un
+      // gráfico de respaldo determinista en vez de un error rojo (feedback Fabrizio).
+      try {
+        var fb = _cvFallbackSpec(query);
+        if (fb && fb.data && fb.data.length && window._cvRenderCard) {
+          window._cvRenderCard(cardId, query, fb, 'local ⚡ respaldo');
+          return;
+        }
+      } catch (e2) {}
       var card = document.getElementById(cardId);
       if (card) card.innerHTML = '<div class="cv-card-hdr"><div class="cv-card-title">' + esc(query) + '</div></div>' +
         '<div style="padding:20px;text-align:center;color:#f87171;font-size:13px">⚠ ' + esc(e.message) + '</div>';

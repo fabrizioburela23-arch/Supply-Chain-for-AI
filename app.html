@@ -9530,8 +9530,8 @@ function _cvRenderCard(cardId,query,spec,model){
   const body=document.getElementById(cardId+'-body');
   try{
     const fn={bar:_cvBar,line:_cvLine,treemap:_cvTreemap,heatmap:_cvHeatmap,
-               radar:_cvRadar,scatter:_cvScatter,bubble:_cvBubble,table:_cvTable}[spec.type];
-    if(fn) fn(body,spec); else body.innerHTML=`<pre style="font-size:10px;overflow:auto;max-height:300px">${cvEsc(JSON.stringify(spec,null,2))}</pre>`;
+               radar:_cvRadar,scatter:_cvScatter,bubble:_cvBubble,table:_cvTable}[spec.type] || _cvBar;
+    fn(body,spec);   // tipo desconocido → barras, nunca JSON crudo
   } catch(e){ body.innerHTML=`<div style="color:#f87171;font-size:12px">Render error: ${cvEsc(e.message)}</div>`; }
 }
 
