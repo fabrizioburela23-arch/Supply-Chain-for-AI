@@ -499,6 +499,43 @@
       });
     }
 
+    // FUNDAMENTALES en el tiempo (ingresos, margen, flujo libre, ROE): la data
+    // vive en /api/findossier. ANTES cualquier "ingresos de X" caía al PRECIO
+    // (bug de Fabrizio: "le pido una cosa y me da otra"). Detectamos la métrica.
+    var FUND = [
+      { re: /ingres|revenue|facturaci|ventas|\bsales\b/,   key: 'revenue',      es: 'Ingresos',            en: 'Revenue',          unit: '$B', bn: true },
+      { re: /flujo|fcf|caja libre|free cash/,              key: 'fcf',          es: 'Flujo de caja libre', en: 'Free cash flow',   unit: '$B', bn: true },
+      { re: /\broe\b|retorno.*capital|return on equity/,   key: 'roe',          es: 'ROE',                 en: 'Return on equity', unit: '%',  bn: false },
+      { re: /margen bruto|gross margin/,                   key: 'gross_margin', es: 'Margen bruto',        en: 'Gross margin',     unit: '%',  bn: false },
+      { re: /margen|m[aá]rgenes|\bmargin/,                 key: 'gross_margin', es: 'Margen bruto',        en: 'Gross margin',     unit: '%',  bn: false },
+    ];
+    var fund = null;
+    for (var fi = 0; fi < FUND.length; fi++) { if (FUND[fi].re.test(q)) { fund = FUND[fi]; break; } }
+    if (fund) {
+      var fcomps = companiesIn(q.replace(/[¿?¡!.]/g, ' '));
+      var fn2 = fcomps.length ? fcomps[0] : null;
+      if (fn2 && fn2.mkt) {
+        var flab = L() === 'en' ? fund.en : fund.es;
+        return fetch((window.BASE || '') + '/api/findossier/' + encodeURIComponent(fn2.mkt))
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d || !d.available || !Array.isArray(d.years)) return null;
+            var arr = d[fund.key] || [], labs = [], vals = [];
+            d.years.forEach(function (y, i) {
+              var v = arr[i];
+              if (v != null) { labs.push(String(y)); vals.push(fund.bn ? Math.round(v / 1e9 * 10) / 10 : Math.round(v * 10) / 10); }
+            });
+            if (vals.length < 2) return null;
+            var up = vals[vals.length - 1] >= vals[0];
+            return { type: 'line', title: fn2.label + ' — ' + flab,
+              subtitle: (up ? '▲ ' : '▼ ') + labs[0] + '→' + labs[labs.length - 1] + ' · ' + (L() === 'en' ? 'source FMP/AV' : 'fuente FMP/AV'),
+              data: [{ label: flab, values: vals, color: up ? '#34d399' : '#f87171' }],
+              config: { series_labels: [flab], labels: labs, unit: fund.unit } };
+          })
+          .catch(function () { return null; });
+      }
+    }
+
     // precio histórico: "precio de nvidia", "evolución de TSMC", o la consulta
     // ES simplemente una empresa listada
     var m = q.match(/(?:precio|cotizaci[oó]n|evoluci[oó]n|hist[oó]rico|velas|acci[oó]n)\s+(?:de|del)?\s*(.+)/);
@@ -508,6 +545,15 @@
     if (!n && !m) return Promise.resolve(null);
     if (!n || !n.mkt) return Promise.resolve(null);
     if (!m && target.length > 30) return Promise.resolve(null);   // consulta larga: no es "solo una empresa"
+    if (!m) {
+      // sin palabra de "precio": SOLO devolver precio si la consulta es en esencia
+      // el nombre de la empresa (evita "empleados/deuda/lo que sea de X" → precio).
+      var resid = target.toLowerCase()
+        .replace((n.label || '').toLowerCase(), '').replace((n.mkt || '').toLowerCase(), '')
+        .replace(/gr[aá]fic[ao]|graficar?|mu[eé]stra(?:me)?|ens[eé][ñn]ame|dibuja|dame|ver|chart|show|\bde\b|\bdel\b|\bla\b|\bel\b|los|las|un|una|the|of/g, '')
+        .replace(/[^a-záéíóúñ]/g, '').trim();
+      if (resid.length > 2) return Promise.resolve(null);   // hay otra métrica → que lo arme la IA, no precio
+    }
     return _getCandles(n.mkt)
       .then(function (c) {
         if (!c || c.s !== 'ok' || !c.c || c.c.length < 5) return null;
