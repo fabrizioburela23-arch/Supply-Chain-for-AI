@@ -915,7 +915,8 @@ def fin_dossier(ticker):
                     fcf_v = float(r.get('operatingCashflow') or 0) - float(r.get('capitalExpenditures') or 0)
                 except (TypeError, ValueError):
                     fcf_v = None
-                cfs.append({'calendarYear': _y(r), 'freeCashFlow': fcf_v})
+                cfs.append({'calendarYear': _y(r), 'freeCashFlow': fcf_v,
+                            'capitalExpenditure': r.get('capitalExpenditures')})
             km = []   # AV no trae EV/Ventas — ese mini-gráfico queda vacío
     if not inc:
         return jsonify({'available': False,
@@ -939,13 +940,14 @@ def fin_dossier(ticker):
             return None
 
     series = {'years': [], 'revenue': [], 'revenue_growth': [], 'gross_margin': [],
-              'fcf': [], 'fcf_margin': [], 'fcf_growth': [], 'dilution': [],
+              'capex': [], 'fcf': [], 'fcf_margin': [], 'fcf_growth': [], 'dilution': [],
               'de_ratio': [], 'roe': [], 'ev_to_sales': [], 'shares': []}
     prev_rev = prev_fcf = prev_sh = None
     for y in years:
         i, c, b, k = yi.get(y, {}), yc.get(y, {}), yb.get(y, {}), yk.get(y, {})
         rev = _f(i.get('revenue'))
         fcf = _f(c.get('freeCashFlow'))
+        capex = _f(c.get('capitalExpenditure'))   # gasto de capital (se guarda en valor absoluto)
         sh = _f(i.get('weightedAverageShsOut')) or _f(i.get('weightedAverageShsOutDil'))
         debt = _f(b.get('totalDebt'))
         eq = _f(b.get('totalStockholdersEquity')) or _f(b.get('totalEquity'))
@@ -962,6 +964,7 @@ def fin_dossier(ticker):
         series['revenue'].append(rev)
         series['revenue_growth'].append(round((rev / prev_rev - 1) * 100, 1) if rev and prev_rev else None)
         series['gross_margin'].append(round(gm * 100, 1) if gm is not None else None)
+        series['capex'].append(abs(capex) if capex is not None else None)
         series['fcf'].append(fcf)
         series['fcf_margin'].append(round(fcf / rev * 100, 1) if fcf is not None and rev else None)
         series['fcf_growth'].append(round((fcf / prev_fcf - 1) * 100, 1) if fcf and prev_fcf and prev_fcf > 0 else None)
@@ -1794,7 +1797,14 @@ Rules:
 - context.live = {SYMBOL:{price,change_pct}} holds REAL live market prices. When the query
   is about price / today's change / comparison of listed companies, USE these real values
   (price in USD, change_pct in %). Never invent a price when context.live has it.
-- Choose the most insightful chart type for the query.
+- CHOOSE THE BEST CHART TYPE per what best communicates the metric (unless the user asked for a specific type — then honor it):
+  · Trend over time (revenue, margins, ROE, valuation, price) → line.
+  · Annual discrete amounts or growth % that can be negative (capex, free cash flow, revenue growth) → bar.
+  · One metric ranked across many companies → bar (sorted desc).
+  · One company profiled across several normalized metrics → radar.
+  · Composition / share of a whole (sector weights, market cap split) → treemap.
+  · Correlation of two metrics (risk vs margin) → scatter.
+  · Many rows with mixed columns → table.
 - Colors palette: #60a5fa #34d399 #f59e0b #f87171 #a78bfa #38bdf8 #fb923c #4ade80
 """
 
@@ -1865,7 +1875,7 @@ def canvas_generate():
     prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
     try:
         # Canvas IA = análisis que importa → tier 'deep' (Sonnet 5)
-        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1600, tier='deep')
+        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1600, tier='fast')
         # extrae el JSON aunque venga con fences o texto alrededor
         spec = _extract_json(text)
         valid_types = {'bar','line','bubble','treemap','heatmap','radar','scatter','table'}

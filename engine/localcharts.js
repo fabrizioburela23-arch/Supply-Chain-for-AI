@@ -502,12 +502,20 @@
     // FUNDAMENTALES en el tiempo (ingresos, margen, flujo libre, ROE): la data
     // vive en /api/findossier. ANTES cualquier "ingresos de X" caía al PRECIO
     // (bug de Fabrizio: "le pido una cosa y me da otra"). Detectamos la métrica.
+    // Cada métrica con su MEJOR forma de mostrarse (pedido de Fabrizio: no solo
+    // que lo haga, sino la forma óptima para entenderlo). 'line' = tendencia/
+    // trayectoria; 'bar' = montos discretos por año (capex, flujo libre que puede
+    // ser negativo, % de crecimiento). Orden: los específicos ANTES que los amplios.
     var FUND = [
-      { re: /ingres|revenue|facturaci|ventas|\bsales\b/,   key: 'revenue',      es: 'Ingresos',            en: 'Revenue',          unit: '$B', bn: true },
-      { re: /flujo|fcf|caja libre|free cash/,              key: 'fcf',          es: 'Flujo de caja libre', en: 'Free cash flow',   unit: '$B', bn: true },
-      { re: /\broe\b|retorno.*capital|return on equity/,   key: 'roe',          es: 'ROE',                 en: 'Return on equity', unit: '%',  bn: false },
-      { re: /margen bruto|gross margin/,                   key: 'gross_margin', es: 'Margen bruto',        en: 'Gross margin',     unit: '%',  bn: false },
-      { re: /margen|m[aá]rgenes|\bmargin/,                 key: 'gross_margin', es: 'Margen bruto',        en: 'Gross margin',     unit: '%',  bn: false },
+      { re: /crecimiento.*(ingres|ventas)|revenue growth|sales growth/,    key: 'revenue_growth', es: 'Crecimiento de ingresos', en: 'Revenue growth',   unit: '%',  bn: false, type: 'bar'  },
+      { re: /capex|gasto.*capital|inversi[oó]n.*capital|capital expenditure/, key: 'capex',       es: 'Capex (inversión)',      en: 'Capex',            unit: '$B', bn: true,  type: 'bar'  },
+      { re: /flujo|fcf|caja libre|free cash/,                              key: 'fcf',            es: 'Flujo de caja libre',    en: 'Free cash flow',   unit: '$B', bn: true,  type: 'bar'  },
+      { re: /ingres|revenue|facturaci|ventas|\bsales\b/,                   key: 'revenue',        es: 'Ingresos',               en: 'Revenue',          unit: '$B', bn: true,  type: 'line' },
+      { re: /\broe\b|retorno.*capital|return on equity/,                   key: 'roe',            es: 'ROE',                    en: 'Return on equity', unit: '%',  bn: false, type: 'line' },
+      { re: /margen bruto|gross margin/,                                   key: 'gross_margin',   es: 'Margen bruto',           en: 'Gross margin',     unit: '%',  bn: false, type: 'line' },
+      { re: /margen|m[aá]rgenes|\bmargin/,                                 key: 'gross_margin',   es: 'Margen bruto',           en: 'Gross margin',     unit: '%',  bn: false, type: 'line' },
+      { re: /deuda.*capital|debt.*equity|apalancamiento|leverage/,        key: 'de_ratio',       es: 'Deuda / Capital',        en: 'Debt / Equity',    unit: 'x',  bn: false, type: 'line' },
+      { re: /valuaci[oó]n|ev.?\/?.?ventas|ev.?\/?.?sales/,                 key: 'ev_to_sales',    es: 'EV / Ventas',            en: 'EV / Sales',       unit: 'x',  bn: false, type: 'line' },
     ];
     var fund = null;
     for (var fi = 0; fi < FUND.length; fi++) { if (FUND[fi].re.test(q)) { fund = FUND[fi]; break; } }
@@ -527,8 +535,14 @@
             });
             if (vals.length < 2) return null;
             var up = vals[vals.length - 1] >= vals[0];
-            return { type: 'line', title: fn2.label + ' — ' + flab,
-              subtitle: (up ? '▲ ' : '▼ ') + labs[0] + '→' + labs[labs.length - 1] + ' · ' + (L() === 'en' ? 'source FMP/AV' : 'fuente FMP/AV'),
+            var sub = (up ? '▲ ' : '▼ ') + labs[0] + '→' + labs[labs.length - 1] + ' · ' + (L() === 'en' ? 'source FMP/AV' : 'fuente FMP/AV');
+            if (fund.type === 'bar') {
+              // barras por año — la mejor forma para capex, flujo libre y % de crecimiento
+              return { type: 'bar', title: fn2.label + ' — ' + flab, subtitle: sub,
+                data: labs.map(function (lb, i) { return { label: lb, value: vals[i], color: vals[i] < 0 ? '#f87171' : '#34d399' }; }),
+                config: { unit: fund.unit } };
+            }
+            return { type: 'line', title: fn2.label + ' — ' + flab, subtitle: sub,
               data: [{ label: flab, values: vals, color: up ? '#34d399' : '#f87171' }],
               config: { series_labels: [flab], labels: labs, unit: fund.unit } };
           })
