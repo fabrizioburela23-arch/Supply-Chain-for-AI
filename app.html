@@ -9555,28 +9555,38 @@ function _cvBar(el,spec){
 
 /* ── LINE ── */
 function _cvLine(el,spec){
-  const data=spec.data||[];
+  let data=spec.data||[];
   if(!data.length){ el.innerHTML='<div style="color:var(--ink-3);font-size:12px;text-align:center;padding:20px">Sin datos</div>'; return; }
   const W=560, H=200, PAD={t:10,r:20,b:40,l:50};
   const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
-  const seriesLabels=spec.config?.series_labels||data.map((_,i)=>`Serie ${i+1}`);
-  // each item in data = {label, values:[n,…]}
-  // flatten to x-axis labels from first item's length
-  const labels=data[0]?.values?.map((_,i)=>String(i))||[];
+  // NORMALIZAR forma de datos: la IA manda a veces SERIES [{label,values:[…]}] y
+  // a veces PUNTOS [{label,value}] (como el de barras). Aceptamos ambas para que
+  // el gráfico SIEMPRE salga (bug real que dejó una línea vacía ante un inversor).
+  let labels;
+  if(data[0] && Array.isArray(data[0].values)){
+    labels=(data[0].values||[]).map((_,i)=> (spec.config?.labels||[])[i] ?? String(i));
+  } else {
+    labels=data.map(d=> String(d.label!=null?d.label:''));
+    data=[{ label:(spec.config?.series_labels&&spec.config.series_labels[0])||spec.title||'',
+            values:data.map(d=> +(d.value)||0), color:(data[0]||{}).color }];
+  }
+  const seriesLabels=spec.config?.series_labels||data.map((d,i)=> d.label || `Serie ${i+1}`);
   const allVals=data.flatMap(d=>d.values||[]);
   const minV=Math.min(0,...allVals), maxV=Math.max(...allVals)||1;
   const xS=i=>PAD.l+i/(Math.max(labels.length-1,1))*cw;
   const yS=v=>PAD.t+ch-(v-minV)/(maxV-minV||1)*ch;
+  // <path d="M x,y L x,y…"> — NO <polyline points> (el atributo points NO acepta
+  // M/L; ese era el bug que dejaba la línea sin dibujar).
   const paths=data.map((d,si)=>{
     const pts=(d.values||[]).map((v,i)=>`${xS(i).toFixed(1)},${yS(v).toFixed(1)}`).join(' L');
-    return `<polyline points="M ${pts}" fill="none" stroke="${d.color||cvCol(si)}" stroke-width="2.5" stroke-linejoin="round" style="stroke:${d.color||cvCol(si)}"/>`;
+    return `<path d="M ${pts}" fill="none" stroke="${d.color||cvCol(si)}" stroke-width="2.5" stroke-linejoin="round"/>`;
   });
-  const xTicks=labels.filter((_,i)=>i%Math.max(1,Math.floor(labels.length/6))===0);
+  const step=Math.max(1,Math.floor(labels.length/6));
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">
-    ${xTicks.map((_,i)=>{const xi=labels.indexOf(_); return `<text x="${xS(xi).toFixed(1)}" y="${H-4}" font-size="10" fill="var(--ink-4)" text-anchor="middle">${cvEsc(_)}</text>`;}).join('')}
+    ${labels.map((lb,i)=> i%step===0 ? `<text x="${xS(i).toFixed(1)}" y="${H-4}" font-size="10" fill="var(--ink-4)" text-anchor="middle">${cvEsc(lb)}</text>` : '').join('')}
     ${[0,0.25,0.5,0.75,1].map(t=>{const v=minV+(maxV-minV)*t; return `<line x1="${PAD.l}" x2="${W-PAD.r}" y1="${yS(v).toFixed(1)}" y2="${yS(v).toFixed(1)}" stroke="rgba(100,120,160,.15)" stroke-width="1"/><text x="${PAD.l-4}" y="${(yS(v)+4).toFixed(1)}" font-size="10" fill="var(--ink-4)" text-anchor="end">${cvFmt(v)}</text>`;}).join('')}
     ${paths.join('')}
-    ${data.map((d,si)=>`<circle cx="${xS((d.values||[]).length-1).toFixed(1)}" cy="${yS((d.values||[]).slice(-1)[0]??0).toFixed(1)}" r="3.5" fill="${d.color||cvCol(si)}"/>`).join('')}
+    ${data.map((d,si)=>{const vs=d.values||[];return vs.length?`<circle cx="${xS(vs.length-1).toFixed(1)}" cy="${yS(vs[vs.length-1]??0).toFixed(1)}" r="3.5" fill="${d.color||cvCol(si)}"/>`:'';}).join('')}
   </svg>
   <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;justify-content:center">
     ${data.map((d,si)=>`<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-2)"><span style="width:14px;height:3px;background:${d.color||cvCol(si)};border-radius:2px;display:inline-block"></span>${cvEsc(seriesLabels[si]||d.label||'')}</span>`).join('')}
