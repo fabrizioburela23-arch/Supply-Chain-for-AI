@@ -3954,7 +3954,10 @@ def portfolio_advice():
         'Da tu pulso y hasta 3 sugerencias.'
     )
     try:
-        text, model = _ai_complete(system, prompt, max_tokens=900, model='claude-opus-4-8')
+        # Sonnet 5 (elección de Fabrizio por costo/velocidad): 90% del juicio de
+        # Opus, 2-3x más rápido y ~mitad de costo. Se puede subir a claude-opus-4-8
+        # por tarea si alguna lo amerita (cambiar solo este string).
+        text, model = _ai_complete(system, prompt, max_tokens=900, model='claude-sonnet-5')
         data = _extract_json(text)
         if not isinstance(data, dict):
             return jsonify(fallback)

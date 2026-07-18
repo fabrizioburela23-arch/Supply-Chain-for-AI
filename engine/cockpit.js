@@ -918,7 +918,7 @@
   async function _fetchAdvice(mount) {
     if (!mount) return;
     var en = ckLang() === 'en';
-    mount.innerHTML = '<div class="bcp-loading">' + (en ? 'Bixby is studying your portfolio (Opus 4.8)…' : 'Bixby está estudiando tu cartera (Opus 4.8)…') + '</div>';
+    mount.innerHTML = '<div class="bcp-loading">' + (en ? 'Bixby is studying your portfolio…' : 'Bixby está estudiando tu cartera…') + '</div>';
     if (!window._tradeAccountInfo || !window._tradeFetch) { mount.innerHTML = '<div style="color:#FFB300;padding:12px;font-size:13px">' + (en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.') + '</div>'; return; }
     var acct = null, positions = [];
     try { acct = await window._tradeAccountInfo(true, false); } catch (e) {}
@@ -942,6 +942,8 @@
   function _renderAdvice(d, en) {
     var pulse = (d && d.pulse) || '';
     var sug = (d && Array.isArray(d.suggestions)) ? d.suggestions : [];
+    var mdl = String((d && d.model) || '');
+    var mLbl = /opus/i.test(mdl) ? 'Claude Opus 4.8' : /sonnet/i.test(mdl) ? 'Claude Sonnet 5' : /haiku/i.test(mdl) ? 'Claude Haiku' : 'Claude';
     var ico = { add: '➕', reduce: '➖', watch: '👁' };
     var alab = en ? { add: 'Add', reduce: 'Reduce', watch: 'Watch' } : { add: 'Incluir', reduce: 'Reducir', watch: 'Vigilar' };
     var sevCol = { alta: '#f87171', media: '#FFB300', baja: '#34d399', high: '#f87171', medium: '#FFB300', low: '#34d399' };
@@ -961,7 +963,7 @@
     return '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:13px;line-height:1.55;color:#C3CBE0">' +
       '<span style="color:#00E0FF;font-weight:700">🧠 Bixby:</span> ' + esc(pulse) + '</div>' +
       (sug.length ? cards : '<div style="color:#7C87A3;font-size:12.5px;padding:6px">' + (en ? 'No changes suggested right now.' : 'Sin cambios sugeridos por ahora.') + '</div>') +
-      '<div style="margin-top:6px;font-size:10.5px;color:#5b6580">' + (en ? 'Suggestions by Claude Opus 4.8 · you approve every action · not financial advice.' : 'Sugerencias por Claude Opus 4.8 · tú apruebas cada acción · no es asesoría financiera.') + '</div>';
+      '<div style="margin-top:6px;font-size:10.5px;color:#5b6580">' + (en ? 'Suggestions by ' + mLbl + ' · you approve every action · not financial advice.' : 'Sugerencias por ' + mLbl + ' · tú apruebas cada acción · no es asesoría financiera.') + '</div>';
   }
 
   function _wireAdvice(mount) {
