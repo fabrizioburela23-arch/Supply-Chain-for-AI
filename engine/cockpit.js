@@ -246,6 +246,7 @@
         '<button class="bcp-act" data-act="deep">🧠 ' + (en0 ? 'Research' : 'Investigar') + '</button>' +
         '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
         '<button class="bcp-act" data-act="broker">💼 ' + (en0 ? 'Invest' : 'Invertir') + '</button>' +
+        '<button class="bcp-act" data-act="scalp">⚡ Scalping</button>' +
         '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
         '<button class="bcp-act" data-act="market">📈 ' + (en0 ? 'Market' : 'Mercado') + '</button>' +
         '<button class="bcp-act" data-act="geo">🌐 ' + (en0 ? 'Geo' : 'Geo') + '</button>' +
@@ -274,6 +275,7 @@
         if (act === 'insights') return stage('insights');
         if (act === 'canvas') return stage('canvas');
         if (act === 'broker') return stage('broker');
+        if (act === 'scalp') return stage('scalp');
         if (act === 'crypto') return stage('crypto');
         if (act === 'market') return stage('market');
         if (act === 'geo') return stage('geo');
@@ -389,8 +391,10 @@
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
-    markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia'].indexOf(kind) >= 0 ? kind : null);
+    _scalpStop();       // detener el polling de scalping al cambiar de escena
+    markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'].indexOf(kind) >= 0 ? kind : null);
     if (kind === 'broker') return stageBroker(s, arg);
+    if (kind === 'scalp') return stageScalp(s, arg);
     if (kind === 'crypto') return stageCrypto(s, arg);
     if (ADOPT_TABS[kind]) return stageAdoptTab(s, kind);
     if (kind === 'xray') return stageXRay(s, arg);
@@ -900,6 +904,133 @@
       el = document.getElementById('bcp-bk-aicomment');
       if (el) el.innerHTML = '<span style="color:#7C87A3">💬 ' + (en ? "Could not load Bixby's comment." : 'No pude cargar el comentario de Bixby.') + '</span>';
     }
+  }
+
+  /* ══ SCALPING (elección de Fabrizio: 1-clic + ticks en vivo · cripto y acciones ·
+     TODO PAPEL). Precio spot polleado (2.5s), botones de entrada/salida inmediata
+     (sin tarjeta de confirmación: la velocidad ES el punto y es dinero de papel),
+     posición + P&L en vivo y cierre de un toque. ══ */
+  var _scalpTimer = null, _scalpPosTimer = null, _scalpSym = 'BTC/USD', _scalpAmt = 500, _scalpHist = [], _scalpSessOpen = null;
+  var SCALP_PRESETS = [
+    { sym: 'BTC/USD', label: 'BTC' }, { sym: 'ETH/USD', label: 'ETH' }, { sym: 'SOL/USD', label: 'SOL' },
+    { sym: 'NVDA', label: 'NVDA' }, { sym: 'TSM', label: 'TSMC' }, { sym: 'AMD', label: 'AMD' },
+  ];
+  function _scalpStop() {
+    if (_scalpTimer) { clearInterval(_scalpTimer); _scalpTimer = null; }
+    if (_scalpPosTimer) { clearInterval(_scalpPosTimer); _scalpPosTimer = null; }
+  }
+  function _scalpFmtPrice(p) {
+    p = +p || 0;
+    var dec = p < 10 ? 4 : 2;
+    return '$' + p.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+  function _scalpDrawSpark() {
+    var svg = document.getElementById('bcp-scalp-spark');
+    if (!svg || _scalpHist.length < 2) return;
+    var W = 320, H = 60, min = Math.min.apply(null, _scalpHist), max = Math.max.apply(null, _scalpHist), rng = (max - min) || 1;
+    var pts = _scalpHist.map(function (v, i) { return (i / (_scalpHist.length - 1) * W).toFixed(1) + ',' + (H - (v - min) / rng * (H - 8) - 4).toFixed(1); });
+    var up = _scalpHist[_scalpHist.length - 1] >= _scalpHist[0];
+    svg.innerHTML = '<path d="M ' + pts.join(' L ') + '" fill="none" stroke="' + (up ? '#34d399' : '#f87171') + '" stroke-width="2" stroke-linejoin="round"/>';
+  }
+  function _scalpPoll() {
+    var sym = _scalpSym;
+    fetch((window.BASE || '') + '/api/scalp/price/' + encodeURIComponent(sym)).then(function (r) { return r.json(); }).then(function (d) {
+      if (_scalpSym !== sym || !d || d.price == null) return;
+      var p = +d.price;
+      if (_scalpSessOpen == null) _scalpSessOpen = +(d.prev || p);
+      var prev = _scalpHist.length ? _scalpHist[_scalpHist.length - 1] : p;
+      _scalpHist.push(p); if (_scalpHist.length > 50) _scalpHist.shift();
+      var el = document.getElementById('bcp-scalp-price');
+      if (el) { el.textContent = _scalpFmtPrice(p); el.style.color = p > prev ? '#34d399' : p < prev ? '#f87171' : '#E8EDFB'; }
+      var chg = document.getElementById('bcp-scalp-chg');
+      if (chg && _scalpSessOpen) { var pct = (p / _scalpSessOpen - 1) * 100; chg.innerHTML = (pct >= 0 ? '<span style="color:#34d399">▲ +' : '<span style="color:#f87171">▼ ') + pct.toFixed(2) + '%</span>'; }
+      _scalpDrawSpark();
+    }).catch(function () {});
+  }
+  async function _scalpOrder(side) {
+    var st = document.getElementById('bcp-scalp-status'), en = ckLang() === 'en';
+    if (!window._executeTradeOrder || !window._resolveTradeSymbol) { if (st) st.innerHTML = '<span style="color:#f87171">' + (en ? 'Trading not loaded.' : 'Trading no cargado.') + '</span>'; return; }
+    var col = side === 'buy' ? '#34d399' : '#f87171';
+    if (st) { st.style.color = col; st.textContent = en ? 'Sending…' : 'Enviando…'; }
+    try {
+      var res = await window._resolveTradeSymbol(_scalpSym);
+      if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">' + esc(res.error || 'símbolo') + '</span>'; return; }
+      var r = await window._executeTradeOrder({ symbol: res.symbol, side: side, label: res.label, kind: res.kind, notional: _scalpAmt });
+      st = document.getElementById('bcp-scalp-status');
+      if (r && r.ok) { if (st) st.innerHTML = '<span style="color:' + col + '">✓ ' + (side === 'buy' ? (en ? 'Bought' : 'Compraste') : (en ? 'Sold' : 'Vendiste')) + ' $' + _scalpAmt + ' ' + esc(res.label) + '</span>'; setTimeout(_scalpLoadPos, 900); }
+      else if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((r && r.error) || 'error') + '</span>';
+    } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
+  }
+  async function _scalpLoadPos() {
+    var mount = document.getElementById('bcp-scalp-pos'), en = ckLang() === 'en';
+    if (!mount || !window._tradeFetch) return;
+    try {
+      var r = await window._tradeFetch('/api/trade/positions/detail', {}, false);
+      var dp = await r.json();
+      mount = document.getElementById('bcp-scalp-pos');
+      if (!mount || !Array.isArray(dp)) return;
+      var symNorm = _scalpSym.replace('/', '').toUpperCase();
+      var pos = dp.filter(Boolean).find(function (p) { return String(p.symbol || '').replace('/', '').toUpperCase() === symNorm; });
+      if (!pos) { mount.innerHTML = '<div style="text-align:center;color:#7C87A3;font-size:12.5px">' + (en ? 'No open position in ' : 'Sin posición abierta en ') + esc(_scalpSym) + '</div>'; return; }
+      var pl = +pos.unrealized_pct || 0, plUsd = +pos.unrealized || 0, col = pl >= 0 ? '#34d399' : '#f87171';
+      mount.innerHTML = '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;padding:12px 16px;border:1px solid ' + col + '33;border-radius:14px;background:' + col + '0d">' +
+        '<div><div style="font-size:11px;color:#7C87A3">' + (en ? 'Position' : 'Posición') + '</div><div style="font-weight:750;font-family:\'JetBrains Mono\',monospace">' + fmtUsd(pos.market_val) + '</div></div>' +
+        '<div><div style="font-size:11px;color:#7C87A3">P&L</div><div style="font-weight:750;color:' + col + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '% (' + (plUsd >= 0 ? '+' : '') + fmtUsd(plUsd) + ')</div></div>' +
+        '<button id="bcp-scalp-close" style="margin-left:auto;padding:8px 18px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;border:1px solid rgba(248,113,113,.5);background:rgba(248,113,113,.14);color:#f87171">' + (en ? 'Close' : 'Cerrar') + '</button></div>';
+      var cb = document.getElementById('bcp-scalp-close');
+      if (cb) cb.addEventListener('click', _scalpClose);
+    } catch (e) {}
+  }
+  async function _scalpClose() {
+    var st = document.getElementById('bcp-scalp-status'), en = ckLang() === 'en';
+    if (!window._tradeFetch) return;
+    if (st) { st.style.color = '#7C87A3'; st.textContent = en ? 'Closing…' : 'Cerrando…'; }
+    try {
+      var r = await window._tradeFetch('/api/trade/close', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ symbol: _scalpSym }) }, false);
+      st = document.getElementById('bcp-scalp-status');
+      if (r && r.status < 400) { if (st) st.innerHTML = '<span style="color:#34d399">✓ ' + (en ? 'Position closed' : 'Posición cerrada') + '</span>'; setTimeout(_scalpLoadPos, 900); }
+      else { var d = {}; try { d = await r.json(); } catch (e2) {} if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((d && (d.message || d.error)) || 'error') + '</span>'; }
+    } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
+  }
+  function stageScalp(s, arg) {
+    arg = arg || {}; _scalpStop();
+    var en = ckLang() === 'en';
+    if (arg.sym) _scalpSym = arg.sym;
+    _scalpHist = []; _scalpSessOpen = null;
+    var symChips = SCALP_PRESETS.map(function (p) {
+      var on = p.sym === _scalpSym;
+      return '<button class="bcp-scalp-sym" data-sym="' + esc(p.sym) + '" style="padding:6px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;white-space:nowrap;flex-shrink:0;' +
+        'border:1px solid ' + (on ? '#00E0FF' : 'rgba(122,158,255,.25)') + ';background:' + (on ? 'rgba(0,224,255,.14)' : 'transparent') + ';color:' + (on ? '#00E0FF' : '#9BA6C4') + '">' + esc(p.label) + '</button>';
+    }).join('');
+    var amtChips = [100, 500, 1000].map(function (v) {
+      var on = v === _scalpAmt;
+      return '<button class="bcp-scalp-amt" data-amt="' + v + '" style="padding:6px 15px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;' +
+        'border:1px solid ' + (on ? '#00E0FF' : 'rgba(122,158,255,.25)') + ';background:' + (on ? 'rgba(0,224,255,.14)' : 'transparent') + ';color:' + (on ? '#00E0FF' : '#9BA6C4') + '">$' + v.toLocaleString('en-US') + '</button>';
+    }).join('');
+    s.innerHTML = backBar('⚡ Scalping') +
+      '<div class="bcp-inner" style="max-width:720px">' +
+        '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px">' + symChips + '</div>' +
+        '<div style="text-align:center;padding:18px;border:1px solid rgba(122,158,255,.18);border-radius:16px;background:rgba(12,18,32,.5);margin-bottom:16px">' +
+          '<div style="font-size:13px;color:#7C87A3;margin-bottom:4px">' + esc(_scalpSym) + ' <span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:2px 8px;border-radius:999px;background:rgba(255,179,0,.14);color:#FFB300;border:1px solid rgba(255,179,0,.4);margin-left:6px">' + (en ? 'PAPER' : 'PAPEL') + '</span></div>' +
+          '<div id="bcp-scalp-price" style="font-size:38px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:#E8EDFB">—</div>' +
+          '<div id="bcp-scalp-chg" style="font-size:13px;color:#7C87A3;margin-top:2px">&nbsp;</div>' +
+          '<svg id="bcp-scalp-spark" viewBox="0 0 320 60" preserveAspectRatio="none" style="width:100%;max-width:320px;height:60px;margin-top:10px"></svg>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px">' + amtChips + '</div>' +
+        '<div style="display:flex;gap:12px;margin-bottom:16px">' +
+          '<button id="bcp-scalp-buy" style="flex:1;padding:16px;border-radius:14px;cursor:pointer;font-size:17px;font-weight:800;font-family:inherit;border:1px solid #34d39988;background:rgba(52,211,153,.16);color:#34d399">▲ ' + (en ? 'BUY' : 'COMPRAR') + '</button>' +
+          '<button id="bcp-scalp-sell" style="flex:1;padding:16px;border-radius:14px;cursor:pointer;font-size:17px;font-weight:800;font-family:inherit;border:1px solid #f8717188;background:rgba(248,113,113,.16);color:#f87171">▼ ' + (en ? 'SELL' : 'VENDER') + '</button>' +
+        '</div>' +
+        '<div id="bcp-scalp-status" style="text-align:center;font-size:13px;min-height:18px;margin-bottom:14px"></div>' +
+        '<div id="bcp-scalp-pos"></div>' +
+      '</div>';
+    s.querySelectorAll('.bcp-scalp-sym').forEach(function (b) { b.addEventListener('click', function () { stage('scalp', { sym: b.getAttribute('data-sym') }); }); });
+    s.querySelectorAll('.bcp-scalp-amt').forEach(function (b) { b.addEventListener('click', function () { _scalpAmt = +b.getAttribute('data-amt'); stage('scalp', { sym: _scalpSym }); }); });
+    var buy = s.querySelector('#bcp-scalp-buy'), sell = s.querySelector('#bcp-scalp-sell');
+    if (buy) buy.addEventListener('click', function () { _scalpOrder('buy'); });
+    if (sell) sell.addEventListener('click', function () { _scalpOrder('sell'); });
+    _scalpPoll(); _scalpTimer = setInterval(_scalpPoll, 2500);
+    _scalpLoadPos(); _scalpPosTimer = setInterval(_scalpLoadPos, 5000);
   }
 
   /* ══ CAPA PROACTIVA (Opus 4.8) — "sugiere y tú decides" (elección de Fabrizio).
@@ -1796,6 +1927,7 @@
   }
   function close() {
     restoreAdopted();   // devolver grafo/terminal a su sitio original
+    _scalpStop();       // detener el polling de scalping al cerrar la Cabina
     stopCockpitOrb();
     var ov = document.getElementById('bcp-ov');
     if (ov) ov.classList.remove('show');

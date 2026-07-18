@@ -819,6 +819,38 @@ def quote(ticker):
     return jsonify(data)
 
 
+@app.route('/api/scalp/price/<path:symbol>')
+@rate_limit(limit=300, window=60)
+@cache.cached(timeout=2, query_string=True)
+def scalp_price(symbol):
+    """Precio spot RÁPIDO para el scalping. Acciones → Finnhub (c/pc); cripto (par
+    con '/') → datos de Alpaca (misma key). Caché 2s: fresco para scalping sin
+    reventar rate limits. El cliente calcula la dirección del tick comparando lecturas."""
+    sym = (symbol or '').strip().upper()
+    if not sym:
+        return jsonify({'error': 'symbol requerido'}), 400
+    try:
+        if '/' in sym:   # cripto (BTC/USD)
+            if not ALPACA_KEY:
+                return jsonify({'error': 'ALPACA no configurado'}), 400
+            r = requests.get('https://data.alpaca.markets/v1beta3/crypto/us/latest/trades',
+                             params={'symbols': sym}, headers=_alpaca_hdrs(), timeout=8)
+            tr = ((r.json().get('trades') or {}).get(sym)) or {}
+            p = tr.get('p')
+            if p is None:
+                return jsonify({'error': 'sin precio para ' + sym}), 502
+            return jsonify({'symbol': sym, 'price': float(p), 'kind': 'crypto'})
+        # acción (equity)
+        tk = _safe_ticker(sym)
+        data, err = _fetch_quote_raw(tk, timeout=5)
+        if err or not data:
+            return jsonify({'error': err or 'sin precio'}), 502
+        return jsonify({'symbol': tk, 'price': float(data.get('c') or 0),
+                        'prev': float(data.get('pc') or 0), 'kind': 'equity'})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:150]}), 502
+
+
 @app.route('/api/quotes')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
@@ -1332,6 +1364,31 @@ def trade_crypto_assets():
     if assets is None:
         return jsonify({'error': 'No se pudo cargar el catálogo cripto de Alpaca'}), 502
     return jsonify({'assets': assets, 'paper': 'paper' in ALPACA_BASE})
+
+
+@app.route('/api/trade/close', methods=['POST'])
+@rate_limit(limit=60, window=60)
+@_trade_auth
+def trade_close():
+    """Cierra por completo una posición (1-clic 'CLOSE' del scalping). Alpaca:
+    DELETE /v2/positions/{symbol} (cripto va SIN barra en el path: BTCUSD)."""
+    if not ALPACA_KEY:
+        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+    body = request.get_json(force=True, silent=True) or {}
+    symbol = str(body.get('symbol') or '').strip()
+    if not symbol:
+        return jsonify({'error': 'symbol requerido'}), 400
+    try:
+        path_sym = symbol.replace('/', '')   # Alpaca usa BTCUSD en el path de posiciones
+        r = requests.delete(f'{ALPACA_BASE}/v2/positions/{path_sym}',
+                            headers=_alpaca_hdrs(), timeout=10)
+        try:
+            payload = r.json()
+        except Exception:  # noqa: BLE001
+            payload = {'ok': r.status_code < 300}
+        return jsonify(payload), r.status_code
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:150]}), 502
 
 
 @app.route('/api/trade/order', methods=['POST'])
