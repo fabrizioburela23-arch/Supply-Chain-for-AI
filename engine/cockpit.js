@@ -139,7 +139,8 @@
 #bcp-mic.on{background:rgba(214,59,59,.85);border-color:#d63b3b;color:#fff;box-shadow:0 0 18px rgba(214,59,59,.45);animation:bcpPulse 1.1s ease-in-out infinite}
 #bcp-close{margin-left:auto}
 #bcp-actions{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:10px 22px 2px;
-  flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent)}
 #bcp-actions::-webkit-scrollbar{display:none}
 .bcp-act{font-size:11.5px;padding:6px 13px;border-radius:10px;cursor:pointer;color:#9BA6C4;white-space:nowrap;flex-shrink:0;
   background:rgba(11,18,34,.6);border:1px solid rgba(122,158,255,.16);transition:all .13s;
@@ -237,21 +238,22 @@
       // Barra de BOTONES (pedido de Fabrizio): todo lo que Bixby puede
       // mostrar, a un clic — el grafo y la terminal viven DENTRO del escenario.
       '<div id="bcp-actions">' +
+        // Trading/dinero PRIMERO (siempre visibles aunque la barra se deslice en tablet).
+        '<button class="bcp-act" data-act="broker">💼 ' + (en0 ? 'Invest' : 'Invertir') + '</button>' +
+        '<button class="bcp-act" data-act="scalp">⚡ Scalping</button>' +
+        '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
         '<button class="bcp-act" data-act="graph">🗺️ ' + (en0 ? 'Graph' : 'Grafo') + '</button>' +
         '<button class="bcp-act" data-act="terminal">🖥️ ' + (en0 ? 'Terminal' : 'Terminal') + '</button>' +
+        '<button class="bcp-act" data-act="market">📈 ' + (en0 ? 'Market' : 'Mercado') + '</button>' +
         '<button class="bcp-act" data-act="xray">🔬 X-Ray</button>' +
         '<button class="bcp-act" data-act="sim">◉ ' + (en0 ? 'Simulate' : 'Simular') + '</button>' +
         '<button class="bcp-act" data-act="compare">⇄ ' + (en0 ? 'Compare' : 'Comparar') + '</button>' +
         '<button class="bcp-act" data-act="insights">💡 ' + (en0 ? 'Opportunities' : 'Oportunidades') + '</button>' +
         '<button class="bcp-act" data-act="deep">🧠 ' + (en0 ? 'Research' : 'Investigar') + '</button>' +
         '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
-        '<button class="bcp-act" data-act="broker">💼 ' + (en0 ? 'Invest' : 'Invertir') + '</button>' +
-        '<button class="bcp-act" data-act="scalp">⚡ Scalping</button>' +
-        '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
-        '<button class="bcp-act" data-act="market">📈 ' + (en0 ? 'Market' : 'Mercado') + '</button>' +
+        '<button class="bcp-act" data-act="simulation">🔮 ' + (en0 ? 'Scenarios' : 'Escenarios') + '</button>' +
         '<button class="bcp-act" data-act="geo">🌐 ' + (en0 ? 'Geo' : 'Geo') + '</button>' +
         '<button class="bcp-act" data-act="space">🚀 ' + (en0 ? 'Space' : 'Espacio') + '</button>' +
-        '<button class="bcp-act" data-act="simulation">🔮 ' + (en0 ? 'Scenarios' : 'Escenarios') + '</button>' +
       '</div>' +
       '<div id="bcp-stage"></div>' +
       // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Bixby abajo").
