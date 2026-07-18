@@ -12,20 +12,21 @@ from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, CLAUDE,
                          GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY, NVIDIA_MODEL)
 
 
-def _complete_claude(system, prompt, max_tokens, tier='fast'):
+def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
     import anthropic
     client = anthropic.Anthropic(api_key=CLAUDE)
-    # Híbrido: el tier SOLO cambia el modelo de Claude (misma ANTHROPIC_KEY).
-    model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
+    # Híbrido: el tier elige el modelo (misma ANTHROPIC_KEY). `model` lo SOBRESCRIBE
+    # para elegir el mejor modelo POR TAREA (p.ej. claude-opus-4-8 en la capa
+    # proactiva, donde el juicio importa más que la latencia).
+    tier_model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
     base = dict(max_tokens=max_tokens, system=system or '',
                 messages=[{'role': 'user', 'content': prompt or ''}])
     # Lista de modelos Claude a probar EN ORDEN. Si la key no tiene acceso al
-    # modelo del tier (p.ej. claude-sonnet-5), caemos a otro modelo Claude que
-    # SÍ funcione (haiku) — SIEMPRE Claude antes de degradar a Gemini/NVIDIA,
-    # porque cualquier Claude supera al llama de respaldo para este análisis.
-    # (Bug real 2026-07-14: sonnet-5 fallaba y la cascada usaba NVIDIA.)
+    # modelo pedido, caemos a otro modelo Claude que SÍ funcione (haiku) — SIEMPRE
+    # Claude antes de degradar a Gemini/NVIDIA. (Bug 2026-07-14: sonnet-5 fallaba
+    # y la cascada usaba NVIDIA.)
     candidates = []
-    for m in (model, AI_MODEL_FAST, 'claude-haiku-4-5'):
+    for m in (model, tier_model, AI_MODEL_FAST, 'claude-haiku-4-5'):
         if m and m not in candidates:
             candidates.append(m)
 
@@ -103,12 +104,13 @@ def _ai_configured():
     return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
 
 
-def _ai_complete(system, prompt, max_tokens=1000, tier='fast'):
+def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None):
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
     pasa al siguiente. Devuelve (texto, etiqueta_modelo).
 
-    tier: 'fast' (default, AI_MODEL_FAST/Haiku) o 'deep' (AI_MODEL_DEEP/Sonnet 5).
-    SOLO cambia el modelo del proveedor Claude; Gemini/NVIDIA quedan igual."""
+    tier: 'fast' (AI_MODEL_FAST/Haiku) o 'deep' (AI_MODEL_DEEP/Sonnet 5).
+    model: sobrescribe el modelo de Claude para elegir el mejor POR TAREA
+    (p.ej. 'claude-opus-4-8'); solo aplica al proveedor Claude."""
     tier = 'deep' if tier == 'deep' else 'fast'
     # "Sonnet 5 para TODO" (pedido del usuario): Claude SIEMPRE primero cuando la
     # key existe; Gemini/NVIDIA quedan solo de respaldo si Claude cae. Esto
@@ -123,9 +125,12 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast'):
         if not prov or not prov[0]():
             continue
         try:
-            text, model = prov[1](system, prompt, max_tokens, tier)
+            if name == 'claude':
+                text, used = prov[1](system, prompt, max_tokens, tier, model=model)
+            else:
+                text, used = prov[1](system, prompt, max_tokens, tier)
             if text and text.strip():
-                return text, model
+                return text, used
             errors.append(f'{name}: respuesta vacía')
         except Exception as e:  # noqa: BLE001
             errors.append(f'{name}: {str(e)[:80]}')

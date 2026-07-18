@@ -3891,6 +3891,81 @@ def portfolio_comment():
         return jsonify({'ok': True, 'comment': fb, 'model': 'fallback', 'error': str(e)[:120]})
 
 
+@app.route('/api/portfolio/advice', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+def portfolio_advice():
+    """CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un
+    resumen ANÓNIMO de la cartera (papel) + candidatos del universo, Bixby razona
+    con Opus 4.8 (el mejor juicio para esto) y devuelve un pulso + 1-3 sugerencias
+    CONCRETAS (incluir/reducir/vigilar), cada una con su porqué. NUNCA ejecuta nada
+    — el cliente pide aprobación por acción. Respaldo determinista si la IA falla."""
+    body = request.get_json(force=True, silent=True) or {}
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    is_paper = body.get('paper') is not False
+    equity = body.get('equity')
+    pnl_pct = body.get('pnl_pct')
+    positions = body.get('positions') or []       # [{symbol, sector, pct, pnl_pct}]
+    sectors = body.get('sectors') or []           # [{sector, pct}]
+    candidates = body.get('candidates') or []     # [{label, ticker, sector, nrs}]
+
+    try:
+        eq_txt = '$' + format(int(round(float(equity or 0))), ',')
+    except (TypeError, ValueError):
+        eq_txt = '$0'
+    top = sectors[0] if sectors else None
+    if lang == 'en':
+        pulse_fb = f"Portfolio at {eq_txt}, {'+' if (pnl_pct or 0) >= 0 else ''}{pnl_pct}% overall. This is an observation, not financial advice."
+    else:
+        pulse_fb = f"Cartera en {eq_txt}, {'+' if (pnl_pct or 0) >= 0 else ''}{pnl_pct}% en total. Es una observación, no asesoría financiera."
+    sugg_fb = []
+    try:
+        if top and float(top.get('pct') or 0) >= 50:
+            sugg_fb.append({'action': 'reduce', 'target': top.get('sector'),
+                            'rationale': (f"~{round(float(top.get('pct')))}% en {top.get('sector')}; reducir bajaría el riesgo de un solo sector."
+                                          if lang == 'es' else
+                                          f"~{round(float(top.get('pct')))}% in {top.get('sector')}; trimming would lower single-sector risk."),
+                            'severity': 'media'})
+    except (TypeError, ValueError):
+        pass
+    fallback = {'ok': True, 'pulse': pulse_fb, 'suggestions': sugg_fb, 'model': 'fallback'}
+
+    if not _ai_configured():
+        return jsonify(fallback)
+
+    lang_name = 'inglés' if lang == 'en' else 'español'
+    money = 'dinero de PAPEL (simulado)' if is_paper else 'DINERO REAL'
+    system = (
+        'Eres Bixby, asesor financiero PRUDENTE de una app con ' + money + '. Analizas una '
+        'cartera y sugieres en ' + lang_name + '. REGLAS INNEGOCIABLES: (1) Propones acciones '
+        'CONCRETAS (incluir/reducir/vigilar un nombre o sector) pero el usuario SIEMPRE aprueba; '
+        'tú solo SUGIERES, nunca ordenas ni prometes rendimiento. (2) Basa todo en concentración, '
+        'diversificación y riesgo, usando SOLO los datos dados (posiciones, sectores, candidatos). '
+        'No inventes precios ni cifras. (3) Máximo 3 sugerencias, las más útiles; prioriza los '
+        'candidatos dados para "add". (4) El pulso cierra recordando que es observación, no '
+        'asesoría financiera. Devuelve SOLO JSON válido: '
+        '{"pulse":"1 frase de cómo va la cartera","suggestions":[{"action":"add|reduce|watch",'
+        '"target":"nombre o sector","ticker":"TICKER o vacío","rationale":"1 frase","severity":"baja|media|alta"}]}'
+    )
+    prompt = (
+        'CARTERA (' + ('papel' if is_paper else 'real') + '): valor ~' + eq_txt + ', rendimiento ' + str(pnl_pct) + '%.\n'
+        'POSICIONES: ' + json.dumps(positions[:20], ensure_ascii=False) + '\n'
+        'CONCENTRACIÓN POR SECTOR: ' + json.dumps(sectors[:8], ensure_ascii=False) + '\n'
+        'CANDIDATOS para incluir (del universo, NO en cartera): ' + json.dumps(candidates[:20], ensure_ascii=False) + '\n'
+        'Da tu pulso y hasta 3 sugerencias.'
+    )
+    try:
+        text, model = _ai_complete(system, prompt, max_tokens=900, model='claude-opus-4-8')
+        data = _extract_json(text)
+        if not isinstance(data, dict):
+            return jsonify(fallback)
+        sug = data.get('suggestions')
+        return jsonify({'ok': True, 'pulse': (data.get('pulse') or pulse_fb),
+                        'suggestions': (sug if isinstance(sug, list) else [])[:3], 'model': model})
+    except Exception as e:  # noqa: BLE001
+        fallback['error'] = str(e)[:120]
+        return jsonify(fallback)
+
+
 @app.route('/api/trade/positions/detail', methods=['GET'])
 @_trade_auth
 def trade_positions_detail():

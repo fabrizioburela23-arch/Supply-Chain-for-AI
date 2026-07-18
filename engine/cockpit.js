@@ -519,7 +519,7 @@
     var pp = en
       ? 'I can break down any company, simulate what happens if something falls, compare, and chart your data.'
       : 'Puedo desarmar cualquier empresa, simular qué pasa si algo cae, comparar, y dibujarte los datos.';
-    s.innerHTML = '<div id="bcp-empty"><h2>' + esc(h2) + '</h2>' +
+    s.innerHTML = '<div id="bcp-empty"><div id="bcp-home-pulse" style="margin-bottom:16px"></div><h2>' + esc(h2) + '</h2>' +
       '<p>' + esc(pp) + '</p>' +
       '<div class="bcp-chips">' + chips.map(function (c) {
         return '<span class="bcp-chip" data-q="' + esc(c[0] + c[1]) + '"><span class="k">' + esc(c[2]) + '</span>' + esc(c[0] + c[1]) + '</span>';
@@ -527,6 +527,7 @@
     s.querySelectorAll('.bcp-chip').forEach(function (el) {
       el.addEventListener('click', function () { ask(el.getAttribute('data-q')); });
     });
+    try { _homePulse(); } catch (e) {}   // pulso ligero del portafolio (capa proactiva)
   }
 
   // ── "no encontré esa empresa": mensaje bilingüe + sugerencias clicables ──
@@ -901,6 +902,104 @@
     }
   }
 
+  /* ══ CAPA PROACTIVA (Opus 4.8) — "sugiere y tú decides" (elección de Fabrizio).
+     Bixby mira tu cartera + candidatos del universo y propone incluir/reducir/
+     vigilar, cada sugerencia con botón "Aplicar" que abre la confirmación (NUNCA
+     ejecuta solo). ══ */
+  function _portfolioCandidates(heldSymbols) {
+    var held = {}; (heldSymbols || []).forEach(function (s) { held[String(s).toUpperCase().replace('/', '')] = 1; });
+    var nrs = function (id) { try { return typeof computeNRS === 'function' ? computeNRS(id) : null; } catch (e) { return null; } };
+    return (window.NODES || []).filter(function (n) { return n.mkt && !held[String(n.mkt).toUpperCase()]; })
+      .map(function (n) { return { label: n.label, ticker: n.mkt, sector: (typeof window.catLabel === 'function' ? window.catLabel(n.cat) : n.cat), nrs: nrs(n.id) }; })
+      .filter(function (c) { return c.nrs != null; })
+      .sort(function (a, b) { return b.nrs - a.nrs; }).slice(0, 15);
+  }
+
+  async function _fetchAdvice(mount) {
+    if (!mount) return;
+    var en = ckLang() === 'en';
+    mount.innerHTML = '<div class="bcp-loading">' + (en ? 'Bixby is studying your portfolio (Opus 4.8)…' : 'Bixby está estudiando tu cartera (Opus 4.8)…') + '</div>';
+    if (!window._tradeAccountInfo || !window._tradeFetch) { mount.innerHTML = '<div style="color:#FFB300;padding:12px;font-size:13px">' + (en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.') + '</div>'; return; }
+    var acct = null, positions = [];
+    try { acct = await window._tradeAccountInfo(true, false); } catch (e) {}
+    if (!acct || acct.error) { mount.innerHTML = '<div style="color:#FFB300;padding:12px;font-size:13px">' + esc((acct && acct.error) || (en ? 'Connect the broker first.' : 'Conecta el bróker primero.')) + '</div>'; return; }
+    try { var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false); var dp = await rp.json(); if (Array.isArray(dp)) positions = dp; } catch (e) {}
+    var m = _computePortfolio(acct, positions);
+    var payload = {
+      lang: en ? 'en' : 'es', paper: m.paper, equity: Math.round(m.equity || 0), pnl_pct: +m.pnlPct.toFixed(2),
+      positions: positions.slice(0, 20).map(function (p) { return { symbol: p.symbol, sector: _sectorOf(p), pct: m.totalMV ? Math.round((+p.market_val || 0) / m.totalMV * 100) : 0, pnl_pct: +(+p.unrealized_pct || 0).toFixed(1) }; }),
+      sectors: m.sectors.slice(0, 8).map(function (s) { return { sector: s.sector, pct: +s.pct.toFixed(0) }; }),
+      candidates: _portfolioCandidates(positions.map(function (p) { return p.symbol; })),
+    };
+    try {
+      var r = await fetch((window.BASE || '') + '/api/portfolio/advice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      var d = await r.json();
+      mount.innerHTML = _renderAdvice(d, en);
+      _wireAdvice(mount);
+    } catch (e) { mount.innerHTML = '<div style="color:#f87171;padding:12px;font-size:13px">⚠ ' + (en ? 'Could not get advice.' : 'No pude obtener consejos.') + '</div>'; }
+  }
+
+  function _renderAdvice(d, en) {
+    var pulse = (d && d.pulse) || '';
+    var sug = (d && Array.isArray(d.suggestions)) ? d.suggestions : [];
+    var ico = { add: '➕', reduce: '➖', watch: '👁' };
+    var alab = en ? { add: 'Add', reduce: 'Reduce', watch: 'Watch' } : { add: 'Incluir', reduce: 'Reducir', watch: 'Vigilar' };
+    var sevCol = { alta: '#f87171', media: '#FFB300', baja: '#34d399', high: '#f87171', medium: '#FFB300', low: '#34d399' };
+    var cards = sug.map(function (s) {
+      var col = sevCol[String(s.severity || '').toLowerCase()] || '#00E0FF';
+      var canApply = (s.action === 'add' || s.action === 'reduce') && s.ticker;
+      return '<div style="border:1px solid ' + col + '40;border-radius:12px;background:' + col + '0d;padding:12px 14px;margin-bottom:10px">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">' +
+          '<span>' + (ico[s.action] || '•') + '</span>' +
+          '<span style="font-weight:750;font-size:13.5px">' + esc(alab[s.action] || s.action) + ': ' + esc(s.target || s.ticker || '') + '</span>' +
+          (s.ticker ? '<span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace;font-size:12px">' + esc(s.ticker) + '</span>' : '') + '</div>' +
+        '<div style="font-size:12.5px;color:#C3CBE0;line-height:1.5;margin-bottom:' + (canApply ? '10px' : '0') + '">' + esc(s.rationale || '') + '</div>' +
+        (canApply ? '<button class="bcp-adv-apply" data-side="' + (s.action === 'reduce' ? 'sell' : 'buy') + '" data-ticker="' + esc(s.ticker) + '" data-label="' + esc(s.target || s.ticker) + '" ' +
+          'style="padding:5px 14px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:700;border:1px solid ' + col + '66;background:' + col + '1a;color:' + col + '">' + (en ? 'Apply →' : 'Aplicar →') + '</button>' : '') +
+      '</div>';
+    }).join('');
+    return '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:13px;line-height:1.55;color:#C3CBE0">' +
+      '<span style="color:#00E0FF;font-weight:700">🧠 Bixby:</span> ' + esc(pulse) + '</div>' +
+      (sug.length ? cards : '<div style="color:#7C87A3;font-size:12.5px;padding:6px">' + (en ? 'No changes suggested right now.' : 'Sin cambios sugeridos por ahora.') + '</div>') +
+      '<div style="margin-top:6px;font-size:10.5px;color:#5b6580">' + (en ? 'Suggestions by Claude Opus 4.8 · you approve every action · not financial advice.' : 'Sugerencias por Claude Opus 4.8 · tú apruebas cada acción · no es asesoría financiera.') + '</div>';
+  }
+
+  function _wireAdvice(mount) {
+    mount.querySelectorAll('.bcp-adv-apply').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (window._openBrokerStage) window._openBrokerStage({ confirm: {
+          symbol: b.getAttribute('data-ticker'), side: b.getAttribute('data-side'),
+          notional: 100, label: b.getAttribute('data-label'), kind: 'equity' } });
+      });
+    });
+  }
+
+  // Pulso LIGERO en el home (sin IA, cheap): valor + rendimiento + botón "Consejos"
+  // que abre el bróker y dispara el análisis con Opus. Silencioso si no hay PIN.
+  async function _homePulse() {
+    var el = document.getElementById('bcp-home-pulse');
+    if (!el) return;
+    var hasPin = false; try { hasPin = !!localStorage.getItem('khipu_trade_pin'); } catch (e) {}
+    if (!hasPin || !window._tradeAccountInfo || !window._tradeFetch) return;
+    var en = ckLang() === 'en';
+    try {
+      var acct = await window._tradeAccountInfo(false, false);   // NO interactivo
+      if (!acct || acct.error) return;
+      var positions = [];
+      try { var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false); var dp = await rp.json(); if (Array.isArray(dp)) positions = dp; } catch (e) {}
+      var m = _computePortfolio(acct, positions);
+      var plCol = m.pnl >= 0 ? UP : DOWN, sign = m.pnl >= 0 ? '+' : '';
+      var line = (en ? 'Your portfolio' : 'Tu cartera') + ': ' + fmtUsd(m.equity) +
+        (m.n ? ' · <span style="color:' + plCol + '">' + sign + m.pnlPct.toFixed(1) + '%</span> · ' + m.n + ' ' + (en ? (m.n === 1 ? 'position' : 'positions') : (m.n === 1 ? 'posición' : 'posiciones'))
+             : ' · ' + (en ? 'no positions' : 'sin posiciones'));
+      el.innerHTML = '<div style="display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;padding:9px 16px;border:1px solid rgba(0,224,255,.2);border-radius:14px;background:rgba(0,224,255,.05);font-size:13px">' +
+        '<span>💼</span><span style="color:#C3CBE0">' + line + '</span>' +
+        '<button id="bcp-home-adv" style="padding:5px 14px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:700;border:1px solid rgba(0,224,255,.5);background:rgba(0,224,255,.12);color:#00E0FF">🧠 ' + (en ? 'Advice' : 'Consejos') + '</button></div>';
+      var b = document.getElementById('bcp-home-adv');
+      if (b) b.addEventListener('click', function () { stage('broker', { advice: true }); });
+    } catch (e) {}
+  }
+
   function stageBroker(s, arg) {
     arg = arg || {};
     var en = ckLang() === 'en';
@@ -909,11 +1008,19 @@
         '<div id="bcp-bk-confirm"></div>' +
         '<div id="bcp-bk-acct"><div class="bcp-loading">' + tb('loading') + '</div></div>' +
         '<div id="bcp-bk-report"></div>' +
+        // CAPA PROACTIVA: consejos de Bixby (Opus 4.8), "sugiere y tú decides".
+        '<div style="margin-top:18px">' +
+          '<button id="bcp-bk-advbtn" class="bcp-back" style="border-color:rgba(0,224,255,.4);color:#00E0FF;font-weight:700">🧠 ' + (en ? 'Bixby advice' : 'Consejos de Bixby') + '</button>' +
+          '<div id="bcp-bk-advice" style="margin-top:12px"></div>' +
+        '</div>' +
         '<div class="bcp-two" style="margin-top:18px">' +
           '<div><div class="bcp-lh">' + tb('positions') + '</div><div id="bcp-bk-pos"><div class="bcp-loading">…</div></div></div>' +
           '<div><div class="bcp-lh">' + tb('orders') + '</div><div id="bcp-bk-ord"><div class="bcp-loading">…</div></div></div>' +
         '</div>' +
       '</div>';
+    var advBtn = s.querySelector('#bcp-bk-advbtn');
+    if (advBtn) advBtn.addEventListener('click', function () { _fetchAdvice(document.getElementById('bcp-bk-advice')); });
+    if (arg.advice) { try { _fetchAdvice(s.querySelector('#bcp-bk-advice')); } catch (e) {} }
     var box = s.querySelector('#bcp-bk-confirm');
     if (arg.confirm) renderTradeConfirm(arg.confirm);
     else if (arg.resolving) box.innerHTML = '<div class="bcp-loading" style="text-align:left;padding:6px 0 16px">' + tb('resolving') + '</div>';
