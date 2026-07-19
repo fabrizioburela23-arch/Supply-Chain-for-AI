@@ -947,6 +947,14 @@ const BixbyVoice = {
         this._defer(() => this._show('insights'));
         break;
       }
+      case 'run_guided_demo': {
+        // La demostración se narra SOLA en pantalla (y con voz del navegador si
+        // no hay voz premium hablando) → Bixby responde corto y se calla.
+        respond({ success: true,
+          note: 'Demostración guiada en marcha; se narra sola en pantalla. Di UNA frase corta y quédate en silencio.' });
+        this._defer(() => { try { if (window.BixbyCockpit) window.BixbyCockpit.demo(); } catch (e) {} });
+        break;
+      }
       case 'show_insights': case 'show_matrices': {
         // Bixby NARRA lo que ve el hipergrafo: corre la simulación en vivo
         // (factores activos + cascada) y responde con un resumen hablado,

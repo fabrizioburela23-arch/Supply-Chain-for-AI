@@ -229,6 +229,35 @@
 .bcp-cascrow .bar i{display:block;height:100%;background:linear-gradient(90deg,#FF4D6A,#FFB300)}
 .bcp-cascrow .pv{font-family:'JetBrains Mono',monospace;font-size:11px;width:44px;text-align:right;flex:none;color:#FF8FA3}
 .bcp-hyper-foot{font-size:10.5px;color:#5E6884;margin:9px 2px 0}
+/* ── MODO DEMOSTRACIÓN — Bixby maneja la app y va narrando ── */
+#bcp-demo{position:absolute;left:0;right:0;bottom:74px;z-index:12;padding:0 22px;
+  pointer-events:none;animation:bcpDemoIn .3s ease}
+@keyframes bcpDemoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.bcp-demobox{pointer-events:auto;max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;
+  padding:13px 18px;border-radius:16px;border:1px solid rgba(0,224,255,.32);
+  background:rgba(6,11,22,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 10px 40px rgba(0,0,0,.55),0 0 0 1px rgba(0,224,255,.06)}
+.bcp-demoav{width:34px;height:34px;border-radius:50%;flex:none;position:relative;
+  background:radial-gradient(circle at 35% 32%,#7ef0ff,#00E0FF 45%,#0b6fa8);
+  box-shadow:0 0 16px rgba(0,224,255,.65)}
+.bcp-demoav::after{content:"";position:absolute;inset:-5px;border-radius:50%;
+  border:1.5px solid rgba(0,224,255,.35);animation:bcpDemoPing 1.8s ease-out infinite}
+@keyframes bcpDemoPing{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+.bcp-demotxtwrap{flex:1;min-width:0}
+.bcp-demolabel{font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#00E0FF;margin:0 0 3px}
+.bcp-demotxt{font-size:13.5px;line-height:1.45;color:#E8EDFB}
+.bcp-demotxt .cur{display:inline-block;width:7px;color:#00E0FF;animation:bcpBlink .8s steps(1) infinite}
+@keyframes bcpBlink{50%{opacity:0}}
+.bcp-democtl{display:flex;align-items:center;gap:7px;flex:none}
+.bcp-demobtn{width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:13px;
+  display:inline-flex;align-items:center;justify-content:center;color:#9BA6C4;
+  background:rgba(11,18,34,.7);border:1px solid rgba(122,158,255,.2);transition:all .13s;font-family:inherit}
+.bcp-demobtn:hover{color:#E8EDFB;border-color:rgba(0,224,255,.5)}
+.bcp-demodots{display:flex;gap:4px;align-items:center;margin-right:4px}
+.bcp-demodot{width:6px;height:6px;border-radius:50%;background:rgba(122,158,255,.25);transition:all .2s}
+.bcp-demodot.on{background:#00E0FF;box-shadow:0 0 7px #00E0FF}
+.bcp-demodot.done{background:rgba(0,224,255,.45)}
+@media(max-width:700px){.bcp-demodots{display:none}.bcp-demotxt{font-size:12.5px}#bcp-demo{padding:0 12px}}
 /* simulación por agentes (MiroFish) — impactos por empresa con motivo */
 .bcp-agrow{border-bottom:1px solid rgba(122,158,255,.08);padding:9px 0;cursor:pointer}
 .bcp-agrow:hover .nm{color:#00E0FF}
@@ -534,6 +563,7 @@
   function stageEmpty(s) {
     var en = ckLang() === 'en';
     var chips = en ? [
+      ['', 'guided demo', '▶ Guided demo'],
       ['break down ', 'Nvidia', 'Full X-Ray'],
       ['simulate that ', 'China bans HBM exports', 'Agent simulation'],
       ['what if ', 'TSMC falls', 'Shock on the map'],
@@ -544,6 +574,7 @@
       ['', 'my account', tb('broker')],
       ['', 'blank canvas', 'Start from scratch'],
     ] : [
+      ['', 'ver demostración', '▶ Demo guiada'],
       ['desármame ', 'Nvidia', 'Radiografía completa'],
       ['simula que ', 'China prohíbe exportar HBM', 'Sim por agentes'],
       ['¿qué pasa si cae ', 'TSMC?', 'Shock en el mapa'],
@@ -1910,6 +1941,14 @@
     text = (text || '').trim(); if (!text) return;
     ensureShell();
 
+    // 0) MODO DEMOSTRACIÓN — antes que nada (que no lo coma KHIPU ni la IA)
+    if (/^(ver\s+)?(demo|demostraci[óo]n|demonstration|guided\s+demo|modo\s+demo|tour)\b/i.test(text)
+        || /^(mu[ée]strame|ens[eé]ñame)\s+(qu[ée]\s+puedes\s+hacer|una\s+demo)/i.test(text)
+        || /^show\s+me\s+what\s+you\s+can\s+do/i.test(text)) {
+      demoStart();
+      return;
+    }
+
     // 1) ¿es un comando KHIPU? (rápido, sin IA)
     if (window.KHIPU && window.KHIPU.tryParse) {
       try {
@@ -2059,6 +2098,7 @@
   function close() {
     restoreAdopted();   // devolver grafo/terminal a su sitio original
     _scalpStop();       // detener el polling de scalping al cerrar la Cabina
+    demoStop();         // cortar la demostración (timers + voz) al cerrar
     stopCockpitOrb();
     var ov = document.getElementById('bcp-ov');
     if (ov) ov.classList.remove('show');
@@ -2067,7 +2107,195 @@
     if (btn && btn.classList.contains('on') && window.BixbyVoice && window.BixbyVoice.stop) { window.BixbyVoice.stop(); btn.classList.remove('on'); }
   }
 
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && open) close(); });
+  // Esc: si la demostración corre, la corta a ella primero (no toda la Cabina)
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !open) return;
+    if (_demo.on) { demoStop(); return; }
+    close();
+  });
+
+  /* ══ MODO DEMOSTRACIÓN ═══════════════════════════════════════════════════
+     Bixby maneja la app SOLO y va narrando lo que hace, paso a paso — para
+     enseñar el producto (inversionistas) sin depender de ElevenLabs:
+     - la narración SIEMPRE se ve ESCRITA en pantalla (máquina de escribir), así
+       funciona aunque no haya voz premium contratada;
+     - además la lee la voz NATIVA del navegador (speechSynthesis, gratis). Si
+       la voz premium ya está conversando (mic encendido), se calla para no
+       pisarla → el día que ElevenLabs esté activo, el demo no cambia.
+     Controles: pausar/seguir · siguiente · silenciar · salir (Esc). ══ */
+  var _demo = { on: false, i: -1, t: null, typer: null, paused: false, muted: false, steps: [] };
+
+  function _demoNode(name) {
+    try { var n = resolveNode(name); return n ? n.id : null; } catch (e) { return null; }
+  }
+
+  function demoSteps() {
+    var en = ckLang() === 'en';
+    var nvda = _demoNode('Nvidia'), tsmc = _demoNode('TSMC');
+    return en ? [
+      { say: "I'm Bixby. I watch 555 companies across the AI supply chain — chips, cloud, space and nuclear. Let me show you what I do in one minute.",
+        act: function () { stage('empty'); } },
+      { say: "This is the live map. Every dot is a company; every line is a real dependency — who fabricates for whom, who provides the cloud, who sells the power.",
+        act: function () { stage('graph'); } },
+      { say: "I can take any company apart. Here's Nvidia: what it depends on, who depends on it, and how fragile that makes it.",
+        act: function () { if (nvda) stage('xray', nvda); else stage('graph'); } },
+      { say: "Now the important part. What happens if TSMC falls? I shock it and propagate the damage through the whole chain, hop by hop.",
+        act: function () { if (tsmc) stage('sim', { id: tsmc, kind: 'collapse' }); else stage('graph'); } },
+      { say: "And this is what I see on my own: the active systemic factors and who they hit. It isn't a dashboard — it's a simulation running live.",
+        act: function () { stage('insights'); } },
+      { say: "I also follow the market and crypto in real time, so the graph and the prices are the same story.",
+        act: function () { stage('market'); } },
+      { say: "And you can invest from right here, on a simulated account, without leaving my screen.",
+        act: function () { stage('broker'); } },
+      { say: "That's Bixby. Ask me anything: “break down Nvidia”, “what if TSMC falls?”, “show me opportunities”.",
+        act: function () { stage('empty'); } },
+    ] : [
+      { say: 'Soy Bixby. Vigilo 555 empresas de la cadena de la inteligencia artificial: chips, nube, espacio y nuclear. Te muestro en un minuto lo que hago.',
+        act: function () { stage('empty'); } },
+      { say: 'Este es el mapa vivo. Cada punto es una empresa; cada línea, una dependencia real: quién le fabrica a quién, quién le da la nube, quién le vende la energía.',
+        act: function () { stage('graph'); } },
+      { say: 'Puedo desarmar cualquier empresa. Aquí Nvidia: de quién depende, quién depende de ella, y qué tan frágil la deja eso.',
+        act: function () { if (nvda) stage('xray', nvda); else stage('graph'); } },
+      { say: 'Ahora lo importante. ¿Qué pasa si cae TSMC? Le pego el golpe y lo propago por toda la cadena, salto por salto.',
+        act: function () { if (tsmc) stage('sim', { id: tsmc, kind: 'collapse' }); else stage('graph'); } },
+      { say: 'Y esto es lo que veo yo solo: los factores sistémicos activos y a quién golpean. No es un tablero: es una simulación corriendo en vivo.',
+        act: function () { stage('insights'); } },
+      { say: 'También sigo el mercado y el cripto en tiempo real, para que el grafo y los precios cuenten la misma historia.',
+        act: function () { stage('market'); } },
+      { say: 'Y puedes invertir desde aquí mismo, en cuenta simulada, sin salir de mi pantalla.',
+        act: function () { stage('broker'); } },
+      { say: 'Eso es Bixby. Pregúntame lo que quieras: «desármame Nvidia», «¿qué pasa si cae TSMC?», «muéstrame oportunidades».',
+        act: function () { stage('empty'); } },
+    ];
+  }
+
+  function _demoDur(text) {
+    // tiempo suficiente para leer/escuchar la frase y ver el resultado en pantalla
+    return Math.max(5200, Math.min(12000, 3200 + String(text || '').length * 55));
+  }
+
+  function _demoSilence() {
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) {}
+  }
+
+  function _demoSpeak(text) {
+    if (_demo.muted) return;
+    try {   // si la voz premium está conversando, NO la pisamos
+      var mic = document.getElementById('bcp-mic');
+      if (mic && mic.classList.contains('on')) return;
+    } catch (e) {}
+    try {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = ckLang() === 'en' ? 'en-US' : 'es-ES';
+      u.rate = 1.02;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  function _demoType(text) {
+    var el = document.getElementById('bcp-demotxt');
+    if (!el) return;
+    clearInterval(_demo.typer);
+    var i = 0;
+    el.textContent = '';
+    _demo.typer = setInterval(function () {
+      if (i >= text.length) { clearInterval(_demo.typer); _demo.typer = null; return; }
+      i += 1;
+      el.textContent = text.slice(0, i);   // textContent → nunca inyecta HTML
+    }, 16);
+  }
+
+  function _demoDots(n, cur) {
+    var d = document.getElementById('bcp-demodots'); if (!d) return;
+    var h = '';
+    for (var k = 0; k < n; k++) {
+      h += '<span class="bcp-demodot' + (k === cur ? ' on' : (k < cur ? ' done' : '')) + '"></span>';
+    }
+    d.innerHTML = h;
+  }
+
+  function _demoRenderBar() {
+    var ov = ensureShell();
+    var old = document.getElementById('bcp-demo');
+    if (old) old.remove();
+    var en = ckLang() === 'en';
+    var wrap = document.createElement('div');
+    wrap.id = 'bcp-demo';
+    wrap.innerHTML =
+      '<div class="bcp-demobox">' +
+        '<div class="bcp-demoav"></div>' +
+        '<div class="bcp-demotxtwrap">' +
+          '<div class="bcp-demolabel">' + (en ? 'GUIDED DEMO' : 'DEMOSTRACIÓN GUIADA') + '</div>' +
+          '<div class="bcp-demotxt" id="bcp-demotxt"></div>' +
+        '</div>' +
+        '<div class="bcp-democtl">' +
+          '<span class="bcp-demodots" id="bcp-demodots"></span>' +
+          '<button class="bcp-demobtn" id="bcp-demopause" title="' + (en ? 'Pause' : 'Pausar') + '">⏸</button>' +
+          '<button class="bcp-demobtn" id="bcp-demonext" title="' + (en ? 'Next' : 'Siguiente') + '">⏭</button>' +
+          '<button class="bcp-demobtn" id="bcp-demomute" title="' + (en ? 'Mute' : 'Silenciar') + '">' + (_demo.muted ? '🔇' : '🔊') + '</button>' +
+          '<button class="bcp-demobtn" id="bcp-demoexit" title="' + (en ? 'Exit' : 'Salir') + '">✕</button>' +
+        '</div>' +
+      '</div>';
+    ov.appendChild(wrap);
+    wrap.querySelector('#bcp-demopause').addEventListener('click', demoToggle);
+    wrap.querySelector('#bcp-demonext').addEventListener('click', function () { demoNext(); });
+    wrap.querySelector('#bcp-demomute').addEventListener('click', demoMute);
+    wrap.querySelector('#bcp-demoexit').addEventListener('click', function () { demoStop(); });
+  }
+
+  function demoStart() {
+    if (!open) openCockpit();
+    ensureShell();
+    _demo.on = true; _demo.i = -1; _demo.paused = false;
+    _demo.steps = demoSteps();
+    _demoRenderBar();
+    demoNext();
+  }
+
+  function demoNext() {
+    if (!_demo.on) return;
+    clearTimeout(_demo.t); _demo.t = null;
+    _demo.i += 1;
+    if (_demo.i >= _demo.steps.length) return demoStop(true);
+    var st = _demo.steps[_demo.i];
+    try { if (st.act) st.act(); } catch (e) {}
+    // stage() re-dibuja el escenario, no el overlay — pero re-montamos por si acaso
+    if (!document.getElementById('bcp-demo')) _demoRenderBar();
+    _demoDots(_demo.steps.length, _demo.i);
+    _demoType(st.say);
+    _demoSpeak(st.say);
+    if (!_demo.paused) {
+      _demo.t = setTimeout(function () { demoNext(); }, st.t || _demoDur(st.say));
+    }
+  }
+
+  function demoToggle() {
+    if (!_demo.on) return;
+    _demo.paused = !_demo.paused;
+    var b = document.getElementById('bcp-demopause');
+    if (b) b.textContent = _demo.paused ? '▶' : '⏸';
+    if (_demo.paused) { clearTimeout(_demo.t); _demo.t = null; _demoSilence(); }
+    else { _demo.t = setTimeout(function () { demoNext(); }, 1500); }
+  }
+
+  function demoMute() {
+    _demo.muted = !_demo.muted;
+    var b = document.getElementById('bcp-demomute');
+    if (b) b.textContent = _demo.muted ? '🔇' : '🔊';
+    if (_demo.muted) _demoSilence();
+  }
+
+  function demoStop(finished) {
+    _demo.on = false;
+    clearTimeout(_demo.t); _demo.t = null;
+    clearInterval(_demo.typer); _demo.typer = null;
+    _demoSilence();
+    var el = document.getElementById('bcp-demo');
+    if (el) el.remove();
+    if (finished === true) stage('empty');
+  }
 
   window.BixbyCockpit = {
     open: openCockpit,
@@ -2076,5 +2304,8 @@
     stage: stage,
     ask: ask,
     setState: setState,
+    demo: demoStart,
+    demoStop: demoStop,
+    isDemo: function () { return !!_demo.on; },
   };
 })();
