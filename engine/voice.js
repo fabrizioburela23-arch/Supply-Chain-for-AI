@@ -948,8 +948,31 @@ const BixbyVoice = {
         break;
       }
       case 'show_insights': case 'show_matrices': {
-        respond({ success: true });
+        // Bixby NARRA lo que ve el hipergrafo: corre la simulación en vivo
+        // (factores activos + cascada) y responde con un resumen hablado,
+        // además de abrir el panel. Guarda de tiempo → nunca cuelga a ElevenLabs.
+        let answered = false;
+        const done = (r) => { if (!answered) { answered = true; respond(r); } };
         this._defer(() => this._show('insights'));
+        const guard = setTimeout(() => done({ success: true,
+          note: 'Abriendo los insights del hipergrafo en pantalla.' }), 2600);
+        try {
+          fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tier: 'fast' }) })
+            .then(r => r.json())
+            .then(d => {
+              clearTimeout(guard);
+              if (!d || d.available === false) return done({ success: true, note: 'Insights en pantalla.' });
+              done({ success: true,
+                active_factors: (d.factors || []).map(f => f.label),
+                top_insights: (d.insights || []).slice(0, 3).map(i => ({ title: i.title, detail: i.detail, kind: i.kind })),
+                cascade_trigger: d.trigger || null,
+                most_affected: (d.cascade || []).slice(0, 3).map(c => ({ name: c.name, impact: c.impact })),
+                nodes_reached: d.affected || 0,
+                note: 'Narra estos insights del hipergrafo en 2-3 frases, nombrando empresas; recuerda que es análisis, no asesoría.' });
+            })
+            .catch(() => { clearTimeout(guard); done({ success: true, note: 'Insights en pantalla.' }); });
+        } catch (e) { clearTimeout(guard); done({ success: true }); }
         break;
       }
       case 'create_visualization': {

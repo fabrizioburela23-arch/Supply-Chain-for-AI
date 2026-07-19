@@ -2841,7 +2841,7 @@ def _bixby_client_tools():
         T('compare_companies', 'Compare two companies side by side. Returns NRS of each and which has lower risk.', {'company_a': S('First company name/ticker'), 'company_b': S('Second company name/ticker')}, ['company_a', 'company_b']),
         T('get_opportunities', 'Resilient companies with upside: low risk + growth + healthy margin.'),
         T('create_visualization', 'Render a chart/table from a natural-language description of what to visualize.', {'query': S('What to chart, in natural language (e.g. "márgenes de Nvidia, TSMC y ASML")')}, ['query']),
-        T('show_insights', 'Open the insights brain and the 9 relation matrices.'),
+        T('show_insights', 'Show what the HYPERGRAPH sees: it runs a LIVE simulation over the active systemic factors (hyperedges) and the supply-chain cascade, then returns narrated insights + the most-affected companies. Use for "¿qué ves en el grafo?", "dame insights", "qué factores hay activos", "qué está en riesgo en el sistema". Narrate 2-3 of the returned insights, naming companies; it is analysis, not advice.'),
         T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
         T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
         T('run_agent_simulation', 'Run a MULTI-AGENT (MiroFish-style) simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {

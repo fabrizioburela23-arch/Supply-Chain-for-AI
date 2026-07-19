@@ -196,6 +196,39 @@
 .bcp-loading::before{content:"";display:block;width:26px;height:26px;margin:0 auto 12px;border-radius:50%;
   border:2.5px solid rgba(122,158,255,.18);border-top-color:#00E0FF;animation:bcpSpin .7s linear infinite}
 @keyframes bcpSpin{to{transform:rotate(360deg)}}
+/* ── Insights del HIPERGRAFO (simulación en vivo narrada) ── */
+.bcp-hyper{margin:0 0 22px}
+.bcp-hyper-hd{display:flex;align-items:center;gap:9px;margin:0 0 12px}
+.bcp-hyper-hd .t{font-size:13px;font-weight:750;color:#E8EDFB;letter-spacing:.01em}
+.bcp-hyper-hd .live{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#00E0FF;
+  border:1px solid rgba(0,224,255,.4);border-radius:999px;padding:2px 8px;display:inline-flex;align-items:center;gap:5px}
+.bcp-hyper-hd .live::before{content:"";width:6px;height:6px;border-radius:50%;background:#00E0FF;
+  box-shadow:0 0 8px #00E0FF;animation:bcpPulse 1.6s ease-in-out infinite}
+@keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.25}}
+.bcp-facts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.bcp-fact{font-size:11px;padding:5px 11px;border-radius:999px;color:#FFD27A;cursor:default;
+  background:rgba(255,179,0,.09);border:1px solid rgba(255,179,0,.32);display:inline-flex;align-items:center;gap:6px}
+.bcp-fact b{color:#FFE7B0;font-weight:700}
+.bcp-icards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
+@media(max-width:760px){.bcp-icards{grid-template-columns:1fr}}
+.bcp-icard{border:1px solid rgba(122,158,255,.16);border-left-width:3px;border-radius:12px;
+  padding:12px 14px;background:rgba(11,18,34,.5)}
+.bcp-icard .ih{display:flex;align-items:center;gap:8px;margin:0 0 5px}
+.bcp-icard .ic{font-size:14px}
+.bcp-icard .it{font-size:12.5px;font-weight:700;color:#E8EDFB}
+.bcp-icard .id{font-size:12px;color:#AEB8D4;line-height:1.5}
+.bcp-icard.k-riesgo{border-left-color:#FF4D6A}
+.bcp-icard.k-oportunidad{border-left-color:#2BE38B}
+.bcp-icard.k-estructura{border-left-color:#00E0FF}
+.bcp-casc{border:1px solid rgba(122,158,255,.12);border-radius:12px;padding:11px 14px;background:rgba(4,6,11,.4)}
+.bcp-casc .ch{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#7C87A3;font-weight:600;margin:0 0 9px}
+.bcp-cascrow{display:flex;align-items:center;gap:9px;font-size:12px;padding:3px 0;cursor:pointer}
+.bcp-cascrow:hover .nm{color:#00E0FF}
+.bcp-cascrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#C7D0EA}
+.bcp-cascrow .bar{width:120px;height:5px;border-radius:3px;background:rgba(122,158,255,.1);overflow:hidden;flex:none}
+.bcp-cascrow .bar i{display:block;height:100%;background:linear-gradient(90deg,#FF4D6A,#FFB300)}
+.bcp-cascrow .pv{font-family:'JetBrains Mono',monospace;font-size:11px;width:44px;text-align:right;flex:none;color:#FF8FA3}
+.bcp-hyper-foot{font-size:10.5px;color:#5E6884;margin:9px 2px 0}
 /* simulación por agentes (MiroFish) — impactos por empresa con motivo */
 .bcp-agrow{border-bottom:1px solid rgba(122,158,255,.08);padding:9px 0;cursor:pointer}
 .bcp-agrow:hover .nm{color:#00E0FF}
@@ -765,13 +798,77 @@
         '<span class="nm">' + esc(nd.label) + '</span>' +
         '<span class="pv" style="color:' + color + '">' + val(x) + '</span></div>';
     }
+    var en = ckLang() === 'en';
     s.innerHTML = backBar('Insights') +
-      '<div class="bcp-inner"><div class="bcp-two">' +
-        '<div><div class="bcp-lh" style="color:' + DOWN + '">Mayor riesgo (NRS)</div>' +
-          (risk.map(function (x) { return row(x, DOWN, function (y) { return y.nrs; }); }).join('') || '<div class="bcp-loading">—</div>') + '</div>' +
-        '<div><div class="bcp-lh" style="color:' + UP + '">Oportunidades (resilientes)</div>' +
-          (opps.map(function (x) { return row(x, UP, function (y) { return 'NRS ' + y.nrs; }); }).join('') || '<div class="bcp-loading">Sin oportunidades claras ahora</div>') + '</div>' +
-      '</div></div>';
+      '<div class="bcp-inner">' +
+        // El HIPERGRAFO corre una simulación en vivo y la narra (se llena async).
+        '<div id="bcp-hyper" class="bcp-hyper"><div class="bcp-loading">' +
+          (en ? 'The hypergraph is running a live simulation…' : 'El hipergrafo corre una simulación en vivo…') +
+        '</div></div>' +
+        '<div class="bcp-two">' +
+          '<div><div class="bcp-lh" style="color:' + DOWN + '">' + (en ? 'Highest risk (NRS)' : 'Mayor riesgo (NRS)') + '</div>' +
+            (risk.map(function (x) { return row(x, DOWN, function (y) { return y.nrs; }); }).join('') || '<div class="bcp-loading">—</div>') + '</div>' +
+          '<div><div class="bcp-lh" style="color:' + UP + '">' + (en ? 'Opportunities (resilient)' : 'Oportunidades (resilientes)') + '</div>' +
+            (opps.map(function (x) { return row(x, UP, function (y) { return 'NRS ' + y.nrs; }); }).join('') || '<div class="bcp-loading">' + (en ? 'No clear opportunities right now' : 'Sin oportunidades claras ahora') + '</div>') + '</div>' +
+        '</div>' +
+      '</div>';
+    _fetchHyperInsights(en);
+  }
+
+  /* ══ INSIGHTS DEL HIPERGRAFO — el pago del hipergrafo agéntico temporal: el
+     motor corre una simulación EN VIVO con los factores (hiperaristas) activos
+     y la NARRA. /api/matrix/insights ya trae la narración IA + fallback de
+     plantilla, así que el bloque NUNCA sale vacío. Si la ontología está caída
+     (503) el bloque se oculta y la vista NRS de abajo sigue intacta. ══ */
+  function _fetchHyperInsights(en) {
+    var host = document.getElementById('bcp-hyper'); if (!host) return;
+    fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: en ? 'en' : 'es', tier: 'fast' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var h = document.getElementById('bcp-hyper'); if (!h) return;   // el usuario cambió de escena
+        if (!d || d.available === false || d.error) { h.style.display = 'none'; return; }
+        _renderHyperInsights(h, d, en);
+      })
+      .catch(function () { var h = document.getElementById('bcp-hyper'); if (h) h.style.display = 'none'; });
+  }
+
+  function _renderHyperInsights(host, d, en) {
+    var kicon = { riesgo: '⚠️', oportunidad: '📈', estructura: '🕸' };
+    var facts = (d.factors || []).map(function (f) {
+      return '<span class="bcp-fact">⚡ <b>' + esc(f.label) + '</b> · ' + (en ? 'sev' : 'sev') + ' ' +
+        Math.round(f.severity || 5) + '/10 · ' + (f.members || []).length + (en ? ' hit' : ' afecta') + '</span>';
+    }).join('');
+    var cards = (d.insights || []).map(function (it) {
+      var k = (it.kind === 'riesgo' || it.kind === 'oportunidad' || it.kind === 'estructura') ? it.kind : 'estructura';
+      return '<div class="bcp-icard k-' + k + '"><div class="ih"><span class="ic">' + (kicon[k] || '🕸') + '</span>' +
+        '<span class="it">' + esc(it.title || '') + '</span></div>' +
+        '<div class="id">' + esc(it.detail || '') + '</div></div>';
+    }).join('');
+    var casc = '';
+    if ((d.cascade || []).length) {
+      var mx = Math.max.apply(null, d.cascade.map(function (c) { return c.impact || 0; })) || 100;
+      casc = '<div class="bcp-casc"><div class="ch">' +
+        (en ? 'Live cascade' : 'Cascada en vivo') + (d.trigger ? ' · ' + esc(d.trigger) : '') +
+        (d.affected ? ' · ' + d.affected + (en ? ' nodes reached' : ' nodos alcanzados') : '') + '</div>' +
+        d.cascade.slice(0, 6).map(function (c) {
+          var id = c.id || '';
+          return '<div class="bcp-cascrow" onclick="window.BixbyCockpit.stage(\'xray\',\'' + esc(id) + '\')">' +
+            '<span class="nm">' + esc(c.name || id) + '</span>' +
+            '<span class="bar"><i style="width:' + Math.round((c.impact || 0) / mx * 100) + '%"></i></span>' +
+            '<span class="pv">' + Math.round(c.impact || 0) + '%</span></div>';
+        }).join('') + '</div>';
+    }
+    var model = d.model && d.model !== 'plantilla' ? d.model : (en ? 'template' : 'plantilla');
+    host.innerHTML =
+      '<div class="bcp-hyper-hd"><span class="t">' + (en ? '🕸 What the hypergraph sees' : '🕸 Lo que ve el hipergrafo') + '</span>' +
+        '<span class="live">' + (en ? 'LIVE SIM' : 'SIM EN VIVO') + '</span></div>' +
+      (facts ? '<div class="bcp-facts">' + facts + '</div>' : '') +
+      (cards ? '<div class="bcp-icards">' + cards + '</div>' : '') +
+      casc +
+      '<div class="bcp-hyper-foot">' + (en
+        ? 'Analysis, not financial advice · narrated by ' + esc(model)
+        : 'Análisis, no asesoría financiera · narrado por ' + esc(model)) + '</div>';
   }
 
   /* ══ STAGE BRÓKER (Etapa M) — cuenta Alpaca + posiciones + órdenes +
