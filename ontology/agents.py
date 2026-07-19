@@ -332,13 +332,105 @@ class RadarEmpresas:
         }
 
 
-AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas()]
+class TejedorHiperaristas:
+    """Teje HIPERARISTAS: cuando detecta en noticias un golpe SISTÉMICO que toca a
+    VARIAS empresas del grafo a la vez (sanción, escasez de un componente, veto de
+    exportación, conflicto, caída de un proveedor crítico), propone CrearFactor.
+    Cierra el circuito noticia → hiperarista persistida → modulación de la cascada.
+    IA barata y de alta frecuencia (Haiku, tier 'fast')."""
+    name = 'tejedor_hiperaristas'
+    SAMPLE = 3
+
+    def observe(self, session):
+        rows = session.execute(
+            select(LinkRecord.source_id, sqlfunc.count(LinkRecord.id).label('deg'))
+            .where(LinkRecord.valid_to.is_(None)).group_by(LinkRecord.source_id)
+            .order_by(sqlfunc.count(LinkRecord.id).desc()).limit(self.SAMPLE)
+        ).all()
+        ids = [r[0] for r in rows]
+        companies = session.scalars(select(ObjectRecord).where(ObjectRecord.id.in_(ids))).all() if ids else []
+        return [{'company': c} for c in companies]
+
+    def _resolve(self, session, name):
+        """nombre → id de una empresa EXISTENTE (por slug o por label), o None."""
+        if not name:
+            return None
+        sid = _slug(str(name))
+        if session.get(ObjectRecord, sid):
+            return sid
+        row = session.scalars(select(ObjectRecord).where(
+            sqlfunc.lower(ObjectRecord.label) == str(name).strip().lower(),
+            ObjectRecord.type == 'Company')).first()
+        return row.id if row else None
+
+    def propose(self, session, signal):
+        c = signal['company']
+        try:
+            import requests as _rq
+            r = _rq.get('https://api.gdeltproject.org/api/v2/doc/doc',
+                        params={'query': c.label, 'mode': 'artlist', 'maxrecords': 8, 'format': 'json'},
+                        timeout=6)
+            arts = (r.json() or {}).get('articles', []) if r.ok else []
+        except Exception:  # noqa: BLE001
+            arts = []
+        titles = '; '.join(a.get('title', '') for a in arts[:8] if a.get('title'))
+        if not titles:
+            return None
+        try:
+            from core.ai import _ai_complete, _extract_json
+            text, _m = _ai_complete(
+                'Eres el tejedor de hiperaristas de un grafo de la cadena de suministro de IA, '
+                'semiconductores, espacio, energía y defensa. Detectas GOLPES SISTÉMICOS que tocan a '
+                'VARIAS empresas a la vez. Respondes SOLO JSON válido, sin markdown.',
+                f'Titulares recientes sobre {c.label}: {titles}\n\n'
+                '¿Describen un GOLPE que afecta a VARIAS empresas a la vez (una sanción, una escasez '
+                'de un componente, un veto de exportación, un conflicto, la caída de un proveedor '
+                'crítico)? Si SÍ, responde:\n'
+                '{"factor": {"label": "<nombre corto del golpe>", "severity": <1-5>, '
+                '"empresas": ["<nombres de empresas afectadas que reconozcas>"], '
+                '"resumen": "<1 frase de qué pasa y a quién golpea>"}}\n'
+                'Si es una noticia de UNA sola empresa (no sistémica) o nada relevante: {"factor": null}.',
+                max_tokens=350, tier='fast')
+            data = _extract_json(text) or {}
+        except Exception:  # noqa: BLE001
+            return None
+        fac = data.get('factor') if isinstance(data, dict) else None
+        if not fac or not fac.get('label'):
+            return None
+        members = []
+        for nm in (fac.get('empresas') or [])[:20]:
+            rid = self._resolve(session, nm)
+            if rid and rid not in members:
+                members.append(rid)
+        if c.id not in members:
+            members.insert(0, c.id)   # la semilla siempre cuenta como afectada
+        if len(members) < 2:          # una hiperarista necesita ≥2 miembros
+            return None
+        label = str(fac['label']).strip()[:160]
+        fid = 'factor_' + _slug(label)[:40]
+        if session.get(ObjectRecord, fid) or _recently_proposed(session, self.name, 'CrearFactor', fid, hours=48):
+            return None
+        try:
+            sev = max(1.0, min(5.0, float(fac.get('severity') or 3)))
+        except (TypeError, ValueError):
+            sev = 3.0
+        razon = str(fac.get('resumen') or f'Golpe sistémico detectado en noticias de {c.label}')[:600]
+        return {
+            'action_type': 'CrearFactor', 'object_id': fid, 'confidence': 0.6,
+            'payload': {'factor_id': fid, 'label': label, 'severity': sev,
+                        'affects': members, 'coef': 0.5, 'razon': razon,
+                        'fuente': 'tejedor_gdelt', 'confidence': 0.6},
+            'explanation': f'🕸️ {label} → {len(members)} empresas: {razon}',
+        }
+
+
+AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas(), TejedorHiperaristas()]
 AGENTS_BY_NAME = {a.name: a for a in AGENTS}
 
 # ── Ciclo automático (elección de Fabrizio 2026-07-10): las propuestas SEGURAS
 # se aplican solas con actor 'agent:auto' — auditadas y reversibles. Lo que
 # toca dinero (AjustarPosicion) SIEMPRE queda pendiente para el humano.
-SAFE_AUTO = {'AnotarObjeto', 'MarcarRiesgo', 'ProponerVinculo', 'IncorporarEmpresa'}
+SAFE_AUTO = {'AnotarObjeto', 'MarcarRiesgo', 'ProponerVinculo', 'IncorporarEmpresa', 'CrearFactor'}
 AUTO_MIN_CONFIDENCE = 0.55
 
 

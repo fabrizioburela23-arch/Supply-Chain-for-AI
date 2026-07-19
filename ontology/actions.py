@@ -16,7 +16,7 @@ para escritura HUMANA, con validación por tipo y trazabilidad automática.
 """
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import select
@@ -102,6 +102,28 @@ class RetirarEmpresaInput(BaseModel):
     company_id: str
     razon: str = Field(min_length=1, max_length=1000)
     restaurar: bool = False                # true = deshacer el retiro
+
+
+class CrearFactorInput(BaseModel):
+    """Crea una HIPERARISTA (Factor): un golpe que toca a VARIAS empresas a la vez
+    (sanción, escasez de HBM, conflicto). El motor de matrices lo lee (active_factors
+    → fragility) y MODULA cómo se propaga cualquier shock. Bitemporal (con fecha) y
+    reversible con RetirarFactor. Es la pieza que cierra el circuito noticia→cascada."""
+    factor_id: Optional[str] = None
+    label: str = Field(min_length=3, max_length=160)
+    severity: float = Field(default=3.0, ge=0, le=5)      # 0-5: qué tan fuerte es el golpe
+    affects: List[str] = Field(min_length=1, max_length=40)  # ids de empresas afectadas
+    coef: float = Field(default=0.5, ge=0, le=3)          # sensibilidad extra por miembro
+    razon: str = Field(min_length=1, max_length=1000)
+    fuente: str = Field(default='tejedor', max_length=300)
+    confidence: float = Field(default=0.6, ge=0, le=1)
+
+
+class RetirarFactorInput(BaseModel):
+    """Expira una hiperarista: cierra sus links 'affects' (valid_to). La historia
+    queda en events — consultable as_of para verla activa antes de expirar."""
+    factor_id: str
+    razon: str = Field(min_length=1, max_length=1000)
 
 
 # ── Handlers: reciben (session, input_validado, actor) → dict de resultado ──
@@ -321,6 +343,54 @@ def retirar_empresa(session, inp: RetirarEmpresaInput, actor):
     return {'company_id': inp.company_id, 'retired': retired}
 
 
+def crear_factor(session, inp: CrearFactorInput, actor):
+    """Crea la hiperarista: un ObjectRecord type='Factor' (con severity) + N links
+    'affects' bitemporales hacia las empresas afectadas. Solo enlaza empresas que
+    EXISTEN (evita links colgantes que corromperían la matriz)."""
+    fid = inp.factor_id or f'factor_{uuid.uuid4().hex[:12]}'
+    if session.get(ObjectRecord, fid):
+        raise ActionError(f'el factor ya existe: {fid}')
+    members = [m for m in inp.affects if session.get(ObjectRecord, m)]
+    if not members:
+        raise ActionError('ninguna empresa de affects existe en la ontología')
+    apply_event(session, 'ObjectCreated',
+                {'label': inp.label, 'type': 'Factor',
+                 'properties': {'severity': float(inp.severity), 'razon': inp.razon,
+                                'fuente': inp.fuente, 'confidence': inp.confidence}},
+                valid_from=_utcnow(), source=inp.fuente, actor=actor, object_id=fid)
+    for m in members:
+        apply_event(session, 'LinkCreated',
+                    {'rel_type': 'affects', 'weight': float(inp.coef),
+                     'properties': {'factor': True}},
+                    valid_from=_utcnow(), source=inp.fuente, actor=actor,
+                    object_id=fid, target_id=m)
+    _log_action(session, 'CrearFactor', fid, None, {
+        'label': inp.label, 'severity': inp.severity, 'members': members,
+        'razon': inp.razon, 'fuente': inp.fuente,
+    }, actor, source=inp.fuente)
+    return {'factor_id': fid, 'label': inp.label, 'severity': inp.severity, 'members': members}
+
+
+def retirar_factor(session, inp: RetirarFactorInput, actor):
+    """Expira la hiperarista: cierra los 'affects' vigentes (valid_to) y marca el
+    Factor como expirado. Reversible en el sentido bitemporal (la historia queda)."""
+    obj = session.get(ObjectRecord, inp.factor_id)
+    if not obj or obj.type != 'Factor':
+        raise ActionError(f'factor no encontrado: {inp.factor_id}')
+    rows = session.scalars(select(LinkRecord).where(
+        LinkRecord.rel_type == 'affects', LinkRecord.source_id == inp.factor_id,
+        LinkRecord.valid_to.is_(None))).all()
+    for l in rows:
+        apply_event(session, 'LinkRemoved', {'rel_type': 'affects'},
+                    valid_from=_utcnow(), source='tejedor', actor=actor,
+                    object_id=inp.factor_id, target_id=l.target_id)
+    apply_event(session, 'ObjectUpdated',
+                {'properties': {'expired': True, 'expired_razon': inp.razon}},
+                valid_from=_utcnow(), source='tejedor', actor=actor, object_id=inp.factor_id)
+    _log_action(session, 'RetirarFactor', inp.factor_id, None, {'razon': inp.razon}, actor)
+    return {'factor_id': inp.factor_id, 'retired_links': len(rows)}
+
+
 # ── Catálogo: nombre → (esquema Pydantic, handler) ───────────────────────────
 ACTION_CATALOG = {
     'CrearTesis':        (CrearTesisInput, crear_tesis),
@@ -334,6 +404,8 @@ ACTION_CATALOG = {
     'CorregirDato':       (CorregirDatoInput, corregir_dato),
     'IncorporarEmpresa':  (IncorporarEmpresaInput, incorporar_empresa),
     'RetirarEmpresa':     (RetirarEmpresaInput, retirar_empresa),
+    'CrearFactor':        (CrearFactorInput, crear_factor),
+    'RetirarFactor':      (RetirarFactorInput, retirar_factor),
 }
 
 
