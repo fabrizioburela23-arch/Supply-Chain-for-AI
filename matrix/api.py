@@ -39,16 +39,36 @@ def matrix_status():
     scope = _db()
     if scope is None:
         return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
-    from matrix.engine import REL_TYPES, active_factors, node_index
+    from matrix.engine import (REL_TYPES, _graph_epoch, active_factors,
+                               build_matrices, node_index, spectral_radius)
     with scope() as s:
         idx, ids = node_index(s)
         factors = active_factors(s)
-    return jsonify({'available': True, 'objects': len(ids),
-                    'rel_types': REL_TYPES,
-                    'active_factors': [{'id': f['id'], 'label': f['label'],
-                                        'severity': f['severity'],
-                                        'members': len(f['members'])}
-                                       for f in factors]})
+        # ρ(T): riesgo sistémico macro. Cacheado por ÉPOCA del grafo (no solo
+        # TTL): así un cambio de peso o de severidad de un Factor invalida el
+        # ρ/estabilidad cacheados (la clave por nº de nodos + ids de factor NO
+        # capturaba esos cambios → estabilidad rancia hasta el TTL).
+        ck = 'spectral:' + _graph_epoch(s)
+        sr = _ttl_get(ck, ttl=60)
+        if sr is None:
+            try:
+                mats, midx, mids = build_matrices(s)
+                sr = spectral_radius(mats, factors=factors, idx=midx)
+                _ttl_set(ck, sr)
+            except Exception:  # noqa: BLE001
+                sr = None
+    out = {'available': True, 'objects': len(ids),
+           'rel_types': REL_TYPES,
+           'active_factors': [{'id': f['id'], 'label': f['label'],
+                               'severity': f['severity'],
+                               'members': len(f['members'])}
+                              for f in factors]}
+    if sr:
+        # Estabilidad sistémica: damping·ρ(T) < 1 ⇒ las cascadas decaen.
+        out['spectral_radius'] = sr['rho']
+        out['damping_rho'] = sr['damping_rho']
+        out['systemically_stable'] = sr['stable']
+    return jsonify(out)
 
 
 @matrix_bp.get('/<rel_type>')
@@ -64,9 +84,15 @@ def matrix_get(rel_type):
         mats, idx, ids = build_matrices(s, as_of=as_of)
         if request.args.get('modulated', '1') != '0':
             mats = modulate(mats, idx, active_factors(s, as_of=as_of))
+    import scipy.sparse as sp
     m = mats[rel_type]
-    cells = [[ids[i], ids[j], round(float(m[i, j]), 3)]
-             for i, j in zip(*m.nonzero())]
+    if sp.issparse(m):
+        coo = m.tocoo()
+        cells = [[ids[i], ids[j], round(float(v), 3)]
+                 for i, j, v in zip(coo.row.tolist(), coo.col.tolist(), coo.data.tolist()) if v != 0]
+    else:
+        cells = [[ids[i], ids[j], round(float(m[i, j]), 3)]
+                 for i, j in zip(*m.nonzero())]
     return jsonify({'rel_type': rel_type, 'as_of': as_of, 'n': len(ids),
                     'nnz': len(cells), 'cells': cells})
 
@@ -91,18 +117,29 @@ def matrix_impact():
     unknown = [x for x in shock if x not in idx]
     if len(unknown) == len(shock):
         return jsonify({'error': f'ningún id del shock existe: {unknown[:5]}'}), 400
-    impacts, cascade = propagate(
-        mats, idx, ids, [x for x in shock if x in idx],
+    kw = dict(
         magnitude=float(body.get('magnitude', 1.0)),
         damping=float(body.get('damping', 0.6)),
         max_hops=int(body.get('max_hops', 6)),
-        rel_weights=body.get('rel_weights'), frag=frag,
+        rel_weights=body.get('rel_weights'),
+        nonlinear=bool(body.get('nonlinear', False)),   # flag: kernel no-lineal (estrés severo)
     )
-    return jsonify({'shock': shock, 'as_of': as_of,
-                    'impacts': impacts, 'cascade': cascade,
-                    'affected': len(impacts) - len(shock),
-                    'factors_active': [f['label'] for f in factors],
-                    'unknown_ids': unknown})
+    shock_ids = [x for x in shock if x in idx]
+    impacts, cascade = propagate(mats, idx, ids, shock_ids, frag=frag, **kw)
+    out = {'shock': shock, 'as_of': as_of,
+           'impacts': impacts, 'cascade': cascade,
+           'affected': len(impacts) - len(shock),
+           'factors_active': [f['label'] for f in factors],
+           'unknown_ids': unknown}
+    # Bandas de incertidumbre Monte Carlo (opt-in: n_samples>1). Lenguaje VaR/CVaR.
+    n_samples = int(body.get('n_samples', 1))
+    if n_samples > 1:
+        from matrix.engine import propagate_bands
+        mc = propagate_bands(mats, idx, ids, shock_ids, n_samples=min(n_samples, 1000),
+                             seed=int(body.get('seed', 0)), frag=frag, **kw)
+        out['bands'] = mc['bands']
+        out['n_samples'] = mc['n_samples']
+    return jsonify(out)
 
 
 @matrix_bp.post('/simulations')
@@ -230,21 +267,23 @@ def matrix_insights():
     import numpy as np
     from sqlalchemy import select
 
-    from matrix.engine import (active_factors, build_matrices, fragility,
-                               propagate)
+    from matrix.engine import (_graph_epoch, active_factors, build_matrices,
+                               fragility, propagate)
     from ontology.models import ObjectRecord
     body = request.get_json(silent=True) or {}
     as_of = body.get('as_of')
     lang = (body.get('lang') or 'es').strip().lower()[:2]
     tier = body.get('tier') or 'fast'
     manual_shock = body.get('shock') or None
-    ck = f'insights:{as_of or "now"}:{lang}:{tier}'
-    if not manual_shock:
-        hit = _ttl_get(ck, ttl=180)
-        if hit is not None:
-            return jsonify({**hit, 'cached': True})
 
     with scope() as s:
+        # Clave cacheada por ÉPOCA del grafo → un alta/baja/cambio de peso o de
+        # Factor invalida los insights (antes solo TTL 180s → datos rancios).
+        ck = f'insights:{_graph_epoch(s)}:{as_of or "now"}:{lang}:{tier}'
+        if not manual_shock:
+            hit = _ttl_get(ck, ttl=180)
+            if hit is not None:
+                return jsonify({**hit, 'cached': True})
         mats, idx, ids = build_matrices(s, as_of=as_of)
         factors = active_factors(s, as_of=as_of)
         lbl = {r[0]: r[1] for r in s.execute(
@@ -263,7 +302,9 @@ def matrix_insights():
     agg = None
     for m in mats.values():
         agg = m.copy() if agg is None else agg + m
-    indeg = agg.sum(axis=0) if agg is not None else np.zeros(len(ids))
+    # in-degree ponderado; np.asarray(...).ravel() → 1D tanto denso como sparse
+    # (sparse.sum devuelve np.matrix, que rompería argsort/indexado).
+    indeg = np.asarray(agg.sum(axis=0)).ravel() if agg is not None else np.zeros(len(ids))
     top_choke = [ids[i] for i in np.argsort(-indeg)[:6] if indeg[i] > 0]
 
     # Foco de la simulación: shock manual > miembros del factor más severo > chokepoint.
@@ -310,17 +351,71 @@ def matrix_metrics():
     if scope is None:
         return jsonify({'error': 'DATABASE_URL no configurada'}), 503
     as_of = request.args.get('as_of')
-    ck = 'metrics:' + (as_of or 'now')
-    hit = _ttl_get(ck, ttl=300)
-    if hit is not None:
-        return jsonify(hit)
-    from matrix.engine import compute_metrics
+    from matrix.engine import (_graph_epoch, build_matrices, compute_metrics,
+                               spectral_radius)
     with scope() as s:
+        # Cacheado por ÉPOCA del grafo → un cambio estructural invalida las
+        # métricas (antes solo TTL 300s → chokepoints/cascada/ρ rancios).
+        ck = f'metrics:{_graph_epoch(s)}:{as_of or "now"}'
+        hit = _ttl_get(ck, ttl=300)
+        if hit is not None:
+            return jsonify(hit)
         metrics, factors = compute_metrics(s, as_of=as_of)
+        try:
+            mats, midx, _ = build_matrices(s, as_of=as_of)
+            sr = spectral_radius(mats, factors=factors, idx=midx)
+        except Exception:  # noqa: BLE001
+            sr = None
     top = sorted(metrics.items(), key=lambda kv: kv[1]['chokepoint_rank'])[:25]
+    # PageRank: centralidad complementaria (robusta a componentes desconectados)
+    pr_top = sorted(metrics.items(), key=lambda kv: kv[1].get('pagerank_rank', 1e9))[:25]
     payload = {'nodes': len(metrics),
                'factors_active': [f['label'] for f in factors],
                'chokepoints_top25': [{'id': k, **v} for k, v in top],
+               'central_pagerank_top25': [{'id': k, 'pagerank': v.get('pagerank'),
+                                           'pagerank_rank': v.get('pagerank_rank')}
+                                          for k, v in pr_top],
+               'spectral': sr,
                'metrics': metrics}
     _ttl_set(ck, payload)
     return jsonify(payload)
+
+
+@matrix_bp.get('/parity')
+def matrix_parity():
+    """CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre
+    AMBOS motores sobre los MISMOS datos y reporta la discrepancia máxima. Se
+    usa para correr los dos en paralelo antes de retirar el denso — solo se
+    promueve MATRIX_ENGINE=sparse tras un periodo sin discrepancias. `alert`
+    True si la diferencia supera la tolerancia. Params: ?shock=ID&shock=ID&tol=."""
+    scope = _db()
+    if scope is None:
+        return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
+    from matrix import engine as E
+    if E.sp is None:
+        return jsonify({'available': False,
+                        'reason': 'scipy no instalado — modo disperso no disponible'}), 200
+    shock = request.args.getlist('shock')
+    tol = float(request.args.get('tol', '1e-6'))
+    with scope() as s:
+        md, idx, ids = E.build_matrices(s, sparse=False)
+        ms, _, _ = E.build_matrices(s, sparse=True)
+        shock = [x for x in shock if x in idx] or ids[:1]
+        imp_d, _ = E.propagate(md, idx, ids, shock)
+        imp_s, _ = E.propagate(ms, idx, ids, shock)
+        rho_d = E.spectral_radius(md).get('rho')
+        rho_s = E.spectral_radius(ms).get('rho')
+    keys = set(imp_d) | set(imp_s)
+    max_diff = max((abs(imp_d.get(k, 0.0) - imp_s.get(k, 0.0)) for k in keys), default=0.0)
+    mismatch = sorted(set(imp_d) ^ set(imp_s))
+    within = (max_diff <= tol) and not mismatch and abs((rho_d or 0) - (rho_s or 0)) <= 1e-3
+    return jsonify({
+        'available': True, 'shock': shock, 'tol': tol,
+        'nodes_compared': len(keys), 'max_abs_diff': round(max_diff, 9),
+        'key_set_mismatch': mismatch[:20],
+        'rho_dense': rho_d, 'rho_sparse': rho_s,
+        'within_tolerance': within, 'alert': (not within),
+        'recommendation': (
+            'El motor disperso coincide con el denso dentro de tolerancia — seguro promover MATRIX_ENGINE=sparse.'
+            if within else
+            'DISCREPANCIA sobre la tolerancia — NO promover el motor disperso; investigar antes del corte.')})

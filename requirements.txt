@@ -11,6 +11,12 @@ gunicorn>=21.2.0
 # Khipu Finance v1 — API pública (JWT) y métricas de riesgo (VaR/CVaR)
 pyjwt>=2.8.0
 numpy>=1.26.0
+# Motor de matrices DISPERSAS (escala a decenas de miles de nodos) + centralidad
+# PageRank/radio espectral (scipy.sparse / scipy.sparse.linalg). Sin scipy el
+# motor sigue en modo denso (MATRIX_ENGINE=dense, default) — scipy solo se
+# necesita para el modo disperso; pero se fija como dependencia porque el módulo
+# lo importa. Ver spec_matrices_dispersas_centralidad.
+scipy>=1.11.0
 pytest>=7.4.0
 # Grafo de Conocimiento Temporal — persistencia opcional en Neo4j (driver oficial,
 # ligero). Los hechos ya vienen estructurados, así que no se necesita Graphiti
