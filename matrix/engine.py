@@ -562,12 +562,23 @@ _CACHE = {}
 _CACHE_MAX = 24
 
 
+# Solo los eventos que cambian la ESTRUCTURA del grafo mueven la época. Se
+# EXCLUYE PriceObserved (se escribe muy seguido con la ingesta de precios) y
+# ActionExecuted: el índice, las matrices, las métricas y ρ(T) NO dependen del
+# precio → incluirlo haría trillar la caché sin ninguna razón de correctitud.
+_STRUCTURAL_EVENTS = ('ObjectCreated', 'ObjectUpdated', 'LinkCreated', 'LinkRemoved')
+
+
 def _graph_epoch(session):
-    """Token que cambia con cualquier evento nuevo (MAX recorded_at). Barato
-    (índice sobre recorded_at). Si falla, época volátil → no cachea de más."""
+    """Token que cambia con cualquier cambio ESTRUCTURAL del grafo (MAX
+    recorded_at de eventos de objetos/links). Barato (índices sobre event_type y
+    recorded_at). Captura altas/bajas de nodos y links, cambios de peso y de
+    severidad/coeficiente de Factores (todo pasa por ObjectUpdated/LinkCreated)
+    sin enumerar nada. Si falla, época volátil → no cachea de más."""
     try:
         from ontology.models import Event
         v = session.execute(select(Event.recorded_at)
+                            .where(Event.event_type.in_(_STRUCTURAL_EVENTS))
                             .order_by(Event.recorded_at.desc()).limit(1)).scalar()
         return v.isoformat() if v is not None else '0'
     except Exception:  # noqa: BLE001

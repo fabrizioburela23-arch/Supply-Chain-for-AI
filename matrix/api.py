@@ -39,13 +39,16 @@ def matrix_status():
     scope = _db()
     if scope is None:
         return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
-    from matrix.engine import (REL_TYPES, active_factors, build_matrices,
-                               node_index, spectral_radius)
+    from matrix.engine import (REL_TYPES, _graph_epoch, active_factors,
+                               build_matrices, node_index, spectral_radius)
     with scope() as s:
         idx, ids = node_index(s)
         factors = active_factors(s)
-        # ρ(T): riesgo sistémico macro. Cacheado (60s) — no recomputar en cada poll.
-        ck = 'spectral:' + (str(len(ids)) + ':' + ','.join(sorted(f['id'] for f in factors)))
+        # ρ(T): riesgo sistémico macro. Cacheado por ÉPOCA del grafo (no solo
+        # TTL): así un cambio de peso o de severidad de un Factor invalida el
+        # ρ/estabilidad cacheados (la clave por nº de nodos + ids de factor NO
+        # capturaba esos cambios → estabilidad rancia hasta el TTL).
+        ck = 'spectral:' + _graph_epoch(s)
         sr = _ttl_get(ck, ttl=60)
         if sr is None:
             try:
@@ -264,21 +267,23 @@ def matrix_insights():
     import numpy as np
     from sqlalchemy import select
 
-    from matrix.engine import (active_factors, build_matrices, fragility,
-                               propagate)
+    from matrix.engine import (_graph_epoch, active_factors, build_matrices,
+                               fragility, propagate)
     from ontology.models import ObjectRecord
     body = request.get_json(silent=True) or {}
     as_of = body.get('as_of')
     lang = (body.get('lang') or 'es').strip().lower()[:2]
     tier = body.get('tier') or 'fast'
     manual_shock = body.get('shock') or None
-    ck = f'insights:{as_of or "now"}:{lang}:{tier}'
-    if not manual_shock:
-        hit = _ttl_get(ck, ttl=180)
-        if hit is not None:
-            return jsonify({**hit, 'cached': True})
 
     with scope() as s:
+        # Clave cacheada por ÉPOCA del grafo → un alta/baja/cambio de peso o de
+        # Factor invalida los insights (antes solo TTL 180s → datos rancios).
+        ck = f'insights:{_graph_epoch(s)}:{as_of or "now"}:{lang}:{tier}'
+        if not manual_shock:
+            hit = _ttl_get(ck, ttl=180)
+            if hit is not None:
+                return jsonify({**hit, 'cached': True})
         mats, idx, ids = build_matrices(s, as_of=as_of)
         factors = active_factors(s, as_of=as_of)
         lbl = {r[0]: r[1] for r in s.execute(
@@ -346,12 +351,15 @@ def matrix_metrics():
     if scope is None:
         return jsonify({'error': 'DATABASE_URL no configurada'}), 503
     as_of = request.args.get('as_of')
-    ck = 'metrics:' + (as_of or 'now')
-    hit = _ttl_get(ck, ttl=300)
-    if hit is not None:
-        return jsonify(hit)
-    from matrix.engine import build_matrices, compute_metrics, spectral_radius
+    from matrix.engine import (_graph_epoch, build_matrices, compute_metrics,
+                               spectral_radius)
     with scope() as s:
+        # Cacheado por ÉPOCA del grafo → un cambio estructural invalida las
+        # métricas (antes solo TTL 300s → chokepoints/cascada/ρ rancios).
+        ck = f'metrics:{_graph_epoch(s)}:{as_of or "now"}'
+        hit = _ttl_get(ck, ttl=300)
+        if hit is not None:
+            return jsonify(hit)
         metrics, factors = compute_metrics(s, as_of=as_of)
         try:
             mats, midx, _ = build_matrices(s, as_of=as_of)
