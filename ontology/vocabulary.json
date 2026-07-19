@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "_doc": "REGISTRO ÚNICO del vocabulario del grafo. Añadir un tipo de objeto, un tipo de relación o un sector se hace AQUÍ (dato), no editando código en 29 sitios. El servidor lo sirve en GET /api/vocabulary para que el cliente deje de mantener copias. Regla de oro: lo que no está aquí NO se clasifica en silencio — se reporta como desconocido (ver /api/vocabulary/unknown).",
+
+  "object_types": {
+    "Company":  { "economic": true,  "es": "Empresa",            "en": "Company" },
+    "Tech":     { "economic": true,  "es": "Tecnología",         "en": "Technology" },
+    "Country":  { "economic": true,  "es": "País",               "en": "Country" },
+    "Policy":   { "economic": true,  "es": "Política",           "en": "Policy" },
+    "Material": { "economic": true,  "es": "Material",           "en": "Material" },
+    "Energy":   { "economic": true,  "es": "Energía",            "en": "Energy" },
+    "Product":  { "economic": true,  "es": "Producto",           "en": "Product" },
+    "Org":      { "economic": true,  "es": "Organización",       "en": "Organization" },
+
+    "Factor":             { "economic": false, "es": "Factor sistémico",     "en": "Systemic factor" },
+    "Supercycle":         { "economic": false, "es": "Superciclo",           "en": "Supercycle" },
+    "Simulation":         { "economic": false, "es": "Simulación",           "en": "Simulation" },
+    "Thesis":             { "economic": false, "es": "Tesis",                "en": "Thesis" },
+    "Annotation":         { "economic": false, "es": "Nota",                 "en": "Annotation" },
+    "Decision":           { "economic": false, "es": "Decisión",             "en": "Decision" },
+    "PositionAdjustment": { "economic": false, "es": "Ajuste de posición",   "en": "Position adjustment" },
+    "NewsItem":           { "economic": false, "es": "Noticia",              "en": "News item" },
+    "Source":             { "economic": false, "es": "Fuente",               "en": "Source" }
+  },
+
+  "_doc_orden": "El ORDEN de las estructurales se respeta tal cual está aquí y debe seguir siendo el histórico (supply, cloud, fab, license, partner, invest, deploy, owns, ppa): la suma de matrices en coma flotante no es asociativa, así que reordenar introduciría deriva numérica frente al motor histórico.",
+  "relation_types": {
+    "supply":  { "weight": 1.0,  "symmetric": false, "structural": true,  "es": "provee a",        "en": "supplies" },
+    "cloud":   { "weight": 0.9,  "symmetric": false, "structural": true,  "es": "da nube a",       "en": "provides cloud to" },
+    "fab":     { "weight": 1.0,  "symmetric": false, "structural": true,  "es": "fabrica para",    "en": "fabricates for" },
+    "license": { "weight": 0.8,  "symmetric": false, "structural": true,  "es": "licencia a",      "en": "licenses to" },
+    "partner": { "weight": 0.3,  "symmetric": true,  "structural": true,  "es": "socio de",        "en": "partner of" },
+    "invest":  { "weight": 0.25, "symmetric": false, "structural": true,  "es": "invierte en",     "en": "invests in" },
+    "deploy":  { "weight": 0.4,  "symmetric": false, "structural": true,  "es": "despliega",       "en": "deploys" },
+    "owns":    { "weight": 0.6,  "symmetric": false, "structural": true,  "es": "posee",           "en": "owns" },
+    "ppa":     { "weight": 0.7,  "symmetric": false, "structural": true,  "es": "da energía a",    "en": "powers" },
+
+    "affects":  { "weight": 0.0, "symmetric": false, "structural": false, "es": "afecta a",        "en": "affects" },
+    "about":    { "weight": 0.0, "symmetric": false, "structural": false, "es": "trata sobre",     "en": "about" },
+    "reports_on": { "weight": 0.0, "symmetric": false, "structural": false, "es": "informa sobre", "en": "reports on" },
+    "published_by": { "weight": 0.0, "symmetric": false, "structural": false, "es": "publicado por", "en": "published by" }
+  },
+
+  "_doc_relation_types": "structural=true → entra en las matrices de propagación de daño (weight = criticidad). structural=false → relación de conocimiento (hiperaristas, noticias, notas): se guarda y se consulta, pero NO propaga daño. Antes, cualquier relación fuera de la lista de 9 se descartaba EN SILENCIO al construir las matrices.",
+
+  "source_kinds": {
+    "primary":    { "trust": 3, "es": "Fuente primaria",      "en": "Primary source",   "_doc": "informe oficial, filing regulatorio, comunicado de la propia entidad" },
+    "press":      { "trust": 2, "es": "Prensa",               "en": "Press" },
+    "trade":      { "trust": 2, "es": "Prensa especializada", "en": "Trade press",      "_doc": "DigiTimes, TrendForce, SemiAnalysis…" },
+    "rumor":      { "trust": 1, "es": "Rumor de cadena",      "en": "Supply-chain rumor" },
+    "aggregator": { "trust": 1, "es": "Agregador",            "en": "Aggregator" },
+    "corporate":  { "trust": 1, "es": "Nota de la empresa",   "en": "Company PR",       "_doc": "parte interesada: la propia empresa sobre sí misma" },
+    "state":      { "trust": 1, "es": "Medio estatal",        "en": "State media" }
+  },
+
+  "_doc_source_kinds": "Base del filtro de OBJETIVIDAD (enfoque defendible, sin licenciar datasets de sesgo político): la pregunta útil en cadena de suministro no es izquierda/derecha, sino si algo es rumor de una sola fuente o está confirmado por una primaria. trust es un ordinal, NO un puntaje inventado de veracidad."
+}

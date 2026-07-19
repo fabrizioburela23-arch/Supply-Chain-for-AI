@@ -453,6 +453,40 @@ def vendor(name):
 # ----------------------------------------------------------------------------
 # Health check / data-health (extendido: incluye MiroFish, ElevenLabs)
 # ----------------------------------------------------------------------------
+@app.route('/api/vocabulary')
+def api_vocabulary():
+    """REGISTRO ÚNICO del vocabulario (tipos de objeto, tipos de relación con su
+    criticidad, tipos de fuente). El cliente debe consumir ESTO en vez de
+    mantener sus propias copias — antes el vocabulario estaba duplicado en 5
+    sitios y ya había divergido. Añadir un sector/tipo = editar
+    ontology/vocabulary.json, no código. No necesita base de datos."""
+    try:
+        from ontology.vocabulary import snapshot
+        snap = snapshot()
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': f'vocabulario no disponible: {str(e)[:120]}'}), 500
+    resp = jsonify(snap)
+    # Cambia poco → cacheable, pero versionado para invalidar al editarlo.
+    resp.headers['Cache-Control'] = 'public, max-age=300'
+    resp.headers['ETag'] = f'"vocab-{snap.get("version", 0)}"'
+    return resp
+
+
+@app.route('/api/vocabulary/unknown')
+def api_vocabulary_unknown():
+    """Diagnóstico: valores vistos que NO están en el registro. La regla del
+    proyecto es que nada se clasifique en silencio; si algo aparece aquí, o es
+    basura de ingesta o falta añadirlo a vocabulary.json."""
+    try:
+        from ontology.vocabulary import unknown_report
+        rep = unknown_report()
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:120]}), 500
+    return jsonify({'unknown': rep,
+                    'clean': not rep,
+                    'hint': 'Si un valor es legítimo, añádelo a ontology/vocabulary.json'})
+
+
 @app.route('/api/health')
 def health():
     mf_ok = False

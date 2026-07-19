@@ -41,17 +41,18 @@ from ontology.service import _links_active_at, _parse_dt
 
 log = logging.getLogger('matrix.engine')
 
-# Tipos de relación canónicos (Etapa 2). 'partner' es simétrico: se refleja.
-REL_TYPES = ['supply', 'cloud', 'fab', 'license', 'partner', 'invest',
-             'deploy', 'owns', 'ppa']
-SYMMETRIC = {'partner'}
+# Vocabulario: UNA sola fuente de verdad (ontology/vocabulary.json). Antes esto
+# estaba copiado en 5 sitios y ya había divergido. Añadir un tipo de relación o
+# un sector se hace en el JSON, no editando código. Los valores por defecto del
+# registro son EXACTAMENTE los históricos (mismo orden → misma aritmética).
+from ontology import vocabulary as vocab
+
+REL_TYPES = vocab.relation_types()
+SYMMETRIC = vocab.symmetric_relations()
 
 # Pesos por tipo para la propagación de DAÑO operativo: perder a tu proveedor
 # de fab pega más que perder a un inversor. Ajustables por request.
-DEFAULT_REL_WEIGHTS = {
-    'supply': 1.0, 'fab': 1.0, 'cloud': 0.9, 'license': 0.8, 'ppa': 0.7,
-    'deploy': 0.4, 'partner': 0.3, 'owns': 0.6, 'invest': 0.25,
-}
+DEFAULT_REL_WEIGHTS = vocab.relation_weights()
 
 # Fuentes de importación EN BULTO (capa ancha Wikidata/GLEIF): sus relaciones
 # binarias no traen un peso equivalente al de las relaciones curadas a mano, así
@@ -138,9 +139,11 @@ def _transpose_csr(m):
 def node_index(session, as_of=None):
     """Índice estable id→posición (orden alfabético de ids de objetos).
 
-    Excluye tipos que NO son nodos del grafo económico: 'Simulation' (historial
-    de simulaciones guardadas) y 'Factor' (hiperaristas moduladoras) — antes se
-    colaban como filas/columnas fantasma en las matrices.
+    Usa la lista BLANCA del registro (ontology/vocabulary.json): solo los tipos
+    marcados `economic` son nodos del grafo. Antes era una lista NEGRA
+    ('Simulation','Factor'), así que cada tipo de objeto NUEVO se colaba como
+    fila/columna fantasma en las matrices — con Notas, Tesis y sobre todo
+    Noticias persistidas, eso habría inflado el grafo en silencio.
 
     Cacheado por (época del grafo, as_of): a escala grande, reconstruir el
     índice desde Postgres en CADA request es el cuello de botella real, no la
@@ -150,9 +153,17 @@ def node_index(session, as_of=None):
     hit = _cache_get(ck)
     if hit is not None:
         return hit
+    # Tipos presentes en la BD que NO están en el registro: se EXCLUYEN del
+    # grafo (seguro) pero se REPORTAN — el modo de fallo que hay que evitar es
+    # el silencioso. Consulta barata: DISTINCT sobre una columna indexada.
+    try:
+        for (t,) in session.execute(select(ObjectRecord.type).distinct()).all():
+            vocab.is_economic(t)      # anota el desconocido si lo es
+    except Exception:  # noqa: BLE001
+        pass
     ids = [r for (r,) in session.execute(
         select(ObjectRecord.id)
-        .where(ObjectRecord.type.notin_(('Simulation', 'Factor')))
+        .where(ObjectRecord.type.in_(vocab.economic_types()))
         .order_by(ObjectRecord.id)).all()]
     out = ({oid: i for i, oid in enumerate(ids)}, ids)
     _cache_set(ck, out)
