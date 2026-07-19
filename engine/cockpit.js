@@ -558,7 +558,7 @@
     var pp = en
       ? 'I can break down any company, simulate what happens if something falls, compare, and chart your data.'
       : 'Puedo desarmar cualquier empresa, simular qué pasa si algo cae, comparar, y dibujarte los datos.';
-    s.innerHTML = '<div id="bcp-empty"><div id="bcp-home-pulse" style="margin-bottom:16px"></div><h2>' + esc(h2) + '</h2>' +
+    s.innerHTML = '<div id="bcp-empty"><div id="bcp-home-hyper" style="margin-bottom:12px"></div><div id="bcp-home-pulse" style="margin-bottom:16px"></div><h2>' + esc(h2) + '</h2>' +
       '<p>' + esc(pp) + '</p>' +
       '<div class="bcp-chips">' + chips.map(function (c) {
         return '<span class="bcp-chip" data-q="' + esc(c[0] + c[1]) + '"><span class="k">' + esc(c[2]) + '</span>' + esc(c[0] + c[1]) + '</span>';
@@ -566,7 +566,39 @@
     s.querySelectorAll('.bcp-chip').forEach(function (el) {
       el.addEventListener('click', function () { ask(el.getAttribute('data-q')); });
     });
+    try { _homeHyper(); } catch (e) {}   // banner proactivo del hipergrafo (siempre)
     try { _homePulse(); } catch (e) {}   // pulso ligero del portafolio (capa proactiva)
+  }
+
+  /* ══ CAPA PROACTIVA en la PANTALLA DE INICIO (pedido de Fabrizio: "primero la
+     capa proactiva"). El hipergrafo ya narra la situación en vivo → aquí un
+     banner compacto SIEMPRE visible (no requiere cuenta ni PIN) con el insight
+     principal + los factores activos, y un clic al panel completo. Reusa
+     /api/matrix/insights (cacheado 180s en el server → barato). Si la ontología
+     está caída, no aparece nada (silencioso). ══ */
+  async function _homeHyper() {
+    var el = document.getElementById('bcp-home-hyper'); if (!el) return;
+    var en = ckLang() === 'en';
+    try {
+      var r = await fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lang: en ? 'en' : 'es', tier: 'fast' }) });
+      var d = await r.json();
+      if (!document.getElementById('bcp-home-hyper')) return;   // el usuario ya navegó
+      if (!d || d.available === false || !(d.insights && d.insights.length)) return;
+      var top = d.insights[0];
+      var kico = { riesgo: '⚠️', oportunidad: '📈', estructura: '🕸' };
+      var facts = (d.factors || []).slice(0, 2).map(function (f) {
+        return '<span style="font-size:10.5px;color:#FFD27A;border:1px solid rgba(255,179,0,.3);border-radius:999px;padding:1px 8px">⚡ ' + esc(f.label) + '</span>';
+      }).join(' ');
+      el.innerHTML = '<div style="display:inline-flex;max-width:700px;align-items:center;gap:11px;flex-wrap:wrap;justify-content:center;text-align:left;padding:10px 16px;border:1px solid rgba(0,224,255,.22);border-radius:14px;background:rgba(0,224,255,.05)">' +
+        '<span style="font-size:9px;font-weight:800;letter-spacing:.1em;color:#00E0FF;border:1px solid rgba(0,224,255,.4);border-radius:999px;padding:2px 8px">' + (en ? 'LIVE' : 'EN VIVO') + '</span>' +
+        '<span style="font-size:13px;color:#E8EDFB"><b>' + (kico[top.kind] || '🕸') + ' ' + esc(top.title) + '</b></span>' +
+        (facts ? '<span style="display:inline-flex;gap:6px;flex-wrap:wrap">' + facts + '</span>' : '') +
+        '<button id="bcp-home-hyperbtn" style="padding:4px 12px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid rgba(0,224,255,.5);background:rgba(0,224,255,.12);color:#00E0FF">' + (en ? 'See insights' : 'Ver insights') + '</button>' +
+        '</div>';
+      var b = document.getElementById('bcp-home-hyperbtn');
+      if (b) b.addEventListener('click', function () { stage('insights'); });
+    } catch (e) {}
   }
 
   // ── "no encontré esa empresa": mensaje bilingüe + sugerencias clicables ──
