@@ -9,6 +9,66 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-07-19 — Motor de matrices DISPERSAS + centralidad (rama `feature/sparse-matrix-centrality`, NO desplegada)
+
+Implementación del `spec_matrices_dispersas_centralidad`. **NO fusionada a main
+ni desplegada**: el propio spec exige correr denso y disperso en paralelo antes
+del corte a producción. Todo está detrás de un flag; el default sigue DENSO.
+
+**Qué cambió (`matrix/engine.py`):**
+- Motor **denso ↔ disperso** con UN SOLO kernel polimórfico (helpers que
+  despachan por `scipy.sparse.issparse`). Flag `MATRIX_ENGINE=dense|sparse`
+  (default `dense`). scipy es OPCIONAL: sin él, cae a denso sin romper nada.
+- El camino DENSO es **idéntico bit a bit** al histórico (verificado: propagate
+  max abs diff = 0.0 vs la versión previa) → los 5 tests con DB pasan sin tocar
+  sus aserciones. El DISPERSO se valida por un test de **equivalencia**
+  (`numpy.allclose`) DB-free.
+- Pitfall clave resuelto: el denso hace `max()` en pares repetidos; COO→CSR los
+  SUMA → se deduplica por MÁXIMO en un dict antes de armar la COO.
+- **Centralidad PageRank** (ponderada, sobre el grafo de dependencia, con
+  teleportación → robusta a componentes desconectados; maneja nodos colgantes) +
+  **Personalized PageRank** por portafolio. Complementa (no reemplaza)
+  `chokepoint_rank`.
+- **Radio espectral ρ(T)** (Perron-Frobenius: eigs con fallback a power
+  iteration) → condición de estabilidad `damping·ρ(T)<1`; loguea si supercrítico.
+- **Procedencia**: `LinkRecord.properties.source` marca bulto (wikidata/gleif);
+  el motor descuenta su peso (`IMPORT_BULK_WEIGHT_FACTOR`, default 0.5) en la
+  LECTURA (una sola vez). Sin migración de esquema (JSONB).
+- **Caché** del índice de nodos por "época del grafo" (MAX recorded_at de events)
+  → invalidación real, no se reconstruye desde cero en cada request.
+- Extensiones bajo flag (default OFF): **Monte Carlo** `propagate_bands`
+  (p5/p50/p95, semilla fija) y **kernel no-lineal** (`nonlinear=True`).
+
+**API (`matrix/api.py`):** nuevos campos aditivos (no se quitó nada):
+`/status` → `spectral_radius`/`systemically_stable`; `/metrics` →
+`central_pagerank_top25` + `spectral`; `/impact` → `bands` (opt-in `n_samples>1`)
++ `nonlinear`; **`/parity`** (nuevo) corre ambos motores y alerta si difieren
+(mecanismo de corte seguro). `matrix_get` ahora es sparse-safe (COO).
+
+**Ingesta masiva (`ontology/bulk_import.py`, nuevo):** `validate_bulk_links`
+(pura, DB-free, testeada) valida integridad (source/target existen, rel_type
+canónico) y pone en CUARENTENA (no descarta en silencio); `import_links_bulk` es
+idempotente (clave por external_id o triple) y por LOTES, marca procedencia.
+
+**Tests nuevos DB-free:** `tests/test_matrix_sparse.py` (23: equivalencia,
+invariantes, PageRank, ρ, benchmark) + `tests/test_bulk_import.py` (6). Todos
+verdes. Benchmark scale-free: **50k nodos en 1.17s** (build+propagate+PageRank+ρ);
+denso a esa escala serían ~180 GB.
+
+**Desviación documentada (spec §invariantes):** la monotonicidad "aumentar
+CUALQUIER arista nunca reduce el impacto de NINGÚN nodo" **no puede** sostenerse
+bajo normalización columna-estocástica (subir una arista entrante a j diluye a
+los demás proveedores de j → baja el impacto de otro origen). Se testea la
+versión que SÍ sostiene la normalización (arista SALIENTE del nodo en shock →
+su destino no decrece), que es la que detecta errores de signo/normalización.
+
+**Corte a producción (pendiente, requiere Postgres):** correr `/api/matrix/parity`
+un periodo; si `within_tolerance` se mantiene, poner `MATRIX_ENGINE=sparse` y
+`scipy` ya está en requirements.txt. La ingesta Wikidata/GLEIF real usa
+`import_links_bulk` por lotes.
+
+---
+
 # SESIÓN 2026-07-14 (madrugada, autónoma) — víspera de la demo · app en v95
 
 Trabajo nocturno pedido por Fabrizio ("perfecciona todo, asegúrate que corra en
