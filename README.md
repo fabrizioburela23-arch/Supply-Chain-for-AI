@@ -1,119 +1,124 @@
-# Khipu Finance 🌐
+# Bixby Finance 🌐
 
-**Bloomberg Terminal + Jarvis de IA** para la cadena de valor global de semiconductores, IA y espacio.
+**Terminal financiera inteligente para la cadena de suministro de la IA** — estilo Bloomberg sobre un grafo de conocimiento vivo estilo Palantir, con un analista de IA (Bixby) que habla, simula, opera (simulado) y propone.
 
-> 450+ empresas · 900+ conexiones · 35 categorías · NRS Risk Score · Bixby AI Voice · 3D Graph
+> **555 empresas · 1.623 conexiones tipadas · 9 macro-sectores · 43 categorías** — semiconductores, cloud & IA, energía/nuclear, espacio, defensa, robótica.
 
----
-
-## Stack
-
-| Capa | Tecnología |
-|------|-----------|
-| Frontend | HTML/CSS/JS vanilla · D3.js v7 · Three.js r128 · Chart.js 4 |
-| Backend | Flask 3 · Python 3.11 · Gunicorn |
-| AI / Voz | Claude (Anthropic) · ElevenLabs Conversational AI (Bixby) |
-| Simulación | MiroFish (multi-agent) |
-| Infra | Docker Compose · Service Worker (PWA) |
-
-## Deploy en Railway (recomendado para producción)
-
-### Paso 1 — Crear el proyecto
-En [railway.app](https://railway.app) → **New Project → Deploy from GitHub repo** → selecciona `supply-chain-for-ai`.
-
-### Paso 2 — Variables de entorno
-
-**Servicio `khipu`** (app principal):
-```
-SECRET_KEY=<python -c "import secrets; print(secrets.token_hex(32))">
-ANTHROPIC_KEY=sk-ant-...
-FINNHUB_KEY=...
-FMP_KEY=...
-MARKETSTACK_KEY=...
-AV_KEY=...
-```
-
-### Paso 3 — Deploy
-Railway detecta el `railway.toml` y despliega automáticamente. La app queda accesible en `https://tu-proyecto.railway.app`.
+**Demo en vivo:** https://supply-chain-for-ai-production.up.railway.app
+*(al abrir, prueba el chip "▶ Demo guiada": Bixby maneja la app solo y la narra)*
 
 ---
 
-## Inicio rápido local
+## Qué hace
 
-### Con Docker Compose
-```bash
-cp .env.example .env
-# Edita .env con tus API keys
-docker-compose up -d
-# Abre http://localhost:5000
-```
-
-### Solo servidor Python
-```bash
-pip install -r requirements.txt
-cp .env.example .env && nano .env
-python server.py
-```
-
-### Sin servidor (modo standalone)
-Abre `app.html` directamente en el navegador. Configura las API keys en ⚙ Configuración.
-
-## Variables de entorno
-
-| Variable | Requerida | Descripción |
-|----------|-----------|-------------|
-| `SECRET_KEY` | ✅ | Clave JWT para la API v1 |
-| `FINNHUB_KEY` | ✅ | Precios en tiempo real (free tier OK) |
-| `ANTHROPIC_KEY` | ✅ | Claude para análisis IA y Bixby |
-| `ELEVENLABS_KEY` | Bixby | ElevenLabs Conversational AI |
-| `ELEVENLABS_AGENT_ID` | Bixby | ID del agente Bixby en ElevenLabs |
-| `AV_KEY` | VaR/CVaR | Alpha Vantage (free tier) |
-| `FMP_KEY` | Opciones | Financial Modeling Prep |
-| `MARKETSTACK_KEY` | Opciones | Marketstack EOD |
-| `MIROFISH_URL` | Simulación | URL de MiroFish |
+- **Bixby (Cabina)** — pantalla inicial full-screen: chat + voz (ElevenLabs) con ~30 herramientas; abre pantallas, corre simulaciones y narra resultados. Lenguaje de comandos **KHIPU** (`NVDA SIM`, `PORT VAR`, `GRAPH ASOF 2024-01-01`) para respuestas instantáneas sin IA. **Modo demostración guiada** para pitches.
+- **Simulación de shocks** — "¿qué pasa si cae TSMC?": propagación del daño por el grafo (kernel de matrices estilo DebtRank en el servidor), war-room con presets geopolíticos, y **simulación multi-agente** donde varios analistas IA debaten un escenario.
+- **Hipergrafo agéntico** — los eventos sistémicos (sanciones, escaseces, conflictos) son **Factores** que amplifican la propagación; un agente los **teje solo desde las noticias** (auditado y reversible) y el panel 💡 corre la simulación en vivo y la narra con IA.
+- **X-Ray de empresa** — dossier interactivo: dependencias, dependientes, **NRS Risk Score** (0-100, explicable término a término), financieros con el gráfico correcto por métrica, noticias con sentimiento.
+- **◈ Grafo Temporal (bitemporal)** — viaje en el tiempo real: el grafo como era en cualquier fecha; time-travel también en la API (`?as_of=`).
+- **Mercado y ejecución** — cotizaciones en vivo, **bróker simulado** (Alpaca paper, confirmación obligatoria + PIN, badge 🧪 SIMULADO), scalping 1-clic, **Top 50 cripto** con fichas bilingües, portafolios, alertas (precio/NRS/noticias por región), VaR/CVaR.
+- **Mapas** — grafo 2D de fuerzas, universo 3D, globo geopolítico, planetario con satélites reales (CelesTrak), 9 matrices de relación.
+- **Agentes autónomos** — radar de noticias (propone empresas nuevas), tejedor de hiperaristas, lector GDELT, evaluador de alertas y brief matinal; todo pasa por una **cola de propuestas auditada** (solo lo reversible marcado como seguro se auto-aplica).
+- **API pública `/v1`** — monetizada por tiers con JWT (grafo, riesgo y simulación como servicio).
 
 ## Arquitectura
 
 ```
-Browser (app.html)
-├── D3.js force graph (2D) — 450+ nodos
-├── Three.js 3D graph (toggle con botón 3D)
-├── TemporalHypergraph — hiperedges de eventos
-├── SecondBrain panel — 5 capas de conocimiento
-├── BixbyVoice — ElevenLabs WebSocket
-└── MiroFishClient — simulaciones multi-agente
+Browser (app.html, PWA offline-first)          frontend/ (React 19 + Vite — migración
+├── D3 grafo 2D · Three.js 3D · geo/espacio     en curso, rama feature/react-vite-frontend,
+├── Cabina de Bixby (cockpit) + voz             185 tests Vitest; ver frontend/MIGRATION.md)
+├── Grafo Temporal bitemporal (cliente)
+└── engine/*.js (~30 módulos)
 
-Flask server (server.py :5000)
-├── /api/* — proxies de Finnhub, FMP, GDELT, Space, Claude
-└── /v1/* — API pública con JWT auth (tiers)
+Flask + gunicorn (server.py, :5050 local / Railway)
+├── /api/* (62 endpoints) — proxies de mercado/noticias/IA (las keys NUNCA llegan al browser)
+├── /api/ontology/* — ontología bitemporal en Postgres: eventos INMUTABLES
+│   (valid_from/valid_to + recorded_at), objetos/links materializados,
+│   catálogo de Acciones auditadas (Pydantic) y agentes con propuestas
+├── /api/matrix/* — motor de matrices NumPy/SciPy: propagación de shocks,
+│   PageRank (+ personalizado por portafolio), radio espectral ρ(T),
+│   Monte Carlo opcional; modo DENSO y DISPERSO con endpoint de paridad
+│   (benchmark: 50.000 nodos en ~1,2 s)
+├── /api/vocabulary — registro ÚNICO de sectores/tipos/relaciones (dato, no código)
+└── /v1/* — API pública monetizada (JWT por tiers) — NO usar para features internas
+
+Postgres (Railway)  = fuente única de verdad (ontología bitemporal)
+Neo4j Aura (opc.)   = espejo visual del Grafo Temporal
+IA: Claude (Sonnet razonamiento / Haiku narración) con cascada Gemini/NVIDIA
+    y fallback de plantilla — ningún panel sale vacío si un modelo falla
 ```
 
-## Funcionalidades principales
+Ambas bases son **opcionales**: sin sus variables de entorno el servidor arranca igual (patrón try/except en todo).
 
-- **Grafo 2D/3D**: 450+ empresas con zoom, filtros, stress-test cascada, pathfinder
-- **NRS Risk Score**: Puntuación 0-100 compuesta (geo + cadena + mercado + fundamental + concentración)
-- **Bixby**: Asistente de voz IA — navega el grafo, ejecuta stress-tests por voz
-- **Second Brain**: Panel con 5 capas (mercado, noticias, tesis, simulación, red)
-- **VaR/CVaR**: Cálculo de riesgo de portfolio con datos históricos Alpha Vantage
-- **Simulaciones**: 5 presets geopolíticos via MiroFish multi-agent
-- **GDELT News**: Búsqueda de noticias globales en tiempo real con auto-hiperedges en 3D
-- **Alertas de precio**: Notificaciones del sistema cuando un ticker cruza un umbral
-- **API pública v1**: JWT auth por tiers (free/starter/pro/business/enterprise)
+## Correr localmente
 
-## Nodos incluidos
+```bash
+pip install -r requirements.txt
+cp .env.example .env        # edita tus keys (todas opcionales para arrancar)
+python server.py            # http://localhost:5050
+```
 
-| Categoría | Ejemplos |
-|-----------|---------|
-| Foundry / IDM | TSMC, Samsung, Intel, GlobalFoundries |
-| Fabless | Nvidia, AMD, Qualcomm, Broadcom, Apple Silicon |
-| Equipamiento | ASML, Applied Materials, Lam Research, KLA |
-| Cloud / NeoClouds | AWS, Azure, Google Cloud, CoreWeave, Lambda Labs |
-| AI Labs | OpenAI, Anthropic, DeepMind, xAI, Mistral |
-| Espacio | SpaceX, Rocket Lab, Planet Labs, AST SpaceMobile |
-| AI Defense | Anduril, Shield AI, Palantir, L3Harris |
-| Memoría | SK Hynix, Micron, Samsung Memory |
-| Quantum | IBM Quantum, IonQ, Rigetti, D-Wave |
+Frontend React (en migración, opcional):
 
-## Licencia
+```bash
+cd frontend
+npm install
+npm run dev                 # http://localhost:5173 (proxy /api a producción)
+VITE_API_TARGET=http://localhost:5050 npm run dev   # contra tu Flask local
+```
 
-Datos compilados de fuentes públicas y estimaciones de analistas (jun. 2026).
+### Deploy en Railway
+
+**New Project → Deploy from GitHub repo** — Railway detecta `railway.toml` y despliega. Push a `main` = deploy automático (~2 min). Añade el plugin de **Postgres** para activar la ontología (inyecta `DATABASE_URL` solo).
+
+## Variables de entorno
+
+| Variable | Para qué | Notas |
+|----------|----------|-------|
+| `SECRET_KEY` | JWT de la API `/v1` | requerida en producción |
+| `ANTHROPIC_KEY` | Claude (análisis, agentes, narración) | recomendada |
+| `FINNHUB_KEY` | precios y noticias | free tier OK |
+| `ELEVENLABS_KEY` + `ELEVENLABS_AGENT_ID` | voz de Bixby | opcional |
+| `DATABASE_URL` | ontología bitemporal (Postgres) | opcional; Railway la inyecta |
+| `NEO4J_URI/USER/PASSWORD` | espejo del Grafo Temporal | opcional |
+| `ALPACA_KEY/SECRET/BASE` | bróker simulado (paper) | opcional |
+| `GEMINI_KEY`, `NVIDIA_KEY`, `AI_ORDER` | cascada multi-IA | opcional |
+| `AV_KEY`, `FMP_KEY`, `MARKETSTACK_KEY` | datos financieros extra | opcional |
+| `MATRIX_ENGINE` | `dense` (default) / `sparse` | corte seguro vía `/api/matrix/parity` |
+| `IMPORT_BULK_WEIGHT_FACTOR` | peso de datos importados en bulto | default 0.5 |
+
+Las keys viven **solo en el servidor** (SERVER_MODE): el navegador nunca las ve.
+
+## Tests
+
+```bash
+pytest tests/ -q            # backend (~100 tests; los de ontología requieren DATABASE_URL)
+cd frontend && npm test     # frontend React (185 tests, Vitest)
+```
+
+Incluye tests de **equivalencia denso↔disperso** del motor de matrices, invariantes matemáticos (acotación, simetría, decaimiento), registro de vocabulario (paridad histórica exacta) e ingesta masiva (idempotencia + cuarentena).
+
+## Estructura del repo
+
+```
+app.html          UI clásica completa (en migración a frontend/)
+engine/           ~30 módulos JS (cockpit, voz, grafos, KHIPU, demo…)
+nodes/            catálogo de empresas, links y hechos temporales
+ontology/         ontología bitemporal + acciones auditadas + agentes + vocabulario
+matrix/           motor de matrices (denso/disperso) + API
+core/             cascada de IA, HTTP saneado, quotes, config
+frontend/         React + Vite (strangler-fig; ver frontend/MIGRATION.md)
+tests/            pytest (backend) — el FE tiene los suyos en frontend/src/
+docs/ESTADO.md    memoria entre sesiones (leer primero al retomar)
+data/grafo_v0.json  snapshot del grafo (555 nodos / 1.623 links)
+```
+
+## Estado y roadmap
+
+**Hecho:** todo lo de arriba, desplegado y en demo ante inversionistas.
+**En curso:** migración del FE a React (rama `feature/react-vite-frontend`), noticias con procedencia completa + filtro de objetividad (estilo Ground News financiero), escala del grafo a 12k-50k nodos (la infraestructura matemática ya lo soporta), superciclos como factores de larga duración, SaaS multi-usuario.
+
+## Notas
+
+- **Análisis, no asesoría financiera.** Todo el trading es sobre cuentas **simuladas** (paper), con confirmación humana obligatoria.
+- Datos compilados de fuentes públicas y estimaciones de analistas (2026).
