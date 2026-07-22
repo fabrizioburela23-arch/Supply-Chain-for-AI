@@ -1,0 +1,28 @@
+{
+  "name": "bixby-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Bixby Finance — frontend React/Vite (migración strangler-fig desde app.html)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "d3": "^7.9.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^6.0.3",
+    "jsdom": "^29.1.1",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  }
+}
