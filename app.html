@@ -1648,9 +1648,12 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <section id="geo-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
   <div style="max-width:1200px;margin:0 auto;padding:24px 24px 40px">
     <h2 id="geo-title" style="font-family:\'Fraunces\',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
-    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Mapa 3D del riesgo geopolítico · empresas por región real · rutas de la cadena de suministro · chokepoints · datos por región abajo</p>
+    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Sala de Situación en vivo · chokepoints simulables sobre el grafo real · fabs críticas · inestabilidad por país · globo 3D abajo</p>
 
-    <!-- Globo geopolítico 3D — vista principal -->
+    <!-- SALA DE SITUACIÓN (engine/geosituation.js) — vista principal -->
+    <div id="geosit-root"></div>
+
+    <!-- Globo geopolítico 3D — vista secundaria -->
     <div id="geo-globe-wrap" style="margin-bottom:18px">
       <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% -10%, #0e1a30 0%, #08101e 55%, #05070d 100%)">
         <canvas id="geo-globe-canvas" style="width:100%;height:560px;display:block;cursor:grab"></canvas>
@@ -6127,6 +6130,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/geo_coords.js"></script>
 <script src="engine/planetarium.js"></script>
 <script src="engine/geoglobe.js"></script>
+<script src="engine/geosituation.js"></script>
 <script src="engine/canvas-data.js"></script>
 <script src="nodes/temporal_seed_facts.js"></script>
 <script src="nodes/temporal_seed_facts2.js"></script>

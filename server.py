@@ -104,6 +104,13 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Motor de matrices no registrado (opcional): %s', _e)
 
+# ── Sala de Situación geopolítica (opcional) — /api/geo/* ────────────────────
+try:
+    from core.geosit import geo_bp
+    app.register_blueprint(geo_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Sala de Situación no registrada (opcional): %s', _e)
+
 # ── Re-migración de la ontología por variable de entorno (para Fabrizio) ──────
 # Poner REMIGRATE_ON_BOOT=1 en Railway → al reiniciar, re-crea la ontología con
 # los datos canónicos limpios (407). DESTRUCTIVO (borra objetos/eventos de la
@@ -427,6 +434,9 @@ _VENDOR_MAP = {
     'earth-blue-marble.jpg':'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
     'earth-topology.png':   'https://unpkg.com/three-globe/example/img/earth-topology.png',
     'earth-dark.jpg':       'https://unpkg.com/three-globe/example/img/earth-dark.jpg',
+    # Mapa mundial vectorial (TopoJSON, Natural Earth 110m — dominio público)
+    # para la Sala de Situación geopolítica (engine/geosituation.js)
+    'world-110m.json':      'https://unpkg.com/world-atlas@2.0.2/countries-110m.json',
 }
 
 
