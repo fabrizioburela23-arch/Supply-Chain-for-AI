@@ -23,7 +23,6 @@ Todo opcional/defensivo: sin DB ni GDELT el endpoint responde igual (base).
 """
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 from flask import Blueprint, jsonify
@@ -159,10 +158,14 @@ TOPO_NAME_MAP = {
     'Germany': 'germany', 'Netherlands': 'netherlands', 'Singapore': 'singapore',
 }
 
-# ── caché de actividad de noticias (GDELT) con calentado progresivo ──────────
+# ── caché de actividad de noticias (GDELT) con calentador en segundo plano ──
+# GDELT limita a UNA consulta cada 5 s por IP (429 si no). Por eso NADA de
+# consultas en el camino del request: un hilo daemon calienta UNA clave cada
+# ~11 s (2 workers de gunicorn ≈ una consulta global cada ~5,5 s) y el endpoint
+# sirve siempre lo cacheado al instante.
 _NEWS_TTL = 3600
 _NEWS_CACHE = {}       # key → {'ts', 'count', 'tone'}
-_MAX_WARM_PER_REQ = 4  # nunca más de 4 consultas GDELT por request
+_WARM_EVERY = 11       # segundos entre consultas GDELT por worker
 
 
 def _gdelt_activity(query):
@@ -189,38 +192,50 @@ def _gdelt_activity(query):
         return None
 
 
-def _warm_news():
-    """Calienta hasta _MAX_WARM_PER_REQ entradas rancias, en paralelo (hilos).
-    Con el TTL de 1 h y ~23 claves, tras ~6 requests todo queda caliente."""
+_WARMER = {'started': False}
+
+
+def _next_stale():
     now = time.time()
-    stale = []
     for item in CHOKEPOINTS + COUNTRIES:
-        key = item['id']
-        e = _NEWS_CACHE.get(key)
+        e = _NEWS_CACHE.get(item['id'])
         if e is None or now - e['ts'] > _NEWS_TTL:
-            stale.append((key, item['q']))
-        if len(stale) >= _MAX_WARM_PER_REQ:
-            break
-    if not stale:
+            return item['id'], item['q']
+    return None
+
+
+def _warmer_loop():
+    """Hilo daemon: UNA consulta GDELT cada _WARM_EVERY s. Con 23 claves, todo
+    queda caliente en ~4 min tras el arranque y se refresca solo cada hora.
+    En 429/fallo, marca con TTL corto y sigue — nunca martilla."""
+    while True:
+        try:
+            nxt = _next_stale()
+            if nxt is None:
+                time.sleep(30)
+                continue
+            key, q = nxt
+            res = _gdelt_activity(q)
+            now = time.time()
+            if res is not None:
+                _NEWS_CACHE[key] = {'ts': now, **res}
+            else:
+                # reintento en ~5 min sin bloquear el ciclo de las demás claves
+                _NEWS_CACHE[key] = {'ts': now - _NEWS_TTL + 300, 'count': None, 'tone': None}
+            time.sleep(_WARM_EVERY)
+        except Exception:  # noqa: BLE001
+            time.sleep(15)
+
+
+def _ensure_warmer():
+    if _WARMER['started']:
         return
+    _WARMER['started'] = True
     try:
-        with ThreadPoolExecutor(max_workers=len(stale)) as ex:
-            futs = {ex.submit(_gdelt_activity, q): key for key, q in stale}
-            for f in as_completed(futs, timeout=8):
-                key = futs[f]
-                try:
-                    res = f.result()
-                except Exception:  # noqa: BLE001
-                    res = None
-                if res is not None:
-                    _NEWS_CACHE[key] = {'ts': now, **res}
-                elif key not in _NEWS_CACHE:
-                    # marca vacía con TTL corto para reintentar sin martillar
-                    _NEWS_CACHE[key] = {'ts': now - _NEWS_TTL + 300, 'count': None, 'tone': None}
+        import threading
+        threading.Thread(target=_warmer_loop, name='geosit-warmer', daemon=True).start()
     except Exception:  # noqa: BLE001
-        # as_completed(timeout=) LANZA TimeoutError si GDELT se cuelga — el
-        # endpoint debe responder igual con lo que haya; se reintenta luego.
-        pass
+        _WARMER['started'] = False
 
 
 def _news_for(key):
@@ -307,8 +322,9 @@ def _score(base, news, factors):
 
 @geo_bp.get('/situation')
 def geo_situation():
-    """La foto completa de la Sala de Situación en UNA llamada."""
-    _warm_news()
+    """La foto completa de la Sala de Situación en UNA llamada (instantánea:
+    las noticias las calienta el hilo de fondo, nunca este request)."""
+    _ensure_warmer()
     fmatch = _active_factor_matches()
     known = _known_ids()
 
