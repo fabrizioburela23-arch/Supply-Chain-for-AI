@@ -171,21 +171,27 @@ def voice_voices():
     agente tenía una voz en inglés hablando español). Solo lectura."""
     if not ELEVENLABS_KEY:
         return jsonify({'error': 'ELEVENLABS_KEY no configurada'}), 400
-    out = {'mine': [], 'shared_es': []}
+    out = {'mine': [], 'shared_es': [], 'upstream': {}}
     try:
         r = requests.get('https://api.elevenlabs.io/v1/voices',
                          headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
+        out['upstream']['mine'] = r.status_code if not r.ok else 200
+        if not r.ok:
+            out['upstream']['mine_body'] = r.text[:160]
         if r.ok:
             for v in (r.json() or {}).get('voices', [])[:60]:
                 out['mine'].append({'voice_id': v.get('voice_id'), 'name': v.get('name'),
                                     'category': v.get('category'),
                                     'labels': v.get('labels') or {}})
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as e:  # noqa: BLE001
+        out['upstream']['mine_err'] = str(e)[:120]
     try:
         r = requests.get('https://api.elevenlabs.io/v1/shared-voices',
-                         params={'language': 'es', 'page_size': 12, 'sort': 'usage_character_count_7d'},
+                         params={'language': 'es', 'page_size': 12},
                          headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
+        out['upstream']['shared'] = r.status_code if not r.ok else 200
+        if not r.ok:
+            out['upstream']['shared_body'] = r.text[:160]
         if r.ok:
             for v in (r.json() or {}).get('voices', [])[:12]:
                 out['shared_es'].append({'voice_id': v.get('voice_id'),
@@ -194,8 +200,8 @@ def voice_voices():
                                          'gender': v.get('gender'), 'accent': v.get('accent'),
                                          'age': v.get('age'), 'use_case': v.get('use_case'),
                                          'usage_7d': v.get('usage_character_count_7d')})
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as e:  # noqa: BLE001
+        out['upstream']['shared_err'] = str(e)[:120]
     return jsonify(out)
 
 
