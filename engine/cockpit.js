@@ -466,6 +466,7 @@
     if (kind === 'agentsim') return stageAgentSim(s, arg);
     if (kind === 'research') return stageResearch(s, arg);
     if (kind === 'sim') return stageSim(s, arg);
+    if (kind === 'screener') return stageScreener(s);
     if (kind === 'insights') return stageInsights(s);
     if (kind === 'canvas') return stageCanvas(s, arg);
     if (kind === 'deep') return stageDeep(s, arg);
@@ -563,7 +564,7 @@
   function stageEmpty(s) {
     var en = ckLang() === 'en';
     var chips = en ? [
-      ['', 'guided demo', '▶ Guided demo'],
+      ['', 'spot breakouts', '🚀 Breakouts'],
       ['break down ', 'Nvidia', 'Full X-Ray'],
       ['simulate that ', 'China bans HBM exports', 'Agent simulation'],
       ['what if ', 'TSMC falls', 'Shock on the map'],
@@ -573,8 +574,9 @@
       ['chart: ', 'margins of NVIDIA, TSMC and ASML', 'Data canvas'],
       ['', 'my account', tb('broker')],
       ['', 'blank canvas', 'Start from scratch'],
+      ['', 'demo', '▶ Guided tour'],
     ] : [
-      ['', 'ver demostración', '▶ Demo guiada'],
+      ['', 'spotea explosivas', '🚀 Explosivas'],
       ['desármame ', 'Nvidia', 'Radiografía completa'],
       ['simula que ', 'China prohíbe exportar HBM', 'Sim por agentes'],
       ['¿qué pasa si cae ', 'TSMC?', 'Shock en el mapa'],
@@ -584,6 +586,7 @@
       ['gráfico: ', 'márgenes de NVIDIA, TSMC y ASML', 'Lienzo de datos'],
       ['', 'mi cuenta', tb('broker')],
       ['', 'lienzo en blanco', 'Empezar de cero'],
+      ['', 'demo', '▶ Recorrido guiado'],
     ];
     var h2 = en ? "I'm Bixby. Ask me anything." : 'Soy Bixby. Pregúntame lo que sea.';
     var pp = en
@@ -838,6 +841,49 @@
             '<div class="bcp-lh" style="margin-top:18px">Por sector</div>' + secRowsHTML + '</div>' +
         '</div>' +
       '</div>';
+  }
+
+  /* ══ SCREENER DE EXPLOSIVAS — la tesis de la app ("spotear empresas con
+     potencial de crecimiento exponencial") hecha ranking computable:
+     momentum 5/20/60d multi-bolsa (server, invariante a la moneda) +
+     centralidad PageRank del grafo + tendencia MA20. Señales, no asesoría. ══ */
+  function stageScreener(s) {
+    var en = ckLang() === 'en';
+    s.innerHTML = backBar(en ? '🚀 Breakouts' : '🚀 Explosivas') +
+      '<div class="bcp-inner" style="max-width:980px"><div id="bcp-scr">' +
+      '<div class="bcp-loading">' + (en ? 'Scanning all markets…' : 'Barriendo todas las bolsas…') + '</div></div></div>';
+    fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/screener/growth?top=30')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var host = document.getElementById('bcp-scr');
+        if (!host) return;
+        if (!d || !d.ranked) { host.innerHTML = '<div class="bcp-loading">' + (en ? 'Screener unavailable' : 'Screener no disponible') + '</div>'; return; }
+        var cov = d.coverage || {};
+        var covLine = !cov.complete
+          ? '<div style="font-size:11px;color:#FFB300;margin:0 0 10px">⏳ ' +
+            (en ? 'Warming up: ' : 'Calentando: ') + (cov.warm || 0) + '/' + (cov.total || '?') +
+            (en ? ' symbols scanned — ranking improves in minutes' : ' símbolos barridos — el ranking mejora en minutos') + '</div>'
+          : '<div style="font-size:11px;color:#7C87A3;margin:0 0 10px">✓ ' + (cov.warm || 0) + '/' + (cov.total || '?') + (en ? ' symbols scanned (all markets)' : ' símbolos barridos (todas las bolsas)') + '</div>';
+        var maxs = Math.max.apply(null, d.ranked.map(function (x) { return Math.abs(x.score) || 1; }));
+        var rows = d.ranked.map(function (x, i) {
+          var col = x.score >= 0 ? UP : DOWN;
+          var pr = x.pagerank_rank ? '<span title="' + (en ? 'PageRank of the graph: the system depends on it' : 'PageRank del grafo: el sistema depende de ella') + '" style="font-size:9.5px;color:#00E0FF;border:1px solid rgba(0,224,255,.35);border-radius:999px;padding:1px 6px">🕸 #' + x.pagerank_rank + '</span>' : '';
+          var ma = x.above_ma20 ? '<span style="font-size:9.5px;color:#2BE38B">↗MA20</span>' : '';
+          var fx = function (v) { return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; };
+          return '<div class="bcp-row" style="gap:10px" onclick="window.BixbyCockpit.stage(\'xray\',\'' + esc(x.id) + '\')">' +
+            '<span style="width:20px;text-align:right;color:#5E6884;font-size:11px">' + (i + 1) + '</span>' +
+            '<span class="nm" style="font-weight:650">' + esc(x.label) + '</span>' + pr + ma +
+            '<span class="mono" style="font-size:10.5px;color:#9BA6C4;width:150px;text-align:right">5d ' + fx(x.r5) + ' · 20d ' + fx(x.r20) + ' · 60d ' + fx(x.r60) + '</span>' +
+            '<span class="bar" style="width:70px;background:rgba(122,158,255,.1)"><i style="width:' + Math.min(100, Math.abs(x.score) / maxs * 100) + '%;background:' + col + '"></i></span>' +
+            '<span class="pv" style="color:' + col + ';width:48px">' + x.score.toFixed(1) + '</span></div>';
+        }).join('');
+        host.innerHTML = covLine + rows +
+          '<div style="font-size:10px;color:#5E6884;margin-top:12px;line-height:1.5">' + esc(d.method_es || '') + '</div>';
+      })
+      .catch(function () {
+        var host = document.getElementById('bcp-scr');
+        if (host) host.innerHTML = '<div class="bcp-loading">' + (en ? 'Could not reach the screener' : 'No se pudo consultar el screener') + '</div>';
+      });
   }
 
   function stageInsights(s) {
@@ -1941,11 +1987,18 @@
     text = (text || '').trim(); if (!text) return;
     ensureShell();
 
-    // 0) MODO DEMOSTRACIÓN — antes que nada (que no lo coma KHIPU ni la IA)
-    if (/^(ver\s+)?(demo|demostraci[óo]n|demonstration|guided\s+demo|modo\s+demo|tour)\b/i.test(text)
-        || /^(mu[ée]strame|ens[eé]ñame)\s+(qu[ée]\s+puedes\s+hacer|una\s+demo)/i.test(text)
-        || /^show\s+me\s+what\s+you\s+can\s+do/i.test(text)) {
+    // 0) MODO DEMOSTRACIÓN — SOLO con petición EXPLÍCITA y exacta (feedback de
+    //    Fabrizio: "casi lo da de una" — el prefijo suelto secuestraba frases
+    //    normales; el recorrido es solo cuando se PIDE).
+    if (/^(ver\s+)?(la\s+)?(demo|demostraci[óo]n|tour|recorrido(\s+guiado)?|guided\s+(demo|tour))\s*$/i.test(text)
+        || /^(hazme|dame)\s+(una\s+demo|un\s+tour|un\s+recorrido)\s*$/i.test(text)) {
       demoStart();
+      return;
+    }
+
+    // 0.5) SCREENER de explosivas — la tesis de la app en un clic
+    if (/^(spotea|spot)\b/i.test(text) || /\bexplosivas?\b/i.test(text) || /\bbreakouts?\b/i.test(text)) {
+      stage('screener');
       return;
     }
 
@@ -2123,7 +2176,10 @@
        la voz premium ya está conversando (mic encendido), se calla para no
        pisarla → el día que ElevenLabs esté activo, el demo no cambia.
      Controles: pausar/seguir · siguiente · silenciar · salir (Esc). ══ */
-  var _demo = { on: false, i: -1, t: null, typer: null, paused: false, muted: false, steps: [] };
+  // muted:true por defecto — la narración VISUAL es el show; la voz del
+  // navegador (robótica) solo si el usuario la pide con 🔇→🔊. Con la voz
+  // premium de ElevenLabs activa, jamás se le habla encima.
+  var _demo = { on: false, i: -1, t: null, typer: null, paused: false, muted: true, steps: [] };
 
   function _demoNode(name) {
     try { var n = resolveNode(name); return n ? n.id : null; } catch (e) { return null; }

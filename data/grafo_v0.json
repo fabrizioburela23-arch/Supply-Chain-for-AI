@@ -1,9 +1,9 @@
 {
- "exported_at": "2026-07-11T00:25:17.385Z",
+ "exported_at": "2026-07-29T03:22:54.237Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
-  "nodes": 555,
-  "links": 1623,
+  "nodes": 568,
+  "links": 1645,
   "categories": 43,
   "sectors": 9,
   "preipo_entries": 14,
@@ -755,7 +755,8 @@
    "moat_en": "Sanctions force SMIC, Hua Hong and YMTC to buy local: captive demand backed by the Big Fund. Broadest toolkit in China (etch, deposition, clean). Risk: 1-2 generations behind AMAT/Lam and cut off from critical Western components.",
    "growth_en": "🔵 +35% on forced domestic substitution",
    "capex_2026_en": "Heavy: new Beijing campuses",
-   "backlog_status_en": "Record: Chinese fabs buy everything local"
+   "backlog_status_en": "Record: Chinese fabs buy everything local",
+   "mkt": "002371.SZ"
   },
   {
    "sector": "equipos",
@@ -778,7 +779,8 @@
    "moat_en": "The only Chinese toolmaker historically qualified at TSMC (down to 5nm); etch is 3D NAND's most critical step and AMEC is the local standard. Risk: outside China it faces Lam/TEL head-on and still leans on subsidies and imported parts.",
    "growth_en": "🔵 +35% with Chinese fabs at full tilt",
    "capex_2026_en": "High: Lingang campus expansion",
-   "backlog_status_en": "Strong; priority orders from SMIC and YMTC"
+   "backlog_status_en": "Strong; priority orders from SMIC and YMTC",
+   "mkt": "688012.SS"
   },
   {
    "sector": "equipos",
@@ -1376,7 +1378,8 @@
    "moat_en": "Direct beneficiary of the Nvidia ban: Chinese clouds must buy local and Siyuan is the listed alternative; CUDA-style Neuware software maturing. Risk: EUV-less SMIC capacity caps volumes, Huawei's Ascend competes, and the stock trades above 60x sales.",
    "growth_en": "⚡ +150% with Nvidia barred from China",
    "capex_2026_en": "Low: fabless; wafer prepayments to SMIC",
-   "backlog_status_en": "Oversubscribed; SMIC wafers are the bottleneck"
+   "backlog_status_en": "Oversubscribed; SMIC wafers are the bottleneck",
+   "mkt": "688256.SS"
   },
   {
    "sector": "diseno",
@@ -10546,6 +10549,217 @@
    "growth": "🟢 Fuerte demanda de exportación de Rafale post-2022 (Indonesia, EAU) impulsa cartera de pedidos plurianual",
    "margin": 0.09,
    "mkt": "AM"
+  },
+  {
+   "sector": "fabricacion",
+   "id": "CXMT",
+   "label": "CXMT (ChangXin Memory)",
+   "ticker": "688825 · SSE STAR (OPI 27-jul-2026)",
+   "cat": "memory",
+   "port": "",
+   "role": "Mayor fabricante chino de DRAM y 4º del mundo; campeón nacional de la autosuficiencia de memoria. OPI récord en Shanghái: ~US$8.600M, la mayor de Asia en 2026, debut ~+470%.",
+   "supplies": "DRAM (DDR4/DDR5, LPDDR) y HBM en rampa para servidores de IA y móviles del ecosistema chino (Huawei, Xiaomi, Lenovo).",
+   "moat": "Único productor chino de DRAM a escala con respaldo estatal masivo; brecha tecnológica frente a Samsung/SK Hynix/Micron pero acceso cautivo al mercado doméstico. Riesgo: controles de exportación de equipos y sobrevaloración post-OPI.",
+   "loc": "Hefei, China",
+   "country": "China",
+   "growth": "🟢 OPI +470% en el debut (jul 2026); capacidad DRAM en expansión agresiva",
+   "margin": null,
+   "mkt": "688825.SS"
+  },
+  {
+   "sector": "cloud_ia",
+   "id": "Baidu",
+   "label": "Baidu",
+   "ticker": "BIDU · NASDAQ / 9888 · HKEX",
+   "cat": "cloud",
+   "port": "",
+   "role": "Buscador líder de China y pionero de su IA: LLM Ernie, nube AI Cloud, conducción autónoma Apollo Go y chips propios Kunlun.",
+   "supplies": "Nube de IA y APIs de Ernie al mercado chino; robotaxis Apollo Go en varias ciudades.",
+   "moat": "Distribución masiva (búsqueda + apps) y stack propio de IA (chip Kunlun → framework PaddlePaddle → LLM Ernie). Riesgo: competencia feroz de Alibaba/ByteDance/DeepSeek y monetización lenta.",
+   "loc": "Pekín, China",
+   "country": "China",
+   "growth": "🟡 Nube de IA crece; núcleo publicitario presionado",
+   "margin": 0.15,
+   "mkt": "BIDU"
+  },
+  {
+   "sector": "cloud_ia",
+   "id": "Tencent",
+   "label": "Tencent",
+   "ticker": "0700 · HKEX / TCEHY · OTC",
+   "cat": "cloud",
+   "port": "",
+   "role": "Gigante de plataformas (WeChat, gaming #1 mundial) con nube propia y LLM Hunyuan; uno de los mayores compradores chinos de GPUs.",
+   "supplies": "Nube, pagos y distribución vía WeChat al ecosistema chino; inversor prolífico en startups de IA.",
+   "moat": "WeChat como sistema operativo social de China (1.300M+ usuarios) y caja enorme para capex de IA. Riesgo: regulación doméstica y acceso restringido a GPUs de frontera.",
+   "loc": "Shenzhen, China",
+   "country": "China",
+   "growth": "🟢 Hunyuan + gaming sólido; capex de IA en aumento",
+   "margin": 0.26,
+   "mkt": "TCEHY"
+  },
+  {
+   "sector": "cloud_ia",
+   "id": "ByteDance",
+   "label": "ByteDance",
+   "ticker": "Privada (pre-OPI)",
+   "cat": "ailab",
+   "port": "",
+   "role": "Dueña de TikTok/Douyin y del LLM Doubao (el chatbot más usado de China); mayor comprador chino de GPUs de Nvidia y nube propia Volcano Engine.",
+   "supplies": "Modelos Doubao/Seed y nube Volcano Engine al mercado chino; demanda gigante de cómputo que arrastra a toda la cadena.",
+   "moat": "El motor de recomendación más valioso del mundo + escala de datos de TikTok/Douyin. Riesgo: presión geopolítica sobre TikTok y acceso a chips.",
+   "loc": "Pekín, China",
+   "country": "China",
+   "growth": "🟢 Doubao líder en uso; capex de IA récord",
+   "margin": null,
+   "mkt": "",
+   "preipo": true
+  },
+  {
+   "sector": "fabricacion",
+   "id": "HuaHong",
+   "label": "Hua Hong Semiconductor",
+   "ticker": "1347 · HKEX / 688347 · STAR",
+   "cat": "foundry",
+   "port": "",
+   "role": "Segunda fundición de China tras SMIC, especializada en nodos maduros (55-90nm+): power, MCU, NOR flash y análogos.",
+   "supplies": "Fundición de especialidad para diseñadores chinos (GigaDevice y otros) en power discretes, IGBT, eNVM.",
+   "moat": "Capacidad doméstica protegida en nodos maduros con demanda de autos/industria; riesgo: guerra de precios en nodos legacy y sanciones a equipos.",
+   "loc": "Shanghái, China",
+   "country": "China",
+   "growth": "🟡 Utilización recuperándose; presión de precios en legacy",
+   "margin": 0.08,
+   "mkt": "1347.HK"
+  },
+  {
+   "sector": "fabricacion",
+   "id": "GigaDevice",
+   "label": "GigaDevice",
+   "ticker": "603986 · SSE",
+   "cat": "memory",
+   "port": "",
+   "role": "Líder chino (top-3 mundial) en memoria NOR flash y MCUs RISC-V/ARM; fabless.",
+   "supplies": "NOR flash para autos, IoT y wearables; MCUs de propósito general al ecosistema chino.",
+   "moat": "Top-3 mundial en NOR con costos competitivos y sustitución doméstica a favor. Riesgo: ciclo de memoria y competencia de Winbond/Macronix.",
+   "loc": "Pekín, China",
+   "country": "China",
+   "growth": "🟢 Sustitución doméstica + autos empujan NOR/MCU",
+   "margin": 0.18,
+   "mkt": "603986.SS"
+  },
+  {
+   "sector": "diseno",
+   "id": "WillSemi",
+   "label": "Will Semiconductor (OmniVision)",
+   "ticker": "603501 · SSE",
+   "cat": "fabless",
+   "port": "",
+   "role": "Dueña de OmniVision, top-3 mundial en sensores de imagen CMOS (CIS) para smartphones y automóvil.",
+   "supplies": "Sensores de imagen para cámaras de smartphones chinos (Xiaomi, Honor) y sistemas de conducción asistida.",
+   "moat": "Portafolio CIS de gama alta que compite con Sony/Samsung y viento de cola de sustitución doméstica. Riesgo: ciclo de smartphones.",
+   "loc": "Shanghái, China",
+   "country": "China",
+   "growth": "🟢 Recuperación de smartphones + auto CIS en expansión",
+   "margin": 0.14,
+   "mkt": "603501.SS"
+  },
+  {
+   "sector": "diseno",
+   "id": "Montage",
+   "label": "Montage Technology",
+   "ticker": "688008 · STAR",
+   "cat": "fabless",
+   "port": "",
+   "role": "Líder mundial en chips de interfaz de memoria (RCD/MDB para DDR5) — el 'peaje' entre la CPU y los módulos DRAM de servidores.",
+   "supplies": "Chips de interfaz DDR5 a los módulos de memoria de Samsung, SK Hynix y Micron; CXL en desarrollo.",
+   "moat": "Uno de ~3 jugadores del duopolio/triopolio mundial de RCD (con Renesas y Rambus); se beneficia de CADA servidor de IA sin importar quién gane. Riesgo: concentración en un nicho.",
+   "loc": "Shanghái, China",
+   "country": "China",
+   "growth": "🟢 DDR5/servidores de IA disparan la demanda de RCD",
+   "margin": 0.4,
+   "mkt": "688008.SS"
+  },
+  {
+   "sector": "diseno",
+   "id": "Hygon",
+   "label": "Hygon Information",
+   "ticker": "688041 · STAR",
+   "cat": "asic_custom",
+   "port": "",
+   "role": "CPUs x86 domésticas (herencia de la JV con AMD de 2016) y aceleradores DCU para los centros de datos estatales chinos.",
+   "supplies": "CPUs x86 compatibles y aceleradores a servidores de Inspur/Lenovo para gobierno y banca china.",
+   "moat": "Única x86 'de confianza' doméstica para el sector estatal chino. Riesgo: base tecnológica congelada por controles de exportación de 2019; depende de iteración propia.",
+   "loc": "Tianjín, China",
+   "country": "China",
+   "growth": "🟢 Sustitución doméstica estatal acelera pedidos",
+   "margin": 0.3,
+   "mkt": "688041.SS"
+  },
+  {
+   "sector": "cloud_ia",
+   "id": "HorizonRobotics",
+   "label": "Horizon Robotics",
+   "ticker": "9660 · HKEX",
+   "cat": "ai_auto",
+   "port": "",
+   "role": "Líder chino en chips de conducción asistida/autónoma (serie Journey), el 'Mobileye chino'; OPI en Hong Kong 2024.",
+   "supplies": "SoCs Journey y stack de software ADAS a la mayoría de las marcas de autos chinas (BYD, Li Auto, y JV con Volkswagen/CARIAD).",
+   "moat": "Mayor cuota de ADAS doméstico en el mercado de autos más grande del mundo + alianza Volkswagen (~US$2.400M). Riesgo: guerra de precios de los autos eléctricos chinos.",
+   "loc": "Pekín, China",
+   "country": "China",
+   "growth": "🟢 Penetración ADAS en autos chinos en plena curva",
+   "margin": null,
+   "mkt": "9660.HK"
+  },
+  {
+   "sector": "diseno",
+   "id": "Empyrean",
+   "label": "Empyrean Technology",
+   "ticker": "301269 · SZSE",
+   "cat": "eda",
+   "port": "",
+   "role": "El principal EDA doméstico de China (el 'Cadence chino'), pieza crítica de la autosuficiencia: sin EDA no hay diseño de chips.",
+   "supplies": "Herramientas de diseño analógico/mixto y flujos parciales digitales a SMIC, HiSilicon y diseñadores chinos.",
+   "moat": "Campeón nacional protegido con demanda cautiva por las sanciones a Synopsys/Cadence. Riesgo: brecha grande en digital avanzado frente a los líderes.",
+   "loc": "Pekín, China",
+   "country": "China",
+   "growth": "🟢 Sanciones EDA de EE.UU. le regalan el mercado doméstico",
+   "margin": 0.25,
+   "mkt": "301269.SZ"
+  },
+  {
+   "sector": "equipos",
+   "id": "SMEE",
+   "label": "SMEE (Shanghai Micro Electronics)",
+   "ticker": "Estatal (no cotiza)",
+   "cat": "equip",
+   "port": "",
+   "role": "La apuesta china de litografía: escáneres DUV domésticos para nodos maduros; el eslabón MÁS débil (y más estratégico) de la autosuficiencia china.",
+   "supplies": "Litografía DUV de 90nm (28nm en desarrollo) a fabs chinas de nodos maduros.",
+   "moat": "Monopolio doméstico por mandato estatal en el único hueco que ASML no puede llenar por sanciones. Riesgo: décadas de brecha tecnológica frente a ASML/Nikon/Canon.",
+   "loc": "Shanghái, China",
+   "country": "China",
+   "growth": "🟡 Progreso lento pero prioridad nacional absoluta",
+   "margin": null,
+   "mkt": "",
+   "preipo": true
+  },
+  {
+   "sector": "cloud_ia",
+   "id": "ZhipuAI",
+   "label": "Zhipu AI (GLM)",
+   "ticker": "Privada (pre-OPI, proceso iniciado)",
+   "cat": "ailab",
+   "port": "",
+   "role": "Uno de los 'tigres de la IA' chinos: laboratorio de los modelos GLM, spin-off de Tsinghua, respaldado por Alibaba, Tencent y fondos estatales.",
+   "supplies": "Modelos GLM (chat, código, visión) vía API y despliegues empresariales/gubernamentales en China.",
+   "moat": "Pedigrí Tsinghua + respaldo simultáneo de los dos gigantes (Alibaba y Tencent) y del Estado. Riesgo: DeepSeek redefinió el costo de frontera y compite gratis.",
+   "loc": "Pekín, China",
+   "country": "China",
+   "growth": "🟢 En proceso hacia OPI; adopción estatal creciente",
+   "margin": null,
+   "mkt": "",
+   "preipo": true
   }
  ],
  "links": [
@@ -21909,6 +22123,160 @@
    "w": 0.3,
    "rel": "Principal rival directo en el sector de manufactura electrónica por contrato (EMS) en Taiwán",
    "type": "partner"
+  },
+  {
+   "source": "AMEC",
+   "target": "CXMT",
+   "w": 3,
+   "rel": "Equipos de grabado (etch) para las fabs DRAM de CXMT",
+   "type": "supply"
+  },
+  {
+   "source": "Naura",
+   "target": "CXMT",
+   "w": 3,
+   "rel": "Equipos de depósito y grabado para DRAM doméstica",
+   "type": "supply"
+  },
+  {
+   "source": "ACM_Research",
+   "target": "CXMT",
+   "w": 2,
+   "rel": "Equipos de limpieza de obleas para DRAM",
+   "type": "supply"
+  },
+  {
+   "source": "CXMT",
+   "target": "Huawei",
+   "w": 3,
+   "rel": "DRAM y HBM doméstica para servidores Ascend",
+   "type": "supply"
+  },
+  {
+   "source": "CXMT",
+   "target": "Xiaomi",
+   "w": 2,
+   "rel": "LPDDR para smartphones",
+   "type": "supply"
+  },
+  {
+   "source": "CXMT",
+   "target": "Lenovo",
+   "w": 2,
+   "rel": "DRAM para PCs y servidores",
+   "type": "supply"
+  },
+  {
+   "source": "HuaHong",
+   "target": "GigaDevice",
+   "w": 3,
+   "rel": "Fundición de NOR flash y MCUs",
+   "type": "fab"
+  },
+  {
+   "source": "SMIC",
+   "target": "WillSemi",
+   "w": 2,
+   "rel": "Fundición de sensores de imagen CIS",
+   "type": "fab"
+  },
+  {
+   "source": "SMIC",
+   "target": "Cambricon",
+   "w": 2,
+   "rel": "Fundición doméstica de aceleradores de IA",
+   "type": "fab"
+  },
+  {
+   "source": "TSMC",
+   "target": "HorizonRobotics",
+   "w": 3,
+   "rel": "Fabricación de los SoC Journey de conducción",
+   "type": "fab"
+  },
+  {
+   "source": "Montage",
+   "target": "Samsung",
+   "w": 2,
+   "rel": "Chips de interfaz RCD para módulos DDR5",
+   "type": "supply"
+  },
+  {
+   "source": "Montage",
+   "target": "SKHynix",
+   "w": 2,
+   "rel": "Chips de interfaz RCD para DIMMs DDR5",
+   "type": "supply"
+  },
+  {
+   "source": "Montage",
+   "target": "Micron",
+   "w": 2,
+   "rel": "Chips de interfaz de memoria para módulos",
+   "type": "supply"
+  },
+  {
+   "source": "Empyrean",
+   "target": "SMIC",
+   "w": 2,
+   "rel": "Herramientas EDA domésticas",
+   "type": "license"
+  },
+  {
+   "source": "Empyrean",
+   "target": "HiSilicon",
+   "w": 2,
+   "rel": "EDA doméstica para diseño de chips",
+   "type": "license"
+  },
+  {
+   "source": "SMEE",
+   "target": "SMIC",
+   "w": 2,
+   "rel": "Litografía DUV doméstica para nodos maduros",
+   "type": "supply"
+  },
+  {
+   "source": "Nvidia",
+   "target": "Baidu",
+   "w": 2,
+   "rel": "GPUs para entrenamiento (H20 bajo licencia)",
+   "type": "supply"
+  },
+  {
+   "source": "Nvidia",
+   "target": "Tencent",
+   "w": 2,
+   "rel": "GPUs H20 para la nube de Tencent",
+   "type": "supply"
+  },
+  {
+   "source": "Nvidia",
+   "target": "ByteDance",
+   "w": 3,
+   "rel": "Mayor comprador chino de GPUs H20",
+   "type": "supply"
+  },
+  {
+   "source": "Hygon",
+   "target": "Inspur",
+   "w": 2,
+   "rel": "CPUs x86 domésticas para servidores estatales",
+   "type": "supply"
+  },
+  {
+   "source": "AlibabaCloud",
+   "target": "ZhipuAI",
+   "w": 2,
+   "rel": "Inversión estratégica del grupo Alibaba en GLM",
+   "type": "invest"
+  },
+  {
+   "source": "Tencent",
+   "target": "ZhipuAI",
+   "w": 2,
+   "rel": "Inversión en las rondas de Zhipu",
+   "type": "invest"
   }
  ],
  "categories": {

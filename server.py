@@ -111,6 +111,95 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Sala de Situación no registrada (opcional): %s', _e)
 
+
+# ── Screener de crecimiento explosivo — /api/screener/growth ─────────────────
+@app.route('/api/screener/growth')
+def screener_growth():
+    """Ranking de señales de crecimiento explosivo sobre TODO el universo
+    cotizable del grafo (~410 símbolos, multi-bolsa). Momentum 5/20/60d +
+    centralidad PageRank + MA20. El calentador de fondo llena la cobertura en
+    ~7 min tras el arranque; la respuesta declara cuánta hay. Señales, no
+    asesoría."""
+    try:
+        from core.screener import screen_growth
+        top = int(request.args.get('top', 30))
+        return jsonify(screen_growth(top=top))
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:160]}), 500
+
+
+# ── Voz de Bixby: diagnóstico y ajuste FINO del agente ElevenLabs ────────────
+@app.route('/api/voice/agent-diag')
+def voice_agent_diag():
+    """QUÉ voz/modelo/idioma tiene el agente de ElevenLabs AHORA — para
+    diagnosticar 'la voz rara' con datos, no a ciegas. Solo lectura."""
+    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
+        return jsonify({'ok': False, 'reason': 'ELEVENLABS_KEY/AGENT_ID no configurados'})
+    try:
+        r = requests.get(f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
+                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
+        if not r.ok:
+            return jsonify({'ok': False, 'status': r.status_code, 'body': r.text[:180]})
+        cfg = r.json() or {}
+        conv = cfg.get('conversation_config') or {}
+        tts = conv.get('tts') or {}
+        agent = conv.get('agent') or {}
+        voice_id = tts.get('voice_id')
+        voice_name = None
+        if voice_id:
+            try:
+                vr = requests.get(f'https://api.elevenlabs.io/v1/voices/{voice_id}',
+                                  headers={'xi-api-key': ELEVENLABS_KEY}, timeout=8)
+                if vr.ok:
+                    voice_name = (vr.json() or {}).get('name')
+            except Exception:  # noqa: BLE001
+                pass
+        return jsonify({'ok': True, 'name': cfg.get('name'),
+                        'voice_id': voice_id, 'voice_name': voice_name,
+                        'tts_model': tts.get('model_id'),
+                        'language': agent.get('language'),
+                        'llm': ((agent.get('prompt') or {}).get('llm')),
+                        'first_message': (agent.get('first_message') or '')[:120]})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'ok': False, 'error': str(e)[:160]})
+
+
+@app.route('/api/voice/agent-tune', methods=['POST'])
+def voice_agent_tune():
+    """Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere
+    ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que el sync del prompt). Solo
+    toca los campos enviados; devuelve antes/después para el registro."""
+    if os.getenv('ELEVENLABS_ALLOW_OVERRIDE', '').strip() not in ('1', 'true', 'yes'):
+        return jsonify({'error': 'ELEVENLABS_ALLOW_OVERRIDE no está activo'}), 403
+    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
+        return jsonify({'error': 'ELEVENLABS_KEY/AGENT_ID no configurados'}), 400
+    body = request.get_json(silent=True) or {}
+    tts = {}
+    if body.get('tts_model'):
+        tts['model_id'] = str(body['tts_model'])[:60]
+    if body.get('voice_id'):
+        tts['voice_id'] = str(body['voice_id'])[:60]
+    agent = {}
+    if body.get('language'):
+        agent['language'] = str(body['language'])[:8]
+    if not tts and not agent:
+        return jsonify({'error': 'nada que ajustar (tts_model / voice_id / language)'}), 400
+    patch = {'conversation_config': {}}
+    if tts:
+        patch['conversation_config']['tts'] = tts
+    if agent:
+        patch['conversation_config']['agent'] = agent
+    try:
+        r = requests.patch(f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
+                           headers={'xi-api-key': ELEVENLABS_KEY,
+                                    'Content-Type': 'application/json'},
+                           json=patch, timeout=12)
+        if not r.ok:
+            return jsonify({'error': f'upstream {r.status_code}', 'body': r.text[:200]}), 502
+        return jsonify({'ok': True, 'applied': patch})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:160]}), 502
+
 # ── Re-migración de la ontología por variable de entorno (para Fabrizio) ──────
 # Poner REMIGRATE_ON_BOOT=1 en Railway → al reiniciar, re-crea la ontología con
 # los datos canónicos limpios (407). DESTRUCTIVO (borra objetos/eventos de la
@@ -2898,7 +2987,7 @@ def _bixby_client_tools():
         T('get_opportunities', 'Resilient companies with upside: low risk + growth + healthy margin.'),
         T('create_visualization', 'Render a chart/table from a natural-language description of what to visualize.', {'query': S('What to chart, in natural language (e.g. "márgenes de Nvidia, TSMC y ASML")')}, ['query']),
         T('show_insights', 'Show what the HYPERGRAPH sees: it runs a LIVE simulation over the active systemic factors (hyperedges) and the supply-chain cascade, then returns narrated insights + the most-affected companies. Use for "¿qué ves en el grafo?", "dame insights", "qué factores hay activos", "qué está en riesgo en el sistema". Narrate 2-3 of the returned insights, naming companies; it is analysis, not advice.'),
-        T('run_guided_demo', 'Start the GUIDED DEMO: Bixby drives the app by itself, step by step (map → company X-Ray → TSMC collapse cascade → live hypergraph insights → market → invest), narrating each step on screen. Use when the user asks for a demo/demonstration/tour, or says "muéstrame qué puedes hacer" / "show me what you can do". After calling it, say ONE short line like "Te muestro" and then STAY QUIET — the demo narrates itself on screen.'),
+        T('run_guided_demo', 'Start the GUIDED DEMO (full app tour, narrated on screen). STRICT RULE: call this ONLY when the user EXPLICITLY asks for a demo or tour with words like "demo", "demostración", "tour", "recorrido", "hazme una demo". NEVER call it at session start, NEVER on greetings, NEVER because the user seems new, NEVER proactively — an unwanted tour interrupts the user. After calling it, say ONE short line and STAY QUIET.'),
         T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
         T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
         T('run_agent_simulation', 'Run a MULTI-AGENT (MiroFish-style) simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {
