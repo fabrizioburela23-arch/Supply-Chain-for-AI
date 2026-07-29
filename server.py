@@ -899,11 +899,23 @@ def scalp_price(symbol):
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
 def batch_quotes():
-    if not FINNHUB:
-        return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    from core.quotes import fetch_quote_intl, is_intl
     tickers = [s for s in (_safe_ticker(t) for t in request.args.get('symbols', '').split(',')) if s]
+    if not FINNHUB and not any(is_intl(t) for t in tickers):
+        return jsonify({'error': 'no FINNHUB_KEY'}), 400
     results = {}
     for t in tickers[:60]:  # límite de cortesía por request
+        # Bolsas no-EEUU (688825.SS, 1347.HK, 6239.TW…): Yahoo + conversión a
+        # USD, en la MISMA forma cruda {c, pc, v} que espera el cliente.
+        # No requieren FINNHUB_KEY.
+        if is_intl(t):
+            q = fetch_quote_intl(t)
+            if q:
+                results[t] = {'c': q['live'], 'pc': q['prev'], 'v': q['vol'],
+                              'currency': q['currency'], 'converted': q['converted']}
+            continue
+        if not FINNHUB:
+            continue
         data, err = _fetch_quote_raw(t, timeout=4)
         if data:
             results[t] = data
@@ -3425,9 +3437,16 @@ def quotes_live():
     if not tickers:
         return jsonify({'error': 'tickers required'}), 400
 
+    from core.quotes import fetch_quote_intl, is_intl
     results = {}
     for tk in tickers:
         q = None
+        # 0) Bolsas no-EEUU (sufijo Yahoo): directo a Yahoo + conversión a USD
+        if is_intl(tk):
+            q = fetch_quote_intl(tk)
+            if q:
+                results[tk] = q
+            continue
         # 1) Finnhub
         if FINNHUB:
             fh, err = _fetch_quote_raw(tk, timeout=4)
