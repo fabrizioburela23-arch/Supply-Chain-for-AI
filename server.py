@@ -164,6 +164,66 @@ def voice_agent_diag():
         return jsonify({'ok': False, 'error': str(e)[:160]})
 
 
+@app.route('/api/voice/voices')
+def voice_voices():
+    """Voces disponibles: las de la cuenta + las mejor valoradas EN ESPAÑOL de
+    la biblioteca compartida de ElevenLabs (para arreglar la 'voz rara': el
+    agente tenía una voz en inglés hablando español). Solo lectura."""
+    if not ELEVENLABS_KEY:
+        return jsonify({'error': 'ELEVENLABS_KEY no configurada'}), 400
+    out = {'mine': [], 'shared_es': []}
+    try:
+        r = requests.get('https://api.elevenlabs.io/v1/voices',
+                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
+        if r.ok:
+            for v in (r.json() or {}).get('voices', [])[:60]:
+                out['mine'].append({'voice_id': v.get('voice_id'), 'name': v.get('name'),
+                                    'category': v.get('category'),
+                                    'labels': v.get('labels') or {}})
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        r = requests.get('https://api.elevenlabs.io/v1/shared-voices',
+                         params={'language': 'es', 'page_size': 12, 'sort': 'usage_character_count_7d'},
+                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
+        if r.ok:
+            for v in (r.json() or {}).get('voices', [])[:12]:
+                out['shared_es'].append({'voice_id': v.get('voice_id'),
+                                         'public_owner_id': v.get('public_owner_id'),
+                                         'name': v.get('name'),
+                                         'gender': v.get('gender'), 'accent': v.get('accent'),
+                                         'age': v.get('age'), 'use_case': v.get('use_case'),
+                                         'usage_7d': v.get('usage_character_count_7d')})
+    except Exception:  # noqa: BLE001
+        pass
+    return jsonify(out)
+
+
+@app.route('/api/voice/adopt', methods=['POST'])
+def voice_adopt():
+    """Adopta una voz de la biblioteca compartida a la cuenta (paso previo a
+    asignarla al agente). Mismo candado que agent-tune. Body:
+    {public_owner_id, voice_id, name}."""
+    if os.getenv('ELEVENLABS_ALLOW_OVERRIDE', '').strip() not in ('1', 'true', 'yes'):
+        return jsonify({'error': 'ELEVENLABS_ALLOW_OVERRIDE no está activo'}), 403
+    if not ELEVENLABS_KEY:
+        return jsonify({'error': 'ELEVENLABS_KEY no configurada'}), 400
+    b = request.get_json(silent=True) or {}
+    po, vid, name = b.get('public_owner_id'), b.get('voice_id'), (b.get('name') or 'Bixby ES')
+    if not po or not vid:
+        return jsonify({'error': 'public_owner_id y voice_id requeridos'}), 400
+    try:
+        r = requests.post(f'https://api.elevenlabs.io/v1/voices/add/{po}/{vid}',
+                          headers={'xi-api-key': ELEVENLABS_KEY,
+                                   'Content-Type': 'application/json'},
+                          json={'new_name': str(name)[:60]}, timeout=12)
+        if not r.ok:
+            return jsonify({'error': f'upstream {r.status_code}', 'body': r.text[:200]}), 502
+        return jsonify({'ok': True, **(r.json() or {})})
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': str(e)[:160]}), 502
+
+
 @app.route('/api/voice/agent-tune', methods=['POST'])
 def voice_agent_tune():
     """Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere
