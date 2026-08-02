@@ -1265,6 +1265,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/nodes_expand5.js"></script>
 <script src="nodes/meta_fill.js"></script>
 <script src="nodes/nodes_china.js"></script>
+<script src="nodes/nodes_multicapa.js"></script>
 <script src="nodes/preipo_intel.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
@@ -2377,14 +2378,16 @@ const _mergeResult = buildKhipusGraph({
                typeof NODES_NUCLEAR !== 'undefined' ? NODES_NUCLEAR : null,
                typeof NODES_EXPAND4 !== 'undefined' ? NODES_EXPAND4 : null,
                typeof NODES_EXPAND5 !== 'undefined' ? NODES_EXPAND5 : null,
-               typeof NODES_CHINA !== 'undefined' ? NODES_CHINA : null],
+               typeof NODES_CHINA !== 'undefined' ? NODES_CHINA : null,
+               typeof NODES_MULTICAPA !== 'undefined' ? NODES_MULTICAPA : null],
   linkArrays: [typeof LINKS_EXPAND !== 'undefined' ? LINKS_EXPAND : null,
                typeof LINKS_SPACEX !== 'undefined' ? LINKS_SPACEX : null,
                typeof LINKS_CONNECT !== 'undefined' ? LINKS_CONNECT : null,
                typeof LINKS_NUCLEAR !== 'undefined' ? LINKS_NUCLEAR : null,
                typeof LINKS_EXPAND4 !== 'undefined' ? LINKS_EXPAND4 : null,
                typeof LINKS_EXPAND5 !== 'undefined' ? LINKS_EXPAND5 : null,
-               typeof LINKS_CHINA !== 'undefined' ? LINKS_CHINA : null],
+               typeof LINKS_CHINA !== 'undefined' ? LINKS_CHINA : null,
+               typeof LINKS_MULTICAPA !== 'undefined' ? LINKS_MULTICAPA : null],
   warn: m => console.warn(m),
 });
 const _resolveId = _mergeResult.resolveId;

@@ -1,0 +1,1291 @@
+{
+ "factors": [
+  {
+   "id": "FACTOR_TurbinasGas",
+   "label": "Cuello de botella de turbinas de gas",
+   "severity": 8.0,
+   "members": {
+    "NRGEnergy": 0.8,
+    "Vistra": 0.5,
+    "Entergy": 0.6,
+    "GEVernova": 0.9,
+    "SiemensEnergy": 0.8
+   },
+   "rationale": "Los tres grandes fabricantes de turbinas de gas de clase industrial tienen los libros de pedidos saturados hasta ~2030..."
+  },
+  {
+   "id": "FACTOR_TransformadoresEscasez",
+   "label": "Escasez de transformadores y equipos eléctricos de media/alta tensión",
+   "severity": 7.0,
+   "members": {
+    "PJM": 0.6,
+    "ERCOT": 0.6,
+    "ITCHoldings": 0.7,
+    "NationalGrid": 0.5,
+    "AEP": 0.6,
+    "DominionEnergy": 0.6,
+    "Vertiv": 0.4,
+    "Eaton": 0.4
+   },
+   "rationale": "Reportes de la industria de 2026 (Power Magazine, Sandstone Group) estiman que más de la mitad de los proyectos de datacenters en desarrollo en EEUU podrían sufrir retrasos por escasez de transformadores de potencia y otros equipos eléctricos de media/alta tensión, con tiempos de entrega que se extendieron de meses a años. Este cuello de botella afecta tanto a utilities y transmisoras que deben interconectar nueva carga como a los propios desarrolladores de datacenters, y es independiente de la disponibilidad de generación."
+  },
+  {
+   "id": "FACTOR_ColasInterconexion",
+   "label": "Colas de interconexión y permisología en mercados desregulados de EEUU",
+   "severity": 7.0,
+   "members": {
+    "PJM": 0.9,
+    "ERCOT": 0.9,
+    "ITCHoldings": 0.5,
+    "AEP": 0.5,
+    "DominionEnergy": 0.6,
+    "FirstEnergy": 0.4,
+    "Exelon": 0.4
+   },
+   "rationale": "PJM enfrenta más de 800 proyectos de generación en cola de interconexión y proyecta una brecha de capacidad hacia 2027; ERCOT vio su cola de \"grandes cargas\" crecer casi 4 veces en un año hasta superar 438 GW solicitados en 2026, muy por encima de lo que la red puede conectar en el corto plazo. Ambos mercados aprobaron o están debatiendo reformas de proceso de interconexión (nuevas reglas de Texas en 2026, propuestas de PJM para cargas co-localizadas) cuyo resultado final es incierto y puede retrasar tanto generación como demanda de datacenters de IA por años."
+  },
+  {
+   "id": "FACTOR_OPECPlus",
+   "label": "Cuotas de producción OPEP+",
+   "severity": 7.0,
+   "members": {
+    "SaudiAramco": 1.0,
+    "ADNOC": 0.8,
+    "ExxonMobil": 0.3,
+    "Chevron": 0.3,
+    "Shell": 0.3,
+    "BP": 0.3,
+    "TotalEnergies": 0.3,
+    "ConocoPhillips": 0.3,
+    "Eni": 0.3,
+    "Occidental": 0.3,
+    "Petrobras": 0.2,
+    "Equinor": 0.2,
+    "Rosneft": 0.3
+   },
+   "rationale": "Las decisiones de cuota de OPEP+ (reuniones periódicas 2025-2026) mueven el precio del Brent en rangos de US$10-20/barril, afectando directamente el margen upstream de todos los productores globales. Aramco y ADNOC están sujetos a control de cuota directo (ADNOC produce solo ~2/3 de su capacidad real de 4,85 M bpd por disciplina OPEP+); las majors occidentales son \"price takers\" indirectos vía el mercado global de crudo."
+  },
+  {
+   "id": "FACTOR_SancionesRusiaEnergia",
+   "label": "Sanciones occidentales a energía rusa",
+   "severity": 9.0,
+   "members": {
+    "Rosneft": 1.0,
+    "Lukoil": 1.0,
+    "Gazprom": 0.9,
+    "UraniumOne": 0.5,
+    "Rosatom": 0.4,
+    "Vitol": 0.3,
+    "Gunvor": 0.3,
+    "Trafigura": 0.2,
+    "Glencore": 0.2
+   },
+   "rationale": "EE.UU./OFAC sancionó directamente a Rosneft y Lukoil en octubre de 2025, forzando a Lukoil a castigar US$20.200 M en activos internacionales (pérdida neta de US$12.500 M en 2025) y a Rosneft a una caída de -73% en utilidad neta. Gazprom perdió -44% de sus exportaciones europeas por gasoducto en 2025 (mínimo desde mediados de los 1970s) tras el cierre del tránsito ucraniano en dic-2024. Las trading houses (Vitol, Gunvor, Trafigura, Glencore) absorben riesgo reputacional/regulatorio al gestionar flujos residuales o desinversiones forzadas de activos rusos. Coeficientes negativos indican beneficiarios directos: Equinor sustituyó gas ruso perdido por Europa; Cheniere/Venture Global ganaron cuota de mercado de GNL en Europa como reemplazo estructural del gas ruso."
+  },
+  {
+   "id": "FACTOR_EnriquecimientoRuso",
+   "label": "Dependencia de enriquecimiento de uranio ruso (TENEX/Rosatom)",
+   "severity": 8.0,
+   "members": {
+    "Rosatom": 1.0,
+    "CentrusEnergy": 0.7,
+    "Urenco": 0.5,
+    "Orano": 0.5,
+    "Kazatomprom": 0.3
+   },
+   "rationale": "Rosatom/TENEX controla ~43% de la capacidad de enriquecimiento de uranio mundial (vs. Urenco 31%, Orano 12%, CNNC ~13%). La Prohibiting Russian Uranium Imports Act de EE.UU. (2024) obliga a eliminar gradualmente importaciones de uranio enriquecido ruso hacia 2028 (con waivers de emergencia posibles), creando un cuello de botella crítico justo cuando la demanda de HALEU para reactores avanzados/SMR —relevantes para alimentar centros de datos de IA con energía libre de carbono— empieza a crecer. Centrus Energy, el único productor de HALEU 100% estadounidense, tiene la mayor sensibilidad relativa por su escala aún pequeña (capex respaldado por contrato DOE de hasta US$900 M)."
+  },
+  {
+   "id": "FACTOR_IAGasDemandSurge",
+   "label": "Demanda de gas natural impulsada por IA (data center power surge)",
+   "severity": 6.0,
+   "members": {
+    "BloomEnergy": 1.0,
+    "WilliamsCompanies": 0.5,
+    "KinderMorgan": 0.5,
+    "EnergyTransfer": 0.4,
+    "CheniereEnergy": 0.3,
+    "Chevron": 0.2,
+    "ExxonMobil": 0.2
+   },
+   "rationale": "El boom de centros de datos de IA 2025-2026 generó demanda de generación eléctrica on-site/detrás-del-medidor que superó la capacidad de interconexión a la red en EE.UU. Bloom Energy pasó de nicho industrial a socio estratégico de Oracle (hasta 2,8 GW) con financiamiento de Brookfield ampliado a US$25.000 M (jun-2026). Operadores de gasoductos (Williams-Transco, Kinder Morgan, Energy Transfer) anunciaron múltiples proyectos de expansión explícitamente ligados a esta demanda. Un shock inverso (caída abrupta de capex de IA, o disrupción de suministro de gas) golpearía correlacionadamente a todos estos nodos."
+  },
+  {
+   "id": "FACTOR_RDC_Cobalto",
+   "label": "Crisis de exportación de cobalto de RDC (2025-2026)",
+   "severity": 8.0,
+   "members": {
+    "CMOC": 0.9,
+    "EurasianResourcesGroup": 0.8,
+    "Glencore": 0.7,
+    "Umicore": 0.4,
+    "JinchuanGroup": 0.3
+   },
+   "rationale": "ARECOMS suspendió TODAS las exportaciones de cobalto de RDC el 22-feb-2025 (extendida 21-jun-2025 hasta 21-sep-2025); reemplazada por sistema de cuotas el 16-oct-2025 (Décision 004/2025): 96.600 t/año para 2026 y 2027, repartidas CMOC 31.200 t, Glencore 22.800 t, ERG 12.325 t. RDC representa ~70-75% del cobalto minado mundial. Fallas administrativas en jul-2026 dejaron hasta 20.000 t (~US$1.100M) en riesgo de pérdida por vencimiento de cuota semestral."
+  },
+  {
+   "id": "FACTOR_China_TierrasRaras",
+   "label": "Controles de exportación china de tierras raras",
+   "severity": 8.0,
+   "members": {
+    "MP_Materials": 0.8,
+    "Lynas": 0.6,
+    "IlukaResources": 0.6,
+    "AustralianStrategicMaterials": 0.6,
+    "UcoreRareMetals": 0.6,
+    "ChinaNorthernRareEarth": 0.3,
+    "ChinaRareEarthGroup": 0.3
+   },
+   "rationale": "China amplió controles el 4-abr-2025 (7 elementos medianos/pesados) y el 9-oct-2025 (6 anuncios simultáneos: +5 elementos, control de tecnología de fabricación de imanes, regla extraterritorial de minimis 0,1% + regla del 50%). Pausados el 7-nov-2025 hasta el 10-nov-2026 tras la cumbre Trump-Xi (Busan, 30-oct-2025), pero el 22-jun-2026 China añadió a MP Materials y USA Rare Earths a su lista de control por represalia — evidencia de que la tregua es frágil y de que los productores occidentales cotizan con prima geopolítica."
+  },
+  {
+   "id": "FACTOR_China_Grafito",
+   "label": "Controles chinos de grafito y fallo ITC negativo en EEUU",
+   "severity": 6.0,
+   "members": {
+    "SyrahResources": 0.8,
+    "Novonix": 0.8,
+    "NextSourceMaterials": 0.5,
+    "GraphiteOne": 0.4
+   },
+   "rationale": "China exige licencia de exportación de grafito desde el 1-dic-2023 (endurecida 3-dic-2024 y 9-oct-2025, esta última pausada hasta 10-nov-2026). El 12/13-mar-2026 la ITC de EEUU votó 2-1 EN CONTRA de aranceles antidumping/countervailing definitivos al material de ánodo activo (AAM) chino (que habrían llegado a 160-170%), golpeando directamente el caso de negocio de Syrah y Novonix, coalición AAAMP que impulsó el caso."
+  },
+  {
+   "id": "FACTOR_Litio_Ciclo_Precios",
+   "label": "Ciclo de colapso y recuperación de precios del litio (2023-2026)",
+   "severity": 7.0,
+   "members": {
+    "LiontownResources": 0.9,
+    "ElevraLithium": 0.8,
+    "PilbaraMinerals": 0.7,
+    "PiedmontLithium": 0.6,
+    "MineralResources": 0.6,
+    "IGO": 0.5,
+    "GanfengLithium": 0.5,
+    "TianqiLithium": 0.5,
+    "ArcadiumLithium": 0.5,
+    "Albemarle": 0.4,
+    "SQM": 0.4,
+    "SigmaLithium": 0.4,
+    "VulcanEnergy": 0.4
+   },
+   "rationale": "El precio del carbonato de litio cayó a mínimos de ~US$13.433/t hacia fines de 2025 (desde picos de ~US$80.000/t en 2022), forzando impairments masivos (MineralResources -A$896M, ElevraLithium/ex-Sayona -A$382M, LiontownResources -A$193M) y cierres temporales (Bald Hill de MineralResources). Recuperación abrupta de +95% a ~US$26.278/t hacia ene-2026 por recortes de oferta (mantenimiento de mina de CATL, prohibición de exportación de concentrados de Zimbabue, feb-2026)."
+  },
+  {
+   "id": "FACTOR_Indonesia_Nickel",
+   "label": "Política de níquel de Indonesia (regalías, cuotas RKAB, moratoria HPAL)",
+   "severity": 6.0,
+   "members": {
+    "NickelIndustries": 0.9,
+    "PTValeIndonesia": 0.8,
+    "Vale": 0.3,
+    "IGO": 0.1
+   },
+   "rationale": "Indonesia (>50% de reservas mundiales de níquel) propuso subir regalías de NPI de 10% a 14-19% (2025-2026), impone cuotas RKAB anuales restrictivas (NickelIndustries 2026: 14,3 Mwmt) y evalúa una moratoria sobre nuevos proyectos HPAL en 2026. PTValeIndonesia sufrió una suspensión total de minado del 2 al 15-ene-2026 por demora en la aprobación de su RKAB."
+  },
+  {
+   "id": "FACTOR_Rusia_Sanciones_Metales",
+   "label": "Sanciones occidentales sobre metales rusos",
+   "severity": 7.0,
+   "members": {
+    "Nornickel": 1.0
+   },
+   "rationale": "EEUU/Reino Unido prohibieron la importación de aluminio, cobre y níquel ruso (abr-2024); la UE evalúa prohibir cobre y platino rusos en un nuevo paquete de sanciones (2026); EEUU avanza hacia aranceles \"prohibitivos\" sobre paladio ruso (may-2026). Nornickel controla ~41% de la oferta mundial de paladio y ~14% de níquel, sin sustituto de corto plazo para el mercado occidental de paladio."
+  },
+  {
+   "id": "FACTOR_Section232_SteelAlu",
+   "label": "Aranceles Sección 232 (Acero/Aluminio)",
+   "severity": 7.0,
+   "members": {
+    "Nucor": 0.8,
+    "SteelDynamics": 0.85,
+    "CenturyAluminum": 0.9,
+    "Alcoa": 0.5,
+    "ArcelorMittal": 0.25,
+    "NipponSteel": 0.3
+   },
+   "rationale": "El gobierno de EE.UU. elevó los aranceles Sección 232 sobre acero y aluminio de 25% a 50% efectivo el 4 de junio de 2025, cubriendo también productos derivados (valorados solo por su contenido de acero/aluminio). Protege a productores domésticos de EE.UU. (coef. positivo) y penaliza a exportadores hacia EE.UU. (coef. negativo). Reino Unido retuvo excepcionalmente el 25% mientras negocia cuota bajo el US-UK Economic Prosperity Deal."
+  },
+  {
+   "id": "FACTOR_EnergyIntensity",
+   "label": "Intensidad Energética (Smelting de Aluminio + Hornos de Cemento)",
+   "severity": 6.0,
+   "members": {
+    "Alcoa": 0.7,
+    "RioTintoAluminium": 0.6,
+    "Rusal": 0.7,
+    "NorskHydro": 0.6,
+    "Chalco": 0.7,
+    "CenturyAluminum": 0.8,
+    "EGA": 0.7,
+    "Holcim": 0.5,
+    "CRH": 0.35,
+    "Cemex": 0.5,
+    "HeidelbergMaterials": 0.55,
+    "AnhuiConch": 0.6,
+    "Elkem": 0.7,
+    "WackerChemie": 0.5,
+    "BASF": 0.6
+   },
+   "rationale": "El smelting de aluminio primario requiere ~13-15 MWh/tonelada; los hornos de clinker de cemento necesitan calor continuo a >1.400°C. Ambos sectores tienen márgenes muy sensibles a shocks de precio eléctrico/gas — la crisis energética europea de 2022 forzó recortes de capacidad en Alcoa, Rusal y Norsk Hydro simultáneamente, demostrando correlación de shock entre estos nodos."
+  },
+  {
+   "id": "FACTOR_HPQ_SprucePine",
+   "label": "Concentración de Cuarzo de Alta Pureza (Spruce Pine)",
+   "severity": 9.0,
+   "members": {
+    "Sibelco": 1.0,
+    "TheQuartzCorp": 1.0,
+    "GlobalWafers": 0.6,
+    "SUMCO": 0.6,
+    "Siltronic": 0.55,
+    "ShinEtsu": 0.5,
+    "First_Solar": 0.4
+   },
+   "rationale": "Solo dos empresas (Sibelco y The Quartz Corp) minan en Spruce Pine, NC, prácticamente todo el cuarzo de ultra-alta pureza mundial usado en crisoles para crecimiento de cristal de silicio (proceso Czochralski) de obleas semiconductoras y paneles solares. El huracán Helene (octubre 2024) cerró temporalmente ambas minas, evidenciando un punto único de falla para toda la industria de semiconductores — severidad máxima por ausencia de sustituto a escala."
+  },
+  {
+   "id": "FACTOR_ChinaOvercapacity",
+   "label": "Sobrecapacidad China (Acero/Aluminio/Cemento)",
+   "severity": 6.0,
+   "members": {
+    "ChinaBaowu": 0.8,
+    "Chalco": 0.6,
+    "AnhuiConch": 0.75,
+    "YOFC": 0.35
+   },
+   "rationale": "Sobrecapacidad estructural en acero (~1.000 Mt/año de capacidad china), aluminio (tope regulatorio ~45 Mtpa ya cerca de saturarse) y cemento (Anhui Conch con revenue -9,3% en 2025 por crisis inmobiliaria) genera exportaciones a precio bajo que deprimen referencias globales pese a aranceles antidumping crecientes en UE, EE.UU., India, Brasil y México."
+  },
+  {
+   "id": "FACTOR_SiliconMetal_China",
+   "label": "Concentración de Silicio Metálico/Polisilicio en China",
+   "severity": 7.0,
+   "members": {
+    "Elkem": 0.5,
+    "WackerChemie": 0.4,
+    "HemlockSemiconductor": 0.35,
+    "OCIHoldings": 0.3,
+    "Tokuyama": 0.3
+   },
+   "rationale": "China controla ~70-80% de la producción mundial de silicio metálico (materia prima del polisilicio), exponiendo a productores occidentales de polisilicio grado semiconductor (Wacker, Hemlock, Tokuyama, OCI) a riesgo de restricción de exportación china de silicio metálico, con precedente en los controles de exportación de galio/germanio de 2023, incluso cuando el polisilicio final se produce fuera de China."
+  },
+  {
+   "id": "FACTOR_FedRateRegime2026",
+   "label": "Régimen de tasas de la Fed bajo Warsh 2026",
+   "severity": 8.0,
+   "members": {
+    "Nvidia": 0.7,
+    "Microsoft": 0.6,
+    "Oracle": 0.9,
+    "CoreWeave": 1.0,
+    "Palantir": 0.9,
+    "Tesla": 0.8,
+    "Meta": 0.6,
+    "Amazon": 0.6,
+    "Alphabet": 0.6,
+    "Vertiv": 0.6,
+    "SuperMicro": 0.7
+   },
+   "rationale": "El 29-jul-2026 la Fed —ya bajo el nuevo Chair Kevin Warsh, en su cargo desde el 22-may-2026— mantuvo la tasa en 3.50%–3.75% con tres disidencias internas; la inflación superó 4% en junio de 2026, lo que frena el ritmo de recortes que Warsh (elegido por Trump justamente por su inclinación dovish) querría dar. Con la tasa de interés sobre reservas en 3.65%, cualquier sorpresa hawkish repricea de inmediato el ~$570B en emisión de deuda relacionada a IA proyectada para 2026 (Morgan Stanley) y golpea más fuerte a los nombres de mayor duración/apalancamiento (neoclouds, infraestructura financiada con deuda) que a las Big Tech con caja neta positiva."
+  },
+  {
+   "id": "FACTOR_AIDebtLeverageCycle",
+   "label": "Ciclo de apalancamiento de deuda de IA",
+   "severity": 9.0,
+   "members": {
+    "CoreWeave": 1.0,
+    "Oracle": 0.9,
+    "Meta": 0.7,
+    "Vertiv": 0.6,
+    "SuperMicro": 0.6,
+    "Nebius": 0.8,
+    "DigitalRealty": 0.6,
+    "Equinix": 0.5,
+    "Switch": 0.7,
+    "QTS": 0.7,
+    "CyrusOne": 0.7
+   },
+   "rationale": "Morgan Stanley proyecta $570B en emisión de deuda relacionada a IA para 2026 (vs. ~4x el año anterior); los ratios de cobertura de bonos de hyperscalers cayeron de ~5x (feb-2026) a menos de 2x (jul-2026), señal de demanda debilitándose. Cerca de $800B en financiamiento de datacenters se está desplazando hacia crédito privado y estructuras fuera de balance —el caso más citado es la JV Hyperion de Meta con Blue Owl Capital ($27B, con Meta reteniendo solo 20% y manteniendo 80% de la deuda fuera de su balance—, lo que hace más difícil detectar pérdidas si el uso o el retorno de esa capacidad decepciona. Moody's (24-jul-2026) y S&P Global Ratings (17-feb-2026) documentaron formalmente el riesgo."
+  },
+  {
+   "id": "FACTOR_BOJNormalizationCarryUnwind",
+   "label": "Normalización del BOJ y desarme del carry trade en yenes",
+   "severity": 7.0,
+   "members": {
+    "TEL": 0.8,
+    "Advantest": 0.8,
+    "Disco": 0.7,
+    "Screen": 0.6,
+    "SoftBank": 0.9,
+    "Renesas": 0.6,
+    "Kioxia": 0.6,
+    "Nikon": 0.4,
+    "Canon": 0.4
+   },
+   "rationale": "El BOJ sostiene su tasa en 1% (31-jul-2026) con Ueda advirtiendo que la inflación se acerca al objetivo de 2% con riesgos al alza y que podrían verse forzados a \"subir tasas rápidamente\"; su balance cayó a ¥639.6T (-12.6% desde el pico de Q1 2024), con JGBs en 81% del total. El BOJ es, vía ETFs, accionista entre los 10 principales de ~90% de las constituyentes del Nikkei 225 —dominado por el cluster de equipos de semiconductores más grande fuera de EE.UU.—; reportes de FT indican coordinación del Tesoro de EE.UU. con Japón para una posible intervención de fortalecimiento del yen. Cualquier aceleración de la normalización amenaza con desarmar el carry trade JPY que ha financiado apuestas de riesgo globales durante años."
+  },
+  {
+   "id": "FACTOR_PBOCCreditFreeze",
+   "label": "Congelamiento crediticio del PBOC y desaceleración china",
+   "severity": 6.0,
+   "members": {
+    "SMIC": 0.7,
+    "Naura": 0.6,
+    "Cambricon": 0.6,
+    "Foxconn": 0.4,
+    "Lenovo": 0.4,
+    "AlibabaCloud": 0.5,
+    "Xiaomi": 0.4
+   },
+   "rationale": "La LPR china permanece congelada en 3.0%/3.5% por 14 meses consecutivos hasta jul-2026 pese a que el crecimiento cae a mínimos post-pandemia; el PBOC prioriza tolerar un yuan más fuerte sobre estimular agresivamente, limitando el crédito disponible justo cuando Beijing libra una guerra de subsidios para sustituir semiconductores importados. La opacidad del riesgo crediticio de gobiernos locales (LGFV) y del sector inmobiliario es un riesgo sistémico que no se observa directamente desde afuera del sistema financiero chino."
+  },
+  {
+   "id": "FACTOR_ECBHoldEuropeanCompetitivenessGap",
+   "label": "Estancamiento del BCE y brecha de competitividad europea en IA",
+   "severity": 5.0,
+   "members": {
+    "ASML": 0.7,
+    "ASMInt": 0.5,
+    "Besi": 0.5,
+    "Infineon": 0.5,
+    "STMicroelectronics": 0.5,
+    "Siemens_EDA": 0.3
+   },
+   "rationale": "El BCE mantiene la tasa de depósito en 2.25% (jul-2026) vigilando el riesgo energético de la guerra Israel-Irán y un crecimiento débil. A diferencia de EE.UU., Europa no tiene un hyperscaler doméstico de escala comparable a Microsoft/Amazon/Google, así que el ciclo de capex de IA que en EE.UU. genera demanda directa para la cadena de suministro no se traduce en el mismo impulso para la cadena europea de semis —dejándola más expuesta al ciclo de tasas puro que a un boom de gasto doméstico en IA."
+  },
+  {
+   "id": "FACTOR_USTermPremiumDiscountRate",
+   "label": "Prima por plazo del Tesoro de EE.UU. como tasa de descuento universal",
+   "severity": 9.0,
+   "members": {
+    "Palantir": 1.0,
+    "CoreWeave": 1.0,
+    "Tesla": 0.8,
+    "Nvidia": 0.7,
+    "Oracle": 0.8,
+    "SuperMicro": 0.7,
+    "Arm_Holdings": 0.7,
+    "Snowflake": 0.6,
+    "Databricks": 0.5
+   },
+   "rationale": "El rendimiento del Treasury a 10 años llegó a 4.705% el 23-jul-2026, el nivel más alto desde enero de 2025 y comparable a niveles pre-2008. La deuda federal de EE.UU. alcanzó $39.065T en enero de 2026 y se proyecta superior a $50T antes de 2030; el \"problema de $40 billones\" de Bessent —refinanciar deuda emitida a menos de 2% ahora a tasas 2-3x más altas— empuja la prima por plazo al alza de forma estructural, no solo cíclica. Esta es, en la práctica, la tasa de descuento que le pone precio a cualquier flujo de caja futuro de una empresa de IA de alta duración —más que la tasa de fondos federales misma."
+  },
+  {
+   "id": "FACTOR_TaiwanKoreaFXSemiCycle",
+   "label": "Ciclo cambiario Taiwán-Corea atado al superciclo de semis de IA",
+   "severity": 6.0,
+   "members": {
+    "TSMC": 0.8,
+    "Samsung": 0.6,
+    "SKHynix": 0.7,
+    "Foxconn": 0.4
+   },
+   "rationale": "El banco central de Taiwán mantiene la tasa de descuento en 2.00% (jun-2026) mientras revisa al alza el PIB 2026 a 9.45% por el boom exportador de IA/semis y el gasto de cloud providers de EE.UU.; el Banco de Corea subió su tasa a 2.75% el 16-jul-2026 —la primera alza en 3.5 años— bajo el nuevo gobernador Hyun Song Shin. Ambas monedas (TWD, KRW) son directamente sensibles al ciclo de capex de hyperscalers, y su fortaleza/debilidad mueve el margen bruto en dólares de TSMC, Samsung y SK Hynix sin que cambie una sola orden de compra."
+  },
+  {
+   "id": "FACTOR_RatingAgencyReratingRisk",
+   "label": "Riesgo de recalificación crediticia en cascada",
+   "severity": 7.0,
+   "members": {
+    "Oracle": 0.9,
+    "CoreWeave": 1.0,
+    "Meta": 0.6,
+    "Amazon": 0.5,
+    "Alphabet": 0.5,
+    "Vertiv": 0.5,
+    "DigitalRealty": 0.5,
+    "Switch": 0.6
+   },
+   "rationale": "Moody's advirtió el 24-jul-2026 que el gasto \"sin precedentes\" en IA erosiona el flujo de caja libre y puede forzar una \"reevaluación de calificaciones crediticias\" en Amazon, Meta y Alphabet. S&P Global Ratings documentó el 17-feb-2026 que el crédito privado ya supera al préstamo sindicado tradicional para prestatarios B- o menores por cuatro años consecutivos, con vencimientos de deuda B- proyectados en un pico de $215B en 2028 y titulización de datacenters que superó $30B en 2025. Una cascada de downgrades en este segmento propagaría contagio directo al costo de capital de toda la cadena de suministro, no solo del emisor afectado."
+  },
+  {
+   "id": "FACTOR_PassiveIndexConcentration",
+   "label": "Concentración de índices pasivos en nombres de IA",
+   "severity": 6.0,
+   "members": {
+    "Nvidia": 0.9,
+    "Microsoft": 0.8,
+    "Apple": 0.7,
+    "Broadcom": 0.7,
+    "Tesla": 0.6,
+    "Alphabet": 0.6,
+    "Amazon": 0.6,
+    "Meta": 0.6
+   },
+   "rationale": "La concentración de los nombres de IA de mayor capitalización en el S&P 500, Nasdaq-100, MSCI World y Russell 1000 alcanzó niveles récord en 2025-2026 (contexto: el propio blog de MSCI publicó en 2026 un análisis sobre cómo las megacap IPOs podrían \"reconfigurar los benchmarks globales\"). Cualquier evento de rebalanceo, cambio de metodología (límites de concentración, ajuste de flotante) o corrección abrupta de precio en estos nombres desencadena compra/venta mecánica de cientos de miles de millones de dólares en fondos pasivos —amplificando, no absorbiendo, el shock inicial."
+  },
+  {
+   "id": "FACTOR_CentralBankIndependenceRisk",
+   "label": "Riesgo de independencia de bancos centrales",
+   "severity": 8.0,
+   "members": {
+    "Palantir": 0.6,
+    "CoreWeave": 0.7,
+    "Tesla": 0.6,
+    "Oracle": 0.6,
+    "Nvidia": 0.5
+   },
+   "rationale": "La Corte Suprema de EE.UU. falló en *Trump v. Cook* (29-jun-2026) que Trump no puede, por ahora, destituir a la gobernadora de la Fed Lisa Cook pese a una investigación penal del DOJ por presunto fraude hipotecario —un precedente judicial sin comparación en la historia moderna de la Fed. El propio Kevin Warsh, elegido por Trump como Chair, ha declarado públicamente que no será su \"sock puppet\". Cuando la independencia del banco central emisor de la moneda de reserva global está en disputa judicial activa, el mercado de bonos empieza a exigir una prima de riesgo adicional (term premium) que golpea primero y más fuerte a los activos de mayor duración —las mismas acciones de IA que ya cotizan a múltiplos que asumen tasas estables y predecibles."
+  },
+  {
+   "id": "FACTOR_RareEarth",
+   "label": "Controles chinos de exportación de tierras raras e imanes",
+   "severity": 9.0,
+   "members": {},
+   "rationale": "China amplió su régimen de licencias de exportación de tierras raras e imanes de forma escalonada desde abril de 2025, endurecido de nuevo en oct-nov 2025 con reglas de \"contenido de origen chino\" (umbral 0.1%) de alcance extraterritorial. Golpea a productores no-chinos (MP Materials, que recibió inyección de US$400M en acciones preferentes del DoD el 10-jul-2025) y a todo usuario final de imanes."
+  },
+  {
+   "id": "FACTOR_H20_Whiplash",
+   "label": "Vaivén regulatorio de exportación de chips de IA a China (H20/H200/MI325X)",
+   "severity": 8.0,
+   "members": {},
+   "rationale": "Ciclo de whiplash regulatorio 2025-2026: prohibición del H20 (abr-2025) → autorización condicionada con reparto del 15% de ingresos con el Tesoro (ago-2025) → revisión de licencias caso-por-caso para H200/MI325X → extensión de la prohibición a filiales fuera de China (1-jun-2026) → aranceles adicionales. El régimen cambia de dirección varias veces por año."
+  },
+  {
+   "id": "FACTOR_Taiwan_Tension",
+   "label": "Tensión militar Taiwán-China",
+   "severity": 8.0,
+   "members": {},
+   "rationale": "Los ejercicios militares chinos alrededor de Taiwán se intensificaron tras la investidura de Lai Ching-te (may-2024) y continúan de forma recurrente. El riesgo de bloqueo/cuarentena naval sigue siendo el mayor tail-risk de punto único de falla de toda la cadena de semiconductores avanzados."
+  },
+  {
+   "id": "FACTOR_IEEPA_SCOTUS",
+   "label": "Corte Suprema de EEUU anula los aranceles IEEPA",
+   "severity": 7.0,
+   "members": {},
+   "rationale": "El 20-feb-2026 la Corte Suprema falló en *Learning Resources, Inc. v. Trump* que la IEEPA no otorga al presidente poder para imponer aranceles; se anularon los aranceles \"recíprocos\" y por fentanilo. Section 301/232 NO fueron afectados y siguen vigentes. Redirección del riesgo arancelario más que su eliminación."
+  },
+  {
+   "id": "FACTOR_Nexperia",
+   "label": "Crisis Nexperia (toma de control holandesa + bloqueo de exportación chino)",
+   "severity": 7.0,
+   "members": {},
+   "rationale": "El gobierno holandés invocó su \"Ley de Disponibilidad de Bienes\" para tomar control de Nexperia (subsidiaria neerlandesa de la china Wingtech) en sep-oct 2025; China bloqueó en represalia las exportaciones de chips empaquetados desde Dongguan, paralizando fabricantes automotrices globales. Parcialmente resuelto tras acuerdo Trump-Xi y visita comercial holandesa a China (8-jul-2026)."
+  },
+  {
+   "id": "FACTOR_Sec232_Semis",
+   "label": "Arancel Section 232 del 25% a semiconductores avanzados",
+   "severity": 6.0,
+   "members": {},
+   "rationale": "Trump ordenó un arancel Section 232 del 25% sobre semiconductores avanzados, efectivo desde mediados de enero de 2026, con exenciones para empresas que se comprometan a invertir en manufactura en EEUU. Ventaja estructural para quienes ya tienen fabs en EEUU (TSMC Arizona, Samsung Texas)."
+  },
+  {
+   "id": "FACTOR_USGov_Equity",
+   "label": "EEUU toma participaciones accionarias directas en semiconductoras estratégicas",
+   "severity": 6.0,
+   "members": {},
+   "rationale": "Comercio (Lutnick) convirtió ~US$8.9bn de subsidios CHIPS Act en ~10% de participación de Intel (ago-2025, valorada ~US$36bn a mediados de 2026); DoD tomó US$400M en acciones preferentes de MP Materials (10-jul-2025); Comercio anunció el 31-jul-2026 participaciones adicionales en 7 empresas más (incl. GlobalFoundries, ~US$300M) por US$870M total. Nuevo régimen de \"capitalismo de estado\" en semiconductores."
+  },
+  {
+   "id": "FACTOR_AIPower_Nuclear",
+   "label": "Boom de demanda eléctrica de datacenters de IA + relanzamiento nuclear/SMR",
+   "severity": 6.0,
+   "members": {},
+   "rationale": "La demanda eléctrica de datacenters de IA impulsó PPAs nucleares directos y relanzamientos de reactores desde 2024. La NRC nombró chairman nuevo en enero de 2026 (Ho K. Nieh) con mandato explícito de acelerar permisos — cuello de botella regulatorio nuclear ahora es un factor directo de cuánta capacidad de cómputo de IA puede escalar físicamente EEUU."
+  },
+  {
+   "id": "FACTOR_GulfAI",
+   "label": "Difusión de chips de IA de EEUU al Golfo Pérsico (UAE G42, Arabia Saudita HUMAIN)",
+   "severity": 5.0,
+   "members": {},
+   "rationale": "BIS autorizó en noviembre de 2025 la exportación de chips de gama alta a G42 (EAU) y HUMAIN (Arabia Saudita), marco que sigue activo y expandiéndose en 2026. Abre mercado nuevo de escala masiva, pero crea dependencia de acuerdos bilaterales revocables y riesgo de triangulación hacia China."
+  },
+  {
+   "id": "FACTOR_ChinaAntitrust_Nvidia",
+   "label": "Investigación antimonopolio china contra Nvidia",
+   "severity": 5.0,
+   "members": {},
+   "rationale": "SAMR abrió investigación en diciembre de 2024 por el caso de adquisición de Mellanox; en revisión preliminar del 15-sept-2025 determinó que Nvidia \"violó\" la ley antimonopolio china. Sin multa/resolución final confirmada — funciona como palanca de negociación activa de Beijing, con potencial de multa estimada entre US$1bn y US$5bn."
+  },
+  {
+   "id": "FACTOR_Micron_China",
+   "label": "Veto chino a Micron en infraestructura crítica + salida de Micron del mercado chino de servidores",
+   "severity": 5.0,
+   "members": {},
+   "rationale": "CAC declaró en mayo de 2023 que los productos de Micron representan \"riesgo de seguridad\" y los vetó de infraestructura crítica china; en octubre de 2025 Micron decidió salir por completo del negocio de memoria para servidores/datacenters en China. Abre cuota de mercado directa para SK Hynix, Samsung y YMTC."
+  },
+  {
+   "id": "FACTOR_OutboundInvest",
+   "label": "Restricciones de EEUU a inversión saliente hacia tecnología china (Outbound Investment Security Program)",
+   "severity": 4.0,
+   "members": {},
+   "rationale": "El programa del Tesoro (bajo la EO 14105) está en vigor desde enero de 2025 y restringe la inversión de capital privado/venture capital estadounidense en IA, semiconductores avanzados y computación cuántica chinas; la NDAA FY2026 introdujo un marco estatutario ampliado."
+  },
+  {
+   "id": "FACTOR_EUChipsAct2",
+   "label": "Chips Act 2.0 / paquete de soberanía tecnológica de la Unión Europea",
+   "severity": 4.0,
+   "members": {},
+   "rationale": "La Comisión Europea propuso formalmente el 3 de junio de 2026 el \"Chips Act 2.0\" como parte de un paquete de soberanía tecnológica, tras consulta pública (sep-2025) y declaración de la \"Semicon Coalition\" (los 27 estados miembro). Busca reducir dependencia estratégica europea ante aranceles de EEUU y controles chinos de insumos críticos."
+  },
+  {
+   "id": "FACTOR_GCC_ChipExport",
+   "label": "Flexibilización/reversión de controles de exportación de chips de IA al Golfo",
+   "severity": 8.0,
+   "members": {
+    "Khazna": 0.9,
+    "MoroHub": 0.5,
+    "EDGNEX": 0.7,
+    "PureDataCentres": 0.5,
+    "Meeza": 0.4
+   },
+   "rationale": "En jul-2026 EE.UU. flexibilizó las reglas de exportación permitiendo venta de chips Nvidia/AMD sin licencia a EAU (Bloomberg, US News, 10-jul-2026), revirtiendo parcialmente el marco previo de \"AI Diffusion\" de 2025. Todo el boom de datacenters de IA del Golfo (Stargate UAE de Khazna/G42, EDGNEX de DAMAC, Pure DC en expansión hacia Medio Oriente) depende de la disponibilidad continua de GPUs de última generación bajo licencias del Bureau of Industry and Security (BIS) de EE.UU., un marco que puede revertirse con cambios de administración o de política exterior."
+  },
+  {
+   "id": "FACTOR_SEA_PowerLand",
+   "label": "Cuello de botella de suelo/energía/agua en el corredor Singapur-Johor",
+   "severity": 7.0,
+   "members": {
+    "AirTrunk": 0.7,
+    "DigitalEdge": 0.7,
+    "ESR_Group": 0.5,
+    "KeppelDCREIT": 0.5,
+    "STT_GDC": 0.6,
+    "DayOne": 0.5
+   },
+   "rationale": "Singapur mantiene su marco regulatorio \"DC 2.0\" que raciona nueva capacidad por condiciones de sostenibilidad, empujando el exceso de demanda hacia Johor (Malasia), donde en 2026 crecen los llamados públicos a una moratoria de nuevos datacenters por estrés de red eléctrica y agua (Free Malaysia Today, jun-2026; TechWire Asia, mar-2026). AirTrunk ($3bn/280MW), ESR, Digital Edge y otros están concentrando expansión en este corredor exacto, elevando el riesgo de choque regulatorio simultáneo para múltiples operadores."
+  },
+  {
+   "id": "FACTOR_India_AIBuildout",
+   "label": "Carrera de gigavatios de IA en India + cuellos de botella de energía/tierra",
+   "severity": 8.0,
+   "members": {
+    "NxtraData": 0.8,
+    "JioDataCenters": 0.9,
+    "CtrlS": 0.7,
+    "AdaniConneX": 0.8,
+    "Sify": 0.4,
+    "DigitalEdge": 0.3
+   },
+   "rationale": "Reliance anunció un plan de $110bn en infraestructura de IA (feb-2026) y el gobierno indio aprobó un tax holiday para servicios cloud desde datacenters domésticos (FY2026-27 a FY2047, anunciado feb-2026), generando una carrera simultánea entre Jio ($110bn/2GW+ con Nvidia y Meta), Adani ($100bn/5GW con Google y Microsoft), Airtel/Nxtra ($1bn levantados, objetivo 1GW) y CtrlS (JV con CPP Investments). El riesgo sistémico es la disponibilidad de energía y agua para enfriar múltiples proyectos de escala gigavatio compitiendo por los mismos estados (Gujarat, Telangana, Tamil Nadu, UP) simultáneamente."
+  },
+  {
+   "id": "FACTOR_LatAm_REDATA",
+   "label": "Incentivo fiscal ReData + abundancia hidroeléctrica en Brasil",
+   "severity": 6.0,
+   "members": {
+    "Ascenty": 0.7,
+    "ScalaDataCenters": 0.8,
+    "ODATA": 0.7,
+    "Cirion": 0.3,
+    "KIONetworks": 0.3
+   },
+   "rationale": "La Cámara de Diputados de Brasil aprobó en feb-2026 el régimen \"ReData\" de incentivos fiscales para inversión en datacenters (Câmara dos Deputados, 25-feb-2026), sumado a la abundancia de energía hidroeléctrica/eólica del país. Esto coincide con anuncios simultáneos de Ascenty ($1.2bn/150MW), Scala (\"AI City\" de hasta $50bn/4.75GW) y ODATA (parte de Aligned), generando el mayor pipeline de capex de datacenters de la historia de LatAm concentrado en un solo país, con riesgo de sobre-anuncio frente a demanda contratada real."
+  },
+  {
+   "id": "FACTOR_TakePrivate_Wave",
+   "label": "Ola de privatizaciones y consolidación de capital soberano/PE en REITs y plataformas de datacenters de Asia-Pacífico",
+   "severity": 7.0,
+   "members": {
+    "ESR_Group": 1.0,
+    "STT_GDC": 1.0,
+    "AlignedDataCenters": 0.8,
+    "Nabiax": 0.4,
+    "GlobalSwitch": 0.3,
+    "DigiCo_REIT": 0.3
+   },
+   "rationale": "En un período de 18 meses (2025-2026), tres de las mayores plataformas de datacenters de Asia-Pacífico fueron absorbidas por capital privado/soberano: ESR Group completó su privatización de $7.1bn (2025, Starwood/Sixth Street/Warburg Pincus/QIA), STT GDC acordó ser adquirida al 100% por KKR/Singtel por S$13.8bn (feb-2026), y Aligned Data Centers (con exposición a Brasil vía ODATA) fue valorada en ~$40bn por un consorcio MGX-GIP-AIP (oct-2025). Este patrón refleja escasez de vehículos públicos puros de datacenters y una prima que el capital privado/soberano está dispuesto a pagar por plataformas listas para IA, reduciendo la profundidad del mercado público del sector."
+  },
+  {
+   "id": "FACTOR_APAC_REIT_RateSensitivity",
+   "label": "Sensibilidad de REITs de datacenters de APAC a tasas de interés y cap rates",
+   "severity": 5.0,
+   "members": {
+    "KeppelDCREIT": 0.8,
+    "MapletreeIndustrialTrust": 0.7,
+    "NEXTDC": 0.4,
+    "DigiCo_REIT": 0.5,
+    "CDC_DataCentres": 0.4
+   },
+   "rationale": "Mapletree Industrial Trust reportó que su DPU cayó desde el pico de 13.57¢ (FY22/23) \"por mayores costos de refinanciamiento\", mientras que Keppel DC REIT vio su DPU crecer 11.3% en 1H2026 y analistas (UOB Kay Hian, Maybank, jul-2026) elevaron targets de precio citando expectativas de recorte de tasas. La valuación de estos REITs y cuasi-REITs (incl. las revaluaciones trimestrales de CDC/Infratil y DigiCo) está altamente correlacionada con la trayectoria de tasas de interés de Singapur/Australia, además del apalancamiento agregado (34-38% en los casos revisados)."
+  },
+  {
+   "id": "FACTOR_PowerGridBottleneck",
+   "label": "Cuello de botella de interconexión eléctrica / suelo \"power-ready\"",
+   "severity": 8.0,
+   "members": {
+    "Group": 0.5,
+    "Segro": 0.9,
+    "Prologis": 0.8,
+    "GLP": 0.7,
+    "Trust": 0.6,
+    "REIT": 0.5,
+    "JLL": 0.6,
+    "Wakefield": 0.6,
+    "Colliers": 0.5,
+    "AECOM": 0.6,
+    "Construction": 0.4,
+    "Mortenson": 0.6
+   },
+   "rationale": "Goodman describe un \"power bank\" de 6GW (jul-2026); Segro un \"powered land bank\" de 2,5GW+ (mar-2026); ESR asegura +3GW de suelo/energía (abr-2026); el CFO de Prologis enmarca sus \"energy holdings\" como base de hasta USD 60.000M en desarrollo turnkey. JLL reporta esperas de 4+ años para interconexión a la red (\"2026 Global Data Center Outlook\", 8-ene-2026); Colliers documenta USD 64.000M en proyectos de EE.UU. retrasados o cancelados por falta de energía; CBRE y Cushman & Wakefield registran vacancia récord (1,4% y 3,5-4,2%) causada por oferta restringida por energía. En construcción, el campus Meta de Louisiana (Turner/DPR/Mortenson) depende de que Entergy construya 1.500MW+ de generación nueva antes de poder energizarlo (Construction Dive, dic-2024). Es el techo sistémico único que condiciona simultáneamente cuánto suelo pueden monetizar los REITs, cuántas transacciones pueden cerrar los brokers, y cuánto backlog pueden ejecutar las constructoras."
+  },
+  {
+   "id": "FACTOR_LiquidCoolingConsolidation",
+   "label": "Consolidación M&A del liquid cooling — desaparición de los \"independientes\"",
+   "severity": 9.0,
+   "members": {
+    "Thermal": 1.0,
+    "Systems": 1.0,
+    "LiquidStack": 1.0,
+    "Technologies": 0.9,
+    "Controls": 0.85,
+    "Group": 0.75,
+    "Electric": 0.7,
+    "Global": 0.6,
+    "Asetek": 0.6,
+    "STULZ": 0.5,
+    "Vertiv": 0.4,
+    "Schneider": 0.3,
+    "Modine": 0.3,
+    "Envicool": 0.2,
+    "DeltaElectronics": 0.1
+   },
+   "rationale": "En 9 meses (nov-2025 a jul-2026) las tres empresas que el brief original pedía como ejemplos de especialistas \"puros\" de liquid cooling dejaron de ser independientes: Eaton compró Boyd Thermal por USD 9.500M (anunciado 3-nov-2025, cerrado 12-mar-2026, verificado vía Bloomberg/IR de Eaton), Trane Technologies compró LiquidStack (anunciado 10-feb-2026, cerrado 3-mar-2026) y Ecolab compró CoolIT Systems por USD 4.750M (anunciado 20-mar-2026, cerrado 2-jul-2026, verificado vía IR de Ecolab). A esto se suman Munters-Geoclima (jul-2024), Carrier Ventures-ZutaCore/Strategic Thermal Labs (feb-2025/abr-2024), JCI-Accelsius/Alloy Enterprises (oct-2025/feb-2026), y —fuera de este batch pero informativo— Vertiv-CoolTera/PurgeRite/ThermoKey (dic-2023 a mar-2026) y Schneider Electric-Motivair (75%, USD 850M, oct-2024/feb-2025). El patrón es sistémico: gigantes de power management/HVAC/química industrial están comprando capacidad de ingeniería térmica más rápido de lo que el mercado genera nuevos ent"
+  },
+  {
+   "id": "FACTOR_SkilledLaborShortageDC",
+   "label": "Escasez de mano de obra especializada MEP en construcción de datacenters",
+   "severity": 8.0,
+   "members": {
+    "USA": 0.9,
+    "Group": 0.85,
+    "Infrastructure": 0.85,
+    "Quanta": 0.8,
+    "Construction": 0.5,
+    "Mortenson": 0.6,
+    "Phelps": 0.6,
+    "Bechtel": 0.5,
+    "Corgan": 0.35,
+    "AECOM": 0.3,
+    "Inc": 0.3
+   },
+   "rationale": "ENR reporta que los ingresos del Top 400 de EE.UU. saltaron 11,8% a USD 671.400M en 2025, impulsados por el segmento telecom/datacenter (+86,4%, de 4,5% a 15,1% del total 2021-2025) — expansión que \"choca contra un techo de mano de obra especializada\" (ENR, medio 2026). Insurance Journal (8-jul-2026) nombra explícitamente a Sterling, Quanta, EMCOR y Comfort Systems enfrentando la misma escasez de electricistas/pipefitters; salarios de electricistas comerciales subieron 9,9% YoY (vs. 2,4% general). Un análisis de la industria de 2026 estima 340.000 posiciones sin cubrir para fin de año (de 650.000 necesarias según BLS), con 33% de la fuerza técnica cerca de la jubilación."
+  },
+  {
+   "id": "FACTOR_CDUCoolingComponentBottleneck",
+   "label": "Cuello de botella de manufactura de CDUs/cold plates/chillers",
+   "severity": 7.0,
+   "members": {
+    "Group": 0.85,
+    "Electric": 0.8,
+    "Thermal": 0.7,
+    "Systems": 0.7,
+    "STULZ": 0.7,
+    "LiquidStack": 0.6,
+    "Modine": 0.6,
+    "Controls": 0.5,
+    "Technologies": 0.5,
+    "Asetek": 0.5,
+    "DeltaElectronics": 0.5,
+    "Envicool": 0.5,
+    "Global": 0.45
+   },
+   "rationale": "The Cooling Report (2026) documenta lead times de industria de 12-16 semanas para cold plates, 16-24 para CDUs y 20-30 para chillers, presionados por cobre por encima de USD 9.000/tonelada (LME) y escasez de manufactura especializada. La respuesta de capacidad es visible en todo el batch: nVent construyó 3 plantas nuevas en Minnesota en 3 años (última, 31-jul-2026, con producción recién en 1H2027); STULZ abrió/anunció 2 plantas en Denton, TX (2025 y may-2026); Munters admitió en su Q2 2026 que la facturación de Data Center Technologies quedó por debajo de lo esperado por \"cuellos de botella de cadena de suministro\" y el ramp-up de su planta en Virginia, golpeando el margen del grupo. Los \"top-14\" hyperscalers comprometieron ~USD 750.000M de capex 2026 sobre ~23GW en construcción — demanda que creció 2-3x los volúmenes históricos."
+  },
+  {
+   "id": "FACTOR_HyperscalerConcentrationRisk",
+   "label": "Concentración de ingresos/backlog en un puñado de hyperscalers",
+   "severity": 7.0,
+   "members": {
+    "USA": 0.85,
+    "Infrastructure": 0.85,
+    "Corgan": 0.8,
+    "Mortenson": 0.7,
+    "Group": 0.6,
+    "Modine": 0.6,
+    "Construction": 0.4,
+    "Quanta": 0.45,
+    "Phelps": 0.4,
+    "Inc": 0.25
+   },
+   "rationale": "Comfort Systems reveló en su call de 2T-2026 (24-jul-2026) que hyperscalers tecnológicos = 58% de su revenue total (vs. 40% un año antes); Sterling reveló que trabajo mission-critical supera 90% del backlog de su segmento E-Infrastructure (1T-2026); DPR divulga que 96% de sus ingresos mission critical de 5 años vienen de clientes recurrentes, sobre todo Meta (4 campus de USD 800M-10.000M repartidos entre Turner/DPR/Mortenson/Hensel Phelps en este batch); Modine confirmó en su call de may-2026 que \"dos hyperscalers representan la mayoría\" de su revenue de datacenters, sin nombrarlos. Las 4 contratistas públicas del batch re-rated fuertemente en 2026 (market caps de USD 18.310M a USD 100.330M al 31-jul-2026) en gran parte sobre esta narrativa concentrada — una desaceleración del capex de IA en 3-4 hyperscalers golpearía simultáneamente crecimiento y múltiplos de todo el grupo."
+  },
+  {
+   "id": "FACTOR_TransformerSwitchgearBottleneck",
+   "label": "Cuello de botella de transformadores y equipos eléctricos (switchgear)",
+   "severity": 7.0,
+   "members": {
+    "Quanta": 0.7,
+    "Infrastructure": 0.55,
+    "Group": 0.55,
+    "USA": 0.5,
+    "Corgan": 0.45,
+    "Inc": 0.35
+   },
+   "rationale": "Reportes de jul-2026 (Tech Times, 29-jul-2026, \"Data Center Supply Chains Emerge as AI Buildout's Third Chokepoint\") documentan que más de la mitad de los proyectos de datacenters planeados en EE.UU. sufrieron demoras o cancelaciones por escasez de transformadores y componentes eléctricos, agravada por restricciones en partes provenientes de China. Afecta directamente la capacidad de las contratistas eléctricas de ejecutar backlog récord en los plazos comprometidos — especialmente Quanta, dado su foco en subestaciones/transmisión (backlog USD 53.400M, 2T-2026)."
+  },
+  {
+   "id": "FACTOR_ChinaCoolingGeoRisk",
+   "label": "Riesgo geopolítico de proveedores chinos de cooling",
+   "severity": 7.0,
+   "members": {
+    "Envicool": 0.9,
+    "DeltaElectronics": 0.3,
+    "Systems": 0.1
+   },
+   "rationale": "Envicool, líder doméstico chino de liquid cooling (ByteDance, Tencent, Alibaba), enfrenta aranceles de EE.UU. reportados hasta ~145% en el pico de la disputa 2025-2026, limitando su acceso directo al mercado estadounidense — pese a estar en negociaciones activas con Google para CDUs fuera de EE.UU. (Reuters, 17-mar-2026). En paralelo, Taiwán evaluaba en jun-2026 ampliar sus propios controles de exportación de chips de IA hacia China más allá de Huawei, lo que podría generar represalias que afecten a toda la cadena de manufactura electrónica taiwanesa (incluida DeltaElectronics, con plantas en China continental). El resultado es una capa de cooling físicamente crítica cada vez más fracturada en dos ecosistemas de suministro que podrían dejar de ser intercambiables si la escalada continúa."
+  },
+  {
+   "id": "FACTOR_DCBrokerageFeeSupercycle",
+   "label": "Supercycle de fees de brokerage por transacciones/financiamiento de datacenters de IA",
+   "severity": 7.0,
+   "members": {
+    "Group": 0.7,
+    "JLL": 0.6,
+    "Colliers": 0.5,
+    "Wakefield": 0.5
+   },
+   "rationale": "El boom de fees por transacciones/financiamiento de datacenters de IA fue el principal driver de crecimiento reportado por las 5 firmas simultáneamente en 1T-2T 2026 (CBRE: EPS core +81% YoY 1T2026; Newmark: préstamo récord de USD 7.100M para Stargate Abilene, 22-may-2025; JLL: Capital Markets +19% 2T2026; Colliers: utilidad neta +613% YoY 2T2026). Como los brokers cobran comisiones sobre flujo de transacciones —no sobre stock de activos—, una desaceleración en el ritmo de nuevos cierres de deals de IA golpearía desproporcionadamente sus ingresos frente a jugadores con ingresos más recurrentes (ej. REITs con arrendamientos de largo plazo)."
+  },
+  {
+   "id": "FACTOR_CapRatesIndustrialREIT",
+   "label": "Sensibilidad de valuaciones REIT industrial a tasas de interés/cap rates",
+   "severity": 6.0,
+   "members": {
+    "Segro": 0.7,
+    "Group": 0.6,
+    "Trust": 0.4,
+    "Prologis": 0.5,
+    "Realty": 0.5,
+    "Property": 0.5
+   },
+   "rationale": "Segro elevó su LTV de 28% (2024) a 31% (2025); la capitalización de Goodman cayó de ~AUD 69.500M (jun-2025) a AUD 59.540M (jul-2026) pese a +13% en utilidad operativa; Mapletree Industrial Trust registró DPU -6,3% YoY (FY25/26) con programa defensivo de capital recycling (SGD 550,6M en desinversiones); Rexford vio net income -23,85% YoY pese a +7,13% en revenue. Este patrón —fundamentals operativos sólidos pero compresión de valuación/DPU— es consistente con tasas más altas presionando cap rates del sector industrial a nivel global en 2025-2026."
+  },
+  {
+   "id": "FACTOR_REITPrivatizationMA",
+   "label": "Consolidación M&A / take-private de REITs industriales con exposición a datacenters",
+   "severity": 6.0,
+   "members": {
+    "Group": 0.3,
+    "GLP": 1.0,
+    "Industrial": 1.0,
+    "Segro": 0.3
+   },
+   "rationale": "Tres de los once REITs de este batch cambiaron de manos vía M&A/take-private entre 2021-2025: WPT Industrial→Blackstone/BREIT (cierre 20-oct-2021, ~USD 3.100M), GLP Capital Partners International→Ares Management (cierre 3-mar-2025, ~USD 5.200-5.300M, renombrada GCP International), y ESR Group→consorcio Starwood/SSW Partners/Sixth Street (cierre 4-jul-2025, ~USD 7.100M). Esto concentra activos críticos de datacenter en manos de un número menor de gestores de capital privado, reduciendo la transparencia pública sobre decisiones de inversión que afectan directamente la capacidad física disponible para la cadena de IA."
+  },
+  {
+   "id": "FACTOR_ChillerlessDisruptionRisk",
+   "label": "Riesgo de disrupción \"chiller-less\" (narrativa Nvidia)",
+   "severity": 6.0,
+   "members": {
+    "Controls": 0.9,
+    "Technologies": 0.7,
+    "Global": 0.5,
+    "Group": 0.35,
+    "STULZ": 0.3,
+    "Electric": 0.15
+   },
+   "rationale": "El 6-ene-2026 (CES 2026) Jensen Huang (Nvidia) afirmó que la plataforma Vera Rubin \"no necesitará chillers de agua\" pese a su mayor densidad de potencia, lo que hizo caer en un día las acciones de Johnson Controls -10%, Trane -8% y Carrier -5% (mayor caída en las de menor diversificación hacia liquid cooling en ese momento). El episodio expuso el riesgo de obsolescencia parcial del chiller tradicional de gran escala si la arquitectura 100%-liquid se generaliza, aunque los resultados de 2T-3T 2026 de las tres empresas sugieren que el mercado reaccionó de forma exagerada en el corto plazo."
+  },
+  {
+   "id": "FACTOR_HormuzWar2026",
+   "label": "Guerra y cierre del Estrecho de Ormuz (2026)",
+   "severity": 10.0,
+   "members": {
+    "Nakilat": 1.0,
+    "DPWorld": 0.9,
+    "QatarEnergy": 0.8,
+    "MOL": 0.6,
+    "NYKLine": 0.6,
+    "ADNOC": 0.6,
+    "SaudiAramco": 0.5,
+    "SuezCanalAuthority": 0.4,
+    "PanamaCanalAuthority": 0.3,
+    "HapagLloyd": 0.3
+   },
+   "rationale": "Desde el 28-feb-2026, tras \"Operation Epic Fury\" (ataques aéreos EEUU-Israel que mataron al líder supremo iraní), Irán bloqueó de facto el Estrecho de Ormuz con minado y ataques a buques, cortando ~25% del petróleo marítimo mundial y ~20% del GNL global; el tráfico de tanqueros cayó a casi cero a inicios de marzo-2026, con ~20.000 marinos y 2.000 buques varados en el Golfo (en.wikipedia.org/wiki/2026_Strait_of_Hormuz_crisis). Un buque GNL de Nakilat fue alcanzado por un proyectil el 7-jul-2026; Jebel Ali (DP World) perdió 90-95% de su tráfico. Brent superó USD 126/barril en marzo-2026. Catar reanudó envíos cautelosos recién el 30-jul-2026."
+  },
+  {
+   "id": "FACTOR_RedSeaHouthi",
+   "label": "Crisis del Mar Rojo / Bab-el-Mandeb (Houthi, 2023-2026)",
+   "severity": 8.0,
+   "members": {
+    "ZIM": 1.0,
+    "SuezCanalAuthority": 0.9,
+    "Maersk": 0.5,
+    "HapagLloyd": 0.5,
+    "MSC": 0.4,
+    "CMA_CGM": 0.4,
+    "ONE_Line": 0.4,
+    "EvergreenMarine": 0.4,
+    "HMM": 0.3,
+    "YangMing": 0.3
+   },
+   "rationale": "Desde oct-2023 los ataques hutíes forzaron a la mayoría de las navieras a desviar rutas Asia-Europa por el Cabo de Buena Esperanza (+10-14 días). Los ingresos de Suez cayeron -45,5% en FY2024/25 antes de recuperar +23% en FY2025/26 (cerrado 30-jun-2026) tras el alto el fuego de Gaza de oct-2025. Pero el 8-jun-2026 los hutíes declararon un bloqueo total contra naves vinculadas a Israel, y hacia jul-2026 la crisis \"resurgió\" en paralelo a la guerra de Ormuz — Arabia Saudita reportó caída de 36% en cargas petroleras vía Bab-el-Mandeb (The National, 20-jul-2026). ZIM es el blanco directo por bandera israelí."
+  },
+  {
+   "id": "FACTOR_TaiwanStrait",
+   "label": "Tensión en el Estrecho de Taiwán",
+   "severity": 8.0,
+   "members": {
+    "TSMC": 1.0,
+    "EvergreenMarine": 0.8,
+    "YangMing": 0.8,
+    "WanHai": 0.7,
+    "Foxconn": 0.5,
+    "COSCOShipping": 0.3,
+    "ONE_Line": 0.3
+   },
+   "rationale": "El Estrecho de Taiwán es una de las rutas marítimas más transitadas del mundo y concentra la producción de los semiconductores más avanzados del planeta (TSMC). Un análisis de Bloomberg citado por Chatham House (abr-2026) estima que un bloqueo chino reduciría el PBI global ~5% (comparable a 2008-09/COVID), y un conflicto militar pleno hasta ~10% — muy por encima del impacto de Ormuz, porque los semiconductores (a diferencia del petróleo) no pueden sustituirse ni almacenarse fácilmente y requieren re-certificación prolongada. En jul-2026 la Guardia Costera china ensayó herramientas de bloqueo mientras Taiwán planeaba contra-simulacros (Tech Times, 20-jul-2026); no hay bloqueo cinético activo a la fecha de referencia, pero la escalada retórica y de ensayos es la más alta desde 2023-2024."
+  },
+  {
+   "id": "FACTOR_MalaccaStrait",
+   "label": "Concentración estructural en el Estrecho de Malaca",
+   "severity": 7.0,
+   "members": {
+    "PSAInternational": 1.0,
+    "ONE_Line": 0.6,
+    "EvergreenMarine": 0.5,
+    "YangMing": 0.5,
+    "WanHai": 0.5,
+    "MSC": 0.4,
+    "Maersk": 0.4,
+    "COSCOShipping": 0.4,
+    "HMM": 0.4,
+    "DPWorld": 0.3
+   },
+   "rationale": "El Estrecho de Malaca canaliza entre ~22-25% del comercio mundial y hasta \"casi un tercio de los flujos petroleros globales\" según Malay Mail (6-abr-2026), sin ruta alternativa comparable en tiempo/costo (el rodeo por el Estrecho de la Sonda o Lombok añade días y no tiene la infraestructura portuaria de Singapur). Es un chokepoint estructural y permanente (a diferencia de Ormuz/Mar Rojo que son crisis episódicas), por lo que cualquier interrupción —accidente, bloqueo chino en escenario de Taiwán, piratería— afectaría simultáneamente a la práctica totalidad de las navieras y puertos de esta capa."
+  },
+  {
+   "id": "FACTOR_PanamaDrought",
+   "label": "Sequía / El Niño y restricciones de calado en el Canal de Panamá",
+   "severity": 6.0,
+   "members": {
+    "PanamaCanalAuthority": 1.0,
+    "HutchisonPorts": 0.4,
+    "APMTerminals": 0.4,
+    "MSC": 0.3,
+    "Maersk": 0.3,
+    "CMA_CGM": 0.3,
+    "CheniereEnergy": 0.4
+   },
+   "rationale": "El Canal de Panamá depende 100% de agua de lluvia (lagos Gatún/Alajuela) para operar sus esclusas. Tras la crisis histórica de 2023-24, la ACP recuperó operación plena en FY2025 (489,1M toneladas, ingresos +14,4%), pero el 3-jul-2026 reintrodujo un recorte de calado a 49,5 pies en las esclusas Neopanamax ante pronósticos de un nuevo El Niño extendiéndose a 2027 (FreshFruitPortal, 10-jun-2026; Marine Insight, jul-2026). El proyecto Lago Río Indio (USD 1.600M) busca romper esta dependencia climática recién hacia inicios de la próxima década."
+  },
+  {
+   "id": "FACTOR_USChinaPortRivalry",
+   "label": "Rivalidad EEUU-China por puertos globales (disputa Panamá/CK Hutchison/Section 301/Chancay)",
+   "severity": 6.0,
+   "members": {
+    "HutchisonPorts": 1.0,
+    "COSCOShippingPorts": 0.8,
+    "PanamaCanalAuthority": 0.7,
+    "ChinaMerchantsPort": 0.6,
+    "COSCOShipping": 0.6,
+    "Maersk": 0.5,
+    "MSC": 0.5
+   },
+   "rationale": "Desde mar-2025 la venta de 43 terminales de CK Hutchison (incl. Balboa/Cristóbal en Panamá) a un consorcio BlackRock-TiL(MSC) por USD 22.800M quedó atrapada entre la presión de EEUU (que impulsa sacar el control chino de las cercanías del Canal) y de China (que exige que COSCO Shipping Ports y China Merchants entren con control mayoritario, estancando el cierre desde abr-2026). En paralelo, la Corte Suprema de Panamá anuló la concesión de Hutchison en Balboa/Cristóbal (feb-2026), entregada de forma interina a Maersk/APM Terminals y MSC/TiL, mientras Washington aplicó y luego suspendió (10-nov-2025 a 9-nov-2026) aranceles portuarios Section 301 contra navieras chinas tras la cumbre Trump-Xi. El mismo eje de disputa se repite en Chancay, Perú, donde un tribunal restauró la supervisión regulatoria sobre el puerto de COSCO Shipping Ports el 2-jul-2026 en medio de advertencias de EEUU sobre \"pérdida de soberanía\" peruana."
+  },
+  {
+   "id": "FACTOR_NARailConsolidation",
+   "label": "Consolidación ferroviaria norteamericana (fusión Union Pacific-Norfolk Southern)",
+   "severity": 5.0,
+   "members": {
+    "UnionPacific": 1.0,
+    "NorfolkSouthern": 1.0,
+    "CSXCorp": 0.6,
+    "BNSFRailway": 0.5,
+    "CPKC": 0.4,
+    "CanadianNational": 0.3,
+    "JBHunt": 0.5,
+    "CHRobinson": 0.2
+   },
+   "rationale": "El 28-29-jul-2025 Union Pacific acordó adquirir Norfolk Southern por ~USD 85.000M para crear \"el primer ferrocarril transcontinental de EEUU\". El Surface Transportation Board aceptó la solicitud enmendada el 28-may-2026 pero mantiene el proceso \"in abeyance\" pendiente de información adicional (incluyendo datos de impacto laboral publicados por orden del STB el 22-jul-2026), con cierre no esperado antes de inicios de 2027. Todo el sector reaccionó preventivamente: BNSF y CPKC rechazaron fusionarse con CSX (ago-2025) y en su lugar formaron partnerships intermodales (BNSF-CSX \"coast-to-coast\"; CPKC-CSX \"Southeast Mexico Express\"), mientras J.B. Hunt advirtió que la fusión podría alterar la economía de su red intermodal este (dependiente de NS)."
+  },
+  {
+   "id": "FACTOR_ContainerOvercapacity",
+   "label": "Sobrecapacidad y colapso de tarifas en shipping de contenedores (2025-2026)",
+   "severity": 5.0,
+   "members": {
+    "ONE_Line": 0.9,
+    "ZIM": 0.7,
+    "COSCOShipping": 0.7,
+    "Maersk": 0.7,
+    "HapagLloyd": 0.6,
+    "CMA_CGM": 0.6,
+    "EvergreenMarine": 0.6,
+    "YangMing": 0.6,
+    "WanHai": 0.6,
+    "HMM": 0.6,
+    "MSC": 0.4
+   },
+   "rationale": "El exceso de pedidos de buques de 2021-2024 generó sobrecapacidad estructural que, combinada con la normalización gradual de rutas tras la crisis del Mar Rojo, deprimió las tarifas de flete durante 2025 en toda la industria: Maersk (-56% utilidad neta), ONE (-92%), ZIM (-78%), COSCO (-37,2%), HMM (-58,4% operativo) reportaron caídas simultáneas y muy pronunciadas de rentabilidad pese a volúmenes estables o crecientes. Es un riesgo financiero sistémico de la capa —afecta prácticamente a todas las navieras de contenedores del lote simultáneamente— distinto de los choques geopolíticos puntuales, y explica la ola de M&A defensiva de 2025-2026 (Hapag-Lloyd/ZIM, consolidación de alianzas)."
+  },
+  {
+   "id": "FACTOR_HeavyLiftConcentration",
+   "label": "Concentración extrema en heavy-lift terrestre especializado",
+   "severity": 7.0,
+   "members": {
+    "Mammoet": 0.4,
+    "Sarens": 0.27,
+    "Fagioli": 0.2,
+    "deugro": 0.08,
+    "TransGlobalProjects": 0.05
+   },
+   "rationale": "Tras la fusión Mammoet-ALE (cierre ene-2020) y la adquisición de Fagioli por CEVA/CMA CGM (cierre abr-2026), la capacidad mundial de izaje de miles de toneladas (transformadores AT/EHV, turbinas, módulos de datacenter) está concentrada en un puñado de operadores. Mammoet declaró que, tras absorber ALE, su capacidad de izaje llegó a ser \"aproximadamente el doble que su competidor más cercano\" (KHL Group, ene-2020). Sarens (853,3M€ de ingresos en 2024, sarens.com) es el principal rival independiente restante, mientras que Fagioli —poseedora del récord mundial de transporte terrestre (buque Charybdis, 23.000+ toneladas, 2024)— ahora depende de las prioridades de capital de un conglomerado naviero francés. Un evento adverso (quiebra, huelga, restricción de crédito, cambio de propietario) en cualquiera de estos tres grupos tendría efecto sistémico inmediato sobre proyectos de datacenters y red eléctrica en curso a nivel mundial, dado que no existen sustitutos de escala comparable."
+  },
+  {
+   "id": "FACTOR_An124Collapse",
+   "label": "Colapso de la flota occidental/comercial de Antonov An-124",
+   "severity": 9.0,
+   "members": {
+    "Antonov_Airlines": 0.45,
+    "Volga_Dnepr": 0.35,
+    "Maximus_Air": 0.2
+   },
+   "rationale": "De la flota civil mundial de An-124 (~15 aeronaves comercialmente operativas según \"List of Antonov An-124 operators\", Wikipedia, medido ~2025; ningún fabricante produce unidades nuevas), Volga-Dnepr (7-11 unidades nominales, mayoría en tierra por sanciones desde feb-2022, vendida a un comprador ruso doméstico —Evraz Avia Servis— el 30-dic-2025) es en la práctica inaccesible para clientes occidentales. Antonov Airlines (Ucrania, 7 unidades, 3-5 operativas según fuente/fecha) es el único operador comercial plenamente alineado con Occidente, tras perder 3 aeronaves incl. su único An-225 Mriya en la batalla de Hostomel (feb-2022) y operar bajo guerra activa desde una base reubicada en Alemania. Maximus Air (EAU) aporta apenas 1 unidad adicional. El caso documentado de Hitachi Energy (jun-2026: dos transformadores de 80 toneladas cada uno volados de Łódź, Polonia, a Chicago en un An-124 para un datacenter hyperscale de IA, con una \"ventana de entrega extremadamente comprimida\" que llevó a "
+  },
+  {
+   "id": "FACTOR_747NoseCargoEnd",
+   "label": "Fin de producción del Boeing 747 y dependencia de carga por morro sin reemplazo",
+   "severity": 6.0,
+   "members": {
+    "Cargolux": 0.24,
+    "Atlas_Air": 0.22,
+    "Cathay_Cargo": 0.17,
+    "Kalitta_Air": 0.15,
+    "Silk_Way_West": 0.13,
+    "Volga_Dnepr": 0.09
+   },
+   "rationale": "Boeing entregó el último 747 de la historia a Atlas Air el 31-ene-2023 (Boeing press release), cerrando 54 años de producción. El 747-8F/400F es, junto al An-124 (cubierto en FACTOR_An124Collapse), de los únicos aviones de carga con puerta de carga por el morro además de lateral, permitiendo cargar piezas indivisibles largas —componentes de sistemas EUV, rotores de turbina, núcleos de transformador— que no entran por las puertas laterales de los 777F/A350F que dominan los pedidos de nueva generación (Atlas Air: 20 A350F pedidos mar-2026; Cathay Cargo: 6 A350F pedidos; Emirates/Qatar: solo 777F). La flota mundial de 747F es fija y envejece sin reemplazo directo — cualquier atrición (retiros por edad, como el retiro completo de la flota MD-11F de UPS en 4T2025, un tipo de aeronave con problema análogo de fin de producción) reduce permanentemente la capacidad mundial de carga aérea \"por morro\" disponible para equipos indivisibles de IA/energía."
+  }
+ ],
+ "seats": [
+  {
+   "id": "Seat_FedChair",
+   "label": "Presidencia (Chair) de la Reserva Federal",
+   "props": {
+    "institución": "Sistema de la Reserva Federal / FOMC (EEUU)",
+    "ocupante_actual": "Kevin Warsh, desde el 22 de mayo de 2026 (sucede a Jerome Powell)...",
+    "tipo_de_palanca": "monetaria",
+    "que_puede_mover": "preside el FOMC y fija la tasa de referencia, que determina el costo de capital para todo el capex de IA/datacenters...",
+    "conexiones": "influencia sistémica vía costo de capital, no 1:1 — ver FACTOR_USGov_Equity...",
+    "fuente": "Federal Reserve press release 22-may-2026; CNBC 13-may-2026..."
+   }
+  },
+  {
+   "id": "Seat_ECBPresident",
+   "label": "Presidencia del Banco Central Europeo",
+   "props": {
+    "institución": "Banco Central Europeo (BCE)",
+    "ocupante_actual": "**Christine Lagarde**, desde noviembre de 2019 (mandato formal hasta octubre de 2027). Activa a julio 2026, pero reportes del 3-jul-2026 indican que evalúa salida anticipada por una eventual candidatura en la política francesa.",
+    "tipo_de_palanca": "monetaria",
+    "que_puede_mover": "fija la tasa de referencia de la eurozona (costo de capital para ASML, Infineon, STMicroelectronics, Siemens Energy); supervisión bancaria de la eurozona; su política cambiaria afecta la competitividad exportadora del equipamiento europeo de semiconductores.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_EUChipsAct2.",
+    "fuente": "CNBC \"Christine Lagarde leaves door open to early ECB exit\", 3-jul-2026; ECB.europa.eu statement 2026"
+   }
+  },
+  {
+   "id": "Seat_PBOCGovernor",
+   "label": "Gobernador del Banco Popular de China",
+   "props": {
+    "institución": "Banco Popular de China (PBOC)",
+    "ocupante_actual": "**Pan Gongsheng**, desde julio de 2023. Activo a junio 2026.",
+    "tipo_de_palanca": "monetaria",
+    "que_puede_mover": "fija tasas de referencia y el coeficiente de reservas (RRR) de China; dirige la política cambiaria del yuan; canaliza liquidez estatal a bancos que financian a SMIC, YMTC y el ecosistema Huawei.",
+    "conexiones": "influencia amplia no 1:1 — condiciona el acceso a crédito de todo el complejo de semiconductores estatal chino (SMIC, YMTC, Huawei, Cambricon); ver FACTOR_OutboundInvest y FACTOR_RareEarth.",
+    "fuente": "Bloomberg \"PBOC's Pan Reaffirms Room for Further Easing\", 22-ene-2026; investingLive 17-jun-2026"
+   }
+  },
+  {
+   "id": "Seat_BOJGovernor",
+   "label": "Gobernador del Banco de Japón",
+   "props": {
+    "institución": "Banco de Japón (BOJ)",
+    "ocupante_actual": "**Kazuo Ueda**, desde abril de 2023. Hospitalizado 10-jun-2026, dado de alta 19-jun-2026; el BOJ mantuvo su reunión de política el 31-jul-2026.",
+    "tipo_de_palanca": "monetaria",
+    "que_puede_mover": "única gran economía aún normalizando tasas desde niveles ultra-bajos — afecta directamente el \"carry trade\" del yen que financia buena parte del capex tecnológico asiático; mueve el costo de capital de Tokyo Electron, Nikon, Canon, Renesas.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_EUChipsAct2 y FACTOR_TSMC_Arizona como contexto (Japón compite por atraer capex de fabs, ej. Rapidus).",
+    "fuente": "CNBC \"BOJ governor Ueda hospitalised\", 10-jun-2026; Bloomberg 19-jun-2026; Axios 31-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_BoEGovernor",
+   "label": "Gobernador del Banco de Inglaterra",
+   "props": {
+    "institución": "Banco de Inglaterra (BoE)",
+    "ocupante_actual": "**Andrew Bailey**, desde marzo de 2020. Activo a 30-jul-2026 (decisión de tasas con voto dividido).",
+    "tipo_de_palanca": "monetaria",
+    "que_puede_mover": "tasa de referencia UK; relevante para ARM Holdings (base operativa en Cambridge) y el sector financiero que apalanca infraestructura de datacenters en UK.",
+    "conexiones": "nodo directo más cercano: ARM_Holdings.",
+    "fuente": "Bloomberg \"Bailey Plays Down Rate Hikes\", 30-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_USCommerce",
+   "label": "Secretaría de Comercio de EEUU",
+   "props": {
+    "institución": "Departamento de Comercio de EEUU",
+    "ocupante_actual": "**Howard Lutnick**, desde febrero de 2025. Activo a abril 2026.",
+    "tipo_de_palanca": "regulatoria_comercio",
+    "que_puede_mover": "recomienda al presidente aranceles sectoriales bajo Section 232 (incluyendo el 25% a semiconductores avanzados vigente desde ene-feb 2026); supervisa BIS y nombra a su Under Secretary; negocia condiciones del CHIPS Act, incluyendo exigir participaciones accionarias del gobierno (Intel, GlobalFoundries y 7 empresas más anunciadas el 31-jul-2026).",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_Sec232_Semis y FACTOR_USGov_Equity.",
+    "fuente": "Commerce.gov \"First Year Accomplishments under Secretary Lutnick\", ene-2026; Commerce.gov abr-2026"
+   }
+  },
+  {
+   "id": "Seat_USTR",
+   "label": "Representante Comercial de EEUU (USTR)",
+   "props": {
+    "institución": "Office of the United States Trade Representative",
+    "ocupante_actual": "**Jamieson Greer**, desde febrero de 2025. Activo a 21-jul-2026 (insinúa nuevos aranceles vía Section 301).",
+    "tipo_de_palanca": "regulatoria_comercio",
+    "que_puede_mover": "administra y expande los aranceles Section 301 (la herramienta arancelaria contra China que sobrevivió al fallo de la Corte Suprema de feb-2026); negocia acuerdos bilaterales (marco de minerales críticos con Japón, marco con Taiwán); puede abrir nuevas investigaciones Section 301/232.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_IEEPA_SCOTUS y FACTOR_Sec232_Semis.",
+    "fuente": "USTR.gov \"2026 Trade Policy Agenda\", mar-2026; CNBC 21-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_MOFCOM",
+   "label": "Ministro de Comercio de China (MOFCOM)",
+   "props": {
+    "institución": "Ministerio de Comercio de la República Popular China (MOFCOM)",
+    "ocupante_actual": "**Wang Wentao**, desde diciembre de 2022. Activo a 2-jul-2026 y 29-jun-2026.",
+    "tipo_de_palanca": "regulatoria_comercio",
+    "que_puede_mover": "administra la \"Lista de Entidades No Confiables\" china; emite licencias de exportación de minerales críticos (tierras raras, galio, germanio, grafito); revisa antimonopolio fusiones extranjeras en China (caso Nvidia-Mellanox).",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_RareEarth y FACTOR_ChinaAntitrust_Nvidia.",
+    "fuente": "MOFCOM rueda de prensa, 2-jul-2026; MOFCOM/X 29-jun-2026"
+   }
+  },
+  {
+   "id": "Seat_HeLifeng",
+   "label": "Vice Premier a cargo de política económica y negociación comercial con EEUU",
+   "props": {
+    "institución": "Consejo de Estado de la República Popular China",
+    "ocupante_actual": "**He Lifeng**, Vice Premier desde marzo de 2023, miembro del Politburó. Activo el 30-jul-2026 (videollamada con Bessent y Greer).",
+    "tipo_de_palanca": "regulatoria_comercio",
+    "que_puede_mover": "es el negociador jefe de China frente a EEUU en toda la relación económica; su firma valida o rompe cualquier tregua arancelaria o acuerdo de minerales críticos.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_IEEPA_SCOTUS, FACTOR_RareEarth y FACTOR_H20_Whiplash.",
+    "fuente": "Xinhua 30-jul-2026; Axios 30-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_BISUnderSecretary",
+   "label": "Under Secretary of Commerce for Industry and Security (jefe de BIS)",
+   "props": {
+    "institución": "Bureau of Industry and Security (BIS), Departamento de Comercio de EEUU",
+    "ocupante_actual": "**Jeffrey Kessler**, juramentado en marzo de 2025. **No verificado con fuente fechada en 2026** — última confirmación firme es marzo de 2025; no hay noticia de reemplazo.",
+    "tipo_de_palanca": "regulatoria_tech",
+    "que_puede_mover": "añade/quita empresas del Entity List (bloqueo de acceso a EDA de Cadence/Synopsys/Siemens EDA, litografía ASML, herramientas AMAT/Lam/KLA); escribe las reglas de control de exportación de semiconductores avanzados (EAR), incluyendo el régimen de licencias caso-por-caso para H20/H200/MI325X hacia China.",
+    "conexiones": "ver FACTOR_H20_Whiplash y FACTOR_RareEarth; nodo directo: Cadence, Synopsys.",
+    "fuente": "Congress.gov nominación; HSToday mar-2025; BIS.gov 2026 — **ocupante no reverificado para 2026**"
+   }
+  },
+  {
+   "id": "Seat_NDRC",
+   "label": "Presidente de la Comisión Nacional de Desarrollo y Reforma (NDRC, China)",
+   "props": {
+    "institución": "National Development and Reform Commission (NDRC), China",
+    "ocupante_actual": "**Zheng Shanjie**, desde marzo de 2023. Activo el 6-mar-2026.",
+    "tipo_de_palanca": "regulatoria_tech",
+    "que_puede_mover": "equivalente chino de política industrial de chips — asigna subsidios y cuotas de inversión a fabs chinas (SMIC, YMTC, CXMT), fija metas de autosuficiencia tecnológica en el plan quinquenal.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_OutboundInvest y FACTOR_H20_Whiplash.",
+    "fuente": "Global Times 6-mar-2026; NDRC.gov.cn"
+   }
+  },
+  {
+   "id": "Seat_NvidiaCEO",
+   "label": "CEO de Nvidia",
+   "props": {
+    "institución": "Nvidia Corporation",
+    "ocupante_actual": "**Jensen Huang**, cofundador y CEO desde 1993. Activo a 25-jul-2026.",
+    "tipo_de_palanca": "corporativa",
+    "que_puede_mover": "decide la asignación de GPUs de IA escasas (quién recibe Blackwell/Vera Rubin primero); decide qué proveedores de empaquetado/foundry usa; lobbying directo con la Casa Blanca y con Beijing sobre reglas de exportación de chips de IA.",
+    "conexiones": "TSMC (cliente ancla de capacidad CoWoS/2nm), SKHynix y Micron (contratos de suministro HBM), CoreWeave (cliente/inversión cruzada de GPUs), Microsoft y Amazon (mayores compradores hyperscale).",
+    "fuente": "Fortune 25-jul-2026; Nvidia Newsroom GTC 2026"
+   }
+  },
+  {
+   "id": "Seat_TSMCCEO",
+   "label": "CEO/Chairman de TSMC",
+   "props": {
+    "institución": "Taiwan Semiconductor Manufacturing Company (TSMC)",
+    "ocupante_actual": "**C.C. Wei**, CEO desde 2018; asumió también la presidencia (Chairman) en junio de 2024.",
+    "tipo_de_palanca": "corporativa",
+    "que_puede_mover": "decide la asignación de capacidad de manufactura de vanguardia; decide ritmo y tamaño de la expansión fuera de Taiwán (Arizona, Japón, Alemania); fija precios de wafers que se traspasan a toda la cadena fabless.",
+    "conexiones": "Nvidia, Apple, AMD (clientes ancla), ASML (comprador de sistemas EUV/High-NA), AMAT/Lam/KLA (compras de capex).",
+    "fuente": "DigiTimes 4-jun-2026; TIME100 2026"
+   }
+  },
+  {
+   "id": "Seat_ASMLCEO",
+   "label": "CEO de ASML",
+   "props": {
+    "institución": "ASML Holding N.V.",
+    "ocupante_actual": "**Christophe Fouquet**, President & CEO desde abril de 2024. Activo a 15-jul-2026.",
+    "tipo_de_palanca": "corporativa",
+    "que_puede_mover": "decide la asignación de sistemas EUV/High-NA entre TSMC, Samsung, Intel y SK Hynix; determina el grado de cumplimiento/resistencia frente a restricciones de exportación holandesas y estadounidenses hacia China.",
+    "conexiones": "TSMC, Samsung, Intel (compradores de EUV), SMIC (cliente históricamente restringido).",
+    "fuente": "CNBC 15-jul-2026; ASML.com 2026"
+   }
+  },
+  {
+   "id": "Seat_SamsungDS",
+   "label": "Vicepresidente y Co-CEO, jefe de la División Device Solutions de Samsung Electronics",
+   "props": {
+    "institución": "Samsung Electronics — División Device Solutions (memoria + foundry + system LSI)",
+    "ocupante_actual": "**Jun Young-Hyun**, Vice Chairman & Co-CEO, jefe de la división DS desde mayo de 2024, reafirmado en el reshuffle de noviembre de 2025.",
+    "tipo_de_palanca": "corporativa",
+    "que_puede_mover": "decide el capex de foundry y memoria de Samsung; negocia directamente los contratos de HBM con Nvidia/AMD; decide si el proceso 2nm GAA de Samsung se certifica para clientes externos.",
+    "conexiones": "Nvidia (HBM4), Tesla (foundry de chips de IA/AI5), Qualcomm (cliente potencial).",
+    "fuente": "Korea Herald; DigiTimes 21-nov-2025; Samsung Semiconductor Newsroom"
+   }
+  },
+  {
+   "id": "Seat_SKHynixCEO",
+   "label": "CEO de SK Hynix",
+   "props": {
+    "institución": "SK Hynix Inc.",
+    "ocupante_actual": "**Kwak Noh-jung**, desde marzo de 2022.",
+    "tipo_de_palanca": "corporativa",
+    "que_puede_mover": "controla la mayor cuota de mercado mundial de HBM (High Bandwidth Memory) — insumo crítico e irremplazable para las GPUs de IA de Nvidia y AMD.",
+    "conexiones": "Nvidia (suministro HBM crítico), Micron y Samsung (competencia por cuota HBM4/HBM4E).",
+    "fuente": "UPI 2-jun-2026; SK hynix Newsroom 2026"
+   }
+  },
+  {
+   "id": "Seat_NLTradeMinister",
+   "label": "Ministro de Comercio Exterior y Cooperación al Desarrollo de los Países Bajos",
+   "props": {
+    "institución": "Ministerie van Buitenlandse Zaken (Países Bajos) — cartera de Comercio Exterior",
+    "ocupante_actual": "**Sjoerd Sjoerdsma** (D66), juramentado el 23-feb-2026.",
+    "tipo_de_palanca": "regulatoria_tech",
+    "que_puede_mover": "otorga o revoca las licencias de exportación de los sistemas DUV/EUV de ASML hacia China; este asiento fue el que en 2023-2024 restringió el servicio de mantenimiento de ASML a herramientas ya instaladas en China.",
+    "conexiones": "ASML; ver también FACTOR_Nexperia.",
+    "fuente": "Government.nl 23-feb-2026; NL Times 8-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_JapanMETI",
+   "label": "Ministro de Economía, Comercio e Industria de Japón (METI)",
+   "props": {
+    "institución": "Ministry of Economy, Trade and Industry (METI), Japón",
+    "ocupante_actual": "**Akazawa Ryosei**, nombrado el 21-oct-2025, reconfirmado el 18-feb-2026.",
+    "tipo_de_palanca": "regulatoria_tech",
+    "que_puede_mover": "controla las licencias de exportación de equipos de litografía y materiales japoneses (Nikon, Canon, Tokyo Electron, Shin-Etsu, JSR); negoció el marco de minerales críticos EEUU-Japón (mar-2026).",
+    "conexiones": "Nikon, Canon, TEL, ShinEtsu, JSR.",
+    "fuente": "METI.go.jp; USTR.gov mar-2026"
+   }
+  },
+  {
+   "id": "Seat_XiJinping_CMC",
+   "label": "Liderazgo del Politburó/Comisión Militar Central de China con poder de decisión sobre Taiwán",
+   "props": {
+    "institución": "Comisión Militar Central (CMC) del PCCh / Secretaría General del PCCh / Presidencia de la RPC",
+    "ocupante_actual": "**Xi Jinping**, desde noviembre de 2012 (CMC) / marzo de 2013 (Presidencia). Activo el 1-jul-2026. Nota: turbulencia interna reciente en la cúpula de la CMC (purga del vicepresidente He Weidong), que no afecta la ocupación del asiento principal.",
+    "tipo_de_palanca": "militar_geopolitica",
+    "que_puede_mover": "decide la postura militar sobre Taiwán; decide represalias económicas contra Taiwán/EEUU; controla los nombramientos de la cúpula militar.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_Taiwan_Tension.",
+    "fuente": "Washington Times 1-jul-2026; NBC News (purga de generales)"
+   }
+  },
+  {
+   "id": "Seat_TaiwanPresident",
+   "label": "Presidencia de Taiwán",
+   "props": {
+    "institución": "Oficina de la Presidencia, República de China (Taiwán)",
+    "ocupante_actual": "**Lai Ching-te** (William Lai), desde el 20 de mayo de 2024.",
+    "tipo_de_palanca": "militar_geopolitica",
+    "que_puede_mover": "decide la política de defensa y el gasto militar de Taiwán; gestiona la relación con TSMC respecto a cuánta producción de vanguardia debe permanecer en la isla (\"escudo de silicio\"); negocia con EEUU garantías de seguridad vinculadas a la inversión de TSMC en Arizona.",
+    "conexiones": "TSMC; ver FACTOR_Taiwan_Tension.",
+    "fuente": "Office of the President ROC discurso Año Nuevo 2026; Washington Times 1-ene-2026"
+   }
+  },
+  {
+   "id": "Seat_USEnergy",
+   "label": "Secretaría de Energía de EEUU",
+   "props": {
+    "institución": "Departamento de Energía de EEUU (DOE)",
+    "ocupante_actual": "**Chris Wright**, desde febrero de 2025. Activo a 10-may-2026.",
+    "tipo_de_palanca": "energetica",
+    "que_puede_mover": "controla los préstamos del Loan Programs Office (LPO) para proyectos nucleares y de energía; coordina la política de permisos nucleares relevante para SMRs que alimentan datacenters de IA; decide política de exportación de GNL.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_AIPower_Nuclear.",
+    "fuente": "CBS News \"Face the Nation\" 10-may-2026; Energy.gov testimonio presupuesto FY2026"
+   }
+  },
+  {
+   "id": "Seat_OPECSecGen",
+   "label": "Secretario General de la OPEP",
+   "props": {
+    "institución": "Organización de Países Exportadores de Petróleo (OPEP/OPEC)",
+    "ocupante_actual": "**Haitham Al Ghais**, desde agosto de 2022. Activo a 18-jun-2026.",
+    "tipo_de_palanca": "energetica",
+    "que_puede_mover": "coordina (con poder más simbólico/técnico que decisorio real) la política de cuotas de producción de la OPEP.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_AIPower_Nuclear.",
+    "fuente": "OPEC.org 18-jun-2026; CNBC 18-jun-2026"
+   }
+  },
+  {
+   "id": "Seat_SaudiEnergyMinister",
+   "label": "Ministro de Energía (y ahora también Industria) de Arabia Saudita",
+   "props": {
+    "institución": "Ministerio de Energía + Ministerio de Industria y Recursos Minerales, Arabia Saudita",
+    "ocupante_actual": "**Príncipe Abdulaziz bin Salman**, Ministro de Energía desde septiembre de 2019; el 11-jul-2026 recibió además la cartera de Industria y Recursos Minerales.",
+    "tipo_de_palanca": "energetica",
+    "que_puede_mover": "es quien realmente fija de facto las cuotas de producción de la OPEP+; controla también la ambición saudí de convertirse en hub industrial/de IA (Humain).",
+    "conexiones": "influencia amplia no 1:1 — afecta el costo energético global; relación directa emergente con Nvidia/AMD vía HUMAIN (ver FACTOR_GulfAI).",
+    "fuente": "Arab News 11-jul-2026; Bloomberg 13-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_NRCChair",
+   "label": "Presidencia de la Comisión Reguladora Nuclear de EEUU",
+   "props": {
+    "institución": "Nuclear Regulatory Commission (NRC), EEUU",
+    "ocupante_actual": "**Ho K. Nieh**, designado Chairman en enero de 2026, sucediendo a Christopher Hanson.",
+    "tipo_de_palanca": "energetica",
+    "que_puede_mover": "aprueba o deniega licencias de diseño y construcción de reactores (incluyendo SMRs) que los hyperscalers están contratando para alimentar datacenters de IA — cuello de botella regulatorio literal para la expansión energética nuclear de la IA en EEUU.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_AIPower_Nuclear.",
+    "fuente": "NRC.gov ene-2026; Morgan Lewis ene-2026"
+   }
+  },
+  {
+   "id": "Seat_WTODG",
+   "label": "Director General de la Organización Mundial del Comercio",
+   "props": {
+    "institución": "Organización Mundial del Comercio (OMC/WTO)",
+    "ocupante_actual": "**Ngozi Okonjo-Iweala**, desde marzo de 2021. Activa a julio de 2026.",
+    "tipo_de_palanca": "multilateral",
+    "que_puede_mover": "sin poder de sanción directo, preside el único foro multilateral de disputas comerciales; su influencia es de agenda y legitimidad, no ejecutiva.",
+    "conexiones": "influencia amplia y difusa, no modelable 1:1.",
+    "fuente": "WTO.org 8-jul-2026 y 14-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_IMFMD",
+   "label": "Directora Gerente del Fondo Monetario Internacional",
+   "props": {
+    "institución": "Fondo Monetario Internacional (FMI/IMF)",
+    "ocupante_actual": "**Kristalina Georgieva**, desde octubre de 2019; reelegida hasta 2029 en abril de 2024. Activa a 7-jul-2026.",
+    "tipo_de_palanca": "multilateral",
+    "que_puede_mover": "condiciona préstamos a países en crisis; publica análisis de riesgo sistémico que mueve mercados; advirtió en jun-2026 que \"la economía global no está preparada para shocks cada vez más frecuentes\".",
+    "conexiones": "influencia amplia y difusa, no modelable 1:1 — relevante como \"sensor\" sistémico.",
+    "fuente": "Bloomberg 8-jun-2026; IMF.org 7-jul-2026"
+   }
+  },
+  {
+   "id": "Seat_POTUS",
+   "label": "Presidencia de los Estados Unidos",
+   "props": {
+    "institución": "Casa Blanca / Executive Office of the President",
+    "ocupante_actual": "**Donald Trump**, desde el 20 de enero de 2025.",
+    "tipo_de_palanca": "regulatoria_comercio",
+    "que_puede_mover": "nombra jefes de agencias regulatorias (Fed, BIS, NRC); firma órdenes ejecutivas de control de exportación; **su autoridad arancelaria vía IEEPA fue anulada por la Corte Suprema el 20-feb-2026** (retiene aranceles Section 232/301); negocia directamente participaciones accionarias del gobierno en empresas estratégicas (Intel, MP Materials, GlobalFoundries).",
+    "conexiones": "influencia sistémica sobre todo el grafo, no modelable 1:1 — ver FACTOR_IEEPA_SCOTUS, FACTOR_Sec232_Semis y FACTOR_USGov_Equity.",
+    "fuente": "White & Case feb-2026; Federal Reserve nombramiento de Warsh"
+   }
+  },
+  {
+   "id": "Seat_USTreasury",
+   "label": "Secretaría del Tesoro de EEUU",
+   "props": {
+    "institución": "Departamento del Tesoro de EEUU",
+    "ocupante_actual": "**Scott Bessent**, desde enero de 2025. Activo a 28-may-2026 y 30-jul-2026.",
+    "tipo_de_palanca": "regulatoria_comercio",
+    "que_puede_mover": "preside el CFIUS (puede bloquear/forzar desmantelamiento de inversión china en tech/semiconductores de EEUU); administra sanciones OFAC; supervisa el Outbound Investment Security Program; es la contraparte estadounidense directa de He Lifeng.",
+    "conexiones": "influencia amplia no 1:1 — ver FACTOR_OutboundInvest y FACTOR_IEEPA_SCOTUS.",
+    "fuente": "Home.treasury.gov; CNBC 14-may-2026; Axios 30-jul-2026"
+   }
+  }
+ ]
+}
