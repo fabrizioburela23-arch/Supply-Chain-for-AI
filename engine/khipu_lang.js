@@ -163,13 +163,21 @@
       return { answer: `${list.length} factores sistémicos latentes. Los de mayor severidad en crisis:\n` + lines.join('\n') + '\n\nDispara uno con: FACTOR <id> FIRE', actions: [] };
     }
 
-    // resolver el factor: id exacto → prefijo de id → texto contenido en label
+    // resolver el factor: id exacto gana; si el texto calza con VARIOS
+    // (p.ej. "taiwan" → tensión militar Y ciclo cambiario), se dispara el de
+    // mayor severidad de crisis y se mencionan las alternativas
     const query = args.filter(a => a.toUpperCase() !== 'FIRE').join(' ').toLowerCase();
     const norm = s => (s || '').toLowerCase();
-    let f = list.find(x => norm(x.id) === query) ||
-            list.find(x => norm(x.id) === 'factor_' + query) ||
-            list.find(x => norm(x.id).indexOf(query) >= 0) ||
-            list.find(x => norm(x.label).indexOf(query) >= 0);
+    let f = list.find(x => norm(x.id) === query) || list.find(x => norm(x.id) === 'factor_' + query);
+    let alts = [];
+    if (!f) {
+      const matches = list.filter(x => norm(x.id).indexOf(query) >= 0 || norm(x.label).indexOf(query) >= 0);
+      if (matches.length) {
+        matches.sort((a, b) => (b.severity_crisis || 0) - (a.severity_crisis || 0));
+        f = matches[0];
+        alts = matches.slice(1, 4).map(x => x.id);
+      }
+    }
     if (!f) return { answer: `No encontré el factor "${query}". Prueba FACTOR LIST para ver los disponibles.`, actions: [] };
 
     try {
@@ -183,7 +191,8 @@
       const estab = rho.estable_en_crisis === false ? '⚠ en crisis el sistema entra en régimen supercrítico (las cascadas se auto-sostienen)' : 'el sistema aguanta la crisis sin auto-sostenerse';
       const ans = `🔥 ${r.factor.label}\nSeveridad: latente ${r.factor.severity_latente} → crisis ${r.factor.severity_crisis}. ` +
         `Alcanza ${r.affected} empresas más allá de sus ${Object.keys(r.factor.members || {}).length} miembros directos.\n` +
-        `Mayor contagio: ${top || 'ninguno'}.\nρ(T): ${rho.latente} → ${rho.crisis} en crisis — ${estab}.\n(What-if: no cambia nada en la ontología.)`;
+        `Mayor contagio: ${top || 'ninguno'}.\nρ(T): ${rho.latente} → ${rho.crisis} en crisis — ${estab}.\n(What-if: no cambia nada en la ontología.)` +
+        (alts.length ? `\nTambién coinciden con "${query}": ${alts.join(', ')} — dispara por id exacto si querías otro.` : '');
       // feedback visual: livesim sobre el miembro más golpeado del factor
       const members = Object.entries(r.factor.members || {}).sort((a, b) => b[1] - a[1]);
       const actions = members.length ? [{ type: 'livesim', arg: { id: members[0][0], sev: Math.round((r.factor.severity_crisis / 5) * 100) } }] : [];
