@@ -11,6 +11,7 @@
 //   PORT VAR · PORT PL
 //   GRAPH ASOF <YYYY-MM-DD> · GRAPH DIFF <Nd>
 //   ALERT <TICKER> PX|NRS > <valor> · ALERT REGION <región> NEWS · ALERT LIST
+//   FACTOR LIST · FACTOR <id|texto> FIRE  (what-if de crisis, no muta nada)
 
 (function () {
   'use strict';
@@ -50,7 +51,7 @@
   }
 
   const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY']);
-  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX']);
+  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX', 'FACTOR']);
 
   function tryParse(text) {
     const raw = (text || '').trim();
@@ -138,9 +139,58 @@
     if (kw === 'ALERT') return _handleAlert(args);
     if (kw === 'COMPARE') return _handleCompare(args);
     if (kw === 'SHOCK') return _handleShock(args);
+    if (kw === 'FACTOR') return _handleFactor(args);
     if (kw === 'INSIGHTS') return { answer: 'Abriendo insights automáticos de la red.', actions: [{ type: 'insights' }] };
     if (kw === 'MATRIX') return { answer: 'Abriendo las 9 matrices de relación.', actions: [{ type: 'insights' }] };
     return null;
+  }
+
+  // FACTOR LIST · FACTOR <id|texto> [FIRE] — los 70 factores sistémicos viven
+  // LATENTES en la ontología (severidad 1.0); dispararlos es un WHAT-IF de
+  // crisis en el server (/api/matrix/factor/fire) que NO muta nada.
+  async function _handleFactor(args) {
+    const sub = (args[0] || '').toUpperCase();
+    let list = [];
+    try {
+      const d = await fetch(_base() + '/api/matrix/factors').then(r => r.json());
+      if (d && d.available && Array.isArray(d.factors)) list = d.factors;
+    } catch (e) { /* server caído → mensaje de abajo */ }
+    if (!list.length) return { answer: 'No hay factores sistémicos activos (o la ontología no está disponible).', actions: [] };
+
+    if (!sub || sub === 'LIST') {
+      const top = list.slice().sort((a, b) => (b.severity_crisis || 0) - (a.severity_crisis || 0)).slice(0, 12);
+      const lines = top.map(f => `• ${f.id} — ${f.label} (latente ${f.severity}, crisis ${f.severity_crisis || '?'})`);
+      return { answer: `${list.length} factores sistémicos latentes. Los de mayor severidad en crisis:\n` + lines.join('\n') + '\n\nDispara uno con: FACTOR <id> FIRE', actions: [] };
+    }
+
+    // resolver el factor: id exacto → prefijo de id → texto contenido en label
+    const query = args.filter(a => a.toUpperCase() !== 'FIRE').join(' ').toLowerCase();
+    const norm = s => (s || '').toLowerCase();
+    let f = list.find(x => norm(x.id) === query) ||
+            list.find(x => norm(x.id) === 'factor_' + query) ||
+            list.find(x => norm(x.id).indexOf(query) >= 0) ||
+            list.find(x => norm(x.label).indexOf(query) >= 0);
+    if (!f) return { answer: `No encontré el factor "${query}". Prueba FACTOR LIST para ver los disponibles.`, actions: [] };
+
+    try {
+      const r = await fetch(_base() + '/api/matrix/factor/fire', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ factor_id: f.id })
+      }).then(x => x.json());
+      if (r.error) return { answer: 'El disparo falló: ' + r.error, actions: [] };
+      const top = (r.top_contagio || []).slice(0, 5).map(t => `${t.id} ${t.impact}%`).join(' · ');
+      const rho = r.rho || {};
+      const estab = rho.estable_en_crisis === false ? '⚠ en crisis el sistema entra en régimen supercrítico (las cascadas se auto-sostienen)' : 'el sistema aguanta la crisis sin auto-sostenerse';
+      const ans = `🔥 ${r.factor.label}\nSeveridad: latente ${r.factor.severity_latente} → crisis ${r.factor.severity_crisis}. ` +
+        `Alcanza ${r.affected} empresas más allá de sus ${Object.keys(r.factor.members || {}).length} miembros directos.\n` +
+        `Mayor contagio: ${top || 'ninguno'}.\nρ(T): ${rho.latente} → ${rho.crisis} en crisis — ${estab}.\n(What-if: no cambia nada en la ontología.)`;
+      // feedback visual: livesim sobre el miembro más golpeado del factor
+      const members = Object.entries(r.factor.members || {}).sort((a, b) => b[1] - a[1]);
+      const actions = members.length ? [{ type: 'livesim', arg: { id: members[0][0], sev: Math.round((r.factor.severity_crisis / 5) * 100) } }] : [];
+      return { answer: ans, actions };
+    } catch (e) {
+      return { answer: 'No pude disparar el factor (¿server caído?).', actions: [] };
+    }
   }
 
   function _handleCompare(args) {

@@ -273,8 +273,15 @@ def active_factors(session, as_of=None):
             if not o:
                 continue  # el source del 'affects' no es un Factor — ignorar
             props = o.properties or {}
+            try:
+                sev_crisis = float(props['severity_crisis'])
+            except (KeyError, TypeError, ValueError):
+                sev_crisis = None
             factors.append({'id': fid, 'label': o.label,
                             'severity': float(props.get('severity', 5)),
+                            # nivel al que sube si el factor se DISPARA (los
+                            # factores viven latentes; ver /factor/fire)
+                            'severity_crisis': sev_crisis,
                             # Track B: el porqué del factor (razon/rationale en
                             # JSONB) — antes se perdía al servirlo
                             'rationale': props.get('razon') or props.get('rationale', ''),

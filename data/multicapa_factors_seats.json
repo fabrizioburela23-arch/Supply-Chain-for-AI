@@ -431,91 +431,199 @@
    "id": "FACTOR_RareEarth",
    "label": "Controles chinos de exportación de tierras raras e imanes",
    "severity": 9.0,
-   "members": {},
+   "members": {
+    "MP_Materials": 0.7,
+    "Lynas": 0.6,
+    "Energy_Fuels": 0.5,
+    "NioCorp": 0.5,
+    "Albemarle": 0.3,
+    "Tesla": 0.4,
+    "GE_Aerospace": 0.4,
+    "Northrop": 0.4,
+    "Raytheon": 0.4,
+    "Rheinmetall": 0.3
+   },
    "rationale": "China amplió su régimen de licencias de exportación de tierras raras e imanes de forma escalonada desde abril de 2025, endurecido de nuevo en oct-nov 2025 con reglas de \"contenido de origen chino\" (umbral 0.1%) de alcance extraterritorial. Golpea a productores no-chinos (MP Materials, que recibió inyección de US$400M en acciones preferentes del DoD el 10-jul-2025) y a todo usuario final de imanes."
   },
   {
    "id": "FACTOR_H20_Whiplash",
    "label": "Vaivén regulatorio de exportación de chips de IA a China (H20/H200/MI325X)",
    "severity": 8.0,
-   "members": {},
+   "members": {
+    "Nvidia": 1.0,
+    "AMD": 0.7,
+    "Huawei": 0.5,
+    "SMIC": 0.4,
+    "Cambricon": 0.4,
+    "HiSilicon": 0.4,
+    "DeepSeek": 0.3,
+    "AlibabaCloud": 0.3
+   },
    "rationale": "Ciclo de whiplash regulatorio 2025-2026: prohibición del H20 (abr-2025) → autorización condicionada con reparto del 15% de ingresos con el Tesoro (ago-2025) → revisión de licencias caso-por-caso para H200/MI325X → extensión de la prohibición a filiales fuera de China (1-jun-2026) → aranceles adicionales. El régimen cambia de dirección varias veces por año."
   },
   {
    "id": "FACTOR_Taiwan_Tension",
    "label": "Tensión militar Taiwán-China",
    "severity": 8.0,
-   "members": {},
+   "members": {
+    "TSMC": 0.9,
+    "ASE": 0.5,
+    "ASEGroup": 0.5,
+    "MediaTek": 0.5,
+    "Foxconn": 0.6,
+    "Wistron": 0.4,
+    "Pegatron": 0.4,
+    "Quanta_Computer": 0.4
+   },
    "rationale": "Los ejercicios militares chinos alrededor de Taiwán se intensificaron tras la investidura de Lai Ching-te (may-2024) y continúan de forma recurrente. El riesgo de bloqueo/cuarentena naval sigue siendo el mayor tail-risk de punto único de falla de toda la cadena de semiconductores avanzados."
   },
   {
    "id": "FACTOR_IEEPA_SCOTUS",
    "label": "Corte Suprema de EEUU anula los aranceles IEEPA",
    "severity": 7.0,
-   "members": {},
+   "members": {
+    "Apple": 0.6,
+    "Dell": 0.6,
+    "HPE": 0.5,
+    "SuperMicro": 0.6,
+    "Cisco": 0.4,
+    "Foxconn": 0.5,
+    "Quanta_Computer": 0.5,
+    "Wistron": 0.4,
+    "Pegatron": 0.4,
+    "Celestica": 0.4
+   },
    "rationale": "El 20-feb-2026 la Corte Suprema falló en *Learning Resources, Inc. v. Trump* que la IEEPA no otorga al presidente poder para imponer aranceles; se anularon los aranceles \"recíprocos\" y por fentanilo. Section 301/232 NO fueron afectados y siguen vigentes. Redirección del riesgo arancelario más que su eliminación."
   },
   {
    "id": "FACTOR_Nexperia",
    "label": "Crisis Nexperia (toma de control holandesa + bloqueo de exportación chino)",
    "severity": 7.0,
-   "members": {},
+   "members": {
+    "ASML": 0.3,
+    "Infineon": 0.4,
+    "STMicroelectronics": 0.4,
+    "NXP": 0.4,
+    "onsemi": 0.4,
+    "Renesas": 0.3
+   },
    "rationale": "El gobierno holandés invocó su \"Ley de Disponibilidad de Bienes\" para tomar control de Nexperia (subsidiaria neerlandesa de la china Wingtech) en sep-oct 2025; China bloqueó en represalia las exportaciones de chips empaquetados desde Dongguan, paralizando fabricantes automotrices globales. Parcialmente resuelto tras acuerdo Trump-Xi y visita comercial holandesa a China (8-jul-2026)."
   },
   {
    "id": "FACTOR_Sec232_Semis",
    "label": "Arancel Section 232 del 25% a semiconductores avanzados",
    "severity": 6.0,
-   "members": {},
+   "members": {
+    "Samsung": 0.6,
+    "SKHynix": 0.6,
+    "TSMC": 0.5,
+    "TowerSemiconductor": 0.5,
+    "STMicroelectronics": 0.5,
+    "Micron": 0.4,
+    "GlobalFoundries": 0.3,
+    "Nvidia": 0.3,
+    "Qualcomm": 0.3,
+    "TexasInstruments": 0.2
+   },
    "rationale": "Trump ordenó un arancel Section 232 del 25% sobre semiconductores avanzados, efectivo desde mediados de enero de 2026, con exenciones para empresas que se comprometan a invertir en manufactura en EEUU. Ventaja estructural para quienes ya tienen fabs en EEUU (TSMC Arizona, Samsung Texas)."
   },
   {
    "id": "FACTOR_USGov_Equity",
    "label": "EEUU toma participaciones accionarias directas en semiconductoras estratégicas",
    "severity": 6.0,
-   "members": {},
+   "members": {
+    "Intel": 0.9,
+    "GlobalFoundries": 0.5,
+    "MP_Materials": 0.6
+   },
    "rationale": "Comercio (Lutnick) convirtió ~US$8.9bn de subsidios CHIPS Act en ~10% de participación de Intel (ago-2025, valorada ~US$36bn a mediados de 2026); DoD tomó US$400M en acciones preferentes de MP Materials (10-jul-2025); Comercio anunció el 31-jul-2026 participaciones adicionales en 7 empresas más (incl. GlobalFoundries, ~US$300M) por US$870M total. Nuevo régimen de \"capitalismo de estado\" en semiconductores."
   },
   {
    "id": "FACTOR_AIPower_Nuclear",
    "label": "Boom de demanda eléctrica de datacenters de IA + relanzamiento nuclear/SMR",
    "severity": 6.0,
-   "members": {},
+   "members": {
+    "Constellation": 0.5,
+    "GEVernova": 0.4,
+    "SiemensEnergy": 0.3,
+    "NuScale": 0.4,
+    "Oklo": 0.4,
+    "KairosPower": 0.4,
+    "TerraPower": 0.3,
+    "Cameco": 0.3,
+    "Xenergy": 0.2
+   },
    "rationale": "La demanda eléctrica de datacenters de IA impulsó PPAs nucleares directos y relanzamientos de reactores desde 2024. La NRC nombró chairman nuevo en enero de 2026 (Ho K. Nieh) con mandato explícito de acelerar permisos — cuello de botella regulatorio nuclear ahora es un factor directo de cuánta capacidad de cómputo de IA puede escalar físicamente EEUU."
   },
   {
    "id": "FACTOR_GulfAI",
    "label": "Difusión de chips de IA de EEUU al Golfo Pérsico (UAE G42, Arabia Saudita HUMAIN)",
    "severity": 5.0,
-   "members": {},
+   "members": {
+    "Nvidia": 0.6,
+    "AMD": 0.4,
+    "Microsoft": 0.3,
+    "Oracle": 0.3,
+    "Amazon": 0.2,
+    "SoftBank": 0.3
+   },
    "rationale": "BIS autorizó en noviembre de 2025 la exportación de chips de gama alta a G42 (EAU) y HUMAIN (Arabia Saudita), marco que sigue activo y expandiéndose en 2026. Abre mercado nuevo de escala masiva, pero crea dependencia de acuerdos bilaterales revocables y riesgo de triangulación hacia China."
   },
   {
    "id": "FACTOR_ChinaAntitrust_Nvidia",
    "label": "Investigación antimonopolio china contra Nvidia",
    "severity": 5.0,
-   "members": {},
+   "members": {
+    "Nvidia": 0.8,
+    "Huawei": 0.3,
+    "Cambricon": 0.3,
+    "HiSilicon": 0.3
+   },
    "rationale": "SAMR abrió investigación en diciembre de 2024 por el caso de adquisición de Mellanox; en revisión preliminar del 15-sept-2025 determinó que Nvidia \"violó\" la ley antimonopolio china. Sin multa/resolución final confirmada — funciona como palanca de negociación activa de Beijing, con potencial de multa estimada entre US$1bn y US$5bn."
   },
   {
    "id": "FACTOR_Micron_China",
    "label": "Veto chino a Micron en infraestructura crítica + salida de Micron del mercado chino de servidores",
    "severity": 5.0,
-   "members": {},
+   "members": {
+    "Micron": 0.8,
+    "SKHynix": 0.4,
+    "Samsung": 0.4,
+    "YMTC": 0.3,
+    "SanDisk": 0.2,
+    "Kioxia": 0.2
+   },
    "rationale": "CAC declaró en mayo de 2023 que los productos de Micron representan \"riesgo de seguridad\" y los vetó de infraestructura crítica china; en octubre de 2025 Micron decidió salir por completo del negocio de memoria para servidores/datacenters en China. Abre cuota de mercado directa para SK Hynix, Samsung y YMTC."
   },
   {
    "id": "FACTOR_OutboundInvest",
    "label": "Restricciones de EEUU a inversión saliente hacia tecnología china (Outbound Investment Security Program)",
    "severity": 4.0,
-   "members": {},
+   "members": {
+    "SMIC": 0.4,
+    "Huawei": 0.4,
+    "DeepSeek": 0.3,
+    "Cambricon": 0.3,
+    "YMTC": 0.3,
+    "HiSilicon": 0.3
+   },
    "rationale": "El programa del Tesoro (bajo la EO 14105) está en vigor desde enero de 2025 y restringe la inversión de capital privado/venture capital estadounidense en IA, semiconductores avanzados y computación cuántica chinas; la NDAA FY2026 introdujo un marco estatutario ampliado."
   },
   {
    "id": "FACTOR_EUChipsAct2",
    "label": "Chips Act 2.0 / paquete de soberanía tecnológica de la Unión Europea",
    "severity": 4.0,
-   "members": {},
+   "members": {
+    "ASML": 0.4,
+    "Infineon": 0.4,
+    "STMicroelectronics": 0.4,
+    "NXP": 0.3,
+    "GlobalFoundries": 0.3,
+    "Zeiss": 0.3,
+    "Siltronic": 0.3,
+    "ASMInt": 0.3,
+    "Besi": 0.2
+   },
    "rationale": "La Comisión Europea propuso formalmente el 3 de junio de 2026 el \"Chips Act 2.0\" como parte de un paquete de soberanía tecnológica, tras consulta pública (sep-2025) y declaración de la \"Semicon Coalition\" (los 27 estados miembro). Busca reducir dependencia estratégica europea ante aranceles de EEUU y controles chinos de insumos críticos."
   },
   {

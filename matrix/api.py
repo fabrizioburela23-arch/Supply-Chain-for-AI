@@ -396,6 +396,71 @@ def matrix_factors():
     return jsonify({'available': True, 'as_of': as_of, 'factors': factors})
 
 
+@matrix_bp.post('/factor/fire')
+def matrix_factor_fire():
+    """WHAT-IF de crisis: dispara UN factor a su severity_crisis SIN mutar la
+    ontología (los factores viven LATENTES — severity 1.0 — para no simular
+    todas las crisis a la vez; ver curación 2026-08-02). El shock inicial son
+    sus miembros escalados por su coeficiente; la fragilidad se recalcula con
+    ese factor en nivel de crisis sobre el fondo latente.
+    Body: {factor_id, magnitude?, damping?, max_hops?, n_samples?}
+    → {factor, rho: {latente, crisis, crisis_damped}, impacts, cascade,
+       affected, top}."""
+    scope = _db()
+    if scope is None:
+        return jsonify({'error': 'DATABASE_URL no configurada'}), 503
+    from matrix.engine import (active_factors, build_matrices, fragility,
+                               propagate, spectral_radius)
+    body = request.get_json(silent=True) or {}
+    fid = (body.get('factor_id') or '').strip()
+    if not fid:
+        return jsonify({'error': 'factor_id requerido'}), 400
+    with scope() as s:
+        mats, idx, ids = build_matrices(s)
+        factors = active_factors(s)
+    target = next((f for f in factors if f['id'] == fid), None)
+    if target is None:
+        return jsonify({'error': f'factor no activo o inexistente: {fid}',
+                        'activos': [f['id'] for f in factors][:60]}), 404
+    crisis = target.get('severity_crisis') or min(5.0, target['severity'] * 2)
+    factors_crisis = [dict(f, severity=crisis) if f['id'] == fid else f
+                      for f in factors]
+    damping = float(body.get('damping', 0.6))
+    frag = fragility(idx, factors_crisis)
+    shock_ids = [m for m in target['members'] if m in idx]
+    if not shock_ids:
+        return jsonify({'error': f'ningún miembro del factor existe en la matriz: {fid}'}), 400
+    # magnitud del golpe inicial = coeficiente del miembro × (crisis/5): un
+    # miembro coef 0.9 en una crisis sev 4 arranca al 72%, no al 100%
+    base_mag = float(body.get('magnitude', crisis / 5.0))
+    impacts, cascade = propagate(
+        mats, idx, ids, shock_ids, frag=frag,
+        magnitude=base_mag, damping=damping,
+        max_hops=int(body.get('max_hops', 6)))
+    # el golpe inicial por miembro respeta su coeficiente relativo
+    for m in shock_ids:
+        coef = min(1.0, float(target['members'][m]))
+        if m in impacts:
+            impacts[m] = round(impacts[m] * coef, 2)
+    rho_lat = spectral_radius(mats, factors, idx, damping=damping)
+    rho_cri = spectral_radius(mats, factors_crisis, idx, damping=damping)
+    top = sorted(((k, v) for k, v in impacts.items() if k not in target['members']),
+                 key=lambda x: -x[1])[:15]
+    return jsonify({
+        'factor': {'id': fid, 'label': target['label'],
+                   'severity_latente': target['severity'],
+                   'severity_crisis': crisis,
+                   'rationale': target.get('rationale', ''),
+                   'members': target['members']},
+        'rho': {'latente': rho_lat.get('rho'), 'crisis': rho_cri.get('rho'),
+                'crisis_damped': rho_cri.get('damping_rho'),
+                'estable_en_crisis': rho_cri.get('stable')},
+        'impacts': impacts, 'cascade': cascade,
+        'affected': len(impacts) - len(shock_ids),
+        'top_contagio': [{'id': k, 'impact': round(v, 1)} for k, v in top],
+    })
+
+
 @matrix_bp.get('/parity')
 def matrix_parity():
     """CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre
