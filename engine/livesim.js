@@ -25,6 +25,23 @@
   ];
 
   var active = false, typeId = 'corte', targets = ['TSMC'], severity = 100, factors = [], raf = 0;
+  // Track B (gap de cableado detectado en la auditoría): factors estaba SIEMPRE
+  // vacío — el server aplicaba los Factor reales de la ontología y el motor
+  // cliente los ignoraba. Ahora se traen de /api/matrix/factors (mismo esquema
+  // {id,label,severity,members:{id:coef}} que consume KhipuState.simulate).
+  var _factorsAt = 0;
+  function refreshFactors() {
+    var now = Date.now();
+    if (now - _factorsAt < 120000) return;   // 2 min de caché — no martillar
+    _factorsAt = now;
+    try {
+      var base = (typeof BASE !== 'undefined' && BASE) ? BASE : '';
+      fetch(base + '/api/matrix/factors').then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.available && Array.isArray(d.factors)) factors = d.factors;
+        }).catch(function () {});
+    } catch (e) {}
+  }
   var playing = false, playTimer = 0, lastResult = null, addMode = false;
 
   function T() { return TYPES.find(function (t) { return t.id === typeId; }) || TYPES[0]; }
@@ -109,6 +126,7 @@
     var ty = T();
     var shocks = {};
     targets.forEach(function (id) { shocks[id] = { salud: 1 - severity / 100 }; });
+    refreshFactors();   // los Factor reales de la ontología modulan la sim en vivo
     var r = window.KhipuState.simulate(shocks, factors, 8, 0.6, true, { direction: ty.dir, kind: ty.kind });
     lastResult = r;
     paint(r.impact, ty.dir);

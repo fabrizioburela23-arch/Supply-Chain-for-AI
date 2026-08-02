@@ -381,6 +381,21 @@ def matrix_metrics():
     return jsonify(payload)
 
 
+@matrix_bp.get('/factors')
+def matrix_factors():
+    """Track B: detalle COMPLETO de los Factor activos — /status solo expone un
+    conteo de members; el motor cliente (livesim) necesita el dict {obj_id:coef}
+    y el rationale para aplicar la MISMA fragilidad que el server."""
+    scope = _db()
+    if scope is None:
+        return jsonify({'available': False, 'factors': []})
+    from matrix.engine import active_factors
+    as_of = request.args.get('as_of')
+    with scope() as s:
+        factors = active_factors(s, as_of=as_of)
+    return jsonify({'available': True, 'as_of': as_of, 'factors': factors})
+
+
 @matrix_bp.get('/parity')
 def matrix_parity():
     """CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre

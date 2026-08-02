@@ -131,6 +131,9 @@ class CrearFactorInput(BaseModel):
     severity: float = Field(default=3.0, ge=0, le=5)      # 0-5: qué tan fuerte es el golpe
     affects: List[str] = Field(min_length=1, max_length=40)  # ids de empresas afectadas
     coef: float = Field(default=0.5, ge=0, le=3)          # sensibilidad extra por miembro
+    # Track B: coeficiente POR MIEMBRO ({obj_id: coef}) — si viene, manda sobre
+    # affects+coef uniforme. Los presets de escenario usan esta forma.
+    members: Optional[dict] = None
     razon: str = Field(min_length=1, max_length=1000)
     fuente: str = Field(default='tejedor', max_length=300)
     confidence: float = Field(default=0.6, ge=0, le=1)
@@ -371,7 +374,12 @@ def crear_factor(session, inp: CrearFactorInput, actor):
     fid = inp.factor_id or f'factor_{uuid.uuid4().hex[:12]}'
     if session.get(ObjectRecord, fid):
         raise ActionError(f'el factor ya existe: {fid}')
-    members = [m for m in inp.affects if session.get(ObjectRecord, m)]
+    # forma por-miembro (Track B, presets) o uniforme (affects+coef, histórica)
+    if inp.members:
+        pairs = [(m, float(c)) for m, c in inp.members.items() if session.get(ObjectRecord, m)]
+    else:
+        pairs = [(m, float(inp.coef)) for m in inp.affects if session.get(ObjectRecord, m)]
+    members = [m for m, _ in pairs]
     if not members:
         raise ActionError('ninguna empresa de affects existe en la ontología')
     apply_event(session, 'ObjectCreated',
@@ -379,9 +387,9 @@ def crear_factor(session, inp: CrearFactorInput, actor):
                  'properties': {'severity': float(inp.severity), 'razon': inp.razon,
                                 'fuente': inp.fuente, 'confidence': inp.confidence}},
                 valid_from=_utcnow(), source=inp.fuente, actor=actor, object_id=fid)
-    for m in members:
+    for m, coef in pairs:
         apply_event(session, 'LinkCreated',
-                    {'rel_type': 'affects', 'weight': float(inp.coef),
+                    {'rel_type': 'affects', 'weight': coef,
                      'properties': {'factor': True}},
                     valid_from=_utcnow(), source=inp.fuente, actor=actor,
                     object_id=fid, target_id=m)

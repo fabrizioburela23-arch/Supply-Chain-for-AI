@@ -275,6 +275,9 @@ def active_factors(session, as_of=None):
             props = o.properties or {}
             factors.append({'id': fid, 'label': o.label,
                             'severity': float(props.get('severity', 5)),
+                            # Track B: el porqué del factor (razon/rationale en
+                            # JSONB) — antes se perdía al servirlo
+                            'rationale': props.get('razon') or props.get('rationale', ''),
                             'members': members})
     return factors
 
