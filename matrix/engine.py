@@ -282,18 +282,32 @@ def active_factors(session, as_of=None):
     return factors
 
 
+def fragility_cap():
+    """Tope de fragilidad POR NODO (env FRAGILITY_CAP, default 2.5). Con decenas
+    de Factores latentes activos a la vez, la suma sin tope pone el sistema en
+    régimen saturado (todo impacto = 100%, ρ supercrítico) y las cascadas dejan
+    de informar. 2.5 deja expresar UNA crisis completa (severity alta) sobre el
+    fondo latente, pero impide el escenario irreal 'todas las crisis a la vez'."""
+    try:
+        v = float(os.getenv('FRAGILITY_CAP', '2.5'))
+        return v if v >= 1.0 else 2.5
+    except (TypeError, ValueError):
+        return 2.5
+
+
 def fragility(idx, factors):
     """Vector de FRAGILIDAD por nodo (1.0 baseline). Cada hiperarista activa
-    aumenta la fragilidad de sus miembros: f = 1 + Σ coef·(severity/5). Un
-    nodo frágil recibe MÁS daño de un mismo shock (se aplica en propagate,
-    tras la normalización — por eso no se cancela como escalar una columna
-    cruda antes de normalizar)."""
+    aumenta la fragilidad de sus miembros: f = 1 + Σ coef·(severity/5), acotado
+    por fragility_cap(). Un nodo frágil recibe MÁS daño de un mismo shock (se
+    aplica en propagate, tras la normalización — por eso no se cancela como
+    escalar una columna cruda antes de normalizar)."""
     n = len(idx)
     f = np.ones(n)
     for factor in factors or []:
         for oid, coef in factor['members'].items():
             if oid in idx:
                 f[idx[oid]] += coef * (factor['severity'] / 5.0)
+    np.minimum(f, fragility_cap(), out=f)
     return f
 
 

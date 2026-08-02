@@ -173,7 +173,9 @@ def parse_factor(head, body):
     members = {}
     mm = re.search(r'members:\s*\{(.*?)\}', body, re.S)
     if mm:
-        for pm in re.finditer(r'([A-Za-z_0-9]+):\s*([\d.]+)', mm.group(1)):
+        # dos formatos en el doc: {id: 0.7, ...} (capas A-F) y JSON inline con
+        # ids entre comillas {"id": 0.7, ...} (PARTE 2, catálogo geopolítico)
+        for pm in re.finditer(r'"?([A-Za-z_0-9]+)"?\s*:\s*([\d.]+)', mm.group(1)):
             members[pm.group(1)] = float(pm.group(2))
     return {'id': f['id'].strip(), 'label': head.replace('FACTOR:', '').strip(),
             'severity': float(re.search(r'[\d.]+', f.get('severity', '5')).group(0)),
