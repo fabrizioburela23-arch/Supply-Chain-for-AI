@@ -424,7 +424,219 @@ class TejedorHiperaristas:
         }
 
 
-AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas(), TejedorHiperaristas()]
+# ── Agente 7: Investigador Autónomo (Track C, 2026-08) ───────────────────────
+# Investiga con BÚSQUEDA WEB REAL (core/websearch, Tavily) y propone CrearTesis
+# con fuentes citables — o AnotarObjeto si la investigación no concluye.
+# NUNCA ejecuta nada; 'CrearTesis' JAMÁS entra a SAFE_AUTO (test de regresión).
+class InvestigadorAutonomo:
+    """Dos caminos: manual (endpoint /agents/investigar, SIEMPRE disponible) o
+    reactivo (Annotations recientes de otros agentes — gateado por
+    INVESTIGADOR_AUTO, 'off' por defecto: decisión de Fabrizio 2026-08-02).
+    Disciplina anti-alucinación en DOS capas: instrucción explícita al modelo
+    (REGLAS INNEGOCIABLES, el idioma que ya usa este repo) + verificación
+    server-side de citas que NO confía en que el modelo obedeció. La confianza
+    final se acota de forma determinista por número de fuentes independientes."""
+    name = 'investigador_autonomo'
+    MAX_FUENTES = 6
+
+    def observe(self, session):
+        from core.config import INVESTIGADOR_AUTO, INVESTIGADOR_AUTO_CUTOFF_HORAS
+        if INVESTIGADOR_AUTO != 'on':
+            return []
+        cutoff = _utcnow() - timedelta(hours=INVESTIGADOR_AUTO_CUTOFF_HORAS)
+        anns = session.scalars(select(ObjectRecord).where(
+            ObjectRecord.type == 'Annotation', ObjectRecord.created_at >= cutoff)).all()
+        signals = []
+        for ann in anns:
+            target = (ann.properties or {}).get('target_object_id')
+            company = session.get(ObjectRecord, target) if target else None
+            if not company or company.type != 'Company':
+                continue
+            if _recently_proposed(session, self.name, 'CrearTesis', company.id, hours=48):
+                continue
+            signals.append({'company': company, 'contexto': (ann.properties or {}).get('texto', '')})
+        return signals
+
+    def propose(self, session, signal):
+        return self._investigar(session, empresa=signal['company'],
+                                contexto_previo=signal.get('contexto', ''),
+                                disparado_por='reactivo')
+
+    def investigar_manual(self, session, query, actor, empresa_id=None):
+        """Fuera del contrato estándar — no la llama run_agents(). La usa
+        POST /api/ontology/agents/investigar para una pregunta puntual."""
+        empresa = session.get(ObjectRecord, empresa_id) if empresa_id else None
+        return self._investigar(session, empresa=empresa, tema_libre=query,
+                                disparado_por=f'manual:{actor}')
+
+    # ── tubería interna ────────────────────────────────────────────────────
+    def _investigar(self, session, empresa=None, tema_libre=None,
+                    contexto_previo='', disparado_por='manual'):
+        from core.websearch import _web_search_available
+        if not _web_search_available():
+            return None
+        queries = self._armar_queries(empresa, tema_libre, contexto_previo)
+        fuentes = self._fan_out(queries)
+        if not fuentes:
+            return None
+        data = self._sintetizar(empresa, tema_libre, fuentes)
+        if not data:
+            return None
+        data = self._verificar_citas(data, fuentes)
+        return self._armar_propuesta(empresa, data, fuentes, disparado_por)
+
+    def _armar_queries(self, empresa, tema_libre, contexto_previo):
+        import datetime as _dt
+        anio = _dt.date.today().year
+        if empresa is not None:
+            label = empresa.label
+            qs = [f'{label} noticias', f'{label} earnings revenue guidance',
+                  f'{label} competidores market share']
+            low = (contexto_previo or '').lower()
+            for kw in ('sanci', 'escasez', 'shortage', 'contrato', 'demanda', 'export'):
+                if kw in low:
+                    qs.append(f'{label} {contexto_previo[:80]}')
+                    break
+            return qs[:4]
+        q = (tema_libre or '').strip()
+        return [q, f'{q} {anio} riesgos'][:2] if q else []
+
+    def _fan_out(self, queries):
+        """2-4 búsquedas en paralelo (mismo patrón de hilos que geosit/screener)."""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        from core.websearch import web_search
+        fuentes, seen = [], set()
+        if not queries:
+            return fuentes
+        try:
+            with ThreadPoolExecutor(max_workers=min(4, len(queries))) as ex:
+                futs = [ex.submit(web_search, q, 4) for q in queries]
+                for f in as_completed(futs, timeout=30):
+                    try:
+                        for r in (f.result() or []):
+                            if r.get('url') and r['url'] not in seen:
+                                seen.add(r['url'])
+                                fuentes.append(r)
+                    except Exception:  # noqa: BLE001
+                        continue
+        except Exception:  # noqa: BLE001
+            pass
+        fuentes.sort(key=lambda x: -(x.get('score') or 0))
+        return fuentes[:self.MAX_FUENTES]
+
+    _SYSTEM = (
+        'Eres el Investigador Autónomo de Khipus AI Finance Intelligence. Tu única '
+        'fuente de verdad para datos concretos (cifras, fechas, montos, porcentajes, '
+        'nombres) son los FRAGMENTOS de fuentes ya bajados de la web que te paso — '
+        'NUNCA tu conocimiento entrenado, que puede estar desactualizado.\n'
+        'REGLAS INNEGOCIABLES (romperlas invalida tu respuesta):\n'
+        '1. Toda cifra/fecha/dato concreto DEBE venir literalmente de un fragmento de '
+        'FUENTES. Copia la frase exacta en "cita_textual" y el índice en "fuente_idx".\n'
+        '2. Si ninguna fuente confirma un dato, no lo inventes: escribe "N/D" y qué '
+        'buscarías para confirmarlo. Prefiere varios N/D a un solo número inventado — '
+        'el usuario invierte capital real con esto.\n'
+        '3. Si dos fuentes se contradicen, NO promedies: reporta ambas versiones.\n'
+        '4. Nunca conviertas una opinión ("los analistas creen...") en un hecho.\n'
+        '5. Tu "confidence_ia" (0-1) refleja CUÁNTAS fuentes independientes confirman '
+        'la tesis central, no tu fluidez. 1 sola fuente no-primaria → <= 0.4.\n'
+        '6. Tú SOLO PROPONES. Nunca ejecutas ni ordenas nada.\n'
+        '7. Responde SOLO JSON válido (sin markdown) con el esquema exacto: '
+        '{"concluye_tesis": bool, "stance": "long|short|watch|avoid", '
+        '"confidence_ia": 0.0, "resumen": str, '
+        '"datos_clave": [{"dato": str, "valor": str, "fuente_idx": int, "cita_textual": str}], '
+        '"riesgos": [str], "contradicciones": [{"tema": str, "version_a": str, "fuente_a": int, '
+        '"version_b": str, "fuente_b": int}], "no_verificado": [str], "fuentes_usadas": [int]}')
+
+    def _sintetizar(self, empresa, tema_libre, fuentes):
+        try:
+            from core.ai import _ai_complete, _extract_json
+            frag = '\n\n'.join(
+                f'[{i}] {f.get("title", "")} — {f.get("url", "")} ({f.get("published_date") or "s/f"})\n'
+                f'{(f.get("content") or "")[:1200]}'
+                for i, f in enumerate(fuentes))
+            objetivo = (f'Empresa a investigar: {empresa.label} ({empresa.id}).'
+                        if empresa is not None else f'Pregunta del usuario: {tema_libre}')
+            text, _model = _ai_complete(
+                self._SYSTEM,
+                f'{objetivo}\n\nFUENTES:\n{frag[:14000]}',
+                max_tokens=1600, tier='deep')   # síntesis de tesis = tier profundo
+            data = _extract_json(text)
+            return data if isinstance(data, dict) else None
+        except Exception:  # noqa: BLE001
+            return None
+
+    @staticmethod
+    def _verificar_citas(data, fuentes):
+        """Capa 2 — NO confía en que el LLM cumplió: si la cita no aparece en el
+        contenido bajado, el dato se degrada a N/D. Heurística v1 (substring
+        laxo, primeras 8 palabras) — documentada; upgrade path: verificación
+        tipada estilo FinGround si hace falta."""
+        for item in (data.get('datos_clave') or []):
+            idx = item.get('fuente_idx')
+            cita = (item.get('cita_textual') or '').strip().lower()
+            ok = (idx is not None and isinstance(idx, int) and 0 <= idx < len(fuentes)
+                  and len(cita.split()) >= 4
+                  and ' '.join(cita.split()[:8]) in (fuentes[idx].get('content') or '').lower())
+            if not ok:
+                item['valor'] = 'N/D (no verificado)'
+                item['fuente_idx'] = None
+        return data
+
+    @staticmethod
+    def _score_confidence(n_fuentes_independientes, hay_fuente_primaria, ai_confidence):
+        """Confianza final DETERMINISTA (nunca el autoreporte del LLM solo)."""
+        base = {0: 0.0, 1: 0.3, 2: 0.5}.get(n_fuentes_independientes, 0.65)
+        if hay_fuente_primaria:
+            base = min(0.9, base + 0.15)
+        return round(min(base, ai_confidence or base), 2)
+
+    _PRIMARY_HINTS = ('sec.gov', 'ir.', 'investor', '.gov', 'prnewswire', 'businesswire')
+
+    def _armar_propuesta(self, empresa, data, fuentes, disparado_por):
+        usadas_idx = [i for i in (data.get('fuentes_usadas') or []) if isinstance(i, int) and 0 <= i < len(fuentes)]
+        usadas = [fuentes[i] for i in usadas_idx] or fuentes[:3]
+        dominios = {(f.get('url') or '').split('/')[2] if '//' in (f.get('url') or '') else f.get('url') for f in usadas}
+        primaria = any(any(h in (f.get('url') or '') for h in self._PRIMARY_HINTS) for f in usadas)
+        conf = self._score_confidence(len(dominios), primaria, data.get('confidence_ia'))
+        now_iso = _utcnow().isoformat()
+        fuentes_payload = [{'url': f.get('url', ''), 'titulo': (f.get('title') or '')[:300],
+                           'publicador': ((f.get('url') or '').split('/')[2] if '//' in (f.get('url') or '') else '')[:120],
+                           'fecha': (f.get('published_date') or '')[:40],
+                           'cita_textual': next((d.get('cita_textual', '')[:500]
+                                                 for d in (data.get('datos_clave') or [])
+                                                 if d.get('fuente_idx') is not None and usadas_idx
+                                                 and d.get('fuente_idx') < len(fuentes)
+                                                 and fuentes[d['fuente_idx']] is f), (f.get('content') or '')[:200]),
+                           'consultado_at': now_iso} for f in usadas]
+        no_verif = [str(x)[:200] for x in (data.get('no_verificado') or [])][:20]
+        resumen = str(data.get('resumen') or '')[:800]
+        if not data.get('concluye_tesis') or empresa is None:
+            objeto = empresa.id if empresa is not None else None
+            texto = f'[Investigador] {resumen} — no alcanza confianza para tesis; ver no_verificado: {no_verif[:3]}'
+            if objeto is None:
+                texto = f'[Investigador] {resumen}'
+            return {'action_type': 'AnotarObjeto',
+                    'payload': {'object_id': objeto or 'Nvidia', 'texto': texto[:1000]},
+                    'object_id': objeto, 'confidence': conf,
+                    'explanation': f'Investigación ({disparado_por}) inconclusa o sin empresa foco; '
+                                   f'{len(usadas)} fuentes consultadas.'}
+        riesgos = '; '.join(str(r)[:160] for r in (data.get('riesgos') or [])[:4])
+        rationale = (f'{resumen}\n\nRIESGOS: {riesgos}\n'
+                     f'NO VERIFICADO: {"; ".join(no_verif[:5]) or "—"}\n'
+                     f'(Investigación {disparado_por}; {len(usadas)} fuentes, '
+                     f'{len(dominios)} dominios independientes{", incluye primaria" if primaria else ""}.)')[:4000]
+        return {'action_type': 'CrearTesis',
+                'payload': {'company_id': empresa.id, 'stance': data.get('stance', 'watch'),
+                            'confidence': conf, 'rationale': rationale,
+                            'fuentes': fuentes_payload, 'autor_tipo': 'agente',
+                            'datos_no_verificados': no_verif},
+                'object_id': empresa.id, 'confidence': conf,
+                'explanation': f'Tesis {data.get("stance", "watch")} sobre {empresa.label} con '
+                               f'{len(usadas)} fuentes citadas — requiere tu aprobación.'}
+
+
+AGENTS = [CentinelaNRS(), LectorGDELT(), GuardianCartera(), Cartografo(), RadarEmpresas(), TejedorHiperaristas(), InvestigadorAutonomo()]
 AGENTS_BY_NAME = {a.name: a for a in AGENTS}
 
 # ── Ciclo automático (elección de Fabrizio 2026-07-10): las propuestas SEGURAS

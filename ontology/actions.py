@@ -31,11 +31,28 @@ class ActionError(ValueError):
 
 # ── Esquemas de entrada (uno por Acción del catálogo) ────────────────────────
 
+class FuenteCitada(BaseModel):
+    """Fuente citable de una tesis (Track C, Investigador Autónomo): la regla
+    del proyecto es que toda cifra venga de una fuente verificable, no del
+    conocimiento entrenado del modelo."""
+    url: str = Field(min_length=4, max_length=500)
+    titulo: str = Field(default='', max_length=300)
+    publicador: str = Field(default='', max_length=120)
+    fecha: str = Field(default='', max_length=40)
+    cita_textual: str = Field(min_length=1, max_length=500)
+    consultado_at: str = Field(default='', max_length=40)
+
+
 class CrearTesisInput(BaseModel):
     company_id: str
     stance: str = Field(pattern='^(long|short|watch|avoid)$')
     confidence: float = Field(ge=0, le=1)
     rationale: str = Field(min_length=1, max_length=4000)
+    # Extensión aditiva (Track C) — defaults → el flujo humano existente
+    # (<TICKER> THESIS, formulario del Grafo Temporal) sigue intacto.
+    fuentes: List[FuenteCitada] = Field(default_factory=list, max_length=12)
+    autor_tipo: str = Field(default='humano', pattern='^(humano|agente)$')
+    datos_no_verificados: List[str] = Field(default_factory=list, max_length=20)
 
 
 class AnotarObjetoInput(BaseModel):
@@ -150,7 +167,11 @@ def crear_tesis(session, inp: CrearTesisInput, actor):
     apply_event(session, 'ObjectCreated', {
         'label': f'Tesis de {actor} sobre {inp.company_id}', 'type': 'Thesis',
         'properties': {'company_id': inp.company_id, 'stance': inp.stance,
-                        'confidence': inp.confidence, 'rationale': inp.rationale, 'author': actor},
+                        'confidence': inp.confidence, 'rationale': inp.rationale, 'author': actor,
+                        # Track C: fuentes citables + honestidad de lo no verificado
+                        'fuentes': [f.model_dump() for f in inp.fuentes],
+                        'autor_tipo': inp.autor_tipo,
+                        'datos_no_verificados': inp.datos_no_verificados},
     }, valid_from=_utcnow(), source='manual', actor=actor, object_id=thesis_id)
     apply_event(session, 'LinkCreated', {'rel_type': 'about', 'properties': {}},
                 valid_from=_utcnow(), source='manual', actor=actor,

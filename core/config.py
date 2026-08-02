@@ -37,3 +37,20 @@ NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
 
 HTTP_TIMEOUT = 8
+
+# ── Búsqueda web (Investigador Autónomo) ─────────────────────────────────────
+# Tavily: pensado para agentes LLM (snippets + URL ya listos para citar, sin
+# parsear HTML a mano); tier gratis 1,000 búsquedas/mes alcanza para uso
+# personal. Sin la key, el agente se auto-deshabilita — mismo patrón que
+# NEO4J_*/DATABASE_URL (*_available()), nunca rompe el resto de la app.
+TAVILY_KEY = os.getenv('TAVILY_KEY', '')
+
+# Interruptor de investigación reactiva — decisión de Fabrizio (2026-08-02):
+# arranca en 'off' (el agente SOLO investiga cuando se lo piden por el endpoint
+# manual). El gancho reactivo (observe()) queda construido pero apagado —
+# prenderlo más adelante es cambiar esta env var a 'on' en Railway y
+# redeployar, no requiere código nuevo. Mismo espíritu que MIROFISH_URL/
+# TAVILY_KEY: la capacidad existe, el gasto de IA no ocurre salvo que esté
+# explícitamente prendida.
+INVESTIGADOR_AUTO = os.getenv('INVESTIGADOR_AUTO', 'off')            # 'off' | 'on'
+INVESTIGADOR_AUTO_CUTOFF_HORAS = int(os.getenv('INVESTIGADOR_AUTO_CUTOFF_HORAS', '6'))

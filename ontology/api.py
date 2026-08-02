@@ -249,6 +249,70 @@ def agents_cycle():
                     'last': _cycle_state['last']})
 
 
+# ── Investigador Autónomo (Track C): investigación puntual bajo demanda ─────
+# Corre en hilo de fondo (2-4 búsquedas web + 1 síntesis tier deep = 20-60 s;
+# no se bloquea un worker síncrono ese tiempo). Throttle de 3 min por si se
+# aprieta el botón dos veces. Este endpoint NO depende de INVESTIGADOR_AUTO —
+# es el camino "cuando yo pida" y queda activo desde el primer deploy.
+_invest_state = {'running': False, 'last': None, 'last_at': 0.0, 'last_query': ''}
+
+
+def _invest_bg(query, actor, empresa_id):
+    try:
+        from ontology.agents import AGENTS
+        inv = next((a for a in AGENTS if a.name == 'investigador_autonomo'), None)
+        if inv is None:
+            _invest_state['last'] = {'status': 'error', 'error': 'agente no registrado'}
+            return
+        with session_scope() as s:
+            proposal = inv.investigar_manual(s, query, actor, empresa_id=empresa_id)
+            if not proposal:
+                _invest_state['last'] = {'status': 'sin_resultado',
+                                         'hint': 'Sin TAVILY_KEY o sin fuentes — nada que proponer.'}
+                return
+            from ontology.models import ProposedAction
+            pa = ProposedAction(agent=inv.name, action_type=proposal['action_type'],
+                                payload=proposal['payload'], object_id=proposal.get('object_id'),
+                                confidence=proposal.get('confidence'),
+                                explanation=proposal.get('explanation'), status='pending')
+            s.add(pa)
+            s.flush()
+            _invest_state['last'] = {'status': 'ok', 'action_type': proposal['action_type'],
+                                     'proposal_id': str(pa.id), 'confidence': proposal.get('confidence')}
+    except Exception as e:  # noqa: BLE001
+        _invest_state['last'] = {'status': 'error', 'error': str(e)[:300]}
+    finally:
+        import time as _t
+        _invest_state['last_at'] = _t.time()
+        _invest_state['running'] = False
+
+
+@ontology_bp.route('/agents/investigar', methods=['POST'])
+@_require_db
+def agents_investigar():
+    """Body: {query, actor, empresa_id?}. Responde al instante; el resultado
+    aparece como ProposedAction en 🔔 Propuestas (y en GET de este estado)."""
+    import threading as _th
+    import time as _t
+    from core.websearch import _web_search_available
+    if not _web_search_available():
+        return jsonify({'ok': False, 'error': 'TAVILY_KEY no configurada — añádela en Railway '
+                        '(tavily.com, tier gratis) para habilitar la investigación web.'}), 400
+    b = request.get_json(force=True, silent=True) or {}
+    query = (b.get('query') or '').strip()[:300]
+    actor = (b.get('actor') or 'anónimo').strip()[:80]
+    empresa_id = (b.get('empresa_id') or None)
+    if not query:
+        return jsonify({'ok': False, 'error': 'query requerida'}), 400
+    started = False
+    if not _invest_state['running'] and _t.time() - _invest_state['last_at'] > 180:
+        _invest_state.update(running=True, last_query=query)
+        _th.Thread(target=_invest_bg, args=(query, actor, empresa_id), daemon=True).start()
+        started = True
+    return jsonify({'ok': True, 'started': started, 'running': _invest_state['running'],
+                    'last': _invest_state['last'], 'last_query': _invest_state['last_query']})
+
+
 @ontology_bp.route('/agents/proposals', methods=['GET'])
 @_require_db
 def agents_proposals_list():

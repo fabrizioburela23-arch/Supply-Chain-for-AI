@@ -2057,11 +2057,17 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   </div>
 
   <div id="sistema-propuestas" style="display:none">
-    <p class="settings-sub">4 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <p class="settings-sub">7 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo, radar de empresas, hiperaristas e investigación web) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
       <button class="key-btn" id="propuestas-run" onclick="window.runAgentes&&window.runAgentes()" style="flex:0 0 auto">🔍 Revisar ahora</button>
       <button class="key-btn" id="propuestas-refresh" onclick="window.openPropuestas&&window.openPropuestas(true)" style="flex:0 0 auto">↻ Actualizar</button>
       <span id="propuestas-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+    </div>
+    <!-- Track C: investigación web bajo demanda (Investigador Autónomo) -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <input id="investigar-q" placeholder="Investiga en la web… (ej. «¿CXMT amenaza a Micron?»)" style="flex:1;min-width:180px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:12.5px">
+      <button class="key-btn" id="investigar-go" onclick="window.lanzarInvestigacion&&window.lanzarInvestigacion()" style="flex:0 0 auto">🌐 Investigar</button>
+      <span id="investigar-status" style="font-size:11px;color:var(--ink-3)"></span>
     </div>
     <div id="propuestas-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando propuestas…</div></div>
   </div>
@@ -4993,7 +4999,16 @@ function _propuestaCard(p){
   const m = AGENT_META[p.agent] || {icon:'🤖', label:p.agent};
   const objLabel = (window.NODE_BY_ID && window.NODE_BY_ID[p.object_id] && window.NODE_BY_ID[p.object_id].label) || p.object_id || '';
   const conf = p.confidence!=null ? Math.round(p.confidence*100)+'%' : '—';
-  const fields = Object.keys(p.payload||{}).filter(k=>!['company_id','object_id','ticker'].includes(k) || k==='ticker');
+  // Track C: 'fuentes' y 'datos_no_verificados' del Investigador se muestran
+  // bonitos (links + lista), no como JSON editable; 'autor_tipo' se omite.
+  const fields = Object.keys(p.payload||{}).filter(k=>(!['company_id','object_id','ticker','fuentes','datos_no_verificados','autor_tipo'].includes(k)) || k==='ticker');
+  const fuentes = Array.isArray(p.payload&&p.payload.fuentes) ? p.payload.fuentes : [];
+  const fuentesHtml = fuentes.length ? `<div style="margin:6px 0 8px">
+      <label style="font-size:10px;color:var(--ink-3);display:block;margin-bottom:3px">📎 Fuentes citadas (${fuentes.length})</label>
+      ${fuentes.slice(0,8).map(f=>`<a href="${esc(f.url||'#')}" target="_blank" rel="noopener noreferrer" style="display:block;font-size:11px;color:#7aa2ff;text-decoration:none;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↗ ${esc(f.titulo||f.publicador||f.url||'')}</a>`).join('')}
+    </div>` : '';
+  const noVerif = Array.isArray(p.payload&&p.payload.datos_no_verificados) ? p.payload.datos_no_verificados : [];
+  const noVerifHtml = noVerif.length ? `<div style="margin:0 0 8px;font-size:10.5px;color:#d9a441">⚠ Sin verificar: ${esc(noVerif.slice(0,4).join(' · '))}</div>` : '';
   const fieldsHtml = fields.map(k=>{
     const v = p.payload[k];
     const label = PROPOSAL_FIELD_LABELS[k] || k;
@@ -5012,7 +5027,7 @@ function _propuestaCard(p){
       <span style="font-size:10px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">conf. ${conf}</span>
     </div>
     <div style="font-size:12px;color:var(--ink-2);margin:4px 0 8px;line-height:1.4">${esc(p.explanation||'')}</div>
-    ${fieldsHtml}
+    ${fuentesHtml}${noVerifHtml}${fieldsHtml}
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
       <button class="prop-approve" style="font-size:12px;padding:6px 12px;border-radius:7px;border:none;background:#43C896;color:#04241a;font-weight:700;cursor:pointer">✓ Aprobar</button>
       <button class="prop-reject" style="font-size:12px;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:none;color:var(--ink-2);cursor:pointer">✗ Rechazar</button>
@@ -5020,6 +5035,39 @@ function _propuestaCard(p){
     </div>
   </div>`;
 }
+/* Track C — Investigador Autónomo: investigación web puntual bajo demanda.
+   Corre en el server en segundo plano (20-60s); aquí se sondea el estado y al
+   terminar se refresca la lista (la tesis aparece como propuesta a aprobar). */
+window.lanzarInvestigacion = async function(){
+  const q = ($('investigar-q')&&$('investigar-q').value||'').trim();
+  const st = $('investigar-status');
+  if(!q){ if(st) st.textContent = 'Escribe qué investigar.'; return; }
+  const base = (typeof BASE!=='undefined') ? BASE : '';
+  let actor = 'anónimo'; try{ actor = localStorage.getItem('khipu_actor')||'anónimo'; }catch(e){}
+  const post = async()=>{ const r = await fetch(`${base}/api/ontology/agents/investigar`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({query:q, actor})}); return {ok:r.ok, code:r.status, data:await r.json().catch(()=>null)}; };
+  if(st) st.textContent = '🌐 Investigando en la web… (20-60s)';
+  let res = await post();
+  if(!res.ok){
+    if(st) st.textContent = (res.data&&res.data.error) ? res.data.error : `Error ${res.code}`;
+    return;
+  }
+  let tries = 0;
+  const poll = async()=>{
+    tries++;
+    const r = await post();                      // re-POST = consulta estado (throttle server)
+    const d = r.data||{};
+    if(d.running && tries < 24){ setTimeout(poll, 5000); return; }
+    const last = d.last||{};
+    if(st) st.textContent = last.status==='ok'
+      ? `✓ Propuesta creada (${last.action_type}) — revísala abajo y apruébala o recházala.`
+      : (last.status==='sin_resultado' ? (last.hint||'Sin resultados.') : (last.error||'Terminó.'));
+    if(last.status==='ok') window.openPropuestas(true);
+  };
+  setTimeout(poll, 6000);
+};
+
 window.openPropuestas = async function(fresh){
   const body = $('propuestas-body');
   if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
