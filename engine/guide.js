@@ -39,6 +39,8 @@
     ['PORT VAR', 'el riesgo (VaR) de tu portafolio'],
     ['GRAPH ASOF 2020-01-01', 'ver la cadena como era en esa fecha'],
     ['ALERT NVDA PX > 150', 'avisarte si Nvidia sube de $150'],
+    ['FACTOR LIST', 'los ~70 riesgos sistémicos latentes (aranceles, tasas, cuellos de botella)'],
+    ['FACTOR taiwan FIRE', 'qué pasaría si esa crisis se dispara: contagio y nivel sistémico'],
   ];
 
   window.initGuiaTab = function () {
@@ -54,9 +56,10 @@
         <div style="margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--violet)">Guía rápida</div>
         <h2 style="font-family:'Fraunces',serif;font-size:27px;font-weight:700;margin:0 0 8px">¿Qué es Bixby Finance?</h2>
         <p style="font-size:14px;line-height:1.6;color:var(--ink-2);margin:0 0 36px;max-width:70ch">
-          Un terminal financiero para invertir en la cadena de suministro de la IA — <b>555 empresas</b> de
-          semiconductores, inteligencia artificial, espacio, energía nuclear, robótica y defensa, conectadas por sus
-          <b>1.600+ relaciones reales</b> (quién fabrica, quién abastece, quién depende de quién). Precios en vivo,
+          Un terminal financiero para invertir en la cadena de suministro de la IA — <b>949 empresas</b> en
+          13 sectores: semiconductores, IA, espacio, nuclear, robótica, defensa, energía, materiales,
+          macro/crédito, inmobiliario y logística, conectadas por sus <b>2.500+ relaciones reales</b>
+          (quién fabrica, quién abastece, quién depende de quién). Precios en vivo de las bolsas del mundo,
           simulaciones de crisis, radiografías de empresas, y un asistente (Bixby) que lo ejecuta todo por ti.
         </p>
 

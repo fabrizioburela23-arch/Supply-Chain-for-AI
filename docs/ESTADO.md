@@ -9,6 +9,49 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-08-02 — Expansión multicapa COMPLETA (olas 1-6): 949 nodos, 13 sectores, 70 factores latentes
+
+Archivo fuente de Fabrizio: `khipus_ai_finance_grafo_completo.md` (393 nodos +
+69 FACTORs + 28 ASIENTOs en 6 capas: energía, materiales, macro/crédito,
+actores, inmobiliario, logística). Todo desplegado y verificado en prod (sw v122).
+
+**Cliente:** 949 nodos / 2.526 links / 13 sectores (4 nuevos en SECTORS9 con
+colores) vía `nodes/nodes_multicapa.js` generado por `scripts/ingest_multicapa.py`
+(dedupe + auto-exclusión de su propia salida; las 5 alertas de reconciliación
+del doc aplicadas; sufijos Yahoo mundiales → 205 cotizables).
+
+**Ontología (Postgres):** espejo COMPLETO — 1.037 objetos económicos. Incluye
+188 empresas históricas que NUNCA se habían espejado (la Etapa B de 148 solo
+vivía en el cliente; se descubrió por los links en cuarentena "target
+inexistente"). 28 Seats (type no-económico nuevo en vocabulary.json). Links
+881/882 (1 cuarentena legítima). `POST /api/ontology/bulk/import` nuevo
+(objects no-económicos + links, actor obligatorio, límites 200/1000).
+
+**Los 70 factores viven LATENTES — lección de modelado:** cargarlos a
+severidad de crisis (doc/2) puso ρ(T) en 2.63 con cascadas saturadas
+(todo-100%): "todas las crisis a la vez" es un escenario irreal. Curación:
+severity=1.0 (latente) + `severity_crisis` en props (nivel si se dispara) +
+tope `FRAGILITY_CAP=2.5` por nodo en `matrix/engine.py::fragility()`.
+Resultado: ρ base 1.553 → 1.939 latente (damped 1.16, casi-crítico — hallazgo
+honesto de la tesis multicapa, no bug), cascadas con gradiente informativo
+(TSMC → Nvidia 100 / Oracle 89 / Tesla 79). Los 13 factores de PARTE 2 traían
+members como JSON inline con comillas — regex del parser corregida.
+
+**Disparo de factores (what-if):** `POST /api/matrix/factor/fire`
+{factor_id} — recalcula fragilidad y ρ con ESE factor en su severity_crisis
+sobre el fondo latente, SIN mutar la ontología. `active_factors()` ahora
+expone severity_crisis. Comando KHIPU `FACTOR LIST` / `FACTOR <id|texto> FIRE`
+(ambigüedad → dispara el de mayor severity_crisis y lista alternativas;
+feedback visual livesim). Guía ❓ actualizada (949 empresas, comandos FACTOR).
+
+**Pendiente inmediato:** Track B restante (pestaña INSIGHTS, presets →
+factores reales, /insights/history), Track A Fase 2 (borrar stack 3D viejo),
+rework de escala cliente antes de superar ~2.500 nodos. Nota de curación:
+existen 2 factores "Taiwán" legítimos (tensión militar y ciclo cambiario,
+miembros distintos) — no fusionar sin revisar.
+
+---
+
 # SESIÓN 2026-08-01 — Prompt frontend+IA (Cowork): Tracks C y D implementados
 
 Del documento `khipus_prompt_frontend_ia_inversion.md` (4 tracks). Orden de la

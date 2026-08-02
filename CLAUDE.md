@@ -1,10 +1,15 @@
 # Khipus AI Finance Inteligence — CLAUDE.md
 
 Terminal financiero (estilo Bloomberg + ontología estilo Palantir) para la
-cadena de suministro de semiconductores, IA, espacio y nuclear. 407 empresas
-canónicas, 1,028 relaciones (dirección ÚNICA: source PROVEE a target; 9 tipos
-de relación; 9 macro-sectores en SECTORS9). Desplegado en Railway (push a
-`main` auto-deploya, ~2 min).
+cadena de suministro de IA + capas macro. 949 nodos cliente / 1.037 objetos
+económicos en la ontología, 2.500+ relaciones (dirección ÚNICA: source PROVEE
+a target; 9 tipos de relación; 13 macro-sectores en SECTORS9 — expansión
+multicapa 2026-08-02: energía, materiales, macro_credito, inmobiliario,
+logistica). ~70 Factores sistémicos LATENTES (severity 1.0) con
+`severity_crisis` en props — se disparan como what-if vía
+`POST /api/matrix/factor/fire`, nunca dejarlos todos en severidad de crisis
+(satura: ρ 2.63). Tope FRAGILITY_CAP=2.5 por nodo en matrix/engine.py.
+Desplegado en Railway (push a `main` auto-deploya, ~2 min).
 
 **Al iniciar una sesión de trabajo: lee `docs/ESTADO.md`** — es la memoria
 entre sesiones (qué se construyó, decisiones tomadas, qué falta).
@@ -140,8 +145,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 `PORT VAR/PL` · `GRAPH ASOF <fecha>` / `GRAPH DIFF <Nd>` ·
 `ALERT <ticker> PX|NRS > <valor>` / `ALERT REGION <región> NEWS` / `ALERT LIST` ·
 `COMPARE <A> <B>` (comparador) · `SHOCK <ticker> [sev]` (sim en vivo) ·
-`INSIGHTS` / `MATRIX` (pestaña Análisis). Acciones nuevas en command_center:
-xray, compare, insights, livesim.
+`INSIGHTS` / `MATRIX` (pestaña Análisis) ·
+`FACTOR LIST` / `FACTOR <id|texto> FIRE` (what-if de crisis de un factor
+sistémico; ambigüedad → mayor severity_crisis + alternativas). Acciones
+nuevas en command_center: xray, compare, insights, livesim.
 
 ## ScenarioBuilder / categorías
 
