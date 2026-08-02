@@ -141,18 +141,24 @@ const ScenarioBuilder = {
     return buildMiroFishSeed({ title: p.title, description: p.description, nodes, question: p.question });
   },
 
+  // factorId: ancla el preset a un Factor REAL de la ontología (se dispara
+  // como what-if vía /api/matrix/factor/fire para contrastar la narrativa de
+  // la IA con contagio determinista). Los presets hipotéticos (incendio HBM,
+  // revelación Starshield) NO llevan factorId — no inventamos factores.
   PRESETS: {
     taiwan_conflict: {
       title: 'Taiwan Strait Crisis — TSMC Production Halt',
       description: 'Military conflict forces TSMC to halt 3nm/2nm production for 90 days. Starshield/DoD assets on alert.',
       nodeIds: ['TSMC', 'Nvidia', 'Apple', 'AMD', 'ASML', 'SKHynix', 'Samsung', 'SpaceX', 'AST_SpaceMobile'],
       question: 'What happens to GPU supply, AI lab timelines, and stock valuations? Who benefits from reshoring?',
+      factorId: 'FACTOR_Taiwan_Tension',
     },
     china_chip_ban_total: {
       title: 'Complete Chip Export Ban — All Nvidia/AMD to China',
       description: 'BIS emergency order bans all Nvidia, AMD, Intel chips to China including previously allowed H20/MI300.',
       nodeIds: ['Nvidia', 'AMD', 'Intel', 'SMIC', 'HiSilicon', 'Cambricon', 'Huawei'],
       question: 'How does China respond? What happens to Nvidia revenue and Chinese AI? Who wins?',
+      factorId: 'FACTOR_H20_Whiplash',
     },
     hbm_shortage_2027: {
       title: 'HBM Memory Severe Shortage — Fab Fire + Qualification Delay',
@@ -165,6 +171,7 @@ const ScenarioBuilder = {
       description: 'OpenAI goes public at $250B valuation. Market digests AI profitability timeline.',
       nodeIds: ['OpenAI', 'Microsoft', 'Anthropic', 'Nvidia', 'Oracle', 'Meta', 'Alphabet'],
       question: 'How does the OpenAI IPO reshape capital flows, valuations, and competitive dynamics?',
+      factorId: 'FACTOR_AIDebtLeverageCycle',
     },
     starshield_reveal: {
       title: 'Starshield Pentagon Reveal — SpaceX Defense Business',

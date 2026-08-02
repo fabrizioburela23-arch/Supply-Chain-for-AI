@@ -6701,6 +6701,39 @@ function _simSetStatus(status, text, color) {
   status.style.color = fg[color]||fg.gray;
 }
 
+// Ancla del motor de matrices: si el preset tiene factorId (Factor REAL de la
+// ontología), lo dispara como what-if (/api/matrix/factor/fire) y muestra el
+// contagio DETERMINISTA encima de la narrativa de la IA — números contra
+// relato. Presets hipotéticos (sin factorId) no muestran nada. window.* para
+// ser visible desde el handler del botón (otro bloque de script).
+window._simGroundFactor = async function (presetId) {
+  let box = document.getElementById('sim-ground');
+  const out = document.getElementById('sim-output');
+  if (!box) {
+    if (!out || !out.parentNode) return;
+    box = document.createElement('div');
+    box.id = 'sim-ground';
+    out.parentNode.insertBefore(box, out);
+  }
+  const fid = presetId && window.ScenarioBuilder?.PRESETS?.[presetId]?.factorId;
+  if (!fid) { box.innerHTML = ''; return; }
+  const h = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  box.innerHTML = `<div style="margin:0 0 10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12px;color:var(--ink-3)">📐 Anclando con el motor de matrices…</div>`;
+  try {
+    const r = await fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/matrix/factor/fire', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ factor_id: fid })
+    }).then(x => x.json());
+    if (!r || r.error) { box.innerHTML = ''; return; }
+    const top = (r.top_contagio || []).slice(0, 6).map(t => `<b>${h(t.id)}</b> ${t.impact}%`).join(' · ');
+    const estab = r.rho && r.rho.estable_en_crisis === false ? '⚠ régimen supercrítico' : 'estable';
+    box.innerHTML = `<div style="margin:0 0 10px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--violet);border-radius:8px;background:var(--surface);font-size:12px;line-height:1.65">
+      <b>📐 Ancla del motor de matrices</b> — factor real disparado: <b>${h(r.factor.label)}</b> (severidad ${h(r.factor.severity_crisis)}/5)<br>
+      Contagio determinista, sin IA: alcanza <b>${r.affected}</b> empresas · ${top}<br>
+      ρ(T) en crisis: ${h(r.rho && r.rho.crisis)} (${estab}). Contrasta la narrativa de abajo con estos números.</div>`;
+  } catch (e) { box.innerHTML = ''; }
+};
+
 async function _runMiroFishPipeline(text, presetId, output, status) {
   const setOut = html => { output.innerHTML = html; };
   const log = msg => {
@@ -7842,6 +7875,8 @@ function initSimTab() {
     const activeBtn = document.querySelector('.sim-preset-btn[data-active="1"]');
     const presetId = activeBtn?.dataset?.preset || null;
     if (!text) { toast('Escribe un escenario o selecciona un preset'); return; }
+    // ancla determinista (no bloquea): factor real del preset, si lo tiene
+    try { window._simGroundFactor && window._simGroundFactor(presetId); } catch (e) {}
 
     document.getElementById('sim-run-btn').disabled = true;
     const engine = document.querySelector('#sim-engine-seg button.active')?.dataset?.engine || 'simple';
