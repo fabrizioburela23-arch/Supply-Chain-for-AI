@@ -20,7 +20,8 @@
     "Decision":           { "economic": false, "es": "Decisión",             "en": "Decision" },
     "PositionAdjustment": { "economic": false, "es": "Ajuste de posición",   "en": "Position adjustment" },
     "NewsItem":           { "economic": false, "es": "Noticia",              "en": "News item" },
-    "Source":             { "economic": false, "es": "Fuente",               "en": "Source" }
+    "Source":             { "economic": false, "es": "Fuente",               "en": "Source" },
+    "Seat":               { "economic": false, "es": "Asiento de poder",     "en": "Seat of power" }
   },
 
   "_doc_orden": "El ORDEN de las estructurales se respeta tal cual está aquí y debe seguir siendo el histórico (supply, cloud, fab, license, partner, invest, deploy, owns, ppa): la suma de matrices en coma flotante no es asociativa, así que reordenar introduciría deriva numérica frente al motor histórico.",

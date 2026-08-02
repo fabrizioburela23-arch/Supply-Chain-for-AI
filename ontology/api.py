@@ -249,6 +249,56 @@ def agents_cycle():
                     'last': _cycle_state['last']})
 
 
+# ── Ingesta masiva (expansión multicapa y futuras) ───────────────────────────
+@ontology_bp.route('/bulk/import', methods=['POST'])
+@_require_db
+def bulk_import_route():
+    """Carga masiva AUDITADA: objects (solo tipos NO económicos del registro,
+    p.ej. Seat) + links (vía ontology.bulk_import: validación de integridad,
+    cuarentena, idempotencia por external_id/triple, por lotes). Body:
+    {actor, provenance, objects?: [{id,type,label,properties}], links?: [...]}.
+    Mismo modelo de seguridad que las Acciones (actor obligatorio, todo queda
+    como eventos inmutables reversibles) + límite de tamaño por request."""
+    b = request.get_json(force=True, silent=True) or {}
+    actor = (b.get('actor') or '').strip()[:80]
+    provenance = (b.get('provenance') or 'bulk').strip()[:60]
+    if not actor:
+        return jsonify({'error': 'actor requerido'}), 400
+    objects = b.get('objects') or []
+    links = b.get('links') or []
+    if len(objects) > 200 or len(links) > 1000:
+        return jsonify({'error': 'máx 200 objects / 1000 links por request'}), 400
+    out = {'objects_created': 0, 'objects_skipped': [], 'links': None}
+    with session_scope() as s:
+        if objects:
+            from ontology.models import ObjectRecord
+            from ontology.service import apply_event
+            from ontology.vocabulary import is_economic, object_types
+            known_types = object_types()
+            for o in objects:
+                oid = str(o.get('id') or '').strip()[:120]
+                otype = str(o.get('type') or '').strip()[:40]
+                if not oid or otype not in known_types or is_economic(otype):
+                    out['objects_skipped'].append({'id': oid, 'reason':
+                        'tipo económico o fuera del registro — usa IncorporarEmpresa/acciones'})
+                    continue
+                if s.get(ObjectRecord, oid):
+                    out['objects_skipped'].append({'id': oid, 'reason': 'ya existe'})
+                    continue
+                apply_event(s, 'ObjectCreated',
+                            {'label': str(o.get('label') or oid)[:300], 'type': otype,
+                             'properties': dict(o.get('properties') or {})},
+                            valid_from=None,   # _parse_dt → ahora (default)
+                            source=provenance, actor=actor, object_id=oid)
+                out['objects_created'] += 1
+        if links:
+            from ontology.bulk_import import import_links_bulk
+            res = import_links_bulk(s, links, provenance, actor=actor)
+            res['quarantined'] = res.get('quarantined', [])[:15]   # muestra, no todo
+            out['links'] = res
+    return jsonify(out)
+
+
 # ── Investigador Autónomo (Track C): investigación puntual bajo demanda ─────
 # Corre en hilo de fondo (2-4 búsquedas web + 1 síntesis tier deep = 20-60 s;
 # no se bloquea un worker síncrono ese tiempo). Throttle de 3 min por si se

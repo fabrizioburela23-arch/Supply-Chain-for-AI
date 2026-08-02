@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-08-02T20:51:18.316Z",
+ "exported_at": "2026-08-02T20:56:45.243Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -11062,7 +11062,7 @@
    "country": "Europa",
    "growth": "🟢 Beneficio neto récord de €6,285M en 2025 (+12%), impulsado principalmente por el negocio de redes.",
    "margin": null,
-   "mkt": "",
+   "mkt": "IBE.MC",
    "sector_hint": "energia"
   },
   {
@@ -11078,7 +11078,7 @@
    "country": "Europa",
    "growth": "🟢 Market cap +26% en 12 meses; capacidad neta instalada de 88GW.",
    "margin": null,
-   "mkt": "",
+   "mkt": "ENEL.MI",
    "sector_hint": "energia"
   },
   {
@@ -11094,7 +11094,7 @@
    "country": "ReinoUnido",
    "growth": "🟢 Expansión activa en generación dedicada para datacenters en EEUU (Wisconsin) más allá de su negocio tradicional de redes.",
    "margin": null,
-   "mkt": "",
+   "mkt": "NG.L",
    "sector_hint": "energia"
   },
   {
@@ -11126,7 +11126,7 @@
    "country": "Francia",
    "growth": "🔵 Ingresos 2025 crecieron modestamente (+1.9%) tras una caída significativa en 2024.",
    "margin": null,
-   "mkt": "",
+   "mkt": "ENGI.PA",
    "sector_hint": "energia"
   },
   {
@@ -11158,7 +11158,7 @@
    "country": "ReinoUnido",
    "growth": "🟢 Crecimiento sostenido en renovables y refuerzo de red, con ingresos 2026 levemente positivos (+0.54%).",
    "margin": null,
-   "mkt": "",
+   "mkt": "SSE.L",
    "sector_hint": "energia"
   },
   {
@@ -11190,7 +11190,7 @@
    "country": "Europa",
    "growth": "🟢 Market cap +15% en 12 meses, respaldado por inversión regulada creciente en modernización de red.",
    "margin": null,
-   "mkt": "",
+   "mkt": "TRN.MI",
    "sector_hint": "energia"
   },
   {
@@ -11222,7 +11222,7 @@
    "country": "Japon",
    "growth": "🟢 Reinicio nuclear marca \"el fin del estancamiento nuclear post-Fukushima\", según analistas citados en la prensa especializada.",
    "margin": null,
-   "mkt": "",
+   "mkt": "9501.T",
    "sector_hint": "energia"
   },
   {
@@ -11270,7 +11270,7 @@
    "country": "China",
    "growth": "🔵 Negocio base estable en Hong Kong; ingresos 2025 bajaron levemente (-3.2%) frente a 2024.",
    "margin": null,
-   "mkt": "",
+   "mkt": "0002.HK",
    "sector_hint": "energia"
   },
   {
@@ -11286,7 +11286,7 @@
    "country": "China",
    "growth": "🟢 China lidera el mundo en nueva construcción nuclear; CGN expande cartera de renovables además de su núcleo nuclear.",
    "margin": null,
-   "mkt": "",
+   "mkt": "1816.HK",
    "sector_hint": "energia"
   },
   {
@@ -11302,7 +11302,7 @@
    "country": "Japon",
    "growth": "🟢 Ganancias récord impulsadas por maximización de generación nuclear; ventas cayeron 6.5% interanual pero rentabilidad mejoró.",
    "margin": null,
-   "mkt": "",
+   "mkt": "9503.T",
    "sector_hint": "energia"
   },
   {
@@ -11462,7 +11462,7 @@
    "country": "Europa",
    "growth": "🟡 resultados mixtos 2025-2026 por precios de crudo más débiles.",
    "margin": null,
-   "mkt": "",
+   "mkt": "REP.MC",
    "sector_hint": "energia"
   },
   {
@@ -11494,7 +11494,7 @@
    "country": "China",
    "growth": "🔵 crecimiento estable ligado a demanda energética china y sustitución de importaciones.",
    "margin": null,
-   "mkt": "",
+   "mkt": "601857.HK",
    "sector_hint": "energia"
   },
   {
@@ -11510,7 +11510,7 @@
    "country": "China",
    "growth": "🔵 estable, ligado a demanda de combustibles/petroquímicos china.",
    "margin": null,
-   "mkt": "",
+   "mkt": "600028.HK",
    "sector_hint": "energia"
   },
   {
@@ -11526,7 +11526,7 @@
    "country": "China",
    "growth": "🟢 fuerte revalorización bursátil 2025-2026 (mayor market cap de las \"tres grandes\" chinas).",
    "margin": null,
-   "mkt": "",
+   "mkt": "0883.HK",
    "sector_hint": "energia"
   },
   {
@@ -11814,7 +11814,7 @@
    "country": "Europa",
    "growth": "🔴 ingresos -48% interanual en 2T25 por parálisis de proyectos de hidrógeno en el mercado.",
    "margin": null,
-   "mkt": "",
+   "mkt": "NEL.OL",
    "sector_hint": "energia"
   },
   {
@@ -11862,7 +11862,7 @@
    "country": "Europa",
    "growth": "🟢 recuperación fuerte en 2025: utilidad neta de US$363 M vs pérdida de US$1.634 M en 2024.",
    "margin": 0,
-   "mkt": "",
+   "mkt": "GLEN.L",
    "sector_hint": "energia"
   },
   {
@@ -12070,7 +12070,7 @@
    "country": "ReinoUnido",
    "growth": "🟢 Resultados récord (EBITDA +52% FY2025)",
    "margin": 0.603,
-   "mkt": "",
+   "mkt": "ANTO.L",
    "sector_hint": "materiales"
   },
   {
@@ -12086,7 +12086,7 @@
    "country": "ReinoUnido",
    "growth": "🟡 En plena reestructuración, fusión histórica sin cerrar",
    "margin": 0.346,
-   "mkt": "",
+   "mkt": "AAL.L",
    "sector_hint": "materiales"
   },
   {
@@ -12134,7 +12134,7 @@
    "country": "Canadá",
    "growth": "🟡 Negociando reapertura de Panamá, producción en alza en activos restantes",
    "margin": 0.184,
-   "mkt": "",
+   "mkt": "FM.TO",
    "sector_hint": "materiales"
   },
   {
@@ -12150,7 +12150,7 @@
    "country": "Canadá",
    "growth": "🟢 Producción de cobre en fuerte crecimiento, fundición propia arrancada",
    "margin": 0.44,
-   "mkt": "",
+   "mkt": "IVN.TO",
    "sector_hint": "materiales"
   },
   {
@@ -12198,7 +12198,7 @@
    "country": "China",
    "growth": "🟢 Valuación superó US$100.000M, entrada acelerada a litio",
    "margin": 0.149,
-   "mkt": "",
+   "mkt": "2899.HK",
    "sector_hint": "materiales"
   },
   {
@@ -12230,7 +12230,7 @@
    "country": "India",
    "growth": "🟢 Producción y utilidad récord en año fiscal 2026, impulsadas por plata",
    "margin": 0.351,
-   "mkt": "",
+   "mkt": "HINDZINC.NS",
    "sector_hint": "materiales"
   },
   {
@@ -12278,7 +12278,7 @@
    "country": "Australia",
    "growth": "🟡 Expansión HPAL en rampa, bajo presión de política indonesia",
    "margin": 0.172,
-   "mkt": "",
+   "mkt": "NIC.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12294,7 +12294,7 @@
    "country": "Australia",
    "growth": "🟡 Fuerte recuperación FY26 tras pérdida masiva en FY25",
    "margin": -0.08,
-   "mkt": "",
+   "mkt": "IGO.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12310,7 +12310,7 @@
    "country": "Indonesia",
    "growth": "🟢 Producción récord, expansión HPAL con socios occidentales/coreanos",
    "margin": 0.23,
-   "mkt": "",
+   "mkt": "INCO.JK",
    "sector_hint": "materiales"
   },
   {
@@ -12326,7 +12326,7 @@
    "country": "Francia",
    "growth": "🔴 EBITDA -54% FY2025 por crisis de Nueva Caledonia, recuperando en H1-2026",
    "margin": 0.135,
-   "mkt": "",
+   "mkt": "ERA.PA",
    "sector_hint": "materiales"
   },
   {
@@ -12342,7 +12342,7 @@
    "country": "China",
    "growth": "🟡 Producción récord de cobre y cobalto, pero ventas de cobalto limitadas por cuota",
    "margin": 0.21,
-   "mkt": "",
+   "mkt": "603993.HK",
    "sector_hint": "materiales"
   },
   {
@@ -12390,7 +12390,7 @@
    "country": "Canadá",
    "growth": "🟡 Transformada por la adquisición de Eagle Mine; Tamarack aún sin permisos finales",
    "margin": 0.166,
-   "mkt": "",
+   "mkt": "TLO.TO",
    "sector_hint": "materiales"
   },
   {
@@ -12406,7 +12406,7 @@
    "country": "China",
    "growth": "🟢 Retorno a utilidad, expansión de capacidad en Mali y Argentina",
    "margin": 0.07,
-   "mkt": "",
+   "mkt": "002460.HK",
    "sector_hint": "materiales"
   },
   {
@@ -12422,7 +12422,7 @@
    "country": "China",
    "growth": "🔴 Pérdida histórica en 2024, derrota legal en Chile y desinversión forzada de SQM",
    "margin": 0.045,
-   "mkt": "",
+   "mkt": "002466.HK",
    "sector_hint": "materiales"
   },
   {
@@ -12438,7 +12438,7 @@
    "country": "Australia",
    "growth": "🟢 Fuerte recuperación FY26 (ingresos +152%) tras colapso de precios FY25",
    "margin": 0.13,
-   "mkt": "",
+   "mkt": "PLS.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12454,7 +12454,7 @@
    "country": "Australia",
    "growth": "🟡 Volúmenes récord en FY26 pese a escándalo de gobernanza sin resolver",
    "margin": 0.2,
-   "mkt": "",
+   "mkt": "MIN.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12470,7 +12470,7 @@
    "country": "Australia",
    "growth": "🟢 Recuperación fuerte 2026, market cap saltó de A$1.270M (dic-2024) a A$5.420M (jul-2026)",
    "margin": -0.63,
-   "mkt": "",
+   "mkt": "LTR.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12486,7 +12486,7 @@
    "country": "Australia",
    "growth": "🟢 Producción récord pre-fusión, acción +504% reflejando fusión y recuperación de precios",
    "margin": -1,
-   "mkt": "",
+   "mkt": "ELV.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12502,7 +12502,7 @@
    "country": "Australia / Germany",
    "growth": "🟡 Cierre financiero de €2.200M logrado may-2026, pero acción débil",
    "margin": null,
-   "mkt": "",
+   "mkt": "VUL.DE",
    "sector_hint": "materiales"
   },
   {
@@ -12550,7 +12550,7 @@
    "country": "Australia",
    "growth": "🔴 Cierres repetidos de mina, disputa con Tesla, fallo arancelario adverso",
    "margin": -0.02,
-   "mkt": "",
+   "mkt": "SYR.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12566,7 +12566,7 @@
    "country": "Australia",
    "growth": "🟡 Contratos firmes con OEMs pero pérdidas profundas y fallo arancelario adverso",
    "margin": -0.086,
-   "mkt": "",
+   "mkt": "NVX.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12598,7 +12598,7 @@
    "country": "Canadá",
    "growth": "🟢 Nuevos offtakes firmados, expansión Fase 2 anunciada",
    "margin": null,
-   "mkt": "",
+   "mkt": "NEXT.TO",
    "sector_hint": "materiales"
   },
   {
@@ -12646,7 +12646,7 @@
    "country": "Australia",
    "growth": "🟡 Negocio actual en declive, pero refinería y primer offtake avanzando",
    "margin": 0.31,
-   "mkt": "",
+   "mkt": "ILU.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12662,7 +12662,7 @@
    "country": "Australia",
    "growth": "🟡 En proceso de adquisición por Energy Fuels, cierre pospuesto",
    "margin": -0.04,
-   "mkt": "",
+   "mkt": "ASM.AX",
    "sector_hint": "materiales"
   },
   {
@@ -12678,7 +12678,7 @@
    "country": "Canadá",
    "growth": "🟢 Fuerte respaldo gubernamental/DOD, nuevos offtakes firmados",
    "margin": null,
-   "mkt": "",
+   "mkt": "UCU.TO",
    "sector_hint": "materiales"
   },
   {
@@ -12742,7 +12742,7 @@
    "country": "Japon",
    "growth": "🟢 expansión de escala en mercado de EE.UU. protegido por Sección 232; revenue +15,7% interanual tras consolidar US Steel.",
    "margin": null,
-   "mkt": "",
+   "mkt": "5401.T",
    "sector_hint": "materiales"
   },
   {
@@ -12790,7 +12790,7 @@
    "country": "India",
    "growth": "🟡 India con demanda fuerte de infraestructura; Europa en transición dolorosa a acero verde con recortes de empleo.",
    "margin": null,
-   "mkt": "",
+   "mkt": "TATASTEEL.NS",
    "sector_hint": "materiales"
   },
   {
@@ -12854,7 +12854,7 @@
    "country": "Russia",
    "growth": "🔴 sancionada por EE.UU./UE/Reino Unido desde 2022; LME restringió registro de metal ruso nuevo desde abril 2024.",
    "margin": null,
-   "mkt": "",
+   "mkt": "0486.HK",
    "sector_hint": "materiales"
   },
   {
@@ -12870,7 +12870,7 @@
    "country": "Europa",
    "growth": "🟢 demanda creciente de aluminio bajo en carbono con ventaja verde noruega.",
    "margin": null,
-   "mkt": "",
+   "mkt": "NHY.OL",
    "sector_hint": "materiales"
   },
   {
@@ -12886,7 +12886,7 @@
    "country": "China",
    "growth": "🟡 demanda doméstica china de EVs/renovables fuerte, pero limitada por tope de capacidad y controles energéticos gubernamentales.",
    "margin": null,
-   "mkt": "",
+   "mkt": "601600.HK",
    "sector_hint": "materiales"
   },
   {
@@ -12934,7 +12934,7 @@
    "country": "Europa",
    "growth": "🟡 transición post spin-off genera incertidumbre de tamaño/foco; revenue cayó fuertemente tras excluir Norteamérica.",
    "margin": null,
-   "mkt": "",
+   "mkt": "HOLN.SW",
    "sector_hint": "materiales"
   },
   {
@@ -12982,7 +12982,7 @@
    "country": "Alemania",
    "growth": "🟡 fuerte inversión en descarbonización pero demanda europea de construcción débil.",
    "margin": null,
-   "mkt": "",
+   "mkt": "HEI.DE",
    "sector_hint": "materiales"
   },
   {
@@ -13030,7 +13030,7 @@
    "country": "China",
    "growth": "🔴 crisis inmobiliaria china (Evergrande, Country Garden, etc.) redujo demanda doméstica; revenue -9,3% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "600585.HK",
    "sector_hint": "materiales"
   },
   {
@@ -13062,7 +13062,7 @@
    "country": "Japon",
    "growth": "🟢 fuerte exposición a expansión de capacidad de fabs en Asia.",
    "margin": null,
-   "mkt": "",
+   "mkt": "4091.T",
    "sector_hint": "materiales"
   },
   {
@@ -13094,7 +13094,7 @@
    "country": "Japon",
    "growth": "🔵 crecimiento estable, menos apalancado al boom de IA que competidores puros de gases especiales.",
    "margin": null,
-   "mkt": "",
+   "mkt": "4088.T",
    "sector_hint": "materiales"
   },
   {
@@ -13110,7 +13110,7 @@
    "country": "Alemania",
    "growth": "🟡 polisilicio solar en crisis por sobrecapacidad china (2023-2025); grado semiconductor y siliconas más estables/rentables.",
    "margin": null,
-   "mkt": "",
+   "mkt": "WCH.DE",
    "sector_hint": "materiales"
   },
   {
@@ -13142,7 +13142,7 @@
    "country": "Corea",
    "growth": "🔴 sobrecapacidad/dumping del polisilicio solar chino forzó venta de activos en Malasia a Hanwha Corp (2024) y reestructuración; revenue -9,2% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "010060.KS",
    "sector_hint": "materiales"
   },
   {
@@ -13158,7 +13158,7 @@
    "country": "Japon",
    "growth": "🟡 polisilicio grado semiconductor estable; JV de polisilicio solar en Malasia afectada por precios bajos.",
    "margin": null,
-   "mkt": "",
+   "mkt": "4043.T",
    "sector_hint": "materiales"
   },
   {
@@ -13174,7 +13174,7 @@
    "country": "Europa",
    "growth": "🟡 demanda de silicio metálico como precursor de polisilicio es sólida, pero precios volátiles por competencia china.",
    "margin": null,
-   "mkt": "",
+   "mkt": "ELK.OL",
    "sector_hint": "materiales"
   },
   {
@@ -13190,7 +13190,7 @@
    "country": "Japon",
    "growth": "🟢 demanda impulsada por nodos avanzados de chips de IA; market cap +59% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "4109.T",
    "sector_hint": "materiales"
   },
   {
@@ -13206,7 +13206,7 @@
    "country": "Alemania",
    "growth": "🔴 crisis estructural de la industria química alemana por costo energético; recortes en Ludwigshafen y traslado de inversión a China.",
    "margin": null,
-   "mkt": "",
+   "mkt": "BAS.DE",
    "sector_hint": "materiales"
   },
   {
@@ -13222,7 +13222,7 @@
    "country": "Japon",
    "growth": "🔴 pérdidas significativas en petroquímica básica fuerzan reestructuración desde 2023-2024; revenue -10,7% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "4005.T",
    "sector_hint": "materiales"
   },
   {
@@ -13238,7 +13238,7 @@
    "country": "Japon",
    "growth": "🟢 demanda robusta por expansión de capacidad de fabs de memoria/lógica; market cap +265% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "4047.T",
    "sector_hint": "materiales"
   },
   {
@@ -13254,7 +13254,7 @@
    "country": "Japon",
    "growth": "🟢 división de materiales electrónicos en expansión con demanda de litografía avanzada.",
    "margin": null,
-   "mkt": "",
+   "mkt": "5201.T",
    "sector_hint": "materiales"
   },
   {
@@ -13270,7 +13270,7 @@
    "country": "Japon",
    "growth": "🟢 demanda de sustratos avanzados de empaquetado de IA en fuerte crecimiento; market cap +89% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "5214.T",
    "sector_hint": "materiales"
   },
   {
@@ -13302,7 +13302,7 @@
    "country": "Japon",
    "growth": "🟢 se convirtió en una de las acciones \"proxy de IA\" más seguidas en Japón; market cap +237% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "5803.T",
    "sector_hint": "materiales"
   },
   {
@@ -13318,7 +13318,7 @@
    "country": "Japon",
    "growth": "🟢 beneficiario claro del boom de interconexión de IA; market cap +422% interanual (cifra atípica, posiblemente reflejo del rally sectorial de ópticos japoneses en 2024-2025).",
    "margin": null,
-   "mkt": "",
+   "mkt": "5802.T",
    "sector_hint": "materiales"
   },
   {
@@ -13334,7 +13334,7 @@
    "country": "Japon",
    "growth": "🟢 fuerte rally por narrativa de IA/datacenters; market cap +1.062% interanual (cifra atípica, consistente con el rally generalizado de ópticos japoneses en 2024-2025, requiere verificación adicional).",
    "margin": null,
-   "mkt": "",
+   "mkt": "5801.T",
    "sector_hint": "materiales"
   },
   {
@@ -13350,7 +13350,7 @@
    "country": "Europa",
    "growth": "🟢 backlog récord por demanda de datacenters de IA y redes eléctricas; adquirió Encore Wire (EE.UU.) en 2024 por ~US$4.200M; market cap +157% interanual.",
    "margin": null,
-   "mkt": "",
+   "mkt": "PRY.MI",
    "sector_hint": "materiales"
   },
   {
@@ -13366,7 +13366,7 @@
    "country": "Francia",
    "growth": "🟢 backlog en máximos históricos por electrificación y demanda de conexión de datacenters.",
    "margin": null,
-   "mkt": "",
+   "mkt": "NEX.PA",
    "sector_hint": "materiales"
   },
   {
@@ -13382,7 +13382,7 @@
    "country": "China",
    "growth": "🟢 fuerte demanda doméstica china de datacenters de IA; market cap +1.160% interanual (cifra atípica, consistente con el rally sectorial de ópticos asiáticos en 2024-2025, requiere verificación adicional).",
    "margin": null,
-   "mkt": "",
+   "mkt": "601869.HK",
    "sector_hint": "materiales"
   },
   {
@@ -13798,7 +13798,7 @@
    "country": "ReinoUnido",
    "growth": "🟢 Ingresos 2025 de £9.35B (+5.5% interanual); mercado de capitalización £44.43B.",
    "margin": null,
-   "mkt": "",
+   "mkt": "LSEG.L",
    "sector_hint": "macro_credito"
   },
   {
@@ -14006,7 +14006,7 @@
    "country": "Japon",
    "growth": "🟢 Utilidad neta casi se duplicó a USD 8.200M en el año fiscal cerrado en marzo de 2026.",
    "margin": 0.15,
-   "mkt": "",
+   "mkt": "8411",
    "sector_hint": "macro_credito"
   },
   {
@@ -14022,7 +14022,7 @@
    "country": "Japon",
    "growth": "🟢 Utilidad neta de USD 16.020M (+92% interanual) en el año fiscal cerrado en marzo de 2026.",
    "margin": 0.21,
-   "mkt": "",
+   "mkt": "8306",
    "sector_hint": "macro_credito"
   },
   {
@@ -14054,7 +14054,7 @@
    "country": "Japon",
    "growth": "🟢 Utilidad neta de USD 7.508M (+138% interanual, con ganancias no recurrentes) en el año fiscal cerrado en marzo de 2026.",
    "margin": 0.13,
-   "mkt": "",
+   "mkt": "8316",
    "sector_hint": "macro_credito"
   },
   {
@@ -14422,7 +14422,7 @@
    "country": "Australia",
    "growth": "🔵 Estrategia de reciclaje de capital: vendió sus posiciones en datacenters (AirTrunk, Aligned) con ganancias altas y redirige capital a nuevas plataformas (Applied Digital); AUM de Macquarie Asset Management +8% en FY2026.",
    "margin": 0.239,
-   "mkt": "",
+   "mkt": "MQG.AX",
    "sector_hint": "macro_credito"
   },
   {
@@ -14758,7 +14758,7 @@
    "country": "Australia",
    "growth": "🟢 Resultados récord FY25 (ingreso neto A$350.2M, +14%; EBITDA A$216.7M, +6%) con utilización contratada +42% interanual; guía FY26 de A$390-400M de ingresos; market cap +43.6% en lo que va de 2026.",
    "margin": 0.619,
-   "mkt": "",
+   "mkt": "NXT.AX",
    "sector_hint": "inmobiliario"
   },
   {
@@ -14774,7 +14774,7 @@
    "country": "Australia",
    "growth": "🟡 IPO sobre-suscrito de A$4.2bn (nov-2024) seguido de tres adquisiciones hyperscale en Norteamérica por A$2.29bn (llevando la valuación de portafolio a A$6.1bn objetivo); vendió activo de Chicago por $750M en 2026, generando alza en la acción.",
    "margin": null,
-   "mkt": "",
+   "mkt": "DGT.AX",
    "sector_hint": "inmobiliario"
   },
   {
@@ -14806,7 +14806,7 @@
    "country": "Singapur",
    "growth": "🟢 DPU 1H2026 de 5.714 centavos (+11.3% YoY) sobre ingresos brutos de S$242.0M; ocupación 92.5%; analistas (UOB Kay Hian, Maybank) elevaron targets de precio en jul-2026 citando expansión de datacenters y expectativas de recorte de tasas.",
    "margin": null,
-   "mkt": "",
+   "mkt": "AJBU.SI",
    "sector_hint": "inmobiliario"
   },
   {
@@ -14822,7 +14822,7 @@
    "country": "Singapur",
    "growth": "🟡 DPU FY25/26 de 12.71¢ (yield 6.59%), con S$550.6M en desinversiones y emisión de S$300M en perpetual securities reestructurando el portafolio; ocupación norteamericana sigue siendo la incógnita principal para 2026-2027.",
    "margin": null,
-   "mkt": "",
+   "mkt": "ME8U.SI",
    "sector_hint": "inmobiliario"
   },
   {
@@ -15238,7 +15238,7 @@
    "country": "Reino Unido",
    "growth": "🟢 Pipeline de datacenters de +2,5GW en land bank powered (mar-2026); pre-let de 50MVA en Slough (30.000 m²) y aprobación de planificación para Park Royal (70MVA, JV con Pure Data Centres Group) en West London (mar-2026).",
    "margin": null,
-   "mkt": "",
+   "mkt": "SGRO.L",
    "sector_hint": "inmobiliario"
   },
   {
@@ -15254,7 +15254,7 @@
    "country": "Australia",
    "growth": "🟢 Power bank creció de 5GW a 6GW; datacenters = 57% del development WIP (~AUD 18.000M a jun-2026, >73% en datacenters); utilidad operativa 1H26 AUD 1.200M.",
    "margin": null,
-   "mkt": "",
+   "mkt": "GMG.AX",
    "sector_hint": "inmobiliario"
   },
   {
@@ -15286,7 +15286,7 @@
    "country": "Reino Unido",
    "growth": "🟡 Sin catalizador de datacenters/IA identificado; crecimiento reciente ligado a integración de la fusión LXi y sectores de consumo esencial.",
    "margin": null,
-   "mkt": "",
+   "mkt": "LMP.L",
    "sector_hint": "inmobiliario"
   },
   {
@@ -15366,7 +15366,7 @@
    "country": "Singapur",
    "growth": "🟡 Gross revenue FY25/26 (a 31-mar-2026) cayó -5,5% YoY a SGD 673,0M; NPI -5,9% a SGD 500,4M; SGD 550,6M en desinversiones + emisión SGD 300M en perpetual securities — capital recycling defensivo más que expansión neta.",
    "margin": 0.744,
-   "mkt": "",
+   "mkt": "ME8U.SI",
    "sector_hint": "inmobiliario"
   },
   {
@@ -15382,7 +15382,7 @@
    "country": "India",
    "growth": "🟢 En 2024 anunció 1M sq ft adicionales (3 edificios) sobre base operativa de ~0,63M sq ft (2 datacenters con PDG), llevando el portfolio a ~1,65M sq ft al completarse; en abr-2026 adquirió un IT Park en Chennai (2,6M sq ft, Rs 30.000M).",
    "margin": null,
-   "mkt": "",
+   "mkt": "MINDSPACE.NS",
    "sector_hint": "inmobiliario"
   },
   {
@@ -15942,7 +15942,7 @@
    "country": "China",
    "growth": "🟡 Ingresos y utilidad cayeron en 2025 (neta -37,2%) pese a volumen +5,8%; pedido récord de 87 buques por USD 7.170M (dic-2025).",
    "margin": 0.17,
-   "mkt": "",
+   "mkt": "601919.HK",
    "sector_hint": "logistica"
   },
   {
@@ -15958,7 +15958,7 @@
    "country": "Alemania",
    "growth": "🟢 Red Gemini alcanzó 90% de fiabilidad en 2025; adquisición de ZIM por USD 4.200M (16-feb-2026).",
    "margin": 0.05,
-   "mkt": "",
+   "mkt": "HLAG.DE",
    "sector_hint": "logistica"
   },
   {
@@ -16022,7 +16022,7 @@
    "country": "Corea del Sur",
    "growth": "🟡 Utilidad operativa FY2025 cayó 58,4% pero se mantuvo rentable todo 2025; lanzó el plan de inversión más ambicioso del sector coreano.",
    "margin": 0.13,
-   "mkt": "",
+   "mkt": "011200.KS",
    "sector_hint": "logistica"
   },
   {
@@ -16070,7 +16070,7 @@
    "country": "Japon",
    "growth": "🟡 FY2025 (cerrado mar-2026): utilidad neta ¥211.700M (-¥265.900M i.a.) por debilidad en liner y tensiones en Medio Oriente; expande flota GNL (+50% a 130+ buques hacia 2029).",
    "margin": 0.05,
-   "mkt": "",
+   "mkt": "9101",
    "sector_hint": "logistica"
   },
   {
@@ -16086,7 +16086,7 @@
    "country": "Japon",
    "growth": "🟡 FY2025 récord (utilidad neta ¥425.492M, ROE 16,9%), pero guía FY2026 anticipa fuerte caída a ¥213.260M por normalización de ONE. Elliott Management reveló posición \"significativa\" (18-mar-2026).",
    "margin": 0.08,
-   "mkt": "",
+   "mkt": "9104",
    "sector_hint": "logistica"
   },
   {
@@ -16182,7 +16182,7 @@
    "country": "China (Hong Kong/Shenzhen)",
    "growth": "🟡 Throughput +3,8% YoY (151,29M TEU) en 2025, pero utilidad neta atribuible cayó -18,5%.",
    "margin": null,
-   "mkt": "",
+   "mkt": "0144.HK",
    "sector_hint": "logistica"
   },
   {
@@ -16198,7 +16198,7 @@
    "country": "China (matriz COSCO Shipping Group en Shanghái)",
    "growth": "🟢 Throughput +8,2% YoY en H1 2026; Chancay creció +68,2% YoY en H1 2026.",
    "margin": 0.24,
-   "mkt": "",
+   "mkt": "1199.HK",
    "sector_hint": "logistica"
   },
   {
@@ -16214,7 +16214,7 @@
    "country": "India",
    "growth": "🟢 Ingresos FY26 +25% (récord); DOJ retiró cargos de soborno (may-jul 2026); S&P subió rating a \"BBB\" (26-jun-2026); acuerdo USD 1.397M con MSC por 49% de Vizhinjam.",
    "margin": 0.59,
-   "mkt": "",
+   "mkt": "ADANIPORTS.NS",
    "sector_hint": "logistica"
   },
   {
@@ -16406,7 +16406,7 @@
    "country": "India",
    "growth": "🟡 Ingresos +3,5% y utilidad neta +3,35% en FY2024-25, TEUs +7,94%; acción cayó ~20% en 12 meses.",
    "margin": 0.13,
-   "mkt": "",
+   "mkt": "CONCOR.NS",
    "sector_hint": "logistica"
   },
   {
@@ -16438,7 +16438,7 @@
    "country": "Suiza",
    "growth": "🟡 FY2025 débil (turnover -1,3%, EBIT -25%), forzó recortes (>CHF 200M, ~2.000 empleos); Q1/Q2 2026 superaron expectativas, guía EBIT 2026 elevada dos veces a CHF 1,35-1,55bn.",
    "margin": 0.16,
-   "mkt": "",
+   "mkt": "KNIN.SW",
    "sector_hint": "logistica"
   },
   {
@@ -16582,7 +16582,7 @@
    "country": "Suiza (sede en Schindellegi; fundada en Bremen, Alemania)",
    "growth": "🟢 Ingresos FY2025 CHF 24.500M, free cash flow +48% interanual (Kuehne+Nagel newsroom, feb-2026); expansión activa de la red de chárter semiconductor desde 2023.",
    "margin": 0.05,
-   "mkt": "",
+   "mkt": "KNIN.SW",
    "sector_hint": "logistica"
   },
   {
@@ -16662,7 +16662,7 @@
    "country": "Alemania",
    "growth": "🔴 Ingresos FY2025 €82.900M (-1,6% interanual); ingresos de airfreight FY2025 €6.000M (-4,6%), con 4T2025 cayendo -10,3% interanual (Air Cargo News, mar-2026) — aunque EBIT del grupo mejoró +3,7% a €6.000M por eficiencias.",
    "margin": 0.07,
-   "mkt": "",
+   "mkt": "DHL.DE",
    "sector_hint": "logistica"
   },
   {
@@ -16710,7 +16710,7 @@
    "country": "Hong Kong (China)",
    "growth": "🟢 \"Desempeño robusto\" en 2025 (CEO Ronald Lam); volumen de carga 1,7 millones de toneladas (+9,5% interanual); AFTK +8,3%, aunque yield por AFTK cayó -6,5% y load factor bajó a 58,8% (Cathay 2025 Annual Results, mar-2026).",
    "margin": null,
-   "mkt": "",
+   "mkt": "0293.HK",
    "sector_hint": "logistica"
   },
   {

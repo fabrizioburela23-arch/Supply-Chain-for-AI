@@ -121,13 +121,29 @@ def parse_node(head, body):
 
     def mkt_of(ticker):
         t = nd(ticker) or ''
-        mm = re.match(r'^([A-Z][A-Z0-9.\-]{0,9})\s*·\s*(.+)$', t)
+        mm = re.match(r'^([A-Z0-9][A-Z0-9.\-]{0,9})\s*·\s*(.+)$', t)
         if not mm:
             return ''
         sym, exch = mm.group(1), mm.group(2).upper()
         if any(e in exch for e in US_EXCH):
             return sym
-        return ''   # bolsas no-US: mapear a sufijo Yahoo en una pasada posterior
+        # Bolsas no-US → sufijo Yahoo (la tubería multi-mercado ya convierte a USD)
+        SUF = [('HKEX', '.HK'), ('HONG KONG', '.HK'), ('TSE', '.T'), ('TYO', '.T'),
+               ('TOKYO', '.T'), ('TOKIO', '.T'), ('LSE', '.L'), ('LONDON', '.L'),
+               ('EURONEXT PARIS', '.PA'), ('EPA', '.PA'), ('PARIS', '.PA'),
+               ('EURONEXT AMSTERDAM', '.AS'), ('AMSTERDAM', '.AS'),
+               ('XETRA', '.DE'), ('FRANKFURT', '.DE'), ('FRA', '.DE'),
+               ('ASX', '.AX'), ('TSX', '.TO'), ('TORONTO', '.TO'),
+               ('SIX', '.SW'), ('ZURICH', '.SW'), ('BME', '.MC'), ('MADRID', '.MC'),
+               ('KRX', '.KS'), ('KOSPI', '.KS'), ('TWSE', '.TW'),
+               ('SSE', '.SS'), ('STAR', '.SS'), ('SZSE', '.SZ'),
+               ('OSLO', '.OL'), ('COPENHAGEN', '.CO'), ('STOCKHOLM', '.ST'),
+               ('MILAN', '.MI'), ('BORSA', '.MI'), ('BOLSA', ''), ('NSE', '.NS'),
+               ('SGX', '.SI'), ('IDX', '.JK'), ('BRUSSELS', '.BR'), ('LISBON', '.LS')]
+        for name, suf in SUF:
+            if name in exch and suf:
+                return sym + suf if '.' not in sym else sym
+        return ''
 
     return {
         'id': nid, 'label': head.strip(), 'sector': f.get('sector', ''),
