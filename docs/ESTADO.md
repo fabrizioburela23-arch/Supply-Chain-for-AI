@@ -9,6 +9,44 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-08-01 — Prompt frontend+IA (Cowork): Tracks C y D implementados
+
+Del documento `khipus_prompt_frontend_ia_inversion.md` (4 tracks). Orden de la
+sección 6 respetado: sync verificado (ya éramos origin/main), referencias
+re-grepeadas, Track D pasos 1-2 ya estaban (PIN + papel confirmados en prod).
+
+**Track D — endurecimiento del auto-trader (desplegado):** FIX del bug del
+circuit-breaker (bloquea solo entradas nuevas; el stop-loss YA NO se apaga con
+el breaker activo), freno max_orders_per_cycle, no acumular sobre el tope por
+ticker, no vender sin tenencia, min_confidence y universe configurables en
+caliente, `_diag_alpaca()` en /api/diagnostics con el MODO visible (verificado
+en prod: "Cuenta PAPEL (simulada) — sin dinero real"). La Capa 3 (puente
+propuesta aprobada→orden real, TRADE_BRIDGE_ENABLED) NO se construye hasta que
+Fabrizio la pida explícitamente.
+
+**Track C — Investigador Autónomo (desplegado):** agente 7 con búsqueda web
+real (Tavily, `core/websearch.py`), anti-alucinación en 2 capas (REGLAS
+INNEGOCIABLES + `_verificar_citas` server-side), confianza determinista,
+CrearTesis extendida con fuentes citables (aditiva), endpoint
+`POST /api/ontology/agents/investigar` (bg, throttle 3 min), UI en 🔔
+Propuestas (fuentes como links + campo "Investiga en la web…").
+`INVESTIGADOR_AUTO='off'` (decisión Fabrizio 2026-08-02) — reactivo construido
+y apagado. 7 tests DB-free incl. regresión SAFE_AUTO.
+
+**Pendiente que necesita a Fabrizio:** crear cuenta gratis en tavily.com y
+pegar `TAVILY_KEY` en Railway (sin eso el botón avisa y no gasta).
+
+**Tracks A y B del mismo doc: PENDIENTES** (siguiente ola, en este orden):
+A Fase 0 (reubicar getCatColorHex/getLinkColorHex fuera de graph3d.js) →
+A Fase 1 (engine/globe.js = geoglobe+planetarium) → B (rate_limit a core/http,
+insights/War-Room sin MiroFish, ActivarFactor/DesactivarFactor, pestaña
+INSIGHTS). OJO al implementar B: `/api/matrix/insights` YA EXISTE (sim narrada
+del hipergrafo) — las rutas nuevas del doc deben renombrarse (p.ej.
+`/insights/history`). Y el inventario de renderers del Track A no incluye
+`engine/geosituation.js` (Sala de Situación, posterior a su investigación).
+
+---
+
 # SESIÓN 2026-07-19 — Motor de matrices DISPERSAS + centralidad (rama `feature/sparse-matrix-centrality`, NO desplegada)
 
 Implementación del `spec_matrices_dispersas_centralidad`. **NO fusionada a main
