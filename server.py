@@ -872,6 +872,26 @@ def _diag_grafo():
                 'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e) + ctx + warn}
 
 
+def _diag_alpaca():
+    """Bróker: configurado, alcanzable y — LO MÁS IMPORTANTE para un usuario no
+    técnico — en qué modo está: PAPEL (simulado) o REAL. Auditoría Track D: era
+    el gap de seguridad/UX más grande (no había forma de verlo dentro de la app)."""
+    mode = 'paper' if 'paper-api' in ALPACA_BASE else 'live'
+    if not ALPACA_KEY:
+        return {'configured': False, 'ok': False, 'mode': mode,
+                'detail': 'ALPACA_KEY sin configurar — el bróker simulado está apagado.'}
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=8)
+        ok = r.status_code == 200
+        detail = ('Cuenta PAPEL (simulada) conectada — sin dinero real.' if ok and mode == 'paper'
+                  else '⚠ Cuenta REAL conectada — las órdenes mueven dinero de verdad.' if ok
+                  else f'Alpaca respondió HTTP {r.status_code}.')
+        return {'configured': True, 'ok': ok, 'mode': mode, 'detail': detail}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'mode': mode,
+                'detail': f'Alpaca inalcanzable: {str(e)[:100]}'}
+
+
 def _diag_finnhub():
     if not FINNHUB:
         return {'configured': False, 'ok': False,
@@ -942,6 +962,7 @@ def diagnostics():
         'finnhub':    _diag_finnhub(),
         'grafo':      _diag_grafo(),
         'ontologia':  _diag_ontologia(),
+        'alpaca':     _diag_alpaca(),
     }
     # Secundarias: solo presencia (no gastamos llamadas externas extra)
     _extra_names = [n for n, v in (('FMP', FMP), ('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]
@@ -3800,6 +3821,8 @@ _AGENT: dict = {
     'max_pos_pct': 5.0,        # max % of equity per position
     'max_daily_loss_pct': 2.0, # daily circuit-breaker
     'stop_loss_pct': 3.0,      # per-position stop
+    'min_confidence': 65,      # umbral para ejecutar (antes hardcodeado)
+    'max_orders_per_cycle': 3, # freno duro anti-loop: máx órdenes nuevas por ciclo
     'log': [],
     'thread': None,
     'last_run': None,
@@ -3891,12 +3914,17 @@ def _agent_run_cycle():
     if last_equity > 0:
         _AGENT['daily_pnl_pct'] = (equity - last_equity) / last_equity * 100
 
-    # check daily circuit-breaker
-    if _AGENT['daily_pnl_pct'] <= -_AGENT['max_daily_loss_pct']:
+    # Circuit-breaker diario: bloquea ENTRADAS NUEVAS pero NUNCA la protección
+    # de salida. (Bug de diseño corregido — auditoría Track D 2026-08-01: el
+    # `return` temprano de antes también saltaba el stop-loss, así que en el
+    # peor momento (límite diario ya perdido) las posiciones perdedoras
+    # quedaban sin cerrar hasta el día siguiente. Un breaker debe frenar
+    # compras, no apagar el freno de emergencia.)
+    breaker_on = _AGENT['daily_pnl_pct'] <= -_AGENT['max_daily_loss_pct']
+    if breaker_on:
         log_entries.append({'ts': time.strftime('%H:%M:%S'),
-                            'msg': f'🛑 Daily loss limit hit ({_AGENT["daily_pnl_pct"]:.2f}%) — no new trades',
+                            'msg': f'🛑 Daily loss limit hit ({_AGENT["daily_pnl_pct"]:.2f}%) — sin entradas nuevas; stop-loss sigue activo',
                             'level': 'warn'})
-        return
 
     positions = _agent_get_positions()
 
@@ -3923,6 +3951,14 @@ def _agent_run_cycle():
                     log_entries.append({'ts': time.strftime('%H:%M:%S'), 'ticker': sym,
                                         'msg': f'Stop-loss error: {str(e)[:60]}', 'level': 'error'})
 
+    # Con el breaker activo y en modo auto no hay nada que ejecutar: ahorramos
+    # además el costo de analizar 10-30 tickers con IA. En modo manual (solo
+    # consejos) se sigue analizando — el log asesor no abre posiciones.
+    if breaker_on and _AGENT['mode'] == 'auto':
+        _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
+        return
+
+    orders_this_cycle = 0
     for ticker in _AGENT['universe']:
         if not _AGENT['running']:
             break
@@ -3967,18 +4003,42 @@ def _agent_run_cycle():
             'level': 'info',
         }
 
-        if _AGENT['mode'] == 'auto' and ALPACA_KEY and action != 'hold' and confidence >= 65:
-            notional = equity * size_pct / 100
-            notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100))
+        if (_AGENT['mode'] == 'auto' and ALPACA_KEY and action != 'hold'
+                and confidence >= _AGENT.get('min_confidence', 65)):
+            # Endurecimientos (auditoría Track D): freno duro de órdenes por
+            # ciclo, no acumular por encima del tope en el mismo ticker, y no
+            # vender sin tenencia (evita shorts no intencionados con margen).
+            existing = positions.get(ticker) or {}
             try:
-                result = _agent_place(ticker, action, notional)
-                entry['executed'] = True
-                entry['order_id'] = result.get('id', '')[:12]
-                entry['notional'] = notional
-                entry['level'] = 'success'
-            except Exception as e:  # noqa: BLE001
-                entry['exec_error'] = str(e)[:60]
-                entry['level'] = 'error'
+                existing_mv = abs(float(existing.get('market_value') or 0))
+            except (TypeError, ValueError):
+                existing_mv = 0.0
+            skip = None
+            if orders_this_cycle >= _AGENT.get('max_orders_per_cycle', 3):
+                skip = 'freno: tope de órdenes por ciclo'
+            elif action == 'buy' and equity > 0 and existing_mv >= equity * _AGENT['max_pos_pct'] / 100:
+                skip = f'posición ya en tope ({existing_mv / equity * 100:.1f}% ≥ {_AGENT["max_pos_pct"]}%)'
+            elif action == 'sell' and not existing:
+                skip = 'sin tenencia — no se abre corto'
+            if skip:
+                entry['skipped'] = skip
+            else:
+                notional = equity * size_pct / 100
+                notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100))
+                if action == 'buy' and equity > 0:
+                    # que la orden no empuje la posición total por encima del tope
+                    room = equity * _AGENT['max_pos_pct'] / 100 - existing_mv
+                    notional = min(notional, max(1.0, room))
+                try:
+                    result = _agent_place(ticker, action, notional)
+                    entry['executed'] = True
+                    entry['order_id'] = result.get('id', '')[:12]
+                    entry['notional'] = round(notional, 2)
+                    entry['level'] = 'success'
+                    orders_this_cycle += 1
+                except Exception as e:  # noqa: BLE001
+                    entry['exec_error'] = str(e)[:60]
+                    entry['level'] = 'error'
 
         log_entries.append(entry)
         # keep last 100 entries
@@ -4017,6 +4077,8 @@ def agent_start():
     if data.get('max_pos_pct'):   _AGENT['max_pos_pct']      = float(data['max_pos_pct'])
     if data.get('max_daily_loss_pct'): _AGENT['max_daily_loss_pct'] = float(data['max_daily_loss_pct'])
     if data.get('stop_loss_pct'): _AGENT['stop_loss_pct']   = float(data['stop_loss_pct'])
+    if data.get('min_confidence'): _AGENT['min_confidence'] = int(data['min_confidence'])
+    if data.get('max_orders_per_cycle'): _AGENT['max_orders_per_cycle'] = int(data['max_orders_per_cycle'])
 
     if _AGENT['running']:
         return jsonify({'status': 'already_running'})
@@ -4049,6 +4111,9 @@ def agent_status():
         'max_pos_pct': _AGENT['max_pos_pct'],
         'max_daily_loss_pct': _AGENT['max_daily_loss_pct'],
         'stop_loss_pct': _AGENT['stop_loss_pct'],
+        'min_confidence': _AGENT.get('min_confidence', 65),
+        'max_orders_per_cycle': _AGENT.get('max_orders_per_cycle', 3),
+        'paper': 'paper-api' in ALPACA_BASE,
         'last_run': _AGENT['last_run'],
         'daily_pnl_pct': _AGENT['daily_pnl_pct'],
         'broker_error': _AGENT.get('broker_error'),
@@ -4066,8 +4131,13 @@ def agent_config():
     if 'max_pos_pct'        in data: _AGENT['max_pos_pct']      = float(data['max_pos_pct'])
     if 'max_daily_loss_pct' in data: _AGENT['max_daily_loss_pct'] = float(data['max_daily_loss_pct'])
     if 'stop_loss_pct'      in data: _AGENT['stop_loss_pct']    = float(data['stop_loss_pct'])
+    if 'min_confidence'     in data: _AGENT['min_confidence']   = int(data['min_confidence'])
+    if 'max_orders_per_cycle' in data: _AGENT['max_orders_per_cycle'] = int(data['max_orders_per_cycle'])
+    if 'universe'           in data and isinstance(data['universe'], list) and data['universe']:
+        _AGENT['universe'] = [str(t)[:12] for t in data['universe'][:30]]
     return jsonify({'status': 'updated', **{k: _AGENT[k] for k in
-                    ['mode','interval_min','max_pos_pct','max_daily_loss_pct','stop_loss_pct']}})
+                    ['mode','interval_min','max_pos_pct','max_daily_loss_pct','stop_loss_pct',
+                     'min_confidence','max_orders_per_cycle','universe']}})
 
 
 @app.route('/api/trade/history', methods=['GET'])
