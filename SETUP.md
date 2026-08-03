@@ -30,7 +30,7 @@ que solo tú puedes hacer (acceso a Railway / ElevenLabs). Aquí está todo.
 
 ## 2. Desplegar el RAG / Second Brain (2º servicio en Railway)
 
-Es el único servicio en 🔴 en el 🩺. Búsqueda semántica de Bixby. **Opcional.**
+Es el único servicio en 🔴 en el 🩺. Búsqueda semántica de Khipu. **Opcional.**
 La carpeta `rag/` ya está lista para desplegar (Dockerfile + railway.toml).
 
 1. Railway → tu proyecto → **+ New → GitHub Repo** → mismo repo.
@@ -47,10 +47,10 @@ La carpeta `rag/` ya está lista para desplegar (Dockerfile + railway.toml).
 
 ---
 
-## 3. ElevenLabs — que Bixby no se corte por silencio
+## 3. ElevenLabs — que Khipu no se corte por silencio
 
-Si la voz de Bixby se desconecta cuando esperas un resultado callado:
-1. elevenlabs.io → **Conversational AI → tu agente (Bixby)**.
+Si la voz de Khipu se desconecta cuando esperas un resultado callado:
+1. elevenlabs.io → **Conversational AI → tu agente (Khipu)**.
 2. **Advanced / Voice settings** → sube el **"Turn timeout"** (a ~45–60s) y, si existe,
    el timeout de silencio que termina la llamada.
 3. **Security / Overrides** → activa el override del **System prompt** (para que la
@@ -69,7 +69,7 @@ Abre la app **en incógnito** → botón **🩺** en el header. Deberías ver:
 ### Tour de features
 - **Espacio** → planeta 3D con satélites reales.
 - **Geopolítica** → globo 3D con empresas por región.
-- **Bixby** (⌘K) → "compara márgenes de NVIDIA, TSMC y ASML" → tabla inline.
+- **Khipu** (⌘K) → "compara márgenes de NVIDIA, TSMC y ASML" → tabla inline.
 - Clic en **NVDA** → 🧠 Second Brain · 📊 Dossier · 📄 SEC.
 - Clic en **SpaceX/Helion** → panel 🔒 Empresa privada.
 - **Simulación** → motor 🤖 IA Simple o 🧬 MiroFish.

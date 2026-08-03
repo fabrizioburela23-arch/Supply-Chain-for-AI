@@ -172,7 +172,7 @@ cualquier compu, no tarde mucho"). Auditoría de regresión final: **12/12 verde
   Fabrizio): `stageCrypto` + adoptador genérico para `tkg`/`guia`
   (`ADOPT_TABS`). Pedir cripto por voz ya NO cierra la Cabina (bug: `ck.close()`
   en `surfaceTabInCockpit` para pestañas sin escenario → cortaba la voz).
-- **Bixby sabe de espacio**: tool `get_space_summary` (voz) + inyección en
+- **Khipu sabe de espacio**: tool `get_space_summary` (voz) + inyección en
   `/api/ai/command` (texto) con conteos reales de CelesTrak (Starlink 10.734).
   Helpers `_space_constellations`/`_space_facts_str` cacheados + piso de respaldo.
 - **Alpaca 404**: `_norm_alpaca_base` quita sufijo `/v2` y barra. Nuevo
@@ -196,7 +196,7 @@ persistente (Redis) para que sobrevivan reinicios de Railway.
 
 Decisiones de Fabrizio (2026-07-03, no reabrir sin razón nueva): UN solo mapa
 con capas activables; app final de 4 pestañas (MAPA/MERCADO/INSIGHTS/GUÍA) con
-Bixby/terminal flotante; motor de predicción INTERNO (adiós MiroFish) centrado
+Khipu/terminal flotante; motor de predicción INTERNO (adiós MiroFish) centrado
 en insights de inversión; matrices numéricas por tipo de relación moduladas
 por hiperaristas (todo bitemporal en la ontología); 40 categorías → ~9
 macro-sectores sin perder detalle; SOLO Railway (se elimina el modo
@@ -395,7 +395,7 @@ server.py salvo el registro del blueprint.
       potencial) + panorama por sector (más frágil/más sólido).
 - [x] **Las 9 matrices dentro de la app** (matrixview.js): small-multiples +
       heatmap grande con tooltip, en la pestaña Análisis, 100% cliente.
-- [x] **Bixby agente de voz total** (voice.js + server.py, 589cabd): Bixby ya
+- [x] **Khipu agente de voz total** (voice.js + server.py, 589cabd): Khipu ya
       dispara las funciones nuevas por voz. Camino de TOKENS en su propio texto
       (no requiere configurar herramientas en el panel de ElevenLabs, igual que
       NAV/TAB/STRESS): `[XRAY:id]` · `[COMPARE:a,b]` · `[SHOCK:id:kind]`
@@ -403,12 +403,12 @@ server.py salvo el registro del blueprint.
       tools nuevos en `_handleToolCall` (open_xray, run_live_simulation,
       compare_companies, get_opportunities, show_insights) por si algún día se
       registran en ElevenLabs — devuelven datos reales. Resolvedor
-      `_resolveNode` case-insensitive (id/ticker/nombre): Bixby dice "NVIDIA"
+      `_resolveNode` case-insensitive (id/ticker/nombre): Khipu dice "NVIDIA"
       pero el id real es "Nvidia" (NVDA). BIXBY_SYSTEM_PROMPT enseña cuándo usar
       cada token. Verificado en navegador con 407 empresas (X-Ray poblado,
       SHOCK TSMC→252 afectados, COMPARE TSMC vs Samsung).
-- [x] **Cabina de Bixby — modo pantalla completa** (engine/cockpit.js, 0660527):
-      Bixby deja de ser un botón y SE VUELVE la pantalla. El botón de Bixby y
+- [x] **Cabina de Khipu — modo pantalla completa** (engine/cockpit.js, 0660527):
+      Khipu deja de ser un botón y SE VUELVE la pantalla. El botón de Khipu y
       ⌘K abren una vista full-screen: orbe/logo arriba + una barra para pedir
       por texto o 🎙 voz + un ESCENARIO grande abajo. El enrutador `ask(texto)`
       manda lo que pides a escenas: X-Ray a pantalla completa · simulación de
@@ -422,15 +422,15 @@ server.py salvo el registro del blueprint.
         Onda de impacto INSTANTÁNEA con KhipuState (~7ms) → arregla "tarda
         mucho". CSS scoped a `.xray-scope` (antes `#xray`).
       - Responde al feedback de Fabrizio: "no me destripa la empresa" (muestra
-        TODO), "tarda mucho" (instantáneo), "no hay modo Bixby pantalla entera".
+        TODO), "tarda mucho" (instantáneo), "no hay modo Khipu pantalla entera".
       - Orbe plasma optimizado: el bucle salta canvas invisibles y escala el
         detalle al tamaño (antes dibujaba el orbe oculto de 200px en cada frame).
       - PENDIENTE conocido: el system prompt con los tokens nuevos solo llega a
-        Bixby si ELEVENLABS_ALLOW_OVERRIDE=true + "Allow overrides" ON en el
+        Khipu si ELEVENLABS_ALLOW_OVERRIDE=true + "Allow overrides" ON en el
         panel de ElevenLabs. La cabina por TEXTO funciona siempre (no depende
         de eso). La cabina por VOZ ejecuta acciones vía los tokens de voice.js.
 
-## Sesión "modo máximo" 2026-07-10 (feedback: perfeccionar Bixby, 555 empresas, vivo, 3D)
+## Sesión "modo máximo" 2026-07-10 (feedback: perfeccionar Khipu, 555 empresas, vivo, 3D)
 
 Decisiones de Fabrizio (AskUserQuestion): sync ElevenLabs automático vía API ·
 altas/bajas de empresas automáticas con registro reversible · caché interno
@@ -439,7 +439,7 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
 - [x] **Etapa A** (e92cf6e): fix DEFINITIVO del "veo lo mismo" — index() inyecta
       `?v=<versión SW>` en cada `<script src>` (bump de sw.js → URLs nuevas →
       código fresco siempre) + auto-reload en controllerchange (una vez, con
-      guardas). Bixby 100% silencioso: BIXBY_SYSTEM_PROMPT reescrito (GOLDEN
+      guardas). Khipu 100% silencioso: BIXBY_SYSTEM_PROMPT reescrito (GOLDEN
       RULES: jamás decir comandos/tokens/herramientas, actuar y narrar),
       `_bixby_client_tools()` (23 tools) + `_sync_bixby_agent()` + POST
       /api/voice/sync-agent con autosync al boot (BIXBY_AUTOSYNC=0 apaga);
@@ -489,10 +489,10 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       SIMULAR (matrices con hiperaristas) → SINTETIZAR (tesis/evidencia/
       riesgos/vigilar). Cabina: escena stageDeep con pasos en vivo + polling
       2.5s (chip "Investigación profunda", regex investiga/a fondo/tesis).
-      Bixby: tool deep_analysis (23+1 registradas vía sync).
-- **Bixby sync VERIFICADO en producción**: ok:true, mode:full, 22 tools
+      Khipu: tool deep_analysis (23+1 registradas vía sync).
+- **Khipu sync VERIFICADO en producción**: ok:true, mode:full, 22 tools
   registradas (tras el fix del modelo TTS flash v2.5 para agentes en español
-  — 652cb7e). Bixby ya no dice comandos.
+  — 652cb7e). Khipu ya no dice comandos.
 - [x] **Etapa G** (4de15f9, feedback 2 con referencia investingvisuals):
       1) localcharts.js — gráficos DETERMINISTAS sin IA para pedidos comunes
       (0 ms; la IA solo para lo exótico); enganchado en Cabina y Canvas.
@@ -507,7 +507,7 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       OJO: /api/fundamentals/<t> YA existía (P/E+ratings del Second Brain) —
       por eso el nuevo se llama findossier.
 - [x] **Feedback 3** (23c3dac): get_company_info devuelve la FICHA COMPLETA
-      (empleados/fundación/ingresos/cap/moat/geo_risk/desc/grados) — Bixby ya
+      (empleados/fundación/ingresos/cap/moat/geo_risk/desc/grados) — Khipu ya
       no dice "no sé" con datos que la app tiene; el CONTEXT_UPDATE de la
       empresa seleccionada también. Anti-glitch: al adoptar/devolver el grafo
       de la Cabina se re-encuadra con fitToView() (quedaba clavado en una
@@ -583,7 +583,7 @@ Redis-ready · el 3D nuevo REEMPLAZA al actual.
       SOBREVIVEN deploys (antes se perdieron 3 veces). PARA LA VERSIÓN FINAL
       faltan: REMIGRATE_ON_BOOT (acción de Fabrizio, BD prod sigue vieja),
       confirmar 3D en su dispositivo (leer diag/recent — ya persistente),
-      prueba de voz Bixby end-to-end, y opcionales (workspace drag&drop,
+      prueba de voz Khipu end-to-end, y opcionales (workspace drag&drop,
       unificación renderers, 12k, SaaS).
 - [x] **Gráficos rápidos v2** (e8f1341, "tardan full"): el prompt del Canvas
       IA mandaba las 555 empresas (~150KB) — ahora la Capa 2 lo adelgaza
@@ -632,7 +632,7 @@ prompt del "módulo de datos Bloomberg-depth" (adapters, cripto, Alpaca paper).
 
 ## Etapas I+J — Feedback 8 + Expediente Cripto (2026-07-12, sw v76)
 
-Feedback: 3D pantalla negra otra vez, Bixby no entiende "nvidia" por voz,
+Feedback: 3D pantalla negra otra vez, Khipu no entiende "nvidia" por voz,
 resultados quedan detrás de la interfaz, gráficos lentos, quiere Sonnet 5
 (eligió HÍBRIDO), NO quiere avisos de versión (siempre lo último al abrir),
 "no veo nada de cripto". + Pegó KHIPUS_CRIPTO_TOP50_EXPEDIENTE.md.
@@ -651,16 +651,16 @@ en silencio y _selfCheck ignoraba buffer 0×0) = pantalla negra sin error.
 - [x] **Actualizaciones invisibles** (pedido explícito): _showUpdatePill ya
       NO muestra pill — recarga silenciosa al abrir (<10s), con pestaña
       oculta, o al ocultarla (visibilitychange). Anti-bucle 1/min.
-- [x] **Bixby entiende nombres** (agente A): engine/resolve.js NUEVO —
+- [x] **Khipu entiende nombres** (agente A): engine/resolve.js NUEVO —
       KhipuResolve.find() con ~150 aliases de transcripción de voz española
       ('en vidia'/'envidia'/'video'→Nvidia, 'te ese eme ce'→TSMC), fuzzy
       Levenshtein, sugerencias top-3; integrado en voice/command_center/
-      cockpit/khipu_lang con fallback. notFound() bilingüe (Bixby DICE las
+      cockpit/khipu_lang con fallback. notFound() bilingüe (Khipu DICE las
       sugerencias). VERIFICADO: 8/8 variantes de voz resuelven.
 - [x] **Todo al frente** (agente A): window._surface(kind,arg) — Cabina
       abierta → renderiza EN su escenario (dossier fc-ov z→7600 sobre el
       cockpit z7000); cerrada → cierra overlays y switchTab ANTES de pintar.
-      Todas las acciones visuales de Bixby pasan por _surface.
+      Todas las acciones visuales de Khipu pasan por _surface.
 - [x] **IA híbrida** (agente B): core/ai.py _ai_complete(tier='fast'|'deep');
       AI_MODEL_FAST (haiku) / AI_MODEL_DEEP (claude-sonnet-5, env override).
       DEEP: síntesis deep research, veredicto/tesis IA (aiComplete tier),
@@ -684,7 +684,7 @@ en silencio y _selfCheck ignoraba buffer 0×0) = pantalla negra sin error.
       Detalle (gráfico 90d + Expediente Khipus de 6 bloques + banner ⚠ +
       disclaimer). Fuente: KHIPUS_CRIPTO_TOP50_EXPEDIENTE.md — capa estática
       jul-2026, REFRESCAR CADA 3-6 MESES (recordatorio del propio doc).
-- [x] Bixby prompt: sabe del tab 'crypto' + lee errores did_you_mean tal cual.
+- [x] Khipu prompt: sabe del tab 'crypto' + lee errores did_you_mean tal cual.
 - [x] Gates: node --check 13 archivos, py_compile 5, 8 bloques inline OK,
       pytest 56 passed. Verificación en vivo local: resolver 8/8, _surface,
       caché/prefetch de charts, mapa cripto, detalle EN con banner Aster.
@@ -749,9 +749,9 @@ alcanza. DECISIÓN (ni arreglar WebGL a ciegas ni borrar la feature):
      máquina seguirá congelada en la versión vieja PARA SIEMPRE.
   2. Railway: REMIGRATE_ON_BOOT=1 (una vez) para re-migrar la ontología
      limpia en prod; quitarla después.
-  3. Probar Bixby por voz end-to-end una vez.
+  3. Probar Khipu por voz end-to-end una vez.
 
-## Etapa M — Trading cripto en papel, integrado en Bixby (2026-07-13, sw v80)
+## Etapa M — Trading cripto en papel, integrado en Khipu (2026-07-13, sw v80)
 
 Pedido: "haz que se pueda tradear cripto… la idea es que todo se vaya
 integrando en el bixby y en su pantalla… super integrado". 3 agentes en
@@ -760,7 +760,7 @@ paralelo contra contrato fijo + integración del orquestador:
 - [x] SERVER (server.py): /api/trade/order acepta notional (1..100000, USD)
       o qty; símbolos cripto 'BTC/USD' → valida contra catálogo + fuerza
       tif='gtc'; GET /api/trade/crypto/assets (cache 1h en módulo, nunca
-      cachea 401/403); /api/trade/account devuelve paper:bool; tools Bixby
+      cachea 401/403); /api/trade/account devuelve paper:bool; tools Khipu
       place_paper_trade + get_portfolio_status registrados + sección PAPER
       TRADING en el prompt (confirmación verbal obligatoria, sin consejos).
       Los tools llegan a ElevenLabs en el próximo arranque (BIXBY_AUTOSYNC).
@@ -824,17 +824,17 @@ de Opera, aunque eso también contribuía):
 - Opera de Fabrizio: si AÚN ve negro, es la copia vieja cacheada — borrar
   datos del sitio una vez (sigue pendiente de su lado).
 
-## Etapa O — Bixby Finance: 9 frentes + rebrand + Cabina inicial (2026-07-13, sw v85)
+## Etapa O — Khipus Finance AI: 9 frentes + rebrand + Cabina inicial (2026-07-13, sw v85)
 
 Presentación mañana en OTRA máquina. Workflow de 9 agentes (archivos disjuntos)
-+ integración del orquestador en app.html/sw.js. Rebrand a **Bixby Finance**.
++ integración del orquestador en app.html/sw.js. Rebrand a **Khipus Finance AI**.
 
 - [x] SERVER (server.py/config/ai): **Sonnet 5 en TODO** (fast y deep;
       thinking desactivado para que no trunque el JSON/comandos); **fix Alpaca
       404** (normaliza ALPACA_BASE con rstrip('/') — la barra final causaba
       //v2/account) + GET /api/trade/diag; POST /api/crypto/analyze (cauto);
       POST /api/research/deep (más allá del nodo); ruta /api/sim/agents;
-      prompt Bixby cauto con postura + tools run_agent_simulation/deep_research.
+      prompt Khipu cauto con postura + tools run_agent_simulation/deep_research.
 - [x] SIM (core/sim_agents.py NUEVO): motor por AGENTES estilo MiroFish — cada
       empresa un agente + Gobierno EE.UU./China + Geopolítica/Taiwán + Mercado
       + sectores; 2 rondas con Sonnet 5; magnitudes REALISTAS clampeadas por
@@ -855,10 +855,10 @@ Presentación mañana en OTRA máquina. Workflow de 9 agentes (archivos disjunto
       Mercado; crea carteras, dinero virtual, añade cualquiera de las 555
       empresas, P&L en vivo. Se quitaron las C1/C2 mediano/largo de la ficha →
       botón "💼 Añadir a cartera". Verificado montando en vivo.
-- [x] REBRAND → **Bixby Finance** (solo VISIBLE: título, cabecera, boot, pie,
+- [x] REBRAND → **Khipus Finance AI** (solo VISIBLE: título, cabecera, boot, pie,
       guía, prompts, dossier). Internos intactos (caché sw, localStorage,
       globals Khipu*, /v1/*).
-- [x] **Cabina de Bixby = PANTALLA INICIAL**: abre sola tras el boot, 1 vez por
+- [x] **Cabina de Khipu = PANTALLA INICIAL**: abre sola tras el boot, 1 vez por
       sesión (sessionStorage kh_bixby_landed), robusto (espera datos+cabina,
       si falla queda en el mapa). Verificado: abre con el orbe montado.
 - [x] Gates: node --check 12 JS, 8 bloques inline, py_compile, **pytest 61
@@ -885,7 +885,7 @@ Presentación mañana en OTRA máquina. Workflow de 9 agentes (archivos disjunto
    UN kernel de propagación, agente MatrixSentinel → ProposedAction.
 4. **Etapa 4 — Mapa unificado con capas**: 7 renderers → 2 motores
    (grafo 2D + globo), LayerRegistry, 4 pestañas, 9 macro-sectores, un solo
-   store de estado, borrar stack 3D conservando datos, regenerar Guía+Bixby.
+   store de estado, borrar stack 3D conservando datos, regenerar Guía+Khipu.
 5. **Etapa 5 — Predicciones internas + INSIGHTS**: kernel de matrices +
    presets como hiperaristas nombradas, War-Room como visualización,
    pestaña INSIGHTS (feed + brief + panel junto al mapa), control único de
@@ -1078,8 +1078,8 @@ haya una demo en vivo horas después.
 **Estado: ✅ COMPLETA**
 
 - [x] `engine/khipu_lang.js`: parser de `<ENTIDAD> <FUNCIÓN> [ARGS]`.
-      Se intenta ANTES de llamar a la IA en `command_center.js` (Bixby) — si
-      no calza con la gramática, `tryParse()` devuelve `null` y Bixby sigue
+      Se intenta ANTES de llamar a la IA en `command_center.js` (Khipu) — si
+      no calza con la gramática, `tryParse()` devuelve `null` y Khipu sigue
       su flujo normal de lenguaje natural. Comandos exactos no gastan tokens
       ni tiempo de red a Claude.
       - `<TICKER> DES/GP/SUP/CLI/RISK/NEWS/SIM/FA/THESIS [texto]` — cada uno
@@ -1148,7 +1148,7 @@ Antes de este roadmap, ya se había construido (y sigue en pie, se reusa como
 semilla):
 - **Grafo de Conocimiento Temporal** (`engine/temporal-graph.js`): timeline
   con validez, D3 force-graph, ficha de objeto con precio en vivo + NRS +
-  Bixby análisis + noticias, microsimulación de shocks (BFS con dirección
+  Khipu análisis + noticias, microsimulación de shocks (BFS con dirección
   semántica), chokepoints, exposición de portafolio. Persiste opcionalmente
   en Neo4j Aura (ya conectado, badge "neo4j 🟢").
 - **Ontología cliente** (`nodes/ontology.js` + `ontology_facts.js`): 8 tipos

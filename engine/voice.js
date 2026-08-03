@@ -1,5 +1,5 @@
-// engine/voice.js — Bixby, el asistente de voz de Khipu Finance
-// Cliente WebSocket de ElevenLabs Conversational AI. Bixby es el "Jarvis de las
+// engine/voice.js — Khipu, el asistente de voz de Khipu Finance
+// Cliente WebSocket de ElevenLabs Conversational AI. Khipu es el "Jarvis de las
 // finanzas": escucha por micrófono, responde por voz, y puede controlar la terminal.
 //
 // Depende de app.html: Keys, BASE, NODES, NODE_BY_ID, MKT, selected, stressId,
@@ -34,7 +34,7 @@ const BixbyVoice = {
     // Mobile browsers (Chrome Android, Safari iOS) revoke the gesture context
     // after the first await. Asking here ensures the permission dialog appears
     // immediately and the stream is ready when the WebSocket opens.
-    this._showOverlay('Bixby — pidiendo micrófono…');
+    this._showOverlay('Khipu — pidiendo micrófono…');
     let preStream = null;
     if (navigator.mediaDevices?.getUserMedia) {
       try {
@@ -42,7 +42,7 @@ const BixbyVoice = {
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: { ideal: 16000 } },
           video: false,
         });
-        this._showOverlay('Bixby — conectando…');
+        this._showOverlay('Khipu — conectando…');
       } catch (e) {
         const msg = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
           ? 'Permiso de micrófono denegado — actívalo en el navegador'
@@ -84,7 +84,7 @@ const BixbyVoice = {
       signedUrl = data.signed_url || data.signedUrl;
       if (!signedUrl) throw new Error('No signed_url devuelto por el servidor');
     } catch (e) {
-      this._setStatus('Bixby: ' + e.message, true);
+      this._setStatus('Khipu: ' + e.message, true);
       preStream.getTracks().forEach(t => t.stop()); // release mic if no WS
       return;
     }
@@ -95,7 +95,7 @@ const BixbyVoice = {
 
     this.ws.onopen = () => {
       this.isConnected = true;
-      this._showOverlay('Bixby — iniciando sesión…');
+      this._showOverlay('Khipu — iniciando sesión…');
       this._sendInitContext();
       // Mic starts on conversation_initiation_metadata (not here)
       // ElevenLabs requires that exchange before audio can be sent
@@ -107,7 +107,7 @@ const BixbyVoice = {
     this.ws.onerror = (ev) => {
       // onerror fires before onclose — don't call disconnect() here because
       // that triggers ws.close() → onclose fires again and double-hides.
-      this._setStatus('Error de red con Bixby — reintenta', true);
+      this._setStatus('Error de red con Khipu — reintenta', true);
     };
     this.ws.onclose = (ev) => {
       // Skip if disconnect() already cleaned up (isConnected already false)
@@ -123,7 +123,7 @@ const BixbyVoice = {
         // Unexpected close — show reason so user can diagnose
         const reason = ev.reason
           ? ev.reason.slice(0, 120)
-          : `Bixby desconectado (código ${ev.code})`;
+          : `Khipu desconectado (código ${ev.code})`;
         this._setStatus(reason, true);
       }
     };
@@ -224,7 +224,7 @@ const BixbyVoice = {
       this._micMute = mute;
       this._micStream = stream;
 
-      this._showOverlay('🎙️ Bixby te escucha — habla');
+      this._showOverlay('🎙️ Khipu te escucha — habla');
     } catch (e) {
       this._setStatus('Error al iniciar micrófono: ' + (e?.message || e), true);
     }
@@ -236,7 +236,7 @@ const BixbyVoice = {
     if (now - (this._lastVizUpdate || 0) < 50) return; // ~20fps
     this._lastVizUpdate = now;
     const level = Math.min(1, rms * 8);
-    // Orbe de voz de Bixby (engine/orb.js): energía del USUARIO (cian/teal).
+    // Orbe de voz de Khipu (engine/orb.js): energía del USUARIO (cian/teal).
     // Se alimenta SIEMPRE, aunque no exista el visualizador de barras.
     if (window.BixbyOrb) { try { window.BixbyOrb.setUserLevel(level); } catch (e) {} }
     const bars = document.querySelectorAll('#bixby-viz .bvbar');
@@ -251,10 +251,10 @@ const BixbyVoice = {
     });
   },
 
-  // ── Orbe de voz de Bixby (engine/orb.js) ───────────────────────────────────
+  // ── Orbe de voz de Khipu (engine/orb.js) ───────────────────────────────────
   // La Cabina monta el orbe en su header y lo hace respirar; aquí solo lo
   // ALIMENTAMOS: setUserLevel desde el micrófono (_setMicLevel) y setBixbyLevel
-  // mientras Bixby reproduce audio (_startOrbDrive). En reposo, el orbe respira.
+  // mientras Khipu reproduce audio (_startOrbDrive). En reposo, el orbe respira.
   _orbOn() {
     const orb = (typeof window !== 'undefined') ? window.BixbyOrb : null;
     if (orb) {
@@ -356,7 +356,7 @@ const BixbyVoice = {
     if (typeof NODES !== 'undefined') NODES.forEach(n => { cats[n.cat] = (cats[n.cat] || 0) + 1; });
 
     return {
-      app: 'Khipu Finance', assistant: 'Bixby',
+      app: 'Khipu Finance', assistant: 'Khipu',
       active_tab: (typeof activeTab !== 'undefined') ? activeTab : null,
       language: (typeof LANG !== 'undefined') ? LANG : 'es',
       total_nodes: (typeof NODES !== 'undefined') ? NODES.length : 0,
@@ -370,7 +370,7 @@ const BixbyVoice = {
           nrs: typeof computeNRS === 'function' ? computeNRS(sel.id) : null,
           price: sel.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt]?.close || null : null) : null,
           role: sel.role || null,
-          // la ficha completa: Bixby debe saber lo que la pantalla muestra
+          // la ficha completa: Khipu debe saber lo que la pantalla muestra
           employees: m.employees || null, founded: m.founded || null,
           revenue: m.revenue_2025 || null, market_cap_billions: m.mktcap_b || null,
           geo_risk: m.geo_risk || null, country: sel.country || null,
@@ -391,7 +391,7 @@ const BixbyVoice = {
     switch (msg.type) {
       case 'conversation_initiation_metadata':
         // Session confirmed — NOW safe to start sending audio
-        this._showOverlay('🎙️ Bixby te escucha — habla');
+        this._showOverlay('🎙️ Khipu te escucha — habla');
         if (this._preStream) {
           this._startMicWithStream(this._preStream);
           this._preStream = null;
@@ -411,7 +411,7 @@ const BixbyVoice = {
         if (text) {
           // El usuario NUNCA debe ver los tokens internos ([XRAY:...], [NAV:...])
           const clean = this._cleanSpeech(text);
-          if (clean) this._showOverlay('Bixby: ' + clean.slice(0, 80));
+          if (clean) this._showOverlay('Khipu: ' + clean.slice(0, 80));
           this._onAgentResponse(text);
         }
         break;
@@ -573,7 +573,7 @@ const BixbyVoice = {
   },
 
   // Quita los tokens de comando internos del texto hablado/mostrado.
-  // Bixby los emite para actuar, pero el usuario jamás debe verlos ni oírlos.
+  // Khipu los emite para actuar, pero el usuario jamás debe verlos ni oírlos.
   _cleanSpeech(text) {
     return String(text || '')
       .replace(/\[[A-Z_]+:[^\]]*\]/g, '')   // [NAV:x] [XRAY:x] [SHOCK:x:y] [CANVAS:...]
@@ -608,7 +608,7 @@ const BixbyVoice = {
       || this._resolveNode(params.company_id) || null;
   },
 
-  // Respuesta bilingüe de "no encontrado" CON sugerencias, para que Bixby
+  // Respuesta bilingüe de "no encontrado" CON sugerencias, para que Khipu
   // las DIGA en voz alta ("¿Quisiste decir NVIDIA, AMD o Micron?") en vez
   // del seco "Company not found" (feedback real del usuario).
   _notFound(q) {
@@ -670,7 +670,7 @@ const BixbyVoice = {
       case 'run_stress_test': {
         const n = this._resolveAny(params);
         if (n && typeof activateStress === 'function') {
-          // LATENCIA (feedback Fabrizio): responder YA para que Bixby hable sin
+          // LATENCIA (feedback Fabrizio): responder YA para que Khipu hable sin
           // esperar la cascada; el conteo real se manda luego por contextual_update.
           respond({ success: true, company: n.label,
             note: 'Ejecutando el estrés en el mapa; los efectos aparecen en pantalla.' });
@@ -714,7 +714,7 @@ const BixbyVoice = {
         break;
       }
       case 'get_company_info': {
-        // TODO lo que la app sabe de la empresa — Bixby nunca debe decir
+        // TODO lo que la app sabe de la empresa — Khipu nunca debe decir
         // "no sé" si el dato está en la ficha (feedback real: empleados de TSMC)
         const n = this._resolveAny(params);
         if (n) {
@@ -797,7 +797,7 @@ const BixbyVoice = {
         } else respond(this._notFound(params.ticker || params.company_name));
         break;
       }
-      // ── Trading Bixby (Etapa M): orden por voz con confirmación explícita ──
+      // ── Trading Khipu (Etapa M): orden por voz con confirmación explícita ──
       case 'place_paper_trade': {
         // NUNCA envía sin confirmed=true — ver _toolPlacePaperTrade
         this._toolPlacePaperTrade(params)
@@ -949,14 +949,14 @@ const BixbyVoice = {
       }
       case 'run_guided_demo': {
         // La demostración se narra SOLA en pantalla (y con voz del navegador si
-        // no hay voz premium hablando) → Bixby responde corto y se calla.
+        // no hay voz premium hablando) → Khipu responde corto y se calla.
         respond({ success: true,
           note: 'Demostración guiada en marcha; se narra sola en pantalla. Di UNA frase corta y quédate en silencio.' });
         this._defer(() => { try { if (window.BixbyCockpit) window.BixbyCockpit.demo(); } catch (e) {} });
         break;
       }
       case 'show_insights': case 'show_matrices': {
-        // Bixby NARRA lo que ve el hipergrafo: corre la simulación en vivo
+        // Khipu NARRA lo que ve el hipergrafo: corre la simulación en vivo
         // (factores activos + cascada) y responde con un resumen hablado,
         // además de abrir el panel. Guarda de tiempo → nunca cuelga a ElevenLabs.
         let answered = false;
@@ -1009,16 +1009,16 @@ const BixbyVoice = {
       }
       case 'deep_analysis': {
         // Capa 4: investigación profunda multi-paso — el resultado se pinta
-        // en el escenario de la Cabina (tarda 30-90s; Bixby avisa y espera)
+        // en el escenario de la Cabina (tarda 30-90s; Khipu avisa y espera)
         const q = (params.question || '').trim();
         if (!q) { respond({ success: false, error: 'question required' }); break; }
         respond({ success: true, started: true, eta_seconds: 60 });
         this._defer(() => this._show('deep', q));
         break;
       }
-      // ── Simulación POR AGENTES (MiroFish desde la terminal de Bixby) ──
+      // ── Simulación POR AGENTES (MiroFish desde la terminal de Khipu) ──
       // Corre en el servidor (varios agentes debaten) y se MUESTRA en la Cabina.
-      // Bixby narra el consenso y los mayores impactos.
+      // Khipu narra el consenso y los mayores impactos.
       case 'run_agent_simulation': {
         const scenario = String(params.scenario || params.query || '').trim();
         if (!scenario) { respond({ success: false, error: 'scenario required' }); break; }
@@ -1065,10 +1065,10 @@ const BixbyVoice = {
     }
   },
 
-  // ── Trading Bixby (Etapa M) ────────────────────────────────────────────────
+  // ── Trading Khipu (Etapa M) ────────────────────────────────────────────────
   // place_paper_trade: resuelve el activo (cripto primero, luego equity vía
   // KhipuResolve) y SOLO envía la orden cuando confirmed===true. Sin confirmar
-  // devuelve needs_confirmation con un resumen hablable (ES/EN) para que Bixby
+  // devuelve needs_confirmation con un resumen hablable (ES/EN) para que Khipu
   // lo LEA en voz alta y pida el sí explícito del usuario. Regla innegociable:
   // ninguna orden sale sin confirmación.
   async _toolPlacePaperTrade(params) {
@@ -1230,7 +1230,7 @@ const BixbyVoice = {
 
   // get_space_summary: satélites REALES por constelación (CelesTrak) + próximo
   // lanzamiento. Arregla "no sé cuántos satélites tiene Starlink" — el dato SÍ
-  // existía (/api/space/tle) pero Bixby no tenía tool para leerlo. NO navega
+  // existía (/api/space/tle) pero Khipu no tenía tool para leerlo. NO navega
   // (abrir la pestaña 'space' cerraría la Cabina y cortaría la voz).
   async _toolSpaceSummary(params) {
     params = params || {};
@@ -1284,7 +1284,7 @@ const BixbyVoice = {
   },
 
   // Ejecuta una acción visual pesada FUERA del hilo crítico del WebSocket, para
-  // no bloquear el procesamiento/agendado del audio mientras Bixby habla.
+  // no bloquear el procesamiento/agendado del audio mientras Khipu habla.
   // OJO: requestAnimationFrame se CONGELA en pestañas ocultas. Si la pestaña
   // está en background usamos setTimeout (sí dispara), para que ni las acciones
   // ni el respond() de run_stress_test queden colgados y cuelguen a ElevenLabs.
@@ -1350,7 +1350,7 @@ const BixbyVoice = {
       } else if (lower.includes('conectando') || lower.includes('iniciando') || lower.includes('sesión')) {
         this._setBadge('CONECTANDO', false);
         if (window.setBixbyThinking) window.setBixbyThinking(false);
-      } else if (lower.includes('bixby:') || lower.includes('speaking')) {
+      } else if (lower.includes('khipu:') || lower.includes('bixby:') || lower.includes('speaking')) {
         this._setBadge('HABLANDO', true);
         if (window.setBixbyThinking) window.setBixbyThinking(false);
       } else if (lower.includes('procesando') || lower.includes('pensando') || lower.includes('tú:')) {
@@ -1361,12 +1361,12 @@ const BixbyVoice = {
         if (window.setBixbyThinking) window.setBixbyThinking(false);
       }
     }
-    // reflejar el estado en la Cabina de Bixby (si está abierta)
+    // reflejar el estado en la Cabina de Khipu (si está abierta)
     if (window.BixbyCockpit && window.BixbyCockpit.setState && text) {
       const lo = text.toLowerCase();
       const mode = (lo.includes('procesando') || lo.includes('pensando') || lo.includes('tú:')) ? 'think'
-        : (lo.includes('escucha') || lo.includes('habla') || lo.includes('bixby:')) ? 'live' : '';
-      const label = lo.includes('bixby:') ? 'Hablando' : lo.includes('escucha') ? 'Escuchando'
+        : (lo.includes('escucha') || lo.includes('habla') || lo.includes('khipu:') || lo.includes('bixby:')) ? 'live' : '';
+      const label = (lo.includes('khipu:') || lo.includes('bixby:')) ? 'Hablando' : lo.includes('escucha') ? 'Escuchando'
         : mode === 'think' ? 'Pensando' : lo.includes('conectando') || lo.includes('iniciando') ? 'Conectando' : 'Listo';
       window.BixbyCockpit.setState(mode, label);
     }
@@ -1381,7 +1381,7 @@ const BixbyVoice = {
 window.BixbyVoice = BixbyVoice;
 
 /* ============================================================================
-   TRADING COMPARTIDO (Etapa M) — helpers usados por voice.js (tools de Bixby),
+   TRADING COMPARTIDO (Etapa M) — helpers usados por voice.js (tools de Khipu),
    engine/cockpit.js (stage 'broker') y engine/command_center.js. UN solo lugar
    para: resolver el símbolo (cripto → equity), leer la cuenta, ejecutar la
    orden (con guard anti-doble-envío) y abrir el stage del bróker. NO duplicar.

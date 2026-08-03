@@ -11,7 +11,7 @@ El sistema ejecuta sin "pensar": tool calling reflejo y datos directos.
 | Pieza | Dónde vive |
 |---|---|
 | Parser KHIPU (`TSMC XRAY`, `SHOCK nvidia`…) — se intenta ANTES de llamar a la IA | `engine/khipu_lang.js` |
-| Client tools de Bixby (23 herramientas silenciosas registradas en ElevenLabs) | `engine/voice.js` + `_bixby_client_tools()` en `server.py` |
+| Client tools de Khipu (23 herramientas silenciosas registradas en ElevenLabs) | `engine/voice.js` + `_bixby_client_tools()` en `server.py` |
 | Enrutador de la Cabina (regex: desármame/cae/compara/investiga…) | `engine/cockpit.js → ask()` |
 | Proxies de datos (quotes, news, GDELT, satélites) | `server.py` |
 | Motor de estados client-side (~7 ms/simulación, 60 fps) | `engine/statematrix.js` |
@@ -31,7 +31,7 @@ Lo que el usuario no ve pero ya está preparado: caché + subgrafo activo.
 
 `_ai_complete()` (cascada claude→gemini→nvidia en `core/ai.py`) recibe SOLO
 el contexto hiper-filtrado de la Capa 2 — nunca el grafo completo. Usos:
-Canvas IA (`/api/canvas/generate`), análisis (`/api/ai/analyze`), Bixby
+Canvas IA (`/api/canvas/generate`), análisis (`/api/ai/analyze`), Khipu
 (`/api/ai/command`), agentes de la ontología (`_ai_explain`).
 
 ## Capa 4 — Investigación Profunda (bucle agéntico, 30-90 s)
@@ -40,7 +40,7 @@ Para preguntas complejas. Bucle multi-paso en background con polling:
 
 ```
 POST /api/deep/analyze {question}      ← lo dispara la Cabina ("investiga …")
-                                          o Bixby por voz (tool deep_analysis)
+                                          o Khipu por voz (tool deep_analysis)
   1. PLAN      la IA descompone la pregunta en sub-análisis
   2. REUNIR    Capa 2: build_context() → subgrafo activo de las empresas foco
   3. SIMULAR   matrices del servidor: propagate() con hiperaristas activas

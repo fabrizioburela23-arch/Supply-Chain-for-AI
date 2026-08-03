@@ -1046,7 +1046,7 @@
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px">
           <button id="tkg-obj-shock" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid #ef444488;background:#ef44441a;color:#ff8a8a;cursor:pointer">⚡ Simular caída</button>
           ${isCompany ? `<button id="tkg-obj-map" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">🗺 Ver en mapa</button>` : ''}
-          <button id="tkg-obj-ai" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">🧠 Bixby analiza</button>
+          <button id="tkg-obj-ai" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--violet);background:none;color:var(--violet);cursor:pointer">🧠 Khipu analiza</button>
           ${isCompany ? `<button id="tkg-obj-news" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">📰 Noticias</button>` : ''}
           <button id="tkg-obj-action" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid #43C89688;background:rgba(67,200,150,.10);color:#43C896;cursor:pointer">＋ Acción</button>
         </div>
@@ -1196,7 +1196,7 @@
 
   function _objAnalyze(id, label, mkt) {
     const out = document.getElementById('tkg-obj-ai-out'); if (!out) return;
-    out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">🧠 Bixby analizando…</div>';
+    out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">🧠 Khipu analizando…</div>';
     const e = resolveEntity(id) || {};
     const NB = window.NODE_BY_ID || {};
     const n = NB[id] || {};
@@ -1205,11 +1205,11 @@
       price: q ? q.close : null, change_pct: q && q.pct != null ? +q.pct.toFixed(2) : null,
       nrs: typeof window.computeNRS === 'function' ? window.computeNRS(id) : null,
       role: (n.role || '').slice(0, 300) };
-    const sys = 'Eres Bixby, analista senior de inversión en la cadena de deep-tech (semiconductores, IA, espacio, nuclear). Responde en español, conciso y accionable, SIN markdown.';
+    const sys = 'Eres Khipu, analista senior de inversión en la cadena de deep-tech (semiconductores, IA, espacio, nuclear). Responde en español, conciso y accionable, SIN markdown.';
     const prompt = `Da un análisis de inversión de "${label}" en 4-6 frases: su rol en la cadena, 1-2 riesgos clave, 1 catalizador, y qué vigilar. Usa los datos si ayudan.\nDATOS: ${JSON.stringify(ctx)}`;
     fetch(`${_base()}/api/ai/analyze`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ system: sys, prompt, max_tokens: 420 }) })
       .then(r => r.ok ? r.json() : null).then(d => {
-        if (d && d.result) out.innerHTML = `<div style="border:1px solid rgba(124,58,237,.35);background:rgba(124,58,237,.08);border-radius:10px;padding:11px 12px;font-size:12.5px;line-height:1.5;color:var(--ink-1)"><b style="color:var(--violet)">🧠 Bixby</b> <span style="font-size:10px;color:var(--ink-3)">${esc(d.model || '')}</span><br>${esc(d.result)}</div>`;
+        if (d && d.result) out.innerHTML = `<div style="border:1px solid rgba(124,58,237,.35);background:rgba(124,58,237,.08);border-radius:10px;padding:11px 12px;font-size:12.5px;line-height:1.5;color:var(--ink-1)"><b style="color:var(--violet)">🧠 Khipu</b> <span style="font-size:10px;color:var(--ink-3)">${esc(d.model || '')}</span><br>${esc(d.result)}</div>`;
         else out.innerHTML = `<div style="font-size:12px;color:#f87171">${esc((d && d.error) || 'No pude analizar ahora.')}</div>`;
       }).catch(() => { out.innerHTML = '<div style="font-size:12px;color:#f87171">Error de red al analizar.</div>'; });
   }

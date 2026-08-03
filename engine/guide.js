@@ -14,18 +14,18 @@
 
   const TAB_ROWS = [
     ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, ◈ Grafo Temporal, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom.'],
-    ['📈 Mercado', 'Precios en tiempo real y tu portafolio. Sub-modo ₿ Cripto: el mercado cripto explicado — vista Mapa por categorías (qué es cada familia de monedas, en simple), top 100 en vivo, y el Expediente Bixby de las 50 grandes: qué es, cómo funciona, riesgos y catalizadores de cada una, con advertencias ⚠ en las monedas delicadas.'],
+    ['📈 Mercado', 'Precios en tiempo real y tu portafolio. Sub-modo ₿ Cripto: el mercado cripto explicado — vista Mapa por categorías (qué es cada familia de monedas, en simple), top 100 en vivo, y el Expediente Khipu de las 50 grandes: qué es, cómo funciona, riesgos y catalizadores de cada una, con advertencias ⚠ en las monedas delicadas.'],
     ['🖥️ Terminal', 'Vista estilo Bloomberg: hasta 4 gráficos lado a lado + el panel 📋 Datos a la derecha (ficha, valuación, analistas, fundamentales anuales y cadena de cada empresa). Sub-modos: Terminal, Análisis y Canvas IA.'],
     ['❓ Guía', 'Esta página.'],
   ];
 
   const WOW_ROWS = [
-    ['🎙 Cabina de Bixby', 'Toca el botón Bixby (o Ctrl+K): pantalla completa con botones para TODO — Grafo, Terminal, X-Ray, Simular, Comparar, Oportunidades, Investigar y Gráficos. Escribe o habla en español normal.'],
+    ['🎙 Cabina de Khipu', 'Toca el botón Khipu (o Ctrl+K): pantalla completa con botones para TODO — Grafo, Terminal, X-Ray, Simular, Comparar, Oportunidades, Investigar y Gráficos. Escribe o habla en español normal.'],
     ['🔬 X-Ray', 'En la ficha de cualquier empresa: la "desarma" por completo — por qué tiene ese riesgo, todos sus hilos (de quién depende y a quién provee), y la onda de impacto si cae (quién sufre y quién GANA).'],
     ['📊 Dossier financiero', 'En la Terminal, cada empresa tiene un botón 📊 DOSSIER: 8 mini-gráficos con crecimiento de ingresos, dilución, free cash flow, acción, valuación, deuda, márgenes y ROE.'],
     ['◉ Simulación en vivo', 'En el mapa, botón "◉ En vivo": elige un tipo de golpe (corte, auge, precio, sanción) y un objetivo (empresa, sector o país entero) — el mapa se tiñe en tiempo real y ves ganadores y perdedores.'],
     ['🪐 Universo', 'Las 555 empresas flotando en el espacio con estrellas y nebulosas: izquierda→derecha = posición en la cadena, arriba→abajo = riesgo. Clic en una empresa y su cadena se ilumina (verde = le provee, naranja = le compra); doble clic abre su ficha. Funciona en cualquier equipo, sin depender de la tarjeta gráfica.'],
-    ['🧠 Investigación profunda', 'Dile a Bixby "investiga la energía nuclear para datacenters" (o cualquier pregunta grande): planifica, reúne el contexto, simula en las matrices y te escribe una tesis con números reales. Tarda ~1 minuto.'],
+    ['🧠 Investigación profunda', 'Dile a Khipu "investiga la energía nuclear para datacenters" (o cualquier pregunta grande): planifica, reúne el contexto, simula en las matrices y te escribe una tesis con números reales. Tarda ~1 minuto.'],
     ['📡 Radar en vivo', 'La app se mantiene al día SOLA: cada ~10 minutos los agentes leen noticias, recalculan riesgos y hasta incorporan empresas nuevas al grafo (todo auditado y reversible). Verás "● EN VIVO" en el pie.'],
     ['✦ Gráficos al instante', 'Pide "top 10 por riesgo", "márgenes de Nvidia y TSMC", "proveedores de ASML" o "precio de AMD" — salen al instante, sin esperar a la IA (etiqueta "local ⚡").'],
   ];
@@ -54,13 +54,13 @@
     panel.innerHTML = `
       <div style="max-width:820px;margin:0 auto;padding:26px 24px 60px">
         <div style="margin-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--violet)">Guía rápida</div>
-        <h2 style="font-family:'Fraunces',serif;font-size:27px;font-weight:700;margin:0 0 8px">¿Qué es Bixby Finance?</h2>
+        <h2 style="font-family:'Fraunces',serif;font-size:27px;font-weight:700;margin:0 0 8px">¿Qué es Khipus Finance AI?</h2>
         <p style="font-size:14px;line-height:1.6;color:var(--ink-2);margin:0 0 36px;max-width:70ch">
           Un terminal financiero para invertir en la cadena de suministro de la IA — <b>949 empresas</b> en
           13 sectores: semiconductores, IA, espacio, nuclear, robótica, defensa, energía, materiales,
           macro/crédito, inmobiliario y logística, conectadas por sus <b>2.500+ relaciones reales</b>
           (quién fabrica, quién abastece, quién depende de quién). Precios en vivo de las bolsas del mundo,
-          simulaciones de crisis, radiografías de empresas, y un asistente (Bixby) que lo ejecuta todo por ti.
+          simulaciones de crisis, radiografías de empresas, y un asistente (Khipu) que lo ejecuta todo por ti.
         </p>
 
         ${SEC('Las 4 pestañas', `
@@ -81,13 +81,13 @@
               </div>`).join('')}
           </div>`)}
 
-        ${SEC('Bixby: pídeselo y lo hace', `
+        ${SEC('Khipu: pídeselo y lo hace', `
           <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 8px">
-            Toca <b>Bixby</b> (arriba a la derecha) o presiona <b>Ctrl+K</b>: se abre su pantalla completa.
+            Toca <b>Khipu</b> (arriba a la derecha) o presiona <b>Ctrl+K</b>: se abre su pantalla completa.
             Escríbele o háblale en español normal — <i>"desármame Nvidia"</i>, <i>"¿qué pasa si cae TSMC?"</i>,
             <i>"compara Nvidia y AMD"</i>, <i>"dossier de Apple"</i>, <i>"precio de AMD"</i>,
             <i>"investiga la energía nuclear para datacenters"</i>, <i>"muéstrame la terminal"</i>.
-            Bixby lo ejecuta y te muestra el resultado en su propio escenario.
+            Khipu lo ejecuta y te muestra el resultado en su propio escenario.
           </p>
           <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0">
             Por voz sabe también los datos de cada empresa (empleados, ingresos, fundación, riesgo…) —
@@ -102,7 +102,7 @@
           </p>`)}
 
         ${SEC('Comandos rápidos (opcional)', `
-          <p style="font-size:12.5px;color:var(--ink-3);margin:0 0 12px">Escríbelos en la Cabina de Bixby — responden al instante, sin esperar a la IA.</p>
+          <p style="font-size:12.5px;color:var(--ink-3);margin:0 0 12px">Escríbelos en la Cabina de Khipu — responden al instante, sin esperar a la IA.</p>
           <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
             ${KHIPU_ROWS.map(([cmd, desc], i) => `
               <div style="display:flex;gap:14px;align-items:center;padding:9px 14px;${i % 2 ? 'background:var(--surface-2)' : ''}">

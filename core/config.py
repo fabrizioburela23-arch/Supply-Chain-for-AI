@@ -20,7 +20,7 @@ AI_MODEL = os.getenv('AI_MODEL', 'claude-sonnet-5')
 # ── IA híbrida: dos niveles de modelo ───────────────────────────────────────
 # 'fast'  → comandos, ruteo, resúmenes de noticias, alertas, agente de trading.
 # 'deep'  → síntesis de investigación profunda, tesis, Canvas IA, cripto IA, SIM.
-# 2026-07-15 (feedback Fabrizio: "Bixby tarda mucho en hablar/ejecutar"): el tier
+# 2026-07-15 (feedback Fabrizio: "Khipu tarda mucho en hablar/ejecutar"): el tier
 # 'fast' pasa a Haiku 4.5 (3-5x más rápido para clasificación+JSON trivial); el
 # 'deep' se queda en Sonnet 5 para que la calidad de la sim/investigación/cripto
 # NO cambie. Sobreescribibles por entorno. La MISMA ANTHROPIC_KEY sirve para ambos.

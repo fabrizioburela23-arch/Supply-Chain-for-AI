@@ -1,4 +1,4 @@
-// engine/orb.js — BixbyOrb: el orbe de voz de Bixby.
+// engine/orb.js — BixbyOrb: el orbe de voz de Khipu.
 //
 // Un blob orgánico que FLOTA (bobbing suave), respira en reposo y se deforma /
 // pulsa con la energía de la voz: cuando habla el USUARIO reacciona hacia el
@@ -39,7 +39,7 @@
   }
 
   /* ── Paleta de la app ── */
-  //  violeta (Bixby) · cian + teal (usuario)
+  //  violeta (Khipu) · cian + teal (usuario)
   const C_VIOLET = [0x8e, 0x5a, 0xff]; // #8e5aff
   const C_CYAN   = [0x00, 0xe0, 0xff]; // #00E0FF
   const C_TEAL   = [0x3d, 0xe0, 0xc8]; // #3DE0C8
@@ -73,7 +73,7 @@
     userTarget: 0, bixbyTarget: 0,
     userLevel: 0, bixbyLevel: 0,
 
-    // Blend cromático suavizado: 0 = usuario (cian/teal) · 1 = Bixby (violeta).
+    // Blend cromático suavizado: 0 = usuario (cian/teal) · 1 = Khipu (violeta).
     blend: 0.5,
 
     // Semillas de ruido para que el contorno no sea un círculo rígido.
@@ -114,7 +114,7 @@
     const cv = document.createElement('canvas');
     cv.className = 'bixby-orb-canvas';
     cv.setAttribute('role', 'img');
-    cv.setAttribute('aria-label', _lang() === 'en' ? 'Bixby voice orb' : 'Orbe de voz de Bixby');
+    cv.setAttribute('aria-label', _lang() === 'en' ? 'Khipu voice orb' : 'Orbe de voz de Khipu');
     // Sin fondo: el canvas es transparente y no capta clics por defecto.
     cv.style.cssText = 'display:block;width:100%;height:100%;background:transparent;pointer-events:none';
     host.appendChild(cv);

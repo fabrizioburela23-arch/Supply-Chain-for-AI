@@ -1,7 +1,7 @@
 // engine/khipu_lang.js — Fase 4 del roadmap de ontología: lenguaje de
 // comandos KHIPU, corto y componible: <ENTIDAD> <FUNCIÓN> [ARGS].
-// Se intenta ANTES de mandar el texto a la IA (Bixby): si no calza con esta
-// gramática, devuelve null y Bixby sigue su camino normal (lenguaje natural,
+// Se intenta ANTES de mandar el texto a la IA (Khipu): si no calza con esta
+// gramática, devuelve null y Khipu sigue su camino normal (lenguaje natural,
 // sin round-trip a Claude — más rápido para comandos exactos). Cada función
 // es un atajo a la MISMA API que usan los paneles — cero lógica duplicada.
 //

@@ -9,7 +9,7 @@
 
    Dos modos de render sobre el MISMO HTML (buildXRayHTML):
    - cajón lateral (#xray, 560px) — abre desde el mapa
-   - escenario grande (.xr-full, multi-columna) — la Cabina de Bixby lo usa a
+   - escenario grande (.xr-full, multi-columna) — la Cabina de Khipu lo usa a
      pantalla completa para "destripar la empresa por completo".
 
    Estilos scoped a .xray-scope — no tocan el resto de la app. Piel NEXUS.
@@ -94,7 +94,7 @@
 .xray-scope .xr-victim .vp{font-family:'JetBrains Mono',monospace;font-size:10px;color:#FF4D6A;width:40px;text-align:right;flex:none}
 .xray-scope .xr-loading{color:#7C87A3;font-size:11px;font-style:italic}
 .xray-scope .thread-scroll{max-height:none}
-/* ── modo escenario (pantalla completa, Cabina de Bixby) ── */
+/* ── modo escenario (pantalla completa, Cabina de Khipu) ── */
 .xray-scope.xr-full{padding:0 4px 24px}
 .xray-scope.xr-full .xr-hd{position:relative;background:transparent;border-bottom:1px solid rgba(122,158,255,.14);padding:6px 8px 16px}
 .xray-scope.xr-full .xr-name{font-size:26px}
@@ -366,7 +366,7 @@
   function render(id) {
     var n = window.NODE_BY_ID ? window.NODE_BY_ID[id] : null;
     if (!n) return;
-    // si la Cabina de Bixby está abierta, el X-Ray va al escenario grande
+    // si la Cabina de Khipu está abierta, el X-Ray va al escenario grande
     if (window.BixbyCockpit && window.BixbyCockpit.isOpen && window.BixbyCockpit.isOpen()) {
       window.BixbyCockpit.stage('xray', id);
       return;
@@ -412,7 +412,7 @@
   };
   window.openXRay = function (id) { render(id); };
 
-  // API para la Cabina de Bixby
+  // API para la Cabina de Khipu
   window.buildXRayHTML = buildXRayHTML;
   window.wireXRay = wire;
   window.xrayEnsureStyles = ensureStyles;

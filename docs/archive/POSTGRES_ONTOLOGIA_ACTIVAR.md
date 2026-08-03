@@ -62,7 +62,7 @@ Deberías ver:
 
 ## Qué NO cambia (importante)
 
-El resto de la app (mapa, mercado, análisis, Bixby, Canvas…) sigue
+El resto de la app (mapa, mercado, análisis, Khipu, Canvas…) sigue
 funcionando exactamente igual — la ontología es **aditiva**, no reemplaza
 nada todavía. El siguiente paso (que el mapa principal también lea de la
 ontología) es un cambio más grande que se hace en su propia sesión, con

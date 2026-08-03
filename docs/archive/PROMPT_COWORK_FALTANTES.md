@@ -38,7 +38,7 @@ Copia TODO lo que está dentro del bloque de abajo y pégalo en Claude Cowork.
 > 5. Tras el deploy, **indexar las empresas** en el Second Brain (el servidor
 >    principal tiene un endpoint de indexación que llama a `/index/company`, o se
 >    puede usar `rag/indexer.py`). Dime exactamente cómo dispararlo.
-> 6. Verificar que 🩺 → “Second Brain (RAG)” pase a **OPERATIVO** y que Bixby
+> 6. Verificar que 🩺 → “Second Brain (RAG)” pase a **OPERATIVO** y que Khipu
 >    pueda responder con contexto del Second Brain.
 >
 > ## 2) Neo4j (Grafo Temporal) — arreglar credenciales
@@ -59,7 +59,7 @@ Copia TODO lo que está dentro del bloque de abajo y pégalo en Claude Cowork.
 > ## Cómo verificar todo
 > La app tiene un panel de diagnóstico en vivo (icono 🩺 / “Diagnóstico”). Ábrelo
 > tras cada cambio: cada servicio muestra OPERATIVO (verde) o FALLA (rojo) con el
-> motivo. El objetivo es dejar en verde: Voz (Bixby), MiroFish, Second Brain,
+> motivo. El objetivo es dejar en verde: Voz (Khipu), MiroFish, Second Brain,
 > Grafo Temporal y Fuentes de respaldo. Finnhub puede quedar en rojo sin problema.
 >
 > Empecemos por el punto 1 (Second Brain), que es el que requiere más pasos.

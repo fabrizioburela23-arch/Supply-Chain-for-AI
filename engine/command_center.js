@@ -1,8 +1,8 @@
-// engine/command_center.js — Bixby Command Center (Khipu Finance)
-// UN SOLO Bixby: el botón original del header lo abre. NO hay orbe flotante.
+// engine/command_center.js — Khipu Command Center (Khipu Finance)
+// UN SOLO Khipu: el botón original del header lo abre. NO hay orbe flotante.
 // El panel (input + feed de resultados) aparece como dropdown arriba-derecha,
 // en su espacio dedicado, sin tapar el contenido de abajo.
-// Escribe O habla; Bixby ejecuta y muestra la respuesta inline.
+// Escribe O habla; Khipu ejecuta y muestra la respuesta inline.
 // Reutiliza: switchTab, jumpTo, activateStress, nexusCore.runPreset,
 // _openSecondBrain, canvasGenerate (_cvRenderCard) y BixbyVoice (voz).
 // Endpoint: /api/ai/command. Expone window.BixbyCC.
@@ -57,7 +57,7 @@
       root.innerHTML = `
         <div id="bcc-feed"></div>
         <div id="bcc-bar">
-          <input id="bcc-input" type="text" autocomplete="off" placeholder="Pregúntale a Bixby… (⌘K)">
+          <input id="bcc-input" type="text" autocomplete="off" placeholder="Pregúntale a Khipu… (⌘K)">
           <button id="bcc-mic" class="bcc-mini" title="Hablar por voz">🎙</button>
           <button id="bcc-send" class="bcc-mini" title="Enviar">➤</button>
           <button id="bcc-collapse" class="bcc-mini" title="Cerrar">✕</button>
@@ -70,9 +70,9 @@
       document.getElementById('bcc-mic').addEventListener('click', () => this._toggleVoice());
       document.getElementById('bcc-collapse').addEventListener('click', () => this.setOpen(false));
 
-      // El botón ORIGINAL del header es el único disparador de Bixby
+      // El botón ORIGINAL del header es el único disparador de Khipu
       const hb = document.getElementById('bixby-btn');
-      // El botón de Bixby abre la CABINA a pantalla completa (voz + texto + escenario).
+      // El botón de Khipu abre la CABINA a pantalla completa (voz + texto + escenario).
       // Si la cabina no está cargada, cae al command center de texto (compat).
       if (hb) hb.onclick = (e) => { e.preventDefault(); if (window.BixbyCockpit) window.BixbyCockpit.open(); else this.toggle(); };
 
@@ -197,7 +197,7 @@
 
         // Fase 4: lenguaje KHIPU — comandos exactos tipo "NVDA SUP" se resuelven
         // localmente, SIN llamar a la IA (más rápido, cero costo de tokens).
-        // Si no calza con la gramática, tryParse devuelve null y seguimos con Bixby normal.
+        // Si no calza con la gramática, tryParse devuelve null y seguimos con Khipu normal.
         const khipuResult = (window.KHIPU && window.KHIPU.tryParse) ? window.KHIPU.tryParse(text) : null;
         if (khipuResult) {
           const r = await khipuResult;
@@ -367,7 +367,7 @@
 
     _label(id) { const n = (window.NODE_BY_ID || {})[id]; return n ? n.label : id; },
     _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); },
-    _toast(m) { if (window.toast) window.toast(m); else { this.setOpen(true); const c = this._addCard('Bixby'); c.querySelector('.bcc-a').textContent = m; } },
+    _toast(m) { if (window.toast) window.toast(m); else { this.setOpen(true); const c = this._addCard('Khipu'); c.querySelector('.bcc-a').textContent = m; } },
   };
 
   window.BixbyCC = CC;

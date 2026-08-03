@@ -29,7 +29,7 @@ from flask import Flask, jsonify, send_file, request
 from flask_caching import Cache
 
 # PyJWT es opcional: si no está instalado, la API pública /v1/* queda deshabilitada
-# pero el resto del servidor (proxy de datos, voz Bixby) sigue funcionando.
+# pero el resto del servidor (proxy de datos, voz Khipu) sigue funcionando.
 try:
     import jwt
     _HAS_JWT = True
@@ -128,7 +128,7 @@ def screener_growth():
         return jsonify({'error': str(e)[:160]}), 500
 
 
-# ── Voz de Bixby: diagnóstico y ajuste FINO del agente ElevenLabs ────────────
+# ── Voz de Khipu: diagnóstico y ajuste FINO del agente ElevenLabs ────────────
 @app.route('/api/voice/agent-diag')
 def voice_agent_diag():
     """QUÉ voz/modelo/idioma tiene el agente de ElevenLabs AHORA — para
@@ -215,7 +215,7 @@ def voice_adopt():
     if not ELEVENLABS_KEY:
         return jsonify({'error': 'ELEVENLABS_KEY no configurada'}), 400
     b = request.get_json(silent=True) or {}
-    po, vid, name = b.get('public_owner_id'), b.get('voice_id'), (b.get('name') or 'Bixby ES')
+    po, vid, name = b.get('public_owner_id'), b.get('voice_id'), (b.get('name') or 'Khipu ES')
     if not po or not vid:
         return jsonify({'error': 'public_owner_id y voice_id requeridos'}), 400
     try:
@@ -509,7 +509,7 @@ def service_worker():
 
 _MANIFEST = (
     '{'
-    '"name":"Bixby Finance","short_name":"Bixby","display":"standalone",'
+    '"name":"Khipus Finance AI","short_name":"Khipu","display":"standalone",'
     '"start_url":"/","scope":"/","background_color":"#F4F1EA","theme_color":"#1A1813",'
     '"description":"Inteligencia financiera sobre la cadena de valor global de IA, semiconductores y espacio",'
     '"icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]'
@@ -661,8 +661,8 @@ def health():
         pass
     return jsonify({
         'server': True,
-        'app': 'Bixby Finance',
-        'assistant': 'Bixby',
+        'app': 'Khipus Finance AI',
+        'assistant': 'Khipu',
         'finnhub': bool(FINNHUB),
         'fmp': bool(FMP),
         'claude': bool(CLAUDE),
@@ -701,7 +701,7 @@ def _diag_claude():
     if not CLAUDE:
         return {'configured': False, 'ok': False,
                 'detail': 'ANTHROPIC_KEY no está en las variables del servidor (Railway). '
-                          'Sin ella: Canvas IA, análisis de Bixby y el fallback del War-Room fallan.'}
+                          'Sin ella: Canvas IA, análisis de Khipu y el fallback del War-Room fallan.'}
     t0 = time.time()
     try:
         import anthropic
@@ -764,7 +764,7 @@ def _diag_nvidia():
 def _diag_elevenlabs():
     if not ELEVENLABS_KEY:
         return {'configured': False, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
-                'detail': 'ELEVENLABS_KEY no está en el servidor. Bixby (voz) no podrá conectar.'}
+                'detail': 'ELEVENLABS_KEY no está en el servidor. Khipu (voz) no podrá conectar.'}
     t0 = time.time()
     try:
         r = requests.get('https://api.elevenlabs.io/v1/user',
@@ -784,10 +784,10 @@ def _diag_elevenlabs():
             except Exception:  # noqa: BLE001
                 agent_ok = False
         if not ELEVENLABS_AGENT_ID:
-            detail = 'Key válida, pero falta ELEVENLABS_AGENT_ID — Bixby no sabe a qué agente conectar.'
+            detail = 'Key válida, pero falta ELEVENLABS_AGENT_ID — Khipu no sabe a qué agente conectar.'
             ok = False
         elif agent_ok:
-            detail = 'Key válida y agente encontrado. Bixby debería conectar.'
+            detail = 'Key válida y agente encontrado. Khipu debería conectar.'
             ok = True
         else:
             detail = 'Key válida, pero el ELEVENLABS_AGENT_ID no existe o no es accesible con esta key.'
@@ -1287,7 +1287,7 @@ def candles(ticker):
         yf0 = requests.get(
             f'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}'
             f'?interval={itv}&range={rng}',
-            headers={'User-Agent': 'Mozilla/5.0 (compatible; BixbyFinance/1.0)'},
+            headers={'User-Agent': 'Mozilla/5.0 (compatible; KhipuFinance/1.0)'},
             timeout=12)
         if yf0.status_code == 200:
             yd = yf0.json()
@@ -1782,7 +1782,7 @@ def crypto_analyze():
 
     _tongue = 'inglés' if lang == 'en' else 'español'
     sys = (
-        'Eres un analista de criptomercados CAUTO de Bixby Finance. '
+        'Eres un analista de criptomercados CAUTO de Khipus Finance AI. '
         'NUNCA das un "compra"/"vende" tajante: das una POSTURA SUAVE con factores y un '
         'nivel de confianza, y recuerdas siempre que es análisis, no asesoría financiera. '
         'Usa los datos de mercado en vivo del contexto; no inventes cifras. '
@@ -1860,7 +1860,7 @@ def research_deep():
 
     _tongue = 'inglés' if lang == 'en' else 'español'
     sys = (
-        'Eres el analista jefe de Bixby Finance, experto en la cadena de '
+        'Eres el analista jefe de Khipus Finance AI, experto en la cadena de '
         'suministro de semiconductores, IA, espacio, energía y nuclear. Escribe una '
         'investigación PROFUNDA que va MÁS ALLÁ de la empresa foco: panorama del sector, '
         'competidores directos, exposición geopolítica, cuellos de botella (chokepoints) de '
@@ -2057,9 +2057,9 @@ def ai_analyze():
         return jsonify({'error': str(e)[:200]}), 500
 
 
-# ── Bixby Canvas — AI-generated chart specs (Fase 1) ────────────────────────
+# ── Khipu Canvas — AI-generated chart specs (Fase 1) ────────────────────────
 _CANVAS_SYSTEM = """\
-You are Bixby Finance's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
+You are Khipus Finance AI's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
 Given a user query and a JSON context with node data and market quotes, produce a single-screen
 data visualization spec. Respond ONLY with valid JSON — no markdown fences, no explanation.
 
@@ -2180,9 +2180,9 @@ def canvas_generate():
         return jsonify({'error': str(e)[:200]}), 500
 
 
-# ── Bixby Command Center — interpreta comando libre → respuesta + acciones ────
+# ── Khipu Command Center — interpreta comando libre → respuesta + acciones ────
 _COMMAND_SYSTEM = """\
-Eres Bixby, el copiloto de IA del terminal financiero Bixby Finance (semiconductores, IA y espacio).
+Eres Khipu, el copiloto de IA del terminal financiero Khipus Finance AI (semiconductores, IA y espacio).
 El usuario te habla o escribe en lenguaje natural y tú controlas la app y respondes como analista.
 Responde SOLO con JSON válido (sin markdown, sin explicación fuera del JSON):
 
@@ -2231,7 +2231,7 @@ def ai_command():
     ctx_str = json.dumps({'nodes': nodes_compact, 'selected': body.get('selected')},
                          ensure_ascii=False)
     # Datos de ESPACIO: si preguntan por satélites/constelaciones/lanzamientos, se
-    # inyectan los conteos REALES (CelesTrak, cacheado) para que Bixby responda con
+    # inyectan los conteos REALES (CelesTrak, cacheado) para que Khipu responda con
     # números en vez de "no sé cuántos satélites tiene Starlink".
     space_ctx = ''
     if re.search(r'sat[eé]lit|constelaci|starlink|oneweb|iridium|[oó]rbit|orbit|lanzamient|launch|espacio|\bspace\b', query, re.I):
@@ -2300,7 +2300,7 @@ def ipo_calendar():
 
 # ════════════════════════════════════════════════════════════════════════════
 # KHIPU FINANCE v1 — Backend ampliado
-# Space APIs · GDELT · SEC EDGAR · MiroFish · Bixby voice · API pública JWT
+# Space APIs · GDELT · SEC EDGAR · MiroFish · Khipu voice · API pública JWT
 # ════════════════════════════════════════════════════════════════════════════
 
 # ── Space APIs (Launch Library 2 — gratis) ──────────────────────────────────
@@ -2423,7 +2423,7 @@ def space_tle():
         return jsonify(_fallback_tle())
 
     total = sum(c['count'] for c in constellations)
-    # comparte los conteos REALES con el Bixby de TEXTO (para que reuse estos
+    # comparte los conteos REALES con el Khipu de TEXTO (para que reuse estos
     # números y no haga su propio re-fetch parcial que dejaba a Starlink en 0).
     try:
         cache.set('space_constellations',
@@ -2472,7 +2472,7 @@ _SAT_FALLBACK = {'Starlink': 8000, 'OneWeb': 648, 'Planet Labs': 190, 'Spire Glo
 def _space_constellations():
     """[(label, count), …] satélites reales por constelación (CelesTrak), cacheado
     24h. Robusto: si un grupo falla usa su piso de respaldo (así Starlink nunca
-    queda en 0). Compartido por el Bixby de TEXTO (/api/ai/command)."""
+    queda en 0). Compartido por el Khipu de TEXTO (/api/ai/command)."""
     ck = 'space_constellations'
     hit = cache.get(ck)
     if hit is not None:
@@ -2941,8 +2941,8 @@ def mirofish_proxy(endpoint):
         return jsonify({'error': str(e), 'mirofish_url': MIROFISH_URL}), 502
 
 
-# ── Bixby voice — system prompt for ElevenLabs agent configuration ──────────
-BIXBY_SYSTEM_PROMPT = """You are Bixby, the AI analyst co-pilot for Bixby Finance — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
+# ── Khipu voice — system prompt for ElevenLabs agent configuration ──────────
+BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finance AI — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
 
 ## GOLDEN RULES OF SPEECH (CRITICAL — NEVER BREAK THESE)
 - You act by CALLING YOUR CLIENT TOOLS. Tools are silent and instant.
@@ -3052,7 +3052,7 @@ War-Room scenarios (5 presets):
 - You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
 
 
-# ── Bixby — client tools registradas en el agente de ElevenLabs vía API ──────
+# ── Khipu — client tools registradas en el agente de ElevenLabs vía API ──────
 # Cada entrada espeja un `case` de _handleToolCall en engine/voice.js.
 # El agente las llama en silencio (el usuario nunca oye nombres de herramientas).
 def _bixby_client_tools():
@@ -3092,12 +3092,12 @@ def _bixby_client_tools():
         T('list_companies', 'List companies, optionally by category.', {'category': S('Category filter (optional)'), 'limit': N('Max results (default 10)')}),
         T('get_supply_chain_links', 'Upstream/downstream supply-chain connections of a company.', company, ['company_name']),
         T('navigate_to_company', 'Jump to a company on the map.', company, ['company_name']),
-        T('switch_tab', 'Switch app tab. Use tab="crypto" for the live crypto market + Expediente dossier — it opens INSIDE the Bixby cockpit (does not close it).', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | tkg | guia | crypto')}, ['tab']),
+        T('switch_tab', 'Switch app tab. Use tab="crypto" for the live crypto market + Expediente dossier — it opens INSIDE the Khipu cockpit (does not close it).', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | tkg | guia | crypto')}, ['tab']),
         T('show_chart', 'Show the stock chart of a ticker in the side panel.', {'ticker': S('Ticker')}, ['ticker']),
         T('open_terminal', 'Open the multi-chart Bloomberg-style terminal on a ticker.', {'ticker': S('Ticker')}, ['ticker']),
         T('place_trade', 'Open the buy/sell trade modal for a ticker (the user confirms manually).', {'ticker': S('Ticker')}, ['ticker']),
         T('open_second_brain', 'Open the AI intelligence panel for a company.', company, ['company_name']),
-        T('open_cockpit', 'Open the full-screen Bixby cockpit view.'),
+        T('open_cockpit', 'Open the full-screen Khipu cockpit view.'),
         T('deep_analysis', 'Run a multi-step DEEP investigation (plan → context → simulation → synthesis) for a complex investment question. Takes 30-90 seconds; the full analysis appears on screen — tell the user you are investigating and it will appear shortly.', {'question': S('The complete question, in the user language')}, ['question']),
         T('open_dossier', 'Open the FINANCIAL DOSSIER card of a listed company: revenue growth, dilution, free cash flow, stock, EV/Sales valuation, debt/equity, margins and ROE (investingvisuals-style small multiples).', company, ['company_name']),
         T('place_paper_trade', 'Execute a SIMULATED (paper-money) buy/sell order on the paper broker — never real money. MUST be called FIRST with confirmed=false: it returns an order summary WITHOUT executing; read that summary to the user and ask for confirmation. ONLY after an explicit verbal yes, call again with the same parameters and confirmed=true to execute. Never give investment advice; if the tool returns an error, read it as-is.', {
@@ -3112,7 +3112,7 @@ def _bixby_client_tools():
 
 
 def _sync_bixby_agent():
-    """Empuja el cerebro de Bixby (system prompt + client tools + idioma) al
+    """Empuja el cerebro de Khipu (system prompt + client tools + idioma) al
     agente de ElevenLabs vía PATCH — así Fabrizio no configura nada a mano.
     Idempotente; si el esquema de tools no es aceptado, reintenta solo-prompt.
 
@@ -3184,18 +3184,18 @@ if os.getenv('BIXBY_AUTOSYNC', '1').strip().lower() not in ('0', 'false', 'no'):
         time.sleep(4)
         res = _sync_bixby_agent()
         if res.get('ok'):
-            log.info('Bixby sincronizado con ElevenLabs (%s, tools=%s)', res.get('mode'), res.get('tools_registered'))
+            log.info('Khipu sincronizado con ElevenLabs (%s, tools=%s)', res.get('mode'), res.get('tools_registered'))
         else:
-            log.warning('Bixby autosync falló (la app sigue): %s', res)
+            log.warning('Khipu autosync falló (la app sigue): %s', res)
     try:
         if ELEVENLABS_KEY and ELEVENLABS_AGENT_ID:
             threading.Thread(target=_bixby_autosync, daemon=True).start()
     except Exception as _e:  # noqa: BLE001
-        log.warning('Bixby autosync no arrancó: %s', _e)
+        log.warning('Khipu autosync no arrancó: %s', _e)
 
 
 # ══ CAPA 4 — INVESTIGACIÓN PROFUNDA (arquitectura de 4 capas, 2026-07-10) ═══
-# Capa 1 (refleja): KHIPU parser + proxies + client tools de Bixby.
+# Capa 1 (refleja): KHIPU parser + proxies + client tools de Khipu.
 # Capa 2 (preconsciente): caché + core/semantic.py (subgrafo hiper-filtrado).
 # Capa 3 (consciente): _ai_complete con SOLO el contexto relevante.
 # Capa 4 (esta): bucle multi-paso para preguntas complejas — planear → reunir
@@ -3264,7 +3264,7 @@ def _deep_run(question, company_ids):
         # Síntesis final = lo que importa → tier 'deep' (Sonnet 5) con más presupuesto.
         # (El PLAN del paso 1 queda 'fast': es barato y no necesita profundidad.)
         final, model = _ai_complete(
-            'Eres el analista jefe de Bixby Finance. Escribe en español, '
+            'Eres el analista jefe de Khipus Finance AI. Escribe en español, '
             'para un inversor exigente: 1) TESIS en 2-3 frases; 2) EVIDENCIA con los números '
             'del contexto/simulación (cita empresas y porcentajes REALES del JSON, jamás '
             'inventes); 3) RIESGOS (2-3 bullets); 4) QUÉ VIGILAR (2-3 señales concretas). '
@@ -3376,7 +3376,7 @@ def deep_status():
 
 @app.route('/api/voice/bixby-prompt', methods=['GET'])
 def bixby_system_prompt():
-    """Returns Bixby's system prompt for ElevenLabs agent configuration."""
+    """Returns Khipu's system prompt for ElevenLabs agent configuration."""
     # allow_override: set ELEVENLABS_ALLOW_OVERRIDE=true in Railway env vars ONLY
     # if your ElevenLabs agent dashboard has "Allow overrides" turned ON.
     # Sending a prompt override when overrides are OFF causes ElevenLabs to close
@@ -3384,13 +3384,13 @@ def bixby_system_prompt():
     allow_override = os.getenv('ELEVENLABS_ALLOW_OVERRIDE', 'false').lower() == 'true'
     return jsonify({
         'system_prompt': BIXBY_SYSTEM_PROMPT,
-        'agent_name': 'Bixby',
+        'agent_name': 'Khipu',
         'platform': 'Khipu Finance',
         'allow_override': allow_override,
     })
 
 
-# ── Bixby voice — sesión firmada de ElevenLabs ───────────────────────────────
+# ── Khipu voice — sesión firmada de ElevenLabs ───────────────────────────────
 @app.route('/api/voice/session', methods=['POST'])
 def voice_session():
     if not ELEVENLABS_KEY:
@@ -3556,7 +3556,7 @@ def api_docs():
             'POST /v1/risk/portfolio': 'VaR/CVaR/Sharpe for portfolio [starter]',
             'GET  /api/space/launches': 'Upcoming space launches (Launch Library 2)',
             'GET  /api/news/gdelt/<company>': 'Global news via GDELT',
-            'GET  /api/voice/session': 'Bixby ElevenLabs signed session URL',
+            'GET  /api/voice/session': 'Khipu ElevenLabs signed session URL',
             'ANY  /api/mirofish/<path>': 'MiroFish simulation proxy',
             'GET  /api/health': 'Service health check',
         },
@@ -4156,7 +4156,7 @@ def trade_history():
 @app.route('/api/portfolio/comment', methods=['POST'])
 @rate_limit(limit=40, window=3600)
 def portfolio_comment():
-    """Comentario CAUTO de Bixby sobre el portafolio (papel). Recibe un resumen
+    """Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen
     AGREGADO y anónimo desde el cliente (sin datos personales: solo símbolos
     públicos + porcentajes) y devuelve 1-2 frases prudentes: observa concentración
     / diversificación, NUNCA una orden de compra/venta ni promesa de rendimiento.
@@ -4211,7 +4211,7 @@ def portfolio_comment():
     money_close = ('es dinero de papel y no es asesoría financiera' if is_paper
                    else 'es una cuenta de DINERO REAL y esto no es asesoría financiera')
     system = (
-        'Eres Bixby, un observador financiero PRUDENTE dentro de una app con '
+        'Eres Khipu, un observador financiero PRUDENTE dentro de una app con '
         + money_ctx + '. Comentas un portafolio en 1-2 frases, en ' + lang_name + '. '
         'REGLAS INNEGOCIABLES: (1) NUNCA des una orden ni recomendación directa de comprar o '
         'vender un activo concreto. (2) Puedes observar concentración, diversificación y riesgo '
@@ -4241,7 +4241,7 @@ def portfolio_comment():
 @rate_limit(limit=30, window=3600)
 def portfolio_advice():
     """CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un
-    resumen ANÓNIMO de la cartera (papel) + candidatos del universo, Bixby razona
+    resumen ANÓNIMO de la cartera (papel) + candidatos del universo, Khipu razona
     con Opus 4.8 (el mejor juicio para esto) y devuelve un pulso + 1-3 sugerencias
     CONCRETAS (incluir/reducir/vigilar), cada una con su porqué. NUNCA ejecuta nada
     — el cliente pide aprobación por acción. Respaldo determinista si la IA falla."""
@@ -4281,7 +4281,7 @@ def portfolio_advice():
     lang_name = 'inglés' if lang == 'en' else 'español'
     money = 'dinero de PAPEL (simulado)' if is_paper else 'DINERO REAL'
     system = (
-        'Eres Bixby, asesor financiero PRUDENTE de una app con ' + money + '. Analizas una '
+        'Eres Khipu, asesor financiero PRUDENTE de una app con ' + money + '. Analizas una '
         'cartera y sugieres en ' + lang_name + '. REGLAS INNEGOCIABLES: (1) Propones acciones '
         'CONCRETAS (incluir/reducir/vigilar un nombre o sector) pero el usuario SIEMPRE aprueba; '
         'tú solo SUGIERES, nunca ordenas ni prometes rendimiento. (2) Basa todo en concentración, '

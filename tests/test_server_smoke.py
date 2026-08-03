@@ -102,7 +102,7 @@ def test_space_launches_json(client):
     assert r.content_type.startswith('application/json')
 
 
-# ── Bixby voice prompt ─────────────────────────────────────────────────────
+# ── Khipu voice prompt ─────────────────────────────────────────────────────
 
 def test_bixby_prompt_returns_text(client):
     r = client.get('/api/voice/bixby-prompt')

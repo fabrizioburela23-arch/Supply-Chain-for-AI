@@ -973,7 +973,7 @@ var META_FILL = {
   "employees": 400,
   "revenue_2025": "~$150-200M ARR (privada)",
   "geo_risk": "Fundada por polacos con sedes en Nueva York y Londres; riesgo más regulatorio (deepfakes de voz, UE AI Act) que geográfico, y depende de nubes/GPU de terceros.",
-  "desc": "Líder en síntesis y clonación de voz con IA y agentes conversacionales de voz. Valorada en ~$6.6B (enero 2025); es la capa de voz de facto para productos de IA (incluida la voz Bixby de esta app)."
+  "desc": "Líder en síntesis y clonación de voz con IA y agentes conversacionales de voz. Valorada en ~$6.6B (enero 2025); es la capa de voz de facto para productos de IA (incluida la voz Khipu de esta app)."
  },
  "ScaleAI": {
   "founded": 2016,

@@ -56,9 +56,9 @@ en modo servidor):
 | SEC EDGAR | Fundamentales oficiales US | (sin key) |
 | CelesTrak | TLE de satélites | (sin key) |
 | Alpaca | Paper/live trading | `ALPACA_KEY/SECRET/BASE` |
-| Anthropic (Claude) | Bixby, Canvas IA, análisis | `ANTHROPIC_KEY` |
+| Anthropic (Claude) | Khipu, Canvas IA, análisis | `ANTHROPIC_KEY` |
 | Gemini / NVIDIA NIM | Fallback multi-IA | `GEMINI_KEY` / `NVIDIA_KEY` |
-| ElevenLabs | Voz conversacional (Bixby) | `ELEVENLABS_KEY/AGENT_ID` |
+| ElevenLabs | Voz conversacional (Khipu) | `ELEVENLABS_KEY/AGENT_ID` |
 | Neo4j Aura | Persistencia grafo temporal | `NEO4J_URI/USER/PASSWORD` |
 | MiroFish | Motor de simulación multi-agente | `MIROFISH_URL` |
 | ChromaDB (RAG) | Second Brain | `RAG_URL` (no desplegado) |

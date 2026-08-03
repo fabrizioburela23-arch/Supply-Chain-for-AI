@@ -1,17 +1,17 @@
-# Bixby Finance 🌐
+# Khipus Finance AI 🌐
 
-**Terminal financiera inteligente para la cadena de suministro de la IA** — estilo Bloomberg sobre un grafo de conocimiento vivo estilo Palantir, con un analista de IA (Bixby) que habla, simula, opera (simulado) y propone.
+**Terminal financiera inteligente para la cadena de suministro de la IA** — estilo Bloomberg sobre un grafo de conocimiento vivo estilo Palantir, con un analista de IA (Khipu) que habla, simula, opera (simulado) y propone.
 
 > **555 empresas · 1.623 conexiones tipadas · 9 macro-sectores · 43 categorías** — semiconductores, cloud & IA, energía/nuclear, espacio, defensa, robótica.
 
 **Demo en vivo:** https://supply-chain-for-ai-production.up.railway.app
-*(al abrir, prueba el chip "▶ Demo guiada": Bixby maneja la app solo y la narra)*
+*(al abrir, prueba el chip "▶ Demo guiada": Khipu maneja la app solo y la narra)*
 
 ---
 
 ## Qué hace
 
-- **Bixby (Cabina)** — pantalla inicial full-screen: chat + voz (ElevenLabs) con ~30 herramientas; abre pantallas, corre simulaciones y narra resultados. Lenguaje de comandos **KHIPU** (`NVDA SIM`, `PORT VAR`, `GRAPH ASOF 2024-01-01`) para respuestas instantáneas sin IA. **Modo demostración guiada** para pitches.
+- **Khipu (Cabina)** — pantalla inicial full-screen: chat + voz (ElevenLabs) con ~30 herramientas; abre pantallas, corre simulaciones y narra resultados. Lenguaje de comandos **KHIPU** (`NVDA SIM`, `PORT VAR`, `GRAPH ASOF 2024-01-01`) para respuestas instantáneas sin IA. **Modo demostración guiada** para pitches.
 - **Simulación de shocks** — "¿qué pasa si cae TSMC?": propagación del daño por el grafo (kernel de matrices estilo DebtRank en el servidor), war-room con presets geopolíticos, y **simulación multi-agente** donde varios analistas IA debaten un escenario.
 - **Hipergrafo agéntico** — los eventos sistémicos (sanciones, escaseces, conflictos) son **Factores** que amplifican la propagación; un agente los **teje solo desde las noticias** (auditado y reversible) y el panel 💡 corre la simulación en vivo y la narra con IA.
 - **X-Ray de empresa** — dossier interactivo: dependencias, dependientes, **NRS Risk Score** (0-100, explicable término a término), financieros con el gráfico correcto por métrica, noticias con sentimiento.
@@ -26,7 +26,7 @@
 ```
 Browser (app.html, PWA offline-first)          frontend/ (React 19 + Vite — migración
 ├── D3 grafo 2D · Three.js 3D · geo/espacio     en curso, rama feature/react-vite-frontend,
-├── Cabina de Bixby (cockpit) + voz             185 tests Vitest; ver frontend/MIGRATION.md)
+├── Cabina de Khipu (cockpit) + voz             185 tests Vitest; ver frontend/MIGRATION.md)
 ├── Grafo Temporal bitemporal (cliente)
 └── engine/*.js (~30 módulos)
 
@@ -78,7 +78,7 @@ VITE_API_TARGET=http://localhost:5050 npm run dev   # contra tu Flask local
 | `SECRET_KEY` | JWT de la API `/v1` | requerida en producción |
 | `ANTHROPIC_KEY` | Claude (análisis, agentes, narración) | recomendada |
 | `FINNHUB_KEY` | precios y noticias | free tier OK |
-| `ELEVENLABS_KEY` + `ELEVENLABS_AGENT_ID` | voz de Bixby | opcional |
+| `ELEVENLABS_KEY` + `ELEVENLABS_AGENT_ID` | voz de Khipu | opcional |
 | `DATABASE_URL` | ontología bitemporal (Postgres) | opcional; Railway la inyecta |
 | `NEO4J_URI/USER/PASSWORD` | espejo del Grafo Temporal | opcional |
 | `ALPACA_KEY/SECRET/BASE` | bróker simulado (paper) | opcional |

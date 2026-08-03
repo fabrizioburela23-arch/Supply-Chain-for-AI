@@ -1,14 +1,14 @@
 /* ============================================================================
    engine/cockpit.js — CABINA DE BIXBY · el modo pantalla completa
-   Bixby deja de ser un botón: SE VUELVE la pantalla.
-   - Arriba: el orbe/logo de Bixby + estado (escuchando / pensando / listo) +
+   Khipu deja de ser un botón: SE VUELVE la pantalla.
+   - Arriba: el orbe/logo de Khipu + estado (escuchando / pensando / listo) +
      una barra para pedirle cosas por texto o por voz (🎙).
-   - Abajo: un ESCENARIO grande (un lienzo) donde Bixby te muestra lo que pidas:
+   - Abajo: un ESCENARIO grande (un lienzo) donde Khipu te muestra lo que pidas:
        · la radiografía completa de una empresa (X-Ray a pantalla completa)
        · una simulación de shock (a quién arrastra / quién gana)
        · dos empresas comparadas lado a lado
        · un gráfico / tabla generado por IA (Canvas)  ·  o un lienzo en blanco
-   Voz y texto van al MISMO escenario: cuando Bixby (por voz) abre un X-Ray,
+   Voz y texto van al MISMO escenario: cuando Khipu (por voz) abre un X-Ray,
    xray.js detecta que la cabina está abierta y lo pinta aquí, no en el cajón.
 
    Depende de (todos ya cargados antes que este archivo):
@@ -123,7 +123,7 @@
 #bcp-state.live .dot{background:#00E0FF;color:#00E0FF;animation:bcpPulse 1.2s ease-in-out infinite}
 #bcp-state.think .dot{background:#FFB300;color:#FFB300;animation:bcpPulse .7s ease-in-out infinite}
 @keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.3}}
-/* barra de chat de Bixby: AHORA ABAJO (pedido de Fabrizio: "ponla abajo") */
+/* barra de chat de Khipu: AHORA ABAJO (pedido de Fabrizio: "ponla abajo") */
 #bcp-barwrap{flex-shrink:0;padding:12px 22px 16px;border-top:1px solid rgba(122,158,255,.16);
   display:flex;justify-content:center;background:linear-gradient(0deg,rgba(5,7,14,.7),rgba(5,7,14,.2));
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
@@ -229,7 +229,7 @@
 .bcp-cascrow .bar i{display:block;height:100%;background:linear-gradient(90deg,#FF4D6A,#FFB300)}
 .bcp-cascrow .pv{font-family:'JetBrains Mono',monospace;font-size:11px;width:44px;text-align:right;flex:none;color:#FF8FA3}
 .bcp-hyper-foot{font-size:10.5px;color:#5E6884;margin:9px 2px 0}
-/* ── MODO DEMOSTRACIÓN — Bixby maneja la app y va narrando ── */
+/* ── MODO DEMOSTRACIÓN — Khipu maneja la app y va narrando ── */
 #bcp-demo{position:absolute;left:0;right:0;bottom:74px;z-index:12;padding:0 22px;
   pointer-events:none;animation:bcpDemoIn .3s ease}
 @keyframes bcpDemoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -297,7 +297,7 @@
           '<div id="bcp-state"><span class="dot"></span><span class="txt">' + (en0 ? 'Ready' : 'Listo') + '</span></div></div>' +
         '<button class="bcp-iconbtn" id="bcp-close" title="' + (en0 ? 'Close (Esc)' : 'Cerrar (Esc)') + '">✕</button>' +
       '</div>' +
-      // Barra de BOTONES (pedido de Fabrizio): todo lo que Bixby puede
+      // Barra de BOTONES (pedido de Fabrizio): todo lo que Khipu puede
       // mostrar, a un clic — el grafo y la terminal viven DENTRO del escenario.
       '<div id="bcp-actions">' +
         // Trading/dinero PRIMERO (siempre visibles aunque la barra se deslice en tablet).
@@ -318,14 +318,14 @@
         '<button class="bcp-act" data-act="space">🚀 ' + (en0 ? 'Space' : 'Espacio') + '</button>' +
       '</div>' +
       '<div id="bcp-stage"></div>' +
-      // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Bixby abajo").
+      // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Khipu abajo").
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
         '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false" ' +
           'placeholder="' + (en0
-            ? 'Ask Bixby anything…  “break down Nvidia”  ·  “what if TSMC falls?”'
-            : 'Pídele algo a Bixby…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»') + '">' +
+            ? 'Ask Khipu anything…  “break down Nvidia”  ·  “what if TSMC falls?”'
+            : 'Pídele algo a Khipu…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»') + '">' +
         '<button class="bcp-iconbtn" id="bcp-send" title="' + (en0 ? 'Send' : 'Enviar') + '">➤</button>' +
-        '<button class="bcp-iconbtn" id="bcp-mic" title="' + (en0 ? 'Talk to Bixby' : 'Hablar con Bixby') + '">🎙</button>' +
+        '<button class="bcp-iconbtn" id="bcp-mic" title="' + (en0 ? 'Talk to Khipu' : 'Hablar con Khipu') + '">🎙</button>' +
       '</div></div>';
     document.body.appendChild(ov);
 
@@ -367,9 +367,9 @@
     return ov;
   }
 
-  // ── Orbe de voz de Bixby (engine/orb.js) dentro de la Cabina ──
+  // ── Orbe de voz de Khipu (engine/orb.js) dentro de la Cabina ──
   // Reemplaza el orbe estático del header: respira en reposo y reacciona a la
-  // voz (cian = usuario, violeta = Bixby). voice.js lo alimenta con setUserLevel
+  // voz (cian = usuario, violeta = Khipu). voice.js lo alimenta con setUserLevel
   // / setBixbyLevel. Si orb.js no cargó, cae al orbe pequeño (registerBixbyOrb).
   function mountCockpitOrb() {
     var wrap = document.getElementById('bcp-orb-wrap');
@@ -409,7 +409,7 @@
 
   // ── ADOPCIÓN de paneles reales: el grafo y la terminal se MUEVEN al
   // escenario de la Cabina (con un placeholder para devolverlos intactos al
-  // salir). Así Bixby los muestra EN SU PANTALLA, no te lleva a otra pestaña.
+  // salir). Así Khipu los muestra EN SU PANTALLA, no te lleva a otra pestaña.
   var _adopted = [];
 
   function restoreAdopted() {
@@ -494,7 +494,7 @@
   }
 
   // ── CRIPTO, dentro de la Cabina. Arregla el bug (pedir cripto por voz cerraba
-  //    la Cabina y callaba a Bixby) y cumple la visión: TODO vive en Bixby. Adopta
+  //    la Cabina y callaba a Khipu) y cumple la visión: TODO vive en Khipu. Adopta
   //    #crypto-panel igual que el grafo/terminal (mismo panel vivo, se devuelve al
   //    salir). ──
   function stageCrypto(s, arg) {
@@ -511,11 +511,11 @@
 
   // ── Unificación progresiva: más pestañas DENTRO de la Cabina (adopción del
   //    panel vivo, igual que grafo/terminal/cripto). Así navegar a ellas por voz
-  //    ya NO cierra la Cabina ni corta a Bixby. Solo paneles DOM/SVG seguros. ──
+  //    ya NO cierra la Cabina ni corta a Khipu. Solo paneles DOM/SVG seguros. ──
   var ADOPT_TABS = {
     tkg:  { panel: 'tkg-panel',  es: 'Grafo Temporal', en: 'Temporal Graph', init: function () { if (typeof window.initTKGTab === 'function') window.initTKGTab(); } },
     guia: { panel: 'guia-panel', es: 'Guía',           en: 'Guide',          init: function () { if (typeof window.initGuiaTab === 'function') window.initGuiaTab(); } },
-    // Integración total (feedback Fabrizio: "que todos los mapas se vean dentro de Bixby").
+    // Integración total (feedback Fabrizio: "que todos los mapas se vean dentro de Khipu").
     market:     { panel: 'market',           es: 'Mercado',     en: 'Market',      init: function () { try { if (typeof window.renderMarket === 'function') window.renderMarket(); if (typeof window.fetchQuotes === 'function' && !(window.MKT && window.MKT.ts)) window.fetchQuotes(); } catch (e) {} } },
     geo:        { panel: 'geo-panel',         es: 'Geopolítica', en: 'Geopolitics', init: function () { if (typeof window.renderGeoPanel === 'function') window.renderGeoPanel(); } },
     space:      { panel: 'space-panel',       es: 'Espacio',     en: 'Space',       init: function () { if (typeof window.initSpaceTab === 'function') window.initSpaceTab(); } },
@@ -588,7 +588,7 @@
       ['', 'lienzo en blanco', 'Empezar de cero'],
       ['', 'demo', '▶ Recorrido guiado'],
     ];
-    var h2 = en ? "I'm Bixby. Ask me anything." : 'Soy Bixby. Pregúntame lo que sea.';
+    var h2 = en ? "I'm Khipu. Ask me anything." : 'Soy Khipu. Pregúntame lo que sea.';
     var pp = en
       ? 'I can break down any company, simulate what happens if something falls, compare, and chart your data.'
       : 'Puedo desarmar cualquier empresa, simular qué pasa si algo cae, comparar, y dibujarte los datos.';
@@ -1000,9 +1000,9 @@
   }
   function fmtUsd(v) { return '$' + (Number(v) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 
-  /* ══ INFORME DE PORTAFOLIO (pedido de Fabrizio: que Bixby "mande" informes de
+  /* ══ INFORME DE PORTAFOLIO (pedido de Fabrizio: que Khipu "mande" informes de
      cómo va el portafolio). Rendimiento + mejor/peor + concentración por sector
-     + comentario CAUTO de Bixby (Sonnet 5, sin órdenes de compra/venta). Todo
+     + comentario CAUTO de Khipu (Sonnet 5, sin órdenes de compra/venta). Todo
      sobre la cuenta de PAPEL. Reusa NODES/catLabel y los helpers de trade. ══ */
   function _sectorOf(p) {
     var en = ckLang() === 'en';
@@ -1012,7 +1012,7 @@
     if (!sym) return en ? 'Other' : 'Otro';
     // cripto: por asset_class de Alpaca, por par con barra ("BTC/USD"), o por sufijo
     // USD/USDT/USDC ("BTCUSD" — así lo devuelve /v2/positions, SIN barra → antes caía
-    // a "Otro" y Bixby decía "~100% en Otro" en carteras cripto).
+    // a "Otro" y Khipu decía "~100% en Otro" en carteras cripto).
     if (ac === 'crypto' || sym.indexOf('/') >= 0 || /^[A-Z0-9]{2,10}(USD|USDT|USDC)$/.test(sym))
       return en ? 'Crypto' : 'Cripto';
     var n = (window.NODES || []).find(function (x) { return x.mkt && String(x.mkt).toUpperCase() === sym; });
@@ -1083,7 +1083,7 @@
         '<div style="font-size:11px;color:#7C87A3;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">' +
           (en ? 'Concentration by sector' : 'Concentración por sector') + '</div>' + bars +
         '<div id="bcp-bk-aicomment" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:12.5px;line-height:1.5;color:#C3CBE0">' +
-          '<span style="color:#7C87A3">💬 ' + (en ? 'Bixby is looking at your portfolio…' : 'Bixby está mirando tu portafolio…') + '</span></div></div>';
+          '<span style="color:#7C87A3">💬 ' + (en ? 'Khipu is looking at your portfolio…' : 'Khipu está mirando tu portafolio…') + '</span></div></div>';
     _fetchPortfolioComment(m);
   }
 
@@ -1106,11 +1106,11 @@
       el = document.getElementById('bcp-bk-aicomment');
       if (!el) return;
       el.innerHTML = (d && d.comment)
-        ? '<span style="color:#00E0FF;font-weight:700">💬 Bixby:</span> ' + esc(d.comment)
+        ? '<span style="color:#00E0FF;font-weight:700">💬 Khipu:</span> ' + esc(d.comment)
         : '<span style="color:#7C87A3">💬 ' + (en ? 'No comment available.' : 'Sin comentario disponible.') + '</span>';
     } catch (e) {
       el = document.getElementById('bcp-bk-aicomment');
-      if (el) el.innerHTML = '<span style="color:#7C87A3">💬 ' + (en ? "Could not load Bixby's comment." : 'No pude cargar el comentario de Bixby.') + '</span>';
+      if (el) el.innerHTML = '<span style="color:#7C87A3">💬 ' + (en ? "Could not load Khipu's comment." : 'No pude cargar el comentario de Khipu.') + '</span>';
     }
   }
 
@@ -1242,7 +1242,7 @@
   }
 
   /* ══ CAPA PROACTIVA (Opus 4.8) — "sugiere y tú decides" (elección de Fabrizio).
-     Bixby mira tu cartera + candidatos del universo y propone incluir/reducir/
+     Khipu mira tu cartera + candidatos del universo y propone incluir/reducir/
      vigilar, cada sugerencia con botón "Aplicar" que abre la confirmación (NUNCA
      ejecuta solo). ══ */
   function _portfolioCandidates(heldSymbols) {
@@ -1257,7 +1257,7 @@
   async function _fetchAdvice(mount) {
     if (!mount) return;
     var en = ckLang() === 'en';
-    mount.innerHTML = '<div class="bcp-loading">' + (en ? 'Bixby is studying your portfolio…' : 'Bixby está estudiando tu cartera…') + '</div>';
+    mount.innerHTML = '<div class="bcp-loading">' + (en ? 'Khipu is studying your portfolio…' : 'Khipu está estudiando tu cartera…') + '</div>';
     if (!window._tradeAccountInfo || !window._tradeFetch) { mount.innerHTML = '<div style="color:#FFB300;padding:12px;font-size:13px">' + (en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.') + '</div>'; return; }
     var acct = null, positions = [];
     try { acct = await window._tradeAccountInfo(true, false); } catch (e) {}
@@ -1300,7 +1300,7 @@
       '</div>';
     }).join('');
     return '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:13px;line-height:1.55;color:#C3CBE0">' +
-      '<span style="color:#00E0FF;font-weight:700">🧠 Bixby:</span> ' + esc(pulse) + '</div>' +
+      '<span style="color:#00E0FF;font-weight:700">🧠 Khipu:</span> ' + esc(pulse) + '</div>' +
       (sug.length ? cards : '<div style="color:#7C87A3;font-size:12.5px;padding:6px">' + (en ? 'No changes suggested right now.' : 'Sin cambios sugeridos por ahora.') + '</div>') +
       '<div style="margin-top:6px;font-size:10.5px;color:#5b6580">' + (en ? 'Suggestions by ' + mLbl + ' · you approve every action · not financial advice.' : 'Sugerencias por ' + mLbl + ' · tú apruebas cada acción · no es asesoría financiera.') + '</div>';
   }
@@ -1349,9 +1349,9 @@
         '<div id="bcp-bk-confirm"></div>' +
         '<div id="bcp-bk-acct"><div class="bcp-loading">' + tb('loading') + '</div></div>' +
         '<div id="bcp-bk-report"></div>' +
-        // CAPA PROACTIVA: consejos de Bixby (Opus 4.8), "sugiere y tú decides".
+        // CAPA PROACTIVA: consejos de Khipu (Opus 4.8), "sugiere y tú decides".
         '<div style="margin-top:18px">' +
-          '<button id="bcp-bk-advbtn" class="bcp-back" style="border-color:rgba(0,224,255,.4);color:#00E0FF;font-weight:700">🧠 ' + (en ? 'Bixby advice' : 'Consejos de Bixby') + '</button>' +
+          '<button id="bcp-bk-advbtn" class="bcp-back" style="border-color:rgba(0,224,255,.4);color:#00E0FF;font-weight:700">🧠 ' + (en ? 'Khipu advice' : 'Consejos de Khipu') + '</button>' +
           '<div id="bcp-bk-advice" style="margin-top:12px"></div>' +
         '</div>' +
         '<div class="bcp-two" style="margin-top:18px">' +
@@ -1774,7 +1774,7 @@
     }
   }
 
-  /* ══ SIMULACIÓN POR AGENTES (MiroFish desde la terminal de Bixby) ══
+  /* ══ SIMULACIÓN POR AGENTES (MiroFish desde la terminal de Khipu) ══
      Varios agentes analistas (empresa / gobierno / geopolítica) debaten un
      escenario y proyectan impactos REALISTAS. Server: POST /api/sim/agents
      {scenario, seeds, lang} → {narrative, impacts:[{id,label,pct,rationale}],
@@ -1885,7 +1885,7 @@
   }
 
   // Helper público (lo llama voice.js): abre la Cabina en la sim por agentes y
-  // devuelve la promesa del resultado para que Bixby narre el consenso.
+  // devuelve la promesa del resultado para que Khipu narre el consenso.
   window._runAgentSim = function (scenario, seeds, lang) {
     ensureShell();
     var p = fetchAgentSim(scenario, seeds || [], lang);
@@ -1972,7 +1972,7 @@
   }
 
   // Helper público (voice.js): abre la investigación profunda en la Cabina y
-  // devuelve la promesa del informe para que Bixby narre la tesis.
+  // devuelve la promesa del informe para que Khipu narre la tesis.
   // OJO: NO usar el nombre window._openResearch — app.html ya lo usa para el
   // panel "📄 SEC" (10-K de EDGAR). Aquí es la investigación PROFUNDA de la Cabina.
   window._openDeepResearch = function (id, lang) {
@@ -2057,7 +2057,7 @@
       stageNotFound(document.getElementById('bcp-stage'), dosM[1].replace(/\?+$/, '').trim()); return;
     }
 
-    // 2.6) el grafo o la terminal, DENTRO de la pantalla de Bixby
+    // 2.6) el grafo o la terminal, DENTRO de la pantalla de Khipu
     if (/universo|\b3d\b/.test(low)) { close(); if (window._go3D) { window._go3D(); return; } }
     if (/^(mu[eé]strame |ver |abre |abrir )?(el )?(grafo|mapa)\b/.test(low)) { stage('graph'); return; }
     var termM = low.match(/^(mu[eé]strame |ver |abre |abrir )?(la )?terminal(?:\s+(?:de|con)\s+(.+))?/);
@@ -2168,7 +2168,7 @@
   });
 
   /* ══ MODO DEMOSTRACIÓN ═══════════════════════════════════════════════════
-     Bixby maneja la app SOLO y va narrando lo que hace, paso a paso — para
+     Khipu maneja la app SOLO y va narrando lo que hace, paso a paso — para
      enseñar el producto (inversionistas) sin depender de ElevenLabs:
      - la narración SIEMPRE se ve ESCRITA en pantalla (máquina de escribir), así
        funciona aunque no haya voz premium contratada;
@@ -2189,7 +2189,7 @@
     var en = ckLang() === 'en';
     var nvda = _demoNode('Nvidia'), tsmc = _demoNode('TSMC');
     return en ? [
-      { say: "I'm Bixby. I watch 555 companies across the AI supply chain — chips, cloud, space and nuclear. Let me show you what I do in one minute.",
+      { say: "I'm Khipu. I watch 555 companies across the AI supply chain — chips, cloud, space and nuclear. Let me show you what I do in one minute.",
         act: function () { stage('empty'); } },
       { say: "This is the live map. Every dot is a company; every line is a real dependency — who fabricates for whom, who provides the cloud, who sells the power.",
         act: function () { stage('graph'); } },
@@ -2203,10 +2203,10 @@
         act: function () { stage('market'); } },
       { say: "And you can invest from right here, on a simulated account, without leaving my screen.",
         act: function () { stage('broker'); } },
-      { say: "That's Bixby. Ask me anything: “break down Nvidia”, “what if TSMC falls?”, “show me opportunities”.",
+      { say: "That's Khipu. Ask me anything: “break down Nvidia”, “what if TSMC falls?”, “show me opportunities”.",
         act: function () { stage('empty'); } },
     ] : [
-      { say: 'Soy Bixby. Vigilo 555 empresas de la cadena de la inteligencia artificial: chips, nube, espacio y nuclear. Te muestro en un minuto lo que hago.',
+      { say: 'Soy Khipu. Vigilo 555 empresas de la cadena de la inteligencia artificial: chips, nube, espacio y nuclear. Te muestro en un minuto lo que hago.',
         act: function () { stage('empty'); } },
       { say: 'Este es el mapa vivo. Cada punto es una empresa; cada línea, una dependencia real: quién le fabrica a quién, quién le da la nube, quién le vende la energía.',
         act: function () { stage('graph'); } },
@@ -2220,7 +2220,7 @@
         act: function () { stage('market'); } },
       { say: 'Y puedes invertir desde aquí mismo, en cuenta simulada, sin salir de mi pantalla.',
         act: function () { stage('broker'); } },
-      { say: 'Eso es Bixby. Pregúntame lo que quieras: «desármame Nvidia», «¿qué pasa si cae TSMC?», «muéstrame oportunidades».',
+      { say: 'Eso es Khipu. Pregúntame lo que quieras: «desármame Nvidia», «¿qué pasa si cae TSMC?», «muéstrame oportunidades».',
         act: function () { stage('empty'); } },
     ];
   }

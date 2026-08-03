@@ -6,7 +6,7 @@
 ## Qué es
 Terminal de inteligencia de inversión estilo Bloomberg + IA para tecnologías profundas:
 semiconductores, IA, espacio, computación cuántica, energía nuclear y robótica. ~460+
-empresas con grafo de cadena de suministro navegable, análisis por IA, voz (Bixby),
+empresas con grafo de cadena de suministro navegable, análisis por IA, voz (Khipu),
 simulación agéntica y mapas 3D inmersivos.
 
 ## Arquitectura
@@ -15,7 +15,7 @@ simulación agéntica y mapas 3D inmersivos.
 - **`server.py`** (Flask): proxy de datos (Finnhub/FMP/Marketstack/Alpaca/SEC), IA
   multi-proveedor, VaR/CVaR, JWT, `/vendor` (proxy de librerías), diagnóstico.
 - **`engine/`**: graph3d.js (grafo 3D), planetarium.js (planeta satelital), geoglobe.js
-  (globo geopolítico), geo_coords.js, voice.js (Bixby voz), command_center.js (Bixby texto),
+  (globo geopolítico), geo_coords.js, voice.js (Khipu voz), command_center.js (Khipu texto),
   canvas-data.js, secondbrain.js, hypergraph.js.
 - **`sim/`**: mirofish_client.js, scenario_builder.js.
 - **`nodes/`**: nodes_expand*.js, nodes_spacex.js, nodes_nuclear.js, nodes_expand4.js,
@@ -33,13 +33,13 @@ simulación agéntica y mapas 3D inmersivos.
 | Simulación War-Room | tab Simulación | 2 motores: 🤖 IA Simple / 🧬 MiroFish. |
 | Espacio | tab Espacio | Planeta 3D con satélites reales (CelesTrak). |
 | Canvas IA | tab Canvas | Gráficos/tablas generados por IA en lenguaje natural. |
-| Bixby | botón header / ⌘K | Copiloto de voz+texto: ejecuta acciones + genera Canvas inline. |
+| Khipu | botón header / ⌘K | Copiloto de voz+texto: ejecuta acciones + genera Canvas inline. |
 | Carteras editables | detalle empresa | Botones +C1/+C2 (persistidas en localStorage). |
 | Empresa privada | detalle (pre-IPO) | Rondas, inversores, timeline IPO, hitos. |
 
 ## IA (multi-proveedor con fallback)
 `_ai_complete()` prueba en orden (`AI_ORDER`, default `claude,gemini,nvidia`); si uno falla,
-pasa al siguiente. Todas las features de IA (Canvas, Bixby, análisis, research SEC) lo usan.
+pasa al siguiente. Todas las features de IA (Canvas, Khipu, análisis, research SEC) lo usan.
 - Claude (Anthropic) — principal, requiere saldo.
 - Gemini (Google, gratis) y NVIDIA NIM (gratis MVP) — respaldo.
 
@@ -53,7 +53,7 @@ Opcionales: NVIDIA_KEY, MIROFISH_TOKEN, SEC_USER_AGENT.
 ## Endpoints clave (server.py)
 - `/api/health`, `/api/diagnostics` (🩺 estado en vivo de cada servicio).
 - `/api/quote`, `/api/quotes`, `/api/candles` (precios).
-- `/api/ai/command` (Bixby texto), `/api/canvas/generate` (Canvas IA).
+- `/api/ai/command` (Khipu texto), `/api/canvas/generate` (Canvas IA).
 - `/api/company/research/<ticker>` (síntesis 10-K SEC), `/api/dossier/<ticker>`.
 - `/api/space/tle` (satélites), `/api/mirofish/*`, `/api/rag/*`.
 - `/vendor/<asset>` (proxy de d3/three/chart/satellite + texturas, para redes que bloquean CDNs).
@@ -65,7 +65,7 @@ CDNs externos que algunas redes bloquean. El service worker es network-first (si
 
 ## Limitaciones / pendientes conocidos
 - RAG / Second Brain: requiere desplegar `rag/` como 2º servicio en Railway (ver SETUP.md).
-- Voz Bixby: el timeout de inactividad se ajusta en el panel de ElevenLabs.
+- Voz Khipu: el timeout de inactividad se ajusta en el panel de ElevenLabs.
 - Trading real requiere cuenta Alpaca; si falla, cae a operación simulada (paper).
 
 ## Docs relacionados

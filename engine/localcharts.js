@@ -11,7 +11,7 @@
       espera "mirando nada".
    3) CACHÉ CLIENTE (localStorage 'kh_chartcache', TTL 1 h, LRU 30): pedir el
       mismo gráfico dos veces = instantáneo. Se implementa interceptando
-      fetch('/api/canvas/generate') — así cubre Canvas, Cabina y Bixby sin
+      fetch('/api/canvas/generate') — así cubre Canvas, Cabina y Khipu sin
       tocar sus archivos. Invalidar: window.KhipuLocalCharts.clearCache().
    4) PREFETCH: al abrir Canvas/Cabina se precalientan /api/candles del
       portafolio (MKT.pos) y del nodo enfocado (máx. 4, silenciosos).
@@ -611,7 +611,7 @@
       '</div></div>';
   }
 
-  // localiza los cards pendientes (Canvas / Cabina / Bixby inline) y pinta el
+  // localiza los cards pendientes (Canvas / Cabina / Khipu inline) y pinta el
   // esqueleto EN EL MISMO contenedor donde aparecerá el gráfico.
   function _showAISkeleton() {
     try {
@@ -625,7 +625,7 @@
           card.setAttribute('data-khlc', '1');
           spin.parentElement.outerHTML = _skelHTML(180);
         } else if (!spin && card.id && card.id.indexOf('bcc-cv-') === 0 && !card.querySelector('.cv-card-hdr')) {
-          // Bixby inline (command_center.js): holder sin header todavía
+          // Khipu inline (command_center.js): holder sin header todavía
           card.setAttribute('data-khlc', '1');
           card.innerHTML = _skelHTML(130);
         }
@@ -680,7 +680,7 @@
 
   // Interceptor de fetch SOLO para POST /api/canvas/generate: sirve del caché
   // (instantáneo) o pinta el esqueleto y guarda la respuesta. Cubre Canvas,
-  // Cabina y Bixby sin tocar sus archivos. Passthrough para todo lo demás.
+  // Cabina y Khipu sin tocar sus archivos. Passthrough para todo lo demás.
   function _wrapFetch() {
     if (window.__khlcFetchWrapped || typeof window.fetch !== 'function') return;
     window.__khlcFetchWrapped = true;

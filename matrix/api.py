@@ -222,7 +222,7 @@ def _fallback_insights(situation, lang):
 def _narrate_insights(situation, lang, tier):
     """IA barata narra el estado del hipergrafo. Fallback a plantilla si falla."""
     tongue = 'inglés' if lang == 'en' else 'español'
-    sys = ('Eres el motor de INSIGHTS de Bixby Finance: un hipergrafo vivo de la cadena de '
+    sys = ('Eres el motor de INSIGHTS de Khipus Finance AI: un hipergrafo vivo de la cadena de '
            'suministro de IA, semiconductores, espacio y nuclear. Te doy el ESTADO del sistema '
            '(factores sistémicos activos = hiperaristas, puntos de estrangulamiento, y una '
            'cascada ya simulada por el motor). Devuelve 2-4 INSIGHTS accionables, cortos y '

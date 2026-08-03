@@ -4,7 +4,7 @@ Referencia de producto: World Monitor (pedido de Fabrizio 2026-07-22: "quiero
 que sea así de avanzado, incluso más"). El "más" nuestro: cada punto de
 estrangulamiento está CONECTADO al grafo de suministro real — el cliente puede
 simular su cierre con el motor de matrices (/api/matrix/impact) y ver qué
-empresas caen. World Monitor muestra el riesgo; Bixby lo simula.
+empresas caen. World Monitor muestra el riesgo; Khipu lo simula.
 
 Datos:
 - CHOKEPOINTS/FABS/COUNTRIES: curados a mano (coordenadas reales a nivel
@@ -176,7 +176,7 @@ def _gdelt_activity(query):
             'https://api.gdeltproject.org/api/v2/doc/doc',
             params={'query': query, 'mode': 'artlist', 'maxrecords': 50,
                     'timespan': '7d', 'format': 'json', 'sort': 'datedesc'},
-            timeout=5, headers={'User-Agent': 'BixbyFinance/1.0'})
+            timeout=5, headers={'User-Agent': 'KhipuFinance/1.0'})
         if not r.ok:
             return None
         arts = (r.json() or {}).get('articles') or []

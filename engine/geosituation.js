@@ -1,7 +1,7 @@
 // engine/geosituation.js — SALA DE SITUACIÓN geopolítica (estilo World Monitor,
 // pedido de Fabrizio 2026-07-22: "así de avanzado, incluso más").
 // El "más": cada punto de estrangulamiento se puede SIMULAR sobre el grafo de
-// suministro real (POST /api/matrix/impact) — WM muestra el riesgo, Bixby lo simula.
+// suministro real (POST /api/matrix/impact) — WM muestra el riesgo, Khipu lo simula.
 //
 // Mapa 2D canvas (d3-geo, proyección Natural Earth) + capas activables:
 //   empresas (HQ por sector), arcos de suministro, fabs críticas, chokepoints,

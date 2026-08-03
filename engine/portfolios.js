@@ -651,7 +651,7 @@
       render();
     },
     refresh: function () { render(); },
-    // utilidades por si otro módulo (Bixby, KHIPU) las necesita
+    // utilidades por si otro módulo (Khipu, KHIPU) las necesita
     _list: loadAll,
     _stats: pfStats,
     _priceOf: priceOf

@@ -38,8 +38,8 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   `actions.py` (catálogo de 9 Acciones auditadas, Pydantic), `agents.py`
   (4 agentes + brief matinal + evaluador de alertas), `api.py` (blueprint).
 - `engine/`: temporal-graph.js (~1,050 líneas, Grafo Temporal), khipu_lang.js
-  (parser de comandos), guide.js (Guía), voice.js (Bixby voz/ElevenLabs),
-  command_center.js (Bixby texto), graph3d.js, geoglobe.js, planetarium.js,
+  (parser de comandos), guide.js (Guía), voice.js (Khipu voz/ElevenLabs),
+  command_center.js (Khipu texto), graph3d.js, geoglobe.js, planetarium.js,
   secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js.
   REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
   (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
@@ -120,7 +120,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   empresas (aliases de transcripción de voz, fuzzy, sugerencias top-3) —
   TODO camino de entrada de nombres (voice/command_center/cockpit/khipu_lang)
   pasa por él. `KhipuResolve.notFound(q)` da el mensaje bilingüe.
-- `window._surface(kind, arg)`: lo que Bixby muestra queda SIEMPRE al frente
+- `window._surface(kind, arg)`: lo que Khipu muestra queda SIEMPRE al frente
   (dentro de la Cabina si está abierta; si no, switchTab + cierra overlays).
   No mostrar resultados sin pasar por _surface.
 - `window.CRYPTO_INTEL` + `window.CRYPTO_CATS` (nodes/crypto_intel*.js):
@@ -135,7 +135,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   — nunca reimplementar el PIN. Cripto = símbolos 'BTC/USD' + notional USD;
   el server fuerza tif='gtc'. Badge obligatorio 🧪 SIMULADO / 🔴 DINERO REAL
   según `account.paper`. NINGUNA orden sin confirmación explícita (clic o
-  sí verbal). Bixby: place_paper_trade (flujo confirmed=false→resumen→sí→
+  sí verbal). Khipu: place_paper_trade (flujo confirmed=false→resumen→sí→
   confirmed=true) y get_portfolio_status; broker en Cabina:
   `window._openBrokerStage()` / `_surface('trade')` sin arg.
 
@@ -217,8 +217,18 @@ server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 
 ## Nombres y usuario
 
-- App: **Khipus AI Finance Inteligence** (grafía del usuario; antes "Khipu
-  Finance"). Voz: **Bixby** (ElevenLabs, no el de Samsung).
+- App: **Khipus Finance AI** (renombrada 2026-08-03 — "Bixby" es marca de
+  Samsung y Fabrizio no puede usarla; antes fue "Bixby Finance" y
+  originalmente "Khipus AI Finance Inteligence"). Asistente/voz: **Khipu**
+  (nombre PROVISIONAL — Fabrizio buscará el definitivo; cuando llegue,
+  repetir el sed protegido: blindar primero los identificadores
+  Bixby(CC|Cockpit|Level|Orb|Thinking|Voice), que NO se renombraron, y las
+  clases CSS/ids 'bixby-*' minúsculas tampoco; el matcher de transcripción en
+  voice.js acepta 'khipu:' y 'bixby:'). SOLO se renombra lo VISIBLE;
+  identificadores internos NO cambian (caché sw 'khipu-finance-vN',
+  localStorage 'khipu_*'/'kh_*', globals Bixby*/KhipuResolve/KhipuLocalCharts/
+  KhipuPortfolios/KhipuUniverse2D, window.KHIPU DSL, engine/khipu_lang.js,
+  /v1/* monetizada) — cambiarlos rompería estados/caché.
 - Usuario (Fabrizio): hispanohablante, no técnico. Explicar en español simple,
   sin jerga; pasos con clics exactos para Railway/Neo4j/etc.; siempre cerrar
   con "qué hacer ahora" concreto. La pestaña ❓ Guía de la app existe para él.
