@@ -18,7 +18,7 @@ import enum
 import uuid
 
 from sqlalchemy import (
-    Column, String, Text, DateTime, Float, Boolean, Index, ForeignKey, func,
+    Column, String, Text, DateTime, Float, Boolean, Integer, Index, ForeignKey, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base
@@ -112,6 +112,38 @@ class ProposedAction(Base):
 
     __table_args__ = (
         Index('ix_proposed_status_agent', 'status', 'agent'),
+    )
+
+
+class InsightSnapshot(Base):
+    """Track B — historial de /api/matrix/insights.
+
+    Los insights son DERIVADOS (se recalculan del grafo), no hechos de dominio:
+    por eso viven en su propia tabla y no como eventos bitemporales, que
+    ensuciarían la ontología con conclusiones en vez de observaciones.
+
+    Se guarda UNA fila por cambio real: la clave de deduplicación es
+    (graph_epoch, as_of, lang). Como graph_epoch = MAX(recorded_at) de events,
+    dos lecturas del mismo grafo no generan filas nuevas — la historia queda
+    siendo "qué cambió y cuándo", no un log de cada visita.
+    """
+    __tablename__ = 'insight_snapshots'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    graph_epoch = Column(String(64), nullable=False, index=True)
+    as_of = Column(String(40), nullable=True)      # fecha de time-travel, o None = ahora
+    lang = Column(String(5), nullable=False, default='es')
+    trigger = Column(String(300), nullable=True)   # qué disparó la cascada narrada
+    affected = Column(Integer, nullable=False, default=0)
+    situation = Column(JSONB, nullable=False, default=dict)  # factores/chokepoints/cascada
+    # `insights` NO es texto: /insights devuelve una lista de tarjetas
+    # [{kind, title, detail}] — narradas por IA o por plantilla.
+    insights = Column(JSONB, nullable=True)
+    model = Column(String(60), nullable=True)      # qué la escribió
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    __table_args__ = (
+        Index('ix_insight_dedupe', 'graph_epoch', 'as_of', 'lang'),
     )
 
 

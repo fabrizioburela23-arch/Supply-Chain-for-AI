@@ -4,9 +4,12 @@ Igual que la ontología: opcional y defensivo — sin DATABASE_URL responde 503
 y el resto de la app sigue intacta. NO tocar /v1/* (API monetizada).
 """
 import json
+import logging
 import time
 
 from flask import Blueprint, jsonify, request
+
+log = logging.getLogger('khipu')
 
 matrix_bp = Blueprint('matrix', __name__, url_prefix='/api/matrix')
 
@@ -279,7 +282,8 @@ def matrix_insights():
     with scope() as s:
         # Clave cacheada por ÉPOCA del grafo → un alta/baja/cambio de peso o de
         # Factor invalida los insights (antes solo TTL 180s → datos rancios).
-        ck = f'insights:{_graph_epoch(s)}:{as_of or "now"}:{lang}:{tier}'
+        epoch = _graph_epoch(s)
+        ck = f'insights:{epoch}:{as_of or "now"}:{lang}:{tier}'
         if not manual_shock:
             hit = _ttl_get(ck, ttl=180)
             if hit is not None:
@@ -342,7 +346,68 @@ def matrix_insights():
                'trigger': trigger, 'affected': affected, 'model': model}
     if not manual_shock:
         _ttl_set(ck, payload)
+        _persist_insight(scope, epoch, as_of, lang, payload)
     return jsonify(payload)
+
+
+def _persist_insight(scope, epoch, as_of, lang, payload):
+    """Guarda el insight en el historial, UNA fila por época del grafo.
+
+    Solo para lecturas del estado real (los shocks manuales son exploración,
+    no historia). Nunca debe tumbar la respuesta: si el guardado falla, el
+    usuario igual recibe su insight."""
+    from ontology.models import InsightSnapshot
+    from sqlalchemy import select
+    try:
+        with scope() as s:
+            dup = s.scalars(select(InsightSnapshot).where(
+                InsightSnapshot.graph_epoch == str(epoch),
+                InsightSnapshot.as_of.is_(None) if as_of is None else InsightSnapshot.as_of == as_of,
+                InsightSnapshot.lang == lang,
+            ).limit(1)).first()
+            if dup:
+                return
+            s.add(InsightSnapshot(
+                graph_epoch=str(epoch), as_of=as_of, lang=lang,
+                trigger=(payload.get('trigger') or '')[:300],
+                affected=int(payload.get('affected') or 0),
+                situation=payload.get('situation') or {},
+                insights=payload.get('insights'),
+                model=(payload.get('model') or '')[:60],
+            ))
+    except Exception:  # noqa: BLE001
+        log.warning('no se pudo guardar el insight en el historial', exc_info=True)
+
+
+@matrix_bp.get('/insights/history')
+def matrix_insights_history():
+    """Historial de insights: cómo fue cambiando la lectura de la red.
+
+    Una fila por cambio real del grafo (no por visita) — ver InsightSnapshot.
+    Query: ?limit=20&lang=es. → {available, count, history:[…]}."""
+    scope = _db()
+    if scope is None:
+        return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
+    from ontology.models import InsightSnapshot
+    from sqlalchemy import select
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 200)
+    except (TypeError, ValueError):
+        limit = 20
+    lang = (request.args.get('lang') or '').strip().lower()[:2]
+
+    with scope() as s:
+        q = select(InsightSnapshot)
+        if lang:
+            q = q.where(InsightSnapshot.lang == lang)
+        rows = s.scalars(q.order_by(InsightSnapshot.created_at.desc()).limit(limit)).all()
+        history = [{
+            'id': str(r.id), 'as_of': r.as_of, 'lang': r.lang, 'trigger': r.trigger,
+            'affected': r.affected, 'situation': r.situation, 'insights': r.insights,
+            'model': r.model,
+            'created_at': r.created_at.isoformat() if r.created_at else None,
+        } for r in rows]
+    return jsonify({'available': True, 'count': len(history), 'history': history})
 
 
 @matrix_bp.get('/metrics')

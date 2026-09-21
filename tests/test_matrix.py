@@ -128,3 +128,92 @@ def test_api_endpoints(db):
 
     bad = client.post('/api/matrix/impact', json={'shock': ['NoExiste123']})
     assert bad.status_code == 400
+
+
+# ── Historial de insights (Track B) ─────────────────────────────────────────
+# OJO: /api/matrix/insights YA EXISTÍA (sim narrada del hipergrafo). El
+# historial es una ruta NUEVA bajo /insights/history para no colisionar.
+
+def test_insights_history_guarda_una_fila_por_epoca(db):
+    """Dos lecturas del MISMO grafo no deben duplicar historia: la clave de
+    deduplicación es (graph_epoch, as_of, lang)."""
+    import server
+    from ontology.db import session_scope
+    from ontology.models import InsightSnapshot
+    client = server.app.test_client()
+
+    with session_scope() as s:
+        s.query(InsightSnapshot).delete()
+
+    first = client.post('/api/matrix/insights', json={'lang': 'es'})
+    assert first.status_code == 200
+
+    h1 = client.get('/api/matrix/insights/history').get_json()
+    assert h1['available'] is True
+    assert h1['count'] == 1
+    assert h1['history'][0]['lang'] == 'es'
+
+    # segunda lectura del mismo grafo → sin fila nueva (aunque venga de caché)
+    client.post('/api/matrix/insights', json={'lang': 'es'})
+    h2 = client.get('/api/matrix/insights/history').get_json()
+    assert h2['count'] == 1
+
+
+def test_insights_history_nueva_fila_cuando_cambia_el_grafo(db):
+    """Un cambio real del grafo (época nueva) SÍ debe dejar una fila nueva."""
+    import server
+    from ontology.db import session_scope
+    from ontology.models import InsightSnapshot
+    from ontology.actions import execute_action
+    client = server.app.test_client()
+
+    with session_scope() as s:
+        s.query(InsightSnapshot).delete()
+
+    client.post('/api/matrix/insights', json={'lang': 'es'})
+    antes = client.get('/api/matrix/insights/history').get_json()['count']
+
+    # escribir en la ontología mueve MAX(recorded_at) = la época del grafo
+    with session_scope() as s:
+        execute_action(s, 'AnotarObjeto',
+                       {'object_id': 'TSMC', 'texto': 'nota que cambia la época'}, actor='pytest')
+
+    client.post('/api/matrix/insights', json={'lang': 'es'})
+    despues = client.get('/api/matrix/insights/history').get_json()['count']
+    assert despues == antes + 1
+
+
+def test_insights_history_filtra_por_idioma_y_respeta_limit(db):
+    import server
+    from ontology.db import session_scope
+    from ontology.models import InsightSnapshot
+    client = server.app.test_client()
+
+    with session_scope() as s:
+        s.query(InsightSnapshot).delete()
+
+    client.post('/api/matrix/insights', json={'lang': 'es'})
+    client.post('/api/matrix/insights', json={'lang': 'en'})
+
+    solo_en = client.get('/api/matrix/insights/history?lang=en').get_json()
+    assert solo_en['count'] == 1
+    assert all(h['lang'] == 'en' for h in solo_en['history'])
+
+    limitado = client.get('/api/matrix/insights/history?limit=1').get_json()
+    assert limitado['count'] == 1
+
+
+def test_shock_manual_no_ensucia_el_historial(db):
+    """Un shock manual es exploración, no historia — no debe persistirse."""
+    import server
+    from ontology.db import session_scope
+    from ontology.models import InsightSnapshot
+    client = server.app.test_client()
+
+    with session_scope() as s:
+        s.query(InsightSnapshot).delete()
+
+    r = client.post('/api/matrix/insights', json={'lang': 'es', 'shock': ['TSMC']})
+    assert r.status_code == 200
+    h = client.get('/api/matrix/insights/history').get_json()
+    assert h['count'] == 0

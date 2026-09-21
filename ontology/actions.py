@@ -146,6 +146,30 @@ class RetirarFactorInput(BaseModel):
     razon: str = Field(min_length=1, max_length=1000)
 
 
+class ActivarFactorInput(BaseModel):
+    """Sube un Factor de su nivel LATENTE a su nivel de crisis, de forma
+    PERSISTENTE y auditada.
+
+    Distinto de `POST /api/matrix/factor/fire`, que es un what-if efímero que no
+    muta nada: esto cambia la línea base que lee el motor de matrices hasta que
+    alguien lo desactive. Úsalo cuando la crisis pasó de verdad, no para
+    explorar escenarios.
+
+    Guarda la severidad previa en `severity_latente` para poder revertir exacto.
+    Si no se pasa `severity`, usa la `severity_crisis` del propio factor."""
+    factor_id: str
+    severity: Optional[float] = Field(default=None, ge=0, le=5)
+    razon: str = Field(min_length=1, max_length=1000)
+
+
+class DesactivarFactorInput(BaseModel):
+    """Devuelve un Factor activado a su severidad latente (la que tenía antes de
+    ActivarFactor; 1.0 si no hay registro). NO lo expira — para eso está
+    RetirarFactor, que además cierra sus links 'affects'."""
+    factor_id: str
+    razon: str = Field(min_length=1, max_length=1000)
+
+
 # ── Handlers: reciben (session, input_validado, actor) → dict de resultado ──
 
 def _log_action(session, action_type, object_id, target_id, payload, actor, source='manual'):
@@ -420,6 +444,72 @@ def retirar_factor(session, inp: RetirarFactorInput, actor):
     return {'factor_id': inp.factor_id, 'retired_links': len(rows)}
 
 
+def _require_factor(session, factor_id):
+    obj = session.get(ObjectRecord, factor_id)
+    if not obj or obj.type != 'Factor':
+        raise ActionError(f'factor no encontrado: {factor_id}')
+    return obj
+
+
+def activar_factor(session, inp: ActivarFactorInput, actor):
+    """Persistente: cambia `severity` en las props del Factor. El motor lo lee en
+    active_factors() y el caché de matrices se invalida solo (la época del grafo
+    es MAX(recorded_at) de events, y esto escribe un ObjectUpdated)."""
+    obj = _require_factor(session, inp.factor_id)
+    props = obj.properties or {}
+    if props.get('expired'):
+        raise ActionError(f'el factor está retirado: {inp.factor_id} — recréalo con CrearFactor')
+    prev = float(props.get('severity', 1.0))
+    target = inp.severity
+    if target is None:
+        try:
+            target = float(props['severity_crisis'])
+        except (KeyError, TypeError, ValueError):
+            raise ActionError(
+                f'{inp.factor_id} no tiene severity_crisis — pasa "severity" explícita')
+    target = float(target)
+    # La severidad latente se captura solo en la PRIMERA activación: reactivar a
+    # otro nivel no debe sobrescribirla con un valor de crisis (se perdería el
+    # punto de retorno).
+    latente = props.get('severity_latente')
+    if not props.get('activo') or latente is None:
+        latente = prev
+    if props.get('activo') and abs(prev - target) < 1e-9:
+        raise ActionError(f'el factor ya está activo en severidad {prev}')
+    apply_event(session, 'ObjectUpdated', {'properties': {
+        'severity': target, 'activo': True, 'severity_latente': float(latente),
+        'activado_por': actor, 'activado_razon': inp.razon,
+    }}, valid_from=_utcnow(), source='manual', actor=actor, object_id=inp.factor_id)
+    _log_action(session, 'ActivarFactor', inp.factor_id, None, {
+        'severity_anterior': prev, 'severity': target, 'razon': inp.razon,
+    }, actor)
+    return {'factor_id': inp.factor_id, 'severity_anterior': prev,
+            'severity': target, 'severity_latente': float(latente)}
+
+
+def desactivar_factor(session, inp: DesactivarFactorInput, actor):
+    """Revierte ActivarFactor. Vuelve a `severity_latente`; si el factor nunca se
+    activó por esta vía (p.ej. venía de la ingesta multicapa) cae a 1.0, que es
+    el nivel latente con el que se cargaron los ~70 factores."""
+    obj = _require_factor(session, inp.factor_id)
+    props = obj.properties or {}
+    if not props.get('activo'):
+        raise ActionError(f'el factor no está activo: {inp.factor_id}')
+    prev = float(props.get('severity', 1.0))
+    try:
+        latente = float(props['severity_latente'])
+    except (KeyError, TypeError, ValueError):
+        latente = 1.0
+    apply_event(session, 'ObjectUpdated', {'properties': {
+        'severity': latente, 'activo': False,
+        'desactivado_por': actor, 'desactivado_razon': inp.razon,
+    }}, valid_from=_utcnow(), source='manual', actor=actor, object_id=inp.factor_id)
+    _log_action(session, 'DesactivarFactor', inp.factor_id, None, {
+        'severity_anterior': prev, 'severity': latente, 'razon': inp.razon,
+    }, actor)
+    return {'factor_id': inp.factor_id, 'severity_anterior': prev, 'severity': latente}
+
+
 # ── Catálogo: nombre → (esquema Pydantic, handler) ───────────────────────────
 ACTION_CATALOG = {
     'CrearTesis':        (CrearTesisInput, crear_tesis),
@@ -435,6 +525,8 @@ ACTION_CATALOG = {
     'RetirarEmpresa':     (RetirarEmpresaInput, retirar_empresa),
     'CrearFactor':        (CrearFactorInput, crear_factor),
     'RetirarFactor':      (RetirarFactorInput, retirar_factor),
+    'ActivarFactor':      (ActivarFactorInput, activar_factor),
+    'DesactivarFactor':   (DesactivarFactorInput, desactivar_factor),
 }
 
 

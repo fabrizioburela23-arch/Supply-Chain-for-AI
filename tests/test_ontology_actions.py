@@ -200,3 +200,151 @@ def test_list_actions_is_filterable_and_ordered(db):
         assert all(a.actor == 'beto' for a in only_beto)
         assert len(only_beto) >= 1  # ConfirmarVinculo/RechazarVinculo se ejecutaron como 'beto'
         assert len(only_ana) >= 1
+
+
+# ── ActivarFactor / DesactivarFactor (Track B) ──────────────────────────────
+# Los ~70 factores de la ingesta multicapa viven LATENTES (severity 1.0) con su
+# nivel de crisis en `severity_crisis`. /api/matrix/factor/fire es un what-if
+# que NO muta; estas dos Acciones sí cambian la línea base, auditadas.
+
+def _crear_factor_latente(fid, severity=1.0, severity_crisis=4.0):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.service import apply_event, _utcnow
+
+    with session_scope() as s:
+        execute_action(s, 'CrearFactor', {
+            'factor_id': fid, 'label': f'Factor {fid}', 'severity': severity,
+            'affects': ['ACME'], 'coef': 0.5, 'razon': 'test',
+        }, actor='ana')
+        # severity_crisis no es campo de CrearFactor (viene de la ingesta) —
+        # se inyecta igual que lo hace el parser multicapa.
+        if severity_crisis is not None:
+            apply_event(s, 'ObjectUpdated', {'properties': {'severity_crisis': severity_crisis}},
+                        valid_from=_utcnow(), source='test', actor='pytest', object_id=fid)
+
+
+def test_activar_factor_sube_a_severity_crisis(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.service import get_object
+
+    _crear_factor_latente('f_act', severity=1.0, severity_crisis=4.0)
+    with session_scope() as s:
+        r = execute_action(s, 'ActivarFactor', {'factor_id': 'f_act', 'razon': 'la crisis pasó'}, actor='ana')
+        assert r['severity_anterior'] == 1.0
+        assert r['severity'] == 4.0
+
+    with session_scope() as s:
+        props = get_object(s, 'f_act').properties
+        assert props['severity'] == 4.0
+        assert props['activo'] is True
+        assert props['severity_latente'] == 1.0   # punto de retorno guardado
+        assert props['activado_por'] == 'ana'
+
+
+def test_desactivar_factor_restaura_la_latente(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.service import get_object
+
+    _crear_factor_latente('f_des', severity=1.0, severity_crisis=3.5)
+    with session_scope() as s:
+        execute_action(s, 'ActivarFactor', {'factor_id': 'f_des', 'razon': 'x'}, actor='ana')
+    with session_scope() as s:
+        r = execute_action(s, 'DesactivarFactor', {'factor_id': 'f_des', 'razon': 'ya pasó'}, actor='beto')
+        assert r['severity_anterior'] == 3.5
+        assert r['severity'] == 1.0
+
+    with session_scope() as s:
+        props = get_object(s, 'f_des').properties
+        assert props['severity'] == 1.0
+        assert props['activo'] is False
+        assert props['desactivado_por'] == 'beto'
+
+
+def test_reactivar_a_otro_nivel_conserva_la_latente_original(db):
+    """Regresión: la 2ª activación NO debe grabar la severidad de crisis como
+    'latente' — se perdería el punto de retorno."""
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.service import get_object
+
+    _crear_factor_latente('f_re', severity=1.0, severity_crisis=4.0)
+    with session_scope() as s:
+        execute_action(s, 'ActivarFactor', {'factor_id': 'f_re', 'razon': 'crisis'}, actor='ana')
+    with session_scope() as s:
+        execute_action(s, 'ActivarFactor', {'factor_id': 'f_re', 'severity': 5.0, 'razon': 'peor'}, actor='ana')
+
+    with session_scope() as s:
+        props = get_object(s, 'f_re').properties
+        assert props['severity'] == 5.0
+        assert props['severity_latente'] == 1.0   # sigue siendo la original, no 4.0
+
+    with session_scope() as s:
+        r = execute_action(s, 'DesactivarFactor', {'factor_id': 'f_re', 'razon': 'fin'}, actor='ana')
+        assert r['severity'] == 1.0
+
+
+def test_activar_sin_severity_crisis_exige_severity_explicita(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action, ActionError
+
+    _crear_factor_latente('f_nocrisis', severity=1.0, severity_crisis=None)
+    with session_scope() as s:
+        with pytest.raises(ActionError, match='severity_crisis'):
+            execute_action(s, 'ActivarFactor', {'factor_id': 'f_nocrisis', 'razon': 'x'}, actor='ana')
+    with session_scope() as s:
+        r = execute_action(s, 'ActivarFactor',
+                           {'factor_id': 'f_nocrisis', 'severity': 2.5, 'razon': 'x'}, actor='ana')
+        assert r['severity'] == 2.5
+
+
+def test_desactivar_factor_inactivo_falla(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action, ActionError
+
+    _crear_factor_latente('f_inactivo')
+    with session_scope() as s:
+        with pytest.raises(ActionError, match='no está activo'):
+            execute_action(s, 'DesactivarFactor', {'factor_id': 'f_inactivo', 'razon': 'x'}, actor='ana')
+
+
+def test_activar_factor_inexistente_o_retirado_falla(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action, ActionError
+
+    with session_scope() as s:
+        with pytest.raises(ActionError, match='factor no encontrado'):
+            execute_action(s, 'ActivarFactor', {'factor_id': 'no_existe', 'razon': 'x'}, actor='ana')
+        # una empresa NO es un Factor
+        with pytest.raises(ActionError, match='factor no encontrado'):
+            execute_action(s, 'ActivarFactor', {'factor_id': 'ACME', 'razon': 'x'}, actor='ana')
+
+    _crear_factor_latente('f_retirado')
+    with session_scope() as s:
+        execute_action(s, 'RetirarFactor', {'factor_id': 'f_retirado', 'razon': 'ya no aplica'}, actor='ana')
+    with session_scope() as s:
+        with pytest.raises(ActionError, match='retirado'):
+            execute_action(s, 'ActivarFactor', {'factor_id': 'f_retirado', 'razon': 'x'}, actor='ana')
+
+
+def test_activar_factor_mueve_la_linea_base_del_motor(db):
+    """El motor de matrices lee `severity` de las props: activar debe cambiar lo
+    que ve active_factors(), no solo la auditoría."""
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from matrix.engine import active_factors
+
+    _crear_factor_latente('f_motor', severity=1.0, severity_crisis=4.0)
+    with session_scope() as s:
+        antes = {f['id']: f for f in active_factors(s)}['f_motor']
+        assert antes['severity'] == 1.0
+        assert antes['severity_crisis'] == 4.0
+
+    with session_scope() as s:
+        execute_action(s, 'ActivarFactor', {'factor_id': 'f_motor', 'razon': 'crisis real'}, actor='ana')
+
+    with session_scope() as s:
+        despues = {f['id']: f for f in active_factors(s)}['f_motor']
+        assert despues['severity'] == 4.0
