@@ -2183,10 +2183,11 @@ function sectorLabelFor(cat){
   var s = window.SECTORS9[(window.CAT_TO_SECTOR[cat]) || 'cloud_ia'];
   return s ? (LANG==='en' ? s.en : s.label) : 'Cloud & IA';
 }
-/* Track A Fase 0 — reubicadas desde engine/graph3d.js (únicas definiciones del
-   repo; el Grafo Temporal las usa). Sin esto, borrar graph3d.js dejaría ◈ en
-   un solo color violeta EN SILENCIO (CLAUDE.md ya lo advertía). La copia de
-   graph3d.js queda hasta la Fase 2; esta definición carga siempre. */
+/* Track A Fase 0 — reubicadas desde engine/graph3d.js. Desde la Fase 2 estas
+   son las ÚNICAS definiciones del repo: la copia duplicada de graph3d.js se
+   borró (pisaba esta en silencio al cargar). Las usan el Grafo Temporal,
+   universe2d, secondbrain e hypergraph, y cargan siempre — también cuando
+   graph3d.js no se carga (camino sin WebGL). */
 function getCatColorHex(cat) {
   if (typeof catColor === 'function') {
     try { const v = catColor(cat); if (v) return v; } catch (e) {}

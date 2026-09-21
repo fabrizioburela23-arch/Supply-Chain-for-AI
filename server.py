@@ -284,7 +284,7 @@ if os.getenv('REMIGRATE_ON_BOOT', '').strip() in ('1', 'true', 'yes'):
 # Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
 from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,
                          GEMINI_MODEL, HTTP_TIMEOUT, NVIDIA_KEY, NVIDIA_MODEL)
-from core.http import _safe_get, _safe_ticker
+from core.http import _rate_buckets, _rate_limit, _safe_get, _safe_ticker, rate_limit
 from core.ai import (_ai_complete, _ai_configured, _claude_complete,
                      _complete_gemini, _complete_nvidia, _extract_json)
 from core.quotes import _fetch_quote_raw
@@ -384,32 +384,10 @@ CONTENT_SECURITY_POLICY = (
     "object-src 'none'"
 )
 
-# ── Simple in-process rate limiter ──────────────────────────────────────────
-_rate_buckets: dict = defaultdict(list)
-
-def _rate_limit(key: str, limit: int, window: int) -> bool:
-    """Returns True if request is allowed. key=ip+endpoint, limit=max calls, window=seconds."""
-    now = time.time()
-    bucket = _rate_buckets[key]
-    _rate_buckets[key] = [t for t in bucket if now - t < window]
-    if len(_rate_buckets[key]) >= limit:
-        return False
-    _rate_buckets[key].append(now)
-    return True
-
-def rate_limit(limit: int, window: int = 3600):
-    """Decorator: limit calls per IP. limit=max, window=seconds (default 1 hour)."""
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            ip = request.headers.get('X-Forwarded-For', request.remote_addr or 'unknown').split(',')[0].strip()
-            key = f'{ip}:{f.__name__}'
-            if not _rate_limit(key, limit, window):
-                log.warning('Rate limit hit: %s %s', ip, f.__name__)
-                return jsonify({'error': 'Rate limit exceeded. Try again later.'}), 429
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
+# ── Límite de tasa: la implementación vive en core/http.py (importada arriba)
+# para que matrix/ y ontology/ puedan usarla sin importar el server — que es
+# justo la circularidad que core/ existe para romper. Las 46 rutas de este
+# archivo siguen usando @rate_limit igual que antes. ───────────────────────
 
 
 @app.after_request

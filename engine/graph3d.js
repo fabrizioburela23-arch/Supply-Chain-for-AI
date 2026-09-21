@@ -1196,26 +1196,11 @@ class KhipuGraph3D {
   }
 }
 
-// ── Helpers de color ─────────────────────────────────────────────────────────
-// getCatColorHex: devuelve el color CSS de la categoría (reutiliza catColor de app.html)
-function getCatColorHex(cat) {
-  if (typeof catColor === 'function') {
-    try { const v = catColor(cat); if (v) return v; } catch {}
-  }
-  const meta = (typeof CATS !== 'undefined' && CATS[cat]) || (typeof CATS_NEW !== 'undefined' && CATS_NEW[cat]) || {};
-  const val = getComputedStyle(document.documentElement)
-    .getPropertyValue(meta.cssVar || '--c-fabless').trim();
-  return val || '#52B1FF';
-}
-
-function getLinkColorHex(type) {
-  const LINK_HEX = {
-    supply:   '#4E8B1E', fab:      '#0F8C5F', license:  '#6B5DD3',
-    cloud:    '#0A6CA8', invest:   '#B8880D', deploy:   '#0E7A6E',
-    partner:  '#8A857A', customer: '#C25E12', owns:     '#7C3AED',
-  };
-  return LINK_HEX[type] || '#4E8B1E';
-}
+// ── Helpers de color: YA NO viven aquí ──────────────────────────────────────
+// getCatColorHex/getLinkColorHex se reubicaron a app.html (Track A Fase 0) y
+// las copias de este archivo se borraron en la Fase 2. Eran idénticas, pero
+// como ambas eran `function` de nivel superior, ESTA pisaba silenciosamente a
+// la de app.html al cargar — editar la de app.html no habría tenido efecto.
 
 window.KhipuGraph3D = KhipuGraph3D;
 

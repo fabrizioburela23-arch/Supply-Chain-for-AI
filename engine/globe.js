@@ -5,8 +5,8 @@
 // Ahora se escribe UNA vez; las diferencias son CAPAS: 'companies' (empresas
 // por NRS + arcos + chokepoints + etiquetas) y 'satellites' (constelaciones
 // SGP4 en vivo). Compatibilidad: window.KhipuGeoGlobe y window.Planetarium
-// quedan como alias finos — los llamadores de app.html no cambian (burn-in;
-// geoglobe.js/planetarium.js quedan en el repo sin cargarse hasta la limpieza).
+// quedan como alias finos — los llamadores de app.html no cambian. Los dos
+// archivos originales se borraron en Track A Fase 2: este es el único motor.
 (function () {
   'use strict';
   const THREE = window.THREE;

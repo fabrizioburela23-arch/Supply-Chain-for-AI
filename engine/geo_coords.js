@@ -4,7 +4,7 @@
 //   1) HQ real para las empresas clave (demo precisa),
 //   2) hubs regionales reales dentro de países grandes (EE.UU. no se vuelve un borrón),
 //   3) centroide de país + jitter determinista para el resto.
-// Lo usan engine/space3d.js y engine/geoglobe.js.
+// Lo usa engine/globe.js (el motor unificado de globo).
 
 (function () {
   'use strict';
