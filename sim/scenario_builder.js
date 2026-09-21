@@ -1,5 +1,5 @@
-// sim/scenario_builder.js — Constructor de seeds para simulaciones MiroFish (Khipu Finance)
-// Genera el "seed" textual que alimenta a MiroFish con contexto realista:
+// sim/scenario_builder.js — Constructor de seeds para las simulaciones (Khipu Finance)
+// Genera el "seed" textual que alimenta a los motores de simulación con contexto realista:
 //   geopolítica + sentimiento social + precedentes históricos + perfiles de agentes.
 // Incluye 5 escenarios predefinidos listos para el demo.
 //
@@ -75,7 +75,7 @@ const HISTORICAL_PRECEDENTS = `
 `;
 
 // ── D) Construcción del seed completo ────────────────────────────────────────
-async function buildMiroFishSeed(scenarioConfig) {
+async function buildScenarioSeed(scenarioConfig) {
   const {
     title, description, nodes, question,
     includeGeopolitics = true, includeSocial = true, includeHistory = true,
@@ -126,7 +126,7 @@ ${question}
 const ScenarioBuilder = {
   async buildFromNodes(nodeIds, question, includeRecentNews = true) {
     const nodes = (nodeIds || []).map(id => NODE_BY_ID[id]).filter(Boolean);
-    return buildMiroFishSeed({
+    return buildScenarioSeed({
       title: `Supply Chain Analysis: ${nodes.map(n => n.label).slice(0, 3).join(', ')}`,
       description: 'Analysis of supply chain dynamics and investment implications for the selected companies.',
       nodes,
@@ -138,7 +138,7 @@ const ScenarioBuilder = {
     const p = this.PRESETS[presetId];
     if (!p) throw new Error('Unknown preset: ' + presetId);
     const nodes = p.nodeIds.map(id => NODE_BY_ID[id]).filter(Boolean);
-    return buildMiroFishSeed({ title: p.title, description: p.description, nodes, question: p.question });
+    return buildScenarioSeed({ title: p.title, description: p.description, nodes, question: p.question });
   },
 
   // factorId: ancla el preset a un Factor REAL de la ontología (se dispara
@@ -183,4 +183,4 @@ const ScenarioBuilder = {
 };
 
 window.ScenarioBuilder = ScenarioBuilder;
-window.buildMiroFishSeed = buildMiroFishSeed;
+window.buildScenarioSeed = buildScenarioSeed;

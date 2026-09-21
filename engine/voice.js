@@ -1016,7 +1016,7 @@ const BixbyVoice = {
         this._defer(() => this._show('deep', q));
         break;
       }
-      // ── Simulación POR AGENTES (MiroFish desde la terminal de Khipu) ──
+      // ── Simulación POR AGENTES (motor interno, desde la terminal de Khipu) ──
       // Corre en el servidor (varios agentes debaten) y se MUESTRA en la Cabina.
       // Khipu narra el consenso y los mayores impactos.
       case 'run_agent_simulation': {

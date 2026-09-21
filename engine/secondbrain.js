@@ -1,7 +1,7 @@
 // engine/secondbrain.js — Second Brain de 5 capas para Khipu Finance
 // Al seleccionar una empresa, abre un panel con 5 capas de conocimiento:
 //   1. Mercado (precio + sparkline + NRS)   2. Noticias
-//   3. Tesis (catalizadores + riesgos + IA)  4. Simulación (presets MiroFish)
+//   3. Tesis (catalizadores + riesgos + IA)  4. Simulación (presets de escenario)
 //   5. Red (betweenness + cascada + desglose NRS)
 //
 // Depende de app.html: NODE_BY_ID, NODE_META, MKT, Keys, DataLayer, computeNRS,

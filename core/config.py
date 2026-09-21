@@ -49,8 +49,8 @@ TAVILY_KEY = os.getenv('TAVILY_KEY', '')
 # arranca en 'off' (el agente SOLO investiga cuando se lo piden por el endpoint
 # manual). El gancho reactivo (observe()) queda construido pero apagado —
 # prenderlo más adelante es cambiar esta env var a 'on' en Railway y
-# redeployar, no requiere código nuevo. Mismo espíritu que MIROFISH_URL/
-# TAVILY_KEY: la capacidad existe, el gasto de IA no ocurre salvo que esté
-# explícitamente prendida.
+# redeployar, no requiere código nuevo. Mismo espíritu que TAVILY_KEY: la
+# capacidad existe, el gasto de IA no ocurre salvo que esté explícitamente
+# prendida.
 INVESTIGADOR_AUTO = os.getenv('INVESTIGADOR_AUTO', 'off')            # 'off' | 'on'
 INVESTIGADOR_AUTO_CUTOFF_HORAS = int(os.getenv('INVESTIGADOR_AUTO_CUTOFF_HORAS', '6'))

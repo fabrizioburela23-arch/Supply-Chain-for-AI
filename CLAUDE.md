@@ -24,22 +24,27 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   (NO subir workers: el estado en memoria — caché, rate limits, agente de
   trading — divergiría entre workers). Proxy de todas las APIs externas.
 - `core/` (paquete Python): helpers compartidos server/ontology/matrix —
-  `config.py` (keys IA/Finnhub/timeout), `http.py` (_safe_get/_safe_ticker),
+  `config.py` (keys IA/Finnhub/timeout), `http.py` (_safe_get/_safe_ticker +
+  `rate_limit`, el decorador que usan server/matrix/ontology),
   `ai.py` (cascada Claude→Gemini→NVIDIA + _extract_json), `quotes.py`
   (_fetch_quote_raw). Rompe la dependencia circular ontology→server.
 - `matrix/` (paquete Python, opcional): motor de matrices — `engine.py`
   (build_matrices por rel_type + as_of, active_factors=hiperaristas,
   fragility, propagate=EL kernel de shocks, compute_metrics/chokepoints),
   `api.py` (blueprint /api/matrix/*: status, /<rel_type>, POST /impact,
-  /metrics). Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503.
+  /metrics, POST /insights, GET /insights/history, POST /factor/fire).
+  Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503.
 - `ontology/` (paquete Python): ontología Palantir-style —
   `models.py` (events bitemporal + objects/links materializados +
   ProposedAction + Alert), `service.py` (apply_event, as_of_graph, diff_graph),
-  `actions.py` (catálogo de 9 Acciones auditadas, Pydantic), `agents.py`
+  `actions.py` (catálogo de 13 Acciones auditadas, Pydantic — incluye
+  Activar/DesactivarFactor), `agents.py`
   (4 agentes + brief matinal + evaluador de alertas), `api.py` (blueprint).
 - `engine/`: temporal-graph.js (~1,050 líneas, Grafo Temporal), khipu_lang.js
   (parser de comandos), guide.js (Guía), voice.js (Khipu voz/ElevenLabs),
-  command_center.js (Khipu texto), graph3d.js, geoglobe.js, planetarium.js,
+  command_center.js (Khipu texto), graph3d.js (WebGL, ?webgl3d=1), globe.js
+  (motor de globo unificado; reemplazó a geoglobe.js+planetarium.js, borrados
+  en Track A Fase 2), universe2d.js (camino sin WebGL, el default),
   secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js.
   REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
   (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
@@ -53,10 +58,13 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 - `data/grafo_v0.json`: snapshot canónico (407 nodos / 1,028 links) — se
   regenera con `node scripts/export_graph_v0.js` (usa nodes/merge_graph.js,
   la MISMA implementación de merge que el navegador; nunca duplicar).
-- `sim/`: mirofish_client.js, scenario_builder.js.
-- ELIMINADOS en la limpieza 2026-07 (no recrear): `rag/` (nunca desplegado),
-  `litellm/`, `nodes/nodes_core.js` (duplicado), el modo standalone completo
-  y el stack de keys en el navegador.
+- `sim/`: scenario_builder.js (seeds de escenario; `buildScenarioSeed`).
+- ELIMINADOS (no recrear): `rag/` (nunca desplegado), `litellm/`,
+  `nodes/nodes_core.js` (duplicado), el modo standalone y el stack de keys en
+  el navegador (2026-07); `engine/geoglobe.js`, `engine/planetarium.js` y
+  `sim/mirofish_client.js` + todo el proxy/diagnóstico de MiroFish (2026-09:
+  era un microservicio EXTERNO; lo reemplazan los motores internos
+  core/sim_agents.py y matrix/engine.py).
 
 ## Dos bases de datos — roles distintos, NO fusionar
 
@@ -169,7 +177,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (56 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (118 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -184,7 +192,6 @@ ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_ALLOW_OVERRIDE,
 AV_KEY, FMP_KEY, MARKETSTACK_KEY, ALPACA_KEY/SECRET/BASE,
 TRADE_PIN            ← SIN esto el trading queda deshabilitado (X-Trade-Pin)
 KHIPU_ADMIN_SECRET   ← emite claves /v1 de tiers de pago (X-Admin-Secret)
-MIROFISH_URL, MIROFISH_TOKEN,
 NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,   ← Grafo Temporal persistente
 DATABASE_URL                              ← Ontología (Postgres en Railway)
 ```
@@ -209,7 +216,9 @@ server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 - Olvidar el bump de sw.js → los usuarios ven código viejo.
 - Panel de pestaña fuera de `.app` → pantalla negra.
 - Usar `/v1/*` para features internas → colisiona con la API monetizada.
-- `getCatColorHex()` vive en engine/graph3d.js — no existe antes de cargar.
+- `getCatColorHex()`/`getLinkColorHex()` viven en app.html (~:2191) y son las
+  ÚNICAS definiciones: la copia de graph3d.js se borró en Track A Fase 2
+  porque pisaba a la de app.html en silencio. No reintroducirla.
 - Atributos SVG no resuelven `var(--css)` — usar hex directo.
 - rAF se congela en pestañas ocultas — voice.js usa `_defer()` con fallback a
   setTimeout cuando `document.hidden` (no revertir).

@@ -1713,7 +1713,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <section id="simulation-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
   <div style="max-width:1100px;margin:0 auto;padding:28px 24px 40px">
     <h2 style="font-family:'Fraunces',serif;font-size:26px;font-weight:700;margin:0 0 4px">🧬 Simulación de Escenarios</h2>
-    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px">Motor MiroFish · IA multi-agente · Escenarios geopolíticos y de mercado sobre la cadena de valor global <span id="mf-status-badge" style="font-size:11px;margin-left:8px;opacity:.8">⏳ Verificando MiroFish...</span></p>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:24px" data-i18n="sim_sub">Motores internos · agentes con IA + matrices deterministas · Escenarios geopolíticos y de mercado sobre la cadena de valor global</p>
     <div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">
       <!-- Scenario presets -->
       <div>
@@ -1749,13 +1749,13 @@ body:not(.dark) .toolbar{animation-delay:.06s}
               <span style="font-size:11px;color:var(--ink-3)">Contexto adicional (noticias, informes, datos)</span>
               <button onclick="_injectGraphContext()" style="font-size:10px;padding:2px 8px;border:1px solid var(--line);border-radius:4px;background:none;color:var(--violet);cursor:pointer">📊 Cargar grafo</button>
             </div>
-            <textarea id="sim-context-text" placeholder="Pega aquí noticias, reportes o datos financieros. MiroFish los incluirá como contexto para la simulación." style="width:100%;height:56px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:11px;resize:vertical;font-family:inherit;color:var(--ink-2)"></textarea>
+            <textarea id="sim-context-text" placeholder="Pega aquí noticias, reportes o datos financieros: se incluyen como contexto de la simulación." style="width:100%;height:56px;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);font-size:11px;resize:vertical;font-family:inherit;color:var(--ink-2)"></textarea>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap">
             <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Motor de simulación</span>
             <div id="sim-engine-seg" class="seg">
               <button data-engine="simple" class="active" title="Sistema de agentes con IA (Claude/Gemini/NVIDIA) — funciona con cualquier proveedor">🤖 IA Simple</button>
-              <button data-engine="mirofish" title="Motor multi-agente real MiroFish">🧬 MiroFish</button>
+              <button data-engine="agentes" title="Motor multi-agente interno: cada empresa es un agente y debaten el escenario (POST /api/sim/agents)">🧬 Agentes</button>
             </div>
             <span id="sim-engine-hint" style="font-size:10px;color:var(--ink-3)"></span>
           </div>
@@ -3372,7 +3372,7 @@ function drawStockChart(nodeId, data, mode) {
 
 /* openTradeModal is defined at bottom of file in the Trade Panel block */
 
-/* ===================== MiroFish — contexto del grafo ===================== */
+/* ================== Simulación — contexto del grafo ================== */
 function _injectGraphContext() {
   const cl = (cat) => typeof catLabel === 'function' ? catLabel(cat) : cat;
 
@@ -4906,7 +4906,6 @@ const DIAG_META = {
   gemini:     { icon:'◆',  name:'Google Gemini',        why:'Canal de respaldo de IA (alterna si Claude falla)' },
   nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)' },
   elevenlabs: { icon:'🎙', name:'Khipu / ElevenLabs',  why:'Voz conversacional — preguntar por voz' },
-  mirofish:   { icon:'🧬', name:'MiroFish',            why:'Motor multi-agente real del War-Room' },
   finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo del terminal' },
   grafo:      { icon:'◈',  name:'Grafo Temporal',       why:'Memoria temporal (nativa · Neo4j opcional)' },
   ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', why:'Fuente única de verdad · eventos bitemporales' },
@@ -4943,7 +4942,7 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','gemini','nvidia','elevenlabs','mirofish','finnhub','grafo','ontologia','market_extra'];
+    const order = ['claude','gemini','nvidia','elevenlabs','finnhub','grafo','ontologia','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
@@ -6239,7 +6238,6 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
 <script src="engine/command_center.js"></script>
-<script src="sim/mirofish_client.js"></script>
 <script src="sim/scenario_builder.js"></script>
 
 <script>
@@ -6593,7 +6591,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
     if (window._secondBrain) window._secondBrain.showNodeLayers(nodeId);
   };
 
-  // Expose NRS globally for Khipu/MiroFish
+  // Expose NRS globally for Khipu y los motores de simulación
   window.computeNRS = computeNRS;
   // Expose quote loader so the Grafo Temporal / ontología puede precargar precios en vivo
   if (typeof fetchQuotes === 'function') window.fetchQuotes = fetchQuotes;
@@ -6689,15 +6687,6 @@ window.renderNrsTop10 = renderNrsTop10;
 
 // ── Simulation Tab ───────────────────────────────────────────────────────────
 let _simInited = false;
-let _mfAvailable = null; // cached: null=unknown, true/false
-
-async function _checkMiroFish() {
-  if (_mfAvailable !== null) return _mfAvailable;
-  try {
-    _mfAvailable = window.MiroFishClient ? await window.MiroFishClient.checkHealth() : false;
-  } catch { _mfAvailable = false; }
-  return _mfAvailable;
-}
 
 function _simSetStatus(status, text, color) {
   status.textContent = text;
@@ -6740,108 +6729,60 @@ window._simGroundFactor = async function (presetId) {
   } catch (e) { box.innerHTML = ''; }
 };
 
-async function _runMiroFishPipeline(text, presetId, output, status) {
-  const setOut = html => { output.innerHTML = html; };
-  const log = msg => {
-    output.querySelector('#mf-log') && (output.querySelector('#mf-log').innerHTML += `<div>${msg}</div>`);
-  };
-
-  setOut(`<div style="padding:20px">
-    <div style="font-weight:700;margin-bottom:10px;color:var(--violet)">🤖 MiroFish Multi-Agente</div>
-    <div id="mf-log" style="font-size:12px;color:var(--ink-3);line-height:2;font-family:monospace"></div>
-    <div id="mf-progress" style="margin-top:12px;height:4px;background:var(--line);border-radius:2px;overflow:hidden">
-      <div id="mf-bar" style="width:0%;height:100%;background:var(--violet);transition:width .4s;border-radius:2px"></div>
-    </div>
-  </div>`);
-  const bar = pct => { const el=output.querySelector('#mf-bar'); if(el) el.style.width=pct+'%'; };
-
+// Motor multi-agente INTERNO (core/sim_agents.py vía POST /api/sim/agents):
+// cada empresa relevante es un agente, más agentes externos (gobiernos,
+// reguladores), y debaten el escenario. Sustituye al pipeline de MiroFish —
+// mismo rol, sin microservicio externo. Devuelve true si logró pintar el
+// War-Room; false para que el llamador caiga al motor narrativo.
+async function _runAgentSim(text, presetId, output, status) {
+  const en = (window.LANG === 'en');
+  _simSetStatus(status, en ? '🧬 Convening agents…' : '🧬 Convocando agentes…', 'violet');
+  _renderWarRoom({
+    scenarioTitle: text.slice(0, 70),
+    nodeImpacts: {}, priceTrajs: {}, cascadeNodes: [],
+    reportText: en ? 'Agents are debating the scenario…' : 'Los agentes están debatiendo el escenario…',
+    reportId: null, simId: null, presetId,
+  });
   try {
-    // 1. Construir seed con ScenarioBuilder si hay preset
-    let seed = text;
-    let question = '¿Cuáles son las implicaciones de inversión y trayectorias de precio?';
-    if (presetId && window.ScenarioBuilder?.PRESETS?.[presetId]) {
-      _simSetStatus(status, '🔄 Construyendo seed...', 'violet');
-      log('📋 Construyendo seed geopolítico...');
-      seed = await window.ScenarioBuilder.buildFromPreset(presetId);
-      question = window.ScenarioBuilder.PRESETS[presetId].question;
-      bar(15);
-    }
+    // Semillas: los nodos que el escenario menciona (las resuelve el server si
+    // van vacías). Reusamos el mismo resolutor que todo lo demás.
+    let seeds = [];
+    try {
+      if (window.KhipuResolve && window.NODES) {
+        seeds = text.split(/[\s,.;:()]+/).map(w => w.trim()).filter(w => w.length > 2)
+          .map(w => { const r = window.KhipuResolve.find(w); return (r && r.node && r.score >= 70) ? r.node.id : null; })
+          .filter(Boolean);
+        seeds = [...new Set(seeds)].slice(0, 12);
+      }
+    } catch (e) { seeds = []; }
 
-    // 1b. Append custom context from the textarea (news, reports, data)
-    const extraCtx = document.getElementById('sim-context-text')?.value?.trim() || '';
-    if (extraCtx) seed = extraCtx + '\n\n' + seed;
-
-    // 2. Build graph
-    _simSetStatus(status, '🔄 Construyendo grafo...', 'violet');
-    log('🕸 Construyendo grafo de agentes...');
-    const graphData = await window.MiroFishClient.buildGraph(seed, text.slice(0,200));
-    const graphId = graphData?.data?.graph_id || graphData?.graph_id;
-    if (!graphId) throw new Error('MiroFish no devolvió graph_id: ' + JSON.stringify(graphData).slice(0,200));
-    log(`✓ Grafo construido (id: ${graphId.slice(0,8)}...)`);
-    bar(30);
-
-    // 3. Crear simulación
-    _simSetStatus(status, '🔄 Creando simulación...', 'violet');
-    log('⚙️ Inicializando simulación multi-agente...');
-    const simData = await window.MiroFishClient.createSimulation({
-      graph_id: graphId, rounds: 20,
-      goal: question,
-      lang: typeof LANG !== 'undefined' ? LANG : 'es',
+    const r = await fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/sim/agents', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenario: text, seeds, lang: en ? 'en' : 'es' }),
     });
-    const simId = simData?.data?.simulation_id || simData?.simulation_id;
-    if (!simId) throw new Error('No se obtuvo simulation_id');
-    log(`✓ Simulación creada (id: ${simId.slice(0,8)}...)`);
-    bar(45);
+    const d = await r.json().catch(() => null);
+    if (!r.ok || !d || d.ok === false || !Array.isArray(d.impacts) || !d.impacts.length) return false;
 
-    // 4. Preparar + iniciar
-    _simSetStatus(status, '🔄 Preparando agentes...', 'violet');
-    log('👥 Generando perfiles de agentes...');
-    await window.MiroFishClient.prepareSimulation(simId);
-    bar(55);
-    _simSetStatus(status, '▶️ Simulando...', 'violet');
-    log('🚀 Ejecutando 20 rondas de simulación...');
-    await window.MiroFishClient.startSimulation(simId, 20);
-    bar(60);
+    const nodeImpacts = {};
+    d.impacts.forEach(i => { if (i && i.id != null) nodeImpacts[i.id] = i.pct; });
+    // cascadeNodes espera ids ordenados por magnitud (ya vienen así del server)
+    const cascadeNodes = d.impacts.map(i => i.id).filter(Boolean).slice(0, 40);
 
-    // 5. Poll progreso — capture final simulation data
-    const simFinal = await window.MiroFishClient.pollSimulation(simId, (d) => {
-      const pct = d?.data?.progress_pct || d?.progress_pct;
-      if (pct) { bar(60 + pct * 0.2); log(`⏳ Progreso: ${Math.round(pct)}%`); }
-    }, 300000);
-    const nodeImpacts = simFinal?.data?.node_impacts || simFinal?.node_impacts || {};
-    const priceTrajs  = simFinal?.data?.price_trajectories || simFinal?.price_trajectories || {};
-    const cascadeNodes = simFinal?.data?.cascade_nodes || simFinal?.cascade_nodes || [];
-    log('✅ Simulación completada');
-    bar(80);
-
-    // 6. Generar reporte
-    _simSetStatus(status, '📝 Generando reporte...', 'violet');
-    log('📊 Generando reporte de análisis...');
-    const reportData = await window.MiroFishClient.generateReport(simId, question);
-    const reportId = reportData?.data?.report_id || reportData?.report_id;
-    if (!reportId) throw new Error('No se obtuvo report_id');
-    bar(85);
-
-    const report = await window.MiroFishClient.pollReport(reportId, (d) => {
-      const pct = d?.data?.progress_pct || d?.progress_pct;
-      if (pct) bar(85 + pct * 0.15);
-    }, 180000);
-    bar(100);
-
-    // 7. Render War-Room
-    const reportText = report?.data?.content || report?.content || report?.report || JSON.stringify(report, null, 2);
-    const scenarioTitle = presetId && window.ScenarioBuilder?.PRESETS?.[presetId]?.title
-      ? window.ScenarioBuilder.PRESETS[presetId].title
-      : text.slice(0, 70);
-    _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, reportText, reportId, simId, presetId });
-
-  } catch(e) {
-    _mfAvailable = false; // marcar como no disponible para próxima vez
-    log(`❌ MiroFish error: ${e.message} — usando Claude como fallback...`);
-    bar(100);
-    return false; // señal de fallback
+    const roster = Array.isArray(d.agents) && d.agents.length
+      ? (en ? `\n\nAGENTS (${d.agents.length}): ` : `\n\nAGENTES (${d.agents.length}): `) +
+        d.agents.slice(0, 12).map(a => a.label || a.id).join(', ')
+      : '';
+    _renderWarRoom({
+      scenarioTitle: text.slice(0, 70),
+      nodeImpacts, priceTrajs: {}, cascadeNodes,
+      reportText: (d.narrative || '') + roster,
+      reportId: null, simId: null, presetId,
+    });
+    _simSetStatus(status, en ? '✅ Agent simulation ready' : '✅ Simulación por agentes lista', 'green');
+    return true;
+  } catch (e) {
+    return false;
   }
-  return true;
 }
 
 async function _runClaudeSim(text, nodeStr, output, status) {
@@ -6886,10 +6827,12 @@ async function _runClaudeSim(text, nodeStr, output, status) {
 // WAR-ROOM DE SIMULACIÓN — 2D animated cascade visualization
 // ════════════════════════════════════════════════════════════════════════════
 let _wrAnimId = null;
-let _wrReportId = null;
+// El chat del War-Room trabaja sobre el TEXTO del informe que está en pantalla.
+// (Antes dependía de un reportId de MiroFish; al retirarse ese servicio el
+// chat quedaba muerto, porque el motor interno nunca produce ese id.)
+let _wrReportText = '';
 
 async function _wrChatSend() {
-  if (!_wrReportId) return;
   const input = document.getElementById('wr-chat-input');
   const log = document.getElementById('wr-chat-log');
   const msg = (input?.value || '').trim(); if (!msg) return;
@@ -6897,8 +6840,19 @@ async function _wrChatSend() {
   log.insertAdjacentHTML('beforeend',
     `<div style="font-size:12px;color:var(--ink-2);padding:5px 10px;background:rgba(96,165,250,.08);border-radius:6px;align-self:flex-end">${msg.replace(/</g,'&lt;')}</div>`);
   try {
-    const d = await window.MiroFishClient.chatWithReport(_wrReportId, msg);
-    const reply = d?.data?.response || d?.response || JSON.stringify(d);
+    const en = (window.LANG === 'en');
+    const r = await fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/ai/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system: en
+          ? 'You are an analyst discussing a supply-chain scenario report. Answer ONLY from the report below; if it does not cover the question, say so plainly instead of inventing. Be brief and concrete.'
+          : 'Eres un analista comentando el informe de un escenario de cadena de suministro. Responde SOLO con lo que dice el informe de abajo; si no lo cubre, dilo claramente en vez de inventar. Sé breve y concreto.',
+        prompt: `INFORME:\n${(_wrReportText || '').slice(0, 6000)}\n\nPREGUNTA: ${msg}`,
+        max_tokens: 700, tier: 'fast',
+      }),
+    });
+    const d = await r.json();
+    const reply = d.result || d.error || (en ? 'No answer.' : 'Sin respuesta.');
     log.insertAdjacentHTML('beforeend',
       `<div style="font-size:12px;color:var(--ink-1);padding:5px 10px;background:var(--surface-2);border-radius:6px">${String(reply).replace(/</g,'&lt;')}</div>`);
   } catch(e) {
@@ -6912,7 +6866,7 @@ window._wrChatSend = _wrChatSend;
 // Main entry — builds War-Room UI and starts animation
 function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, reportText, reportId, simId, presetId }) {
   if (_wrAnimId) { cancelAnimationFrame(_wrAnimId); _wrAnimId = null; }
-  _wrReportId = reportId || simId || null;
+  _wrReportText = reportText || '';
 
   const simStatus = document.getElementById('sim-status');
   if (simStatus) _simSetStatus(simStatus, '✅ War-Room activo', 'green');
@@ -6952,7 +6906,7 @@ function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, 
       <div id="wr-agents" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
     </div>
     <details style="margin-bottom:10px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--ink-3);padding:6px 0;list-style:none;user-select:none">📄 Ver informe completo de MiroFish ▾</summary>
+      <summary style="cursor:pointer;font-size:12px;color:var(--ink-3);padding:6px 0;list-style:none;user-select:none">📄 Ver informe completo ▾</summary>
       <div id="wr-report" style="font-size:12px;line-height:1.75;color:var(--ink-2);padding:12px 0;white-space:pre-wrap;border-top:1px solid var(--line);margin-top:6px"></div>
     </details>
     <div style="background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px">
@@ -7026,7 +6980,7 @@ function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, 
         id: 'he_wr_' + Date.now(),
         type: 'simulation',
         timestamp: new Date().toISOString(),
-        title: scenarioTitle || 'War-Room MiroFish',
+        title: scenarioTitle || 'War-Room',
         severity: 8,
         nodes_affected: finalCascade.slice(0, 20),
         node_impacts: finalImpacts,
@@ -7069,7 +7023,7 @@ function _wrComputeLayout(W, H, nodes) {
   return nodePos;
 }
 
-// BFS cascade from seed nodes when MiroFish provides no impact data
+// BFS cascade from seed nodes when the engine provides no impact data
 function _wrFallbackCascade(nodes, edges, initialCascade, reportText, presetId) {
   const impacts = {};
   const cascade = [];
@@ -7842,14 +7796,8 @@ function initSimTab() {
   if (_simInited) return;
   _simInited = true;
 
-  // Check MiroFish availability and show indicator
-  _checkMiroFish().then(ok => {
-    const badge = document.getElementById('mf-status-badge');
-    if (badge) {
-      badge.textContent = ok ? '🟢 MiroFish conectado' : '🔵 Modo Claude';
-      badge.style.color = ok ? '#22c55e' : 'var(--blue)';
-    }
-  });
+  // Ya no hay sonda de disponibilidad: ambos motores son INTERNOS (no
+  // dependen de ningún microservicio externo que pueda estar caído).
 
   document.querySelectorAll('.sim-preset-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -7887,13 +7835,13 @@ function initSimTab() {
     document.getElementById('sim-run-btn').disabled = true;
     const engine = document.querySelector('#sim-engine-seg button.active')?.dataset?.engine || 'simple';
 
-    if (engine === 'mirofish') {
-      const mfOk = await _checkMiroFish();
-      if (mfOk) {
-        const ok = await _runMiroFishPipeline(text, presetId, output, status);
-        if (!ok) { _simSetStatus('run', 'MiroFish falló — usando IA Simple', '#f59e0b'); await _runClaudeSim(text, nodeStr, output, status); }
-      } else {
-        _simSetStatus('run', 'MiroFish no disponible — usando IA Simple', '#f59e0b');
+    if (engine === 'agentes') {
+      // Motor multi-agente INTERNO (core/sim_agents.py). Si falla, cae al
+      // narrativo — igual que antes, pero sin depender de nada externo.
+      const ok = await _runAgentSim(text, presetId, output, status);
+      if (!ok) {
+        _simSetStatus('run', window.LANG === 'en' ? 'Agent engine failed — using AI narrative'
+                                                  : 'El motor de agentes falló — usando IA narrativa', '#f59e0b');
         await _runClaudeSim(text, nodeStr, output, status);
       }
     } else {
@@ -7908,9 +7856,12 @@ function initSimTab() {
       document.querySelectorAll('#sim-engine-seg button').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
       const hint = document.getElementById('sim-engine-hint');
-      if (hint) hint.textContent = b.dataset.engine === 'mirofish'
-        ? 'Motor multi-agente real (cae a IA Simple si no responde)'
-        : 'Agentes con IA · funciona con cualquier proveedor';
+      const en = (window.LANG === 'en');
+      if (hint) hint.textContent = b.dataset.engine === 'agentes'
+        ? (en ? 'Each company debates as an agent · internal engine'
+              : 'Cada empresa debate como agente · motor interno')
+        : (en ? 'AI narrative · works with any provider'
+              : 'Narrativa con IA · funciona con cualquier proveedor');
     });
   });
   document.getElementById('var-calc-btn').addEventListener('click', async () => {
@@ -9423,7 +9374,7 @@ async function _runPreflight(text) {
     { label: 'NRS promedio', value: avgNRS, sub: 'Resiliencia de nodos afectados', color: nrsColor },
     { label: 'Posiciones expuestas', value: portfolioExposed.length, sub: portfolioExposed.length ? portfolioExposed.map(n=>n.label).slice(0,2).join(', ')+'…' : 'Sin posiciones abiertas', color: portfolioExposed.length ? '#f59e0b' : 'var(--ink-3)' },
     { label: 'Tokens estimados', value: totalTokens >= 1000 ? (totalTokens/1000).toFixed(1)+'K' : totalTokens, sub: `~$${costUsd < 0.01 ? costUsd.toFixed(4) : costUsd.toFixed(2)} USD`, color: 'var(--ink-2)' },
-    { label: 'Tiempo estimado', value: affectedNodes.length > 80 ? '2-4 min' : '1-2 min', sub: 'con MiroFish/Claude', color: 'var(--ink-2)' },
+    { label: 'Tiempo estimado', value: affectedNodes.length > 80 ? '2-4 min' : '1-2 min', sub: 'con los motores internos', color: 'var(--ink-2)' },
     { label: 'Categorías', value: topCats.length, sub: topCats.map(([c,n])=>`${c.replace(/_/g,' ')} (${n})`).slice(0,2).join(' · '), color: '#a78bfa' },
   ].map(m => `<div style="padding:10px;background:var(--surface-2);border-radius:8px">
     <div style="font-size:10px;color:var(--ink-3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">${m.label}</div>

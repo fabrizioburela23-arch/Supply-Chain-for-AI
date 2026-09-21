@@ -14,10 +14,13 @@ simulación agéntica y mapas 3D inmersivos.
   embebidos + cargados de `nodes/*.js`.
 - **`server.py`** (Flask): proxy de datos (Finnhub/FMP/Marketstack/Alpaca/SEC), IA
   multi-proveedor, VaR/CVaR, JWT, `/vendor` (proxy de librerías), diagnóstico.
-- **`engine/`**: graph3d.js (grafo 3D), planetarium.js (planeta satelital), geoglobe.js
-  (globo geopolítico), geo_coords.js, voice.js (Khipu voz), command_center.js (Khipu texto),
-  canvas-data.js, secondbrain.js, hypergraph.js.
-- **`sim/`**: mirofish_client.js, scenario_builder.js.
+- **`engine/`**: graph3d.js (grafo 3D WebGL), globe.js (motor de globo unificado:
+  geopolítico + satélites; reemplazó a geoglobe.js y planetarium.js), universe2d.js
+  (universo 2D, camino sin WebGL), geo_coords.js, voice.js (Khipu voz),
+  command_center.js (Khipu texto), khipu_lang.js (comandos), xray.js, statematrix.js,
+  livesim.js, layers.js, insights.js, brief.js, resolve.js, guide.js,
+  canvas-data.js, secondbrain.js, hypergraph.js, cockpit.js, crypto.js.
+- **`sim/`**: scenario_builder.js.
 - **`nodes/`**: nodes_expand*.js, nodes_spacex.js, nodes_nuclear.js, nodes_expand4.js,
   preipo_intel.js, links_*.js.
 - **`rag/`**: microservicio ChromaDB (Second Brain) — se despliega aparte (ver SETUP.md).
@@ -30,7 +33,7 @@ simulación agéntica y mapas 3D inmersivos.
 | Mercado en vivo | tab Mercado | Precios Finnhub (WS + REST fallback), portafolio, P&L. |
 | Análisis / NRS | tab Análisis | Deep-dive por empresa, Dossier 5 años, 📄 SEC 10-K, 🧠 Second Brain. |
 | Geopolítica | tab Geopolítica | Globo 3D con empresas por región + chokepoints + rutas. |
-| Simulación War-Room | tab Simulación | 2 motores: 🤖 IA Simple / 🧬 MiroFish. |
+| Simulación War-Room | tab Simulación | 2 motores INTERNOS: 🤖 IA Simple (narrativa) / 🧬 Agentes (core/sim_agents.py). |
 | Espacio | tab Espacio | Planeta 3D con satélites reales (CelesTrak). |
 | Canvas IA | tab Canvas | Gráficos/tablas generados por IA en lenguaje natural. |
 | Khipu | botón header / ⌘K | Copiloto de voz+texto: ejecuta acciones + genera Canvas inline. |
@@ -46,16 +49,16 @@ pasa al siguiente. Todas las features de IA (Canvas, Khipu, análisis, research 
 ## Variables de entorno (Railway, servicio principal)
 Configuradas: ANTHROPIC_KEY, GEMINI_KEY, ELEVENLABS_KEY, ELEVENLABS_AGENT_ID,
 ELEVENLABS_ALLOW_OVERRIDE, FINNHUB_KEY, FMP_KEY, MARKETSTACK_KEY, AV_KEY, ALPACA_KEY,
-ALPACA_SECRET, ALPACA_BASE, AI_MODEL, MIROFISH_URL.
+ALPACA_SECRET, ALPACA_BASE, AI_MODEL.
 Recomendadas: SECRET_KEY (fuerte), AI_ORDER, RAG_URL (tras desplegar el RAG).
-Opcionales: NVIDIA_KEY, MIROFISH_TOKEN, SEC_USER_AGENT.
+Opcionales: NVIDIA_KEY, SEC_USER_AGENT.
 
 ## Endpoints clave (server.py)
 - `/api/health`, `/api/diagnostics` (🩺 estado en vivo de cada servicio).
 - `/api/quote`, `/api/quotes`, `/api/candles` (precios).
 - `/api/ai/command` (Khipu texto), `/api/canvas/generate` (Canvas IA).
 - `/api/company/research/<ticker>` (síntesis 10-K SEC), `/api/dossier/<ticker>`.
-- `/api/space/tle` (satélites), `/api/mirofish/*`, `/api/rag/*`.
+- `/api/space/tle` (satélites), `/api/sim/agents` (simulación por agentes).
 - `/vendor/<asset>` (proxy de d3/three/chart/satellite + texturas, para redes que bloquean CDNs).
 
 ## "Funciona en cualquier computadora"

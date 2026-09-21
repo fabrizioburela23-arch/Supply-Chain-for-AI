@@ -258,7 +258,7 @@
 .bcp-demodot.on{background:#00E0FF;box-shadow:0 0 7px #00E0FF}
 .bcp-demodot.done{background:rgba(0,224,255,.45)}
 @media(max-width:700px){.bcp-demodots{display:none}.bcp-demotxt{font-size:12.5px}#bcp-demo{padding:0 12px}}
-/* simulación por agentes (MiroFish) — impactos por empresa con motivo */
+/* simulación por agentes (motor interno) — impactos por empresa con motivo */
 .bcp-agrow{border-bottom:1px solid rgba(122,158,255,.08);padding:9px 0;cursor:pointer}
 .bcp-agrow:hover .nm{color:#00E0FF}
 .bcp-agrow-top{display:flex;align-items:center;gap:9px}
@@ -1774,7 +1774,7 @@
     }
   }
 
-  /* ══ SIMULACIÓN POR AGENTES (MiroFish desde la terminal de Khipu) ══
+  /* ══ SIMULACIÓN POR AGENTES (motor interno, desde la terminal de Khipu) ══
      Varios agentes analistas (empresa / gobierno / geopolítica) debaten un
      escenario y proyectan impactos REALISTAS. Server: POST /api/sim/agents
      {scenario, seeds, lang} → {narrative, impacts:[{id,label,pct,rationale}],
@@ -1856,7 +1856,7 @@
     s.innerHTML = backBar(title) +
       '<div class="bcp-inner" style="max-width:1040px">' +
         '<div class="bcp-simhd"><span class="big">🧪 ' + esc(scen || title) + '</span>' +
-          '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">MiroFish</span>' +
+          '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">Agentes</span>' +
           '<span style="color:#7C87A3;font-size:12px">' + (en ? 'analysts debating…' : 'analistas debatiendo…') + '</span></div>' +
         '<div id="bcp-ag-body"></div>' +
       '</div>';
@@ -2073,7 +2073,7 @@
     var cmp = low.match(/compar[ao]?r?\s+(.+?)\s+(?:y|vs|versus|con|contra)\s+(.+)/);
     if (cmp) { stage('compare', { a: cmp[1], b: cmp[2] }); return; }
 
-    // 4.5) SIMULACIÓN POR AGENTES (MiroFish): escenarios abiertos en lenguaje
+    // 4.5) SIMULACIÓN POR AGENTES (motor interno): escenarios abiertos en lenguaje
     //      natural — "simula que China prohíbe HBM", "qué pasaría si cae Taiwán".
     //      El "qué pasa si cae X" simple (present) sigue yendo al sim local rápido.
     var agM = low.match(/^(?:simulate|simula(?:r|me|ci[oó]n)?|run\s+a\s+simulation(?:\s+of)?)\b\s*(?:that|the scenario|un escenario|el escenario|que|del?|:)?\s*(.+)$/)

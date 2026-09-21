@@ -323,8 +323,9 @@ def _temporal_mode():
     return 'neo4j' if (NEO4J_URI and NEO4J_PASSWORD and _neo4j_available()) else 'native'
 
 # Servicios adicionales (Khipu Finance v1)
-MIROFISH_URL        = os.getenv('MIROFISH_URL', 'https://mirofish-fika.up.railway.app')
-MIROFISH_TOKEN      = os.getenv('MIROFISH_TOKEN', '')
+# MiroFish (microservicio externo multi-agente) se retiró: su caso de uso lo
+# cubren los motores INTERNOS — matrix/engine.py (cascada determinista) y
+# core/sim_agents.py (debate de agentes). Ver docs/ESTADO.md.
 ELEVENLABS_KEY      = os.getenv('ELEVENLABS_KEY', '')
 ELEVENLABS_AGENT_ID = os.getenv('ELEVENLABS_AGENT_ID', '')
 AV_KEY              = os.getenv('AV_KEY') or os.getenv('ALPHA_VANTAGE_KEY', '')
@@ -594,7 +595,7 @@ def vendor(name):
 
 
 # ----------------------------------------------------------------------------
-# Health check / data-health (extendido: incluye MiroFish, ElevenLabs)
+# Health check / data-health (keys presentes + estado de subsistemas)
 # ----------------------------------------------------------------------------
 @app.route('/api/vocabulary')
 def api_vocabulary():
@@ -632,11 +633,8 @@ def api_vocabulary_unknown():
 
 @app.route('/api/health')
 def health():
-    mf_ok = False
-    try:
-        mf_ok = requests.get(f'{MIROFISH_URL}/api/health', timeout=2).ok
-    except Exception:  # noqa: BLE001
-        pass
+    # Sin llamadas de red: /api/health debe ser instantáneo. (Antes pagaba
+    # hasta 2s de timeout sondeando MiroFish, ya retirado.)
     return jsonify({
         'server': True,
         'app': 'Khipus Finance AI',
@@ -649,7 +647,6 @@ def health():
         'marketstack': bool(MSTACK),
         'elevenlabs': bool(ELEVENLABS_KEY),
         'alpha_vantage': bool(AV_KEY),
-        'mirofish': mf_ok,
         'jwt_api': _HAS_JWT,
         'ai_model': AI_MODEL,
         'ts': int(time.time()),
@@ -668,7 +665,7 @@ _DIAG_TTL = 60  # segundos
 def _diag_redact(text):
     """Quita cualquier valor de key que pudiera aparecer en un mensaje de error."""
     s = str(text)[:200]
-    for secret in (CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, MIROFISH_TOKEN, SECRET_KEY,
+    for secret in (CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, SECRET_KEY,
                    NEO4J_PASSWORD, NEO4J_URI):
         if secret and len(secret) > 6 and secret in s:
             s = s.replace(secret, '••••')
@@ -776,26 +773,6 @@ def _diag_elevenlabs():
         return {'configured': True, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
                 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': 'No se pudo contactar ElevenLabs: ' + _diag_redact(e)}
-
-
-def _diag_mirofish():
-    """Prueba ambas rutas (/api/health y /health) porque hubo inconsistencia histórica."""
-    t0 = time.time()
-    last = ''
-    for path in ('/api/health', '/health'):
-        try:
-            r = requests.get(f'{MIROFISH_URL}{path}', headers=_mf_headers(), timeout=6)
-            if r.ok:
-                return {'configured': True, 'ok': True, 'token_set': bool(MIROFISH_TOKEN),
-                        'latency_ms': int((time.time() - t0) * 1000), 'working_path': path,
-                        'detail': f'MiroFish vivo en {path}. War-Room puede usar el motor real.'}
-            last = f'{path} → HTTP {r.status_code}'
-        except Exception as e:  # noqa: BLE001
-            last = f'{path} → ' + _diag_redact(e)
-    hint = '' if MIROFISH_TOKEN else ' (no hay MIROFISH_TOKEN configurado — puede requerir auth).'
-    return {'configured': True, 'ok': False, 'token_set': bool(MIROFISH_TOKEN),
-            'latency_ms': int((time.time() - t0) * 1000),
-            'detail': f'MiroFish no responde OK: {last}.{hint} El War-Room usará el fallback de Claude.'}
 
 
 def _diag_ontologia():
@@ -936,7 +913,6 @@ def diagnostics():
         'gemini':     _diag_gemini(),
         'nvidia':     _diag_nvidia(),
         'elevenlabs': _diag_elevenlabs(),
-        'mirofish':   _diag_mirofish(),
         'finnhub':    _diag_finnhub(),
         'grafo':      _diag_grafo(),
         'ontologia':  _diag_ontologia(),
@@ -1879,7 +1855,7 @@ def research_deep():
     return jsonify(out)
 
 
-# ── Simulación POR AGENTES (MiroFish-style) — la lógica vive en core.sim_agents
+# ── Simulación POR AGENTES (motor interno) — la lógica vive en core.sim_agents
 # (módulo del agente SIM). Aquí SOLO la ruta: valida el body y delega, sin romper
 # el JSON si el módulo aún no existe o falla. ──────────────────────────────────
 @app.route('/api/sim/agents', methods=['POST'])
@@ -2278,7 +2254,7 @@ def ipo_calendar():
 
 # ════════════════════════════════════════════════════════════════════════════
 # KHIPU FINANCE v1 — Backend ampliado
-# Space APIs · GDELT · SEC EDGAR · MiroFish · Khipu voice · API pública JWT
+# Space APIs · GDELT · SEC EDGAR · Khipu voice · API pública JWT
 # ════════════════════════════════════════════════════════════════════════════
 
 # ── Space APIs (Launch Library 2 — gratis) ──────────────────────────────────
@@ -2877,48 +2853,6 @@ def _neo4j_add_fact(fact):
         s.run(_FACT_CYPHER, **params)
 
 
-# ── MiroFish proxy (simulaciones multi-agente) ───────────────────────────────
-def _mf_headers():
-    h = {'Content-Type': 'application/json'}
-    if MIROFISH_TOKEN:
-        h['Authorization'] = f'Bearer {MIROFISH_TOKEN}'
-    return h
-
-
-@app.route('/api/mirofish/health', methods=['GET'])
-def mirofish_health():
-    """MiroFish health is at /health (root), not /api/health — special case."""
-    try:
-        r = requests.get(f'{MIROFISH_URL}/health', headers=_mf_headers(), timeout=5)
-        return jsonify(r.json()), r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'status': 'offline', 'error': str(e)[:120], 'mirofish_url': MIROFISH_URL}), 502
-
-
-@app.route('/api/mirofish/<path:endpoint>', methods=['GET', 'POST', 'DELETE'])
-def mirofish_proxy(endpoint):
-    url = f'{MIROFISH_URL}/api/{endpoint}'
-    hdrs = _mf_headers()
-    try:
-        if request.method == 'GET':
-            r = requests.get(url, params=request.args, headers=hdrs, timeout=120)
-        elif request.method == 'POST':
-            if request.content_type and 'multipart' in request.content_type:
-                r = requests.post(url, files=request.files, data=request.form,
-                                  headers={k: v for k, v in hdrs.items() if k != 'Content-Type'},
-                                  timeout=120)
-            else:
-                r = requests.post(url, json=request.get_json(silent=True), headers=hdrs, timeout=120)
-        else:
-            r = requests.delete(url, headers=hdrs, timeout=30)
-        try:
-            return jsonify(r.json()), r.status_code
-        except Exception:  # noqa: BLE001
-            return r.text, r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e), 'mirofish_url': MIROFISH_URL}), 502
-
-
 # ── Khipu voice — system prompt for ElevenLabs agent configuration ──────────
 BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finance AI — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
 
@@ -2958,7 +2892,7 @@ Analysis superpowers (prefer these — they are the platform's wow):
 - show_insights(): opens the insights brain + the 9 relation matrices.
 - run_stress_test(ticker): classic failure cascade on the map.
 - run_simulation(scenario_id): war-room presets: taiwan_conflict, china_chip_ban_total, hbm_shortage_2027, openai_ipo_impact, starshield_reveal.
-- run_agent_simulation(scenario, companies): a MULTI-AGENT (MiroFish-style) simulation — several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / qué pasaría si…" questions that benefit from a debate. The full sim appears on screen; narrate the consensus, the biggest impacts, and where agents disagreed.
+- run_agent_simulation(scenario, companies): a MULTI-AGENT simulation — several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / qué pasaría si…" questions that benefit from a debate. The full sim appears on screen; narrate the consensus, the biggest impacts, and where agents disagreed.
 - deep_research(company): a DEEP investigation that goes BEYOND one company — sector panorama, direct competitors, geopolitical exposure, supply-chain chokepoints and an investment thesis. Use when the user wants a thorough dossier, not a quick fact; it appears on screen in a few seconds.
 
 Data lookups:
@@ -3026,7 +2960,7 @@ War-Room scenarios (5 presets):
 - Be concise (2-3 sentences of analysis) then act immediately — no over-explanation.
 - Match user language exactly (Spanish/English/mixed — follow their lead). Default to Spanish.
 - When asked investment questions, give a CAUTIOUS take WITH A STANCE — you may lean ("me inclinaría por… / sería cauto con TSMC porque…"), name the 2-3 key factors and a confidence level (alta/media/baja), but NEVER a blunt "compra/vende". ALWAYS close with a short reminder that this is analysis, not formal financial advice, and the decision is theirs. This soft-stance rule applies to stocks AND crypto.
-- You can run MiroFish-style MULTI-AGENT simulations from your own terminal (run_agent_simulation): several analyst agents debate a scenario and project realistic impacts. Reach for them on open-ended "¿qué pasaría si…? / what would happen if…" questions where a debate adds value.
+- You can run MULTI-AGENT simulations from your own terminal (run_agent_simulation): several analyst agents debate a scenario and project realistic impacts. Reach for them on open-ended "¿qué pasaría si…? / what would happen if…" questions where a debate adds value.
 - You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
 
 
@@ -3055,7 +2989,7 @@ def _bixby_client_tools():
         T('run_guided_demo', 'Start the GUIDED DEMO (full app tour, narrated on screen). STRICT RULE: call this ONLY when the user EXPLICITLY asks for a demo or tour with words like "demo", "demostración", "tour", "recorrido", "hazme una demo". NEVER call it at session start, NEVER on greetings, NEVER because the user seems new, NEVER proactively — an unwanted tour interrupts the user. After calling it, say ONE short line and STAY QUIET.'),
         T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
         T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
-        T('run_agent_simulation', 'Run a MULTI-AGENT (MiroFish-style) simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {
+        T('run_agent_simulation', 'Run a MULTI-AGENT simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {
             'scenario': S('The scenario in natural language, e.g. "China prohíbe exportar HBM"'),
             'companies': {'type': 'array',
                           'items': {'type': 'string', 'description': 'A company name or ticker'},
@@ -3535,7 +3469,6 @@ def api_docs():
             'GET  /api/space/launches': 'Upcoming space launches (Launch Library 2)',
             'GET  /api/news/gdelt/<company>': 'Global news via GDELT',
             'GET  /api/voice/session': 'Khipu ElevenLabs signed session URL',
-            'ANY  /api/mirofish/<path>': 'MiroFish simulation proxy',
             'GET  /api/health': 'Service health check',
         },
         'tiers': list(TIER_DAY_LIMITS.keys()),

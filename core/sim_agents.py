@@ -1,8 +1,12 @@
-"""core/sim_agents.py — Motor de simulación POR AGENTES (estilo MiroFish).
+"""core/sim_agents.py — Motor de simulación POR AGENTES (interno).
 
 Visión de Fabrizio (verbatim): "un clon de MiroFish en estructura que simule a
 través de agentes, donde cada nodo es un agente más los agentes gobierno u
 otros externos".
+
+Nota histórica: MiroFish era un microservicio EXTERNO que se usó al principio.
+Se retiró (2026-09); este módulo, que nació imitando su estructura, es hoy el
+motor de agentes de la app. No queda ninguna dependencia de aquel servicio.
 
 Idea: ante un escenario (p.ej. "China prohíbe exportar galio y germanio") armamos
 un ELENCO de agentes —cada empresa relevante del grafo + agentes externos

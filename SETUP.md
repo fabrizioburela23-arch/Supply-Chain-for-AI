@@ -10,7 +10,7 @@ que solo tú puedes hacer (acceso a Railway / ElevenLabs). Aquí está todo.
 ### Ya configuradas ✅
 `ANTHROPIC_KEY`, `ELEVENLABS_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_ALLOW_OVERRIDE`,
 `FINNHUB_KEY`, `FMP_KEY`, `MARKETSTACK_KEY`, `AV_KEY`, `ALPACA_KEY`, `ALPACA_SECRET`,
-`ALPACA_BASE`, `AI_MODEL`, `MIROFISH_URL`, `GEMINI_KEY`.
+`ALPACA_BASE`, `AI_MODEL`, `GEMINI_KEY`.
 
 ### Recomendadas
 | Variable | Valor | Por qué |
@@ -23,7 +23,6 @@ que solo tú puedes hacer (acceso a Railway / ElevenLabs). Aquí está todo.
 | Variable | Valor | Por qué |
 |---|---|---|
 | `NVIDIA_KEY` | nvapi-… (build.nvidia.com) | 2º canal de IA de respaldo (gratis). |
-| `MIROFISH_TOKEN` | (token) | Solo si MiroFish sale 🔴 por auth en el 🩺. |
 | `SEC_USER_AGENT` | `Tu Nombre tu@email.com` | Para el Research SEC 10-K. |
 
 ---
@@ -63,7 +62,7 @@ Si la voz de Khipu se desconecta cuando esperas un resultado callado:
 ## 4. Verificación final (🩺 Estado del Sistema)
 
 Abre la app **en incógnito** → botón **🩺** en el header. Deberías ver:
-- ✦ Claude 🟢 · ◆ Gemini 🟢 · 🎙 ElevenLabs 🟢 · 🧬 MiroFish 🟢 · 📈 Finnhub 🟢
+- ✦ Claude 🟢 · ◆ Gemini 🟢 · 🎙 ElevenLabs 🟢 · 📈 Finnhub 🟢
 - 🧠 Second Brain 🟢 (tras el paso §2)
 
 ### Tour de features
@@ -72,6 +71,6 @@ Abre la app **en incógnito** → botón **🩺** en el header. Deberías ver:
 - **Khipu** (⌘K) → "compara márgenes de NVIDIA, TSMC y ASML" → tabla inline.
 - Clic en **NVDA** → 🧠 Second Brain · 📊 Dossier · 📄 SEC.
 - Clic en **SpaceX/Helion** → panel 🔒 Empresa privada.
-- **Simulación** → motor 🤖 IA Simple o 🧬 MiroFish.
+- **Simulación** → motor 🤖 IA Simple (narrativa) o 🧬 Agentes (motor interno).
 - **🕸 3D** → scatter de inversión (tiempo × tamaño × riesgo) + filtros 💎.
 - Detalle de empresa → **+ C1 / + C2** para editar carteras.
