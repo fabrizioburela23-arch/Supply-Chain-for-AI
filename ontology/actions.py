@@ -191,21 +191,43 @@ def _require_object(session, object_id):
 def crear_tesis(session, inp: CrearTesisInput, actor):
     _require_object(session, inp.company_id)
     thesis_id = f'thesis_{uuid.uuid4().hex[:12]}'
+
+    # Phase 1 · M1 — la evidencia deja de morir dentro de properties: cada URL
+    # citada se registra como entidad `Source` (deduplicada por URL), se enlaza
+    # con `evidenced_by` y sus ids viajan EN EL EVENTO auditable. Antes las
+    # fuentes solo eran visibles mientras la propuesta estaba pendiente y se
+    # perdían al aprobarla.
+    from ontology.provenance import register_source, link_evidence
+    source_ids = []
+    for f in inp.fuentes:
+        sid = register_source(
+            session, f.url, title=f.titulo, publisher=f.publicador,
+            published_at=f.fecha, retrieved_at=f.consultado_at,
+            extractor=inp.autor_tipo, actor=actor)
+        if sid:
+            source_ids.append(sid)
+
     apply_event(session, 'ObjectCreated', {
         'label': f'Tesis de {actor} sobre {inp.company_id}', 'type': 'Thesis',
         'properties': {'company_id': inp.company_id, 'stance': inp.stance,
                         'confidence': inp.confidence, 'rationale': inp.rationale, 'author': actor,
                         # Track C: fuentes citables + honestidad de lo no verificado
                         'fuentes': [f.model_dump() for f in inp.fuentes],
+                        'source_ids': source_ids,
                         'autor_tipo': inp.autor_tipo,
                         'datos_no_verificados': inp.datos_no_verificados},
-    }, valid_from=_utcnow(), source='manual', actor=actor, object_id=thesis_id)
+    }, valid_from=_utcnow(), source='manual', actor=actor, object_id=thesis_id,
+       source_id=(source_ids[0] if source_ids else None), confidence=inp.confidence)
     apply_event(session, 'LinkCreated', {'rel_type': 'about', 'properties': {}},
                 valid_from=_utcnow(), source='manual', actor=actor,
                 object_id=thesis_id, target_id=inp.company_id)
+    for f, sid in zip(inp.fuentes, source_ids):
+        link_evidence(session, thesis_id, sid, actor=actor, quote=f.cita_textual)
+
     _log_action(session, 'CrearTesis', inp.company_id, thesis_id,
-                {'stance': inp.stance, 'confidence': inp.confidence}, actor)
-    return {'thesis_id': thesis_id}
+                {'stance': inp.stance, 'confidence': inp.confidence,
+                 'source_ids': source_ids}, actor)
+    return {'thesis_id': thesis_id, 'source_ids': source_ids}
 
 
 def anotar_objeto(session, inp: AnotarObjetoInput, actor):

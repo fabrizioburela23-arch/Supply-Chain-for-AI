@@ -48,8 +48,15 @@ class Event(Base):
     valid_from = Column(DateTime(timezone=True), nullable=False, index=True)
     valid_to = Column(DateTime(timezone=True), nullable=True, index=True)  # NULL = sigue vigente
     recorded_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
-    source = Column(String(60), nullable=False)     # 'manual', 'migration_v0', 'gdelt', 'marketstack'…
+    source = Column(String(60), nullable=False)     # CANAL: 'manual', 'migration_v0', 'gdelt'…
     actor = Column(String(120), nullable=False)      # usuario o agente
+    # Phase 1 · M1 — procedencia. `source` (arriba) dice por qué TUBERÍA entró
+    # el hecho; `source_id` dice de qué DOCUMENTO salió: apunta a un objeto
+    # type='Source' con url/kind/trust/published_at (ver ontology/provenance.py).
+    # Nullable a propósito: los eventos derivados (migración, cálculo) no citan
+    # ningún documento, y forzarlos a inventar uno sería peor que no tenerlo.
+    source_id = Column(String(120), nullable=True, index=True)
+    confidence = Column(Float, nullable=True)        # 0-1; None = no declarada
 
     __table_args__ = (
         Index('ix_events_object_validity', 'object_id', 'valid_from', 'valid_to'),

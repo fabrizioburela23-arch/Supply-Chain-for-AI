@@ -43,18 +43,39 @@ def _parse_dt(v, default=None):
 
 
 def apply_event(session, event_type, payload, valid_from, source, actor,
-                 object_id=None, target_id=None, valid_to=None):
+                 object_id=None, target_id=None, valid_to=None,
+                 source_id=None, confidence=None):
     """Inserta el evento (inmutable) y actualiza objects/links (materializado).
-    Devuelve el Event insertado. Lanza OntologyError si el evento es inválido."""
+    Devuelve el Event insertado. Lanza OntologyError si el evento es inválido.
+
+    `source` es el CANAL por el que entró el hecho ('manual', 'gdelt'…).
+    `source_id` (Phase 1 · M1, opcional) apunta al DOCUMENTO que lo evidencia
+    — un objeto type='Source' con url/kind/trust; ver ontology/provenance.py.
+    `confidence` (0-1, opcional) es la confianza declarada sobre ESTE evento.
+
+    Ambos son opcionales a propósito: los eventos derivados (migración,
+    cálculo, materialización) no citan ningún documento, y obligarlos a
+    inventar uno sería peor que no tenerlo."""
     if event_type not in VALID_EVENT_TYPES:
         raise OntologyError(f'event_type desconocido: {event_type}')
     valid_from = _parse_dt(valid_from, default=_utcnow())
     valid_to = _parse_dt(valid_to)
 
+    # `Event.source` es String(60) y varias Acciones admiten `fuente` de hasta
+    # 200 caracteres: sin este corte, una fuente larga rompe la escritura del
+    # hecho (defecto detectado en la auditoría de Phase 1).
+    source = (str(source) if source is not None else '')[:60]
+
+    if confidence is not None:
+        try:
+            confidence = max(0.0, min(1.0, float(confidence)))
+        except (TypeError, ValueError):
+            confidence = None
+
     ev = Event(
         id=uuid.uuid4(), event_type=event_type, object_id=object_id, target_id=target_id,
         payload=payload or {}, valid_from=valid_from, valid_to=valid_to,
-        source=source, actor=actor,
+        source=source, actor=actor, source_id=source_id, confidence=confidence,
     )
     session.add(ev)
     session.flush()  # para tener ev.recorded_at si hiciera falta, y detectar errores de constraint ya

@@ -530,6 +530,55 @@ def alerts_check():
         return jsonify({'fired': fired, 'count': len(fired)})
 
 
+@ontology_bp.route('/sources')
+@_require_db
+def sources_list():
+    """Documentos que respaldan hechos del grafo (Phase 1 · M1).
+    Query: ?kind=primary&min_trust=2&limit=50. Ordenadas por confiabilidad."""
+    from sqlalchemy import select
+    from ontology.models import ObjectRecord
+    from ontology.provenance import SOURCE_TYPE, source_to_dict
+
+    kind = (request.args.get('kind') or '').strip().lower()
+    try:
+        min_trust = int(request.args.get('min_trust', 0))
+    except (TypeError, ValueError):
+        min_trust = 0
+    try:
+        limit = min(max(int(request.args.get('limit', 50)), 1), 500)
+    except (TypeError, ValueError):
+        limit = 50
+
+    with session_scope() as s:
+        objs = s.scalars(select(ObjectRecord).where(ObjectRecord.type == SOURCE_TYPE)).all()
+        out = [source_to_dict(o) for o in objs]
+    if kind:
+        out = [x for x in out if (x.get('kind') or '') == kind]
+    if min_trust:
+        out = [x for x in out if (x.get('trust') or 0) >= min_trust]
+    out.sort(key=lambda x: (-(x.get('trust') or 0), x.get('publisher') or ''))
+    return jsonify({'count': len(out), 'sources': out[:limit]})
+
+
+@ontology_bp.route('/objects/<object_id>/provenance')
+@_require_db
+def object_provenance(object_id):
+    """De dónde salió lo que sabemos de este objeto: las fuentes que lo
+    evidencian y los eventos que las citan (con fecha y confianza).
+
+    Es el camino `Graph Claim → Source → evidencia original` que pide la
+    especificación. Una lista vacía significa exactamente eso — que el hecho
+    aún no tiene documento detrás — y no se disfraza."""
+    from ontology.provenance import provenance_for_object
+    with session_scope() as s:
+        obj = get_object(s, object_id)
+        if not obj:
+            return jsonify({'error': f'objeto no encontrado: {object_id}'}), 404
+        fuentes = provenance_for_object(s, object_id)
+        return jsonify({'object_id': object_id, 'label': obj.label,
+                        'count': len(fuentes), 'sources': fuentes})
+
+
 @ontology_bp.route('/events', methods=['POST'])
 @_require_db
 def events_create():
