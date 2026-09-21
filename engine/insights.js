@@ -196,4 +196,75 @@
         : '<div style="grid-column:1/-1;color:var(--ink-3,#7C87A3);font-size:11.5px">Sin lecturas por ahora — el grafo aún carga.</div>';
     });
   };
+
+  /* ── Historial de lecturas (GET /api/matrix/insights/history) ─────────────
+     El feed de arriba dice cómo está la red AHORA; esto dice cómo fue
+     cambiando. El server guarda una fila por CAMBIO REAL del grafo (dedupe
+     por época), no por visita, así que cada entrada es una lectura distinta.
+     Sin DATABASE_URL la sección no se dibuja: no hay historia que mostrar. */
+  function L(es, en) {
+    var lang = window.LANG;
+    if (!lang) { try { lang = localStorage.getItem('eco_lang'); } catch (e) { lang = null; } }
+    return (lang === 'en') ? en : es;
+  }
+
+  function whenStr(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(L('es', 'en'), { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function historyRow(h) {
+    var cards = Array.isArray(h.insights) ? h.insights : [];
+    var lead = cards.length ? (cards[0].title || cards[0].detail || '') : '';
+    var trig = h.trigger || L('sin disparador', 'no trigger');
+    var asOf = h.as_of ? ' · as_of ' + esc(h.as_of) : '';
+    return '<div style="border:1px solid var(--line);border-left:3px solid var(--violet,#9B4FE8);border-radius:8px;padding:10px 13px;margin-bottom:9px;background:var(--surface-2,rgba(255,255,255,.02))">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
+      +   '<b style="font-size:12.5px;flex:1">' + esc(trig) + '</b>'
+      +   '<span style="font-size:10px;color:var(--ink-3);font-family:\'JetBrains Mono\',monospace">' + esc(whenStr(h.created_at)) + esc(asOf) + '</span>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--ink-3)">'
+      +   L('alcanzó ', 'reached ') + '<b style="color:var(--ink-2)">' + (h.affected || 0) + '</b>'
+      +   L(' empresas', ' companies')
+      +   (cards.length ? ' · ' + cards.length + L(' lecturas', ' readings') : '')
+      +   (h.model ? ' · ' + esc(h.model) : '')
+      + '</div>'
+      + (lead ? '<div style="font-size:12px;color:var(--ink-2);margin-top:5px;line-height:1.45">' + esc(String(lead).slice(0, 220)) + '</div>' : '')
+      + '</div>';
+  }
+
+  window.renderInsightsHistory = function () {
+    var el = document.getElementById('an-history');
+    if (!el) return;
+    var base = (typeof window.BASE !== 'undefined' && window.BASE) ? window.BASE : '';
+    var lang = L('es', 'en');
+    el.innerHTML = '<div style="color:var(--ink-3,#7C87A3);font-size:11.5px;font-style:italic">'
+      + L('Cargando historial…', 'Loading history…') + '</div>';
+    fetch(base + '/api/matrix/insights/history?limit=12&lang=' + lang)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.available) {
+          // sin ontología no hay historial — se dice, no se finge
+          el.innerHTML = '<div style="color:var(--ink-3,#7C87A3);font-size:11.5px">'
+            + L('El historial necesita la ontología (DATABASE_URL) — sin ella solo hay lectura del momento.',
+                'History needs the ontology (DATABASE_URL) — without it only the live reading is available.')
+            + '</div>';
+          return;
+        }
+        if (!d.history || !d.history.length) {
+          el.innerHTML = '<div style="color:var(--ink-3,#7C87A3);font-size:11.5px">'
+            + L('Aún no hay historial: se guarda una entrada cada vez que el grafo cambia de verdad.',
+                'No history yet: one entry is stored each time the graph actually changes.')
+            + '</div>';
+          return;
+        }
+        el.innerHTML = d.history.map(historyRow).join('');
+      })
+      .catch(function () {
+        el.innerHTML = '<div style="color:var(--ink-3,#7C87A3);font-size:11.5px">'
+          + L('No se pudo cargar el historial.', 'Could not load the history.') + '</div>';
+      });
+  };
 })();

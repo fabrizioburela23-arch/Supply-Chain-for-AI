@@ -9,6 +9,83 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-21 — Limpieza estructural: Track A Fase 2 + Track B completos
+
+Pedido de Fabrizio: "avanza con todo eso… esto solo es estructura, no
+modalidades". Cero features nuevas para el usuario; se cierran los pendientes
+de arquitectura que arrastraban las sesiones anteriores. **118 tests** (eran
+107 al empezar; 56 según CLAUDE.md, que estaba desactualizado). sw v128.
+
+**Track A Fase 2 — stack 3D viejo BORRADO.** `engine/geoglobe.js` y
+`engine/planetarium.js` estaban huérfanos desde que se creó `engine/globe.js`:
+ningún `<script src>` los cargaba ni estaban en el SHELL del SW. `graph3d.js`
+NO se borra (es el motor WebGL de `?webgl3d=1` y hypergraph/voice/Scatter 3D
+dependen de su instancia). **Bug latente corregido de paso**:
+`getCatColorHex`/`getLinkColorHex` estaban definidas DOS veces (app.html desde
+Fase 0 + la copia original en graph3d.js) y, al ser ambas `function` de nivel
+superior, la de graph3d.js pisaba en silencio a la de app.html — editar la de
+app.html no habría tenido efecto. Ahora la definición es única.
+
+**`rate_limit` → `core/http.py`.** Vivía en server.py, lo que dejaba a los
+blueprints (matrix/, ontology/) sin poder limitarse sin importar el server —
+justo la circularidad que core/ existe para romper. Las 46 rutas de server.py
+no cambian.
+
+**ActivarFactor / DesactivarFactor** (ontology/actions.py, catálogo 11→13).
+Los ~70 factores viven LATENTES (severity 1.0) con `severity_crisis` en props;
+hasta ahora solo existía el what-if efímero (`/api/matrix/factor/fire`). Estas
+dos Acciones mueven la línea base de forma persistente y auditada.
+`severity_latente` guarda el punto de retorno y **solo se captura en la PRIMERA
+activación** (reactivar a otro nivel no debe sobrescribirlo — hay test de
+regresión). El motor lo recoge solo: `active_factors()` lee `severity` y el
+caché de matrices se invalida por época del grafo, que estos ObjectUpdated
+mueven. La API las expone sin tocar rutas (el endpoint es dirigido por catálogo).
+
+**Historial de insights.** Tabla `InsightSnapshot` + `GET
+/api/matrix/insights/history?limit&lang`. Los insights son DERIVADOS, no
+hechos de dominio: tabla propia, no eventos bitemporales (ensuciarían la
+ontología con conclusiones en vez de observaciones). Una fila por CAMBIO REAL
+del grafo (dedupe por graph_epoch+as_of+lang), no por visita; los shocks
+manuales no se persisten (son exploración). Bug encontrado por los tests:
+`insights` no es texto sino lista de tarjetas `[{kind,title,detail}]` → JSONB.
+
+**MiroFish RETIRADO por completo.** Era un microservicio EXTERNO. Borrados el
+proxy `/api/mirofish/*`, `_diag_mirofish`, el campo de `/api/health`,
+`MIROFISH_URL/TOKEN`, `sim/mirofish_client.js` y su entrada del SHELL.
+- `/api/health` pasó de **~2000 ms a 1 ms**: sondeaba MiroFish con timeout de
+  2s en CADA llamada. Y como `MIROFISH_URL` traía una URL de Railway
+  hardcodeada como default, el 🩺 reportaba 🔴 FALLA permanente (no "no
+  configurado") y bajaba el contador ok/total para siempre.
+- El selector de motor pasa de `🤖 IA Simple / 🧬 MiroFish` a
+  `🤖 IA Simple / 🧬 Agentes`: el segundo es `_runAgentSim()` → `POST
+  /api/sim/agents` (core/sim_agents.py, motor INTERNO), resuelve semillas con
+  KhipuResolve y mapea `impacts` → `nodeImpacts`/`cascadeNodes` del War-Room.
+  Cae al narrativo si falla. Se eligió `/api/sim/agents` y no
+  `/api/matrix/impact` porque el primero funciona **sin DATABASE_URL** (lee el
+  snapshot JSON) — el matrix devuelve 503 y habría dejado el War-Room peor.
+- `_wrChatSend` dependía del `reportId` de MiroFish, así que estaba **muerto**
+  desde que el motor interno es el default (nunca produce ese id). Ahora
+  conversa sobre el TEXTO del informe en pantalla vía `/api/ai/analyze`, con
+  instrucción de no inventar fuera del informe. Bilingüe.
+- `buildMiroFishSeed` → `buildScenarioSeed` (no tenía llamadores externos).
+
+**Historial de lecturas en la UI — DECISIÓN: no se creó una pestaña nueva.**
+El roadmap pedía "pestaña INSIGHTS", pero CLAUDE.md registra la instrucción
+explícita de Fabrizio de que la interfaz debe SIMPLIFICARSE y de evaluar
+fusionar antes de añadir. La pestaña 🔬 Análisis de Red ya era el hogar del
+feed (`#an-insights`) y ya está en el grupo "insights" de la barra. Se le
+añadió `🕘 Historial de lecturas` (`#an-history`, `window.renderInsightsHistory()`
+en engine/insights.js, bilingüe). Resultado: feed + historial en un solo sitio,
+cero pestañas nuevas. **Si Fabrizio prefiere una pestaña propia, es revertible
+en minutos** — el render ya está aislado en su función.
+
+**Pendiente inmediato tras esta sesión:** sigue el checklist manual de
+Fabrizio (REMIGRATE_ON_BOOT en Railway para re-migrar la ontología limpia en
+prod, verificar TRADE_PIN, Opera borrar datos del sitio) y el rework de escala
+del cliente antes de superar ~2.500 nodos.
+
+---
+
 # SESIÓN 2026-08-02 — Expansión multicapa COMPLETA (olas 1-6): 949 nodos, 13 sectores, 70 factores latentes
 
 Archivo fuente de Fabrizio: `khipus_ai_finance_grafo_completo.md` (393 nodos +

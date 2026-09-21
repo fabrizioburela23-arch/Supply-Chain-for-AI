@@ -1560,6 +1560,11 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     </div>
     <div id="an-insights" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:26px"></div>
 
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="mkt-sec-head" style="margin:0;display:flex;align-items:center;gap:8px">🕘 <span data-i18n="an_history_h">Historial de lecturas</span> <span data-i18n="an_history_sub" style="font-size:10px;color:var(--ink-3);font-weight:400;letter-spacing:.04em;text-transform:none">— cómo fue cambiando la red (una entrada por cambio real, no por visita)</span></div>
+    </div>
+    <div id="an-history" style="margin-bottom:26px"></div>
+
     <div id="an-matrix" style="margin-bottom:26px"></div>
 
     <div id="analysis-stats" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px">
@@ -3706,6 +3711,9 @@ es: {
   tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo', tab_portfolios:'Carteras',
   tab_analysis:'Análisis de Red', tab_geo:'Geopolítica',
   tab_sim:'Simulación', tab_space:'Espacio',
+  an_history_h:'Historial de lecturas',
+  an_history_sub:'— cómo fue cambiando la red (una entrada por cambio real, no por visita)',
+  sim_sub:'Motores internos · agentes con IA + matrices deterministas · Escenarios geopolíticos y de mercado sobre la cadena de valor global',
   sim_preset_btn:'Preset', sim_run:'▶ Ejecutar Simulación', sim_placeholder:'Describe el escenario...',
   space_launches:'Próximos Lanzamientos', space_companies:'Empresas Espaciales en Khipu',
   f_link:'Vínculo',
@@ -3771,6 +3779,9 @@ en: {
   tab_map:'Chain Map', tab_market:'Live Market', tab_portfolios:'Portfolios',
   tab_analysis:'Network Analysis', tab_geo:'Geopolitics',
   tab_sim:'Simulation', tab_space:'Space Economy',
+  an_history_h:'Reading history',
+  an_history_sub:'— how the network kept changing (one entry per real change, not per visit)',
+  sim_sub:'Internal engines · AI agents + deterministic matrices · Geopolitical and market scenarios across the global value chain',
   sim_preset_btn:'Preset', sim_run:'▶ Run Simulation', sim_placeholder:'Describe the scenario...',
   space_launches:'Upcoming Launches', space_companies:'Space Companies in Khipu',
   f_link:'Link type',
@@ -4057,6 +4068,7 @@ function renderAnalysis(){
   const anSub=document.getElementById('an-subtitle');
   if(anSub) anSub.textContent=t('an_sub').replace('{n}',NODES.length).replace('{l}',LINKS.length);
   if(typeof window.renderKhipuInsights==='function') window.renderKhipuInsights();  // llena #an-insights
+  if(typeof window.renderInsightsHistory==='function') window.renderInsightsHistory();  // llena #an-history
   if(typeof window.renderMatrixView==='function') window.renderMatrixView();        // llena #an-matrix (las 9 matrices)
   document.getElementById('an-nodes').textContent=NODES.length;
   document.getElementById('an-links').textContent=LINKS.length;
