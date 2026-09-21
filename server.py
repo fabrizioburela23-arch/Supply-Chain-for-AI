@@ -267,14 +267,16 @@ def voice_agent_tune():
         return jsonify({'error': str(e)[:160]}), 502
 
 # ── Re-migración de la ontología por variable de entorno (para Fabrizio) ──────
-# Poner REMIGRATE_ON_BOOT=1 en Railway → al reiniciar, re-crea la ontología con
-# los datos canónicos limpios (407). DESTRUCTIVO (borra objetos/eventos de la
-# ontología, incl. tesis/sims/alertas guardadas). Se corre UNA vez y luego se
-# quita la variable. Nunca bloquea el arranque (todo en try/except).
+# Poner REMIGRATE_ON_BOOT=1 en Railway → al reiniciar, re-crea la ontología
+# COMPLETA desde el repo: 949 empresas + links + hechos temporales + los ~69
+# factores sistémicos (latentes) y 28 asientos de la capa multicapa.
+# DESTRUCTIVO (borra objetos/eventos, incl. tesis/anotaciones/alertas que el
+# usuario haya guardado). Se corre UNA vez y luego se QUITA la variable.
+# Nunca bloquea el arranque (todo en try/except).
 if os.getenv('REMIGRATE_ON_BOOT', '').strip() in ('1', 'true', 'yes'):
     try:
         from scripts.migrate_v0_to_ontology import run_migration
-        log.warning('REMIGRATE_ON_BOOT activo — re-migrando la ontología a los 407 canónicos…')
+        log.warning('REMIGRATE_ON_BOOT activo — re-migrando la ontología completa desde el repo…')
         run_migration(reset=True, log=lambda m: log.warning('  [remigrate] %s', m))
         log.warning('REMIGRATE_ON_BOOT: listo. QUITA la variable REMIGRATE_ON_BOOT de Railway ahora.')
     except Exception as _e:  # noqa: BLE001

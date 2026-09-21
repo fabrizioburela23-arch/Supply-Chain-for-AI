@@ -223,7 +223,11 @@ def test_object_history_ordered(db):
 
 def test_migration_is_isomorphic_with_grafo_v0():
     """Criterio de aceptación: la migración real (grafo_v0.json → Postgres)
-    produce el mismo conteo de nodos/links que el snapshot exportado."""
+    produce el mismo conteo de nodos/links que el snapshot exportado, MÁS la
+    capa multicapa (factores sistémicos + asientos), que no vive en el snapshot
+    sino en data/multicapa_factors_seats.json. Ambas partes deben cuadrar: si
+    una re-migración dejara fuera los factores, la ontología quedaría a medias
+    (sin hiperaristas para la fragilidad ni objeto para Activar/DesactivarFactor)."""
     import json
     import subprocess
 
@@ -246,10 +250,28 @@ def test_migration_is_isomorphic_with_grafo_v0():
     assert result.returncode == 0, result.stderr
 
     expected_objects = len(g['nodes']) + len((g.get('ontology') or {}).get('objects', []))
+
+    # capa multicapa: solo cuentan los factores con al menos un miembro que
+    # exista en el snapshot (los colgantes se omiten a propósito — un 'affects'
+    # hacia un id inexistente corrompería la matriz de fragilidad)
+    mc_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'multicapa_factors_seats.json')
+    n_factors = n_seats = 0
+    if os.path.exists(mc_path):
+        with open(mc_path, encoding='utf-8') as f:
+            mc = json.load(f)
+        known = {n['id'] for n in g['nodes']} | {o['id'] for o in (g.get('ontology') or {}).get('objects', [])}
+        n_factors = sum(1 for fx in mc.get('factors', [])
+                        if any(m in known for m in (fx.get('members') or {})))
+        n_seats = len(mc.get('seats', []))
+
     with session_scope() as s:
         n_obj = s.query(ObjectRecord).count()
         n_link = s.query(LinkRecord).count()
+        n_fact_db = s.query(ObjectRecord).filter(ObjectRecord.type == 'Factor').count()
+        n_seat_db = s.query(ObjectRecord).filter(ObjectRecord.type == 'Seat').count()
 
-    assert n_obj == expected_objects
+    assert n_obj == expected_objects + n_factors + n_seats
+    assert n_fact_db == n_factors
+    assert n_seat_db == n_seats
     # links >= los base (algunos hechos temporales pueden duplicar pares, es esperado — ver docstring del script)
     assert n_link >= len(g['links'])

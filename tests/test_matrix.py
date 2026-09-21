@@ -217,3 +217,80 @@ def test_shock_manual_no_ensucia_el_historial(db):
     assert r.status_code == 200
     h = client.get('/api/matrix/insights/history').get_json()
     assert h['count'] == 0
+
+
+# ── Restauración de factores + asientos en la migración ─────────────────────
+# Regresión: grafo_v0.json son SOLO empresas y sus links. Los ~70 factores
+# sistémicos y los 28 asientos viven en data/multicapa_factors_seats.json.
+# Antes, una re-migración (REMIGRATE_ON_BOOT en prod) dejaba la ontología a
+# medias: sin factores no hay FACTOR LIST/FIRE, ni hiperaristas en la
+# fragilidad, ni objeto para Activar/DesactivarFactor.
+#
+# Los tests filtran por properties.fuente == 'multicapa': otros tests de este
+# módulo crean factores propios (p.ej. FACTOR_taiwan_test con severidad 8) y
+# el fixture es de módulo, así que aserciones sobre TODOS los factores serían
+# frágiles y engañosas.
+
+def _factores_migrados(session):
+    from ontology.models import ObjectRecord
+    from sqlalchemy import select
+    objs = session.scalars(select(ObjectRecord).where(ObjectRecord.type == 'Factor')).all()
+    return [o for o in objs if (o.properties or {}).get('fuente') == 'multicapa']
+
+
+def test_migracion_restaura_los_factores_latentes(db):
+    from ontology.db import session_scope
+
+    with session_scope() as s:
+        migrados = _factores_migrados(s)
+        assert len(migrados) >= 60, f'se esperaban ~69 factores migrados, hay {len(migrados)}'
+
+        props = [o.properties or {} for o in migrados]
+        # TODOS latentes: cargarlos en severidad de CRISIS satura el modelo
+        # (ρ 2.63, cascadas al 100%) — lección registrada en docs/ESTADO.md.
+        assert {p.get('severity') for p in props} == {1.0}
+        assert all(p.get('activo') is False for p in props)
+
+        # cada uno conserva su nivel de crisis para el what-if (escala 0-10 del
+        # documento fuente, NO la 0-5 del esquema de CrearFactor)
+        con_crisis = [p for p in props if p.get('severity_crisis')]
+        assert len(con_crisis) >= 60
+        assert all(4.0 <= p['severity_crisis'] <= 10.0 for p in con_crisis)
+
+        # el porqué no se pierde (Track B: rationale servido)
+        assert any((p.get('razon') or '').strip() for p in props)
+
+
+def test_migracion_restaura_asientos_y_no_deja_links_colgantes(db):
+    from ontology.db import session_scope
+    from ontology.models import ObjectRecord, LinkRecord
+    from sqlalchemy import select
+
+    with session_scope() as s:
+        seats = s.scalars(select(ObjectRecord).where(ObjectRecord.type == 'Seat')).all()
+        assert len(seats) >= 25, f'se esperaban ~28 asientos, hay {len(seats)}'
+
+        # ningún 'affects' puede apuntar a un objeto inexistente: corrompería
+        # la matriz de fragilidad
+        ids = {o.id for o in s.scalars(select(ObjectRecord)).all()}
+        affects = s.scalars(select(LinkRecord).where(LinkRecord.rel_type == 'affects')).all()
+        assert affects, 'la migración no creó vínculos affects'
+        colgantes = [(l.source_id, l.target_id) for l in affects
+                     if l.source_id not in ids or l.target_id not in ids]
+        assert not colgantes, f'links affects colgantes: {colgantes[:5]}'
+
+
+def test_factores_latentes_no_saturan_el_modelo(db):
+    """ρ con los factores MIGRADOS latentes debe quedar lejos del 2.63 saturado."""
+    from ontology.db import session_scope
+    from matrix.engine import active_factors, build_matrices, spectral_radius
+
+    with session_scope() as s:
+        ids_migrados = {o.id for o in _factores_migrados(s)}
+        fx = [f for f in active_factors(s) if f['id'] in ids_migrados]
+        mats, idx, _ids = build_matrices(s)
+        base = spectral_radius(mats, factors=[], idx=idx)
+        lat = spectral_radius(mats, factors=fx, idx=idx)
+
+    assert lat['rho'] > base['rho'], 'los factores deben añadir fragilidad'
+    assert lat['rho'] < 2.3, f'ρ latente {lat["rho"]} — ¿volvieron a severidad de crisis?'

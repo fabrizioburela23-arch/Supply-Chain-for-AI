@@ -133,8 +133,88 @@ def run_migration(reset=False, dry_run=False, graph_path=None, log=print):
         s.flush()
         log(f'✅ {len(edges) - skipped_t} hechos temporales creados ({skipped_t} saltados) ({time.time()-t0:.1f}s)')
 
+        # ── Factores sistémicos + Asientos (capa multicapa) ──────────────────
+        # NO vienen en grafo_v0.json (ese snapshot son empresas y sus links):
+        # viven en data/multicapa_factors_seats.json, que produjo
+        # scripts/ingest_multicapa.py a partir del documento de Fabrizio.
+        # Sin este paso, una re-migración deja la ontología a medias: sin
+        # factores no hay FACTOR LIST/FIRE, ni hiperaristas en la fragilidad
+        # del motor de matrices, y Activar/DesactivarFactor quedan sin objeto.
+        n_fact, n_aff, n_seat = _restore_factors_and_seats(s, known_ids, log)
+        s.flush()
+        log(f'✅ {n_fact} factores (latentes) + {n_aff} vínculos affects + {n_seat} asientos ({time.time()-t0:.1f}s)')
+
     log(f'🎉 Migración completa en {time.time()-t0:.1f}s')
     return True
+
+
+# Nivel LATENTE de los factores. Lección registrada en docs/ESTADO.md: cargar
+# los ~70 factores a su severidad de CRISIS pone ρ(T) en 2.63 y satura las
+# cascadas (todo al 100%) — "todas las crisis a la vez" no es un escenario
+# real. Viven en 1.0 y su nivel de crisis queda en `severity_crisis`, que es
+# lo que disparan /api/matrix/factor/fire (what-if) y la Acción ActivarFactor
+# (persistente). OJO con la escala: el documento usa 0-10, no 0-5.
+FACTOR_LATENT_SEVERITY = 1.0
+
+
+def _restore_factors_and_seats(s, known_ids, log=print):
+    """Carga data/multicapa_factors_seats.json en la ontología. Devuelve
+    (n_factores, n_links_affects, n_asientos). Si el archivo no está, no es un
+    error: se avisa y se sigue (la migración base ya es útil)."""
+    from ontology.service import apply_event
+
+    path = os.path.join(os.path.dirname(__file__), '..', 'data', 'multicapa_factors_seats.json')
+    if not os.path.exists(path):
+        log('⚠️  data/multicapa_factors_seats.json no está — se omiten factores y asientos.')
+        return 0, 0, 0
+    with open(path, 'r', encoding='utf-8') as fh:
+        data = json.load(fh)
+
+    factors = data.get('factors') or []
+    seats = data.get('seats') or []
+
+    n_fact = n_aff = 0
+    for f in factors:
+        fid = (f.get('id') or '').strip()
+        if not fid:
+            continue
+        members = f.get('members') or {}
+        # Solo miembros que EXISTEN: un link 'affects' colgante corrompería la
+        # matriz (mismo criterio que la Acción CrearFactor).
+        pairs = [(m, float(c)) for m, c in members.items() if m in known_ids]
+        if not pairs:
+            continue
+        apply_event(s, 'ObjectCreated', {
+            'label': f.get('label') or fid, 'type': 'Factor',
+            'properties': {
+                'severity': FACTOR_LATENT_SEVERITY,
+                'severity_crisis': float(f['severity']) if f.get('severity') is not None else None,
+                'razon': f.get('rationale') or '',
+                'fuente': 'multicapa', 'activo': False,
+            },
+        }, valid_from=GENESIS, source='migration_multicapa',
+           actor='script:migrate_v0_to_ontology', object_id=fid)
+        n_fact += 1
+        for m, coef in pairs:
+            apply_event(s, 'LinkCreated',
+                        {'rel_type': 'affects', 'weight': coef, 'properties': {'factor': True}},
+                        valid_from=GENESIS, source='migration_multicapa',
+                        actor='script:migrate_v0_to_ontology', object_id=fid, target_id=m)
+            n_aff += 1
+
+    n_seat = 0
+    for st in seats:
+        sid = (st.get('id') or '').strip()
+        if not sid:
+            continue
+        apply_event(s, 'ObjectCreated', {
+            'label': st.get('label') or sid, 'type': 'Seat',
+            'properties': st.get('props') or {},
+        }, valid_from=GENESIS, source='migration_multicapa',
+           actor='script:migrate_v0_to_ontology', object_id=sid)
+        n_seat += 1
+
+    return n_fact, n_aff, n_seat
 
 
 if __name__ == '__main__':
