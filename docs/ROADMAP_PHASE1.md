@@ -3,7 +3,7 @@
 Milestones derivados de la auditoría en `docs/ARCHITECTURE.md`. Cada uno es
 **aditivo**, tiene tests, y deja la app desplegable al terminar.
 
-Estado global: **M1 y M2 (núcleo) completos**. M3-M6 planificados.
+Estado global: **M1, M2 (núcleo) y M3 completos**. M4-M6 planificados.
 
 ---
 
@@ -73,19 +73,44 @@ Pendiente de M2 (no bloquea a M3/M4):
       resolvedor —correctamente— prefiere no adivinar.
 - [ ] Matches de baja confianza → cola `ProposedAction` (el patrón ya existe).
 
-## M3 — Interfaces de proveedor
+## M3 — Interfaces de proveedor ✅ COMPLETO
 
-> Spec §7. `core/providers/__init__.py` ya describe este patrón y cita un
-> `base.py` **que no existe**; solo CoinGecko pasa por ahí.
+> Spec §7. `core/providers/__init__.py` describía este patrón desde 2026-07 y
+> citaba un `base.py` **que nunca se escribió**: solo cripto pasaba por la capa
+> de adapters; las acciones llamaban a Finnhub/Yahoo/FMP directamente, cada una
+> con su propia forma de respuesta.
 
-- [ ] `core/providers/base.py`: `MarketDataProvider` (`get_quote`,
-      `get_history`, `subscribe_quotes`) y `NewsProvider` (`get_latest`,
-      `search`, `subscribe`) + esquemas unificados.
-- [ ] Adapters de equities (Finnhub, FMP, Yahoo) detrás de la interfaz; el
-      resto del sistema deja de conocer al proveedor.
-- [ ] Cada respuesta lleva `as_of` — hoy los quotes no exponen su frescura.
-- [ ] Modo "configuración pendiente" explícito cuando falta una key: nunca
-      datos simulados presentados como reales.
+- [x] `core/providers/base.py`: el contrato. `MarketDataProvider`
+      (`get_quote`/`get_history`) y `NewsProvider` (`get_latest`/`search`),
+      esquema único `make_quote()`, `ProviderStatus` y `ProviderRegistry`.
+- [x] **`as_of` + `age_seconds` en toda cotización.** Es lo que permite cumplir
+      la spec §13 ("no fingir tiempo real"): Finnhub aporta el timestamp REAL
+      del dato (`t`), no la hora a la que preguntamos.
+- [x] Adapters: `FinnhubProvider`, `YahooProvider` (sin key, bolsas de todo el
+      mundo) y `CoinGeckoProvider` — el que ya existía, ahora bajo el mismo
+      contrato. **Envuelven `core/quotes.py`**, no lo reescriben: la lógica
+      probada (conversión a USD, negarse a publicar precio sin tipo de cambio)
+      se conserva intacta.
+- [x] **"Sin configurar" ≠ "falló".** `ProviderStatus` dice qué falta
+      (`'Falta FINNHUB_KEY…'`), y la cascada **salta** a los no configurados en
+      vez de contarlos como error.
+- [x] Cuando no hay dato se explica POR QUÉ: `get_quote` devuelve los intentos
+      de cada proveedor. Un `None` mudo obligaba a adivinar.
+- [x] `subscribe_quotes`/`subscribe` levantan `NotImplementedError` **a
+      propósito**: ningún proveedor del stack tiene streaming, y hacer polling
+      disfrazado de suscripción escondería la arquitectura real (spec §6).
+- [x] API nueva y ADITIVA (la UI actual no se toca):
+      `GET /api/market/quote/<symbol>?kind=equity|crypto&prefer=` y
+      `GET /api/market/providers` (qué hay configurado y por qué no lo que no).
+- [x] `GdeltProvider` normaliza noticias al esquema que consumirá M4, con
+      `source_kind` inferido y **descartando artículos sin URL** (sin URL no hay
+      procedencia posible, y M1 dejó claro que un hecho sin origen no entra).
+
+Pendiente (no bloquea M4):
+
+- [ ] Migrar las rutas existentes a la capa (hoy conviven: `/api/quote/` crudo
+      y `/api/market/quote/` normalizado).
+- [ ] Adapter de FMP y `get_history` en los de equities.
 
 ## M4 — Ingesta de eventos al grafo
 

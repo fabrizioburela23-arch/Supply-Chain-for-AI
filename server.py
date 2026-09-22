@@ -1027,6 +1027,43 @@ def quote(ticker):
     return jsonify(data)
 
 
+# ── Phase 1 · M3: cotización por la capa de PROVEEDORES ─────────────────────
+# Convive con /api/quote/<ticker> (que devuelve el JSON crudo de Finnhub y que
+# la UI actual sigue usando): esta ruta es la que cumple el contrato de
+# core/providers — esquema único, cascada con respaldo, y sobre todo `as_of` +
+# `age_seconds`, que es lo que permite NO fingir tiempo real.
+@app.route('/api/market/quote/<path:symbol>')
+@rate_limit(limit=120, window=60)
+@cache.cached(timeout=15, query_string=True)
+def market_quote(symbol):
+    from core.providers.market import crypto_registry, market_registry
+
+    kind = (request.args.get('kind') or 'equity').strip().lower()
+    reg = crypto_registry() if kind == 'crypto' else market_registry()
+    q, intentos = reg.get_quote(symbol, prefer=request.args.get('prefer'))
+    if not q:
+        # Se dice POR QUÉ no hay dato, distinguiendo "sin configurar" de "falló":
+        # un 404 mudo obligaría a adivinar cuál de las dos cosas pasó.
+        return jsonify({'error': 'sin cotización disponible', 'symbol': symbol,
+                        'attempts': intentos,
+                        'providers': reg.statuses()}), 404
+    return jsonify(q)
+
+
+@app.route('/api/market/providers')
+@rate_limit(limit=60, window=60)
+def market_providers():
+    """Qué proveedores hay, cuáles están configurados y por qué no los que no.
+    Honestidad de fuentes (spec §13): nada de fingir integraciones activas."""
+    from core.providers.market import crypto_registry, market_registry
+    from core.providers.news import news_registry
+    return jsonify({
+        'market': market_registry().statuses(),
+        'crypto': crypto_registry().statuses(),
+        'news': news_registry().statuses(),
+    })
+
+
 @app.route('/api/scalp/price/<path:symbol>')
 @rate_limit(limit=300, window=60)
 @cache.cached(timeout=2, query_string=True)
