@@ -850,6 +850,22 @@ def _diag_ontologia():
             return {'configured': False, 'ok': True,
                     'detail': 'Ontología no configurada (opcional). Añade el plugin de Postgres en '
                               'Railway y DATABASE_URL para activar /api/ontology/*.'}
+        # AUTO-REPARACIÓN: si la base arrancó DESPUÉS que la app (Railway lanza
+        # los contenedores en paralelo), init_schema pudo fallar en el boot y el
+        # esquema se quedó viejo — la app respondía 'column events.source_id
+        # does not exist'. Detectarlo aquí y repararlo convierte el botón
+        # "Re-probar" del panel en el arreglo, sin redesplegar.
+        from ontology.db import init_schema, schema_outdated
+        faltantes = schema_outdated()
+        if faltantes:
+            reparado = init_schema()
+            if not reparado or schema_outdated():
+                return {'configured': True, 'ok': False,
+                        'detail': f'Esquema desactualizado: faltan {", ".join(faltantes)}. '
+                                  'Se intentó reparar automáticamente y no se pudo — '
+                                  'reinicia el servicio en Railway (Deployments → Restart).'}
+            log.warning('Esquema de la ontología reparado en caliente: %s', faltantes)
+
         from ontology.db import session_scope
         from ontology.models import ObjectRecord, LinkRecord, Event
         with session_scope() as s:

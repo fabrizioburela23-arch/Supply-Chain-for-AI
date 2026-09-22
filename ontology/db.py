@@ -67,26 +67,64 @@ _COLUMNAS_TARDIAS = (
 )
 
 
-def init_schema():
-    """Crea las tablas si no existen (idempotente). Se llama al arrancar el
-    server si ontology_available() y también desde el script de migración."""
+def schema_outdated(engine=None):
+    """¿Falta alguna de las columnas tardías? Permite detectar una base con el
+    esquema viejo SIN tener que provocar el error en una consulta real."""
+    from sqlalchemy import inspect
+    try:
+        insp = inspect(engine or _get_engine())
+        existentes = set(insp.get_table_names())
+        faltan = []
+        for tabla, columna, _tipo in _COLUMNAS_TARDIAS:
+            if tabla not in existentes:
+                continue          # la tabla aún no existe: create_all la hará completa
+            cols = {c['name'] for c in insp.get_columns(tabla)}
+            if columna not in cols:
+                faltan.append(f'{tabla}.{columna}')
+        return faltan
+    except Exception:  # noqa: BLE001
+        return []     # si no se puede inspeccionar, no afirmamos nada
+
+
+def init_schema(retries=6, delay=2.0):
+    """Crea/actualiza el esquema (idempotente). Se llama al arrancar el server
+    y desde el script de migración.
+
+    REINTENTA a propósito: Railway arranca la app y Postgres EN PARALELO, así
+    que el primer intento puede encontrar la base todavía sin aceptar
+    conexiones. Sin reintento el esquema se quedaba sin actualizar hasta el
+    siguiente despliegue, y los endpoints fallaban con
+    'column events.source_id does not exist' — pasó en producción (sept-2026).
+
+    Nunca impide el arranque: si tras los reintentos sigue fallando, se registra
+    y la app sigue (el resto de la app no depende de la ontología)."""
+    import time as _time
+
     from sqlalchemy import text
     from ontology.models import Base
-    engine = _get_engine()
-    Base.metadata.create_all(engine)
 
-    # Nunca debe impedir el arranque: si un ALTER falla, la app sigue y el
-    # fallo se ve en los logs (mismo criterio que el resto de la ontología).
-    with engine.begin() as conn:
-        for tabla, columna, tipo in _COLUMNAS_TARDIAS:
-            try:
-                conn.execute(text(
-                    f'ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo}'))
-            except Exception as e:  # noqa: BLE001
-                log.warning('no se pudo añadir %s.%s (%s): %s', tabla, columna, tipo, e)
-    with engine.begin() as conn:
+    ultimo = None
+    for intento in range(1, max(1, retries) + 1):
         try:
-            conn.execute(text(
-                'CREATE INDEX IF NOT EXISTS ix_events_source_id ON events (source_id)'))
+            engine = _get_engine()
+            Base.metadata.create_all(engine)
+
+            with engine.begin() as conn:
+                for tabla, columna, tipo in _COLUMNAS_TARDIAS:
+                    conn.execute(text(
+                        f'ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo}'))
+                conn.execute(text(
+                    'CREATE INDEX IF NOT EXISTS ix_events_source_id ON events (source_id)'))
+
+            if intento > 1:
+                log.warning('init_schema: OK en el intento %d (la base tardó en arrancar)', intento)
+            return True
         except Exception as e:  # noqa: BLE001
-            log.warning('no se pudo crear ix_events_source_id: %s', e)
+            ultimo = e
+            if intento < retries:
+                # Arranque en paralelo: la base suele estar lista en segundos.
+                _time.sleep(delay * intento)
+
+    log.error('init_schema falló tras %d intentos (la app sigue, la ontología no): %s',
+              retries, ultimo)
+    return False

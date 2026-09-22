@@ -334,3 +334,62 @@ def test_base_existente_gana_las_columnas_sin_perder_datos(db):
     # y los datos previos siguen ahí
     with session_scope() as s:
         assert s.query(Event).count() == filas_antes
+
+
+def test_schema_outdated_detecta_columnas_faltantes(db):
+    """Permite ver el esquema viejo SIN provocar el error en una consulta."""
+    from sqlalchemy import text
+    from ontology.db import _get_engine, init_schema, schema_outdated
+
+    engine = _get_engine()
+    init_schema()
+    assert schema_outdated() == []
+
+    with engine.begin() as c:
+        c.execute(text('ALTER TABLE events DROP COLUMN IF EXISTS source_id'))
+    assert 'events.source_id' in schema_outdated()
+
+    init_schema()
+    assert schema_outdated() == []
+
+
+def test_el_diagnostico_repara_el_esquema_viejo(db):
+    """Caso REAL de producción (sept-2026): Railway arranca la app y Postgres en
+    paralelo; init_schema falló en el boot porque la base aún no aceptaba
+    conexiones, y como no se reintentaba, la app quedó sirviendo
+    'column events.source_id does not exist' hasta el siguiente despliegue.
+
+    El panel 🩺 debe detectarlo y repararlo, de modo que pulsar "Re-probar"
+    sea el arreglo — sin redesplegar."""
+    import server
+    from sqlalchemy import text
+    from ontology.db import _get_engine, init_schema, schema_outdated
+
+    engine = _get_engine()
+    init_schema()
+    with engine.begin() as c:
+        c.execute(text('ALTER TABLE events DROP COLUMN IF EXISTS source_id'))
+        c.execute(text('ALTER TABLE events DROP COLUMN IF EXISTS confidence'))
+    assert schema_outdated()
+
+    d = server._diag_ontologia()
+    assert d['ok'] is True, d['detail']
+    assert schema_outdated() == []
+
+
+def test_init_schema_reintenta_y_no_tumba_el_arranque(monkeypatch):
+    """La base puede tardar en aceptar conexiones. init_schema reintenta, y si
+    aun así falla, devuelve False en vez de propagar: el resto de la app no
+    depende de la ontología."""
+    from ontology import db as dbmod
+
+    intentos = {'n': 0}
+
+    def _falla_siempre():
+        intentos['n'] += 1
+        raise RuntimeError('la base todavía no acepta conexiones')
+
+    monkeypatch.setattr(dbmod, '_get_engine', _falla_siempre)
+    ok = dbmod.init_schema(retries=3, delay=0)   # delay 0: el test no espera
+    assert ok is False
+    assert intentos['n'] == 3                    # reintentó de verdad
