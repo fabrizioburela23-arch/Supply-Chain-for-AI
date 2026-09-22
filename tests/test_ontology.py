@@ -275,3 +275,21 @@ def test_migration_is_isomorphic_with_grafo_v0():
     assert n_seat_db == n_seats
     # links >= los base (algunos hechos temporales pueden duplicar pares, es esperado — ver docstring del script)
     assert n_link >= len(g['links'])
+
+
+def test_as_of_y_diff_aceptan_texto_o_datetime(db):
+    """Regresión: ambas asumían datetime y reventaban con un string. La ruta
+    HTTP lo tapaba porque parsea antes de llamar, así que el fallo solo salía
+    al usar las funciones directamente — justo como las usa la ingesta."""
+    from datetime import datetime, timezone
+    from ontology.db import session_scope
+    from ontology.service import as_of_graph, diff_graph
+
+    fecha_txt, fecha_dt = '2020-01-01', datetime(2020, 1, 1, tzinfo=timezone.utc)
+    hasta_txt, hasta_dt = '2021-01-01', datetime(2021, 1, 1, tzinfo=timezone.utc)
+
+    with session_scope() as s:
+        assert as_of_graph(s, fecha_txt)['counts'] == as_of_graph(s, fecha_dt)['counts']
+        assert as_of_graph(s)['counts']['nodes'] >= 0        # sin argumento = ahora
+        assert (diff_graph(s, fecha_txt, hasta_txt)['counts']
+                == diff_graph(s, fecha_dt, hasta_dt)['counts'])

@@ -3,7 +3,7 @@
 Milestones derivados de la auditoría en `docs/ARCHITECTURE.md`. Cada uno es
 **aditivo**, tiene tests, y deja la app desplegable al terminar.
 
-Estado global: **M1, M2 (núcleo) y M3 completos**. M4-M6 planificados.
+Estado global: **M1, M2 (núcleo), M3 y M4 (noticias) completos**. M5-M6 planificados.
 
 ---
 
@@ -112,18 +112,46 @@ Pendiente (no bloquea M4):
       y `/api/market/quote/` normalizado).
 - [ ] Adapter de FMP y `get_history` en los de equities.
 
-## M4 — Ingesta de eventos al grafo
+## M4 — Ingesta de eventos al grafo ✅ NOTICIAS COMPLETAS
 
-> Spec §6 y §10. Depende de M1 (procedencia) y M2 (identidad).
+> Spec §6 y §10. Aquí convergen los tres milestones anteriores: M3 trae el
+> artículo, M1 lo registra como fuente citable, M2 decide a qué entidad se pega.
 
-- [ ] GDELT y SEC dejan de ser passthrough: las noticias se normalizan a
-      `NewsItem` (tipo ya declarado en el vocabulario) con su `Source`, y se
-      enlazan (`reports_on`, ya en el vocabulario) a las entidades que
-      mencionan.
+- [x] **Las noticias dejan de ser un pasamanos.** Antes GDELT se consultaba, se
+      devolvía al navegador y ahí moría: la URL se descartaba y solo sobrevivía
+      un resumen en texto dentro de una anotación.
+- [x] `ontology/ingest_news.py`: crea `NewsItem` + `Source` y los enlaza con
+      `reports_on` / `published_by`. Los tres estaban **declarados en el
+      vocabulario sin una línea de código** — mismo patrón que `Source` antes
+      de M1.
+- [x] **`valid_from` = fecha de PUBLICACIÓN, no de ingesta.** Es la razón de
+      ser del modelo bitemporal: consultar `as_of` una fecha devuelve lo que se
+      sabía entonces. Hay test que lo comprueba (0 → 1 → 2 noticias según
+      avanza la fecha).
+- [x] **Idempotente**: el id sale de la URL normalizada, así que reingerir no
+      duplica y el mismo artículo con `?utm_source=…` es el mismo objeto.
+- [x] **El vínculo con la empresa es por CONSTRUCCIÓN**, no por adivinanza: se
+      piden noticias PARA una entidad. Escanear texto buscando menciones y
+      pegar hechos a quien se parezca es como se contamina un grafo.
+- [x] **La confianza de la noticia hereda la de su fuente**: un filing (trust 3)
+      y un agregador anónimo (trust 1) no valen lo mismo, y los agentes de
+      Fase 2 necesitan poder distinguirlo.
+- [x] Robustez: un artículo sin URL se descarta sin romper el lote, un
+      proveedor caído no revienta la ingesta, y **una noticia no puede crear
+      empresas** (para eso está `IncorporarEmpresa`, que pasa por revisión).
+- [x] API: `GET /api/ontology/objects/<id>/news` (solo lee; abrir una ficha no
+      dispara llamadas externas) y `POST /api/ontology/ingest/news`.
+- [x] **Bug latente corregido**: `as_of_graph` y `diff_graph` asumían recibir
+      un datetime y reventaban con texto. La ruta HTTP lo tapaba porque parsea
+      antes, así que el fallo solo aparecía al usarlas directamente — justo
+      como las usa la ingesta.
+
+Pendiente de M4 (no bloquea M5/M6):
+
 - [ ] `CorporateEvent` N-ario (earnings, M&A) sobre la abstracción de
-      hiperaristas que **ya existe** (`Factor` + `affects`), sin esquema nuevo.
-- [ ] Bus de eventos interno con suscriptores, preparado para streaming.
-      Hoy la ingesta es por corrida manual (`/api/ontology/agents/run`) —
+      hiperaristas que ya existe (`Factor` + `affects`), sin esquema nuevo.
+- [ ] SEC EDGAR como proveedor de noticias primarias (hoy solo resuelve CIK).
+- [ ] Bus de eventos con suscriptores. Hoy la ingesta es bajo demanda —
       decisión deliberada: gunicorn con 1 worker no admite scheduler interno.
 
 ## M5 — Completar la Graph API

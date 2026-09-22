@@ -530,6 +530,55 @@ def alerts_check():
         return jsonify({'fired': fired, 'count': len(fired)})
 
 
+@ontology_bp.route('/objects/<object_id>/news')
+@_require_db
+def object_news(object_id):
+    """Noticias que informan sobre una entidad, ya en el grafo (Phase 1 · M4).
+    Solo LEE: no dispara ingesta, para que abrir una ficha no provoque
+    llamadas a proveedores externos sin que nadie lo pida."""
+    from ontology.ingest_news import news_for_object
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 200)
+    except (TypeError, ValueError):
+        limit = 20
+    with session_scope() as s:
+        obj = get_object(s, object_id)
+        if not obj:
+            return jsonify({'error': f'objeto no encontrado: {object_id}'}), 404
+        items = news_for_object(s, object_id, limit=limit)
+        return jsonify({'object_id': object_id, 'label': obj.label,
+                        'count': len(items), 'news': items})
+
+
+@ontology_bp.route('/ingest/news', methods=['POST'])
+@_require_db
+def ingest_news():
+    """Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4).
+    Body: {entity_id, query?, limit?, actor?}.
+
+    Escribe: crea `NewsItem` + `Source` y los enlaza con `reports_on` /
+    `published_by`. Es idempotente (el id sale de la URL), así que repetirlo no
+    duplica. La noticia entra directo por ser una observación con fuente
+    comprobable; su interpretación sigue pasando por la cola de aprobación."""
+    from ontology.ingest_news import ingest_news_for
+    body = request.get_json(force=True, silent=True) or {}
+    entity_id = (body.get('entity_id') or '').strip()
+    if not entity_id:
+        return jsonify({'error': 'entity_id es requerido'}), 400
+    actor = (body.get('actor') or '').strip()
+    if not actor:
+        return jsonify({'error': 'actor es requerido — toda escritura queda atribuida'}), 400
+    try:
+        limit = min(max(int(body.get('limit', 10)), 1), 50)
+    except (TypeError, ValueError):
+        limit = 10
+
+    with session_scope() as s:
+        res = ingest_news_for(s, entity_id, query=body.get('query'),
+                              limit=limit, actor=actor)
+    return (jsonify(res), 200) if res.get('ok') else (jsonify(res), 404)
+
+
 @ontology_bp.route('/sources')
 @_require_db
 def sources_list():

@@ -227,8 +227,12 @@ def _links_active_at(session, as_of_dt):
 
 
 def as_of_graph(session, as_of_dt=None):
-    """Grafo (nodos + aristas) vigente en `as_of_dt` (default: ahora)."""
-    as_of_dt = as_of_dt or _utcnow()
+    """Grafo (nodos + aristas) vigente en `as_of_dt` (default: ahora).
+
+    Acepta datetime o texto ('2026-04-01'). Antes asumía datetime y reventaba
+    con un string —la ruta HTTP lo esquivaba porque parsea antes de llamar—,
+    así que el fallo solo aparecía al usar la función directamente."""
+    as_of_dt = _parse_dt(as_of_dt) or _utcnow()
     links = _links_active_at(session, as_of_dt)
     node_ids = set()
     for l in links:
@@ -240,7 +244,12 @@ def as_of_graph(session, as_of_dt=None):
 
 
 def diff_graph(session, from_dt, to_dt):
-    """Qué vínculos aparecieron/desaparecieron entre dos fechas de validez."""
+    """Qué vínculos aparecieron/desaparecieron entre dos fechas de validez.
+
+    Acepta datetime o texto, igual que as_of_graph: ambas tenían el mismo fallo
+    latente (asumían datetime y la ruta HTTP lo tapaba parseando antes)."""
+    from_dt = _parse_dt(from_dt) or _utcnow()
+    to_dt = _parse_dt(to_dt) or _utcnow()
     a = {(l['source'], l['target'], l['rel_type']) for l in _links_active_at(session, from_dt)}
     b = {(l['source'], l['target'], l['rel_type']) for l in _links_active_at(session, to_dt)}
     added = b - a
