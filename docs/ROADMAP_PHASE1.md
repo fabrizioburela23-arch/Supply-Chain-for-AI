@@ -3,7 +3,7 @@
 Milestones derivados de la auditoría en `docs/ARCHITECTURE.md`. Cada uno es
 **aditivo**, tiene tests, y deja la app desplegable al terminar.
 
-Estado global: **M1 completo**. M2-M6 planificados.
+Estado global: **M1 y M2 (núcleo) completos**. M3-M6 planificados.
 
 ---
 
@@ -34,23 +34,43 @@ Estado global: **M1 completo**. M2-M6 planificados.
       caracteres y se volcaban a `Event.source`, que es `String(60)` →
       truncamiento/error de escritura.
 
-## M2 — Identidad de entidad
+## M2 — Identidad de entidad ✅ NÚCLEO COMPLETO
 
-> Spec §8. Segundo porque la ingesta automática (M4) necesita saber a qué
+> Spec §8. Va segundo porque la ingesta automática (M4) necesita saber a qué
 > entidad pegar un hecho sin duplicar.
 
-- [ ] `external_ids` estructurado por entidad: `{ticker, mic, cik, isin, lei}`
-      con índice y unicidad, en vez del `mkt`/`ticker` que hoy cae en el JSONB
-      por un barrido genérico.
-- [ ] `aliases[]` tipados (legal / comercial / ticker / ASR / histórico) con
-      validez temporal — hoy están repartidos en tres literales inconexos
-      (`VOICE_ALIAS`, `NODE_ID_ALIAS`, derivación de paréntesis).
-- [ ] **Exportar `NODE_ID_ALIAS` a `data/grafo_v0.json`**: hoy muere en la
-      frontera cliente→servidor, y por eso la base de producción conserva los
-      duplicados que el cliente resuelve en memoria.
-- [ ] Un solo resolvedor server-side (hoy hay **cuatro** divergentes) que
-      persista `{método, score, alias usado}` — hoy se calcula y se tira.
-- [ ] Persistir CIK (hoy se resuelve ad-hoc contra SEC y se descarta).
+- [x] **`NODE_ID_ALIAS` ya cruza la frontera cliente→servidor.** Era el defecto
+      raíz: el exportador la usaba como ENTRADA del merge pero no la incluía en
+      `data/grafo_v0.json`, así que ni la migración ni el servidor la veían.
+      Ahora se exporta (81 alias) y el snapshot sigue dando 949 nodos / 2.526
+      links, idénticos.
+- [x] **Un solo resolvedor server-side** (`core/entities.py`) que reemplaza a
+      los tres divergentes. Escalera auditable: id 100 · ticker 98 · label 95 ·
+      alias 92 · sufijo societario 88-90 · prefijo único 70 · subcadena única 60.
+      Un prefijo/subcadena **ambiguo no resuelve**: dos candidatos = ninguno.
+- [x] **Devuelve CÓMO resolvió**, no solo qué: `{id, score, method, matched}`.
+      Sin el método no se puede auditar por qué un texto acabó en una entidad.
+- [x] **Dos umbrales distintos a propósito**: `UMBRAL_ESCRITURA=85` (solo
+      exacto/ticker/alias) y `UMBRAL_BUSQUEDA=60`. Un match flojo al escribir
+      en la ontología la corrompe en silencio; al buscar solo molesta.
+- [x] **`ontology/agents.py:_resolve` usa el resolvedor único.** Es el camino
+      que consume nombres GENERADOS POR UN LLM: antes solo probaba slug y label
+      exacto, así que "NVIDIA Corporation", "NVDA" o "AWS" fallaban en silencio
+      y el hecho se perdía. Confirma contra la base antes de devolver.
+- [x] `external_ids` estructurado: `parse_ticker()` separa el campo sucio del
+      catálogo (`'RGTI · Nasdaq'`) en `{ticker, exchange}`.
+
+Pendiente de M2 (no bloquea a M3/M4):
+
+- [ ] Persistir `aliases[]` y `external_ids{}` en las propiedades de cada
+      objeto durante la migración (hoy el resolvedor los lee del snapshot).
+- [ ] CIK/ISIN/LEI: hoy CIK se resuelve ad-hoc contra SEC y se descarta;
+      ISIN y LEI no existen.
+- [ ] Persistir la decisión de resolución (método+score) cuando un agente
+      escribe, para poder medir falsos positivos.
+- [ ] Enriquecer alias con nombres legales completos: "Taiwan Semiconductor"
+      no resuelve porque el catálogo llama a esa empresa solo "TSMC", y el
+      resolvedor —correctamente— prefiere no adivinar.
 - [ ] Matches de baja confianza → cola `ProposedAction` (el patrón ya existe).
 
 ## M3 — Interfaces de proveedor

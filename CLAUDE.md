@@ -27,7 +27,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   `config.py` (keys IA/Finnhub/timeout), `http.py` (_safe_get/_safe_ticker +
   `rate_limit`, el decorador que usan server/matrix/ontology),
   `ai.py` (cascada Claude→Gemini→NVIDIA + _extract_json), `quotes.py`
-  (_fetch_quote_raw). Rompe la dependencia circular ontology→server.
+  (_fetch_quote_raw), `entities.py` (Phase 1 M2: EL resolvedor server-side —
+  id/ticker/label/alias/sufijo, devuelve {id,score,method,matched}; dos
+  umbrales: ESCRITURA 85 vs BÚSQUEDA 60). Rompe la circularidad ontology→server.
 - `matrix/` (paquete Python, opcional): motor de matrices — `engine.py`
   (build_matrices por rel_type + as_of, active_factors=hiperaristas,
   fragility, propagate=EL kernel de shocks, compute_metrics/chokepoints),
@@ -36,7 +38,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503.
 - `ontology/` (paquete Python): ontología Palantir-style —
   `models.py` (events bitemporal + objects/links materializados +
-  ProposedAction + Alert), `service.py` (apply_event, as_of_graph, diff_graph),
+  ProposedAction + Alert + InsightSnapshot), `provenance.py` (Phase 1 M1:
+  Source como ENTIDAD, id derivado de la URL, trust del vocabulario),
+  `service.py` (apply_event con source_id/confidence, as_of_graph, diff_graph),
   `actions.py` (catálogo de 13 Acciones auditadas, Pydantic — incluye
   Activar/DesactivarFactor), `agents.py`
   (4 agentes + brief matinal + evaluador de alertas), `api.py` (blueprint).
@@ -55,8 +59,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   ontology.js/ontology_facts.js (tipos y hechos tipados) +
   temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js.
 - `scripts/`: export_graph_v0.js (snapshot) · migrate_v0_to_ontology.py.
-- `data/grafo_v0.json`: snapshot canónico (407 nodos / 1,028 links) — se
-  regenera con `node scripts/export_graph_v0.js` (usa nodes/merge_graph.js,
+- `data/grafo_v0.json`: snapshot canónico (949 nodos / 2.526 links + la tabla
+  `node_id_alias`, que antes NO se exportaba y por eso el servidor no podía
+  resolver alias) — se regenera con `node scripts/export_graph_v0.js` (usa nodes/merge_graph.js,
   la MISMA implementación de merge que el navegador; nunca duplicar).
 - `sim/`: scenario_builder.js (seeds de escenario; `buildScenarioSeed`).
 - ELIMINADOS (no recrear): `rag/` (nunca desplegado), `litellm/`,
@@ -177,7 +182,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (118 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (144 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -211,6 +216,11 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 
 ## Errores comunes
+
+- **Los proveedores de IA RETIRAN modelos.** En sept-2026 Gemini (404) y NVIDIA
+  (410) cayeron a la vez por eso, justo cuando Claude se quedó sin saldo: cero
+  red de seguridad. El arreglo NUNCA es tocar código — es `GEMINI_MODEL` /
+  `NVIDIA_MODEL` en Railway. El 🩺 ya lo dice explícitamente (`_ai_error_hint`).
 
 - `switchTab('sim')` → INCORRECTO, es `'simulation'`.
 - Olvidar el bump de sw.js → los usuarios ven código viejo.

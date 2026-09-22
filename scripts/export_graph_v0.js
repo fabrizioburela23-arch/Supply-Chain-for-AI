@@ -64,6 +64,11 @@ const out = {
   },
   nodes: NODES.map(n => Object.assign({ sector: CAT_TO_SECTOR[n.cat] || 'cloud_ia' }, n)),
   links: result.LINKS,
+  // La tabla de alias entraba al merge como INPUT pero no salía al snapshot, así
+  // que moría en la frontera cliente→servidor: la migración nunca la veía y el
+  // servidor no podía resolver "NVDA"/"NVIDIA Corporation" → Nvidia. Sin esto,
+  // un nombre generado por un LLM no se puede pegar a su entidad.
+  node_id_alias: g('NODE_ID_ALIAS') || {},
   categories: CATS,
   sectors9: g('SECTORS9'),
   cat_to_sector: CAT_TO_SECTOR,

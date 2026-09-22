@@ -30,10 +30,18 @@ AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5'
 # ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──
 # Si un canal falla (o no tiene key), pasa al siguiente automáticamente.
 # NVIDIA NIM (build.nvidia.com) y Gemini tienen tier gratis útil para el MVP.
+#
+# ⚠️ LOS PROVEEDORES RETIRAN MODELOS. En sept-2026 los dos respaldos estaban
+# caídos por eso: `gemini-2.0-flash` daba 404 y `meta/llama-3.1-70b-instruct`
+# daba 410 Gone — justo cuando Claude se quedó sin saldo, así que no hubo red.
+# Estos valores son el mejor default conocido, NO una garantía: si el 🩺 dice
+# "modelo retirado", el arreglo es poner GEMINI_MODEL / NVIDIA_MODEL en Railway
+# con un modelo vigente del catálogo del proveedor. No hace falta tocar código
+# ni desplegar.
 GEMINI_KEY   = os.getenv('GEMINI_KEY') or os.getenv('GOOGLE_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
 NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
-NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.1-70b-instruct')
+NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.3-70b-instruct')
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
 
 HTTP_TIMEOUT = 8

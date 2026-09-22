@@ -352,7 +352,17 @@ class TejedorHiperaristas:
         return [{'company': c} for c in companies]
 
     def _resolve(self, session, name):
-        """nombre → id de una empresa EXISTENTE (por slug o por label), o None."""
+        """nombre → id de una empresa EXISTENTE, o None.
+
+        Este camino consume nombres GENERADOS POR UN LLM, que rara vez coinciden
+        carácter a carácter con el id o el label: dice "NVIDIA Corporation",
+        "NVDA" o "AWS". Antes solo probaba slug y label exacto, así que esos
+        casos fallaban en silencio y el hecho se perdía.
+
+        Ahora pasa por el resolvedor único (core/entities), que conoce la tabla
+        de alias del merge. Umbral de ESCRITURA (85): exacto, ticker o alias —
+        nada de prefijos ni subcadenas. Un match flojo al escribir en la
+        ontología corrompe el grafo en silencio, que es peor que no escribir."""
         if not name:
             return None
         sid = _slug(str(name))
@@ -361,7 +371,18 @@ class TejedorHiperaristas:
         row = session.scalars(select(ObjectRecord).where(
             sqlfunc.lower(ObjectRecord.label) == str(name).strip().lower(),
             ObjectRecord.type == 'Company')).first()
-        return row.id if row else None
+        if row:
+            return row.id
+        try:
+            from core.entities import resolve, UMBRAL_ESCRITURA
+            r = resolve(name, umbral=UMBRAL_ESCRITURA)
+            # el resolvedor trabaja sobre el snapshot: confirmar que el objeto
+            # existe DE VERDAD en la base antes de devolverlo
+            if r and session.get(ObjectRecord, r['id']):
+                return r['id']
+        except Exception:  # noqa: BLE001 — resolver nunca debe tumbar al agente
+            pass
+        return None
 
     def propose(self, session, signal):
         c = signal['company']

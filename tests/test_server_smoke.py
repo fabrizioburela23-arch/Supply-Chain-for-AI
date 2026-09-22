@@ -167,3 +167,26 @@ def test_engine_files_exist():
                   'engine/voice.js', 'engine/secondbrain.js']:
         path = os.path.join(base, fname)
         assert os.path.exists(path), f"Missing: {fname}"
+
+
+def test_ai_error_hint_es_accionable():
+    """Un '404' pelado no le dice a nadie qué hacer. Los proveedores retiran
+    modelos (sept-2026: gemini-2.0-flash 404 y llama-3.1-70b 410 a la vez,
+    dejando la app sin respaldo justo cuando Claude se quedó sin saldo).
+    El 🩺 debe nombrar la variable de entorno que lo arregla."""
+    from server import _ai_error_hint as hint
+
+    retirado = hint('Gemini HTTP 404', 'gemini-2.5-flash', 'GEMINI_MODEL')
+    assert 'GEMINI_MODEL' in retirado and 'retirado' in retirado
+    assert 'gemini-2.5-flash' in retirado
+
+    assert 'NVIDIA_MODEL' in hint('NVIDIA HTTP 410', 'm', 'NVIDIA_MODEL')
+
+    saldo = hint('Error code: 400 — your credit balance is too low', 'm', 'X')
+    assert 'aldo' in saldo  # "saldo agotado"
+
+    assert 'ímite' in hint('HTTP 429 quota exceeded', 'm', 'X')      # límite
+    assert 'key' in hint('401 unauthorized', 'm', 'X').lower()
+
+    # sin pista reconocible NO se inventa una explicación
+    assert hint('algo completamente inesperado', 'm', 'X') == ''

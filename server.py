@@ -703,11 +703,37 @@ def _diag_claude():
             except Exception as e:  # noqa: BLE001
                 res[label] = f'{mid} ✗ ({_diag_redact(e)})'
         detail = 'FAST: ' + res['fast'] + ' · DEEP: ' + res['deep']
+        if not oks:
+            # Los dos niveles fallaron: la causa suele ser una sola (saldo,
+            # key, modelo retirado). Se dice una vez, en claro.
+            detail += _ai_error_hint(res['fast'] + ' ' + res['deep'],
+                                     AI_MODEL_FAST, 'AI_MODEL_FAST/AI_MODEL_DEEP')
         return {'configured': True, 'ok': bool(oks), 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': detail}
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': 'Key presente pero la API rechazó la llamada: ' + _diag_redact(e)}
+
+
+def _ai_error_hint(err_text, modelo, env_var):
+    """Traduce el error crudo de un proveedor de IA a algo accionable.
+
+    Un '404'/'410' pelado no le dice a nadie qué hacer. Los proveedores RETIRAN
+    modelos: pasó en sept-2026 con gemini-2.0-flash (404) y
+    meta/llama-3.1-70b-instruct (410) a la vez, dejando la app sin respaldo.
+    El arreglo nunca es tocar código — es cambiar la variable de entorno."""
+    s = str(err_text)
+    if '404' in s or '410' in s or 'not found' in s.lower() or 'not_found' in s.lower():
+        return (f' → El modelo «{modelo}» ya no existe en el proveedor (retirado). '
+                f'Arreglo: pon {env_var} en Railway con un modelo vigente de su catálogo. '
+                f'No hace falta desplegar.')
+    if '401' in s or '403' in s or 'api key' in s.lower() or 'unauthorized' in s.lower():
+        return ' → La key parece inválida o sin permisos para ese modelo.'
+    if '429' in s or 'quota' in s.lower() or 'rate' in s.lower():
+        return ' → Límite de uso alcanzado (cuota o rate-limit). Espera o sube el plan.'
+    if 'credit' in s.lower() or 'balance' in s.lower() or 'billing' in s.lower():
+        return ' → Saldo agotado: recarga en la consola del proveedor.'
+    return ''
 
 
 def _diag_gemini():
@@ -720,8 +746,11 @@ def _diag_gemini():
         return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': f'Key válida — {model} respondió.'}
     except Exception as e:  # noqa: BLE001
+        from core.config import GEMINI_MODEL
+        red = _diag_redact(e)
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'Gemini rechazó la llamada: ' + _diag_redact(e)}
+                'detail': 'Gemini rechazó la llamada: ' + red
+                          + _ai_error_hint(red, GEMINI_MODEL, 'GEMINI_MODEL')}
 
 
 def _diag_nvidia():
@@ -734,8 +763,11 @@ def _diag_nvidia():
         return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': f'Key válida — {model} respondió.'}
     except Exception as e:  # noqa: BLE001
+        from core.config import NVIDIA_MODEL
+        red = _diag_redact(e)
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'NVIDIA rechazó la llamada: ' + _diag_redact(e)}
+                'detail': 'NVIDIA rechazó la llamada: ' + red
+                          + _ai_error_hint(red, NVIDIA_MODEL, 'NVIDIA_MODEL')}
 
 
 def _diag_elevenlabs():
