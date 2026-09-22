@@ -809,6 +809,37 @@ def _diag_elevenlabs():
                 'detail': 'No se pudo contactar ElevenLabs: ' + _diag_redact(e)}
 
 
+def _db_error_hint(err_text):
+    """Traduce un error de conexión a base de datos a algo accionable.
+
+    Mismo criterio que `_ai_error_hint`: un traceback de psycopg2 no le dice a
+    nadie qué hacer. El caso real (sept-2026): DATABASE_URL apuntaba a
+    'postgres.railway.internal' — el host de la red privada de Railway — pero
+    el servicio Postgres ya no existía con ese nombre, así que el DNS interno
+    no resolvía. Un texto literal en la variable envejece; una REFERENCIA
+    (${{Postgres.DATABASE_URL}}) la resuelve Railway sola y nunca se queda
+    obsoleta."""
+    s = str(err_text).lower()
+    if 'railway.internal' in s and ('translate host name' in s or 'name or service not known' in s):
+        return (' → El servicio de base de datos no existe con ese nombre en el proyecto. '
+                'En Railway: crea el Postgres (+ New → Database) y pon la variable como '
+                'REFERENCIA, no como texto: DATABASE_URL = ${{Postgres.DATABASE_URL}} '
+                '(usa el nombre EXACTO que aparece en la tarjeta del servicio). '
+                'Así Railway la resuelve sola y no vuelve a quedarse obsoleta.')
+    if 'translate host name' in s or 'name or service not known' in s or 'nodename nor servname' in s:
+        return (' → El host de la base de datos no resuelve: el servidor no existe, cambió de '
+                'nombre, o la instancia gratuita se borró por inactividad.')
+    if 'password authentication failed' in s or 'authentication' in s:
+        return ' → El host responde pero las credenciales no son válidas: revisa usuario/contraseña.'
+    if 'does not exist' in s and 'database' in s:
+        return ' → El servidor responde pero esa base de datos no existe.'
+    if 'connection refused' in s:
+        return ' → El host resuelve pero nadie escucha en ese puerto: ¿el servicio está apagado?'
+    if 'timeout' in s or 'timed out' in s:
+        return ' → Tiempo de espera agotado: red o firewall entre la app y la base.'
+    return ''
+
+
 def _diag_ontologia():
     """Ontología (Postgres, Fase 1 del roadmap): fuente única de verdad de
     objetos/vínculos con historia bitemporal. Feature opcional — si
@@ -830,7 +861,9 @@ def _diag_ontologia():
         return {'configured': True, 'ok': True,
                 'detail': f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.{lineage}'}
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'detail': 'Ontología configurada pero no conecta: ' + _diag_redact(e)}
+        red = _diag_redact(e)
+        return {'configured': True, 'ok': False,
+                'detail': 'Ontología configurada pero no conecta: ' + red + _db_error_hint(red)}
 
 
 def _diag_grafo():
@@ -858,7 +891,8 @@ def _diag_grafo():
                 'detail': 'Neo4j conectado — memoria temporal persistente activa.' + ctx}
     except Exception as e:  # noqa: BLE001
         return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e) + ctx + warn}
+                'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e)
+                          + _db_error_hint(_diag_redact(e)) + ctx + warn}
 
 
 def _diag_alpaca():

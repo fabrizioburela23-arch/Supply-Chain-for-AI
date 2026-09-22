@@ -190,3 +190,29 @@ def test_ai_error_hint_es_accionable():
 
     # sin pista reconocible NO se inventa una explicación
     assert hint('algo completamente inesperado', 'm', 'X') == ''
+
+
+def test_db_error_hint_es_accionable():
+    """Un traceback de psycopg2 no le dice a nadie qué hacer. Caso real
+    (sept-2026): DATABASE_URL apuntaba a 'postgres.railway.internal' pero el
+    servicio ya no existía con ese nombre, y el panel solo mostraba el error
+    crudo. El 🩺 debe nombrar la solución: variable como REFERENCIA."""
+    from server import _db_error_hint as hint
+
+    railway = hint('could not translate host name "postgres.railway.internal" '
+                   'to address: Name or service not known')
+    assert 'REFERENCIA' in railway
+    assert 'DATABASE_URL' in railway
+
+    # un host que no resuelve pero no es Railway → pista genérica, no la de Railway
+    neo = hint('Failed to DNS resolve address a83aa2de.databases.neo4j.io:7687: '
+               'Name or service not known')
+    assert 'no resuelve' in neo
+    assert 'REFERENCIA' not in neo
+
+    assert 'credenciales' in hint('FATAL: password authentication failed for user "postgres"')
+    assert 'apagado' in hint('connection refused')
+    assert 'espera' in hint('connection timed out')
+
+    # sin pista reconocible NO se inventa una explicación
+    assert hint('algo completamente inesperado') == ''
