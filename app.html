@@ -2554,7 +2554,10 @@ function resize(){
   W=r.width; H=r.height;
   setForces();
   positionRegionLabels();
-  sim.alpha(.4).restart();
+  // Reasentado LIGERO: resize se dispara al girar el móvil y al ocultarse la
+  // barra del navegador. Un re-layout completo en cada uno sería peor que el
+  // problema que arregla.
+  settleGraph(.15, 60);
 }
 
 const linkSel = linkLayer.selectAll('line').data(LINKS).join('line')
@@ -2632,15 +2635,40 @@ nodeSel.append('text')
   .style('opacity', d => computeNodeRadius(d.id) >= 13 ? 1 : 0);
 
 nodeSel.call(d3.drag()
-  .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.2).restart();d.fx=d.x;d.fy=d.y;})
+  .on('start',(e,d)=>{if(!e.active){_liveTick=true;sim.alphaTarget(.2).restart();}d.fx=d.x;d.fy=d.y;})
   .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;})
-  .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;}));
+  .on('end',(e,d)=>{if(!e.active){sim.alphaTarget(0);_liveTick=false;settleGraph(.08,40);}d.fx=null;d.fy=null;}));
 
-sim.on('tick',()=>{
+/* ── Rendimiento del mapa: la física se calcula SIN dibujar ────────────────
+   Antes cada tick escribía ~11.000 atributos al DOM (2.526 enlaces × 4 +
+   949 nodos), y la simulación tarda ~150 ticks en asentarse → ~1,6 millones
+   de escrituras cada vez que arrancaba: al cargar, al filtrar y al arrastrar.
+   En un teléfono eso es lo que se sentía lento.
+
+   Ahora la simulación se adelanta en memoria (sim.tick() NO dispara el evento
+   'tick' en d3, justo para esto) y se pinta UNA vez con las posiciones ya
+   finales. Excepción: mientras arrastras SÍ se pinta en vivo, porque ahí el
+   movimiento es la respuesta a tu dedo. Mismo resultado visual, sin el baile
+   inicial.                                                                  */
+function _paintGraph(){
   linkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
          .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
   nodeSel.attr('transform',d=>`translate(${d.x},${d.y})`);
-});
+}
+let _liveTick = false;   // solo true mientras se arrastra un nodo
+sim.on('tick',()=>{ if(_liveTick) _paintGraph(); });
+
+function settleGraph(alpha=.4, maxTicks=200){
+  try{
+    sim.stop();
+    sim.alpha(alpha);
+    const minA = sim.alphaMin();
+    for(let i=0;i<maxTicks && sim.alpha()>minA;i++) sim.tick();
+    sim.stop();
+  }catch(e){ /* si algo falla, al menos pintamos lo que haya */ }
+  _paintGraph();
+}
+window.settleGraph = settleGraph;
 
 svg.on('click',()=>{ if(stressId||pathfinderMode) return; deselect(); });
 
@@ -3473,7 +3501,7 @@ function applyView(mode){
   renderLegend();
   renderBand();
   refreshStyles();
-  sim.alpha(.75).restart();
+  settleGraph(.75, 220);
 }
 document.querySelectorAll('#view-seg button').forEach(b=>{
   b.onclick=()=>applyView(b.dataset.view);
@@ -3700,7 +3728,15 @@ function onStressMobile(){ if(isMobile()){ closeToolbar(); openSheet(); } }
 setTimeout(()=>{ if(isMobile()) fitToView(650); },1900);
 
 /* ===================== Init ===================== */
-window.addEventListener('resize',resize);
+// Amortiguado a propósito: en el móvil este evento se dispara en ráfaga al
+// ocultarse/mostrarse la barra del navegador durante el scroll, y ahora cada
+// resize reasienta la física (trabajo síncrono). Sin esto, el arreglo de
+// rendimiento se convertiría en un problema de rendimiento.
+let _resizeT = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeT);
+  _resizeT = setTimeout(resize, 150);
+});
 setTimeout(resize,60);
 
 
