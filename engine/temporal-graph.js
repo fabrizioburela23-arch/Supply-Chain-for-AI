@@ -1051,7 +1051,7 @@
           <button id="tkg-obj-action" style="font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid #43C89688;background:rgba(67,200,150,.10);color:#43C896;cursor:pointer">＋ Acción</button>
         </div>
         <div id="tkg-obj-action-form" style="display:none;margin:0 0 12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)"></div>
-        <div id="tkg-obj-action-log" style="margin:0 0 4px"></div>
+        <div id="tkg-obj-timeline" style="margin:0 0 4px"></div>
         ${isCompany ? `
           <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px">Depende de (upstream)</div>${chipRow(up, '↑ ')}
           <div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-top:8px">Le abastece a (downstream)</div>${chipRow(down, '↓ ')}` : ''}
@@ -1069,7 +1069,7 @@
     const bAi = p.querySelector('#tkg-obj-ai'); if (bAi) bAi.onclick = () => _objAnalyze(id, e.label, mkt);
     const bNews = p.querySelector('#tkg-obj-news'); if (bNews) bNews.onclick = () => _objNews(id, e.label, mkt);
     const bAction = p.querySelector('#tkg-obj-action'); if (bAction) bAction.onclick = () => _toggleActionForm(id, isCompany, e.label);
-    _renderActionLog(id);
+    _renderTimeline(id);
     if (isCompany) _loadNrsLineage(id);
   }
 
@@ -1168,30 +1168,106 @@
       if (ok) {
         status.textContent = '✓ guardado'; status.style.color = '#43C896';
         form.style.display = 'none';
-        _renderActionLog(id);
+        _renderTimeline(id);
       } else {
         status.textContent = '⚠ ' + (d.error || 'error'); status.style.color = '#f87171';
       }
     }).catch(() => { status.textContent = '⚠ error de red'; status.style.color = '#f87171'; });
   }
 
-  function _renderActionLog(id) {
-    const el = document.getElementById('tkg-obj-action-log'); if (!el) return;
-    const base = _base();
-    fetch(`${base}/api/ontology/actions?object_id=${encodeURIComponent(id)}&limit=6`)
-      .then(r => r.ok ? r.json() : null).then(d => {
-        if (!d || !d.actions || !d.actions.length) { el.innerHTML = ''; return; }
-        el.innerHTML = `<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px">Registro</div>` +
-          d.actions.map(a => {
-            const when = a.recorded_at ? new Date(a.recorded_at).toLocaleDateString('es', { day: '2-digit', month: 'short' }) : '';
-            const p = a.payload || {};
-            const detail = p.rationale || p.razon || p.decision || p.texto || '';
-            return `<div style="font-size:11.5px;color:var(--ink-2);padding:3px 0;line-height:1.4">
-              <b style="color:#43C896">${esc(a.action || '')}</b> · ${esc(a.actor || '')} · <span style="color:var(--ink-3)">${when}</span>
-              ${detail ? '<br><span style="color:var(--ink-3)">' + esc(String(detail).slice(0, 140)) + '</span>' : ''}
-            </div>`;
-          }).join('');
-      }).catch(() => { el.innerHTML = ''; });
+  /* ── Línea de tiempo + procedencia (Phase 1 · M6) ────────────────────────
+     Sustituye al mini-registro de acciones: la línea de tiempo lo CONTIENE
+     (las acciones son eventos) y añade los cambios de datos, los vínculos que
+     aparecen o se cortan, y las noticias — cada cosa con la fuente de la que
+     salió. Va en el mismo hueco: más información, un concepto menos.
+
+     Cierra el hueco que la auditoría marcó: hasta ahora la evidencia solo era
+     clicable mientras una propuesta estaba pendiente, y se perdía al aprobarla. */
+
+  function _tlLang() {
+    let l = window.LANG;
+    if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } }
+    return (l === 'en') ? 'en' : 'es';
+  }
+  function _tlT(es, en) { return _tlLang() === 'en' ? en : es; }
+
+  const _TL_ICON = {
+    ObjectCreated: '✦', ObjectUpdated: '✎', LinkCreated: '🔗',
+    LinkRemoved: '⛓', ActionExecuted: '◆', PriceObserved: '$', NewsItem: '📰',
+  };
+
+  function _tlWhen(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString(_tlLang(), { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // Confiabilidad de la fuente, del vocabulario (primary 3 · press/trade 2 · resto 1)
+  function _tlTrustDot(trust) {
+    const t = Number(trust) || 0;
+    const color = t >= 3 ? '#43C896' : t === 2 ? '#E0B25C' : '#8A857A';
+    const label = t >= 3 ? _tlT('fuente primaria', 'primary source')
+      : t === 2 ? _tlT('prensa', 'press') : _tlT('fuente débil', 'weak source');
+    return `<span title="${esc(label)}" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:5px;vertical-align:middle"></span>`;
+  }
+
+  function _tlSourceLine(src) {
+    if (!src || !src.url) return '';
+    const host = (src.publisher || src.url).replace(/^https?:\/\//, '').split('/')[0];
+    // La evidencia es un ENLACE de verdad: el recorrido hecho → fuente →
+    // documento original tiene que terminar en el documento.
+    return `<div style="margin-top:3px;padding-left:18px">
+      <a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer"
+         style="font-size:10.5px;color:var(--ink-3);text-decoration:none;border-bottom:1px dotted var(--line)"
+         title="${esc(src.url)}">${_tlTrustDot(src.trust)}${esc(host)} ↗</a></div>`;
+  }
+
+  function _tlRow(e) {
+    const icon = _TL_ICON[e.event_type] || '•';
+    const esNoticia = e.kind === 'news';
+    const color = esNoticia ? 'var(--violet)' : '#43C896';
+    const quien = e.actor ? ` · ${esc(e.actor)}` : '';
+    // `at` es cuándo fue cierto; si lo supimos mucho después, se dice.
+    let tarde = '';
+    if (e.recorded_at && e.at) {
+      const dias = Math.round((new Date(e.recorded_at) - new Date(e.at)) / 86400000);
+      if (dias > 30) tarde = ` · <span title="${esc(_tlT('lo supimos después', 'learned later'))}" style="color:var(--ink-3)">${_tlT('registrado', 'recorded')} +${dias}d</span>`;
+    }
+    return `<div style="padding:5px 0;border-bottom:1px solid var(--line);line-height:1.45">
+      <div style="display:flex;gap:7px;align-items:baseline">
+        <span style="font-size:11px;color:${color};flex-shrink:0">${icon}</span>
+        <b style="font-size:11.5px;color:var(--ink-2);flex:1">${esc(e.title || '')}</b>
+        <span style="font-size:10px;color:var(--ink-3);font-family:'JetBrains Mono',monospace;flex-shrink:0">${esc(_tlWhen(e.at))}</span>
+      </div>
+      ${e.detail ? `<div style="font-size:10.5px;color:var(--ink-3);padding-left:18px">${esc(String(e.detail).slice(0, 160))}${quien}${tarde}</div>`
+                 : (quien || tarde ? `<div style="font-size:10.5px;color:var(--ink-3);padding-left:18px">${quien.replace(/^ · /, '')}${tarde}</div>` : '')}
+      ${_tlSourceLine(e.source)}
+    </div>`;
+  }
+
+  function _renderTimeline(id) {
+    const el = document.getElementById('tkg-obj-timeline'); if (!el) return;
+    const titulo = _tlT('Historia', 'History');
+    el.innerHTML = `<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 2px">${titulo}</div>
+      <div style="font-size:11px;color:var(--ink-3);font-style:italic">${_tlT('cargando…', 'loading…')}</div>`;
+
+    fetch(`${_base()}/api/ontology/objects/${encodeURIComponent(id)}/timeline?limit=14&lang=${_tlLang()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d || !Array.isArray(d.timeline) || !d.timeline.length) {
+          // Sin ontología o sin historia: se dice, no se finge.
+          el.innerHTML = `<div style="font-size:11px;color:var(--ink-3);margin-top:10px">${
+            _tlT('Sin historia registrada todavía.', 'No recorded history yet.')}</div>`;
+          return;
+        }
+        const conFuente = d.timeline.filter(e => e.source && e.source.url).length;
+        el.innerHTML = `<div style="display:flex;align-items:baseline;gap:8px;margin:10px 0 2px">
+            <span style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px">${titulo}</span>
+            <span style="font-size:10px;color:var(--ink-3)">${d.timeline.length} ${_tlT('hechos', 'facts')} · ${conFuente} ${_tlT('con fuente', 'with source')}</span>
+          </div>` + d.timeline.map(_tlRow).join('');
+      })
+      .catch(() => { el.innerHTML = ''; });
   }
 
   function _objAnalyze(id, label, mkt) {

@@ -3,7 +3,7 @@
 Milestones derivados de la auditoría en `docs/ARCHITECTURE.md`. Cada uno es
 **aditivo**, tiene tests, y deja la app desplegable al terminar.
 
-Estado global: **M1-M5 completos**. Queda M6 (UI).
+Estado global: **PHASE 1 COMPLETA (M1-M6)**. Pendientes listados al final.
 
 ---
 
@@ -174,16 +174,34 @@ Pendiente de M4 (no bloquea M5/M6):
 - [x] `ontology/timeline.py` como modelo de LECTURA separado del event store.
       Resuelve etiquetas y fuentes en 2 consultas, no una por evento.
 
-## M6 — UI del grafo vivo
+## M6 — UI del grafo vivo ✅ COMPLETO
 
 > Spec §12 y los criterios de éxito.
 
-- [ ] Panel de procedencia en la ficha de entidad: de qué fuente salió cada
-      dato, con enlace a la evidencia original. Hoy la evidencia solo es
-      clicable mientras la propuesta está pendiente y **se pierde al aprobarla**.
-- [ ] Feed de eventos en vivo.
-- [ ] Línea de tiempo por entidad.
-- [ ] Mostrar frescura por dato (hoy solo el precio tiene el linaje ⓘ).
+- [x] **Línea de tiempo + procedencia en la ficha de objeto.** Aplicando la
+      regla de simplificar: en vez de un sexto botón, la línea de tiempo
+      ABSORBE el mini-registro de acciones que ya ocupaba ese hueco — lo
+      contiene (las acciones son eventos) y añade cambios de datos, vínculos
+      que aparecen o se cortan, y noticias. Más información, un concepto menos.
+- [x] **La evidencia es un enlace de verdad.** Cierra el hueco que marcó la
+      auditoría: hasta ahora la URL solo era clicable mientras una propuesta
+      estaba pendiente, y se perdía al aprobarla.
+- [x] **Confiabilidad visible**: un punto de color por fuente (primaria /
+      prensa / débil) tomado del `trust` del vocabulario, con su explicación
+      al pasar el cursor.
+- [x] **Las dos líneas temporales, visibles**: cuando un hecho se registró
+      mucho después de ocurrir, se marca (`registrado +Nd`). "Nos enteramos
+      tarde" es información, no ruido.
+- [x] Bilingüe es/en, y degrada con honestidad: sin ontología dice que no hay
+      historia registrada en vez de fingir.
+- [x] `_log_action` pasa `source_id` al evento auditable — sin eso la acción
+      aparecía en la línea de tiempo SIN su evidencia, aunque la evidencia
+      existiera, y el recorrido hecho → fuente → documento se cortaba ahí.
+
+Pendiente de M6 (no bloquea nada):
+
+- [ ] Feed de eventos en vivo a nivel global (hoy la historia es por entidad).
+- [ ] Frescura por dato en más sitios (hoy: precio, NRS y la línea de tiempo).
 
 ---
 

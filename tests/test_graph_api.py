@@ -184,3 +184,27 @@ def test_timeline_incluye_noticias_y_se_pueden_excluir(db):
 
 def test_timeline_de_objeto_inexistente(db):
     assert _c().get('/api/ontology/objects/NoExiste/timeline').status_code == 404
+
+
+def test_la_accion_auditable_arrastra_su_fuente_al_timeline(db):
+    """La línea de tiempo mostraba la acción SIN su evidencia, aunque la
+    evidencia existiera: _log_action no pasaba source_id al evento. La UI
+    (M6) pinta el enlace desde ahí, así que sin esto el recorrido
+    hecho → fuente → documento se cortaba justo en el rastro auditable."""
+    c = _c()
+    r = c.post('/api/ontology/actions/CrearTesis', json={
+        'actor': 'beto', 'company_id': 'ACME', 'stance': 'long', 'confidence': 0.7,
+        'rationale': 'tesis con evidencia',
+        'fuentes': [{'url': 'https://www.sec.gov/Archives/acme-8k.htm',
+                     'titulo': 'ACME 8-K', 'publicador': 'SEC',
+                     'cita_textual': 'material agreement signed'}],
+    })
+    assert r.status_code == 200
+
+    d = c.get('/api/ontology/objects/ACME/timeline?limit=20').get_json()
+    accion = next(e for e in d['timeline']
+                  if e['event_type'] == 'ActionExecuted' and e['actor'] == 'beto')
+    assert accion['source'], 'la acción llegó sin fuente al timeline'
+    assert 'sec.gov' in accion['source']['url']
+    assert accion['source']['trust'] == 3       # filing = fuente primaria
+    assert accion['confidence'] == 0.7

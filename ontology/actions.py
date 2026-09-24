@@ -172,12 +172,18 @@ class DesactivarFactorInput(BaseModel):
 
 # ── Handlers: reciben (session, input_validado, actor) → dict de resultado ──
 
-def _log_action(session, action_type, object_id, target_id, payload, actor, source='manual'):
-    """Evento ActionExecuted — el rastro auditable, siempre presente."""
+def _log_action(session, action_type, object_id, target_id, payload, actor, source='manual',
+                source_id=None, confidence=None):
+    """Evento ActionExecuted — el rastro auditable, siempre presente.
+
+    `source_id` (Phase 1 · M1) hace que el rastro apunte al DOCUMENTO que
+    respalda la acción, no solo al canal. Sin esto la línea de tiempo mostraba
+    la acción sin su evidencia, aunque la evidencia existiera."""
     return apply_event(
         session, 'ActionExecuted', payload={'action': action_type, **payload},
         valid_from=_utcnow(), source=source, actor=actor,
         object_id=object_id, target_id=target_id,
+        source_id=source_id, confidence=confidence,
     )
 
 
@@ -226,7 +232,9 @@ def crear_tesis(session, inp: CrearTesisInput, actor):
 
     _log_action(session, 'CrearTesis', inp.company_id, thesis_id,
                 {'stance': inp.stance, 'confidence': inp.confidence,
-                 'source_ids': source_ids}, actor)
+                 'source_ids': source_ids}, actor,
+                source_id=(source_ids[0] if source_ids else None),
+                confidence=inp.confidence)
     return {'thesis_id': thesis_id, 'source_ids': source_ids}
 
 
