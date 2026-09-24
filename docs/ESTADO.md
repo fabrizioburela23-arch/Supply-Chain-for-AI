@@ -9,6 +9,89 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-22/24 — PHASE 1 "Live Investment Graph" COMPLETA + velocidad + 3D temporal
+
+Spec de Fabrizio ("Live Investment Graph V1"). Auditoría primero
+(`docs/ARCHITECTURE.md`): el 60-70 % ya existía — event store bitemporal,
+hipergrafo real, motor de matrices, Acciones auditadas. Faltaban tres capas.
+Plan y estado en `docs/ROADMAP_PHASE1.md`. **193 tests.** sw v131.
+
+**Decisiones de fondo (no reabrir sin razón nueva):**
+- **Seguir en PostgreSQL**, sin Neo4j como fuente de verdad ni Apache AGE: el
+  modelo temporal ya vive ahí y la propagación es álgebra matricial, no
+  traversals. Neo4j Aura se borró sola por inactividad — prueba de que otro
+  almacén es otra cosa que se cae.
+- **No reorganizar el repo ni reescribir la UI a React**: la separación que pide
+  el spec ya existe con otros nombres (core/ = shared+providers, ontology/ +
+  matrix/ = domain+graph, server.py = api, app.html+engine/ = web).
+
+**Milestones:**
+- **M1 Procedencia** (`ontology/provenance.py`): `Source` como ENTIDAD (el tipo
+  ya estaba en vocabulary.json sin código), id = `src_<sha1(url normalizada)>`,
+  `trust` del `source_kinds` del vocabulario, `Event.source_id` + `confidence`.
+  `GET /api/ontology/sources`, `/objects/<id>/provenance`.
+- **M2 Identidad** (`core/entities.py`): EL resolvedor server-side (sustituye a
+  3 divergentes). `NODE_ID_ALIAS` ahora se EXPORTA al snapshot (antes moría en
+  la frontera cliente→servidor). Umbrales ESCRITURA 85 / BÚSQUEDA 60.
+  `agents._resolve` lo usa → "NVIDIA Corporation" ya no se pierde en silencio.
+- **M3 Proveedores** (`core/providers/base.py` + `market.py` + `news.py`): el
+  `base.py` que el docstring citaba desde julio y nunca existió. Esquema único
+  con `as_of`/`age_seconds`; "sin configurar" ≠ "falló"; `subscribe_*` lanza
+  NotImplementedError A PROPÓSITO (no hay streaming, no se finge).
+  `GET /api/market/quote/<sym>`, `/api/market/providers`.
+- **M4 Noticias al grafo** (`ontology/ingest_news.py`): `NewsItem` + `Source` +
+  `reports_on`/`published_by` (declarados sin código). `valid_from` = fecha de
+  PUBLICACIÓN. Vínculo por construcción, no por adivinanza. Una noticia NO crea
+  empresas. `POST /api/ontology/ingest/news`, `GET /objects/<id>/news`.
+- **M5 Graph API**: `/search` server-side, `/events/<id>`,
+  `/objects/<id>/timeline` (`ontology/timeline.py`: eventos + noticias, por
+  validez, con fuente, bilingüe).
+- **M6 UI**: la ficha del Grafo Temporal muestra la línea de tiempo con
+  enlaces a la evidencia y punto de confiabilidad; SUSTITUYE al mini-registro
+  de acciones (lo contiene) en vez de añadir botón.
+
+**Producción — lo que pasó y cómo se arregló:**
+- La base NO se había borrado: se había roto el cable (`DATABASE_URL` apuntaba
+  a `postgres.railway.internal` y el servicio no resolvía). Al reconectar volvió
+  la base ORIGINAL: **1.294 objetos, último evento 2026-08-27**. ⚠️ **NO correr
+  REMIGRATE_ON_BOOT sobre ella**: tiene ~216 objetos (empresas históricas,
+  tesis, anotaciones) que el repo no puede reconstruir.
+- Bug de arranque (mío, M1): Railway lanza app y Postgres EN PARALELO;
+  `init_schema` fallaba en el boot y no se reintentaba → `column
+  events.source_id does not exist`. Ahora reintenta 6 veces y `_diag_ontologia`
+  AUTO-REPARA (`schema_outdated()`): pulsar "Re-probar" en el 🩺 lo arregla.
+- El 🩺 traduce errores a acciones (`_ai_error_hint`, `_db_error_hint`).
+  Gemini funciona con `GEMINI_MODEL=gemini-3.5-flash` (puesto por Fabrizio).
+  NVIDIA sigue con modelo retirado (mi `llama-3.3-70b` también lo estaba).
+- Bugs latentes corregidos: `as_of_graph`/`diff_graph` reventaban con fecha en
+  texto; `_log_action` no pasaba `source_id`; la re-migración perdía los 69
+  factores y 28 asientos (viven en `data/multicapa_factors_seats.json`).
+
+**Velocidad del mapa (confirmado por Fabrizio: "ta mejor"):** el mapa es SVG +
+d3.forceSimulation — ~11.000 escrituras al DOM por fotograma × ~150 fotogramas
+por arranque. Ahora `settleGraph()` adelanta la física en memoria
+(`sim.tick()` no emite 'tick') y pinta UNA vez; solo el arrastre pinta en vivo
+(`_liveTick`). `resize` amortiguado a 150 ms (en móvil llega en ráfaga).
+Efecto visible buscado: los nodos aparecen colocados, sin baile inicial.
+
+**3D temporal** (`engine/timeline3d.js`, modo "⬗ Tiempo 3D" de la pestaña
+Temporal, sin pestaña nueva): Z = fecha de inicio de cada relación. Anillo de
+empresas + cuerdas a la profundidad de su fecha. Solo hechos con fecha real
+(86 relaciones, 71 empresas, 1926→2025, 1.862 vértices). Montaje perezoso y
+dibujo bajo demanda (sin bucle continuo). Decisión explícita: **3D solo donde
+la profundidad significa algo**; el 3D decorativo del mapa NO vuelve.
+
+**Pendiente:**
+- ⏸️ Velocidad paso 2 (enlaces del mapa a `<canvas>`): APLAZADO tras
+  inspección — `linkSel` se usa en 10 sitios (estilos, selección, cascada de
+  estrés, clase CSS `.flowing` animada) y el zoom es una transformación SVG.
+  Riesgo alto sobre la pantalla principal; requiere plan propio.
+- Sub-pendientes de cada milestone listados en `docs/ROADMAP_PHASE1.md`.
+- Manual de Fabrizio: recargar Claude (opcional, Gemini cubre), `NVIDIA_MODEL`
+  vigente (opcional), Neo4j (opcional de verdad).
+
+---
+
 # SESIÓN 2026-09-21 — Limpieza estructural: Track A Fase 2 + Track B completos
 
 Pedido de Fabrizio: "avanza con todo eso… esto solo es estructura, no

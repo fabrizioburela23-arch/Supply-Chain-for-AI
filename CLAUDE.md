@@ -49,7 +49,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   command_center.js (Khipu texto), graph3d.js (WebGL, ?webgl3d=1), globe.js
   (motor de globo unificado; reemplazó a geoglobe.js+planetarium.js, borrados
   en Track A Fase 2), universe2d.js (camino sin WebGL, el default),
-  secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js.
+  secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js, timeline3d.js
+  (Grafo Temporal en 3D: Z = fecha de inicio de la relación; modo "⬗ Tiempo 3D"
+  de la pestaña tkg; solo hechos con fecha; montaje perezoso, dibujo bajo demanda).
   REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
   (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
   livesim.js (simulación en vivo sobre el mapa), layers.js (capas del mapa),
@@ -182,7 +184,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (144 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (193 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -216,6 +218,13 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 
 ## Errores comunes
+
+- **NO correr `REMIGRATE_ON_BOOT` sobre la base de producción**: es la base
+  ORIGINAL (1.294 objetos, reconectada 2026-09-22), con ~216 objetos que el
+  repo no puede reconstruir. Es destructiva. Solo para bases nuevas y vacías.
+- **Mapa principal**: la física se asienta SIN dibujar (`settleGraph()`); solo
+  el arrastre pinta en vivo (`_liveTick`). No reintroducir `sim.alpha().restart()`
+  fuera del drag: son ~11.000 escrituras al DOM por fotograma.
 
 - **Los proveedores de IA RETIRAN modelos.** En sept-2026 Gemini (404) y NVIDIA
   (410) cayeron a la vez por eso, justo cuando Claude se quedó sin saldo: cero
