@@ -1305,19 +1305,48 @@
 
   function _objNews(id, label, mkt) {
     const out = document.getElementById('tkg-obj-news-out'); if (!out) return;
-    out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">📰 buscando noticias…</div>';
+    out.innerHTML = `<div style="font-size:12px;color:var(--ink-3)">📰 ${_tlT('buscando noticias…', 'looking for news…')}</div>`;
     const url = mkt ? `${_base()}/api/news/${encodeURIComponent(mkt)}` : `${_base()}/api/news/gdelt/${encodeURIComponent(label)}`;
     fetch(url).then(r => r.ok ? r.json() : null).then(d => {
       const arr = Array.isArray(d) ? d : (d && Array.isArray(d.articles) ? d.articles : []);
-      if (!arr.length) { out.innerHTML = '<div style="font-size:12px;color:var(--ink-3)">Sin noticias recientes.</div>'; return; }
-      out.innerHTML = `<div style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Noticias</div>` +
-        arr.slice(0, 6).map(a => {
-          const h = a.headline || a.title || ''; const src = a.source || ''; const u = a.url || a.link || '#';
-          const sent = a.sentiment;
-          const dot = sent != null ? `<span style="color:${sent > 0 ? '#43C896' : sent < 0 ? '#FF6B5C' : 'var(--ink-3)'}">●</span> ` : '';
-          return `<a href="${esc(u)}" target="_blank" rel="noopener" style="display:block;font-size:11.5px;color:var(--ink-2);text-decoration:none;padding:5px 0;border-bottom:1px solid var(--line);line-height:1.35">${dot}${esc(h)}${src ? ` <span style="color:var(--ink-3)">· ${esc(src)}</span>` : ''}</a>`;
-        }).join('');
-    }).catch(() => { out.innerHTML = '<div style="font-size:12px;color:#f87171">Error al cargar noticias.</div>'; });
+      if (!arr.length) { out.innerHTML = `<div style="font-size:12px;color:var(--ink-3)">${_tlT('Sin noticias recientes.', 'No recent news.')}</div>`; }
+      else {
+        out.innerHTML = `<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">
+            <span style="font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.5px">${_tlT('Noticias', 'News')}</span>
+            <span id="tkg-news-saved" style="font-size:10px;color:var(--ink-3)"></span></div>` +
+          arr.slice(0, 6).map(a => {
+            const h = a.headline || a.title || ''; const src = a.source || ''; const u = a.url || a.link || '#';
+            const sent = a.sentiment;
+            const dot = sent != null ? `<span style="color:${sent > 0 ? '#43C896' : sent < 0 ? '#FF6B5C' : 'var(--ink-3)'}">●</span> ` : '';
+            return `<a href="${esc(u)}" target="_blank" rel="noopener" style="display:block;font-size:11.5px;color:var(--ink-2);text-decoration:none;padding:5px 0;border-bottom:1px solid var(--line);line-height:1.35">${dot}${esc(h)}${src ? ` <span style="color:var(--ink-3)">· ${esc(src)}</span>` : ''}</a>`;
+          }).join('');
+      }
+      _ingestNews(id);
+    }).catch(() => { out.innerHTML = `<div style="font-size:12px;color:#f87171">${_tlT('Error al cargar noticias.', 'Could not load news.')}</div>`; });
+  }
+
+  /* Phase 1 · M4 cerrado: las noticias que el usuario pidió ver se GUARDAN en
+     el grafo, con su fuente y su fecha de publicación, y aparecen en la línea
+     de tiempo. Antes la ingesta existía en el servidor pero ningún botón la
+     disparaba, así que en producción la historia nunca mostraba noticias.
+     Es idempotente (el id sale de la URL): pulsar dos veces no duplica. Si la
+     ontología no está (503) no se muestra error: la lista ya se vio. */
+  function _ingestNews(id) {
+    let actor = 'ingesta_ui';
+    try { actor = localStorage.getItem('khipu_actor') || actor; } catch (e) {}
+    fetch(`${_base()}/api/ontology/ingest/news`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ entity_id: id, actor, limit: 10 }),
+    }).then(r => r.ok ? r.json() : null).then(res => {
+      if (!res || !res.ok) return;
+      const tag = document.getElementById('tkg-news-saved');
+      if (tag && res.ingested) {
+        tag.textContent = res.new
+          ? `✓ ${res.new} ${_tlT('nuevas guardadas en la historia', 'new saved to history')}`
+          : `✓ ${_tlT('ya estaban en la historia', 'already in history')}`;
+      }
+      if (res.new) _renderTimeline(id);
+    }).catch(() => {});
   }
   // permitir navegar entre objetos desde los chips upstream/downstream
   window.__tkgOpenObj = function (id) { try { _openObject(id); } catch (e) {} };
