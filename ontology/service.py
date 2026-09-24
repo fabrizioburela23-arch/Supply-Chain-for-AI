@@ -42,6 +42,28 @@ def _parse_dt(v, default=None):
         raise OntologyError(f'fecha inválida: {v!r}')
 
 
+def _vigilar_vocabulario(kind, value):
+    """Deja constancia de un tipo fuera del vocabulario, SIN rechazar la
+    escritura.
+
+    apply_event es la puerta principal de escritura y no validaba nada: un
+    rel_type inventado (p.ej. 'justified_by', que llevaba meses persistiéndose)
+    entraba a la base en silencio y luego el motor de matrices lo descartaba
+    también en silencio. Rechazar ahora podría romper escrituras que hoy
+    funcionan sobre la base ORIGINAL de producción, así que se observa: queda
+    en /api/vocabulary/unknown y en el log, y se decide caso por caso."""
+    try:
+        from ontology import vocabulary as _v
+        if kind == 'object_type':
+            conocidos = _v.object_types()
+        else:
+            conocidos = _v.relation_types_all()
+        if value and value not in conocidos:
+            _v.note_unknown(kind, value)
+    except Exception:  # noqa: BLE001 — vigilar nunca debe tumbar una escritura
+        pass
+
+
 def apply_event(session, event_type, payload, valid_from, source, actor,
                  object_id=None, target_id=None, valid_to=None,
                  source_id=None, confidence=None):
@@ -95,6 +117,7 @@ def _materialize(session, ev):
         new_props = p.get('properties', {}) or {}
         label = p.get('label') or (obj.label if obj else ev.object_id)
         otype = p.get('type') or (obj.type if obj else 'Company')
+        _vigilar_vocabulario('object_type', otype)
         if obj is None:
             obj = ObjectRecord(id=ev.object_id, type=otype, label=label, properties=new_props)
             session.add(obj)
@@ -109,6 +132,7 @@ def _materialize(session, ev):
         if not ev.object_id or not ev.target_id:
             raise OntologyError('LinkCreated requiere object_id (source) y target_id')
         rel_type = p.get('rel_type') or p.get('type') or 'supply'
+        _vigilar_vocabulario('rel_type', rel_type)
         link = LinkRecord(
             id=uuid.uuid4(), source_id=ev.object_id, target_id=ev.target_id,
             rel_type=rel_type, weight=p.get('weight'), properties=p.get('properties', {}) or {},

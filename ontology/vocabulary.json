@@ -193,6 +193,14 @@
    "es": "evidenciado por",
    "en": "evidenced by",
    "_doc": "Phase 1 M1 — une un hecho/objeto con la Source (documento) que lo respalda"
+  },
+  "justified_by": {
+   "weight": 0.0,
+   "symmetric": false,
+   "structural": false,
+   "es": "justificado por",
+   "en": "justified by",
+   "_doc": "PositionAdjustment -> Decision (Acción AjustarPosicion). Se usaba desde la Fase 2 sin estar registrado: el motor lo descartaba en silencio."
   }
  },
  "_doc_relation_types": "structural=true → entra en las matrices de propagación de daño (weight = criticidad). structural=false → relación de conocimiento (hiperaristas, noticias, notas): se guarda y se consulta, pero NO propaga daño. Antes, cualquier relación fuera de la lista de 9 se descartaba EN SILENCIO al construir las matrices.",

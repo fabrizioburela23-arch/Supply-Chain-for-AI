@@ -91,3 +91,32 @@ def test_snapshot_serializable():
     assert snap['structural_relations'] == HIST_REL_TYPES
     assert set(snap['economic_types']) == HIST_ECONOMIC
     assert snap['source_kinds'], 'los tipos de fuente alimentan el filtro de objetividad'
+
+
+def test_justified_by_esta_registrado():
+    """AjustarPosicion escribe PositionAdjustment -justified_by-> Decision desde
+    la Fase 2, pero el tipo nunca se registró: entraba a la base en silencio y
+    el motor de matrices lo descartaba en silencio. No estructural: no debe
+    propagar daño en las matrices."""
+    from ontology import vocabulary as v
+    v.load(force=True)
+    assert v.is_known_relation('justified_by')
+    assert 'justified_by' not in v.relation_types()   # relation_types() = solo estructurales
+
+
+def test_apply_event_vigila_tipos_fuera_del_vocabulario(monkeypatch):
+    """La puerta principal de escritura OBSERVA los tipos desconocidos sin
+    rechazar la escritura (rechazar podría romper la base original de
+    producción). Quedan en /api/vocabulary/unknown."""
+    from ontology import vocabulary as v
+    from ontology.service import _vigilar_vocabulario
+
+    v.reset_unknown()
+    _vigilar_vocabulario('rel_type', 'relacion_inventada_xyz')
+    _vigilar_vocabulario('rel_type', 'supply')            # conocido: no se anota
+    _vigilar_vocabulario('object_type', 'TipoInventadoXyz')
+    rep = v.unknown_report()
+    assert 'relacion_inventada_xyz' in rep.get('rel_type', {})
+    assert 'supply' not in rep.get('rel_type', {})
+    assert 'TipoInventadoXyz' in rep.get('object_type', {})
+    v.reset_unknown()
