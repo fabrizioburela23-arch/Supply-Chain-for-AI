@@ -11,6 +11,7 @@
   let _built = false, _facts = [], _sim = null, _svg = null, _root = null;
   let _linkSel = null, _nodeSel = null, _labelSel = null;
   let _minMs = 0, _maxMs = 0, _dateMs = 0, _playTimer = null, _tab = 'viz';
+  let _t3dReady = false;   // la vista 3D se monta solo si se abre
   let _search = '';
   // Etapa 2/3: filtros por tipo, color de arista, y motor de microsimulación
   let _hiddenTypes = new Set();       // tipos de objeto ocultos por el usuario
@@ -213,6 +214,7 @@
           <div class="seg" id="tkg-tabseg">
             <button data-t="viz" class="active">◈ Grafo</button>
             <button data-t="facts">☰ Hechos</button>
+            <button data-t="t3d" title="La profundidad es el tiempo">⬗ Tiempo 3D</button>
           </div>
         </div>
 
@@ -266,6 +268,7 @@
           </div>
         </div>
         <div id="tkg-facts" style="display:none"></div>
+        <div id="tkg-t3d" style="display:none"></div>
       </div>`;
 
     // wire
@@ -275,7 +278,17 @@
       b.classList.add('active'); _tab = b.dataset.t;
       panel.querySelector('#tkg-viz').style.display = _tab === 'viz' ? 'block' : 'none';
       panel.querySelector('#tkg-facts').style.display = _tab === 'facts' ? 'block' : 'none';
-      if (_tab === 'viz') { _resize(); _refresh(); } else _renderFacts();
+      const el3d = panel.querySelector('#tkg-t3d');
+      if (el3d) el3d.style.display = _tab === 't3d' ? 'block' : 'none';
+      if (_tab === 'viz') { _resize(); _refresh(); }
+      else if (_tab === 't3d') {
+        // Se monta perezosamente: entrar a la pestaña Temporal no debe pagar el
+        // coste de WebGL si el usuario nunca abre esta vista.
+        if (window.KhipuTimeline3D) {
+          if (!_t3dReady) _t3dReady = window.KhipuTimeline3D.init('tkg-t3d');
+          else window.KhipuTimeline3D.resize();
+        }
+      } else _renderFacts();
     }));
     const slider = panel.querySelector('#tkg-time');
     // throttle con rAF: arrastrar el slider dispara muchos 'input'; coalescemos a 1 por frame

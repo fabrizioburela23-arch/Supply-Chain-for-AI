@@ -216,3 +216,40 @@ def test_db_error_hint_es_accionable():
 
     # sin pista reconocible NO se inventa una explicación
     assert hint('algo completamente inesperado') == ''
+
+
+def test_la_vista_3d_temporal_es_pequena_por_construccion():
+    """El 3D temporal (engine/timeline3d.js) solo dibuja hechos CON fecha real
+    y las empresas que participan en ellos — no las 949 del mapa. Esa es la
+    razón de que sea barato en un teléfono, así que conviene que no se rompa
+    en silencio si alguien cambia el formato de los hechos."""
+    import json
+
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    assert os.path.exists(os.path.join(base, 'engine', 'timeline3d.js'))
+
+    with open(os.path.join(base, 'data', 'grafo_v0.json'), encoding='utf-8') as fh:
+        snap = json.load(fh)
+
+    situables = [f for f in (snap.get('temporal_facts') or [])
+                 if f.get('object_type') == 'node' and f.get('valid_from')
+                 and f.get('subject') and f.get('object')
+                 and f.get('subject') != f.get('object')]
+    entidades = {e for f in situables for e in (f['subject'], f['object'])}
+
+    assert len(situables) >= 60, f'solo {len(situables)} hechos fechados: el eje temporal se queda vacío'
+    # Cota de coste: ~20 vértices por cuerda + 2 por columna. Si esto crece
+    # mucho habrá que agrupar por año en vez de dibujar cada hecho.
+    vertices = len(situables) * 20 + len(entidades) * 2
+    assert vertices < 40000, f'{vertices} vértices — la escena dejó de ser trivial, revisar LOD'
+
+
+def test_timeline3d_degrada_sin_webgl():
+    """Sin WebGL o sin hechos fechados debe decirlo en texto, no romper la
+    pestaña ni dejar un hueco mudo."""
+    base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(base, 'engine', 'timeline3d.js'), encoding='utf-8') as fh:
+        src = fh.read()
+    assert 'if (!window.THREE)' in src
+    assert 'No hay hechos con fecha real' in src
+    assert 'needs WebGL' in src          # y en inglés (regla bilingüe)
