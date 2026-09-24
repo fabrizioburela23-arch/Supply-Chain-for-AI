@@ -530,6 +530,117 @@ def alerts_check():
         return jsonify({'fired': fired, 'count': len(fired)})
 
 
+@ontology_bp.route('/search')
+@_require_db
+def search_objects():
+    """Búsqueda de entidades desde el SERVIDOR (Phase 1 · M5).
+
+    Hasta ahora buscar era cosa solo del cliente, así que nada fuera del
+    navegador (un agente, un script, otra app) podía encontrar una entidad.
+
+    Combina dos caminos: el resolvedor único de M2 —que conoce tickers y la
+    tabla de alias del merge, y por eso acierta con "NVDA" o "NVIDIA
+    Corporation"— y una búsqueda por texto en la etiqueta para lo demás.
+    El resultado dice CÓMO se encontró cada cosa (`match`), para que quien
+    consuma pueda exigir más o menos rigor."""
+    q = (request.args.get('q') or '').strip()
+    if not q:
+        return jsonify({'error': "el parámetro 'q' es requerido"}), 400
+    tipo = (request.args.get('type') or '').strip() or None
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 100)
+    except (TypeError, ValueError):
+        limit = 20
+
+    resultados, vistos = [], set()
+
+    # 1) coincidencia fuerte: id, ticker o alias (umbral de BÚSQUEDA)
+    try:
+        from core.entities import UMBRAL_BUSQUEDA, resolve
+        r = resolve(q, umbral=UMBRAL_BUSQUEDA)
+    except Exception:  # noqa: BLE001 — sin snapshot seguimos con la búsqueda por texto
+        r = None
+
+    with session_scope() as s:
+        if r:
+            obj = get_object(s, r['id'])
+            if obj and (not tipo or obj.type == tipo):
+                vistos.add(obj.id)
+                resultados.append({'id': obj.id, 'label': obj.label, 'type': obj.type,
+                                   'score': r['score'], 'match': r['method']})
+
+        # 2) por texto en la etiqueta, para todo lo demás
+        for o in list_objects(s, type_=tipo, q=q, limit=limit * 2):
+            if o.id in vistos:
+                continue
+            vistos.add(o.id)
+            resultados.append({'id': o.id, 'label': o.label, 'type': o.type,
+                               'score': 50, 'match': 'texto'})
+
+    resultados.sort(key=lambda x: -x['score'])
+    return jsonify({'query': q, 'count': len(resultados[:limit]),
+                    'results': resultados[:limit]})
+
+
+@ontology_bp.route('/events/<event_id>')
+@_require_db
+def event_detail(event_id):
+    """Un evento concreto, con su procedencia resuelta (Phase 1 · M5)."""
+    import uuid as _uuid
+
+    from ontology.models import Event, ObjectRecord
+    from ontology.provenance import source_to_dict
+    try:
+        eid = _uuid.UUID(event_id)
+    except ValueError:
+        return jsonify({'error': 'event_id inválido'}), 400
+
+    with session_scope() as s:
+        ev = s.get(Event, eid)
+        if not ev:
+            return jsonify({'error': f'evento no encontrado: {event_id}'}), 404
+        fuente = None
+        if ev.source_id:
+            o = s.get(ObjectRecord, ev.source_id)
+            if o is not None:
+                fuente = source_to_dict(o)
+        return jsonify({
+            'id': str(ev.id), 'event_type': ev.event_type,
+            'object_id': ev.object_id, 'target_id': ev.target_id,
+            'payload': ev.payload,
+            'valid_from': ev.valid_from.isoformat() if ev.valid_from else None,
+            'valid_to': ev.valid_to.isoformat() if ev.valid_to else None,
+            'recorded_at': ev.recorded_at.isoformat() if ev.recorded_at else None,
+            'channel': ev.source, 'actor': ev.actor,
+            'confidence': ev.confidence, 'source': fuente,
+        })
+
+
+@ontology_bp.route('/objects/<object_id>/timeline')
+@_require_db
+def object_timeline(object_id):
+    """Qué le ha pasado a esta entidad, en un solo hilo (Phase 1 · M5).
+    Fusiona eventos del grafo y noticias, ordenado por cuándo fue cierto en el
+    mundo. Query: ?limit=60&lang=es|en&news=0 para excluir noticias."""
+    from ontology.timeline import entity_timeline
+    lang = (request.args.get('lang') or 'es').strip().lower()[:2]
+    incluir_noticias = (request.args.get('news') or '1') not in ('0', 'false', 'no')
+    try:
+        limit = min(max(int(request.args.get('limit', 60)), 1), 300)
+    except (TypeError, ValueError):
+        limit = 60
+
+    with session_scope() as s:
+        obj = get_object(s, object_id)
+        if not obj:
+            return jsonify({'error': f'objeto no encontrado: {object_id}'}), 404
+        entradas = entity_timeline(s, object_id, limit=limit, lang=lang,
+                                   include_news=incluir_noticias)
+        return jsonify({'object_id': object_id, 'label': obj.label,
+                        'type': obj.type, 'count': len(entradas),
+                        'timeline': entradas})
+
+
 @ontology_bp.route('/objects/<object_id>/news')
 @_require_db
 def object_news(object_id):

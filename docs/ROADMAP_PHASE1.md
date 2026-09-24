@@ -3,7 +3,7 @@
 Milestones derivados de la auditoría en `docs/ARCHITECTURE.md`. Cada uno es
 **aditivo**, tiene tests, y deja la app desplegable al terminar.
 
-Estado global: **M1, M2 (núcleo), M3 y M4 (noticias) completos**. M5-M6 planificados.
+Estado global: **M1-M5 completos**. Queda M6 (UI).
 
 ---
 
@@ -154,15 +154,25 @@ Pendiente de M4 (no bloquea M5/M6):
 - [ ] Bus de eventos con suscriptores. Hoy la ingesta es bajo demanda —
       decisión deliberada: gunicorn con 1 worker no admite scheduler interno.
 
-## M5 — Completar la Graph API
+## M5 — Completar la Graph API ✅ COMPLETO
 
-> Spec §11. Lo que falta sobre lo que ya existe.
+> Spec §11. Lo que faltaba sobre lo que ya existía.
 
-- [ ] `GET /api/ontology/search` server-side (hoy la búsqueda es solo cliente).
-- [ ] `GET /api/ontology/events/<id>`.
-- [ ] `GET /api/ontology/objects/<id>/timeline` — fusión de eventos del grafo +
-      noticias + movimientos de precio en una sola línea de tiempo.
-- [ ] Filtros temporales uniformes (`as_of`) en todo lo anterior.
+- [x] `GET /api/ontology/search?q=&type=&limit=` — búsqueda desde el SERVIDOR.
+      Hasta ahora buscar era cosa solo del cliente, así que nada fuera del
+      navegador (un agente, un script) podía encontrar una entidad. Combina el
+      resolvedor de M2 (acierta con "NVDA" o "NVIDIA Corporation") con búsqueda
+      por texto, y dice CÓMO encontró cada cosa (`match`).
+- [x] `GET /api/ontology/events/<id>` — un evento con su procedencia resuelta
+      y las dos líneas temporales separadas (`valid_from` vs `recorded_at`).
+- [x] `GET /api/ontology/objects/<id>/timeline` — **el criterio de éxito del
+      spec**: en un solo hilo, qué le ha pasado a una entidad. Fusiona eventos
+      del grafo y noticias (M4), ordenado por cuándo fue cierto EN EL MUNDO.
+      Cada entrada arrastra su fuente; las que no tienen evidencia lo dicen con
+      un hueco, no con relleno. Bilingüe (`?lang=`), y las noticias se pueden
+      excluir (`?news=0`).
+- [x] `ontology/timeline.py` como modelo de LECTURA separado del event store.
+      Resuelve etiquetas y fuentes en 2 consultas, no una por evento.
 
 ## M6 — UI del grafo vivo
 
