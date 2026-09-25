@@ -2854,20 +2854,20 @@ function _refreshStylesCore(){
   nodeSel.select('.n-core').classed('failed', false);
   nodeSel.select('.n-ring').classed('failed-ring', false);
 
+  /* ⏱ tiempo en el mapa (engine/maptime.js): lo que aún no existía en la fecha se apaga */
+  const tm = (window.KhipuMapTime && window.KhipuMapTime.active) ? window.KhipuMapTime : null;
   const focus = selected || hovered;
   if(focus && NODE_BY_ID[focus]){
     const nb=neighborsOf(focus);
-    nodeSel.style('opacity', n=>nb.has(n.id)?1:.13);
+    nodeSel.style('opacity', n=> tm && !tm.nodeOk(n.id) ? .05 : nb.has(n.id)?1:.13);
     linkSel
       .style('stroke', l=>(lid(l.source)===focus||lid(l.target)===focus)?nodeFill(NODE_BY_ID[focus]):getLinkColor(l.type))
-      .style('stroke-opacity', l=>(lid(l.source)===focus||lid(l.target)===focus)?.85:.05);
+      .style('stroke-opacity', l=> tm && !tm.linkOk(l) ? .015 : (lid(l.source)===focus||lid(l.target)===focus)?.85:.05);
     return;
   }
   const anyFilter = activePF||activeCat||activeCountry||searchTerm;
   let baseOp = viewMode==='geo' ? .14 : .35;
   const cache = buildFilterCache(); /* v7 · M10 */
-  /* ⏱ tiempo en el mapa (engine/maptime.js): lo que aún no existía en la fecha se apaga */
-  const tm = (window.KhipuMapTime && window.KhipuMapTime.active) ? window.KhipuMapTime : null;
   if(tm && tm.events) baseOp = .1;   /* con ⚡ Eventos, los vínculos normales ceden protagonismo */
   nodeSel.style('opacity', d=> tm && !tm.nodeOk(d.id) ? .05 : cache.get(d.id)?1:.12);
   linkSel.style('stroke',l=>getLinkColor(l.type))

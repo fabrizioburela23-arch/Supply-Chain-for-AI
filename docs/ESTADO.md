@@ -31,6 +31,12 @@ mucho por sí solo". Elegido "Todo a la vez". **engine/maptime.js** (nuevo):
   `__tkgOpenObj`, `_xrayTKG`, cockpit stage 'tkg'. `GRAPH ASOF` mueve el MAPA.
 - Probado en Chromium headless (jun 2005: 622/949 empresas, 1.380 vínculos;
   jun 2024: 16 eventos vigentes). 195 tests. sw v134.
+- v135: hechos empresa↔CONCEPTO (EUV, Ley CHIPS, China, galio… = ONT_*) y
+  atributos literales se anclan como ANILLO punteado alrededor de la empresa
+  (apilados +4px). Dibujables: 31 → 94 de 105 (los 11 restantes son
+  concepto↔concepto, p.ej. SMR→Red eléctrica; siguen en ☰ Hechos). Colores
+  de verbos desde ONTOLOGY.rels. El filtro de fecha también aplica con una
+  empresa seleccionada.
 
 ---
 

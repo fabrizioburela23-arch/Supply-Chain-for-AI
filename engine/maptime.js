@@ -11,7 +11,10 @@
      ⚡ capa Eventos     → los hechos fechados (sanciones, inversiones,
                           fábricas, competencia…) dibujados como líneas
                           punteadas entre las dos empresas, visibles solo
-                          dentro de su ventana de validez. Apagada por defecto.
+                          dentro de su ventana de validez. Si el otro extremo
+                          es un CONCEPTO (EUV, Ley CHIPS, China, galio…) o un
+                          atributo, el hecho se ancla como anillo punteado
+                          alrededor de la empresa. Apagada por defecto.
      ☰ Hechos / ⬗ 3D    → la lista de hechos y la vista 3D temporal siguen
                           existiendo, pero como VISTAS que se abren desde aquí.
 
@@ -55,6 +58,10 @@
     return (isEn() ? en : es)[m] + ' ' + d.getUTCFullYear();
   }
   function relColor(rel) {
+    // primero los verbos de la ontología (sanciona, restringe, alberga…),
+    // que getLinkColorHex no conoce
+    const o = window.ONTOLOGY && window.ONTOLOGY.rels && window.ONTOLOGY.rels[rel];
+    if (o && o.color) return o.color;
     try { if (typeof window.getLinkColorHex === 'function') return window.getLinkColorHex(rel); } catch (e) {}
     return '#8e5aff';
   }
@@ -67,7 +74,9 @@
     built: false,
     founded: {},       // id → ms de fundación
     pairFrom: {},      // 'a|b' (ordenado) → ms del hecho más antiguo del par
-    facts: [],         // hechos dibujables en el mapa
+    facts: [],         // hechos empresa↔empresa → línea punteada
+    marks: [],         // hechos empresa↔concepto (EUV, Ley CHIPS, China…) → anillo en la empresa
+    msel: null,
     layer: null,       // <g> de eventos
     sel: null,         // selección d3 de líneas de eventos
     play: null,
@@ -87,12 +96,30 @@
       if (y > 1000 && y < 2100) S.founded[id] = Date.UTC(y, 0, 1);
     });
     const seen = new Set();
+    const concepts = {};
+    ((window.ONTOLOGY && window.ONTOLOGY.objects) || []).forEach(o => { concepts[o.id] = o.label; });
+    const stack = {};
     (window.TEMPORAL_SEED_FACTS || []).forEach(f => {
-      if (!f || f.object_type !== 'node') return;
-      const a = canon(f.subject), b = canon(f.object);
+      if (!f) return;
       const from = Date.parse(f.valid_from || '');
-      if (!a || !b || a === b || isNaN(from)) return;
+      if (isNaN(from)) return;
       const until = Date.parse(f.valid_until || '');
+      const a = canon(f.subject), b = f.object_type === 'node' ? canon(f.object) : null;
+      // Un solo extremo en el mapa (el otro es un concepto o un atributo):
+      // el hecho se ancla como anillo alrededor de esa empresa.
+      if (!!a !== !!b || (a && f.object_type !== 'node')) {
+        const node = a || b;
+        const other = a ? f.object : f.subject;
+        if (!node) return;
+        const i = stack[node] = (stack[node] || 0) + 1;
+        S.marks.push({
+          id: f.id, node, other: concepts[other] || other, from, until: isNaN(until) ? null : until,
+          rel: f.rel || 'restringe', impact: (f.meta && f.meta.impact) || 5, ring: i - 1,
+          headline: (f.meta && f.meta.headline) || f.predicate || '',
+        });
+        return;
+      }
+      if (!a || !b || a === b) return;
       const k = pairKey(a, b);
       if (S.pairFrom[k] == null || from < S.pairFrom[k]) S.pairFrom[k] = from;
       const dedupe = a + '>' + b + '>' + (f.rel || '') + '>' + from;
@@ -143,6 +170,19 @@
         if (typeof go === 'function') go(d.a);
       });
     S.sel.append('title');
+    S.msel = S.layer.selectAll('circle').data(S.marks).join('circle')
+      .attr('fill', 'none')
+      .attr('stroke', d => relColor(d.rel))
+      .attr('stroke-width', 2)
+      .attr('stroke-dasharray', '3 3')
+      .style('pointer-events', 'visibleStroke')
+      .style('cursor', 'pointer')
+      .on('click', (e, d) => {
+        e.stopPropagation();
+        const go = window.jumpTo || window.selectNode;
+        if (typeof go === 'function') go(d.node);
+      });
+    S.msel.append('title');
     paint();
   }
   function paint() {
@@ -150,6 +190,11 @@
     const N = window.NODE_BY_ID || {};
     S.sel.attr('x1', d => (N[d.a] || {}).x || 0).attr('y1', d => (N[d.a] || {}).y || 0)
          .attr('x2', d => (N[d.b] || {}).x || 0).attr('y2', d => (N[d.b] || {}).y || 0);
+    if (S.msel) {
+      const rad = id => { try { return window.computeNodeRadius(id); } catch (e) { return 8; } };
+      S.msel.attr('cx', d => (N[d.node] || {}).x || 0).attr('cy', d => (N[d.node] || {}).y || 0)
+        .attr('r', d => rad(d.node) + 5 + d.ring * 4);
+    }
   }
   function styleEvents() {
     if (!S.sel) return;
@@ -163,6 +208,13 @@
     S.sel.select('title').text(d =>
       fmt(d.from) + (d.until ? ' → ' + fmt(d.until) : '') + ' · ' +
       ((N[d.a] || {}).label || d.a) + ' ↔ ' + ((N[d.b] || {}).label || d.b) + '\n' + d.headline);
+    if (S.msel) {
+      S.msel.style('display', d => factOn(d) ? null : 'none')
+        .style('stroke-opacity', d => (S.dateMs - d.from) < recent ? 0.95 : 0.45);
+      S.msel.select('title').text(d =>
+        fmt(d.from) + (d.until ? ' → ' + fmt(d.until) : '') + ' · ' +
+        ((N[d.node] || {}).label || d.node) + ' · ' + d.other + '\n' + d.headline);
+    }
   }
 
   /* ── barra de tiempo ──────────────────────────────────────────────────── */
@@ -214,8 +266,8 @@
                            '⏱ Time: see the chain as it was on a date + dated events');
     const set = (id, txt, tip) => { const el = document.getElementById(id); if (el) { el.textContent = txt; if (tip) el.title = tip; } };
     set('mt-ev', '⚡ ' + L('Eventos', 'Events'),
-        L('Hechos con fecha (sanciones, inversiones, fábricas…) como líneas punteadas',
-          'Dated facts (sanctions, investments, fabs…) as dashed lines'));
+        L('Hechos con fecha: línea punteada = entre dos empresas; anillo punteado = una empresa y un tema (EUV, Ley CHIPS, China…)',
+          'Dated facts: dashed line = between two companies; dashed ring = a company and a topic (EUV, CHIPS Act, China…)'));
     set('mt-facts', '☰ ' + L('Hechos', 'Facts'), L('Lista completa de hechos con fecha', 'Full list of dated facts'));
     set('mt-3d', '⬗ 3D', L('Vista 3D: la profundidad es el tiempo', '3D view: depth is time'));
     set('mt-close', '✕', L('Volver a hoy', 'Back to today'));
@@ -234,7 +286,7 @@
     const ids = new Set(Object.keys(window.NODE_BY_ID || {}).map(canon).filter(Boolean));
     let nOk = 0; ids.forEach(id => { if (nodeOk(id)) nOk++; });
     let lOk = 0; (window.LINKS || []).forEach(l => { if (linkOk(l)) lOk++; });
-    const evN = S.facts.filter(factOn).length;
+    const evN = S.facts.filter(factOn).length + S.marks.filter(factOn).length;
     const c = document.getElementById('mt-count');
     if (c) c.textContent = L(
       `En ${fmt(S.dateMs)}: ${nOk} de ${ids.size} empresas ya existían y ${lOk} vínculos. ` +
