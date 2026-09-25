@@ -4766,6 +4766,9 @@ Object.assign(I18N.es, {
   pref_aicache:'Guardar análisis de IA en caché (24h)',
   d_news:'Noticias', d_earn:'Próximo earnings', d_fund:'Fundamentales', d_ai:'Análisis IA',
   d_alerts:'Alertas de precio', d_pos:'Mi posición',
+  d_history:'Historia · de dónde sale cada dato', hist_empty:'Sin historia registrada todavía.',
+  hist_facts:'hechos', hist_src:'con fuente', hist_saved:'noticias nuevas guardadas',
+  hist_primary:'fuente primaria', hist_press:'prensa', hist_weak:'fuente débil',
   v8_needkey:'Configura tu API key en ⚙ para activar esta sección.',
   v8_nolist:'Sin listado en EE.UU. — datos de mercado no disponibles.',
   ai_btn:'✨ Analizar con IA', ai_loading:'Analizando con IA…',
@@ -4801,6 +4804,9 @@ Object.assign(I18N.en, {
   pref_aicache:'Cache AI analysis (24h)',
   d_news:'News', d_earn:'Next earnings', d_fund:'Fundamentals', d_ai:'AI analysis',
   d_alerts:'Price alerts', d_pos:'My position',
+  d_history:'History · where each fact comes from', hist_empty:'No recorded history yet.',
+  hist_facts:'facts', hist_src:'with source', hist_saved:'new news items saved',
+  hist_primary:'primary source', hist_press:'press', hist_weak:'weak source',
   v8_needkey:'Add your API key in ⚙ to enable this section.',
   v8_nolist:'No US listing — market data unavailable.',
   ai_btn:'✨ Analyze with AI', ai_loading:'Analyzing with AI…',
@@ -5385,6 +5391,51 @@ renderDetail = function(id){
 
 const V8detail = {
   token:0, fundCache:{}, newsCache:{}, newsRange:{},
+  /* Phase 1 · M6 en el sitio correcto: la historia de la entidad con la
+     FUENTE de cada hecho, en el panel que se abre desde el mapa principal.
+     (Primero se puso solo en la ficha del Grafo Temporal — una pantalla que
+     casi no se usa — y desde el mapa "todo se veía como antes".)
+     Además, la primera vez por sesión ingiere noticias de esa empresa al
+     grafo, para que la historia crezca sola con fuentes citables. */
+  _histIngested:new Set(),
+  loadHistory(id,my){
+    const el=$('v8-history'); if(!el) return;
+    const lang=(LANG==='en')?'en':'es';
+    fetch(`${BASE}/api/ontology/objects/${encodeURIComponent(id)}/timeline?limit=8&lang=${lang}`)
+      .then(r=>r.ok?r.json():null).then(d=>{
+        if(my!==this.token) return;
+        if(!d||!Array.isArray(d.timeline)||!d.timeline.length){
+          el.innerHTML=`<div class="v8-loading" style="font-style:normal">${t('hist_empty')}</div>`;
+        } else {
+          const nsrc=d.timeline.filter(e=>e.source&&e.source.url).length;
+          const dot=tr=>{const n=+tr||0;const c=n>=3?'#43C896':n===2?'#E0B25C':'#8A857A';
+            const lb=n>=3?t('hist_primary'):n===2?t('hist_press'):t('hist_weak');
+            return `<span title="${esc(lb)}" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${c};margin-right:4px;vertical-align:middle"></span>`;};
+          const when=iso=>{if(!iso)return'';const x=new Date(iso);return isNaN(x)?'':x.toLocaleDateString(lang,{day:'2-digit',month:'short',year:'numeric'});};
+          el.innerHTML=`<div style="font-size:10.5px;color:var(--ink-3);margin-bottom:4px">${d.timeline.length} ${t('hist_facts')} · ${nsrc} ${t('hist_src')}</div>`+
+            d.timeline.map(e=>{
+              const src=e.source&&e.source.url?e.source:null;
+              const host=src?(src.publisher||src.url).replace(/^https?:\/\//,'').split('/')[0]:'';
+              return `<div style="padding:5px 0;border-bottom:1px solid var(--line);line-height:1.4">
+                <div style="display:flex;gap:6px;align-items:baseline">
+                  <span style="font-size:11.5px;color:var(--ink-2);flex:1">${e.kind==='news'?'📰 ':''}${esc(e.title||'')}</span>
+                  <span style="font-size:10px;color:var(--ink-3);white-space:nowrap">${esc(when(e.at))}</span></div>
+                ${src?`<a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none">${dot(src.trust)}${esc(host)} ↗</a>`:''}
+              </div>`;}).join('');
+        }
+        this.ingestOnce(id,my);
+      }).catch(()=>{ el.innerHTML=''; });
+  },
+  ingestOnce(id,my){
+    if(this._histIngested.has(id)) return;
+    this._histIngested.add(id);
+    let actor='ingesta_ui'; try{ actor=localStorage.getItem('khipu_actor')||actor; }catch(e){}
+    fetch(`${BASE}/api/ontology/ingest/news`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({entity_id:id,actor,limit:8})})
+      .then(r=>r.ok?r.json():null).then(res=>{
+        if(res&&res.new&&my===this.token) this.loadHistory(id,my);
+      }).catch(()=>{});
+  },
   enrich(id){
     const d=NODE_BY_ID[id]; if(!d) return;
     const tk=d.mkt; const my=++this.token;
@@ -5400,7 +5451,8 @@ const V8detail = {
           <div id="v8-news-digest"></div><div id="v8-news"><div class="v8-loading">…</div></div></div>
        <div class="v8-sec"><div class="v8-sec-h">${t('d_ai')}</div><button class="ai-btn" id="v8-ai-btn">${t('ai_btn')}</button><div id="v8-ai"></div></div>
        <div class="v8-sec"><div class="v8-sec-h">${t('d_alerts')}</div><div id="v8-alerts"></div></div>`
-    ) : `<div class="v8-sec"><div class="v8-need-key">${t('v8_nolist')}</div></div>`);
+    ) : `<div class="v8-sec"><div class="v8-need-key">${t('v8_nolist')}</div></div>`)
+      + `<div class="v8-sec"><div class="v8-sec-h">${t('d_history')}</div><div id="v8-history"><div class="v8-loading">…</div></div></div>`;
     const detail=$('detail'); const stressBtn=detail.querySelector('.stress-btn');
     if(stressBtn) detail.insertBefore(host, stressBtn); else detail.appendChild(host);
     // wire collapsible sections
@@ -5410,6 +5462,7 @@ const V8detail = {
       if(h) h.addEventListener('click', () => sec.classList.toggle('collapsed'));
     });
 
+    this.loadHistory(id,my);
     if(!tk) return;
     this.loadEarnings(id,tk,my);
     this.loadFundamentals(id,tk,my);
