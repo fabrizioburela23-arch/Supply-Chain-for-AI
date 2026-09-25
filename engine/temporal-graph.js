@@ -203,7 +203,8 @@
     panel.innerHTML = `
       <div style="max-width:1200px;margin:0 auto;padding:22px 24px 40px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px">
-          <h2 style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;margin:0">◈ Grafo de Conocimiento Temporal</h2>
+          <div style="display:flex;align-items:center;gap:10px"><button id="tkg-back" onclick="window.switchTab&&window.switchTab('map')" style="font-size:12px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer">← ${(window.LANG==='en')?'Map':'Mapa'}</button>
+          <h2 style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;margin:0">◈ Grafo de Conocimiento Temporal</h2></div>
           <span id="tkg-store" style="font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3)">memoria: nativa</span>
           <span id="tkg-ontology-badge" style="display:none;font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface-2);border:1px solid var(--violet);color:var(--violet)"></span>
         </div>

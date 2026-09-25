@@ -13,7 +13,7 @@
     </div>`;
 
   const TAB_ROWS = [
-    ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, ◈ Grafo Temporal, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom.'],
+    ['🗺️ Mapa', 'El universo de las 555 empresas. Sub-modos: ⬡ Cadena (el grafo), 🌐 Geopolítica, 🚀 Espacio, 🧬 Simulación y 🪐 3D. También puedes entrar al 3D con el botón 🪐 junto al zoom. El botón ⏱ (debajo de 🪐, junto al zoom) lo convierte en máquina del tiempo.'],
     ['📈 Mercado', 'Precios en tiempo real y tu portafolio. Sub-modo ₿ Cripto: el mercado cripto explicado — vista Mapa por categorías (qué es cada familia de monedas, en simple), top 100 en vivo, y el Expediente Khipu de las 50 grandes: qué es, cómo funciona, riesgos y catalizadores de cada una, con advertencias ⚠ en las monedas delicadas.'],
     ['🖥️ Terminal', 'Vista estilo Bloomberg: hasta 4 gráficos lado a lado + el panel 📋 Datos a la derecha (ficha, valuación, analistas, fundamentales anuales y cadena de cada empresa). Sub-modos: Terminal, Análisis y Canvas IA.'],
     ['❓ Guía', 'Esta página.'],
@@ -94,10 +94,13 @@
             pregúntale lo que quieras mientras miras el mapa.
           </p>`)}
 
-        ${SEC('◈ Grafo Temporal — la máquina del tiempo', `
+        ${SEC('⏱ Tiempo — el mapa como máquina del tiempo', `
           <p style="font-size:13px;line-height:1.6;color:var(--ink-2);margin:0 0 10px">
-            Cada relación entre empresas tiene fecha de inicio (y a veces de fin). Mueve la línea de tiempo y verás
-            cómo la cadena cambió con los años — sanciones, escaseces, nuevos acuerdos. Dentro de la ficha de cada
+            En el mapa, toca <b>⏱</b> (a la izquierda, debajo de + − ⤢ 🪐). Aparece una línea de tiempo abajo: muévela
+            (o dale ▶) y verás la cadena como era en esa fecha — lo que aún no existía se apaga. <b>⚡ Eventos</b>
+            dibuja los hechos con fecha (sanciones, inversiones, fábricas, competencia) como líneas punteadas;
+            pasa el mouse sobre una para leerla. <b>☰ Hechos</b> abre la lista completa y <b>⬗ 3D</b> la vista donde
+            la profundidad es el tiempo. Dentro de la ficha de cada
             empresa, <b>＋ Acción</b> te deja crear tesis, marcar riesgos o anotar — con fecha y tu nombre, para siempre.
           </p>`)}
 

@@ -1384,7 +1384,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab active" data-tab="map" data-group="mapa" id="tab-map">⬡ <span data-i18n="tab_map">Cadena</span></button>
       <button class="tab" data-tab="geo" data-group="mapa" id="tab-geo">🌐 <span data-i18n="tab_geo">Geopolítica</span></button>
       <button class="tab" data-tab="space" data-group="mapa" id="tab-space">🚀 <span data-i18n="tab_space">Espacio</span></button>
-      <button class="tab" data-tab="tkg" data-group="mapa" id="tab-tkg">◈ <span>Grafo Temporal</span></button>
+      <!-- ◈ Grafo Temporal ya no es pestaña (2026-09-25): el tiempo vive en el mapa (⏱ en la barra).
+           El panel #tkg-panel sigue existiendo como vista (☰ Hechos / ⬗ 3D / fichas). -->
       <button class="tab" data-tab="simulation" data-group="mapa" id="tab-sim">🧬 <span data-i18n="tab_sim">Simulación</span></button>
       <button class="tab" id="tab-3d" data-group="mapa" title="Universo — todas las empresas en el espacio (funciona en cualquier equipo)" onclick="window._go3D&&window._go3D()">🪐 <span>Universo</span></button>
       <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
@@ -2421,6 +2422,8 @@ const linkLayer = root.append('g');
 const nodeLayer = root.append('g');
 // Las etiquetas de país van POR ENCIMA de los nodos para que se lean (sin bloquear clics)
 regionLayer.raise().style('pointer-events','none');
+// engine/maptime.js inserta su capa ⚡ Eventos entre enlaces y nodos
+window._mapLayers = { root, linkLayer, nodeLayer };
 
 const zoom = d3.zoom().scaleExtent([.3,3.5]).on('zoom',e=>root.attr('transform',e.transform));
 svg.call(zoom);
@@ -2654,6 +2657,7 @@ function _paintGraph(){
   linkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
          .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
   nodeSel.attr('transform',d=>`translate(${d.x},${d.y})`);
+  if(window._mapTimePaint) window._mapTimePaint();   /* capa ⚡ Eventos */
 }
 let _liveTick = false;   // solo true mientras se arrastra un nodo
 sim.on('tick',()=>{ if(_liveTick) _paintGraph(); });
@@ -2814,6 +2818,7 @@ function updateRiskRings(){
 }
 
 function refreshStyles(){ _refreshStylesCore(); updateRiskRings(); }
+window.refreshStyles = refreshStyles;
 
 function _refreshStylesCore(){
   if(pathActive){
@@ -2859,11 +2864,15 @@ function _refreshStylesCore(){
     return;
   }
   const anyFilter = activePF||activeCat||activeCountry||searchTerm;
-  const baseOp = viewMode==='geo' ? .14 : .35;
+  let baseOp = viewMode==='geo' ? .14 : .35;
   const cache = buildFilterCache(); /* v7 · M10 */
-  nodeSel.style('opacity', d=>cache.get(d.id)?1:.12);
+  /* ⏱ tiempo en el mapa (engine/maptime.js): lo que aún no existía en la fecha se apaga */
+  const tm = (window.KhipuMapTime && window.KhipuMapTime.active) ? window.KhipuMapTime : null;
+  if(tm && tm.events) baseOp = .1;   /* con ⚡ Eventos, los vínculos normales ceden protagonismo */
+  nodeSel.style('opacity', d=> tm && !tm.nodeOk(d.id) ? .05 : cache.get(d.id)?1:.12);
   linkSel.style('stroke',l=>getLinkColor(l.type))
     .style('stroke-opacity', l=>{
+      if(tm && !tm.linkOk(l)) return .015;
       const ltOk = !activeLinkType || l.type===activeLinkType;
       if(!ltOk) return .04;
       if(!anyFilter) return baseOp;
@@ -3911,6 +3920,7 @@ function applyLang(){
   /* v7: textos de las features nuevas */
   const ltl=document.getElementById('lt-label'); if(ltl) ltl.textContent=t('f_link');
   const pfb=document.getElementById('pf-btn-txt'); if(pfb) pfb.textContent=t('pf_btn');
+  if(window.KhipuMapTime) window.KhipuMapTime.relabel();
   const pcl=document.getElementById('path-clear'); if(pcl) pcl.textContent='✕ '+t('pf_clear');
   buildLtChips();
   const gt=document.getElementById('geo-title'); if(gt) gt.textContent=t('geo_title');
@@ -6318,6 +6328,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="nodes/ontology_facts.js"></script>
 <script src="engine/temporal-graph.js"></script>
 <script src="engine/timeline3d.js"></script>
+<script src="engine/maptime.js"></script>
 <script src="engine/khipu_lang.js"></script>
 <script src="engine/guide.js"></script>
 <script src="engine/xray.js"></script>

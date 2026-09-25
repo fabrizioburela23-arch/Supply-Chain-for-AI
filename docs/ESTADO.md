@@ -9,6 +9,31 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-25 — El Grafo Temporal se fusiona con el mapa principal
+
+Fabrizio: "el grafo temporal y el normal deberían ser uno; el temporal no da
+mucho por sí solo". Elegido "Todo a la vez". **engine/maptime.js** (nuevo):
+- Botón **⏱** en `.zoom-ctrl` (debajo de + − ⤢ 🪐 — la barra de filtros queda
+  tapada en pantallas chicas). Abre una barra de tiempo sobre el mapa: ▶,
+  slider 1970→hoy, fecha, **⚡ Eventos**, **☰ Hechos**, **⬗ 3D**, ✕ (vuelve a hoy).
+- En la fecha T se apagan las empresas aún no fundadas (`NODE_META.founded`) y
+  los vínculos cuyo par tiene un hecho fechado posterior a T. Vínculo sin fecha
+  = presente si existen sus dos empresas (NO se inventan fechas).
+- ⚡ Eventos: hechos de `TEMPORAL_SEED_FACTS` con ambos extremos en el mapa (31
+  hoy) como líneas punteadas color-relación, visibles solo en su ventana;
+  `<title>` = fecha + titular; clic → jumpTo. Con ⚡ activo los vínculos
+  normales bajan a .1 para que resalten.
+- Enganches en app.html: `window._mapLayers`, `_paintGraph` llama
+  `_mapTimePaint`, `_refreshStylesCore` consulta `KhipuMapTime.nodeOk/linkOk`,
+  `window.refreshStyles`, `applyLang` → `KhipuMapTime.relabel()`.
+- Pestaña ◈ Grafo Temporal QUITADA de la barra; `#tkg-panel` sigue vivo como
+  vista (`window.__tkgShow('facts'|'t3d'|'viz')`, botón "← Mapa"), igual que
+  `__tkgOpenObj`, `_xrayTKG`, cockpit stage 'tkg'. `GRAPH ASOF` mueve el MAPA.
+- Probado en Chromium headless (jun 2005: 622/949 empresas, 1.380 vínculos;
+  jun 2024: 16 eventos vigentes). 195 tests. sw v134.
+
+---
+
 # SESIÓN 2026-09-22/24 — PHASE 1 "Live Investment Graph" COMPLETA + velocidad + 3D temporal
 
 Spec de Fabrizio ("Live Investment Graph V1"). Auditoría primero

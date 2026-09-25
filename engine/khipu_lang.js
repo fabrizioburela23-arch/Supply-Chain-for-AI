@@ -262,9 +262,12 @@
     if (sub === 'ASOF') {
       const date = args[1];
       if (!date) return { answer: 'Uso: GRAPH ASOF <YYYY-MM-DD>', actions: [] };
-      if (typeof switchTab === 'function') switchTab('tkg');
-      const ok = window.__tkgSetDate ? window.__tkgSetDate(date) : false;
-      return { answer: ok ? `Grafo Temporal movido a ${date}.` : 'No se pudo mover la línea de tiempo (¿fecha inválida?).', actions: [] };
+      // El tiempo vive en el MAPA principal (engine/maptime.js); el panel
+      // temporal viejo solo como respaldo si ese módulo no cargó.
+      let ok = false;
+      if (window.KhipuMapTime) ok = window.KhipuMapTime.setDate(date);
+      else { if (typeof switchTab === 'function') switchTab('tkg'); ok = window.__tkgSetDate ? window.__tkgSetDate(date) : false; }
+      return { answer: ok ? `Mapa movido a ${date} (⏱).` : 'No se pudo mover la línea de tiempo (¿fecha inválida?).', actions: [] };
     }
     if (sub === 'DIFF') {
       const nStr = (args[1] || '30D').toUpperCase().replace('D', '');

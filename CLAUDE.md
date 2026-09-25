@@ -19,7 +19,8 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 
 - `app.html` (~12,300 líneas): TODA la UI en un archivo, 8 bloques `<script>`
   inline. Tabs: map, market, analysis, geo, simulation, space, terminal,
-  canvas, tkg (◈ Grafo Temporal), guia (❓ Guía).
+  canvas, tkg (◈ Grafo Temporal — ya SIN botón de pestaña: se abre como vista
+  desde ⏱ del mapa, engine/maptime.js), guia (❓ Guía).
 - `server.py` (~2,500 líneas): Flask sync + gunicorn **1 worker + 8 threads**
   (NO subir workers: el estado en memoria — caché, rate limits, agente de
   trading — divergiría entre workers). Proxy de todas las APIs externas.
@@ -52,6 +53,8 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js, timeline3d.js
   (Grafo Temporal en 3D: Z = fecha de inicio de la relación; modo "⬗ Tiempo 3D"
   de la pestaña tkg; solo hechos con fecha; montaje perezoso, dibujo bajo demanda).
+  maptime.js (⏱ TIEMPO EN EL MAPA PRINCIPAL: slider de fecha + capa ⚡ Eventos;
+  window.KhipuMapTime, __tkgShow(vista); GRAPH ASOF mueve el mapa).
   REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
   (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
   livesim.js (simulación en vivo sobre el mapa), layers.js (capas del mapa),
@@ -184,7 +187,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (193 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (195 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
