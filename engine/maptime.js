@@ -325,6 +325,8 @@
     build(); ensureBar();
     S.active = true;
     const bar = document.getElementById('mt-bar'); if (bar) bar.classList.add('on');
+    // el aviso "toca una empresa" del teléfono tapaba la barra
+    const mh = document.getElementById('mobile-hint'); if (mh) mh.style.display = 'none';
     const btn = document.getElementById('mt-btn'); if (btn) btn.classList.add('on');
     schedule();
   }

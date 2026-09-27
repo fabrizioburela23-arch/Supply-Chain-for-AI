@@ -293,7 +293,7 @@
     ov.innerHTML =
       '<div id="bcp-top">' +
         '<div id="bcp-orb-wrap"><canvas id="bcp-orb-canvas" width="64" height="64"></canvas></div>' +
-        '<div id="bcp-idwrap"><div id="bcp-word">BIXBY</div>' +
+        '<div id="bcp-idwrap"><div id="bcp-word">KHIPU</div>' +
           '<div id="bcp-state"><span class="dot"></span><span class="txt">' + (en0 ? 'Ready' : 'Listo') + '</span></div></div>' +
         '<button class="bcp-iconbtn" id="bcp-close" title="' + (en0 ? 'Close (Esc)' : 'Cerrar (Esc)') + '">✕</button>' +
       '</div>' +

@@ -119,6 +119,7 @@
    empresas se angosta y el grid usa una sola columna (auditoría 375px) */
 @media(max-width:760px){
   #term-data{position:absolute;inset:0;width:100%;min-width:0;z-index:12}
+  /* (≤560px la lista va ARRIBA a lo ancho — ver app.html, bloque TELÉFONO) */
   #term-sidebar{width:150px!important;min-width:150px!important}
   #term-grid{grid-template-columns:1fr!important}
 }

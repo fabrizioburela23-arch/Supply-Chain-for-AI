@@ -68,6 +68,11 @@
       // ocultar la fila secundaria si el grupo tiene un solo modo
       var count = stabs.querySelectorAll('.tab[data-group="' + grp + '"]').length;
       stabs.classList.toggle('hide', count <= 1);
+      // en teléfono la fila es deslizable: que el modo activo quede a la vista
+      try {
+        var act = stabs.querySelector('.tab.active');
+        if (act && stabs.scrollWidth > stabs.clientWidth) stabs.scrollLeft = Math.max(0, act.offsetLeft - 12);
+      } catch (e) {}
     }
     // fluidez: fundido sutil del panel que entra (re-disparable)
     try {

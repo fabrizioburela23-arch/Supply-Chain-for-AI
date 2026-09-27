@@ -9,6 +9,29 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-27 — La app en el TELÉFONO (sw v136)
+
+Probado con Playwright en iPhone SE (320), iPhone 13 (390), Pixel 5 (393) e
+iPad Mini (768). Causa raíz: la fila de botones del header medía 445px en un
+iPhone de 390 → el navegador encogía TODA la app a 476px (letra diminuta, todo
+cortado a la derecha). Arreglos (bloques `@media` 820/560 en app.html):
+- ≤560: se ocultan ⟲ y el reloj LIVE (`#hdr-live`); Khipu = solo orbe
+  (`.bixby-btn-txt` oculto); título con elipsis. Resultado: ancho = pantalla.
+- ≤560: pestañas primarias y sub-pestañas en UNA fila deslizable (antes 3
+  filas + "❓ Guía" cortada); nav4.js desliza hasta el modo activo.
+- ≤820: ◱ Capas bajo la franja de sectores, ◉ En vivo arriba-der, zoom/🪐/⏱
+  en columna derecha sobre el ❓; barra ⏱ sin tapar el ❓; al abrir ⏱ se oculta
+  el aviso "toca una empresa".
+- Ficha: la fila NRS/Second Brain/Dossier/SEC hace wrap (se cortaba).
+- Simulación: 1 columna (`.sim-grid`). Terminal: lista arriba (44%), gráficos
+  abajo, arranca con 1 panel; y TOCAR una empresa la abre en el primer panel
+  libre (antes solo arrastrar → inútil en táctil). La regla móvil de
+  termdata.js (lista 150px al costado) queda pisada por `#terminal-panel #term-sidebar`.
+- Cabina: decía "BIXBY" (marca de Samsung) → "KHIPU".
+- Escritorio verificado sin cambios.
+
+---
+
 # SESIÓN 2026-09-25 — El Grafo Temporal se fusiona con el mapa principal
 
 Fabrizio: "el grafo temporal y el normal deberían ser uno; el temporal no da
