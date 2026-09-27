@@ -384,6 +384,22 @@ class TejedorHiperaristas:
             pass
         return None
 
+    def _dudoso(self, session, name):
+        """Phase 1 · M2 (pendiente cerrado): un nombre que NO pasa el umbral de
+        escritura pero SÍ el de búsqueda ("Hynix" → SK Hynix por prefijo) ya no
+        se descarta en silencio: vuelve como sugerencia {nombre, id, label,
+        score, method} para que un HUMANO decida en la cola de propuestas.
+        Nunca entra solo a `affects`."""
+        try:
+            from core.entities import resolve, UMBRAL_BUSQUEDA
+            r = resolve(name, umbral=UMBRAL_BUSQUEDA)
+            if r and session.get(ObjectRecord, r['id']):
+                return {'nombre': str(name)[:120], 'id': r['id'], 'label': r['label'],
+                        'score': r['score'], 'method': r['method']}
+        except Exception:  # noqa: BLE001
+            pass
+        return None
+
     def propose(self, session, signal):
         c = signal['company']
         try:
@@ -419,10 +435,15 @@ class TejedorHiperaristas:
         if not fac or not fac.get('label'):
             return None
         members = []
+        dudosos = []   # nombres que solo resuelven con match flojo → decide un humano
         for nm in (fac.get('empresas') or [])[:20]:
             rid = self._resolve(session, nm)
             if rid and rid not in members:
                 members.append(rid)
+            elif not rid:
+                d = self._dudoso(session, nm)
+                if d and d['id'] not in members and all(x['id'] != d['id'] for x in dudosos):
+                    dudosos.append(d)
         if c.id not in members:
             members.insert(0, c.id)   # la semilla siempre cuenta como afectada
         if len(members) < 2:          # una hiperarista necesita ≥2 miembros
@@ -436,12 +457,22 @@ class TejedorHiperaristas:
         except (TypeError, ValueError):
             sev = 3.0
         razon = str(fac.get('resumen') or f'Golpe sistémico detectado en noticias de {c.label}')[:600]
+        # Con nombres dudosos la propuesta queda por debajo del umbral de
+        # auto-aplicación: CrearFactor es SAFE_AUTO, y aplicarla sola dejaría
+        # fuera a esas empresas sin que nadie lo vea.
+        conf = 0.5 if dudosos else 0.6
+        expl = f'🕸️ {label} → {len(members)} empresas: {razon}'
+        if dudosos:
+            expl += ' · ¿También? ' + ', '.join(
+                f'"{d["nombre"]}" = {d["label"]} ({d["score"]})' for d in dudosos[:6])
         return {
-            'action_type': 'CrearFactor', 'object_id': fid, 'confidence': 0.6,
+            'action_type': 'CrearFactor', 'object_id': fid, 'confidence': conf,
             'payload': {'factor_id': fid, 'label': label, 'severity': sev,
                         'affects': members, 'coef': 0.5, 'razon': razon,
-                        'fuente': 'tejedor_gdelt', 'confidence': 0.6},
-            'explanation': f'🕸️ {label} → {len(members)} empresas: {razon}',
+                        'fuente': 'tejedor_gdelt', 'confidence': conf,
+                        # auditable: qué nombres quedaron fuera y por qué
+                        'dudosos': dudosos},
+            'explanation': expl[:1500],
         }
 
 

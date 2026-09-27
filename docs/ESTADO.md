@@ -22,7 +22,13 @@ está conectado).
   oculta sin ontología). Empresa clicable → jumpTo.
 - KHIPU `FEED [n]`; además FEED/INSIGHTS/MATRIX/PORT funcionan como UNA sola
   palabra (antes exigía 2 y caían a la IA).
-- 200 tests.
+- M2 cerrado también: nombres DUDOSOS del tejedor de hiperaristas → propuesta
+  para humano (ver ROADMAP_PHASE1). 202 tests.
+- Pendientes de Phase 1 que quedan (ninguno bloquea): persistir aliases/
+  external_ids en props, CIK/ISIN/LEI, migrar /api/quote a la capa de
+  proveedores, FMP+get_history, CorporateEvent N-ario, SEC EDGAR como fuente,
+  bus de eventos, frescura por dato en más sitios. Y Velocidad paso 2
+  (enlaces a canvas), aplazado por riesgo.
 
 ---
 

@@ -73,7 +73,12 @@ Pendiente de M2 (no bloquea a M3/M4):
       resolvedores — navegador (engine/resolve.js, peso 86) y servidor
       (core/entities.py, vía `legal_names` del snapshot). "Taiwan
       Semiconductor Manufacturing Company" → TSMC pasa el umbral de ESCRITURA.
-- [ ] Matches de baja confianza → cola `ProposedAction` (el patrón ya existe).
+- [x] Matches de baja confianza → cola `ProposedAction` (2026-09-27): el
+      tejedor de hiperaristas ya no descarta en silencio un nombre que solo
+      resuelve con match flojo ("Hynix"→SK Hynix, score 60): va en
+      `payload.dudosos` {nombre,id,label,score,method}, se cita en la
+      explicación ("¿También? …") y la propuesta baja a confianza 0.5 (<0.55
+      de auto-aplicación) para que decida un humano. tests/test_agent_dudosos.py.
 
 ## M3 — Interfaces de proveedor ✅ COMPLETO
 
