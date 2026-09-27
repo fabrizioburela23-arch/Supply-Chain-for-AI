@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-22T02:16:10.172Z",
+ "exported_at": "2026-09-27T15:35:21.555Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -10764,7 +10764,7 @@
   {
    "sector": "energia",
    "id": "NextEraEnergy",
-   "label": "NextEraEnergy",
+   "label": "NextEra Energy",
    "ticker": "NEE · NYSE",
    "cat": "renewables_utility",
    "port": "",
@@ -10780,7 +10780,7 @@
   {
    "sector": "energia",
    "id": "SouthernCo",
-   "label": "SouthernCo",
+   "label": "Southern Company",
    "ticker": "SO · NYSE",
    "cat": "power_ipp",
    "port": "",
@@ -10844,7 +10844,7 @@
   {
    "sector": "energia",
    "id": "XcelEnergy",
-   "label": "XcelEnergy",
+   "label": "Xcel Energy",
    "ticker": "XEL · NASDAQ",
    "cat": "renewables_utility",
    "port": "",
@@ -10876,7 +10876,7 @@
   {
    "sector": "energia",
    "id": "AESCorp",
-   "label": "AESCorp",
+   "label": "AES",
    "ticker": "AES · NYSE",
    "cat": "power_ipp",
    "port": "",
@@ -10892,7 +10892,7 @@
   {
    "sector": "energia",
    "id": "PGECorp",
-   "label": "PGECorp",
+   "label": "PG&E",
    "ticker": "PCG · NYSE",
    "cat": "grid_transmission",
    "port": "",
@@ -10908,7 +10908,7 @@
   {
    "sector": "energia",
    "id": "BerkshireHathawayEnergy",
-   "label": "BerkshireHathawayEnergy",
+   "label": "Berkshire Hathaway Energy",
    "ticker": "Privada (subsidiaria de Berkshire Hathaway Inc., BRK.A/BRK.B · NYSE)",
    "cat": "power_ipp",
    "port": "",
@@ -10988,7 +10988,7 @@
   {
    "sector": "energia",
    "id": "FluenceEnergy",
-   "label": "FluenceEnergy",
+   "label": "Fluence Energy",
    "ticker": "FLNC · NASDAQ",
    "cat": "storage_grid",
    "port": "",
@@ -11004,7 +11004,7 @@
   {
    "sector": "energia",
    "id": "FormEnergy",
-   "label": "FormEnergy",
+   "label": "Form Energy",
    "ticker": "Privada",
    "cat": "storage_grid",
    "port": "",
@@ -11084,7 +11084,7 @@
   {
    "sector": "energia",
    "id": "NationalGrid",
-   "label": "NationalGrid",
+   "label": "National Grid",
    "ticker": "NG · LSE",
    "cat": "grid_transmission",
    "port": "",
@@ -11244,7 +11244,7 @@
   {
    "sector": "energia",
    "id": "StateGridChina",
-   "label": "StateGridChina",
+   "label": "State Grid (China)",
    "ticker": "N/A — estatal",
    "cat": "grid_transmission",
    "port": "",
@@ -11260,7 +11260,7 @@
   {
    "sector": "energia",
    "id": "CLPGroup",
-   "label": "CLPGroup",
+   "label": "CLP Group",
    "ticker": "0002 · Hong Kong Stock Exchange (HKEX)",
    "cat": "power_ipp",
    "port": "",
@@ -11276,7 +11276,7 @@
   {
    "sector": "energia",
    "id": "CGNPower",
-   "label": "CGNPower",
+   "label": "CGN Power",
    "ticker": "1816 · HKEX / 003816 · Shenzhen",
    "cat": "nuclear_operator",
    "port": "",
@@ -11292,7 +11292,7 @@
   {
    "sector": "energia",
    "id": "KansaiElectric",
-   "label": "KansaiElectric",
+   "label": "Kansai Electric",
    "ticker": "9503 · Tokyo Stock Exchange (ADR: KAEPY)",
    "cat": "nuclear_operator",
    "port": "",
@@ -11356,7 +11356,7 @@
   {
    "sector": "energia",
    "id": "SaudiAramco",
-   "label": "SaudiAramco",
+   "label": "Saudi Aramco",
    "ticker": "2222 · Tadawul (Riad)",
    "cat": "oil_gas_major",
    "port": "",
@@ -11676,7 +11676,7 @@
   {
    "sector": "energia",
    "id": "CheniereEnergy",
-   "label": "CheniereEnergy",
+   "label": "Cheniere Energy",
    "ticker": "LNG · NYSE",
    "cat": "lng",
    "port": "",
@@ -11692,7 +11692,7 @@
   {
    "sector": "energia",
    "id": "VentureGlobalLNG",
-   "label": "VentureGlobalLNG",
+   "label": "Venture Global LNG",
    "ticker": "VG · NYSE",
    "cat": "lng",
    "port": "",
@@ -11724,7 +11724,7 @@
   {
    "sector": "energia",
    "id": "UraniumOne",
-   "label": "UraniumOne",
+   "label": "Uranium One",
    "ticker": "Privada (subsidiaria de Rosatom/ARMZ)",
    "cat": "uranium_mining",
    "port": "",
@@ -11756,7 +11756,7 @@
   {
    "sector": "energia",
    "id": "AirProducts",
-   "label": "AirProducts",
+   "label": "Air Products",
    "ticker": "APD · NYSE",
    "cat": "hydrogen",
    "port": "",
@@ -11772,7 +11772,7 @@
   {
    "sector": "energia",
    "id": "PlugPower",
-   "label": "PlugPower",
+   "label": "Plug Power",
    "ticker": "PLUG · NASDAQ",
    "cat": "hydrogen",
    "port": "",
@@ -11788,7 +11788,7 @@
   {
    "sector": "energia",
    "id": "BloomEnergy",
-   "label": "BloomEnergy",
+   "label": "Bloom Energy",
    "ticker": "BE · NYSE",
    "cat": "hydrogen",
    "port": "",
@@ -11804,7 +11804,7 @@
   {
    "sector": "energia",
    "id": "NelASA",
-   "label": "NelASA",
+   "label": "Nel ASA",
    "ticker": "NEL · Oslo Børs",
    "cat": "hydrogen",
    "port": "",
@@ -11820,7 +11820,7 @@
   {
    "sector": "energia",
    "id": "BallardPower",
-   "label": "BallardPower",
+   "label": "Ballard Power",
    "ticker": "BLDP · NASDAQ/TSX",
    "cat": "hydrogen",
    "port": "",
@@ -11916,7 +11916,7 @@
   {
    "sector": "energia",
    "id": "KinderMorgan",
-   "label": "KinderMorgan",
+   "label": "Kinder Morgan",
    "ticker": "KMI · NYSE",
    "cat": "midstream_pipeline",
    "port": "",
@@ -11932,7 +11932,7 @@
   {
    "sector": "energia",
    "id": "EnterpriseProductsPartners",
-   "label": "EnterpriseProductsPartners",
+   "label": "Enterprise Products Partners",
    "ticker": "EPD · NYSE",
    "cat": "midstream_pipeline",
    "port": "",
@@ -11948,7 +11948,7 @@
   {
    "sector": "energia",
    "id": "EnergyTransfer",
-   "label": "EnergyTransfer",
+   "label": "Energy Transfer",
    "ticker": "ET · NYSE",
    "cat": "midstream_pipeline",
    "port": "",
@@ -11964,7 +11964,7 @@
   {
    "sector": "energia",
    "id": "WilliamsCompanies",
-   "label": "WilliamsCompanies",
+   "label": "Williams Companies",
    "ticker": "WMB · NYSE",
    "cat": "midstream_pipeline",
    "port": "",
@@ -11980,7 +11980,7 @@
   {
    "sector": "materiales",
    "id": "FreeportMcMoRan",
-   "label": "FreeportMcMoRan",
+   "label": "Freeport-McMoRan",
    "ticker": "FCX · NYSE",
    "cat": "mining_copper",
    "port": "",
@@ -12012,7 +12012,7 @@
   {
    "sector": "materiales",
    "id": "RioTinto",
-   "label": "RioTinto",
+   "label": "Rio Tinto",
    "ticker": "RIO · LSE/ASX/NYSE",
    "cat": "mining_diversified",
    "port": "",
@@ -12044,7 +12044,7 @@
   {
    "sector": "materiales",
    "id": "SouthernCopper",
-   "label": "SouthernCopper",
+   "label": "Southern Copper",
    "ticker": "SCCO · NYSE/BVL/BMV",
    "cat": "mining_copper",
    "port": "",
@@ -12076,7 +12076,7 @@
   {
    "sector": "materiales",
    "id": "AngloAmerican",
-   "label": "AngloAmerican",
+   "label": "Anglo American",
    "ticker": "AAL · LSE",
    "cat": "mining_diversified",
    "port": "",
@@ -12092,7 +12092,7 @@
   {
    "sector": "materiales",
    "id": "TeckResources",
-   "label": "TeckResources",
+   "label": "Teck Resources",
    "ticker": "TECK · NYSE/TSX",
    "cat": "mining_copper",
    "port": "",
@@ -12124,7 +12124,7 @@
   {
    "sector": "materiales",
    "id": "FirstQuantumMinerals",
-   "label": "FirstQuantumMinerals",
+   "label": "First Quantum Minerals",
    "ticker": "FM · TSX",
    "cat": "mining_copper",
    "port": "",
@@ -12140,7 +12140,7 @@
   {
    "sector": "materiales",
    "id": "IvanhoeMines",
-   "label": "IvanhoeMines",
+   "label": "Ivanhoe Mines",
    "ticker": "IVN · TSX",
    "cat": "mining_copper",
    "port": "",
@@ -12172,7 +12172,7 @@
   {
    "sector": "materiales",
    "id": "GrupoMexico",
-   "label": "GrupoMexico",
+   "label": "Grupo México",
    "ticker": "GMEXICOB · BMV",
    "cat": "mining_diversified",
    "port": "",
@@ -12188,7 +12188,7 @@
   {
    "sector": "materiales",
    "id": "ZijinMining",
-   "label": "ZijinMining",
+   "label": "Zijin Mining",
    "ticker": "2899 · HKEX / 601899 · Shanghai",
    "cat": "mining_diversified",
    "port": "",
@@ -12220,7 +12220,7 @@
   {
    "sector": "materiales",
    "id": "HindustanZinc",
-   "label": "HindustanZinc",
+   "label": "Hindustan Zinc",
    "ticker": "HINDZINC · NSE India",
    "cat": "mining_zinc",
    "port": "",
@@ -12252,7 +12252,7 @@
   {
    "sector": "materiales",
    "id": "SibanyeStillwater",
-   "label": "SibanyeStillwater",
+   "label": "Sibanye-Stillwater",
    "ticker": "SBSW · NYSE/JSE",
    "cat": "mining_pgm",
    "port": "",
@@ -12268,7 +12268,7 @@
   {
    "sector": "materiales",
    "id": "NickelIndustries",
-   "label": "NickelIndustries",
+   "label": "Nickel Industries",
    "ticker": "NIC · ASX",
    "cat": "mining_nickel",
    "port": "",
@@ -12284,7 +12284,7 @@
   {
    "sector": "materiales",
    "id": "IGO",
-   "label": "IGO (inicio — continúa en archivo de la primera entrega con el resto de los campos desde \"margin\")",
+   "label": "IGO",
    "ticker": "IGO · ASX",
    "cat": "mining_nickel",
    "port": "",
@@ -12300,7 +12300,7 @@
   {
    "sector": "materiales",
    "id": "PTValeIndonesia",
-   "label": "PTValeIndonesia",
+   "label": "PT Vale Indonesia",
    "ticker": "INCO · IDX",
    "cat": "mining_nickel",
    "port": "",
@@ -12348,7 +12348,7 @@
   {
    "sector": "materiales",
    "id": "JinchuanGroup",
-   "label": "JinchuanGroup",
+   "label": "Jinchuan Group",
    "ticker": "Estatal (subsidiaria Jinchuan Group International Resources cotiza 2362 · HKEX, suspendida desde mar-2025)",
    "cat": "mining_nickel",
    "port": "",
@@ -12364,7 +12364,7 @@
   {
    "sector": "materiales",
    "id": "EurasianResourcesGroup",
-   "label": "EurasianResourcesGroup",
+   "label": "Eurasian Resources Group",
    "ticker": "Privada",
    "cat": "mining_cobalt",
    "port": "",
@@ -12380,7 +12380,7 @@
   {
    "sector": "materiales",
    "id": "TalonMetals",
-   "label": "TalonMetals",
+   "label": "Talon Metals",
    "ticker": "TLO · TSX",
    "cat": "mining_nickel",
    "port": "",
@@ -12396,7 +12396,7 @@
   {
    "sector": "materiales",
    "id": "GanfengLithium",
-   "label": "GanfengLithium",
+   "label": "Ganfeng Lithium",
    "ticker": "002460 · Shenzhen / 1772 · HKEX",
    "cat": "mining_lithium",
    "port": "",
@@ -12412,7 +12412,7 @@
   {
    "sector": "materiales",
    "id": "TianqiLithium",
-   "label": "TianqiLithium",
+   "label": "Tianqi Lithium",
    "ticker": "002466 · Shenzhen / 9696 · HKEX",
    "cat": "mining_lithium",
    "port": "",
@@ -12428,7 +12428,7 @@
   {
    "sector": "materiales",
    "id": "PilbaraMinerals",
-   "label": "PilbaraMinerals",
+   "label": "Pilbara Minerals",
    "ticker": "PLS · ASX",
    "cat": "mining_lithium",
    "port": "",
@@ -12444,7 +12444,7 @@
   {
    "sector": "materiales",
    "id": "MineralResources",
-   "label": "MineralResources",
+   "label": "Mineral Resources",
    "ticker": "MIN · ASX",
    "cat": "mining_lithium",
    "port": "",
@@ -12460,7 +12460,7 @@
   {
    "sector": "materiales",
    "id": "LiontownResources",
-   "label": "LiontownResources",
+   "label": "Liontown Resources",
    "ticker": "LTR · ASX",
    "cat": "mining_lithium",
    "port": "",
@@ -12476,7 +12476,7 @@
   {
    "sector": "materiales",
    "id": "ElevraLithium",
-   "label": "ElevraLithium",
+   "label": "Elevra Lithium",
    "ticker": "ELV · ASX",
    "cat": "mining_lithium",
    "port": "",
@@ -12492,7 +12492,7 @@
   {
    "sector": "materiales",
    "id": "VulcanEnergy",
-   "label": "VulcanEnergy",
+   "label": "Vulcan Energy",
    "ticker": "VUL · ASX/Frankfurt",
    "cat": "mining_lithium",
    "port": "",
@@ -12508,7 +12508,7 @@
   {
    "sector": "materiales",
    "id": "LithiumAmericas",
-   "label": "LithiumAmericas",
+   "label": "Lithium Americas",
    "ticker": "LAC · NYSE/TSX",
    "cat": "mining_lithium",
    "port": "",
@@ -12524,7 +12524,7 @@
   {
    "sector": "materiales",
    "id": "StandardLithium",
-   "label": "StandardLithium",
+   "label": "Standard Lithium",
    "ticker": "SLI · NYSE American/TSXV",
    "cat": "mining_lithium",
    "port": "",
@@ -12540,7 +12540,7 @@
   {
    "sector": "materiales",
    "id": "SyrahResources",
-   "label": "SyrahResources",
+   "label": "Syrah Resources",
    "ticker": "SYR · ASX",
    "cat": "graphite",
    "port": "",
@@ -12572,7 +12572,7 @@
   {
    "sector": "materiales",
    "id": "GraphiteOne",
-   "label": "GraphiteOne",
+   "label": "Graphite One",
    "ticker": "GPH · TSXV / GPHOF · OTCQX",
    "cat": "graphite",
    "port": "",
@@ -12588,7 +12588,7 @@
   {
    "sector": "materiales",
    "id": "NextSourceMaterials",
-   "label": "NextSourceMaterials",
+   "label": "NextSource Materials",
    "ticker": "NEXT · TSX",
    "cat": "graphite",
    "port": "",
@@ -12604,7 +12604,7 @@
   {
    "sector": "materiales",
    "id": "ChinaNorthernRareEarth",
-   "label": "ChinaNorthernRareEarth",
+   "label": "China Northern Rare Earth",
    "ticker": "600111 · Shanghai",
    "cat": "rare_earths",
    "port": "",
@@ -12620,7 +12620,7 @@
   {
    "sector": "materiales",
    "id": "ChinaRareEarthGroup",
-   "label": "ChinaRareEarthGroup",
+   "label": "China Rare Earth Group",
    "ticker": "Estatal (subsidiaria 000831 · Shenzhen cotiza parcialmente)",
    "cat": "rare_earths",
    "port": "",
@@ -12636,7 +12636,7 @@
   {
    "sector": "materiales",
    "id": "IlukaResources",
-   "label": "IlukaResources",
+   "label": "Iluka Resources",
    "ticker": "ILU · ASX",
    "cat": "rare_earths",
    "port": "",
@@ -12652,7 +12652,7 @@
   {
    "sector": "materiales",
    "id": "AustralianStrategicMaterials",
-   "label": "AustralianStrategicMaterials",
+   "label": "Australian Strategic Materials",
    "ticker": "ASM · ASX",
    "cat": "rare_earths",
    "port": "",
@@ -12668,7 +12668,7 @@
   {
    "sector": "materiales",
    "id": "UcoreRareMetals",
-   "label": "UcoreRareMetals",
+   "label": "Ucore Rare Metals",
    "ticker": "UCU · TSXV",
    "cat": "rare_earths",
    "port": "",
@@ -12732,7 +12732,7 @@
   {
    "sector": "materiales",
    "id": "NipponSteel",
-   "label": "NipponSteel",
+   "label": "Nippon Steel",
    "ticker": "5401 · TSE",
    "cat": "steel",
    "port": "",
@@ -12748,7 +12748,7 @@
   {
    "sector": "materiales",
    "id": "ChinaBaowu",
-   "label": "ChinaBaowu",
+   "label": "China Baowu",
    "ticker": "Privada (estatal, SASAC); filial cotizada Baoshan Iron & Steel (600019 · SSE)",
    "cat": "steel",
    "port": "",
@@ -12764,7 +12764,7 @@
   {
    "sector": "materiales",
    "id": "SteelDynamics",
-   "label": "SteelDynamics",
+   "label": "Steel Dynamics",
    "ticker": "STLD · Nasdaq",
    "cat": "steel",
    "port": "",
@@ -12780,7 +12780,7 @@
   {
    "sector": "materiales",
    "id": "TataSteel",
-   "label": "TataSteel",
+   "label": "Tata Steel",
    "ticker": "TATASTEEL · NSE/BSE",
    "cat": "steel",
    "port": "",
@@ -12828,7 +12828,7 @@
   {
    "sector": "materiales",
    "id": "RioTintoAluminium",
-   "label": "RioTintoAluminium",
+   "label": "Rio Tinto Aluminium",
    "ticker": "RIO · LSE/NYSE(ADR)/ASX (grupo Rio Tinto; división Aluminium no cotiza por separado)",
    "cat": "aluminum",
    "port": "",
@@ -12860,7 +12860,7 @@
   {
    "sector": "materiales",
    "id": "NorskHydro",
-   "label": "NorskHydro",
+   "label": "Norsk Hydro",
    "ticker": "NHY · Oslo Børs",
    "cat": "aluminum",
    "port": "",
@@ -12892,7 +12892,7 @@
   {
    "sector": "materiales",
    "id": "CenturyAluminum",
-   "label": "CenturyAluminum",
+   "label": "Century Aluminum",
    "ticker": "CENX · Nasdaq",
    "cat": "aluminum",
    "port": "",
@@ -12972,7 +12972,7 @@
   {
    "sector": "materiales",
    "id": "HeidelbergMaterials",
-   "label": "HeidelbergMaterials",
+   "label": "Heidelberg Materials",
    "ticker": "HEI · Deutsche Börse (Frankfurt, DAX)",
    "cat": "cement",
    "port": "",
@@ -12988,7 +12988,7 @@
   {
    "sector": "materiales",
    "id": "VulcanMaterials",
-   "label": "VulcanMaterials",
+   "label": "Vulcan Materials",
    "ticker": "VMC · NYSE",
    "cat": "cement",
    "port": "",
@@ -13004,7 +13004,7 @@
   {
    "sector": "materiales",
    "id": "MartinMarietta",
-   "label": "MartinMarietta",
+   "label": "Martin Marietta",
    "ticker": "MLM · NYSE",
    "cat": "cement",
    "port": "",
@@ -13020,7 +13020,7 @@
   {
    "sector": "materiales",
    "id": "AnhuiConch",
-   "label": "AnhuiConch",
+   "label": "Anhui Conch",
    "ticker": "600585 · SSE / 0914 · HKEX",
    "cat": "cement",
    "port": "",
@@ -13036,7 +13036,7 @@
   {
    "sector": "materiales",
    "id": "MesserGroup",
-   "label": "MesserGroup",
+   "label": "Messer Group",
    "ticker": "Privada (familia Messer, mayoría)",
    "cat": "industrial_gas",
    "port": "",
@@ -13052,7 +13052,7 @@
   {
    "sector": "materiales",
    "id": "NipponSanso",
-   "label": "NipponSanso",
+   "label": "Nippon Sanso",
    "ticker": "4091 · TSE",
    "cat": "industrial_gas",
    "port": "",
@@ -13084,7 +13084,7 @@
   {
    "sector": "materiales",
    "id": "AirWater",
-   "label": "AirWater",
+   "label": "Air Water",
    "ticker": "4088 · TSE",
    "cat": "industrial_gas",
    "port": "",
@@ -13100,7 +13100,7 @@
   {
    "sector": "materiales",
    "id": "WackerChemie",
-   "label": "WackerChemie",
+   "label": "Wacker Chemie",
    "ticker": "WCH · Frankfurt (XETRA)",
    "cat": "polysilicon",
    "port": "",
@@ -13116,7 +13116,7 @@
   {
    "sector": "materiales",
    "id": "HemlockSemiconductor",
-   "label": "HemlockSemiconductor",
+   "label": "Hemlock Semiconductor",
    "ticker": "Privada (Corning ~80% propietario mayoritario; Shin-Etsu Handotai y Mitsubishi Materials minoritarios)",
    "cat": "polysilicon",
    "port": "",
@@ -13132,7 +13132,7 @@
   {
    "sector": "materiales",
    "id": "OCIHoldings",
-   "label": "OCIHoldings",
+   "label": "OCI Holdings",
    "ticker": "010060 · KRX",
    "cat": "polysilicon",
    "port": "",
@@ -13180,7 +13180,7 @@
   {
    "sector": "materiales",
    "id": "StellaChemifa",
-   "label": "StellaChemifa",
+   "label": "Stella Chemifa",
    "ticker": "4109 · TSE",
    "cat": "specialty_chemical",
    "port": "",
@@ -13212,7 +13212,7 @@
   {
    "sector": "materiales",
    "id": "SumitomoChemical",
-   "label": "SumitomoChemical",
+   "label": "Sumitomo Chemical",
    "ticker": "4005 · TSE",
    "cat": "specialty_chemical",
    "port": "",
@@ -13228,7 +13228,7 @@
   {
    "sector": "materiales",
    "id": "KantoDenka",
-   "label": "KantoDenka",
+   "label": "Kanto Denka",
    "ticker": "4047 · TSE",
    "cat": "specialty_chemical",
    "port": "",
@@ -13260,7 +13260,7 @@
   {
    "sector": "materiales",
    "id": "NipponElectricGlass",
-   "label": "NipponElectricGlass",
+   "label": "Nippon Electric Glass",
    "ticker": "5214 · TSE",
    "cat": "glass_fiber",
    "port": "",
@@ -13276,7 +13276,7 @@
   {
    "sector": "materiales",
    "id": "SchottAG",
-   "label": "SchottAG",
+   "label": "Schott AG",
    "ticker": "Privada (100% Fundación Carl Zeiss)",
    "cat": "glass_fiber",
    "port": "",
@@ -13308,7 +13308,7 @@
   {
    "sector": "materiales",
    "id": "SumitomoElectric",
-   "label": "SumitomoElectric",
+   "label": "Sumitomo Electric",
    "ticker": "5802 · TSE",
    "cat": "fiber_optic_cable",
    "port": "",
@@ -13324,7 +13324,7 @@
   {
    "sector": "materiales",
    "id": "FurukawaElectric",
-   "label": "FurukawaElectric",
+   "label": "Furukawa Electric",
    "ticker": "5801 · TSE",
    "cat": "fiber_optic_cable",
    "port": "",
@@ -13404,7 +13404,7 @@
   {
    "sector": "materiales",
    "id": "TheQuartzCorp",
-   "label": "TheQuartzCorp",
+   "label": "The Quartz Corp",
    "ticker": "Privada (JV con participación noruega y francesa)",
    "cat": "high_purity_quartz",
    "port": "",
@@ -13420,7 +13420,7 @@
   {
    "sector": "macro_credito",
    "id": "FederalReserve",
-   "label": "FederalReserve",
+   "label": "Federal Reserve",
    "ticker": "N/A — banco central",
    "cat": "central_bank",
    "port": "",
@@ -13644,7 +13644,7 @@
   {
    "sector": "macro_credito",
    "id": "MoodysRatings",
-   "label": "MoodysRatings",
+   "label": "Moody's Ratings",
    "ticker": "MCO · NYSE (Moody's Corporation, matriz)",
    "cat": "rating_agency",
    "port": "",
@@ -13660,7 +13660,7 @@
   {
    "sector": "macro_credito",
    "id": "SPGlobalRatings",
-   "label": "SPGlobalRatings",
+   "label": "S&P Global Ratings",
    "ticker": "SPGI · NYSE (S&P Global Inc., matriz)",
    "cat": "rating_agency",
    "port": "",
@@ -13676,7 +13676,7 @@
   {
    "sector": "macro_credito",
    "id": "FitchRatings",
-   "label": "FitchRatings",
+   "label": "Fitch Ratings",
    "ticker": "N/A — institución (subsidiaria privada de Hearst Communications, no cotiza)",
    "cat": "rating_agency",
    "port": "",
@@ -13692,7 +13692,7 @@
   {
    "sector": "macro_credito",
    "id": "MorningstarDBRS",
-   "label": "MorningstarDBRS",
+   "label": "Morningstar DBRS",
    "ticker": "N/A — institución (subsidiaria de Morningstar Inc., ticker MORN · Nasdaq — nota: \"Morningstar\" ya existe como id en el grafo representando el negocio de datos/investigación; este id nuevo representa específicamente el brazo de calificación crediticia)",
    "cat": "rating_agency",
    "port": "",
@@ -13756,7 +13756,7 @@
   {
    "sector": "macro_credito",
    "id": "BloombergIndices",
-   "label": "BloombergIndices",
+   "label": "Bloomberg Indices",
    "ticker": "N/A — institución (privada, Bloomberg L.P.)",
    "cat": "index_provider",
    "port": "",
@@ -13804,7 +13804,7 @@
   {
    "sector": "macro_credito",
    "id": "CMEGroup",
-   "label": "CMEGroup",
+   "label": "CME Group",
    "ticker": "CME · Nasdaq",
    "cat": "exchange_derivatives",
    "port": "",
@@ -13852,7 +13852,7 @@
   {
    "sector": "macro_credito",
    "id": "NikkeiInc",
-   "label": "NikkeiInc",
+   "label": "Nikkei Inc.",
    "ticker": "N/A — institución (privada, Nikkei Inc. / Nihon Keizai Shimbun)",
    "cat": "index_provider",
    "port": "",
@@ -13916,7 +13916,7 @@
   {
    "sector": "macro_credito",
    "id": "GoldmanSachs",
-   "label": "GoldmanSachs",
+   "label": "Goldman Sachs",
    "ticker": "GS · NYSE",
    "cat": "investment_bank",
    "port": "",
@@ -13932,7 +13932,7 @@
   {
    "sector": "macro_credito",
    "id": "MorganStanley",
-   "label": "MorganStanley",
+   "label": "Morgan Stanley",
    "ticker": "MS · NYSE",
    "cat": "investment_bank",
    "port": "",
@@ -13964,7 +13964,7 @@
   {
    "sector": "macro_credito",
    "id": "BankOfAmerica",
-   "label": "BankOfAmerica",
+   "label": "Bank of America",
    "ticker": "BAC · NYSE",
    "cat": "universal_bank",
    "port": "",
@@ -13980,7 +13980,7 @@
   {
    "sector": "macro_credito",
    "id": "WellsFargo",
-   "label": "WellsFargo",
+   "label": "Wells Fargo",
    "ticker": "WFC · NYSE",
    "cat": "universal_bank",
    "port": "",
@@ -14092,7 +14092,7 @@
   {
    "sector": "macro_credito",
    "id": "StateStreet",
-   "label": "StateStreet",
+   "label": "State Street",
    "ticker": "STT · NYSE (State Street Corporation, matriz)",
    "cat": "asset_manager",
    "port": "",
@@ -14124,7 +14124,7 @@
   {
    "sector": "macro_credito",
    "id": "TRowePrice",
-   "label": "TRowePrice",
+   "label": "T. Rowe Price",
    "ticker": "TROW · NASDAQ",
    "cat": "asset_manager",
    "port": "",
@@ -14172,7 +14172,7 @@
   {
    "sector": "macro_credito",
    "id": "CapitalGroup",
-   "label": "CapitalGroup",
+   "label": "Capital Group",
    "ticker": "Privada (propiedad de ~450 socios)",
    "cat": "asset_manager",
    "port": "",
@@ -14188,7 +14188,7 @@
   {
    "sector": "macro_credito",
    "id": "ThriveCapital",
-   "label": "ThriveCapital",
+   "label": "Thrive Capital",
    "ticker": "Privada",
    "cat": "growth_equity",
    "port": "",
@@ -14204,7 +14204,7 @@
   {
    "sector": "macro_credito",
    "id": "FoundersFund",
-   "label": "FoundersFund",
+   "label": "Founders Fund",
    "ticker": "Privada",
    "cat": "venture_capital",
    "port": "",
@@ -14220,7 +14220,7 @@
   {
    "sector": "macro_credito",
    "id": "SequoiaCapital",
-   "label": "SequoiaCapital",
+   "label": "Sequoia Capital",
    "ticker": "Privada",
    "cat": "venture_capital",
    "port": "",
@@ -14236,7 +14236,7 @@
   {
    "sector": "macro_credito",
    "id": "ApolloGlobal",
-   "label": "ApolloGlobal",
+   "label": "Apollo Global",
    "ticker": "APO · NYSE",
    "cat": "private_credit",
    "port": "",
@@ -14300,7 +14300,7 @@
   {
    "sector": "macro_credito",
    "id": "AresManagement",
-   "label": "AresManagement",
+   "label": "Ares Management",
    "ticker": "ARES · NYSE",
    "cat": "private_credit",
    "port": "",
@@ -14332,7 +14332,7 @@
   {
    "sector": "macro_credito",
    "id": "BlueOwl",
-   "label": "BlueOwl",
+   "label": "Blue Owl",
    "ticker": "OWL · NYSE",
    "cat": "private_credit",
    "port": "",
@@ -14348,7 +14348,7 @@
   {
    "sector": "macro_credito",
    "id": "SixthStreet",
-   "label": "SixthStreet",
+   "label": "Sixth Street",
    "ticker": "Privada",
    "cat": "private_credit",
    "port": "",
@@ -14428,7 +14428,7 @@
   {
    "sector": "macro_credito",
    "id": "PIF_SaudiArabia",
-   "label": "PIF_SaudiArabia",
+   "label": "PIF (Saudi Arabia)",
    "ticker": "Fondo soberano — estatal",
    "cat": "sovereign_fund",
    "port": "",
@@ -14652,7 +14652,7 @@
   {
    "sector": "inmobiliario",
    "id": "PureDataCentres",
-   "label": "PureDataCentres",
+   "label": "Pure Data Centres",
    "ticker": "Privada (Oaktree Capital Management)",
    "cat": "datacenter_operator",
    "port": "",
@@ -14668,7 +14668,7 @@
   {
    "sector": "inmobiliario",
    "id": "GlobalSwitch",
-   "label": "GlobalSwitch",
+   "label": "Global Switch",
    "ticker": "Privada (consorcio chino liderado por Jiangsu Shagang Group ~49.9% + Avic Trust y otros inversores, control completo desde ago-2019)",
    "cat": "colocation",
    "port": "",
@@ -14764,7 +14764,7 @@
   {
    "sector": "inmobiliario",
    "id": "DigiCo_REIT",
-   "label": "DigiCo_REIT",
+   "label": "DigiCo REIT",
    "ticker": "DGT · ASX",
    "cat": "datacenter_reit",
    "port": "",
@@ -14780,7 +14780,7 @@
   {
    "sector": "inmobiliario",
    "id": "CDC_DataCentres",
-   "label": "CDC_DataCentres",
+   "label": "CDC Data Centres",
    "ticker": "Privada (49.72% Infratil — cotizada en NZX/ASX —, resto en manos de otros inversores institucionales e Investment家庭)",
    "cat": "datacenter_operator",
    "port": "",
@@ -14796,7 +14796,7 @@
   {
    "sector": "inmobiliario",
    "id": "KeppelDCREIT",
-   "label": "KeppelDCREIT",
+   "label": "Keppel DC REIT",
    "ticker": "AJBU · SGX",
    "cat": "datacenter_reit",
    "port": "",
@@ -14812,7 +14812,7 @@
   {
    "sector": "inmobiliario",
    "id": "MapletreeIndustrialTrust",
-   "label": "MapletreeIndustrialTrust",
+   "label": "Mapletree Industrial Trust",
    "ticker": "ME8U · SGX",
    "cat": "datacenter_reit",
    "port": "",
@@ -14860,7 +14860,7 @@
   {
    "sector": "inmobiliario",
    "id": "DigitalEdge",
-   "label": "DigitalEdge",
+   "label": "Digital Edge",
    "ticker": "Privada (Stonepeak Infrastructure Partners, inversor fundador desde ago-2020)",
    "cat": "datacenter_operator",
    "port": "",
@@ -14876,7 +14876,7 @@
   {
    "sector": "inmobiliario",
    "id": "NxtraData",
-   "label": "NxtraData",
+   "label": "Nxtra Data",
    "ticker": "Privada (Bharti Airtel control mayoritario; Alpha Wave Global, Carlyle y Anchorage Capital como inversores minoritarios tras ronda de $1bn en mar-2026)",
    "cat": "datacenter_operator",
    "port": "",
@@ -14892,7 +14892,7 @@
   {
    "sector": "inmobiliario",
    "id": "JioDataCenters",
-   "label": "JioDataCenters",
+   "label": "Jio Data Centers",
    "ticker": "Privada (100% Reliance Industries / Jio Platforms; sin subsidiaria de datacenters separadamente listada identificada)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15036,7 +15036,7 @@
   {
    "sector": "inmobiliario",
    "id": "RaxioGroup",
-   "label": "RaxioGroup",
+   "label": "Raxio Group",
    "ticker": "Privada (IFC, Roha Group y Meridiam como inversores principales)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15052,7 +15052,7 @@
   {
    "sector": "inmobiliario",
    "id": "AfricaDataCentres",
-   "label": "AfricaDataCentres",
+   "label": "Africa Data Centres",
    "ticker": "Privada (100% subsidiaria de Cassava Technologies, grupo panafricano de Econet/Strive Masiyiwa)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15084,7 +15084,7 @@
   {
    "sector": "inmobiliario",
    "id": "ScalaDataCenters",
-   "label": "ScalaDataCenters",
+   "label": "Scala Data Centers",
    "ticker": "Privada (DigitalBridge)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15164,7 +15164,7 @@
   {
    "sector": "inmobiliario",
    "id": "AlignedDataCenters",
-   "label": "AlignedDataCenters",
+   "label": "Aligned Data Centers",
    "ticker": "Privada (consorcio BlackRock/GIP + MGX + AIP —incl. Nvidia y Microsoft—, deal de $40bn anunciado 16-oct-2025, cierre esperado 1H2026; ex-Macquarie Asset Management)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15180,7 +15180,7 @@
   {
    "sector": "inmobiliario",
    "id": "YondrGroup",
-   "label": "YondrGroup",
+   "label": "Yondr Group",
    "ticker": "Privada (multi-inversor: DigitalBridge, La Caisse/CDPQ, Mubadala, Allianz Global Investors, Apollo)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15196,7 +15196,7 @@
   {
    "sector": "inmobiliario",
    "id": "CompassDatacenters",
-   "label": "CompassDatacenters",
+   "label": "Compass Datacenters",
    "ticker": "Privada (Brookfield Infrastructure + Ontario Teachers' Pension Plan, control conjunto desde jun-2023, transacción de $5.5bn)",
    "cat": "datacenter_operator",
    "port": "",
@@ -15932,7 +15932,7 @@
   {
    "sector": "logistica",
    "id": "COSCOShipping",
-   "label": "COSCOShipping",
+   "label": "COSCO Shipping",
    "ticker": "601919 · SSE (Shanghai) / 1919 · HKEX (Hong Kong)",
    "cat": "shipping_line",
    "port": "",
@@ -15948,7 +15948,7 @@
   {
    "sector": "logistica",
    "id": "HapagLloyd",
-   "label": "HapagLloyd",
+   "label": "Hapag-Lloyd",
    "ticker": "HLAG · Deutsche Börse (Frankfurt/Xetra)",
    "cat": "shipping_line",
    "port": "",
@@ -15980,7 +15980,7 @@
   {
    "sector": "logistica",
    "id": "EvergreenMarine",
-   "label": "EvergreenMarine",
+   "label": "Evergreen Marine",
    "ticker": "2603.TW · Taiwan Stock Exchange",
    "cat": "shipping_line",
    "port": "",
@@ -15996,7 +15996,7 @@
   {
    "sector": "logistica",
    "id": "YangMing",
-   "label": "YangMing",
+   "label": "Yang Ming",
    "ticker": "2609.TW · Taiwan Stock Exchange",
    "cat": "shipping_line",
    "port": "",
@@ -16028,7 +16028,7 @@
   {
    "sector": "logistica",
    "id": "WanHai",
-   "label": "WanHai",
+   "label": "Wan Hai",
    "ticker": "2615.TW · Taiwan Stock Exchange",
    "cat": "shipping_line",
    "port": "",
@@ -16060,7 +16060,7 @@
   {
    "sector": "logistica",
    "id": "NYKLine",
-   "label": "NYKLine",
+   "label": "NYK Line",
    "ticker": "9101 · Tokyo Stock Exchange (ADR OTC: NPNYY)",
    "cat": "shipping_line",
    "port": "",
@@ -16140,7 +16140,7 @@
   {
    "sector": "logistica",
    "id": "HutchisonPorts",
-   "label": "HutchisonPorts",
+   "label": "Hutchison Ports",
    "ticker": "",
    "cat": "port_operator",
    "port": "",
@@ -16172,7 +16172,7 @@
   {
    "sector": "logistica",
    "id": "ChinaMerchantsPort",
-   "label": "ChinaMerchantsPort",
+   "label": "China Merchants Port",
    "ticker": "0144 · HKEX (Hong Kong)",
    "cat": "port_operator",
    "port": "",
@@ -16188,7 +16188,7 @@
   {
    "sector": "logistica",
    "id": "COSCOShippingPorts",
-   "label": "COSCOShippingPorts",
+   "label": "COSCO Shipping Ports",
    "ticker": "1199 · HKEX (Hong Kong)",
    "cat": "port_operator",
    "port": "",
@@ -16204,7 +16204,7 @@
   {
    "sector": "logistica",
    "id": "AdaniPorts",
-   "label": "AdaniPorts",
+   "label": "Adani Ports",
    "ticker": "ADANIPORTS · NSE/BSE (India) · controlada por el Grupo Adani (familia Adani)",
    "cat": "port_operator",
    "port": "",
@@ -16220,7 +16220,7 @@
   {
    "sector": "logistica",
    "id": "PanamaCanalAuthority",
-   "label": "PanamaCanalAuthority",
+   "label": "Panama Canal Authority",
    "ticker": "Estatal · Gobierno de Panamá (ACP)",
    "cat": "canal_authority",
    "port": "",
@@ -16236,7 +16236,7 @@
   {
    "sector": "logistica",
    "id": "SuezCanalAuthority",
-   "label": "SuezCanalAuthority",
+   "label": "Suez Canal Authority",
    "ticker": "Estatal · Gobierno de Egipto",
    "cat": "canal_authority",
    "port": "",
@@ -16252,7 +16252,7 @@
   {
    "sector": "logistica",
    "id": "UnionPacific",
-   "label": "UnionPacific",
+   "label": "Union Pacific",
    "ticker": "UNP · NYSE",
    "cat": "rail_freight",
    "port": "",
@@ -16284,7 +16284,7 @@
   {
    "sector": "logistica",
    "id": "NorfolkSouthern",
-   "label": "NorfolkSouthern",
+   "label": "Norfolk Southern",
    "ticker": "NSC · NYSE",
    "cat": "rail_freight",
    "port": "",
@@ -16300,7 +16300,7 @@
   {
    "sector": "logistica",
    "id": "CSXCorp",
-   "label": "CSXCorp",
+   "label": "CSX",
    "ticker": "CSX · NASDAQ",
    "cat": "rail_freight",
    "port": "",
@@ -16316,7 +16316,7 @@
   {
    "sector": "logistica",
    "id": "CanadianNational",
-   "label": "CanadianNational",
+   "label": "Canadian National",
    "ticker": "CNI · NYSE / CNR · TSX",
    "cat": "rail_freight",
    "port": "",
@@ -16348,7 +16348,7 @@
   {
    "sector": "logistica",
    "id": "ChinaStateRailway",
-   "label": "ChinaStateRailway",
+   "label": "China State Railway",
    "ticker": "Estatal · 100% Consejo de Estado de China (SASAC)",
    "cat": "rail_freight",
    "port": "",
@@ -16380,7 +16380,7 @@
   {
    "sector": "logistica",
    "id": "RussianRailways",
-   "label": "RussianRailways",
+   "label": "Russian Railways",
    "ticker": "Estatal · 100% Gobierno de la Federación Rusa (OJSC RZD)",
    "cat": "rail_freight",
    "port": "",
@@ -16428,7 +16428,7 @@
   {
    "sector": "logistica",
    "id": "KuehneNagel",
-   "label": "KuehneNagel",
+   "label": "Kuehne+Nagel",
    "ticker": "KNIN · SIX",
    "cat": "freight_forwarder",
    "port": "",
@@ -16460,7 +16460,7 @@
   {
    "sector": "logistica",
    "id": "CHRobinson",
-   "label": "CHRobinson",
+   "label": "C.H. Robinson",
    "ticker": "CHRW · NASDAQ",
    "cat": "freight_forwarder",
    "port": "",
@@ -16492,7 +16492,7 @@
   {
    "sector": "logistica",
    "id": "JBHunt",
-   "label": "JBHunt",
+   "label": "J.B. Hunt",
    "ticker": "JBHT · NASDAQ",
    "cat": "freight_forwarder",
    "port": "",
@@ -16572,7 +16572,7 @@
   {
    "sector": "logistica",
    "id": "Kuehne_Nagel",
-   "label": "Kuehne_Nagel",
+   "label": "Kuehne+Nagel",
    "ticker": "KNIN · SIX Swiss Exchange",
    "cat": "heavy_lift_logistics",
    "port": "",
@@ -16604,7 +16604,7 @@
   {
    "sector": "logistica",
    "id": "TransGlobalProjects",
-   "label": "TransGlobalProjects",
+   "label": "TransGlobal Projects",
    "ticker": "Privada · Breezeline International Group Ltd (management buyout, 2007)",
    "cat": "heavy_lift_logistics",
    "port": "",
@@ -16652,7 +16652,7 @@
   {
    "sector": "logistica",
    "id": "DHL_Group",
-   "label": "DHL_Group",
+   "label": "DHL Group",
    "ticker": "DHL · Deutsche Börse (Frankfurt, XETRA)",
    "cat": "air_cargo",
    "port": "",
@@ -16700,7 +16700,7 @@
   {
    "sector": "logistica",
    "id": "Cathay_Cargo",
-   "label": "Cathay_Cargo",
+   "label": "Cathay Cargo",
    "ticker": "0293 · HKEX (Cathay Pacific Airways Ltd — división de carga, no cotiza por separado)",
    "cat": "air_cargo",
    "port": "",
@@ -16716,7 +16716,7 @@
   {
    "sector": "logistica",
    "id": "Emirates_SkyCargo",
-   "label": "Emirates_SkyCargo",
+   "label": "Emirates SkyCargo",
    "ticker": "Estatal · Investment Corporation of Dubai (accionista de Emirates Group)",
    "cat": "air_cargo",
    "port": "",
@@ -34624,6 +34624,167 @@
   "TowerSemi": "TowerSemiconductor",
   "Kratos": "Kratos_Defense",
   "Scale_AI": "ScaleAI"
+ },
+ "legal_names": {
+  "Taiwan Semiconductor Manufacturing Company": "TSMC",
+  "Taiwan Semiconductor Manufacturing": "TSMC",
+  "Taiwan Semiconductor": "TSMC",
+  "Advanced Micro Devices": "AMD",
+  "Samsung": "Samsung",
+  "SK hynix": "SKHynix",
+  "Micron Technology": "Micron",
+  "ASML Holding": "ASML",
+  "Applied Materials": "AMAT",
+  "KLA Corporation": "KLA",
+  "KLA-Tencor": "KLA",
+  "Tokyo Electron Limited": "TEL",
+  "Semiconductor Manufacturing International Corporation": "SMIC",
+  "Semiconductor Manufacturing International": "SMIC",
+  "Arm Holdings": "ARM",
+  "Qualcomm Incorporated": "Qualcomm",
+  "Broadcom Inc": "Broadcom",
+  "Marvell Technology": "Marvell",
+  "Texas Instruments Incorporated": "TexasInstruments",
+  "Infineon Technologies": "Infineon",
+  "ON Semiconductor": "onsemi",
+  "Intel Corporation": "Intel",
+  "Synopsys Inc": "Synopsys",
+  "Cadence Design Systems": "Cadence",
+  "Advantest Corporation": "Advantest",
+  "Amkor Technology": "Amkor",
+  "ASE Group": "ASE",
+  "Advanced Semiconductor Engineering": "ASE",
+  "BE Semiconductor Industries": "Besi",
+  "ASM International NV": "ASMInt",
+  "Shin-Etsu": "ShinEtsu",
+  "Western Digital Corporation": "WesternDigital",
+  "Kioxia Holdings": "Kioxia",
+  "NXP": "NXP",
+  "STMicro": "STMicroelectronics",
+  "ST Microelectronics": "STMicroelectronics",
+  "Monolithic Power Systems": "MPWR",
+  "Lattice Semiconductor Corporation": "Lattice",
+  "Microchip": "Microchip_Tech",
+  "Renesas": "Renesas",
+  "Wolfspeed Inc": "Wolfspeed",
+  "Cree": "Wolfspeed",
+  "Hua Hong": "HuaHong",
+  "ChangXin Memory Technologies": "CXMT",
+  "ChangXin Memory": "CXMT",
+  "Nanya": "Nanya",
+  "Cerebras": "Cerebras",
+  "Credo Technology Group": "Credo",
+  "Astera Labs Inc": "Astera",
+  "Coherent Corp": "Coherent",
+  "II-VI": "Coherent",
+  "Lumentum Holdings": "Lumentum",
+  "Teradyne Inc": "Teradyne",
+  "Entegris Inc": "Entegris",
+  "Lam Research Corporation": "Lam",
+  "Hon Hai Precision Industry": "Foxconn",
+  "Hon Hai": "Foxconn",
+  "Foxconn": "Foxconn",
+  "Super Micro Computer": "SuperMicro",
+  "Supermicro": "SuperMicro",
+  "Hewlett Packard Enterprise": "HPE",
+  "Dell": "Dell",
+  "Arista": "Arista",
+  "Cisco Systems": "Cisco",
+  "Corning Incorporated": "Corning",
+  "Vertiv Holdings": "Vertiv",
+  "Eaton Corporation": "Eaton",
+  "Schneider": "Schneider",
+  "Amphenol Corporation": "Amphenol",
+  "Quanta Computer Inc": "Quanta",
+  "Lenovo Group": "Lenovo",
+  "Celestica Inc": "Celestica",
+  "Jabil Inc": "Jabil",
+  "Seagate": "Seagate",
+  "Google": "Alphabet",
+  "Google Cloud": "Alphabet",
+  "Alphabet Inc": "Alphabet",
+  "Microsoft Corporation": "Microsoft",
+  "Azure": "Microsoft",
+  "Amazon.com": "Amazon",
+  "Amazon Web Services": "Amazon",
+  "AWS": "Amazon",
+  "Oracle Corporation": "Oracle",
+  "Meta Platforms": "Meta",
+  "Facebook": "Meta",
+  "Apple Inc": "Apple",
+  "Alibaba Group": "Qwen",
+  "Alibaba": "Qwen",
+  "Tencent Holdings": "Tencent",
+  "Baidu Inc": "Baidu",
+  "Palantir Technologies": "Palantir",
+  "CrowdStrike Holdings": "CrowdStrike",
+  "Snowflake Inc": "Snowflake",
+  "Salesforce Inc": "Salesforce",
+  "Palo Alto": "PaloAltoNetworks",
+  "Cloudflare Inc": "Cloudflare",
+  "Equinix Inc": "Equinix",
+  "Digital Realty Trust": "DigitalRealty",
+  "CoreWeave Inc": "CoreWeave",
+  "Nebius Group": "Nebius",
+  "Tesla Inc": "Tesla",
+  "Tesla Motors": "Tesla",
+  "Constellation Energy Corporation": "Constellation",
+  "GE Vernova Inc": "GEVernova",
+  "Siemens Energy AG": "SiemensEnergy",
+  "Vistra Corp": "Vistra",
+  "NextEra": "NextEraEnergy",
+  "Exxon": "ExxonMobil",
+  "Exxon Mobil": "ExxonMobil",
+  "Chevron Corporation": "Chevron",
+  "Shell plc": "Shell",
+  "Royal Dutch Shell": "Shell",
+  "British Petroleum": "BP",
+  "Aramco": "SaudiAramco",
+  "Saudi Arabian Oil Company": "SaudiAramco",
+  "Petroleo Brasileiro": "Petrobras",
+  "Cameco": "Cameco",
+  "Oklo": "Oklo",
+  "NuScale": "NuScale",
+  "Tokyo Electric Power Company": "TEPCO",
+  "Korea Electric Power Corporation": "KEPCO",
+  "Pacific Gas and Electric": "PGECorp",
+  "Freeport": "FreeportMcMoRan",
+  "BHP Group": "BHP",
+  "Rio Tinto Group": "RioTinto",
+  "Vale SA": "Vale",
+  "Albemarle": "Albemarle",
+  "Sociedad Quimica y Minera": "SQM",
+  "MP Materials Corp": "MP_Materials",
+  "Lynas": "Lynas",
+  "JPMorgan Chase": "JPMorgan",
+  "JP Morgan": "JPMorgan",
+  "Goldman Sachs Group": "GoldmanSachs",
+  "Bank of America Corporation": "BankOfAmerica",
+  "BofA": "BankOfAmerica",
+  "Citi": "Citigroup",
+  "Mitsubishi UFJ Financial Group": "MUFG",
+  "Sumitomo Mitsui Banking Corporation": "SMBC",
+  "Blackstone Inc": "Blackstone",
+  "Kohlberg Kravis Roberts": "KKR",
+  "Apollo Global Management": "ApolloGlobal",
+  "Brookfield Asset Management": "Brookfield",
+  "Intercontinental Exchange": "ICE",
+  "London Stock Exchange Group": "LSEG",
+  "S&P Global": "SPGlobalRatings",
+  "Moody's": "MoodysRatings",
+  "Fed": "FederalReserve",
+  "Lockheed": "lockheed-martin",
+  "Northrop": "Northrop",
+  "RTX Corporation": "Raytheon",
+  "Raytheon Technologies": "Raytheon",
+  "Space Exploration Technologies": "SpaceX",
+  "The Boeing Company": "Boeing",
+  "Airbus SE": "Airbus",
+  "A.P. Moller-Maersk": "Maersk",
+  "AP Moller Maersk": "Maersk",
+  "United Parcel Service": "UPS",
+  "Deutsche Post DHL": "DHL_Group",
+  "Federal Express": "FedEx"
  },
  "categories": {
   "quantum_hw": {

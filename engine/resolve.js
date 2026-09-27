@@ -196,6 +196,14 @@
       var n = NB[VOICE_ALIAS[k]];
       if (n) add(norm(k), n, 85);
     });
+    // nombres legales/alternativos (nodes/legal_names.js): "Taiwan
+    // Semiconductor Manufacturing", "Google", "Hon Hai"… — misma tabla que
+    // usa el servidor (core/entities.py vía el snapshot)
+    var LN = window.LEGAL_NAMES || {};
+    Object.keys(LN).forEach(function (k) {
+      var n = NB[LN[k]];
+      if (n) add(norm(k), n, 86);
+    });
     // NODE_ID_ALIAS (tabla canónica del merge) — ids alias también resuelven
     var IDA = (typeof NODE_ID_ALIAS !== 'undefined') ? NODE_ID_ALIAS
       : (window.NODE_ID_ALIAS || null);

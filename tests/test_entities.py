@@ -144,3 +144,51 @@ def test_resolve_many_separa_resueltos_de_fallos():
     ok, fallos = resolve_many(['Nvidia', 'NVDA', 'no-existe-xyz-123'])
     assert set(ok) == {'Nvidia', 'NVDA'}
     assert fallos == ['no-existe-xyz-123']
+
+
+# ── Nombres legales (nodes/legal_names.js → snapshot) ───────────────────────
+
+def test_nombres_legales_resuelven_con_umbral_de_escritura():
+    """Pendiente de M2 cerrado: "Taiwan Semiconductor" NO resolvía porque el
+    catálogo llama a esa empresa solo "TSMC". Los nombres legales vienen de una
+    tabla curada, así que deben pasar incluso el umbral estricto de un agente."""
+    from core.entities import resolve, UMBRAL_ESCRITURA, get_index
+    get_index(force=True)
+    casos = {
+        'Taiwan Semiconductor Manufacturing Company': 'TSMC',
+        'Taiwan Semiconductor': 'TSMC',
+        'Google': 'Alphabet',
+        'Hon Hai Precision Industry Co., Ltd.': 'Foxconn',
+        'Advanced Micro Devices, Inc.': 'AMD',
+        'Meta Platforms': 'Meta',
+        'JPMorgan Chase & Co.': 'JPMorgan',
+    }
+    for texto, esperado in casos.items():
+        r = resolve(texto, umbral=UMBRAL_ESCRITURA)
+        assert r and r['id'] == esperado, (texto, r)
+
+
+def test_todas_las_entradas_de_la_tabla_legal_existen():
+    """Una entrada con id mal escrito se ignoraría EN SILENCIO en ambos
+    resolvedores. Este test es quien lo hace ruidoso."""
+    import json
+    ruta = os.path.join(os.path.dirname(__file__), '..', 'data', 'grafo_v0.json')
+    with open(ruta, encoding='utf-8') as fh:
+        snap = json.load(fh)
+    tabla = snap.get('legal_names') or {}
+    assert len(tabla) >= 100, 'la tabla de nombres legales no llegó al snapshot'
+    ids = {n['id'] for n in snap['nodes']}
+    alias = snap.get('node_id_alias') or {}
+    rotos = [k for k, v in tabla.items() if v not in ids and alias.get(v) not in ids]
+    assert not rotos, rotos
+
+
+def test_nombres_visibles_sin_palabras_pegadas():
+    """La capa multicapa traía etiquetas tipo 'GoldmanSachs': feas en la UI y
+    'Goldman Sachs' escrito normal no las encontraba."""
+    from core.entities import resolve, get_index
+    get_index(force=True)
+    for texto, esperado in {'Goldman Sachs': 'GoldmanSachs', 'Rio Tinto': 'RioTinto',
+                            'Union Pacific': 'UnionPacific', 'IGO': 'IGO'}.items():
+        r = resolve(texto)
+        assert r and r['id'] == esperado, (texto, r)

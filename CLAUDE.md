@@ -62,7 +62,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   window.NODES/LINKS/computeNRS/SECTORS9 y degradan sin DATABASE_URL.
 - `nodes/`: catálogo de empresas (nodes_*.js) + links (links_*.js) +
   ontology.js/ontology_facts.js (tipos y hechos tipados) +
-  temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js.
+  temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js +
+  legal_names.js (nombres legales → id; la usan resolve.js Y core/entities.py
+  vía el snapshot — tras editarla, regenerar data/grafo_v0.json).
 - `scripts/`: export_graph_v0.js (snapshot) · migrate_v0_to_ontology.py.
 - `data/grafo_v0.json`: snapshot canónico (949 nodos / 2.526 links + la tabla
   `node_id_alias`, que antes NO se exportaba y por eso el servidor no podía
@@ -187,7 +189,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (195 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (198 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

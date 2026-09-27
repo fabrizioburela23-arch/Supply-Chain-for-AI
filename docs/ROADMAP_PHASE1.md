@@ -68,9 +68,11 @@ Pendiente de M2 (no bloquea a M3/M4):
       ISIN y LEI no existen.
 - [ ] Persistir la decisión de resolución (método+score) cuando un agente
       escribe, para poder medir falsos positivos.
-- [ ] Enriquecer alias con nombres legales completos: "Taiwan Semiconductor"
-      no resuelve porque el catálogo llama a esa empresa solo "TSMC", y el
-      resolvedor —correctamente— prefiere no adivinar.
+- [x] Enriquecer alias con nombres legales completos (2026-09-27):
+      `nodes/legal_names.js` (159 nombres curados → id) lo usan los DOS
+      resolvedores — navegador (engine/resolve.js, peso 86) y servidor
+      (core/entities.py, vía `legal_names` del snapshot). "Taiwan
+      Semiconductor Manufacturing Company" → TSMC pasa el umbral de ESCRITURA.
 - [ ] Matches de baja confianza → cola `ProposedAction` (el patrón ya existe).
 
 ## M3 — Interfaces de proveedor ✅ COMPLETO

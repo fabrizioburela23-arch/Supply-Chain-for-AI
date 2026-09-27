@@ -147,6 +147,16 @@ def _build_index(snapshot_path=None):
             por_alias.setdefault(norm(alias), can)
             por_alias.setdefault(strip_suffix(alias), can)
 
+    # Nombres legales/alternativos (nodes/legal_names.js → snapshot): así
+    # "Taiwan Semiconductor Manufacturing Company" o "Google" llegan a TSMC /
+    # Alphabet. Ids inexistentes se ignoran. Van DESPUÉS de los alias del
+    # merge: si chocan, gana la tabla canónica.
+    for nombre, destino in (snap.get('legal_names') or {}).items():
+        can = canonico(destino)
+        if can in nodos:
+            por_alias.setdefault(norm(nombre), can)
+            por_alias.setdefault(strip_suffix(nombre), can)
+
     return {'nodos': nodos, 'por_id': por_id, 'por_ticker': por_ticker,
             'por_label': por_label, 'por_label_corto': por_label_corto,
             'por_alias': por_alias, 'alias_tbl': alias_tbl}

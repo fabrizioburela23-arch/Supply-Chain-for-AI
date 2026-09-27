@@ -9,6 +9,26 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-27 (b) — Nombres: búsqueda por nombre legal + etiquetas legibles (sw v137)
+
+- `nodes/legal_names.js` (nuevo): 159 nombres legales/alternativos → id
+  ("Taiwan Semiconductor Manufacturing Company"→TSMC, "Google"→Alphabet,
+  "Hon Hai"→Foxconn, "Aramco"→SaudiAramco…). Una tabla, dos resolvedores:
+  engine/resolve.js (window.LEGAL_NAMES) y core/entities.py (`legal_names` del
+  snapshot, que ahora exporta scripts/export_graph_v0.js). Cierra el pendiente
+  de M2. Test que vigila ids rotos.
+- 148 etiquetas VISIBLES de nodes_multicapa.js estaban pegadas
+  ("GoldmanSachs", "NextEraEnergy", "RioTinto"): ahora "Goldman Sachs"… Los
+  ids NO cambian. Marcas reales (OpenAI, SpaceX, CoreWeave…) intactas.
+- IGO tenía de etiqueta una nota interna ("IGO (inicio — continúa en
+  archivo…)") → "IGO".
+- OJO: la base de producción (original, 1.294 objetos) conserva las etiquetas
+  viejas en la ontología hasta que alguien las actualice; el mapa y los
+  resolvedores ya usan las nuevas. NO usar REMIGRATE para esto.
+- 198 tests.
+
+---
+
 # SESIÓN 2026-09-27 — La app en el TELÉFONO (sw v136)
 
 Probado con Playwright en iPhone SE (320), iPhone 13 (390), Pixel 5 (393) e

@@ -23,7 +23,7 @@ const DATA_FILES = [
   'nodes/preipo_intel.js',
   'nodes/links_all.js', 'nodes/links_expand.js', 'nodes/links_connect.js',
   'nodes/temporal_seed_facts.js', 'nodes/temporal_seed_facts2.js',
-  'nodes/ontology.js', 'nodes/ontology_facts.js',
+  'nodes/ontology.js', 'nodes/ontology_facts.js', 'nodes/legal_names.js',
   'nodes/merge_graph.js',
 ];
 for (const f of DATA_FILES) {
@@ -69,6 +69,9 @@ const out = {
   // servidor no podía resolver "NVDA"/"NVIDIA Corporation" → Nvidia. Sin esto,
   // un nombre generado por un LLM no se puede pegar a su entidad.
   node_id_alias: g('NODE_ID_ALIAS') || {},
+  // Nombres legales/alternativos ("Taiwan Semiconductor" → TSMC): los lee
+  // core/entities.py. Misma tabla que usa engine/resolve.js en el navegador.
+  legal_names: W.LEGAL_NAMES || {},
   categories: CATS,
   sectors9: g('SECTORS9'),
   cat_to_sector: CAT_TO_SECTOR,
