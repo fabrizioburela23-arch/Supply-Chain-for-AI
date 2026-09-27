@@ -202,7 +202,12 @@ Pendiente de M4 (no bloquea M5/M6):
 
 Pendiente de M6 (no bloquea nada):
 
-- [ ] Feed de eventos en vivo a nivel global (hoy la historia es por entidad).
+- [x] Feed de eventos a nivel global (2026-09-27): `ontology/timeline.py:
+      global_feed` + `GET /api/ontology/feed?limit&lang&since`. Ordenado por
+      `recorded_at` (qué es NUEVO para nosotros), sin migración, precios,
+      Fuentes ni vínculos de procedencia; cada noticia una vez con sus
+      empresas. UI: "📡 Lo último en el grafo" en el panel derecho del mapa
+      (sin empresa elegida) + comando KHIPU `FEED [n]`.
 - [ ] Frescura por dato en más sitios (hoy: precio, NRS y la línea de tiempo).
 
 ---

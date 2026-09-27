@@ -31,10 +31,10 @@ _T = {
     'es': {
         'created': 'Entró al grafo',
         'updated': 'Datos actualizados',
-        'link_out': 'Nueva relación: {rel} → {other}',
-        'link_in': 'Nueva relación: {other} → {rel}',
-        'unlink_out': 'Relación terminada: {rel} → {other}',
-        'unlink_in': 'Relación terminada: {other} → {rel}',
+        'link_out': 'Nueva relación: {rel} {other}',
+        'link_in': 'Nueva relación: {other} {rel} esta empresa',
+        'unlink_out': 'Relación terminada: {rel} {other}',
+        'unlink_in': 'Relación terminada: {other} {rel} esta empresa',
         'action': 'Acción: {name}',
         'price': 'Precio observado',
         'news': 'Noticia',
@@ -43,15 +43,31 @@ _T = {
     'en': {
         'created': 'Entered the graph',
         'updated': 'Data updated',
-        'link_out': 'New relation: {rel} → {other}',
-        'link_in': 'New relation: {other} → {rel}',
-        'unlink_out': 'Relation ended: {rel} → {other}',
-        'unlink_in': 'Relation ended: {other} → {rel}',
+        'link_out': 'New relation: {rel} {other}',
+        'link_in': 'New relation: {other} {rel} this company',
+        'unlink_out': 'Relation ended: {rel} {other}',
+        'unlink_in': 'Relation ended: {other} {rel} this company',
         'action': 'Action: {name}',
         'price': 'Price observed',
         'news': 'News',
         'fields': 'fields',
     },
+}
+
+
+# Verbos legibles para los tipos de relación (el código crudo "supply" no le
+# dice nada a un inversionista). Lo desconocido se muestra tal cual.
+_REL = {
+    'es': {'supply': 'suministra a', 'fab': 'fabrica para', 'license': 'licencia a',
+           'cloud': 'da nube a', 'invest': 'invierte en', 'deploy': 'despliega en',
+           'partner': 'socio de', 'affects': 'afecta a', 'reports_on': 'informa sobre',
+           'fabrica': 'fabrica', 'sanciona': 'sanciona a', 'restringe': 'restringe',
+           'depende': 'depende de', 'compite': 'compite con', 'invierte': 'invierte en'},
+    'en': {'supply': 'supplies', 'fab': 'fabs for', 'license': 'licenses to',
+           'cloud': 'provides cloud to', 'invest': 'invests in', 'deploy': 'deploys at',
+           'partner': 'partners with', 'affects': 'affects', 'reports_on': 'reports on',
+           'fabrica': 'makes', 'sanciona': 'sanctions', 'restringe': 'restricts',
+           'depende': 'depends on', 'compite': 'competes with', 'invierte': 'invests in'},
 }
 
 
@@ -71,6 +87,7 @@ def _titulo(ev, object_id, etiquetas, t):
         return t['updated'], ', '.join(campos[:6])
     if tipo in ('LinkCreated', 'LinkRemoved'):
         rel = p.get('rel_type') or p.get('type') or '?'
+        rel = _REL['en' if t is _T['en'] else 'es'].get(rel, rel)
         saliente = ev.object_id == object_id
         otro_id = ev.target_id if saliente else ev.object_id
         otro = etiquetas.get(otro_id, otro_id or '?')
@@ -158,3 +175,134 @@ def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
     # de romper la comparación o colarse arriba como si fueran de hoy.
     entradas.sort(key=lambda x: (x['at'] is not None, x['at'] or ''), reverse=True)
     return entradas[:limit]
+
+
+# ── Feed GLOBAL: lo último que entró al grafo (M6, pendiente cerrado) ───────
+#
+# La línea de tiempo de arriba es POR ENTIDAD. Este es el hilo de TODO el
+# grafo: "¿qué hay de nuevo?". Se ordena por `recorded_at` (cuándo lo SUPIMOS)
+# y no por validez, porque la pregunta es qué es nuevo para nosotros — una
+# noticia de marzo ingerida hoy ES novedad hoy. `at` (validez) viaja igual.
+#
+# Se filtra el ruido estructural, que ahogaría lo interesante:
+#   · la migración (miles de ObjectCreated con fecha GÉNESIS),
+#   · los precios observados,
+#   · las Fuentes y los vínculos de procedencia (published_by/evidenced_by/
+#     justified_by): son el "de dónde sale", ya viajan DENTRO de cada entrada.
+# Una noticia aparece UNA vez, con las empresas sobre las que informa.
+
+_RELS_PROCEDENCIA = {'published_by', 'evidenced_by', 'justified_by'}
+
+_TF = {
+    'es': {'news_about': 'Noticia', 'no_entity': 'sin empresa asociada'},
+    'en': {'news_about': 'News', 'no_entity': 'no linked company'},
+}
+
+
+def global_feed(session, limit=30, lang='es', since=None):
+    """Lo más reciente del grafo entero, más nuevo primero.
+
+    `since` (datetime) devuelve solo lo registrado después — para refrescar
+    sin volver a traer todo. Cada entrada: kind, at, recorded_at, event_type,
+    subject {id,label,type}, entities [ids], title, detail, actor, channel,
+    confidence, source, url."""
+    from ontology.ingest_news import NEWS_TYPE, REPORTS_REL
+
+    t = _T.get(lang if lang in _T else 'es')
+    tf = _TF.get(lang if lang in _TF else 'es')
+    limit = max(1, min(int(limit or 30), 200))
+
+    q = (select(Event)
+         .where(~Event.source.like('migration%'),
+                Event.event_type != 'PriceObserved')
+         # desempate estable: en una misma transacción todo comparte recorded_at
+         .order_by(Event.recorded_at.desc(), Event.valid_from.desc())
+         # se filtra en Python lo que no se puede en SQL sin joins (tipo del
+         # objeto); se pide de más para que el filtro no deje la página corta
+         .limit(limit * 4))
+    if since is not None:
+        q = q.where(Event.recorded_at > since)
+    eventos = session.scalars(q).all()
+
+    ids = set()
+    for e in eventos:
+        ids.add(e.object_id)
+        ids.add(e.target_id)
+    ids.discard(None)
+    objs = {}
+    if ids:
+        objs = {o.id: o for o in session.scalars(
+            select(ObjectRecord).where(ObjectRecord.id.in_(list(ids)))).all()}
+
+    # sobre qué empresas informa cada noticia del lote
+    noticias = [e.object_id for e in eventos
+                if e.object_id in objs and objs[e.object_id].type == NEWS_TYPE]
+    informa = {}
+    if noticias:
+        for l in session.scalars(select(LinkRecord).where(
+                LinkRecord.source_id.in_(noticias),
+                LinkRecord.rel_type == REPORTS_REL)).all():
+            informa.setdefault(l.source_id, []).append(l.target_id)
+        faltan = {x for v in informa.values() for x in v} - set(objs)
+        if faltan:
+            objs.update({o.id: o for o in session.scalars(
+                select(ObjectRecord).where(ObjectRecord.id.in_(list(faltan)))).all()})
+
+    src_ids = {e.source_id for e in eventos if e.source_id}
+    fuentes = {}
+    if src_ids:
+        fuentes = {o.id: source_to_dict(o) for o in session.scalars(
+            select(ObjectRecord).where(ObjectRecord.id.in_(list(src_ids)))).all()}
+
+    etiquetas = {k: o.label for k, o in objs.items()}
+
+    def ent(oid):
+        o = objs.get(oid)
+        return {'id': oid, 'label': o.label if o else oid, 'type': o.type if o else None}
+
+    entradas = []
+    for ev in eventos:
+        obj = objs.get(ev.object_id)
+        tipo_obj = obj.type if obj else None
+        rel = (ev.payload or {}).get('rel_type') or (ev.payload or {}).get('type')
+        if tipo_obj == 'Source':
+            continue
+        if ev.event_type in ('LinkCreated', 'LinkRemoved') and rel in _RELS_PROCEDENCIA:
+            continue
+        fuente = fuentes.get(ev.source_id) if ev.source_id else None
+
+        if tipo_obj == NEWS_TYPE:
+            # la noticia se cuenta una sola vez: en su creación
+            if ev.event_type != 'ObjectCreated':
+                continue
+            props = obj.properties or {}
+            sobre = informa.get(ev.object_id, [])
+            entradas.append({
+                'kind': 'news',
+                'at': _iso(ev.valid_from), 'recorded_at': _iso(ev.recorded_at),
+                'event_type': 'NewsItem',
+                'subject': ent(sobre[0]) if sobre else None,
+                'entities': sobre,
+                'title': props.get('title') or obj.label or tf['news_about'],
+                'detail': ', '.join(etiquetas.get(x, x) for x in sobre[:4]) or tf['no_entity'],
+                'actor': ev.actor, 'channel': ev.source, 'confidence': ev.confidence,
+                'source': fuente or {'url': props.get('url'), 'kind': props.get('source_kind'),
+                                     'publisher': props.get('publisher')},
+                'url': props.get('url') or (fuente or {}).get('url'),
+            })
+        else:
+            titulo, detalle = _titulo(ev, ev.object_id, etiquetas, t)
+            entidades = [x for x in (ev.object_id, ev.target_id) if x]
+            entradas.append({
+                'kind': 'event',
+                'at': _iso(ev.valid_from), 'recorded_at': _iso(ev.recorded_at),
+                'event_type': ev.event_type,
+                'subject': ent(ev.object_id) if ev.object_id else None,
+                'entities': entidades,
+                'title': titulo, 'detail': detalle,
+                'actor': ev.actor, 'channel': ev.source, 'confidence': ev.confidence,
+                'source': fuente, 'url': (fuente or {}).get('url'),
+            })
+        if len(entradas) >= limit:
+            break
+    return entradas

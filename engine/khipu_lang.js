@@ -51,16 +51,18 @@
   }
 
   const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY']);
-  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX', 'FACTOR']);
+  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX', 'FACTOR', 'FEED']);
 
   function tryParse(text) {
     const raw = (text || '').trim();
     if (!raw) return null;
     const parts = raw.split(/\s+/);
-    if (parts.length < 2) return null;
     const first = parts[0].toUpperCase();
-
-    if (KEYWORDS.has(first)) return _handleKeyword(first, parts.slice(1));
+    // palabras clave que funcionan SOLAS ("FEED", "INSIGHTS", "MATRIX"):
+    // antes exigía 2 palabras y estas caían a la IA sin necesidad
+    if (KEYWORDS.has(first) && (parts.length >= 2 || ['FEED', 'INSIGHTS', 'MATRIX', 'PORT'].indexOf(first) >= 0))
+      return _handleKeyword(first, parts.slice(1));
+    if (parts.length < 2) return null;
 
     const fn = (parts[1] || '').toUpperCase();
     if (!FUNCS.has(fn)) return null;
@@ -140,9 +142,29 @@
     if (kw === 'COMPARE') return _handleCompare(args);
     if (kw === 'SHOCK') return _handleShock(args);
     if (kw === 'FACTOR') return _handleFactor(args);
+    if (kw === 'FEED') return _handleFeed(args);
     if (kw === 'INSIGHTS') return { answer: 'Abriendo insights automáticos de la red.', actions: [{ type: 'insights' }] };
     if (kw === 'MATRIX') return { answer: 'Abriendo las 9 matrices de relación.', actions: [{ type: 'insights' }] };
     return null;
+  }
+
+  // FEED [n] — lo último que entró al grafo ENTERO (noticias, relaciones,
+  // tesis, acciones), de /api/ontology/feed. Responde al instante sin IA.
+  async function _handleFeed(args) {
+    const en = ((window.LANG || (function () { try { return localStorage.getItem('eco_lang'); } catch (e) { return null; } })() || 'es') === 'en');
+    const n = Math.max(1, Math.min(parseInt(args[0], 10) || 6, 15));
+    let feed = null;
+    try {
+      const r = await fetch(`${_base()}/api/ontology/feed?limit=${n}&lang=${en ? 'en' : 'es'}`);
+      if (r.ok) feed = (await r.json()).feed;
+    } catch (e) { /* red caída → mensaje de abajo */ }
+    if (!feed) return { answer: en ? 'The ontology is not available — no feed right now.' : 'La ontología no está disponible — no hay feed ahora.', actions: [] };
+    if (!feed.length) return { answer: en ? 'Nothing new in the graph yet.' : 'Todavía no hay novedades en el grafo.', actions: [] };
+    const lines = feed.map(e => '• ' + (e.subject ? e.subject.label + ' · ' : '') + (e.title || '') +
+      (e.source && e.source.publisher ? ' (' + e.source.publisher + ')' : ''));
+    const first = feed.find(e => e.subject && window.NODE_BY_ID && window.NODE_BY_ID[e.subject.id]);
+    return { answer: (en ? 'Latest in the graph:\n' : 'Lo último en el grafo:\n') + lines.join('\n'),
+             actions: first ? [{ type: 'navigate', arg: first.subject.id }] : [] };
   }
 
   // FACTOR LIST · FACTOR <id|texto> [FIRE] — los 70 factores sistémicos viven

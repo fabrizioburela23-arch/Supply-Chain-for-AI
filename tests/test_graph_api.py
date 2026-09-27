@@ -208,3 +208,46 @@ def test_la_accion_auditable_arrastra_su_fuente_al_timeline(db):
     assert 'sec.gov' in accion['source']['url']
     assert accion['source']['trust'] == 3       # filing = fuente primaria
     assert accion['confidence'] == 0.7
+
+
+# ── Feed global (M6) ────────────────────────────────────────────────────────
+
+def test_feed_global_trae_lo_nuevo_sin_ruido(db):
+    """El hilo de TODO el grafo: debe traer la noticia (una sola vez, con la
+    empresa sobre la que informa) y los cambios reales, pero NO las Fuentes
+    ni los vínculos de procedencia ni la migración."""
+    from ontology.db import session_scope
+    from ontology.service import apply_event
+    with session_scope() as s:
+        apply_event(s, 'ObjectCreated', {'label': 'Ruido', 'type': 'Company', 'properties': {}},
+                    valid_from='2000-01-01', source='migration_v0', actor='script', object_id='Ruido')
+
+    d = _c().get('/api/ontology/feed?limit=50').get_json()
+    feed = d['feed']
+    assert d['count'] == len(feed) and feed
+    tipos = {e['event_type'] for e in feed}
+    assert 'ObjectUpdated' in tipos
+    # la migración no aparece
+    assert not any(e['subject'] and e['subject']['id'] == 'Ruido' for e in feed)
+    # ninguna Fuente ni vínculo de procedencia
+    assert not any((e['subject'] or {}).get('type') == 'Source' for e in feed)
+    assert not any('published_by' in e['title'] or 'reports_on' in e['title'] for e in feed)
+    # la noticia (si el test de timeline ya la ingirió) aparece una sola vez,
+    # atada a ACME
+    news = [e for e in feed if e['kind'] == 'news']
+    if news:
+        assert len({e['url'] for e in news}) == len(news)
+        assert news[0]['entities'] == ['ACME']
+    # más nuevo primero, por cuándo lo SUPIMOS
+    rec = [e['recorded_at'] for e in feed]
+    assert rec == sorted(rec, reverse=True)
+
+
+def test_feed_global_since_y_validacion(db):
+    c = _c()
+    todo = c.get('/api/ontology/feed').get_json()['feed']
+    ultimo = todo[0]['recorded_at']
+    assert c.get('/api/ontology/feed?since=' + ultimo.replace('+', '%2B')).get_json()['feed'] == []
+    assert c.get('/api/ontology/feed?since=no-es-fecha').status_code == 400
+    en = c.get('/api/ontology/feed?lang=en').get_json()['feed']
+    assert any(e['title'].startswith(('Data updated', 'New relation', 'Entered')) for e in en)

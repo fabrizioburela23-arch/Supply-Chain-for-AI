@@ -1540,6 +1540,11 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           <div class="t">Empieza por los nodos centrales</div>
           <div class="start-pills" id="start-pills"></div>
         </div>
+        <!-- 📡 lo último en el grafo entero (feed global, M6) — se oculta sin ontología -->
+        <div class="start-hint" id="feed-box" style="display:none">
+          <div class="t" id="feed-h"></div>
+          <div id="feed-list"></div>
+        </div>
       </div>
       <div class="detail" id="detail" style="display:none"></div>
     </aside>
@@ -2935,6 +2940,7 @@ function deselect(){
   refreshStyles();
   document.getElementById('detail').style.display='none';
   document.getElementById('panel-empty').style.display='block';
+  if(window.V8feed) window.V8feed.load();   /* 📡 refresca como mucho 1/min */
 }
 
 /* ===================== Stress-Test (Simulador de Colapso) ===================== */
@@ -4817,6 +4823,7 @@ Object.assign(I18N.es, {
   d_news:'Noticias', d_earn:'Próximo earnings', d_fund:'Fundamentales', d_ai:'Análisis IA',
   d_alerts:'Alertas de precio', d_pos:'Mi posición',
   d_history:'Historia · de dónde sale cada dato', hist_empty:'Sin historia registrada todavía.',
+  feed_h:'Lo último en el grafo', feed_ago:'hace', feed_now:'ahora',
   hist_facts:'hechos', hist_src:'con fuente', hist_saved:'noticias nuevas guardadas',
   hist_primary:'fuente primaria', hist_press:'prensa', hist_weak:'fuente débil',
   v8_needkey:'Configura tu API key en ⚙ para activar esta sección.',
@@ -4855,6 +4862,7 @@ Object.assign(I18N.en, {
   d_news:'News', d_earn:'Next earnings', d_fund:'Fundamentals', d_ai:'AI analysis',
   d_alerts:'Price alerts', d_pos:'My position',
   d_history:'History · where each fact comes from', hist_empty:'No recorded history yet.',
+  feed_h:'Latest in the graph', feed_ago:'ago', feed_now:'now',
   hist_facts:'facts', hist_src:'with source', hist_saved:'new news items saved',
   hist_primary:'primary source', hist_press:'press', hist_weak:'weak source',
   v8_needkey:'Add your API key in ⚙ to enable this section.',
@@ -5705,6 +5713,49 @@ Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con est
 
 window.V8detail = V8detail;
 
+/* ── 📡 Lo último en el grafo (Phase 1 · M6: feed GLOBAL) ──────────────────
+   La Historia de arriba es POR EMPRESA; esto es el grafo ENTERO: noticias,
+   relaciones nuevas o terminadas, tesis y acciones, lo más nuevo primero (por
+   cuándo lo supimos). Vive en el panel derecho del mapa cuando no hay empresa
+   elegida — donde Fabrizio ya mira. Sin ontología (sin DATABASE_URL) se oculta. */
+const V8feed = {
+  _t:0,
+  load(force){
+    const box=$('feed-box'), el=$('feed-list'); if(!box||!el) return;
+    if(!force && Date.now()-this._t<60000) return;
+    this._t=Date.now();
+    const lang=(LANG==='en')?'en':'es';
+    fetch(`${BASE}/api/ontology/feed?limit=8&lang=${lang}`)
+      .then(r=>r.ok?r.json():null).then(d=>{
+        if(!d||!Array.isArray(d.feed)||!d.feed.length){ box.style.display='none'; return; }
+        box.style.display='block';
+        $('feed-h').textContent='📡 '+t('feed_h');
+        const ico={NewsItem:'📰',LinkCreated:'🔗',LinkRemoved:'✂',ActionExecuted:'✎',ObjectUpdated:'↻',ObjectCreated:'＋'};
+        const ago=iso=>{ const x=Date.parse(iso||''); if(isNaN(x)) return '';
+          const m=Math.max(0,(Date.now()-x)/60000);
+          const v=m<1?t('feed_now'):m<60?Math.round(m)+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d';
+          return m<1?v:(lang==='en'?v+' '+t('feed_ago'):t('feed_ago')+' '+v); };
+        el.innerHTML=d.feed.map(e=>{
+          const sub=e.subject||null;
+          const onMap=sub&&NODE_BY_ID[sub.id];
+          const subj=sub?(onMap
+            ? `<span onclick="jumpTo('${esc(sub.id)}')" style="color:var(--ink);font-weight:600;cursor:pointer;border-bottom:1px dotted var(--ink-3)">${esc(sub.label)}</span>`
+            : `<span style="color:var(--ink-2);font-weight:600">${esc(sub.label)}</span>`):'';
+          const src=e.source&&e.source.url?e.source:null;
+          const host=src?(src.publisher||src.url).replace(/^https?:\/\//,'').split('/')[0]:'';
+          return `<div style="padding:6px 0;border-bottom:1px solid var(--line);line-height:1.4;font-size:12px">
+            <div style="display:flex;gap:6px;align-items:baseline">
+              <span style="flex-shrink:0">${ico[e.event_type]||'•'}</span>
+              <span style="flex:1;color:var(--ink-2)">${subj}${subj?' · ':''}${esc(e.title||'')}</span>
+              <span style="font-size:10px;color:var(--ink-3);white-space:nowrap">${esc(ago(e.recorded_at))}</span></div>
+            ${src?`<a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none;margin-left:20px">${esc(host)} ↗</a>`:''}
+          </div>`;}).join('');
+      }).catch(()=>{ box.style.display='none'; });
+  },
+};
+window.V8feed = V8feed;
+setTimeout(()=>V8feed.load(true), 1500);
+
 /* sentimiento por palabras clave */
 function sentiment(headline){
   const h=(headline||'').toLowerCase();
@@ -5945,6 +5996,7 @@ function toast(msg){
 
 /* ════════════════ §M · i18n estático v8 + wrap de applyLang ════════════════ */
 function applyLangV8(){
+  if(window.V8feed) V8feed.load(true);
   const ob=$('offline-badge'); if(ob){ const sp=ob.querySelector('[data-i18n="offline"]'); if(sp) sp.textContent=t('offline'); }
   const ex=$('mk-export'); if(ex){ const sp=ex.querySelector('[data-i18n="mk_export"]'); if(sp) sp.textContent=t('mk_export'); }
   if($('settings-panel').classList.contains('show')) Settings.render();

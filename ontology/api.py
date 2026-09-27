@@ -641,6 +641,32 @@ def object_timeline(object_id):
                         'timeline': entradas})
 
 
+@ontology_bp.route('/feed')
+@_require_db
+def global_feed_route():
+    """Lo último que entró al grafo ENTERO (M6): noticias, relaciones nuevas
+    o terminadas, tesis y acciones — sin la migración ni los precios.
+    Query: ?limit=30&lang=es|en&since=<ISO> (solo lo registrado después)."""
+    from ontology.timeline import global_feed
+    from ontology.service import _parse_dt
+    lang = (request.args.get('lang') or 'es').strip().lower()[:2]
+    try:
+        limit = min(max(int(request.args.get('limit', 30)), 1), 200)
+    except (TypeError, ValueError):
+        limit = 30
+    since = None
+    if request.args.get('since'):
+        try:
+            since = _parse_dt(request.args.get('since'))
+        except Exception:
+            since = None
+        if since is None:
+            return jsonify({'error': 'since inválido (usa ISO 8601)'}), 400
+    with session_scope() as s:
+        entradas = global_feed(s, limit=limit, lang=lang, since=since)
+        return jsonify({'count': len(entradas), 'feed': entradas})
+
+
 @ontology_bp.route('/objects/<object_id>/news')
 @_require_db
 def object_news(object_id):

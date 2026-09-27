@@ -38,6 +38,7 @@
     ['NVDA THESIS me gusta por su moat', 'guarda esa idea como tesis'],
     ['PORT VAR', 'el riesgo (VaR) de tu portafolio'],
     ['GRAPH ASOF 2020-01-01', 'ver la cadena como era en esa fecha'],
+    ['FEED', 'lo último que entró al grafo: noticias, relaciones nuevas, tesis'],
     ['ALERT NVDA PX > 150', 'avisarte si Nvidia sube de $150'],
     ['FACTOR LIST', 'los ~70 riesgos sistémicos latentes (aranceles, tasas, cuellos de botella)'],
     ['FACTOR taiwan FIRE', 'qué pasaría si esa crisis se dispara: contagio y nivel sistémico'],

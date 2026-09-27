@@ -9,6 +9,23 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-27 (c) — Feed global "📡 Lo último en el grafo" (sw v138)
+
+- `global_feed()` en ontology/timeline.py + `GET /api/ontology/feed`
+  (?limit&lang&since). Por `recorded_at` desc (desempate valid_from). Filtra
+  migración/precios/Fuentes/vínculos de procedencia; una noticia = una
+  entrada con las empresas sobre las que informa (`reports_on`).
+- Títulos de relación legibles y bilingües ("suministra a Nvidia" en vez de
+  "supply → Nvidia") — también en la Historia de cada empresa.
+- UI: sección 📡 en el panel derecho del mapa cuando no hay empresa elegida
+  (V8feed en app.html; se refresca como mucho 1/min al deseleccionar; se
+  oculta sin ontología). Empresa clicable → jumpTo.
+- KHIPU `FEED [n]`; además FEED/INSIGHTS/MATRIX/PORT funcionan como UNA sola
+  palabra (antes exigía 2 y caían a la IA).
+- 200 tests.
+
+---
+
 # SESIÓN 2026-09-27 (b) — Nombres: búsqueda por nombre legal + etiquetas legibles (sw v137)
 
 - `nodes/legal_names.js` (nuevo): 159 nombres legales/alternativos → id
