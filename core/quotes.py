@@ -93,3 +93,61 @@ def fetch_quote_intl(symbol, timeout=6):
         return q
     except Exception:  # noqa: BLE001
         return None
+
+
+# ── Capitalización vía Yahoo (bolsas fuera de EE.UU.) ───────────────────────
+# El endpoint /v7/finance/quote exige una "crumb" ligada a una cookie de
+# sesión: se obtiene una vez (fc.yahoo.com → getcrumb) y se reutiliza ~1 h.
+_Y_SESS = {'s': None, 'crumb': None, 'ts': 0}
+_MCAP_CACHE = {}   # símbolo → (ts, mcap_b)
+
+
+def _yahoo_session():
+    if _Y_SESS['s'] is not None and time.time() - _Y_SESS['ts'] < 3600:
+        return _Y_SESS['s'], _Y_SESS['crumb']
+    s = _requests.Session()
+    s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                      'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'})
+    try:
+        s.get('https://fc.yahoo.com', timeout=6)
+        r = s.get('https://query2.finance.yahoo.com/v1/test/getcrumb', timeout=6)
+        crumb = (r.text or '').strip() if r.ok else None
+    except Exception:  # noqa: BLE001
+        crumb = None
+    _Y_SESS.update({'s': s, 'crumb': crumb, 'ts': time.time()})
+    return s, crumb
+
+
+def fetch_market_cap_yahoo(symbol, timeout=6):
+    """Capitalización en MILES DE MILLONES de USD vía Yahoo, o None.
+    Cacheada 6 h por símbolo (cambia despacio y no conviene martillar)."""
+    if not symbol:
+        return None
+    e = _MCAP_CACHE.get(symbol)
+    if e and time.time() - e[0] < 6 * 3600:
+        return e[1]
+    val = None
+    try:
+        s, crumb = _yahoo_session()
+        params = {'symbols': symbol}
+        if crumb:
+            params['crumb'] = crumb
+        r = s.get('https://query2.finance.yahoo.com/v7/finance/quote', params=params, timeout=timeout)
+        res = (((r.json() or {}).get('quoteResponse') or {}).get('result') or [None])[0] or {}
+        mc = res.get('marketCap')
+        # marketCap viene en la moneda de COTIZACIÓN ('currency'); 'GBp'
+        # (peniques) es solo el precio — la capitalización ya está en libras
+        cur = (res.get('currency') or res.get('financialCurrency') or 'USD')
+        cur = 'GBP' if cur == 'GBp' else cur.upper()
+        if mc and float(mc) > 0:
+            rate = _fx_to_usd(cur)
+            if rate:
+                val = round(float(mc) * rate / 1e9, 2)
+    except Exception:  # noqa: BLE001
+        val = None
+    if val is not None:
+        _MCAP_CACHE[symbol] = (time.time(), val)
+    else:
+        # la sesión pudo caducar: forzar una nueva la próxima vez
+        _Y_SESS['ts'] = 0
+    return val

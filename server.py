@@ -2036,7 +2036,7 @@ def fundamentals(ticker):
     if not ticker:
         return jsonify({'error': 'invalid ticker'}), 400
     # Cache manual: no cachear si los datos vienen vacíos (evita envenenar 24h con errores de rate-limit)
-    cache_key = f'fund_{ticker}'
+    cache_key = f'fund2_{ticker}'   # v2: + marketCapB (la v1 cacheada 24 h no la traía)
     hit = cache.get(cache_key)
     if hit is not None:
         return jsonify(hit)
@@ -2097,6 +2097,13 @@ def fundamentals(ticker):
             ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
                         'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
                         'analystRatingsHold': h}]
+    if mcap_b is None:
+        # tercera vía: Yahoo (cubre Tokio, Hong Kong, Europa… que el plan
+        # gratuito de FMP no). Devuelve USD o None; nunca inventa.
+        from core.quotes import fetch_market_cap_yahoo
+        y = fetch_market_cap_yahoo(ticker)
+        if y:
+            mcap_b, mcap_src = y, 'yahoo'
     result = {'metrics': metrics, 'priceTarget': targets or [], 'ratings': ratings,
               'marketCapB': mcap_b, 'marketCapSource': mcap_src}
     # Solo cachear si obtuvimos algo — errores transitorios no deben quedarse 24h

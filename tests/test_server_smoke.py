@@ -285,3 +285,19 @@ def test_fundamentales_traen_capitalizacion_en_vivo(monkeypatch):
     assert us['marketCapB'] == 2500.0 and us['marketCapSource'] == 'finnhub'
     jp = c.get('/api/fundamentals/8411.T').get_json()
     assert jp['marketCapB'] == 140.0 and jp['marketCapSource'] == 'fmp'
+
+
+def test_capitalizacion_yahoo_como_ultima_via(monkeypatch):
+    """Tokio/HK/Europa: ni Finnhub free ni FMP free las cubren → Yahoo."""
+    import server
+    import core.quotes as q
+    server.app.config['TESTING'] = True
+    try:
+        server.cache.clear()
+    except Exception:
+        pass
+    monkeypatch.setattr(server, 'FINNHUB', '')
+    monkeypatch.setattr(server, 'FMP', '')
+    monkeypatch.setattr(q, 'fetch_market_cap_yahoo', lambda sym: 95.5 if sym == '8411.T' else None)
+    d = server.app.test_client().get('/api/fundamentals/8411.T').get_json()
+    assert d['marketCapB'] == 95.5 and d['marketCapSource'] == 'yahoo'

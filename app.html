@@ -3156,15 +3156,19 @@ function renderDetail(id){
 
   // NODE_META extra data
   const meta = NODE_META[id] || {};
-  const metaHTML = meta.founded ? `
+  /* la rejilla sale también para toda empresa que COTIZA aunque no tenga
+     ficha extendida (Mizuho no tenía `founded` → ni siquiera había dónde
+     mostrar su capitalización en vivo) */
+  const _en = LANG==='en';
+  const metaHTML = (meta.founded || d.mkt) ? `
     <div class="meta-grid">
-      <div class="meta-item"><div class="meta-l">Fundada</div><div class="meta-v">${meta.founded||'—'}</div></div>
-      <div class="meta-item"><div class="meta-l">Empleados</div><div class="meta-v">${meta.employees||'—'}</div></div>
+      <div class="meta-item"><div class="meta-l">${_en?'Founded':'Fundada'}</div><div class="meta-v">${meta.founded||'—'}</div></div>
+      <div class="meta-item"><div class="meta-l">${_en?'Employees':'Empleados'}</div><div class="meta-v">${meta.employees||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">Revenue 2025</div><div class="meta-v">${meta.revenue_2025||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
     </div>
     ${meta.geo_risk?`<div class="geo-risk-box"><span class="geo-icon">🌐</span>${esc(meta.geo_risk)}</div>`:''}
-    ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">Clientes clave</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
+    ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">${_en?'Key clients':'Clientes clave'}</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
   ` : '';
 
   // Connection type breakdown
@@ -4960,7 +4964,7 @@ const DataLayer = {
       this._json(BASE+'/api/earnings/'+encodeURIComponent(ticker)));
   },
   async fundamentals(ticker){
-    return DataLayer._cached('fund2_'+ticker, 86400000, ()=>
+    return DataLayer._cached('fund3_'+ticker, 86400000, ()=>
       this._json(BASE+'/api/fundamentals/'+encodeURIComponent(ticker)));
   },
   async insiders(ticker){

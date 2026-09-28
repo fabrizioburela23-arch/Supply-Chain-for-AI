@@ -192,7 +192,7 @@
         '<span class="nv xr-mono">' + t.val + '/' + t.max + '</span></div>';
     }).join('') : '<div class="xr-loading">' + L('NRS no disponible', 'NRS not available') + '</div>';
 
-    var mm = meta.founded ? '<div class="xr-sect"><div class="xr-h">' + L('Anatomía', 'Anatomy') + '</div>' +
+    var mm = (meta.founded || n.mkt) ? '<div class="xr-sect"><div class="xr-h">' + L('Anatomía', 'Anatomy') + '</div>' +
       '<div class="impact-grid">' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.employees ? (meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +

@@ -60,6 +60,14 @@ los hallazgos sin fuente abierta quedaron en confianza media/baja).
   tipo de cambio). `window.fillLiveMcap(el, n)` lo pinta en la ficha del mapa
   (#d-mcap) y el X-Ray (.xr-mcap). Caché cliente renombrada fund_→fund2_.
   Comparador (compare.js) bilingüe.
+- v148 ("todavía no sale"): tres causas más. (1) caché del SERVIDOR de
+  /api/fundamentals (24 h) seguía entregando la respuesta vieja → clave
+  fund2_; (2) FMP free no cubre Tokio/HK/Europa → tercera vía
+  `core/quotes.fetch_market_cap_yahoo` (v7/quote con crumb de sesión, caché
+  6 h, moneda de cotización → USD; GBp→GBP); (3) la ficha del mapa y el X-Ray
+  solo pintaban la rejilla con `meta.founded` → ahora también si cotiza.
+  Caché cliente fund3_. Ojo al probar con Playwright: el service worker
+  salta page.route → usar serviceWorkers:'block'.
 
 ---
 
