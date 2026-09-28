@@ -21,6 +21,29 @@ def ontology_available():
     return bool(DATABASE_URL)
 
 
+def _normalize_url(url):
+    """Esquema → driver INSTALADO. Railway a veces entrega postgres:// (viejo) y
+    algunas plantillas usan postgresql+psycopg:// (psycopg 3), que NO está en
+    requirements (usamos psycopg2-binary) → 'No module named psycopg' en prod
+    (2026-09-28). Si el driver pedido no existe, se usa psycopg2."""
+    if '://' not in url:
+        return url
+    scheme, rest = url.split('://', 1)
+    base, _, driver = scheme.partition('+')
+    if base in ('postgres', 'postgresql'):
+        base = 'postgresql'
+        if driver:
+            try:
+                __import__({'psycopg': 'psycopg', 'psycopg2': 'psycopg2', 'asyncpg': 'asyncpg',
+                            'pg8000': 'pg8000'}.get(driver, driver))
+                if driver == 'asyncpg':
+                    raise ImportError('asyncpg no sirve con un engine síncrono')
+            except ImportError:
+                driver = ''
+        return f'{base}+{driver}://{rest}' if driver else f'{base}://{rest}'
+    return url
+
+
 def _get_engine():
     global _engine, _SessionLocal
     if _engine is None:
@@ -29,8 +52,7 @@ def _get_engine():
         url = DATABASE_URL
         # Railway a veces entrega postgres:// (esquema viejo); SQLAlchemy 1.4+/2.x
         # requiere postgresql://
-        if url.startswith('postgres://'):
-            url = url.replace('postgres://', 'postgresql://', 1)
+        url = _normalize_url(url)
         _engine = create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
         _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
