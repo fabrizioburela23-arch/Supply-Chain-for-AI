@@ -9,6 +9,23 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-28 — X-Ray pulido (sw v139)
+
+A partir de la captura de Fabrizio (X-Ray de la Reserva Federal, ya en prod):
+- engine/xray.js BILINGÜE completo (helper `L(es,en)`); los términos del NRS
+  (computeNRSBreakdown en app.html) también.
+- `growth` que es una FRASE (capa macro) ya no se mete en el cuadrito de 3
+  columnas (salía una torre ilegible): va como nota debajo; `geo_risk` en
+  texto normal (antes MAYÚSCULAS vía .tcap).
+- "Calculando propagación…" podía quedarse PARA SIEMPRE (0 vínculos o el
+  servidor respondía sin impactos): ahora siempre cierra con un mensaje
+  (actor macro → se simula con FACTOR LIST).
+- Sin ticker: "no cotiza en bolsa" en vez de "— · —". Sin vínculos: se dice.
+- Pendiente visible: la Cabina (cockpit.js — chips Invertir/Scalping…, "LISTO",
+  placeholder, migas "Radiografía") sigue solo en español.
+
+---
+
 # SESIÓN 2026-09-27 (c) — Feed global "📡 Lo último en el grafo" (sw v138)
 
 - `global_feed()` en ontology/timeline.py + `GET /api/ontology/feed`

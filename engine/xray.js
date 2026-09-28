@@ -25,6 +25,13 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function lid(v) { return (typeof v === 'object' && v !== null) ? v.id : v; }
   function fmtPct(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }
+  // REGLA BILINGÜE: todo texto visible pasa por L(es, en)
+  function isEn() {
+    var l = window.LANG;
+    if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } }
+    return l === 'en';
+  }
+  function L(es, en) { return isEn() ? en : es; }
 
   // ── estilos (inyectados una vez) ──
   function ensureStyles() {
@@ -93,6 +100,7 @@
 .xray-scope .xr-victim .vbar i{display:block;height:100%;background:#FF4D6A}
 .xray-scope .xr-victim .vp{font-family:'JetBrains Mono',monospace;font-size:10px;color:#FF4D6A;width:40px;text-align:right;flex:none}
 .xray-scope .xr-loading{color:#7C87A3;font-size:11px;font-style:italic}
+.xray-scope .xr-note{font-size:11.5px;line-height:1.55;color:#AEB7CF;margin-top:11px}
 .xray-scope .thread-scroll{max-height:none}
 /* ── modo escenario (pantalla completa, Cabina de Khipu) ── */
 .xray-scope.xr-full{padding:0 4px 24px}
@@ -154,7 +162,7 @@
     opts = opts || {};
     var full = !!opts.full;
     var n = window.NODE_BY_ID ? window.NODE_BY_ID[id] : null;
-    if (!n) return '<div class="xr-loading" style="padding:24px">Sin datos para ' + esc(id) + '</div>';
+    if (!n) return '<div class="xr-loading" style="padding:24px">' + L('Sin datos para ', 'No data for ') + esc(id) + '</div>';
     var col = sectorColor(n.cat);
     var bd = window.computeNRSBreakdown ? window.computeNRSBreakdown(id) : null;
     var th = threadsFor(id);
@@ -167,32 +175,38 @@
         '<span>' + t.key + '<div class="nd">' + esc(t.detail) + '</div></span>' +
         '<div class="nrsbar"><i style="width:' + Math.round(t.val / t.max * 100) + '%"></i></div>' +
         '<span class="nv xr-mono">' + t.val + '/' + t.max + '</span></div>';
-    }).join('') : '<div class="xr-loading">NRS no disponible</div>';
+    }).join('') : '<div class="xr-loading">' + L('NRS no disponible', 'NRS not available') + '</div>';
 
-    var mm = meta.founded ? '<div class="xr-sect"><div class="xr-h">Anatomía</div>' +
+    var mm = meta.founded ? '<div class="xr-sect"><div class="xr-h">' + L('Anatomía', 'Anatomy') + '</div>' +
       '<div class="impact-grid">' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.founded || '—') + '</b><span>Fundada</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.employees ? (meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>Empleados</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : 'Priv.') + '</b><span>Mkt Cap</span></div>' +
-      '</div>' + (meta.geo_risk ? '<div class="tcap" style="margin-top:11px">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.employees ? (meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : L('Priv.', 'Priv.')) + '</b><span>Mkt Cap</span></div>' +
+      '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
     // fundamentales extra (margen / crecimiento / puerto) si existen
     var funds = '';
     if (full && (n.margin != null || n.growth || n.country)) {
-      funds = '<div class="xr-sect"><div class="xr-h">Fundamentales</div><div class="impact-grid">' +
-        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</b><span>Margen</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB;font-size:14px" class="xr-mono">' + esc(n.growth || '—') + '</b><span>Crecim.</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(n.country || '—') + '</b><span>País</span></div>' +
-        '</div></div>';
+      // `growth` a veces es un número corto ("+35%") y a veces una FRASE
+      // entera (bancos centrales, capa macro): la frase no cabe en un cuadrito
+      // de 3 columnas y se volvía una torre ilegible — va como nota debajo.
+      var g = String(n.growth || '').trim();
+      var gCorto = g && g.length <= 14;
+      funds = '<div class="xr-sect"><div class="xr-h">' + L('Fundamentales', 'Fundamentals') + '</div><div class="impact-grid">' +
+        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</b><span>' + L('Margen', 'Margin') + '</span></div>' +
+        '<div class="icell"><b style="color:#E8EDFB;font-size:14px" class="xr-mono">' + (gCorto ? esc(g) : '—') + '</b><span>' + L('Crecim.', 'Growth') + '</span></div>' +
+        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(n.country || '—') + '</b><span>' + L('País', 'Country') + '</span></div>' +
+        '</div>' + (g && !gCorto ? '<div class="xr-note">' + esc(g) + '</div>' : '') + '</div>';
     }
 
     // hilos: en escenario mostramos TODOS (scroll); en cajón, los 6 top
     var upList = full ? th.up : th.up.slice(0, 6);
     var downList = full ? th.down : th.down.slice(0, 6);
-    var threadsHTML = '<div class="xr-sect"><div class="xr-h">Hilos — a quién provee / de quién depende</div>' +
+    var threadsHTML = '<div class="xr-sect"><div class="xr-h">' + L('Hilos — a quién provee / de quién depende', 'Threads — who it supplies / who it depends on') + '</div>' +
       (full && (th.up.length + th.down.length) ? '<div class="relchips" style="margin-bottom:10px">' + relBreakdown(th) + '</div>' : '') +
-      (th.up.length ? '<div class="tcap">Depende de (' + th.up.length + ')</div><div class="thread-scroll">' + upList.map(function (t) { return threadRow(t, 'up'); }).join('') + '</div>' : '') +
-      (th.down.length ? '<div class="tcap">Provee a (' + th.down.length + ')</div><div class="thread-scroll">' + downList.map(function (t) { return threadRow(t, 'down'); }).join('') + '</div>' : '') +
+      (!th.up.length && !th.down.length ? '<div class="xr-loading">' + L('Sin vínculos de suministro en el mapa (su efecto llega por los factores macro).', 'No supply links on the map (its effect travels through macro factors).') + '</div>' : '') +
+      (th.up.length ? '<div class="tcap">' + L('Depende de', 'Depends on') + ' (' + th.up.length + ')</div><div class="thread-scroll">' + upList.map(function (t) { return threadRow(t, 'up'); }).join('') + '</div>' : '') +
+      (th.down.length ? '<div class="tcap">' + L('Provee a', 'Supplies') + ' (' + th.down.length + ')</div><div class="thread-scroll">' + downList.map(function (t) { return threadRow(t, 'down'); }).join('') + '</div>' : '') +
       '</div>';
 
     var header =
@@ -200,30 +214,30 @@
         '<button class="xr-close" onclick="window._xrayClose()">✕</button>' +
         '<div class="xr-name">' + esc(n.label) + ' <span class="xr-tk xr-mono">' + esc(tk) + '</span></div>' +
         '<div class="xr-sec"><span class="xr-dot" style="background:' + col + ';color:' + col + '"></span>' +
-          sectorLabel(n.cat) + ' · ' + esc(n.country || '—') + ' · ' + (th.up.length + th.down.length) + ' vínculos</div>' +
-        '<div class="xr-px xr-mono" id="xr-px"><span class="p" style="color:#7C87A3">— · —</span></div>' +
+          sectorLabel(n.cat) + ' · ' + esc(n.country || '—') + ' · ' + (th.up.length + th.down.length) + ' ' + L('vínculos', 'links') + '</div>' +
+        '<div class="xr-px xr-mono" id="xr-px"><span class="p" style="color:#7C87A3">' + (n.mkt ? '— · —' : L('no cotiza en bolsa', 'not publicly traded')) + '</span></div>' +
         '<div class="xr-lin" id="xr-lin"></div>' +
       '</div>';
 
     var nrsSection =
-      '<div class="xr-sect"><div class="xr-h"><span>Riesgo NRS — por qué ' + (bd ? bd.total : '?') +
+      '<div class="xr-sect"><div class="xr-h"><span>' + L('Riesgo NRS — por qué ', 'NRS risk — why ') + (bd ? bd.total : '?') +
         (window.explainChip ? window.explainChip('nrs') : '') + '</span>' +
         '<span class="v xr-mono" style="color:' + (bd && bd.total >= 60 ? '#FF4D6A' : bd && bd.total >= 35 ? '#FFB300' : '#2BE38B') + '">' +
         (bd ? bd.total : '?') + '/100</span></div>' + nrsHTML +
-        (rank ? '<div class="xr-lin" style="margin-top:8px">Ranking de riesgo: <b style="color:#E8EDFB">#' + rank.rank + '</b> de ' + rank.of + ' empresas</div>' : '') +
-        '<div class="xr-lin" style="margin-top:4px">ⓘ fórmula NRS · el motor de matrices puede fijarlo con datos vivos</div></div>';
+        (rank ? '<div class="xr-lin" style="margin-top:8px">' + L('Ranking de riesgo: ', 'Risk ranking: ') + '<b style="color:#E8EDFB">#' + rank.rank + '</b> ' + L('de', 'of') + ' ' + rank.of + ' ' + L('empresas', 'companies') + '</div>' : '') +
+        '<div class="xr-lin" style="margin-top:4px">' + L('ⓘ fórmula NRS · el motor de matrices puede fijarlo con datos vivos', 'ⓘ NRS formula · the matrix engine can refine it with live data') + '</div></div>';
 
     var impactSection =
-      '<div class="xr-sect"><div class="xr-h">Si ' + esc(n.label) + ' cae — onda de impacto</div>' +
-        '<div id="xr-impact"><div class="xr-loading">Calculando propagación…</div></div></div>';
+      '<div class="xr-sect"><div class="xr-h">' + L('Si ', 'If ') + esc(n.label) + L(' cae — onda de impacto', ' fails — impact wave') + '</div>' +
+        '<div id="xr-impact"><div class="xr-loading">' + L('Calculando propagación…', 'Computing propagation…') + '</div></div></div>';
 
     var btns =
       '<div class="xr-btns">' +
-        '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ Ver onda en el mapa</span>' +
+        '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ ' + L('Ver onda en el mapa', 'See wave on the map') + '</span>' +
         (window.openFinCard ? '<span class="xrb" onclick="window.openFinCard(\'' + esc(n.mkt || id) + '\')">📊 Dossier</span>' : '') +
-        (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ Comparar</span>' : '') +
-        (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ En el tiempo</span>' : '') +
-        (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 Análisis IA</span>' : '') +
+        (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ ' + L('Comparar', 'Compare') + '</span>' : '') +
+        (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ ' + L('En el tiempo', 'Over time') + '</span>' : '') +
+        (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
       '</div>';
 
     var body = nrsSection + mm + funds + threadsHTML + impactSection + btns;
@@ -241,7 +255,7 @@
       if (el) el.innerHTML = '<span class="p">$' + q.c.toFixed(2) + '</span>' +
         '<span class="chg" style="color:' + (pct >= 0 ? '#2BE38B' : '#FF4D6A') + '">' + fmtPct(pct) + '</span>';
       var lin = root.querySelector('#xr-lin');
-      if (lin) lin.textContent = 'ⓘ Finnhub · en vivo';
+      if (lin) lin.textContent = L('ⓘ Finnhub · en vivo', 'ⓘ Finnhub · live');
     }).catch(function () {});
   }
 
@@ -270,7 +284,7 @@
         '<span class="vp xr-mono">' + Math.round(x.v) + '%</span></div>';
     }).join('');
     var winners = computeWinners(id, impacts);
-    var winHTML = winners.length ? '<div class="xr-h" style="margin:13px 0 6px;color:#2BE38B">Quién gana ↑</div>' +
+    var winHTML = winners.length ? '<div class="xr-h" style="margin:13px 0 6px;color:#2BE38B">' + L('Quién gana ↑', 'Who wins ↑') + '</div>' +
       winners.map(function (w) {
         var node = window.NODE_BY_ID[w.id];
         return '<div class="xr-victim" onclick="window._xrayJump(\'' + esc(w.id) + '\')">' +
@@ -283,11 +297,11 @@
     if (!el) return;
     el.innerHTML =
       '<div class="impact-grid" style="margin-bottom:11px">' +
-        '<div class="icell"><b>' + arr.length + '</b><span>empresas</span></div>' +
-        '<div class="icell"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>cap expuesta</span></div>' +
-        '<div class="icell"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>tu cartera</span></div>' +
+        '<div class="icell"><b>' + arr.length + '</b><span>' + L('empresas', 'companies') + '</span></div>' +
+        '<div class="icell"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>' + L('cap expuesta', 'exposed cap') + '</span></div>' +
+        '<div class="icell"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>' +
       '</div>' +
-      '<div class="xr-h" style="margin:2px 0 6px">Quién sufre ↓</div>' + top + winHTML +
+      '<div class="xr-h" style="margin:2px 0 6px">' + L('Quién sufre ↓', 'Who suffers ↓') + '</div>' + top + winHTML +
       (note ? '<div class="xr-lin" style="margin-top:8px">' + note + '</div>' : '');
   }
 
@@ -325,8 +339,29 @@
   function loadImpact(root, id, n) {
     // 1) INSTANTÁNEO: motor de estados en el navegador (adiós "tarda mucho")
     var instant = impactViaState(id);
-    if (instant && Object.keys(instant).length > 1) {
-      renderVictims(root, id, n, instant, 'ⓘ motor de estados en vivo (instantáneo)');
+    var shown = !!(instant && Object.keys(instant).length > 1);
+    if (shown) renderVictims(root, id, n, instant, L('ⓘ motor de estados en vivo (instantáneo)', 'ⓘ live state engine (instant)'));
+    // Cierre SIEMPRE con un mensaje: antes, si nadie caía detrás (p.ej. la
+    // Reserva Federal, 0 vínculos de suministro) o el servidor respondía sin
+    // impactos, la sección se quedaba en "Calculando propagación…" para siempre.
+    function finish() {
+      if (shown) return;
+      var el = root.querySelector('#xr-impact');
+      if (typeof window.computeDownstream === 'function') {
+        try {
+          var affected = window.computeDownstream(id);
+          var list = affected instanceof Set ? Array.from(affected) : (affected || []);
+          if (list.length) {
+            var impacts = {}; impacts[id] = 100;
+            list.forEach(function (aid) { impacts[aid] = 55; });
+            renderVictims(root, id, n, impacts, L('ⓘ estimación local', 'ⓘ local estimate'));
+            return;
+          }
+        } catch (e) {}
+      }
+      if (el) el.innerHTML = '<div class="xr-loading">' + L(
+        'Su caída no arrastra a ninguna empresa por la cadena de suministro. Si es un actor macro (banco central, regulador), su efecto se simula con los factores sistémicos (FACTOR LIST).',
+        'Its failure does not drag any company down the supply chain. If it is a macro actor (central bank, regulator), its effect is simulated through systemic factors (FACTOR LIST).') + '</div>';
     }
     // 2) refinar en segundo plano con el motor de matrices del servidor (si está)
     fetch('/api/matrix/impact', {
@@ -334,24 +369,10 @@
       body: JSON.stringify({ shock: [id] }),
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (d && d.impacts && Object.keys(d.impacts).length > 1) {
-        renderVictims(root, id, n, d.impacts, 'ⓘ motor de matrices (servidor · ponderado)');
-      }
-    }).catch(function () {
-      // sin servidor: si tampoco hubo motor de estados, avisamos
-      if (!instant || Object.keys(instant).length <= 1) {
-        var el = root.querySelector('#xr-impact');
-        if (typeof window.computeDownstream === 'function') {
-          try {
-            var affected = window.computeDownstream(id);
-            var impacts = {}; impacts[id] = 100;
-            (affected instanceof Set ? Array.from(affected) : affected || []).forEach(function (aid) { impacts[aid] = 55; });
-            renderVictims(root, id, n, impacts, 'ⓘ estimación local');
-            return;
-          } catch (e) {}
-        }
-        if (el) el.innerHTML = '<div class="xr-loading">Propagación no disponible</div>';
-      }
-    });
+        shown = true;
+        renderVictims(root, id, n, d.impacts, L('ⓘ motor de matrices (servidor · ponderado)', 'ⓘ matrix engine (server · weighted)'));
+      } else finish();
+    }).catch(finish);
   }
 
   // conecta precio + impacto a un root ya renderizado con buildXRayHTML
