@@ -198,7 +198,7 @@
       '<div class="impact-grid" style="grid-template-columns:1fr 1fr">' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-emp" data-live="employees" data-live-fmt="k">' + (meta.employees ? esc(meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? '$' + esc(meta.mktcap_b) + 'B' : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? (isFinite(+meta.mktcap_b) ? '$' + esc(meta.mktcap_b) + 'B' : esc(meta.mktcap_b)) : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB;font-size:15px;overflow-wrap:anywhere" class="xr-mono xr-rev" data-live="revenue">' + esc(meta.revenue_2025 || '—') + '</b><span class="xr-rev-l" data-live-label="revenue">' + L('Ingresos 2025', 'Revenue 2025') + '</span></div>' +
       '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
@@ -252,7 +252,7 @@
     var btns =
       '<div class="xr-btns">' +
         '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ ' + L('Ver onda en el mapa', 'See wave on the map') + '</span>' +
-        (window.openFinCard ? '<span class="xrb" onclick="window.openFinCard(\'' + esc(id) + '\')">📊 Dossier</span>' : '') +
+        (window.openFinCard ? '<span class="xrb" onclick="window._surface ? window._surface(\'dossier\', \'' + esc(id) + '\') : window.openFinCard(\'' + esc(id) + '\')">📊 Dossier</span>' : '') +
         (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ ' + L('Comparar', 'Compare') + '</span>' : '') +
         (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ ' + L('En el tiempo', 'Over time') + '</span>' : '') +
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
@@ -371,8 +371,10 @@
     if (!n.mkt) return;
     root._xrPxTimer = setInterval(function () {
       // cerrado, re-renderizado o escondido (cajón / Cabina) → se apaga solo
-      if (!root.isConnected || !root.getClientRects().length) { stopPriceTimer(root); return; }
-      if (document.hidden) return;
+      // desconectado (re-render / cerrado de verdad) → se apaga; solo OCULTO
+      // (Cabina cerrada, pestaña Fundamentales) → se salta el tick y sigue
+      if (!root.isConnected) { stopPriceTimer(root); return; }
+      if (document.hidden || !root.getClientRects().length) return;
       loadPrice(root, n);
     }, PRICE_MS);
   }

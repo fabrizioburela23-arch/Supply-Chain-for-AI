@@ -31,6 +31,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   (_fetch_quote_raw), `entities.py` (Phase 1 M2: EL resolvedor server-side —
   id/ticker/label/alias/sufijo, devuelve {id,score,method,matched}; dos
   umbrales: ESCRITURA 85 vs BÚSQUEDA 60). Rompe la circularidad ontology→server.
+  `company_data.py` (estados anuales FMP→Yahoo→AV en USD y perfil EN VIVO
+  Yahoo/Finnhub; lo usan /api/findossier, /api/dossier y /api/company/live —
+  NUNCA inventar cifras: el viejo `_dossierSynthetic` con Math.random se borró).
 - `matrix/` (paquete Python, opcional): motor de matrices — `engine.py`
   (build_matrices por rel_type + as_of, active_factors=hiperaristas,
   fragility, propagate=EL kernel de shocks, compute_metrics/chokepoints),
@@ -137,6 +140,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   existen pero ya NO gestionan su propio panel — no recrear paneles sueltos.
 - `window.KHIPU.tryParse(texto)`: parser de comandos — se intenta ANTES de
   llamar a la IA en command_center.js (devuelve null si no es comando).
+- `window.openFinCard(idOrTicker)`: EL Dossier (📊) — funciona para TODO nodo
+  (cotizada: franja en vivo + estados; no cotizada: ficha + dueño + noticias).
+  Abrir desde botones con `_surface('dossier', id)` (queda sobre la Cabina).
+  `window.KhipuLive.profile(ticker)`: perfil en vivo (caché 60 s).
 - `window._openSecondBrain(nodeId)` · `window.BixbyVoice.toggle()` ·
   `window.nexusCore.runPreset(presetId)`.
 - `window.KhipuResolve.find(texto)` (engine/resolve.js): resolutor robusto de
@@ -192,7 +199,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (205 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (231 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

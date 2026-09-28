@@ -13,8 +13,8 @@
        clara: NUNCA un overlay vacío. Botón "⇄ Comparar en Análisis".
      · No cotiza (privada, filial, comprada, organismo) → ficha del catálogo
        + franja en vivo del DUEÑO si n.listing.parent_ticker + noticias en vivo
-       (GDELT: se revisa cada 5 min, pero /api/news/gdelt guarda cada búsqueda
-       30 min en el server — la UI lo dice así) + Historia de la ontología.
+       (GDELT: se revisa cada 5 min; /api/news/gdelt guarda solo búsquedas
+       exitosas 5 min en el server — la UI lo dice así) + Historia de la ontología.
      · La franja dice la hora REAL del precio (market_time), no la de la
        consulta; "EN VIVO" solo si la sesión está en curso (quoteInfo).
    Honestidad: nada se inventa; lo que falta se dice ("—" o nota).
@@ -483,7 +483,7 @@
       tile('emp', L('Empleados', 'Employees'), esc(fmtInt(p.employees))) +
       tile('rev', L('Ingresos (12 m)', 'Revenue (TTM)'), esc(fmtUsdB(p.revenue_ttm_usd_b)),
            revG != null ? '<span class="' + (revG >= 0 ? 'fc-up' : 'fc-dn') + '">' + esc(fmtPct(revG, true)) + '</span> ' + L('anual', 'YoY')
-             : revGq != null ? '<span class="' + (revGq >= 0 ? 'fc-up' : 'fc-dn') + '">' + esc(fmtPct(revGq, true)) + '</span> ' + L('últ. trimestre vs año ant.', 'last quarter YoY') : null) +
+             : revGq != null ? '<span class="' + (revGq >= 0 ? 'fc-up' : 'fc-dn') + '">' + esc(fmtPct(revGq, true)) + '</span> ' + L('trim. interanual', 'qtr YoY') : null) +
       tile('margin', L('Margen neto', 'Net margin'), nm != null ? '<span class="' + (nm >= 0 ? '' : 'fc-dn') + '">' + esc(fmtPct(nm)) + '</span>' : null,
            gm != null ? L('bruto ', 'gross ') + esc(fmtPct(gm)) : null) +
       tile('w52', L('Rango 52 sem.', '52-week range'), rng, null, bar, true) +
@@ -895,8 +895,8 @@
         // sin duplicados por titular (GDELT repite la misma nota en varios medios)
         var seen = {};
         items = items.filter(function (a) { var k = String(a.headline).toLowerCase().slice(0, 80); if (seen[k]) return false; seen[k] = 1; return true; }).slice(0, 6);
-        // Honestidad sobre la frescura: el servidor guarda cada búsqueda de
-        // GDELT hasta 30 min (también cuando GDELT falla y vuelve vacía), así
+        // Honestidad sobre la frescura: el servidor guarda cada búsqueda EXITOSA
+        // de GDELT hasta 5 min (los fallos no se guardan: se reintenta), así
         // que "revisado HH:MM" es cuándo PREGUNTAMOS, no cuándo se buscó; lo
         // que de verdad dice qué tan nuevas son es la fecha de cada nota.
         var now = new Date();
@@ -909,8 +909,8 @@
           }
           if (st) st.textContent = L('vía GDELT · revisado ', 'via GDELT · checked ') + fmtClock(now) + ' · ' + L('sin resultados', 'no results');
           list.innerHTML = '<div class="fc-note" style="padding:18px 8px">' +
-            esc(L('Sin noticias recientes de «' + q + '» en GDELT (o GDELT no respondió). Seguimos revisando solos cada 5 min, pero nuestro servidor guarda cada búsqueda hasta 30 min: si GDELT falló, puede tardar hasta media hora en volver a intentarlo.',
-                  'No recent news for “' + q + '” on GDELT (or GDELT did not answer). We keep checking every 5 min on our own, but our server keeps each search for up to 30 min: if GDELT failed, it may take up to half an hour to try again.')) + '</div>';
+            esc(L('Sin noticias recientes de «' + q + '» en GDELT (o GDELT no respondió). Seguimos revisando solos cada 5 min: si GDELT falló, se vuelve a intentar en la próxima revisión.',
+                  'No recent news for “' + q + '” on GDELT (or GDELT did not answer). We keep checking every 5 min on our own: if GDELT failed, it is retried on the next check.')) + '</div>';
           return;
         }
         _st.newsOk = true;
@@ -925,8 +925,8 @@
             '<div class="fc-meta">' + esc(a.source || '') + (t ? ' · ' + esc(ago(t)) : '') +
             (a.language && !/^(english|spanish)$/i.test(a.language) ? ' · ' + esc(a.language) : '') + '</div></div>';
         }).join('') +
-          '<div class="fc-meta" style="margin-top:8px">' + esc(L('Revisamos solos cada 5 min; nuestro servidor guarda cada búsqueda en GDELT hasta 30 min, así que una nota nueva puede tardar hasta media hora en aparecer aquí.',
-            'We check on our own every 5 min; our server keeps each GDELT search for up to 30 min, so a new story can take up to half an hour to show up here.')) + '</div>';
+          '<div class="fc-meta" style="margin-top:8px">' + esc(L('Revisamos solos cada 5 min y nuestro servidor guarda cada búsqueda exitosa hasta 5 min, así que una nota nueva puede tardar unos 10 min en aparecer aquí.',
+            'We check on our own every 5 min and our server keeps each successful search for up to 5 min, so a new story can take about 10 min to show up here.')) + '</div>';
       })
       .catch(function () {
         if (gen !== _gen) return;

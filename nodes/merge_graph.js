@@ -60,6 +60,14 @@ function buildKhipusGraph(env) {
   // "privada" meses después de salir a bolsa (SPCX, jun-2026). Esta capa
   // pisa SOLO lo que se verificó con fuente, y deja el rastro en n.listing
   // {status, note_es, note_en, source_url, as_of…} para que la UI lo muestre.
+  // Ticker "de relleno" en privadas (FIGURE, GROQ, PERPLEXITY…): no es un
+  // símbolo de bolsa, y con él la app las trataba como cotizadas (Dossier de
+  // cotizada vacío, pedía precios que no existen). Una pre-IPO sin estado
+  // verificado "public" NO cotiza: mkt = null (el texto de n.ticker se queda).
+  NODES.forEach(function (n) {
+    if (n && n.preipo && n.mkt) n.mkt = null;
+  });
+
   const LS = env.LISTING_STATUS;
   if (LS && LS.entries) {
     Object.keys(LS.entries).forEach(function (id) {

@@ -654,21 +654,33 @@ def _better(res, best):
     return (_complete(res), _score(res)) > (_complete(best), _score(best))
 
 
+# Los dicts de caché los comparten los 8 hilos de gunicorn: recorrerlos
+# mientras otro hilo escribe lanza RuntimeError. Un candado global corto
+# (solo la lectura/escritura del dict; el deepcopy va fuera).
+_CACHE_GUARD = threading.Lock()
+
+
 def _cache_get(cache, key):
-    e = cache.get(key)
+    with _CACHE_GUARD:
+        e = cache.get(key)
     if e and time.time() - e[0] < e[2]:
         return copy.deepcopy(e[1])
     return None
 
 
 def _cache_put(cache, key, data, ttl):
-    if len(cache) > _CACHE_MAX:
-        now = time.time()
-        for k in [k for k, e in cache.items() if now - e[0] >= e[2]]:
-            cache.pop(k, None)
-        if len(cache) > _CACHE_MAX:
-            cache.clear()
-    cache[key] = (time.time(), copy.deepcopy(data), ttl)
+    val = (time.time(), copy.deepcopy(data), ttl)
+    try:
+        with _CACHE_GUARD:
+            if len(cache) > _CACHE_MAX:
+                now = time.time()
+                for k in [k for k, e in list(cache.items()) if now - e[0] >= e[2]]:
+                    cache.pop(k, None)
+                if len(cache) > _CACHE_MAX:
+                    cache.clear()
+            cache[key] = val
+    except Exception:  # noqa: BLE001 — cachear nunca debe tumbar un dato ya obtenido
+        pass
 
 
 def _lock_for(key):

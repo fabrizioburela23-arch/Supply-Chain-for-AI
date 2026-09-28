@@ -6,6 +6,15 @@
 window.LISTING_STATUS = {
  "as_of": "2026-09-28",
  "entries": {
+  "ABB_Robotics": {
+   "status": "subsidiary",
+   "parent": "ABB",
+   "parent_ticker": "ABBN.SW",
+   "note_es": "División de ABB (su venta a SoftBank aún no cierra); no cotiza por separado — se invierte vía ABB (ABBN.SW).",
+   "note_en": "An ABB division (its sale to SoftBank has not closed); not listed on its own — exposure is via ABB (ABBN.SW).",
+   "source_url": "https://global.abb/group/en/investors",
+   "confidence": "medium"
+  },
   "AESCorp": {
    "status": "public",
    "ticker": "AES",
@@ -41,6 +50,15 @@ window.LISTING_STATUS = {
    "note_es": "Comprada por L3Harris (LHX) en jul-2023; ya no cotiza.",
    "note_en": "Acquired by L3Harris (LHX) in Jul 2023; no longer listed.",
    "source_url": "https://en.wikipedia.org/wiki/Aerojet_Rocketdyne",
+   "confidence": "high"
+  },
+  "AlibabaCloud": {
+   "status": "subsidiary",
+   "parent": "Alibaba Group",
+   "parent_ticker": "BABA",
+   "note_es": "Alibaba Cloud es un segmento de Alibaba; no cotiza por separado — se invierte vía Alibaba (BABA).",
+   "note_en": "Alibaba Cloud is an Alibaba segment; not listed on its own — exposure is via Alibaba (BABA).",
+   "source_url": "https://www.alibabagroup.com/en-US/ir-overview",
    "confidence": "high"
   },
   "AlignedDataCenters": {
@@ -349,6 +367,15 @@ window.LISTING_STATUS = {
    "source_url": "https://www.datacenterdynamics.com/en/news/stonepeak-to-acquire-25bn-stake-in-american-towers-coresite-business/",
    "confidence": "high"
   },
+  "CyrusOne": {
+   "status": "subsidiary",
+   "parent": "KKR y Global Infrastructure Partners",
+   "parent_ticker": "KKR",
+   "note_es": "Privada desde 2022: la compraron KKR y Global Infrastructure Partners; no cotiza.",
+   "note_en": "Private since 2022: acquired by KKR and Global Infrastructure Partners; not listed.",
+   "source_url": "https://www.kkr.com/news/press-release/2022/kkr-and-gip-complete-acquisition-of-cyrusone",
+   "confidence": "high"
+  },
   "DSV": {
    "status": "public",
    "ticker": "DSV.CO",
@@ -356,6 +383,15 @@ window.LISTING_STATUS = {
    "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Copenhague como DSV.CO.",
    "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Copenhagen as DSV.CO.",
    "source_url": "https://www.nasdaqomxnordic.com/",
+   "confidence": "medium"
+  },
+  "DataBank": {
+   "status": "subsidiary",
+   "parent": "DigitalBridge (inversor principal)",
+   "parent_ticker": "DBRG",
+   "note_es": "Privada, respaldada principalmente por DigitalBridge; no cotiza.",
+   "note_en": "Private, backed mainly by DigitalBridge; not listed.",
+   "source_url": "https://www.databank.com/about/",
    "confidence": "medium"
   },
   "DeltaElectronics": {
@@ -676,6 +712,15 @@ window.LISTING_STATUS = {
    "note_es": "Cotiza en la Bolsa de Corea (005380); siempre fue pública.",
    "note_en": "Listed on the Korea Exchange (005380); it has always been public.",
    "source_url": "https://finance.yahoo.com/quote/005380.KS/",
+   "confidence": "high"
+  },
+  "IBMQuantum": {
+   "status": "subsidiary",
+   "parent": "IBM",
+   "parent_ticker": "IBM",
+   "note_es": "División de IBM; no cotiza por separado — su exposición bursátil es la acción de IBM.",
+   "note_en": "An IBM division; not listed on its own — its market exposure is IBM stock.",
+   "source_url": "https://www.ibm.com/quantum",
    "confidence": "high"
   },
   "ITCHoldings": {
@@ -1105,6 +1150,15 @@ window.LISTING_STATUS = {
    "source_url": "https://www.cnbc.com/2026/06/04/quantinuum-qnt-stock-first-trade-ipo.html",
    "confidence": "high"
   },
+  "Qwen": {
+   "status": "subsidiary",
+   "parent": "Alibaba Group",
+   "parent_ticker": "BABA",
+   "note_es": "Qwen es la familia de modelos de IA de Alibaba; no cotiza por separado — se invierte vía Alibaba (BABA).",
+   "note_en": "Qwen is Alibaba's AI model family; not listed on its own — exposure is via Alibaba (BABA).",
+   "source_url": "https://www.alibabagroup.com/en-US/ir-overview",
+   "confidence": "high"
+  },
   "RWE": {
    "status": "public",
    "ticker": "RWE.DE",
@@ -1251,6 +1305,15 @@ window.LISTING_STATUS = {
    "note_en": "Taken private by a JIC Capital-led consortium (buying out Fujitsu) in 2025; no longer listed in Tokyo.",
    "source_url": "https://en.wikipedia.org/wiki/Shinko_Electric_Industries",
    "confidence": "medium"
+  },
+  "SiemensEDA": {
+   "status": "subsidiary",
+   "parent": "Siemens AG",
+   "parent_ticker": "SIE.DE",
+   "note_es": "Siemens EDA forma parte de Siemens Digital Industries Software; no cotiza por separado — se invierte vía Siemens (SIE.DE).",
+   "note_en": "Siemens EDA is part of Siemens Digital Industries Software; not listed on its own — exposure is via Siemens (SIE.DE).",
+   "source_url": "https://eda.sw.siemens.com/en-US/",
+   "confidence": "high"
   },
   "SiliconLabs": {
    "status": "public",

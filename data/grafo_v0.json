@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-28T04:16:50.768Z",
+ "exported_at": "2026-09-28T06:29:08.352Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -15,7 +15,7 @@
    "sector": "diseno",
    "id": "IBMQuantum",
    "label": "IBM Quantum",
-   "ticker": "IBM · NYSE (división)",
+   "ticker": "IBM (IBM)",
    "cat": "quantum_hw",
    "port": "",
    "role": "División cuántica de IBM, líder en qubits superconductores con la hoja de ruta más creíble del sector.",
@@ -27,13 +27,24 @@
    "capex_2026": "n/s — integrado en CAPEX de IBM",
    "backlog_status": "Quantum Network: 250+ miembros; ~$1B de ingresos acumulados",
    "country": "EEUU",
-   "mkt": "IBM",
+   "mkt": null,
    "role_en": "IBM's quantum division, the leader in superconducting qubits with the sector's most credible roadmap.",
    "supplies_en": "Cloud access to Quantum System Two processors (Heron/Flamingo) and the IBM Quantum Network for 250+ corporations, governments and labs; also installs on-premise systems in Japan, Germany and Korea.",
    "moat_en": "Public roadmap targeting Starling (2029): fault-tolerant computing with logical qubits. ~$1B in cumulative revenue and IBM's balance sheet behind it — no one else combines scale, an in-house fab and financial patience. Risk: the timeline may slip.",
    "growth_en": "🔵 +30% 2026e (division, small base)",
    "capex_2026_en": "n/a — folded into IBM's CAPEX",
-   "backlog_status_en": "Quantum Network: 250+ members; ~$1B cumulative revenue"
+   "backlog_status_en": "Quantum Network: 250+ members; ~$1B cumulative revenue",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "IBM",
+    "parent_ticker": "IBM",
+    "note_es": "División de IBM; no cotiza por separado — su exposición bursátil es la acción de IBM.",
+    "note_en": "An IBM division; not listed on its own — its market exposure is IBM stock.",
+    "source_url": "https://www.ibm.com/quantum",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
@@ -106,7 +117,7 @@
    "growth_en": "⭐ PRE-IPO (~$7B); nascent revenue",
    "capex_2026_en": "$500M+ (Brisbane and Chicago)",
    "backlog_status_en": "State megaprojects: Brisbane (Australia) and Illinois (US)",
-   "mkt": "PSIQUANTUM"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -377,7 +388,7 @@
    "sector": "diseno",
    "id": "SiemensEDA",
    "label": "Siemens EDA",
-   "ticker": "vía Siemens · Frankfurt",
+   "ticker": "Siemens AG (SIE.DE)",
    "cat": "eda",
    "port": "",
    "role": "Tercer jugador del oligopolio EDA (ex-Mentor Graphics), dentro de Siemens.",
@@ -389,13 +400,24 @@
    "capex_2026": "n/s — división de software de Siemens",
    "backlog_status": "Contratos plurianuales; sin desglose público",
    "country": "Alemania",
-   "mkt": "SIEGY",
+   "mkt": null,
    "role_en": "Third player in the EDA oligopoly (formerly Mentor Graphics), within Siemens.",
    "supplies_en": "PCB design tools, physical verification (Calibre, the de facto sign-off standard) and emulation (Veloce). Especially strong in automotive and embedded systems.",
    "moat_en": "The relevant third player behind Synopsys and Cadence; Calibre is practically mandatory for final verification of any chip headed to TSMC. Backed by Siemens' balance sheet.",
    "growth_en": "🟡 +8–11% per year",
    "capex_2026_en": "n/a — Siemens software division",
-   "backlog_status_en": "Multi-year contracts; no public breakdown"
+   "backlog_status_en": "Multi-year contracts; no public breakdown",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Siemens AG",
+    "parent_ticker": "SIE.DE",
+    "note_es": "Siemens EDA forma parte de Siemens Digital Industries Software; no cotiza por separado — se invierte vía Siemens (SIE.DE).",
+    "note_en": "Siemens EDA is part of Siemens Digital Industries Software; not listed on its own — exposure is via Siemens (SIE.DE).",
+    "source_url": "https://eda.sw.siemens.com/en-US/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -2934,7 +2956,7 @@
    "sector": "cloud_ia",
    "id": "Qwen",
    "label": "Alibaba (Qwen)",
-   "ticker": "BABA · NYSE",
+   "ticker": "Alibaba Group (BABA)",
    "cat": "ailab",
    "port": "",
    "role": "Familia Qwen de Alibaba: el open-weight más usado del mundo; invertible vía BABA",
@@ -2952,7 +2974,18 @@
    "growth_en": "🔵 Alibaba Cloud +28% driven by AI",
    "capex_2026_en": "Within BABA's ~$53B/3-yr plan",
    "backlog_status_en": "N/A; inference capped by capacity",
-   "mkt": "BABA"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Alibaba Group",
+    "parent_ticker": "BABA",
+    "note_es": "Qwen es la familia de modelos de IA de Alibaba; no cotiza por separado — se invierte vía Alibaba (BABA).",
+    "note_en": "Qwen is Alibaba's AI model family; not listed on its own — exposure is via Alibaba (BABA).",
+    "source_url": "https://www.alibabagroup.com/en-US/ir-overview",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "robotica",
@@ -3003,7 +3036,7 @@
    "growth_en": "⭐ PRE-IPO (no S-1 yet)",
    "capex_2026_en": "~$1B (BotQ scale-up)",
    "backlog_status_en": "BMW/UPS pilots; no public order book",
-   "mkt": "FIGURE"
+   "mkt": null
   },
   {
    "sector": "robotica",
@@ -3125,7 +3158,7 @@
    "capex_2026_en": "Funded by ~$403M Series A",
    "backlog_status_en": "Mercedes/GXO pilots; no volume orders yet",
    "preipo": true,
-   "mkt": "APPTRONIK"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -3280,7 +3313,7 @@
    "growth_en": "⚡ Pre-revenue but >1M users on GroqCloud",
    "capex_2026_en": "Series D ~$640M to scale fab",
    "backlog_status_en": "GroqCloud in public beta; enterprise waitlist",
-   "mkt": "GROQ"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -3305,7 +3338,7 @@
    "growth_en": "🔵 +80% est. 2025 (small base)",
    "capex_2026_en": "~$300M Series D (2023)",
    "backlog_status_en": "National AI Cloud active at DoE labs",
-   "mkt": "SAMBANOVA"
+   "mkt": null
   },
   {
    "sector": "fabricacion",
@@ -3717,7 +3750,7 @@
    "capex_2026": "~$0.2B",
    "backlog_status": "Early stage",
    "preipo": true,
-   "mkt": "TENSTORRENT"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -3736,7 +3769,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Pre-revenue",
    "preipo": true,
-   "mkt": "DMATRIX"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -3838,7 +3871,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Pre-comercial",
    "preipo": true,
-   "mkt": "AYARLABS"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -3908,7 +3941,7 @@
    "capex_2026": "~$0.02B",
    "backlog_status": "Pre-revenue",
    "preipo": true,
-   "mkt": "SPINNCLOUD"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -3927,7 +3960,7 @@
    "capex_2026": "~$0.02B",
    "backlog_status": "Sampleo",
    "preipo": true,
-   "mkt": "INNATERA"
+   "mkt": null
   },
   {
    "sector": "infra",
@@ -3984,7 +4017,7 @@
    "sector": "infra",
    "id": "CyrusOne",
    "label": "CyrusOne",
-   "ticker": "Privado (KKR/GIP)",
+   "ticker": "KKR y Global Infrastructure Partners (KKR)",
    "cat": "dc_reit",
    "port": "",
    "role": "Datacenters enterprise e hiperescala Europa/EE.UU.",
@@ -3996,14 +4029,24 @@
    "margin": 0.3,
    "capex_2026": "~$2.0B",
    "backlog_status": "Expansión",
-   "mkt": "KKR",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "KKR y Global Infrastructure Partners",
+    "parent_ticker": "KKR",
+    "note_es": "Privada desde 2022: la compraron KKR y Global Infrastructure Partners; no cotiza.",
+    "note_en": "Private since 2022: acquired by KKR and Global Infrastructure Partners; not listed.",
+    "source_url": "https://www.kkr.com/news/press-release/2022/kkr-and-gip-complete-acquisition-of-cyrusone",
+    "confidence": "high"
+   }
   },
   {
    "sector": "infra",
    "id": "DataBank",
    "label": "DataBank",
-   "ticker": "Privado (DigitalBridge)",
+   "ticker": "DigitalBridge (inversor principal) (DBRG)",
    "cat": "dc_reit",
    "port": "",
    "role": "Edge datacenters y colocation distribuida",
@@ -4015,10 +4058,21 @@
    "margin": 0.28,
    "capex_2026": "~$0.5B",
    "backlog_status": "Estable",
-   "mkt": "DATABANK",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "Edge data center REIT focused on enterprise"
+   "desc": "Edge data center REIT focused on enterprise",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "DigitalBridge (inversor principal)",
+    "parent_ticker": "DBRG",
+    "note_es": "Privada, respaldada principalmente por DigitalBridge; no cotiza.",
+    "note_en": "Private, backed mainly by DigitalBridge; not listed.",
+    "source_url": "https://www.databank.com/about/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -4416,7 +4470,7 @@
    "capex_2026": "~$0.05B",
    "backlog_status": "Expansión",
    "preipo": true,
-   "mkt": "PATHAI",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
    "desc": "AI-powered pathology platform for oncology"
@@ -4471,7 +4525,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Expansión",
    "preipo": true,
-   "mkt": "ALPHASENSE"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -4520,7 +4574,7 @@
    "capex_2026": "~$0.01B",
    "backlog_status": "Nicho",
    "preipo": true,
-   "mkt": "KAVOUT"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -4539,7 +4593,7 @@
    "capex_2026": "~$0.05B",
    "backlog_status": "Crecimiento",
    "preipo": true,
-   "mkt": "ADDEPAR"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -4558,7 +4612,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Hipercrecimiento",
    "preipo": true,
-   "mkt": "COGNITION"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -4577,7 +4631,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Desarrollo",
    "preipo": true,
-   "mkt": "ADEPT"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -4596,7 +4650,7 @@
    "capex_2026": "~$0.3B",
    "backlog_status": "Transición",
    "preipo": true,
-   "mkt": "INFLECTION"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -4615,7 +4669,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "I+D",
    "preipo": true,
-   "mkt": "IMBUE"
+   "mkt": null
   },
   {
    "sector": "espacio",
@@ -4704,7 +4758,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Crecimiento",
    "preipo": true,
-   "mkt": "UMBRA"
+   "mkt": null
   },
   {
    "sector": "espacio",
@@ -4892,7 +4946,7 @@
    "capex_2026": "~$0.05B",
    "backlog_status": "Crecimiento",
    "preipo": true,
-   "mkt": "KNERON"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -4911,7 +4965,7 @@
    "capex_2026": "~$0.02B",
    "backlog_status": "Supervivencia",
    "preipo": true,
-   "mkt": "MYTHIC",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
    "desc": "Analog compute-in-memory AI inference chip"
@@ -4933,7 +4987,7 @@
    "capex_2026": "~$0.01B",
    "backlog_status": "Early",
    "preipo": true,
-   "mkt": "GREENWAVES",
+   "mkt": null,
    "geo": "Europa",
    "big": false,
    "desc": "Ultra-low-power RISC-V edge AI processor"
@@ -5153,7 +5207,7 @@
    "capex_2026": "~$0.3B",
    "backlog_status": "Pivot estratégico",
    "preipo": true,
-   "mkt": "RELATIVITY"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -5226,7 +5280,7 @@
    "capex_2026": "~$0.2B",
    "backlog_status": "I+D",
    "preipo": true,
-   "mkt": "PI_ROBOTICS"
+   "mkt": null
   },
   {
    "sector": "diseno",
@@ -5245,7 +5299,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "I+D",
    "preipo": true,
-   "mkt": "QUERA"
+   "mkt": null
   },
   {
    "sector": "infra",
@@ -5310,7 +5364,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Hipercrecimiento",
    "preipo": true,
-   "mkt": "RUNWAY"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -5329,7 +5383,7 @@
    "capex_2026": "~$0.05B",
    "backlog_status": "Hipercrecimiento",
    "preipo": true,
-   "mkt": "SUNO"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -5348,7 +5402,7 @@
    "capex_2026": "~$0.2B",
    "backlog_status": "Hipercrecimiento",
    "preipo": true,
-   "mkt": "PERPLEXITY"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -5367,7 +5421,7 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Expansión enterprise",
    "preipo": true,
-   "mkt": "GLEAN"
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -5386,7 +5440,7 @@
    "capex_2026": "~$0.3B",
    "backlog_status": "Expansión enterprise",
    "preipo": true,
-   "mkt": "COHERE",
+   "mkt": null,
    "founded": 2019,
    "employees": 600,
    "revenue_2025": "~$200M est",
@@ -6516,7 +6570,7 @@
    "sector": "cloud_ia",
    "id": "AlibabaCloud",
    "label": "Alibaba Cloud",
-   "ticker": "BABA · NYSE",
+   "ticker": "Alibaba Group (BABA)",
    "cat": "cloud",
    "port": "",
    "role": "Nube líder en China y Asia-Pacífico; Qwen LLM open-source y servicios AI empresariales.",
@@ -6528,7 +6582,18 @@
    "margin": 0.04,
    "capex_2026": "~$5B",
    "backlog_status": "Qwen 2.5 open-weight SOTA; cloud reacceleration",
-   "mkt": "BABA"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Alibaba Group",
+    "parent_ticker": "BABA",
+    "note_es": "Alibaba Cloud es un segmento de Alibaba; no cotiza por separado — se invierte vía Alibaba (BABA).",
+    "note_en": "Alibaba Cloud is an Alibaba segment; not listed on its own — exposure is via Alibaba (BABA).",
+    "source_url": "https://www.alibabagroup.com/en-US/ir-overview",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -8180,7 +8245,7 @@
    "sector": "robotica",
    "id": "ABB_Robotics",
    "label": "ABB Robotics",
-   "ticker": "ABBN · SIX",
+   "ticker": "ABB (ABBN.SW)",
    "cat": "robotics_physical",
    "role": "División de robots industriales y automación de ABB; líder en colaborativos (YuMi).",
    "supplies": "Robots IRB para electrónica; YuMi cobots para ensamblaje; software RobotStudio.",
@@ -8189,7 +8254,18 @@
    "country": "Europa",
    "growth": "🟢 +15% e. 2026; EV + semiconductor automation",
    "margin": 0.13,
-   "mkt": "ABBN.SW"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "ABB",
+    "parent_ticker": "ABBN.SW",
+    "note_es": "División de ABB (su venta a SoftBank aún no cierra); no cotiza por separado — se invierte vía ABB (ABBN.SW).",
+    "note_en": "An ABB division (its sale to SoftBank has not closed); not listed on its own — exposure is via ABB (ABBN.SW).",
+    "source_url": "https://global.abb/group/en/investors",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "espacio",

@@ -1,0 +1,79 @@
+[
+ {
+  "id": "IBMQuantum",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "IBM",
+  "parent_ticker": "IBM",
+  "note_es": "División de IBM; no cotiza por separado — su exposición bursátil es la acción de IBM.",
+  "note_en": "An IBM division; not listed on its own — its market exposure is IBM stock.",
+  "source_url": "https://www.ibm.com/quantum",
+  "confidence": "high"
+ },
+ {
+  "id": "Qwen",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "Alibaba Group",
+  "parent_ticker": "BABA",
+  "note_es": "Qwen es la familia de modelos de IA de Alibaba; no cotiza por separado — se invierte vía Alibaba (BABA).",
+  "note_en": "Qwen is Alibaba's AI model family; not listed on its own — exposure is via Alibaba (BABA).",
+  "source_url": "https://www.alibabagroup.com/en-US/ir-overview",
+  "confidence": "high"
+ },
+ {
+  "id": "AlibabaCloud",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "Alibaba Group",
+  "parent_ticker": "BABA",
+  "note_es": "Alibaba Cloud es un segmento de Alibaba; no cotiza por separado — se invierte vía Alibaba (BABA).",
+  "note_en": "Alibaba Cloud is an Alibaba segment; not listed on its own — exposure is via Alibaba (BABA).",
+  "source_url": "https://www.alibabagroup.com/en-US/ir-overview",
+  "confidence": "high"
+ },
+ {
+  "id": "SiemensEDA",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "Siemens AG",
+  "parent_ticker": "SIE.DE",
+  "note_es": "Siemens EDA forma parte de Siemens Digital Industries Software; no cotiza por separado — se invierte vía Siemens (SIE.DE).",
+  "note_en": "Siemens EDA is part of Siemens Digital Industries Software; not listed on its own — exposure is via Siemens (SIE.DE).",
+  "source_url": "https://eda.sw.siemens.com/en-US/",
+  "confidence": "high"
+ },
+ {
+  "id": "CyrusOne",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "KKR y Global Infrastructure Partners",
+  "parent_ticker": "KKR",
+  "note_es": "Privada desde 2022: la compraron KKR y Global Infrastructure Partners; no cotiza.",
+  "note_en": "Private since 2022: acquired by KKR and Global Infrastructure Partners; not listed.",
+  "source_url": "https://www.kkr.com/news/press-release/2022/kkr-and-gip-complete-acquisition-of-cyrusone",
+  "confidence": "high"
+ },
+ {
+  "id": "DataBank",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "DigitalBridge (inversor principal)",
+  "parent_ticker": "DBRG",
+  "note_es": "Privada, respaldada principalmente por DigitalBridge; no cotiza.",
+  "note_en": "Private, backed mainly by DigitalBridge; not listed.",
+  "source_url": "https://www.databank.com/about/",
+  "confidence": "medium"
+ },
+ {
+  "id": "ABB_Robotics",
+  "status": "subsidiary",
+  "ticker": null,
+  "parent": "ABB",
+  "parent_ticker": "ABBN.SW",
+  "note_es": "División de ABB (su venta a SoftBank aún no cierra); no cotiza por separado — se invierte vía ABB (ABBN.SW).",
+  "note_en": "An ABB division (its sale to SoftBank has not closed); not listed on its own — exposure is via ABB (ABBN.SW).",
+  "source_url": "https://global.abb/group/en/investors",
+  "confidence": "medium"
+ }
+]

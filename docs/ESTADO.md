@@ -9,6 +9,54 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-28 (c) — DOSSIER PARA TODAS LAS EMPRESAS + DATOS EN VIVO (sw v151)
+
+Pedido: "que todas las empresas tengan dossier y que la info se actualice en
+vivo". Hecho con workflow (3 implementadores en paralelo → 4 revisores →
+2-3 escépticos por hallazgo → fixers) + segunda revisión de regresiones.
+Hallazgo GRAVE previo: el Dossier de Análisis (`_dossierSynthetic`)
+INVENTABA ingresos/márgenes/ROE con Math.random cada vez que /api/dossier
+fallaba — y fallaba siempre (usaba FMP /api/v3, que el plan de prod no da).
+ELIMINADO: sin datos → mensaje honesto con las fuentes probadas.
+
+- `core/company_data.py` (nuevo): `get_annual_financials` (FMP /stable →
+  Yahoo fundamentals-timeseries → Alpha Vantage solo EE.UU.; montos a USD con
+  el tipo de cambio ACTUAL — la UI lo dice; caché 12 h completos / 1 h
+  parciales / 10 min fallos; candado por ticker + candado global de caché) y
+  `get_live_profile` (Yahoo quoteSummary con crumb → Finnhub → Yahoo chart;
+  caché 90 s). Transformaciones puras testeadas (tests/test_company_data.py).
+- Rutas: `/api/findossier` y `/api/dossier` reescritas sobre eso (mismas
+  claves/unidades; `synthetic:false` siempre; sin datos → 200
+  available:false). NUEVA `/api/company/live/<ticker>`. GDELT: caché manual
+  5 min solo de éxitos (antes 30 min incluyendo fallos).
+- engine/fincard.js ("📊 Dossier"): franja EN VIVO (precio, cap., empleados,
+  ingresos 12 m, márgenes, rango 52 sem., objetivo, P/E) refrescada cada 60 s
+  y que dice la hora REAL del precio y si el mercado está abierto; 8 gráficos
+  con la fuente real; sin estados → franja + acción + nota (nunca vacío).
+  No cotizadas (privada, filial, comprada, organismo) → dossier con ficha,
+  nota verificada, franja del DUEÑO rotulada "cifras del dueño", noticias
+  GDELT en vivo (5 min) e Historia. "⇄ Comparar en Análisis" para cotizadas.
+- app.html: botón 📊 Dossier para TODOS los nodos (vía `_surface('dossier')`,
+  queda al frente de la Cabina); `window.KhipuLive.profile(t)` (caché 60 s;
+  live.js ahora FUSIONA su tick/cycle en el mismo objeto); ficha del mapa y
+  X-Ray pintan empleados/ingresos/cap. EN VIVO con fuente y hora; precio del
+  X-Ray se refresca cada 60 s (se salta si está oculto, se apaga si se
+  desconecta); Dossier de Análisis bilingüe y redibujo diferido si la pestaña
+  está oculta. cockpit.js/localcharts.js dicen la fuente real.
+- DATOS: divisiones que usaban el ticker del dueño (IBMQuantum→IBM,
+  Qwen/AlibabaCloud→BABA, SiemensEDA→SIE.DE, CyrusOne→KKR, DataBank→DBRG,
+  ABB_Robotics→ABBN.SW) pasan a `subsidiary` (listing_verification/
+  2026-09-28_divisiones.json) — antes el "en vivo" les pintaba empleados e
+  ingresos de IBM/Alibaba como propios. merge_graph.js: una pre-IPO sin
+  estado "public" verificado NO cotiza → mkt=null (31 tickers de relleno
+  tipo FIGURE/GROQ/PERPLEXITY). Quedan 578 nodos con ticker real.
+- Pendiente: ver en producción con Yahoo real (Tokio, Londres, EE.UU.); el
+  sandbox no llega a Yahoo — todo probado con respuestas simuladas. War Room
+  (_wrRenderPrices) aún genera trayectorias de precio simuladas sin rótulo.
+- 231 tests.
+
+---
+
 # SESIÓN 2026-09-28 (b) — Estado en bolsa VERIFICADO (sw v142-143)
 
 Fabrizio: "SpaceX me dice que no cotiza, y así con varias". El catálogo es

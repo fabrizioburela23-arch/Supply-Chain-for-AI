@@ -3172,7 +3172,7 @@ function renderDetail(id){
       <div class="meta-item"><div class="meta-l">${_en?'Founded':'Fundada'}</div><div class="meta-v">${meta.founded||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">${_en?'Employees':'Empleados'}</div><div class="meta-v" id="d-emp" data-live="employees">${meta.employees?esc(isFinite(+meta.employees)?(+meta.employees).toLocaleString(_en?'en-US':'es-ES'):meta.employees):'—'}</div></div>
       <div class="meta-item"><div class="meta-l" id="d-rev-l" data-live-label="revenue">${_en?'Revenue 2025':'Ingresos 2025'}</div><div class="meta-v" id="d-rev" data-live="revenue">${esc(meta.revenue_2025||'—')}</div></div>
-      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap" data-live="mcap">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
+      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap" data-live="mcap">${meta.mktcap_b?(isFinite(+meta.mktcap_b)?'$'+meta.mktcap_b+'B':esc(meta.mktcap_b)):(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
     </div>
     ${meta.geo_risk?`<div class="geo-risk-box"><span class="geo-icon">🌐</span>${esc(meta.geo_risk)}</div>`:''}
     ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">${_en?'Key clients':'Clientes clave'}</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
@@ -4087,6 +4087,7 @@ function switchTab(tab){
   document.getElementById('market').style.display = tab==='market'?'block':'none';
   const anEl=document.getElementById('analysis-panel');
   if(anEl) anEl.style.display = isAnalysis?'block':'none';
+  if(isAnalysis && window._dossierRedrawIfNeeded) setTimeout(window._dossierRedrawIfNeeded, 0);   /* Dossier: redibujo pendiente */
   const geoEl=document.getElementById('geo-panel');
   if(geoEl) geoEl.style.display = isGeo?'block':'none';
   const simEl=document.getElementById('simulation-panel');
@@ -6961,7 +6962,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
         const mkt = (window.NODE_BY_ID||{})[id]?.mkt || '';
         const nrsLbl = LANG==='en' ? (nrs<30?'Low risk':nrs<60?'Medium risk':'High risk') : (nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto');
-        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span>${window.explainChip?window.explainChip('nrs'):''}<span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrsLbl}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button><button onclick="window.openFinCard?window.openFinCard('${id}'):(window._openDossier&&window._openDossier('${id}','${mkt}'))" title="${LANG==='en'?(mkt?'Dossier: live price, market cap, employees, revenue + yearly financials':'Dossier: profile, owner quote and live news'):(mkt?'Dossier: precio, capitalización, empleados e ingresos en vivo + estados anuales':'Dossier: ficha, cotización del dueño y noticias en vivo')}" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span>${window.explainChip?window.explainChip('nrs'):''}<span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrsLbl}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button><button onclick="window.openFinCard?(window._surface?window._surface('dossier','${id}'):window.openFinCard('${id}')):(window._openDossier&&window._openDossier('${id}','${mkt}'))" title="${LANG==='en'?(mkt?'Dossier: live price, market cap, employees, revenue + yearly financials':'Dossier: profile, owner quote and live news'):(mkt?'Dossier: precio, capitalización, empleados e ingresos en vivo + estados anuales':'Dossier: ficha, cotización del dueño y noticias en vivo')}" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
       } catch(e) {}
     };
   }
@@ -7977,13 +7978,24 @@ window._dossierRelabel = function () {
   set('dossier-compare-btn', '+ Comparar empresa', '+ Compare company');
   const inp = document.getElementById('dossier-search');
   if (inp) inp.placeholder = _dsL('Empresa o ticker…', 'Company or ticker…');
-  if (_dossier.slots.some(s => s.data)) _dossierRenderPanels();
+  if (_dossier.slots.some(s => s.data)) {
+    // con la pestaña Análisis oculta los canvas miden 0 px y los gráficos
+    // saldrían rotos: se marca y se redibuja al volver (switchTab)
+    const ap = document.getElementById('analysis-panel');
+    if (ap && ap.offsetParent === null) _dossier.needsRedraw = true;
+    else _dossierRenderPanels();
+  }
   else if (!_dossier.slots.length) {
     const p = document.getElementById('dossier-panels');
     if (p) p.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">${_dsL('Busca una empresa para ver su dossier financiero completo', 'Search for a company to see its full financial dossier')}</div>`;
   }
 };
 try { window._dossierRelabel(); } catch (e) {}   // arranque en inglés: textos fijos del bloque
+window._dossierRedrawIfNeeded = function () {
+  if (!_dossier.needsRedraw) return;
+  _dossier.needsRedraw = false;
+  if (_dossier.slots.some(s => s.data)) _dossierRenderPanels();
+};
 // aviso sobre el canvas cuando la fuente no trae esa serie (en vez de un hueco mudo)
 function _dsNoSeries(ctx, W, H) {
   ctx.fillStyle = 'rgba(120,140,180,.6)';
