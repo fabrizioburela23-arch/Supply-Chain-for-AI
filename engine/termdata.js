@@ -200,7 +200,7 @@
 
     body.innerHTML =
       '<div class="td-sec"><div class="td-h">' + esc(T('ficha')) + '</div>' +
-        kv(esc(T('sector')), esc((window.SECTORS9 && window.SECTORS9[(window.CAT_TO_SECTOR || {})[n.cat]] || {}).label || n.cat)) +
+        kv(esc(T('sector')), esc(window.sectorName ? window.sectorName(n.cat, true) : n.cat)) +
         kv(esc(T('country')), esc(n.country || '—')) +
         kv(esc(T('founded')), fmt(m.founded)) +
         kv(esc(T('employees')), m.employees ? Number(m.employees).toLocaleString() : '—') +

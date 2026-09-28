@@ -1407,7 +1407,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   </span>
   <span class="bixby-btn-txt" style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.12">
     <span style="font-size:12.5px;font-weight:800;letter-spacing:.03em">Khipu</span>
-    <span style="font-size:9px;opacity:.72;font-weight:600">pregúntame ⌘K</span>
+    <span id="bixby-btn-sub" style="font-size:9px;opacity:.72;font-weight:600">pregúntame ⌘K</span>
   </span>
 </button>
     </div>
@@ -2226,6 +2226,15 @@ function catColor(cat){
 // X-Ray, el globo y el resto de motores.
 window.SECTORS9 = (typeof SECTORS9 !== 'undefined') ? SECTORS9 : {};
 window.CAT_TO_SECTOR = (typeof CAT_TO_SECTOR !== 'undefined') ? CAT_TO_SECTOR : {};
+/* Nombre VISIBLE de un macro-sector en el idioma activo (cada entrada de
+   SECTORS9 ya trae `en`; los módulos mostraban siempre `label` en español).
+   Acepta la clave de sector ('macro_credito') o, con byCat=true, una categoría. */
+window.sectorName = function(key, byCat){
+  var k = byCat ? ((window.CAT_TO_SECTOR || {})[key] || 'cloud_ia') : key;
+  var s = (window.SECTORS9 || {})[k];
+  if(!s) return key || '';
+  return (typeof LANG !== 'undefined' && LANG === 'en' && s.en) ? s.en : s.label;
+};
 function sectorColorFor(cat){
   var s = window.SECTORS9[(window.CAT_TO_SECTOR[cat]) || 'cloud_ia'];
   return s ? s.color : '#00E0FF';
@@ -3978,6 +3987,11 @@ function applyLang(){
   const gco=document.getElementById('geo-th-co'); if(gco) gco.textContent=t('geo_th_co');
   if(activeTab==='geo') renderGeoPanel();
   if(activeTab==='analysis') renderAnalysis();
+  if(activeTab==='guia' && window.initGuiaTab) window.initGuiaTab();   /* la Guía es bilingüe */
+  /* pestañas primarias (nav4) y subtítulo del botón Khipu: también bilingües */
+  { const _en=LANG==='en', PT={mapa:_en?'Map':'Mapa', mercado:_en?'Market':'Mercado', insights:'Terminal', guia:_en?'Guide':'Guía'};
+    document.querySelectorAll('.ptab[data-group]').forEach(b=>{ const sp=b.querySelector('span'); if(sp&&PT[b.dataset.group]) sp.textContent=PT[b.dataset.group]; });
+    const bs=document.getElementById('bixby-btn-sub'); if(bs) bs.textContent=_en?'ask me ⌘K':'pregúntame ⌘K'; }
   const pe=document.getElementById('panel-empty');
   pe.querySelector('h2').innerHTML=t('em_title');
   const ps=pe.querySelectorAll('p');

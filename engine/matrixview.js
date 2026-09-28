@@ -15,7 +15,7 @@
   function nm(id) { var n = window.NODE_BY_ID && window.NODE_BY_ID[id]; return n ? n.label : id; }
   function secOf(id) { var n = window.NODE_BY_ID && window.NODE_BY_ID[id]; return (window.CAT_TO_SECTOR || {})[n ? n.cat : ''] || 'cloud_ia'; }
   function secColor(s) { var S = (window.SECTORS9 || {})[s]; return S ? S.color : '#00E0FF'; }
-  function secLabel(s) { var S = (window.SECTORS9 || {})[s]; return S ? S.label : s; }
+  function secLabel(s) { if (window.sectorName) return window.sectorName(s); var S = (window.SECTORS9 || {})[s]; return S ? S.label : s; }
 
   var built = null, curRT = 'supply';
 

@@ -14,6 +14,10 @@
   var NEON = '#00E0FF', DOWN = '#FF4D6A', UP = '#2BE38B', INK = '#9BA6C4';
   var charts = [];
 
+  // bilingüe (regla del proyecto): idioma activo = window.LANG → eco_lang
+  function isEn() { var l = window.LANG; if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } } return l === 'en'; }
+  function L(es, en) { return isEn() ? en : es; }
+
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   function ensureStyles() {
@@ -132,26 +136,26 @@
     }).join('');
     fc.innerHTML =
       '<div class="fc-hd"><span class="fc-name">🔒 ' + esc(n.label) + '</span>' +
-        '<span class="fc-tk">empresa privada · dossier pre-IPO</span>' +
-        '<button class="fc-close" onclick="window._finCardClose()">✕</button></div>' +
-      '<div class="fc-sub">Sin estados financieros públicos — esto es lo que sabemos del catálogo e inteligencia pre-IPO</div>' +
+        '<span class="fc-tk">' + L('empresa privada · dossier pre-IPO', 'private company · pre-IPO dossier') + '</span>' +
+        '<button class="fc-close" onclick="window._finCardClose()" title="' + L('Cerrar', 'Close') + '">✕</button></div>' +
+      '<div class="fc-sub">' + L('Sin estados financieros públicos — esto es lo que sabemos del catálogo e inteligencia pre-IPO', 'No public financial statements — this is what we know from the catalog and pre-IPO intelligence') + '</div>' +
       '<div class="fc-grid">' +
-        '<div class="fc-cell"><div class="fc-t">🏢 Ficha</div>' +
-          kv('País', n.country) + kv('Fundada', m.founded) +
-          kv('Empleados', m.employees ? Number(m.employees).toLocaleString() : null) +
-          kv('Ingresos', m.revenue_2025) + kv('Riesgo geopolítico', m.geo_risk) + '</div>' +
-        '<div class="fc-cell"><div class="fc-t">💎 Valuación</div>' +
-          kv('Valuación', pi.valuation) + kv('Capital levantado', pi.total_raised) +
-          kv('IPO estimada', pi.ipo_timeline) +
-          kv('Inversores', (pi.investors || []).slice(0, 4).join(', ') || null) +
-          (!pi.valuation ? '<div class="fc-note" style="padding:14px 4px">Sin inteligencia pre-IPO registrada para esta empresa.</div>' : '') + '</div>' +
-        (rounds ? '<div class="fc-cell"><div class="fc-t">💸 Rondas</div>' + rounds + '</div>' : '') +
-        (miles ? '<div class="fc-cell"><div class="fc-t">🏁 Hitos</div>' + miles + '</div>' : '') +
-        ((m.desc || n.role) ? '<div class="fc-cell" style="grid-column:1/-1"><div class="fc-t">📖 Qué hace</div>' +
+        '<div class="fc-cell"><div class="fc-t">🏢 ' + L('Ficha', 'Profile') + '</div>' +
+          kv(L('País', 'Country'), n.country) + kv(L('Fundada', 'Founded'), m.founded) +
+          kv(L('Empleados', 'Employees'), m.employees ? Number(m.employees).toLocaleString() : null) +
+          kv(L('Ingresos', 'Revenue'), m.revenue_2025) + kv(L('Riesgo geopolítico', 'Geopolitical risk'), m.geo_risk) + '</div>' +
+        '<div class="fc-cell"><div class="fc-t">💎 ' + L('Valuación', 'Valuation') + '</div>' +
+          kv(L('Valuación', 'Valuation'), pi.valuation) + kv(L('Capital levantado', 'Capital raised'), pi.total_raised) +
+          kv(L('IPO estimada', 'Expected IPO'), pi.ipo_timeline) +
+          kv(L('Inversores', 'Investors'), (pi.investors || []).slice(0, 4).join(', ') || null) +
+          (!pi.valuation ? '<div class="fc-note" style="padding:14px 4px">' + L('Sin inteligencia pre-IPO registrada para esta empresa.', 'No pre-IPO intelligence on record for this company.') + '</div>' : '') + '</div>' +
+        (rounds ? '<div class="fc-cell"><div class="fc-t">💸 ' + L('Rondas', 'Funding rounds') + '</div>' + rounds + '</div>' : '') +
+        (miles ? '<div class="fc-cell"><div class="fc-t">🏁 ' + L('Hitos', 'Milestones') + '</div>' + miles + '</div>' : '') +
+        ((m.desc || n.role) ? '<div class="fc-cell" style="grid-column:1/-1"><div class="fc-t">📖 ' + L('Qué hace', 'What it does') + '</div>' +
           '<div style="font-size:12.5px;line-height:1.6;color:#C9D4EC;padding:4px 0">' + esc(m.desc || n.role) + '</div>' +
           (n.moat ? '<div style="font-size:11.5px;line-height:1.55;color:#8FA0C0;padding:6px 0 0"><b style="color:#9BA6C4">Moat:</b> ' + esc(n.moat) + '</div>' : '') + '</div>' : '') +
       '</div>' +
-      '<div class="fc-foot"><span>Khipus AI Finance Intelligence · análisis, no asesoría financiera</span><span>fuente: catálogo + inteligencia pre-IPO</span></div>';
+      '<div class="fc-foot"><span>Khipus Finance AI · ' + L('análisis, no asesoría financiera', 'analysis, not financial advice') + '</span><span>' + L('fuente: catálogo + inteligencia pre-IPO', 'source: catalog + pre-IPO intelligence') + '</span></div>';
     ov.classList.add('show');
   }
 
@@ -160,17 +164,17 @@
     var ticker = (n && n.mkt) || String(idOrTicker || '').toUpperCase();
     var label = (n && n.label) || ticker;
     if (n && !n.mkt) { renderPrivate(n); return; }   // privada → dossier pre-IPO
-    if (!ticker) { if (typeof toast === 'function') toast('No encuentro esa empresa'); return; }
+    if (!ticker) { if (typeof toast === 'function') toast(L('No encuentro esa empresa', "I can't find that company")); return; }
 
     var ov = ensureShell();
     var fc = document.getElementById('fc');
     charts.forEach(function (c) { try { c.destroy(); } catch (e) {} }); charts = [];
     fc.innerHTML =
       '<div class="fc-hd"><span class="fc-name">📊 ' + esc(label) + '</span>' +
-        '<span class="fc-tk">' + esc(ticker) + ' · dossier financiero</span>' +
-        '<button class="fc-close" onclick="window._finCardClose()">✕</button></div>' +
-      '<div class="fc-sub">Estados financieros anuales · fuente FMP · los años sin dato se omiten</div>' +
-      '<div class="fc-note">Cargando fundamentales…</div>';
+        '<span class="fc-tk">' + esc(ticker) + ' · ' + L('dossier financiero', 'financial dossier') + '</span>' +
+        '<button class="fc-close" onclick="window._finCardClose()" title="' + L('Cerrar', 'Close') + '">✕</button></div>' +
+      '<div class="fc-sub">' + L('Estados financieros anuales · fuente FMP · los años sin dato se omiten', 'Annual financial statements · source FMP · years without data are skipped') + '</div>' +
+      '<div class="fc-note">' + L('Cargando fundamentales…', 'Loading fundamentals…') + '</div>';
     ov.classList.add('show');
 
     fetch((window.BASE || '') + '/api/findossier/' + encodeURIComponent(ticker))
@@ -178,8 +182,8 @@
       .then(function (d) {
         if (!d || !d.available) {
           fc.querySelector('.fc-note').textContent = (d && d.reason === 'FMP_KEY no configurada')
-            ? 'Para el dossier completo añade FMP_KEY en Railway (financialmodelingprep.com — plan gratis).'
-            : 'Sin estados financieros para ' + ticker + (d && d.reason ? ' — ' + d.reason : '') + '.';
+            ? L('Para el dossier completo añade FMP_KEY en Railway (financialmodelingprep.com — plan gratis).', 'For the full dossier add FMP_KEY in Railway (financialmodelingprep.com — free plan).')
+            : L('Sin estados financieros para ', 'No financial statements for ') + ticker + (d && d.reason ? ' — ' + d.reason : '') + '.';
           return;
         }
         var Y = d.years || [];
@@ -191,29 +195,29 @@
         // tiene un plan B con datos reales; si ni eso, una nota clara.
         var CELLS = [
           has(d.revenue_growth)
-            ? { t: '💵 Crecimiento de ingresos', d: 'variación anual, %', r: function (id) { lineChart(id, Y, d.revenue_growth, '%'); } }
-            : { t: '💵 Ingresos', d: 'miles de millones USD por año', r: has(revB) ? function (id) { barChart(id, Y, revB, '$B'); } : null },
+            ? { t: L('💵 Crecimiento de ingresos', '💵 Revenue growth'), d: L('variación anual, %', 'year-over-year change, %'), r: function (id) { lineChart(id, Y, d.revenue_growth, '%'); } }
+            : { t: L('💵 Ingresos', '💵 Revenue'), d: L('miles de millones USD por año', 'USD billions per year'), r: has(revB) ? function (id) { barChart(id, Y, revB, '$B'); } : null },
           has(d.dilution)
-            ? { t: '🩸 Dilución', d: 'cambio de acciones en circulación, % (menos es mejor)', r: function (id) { barChart(id, Y, d.dilution, '%', posnegInv); } }
-            : { t: '🩸 Acciones en circulación', d: 'miles de millones de acciones', r: has(d.shares) ? function (id) { lineChart(id, Y, d.shares, 'B'); } : null },
+            ? { t: L('🩸 Dilución', '🩸 Dilution'), d: L('cambio de acciones en circulación, % (menos es mejor)', 'change in shares outstanding, % (lower is better)'), r: function (id) { barChart(id, Y, d.dilution, '%', posnegInv); } }
+            : { t: L('🩸 Acciones en circulación', '🩸 Shares outstanding'), d: L('miles de millones de acciones', 'billions of shares'), r: has(d.shares) ? function (id) { lineChart(id, Y, d.shares, 'B'); } : null },
           has(d.fcf_growth)
-            ? { t: '💰 Free cash flow', d: 'crecimiento anual, %', r: function (id) { lineChart(id, Y, d.fcf_growth, '%'); } }
-            : { t: '💰 Free cash flow', d: 'miles de millones USD por año', r: has(fcfB) ? function (id) { barChart(id, Y, fcfB, '$B', posneg); } : null },
-          { t: '📈 Acción', d: 'últimos ~90 días', r: 'candles' },
+            ? { t: '💰 Free cash flow', d: L('crecimiento anual, %', 'annual growth, %'), r: function (id) { lineChart(id, Y, d.fcf_growth, '%'); } }
+            : { t: '💰 Free cash flow', d: L('miles de millones USD por año', 'USD billions per year'), r: has(fcfB) ? function (id) { barChart(id, Y, fcfB, '$B', posneg); } : null },
+          { t: L('📈 Acción', '📈 Stock'), d: L('últimos ~90 días', 'last ~90 days'), r: 'candles' },
           has(d.ev_to_sales)
-            ? { t: '🏷️ Valuación', d: 'EV / Ventas', r: function (id) { lineChart(id, Y, d.ev_to_sales, 'x'); } }
-            : { t: '🏷️ Margen bruto anual', d: 'evolución del margen bruto, %', r: has(d.gross_margin) ? function (id) { lineChart(id, Y, d.gross_margin, '%'); } : null },
-          { t: '🏦 Balance', d: 'deuda / capital (menos es mejor)', r: has(d.de_ratio) ? function (id) { barChart(id, Y, d.de_ratio, '', function (v) { return v == null ? INK : v > 1 ? DOWN : NEON; }); } : null },
-          { t: '🧮 Márgenes', d: 'bruto vs FCF, último año, %', r: 'margins' },
-          { t: '♻️ Return on equity', d: 'ROE anual, %', r: has(d.roe) ? function (id) { barChart(id, Y, d.roe, '%', posneg); } : null },
+            ? { t: L('🏷️ Valuación', '🏷️ Valuation'), d: L('EV / Ventas', 'EV / Sales'), r: function (id) { lineChart(id, Y, d.ev_to_sales, 'x'); } }
+            : { t: L('🏷️ Margen bruto anual', '🏷️ Annual gross margin'), d: L('evolución del margen bruto, %', 'gross margin trend, %'), r: has(d.gross_margin) ? function (id) { lineChart(id, Y, d.gross_margin, '%'); } : null },
+          { t: L('🏦 Balance', '🏦 Balance sheet'), d: L('deuda / capital (menos es mejor)', 'debt / equity (lower is better)'), r: has(d.de_ratio) ? function (id) { barChart(id, Y, d.de_ratio, '', function (v) { return v == null ? INK : v > 1 ? DOWN : NEON; }); } : null },
+          { t: L('🧮 Márgenes', '🧮 Margins'), d: L('bruto vs FCF, último año, %', 'gross vs FCF, latest year, %'), r: 'margins' },
+          { t: '♻️ Return on equity', d: L('ROE anual, %', 'annual ROE, %'), r: has(d.roe) ? function (id) { barChart(id, Y, d.roe, '%', posneg); } : null },
         ];
 
         fc.querySelector('.fc-note').outerHTML =
           '<div class="fc-grid">' +
             CELLS.map(function (c, i) { return cell(c.t, c.d, 'fc-c' + i); }).join('') +
           '</div>' +
-          '<div class="fc-foot"><span>Khipus AI Finance Intelligence · análisis, no asesoría financiera</span>' +
-          '<span>fuente: estados financieros + mercado en vivo</span></div>';
+          '<div class="fc-foot"><span>Khipus Finance AI · ' + L('análisis, no asesoría financiera', 'analysis, not financial advice') + '</span>' +
+          '<span>' + L('fuente: estados financieros + mercado en vivo', 'source: financial statements + live market') + '</span></div>';
 
         CELLS.forEach(function (c, i) {
           var id = 'fc-c' + i;
@@ -225,7 +229,7 @@
               if (fm == null && d.fcf_margin[k] != null) fm = d.fcf_margin[k];
             }
             if (gm != null || fm != null) {
-              barChart(id, ['Margen bruto', 'Margen FCF'], [gm, fm], '%', function (v) { return v == null ? INK : v >= 0 ? NEON : DOWN; });
+              barChart(id, [L('Margen bruto', 'Gross margin'), L('Margen FCF', 'FCF margin')], [gm, fm], '%', function (v) { return v == null ? INK : v >= 0 ? NEON : DOWN; });
               return;
             }
             c.r = null;
@@ -233,7 +237,7 @@
           if (c.r == null) {
             var el = document.getElementById(id);
             if (el) el.parentNode.innerHTML = '<div class="fc-t">' + c.t + '</div>' +
-              '<div class="fc-note" style="padding:26px 8px">El proveedor no publica este dato para esta empresa.</div>';
+              '<div class="fc-note" style="padding:26px 8px">' + L('El proveedor no publica este dato para esta empresa.', 'The provider does not publish this data for this company.') + '</div>';
           }
         });
         // precio ~90d (celda 4 = fc-c3); si no hay velas → nota clara
@@ -242,8 +246,8 @@
           .then(function (c) {
             if (!c || c.s !== 'ok' || !c.c || !c.c.length) {
               var el = document.getElementById('fc-c3');
-              if (el) el.parentNode.innerHTML = '<div class="fc-t">📈 Acción</div>' +
-                '<div class="fc-note" style="padding:26px 8px">Sin datos de mercado para este ticker.</div>';
+              if (el) el.parentNode.innerHTML = '<div class="fc-t">' + L('📈 Acción', '📈 Stock') + '</div>' +
+                '<div class="fc-note" style="padding:26px 8px">' + L('Sin datos de mercado para este ticker.', 'No market data for this ticker.') + '</div>';
               return;
             }
             var labels = (c.t || []).map(function (ts) { var dt = new Date(ts * 1000); return (dt.getMonth() + 1) + '/' + dt.getDate(); });
@@ -253,7 +257,7 @@
       })
       .catch(function () {
         var nEl = fc.querySelector('.fc-note');
-        if (nEl) nEl.textContent = 'No se pudo cargar el dossier — reintenta en un momento.';
+        if (nEl) nEl.textContent = L('No se pudo cargar el dossier — reintenta en un momento.', 'Could not load the dossier — try again in a moment.');
       });
   };
 

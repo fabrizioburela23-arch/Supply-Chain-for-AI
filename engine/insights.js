@@ -126,7 +126,7 @@
         .sort(function (a, b) { return b.avg - a.avg; });
       if (rows.length >= 2) {
         var frag = rows[0], fuerte = rows[rows.length - 1];
-        var lbl = function (s) { return (window.SECTORS9[s] || {}).label || s; };
+        var lbl = function (s) { return window.sectorName ? window.sectorName(s) : ((window.SECTORS9[s] || {}).label || s); };
         out.push({ kind: 'geo', tag: 'panorama sectorial', nodes: [],
           text: 'Sector más frágil: <b>' + esc(lbl(frag.s)) + '</b> (NRS medio ' + Math.round(frag.avg) + '). El más sólido: <b>' +
             esc(lbl(fuerte.s)) + '</b> (' + Math.round(fuerte.avg) + ').' });

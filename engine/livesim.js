@@ -9,19 +9,25 @@
 (function () {
   'use strict';
 
+  // bilingüe (regla del proyecto): idioma activo = window.LANG → eco_lang
+  function isEn() { var l = window.LANG; if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } } return l === 'en'; }
+  function L(es, en) { return isEn() ? en : es; }
+
   // tipos de golpe → {direction, kind} para el motor
   var TYPES = [
-    { id: 'corte',   label: 'Corte ↓',   dir: 'down', kind: 'collapse', tint: '#FF4D6A', desc: 'corte de suministro' },
-    { id: 'demanda', label: 'Demanda ↑', dir: 'up',   kind: 'demand',   tint: '#2BE38B', desc: 'salto de demanda' },
-    { id: 'precio',  label: 'Precio',    dir: 'down', kind: 'price',    tint: '#FFB300', desc: 'shock de precio' },
-    { id: 'sancion', label: 'Sanción',   dir: 'down', kind: 'sanction', tint: '#9D6BFF', desc: 'sanción / veto' },
+    { id: 'corte',   es: 'Corte ↓',   en: 'Cutoff ↓',   dir: 'down', kind: 'collapse', tint: '#FF4D6A', descEs: 'corte de suministro', descEn: 'supply cutoff' },
+    { id: 'demanda', es: 'Demanda ↑', en: 'Demand ↑',   dir: 'up',   kind: 'demand',   tint: '#2BE38B', descEs: 'salto de demanda',    descEn: 'demand spike' },
+    { id: 'precio',  es: 'Precio',    en: 'Price',      dir: 'down', kind: 'price',    tint: '#FFB300', descEs: 'shock de precio',     descEn: 'price shock' },
+    { id: 'sancion', es: 'Sanción',   en: 'Sanction',   dir: 'down', kind: 'sanction', tint: '#9D6BFF', descEs: 'sanción / veto',      descEn: 'sanction / ban' },
   ];
+  function tLabel(t) { return L(t.es, t.en); }
+  function tDesc(t) { return L(t.descEs, t.descEn); }
   var PRESETS = [
-    { id: 'taiwan',  label: 'Taiwán',   shock: ['TSMC'] },
-    { id: 'hbm',     label: 'Memoria',  shock: ['SKHynix', 'Micron', 'Samsung'] },
-    { id: 'euv',     label: 'EUV',      shock: ['ASML'] },
-    { id: 'cloud',   label: 'Cloud',    shock: ['Amazon'] },
-    { id: 'ia',      label: 'Boom IA',  shock: ['Nvidia'], type: 'demanda' },
+    { id: 'taiwan',  es: 'Taiwán',   en: 'Taiwan',    shock: ['TSMC'] },
+    { id: 'hbm',     es: 'Memoria',  en: 'Memory',    shock: ['SKHynix', 'Micron', 'Samsung'] },
+    { id: 'euv',     es: 'EUV',      en: 'EUV',       shock: ['ASML'] },
+    { id: 'cloud',   es: 'Cloud',    en: 'Cloud',     shock: ['Amazon'] },
+    { id: 'ia',      es: 'Boom IA',  en: 'AI boom',   shock: ['Nvidia'], type: 'demanda' },
   ];
 
   var active = false, typeId = 'corte', targets = ['TSMC'], severity = 100, factors = [], raf = 0;
@@ -145,9 +151,9 @@
 
     var stats = document.getElementById('ls-stats');
     if (stats) stats.innerHTML =
-      '<div class="ls-cell"><b style="color:' + ty.tint + '">' + arr.length + '</b><span>' + (isUp ? 'benefician' : 'afectadas') + '</span></div>' +
-      '<div class="ls-cell"><b style="color:' + ty.tint + '">' + fmtB(capExp) + '</b><span>cap movida</span></div>' +
-      '<div class="ls-cell"><b style="color:' + (isUp ? '#2BE38B' : '#FF4D6A') + '">' + (portTotal ? (isUp ? '+' : '−') + Math.round(portHit / portTotal) + '%' : '—') + '</b><span>tu cartera</span></div>';
+      '<div class="ls-cell"><b style="color:' + ty.tint + '">' + arr.length + '</b><span>' + (isUp ? L('benefician', 'benefit') : L('afectadas', 'affected')) + '</span></div>' +
+      '<div class="ls-cell"><b style="color:' + ty.tint + '">' + fmtB(capExp) + '</b><span>' + L('cap movida', 'cap moved') + '</span></div>' +
+      '<div class="ls-cell"><b style="color:' + (isUp ? '#2BE38B' : '#FF4D6A') + '">' + (portTotal ? (isUp ? '+' : '−') + Math.round(portHit / portTotal) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>';
 
     var sect = document.getElementById('ls-sect');
     if (sect && window.SECTORS9) {
@@ -155,7 +161,7 @@
       var mx = sectorDmg[top3[0]] || 1;
       sect.innerHTML = top3.map(function (s) {
         var S = window.SECTORS9[s] || {};
-        return '<div class="ls-sbar"><span style="width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (S.label || s) + '</span>' +
+        return '<div class="ls-sbar"><span style="width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (window.sectorName ? window.sectorName(s) : (S.label || s)) + '</span>' +
           '<span class="sb"><i style="width:' + Math.round(sectorDmg[s] / mx * 100) + '%;background:' + (S.color || ty.tint) + '"></i></span>' +
           '<span class="sp">' + Math.round(sectorDmg[s] / 100 * 10) / 10 + '</span></div>';
       }).join('');
@@ -170,18 +176,18 @@
     // segunda columna: ganadores (solo en golpes a la baja)
     var win = document.getElementById('ls-win'), winH = document.getElementById('ls-winh');
     if (win) {
-      if (isUp) { if (winH) winH.textContent = 'Cadena arriba'; win.innerHTML = '<div style="font-size:10px;color:#7C87A3">el auge sube a proveedores</div>'; }
+      if (isUp) { if (winH) winH.textContent = L('Cadena arriba', 'Upstream chain'); win.innerHTML = '<div style="font-size:10px;color:#7C87A3">' + L('el auge sube a proveedores', 'the boom flows up to suppliers') + '</div>'; }
       else {
-        if (winH) winH.textContent = 'Ganadores ↑';
+        if (winH) winH.textContent = L('Ganadores ↑', 'Winners ↑');
         var winners = computeWinners(r.impact);
         win.innerHTML = winners.map(function (x) {
           return '<div class="ls-v" onclick="window.jumpTo&&window.jumpTo(\'' + x.id + '\')"><span>' + nm(x.id) + '</span>' +
             '<span class="p" style="color:#2BE38B">↑' + x.up + '%</span></div>';
-        }).join('') || '<div style="font-size:10px;color:#7C87A3">sin ganadores claros</div>';
+        }).join('') || '<div style="font-size:10px;color:#7C87A3">' + L('sin ganadores claros', 'no clear winners') + '</div>';
       }
     }
     var read = document.getElementById('ls-read');
-    if (read) read.innerHTML = ty.desc + ' · <b style="color:' + ty.tint + '">' + targets.slice(0, 3).map(nm).join(', ') + (targets.length > 3 ? '…' : '') + '</b> al ' + severity + '%';
+    if (read) read.innerHTML = tDesc(ty) + ' · <b style="color:' + ty.tint + '">' + targets.slice(0, 3).map(nm).join(', ') + (targets.length > 3 ? '…' : '') + '</b> ' + L('al', 'at') + ' ' + severity + '%';
   }
 
   function schedule() {
@@ -212,12 +218,12 @@
     var frames = lastResult.frames, dir = lastResult.direction, k = 0;
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var btn = document.getElementById('ls-playbtn'), hopEl = document.getElementById('ls-hop');
-    if (btn) btn.textContent = '■ Detener';
+    if (btn) btn.textContent = L('■ Detener', '■ Stop');
     if (reduce) { paint(frames[frames.length - 1], dir); stopCascade(); return; }
     function step() {
       if (!playing) return;
       paint(frames[Math.min(k, frames.length - 1)], dir);
-      if (hopEl) hopEl.textContent = 'salto ' + Math.min(k, frames.length - 1) + '/' + (frames.length - 1);
+      if (hopEl) hopEl.textContent = L('salto ', 'hop ') + Math.min(k, frames.length - 1) + '/' + (frames.length - 1);
       k++; if (k >= frames.length + 1) { stopCascade(); return; }
       playTimer = setTimeout(step, 420);
     }
@@ -225,7 +231,7 @@
   }
   function stopCascade() {
     playing = false; if (playTimer) clearTimeout(playTimer);
-    var btn = document.getElementById('ls-playbtn'); if (btn) btn.textContent = '▶ Reproducir cascada';
+    var btn = document.getElementById('ls-playbtn'); if (btn) btn.textContent = L('▶ Reproducir cascada', '▶ Play cascade');
     if (lastResult) paint(lastResult.impact, lastResult.direction);
   }
 
@@ -233,8 +239,8 @@
     active = !active;
     var btn = document.getElementById('ls-btn'), panel = document.getElementById('ls-panel');
     btn.classList.toggle('on', active); panel.classList.toggle('show', active);
-    btn.innerHTML = active ? '<span>◉</span> En vivo · ON' : '<span>◉</span> En vivo';
-    if (active) { window.KhipuState && window.KhipuState.build(); schedule(); }
+    btn.innerHTML = active ? '<span>◉</span> ' + L('En vivo', 'Live') + ' · ON' : '<span>◉</span> ' + L('En vivo', 'Live');
+    if (active) { applyLang();  window.KhipuState && window.KhipuState.build(); schedule(); }
     else { stopCascade(); addMode = false; if (window._liveResetColors) window._liveResetColors(); }
   }
 
@@ -242,41 +248,72 @@
   function addSelected() {
     var sel = window._liveSelectedNode && window._liveSelectedNode();
     var b = document.getElementById('ls-addbtn');
-    if (!sel) { if (b) { b.textContent = '＋ primero clic en un nodo del mapa'; setTimeout(function () { b.textContent = '＋ añadir empresa seleccionada'; }, 1600); } return; }
+    if (!sel) { if (b) { b.textContent = L('＋ primero clic en un nodo del mapa', '＋ first click a node on the map'); setTimeout(function () { b.textContent = L('＋ añadir empresa seleccionada', '＋ add selected company'); }, 1600); } return; }
     if (targets.indexOf(sel) < 0) { targets.push(sel); renderPicks(); schedule(); }
-    if (b) { b.textContent = '✓ ' + nm(sel) + ' añadida'; setTimeout(function () { b.textContent = '＋ añadir empresa seleccionada'; }, 1400); }
+    if (b) { b.textContent = '✓ ' + nm(sel) + L(' añadida', ' added'); setTimeout(function () { b.textContent = L('＋ añadir empresa seleccionada', '＋ add selected company'); }, 1400); }
+  }
+
+  // textos estáticos del panel: se re-aplican al abrirlo (cambio de idioma)
+  var STR = {
+    title: ['Simulación en vivo', 'Live simulation'],
+    type: ['Tipo de golpe', 'Shock type'],
+    target: ['Objetivo — escenario', 'Target — scenario'],
+    sector: ['Sector entero…', 'Whole sector…'],
+    country: ['País entero…', 'Whole country…'],
+    add: ['＋ añadir empresa seleccionada', '＋ add selected company'],
+    sev: ['Severidad', 'Severity'],
+    vict: ['Más afectadas', 'Most affected'],
+    win: ['Ganadores ↑', 'Winners ↑'],
+    play: ['▶ Reproducir cascada', '▶ Play cascade'],
+    save: ['💾 Guardar', '💾 Save'],
+    hist: ['📁 Historial', '📁 History'],
+  };
+  function S(k) { return L(STR[k][0], STR[k][1]); }
+  function applyLang() {
+    var panel = document.getElementById('ls-panel'); if (!panel) return;
+    panel.querySelectorAll('[data-l]').forEach(function (el) { el.textContent = S(el.getAttribute('data-l')); });
+    panel.querySelectorAll('#ls-types .ls-chip').forEach(function (c) {
+      var t = TYPES.find(function (x) { return x.id === c.dataset.t; }); if (t) c.textContent = tLabel(t);
+    });
+    panel.querySelectorAll('#ls-presets .ls-chip').forEach(function (c) {
+      var p = PRESETS.find(function (x) { return x.id === c.dataset.p; }); if (p) c.textContent = L(p.es, p.en);
+    });
+    var sec = panel.querySelector('#ls-sector');
+    if (sec && window.sectorName) Array.prototype.forEach.call(sec.options, function (o) { if (o.value) o.textContent = window.sectorName(o.value); });
+    if (!playing) { var pb = document.getElementById('ls-playbtn'); if (pb) pb.textContent = S('play'); }
+    var bt = document.getElementById('ls-btn'); if (bt) bt.title = L('Simulación en vivo — arma tu escenario y ve reaccionar la red', 'Live simulation — build your scenario and watch the network react');
   }
 
   function mount() {
     var wrap = document.querySelector('.graph-wrap');
     if (!wrap || document.getElementById('ls-btn')) return;
     ensureStyles();
-    var btn = document.createElement('div'); btn.id = 'ls-btn'; btn.innerHTML = '<span>◉</span> En vivo';
-    btn.title = 'Simulación en vivo — arma tu escenario y ve reaccionar la red'; btn.onclick = toggle;
+    var btn = document.createElement('div'); btn.id = 'ls-btn'; btn.innerHTML = '<span>◉</span> ' + L('En vivo', 'Live');
+    btn.title = L('Simulación en vivo — arma tu escenario y ve reaccionar la red', 'Live simulation — build your scenario and watch the network react'); btn.onclick = toggle;
     var sectors = window.SECTORS9 || {};
     var countries = {}; (window.NODES || []).forEach(function (n) { if (n.country) countries[n.country] = (countries[n.country] || 0) + 1; });
     var panel = document.createElement('div'); panel.id = 'ls-panel';
     panel.innerHTML = ''
-      + '<h4>Simulación en vivo <span class="lsx" onclick="window._lsToggle()">✕</span></h4>'
-      + '<div class="ls-lbl">Tipo de golpe</div>'
-      + '<div class="ls-chips" id="ls-types">' + TYPES.map(function (t) { return '<span class="ls-chip' + (t.id === 'corte' ? ' on' : '') + '" data-t="' + t.id + '">' + t.label + '</span>'; }).join('') + '</div>'
-      + '<div class="ls-lbl">Objetivo — escenario</div>'
-      + '<div class="ls-chips" id="ls-presets">' + PRESETS.map(function (p) { return '<span class="ls-chip" data-p="' + p.id + '">' + p.label + '</span>'; }).join('') + '</div>'
+      + '<h4><span data-l="title">' + S('title') + '</span> <span class="lsx" onclick="window._lsToggle()">✕</span></h4>'
+      + '<div class="ls-lbl" data-l="type">' + S('type') + '</div>'
+      + '<div class="ls-chips" id="ls-types">' + TYPES.map(function (t) { return '<span class="ls-chip' + (t.id === 'corte' ? ' on' : '') + '" data-t="' + t.id + '">' + tLabel(t) + '</span>'; }).join('') + '</div>'
+      + '<div class="ls-lbl" data-l="target">' + S('target') + '</div>'
+      + '<div class="ls-chips" id="ls-presets">' + PRESETS.map(function (p) { return '<span class="ls-chip" data-p="' + p.id + '">' + L(p.es, p.en) + '</span>'; }).join('') + '</div>'
       + '<div class="ls-chips" style="gap:6px">'
-      +   '<select class="ls-sel" id="ls-sector" style="flex:1"><option value="">Sector entero…</option>' + Object.keys(sectors).map(function (s) { return '<option value="' + s + '">' + sectors[s].label + '</option>'; }).join('') + '</select>'
-      +   '<select class="ls-sel" id="ls-country" style="flex:1"><option value="">País entero…</option>' + Object.keys(countries).sort().map(function (c) { return '<option value="' + c + '">' + c + ' (' + countries[c] + ')</option>'; }).join('') + '</select>'
+      +   '<select class="ls-sel" id="ls-sector" style="flex:1"><option value="" data-l="sector">' + S('sector') + '</option>' + Object.keys(sectors).map(function (s) { return '<option value="' + s + '">' + (window.sectorName ? window.sectorName(s) : sectors[s].label) + '</option>'; }).join('') + '</select>'
+      +   '<select class="ls-sel" id="ls-country" style="flex:1"><option value="" data-l="country">' + S('country') + '</option>' + Object.keys(countries).sort().map(function (c) { return '<option value="' + c + '">' + c + ' (' + countries[c] + ')</option>'; }).join('') + '</select>'
       + '</div>'
       + '<div class="ls-picks" id="ls-picks"></div>'
-      + '<button class="ls-addbtn" id="ls-addbtn">＋ añadir empresa seleccionada</button>'
-      + '<div class="lsrow"><span>Severidad</span><span id="ls-sevv">100%</span></div>'
+      + '<button class="ls-addbtn" id="ls-addbtn" data-l="add">' + S('add') + '</button>'
+      + '<div class="lsrow"><span data-l="sev">' + S('sev') + '</span><span id="ls-sevv">100%</span></div>'
       + '<input type="range" id="ls-sev" min="0" max="100" value="100">'
       + '<div id="ls-read" style="font-size:11px;color:#9BA6C4"></div>'
       + '<div id="ls-stats"></div><div id="ls-sect"></div>'
-      + '<div id="ls-cols"><div><div class="lsh" id="ls-victh">Más afectadas</div><div id="ls-vict"></div></div>'
-      +   '<div><div class="lsh" id="ls-winh">Ganadores ↑</div><div id="ls-win"></div></div></div>'
-      + '<div id="ls-play"><button id="ls-playbtn">▶ Reproducir cascada</button><span id="ls-hop"></span></div>'
-      + '<div id="ls-save" style="display:flex;gap:7px"><button id="ls-savebtn" style="flex:1;padding:6px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:rgba(122,158,255,.1);border:1px solid rgba(122,158,255,.3);color:#c8d0e0">💾 Guardar</button>'
-      +   '<button id="ls-histbtn" style="flex:1;padding:6px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:rgba(122,158,255,.1);border:1px solid rgba(122,158,255,.3);color:#c8d0e0">📁 Historial</button></div>'
+      + '<div id="ls-cols"><div><div class="lsh" id="ls-victh" data-l="vict">' + S('vict') + '</div><div id="ls-vict"></div></div>'
+      +   '<div><div class="lsh" id="ls-winh">' + S('win') + '</div><div id="ls-win"></div></div></div>'
+      + '<div id="ls-play"><button id="ls-playbtn">' + S('play') + '</button><span id="ls-hop"></span></div>'
+      + '<div id="ls-save" style="display:flex;gap:7px"><button id="ls-savebtn" style="flex:1;padding:6px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:rgba(122,158,255,.1);border:1px solid rgba(122,158,255,.3);color:#c8d0e0" data-l="save">' + S('save') + '</button>'
+      +   '<button id="ls-histbtn" style="flex:1;padding:6px 0;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;background:rgba(122,158,255,.1);border:1px solid rgba(122,158,255,.3);color:#c8d0e0" data-l="hist">' + S('hist') + '</button></div>'
       + '<div id="ls-hist" style="display:none;flex-direction:column;gap:3px;margin-top:2px"></div>';
     wrap.appendChild(btn); wrap.appendChild(panel);
 
@@ -318,35 +355,35 @@
     lastResult.impact.forEach(function (v, id) { if (targets.indexOf(id) < 0) top.push({ id: id, v: v }); });
     top.sort(function (a, b) { return b.v - a.v; });
     var btn = document.getElementById('ls-savebtn');
-    if (btn) btn.textContent = 'Guardando…';
+    if (btn) btn.textContent = L('Guardando…', 'Saving…');
     fetch('/api/matrix/simulations', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         actor: localStorage.getItem('khipu_actor') || 'anónimo',
-        name: ty.desc + ' · ' + targets.slice(0, 2).map(nm).join(', ') + (targets.length > 2 ? '…' : ''),
+        name: tDesc(ty) + ' · ' + targets.slice(0, 2).map(nm).join(', ') + (targets.length > 2 ? '…' : ''),
         targets: targets, kind: ty.kind, direction: ty.dir, severity: severity,
         affected: top.length, top: top.slice(0, 8),
       }),
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      if (btn) { btn.textContent = d && d.id ? '✓ Guardada' : '⚠ requiere Postgres'; setTimeout(function () { btn.textContent = '💾 Guardar'; }, 1600); }
-    }).catch(function () { if (btn) { btn.textContent = '⚠ sin conexión'; setTimeout(function () { btn.textContent = '💾 Guardar'; }, 1600); } });
+      if (btn) { btn.textContent = d && d.id ? L('✓ Guardada', '✓ Saved') : L('⚠ requiere Postgres', '⚠ requires Postgres'); setTimeout(function () { btn.textContent = S('save'); }, 1600); }
+    }).catch(function () { if (btn) { btn.textContent = L('⚠ sin conexión', '⚠ offline'); setTimeout(function () { btn.textContent = S('save'); }, 1600); } });
   }
 
   function toggleHist() {
     var el = document.getElementById('ls-hist');
     if (el.style.display === 'flex') { el.style.display = 'none'; return; }
-    el.style.display = 'flex'; el.innerHTML = '<div style="font-size:10px;color:#7C87A3">Cargando historial…</div>';
+    el.style.display = 'flex'; el.innerHTML = '<div style="font-size:10px;color:#7C87A3">' + L('Cargando historial…', 'Loading history…') + '</div>';
     fetch('/api/matrix/simulations?limit=20').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      if (!d || !d.simulations) { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">Historial requiere Postgres (Railway).</div>'; return; }
-      if (!d.simulations.length) { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">Sin simulaciones guardadas aún.</div>'; return; }
+      if (!d || !d.simulations) { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">' + L('Historial requiere Postgres (Railway).', 'History requires Postgres (Railway).') + '</div>'; return; }
+      if (!d.simulations.length) { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">' + L('Sin simulaciones guardadas aún.', 'No saved simulations yet.') + '</div>'; return; }
       el.innerHTML = d.simulations.map(function (s) {
-        var when = ''; try { when = new Date(s.saved_at).toLocaleDateString('es', { day: 'numeric', month: 'short' }); } catch (e) {}
+        var when = ''; try { when = new Date(s.saved_at).toLocaleDateString(isEn() ? 'en' : 'es', { day: 'numeric', month: 'short' }); } catch (e) {}
         return '<div class="ls-v" style="border:1px solid rgba(122,158,255,.1);border-radius:7px;padding:5px 8px" ' +
           'onclick=\'window._lsReplay(' + JSON.stringify(JSON.stringify({ targets: s.targets, kind: s.kind, dir: s.direction, sev: s.severity })) + ')\'>' +
           '<span style="max-width:150px">' + esc(s.label || 'sim') + '</span>' +
           '<span class="p" style="color:#7C87A3">' + when + '</span></div>';
       }).join('');
-    }).catch(function () { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">No se pudo cargar.</div>'; });
+    }).catch(function () { el.innerHTML = '<div style="font-size:10px;color:#7C87A3">' + L('No se pudo cargar.', 'Could not load.') + '</div>'; });
   }
 
   window._lsReplay = function (json) {

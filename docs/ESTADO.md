@@ -21,8 +21,16 @@ A partir de la captura de Fabrizio (X-Ray de la Reserva Federal, ya en prod):
   servidor respondía sin impactos): ahora siempre cierra con un mensaje
   (actor macro → se simula con FACTOR LIST).
 - Sin ticker: "no cotiza en bolsa" en vez de "— · —". Sin vínculos: se dice.
-- Pendiente visible: la Cabina (cockpit.js — chips Invertir/Scalping…, "LISTO",
-  placeholder, migas "Radiografía") sigue solo en español.
+- v140-141: BILINGÜE también la Cabina (cockpit.js: `actChips()` +
+  `relabelShell()` re-etiquetan al abrir; matchers aceptan "break down",
+  "compare … and/with", "opportunit", "blank canvas"), el panel ◉ En vivo
+  (livesim.js: TYPES/PRESETS con es/en, `applyLang()` al abrir), el Dossier
+  (fincard.js), la Guía (reescrita: 949 empresas, ⏱, 📡, teléfono; quitado el
+  aviso "Nueva versión" que ya no existe; se rehace al cambiar idioma), las
+  pestañas primarias y el subtítulo del botón Khipu. `window.sectorName(key,
+  byCat)` da el nombre de sector en el idioma activo (SECTORS9 ya traía `en`).
+- Queda en español: CONTENIDO del catálogo (descripciones, geo_risk, hitos) —
+  es dato, no UI; traducirlo sería otro proyecto. graph3d.js (solo ?webgl3d=1).
 
 ---
 

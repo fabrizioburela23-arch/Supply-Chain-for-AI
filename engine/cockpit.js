@@ -281,6 +281,56 @@
     document.head.appendChild(st);
   }
 
+  // Botones de la barra superior: [data-act, icono, es, en]. Función (no
+  // constante) para que las etiquetas se evalúen al pintar (regla bilingüe).
+  function actChips() {
+    return [
+      ['broker',     '💼', 'Invertir',      'Invest'],
+      ['scalp',      '⚡', 'Scalping',      'Scalping'],
+      ['crypto',     '💠', 'Cripto',        'Crypto'],
+      ['graph',      '🗺️', 'Grafo',         'Graph'],
+      ['terminal',   '🖥️', 'Terminal',      'Terminal'],
+      ['market',     '📈', 'Mercado',       'Market'],
+      ['xray',       '🔬', 'X-Ray',         'X-Ray'],
+      ['sim',        '◉',  'Simular',       'Simulate'],
+      ['compare',    '⇄',  'Comparar',      'Compare'],
+      ['insights',   '💡', 'Oportunidades', 'Opportunities'],
+      ['deep',       '🧠', 'Investigar',    'Research'],
+      ['canvas',     '✦',  'Gráfico',       'Chart'],
+      ['simulation', '🔮', 'Escenarios',    'Scenarios'],
+      ['geo',        '🌐', 'Geo',           'Geo'],
+      ['space',      '🚀', 'Espacio',       'Space'],
+    ];
+  }
+
+  // Re-etiqueta la cáscara (chips, placeholder, tooltips, estado) en el idioma
+  // ACTUAL. La cáscara se construye una sola vez; esto corre en cada apertura
+  // para que el cambio de idioma se refleje la próxima vez que se abra.
+  function relabelShell(ov) {
+    ov = ov || document.getElementById('bcp-ov');
+    if (!ov) return;
+    var labels = {};
+    actChips().forEach(function (c) { labels[c[0]] = c[1] + ' ' + L(c[2], c[3]); });
+    ov.querySelectorAll('.bcp-act').forEach(function (b) {
+      var k = b.getAttribute('data-act');
+      if (labels[k]) b.textContent = labels[k];
+    });
+    var inp = ov.querySelector('#bcp-input');
+    if (inp) inp.setAttribute('placeholder', L('Pídele algo a Khipu…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»',
+      'Ask Khipu anything…  “break down Nvidia”  ·  “what if TSMC falls?”'));
+    var setT = function (sel, es, en) {
+      var el = ov.querySelector(sel);
+      if (el) { el.setAttribute('title', L(es, en)); el.setAttribute('aria-label', L(es, en)); }
+    };
+    setT('#bcp-close', 'Cerrar (Esc)', 'Close (Esc)');
+    setT('#bcp-send', 'Enviar', 'Send');
+    setT('#bcp-mic', 'Hablar con Khipu', 'Talk to Khipu');
+    var st = ov.querySelector('#bcp-state');
+    var tx = st && st.querySelector('.txt');
+    // solo el estado de reposo se re-traduce (no pisar "Escuchando"/"Pensando")
+    if (tx && (!st.className || !tx.textContent)) tx.textContent = L('Listo', 'Ready');
+  }
+
   // ── shell (una vez) ──
   function ensureShell() {
     ensureStyles();
@@ -289,45 +339,31 @@
     if (ov) return ov;
     ov = document.createElement('div');
     ov.id = 'bcp-ov';
-    var en0 = ckLang() === 'en';
     ov.innerHTML =
       '<div id="bcp-top">' +
         '<div id="bcp-orb-wrap"><canvas id="bcp-orb-canvas" width="64" height="64"></canvas></div>' +
         '<div id="bcp-idwrap"><div id="bcp-word">KHIPU</div>' +
-          '<div id="bcp-state"><span class="dot"></span><span class="txt">' + (en0 ? 'Ready' : 'Listo') + '</span></div></div>' +
-        '<button class="bcp-iconbtn" id="bcp-close" title="' + (en0 ? 'Close (Esc)' : 'Cerrar (Esc)') + '">✕</button>' +
+          '<div id="bcp-state"><span class="dot"></span><span class="txt"></span></div></div>' +
+        '<button class="bcp-iconbtn" id="bcp-close">✕</button>' +
       '</div>' +
       // Barra de BOTONES (pedido de Fabrizio): todo lo que Khipu puede
       // mostrar, a un clic — el grafo y la terminal viven DENTRO del escenario.
+      // Trading/dinero PRIMERO (siempre visibles aunque la barra se deslice en tablet).
+      // Las etiquetas se ponen en relabelShell() (se re-evalúan al abrir → idioma al día).
       '<div id="bcp-actions">' +
-        // Trading/dinero PRIMERO (siempre visibles aunque la barra se deslice en tablet).
-        '<button class="bcp-act" data-act="broker">💼 ' + (en0 ? 'Invest' : 'Invertir') + '</button>' +
-        '<button class="bcp-act" data-act="scalp">⚡ Scalping</button>' +
-        '<button class="bcp-act" data-act="crypto">💠 ' + (en0 ? 'Crypto' : 'Cripto') + '</button>' +
-        '<button class="bcp-act" data-act="graph">🗺️ ' + (en0 ? 'Graph' : 'Grafo') + '</button>' +
-        '<button class="bcp-act" data-act="terminal">🖥️ ' + (en0 ? 'Terminal' : 'Terminal') + '</button>' +
-        '<button class="bcp-act" data-act="market">📈 ' + (en0 ? 'Market' : 'Mercado') + '</button>' +
-        '<button class="bcp-act" data-act="xray">🔬 X-Ray</button>' +
-        '<button class="bcp-act" data-act="sim">◉ ' + (en0 ? 'Simulate' : 'Simular') + '</button>' +
-        '<button class="bcp-act" data-act="compare">⇄ ' + (en0 ? 'Compare' : 'Comparar') + '</button>' +
-        '<button class="bcp-act" data-act="insights">💡 ' + (en0 ? 'Opportunities' : 'Oportunidades') + '</button>' +
-        '<button class="bcp-act" data-act="deep">🧠 ' + (en0 ? 'Research' : 'Investigar') + '</button>' +
-        '<button class="bcp-act" data-act="canvas">✦ ' + (en0 ? 'Chart' : 'Gráfico') + '</button>' +
-        '<button class="bcp-act" data-act="simulation">🔮 ' + (en0 ? 'Scenarios' : 'Escenarios') + '</button>' +
-        '<button class="bcp-act" data-act="geo">🌐 ' + (en0 ? 'Geo' : 'Geo') + '</button>' +
-        '<button class="bcp-act" data-act="space">🚀 ' + (en0 ? 'Space' : 'Espacio') + '</button>' +
+        actChips().map(function (c) {
+          return '<button class="bcp-act" data-act="' + c[0] + '"></button>';
+        }).join('') +
       '</div>' +
       '<div id="bcp-stage"></div>' +
       // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Khipu abajo").
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
-        '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false" ' +
-          'placeholder="' + (en0
-            ? 'Ask Khipu anything…  “break down Nvidia”  ·  “what if TSMC falls?”'
-            : 'Pídele algo a Khipu…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»') + '">' +
-        '<button class="bcp-iconbtn" id="bcp-send" title="' + (en0 ? 'Send' : 'Enviar') + '">➤</button>' +
-        '<button class="bcp-iconbtn" id="bcp-mic" title="' + (en0 ? 'Talk to Khipu' : 'Hablar con Khipu') + '">🎙</button>' +
+        '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false">' +
+        '<button class="bcp-iconbtn" id="bcp-send">➤</button>' +
+        '<button class="bcp-iconbtn" id="bcp-mic">🎙</button>' +
       '</div></div>';
     document.body.appendChild(ov);
+    relabelShell(ov);
 
     ov.querySelectorAll('.bcp-act').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -348,10 +384,10 @@
         // acciones que necesitan una empresa → prellenar la barra (enseña la sintaxis)
         var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null;
         var name = sel && window.NODE_BY_ID && window.NODE_BY_ID[sel] ? window.NODE_BY_ID[sel].label : '';
-        if (act === 'xray') { if (name) return stage('xray', sel); input.value = 'desármame '; }
-        if (act === 'sim') { if (name) return stage('sim', { id: sel, kind: 'collapse' }); input.value = '¿qué pasa si cae '; }
-        if (act === 'compare') { input.value = 'compara ' + (name ? name + ' y ' : ''); }
-        if (act === 'deep') { input.value = 'investiga '; }
+        if (act === 'xray') { if (name) return stage('xray', sel); input.value = L('desármame ', 'break down '); }
+        if (act === 'sim') { if (name) return stage('sim', { id: sel, kind: 'collapse' }); input.value = L('¿qué pasa si cae ', 'shock '); }
+        if (act === 'compare') { input.value = L('compara ', 'compare ') + (name ? name + L(' y ', ' and ') : ''); }
+        if (act === 'deep') { input.value = L('investiga ', 'research '); }
         input.focus();
       });
     });
@@ -401,10 +437,10 @@
   // ── micrófono / voz ──
   function toggleMic() {
     var btn = document.getElementById('bcp-mic');
-    if (!window.BixbyVoice) { setState('', 'Voz no disponible'); return; }
+    if (!window.BixbyVoice) { setState('', L('Voz no disponible', 'Voice unavailable')); return; }
     var on = window.BixbyVoice.isConnected;
-    if (on) { window.BixbyVoice.stop && window.BixbyVoice.stop(); if (btn) btn.classList.remove('on'); setState('', 'Listo'); }
-    else { window.BixbyVoice.toggle && window.BixbyVoice.toggle(); if (btn) btn.classList.add('on'); setState('live', 'Escuchando'); }
+    if (on) { window.BixbyVoice.stop && window.BixbyVoice.stop(); if (btn) btn.classList.remove('on'); setState('', L('Listo', 'Ready')); }
+    else { window.BixbyVoice.toggle && window.BixbyVoice.toggle(); if (btn) btn.classList.add('on'); setState('live', L('Escuchando', 'Listening')); }
   }
 
   // ── ADOPCIÓN de paneles reales: el grafo y la terminal se MUEVEN al
@@ -450,12 +486,14 @@
   }
 
   // ══ ESCENARIO ══
+  var _curKind = null;   // escena actual (para re-pintar el inicio al reabrir)
   function stage(kind, arg) {
     ensureShell();
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
     _scalpStop();       // detener el polling de scalping al cambiar de escena
+    _curKind = kind;
     markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'].indexOf(kind) >= 0 ? kind : null);
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'scalp') return stageScalp(s, arg);
@@ -477,10 +515,10 @@
 
   // ── el GRAFO en vivo, dentro de la Cabina ──
   function stageGraph(s, focusId) {
-    s.innerHTML = backBar('Grafo en vivo') + '<div class="bcp-embed" id="bcp-embed-graph"></div>';
+    s.innerHTML = backBar(L('Grafo en vivo', 'Live graph')) + '<div class="bcp-embed" id="bcp-embed-graph"></div>';
     var main = document.querySelector('main');
     if (!adoptInto(s.querySelector('#bcp-embed-graph'), main, 'flex')) {
-      s.innerHTML += '<div class="bcp-loading">No se pudo montar el grafo</div>';
+      s.innerHTML += '<div class="bcp-loading">' + L('No se pudo montar el grafo', 'Could not mount the graph') + '</div>';
       return;
     }
     // re-encuadrar al tamaño del escenario (si no, entra con el zoom que traía)
@@ -546,7 +584,7 @@
     s.innerHTML = backBar('Terminal') + '<div class="bcp-embed" id="bcp-embed-term"></div>';
     var term = document.getElementById('terminal-panel');
     if (!adoptInto(s.querySelector('#bcp-embed-term'), term, 'flex')) {
-      s.innerHTML += '<div class="bcp-loading">No se pudo montar la terminal</div>';
+      s.innerHTML += '<div class="bcp-loading">' + L('No se pudo montar la terminal', 'Could not mount the terminal') + '</div>';
       return;
     }
     try { if (typeof window.initTerminalTab === 'function') window.initTerminalTab(); } catch (e) {}
@@ -655,8 +693,8 @@
 
   function stageXRay(s, id) {
     var n = resolveNode(id); if (!n) { stageNotFound(s, id); return; }
-    if (!window.buildXRayHTML) { s.innerHTML = '<div class="bcp-loading">X-Ray no disponible</div>'; return; }
-    s.innerHTML = backBar('Radiografía') +
+    if (!window.buildXRayHTML) { s.innerHTML = '<div class="bcp-loading">' + L('X-Ray no disponible', 'X-Ray unavailable') + '</div>'; return; }
+    s.innerHTML = backBar(L('Radiografía', 'X-Ray')) +
       '<div class="bcp-inner"><div id="bcp-xray" class="xray-scope xr-full">' + window.buildXRayHTML(n.id, { full: true }) + '</div></div>';
     var root = s.querySelector('#bcp-xray');
     if (window.wireXRay) window.wireXRay(root, n.id);
@@ -735,7 +773,7 @@
       return '<button class="bcp-back cmp-tab" data-cmp="' + mode + '" style="' +
         (on ? 'border-color:#00E0FF;color:#00E0FF' : '') + '">' + label + '</button>';
     };
-    s.innerHTML = backBar('Comparar') +
+    s.innerHTML = backBar(L('Comparar', 'Compare')) +
       '<div class="bcp-inner">' +
         '<div style="display:flex;gap:8px;margin-bottom:14px">' +
           tabBtn('profile', true, '🔬 ' + (en ? 'Profile' : 'Perfil')) +
@@ -780,9 +818,9 @@
     var n = resolveNode(arg.id); if (!n) { stageNotFound(s, arg.id || ''); return; }
     var kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(arg.kind) >= 0 ? arg.kind : 'collapse';
     var dir = kind === 'demand' ? 'up' : 'down';
-    var kindLabel = { collapse: 'Corte / caída', demand: 'Auge de demanda', price: 'Shock de precio', sanction: 'Sanción' }[kind];
+    var kindLabel = { collapse: L('Corte / caída', 'Outage / collapse'), demand: L('Auge de demanda', 'Demand boom'), price: L('Shock de precio', 'Price shock'), sanction: L('Sanción', 'Sanction') }[kind];
     var tint = dir === 'up' ? UP : DOWN;
-    if (!window.KhipuState || !window.KhipuState.simulate) { s.innerHTML = backBar() + '<div class="bcp-loading">Motor de simulación no disponible</div>'; return; }
+    if (!window.KhipuState || !window.KhipuState.simulate) { s.innerHTML = backBar() + '<div class="bcp-loading">' + L('Motor de simulación no disponible', 'Simulation engine unavailable') + '</div>'; return; }
     var shock = {}; shock[n.id] = (kind === 'demand') ? { salud: 100 } : { salud: 0 };
     var r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
     var impacts = {}; if (r && r.impact) r.impact.forEach(function (v, k) { if (k !== n.id && v > 0) impacts[k] = v; });
@@ -805,7 +843,7 @@
         '<span class="nm">' + esc(nd.label) + '</span>' +
         '<span class="bar" style="background:rgba(255,77,106,.15)"><i style="width:' + Math.round(x.v) + '%;background:' + tint + '"></i></span>' +
         '<span class="pv" style="color:' + tint + '">' + Math.round(x.v) + '%</span></div>';
-    }).join('') || '<div class="bcp-loading" style="padding:16px">Sin propagación significativa</div>';
+    }).join('') || '<div class="bcp-loading" style="padding:16px">' + L('Sin propagación significativa', 'No significant spillover') + '</div>';
 
     var winRows = winners.length ? winners.map(function (w) {
       var nd = window.NODE_BY_ID[w.id]; if (!nd) return '';
@@ -824,21 +862,21 @@
         '<span class="pv">' + Math.round(x.avg) + '%</span></div>';
     }).join('');
 
-    s.innerHTML = backBar('Simulación') +
+    s.innerHTML = backBar(L('Simulación', 'Simulation')) +
       '<div class="bcp-inner">' +
         '<div class="bcp-simhd"><span class="big">' + esc(n.label) + '</span>' +
           '<span class="kind" style="background:' + tint + '22;color:' + tint + '">' + esc(kindLabel) + '</span>' +
-          '<span style="color:#7C87A3;font-size:12px">' + arr.length + ' empresas movidas</span>' +
-          '<button class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\')">⚡ Ver en el mapa</button></div>' +
+          '<span style="color:#7C87A3;font-size:12px">' + arr.length + ' ' + L('empresas movidas', 'companies moved') + '</span>' +
+          '<button class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\')">⚡ ' + L('Ver en el mapa', 'See on the map') + '</button></div>' +
         '<div class="bcp-grid3">' +
-          '<div class="bcp-stat"><b style="color:' + tint + '">' + arr.length + '</b><span>empresas afectadas</span></div>' +
-          '<div class="bcp-stat"><b style="color:' + tint + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>golpe máximo</span></div>' +
-          '<div class="bcp-stat"><b style="color:' + UP + '">' + winners.length + '</b><span>ganadores</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + tint + '">' + arr.length + '</b><span>' + L('empresas afectadas', 'companies affected') + '</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + tint + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>' + L('golpe máximo', 'max hit') + '</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + UP + '">' + winners.length + '</b><span>' + L('ganadores', 'winners') + '</span></div>' +
         '</div>' +
         '<div class="bcp-two">' +
-          '<div><div class="bcp-lh" style="color:' + tint + '">' + (dir === 'up' ? 'Quién se beneficia ↑' : 'Quién sufre ↓') + '</div>' + victimRows + '</div>' +
-          '<div><div class="bcp-lh" style="color:' + UP + '">Quién gana ↑ (rivales)</div>' + winRows +
-            '<div class="bcp-lh" style="margin-top:18px">Por sector</div>' + secRowsHTML + '</div>' +
+          '<div><div class="bcp-lh" style="color:' + tint + '">' + (dir === 'up' ? L('Quién se beneficia ↑', 'Who benefits ↑') : L('Quién sufre ↓', 'Who suffers ↓')) + '</div>' + victimRows + '</div>' +
+          '<div><div class="bcp-lh" style="color:' + UP + '">' + L('Quién gana ↑ (rivales)', 'Who gains ↑ (rivals)') + '</div>' + winRows +
+            '<div class="bcp-lh" style="margin-top:18px">' + L('Por sector', 'By sector') + '</div>' + secRowsHTML + '</div>' +
         '</div>' +
       '</div>';
   }
@@ -878,7 +916,7 @@
             '<span class="pv" style="color:' + col + ';width:48px">' + x.score.toFixed(1) + '</span></div>';
         }).join('');
         host.innerHTML = covLine + rows +
-          '<div style="font-size:10px;color:#5E6884;margin-top:12px;line-height:1.5">' + esc(d.method_es || '') + '</div>';
+          '<div style="font-size:10px;color:#5E6884;margin-top:12px;line-height:1.5">' + esc(en ? 'Signals, not predictions: 5/20/60-day momentum (multi-exchange, currency-neutral) + graph PageRank centrality (what the system depends on) + trend vs. MA20. Analysis, not financial advice.' : (d.method_es || '')) + '</div>';
       })
       .catch(function () {
         var host = document.getElementById('bcp-scr');
@@ -1162,7 +1200,7 @@
     if (st) { st.style.color = col; st.textContent = en ? 'Sending…' : 'Enviando…'; }
     try {
       var res = await window._resolveTradeSymbol(_scalpSym);
-      if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">' + esc(res.error || 'símbolo') + '</span>'; return; }
+      if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">' + esc(res.error || L('símbolo', 'symbol')) + '</span>'; return; }
       var r = await window._executeTradeOrder({ symbol: res.symbol, side: side, label: res.label, kind: res.kind, notional: _scalpAmt });
       st = document.getElementById('bcp-scalp-status');
       if (r && r.ok) { if (st) st.innerHTML = '<span style="color:' + col + '">✓ ' + (side === 'buy' ? (en ? 'Bought' : 'Compraste') : (en ? 'Sold' : 'Vendiste')) + ' $' + _scalpAmt + ' ' + esc(res.label) + '</span>'; setTimeout(_scalpLoadPos, 900); }
@@ -1438,7 +1476,7 @@
     if (stEl) { stEl.style.color = UP; stEl.textContent = '✓ ' + tb('sent') + (en ? ' (confirming…)' : ' (confirmando…)'); }
     setTimeout(function () { loadBroker(false, true); }, 900);   // refresca posiciones pronto
     var exec = window._executeTradeOrder ? window._executeTradeOrder(o)
-      : Promise.resolve({ ok: false, error: 'trading no disponible' });
+      : Promise.resolve({ ok: false, error: L('trading no disponible', 'trading unavailable') });
     exec.then(function (r) {
       var st = document.getElementById('bcp-bk-cstatus');   // pudo cambiar de escena
       if (r && r.ok) {
@@ -1620,14 +1658,14 @@
   function stageDeep(s, question) {
     if (_deepTimer) { clearInterval(_deepTimer); _deepTimer = null; }
     question = (question || '').trim();
-    s.innerHTML = backBar('Investigación profunda') +
+    s.innerHTML = backBar(L('Investigación profunda', 'Deep research')) +
       '<div class="bcp-inner" style="max-width:820px">' +
-        '<div class="bcp-simhd"><span class="big">🧠 ' + esc(question || 'Análisis profundo') + '</span></div>' +
+        '<div class="bcp-simhd"><span class="big">🧠 ' + esc(question || L('Análisis profundo', 'Deep analysis')) + '</span></div>' +
         '<div id="bcp-deep-steps" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px"></div>' +
         '<div id="bcp-deep-result"></div>' +
       '</div>';
     if (!question) return;
-    setState('think', 'Investigando');
+    setState('think', L('Investigando', 'Researching'));
 
     fetch((window.BASE || '') + '/api/deep/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1636,12 +1674,12 @@
       if (d.error) { renderDeepError(d.error); return; }
       _deepTimer = setInterval(pollDeep, 2500);
       pollDeep();
-    }).catch(function () { renderDeepError('No se pudo conectar con el servidor'); });
+    }).catch(function () { renderDeepError(L('No se pudo conectar con el servidor', 'Could not reach the server')); });
 
     function renderDeepError(msg) {
       var el = document.getElementById('bcp-deep-result');
       if (el) el.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc(msg) + '</div>';
-      setState('', 'Listo');
+      setState('', L('Listo', 'Ready'));
     }
 
     function pollDeep() {
@@ -1656,15 +1694,15 @@
         }).join('');
         if (!d.running && d.result) {
           clearInterval(_deepTimer); _deepTimer = null;
-          setState('', 'Listo');
+          setState('', L('Listo', 'Ready'));
           var el = document.getElementById('bcp-deep-result');
           if (!el) return;
           if (d.result.error) { renderDeepError(d.result.error); return; }
           var simHTML = d.result.sim ?
             '<div class="bcp-grid3" style="margin:14px 0">' +
-              '<div class="bcp-stat"><b style="color:#FF4D6A">' + d.result.sim.afectadas + '</b><span>afectadas si cae ' + esc(d.result.sim.shock) + '</span></div>' +
-              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:14px">' + esc((d.result.focos || []).join(', ').slice(0, 40) || '—') + '</b><span>foco</span></div>' +
-              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:13px">' + esc(d.result.model || '') + '</b><span>modelo</span></div>' +
+              '<div class="bcp-stat"><b style="color:#FF4D6A">' + d.result.sim.afectadas + '</b><span>' + L('afectadas si cae ', 'affected if it falls: ') + esc(d.result.sim.shock) + '</span></div>' +
+              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:14px">' + esc((d.result.focos || []).join(', ').slice(0, 40) || '—') + '</b><span>' + L('foco', 'focus') + '</span></div>' +
+              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:13px">' + esc(d.result.model || '') + '</b><span>' + L('modelo', 'model') + '</span></div>' +
             '</div>' : '';
           el.innerHTML = simHTML +
             '<div style="border:1px solid rgba(122,158,255,.16);border-radius:14px;background:rgba(11,18,34,.55);' +
@@ -1677,12 +1715,12 @@
 
   // ── Canvas / lienzo (gráfico o tabla por IA) ──
   function stageCanvas(s, query) {
-    s.innerHTML = backBar('Lienzo') +
+    s.innerHTML = backBar(L('Lienzo', 'Canvas')) +
       '<div class="bcp-inner bcp-canvaswrap">' +
         '<div class="bcp-canvasbar">' +
-          '<input id="bcp-cv-q" class="" type="text" autocomplete="off" placeholder="Describe el gráfico o la tabla…  «top 10 por riesgo NRS»" ' +
+          '<input id="bcp-cv-q" class="" type="text" autocomplete="off" placeholder="' + esc(L('Describe el gráfico o la tabla…  «top 10 por riesgo NRS»', 'Describe the chart or table…  “top 10 by NRS risk”')) + '" ' +
             'style="flex:1;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.22);border-radius:12px;color:#E8EDFB;font-size:14px;padding:12px 15px;outline:none">' +
-          '<button class="bcp-iconbtn" id="bcp-cv-go" style="width:auto;padding:0 16px">✦ Generar</button>' +
+          '<button class="bcp-iconbtn" id="bcp-cv-go" style="width:auto;padding:0 16px">✦ ' + L('Generar', 'Generate') + '</button>' +
         '</div>' +
         '<div id="bcp-cv-cards"></div>' +
       '</div>';
@@ -1726,15 +1764,15 @@
     var cardId = 'bcpcv-' + (query.length + query.charCodeAt(0) + cards.children.length);
     cards.insertAdjacentHTML('afterbegin',
       '<div id="' + cardId + '" class="cv-card"><div class="cv-card-hdr"><div><div class="cv-card-title">' + esc(query) +
-      '</div><div class="cv-card-sub">Generando…</div></div></div>' +
+      '</div><div class="cv-card-sub">' + L('Generando…', 'Generating…') + '</div></div></div>' +
       '<div style="height:180px;display:flex;align-items:center;justify-content:center"><div class="cv-spinner"></div></div></div>');
     // 1º: generador LOCAL determinista (0 ms, 0 errores) — la IA solo para lo exótico
     var local = window.KhipuLocalCharts && window.KhipuLocalCharts.try(query);
-    if (local && window._cvRenderCard) { window._cvRenderCard(cardId, query, local, 'local ⚡ instantáneo'); return; }
+    if (local && window._cvRenderCard) { window._cvRenderCard(cardId, query, local, L('local ⚡ instantáneo', 'local ⚡ instant')); return; }
     // 2º: patrones locales con datos del servidor (precio histórico, ~300ms)
     if (window.KhipuLocalCharts && window.KhipuLocalCharts.tryAsync) {
       var localA = await window.KhipuLocalCharts.tryAsync(query);
-      if (localA && window._cvRenderCard) { window._cvRenderCard(cardId, query, localA, 'local ⚡ sin IA'); return; }
+      if (localA && window._cvRenderCard) { window._cvRenderCard(cardId, query, localA, L('local ⚡ sin IA', 'local ⚡ no AI')); return; }
     }
     try {
       var nodeCtx = (window.NODES || []).slice(0, 600).map(function (n) {
@@ -1754,7 +1792,7 @@
         body: JSON.stringify({ query: query, context: { nodes: nodeCtx, quotes: quotesCtx, live: live } })
       });
       var ct = r.headers.get('content-type') || '';
-      if (ct.indexOf('application/json') < 0) throw new Error('El servidor está ocupado. Reintenta en ~1 min.');
+      if (ct.indexOf('application/json') < 0) throw new Error(L('El servidor está ocupado. Reintenta en ~1 min.', 'The server is busy. Try again in ~1 min.'));
       var d = await r.json();
       if (d.error) throw new Error(d.error);
       if (window._cvRenderCard) window._cvRenderCard(cardId, query, d.spec, d.model);
@@ -1764,7 +1802,7 @@
       try {
         var fb = _cvFallbackSpec(query);
         if (fb && fb.data && fb.data.length && window._cvRenderCard) {
-          window._cvRenderCard(cardId, query, fb, 'local ⚡ respaldo');
+          window._cvRenderCard(cardId, query, fb, L('local ⚡ respaldo', 'local ⚡ fallback'));
           return;
         }
       } catch (e2) {}
@@ -1856,7 +1894,7 @@
     s.innerHTML = backBar(title) +
       '<div class="bcp-inner" style="max-width:1040px">' +
         '<div class="bcp-simhd"><span class="big">🧪 ' + esc(scen || title) + '</span>' +
-          '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">Agentes</span>' +
+          '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">' + (en ? 'Agents' : 'Agentes') + '</span>' +
           '<span style="color:#7C87A3;font-size:12px">' + (en ? 'analysts debating…' : 'analistas debatiendo…') + '</span></div>' +
         '<div id="bcp-ag-body"></div>' +
       '</div>';
@@ -2026,7 +2064,7 @@
     }
 
     // 2) lienzo en blanco / gráfico
-    if (/^(l[ií]enzo|canvas)\b/.test(low) || /lienzo en blanco/.test(low)) { stage('canvas'); return; }
+    if (/^(l[ií]enzo|canvas)\b/.test(low) || /lienzo en blanco|blank canvas/.test(low)) { stage('canvas'); return; }
     if (/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\b[:\s]/.test(low) || low.indexOf('gráfico:') >= 0) {
       stage('canvas', text.replace(/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\s*:?\s*/i, '')); return;
     }
@@ -2067,10 +2105,10 @@
     }
 
     // 3) oportunidades / insights
-    if (/oportunidad|insight|d[oó]nde inv|qu[eé] compr/.test(low)) { stage('insights'); return; }
+    if (/oportunidad|opportunit|insight|d[oó]nde inv|qu[eé] compr|where to invest/.test(low)) { stage('insights'); return; }
 
     // 4) comparar A y B
-    var cmp = low.match(/compar[ao]?r?\s+(.+?)\s+(?:y|vs|versus|con|contra)\s+(.+)/);
+    var cmp = low.match(/compar[aoe]?r?\s+(.+?)\s+(?:y|and|vs|versus|con|contra|with)\s+(.+)/);
     if (cmp) { stage('compare', { a: cmp[1], b: cmp[2] }); return; }
 
     // 4.5) SIMULACIÓN POR AGENTES (motor interno): escenarios abiertos en lenguaje
@@ -2095,7 +2133,7 @@
 
     // 6) desármame / radiografía / x-ray → X-Ray; el nombre es claramente una
     //    empresa: si no resuelve, mensaje con sugerencias (no "no existe")
-    var xrStrong = low.match(/(?:des[aá]rma(?:me)?|radiograf[ií]a|x-?ray|destripa(?:me)?)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
+    var xrStrong = low.match(/(?:des[aá]rma(?:me)?|radiograf[ií]a|x-?ray|destripa(?:me)?|break\s*down)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
     if (xrStrong) {
       var nxs = resolveNode(xrStrong[1].replace(/\?+$/, '').trim());
       if (nxs) { stage('xray', nxs.id); return; }
@@ -2143,9 +2181,11 @@
     var ov = document.getElementById('bcp-ov');
     ov.classList.add('show');
     open = true;
+    relabelShell(ov);   // idioma al día (la cáscara se construyó una sola vez)
     mountCockpitOrb();
     if (initial && initial.kind) stage(initial.kind, initial.arg);
-    else if (!document.getElementById('bcp-stage').children.length) stage('empty');
+    // pantalla de inicio vacía o ya mostrada → se re-pinta (textos en el idioma actual)
+    else if (!document.getElementById('bcp-stage').children.length || _curKind === 'empty') stage('empty');
     setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
   }
   function close() {

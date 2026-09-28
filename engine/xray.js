@@ -21,7 +21,10 @@
   var CAT_TO_SECTOR = (typeof window.CAT_TO_SECTOR !== 'undefined') ? window.CAT_TO_SECTOR : {};
   function sectorOf(cat) { return CAT_TO_SECTOR[cat] || 'cloud_ia'; }
   function sectorColor(cat) { var s = SECTORS9[sectorOf(cat)]; return s ? s.color : '#00E0FF'; }
-  function sectorLabel(cat) { var s = SECTORS9[sectorOf(cat)]; return s ? s.label : 'Cloud & IA'; }
+  function sectorLabel(cat) {
+    if (window.sectorName) return window.sectorName(sectorOf(cat));
+    var s = SECTORS9[sectorOf(cat)]; return s ? s.label : 'Cloud & IA';
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function lid(v) { return (typeof v === 'object' && v !== null) ? v.id : v; }
   function fmtPct(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; }

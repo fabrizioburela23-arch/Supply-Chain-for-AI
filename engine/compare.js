@@ -105,8 +105,8 @@
     document.getElementById('cmp').innerHTML =
       '<div class="hd"><span class="eb">Comparar empresas</span><span class="x" onclick="window._cmpClose()">✕</span></div>' +
       '<div class="heads"><select id="cmp-a">' + opts(A) + '</select><div class="vs">vs</div><select id="cmp-b">' + opts(B) + '</select></div>' +
-      row('Sector', pill(A) + (window.SECTORS9 ? (window.SECTORS9[(window.CAT_TO_SECTOR || {})[ma.n.cat]] || {}).label || '' : ''),
-                    pill(B) + (window.SECTORS9 ? (window.SECTORS9[(window.CAT_TO_SECTOR || {})[mb.n.cat]] || {}).label || '' : ''), null) +
+      row('Sector', pill(A) + (window.sectorName ? window.sectorName(ma.n.cat, true) : ''),
+                    pill(B) + (window.sectorName ? window.sectorName(mb.n.cat, true) : ''), null) +
       row('País', ma.country, mb.country, null) +
       row('Riesgo NRS', ma.nrs, mb.nrs, function (v) { return v + '/100'; }, true) +
       row('Margen', ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false) +
