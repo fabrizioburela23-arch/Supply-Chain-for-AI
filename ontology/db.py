@@ -40,6 +40,14 @@ def _normalize_url(url):
                     raise ImportError('asyncpg no sirve con un engine síncrono')
             except ImportError:
                 driver = ''
+        if not driver:
+            # SQLAlchemy 2.1 cambió el driver POR DEFECTO de postgresql:// a
+            # psycopg 3 → hay que nombrar psycopg2 explícitamente.
+            try:
+                __import__('psycopg2')
+                driver = 'psycopg2'
+            except ImportError:
+                pass
         return f'{base}+{driver}://{rest}' if driver else f'{base}://{rest}'
     return url
 

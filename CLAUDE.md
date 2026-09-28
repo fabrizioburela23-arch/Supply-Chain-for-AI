@@ -256,6 +256,11 @@ server.py y ontology/agents.py importan de core/ — no redefinir en el server.
   red de seguridad. El arreglo NUNCA es tocar código — es `GEMINI_MODEL` /
   `NVIDIA_MODEL` en Railway. El 🩺 ya lo dice explícitamente (`_ai_error_hint`).
 
+- **SQLAlchemy 2.1 usa psycopg 3 por defecto** (no instalado) → en sept-2026
+  un redeploy la instaló y TODA la ontología dio "No module named 'psycopg'".
+  requirements fija `<2.1` y `ontology/db._normalize_url` fuerza `+psycopg2`.
+  No quitar ninguna de las dos.
+
 - `switchTab('sim')` → INCORRECTO, es `'simulation'`.
 - Olvidar el bump de sw.js → los usuarios ven código viejo.
 - Panel de pestaña fuera de `.app` → pantalla negra.

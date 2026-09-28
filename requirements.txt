@@ -25,7 +25,9 @@ neo4j>=5.14.0
 # Ontología (Fase 1) — fuente única de verdad bitemporal en Postgres. Opcional:
 # se activa con DATABASE_URL (Railway lo inyecta solo al añadir el plugin de
 # Postgres). Sin esta variable, /api/ontology/* devuelve 503 sin romper nada.
-sqlalchemy>=2.0.0
+# <2.1: SQLAlchemy 2.1 usa psycopg 3 por defecto (no instalado) → rompió la
+# ontología en prod (2026-09-28). ontology/db.py además fuerza +psycopg2.
+sqlalchemy>=2.0.0,<2.1
 psycopg2-binary>=2.9.0
 # Ontología (Fase 2) — catálogo de Acciones: valida cada tipo de escritura
 # humana (CrearTesis, AnotarObjeto, MarcarRiesgo…) igual que Zod en el roadmap
