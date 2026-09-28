@@ -28,7 +28,16 @@ Hecho (vertical slice NVIDIA → Investigar → agentes → claims/evidencia →
   botón en el X-Ray, comando `NVDA RESEARCH`, "?" de confianza y horizonte.
 - Eventos automáticos: /ingest/news dispara NEWS solo si
   `RESEARCH_AUTO_EVENTS=on` (apagado por defecto para cuidar costo).
-- Tests: tests/test_research.py (15) → suite 248.
+- Tests: tests/test_research.py (16) → suite 249.
+- VERIFICADO EN PRODUCCIÓN (28-sep, Fabrizio): investigación real de Nvidia
+  OK con Gemini. Arreglos que hicieron falta en prod: (1) SQLAlchemy 2.1 →
+  psycopg 3 por defecto → fijado <2.1 + _normalize_url(+psycopg2); (2) Gemini
+  2.5-flash cortaba el JSON (el pensamiento consume maxOutputTokens) →
+  json_mode (responseMimeType, thinkingBudget 0, 8192); (3) job con todos
+  los agentes fallidos queda 'failed' y el dedupe no lo reutiliza; (4) sin
+  ventana de nombre (actor = khipu_actor o 'usuario'); (5) errores visibles
+  con código+detalle en el panel. Claude sin saldo; NVIDIA_MODEL retirado
+  (410) — Fabrizio iba a poner uno nuevo de build.nvidia.com.
 - Pendiente: verificar en producción una investigación REAL (Claude sin
   saldo → correrá con Gemini); contradicciones semánticas; eventos
   EARNINGS/PRICE_ANOMALY/FACTOR_FIRED automáticos; evidencia SEC; calibrar
