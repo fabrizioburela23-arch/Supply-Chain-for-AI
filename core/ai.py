@@ -66,18 +66,33 @@ def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
     raise last_err or RuntimeError('claude: sin texto de ningún modelo')
 
 
-def _complete_gemini(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
+def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False):  # noqa: ARG001 — tier no aplica
+    """json_mode (lo usa research/): pide JSON estricto (responseMimeType), da
+    más presupuesto y apaga el "pensamiento" en modelos flash — en 2.5 el
+    pensamiento consume maxOutputTokens y cortaba el JSON a la mitad
+    ("Unterminated string", visto en prod 2026-09-28)."""
+    gen = {'maxOutputTokens': max_tokens, 'temperature': 0.6}
+    if json_mode:
+        gen.update({'responseMimeType': 'application/json', 'temperature': 0.3,
+                    'maxOutputTokens': max(max_tokens, 8192)})
+        if 'flash' in GEMINI_MODEL:
+            gen['thinkingConfig'] = {'thinkingBudget': 0}
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
-            'generationConfig': {'maxOutputTokens': max_tokens, 'temperature': 0.6}}
-    r = requests.post(
-        f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}',
-        json=body, timeout=45)
+            'generationConfig': gen}
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}'
+    r = requests.post(url, json=body, timeout=90 if json_mode else 45)
+    if r.status_code == 400 and 'thinkingConfig' in gen:
+        gen.pop('thinkingConfig')            # modelo que no acepta apagar el pensamiento
+        r = requests.post(url, json=body, timeout=90)
     if not r.ok:
         raise RuntimeError(f'Gemini HTTP {r.status_code}')
     cands = (r.json() or {}).get('candidates') or []
     if not cands:
         raise RuntimeError('Gemini sin candidates')
-    text = ''.join(p.get('text', '') for p in cands[0].get('content', {}).get('parts', []))
+    parts = cands[0].get('content', {}).get('parts', [])
+    text = ''.join(p.get('text', '') for p in parts if not p.get('thought'))
+    if json_mode and cands[0].get('finishReason') == 'MAX_TOKENS':
+        raise RuntimeError('Gemini cortó la respuesta (MAX_TOKENS)')
     return text, 'gemini:' + GEMINI_MODEL
 
 
@@ -161,5 +176,12 @@ def _extract_json(text):
                 return json.loads(cleaned[i:j + 1])
             except json.JSONDecodeError:
                 continue
-    # 3) sin remedio → propagar el error para que el caller lo maneje
+    # 3) primer objeto JSON válido aunque le siga texto ("Extra data")
+    dec = json.JSONDecoder()
+    for m in re.finditer(r'[{\[]', cleaned):
+        try:
+            return dec.raw_decode(cleaned[m.start():])[0]
+        except json.JSONDecodeError:
+            continue
+    # 4) sin remedio → propagar el error para que el caller lo maneje
     return json.loads(cleaned)

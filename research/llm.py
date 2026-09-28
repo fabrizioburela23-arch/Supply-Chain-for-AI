@@ -107,6 +107,8 @@ class CoreProvider(LLMProvider):
             tier = 'deep' if self.model in (None, 'deep') else 'fast'
             model = self.model if self.model not in (None, 'deep', 'fast') else None
             text, used = prov[1](system, prompt, max_tokens, tier, model=model)
+        elif self.provider == 'gemini':
+            text, used = prov[1](system, prompt, max_tokens, 'deep', json_mode=True)
         else:
             text, used = prov[1](system, prompt, max_tokens, 'deep')
         if not text or not text.strip():
