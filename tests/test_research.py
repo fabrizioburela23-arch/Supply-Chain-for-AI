@@ -263,3 +263,16 @@ def test_presupuesto_diario_detiene_agentes(db, monkeypatch):
     with session_scope() as s:
         run = s.query(AgentRun).filter_by(job_id=jid).one()
         assert run.status == 'skipped' and 'presupuesto' in run.errors[0]
+
+
+@needs_db
+def test_job_sin_agentes_ok_queda_failed_y_se_puede_reintentar(db):
+    """Si todos los agentes fallan, el job es 'failed' y el dedupe no lo reutiliza."""
+    from ontology.db import session_scope
+    from research.models import ResearchJob
+    from research.runner import create_job
+    jid = _run('AMD', ['fundamental'], {'fundamental': ['no json', 'tampoco']}, depth='QUICK', force=False)
+    with session_scope() as s:
+        assert s.get(ResearchJob, jid).status == 'failed'
+        job2, reused2 = create_job(s, 'AMD', depth='QUICK', agents=['fundamental'])
+        assert not reused2 and job2.id != jid

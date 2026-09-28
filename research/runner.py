@@ -240,12 +240,18 @@ def synthesize(session, job):
 def execute_job(session, job, provider_factory=None, fetchers=None):
     job.status = 'running'
     session.flush()
+    ok = 0
     for agent_type in job.agents or []:
         prov = provider_factory(agent_type) if provider_factory else None
-        run_agent(session, job, agent_type, provider=prov, fetchers=fetchers)
+        run = run_agent(session, job, agent_type, provider=prov, fetchers=fetchers)
+        ok += 1 if getattr(run, 'status', None) == 'done' else 0
         session.commit()   # cada agente visible en vivo (feed de actividad)
     job.synthesis = synthesize(session, job)
-    job.status = 'done'
+    # Si NINGÚN agente terminó bien, el job es 'failed' → el dedupe (que solo
+    # reutiliza queued/running/done) deja reintentar enseguida.
+    job.status = 'done' if ok or not job.agents else 'failed'
+    if not ok and job.agents:
+        job.error = 'ningún agente produjo resultado'
     job.completed_at = _now()
     session.flush()
     return job
