@@ -68,6 +68,18 @@ function buildKhipusGraph(env) {
     if (n && n.preipo && n.mkt) n.mkt = null;
   });
 
+  // Valuación verificada de privadas: el texto del ticker ("Pre-IPO ~$39B")
+  // lo leen la ficha y las carteras (precio estimado) — que no circule la vieja.
+  const PV = env.PRIVATE_VALUATIONS;
+  if (PV && PV.entries) {
+    Object.keys(PV.entries).forEach(function (id) {
+      const n = NODE_BY_ID[resolveId(id)], e = PV.entries[id];
+      if (!n || !e || !e.label || !n.preipo) return;
+      if (/\$\s?[\d.,]+\s*[BT]/i.test(n.ticker || '')) n.ticker = String(n.ticker).replace(/~?\$\s?[\d.,]+\s*[BT]/i, '~' + e.label.split(' ')[0]);
+      else if (!n.ticker || /privad|pre-?ipo/i.test(n.ticker)) n.ticker = 'Pre-IPO ~' + e.label.split(' ')[0];
+    });
+  }
+
   const LS = env.LISTING_STATUS;
   if (LS && LS.entries) {
     Object.keys(LS.entries).forEach(function (id) {

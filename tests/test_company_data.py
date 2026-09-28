@@ -633,3 +633,35 @@ def test_ruta_live(client, monkeypatch):
 def test_rutas_ticker_invalido(client):
     for path in ('/api/company/live/', '/api/dossier/', '/api/findossier/'):
         assert client.get(path + 'A%26token%3Dx').status_code == 400
+
+
+# ── Valuación de privadas desde titulares ───────────────────────────────────
+
+def test_extrae_valuaciones_de_titulares_y_separa_negociacion():
+    from core.company_data import extract_valuation_mentions
+    arts = [
+        {'headline': 'OpenAI weighing funding round at over $1.2 trillion valuation', 'url': 'u1',
+         'source': 'yahoo.com', 'datetime': '20260920T120000Z'},
+        {'headline': 'OpenAI raises $122 billion, valued at $852 billion', 'url': 'u2',
+         'source': 'reuters.com', 'datetime': '20260331T120000Z'},
+        {'headline': 'OpenAI valorada en 1,2 billones de dólares, según FT', 'url': 'u3',
+         'source': 'elpais.com', 'datetime': '20260921T080000Z'},
+        {'headline': 'Anthropic valued at $380 billion', 'url': 'u4', 'source': 'x.com',
+         'datetime': '20260301T000000Z'},                      # otra empresa → fuera
+        {'headline': 'OpenAI hires 3,000 engineers', 'url': 'u5', 'source': 'x.com',
+         'datetime': '20260925T000000Z'},                      # sin cifra → fuera
+    ]
+    m = extract_valuation_mentions(arts, 'OpenAI')
+    assert [x['url'] for x in m] == ['u3', 'u1', 'u2']       # más reciente primero
+    by = {x['url']: x for x in m}
+    assert by['u1']['usd_b'] == 1200.0 and by['u1']['kind'] == 'talks'
+    assert by['u2']['usd_b'] == 852.0 and by['u2']['kind'] == 'reported'
+    assert by['u3']['usd_b'] == 1200.0                        # "billones" = trillion
+
+
+def test_valuacion_gdelt_caida_no_rompe(monkeypatch):
+    import core.company_data as cd
+    cd._VAL_CACHE.clear()
+    monkeypatch.setattr(cd, '_get_json', lambda *a, **k: (None, 'timeout'))
+    r = cd.get_valuation_news('OpenAI')
+    assert r['available'] is False and r['mentions'] == [] and 'GDELT' in r['reason']

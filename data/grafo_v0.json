@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-28T06:29:08.352Z",
+ "exported_at": "2026-09-28T15:12:15.907Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,

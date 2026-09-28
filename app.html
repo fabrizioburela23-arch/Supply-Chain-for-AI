@@ -1315,6 +1315,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <script src="nodes/nodes_multicapa.js"></script>
 <script src="nodes/preipo_intel.js"></script>
 <script src="nodes/listing_status.js"></script>
+<script src="nodes/private_valuations.js"></script>
 <script src="nodes/links_all.js"></script>
 <script src="nodes/links_expand.js"></script>
 <script src="nodes/links_connect.js"></script>
@@ -2447,6 +2448,7 @@ function getLinkColor(type) {
 const _mergeResult = buildKhipusGraph({
   NODES, NODE_BY_ID, NODE_ID_ALIAS, RAW_LINKS,
   LISTING_STATUS: window.LISTING_STATUS || null,   /* estado en bolsa verificado */
+  PRIVATE_VALUATIONS: window.PRIVATE_VALUATIONS || null,   /* valuación verificada de privadas */
   expansions: [typeof NODES_EXPAND !== 'undefined' ? NODES_EXPAND : null,
                typeof NODES_EXPAND2 !== 'undefined' ? NODES_EXPAND2 : null,
                typeof NODES_SPACEX !== 'undefined' ? NODES_SPACEX : null,

@@ -24,7 +24,7 @@
   'use strict';
 
   var NEON = '#00E0FF', DOWN = '#FF4D6A', UP = '#2BE38B', INK = '#9BA6C4';
-  var LIVE_MS = 60 * 1000, NEWS_MS = 5 * 60 * 1000;
+  var LIVE_MS = 60 * 1000, NEWS_MS = 5 * 60 * 1000, VAL_MS = 30 * 60 * 1000;
   var charts = [];
   var _gen = 0;          // sube en cada apertura/cierre: las respuestas viejas se ignoran
   var _timers = [];      // intervalos vivos de la ficha abierta
@@ -823,13 +823,33 @@
         kvAuto(L('Riesgo geopolítico', 'Geopolitical risk'), m.geo_risk) +
       '</div>';
 
-    var showVal = !!(pi.valuation || pi.total_raised || pi.ipo_timeline || (pi.investors && pi.investors.length) || n.preipo);
+    // Valuación en 3 capas, de más a menos confiable y SIEMPRE con su fecha:
+    //  1) última ronda CERRADA verificada con fuente (nodes/private_valuations.js)
+    //  2) lo que dicen HOY los titulares (GDELT, en vivo, cifra + medio + fecha;
+    //     separa ronda cerrada de negociación) — se rellena en fetchValNews
+    //  3) el valor del catálogo, rotulado como tal, solo si no hay 1)
+    var pv = ((window.PRIVATE_VALUATIONS || {}).entries || {})[n.id] || null;
+    var pvAsOf = (window.PRIVATE_VALUATIONS || {}).as_of;
+    var showVal = !!(pv || pi.valuation || pi.total_raised || pi.ipo_timeline || (pi.investors && pi.investors.length) || n.preipo);
+    var pvHtml = '';
+    if (pv && pv.valuation_usd_b != null) {
+      var pvSrc = safeUrl(pv.source_url), tkSrc = safeUrl(pv.talks_source_url);
+      pvHtml = kv(L('Última ronda cerrada', 'Latest closed round'),
+                  fmtUsdB(pv.valuation_usd_b) + (pv.as_of ? ' · ' + pv.as_of : '')) +
+        kv(L('Levantado en esa ronda', 'Raised in that round'), pv.raised ? pv.raised + (pv.round ? ' (' + pv.round + ')' : '') : null) +
+        (pv.talks_usd_b != null ? kv(L('En negociación', 'In talks'), '~' + fmtUsdB(pv.talks_usd_b)) : '') +
+        '<div class="fc-meta" style="margin:4px 0 6px">' + esc(L('verificado ', 'verified ')) + esc(pvAsOf || '') +
+          (pvSrc ? ' · <a href="' + esc(pvSrc) + '" target="_blank" rel="noopener">' + esc(L('fuente', 'source')) + ' ↗</a>' : '') +
+          (tkSrc ? ' · <a href="' + esc(tkSrc) + '" target="_blank" rel="noopener">' + esc(L('fuente negociación', 'talks source')) + ' ↗</a>' : '') + '</div>';
+    }
     var val = showVal
-      ? '<div class="fc-cell"><div class="fc-t">💎 ' + esc(L('Valuación', 'Valuation')) + '<span class="fc-tr">' + esc(L('inteligencia pre-IPO', 'pre-IPO intelligence')) + '</span></div>' +
-          kv(L('Valuación', 'Valuation'), pi.valuation) + kv(L('Capital levantado', 'Capital raised'), pi.total_raised) +
+      ? '<div class="fc-cell"><div class="fc-t">💎 ' + esc(L('Valuación', 'Valuation')) + '<span class="fc-tr">' + esc(L('privada: no hay precio de bolsa', 'private: no market price')) + '</span></div>' +
+          pvHtml +
+          '<div id="fc-valnews" class="fc-meta" style="margin:2px 0 8px">📡 ' + esc(L('Buscando la última valuación en las noticias…', 'Looking for the latest valuation in the news…')) + '</div>' +
+          (!pv && pi.valuation ? kv(L('Valuación (catálogo)', 'Valuation (catalog)'), pi.valuation) : '') +
+          kv(L('Capital levantado (catálogo)', 'Capital raised (catalog)'), pv ? null : pi.total_raised) +
           kv(L('IPO estimada', 'Expected IPO'), pi.ipo_timeline) +
           kv(L('Inversores', 'Investors'), (pi.investors || []).slice(0, 4).join(', ') || null) +
-          (!pi.valuation ? '<div class="fc-note" style="padding:14px 4px">' + esc(L('Sin inteligencia pre-IPO registrada para esta empresa.', 'No pre-IPO intelligence on record for this company.')) + '</div>' : '') +
         '</div>'
       : '';
 
@@ -864,7 +884,43 @@
 
     if (parentTk) startLive({ ticker: parentTk, parent: { name: ls.parent || parentTk, ticker: parentTk, child: n.label || n.id } }, gen);
     startNews(n, gen);
+    if (showVal) { fetchValNews(n, gen); every(VAL_MS, function () { fetchValNews(n, gen); }, gen); }
     loadHistory(n, gen);
+  }
+
+  // Valuación EN VIVO según los titulares (server: /api/company/valuation →
+  // GDELT, extracción por patrón sin IA). Dice la cifra, el medio, la fecha y
+  // si es ronda cerrada o solo negociación. Si no hay menciones, lo dice.
+  function fetchValNews(n, gen) {
+    var q = newsQuery(n);
+    if (!q) return;
+    fetch(base() + '/api/company/valuation/' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (gen !== _gen) return;
+        var el = document.getElementById('fc-valnews'); if (!el) return;
+        var line = function (m, label) {
+          var t = parseWhen(m.date), u = safeUrl(m.url);
+          return '<div style="margin-top:3px"><b style="color:#E8EDFB">' + esc(label) + ' ' + esc(fmtUsdB(m.usd_b)) + '</b> · ' +
+            (u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(m.source || L('fuente', 'source')) + ' ↗</a>' : esc(m.source || '')) +
+            (t ? ' · ' + esc(ago(t)) : '') + '<div style="opacity:.8">«' + esc(m.headline) + '»</div></div>';
+        };
+        if (!d || !d.available) {
+          el.innerHTML = '📡 ' + esc(L('No se pudo revisar la valuación en las noticias ahora; reintentamos cada 30 min.', 'Could not check the valuation in the news right now; we retry every 30 min.'));
+          return;
+        }
+        if (!d.latest_reported && !d.latest_talks) {
+          el.innerHTML = '📡 ' + esc(L('Sin titulares recientes (6 meses) con una valuación de esta empresa.', 'No recent headlines (6 months) with a valuation for this company.'));
+          return;
+        }
+        el.innerHTML = '<div>📡 ' + esc(L('En las noticias (en vivo, se revisa cada 30 min):', 'In the news (live, checked every 30 min):')) + '</div>' +
+          (d.latest_reported ? line(d.latest_reported, L('Reportada:', 'Reported:')) : '') +
+          (d.latest_talks ? line(d.latest_talks, L('En negociación:', 'In talks:')) : '');
+      })
+      .catch(function () {
+        var el = document.getElementById('fc-valnews');
+        if (el && gen === _gen) el.textContent = '📡 ' + L('No se pudo revisar la valuación en las noticias ahora; reintentamos cada 30 min.', 'Could not check the valuation in the news right now; we retry every 30 min.');
+      });
   }
 
   // GDELT: el server limpia a [A-Za-z0-9 ._-]; aquí quitamos acentos y el

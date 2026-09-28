@@ -1226,3 +1226,107 @@ def _compute_live(t, fh):
     out['reason_en'] = f'No live market data for {t} — ' + ' · '.join(notes_en)
     _cache_put(_LIVE_CACHE, t, out, LIVE_TTL_FAIL)
     return out
+
+
+# ── Valuación de PRIVADAS en vivo desde titulares (GDELT) ───────────────────
+# Una privada no tiene precio de bolsa. Lo más "en vivo" que existe es lo que
+# la prensa reporta: "OpenAI valued at $852 billion", "valorada en 1,2
+# billones". Se extrae la cifra del TITULAR (con medio y fecha), sin IA que
+# pueda alucinar, y se separa lo CONFIRMADO de lo que está en NEGOCIACIÓN.
+
+_GDELT_URL = 'https://api.gdeltproject.org/api/v2/doc/doc'
+_VAL_CACHE = {}   # nombre → (ts, data, ttl)
+
+_UNIT_B = {'trillion': 1000.0, 'tn': 1000.0, 't': 1000.0, 'billion': 1.0, 'bn': 1.0,
+           'b': 1.0, 'billones': 1000.0, 'mil millones': 1.0}
+_VAL_PATTERNS = (
+    # "valued at $852 billion", "valuation of $1.2 trillion", "worth $300bn"
+    re.compile(r'(?:valu(?:ed|ation|ing)|worth)\D{0,30}?\$\s?(\d{1,4}(?:[.,]\d{1,3})?)\s*(trillion|tn|billion|bn|t|b)\b', re.I),
+    # "$852 billion valuation", "$1.2tn valuation"
+    re.compile(r'\$\s?(\d{1,4}(?:[.,]\d{1,3})?)\s*(trillion|tn|billion|bn|t|b)\b[-\s]+valuation', re.I),
+    # "valorada en 1,2 billones de dólares" / "valuada en 852.000 millones" / "US$ 300 mil millones"
+    re.compile(r'(?:valorad[ao]|valuad[ao]|valoraci[oó]n)\D{0,30}?(?:US\$|\$)?\s?(\d{1,4}(?:[.,]\d{1,3})?)\s*(billones|mil millones)', re.I),
+)
+_TALKS_RE = re.compile(
+    r'\b(talks?|seeks?|seeking|eyes|eyeing|weigh(?:s|ing)?|consider(?:s|ing)?|in discussions|plans?|aims?|'
+    r'could|may|would|targets?|mulls?|explores?|reportedly|negocia|busca|podr[ií]a|planea|conversaciones)\b', re.I)
+
+
+def _to_float(txt):
+    t = str(txt).strip()
+    if ',' in t and '.' not in t:
+        # "1,2" (decimal español) vs "852,000" (miles en inglés)
+        t = t.replace(',', '.') if len(t.split(',')[-1]) != 3 else t.replace(',', '')
+    else:
+        t = t.replace(',', '')
+    try:
+        return float(t)
+    except ValueError:
+        return None
+
+
+def extract_valuation_mentions(articles, name):
+    """Pura (testeable): de artículos GDELT normalizados ({headline, url,
+    source, datetime}) saca las valuaciones citadas en TITULARES que nombran a
+    la empresa. Devuelve lista ordenada (más reciente primero) de
+    {usd_b, kind:'reported'|'talks', headline, url, source, date}."""
+    out, seen = [], set()
+    nm = (name or '').strip().lower()
+    for a in articles or []:
+        h = str((a or {}).get('headline') or '').strip()
+        if not h or (nm and nm not in h.lower()):
+            continue
+        for pat in _VAL_PATTERNS:
+            m = pat.search(h)
+            if not m:
+                continue
+            v = _to_float(m.group(1))
+            unit = _UNIT_B.get(m.group(2).lower())
+            if v is None or unit is None:
+                continue
+            usd_b = round(v * unit, 1)
+            # cotas de cordura: una valuación citada en titulares de estas
+            # empresas está entre $50M y $10T; fuera de eso es otra cifra
+            if not (0.05 <= usd_b <= 10000):
+                continue
+            key = (usd_b, h.lower()[:60])
+            if key in seen:
+                break
+            seen.add(key)
+            out.append({'usd_b': usd_b, 'kind': 'talks' if _TALKS_RE.search(h) else 'reported',
+                        'headline': h[:300], 'url': (a or {}).get('url'),
+                        'source': (a or {}).get('source'), 'date': (a or {}).get('datetime')})
+            break
+    out.sort(key=lambda x: str(x.get('date') or ''), reverse=True)
+    return out
+
+
+def get_valuation_news(name):
+    """Menciones de valuación de una empresa en las noticias recientes (GDELT).
+    Caché 30 min de éxitos, 5 min de fallos. Nunca lanza."""
+    name = re.sub(r'[^A-Za-z0-9 ._&-]', '', str(name or ''))[:60].strip()
+    if not name:
+        return {'available': False, 'mentions': [], 'reason': 'nombre vacío', 'reason_en': 'empty name'}
+    key = name.lower()
+    hit = _cache_get(_VAL_CACHE, key)
+    if hit is not None:
+        return hit
+    q = f'"{name}" (valuation OR valued OR valorada)'
+    data, err = _get_json(_GDELT_URL, params={'query': q, 'mode': 'artlist', 'maxrecords': 75,
+                                              'format': 'json', 'sort': 'datedesc', 'timespan': '6m'},
+                          timeout=12)
+    if err or not isinstance(data, dict):
+        res = {'available': False, 'mentions': [], 'source': 'gdelt',
+               'reason': f'GDELT no respondió ({err or "respuesta inválida"})',
+               'reason_en': f'GDELT did not answer ({err or "invalid response"})'}
+        _cache_put(_VAL_CACHE, key, res, 300)
+        return res
+    arts = [{'headline': a.get('title'), 'url': a.get('url'), 'source': a.get('domain'),
+             'datetime': a.get('seendate')} for a in (data.get('articles') or [])]
+    ments = extract_valuation_mentions(arts, name)
+    res = {'available': True, 'source': 'gdelt', 'as_of': _now_iso(), 'mentions': ments[:8],
+           'latest_reported': next((m for m in ments if m['kind'] == 'reported'), None),
+           'latest_talks': next((m for m in ments if m['kind'] == 'talks'), None),
+           'articles_scanned': len(arts)}
+    _cache_put(_VAL_CACHE, key, res, 1800)
+    return res

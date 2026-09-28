@@ -2584,6 +2584,21 @@ def company_live(ticker):
     return jsonify(prof)
 
 
+@app.route('/api/company/valuation/<path:name>')
+@rate_limit(limit=60, window=60)
+def company_valuation_news(name):
+    """Valuación de una PRIVADA según los titulares recientes (GDELT): la cifra
+    citada, medio, fecha y si es ronda cerrada o negociación. Pedido
+    2026-09-28: "OpenAI dice $500B y está por $1T — que siempre sea en vivo"."""
+    from core.company_data import get_valuation_news
+    try:
+        return jsonify(get_valuation_news(name))
+    except Exception as e:  # noqa: BLE001
+        log.warning('company_valuation %s: %s', name[:40], type(e).__name__)
+        return jsonify({'available': False, 'mentions': [],
+                        'reason': 'error interno', 'reason_en': 'internal error'})
+
+
 # ── SEC 10-K Research — síntesis del filing con Claude (Fase 2) ───────────────
 _SEC_UA = os.getenv('SEC_USER_AGENT', 'Khipu Finance research@khipu.finance')
 _SEC_TICKERS = {'data': None, 'ts': 0.0}
