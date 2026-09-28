@@ -121,6 +121,8 @@
 #fc .fc-btn.sm{height:26px;padding:0 10px;font-size:11px;border-radius:7px}
 #fc .fc-sub{font-size:11px;color:#5b6580;margin-bottom:16px;line-height:1.5}
 #fc .fc-sub a,#fc .fc-foot a{color:#00E0FF;text-decoration:none}
+#fc .fc-cell a{color:#5FC6E8;text-decoration:none}
+#fc .fc-cell a:hover{text-decoration:underline}
 #fc .fc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
 #fc .fc-cell{border:1px solid rgba(122,158,255,.14);border-radius:13px;background:rgba(11,18,34,.55);padding:13px 14px;min-width:0}
 #fc .fc-wide{grid-column:1/-1}
@@ -787,7 +789,14 @@
     _st.parent = parentTk ? { ticker: parentTk, name: ls.parent || parentTk } : null;
     _st.cmp = null;
 
-    var rounds = (pi.rounds || []).map(function (r) {
+    // la ronda VERIFICADA más reciente va primero (el catálogo trae solo las viejas)
+    var pvR = ((window.PRIVATE_VALUATIONS || {}).entries || {})[n.id];
+    var roundList = (pi.rounds || []).slice();
+    if (pvR && pvR.as_of && (pvR.raised || pvR.round) &&
+        !roundList.some(function (r) { return String(r.date || '').slice(0, 7) === String(pvR.as_of).slice(0, 7); })) {
+      roundList.unshift({ date: String(pvR.as_of).slice(0, 7), round: (pvR.round || L('Ronda', 'Round')) + ' · ' + L('verificada', 'verified'), amount: pvR.raised || '' });
+    }
+    var rounds = roundList.map(function (r) {
       return '<div style="display:flex;gap:10px;font-size:11.5px;padding:5px 0;border-bottom:1px solid rgba(122,158,255,.06)">' +
         '<span style="color:#00E0FF;font-family:monospace;flex:0 0 52px">' + esc(r.date || '') + '</span>' +
         '<span style="color:#E8EDFB;flex:1">' + esc(r.round || '') + '</span>' +

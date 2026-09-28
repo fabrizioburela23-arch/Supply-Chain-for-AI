@@ -9,6 +9,28 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-28 (d) — Valuación de PRIVADAS en vivo (sw v152)
+
+"OpenAI dice $500B y está por $1T — la idea es que siempre sea en vivo".
+Una privada no tiene precio de bolsa → dos capas, siempre con fecha y fuente:
+- VERIFICADA: `nodes/private_valuations.js` (GENERADO por
+  scripts/build_private_valuations.py desde data/private_valuations/*.json;
+  54 empresas: OpenAI $852B mar-2026 (+ negociación ~$1.2T), Anthropic $965B,
+  Anduril $61B, ShieldAI $12.7B, ElevenLabs $11B, Databricks $190B, Groq
+  $3.5B (bajó)…). Actualiza PREIPO_INTEL[id].valuation y (merge_graph, env
+  PRIVATE_VALUATIONS) el texto "Pre-IPO ~$XB" del ticker.
+- EN VIVO: `/api/company/valuation/<nombre>` → core/company_data.
+  get_valuation_news: GDELT (6 meses) + extracción por PATRÓN en titulares
+  (sin IA; en/es, "billones"=trillion), separa "reportada" de "en
+  negociación"; caché 30 min. El Dossier de privadas lo muestra (medio,
+  fecha, titular) y lo revisa cada 30 min; la ronda verificada va primera en
+  "Rondas".
+- Sin verificar (quedan con el catálogo): 1X, TerraPower, CFS, Axiom, Zap,
+  Waabi, AgiBot, Tenstorrent, Poolside, Physical Intelligence… y ~70 no
+  revisadas (Bluefors, Zeiss, Trumpf, Rapidus, DeepSeek…).
+
+---
+
 # SESIÓN 2026-09-28 (c) — DOSSIER PARA TODAS LAS EMPRESAS + DATOS EN VIVO (sw v151)
 
 Pedido: "que todas las empresas tengan dossier y que la info se actualice en
