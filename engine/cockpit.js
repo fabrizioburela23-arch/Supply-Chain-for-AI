@@ -757,7 +757,7 @@
       var da = res[0] || {}, db = res[1] || {};
       if (!da.available && !db.available) { box.innerHTML = '<div style="color:#FFB300;padding:14px;font-size:13px">' + (en ? 'No fundamentals available for these two.' : 'Sin fundamentales disponibles para estas dos.') + '</div>'; return; }
       box.innerHTML = buildFundTable(da.available ? da : {}, db.available ? db : {}, aNode.label, bNode.label, en) +
-        '<div style="margin-top:10px;font-size:10.5px;color:#5b6580">' + (en ? 'Latest available fiscal year · source FMP/Alpha Vantage · green = better in that row · not financial advice.' : 'Último año fiscal disponible · fuente FMP/Alpha Vantage · verde = mejor en esa fila · no es asesoría financiera.') + '</div>';
+        '<div style="margin-top:10px;font-size:10.5px;color:#5b6580">' + (function () { var SM = { fmp: 'FMP', yahoo: 'Yahoo Finance', alphavantage: 'Alpha Vantage' }; var srcs = [da.source, db.source].filter(Boolean).map(function (x) { return SM[x] || x; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' + ') || '—'; return en ? 'Latest available fiscal year · source ' + srcs + ' · green = better in that row · not financial advice.' : 'Último año fiscal disponible · fuente ' + srcs + ' · verde = mejor en esa fila · no es asesoría financiera.'; })() + '</div>';
     });
   }
 

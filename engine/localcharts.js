@@ -535,7 +535,7 @@
             });
             if (vals.length < 2) return null;
             var up = vals[vals.length - 1] >= vals[0];
-            var sub = (up ? '▲ ' : '▼ ') + labs[0] + '→' + labs[labs.length - 1] + ' · ' + (L() === 'en' ? 'source FMP/AV' : 'fuente FMP/AV');
+            var sub = (up ? '▲ ' : '▼ ') + labs[0] + '→' + labs[labs.length - 1] + ' · ' + (function () { var SM = { fmp: 'FMP', yahoo: 'Yahoo Finance', alphavantage: 'Alpha Vantage' }; var s = SM[d.source] || d.source || '—'; return L() === 'en' ? 'source ' + s : 'fuente ' + s; })();
             if (fund.type === 'bar') {
               // barras por año — la mejor forma para capex, flujo libre y % de crecimiento
               return { type: 'bar', title: fn2.label + ' — ' + flab, subtitle: sub,

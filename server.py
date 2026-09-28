@@ -1177,158 +1177,30 @@ def batch_quotes():
 # OJO: /api/fundamentals/<t> ya existe (P/E + price targets + ratings, lo usa
 # el Second Brain) — este es OTRO endpoint con las series anuales de 6 años.
 @app.route('/api/findossier/<ticker>')
-@rate_limit(limit=60, window=3600)
+@rate_limit(limit=240, window=3600)
 def fin_dossier(ticker):
-    """Series anuales para el dossier financiero de una empresa:
-    crecimiento de ingresos, dilución, FCF, márgenes, deuda/capital, ROE y
-    EV/Ventas. Fuente: FMP (estados anuales, ~5 años). Sin FMP_KEY responde
-    {available:false} y el cliente lo muestra con gracia.
-    Caché MANUAL solo de éxitos — un rate-limit de FMP no debe quedar
-    envenenado 24h (mismo patrón que /api/fundamentals)."""
+    """Series anuales para el dossier financiero de una empresa (lo consumen
+    engine/fincard.js, cockpit.js, termdata.js y localcharts.js): crecimiento
+    de ingresos, dilución, FCF, márgenes, deuda/capital, ROE y EV/Ventas.
+
+    2026-09-28: la cascada vive en core/company_data.get_annual_financials —
+    FMP /stable/ → Yahoo fundamentals-timeseries (TODAS las bolsas, sin clave)
+    → Alpha Vantage. Antes era FMP → AV y fuera de EE.UU. casi nunca había
+    datos. Mismas claves y unidades que siempre + `source` y `currency`
+    (moneda ORIGINAL del reporte; los montos salen convertidos a USD).
+    La caché (12 h éxito completo / 1 h parcial / 10 min fallo) está en el
+    módulo: un fallo transitorio nunca queda envenenado."""
     ticker = _safe_ticker(ticker)
     if not ticker:
         return jsonify({'error': 'invalid ticker'}), 400
-    if not FMP:
-        return jsonify({'available': False, 'reason': 'FMP_KEY no configurada'})
-    _ck = f'findossier_{ticker}'
-    _hit = cache.get(_ck)
-    if _hit is not None:
-        return jsonify(_hit)
-
-    # FMP "stable" primero (los planes nuevos NO soportan /api/v3 — el resto
-    # del server ya usa /stable/); v3 como respaldo para planes antiguos.
-    _last_err = {}
-
-    def _fmp(resource):
-        data, err = _safe_get(
-            f'https://financialmodelingprep.com/stable/{resource}?symbol={ticker}&limit=6&apikey={FMP}')
-        if isinstance(data, list) and data:
-            return data
-        if isinstance(data, dict):
-            _last_err[resource] = str(data.get('Error Message') or data.get('message') or data)[:150]
-        elif err:
-            _last_err[resource] = str(err)[:150]
-        data, err = _safe_get(
-            f'https://financialmodelingprep.com/api/v3/{resource}/{ticker}?limit=6&apikey={FMP}')
-        if isinstance(data, list) and data:
-            return data
-        if isinstance(data, dict):
-            _last_err[resource] = str(data.get('Error Message') or data.get('message') or data)[:150]
-        return []
-
-    inc = _fmp('income-statement')
-    cfs = _fmp('cash-flow-statement')
-    bal = _fmp('balance-sheet-statement')
-    km = _fmp('key-metrics')
-    if not inc and AV_KEY:
-        # Respaldo: Alpha Vantage (el plan gratis SÍ incluye estados anuales).
-        # El plan FMP de producción devuelve 402 en statements (2026-07-11).
-        def _av(fn):
-            data, _e = _safe_get(f'https://www.alphavantage.co/query?function={fn}&symbol={ticker}&apikey={AV_KEY}')
-            if isinstance(data, dict):
-                note = data.get('Note') or data.get('Information') or data.get('Error Message')
-                if note:
-                    _last_err['av_' + fn] = str(note)[:160]
-                return data.get('annualReports') or []
-            return []
-
-        # AV free = 1 request/segundo — espaciar las 3 llamadas (total ~2.4s,
-        # tolerable: el dossier completo queda cacheado 24h por ticker)
-        inc_av = _av('INCOME_STATEMENT')
-        time.sleep(1.2)
-        bal_av = _av('BALANCE_SHEET')
-        time.sleep(1.2)
-        cfs_av = _av('CASH_FLOW')
-        if inc_av:
-            def _y(r):
-                return str(r.get('fiscalDateEnding', ''))[:4]
-            sh_by_year = {_y(r): r.get('commonStockSharesOutstanding') for r in bal_av}
-            inc = [{'calendarYear': _y(r), 'revenue': r.get('totalRevenue'),
-                    'grossProfit': r.get('grossProfit'), 'netIncome': r.get('netIncome'),
-                    'weightedAverageShsOut': sh_by_year.get(_y(r))} for r in inc_av[:6]]
-            bal = [{'calendarYear': _y(r), 'totalDebt': r.get('shortLongTermDebtTotal'),
-                    'totalStockholdersEquity': r.get('totalShareholderEquity')} for r in bal_av[:6]]
-            cfs = []
-            for r in cfs_av[:6]:
-                try:
-                    fcf_v = float(r.get('operatingCashflow') or 0) - float(r.get('capitalExpenditures') or 0)
-                except (TypeError, ValueError):
-                    fcf_v = None
-                cfs.append({'calendarYear': _y(r), 'freeCashFlow': fcf_v,
-                            'capitalExpenditure': r.get('capitalExpenditures')})
-            km = []   # AV no trae EV/Ventas — ese mini-gráfico queda vacío
-    if not inc:
-        return jsonify({'available': False,
-                        'reason': _last_err.get('income-statement', 'sin estados financieros para este ticker/plan')})
-
-    def by_year(rows):
-        out = {}
-        for r in (rows if isinstance(rows, list) else []):
-            y = str(r.get('calendarYear') or r.get('date', ''))[:4]
-            if y.isdigit():
-                out[y] = r
-        return out
-
-    yi, yc, yb, yk = by_year(inc), by_year(cfs), by_year(bal), by_year(km)
-    years = sorted(yi.keys())[-6:]
-
-    def _f(v):
-        try:
-            return float(v)
-        except (TypeError, ValueError):
-            return None
-
-    series = {'years': [], 'revenue': [], 'revenue_growth': [], 'gross_margin': [],
-              'capex': [], 'fcf': [], 'fcf_margin': [], 'fcf_growth': [], 'dilution': [],
-              'de_ratio': [], 'roe': [], 'ev_to_sales': [], 'shares': []}
-    prev_rev = prev_fcf = prev_sh = None
-    for y in years:
-        i, c, b, k = yi.get(y, {}), yc.get(y, {}), yb.get(y, {}), yk.get(y, {})
-        rev = _f(i.get('revenue'))
-        fcf = _f(c.get('freeCashFlow'))
-        capex = _f(c.get('capitalExpenditure'))   # gasto de capital (se guarda en valor absoluto)
-        sh = _f(i.get('weightedAverageShsOut')) or _f(i.get('weightedAverageShsOutDil'))
-        debt = _f(b.get('totalDebt'))
-        eq = _f(b.get('totalStockholdersEquity')) or _f(b.get('totalEquity'))
-        # márgenes/ratios: usar el campo directo si está, si no calcular del crudo
-        gm = _f(i.get('grossProfitRatio'))
-        if gm is None and rev and _f(i.get('grossProfit')) is not None:
-            gm = _f(i.get('grossProfit')) / rev
-        roe = _f(k.get('roe')) or _f(k.get('returnOnEquity'))
-        if roe is None and eq and _f(i.get('netIncome')) is not None:
-            roe = _f(i.get('netIncome')) / eq
-        evs = _f(k.get('evToSales')) or _f(k.get('enterpriseValueOverRevenue')) \
-            or _f(k.get('evToRevenue'))
-        series['years'].append(y)
-        series['revenue'].append(rev)
-        series['revenue_growth'].append(round((rev / prev_rev - 1) * 100, 1) if rev and prev_rev else None)
-        series['gross_margin'].append(round(gm * 100, 1) if gm is not None else None)
-        series['capex'].append(abs(capex) if capex is not None else None)
-        series['fcf'].append(fcf)
-        series['fcf_margin'].append(round(fcf / rev * 100, 1) if fcf is not None and rev else None)
-        series['fcf_growth'].append(round((fcf / prev_fcf - 1) * 100, 1) if fcf and prev_fcf and prev_fcf > 0 else None)
-        series['dilution'].append(round((sh / prev_sh - 1) * 100, 2) if sh and prev_sh else None)
-        series['shares'].append(round(sh / 1e9, 3) if sh else None)
-        series['de_ratio'].append(round(debt / eq, 3) if debt is not None and eq else None)
-        series['roe'].append(round(roe * 100, 1) if roe is not None else None)
-        series['ev_to_sales'].append(round(evs, 1) if evs is not None else None)
-        prev_rev, prev_fcf, prev_sh = rev, fcf, sh
-
-    payload = {'available': True, 'ticker': ticker, **series}
-    if _last_err:
-        payload['partial'] = {k: v for k, v in _last_err.items()}   # diagnóstico visible
-    # caché: 24h si el paquete está COMPLETO; 1h si es PARCIAL (FMP 402 → Alpha
-    # Vantage sin dilución/FCF). Antes un parcial NO se cacheaba → cada vista
-    # tardaba ~7s (AV con pausas de 1.2s) y la comparación de dossiers se sentía
-    # lenta. Ahora el primer acceso es lento (API externa) pero los repetidos son
-    # instantáneos, y un parcial se re-intenta en 1h por si FMP se recupera.
-    complete = any(v is not None for v in series['dilution']) and any(v is not None for v in series['fcf'])
-    has_rev = any(v is not None for v in series['revenue'])
-    if complete:
-        cache.set(_ck, payload, timeout=86400)
-    elif has_rev:
-        cache.set(_ck, payload, timeout=3600)
-    return jsonify(payload)
+    from core.company_data import get_annual_financials, to_findossier
+    try:
+        fin = get_annual_financials(ticker, fmp_key=FMP, av_key=AV_KEY)
+    except Exception as e:  # noqa: BLE001
+        log.warning('findossier %s: %s', ticker, type(e).__name__)
+        fin = {'available': False, 'reason': 'error interno al consultar las fuentes',
+               'reason_en': 'internal error while querying the sources'}
+    return jsonify(to_findossier(fin, ticker))
 
 
 @app.route('/api/candles/<ticker>')
@@ -2614,20 +2486,28 @@ def _space_facts_str():
 # ── GDELT News (gratis, global, multi-idioma) ────────────────────────────────
 @app.route('/api/news/gdelt/<company_name>')
 @rate_limit(limit=60, window=60)
-@cache.cached(timeout=1800)
 def news_gdelt(company_name):
+    # Caché MANUAL de 5 min solo de éxitos (antes 30 min, y cacheaba también
+    # los fallos de GDELT: el Dossier "en vivo" no veía noticias nuevas y un
+    # corte de GDELT quedaba envenenado media hora).
     from urllib.parse import quote as _urlq
     company_name = re.sub(r'[^A-Za-z0-9 ._-]', '', company_name)[:60]
+    _ck = f'gdelt_{company_name.lower()}'
+    _hit = cache.get(_ck)
+    if _hit is not None:
+        return jsonify(_hit)
     url = (f'https://api.gdeltproject.org/api/v2/doc/doc?query={_urlq(company_name)}'
            f'&mode=artlist&maxrecords=20&format=json&sort=datedesc')
     data, err = _safe_get(url, timeout=12)
     if err or not isinstance(data, dict):
         return jsonify([])
-    return jsonify([{
+    out = [{
         'headline': a.get('title'), 'url': a.get('url'), 'source': a.get('domain'),
         'datetime': a.get('seendate'), 'language': a.get('language'),
         'sentiment': float(a.get('tone', 0) or 0), 'source_api': 'GDELT',
-    } for a in (data.get('articles', []) or [])[:20]])
+    } for a in (data.get('articles', []) or [])[:20]]
+    cache.set(_ck, out, timeout=300)
+    return jsonify(out)
 
 
 # ── SEC EDGAR (financieros oficiales, gratis) ────────────────────────────────
@@ -2659,99 +2539,49 @@ _CIK_MAP = {
 
 @app.route('/api/dossier/<ticker>')
 @rate_limit(limit=30, window=60)
-@cache.cached(timeout=3600)
 def dossier(ticker):
-    """5-year financial dossier: income + balance + cash flow + key metrics (FMP)."""
+    """Dossier de 5-6 años para la pestaña Análisis (app.html
+    `_dossierRenderPanels`): ingresos, dilución, FCF, valuación, balance,
+    márgenes, ROE/ROIC — en MILES DE MILLONES USD y %.
+
+    2026-09-28: antes usaba FMP /api/v3 (el plan de producción responde 402) y
+    el cliente caía SIEMPRE a un dossier INVENTADO. Ahora usa la misma
+    cascada honesta que /api/findossier (core/company_data). `synthetic` es
+    SIEMPRE False. Sin datos → 200 {available:false, reason, ticker}: el
+    cliente muestra un mensaje honesto, jamás números inventados."""
     ticker = _safe_ticker(ticker)
     if not ticker:
         return jsonify({'error': 'invalid ticker'}), 400
+    from core.company_data import get_annual_financials, to_dossier
+    try:
+        fin = get_annual_financials(ticker, fmp_key=FMP, av_key=AV_KEY)
+    except Exception as e:  # noqa: BLE001
+        log.warning('dossier %s: %s', ticker, type(e).__name__)
+        fin = {'available': False, 'reason': 'error interno al consultar las fuentes',
+               'reason_en': 'internal error while querying the sources'}
+    return jsonify(to_dossier(fin, ticker))
 
-    def pick(lst, field, scale=1e9, rnd=2):
-        if not lst:
-            return []
-        out = []
-        for x in reversed(lst):
-            v = x.get(field) if isinstance(x, dict) else None
-            out.append(round(float(v) / scale, rnd) if v is not None else None)
-        return out
 
-    def pick_pct(lst, field):
-        vals = pick(lst, field, scale=1, rnd=3)
-        return [round(v * 100, 1) if v is not None else None for v in vals]
-
-    if not FMP:
-        return jsonify({'error': 'FMP_KEY not configured — dossier requires FMP', 'ticker': ticker}), 503
-
-    inc, _  = _safe_get(f'https://financialmodelingprep.com/api/v3/income-statement/{ticker}?limit=5&apikey={FMP}')
-    bal, _  = _safe_get(f'https://financialmodelingprep.com/api/v3/balance-sheet-statement/{ticker}?limit=5&apikey={FMP}')
-    cf, _   = _safe_get(f'https://financialmodelingprep.com/api/v3/cash-flow-statement/{ticker}?limit=5&apikey={FMP}')
-    km, _   = _safe_get(f'https://financialmodelingprep.com/api/v3/key-metrics/{ticker}?limit=5&apikey={FMP}')
-
-    inc  = inc  if isinstance(inc,  list) else []
-    bal  = bal  if isinstance(bal,  list) else []
-    cf   = cf   if isinstance(cf,   list) else []
-    km   = km   if isinstance(km,   list) else []
-
-    years = [x['date'][:4] for x in reversed(inc) if isinstance(x, dict) and 'date' in x]
-    rev   = pick(inc, 'revenue')
-
-    # Revenue growth % YoY
-    def growth(vals):
-        out = [None]
-        for i in range(1, len(vals)):
-            a, b = vals[i-1], vals[i]
-            out.append(round((b-a)/abs(a)*100, 1) if a and b else None)
-        return out
-
-    # Net debt = totalDebt - cash
-    debt = pick(bal, 'totalDebt')
-    cash = pick(bal, 'cashAndCashEquivalents')
-    net_debt = [
-        round((d or 0) - (c or 0), 2)
-        for d, c in zip(debt, cash)
-    ]
-
-    fcf = pick(cf, 'freeCashFlow')
-    fcf_margin = [
-        round(f/r*100, 1) if f is not None and r else None
-        for f, r in zip(fcf, rev)
-    ]
-
-    # EV/Revenue — try key-metrics first, fall back to priceToSalesRatio
-    km_fields = km[0] if km else {}
-    ev_rev_field = 'evToRevenue' if 'evToRevenue' in km_fields else 'priceToSalesRatio'
-
-    return jsonify({
-        'ticker': ticker,
-        'years': years,
-        'synthetic': False,
-        # P1 Revenue (B$)
-        'revenue': rev,
-        'revenue_growth': growth(rev),
-        # P2 Dilution — shares outstanding (B)
-        'shares': pick(inc, 'weightedAverageShsOut', scale=1e9, rnd=3),
-        # P3 FCF (B$)
-        'fcf': fcf,
-        'fcf_margin': fcf_margin,
-        # P4 Stock — served from /api/candles/<ticker> in the browser
-        # P5 Valuation
-        'ev_revenue': [round(v, 2) if v else None for v in pick(km, ev_rev_field, scale=1, rnd=2)],
-        'pe_ratio':   [round(v, 1) if v else None for v in pick(km, 'peRatio', scale=1, rnd=1)],
-        # P6 Balance sheet
-        'total_debt': debt,
-        'cash': cash,
-        'net_debt': net_debt,
-        # P7 Margins
-        'gross_margin': pick_pct(inc, 'grossProfitRatio'),
-        'net_margin':   pick_pct(inc, 'netIncomeRatio'),
-        # P8 ROE / ROIC
-        'roe':  pick_pct(km, 'roe'),
-        'roic': pick_pct(km, 'roic'),
-        # extras
-        'net_income': pick(inc, 'netIncome'),
-        'eps':        [x.get('eps') if isinstance(x,dict) else None for x in reversed(inc)],
-        'ebitda':     pick(inc, 'ebitda'),
-    })
+@app.route('/api/company/live/<ticker>')
+@rate_limit(limit=120, window=60)
+def company_live(ticker):
+    """Perfil EN VIVO de cualquier empresa cotizada (pedido 2026-09-28: "que la
+    info se actualice en vivo"): precio y % del día, capitalización en USD,
+    empleados, ingresos TTM, márgenes, P/E, rango 52 semanas, precio objetivo.
+    Yahoo quoteSummary → Finnhub (EE.UU.) → Yahoo chart; caché 90 s en
+    core/company_data. Responde 200 SIEMPRE con available true/false."""
+    ticker = _safe_ticker(ticker)
+    if not ticker:
+        return jsonify({'error': 'invalid ticker', 'available': False}), 400
+    from core.company_data import get_live_profile
+    try:
+        prof = get_live_profile(ticker, finnhub_key=FINNHUB)
+    except Exception as e:  # noqa: BLE001
+        log.warning('company_live %s: %s', ticker, type(e).__name__)
+        prof = {'available': False, 'source': None, 'symbol': ticker,
+                'reason': 'error interno al consultar las fuentes',
+                'reason_en': 'internal error while querying the sources'}
+    return jsonify(prof)
 
 
 # ── SEC 10-K Research — síntesis del filing con Claude (Fase 2) ───────────────

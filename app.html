@@ -457,6 +457,13 @@ footer .disc{line-height:1.4}
 .meta-item{background:var(--bg);border:1px solid var(--line);border-radius:2px;padding:9px 11px}
 .meta-l{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:4px}
 .meta-v{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:600;line-height:1.2}
+/* dato EN VIVO (KhipuLive): punto verde; el title dice en vivo · fuente · hora */
+.is-live{cursor:help}
+.is-live::after{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#2BE38B;box-shadow:0 0 5px #2BE38B;margin-left:5px;vertical-align:middle}
+/* tocar un dato en vivo (móvil: no hay hover) → globo con fuente y hora */
+#live-tip{position:fixed;z-index:9500;max-width:min(300px,calc(100vw - 16px));box-sizing:border-box;background:#0B1222;color:#E8EDFB;border:1px solid #2BE38B;border-radius:8px;padding:7px 10px;font:500 12px/1.4 'Inter',system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .15s}
+#live-tip.show{opacity:1}
+#live-tip small{display:block;color:#9BA6C4;font-size:11px;margin-top:3px}
 .geo-risk-box{background:var(--bg);border:1px solid var(--line-2);border-radius:2px;padding:9px 12px;font-size:12px;color:var(--ink-2);margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;line-height:1.4}
 .geo-icon{font-size:14px;flex-shrink:0}
 .key-clients-box{margin:8px 0 14px;background:var(--bg);border:1px solid var(--line);border-radius:2px;padding:10px 12px}
@@ -1669,8 +1676,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     <div class="mkt-tablewrap" style="margin-top:24px;padding:0;overflow:visible" id="dossier-wrap">
       <div style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px">
         <div>
-          <div class="mkt-sec-head" style="margin:0;font-size:13px">📊 Dossier Financiero</div>
-          <div style="font-size:11px;color:var(--ink-3);margin-top:2px">Análisis 5 años · Compara hasta 3 empresas · FMP + síntesis</div>
+          <div class="mkt-sec-head" id="dossier-h" style="margin:0;font-size:13px">📊 Dossier Financiero</div>
+          <div id="dossier-sub" style="font-size:11px;color:var(--ink-3);margin-top:2px">Estados anuales · compara hasta 3 empresas · FMP → Yahoo Finance → Alpha Vantage · nada inventado</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <div id="dossier-badges" style="display:flex;gap:5px;flex-wrap:wrap"></div>
@@ -1680,7 +1687,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
               oninput="_dossierAutocomplete(this.value)" onkeydown="if(event.key==='Enter')_dossierLoad()">
             <div id="dossier-ac" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;z-index:200;max-height:180px;overflow-y:auto;margin-top:2px"></div>
           </div>
-          <button onclick="_dossierLoad()" style="padding:6px 12px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Analizar</button>
+          <button id="dossier-go" onclick="_dossierLoad()" style="padding:6px 12px;background:var(--violet);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">Analizar</button>
         </div>
       </div>
       <!-- 8-panel grid -->
@@ -1691,7 +1698,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
       <!-- Actions bar -->
       <div id="dossier-actions" style="display:none;padding:10px 16px;border-top:1px solid var(--line);display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="_dossierToWarRoom()" style="padding:6px 13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">🚨 Stress en War-Room</button>
+        <button id="dossier-wr-btn" onclick="_dossierToWarRoom()" style="padding:6px 13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">🚨 Stress en War-Room</button>
         <button onclick="_dossierAddCompare()" id="dossier-compare-btn" style="padding:6px 13px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);border-radius:6px;font-size:12px;cursor:pointer">+ Comparar empresa</button>
       </div>
     </div>
@@ -3163,9 +3170,9 @@ function renderDetail(id){
   const metaHTML = (meta.founded || d.mkt) ? `
     <div class="meta-grid">
       <div class="meta-item"><div class="meta-l">${_en?'Founded':'Fundada'}</div><div class="meta-v">${meta.founded||'—'}</div></div>
-      <div class="meta-item"><div class="meta-l">${_en?'Employees':'Empleados'}</div><div class="meta-v">${meta.employees||'—'}</div></div>
-      <div class="meta-item"><div class="meta-l">Revenue 2025</div><div class="meta-v">${meta.revenue_2025||'—'}</div></div>
-      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
+      <div class="meta-item"><div class="meta-l">${_en?'Employees':'Empleados'}</div><div class="meta-v" id="d-emp" data-live="employees">${meta.employees?esc(isFinite(+meta.employees)?(+meta.employees).toLocaleString(_en?'en-US':'es-ES'):meta.employees):'—'}</div></div>
+      <div class="meta-item"><div class="meta-l" id="d-rev-l" data-live-label="revenue">${_en?'Revenue 2025':'Ingresos 2025'}</div><div class="meta-v" id="d-rev" data-live="revenue">${esc(meta.revenue_2025||'—')}</div></div>
+      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap" data-live="mcap">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
     </div>
     ${meta.geo_risk?`<div class="geo-risk-box"><span class="geo-icon">🌐</span>${esc(meta.geo_risk)}</div>`:''}
     ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">${_en?'Key clients':'Clientes clave'}</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
@@ -3993,6 +4000,7 @@ function applyLang(){
   const gco=document.getElementById('geo-th-co'); if(gco) gco.textContent=t('geo_th_co');
   if(activeTab==='geo') renderGeoPanel();
   if(activeTab==='analysis') renderAnalysis();
+  if(window._dossierRelabel) window._dossierRelabel();   /* Dossier de Análisis: bilingüe */
   if(activeTab==='guia' && window.initGuiaTab) window.initGuiaTab();   /* la Guía es bilingüe */
   /* pestañas primarias (nav4) y subtítulo del botón Khipu: también bilingües */
   { const _en=LANG==='en', PT={mapa:_en?'Map':'Mapa', mercado:_en?'Market':'Mercado', insights:'Terminal', guia:_en?'Guide':'Guía'};
@@ -4993,6 +5001,7 @@ const DataLayer = {
   }
 };
 V8.DataLayer = DataLayer;
+window.DataLayer = DataLayer;   // el X-Ray (engine/xray.js) lo busca en window para el precio en vivo
 
 /* ---------- helpers ---------- */
 const $ = id => document.getElementById(id);
@@ -5517,7 +5526,7 @@ const V8detail = {
   },
   enrich(id){
     const d=NODE_BY_ID[id]; if(!d) return;
-    window.fillLiveMcap($('d-mcap'), d);
+    window.fillLiveMeta($('detail'), d);   // empleados / capitalización / ingresos EN VIVO
     const tk=d.mkt; const my=++this.token;
     const host=document.createElement('div'); host.id='v8-detail-host';
     // posición / P&L
@@ -5735,17 +5744,152 @@ Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con est
 
 window.V8detail = V8detail;
 
-/* Capitalización EN VIVO cuando el catálogo no la trae (~500 de ~620
-   cotizadas): la da /api/fundamentals (Finnhub en EE.UU., FMP + tipo de
-   cambio en el resto). La usan la ficha del mapa y el X-Ray. Sin dato → "—". */
+/* ── KhipuLive: perfil EN VIVO de una empresa cotizada (2026-09-28) ─────────
+   window.KhipuLive.profile(ticker) → Promise<perfil|null> sobre
+   /api/company/live/<ticker> (Yahoo quoteSummary → Finnhub → Yahoo chart; el
+   servidor cachea 90 s). Aquí, caché de 60 s en memoria POR PROMESA: la ficha
+   del mapa, el X-Ray y la capitalización piden lo mismo a la vez → 1 request.
+   El perfil trae `available`; sin dato → los llamadores dejan el catálogo.
+   OJO: engine/live.js (cargado DESPUÉS) hace `window.KhipuLive = {tick, cycle}`
+   — por eso KhipuLive es una propiedad con setter que FUSIONA lo asignado en
+   este mismo objeto en vez de reemplazarlo (no se pierde profile()). */
+(function(){
+  const TTL = 60000, _c = {};
+  const SRC = { yahoo:'Yahoo Finance', yahoo_chart:'Yahoo Finance', finnhub:'Finnhub' };
+  const en = () => (typeof LANG!=='undefined' && LANG==='en');
+  const api = {
+    profile(ticker){
+      const tk = String(ticker==null?'':ticker).trim();
+      if(!tk) return Promise.resolve(null);
+      const k = tk.toUpperCase(), hit = _c[k];
+      if(hit && Date.now()-hit.t < TTL) return hit.p;
+      const p = fetch(BASE+'/api/company/live/'+encodeURIComponent(tk))
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if(!j || typeof j!=='object'){ delete _c[k]; return null; } return j; })
+        .catch(() => { delete _c[k]; return null; });   // fallo de red → reintenta la próxima vez
+      _c[k] = { t: Date.now(), p };
+      return p;
+    },
+    /* "en vivo · Yahoo Finance · 14:32:05" (bilingüe) — para el title de cada dato */
+    stamp(p){
+      if(!p) return '';
+      const src = SRC[p.source] || p.source || '—';
+      const t = p.as_of ? new Date(p.as_of) : null;
+      const hh = (t && !isNaN(t)) ? t.toLocaleTimeString(en()?'en-US':'es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : '';
+      return (en()?'live':'en vivo')+' · '+src+(hh?' · '+hh:'');
+    },
+    fmtUsdB(b){   // miles de millones USD → $1.23T / $45B / $3.4B / $560M
+      b = +b; if(!isFinite(b) || b<=0) return '—';
+      return b>=1000 ? '$'+(b/1000).toFixed(2)+'T' : b>=10 ? '$'+Math.round(b)+'B' : b>=1 ? '$'+b.toFixed(1)+'B' : '$'+Math.round(b*1000)+'M';
+    },
+    fmtEmp(v, compact){
+      v = Math.round(+v); if(!isFinite(v) || v<=0) return '—';
+      if(compact) return v>=1000 ? Math.round(v/1000)+'K' : String(v);
+      return v.toLocaleString(en()?'en-US':'es-ES');
+    },
+    sourceName(p){ return p ? (SRC[p.source] || p.source || '') : ''; },
+    clear(){ Object.keys(_c).forEach(k => delete _c[k]); }
+  };
+  const prev = window.KhipuLive;
+  try {
+    Object.defineProperty(window, 'KhipuLive', {
+      configurable: true, enumerable: true,
+      get(){ return api; },
+      set(v){ if(v && typeof v==='object' && v!==api) Object.keys(v).forEach(k => { if(!(k in api)) api[k]=v[k]; }); }
+    });
+  } catch(e){ window.KhipuLive = api; }
+  if(prev && typeof prev==='object') window.KhipuLive = prev;   // fusiona lo que ya hubiera
+})();
+
+/* marca un dato como EN VIVO: texto + title "en vivo · fuente · hora" + punto verde */
+function _paintLive(el, txt, p){
+  if(!el || !el.isConnected || txt==null || txt==='—') return false;
+  el.textContent = txt;
+  el.title = window.KhipuLive.stamp(p);
+  el.classList.add('is-live');
+  return true;
+}
+
+/* El "en vivo · fuente · hora" vive en el title, que en el teléfono NO se ve
+   (no hay hover). Tocar (o hacer clic en) un dato con punto verde abre un
+   globito con esa misma línea + qué significa el punto. Delegado en document:
+   sirve para la ficha del mapa, el X-Ray (cajón y Cabina) y lo que venga. */
+document.addEventListener('click', e=>{
+  const el = e.target && e.target.closest ? e.target.closest('.is-live') : null;
+  if(!el || !el.title) return;
+  let tip = document.getElementById('live-tip');
+  if(!tip){
+    tip = document.createElement('div'); tip.id = 'live-tip';
+    tip.setAttribute('role','status'); tip.setAttribute('aria-live','polite');
+    document.body.appendChild(tip);
+  }
+  tip.textContent = '● ' + el.title;
+  const sm = document.createElement('small');
+  sm.textContent = LANG==='en'
+    ? 'The green dot marks a figure fetched live from the source (not from the catalog).'
+    : 'El punto verde marca un dato consultado en vivo a la fuente (no del catálogo).';
+  tip.appendChild(sm);
+  const r = el.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(r.left, vw - w - 8)) + 'px';
+  tip.style.top = (r.bottom + 6 + h > vh - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+  tip.classList.add('show');
+  clearTimeout(tip._t); tip._t = setTimeout(()=>tip.classList.remove('show'), 4000);
+});
+
+/* Capitalización EN VIVO. 1º el perfil en vivo (KhipuLive: Yahoo/Finnhub, en
+   USD); si no hay, /api/fundamentals (Finnhub en EE.UU., FMP + tipo de cambio
+   en el resto) — este solo cuando el catálogo no la trae, como antes. La usan
+   la ficha del mapa y el X-Ray. Sin dato → queda el valor del catálogo o "—". */
 window.fillLiveMcap = function(el, n){
   if(!el || !n || !n.mkt) return;
   const meta=(window.NODE_META||{})[n.id]||{};
-  if(meta.mktcap_b) return;
-  DataLayer.fundamentals(n.mkt).then(f=>{
-    const b=f&&f.marketCapB; if(!b||!el.isConnected) return;
-    el.textContent = b>=1000 ? '$'+(b/1000).toFixed(2)+'T' : b>=10 ? '$'+Math.round(b)+'B' : '$'+b.toFixed(1)+'B';
-    el.title = (LANG==='en'?'Live market cap · ':'Capitalización en vivo · ')+(f.marketCapSource||'');
+  const viaFundamentals = ()=>{
+    if(meta.mktcap_b || !el.isConnected) return;
+    DataLayer.fundamentals(n.mkt).then(f=>{
+      const b=f&&f.marketCapB; if(!b||!el.isConnected) return;
+      el.textContent = window.KhipuLive.fmtUsdB(b);
+      el.title = (LANG==='en'?'Live market cap · ':'Capitalización en vivo · ')+(f.marketCapSource||'');
+    }).catch(()=>{});
+  };
+  window.KhipuLive.profile(n.mkt).then(p=>{
+    const b = p && p.available && p.market_cap_usd_b;
+    if(b && _paintLive(el, window.KhipuLive.fmtUsdB(b), p)) return;
+    viaFundamentals();
+  }).catch(viaFundamentals);
+};
+
+/* Empleados / Mkt Cap / Ingresos EN VIVO dentro de `root` (ficha del mapa,
+   X-Ray, Cabina). Busca [data-live="employees|mcap|revenue"] y, para ingresos,
+   cambia la etiqueta [data-live-label="revenue"] a "Ingresos (últ. 12 m)" (el catálogo
+   dice 2025; el dato vivo son los últimos 12 meses — no mezclar). Sin perfil
+   en vivo, todo queda con el catálogo como hoy. data-live-fmt="k" → 48K. */
+window.fillLiveMeta = function(root, n){
+  if(!root || !n || !n.mkt) return;
+  const mc = root.querySelector('[data-live="mcap"]');
+  if(mc) window.fillLiveMcap(mc, n);
+  // Las celdas se capturan AHORA, antes de la consulta: `root` (#detail, el
+  // cajón #xray) sigue en la página aunque ya muestre OTRA empresa (se le
+  // cambia el innerHTML). Así, si la respuesta de A llega tarde, sus celdas
+  // ya no están conectadas y _paintLive la descarta — nunca pinta los datos
+  // de A en la ficha de B.
+  const emp = root.querySelector('[data-live="employees"]');
+  const rev = root.querySelector('[data-live="revenue"]');
+  const lab = root.querySelector('[data-live-label="revenue"]');
+  if(!emp && !rev) return;
+  window.KhipuLive.profile(n.mkt).then(p=>{
+    if(!p || !p.available) return;
+    const L = window.KhipuLive;
+    if(emp && p.employees) _paintLive(emp, L.fmtEmp(p.employees, emp.dataset.liveFmt==='k'), p);
+    if(rev && p.revenue_ttm_usd_b && _paintLive(rev, L.fmtUsdB(p.revenue_ttm_usd_b), p)){
+      // "últimos 12 meses" en palabras (no la sigla TTM), igual que el Dossier
+      if(lab && lab.isConnected){
+        lab.textContent = LANG==='en' ? 'Revenue (last 12 mo)' : 'Ingresos (últ. 12 m)';
+        lab.title = LANG==='en'
+          ? 'Sales over the last 12 months (the sum of the latest 4 quarters), live. The catalog figure was for year 2025.'
+          : 'Ventas de los últimos 12 meses (suma de los 4 trimestres más recientes), en vivo. El dato del catálogo era del año 2025.';
+      }
+    }
   }).catch(()=>{});
 };
 
@@ -6817,7 +6961,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
         const color = nrs < 30 ? '#22c55e' : nrs < 60 ? '#f59e0b' : '#ef4444';
         const mkt = (window.NODE_BY_ID||{})[id]?.mkt || '';
         const nrsLbl = LANG==='en' ? (nrs<30?'Low risk':nrs<60?'Medium risk':'High risk') : (nrs<30?'Bajo riesgo':nrs<60?'Riesgo medio':'Riesgo alto');
-        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span>${window.explainChip?window.explainChip('nrs'):''}<span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrsLbl}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button>${mkt ? `<button onclick="window._openDossier&&window._openDossier('${id}','${mkt}')" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>` : ''}${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
+        existing.innerHTML = `<span style="font-weight:700;color:var(--ink)">NRS</span><span style="font-size:16px;font-weight:800;color:${color}">${nrs}</span><span style="color:var(--ink-3)">/ 100</span>${window.explainChip?window.explainChip('nrs'):''}<span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${nrsLbl}</span><button onclick="window._openSecondBrain&&window._openSecondBrain('${id}')" style="margin-left:8px;padding:3px 10px;border:1px solid var(--violet);border-radius:4px;background:none;color:var(--violet);cursor:pointer;font-size:11px;font-weight:600">🧠 Second Brain</button><button onclick="window.openFinCard?window.openFinCard('${id}'):(window._openDossier&&window._openDossier('${id}','${mkt}'))" title="${LANG==='en'?(mkt?'Dossier: live price, market cap, employees, revenue + yearly financials':'Dossier: profile, owner quote and live news'):(mkt?'Dossier: precio, capitalización, empleados e ingresos en vivo + estados anuales':'Dossier: ficha, cotización del dueño y noticias en vivo')}" style="margin-left:4px;padding:3px 10px;border:1px solid var(--blue);border-radius:4px;background:none;color:var(--blue);cursor:pointer;font-size:11px;font-weight:600">📊 Dossier</button>${mkt ? `<button onclick="window._openResearch&&window._openResearch('${mkt}','${id}')" style="margin-left:4px;padding:3px 10px;border:1px solid #34d399;border-radius:4px;background:none;color:#34d399;cursor:pointer;font-size:11px;font-weight:600">📄 SEC</button>` : ''}`;
       } catch(e) {}
     };
   }
@@ -7607,8 +7751,14 @@ function _dossierLoad() {
     nd.mkt && ((nd.mkt||'').toLowerCase() === q ||
     (nd.label||'').toLowerCase().includes(q) ||
     nd.id.toLowerCase().includes(q)));
-  if (n) _dossierLoadCompany(n.id, n.mkt, n.label || n.id);
-  else if (typeof toast === 'function') toast('Empresa no encontrada con ticker/nombre: ' + q);
+  if (n) { _dossierLoadCompany(n.id, n.mkt, n.label || n.id); return; }
+  // ¿existe pero no cotiza? → su Dossier universal (toda empresa tiene uno)
+  const p = (window.NODES || []).find(nd =>
+    (nd.label||'').toLowerCase().includes(q) || nd.id.toLowerCase().includes(q));
+  if (p && window.openFinCard) {
+    if (typeof toast === 'function') toast(_dsL(`${p.label||p.id} no cotiza en bolsa: abrimos su Dossier.`, `${p.label||p.id} is not publicly traded: opening its Dossier.`));
+    window.openFinCard(p.id);
+  } else if (typeof toast === 'function') toast(_dsL('Empresa no encontrada con ticker/nombre: ', 'No company found for ticker/name: ') + q);
 }
 document.addEventListener('click', () => { const b=document.getElementById('dossier-ac'); if(b)b.style.display='none'; });
 
@@ -7618,91 +7768,61 @@ function _dossierAddCompare() {
 }
 
 // ── Load company dossier ─────────────────────────────────────────────────────
+/* 2026-09-28: HONESTIDAD. Antes, si /api/dossier fallaba, el cliente INVENTABA
+   ingresos, márgenes, ROE y FCF con Math.random() (_dossierSynthetic, borrado).
+   Ahora: datos reales de la cascada del servidor (FMP → Yahoo → Alpha Vantage)
+   o un aviso claro y bilingüe de que no hay estados públicos — jamás números
+   inventados. Las empresas sin cotización van al 📊 Dossier universal. */
+const _dsL = (es, en) => (typeof LANG !== 'undefined' && LANG === 'en') ? en : es;
+const _DS_SRC = { fmp:'Financial Modeling Prep', yahoo:'Yahoo Finance', alphavantage:'Alpha Vantage' };
+const _dsNoData = d => !d || d.error || d.available === false;
+
 async function _dossierLoadCompany(nodeId, ticker, label) {
+  if (!ticker) {                       // no cotiza → su Dossier universal (fincard)
+    if (window.openFinCard) window.openFinCard(nodeId);
+    return;
+  }
   const slot = _dossier.slots.findIndex(s => s.nodeId === nodeId);
   const idx  = slot >= 0 ? slot : (_dossier.slots.length < 3 ? _dossier.slots.length : 0);
-  const color = _dossier.COLORS[idx];
-  _dossier.slots[idx] = { nodeId, ticker, label, color, data: null };
+  // color libre (al quitar una empresa, dos podían quedar del mismo color)
+  const used = new Set(_dossier.slots.filter((s, i) => i !== idx).map(s => s.color));
+  const color = _dossier.COLORS.find(c => !used.has(c)) || _dossier.COLORS[idx];
+  const slotObj = { nodeId, ticker, label, color, data: null };
+  _dossier.slots[idx] = slotObj;
   _dossierRenderBadges();
 
   const panels = document.getElementById('dossier-panels');
-  if (idx === 0) {
+  if (panels && !_dossier.slots.some(s => s.data)) {
     panels.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">
-      Cargando dossier de ${label}…</div>`;
+      ${_dsL('Cargando dossier de ', 'Loading dossier for ')}${esc(label)}…</div>`;
   }
 
-  // Try FMP endpoint, fall back to synthetic
-  let data;
+  // Un fallo de TRANSPORTE (límite de consultas 429, servidor reiniciándose
+  // 5xx, sin red, respuesta ilegible) NO es "esta empresa no publica estados":
+  // se marca `transient` y la tarjeta ofrece reintentar. Solo un 200 con
+  // available:false del servidor dice que las fuentes no tienen los datos.
+  let data, transient = false, httpStatus = null;
   try {
-    const r = await fetch(`/api/dossier/${encodeURIComponent(ticker)}`);
-    data = r.ok ? await r.json() : null;
-  } catch { data = null; }
-
-  if (!data || data.error) {
-    data = _dossierSynthetic(nodeId, ticker, label);
+    const r = await fetch(`${BASE}/api/dossier/${encodeURIComponent(ticker)}`);
+    data = await r.json().catch(() => null);
+    if (!r.ok || !data || typeof data !== 'object') { transient = true; httpStatus = r.status; }
+  } catch (e) {
+    transient = true;
   }
-  _dossier.slots[idx].data = data;
+  if (transient) {
+    data = { available: false, transient: true, ticker, status: httpStatus };
+  } else if (_dsNoData(data)) {
+    data = { available: false, ticker,
+      reason: data.reason || data.error || 'sin datos',
+      reason_en: data.reason_en || data.reason || data.error || 'no data',
+      tried: data.tried || [] };
+  }
+  if (!_dossier.slots.includes(slotObj)) return;   // lo quitaron mientras cargaba
+  slotObj.data = data;
   _dossierRenderPanels();
 
   const actions = document.getElementById('dossier-actions');
   if (actions) actions.style.display = 'flex';
-}
-
-// ── Synthetic dossier when FMP is unavailable ────────────────────────────────
-function _dossierSynthetic(nodeId, ticker, label) {
-  const meta = (window.NODE_META || {})[nodeId] || {};
-  const node = (window.NODE_BY_ID || {})[nodeId] || {};
-  const quote = (window.MKT?.quotes || {})[ticker] || {};
-
-  // Parse revenue_2025 from meta
-  const revStr = String(meta.revenue_2025 || '');
-  let rev25 = parseFloat(revStr.replace(/[^0-9.]/g,'')) || 5;
-  if (revStr.includes('M') && !revStr.includes('B')) rev25 /= 1000;
-
-  // Category-based growth (CAGR 2021-2025)
-  const cat = node.cat || '';
-  const cagr = {
-    gpu:0.38, ai_lab:0.55, memory:0.22, networking:0.28, cloud:0.26,
-    hyperscaler:0.24, fab:0.18, equipment:0.20, eda:0.14, datacenter:0.30,
-    space:0.20, defense:0.12, software:0.22, automotive:0.18,
-  }[cat] || 0.18;
-
-  const years5 = ['2021','2022','2023','2024','2025'];
-  const revenue = years5.map((_,i) => parseFloat((rev25 / Math.pow(1+cagr, 4-i)).toFixed(2)));
-
-  // Margins by category
-  const gm = { gpu:0.56, ai_lab:0.72, memory:0.45, networking:0.62, cloud:0.68,
-    hyperscaler:0.52, fab:0.48, equipment:0.45, eda:0.75, datacenter:0.55,
-    space:0.28, defense:0.22, software:0.70 }[cat] || 0.50;
-  const nm = gm * 0.35 + (Math.random()-0.5)*0.04;
-  const fcfM = nm * 1.05 + (Math.random()-0.5)*0.04;
-
-  const fcf = revenue.map(r => parseFloat((r * (fcfM + (Math.random()-0.5)*0.03)).toFixed(2)));
-  const gross_margin = years5.map((_,i) => parseFloat(((gm - 0.04 + i*0.01 + (Math.random()-0.5)*0.01)*100).toFixed(1)));
-  const net_margin   = years5.map((_,i) => parseFloat(((nm - 0.03 + i*0.008)*100).toFixed(1)));
-  const fcf_margin   = fcf.map((f,i) => parseFloat((f/revenue[i]*100).toFixed(1)));
-
-  const baseShares = (meta.mktcap_b && quote.close)
-    ? parseFloat(((meta.mktcap_b||5) / (quote.close||100) * 1e9 / 1e9).toFixed(3))
-    : 0.5 + Math.random()*2;
-  const shares = years5.map((_,i) => parseFloat((baseShares * (1 + (3-i)*0.02)).toFixed(3)));
-
-  const mktcap = typeof meta.mktcap_b === 'number' ? meta.mktcap_b : parseFloat(String(meta.mktcap_b||'5').replace(/[^0-9.]/g,'')) || 5;
-  const ev_revenue = revenue.map((r,i) => parseFloat(((mktcap * Math.pow(1.15, 4-i)) / Math.max(r,0.1)).toFixed(1)));
-  const roe  = years5.map((_,i) => parseFloat(((15 + i*2 + (Math.random()-0.5)*4)).toFixed(1)));
-  const roic = roe.map(r => parseFloat((r * 0.8).toFixed(1)));
-
-  return {
-    ticker, years: years5, synthetic: true,
-    revenue,
-    revenue_growth: [null, ...revenue.slice(1).map((b,i)=>parseFloat(((b-revenue[i])/Math.abs(revenue[i])*100).toFixed(1)))],
-    shares, fcf, fcf_margin, gross_margin, net_margin,
-    ev_revenue, pe_ratio: ev_revenue.map(v => parseFloat((v*2.5).toFixed(1))),
-    roe, roic,
-    net_income: revenue.map(r => parseFloat((r*nm).toFixed(2))),
-    total_debt: revenue.map(r => parseFloat((r*0.4).toFixed(2))),
-    cash: revenue.map(r => parseFloat((r*0.25).toFixed(2))),
-  };
 }
 
 // ── Render badges ─────────────────────────────────────────────────────────────
@@ -7711,7 +7831,7 @@ function _dossierRenderBadges() {
   if (!el) return;
   el.innerHTML = _dossier.slots.map((s,i) =>
     `<span class="dossier-badge" style="background:${s.color}22;border:1px solid ${s.color}55;color:${s.color}">
-       ${s.label.split(' ')[0]} <span class="rm" onclick="_dossierRemove(${i});event.stopPropagation()">✕</span>
+       ${esc(s.label.split(' ')[0])} <span class="rm" onclick="_dossierRemove(${i});event.stopPropagation()">✕</span>
      </span>`).join('');
 }
 
@@ -7721,9 +7841,68 @@ function _dossierRemove(idx) {
   if (_dossier.slots.length) _dossierRenderPanels();
   else {
     document.getElementById('dossier-panels').innerHTML =
-      '<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">Busca una empresa para ver su dossier</div>';
+      `<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">${_dsL('Busca una empresa para ver su dossier', 'Search for a company to see its dossier')}</div>`;
     document.getElementById('dossier-actions').style.display = 'none';
   }
+}
+
+// ── helpers de datos ─────────────────────────────────────────────────────────
+// años: unión de los años de todas las empresas con datos (ascendente, máx. 7)
+// y cada serie se ALINEA por año — antes se alineaba por posición y dos
+// empresas con años fiscales distintos quedaban desfasadas.
+function _dsYears(okSlots) {
+  return [...new Set(okSlots.flatMap(s => s.data.years || []).map(String))].sort().slice(-7);
+}
+function _dsAlign(s, field, years) {
+  const ys = (s.data.years || []).map(String), v = s.data[field] || [];
+  return years.map(y => { const i = ys.indexOf(y); return (i >= 0 && v[i] != null && isFinite(v[i])) ? +v[i] : null; });
+}
+function _dsLast(s, field) {          // último valor NO nulo + su año
+  const ys = s.data.years || [], v = s.data[field] || [];
+  for (let i = v.length - 1; i >= 0; i--) if (v[i] != null && isFinite(v[i])) return { v: +v[i], y: String(ys[i] || '') };
+  return null;
+}
+function _dsFmtB(v, sign) {           // miles de millones USD → $1.2T / $3.4B / $560M
+  const a = Math.abs(v), s = v < 0 ? '-' : (sign ? '+' : '');
+  return s + '$' + (a >= 1000 ? (a / 1000).toFixed(2) + 'T' : a >= 1 ? a.toFixed(1) + 'B' : Math.round(a * 1000) + 'M');
+}
+// reintentar una empresa cuyo dossier falló por un problema pasajero
+function _dossierRetry(nodeId, btn) {
+  const s = _dossier.slots.find(x => x.nodeId === nodeId);
+  if (!s) return;
+  if (btn) { btn.disabled = true; btn.textContent = _dsL('Reintentando…', 'Retrying…'); }
+  _dossierLoadCompany(s.nodeId, s.ticker, s.label);
+}
+// fallo pasajero: el servidor no respondió AHORA (no es falta de datos)
+function _dsTransientCard(s) {
+  const d = s.data || {};
+  const why = d.status === 429
+    ? _dsL('Hubo demasiadas consultas seguidas; el servidor pide esperar un momento.', 'Too many requests in a row; the server asks us to wait a moment.')
+    : d.status
+      ? _dsL('El servidor está ocupado o reiniciándose.', 'The server is busy or restarting.')
+      : _dsL('No hubo conexión con el servidor (revisa tu internet).', 'There was no connection to the server (check your internet).');
+  return `<div style="grid-column:1/-1;padding:12px 14px;border:1px solid var(--line);border-left:3px solid ${s.color};border-radius:8px;background:var(--surface-2);font-size:12px;line-height:1.5;color:var(--ink-2)">
+      <div style="font-weight:700;color:var(--ink)">⏳ ${esc(s.label)} <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-3)">${esc(s.ticker)}</span></div>
+      <div>${_dsL('No pudimos consultar las fuentes ahora. Reintenta en un minuto.', 'We could not reach the sources right now. Try again in a minute.')}</div>
+      <div style="font-size:11px;color:var(--ink-3)">${why} ${_dsL('Esto NO significa que la empresa no tenga estados financieros.', 'This does NOT mean the company has no financial statements.')}</div>
+      <button onclick="_dossierRetry('${esc(s.nodeId)}', this)" style="margin-top:8px;padding:5px 12px;border:1px solid var(--blue);border-radius:6px;background:none;color:var(--blue);cursor:pointer;font-size:11.5px;font-weight:600">↻ ${_dsL('Reintentar', 'Try again')}</button>
+    </div>`;
+}
+function _dsEmptyCard(s) {
+  const d = s.data || {};
+  if (d.transient) return _dsTransientCard(s);
+  // el servidor antepone "Sin estados… para X — "; aquí ya lo dice la 1ª línea → solo el detalle
+  const raw = String(_dsL(d.reason, d.reason_en || d.reason) || '');
+  const reason = raw.includes(' — ') ? raw.split(' — ').slice(1).join(' — ') : raw;
+  const tried = (d.tried || []).map(k => _DS_SRC[k] || k).join(' · ');
+  return `<div style="grid-column:1/-1;padding:12px 14px;border:1px solid var(--line);border-left:3px solid ${s.color};border-radius:8px;background:var(--surface-2);font-size:12px;line-height:1.5;color:var(--ink-2)">
+      <div style="font-weight:700;color:var(--ink)">📭 ${esc(s.label)} <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-3)">${esc(s.ticker)}</span></div>
+      <div>${_dsL('Sin estados financieros públicos para ', 'No public financial statements for ')}${esc(s.label)}${_dsL(' en las fuentes consultadas.', ' in the sources we checked.')}</div>
+      ${tried ? `<div style="font-size:11px;color:var(--ink-3)">${_dsL('Fuentes probadas: ', 'Sources tried: ')}${esc(tried)}</div>` : ''}
+      ${reason ? `<div style="font-size:11px;color:var(--ink-3)">${_dsL('Detalle: ', 'Details: ')}${esc(reason)}</div>` : ''}
+      <div style="font-size:11px;color:var(--ink-3);margin-top:2px">${_dsL('No mostramos cifras estimadas ni inventadas: este espacio queda vacío hasta que una fuente pública las publique.', 'We never show estimated or made-up figures: this stays empty until a public source publishes them.')}</div>
+      ${window.openFinCard ? `<button onclick="window.openFinCard('${esc(s.nodeId)}')" style="margin-top:8px;padding:5px 12px;border:1px solid var(--blue);border-radius:6px;background:none;color:var(--blue);cursor:pointer;font-size:11.5px;font-weight:600">📊 ${_dsL('Ver su Dossier en vivo (precio, capitalización y gráfico de la acción)', 'See its live Dossier (price, market cap and stock chart)')}</button>` : ''}
+    </div>`;
 }
 
 // ── Render all 8 panels ──────────────────────────────────────────────────────
@@ -7731,60 +7910,86 @@ function _dossierRenderPanels() {
   const panels = document.getElementById('dossier-panels');
   if (!panels || !_dossier.slots.some(s => s.data)) return;
 
-  const mainSlot = _dossier.slots.find(s => s.data);
-  const years = mainSlot.data.years || ['2021','2022','2023','2024','2025'];
-  const synth = _dossier.slots.every(s => s.data?.synthetic);
+  const okSlots = _dossier.slots.filter(s => s.data && !_dsNoData(s.data));
+  const noSlots = _dossier.slots.filter(s => s.data && _dsNoData(s.data));
+  const emptyHTML = noSlots.map(_dsEmptyCard).join('');
+  if (!okSlots.length) { panels.innerHTML = emptyHTML; return; }
 
-  const mkPanel = (id, head, valStr) =>
+  const years = _dsYears(okSlots);
+  const d0 = okSlots[0];
+  const yTag = x => x && x.y ? ` <span style="font-size:10px;font-weight:500;opacity:.55">FY${esc(x.y.slice(-2))}</span>` : '';
+  const mkPanel = (id, head, valStr, legend) =>
     `<div class="dossier-panel">
-       <div class="dossier-phead">${head}${synth ? ' <span style="opacity:.5">est.</span>':''}</div>
+       <div class="dossier-phead">${head}${legend ? ` <span style="opacity:.5;font-weight:500;font-size:9px">${legend}</span>` : ''}</div>
        <div class="dossier-pval" id="dp-val-${id}">${valStr}</div>
        <canvas id="dp-${id}" height="90"></canvas>
      </div>`;
+  const pct = x => x ? x.v.toFixed(1) + '%' + yTag(x) : '—';
 
-  const fmtB = (v) => v !== null && v !== undefined ? (v >= 0 ? '+' : '') + v.toFixed(1) + 'B' : '—';
-  const fmtPct = (v) => v !== null && v !== undefined ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '—';
+  const rev = _dsLast(d0, 'revenue'), sh = _dsLast(d0, 'shares'), fcf = _dsLast(d0, 'fcf');
+  const gm = _dsLast(d0, 'gross_margin'), ev = _dsLast(d0, 'ev_revenue'), nd = _dsLast(d0, 'net_debt');
+  const nm = _dsLast(d0, 'net_margin'), roe = _dsLast(d0, 'roe');
 
-  const d0 = mainSlot.data;
-  const lastRev  = d0.revenue?.at(-1);
-  const lastFcf  = d0.fcf?.at(-1);
-  const lastGm   = d0.gross_margin?.at(-1);
-  const lastRoe  = d0.roe?.at(-1);
-  const lastEv   = d0.ev_revenue?.at(-1);
-  const lastShares = d0.shares?.at(-1);
+  // fuente de cada empresa, dicha tal cual (y la moneda original si no es USD)
+  const srcLine = okSlots.map(s => {
+    const src = _DS_SRC[s.data.source] || s.data.source || '—';
+    const cur = s.data.currency && s.data.currency !== 'USD'
+      ? _dsL(` · montos en USD convertidos desde ${esc(s.data.currency)} al tipo de cambio ACTUAL (todos los años; puede diferir de lo que la empresa reportó en dólares ese año)`,
+             ` · amounts in USD converted from ${esc(s.data.currency)} at the CURRENT exchange rate (every year; may differ from the dollar figure the company reported that year)`) : '';
+    return `<span style="color:${s.color}">●</span> ${esc(s.label)} — ${esc(src)}${cur}`;
+  }).join(' &nbsp; ');
 
-  panels.innerHTML =
-    mkPanel('revenue',    'Revenue',      lastRev  ? '$' + lastRev.toFixed(1) + 'B'    : '—') +
-    mkPanel('shares',     'Dilución',     lastShares ? lastShares.toFixed(2) + 'B acc.' : '—') +
-    mkPanel('fcf',        'Free Cash Flow', lastFcf ? (lastFcf>=0?'+':'') + lastFcf.toFixed(1) + 'B' : '—') +
-    mkPanel('margins',    'Márgenes',     lastGm   ? lastGm.toFixed(0) + '% bruto'     : '—') +
-    mkPanel('ev',         'EV/Revenue',   lastEv   ? lastEv.toFixed(1) + 'x'           : '—') +
-    mkPanel('balance',    'Balance',      '—') +
-    mkPanel('margins2',   'Margen Neto',  lastGm   ? lastGm.toFixed(0) + '% / FCF'    : '—') +
-    mkPanel('roe',        'ROE / ROIC',   lastRoe  ? lastRoe.toFixed(1) + '%'          : '—');
+  panels.innerHTML = emptyHTML +
+    mkPanel('revenue',  _dsL('Ingresos', 'Revenue'),                 rev ? _dsFmtB(rev.v) + yTag(rev) : '—') +
+    mkPanel('shares',   _dsL('Acciones (dilución)', 'Shares (dilution)'), sh ? sh.v.toFixed(2) + _dsL(' mil M acc.', 'B shares') + yTag(sh) : '—') +
+    mkPanel('fcf',      'Free Cash Flow',                             fcf ? _dsFmtB(fcf.v, true) + yTag(fcf) : '—') +
+    mkPanel('margins',  _dsL('Márgenes', 'Margins'),                  gm ? gm.v.toFixed(0) + _dsL('% bruto', '% gross') + yTag(gm) : '—', _dsL('— bruto · - - FCF', '— gross · - - FCF')) +
+    mkPanel('ev',       _dsL('EV/Ventas', 'EV/Sales'),                ev ? ev.v.toFixed(1) + 'x' + yTag(ev) : '—') +
+    mkPanel('balance',  _dsL('Balance', 'Balance sheet'),             nd ? (nd.v > 0 ? _dsL('Deuda neta ', 'Net debt ') + _dsFmtB(nd.v) : _dsL('Caja neta ', 'Net cash ') + _dsFmtB(-nd.v)) + yTag(nd) : '—') +
+    mkPanel('margins2', _dsL('Margen neto', 'Net margin'),            pct(nm), _dsL('— bruto · - - neto', '— gross · - - net')) +
+    mkPanel('roe',      'ROE / ROIC',                                 pct(roe), '— ROE · - - ROIC') +
+    `<div style="grid-column:1/-1;font-size:10.5px;color:var(--ink-3);line-height:1.6">${_dsL('Fuente: ', 'Source: ')}${srcLine}</div>`;
 
   requestAnimationFrame(() => {
-    // Collect series for each panel
-    const series = (field) => _dossier.slots.map(s => ({ vals: s.data?.[field] || [], color: s.color }));
-
-    _dsDrawBars('dp-revenue',  series('revenue'),      years, { unit:'$B', zeroBase:true });
-    _dsDrawBars('dp-shares',   series('shares'),       years, { unit:'B', zeroBase:true });
-    _dsDrawBars('dp-fcf',      series('fcf'),          years, { unit:'B', zeroBase:false });
-    _dsDrawLines('dp-margins', [
-      ..._dossier.slots.map(s => ({ vals: s.data?.gross_margin||[], color: s.color, dash:false })),
-      ..._dossier.slots.map(s => ({ vals: s.data?.fcf_margin||[], color: s.color, dash:true })),
-    ], years, { unit:'%' });
-    _dsDrawLines('dp-ev',      series('ev_revenue'),   years, { unit:'x' });
-    _dsDrawBalance('dp-balance');
-    _dsDrawLines('dp-margins2',[
-      ..._dossier.slots.map(s => ({ vals: s.data?.gross_margin||[], color: s.color, dash:false })),
-      ..._dossier.slots.map(s => ({ vals: s.data?.net_margin||[], color: s.color, dash:true })),
-    ], years, { unit:'%' });
-    _dsDrawLines('dp-roe', [
-      ..._dossier.slots.map(s => ({ vals: s.data?.roe||[], color: s.color, dash:false })),
-      ..._dossier.slots.map(s => ({ vals: s.data?.roic||[], color: s.color, dash:true })),
-    ], years, { unit:'%' });
+    const series = (field) => okSlots.map(s => ({ vals: _dsAlign(s, field, years), color: s.color }));
+    const pair = (a, b) => [
+      ...okSlots.map(s => ({ vals: _dsAlign(s, a, years), color: s.color, dash:false })),
+      ...okSlots.map(s => ({ vals: _dsAlign(s, b, years), color: s.color, dash:true })),
+    ];
+    _dsDrawBars('dp-revenue',  series('revenue'), years, { unit:'$B', zeroBase:true });
+    _dsDrawBars('dp-shares',   series('shares'),  years, { unit:'B', zeroBase:true });
+    _dsDrawBars('dp-fcf',      series('fcf'),     years, { unit:'B', zeroBase:false });
+    _dsDrawLines('dp-margins', pair('gross_margin', 'fcf_margin'), years, { unit:'%' });
+    _dsDrawLines('dp-ev',      series('ev_revenue'), years, { unit:'x' });
+    _dsDrawBalance('dp-balance', okSlots, years);
+    _dsDrawLines('dp-margins2', pair('gross_margin', 'net_margin'), years, { unit:'%' });
+    _dsDrawLines('dp-roe',     pair('roe', 'roic'), years, { unit:'%' });
   });
+}
+// al cambiar de idioma (applyLang) se redibuja con los textos nuevos
+window._dossierRelabel = function () {
+  const set = (id, es, en) => { const el = document.getElementById(id); if (el) el.textContent = _dsL(es, en); };
+  set('dossier-h', '📊 Dossier Financiero', '📊 Financial Dossier');
+  set('dossier-sub', 'Estados anuales · compara hasta 3 empresas · FMP → Yahoo Finance → Alpha Vantage · nada inventado',
+    'Annual statements · compare up to 3 companies · FMP → Yahoo Finance → Alpha Vantage · nothing made up');
+  set('dossier-go', 'Analizar', 'Analyze');
+  set('dossier-wr-btn', '🚨 Stress en War-Room', '🚨 Stress in War-Room');
+  set('dossier-compare-btn', '+ Comparar empresa', '+ Compare company');
+  const inp = document.getElementById('dossier-search');
+  if (inp) inp.placeholder = _dsL('Empresa o ticker…', 'Company or ticker…');
+  if (_dossier.slots.some(s => s.data)) _dossierRenderPanels();
+  else if (!_dossier.slots.length) {
+    const p = document.getElementById('dossier-panels');
+    if (p) p.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px 0;font-size:12px;color:var(--ink-3)">${_dsL('Busca una empresa para ver su dossier financiero completo', 'Search for a company to see its full financial dossier')}</div>`;
+  }
+};
+try { window._dossierRelabel(); } catch (e) {}   // arranque en inglés: textos fijos del bloque
+// aviso sobre el canvas cuando la fuente no trae esa serie (en vez de un hueco mudo)
+function _dsNoSeries(ctx, W, H) {
+  ctx.fillStyle = 'rgba(120,140,180,.6)';
+  ctx.font = '9px Inter,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(_dsL('— la fuente no publica este dato —', '— not reported by the source —'), W / 2, H / 2 + 3);
 }
 
 // ── Canvas drawing helpers ────────────────────────────────────────────────────
@@ -7811,7 +8016,7 @@ function _dsDrawBars(id, series, years, opts = {}) {
 
   // Flatten all values
   const allVals = series.flatMap(s => s.vals).filter(v => v !== null && v !== undefined);
-  if (!allVals.length) return;
+  if (!allVals.length) { _dsNoSeries(ctx, W, H); return; }
   const rawMin = zeroBase ? Math.min(0, ...allVals) : Math.min(...allVals);
   const rawMax = Math.max(...allVals);
   const range = rawMax - rawMin || 1;
@@ -7868,7 +8073,7 @@ function _dsDrawLines(id, series, years, opts = {}) {
   const cH = H - PAD.top - PAD.bottom;
 
   const allVals = series.flatMap(s => s.vals).filter(v => v !== null && v !== undefined);
-  if (!allVals.length) return;
+  if (!allVals.length) { _dsNoSeries(ctx, W, H); return; }
   const rawMin = Math.min(...allVals);
   const rawMax = Math.max(...allVals);
   const range = rawMax - rawMin || 1;
@@ -7914,22 +8119,23 @@ function _dsDrawLines(id, series, years, opts = {}) {
   });
 }
 
-function _dsDrawBalance(id) {
+function _dsDrawBalance(id, okSlots, years) {
   const canvas = document.getElementById(id); if (!canvas) return;
   const { ctx, W, H } = _dsSetup(canvas);
   const PAD = { top:14, right:6, bottom:18, left:28 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
+  okSlots = okSlots || [];
+  years = years || [];
 
-  // Stacked: cash (green) vs debt (red) per slot per year
-  const years = (_dossier.slots.find(s=>s.data)?.data?.years) || [];
-  const allVals = _dossier.slots.flatMap(s => [
-    ...(s.data?.total_debt||[]), ...(s.data?.cash||[])
-  ]).filter(v => v != null);
-  if (!allVals.length) return;
+  // deuda (rojo) vs caja (color de la empresa) por empresa y año — alineado por año
+  const debt = okSlots.map(s => _dsAlign(s, 'total_debt', years));
+  const cash = okSlots.map(s => _dsAlign(s, 'cash', years));
+  const allVals = [...debt.flat(), ...cash.flat()].filter(v => v != null);
+  if (!allVals.length || !years.length) { _dsNoSeries(ctx, W, H); return; }
   const maxV = Math.max(...allVals) || 1;
 
-  const nSeries = _dossier.slots.length;
+  const nSeries = okSlots.length;
   const groupW = cW / years.length;
   const barW = Math.min(groupW / (nSeries + 1), 14);
 
@@ -7939,16 +8145,16 @@ function _dsDrawBalance(id) {
   ctx.fillText(maxV.toFixed(0)+'B', PAD.left-3, PAD.top+3);
   ctx.fillText('0', PAD.left-3, PAD.top+cH+3);
 
-  _dossier.slots.forEach((s, si) => {
-    (s.data?.total_debt||[]).forEach((d, i) => {
-      if (d == null) return;
+  okSlots.forEach((s, si) => {
+    debt[si].forEach((d, i) => {
+      if (d == null || d < 0) return;
       const x = PAD.left + groupW*i + groupW/(nSeries+1)*(si+0.5);
       const debtH = (d/maxV)*cH;
       ctx.fillStyle = '#ef444488';
       ctx.fillRect(x, PAD.top+cH-debtH, barW, debtH);
     });
-    (s.data?.cash||[]).forEach((c, i) => {
-      if (c == null) return;
+    cash[si].forEach((c, i) => {
+      if (c == null || c < 0) return;
       const x = PAD.left + groupW*i + groupW/(nSeries+1)*(si+0.5);
       const cashH = (c/maxV)*cH;
       ctx.fillStyle = s.color + '99';
@@ -7960,15 +8166,18 @@ function _dsDrawBalance(id) {
   ctx.font = '8px Inter,sans-serif';
   ctx.textAlign = 'center';
   years.forEach((yr, i) => {
-    ctx.fillText(yr.slice(2), PAD.left+groupW*i+groupW/2, H-3);
+    ctx.fillText(String(yr).slice(2), PAD.left+groupW*i+groupW/2, H-3);
   });
 
   // Legend
+  const lDebt = _dsL('Deuda', 'Debt'), lCash = _dsL('Caja', 'Cash');
+  ctx.font = '8px Inter,sans-serif';
+  ctx.textAlign = 'left';
   ctx.fillStyle = '#ef4444'; ctx.fillRect(PAD.left, 4, 8, 4);
-  ctx.fillStyle = 'rgba(124,58,237,.8)'; ctx.fillRect(PAD.left+12, 4, 8, 4);
-  ctx.fillStyle = 'rgba(120,140,180,.7)'; ctx.font = '8px Inter,sans-serif';
-  ctx.textAlign='left'; ctx.fillText('Deuda', PAD.left+22, 9);
-  ctx.fillText('Caja', PAD.left+34, 9);
+  ctx.fillStyle = 'rgba(120,140,180,.7)'; ctx.fillText(lDebt, PAD.left+11, 9);
+  const x2 = PAD.left + 11 + ctx.measureText(lDebt).width + 8;
+  ctx.fillStyle = (okSlots[0] ? okSlots[0].color : '#7c3aed') + 'cc'; ctx.fillRect(x2, 4, 8, 4);
+  ctx.fillStyle = 'rgba(120,140,180,.7)'; ctx.fillText(lCash, x2+11, 9);
 }
 
 // ── War-Room from dossier ─────────────────────────────────────────────────────
@@ -7988,9 +8197,12 @@ function _dossierToWarRoom() {
 
 // Public: open dossier from node panel
 window._openDossier = function(nodeId, ticker) {
-  switchTab('analysis');
   const n = (window.NODE_BY_ID||{})[nodeId];
-  if (n) setTimeout(() => _dossierLoadCompany(nodeId, ticker||n.mkt, n.label||nodeId), 300);
+  if (!n) return;
+  // sin cotización no hay estados que comparar → su Dossier universal (fincard)
+  if (!(ticker||n.mkt)) { if (window.openFinCard) window.openFinCard(nodeId); return; }
+  switchTab('analysis');
+  setTimeout(() => _dossierLoadCompany(nodeId, ticker||n.mkt, n.label||nodeId), 300);
 };
 
 /* ── Research SEC 10-K (Fase 2): modal con síntesis de Claude ──────────────── */

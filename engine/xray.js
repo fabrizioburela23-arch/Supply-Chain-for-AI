@@ -192,11 +192,14 @@
         '<span class="nv xr-mono">' + t.val + '/' + t.max + '</span></div>';
     }).join('') : '<div class="xr-loading">' + L('NRS no disponible', 'NRS not available') + '</div>';
 
+    // Anatomía: Empleados / Mkt Cap / Ingresos se reemplazan por el dato EN
+    // VIVO (window.fillLiveMeta, en wire) cuando hay perfil; si no, catálogo.
     var mm = (meta.founded || n.mkt) ? '<div class="xr-sect"><div class="xr-h">' + L('Anatomía', 'Anatomy') + '</div>' +
-      '<div class="impact-grid">' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.employees ? (meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="impact-grid" style="grid-template-columns:1fr 1fr">' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-emp" data-live="employees" data-live-fmt="k">' + (meta.employees ? esc(meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? '$' + esc(meta.mktcap_b) + 'B' : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB;font-size:15px;overflow-wrap:anywhere" class="xr-mono xr-rev" data-live="revenue">' + esc(meta.revenue_2025 || '—') + '</b><span class="xr-rev-l" data-live-label="revenue">' + L('Ingresos 2025', 'Revenue 2025') + '</span></div>' +
       '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
     // fundamentales extra (margen / crecimiento / puerto) si existen
@@ -249,7 +252,7 @@
     var btns =
       '<div class="xr-btns">' +
         '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ ' + L('Ver onda en el mapa', 'See wave on the map') + '</span>' +
-        (window.openFinCard ? '<span class="xrb" onclick="window.openFinCard(\'' + esc(n.mkt || id) + '\')">📊 Dossier</span>' : '') +
+        (window.openFinCard ? '<span class="xrb" onclick="window.openFinCard(\'' + esc(id) + '\')">📊 Dossier</span>' : '') +
         (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ ' + L('Comparar', 'Compare') + '</span>' : '') +
         (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ ' + L('En el tiempo', 'Over time') + '</span>' : '') +
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
@@ -261,17 +264,117 @@
   }
 
   // ── precio en vivo (scoped al root) ──
-  function loadPrice(root, n) {
-    if (!n.mkt || !window.DataLayer) return;
-    window.DataLayer.quote(n.mkt).then(function (q) {
-      if (!q || q.c == null) return;
-      var pct = q.pc ? (q.c - q.pc) / q.pc * 100 : 0;
-      var el = root.querySelector('#xr-px');
-      if (el) el.innerHTML = '<span class="p">$' + q.c.toFixed(2) + '</span>' +
-        '<span class="chg" style="color:' + (pct >= 0 ? '#2BE38B' : '#FF4D6A') + '">' + fmtPct(pct) + '</span>';
-      var lin = root.querySelector('#xr-lin');
-      if (lin) lin.textContent = L('ⓘ Finnhub · en vivo', 'ⓘ Finnhub · live');
+  // 1º Finnhub (/api/quote, EE.UU.); si no responde o es de otra bolsa, el
+  // perfil en vivo (KhipuLive: Yahoo, cualquier bolsa, en su moneda). Se
+  // refresca cada 60 s mientras el X-Ray está a la vista (startPriceTimer).
+  var PRICE_MS = 60 * 1000;
+  function hhmmss(d) {
+    try { return d.toLocaleTimeString(isEn() ? 'en-US' : 'es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+    catch (e) { return ''; }
+  }
+  // Estado del mercado → etiqueta honesta (misma regla que engine/fincard.js):
+  // "en vivo" SOLO si la sesión está en curso. Yahoo quoteSummary trae
+  // marketState; Finnhub y el gráfico de Yahoo no → se deduce por la
+  // antigüedad del precio (`t` de Finnhub / market_time), nunca por el reloj
+  // de la consulta. live: true = sesión en curso · false = último cierre ·
+  // null = la fuente no dice ni estado ni hora.
+  var STALE_UNKNOWN_MS = 30 * 60 * 1000, STALE_OPEN_MS = 6 * 3600 * 1000;
+  function mktState(st) {
+    st = String(st || '').toUpperCase();
+    if (!st) return null;
+    if (st === 'REGULAR') return { open: true, es: 'mercado abierto', en: 'market open' };
+    if (st.indexOf('PRE') === 0) return { open: false, es: 'pre-apertura', en: 'pre-market' };
+    if (st.indexOf('POST') === 0) return { open: false, es: 'después del cierre', en: 'after hours' };
+    return { open: false, es: 'mercado cerrado', en: 'market closed' };
+  }
+  function quoteInfo(state, qt, asOf) {
+    var ms = mktState(state);
+    if (qt && isNaN(qt.getTime())) qt = null;
+    var ref = asOf && !isNaN(asOf.getTime()) ? asOf.getTime() : Date.now();
+    var age = qt ? Math.max(0, ref - qt.getTime()) : null;
+    var live;
+    if (ms) live = ms.open && !(age != null && age > STALE_OPEN_MS);
+    else live = age != null ? age <= STALE_UNKNOWN_MS : null;
+    return { ms: ms, qt: qt, live: live };
+  }
+  // hora del precio: "14:32:05" si es de hoy; "26 sep, 22:00" si es de otro día
+  function whenTxt(d) {
+    if (!d) return '';
+    if (d.toDateString() === new Date().toDateString()) return hhmmss(d);
+    try { return d.toLocaleString(isEn() ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }); }
+    catch (e) { return d.toISOString().slice(0, 16).replace('T', ' '); }
+  }
+  // `els` = {px, lin} capturados ANTES de la consulta: si el cajón ya muestra
+  // otra empresa (render() reemplaza su innerHTML), esos nodos quedaron fuera
+  // del documento y la respuesta vieja se descarta — nunca pinta el precio de
+  // A en la ficha de B.
+  function priceEls(root) {
+    return { px: root.querySelector('#xr-px'), lin: root.querySelector('#xr-lin') };
+  }
+  function paintPrice(els, price, pct, cur, src, qi) {
+    var el = els && els.px;
+    if (!el || !el.isConnected || !(price > 0)) return;
+    qi = qi || { live: null, qt: null, ms: null };
+    var p = (!cur || cur === 'USD') ? '$' + price.toFixed(2)
+      : price.toLocaleString(isEn() ? 'en-US' : 'es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + esc(cur);
+    // la variación dice de CUÁNDO es: "hoy" solo con sesión en curso
+    var chgWhen = qi.live === true ? '' : qi.live === false ? ' ' + L('última sesión', 'last session') : '';
+    el.innerHTML = '<span class="p">' + p + '</span>' +
+      (pct != null && isFinite(pct) ? '<span class="chg" style="color:' + (pct >= 0 ? '#2BE38B' : '#FF4D6A') + '">' + fmtPct(pct) +
+        (chgWhen ? '<small style="color:#7C87A3;font-size:10px">' + esc(chgWhen) + '</small>' : '') + '</span>' : '');
+    var lin = els.lin;
+    if (!lin || !lin.isConnected) return;
+    var parts = ['ⓘ ' + src];
+    if (qi.live === true) {
+      parts.push(L('en vivo', 'live'));
+      if (qi.qt) parts.push(L('precio de las ', 'price as of ') + whenTxt(qi.qt));
+    } else if (qi.live === false) {
+      parts.push(qi.ms ? L(qi.ms.es, qi.ms.en) : L('mercado cerrado', 'market closed'));
+      if (qi.qt) parts.push(L('último precio: ', 'last price: ') + whenTxt(qi.qt));
+    } else {
+      parts.push(L('consultado ', 'checked ') + hhmmss(new Date()));
+      parts.push(L('la fuente no indica la hora del precio', 'the source does not give the price time'));
+    }
+    parts.push(L('se revisa cada minuto', 'checked every minute'));
+    lin.textContent = parts.join(' · ');
+  }
+  function loadPriceLive(els, n) {
+    var K = window.KhipuLive;
+    if (!K || !K.profile) return;
+    K.profile(n.mkt).then(function (p) {
+      if (!p || !p.available || p.price == null || !els.px || !els.px.isConnected) return;
+      var qt = p.market_time ? new Date(p.market_time) : null;
+      var asOf = p.as_of ? new Date(p.as_of) : null;
+      paintPrice(els, +p.price, p.change_pct, p.currency, (K.sourceName && K.sourceName(p)) || p.source || '—',
+        quoteInfo(p.market_state, qt, asOf));
     }).catch(function () {});
+  }
+  function loadPrice(root, n) {
+    if (!n.mkt) return;
+    var els = priceEls(root);          // capturados AHORA (ver priceEls)
+    if (!els.px) return;
+    if (!window.DataLayer) { loadPriceLive(els, n); return; }
+    window.DataLayer.quote(n.mkt).then(function (q) {
+      if (!els.px.isConnected) return;   // el cajón ya muestra otra empresa
+      if (!q || !(q.c > 0)) { loadPriceLive(els, n); return; }   // Finnhub da c=0 si no conoce el símbolo
+      var pct = q.pc ? (q.c - q.pc) / q.pc * 100 : null;
+      // `t` de Finnhub = hora (unix) del último precio; sin ella no se afirma "en vivo"
+      var qt = q.t > 0 ? new Date(q.t * 1000) : null;
+      paintPrice(els, q.c, pct, 'USD', 'Finnhub', quoteInfo(null, qt, null));
+    }).catch(function () { if (els.px.isConnected) loadPriceLive(els, n); });
+  }
+  function stopPriceTimer(root) {
+    if (root && root._xrPxTimer) { clearInterval(root._xrPxTimer); root._xrPxTimer = null; }
+  }
+  function startPriceTimer(root, n) {
+    stopPriceTimer(root);
+    if (!n.mkt) return;
+    root._xrPxTimer = setInterval(function () {
+      // cerrado, re-renderizado o escondido (cajón / Cabina) → se apaga solo
+      if (!root.isConnected || !root.getClientRects().length) { stopPriceTimer(root); return; }
+      if (document.hidden) return;
+      loadPrice(root, n);
+    }, PRICE_MS);
   }
 
   function renderVictims(root, id, n, impacts, note) {
@@ -395,8 +498,11 @@
     var n = window.NODE_BY_ID ? window.NODE_BY_ID[id] : null;
     if (!n) return;
     loadPrice(root, n);
+    startPriceTimer(root, n);   // precio del encabezado: cada 60 s mientras esté abierto
     loadImpact(root, id, n);
-    if (window.fillLiveMcap) window.fillLiveMcap(root.querySelector('.xr-mcap'), n);   // Mkt Cap en vivo si falta
+    // Empleados / Mkt Cap / Ingresos EN VIVO (KhipuLive) con title "en vivo · fuente · hora"
+    if (window.fillLiveMeta) window.fillLiveMeta(root, n);
+    else if (window.fillLiveMcap) window.fillLiveMcap(root.querySelector('.xr-mcap'), n);
   }
 
   // ── cajón lateral (abre desde el mapa) ──
@@ -426,6 +532,7 @@
   function close() {
     var ov = document.getElementById('xray-ov');
     if (ov) ov.classList.remove('show');
+    stopPriceTimer(document.getElementById('xray'));
   }
 
   window._xrayJump = function (id) {

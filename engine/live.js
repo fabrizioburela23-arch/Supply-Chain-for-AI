@@ -113,5 +113,6 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountBadge);
   else mountBadge();
 
-  window.KhipuLive = { tick: tick, cycle: cycle };
+  // se FUSIONA: app.html ya define window.KhipuLive.profile() (perfil en vivo)
+  window.KhipuLive = Object.assign(window.KhipuLive || {}, { tick: tick, cycle: cycle });
 })();
