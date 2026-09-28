@@ -11,6 +11,7 @@ import json
 
 from research.context import render_context
 from research.llm import RoutedProvider, route_for
+from research.numbers import check_numbers
 from research.schemas import AgentResearchResult, check_refs, json_schema_hint
 
 # Lo ÚNICO que un agente puede escribir (el runner lo hace cumplir).
@@ -40,7 +41,11 @@ REGLAS INNEGOCIABLES
    razonamiento privado extenso.
 6. agent_certainty: tu seguridad honesta (0-1). No es la confianza final: el sistema la calcula aparte.
 7. Entre 1 y {max_claims} claims materiales. Menos y mejores es preferible.
-8. Responde SOLO con un JSON válido con esta forma (sin texto fuera del JSON):
+8. CIFRAS: toda cifra de dinero o precio (capitalización, valuación, ingresos, deuda, precio) debe
+   COPIARSE del paquete de evidencia. NUNCA uses cifras de tu memoria: están desactualizadas y un dato
+   falso perjudica al inversionista. La capitalización/valuación ACTUAL es SOLO la del perfil de mercado
+   en vivo (market_cap_usd_b, en miles de millones de USD). Si no está en el paquete, no la menciones.
+9. Responde SOLO con un JSON válido con esta forma (sin texto fuera del JSON):
 {schema}
 
 TU ENFOQUE
@@ -90,5 +95,5 @@ class Agent:
         valid_refs = [e['ref'] for e in ctx['evidence']]
         return provider.structured_generate(
             self.system_prompt(), self.user_prompt(ctx), AgentResearchResult,
-            max_tokens=2600, max_attempts=2,
-            extra_check=lambda obj: check_refs(obj, valid_refs))
+            max_tokens=2600, max_attempts=3,
+            extra_check=lambda obj: check_refs(obj, valid_refs) + check_numbers(obj, ctx['evidence']))

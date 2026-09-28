@@ -118,8 +118,14 @@ def _fetch_web(query, limit):
     return web_search(query, max_results=limit)
 
 
+def _fetch_mcap(symbol):
+    from core.quotes import fetch_market_cap_yahoo
+    return fetch_market_cap_yahoo(symbol)
+
+
 DEFAULT_FETCHERS = {'profile': _fetch_profile, 'financials': _fetch_financials,
-                    'news': _fetch_news, 'web': _fetch_web, 'candles': _fetch_candles}
+                    'news': _fetch_news, 'web': _fetch_web, 'candles': _fetch_candles,
+                    'mcap': _fetch_mcap}
 
 
 def _reliability_for_url(url):
@@ -252,9 +258,24 @@ class ContextBuilder:
                         'revenue_growth_q', 'pe_trailing', 'pe_forward', 'week52_low', 'week52_high',
                         'target_mean', 'recommendation', 'employees')
                 ex = ', '.join(f'{k}={p[k]}' for k in keys if p.get(k) is not None)
-                add('market', f'Perfil de mercado {mkt} ({p.get("source")}) a {p.get("as_of")}', ex,
+                if p.get('market_cap_usd_b') is not None:
+                    ex = f"CAPITALIZACIÓN ACTUAL EN VIVO: {p['market_cap_usd_b']} miles de millones USD · " + ex
+                add('market', f'Perfil de mercado EN VIVO {mkt} ({p.get("source")}) a {p.get("as_of")}', ex,
                     reference=f'https://finance.yahoo.com/quote/{mkt}', published_at=p.get('as_of'),
                     reliability=0.85, source_kind='primary')
+            else:
+                # sin perfil: al menos la capitalización en vivo (Yahoo) — sin ella el
+                # modelo tiende a usar cifras de memoria desactualizadas
+                try:
+                    mc = self.f['mcap'](mkt)
+                except Exception:  # noqa: BLE001
+                    mc = None
+                if mc:
+                    add('market', f'Capitalización de mercado EN VIVO {mkt} (yahoo)',
+                        f'CAPITALIZACIÓN ACTUAL EN VIVO: market_cap_usd_b={round(mc, 1)} miles de millones USD',
+                        reference=f'https://finance.yahoo.com/quote/{mkt}',
+                        published_at=datetime.now(timezone.utc).isoformat(), reliability=0.85,
+                        source_kind='primary')
 
         # indicadores de precio calculados (sin IA)
         if 'candles' in needs and mkt:

@@ -11,6 +11,7 @@ Control de costo (docs/MODEL_ROUTING.md):
 """
 import logging
 import os
+import re
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -90,6 +91,28 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
     session.add(job)
     session.flush()
     return job, False
+
+
+def retract_unsupported(session, entity_id):
+    """Retira (status='retracted') las claims ACTIVAS de la entidad cuyas cifras
+    de dinero no aparecen en su propia evidencia guardada — p. ej. las escritas
+    antes del guardián de cifras (Broadcom "~$350B", 2026-09-28). Devuelve n."""
+    from research.numbers import evidence_numbers, unsupported_money
+    claims = (session.query(ResearchClaim)
+              .filter(ResearchClaim.subject_entity_id == entity_id, ResearchClaim.status == 'active').all())
+    n = 0
+    for c in claims:
+        txt = ' '.join(filter(None, [c.statement_es, c.statement_en, c.reasoning_summary, c.object]))
+        if not txt or not re.search(r'\d', txt):
+            continue
+        ev = session.query(ResearchEvidence).filter(ResearchEvidence.claim_id == c.id).all()
+        vals = evidence_numbers([{'title': e.title, 'excerpt': e.excerpt} for e in ev])
+        if unsupported_money(txt, vals):
+            c.status = 'retracted'
+            n += 1
+    if n:
+        session.flush()
+    return n
 
 
 def _completeness(ctx):

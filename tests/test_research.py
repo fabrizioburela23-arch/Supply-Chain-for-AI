@@ -212,9 +212,9 @@ def test_contradiccion_mismo_horizonte_y_coexistencia_entre_horizontes(db):
     from research.models import ClaimRelation, ResearchClaim
     pos = _claim(topic='margins', stance='positive', horizon='MEDIUM_TERM', predicate='MARGIN_EXPANSION_LIKELY')
     neg = _claim(topic='margins', stance='negative', horizon='MEDIUM_TERM', predicate='INPUT_COSTS_RISING',
-                 evidence_refs=['E4'], counter_evidence_refs=[])
+                 evidence_refs=['E4'], counter_evidence_refs=[], reasoning_summary='E4: costos de HBM suben.')
     far = _claim(topic='margins', stance='negative', horizon='LONG_TERM', predicate='MARGINS_NORMALIZE',
-                 evidence_refs=['E4'], counter_evidence_refs=[])
+                 evidence_refs=['E4'], counter_evidence_refs=[], reasoning_summary='E4: presión de costos.')
     _run('Intel', ['fundamental', 'supply_chain'],
          {'fundamental': [_result([pos])], 'supply_chain': [_result([neg, far])]})
     with session_scope() as s:
@@ -276,3 +276,29 @@ def test_job_sin_agentes_ok_queda_failed_y_se_puede_reintentar(db):
         assert s.get(ResearchJob, jid).status == 'failed'
         job2, reused2 = create_job(s, 'AMD', depth='QUICK', agents=['fundamental'])
         assert not reused2 and job2.id != jid
+
+
+def test_guardian_de_cifras_rechaza_valuacion_de_memoria():
+    """Caso real: 'Broadcom vale ~$350B' con capitalización en vivo de >$1T."""
+    from research.numbers import unsupported_money, evidence_numbers
+    ev = [{'title': 'Perfil EN VIVO AVGO', 'excerpt': 'market_cap_usd_b=1105.2, price=235.4'},
+          {'title': 'Estados', 'excerpt': 'ingresos USD: 2024: 51.6B'}]
+    v = evidence_numbers(ev)
+    assert unsupported_money('Broadcom vale ~$350B', v) == ['$350B']
+    assert unsupported_money('Capitalización de US$ 1,1 billones', v) == []
+    assert unsupported_money('ingresos de $51.6B y acción a $235', v) == []
+    assert unsupported_money('TPU con B200 en 3nm', v) == []
+
+
+def test_agente_corrige_cifra_inventada_con_feedback():
+    """1er intento con cifra de memoria → rechazado → 2º intento correcto."""
+    from research.agents import AGENTS_BY_TYPE
+    from research.context import ContextBuilder
+    from research.llm import FakeProvider
+    ctx = ContextBuilder(fetchers=FETCH).build('Nvidia', 'fundamental', depth='QUICK')
+    mala = _result([_claim(statement_es='Nvidia vale ~$1.2T hoy.')])
+    buena = _result([_claim(statement_es='Nvidia vale ~$4.4T hoy (en vivo).')])
+    prov = FakeProvider([mala, buena])
+    obj, meta = AGENTS_BY_TYPE['fundamental'].run(ctx, prov)
+    assert meta['repaired'] and '4.4T' in obj.claims[0].statement_es
+    assert 'NO están en la evidencia' in prov.calls[1]

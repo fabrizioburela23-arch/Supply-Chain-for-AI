@@ -133,6 +133,12 @@ def entity(entity_id):
 
     from research.models import ClaimRelation, ResearchClaim, ResearchEvidence, ResearchJob
     eid = _resolve(entity_id[:120]) or entity_id[:120]
+    try:
+        from research.runner import retract_unsupported
+        with session_scope() as s:
+            retract_unsupported(s, eid)
+    except Exception:  # noqa: BLE001 — nunca impide mostrar la investigación
+        pass
     with session_scope() as s:
         claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
                                                 ResearchClaim.status == 'active')

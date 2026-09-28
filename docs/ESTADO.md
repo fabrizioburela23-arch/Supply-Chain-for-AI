@@ -38,6 +38,11 @@ Hecho (vertical slice NVIDIA → Investigar → agentes → claims/evidencia →
   ventana de nombre (actor = khipu_actor o 'usuario'); (5) errores visibles
   con código+detalle en el panel. Claude sin saldo; NVIDIA_MODEL retirado
   (410) — Fabrizio iba a poner uno nuevo de build.nvidia.com.
+- GUARDIÁN DE CIFRAS (research/numbers.py): "Broadcom ~$350B" (memoria del
+  modelo) vs >$1T en vivo → toda cifra de dinero debe estar en la evidencia o
+  se rechaza/reintenta; claims viejas con cifras sin respaldo → 'retracted'.
+  PENDIENTE: el mismo riesgo existe en otras funciones de IA (tesis/veredicto,
+  brief, War Room, Canvas) — aplicarles el guardián.
 - Pendiente: verificar en producción una investigación REAL (Claude sin
   saldo → correrá con Gemini); contradicciones semánticas; eventos
   EARNINGS/PRICE_ANOMALY/FACTOR_FIRED automáticos; evidencia SEC; calibrar
