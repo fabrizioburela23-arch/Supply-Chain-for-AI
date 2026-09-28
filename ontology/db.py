@@ -102,6 +102,10 @@ def init_schema(retries=6, delay=2.0):
 
     from sqlalchemy import text
     from ontology.models import Base
+    try:
+        import research.models  # noqa: F401 — Phase 2: registra research_* en el mismo Base
+    except Exception as e:  # noqa: BLE001
+        log.warning('init_schema: research.models no cargó (%s)', type(e).__name__)
 
     ultimo = None
     for intento in range(1, max(1, retries) + 1):

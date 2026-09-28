@@ -9,6 +9,33 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-28 (e) — PHASE 2: AGENT RESEARCH SWARM (sw v153)
+
+Pedido: la especificación completa de Phase 2 ("dale con la Fase 2").
+Hecho (vertical slice NVIDIA → Investigar → agentes → claims/evidencia → UI):
+- `research/` nuevo: models (5 tablas), schemas (salida estructurada con
+  vocabulario cerrado; refs E# inventadas → rechazo), llm (LLMProvider
+  multi-modelo con reintento/reparación y fallback; env RESEARCH_MODEL_*),
+  context (paquete de evidencia numerado + defensa anti-inyección), confidence
+  (calculada, componentes guardados, tope 0.6 con una sola fuente),
+  contradictions (POTENTIALLY_CONTRADICTS solo mismo tema+horizonte),
+  runner (jobs, dedupe, presupuesto diario, supersesión, síntesis sin
+  COMPRA/VENTA), router (evento → entidades relevantes acotadas → agentes),
+  api (/api/research/*: jobs, entity, claims/<id> = ¿POR QUÉ?, activity,
+  agents, budget, events).
+- UI: `engine/research.js` (overlay 🔬 por agente, vista ¿Por qué?, choques,
+  síntesis por horizonte, actividad REAL), sección en la ficha del mapa,
+  botón en el X-Ray, comando `NVDA RESEARCH`, "?" de confianza y horizonte.
+- Eventos automáticos: /ingest/news dispara NEWS solo si
+  `RESEARCH_AUTO_EVENTS=on` (apagado por defecto para cuidar costo).
+- Tests: tests/test_research.py (15) → suite 248.
+- Pendiente: verificar en producción una investigación REAL (Claude sin
+  saldo → correrá con Gemini); contradicciones semánticas; eventos
+  EARNINGS/PRICE_ANOMALY/FACTOR_FIRED automáticos; evidencia SEC; calibrar
+  la confianza con resultados reales. Ver docs/ROADMAP.md.
+
+---
+
 # SESIÓN 2026-09-28 (d) — Valuación de PRIVADAS en vivo (sw v152)
 
 "OpenAI dice $500B y está por $1T — la idea es que siempre sea en vivo".

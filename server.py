@@ -97,6 +97,15 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Ontología no registrada (opcional): %s', _e)
 
+# ── PHASE 2 · Agent Research Swarm (opcional) — /api/research/* ─────────────
+# Claims con evidencia/contra-evidencia, horizonte y confianza calculada;
+# tablas research_* creadas por init_schema. Sin DATABASE_URL responde 503.
+try:
+    from research.api import research_bp
+    app.register_blueprint(research_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Investigación (Phase 2) no registrada (opcional): %s', _e)
+
 # ── Motor de matrices (Etapa 3, opcional) — /api/matrix/* ────────────────────
 try:
     from matrix.api import matrix_bp

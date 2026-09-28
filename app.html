@@ -4855,6 +4855,7 @@ Object.assign(I18N.es, {
   d_news:'Noticias', d_earn:'Próximo earnings', d_fund:'Fundamentales', d_ai:'Análisis IA',
   d_alerts:'Alertas de precio', d_pos:'Mi posición',
   d_history:'Historia · de dónde sale cada dato', hist_empty:'Sin historia registrada todavía.',
+  d_research:'🔬 Investigación IA · agentes con evidencia',
   feed_h:'Lo último en el grafo', feed_ago:'hace', feed_now:'ahora',
   hist_facts:'hechos', hist_src:'con fuente', hist_saved:'noticias nuevas guardadas',
   hist_primary:'fuente primaria', hist_press:'prensa', hist_weak:'fuente débil',
@@ -4894,6 +4895,7 @@ Object.assign(I18N.en, {
   d_news:'News', d_earn:'Next earnings', d_fund:'Fundamentals', d_ai:'AI analysis',
   d_alerts:'Price alerts', d_pos:'My position',
   d_history:'History · where each fact comes from', hist_empty:'No recorded history yet.',
+  d_research:'🔬 AI research · agents with evidence',
   feed_h:'Latest in the graph', feed_ago:'ago', feed_now:'now',
   hist_facts:'facts', hist_src:'with source', hist_saved:'new news items saved',
   hist_primary:'primary source', hist_press:'press', hist_weak:'weak source',
@@ -5544,6 +5546,7 @@ const V8detail = {
        <div class="v8-sec"><div class="v8-sec-h">${t('d_ai')}</div><button class="ai-btn" id="v8-ai-btn">${t('ai_btn')}</button><div id="v8-ai"></div></div>
        <div class="v8-sec"><div class="v8-sec-h">${t('d_alerts')}</div><div id="v8-alerts"></div></div>`
     ) : `<div class="v8-sec"><div class="v8-need-key">${t('v8_nolist')}</div></div>`)
+      + `<div class="v8-sec"><div class="v8-sec-h">${t('d_research')}</div><div id="v8-research"><div class="v8-loading">…</div></div></div>`
       + `<div class="v8-sec"><div class="v8-sec-h">${t('d_history')}</div><div id="v8-history"><div class="v8-loading">…</div></div></div>`;
     const detail=$('detail'); const stressBtn=detail.querySelector('.stress-btn');
     if(stressBtn) detail.insertBefore(host, stressBtn); else detail.appendChild(host);
@@ -5555,6 +5558,7 @@ const V8detail = {
     });
 
     this.loadHistory(id,my);
+    if(window.KhipuResearch) window.KhipuResearch.renderInline($('v8-research'), id);   /* Phase 2: investigación IA */
     if(!tk) return;
     this.loadEarnings(id,tk,my);
     this.loadFundamentals(id,tk,my);
@@ -6608,6 +6612,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/khipu_lang.js"></script>
 <script src="engine/guide.js"></script>
 <script src="engine/xray.js"></script>
+<script src="engine/research.js"></script>
 <script src="engine/insights.js"></script>
 <script src="engine/statematrix.js"></script>
 <script src="engine/livesim.js"></script>

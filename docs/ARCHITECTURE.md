@@ -293,3 +293,27 @@ Honestidad explícita, como pide la spec (*"No declares una integración como
 
 Ninguna parte del sistema inventa datos de mercado. Cuando una fuente no
 responde, la UI lo dice (🩺, badges de estado, linaje ⓘ con antigüedad).
+
+## 10. Phase 2 — Agent Research Swarm (2026-09-28)
+
+Paquete `research/` (Python) + `engine/research.js` (UI) + blueprint
+`/api/research/*`. Los agentes NO escriben hechos del grafo: producen
+**claims** (conclusiones derivadas) con **evidencia** citada, separadas de
+RAW DATA (fuentes) y GRAPH FACTS (ontología).
+
+```
+evento/usuario → router (relevancia acotada por grafo) → job
+  → ContextBuilder (paquete E1..En: finanzas, perfil, precio, noticias, subgrafo, memoria)
+  → Agent.run → LLMProvider.structured_generate (validar → reparar → rechazar)
+  → persist_result (confianza calculada, evidencia, Source, supersesión, contradicciones)
+  → synthesize (por horizonte; sin COMPRA/VENTA)
+```
+
+- Tablas nuevas (ontología Postgres): research_claims, research_evidence,
+  claim_relations, agent_runs, research_jobs (`research/models.py`).
+- 8 agentes (`research/agents/registry.py`): fundamental, news, technical,
+  supply_chain, geopolitical, macro, crypto, risk_observation.
+- Control de costo: profundidad QUICK/STANDARD/DEEP, dedupe 30 min,
+  tope diario `RESEARCH_DAILY_BUDGET_USD` (default 2.0), máx. 4 agentes/job.
+- Detalle: `AGENT_ARCHITECTURE.md`, `CLAIM_MODEL.md`, `MODEL_ROUTING.md`,
+  `AGENT_SECURITY.md`, `GRAPH_SCHEMA.md`, `ROADMAP.md`.

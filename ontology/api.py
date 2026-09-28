@@ -713,6 +713,20 @@ def ingest_news():
     with session_scope() as s:
         res = ingest_news_for(s, entity_id, query=body.get('query'),
                               limit=limit, actor=actor)
+    # PHASE 2 · event-driven: noticias NUEVAS de una entidad = evento NEWS →
+    # router → agentes suscritos (QUICK, dedupe 24 h, tope diario). Apagado
+    # por defecto por costo: RESEARCH_AUTO_EVENTS=on en Railway lo activa.
+    try:
+        import os
+        if res.get('ok') and res.get('new') and os.getenv('RESEARCH_AUTO_EVENTS', 'off').lower() == 'on':
+            from research.router import dispatch_event
+            with session_scope() as s2:
+                res['research'] = dispatch_event(s2, {
+                    'type': 'NEWS', 'entities': [entity_id], 'depth': 'QUICK',
+                    'headline': f"{res.get('new')} noticias nuevas de {entity_id}"}, actor='event:news-ingest')
+            res['research'] = {k: res['research'].get(k) for k in ('event_type', 'agents', 'jobs', 'reason')}
+    except Exception as e:  # noqa: BLE001 — la investigación nunca tumba la ingesta
+        res['research_error'] = type(e).__name__
     return (jsonify(res), 200) if res.get('ok') else (jsonify(res), 404)
 
 

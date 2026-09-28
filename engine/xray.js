@@ -255,6 +255,7 @@
         (window.openFinCard ? '<span class="xrb" onclick="window._surface ? window._surface(\'dossier\', \'' + esc(id) + '\') : window.openFinCard(\'' + esc(id) + '\')">📊 Dossier</span>' : '') +
         (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ ' + L('Comparar', 'Compare') + '</span>' : '') +
         (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ ' + L('En el tiempo', 'Over time') + '</span>' : '') +
+        (window.KhipuResearch ? '<span class="xrb" onclick="window.KhipuResearch.open(\'' + esc(id) + '\')">🔬 ' + L('Investigación IA', 'AI research') + '</span>' : '') +
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
       '</div>';
 

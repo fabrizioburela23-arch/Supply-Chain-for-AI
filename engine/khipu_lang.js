@@ -50,7 +50,7 @@
     return en ? fallbackEn : fallbackEs;
   }
 
-  const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY']);
+  const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY', 'RESEARCH']);
   const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX', 'FACTOR', 'FEED']);
 
   function tryParse(text) {
@@ -82,6 +82,12 @@
   async function _handleEntityFunc(entity, fn, args) {
     const id = entity.id, label = entity.label;
     switch (fn) {
+      case 'RESEARCH': {
+        // Phase 2: abre la Investigación IA y lanza un trabajo de agentes
+        const en = (window.LANG || '') === 'en';
+        if (window.KhipuResearch) { window.KhipuResearch.open(id); window.KhipuResearch.run(id, 'STANDARD'); }
+        return { answer: en ? `Research agents started for ${label} — you can watch them work.` : `Agentes investigando ${label} — puedes verlos trabajar.`, actions: [] };
+      }
       case 'DES':
         return { answer: `Abriendo ficha de ${label}.`, actions: [{ type: 'second_brain', arg: id }] };
       case 'GP':

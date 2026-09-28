@@ -15,6 +15,42 @@
   }
 
   var EXPLAIN = {
+    claim_conf: {
+      es: { t: '¿Qué es la confianza de una conclusión?',
+        b: 'Es qué tan bien <b>respaldada</b> está una conclusión de un agente de IA, de 0 a 100%. <b>No</b> es lo que "dice" la IA: ' +
+           'la calcula Khipus combinando seis cosas, y guarda cada una para auditar:' +
+           '<ul style="margin:10px 0;padding-left:20px;line-height:1.7">' +
+           '<li><b>Calidad de las fuentes</b> (30%) — un estado financiero vale más que un blog.</li>' +
+           '<li><b>Fuentes independientes</b> (20%) — tres fuentes distintas valen más que una.</li>' +
+           '<li><b>Qué tan recientes</b> (15%) — una noticia de hace un año pesa menos.</li>' +
+           '<li><b>Evidencia en contra</b> (15%) — si hay datos que la contradicen, baja.</li>' +
+           '<li><b>Seguridad del agente</b> (10%) — lo que declara la IA, con poco peso a propósito.</li>' +
+           '<li><b>Datos completos</b> (10%) — si faltaron datos que el agente necesitaba, baja.</li></ul>' +
+           'Con una sola fuente nunca pasa de 60%. <b>No es una recomendación</b> de compra ni de venta.' },
+      en: { t: 'What is a conclusion\'s confidence?',
+        b: 'How well <b>supported</b> an AI agent\'s conclusion is, from 0 to 100%. It is <b>not</b> what the AI "says": ' +
+           'Khipus computes it from six factors and stores each one for auditing:' +
+           '<ul style="margin:10px 0;padding-left:20px;line-height:1.7">' +
+           '<li><b>Source quality</b> (30%) — a financial statement beats a blog.</li>' +
+           '<li><b>Independent sources</b> (20%) — three different sources beat one.</li>' +
+           '<li><b>Recency</b> (15%) — year-old news weighs less.</li>' +
+           '<li><b>Counter-evidence</b> (15%) — data against it lowers it.</li>' +
+           '<li><b>Agent certainty</b> (10%) — what the AI declares, deliberately low weight.</li>' +
+           '<li><b>Data completeness</b> (10%) — missing data the agent needed lowers it.</li></ul>' +
+           'With a single source it never exceeds 60%. <b>It is not</b> a buy or sell recommendation.' },
+    },
+    horizon: {
+      es: { t: '¿Qué es el horizonte?',
+        b: 'El plazo en el que aplica una conclusión: <b>Intradía</b> (horas), <b>Corto plazo</b> (días a ~3 meses), ' +
+           '<b>Mediano</b> (3-12 meses), <b>Largo</b> (1-5 años) y <b>Estructural</b> (más de 5 años).<br><br>' +
+           'Dos agentes pueden "discrepar" sin contradecirse: el técnico puede ver caída a <b>corto</b> plazo y el ' +
+           'fundamental crecimiento a <b>largo</b>. La app muestra ambas y no las mezcla.' },
+      en: { t: 'What is the horizon?',
+        b: 'The time frame a conclusion applies to: <b>Intraday</b> (hours), <b>Short term</b> (days to ~3 months), ' +
+           '<b>Medium</b> (3-12 months), <b>Long</b> (1-5 years) and <b>Structural</b> (5+ years).<br><br>' +
+           'Two agents can "disagree" without contradicting each other: technical may see a <b>short-term</b> drop while ' +
+           'fundamental sees <b>long-term</b> growth. The app shows both and never mixes them.' },
+    },
     nrs: {
       es: {
         t: '¿Qué es el NRS?',

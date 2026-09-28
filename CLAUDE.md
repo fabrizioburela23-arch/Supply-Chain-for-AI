@@ -76,6 +76,15 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   `node_id_alias`, que antes NO se exportaba y por eso el servidor no podía
   resolver alias) — se regenera con `node scripts/export_graph_v0.js` (usa nodes/merge_graph.js,
   la MISMA implementación de merge que el navegador; nunca duplicar).
+- `research/` (Phase 2 — Agent Research Swarm): 8 agentes producen CLAIMS
+  con evidencia citada (E#), horizonte, confianza CALCULADA y falsadores;
+  tablas research_claims/research_evidence/claim_relations/agent_runs/
+  research_jobs; blueprint `/api/research/*` (jobs, entity, claims/<id> =
+  ¿Por qué?, activity, agents, budget, events). UI: engine/research.js
+  (`window.KhipuResearch.open(id)`), comando `<TICKER> RESEARCH`. NUNCA
+  COMPRA/VENTA. Env: RESEARCH_MODEL_DEFAULT / RESEARCH_MODEL_<TIPO>,
+  RESEARCH_DAILY_BUDGET_USD (2.0), RESEARCH_AUTO_EVENTS (off). Docs:
+  AGENT_ARCHITECTURE, CLAIM_MODEL, MODEL_ROUTING, AGENT_SECURITY.
 - `sim/`: scenario_builder.js (seeds de escenario; `buildScenarioSeed`).
 - ELIMINADOS (no recrear): `rag/` (nunca desplegado), `litellm/`,
   `nodes/nodes_core.js` (duplicado), el modo standalone y el stack de keys en
@@ -199,7 +208,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (233 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (248 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -216,6 +225,7 @@ TRADE_PIN            ← SIN esto el trading queda deshabilitado (X-Trade-Pin)
 KHIPU_ADMIN_SECRET   ← emite claves /v1 de tiers de pago (X-Admin-Secret)
 NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,   ← Grafo Temporal persistente
 DATABASE_URL                              ← Ontología (Postgres en Railway)
+RESEARCH_DAILY_BUDGET_USD, RESEARCH_AUTO_EVENTS, RESEARCH_MODEL_DEFAULT  ← Phase 2
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)

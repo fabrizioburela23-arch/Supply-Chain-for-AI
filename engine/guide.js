@@ -42,6 +42,7 @@
       wow: [
         ['🎙 Cabina de Khipu', 'Toca el botón Khipu (o Ctrl+K): pantalla completa con botones para TODO — Grafo, Terminal, X-Ray, Simular, Comparar, Oportunidades, Investigar y Gráficos. Escribe o habla normal.'],
         ['🔬 X-Ray', 'En la ficha de cualquier empresa: la "desarma" por completo — por qué tiene ese riesgo, todos sus hilos (de quién depende y a quién provee), y la onda de impacto si cae (quién sufre y quién GANA).'],
+        ['🔬 Investigación IA', 'En el X-Ray o la ficha de una empresa: botón 🔬 Investigar. Varios analistas IA (fundamentales, noticias, técnico, cadena de suministro…) leen SOLO datos reales con fuente y escriben conclusiones cortas: cada una dice si es a favor, en contra o neutral, para qué plazo (hoy, semanas, meses, años), qué tan confiable es (y por qué) y qué la desmentiría. Toca "¿Por qué? →" para ver la evidencia a favor y en contra con su fuente original. Si dos analistas no están de acuerdo, se muestra el choque — no se esconde. Nunca dice compra/vende.'],
         ['📊 Dossier de cada empresa', 'TODAS las empresas tienen Dossier: botón 📊 Dossier en la ficha del mapa, en el X-Ray y en la Terminal. Si cotiza en bolsa, arriba va una franja EN VIVO (precio y % del día, capitalización, empleados, ingresos de los últimos 12 meses, márgenes, rango del año y precio objetivo — se refresca sola cada minuto) y debajo 8 mini-gráficos anuales (ingresos, dilución, free cash flow, acción, valuación, deuda, márgenes y ROE) con su fuente. Si es privada o filial: su ficha, la cotización del dueño cuando la hay ("cotiza a través de…") y noticias recientes en vivo. Si una fuente no publica un dato, se dice — nunca se inventan números.'],
         ['◉ Simulación en vivo', 'En el mapa, botón "◉ En vivo": elige un tipo de golpe (corte, auge, precio, sanción) y un objetivo (empresa, sector o país entero) — el mapa se tiñe en tiempo real y ves ganadores y perdedores.'],
         ['🪐 Universo', 'Las 949 empresas flotando en el espacio: izquierda→derecha = posición en la cadena, arriba→abajo = riesgo. Clic en una empresa y su cadena se ilumina (verde = le provee, naranja = le compra); doble clic abre su ficha. Funciona en cualquier equipo.'],
@@ -70,6 +71,7 @@
       cmd_p: 'Escríbelos en la Cabina de Khipu — responden al instante, sin esperar a la IA.',
       cmds: [
         ['TSMC XRAY', 'desarma TSMC (el X-Ray completo)'],
+        ['NVDA RESEARCH', 'pone a los analistas IA a investigar Nvidia'],
         ['SHOCK NVDA', 'simula qué pasa si Nvidia cae'],
         ['COMPARE NVDA AMD', 'compara dos empresas lado a lado'],
         ['INSIGHTS', 'abre el panel de oportunidades y riesgo'],
@@ -110,6 +112,7 @@
       wow: [
         ['🎙 Khipu Cockpit', 'Tap the Khipu button (or Ctrl+K): a full screen with buttons for EVERYTHING — Graph, Terminal, X-Ray, Simulate, Compare, Opportunities, Research and Charts. Type or talk normally.'],
         ['🔬 X-Ray', 'From any company card: takes it apart completely — why it carries that risk, all its threads (who it depends on and who it supplies), and the impact wave if it fails (who suffers and who WINS).'],
+        ['🔬 AI Research', 'In the X-Ray or a company card: the 🔬 Research button. Several AI analysts (fundamentals, news, technical, supply chain…) read ONLY real, sourced data and write short conclusions: each says whether it is positive, negative or neutral, for which horizon (today, weeks, months, years), how reliable it is (and why) and what would prove it wrong. Tap "Why? →" to see the evidence for and against with its original source. When two analysts disagree the clash is shown, not hidden. It never says buy/sell.'],
         ['📊 Every company has a Dossier', 'EVERY company has a Dossier: the 📊 Dossier button on the map card, in the X-Ray and in the Terminal. If it is publicly traded, the top shows a LIVE strip (price and daily %, market cap, employees, trailing-12-month revenue, margins, 52-week range and price target — it refreshes itself every minute) and below it 8 yearly mini-charts (revenue, dilution, free cash flow, stock, valuation, debt, margins and ROE) with their source. If it is private or a subsidiary: its profile, the owner\'s live quote when there is one ("traded through…") and live recent news. When a source does not publish a figure, we say so — numbers are never made up.'],
         ['◉ Live simulation', 'On the map, the "◉ Live" button: pick a type of shock (cut, boom, price, sanction) and a target (company, sector or whole country) — the map colors in real time and you see winners and losers.'],
         ['🪐 Universe', 'The 949 companies floating in space: left→right = position in the chain, top→bottom = risk. Click a company and its chain lights up (green = supplies it, orange = buys from it); double-click opens its card. Works on any device.'],
@@ -138,6 +141,7 @@
       cmd_p: 'Type them in the Khipu Cockpit — they answer instantly, without waiting for the AI.',
       cmds: [
         ['TSMC XRAY', 'take TSMC apart (the full X-Ray)'],
+        ['NVDA RESEARCH', 'put the AI analysts to research Nvidia'],
         ['SHOCK NVDA', 'simulate what happens if Nvidia fails'],
         ['COMPARE NVDA AMD', 'compare two companies side by side'],
         ['INSIGHTS', 'open the opportunities and risk panel'],
