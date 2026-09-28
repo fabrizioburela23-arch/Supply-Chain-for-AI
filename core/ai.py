@@ -130,7 +130,9 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
     MARCA "(⚠ cifra no verificada)". verify_numbers=False solo para diagnóstico."""
     if not verify_numbers:
         return _ai_complete_raw(system, prompt, max_tokens, tier, model)
+    from core.live_facts import live_facts_block
     from core.numbers import NUMBERS_RULE, mark_unsupported, unsupported_in
+    prompt = (prompt or '') + live_facts_block(prompt)   # cifras CORRECTAS, en vivo
     source = f'{system or ""}\n{prompt or ""}'
     sys2 = (system or '') + NUMBERS_RULE
     text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model)

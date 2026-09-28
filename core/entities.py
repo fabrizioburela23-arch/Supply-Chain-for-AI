@@ -159,7 +159,8 @@ def _build_index(snapshot_path=None):
 
     return {'nodos': nodos, 'por_id': por_id, 'por_ticker': por_ticker,
             'por_label': por_label, 'por_label_corto': por_label_corto,
-            'por_alias': por_alias, 'alias_tbl': alias_tbl}
+            'por_alias': por_alias, 'alias_tbl': alias_tbl,
+            'preipo_intel': snap.get('preipo_intel') or {}}
 
 
 def get_index(force=False, snapshot_path=None):

@@ -208,7 +208,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (255 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (257 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -247,7 +247,10 @@ system y verifica (core/numbers.py) que toda cifra de dinero/precio de la
 respuesta esté en el input; si no → 1 reintento con feedback y, si persiste,
 la marca "(⚠ cifra no verificada)". `_ai_complete_raw` = sin guardián (solo
 lo usa el guardián). research/ usa check_numbers (rechazo estricto). Para que
-la IA dé cifras correctas hay que PASARLE el dato en vivo en el prompt.
+la IA dé cifras correctas, `core/live_facts.py` anexa a TODO prompt un
+bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:
+última valuación VERIFICADA con fecha) de las empresas mencionadas (máx 4,
+6 s, nunca rompe la llamada).
 
 ## Errores comunes
 

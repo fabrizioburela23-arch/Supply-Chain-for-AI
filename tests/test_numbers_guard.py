@@ -14,7 +14,9 @@ def _fake(responses, calls):
     return f
 
 
-def _patch(monkeypatch, responses, calls):
+def _patch(monkeypatch, responses, calls, live=''):
+    import core.live_facts as lf
+    monkeypatch.setattr(lf, 'live_facts_block', lambda text: live)
     monkeypatch.setattr(ai, 'CLAUDE', '')
     monkeypatch.setattr(ai, 'AI_ORDER', ['gemini'])
     monkeypatch.setitem(ai._AI_PROVIDERS, 'gemini', (lambda: True, _fake(responses, calls)))
@@ -49,3 +51,19 @@ def test_marca_en_ingles_y_json_sigue_valido(monkeypatch):
     _patch(monkeypatch, ['{"summary": "The company is worth $350B and growing"}'] * 2, calls)
     text, _ = ai._ai_complete('Analyst', 'market cap 1105B', 500)
     assert 'unverified figure' in ai._extract_json(text)['summary']
+
+
+def test_datos_en_vivo_se_inyectan_y_habilitan_la_cifra(monkeypatch):
+    """La IA recibe la capitalización EN VIVO y puede citarla sin marca."""
+    calls = []
+    live = '\n\nDATOS EN VIVO: - Broadcom (AVGO, cotiza): capitalización de mercado 1105.2 mil millones USD'
+    _patch(monkeypatch, ['Broadcom vale unos $1.1T hoy.'], calls, live=live)
+    text, _ = ai._ai_complete('Analista', '¿Cuánto vale Broadcom?', 500)
+    assert 'DATOS EN VIVO' in calls[0][1] and '⚠' not in text and len(calls) == 1
+
+
+def test_detecta_empresas_por_nombre_y_ticker():
+    from core.live_facts import detect_entities
+    assert detect_entities('¿Cuánto vale Broadcom hoy vs Nvidia?') == ['Broadcom', 'Nvidia']
+    assert detect_entities('Analiza AVGO') == ['Broadcom']
+    assert detect_entities('sin empresas aquí') == []
