@@ -67,15 +67,28 @@ function buildKhipusGraph(env) {
       const e = LS.entries[id];
       if (!n || !e) return;
       n.listing = Object.assign({ as_of: LS.as_of }, e);
+      // El texto de crecimiento se escribió cuando era privada ("⭐ PRE-IPO
+      // ~$350B…") y la ficha lo muestra tal cual: sin esto la empresa seguía
+      // DICIENDO pre-IPO aunque la marca ya estuviera apagada.
+      const PRE = /⭐?\s*PRE-?IPO[^;·]*[;·]?\s*/i;
+      const hadPre = PRE.test(n.growth || '') || PRE.test(n.growth_en || '');
       if (e.status === 'public' && e.ticker) {
         n.mkt = e.ticker;
         n.ticker = e.ticker + (e.exchange ? ' · ' + e.exchange : '');
         n.preipo = false;
+        if (hadPre) {
+          const since = e.listed_since ? ' ' + e.listed_since : '';
+          const rest = (n.growth || '').replace(PRE, '').trim();
+          const restEn = (n.growth_en || n.growth || '').replace(PRE, '').trim();
+          n.growth = '🟢 En bolsa (' + e.ticker + ')' + (since ? ' desde' + since : '') + (rest ? ' · ' + rest : '');
+          n.growth_en = '🟢 Listed (' + e.ticker + ')' + (since ? ' since' + since : '') + (restEn ? ' · ' + restEn : '');
+        }
       } else if (e.status === 'acquired' || e.status === 'merged' || e.status === 'subsidiary') {
         // ya no cotiza por sí misma; la exposición bursátil es la del dueño
         n.mkt = null;
         n.preipo = false;
         n.ticker = (e.parent || '') + (e.parent_ticker ? ' (' + e.parent_ticker + ')' : '');
+        if (hadPre && e.note_es) { n.growth = '🔄 ' + e.note_es; n.growth_en = '🔄 ' + (e.note_en || e.note_es); }
       } else if (e.status === 'defunct') {
         n.mkt = null;
         n.preipo = false;

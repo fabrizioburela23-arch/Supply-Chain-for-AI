@@ -915,7 +915,7 @@ var META_FILL = {
  "SpaceX": {
   "founded": 2002,
   "employees": 14000,
-  "revenue_2025": "~$15B (privada, estimado)",
+  "revenue_2025": "~$15B (estimado)",
   "geo_risk": "Sede en EE.UU. (Texas/California); dominio casi monopólico del lanzamiento occidental y dependencia del gobierno de EE.UU. (NASA, Pentágono), con riesgo político ligado a la figura de Elon Musk.",
   "desc": "Empresa de Elon Musk que domina el acceso al espacio con Falcon 9/Starship y opera Starlink, la mayor constelación de satélites del mundo. Es la infraestructura de lanzamiento de la que depende gran parte de la economía espacial y militar (Starshield)."
  },

@@ -4,8 +4,8 @@ const NODES_SPACEX = [
 
 {"id":"SpaceX","label":"SpaceX","ticker":"No cotiza · privada ~$350B (Musk)","cat":"space_launch",
 "port":"","preipo":true,"big":true,
-"role":"Mayor empresa privada de lanzamiento espacial; opera Starlink (6,000+ satélites LEO), Starshield (defensa) y desarrolla Starship para colonización lunar/marciana.",
-"role_en":"World's largest private launch company; operates Starlink (6,000+ LEO satellites), Starshield (defense) and develops Starship for lunar/Martian colonization.",
+"role":"Mayor empresa de lanzamiento espacial del mundo (cotiza en Nasdaq como SPCX desde jun-2026); opera Starlink (6,000+ satélites LEO), Starshield (defensa) y desarrolla Starship para colonización lunar/marciana.",
+"role_en":"World's largest launch company (listed on Nasdaq as SPCX since Jun-2026); operates Starlink (6,000+ LEO satellites), Starshield (defense) and develops Starship for lunar/Martian colonization.",
 "supplies":"Servicios de lanzamiento a NASA, DoD, clientes comerciales; internet Starlink a 4M+ suscriptores; Starshield para inteligencia gubernamental clasificada.",
 "moat":"Costo de lanzamiento 10x menor que competencia por reusabilidad; verticalización extrema (fabrica 90%+ en-house incluyendo ASICs Starlink); Starship habilita economía lunar.",
 "loc":"EE.UU.","country":"EEUU","growth":"⭐ PRE-IPO ~$350B; Starlink ARR ~$8B +80% anual",

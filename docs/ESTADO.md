@@ -40,6 +40,12 @@ los hallazgos sin fuente abierta quedaron en confianza media/baja).
   confidencial, Westinghouse IPO oct-2026, Nscale NSCL, Hugging Face→Nvidia)
   NO se aplicaron: siguen "privada" hasta que cierren.
 - Para refrescar: nueva verificación → build_listing_status.py → export.
+- v144: "SpaceX me sigue saliendo pre-IPO" — la marca ya estaba apagada pero
+  los TEXTOS de la ficha lo decían ("⭐ PRE-IPO ~$350B", "Mayor empresa
+  privada", "(privada, estimado)"). merge_graph.js ahora reescribe growth/
+  growth_en al aplicar el estado (public → "🟢 En bolsa (SPCX) desde …";
+  comprada/fusionada → "🔄 <nota>"); rol e ingresos de SpaceX corregidos en
+  la fuente (nodes_spacex.js / meta_fill.js).
 
 ---
 
