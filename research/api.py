@@ -79,13 +79,30 @@ def create():
         return jsonify({'error': 'ningún proveedor de IA configurado'}), 503
     from research.runner import create_job, execute_job_async
     agents_req = body.get('agents') if isinstance(body.get('agents'), list) else None
-    with session_scope() as s:
-        job, reused = create_job(s, eid, depth=str(body.get('depth') or 'STANDARD').upper(),
-                                 agents=agents_req, trigger={'kind': 'user', 'by': actor},
-                                 requested_by=actor, force=bool(body.get('force')))
-        jid, status = job.id, job.status
-        out = {'job_id': jid, 'entity_id': eid, 'status': status, 'reused': reused, 'agents': job.agents,
-               'depth': job.depth}
+
+    def _crear():
+        with session_scope() as s:
+            job, reused = create_job(s, eid, depth=str(body.get('depth') or 'STANDARD').upper(),
+                                     agents=agents_req, trigger={'kind': 'user', 'by': actor},
+                                     requested_by=actor, force=bool(body.get('force')))
+            return job.id, reused, {'job_id': job.id, 'entity_id': eid, 'status': job.status,
+                                    'reused': reused, 'agents': job.agents, 'depth': job.depth}
+    try:
+        try:
+            jid, reused, out = _crear()
+        except Exception as e:  # noqa: BLE001
+            # AUTO-REPARACIÓN: si la base arrancó después que la app, las tablas
+            # research_* pueden no existir aún → se crean y se reintenta una vez.
+            if 'does not exist' not in str(e) and 'UndefinedTable' not in type(e).__name__ + str(e):
+                raise
+            from ontology.db import init_schema
+            init_schema(retries=1)
+            jid, reused, out = _crear()
+    except Exception as e:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).warning('research create: %s', e)
+        return jsonify({'error': 'no se pudo crear la investigación',
+                        'detail': f'{type(e).__name__}: {str(e)[:240]}'}), 500
     if not reused:
         execute_job_async(jid)
     return jsonify(out), (200 if reused else 202)

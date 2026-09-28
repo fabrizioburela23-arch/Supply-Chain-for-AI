@@ -133,7 +133,9 @@
     if (st === 404) return L('No encontré esa empresa en el catálogo.', 'That company is not in the catalog.');
     if (st === 503 && /IA|proveedor/i.test((d && d.error) || '')) return L('No hay ningún servicio de IA disponible ahora (revisa 🩺 Sistema → IA).', 'No AI service is available right now (check 🩺 System → AI).');
     if (st === 503) return L('La investigación necesita la base de datos (DATABASE_URL en Railway).', 'Research needs the database (DATABASE_URL on Railway).');
-    return (d && d.error) || L('No se pudo iniciar la investigación.', 'Could not start research.');
+    var base = (d && d.error) || L('No se pudo iniciar la investigación.', 'Could not start research.');
+    // Mostrar SIEMPRE el código y el detalle técnico: con eso se diagnostica.
+    return base + ' [' + (st || '?') + (d && d.detail ? ' · ' + d.detail : '') + (d && d._raw ? ' · ' + d._raw : '') + ']';
   }
   function runErrors(j) {
     var out = [];
@@ -149,7 +151,11 @@
 
   function getJSON(url, opts) {
     return fetch(base() + url, opts).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (d) { d._status = r.status; return d; });
+      return r.text().then(function (t) {
+        var d; try { d = JSON.parse(t); } catch (e) { d = { _raw: String(t || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) }; }
+        if (!d || typeof d !== 'object') d = {};
+        d._status = r.status; return d;
+      });
     });
   }
 
