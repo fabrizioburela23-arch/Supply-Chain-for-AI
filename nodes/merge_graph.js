@@ -55,6 +55,34 @@ function buildKhipusGraph(env) {
   });
   expansions.forEach(function (arr) { if (arr) arr.forEach(absorbNode); });
 
+  // ── Estado en bolsa VERIFICADO (nodes/listing_status.js) ────────────────
+  // El catálogo se escribió en una fecha y envejece: SpaceX figuraba como
+  // "privada" meses después de salir a bolsa (SPCX, jun-2026). Esta capa
+  // pisa SOLO lo que se verificó con fuente, y deja el rastro en n.listing
+  // {status, note_es, note_en, source_url, as_of…} para que la UI lo muestre.
+  const LS = env.LISTING_STATUS;
+  if (LS && LS.entries) {
+    Object.keys(LS.entries).forEach(function (id) {
+      const n = NODE_BY_ID[resolveId(id)];
+      const e = LS.entries[id];
+      if (!n || !e) return;
+      n.listing = Object.assign({ as_of: LS.as_of }, e);
+      if (e.status === 'public' && e.ticker) {
+        n.mkt = e.ticker;
+        n.ticker = e.ticker + (e.exchange ? ' · ' + e.exchange : '');
+        n.preipo = false;
+      } else if (e.status === 'acquired' || e.status === 'merged' || e.status === 'subsidiary') {
+        // ya no cotiza por sí misma; la exposición bursátil es la del dueño
+        n.mkt = null;
+        n.preipo = false;
+        n.ticker = (e.parent || '') + (e.parent_ticker ? ' (' + e.parent_ticker + ')' : '');
+      } else if (e.status === 'defunct') {
+        n.mkt = null;
+        n.preipo = false;
+      }
+    });
+  }
+
   // links de expansión → RAW (acepta [s,t,w,rel,type] y {s,t,w,rel,type})
   (env.linkArrays || []).forEach(function (arr) {
     if (!arr) return;

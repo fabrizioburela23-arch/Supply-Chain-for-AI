@@ -192,3 +192,26 @@ def test_nombres_visibles_sin_palabras_pegadas():
                             'Union Pacific': 'UnionPacific', 'IGO': 'IGO'}.items():
         r = resolve(texto)
         assert r and r['id'] == esperado, (texto, r)
+
+
+# ── Estado en bolsa verificado (nodes/listing_status.js) ────────────────────
+
+def test_estado_en_bolsa_verificado_llega_al_snapshot():
+    """SpaceX figuraba como privada meses después de salir a bolsa (SPCX,
+    jun-2026). La capa verificada pisa el catálogo y deja fuente y fecha."""
+    import json
+    ruta = os.path.join(os.path.dirname(__file__), '..', 'data', 'grafo_v0.json')
+    with open(ruta, encoding='utf-8') as fh:
+        snap = json.load(fh)
+    nodos = {n['id']: n for n in snap['nodes']}
+    sx = nodos['SpaceX']
+    assert sx['mkt'] == 'SPCX' and sx['preipo'] is False
+    assert sx['listing']['source_url'].startswith('http') and sx['listing']['as_of']
+    # toda entrada verificada trae fuente y nota bilingüe
+    for n in snap['nodes']:
+        e = n.get('listing')
+        if not e:
+            continue
+        assert e.get('source_url') and e.get('note_es') and e.get('note_en'), n['id']
+        if e['status'] == 'public':
+            assert n['mkt'] == e['ticker'], n['id']

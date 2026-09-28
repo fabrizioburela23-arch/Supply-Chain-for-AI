@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-27T15:35:21.555Z",
+ "exported_at": "2026-09-28T02:12:50.410Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -6965,10 +6965,10 @@
    "sector": "espacio",
    "id": "SpaceX",
    "label": "SpaceX",
-   "ticker": "No cotiza · privada ~$350B (Musk)",
+   "ticker": "SPCX · Nasdaq",
    "cat": "space_launch",
    "port": "",
-   "preipo": true,
+   "preipo": false,
    "big": true,
    "role": "Mayor empresa privada de lanzamiento espacial; opera Starlink (6,000+ satélites LEO), Starshield (defensa) y desarrolla Starship para colonización lunar/marciana.",
    "role_en": "World's largest private launch company; operates Starlink (6,000+ LEO satellites), Starshield (defense) and develops Starship for lunar/Martian colonization.",
@@ -6978,12 +6978,23 @@
    "country": "EEUU",
    "growth": "⭐ PRE-IPO ~$350B; Starlink ARR ~$8B +80% anual",
    "margin": 0.12,
-   "mkt": null,
+   "mkt": "SPCX",
    "thesis": "La única empresa que ha reducido el costo de acceso al espacio en un orden de magnitud.",
    "founded": 2002,
    "employees": 14000,
    "revenue_2025": "~$15B",
-   "geo_risk": "EE.UU. — ITAR, DoD contractor crítico"
+   "geo_risk": "EE.UU. — ITAR, DoD contractor crítico",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "SPCX",
+    "exchange": "Nasdaq",
+    "listed_since": "2026-06-12",
+    "note_es": "Salió a bolsa en Nasdaq (SPCX) el 12-jun-2026 a $135 por acción.",
+    "note_en": "Went public on Nasdaq (SPCX) on 12-Jun-2026 at $135 per share.",
+    "source_url": "https://en.wikipedia.org/wiki/Initial_public_offering_of_SpaceX",
+    "confidence": "high"
+   }
   },
   {
    "sector": "espacio",

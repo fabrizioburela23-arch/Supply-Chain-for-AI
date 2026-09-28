@@ -160,6 +160,18 @@
     return { rank: worse + 1, of: n };
   }
 
+  // Estado en bolsa VERIFICADO (nodes/listing_status.js): salió a bolsa, la
+  // compraron, cerró… con fecha de verificación y fuente clicable.
+  function listingLine(n) {
+    var e = n && n.listing;
+    if (!e || e.status === 'private' || e.status === 'unknown') return '';
+    var txt = L(e.note_es || '', e.note_en || e.note_es || '');
+    if (!txt) return '';
+    var src = e.source_url ? ' · <a href="' + esc(e.source_url) + '" target="_blank" rel="noopener noreferrer" style="color:#7C87A3">' + L('fuente', 'source') + ' ↗</a>' : '';
+    return '<div class="xr-note" style="margin-top:6px">✓ ' + esc(txt) +
+      '<span style="color:#7C87A3;font-size:10.5px"> · ' + L('verificado', 'verified') + ' ' + esc(e.as_of || '') + src + '</span></div>';
+  }
+
   // ── construye el HTML interno del X-Ray (lo usan el cajón y el escenario) ──
   function buildXRayHTML(id, opts) {
     opts = opts || {};
@@ -184,7 +196,7 @@
       '<div class="impact-grid">' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.employees ? (meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : L('Priv.', 'Priv.')) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
       '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
     // fundamentales extra (margen / crecimiento / puerto) si existen
@@ -219,7 +231,7 @@
         '<div class="xr-sec"><span class="xr-dot" style="background:' + col + ';color:' + col + '"></span>' +
           sectorLabel(n.cat) + ' · ' + esc(n.country || '—') + ' · ' + (th.up.length + th.down.length) + ' ' + L('vínculos', 'links') + '</div>' +
         '<div class="xr-px xr-mono" id="xr-px"><span class="p" style="color:#7C87A3">' + (n.mkt ? '— · —' : L('no cotiza en bolsa', 'not publicly traded')) + '</span></div>' +
-        '<div class="xr-lin" id="xr-lin"></div>' +
+        '<div class="xr-lin" id="xr-lin"></div>' + listingLine(n) +
       '</div>';
 
     var nrsSection =
