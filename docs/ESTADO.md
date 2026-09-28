@@ -9,6 +9,40 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-28 (b) — Estado en bolsa VERIFICADO (sw v142-143)
+
+Fabrizio: "SpaceX me dice que no cotiza, y así con varias". El catálogo es
+estático y envejece. Auditoría de 339 "privadas" + 565 cotizadas con 6
+agentes (WebSearch; el cupo de 200 búsquedas de la sesión se agotó a mitad —
+los hallazgos sin fuente abierta quedaron en confianza media/baja).
+- `nodes/listing_status.js` (GENERADO por `scripts/build_listing_status.py`
+  desde los JSON de verificación; solo cambios con fuente y confianza
+  alta/media). Lo aplica `nodes/merge_graph.js` (env.LISTING_STATUS) en el
+  navegador Y en el snapshot: public → mkt/ticker/preipo=false; acquired/
+  merged/subsidiary → mkt=null + dueño; defunct → mkt=null. Rastro en
+  `n.listing` {status, note_es/en, source_url, as_of…}; el X-Ray lo muestra
+  ("✓ … · verificado 2026-09-28 · fuente ↗").
+- 148 entradas. Ej.: SpaceX SPCX (IPO 12-jun-2026), xAI fusionada en SpaceX,
+  Quantinuum QNT, Pasqal PSQL, IQM IQMX, Infleqtion INFQ, Xanadu XNDU, Zhipu
+  2513.HK, Firefly FLY, General Fusion GFUZ, Enflame 688801.SS; compradas:
+  Ansys→SNPS, Juniper→HPE, HashiCorp→IBM, Infinera→NOK, Altium→Renesas,
+  Capella→IonQ, Hailo→MCHP, Calpine→CEG, Ampere→SoftBank…; tickers
+  corregidos (PetroChina 0857.HK, SAIC Motor 600104.SS — "SAIC" era otra
+  empresa —, Nanya 2408.TW, Powerchip 6770.TW, Eni ENI.MI); Aramco 2222.SR,
+  MediaTek 2454.TW, SoftBank 9984.T… que figuraban sin ticker.
+- Descartadas por falta de fuente: Luminar (quiebra dic-2025?), Rain AI,
+  Unitree (salió a bolsa ago-2026 pero sin ticker confirmado).
+- Pendiente de verificar con cupo de búsqueda nuevo: 18 "privadas" de
+  confianza baja (Bluefors, Apptronik, Cognition…), Cerebras (¿cotiza?),
+  X-energy, tickers sin sufijo de bolsa (4004, 8411, BARC, AM=Antero ≠
+  Dassault…), Confluent→IBM, Verint, Axcelis+Veeco, ABB Robotics→SoftBank,
+  Northern Data→Rumble. Eventos pendientes (OpenAI/Anthropic S-1
+  confidencial, Westinghouse IPO oct-2026, Nscale NSCL, Hugging Face→Nvidia)
+  NO se aplicaron: siguen "privada" hasta que cierren.
+- Para refrescar: nueva verificación → build_listing_status.py → export.
+
+---
+
 # SESIÓN 2026-09-28 — X-Ray pulido (sw v139)
 
 A partir de la captura de Fabrizio (X-Ray de la Reserva Federal, ya en prod):

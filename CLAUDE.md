@@ -64,7 +64,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   ontology.js/ontology_facts.js (tipos y hechos tipados) +
   temporal_seed_facts*.js (105 hechos con fechas reales) + preipo_intel.js +
   legal_names.js (nombres legales → id; la usan resolve.js Y core/entities.py
-  vía el snapshot — tras editarla, regenerar data/grafo_v0.json).
+  vía el snapshot — tras editarla, regenerar data/grafo_v0.json) +
+  listing_status.js (GENERADO: estado en bolsa verificado con fuente — IPOs,
+  compras, quiebras — que pisa al catálogo en merge_graph.js; regenerar con
+  scripts/build_listing_status.py + export; nunca editar a mano).
 - `scripts/`: export_graph_v0.js (snapshot) · migrate_v0_to_ontology.py.
 - `data/grafo_v0.json`: snapshot canónico (949 nodos / 2.526 links + la tabla
   `node_id_alias`, que antes NO se exportaba y por eso el servidor no podía
@@ -189,7 +192,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (202 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (203 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

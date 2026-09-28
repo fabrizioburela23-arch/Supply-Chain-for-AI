@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-28T02:12:50.410Z",
+ "exported_at": "2026-09-28T02:16:39.733Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -136,7 +136,7 @@
    "sector": "diseno",
    "id": "Quantinuum",
    "label": "Quantinuum",
-   "ticker": "Pre-IPO ~$10B (Honeywell)",
+   "ticker": "QNT · Nasdaq",
    "cat": "quantum_hw",
    "port": "",
    "role": "Líder en computación cuántica de iones atrapados (Helios); récords de volumen cuántico; mayoría de Honeywell",
@@ -154,14 +154,25 @@
    "growth_en": "⭐ PRE-IPO · revenue >+50% off a ~$100M base",
    "capex_2026_en": "High: Helios builds; Apollo roadmap",
    "backlog_status_en": "Multi-year gov/HPC contracts; solid Helios demand",
-   "preipo": true,
-   "mkt": "QUANTINUUM"
+   "preipo": false,
+   "mkt": "QNT",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "QNT",
+    "exchange": "Nasdaq",
+    "listed_since": "2026-06-04",
+    "note_es": "Salió a bolsa en Nasdaq (QNT) el 4-jun-2026 a $60 por acción, recaudando $1.680M; Honeywell sigue como accionista mayoritario.",
+    "note_en": "IPO'd on Nasdaq (QNT) on 4-Jun-2026 at $60/share, raising $1.68B; Honeywell remains majority holder.",
+    "source_url": "https://www.cnbc.com/2026/06/04/quantinuum-qnt-stock-first-trade-ipo.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
    "id": "Pasqal",
    "label": "Pasqal",
-   "ticker": "Pre-IPO · Francia",
+   "ticker": "PSQL · Nasdaq",
    "cat": "quantum_hw",
    "port": "",
    "role": "Campeón cuántico francés y europeo; procesadores de átomos neutros de 100-1.000 qubits para HPC",
@@ -179,7 +190,20 @@
    "growth_en": "⭐ PRE-IPO · European HPC contracts expanding",
    "capex_2026_en": "Moderate: Massy fab plus overseas lines",
    "backlog_status_en": "EuroHPC/GENCI orders signed; sovereign pipeline",
-   "preipo": true
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "PSQL",
+    "exchange": "Nasdaq",
+    "listed_since": "2026-08-28",
+    "event_date": "2026-08-27",
+    "note_es": "Cotiza en Nasdaq (PSQL) desde el 28-ago-2026 tras fusionarse con el SPAC Bleichroeder Acquisition Corp. II.",
+    "note_en": "Trades on Nasdaq (PSQL) since 28-Aug-2026 after merging with SPAC Bleichroeder Acquisition Corp. II.",
+    "source_url": "https://investors.pasqal.com/news-releases/news-release-details/pasqal-and-bleichroeder-acquisition-corp-ii-complete-business",
+    "confidence": "high"
+   },
+   "mkt": "PSQL"
   },
   {
    "sector": "equipos",
@@ -858,7 +882,7 @@
    "sector": "equipos",
    "id": "GlobalWafers",
    "label": "GlobalWafers",
-   "ticker": "6488 · TWSE",
+   "ticker": "6488.TWO · TPEx (Taipei Exchange)",
    "cat": "materials",
    "port": "",
    "role": "Tercer-cuarto proveedor global de obleas; el más diversificado geográficamente.",
@@ -875,7 +899,19 @@
    "moat_en": "Fourth global supplier with 18 fabs in 9 countries; the only advanced \"Made in USA\" wafer, favored by the CHIPS Act. Main risk: execution of the Texas ramp.",
    "growth_en": "🟢 +8–11% per year",
    "capex_2026_en": "~$1B (Texas ramp)",
-   "backlog_status_en": "LTAs with prepayments; Texas ramping in 2026"
+   "backlog_status_en": "LTAs with prepayments; Texas ramping in 2026",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6488.TWO",
+    "exchange": "TPEx (Taipei Exchange)",
+    "note_es": "Cotiza en la bolsa de Taipéi TPEx con el código 6488; el catálogo la marcaba como no cotizada por error.",
+    "note_en": "Listed on Taipei Exchange (TPEx) under code 6488; the catalog wrongly marked it as unlisted.",
+    "source_url": "https://finance.yahoo.com/quote/6488.TWO/",
+    "confidence": "high"
+   },
+   "mkt": "6488.TWO",
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -905,7 +941,7 @@
    "sector": "equipos",
    "id": "JSR",
    "label": "JSR",
-   "ticker": "Estatizada (JIC 2024)",
+   "ticker": "Japan Investment Corporation (JIC, estatal)",
    "cat": "chemicals",
    "port": "",
    "role": "Líder en fotorresistencias EUV, estatizada por el fondo JIC como activo estratégico de Japón.",
@@ -922,7 +958,19 @@
    "moat_en": "One of only two qualified EUV resist suppliers in the world (duopoly with Tokyo Ohka). The Japanese government funds its expansion via JIC — patient capital with no stock-market pressure.",
    "growth_en": "🔵 +15–22% per year",
    "capex_2026_en": "~$400M (funded by JIC)",
-   "backlog_status_en": "Qualified in TSMC/Samsung 2nm ramps"
+   "backlog_status_en": "Qualified in TSMC/Samsung 2nm ramps",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Japan Investment Corporation (JIC, estatal)",
+    "event_date": "2024-06",
+    "note_es": "Fue comprada por el fondo estatal JIC y excluida de la Bolsa de Tokio en 2024.",
+    "note_en": "Taken private by state-backed fund JIC and delisted from the Tokyo Stock Exchange in 2024.",
+    "source_url": "https://www.jsr.co.jp/jsr/en/",
+    "confidence": "medium"
+   },
+   "mkt": null,
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -952,7 +1000,7 @@
    "sector": "equipos",
    "id": "TokyoOhka",
    "label": "Tokyo Ohka Kogyo",
-   "ticker": "4186 · TSE",
+   "ticker": "4186.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Mayor fabricante mundial de fotorresistencias por volumen; duopolio EUV con JSR.",
@@ -969,7 +1017,19 @@
    "moat_en": "Duopoly with JSR in EUV resists (~70–80% combined); qualifying a recipe with a fab takes years. Unlike JSR it remains listed — the segment's accessible pure play.",
    "growth_en": "🟢 +12–16% per year",
    "capex_2026_en": "~$300M (¥45B)",
-   "backlog_status_en": "EUV capacity committed to the big three"
+   "backlog_status_en": "EUV capacity committed to the big three",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4186.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Cotiza en la Bolsa de Tokio (4186); siempre fue pública.",
+    "note_en": "Listed on the Tokyo Stock Exchange (4186); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/4186.T/",
+    "confidence": "high"
+   },
+   "mkt": "4186.T",
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -1553,7 +1613,7 @@
    "sector": "fabricacion",
    "id": "Unimicron",
    "label": "Unimicron",
-   "ticker": "3037 · TWSE",
+   "ticker": "3037.TW · TWSE",
    "cat": "substrates",
    "port": "",
    "role": "Segundo mayor fabricante mundial de sustratos ABF.",
@@ -1570,7 +1630,19 @@
    "moat_en": "Oligopoly with Ibiden. Its capacity expansion is funded by take-or-pay contracts signed by the customers themselves, who bear the volume risk and lock in plant utilization.",
    "growth_en": "🔵 +18–24% annually",
    "capex_2026_en": "~NT$35B (ABF expansion)",
-   "backlog_status_en": "Take-or-pay covers the new capacity through 2027"
+   "backlog_status_en": "Take-or-pay covers the new capacity through 2027",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "3037.TW",
+    "exchange": "TWSE",
+    "note_es": "Cotiza en la Bolsa de Taiwán (3037); siempre fue pública.",
+    "note_en": "Listed on the Taiwan Stock Exchange (3037); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/3037.TW/",
+    "confidence": "high"
+   },
+   "mkt": "3037.TW",
+   "preipo": false
   },
   {
    "sector": "fabricacion",
@@ -1913,7 +1985,7 @@
    "sector": "infra",
    "id": "Innolight",
    "label": "Innolight",
-   "ticker": "300308 · SZSE",
+   "ticker": "300308.SZ · SZSE ChiNext + HKEX (3308.HK)",
    "cat": "networking",
    "port": "",
    "role": "#1 mundial en transceptores ópticos 800G/1.6T; proveedor crítico de Nvidia y hyperscalers",
@@ -1930,7 +2002,20 @@
    "moat_en": "~30% global share in high-speed datacom and unmatched manufacturing scale (Thailand/China). Risks: US-China tariffs, Nvidia/Broadcom CPO internalizing the optics, and reliance on third-party EMLs.",
    "growth_en": "⚡ Revenue +60% 2026; 1.6T ramp",
    "capex_2026_en": "~$700M; Thailand capacity",
-   "backlog_status_en": "1.6T capacity fully committed through 2026"
+   "backlog_status_en": "1.6T capacity fully committed through 2026",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "300308.SZ",
+    "exchange": "SZSE ChiNext + HKEX (3308.HK)",
+    "listed_since": "2026-07-30",
+    "note_es": "Cotiza en Shenzhen (300308) y desde el 30-jul-2026 también en Hong Kong (3308) tras recaudar ~$6.800M.",
+    "note_en": "Listed in Shenzhen (300308) and, since 30-Jul-2026, also in Hong Kong (3308) after raising ~$6.8B.",
+    "source_url": "https://www.trendforce.com/news/2026/08/03/news-zj-innolight-debuts-on-hkex-in-record-ipo-as-inp-substrate-bottleneck-intensifies/",
+    "confidence": "high"
+   },
+   "mkt": "300308.SZ",
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -2128,7 +2213,7 @@
    "sector": "infra",
    "id": "DeltaElectronics",
    "label": "Delta Electronics",
-   "ticker": "2308 · TWSE",
+   "ticker": "2308.TW · TWSE",
    "cat": "power",
    "port": "",
    "role": "Fuentes de poder y módulos de potencia de los racks GB300; partner de Nvidia en 800 VDC",
@@ -2145,7 +2230,19 @@
    "moat_en": "~50% share in server power supplies and early co-design with Nvidia on the 800 VDC architecture. Risks: Lite-On/Vertiv competition and exposure to Nvidia's product cadence.",
    "growth_en": "🔵 Revenue +30% 2026; AI power doubling",
    "capex_2026_en": "~$1B; US and Thailand plants",
-   "backlog_status_en": "GB300 power shelves committed through 2026"
+   "backlog_status_en": "GB300 power shelves committed through 2026",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2308.TW",
+    "exchange": "TWSE",
+    "note_es": "Cotiza en la Bolsa de Taiwán (2308); siempre fue pública.",
+    "note_en": "Listed on the Taiwan Stock Exchange (2308); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/2308.TW/",
+    "confidence": "high"
+   },
+   "mkt": "2308.TW",
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -2716,7 +2813,7 @@
    "sector": "cloud_ia",
    "id": "xAI",
    "label": "xAI (+SpaceX)",
-   "ticker": "Pre-IPO finales 2026",
+   "ticker": "SpaceX (SPCX)",
    "cat": "ailab",
    "port": "",
    "role": "Laboratorio de IA frontera fusionado con SpaceX — creador de Grok.",
@@ -2727,14 +2824,26 @@
    "margin": -1.5,
    "capex_2026": "$15–20B (Colossus 1/2)",
    "backlog_status": "Colossus 2 en expansión; demanda cautiva de X/SpaceX",
-   "preipo": true,
+   "preipo": false,
    "country": "EEUU",
    "role_en": "Frontier AI lab merged with SpaceX — creator of Grok.",
    "supplies_en": "The Grok model, integrated with X. Operates the Colossus 1/2 supercluster in Memphis on Dell and Super Micro servers. Combined IPO with SpaceX targeted for late 2026 (~$2T), aiming to raise $75B+.",
    "moat_en": "Backed by Musk and vertically integrated with X/SpaceX (data, distribution, energy). It would be one of the largest IPOs in history, but it burns cash at an extreme pace and its supplier Super Micro is dragging a DOJ indictment.",
    "growth_en": "⭐ PRE-IPO late 2026 (~$2T)",
    "capex_2026_en": "$15–20B (Colossus 1/2)",
-   "backlog_status_en": "Colossus 2 expanding; captive demand from X/SpaceX"
+   "backlog_status_en": "Colossus 2 expanding; captive demand from X/SpaceX",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "merged",
+    "parent": "SpaceX",
+    "parent_ticker": "SPCX",
+    "event_date": "2026-02-02",
+    "note_es": "Se fusionó con SpaceX el 2-feb-2026; la entidad combinada cotiza en Nasdaq (SPCX) desde el 12-jun-2026.",
+    "note_en": "Merged into SpaceX on 2-Feb-2026; the combined company trades on Nasdaq (SPCX) since 12-Jun-2026.",
+    "source_url": "https://www.npr.org/2026/06/11/nx-s1-5853199/spacex-ipo-price-elon-musk",
+    "confidence": "high"
+   },
+   "mkt": null
   },
   {
    "sector": "cloud_ia",
@@ -2889,7 +2998,7 @@
    "sector": "robotica",
    "id": "BostonDynamics",
    "label": "Boston Dynamics",
-   "ticker": "vía Hyundai (no cotiza)",
+   "ticker": "Hyundai Motor Group (005380.KS)",
    "cat": "robotics_physical",
    "port": "",
    "role": "Pionero de la robótica dinámica — subsidiaria de Hyundai; humanoides para logística.",
@@ -2900,14 +3009,26 @@
    "margin": null,
    "capex_2026": "n/d — financiada por Hyundai",
    "backlog_status": "Atlas en pilotos (Hyundai, DHL); Spot/Stretch comerciales",
-   "preipo": true,
+   "preipo": false,
    "country": "EEUU",
    "role_en": "Pioneer of dynamic robotics — Hyundai subsidiary; humanoids for logistics.",
    "supplies_en": "Electric Atlas in logistics pilots with Hyundai (Georgia Metaplant) and DHL; Spot and Stretch robots already commercial. Onboard AI runs on Nvidia Jetson compute.",
    "moat_en": "Three decades of leadership in locomotion and manipulation — the most proven robot lineup in the sector. Risk: slow monetization versus better-funded rivals; only investable via Hyundai.",
    "growth_en": "⭐ Not listed — Hyundai subsidiary",
    "capex_2026_en": "n/a — funded by Hyundai",
-   "backlog_status_en": "Atlas in pilots (Hyundai, DHL); Spot/Stretch commercial"
+   "backlog_status_en": "Atlas in pilots (Hyundai, DHL); Spot/Stretch commercial",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Hyundai Motor Group",
+    "parent_ticker": "005380.KS",
+    "event_date": "2026-07",
+    "note_es": "Filial de Hyundai, que en jul-2026 compró el ~10% restante de SoftBank; IPO poco probable antes de 2028.",
+    "note_en": "Hyundai subsidiary; Hyundai bought SoftBank's remaining ~10% in Jul 2026; IPO unlikely before 2028.",
+    "source_url": "https://yournews.com/2026/09/14/7194096/boston-dynamics-ipo-unlikely-in-2027-as-hyundai-prioritizes-robot/",
+    "confidence": "medium"
+   },
+   "mkt": null
   },
   {
    "sector": "robotica",
@@ -3081,7 +3202,7 @@
    "sector": "diseno",
    "id": "MediaTek",
    "label": "MediaTek",
-   "ticker": "2454 · TWSE",
+   "ticker": "2454.TW · TWSE",
    "cat": "fabless",
    "port": "",
    "role": "2º fabless global por volumen: SoCs para smartphones Android, IoT y TV.",
@@ -3098,7 +3219,19 @@
    "moat_en": "Dominates mid-to-high Android with >40% smartphone market share. Direct Qualcomm competitor on price/performance.",
    "growth_en": "🟢 +18% driven by AIoT and edge AI",
    "capex_2026_en": "Low: fabless",
-   "backlog_status_en": "Solid mid-range backlog"
+   "backlog_status_en": "Solid mid-range backlog",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2454.TW",
+    "exchange": "TWSE",
+    "note_es": "Cotiza en la Bolsa de Taiwán (2454); siempre fue pública.",
+    "note_en": "Listed on the Taiwan Stock Exchange (2454); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/2454.TW/",
+    "confidence": "high"
+   },
+   "mkt": "2454.TW",
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -3178,7 +3311,7 @@
    "sector": "cloud_ia",
    "id": "Naver",
    "label": "Naver (HyperCLOVA X)",
-   "ticker": "035420 · KOSPI",
+   "ticker": "035420.KS · KOSPI",
    "cat": "cloud",
    "port": "",
    "role": "Hyperscaler coreano: HyperCLOVA X (82B params) compite con ChatGPT en coreano.",
@@ -3195,13 +3328,25 @@
    "moat_en": "Korean linguistic dominance — no Western model beats it in Korean/Japanese. Sovereign Korean infrastructure outside US sanction reach.",
    "growth_en": "🔵 +25% NAVER Cloud driven by HyperCLOVA",
    "capex_2026_en": "~$1B in AI infrastructure",
-   "backlog_status_en": ">100K companies on NAVER Cloud Korea"
+   "backlog_status_en": ">100K companies on NAVER Cloud Korea",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "035420.KS",
+    "exchange": "KOSPI",
+    "note_es": "Cotiza en el KOSPI de Corea (035420); siempre fue pública.",
+    "note_en": "Listed on Korea's KOSPI (035420); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/035420.KS/",
+    "confidence": "high"
+   },
+   "mkt": "035420.KS",
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
    "id": "SoftBank",
    "label": "SoftBank Group",
-   "ticker": "9984 · TSE",
+   "ticker": "9984.T · Tokyo Stock Exchange",
    "cat": "cloud",
    "port": "",
    "role": "Conglomerado inversor japonés: dueño de ARM, líder de la ronda de OpenAI y socio del megaproyecto Stargate.",
@@ -3218,13 +3363,25 @@
    "moat_en": "Few entities can write $30B+ checks on a single thesis. ARM control gives exposure to nearly every mobile chip on the planet. Risk: leverage and extreme AI concentration.",
    "growth_en": "🔵 NAV tied to ARM and AI portfolio",
    "capex_2026_en": "$19B committed to Stargate (phase 1)",
-   "backlog_status_en": "Stargate: $100–500B target over 4 years"
+   "backlog_status_en": "Stargate: $100–500B target over 4 years",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "9984.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Cotiza en la Bolsa de Tokio (9984); siempre fue pública.",
+    "note_en": "Listed on the Tokyo Stock Exchange (9984); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/9984.T/",
+    "confidence": "high"
+   },
+   "mkt": "9984.T",
+   "preipo": false
   },
   {
    "sector": "diseno",
    "id": "Xiaomi",
    "label": "Xiaomi",
-   "ticker": "1810 · HKEX",
+   "ticker": "1810.HK · HKEX",
    "cat": "fabless",
    "port": "",
    "role": "Gigante chino de electrónica de consumo que ya diseña su propio silicio (XRING O1) y fabrica EVs.",
@@ -3241,13 +3398,25 @@
    "moat_en": "Unique hardware-software-EV integration in China; direct channel to hundreds of millions of users. Risk: dependence on TSMC and Qualcomm under export controls.",
    "growth_en": "🟢 +30% driven by EV and premium tier",
    "capex_2026_en": "~$4B (EV + chips)",
-   "backlog_status_en": "SU7: ~150K pending orders"
+   "backlog_status_en": "SU7: ~150K pending orders",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "1810.HK",
+    "exchange": "HKEX",
+    "note_es": "Cotiza en la Bolsa de Hong Kong (1810) desde 2018.",
+    "note_en": "Listed on the Hong Kong Stock Exchange (1810) since 2018.",
+    "source_url": "https://finance.yahoo.com/quote/1810.HK/",
+    "confidence": "high"
+   },
+   "mkt": "1810.HK",
+   "preipo": false
   },
   {
    "sector": "robotica",
    "id": "BMW",
    "label": "BMW Group",
-   "ticker": "BMW · XETRA",
+   "ticker": "BMW.DE · XETRA",
    "cat": "robotics_physical",
    "port": "",
    "role": "Fabricante premium alemán — primer cliente industrial de los humanoides Figure 02 en su planta de Spartanburg.",
@@ -3264,13 +3433,25 @@
    "moat_en": "Century-old brand and precision manufacturing; its early humanoid adoption sets the standard for Western automotive.",
    "growth_en": "🟡 +5% — Neue Klasse cycle",
    "capex_2026_en": "~€9B",
-   "backlog_status_en": "Neue Klasse: 2026–2028 launches"
+   "backlog_status_en": "Neue Klasse: 2026–2028 launches",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "BMW.DE",
+    "exchange": "XETRA",
+    "note_es": "Cotiza en Fráncfort/XETRA (BMW); siempre fue pública.",
+    "note_en": "Listed on Frankfurt/XETRA (BMW); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/BMW.DE/",
+    "confidence": "high"
+   },
+   "mkt": "BMW.DE",
+   "preipo": false
   },
   {
    "sector": "robotica",
    "id": "Hyundai",
    "label": "Hyundai Motor",
-   "ticker": "005380 · KRX",
+   "ticker": "005380.KS · KRX (KOSPI)",
    "cat": "robotics_physical",
    "port": "",
    "role": "3º fabricante mundial de coches y propietario de Boston Dynamics — la apuesta coreana por la IA física.",
@@ -3287,13 +3468,25 @@
    "moat_en": "The only automaker owning a humanoid robotics leader (Boston Dynamics, $1.1B in 2021). Vertically integrated Korea–US manufacturing.",
    "growth_en": "🟡 +6% — EVs and hybridization",
    "capex_2026_en": "~$16B (group)",
-   "backlog_status_en": "Metaplant: 300K EVs/yr ramping"
+   "backlog_status_en": "Metaplant: 300K EVs/yr ramping",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "005380.KS",
+    "exchange": "KRX (KOSPI)",
+    "note_es": "Cotiza en la Bolsa de Corea (005380); siempre fue pública.",
+    "note_en": "Listed on the Korea Exchange (005380); it has always been public.",
+    "source_url": "https://finance.yahoo.com/quote/005380.KS/",
+    "confidence": "high"
+   },
+   "mkt": "005380.KS",
+   "preipo": false
   },
   {
    "sector": "robotica",
    "id": "SAIC",
    "label": "SAIC Motor",
-   "ticker": "600104 · SSE",
+   "ticker": "600104.SS · SSE",
    "cat": "robotics_physical",
    "port": "",
    "role": "Mayor grupo automotor de China (~5M coches/año) — primera línea de producción con humanoides Unitree G1.",
@@ -3311,7 +3504,18 @@
    "growth_en": "🟡 +3% — EV price pressure",
    "capex_2026_en": "~$7B",
    "backlog_status_en": "MG: EU/LatAm expansion",
-   "mkt": "SAIC"
+   "mkt": "600104.SS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "600104.SS",
+    "exchange": "SSE",
+    "note_es": "SAIC Motor cotiza en Shanghái (600104); el ticker 'SAIC' es de Science Applications International Corp (Nasdaq), otra empresa.",
+    "note_en": "SAIC Motor trades in Shanghai (600104); 'SAIC' is the Nasdaq ticker of Science Applications International Corp, an unrelated company.",
+    "source_url": "https://en.wikipedia.org/wiki/SAIC_Motor",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "defensa",
@@ -3443,7 +3647,7 @@
    "sector": "diseno",
    "id": "AmpereComputing",
    "label": "Ampere Computing",
-   "ticker": "Privada",
+   "ticker": "SoftBank Group (9984.T)",
    "cat": "asic_custom",
    "port": "",
    "role": "CPUs ARM cloud-native de alta eficiencia",
@@ -3455,11 +3659,22 @@
    "margin": 0.25,
    "capex_2026": "~$0.3B",
    "backlog_status": "Crecimiento",
-   "preipo": true,
-   "mkt": "AMPERE",
+   "preipo": false,
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "ARM-based cloud-native CPU with 192 cores"
+   "desc": "ARM-based cloud-native CPU with 192 cores",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "SoftBank Group",
+    "parent_ticker": "9984.T",
+    "event_date": "2025-11-25",
+    "note_es": "SoftBank completó su compra por $6.500M el 25-nov-2025; ahora es filial 100% de SoftBank.",
+    "note_en": "SoftBank completed its $6.5B acquisition on 25-Nov-2025; now a wholly owned SoftBank subsidiary.",
+    "source_url": "https://group.softbank/en/news/press/20251126",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -3503,7 +3718,7 @@
    "sector": "diseno",
    "id": "Hailo",
    "label": "Hailo Technologies",
-   "ticker": "Privada",
+   "ticker": "Microchip Technology (MCHP)",
    "cat": "asic_custom",
    "port": "",
    "role": "NPUs Edge IA para automotive y visión",
@@ -3515,8 +3730,19 @@
    "margin": 0.15,
    "capex_2026": "~$0.1B",
    "backlog_status": "Crecimiento",
-   "preipo": true,
-   "mkt": "HAILO"
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Microchip Technology",
+    "parent_ticker": "MCHP",
+    "event_date": "2026-09-21",
+    "note_es": "Microchip Technology completó su adquisición el 21-sept-2026 tras el fracaso de su fusión con un SPAC.",
+    "note_en": "Microchip Technology completed its acquisition on 21-Sep-2026 after its SPAC merger collapsed.",
+    "source_url": "https://ir.microchip.com/news-events/press-releases/detail/1415/microchip-technology-completes-acquisition-of-hailo",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -3534,11 +3760,21 @@
    "margin": 0,
    "capex_2026": "~$0.05B",
    "backlog_status": "Early stage",
-   "preipo": true,
-   "mkt": "ESPERANTO",
+   "preipo": false,
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "RISC-V based AI inference chip with 1092 cores"
+   "desc": "RISC-V based AI inference chip with 1092 cores",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "defunct",
+    "parent": "Ainekko (compró su PI)",
+    "event_date": "2025-11",
+    "note_es": "Cerró su negocio de chips en 2025; Ainekko compró su propiedad intelectual y activos en nov-2025.",
+    "note_en": "Wound down its chip business in 2025; Ainekko bought its IP and assets in Nov 2025.",
+    "source_url": "https://www.eetimes.com/ainekko-buys-esperanto-hardware-ip-open-sources-it/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -3584,7 +3820,7 @@
    "sector": "diseno",
    "id": "Lightelligence",
    "label": "Lightelligence",
-   "ticker": "Privada",
+   "ticker": "1879.HK · HKEX",
    "cat": "photonics_si",
    "port": "",
    "role": "Computing fotónico para IA",
@@ -3596,11 +3832,22 @@
    "margin": 0,
    "capex_2026": "~$0.05B",
    "backlog_status": "I+D",
-   "preipo": true,
-   "mkt": "LIGHTELLIGENCE",
+   "preipo": false,
+   "mkt": "1879.HK",
    "geo": "EEUU",
    "big": false,
-   "desc": "Photonic AI chip startup using optical computing"
+   "desc": "Photonic AI chip startup using optical computing",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "1879.HK",
+    "exchange": "HKEX",
+    "listed_since": "2026-04-28",
+    "note_es": "Salió a bolsa en Hong Kong (1879) el 28-abr-2026 a HK$183,2 y subió 383% en su debut.",
+    "note_en": "Listed in Hong Kong (1879) on 28-Apr-2026 at HK$183.2 and rose 383% on debut.",
+    "source_url": "https://www.caixinglobal.com/2026-04-28/lightelligence-sets-record-ipo-gain-with-383-surge-on-hong-kong-debut-102438977.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -3680,7 +3927,7 @@
    "sector": "infra",
    "id": "QTS",
    "label": "QTS Realty Trust",
-   "ticker": "QTS · Privado (Blackstone)",
+   "ticker": "Blackstone Infrastructure / BREIT (BX)",
    "cat": "dc_reit",
    "port": "",
    "role": "Datacenters hiperescala y colocation",
@@ -3692,10 +3939,22 @@
    "margin": 0.35,
    "capex_2026": "~$5.0B",
    "backlog_status": "Récord",
-   "mkt": "BX",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "Data center REIT; acquired by Blackstone 2021"
+   "desc": "Data center REIT; acquired by Blackstone 2021",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Blackstone Infrastructure / BREIT",
+    "parent_ticker": "BX",
+    "event_date": "2021-08-31",
+    "note_es": "Comprada por Blackstone en ago-2021; ya no cotiza (BX es el ticker del comprador).",
+    "note_en": "Acquired by Blackstone in Aug 2021; no longer listed (BX is the acquirer's ticker).",
+    "source_url": "https://en.wikipedia.org/wiki/QTS_Realty_Trust",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -3741,7 +4000,7 @@
    "sector": "infra",
    "id": "Switch",
    "label": "Switch (Endeavor DC)",
-   "ticker": "Privado (DigitalBridge)",
+   "ticker": "DigitalBridge-led consortium (with IFM Investors)",
    "cat": "dc_reit",
    "port": "",
    "role": "Datacenters tier 5 de alta disponibilidad",
@@ -3753,10 +4012,21 @@
    "margin": 0.4,
    "capex_2026": "~$1.0B",
    "backlog_status": "Expansión",
-   "mkt": "DBRG",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "Hyperscale data center operator; acquired by DigitalBridge"
+   "desc": "Hyperscale data center operator; acquired by DigitalBridge",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "DigitalBridge-led consortium (with IFM Investors)",
+    "event_date": "2022-12-06",
+    "note_es": "Comprada por un consorcio liderado por DigitalBridge e IFM en dic-2022; es privada (DBRG no es su cotización).",
+    "note_en": "Taken private by a DigitalBridge/IFM-led consortium in Dec 2022; DBRG is not its quote.",
+    "source_url": "https://en.wikipedia.org/wiki/Switch,_Inc.",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -3792,16 +4062,26 @@
    "margin": -0.25,
    "capex_2026": "~$0.05B",
    "backlog_status": "Riesgo alto",
-   "mkt": "EGIO",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "CDN and edge cloud platform for streaming"
+   "desc": "CDN and edge cloud platform for streaming",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "defunct",
+    "event_date": "2024-09-09",
+    "note_es": "Se declaró en quiebra (Chapter 11) en sep-2024, vendió sus activos (parte a Akamai) y fue retirada de Nasdaq.",
+    "note_en": "Filed Chapter 11 in Sep 2024, sold its assets (partly to Akamai) and was delisted from Nasdaq.",
+    "source_url": "https://en.wikipedia.org/wiki/Edgio",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
    "id": "Imperva",
    "label": "Imperva (Thales)",
-   "ticker": "Privado (Thales)",
+   "ticker": "Thales (HO.PA)",
    "cat": "cdn_edge",
    "port": "",
    "role": "Seguridad de aplicaciones web y datos",
@@ -3813,7 +4093,19 @@
    "margin": 0.2,
    "capex_2026": "~$0.1B",
    "backlog_status": "Integración",
-   "mkt": "IMPERVA"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Thales",
+    "parent_ticker": "HO.PA",
+    "event_date": "2023-12",
+    "note_es": "Filial de Thales desde que completó su compra por $3.600M en dic-2023.",
+    "note_en": "Thales subsidiary since Thales completed its $3.6B purchase in Dec 2023.",
+    "source_url": "https://www.thalesgroup.com/en/worldwide/group/press_release/thales-completes-acquisition-imperva",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -3881,7 +4173,7 @@
    "sector": "cloud_ia",
    "id": "Waymo",
    "label": "Waymo (Alphabet)",
-   "ticker": "GOOGL · NASDAQ",
+   "ticker": "Alphabet (GOOGL)",
    "cat": "ai_auto",
    "port": "",
    "role": "Robotaxi L4 y stack de conducción autónoma",
@@ -3893,14 +4185,24 @@
    "margin": -0.3,
    "capex_2026": "~$2.0B",
    "backlog_status": "Expansión",
-   "preipo": true,
-   "mkt": "WAYMO"
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Alphabet",
+    "parent_ticker": "GOOGL",
+    "note_es": "Filial de Alphabet; no cotiza por separado.",
+    "note_en": "Alphabet subsidiary; not separately listed.",
+    "source_url": "https://abc.xyz/investor/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "cloud_ia",
    "id": "Zoox",
    "label": "Zoox (Amazon)",
-   "ticker": "AMZN · NASDAQ",
+   "ticker": "Amazon (AMZN)",
    "cat": "ai_auto",
    "port": "",
    "role": "Vehículo robotaxi bidireccional propósito específico",
@@ -3912,8 +4214,19 @@
    "margin": -0.8,
    "capex_2026": "~$1.0B",
    "backlog_status": "Pre-comercial",
-   "mkt": "ZOOX",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Amazon",
+    "parent_ticker": "AMZN",
+    "event_date": "2020-06",
+    "note_es": "Filial de Amazon desde 2020; no cotiza por separado.",
+    "note_en": "Amazon subsidiary since 2020; not separately listed.",
+    "source_url": "https://zoox.com/about",
+    "confidence": "high"
+   }
   },
   {
    "sector": "cloud_ia",
@@ -3937,7 +4250,7 @@
    "sector": "cloud_ia",
    "id": "Cepton",
    "label": "Cepton (Koito Mfg)",
-   "ticker": "Privado (Koito)",
+   "ticker": "Koito Manufacturing (7276.T)",
    "cat": "ai_auto",
    "port": "",
    "role": "LiDAR ADAS integrado en faros automotrices",
@@ -3949,10 +4262,22 @@
    "margin": 0.05,
    "capex_2026": "~$0.1B",
    "backlog_status": "Rampa serial",
-   "mkt": "CEPTON",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "LiDAR solutions for automotive; acquired by Koito"
+   "desc": "LiDAR solutions for automotive; acquired by Koito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Koito Manufacturing",
+    "parent_ticker": "7276.T",
+    "event_date": "2025-01-07",
+    "note_es": "Koito completó su compra el 7-ene-2025 y la retiró de Nasdaq.",
+    "note_en": "Koito completed its acquisition on 7-Jan-2025 and delisted it from Nasdaq.",
+    "source_url": "https://www.koito.co.jp/english/news/2025/01/08/004421.html",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -4066,7 +4391,7 @@
    "sector": "cloud_ia",
    "id": "Insilico",
    "label": "Insilico Medicine",
-   "ticker": "Privada",
+   "ticker": "3696.HK · HKEX",
    "cat": "ai_health",
    "port": "",
    "role": "IA generativa para descubrimiento de fármacos",
@@ -4078,11 +4403,22 @@
    "margin": -0.4,
    "capex_2026": "~$0.1B",
    "backlog_status": "Clínico",
-   "preipo": true,
-   "mkt": "INSILICO",
+   "preipo": false,
+   "mkt": "3696.HK",
    "geo": "EEUU",
    "big": false,
-   "desc": "AI-driven drug discovery platform"
+   "desc": "AI-driven drug discovery platform",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "3696.HK",
+    "exchange": "HKEX",
+    "listed_since": "2025-12-30",
+    "note_es": "Cotiza en la Bolsa de Hong Kong (3696) desde el 30-dic-2025.",
+    "note_en": "Listed on the Hong Kong Stock Exchange (3696) since 30-Dec-2025.",
+    "source_url": "https://insilico.com/news/p010170up1-insilico-medicine-lists-on-hong-kong-sto",
+    "confidence": "high"
+   }
   },
   {
    "sector": "cloud_ia",
@@ -4107,7 +4443,7 @@
    "sector": "cloud_ia",
    "id": "Kensho",
    "label": "Kensho Technologies (S&P)",
-   "ticker": "SPGI · NYSE",
+   "ticker": "S&P Global (SPGI)",
    "cat": "ai_finance",
    "port": "",
    "role": "Analítica cuantitativa e IA para mercados financieros",
@@ -4119,8 +4455,19 @@
    "margin": 0.35,
    "capex_2026": "~$0.1B",
    "backlog_status": "Integrado",
-   "mkt": "SPGI",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "S&P Global",
+    "parent_ticker": "SPGI",
+    "event_date": "2018-04",
+    "note_es": "Filial de S&P Global desde 2018; no cotiza por separado.",
+    "note_en": "S&P Global subsidiary since 2018; not separately listed.",
+    "source_url": "https://kensho.com/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "cloud_ia",
@@ -4280,7 +4627,7 @@
    "sector": "espacio",
    "id": "HawkEye360",
    "label": "HawkEye 360",
-   "ticker": "Privada",
+   "ticker": "HAWK · NYSE",
    "cat": "earth_obs",
    "port": "",
    "role": "Inteligencia RF desde el espacio",
@@ -4292,8 +4639,19 @@
    "margin": 0,
    "capex_2026": "~$0.1B",
    "backlog_status": "Expansión",
-   "preipo": true,
-   "mkt": "HAWKEYE360"
+   "preipo": false,
+   "mkt": "HAWK",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "HAWK",
+    "exchange": "NYSE",
+    "listed_since": "2026-05-07",
+    "note_es": "Salió a bolsa en la NYSE (HAWK) el 7-may-2026 a $26 por acción, recaudando $416M.",
+    "note_en": "IPO'd on the NYSE (HAWK) on 7-May-2026 at $26/share, raising $416M.",
+    "source_url": "https://qz.com/hawkeye-360-ipo-nyse-hawk-416-million-050726",
+    "confidence": "high"
+   }
   },
   {
    "sector": "espacio",
@@ -4318,7 +4676,7 @@
    "sector": "espacio",
    "id": "CapellaSpace",
    "label": "Capella Space",
-   "ticker": "Privada",
+   "ticker": "IonQ (IONQ)",
    "cat": "earth_obs",
    "port": "",
    "role": "SAR comercial con revisita horaria",
@@ -4330,8 +4688,19 @@
    "margin": 0.05,
    "capex_2026": "~$0.15B",
    "backlog_status": "Expansión",
-   "preipo": true,
-   "mkt": "CAPELLASPACE"
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "IonQ",
+    "parent_ticker": "IONQ",
+    "event_date": "2025-07-15",
+    "note_es": "IonQ completó su adquisición el 15-jul-2025.",
+    "note_en": "IonQ completed its acquisition on 15-Jul-2025.",
+    "source_url": "https://investors.ionq.com/news/news-details/2025/IonQ-Completes-Acquisition-of-Capella-Space-Advancing-Vision-for-Space-Based-Quantum-Communications/default.aspx",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -4515,7 +4884,7 @@
    "sector": "diseno",
    "id": "EdgeImpulse",
    "label": "Edge Impulse",
-   "ticker": "Privada",
+   "ticker": "Qualcomm (QCOM)",
    "cat": "edge_ai",
    "port": "",
    "role": "Plataforma MLOps para desarrollo edge AI",
@@ -4527,11 +4896,22 @@
    "margin": -0.2,
    "capex_2026": "~$0.02B",
    "backlog_status": "Crecimiento plataforma",
-   "preipo": true,
-   "mkt": "EDGEIMPULSE",
+   "preipo": false,
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
-   "desc": "MLOps platform for edge AI development"
+   "desc": "MLOps platform for edge AI development",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Qualcomm",
+    "parent_ticker": "QCOM",
+    "event_date": "2025-03",
+    "note_es": "Adquirida por Qualcomm en marzo de 2025.",
+    "note_en": "Acquired by Qualcomm in March 2025.",
+    "source_url": "https://www.qualcomm.com/news/releases/2025/03/qualcomm-to-bolster-ai-and-iot-capabilities-with-edge-impulse-ac",
+    "confidence": "high"
+   }
   },
   {
    "sector": "energia",
@@ -4599,7 +4979,7 @@
    "sector": "energia",
    "id": "Livent",
    "label": "Livent (Arcadium Lithium)",
-   "ticker": "ALTM · NYSE",
+   "ticker": "Rio Tinto (RIO)",
    "cat": "battery_mat",
    "port": "",
    "role": "Productos de litio para baterías EV e industria",
@@ -4611,7 +4991,19 @@
    "margin": 0.15,
    "capex_2026": "~$0.5B",
    "backlog_status": "Ciclo bajo",
-   "mkt": "ALTM"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Rio Tinto",
+    "parent_ticker": "RIO",
+    "event_date": "2025-03-06",
+    "note_es": "Se fusionó con Allkem como Arcadium Lithium (ene-2024), que Rio Tinto compró en mar-2025; ya no cotiza.",
+    "note_en": "Merged with Allkem into Arcadium Lithium (Jan 2024), which Rio Tinto acquired in Mar 2025; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Arcadium_Lithium",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -4662,7 +5054,7 @@
    "sector": "espacio",
    "id": "ULA",
    "label": "ULA (United Launch Alliance)",
-   "ticker": "Privado (Boeing/LM)",
+   "ticker": "Boeing / Lockheed Martin (50/50 joint venture)",
    "cat": "space_launch",
    "port": "",
    "role": "Lanzamiento confiable para gobierno EE.UU.",
@@ -4674,7 +5066,17 @@
    "margin": 0.1,
    "capex_2026": "~$0.3B",
    "backlog_status": "Establecido",
-   "mkt": "ULA"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Boeing / Lockheed Martin (50/50 joint venture)",
+    "note_es": "Empresa conjunta privada 50/50 de Boeing y Lockheed Martin; no cotiza ('ULA' no es un ticker válido).",
+    "note_en": "Private 50/50 joint venture of Boeing and Lockheed Martin; not listed ('ULA' is not a valid ticker).",
+    "source_url": "https://en.wikipedia.org/wiki/United_Launch_Alliance",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "espacio",
@@ -4803,7 +5205,17 @@
    "margin": 0.05,
    "capex_2026": "~$0.01B",
    "backlog_status": "Declive",
-   "mkt": "SCMR"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "defunct",
+    "event_date": "2013-03",
+    "note_es": "Vendió su negocio a Marlin Equity en 2013, salió de Nasdaq y se disolvió; ya no existe como cotizada.",
+    "note_en": "Sold its business to Marlin Equity in 2013, delisted from Nasdaq and dissolved; no longer a listed company.",
+    "source_url": "https://en.wikipedia.org/wiki/Sycamore_Networks",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -4926,7 +5338,7 @@
    "sector": "diseno",
    "id": "AnsysEDA",
    "label": "Ansys (EDA/Simulation)",
-   "ticker": "ANSS · NASDAQ",
+   "ticker": "Synopsys (SNPS)",
    "cat": "eda",
    "port": "",
    "role": "Simulación multifísica para semiconductores e ingeniería",
@@ -4938,7 +5350,19 @@
    "margin": 0.3,
    "capex_2026": "~$0.2B",
    "backlog_status": "Integración",
-   "mkt": "ANSS"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Synopsys",
+    "parent_ticker": "SNPS",
+    "event_date": "2025-07-17",
+    "note_es": "Comprada por Synopsys (SNPS) en jul-2025; ya no cotiza.",
+    "note_en": "Acquired by Synopsys (SNPS) in Jul 2025; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Ansys",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -5241,7 +5665,7 @@
    "sector": "cloud_ia",
    "id": "HashiCorp",
    "label": "HashiCorp",
-   "ticker": "HCP · Nasdaq",
+   "ticker": "IBM (IBM)",
    "cat": "cloud",
    "port": "",
    "role": "Infraestructura cloud-agnostic: herramientas open-source para provisioning, secrets y networking (Terraform, Vault).",
@@ -5253,7 +5677,19 @@
    "margin": null,
    "capex_2026": "n/d — integración IBM",
    "backlog_status": "Adquisición IBM completada 2024",
-   "mkt": "IBM"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "IBM",
+    "parent_ticker": "IBM",
+    "event_date": "2025-02-27",
+    "note_es": "Comprada por IBM en feb-2025; ya no cotiza.",
+    "note_en": "Acquired by IBM in Feb 2025; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/HashiCorp",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -5387,7 +5823,7 @@
    "sector": "cloud_ia",
    "id": "Exscientia",
    "label": "Exscientia",
-   "ticker": "EXAI · Nasdaq",
+   "ticker": "Recursion Pharmaceuticals (RXRX)",
    "cat": "ai_health",
    "port": "",
    "role": "Empresa de descubrimiento de fármacos acelerado por IA; primer candidato diseñado por IA en fase clínica.",
@@ -5399,7 +5835,19 @@
    "margin": -0.8,
    "capex_2026": "~$50M",
    "backlog_status": "Acuerdos: Sanofi $1B, BMS $1.2B",
-   "mkt": "EXAI"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "merged",
+    "parent": "Recursion Pharmaceuticals",
+    "parent_ticker": "RXRX",
+    "event_date": "2024-11-20",
+    "note_es": "Se fusionó con Recursion (RXRX) en nov-2024; ya no cotiza.",
+    "note_en": "Merged into Recursion (RXRX) in Nov 2024; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Exscientia",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -5417,7 +5865,18 @@
    "margin": -1.2,
    "capex_2026": "~$30M",
    "backlog_status": "AstraZeneca partnership; pipeline ALS fase II",
-   "mkt": "BAI"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "defunct",
+    "parent": "Osaka Holdings (founder-led take-private)",
+    "event_date": "2025-03",
+    "note_es": "Excluida de Euronext Amsterdam en 2025 tras una oferta para sacarla de bolsa; hoy es privada.",
+    "note_en": "Delisted from Euronext Amsterdam in 2025 after a take-private offer; now private.",
+    "source_url": "https://en.wikipedia.org/wiki/BenevolentAI",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -5582,7 +6041,17 @@
    "margin": -1.2,
    "capex_2026": "~$30M",
    "backlog_status": "NDA wearable OEM; Glucose monitoring pivot",
-   "mkt": "RKLY"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "defunct",
+    "event_date": "2023-01",
+    "note_es": "Entró en liquidación provisional/reestructuración en ene-2023 y fue retirada de la NYSE; hoy es privada.",
+    "note_en": "Entered provisional liquidation/restructuring in Jan 2023 and was delisted from the NYSE; now private.",
+    "source_url": "https://en.wikipedia.org/wiki/Rockley_Photonics",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
@@ -5644,7 +6113,7 @@
    "sector": "espacio",
    "id": "HughesNetwork",
    "label": "Hughes Network Systems",
-   "ticker": "No cotiza · vía EchoStar",
+   "ticker": "EchoStar (SATS)",
    "cat": "satellite",
    "port": "",
    "role": "Mayor proveedor de internet satelital rural de EEUU; operador de satélites geoestacionarios.",
@@ -5656,14 +6125,24 @@
    "margin": 0.12,
    "capex_2026": "~$200M",
    "backlog_status": "Competition from Starlink intense; Jupiter 3 launch",
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "EchoStar",
+    "parent_ticker": "SATS",
+    "note_es": "Filial de EchoStar (Nasdaq: SATS); no cotiza por separado.",
+    "note_en": "Subsidiary of EchoStar (Nasdaq: SATS); not separately listed.",
+    "source_url": "https://www.hughes.com/who-we-are",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "espacio",
    "id": "Orbcomm",
    "label": "Orbcomm",
-   "ticker": "No cotiza · adquirida GI",
+   "ticker": "GI Partners",
    "cat": "satellite",
    "port": "",
    "role": "Telemetría IoT satelital para activos industriales: camiones, trenes, contenedores, oleoductos.",
@@ -5675,14 +6154,24 @@
    "margin": 0.15,
    "capex_2026": "n/d — privado",
    "backlog_status": "Private; cold chain + rail IoT focus",
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "GI Partners",
+    "event_date": "2021-09-01",
+    "note_es": "Adquirida por GI Partners en 2021 y retirada de Nasdaq; sigue privada.",
+    "note_en": "Acquired by GI Partners in 2021 and delisted from Nasdaq; remains private.",
+    "source_url": "https://www.orbcomm.com/en/company/news/2021/orbcomm-completes-acquisition-by-gi-partners",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "espacio",
    "id": "Firefly",
    "label": "Firefly Aerospace",
-   "ticker": "No cotiza",
+   "ticker": "FLY · Nasdaq",
    "cat": "space_launch",
    "port": "",
    "role": "Cohetes Alpha (lanzador pequeño comercial) y Miranda para misiones lunares.",
@@ -5694,8 +6183,19 @@
    "margin": null,
    "capex_2026": "n/d",
    "backlog_status": "NASA CLPS Blue Ghost Moon 2024 success; Alpha ramp",
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": "FLY",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "FLY",
+    "exchange": "Nasdaq",
+    "listed_since": "2025-08-07",
+    "note_es": "Salió a bolsa en Nasdaq (FLY) el 7-ago-2025 a $45 por acción.",
+    "note_en": "IPO'd on Nasdaq (FLY) on 7-Aug-2025 at $45 per share.",
+    "source_url": "https://fireflyspace.com/news/firefly-aerospace-announces-pricing-of-upsized-initial-public-offering/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "espacio",
@@ -5738,7 +6238,7 @@
    "sector": "energia",
    "id": "PiedmontLithium",
    "label": "Piedmont Lithium",
-   "ticker": "PLL · Nasdaq",
+   "ticker": "Elevra Lithium (ELV.AX)",
    "cat": "battery_mat",
    "port": "",
    "role": "Productor de litio americano desde la mayor mina en Carolina del Norte; suministrador de Tesla.",
@@ -5750,7 +6250,19 @@
    "margin": -0.5,
    "capex_2026": "~$400M (planta TN)",
    "backlog_status": "Tesla offtake; DOE ATVM $760M pending",
-   "mkt": "PLL"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "merged",
+    "parent": "Elevra Lithium",
+    "parent_ticker": "ELV.AX",
+    "event_date": "2025-08-29",
+    "note_es": "Se fusionó con Sayona Mining para formar Elevra Lithium (ASX: ELV) en ago-2025; PLL ya no cotiza.",
+    "note_en": "Merged with Sayona Mining to form Elevra Lithium (ASX: ELV) in Aug 2025; PLL no longer trades.",
+    "source_url": "https://en.wikipedia.org/wiki/Piedmont_Lithium",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -5774,7 +6286,7 @@
    "sector": "energia",
    "id": "ArcadiumLithium",
    "label": "Arcadium Lithium (ex-Livent)",
-   "ticker": "ALTM · NYSE",
+   "ticker": "Rio Tinto (RIO)",
    "cat": "battery_mat",
    "port": "",
    "role": "Productor de LiOH y carbonato de litio a partir de salmueras en Argentina y EE.UU.",
@@ -5786,7 +6298,19 @@
    "margin": 0.22,
    "capex_2026": "n/d — integración Rio Tinto",
    "backlog_status": "Rio Tinto acquisition 2024; scale-up Fenix",
-   "mkt": "RIO"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Rio Tinto",
+    "parent_ticker": "RIO",
+    "event_date": "2025-03-06",
+    "note_es": "Comprada por Rio Tinto (RIO) en mar-2025 por ~US$6.700M; ya no cotiza.",
+    "note_en": "Acquired by Rio Tinto (RIO) in Mar 2025 for ~US$6.7B; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Arcadium_Lithium",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "robotica",
@@ -5955,7 +6479,7 @@
    "sector": "equipos",
    "id": "CMC_Materials",
    "label": "CMC Materials (now CMIIT)",
-   "ticker": "CMIT · Nasdaq",
+   "ticker": "Entegris (ENTG)",
    "cat": "chemicals",
    "port": "",
    "role": "Slurries CMP (chemical-mechanical planarization) y almohadillas para fabricación de chips avanzados.",
@@ -5967,13 +6491,25 @@
    "margin": 0.22,
    "capex_2026": "~$100M",
    "backlog_status": "CHIPS Act beneficiary; 2nm/3nm CMP ramp",
-   "mkt": "CMIT"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Entegris",
+    "parent_ticker": "ENTG",
+    "event_date": "2022-07-06",
+    "note_es": "Comprada por Entegris (ENTG) en jul-2022; ya no cotiza ('CMIT' no es su ticker).",
+    "note_en": "Acquired by Entegris (ENTG) in Jul 2022; no longer listed ('CMIT' is not its ticker).",
+    "source_url": "https://en.wikipedia.org/wiki/CMC_Materials",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "DuPont_Electronics",
    "label": "DuPont Electronics",
-   "ticker": "DD · NYSE",
+   "ticker": "Q · NYSE",
    "cat": "materials",
    "port": "",
    "role": "División de materiales electrónicos de DuPont: fotoresinas, filmes low-k, materiales avanzados para chips.",
@@ -5985,7 +6521,20 @@
    "margin": 0.28,
    "capex_2026": "~$300M",
    "backlog_status": "EUV photoresist sole-source; separation confirmed",
-   "mkt": "DD"
+   "mkt": "Q",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "Q",
+    "exchange": "NYSE",
+    "listed_since": "2025-11-03",
+    "event_date": "2025-11-01",
+    "note_es": "El negocio de electrónica de DuPont se escindió como Qnity Electronics (NYSE: Q) el 1-nov-2025.",
+    "note_en": "DuPont's electronics business was spun off as Qnity Electronics (NYSE: Q) on Nov 1, 2025.",
+    "source_url": "https://www.qnityelectronics.com",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
@@ -6009,7 +6558,7 @@
    "sector": "fabricacion",
    "id": "PowerchipSemi",
    "label": "Powerchip Semiconductor",
-   "ticker": "6239 · TWSE",
+   "ticker": "6770.TW · TWSE",
    "cat": "foundry",
    "port": "",
    "role": "Fundición de nodos maduros y DRAM legacy; especialidad en drivers de display y power ICs.",
@@ -6021,7 +6570,18 @@
    "margin": 0.1,
    "capex_2026": "~$400M",
    "backlog_status": "Display driver ramp; JHiC partnership",
-   "mkt": "6239.TW"
+   "mkt": "6770.TW",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6770.TW",
+    "exchange": "TWSE",
+    "note_es": "Powerchip Semiconductor Manufacturing (PSMC) cotiza como 6770 en TWSE; 6239 es Powertech Technology, otra empresa.",
+    "note_en": "Powerchip Semiconductor Manufacturing (PSMC) trades as 6770 on TWSE; 6239 is Powertech Technology, a different company.",
+    "source_url": "https://en.wikipedia.org/wiki/Powerchip",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
@@ -6149,14 +6709,25 @@
    "margin": null,
    "capex_2026": "n/d",
    "backlog_status": "Samsung investment; automotive AI wins",
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "defunct",
+    "parent": "AMD (solo equipo / team only)",
+    "parent_ticker": "AMD",
+    "event_date": "2025-06",
+    "note_es": "Cerró en jun-2025: dejó de vender productos y su equipo de ingeniería pasó a AMD.",
+    "note_en": "Shut down in Jun-2025: discontinued its products and its engineering team joined AMD.",
+    "source_url": "https://www.eetimes.com/untether-ai-shuts-down-engineering-team-joins-amd/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
    "id": "Graphcore",
    "label": "Graphcore",
-   "ticker": "No cotiza",
+   "ticker": "SoftBank Group (9984.T)",
    "cat": "asic_custom",
    "port": "",
    "role": "IPU (Intelligence Processing Unit) para ML con arquitectura masivamente paralela.",
@@ -6168,14 +6739,25 @@
    "margin": null,
    "capex_2026": "n/d",
    "backlog_status": "SoftBank acquisition; niche graph AI workloads",
-   "preipo": true,
-   "mkt": "9984.T"
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "SoftBank Group",
+    "parent_ticker": "9984.T",
+    "event_date": "2024-07",
+    "note_es": "Adquirida por SoftBank Group (9984.T) en 2024; ya no es independiente.",
+    "note_en": "Acquired by SoftBank Group (9984.T) in 2024; no longer independent.",
+    "source_url": "https://www.softbank.jp/en/corp/news/press/sbkk/",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "infra",
    "id": "Lightsource_BP",
    "label": "Lightsource bp",
-   "ticker": "No cotiza",
+   "ticker": "BP (BP.L)",
    "cat": "power",
    "port": "",
    "role": "Mayor desarrollador de energía solar del mundo; proyectos en 6 continentes para empresas tecnológicas.",
@@ -6187,8 +6769,19 @@
    "margin": null,
    "capex_2026": "~$3B proyectos",
    "backlog_status": "30GW pipeline; PPAs con hyperscalers",
-   "preipo": true,
-   "mkt": "BP.L"
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "BP",
+    "parent_ticker": "BP.L",
+    "event_date": "2024-10",
+    "note_es": "Filial 100% de BP (BP.L) desde 2024; BP negocia venderla a un consorcio respaldado por Kuwait (jul-2026).",
+    "note_en": "Wholly owned by BP (BP.L) since 2024; BP is negotiating a sale to a Kuwait-backed consortium (Jul-2026).",
+    "source_url": "https://solarquarter.com/2026/07/29/british-petroleum-moves-to-sell-lightsource-solar-business-to-kuwait-backed-consortium/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "infra",
@@ -6875,16 +7468,28 @@
    "sector": "espacio",
    "id": "Aerojet",
    "label": "Aerojet Rocketdyne",
-   "ticker": "AJRD · NYSE",
+   "ticker": "L3Harris Technologies (LHX)",
    "cat": "space_launch",
    "country": "EEUU",
-   "mkt": "LHX",
+   "mkt": null,
    "geo": "EEUU",
    "big": false,
    "desc": "Rocket propulsion and missile systems",
    "role": "Aerojet Rocketdyne — propulsión de cohetes y misiles (RS-25 para SLS, RL10 para Atlas/Vulcan, motores hipersónicos); adquirida por L3Harris (LHX)",
    "growth": "🟢 +20% e. 2026; SLS, misiles hipersónicos y GBSD",
-   "margin": 0.09
+   "margin": 0.09,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "L3Harris Technologies",
+    "parent_ticker": "LHX",
+    "event_date": "2023-07-28",
+    "note_es": "Comprada por L3Harris (LHX) en jul-2023; ya no cotiza.",
+    "note_en": "Acquired by L3Harris (LHX) in Jul 2023; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Aerojet_Rocketdyne",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -6991,8 +7596,8 @@
     "exchange": "Nasdaq",
     "listed_since": "2026-06-12",
     "note_es": "Salió a bolsa en Nasdaq (SPCX) el 12-jun-2026 a $135 por acción.",
-    "note_en": "Went public on Nasdaq (SPCX) on 12-Jun-2026 at $135 per share.",
-    "source_url": "https://en.wikipedia.org/wiki/Initial_public_offering_of_SpaceX",
+    "note_en": "IPO'd on Nasdaq (SPCX) on 12-Jun-2026 at $135 per share.",
+    "source_url": "https://www.nasdaq.com/newsroom/spacex-ipo-rocket-company-launches-historic-ipo",
     "confidence": "high"
    }
   },
@@ -7254,7 +7859,7 @@
    "sector": "infra",
    "id": "FujitsuHPC",
    "label": "Fugaku / Fujitsu",
-   "ticker": "6702 · TSE",
+   "ticker": "6702.T · Tokyo Stock Exchange",
    "cat": "hpc_super",
    "role": "Fugaku: el supercomputador más rápido del mundo (ARM-based); Fujitsu como proveedor HPC Asia.",
    "moat": "Arquitectura propietaria A64FX que combina CPU y HBM en el mismo package.",
@@ -7265,7 +7870,19 @@
    "founded": 1935,
    "employees": 130000,
    "revenue_2025": "~¥3.7T",
-   "geo_risk": "Japón — bajo"
+   "geo_risk": "Japón — bajo",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6702.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Fujitsu cotiza en la Bolsa de Tokio (6702.T); el catálogo la marca mal como no cotizada.",
+    "note_en": "Fujitsu is listed on the Tokyo Stock Exchange (6702.T); the catalog wrongly marks it unlisted.",
+    "source_url": "https://www.fujitsu.com/global/about/ir/",
+    "confidence": "high"
+   },
+   "mkt": "6702.T",
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -7331,7 +7948,7 @@
    "sector": "fabricacion",
    "id": "Shinko_Electric",
    "label": "Shinko Electric Industries",
-   "ticker": "6967 · TSE",
+   "ticker": "JIC Capital consortium (with DNP and Mitsui Chemicals)",
    "cat": "substrates",
    "role": "Tercer productor de sustratos IC; adquirida por JX Holdings; foco en flip-chip y BGA.",
    "supplies": "Sustratos FC-CSP, BGA para telecom, automotriz, consumer; FC-BGA packaging.",
@@ -7340,7 +7957,18 @@
    "country": "Japon",
    "growth": "🟢 +20% e. 2026; IC substrate demand",
    "margin": 0.14,
-   "mkt": "6967.T"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "JIC Capital consortium (with DNP and Mitsui Chemicals)",
+    "event_date": "2025",
+    "note_es": "Sacada de bolsa por un consorcio liderado por JIC Capital (compra a Fujitsu) en 2025; ya no cotiza en Tokio.",
+    "note_en": "Taken private by a JIC Capital-led consortium (buying out Fujitsu) in 2025; no longer listed in Tokyo.",
+    "source_url": "https://en.wikipedia.org/wiki/Shinko_Electric_Industries",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -7406,7 +8034,7 @@
    "sector": "espacio",
    "id": "Maxar",
    "label": "Maxar Technologies",
-   "ticker": "No cotiza · privado",
+   "ticker": "Advent International",
    "cat": "earth_obs",
    "role": "Proveedor de imágenes de satélite de alta resolución para NGA, CIA y clientes comerciales.",
    "supplies": "WorldView-3/4 imágenes <30cm resolución; GeoEye para inteligencia geoespacial DoD.",
@@ -7415,8 +8043,18 @@
    "country": "EEUU",
    "growth": "🟢 Adquirido Advent/KKR; DoD anchor",
    "margin": null,
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Advent International",
+    "event_date": "2023-05",
+    "note_es": "Adquirida por Advent International (2023) y dividida: hoy Vantor (privada) y Lanteris, vendida a Intuitive Machines (LUNR) en ene-2026.",
+    "note_en": "Acquired by Advent International (2023) and split: now Vantor (private) and Lanteris, sold to Intuitive Machines (LUNR) in Jan-2026.",
+    "source_url": "https://breakingdefense.com/2025/10/whats-in-a-name-goodbye-maxar-hello-vantor-and-lanteris/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "defensa",
@@ -7483,7 +8121,7 @@
    "sector": "fabricacion",
    "id": "Nanya",
    "label": "Nanya Technology",
-   "ticker": "2303 · TWSE",
+   "ticker": "2408.TW · TWSE",
    "cat": "memory",
    "role": "Tercer fabricante de DRAM del mundo; produce DDR4/DDR5 para PC y servidores.",
    "supplies": "DDR4/DDR5 para PC/laptop OEMs; módulos LPDDR para automoción.",
@@ -7492,7 +8130,18 @@
    "country": "Taiwan",
    "growth": "🔵 +18% e. 2026; DRAM recovery",
    "margin": 0.08,
-   "mkt": "2303.TW"
+   "mkt": "2408.TW",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2408.TW",
+    "exchange": "TWSE",
+    "note_es": "Nanya Technology cotiza como 2408 en TWSE; 2303 es UMC, otra empresa.",
+    "note_en": "Nanya Technology trades as 2408 on TWSE; 2303 is UMC, a different company.",
+    "source_url": "https://en.wikipedia.org/wiki/Nanya_Technology",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
@@ -7513,7 +8162,7 @@
    "sector": "diseno",
    "id": "Altium",
    "label": "Altium",
-   "ticker": "No cotiza · Renesas",
+   "ticker": "Renesas Electronics (6723.T)",
    "cat": "eda",
    "role": "Software de diseño PCB Altium Designer; la herramienta más usada en PCB profesional.",
    "supplies": "Altium Designer (EDA PCB), Altium 365 (cloud collaboration), NEXUS (enterprise).",
@@ -7522,7 +8171,19 @@
    "country": "Australia",
    "growth": "🟢 Adquirida por Renesas $5.9B 2024",
    "margin": null,
-   "mkt": "6723.T"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Renesas Electronics",
+    "parent_ticker": "6723.T",
+    "event_date": "2024-08-01",
+    "note_es": "Comprada por Renesas (6723.T) en ago-2024; ya no cotiza en la ASX.",
+    "note_en": "Acquired by Renesas (6723.T) in Aug 2024; delisted from the ASX.",
+    "source_url": "https://en.wikipedia.org/wiki/Altium",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
@@ -7619,7 +8280,7 @@
    "sector": "diseno",
    "id": "InfiniteraNet",
    "label": "Infinera",
-   "ticker": "INFN · Nasdaq",
+   "ticker": "Nokia (NOK)",
    "cat": "photonics_si",
    "role": "Transponders ópticos con PICs (Photonic Integrated Circuits) para redes troncales.",
    "supplies": "GX Series transponders; Cloud Xpress para interconnect; ICE6 modem para 800G.",
@@ -7628,7 +8289,19 @@
    "country": "EEUU",
    "growth": "🟢 +18% e. 2026; AI traffic backbone boom",
    "margin": 0.06,
-   "mkt": "INFN"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Nokia",
+    "parent_ticker": "NOK",
+    "event_date": "2025-02-28",
+    "note_es": "Comprada por Nokia (NOK) en feb-2025; ya no cotiza.",
+    "note_en": "Acquired by Nokia (NOK) in Feb 2025; no longer listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Infinera",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "cloud_ia",
@@ -7801,7 +8474,7 @@
    "sector": "fabricacion",
    "id": "Vedanta_Semi",
    "label": "Vedanta-Foxconn Semi",
-   "ticker": "No cotiza",
+   "ticker": "Vedanta Limited (VEDL.NS)",
    "cat": "foundry",
    "role": "JV Vedanta-Foxconn para primera fab de chips en India (Gujarat); 28nm process.",
    "supplies": "Chips para India market: consumer electronics, IoT, telecom.",
@@ -7810,8 +8483,19 @@
    "country": "India",
    "growth": "🔵 Planta 2025-2026; India chip sovereignty",
    "margin": null,
-   "preipo": true,
-   "mkt": "VEDL.NS"
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Vedanta Limited",
+    "parent_ticker": "VEDL.NS",
+    "event_date": "2023-07-10",
+    "note_es": "La JV se deshizo en jul-2023 al salir Foxconn; la entidad quedó 100% en manos de Vedanta (VEDL.NS).",
+    "note_en": "The JV unraveled in Jul-2023 when Foxconn exited; the entity is now wholly owned by Vedanta (VEDL.NS).",
+    "source_url": "https://thediplomat.com/2023/07/chip-maker-foxconn-exits-semiconductor-joint-venture-with-indian-mining-company-vedanta/",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "diseno",
@@ -7864,7 +8548,7 @@
    "sector": "diseno",
    "id": "GrAI_Matter",
    "label": "GrAI Matter Labs",
-   "ticker": "No cotiza",
+   "ticker": "Snap Inc. (SNAP)",
    "cat": "neuromorphic",
    "role": "Procesador neuromórfico ultra-eficiente para visión en tiempo real en dispositivos edge.",
    "supplies": "GrAI VIP chip para vision AI <1W; VIP SDK para deployment de vision models en drones.",
@@ -7873,8 +8557,19 @@
    "country": "Europa",
    "growth": "🔵 Series B €15M; drone + auto vision wins",
    "margin": null,
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Snap Inc.",
+    "parent_ticker": "SNAP",
+    "event_date": "2023-10-31",
+    "note_es": "Adquirida por Snap Inc. (SNAP) el 31-oct-2023.",
+    "note_en": "Acquired by Snap Inc. (SNAP) on 31-Oct-2023.",
+    "source_url": "https://www.eetimes.com/has-grai-matter-labs-been-snapped-up-by-snap-inc/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -7912,7 +8607,7 @@
    "sector": "infra",
    "id": "Richtek",
    "label": "Richtek Technology",
-   "ticker": "6286 · TWSE",
+   "ticker": "MediaTek (2454.TW)",
    "cat": "power",
    "role": "Diseñador de ICs de gestión de energía (PMIC) para AI servers y electrónica de consumo.",
    "supplies": "PMIC para AI GPUs (NVIDIA Hopper power delivery); DDR PMIC; notebook power controllers.",
@@ -7921,7 +8616,19 @@
    "country": "Taiwan",
    "growth": "🟢 +30% e. 2026; AI server PMIC demand",
    "margin": 0.32,
-   "mkt": "6286.TW"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "MediaTek",
+    "parent_ticker": "2454.TW",
+    "event_date": "2019",
+    "note_es": "Filial 100% de MediaTek (2454.TW) y retirada de la bolsa de Taiwán; 6286 ya no cotiza.",
+    "note_en": "Wholly owned MediaTek (2454.TW) subsidiary, delisted from the Taiwan exchange; 6286 no longer trades.",
+    "source_url": "https://en.wikipedia.org/wiki/Richtek_Technology",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
@@ -7957,7 +8664,7 @@
    "sector": "diseno",
    "id": "FlexLogix",
    "label": "Flex Logix Technologies",
-   "ticker": "No cotiza",
+   "ticker": "Analog Devices (ADI)",
    "cat": "fabless",
    "role": "IP de eFPGA (embedded FPGA) y chips de inferencia NN para SoC personalizados.",
    "supplies": "EFLX eFPGA IP para SoC customization; InferX X1 chip para edge AI inference.",
@@ -7966,8 +8673,19 @@
    "country": "EEUU",
    "growth": "🟢 $42M raised; ARM + Samsung partnerships",
    "margin": null,
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Analog Devices",
+    "parent_ticker": "ADI",
+    "event_date": "2024-11-11",
+    "note_es": "Adquirida por Analog Devices (ADI) el 11-nov-2024.",
+    "note_en": "Acquired by Analog Devices (ADI) on 11-Nov-2024.",
+    "source_url": "https://www.eetimes.com/flex-logix-acquired-by-analog-devices/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "energia",
@@ -8317,7 +9035,7 @@
    "sector": "energia",
    "id": "Calpine",
    "label": "Calpine (Constellation Energy)",
-   "ticker": "Privada (subsidiaria de Constellation Energy desde ene 2026)",
+   "ticker": "Constellation Energy (CEG)",
    "cat": "power_ipp",
    "port": "",
    "role": "Mayor flota de generación a gas natural y geotérmica de EEUU, adquirida por Constellation Energy para crear el mayor productor privado de electricidad del país.",
@@ -8326,8 +9044,19 @@
    "country": "EEUU",
    "growth": "🟢 Integración con Constellation refuerza posición dominante en mercado de energía para IA.",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Constellation Energy",
+    "parent_ticker": "CEG",
+    "event_date": "2026-01-07",
+    "note_es": "Adquirida por Constellation Energy (CEG) el 7-ene-2026.",
+    "note_en": "Acquired by Constellation Energy (CEG) on 7-Jan-2026.",
+    "source_url": "https://www.constellationenergy.com/news/2026/01/constellation-completes-calpine-transaction-powering-americas-clean-energy-future.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "energia",
@@ -8423,7 +9152,7 @@
    "sector": "energia",
    "id": "RollsRoyceSMR",
    "label": "Rolls-Royce SMR",
-   "ticker": "Privada (subsidiaria de Rolls-Royce Holdings, LSE: RR.)",
+   "ticker": "Rolls-Royce Holdings (RR.L)",
    "cat": "nuclear_smr",
    "port": "",
    "role": "Diseña y fabrica reactores modulares pequeños (SMR) de ~470 MWe basados en tecnología de agua presurizada.",
@@ -8432,14 +9161,24 @@
    "country": "Reino Unido",
    "growth": "🟡 Contratos gubernamentales crecientes (Reino Unido abr 2026, ČEZ/Chequia abr 2026) pero sin PPA de IA aún.",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Rolls-Royce Holdings",
+    "parent_ticker": "RR.L",
+    "note_es": "Filial mayoritaria de Rolls-Royce Holdings (RR.L); no cotiza por separado.",
+    "note_en": "Majority-owned subsidiary of Rolls-Royce Holdings (RR.L); not separately listed.",
+    "source_url": "https://www.rolls-royce-smr.com/",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "energia",
    "id": "GEHitachiNuclear",
    "label": "GE Hitachi Nuclear Energy",
-   "ticker": "No cotiza (JV GE Vernova / Hitachi)",
+   "ticker": "GE Vernova (GEV)",
    "cat": "nuclear_smr",
    "port": "",
    "role": "Diseña el reactor modular pequeño BWRX-300 y reactores ABWR/ESBWR de gran escala.",
@@ -8448,7 +9187,18 @@
    "country": "EEUU",
    "growth": "🟢 Hitachi vincula explícitamente su expansión de cadena nuclear a la demanda de datacenters de IA (oct 2025).",
    "margin": null,
-   "mkt": ""
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "GE Vernova",
+    "parent_ticker": "GEV",
+    "note_es": "JV controlada por GE Vernova (GEV) con Hitachi (6501.T) como socio minoritario; no cotiza.",
+    "note_en": "JV controlled by GE Vernova (GEV) with Hitachi (6501.T) as minority partner; not listed.",
+    "source_url": "https://www.gevernova.com/nuclear",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -8575,7 +9325,7 @@
    "sector": "energia",
    "id": "GeneralFusion",
    "label": "General Fusion",
-   "ticker": "Pre-IPO ~$1B (SPAC pendiente, Spring Valley Acquisition Corp III, NASDAQ ~\"GFUZ\")",
+   "ticker": "GFUZ · Nasdaq",
    "cat": "nuclear_fusion",
    "port": "",
    "role": "Desarrolla fusión nuclear por confinamiento magnetizado (MTF), comprimiendo litio líquido sin imanes superconductores ni láseres.",
@@ -8584,8 +9334,20 @@
    "country": "Canadá",
    "growth": "🟡 Hito jun 2026 (8.4M°C, 0.72 keV, 3x mejora) y salida a bolsa vía SPAC prevista para 2026, pero sin PPA de hyperscaler confirmado (a diferencia de Helion Energy-Microsoft).",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": "GFUZ",
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "GFUZ",
+    "exchange": "Nasdaq",
+    "listed_since": "2026-07-13",
+    "event_date": "2026-07-10",
+    "note_es": "Cotiza en Nasdaq (GFUZ) desde el 13-jul-2026 tras fusionarse con el SPAC Spring Valley III.",
+    "note_en": "Trades on Nasdaq (GFUZ) since 13-Jul-2026 after merging with SPAC Spring Valley III.",
+    "source_url": "https://generalfusion.com/post/general-fusion-completes-business-combination-with-spring-valley-acquisition-corp-iii/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "energia",
@@ -8622,7 +9384,7 @@
    "sector": "energia",
    "id": "Orano",
    "label": "Orano",
-   "ticker": "ORAN · Euronext Paris (listado parcial 2024; mayoría estatal francesa)",
+   "ticker": "Estado francés (APE/CEA ~90%; JNFL y MHI ~5% c/u)",
    "cat": "uranium",
    "port": "",
    "role": "Gigante estatal francés del ciclo de combustible nuclear completo: minería de uranio, conversión, enriquecimiento y reciclaje, competidor directo de Kazatomprom y Cameco.",
@@ -8631,7 +9393,18 @@
    "country": "Francia",
    "growth": "🟢 Demanda occidental de enriquecimiento no-ruso en máximos históricos por expansión nuclear ligada a IA.",
    "margin": 0.1,
-   "mkt": "ORAN"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Estado francés (APE/CEA ~90%; JNFL y MHI ~5% c/u)",
+    "event_date": "2018-01",
+    "note_es": "Orano no cotiza en bolsa: ~90% pertenece al Estado francés y el resto a JNFL y Mitsubishi Heavy; 'ORAN' no es su ticker.",
+    "note_en": "Orano is not listed: ~90% owned by the French State, the rest by JNFL and Mitsubishi Heavy; 'ORAN' is not its ticker.",
+    "source_url": "https://www.orano.group/en/group/who-we-are",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -9109,7 +9882,7 @@
    "sector": "diseno",
    "id": "enflame",
    "label": "Enflame Technology",
-   "ticker": "Privada (IPO STAR Market aprobada, aún no cotiza)",
+   "ticker": "688801.SS · Shanghai Stock Exchange (STAR Market)",
    "cat": "fabless",
    "port": "",
    "role": "Diseñador fabless de chips aceleradores de entrenamiento/inferencia IA en la nube, uno de los \"cuatro dragones\" chinos de chips IA.",
@@ -9118,14 +9891,25 @@
    "country": "China",
    "growth": "🟢 ingresos +~37% YoY 2025, pero pérdidas crecientes",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": "688801.SS",
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "688801.SS",
+    "exchange": "Shanghai Stock Exchange (STAR Market)",
+    "listed_since": "2026-09-11",
+    "note_es": "Salió a bolsa en el STAR Market de Shanghái (688801) el 11-sep-2026 a RMB 142,18; subió 206% el primer día.",
+    "note_en": "Listed on Shanghai's STAR Market (688801) on 11-Sep-2026 at RMB 142.18; rose 206% on day one.",
+    "source_url": "https://www.cnbc.com/2026/09/11/chinese-nvidia-rival-enflame-stock-market-debut-ai.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "equipos",
    "id": "nexperia",
    "label": "Nexperia",
-   "ticker": "Privada (subsidiaria de Wingtech Technology, 600745 · SSE)",
+   "ticker": "Wingtech Technology (600745.SS)",
    "cat": "materials",
    "port": "",
    "role": "Fabrica semiconductores discretos, ICs lógicos y MOSFETs de alto volumen para automotriz, industrial y consumo.",
@@ -9134,8 +9918,18 @@
    "country": "Países Bajos",
    "growth": "🔴 disrupción severa desde finales de 2025 por la disputa Países Bajos-China",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Wingtech Technology",
+    "parent_ticker": "600745.SS",
+    "note_es": "Filial de Wingtech Technology (600745.SS), bajo disputa de control con el gobierno neerlandés desde oct-2025.",
+    "note_en": "Subsidiary of Wingtech Technology (600745.SS), under a control dispute with the Dutch government since Oct-2025.",
+    "source_url": "https://www.nexperia.com/about",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "equipos",
@@ -9156,7 +9950,7 @@
    "sector": "infra",
    "id": "juniper",
    "label": "Juniper Networks",
-   "ticker": "No cotiza — adquirida por HPE (HPE · NYSE), cierre julio 2025",
+   "ticker": "Hewlett Packard Enterprise (HPE)",
    "cat": "networking",
    "port": "",
    "role": "Fabricaba routers, switches y redes con IA (Mist AI) para empresas, proveedores de servicio y datacenters; ahora integrada en la unidad de networking de HPE.",
@@ -9165,7 +9959,19 @@
    "country": "Estados Unidos",
    "growth": "🟢 crecimiento \"récord\" del segmento de networking de HPE tras la adquisición",
    "margin": null,
-   "mkt": ""
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Hewlett Packard Enterprise",
+    "parent_ticker": "HPE",
+    "event_date": "2025-07-02",
+    "note_es": "Adquirida por Hewlett Packard Enterprise (HPE) el 2-jul-2025.",
+    "note_en": "Acquired by Hewlett Packard Enterprise (HPE) on 2-Jul-2025.",
+    "source_url": "https://www.hpe.com/us/en/newsroom/press-release/2025/07/hpe-completes-acquisition-of-juniper-networks.html",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -9307,7 +10113,7 @@
    "sector": "infra",
    "id": "chindata",
    "label": "Chindata Group",
-   "ticker": "Privada (ex-NASDAQ:CD, deslistada tras adquisición por Bain Capital 2023)",
+   "ticker": "Bain Capital",
    "cat": "dc_reit",
    "port": "",
    "role": "Operador de datacenters hyperscale en China y Asia emergente (India, Malasia, tras fusión con Bridge Data Centres).",
@@ -9316,8 +10122,18 @@
    "country": "China / Singapur (holding, operaciones pan-asiáticas)",
    "growth": "🟢 fusión con Bridge Data Centres crea plataforma pan-asiática de ~$4B+ tras salida de Bain Capital",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Bain Capital",
+    "event_date": "2023-09",
+    "note_es": "Adquirida y retirada de Nasdaq por Bain Capital en 2023; sigue privada.",
+    "note_en": "Taken private and delisted from Nasdaq by Bain Capital in 2023; remains private.",
+    "source_url": "https://www.chindatagroup.com/",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "infra",
@@ -9371,7 +10187,7 @@
    "sector": "infra",
    "id": "voltage-park",
    "label": "Voltage Park",
-   "ticker": "Privada",
+   "ticker": "Lightning AI",
    "cat": "hpc_super",
    "port": "",
    "role": "Nube de GPU independiente (neocloud) fundada con donación filantrópica de Navigation Fund; ahora rebautizada como Lightning AI tras pivote de producto.",
@@ -9380,8 +10196,18 @@
    "country": "Estados Unidos (HQ San Francisco, CA)",
    "growth": "🟡 pivote de marca a \"Lightning AI\" en 2026 sugiere reposicionamiento estratégico",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "merged",
+    "parent": "Lightning AI",
+    "event_date": "2026-01-21",
+    "note_es": "Se fusionó con Lightning AI el 21-ene-2026; la empresa combinada (privada) opera como Lightning AI.",
+    "note_en": "Merged with Lightning AI on 21-Jan-2026; the combined (private) company operates as Lightning AI.",
+    "source_url": "https://www.businesswire.com/news/home/20260121371691/en/Lightning-AI-and-Voltage-Park-Complete-Merger-to-Create-the-First-Cloud-Built-for-AI",
+    "confidence": "high"
+   }
   },
   {
    "sector": "infra",
@@ -9498,7 +10324,7 @@
    "sector": "infra",
    "id": "ntt-gdc",
    "label": "NTT Global Data Centers",
-   "ticker": "9432 · Tokyo (matriz NTT Corporation)",
+   "ticker": "NTT, Inc. (vía NTT DATA Group) (9432.T)",
    "cat": "dc_reit",
    "port": "",
    "role": "División global de datacenters de NTT, uno de los mayores operadores hyperscale del mundo con presencia en más de 20 países.",
@@ -9507,7 +10333,18 @@
    "country": "Japón",
    "growth": "🟢 plan de duplicar capacidad global anunciado en 2026 ante demanda de IA",
    "margin": null,
-   "mkt": "9432"
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "NTT, Inc. (vía NTT DATA Group)",
+    "parent_ticker": "9432.T",
+    "note_es": "NTT Global Data Centers es una unidad del grupo NTT (9432.T); no cotiza por separado.",
+    "note_en": "NTT Global Data Centers is a unit of the NTT group (9432.T); it is not separately listed.",
+    "source_url": "https://group.ntt/en/ir/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -9609,7 +10446,7 @@
    "sector": "robotica",
    "id": "berkshire-grey",
    "label": "Berkshire Grey",
-   "ticker": "No cotiza (ex-Nasdaq: BGRY, deslistada)",
+   "ticker": "SoftBank Group (9984.T)",
    "cat": "robotics_physical",
    "port": "",
    "role": "Fabrica sistemas de automatización robótica con IA para picking, clasificación y empaque en almacenes de e-commerce y logística.",
@@ -9618,7 +10455,19 @@
    "country": "Estados Unidos",
    "growth": "🔴 Absorbida por SoftBank tras colapso de valuación pública; ahora integrada en su unidad de robótica junto a ABB Robotics.",
    "margin": null,
-   "mkt": ""
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "SoftBank Group",
+    "parent_ticker": "9984.T",
+    "event_date": "2023-07",
+    "note_es": "Adquirida por SoftBank Group (9984.T) en 2023 y retirada de Nasdaq.",
+    "note_en": "Acquired by SoftBank Group (9984.T) in 2023 and delisted from Nasdaq.",
+    "source_url": "https://www.berkshiregrey.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "robotica",
@@ -9734,7 +10583,7 @@
    "sector": "robotica",
    "id": "diligent-robotics",
    "label": "Diligent Robotics",
-   "ticker": "Privada (subsidiaria de Serve Robotics, Nasdaq: SERV, desde ene-2026)",
+   "ticker": "Serve Robotics (SERV)",
    "cat": "robotics_physical",
    "port": "",
    "role": "Fabrica el robot móvil manipulador Moxi para transporte autónomo de suministros, muestras de laboratorio y medicamentos en hospitales.",
@@ -9743,8 +10592,19 @@
    "country": "Estados Unidos",
    "growth": "🟡 Adquisición por Serve Robotics (ene-2026) marca el fin de su vida independiente, aunque la tecnología Moxi continúa desplegándose.",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Serve Robotics",
+    "parent_ticker": "SERV",
+    "event_date": "2026-01-27",
+    "note_es": "Adquirida por Serve Robotics (SERV) el 27-ene-2026 por ~$25,7M.",
+    "note_en": "Acquired by Serve Robotics (SERV) on 27-Jan-2026 for ~$25.7M.",
+    "source_url": "https://www.stocktitan.net/sec-filings/SERV/8-k-serve-robotics-inc-de-reports-material-event-1d63fae26ecc.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "robotica",
@@ -9814,7 +10674,7 @@
    "sector": "robotica",
    "id": "wing-alphabet",
    "label": "Wing (Alphabet)",
-   "ticker": "No cotiza (subsidiaria de Alphabet, GOOGL · Nasdaq)",
+   "ticker": "Alphabet Inc. (GOOGL)",
    "cat": "robotics_physical",
    "port": "",
    "role": "Opera un servicio de entrega de paquetes pequeños mediante drones VTOL, subsidiaria 100% de Alphabet desde 2018.",
@@ -9823,7 +10683,18 @@
    "country": "Estados Unidos",
    "growth": "🟢 Entregas crecieron 3x entre jul-dic 2025 vs ene-jun 2025; expansión agresiva con Walmart.",
    "margin": null,
-   "mkt": ""
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Alphabet Inc.",
+    "parent_ticker": "GOOGL",
+    "note_es": "Subsidiaria de Alphabet; no cotiza por separado.",
+    "note_en": "Alphabet subsidiary; not separately listed.",
+    "source_url": "https://abc.xyz/investor/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "robotica",
@@ -10001,7 +10872,7 @@
    "sector": "espacio",
    "id": "terran-orbital",
    "label": "Terran Orbital",
-   "ticker": "Privada (subsidiaria de Lockheed Martin, adquirida en 2024)",
+   "ticker": "Lockheed Martin (LMT)",
    "cat": "satellite",
    "port": "",
    "role": "Fabrica buses y plataformas satelitales completas (pequeños a medianos) para clientes de defensa, gobierno y comerciales.",
@@ -10010,8 +10881,19 @@
    "country": "Estados Unidos",
    "growth": "🟡 Estabilizada tras la adquisición por Lockheed Martin luego de años de pérdidas como empresa pública",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Lockheed Martin",
+    "parent_ticker": "LMT",
+    "event_date": "2024-10-30",
+    "note_es": "Adquirida por Lockheed Martin el 30-oct-2024; ya no cotiza.",
+    "note_en": "Acquired by Lockheed Martin on 30-Oct-2024; no longer listed.",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1835512/000095017024118608/llap-ex99_1.htm",
+    "confidence": "high"
+   }
   },
   {
    "sector": "espacio",
@@ -10079,7 +10961,7 @@
    "sector": "espacio",
    "id": "nanoavionics",
    "label": "NanoAvionics",
-   "ticker": "Privada (subsidiaria de Kongsberg)",
+   "ticker": "Kongsberg Gruppen (KOG.OL)",
    "cat": "satellite",
    "port": "",
    "role": "Diseña y fabrica plataformas y buses de nanosatélites/smallsats modulares para clientes comerciales, gubernamentales y de defensa.",
@@ -10088,8 +10970,19 @@
    "country": "Lituania",
    "growth": "🟢 Integración con la división de defensa espacial de Kongsberg impulsa contratos militares europeos",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Kongsberg Gruppen",
+    "parent_ticker": "KOG.OL",
+    "event_date": "2022",
+    "note_es": "Subsidiaria de Kongsberg (mayoría desde 2022), opera como Kongsberg NanoAvionics.",
+    "note_en": "Kongsberg subsidiary (majority since 2022), operating as Kongsberg NanoAvionics.",
+    "source_url": "https://payloadspace.com/kongsberg-acquires-majority-stake-in-nanoavionics/",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "espacio",
@@ -10313,7 +11206,7 @@
    "sector": "defensa",
    "id": "textron-systems",
    "label": "Textron Systems",
-   "ticker": "Privada (división de Textron Inc, TXT · NYSE)",
+   "ticker": "Textron Inc. (TXT)",
    "cat": "defense_prime",
    "port": "",
    "role": "División de defensa de Textron especializada en sistemas no tripulados aéreos y terrestres, municiones y simulación militar.",
@@ -10322,8 +11215,18 @@
    "country": "Estados Unidos",
    "growth": "🟡 Crecimiento moderado, presionado por nuevos entrantes en drones de bajo costo",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": null,
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Textron Inc.",
+    "parent_ticker": "TXT",
+    "note_es": "División de Textron Inc.; no cotiza por separado.",
+    "note_en": "Business unit of Textron Inc.; not separately listed.",
+    "source_url": "https://investor.textron.com/",
+    "confidence": "high"
+   }
   },
   {
    "sector": "defensa",
@@ -10374,7 +11277,7 @@
    "sector": "diseno",
    "id": "xanadu-quantum",
    "label": "Xanadu",
-   "ticker": "Privada",
+   "ticker": "XNDU · Nasdaq / TSX",
    "cat": "quantum_hw",
    "port": "",
    "role": "Desarrolla computadoras cuánticas fotónicas y el framework open-source PennyLane para computación cuántica y machine learning cuántico.",
@@ -10383,14 +11286,25 @@
    "country": "Canadá",
    "growth": "🟡 Avances técnicos notables (Aurora) pero camino a ventaja cuántica comercial incierto",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": "XNDU",
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "XNDU",
+    "exchange": "Nasdaq / TSX",
+    "listed_since": "2026-03-27",
+    "note_es": "Salió a bolsa vía SPAC con Crane Harbor; cotiza como XNDU en Nasdaq y TSX desde mar-2026.",
+    "note_en": "Went public via SPAC with Crane Harbor; trades as XNDU on Nasdaq and TSX since Mar 2026.",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/2054174/000121390026032904/ea028273201ex99-1.htm",
+    "confidence": "medium"
+   }
   },
   {
    "sector": "diseno",
    "id": "iqm-quantum",
    "label": "IQM Quantum Computers",
-   "ticker": "Privada",
+   "ticker": "IQMX · Nasdaq",
    "cat": "quantum_hw",
    "port": "",
    "role": "Fabricante europeo de computadoras cuánticas superconductoras de pila completa (hardware y control), on-premise y en la nube.",
@@ -10399,8 +11313,19 @@
    "country": "Finlandia",
    "growth": "🟢 Fuerte impulso de financiamiento soberano europeo por autonomía tecnológica cuántica",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": "IQMX",
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "IQMX",
+    "exchange": "Nasdaq",
+    "listed_since": "2026-07-02",
+    "note_es": "Salió a bolsa vía SPAC (Real Asset Acquisition); ADS cotizan en Nasdaq como IQMX desde el 2-jul-2026.",
+    "note_en": "Went public via SPAC (Real Asset Acquisition); ADSs trade on Nasdaq as IQMX since 2-Jul-2026.",
+    "source_url": "https://www.nasdaq.com/press-release/iqm-quantum-computers-and-real-asset-acquisition-corp-complete-combination-trading",
+    "confidence": "high"
+   }
   },
   {
    "sector": "diseno",
@@ -10454,7 +11379,7 @@
    "sector": "diseno",
    "id": "infleqtion",
    "label": "Infleqtion",
-   "ticker": "Privada",
+   "ticker": "INFQ · NYSE",
    "cat": "quantum_hw",
    "port": "",
    "role": "Desarrolla tecnología cuántica basada en átomos fríos para computación, sensores de precisión y relojes atómicos (antes ColdQuanta).",
@@ -10463,8 +11388,19 @@
    "country": "Estados Unidos",
    "growth": "🟡 Crecimiento constante en contratos gubernamentales, cómputo cuántico comercial aún inmaduro",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": "INFQ",
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "INFQ",
+    "exchange": "NYSE",
+    "listed_since": "2026-02-17",
+    "note_es": "Salió a bolsa vía SPAC (Churchill Capital X); cotiza en NYSE como INFQ desde el 17-feb-2026.",
+    "note_en": "Went public via SPAC (Churchill Capital X); trades on NYSE as INFQ since 17-Feb-2026.",
+    "source_url": "https://ir.infleqtion.com/news-events/press-releases/detail/166/infleqtion-and-churchill-capital-corp-x-complete-business-combination",
+    "confidence": "high"
+   }
   },
   {
    "sector": "cloud_ia",
@@ -10759,7 +11695,7 @@
    "sector": "cloud_ia",
    "id": "ZhipuAI",
    "label": "Zhipu AI (GLM)",
-   "ticker": "Privada (pre-OPI, proceso iniciado)",
+   "ticker": "2513.HK · HKEX",
    "cat": "ailab",
    "port": "",
    "role": "Uno de los 'tigres de la IA' chinos: laboratorio de los modelos GLM, spin-off de Tsinghua, respaldado por Alibaba, Tencent y fondos estatales.",
@@ -10769,8 +11705,19 @@
    "country": "China",
    "growth": "🟢 En proceso hacia OPI; adopción estatal creciente",
    "margin": null,
-   "mkt": "",
-   "preipo": true
+   "mkt": "2513.HK",
+   "preipo": false,
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2513.HK",
+    "exchange": "HKEX",
+    "listed_since": "2026-01-08",
+    "note_es": "Salió a bolsa en Hong Kong (2513) el 8-ene-2026 a HK$116,20 por acción.",
+    "note_en": "Listed in Hong Kong (2513) on 8-Jan-2026 at HK$116.20 per share.",
+    "source_url": "https://www.cnbc.com/2026/01/08/china-ai-tiger-goes-ipo-zhipu-hong-kong-debut-openai-knowledge-atlas-hsi-hang-seng-listing.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "energia",
@@ -10920,7 +11867,7 @@
    "sector": "energia",
    "id": "BerkshireHathawayEnergy",
    "label": "Berkshire Hathaway Energy",
-   "ticker": "Privada (subsidiaria de Berkshire Hathaway Inc., BRK.A/BRK.B · NYSE)",
+   "ticker": "Berkshire Hathaway Inc. (BRK-B)",
    "cat": "power_ipp",
    "port": "",
    "role": "Conglomerado de utilities reguladas (PacifiCorp, MidAmerican Energy, NV Energy) controlado por Berkshire Hathaway; socio de TerraPower en el proyecto nuclear Natrium de Wyoming.",
@@ -10929,8 +11876,19 @@
    "country": "EEUU",
    "growth": "🔵 Crecimiento estable ligado a expansión de datacenters en Nevada (NV Energy) y apuesta nuclear a largo plazo en Wyoming.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": null,
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Berkshire Hathaway Inc.",
+    "parent_ticker": "BRK-B",
+    "note_es": "Subsidiaria de Berkshire Hathaway (~92%); no cotiza.",
+    "note_en": "Subsidiary of Berkshire Hathaway (~92%); not listed.",
+    "source_url": "https://www.brkenergy.com/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -10984,7 +11942,7 @@
    "sector": "energia",
    "id": "ITCHoldings",
    "label": "ITCHoldings",
-   "ticker": "Privada (subsidiaria de Fortis Inc., FTS · TSX/NYSE)",
+   "ticker": "Fortis Inc. (FTS.TO)",
    "cat": "grid_transmission",
    "port": "",
    "role": "Mayor transmisora eléctrica independiente (sin generación propia) de EEUU, operando ~14,390 km de líneas en ocho estados del medio oeste.",
@@ -10993,8 +11951,19 @@
    "country": "EEUU",
    "growth": "🔵 Crecimiento estable ligado a inversión en modernización de red del medio oeste de EEUU.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": null,
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Fortis Inc.",
+    "parent_ticker": "FTS.TO",
+    "note_es": "Subsidiaria de Fortis (80,1%; GIC 19,9%); no cotiza.",
+    "note_en": "Fortis subsidiary (80.1%; GIC 19.9%); not listed.",
+    "source_url": "https://www.fortisinc.com/our-utilities/itc",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11048,7 +12017,7 @@
    "sector": "energia",
    "id": "RWE",
    "label": "RWE",
-   "ticker": "RWE · Fráncfort (XETR)",
+   "ticker": "RWE.DE · XETRA",
    "cat": "power_ipp",
    "port": "",
    "role": "Mayor generador de electricidad de Alemania y uno de los mayores desarrolladores de renovables de Europa; anunció expansión agresiva en EEUU con foco en gas para datacenters.",
@@ -11057,8 +12026,19 @@
    "country": "Alemania",
    "growth": "🟢 Pivote hacia gas peaker en EEUU específicamente para datacenters marca nueva fase de crecimiento internacional.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "RWE.DE",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "RWE.DE",
+    "exchange": "XETRA",
+    "note_es": "Cotiza en Fráncfort (RWE).",
+    "note_en": "Listed in Frankfurt (RWE).",
+    "source_url": "https://www.rwe.com/en/investor-relations/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11112,7 +12092,7 @@
    "sector": "energia",
    "id": "EON",
    "label": "EON",
-   "ticker": "EOAN · Fráncfort (XETR)",
+   "ticker": "EOAN.DE · XETRA",
    "cat": "grid_transmission",
    "port": "",
    "role": "Mayor operador de redes de energía de Europa, con distribución eléctrica y de gas en Alemania, Reino Unido, Suecia y Europa del Este.",
@@ -11121,8 +12101,19 @@
    "country": "Alemania",
    "growth": "🔵 Negocio regulado estable pero con caída reciente de ingresos; capitalización de mercado +21% en 12 meses.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "EOAN.DE",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "EOAN.DE",
+    "exchange": "XETRA",
+    "note_es": "Cotiza en Fráncfort (EOAN).",
+    "note_en": "Listed in Frankfurt (EOAN).",
+    "source_url": "https://www.eon.com/en/investor-relations.html",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11144,7 +12135,7 @@
    "sector": "energia",
    "id": "Orsted",
    "label": "Orsted",
-   "ticker": "ORSTED · Bolsa de Copenhague",
+   "ticker": "ORSTED.CO · Nasdaq Copenhagen",
    "cat": "renewables_utility",
    "port": "",
    "role": "Mayor desarrollador de eólica marina del mundo; en proceso de reestructuración tras años de sobrecostos y cancelaciones de proyectos en EEUU.",
@@ -11153,8 +12144,19 @@
    "country": "Europa",
    "growth": "🟡 Acción se recuperó con fuerza (+59% en 12 meses) tras tocar fondo, pero la compañía sigue en modo de ajuste de cartera y venta de activos.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "ORSTED.CO",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ORSTED.CO",
+    "exchange": "Nasdaq Copenhagen",
+    "note_es": "Cotiza en Copenhague (ORSTED); el Estado danés es accionista mayoritario.",
+    "note_en": "Listed in Copenhagen (ORSTED); Danish State is majority shareholder.",
+    "source_url": "https://orsted.com/en/investors",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11176,7 +12178,7 @@
    "sector": "energia",
    "id": "Uniper",
    "label": "Uniper",
-   "ticker": "UN01 · Fráncfort (XETR)",
+   "ticker": "UN01.DE · XETRA",
    "cat": "power_ipp",
    "port": "",
    "role": "Generador y comercializador de energía alemán, nacionalizado en 99% por el gobierno alemán en 2022 tras la crisis energética post-invasión rusa de Ucrania; en proceso de reprivatización.",
@@ -11185,8 +12187,19 @@
    "country": "Alemania",
    "growth": "🔵 Estabilizada tras nacionalización; a la espera de definición de nuevos propietarios privados.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "UN01.DE",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "UN01.DE",
+    "exchange": "XETRA",
+    "note_es": "Cotiza en Fráncfort (UN01), ~99% del Estado alemán, que inició su venta en may-2026.",
+    "note_en": "Listed in Frankfurt (UN01), ~99% German State, which launched its sale in May 2026.",
+    "source_url": "https://www.bloomberg.com/news/articles/2026-05-19/german-government-launches-privatization-of-energy-firm-uniper-mpc7nu4l",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11368,7 +12381,7 @@
    "sector": "energia",
    "id": "SaudiAramco",
    "label": "Saudi Aramco",
-   "ticker": "2222 · Tadawul (Riad)",
+   "ticker": "2222.SR · Tadawul",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Mayor productora de petróleo del mundo por volumen; controla capacidad sostenida ~12 millones bpd.",
@@ -11377,8 +12390,20 @@
    "country": "RestoMundo",
    "growth": "🟡 utilidad neta 2025 en descenso por precios más bajos, pero capex sostenido y aumento de dividendos.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "2222.SR",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2222.SR",
+    "exchange": "Tadawul",
+    "listed_since": "2019-12-11",
+    "note_es": "Cotiza en Tadawul (2222) desde dic-2019; el Estado saudí es mayoritario.",
+    "note_en": "Listed on Tadawul (2222) since Dec 2019; Saudi State is majority owner.",
+    "source_url": "https://www.aramco.com/en/investors",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11432,7 +12457,7 @@
    "sector": "energia",
    "id": "Eni",
    "label": "Eni",
-   "ticker": "ENI · Borsa Italiana/NYSE",
+   "ticker": "ENI.MI · Borsa Italiana (Euronext Milan); ADR NYSE: E",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Petrolera integrada italiana con fuerte perfil de gas natural africano y mediterráneo.",
@@ -11441,8 +12466,19 @@
    "country": "Europa",
    "growth": "🟢 producción +7% interanual en 4T25 (1,84 M boe/d), +4% subyacente en el año completo (1,73 M boe/d).",
    "margin": null,
-   "mkt": "ENI",
-   "sector_hint": "energia"
+   "mkt": "ENI.MI",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ENI.MI",
+    "exchange": "Borsa Italiana (Euronext Milan); ADR NYSE: E",
+    "note_es": "El símbolo 'ENI' no es Eni en Yahoo: cotiza como ENI.MI en Milán y su ADR en NYSE es 'E'.",
+    "note_en": "'ENI' is not Eni's Yahoo symbol: it trades as ENI.MI in Milan and its NYSE ADR is 'E'.",
+    "source_url": "https://www.eni.com/en-IT/investors.html",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11496,7 +12532,7 @@
    "sector": "energia",
    "id": "PetroChina",
    "label": "PetroChina",
-   "ticker": "601857 · SSE / 0857 · HKEX",
+   "ticker": "0857.HK · HKEX",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Mayor productora y comercializadora de petróleo y gas de China (brazo cotizado de CNPC).",
@@ -11505,14 +12541,25 @@
    "country": "China",
    "growth": "🔵 crecimiento estable ligado a demanda energética china y sustitución de importaciones.",
    "margin": null,
-   "mkt": "601857.HK",
-   "sector_hint": "energia"
+   "mkt": "0857.HK",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "0857.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 601857 es el código A-share de Shanghái, no de Hong Kong; la acción H de PetroChina es 0857.HK (A-share: 601857.SS).",
+    "note_en": "Malformed symbol: 601857 is the Shanghai A-share code, not a Hong Kong code; PetroChina's H-share is 0857.HK (A-share: 601857.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=857&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "Sinopec",
    "label": "Sinopec",
-   "ticker": "600028 · SSE / 0386 · HKEX",
+   "ticker": "0386.HK · HKEX",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Mayor refinadora de Asia y segunda petrolera integrada de China.",
@@ -11521,8 +12568,19 @@
    "country": "China",
    "growth": "🔵 estable, ligado a demanda de combustibles/petroquímicos china.",
    "margin": null,
-   "mkt": "600028.HK",
-   "sector_hint": "energia"
+   "mkt": "0386.HK",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "0386.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 600028 es el código A-share de Shanghái, no de Hong Kong; la acción H de Sinopec es 0386.HK (A-share: 600028.SS).",
+    "note_en": "Malformed symbol: 600028 is the Shanghai A-share code, not a Hong Kong code; Sinopec's H-share is 0386.HK (A-share: 600028.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=386&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -11544,7 +12602,7 @@
    "sector": "energia",
    "id": "Rosneft",
    "label": "Rosneft",
-   "ticker": "ROSN · MOEX",
+   "ticker": "ROSN.ME · MOEX",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Mayor petrolera de Rusia (~1/3 de la producción nacional); controlada por el estado ruso.",
@@ -11553,14 +12611,25 @@
    "country": "Russia",
    "growth": "🔴 utilidad neta -73% interanual en 2025 por sanciones, sobreoferta y fletes disparados (hasta US$20/barril Báltico-India, 10x desde 2022).",
    "margin": 0.03,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "ROSN.ME",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ROSN.ME",
+    "exchange": "MOEX",
+    "note_es": "Cotiza en la Bolsa de Moscú (ROSN), control estatal; sancionada.",
+    "note_en": "Listed on Moscow Exchange (ROSN), state-controlled; under sanctions.",
+    "source_url": "https://www.rosneft.com/Investors/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "Gazprom",
    "label": "Gazprom",
-   "ticker": "GAZP · MOEX",
+   "ticker": "GAZP.ME · MOEX",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Monopolio estatal ruso de exportación de gas por gasoducto; antes principal proveedor de gas de Europa.",
@@ -11569,14 +12638,25 @@
    "country": "Russia",
    "growth": "🔴 exportaciones por gasoducto a Europa cayeron -44% en 2025 al nivel más bajo desde mediados de los 1970s (cierre de tránsito ucraniano dic-2024, solo queda TurkStream operativo hacia Europa).",
    "margin": 0.13,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "GAZP.ME",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "GAZP.ME",
+    "exchange": "MOEX",
+    "note_es": "Cotiza en la Bolsa de Moscú (GAZP), control estatal.",
+    "note_en": "Listed on Moscow Exchange (GAZP), state-controlled.",
+    "source_url": "https://www.gazprom.com/investors/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "Lukoil",
    "label": "Lukoil",
-   "ticker": "LKOH · MOEX",
+   "ticker": "LKOH.ME · MOEX",
    "cat": "oil_gas_major",
    "port": "",
    "role": "Mayor petrolera privada de Rusia (~2% de la producción mundial de petróleo).",
@@ -11585,8 +12665,19 @@
    "country": "Russia",
    "growth": "🔴 pérdida neta de US$12.500 M en 2025 por sanciones y castigo contable de US$20.200 M en activos internacionales.",
    "margin": -0.27,
-   "mkt": "",
-   "sector_hint": "energia"
+   "mkt": "LKOH.ME",
+   "sector_hint": "energia",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "LKOH.ME",
+    "exchange": "MOEX",
+    "note_es": "Cotiza en la Bolsa de Moscú (LKOH); sancionada por EE.UU. desde oct-2025.",
+    "note_en": "Listed on Moscow Exchange (LKOH); under US sanctions since Oct 2025.",
+    "source_url": "https://lukoil.com/InvestorAndShareholderCenter",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -12168,7 +13259,7 @@
    "sector": "materiales",
    "id": "KGHM",
    "label": "KGHM",
-   "ticker": "KGH · GPW Varsovia",
+   "ticker": "KGH.WA · GPW Warsaw",
    "cat": "mining_copper",
    "port": "",
    "role": "Minera/fundidora integrada de cobre y plata, con Polonia, Chile, EEUU y Canadá como jurisdicciones.",
@@ -12177,14 +13268,25 @@
    "country": "Poland",
    "growth": "🔵 Resultados récord Q1-2026, expansión en Sierra Gorda y Robinson",
    "margin": 0.282,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": "KGH.WA",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "KGH.WA",
+    "exchange": "GPW Warsaw",
+    "note_es": "Cotiza en la Bolsa de Varsovia (KGH); el Estado polaco tiene ~31,8%.",
+    "note_en": "Listed on the Warsaw Stock Exchange (KGH); Polish State holds ~31.8%.",
+    "source_url": "https://kghm.com/en/investors",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
    "id": "GrupoMexico",
    "label": "Grupo México",
-   "ticker": "GMEXICOB · BMV",
+   "ticker": "GMEXICOB.MX · BMV",
    "cat": "mining_diversified",
    "port": "",
    "role": "Conglomerado diversificado — minería (vía Southern Copper y Asarco), transporte ferroviario (Ferromex), infraestructura.",
@@ -12193,8 +13295,19 @@
    "country": "RestoMundo",
    "growth": "🟢 Utilidad récord, plan de inversión decenal de US$20.500M",
    "margin": 0.27,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": "GMEXICOB.MX",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "GMEXICOB.MX",
+    "exchange": "BMV",
+    "note_es": "Cotiza en la Bolsa Mexicana (GMEXICO B).",
+    "note_en": "Listed on the Mexican Stock Exchange (GMEXICO B).",
+    "source_url": "https://www.gmexico.com/en/Pages/investors.aspx",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12248,7 +13361,7 @@
    "sector": "materiales",
    "id": "Nornickel",
    "label": "Nornickel",
-   "ticker": "GMKN · MOEX",
+   "ticker": "GMKN.ME · MOEX",
    "cat": "mining_nickel",
    "port": "",
    "role": "Mayor productor mundial de níquel refinado y paladio; también platino y cobre relevantes.",
@@ -12257,8 +13370,19 @@
    "country": "Russia",
    "growth": "🔴 Producción bajo presión de sanciones, redirigiendo ventas a Asia",
    "margin": 0.412,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": "GMKN.ME",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "GMKN.ME",
+    "exchange": "MOEX",
+    "note_es": "Cotiza en la Bolsa de Moscú (GMKN).",
+    "note_en": "Listed on Moscow Exchange (GMKN).",
+    "source_url": "https://nornickel.com/investors/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12344,7 +13468,7 @@
    "sector": "materiales",
    "id": "CMOC",
    "label": "CMOC",
-   "ticker": "603993 · Shanghai / 3993 · HKEX",
+   "ticker": "3993.HK · HKEX",
    "cat": "mining_cobalt",
    "port": "",
    "role": "Mayor productor mundial de cobalto, con posiciones top-tier en cobre, molibdeno, tungsteno y niobio.",
@@ -12353,8 +13477,19 @@
    "country": "China",
    "growth": "🟡 Producción récord de cobre y cobalto, pero ventas de cobalto limitadas por cuota",
    "margin": 0.21,
-   "mkt": "603993.HK",
-   "sector_hint": "materiales"
+   "mkt": "3993.HK",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "3993.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 603993 es el código A-share de Shanghái, no de Hong Kong; la acción H de CMOC es 3993.HK (A-share: 603993.SS).",
+    "note_en": "Malformed symbol: 603993 is the Shanghai A-share code, not a Hong Kong code; CMOC's H-share is 3993.HK (A-share: 603993.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=3993&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12408,7 +13543,7 @@
    "sector": "materiales",
    "id": "GanfengLithium",
    "label": "Ganfeng Lithium",
-   "ticker": "002460 · Shenzhen / 1772 · HKEX",
+   "ticker": "1772.HK · HKEX",
    "cat": "mining_lithium",
    "port": "",
    "role": "Mayor productor mundial integrado de compuestos de litio (mina-química-batería-reciclaje).",
@@ -12417,14 +13552,25 @@
    "country": "China",
    "growth": "🟢 Retorno a utilidad, expansión de capacidad en Mali y Argentina",
    "margin": 0.07,
-   "mkt": "002460.HK",
-   "sector_hint": "materiales"
+   "mkt": "1772.HK",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "1772.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 002460 es el código A-share de Shenzhen, no de Hong Kong; la acción H de Ganfeng Lithium es 1772.HK (A-share: 002460.SZ).",
+    "note_en": "Malformed symbol: 002460 is the Shenzhen A-share code, not a Hong Kong code; Ganfeng Lithium's H-share is 1772.HK (A-share: 002460.SZ).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=1772&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
    "id": "TianqiLithium",
    "label": "Tianqi Lithium",
-   "ticker": "002466 · Shenzhen / 9696 · HKEX",
+   "ticker": "9696.HK · HKEX",
    "cat": "mining_lithium",
    "port": "",
    "role": "Minería de litio de roca dura vía JV en Greenbushes más participación minoritaria significativa en SQM.",
@@ -12433,8 +13579,19 @@
    "country": "China",
    "growth": "🔴 Pérdida histórica en 2024, derrota legal en Chile y desinversión forzada de SQM",
    "margin": 0.045,
-   "mkt": "002466.HK",
-   "sector_hint": "materiales"
+   "mkt": "9696.HK",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "9696.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 002466 es el código A-share de Shenzhen, no de Hong Kong; la acción H de Tianqi Lithium es 9696.HK (A-share: 002466.SZ).",
+    "note_en": "Malformed symbol: 002466 is the Shenzhen A-share code, not a Hong Kong code; Tianqi Lithium's H-share is 9696.HK (A-share: 002466.SZ).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=9696&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12616,7 +13773,7 @@
    "sector": "materiales",
    "id": "ChinaNorthernRareEarth",
    "label": "China Northern Rare Earth",
-   "ticker": "600111 · Shanghai",
+   "ticker": "600111.SS · SSE",
    "cat": "rare_earths",
    "port": "",
    "role": "Mayor productor mundial de tierras raras ligeras (La, Ce, Pr, Nd), estatal china, con base en el yacimiento de Bayan Obo.",
@@ -12625,8 +13782,19 @@
    "country": "China",
    "growth": "🟢 Ingresos y utilidad récord, precios de Pr-Nd al alza",
    "margin": 0.0607,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": "600111.SS",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "600111.SS",
+    "exchange": "SSE",
+    "note_es": "Cotiza en Shanghái (600111), bajo control estatal (Baotou Steel).",
+    "note_en": "Listed in Shanghai (600111), state-controlled (Baotou Steel).",
+    "source_url": "http://www.sse.com.cn/assortment/stock/list/info/company/index.shtml?COMPANY_CODE=600111",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12808,7 +13976,7 @@
    "sector": "materiales",
    "id": "SSAB",
    "label": "SSAB",
-   "ticker": "SSAB A/SSAB B · Nasdaq Stockholm",
+   "ticker": "SSAB-B.ST · Nasdaq Stockholm",
    "cat": "steel",
    "port": "",
    "role": "Siderúrgica sueco-finlandesa pionera del \"acero fósil-libre\" (HYBRIT, reducción directa con hidrógeno verde).",
@@ -12817,8 +13985,19 @@
    "country": "Europa",
    "growth": "🟢 demanda creciente de clientes que buscan descarbonizar su cadena de suministro (automotriz, energía).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": "SSAB-B.ST",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "SSAB-B.ST",
+    "exchange": "Nasdaq Stockholm",
+    "note_es": "Cotiza en Nasdaq Estocolmo (SSAB A/B) y Helsinki.",
+    "note_en": "Listed on Nasdaq Stockholm (SSAB A/B) and Helsinki.",
+    "source_url": "https://www.ssab.com/en/company/investors",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12840,7 +14019,7 @@
    "sector": "materiales",
    "id": "RioTintoAluminium",
    "label": "Rio Tinto Aluminium",
-   "ticker": "RIO · LSE/NYSE(ADR)/ASX (grupo Rio Tinto; división Aluminium no cotiza por separado)",
+   "ticker": "Rio Tinto (RIO)",
    "cat": "aluminum",
    "port": "",
    "role": "División de aluminio de Rio Tinto Group (diversificado, también líder en mineral de hierro y litio); mayor productor integrado bauxita-alúmina-aluminio del mundo.",
@@ -12849,8 +14028,19 @@
    "country": "United Kingdom/Australia",
    "growth": "🟢 fuerte demanda de aluminio bajo en carbono para clientes que buscan descarbonizar (automotriz, packaging).",
    "margin": null,
-   "mkt": "RIO",
-   "sector_hint": "materiales"
+   "mkt": null,
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Rio Tinto",
+    "parent_ticker": "RIO",
+    "note_es": "Rio Tinto Aluminium es una división de Rio Tinto (RIO / RIO.L / RIO.AX); no cotiza por separado.",
+    "note_en": "Rio Tinto Aluminium is a division of Rio Tinto (RIO / RIO.L / RIO.AX); it is not separately listed.",
+    "source_url": "https://www.riotinto.com/en/invest",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -12888,7 +14078,7 @@
    "sector": "materiales",
    "id": "Chalco",
    "label": "Chalco",
-   "ticker": "601600 · SSE / 2600 · HKEX",
+   "ticker": "2600.HK · HKEX",
    "cat": "aluminum",
    "port": "",
    "role": "Mayor productor de aluminio primario de China (filial de Chinalco), integrado bauxita-alúmina-aluminio.",
@@ -12897,8 +14087,19 @@
    "country": "China",
    "growth": "🟡 demanda doméstica china de EVs/renovables fuerte, pero limitada por tope de capacidad y controles energéticos gubernamentales.",
    "margin": null,
-   "mkt": "601600.HK",
-   "sector_hint": "materiales"
+   "mkt": "2600.HK",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2600.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 601600 es el código A-share de Shanghái, no de Hong Kong; la acción H de Chalco es 2600.HK (A-share: 601600.SS).",
+    "note_en": "Malformed symbol: 601600 is the Shanghai A-share code, not a Hong Kong code; Chalco's H-share is 2600.HK (A-share: 601600.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=2600&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -13032,7 +14233,7 @@
    "sector": "materiales",
    "id": "AnhuiConch",
    "label": "Anhui Conch",
-   "ticker": "600585 · SSE / 0914 · HKEX",
+   "ticker": "0914.HK · HKEX",
    "cat": "cement",
    "port": "",
    "role": "Mayor productor de cemento por capacidad del mundo.",
@@ -13041,8 +14242,19 @@
    "country": "China",
    "growth": "🔴 crisis inmobiliaria china (Evergrande, Country Garden, etc.) redujo demanda doméstica; revenue -9,3% interanual.",
    "margin": null,
-   "mkt": "600585.HK",
-   "sector_hint": "materiales"
+   "mkt": "0914.HK",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "0914.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 600585 es el código A-share de Shanghái, no de Hong Kong; la acción H de Anhui Conch es 0914.HK (A-share: 600585.SS).",
+    "note_en": "Malformed symbol: 600585 is the Shanghai A-share code, not a Hong Kong code; Anhui Conch's H-share is 0914.HK (A-share: 600585.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=914&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -13080,7 +14292,7 @@
    "sector": "materiales",
    "id": "SKMaterials",
    "label": "SKMaterials",
-   "ticker": "Privada (subsidiaria de SK Inc)",
+   "ticker": "SK Inc. (034730.KS)",
    "cat": "industrial_gas",
    "port": "",
    "role": "Productor surcoreano líder de gases especiales (NF3, WF6) para la industria de semiconductores.",
@@ -13089,8 +14301,20 @@
    "country": "Corea",
    "growth": "🟢 beneficiario directo de expansión de capacidad de memoria HBM para IA.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": null,
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "merged",
+    "parent": "SK Inc.",
+    "parent_ticker": "034730.KS",
+    "event_date": "2021-12-01",
+    "note_es": "Fusionada en SK Inc. en dic-2021; dejó de cotizar.",
+    "note_en": "Merged into SK Inc. in Dec 2021; delisted.",
+    "source_url": "https://eng.sk.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -13128,7 +14352,7 @@
    "sector": "materiales",
    "id": "HemlockSemiconductor",
    "label": "Hemlock Semiconductor",
-   "ticker": "Privada (Corning ~80% propietario mayoritario; Shin-Etsu Handotai y Mitsubishi Materials minoritarios)",
+   "ticker": "Corning Inc. (GLW)",
    "cat": "polysilicon",
    "port": "",
    "role": "Productor estadounidense de polisilicio hiperpuro grado semiconductor y solar.",
@@ -13137,8 +14361,19 @@
    "country": "EEUU",
    "growth": "🟢 recibió US$325M confirmados del CHIPS Act (finalizado ene-2025) para expandir capacidad en Michigan y reducir dependencia de Asia.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "materiales"
+   "mkt": null,
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Corning Inc.",
+    "parent_ticker": "GLW",
+    "note_es": "Participada mayoritariamente por Corning (~80,5%); no cotiza.",
+    "note_en": "Majority-owned by Corning (~80.5%); not listed.",
+    "source_url": "https://www.corning.com/worldwide/en/about-us/company-profile.html",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -13384,7 +14619,7 @@
    "sector": "materiales",
    "id": "YOFC",
    "label": "YOFC",
-   "ticker": "601869 · SSE / 6869 · HKEX",
+   "ticker": "6869.HK · HKEX",
    "cat": "fiber_optic_cable",
    "port": "",
    "role": "Mayor fabricante mundial de fibra óptica y cable de fibra óptica por volumen.",
@@ -13393,8 +14628,19 @@
    "country": "China",
    "growth": "🟢 fuerte demanda doméstica china de datacenters de IA; market cap +1.160% interanual (cifra atípica, consistente con el rally sectorial de ópticos asiáticos en 2024-2025, requiere verificación adicional).",
    "margin": null,
-   "mkt": "601869.HK",
-   "sector_hint": "materiales"
+   "mkt": "6869.HK",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6869.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 601869 es el código A-share de Shanghái, no de Hong Kong; la acción H de YOFC es 6869.HK (A-share: 601869.SS).",
+    "note_en": "Malformed symbol: 601869 is the Shanghai A-share code, not a Hong Kong code; YOFC's H-share is 6869.HK (A-share: 601869.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=6869&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -13656,7 +14902,7 @@
    "sector": "macro_credito",
    "id": "MoodysRatings",
    "label": "Moody's Ratings",
-   "ticker": "MCO · NYSE (Moody's Corporation, matriz)",
+   "ticker": "Moody's Corporation (MCO)",
    "cat": "rating_agency",
    "port": "",
    "role": "Una de las tres grandes agencias de calificación crediticia; sus notas determinan directamente el costo de financiamiento de la deuda que financia el boom de capex de IA.",
@@ -13665,14 +14911,25 @@
    "country": "EEUU",
    "growth": "🟢 Resultados récord — ingresos 2025 de $7.72B (+8.9% interanual), impulsados en parte por \"varias operaciones grandes ligadas a IA\" en el segmento de finanzas corporativas.",
    "margin": 0.636,
-   "mkt": "MCO",
-   "sector_hint": "macro_credito"
+   "mkt": null,
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Moody's Corporation",
+    "parent_ticker": "MCO",
+    "note_es": "Moody's Ratings es una división de Moody's Corporation (MCO); no cotiza por separado.",
+    "note_en": "Moody's Ratings is a division of Moody's Corporation (MCO); it is not separately listed.",
+    "source_url": "https://ir.moodys.com/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
    "id": "SPGlobalRatings",
    "label": "S&P Global Ratings",
-   "ticker": "SPGI · NYSE (S&P Global Inc., matriz)",
+   "ticker": "S&P Global Inc. (SPGI)",
    "cat": "rating_agency",
    "port": "",
    "role": "La mayor de las tres grandes agencias de calificación por ingresos; además de rating, su matriz controla el negocio de índices (S&P DJI) más usado del mundo.",
@@ -13681,8 +14938,19 @@
    "country": "EEUU",
    "growth": "🟢 Q2 2026: ingresos +11% interanual, con Ratings e Indices como motores; la propia compañía reporta \"aumento de clientes de IA\" y elevó su plan de recompra de acciones a $7 mil millones.",
    "margin": null,
-   "mkt": "SPGI",
-   "sector_hint": "macro_credito"
+   "mkt": null,
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "S&P Global Inc.",
+    "parent_ticker": "SPGI",
+    "note_es": "S&P Global Ratings es una división de S&P Global (SPGI); no cotiza por separado.",
+    "note_en": "S&P Global Ratings is a division of S&P Global (SPGI); it is not separately listed.",
+    "source_url": "https://investor.spglobal.com/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
@@ -14152,7 +15420,7 @@
    "sector": "macro_credito",
    "id": "PIMCO",
    "label": "PIMCO",
-   "ticker": "Privada (subsidiaria de Allianz SE · ETR: ALV)",
+   "ticker": "Allianz SE (ALV.DE)",
    "cat": "asset_manager",
    "port": "",
    "role": "Mayor gestora de renta fija activa del mundo; se ha convertido en uno de los prestamistas ancla del boom de deuda privada de datacenters de IA.",
@@ -14161,8 +15429,19 @@
    "country": "EEUU",
    "growth": "🟢 Pasó a ser prestamista ancla en varias de las mayores operaciones de deuda de datacenters de 2025-2026 (Meta, Oracle).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "macro_credito"
+   "mkt": null,
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Allianz SE",
+    "parent_ticker": "ALV.DE",
+    "note_es": "Filial de Allianz SE; no cotiza por separado.",
+    "note_en": "Subsidiary of Allianz SE; not separately listed.",
+    "source_url": "https://en.wikipedia.org/wiki/PIMCO",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
@@ -14696,7 +15975,7 @@
    "sector": "inmobiliario",
    "id": "Telehouse",
    "label": "Telehouse",
-   "ticker": "Privada (100% subsidiaria de KDDI Corporation)",
+   "ticker": "KDDI Corporation (9433.T)",
    "cat": "colocation",
    "port": "",
    "role": "Operador de colocation e interconexión carrier-neutral; 40+ datacenters en 10 países (Londres, Nueva York, Fráncfort, París, Shanghái, Tokio, Hong Kong, Seúl, entre otros).",
@@ -14705,8 +15984,19 @@
    "country": "Japón (sede operativa global, matriz KDDI)",
    "growth": "🟡 Expansión continua en Tokio (campus Tama) y adquisición de sitio de oficinas en Docklands (Londres) para futura capacidad de datacenter, pero sin anuncios de escala comparable a competidores hyperscale en 2025-2026.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "KDDI Corporation",
+    "parent_ticker": "9433.T",
+    "note_es": "Filial 100% de KDDI; no cotiza por separado.",
+    "note_en": "Wholly owned subsidiary of KDDI; not separately listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Telehouse",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -14840,7 +16130,7 @@
    "sector": "inmobiliario",
    "id": "STT_GDC",
    "label": "STT_GDC",
-   "ticker": "Privada (KKR 75% + Singtel 25% tras acuerdo de control total anunciado 4-feb-2026; ex-ST Telemedia/Temasek-linked)",
+   "ticker": "KKR / Singtel (KKR)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Operador pan-asiático de datacenters con capacidad de diseño de 2.3GW en 12 mercados principales (incl. India, Indonesia, Japón, Filipinas, Singapur, Corea del Sur, Tailandia, Reino Unido, Alemania, Malasia, Vietnam, Italia).",
@@ -14849,14 +16139,26 @@
    "country": "Singapur",
    "growth": "🟢 KKR y Singtel acordaron adquirir el 100% de STT GDC a un valor de empresa de S$13.8bn (US$10.9bn) el 4-feb-2026, comprando el 82% restante de ST Telemedia por S$6.6bn (US$5.1bn); cierre esperado en la primera mitad del 2H2026.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "KKR / Singtel",
+    "parent_ticker": "KKR",
+    "event_date": "2026-09",
+    "note_es": "KKR (75%) y Singtel (25%) completaron la compra total en sep-2026.",
+    "note_en": "KKR (75%) and Singtel (25%) completed the full takeover in Sep-2026.",
+    "source_url": "https://technode.global/2026/09/03/kkr-singtel-consortium-completes-takeover-of-singapores-stt-gdc-at-10-9b/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "ESR_Group",
    "label": "ESR_Group",
-   "ticker": "Privada (ex-HKEX:1821, deslistada 2025 tras buyout de $7.1bn por consorcio Starwood Capital + Sixth Street + SSW Partners + Warburg Pincus + Qatar Investment Authority)",
+   "ticker": "Starwood Capital-led consortium",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Desarrollador-inversor de datacenters de APAC construido sobre su plataforma logística/industrial; 575MW comprometidos en ejecución, objetivo >2GW en ~18 proyectos.",
@@ -14865,8 +16167,19 @@
    "country": "Hong Kong / Singapur (sede dual)",
    "growth": "🟢 Recaudó >US$2bn de fondos soberanos y de pensiones para datacenters, más US$850M adicionales de equity (2026); entró al mercado indio con proyecto de $100M en Mumbai (60MW) y debutó con datacenter de 80MW en Corea del Sur.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Starwood Capital-led consortium",
+    "event_date": "2025-07-04",
+    "note_es": "Deslistada de HKEX el 4-jul-2025 tras la compra de ~US$7.100M del consorcio liderado por Starwood.",
+    "note_en": "Delisted from HKEX on 4-Jul-2025 after a ~US$7.1bn Starwood-led take-private.",
+    "source_url": "https://www.esr.com/news/esr-completes-privatisation-strengthens-leadership-team/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -14888,7 +16201,7 @@
    "sector": "inmobiliario",
    "id": "NxtraData",
    "label": "Nxtra Data",
-   "ticker": "Privada (Bharti Airtel control mayoritario; Alpha Wave Global, Carlyle y Anchorage Capital como inversores minoritarios tras ronda de $1bn en mar-2026)",
+   "ticker": "Bharti Airtel (BHARTIARTL.NS)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Brazo de datacenters de Bharti Airtel; 14 datacenters \"core\" grandes + 120+ instalaciones edge, ~300MW de capacidad IT actual, objetivo 1GW.",
@@ -14897,14 +16210,25 @@
    "country": "India",
    "growth": "🟢 Cerró ronda de $1bn en mar-2026 (Alpha Wave Global $435M + Carlyle $240M + Anchorage $35M + Airtel resto) a valuación post-money de ~$3.1bn, apuntando a 25% de cuota de mercado con 1GW.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Bharti Airtel",
+    "parent_ticker": "BHARTIARTL.NS",
+    "note_es": "Filial de Bharti Airtel, que mantiene el control tras la ronda de US$1.000M de 2026.",
+    "note_en": "Subsidiary of Bharti Airtel, which keeps control after the 2026 US$1bn round.",
+    "source_url": "https://www.cnbc.com/2026/03/31/pe-alpha-wave-carlyle-1-billion-airtel-data-center.html",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "JioDataCenters",
    "label": "Jio Data Centers",
-   "ticker": "Privada (100% Reliance Industries / Jio Platforms; sin subsidiaria de datacenters separadamente listada identificada)",
+   "ticker": "Reliance Industries (RELIANCE.NS)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Negocio de datacenters de IA de Reliance Industries/Jio, parte de un plan de inversión de $110bn en IA anunciado feb-2026; campus insignia en Jamnagar con socios Nvidia y Meta.",
@@ -14913,8 +16237,19 @@
    "country": "India",
    "growth": "🟢 Reliance anunció plan de $110bn en IA (feb-2026); acuerdo con Nvidia para 2.000MW de datacenters de IA; acuerdo con Meta por 168MW en Jamnagar (jun-2026); reportes de un datacenter de hasta 3GW en desarrollo.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Reliance Industries",
+    "parent_ticker": "RELIANCE.NS",
+    "note_es": "Unidad de Reliance Industries/Jio Platforms; no cotiza por separado.",
+    "note_en": "Unit of Reliance Industries/Jio Platforms; not separately listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Jio_Platforms",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -14952,7 +16287,7 @@
    "sector": "inmobiliario",
    "id": "AdaniConneX",
    "label": "AdaniConneX",
-   "ticker": "Privada (JV 50/50 entre Adani Enterprises y edgeconnex desde 2021)",
+   "ticker": "Adani Enterprises (50%) / EdgeConneX (50%) (ADANIENT.NS)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "JV de datacenters entre Adani Enterprises y EdgeConneX; ~2GW de capacidad nacional actual, objetivo de 5GW para 2035.",
@@ -14961,8 +16296,19 @@
    "country": "India",
    "growth": "🟢 Adani Group anunció plan de $100bn para datacenters hyperscale renovables (18-feb-2026), que podría catalizar $150bn adicionales en inversión relacionada; AdaniConneX sella el mayor financiamiento de construcción de datacenters de India (~$213M).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Adani Enterprises (50%) / EdgeConneX (50%)",
+    "parent_ticker": "ADANIENT.NS",
+    "note_es": "JV 50/50 de Adani Enterprises y EdgeConneX; no cotiza por separado.",
+    "note_en": "50/50 JV of Adani Enterprises and EdgeConneX; not separately listed.",
+    "source_url": "https://www.adanienterprises.com/newsroom/media-releases/adaniconnex-a-new-data-center-joint-venture-formed-between-adani-enterprises-and-edgeconnex",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -14984,7 +16330,7 @@
    "sector": "inmobiliario",
    "id": "MoroHub",
    "label": "MoroHub",
-   "ticker": "Privada (100% subsidiaria de Digital DEWA, brazo digital de Dubai Electricity and Water Authority)",
+   "ticker": "Dubai Electricity and Water Authority (DEWA)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Operador del mayor datacenter solar del mundo (campus Warsan, Dubái); capacidad planeada de >100MW en su instalación insignia.",
@@ -14993,14 +16339,24 @@
    "country": "Emiratos Árabes Unidos",
    "growth": "🟡 DEWA aprobó la segunda fase del datacenter verde de Warsan en ene-2026; primera fase prevista para 2H2026; instalación abarca >66.000 m².",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Dubai Electricity and Water Authority (DEWA)",
+    "note_es": "Filial de Digital DEWA, brazo de DEWA (cotizada en el DFM de Dubái).",
+    "note_en": "Subsidiary of Digital DEWA, the digital arm of DEWA (listed on Dubai Financial Market).",
+    "source_url": "https://www.morohub.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "Meeza",
    "label": "Meeza",
-   "ticker": "MEZA · Qatar Stock Exchange",
+   "ticker": "MEZA.QA · Qatar Stock Exchange",
    "cat": "colocation",
    "port": "",
    "role": "Mayor proveedor de servicios de TI gestionados y datacenters de Catar; 14MW de capacidad IT actual en 5 instalaciones certificadas (M-Vaults 1-5).",
@@ -15009,8 +16365,20 @@
    "country": "Catar",
    "growth": "🟢 Plan de cuadruplicar capacidad en 4 años; M-Vault 4 (4MW) ya vendido con entrega 1H2026; campus Um Garn (24MW) con primeros 6MW operativos para fines de 2027; aseguró facilidad de QAR 1.6bn (~$440M) de Dukhan Bank (jul-2026).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": "MEZA.QA",
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "MEZA.QA",
+    "exchange": "Qatar Stock Exchange",
+    "listed_since": "2023-08-23",
+    "note_es": "Cotiza en la Bolsa de Qatar (MEZA) desde el 23-ago-2023.",
+    "note_en": "Listed on the Qatar Stock Exchange (MEZA) since 23-Aug-2023.",
+    "source_url": "https://www.meeza.net/meeza-successfully-listed-on-qatar-stock-exchange-main-market/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15032,7 +16400,7 @@
    "sector": "inmobiliario",
    "id": "Teraco",
    "label": "Teraco",
-   "ticker": "Privada (Digital Realty ~55% desde cierre 2022, resto en manos de fundadores/inversores originales)",
+   "ticker": "Digital Realty (DLR)",
    "cat": "colocation",
    "port": "",
    "role": "Mayor operador de colocation/interconexión de África; 7 instalaciones en Johannesburgo, Ciudad del Cabo y Durban, >180MW de capacidad crítica actual.",
@@ -15041,8 +16409,19 @@
    "country": "Sudáfrica",
    "growth": "🟢 Comprometió $1.2bn (may-2026) para desplegar 150MW adicionales de capacidad de IA en 4 instalaciones — 40% de toda la capacidad desplegada en sus 15 años de historia; firmó PPA de energía renovable de 110MW con Casa dos Ventos y proyecto solar utility-scale de 120MW.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Digital Realty",
+    "parent_ticker": "DLR",
+    "note_es": "Controlada por Digital Realty (~61%, sube a 77% tras acuerdo de jun-2026).",
+    "note_en": "Controlled by Digital Realty (~61%, rising to 77% under a Jun-2026 deal).",
+    "source_url": "https://investor.digitalrealty.com/news-releases/news-release-details/digital-realty-announces-transactions-drive-continued-platform",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15080,7 +16459,7 @@
    "sector": "inmobiliario",
    "id": "Ascenty",
    "label": "Ascenty",
-   "ticker": "Privada (JV Digital Realty + Brookfield Infrastructure Partners)",
+   "ticker": "Digital Realty / Brookfield Infrastructure (DLR)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Mayor operador de datacenters de Brasil; comprometió $1.2bn para 150MW adicionales de capacidad de IA en 4 instalaciones (may-2026), equivalente al 40% de su capacidad histórica desplegada en 15 años.",
@@ -15089,8 +16468,19 @@
    "country": "Brasil — operaciones en Brasil, México y Chile",
    "growth": "🟢 Comprometió $1.2bn (27-may-2026) para 150MW en Sumaré 3 (90MW, entrega 3T2027), Vinhedo 3 (90MW), Vinhedo 4&5 (45MW c/u) y São Paulo metro (20MW); financiamiento \"casi totalmente asegurado\" vía project finance y debentures.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Digital Realty / Brookfield Infrastructure",
+    "parent_ticker": "DLR",
+    "note_es": "JV controlada por Digital Realty (51%) con Brookfield (49%).",
+    "note_en": "JV controlled by Digital Realty (51%) with Brookfield (49%).",
+    "source_url": "https://ascenty.com/en/about/investors/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15160,7 +16550,7 @@
    "sector": "inmobiliario",
    "id": "CoreSite",
    "label": "CoreSite",
-   "ticker": "Privada (~64% American Tower, ~36% Stonepeak vía JV desde oct-2022; American Tower adquirió el 100% original en nov-2021 por ~$10.1bn)",
+   "ticker": "American Tower (AMT)",
    "cat": "colocation",
    "port": "",
    "role": "Operador de colocation/interconexión con 30 datacenters en 11 mercados de EE.UU., 4.8M sq ft de portafolio, 44.000+ interconexiones.",
@@ -15169,14 +16559,26 @@
    "country": "Estados Unidos",
    "growth": "🟢 American Tower reportó crecimiento de ingresos consolidado de 7.7% impulsado por upgrades de telecom y crecimiento de datacenters; nueva instalación DE3 (Denver) completada; expansión de campus de Silicon Valley con 228.000 sq ft adicionales AI-ready.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "American Tower",
+    "parent_ticker": "AMT",
+    "event_date": "2021-12-28",
+    "note_es": "Filial de American Tower (Stonepeak con participación minoritaria); no cotiza.",
+    "note_en": "Subsidiary of American Tower (Stonepeak holds a minority stake); not listed.",
+    "source_url": "https://www.datacenterdynamics.com/en/news/stonepeak-to-acquire-25bn-stake-in-american-towers-coresite-business/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "AlignedDataCenters",
    "label": "Aligned Data Centers",
-   "ticker": "Privada (consorcio BlackRock/GIP + MGX + AIP —incl. Nvidia y Microsoft—, deal de $40bn anunciado 16-oct-2025, cierre esperado 1H2026; ex-Macquarie Asset Management)",
+   "ticker": "AIP / MGX / BlackRock's GIP consortium (BLK)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Operador hyperscale con >5GW de capacidad y más de 50 campus en las Américas; una de las mayores transacciones de infraestructura de IA de la historia.",
@@ -15185,14 +16587,26 @@
    "country": "Estados Unidos — huella pan-americana (incl. Brasil, Chile, Colombia, México vía ODATA)",
    "growth": "🟢 Consorcio BlackRock GIP + MGX + AIP (Nvidia, Microsoft) acordó adquirir Aligned por ~$40bn de enterprise value (16-oct-2025), cierre esperado 1H2026 sujeto a aprobación regulatoria incl. CFIUS.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "AIP / MGX / BlackRock's GIP consortium",
+    "parent_ticker": "BLK",
+    "event_date": "2026-07-21",
+    "note_es": "AIP, MGX y GIP (BlackRock) cerraron su compra por ~US$40.000M el 21-jul-2026.",
+    "note_en": "AIP, MGX and BlackRock's GIP closed its ~US$40bn acquisition on 21-Jul-2026.",
+    "source_url": "https://www.businesswire.com/news/home/20260720395324/en/AIP-MGX-and-BlackRocks-GIP-Close-Acquisition-of-Aligned-Data-Centers",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "YondrGroup",
    "label": "Yondr Group",
-   "ticker": "Privada (multi-inversor: DigitalBridge, La Caisse/CDPQ, Mubadala, Allianz Global Investors, Apollo)",
+   "ticker": "DigitalBridge / La Caisse (DBRG)",
    "cat": "datacenter_operator",
    "port": "",
    "role": "Desarrollador hyperscale global; 123MW operativos confirmados en Norteamérica (96MW Norte de Virginia + 27MW Toronto) más el megacampus de Dallas en desarrollo.",
@@ -15201,8 +16615,20 @@
    "country": "Reino Unido (sede Londres) — operaciones en EE.UU., Canadá y Europa (Londres, Fráncfort, Ámsterdam)",
    "growth": "🟢 Anunció campus de 550MW en Dallas (2026) como parte de un plan de $2bn de inversión en las Américas; Mubadala (jul-2025) y Allianz Global Investors (jul-2025) tomaron participaciones accionarias adicionales.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "DigitalBridge / La Caisse",
+    "parent_ticker": "DBRG",
+    "event_date": "2025-07-01",
+    "note_es": "DigitalBridge y La Caisse completaron su compra el 1-jul-2025.",
+    "note_en": "DigitalBridge and La Caisse completed its acquisition on 1-Jul-2025.",
+    "source_url": "https://www.businesswire.com/news/home/20250701076482/en/DigitalBridge-and-La-Caisse-Complete-Acquisition-of-Yondr-Group",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15272,7 +16698,7 @@
    "sector": "inmobiliario",
    "id": "WPT Industrial",
    "label": "WPT Industrial",
-   "ticker": "Privada — sin cotización desde oct-2021, absorbida por Blackstone Real Estate Income Trust (BREIT)",
+   "ticker": "Blackstone Real Estate Income Trust (BREIT)",
    "cat": "industrial_reit",
    "port": "",
    "role": "ADVERTENCIA DE ESTADO: ex-REIT industrial de logística/e-commerce en EE.UU., adquirida en su totalidad por BREIT el 20-oct-2021 (~USD 3.100M). No hay evidencia de que opere hoy como marca/entidad distinta dentro de Blackstone — sin filings ni comunicados post-2021 como unidad separada.",
@@ -15281,8 +16707,19 @@
    "country": "Canadá (sede original Toronto) / activos en EE.UU.",
    "growth": "🔴 Entidad discontinuada como nodo independiente desde oct-2021; ninguna señal de reactivación de marca a jul-2026.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Blackstone Real Estate Income Trust (BREIT)",
+    "event_date": "2021-10",
+    "note_es": "Adquirida por BREIT (Blackstone) en 2021 y deslistada.",
+    "note_en": "Acquired by BREIT (Blackstone) in 2021 and delisted.",
+    "source_url": "https://en.wikipedia.org/wiki/WPT_Industrial_REIT",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15336,7 +16773,7 @@
    "sector": "inmobiliario",
    "id": "ESR Group",
    "label": "ESR Group",
-   "ticker": "Privada — deslistada de HKEX (ex-1821.HK) el 4-jul-2025 tras take-private de ~USD 7.090-7.100M; consorcio liderado por Starwood Capital Group, SSW Partners y Sixth Street, con Warburg Pincus y Qatar Investment Authority como inversores adicionales, más equity \"rolled\" de los fundadores Stuart Gibson y Jeffrey Shen, OMERS y Sumitomo Mitsui Banking Corporation.",
+   "ticker": "Starwood Capital-led consortium",
    "cat": "industrial_reit",
    "port": "",
    "role": "Mayor gestor de real estate logístico/industrial de APAC por AUM, con datacenters e infraestructura energética como uno de sus tres pilares estratégicos; pipeline de datacenters de +3GW de suelo/energía asegurados (abr-2026).",
@@ -15345,8 +16782,19 @@
    "country": "Hong Kong / Singapur (foco APAC)",
    "growth": "🟢 Pipeline de datacenters superó 3GW asegurados (abr-2026, desde >2GW en FY2024); captó USD 850M adicionales de accionistas existentes (abr-2026) y cerró el ESR Data Centre Fund I (abr-2025).",
    "margin": -0.125,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Starwood Capital-led consortium",
+    "event_date": "2025-07-04",
+    "note_es": "Deslistada de HKEX el 4-jul-2025 tras la compra de ~US$7.100M del consorcio liderado por Starwood.",
+    "note_en": "Delisted from HKEX on 4-Jul-2025 after a ~US$7.1bn Starwood-led take-private.",
+    "source_url": "https://www.esr.com/news/esr-completes-privatisation-strengthens-leadership-team/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15480,7 +16928,7 @@
    "sector": "inmobiliario",
    "id": "Turner Construction",
    "label": "Turner Construction",
-   "ticker": "Privada · subsidiaria 100% de HOCHTIEF AG (Fráncfort: HOT), controlada mayoritariamente por ACS Group (Madrid: ACS)",
+   "ticker": "HOCHTIEF AG (HOT.DE)",
    "cat": "dc_construction",
    "port": "",
    "role": "Mayor contratista de EE.UU. por ingresos (ENR Top 400: #1 en 2025 y 2026); pivotó agresivamente hacia datacenters de IA, ya su principal motor de crecimiento.",
@@ -15489,8 +16937,19 @@
    "country": "Estados Unidos (Nueva York, NY)",
    "growth": "🟢 Ingresos de datacenter más que se duplicaron YoY en 2025 (DCD, 26-nov-2025); backlog récord de USD 44.300M (+34% YoY) al cierre de 2025.",
    "margin": 0.03,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "HOCHTIEF AG",
+    "parent_ticker": "HOT.DE",
+    "note_es": "Filial 100% de HOCHTIEF (controlada por ACS); no cotiza por separado.",
+    "note_en": "Wholly owned subsidiary of HOCHTIEF (controlled by ACS); not separately listed.",
+    "source_url": "https://en.wikipedia.org/wiki/Turner_Construction",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15800,7 +17259,7 @@
    "sector": "inmobiliario",
    "id": "Boyd Thermal",
    "label": "Boyd Thermal",
-   "ticker": "Privada — desde 12-mar-2026 unidad de negocio de Eaton (NYSE: ETN), segmento Electrical Global. Antes (2021-2026): propiedad de Goldman Sachs Asset Management + GIC (como \"Boyd Corporation\").",
+   "ticker": "Eaton (ETN)",
    "cat": "cooling_thermal",
    "port": "",
    "role": "Uno de los mayores fabricantes globales de hardware de enfriamiento líquido para datacenters de IA (cold plates, CDUs, immersion, two-phase, quick disconnects). Hasta mar-2026 operó como división \"Boyd Thermal\" de Boyd Corporation; ahora es el ancla de la estrategia \"grid-to-chip\" de Eaton. Nota de origen: esta entidad corresponde a lo que el brief original pedía como \"Boyd Corporation\" — la empresa se dividió y solo la división Thermal es relevante a liquid cooling (ver Dudas sobre el remanente Engineered Materials).",
@@ -15809,14 +17268,26 @@
    "country": "Estados Unidos (manufactura global: México/Norteamérica, Asia, Europa)",
    "growth": "🟢 Ventas 2026 proyectadas de Boyd Thermal en USD 1.700M (USD 1.500M de liquid cooling) al anuncio de venta (3-nov-2025); capacidad de manufactura en México más que duplicada a 460.000 sq ft (17-feb-2026); 5M+ cold plates entregados acumulados a hyperscalers (8-sep-2025).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Eaton",
+    "parent_ticker": "ETN",
+    "event_date": "2026-03-12",
+    "note_es": "Eaton completó su compra por US$9.500M el 12-mar-2026.",
+    "note_en": "Eaton completed its US$9.5bn acquisition on 12-Mar-2026.",
+    "source_url": "https://www.businesswire.com/news/home/20260312582488/en/Eaton-completes-acquisition-of-leading-liquid-cooling-solutions-provider-Boyd-Thermal-creating-an-industry-leading-grid-to-chip-solution-for-data-centers",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "CoolIT Systems",
    "label": "CoolIT Systems",
-   "ticker": "Privada — adquirida por Ecolab Inc. (NYSE: ECL), anunciado 20-mar-2026, cerrado 2-jul-2026 (USD 4.750M). Propietario previo (2023-2026): KKR (mayoritario, vía Global Impact Fund II) + Mubadala Investment Company (minoritario).",
+   "ticker": "Ecolab (ECL)",
    "cat": "cooling_thermal",
    "port": "",
    "role": "Pionero y líder global en direct-to-chip liquid cooling (cold plates, CDUs) para HPC e IA — 25 años de trayectoria (fundada 2001), con más de 1.000 datacenters usando su tecnología a nivel mundial.",
@@ -15825,14 +17296,26 @@
    "country": "Canadá (Calgary, Alberta); manufactura también en China y Vietnam",
    "growth": "🟢 KKR obtuvo ~15x de retorno en 3 años en la venta a Ecolab; bajo KKR duplicó plantilla (+300 empleos), expandió manufactura a 300.000+ sq ft, y multiplicó por 25x su capacidad de producción de CDUs (2023→2026); ventas proyectadas NTM ~USD 550M a la valorización de venta, a 29x EBITDA ajustado NTM.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Ecolab",
+    "parent_ticker": "ECL",
+    "event_date": "2026-07-02",
+    "note_es": "Ecolab completó su compra por US$4.750M en 2026.",
+    "note_en": "Ecolab completed its US$4.75bn acquisition in 2026.",
+    "source_url": "https://www.coolitsystems.com/resources/news/ecolab-has-closed-its-acquisition-of-coolit-systems/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
    "id": "LiquidStack",
    "label": "LiquidStack",
-   "ticker": "Privada — adquirida 100% por Trane Technologies (NYSE: TT), anunciado 10-feb-2026, cerrado 3-mar-2026 (monto no revelado). Inversores previos: Bitfury Group (matriz/mayoritario hasta 2021), Wiwynn (Serie A, 2021), Trane Technologies (Serie B, 2023), Tiger Global (extensión Serie B, sep-2024).",
+   "ticker": "Trane Technologies (TT)",
    "cat": "cooling_thermal",
    "port": "",
    "role": "Especialista pionero en immersion cooling de dos fases para datacenters de IA/HPC — origen en cooling extremo para minería de criptomonedas (Bitfury), reorientado a IA desde 2021.",
@@ -15841,8 +17324,20 @@
    "country": "Estados Unidos (HQ y manufactura en Carrollton, Texas, desde 2024) — origen corporativo en Hong Kong (Allied Control Limited, 2012)",
    "growth": "🟢 Trane Technologies completó la adquisición el 3-mar-2026 para ofrecer soluciones integradas \"desde la planta central hasta el chip\"; había recibido extensión de Serie B de USD 20M liderada por Tiger Global en sep-2024 (Serie B total: USD 35M).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": null,
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "Trane Technologies",
+    "parent_ticker": "TT",
+    "event_date": "2026-03-03",
+    "note_es": "Trane Technologies completó su compra el 3-mar-2026.",
+    "note_en": "Trane Technologies completed its acquisition on 3-Mar-2026.",
+    "source_url": "https://www.businesswire.com/news/home/20260303582406/en/Trane-Technologies-Completes-Acquisition-of-LiquidStack",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15864,7 +17359,7 @@
    "sector": "inmobiliario",
    "id": "Envicool",
    "label": "Envicool",
-   "ticker": "002837 · Shenzhen Stock Exchange (Shenzhen Envicool Technology Co., Ltd.)",
+   "ticker": "002837.SZ · Shenzhen Stock Exchange",
    "cat": "cooling_thermal",
    "port": "",
    "role": "Líder chino en thermal management para datacenters — el proveedor doméstico de liquid cooling más relevante para el ecosistema de IA de China (ByteDance, Tencent, Alibaba) y con ambiciones de exportación creciente, incluso cortejando a hyperscalers occidentales. Compite globalmente con jugadores de mayor escala como Modine (vía Airedale) y DeltaElectronics en el segmento de thermal management, aunque con una base de clientes geográficamente distinta.",
@@ -15873,8 +17368,20 @@
    "country": "China (Shenzhen)",
    "growth": "🟡 Ingresos FY2025 CNY 6.070M (+32,2% YoY, primera vez que supera CNY 6.000M), con el segmento de liquid cooling para IA en CNY 3.450M (+41,3%, 56,8% del total) — pero el mercado castigó la acción en abr-2026 tras revelarse que la utilidad neta Q1-2026 cayó -82% YoY, por gastos financieros (pérdidas cambiarias +77x) y compresión de márgenes a un mínimo de 5 años (8,6% margen neto FY2025).",
    "margin": 20.25,
-   "mkt": "",
-   "sector_hint": "inmobiliario"
+   "mkt": "002837.SZ",
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "002837.SZ",
+    "exchange": "Shenzhen Stock Exchange",
+    "listed_since": "2016-12",
+    "note_es": "Cotiza en la Bolsa de Shenzhen (002837).",
+    "note_en": "Listed on the Shenzhen Stock Exchange (002837).",
+    "source_url": "https://finance.yahoo.com/quote/002837.SZ/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -15896,7 +17403,7 @@
    "sector": "logistica",
    "id": "Maersk",
    "label": "Maersk",
-   "ticker": "MAERSK-B · Nasdaq Copenhagen",
+   "ticker": "MAERSK-B.CO · Nasdaq Copenhagen",
    "cat": "shipping_line",
    "port": "",
    "role": "Naviera integrada danesa, 2ª mayor del mundo por capacidad (~4,1-4,6M TEU); combina transporte marítimo, terminales (APM Terminals), logística terrestre y aérea en ~130 países.",
@@ -15905,8 +17412,19 @@
    "country": "Dinamarca",
    "growth": "🟡 Utilidad neta 2025 cayó 56% y recortó ~1.000 empleos corporativos (5-feb-2026), pero elevó su guía de ganancias 2026 el 29-jun-2026 por fuerte demanda transpacífica.",
    "margin": 0.06,
-   "mkt": "MAERSK-B",
-   "sector_hint": "logistica"
+   "mkt": "MAERSK-B.CO",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "MAERSK-B.CO",
+    "exchange": "Nasdaq Copenhagen",
+    "note_es": "Cotiza en Nasdaq Copenhague (MAERSK-B).",
+    "note_en": "Listed on Nasdaq Copenhagen (MAERSK-B).",
+    "source_url": "https://en.wikipedia.org/wiki/Maersk",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -15944,7 +17462,7 @@
    "sector": "logistica",
    "id": "COSCOShipping",
    "label": "COSCO Shipping",
-   "ticker": "601919 · SSE (Shanghai) / 1919 · HKEX (Hong Kong)",
+   "ticker": "1919.HK · HKEX",
    "cat": "shipping_line",
    "port": "",
    "role": "Naviera estatal china, 4ª mayor del mundo (~3,6M TEU); controla OOCL y una red de terminales propia; brazo marítimo central de la estrategia comercial exterior china.",
@@ -15953,8 +17471,19 @@
    "country": "China",
    "growth": "🟡 Ingresos y utilidad cayeron en 2025 (neta -37,2%) pese a volumen +5,8%; pedido récord de 87 buques por USD 7.170M (dic-2025).",
    "margin": 0.17,
-   "mkt": "601919.HK",
-   "sector_hint": "logistica"
+   "mkt": "1919.HK",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "1919.HK",
+    "exchange": "HKEX",
+    "note_es": "Símbolo mal formado: 601919 es el código A-share de Shanghái, no de Hong Kong; la acción H de COSCO Shipping Holdings es 1919.HK (A-share: 601919.SS).",
+    "note_en": "Malformed symbol: 601919 is the Shanghai A-share code, not a Hong Kong code; COSCO Shipping Holdings's H-share is 1919.HK (A-share: 601919.SS).",
+    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=1919&sc_lang=en",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16001,8 +17530,19 @@
    "country": "Taiwan",
    "growth": "🟡 2025 fue el segundo mejor año de utilidades de su historia (NT$68.500M); ingresos 1T-2026 cayeron 21% YoY por tarifas débiles, parcialmente compensado por alza SCFI +40% tras el conflicto de Medio Oriente de mar-2026.",
    "margin": 0.22,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": "2603.TW",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2603.TW",
+    "exchange": "Taiwan Stock Exchange",
+    "note_es": "Cotiza en la Bolsa de Taiwán (2603).",
+    "note_en": "Listed on the Taiwan Stock Exchange (2603).",
+    "source_url": "https://en.wikipedia.org/wiki/Evergreen_Marine",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16017,8 +17557,19 @@
    "country": "Taiwan",
    "growth": "🟡 6º año consecutivo de utilidad (NT$17.100M en 2025) pero en descenso; año de \"incertidumbre significativa\" por política arancelaria de EEUU.",
    "margin": 0.12,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": "2609.TW",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2609.TW",
+    "exchange": "Taiwan Stock Exchange",
+    "note_es": "Cotiza en la Bolsa de Taiwán (2609).",
+    "note_en": "Listed on the Taiwan Stock Exchange (2609).",
+    "source_url": "https://en.wikipedia.org/wiki/Yang_Ming_Marine_Transport_Corporation",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16049,8 +17600,19 @@
    "country": "Taiwan",
    "growth": "🟡 Utilidad de USD 660M en 9M-2025, sólida pero bajo el récord de 2024; expansión de flota agresiva (+40 buques en pedido).",
    "margin": 0.25,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": "2615.TW",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2615.TW",
+    "exchange": "Taiwan Stock Exchange",
+    "note_es": "Cotiza en la Bolsa de Taiwán (2615).",
+    "note_en": "Listed on the Taiwan Stock Exchange (2615).",
+    "source_url": "https://en.wikipedia.org/wiki/Wan_Hai_Lines",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16104,7 +17666,7 @@
    "sector": "logistica",
    "id": "Nakilat",
    "label": "Nakilat",
-   "ticker": "QGTS · Qatar Exchange (Doha) · Estatal indirecto — Qatar Navigation/Milaha 36,3%, fondos públicos qataríes",
+   "ticker": "QGTS.QA · Qatar Stock Exchange",
    "cat": "shipping_line",
    "port": "",
    "role": "Mayor operador mundial de buques metaneros (GNL) por flota propia: 69 buques GNL + 2 LPG/VLGC + 1 FSRU (72 activos, 2025), con 40+ unidades adicionales en construcción (meta 112 buques).",
@@ -16113,8 +17675,19 @@
    "country": "Catar",
    "growth": "🟡 Utilidad neta FY2025 +3,1% a USD 460M (récord), pero H1 2026 prácticamente plana por la crisis de Ormuz; flota sigue en fuerte expansión (72→112 buques).",
    "margin": 0.35,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": "QGTS.QA",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "QGTS.QA",
+    "exchange": "Qatar Stock Exchange",
+    "note_es": "Cotiza en la Bolsa de Qatar (QGTS).",
+    "note_en": "Listed on the Qatar Stock Exchange (QGTS).",
+    "source_url": "https://en.wikipedia.org/wiki/Nakilat",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16152,7 +17725,7 @@
    "sector": "logistica",
    "id": "HutchisonPorts",
    "label": "Hutchison Ports",
-   "ticker": "",
+   "ticker": "CK Hutchison Holdings (0001.HK)",
    "cat": "port_operator",
    "port": "",
    "role": "Mayor operador portuario privado del mundo por throughput; 53 puertos en 24 países; 90,1M TEU manejados en 2025.",
@@ -16161,14 +17734,25 @@
    "country": "Hong Kong (China)",
    "growth": "🟡 Operativamente sólida (+3% throughput, +8% EBITDA en 2025), pero envuelta en la mayor crisis geopolítico-corporativa del sector portuario desde 2025.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": null,
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "CK Hutchison Holdings",
+    "parent_ticker": "0001.HK",
+    "note_es": "Filial de CK Hutchison; la venta del 80% a BlackRock/MSC sigue sin cerrarse.",
+    "note_en": "Subsidiary of CK Hutchison; the 80% sale to BlackRock/MSC remains unclosed.",
+    "source_url": "https://theloadstar.com/hutchwatch-the-23bn-port-deal-that-nobody-can-close/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
    "id": "APMTerminals",
    "label": "APMTerminals",
-   "ticker": "",
+   "ticker": "A.P. Møller-Maersk (MAERSK-B.CO)",
    "cat": "port_operator",
    "port": "",
    "role": "División global de terminales portuarias de Maersk; opera 60+ terminales en 30-38 países en cinco continentes.",
@@ -16177,8 +17761,19 @@
    "country": "Países Bajos (sede en La Haya)",
    "growth": "🟢 \"Mejor desempeño financiero de su historia\" en FY2025: ingresos +20% YoY, EBIT +31% YoY, utilización récord ~88%.",
    "margin": 0.34,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": null,
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "A.P. Møller-Maersk",
+    "parent_ticker": "MAERSK-B.CO",
+    "note_es": "Filial de A.P. Møller-Maersk; no cotiza por separado.",
+    "note_en": "Subsidiary of A.P. Møller-Maersk; not separately listed.",
+    "source_url": "https://en.wikipedia.org/wiki/APM_Terminals",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16280,7 +17875,7 @@
    "sector": "logistica",
    "id": "BNSFRailway",
    "label": "BNSFRailway",
-   "ticker": "",
+   "ticker": "Berkshire Hathaway (BRK-B)",
    "cat": "rail_freight",
    "port": "",
    "role": "Mayor ferrocarril de Clase I de Norteamérica por volumen, ~32.500 millas (52.300 km) en 28 estados + 3 provincias canadienses. Ingresos de USD 23.400M en 2025.",
@@ -16289,8 +17884,20 @@
    "country": "Estados Unidos (Fort Worth, Texas)",
    "growth": "🟡 Ingresos FY2025 planos (USD 23.400M) pero ingreso operativo mejoró a USD 8.100M; rechazó fusionarse (ago-2025) y firmó partnership intermodal con CSX.",
    "margin": 0.65,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": null,
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Berkshire Hathaway",
+    "parent_ticker": "BRK-B",
+    "event_date": "2010-02",
+    "note_es": "Filial 100% de Berkshire Hathaway.",
+    "note_en": "Wholly owned subsidiary of Berkshire Hathaway.",
+    "source_url": "https://en.wikipedia.org/wiki/BNSF_Railway",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16424,7 +18031,7 @@
    "sector": "logistica",
    "id": "Rumo",
    "label": "Rumo",
-   "ticker": "RAIL3 · B3 (Brasil) · Cosan S.A. ~20,33% (mayor accionista)",
+   "ticker": "RAIL3.SA · B3",
    "cat": "rail_freight",
    "port": "",
    "role": "Mayor operador ferroviario de carga independiente de Brasil/Latam; ~13.500-14.000 km de vías conectando el Centro-Oeste agrícola con los puertos de Santos, Paranaguá, São Francisco do Sul y Rio Grande.",
@@ -16433,8 +18040,19 @@
    "country": "Brasil",
    "growth": "🟡 EBITDA ajustado 2025 +4% (bajo guía) a R$8.020M; utilidad neta 2025 positiva en R$865M (revirtiendo pérdida de R$949M en 2024); acción cayó ~32% en 12 meses.",
    "margin": 0.57,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": "RAIL3.SA",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "RAIL3.SA",
+    "exchange": "B3",
+    "note_es": "Cotiza en B3 (RAIL3).",
+    "note_en": "Listed on B3 (RAIL3).",
+    "source_url": "https://en.wikipedia.org/wiki/Rumo_Logística",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16568,7 +18186,7 @@
    "sector": "logistica",
    "id": "Fagioli",
    "label": "Fagioli",
-   "ticker": "Privada · 100% subsidiaria de CEVA Logistics (Grupo CMA CGM) desde el cierre de la adquisición el 1-abr-2026",
+   "ticker": "CEVA Logistics (CMA CGM)",
    "cat": "heavy_lift_logistics",
    "port": "",
    "role": "Especialista italiano en heavy-haul, izaje e ingeniería aplicada para sectores oil & gas, energía y construcción industrial; recientemente absorbida por el conglomerado naviero-logístico francés CMA CGM.",
@@ -16577,8 +18195,19 @@
    "country": "Italia (Reggio Emilia)",
    "growth": "🟢 Adquisición por CEVA Logistics cerrada el 1-abr-2026, expandiendo capacidades de transporte especializado de CEVA en Europa, Asia-Pacífico y Norteamérica; hub de Houston designado centro de excelencia para proyectos energéticos del Golfo de México (FreightWaves, abr-2026).",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": null,
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "acquired",
+    "parent": "CEVA Logistics (CMA CGM)",
+    "event_date": "2026-03-31",
+    "note_es": "CEVA Logistics (grupo CMA CGM) completó su compra el 31-mar-2026.",
+    "note_en": "CEVA Logistics (CMA CGM group) completed its acquisition on 31-Mar-2026.",
+    "source_url": "https://www.heavyliftpfi.com/logistics/2026/03/31/ceva-completes-fagioli-acquisition/",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16712,7 +18341,7 @@
    "sector": "logistica",
    "id": "Cathay_Cargo",
    "label": "Cathay Cargo",
-   "ticker": "0293 · HKEX (Cathay Pacific Airways Ltd — división de carga, no cotiza por separado)",
+   "ticker": "Cathay Pacific Airways (0293.HK)",
    "cat": "air_cargo",
    "port": "",
    "role": "División de carga de Cathay Pacific; hub en Hong Kong International Airport, posición estratégica para conectar cadenas de suministro de semiconductores de Taiwán/China continental con el resto del mundo.",
@@ -16721,8 +18350,19 @@
    "country": "Hong Kong (China)",
    "growth": "🟢 \"Desempeño robusto\" en 2025 (CEO Ronald Lam); volumen de carga 1,7 millones de toneladas (+9,5% interanual); AFTK +8,3%, aunque yield por AFTK cayó -6,5% y load factor bajó a 58,8% (Cathay 2025 Annual Results, mar-2026).",
    "margin": null,
-   "mkt": "0293.HK",
-   "sector_hint": "logistica"
+   "mkt": null,
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Cathay Pacific Airways",
+    "parent_ticker": "0293.HK",
+    "note_es": "Cathay Cargo es la división de carga de Cathay Pacific (0293.HK); no cotiza por separado.",
+    "note_en": "Cathay Cargo is Cathay Pacific's cargo division (0293.HK); it is not separately listed.",
+    "source_url": "https://www.cathaypacific.com/cx/en_HK/about-us/investor-relations.html",
+    "confidence": "high"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -16824,7 +18464,7 @@
    "sector": "logistica",
    "id": "Maximus_Air",
    "label": "Maximus_Air",
-   "ticker": "Privada · estructura accionaria exacta N/D",
+   "ticker": "Abu Dhabi Aviation",
    "cat": "air_cargo",
    "port": "",
    "role": "Operador emiratí de carga con acceso al An-124 — uno de solo tres operadores comerciales mundiales de este tipo de aeronave (junto a Volga-Dnepr y Antonov Airlines).",
@@ -16833,8 +18473,19 @@
    "country": "Emiratos Árabes Unidos (Abu Dhabi)",
    "growth": "🟡 Anunció colaboración con la startup de aeronaves estratosféricas Radia para \"soluciones de carga aérea de próxima generación\" (prnewswire.com, 2025) — señal de inversión en innovación futura, aunque de impacto comercial aún no verificable.",
    "margin": null,
-   "mkt": "",
-   "sector_hint": "logistica"
+   "mkt": null,
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "subsidiary",
+    "parent": "Abu Dhabi Aviation",
+    "event_date": "2008-11",
+    "note_es": "Filial (95%) de Abu Dhabi Aviation (cotizada en ADX) desde 2008.",
+    "note_en": "95%-owned subsidiary of Abu Dhabi Aviation (listed on ADX) since 2008.",
+    "source_url": "https://en.wikipedia.org/wiki/Maximus_Air",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
