@@ -44,9 +44,10 @@ Hecho (vertical slice NVIDIA → Investigar → agentes → claims/evidencia →
   Extendido a TODA la IA: core/ai._ai_complete (tesis/veredicto, brief,
   War Room, Canvas, Khipu, deep research, cripto, portafolio, matrix
   insights…) → regla en el system + verificación contra el input + 1
-  reintento + marca "(⚠ cifra no verificada)". PENDIENTE: inyectar datos EN
-  VIVO (capitalización/precio) en los contextos que hoy usan el catálogo
-  (NODE_META.mktcap_b es estático) para que la IA tenga la cifra correcta.
+  reintento + marca "(⚠ cifra no verificada)". + core/live_facts.py: a todo
+  prompt se le anexan DATOS EN VIVO (cap. y precio) de las empresas
+  mencionadas; privadas → última valuación verificada con fecha. PENDIENTE:
+  NODE_META.mktcap_b del catálogo sigue estático (la UI lo pisa en vivo).
 - Pendiente: verificar en producción una investigación REAL (Claude sin
   saldo → correrá con Gemini); contradicciones semánticas; eventos
   EARNINGS/PRICE_ANOMALY/FACTOR_FIRED automáticos; evidencia SEC; calibrar
