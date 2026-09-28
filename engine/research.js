@@ -118,14 +118,33 @@
     if (S.poll) { clearInterval(S.poll); S.poll = null; }
   }
 
+  // Sin ventana de "¿cómo te identificamos?": bloqueaba la investigación (y en
+  // el teléfono a veces ni aparece). Se usa el nombre guardado si existe.
   function actor() {
     var a = null;
     try { a = localStorage.getItem('khipu_actor'); } catch (e) {}
-    if (!a) {
-      a = (window.prompt(L('¿Cómo te identificamos? (queda registrado quién pidió cada investigación)', 'How should we identify you? (each research request is logged with who asked)')) || '').trim();
-      if (a) { try { localStorage.setItem('khipu_actor', a); } catch (e) {} }
-    }
-    return a;
+    return (a && a.trim()) || 'usuario';
+  }
+
+  // Mensaje visible y claro dentro del panel (no un aviso que se pierde).
+  function friendlyError(d) {
+    var st = d && d._status;
+    if (st === 429) return L('Hiciste muchas investigaciones en poco tiempo. Espera unos minutos y reintenta.', 'Too many research requests in a short time. Wait a few minutes and try again.');
+    if (st === 404) return L('No encontré esa empresa en el catálogo.', 'That company is not in the catalog.');
+    if (st === 503 && /IA|proveedor/i.test((d && d.error) || '')) return L('No hay ningún servicio de IA disponible ahora (revisa 🩺 Sistema → IA).', 'No AI service is available right now (check 🩺 System → AI).');
+    if (st === 503) return L('La investigación necesita la base de datos (DATABASE_URL en Railway).', 'Research needs the database (DATABASE_URL on Railway).');
+    return (d && d.error) || L('No se pudo iniciar la investigación.', 'Could not start research.');
+  }
+  function runErrors(j) {
+    var out = [];
+    (j.runs || []).forEach(function (r) {
+      if (r.status === 'failed' || r.status === 'skipped') {
+        var e = (r.errors || [])[0];
+        out.push(ag(r.agent_type) + ': ' + (typeof e === 'string' ? e : L('sin detalle', 'no detail')));
+      }
+    });
+    if (j.error) out.push(j.error);
+    return out;
   }
 
   function getJSON(url, opts) {
@@ -165,6 +184,7 @@
         '<button class="rs-x" onclick="window.KhipuResearch.close()" title="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
       '<div class="rs-sub">' + esc(L('Agentes especializados leen datos reales (estados financieros, mercado, noticias, grafo) y escriben conclusiones con evidencia a favor y en contra. No son recomendaciones de compra o venta. Los agentes pueden discrepar: se muestran ambas posturas.',
         'Specialized agents read real data (financial statements, market, news, graph) and write conclusions with evidence for and against. Not buy or sell recommendations. Agents may disagree: both views are shown.')) + '</div>' +
+      (S.msg ? '<div class="rs-cell" style="margin-bottom:10px;border-color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';font-size:13px">' + esc(S.msg.text) + '</div>' : '') +
       '<div class="rs-grid"><div>' +
         '<div class="rs-cell"><div class="rs-t">' + esc(L('Conclusiones por perspectiva', 'Conclusions by perspective')) + '</div>' +
           (types.length ? '<div class="rs-tabs">' + types.map(function (t) {
@@ -227,34 +247,35 @@
   }
 
   function open(entityId) {
-    S.entity = entityId; S.data = null; S.tab = null;
+    S.entity = entityId; S.data = null; S.tab = null; S.msg = null;
     var ov = shell(); ov.classList.add('show');
     document.getElementById('rs').innerHTML = '<div class="rs-note" style="padding:30px">' + esc(L('Cargando investigación…', 'Loading research…')) + '</div>';
     load(entityId);
   }
 
   function run(entityId, depth) {
-    var who = actor(); if (!who) return;
-    S.entity = entityId;
+    var who = actor();
+    S.entity = entityId; S.msg = null;
     if (depth === 'DEEP' && !window.confirm(L('La investigación profunda usa más IA (y más costo). ¿Continuar?', 'Deep research uses more AI (and cost). Continue?'))) return;
     getJSON('/api/research/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity: entityId, depth: depth || 'STANDARD', actor: who }) }).then(function (d) {
-      if (!d.job_id) {
-        if (typeof window.toast === 'function') window.toast(d.error || L('No se pudo iniciar la investigación', 'Could not start research'));
-        else window.alert(d.error || L('No se pudo iniciar la investigación', 'Could not start research'));
-        return;
-      }
+      if (!d.job_id) { S.msg = { bad: true, text: friendlyError(d) }; render(); return; }
       S.job = d.job_id; render();
       if (S.poll) clearInterval(S.poll);
       S.poll = setInterval(function () {
         getJSON('/api/research/jobs/' + encodeURIComponent(S.job)).then(function (j) {
           loadActivity();
           if (j.status === 'done' || j.status === 'failed' || j._status === 404) {
-            clearInterval(S.poll); S.poll = null; S.job = null; load(S.entity);
+            clearInterval(S.poll); S.poll = null; S.job = null;
+            var errs = runErrors(j), n = (j.claims || []).length;
+            if (!n) S.msg = { bad: true, text: L('La investigación no produjo conclusiones.', 'The research produced no conclusions.') + (errs.length ? ' ' + L('Motivo: ', 'Reason: ') + errs.join(' · ') : '') };
+            else if (errs.length) S.msg = { bad: false, text: n + ' ' + L('conclusiones nuevas. Algunos agentes fallaron: ', 'new conclusions. Some agents failed: ') + errs.join(' · ') };
+            else S.msg = { bad: false, text: n + ' ' + L('conclusiones nuevas.', 'new conclusions.') };
+            load(S.entity);
           }
         });
       }, 3000);
-    });
+    }).catch(function () { S.msg = { bad: true, text: L('Sin conexión con el servidor.', 'No connection to the server.') }; render(); });
   }
 
   function why(claimId) {
