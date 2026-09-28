@@ -8,7 +8,10 @@ catálogo marcada como privada / sin ticker contra fuentes (SEC, bolsas,
 prensa). Solo entra lo que cambia algo (no 'private'/'unknown'), con fuente y
 confianza alta o media. Uso:
 
-    python3 scripts/build_listing_status.py res_0.json res_1.json … [--as-of 2026-09-28]
+    python3 scripts/build_listing_status.py data/listing_verification/*.json --as-of 2026-09-28
+
+Las entradas de verificación se GUARDAN en data/listing_verification/ (una
+por auditoría) para poder regenerar y auditar: el .js es solo el resultado.
 
 Después: node scripts/export_graph_v0.js (el snapshot del servidor).
 """

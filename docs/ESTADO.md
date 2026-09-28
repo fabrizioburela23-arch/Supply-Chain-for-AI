@@ -46,6 +46,13 @@ los hallazgos sin fuente abierta quedaron en confianza media/baja).
   growth_en al aplicar el estado (public → "🟢 En bolsa (SPCX) desde …";
   comprada/fusionada → "🔄 <nota>"); rol e ingresos de SpaceX corregidos en
   la fuente (nodes_spacex.js / meta_fill.js).
+- v145: 47 tickers SIN sufijo de bolsa corregidos (4004→4004.T, BOE→BOE.AX
+  — "BOE" en EE.UU. es un fondo de BlackRock —, ADV→ADV.DE — ADV es
+  Advantage Solutions —, AM→AM.PA — AM es Antero Midstream —, BARC→BARC.L…).
+  core/quotes.py ya enruta símbolos con "." a Yahoo con conversión a USD, así
+  que ahora traen precio real. Entradas de verificación guardadas en
+  data/listing_verification/ (auditoría + tickers_sin_bolsa); regenerar con
+  `python3 scripts/build_listing_status.py data/listing_verification/*.json`.
 
 ---
 

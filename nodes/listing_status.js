@@ -102,6 +102,15 @@ window.LISTING_STATUS = {
    "source_url": "https://ascenty.com/en/about/investors/",
    "confidence": "medium"
   },
+  "Asetek": {
+   "status": "public",
+   "ticker": "ASTK.CO",
+   "exchange": "Nasdaq Copenhagen",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Copenhague como ASTK.CO.",
+   "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Copenhagen as ASTK.CO.",
+   "source_url": "https://www.nasdaqomxnordic.com/",
+   "confidence": "medium"
+  },
   "BMW": {
    "status": "public",
    "ticker": "BMW.DE",
@@ -121,6 +130,15 @@ window.LISTING_STATUS = {
    "source_url": "https://en.wikipedia.org/wiki/BNSF_Railway",
    "confidence": "high"
   },
+  "Barclays": {
+   "status": "public",
+   "ticker": "BARC.L",
+   "exchange": "London Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Londres como BARC.L.",
+   "note_en": "Ticker corrected to its home exchange: trades on London Stock Exchange as BARC.L.",
+   "source_url": "https://www.londonstockexchange.com/",
+   "confidence": "medium"
+  },
   "BenevolentAI": {
    "status": "defunct",
    "parent": "Osaka Holdings (founder-led take-private)",
@@ -138,6 +156,24 @@ window.LISTING_STATUS = {
    "note_en": "Subsidiary of Berkshire Hathaway (~92%); not listed.",
    "source_url": "https://www.brkenergy.com/",
    "confidence": "high"
+  },
+  "Boliden": {
+   "status": "public",
+   "ticker": "BOL.ST",
+   "exchange": "Nasdaq Stockholm",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Estocolmo como BOL.ST.",
+   "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Stockholm as BOL.ST.",
+   "source_url": "https://www.nasdaqomxnordic.com/",
+   "confidence": "medium"
+  },
+  "BossEnergy": {
+   "status": "public",
+   "ticker": "BOE.AX",
+   "exchange": "Australian Securities Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como BOE.AX.",
+   "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as BOE.AX.",
+   "source_url": "https://www.asx.com.au/",
+   "confidence": "medium"
   },
   "BostonDynamics": {
    "status": "subsidiary",
@@ -263,6 +299,15 @@ window.LISTING_STATUS = {
    "note_en": "Subsidiary of American Tower (Stonepeak holds a minority stake); not listed.",
    "source_url": "https://www.datacenterdynamics.com/en/news/stonepeak-to-acquire-25bn-stake-in-american-towers-coresite-business/",
    "confidence": "high"
+  },
+  "DSV": {
+   "status": "public",
+   "ticker": "DSV.CO",
+   "exchange": "Nasdaq Copenhagen",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Copenhague como DSV.CO.",
+   "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Copenhagen as DSV.CO.",
+   "source_url": "https://www.nasdaqomxnordic.com/",
+   "confidence": "medium"
   },
   "DeltaElectronics": {
    "status": "public",
@@ -452,6 +497,15 @@ window.LISTING_STATUS = {
    "source_url": "https://generalfusion.com/post/general-fusion-completes-business-combination-with-spring-valley-acquisition-corp-iii/",
    "confidence": "high"
   },
+  "GlobalAtomic": {
+   "status": "public",
+   "ticker": "GLO.TO",
+   "exchange": "Toronto Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Toronto como GLO.TO.",
+   "note_en": "Ticker corrected to its home exchange: trades on Toronto Stock Exchange as GLO.TO.",
+   "source_url": "https://www.tsx.com/",
+   "confidence": "medium"
+  },
   "GlobalWafers": {
    "status": "public",
    "ticker": "6488.TWO",
@@ -479,6 +533,15 @@ window.LISTING_STATUS = {
    "note_es": "Adquirida por SoftBank Group (9984.T) en 2024; ya no es independiente.",
    "note_en": "Acquired by SoftBank Group (9984.T) in 2024; no longer independent.",
    "source_url": "https://www.softbank.jp/en/corp/news/press/sbkk/",
+   "confidence": "medium"
+  },
+  "GraphiteOne": {
+   "status": "public",
+   "ticker": "GPH.V",
+   "exchange": "TSX Venture Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en TSX Venture como GPH.V.",
+   "note_en": "Ticker corrected to its home exchange: trades on TSX Venture Exchange as GPH.V.",
+   "source_url": "https://www.tsx.com/",
    "confidence": "medium"
   },
   "GrupoMexico": {
@@ -632,6 +695,15 @@ window.LISTING_STATUS = {
    "source_url": "https://kghm.com/en/investors",
    "confidence": "high"
   },
+  "Kazatomprom": {
+   "status": "public",
+   "ticker": "KAP.L",
+   "exchange": "London Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Londres como KAP.L.",
+   "note_en": "Ticker corrected to its home exchange: trades on London Stock Exchange as KAP.L.",
+   "source_url": "https://www.londonstockexchange.com/",
+   "confidence": "medium"
+  },
   "Kensho": {
    "status": "subsidiary",
    "parent": "S&P Global",
@@ -691,6 +763,24 @@ window.LISTING_STATUS = {
    "source_url": "https://lukoil.com/InvestorAndShareholderCenter",
    "confidence": "high"
   },
+  "MOL": {
+   "status": "public",
+   "ticker": "9104.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 9104.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 9104.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "MUFG": {
+   "status": "public",
+   "ticker": "8306.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 8306.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 8306.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
   "Maersk": {
    "status": "public",
    "ticker": "MAERSK-B.CO",
@@ -737,6 +827,15 @@ window.LISTING_STATUS = {
    "source_url": "https://www.meeza.net/meeza-successfully-listed-on-qatar-stock-exchange-main-market/",
    "confidence": "high"
   },
+  "Mizuho": {
+   "status": "public",
+   "ticker": "8411.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 8411.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 8411.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
   "MoodysRatings": {
    "status": "subsidiary",
    "parent": "Moody's Corporation",
@@ -752,6 +851,24 @@ window.LISTING_STATUS = {
    "note_es": "Filial de Digital DEWA, brazo de DEWA (cotizada en el DFM de Dubái).",
    "note_en": "Subsidiary of Digital DEWA, the digital arm of DEWA (listed on Dubai Financial Market).",
    "source_url": "https://www.morohub.com/",
+   "confidence": "medium"
+  },
+  "Munters Group": {
+   "status": "public",
+   "ticker": "MTRS.ST",
+   "exchange": "Nasdaq Stockholm",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Estocolmo como MTRS.ST.",
+   "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Stockholm as MTRS.ST.",
+   "source_url": "https://www.nasdaqomxnordic.com/",
+   "confidence": "medium"
+  },
+  "NYKLine": {
+   "status": "public",
+   "ticker": "9101.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 9101.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 9101.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
    "confidence": "medium"
   },
   "Nakilat": {
@@ -834,6 +951,15 @@ window.LISTING_STATUS = {
    "note_en": "Subsidiary of Allianz SE; not separately listed.",
    "source_url": "https://en.wikipedia.org/wiki/PIMCO",
    "confidence": "high"
+  },
+  "PaladinEnergy": {
+   "status": "public",
+   "ticker": "PDN.AX",
+   "exchange": "Australian Securities Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como PDN.AX.",
+   "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as PDN.AX.",
+   "source_url": "https://www.asx.com.au/",
+   "confidence": "medium"
   },
   "Pasqal": {
    "status": "public",
@@ -974,6 +1100,15 @@ window.LISTING_STATUS = {
    "note_es": "Fusionada en SK Inc. en dic-2021; dejó de cotizar.",
    "note_en": "Merged into SK Inc. in Dec 2021; delisted.",
    "source_url": "https://eng.sk.com/",
+   "confidence": "medium"
+  },
+  "SMBC": {
+   "status": "public",
+   "ticker": "8316.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 8316.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 8316.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
    "confidence": "medium"
   },
   "SPGlobalRatings": {
@@ -1243,6 +1378,51 @@ window.LISTING_STATUS = {
    "source_url": "https://zoox.com/about",
    "confidence": "high"
   },
+  "adeka-corporation": {
+   "status": "public",
+   "ticker": "4401.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4401.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4401.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "adva": {
+   "status": "public",
+   "ticker": "ADV.DE",
+   "exchange": "Xetra (Frankfurt)",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Xetra (Fráncfort) como ADV.DE.",
+   "note_en": "Ticker corrected to its home exchange: trades on Xetra (Frankfurt) as ADV.DE.",
+   "source_url": "https://www.boerse-frankfurt.de/en",
+   "confidence": "medium"
+  },
+  "arafura-resources": {
+   "status": "public",
+   "ticker": "ARU.AX",
+   "exchange": "Australian Securities Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como ARU.AX.",
+   "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as ARU.AX.",
+   "source_url": "https://www.asx.com.au/",
+   "confidence": "medium"
+  },
+  "astroscale": {
+   "status": "public",
+   "ticker": "5034.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 5034.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 5034.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "babcock-international": {
+   "status": "public",
+   "ticker": "BAB.L",
+   "exchange": "London Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Londres como BAB.L.",
+   "note_en": "Ticker corrected to its home exchange: trades on London Stock Exchange as BAB.L.",
+   "source_url": "https://www.londonstockexchange.com/",
+   "confidence": "medium"
+  },
   "berkshire-grey": {
    "status": "acquired",
    "parent": "SoftBank Group",
@@ -1253,6 +1433,24 @@ window.LISTING_STATUS = {
    "source_url": "https://www.berkshiregrey.com/",
    "confidence": "medium"
   },
+  "biren": {
+   "status": "public",
+   "ticker": "6082.HK",
+   "exchange": "Hong Kong Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Hong Kong como 6082.HK.",
+   "note_en": "Ticker corrected to its home exchange: trades on Hong Kong Exchange as 6082.HK.",
+   "source_url": "https://www.hkex.com.hk/",
+   "confidence": "medium"
+  },
+  "china-northern-rare-earth": {
+   "status": "public",
+   "ticker": "600111.SS",
+   "exchange": "Shanghai Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 600111.SS.",
+   "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 600111.SS.",
+   "source_url": "https://english.sse.com.cn/",
+   "confidence": "medium"
+  },
   "chindata": {
    "status": "acquired",
    "parent": "Bain Capital",
@@ -1260,6 +1458,24 @@ window.LISTING_STATUS = {
    "note_es": "Adquirida y retirada de Nasdaq por Bain Capital en 2023; sigue privada.",
    "note_en": "Taken private and delisted from Nasdaq by Bain Capital in 2023; remains private.",
    "source_url": "https://www.chindatagroup.com/",
+   "confidence": "medium"
+  },
+  "chipbond": {
+   "status": "public",
+   "ticker": "6147.TWO",
+   "exchange": "Taipei Exchange (TPEx)",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en mercado TPEx de Taiwán como 6147.TWO.",
+   "note_en": "Ticker corrected to its home exchange: trades on Taipei Exchange (TPEx) as 6147.TWO.",
+   "source_url": "https://www.tpex.org.tw/en-us/",
+   "confidence": "medium"
+  },
+  "dassault-aviation": {
+   "status": "public",
+   "ticker": "AM.PA",
+   "exchange": "Euronext Paris",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Euronext París como AM.PA.",
+   "note_en": "Ticker corrected to its home exchange: trades on Euronext Paris as AM.PA.",
+   "source_url": "https://live.euronext.com/",
    "confidence": "medium"
   },
   "diligent-robotics": {
@@ -1282,6 +1498,33 @@ window.LISTING_STATUS = {
    "source_url": "https://www.cnbc.com/2026/09/11/chinese-nvidia-rival-enflame-stock-market-debut-ai.html",
    "confidence": "high"
   },
+  "fujimi-incorporated": {
+   "status": "public",
+   "ticker": "5384.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 5384.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 5384.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "hanwha-aerospace": {
+   "status": "public",
+   "ticker": "012450.KS",
+   "exchange": "Korea Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Corea (KRX) como 012450.KS.",
+   "note_en": "Ticker corrected to its home exchange: trades on Korea Exchange as 012450.KS.",
+   "source_url": "https://global.krx.co.kr/",
+   "confidence": "medium"
+  },
+  "iluka-resources": {
+   "status": "public",
+   "ticker": "ILU.AX",
+   "exchange": "Australian Securities Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como ILU.AX.",
+   "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as ILU.AX.",
+   "source_url": "https://www.asx.com.au/",
+   "confidence": "medium"
+  },
   "infleqtion": {
    "status": "public",
    "ticker": "INFQ",
@@ -1302,6 +1545,24 @@ window.LISTING_STATUS = {
    "source_url": "https://www.nasdaq.com/press-release/iqm-quantum-computers-and-real-asset-acquisition-corp-complete-combination-trading",
    "confidence": "high"
   },
+  "ispace": {
+   "status": "public",
+   "ticker": "9348.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 9348.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 9348.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "jcet": {
+   "status": "public",
+   "ticker": "600584.SS",
+   "exchange": "Shanghai Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 600584.SS.",
+   "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 600584.SS.",
+   "source_url": "https://english.sse.com.cn/",
+   "confidence": "medium"
+  },
   "juniper": {
    "status": "acquired",
    "parent": "Hewlett Packard Enterprise",
@@ -1311,6 +1572,60 @@ window.LISTING_STATUS = {
    "note_en": "Acquired by Hewlett Packard Enterprise (HPE) on 2-Jul-2025.",
    "source_url": "https://www.hpe.com/us/en/newsroom/press-release/2025/07/hpe-completes-acquisition-of-juniper-networks.html",
    "confidence": "high"
+  },
+  "kanto-denka-kogyo": {
+   "status": "public",
+   "ticker": "4047.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4047.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4047.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "kyec": {
+   "status": "public",
+   "ticker": "2449.TW",
+   "exchange": "Taiwan Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Taiwán (TWSE) como 2449.TW.",
+   "note_en": "Ticker corrected to its home exchange: trades on Taiwan Stock Exchange as 2449.TW.",
+   "source_url": "https://www.twse.com.tw/en/",
+   "confidence": "medium"
+  },
+  "kyocera-corporation": {
+   "status": "public",
+   "ticker": "6971.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 6971.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 6971.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "loongson": {
+   "status": "public",
+   "ticker": "688047.SS",
+   "exchange": "Shanghai Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 688047.SS.",
+   "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 688047.SS.",
+   "source_url": "https://english.sse.com.cn/",
+   "confidence": "medium"
+  },
+  "mitsubishi-gas-chemical": {
+   "status": "public",
+   "ticker": "4182.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4182.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4182.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "moorethreads": {
+   "status": "public",
+   "ticker": "688795.SS",
+   "exchange": "Shanghai Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 688795.SS.",
+   "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 688795.SS.",
+   "source_url": "https://english.sse.com.cn/",
+   "confidence": "medium"
   },
   "nanoavionics": {
    "status": "subsidiary",
@@ -1331,6 +1646,33 @@ window.LISTING_STATUS = {
    "source_url": "https://www.nexperia.com/about",
    "confidence": "medium"
   },
+  "nissan-chemical": {
+   "status": "public",
+   "ticker": "4021.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4021.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4021.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "nitto-denko": {
+   "status": "public",
+   "ticker": "6988.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 6988.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 6988.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "northern-data": {
+   "status": "public",
+   "ticker": "NB2.DE",
+   "exchange": "Xetra (Frankfurt)",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Xetra (Fráncfort) como NB2.DE.",
+   "note_en": "Ticker corrected to its home exchange: trades on Xetra (Frankfurt) as NB2.DE.",
+   "source_url": "https://www.boerse-frankfurt.de/en",
+   "confidence": "medium"
+  },
   "ntt-gdc": {
    "status": "subsidiary",
    "parent": "NTT, Inc. (vía NTT DATA Group)",
@@ -1339,6 +1681,42 @@ window.LISTING_STATUS = {
    "note_en": "NTT Global Data Centers is a unit of the NTT group (9432.T); it is not separately listed.",
    "source_url": "https://group.ntt/en/ir/",
    "confidence": "high"
+  },
+  "pti": {
+   "status": "public",
+   "ticker": "6239.TW",
+   "exchange": "Taiwan Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Taiwán (TWSE) como 6239.TW.",
+   "note_en": "Ticker corrected to its home exchange: trades on Taiwan Stock Exchange as 6239.TW.",
+   "source_url": "https://www.twse.com.tw/en/",
+   "confidence": "medium"
+  },
+  "resonac-holdings": {
+   "status": "public",
+   "ticker": "4004.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4004.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4004.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "stella-chemifa": {
+   "status": "public",
+   "ticker": "4109.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4109.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4109.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "sumitomo-chemical": {
+   "status": "public",
+   "ticker": "4005.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4005.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4005.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
   },
   "terran-orbital": {
    "status": "acquired",
@@ -1359,6 +1737,42 @@ window.LISTING_STATUS = {
    "source_url": "https://investor.textron.com/",
    "confidence": "high"
   },
+  "tosoh-corporation": {
+   "status": "public",
+   "ticker": "4042.T",
+   "exchange": "Tokyo Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4042.T.",
+   "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4042.T.",
+   "source_url": "https://www.jpx.co.jp/english/",
+   "confidence": "medium"
+  },
+  "ubtech-robotics": {
+   "status": "public",
+   "ticker": "9880.HK",
+   "exchange": "Hong Kong Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Hong Kong como 9880.HK.",
+   "note_en": "Ticker corrected to its home exchange: trades on Hong Kong Exchange as 9880.HK.",
+   "source_url": "https://www.hkex.com.hk/",
+   "confidence": "medium"
+  },
+  "ucore-rare-metals": {
+   "status": "public",
+   "ticker": "UCU.V",
+   "exchange": "TSX Venture Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en TSX Venture como UCU.V.",
+   "note_en": "Ticker corrected to its home exchange: trades on TSX Venture Exchange as UCU.V.",
+   "source_url": "https://www.tsx.com/",
+   "confidence": "medium"
+  },
+  "vital-metals": {
+   "status": "public",
+   "ticker": "VML.AX",
+   "exchange": "Australian Securities Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como VML.AX.",
+   "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as VML.AX.",
+   "source_url": "https://www.asx.com.au/",
+   "confidence": "medium"
+  },
   "voltage-park": {
    "status": "merged",
    "parent": "Lightning AI",
@@ -1376,6 +1790,15 @@ window.LISTING_STATUS = {
    "note_en": "Alphabet subsidiary; not separately listed.",
    "source_url": "https://abc.xyz/investor/",
    "confidence": "high"
+  },
+  "wingtech": {
+   "status": "public",
+   "ticker": "600745.SS",
+   "exchange": "Shanghai Stock Exchange",
+   "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 600745.SS.",
+   "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 600745.SS.",
+   "source_url": "https://english.sse.com.cn/",
+   "confidence": "medium"
   },
   "xAI": {
    "status": "merged",

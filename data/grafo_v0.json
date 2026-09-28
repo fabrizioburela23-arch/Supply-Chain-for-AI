@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-28T03:05:29.688Z",
+ "exported_at": "2026-09-28T03:23:22.032Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -9221,7 +9221,7 @@
    "sector": "energia",
    "id": "Kazatomprom",
    "label": "Kazatomprom",
-   "ticker": "KAP · LSE / AIX",
+   "ticker": "KAP.L · London Stock Exchange",
    "cat": "uranium",
    "port": "",
    "role": "Mayor productor mundial de uranio (~40% del suministro global) mediante extracción por lixiviación in situ (ISR).",
@@ -9230,7 +9230,18 @@
    "country": "Kazajistán",
    "growth": "🟢 Precio de contrato a largo plazo alcanzó $90/lb en Q1 2026, el más alto desde 2008, en un mercado con déficit estructural.",
    "margin": 0.3,
-   "mkt": "KAP"
+   "mkt": "KAP.L",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "KAP.L",
+    "exchange": "London Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Londres como KAP.L.",
+    "note_en": "Ticker corrected to its home exchange: trades on London Stock Exchange as KAP.L.",
+    "source_url": "https://www.londonstockexchange.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -9266,7 +9277,7 @@
    "sector": "energia",
    "id": "PaladinEnergy",
    "label": "Paladin Energy",
-   "ticker": "PDN · ASX / TSX",
+   "ticker": "PDN.AX · Australian Securities Exchange",
    "cat": "uranium",
    "port": "",
    "role": "Opera la mina de uranio Langer Heinrich en Namibia (75% propiedad, 25% CNNC Overseas) mediante extracción a cielo abierto.",
@@ -9275,7 +9286,18 @@
    "country": "Australia",
    "growth": "🟢 Acción +186% i.a. (jul 2026), narrativa explícita de \"supercycle nuclear\" ligado a demanda de datacenters de IA.",
    "margin": 0.15,
-   "mkt": "PDN"
+   "mkt": "PDN.AX",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "PDN.AX",
+    "exchange": "Australian Securities Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como PDN.AX.",
+    "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as PDN.AX.",
+    "source_url": "https://www.asx.com.au/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -9296,7 +9318,7 @@
    "sector": "energia",
    "id": "GlobalAtomic",
    "label": "Global Atomic Corporation",
-   "ticker": "GLO · TSX / GLATF · OTC",
+   "ticker": "GLO.TO · Toronto Stock Exchange",
    "cat": "uranium",
    "port": "",
    "role": "Desarrolla el proyecto de uranio Dasa en Níger (minería subterránea, ~73M lb U3O8 de reservas).",
@@ -9305,13 +9327,24 @@
    "country": "Canadá",
    "growth": "🟡 Producción retrasada a Q1 2027; parte del déficit estructural de suministro estadounidense (~45-46M lb/año) atribuido en parte a demanda de IA.",
    "margin": null,
-   "mkt": "GLO"
+   "mkt": "GLO.TO",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "GLO.TO",
+    "exchange": "Toronto Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Toronto como GLO.TO.",
+    "note_en": "Ticker corrected to its home exchange: trades on Toronto Stock Exchange as GLO.TO.",
+    "source_url": "https://www.tsx.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "BossEnergy",
    "label": "Boss Energy",
-   "ticker": "BOE · ASX / OTCQX",
+   "ticker": "BOE.AX · Australian Securities Exchange",
    "cat": "uranium",
    "port": "",
    "role": "Productor de uranio ISR en Honeymoon (Australia, 100%) y Alta Mesa (Texas, 30%).",
@@ -9320,7 +9353,18 @@
    "country": "Australia",
    "growth": "🟡 Guía FY2026 recortada a 1.40-1.45M lb por mayores costos de combustible, aunque contexto de precio spot proyectado en $100-135/lb.",
    "margin": null,
-   "mkt": "BOE"
+   "mkt": "BOE.AX",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "BOE.AX",
+    "exchange": "Australian Securities Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como BOE.AX.",
+    "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as BOE.AX.",
+    "source_url": "https://www.asx.com.au/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -9411,7 +9455,7 @@
    "sector": "energia",
    "id": "china-northern-rare-earth",
    "label": "China Northern Rare Earth Group",
-   "ticker": "600111 · SSE (Shanghái)",
+   "ticker": "600111.SS · Shanghai Stock Exchange",
    "cat": "rare_earth",
    "port": "",
    "role": "Mayor productor y procesador de tierras raras del mundo, controla el complejo minero-industrial de Bayan Obo en Mongolia Interior.",
@@ -9420,13 +9464,24 @@
    "country": "China",
    "growth": "🟢 ingresos +29,1% y beneficio neto +124,2% en 2025, impulsados por controles de exportación que elevaron precios globales",
    "margin": null,
-   "mkt": "600111"
+   "mkt": "600111.SS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "600111.SS",
+    "exchange": "Shanghai Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 600111.SS.",
+    "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 600111.SS.",
+    "source_url": "https://english.sse.com.cn/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "iluka-resources",
    "label": "Iluka Resources",
-   "ticker": "ILU · ASX",
+   "ticker": "ILU.AX · Australian Securities Exchange",
    "cat": "rare_earth",
    "port": "",
    "role": "Productor australiano de minerales de mineral pesado (circonio, titanio) que construye la primera refinería de tierras raras totalmente integrada fuera de China.",
@@ -9435,13 +9490,24 @@
    "country": "Australia",
    "growth": "🟡 refinería Eneabba avanzando, primer contrato de offtake de magnéticas firmado jun-2026",
    "margin": null,
-   "mkt": "ILU"
+   "mkt": "ILU.AX",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ILU.AX",
+    "exchange": "Australian Securities Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como ILU.AX.",
+    "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as ILU.AX.",
+    "source_url": "https://www.asx.com.au/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "ucore-rare-metals",
    "label": "Ucore Rare Metals",
-   "ticker": "UCU · TSXV (UURAF · OTCQX)",
+   "ticker": "UCU.V · TSX Venture Exchange",
    "cat": "rare_earth",
    "port": "",
    "role": "Desarrolla la tecnología patentada RapidSX de separación de tierras raras y construye una planta comercial en Louisiana, EEUU.",
@@ -9450,13 +9516,24 @@
    "country": "Canadá",
    "growth": "🟢 contrato DoD de USD 18,4M (mayo 2025), planta de Louisiana escalando de 2.000 a 7.500 tpa",
    "margin": null,
-   "mkt": "UCU"
+   "mkt": "UCU.V",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "UCU.V",
+    "exchange": "TSX Venture Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en TSX Venture como UCU.V.",
+    "note_en": "Ticker corrected to its home exchange: trades on TSX Venture Exchange as UCU.V.",
+    "source_url": "https://www.tsx.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "arafura-resources",
    "label": "Arafura Resources",
-   "ticker": "ARU · ASX",
+   "ticker": "ARU.AX · Australian Securities Exchange",
    "cat": "rare_earth",
    "port": "",
    "role": "Desarrolla el proyecto Nolans, una mina y refinería integrada \"ore-to-oxide\" de óxido de NdPr en el Territorio del Norte australiano.",
@@ -9465,13 +9542,24 @@
    "country": "Australia",
    "growth": "🟢 FID confirmada mayo 2026, compromiso de compra estatal australiano de A$1.200M",
    "margin": null,
-   "mkt": "ARU"
+   "mkt": "ARU.AX",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ARU.AX",
+    "exchange": "Australian Securities Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como ARU.AX.",
+    "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as ARU.AX.",
+    "source_url": "https://www.asx.com.au/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
    "id": "vital-metals",
    "label": "Vital Metals",
-   "ticker": "VML · ASX (suspendida)",
+   "ticker": "VML.AX · Australian Securities Exchange",
    "cat": "rare_earth",
    "port": "",
    "role": "Minera de tierras raras en crisis financiera severa, propietaria del depósito Nechalacho (Tardiff) en Canadá.",
@@ -9480,7 +9568,18 @@
    "country": "Australia",
    "growth": "🔴 acciones suspendidas ago-2025, perdió su rol de socio de procesamiento ante REalloys en Saskatchewan",
    "margin": null,
-   "mkt": "VML"
+   "mkt": "VML.AX",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "VML.AX",
+    "exchange": "Australian Securities Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Australia (ASX) como VML.AX.",
+    "note_en": "Ticker corrected to its home exchange: trades on Australian Securities Exchange as VML.AX.",
+    "source_url": "https://www.asx.com.au/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -9501,7 +9600,7 @@
    "sector": "equipos",
    "id": "resonac-holdings",
    "label": "Resonac Holdings",
-   "ticker": "4004 · TSE",
+   "ticker": "4004.T · Tokyo Stock Exchange",
    "cat": "materials",
    "port": "",
    "role": "Fabricante japonés de materiales avanzados para semiconductores (ex Showa Denko), líder mundial en films no conductores (NCF) para empaquetado HBM.",
@@ -9510,13 +9609,24 @@
    "country": "Japón",
    "growth": "🟢 crecimiento récord en materiales de semiconductores/HBM en 1T FY2026, aunque ingresos totales -3,2% en FY2025",
    "margin": 0.043,
-   "mkt": "4004"
+   "mkt": "4004.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4004.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4004.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4004.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "kanto-denka-kogyo",
    "label": "Kanto Denka Kogyo",
-   "ticker": "4047 · TSE",
+   "ticker": "4047.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Química especializada japonesa, productor casi monopolístico doméstico de NF3 y WF6 críticos para fabricación de semiconductores.",
@@ -9525,13 +9635,24 @@
    "country": "Japón",
    "growth": "🔴 ingresos planos, crisis de tungsteno chino duplicando/triplicando el precio del WF6",
    "margin": 0.056,
-   "mkt": "4047"
+   "mkt": "4047.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4047.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4047.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4047.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "nitto-denko",
    "label": "Nitto Denko",
-   "ticker": "6988 · TSE",
+   "ticker": "6988.T · Tokyo Stock Exchange",
    "cat": "materials",
    "port": "",
    "role": "Fabricante japonés de materiales avanzados de nicho global (cintas, films) para semiconductores, displays y automoción.",
@@ -9540,13 +9661,24 @@
    "country": "Japón",
    "growth": "🟡 ingresos +1,4% FY2026, Industrial Tape crece (+4,2%) pero Optronics se contrae",
    "margin": 0.178,
-   "mkt": "6988"
+   "mkt": "6988.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6988.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 6988.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 6988.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "sumitomo-chemical",
    "label": "Sumitomo Chemical",
-   "ticker": "4005 · TSE",
+   "ticker": "4005.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Conglomerado químico japonés diversificado, líder mundial en fotorresistentes (SUMIRESIST) para litografía de semiconductores incluyendo EUV.",
@@ -9555,13 +9687,24 @@
    "country": "Japón",
    "growth": "🟢 core operating income +48,3%, adquisición de AUECC en Taiwán (nov-2025) expande presencia",
    "margin": 0.065,
-   "mkt": "4005"
+   "mkt": "4005.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4005.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4005.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4005.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "mitsubishi-gas-chemical",
    "label": "Mitsubishi Gas Chemical",
-   "ticker": "4182 · TSE",
+   "ticker": "4182.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Productor japonés de químicos especializados, líder mundial autodeclarado en peróxido de hidrógeno de grado electrónico para limpieza de obleas de semiconductores.",
@@ -9570,13 +9713,24 @@
    "country": "Japón",
    "growth": "🔴 ingresos -4,6%, pérdida neta, impairment en planta de Taiwán",
    "margin": 0.061,
-   "mkt": "4182"
+   "mkt": "4182.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4182.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4182.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4182.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "adeka-corporation",
    "label": "Adeka Corporation",
-   "ticker": "4401 · TSE",
+   "ticker": "4401.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Fabricante japonés de precursores químicos ALD/CVD y materiales high-k para fabricación avanzada de semiconductores.",
@@ -9585,13 +9739,24 @@
    "country": "Japón",
    "growth": "🟡 ventas de semiconductores +5,8% pero beneficio operativo -17,7%",
    "margin": 0.1,
-   "mkt": "4401"
+   "mkt": "4401.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4401.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4401.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4401.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "tosoh-corporation",
    "label": "Tosoh Corporation",
-   "ticker": "4042 · TSE (ADR TOSCF · OTC)",
+   "ticker": "4042.T · Tokyo Stock Exchange",
    "cat": "materials",
    "port": "",
    "role": "Química japonesa diversificada cuya filial Tosoh SMD fabrica metales/aleaciones de alta pureza para sputtering targets de semiconductores.",
@@ -9600,13 +9765,24 @@
    "country": "Japón",
    "growth": "🟡 ingresos -4,1% FY2026, impairment en negocio de sputtering targets",
    "margin": 0.094,
-   "mkt": "4042"
+   "mkt": "4042.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4042.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4042.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4042.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "fujimi-incorporated",
    "label": "Fujimi Incorporated",
-   "ticker": "5384 · TSE",
+   "ticker": "5384.T · Tokyo Stock Exchange",
    "cat": "materials",
    "port": "",
    "role": "Fabricante japonés de abrasivos de precisión y slurries CMP (pulido químico-mecánico) para semiconductores.",
@@ -9615,13 +9791,24 @@
    "country": "Japón",
    "growth": "🟢 ingresos trimestrales crecientes (~¥17-18.000M por trimestre en 2025-2026)",
    "margin": null,
-   "mkt": "5384"
+   "mkt": "5384.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "5384.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 5384.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 5384.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
    "id": "kyocera-corporation",
    "label": "Kyocera Corporation",
-   "ticker": "6971 · TSE (ADR KYO · NYSE)",
+   "ticker": "6971.T · Tokyo Stock Exchange",
    "cat": "materials",
    "port": "",
    "role": "Fabricante japonés de cerámica avanzada y sustratos/packages para componentes de semiconductores y electrónica.",
@@ -9630,7 +9817,18 @@
    "country": "Japón",
    "growth": "🔴 margen operativo cayó de 6,8% a 3,2% en FY2025, pero nuevo sustrato cerámico para IA y expansión en EEUU (Carolina del Norte) en 2026",
    "margin": 0.032,
-   "mkt": "6971"
+   "mkt": "6971.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6971.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 6971.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 6971.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "energia",
@@ -9684,7 +9882,7 @@
    "sector": "equipos",
    "id": "nissan-chemical",
    "label": "Nissan Chemical Corporation",
-   "ticker": "4021 · TSE",
+   "ticker": "4021.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Química diversificada japonesa, proveedor de recubrimientos antirreflectantes (ARC) y materiales multicapa para litografía EUV.",
@@ -9693,7 +9891,18 @@
    "country": "Japón",
    "growth": "🟢 ARC +31%, Multilayer Materials +39%, EUV Materials +36% interanual; beneficio neto récord en FY marzo 2026",
    "margin": 0.226,
-   "mkt": "4021"
+   "mkt": "4021.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4021.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4021.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4021.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -9715,7 +9924,7 @@
    "sector": "equipos",
    "id": "stella-chemifa",
    "label": "Stella Chemifa",
-   "ticker": "4109 · TSE",
+   "ticker": "4109.T · Tokyo Stock Exchange",
    "cat": "chemicals",
    "port": "",
    "role": "Casi monopolista japonés de ácido fluorhídrico de alta pureza (HF), insumo crítico para grabado (etching) de semiconductores.",
@@ -9724,7 +9933,18 @@
    "country": "Japón",
    "growth": "🟡 demanda estable ligada al ciclo de capex de memoria y lógica avanzada",
    "margin": null,
-   "mkt": "4109"
+   "mkt": "4109.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "4109.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 4109.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 4109.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -9746,7 +9966,7 @@
    "sector": "fabricacion",
    "id": "jcet",
    "label": "JCET Group",
-   "ticker": "600584 · SSE",
+   "ticker": "600584.SS · Shanghai Stock Exchange",
    "cat": "osat",
    "port": "",
    "role": "Mayor proveedor OSAT (ensamblaje y test de semiconductores) de China continental, tercero a nivel mundial.",
@@ -9755,13 +9975,24 @@
    "country": "China",
    "growth": "🟡 ingresos casi planos (+0.7% TTM) pero el segmento de packaging avanzado/IA crece más rápido",
    "margin": 0.07,
-   "mkt": "600584"
+   "mkt": "600584.SS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "600584.SS",
+    "exchange": "Shanghai Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 600584.SS.",
+    "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 600584.SS.",
+    "source_url": "https://english.sse.com.cn/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
    "id": "pti",
    "label": "Powertech Technology (PTI)",
-   "ticker": "6239 · TWSE",
+   "ticker": "6239.TW · Taiwan Stock Exchange",
    "cat": "osat",
    "port": "",
    "role": "OSAT taiwanés especializado en empaquetado y test de memoria (DRAM/NAND/MCP) y SiP lógico.",
@@ -9770,13 +10001,24 @@
    "country": "Taiwán",
    "growth": "🟢 +25.2% YoY en 4T25 impulsado por demanda de HBM/IA",
    "margin": 0.1,
-   "mkt": "6239"
+   "mkt": "6239.TW",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6239.TW",
+    "exchange": "Taiwan Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Taiwán (TWSE) como 6239.TW.",
+    "note_en": "Ticker corrected to its home exchange: trades on Taiwan Stock Exchange as 6239.TW.",
+    "source_url": "https://www.twse.com.tw/en/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
    "id": "kyec",
    "label": "King Yuan Electronics (KYEC)",
-   "ticker": "2449 · TWSE",
+   "ticker": "2449.TW · Taiwan Stock Exchange",
    "cat": "osat",
    "port": "",
    "role": "Casa de test de semiconductores pure-play líder en Taiwán, prueba de oblea y test final para chips lógicos/IA.",
@@ -9785,13 +10027,24 @@
    "country": "Taiwán",
    "growth": "🟢 ingresos récord, expansión a Singapur con producción masiva estimada para 2027",
    "margin": 0.12,
-   "mkt": "2449"
+   "mkt": "2449.TW",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "2449.TW",
+    "exchange": "Taiwan Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Taiwán (TWSE) como 2449.TW.",
+    "note_en": "Ticker corrected to its home exchange: trades on Taiwan Stock Exchange as 2449.TW.",
+    "source_url": "https://www.twse.com.tw/en/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
    "id": "chipbond",
    "label": "Chipbond Technology",
-   "ticker": "6147 · TPEx",
+   "ticker": "6147.TWO · Taipei Exchange (TPEx)",
    "cat": "osat",
    "port": "",
    "role": "Mayor proveedor mundial de bumping y empaquetado COF/COG para drivers de pantalla (DDIC), diversificando hacia GaN/SiC.",
@@ -9800,13 +10053,24 @@
    "country": "Taiwán",
    "growth": "🟢 +5.5% YoY 2025, fuerte revalorización bursátil por narrativa IA/potencia",
    "margin": 0.1,
-   "mkt": "6147"
+   "mkt": "6147.TWO",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6147.TWO",
+    "exchange": "Taipei Exchange (TPEx)",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en mercado TPEx de Taiwán como 6147.TWO.",
+    "note_en": "Ticker corrected to its home exchange: trades on Taipei Exchange (TPEx) as 6147.TWO.",
+    "source_url": "https://www.tpex.org.tw/en-us/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
    "id": "biren",
    "label": "Biren Technology",
-   "ticker": "6082 · HKEX",
+   "ticker": "6082.HK · Hong Kong Exchange",
    "cat": "fabless",
    "port": "",
    "role": "Diseñador fabless chino de GPUs/GPGPU de IA, alternativa doméstica a Nvidia para entrenamiento e inferencia.",
@@ -9815,13 +10079,24 @@
    "country": "China",
    "growth": "🟢 IPO en Hong Kong con salto de ~76-82% en el debut (enero 2026), fuerte demanda pese a pérdidas",
    "margin": null,
-   "mkt": "6082"
+   "mkt": "6082.HK",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "6082.HK",
+    "exchange": "Hong Kong Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Hong Kong como 6082.HK.",
+    "note_en": "Ticker corrected to its home exchange: trades on Hong Kong Exchange as 6082.HK.",
+    "source_url": "https://www.hkex.com.hk/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
    "id": "moorethreads",
    "label": "Moore Threads",
-   "ticker": "688795 · SSE (STAR Market)",
+   "ticker": "688795.SS · Shanghai Stock Exchange",
    "cat": "fabless",
    "port": "",
    "role": "Diseñador fabless chino de GPUs, pivotó de gaming a aceleradores de entrenamiento/inferencia IA, apodado el \"Nvidia de China\".",
@@ -9830,7 +10105,18 @@
    "country": "China",
    "growth": "🟢 IPO en STAR Market con +468% en el debut (2026); ingresos explosivos desde una base pequeña",
    "margin": null,
-   "mkt": "688795"
+   "mkt": "688795.SS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "688795.SS",
+    "exchange": "Shanghai Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 688795.SS.",
+    "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 688795.SS.",
+    "source_url": "https://english.sse.com.cn/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
@@ -9868,7 +10154,7 @@
    "sector": "diseno",
    "id": "loongson",
    "label": "Loongson Technology",
-   "ticker": "688047 · SSE (STAR Market)",
+   "ticker": "688047.SS · Shanghai Stock Exchange",
    "cat": "fabless",
    "port": "",
    "role": "Diseña CPUs con su propio set de instrucciones LoongArch para PCs, servidores y sistemas gubernamentales/embebidos.",
@@ -9877,7 +10163,18 @@
    "country": "China",
    "growth": "🟡 +26% YoY 2025, pero margen neto muy negativo (-64.75%)",
    "margin": -0.65,
-   "mkt": "688047"
+   "mkt": "688047.SS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "688047.SS",
+    "exchange": "Shanghai Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 688047.SS.",
+    "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 688047.SS.",
+    "source_url": "https://english.sse.com.cn/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "diseno",
@@ -10038,7 +10335,7 @@
    "sector": "infra",
    "id": "adva",
    "label": "ADVA Optical Networking (Adtran Networks)",
-   "ticker": "ADV · XETRA (mayoría propiedad de Adtran Holdings, ADTN · NASDAQ)",
+   "ticker": "ADV.DE · Xetra (Frankfurt)",
    "cat": "networking",
    "port": "",
    "role": "Diseña equipos de networking óptico y de acceso —transporte de fibra, acceso de banda ancha y sincronización de red— para operadoras telco y empresas.",
@@ -10047,7 +10344,18 @@
    "country": "Alemania",
    "growth": "🟢 recuperación, ingresos FY25 +17.5% YoY, margen no-GAAP volvió a positivo (+4.8%)",
    "margin": null,
-   "mkt": "ADV"
+   "mkt": "ADV.DE",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ADV.DE",
+    "exchange": "Xetra (Frankfurt)",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Xetra (Fráncfort) como ADV.DE.",
+    "note_en": "Ticker corrected to its home exchange: trades on Xetra (Frankfurt) as ADV.DE.",
+    "source_url": "https://www.boerse-frankfurt.de/en",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "equipos",
@@ -10084,7 +10392,7 @@
    "sector": "infra",
    "id": "wingtech",
    "label": "Wingtech Technology",
-   "ticker": "600745 · SSE",
+   "ticker": "600745.SS · Shanghai Stock Exchange",
    "cat": "servers",
    "port": "",
    "role": "Conglomerado chino de manufactura electrónica (ODM) y matriz de Nexperia, con exposición directa a la disputa de control de chips entre Países Bajos y China en 2025.",
@@ -10093,7 +10401,18 @@
    "country": "China",
    "growth": "🔴 disrupción por la crisis de Nexperia y controles de exportación",
    "margin": null,
-   "mkt": "600745"
+   "mkt": "600745.SS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "600745.SS",
+    "exchange": "Shanghai Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Shanghái como 600745.SS.",
+    "note_en": "Ticker corrected to its home exchange: trades on Shanghai Stock Exchange as 600745.SS.",
+    "source_url": "https://english.sse.com.cn/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -10262,7 +10581,7 @@
    "sector": "infra",
    "id": "northern-data",
    "label": "Northern Data Group",
-   "ticker": "NB2 · Frankfurt (Scale/Prime Standard)",
+   "ticker": "NB2.DE · Xetra (Frankfurt)",
    "cat": "hpc_super",
    "port": "",
    "role": "Ex-minero de Bitcoin reconvertido en proveedor europeo de infraestructura de IA/HPC (unidad Taiga Cloud) tras vender su negocio de minería.",
@@ -10271,7 +10590,18 @@
    "country": "Alemania",
    "growth": "🟡 pivote completo a IA/HPC tras vender unidad de minería Bitcoin en 2025-2026, pero con historial financiero volátil",
    "margin": null,
-   "mkt": "NB2"
+   "mkt": "NB2.DE",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "NB2.DE",
+    "exchange": "Xetra (Frankfurt)",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Xetra (Fráncfort) como NB2.DE.",
+    "note_en": "Ticker corrected to its home exchange: trades on Xetra (Frankfurt) as NB2.DE.",
+    "source_url": "https://www.boerse-frankfurt.de/en",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "infra",
@@ -10733,7 +11063,7 @@
    "sector": "robotica",
    "id": "ubtech-robotics",
    "label": "UBTech Robotics",
-   "ticker": "9880 · HKEX",
+   "ticker": "9880.HK · Hong Kong Exchange",
    "cat": "robotics_physical",
    "port": "",
    "role": "Fabricante chino de robots humanoides industriales (línea Walker S) y de consumo/compañía (línea UWORLD U1), primer fabricante de robótica listado en la Bolsa de Hong Kong.",
@@ -10742,7 +11072,18 @@
    "country": "China",
    "growth": "🟢 Ingresos creciendo fuerte, humanoides proyectados a representar >80% de ingresos totales en 2026; 13,361+ pedidos del U1 en su día de lanzamiento.",
    "margin": null,
-   "mkt": "9880"
+   "mkt": "9880.HK",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "9880.HK",
+    "exchange": "Hong Kong Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Hong Kong como 9880.HK.",
+    "note_en": "Ticker corrected to its home exchange: trades on Hong Kong Exchange as 9880.HK.",
+    "source_url": "https://www.hkex.com.hk/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "robotica",
@@ -10796,7 +11137,7 @@
    "sector": "espacio",
    "id": "ispace",
    "label": "ispace",
-   "ticker": "9348 · Tokyo Stock Exchange",
+   "ticker": "9348.T · Tokyo Stock Exchange",
    "cat": "space_infra",
    "port": "",
    "role": "Diseña y opera módulos de alunizaje comerciales para transportar cargas científicas y comerciales a la superficie lunar.",
@@ -10805,13 +11146,24 @@
    "country": "Japón",
    "growth": "🟡 Misión 3 (APEX 1.0) en desarrollo tras dos fallos consecutivos",
    "margin": null,
-   "mkt": "9348"
+   "mkt": "9348.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "9348.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 9348.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 9348.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "espacio",
    "id": "astroscale",
    "label": "Astroscale",
-   "ticker": "5034 · Tokyo Stock Exchange",
+   "ticker": "5034.T · Tokyo Stock Exchange",
    "cat": "space_infra",
    "port": "",
    "role": "Ofrece servicios de sostenibilidad orbital: remoción de basura espacial, extensión de vida útil de satélites e inspección en órbita.",
@@ -10820,7 +11172,18 @@
    "country": "Japón",
    "growth": "🟢 Contratos crecientes con JAXA, ESA, UK Space Agency y programas de defensa",
    "margin": null,
-   "mkt": "5034"
+   "mkt": "5034.T",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "5034.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 5034.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 5034.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "espacio",
@@ -11233,7 +11596,7 @@
    "sector": "defensa",
    "id": "hanwha-aerospace",
    "label": "Hanwha Aerospace",
-   "ticker": "012450 · KRX",
+   "ticker": "012450.KS · Korea Exchange",
    "cat": "defense_prime",
    "port": "",
    "role": "Principal fabricante surcoreano de defensa terrestre y motores aeroespaciales, con expansión agresiva en exportación de artillería y naval.",
@@ -11242,13 +11605,24 @@
    "country": "Corea del Sur",
    "growth": "🟢 Explosión de exportaciones (Polonia, Medio Oriente) la posicionan como potencia emergente de defensa",
    "margin": 0.12,
-   "mkt": "012450"
+   "mkt": "012450.KS",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "012450.KS",
+    "exchange": "Korea Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Corea (KRX) como 012450.KS.",
+    "note_en": "Ticker corrected to its home exchange: trades on Korea Exchange as 012450.KS.",
+    "source_url": "https://global.krx.co.kr/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "defensa",
    "id": "babcock-international",
    "label": "Babcock International",
-   "ticker": "BAB · LSE",
+   "ticker": "BAB.L · London Stock Exchange",
    "cat": "defense_prime",
    "port": "",
    "role": "Proveedor de servicios de ingeniería, mantenimiento y soporte de ciclo de vida para plataformas navales, nucleares y de defensa, incluyendo submarinos nucleares.",
@@ -11257,7 +11631,18 @@
    "country": "Reino Unido",
    "growth": "🟢 Rearme europeo y renovación de disuasión nuclear (AUKUS, Dreadnought) impulsan la cartera de pedidos",
    "margin": 0.08,
-   "mkt": "BAB"
+   "mkt": "BAB.L",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "BAB.L",
+    "exchange": "London Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Londres como BAB.L.",
+    "note_en": "Ticker corrected to its home exchange: trades on London Stock Exchange as BAB.L.",
+    "source_url": "https://www.londonstockexchange.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "defensa",
@@ -11487,7 +11872,7 @@
    "sector": "defensa",
    "id": "dassault-aviation",
    "label": "Dassault Aviation",
-   "ticker": "AM · Euronext Paris",
+   "ticker": "AM.PA · Euronext Paris",
    "cat": "defense_prime",
    "port": "",
    "role": "Fabricante francés de aviones de combate (caza Rafale) y jets ejecutivos Falcon, con integración vertical en diseño y producción aeroespacial.",
@@ -11496,7 +11881,18 @@
    "country": "Francia",
    "growth": "🟢 Fuerte demanda de exportación de Rafale post-2022 (Indonesia, EAU) impulsa cartera de pedidos plurianual",
    "margin": 0.09,
-   "mkt": "AM"
+   "mkt": "AM.PA",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "AM.PA",
+    "exchange": "Euronext Paris",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Euronext París como AM.PA.",
+    "note_en": "Ticker corrected to its home exchange: trades on Euronext Paris as AM.PA.",
+    "source_url": "https://live.euronext.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "fabricacion",
@@ -13330,7 +13726,7 @@
    "sector": "materiales",
    "id": "Boliden",
    "label": "Boliden",
-   "ticker": "BOL · Nasdaq Estocolmo",
+   "ticker": "BOL.ST · Nasdaq Stockholm",
    "cat": "mining_diversified",
    "port": "",
    "role": "Minera y fundidora nórdica integrada de cobre y zinc, con 8 minas y 5 fundiciones propias.",
@@ -13339,8 +13735,19 @@
    "country": "Europa",
    "growth": "🔵 Utilidad Q1-2026 +70% pese a contratiempo operativo en Garpenberg",
    "margin": 0.101,
-   "mkt": "BOL",
-   "sector_hint": "materiales"
+   "mkt": "BOL.ST",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "BOL.ST",
+    "exchange": "Nasdaq Stockholm",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Estocolmo como BOL.ST.",
+    "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Stockholm as BOL.ST.",
+    "source_url": "https://www.nasdaqomxnordic.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -13742,7 +14149,7 @@
    "sector": "materiales",
    "id": "GraphiteOne",
    "label": "Graphite One",
-   "ticker": "GPH · TSXV / GPHOF · OTCQX",
+   "ticker": "GPH.V · TSX Venture Exchange",
    "cat": "graphite",
    "port": "",
    "role": "Desarrolla una cadena de suministro de grafito 100% doméstica de EEUU: mina en Alaska y planta de materiales avanzados en Ohio.",
@@ -13751,8 +14158,19 @@
    "country": "Canadá",
    "growth": "🟡 Pre-producción, pero hitos regulatorios y de financiamiento avanzando",
    "margin": null,
-   "mkt": "GPH",
-   "sector_hint": "materiales"
+   "mkt": "GPH.V",
+   "sector_hint": "materiales",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "GPH.V",
+    "exchange": "TSX Venture Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en TSX Venture como GPH.V.",
+    "note_en": "Ticker corrected to its home exchange: trades on TSX Venture Exchange as GPH.V.",
+    "source_url": "https://www.tsx.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "materiales",
@@ -15277,7 +15695,7 @@
    "sector": "macro_credito",
    "id": "Mizuho",
    "label": "Mizuho",
-   "ticker": "8411 · TSE (ADR: MFG · NYSE)",
+   "ticker": "8411.T · Tokyo Stock Exchange",
    "cat": "universal_bank",
    "port": "",
    "role": "Uno de los tres megabancos de Japón; fuerte en leveraged finance y project finance para datacenters.",
@@ -15286,14 +15704,25 @@
    "country": "Japon",
    "growth": "🟢 Utilidad neta casi se duplicó a USD 8.200M en el año fiscal cerrado en marzo de 2026.",
    "margin": 0.15,
-   "mkt": "8411",
-   "sector_hint": "macro_credito"
+   "mkt": "8411.T",
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "8411.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 8411.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 8411.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
    "id": "MUFG",
    "label": "MUFG",
-   "ticker": "8306 · TSE (ADR: MUFG · NYSE)",
+   "ticker": "8306.T · Tokyo Stock Exchange",
    "cat": "universal_bank",
    "port": "",
    "role": "Mayor banco de Japón por activos; uno de los estructuradores más activos de deuda para datacenters de IA a nivel global.",
@@ -15302,14 +15731,25 @@
    "country": "Japon",
    "growth": "🟢 Utilidad neta de USD 16.020M (+92% interanual) en el año fiscal cerrado en marzo de 2026.",
    "margin": 0.21,
-   "mkt": "8306",
-   "sector_hint": "macro_credito"
+   "mkt": "8306.T",
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "8306.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 8306.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 8306.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
    "id": "Barclays",
    "label": "Barclays",
-   "ticker": "BARC · LSE (ADR: BCS · NYSE)",
+   "ticker": "BARC.L · London Stock Exchange",
    "cat": "universal_bank",
    "port": "",
    "role": "Banco universal británico con fuerte franquicia de banca de inversión en EE.UU.; participa en préstamos sindicados y research de crédito de IA.",
@@ -15318,14 +15758,25 @@
    "country": "ReinoUnido",
    "growth": "🟡 Utilidad neta de USD 8.143M (+20%) en 2025, pero su propio research advierte sobre riesgo de sobrecalentamiento en la deuda de IA que ella misma suscribe.",
    "margin": 0.21,
-   "mkt": "BARC",
-   "sector_hint": "macro_credito"
+   "mkt": "BARC.L",
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "BARC.L",
+    "exchange": "London Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Londres como BARC.L.",
+    "note_en": "Ticker corrected to its home exchange: trades on London Stock Exchange as BARC.L.",
+    "source_url": "https://www.londonstockexchange.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
    "id": "SMBC",
    "label": "SMBC",
-   "ticker": "8316 · TSE (ADR: SMFG · NYSE)",
+   "ticker": "8316.T · Tokyo Stock Exchange",
    "cat": "universal_bank",
    "port": "",
    "role": "Uno de los tres megabancos de Japón; pionero en préstamos garantizados por equipos de fabricación de chips.",
@@ -15334,8 +15785,19 @@
    "country": "Japon",
    "growth": "🟢 Utilidad neta de USD 7.508M (+138% interanual, con ganancias no recurrentes) en el año fiscal cerrado en marzo de 2026.",
    "margin": 0.13,
-   "mkt": "8316",
-   "sector_hint": "macro_credito"
+   "mkt": "8316.T",
+   "sector_hint": "macro_credito",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "8316.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 8316.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 8316.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "macro_credito",
@@ -17228,7 +17690,7 @@
    "sector": "inmobiliario",
    "id": "Munters Group",
    "label": "Munters Group",
-   "ticker": "MTRS · Nasdaq Stockholm",
+   "ticker": "MTRS.ST · Nasdaq Stockholm",
    "cat": "cooling_thermal",
    "port": "",
    "role": "Especialista sueco en control climático industrial con la división Data Center Technologies (DCT), que combina enfriamiento evaporativo/CRAH con chillers (vía Geoclima) y CDUs para datacenters de colocation e hyperscale.",
@@ -17237,8 +17699,19 @@
    "country": "Suecia (Kista/Estocolmo)",
    "growth": "🟡 Order intake de DCT +416% YoY en Q4 2025; pedido récord de ~SEK 2.000-2.100M (~USD 215M) anunciado abr-2026; pero en Q2 2026 las ventas de DCT quedaron por debajo de lo esperado por cuellos de botella de cadena de suministro y el ramp-up de manufactura en Virginia.",
    "margin": null,
-   "mkt": "MTRS",
-   "sector_hint": "inmobiliario"
+   "mkt": "MTRS.ST",
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "MTRS.ST",
+    "exchange": "Nasdaq Stockholm",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Estocolmo como MTRS.ST.",
+    "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Stockholm as MTRS.ST.",
+    "source_url": "https://www.nasdaqomxnordic.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -17344,7 +17817,7 @@
    "sector": "inmobiliario",
    "id": "Asetek",
    "label": "Asetek",
-   "ticker": "ASTK · Nasdaq Copenhagen (deslistada de Oslo Børs el 26-mar-2024 tras un período de dual-listing; cotiza en exclusiva en Copenhague desde entonces)",
+   "ticker": "ASTK.CO · Nasdaq Copenhagen",
    "cat": "cooling_thermal",
    "port": "",
    "role": "Pionero del liquid cooling all-in-one (AIO) para PC/gaming que intenta pivotear hacia datacenters de IA; sigue siendo mayormente una empresa de nicho pequeña, con el segmento de datacenter aún menor que su negocio de consumo (Liquid Cooling + SimSports).",
@@ -17353,8 +17826,19 @@
    "country": "Dinamarca (HQ, como Asetek A/S)",
    "growth": "🟡 Elevó sus metas de mediano plazo tras conseguir el \"OEM top-3 retornante\" (17-oct-2025): target de Liquid Cooling revisado a >USD 65M (antes >USD 50M) con margen EBITDA ajustado >25%; pero el guidance de ingresos de GRUPO completo para 2026 es de apenas USD 55-60M (Liquid Cooling + SimSports combinados) — señal de que la escala real todavía es muy chica comparada con el resto del batch.",
    "margin": 0.25,
-   "mkt": "ASTK",
-   "sector_hint": "inmobiliario"
+   "mkt": "ASTK.CO",
+   "sector_hint": "inmobiliario",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "ASTK.CO",
+    "exchange": "Nasdaq Copenhagen",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Copenhague como ASTK.CO.",
+    "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Copenhagen as ASTK.CO.",
+    "source_url": "https://www.nasdaqomxnordic.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "inmobiliario",
@@ -17635,7 +18119,7 @@
    "sector": "logistica",
    "id": "NYKLine",
    "label": "NYK Line",
-   "ticker": "9101 · Tokyo Stock Exchange (ADR OTC: NPNYY)",
+   "ticker": "9101.T · Tokyo Stock Exchange",
    "cat": "shipping_line",
    "port": "",
    "role": "Naviera diversificada japonesa (1885); flota total de 912 buques (68,0M TPM, mar-2026), incl. 96 GNL, 134 car carriers, 227 graneleros, 106 tanqueros, más 38% de la JV ONE.",
@@ -17644,14 +18128,25 @@
    "country": "Japon",
    "growth": "🟡 FY2025 (cerrado mar-2026): utilidad neta ¥211.700M (-¥265.900M i.a.) por debilidad en liner y tensiones en Medio Oriente; expande flota GNL (+50% a 130+ buques hacia 2029).",
    "margin": 0.05,
-   "mkt": "9101",
-   "sector_hint": "logistica"
+   "mkt": "9101.T",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "9101.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 9101.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 9101.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
    "id": "MOL",
    "label": "MOL",
-   "ticker": "9104 · Tokyo Stock Exchange (ADR OTC: MSLOY/MSLOF)",
+   "ticker": "9104.T · Tokyo Stock Exchange",
    "cat": "shipping_line",
    "port": "",
    "role": "Naviera diversificada japonesa (raíces desde 1884); ~94 buques GNL (ene-2026), 31% de ONE, más graneleros, car carriers y tanqueros; meta de 150 buques GNL.",
@@ -17660,8 +18155,19 @@
    "country": "Japon",
    "growth": "🟡 FY2025 récord (utilidad neta ¥425.492M, ROE 16,9%), pero guía FY2026 anticipa fuerte caída a ¥213.260M por normalización de ONE. Elliott Management reveló posición \"significativa\" (18-mar-2026).",
    "margin": 0.08,
-   "mkt": "9104",
-   "sector_hint": "logistica"
+   "mkt": "9104.T",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "9104.T",
+    "exchange": "Tokyo Stock Exchange",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Bolsa de Tokio como 9104.T.",
+    "note_en": "Ticker corrected to its home exchange: trades on Tokyo Stock Exchange as 9104.T.",
+    "source_url": "https://www.jpx.co.jp/english/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
@@ -18075,7 +18581,7 @@
    "sector": "logistica",
    "id": "DSV",
    "label": "DSV",
-   "ticker": "DSV · Nasdaq Copenhagen",
+   "ticker": "DSV.CO · Nasdaq Copenhagen",
    "cat": "freight_forwarder",
    "port": "",
    "role": "Tras fusionarse con DB Schenker, el mayor freight forwarder del mundo por ingresos, 100% asset-light. FY2025: ~3,7 millones TEU marítimos y ~2,0 millones toneladas de carga aérea.",
@@ -18084,8 +18590,19 @@
    "country": "Dinamarca",
    "growth": "🟢 Q2 2026: ingresos +23,7% y EBIT +32,4% YoY, impulsados por consolidación de Schenker y demanda de semiconductores/IA; DSV elevó guía EBIT 2026 y adelantó la finalización de la integración a fines de 2026.",
    "margin": 0.07,
-   "mkt": "DSV",
-   "sector_hint": "logistica"
+   "mkt": "DSV.CO",
+   "sector_hint": "logistica",
+   "listing": {
+    "as_of": "2026-09-28",
+    "status": "public",
+    "ticker": "DSV.CO",
+    "exchange": "Nasdaq Copenhagen",
+    "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Copenhague como DSV.CO.",
+    "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Copenhagen as DSV.CO.",
+    "source_url": "https://www.nasdaqomxnordic.com/",
+    "confidence": "medium"
+   },
+   "preipo": false
   },
   {
    "sector": "logistica",
