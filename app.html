@@ -3161,7 +3161,7 @@ function renderDetail(id){
       <div class="meta-item"><div class="meta-l">Fundada</div><div class="meta-v">${meta.founded||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">Empleados</div><div class="meta-v">${meta.employees||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">Revenue 2025</div><div class="meta-v">${meta.revenue_2025||'—'}</div></div>
-      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
+      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
     </div>
     ${meta.geo_risk?`<div class="geo-risk-box"><span class="geo-icon">🌐</span>${esc(meta.geo_risk)}</div>`:''}
     ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">Clientes clave</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
@@ -4960,7 +4960,7 @@ const DataLayer = {
       this._json(BASE+'/api/earnings/'+encodeURIComponent(ticker)));
   },
   async fundamentals(ticker){
-    return DataLayer._cached('fund_'+ticker, 86400000, ()=>
+    return DataLayer._cached('fund2_'+ticker, 86400000, ()=>
       this._json(BASE+'/api/fundamentals/'+encodeURIComponent(ticker)));
   },
   async insiders(ticker){
@@ -5513,6 +5513,7 @@ const V8detail = {
   },
   enrich(id){
     const d=NODE_BY_ID[id]; if(!d) return;
+    window.fillLiveMcap($('d-mcap'), d);
     const tk=d.mkt; const my=++this.token;
     const host=document.createElement('div'); host.id='v8-detail-host';
     // posición / P&L
@@ -5729,6 +5730,20 @@ Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con est
 };
 
 window.V8detail = V8detail;
+
+/* Capitalización EN VIVO cuando el catálogo no la trae (~500 de ~620
+   cotizadas): la da /api/fundamentals (Finnhub en EE.UU., FMP + tipo de
+   cambio en el resto). La usan la ficha del mapa y el X-Ray. Sin dato → "—". */
+window.fillLiveMcap = function(el, n){
+  if(!el || !n || !n.mkt) return;
+  const meta=(window.NODE_META||{})[n.id]||{};
+  if(meta.mktcap_b) return;
+  DataLayer.fundamentals(n.mkt).then(f=>{
+    const b=f&&f.marketCapB; if(!b||!el.isConnected) return;
+    el.textContent = b>=1000 ? '$'+(b/1000).toFixed(2)+'T' : b>=10 ? '$'+Math.round(b)+'B' : '$'+b.toFixed(1)+'B';
+    el.title = (LANG==='en'?'Live market cap · ':'Capitalización en vivo · ')+(f.marketCapSource||'');
+  }).catch(()=>{});
+};
 
 /* ── 📡 Lo último en el grafo (Phase 1 · M6: feed GLOBAL) ──────────────────
    La Historia de arriba es POR EMPRESA; esto es el grafo ENTERO: noticias,

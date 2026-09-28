@@ -253,3 +253,35 @@ def test_timeline3d_degrada_sin_webgl():
     assert 'if (!window.THREE)' in src
     assert 'No hay hechos con fecha real' in src
     assert 'needs WebGL' in src          # y en inglés (regla bilingüe)
+
+
+def test_fundamentales_traen_capitalizacion_en_vivo(monkeypatch):
+    """~500 de ~620 cotizadas no tienen mktcap en el catálogo y la UI decía
+    "Privada" (Mizuho). /api/fundamentals ahora la trae: Finnhub (EE.UU.,
+    millones USD) y, si no, el perfil de FMP convertido a USD."""
+    import server
+    server.app.config['TESTING'] = True
+    try:
+        server.cache.clear()
+    except Exception:
+        pass
+    monkeypatch.setattr(server, 'FINNHUB', 'k')
+    monkeypatch.setattr(server, 'FMP', 'k')
+
+    def fake_get(url, *a, **k):
+        if 'finnhub' in url and 'AAA' in url:
+            return {'metric': {'peTTM': 10, 'marketCapitalization': 2500000}}, None
+        if 'finnhub' in url:
+            return {'metric': {}}, None
+        if '/profile' in url:
+            return [{'marketCap': 20_000_000_000_000, 'currency': 'JPY'}], None
+        return [], None
+    monkeypatch.setattr(server, '_safe_get', fake_get)
+    import core.quotes
+    monkeypatch.setattr(core.quotes, '_fx_to_usd', lambda cur: 0.007 if cur == 'JPY' else 1.0)
+
+    c = server.app.test_client()
+    us = c.get('/api/fundamentals/AAA').get_json()
+    assert us['marketCapB'] == 2500.0 and us['marketCapSource'] == 'finnhub'
+    jp = c.get('/api/fundamentals/8411.T').get_json()
+    assert jp['marketCapB'] == 140.0 and jp['marketCapSource'] == 'fmp'

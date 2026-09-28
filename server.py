@@ -2044,6 +2044,11 @@ def fundamentals(ticker):
     metrics = []
     targets = []
     ratings = []
+    # Capitalización EN VIVO (miles de millones USD). El catálogo solo la trae
+    # para ~110 de ~620 cotizadas, y sin ella la UI decía "Privada" a bancos
+    # como Mizuho. US → Finnhub (ya viene en /stock/metric, que se pedía y se
+    # descartaba); resto del mundo → perfil de FMP convertido a USD.
+    mcap_b, mcap_src = None, None
     # Métricas (P/E, EV/EBITDA): Finnhub /stock/metric disponible en plan gratuito
     if FINNHUB:
         fh, fh_err = _safe_get(f'https://finnhub.io/api/v1/stock/metric?symbol={ticker}&metric=all&token={FINNHUB}')
@@ -2054,6 +2059,24 @@ def fundamentals(ticker):
             ev = m.get('evEbitdaTTM') or m.get('evEbitdaAnnual')
             metrics = [{'peRatio': round(float(pe), 2) if pe else None,
                         'enterpriseValueOverEBITDA': round(float(ev), 2) if ev else None}]
+            try:
+                mc = m.get('marketCapitalization')   # millones USD
+                if mc and float(mc) > 0:
+                    mcap_b, mcap_src = round(float(mc) / 1000.0, 2), 'finnhub'
+            except (TypeError, ValueError):
+                pass
+    if mcap_b is None and FMP:
+        prof, _ = _safe_get(f'https://financialmodelingprep.com/stable/profile?symbol={ticker}&apikey={FMP}')
+        p0 = prof[0] if isinstance(prof, list) and prof and isinstance(prof[0], dict) else None
+        if p0:
+            try:
+                mc = float(p0.get('marketCap') or 0)
+                from core.quotes import _fx_to_usd
+                rate = _fx_to_usd((p0.get('currency') or 'USD').upper())
+                if mc > 0 and rate:
+                    mcap_b, mcap_src = round(mc * rate / 1e9, 2), 'fmp'
+            except (TypeError, ValueError):
+                pass
     # Precio objetivo y ratings de analistas: FMP (plan actual soporta estos endpoints)
     if FMP:
         targets, _ = _safe_get(f'https://financialmodelingprep.com/stable/price-target-consensus?symbol={ticker}&apikey={FMP}')
@@ -2074,9 +2097,10 @@ def fundamentals(ticker):
             ratings = [{'analystRatingsBuy': b, 'analystRatingsStrongBuy': sb,
                         'analystRatingsSell': s, 'analystRatingsStrongSell': ss,
                         'analystRatingsHold': h}]
-    result = {'metrics': metrics, 'priceTarget': targets or [], 'ratings': ratings}
+    result = {'metrics': metrics, 'priceTarget': targets or [], 'ratings': ratings,
+              'marketCapB': mcap_b, 'marketCapSource': mcap_src}
     # Solo cachear si obtuvimos algo — errores transitorios no deben quedarse 24h
-    if metrics or targets or ratings:
+    if metrics or targets or ratings or mcap_b:
         cache.set(cache_key, result, timeout=86400)
     return jsonify(result)
 

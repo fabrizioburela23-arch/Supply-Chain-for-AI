@@ -53,6 +53,13 @@ los hallazgos sin fuente abierta quedaron en confianza media/baja).
   que ahora traen precio real. Entradas de verificación guardadas en
   data/listing_verification/ (auditoría + tickers_sin_bolsa); regenerar con
   `python3 scripts/build_listing_status.py data/listing_verification/*.json`.
+- v146-147: "Mizuho es privada" → Mkt Cap mostraba "Privada" si faltaba el
+  dato (505 de 618 cotizadas no lo tienen en NODE_META). Ahora "—" si cotiza,
+  y /api/fundamentals devuelve `marketCapB` EN VIVO (Finnhub
+  metric.marketCapitalization — se pedía y se descartaba — o perfil FMP ×
+  tipo de cambio). `window.fillLiveMcap(el, n)` lo pinta en la ficha del mapa
+  (#d-mcap) y el X-Ray (.xr-mcap). Caché cliente renombrada fund_→fund2_.
+  Comparador (compare.js) bilingüe.
 
 ---
 

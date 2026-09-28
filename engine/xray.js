@@ -196,7 +196,7 @@
       '<div class="impact-grid">' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.employees ? (meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap">' + (meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
       '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
     // fundamentales extra (margen / crecimiento / puerto) si existen
@@ -396,6 +396,7 @@
     if (!n) return;
     loadPrice(root, n);
     loadImpact(root, id, n);
+    if (window.fillLiveMcap) window.fillLiveMcap(root.querySelector('.xr-mcap'), n);   // Mkt Cap en vivo si falta
   }
 
   // ── cajón lateral (abre desde el mapa) ──
