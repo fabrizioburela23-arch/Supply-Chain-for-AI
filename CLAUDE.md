@@ -208,7 +208,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (251 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (255 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -241,6 +241,13 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 `DataLayer.aiComplete(system, prompt, maxTokens, tier)`.
 `_extract_json()` tolera JSON envuelto en prosa/fences (Gemini/NVIDIA).
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
+**GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito "todo en vivo, los datos
+falsos perjudican al inversionista")**: `_ai_complete` añade NUMBERS_RULE al
+system y verifica (core/numbers.py) que toda cifra de dinero/precio de la
+respuesta esté en el input; si no → 1 reintento con feedback y, si persiste,
+la marca "(⚠ cifra no verificada)". `_ai_complete_raw` = sin guardián (solo
+lo usa el guardián). research/ usa check_numbers (rechazo estricto). Para que
+la IA dé cifras correctas hay que PASARLE el dato en vivo en el prompt.
 
 ## Errores comunes
 

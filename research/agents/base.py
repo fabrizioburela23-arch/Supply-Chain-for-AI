@@ -11,7 +11,7 @@ import json
 
 from research.context import render_context
 from research.llm import RoutedProvider, route_for
-from research.numbers import check_numbers
+from core.numbers import check_numbers
 from research.schemas import AgentResearchResult, check_refs, json_schema_hint
 
 # Lo ÚNICO que un agente puede escribir (el runner lo hace cumplir).

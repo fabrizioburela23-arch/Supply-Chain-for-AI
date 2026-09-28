@@ -280,7 +280,7 @@ def test_job_sin_agentes_ok_queda_failed_y_se_puede_reintentar(db):
 
 def test_guardian_de_cifras_rechaza_valuacion_de_memoria():
     """Caso real: 'Broadcom vale ~$350B' con capitalización en vivo de >$1T."""
-    from research.numbers import unsupported_money, evidence_numbers
+    from core.numbers import unsupported_money, evidence_numbers
     ev = [{'title': 'Perfil EN VIVO AVGO', 'excerpt': 'market_cap_usd_b=1105.2, price=235.4'},
           {'title': 'Estados', 'excerpt': 'ingresos USD: 2024: 51.6B'}]
     v = evidence_numbers(ev)

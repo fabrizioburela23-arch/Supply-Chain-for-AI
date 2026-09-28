@@ -1,4 +1,4 @@
-"""research/numbers.py — guardián de CIFRAS (anti-alucinación numérica).
+"""core/numbers.py — guardián de CIFRAS (anti-alucinación numérica).
 
 Problema real (2026-09-28): un agente escribió que Broadcom "vale ~$350B"
 cuando su capitalización en vivo superaba $1T — el modelo usó su MEMORIA
@@ -130,3 +130,35 @@ def check_numbers(result, evidence):
         if bad:
             errs.append(f'{fld} usa cifras que NO están en la evidencia: {sorted(set(bad))}.')
     return errs
+
+
+# ── Guardián GENERAL para toda llamada de IA (core/ai._ai_complete) ─────────
+
+NUMBERS_RULE = (
+    '\n\nREGLA DE CIFRAS (obligatoria): toda cifra de dinero o precio (capitalización, valuación, '
+    'ingresos, deuda, precio de acción, rondas) debe COPIARSE de los datos que te doy en este mensaje. '
+    'NUNCA uses cifras de tu memoria: están desactualizadas y un dato falso perjudica al inversionista. '
+    'Si no tienes el dato, dilo ("no tengo el dato en vivo") en vez de estimarlo. '
+    '/ FIGURES RULE: every money figure or price must be COPIED from the data given in this message; '
+    'never from memory. If you lack it, say so instead of estimating.')
+
+_ES = re.compile(r'\b(el|la|los|las|de|que|para|con|una|por)\b', re.I)
+_EN = re.compile(r'\b(the|of|and|to|with|for|is|are|that)\b', re.I)
+
+
+def unsupported_in(text, source_text):
+    """Cifras de dinero de `text` que NO aparecen en `source_text` (el input)."""
+    vals = evidence_numbers([{'title': '', 'excerpt': source_text or ''}])
+    return sorted(set(unsupported_money(text, vals)))
+
+
+def mark_unsupported(text, bad):
+    """Marca en el texto cada cifra sin respaldo (no la borra: el lector ve
+    que NO está verificada). Seguro dentro de strings JSON."""
+    if not bad:
+        return text
+    es = len(_ES.findall(text or '')) >= len(_EN.findall(text or ''))
+    tag = ' (⚠ cifra no verificada)' if es else ' (⚠ unverified figure)'
+    for b in sorted(bad, key=len, reverse=True):
+        text = re.sub(re.escape(b) + r'(?! \(⚠)', lambda m: m.group(0) + tag, text)
+    return text

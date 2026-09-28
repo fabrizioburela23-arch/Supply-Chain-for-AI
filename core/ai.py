@@ -5,11 +5,14 @@ el motor de matrices. Un solo lugar para proveedores, orden y parsing.
 """
 import json
 import re
+import logging
 
 import requests
 
 from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, CLAUDE,
                          GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY, NVIDIA_MODEL)
+
+log = logging.getLogger(__name__)
 
 
 def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
@@ -119,7 +122,36 @@ def _ai_configured():
     return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
 
 
-def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None):
+def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True):
+    """Llamada de IA con GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito:
+    "necesito que todo esté en vivo; los datos falsos perjudican la tesis").
+    Toda cifra de dinero de la respuesta debe estar en el input (system+prompt);
+    si no: 1 reintento con el error como feedback y, si persiste, la cifra se
+    MARCA "(⚠ cifra no verificada)". verify_numbers=False solo para diagnóstico."""
+    if not verify_numbers:
+        return _ai_complete_raw(system, prompt, max_tokens, tier, model)
+    from core.numbers import NUMBERS_RULE, mark_unsupported, unsupported_in
+    source = f'{system or ""}\n{prompt or ""}'
+    sys2 = (system or '') + NUMBERS_RULE
+    text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model)
+    bad = unsupported_in(text, source)
+    if bad:
+        log.warning('guardián de cifras: %s sin respaldo → reintento', bad)
+        try:
+            fb = (prompt + '\n\nTU RESPUESTA ANTERIOR USÓ CIFRAS QUE NO ESTÁN EN LOS DATOS: ' + ', '.join(bad) +
+                  '. Reescribe la respuesta completa (mismo formato) usando SOLO cifras de los datos dados, '
+                  'o sin esas cifras.')
+            text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model)
+            bad2 = unsupported_in(text2, source)
+            if len(bad2) <= len(bad):
+                text, used, bad = text2, used2, bad2
+        except Exception as e:  # noqa: BLE001
+            log.warning('guardián de cifras: reintento falló (%s)', str(e)[:80])
+        text = mark_unsupported(text, bad)
+    return text, used
+
+
+def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
     pasa al siguiente. Devuelve (texto, etiqueta_modelo).
 

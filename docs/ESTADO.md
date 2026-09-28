@@ -41,8 +41,12 @@ Hecho (vertical slice NVIDIA → Investigar → agentes → claims/evidencia →
 - GUARDIÁN DE CIFRAS (research/numbers.py): "Broadcom ~$350B" (memoria del
   modelo) vs >$1T en vivo → toda cifra de dinero debe estar en la evidencia o
   se rechaza/reintenta; claims viejas con cifras sin respaldo → 'retracted'.
-  PENDIENTE: el mismo riesgo existe en otras funciones de IA (tesis/veredicto,
-  brief, War Room, Canvas) — aplicarles el guardián.
+  Extendido a TODA la IA: core/ai._ai_complete (tesis/veredicto, brief,
+  War Room, Canvas, Khipu, deep research, cripto, portafolio, matrix
+  insights…) → regla en el system + verificación contra el input + 1
+  reintento + marca "(⚠ cifra no verificada)". PENDIENTE: inyectar datos EN
+  VIVO (capitalización/precio) en los contextos que hoy usan el catálogo
+  (NODE_META.mktcap_b es estático) para que la IA tenga la cifra correcta.
 - Pendiente: verificar en producción una investigación REAL (Claude sin
   saldo → correrá con Gemini); contradicciones semánticas; eventos
   EARNINGS/PRICE_ANOMALY/FACTOR_FIRED automáticos; evidencia SEC; calibrar

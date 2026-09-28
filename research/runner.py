@@ -97,7 +97,7 @@ def retract_unsupported(session, entity_id):
     """Retira (status='retracted') las claims ACTIVAS de la entidad cuyas cifras
     de dinero no aparecen en su propia evidencia guardada — p. ej. las escritas
     antes del guardián de cifras (Broadcom "~$350B", 2026-09-28). Devuelve n."""
-    from research.numbers import evidence_numbers, unsupported_money
+    from core.numbers import evidence_numbers, unsupported_money
     claims = (session.query(ResearchClaim)
               .filter(ResearchClaim.subject_entity_id == entity_id, ResearchClaim.status == 'active').all())
     n = 0
