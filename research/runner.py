@@ -77,6 +77,12 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
                                                   ResearchJob.created_at >= since,
                                                   ResearchJob.status.in_(('queued', 'running', 'done')))
                 .order_by(ResearchJob.created_at.desc()).first())
+        # Un job 'done' SIN ningún agente exitoso (p. ej. creado antes del fix
+        # que lo marca 'failed') no se reutiliza: dejaría al usuario atascado.
+        if prev and prev.status == 'done' and not (session.query(AgentRun)
+                                                   .filter(AgentRun.job_id == prev.id,
+                                                           AgentRun.status == 'done').first()):
+            prev = None
         if prev:
             return prev, True
     job = ResearchJob(entity_id=entity_id, depth=depth, agents=agents, trigger=trigger or {'kind': 'user'},
