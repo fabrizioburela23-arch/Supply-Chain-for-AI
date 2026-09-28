@@ -68,6 +68,16 @@ los hallazgos sin fuente abierta quedaron en confianza media/baja).
   solo pintaban la rejilla con `meta.founded` → ahora también si cotiza.
   Caché cliente fund3_. Ojo al probar con Playwright: el service worker
   salta page.route → usar serviceWorkers:'block'.
+- v149: pendientes verificados con búsquedas (data/listing_verification/
+  2026-09-28_pendientes.json): Cerebras CBRS (IPO 14-may-2026; el catálogo
+  decía "IPO 2024"), X-energy XE en Nasdaq (24-abr-2026), Unitree 688836.SS
+  (19-ago-2026), Confluent→IBM (17-mar-2026), Verint→Thoma Bravo, Luminar
+  liquidada (abr-2026), Northern Data→RUM, CommScope: su negocio y marca →
+  Amphenol (APH; el resto cotiza como VISN), SMIC→0981.HK, Moog→MOG-A,
+  Globalstar en Nasdaq. Fusiones ANUNCIADAS sin cerrar (Axcelis+Veeco,
+  Qorvo+Skyworks, SLAB→TI, AES→GIP/EQT, Globalstar→Amazon, ABB Robotics→
+  SoftBank) siguen cotizando con nota. Las 20 startups dudosas: siguen
+  privadas.
 
 ---
 

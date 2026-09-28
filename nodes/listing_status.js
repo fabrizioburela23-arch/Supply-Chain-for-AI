@@ -6,6 +6,15 @@
 window.LISTING_STATUS = {
  "as_of": "2026-09-28",
  "entries": {
+  "AESCorp": {
+   "status": "public",
+   "ticker": "AES",
+   "exchange": "NYSE",
+   "note_es": "Sigue cotizando (AES); la compra por el consorcio GIP (BlackRock)/EQT a $15 por acción fue aprobada por accionistas pero espera permisos regulatorios (cierre previsto fines de 2026/inicios de 2027).",
+   "note_en": "Still listed (AES); the GIP (BlackRock)/EQT take-private at $15/share is shareholder-approved but awaits regulatory approvals (close expected late 2026/early 2027).",
+   "source_url": "https://www.prnewswire.com/news-releases/aes-stockholders-approve-acquisition-by-global-infrastructure-partners-and-eqt-led-consortium-302812261.html",
+   "confidence": "medium"
+  },
   "APMTerminals": {
    "status": "subsidiary",
    "parent": "A.P. Møller-Maersk",
@@ -109,6 +118,15 @@ window.LISTING_STATUS = {
    "note_es": "Ticker corregido al de su bolsa: cotiza en Nasdaq Copenhague como ASTK.CO.",
    "note_en": "Ticker corrected to its home exchange: trades on Nasdaq Copenhagen as ASTK.CO.",
    "source_url": "https://www.nasdaqomxnordic.com/",
+   "confidence": "medium"
+  },
+  "Axcelis": {
+   "status": "public",
+   "ticker": "ACLS",
+   "exchange": "Nasdaq",
+   "note_es": "Sigue cotizando (ACLS); la fusión con Veeco, aprobada por accionistas, aún espera la aprobación de China (SAMR) y se prevé cerrar en el 2S-2026 con nuevo nombre y ticker.",
+   "note_en": "Still listed (ACLS); the shareholder-approved Veeco merger awaits China SAMR approval, expected to close in H2 2026 under a new name and ticker.",
+   "source_url": "https://www.sec.gov/Archives/edgar/data/0001113232/000110465926091999/acls-20260630x10q.htm",
    "confidence": "medium"
   },
   "BMW": {
@@ -262,6 +280,17 @@ window.LISTING_STATUS = {
    "source_url": "https://www.koito.co.jp/english/news/2025/01/08/004421.html",
    "confidence": "high"
   },
+  "Cerebras": {
+   "status": "public",
+   "ticker": "CBRS",
+   "exchange": "Nasdaq",
+   "listed_since": "2026-05-14",
+   "event_date": "2026-05-14",
+   "note_es": "Salió a bolsa en Nasdaq (CBRS) el 14-may-2026 a $185 por acción.",
+   "note_en": "Listed on Nasdaq (CBRS) on May 14, 2026 at $185 per share.",
+   "source_url": "https://www.cnbc.com/2026/05/14/cerebras-cbrs-stock-trade-nasdaq-ipo.html",
+   "confidence": "high"
+  },
   "Chalco": {
    "status": "public",
    "ticker": "2600.HK",
@@ -278,6 +307,26 @@ window.LISTING_STATUS = {
    "note_es": "Cotiza en Shanghái (600111), bajo control estatal (Baotou Steel).",
    "note_en": "Listed in Shanghai (600111), state-controlled (Baotou Steel).",
    "source_url": "http://www.sse.com.cn/assortment/stock/list/info/company/index.shtml?COMPANY_CODE=600111",
+   "confidence": "high"
+  },
+  "CommScopeHolding": {
+   "status": "acquired",
+   "parent": "Amphenol",
+   "parent_ticker": "APH",
+   "event_date": "2026-01-14",
+   "note_es": "Su negocio de conectividad y cable (y la marca CommScope) lo compró Amphenol (APH) el 12-ene-2026; lo que quedó cotiza como Vistance Networks (VISN).",
+   "note_en": "Its connectivity & cable business (and the CommScope brand) was bought by Amphenol (APH) on 12-Jan-2026; the remainder trades as Vistance Networks (VISN).",
+   "source_url": "https://www.nasdaq.com/press-release/commscope-completes-divestiture-connectivity-and-cable-solutions-segment-and-rebrands",
+   "confidence": "high"
+  },
+  "Confluent": {
+   "status": "acquired",
+   "parent": "IBM",
+   "parent_ticker": "IBM",
+   "event_date": "2026-03-17",
+   "note_es": "IBM completó su compra el 17-mar-2026 a $31 por acción (~$11.000 millones); CFLT dejó de cotizar en Nasdaq.",
+   "note_en": "IBM completed its acquisition on Mar 17, 2026 at $31/share (~$11B); CFLT was delisted from Nasdaq.",
+   "source_url": "https://newsroom.ibm.com/2026-03-17-ibm-completes-acquisition-of-confluent,-making-real-time-data-the-engine-of-enterprise-ai-and-agents",
    "confidence": "high"
   },
   "CoolIT Systems": {
@@ -513,6 +562,16 @@ window.LISTING_STATUS = {
    "note_es": "Cotiza en la bolsa de Taipéi TPEx con el código 6488; el catálogo la marcaba como no cotizada por error.",
    "note_en": "Listed on Taipei Exchange (TPEx) under code 6488; the catalog wrongly marked it as unlisted.",
    "source_url": "https://finance.yahoo.com/quote/6488.TWO/",
+   "confidence": "high"
+  },
+  "Globalstar": {
+   "status": "public",
+   "ticker": "GSAT",
+   "exchange": "Nasdaq",
+   "listed_since": "2025-02-11",
+   "note_es": "Cotiza en Nasdaq (no NYSE) como GSAT desde el 11-feb-2025; Amazon acordó comprarla a $90 por acción, cierre previsto a inicios de 2027.",
+   "note_en": "Trades on Nasdaq (not NYSE) as GSAT since Feb 11, 2025; Amazon agreed to buy it at $90/share, closing expected early 2027.",
+   "source_url": "https://www.businesswire.com/news/home/20250207538635/en/Globalstar-Transfers-to-Nasdaq-Global-Select-Market",
    "confidence": "high"
   },
   "GrAI_Matter": {
@@ -763,6 +822,14 @@ window.LISTING_STATUS = {
    "source_url": "https://lukoil.com/InvestorAndShareholderCenter",
    "confidence": "high"
   },
+  "Luminar": {
+   "status": "defunct",
+   "event_date": "2026-04-06",
+   "note_es": "Quebró (Chapter 11, dic-2025), vendió sus negocios a MicroVision y Quantum Computing Inc.; el plan de liquidación entró en vigor el 6-abr-2026 y las acciones se cancelaron sin valor.",
+   "note_en": "Went bankrupt (Chapter 11, Dec 2025), sold its businesses to MicroVision and Quantum Computing Inc.; the liquidation plan took effect Apr 6, 2026 and shares were cancelled with no value.",
+   "source_url": "https://www.investing.com/news/sec-filings/luminar-technologies-completes-liquidation-plan-and-cancels-all-equity-interests-93CH-4599993",
+   "confidence": "high"
+  },
   "MOL": {
    "status": "public",
    "ticker": "9104.T",
@@ -843,6 +910,15 @@ window.LISTING_STATUS = {
    "note_es": "Moody's Ratings es una división de Moody's Corporation (MCO); no cotiza por separado.",
    "note_en": "Moody's Ratings is a division of Moody's Corporation (MCO); it is not separately listed.",
    "source_url": "https://ir.moodys.com/",
+   "confidence": "high"
+  },
+  "Moog": {
+   "status": "public",
+   "ticker": "MOG-A",
+   "exchange": "NYSE",
+   "note_es": "Cotiza en NYSE (clase A: MOG.A); en Yahoo Finance el símbolo es MOG-A, no MOG.A.",
+   "note_en": "Listed on NYSE (Class A: MOG.A); Yahoo Finance uses the symbol MOG-A, not MOG.A.",
+   "source_url": "https://finance.yahoo.com/quote/MOG-A/",
    "confidence": "high"
   },
   "MoroHub": {
@@ -1010,6 +1086,15 @@ window.LISTING_STATUS = {
    "source_url": "https://en.wikipedia.org/wiki/QTS_Realty_Trust",
    "confidence": "high"
   },
+  "Qorvo": {
+   "status": "public",
+   "ticker": "QRVO",
+   "exchange": "Nasdaq",
+   "note_es": "Sigue cotizando (QRVO); la fusión con Skyworks ($32,50 + 0,960 acciones SWKS) aún espera a China y Corea; se prevé cerrar antes de fin de 2026.",
+   "note_en": "Still listed (QRVO); the Skyworks merger ($32.50 + 0.960 SWKS shares) still awaits China and Korea approvals; expected to close by end-2026.",
+   "source_url": "https://finance.yahoo.com/technology/articles/skyworks-solutions-sees-qorvo-deal-140319451.html",
+   "confidence": "medium"
+  },
   "Quantinuum": {
    "status": "public",
    "ticker": "QNT",
@@ -1111,6 +1196,15 @@ window.LISTING_STATUS = {
    "source_url": "https://www.jpx.co.jp/english/",
    "confidence": "medium"
   },
+  "SMIC": {
+   "status": "public",
+   "ticker": "0981.HK",
+   "exchange": "HKEX (también STAR Shanghái 688981.SS)",
+   "note_es": "Cotiza en Hong Kong (0981.HK) y en el STAR de Shanghái (688981.SS); SMICY es solo un ADR extrabursátil de baja liquidez tras salir de NYSE en 2019, así que conviene usar 0981.HK.",
+   "note_en": "Listed in Hong Kong (0981.HK) and on Shanghai STAR (688981.SS); SMICY is only a thinly traded OTC ADR since the 2019 NYSE delisting, so 0981.HK is preferable.",
+   "source_url": "https://www.prnewswire.com/news-releases/announcement-of-intention-to-delist-american-depositary-shares-from-the-new-york-stock-exchange-300856481.html",
+   "confidence": "medium"
+  },
   "SPGlobalRatings": {
    "status": "subsidiary",
    "parent": "S&P Global Inc.",
@@ -1158,6 +1252,15 @@ window.LISTING_STATUS = {
    "source_url": "https://en.wikipedia.org/wiki/Shinko_Electric_Industries",
    "confidence": "medium"
   },
+  "SiliconLabs": {
+   "status": "public",
+   "ticker": "SLAB",
+   "exchange": "Nasdaq",
+   "note_es": "Sigue cotizando (SLAB); Texas Instruments acordó comprarla a $231 por acción, con cierre previsto en el 1S-2027.",
+   "note_en": "Still listed (SLAB); Texas Instruments agreed to buy it at $231/share, with closing expected in H1 2027.",
+   "source_url": "https://investor.ti.com/news-releases/news-release-details/texas-instruments-acquire-silicon-labs",
+   "confidence": "high"
+  },
   "Sinopec": {
    "status": "public",
    "ticker": "0386.HK",
@@ -1166,6 +1269,15 @@ window.LISTING_STATUS = {
    "note_en": "Malformed symbol: 600028 is the Shanghai A-share code, not a Hong Kong code; Sinopec's H-share is 0386.HK (A-share: 600028.SS).",
    "source_url": "https://www.hkex.com.hk/Market-Data/Securities-Prices/Equities/Equities-Quote?sym=386&sc_lang=en",
    "confidence": "high"
+  },
+  "Skyworks": {
+   "status": "public",
+   "ticker": "SWKS",
+   "exchange": "Nasdaq",
+   "note_es": "Sigue cotizando (SWKS); su fusión con Qorvo está pendiente de China y Corea y se prevé cerrar antes de fin de 2026.",
+   "note_en": "Still listed (SWKS); its Qorvo merger is pending China and Korea approvals and expected to close by end-2026.",
+   "source_url": "https://finance.yahoo.com/technology/articles/skyworks-solutions-sees-qorvo-deal-140319451.html",
+   "confidence": "medium"
   },
   "SoftBank": {
    "status": "public",
@@ -1274,6 +1386,17 @@ window.LISTING_STATUS = {
    "source_url": "https://www.bloomberg.com/news/articles/2026-05-19/german-government-launches-privatization-of-energy-firm-uniper-mpc7nu4l",
    "confidence": "high"
   },
+  "Unitree": {
+   "status": "public",
+   "ticker": "688836.SS",
+   "exchange": "Shanghai STAR Market",
+   "listed_since": "2026-08-19",
+   "event_date": "2026-08-19",
+   "note_es": "Salió a bolsa en el STAR Market de Shanghái (688836) el 19-ago-2026 a ¥150,80 por acción y cerró su primer día +460%.",
+   "note_en": "Listed on Shanghai's STAR Market (688836) on Aug 19, 2026 at ¥150.80 per share, closing its first day up 460%.",
+   "source_url": "https://finance.yahoo.com/markets/stocks/articles/unitree-robotics-stock-soars-460-111514463.html",
+   "confidence": "medium"
+  },
   "Untether_AI": {
    "status": "defunct",
    "parent": "AMD (solo equipo / team only)",
@@ -1293,6 +1416,24 @@ window.LISTING_STATUS = {
    "note_en": "The JV unraveled in Jul-2023 when Foxconn exited; the entity is now wholly owned by Vedanta (VEDL.NS).",
    "source_url": "https://thediplomat.com/2023/07/chip-maker-foxconn-exits-semiconductor-joint-venture-with-indian-mining-company-vedanta/",
    "confidence": "medium"
+  },
+  "Veeco": {
+   "status": "public",
+   "ticker": "VECO",
+   "exchange": "Nasdaq",
+   "note_es": "Sigue cotizando (VECO); la fusión con Axcelis está pendiente de la aprobación regulatoria china y se espera cerrar en el 2S-2026.",
+   "note_en": "Still listed (VECO); the Axcelis merger is pending Chinese regulatory approval, expected to close in H2 2026.",
+   "source_url": "https://www.nasdaq.com/press-release/veeco-stockholders-approve-merger-axcelis-2026-02-06",
+   "confidence": "medium"
+  },
+  "Verint": {
+   "status": "acquired",
+   "parent": "Thoma Bravo (fusionada con Calabrio)",
+   "event_date": "2025-11-26",
+   "note_es": "Thoma Bravo completó su compra el 26-nov-2025 a $20,50 por acción y la fusionó con Calabrio; ya no cotiza.",
+   "note_en": "Thoma Bravo completed the take-private on Nov 26, 2025 at $20.50/share and combined it with Calabrio; no longer listed.",
+   "source_url": "https://www.thomabravo.com/press-releases/thoma-bravo-completes-acquisition-of-verint-a-leader-in-ai-driven-customer-experience-automation",
+   "confidence": "high"
   },
   "WPT Industrial": {
    "status": "acquired",
@@ -1319,6 +1460,17 @@ window.LISTING_STATUS = {
    "note_es": "Filial de Alphabet; no cotiza por separado.",
    "note_en": "Alphabet subsidiary; not separately listed.",
    "source_url": "https://abc.xyz/investor/",
+   "confidence": "high"
+  },
+  "Xenergy": {
+   "status": "public",
+   "ticker": "XE",
+   "exchange": "Nasdaq",
+   "listed_since": "2026-04-24",
+   "event_date": "2026-04-24",
+   "note_es": "Salió a bolsa en Nasdaq (no NYSE) como XE el 24-abr-2026 a $23 por acción, recaudando ~$1.020 millones.",
+   "note_en": "IPO'd on Nasdaq (not NYSE) as XE on Apr 24, 2026 at $23 per share, raising ~$1.02B.",
+   "source_url": "https://www.bloomberg.com/news/articles/2026-04-24/amazon-backed-x-energy-climbs-31-after-1-02-billion-us-ipo",
    "confidence": "high"
   },
   "Xiaomi": {

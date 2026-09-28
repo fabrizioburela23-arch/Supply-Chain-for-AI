@@ -1168,7 +1168,7 @@ var NODES_EXPAND = [
     "moat": "WSE único (900B transistores en 1 wafer); latencia inferencia LLM",
     "loc": "EE.UU.",
     "country": "EEUU",
-    "growth": "🟢 IPO 2024; contratos G42, CoreWeave",
+    "growth": "🟢 En bolsa (CBRS) desde 2026-05-14; contratos G42, CoreWeave",
     "margin": -0.10,
     "capex_2026": "~$0.5B",
     "backlog_status": "Expansión post-IPO",
