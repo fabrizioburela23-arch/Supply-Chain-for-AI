@@ -49,6 +49,12 @@
   }
 
   var A = 'TSMC', B = 'Nvidia';
+  // REGLA BILINGÜE
+  function L(es, en) {
+    var l = window.LANG;
+    if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } }
+    return l === 'en' ? en : es;
+  }
 
   function metrics(id) {
     var n = window.NODE_BY_ID[id] || {};
@@ -59,20 +65,30 @@
     var st = window.KhipuState && window.KhipuState.baseline ? window.KhipuState.baseline(id) : null;
     return { n: n, meta: meta, nrs: nrs, bd: bd, deg: deg,
       margin: n.margin != null ? Math.round(n.margin * 100) : null,
-      mktcap: meta.mktcap_b || null, country: n.country || '—',
+      // sin dato de tamaño: si cotiza es "—" (desconocido), NO "privada"
+      mktcap: meta.mktcap_b || null, listed: !!n.mkt, country: n.country || '—',
       senal: st ? st /*placeholder*/ : null };
   }
 
+  function capTxt(m) {
+    var v = m.mktcap;
+    if (v == null) return m.listed ? '—' : L('Priv.', 'Priv.');
+    return v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + v + 'B';
+  }
+
   // fila comparativa: lowerBetter=true si menor valor = mejor (ej. riesgo)
-  function row(lab, a, b, fmt, lowerBetter) {
+  function row(lab, a, b, fmt, lowerBetter, shown) {
     var av = a, bv = b, aWin = false, bWin = false;
     if (typeof a === 'number' && typeof b === 'number') {
       if (a !== b) { var aBetter = lowerBetter ? a < b : a > b; aWin = aBetter; bWin = !aBetter; }
     }
     var f = fmt || function (v) { return v == null ? '—' : v; };
-    return '<div class="cmp-row"><span class="va ' + (aWin ? 'win' : bWin ? 'lose' : '') + '">' + f(a) + '</span>' +
+    // `shown` = textos ya formateados por lado (cuando el formato depende de
+    // más que el valor, p.ej. Mkt cap: "—" si cotiza sin dato, "Priv." si no)
+    var ta = shown ? shown[0] : f(a), tb = shown ? shown[1] : f(b);
+    return '<div class="cmp-row"><span class="va ' + (aWin ? 'win' : bWin ? 'lose' : '') + '">' + ta + '</span>' +
       '<span class="lab">' + lab + '</span>' +
-      '<span class="vb ' + (bWin ? 'win' : aWin ? 'lose' : '') + '">' + f(b) + '</span></div>';
+      '<span class="vb ' + (bWin ? 'win' : aWin ? 'lose' : '') + '">' + tb + '</span></div>';
   }
 
   function render() {
@@ -90,7 +106,7 @@
 
     var nrsRows = '';
     if (ma.bd && mb.bd) {
-      nrsRows = '<div class="cmp-nrs"><div class="t">Por qué su riesgo — término a término</div>' +
+      nrsRows = '<div class="cmp-nrs"><div class="t">' + L('Por qué su riesgo — término a término', 'Why its risk — term by term') + '</div>' +
         ma.bd.terms.map(function (ta, k) {
           var tb = mb.bd.terms[k];
           var pa = Math.round(ta.val / ta.max * 100), pb = Math.round(tb.val / tb.max * 100);
@@ -103,17 +119,17 @@
     }
 
     document.getElementById('cmp').innerHTML =
-      '<div class="hd"><span class="eb">Comparar empresas</span><span class="x" onclick="window._cmpClose()">✕</span></div>' +
+      '<div class="hd"><span class="eb">' + L('Comparar empresas', 'Compare companies') + '</span><span class="x" onclick="window._cmpClose()">✕</span></div>' +
       '<div class="heads"><select id="cmp-a">' + opts(A) + '</select><div class="vs">vs</div><select id="cmp-b">' + opts(B) + '</select></div>' +
       row('Sector', pill(A) + (window.sectorName ? window.sectorName(ma.n.cat, true) : ''),
                     pill(B) + (window.sectorName ? window.sectorName(mb.n.cat, true) : ''), null) +
-      row('País', ma.country, mb.country, null) +
-      row('Riesgo NRS', ma.nrs, mb.nrs, function (v) { return v + '/100'; }, true) +
-      row('Margen', ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false) +
-      row('Mkt cap', ma.mktcap, mb.mktcap, function (v) { return v == null ? 'Priv.' : (v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + v + 'B'); }, false) +
-      row('Conexiones', ma.deg, mb.deg, null, false) +
+      row(L('País', 'Country'), ma.country, mb.country, null) +
+      row(L('Riesgo NRS', 'NRS risk'), ma.nrs, mb.nrs, function (v) { return v + '/100'; }, true) +
+      row(L('Margen', 'Margin'), ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false) +
+      row('Mkt cap', ma.mktcap, mb.mktcap, null, false, [capTxt(ma), capTxt(mb)]) +
+      row(L('Conexiones', 'Links'), ma.deg, mb.deg, null, false) +
       nrsRows +
-      '<div class="foot">Verde = mejor en esa fila (menor riesgo, mayor margen…). Barra NRS: izquierda = ' + esc(nm(A)) + ', derecha = ' + esc(nm(B)) + '.</div>';
+      '<div class="foot">' + L('Verde = mejor en esa fila (menor riesgo, mayor margen…). Barra NRS: izquierda = ', 'Green = better in that row (lower risk, higher margin…). NRS bar: left = ') + esc(nm(A)) + L(', derecha = ', ', right = ') + esc(nm(B)) + '.</div>';
 
     document.getElementById('cmp-a').onchange = function (e) { A = e.target.value; render(); };
     document.getElementById('cmp-b').onchange = function (e) { B = e.target.value; render(); };

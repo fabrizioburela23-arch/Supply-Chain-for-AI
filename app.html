@@ -3161,7 +3161,7 @@ function renderDetail(id){
       <div class="meta-item"><div class="meta-l">Fundada</div><div class="meta-v">${meta.founded||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">Empleados</div><div class="meta-v">${meta.employees||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">Revenue 2025</div><div class="meta-v">${meta.revenue_2025||'—'}</div></div>
-      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v">${meta.mktcap_b?'$'+meta.mktcap_b+'B':'Privada'}</div></div>
+      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v">${meta.mktcap_b?'$'+meta.mktcap_b+'B':(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
     </div>
     ${meta.geo_risk?`<div class="geo-risk-box"><span class="geo-icon">🌐</span>${esc(meta.geo_risk)}</div>`:''}
     ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">Clientes clave</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
