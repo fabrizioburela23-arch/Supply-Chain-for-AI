@@ -1,0 +1,16 @@
+[
+ {
+  "id": "AlephAlpha",
+  "status": "acquired",
+  "ticker": null,
+  "exchange": null,
+  "listed_since": null,
+  "parent": "Cohere",
+  "parent_ticker": null,
+  "event_date": "2026-04-24",
+  "note_es": "Cohere acordó adquirir Aleph Alpha (anunciado 24-abr-2026); los accionistas de Aleph Alpha reciben ~10% de la entidad combinada.",
+  "note_en": "Cohere agreed to acquire Aleph Alpha (announced 24-Apr-2026); Aleph Alpha shareholders get ~10% of the combined entity.",
+  "source_url": "https://www.cnbc.com/2026/04/24/cohere-aleph-alpha-germany-ai-europe-expansion.html",
+  "confidence": "high"
+ }
+]

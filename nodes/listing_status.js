@@ -4,7 +4,7 @@
 // privadas. Lo aplica nodes/merge_graph.js (navegador y snapshot).
 // No editar a mano: regenerar con una nueva verificación.
 window.LISTING_STATUS = {
- "as_of": "2026-09-28",
+ "as_of": "2026-09-29",
  "entries": {
   "ABB_Robotics": {
    "status": "subsidiary",
@@ -50,6 +50,15 @@ window.LISTING_STATUS = {
    "note_es": "Comprada por L3Harris (LHX) en jul-2023; ya no cotiza.",
    "note_en": "Acquired by L3Harris (LHX) in Jul 2023; no longer listed.",
    "source_url": "https://en.wikipedia.org/wiki/Aerojet_Rocketdyne",
+   "confidence": "high"
+  },
+  "AlephAlpha": {
+   "status": "acquired",
+   "parent": "Cohere",
+   "event_date": "2026-04-24",
+   "note_es": "Cohere acordó adquirir Aleph Alpha (anunciado 24-abr-2026); los accionistas de Aleph Alpha reciben ~10% de la entidad combinada.",
+   "note_en": "Cohere agreed to acquire Aleph Alpha (announced 24-Apr-2026); Aleph Alpha shareholders get ~10% of the combined entity.",
+   "source_url": "https://www.cnbc.com/2026/04/24/cohere-aleph-alpha-germany-ai-europe-expansion.html",
    "confidence": "high"
   },
   "AlibabaCloud": {

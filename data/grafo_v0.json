@@ -1,5 +1,5 @@
 {
- "exported_at": "2026-09-28T15:18:15.012Z",
+ "exported_at": "2026-09-29T03:24:33.262Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 949,
@@ -35,7 +35,7 @@
    "capex_2026_en": "n/a — folded into IBM's CAPEX",
    "backlog_status_en": "Quantum Network: 250+ members; ~$1B cumulative revenue",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "IBM",
     "parent_ticker": "IBM",
@@ -168,7 +168,7 @@
    "preipo": false,
    "mkt": "QNT",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "QNT",
     "exchange": "Nasdaq",
@@ -203,7 +203,7 @@
    "backlog_status_en": "EuroHPC/GENCI orders signed; sovereign pipeline",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "PSQL",
     "exchange": "Nasdaq",
@@ -408,7 +408,7 @@
    "capex_2026_en": "n/a — Siemens software division",
    "backlog_status_en": "Multi-year contracts; no public breakdown",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Siemens AG",
     "parent_ticker": "SIE.DE",
@@ -923,7 +923,7 @@
    "capex_2026_en": "~$1B (Texas ramp)",
    "backlog_status_en": "LTAs with prepayments; Texas ramping in 2026",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6488.TWO",
     "exchange": "TPEx (Taipei Exchange)",
@@ -982,7 +982,7 @@
    "capex_2026_en": "~$400M (funded by JIC)",
    "backlog_status_en": "Qualified in TSMC/Samsung 2nm ramps",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Japan Investment Corporation (JIC, estatal)",
     "event_date": "2024-06",
@@ -1041,7 +1041,7 @@
    "capex_2026_en": "~$300M (¥45B)",
    "backlog_status_en": "EUV capacity committed to the big three",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4186.T",
     "exchange": "Tokyo Stock Exchange",
@@ -1246,7 +1246,7 @@
    "capex_2026_en": "~$7–7.5B",
    "backlog_status_en": "Utilization >85%; captive domestic demand (Huawei)",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "0981.HK",
     "exchange": "HKEX (también STAR Shanghái 688981.SS)",
@@ -1665,7 +1665,7 @@
    "capex_2026_en": "~NT$35B (ABF expansion)",
    "backlog_status_en": "Take-or-pay covers the new capacity through 2027",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "3037.TW",
     "exchange": "TWSE",
@@ -2037,7 +2037,7 @@
    "capex_2026_en": "~$700M; Thailand capacity",
    "backlog_status_en": "1.6T capacity fully committed through 2026",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "300308.SZ",
     "exchange": "SZSE ChiNext + HKEX (3308.HK)",
@@ -2265,7 +2265,7 @@
    "capex_2026_en": "~$1B; US and Thailand plants",
    "backlog_status_en": "GB300 power shelves committed through 2026",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2308.TW",
     "exchange": "TWSE",
@@ -2866,7 +2866,7 @@
    "capex_2026_en": "$15–20B (Colossus 1/2)",
    "backlog_status_en": "Colossus 2 expanding; captive demand from X/SpaceX",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "merged",
     "parent": "SpaceX",
     "parent_ticker": "SPCX",
@@ -2976,7 +2976,7 @@
    "backlog_status_en": "N/A; inference capped by capacity",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Alibaba Group",
     "parent_ticker": "BABA",
@@ -3062,7 +3062,7 @@
    "capex_2026_en": "n/a — funded by Hyundai",
    "backlog_status_en": "Atlas in pilots (Hyundai, DHL); Spot/Stretch commercial",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Hyundai Motor Group",
     "parent_ticker": "005380.KS",
@@ -3122,7 +3122,7 @@
    "backlog_status_en": "Orders above capacity; months-long waits",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "688836.SS",
     "exchange": "Shanghai STAR Market",
@@ -3278,7 +3278,7 @@
    "capex_2026_en": "Low: fabless",
    "backlog_status_en": "Solid mid-range backlog",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2454.TW",
     "exchange": "TWSE",
@@ -3387,7 +3387,7 @@
    "capex_2026_en": "~$1B in AI infrastructure",
    "backlog_status_en": ">100K companies on NAVER Cloud Korea",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "035420.KS",
     "exchange": "KOSPI",
@@ -3422,7 +3422,7 @@
    "capex_2026_en": "$19B committed to Stargate (phase 1)",
    "backlog_status_en": "Stargate: $100–500B target over 4 years",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "9984.T",
     "exchange": "Tokyo Stock Exchange",
@@ -3457,7 +3457,7 @@
    "capex_2026_en": "~$4B (EV + chips)",
    "backlog_status_en": "SU7: ~150K pending orders",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "1810.HK",
     "exchange": "HKEX",
@@ -3492,7 +3492,7 @@
    "capex_2026_en": "~€9B",
    "backlog_status_en": "Neue Klasse: 2026–2028 launches",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "BMW.DE",
     "exchange": "XETRA",
@@ -3527,7 +3527,7 @@
    "capex_2026_en": "~$16B (group)",
    "backlog_status_en": "Metaplant: 300K EVs/yr ramping",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "005380.KS",
     "exchange": "KRX (KOSPI)",
@@ -3563,7 +3563,7 @@
    "backlog_status_en": "MG: EU/LatAm expansion",
    "mkt": "600104.SS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "600104.SS",
     "exchange": "SSE",
@@ -3722,7 +3722,7 @@
    "big": false,
    "desc": "ARM-based cloud-native CPU with 192 cores",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "SoftBank Group",
     "parent_ticker": "9984.T",
@@ -3737,7 +3737,7 @@
    "sector": "diseno",
    "id": "Tenstorrent",
    "label": "Tenstorrent",
-   "ticker": "Privada",
+   "ticker": "Pre-IPO ~$2.7B",
    "cat": "asic_custom",
    "port": "",
    "role": "Hardware IA de código abierto (Jim Keller)",
@@ -3790,7 +3790,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Microchip Technology",
     "parent_ticker": "MCHP",
@@ -3823,7 +3823,7 @@
    "big": false,
    "desc": "RISC-V based AI inference chip with 1092 cores",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "parent": "Ainekko (compró su PI)",
     "event_date": "2025-11",
@@ -3895,7 +3895,7 @@
    "big": false,
    "desc": "Photonic AI chip startup using optical computing",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "1879.HK",
     "exchange": "HKEX",
@@ -4001,7 +4001,7 @@
    "big": false,
    "desc": "Data center REIT; acquired by Blackstone 2021",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Blackstone Infrastructure / BREIT",
     "parent_ticker": "BX",
@@ -4032,7 +4032,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "KKR y Global Infrastructure Partners",
     "parent_ticker": "KKR",
@@ -4063,7 +4063,7 @@
    "big": false,
    "desc": "Edge data center REIT focused on enterprise",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "DigitalBridge (inversor principal)",
     "parent_ticker": "DBRG",
@@ -4095,7 +4095,7 @@
    "big": false,
    "desc": "Hyperscale data center operator; acquired by DigitalBridge",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "DigitalBridge-led consortium (with IFM Investors)",
     "event_date": "2022-12-06",
@@ -4145,7 +4145,7 @@
    "big": false,
    "desc": "CDN and edge cloud platform for streaming",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "event_date": "2024-09-09",
     "note_es": "Se declaró en quiebra (Chapter 11) en sep-2024, vendió sus activos (parte a Akamai) y fue retirada de Nasdaq.",
@@ -4173,7 +4173,7 @@
    "backlog_status": "Integración",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Thales",
     "parent_ticker": "HO.PA",
@@ -4247,7 +4247,7 @@
    "revenue_2025": "~$100M",
    "geo_risk": "EE.UU. — bajo",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "event_date": "2026-04-06",
     "note_es": "Quebró (Chapter 11, dic-2025), vendió sus negocios a MicroVision y Quantum Computing Inc.; el plan de liquidación entró en vigor el 6-abr-2026 y las acciones se cancelaron sin valor.",
@@ -4276,7 +4276,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Alphabet",
     "parent_ticker": "GOOGL",
@@ -4305,7 +4305,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Amazon",
     "parent_ticker": "AMZN",
@@ -4355,7 +4355,7 @@
    "big": false,
    "desc": "LiDAR solutions for automotive; acquired by Koito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Koito Manufacturing",
     "parent_ticker": "7276.T",
@@ -4497,7 +4497,7 @@
    "big": false,
    "desc": "AI-driven drug discovery platform",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "3696.HK",
     "exchange": "HKEX",
@@ -4546,7 +4546,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "S&P Global",
     "parent_ticker": "SPGI",
@@ -4656,7 +4656,7 @@
    "sector": "cloud_ia",
    "id": "Imbue",
    "label": "Imbue (ex-Generally Intelligent)",
-   "ticker": "Privada",
+   "ticker": "Pre-IPO ~$1B",
    "cat": "ai_agents",
    "port": "",
    "role": "Agentes IA con razonamiento y código",
@@ -4730,7 +4730,7 @@
    "preipo": false,
    "mkt": "HAWK",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "HAWK",
     "exchange": "NYSE",
@@ -4779,7 +4779,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "IonQ",
     "parent_ticker": "IONQ",
@@ -4869,7 +4869,7 @@
    "backlog_status": "Normalización",
    "mkt": "SLAB",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "SLAB",
     "exchange": "Nasdaq",
@@ -4916,7 +4916,7 @@
    "backlog_status": "Expansión post-IPO",
    "mkt": "CBRS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "CBRS",
     "exchange": "Nasdaq",
@@ -5014,7 +5014,7 @@
    "big": false,
    "desc": "MLOps platform for edge AI development",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Qualcomm",
     "parent_ticker": "QCOM",
@@ -5105,7 +5105,7 @@
    "backlog_status": "Ciclo bajo",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Rio Tinto",
     "parent_ticker": "RIO",
@@ -5180,7 +5180,7 @@
    "backlog_status": "Establecido",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Boeing / Lockheed Martin (50/50 joint venture)",
     "note_es": "Empresa conjunta privada 50/50 de Boeing y Lockheed Martin; no cotiza ('ULA' no es un ticker válido).",
@@ -5267,7 +5267,7 @@
    "sector": "robotica",
    "id": "PhysicalIntelligence",
    "label": "Physical Intelligence (π)",
-   "ticker": "Privada",
+   "ticker": "Pre-IPO ~$11B",
    "cat": "robotics_physical",
    "port": "",
    "role": "Foundation models para robótica física general",
@@ -5319,7 +5319,7 @@
    "backlog_status": "Declive",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "event_date": "2013-03",
     "note_es": "Vendió su negocio a Marlin Equity en 2013, salió de Nasdaq y se disolvió; ya no existe como cotizada.",
@@ -5464,7 +5464,7 @@
    "backlog_status": "Integración",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Synopsys",
     "parent_ticker": "SNPS",
@@ -5628,7 +5628,7 @@
    "backlog_status": "Backlog $1B+; SiC EV sigue fuerte",
    "mkt": "ACLS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ACLS",
     "exchange": "Nasdaq",
@@ -5657,7 +5657,7 @@
    "backlog_status": "Penetración en photonics en silicon",
    "mkt": "VECO",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "VECO",
     "exchange": "Nasdaq",
@@ -5795,7 +5795,7 @@
    "backlog_status": "Transición a Flink impulsando upsell",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "IBM",
     "parent_ticker": "IBM",
@@ -5825,7 +5825,7 @@
    "backlog_status": "Adquisición IBM completada 2024",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "IBM",
     "parent_ticker": "IBM",
@@ -5983,7 +5983,7 @@
    "backlog_status": "Acuerdos: Sanofi $1B, BMS $1.2B",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "merged",
     "parent": "Recursion Pharmaceuticals",
     "parent_ticker": "RXRX",
@@ -6013,7 +6013,7 @@
    "backlog_status": "AstraZeneca partnership; pipeline ALS fase II",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "parent": "Osaka Holdings (founder-led take-private)",
     "event_date": "2025-03",
@@ -6189,7 +6189,7 @@
    "backlog_status": "NDA wearable OEM; Glucose monitoring pivot",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "event_date": "2023-01",
     "note_es": "Entró en liquidación provisional/reestructuración en ene-2023 y fue retirada de la NYSE; hoy es privada.",
@@ -6274,7 +6274,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "EchoStar",
     "parent_ticker": "SATS",
@@ -6303,7 +6303,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "GI Partners",
     "event_date": "2021-09-01",
@@ -6332,7 +6332,7 @@
    "preipo": false,
    "mkt": "FLY",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "FLY",
     "exchange": "Nasdaq",
@@ -6398,7 +6398,7 @@
    "backlog_status": "Tesla offtake; DOE ATVM $760M pending",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "merged",
     "parent": "Elevra Lithium",
     "parent_ticker": "ELV.AX",
@@ -6446,7 +6446,7 @@
    "backlog_status": "Rio Tinto acquisition 2024; scale-up Fenix",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Rio Tinto",
     "parent_ticker": "RIO",
@@ -6584,7 +6584,7 @@
    "backlog_status": "Qwen 2.5 open-weight SOTA; cloud reacceleration",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Alibaba Group",
     "parent_ticker": "BABA",
@@ -6632,7 +6632,7 @@
    "backlog_status": "Ruckus WiFi spin-off plan; 5G cable demand",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Amphenol",
     "parent_ticker": "APH",
@@ -6662,7 +6662,7 @@
    "backlog_status": "CHIPS Act beneficiary; 2nm/3nm CMP ramp",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Entegris",
     "parent_ticker": "ENTG",
@@ -6692,7 +6692,7 @@
    "backlog_status": "EUV photoresist sole-source; separation confirmed",
    "mkt": "Q",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "Q",
     "exchange": "NYSE",
@@ -6741,7 +6741,7 @@
    "backlog_status": "Display driver ramp; JHiC partnership",
    "mkt": "6770.TW",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6770.TW",
     "exchange": "TWSE",
@@ -6828,7 +6828,7 @@
    "sector": "cloud_ia",
    "id": "AlephAlpha",
    "label": "Aleph Alpha",
-   "ticker": "No cotiza",
+   "ticker": "Cohere",
    "cat": "ailab",
    "port": "",
    "role": "Empresa europea de IA soberana (Alemania); modelos Luminous para empresas y gobierno europeo.",
@@ -6840,8 +6840,18 @@
    "margin": null,
    "capex_2026": "n/d",
    "backlog_status": "German federal government; EU AI Act compliant",
-   "preipo": true,
-   "mkt": ""
+   "preipo": false,
+   "mkt": null,
+   "listing": {
+    "as_of": "2026-09-29",
+    "status": "acquired",
+    "parent": "Cohere",
+    "event_date": "2026-04-24",
+    "note_es": "Cohere acordó adquirir Aleph Alpha (anunciado 24-abr-2026); los accionistas de Aleph Alpha reciben ~10% de la entidad combinada.",
+    "note_en": "Cohere agreed to acquire Aleph Alpha (announced 24-Apr-2026); Aleph Alpha shareholders get ~10% of the combined entity.",
+    "source_url": "https://www.cnbc.com/2026/04/24/cohere-aleph-alpha-germany-ai-europe-expansion.html",
+    "confidence": "high"
+   }
   },
   {
    "sector": "cloud_ia",
@@ -6881,7 +6891,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "defunct",
     "parent": "AMD (solo equipo / team only)",
     "parent_ticker": "AMD",
@@ -6911,7 +6921,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "SoftBank Group",
     "parent_ticker": "9984.T",
@@ -6941,7 +6951,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "BP",
     "parent_ticker": "BP.L",
@@ -7097,7 +7107,7 @@
    "backlog_status": "Fortune 500 contact centers; AI bundle adoption",
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Thoma Bravo (fusionada con Calabrio)",
     "event_date": "2025-11-26",
@@ -7451,7 +7461,7 @@
    "revenue_2025": "~$270M",
    "geo_risk": "EE.UU. — bajo",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GSAT",
     "exchange": "Nasdaq",
@@ -7611,7 +7621,7 @@
    "revenue_2025": "~$3.3B",
    "geo_risk": "EE.UU. — bajo",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "MOG-A",
     "exchange": "NYSE",
@@ -7682,7 +7692,7 @@
    "growth": "🟢 +20% e. 2026; SLS, misiles hipersónicos y GBSD",
    "margin": 0.09,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "L3Harris Technologies",
     "parent_ticker": "LHX",
@@ -7793,7 +7803,7 @@
    "revenue_2025": "~$15B",
    "geo_risk": "EE.UU. — ITAR, DoD contractor crítico",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "SPCX",
     "exchange": "Nasdaq",
@@ -8076,7 +8086,7 @@
    "revenue_2025": "~¥3.7T",
    "geo_risk": "Japón — bajo",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6702.T",
     "exchange": "Tokyo Stock Exchange",
@@ -8103,7 +8113,7 @@
    "margin": 0.18,
    "mkt": "QRVO",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "QRVO",
     "exchange": "Nasdaq",
@@ -8129,7 +8139,7 @@
    "margin": 0.23,
    "mkt": "SWKS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "SWKS",
     "exchange": "Nasdaq",
@@ -8185,7 +8195,7 @@
    "margin": 0.14,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "JIC Capital consortium (with DNP and Mitsui Chemicals)",
     "event_date": "2025",
@@ -8256,7 +8266,7 @@
    "margin": 0.13,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "ABB",
     "parent_ticker": "ABBN.SW",
@@ -8283,7 +8293,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Advent International",
     "event_date": "2023-05",
@@ -8369,7 +8379,7 @@
    "margin": 0.08,
    "mkt": "2408.TW",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2408.TW",
     "exchange": "TWSE",
@@ -8410,7 +8420,7 @@
    "margin": null,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Renesas Electronics",
     "parent_ticker": "6723.T",
@@ -8528,7 +8538,7 @@
    "margin": 0.06,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Nokia",
     "parent_ticker": "NOK",
@@ -8723,7 +8733,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Vedanta Limited",
     "parent_ticker": "VEDL.NS",
@@ -8797,7 +8807,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Snap Inc.",
     "parent_ticker": "SNAP",
@@ -8855,7 +8865,7 @@
    "margin": 0.32,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "MediaTek",
     "parent_ticker": "2454.TW",
@@ -8913,7 +8923,7 @@
    "preipo": false,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Analog Devices",
     "parent_ticker": "ADI",
@@ -8968,7 +8978,7 @@
    "moat_en": "TRISO-X: the only NRC-licensed new fuel; Amazon anchor with billions mobilized. Integrated fuel + reactor.",
    "growth_en": "🟢 2026 IPO (~$11B); record NRC FONSI",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "XE",
     "exchange": "Nasdaq",
@@ -9297,7 +9307,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Constellation Energy",
     "parent_ticker": "CEG",
@@ -9414,7 +9424,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Rolls-Royce Holdings",
     "parent_ticker": "RR.L",
@@ -9439,7 +9449,7 @@
    "margin": null,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "GE Vernova",
     "parent_ticker": "GEV",
@@ -9481,7 +9491,7 @@
    "margin": 0.3,
    "mkt": "KAP.L",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "KAP.L",
     "exchange": "London Stock Exchange",
@@ -9537,7 +9547,7 @@
    "margin": 0.15,
    "mkt": "PDN.AX",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "PDN.AX",
     "exchange": "Australian Securities Exchange",
@@ -9578,7 +9588,7 @@
    "margin": null,
    "mkt": "GLO.TO",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GLO.TO",
     "exchange": "Toronto Stock Exchange",
@@ -9604,7 +9614,7 @@
    "margin": null,
    "mkt": "BOE.AX",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "BOE.AX",
     "exchange": "Australian Securities Exchange",
@@ -9631,7 +9641,7 @@
    "mkt": "GFUZ",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GFUZ",
     "exchange": "Nasdaq",
@@ -9689,7 +9699,7 @@
    "margin": 0.1,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Estado francés (APE/CEA ~90%; JNFL y MHI ~5% c/u)",
     "event_date": "2018-01",
@@ -9715,7 +9725,7 @@
    "margin": null,
    "mkt": "600111.SS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "600111.SS",
     "exchange": "Shanghai Stock Exchange",
@@ -9741,7 +9751,7 @@
    "margin": null,
    "mkt": "ILU.AX",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ILU.AX",
     "exchange": "Australian Securities Exchange",
@@ -9767,7 +9777,7 @@
    "margin": null,
    "mkt": "UCU.V",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "UCU.V",
     "exchange": "TSX Venture Exchange",
@@ -9793,7 +9803,7 @@
    "margin": null,
    "mkt": "ARU.AX",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ARU.AX",
     "exchange": "Australian Securities Exchange",
@@ -9819,7 +9829,7 @@
    "margin": null,
    "mkt": "VML.AX",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "VML.AX",
     "exchange": "Australian Securities Exchange",
@@ -9860,7 +9870,7 @@
    "margin": 0.043,
    "mkt": "4004.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4004.T",
     "exchange": "Tokyo Stock Exchange",
@@ -9886,7 +9896,7 @@
    "margin": 0.056,
    "mkt": "4047.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4047.T",
     "exchange": "Tokyo Stock Exchange",
@@ -9912,7 +9922,7 @@
    "margin": 0.178,
    "mkt": "6988.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6988.T",
     "exchange": "Tokyo Stock Exchange",
@@ -9938,7 +9948,7 @@
    "margin": 0.065,
    "mkt": "4005.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4005.T",
     "exchange": "Tokyo Stock Exchange",
@@ -9964,7 +9974,7 @@
    "margin": 0.061,
    "mkt": "4182.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4182.T",
     "exchange": "Tokyo Stock Exchange",
@@ -9990,7 +10000,7 @@
    "margin": 0.1,
    "mkt": "4401.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4401.T",
     "exchange": "Tokyo Stock Exchange",
@@ -10016,7 +10026,7 @@
    "margin": 0.094,
    "mkt": "4042.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4042.T",
     "exchange": "Tokyo Stock Exchange",
@@ -10042,7 +10052,7 @@
    "margin": null,
    "mkt": "5384.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "5384.T",
     "exchange": "Tokyo Stock Exchange",
@@ -10068,7 +10078,7 @@
    "margin": 0.032,
    "mkt": "6971.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6971.T",
     "exchange": "Tokyo Stock Exchange",
@@ -10142,7 +10152,7 @@
    "margin": 0.226,
    "mkt": "4021.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4021.T",
     "exchange": "Tokyo Stock Exchange",
@@ -10184,7 +10194,7 @@
    "margin": null,
    "mkt": "4109.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "4109.T",
     "exchange": "Tokyo Stock Exchange",
@@ -10226,7 +10236,7 @@
    "margin": 0.07,
    "mkt": "600584.SS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "600584.SS",
     "exchange": "Shanghai Stock Exchange",
@@ -10252,7 +10262,7 @@
    "margin": 0.1,
    "mkt": "6239.TW",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6239.TW",
     "exchange": "Taiwan Stock Exchange",
@@ -10278,7 +10288,7 @@
    "margin": 0.12,
    "mkt": "2449.TW",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2449.TW",
     "exchange": "Taiwan Stock Exchange",
@@ -10304,7 +10314,7 @@
    "margin": 0.1,
    "mkt": "6147.TWO",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6147.TWO",
     "exchange": "Taipei Exchange (TPEx)",
@@ -10330,7 +10340,7 @@
    "margin": null,
    "mkt": "6082.HK",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6082.HK",
     "exchange": "Hong Kong Exchange",
@@ -10356,7 +10366,7 @@
    "margin": null,
    "mkt": "688795.SS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "688795.SS",
     "exchange": "Shanghai Stock Exchange",
@@ -10414,7 +10424,7 @@
    "margin": -0.65,
    "mkt": "688047.SS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "688047.SS",
     "exchange": "Shanghai Stock Exchange",
@@ -10441,7 +10451,7 @@
    "mkt": "688801.SS",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "688801.SS",
     "exchange": "Shanghai Stock Exchange (STAR Market)",
@@ -10468,7 +10478,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Wingtech Technology",
     "parent_ticker": "600745.SS",
@@ -10508,7 +10518,7 @@
    "margin": null,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Hewlett Packard Enterprise",
     "parent_ticker": "HPE",
@@ -10595,7 +10605,7 @@
    "margin": null,
    "mkt": "ADV.DE",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ADV.DE",
     "exchange": "Xetra (Frankfurt)",
@@ -10652,7 +10662,7 @@
    "margin": null,
    "mkt": "600745.SS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "600745.SS",
     "exchange": "Shanghai Stock Exchange",
@@ -10694,7 +10704,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Bain Capital",
     "event_date": "2023-09",
@@ -10768,7 +10778,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "merged",
     "parent": "Lightning AI",
     "event_date": "2026-01-21",
@@ -10841,7 +10851,7 @@
    "margin": null,
    "mkt": "NB2.DE",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "NB2.DE",
     "exchange": "Xetra (Frankfurt)",
@@ -10856,7 +10866,7 @@
    "sector": "infra",
    "id": "yotta-data-services",
    "label": "Yotta Data Services",
-   "ticker": "Privada",
+   "ticker": "Pre-IPO ~$3.9B",
    "cat": "hpc_super",
    "port": "",
    "role": "Proveedor indio de datacenters e infraestructura de \"IA soberana\" (Shakti Cloud), parte del grupo Hiranandani.",
@@ -10915,7 +10925,7 @@
    "margin": null,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "NTT, Inc. (vía NTT DATA Group)",
     "parent_ticker": "9432.T",
@@ -11037,7 +11047,7 @@
    "margin": null,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "SoftBank Group",
     "parent_ticker": "9984.T",
@@ -11175,7 +11185,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Serve Robotics",
     "parent_ticker": "SERV",
@@ -11265,7 +11275,7 @@
    "margin": null,
    "mkt": null,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Alphabet Inc.",
     "parent_ticker": "GOOGL",
@@ -11323,7 +11333,7 @@
    "margin": null,
    "mkt": "9880.HK",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "9880.HK",
     "exchange": "Hong Kong Exchange",
@@ -11397,7 +11407,7 @@
    "margin": null,
    "mkt": "9348.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "9348.T",
     "exchange": "Tokyo Stock Exchange",
@@ -11423,7 +11433,7 @@
    "margin": null,
    "mkt": "5034.T",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "5034.T",
     "exchange": "Tokyo Stock Exchange",
@@ -11469,7 +11479,7 @@
    "sector": "espacio",
    "id": "loft-orbital",
    "label": "Loft Orbital",
-   "ticker": "Privada",
+   "ticker": "Pre-IPO ~$1B",
    "cat": "space_infra",
    "port": "",
    "role": "Opera \"infraestructura espacial como servicio\": satélites multi-payload (línea YAM) que alquila a clientes gubernamentales y comerciales.",
@@ -11497,7 +11507,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Lockheed Martin",
     "parent_ticker": "LMT",
@@ -11586,7 +11596,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Kongsberg Gruppen",
     "parent_ticker": "KOG.OL",
@@ -11831,7 +11841,7 @@
    "mkt": null,
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Textron Inc.",
     "parent_ticker": "TXT",
@@ -11856,7 +11866,7 @@
    "margin": 0.12,
    "mkt": "012450.KS",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "012450.KS",
     "exchange": "Korea Exchange",
@@ -11882,7 +11892,7 @@
    "margin": 0.08,
    "mkt": "BAB.L",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "BAB.L",
     "exchange": "London Stock Exchange",
@@ -11924,7 +11934,7 @@
    "mkt": "XNDU",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "XNDU",
     "exchange": "Nasdaq / TSX",
@@ -11951,7 +11961,7 @@
    "mkt": "IQMX",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "IQMX",
     "exchange": "Nasdaq",
@@ -12026,7 +12036,7 @@
    "mkt": "INFQ",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "INFQ",
     "exchange": "NYSE",
@@ -12089,7 +12099,7 @@
    "sector": "cloud_ia",
    "id": "poolside-ai",
    "label": "Poolside AI",
-   "ticker": "Pre-IPO ~$3B",
+   "ticker": "Pre-IPO ~$13B",
    "cat": "ailab",
    "port": "",
    "role": "Laboratorio de IA enfocado en modelos fundacionales para generación de código, entrenados con aprendizaje por refuerzo sobre datos sintéticos de programación.",
@@ -12132,7 +12142,7 @@
    "margin": 0.09,
    "mkt": "AM.PA",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "AM.PA",
     "exchange": "Euronext Paris",
@@ -12354,7 +12364,7 @@
    "mkt": "2513.HK",
    "preipo": false,
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2513.HK",
     "exchange": "HKEX",
@@ -12493,7 +12503,7 @@
    "mkt": "AES",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "AES",
     "exchange": "NYSE",
@@ -12536,7 +12546,7 @@
    "mkt": null,
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Berkshire Hathaway Inc.",
     "parent_ticker": "BRK-B",
@@ -12611,7 +12621,7 @@
    "mkt": null,
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Fortis Inc.",
     "parent_ticker": "FTS.TO",
@@ -12686,7 +12696,7 @@
    "mkt": "RWE.DE",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "RWE.DE",
     "exchange": "XETRA",
@@ -12761,7 +12771,7 @@
    "mkt": "EOAN.DE",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "EOAN.DE",
     "exchange": "XETRA",
@@ -12804,7 +12814,7 @@
    "mkt": "ORSTED.CO",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ORSTED.CO",
     "exchange": "Nasdaq Copenhagen",
@@ -12847,7 +12857,7 @@
    "mkt": "UN01.DE",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "UN01.DE",
     "exchange": "XETRA",
@@ -13050,7 +13060,7 @@
    "mkt": "2222.SR",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2222.SR",
     "exchange": "Tadawul",
@@ -13126,7 +13136,7 @@
    "mkt": "ENI.MI",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ENI.MI",
     "exchange": "Borsa Italiana (Euronext Milan); ADR NYSE: E",
@@ -13201,7 +13211,7 @@
    "mkt": "0857.HK",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "0857.HK",
     "exchange": "HKEX",
@@ -13228,7 +13238,7 @@
    "mkt": "0386.HK",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "0386.HK",
     "exchange": "HKEX",
@@ -13271,7 +13281,7 @@
    "mkt": "ROSN.ME",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ROSN.ME",
     "exchange": "MOEX",
@@ -13298,7 +13308,7 @@
    "mkt": "GAZP.ME",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GAZP.ME",
     "exchange": "MOEX",
@@ -13325,7 +13335,7 @@
    "mkt": "LKOH.ME",
    "sector_hint": "energia",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "LKOH.ME",
     "exchange": "MOEX",
@@ -13928,7 +13938,7 @@
    "mkt": "KGH.WA",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "KGH.WA",
     "exchange": "GPW Warsaw",
@@ -13955,7 +13965,7 @@
    "mkt": "GMEXICOB.MX",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GMEXICOB.MX",
     "exchange": "BMV",
@@ -13998,7 +14008,7 @@
    "mkt": "BOL.ST",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "BOL.ST",
     "exchange": "Nasdaq Stockholm",
@@ -14041,7 +14051,7 @@
    "mkt": "GMKN.ME",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GMKN.ME",
     "exchange": "MOEX",
@@ -14148,7 +14158,7 @@
    "mkt": "3993.HK",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "3993.HK",
     "exchange": "HKEX",
@@ -14223,7 +14233,7 @@
    "mkt": "1772.HK",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "1772.HK",
     "exchange": "HKEX",
@@ -14250,7 +14260,7 @@
    "mkt": "9696.HK",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "9696.HK",
     "exchange": "HKEX",
@@ -14421,7 +14431,7 @@
    "mkt": "GPH.V",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "GPH.V",
     "exchange": "TSX Venture Exchange",
@@ -14464,7 +14474,7 @@
    "mkt": "600111.SS",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "600111.SS",
     "exchange": "SSE",
@@ -14667,7 +14677,7 @@
    "mkt": "SSAB-B.ST",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "SSAB-B.ST",
     "exchange": "Nasdaq Stockholm",
@@ -14710,7 +14720,7 @@
    "mkt": null,
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Rio Tinto",
     "parent_ticker": "RIO",
@@ -14769,7 +14779,7 @@
    "mkt": "2600.HK",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2600.HK",
     "exchange": "HKEX",
@@ -14924,7 +14934,7 @@
    "mkt": "0914.HK",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "0914.HK",
     "exchange": "HKEX",
@@ -14983,7 +14993,7 @@
    "mkt": null,
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "merged",
     "parent": "SK Inc.",
     "parent_ticker": "034730.KS",
@@ -15043,7 +15053,7 @@
    "mkt": null,
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Corning Inc.",
     "parent_ticker": "GLW",
@@ -15310,7 +15320,7 @@
    "mkt": "6869.HK",
    "sector_hint": "materiales",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "6869.HK",
     "exchange": "HKEX",
@@ -15593,7 +15603,7 @@
    "mkt": null,
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Moody's Corporation",
     "parent_ticker": "MCO",
@@ -15620,7 +15630,7 @@
    "mkt": null,
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "S&P Global Inc.",
     "parent_ticker": "SPGI",
@@ -15967,7 +15977,7 @@
    "mkt": "8411.T",
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "8411.T",
     "exchange": "Tokyo Stock Exchange",
@@ -15994,7 +16004,7 @@
    "mkt": "8306.T",
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "8306.T",
     "exchange": "Tokyo Stock Exchange",
@@ -16021,7 +16031,7 @@
    "mkt": "BARC.L",
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "BARC.L",
     "exchange": "London Stock Exchange",
@@ -16048,7 +16058,7 @@
    "mkt": "8316.T",
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "8316.T",
     "exchange": "Tokyo Stock Exchange",
@@ -16155,7 +16165,7 @@
    "mkt": null,
    "sector_hint": "macro_credito",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Allianz SE",
     "parent_ticker": "ALV.DE",
@@ -16710,7 +16720,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "KDDI Corporation",
     "parent_ticker": "9433.T",
@@ -16865,7 +16875,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "KKR / Singtel",
     "parent_ticker": "KKR",
@@ -16893,7 +16903,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Starwood Capital-led consortium",
     "event_date": "2025-07-04",
@@ -16936,7 +16946,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Bharti Airtel",
     "parent_ticker": "BHARTIARTL.NS",
@@ -16963,7 +16973,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Reliance Industries",
     "parent_ticker": "RELIANCE.NS",
@@ -17022,7 +17032,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Adani Enterprises (50%) / EdgeConneX (50%)",
     "parent_ticker": "ADANIENT.NS",
@@ -17065,7 +17075,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Dubai Electricity and Water Authority (DEWA)",
     "note_es": "Filial de Digital DEWA, brazo de DEWA (cotizada en el DFM de Dubái).",
@@ -17091,7 +17101,7 @@
    "mkt": "MEZA.QA",
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "MEZA.QA",
     "exchange": "Qatar Stock Exchange",
@@ -17135,7 +17145,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Digital Realty",
     "parent_ticker": "DLR",
@@ -17194,7 +17204,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Digital Realty / Brookfield Infrastructure",
     "parent_ticker": "DLR",
@@ -17285,7 +17295,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "American Tower",
     "parent_ticker": "AMT",
@@ -17313,7 +17323,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "AIP / MGX / BlackRock's GIP consortium",
     "parent_ticker": "BLK",
@@ -17341,7 +17351,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "DigitalBridge / La Caisse",
     "parent_ticker": "DBRG",
@@ -17433,7 +17443,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Blackstone Real Estate Income Trust (BREIT)",
     "event_date": "2021-10",
@@ -17508,7 +17518,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Starwood Capital-led consortium",
     "event_date": "2025-07-04",
@@ -17663,7 +17673,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "HOCHTIEF AG",
     "parent_ticker": "HOT.DE",
@@ -17962,7 +17972,7 @@
    "mkt": "MTRS.ST",
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "MTRS.ST",
     "exchange": "Nasdaq Stockholm",
@@ -18005,7 +18015,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Eaton",
     "parent_ticker": "ETN",
@@ -18033,7 +18043,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Ecolab",
     "parent_ticker": "ECL",
@@ -18061,7 +18071,7 @@
    "mkt": null,
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "Trane Technologies",
     "parent_ticker": "TT",
@@ -18089,7 +18099,7 @@
    "mkt": "ASTK.CO",
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "ASTK.CO",
     "exchange": "Nasdaq Copenhagen",
@@ -18116,7 +18126,7 @@
    "mkt": "002837.SZ",
    "sector_hint": "inmobiliario",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "002837.SZ",
     "exchange": "Shenzhen Stock Exchange",
@@ -18160,7 +18170,7 @@
    "mkt": "MAERSK-B.CO",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "MAERSK-B.CO",
     "exchange": "Nasdaq Copenhagen",
@@ -18219,7 +18229,7 @@
    "mkt": "1919.HK",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "1919.HK",
     "exchange": "HKEX",
@@ -18278,7 +18288,7 @@
    "mkt": "2603.TW",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2603.TW",
     "exchange": "Taiwan Stock Exchange",
@@ -18305,7 +18315,7 @@
    "mkt": "2609.TW",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2609.TW",
     "exchange": "Taiwan Stock Exchange",
@@ -18348,7 +18358,7 @@
    "mkt": "2615.TW",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "2615.TW",
     "exchange": "Taiwan Stock Exchange",
@@ -18391,7 +18401,7 @@
    "mkt": "9101.T",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "9101.T",
     "exchange": "Tokyo Stock Exchange",
@@ -18418,7 +18428,7 @@
    "mkt": "9104.T",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "9104.T",
     "exchange": "Tokyo Stock Exchange",
@@ -18445,7 +18455,7 @@
    "mkt": "QGTS.QA",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "QGTS.QA",
     "exchange": "Qatar Stock Exchange",
@@ -18504,7 +18514,7 @@
    "mkt": null,
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "CK Hutchison Holdings",
     "parent_ticker": "0001.HK",
@@ -18531,7 +18541,7 @@
    "mkt": null,
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "A.P. Møller-Maersk",
     "parent_ticker": "MAERSK-B.CO",
@@ -18654,7 +18664,7 @@
    "mkt": null,
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Berkshire Hathaway",
     "parent_ticker": "BRK-B",
@@ -18810,7 +18820,7 @@
    "mkt": "RAIL3.SA",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "RAIL3.SA",
     "exchange": "B3",
@@ -18853,7 +18863,7 @@
    "mkt": "DSV.CO",
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "public",
     "ticker": "DSV.CO",
     "exchange": "Nasdaq Copenhagen",
@@ -18976,7 +18986,7 @@
    "mkt": null,
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "acquired",
     "parent": "CEVA Logistics (CMA CGM)",
     "event_date": "2026-03-31",
@@ -19131,7 +19141,7 @@
    "mkt": null,
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Cathay Pacific Airways",
     "parent_ticker": "0293.HK",
@@ -19254,7 +19264,7 @@
    "mkt": null,
    "sector_hint": "logistica",
    "listing": {
-    "as_of": "2026-09-28",
+    "as_of": "2026-09-29",
     "status": "subsidiary",
     "parent": "Abu Dhabi Aviation",
     "event_date": "2008-11",

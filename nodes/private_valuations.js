@@ -3,8 +3,21 @@
 // negociación, aparte). Lo "en vivo" lo agrega el Dossier desde los titulares
 // (/api/company/valuation). No editar a mano: regenerar con una verificación nueva.
 window.PRIVATE_VALUATIONS = {
- "as_of": "2026-09-28",
+ "as_of": "2026-09-29",
  "entries": {
+  "01AI": {
+   "valuation_usd_b": 1.0,
+   "as_of": "2023-11",
+   "lead": "Alibaba Cloud",
+   "talks_note_es": "Bloomberg (jul-2026): prepara ronda pre-IPO antes de cotizar en Hong Kong en 2027; valuación no reportada.",
+   "talks_note_en": "Bloomberg (Jul 2026): preparing a pre-IPO round ahead of a 2027 Hong Kong listing; valuation not reported.",
+   "note_es": "Alcanzó una valuación de ~$1.000M en nov-2023 con respaldo de Alibaba Cloud; en 2026 pivotó a software empresarial.",
+   "note_en": "Reached a ~$1B valuation in Nov 2023 backed by Alibaba Cloud; pivoted to enterprise software in 2026.",
+   "source_url": "https://techcrunch.com/2023/11/05/valued-at-1b-kai-fu-lees-llm-startup-unveils-open-source-model/",
+   "talks_source_url": "https://www.bloomberg.com/news/articles/2026-07-20/ai-pioneer-kai-fu-lee-s-startup-targets-hong-kong-ipo-next-year",
+   "confidence": "medium",
+   "label": "$1B (2023-11)"
+  },
   "Agility": {
    "valuation_usd_b": 2.5,
    "as_of": "2026-06-24",
@@ -110,6 +123,18 @@ window.PRIVATE_VALUATIONS = {
    "confidence": "medium",
    "label": "$330B (2025-08)"
   },
+  "CharacterAI": {
+   "valuation_usd_b": 2.5,
+   "as_of": "2024-08",
+   "raised": "~$2.7B (licencia de Google)",
+   "lead": "Google",
+   "status_note": "Independiente tras el acuerdo de licencia con Google (2024); su CEO Karandeep Anand pasó a Disney como CTO (sept-2026).",
+   "note_es": "Google pagó ~$2.700M (ago-2024) por licenciar su tecnología y recontratar a sus fundadores; los inversores salieron a una valuación cercana a $2.500M. Sin ronda nueva en 2026.",
+   "note_en": "Google paid ~$2.7B (Aug 2024) to license its tech and rehire its founders; investors were bought out at a ~$2.5B valuation. No new round in 2026.",
+   "source_url": "https://www.revenuememo.com/p/who-owns-character-ai",
+   "confidence": "medium",
+   "label": "$2.5B (2024-08)"
+  },
   "Cognition": {
    "valuation_usd_b": 26,
    "as_of": "2026-05-27",
@@ -151,6 +176,22 @@ window.PRIVATE_VALUATIONS = {
    "source_url": "https://www.bloomberg.com/news/articles/2026-08-13/databricks-raises-5-billion-at-a-190-billion-valuation",
    "confidence": "high",
    "label": "$190B (2026-08-13)"
+  },
+  "DeepSeek": {
+   "valuation_usd_b": 52,
+   "as_of": "2026-07",
+   "round": "Primera ronda externa",
+   "raised": "~CNY 50.000M (~$7.400M)",
+   "lead": "Tencent (mayor externo), CATL",
+   "talks_usd_b": 70,
+   "talks_note_es": "SCMP: negocia una nueva ronda a ~$70.000M pre-money; TechCrunch (jul-2026): ~$1.500M antes de una IPO.",
+   "talks_note_en": "SCMP: negotiating a new round at ~$70B pre-money; TechCrunch (Jul 2026): ~$1.5B before an IPO.",
+   "note_es": "Primera ronda externa: ~CNY 50.000M (~$7.400M) con Tencent y CATL a más de CNY 350.000M (~$52.000M) post-money, según un filing en China (jul-2026).",
+   "note_en": "First outside round: ~CNY 50B (~$7.4B) with Tencent and CATL at over CNY 350B (~$52B) post-money, per a Chinese filing (Jul 2026).",
+   "source_url": "https://www.caixinglobal.com/2026-07-17/deepseek-reaches-52-billion-valuation-in-round-backed-by-tencent-catl-102465358.html",
+   "talks_source_url": "https://www.scmp.com/tech/big-tech/article/3360626/ai-investor-mania-chinas-deepseek-chases-us70-billion-valuation-fresh-round",
+   "confidence": "medium",
+   "label": "$52B (2026-07)"
   },
   "ElevenLabs": {
    "valuation_usd_b": 11,
@@ -249,6 +290,18 @@ window.PRIVATE_VALUATIONS = {
    "confidence": "high",
    "label": "$11.5B (2026-06-09)"
   },
+  "Imbue": {
+   "valuation_usd_b": 1.0,
+   "as_of": "2023-09",
+   "round": "Serie B",
+   "raised": "$200M",
+   "lead": "Astera Institute (con Nvidia)",
+   "note_es": "Serie B de $200M (sept-2023) con Astera y Nvidia a una valuación de más de $1.000M; sin rondas nuevas.",
+   "note_en": "$200M Series B (Sep 2023) with Astera and Nvidia at a valuation of over $1B; no newer rounds.",
+   "source_url": "https://www.bwdisrupt.com/article/ai-startup-imbue-raises-200mn-at-over-1bn-valuation-490472",
+   "confidence": "medium",
+   "label": "$1B (2023-09)"
+  },
   "LambdaLabs": {
    "valuation_usd_b": 5.9,
    "as_of": "2025-11",
@@ -330,6 +383,18 @@ window.PRIVATE_VALUATIONS = {
    "talks_source_url": "https://sacra.com/c/perplexity/",
    "confidence": "medium",
    "label": "$20B (2025-09)"
+  },
+  "PhysicalIntelligence": {
+   "valuation_usd_b": 11,
+   "as_of": "2026-03",
+   "raised": "~$1B",
+   "lead": "Founders Fund",
+   "status_note": "Rumor de compra por Anthropic (jul-2026) desmentido por su CEO; sigue independiente.",
+   "note_es": "Bloomberg (mar-2026) reportó ~$1.000M a más de $11.000M con Founders Fund, Lightspeed, Thrive y Lux; TechCrunch (jul-2026) la describe ya valuada en $11.000M. Ronda previa: $600M a $5.600M (nov-2025).",
+   "note_en": "Bloomberg (Mar 2026) reported ~$1B at over $11B with Founders Fund, Lightspeed, Thrive and Lux; TechCrunch (Jul 2026) describes it as valued at $11B. Prior round: $600M at $5.6B (Nov 2025).",
+   "source_url": "https://www.bloomberg.com/news/articles/2026-03-27/ex-deepmind-staffers-robotics-startup-in-talks-for-11-billion-valuation",
+   "confidence": "medium",
+   "label": "$11B (2026-03)"
   },
   "PsiQuantum": {
    "valuation_usd_b": 10.5,
@@ -451,6 +516,22 @@ window.PRIVATE_VALUATIONS = {
    "confidence": "medium",
    "label": "$6B (2025-12-18)"
   },
+  "Tenstorrent": {
+   "valuation_usd_b": 2.7,
+   "as_of": "2024-12",
+   "round": "Serie D",
+   "raised": "$693M",
+   "lead": "Samsung Securities y AFW Partners",
+   "talks_usd_b": 3.2,
+   "talks_note_es": "The Information (nov-2025): negociaba ~$800M liderados por Fidelity a ~$3.000-3.200M; agregadores citan una Serie E de $1.290M (ago-2026) no confirmada por la compañía.",
+   "talks_note_en": "The Information (Nov 2025): in talks for ~$800M led by Fidelity at ~$3-3.2B; aggregators cite a $1.29B Series E (Aug 2026) not confirmed by the company.",
+   "note_es": "Serie D de más de $693M a una valuación pre-money de $2.000M (~$2.700M post) liderada por Samsung Securities y AFW Partners (dic-2024).",
+   "note_en": "Series D of over $693M at a $2B pre-money valuation (~$2.7B post) led by Samsung Securities and AFW Partners (Dec 2024).",
+   "source_url": "https://tenstorrent.com/en/newsroom/tenstorrent-closes-693m-of-series-d-funding-led-by-samsung-securities-and-afw-partners",
+   "talks_source_url": "https://www.theinformation.com/articles/tenstorrent-nears-3-billion-valuation-fidelity-led-round",
+   "confidence": "high",
+   "label": "$2.7B (2024-12)"
+  },
   "Together_AI": {
    "valuation_usd_b": 8.3,
    "as_of": "2026-07-01",
@@ -558,6 +639,18 @@ window.PRIVATE_VALUATIONS = {
    "confidence": "medium",
    "label": "$2.5B (2026-01-21)"
   },
+  "loft-orbital": {
+   "valuation_usd_b": 1.0,
+   "as_of": "2025-01",
+   "round": "Serie C",
+   "raised": "$170M",
+   "lead": "Tikehau Capital y Axial Partners",
+   "note_es": "Serie C de $170M co-liderada por Tikehau y Axial (ene-2025) a una valuación reportada de ~$1.000M.",
+   "note_en": "$170M Series C co-led by Tikehau and Axial (Jan 2025) at a reported ~$1B valuation.",
+   "source_url": "https://www.bloomberg.com/news/articles/2025-01-14/space-firm-loft-orbital-raises-170-million-to-scale-up-launches",
+   "confidence": "medium",
+   "label": "$1B (2025-01)"
+  },
   "neura-robotics": {
    "valuation_usd_b": 7,
    "as_of": "2026-06-10",
@@ -581,6 +674,18 @@ window.PRIVATE_VALUATIONS = {
    "source_url": "https://www.cnbc.com/2026/03/09/nscale-ai-data-center-nvidia-raise.html",
    "confidence": "high",
    "label": "$14.6B (2026-03-09)"
+  },
+  "poolside-ai": {
+   "valuation_usd_b": 13,
+   "as_of": "2026-08",
+   "raised": "$1B",
+   "lead": "Nvidia",
+   "status_note": "No es adquisición: licencia no exclusiva + transferencia de >100 empleados a Nvidia (ago-2026); los $6.000M se repartirán a inversores.",
+   "note_es": "Nvidia pagó una licencia no exclusiva de $6.000M y Poolside levantó $1.000M a $12.000M pre-money (~$13.000M post) en ago-2026; más de 100 ingenieros pasan a Nvidia.",
+   "note_en": "Nvidia paid a $6B non-exclusive license and Poolside raised $1B at a $12B pre-money (~$13B post) in Aug 2026; 100+ engineers move to Nvidia.",
+   "source_url": "https://www.bloomberg.com/news/articles/2026-08-20/nvidia-to-pay-ai-startup-poolside-a-6-billion-license-newcomer-says",
+   "confidence": "medium",
+   "label": "$13B (2026-08)"
   },
   "reflection-ai": {
    "valuation_usd_b": 27.5,
@@ -652,6 +757,18 @@ window.PRIVATE_VALUATIONS = {
    "confidence": "high",
    "label": "$2.2B (2026-04-28)"
   },
+  "waabi": {
+   "valuation_usd_b": 3.0,
+   "as_of": "2026-01",
+   "round": "Serie C",
+   "raised": "$750M (+ hasta $250M de Uber por hitos)",
+   "lead": "Khosla Ventures y G2 Venture Partners",
+   "note_es": "Serie C de $750M (ene-2026) co-liderada por Khosla y G2VP, más hasta $250M de Uber; The Globe and Mail reporta valuación de $3.000M (pre-money).",
+   "note_en": "$750M Series C (Jan 2026) co-led by Khosla and G2VP, plus up to $250M from Uber; The Globe and Mail reports a $3B (pre-money) valuation.",
+   "source_url": "https://www.theglobeandmail.com/business/article-waabi-driverless-truck-raquel-urtasun-750-million-financing-khosla-g2/",
+   "confidence": "medium",
+   "label": "$3B (2026-01)"
+  },
   "world-labs": {
    "valuation_usd_b": 5,
    "as_of": "2026-02-18",
@@ -663,6 +780,22 @@ window.PRIVATE_VALUATIONS = {
    "source_url": "https://www.bloomberg.com/news/articles/2026-02-18/ai-pioneer-fei-fei-li-s-startup-world-labs-raises-1-billion",
    "confidence": "medium",
    "label": "$5B (2026-02-18)"
+  },
+  "yotta-data-services": {
+   "valuation_usd_b": 3.9,
+   "as_of": "2026-07",
+   "round": "Pre-IPO",
+   "raised": "$150M",
+   "lead": "HNIs y family offices",
+   "talks_usd_b": 6.0,
+   "talks_note_es": "Bloomberg (may-2026): prepara IPO en India de hasta $900M a una valuación cercana a $6.000M; prospecto previsto desde oct-2026.",
+   "talks_note_en": "Bloomberg (May 2026): preparing an India IPO of up to $900M at a valuation near $6B; draft prospectus expected from Oct 2026.",
+   "note_es": "Levantó $150M en ronda pre-IPO a ₹37.000 crore (~$3.900M) de valuación (jul-2026).",
+   "note_en": "Raised $150M in a pre-IPO round at a ₹37,000 crore (~$3.9B) valuation (Jul 2026).",
+   "source_url": "https://www.business-standard.com/amp/companies/start-ups/yotta-raises-150-mn-at-37-000-crore-valuation-to-fund-ai-expansion-126070500709_1.html",
+   "talks_source_url": "https://www.bloomberg.com/news/articles/2026-05-05/yotta-data-said-to-hire-advisors-for-900-million-india-ipo",
+   "confidence": "medium",
+   "label": "$3.9B (2026-07)"
   },
   "zipline": {
    "valuation_usd_b": 7.6,
