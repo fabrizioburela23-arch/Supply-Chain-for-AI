@@ -1575,6 +1575,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
           <button data-f="all" class="active" data-i18n="mk_fall">Todas</button>
         </div>
         <button class="mkt-btn" id="mk-refresh">⟳ <span data-i18n="mk_refresh">Actualizar precios</span></button>
+        <button class="mkt-btn" onclick="window.KhipuRisk&&window.KhipuRisk.open({tab:'var',source:'market',autorun:true})" title="VaR · CVaR · volatilidad · beta · Vega">📉 <span data-i18n="mk_risk">Reporte de riesgo</span></button>
         <button id="mk-events-btn" onclick="loadCorporateEvents()" style="padding:5px 10px;border:1px solid rgba(80,120,180,.3);border-radius:5px;background:none;color:#7a9cc4;font-size:11px;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(80,120,180,.1)'" onmouseout="this.style.background='none'">📰 Eventos</button>
         <button id="export-btn" style="padding:5px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);font-size:11px;cursor:pointer" title="Exportar datos">⬇ CSV</button>
         <span class="live-pill" id="live-pill"><span class="live-dot"></span>LIVE</span>
@@ -3857,7 +3858,7 @@ es: {
   em_start:'Empieza por los nodos centrales',
   disc:'Análisis informativo basado en datos públicos y estimaciones (jun. 2026). Toda métrica de rentabilidad es margen sobre ventas. No constituye asesoría financiera.',
   mk_value:'Valor de posiciones', mk_pnl:'P&L total', mk_day:'Variación del día', mk_status:'Datos',
-  mk_fpos:'Posiciones', mk_fall:'Todas', mk_refresh:'Actualizar precios', mk_key:'API key',
+  mk_fpos:'Posiciones', mk_fall:'Todas', mk_refresh:'Actualizar precios', mk_risk:'Reporte de riesgo', mk_key:'API key',
   mk_save:'Guardar', mk_clear:'Borrar',
   mk_keyhint:'Se guarda solo en este navegador (localStorage), nunca en el archivo.',
   mk_foot:'Precios fin-de-día (EOD) de Marketstack v2 en una sola llamada por actualización. Empresas sin listado en EE.UU. (privadas o solo bolsa local) aparecen sin cotización.',
@@ -3925,7 +3926,7 @@ en: {
   em_start:'Start with the central nodes',
   disc:'Informational analysis based on public data and estimates (Jun 2026). All profitability metrics are margin on sales. Not financial advice.',
   mk_value:'Positions value', mk_pnl:'Total P&L', mk_day:'Day change', mk_status:'Data',
-  mk_fpos:'Positions', mk_fall:'All', mk_refresh:'Refresh prices', mk_key:'API key',
+  mk_fpos:'Positions', mk_fall:'All', mk_refresh:'Refresh prices', mk_risk:'Risk report', mk_key:'API key',
   mk_save:'Save', mk_clear:'Clear',
   mk_keyhint:'Stored only in this browser (localStorage), never inside the file.',
   mk_foot:'End-of-day (EOD) prices from Marketstack v2 in a single call per refresh. Companies without a US listing (private or local-exchange only) show no quote.',
@@ -6658,6 +6659,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/guide.js"></script>
 <script src="engine/xray.js"></script>
 <script src="engine/research.js"></script>
+<script src="engine/riskreport.js"></script>
 <script src="engine/insights.js"></script>
 <script src="engine/statematrix.js"></script>
 <script src="engine/livesim.js"></script>

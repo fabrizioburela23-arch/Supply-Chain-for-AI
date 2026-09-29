@@ -91,6 +91,66 @@
       es: { t: '¿Qué es el VaR?', b: '<b>VaR (Value at Risk)</b> responde: "en un día malo, ¿cuánto podría perder mi portafolio?"<br><br>Un VaR de $500 al 95% significa: <b>en 19 de cada 20 días, no perderás más de $500</b>. El día 20 (el 5% peor) podrías perder más.<br><br>El <b>CVaR</b> mide justamente eso: cuánto pierdes en promedio en esos días extremos.' },
       en: { t: 'What is VaR?', b: '<b>VaR (Value at Risk)</b> answers: "on a bad day, how much could my portfolio lose?"<br><br>A $500 VaR at 95% means: <b>on 19 out of 20 days you won’t lose more than $500</b>. On day 20 (the worst 5%) you could lose more.<br><br><b>CVaR</b> measures exactly that: your average loss on those extreme days.' },
     },
+    vol_ann: {
+      es: { t: "¿Qué es la volatilidad?", b: "Cuánto <b>se mueve</b> tu cartera, en promedio, en un año (desviación estándar de los retornos diarios × √252).<br><br>Una volatilidad de 25% quiere decir que en un año típico el valor puede alejarse <b>±25%</b> de su camino normal. Más volatilidad = más sube y baja; no dice si va a subir o bajar." },
+      en: { t: "What is volatility?", b: "How much your portfolio <b>moves</b>, on average, over a year (standard deviation of daily returns × √252).<br><br>A 25% volatility means that in a typical year the value can stray <b>±25%</b> from its normal path. More volatility = bigger swings; it does not say whether it will rise or fall." },
+    },
+    cvar: {
+      es: { t: "¿Qué es el CVaR?", b: "El <b>CVaR</b> (o <i>Expected Shortfall</i>) responde: \"<b>cuando</b> me toca uno de esos días malos (el 5% peor), ¿cuánto pierdo <b>en promedio</b>?\".<br><br>Siempre es mayor que el VaR, y por eso los bancos lo prefieren hoy: mira la cola de las pérdidas, no solo su borde." },
+      en: { t: "What is CVaR?", b: "<b>CVaR</b> (or <i>Expected Shortfall</i>) answers: \"<b>when</b> one of those bad days hits (the worst 5%), how much do I lose <b>on average</b>?\".<br><br>It is always larger than VaR, which is why banks prefer it today: it looks at the whole tail of losses, not just its edge." },
+    },
+    var_method: {
+      es: { t: "VaR histórico vs paramétrico", b: "<b>Histórico</b>: toma los retornos REALES del último año y mira el 5% peor. No supone nada, pero depende de lo que pasó ese año.<br><br><b>Paramétrico</b>: supone que los retornos siguen una curva normal (campana) con la volatilidad medida. Es suave pero <b>subestima</b> las caídas extremas si el mercado tiene \"colas gordas\".<br><br>Si ambos se parecen, el número es robusto. A <b>N días</b> se escala por √N (regla estándar de Basilea)." },
+      en: { t: "Historical vs parametric VaR", b: "<b>Historical</b>: takes the REAL returns of the last year and looks at the worst 5%. It assumes nothing, but depends on what happened that year.<br><br><b>Parametric</b>: assumes returns follow a normal (bell) curve with the measured volatility. It is smooth but <b>underestimates</b> extreme drops when markets have \"fat tails\".<br><br>If both are close, the number is robust. For <b>N days</b> it scales by √N (standard Basel rule)." },
+    },
+    beta: {
+      es: { t: "¿Qué es la beta?", b: "Cuánto se mueve tu cartera cuando se mueve el mercado (S&amp;P 500).<br><br><b>Beta 1</b> = igual que el mercado. <b>1,5</b> = si el mercado cae 10%, tu cartera tiende a caer ~15%. <b>0,5</b> = la mitad. La <b>correlación</b> dice qué tan \"pegada\" va al mercado (1 = totalmente)." },
+      en: { t: "What is beta?", b: "How much your portfolio moves when the market (S&amp;P 500) moves.<br><br><b>Beta 1</b> = same as the market. <b>1.5</b> = if the market drops 10%, your portfolio tends to drop ~15%. <b>0.5</b> = half. <b>Correlation</b> says how tightly it tracks the market (1 = fully)." },
+    },
+    drawdown: {
+      es: { t: "¿Qué es la máxima caída?", b: "La peor caída desde un máximo hasta un mínimo en el período: \"si hubieras comprado en el peor momento, ¿cuánto llegaste a perder antes de recuperarte?\". Mide el <b>dolor real</b> que habría que aguantar." },
+      en: { t: "What is max drawdown?", b: "The worst fall from a peak to a trough in the period: \"had you bought at the worst moment, how much would you have been down before recovering?\". It measures the <b>real pain</b> you would have had to endure." },
+    },
+    sharpe: {
+      es: { t: "¿Qué es el Sharpe?", b: "Retorno por unidad de riesgo: retorno anual ÷ volatilidad anual (aquí con tasa libre de riesgo 0, para simplificar).<br><br>Más de <b>1</b> es bueno; más de <b>2</b>, muy bueno. Es una foto del pasado, no garantiza el futuro." },
+      en: { t: "What is Sharpe?", b: "Return per unit of risk: annual return ÷ annual volatility (here with a 0 risk-free rate, for simplicity).<br><br>Above <b>1</b> is good; above <b>2</b>, very good. It is a snapshot of the past, not a guarantee." },
+    },
+    risk_contrib: {
+      es: { t: "¿Qué es la contribución al riesgo?", b: "Qué parte de la volatilidad total la <b>pone cada acción</b>. Suma 100%.<br><br>Si una acción pesa 20% de tu dinero pero aporta 45% del riesgo, es la que más mueve tu cartera: está <b>concentrando el riesgo</b>. Tiene en cuenta cuánto se mueven juntas (correlaciones)." },
+      en: { t: "What is risk contribution?", b: "Which share of total volatility <b>each stock contributes</b>. It sums to 100%.<br><br>If a stock is 20% of your money but contributes 45% of the risk, it is what moves your portfolio most: it is <b>concentrating the risk</b>. It accounts for how stocks move together (correlations)." },
+    },
+    correlation: {
+      es: { t: "¿Qué es la correlación?", b: "Qué tan parecido se mueven dos acciones, de −1 a 1. <b>Cerca de 1</b>: suben y bajan juntas (no diversifican). <b>Cerca de 0</b>: independientes. <b>Negativa</b>: una tiende a subir cuando la otra baja (cubren).<br><br>El <b>ratio de diversificación</b> dice cuánto riesgo te ahorras por combinarlas: 1 = nada; más alto = mejor." },
+      en: { t: "What is correlation?", b: "How similarly two stocks move, from −1 to 1. <b>Near 1</b>: they rise and fall together (no diversification). <b>Near 0</b>: independent. <b>Negative</b>: one tends to rise when the other falls (a hedge).<br><br>The <b>diversification ratio</b> says how much risk you save by combining them: 1 = none; higher = better." },
+    },
+    backtest: {
+      es: { t: "¿Qué es el backtest del VaR?", b: "Comprueba si el VaR fue honesto: cuenta cuántos días del último año la pérdida real <b>superó</b> el VaR 95%. Lo esperado es ~5% de los días (≈ 12-13 de 250).<br><br>Muchas más veces = el VaR está <b>subestimando</b> el riesgo." },
+      en: { t: "What is the VaR backtest?", b: "It checks whether the VaR was honest: it counts how many days last year the real loss <b>exceeded</b> the 95% VaR. The expected share is ~5% of days (≈ 12-13 of 250).<br><br>Many more = the VaR is <b>underestimating</b> the risk." },
+    },
+    vega: {
+      es: { t: "¿Qué es la Vega (o Kappa)?", b: "La <b>Vega</b> mide la <b>sensibilidad</b> de una posición ante los cambios en la <b>volatilidad</b> del mercado: cuánto cambia el valor de tus <b>opciones</b> si la <b>volatilidad</b> del mercado sube o baja <b>1 punto</b> (por ejemplo de 30% a 31%). En algunos bancos, como Morgan Stanley, se le llama <b>Kappa</b>.<br><br>Vega de <b>+$500</b> = si la volatilidad sube 1 punto, ganas ~$500; si baja 1 punto, pierdes ~$500. Comprar opciones da Vega positiva; venderlas, negativa.<br><br>Las <b>acciones tienen Vega 0</b>: su valor no depende directamente de la volatilidad." },
+      en: { t: "What is Vega (or Kappa)?", b: "<b>Vega</b> measures how much the value of your <b>options</b> changes if market <b>volatility</b> rises or falls by <b>1 point</b> (e.g. from 30% to 31%). At some banks, like Morgan Stanley, it is called <b>Kappa</b>.<br><br>Vega of <b>+$500</b> = if volatility rises 1 point you gain ~$500; if it falls 1 point you lose ~$500. Buying options gives positive Vega; selling them, negative.<br><br><b>Stocks have zero Vega</b>: their value does not depend directly on volatility." },
+    },
+    iv: {
+      es: { t: "¿Qué es la volatilidad implícita?", b: "Es la volatilidad que el <b>mercado</b> está \"cobrando\" en el precio de una opción: lo que los operadores esperan que se mueva la acción hasta el vencimiento.<br><br>Aquí se usa la publicada para ese contrato exacto. Si no está publicada, se usa la volatilidad <b>histórica</b> del último año, y se avisa." },
+      en: { t: "What is implied volatility?", b: "It is the volatility the <b>market</b> is \"charging\" in an option's price: how much traders expect the stock to move until expiry.<br><br>Here we use the one published for that exact contract. If it isn't published, the stock's <b>historical</b> volatility of the last year is used, and we say so." },
+    },
+    greeks: {
+      es: { t: "Delta, Gamma y Theta", b: "<b>Delta</b>: a cuántas acciones equivale tu posición en opciones (si la acción sube $1, ganas ~Delta dólares).<br><b>Gamma</b>: cuánto cambia la Delta cuando la acción se mueve.<br><b>Theta</b>: cuánto valor pierden tus opciones por cada día que pasa, aunque nada más cambie (el \"costo del tiempo\")." },
+      en: { t: "Delta, Gamma and Theta", b: "<b>Delta</b>: how many shares your option position is equivalent to (if the stock rises $1, you gain ~Delta dollars).<br><b>Gamma</b>: how much Delta changes when the stock moves.<br><b>Theta</b>: how much value your options lose each day that passes, even if nothing else changes (the \"cost of time\")." },
+    },
+    delta: {
+      es: { t: "¿Qué es la Delta?", b: "La <b>Delta</b> describe la relación <b>lineal</b> de tu posición con la acción (el activo subyacente): si la acción sube <b>$1</b>, tu posición gana aproximadamente <b>Delta</b> dólares.<br><br>Aquí se muestra en \"acciones equivalentes\": una Delta de +150 se comporta como tener 150 acciones. Una acción tiene Delta 1; un call, entre 0 y 1; un put, entre −1 y 0." },
+      en: { t: "What is Delta?", b: "<b>Delta</b> describes the <b>linear</b> relationship between your position and the stock (the underlying asset): if the stock rises <b>$1</b>, your position gains about <b>Delta</b> dollars.<br><br>Shown here as \"equivalent shares\": a Delta of +150 behaves like holding 150 shares. A share has Delta 1; a call, between 0 and 1; a put, between −1 and 0." },
+    },
+    gamma: {
+      es: { t: "¿Qué es la Gamma?", b: "La <b>Gamma</b> es la <b>segunda derivada</b> respecto al precio de la acción: cuánto cambia la Delta cuando la acción se mueve $1. Añade la <b>curvatura (convexidad)</b> al riesgo.<br><br>Gamma alta = tu exposición cambia rápido cuando el precio se mueve (la Delta sola se queda corta). Comprar opciones da Gamma positiva; venderlas, negativa." },
+      en: { t: "What is Gamma?", b: "<b>Gamma</b> is the <b>second derivative</b> with respect to the stock price: how much Delta changes when the stock moves $1. It adds <b>curvature (convexity)</b> to the risk.<br><br>High Gamma = your exposure changes fast when the price moves (Delta alone falls short). Buying options gives positive Gamma; selling them, negative." },
+    },
+    theta: {
+      es: { t: "¿Qué es la Theta?", b: "La <b>Theta</b> mide cómo cambia el valor de tu cartera <b>a medida que pasa el tiempo</b>, suponiendo que nada más cambia en el mercado.<br><br>Theta de <b>−$20</b> = cada día que pasa tus opciones valen ~$20 menos (el \"costo del tiempo\"). Quien compra opciones suele tener Theta negativa; quien las vende, positiva." },
+      en: { t: "What is Theta?", b: "<b>Theta</b> measures how your portfolio's value changes <b>as time passes</b>, assuming nothing else in the market changes.<br><br>Theta of <b>−$20</b> = each day that passes your options are worth ~$20 less (the \"cost of time\"). Option buyers usually have negative Theta; sellers, positive." },
+    },
     dilucion: {
       es: { t: '¿Qué es la dilución?', b: 'Cuando una empresa <b>emite acciones nuevas</b>, tu porción del pastel se achica: eso es <b>dilución</b>.<br><br>Dilución positiva (+%) = imprimieron acciones (malo para ti, salvo que el dinero se invierta muy bien). Dilución negativa (−%) = la empresa <b>recompró</b> acciones: tu porción crece sin que hagas nada (Nvidia y Apple lo hacen).' },
       en: { t: 'What is dilution?', b: 'When a company <b>issues new shares</b>, your slice of the pie shrinks: that’s <b>dilution</b>.<br><br>Positive dilution (+%) = they printed shares (bad for you unless the money is invested brilliantly). Negative dilution (−%) = the company <b>bought back</b> shares: your slice grows while you do nothing (Nvidia and Apple do this).' },

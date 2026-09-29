@@ -3400,6 +3400,58 @@ def _portfolio_risk_impl(positions, no_data_msg):
     }, 200
 
 
+@app.route('/api/portfolio/risk_report', methods=['POST'])
+@rate_limit(limit=20, window=3600)
+def portfolio_risk_report():
+    """REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución)
+    con precios diarios REALES de 1 año. Body: {positions:[{symbol, shares,
+    label?}], horizon_days?}. No toca /api/portfolio-risk ni /v1 (contratos)."""
+    from core.risk_report import build_report
+    body = request.get_json(silent=True) or {}
+    pos = body.get('positions')
+    if not isinstance(pos, list) or not pos:
+        return jsonify({'ok': False, 'error': 'positions requerido: [{symbol, shares}]'}), 400
+    try:
+        horizon = min(max(int(body.get('horizon_days') or 10), 1), 30)
+    except (TypeError, ValueError):
+        horizon = 10
+    try:
+        return jsonify(build_report(pos, horizon=horizon))
+    except Exception as e:  # noqa: BLE001
+        log.warning('risk_report: %s', e)
+        return jsonify({'ok': False, 'error': 'error interno al calcular el reporte'}), 500
+
+
+@app.route('/api/portfolio/vega_report', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+def portfolio_vega_report():
+    """REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad
+    implícita EN VIVO del contrato. Body: {options:[{symbol, kind, strike,
+    expiry, contracts}]} (contracts < 0 = posición corta)."""
+    from core.options import vega_report
+    body = request.get_json(silent=True) or {}
+    opts = body.get('options')
+    if not isinstance(opts, list) or not opts:
+        return jsonify({'ok': False, 'error': 'options requerido: [{symbol, kind, strike, expiry, contracts}]'}), 400
+    try:
+        return jsonify(vega_report(opts))
+    except Exception as e:  # noqa: BLE001
+        log.warning('vega_report: %s', e)
+        return jsonify({'ok': False, 'error': 'error interno al valorar las opciones'}), 500
+
+
+@app.route('/api/options/chain/<symbol>')
+@rate_limit(limit=120, window=3600)
+def options_chain(symbol):
+    """Vencimientos y strikes disponibles del subyacente (selectores de la UI)."""
+    from core.options import chain_meta
+    safe = _safe_ticker(symbol)
+    if not safe:
+        return jsonify({'available': False, 'error': 'ticker inválido'}), 400
+    exp = request.args.get('expiry')
+    return jsonify(chain_meta(safe, exp if exp and re.fullmatch(r'\d{4}-\d{2}-\d{2}', exp) else None))
+
+
 @app.route('/api/portfolio-risk', methods=['POST'])
 @rate_limit(limit=20, window=3600)
 def api_portfolio_risk_internal():

@@ -343,6 +343,7 @@
       '<div style="flex:1"></div>' + selector + actions +
       '<button id="kpf-new" class="kpf-btn kpf-primary">＋ ' + T('Nueva', 'New') + '</button>' +
       '<button id="kpf-refresh" class="kpf-btn kpf-ghost" title="' + T('Actualizar precios', 'Refresh prices') + '">↻</button>' +
+      '<button id="kpf-risk" class="kpf-btn kpf-ghost" title="VaR · CVaR · Vega">📉 ' + T('Riesgo', 'Risk') + '</button>' +
       '</div>';
   }
 
@@ -581,6 +582,9 @@
     var selEl = $('#kpf-select');
     if (selEl) selEl.onchange = function () { setActiveId(selEl.value); _buyFor = null; render(); };
     if ((el = $('#kpf-refresh'))) el.onclick = function () { refreshPrices(); };
+    if ((el = $('#kpf-risk'))) el.onclick = function () {
+      var a = activeId(); if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'var', source: a ? 'pf:' + a : 'market', autorun: true });
+    };
     if ((el = $('#kpf-rename')) && pf) el.onclick = function () {
       var nn = window.prompt(T('Nuevo nombre de la cartera:', 'New portfolio name:'), pf.name);
       if (nn != null) { renamePortfolio(pf.id, nn); render(); }

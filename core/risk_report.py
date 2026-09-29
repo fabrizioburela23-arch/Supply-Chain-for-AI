@@ -1,0 +1,247 @@
+"""core/risk_report.py — REPORTE DE RIESGO DE CARTERA (VaR, estilo curso MIT).
+
+Pedido (2026-09-29): "un reporte para medir la volatilidad de una cartera".
+Todo se calcula con PRECIOS DIARIOS REALES (Yahoo, ~1 año, ajustados por
+dividendos/splits). Nada se inventa: una posición sin historia suficiente se
+excluye y se dice cuál y por qué.
+
+Métricas (retornos diarios, días comunes a todas las posiciones):
+  · volatilidad anualizada (cartera y por posición)            σ·√252
+  · VaR 95 % y 99 % a 1 día y a N días (histórico y paramétrico normal)
+  · CVaR / Expected Shortfall 95 % y 99 % (histórico)
+  · contribución de cada posición al riesgo (w_i·(Σw)_i / σ²)
+  · beta y correlación contra el S&P 500 (SPY)
+  · matriz de correlaciones entre posiciones
+  · máxima caída (drawdown), Sharpe (tasa libre de riesgo = 0, se dice)
+  · ratio de diversificación (Σ w_i σ_i / σ_p)
+  · peores días reales de la cartera (con fecha)
+  · backtest del VaR 95 %: cuántas veces la pérdida real lo superó (esperado ≈ 5 %)
+
+El VaR es una ESTIMACIÓN estadística basada en el pasado, no una predicción.
+"""
+import math
+import time
+from datetime import datetime, timezone
+
+TRADING_DAYS = 252
+Z = {0.95: 1.6448536, 0.99: 2.3263479}
+BENCH = 'SPY'
+_HIST_CACHE = {}          # (símbolo, rango) → (ts, {date: price}, currency)
+_HIST_TTL = 6 * 3600
+
+
+# ── datos ───────────────────────────────────────────────────────────────────
+def fetch_history(symbol, rng='1y', getter=None):
+    """{fecha 'YYYY-MM-DD': precio ajustado} + moneda, o ({}, None)."""
+    key = (symbol, rng)
+    e = _HIST_CACHE.get(key)
+    if e and time.time() - e[0] < _HIST_TTL:
+        return e[1], e[2]
+    if getter is None:
+        from core.company_data import _get_json as getter
+    data, err = getter(f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
+                       params={'interval': '1d', 'range': rng}, timeout=10)
+    if err or not isinstance(data, dict):
+        return {}, None
+    res = ((data.get('chart') or {}).get('result') or [None])[0] or {}
+    ts = res.get('timestamp') or []
+    ind = res.get('indicators') or {}
+    adj = ((ind.get('adjclose') or [{}])[0] or {}).get('adjclose')
+    close = ((ind.get('quote') or [{}])[0] or {}).get('close')
+    series = adj if adj and len(adj) == len(ts) else close
+    out = {}
+    for t, p in zip(ts, series or []):
+        if p is not None and p > 0:
+            out[datetime.fromtimestamp(t, tz=timezone.utc).strftime('%Y-%m-%d')] = float(p)
+    cur = (res.get('meta') or {}).get('currency')
+    if out:
+        _HIST_CACHE[key] = (time.time(), out, cur)
+    return out, cur
+
+
+# ── matemática pura (testeable sin red) ──────────────────────────────────────
+def _returns(prices, dates):
+    return [prices[dates[i]] / prices[dates[i - 1]] - 1.0 for i in range(1, len(dates))]
+
+
+def _mean(x):
+    return sum(x) / len(x) if x else 0.0
+
+
+def _std(x):
+    if len(x) < 2:
+        return 0.0
+    m = _mean(x)
+    return math.sqrt(sum((v - m) ** 2 for v in x) / (len(x) - 1))
+
+
+def _cov(a, b):
+    ma, mb = _mean(a), _mean(b)
+    return sum((x - ma) * (y - mb) for x, y in zip(a, b)) / (len(a) - 1) if len(a) > 1 else 0.0
+
+
+def _quantile(sorted_x, q):
+    """Cuantil con interpolación lineal (como numpy 'linear')."""
+    if not sorted_x:
+        return 0.0
+    pos = (len(sorted_x) - 1) * q
+    lo, hi = int(math.floor(pos)), int(math.ceil(pos))
+    return sorted_x[lo] + (sorted_x[hi] - sorted_x[lo]) * (pos - lo)
+
+
+def compute(histories, shares, fx, bench=None, horizon=10):
+    """histories: {sym: {date: price}} · shares: {sym: n} · fx: {sym: moneda→USD}.
+    bench: {date: price} del S&P 500 (opcional). Devuelve el reporte (dict)."""
+    syms = [s for s in shares if histories.get(s)]
+    if not syms:
+        return {'ok': False, 'error': 'sin historia de precios para ninguna posición'}
+    common = sorted(set.intersection(*(set(histories[s]) for s in syms)))
+    if len(common) < 60:
+        return {'ok': False, 'error': f'historia común insuficiente ({len(common)} días; se necesitan ≥ 60)'}
+    last = common[-1]
+    values = {s: shares[s] * histories[s][last] * fx.get(s, 1.0) for s in syms}
+    total = sum(values.values())
+    if total <= 0:
+        return {'ok': False, 'error': 'valor de cartera cero'}
+    w = {s: values[s] / total for s in syms}
+    rets = {s: _returns(histories[s], common) for s in syms}
+    n = len(common) - 1
+    port = [sum(w[s] * rets[s][i] for s in syms) for i in range(n)]
+
+    sig_d = _std(port)
+    mu_d = _mean(port)
+    srt = sorted(port)
+
+    def var_block(conf):
+        q = 1 - conf
+        hist = -_quantile(srt, q)
+        tail = [r for r in port if r <= _quantile(srt, q)]
+        cvar = -_mean(tail) if tail else hist
+        param = -(mu_d - Z[conf] * sig_d)
+        scale = math.sqrt(horizon)
+        return {'conf': conf,
+                'hist_1d_pct': round(hist * 100, 3), 'hist_1d_usd': round(hist * total, 2),
+                'param_1d_pct': round(param * 100, 3), 'param_1d_usd': round(param * total, 2),
+                'hist_nd_pct': round(hist * scale * 100, 3), 'hist_nd_usd': round(hist * scale * total, 2),
+                'cvar_1d_pct': round(cvar * 100, 3), 'cvar_1d_usd': round(cvar * total, 2)}
+
+    v95, v99 = var_block(0.95), var_block(0.99)
+
+    # covarianza, contribución al riesgo, correlaciones
+    cov = {a: {b: _cov(rets[a], rets[b]) for b in syms} for a in syms}
+    var_p = sum(w[a] * w[b] * cov[a][b] for a in syms for b in syms)
+    contrib = {a: (w[a] * sum(w[b] * cov[a][b] for b in syms) / var_p) if var_p > 0 else 0.0 for a in syms}
+    sd = {s: _std(rets[s]) for s in syms}
+    corr = {a: {b: round(cov[a][b] / (sd[a] * sd[b]), 3) if sd[a] and sd[b] else None for b in syms}
+            for a in syms}
+    divers = (sum(w[s] * sd[s] for s in syms) / sig_d) if sig_d else None
+
+    # drawdown
+    eq, peak, mdd, mdd_date = 1.0, 1.0, 0.0, None
+    for i, r in enumerate(port):
+        eq *= (1 + r)
+        peak = max(peak, eq)
+        dd = eq / peak - 1
+        if dd < mdd:
+            mdd, mdd_date = dd, common[i + 1]
+
+    # beta vs S&P 500 (mismos pares de días consecutivos en ambas series)
+    beta = corr_mkt = None
+    if bench:
+        pr, br = [], []
+        for i in range(1, len(common)):
+            d0, d1 = common[i - 1], common[i]
+            if d0 in bench and d1 in bench:
+                pr.append(port[i - 1])
+                br.append(bench[d1] / bench[d0] - 1)
+        vb = _cov(br, br)
+        if len(pr) > 30 and vb > 0:
+            beta = round(_cov(pr, br) / vb, 3)
+            sp, sb = _std(pr), _std(br)
+            corr_mkt = round(_cov(pr, br) / (sp * sb), 3) if sp and sb else None
+
+    # backtest del VaR 95 % (dentro de la muestra)
+    thr = _quantile(srt, 0.05)
+    breaches = sum(1 for r in port if r < thr)
+    worst = sorted(((port[i], common[i + 1]) for i in range(n)))[:5]
+
+    positions = [{'symbol': s, 'shares': shares[s], 'price': round(histories[s][last], 4),
+                  'value_usd': round(values[s], 2), 'weight_pct': round(w[s] * 100, 2),
+                  'vol_ann_pct': round(sd[s] * math.sqrt(TRADING_DAYS) * 100, 2),
+                  'risk_contrib_pct': round(contrib[s] * 100, 2)} for s in syms]
+    positions.sort(key=lambda p: -p['risk_contrib_pct'])
+    hist_bins = _histogram(port, 30)
+    return {
+        'ok': True, 'as_of': last, 'days': n, 'from': common[0], 'horizon_days': horizon,
+        'portfolio_value_usd': round(total, 2),
+        'vol_daily_pct': round(sig_d * 100, 3),
+        'vol_ann_pct': round(sig_d * math.sqrt(TRADING_DAYS) * 100, 2),
+        'return_ann_pct': round(((1 + mu_d) ** TRADING_DAYS - 1) * 100, 2),
+        'sharpe': round(mu_d / sig_d * math.sqrt(TRADING_DAYS), 2) if sig_d else None,
+        'var95': v95, 'var99': v99,
+        'max_drawdown_pct': round(mdd * 100, 2), 'max_drawdown_date': mdd_date,
+        'beta_spy': beta, 'corr_spy': corr_mkt,
+        'diversification_ratio': round(divers, 2) if divers else None,
+        'backtest95': {'breaches': breaches, 'days': n, 'expected': round(n * 0.05, 1)},
+        'worst_days': [{'date': d, 'pct': round(r * 100, 2), 'usd': round(r * total, 2)} for r, d in worst],
+        'positions': positions,
+        'correlation': {'symbols': syms, 'matrix': [[corr[a][b] for b in syms] for a in syms]},
+        'histogram': hist_bins,
+    }
+
+
+def _histogram(x, bins):
+    lo, hi = min(x), max(x)
+    if hi <= lo:
+        return {'edges_pct': [round(lo * 100, 3)], 'counts': [len(x)]}
+    step = (hi - lo) / bins
+    counts = [0] * bins
+    for v in x:
+        counts[min(bins - 1, int((v - lo) / step))] += 1
+    return {'edges_pct': [round((lo + i * step) * 100, 3) for i in range(bins + 1)], 'counts': counts}
+
+
+# ── orquestación (red) ───────────────────────────────────────────────────────
+def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
+    """positions: [{symbol, shares, label?}] → reporte + lo excluido."""
+    from concurrent.futures import ThreadPoolExecutor
+    if fx_fn is None:
+        from core.quotes import _fx_to_usd as fx_fn
+    clean = {}
+    labels = {}
+    for p in positions[:30]:
+        from core.http import _safe_ticker
+        sym = _safe_ticker(p.get('symbol')) or ''     # va en la URL: validar
+        try:
+            sh = float(p.get('shares'))
+        except (TypeError, ValueError):
+            continue
+        if sym and sh > 0:
+            clean[sym] = clean.get(sym, 0) + sh
+            labels[sym] = p.get('label') or sym
+    if not clean:
+        return {'ok': False, 'error': 'no hay posiciones con ticker y cantidad'}
+    syms = list(clean) + [BENCH]
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        got = dict(zip(syms, ex.map(lambda s: fetch_history(s, rng, getter), syms)))
+    histories, fx, excluded = {}, {}, []
+    for s in clean:
+        h, cur = got[s]
+        if len(h) < 60:
+            excluded.append({'symbol': s, 'label': labels[s], 'reason': 'sin historia suficiente de precios'})
+            continue
+        cur = 'GBP' if cur == 'GBp' else (cur or 'USD').upper()
+        rate = fx_fn(cur)
+        if not rate:
+            excluded.append({'symbol': s, 'label': labels[s], 'reason': f'sin tipo de cambio {cur}→USD'})
+            continue
+        if (got[s][1] or '') == 'GBp':
+            rate = rate / 100.0            # precio en peniques
+        histories[s], fx[s] = h, rate
+    rep = compute(histories, {s: clean[s] for s in histories}, fx, bench=got[BENCH][0] or None,
+                  horizon=horizon)
+    rep['excluded'] = excluded
+    rep['labels'] = labels
+    rep['source'] = 'Yahoo Finance (precios diarios ajustados)'
+    rep['generated_at'] = datetime.now(timezone.utc).isoformat()
+    return rep

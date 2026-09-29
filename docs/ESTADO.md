@@ -9,6 +9,28 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-29 (día) — REPORTE DE RIESGO: VaR + VEGA/KAPPA (sw v164)
+
+Pedido (curso MIT): "reporte Vega" para medir la sensibilidad a la volatilidad
++ Delta, Gamma, Theta. Hecho:
+- core/risk_report.py + POST /api/portfolio/risk_report: precios diarios
+  REALES 1 año (Yahoo ajustado) → volatilidad, VaR 95/99 histórico y
+  paramétrico (1 d y 10 d √N), CVaR, contribución al riesgo, beta/corr vs SPY,
+  correlaciones, drawdown, Sharpe (rf 0), diversificación, peores días,
+  backtest del VaR. Lo sin datos se EXCLUYE y se dice.
+- core/options.py + POST /api/portfolio/vega_report + GET
+  /api/options/chain/<sym>: Black-Scholes (verificado con Hull: 4,76/0,81),
+  griegas por contrato ×100, IV EN VIVO del contrato (si no, histórica
+  rotulada), tasa ^IRX, escenarios de volatilidad con revaluación completa.
+- engine/riskreport.js (KhipuRisk.open): pestañas VaR / Vega-Kappa, fuentes
+  Mercado (MKT.pos) / Carteras simuladas / manual; opciones en localStorage
+  'kh_options' (no ejecuta órdenes); griegas por empresa (acciones = Delta);
+  imprimir/PDF; "?" de cada métrica (explain.js: delta/gamma/theta/vega/iv…).
+- Accesos: botón en Mercado, 📉 Riesgo en Carteras, PORT VAR (antes mostraba
+  NaN%) y PORT VEGA. /api/portfolio-risk y /v1 intactos. Tests: 277.
+
+---
+
 # SESIÓN 2026-09-29 (noche) — TODO EN VIVO + AUDITORÍA DE DATOS FALSOS (sw v161)
 
 Pedido: "dale con todo mientras duermo". Hecho y desplegado:

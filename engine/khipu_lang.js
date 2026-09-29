@@ -8,7 +8,7 @@
 // Gramática (ver ROADMAP_KHIPUS_ONTOLOGIA.md Fase 4):
 //   NVDA DES · NVDA GP 1Y · NVDA SUP · NVDA CLI · NVDA RISK · NVDA SIM ·
 //   NVDA NEWS · NVDA FA · NVDA THESIS [texto]
-//   PORT VAR · PORT PL
+//   PORT VAR (reporte de riesgo) · PORT VEGA (griegas de opciones) · PORT PL
 //   GRAPH ASOF <YYYY-MM-DD> · GRAPH DIFF <Nd>
 //   ALERT <TICKER> PX|NRS > <valor> · ALERT REGION <región> NEWS · ALERT LIST
 //   FACTOR LIST · FACTOR <id|texto> FIRE  (what-if de crisis, no muta nada)
@@ -253,23 +253,19 @@
   async function _handlePort(args) {
     const sub = (args[0] || '').toUpperCase();
     const pos = (window.MKT && window.MKT.pos) || {};
-    if (sub === 'VAR') {
-      const positions = {};
-      Object.entries(pos).forEach(([nid, p]) => {
-        const n = (window.NODE_BY_ID || {})[nid];
-        if (n && n.mkt) positions[n.mkt] = { shares: p.sh || p.shares, buy_price: p.bp };
-      });
-      if (!Object.keys(positions).length) return { answer: 'No tienes posiciones en tu portafolio todavía.', actions: [] };
-      try {
-        const r = await fetch(`${_base()}/api/portfolio-risk`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ positions }),
-        });
-        const d = await r.json();
-        if (!r.ok) return { answer: `No se pudo calcular VaR: ${d.error || 'error'}`, actions: [] };
-        const v95 = d.var_95 != null ? (d.var_95 * 100).toFixed(1) + '%' : '—';
-        const c95 = d.cvar_95 != null ? (d.cvar_95 * 100).toFixed(1) + '%' : '—';
-        return { answer: `VaR 95%: ${v95} · CVaR 95%: ${c95}.`, actions: [] };
-      } catch (e) { return { answer: 'Error de red al calcular VaR.', actions: [] }; }
+    if (sub === 'VAR' || sub === 'RISK' || sub === 'RIESGO') {
+      // Reporte completo (VaR/CVaR histórico y paramétrico, volatilidad, beta,
+      // contribución al riesgo, correlaciones) con precios diarios reales.
+      const en = (window.LANG || '') === 'en';
+      if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'var', source: 'market', autorun: true });
+      return { answer: en ? 'Opening your portfolio risk report (VaR, volatility, beta, who brings the risk).'
+                          : 'Abriendo el reporte de riesgo de tu cartera (VaR, volatilidad, beta, quién pone el riesgo).', actions: [] };
+    }
+    if (sub === 'VEGA' || sub === 'KAPPA' || sub === 'GREEKS' || sub === 'GRIEGAS') {
+      const en = (window.LANG || '') === 'en';
+      if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'vega' });
+      return { answer: en ? 'Opening the Vega (Kappa) report: Delta, Gamma, Theta and Vega of your options with live implied volatility.'
+                          : 'Abriendo el reporte Vega (Kappa): Delta, Gamma, Theta y Vega de tus opciones con volatilidad implícita en vivo.', actions: [] };
     }
     if (sub === 'PL') {
       const quotes = (window.MKT && window.MKT.quotes) || {};
@@ -282,7 +278,7 @@
       if (!has) return { answer: 'No hay suficientes datos de precio en caché para calcular P&L.', actions: [] };
       return { answer: `P&L de tu cartera: ${pl >= 0 ? '+' : ''}$${pl.toFixed(2)}.`, actions: [] };
     }
-    return { answer: 'Comandos de PORT: VAR, PL.', actions: [] };
+    return { answer: (window.LANG || '') === 'en' ? 'PORT commands: VAR, VEGA, PL.' : 'Comandos de PORT: VAR, VEGA, PL.', actions: [] };
   }
 
   async function _handleGraph(args) {

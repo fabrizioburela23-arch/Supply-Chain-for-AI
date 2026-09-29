@@ -181,7 +181,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 ## Lenguaje KHIPU (engine/khipu_lang.js)
 
 `<TICKER|id> DES/GP/SUP/CLI/RISK/NEWS/SIM/FA/THESIS/XRAY [texto]` ·
-`PORT VAR/PL` · `GRAPH ASOF <fecha>` / `GRAPH DIFF <Nd>` · `FEED [n]` (lo último del grafo) ·
+`PORT VAR` (reporte de riesgo: engine/riskreport.js → POST /api/portfolio/risk_report, core/risk_report.py) / `PORT VEGA` (griegas de opciones: POST /api/portfolio/vega_report, core/options.py, Black-Scholes + IV en vivo) / `PORT PL` · `GRAPH ASOF <fecha>` / `GRAPH DIFF <Nd>` · `FEED [n]` (lo último del grafo) ·
 `ALERT <ticker> PX|NRS > <valor>` / `ALERT REGION <región> NEWS` / `ALERT LIST` ·
 `COMPARE <A> <B>` (comparador) · `SHOCK <ticker> [sev]` (sim en vivo) ·
 `INSIGHTS` / `MATRIX` (pestaña Análisis) ·
@@ -208,7 +208,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (271 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (277 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
