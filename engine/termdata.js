@@ -205,7 +205,7 @@
         kv(esc(T('founded')), fmt(m.founded)) +
         kv(esc(T('employees')), m.employees ? Number(m.employees).toLocaleString() : '—') +
         kv(esc(T('revenue')), esc(m.revenue_2025 || '—')) +
-        kv(esc(T('mktcap')), m.mktcap_b ? '$' + m.mktcap_b + 'B' : (n.preipo ? T('preipo') : '—')) +
+        kv(esc(T('mktcap')), m.mktcap_b ? '$' + esc(String(m.mktcap_b)) + 'B' + (window.liveCapDot ? window.liveCapDot(m) : '') : (n.preipo ? T('preipo') : '—')) +
         kv(esc(T('margin')), n.margin != null ? Math.round(n.margin * 100) + '%' : '—') +
         kv(esc(T('nrsRisk')) + nrsChip,
            '<b style="color:' + nrsCol + '">' + fmt(nrs) + '</b>/100') +

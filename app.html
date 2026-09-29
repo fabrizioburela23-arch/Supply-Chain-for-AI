@@ -5900,6 +5900,51 @@ window.fillLiveMeta = function(root, n){
   }).catch(()=>{});
 };
 
+/* CAPITALIZACIÓN EN VIVO DE TODO EL GRAFO (pedido: "que todo esté en vivo").
+   /api/market/live_caps trae en lote ~580 cotizadas (Yahoo, caché 15 min en el
+   server). Pisa NODE_META[id].mktcap_b (el comparador, la simulación en vivo,
+   el portafolio, la terminal, la Cabina y los gráficos lo leen de ahí) y guarda
+   el valor del catálogo en mktcap_catalog. mktcap_live = {as_of, source}.
+   Emite 'khipu:livecaps'. Sin red → queda el catálogo, como antes. */
+window.KhipuLiveCaps = (function(){
+  let tries = 0, timer = null, last = null;
+  function apply(d){
+    const meta = window.NODE_META || {};
+    let n = 0;
+    Object.keys(d.caps || {}).forEach(id=>{
+      const c = d.caps[id]; if(!c || c.mcap_b == null || !isFinite(+c.mcap_b)) return;
+      const m = meta[id] || (meta[id] = {});
+      if(m.mktcap_catalog === undefined) m.mktcap_catalog = (m.mktcap_b === undefined ? null : m.mktcap_b);
+      const v = +c.mcap_b;
+      m.mktcap_b = v >= 100 ? Math.round(v) : Math.round(v*10)/10;
+      m.mktcap_live = {as_of: d.as_of, source: d.source || 'yahoo', price: c.price, currency: c.currency};
+      n++;
+    });
+    last = {n, as_of: d.as_of};
+    try { window.dispatchEvent(new CustomEvent('khipu:livecaps', {detail: last})); } catch(e){}
+    return n;
+  }
+  function load(){
+    if(document.hidden) return;
+    fetch('/api/market/live_caps').then(r=>r.ok ? r.json() : null).then(d=>{
+      if(!d) return;
+      if(d.caps && Object.keys(d.caps).length) apply(d);
+      if((d.warming || d.refreshing) && tries++ < 6) { clearTimeout(timer); timer = setTimeout(load, 20000); }
+    }).catch(()=>{});
+  }
+  setTimeout(load, 1500);
+  setInterval(()=>{ tries = 0; load(); }, 15*60*1000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && last && last.as_of && Date.now() - Date.parse(last.as_of) > 15*60*1000){ tries = 0; load(); } });
+  return {load, apply, status: ()=>last};
+})();
+/* Punto verde "en vivo" para una capitalización pintada desde NODE_META. */
+window.liveCapDot = function(meta){
+  const l = meta && meta.mktcap_live; if(!l) return '';
+  const t = l.as_of ? new Date(l.as_of).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+  const tip = (LANG==='en' ? 'Live · ' : 'En vivo · ') + (l.source||'yahoo') + (t ? ' · ' + t : '');
+  return ' <b style="color:#2BE38B;font-size:9px;vertical-align:middle" title="'+tip+'">●</b>';
+};
+
 /* ── 📡 Lo último en el grafo (Phase 1 · M6: feed GLOBAL) ──────────────────
    La Historia de arriba es POR EMPRESA; esto es el grafo ENTERO: noticias,
    relaciones nuevas o terminadas, tesis y acciones, lo más nuevo primero (por

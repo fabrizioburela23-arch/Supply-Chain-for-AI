@@ -89,7 +89,7 @@ class SecondBrain {
           <div class="sb-v" style="color:${chg > 0 ? 'var(--up,#3DE0C8)' : chg < 0 ? 'var(--down,#FF6577)' : 'var(--ink)'}">${q.close != null ? '$' + fmtN(q.close) : n.preipo ? 'PRIVADA' : '—'}</div>
           <div class="sb-s">${chg != null ? (chg >= 0 ? '▲ ' : '▼ ') + fmtPct(Math.abs(chg)) : ''}</div></div>
         <div class="sb-card"><div class="sb-l">Market Cap</div>
-          <div class="sb-v" style="font-size:15px">${meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : (n.preipo ? n.ticker : '—')}</div></div>
+          <div class="sb-v" style="font-size:15px">${meta.mktcap_b ? '$' + meta.mktcap_b + 'B' + (window.liveCapDot ? window.liveCapDot(meta) : '') : (n.preipo ? n.ticker : '—')}</div></div>
         <div class="sb-card"><div class="sb-l">Revenue 2025</div>
           <div class="sb-v" style="font-size:13px">${esc(n.revenue_2025 || meta.revenue_2025 || '—')}</div></div>
         <div class="sb-card"><div class="sb-l">NRS Risk</div>

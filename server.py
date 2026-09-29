@@ -2571,6 +2571,16 @@ def dossier(ticker):
     return jsonify(to_dossier(fin, ticker))
 
 
+@app.route('/api/market/live_caps')
+@rate_limit(limit=60, window=300)
+def market_live_caps():
+    """Capitalización + precio EN VIVO de TODAS las cotizadas del grafo (lote
+    Yahoo, caché 15 min, refresco en segundo plano). El cliente pisa con esto
+    el catálogo estático (NODE_META.mktcap_b). Pedido: "que todo esté en vivo"."""
+    from core.live_caps import get_caps
+    return jsonify(get_caps())
+
+
 @app.route('/api/company/live/<ticker>')
 @rate_limit(limit=120, window=60)
 def company_live(ticker):

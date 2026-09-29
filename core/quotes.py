@@ -151,3 +151,44 @@ def fetch_market_cap_yahoo(symbol, timeout=6):
         # la sesión pudo caducar: forzar una nueva la próxima vez
         _Y_SESS['ts'] = 0
     return val
+
+
+def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
+    """Cotización + capitalización EN LOTE (Yahoo v7 quote, `chunk` símbolos
+    por pedido). Devuelve {símbolo: {mcap_b (USD), price, currency,
+    change_pct}}; los símbolos sin dato se omiten (nunca se inventan)."""
+    out = {}
+    syms = [s for s in dict.fromkeys(symbols or []) if s]
+    for i in range(0, len(syms), chunk):
+        part = syms[i:i + chunk]
+        try:
+            s, crumb = _yahoo_session()
+            params = {'symbols': ','.join(part)}
+            if crumb:
+                params['crumb'] = crumb
+            r = s.get('https://query2.finance.yahoo.com/v7/finance/quote', params=params, timeout=timeout)
+            if r.status_code in (401, 403):
+                _Y_SESS['ts'] = 0          # crumb caducado → sesión nueva
+                s, crumb = _yahoo_session()
+                if crumb:
+                    params['crumb'] = crumb
+                r = s.get('https://query2.finance.yahoo.com/v7/finance/quote', params=params, timeout=timeout)
+            rows = (((r.json() or {}).get('quoteResponse') or {}).get('result')) or []
+        except Exception:  # noqa: BLE001
+            rows = []
+        for q in rows:
+            sym = q.get('symbol')
+            if not sym:
+                continue
+            cur = (q.get('currency') or q.get('financialCurrency') or 'USD')
+            cur = 'GBP' if cur == 'GBp' else cur.upper()
+            rate = _fx_to_usd(cur)
+            mc = q.get('marketCap')
+            row = {'price': q.get('regularMarketPrice'), 'currency': q.get('currency'),
+                   'change_pct': q.get('regularMarketChangePercent'),
+                   'mcap_b': round(float(mc) * rate / 1e9, 2) if (mc and rate and float(mc) > 0) else None}
+            if row['mcap_b'] is not None or row['price'] is not None:
+                out[sym] = row
+                if row['mcap_b'] is not None:
+                    _MCAP_CACHE[sym] = (time.time(), row['mcap_b'])
+    return out
