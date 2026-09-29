@@ -208,7 +208,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (277 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (278 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -227,6 +227,7 @@ NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD,   ← Grafo Temporal persistente
 DATABASE_URL                              ← Ontología (Postgres en Railway)
 RESEARCH_DAILY_BUDGET_USD, RESEARCH_AUTO_EVENTS, RESEARCH_MODEL_DEFAULT  ← Phase 2
 RESEARCH_ANOMALY_PCT (8), RESEARCH_ANOMALY_MAX (3)  ← movimientos anómalos → investigación auto
+RESEARCH_EARNINGS_MAX (5)  ← resultados trimestrales (Finnhub, requiere FINNHUB_KEY) → investigación auto
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)

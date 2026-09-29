@@ -119,7 +119,10 @@ def dispatch_event(session, event, actor='system', execute=True, limits=None, no
                                  agents=agents, requested_by=actor,
                                  trigger={'kind': 'event', 'event_key': key, 'event': {
                                      'type': etype, 'headline': (event.get('headline') or '')[:300],
-                                     'source_url': event.get('source_url'), 'distance': ent['distance']}})
+                                     'source_url': event.get('source_url'), 'distance': ent['distance'],
+                                     # datos estructurados del evento (p. ej. resultados trimestrales)
+                                     # → el ContextBuilder los convierte en EVIDENCIA citable
+                                     'data': event.get('data') if ent['distance'] == 0 else None}})
         jobs.append({'job_id': job.id, 'entity_id': ent['id'], 'reused': reused})
     session.flush()
     if execute:

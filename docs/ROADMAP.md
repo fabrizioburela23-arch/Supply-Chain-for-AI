@@ -14,8 +14,8 @@ Live Economic Graph (**Phase 1 ✅**, docs/ROADMAP_PHASE1.md)
 - [x] Contradicciones POTENTIALLY_CONTRADICTS; supersesión de claims
 - [x] Observabilidad (agent_runs), control de costo (presupuesto diario, dedupe, profundidades)
 - [x] UI: 🔬 Investigación IA (ficha del mapa, X-Ray, comando `<TICKER> RESEARCH`), ¿Por qué?, síntesis, actividad real
-- [ ] Contradicciones semánticas (más allá de la regla tema/horizonte/postura)
-- [ ] Más eventos automáticos: resultados trimestrales (EARNINGS), anomalías de precio, factores disparados
+- [~] Contradicciones semánticas: v2 con familias de temas relacionados (2026-09-29); falta comparación por significado con IA
+- [x] Eventos automáticos: EARNINGS (calendario Finnhub, 1×/día, BPA/ingresos como evidencia) y PRICE_ANOMALY (2026-09-29). Los factores disparados son what-if: NO investigan (decisión)
 - [x] Evidencia de filings SEC para FundamentalAgent (2026-09-29: core/sec.py — lista de reportes + Risk Factors/MD&A)
 - [ ] Calibración de la confianza con resultados reales (Phase 3)
 

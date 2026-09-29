@@ -286,7 +286,7 @@
   }
 
   // Nombre legible del tipo de evidencia (es/en)
-  var SRC = { filing: ['reporte oficial SEC', 'official SEC filing'], financials: ['estados financieros', 'financial statements'],
+  var SRC = { filing: ['reporte oficial SEC', 'official SEC filing'], earnings: ['resultados trimestrales', 'quarterly results'], financials: ['estados financieros', 'financial statements'],
     market: ['mercado en vivo', 'live market'], news: ['noticia', 'news'], catalog: ['ficha Khipus', 'Khipus profile'],
     graph: ['grafo de la cadena', 'supply-chain graph'], web: ['web', 'web'] };
   function srcName(t) { return SRC[t] ? L(SRC[t][0], SRC[t][1]) : (t || ''); }

@@ -223,6 +223,20 @@ class ContextBuilder:
                        'reliability': reliability, 'source_kind': source_kind})
             return ref
 
+        # datos del EVENTO disparador (p. ej. resultados trimestrales reales)
+        ern = ((event or {}).get('data') or {}).get('earnings') if isinstance(event, dict) else None
+        if ern:
+            tools.append('earnings_event')
+            parts = [f"fecha {ern.get('date')}", f"trimestre {ern.get('quarter')}/{ern.get('year')}"]
+            for k, lbl in (('epsActual', 'BPA real'), ('epsEstimate', 'BPA estimado'),
+                           ('revenueActual', 'ingresos reales USD'), ('revenueEstimate', 'ingresos estimados USD')):
+                if ern.get(k) is not None:
+                    v = ern[k]
+                    parts.append(f"{lbl} {v / 1e9:.2f}B" if 'revenue' in k and abs(v) >= 1e6 else f"{lbl} {v}")
+            add('earnings', f"Resultados trimestrales reportados ({ern.get('symbol')})", ' · '.join(parts),
+                reference=f"finnhub:earnings:{ern.get('symbol')}:{ern.get('date')}",
+                published_at=ern.get('date'), reliability=0.9, source_kind='primary')
+
         # catálogo (hecho del grafo, confiabilidad media: curado a mano)
         if 'catalog' in needs:
             parts = [f"sector/cat: {node.get('cat')}", f"país: {node.get('country')}"]

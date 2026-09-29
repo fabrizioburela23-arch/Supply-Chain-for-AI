@@ -53,8 +53,9 @@ def refresh(fetch=None):
             # Phase 2: movimientos anómalos REALES → investigación automática
             # (apagado por defecto: RESEARCH_AUTO_EVENTS=on)
             try:
-                from research.auto_events import dispatch_price_anomalies
+                from research.auto_events import dispatch_earnings, dispatch_price_anomalies
                 dispatch_price_anomalies(caps)
+                dispatch_earnings()          # 1 vez al día como máximo
             except Exception as e:  # noqa: BLE001
                 log.warning('live_caps → auto_events: %s', type(e).__name__)
     except Exception as e:  # noqa: BLE001

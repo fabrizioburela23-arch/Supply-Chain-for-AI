@@ -352,3 +352,37 @@ def test_contradiccion_entre_temas_relacionados(db):
         assert frozenset((ids['MARGINS_EXPAND'], ids['PROFITABILITY_FALLS'])) in pairs
         assert not any(ids['TECH_LAGS'] in p for p in pairs)            # tema no relacionado
         assert any('temas relacionados' in r.reason for r in rels)
+
+
+@needs_db
+def test_resultados_trimestrales_disparan_investigacion_con_evidencia(db, monkeypatch):
+    import core.ai
+    from ontology.db import session_scope
+    from research import auto_events
+    from research.agents import AGENTS_BY_TYPE
+    from research.context import ContextBuilder
+    from research.llm import FakeProvider
+    from research.models import ResearchJob
+    monkeypatch.setattr(core.ai, '_ai_configured', lambda: True)
+    monkeypatch.setenv('RESEARCH_AUTO_EVENTS', 'on')
+    auto_events._EARN_STATE['day'] = None
+    rows = {'earningsCalendar': [
+        {'symbol': 'MU', 'date': '2026-09-28', 'quarter': 4, 'year': 2026, 'epsActual': 3.12, 'epsEstimate': 2.85,
+         'revenueActual': 11.3e9, 'revenueEstimate': 10.9e9},
+        {'symbol': 'ZZZZ', 'date': '2026-09-28', 'epsActual': 1.0},            # no está en el grafo
+        {'symbol': 'AMD', 'date': '2026-09-29', 'epsActual': None}]}          # aún no reporta
+    r = auto_events.dispatch_earnings(execute=False, today='2026-09-29', getter=lambda url: (rows, None))
+    assert len(r) == 1 and r[0]['event_type'] == 'EARNINGS' and r[0]['jobs'][0]['entity_id'] == 'Micron'
+    assert auto_events.dispatch_earnings(execute=False, today='2026-09-29', getter=lambda url: (rows, None)) == []
+    with session_scope() as s:
+        job = s.get(ResearchJob, r[0]['jobs'][0]['job_id'])
+        ev = job.trigger['event']
+    assert ev['data']['earnings']['epsActual'] == 3.12
+    ctx = ContextBuilder(fetchers=FETCH).build('Micron', 'fundamental', event=ev, depth='QUICK')
+    e1 = [e for e in ctx['evidence'] if e['source_type'] == 'earnings'][0]
+    assert 'BPA real 3.12' in e1['excerpt'] and 'ingresos reales USD 11.30B' in e1['excerpt']
+    # el agente puede citar la cifra REAL de ingresos sin que el guardián la rechace
+    ok = _result([_claim(statement_es=f"Ingresos de $11.3B superaron lo estimado ({e1['ref']}).",
+                         evidence_refs=[e1['ref']], counter_evidence_refs=[])])
+    obj, meta = AGENTS_BY_TYPE['fundamental'].run(ctx, FakeProvider([ok]))
+    assert meta['attempts'] == 1 and '$11.3B' in obj.claims[0].statement_es
