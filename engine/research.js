@@ -284,6 +284,12 @@
     }).catch(function () { S.msg = { bad: true, text: L('Sin conexión con el servidor.', 'No connection to the server.') }; render(); });
   }
 
+  // Nombre legible del tipo de evidencia (es/en)
+  var SRC = { filing: ['reporte oficial SEC', 'official SEC filing'], financials: ['estados financieros', 'financial statements'],
+    market: ['mercado en vivo', 'live market'], news: ['noticia', 'news'], catalog: ['ficha Khipus', 'Khipus profile'],
+    graph: ['grafo de la cadena', 'supply-chain graph'], web: ['web', 'web'] };
+  function srcName(t) { return SRC[t] ? L(SRC[t][0], SRC[t][1]) : (t || ''); }
+
   function why(claimId) {
     getJSON('/api/research/claims/' + encodeURIComponent(claimId)).then(function (d) {
       var rs = document.getElementById('rs'); if (!rs || !d.claim) return;
@@ -292,7 +298,7 @@
         var u = safeUrl(e.source_reference) || safeUrl(e.source && e.source.url);
         return '<div class="rs-ev' + (cnt ? ' cnt' : '') + '"><b>' + esc(e.ref || '') + '</b> · ' + esc(e.title || '') +
           '<div style="color:#9BA6C4">' + esc(e.excerpt || '') + '</div>' +
-          '<div style="color:#7C87A3;font-size:11px">' + esc(e.source_type) + ' · ' + esc(L('confiabilidad ', 'reliability ')) + Math.round((e.reliability || 0) * 100) + '%' +
+          '<div style="color:#7C87A3;font-size:11px">' + esc(srcName(e.source_type)) + ' · ' + esc(L('confiabilidad ', 'reliability ')) + Math.round((e.reliability || 0) * 100) + '%' +
           (e.published_at ? ' · ' + esc(clock(e.published_at)) : '') + (u ? ' · <a href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(L('fuente original', 'original source')) + ' ↗</a>' : ' · ' + esc(e.source_reference || '')) + '</div></div>';
       };
       var comps = (c.confidence_components || {}).components || {};

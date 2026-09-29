@@ -21,14 +21,14 @@ from core.entities import get_index
 
 # qué datos pide cada tipo de agente (capabilities → fuentes)
 AGENT_NEEDS = {
-    'fundamental': ('financials', 'profile', 'news', 'catalog', 'graph'),
+    'fundamental': ('financials', 'profile', 'sec', 'news', 'catalog', 'graph'),
     'technical': ('profile', 'candles', 'news'),
     'macro': ('catalog', 'graph', 'news'),
-    'news': ('news', 'catalog'),
+    'news': ('news', 'sec', 'catalog'),
     'geopolitical': ('catalog', 'graph', 'news'),
     'supply_chain': ('graph', 'catalog', 'news', 'profile'),
     'crypto': ('news', 'catalog'),
-    'risk_observation': ('profile', 'graph', 'news', 'catalog'),
+    'risk_observation': ('profile', 'sec', 'graph', 'news', 'catalog'),
 }
 
 LIMITS = {   # por profundidad: cuánto contexto (y costo) se permite
@@ -118,6 +118,16 @@ def _fetch_web(query, limit):
     return web_search(query, max_results=limit)
 
 
+def _fetch_sec_filings(symbol):
+    from core.sec import latest_filings
+    return latest_filings(symbol)
+
+
+def _fetch_sec_sections(url):
+    from core.sec import filing_sections
+    return filing_sections(url)
+
+
 def _fetch_mcap(symbol):
     from core.quotes import fetch_market_cap_yahoo
     return fetch_market_cap_yahoo(symbol)
@@ -125,7 +135,8 @@ def _fetch_mcap(symbol):
 
 DEFAULT_FETCHERS = {'profile': _fetch_profile, 'financials': _fetch_financials,
                     'news': _fetch_news, 'web': _fetch_web, 'candles': _fetch_candles,
-                    'mcap': _fetch_mcap}
+                    'mcap': _fetch_mcap, 'sec_filings': _fetch_sec_filings,
+                    'sec_sections': _fetch_sec_sections}
 
 
 def _reliability_for_url(url):
@@ -204,10 +215,10 @@ class ContextBuilder:
         now = _now()
 
         def add(source_type, title, excerpt, reference=None, published_at=None, reliability=0.5,
-                source_kind=None):
+                source_kind=None, max_chars=700):
             ref = f'E{len(ev) + 1}'
             ev.append({'ref': ref, 'source_type': source_type, 'title': _clean(title, 200),
-                       'excerpt': _clean(excerpt, 700), 'reference': reference,
+                       'excerpt': _clean(excerpt, max_chars), 'reference': reference,
                        'published_at': published_at, 'retrieved_at': now.isoformat(),
                        'reliability': reliability, 'source_kind': source_kind})
             return ref
@@ -289,6 +300,31 @@ class ContextBuilder:
                     ', '.join(f'{k}={v}' for k, v in ind.items() if v is not None),
                     reference=f'https://finance.yahoo.com/quote/{mkt}/history', reliability=0.85,
                     source_kind='primary')
+
+        # reportes oficiales SEC (fuente PRIMARIA regulatoria)
+        if 'sec' in needs and mkt:
+            tools.append('sec_filings')
+            try:
+                fl = self.f['sec_filings'](mkt) or []
+            except Exception:  # noqa: BLE001
+                fl = []
+            if fl:
+                add('filing', f'Últimos reportes oficiales a la SEC de {mkt}',
+                    ' | '.join(f"{f['form']} {f['date']}" + (f" (items {f['items']})" if f.get('items') else '')
+                               for f in fl),
+                    reference=fl[0]['url'], published_at=fl[0]['date'], reliability=0.95,
+                    source_kind='primary')
+                main = next((f for f in fl if f['form'] in ('10-K', '10-Q', '20-F', '40-F')), None)
+                if main and depth != 'QUICK':
+                    try:
+                        sec = self.f['sec_sections'](main['url']) or {}
+                    except Exception:  # noqa: BLE001
+                        sec = {}
+                    for key, name in (('risk_factors', 'Factores de riesgo'), ('mdna', 'Análisis de la gerencia (MD&A)')):
+                        if sec.get(key):
+                            add('filing', f"{name} — {main['form']} {mkt} ({main['date']})", sec[key],
+                                reference=main['url'], published_at=main['date'], reliability=0.95,
+                                source_kind='primary', max_chars=1500)
 
         # noticias recientes (externas → DATO)
         if 'news' in needs:
