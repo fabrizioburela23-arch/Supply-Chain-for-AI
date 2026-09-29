@@ -386,3 +386,28 @@ def test_resultados_trimestrales_disparan_investigacion_con_evidencia(db, monkey
                          evidence_refs=[e1['ref']], counter_evidence_refs=[])])
     obj, meta = AGENTS_BY_TYPE['fundamental'].run(ctx, FakeProvider([ok]))
     assert meta['attempts'] == 1 and '$11.3B' in obj.claims[0].statement_es
+
+
+@needs_db
+def test_contradiccion_semantica_con_ia_entre_temas_no_relacionados(db):
+    import json as _j
+    from ontology.db import session_scope
+    from research.llm import FakeProvider
+    from research.models import ClaimRelation, ResearchClaim
+    from research.runner import create_job, execute_job
+    pos = _claim(topic='demand', stance='positive', horizon='MEDIUM_TERM', predicate='AI_DEMAND_GROWS',
+                 statement_es='La demanda de chips de IA sigue creciendo.')
+    neg = _claim(topic='regulation', stance='negative', horizon='MEDIUM_TERM', predicate='CHINA_RULES_CUT_SALES',
+                 statement_es='Las reglas de exportación a China recortarán las ventas.',
+                 evidence_refs=['E4'], counter_evidence_refs=[], reasoning_summary='E4: restricciones.')
+    verdict = _j.dumps({'contradicts': True, 'reason_es': 'Una espera más ventas y la otra menos en el mismo plazo.',
+                        'reason_en': 'One expects more sales and the other fewer over the same horizon.'})
+    resp = {'fundamental': [_result([pos])], 'supply_chain': [_result([neg])], 'contradictions': [verdict]}
+    with session_scope() as s:
+        job, _ = create_job(s, 'Broadcom', depth='STANDARD', agents=['fundamental', 'supply_chain'],
+                            requested_by='pytest', force=True)
+        execute_job(s, job, provider_factory=lambda a: FakeProvider(list(resp[a])), fetchers=FETCH)
+        ids = {c.predicate: c.id for c in s.query(ResearchClaim).filter_by(job_id=job.id)}
+        rels = [r for r in s.query(ClaimRelation).all() if {r.claim_a, r.claim_b} == set(ids.values())]
+        assert len(rels) == 1 and rels[0].reason.startswith('(revisión IA)')
+        assert job.synthesis.get('conflicts') is not None

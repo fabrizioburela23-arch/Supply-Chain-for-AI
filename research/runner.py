@@ -275,6 +275,18 @@ def execute_job(session, job, provider_factory=None, fetchers=None):
         run = run_agent(session, job, agent_type, provider=prov, fetchers=fetchers)
         ok += 1 if getattr(run, 'status', None) == 'done' else 0
         session.commit()   # cada agente visible en vivo (feed de actividad)
+    # contradicciones SEMÁNTICAS (IA, acotadas) — solo Normal/Profunda
+    if ok and job.depth != 'QUICK':
+        try:
+            from research.contradictions import detect_semantic
+            prov = provider_factory('contradictions') if provider_factory else None
+            if prov is None:
+                from research.llm import RoutedProvider, route_for
+                prov = RoutedProvider(route_for('contradictions'))
+            detect_semantic(session, job.id, prov)
+            session.commit()
+        except Exception as e:  # noqa: BLE001
+            log.warning('semantic contradictions: %s', type(e).__name__)
     job.synthesis = synthesize(session, job)
     # Si NINGÚN agente terminó bien, el job es 'failed' → el dedupe (que solo
     # reutiliza queued/running/done) deja reintentar enseguida.

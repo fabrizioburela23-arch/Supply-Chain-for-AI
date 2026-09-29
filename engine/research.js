@@ -57,6 +57,14 @@
     if (!a || !b) return x.reason || '';
     var st = function (v) { var q = STANCE[v] || [0, v, v]; return L(q[1], q[2]); };
     var tEs = a.topic === b.topic ? tp(a.topic) : tp(a.topic) + ' / ' + tp(b.topic);
+    // choque detectado por la revisión con IA: mostrar su razón en el idioma
+    var rs = String(x.reason || '');
+    if (rs.indexOf('(revisión IA)') === 0) {
+      var parts = rs.replace('(revisión IA) ', '').split(' | EN: ');
+      var why = isEn() ? (parts[1] || parts[0]) : parts[0];
+      return ag(a.agent_type) + ' ↔ ' + ag(b.agent_type) + ' · ' + tEs + ' (' + hz(a.horizon) + '): ' + why +
+        ' ' + L('(detectado por revisión con IA; no se decide quién tiene razón)', '(detected by AI review; who is right is not decided)');
+    }
     return L(ag(a.agent_type) + ' ve «' + st(a.stance) + '» y ' + ag(b.agent_type) + ' ve «' + st(b.stance) + '» sobre ' + tEs + ' en el mismo plazo (' + hz(a.horizon) + '). No se decide aquí quién tiene razón.',
       ag(a.agent_type) + ' sees “' + st(a.stance) + '” and ' + ag(b.agent_type) + ' sees “' + st(b.stance) + '” on ' + tEs + ' over the same horizon (' + hz(a.horizon) + '). Who is right is not decided here.');
   }
