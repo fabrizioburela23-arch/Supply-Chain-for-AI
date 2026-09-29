@@ -9,6 +9,38 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-29 (noche) — TODO EN VIVO + AUDITORÍA DE DATOS FALSOS (sw v161)
+
+Pedido: "dale con todo mientras duermo". Hecho y desplegado:
+- CAPITALIZACIÓN EN VIVO DE TODO EL GRAFO: core/quotes.fetch_quotes_batch_yahoo
+  (lote v7) + core/live_caps (hilo, caché 15 min, no borra lo último bueno) +
+  GET /api/market/live_caps + KhipuLiveCaps (app.html) que pisa
+  NODE_META.mktcap_b (guarda mktcap_catalog, mktcap_live={as_of,source}).
+  window.liveCapDot(meta): ● verde si vivo, "cat." gris si es del catálogo.
+- SEC como evidencia primaria (core/sec.py): 10-K/10-Q/8-K + Risk Factors/MD&A
+  para agentes fundamental/noticias/riesgo.
+- War Room: signos de impacto estaban INVERTIDOS (server pct con signo vs
+  "daño positivo"); debate fijo con cifras inventadas y "Corto NVDA" borrado →
+  rondas/razones reales; respaldo sin IA = KhipuState (determinista,
+  severidad 0-100 rotulada); trayectorias Math.random fuera; banner 🧪.
+- sim_agents: sin empresas en el escenario ya no inventa chokepoints (las toma
+  del texto o responde no_seeds); fallback=True + seeds → el cliente usa el
+  motor estructural.
+- PRICE_ANOMALY automático (research/auto_events.py; RESEARCH_AUTO_EVENTS=on,
+  RESEARCH_ANOMALY_PCT=8, _MAX=3). Contradicciones entre temas relacionados.
+- Auditoría (agente): análisis IA ya no da "FUERTE COMPRA/VENDER" (salud del
+  negocio); consenso de analistas con conteos reales; prompt de Khipu sin
+  estadísticas inventadas; Espacio sin "$630B/7,200+" fijos; gráfico 3D sin
+  CAP_B fija; Cabina "Dónde invertir" → "Empresas resilientes"; brief sin
+  "conclusión accionable"; portafolio sin "$10 simbólico".
+- PENDIENTE de la auditoría (decisión de Fabrizio): el agente de trading da
+  buy/sell (lo arranca el usuario, modo papel); /api/portfolio/advice propone
+  "Incluir/Reducir"; tesis del investigador autónomo usan long/short; chips
+  "Cartera 1/2"; MKT_CAP_EST del radio de nodos; nodes/*.js estáticos
+  (revenue_2025, growth, margin) sin fecha.
+
+---
+
 # SESIÓN 2026-09-28 (e) — PHASE 2: AGENT RESEARCH SWARM (sw v153)
 
 Pedido: la especificación completa de Phase 2 ("dale con la Fase 2").
