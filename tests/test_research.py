@@ -303,3 +303,31 @@ def test_agente_corrige_cifra_inventada_con_feedback():
     obj, meta = AGENTS_BY_TYPE['fundamental'].run(ctx, prov)
     assert meta['repaired'] and '4.4T' in obj.claims[0].statement_es
     assert 'NO están en la evidencia' in prov.calls[1]
+
+
+def test_anomalias_de_precio_umbral_y_orden():
+    from research.auto_events import price_anomalies
+    caps = {'A': {'change_pct': 3.1}, 'B': {'change_pct': -12.4}, 'C': {'change_pct': 9.0},
+            'D': {'change_pct': None}, 'E': {'change_pct': 30}}
+    assert price_anomalies(caps, threshold=8, limit=2) == [('E', 30.0), ('B', -12.4)]
+
+
+@needs_db
+def test_anomalia_real_dispara_investigacion_una_vez_por_dia(db, monkeypatch):
+    import core.ai
+    from ontology.db import session_scope
+    from research.auto_events import dispatch_price_anomalies
+    from research.models import ResearchJob
+    monkeypatch.setattr(core.ai, '_ai_configured', lambda: True)
+    caps = {'AMD': {'change_pct': -11.0}}
+    monkeypatch.setenv('RESEARCH_AUTO_EVENTS', 'off')
+    assert dispatch_price_anomalies(caps, execute=False) == []          # apagado → nada
+    monkeypatch.setenv('RESEARCH_AUTO_EVENTS', 'on')
+    r1 = dispatch_price_anomalies(caps, execute=False, today='2026-09-29')
+    assert r1[0]['event_type'] == 'PRICE_ANOMALY' and [j['entity_id'] for j in r1[0]['jobs']] == ['AMD']
+    assert set(r1[0]['agents']) >= {'technical', 'news', 'risk_observation'}
+    r2 = dispatch_price_anomalies(caps, execute=False, today='2026-09-29')
+    assert r2[0].get('duplicate_of') and not r2[0]['jobs']               # dedupe 24 h
+    with session_scope() as s:
+        j = s.query(ResearchJob).filter(ResearchJob.entity_id == 'AMD', ResearchJob.depth == 'QUICK').all()
+        assert any((x.trigger or {}).get('kind') == 'event' for x in j)

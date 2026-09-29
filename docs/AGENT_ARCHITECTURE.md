@@ -46,3 +46,16 @@ búsqueda web Tavily; solo a pedido explícito). Cada claim guarda su `depth`.
 
 ## API
 `/api/research/agents · jobs (POST) · jobs/<id> · entity/<id> · claims/<id> (¿por qué?) · activity · budget · events (POST)`.
+
+
+## Eventos automáticos reales (2026-09-29)
+
+| Evento | Origen | Agentes | Alcance |
+|---|---|---|---|
+| NEWS | POST /api/ontology/ingest/news con noticias nuevas | news, fundamental… | entidad + vecinos (máx 3 jobs) |
+| PRICE_ANOMALY | refresco de core/live_caps (15 min): \|cambio diario\| ≥ RESEARCH_ANOMALY_PCT | technical, news, risk_observation | SOLO la empresa (max_depth 0), máx RESEARCH_ANOMALY_MAX por refresco |
+
+Ambos requieren `RESEARCH_AUTO_EVENTS=on` (apagado por defecto por costo), son
+QUICK, deduplicados 24 h por el router y sujetos al tope diario de gasto.
+Los what-if (disparar un factor, War Room) NO disparan investigación: los
+agentes solo investigan hechos reales.
