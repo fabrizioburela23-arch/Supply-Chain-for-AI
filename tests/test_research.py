@@ -331,3 +331,24 @@ def test_anomalia_real_dispara_investigacion_una_vez_por_dia(db, monkeypatch):
     with session_scope() as s:
         j = s.query(ResearchJob).filter(ResearchJob.entity_id == 'AMD', ResearchJob.depth == 'QUICK').all()
         assert any((x.trigger or {}).get('kind') == 'event' for x in j)
+
+
+@needs_db
+def test_contradiccion_entre_temas_relacionados(db):
+    from ontology.db import session_scope
+    from research.models import ClaimRelation, ResearchClaim
+    pos = _claim(topic='margins', stance='positive', horizon='SHORT_TERM', predicate='MARGINS_EXPAND')
+    neg = _claim(topic='profitability', stance='negative', horizon='SHORT_TERM', predicate='PROFITABILITY_FALLS',
+                 evidence_refs=['E4'], counter_evidence_refs=[], reasoning_summary='E4: presión de costos.')
+    otro = _claim(topic='technology', stance='negative', horizon='SHORT_TERM', predicate='TECH_LAGS',
+                  evidence_refs=['E4'], counter_evidence_refs=[], reasoning_summary='E4: retraso técnico.')
+    _run('Qualcomm', ['fundamental', 'supply_chain'],
+         {'fundamental': [_result([pos])], 'supply_chain': [_result([neg, otro])]})
+    with session_scope() as s:
+        ids = {c.predicate: c.id for c in s.query(ResearchClaim).filter_by(subject_entity_id='Qualcomm')}
+        rels = [r for r in s.query(ClaimRelation).all()
+                if {r.claim_a, r.claim_b} & set(ids.values())]
+        pairs = {frozenset((r.claim_a, r.claim_b)) for r in rels}
+        assert frozenset((ids['MARGINS_EXPAND'], ids['PROFITABILITY_FALLS'])) in pairs
+        assert not any(ids['TECH_LAGS'] in p for p in pairs)            # tema no relacionado
+        assert any('temas relacionados' in r.reason for r in rels)

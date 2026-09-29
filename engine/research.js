@@ -56,8 +56,9 @@
     var a = x.a_info, b = x.b_info;
     if (!a || !b) return x.reason || '';
     var st = function (v) { var q = STANCE[v] || [0, v, v]; return L(q[1], q[2]); };
-    return L(ag(a.agent_type) + ' ve «' + st(a.stance) + '» y ' + ag(b.agent_type) + ' ve «' + st(b.stance) + '» sobre ' + tp(a.topic) + ' en el mismo plazo (' + hz(a.horizon) + '). No se decide aquí quién tiene razón.',
-      ag(a.agent_type) + ' sees “' + st(a.stance) + '” and ' + ag(b.agent_type) + ' sees “' + st(b.stance) + '” on ' + tp(a.topic) + ' over the same horizon (' + hz(a.horizon) + '). Who is right is not decided here.');
+    var tEs = a.topic === b.topic ? tp(a.topic) : tp(a.topic) + ' / ' + tp(b.topic);
+    return L(ag(a.agent_type) + ' ve «' + st(a.stance) + '» y ' + ag(b.agent_type) + ' ve «' + st(b.stance) + '» sobre ' + tEs + ' en el mismo plazo (' + hz(a.horizon) + '). No se decide aquí quién tiene razón.',
+      ag(a.agent_type) + ' sees “' + st(a.stance) + '” and ' + ag(b.agent_type) + ' sees “' + st(b.stance) + '” on ' + tEs + ' over the same horizon (' + hz(a.horizon) + '). Who is right is not decided here.');
   }
   function ag(t) { var a = AG[t] || ['🤖', t, t]; return a[0] + ' ' + L(a[1], a[2]); }
   function hz(h) { var x = HZ[h] || [h, h]; return L(x[0], x[1]); }
