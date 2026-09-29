@@ -171,7 +171,7 @@
     if (isFinite(b) && b > 0) return b;
     b = valuationToB(meta.mktcap_b);       // por si viene como texto "div. IBM"
     if (isFinite(b) && b > 0) return b;
-    return 10;                             // último recurso: precio simbólico
+    return NaN;   // sin valuación conocida → 'no disponible' (antes: $10 inventado)
   }
   // { price, estimated, live, unavailable }
   function priceOf(n) {

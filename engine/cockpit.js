@@ -607,7 +607,7 @@
       ['simulate that ', 'China bans HBM exports', 'Agent simulation'],
       ['what if ', 'TSMC falls', 'Shock on the map'],
       ['compare ', 'Nvidia and AMD', 'Two companies'],
-      ['show me ', 'opportunities', 'Where to invest'],
+      ['show me ', 'opportunities', 'Resilient companies'],
       ['research ', 'Nvidia', 'Deep research'],
       ['chart: ', 'margins of NVIDIA, TSMC and ASML', 'Data canvas'],
       ['', 'my account', tb('broker')],
@@ -619,7 +619,7 @@
       ['simula que ', 'China prohíbe exportar HBM', 'Sim por agentes'],
       ['¿qué pasa si cae ', 'TSMC?', 'Shock en el mapa'],
       ['compara ', 'Nvidia y AMD', 'Dos empresas'],
-      ['muéstrame ', 'oportunidades', 'Dónde invertir'],
+      ['muéstrame ', 'oportunidades', 'Empresas resilientes'],
       ['investiga ', 'Nvidia', 'Investigación profunda'],
       ['gráfico: ', 'márgenes de NVIDIA, TSMC y ASML', 'Lienzo de datos'],
       ['', 'mi cuenta', tb('broker')],
@@ -955,7 +955,8 @@
         '<div class="bcp-two">' +
           '<div><div class="bcp-lh" style="color:' + DOWN + '">' + (en ? 'Highest risk (NRS)' : 'Mayor riesgo (NRS)') + '</div>' +
             (risk.map(function (x) { return row(x, DOWN, function (y) { return y.nrs; }); }).join('') || '<div class="bcp-loading">—</div>') + '</div>' +
-          '<div><div class="bcp-lh" style="color:' + UP + '">' + (en ? 'Opportunities (resilient)' : 'Oportunidades (resilientes)') + '</div>' +
+          '<div><div class="bcp-lh" style="color:' + UP + '">' + (en ? 'Resilient (low risk + growth)' : 'Resilientes (bajo riesgo + crecimiento)') + '</div>' +
+            '<div style="font-size:10px;color:var(--ink-3,#7C87A3);margin:-2px 0 6px">' + (en ? 'Ranked by NRS and catalog growth/margin (may be outdated). Not a buy recommendation.' : 'Ordenado por NRS y crecimiento/margen del catálogo (puede estar desactualizado). No es una recomendación de compra.') + '</div>' +
             (opps.map(function (x) { return row(x, UP, function (y) { return 'NRS ' + y.nrs; }); }).join('') || '<div class="bcp-loading">' + (en ? 'No clear opportunities right now' : 'Sin oportunidades claras ahora') + '</div>') + '</div>' +
         '</div>' +
       '</div>';
@@ -1746,15 +1747,17 @@
     var picked, title, sub;
     if (hits.length >= 1) {
       picked = hits.slice(0, 12);
-      title = (en ? 'Resilience (NRS): ' : 'Resiliencia (NRS): ') + picked.slice(0, 4).map(function (n) { return n.label; }).join(', ') + (picked.length > 4 ? '…' : '');
-      sub = en ? 'Network Risk Score 0-100 · higher = more resilient' : 'Puntaje NRS 0-100 · más alto = más resiliente';
+      // NRS es un puntaje de RIESGO: más alto = MÁS riesgoso (antes decía lo contrario)
+      title = (en ? 'Risk (NRS): ' : 'Riesgo (NRS): ') + picked.slice(0, 4).map(function (n) { return n.label; }).join(', ') + (picked.length > 4 ? '…' : '');
+      sub = en ? 'Network Risk Score 0-100 · higher = riskier' : 'Puntaje NRS 0-100 · más alto = más riesgo';
     } else {
       picked = nodes.map(function (n) { return { n: n, v: nrs(n.id) }; }).filter(function (x) { return x.v != null; })
         .sort(function (a, b) { return b.v - a.v; }).slice(0, 12).map(function (x) { return x.n; });
-      title = en ? 'Top companies by resilience (NRS)' : 'Top empresas por resiliencia (NRS)';
-      sub = en ? 'A useful default while the exact chart was unavailable' : 'Un gráfico útil por defecto (el exacto no estuvo disponible)';
+      title = en ? 'Highest-risk companies (NRS)' : 'Empresas de mayor riesgo (NRS)';
+      sub = en ? 'NRS 0-100, higher = riskier · a default chart (the exact one was unavailable)' : 'NRS 0-100, más alto = más riesgo · gráfico por defecto (el exacto no estuvo disponible)';
     }
-    var data = picked.map(function (n) { var v = nrs(n.id); return { label: n.label, value: (v == null ? 50 : Math.round(v)) }; });
+    // sin NRS → se omite (antes se dibujaba un 50 inventado)
+    var data = picked.map(function (n) { var v = nrs(n.id); return v == null ? null : { label: n.label, value: Math.round(v) }; }).filter(Boolean);
     return { type: 'bar', title: title, subtitle: sub, data: data, config: { unit: '' } };
   }
 
@@ -1882,8 +1885,13 @@
         'border:1px solid ' + NEON + '44;background:' + NEON + '11;font-size:10.5px;color:' + NEON + '">✦ ' +
         (en ? 'Reasoned by ' : 'Razonado por ') + esc(mLabel) + '</div>'
       : (d.model === '' && mdl === '' ? '' : '');
-    return modelHTML + agentsHTML + narrHTML +
-      '<div class="bcp-lh">' + (en ? 'Projected impact by company' : 'Impacto proyectado por empresa') + '</div>' + impactsHTML;
+    var simNote = '<div style="margin-bottom:12px;padding:8px 12px;border:1px dashed #f59e0b;border-radius:10px;background:rgba(245,158,11,.08);font-size:11.5px;color:#fbbf24;line-height:1.5">🧪 ' +
+      (en ? 'SIMULATION of a hypothetical scenario: the % are model estimates, not real prices nor recommendations.'
+          : 'SIMULACIÓN de un escenario hipotético: los % son estimaciones del modelo, no precios reales ni recomendaciones.') +
+      (d.fallback ? ' <b>' + (en ? 'No AI was available: rough fixed-magnitude estimate by supply-chain proximity.'
+                                 : 'Sin IA disponible: estimación gruesa de magnitud fija según cercanía en la cadena.') + '</b>' : '') + '</div>';
+    return modelHTML + simNote + agentsHTML + narrHTML +
+      '<div class="bcp-lh">' + (en ? 'Estimated impact by company' : 'Impacto estimado por empresa') + '</div>' + impactsHTML;
   }
 
   function stageAgentSim(s, arg) {
@@ -2229,7 +2237,7 @@
     var en = ckLang() === 'en';
     var nvda = _demoNode('Nvidia'), tsmc = _demoNode('TSMC');
     return en ? [
-      { say: "I'm Khipu. I watch 555 companies across the AI supply chain — chips, cloud, space and nuclear. Let me show you what I do in one minute.",
+      { say: "I'm Khipu. I watch nearly a thousand companies across the AI supply chain — chips, cloud, space and nuclear. Let me show you what I do in one minute.",
         act: function () { stage('empty'); } },
       { say: "This is the live map. Every dot is a company; every line is a real dependency — who fabricates for whom, who provides the cloud, who sells the power.",
         act: function () { stage('graph'); } },
@@ -2246,7 +2254,7 @@
       { say: "That's Khipu. Ask me anything: “break down Nvidia”, “what if TSMC falls?”, “show me opportunities”.",
         act: function () { stage('empty'); } },
     ] : [
-      { say: 'Soy Khipu. Vigilo 555 empresas de la cadena de la inteligencia artificial: chips, nube, espacio y nuclear. Te muestro en un minuto lo que hago.',
+      { say: 'Soy Khipu. Vigilo casi mil empresas de la cadena de la inteligencia artificial: chips, nube, espacio y nuclear. Te muestro en un minuto lo que hago.',
         act: function () { stage('empty'); } },
       { say: 'Este es el mapa vivo. Cada punto es una empresa; cada línea, una dependencia real: quién le fabrica a quién, quién le da la nube, quién le vende la energía.',
         act: function () { stage('graph'); } },

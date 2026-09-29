@@ -1971,20 +1971,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <div id="space-orbit-caption" style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">🌍 Cargando satélites reales (CelesTrak)… · arrastra para rotar · rueda para zoom · clic en un satélite</div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <!-- LAUNCH CADENCE -->
-      <div class="mkt-tablewrap" style="padding:16px">
-        <div class="mkt-sec-head">Cadencia de lanzamientos 2026 · por proveedor</div>
-        <div id="space-cadence" style="margin-top:14px"></div>
-      </div>
-      <!-- CHIP → SAT -->
-      <div class="mkt-tablewrap" style="padding:16px">
-        <div class="mkt-sec-head">Del silicio al satélite</div>
-        <div id="space-chipchain" style="margin-top:12px;font-size:12px"></div>
-      </div>
-    </div>
-    <!-- METRIC CARDS -->
-    <div id="space-metric-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px;margin-bottom:16px"></div>
+    <!-- (quitados 2026-09-29: 'Cadencia de lanzamientos', 'Del silicio al satélite' y tarjetas de métricas: ningún código los llenaba — títulos sobre cajas vacías) -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <!-- Upcoming launches -->
       <div class="mkt-tablewrap" style="padding:16px">
@@ -2001,21 +1988,20 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
     </div>
     <!-- Space market stats -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px">
+    <!-- Solo cifras VIVAS o del propio grafo (antes: "$630B", "12+", "7,200+" fijos
+         que contradecían el conteo real de CelesTrak de esta misma página). -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
       <div class="mkt-card" style="text-align:center;padding:16px">
-        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Mercado Total 2026</div>
-        <div style="font-size:20px;font-weight:800;color:var(--ink)">$630B</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px" data-i18n="space_consts">Constelaciones rastreadas</div>
+        <div id="space-const-count" style="font-size:20px;font-weight:800;color:var(--blue)">—</div>
       </div>
       <div class="mkt-card" style="text-align:center;padding:16px">
-        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Constelaciones Activas</div>
-        <div style="font-size:20px;font-weight:800;color:var(--blue)">12+</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px" data-i18n="space_sats">Satélites rastreados</div>
+        <div id="space-sat-count" style="font-size:20px;font-weight:800;color:#FF6B35">—</div>
+        <div id="space-sat-src" style="font-size:10px;color:var(--ink-3);margin-top:2px"></div>
       </div>
       <div class="mkt-card" style="text-align:center;padding:16px">
-        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Satélites en Órbita LEO</div>
-        <div style="font-size:20px;font-weight:800;color:#FF6B35">7,200+</div>
-      </div>
-      <div class="mkt-card" style="text-align:center;padding:16px">
-        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">Nodos Espaciales en Khipu</div>
+        <div style="font-size:11px;color:var(--ink-3);margin-bottom:4px" data-i18n="space_nodes">Nodos Espaciales en Khipu</div>
         <div id="space-node-count" style="font-size:20px;font-weight:800;color:var(--violet)">—</div>
       </div>
     </div>
@@ -3174,7 +3160,7 @@ function renderDetail(id){
       <div class="meta-item"><div class="meta-l">${_en?'Founded':'Fundada'}</div><div class="meta-v">${meta.founded||'—'}</div></div>
       <div class="meta-item"><div class="meta-l">${_en?'Employees':'Empleados'}</div><div class="meta-v" id="d-emp" data-live="employees">${meta.employees?esc(isFinite(+meta.employees)?(+meta.employees).toLocaleString(_en?'en-US':'es-ES'):meta.employees):'—'}</div></div>
       <div class="meta-item"><div class="meta-l" id="d-rev-l" data-live-label="revenue">${_en?'Revenue 2025':'Ingresos 2025'}</div><div class="meta-v" id="d-rev" data-live="revenue">${esc(meta.revenue_2025||'—')}</div></div>
-      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap" data-live="mcap">${meta.mktcap_b?(isFinite(+meta.mktcap_b)?'$'+meta.mktcap_b+'B':esc(meta.mktcap_b)):(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
+      <div class="meta-item"><div class="meta-l">Mkt Cap</div><div class="meta-v" id="d-mcap" data-live="mcap">${meta.mktcap_b?(isFinite(+meta.mktcap_b)?'$'+meta.mktcap_b+'B'+(window.liveCapDot?window.liveCapDot(meta):''):esc(meta.mktcap_b)):(d.mkt?'—':(LANG==='en'?'Private':'Privada'))}</div></div>
     </div>
     ${meta.geo_risk?`<div class="geo-risk-box"><span class="geo-icon">🌐</span>${esc(meta.geo_risk)}</div>`:''}
     ${meta.key_clients&&meta.key_clients.length?`<div class="key-clients-box"><div class="kc-l">${_en?'Key clients':'Clientes clave'}</div><div class="kc-tags">${meta.key_clients.map(c=>`<span class="kc-tag">${esc(c)}</span>`).join('')}</div></div>`:''}
@@ -3831,7 +3817,7 @@ es: {
   an_history_sub:'— cómo fue cambiando la red (una entrada por cambio real, no por visita)',
   sim_sub:'Motores internos · agentes con IA + matrices deterministas · Escenarios geopolíticos y de mercado sobre la cadena de valor global',
   sim_preset_btn:'Preset', sim_run:'▶ Ejecutar Simulación', sim_placeholder:'Describe el escenario...',
-  space_launches:'Próximos Lanzamientos', space_companies:'Empresas Espaciales en Khipu',
+  space_launches:'Próximos Lanzamientos', space_companies:'Empresas Espaciales en Khipu', space_consts:'Constelaciones rastreadas', space_sats:'Satélites rastreados', space_nodes:'Nodos espaciales en Khipu',
   f_link:'Vínculo',
   lt_all:'Todos', lt_supply:'Suministro', lt_fab:'Fabricación', lt_license:'Licencia IP',
   lt_cloud:'Cloud/SaaS', lt_invest:'Inversión', lt_deploy:'Despliegue', lt_partner:'Partnership',
@@ -3899,7 +3885,7 @@ en: {
   an_history_sub:'— how the network kept changing (one entry per real change, not per visit)',
   sim_sub:'Internal engines · AI agents + deterministic matrices · Geopolitical and market scenarios across the global value chain',
   sim_preset_btn:'Preset', sim_run:'▶ Run Simulation', sim_placeholder:'Describe the scenario...',
-  space_launches:'Upcoming Launches', space_companies:'Space Companies in Khipu',
+  space_launches:'Upcoming Launches', space_companies:'Space Companies in Khipu', space_consts:'Tracked constellations', space_sats:'Tracked satellites', space_nodes:'Space nodes in Khipu',
   f_link:'Link type',
   lt_all:'All', lt_supply:'Supply', lt_fab:'Fabrication', lt_license:'IP License',
   lt_cloud:'Cloud/SaaS', lt_invest:'Investment', lt_deploy:'Deployment', lt_partner:'Partnership',
@@ -4866,7 +4852,7 @@ Object.assign(I18N.es, {
   news_24:'24h', news_7:'7 días', news_30:'30 días',
   earn_next:'Próximo earnings', earn_in:'en {d} días', earn_eps:'EPS est',
   earn_beat:'✓ Beat', earn_miss:'✗ Miss',
-  fund_pe:'P/E', fund_ev:'EV/EBITDA', fund_pt:'Precio objetivo', fund_ins:'Insiders',
+  fund_pe:'P/E', fund_ev:'EV/EBITDA', fund_pt:'Precio objetivo', fund_ins:'Consenso de analistas',
   fund_sector:'sector', fund_analysts:'{n} analistas', fund_insiders90:'últimos 90d',
   ins_buy:'COMPRA', ins_sell:'VENTA', ins_title:'Insiders (últimos 90 días)',
   al_add:'+ Nueva alerta', al_above:'sobre', al_below:'bajo', al_active:'Activa', al_fired:'Disparada',
@@ -4878,9 +4864,9 @@ Object.assign(I18N.es, {
   dh_live:'LIVE', dh_cache:'caché', dh_ready:'listo', dh_off:'sin clave', dh_no:'no', dh_yes:'sí',
   test:'Probar', test_ok:'✓ válida', test_err:'✗ error', test_ing:'probando…', test_empty:'sin clave',
   clear_quotes:'Borrar caché de precios', clear_ai:'Borrar análisis IA', clear_cache:'Vaciar caché de datos',
-  ai_verdict:'Veredicto', ai_conf:'confianza', ai_bull:'CASO ALCISTA', ai_bear:'RIESGO PRINCIPAL',
+  ai_verdict:'Salud del negocio', ai_conf:'confianza', ai_bull:'CASO ALCISTA', ai_bear:'RIESGO PRINCIPAL',
   ai_metric:'Métrica clave', ai_horizon:'Horizonte', ai_cats:'Catalizadores', ai_similar:'Similar a',
-  ai_disclaim:'Generado por IA a partir de datos públicos. No es asesoría financiera.',
+  ai_disclaim:'Generado por IA a partir de datos públicos. Evalúa la salud del negocio: no es una recomendación de compra, venta ni mantener, ni asesoría financiera.',
 });
 Object.assign(I18N.en, {
   offline:'Offline',
@@ -4906,7 +4892,7 @@ Object.assign(I18N.en, {
   news_24:'24h', news_7:'7 days', news_30:'30 days',
   earn_next:'Next earnings', earn_in:'in {d} days', earn_eps:'EPS est',
   earn_beat:'✓ Beat', earn_miss:'✗ Miss',
-  fund_pe:'P/E', fund_ev:'EV/EBITDA', fund_pt:'Price target', fund_ins:'Insiders',
+  fund_pe:'P/E', fund_ev:'EV/EBITDA', fund_pt:'Price target', fund_ins:'Analyst consensus',
   fund_sector:'sector', fund_analysts:'{n} analysts', fund_insiders90:'last 90d',
   ins_buy:'BUY', ins_sell:'SELL', ins_title:'Insiders (last 90 days)',
   al_add:'+ New alert', al_above:'above', al_below:'below', al_active:'Active', al_fired:'Fired',
@@ -4918,9 +4904,9 @@ Object.assign(I18N.en, {
   dh_live:'LIVE', dh_cache:'cache', dh_ready:'ready', dh_off:'no key', dh_no:'no', dh_yes:'yes',
   test:'Test', test_ok:'✓ valid', test_err:'✗ error', test_ing:'testing…', test_empty:'no key',
   clear_quotes:'Clear price cache', clear_ai:'Clear AI analysis', clear_cache:'Clear data cache',
-  ai_verdict:'Verdict', ai_conf:'confidence', ai_bull:'BULL CASE', ai_bear:'KEY RISK',
+  ai_verdict:'Business health', ai_conf:'confidence', ai_bull:'BULL CASE', ai_bear:'KEY RISK',
   ai_metric:'Key metric', ai_horizon:'Horizon', ai_cats:'Catalysts', ai_similar:'Similar to',
-  ai_disclaim:'AI-generated from public data. Not financial advice.',
+  ai_disclaim:'AI-generated from public data. It assesses business health: not a buy, sell or hold recommendation, nor financial advice.',
 });
 
 /* ---------- §B · Modo de operación + claves ---------- */
@@ -5337,7 +5323,7 @@ $('pref-notif').onchange=e=>{ const p=prefs(); p.notif=e.target.checked; savePre
 $('pref-aicache').onchange=e=>{ const p=prefs(); p.aicache=e.target.checked; savePrefs(p); };
 $('data-clear-quotes').onclick=()=>{ localStorage.removeItem('eco_quotes'); localStorage.removeItem('eco_quotes_ts');
   MKT.quotes={}; MKT.ts=null; if(activeTab==='market') renderMarket(); toast(LANG==='en'?'Price cache cleared':'Caché de precios borrada'); };
-$('data-clear-ai').onclick=()=>{ Object.keys(localStorage).filter(k=>k.startsWith('ai_analysis_')).forEach(k=>localStorage.removeItem(k));
+$('data-clear-ai').onclick=()=>{ Object.keys(localStorage).filter(k=>k.startsWith('ai_analysis')).forEach(k=>localStorage.removeItem(k));
   toast(LANG==='en'?'AI analysis cleared':'Análisis IA borrados'); if(selected) renderDetail(selected); };
 $('data-clear-cache').onclick=()=>{ idb.clear(); toast(LANG==='en'?'Data cache cleared':'Caché de datos vaciada'); };
 
@@ -5625,9 +5611,15 @@ const V8detail = {
         if(cur){ const up=(pt.targetConsensus/cur-1)*100; ptStr+=` ${up>=0?'↑':'↓'}${Math.abs(up).toFixed(0)}%`; ptUp=up>=0?'up':'down'; } }
       // rating de analistas → consenso simple
       const r=(f.ratings&&f.ratings[0])||{};
+      // Es lo que OPINAN analistas externos (FMP), no Khipus. Sin calificaciones
+      // → '—' (antes mostraba "Mantener" que nadie había dado).
       const buys=(r.analystRatingsbuy||r.analystRatingsBuy||0)+(r.analystRatingsStrongBuy||0);
       const sells=(r.analystRatingsSell||0)+(r.analystRatingsStrongSell||0);
-      const rate = buys>sells?(LANG==='en'?'🟢 Buy':'🟢 Compra'):sells>buys?(LANG==='en'?'🔴 Sell':'🔴 Vender'):(LANG==='en'?'🟡 Hold':'🟡 Mantener');
+      const holds=(r.analystRatingsHold||0);
+      const tot=buys+sells+holds;
+      const rate = !tot ? '—' : (LANG==='en'
+        ? `<span title="External analysts' ratings (FMP), not Khipus'">${buys} buy · ${holds} hold · ${sells} sell</span>`
+        : `<span title="Calificaciones de analistas externos (FMP), no de Khipus">${buys} compra · ${holds} mant. · ${sells} venta</span>`);
       el.innerHTML=`<div class="fund-grid">
         <div class="fund-card"><div class="fl">${t('fund_pe')}</div><div class="fv">${pe}</div></div>
         <div class="fund-card"><div class="fl">${t('fund_ev')}</div><div class="fv">${ev}</div></div>
@@ -5680,7 +5672,7 @@ const V8detail = {
   /* ----- Feature 5: análisis con IA ----- */
   showCachedAI(id){
     if(!prefs().aicache) return; const d=NODE_BY_ID[id]; if(!d.mkt) return;
-    const raw=localStorage.getItem('ai_analysis_'+d.mkt+'_'+today());
+    const raw=localStorage.getItem('ai_analysis2_'+d.mkt+'_'+today());
     if(raw){ try{ this.renderAI(id, JSON.parse(raw), true); }catch(e){} }
   },
   async runAI(id){
@@ -5691,24 +5683,26 @@ const V8detail = {
     const fund=(this.fundCache[id]&&this.fundCache[id].metrics&&this.fundCache[id].metrics[0])||{};
     const pt=(this.fundCache[id]&&this.fundCache[id].priceTarget&&this.fundCache[id].priceTarget[0])||{};
     const news=(this.newsCache[id]||[]).slice(0,3).map(n=>'- '+n.headline+' ('+(n.source||'')+')').join('\n')||'—';
-    const system=`Eres un analista de inversiones senior especializado en el ecosistema de semiconductores e inteligencia artificial. Analizas empresas para inversores informados que buscan valor a largo plazo, no trading de corto plazo. Sé preciso y directo, destaca lo que realmente importa. Responde SIEMPRE en ${LANG==='en'?'English':'español'}.`;
-    const prompt=`Analiza esta empresa para un inversor.
+    const system=`Eres un analista de investigación senior especializado en el ecosistema de semiconductores e inteligencia artificial. Evalúas la SALUD DEL NEGOCIO para inversores informados de largo plazo. NUNCA recomiendes comprar, vender ni mantener, ni des precios objetivo propios. Sé preciso y directo, destaca lo que realmente importa. Responde SIEMPRE en ${LANG==='en'?'English':'español'}.`;
+    const live=meta.mktcap_live?`capitalización EN VIVO $${meta.mktcap_b}B`:'capitalización en vivo N/D';
+    const prompt=`Evalúa la salud del negocio de esta empresa.
 Empresa: ${nf(d,'label')||d.label} (${d.ticker})
 Categoría en la cadena: ${catLabel(d.cat)}
 País: ${d.loc}
 Rol: ${nf(d,'role')}
 Moat: ${nf(d,'moat')}
-Datos de mercado: precio ${q.close!=null?'$'+q.close:'N/D'}, P/E ${fund.peRatio!=null?(+fund.peRatio).toFixed(1):'N/D'}, EV/EBITDA ${fund.enterpriseValueOverEBITDA!=null?(+fund.enterpriseValueOverEBITDA).toFixed(1):'N/D'}, precio objetivo consenso ${pt.targetConsensus!=null?'$'+pt.targetConsensus:'N/D'}, margen ${d.margin!=null?(d.margin*100).toFixed(0)+'%':'N/D'}, crecimiento ${nf(d,'growth')}, CAPEX 2026 ${nf(d,'capex_2026')}, riesgo geopolítico ${meta.geo_risk||'N/D'}.
+Datos de mercado (en vivo): precio ${q.close!=null?'$'+q.close:'N/D'}, ${live}, P/E ${fund.peRatio!=null?(+fund.peRatio).toFixed(1):'N/D'}, EV/EBITDA ${fund.enterpriseValueOverEBITDA!=null?(+fund.enterpriseValueOverEBITDA).toFixed(1):'N/D'}, precio objetivo consenso de analistas externos ${pt.targetConsensus!=null?'$'+pt.targetConsensus:'N/D'}.
+Datos del CATÁLOGO Khipus (curados a mano, pueden estar desactualizados — no los presentes como actuales): margen ${d.margin!=null?(d.margin*100).toFixed(0)+'%':'N/D'}, crecimiento ${nf(d,'growth')}, CAPEX 2026 ${nf(d,'capex_2026')}, riesgo geopolítico ${meta.geo_risk||'N/D'}.
 Noticias recientes:
 ${news}
 Idioma de respuesta: ${LANG==='en'?'English':'español'}.
 Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con este formato exacto:
-{"verdict":"FUERTE COMPRA|COMPRA|MANTENER|VENDER|ALTO RIESGO","confidence":1-5,"headline":"tesis central en una línea (max 80 chars)","bull_case":"caso alcista en 2-3 oraciones","bear_case":"riesgo principal en 2-3 oraciones","key_metric":"métrica clave a vigilar","time_horizon":"horizonte (ej 18-36 meses)","catalysts":["c1","c2","c3"],"comparable":"empresa comparable conocida"}`;
+{"verdict":"SÓLIDA|POSITIVA|NEUTRAL|DÉBIL|ALTO RIESGO (salud del negocio; en inglés: STRONG|POSITIVE|NEUTRAL|WEAK|HIGH RISK)","confidence":1-5,"headline":"tesis central en una línea (max 80 chars)","bull_case":"caso alcista en 2-3 oraciones","bear_case":"riesgo principal en 2-3 oraciones","key_metric":"métrica clave a vigilar","time_horizon":"horizonte (ej 18-36 meses)","catalysts":["c1","c2","c3"],"comparable":"empresa comparable conocida"}`;
     try{
       const txt=await DataLayer.aiComplete(system, prompt, 1400, 'deep');
       const obj=extractJSON(txt);
       if(!obj) throw new Error('respuesta no parseable');
-      if(prefs().aicache && d.mkt) localStorage.setItem('ai_analysis_'+d.mkt+'_'+today(), JSON.stringify(obj));
+      if(prefs().aicache && d.mkt) localStorage.setItem('ai_analysis2_'+d.mkt+'_'+today(), JSON.stringify(obj));
       this.renderAI(id, obj, false);
     }catch(e){
       if($('v8-ai')) $('v8-ai').innerHTML=`<div class="ai-err">${esc(String(e.message||e))}</div>`;
@@ -5718,13 +5712,13 @@ Devuelve SOLO un objeto JSON válido (sin texto alrededor, sin markdown) con est
   renderAI(id, a, cached){
     const out=$('v8-ai'); if(!out) return;
     const vkey=(a.verdict||'').toLowerCase();
-    const vcls = /fuerte|strong/.test(vkey)?'fuerte':/compra|buy/.test(vkey)?'buy':/mant|hold/.test(vkey)?'hold':/vend|sell/.test(vkey)?'sell':'riesgo';
+    const vcls = /riesgo|risk/.test(vkey)?'riesgo':/sólida|solida|strong/.test(vkey)?'fuerte':/positiva|positive/.test(vkey)?'buy':/neutral/.test(vkey)?'hold':/débil|debil|weak/.test(vkey)?'sell':'riesgo';
     const conf=Math.max(0,Math.min(5,+a.confidence||0));
     const dots=Array.from({length:5},(_,i)=>`<span class="${i<conf?'on':''}"></span>`).join('');
     const cats=(a.catalysts||[]).map(c=>`<li>${esc(c)}</li>`).join('');
     out.innerHTML=`<div class="ai-card"><div class="ai-card-head">✨ ${t('d_ai')}<span class="ai-ts">${cached?(LANG==='en'?'cached':'caché'):''}</span></div>
       <div class="ai-card-body">
-        <div class="ai-verdict ${vcls}"><span class="av-label">${esc(a.verdict||'')}</span><span class="av-conf">${dots}</span><span style="font-size:11px;color:var(--ink-3)">${conf}/5 ${t('ai_conf')}</span></div>
+        <div class="ai-verdict ${vcls}"><span style="font-size:10px;color:var(--ink-3);margin-right:4px">${t('ai_verdict')}:</span><span class="av-label">${esc(a.verdict||'')}</span><span class="av-conf">${dots}</span><span style="font-size:11px;color:var(--ink-3)">${conf}/5 ${t('ai_conf')}</span></div>
         ${a.headline?`<div class="ai-headline">${esc(a.headline)}</div>`:''}
         ${a.bull_case?`<div class="ai-case bull"><div class="acl">🟢 ${t('ai_bull')}</div><p>${esc(a.bull_case)}</p></div>`:''}
         ${a.bear_case?`<div class="ai-case bear"><div class="acl">🔴 ${t('ai_bear')}</div><p>${esc(a.bear_case)}</p></div>`:''}
@@ -5939,7 +5933,13 @@ window.KhipuLiveCaps = (function(){
 })();
 /* Punto verde "en vivo" para una capitalización pintada desde NODE_META. */
 window.liveCapDot = function(meta){
-  const l = meta && meta.mktcap_live; if(!l) return '';
+  const l = meta && meta.mktcap_live;
+  if(!l){
+    // valor del CATÁLOGO (curado a mano, puede estar desactualizado): rotularlo
+    if(!meta || meta.mktcap_b == null || !isFinite(+meta.mktcap_b)) return '';
+    const tipc = LANG==='en' ? 'Catalog figure (curated, may be outdated) — no live data right now' : 'Dato del catálogo (curado, puede estar desactualizado) — sin dato en vivo ahora';
+    return ' <span style="color:var(--ink-3);font-size:9px;font-weight:400;vertical-align:middle" title="'+tipc+'">'+(LANG==='en'?'cat.':'cat.')+'</span>';
+  }
   const t = l.as_of ? new Date(l.as_of).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
   const tip = (LANG==='en' ? 'Live · ' : 'En vivo · ') + (l.source||'yahoo') + (t ? ' · ' + t : '');
   return ' <b style="color:#2BE38B;font-size:9px;vertical-align:middle" title="'+tip+'">●</b>';
@@ -7200,6 +7200,21 @@ async function _runAgentSim(text, presetId, output, status) {
       body: JSON.stringify({ scenario: text, seeds, lang: en ? 'en' : 'es' }),
     });
     const d = await r.json().catch(() => null);
+    if (d && d.ok && d.no_seeds) {
+      // el escenario no nombra empresas: se dice, no se inventa un elenco
+      _renderWarRoom({ scenarioTitle: text.slice(0, 70), nodeImpacts: {}, priceTrajs: {}, cascadeNodes: [],
+        reportText: d.narrative || '', reportId: null, simId: null, presetId: null, impactSource: 'none' });
+      const rep = document.getElementById('wr-report'); if (rep && rep.parentElement) rep.parentElement.open = true;
+      _simSetStatus(status, en ? 'ℹ️ Name at least one company' : 'ℹ️ Nombra al menos una empresa', 'violet');
+      return true;
+    }
+    if (d && d.ok && d.fallback && Array.isArray(d.seeds) && d.seeds.length) {
+      // sin IA: motor ESTRUCTURAL del cliente (severidad 0-100) desde las semillas
+      _renderWarRoom({ scenarioTitle: text.slice(0, 70), nodeImpacts: {}, priceTrajs: {}, cascadeNodes: d.seeds,
+        reportText: d.narrative || '', reportId: null, simId: null, presetId, impactSource: 'structural' });
+      _simSetStatus(status, en ? '✅ Structural simulation (no AI)' : '✅ Simulación estructural (sin IA)', 'green');
+      return true;
+    }
     if (!r.ok || !d || d.ok === false || !Array.isArray(d.impacts) || !d.impacts.length) return false;
 
     // El motor devuelve pct CON SIGNO (− pierde valor, + gana). El War-Room usa
@@ -7420,7 +7435,9 @@ function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, 
     impactSource = impactSource || 'structural';
   }
   const srcEl = document.getElementById('wr-src');
-  if (srcEl) srcEl.textContent = impactSource === 'agents'
+  if (srcEl) srcEl.textContent = impactSource === 'none'
+    ? WL(' Sin impactos: el escenario no nombra ninguna empresa.', ' No impacts: the scenario names no company.')
+    : impactSource === 'agents'
     ? WL(' Impactos: agentes de IA (' + ((debate && debate.model) || 'IA') + '), cada uno con su razón.', ' Impacts: AI agents (' + ((debate && debate.model) || 'AI') + '), each with its rationale.')
     : WL(' Impactos: motor estructural del grafo (sin IA) — severidad 0-100 del golpe, no % de precio.', ' Impacts: structural graph engine (no AI) — hit severity 0-100, not % price.');
 
@@ -8851,7 +8868,14 @@ async function initSpacePlanet() {
     window._planet.loadConstellations(data);
     renderConstellationLegend(data);
     const fmt = n => (n>=1000? (n/1000).toFixed(n>=10000?0:1)+'k' : n);
-    if (cap) cap.innerHTML = `🛰 <b style="color:#9bd1ff">${fmt(data.total_real||0)}</b> satélites reales · ${data.source==='fallback'?'<span style="color:#e6a23c">datos de respaldo</span>':'CelesTrak en vivo'} · arrastra · rueda · clic`;
+    const _fb = data.source==='fallback', _en = LANG==='en';
+    if (cap) cap.innerHTML = _fb
+      ? `🛰 <span style="color:#e6a23c">${_en?'CelesTrak unreachable — reference counts, NOT live':'CelesTrak no responde — cifras de referencia, NO en vivo'}</span> · ${_en?'drag · wheel · click':'arrastra · rueda · clic'}`
+      : `🛰 <b style="color:#9bd1ff">${fmt(data.total_real||0)}</b> ${_en?'real satellites · CelesTrak live':'satélites reales · CelesTrak en vivo'} · ${_en?'drag · wheel · click':'arrastra · rueda · clic'}`;
+    const _sc=document.getElementById('space-sat-count'), _ss=document.getElementById('space-sat-src'), _cc=document.getElementById('space-const-count');
+    if (_sc) _sc.textContent = _fb ? '—' : fmt(data.total_real||0);
+    if (_ss) _ss.textContent = _fb ? (_en?'source unreachable':'fuente sin respuesta') : (_en?'CelesTrak · live':'CelesTrak · en vivo');
+    if (_cc) _cc.textContent = _fb ? '—' : String(Object.keys(data.constellations||data.groups||{}).length || '—');
   } catch (e) {
     console.warn('TLE fetch falló:', e);
     if (cap) cap.textContent = '⚠ No se pudieron cargar los satélites (revisa conexión)';
@@ -10396,18 +10420,14 @@ window._cvRenderCard = _cvRenderCard;   // permite a Khipu renderizar gráficos 
     quantum_hw:10, nuclear_fusion:15,
   };
 
-  const CAP_B = {
-    NVDA:3200, AAPL:3200, MSFT:3100, AMZN:2200, GOOGL:2100,
-    META:1500, AVGO:750,  TSM:920,   ASML:400,  AMD:260,
-    IBM:210,   QCOM:190,  LMT:135,   TXN:160,   AMAT:150,
-    LRCX:95,   MU:110,   KLAC:90,   MRVL:65,   SNPS:85,
-    CDNS:80,   AXON:32,  BWXT:6,    HII:8,     KTOS:7,
-    ON:30,     WOLF:2,   AMBA:4,    RKLB:10,   OKLO:4,
-    NNE:3,     SMR:3,    IONQ:5,    RGTI:3,    ARQQ:0.5,
-    QMCO:1,    LUNR:1.5, SPIR:0.3,
-  };
-
-  const LOG_MAX = Math.log10(3500);
+  // Capitalización: NODE_META (EN VIVO tras KhipuLiveCaps; si no, catálogo).
+  // Antes: tabla CAP_B fija (NVDA 3200, AVGO 750…) + $8B/$1B INVENTADOS para
+  // el resto — se mostraban como "Mkt cap" y filtraban "Oportunidades".
+  function capOf(node) {
+    const v = +((window.NODE_META || {})[node.id] || {}).mktcap_b;
+    return isFinite(v) && v > 0 ? v : null;
+  }
+  const LOG_MAX = Math.log10(6000);
   const SPREAD  = 340;
 
   function riskNorm(node) {
@@ -10426,20 +10446,15 @@ window._cvRenderCard = _cvRenderCard;   // permite a Khipu renderizar gráficos 
   function semXYZ(node) {
     const ttm = TTM[node.cat] ?? 5;
     const x   = (Math.min(1, ttm / 15) - 0.5) * SPREAD + (Math.random() - 0.5) * 16;
-    const tk  = (node.ticker || '').split(/[·\s]/)[0].trim().toUpperCase();
-    const cap = CAP_B[tk] ?? (node.margin > 0 ? 8 : 1);
+    const cap = capOf(node) ?? 0.3;   // sin dato → franja baja (solo posición; el medidor dice "s/d")
     const y   = (Math.log10(cap + 1) / LOG_MAX - 0.5) * SPREAD + (Math.random() - 0.5) * 16;
     const zn  = riskNorm(node);
     return { x, y, z: (zn - 0.5) * SPREAD + (Math.random() - 0.5) * 16 };
   }
 
-  function capOf(node) {
-    const tk = (node.ticker || '').split(/[·\s]/)[0].trim().toUpperCase();
-    return CAP_B[tk] ?? (node.margin > 0 ? 8 : 1);
-  }
   const FILTERS = {
     all:      () => true,
-    gems:     n => (TTM[n.cat] ?? 5) <= 1 && riskNorm(n) < 0.55 && capOf(n) < 200,
+    gems:     n => (TTM[n.cat] ?? 5) <= 1 && riskNorm(n) < 0.55 && capOf(n) != null && capOf(n) < 200,
     lowrisk:  n => riskNorm(n) < 0.38,
     emerging: n => (TTM[n.cat] ?? 5) >= 3,
     highrisk: n => riskNorm(n) > 0.60,
@@ -10547,10 +10562,11 @@ window._cvRenderCard = _cvRenderCard;   // permite a Khipu renderizar gráficos 
     const ttm = TTM[node.cat] ?? 5;
     setGauge('kg-x-fill', (ttm / 15) * 100);
     setText('kg-x-val', ttm === 0 ? 'Disponible hoy' : ttm + ' año' + (ttm === 1 ? '' : 's'));
-    const tk  = (node.ticker || '').split(/[·\s]/)[0].trim().toUpperCase();
-    const cap = CAP_B[tk] ?? (node.margin > 0 ? 8 : 1);
-    setGauge('kg-y-fill', (Math.log10(cap + 1) / LOG_MAX) * 100);
-    const capLabel = cap >= 1000 ? '$' + (cap / 1000).toFixed(1) + 'T' : cap >= 1 ? '$' + Math.round(cap) + 'B' : '$' + (cap * 1000).toFixed(0) + 'M';
+    const cap = capOf(node);
+    setGauge('kg-y-fill', cap == null ? 0 : (Math.log10(cap + 1) / LOG_MAX) * 100);
+    const capLabel = cap == null ? (LANG === 'en' ? 'n/a' : 's/d')
+      : (cap >= 1000 ? '$' + (cap / 1000).toFixed(1) + 'T' : cap >= 1 ? '$' + Math.round(cap) + 'B' : '$' + (cap * 1000).toFixed(0) + 'M')
+        + (((window.NODE_META || {})[node.id] || {}).mktcap_live ? (LANG === 'en' ? ' · live' : ' · en vivo') : (LANG === 'en' ? ' · catalog' : ' · catálogo'));
     setText('kg-y-val', capLabel);
     const zn = riskNorm(node);
     setGauge('kg-z-fill', zn * 100);

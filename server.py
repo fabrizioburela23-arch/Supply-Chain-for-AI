@@ -2472,24 +2472,29 @@ def _space_constellations():
             n = len(_parse_tle_text(r.text)) if (r.ok and r.text and '<' not in r.text[:1]) else 0
         except Exception:  # noqa: BLE001
             n = 0
+        live = bool(n)
         if not n:
             n = _SAT_FALLBACK.get(label, 0)   # piso si CelesTrak falló para este grupo
         if n:
-            out.append((label, n))
-    total = sum(n for _, n in out)
+            out.append((label, n, live))      # live=False → cifra de REFERENCIA, no en vivo
+    total = sum(n for _, n, _l in out)
     # cachear SOLO si el paquete es plausible (Starlink presente): evita fijar 24h
     # un resultado parcial como el que rompió el texto ("total 1163, sin Starlink").
-    if total > 5000 and any(l == 'Starlink' for l, _ in out):
+    if total > 5000 and any(l == 'Starlink' and lv for l, _, lv in out):
         cache.set(ck, out, timeout=86400)
     return out
 
 
 def _space_facts_str():
     cons = _space_constellations()
-    total = sum(n for _, n in cons)
+    total = sum(n for _, n, _l in cons)
+    ref = [lbl for lbl, _, lv in cons if not lv]
     return (f'Total aproximado: {total} satélites rastreados en órbita. '
-            + ' · '.join(f'{lbl}: {n}' for lbl, n in cons)
-            + ' (fuente CelesTrak, se actualiza a diario).')
+            + ' · '.join(f'{lbl}: {n}' + ('' if lv else ' (cifra de referencia, NO en vivo)')
+                         for lbl, n, lv in cons)
+            + ' (fuente CelesTrak, se actualiza a diario'
+            + (f'; CelesTrak no respondió para {", ".join(ref)} — dilo si citas esas cifras' if ref else '')
+            + ').')
 
 
 # ── GDELT News (gratis, global, multi-idioma) ────────────────────────────────
@@ -2928,15 +2933,15 @@ You may receive [CONTEXT_UPDATE] {json} messages — silent app-state snapshots 
 
 ## DOMAIN KNOWLEDGE — DEEP EXPERTISE
 
-NRS (NEXUS Risk Score): 0-100 composite: geo-political exposure (30%), supply chain concentration (25%), market fundamentals (25%), sector risk (20%). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green).
+NRS (NEXUS Risk Score): 0-100, HIGHER = RISKIER. Sum of: country geo-risk (0-30), supply-chain centrality (0-25, from graph degree), margin-based market risk (0-20), fundamentals (0-15: pre-IPO, weak growth), country concentration (0-10). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green). For a company's actual NRS use the app's tools/context — never quote an NRS from memory.
 
-Critical chokepoints (know these cold):
-- TSMC: sole advanced foundry for <5nm; Apple/NVIDIA/AMD/Qualcomm all depend. NRS ~82
-- ASML: EUV lithography monopoly; no sub-7nm without them. NRS ~78
-- NVIDIA: 90%+ AI training GPU; H100/H200/B200/Blackwell dominate data centers. NRS ~74
-- SK Hynix: HBM monopoly for AI accelerators (HBM3/HBM3E). NRS ~71
-- ARMH: CPU ISA licensed by 99% of mobile + most data center chips. NRS ~69
-- Synopsys/Cadence: EDA duopoly; needed to design ANY modern chip. NRS ~65
+Critical chokepoints (structural roles; for scores, prices or market caps use the app's live data, never memory):
+- TSMC: leading advanced foundry; Apple/NVIDIA/AMD/Qualcomm depend on it.
+- ASML: EUV lithography monopoly; no leading-edge nodes without them.
+- NVIDIA: dominant AI training GPU supplier.
+- SK Hynix: leading HBM supplier for AI accelerators.
+- Arm: CPU ISA licensed across mobile and many data-center chips.
+- Synopsys/Cadence: EDA duopoly; needed to design modern chips.
 
 Supply chains (know the full stack):
 - AI data center: NVIDIA GPU → TSMC fab → ASML litho → SK Hynix HBM → Broadcom switch
@@ -2945,18 +2950,18 @@ Supply chains (know the full stack):
 - Automotive AI: NXP/Renesas SoC → STMicro power → Mobileye vision → LiDAR (Luminar)
 - Quantum: IBM/IonQ/Rigetti systems → Oxford Instruments cryo → Keysight control
 
-Geopolitical risks:
-- Taiwan Strait: TSMC+UMC+ASE = 90% advanced fabs at risk. Conflict → global chip famine
-- US-China: export controls on H100+ to China; Huawei building alternative stack with Ascend
-- Rare earth: China controls 60% supply; MP Materials/Lynas are critical US/AU alternatives
-- Korea risk: Samsung+SK Hynix = 70%+ DRAM+HBM; North Korea artillery range
+Geopolitical risks (qualitative; quote numbers only from live data or sourced context):
+- Taiwan Strait: most leading-edge fab capacity (TSMC, UMC, ASE) is concentrated there. Conflict → global chip shortage
+- US-China: export controls on advanced AI GPUs to China; Huawei building an alternative stack (Ascend)
+- Rare earths: China dominates supply and processing; MP Materials/Lynas are US/AU alternatives
+- Korea: Samsung + SK Hynix concentrate most DRAM/HBM supply
 
-War-Room scenarios (5 presets):
-1. taiwan_conflict — TSMC blockade, ASML/NVDA/AAPL cascade, Samsung/Intel as winners
-2. china_chip_ban_total — NVDA -28% revenue, AMD gains share, Huawei Ascend accelerates
-3. hbm_shortage_2027 — SK Hynix/Micron +35%, AI fabless squeezed, OSAT bottleneck
-4. openai_ipo_impact — NVDA/ARM multiple expansion, entire AI ecosystem re-rating
-5. starshield_reveal — SpaceX defense revenue confirmed, traditional contractors compressed
+War-Room scenarios (5 presets; HYPOTHETICAL — outcomes come from running the simulation, never from memory):
+1. taiwan_conflict — TSMC blockade and its cascade
+2. china_chip_ban_total — total US chip export ban to China
+3. hbm_shortage_2027 — HBM memory shortage
+4. openai_ipo_impact — OpenAI IPO and the AI ecosystem
+5. starshield_reveal — SpaceX Starshield defense program
 
 ## PAPER TRADING (SIMULATED — RULES YOU MUST NEVER BREAK)
 - place_paper_trade and get_portfolio_status operate on a SIMULATED paper-money broker. ALWAYS say clearly that the operation is simulated ("es una operación simulada, dinero de papel") — never let the user believe real money moved.
@@ -2970,7 +2975,7 @@ War-Room scenarios (5 presets):
 - ACT FIRST, TALK SECOND: on almost every user request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never just speak without acting, and never ask permission to act.
 - Deep question about ONE company → open_xray + your sharpest take ("Su talón de Aquiles es…").
 - "What if…" questions → run_live_simulation, then narrate: how many affected, the 2-3 biggest victims, who wins.
-- War-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…"), name winners and losers with % estimates.
+- War-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…") and name winners and losers USING THE % THE SIMULATION RETURNED — always say they are simulated estimates of a hypothetical scenario, never real prices.
 - Charts: create_visualization — never ask the user to describe the chart format, just render something smart.
 - Confirm actions naturally and briefly: "Aquí la tienes…", "Mira el mapa — se tiñe en rojo…".
 - Be concise (2-3 sentences of analysis) then act immediately — no over-explanation.

@@ -335,7 +335,7 @@
     const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     for (const [px, py, c] of S.chokePts) {
       if (Math.hypot(px - mx, py - my) < 11) {
-        return { kind: 'choke', obj: c, html: `<b>⚓ ${esc(en() ? c.en : c.es)}</b><br>${t('riesgo', 'risk')}: <b style="color:${scoreColor(c.score)}">${c.score}</b>/100${c.news ? `<br>📰 ${c.news.count} ${t('artículos 7d', 'articles 7d')}` : ''}${c.factors && c.factors.length ? `<br>⚡ ${esc(c.factors[0])}` : ''}` };
+        return { kind: 'choke', obj: c, html: `<b>⚓ ${esc(en() ? c.en : c.es)}</b><br>${t('riesgo', 'risk')}: <b style="color:${scoreColor(c.score)}">${c.score}</b>/100 <span style="opacity:.7">(${c.news ? t('base editorial + noticias', 'editorial base + news') : t('solo base editorial', 'editorial base only')})</span>${c.news ? `<br>📰 ${c.news.count} ${t('artículos 7d', 'articles 7d')}` : ''}${c.factors && c.factors.length ? `<br>⚡ ${esc(c.factors[0])}` : ''}` };
       }
     }
     for (const [px, py, f] of S.fabPts) {
@@ -378,7 +378,7 @@
       const sim = (c.affected && c.affected.length)
         ? `<button class="gs-simbtn" data-ck="${esc(c.id)}">◉ ${t('Simular cierre', 'Simulate closure')}</button>` : '';
       return `<div class="gs-row" id="gs-ck-${esc(c.id)}">
-        <div class="gs-rtop" data-focus="${c.lat},${c.lon}"><span>⚓</span><span class="nm">${esc(en() ? c.en : c.es)}</span><span class="gs-score" style="color:${col}">${Math.round(c.score)}</span></div>
+        <div class="gs-rtop" data-focus="${c.lat},${c.lon}"><span>⚓</span><span class="nm">${esc(en() ? c.en : c.es)}</span><span class="gs-score" style="color:${col}" title="${c.news ? t('Índice 0-100: base editorial del analista + noticias de los últimos 7 días', 'Index 0-100: analyst editorial base + last 7 days of news') : t('Índice 0-100: solo base editorial del analista (sin noticias en vivo ahora)', 'Index 0-100: analyst editorial base only (no live news right now)')}">${Math.round(c.score)}${c.news ? '' : '<sup style=\'font-size:9px;opacity:.7\'>*</sup>'}</span></div>
         <div class="gs-bar"><i style="width:${Math.min(100, c.score)}%;background:${col}"></i></div>
         <div class="gs-meta">${news}${fx}${sim}</div>
         <div class="gs-meta" style="color:#8B96B5">${esc(en() ? c.why_en : c.why_es)}</div>

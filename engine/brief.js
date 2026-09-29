@@ -156,12 +156,13 @@
   function narrate(cards) {
     var lead = document.getElementById('brief-lead'); if (!lead) return;
     var plain = cards.map(function (c) { return c.text.replace(/<[^>]+>/g, ''); }).join(' ');
-    lead.textContent = cards.length ? 'Hoy destaca: ' + cards[0].text.replace(/<[^>]+>/g, '') : 'Red estable, sin alertas mayores.';
+    var en = (window.LANG || '') === 'en';
+    lead.textContent = cards.length ? (en ? 'Today stands out: ' : 'Hoy destaca: ') + cards[0].text.replace(/<[^>]+>/g, '') : (en ? 'Stable network, no major alerts.' : 'Red estable, sin alertas mayores.');
     if (!cards.length) return;
     fetch('/api/ai/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: 'Eres un analista de inversión. En 1 frase en español, da la conclusión accionable del día. Sin saludos.',
-        prompt: 'Señales de hoy en la cadena de IA/semiconductores: ' + plain + '\nConclusión en 1 frase:', max_tokens: 90 }),
+      body: JSON.stringify({ system: 'Eres un analista de investigación. En 1 frase en ' + (en ? 'inglés' : 'español') + ', resume la señal más importante del día y por qué importa. NO recomiendes comprar, vender ni mantener. Sin saludos.',
+        prompt: 'Señales de hoy en la cadena de IA/semiconductores: ' + plain + '\nResumen en 1 frase:', max_tokens: 90 }),
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (d && d.result && lead) lead.textContent = '💡 ' + d.result.trim();
     }).catch(function () {});

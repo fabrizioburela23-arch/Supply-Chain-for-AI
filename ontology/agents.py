@@ -206,8 +206,10 @@ class GuardianCartera:
             return None
         reduce_by = -round(qty * 0.2, 2)
         explanation = _ai_explain(
-            f'Tengo {qty} unidades de {c.label}, cuyo riesgo (NRS {score}/100) es alto. Sugiere en 1 frase si conviene reducir exposición.',
-            f'{c.label} tiene riesgo elevado (NRS {score}/100) — considera reducir exposición ~20%.')
+            f'Tengo {qty} unidades de {c.label}, cuyo riesgo (NRS {score}/100) es alto. En 1 frase explica '
+            f'qué impulsa ese riesgo. No recomiendes comprar ni vender: la decisión es del usuario.',
+            f'{c.label} tiene riesgo elevado (NRS {score}/100). La propuesta usa un recorte del 20% solo como '
+            f'punto de partida para revisar tu exposición: tú decides si aplicarla y cuánto.')
         return {
             'action_type': 'AjustarPosicion', 'object_id': c.id, 'confidence': 0.5,
             'payload': {'ticker': (c.properties or {}).get('mkt') or c.id, 'delta': reduce_by,

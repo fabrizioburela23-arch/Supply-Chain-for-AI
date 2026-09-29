@@ -92,12 +92,19 @@ def test_run_fallback_when_ai_not_configured(monkeypatch):
     assert res['narrative'].startswith('(estimate without AI)')  # inglés
 
 
-def test_run_empty_seeds_uses_chokepoints(monkeypatch):
+def test_run_sin_semillas_no_inventa_elenco(monkeypatch):
     monkeypatch.setattr(ai, '_ai_complete', _fake_ai_factory(pct=50))
     monkeypatch.setattr(ai, '_ai_configured', lambda: True)
     res = sim_agents.run('Escenario sin semillas', [], 'es')
     _assert_shape(res)
-    assert len(res['impacts']) >= 1               # arma elenco desde chokepoints
+    assert res['no_seeds'] and res['impacts'] == []   # antes: 3 chokepoints inventados
+    assert 'Nombra al menos una' in res['narrative']
+
+
+def test_run_toma_semillas_del_texto_del_escenario(monkeypatch):
+    monkeypatch.setattr(ai, '_ai_configured', lambda: False)
+    res = sim_agents.run('¿Qué pasa si TSMC deja de producir?', [], 'es')
+    assert res.get('fallback') and 'TSMC' in res['seeds']
 
 
 def test_run_never_raises_on_garbage(monkeypatch):

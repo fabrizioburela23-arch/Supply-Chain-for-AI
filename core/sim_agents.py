@@ -154,15 +154,29 @@ def _neighbors(snap, nid, k):
     return out
 
 
-def _seed_ids(seeds, snap):
+def _seed_ids(seeds, snap, scenario=''):
     ids = semantic.resolve_ids(seeds) if seeds else []
     ids = [i for i in ids if i in snap['by_id']]
-    if not ids:
-        # Sin semillas resolubles: usa los mayores chokepoints para que la demo
-        # nunca quede vacía.
-        top = sorted(snap['deg'].items(), key=lambda kv: -kv[1])[:3]
-        ids = [k for k, _ in top]
+    if not ids and scenario:
+        # las empresas NOMBRADAS en el texto del escenario (nombre o ticker)
+        try:
+            from core.live_facts import detect_entities
+            ids = [i for i in detect_entities(scenario, limit=6) if i in snap['by_id']]
+        except Exception:  # noqa: BLE001
+            ids = []
+    # Sin semillas: NO se inventa un elenco (antes: los 3 mayores chokepoints,
+    # con % para empresas que el escenario ni menciona — 2026-09-29).
     return list(dict.fromkeys(ids))
+
+
+def _no_seeds(lang):
+    msg = ('No reconocí ninguna empresa en el escenario. Nombra al menos una (p. ej. '
+           '"¿qué pasa si TSMC deja de producir?") para simular a quién afecta.'
+           if _es(lang) else
+           'I did not recognize any company in the scenario. Name at least one (e.g. '
+           '"what if TSMC stops producing?") to simulate who is affected.')
+    return {'ok': True, 'no_seeds': True, 'narrative': msg, 'impacts': [],
+            'agents': _external_agents([], lang), 'rounds': []}
 
 
 def _build_company_agents(seed_ids, snap):
@@ -401,8 +415,11 @@ def _fallback(scenario, seed_ids, company_agents, externals, snap, lang):
             {'round': 1, 'events': ['The scenario first hits the seed companies.']},
             {'round': 2, 'events': ['The impact propagates to direct suppliers and customers.']},
         ]
-    return {'ok': True, 'narrative': narrative, 'impacts': impacts,
-            'agents': agents, 'rounds': rounds}
+    # fallback=True: el cliente dibuja el motor ESTRUCTURAL (severidad 0-100,
+    # misma matemática que matrix/engine.py) desde `seeds`, rotulado sin IA;
+    # estos % base fijos quedan solo como referencia para otros consumidores.
+    return {'ok': True, 'fallback': True, 'seeds': list(seed_ids), 'narrative': narrative,
+            'impacts': impacts, 'agents': agents, 'rounds': rounds}
 
 
 def _roster(company_agents, externals, pct_by_id, lang):
@@ -431,7 +448,9 @@ def run(scenario, seeds, lang='es'):
         # devolver una forma válida vacía.
         try:
             snap = semantic._load_snapshot()
-            seed_ids = _seed_ids(seeds, snap)
+            seed_ids = _seed_ids(seeds, snap, str(scenario or ''))
+            if not seed_ids:
+                return _no_seeds(lang)
             company_agents = _build_company_agents(seed_ids, snap)
             externals = _external_agents(company_agents, lang)
             return _fallback(str(scenario or ''), seed_ids, company_agents, externals, snap, lang)
@@ -444,7 +463,9 @@ def run(scenario, seeds, lang='es'):
 
 def _run_impl(scenario, seeds, lang):
     snap = semantic._load_snapshot()
-    seed_ids = _seed_ids(seeds, snap)
+    seed_ids = _seed_ids(seeds, snap, scenario)
+    if not seed_ids:
+        return _no_seeds(lang)
     company_agents = _build_company_agents(seed_ids, snap)
     externals = _external_agents(company_agents, lang)
     edges = _cast_edges([a['id'] for a in company_agents], snap)

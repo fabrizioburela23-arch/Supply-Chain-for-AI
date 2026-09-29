@@ -198,7 +198,7 @@
       '<div class="impact-grid" style="grid-template-columns:1fr 1fr">' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-emp" data-live="employees" data-live-fmt="k">' + (meta.employees ? esc(meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? (isFinite(+meta.mktcap_b) ? '$' + esc(meta.mktcap_b) + 'B' : esc(meta.mktcap_b)) : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? (isFinite(+meta.mktcap_b) ? '$' + esc(meta.mktcap_b) + 'B' + (window.liveCapDot ? window.liveCapDot(meta) : '') : esc(meta.mktcap_b)) : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
       '<div class="icell"><b style="color:#E8EDFB;font-size:15px;overflow-wrap:anywhere" class="xr-mono xr-rev" data-live="revenue">' + esc(meta.revenue_2025 || '—') + '</b><span class="xr-rev-l" data-live-label="revenue">' + L('Ingresos 2025', 'Revenue 2025') + '</span></div>' +
       '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
