@@ -36,7 +36,16 @@ def _cached(key, ttl, fn):
 
 def resolve_cik(ticker, getter=None):
     get = getter or requests.get
-    t = (ticker or '').upper().split('.')[0]
+    t = (ticker or '').upper().strip()
+    if '.' in t:
+        base, suf = t.rsplit('.', 1)
+        # sufijo de BOLSA extranjera (BA.L, HEI.DE, 6488.TWO…) → no es emisor SEC
+        # (antes se cortaba el sufijo y BA.L quedaba como Boeing). Clase de
+        # acción de EE.UU. (BRK.B) → formato SEC BRK-B.
+        if len(suf) == 1 and base.isalpha():
+            t = f'{base}-{suf}'
+        else:
+            return None
     if not t:
         return None
     if not _TICKERS['map'] or time.time() - _TICKERS['ts'] > 86400:
@@ -91,21 +100,27 @@ def _strip_html(html):
     text = re.sub(r'(?s)<[^>]+>', ' ', html)
     text = re.sub(r'&#160;|&nbsp;|&#xa0;', ' ', text)
     text = re.sub(r'&amp;', '&', text)
-    text = re.sub(r'&#8217;|&rsquo;', "'", text)
+    text = re.sub(r'&#8217;|&rsquo;|&#x2019;|&#X2019;', "'", text)
+    text = text.replace('\u2019', "'")
     return re.sub(r'\s+', ' ', text).strip()
 
 
 def _section(text, starts, length):
-    """Sección que empieza en el ÚLTIMO encabezado que calza (el primero suele
-    ser el índice del documento) y que tiene contenido real."""
+    """Encabezado por PRIORIDAD (los específicos "Item 1A." antes que el
+    genérico). Dentro de un marcador, la ÚLTIMA aparición con contenido real
+    (la primera suele ser el índice). Un marcador genérico no pisa a uno
+    específico: si "Item 1A. Risk Factors" calza, no se busca "Risk Factors"
+    (que suele ser una referencia cruzada, "see Risk Factors")."""
     low = text.lower()
-    best = ''
     for mk in starts:
+        best = ''
         for m in re.finditer(re.escape(mk.lower()), low):
             chunk = text[m.start():m.start() + length]
-            if len(chunk) > len(best) * 0.9 and len(chunk) > 400:
+            if len(chunk) > 400:
                 best = chunk
-    return best
+        if best:
+            return best
+    return ''
 
 
 def filing_sections(url, length=1600, getter=None):

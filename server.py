@@ -2414,7 +2414,7 @@ def space_tle():
     # números y no haga su propio re-fetch parcial que dejaba a Starlink en 0).
     try:
         cache.set('space_constellations',
-                  [(c['name'], c['count']) for c in constellations if c.get('count')], timeout=86400)
+                  [(c['name'], c['count'], True) for c in constellations if c.get('count')], timeout=86400)
     except Exception:  # noqa: BLE001
         pass
     return jsonify({'constellations': constellations, 'sats': sats,
@@ -2463,7 +2463,8 @@ def _space_constellations():
     ck = 'space_constellations'
     hit = cache.get(ck)
     if hit is not None:
-        return hit
+        # tolera entradas viejas (label, n) cacheadas antes del flag "en vivo"
+        return [tuple(x) if len(x) == 3 else (x[0], x[1], True) for x in hit]
     out = []
     for group, label, node, color in _SAT_GROUPS:
         try:

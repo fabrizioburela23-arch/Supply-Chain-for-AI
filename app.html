@@ -7286,6 +7286,7 @@ async function _runClaudeSim(text, nodeStr, output, status) {
 // WAR-ROOM DE SIMULACIÓN — 2D animated cascade visualization
 // ════════════════════════════════════════════════════════════════════════════
 let _wrAnimId = null;
+let _wrRoundIvl = null;   // intervalo de rondas: se limpia al redibujar (antes seguía escribiendo en el badge nuevo)
 // El chat del War-Room trabaja sobre el TEXTO del informe que está en pantalla.
 // (Antes dependía de un reportId de MiroFish; al retirarse ese servicio el
 // chat quedaba muerto, porque el motor interno nunca produce ese id.)
@@ -7327,6 +7328,7 @@ function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, 
   const _en = (window.LANG === 'en');
   const WL = (es, en) => _en ? en : es;
   if (_wrAnimId) { cancelAnimationFrame(_wrAnimId); _wrAnimId = null; }
+  if (_wrRoundIvl) { clearInterval(_wrRoundIvl); _wrRoundIvl = null; }
   _wrReportText = reportText || '';
 
   const simStatus = document.getElementById('sim-status');
@@ -7427,7 +7429,7 @@ function _renderWarRoom({ scenarioTitle, nodeImpacts, priceTrajs, cascadeNodes, 
   // unidad: 'pct' = % de valor estimado por los agentes; 'sev' = severidad
   // 0-100 del motor estructural (sin IA, misma matemática que el servidor)
   let unit = 'pct';
-  if (!Object.keys(finalImpacts).length) {
+  if (!Object.keys(finalImpacts).length && impactSource !== 'none') {
     const fb = _wrFallbackCascade(rankedNodes, selectedEdges, finalCascade, reportText, presetId);
     finalImpacts = fb.impacts;
     finalCascade = fb.cascade;
@@ -7509,9 +7511,13 @@ function _wrFallbackCascade(nodes, edges, initialCascade, reportText, presetId) 
   const NBI = window.NODE_BY_ID || {};
   const seedIds = new Set(initialCascade.filter(id => NBI[id]).slice(0, 8));
   if (!seedIds.size && reportText) {
+    // palabra COMPLETA (antes "Intel" calzaba en "inteligencia", "Meta" en "metal")
+    const txt = reportText.toLowerCase();
     nodes.forEach(n => {
       const lbl = (n.label || '').toLowerCase();
-      if (lbl.length > 3 && reportText.toLowerCase().includes(lbl)) seedIds.add(n.id);
+      if (lbl.length <= 3 || seedIds.size >= 8) return;
+      const rx = new RegExp('(^|[^\\p{L}\\p{N}])' + lbl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}\\p{N}])', 'u');
+      if (rx.test(txt)) seedIds.add(n.id);
     });
   }
   if (!seedIds.size && presetId) {
@@ -7574,7 +7580,8 @@ function _wrStartAnimation(canvas, nodePos, edges, cascadeOrder, nodeImpacts, un
   };
 
   revealRound();
-  const ivl = setInterval(() => {
+  if (_wrRoundIvl) clearInterval(_wrRoundIvl);
+  const ivl = _wrRoundIvl = setInterval(() => {
     revealRound();
     if (currentRound >= totalRounds) clearInterval(ivl);
   }, 1400);
@@ -8875,7 +8882,7 @@ async function initSpacePlanet() {
     const _sc=document.getElementById('space-sat-count'), _ss=document.getElementById('space-sat-src'), _cc=document.getElementById('space-const-count');
     if (_sc) _sc.textContent = _fb ? '—' : fmt(data.total_real||0);
     if (_ss) _ss.textContent = _fb ? (_en?'source unreachable':'fuente sin respuesta') : (_en?'CelesTrak · live':'CelesTrak · en vivo');
-    if (_cc) _cc.textContent = _fb ? '—' : String(Object.keys(data.constellations||data.groups||{}).length || '—');
+    if (_cc) _cc.textContent = _fb ? '—' : String((data.constellations||[]).filter(c => c && c.count > 0).length || '—');
   } catch (e) {
     console.warn('TLE fetch falló:', e);
     if (cap) cap.textContent = '⚠ No se pudieron cargar los satélites (revisa conexión)';

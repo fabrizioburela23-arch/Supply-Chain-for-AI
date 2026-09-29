@@ -25,13 +25,15 @@ def price_anomalies(caps, threshold=None, limit=None):
     """[(id, change_pct)] con |cambio| ≥ umbral, mayor movimiento primero."""
     thr = float(threshold if threshold is not None else os.getenv('RESEARCH_ANOMALY_PCT', 8))
     lim = int(limit if limit is not None else os.getenv('RESEARCH_ANOMALY_MAX', 3))
-    out = []
-    for nid, c in (caps or {}).items():
+    out, seen_sym = [], set()
+    for nid, c in sorted((caps or {}).items()):
         try:
             chg = float(c.get('change_pct'))
         except (TypeError, ValueError):
             continue
-        if abs(chg) >= thr:
+        sym = c.get('symbol') or nid
+        if abs(chg) >= thr and sym not in seen_sym:   # ids duplicados del mismo ticker → 1 sola
+            seen_sym.add(sym)
             out.append((nid, round(chg, 2)))
     out.sort(key=lambda x: -abs(x[1]))
     return out[:lim]

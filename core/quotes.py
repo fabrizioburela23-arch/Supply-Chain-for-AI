@@ -157,7 +157,7 @@ def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
     """Cotización + capitalización EN LOTE (Yahoo v7 quote, `chunk` símbolos
     por pedido). Devuelve {símbolo: {mcap_b (USD), price, currency,
     change_pct}}; los símbolos sin dato se omiten (nunca se inventan)."""
-    out = {}
+    out, rates = {}, {}
     syms = [s for s in dict.fromkeys(symbols or []) if s]
     for i in range(0, len(syms), chunk):
         part = syms[i:i + chunk]
@@ -182,7 +182,9 @@ def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
                 continue
             cur = (q.get('currency') or q.get('financialCurrency') or 'USD')
             cur = 'GBP' if cur == 'GBp' else cur.upper()
-            rate = _fx_to_usd(cur)
+            if cur not in rates:          # una consulta por moneda por lote (también si falla)
+                rates[cur] = _fx_to_usd(cur)
+            rate = rates[cur]
             mc = q.get('marketCap')
             row = {'price': q.get('regularMarketPrice'), 'currency': q.get('currency'),
                    'change_pct': q.get('regularMarketChangePercent'),

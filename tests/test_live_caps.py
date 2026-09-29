@@ -51,3 +51,18 @@ def test_endpoint_devuelve_estado(monkeypatch):
                      ts=time.time(), running=False, error=None)
     r = server.app.test_client().get('/api/market/live_caps')
     assert r.status_code == 200 and r.get_json()['caps']['Broadcom']['mcap_b'] == 1105.2
+
+
+def test_fallo_del_indice_no_deja_el_refresco_trabado(monkeypatch):
+    from core import live_caps as lc
+    lc._STATE.update(caps={}, as_of=None, ts=0.0, running=True, error=None)
+    monkeypatch.setattr(lc, '_symbols_by_id', lambda: (_ for _ in ()).throw(RuntimeError('snapshot')))
+    lc.refresh(fetch=lambda syms: {})
+    assert lc._STATE['running'] is False and lc._STATE['error']
+
+
+def test_cache_viejo_de_constelaciones_no_rompe_a_khipu(monkeypatch):
+    import server
+    monkeypatch.setattr(server.cache, 'get', lambda k: [('Starlink', 8100), ('OneWeb', 650)])
+    txt = server._space_facts_str()
+    assert 'Starlink: 8100' in txt and 'NO en vivo' not in txt

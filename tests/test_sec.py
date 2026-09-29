@@ -60,3 +60,22 @@ def test_contexto_incluye_reportes_sec_para_el_agente_fundamental():
     # QUICK: solo la lista, sin descargar el documento
     ctx_q = ContextBuilder(fetchers=fetch).build('Broadcom', 'fundamental', depth='QUICK')
     assert len([e for e in ctx_q['evidence'] if e['source_type'] == 'filing']) == 1
+
+
+def test_ticker_extranjero_no_se_confunde_con_uno_de_eeuu():
+    from core import sec
+    sec._TICKERS.update(map={'BA': '0000012927', 'BRK-B': '0001067983'}, ts=9e18)
+    assert sec.resolve_cik('BA.L') is None           # BAE Systems ≠ Boeing
+    assert sec.resolve_cik('6488.TWO') is None
+    assert sec.resolve_cik('BRK.B') == '0001067983'  # clase de acción de EE.UU.
+    assert sec.resolve_cik('BA') == '0000012927'
+
+
+def test_seccion_prioriza_encabezado_especifico_y_apostrofe_curvo():
+    from core import sec
+    html = ('<p>Item 1A. Risk Factors</p><p>' + 'Real risk text. ' * 60 + '</p>'
+            '<p>Item 7. Management’s Discussion and Analysis</p><p>' + 'Revenue grew. ' * 60 + '</p>'
+            '<p>as discussed in Risk Factors above, ' + 'cross reference filler. ' * 60 + '</p>')
+    txt = sec._strip_html(html)
+    assert sec._section(txt, ['Item 1A. Risk Factors', 'Risk Factors'], 800).startswith('Item 1A. Risk Factors')
+    assert 'Revenue grew' in sec._section(txt, ["Item 7. Management's Discussion"], 800)

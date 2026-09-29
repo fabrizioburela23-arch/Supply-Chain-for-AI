@@ -33,8 +33,8 @@ def refresh(fetch=None):
     """Consulta todas las cotizadas (bloqueante). `fetch` inyectable en tests."""
     from core.quotes import fetch_quotes_batch_yahoo
     fetch = fetch or fetch_quotes_batch_yahoo
-    ids = _symbols_by_id()
     try:
+        ids = _symbols_by_id()     # dentro del try: si falla, el finally libera 'running'
         quotes = fetch(sorted(set(ids.values())))
         caps = {}
         for nid, sym in ids.items():
