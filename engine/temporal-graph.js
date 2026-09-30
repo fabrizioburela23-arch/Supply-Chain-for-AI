@@ -52,7 +52,9 @@
   };
   function _t(k) { const o = _L[k]; return o ? (o[_lang()] || o.es) : k; }
 
-  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  // href de datos externos: solo http(s), ya escapado (window.safeUrl, app.html)
+  const safeHref = u => (typeof window.safeUrl === 'function' ? window.safeUrl(u) : (/^https?:\/\//i.test(String(u || '')) ? esc(u) : '#'));
   const catColor = cat => { try { return (typeof getCatColorHex === 'function' && getCatColorHex(cat)) || COL.node; } catch (e) { return COL.node; } };
 
   // Resuelve una entidad desde el catálogo de empresas (NODE_BY_ID) o desde la
@@ -1176,17 +1178,21 @@
     });
     status.textContent = 'guardando…'; status.style.color = 'var(--ink-3)';
     const base = _base();
-    fetch(`${base}/api/ontology/actions/${actionType}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-    }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+    // Acción auditada = escritura de la ontología → PIN de operador (X-Trade-Pin)
+    // vía window._tradeFetch (app.html); sin él, fetch simple (dev sin PIN).
+    const url = `${base}/api/ontology/actions/${encodeURIComponent(actionType)}`;
+    const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+    (typeof window._tradeFetch === 'function' ? window._tradeFetch(url, opts, true) : fetch(url, opts))
+      .then(r => r.json().catch(() => null).then(d => ({ ok: r.ok, d, code: r.status }))).then(({ ok, d, code }) => {
       if (ok) {
-        status.textContent = '✓ guardado'; status.style.color = '#43C896';
+        status.textContent = _tlT('✓ guardado', '✓ saved'); status.style.color = '#43C896';
         form.style.display = 'none';
         _renderTimeline(id);
       } else {
-        status.textContent = '⚠ ' + (d.error || 'error'); status.style.color = '#f87171';
+        const m = window._tradeErrText ? window._tradeErrText(d, code) : ((d && d.error) || 'error');
+        status.textContent = '⚠ ' + m; status.style.color = '#f87171';
       }
-    }).catch(() => { status.textContent = '⚠ error de red'; status.style.color = '#f87171'; });
+    }).catch(() => { status.textContent = '⚠ ' + _tlT('error de red', 'network error'); status.style.color = '#f87171'; });
   }
 
   /* ── Línea de tiempo + procedencia (Phase 1 · M6) ────────────────────────
@@ -1232,7 +1238,7 @@
     // La evidencia es un ENLACE de verdad: el recorrido hecho → fuente →
     // documento original tiene que terminar en el documento.
     return `<div style="margin-top:3px;padding-left:18px">
-      <a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer"
+      <a href="${safeHref(src.url)}" target="_blank" rel="noopener noreferrer"
          style="font-size:10.5px;color:var(--ink-3);text-decoration:none;border-bottom:1px dotted var(--line)"
          title="${esc(src.url)}">${_tlTrustDot(src.trust)}${esc(host)} ↗</a></div>`;
   }
@@ -1319,7 +1325,7 @@
             const h = a.headline || a.title || ''; const src = a.source || ''; const u = a.url || a.link || '#';
             const sent = a.sentiment;
             const dot = sent != null ? `<span style="color:${sent > 0 ? '#43C896' : sent < 0 ? '#FF6B5C' : 'var(--ink-3)'}">●</span> ` : '';
-            return `<a href="${esc(u)}" target="_blank" rel="noopener" style="display:block;font-size:11.5px;color:var(--ink-2);text-decoration:none;padding:5px 0;border-bottom:1px solid var(--line);line-height:1.35">${dot}${esc(h)}${src ? ` <span style="color:var(--ink-3)">· ${esc(src)}</span>` : ''}</a>`;
+            return `<a href="${safeHref(u)}" target="_blank" rel="noopener noreferrer" style="display:block;font-size:11.5px;color:var(--ink-2);text-decoration:none;padding:5px 0;border-bottom:1px solid var(--line);line-height:1.35">${dot}${esc(h)}${src ? ` <span style="color:var(--ink-3)">· ${esc(src)}</span>` : ''}</a>`;
           }).join('');
       }
       _ingestNews(id);

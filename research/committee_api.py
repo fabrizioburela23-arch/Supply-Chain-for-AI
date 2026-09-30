@@ -12,15 +12,16 @@ POST /outcomes/evaluate           (X-Trade-Pin) califica predicciones vencidas (
 GET  /outcomes/recent             últimas calificaciones (auditoría)
 GET  /clients                     (X-Trade-Pin) clientes del módulo de corretaje (para elegir)
 Sin DATABASE_URL → 503. Sin IA → memo determinista rotulado "sin IA".
-PIN: header X-Trade-Pin == env TRADE_PIN (hmac.compare_digest); sin TRADE_PIN → 403.
+PIN: header X-Trade-Pin == env TRADE_PIN vía core.pin (auditoría #7): MISMO contador
+por IP y GLOBAL que /api/trade, /api/brokerage, /api/mcp y la ontología (antes se
+comparaba aquí sin freno → adivinanza ilimitada del PIN). Sin TRADE_PIN → 403.
 """
-import hmac
 import logging
-import os
 import threading
 
 from flask import Blueprint, current_app, jsonify, request
 
+from core import pin as _core_pin
 from core.http import rate_limit
 from ontology.db import ontology_available, session_scope
 
@@ -35,21 +36,15 @@ def _unavailable():
 
 
 def _pin_status():
-    """None si el PIN es válido; si no, (respuesta, código)."""
-    want = os.getenv('TRADE_PIN', '')
-    if not want:
-        return jsonify({'error': 'Trading deshabilitado — configura TRADE_PIN en Railway',
-                        'error_en': 'Trading disabled — set TRADE_PIN on Railway',
-                        'code': 'trading_disabled'}), 403
-    got = request.headers.get('X-Trade-Pin', '')
-    if not hmac.compare_digest(got.encode(), want.encode()):
-        return jsonify({'error': 'PIN de trading incorrecto o faltante', 'error_en': 'Wrong or missing trading PIN',
-                        'code': 'invalid_pin'}), 401
-    return None
+    """None si el PIN es válido; si no, (respuesta, código). core.pin: cuenta los
+    fallos en el contador COMPARTIDO y respeta el bloqueo por IP y global."""
+    return _core_pin.pin_error(where='committee', strict=True)
 
 
 def _pin_ok():
-    return _pin_status() is None
+    """¿PIN válido? (para mostrar montos del cliente). Un PIN vacío no cuenta
+    como fallo, así la vista redactada no suma al contador."""
+    return _core_pin.check(where='committee', strict=True) is None
 
 
 def _actor(body):
@@ -162,6 +157,7 @@ def run():
 
 
 @committee_bp.route('/memo/<memo_id>')
+@rate_limit(limit=120, window=60)
 def memo(memo_id):
     if not ontology_available():
         return _unavailable()
@@ -174,6 +170,7 @@ def memo(memo_id):
 
 
 @committee_bp.route('/entity/<entity_id>')
+@rate_limit(limit=120, window=60)
 def entity(entity_id):
     if not ontology_available():
         return _unavailable()
@@ -293,6 +290,7 @@ def outcomes_recent():
 
 
 @committee_bp.route('/clients')
+@rate_limit(limit=60, window=60)
 def clients():
     if not ontology_available():
         return _unavailable()

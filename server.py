@@ -59,6 +59,123 @@ app.config['MAX_CONTENT_LENGTH'] = 1024 * 1024  # 1 MB — el contexto de Canvas
 # (catálogo de ~555 empresas + quotes) supera 64 KB; sigue acotado y con rate-limit.
 cache = Cache(app)
 
+
+# ── Caché: NUNCA guardar errores (auditoría estructural #5) ─────────────────
+# Flask-Caching guardaba CUALQUIER respuesta: un 502 de /vendor quedaba 7 días,
+# un fallo de noticias 30 min, etc. `_cacheable_response` deja pasar solo
+# status < 400. Se instala como response_filter por defecto de TODO
+# @cache.cached (incluidos los que se añadan en el futuro) envolviendo el
+# método del objeto `cache`; un response_filter explícito se combina con este.
+def _response_status(rv):
+    """Status de lo que devuelve una vista: Response, (body, status[, headers]),
+    (body, headers), dict/str (→ 200) o HTTPException ya convertida."""
+    try:
+        if isinstance(rv, tuple):
+            body = rv[0] if rv else None
+            if len(rv) >= 2 and isinstance(rv[1], int):
+                return rv[1]
+            if len(rv) >= 2 and isinstance(rv[1], str) and rv[1][:3].isdigit():
+                return int(rv[1][:3])
+            return int(getattr(body, 'status_code', 200) or 200)
+        return int(getattr(rv, 'status_code', 200) or 200)
+    except Exception:  # noqa: BLE001
+        return 500
+
+
+_DEGRADED_HDR = 'X-Khipu-Degraded'
+
+
+def _degraded(resp):
+    """Marca una respuesta 200 hecha de RESPALDO (upstream caído → lista vacía,
+    órbitas sintéticas, series a medias…) para que NO se cachee: si no, el
+    fallo quedaba servido 30 min-24 h aunque el proveedor volviera."""
+    resp.headers[_DEGRADED_HDR] = '1'
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+def _cacheable_response(rv):
+    body = rv[0] if isinstance(rv, tuple) and rv else rv
+    headers = getattr(body, 'headers', None)
+    if headers is not None and headers.get(_DEGRADED_HDR):
+        return False
+    return _response_status(rv) < 400
+
+
+_cache_cached_orig = cache.cached
+
+# Caché NEGATIVA corta: un respaldo (_degraded) o un 502/503/504 de upstream
+# NO se guarda en la caché normal (sería servirlo 30 min-7 días), pero sin
+# nada, mientras el proveedor está caído CADA petición volvía a esperarlo
+# (hasta 25 s en /vendor) y unos pocos visitantes agotaban los hilos de
+# gunicorn. Se repite la misma respuesta de fallo _NEG_CACHE_S segundos (o
+# menos: nunca más que la caché positiva de la ruta).
+_NEG_CACHE_S = 60
+_NEG_STATUSES = (502, 503, 504)
+
+
+def _neg_cache_key(query_string=False):
+    key = 'neg:' + request.path
+    if query_string and request.args:
+        key += '?' + '&'.join(f'{k}={v}' for k, v in sorted(request.args.items(multi=True)))
+    return key[:400]
+
+
+def _with_negative_cache(f, query_string=False, ttl=None):
+    @wraps(f)
+    def wrapper(*a, **k):
+        key = None
+        try:
+            key = _neg_cache_key(query_string)
+            hit = cache.get(key)
+        except Exception:  # noqa: BLE001 — la caché nunca rompe la ruta
+            hit = None
+        if hit:
+            body, status, mimetype = hit
+            resp = app.response_class(body, status=status, mimetype=mimetype)
+            resp.headers[_DEGRADED_HDR] = '1'
+            resp.headers['Cache-Control'] = 'no-store'
+            resp.headers['X-Khipu-Neg-Cache'] = '1'
+            return resp
+        rv = f(*a, **k)
+        try:
+            body0 = rv[0] if isinstance(rv, tuple) and rv else rv
+            hdrs = getattr(body0, 'headers', None)
+            degraded = hdrs is not None and hdrs.get(_DEGRADED_HDR)
+            if key and (degraded or _response_status(rv) in _NEG_STATUSES):
+                resp = app.make_response(rv)
+                if not resp.is_streamed:
+                    cache.set(key, (resp.get_data(), resp.status_code, resp.mimetype),
+                              timeout=ttl or _NEG_CACHE_S)
+                return resp
+        except Exception:  # noqa: BLE001
+            pass
+        return rv
+    return wrapper
+
+
+def _cache_cached_ok_only(*args, **kwargs):
+    user_filter = kwargs.get('response_filter')
+    if user_filter is None:
+        kwargs['response_filter'] = _cacheable_response
+    else:
+        kwargs['response_filter'] = lambda rv: _cacheable_response(rv) and user_filter(rv)
+    deco = _cache_cached_orig(*args, **kwargs)
+    qs = bool(kwargs.get('query_string'))
+    # nunca más larga que la caché positiva de la ruta (/api/scalp/price: 2 s)
+    try:
+        pos_ttl = int(kwargs.get('timeout', args[0] if args else None) or app.config['CACHE_DEFAULT_TIMEOUT'])
+    except (TypeError, ValueError):
+        pos_ttl = _NEG_CACHE_S
+    neg_ttl = max(1, min(_NEG_CACHE_S, pos_ttl))
+
+    def apply(f):
+        return deco(_with_negative_cache(f, query_string=qs, ttl=neg_ttl))
+    return apply
+
+
+cache.cached = _cache_cached_ok_only
+
 # Fluidez: comprimir HTML/JS/JSON al vuelo (brotli/gzip) — el código de la app
 # pesa ~1.9 MB sin comprimir; con esto baja ~75%. Defensivo: si el paquete no
 # está instalado aún (deploy en curso), el server arranca igual sin comprimir.
@@ -226,41 +343,70 @@ def voice_voices():
     return jsonify(out)
 
 
+# Rutas que REESCRIBEN el agente de ElevenLabs (voz, modelo, idioma, prompt):
+# además del candado ELEVENLABS_ALLOW_OVERRIDE exigen el PIN de operador
+# (core.pin.require_operator, mismo contador anti-adivinanza que el trading).
+# Sin TRADE_PIN configurado se permiten (modo desarrollo) con aviso en el log.
+from core.http import rate_limit as _rate_limit_early  # noqa: E402 — se importa de nuevo abajo
+from core.pin import require_operator as _require_operator  # noqa: E402
+
+_SAFE_PATH_SEG = re.compile(r'^[A-Za-z0-9_\-]{1,80}$')
+
+
+def _voice_override_off():
+    return jsonify({'error': 'ELEVENLABS_ALLOW_OVERRIDE no está activo',
+                    'error_en': 'ELEVENLABS_ALLOW_OVERRIDE is not enabled'}), 403
+
+
 @app.route('/api/voice/adopt', methods=['POST'])
+@_rate_limit_early(limit=10, window=3600)
+@_require_operator
 def voice_adopt():
     """Adopta una voz de la biblioteca compartida a la cuenta (paso previo a
-    asignarla al agente). Mismo candado que agent-tune. Body:
+    asignarla al agente). Mismo candado que agent-tune + PIN de operador. Body:
     {public_owner_id, voice_id, name}."""
     if os.getenv('ELEVENLABS_ALLOW_OVERRIDE', '').strip() not in ('1', 'true', 'yes'):
-        return jsonify({'error': 'ELEVENLABS_ALLOW_OVERRIDE no está activo'}), 403
+        return _voice_override_off()
     if not ELEVENLABS_KEY:
-        return jsonify({'error': 'ELEVENLABS_KEY no configurada'}), 400
-    b = request.get_json(silent=True) or {}
+        return jsonify({'error': 'ELEVENLABS_KEY no configurada', 'error_en': 'ELEVENLABS_KEY is not set'}), 400
+    b = request.get_json(silent=True)
+    b = b if isinstance(b, dict) else {}
     po, vid, name = b.get('public_owner_id'), b.get('voice_id'), (b.get('name') or 'Khipu ES')
     if not po or not vid:
-        return jsonify({'error': 'public_owner_id y voice_id requeridos'}), 400
+        return jsonify({'error': 'public_owner_id y voice_id requeridos',
+                        'error_en': 'public_owner_id and voice_id are required'}), 400
+    po, vid = str(po), str(vid)
+    if not (_SAFE_PATH_SEG.match(po) and _SAFE_PATH_SEG.match(vid)):    # van en la URL de ElevenLabs
+        return jsonify({'error': 'public_owner_id / voice_id inválidos',
+                        'error_en': 'invalid public_owner_id / voice_id'}), 400
     try:
         r = requests.post(f'https://api.elevenlabs.io/v1/voices/add/{po}/{vid}',
                           headers={'xi-api-key': ELEVENLABS_KEY,
                                    'Content-Type': 'application/json'},
                           json={'new_name': str(name)[:60]}, timeout=12)
         if not r.ok:
-            return jsonify({'error': f'upstream {r.status_code}', 'body': r.text[:200]}), 502
+            return jsonify({'error': f'ElevenLabs respondió HTTP {r.status_code}',
+                            'error_en': f'ElevenLabs returned HTTP {r.status_code}', 'body': r.text[:200]}), 502
         return jsonify({'ok': True, **(r.json() or {})})
     except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:160]}), 502
+        return jsonify({'error': 'No se pudo contactar con ElevenLabs', 'error_en': 'Could not reach ElevenLabs',
+                        'detail': _diag_redact(e)[:160]}), 502
 
 
 @app.route('/api/voice/agent-tune', methods=['POST'])
+@_rate_limit_early(limit=10, window=3600)
+@_require_operator
 def voice_agent_tune():
     """Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere
-    ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que el sync del prompt). Solo
-    toca los campos enviados; devuelve antes/después para el registro."""
+    ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que el sync del prompt) + PIN de
+    operador. Solo toca los campos enviados; devuelve antes/después."""
     if os.getenv('ELEVENLABS_ALLOW_OVERRIDE', '').strip() not in ('1', 'true', 'yes'):
-        return jsonify({'error': 'ELEVENLABS_ALLOW_OVERRIDE no está activo'}), 403
+        return _voice_override_off()
     if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
-        return jsonify({'error': 'ELEVENLABS_KEY/AGENT_ID no configurados'}), 400
-    body = request.get_json(silent=True) or {}
+        return jsonify({'error': 'ELEVENLABS_KEY/AGENT_ID no configurados',
+                        'error_en': 'ELEVENLABS_KEY/AGENT_ID are not set'}), 400
+    body = request.get_json(silent=True)
+    body = body if isinstance(body, dict) else {}
     tts = {}
     if body.get('tts_model'):
         tts['model_id'] = str(body['tts_model'])[:60]
@@ -270,7 +416,8 @@ def voice_agent_tune():
     if body.get('language'):
         agent['language'] = str(body['language'])[:8]
     if not tts and not agent:
-        return jsonify({'error': 'nada que ajustar (tts_model / voice_id / language)'}), 400
+        return jsonify({'error': 'nada que ajustar (tts_model / voice_id / language)',
+                        'error_en': 'nothing to tune (tts_model / voice_id / language)'}), 400
     patch = {'conversation_config': {}}
     if tts:
         patch['conversation_config']['tts'] = tts
@@ -282,19 +429,25 @@ def voice_agent_tune():
                                     'Content-Type': 'application/json'},
                            json=patch, timeout=12)
         if not r.ok:
-            return jsonify({'error': f'upstream {r.status_code}', 'body': r.text[:200]}), 502
+            return jsonify({'error': f'ElevenLabs respondió HTTP {r.status_code}',
+                            'error_en': f'ElevenLabs returned HTTP {r.status_code}', 'body': r.text[:200]}), 502
         return jsonify({'ok': True, 'applied': patch})
     except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:160]}), 502
+        return jsonify({'error': 'No se pudo contactar con ElevenLabs', 'error_en': 'Could not reach ElevenLabs',
+                        'detail': _diag_redact(e)[:160]}), 502
 
 # ── Re-migración de la ontología por variable de entorno (para Fabrizio) ──────
-# Poner REMIGRATE_ON_BOOT=1 en Railway → al reiniciar, re-crea la ontología
-# COMPLETA desde el repo: 949 empresas + links + hechos temporales + los ~69
+# Poner REMIGRATE_ON_BOOT=<NOMBRE DE LA BASE> en Railway (el de
+# `SELECT current_database()`, p. ej. 'railway') → al reiniciar, re-crea el
+# GRAFO desde el repo: 949 empresas + links + hechos temporales + los ~69
 # factores sistémicos (latentes) y 28 asientos de la capa multicapa.
-# DESTRUCTIVO (borra objetos/eventos, incl. tesis/anotaciones/alertas que el
-# usuario haya guardado). Se corre UNA vez y luego se QUITA la variable.
-# Nunca bloquea el arranque (todo en try/except).
-if os.getenv('REMIGRATE_ON_BOOT', '').strip() in ('1', 'true', 'yes'):
+# DESTRUCTIVO (borra objetos/eventos/links). Auditoría #6: el valor ya NO es
+# '1'/'true' — scripts/migrate_v0_to_ontology.check_reset_allowed exige que sea
+# EXACTAMENTE el nombre de la base, se niega si broker_* (libro de clientes)
+# tiene filas y solo borra links/events/objects (MCP, research, alertas y
+# propuestas se conservan); aquí solo se mira que la variable exista.
+# Se corre UNA vez y luego se QUITA la variable. Nunca bloquea el arranque.
+if os.getenv('REMIGRATE_ON_BOOT', '').strip():
     try:
         from scripts.migrate_v0_to_ontology import run_migration
         log.warning('REMIGRATE_ON_BOOT activo — re-migrando la ontología completa desde el repo…')
@@ -307,7 +460,11 @@ if os.getenv('REMIGRATE_ON_BOOT', '').strip() in ('1', 'true', 'yes'):
 # Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
 from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,
                          GEMINI_MODEL, HTTP_TIMEOUT, NVIDIA_KEY, NVIDIA_MODEL)
-from core.http import _rate_buckets, _rate_limit, _safe_get, _safe_ticker, rate_limit
+from core.http import _rate_buckets, _rate_limit, _safe_get, _safe_ticker, rate_limit, redact_secrets
+# PIN de operador ÚNICO (auditoría #7): mismo contador por IP/global para
+# /api/trade/*, /api/brokerage/* y /api/mcp/* — ver core/pin.py.
+from core.pin import (client_ip as _client_ip, insecure_production_secret as _insecure_prod_secret,
+                      require_pin as _require_pin, secret_key_default as _secret_key_default)
 from core.ai import (_ai_complete, _ai_configured, _claude_complete,
                      _complete_gemini, _complete_nvidia, _extract_json)
 from core.quotes import _fetch_quote_raw
@@ -375,8 +532,15 @@ TRADE_PIN           = os.getenv('TRADE_PIN', '')
 # Secreto de administrador para emitir claves /v1 de tiers de pago.
 KHIPU_ADMIN_SECRET  = os.getenv('KHIPU_ADMIN_SECRET', '')
 
-if SECRET_KEY == 'khipu-dev-secret-change-me':
-    log.warning('⚠️  SECRET_KEY is default — set SECRET_KEY env var in Railway before going live')
+if _secret_key_default():
+    if _insecure_prod_secret():
+        # Auditoría #15: en producción es un riesgo real (tokens /ws, claves /v1,
+        # derivación del cifrado del corretaje). No se cambia el comportamiento de
+        # /v1 (API monetizada); se avisa FUERTE aquí, en /api/health y en 🩺.
+        log.error('🚨 SECRET_KEY es la de por defecto EN PRODUCCIÓN — configura SECRET_KEY en Railway YA '
+                  '(las firmas con ella son falsificables; OAuth de MCP queda desactivado)')
+    else:
+        log.warning('⚠️  SECRET_KEY is default — set SECRET_KEY env var in Railway before going live')
 
 # ── Security config (Fase 2 — endurecimiento a producto) ────────────────────
 # La CSP solo se aplica cuando el server sirve la app (modo servidor). En
@@ -453,6 +617,57 @@ def _add_cors_for_public_api(resp):
 def _log_request(resp):
     log.info('%s %s -> %s', request.method, request.path, resp.status_code)
     return resp
+
+
+# ── Red de seguridad: ningún secreto sale en una respuesta JSON (auditoría #13)
+# Hay ~100 `str(e)` devueltos al cliente; si una excepción trae la URL con
+# &token= o una key, aquí se tapa. Valores exactos de las env secretas (≥ 16
+# caracteres —las API keys reales lo son— para no tocar cifras legítimas: un
+# TRADE_PIN numérico corto NUNCA se busca aquí) en todo JSON < 256 KB; además,
+# en errores (status ≥ 400), los patrones key=/token=/Bearer. Corre ANTES de
+# comprimir (flask-compress se registró primero → su after_request va al final).
+_REDACT_MAX_BYTES = 256 * 1024
+_REDACT_EXEMPT_PATHS = frozenset({'/api/ws-key'})   # entrega A PROPÓSITO la key de WebSocket
+# /v1/* (API monetizada) queda fuera: su comportamiento NO se toca (CLAUDE.md).
+
+
+_REDACT_TEXT_ERR_TYPES = ('text/plain', 'text/html')   # páginas de error (status ≥ 400) también
+
+
+@app.after_request
+def _redact_secrets_in_json(resp):
+    try:
+        is_json = resp.mimetype == 'application/json'
+        is_text_err = resp.mimetype in _REDACT_TEXT_ERR_TYPES and resp.status_code >= 400
+        if ((not is_json and not is_text_err) or resp.direct_passthrough or resp.is_streamed
+                or request.path in _REDACT_EXEMPT_PATHS or request.path.startswith('/v1/')
+                or (resp.content_length or 0) > _REDACT_MAX_BYTES):
+            return resp
+        data = resp.get_data(as_text=True)
+        if len(data) > _REDACT_MAX_BYTES:
+            return resp
+        red = data
+        for v in _secret_values_for_scan():
+            if v in red:
+                red = red.replace(v, '••••')
+        if resp.status_code >= 400:
+            red = redact_secrets(red, min_len=_REDACT_MIN_LEN)
+        if red != data:
+            resp.set_data(red)
+            log.warning('secreto tapado en la respuesta de %s (revisar el manejo de errores)', request.path)
+    except Exception:  # noqa: BLE001 — nunca romper una respuesta por esto
+        pass
+    return resp
+
+
+_REDACT_MIN_LEN = 16
+
+
+def _secret_values_for_scan():
+    from core.http import secret_values
+    return secret_values(min_len=_REDACT_MIN_LEN, extra=(CLAUDE, GEMINI_KEY, NVIDIA_KEY, FINNHUB, FMP, MSTACK, AV_KEY,
+                                           ELEVENLABS_KEY, ALPACA_KEY, ALPACA_SECRET, KHIPU_ADMIN_SECRET,
+                                           NEO4J_PASSWORD, SECRET_KEY))
 
 
 # ----------------------------------------------------------------------------
@@ -598,15 +813,18 @@ _VENDOR_MAP = {
 
 
 @app.route('/vendor/<path:name>')
-@cache.cached(timeout=604800)  # 7 días
+@rate_limit(limit=120, window=60)
+@cache.cached(timeout=604800)  # 7 días (solo 200; un fallo se repite 60 s: caché negativa)
 def vendor(name):
     url = _VENDOR_MAP.get(name)
     if not url:
-        return jsonify({'error': 'unknown vendor asset'}), 404
+        return jsonify({'error': 'recurso desconocido', 'error_en': 'unknown vendor asset'}), 404
     try:
-        r = requests.get(url, timeout=25, headers={'User-Agent': 'KhipuFinance/1.0'})
+        # 10 s (antes 25): con el CDN colgado cada carga retenía un hilo 25 s.
+        r = requests.get(url, timeout=10, headers={'User-Agent': 'KhipuFinance/1.0'})
         if not r.ok:
-            return jsonify({'error': f'upstream {r.status_code}'}), 502
+            return jsonify({'error': f'el CDN respondió HTTP {r.status_code}',
+                            'error_en': f'CDN returned HTTP {r.status_code}'}), 502
         ctype = (r.headers.get('Content-Type') or '').split(';')[0] or \
             ('application/javascript' if name.endswith('.js') else 'application/octet-stream')
         resp = app.response_class(r.content, mimetype=ctype)
@@ -614,7 +832,8 @@ def vendor(name):
         resp.headers['Access-Control-Allow-Origin'] = '*'
         return resp
     except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:120]}), 502
+        return jsonify({'error': 'CDN no disponible', 'error_en': 'CDN unavailable',
+                        'detail': _diag_redact(e)[:120]}), 502
 
 
 # ----------------------------------------------------------------------------
@@ -699,6 +918,9 @@ def health():
         'alpha_vantage': bool(AV_KEY),
         'jwt_api': _HAS_JWT,
         'ai_model': AI_MODEL,
+        # Auditoría #15: SECRET_KEY por defecto = firmas falsificables. Solo el
+        # booleano (nunca el valor); la UI/🩺 lo muestran como alerta.
+        'secret_key_default': _secret_key_default(),
         'ts': int(time.time()),
     })
 
@@ -713,13 +935,16 @@ _DIAG_TTL = 60  # segundos
 
 
 def _diag_redact(text):
-    """Quita cualquier valor de key que pudiera aparecer en un mensaje de error."""
-    s = str(text)[:200]
-    for secret in (CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, SECRET_KEY,
-                   NEO4J_PASSWORD, NEO4J_URI):
-        if secret and len(secret) > 6 and secret in s:
-            s = s.replace(secret, '••••')
-    return s
+    """Quita cualquier valor de key que pudiera aparecer en un mensaje de error:
+    TODAS las env secretas (core.http.SECRET_ENV_NAMES: Gemini, NVIDIA, Alpaca,
+    TRADE_PIN, KHIPU_ADMIN_SECRET, Tavily…) + los valores ya cargados aquí +
+    patrones genéricos (key=/token=/apikey=/secret=, Bearer, x-goog-api-key…).
+    Se redacta el texto COMPLETO y luego se trunca (antes se truncaba primero y
+    un secreto cortado en el borde quedaba a medias sin tapar)."""
+    return redact_secrets(text, extra=(CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, SECRET_KEY,
+                                       NEO4J_PASSWORD, NEO4J_URI, GEMINI_KEY, NVIDIA_KEY, ALPACA_KEY,
+                                       ALPACA_SECRET, TRADE_PIN, KHIPU_ADMIN_SECRET),
+                          limit=200)
 
 
 def _diag_claude():
@@ -730,7 +955,7 @@ def _diag_claude():
     t0 = time.time()
     try:
         import anthropic
-        client = anthropic.Anthropic(api_key=CLAUDE)
+        client = anthropic.Anthropic(api_key=CLAUDE, timeout=20, max_retries=0)
 
         def _ping_model(mid):
             _p = dict(model=mid, max_tokens=1, messages=[{'role': 'user', 'content': 'ping'}])
@@ -1030,6 +1255,48 @@ def ai_debug():
     return jsonify(out)
 
 
+def _security_warnings():
+    """Avisos de postura de seguridad para 🩺 (bilingües, sin valores secretos)."""
+    out = []
+    if _secret_key_default():
+        prod = _insecure_prod_secret()
+        out.append({
+            'code': 'secret_key_default', 'severity': 'critical' if prod else 'warning',
+            'es': ('🚨 SECRET_KEY es la de por defecto (pública). Cualquiera puede falsificar lo que se firma con '
+                   'ella. Railway → tu servicio → Variables → añade SECRET_KEY con un texto largo y aleatorio.'
+                   + (' La conexión de IAs por OAuth (MCP) queda desactivada hasta que la cambies.' if prod else '')),
+            'en': ('🚨 SECRET_KEY is the default (public) one. Anyone can forge what is signed with it. '
+                   'Railway → your service → Variables → add SECRET_KEY with a long random string.'
+                   + (' AI connections via OAuth (MCP) stay disabled until you change it.' if prod else '')),
+        })
+    pin = os.getenv('TRADE_PIN', '')
+    if not pin:
+        out.append({'code': 'trade_pin_missing', 'severity': 'info',
+                    'es': 'TRADE_PIN no está configurado: el trading y el corretaje quedan deshabilitados.',
+                    'en': 'TRADE_PIN is not set: trading and brokerage are disabled.'})
+    elif len(pin) < 8:
+        out.append({'code': 'trade_pin_weak', 'severity': 'warning',
+                    'es': 'TRADE_PIN es corto (< 8 caracteres): usa uno más largo en Railway.',
+                    'en': 'TRADE_PIN is short (< 8 characters): use a longer one in Railway.'})
+    if not _house_trading_enabled():
+        out.append({'code': 'trading_halted', 'severity': 'info',
+                    'es': 'Interruptor general APAGADO (BROKERAGE_TRADING_ENABLED=off): no se envía ninguna orden '
+                          '(tampoco cierres). Para cerrar una posición en una emergencia usa el panel de Alpaca.',
+                    'en': 'Master switch OFF (BROKERAGE_TRADING_ENABLED=off): no orders are sent (closes '
+                          'included). To close a position in an emergency use the Alpaca dashboard.'})
+    if FINNHUB and not (os.getenv('FINNHUB_WS_KEY') or '').strip():
+        # Auditoría #14 (residual): /api/ws-key entrega la key al navegador; un
+        # cliente que falsifique Sec-Fetch-Site también la obtiene.
+        out.append({'code': 'finnhub_ws_key_missing', 'severity': 'warning',
+                    'es': 'El WebSocket de precios usa la FINNHUB_KEY del servidor: alguien que imite al navegador '
+                          'podría obtenerla. Crea una segunda key gratis en finnhub.io y ponla en Railway como '
+                          'FINNHUB_WS_KEY (si se filtra, la cambias sin tocar la del servidor).',
+                    'en': 'The price WebSocket uses the server FINNHUB_KEY: someone imitating the browser could '
+                          'obtain it. Create a second free key at finnhub.io and set it in Railway as '
+                          'FINNHUB_WS_KEY (if it leaks, rotate it without touching the server key).'})
+    return out
+
+
 @app.route('/api/diagnostics')
 @rate_limit(limit=20, window=300)
 def diagnostics():
@@ -1064,6 +1331,8 @@ def diagnostics():
         'ts': int(now), 'cached': False, 'ai_model': AI_MODEL,
         'jwt_api': _HAS_JWT, 'services': services,
         'summary': {'ok': n_ok, 'total': len(services)},
+        'secret_key_default': _secret_key_default(),
+        'security_warnings': _security_warnings(),
     }
     _DIAG_CACHE['ts'] = now
     _DIAG_CACHE['data'] = out
@@ -1073,41 +1342,106 @@ def diagnostics():
 # ----------------------------------------------------------------------------
 # Finnhub — precios, noticias, earnings, WebSocket token
 # ----------------------------------------------------------------------------
+# ── WebSocket de Finnhub (auditoría #14) ─────────────────────────────────────
+# El navegador necesita UNA key de Finnhub para abrir el WebSocket. Antes
+# /api/ws-token + /api/ws-key se la daban a cualquiera (curl incluido). Ahora:
+#   · solo peticiones del MISMO ORIGEN (Sec-Fetch-Site same-origin/none, u
+#     Origin/Referer con el mismo host) — frena a otras webs que la pidan desde
+#     el navegador de un visitante;
+#   · el token dura 20 s, va atado a la IP (último salto de X-Forwarded-For) y
+#     sirve UNA sola vez;
+#   · si existe FINNHUB_WS_KEY se entrega ESA (una key aparte, solo para el
+#     navegador) y la FINNHUB_KEY del servidor nunca sale. Recomendado.
+# Un cliente no-navegador puede falsificar cabeceras: por eso lo correcto es
+# FINNHUB_WS_KEY separada (si se filtra, se rota sin tocar el servidor).
+_WS_TOKEN_TTL_S = 20
+_WS_USED = {}                 # firma → vencimiento (tokens ya canjeados)
+_WS_LOCK = threading.Lock()
+# Clave de firma ALEATORIA por proceso (1 worker: emisión y canje ocurren en el
+# mismo proceso; tokens de 20 s). No depende de SECRET_KEY → aunque siga siendo
+# la de por defecto, los tokens no se pueden fabricar.
+_WS_SIGN_KEY = os.urandom(32)
+
+
+def _same_origin_request():
+    sfs = (request.headers.get('Sec-Fetch-Site') or '').strip().lower()
+    if sfs in ('same-origin', 'none'):
+        return True
+    if sfs in ('cross-site', 'same-site'):
+        return False
+    from urllib.parse import urlparse
+    hosts = {h.strip().lower() for h in ((request.host or ''),
+                                        (request.headers.get('X-Forwarded-Host') or '').split(',')[0]) if h.strip()}
+    origin = request.headers.get('Origin')
+    if origin and origin != 'null':
+        return urlparse(origin).netloc.lower() in hosts
+    ref = request.headers.get('Referer')
+    if ref:
+        return urlparse(ref).netloc.lower() in hosts
+    return False
+
+
+def _ws_forbidden():
+    return jsonify({'error': 'Solo disponible desde la propia app (mismo origen)',
+                    'error_en': 'Only available from the app itself (same origin)',
+                    'code': 'cross_origin'}), 403
+
+
+def _ws_sig(expires, ip):
+    return hmac.new(_WS_SIGN_KEY, f'ws:{expires}:{ip}'.encode(), hashlib.sha256).hexdigest()[:24]
+
+
 @app.route('/api/ws-token')
-@rate_limit(limit=30, window=60)  # 30 tokens per minute per IP
+@rate_limit(limit=20, window=60)
 def ws_token():
-    """Returns a short-lived signed token the browser uses to open the Finnhub WebSocket.
-    The token expires in 30 seconds and is HMAC-signed so it cannot be forged.
-    The browser must exchange it for the real key at connect time via /api/ws-key."""
-    if not FINNHUB:
-        return jsonify({'error': 'no FINNHUB_KEY'}), 400
-    expires = int(time.time()) + 30
-    payload = f'ws:{expires}'
-    sig = hmac.new(SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()[:16]
-    return jsonify({'session_token': f'{expires}.{sig}', 'expires_in': 30})
+    """Token corto (20 s, atado a la IP, un solo uso) para canjear por la key
+    del WebSocket en /api/ws-key. Solo desde el mismo origen."""
+    if not (os.getenv('FINNHUB_WS_KEY') or FINNHUB):
+        return jsonify({'error': 'falta FINNHUB_KEY en el servidor', 'error_en': 'FINNHUB_KEY is not set on the server',
+                        'code': 'no_finnhub_key'}), 400
+    if not _same_origin_request():
+        return _ws_forbidden()
+    expires = int(time.time()) + _WS_TOKEN_TTL_S
+    resp = jsonify({'session_token': f'{expires}.{_ws_sig(expires, _client_ip())}',
+                    'expires_in': _WS_TOKEN_TTL_S})
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 
 @app.route('/api/ws-key', methods=['POST'])
-@rate_limit(limit=30, window=60)
+@rate_limit(limit=20, window=60)
 def ws_key():
-    """Validates a session_token and returns the real Finnhub key. Token must be fresh (<30s)."""
-    if not FINNHUB:
-        return jsonify({'error': 'no FINNHUB_KEY'}), 400
-    data = request.get_json(silent=True) or {}
-    token = data.get('session_token', '')
+    """Valida el session_token (fresco, misma IP, no usado) y devuelve la key
+    del WebSocket: FINNHUB_WS_KEY si existe (recomendado), si no FINNHUB_KEY."""
+    ws_key_value = os.getenv('FINNHUB_WS_KEY') or FINNHUB
+    if not ws_key_value:
+        return jsonify({'error': 'falta FINNHUB_KEY en el servidor', 'error_en': 'FINNHUB_KEY is not set on the server',
+                        'code': 'no_finnhub_key'}), 400
+    if not _same_origin_request():
+        return _ws_forbidden()
+    data = request.get_json(silent=True)
+    data = data if isinstance(data, dict) else {}
+    token = str(data.get('session_token', ''))
     try:
-        parts = token.split('.')
-        expires = int(parts[0])
-        sig = parts[1]
-    except (ValueError, IndexError):
-        return jsonify({'error': 'invalid token'}), 401
-    if time.time() > expires:
-        return jsonify({'error': 'token expired'}), 401
-    payload = f'ws:{expires}'
-    expected = hmac.new(SECRET_KEY.encode(), payload.encode(), hashlib.sha256).hexdigest()[:16]
-    if not hmac.compare_digest(sig, expected):
-        return jsonify({'error': 'invalid token signature'}), 401
-    return jsonify({'token': FINNHUB})
+        exp_s, sig = token.split('.', 1)
+        expires = int(exp_s)
+    except (ValueError, AttributeError):
+        return jsonify({'error': 'token inválido', 'error_en': 'invalid token', 'code': 'invalid_token'}), 401
+    now = time.time()
+    if now > expires or expires > now + _WS_TOKEN_TTL_S + 5:
+        return jsonify({'error': 'token vencido', 'error_en': 'token expired', 'code': 'token_expired'}), 401
+    if not hmac.compare_digest(sig, _ws_sig(expires, _client_ip())):
+        return jsonify({'error': 'firma del token inválida', 'error_en': 'invalid token signature',
+                        'code': 'invalid_token'}), 401
+    with _WS_LOCK:
+        for k in [k for k, v in _WS_USED.items() if v < now]:
+            _WS_USED.pop(k, None)
+        if sig in _WS_USED:
+            return jsonify({'error': 'token ya usado', 'error_en': 'token already used', 'code': 'token_used'}), 401
+        _WS_USED[sig] = expires
+    resp = jsonify({'token': ws_key_value})
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
 
 
 @app.route('/api/quote/<ticker>')
@@ -1413,30 +1747,177 @@ def _alpaca_hdrs():
     }
 
 
-def _trade_auth(f):
-    """Exige el PIN de trading (header X-Trade-Pin == env TRADE_PIN).
+# PIN de trading: core.pin.require_pin (auditoría #7). Mismo contador por IP
+# (ÚLTIMO salto de X-Forwarded-For) y GLOBAL que /api/brokerage y /api/mcp;
+# 10 fallos/IP o 30 globales en 10 min → 429. Sin TRADE_PIN → 403
+# 'trading_disabled' (seguro por defecto). Se conserva el nombre _trade_auth.
+_trade_auth = _require_pin
 
-    Estas rutas mueven dinero real en Alpaca y exponen datos de la cuenta:
-    sin este guard, cualquiera con la URL pública puede operar. Sin TRADE_PIN
-    en el entorno el trading queda deshabilitado por completo."""
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not TRADE_PIN:
-            return jsonify({'error': 'Trading deshabilitado — configura TRADE_PIN en Railway',
-                            'code': 'trading_disabled'}), 403
-        pin = request.headers.get('X-Trade-Pin', '')
-        if not hmac.compare_digest(pin, TRADE_PIN):
-            return jsonify({'error': 'PIN de trading incorrecto o faltante',
-                            'code': 'invalid_pin'}), 401
-        return f(*args, **kwargs)
-    return wrapper
+# ── Validación de órdenes de la cuenta de la casa (auditoría #8/#9) ──────────
+MAX_ORDER_USD = 100000.0           # tope por orden (notional o qty × precio)
+# Base 1-10 (acciones ≤ 5 + clase; cripto hasta RENDER…) + clase opcional
+# '.B' + par cripto '/USD'. Sin puntos sueltos: 'X.', '.', '..' no pasan.
+_TRADE_SYM_RE = re.compile(r'^[A-Z0-9]{1,10}(\.[A-Z0-9]{1,3})?(/[A-Z]{3,5})?$')
+_TRADE_TIFS = ('day', 'gtc', 'ioc', 'fok')
+_CLIENT_ORDER_ID_RE = re.compile(r'^[A-Za-z0-9_\-]{8,64}$')
+
+
+def _trade_symbol(raw):
+    """'nvda' → 'NVDA'; 'btc/usd' → 'BTC/USD'. None si no es un símbolo válido.
+    Bloquea '.', '..', '?cancel_orders=true', rutas y cualquier cosa que al
+    ir en la URL de Alpaca pudiera apuntar a otro endpoint (p. ej. cerrar TODO)."""
+    sym = str(raw or '').strip()
+    if not sym or not sym.isascii():        # 'ß'.upper() == 'SS': se valida ANTES de .upper()
+        return None
+    sym = sym.upper()
+    return sym if _TRADE_SYM_RE.match(sym) else None
+
+
+_PAPER_HOSTS = ('paper-api.alpaca.markets',)
+
+
+def _paper():
+    """¿Cuenta de PAPEL? Por el HOST de ALPACA_BASE (no por la subcadena 'paper':
+    un proxy de la cuenta real con 'paper' en el nombre habilitaba el modo AUTO
+    con dinero real). Host desconocido → se trata como DINERO REAL (seguro)."""
+    from urllib.parse import urlparse
+    try:
+        host = (urlparse(str(ALPACA_BASE or '').strip()).hostname or '').lower()
+    except Exception:  # noqa: BLE001
+        return False
+    return host in _PAPER_HOSTS
+
+
+def _account_is_live(account):
+    """El número de cuenta de papel de Alpaca empieza por 'PA'. Si la cuenta
+    trae account_number y NO empieza por 'PA' → dinero real, diga lo que diga
+    la URL. Sin el dato → None (se decide por el host)."""
+    num = str((account or {}).get('account_number') or '').strip().upper() if isinstance(account, dict) else ''
+    return (not num.startswith('PA')) if num else None
+
+
+def _house_trading_enabled():
+    """Interruptor general BROKERAGE_TRADING_ENABLED (=off → ninguna orden:
+    /api/trade/order, /api/trade/close y el agente de trading)."""
+    try:
+        from brokerage.risk import trading_enabled
+        return bool(trading_enabled())
+    except Exception:  # noqa: BLE001 — sin el paquete brokerage, se lee el env igual
+        return (os.getenv('BROKERAGE_TRADING_ENABLED', 'on') or 'on').strip().lower() in \
+            ('on', '1', 'true', 'yes', 'si', 'sí')
+
+
+def _trading_halted_response():
+    return jsonify({'error': 'Interruptor general APAGADO (BROKERAGE_TRADING_ENABLED=off): no se envía ninguna orden',
+                    'error_en': 'Master switch OFF (BROKERAGE_TRADING_ENABLED=off): no orders are sent',
+                    'code': 'trading_halted'}), 423
+
+
+def _broker_missing_response():
+    return jsonify({'error': 'Bróker no configurado: faltan ALPACA_KEY/ALPACA_SECRET en Railway',
+                    'error_en': 'Broker not configured: ALPACA_KEY/ALPACA_SECRET missing in Railway',
+                    'code': 'broker_not_configured'}), 400
+
+
+def _trade_actor():
+    try:
+        a = str(request.headers.get('X-Khipu-Actor') or '').strip()[:80]
+    except Exception:  # noqa: BLE001 — fuera de una petición (hilo del agente)
+        a = ''
+    return f'{a} (PIN)' if a else 'ui (PIN)'
+
+
+def _trade_audit(action, detail, actor=None):
+    """Rastro APPEND-ONLY de cada intento de orden de la cuenta de la casa
+    (auditoría #21): broker_audit vía brokerage.service.audit si hay base; si
+    no, al log. Nunca guarda secretos ni rompe la operación."""
+    detail = dict(detail or {})
+    detail.setdefault('paper', _paper())
+    try:
+        detail.setdefault('ip', _client_ip())
+    except Exception:  # noqa: BLE001 — hilo del agente: sin petición
+        pass
+    actor = actor or _trade_actor()
+    log.info('TRADE-AUDIT %s %s %s', actor, action, json.dumps(detail, default=str)[:600])
+    try:
+        from ontology.db import ontology_available
+        if not ontology_available():
+            return
+        from ontology.db import session_scope
+        from brokerage.service import audit
+        with session_scope() as s:
+            audit(s, actor, action, detail=detail)
+    except Exception as e:  # noqa: BLE001
+        log.warning('trade-audit: no se registró %s en broker_audit (%s)', action, type(e).__name__)
+
+
+def _alpaca_json(r):
+    try:
+        return r.json()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _house_price(sym):
+    """Último precio (USD) para acotar qty × precio. None si no se pudo verificar."""
+    try:
+        if '/' in sym:
+            r = requests.get('https://data.alpaca.markets/v1beta3/crypto/us/latest/trades',
+                             params={'symbols': sym}, headers=_alpaca_hdrs(), timeout=6)
+            p = (((_alpaca_json(r) or {}).get('trades') or {}).get(sym) or {}).get('p')
+            return float(p) if p and float(p) > 0 else None
+        if FINNHUB:
+            data, err = _fetch_quote_raw(sym, timeout=5)
+            if not err and data and float(data.get('c') or 0) > 0:
+                return float(data['c'])
+        from urllib.parse import quote as _q
+        r = requests.get(f'https://data.alpaca.markets/v2/stocks/{_q(sym, safe="")}/trades/latest',
+                         headers=_alpaca_hdrs(), timeout=6)
+        p = ((_alpaca_json(r) or {}).get('trade') or {}).get('p')
+        return float(p) if p and float(p) > 0 else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _finite_pos(v):
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if (f == f and f not in (float('inf'), float('-inf')) and f > 0) else None
+
+
+def _num_str(v):
+    """12.0 → '12'; 0.5 → '0.5'; hasta 9 decimales (fracciones de Alpaca), sin notación científica."""
+    return ('%.9f' % float(v)).rstrip('0').rstrip('.')
+
+
+def _bad(es, en, code='bad_request', status=400, **extra):
+    return jsonify({'error': es, 'error_en': en, 'code': code, **extra}), status
+
+
+def _bad_json_body():
+    """Cuerpo JSON que no es un objeto ([1,2], "NVDA"…): 400 bilingüe (antes 500)."""
+    return _bad('Cuerpo JSON inválido: se esperaba un objeto {…}', 'Invalid JSON body: an object {…} was expected',
+                code='bad_json')
+
+
+def _json_object_body():
+    """→ (dict, None) o (None, respuesta_400). Cuerpo ausente/ilegible = {}."""
+    data = request.get_json(silent=True)
+    if data is None:
+        return {}, None
+    if not isinstance(data, dict):
+        return None, _bad_json_body()
+    return data, None
 
 
 @app.route('/api/trade/account', methods=['GET'])
+@rate_limit(limit=60, window=60)
 @_trade_auth
 def trade_account():
     if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+        return _broker_missing_response()
     try:
         r = requests.get(f'{ALPACA_BASE}/v2/account',
                          headers=_alpaca_hdrs(), timeout=10)
@@ -1445,12 +1926,16 @@ def trade_account():
             # "paper": true → cuenta simulada (paper-api); false → DINERO REAL.
             # La UI usa este flag para el badge 🧪 SIMULADO / 🔴 DINERO REAL.
             if isinstance(payload, dict):
-                payload['paper'] = 'paper' in ALPACA_BASE
+                payload['paper'] = _paper() and _account_is_live(payload) is not True
             return jsonify(payload), r.status_code
         except Exception:
             return jsonify({'error': f'Alpaca HTTP {r.status_code}', 'body': r.text[:300]}), 502
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': str(e)[:200], 'base': ALPACA_BASE, 'key_set': bool(ALPACA_KEY)}), 502
+
+
+_TRADE_STATUS_CACHE = {'ts': 0.0, 'data': None}
+_TRADE_STATUS_TTL_S = 30
 
 
 @app.route('/api/trade/status', methods=['GET'])
@@ -1459,33 +1944,47 @@ def trade_status():
     """Diagnóstico PÚBLICO no sensible del bróker (sin PIN): NO expone claves ni
     datos de cuenta — solo si están configuradas, la base y el status HTTP del
     endpoint de cuenta, con una pista accionable. Para depurar el 'Alpaca HTTP
-    404' desde cualquier dispositivo sin conocer el TRADE_PIN."""
+    404' desde cualquier dispositivo sin conocer el TRADE_PIN. Caché 30 s en
+    memoria (auditoría #7: antes cada visita anónima llamaba a Alpaca)."""
+    now = time.time()
+    cached = _TRADE_STATUS_CACHE['data']
+    if cached is not None and now - _TRADE_STATUS_CACHE['ts'] < _TRADE_STATUS_TTL_S:
+        return jsonify(dict(cached, cached=True))
     info = {'key_set': bool(ALPACA_KEY), 'secret_set': bool(ALPACA_SECRET),
-            'base': ALPACA_BASE, 'pin_set': bool(TRADE_PIN), 'paper': 'paper' in ALPACA_BASE}
+            'base': ALPACA_BASE, 'pin_set': bool(os.getenv('TRADE_PIN', '')), 'paper': _paper(),
+            'trading_enabled': _house_trading_enabled()}
     if not ALPACA_KEY or not ALPACA_SECRET:
         info['ok'] = False
         info['hint'] = 'Faltan ALPACA_KEY/ALPACA_SECRET en Railway.'
-        return jsonify(info)
-    try:
-        r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
-        info['account_status'] = r.status_code
-        info['ok'] = (r.status_code == 200)
-        if r.status_code == 200:
-            info['hint'] = 'Bróker OK.'
-        elif r.status_code in (401, 403):
-            info['hint'] = 'Claves rechazadas: revisa ALPACA_KEY/SECRET y que coincidan con la base (paper vs live).'
-        elif r.status_code == 404:
-            info['hint'] = 'URL no encontrada: ALPACA_BASE debe ser https://paper-api.alpaca.markets (sin /v2 ni barra final).'
-        else:
-            info['hint'] = f'Alpaca respondió HTTP {r.status_code}.'
-    except Exception as e:  # noqa: BLE001
-        info['ok'] = False
-        info['error'] = str(e)[:150]
-        info['hint'] = 'No se pudo conectar con Alpaca — revisa ALPACA_BASE.'
+        info['hint_en'] = 'ALPACA_KEY/ALPACA_SECRET missing in Railway.'
+    else:
+        try:
+            r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
+            info['account_status'] = r.status_code
+            info['ok'] = (r.status_code == 200)
+            if r.status_code == 200:
+                info['hint'], info['hint_en'] = 'Bróker OK.', 'Broker OK.'
+            elif r.status_code in (401, 403):
+                info['hint'] = 'Claves rechazadas: revisa ALPACA_KEY/SECRET y que coincidan con la base (paper vs live).'
+                info['hint_en'] = 'Keys rejected: check ALPACA_KEY/SECRET and that they match the base (paper vs live).'
+            elif r.status_code == 404:
+                info['hint'] = ('URL no encontrada: ALPACA_BASE debe ser https://paper-api.alpaca.markets '
+                                '(sin /v2 ni barra final).')
+                info['hint_en'] = 'URL not found: ALPACA_BASE must be https://paper-api.alpaca.markets (no /v2).'
+            else:
+                info['hint'] = f'Alpaca respondió HTTP {r.status_code}.'
+                info['hint_en'] = f'Alpaca answered HTTP {r.status_code}.'
+        except Exception as e:  # noqa: BLE001
+            info['ok'] = False
+            info['error'] = _diag_redact(e)
+            info['hint'] = 'No se pudo conectar con Alpaca — revisa ALPACA_BASE.'
+            info['hint_en'] = 'Could not reach Alpaca — check ALPACA_BASE.'
+    _TRADE_STATUS_CACHE.update(ts=now, data=info)
     return jsonify(info)
 
 
 @app.route('/api/trade/diag', methods=['GET'])
+@rate_limit(limit=10, window=60)
 @_trade_auth
 def trade_diag():
     """Diagnóstico del broker Alpaca — SIN exponer claves. Prueba cada llamada
@@ -1536,7 +2035,7 @@ def trade_diag():
     return jsonify({
         'ok': bool(account_ok),
         'base': ALPACA_BASE,
-        'paper': 'paper' in ALPACA_BASE,
+        'paper': _paper(),
         'key': _mask(ALPACA_KEY),
         'secret_set': bool(ALPACA_SECRET),
         'checks': checks,
@@ -1586,94 +2085,225 @@ def _fetch_crypto_assets():
 def trade_crypto_assets():
     """Activos cripto tradeables en Alpaca → {"assets":[{symbol,name}], "paper":bool}."""
     if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
+        return _broker_missing_response()
     assets = _fetch_crypto_assets()
     if assets is None:
         return jsonify({'error': 'No se pudo cargar el catálogo cripto de Alpaca'}), 502
-    return jsonify({'assets': assets, 'paper': 'paper' in ALPACA_BASE})
+    return jsonify({'assets': assets, 'paper': _paper()})
 
 
 @app.route('/api/trade/close', methods=['POST'])
-@rate_limit(limit=60, window=60)
+@rate_limit(limit=30, window=60)
 @_trade_auth
 def trade_close():
-    """Cierra por completo una posición (1-clic 'CLOSE' del scalping). Alpaca:
-    DELETE /v2/positions/{symbol} (cripto va SIN barra en el path: BTCUSD)."""
+    """Cierra por completo UNA posición (1-clic 'CLOSE' del scalping). Alpaca:
+    DELETE /v2/positions/{symbol} (cripto va SIN barra en el path: BTCUSD).
+    Auditoría #8: el símbolo se valida estricto y va url-encodeado — antes '.'
+    o '?cancel_orders=true' podían acabar en DELETE /v2/positions (= cerrar TODO)."""
     if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
-    body = request.get_json(force=True, silent=True) or {}
-    symbol = str(body.get('symbol') or '').strip()
+        return _broker_missing_response()
+    body = request.get_json(force=True, silent=True)
+    if body is None:
+        body = {}
+    if not isinstance(body, dict):
+        return _bad_json_body()
+    raw = str(body.get('symbol') or '').strip()
+    if not raw:
+        return _bad('symbol requerido', 'symbol is required')
+    symbol = _trade_symbol(raw)
     if not symbol:
-        return jsonify({'error': 'symbol requerido'}), 400
+        _trade_audit('trade_close', {'symbol': raw[:24], 'outcome': 'rejected_invalid_symbol'})
+        return _bad('Símbolo inválido', 'Invalid symbol', code='invalid_symbol')
+    if not _house_trading_enabled():
+        _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'blocked_kill_switch'})
+        return _trading_halted_response()
+    from urllib.parse import quote as _q
+    path_sym = _q(symbol.replace('/', ''), safe='')   # Alpaca usa BTCUSD en el path de posiciones
     try:
-        path_sym = symbol.replace('/', '')   # Alpaca usa BTCUSD en el path de posiciones
-        r = requests.delete(f'{ALPACA_BASE}/v2/positions/{path_sym}',
-                            headers=_alpaca_hdrs(), timeout=10)
-        try:
-            payload = r.json()
-        except Exception:  # noqa: BLE001
-            payload = {'ok': r.status_code < 300}
-        return jsonify(payload), r.status_code
+        r = requests.delete(f'{ALPACA_BASE}/v2/positions/{path_sym}', headers=_alpaca_hdrs(), timeout=10)
     except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:150]}), 502
+        _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'error', 'error': type(e).__name__})
+        return _bad('No se pudo contactar con Alpaca', 'Could not reach Alpaca', code='broker_unreachable',
+                    status=502, detail=_diag_redact(e))
+    payload = _alpaca_json(r)
+    if payload is None:
+        payload = {'ok': r.status_code < 300}
+    ok = 200 <= r.status_code < 300
+    _trade_audit('trade_close', {'symbol': symbol, 'outcome': 'submitted' if ok else 'rejected',
+                                 'http_status': r.status_code,
+                                 'alpaca_order_id': (payload.get('id') if isinstance(payload, dict) else None),
+                                 'alpaca_message': (str(payload.get('message'))[:160]
+                                                    if isinstance(payload, dict) and payload.get('message') else None)})
+    if isinstance(payload, dict):
+        payload.setdefault('paper', _paper())
+    return jsonify(payload), r.status_code
 
 
 @app.route('/api/trade/order', methods=['POST'])
 @rate_limit(20, 60)
 @_trade_auth
 def trade_order():
+    """Orden de la cuenta de la casa (Alpaca). Auditoría #9/#21:
+    · tope $100.000 por orden en notional O en qty × precio (limit_price, o el
+      último precio si es market; sin precio verificable → se rechaza);
+    · limit_price numérico > 0; time_in_force ∈ day|gtc|ioc|fok (cripto → gtc);
+    · client_order_id (UUID del cliente) se reenvía a Alpaca: un reintento o el
+      doble clic voz+botón NO duplica la orden (Alpaca la rechaza como repetida
+      y aquí se devuelve la ya existente con duplicate=true);
+    · interruptor BROKERAGE_TRADING_ENABLED=off → 423 'trading_halted';
+    · cada intento queda en broker_audit (o en el log sin base)."""
     if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
-    data     = request.get_json(silent=True) or {}
-    ticker   = (data.get('symbol') or '').upper().strip()
-    qty      = data.get('qty')
+        return _broker_missing_response()
+    data = request.get_json(silent=True)
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        return _bad_json_body()
+    raw_sym = str(data.get('symbol') or '').strip()
+    ticker = _trade_symbol(raw_sym)
+    qty = data.get('qty')
     notional = data.get('notional')
-    side     = (data.get('side') or 'buy').lower()
-    otype    = (data.get('type') or 'market').lower()
-    tif      = data.get('time_in_force', 'day')
-    if not ticker or side not in ('buy', 'sell'):
-        return jsonify({'error': 'symbol y side (buy|sell) son requeridos'}), 400
+    side = str(data.get('side') or 'buy').lower().strip()
+    otype = str(data.get('type') or 'market').lower().strip()
+    tif = str(data.get('time_in_force') or 'day').lower().strip()
+    coid = data.get('client_order_id')
+    def _short(v):
+        return str(v)[:32] if isinstance(v, (int, float, str)) and not isinstance(v, bool) else None
+    summary = {'symbol': ticker or raw_sym[:24], 'side': side[:8], 'type': otype[:16], 'tif': tif[:8],
+               'qty': _short(qty), 'notional': _short(notional), 'limit_price': _short(data.get('limit_price')),
+               'client_order_id': str(coid)[:64] if coid else None}
+
+    def reject(es, en, code='bad_request', status=400):
+        _trade_audit('trade_order', dict(summary, outcome='rejected', reason=code))
+        return _bad(es, en, code=code, status=status)
+
+    if not ticker:
+        return reject('Símbolo inválido', 'Invalid symbol', 'invalid_symbol')
+    if side not in ('buy', 'sell'):
+        return reject('side debe ser buy o sell', "side must be 'buy' or 'sell'")
     if otype not in ('market', 'limit'):
-        return jsonify({'error': "type debe ser 'market' o 'limit'"}), 400
-    limit_price = data.get('limit_price')
-    if otype == 'limit' and limit_price is None:
-        return jsonify({'error': 'una orden limit requiere limit_price'}), 400
+        return reject("Tipo de orden no soportado: usa 'market' o 'limit'",
+                      "Unsupported order type: use 'market' or 'limit'", 'unsupported_type')
+    if tif not in _TRADE_TIFS:
+        return reject('time_in_force debe ser day, gtc, ioc o fok', 'time_in_force must be day, gtc, ioc or fok')
+    limit_price = None
+    if otype == 'limit':
+        limit_price = _finite_pos(data.get('limit_price'))
+        if limit_price is None:
+            return reject('Una orden limit requiere limit_price numérico mayor que 0',
+                          'A limit order needs a numeric limit_price greater than 0')
+    if coid is not None and coid != '':
+        coid = str(coid).strip()
+        if not _CLIENT_ORDER_ID_RE.match(coid):
+            return reject('client_order_id inválido (8-64 caracteres: letras, números, - o _)',
+                          'Invalid client_order_id (8-64 chars: letters, digits, - or _)')
+    else:
+        coid = 'kh-' + uuid.uuid4().hex
+    summary['client_order_id'] = coid
     # Exactamente UNO de qty | notional (notional = monto en USD, ej. 100 = $100)
     if (qty is None) == (notional is None):
-        return jsonify({'error': 'envía exactamente uno de: qty O notional (monto en USD)'}), 400
-    if notional is not None:
-        try:
-            notional = float(notional)
-        except (TypeError, ValueError):
-            return jsonify({'error': 'notional debe ser numérico (monto en USD)'}), 400
-        if not (1 <= notional <= 100000):
-            return jsonify({'error': 'notional fuera de rango: mínimo $1, máximo $100,000 por orden'}), 400
-    else:
-        try:
-            if float(qty) <= 0:
-                raise ValueError
-        except (TypeError, ValueError):
-            return jsonify({'error': 'qty debe ser un número mayor que 0'}), 400
-    if '/' in ticker:
+        return reject('Envía exactamente uno de: qty O notional (monto en USD)',
+                      'Send exactly one of: qty OR notional (USD amount)')
+    is_crypto = '/' in ticker
+    if is_crypto:
         # Cripto ('BTC/USD'): validar contra el catálogo de Alpaca; si el
         # catálogo no carga, fallback PERMISIVO (que Alpaca decida el 4xx).
         catalog = _fetch_crypto_assets()
         if catalog is not None and ticker not in {a['symbol'] for a in catalog}:
-            return jsonify({'error': f'{ticker} no es un par cripto tradeable en Alpaca'}), 400
+            return reject(f'{ticker} no es un par cripto tradeable en Alpaca',
+                          f'{ticker} is not a tradable crypto pair on Alpaca', 'not_tradable')
         tif = 'gtc'   # Alpaca solo acepta gtc/ioc en cripto — se fuerza gtc
-    body = {'symbol': ticker, 'side': side, 'type': otype, 'time_in_force': tif}
+        summary['tif'] = tif
+    if notional is not None:
+        notional = _finite_pos(notional)
+        if notional is None:
+            return reject('notional debe ser un número mayor que 0 (monto en USD)',
+                          'notional must be a number greater than 0 (USD amount)')
+        if not (1 <= notional <= MAX_ORDER_USD):
+            return reject('notional fuera de rango: mínimo $1, máximo $100,000 por orden',
+                          'notional out of range: minimum $1, maximum $100,000 per order', 'over_cap')
+        est_usd = notional
+    else:
+        q = _finite_pos(qty)
+        if q is None or _num_str(q) in ('', '0'):      # 1e-10 → '0' en Alpaca: se rechaza aquí
+            return reject('qty debe ser un número mayor que 0 (hasta 9 decimales)',
+                          'qty must be a number greater than 0 (up to 9 decimals)')
+        if q > 1e7:
+            return reject('qty demasiado grande', 'qty too large', 'over_cap')
+        # Monto a acotar: una COMPRA limit se llena a ≤ limit_price → qty × limit
+        # es el techo. Una VENTA limit se llena a ≥ limit_price: con el limit muy
+        # por debajo del mercado se llena AL MERCADO → el techo es qty × max(limit,
+        # mercado); sin precio de mercado verificable se rechaza (como market).
+        if otype == 'limit' and side == 'buy':
+            px = limit_price
+        else:
+            mkt = _house_price(ticker)
+            px = None if mkt is None else (max(mkt, limit_price) if otype == 'limit' else mkt)
+        if px is None:
+            return reject('No se pudo verificar el precio de mercado para acotar el monto: usa notional (USD)'
+                          + (' o una orden limit de compra' if side == 'buy' else ''),
+                          'Could not verify the market price to cap the amount: use notional (USD)'
+                          + (' or a buy limit order' if side == 'buy' else ''),
+                          'price_unavailable', 422)
+        est_usd = q * px
+        if est_usd > MAX_ORDER_USD:
+            return reject(f'La orden supera el tope de $100,000 (≈ ${est_usd:,.0f})',
+                          f'The order exceeds the $100,000 cap (≈ ${est_usd:,.0f})', 'over_cap')
+        qty = q
+    summary['est_usd'] = round(est_usd, 2)
+    if not _house_trading_enabled():
+        _trade_audit('trade_order', dict(summary, outcome='blocked_kill_switch'))
+        return _trading_halted_response()
+    body = {'symbol': ticker, 'side': side, 'type': otype, 'time_in_force': tif, 'client_order_id': coid}
     if notional is not None:
         body['notional'] = f'{notional:.2f}'
     else:
-        body['qty'] = str(qty)
+        body['qty'] = _num_str(qty)
     if otype == 'limit':
-        body['limit_price'] = str(limit_price)
+        body['limit_price'] = _num_str(limit_price)
     try:
-        r = requests.post(f'{ALPACA_BASE}/v2/orders',
-                          headers=_alpaca_hdrs(), json=body, timeout=15)
-        return jsonify(r.json()), r.status_code
+        r = requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(), json=body, timeout=15)
     except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 502
+        # Estado DESCONOCIDO (timeout): la orden pudo llegar. Reintentar con el
+        # MISMO client_order_id es seguro — Alpaca no la duplica.
+        _trade_audit('trade_order', dict(summary, outcome='unknown_error', error=type(e).__name__))
+        return _bad('No se pudo confirmar con Alpaca; reintenta con el mismo client_order_id o revisa el historial',
+                    'Could not confirm with Alpaca; retry with the same client_order_id or check the history',
+                    code='broker_unreachable', status=502, client_order_id=coid)
+    payload = _alpaca_json(r)
+    if payload is None:
+        _trade_audit('trade_order', dict(summary, outcome='error', http_status=r.status_code))
+        return _bad(f'Alpaca respondió HTTP {r.status_code} sin JSON', f'Alpaca answered HTTP {r.status_code} without JSON',
+                    code='broker_bad_response', status=502, client_order_id=coid)
+    if r.status_code == 422 and 'client_order_id' in json.dumps(payload).lower():
+        # Repetida (reintento/doble clic): devolver la orden que YA existe.
+        try:
+            r2 = requests.get(f'{ALPACA_BASE}/v2/orders:by_client_order_id', params={'client_order_id': coid},
+                              headers=_alpaca_hdrs(), timeout=10)
+            prev = _alpaca_json(r2)
+            if r2.status_code == 200 and isinstance(prev, dict) and prev.get('id'):
+                prev['duplicate'] = True
+                prev['paper'] = _paper()
+                _trade_audit('trade_order', dict(summary, outcome='duplicate', alpaca_order_id=prev.get('id')))
+                return jsonify(prev), 200
+        except Exception:  # noqa: BLE001
+            pass
+    ok = 200 <= r.status_code < 300
+    _trade_audit('trade_order', dict(
+        summary, outcome='submitted' if ok else 'rejected', http_status=r.status_code,
+        alpaca_order_id=(payload.get('id') if isinstance(payload, dict) else None),
+        alpaca_status=(payload.get('status') if isinstance(payload, dict) else None),
+        alpaca_message=(str(payload.get('message'))[:160] if isinstance(payload, dict) and payload.get('message')
+                        else None)))
+    if isinstance(payload, dict):
+        payload.setdefault('paper', _paper())
+        if not ok:
+            payload.setdefault('error', payload.get('message') or f'Alpaca HTTP {r.status_code}')
+            payload.setdefault('error_en', payload.get('message') or f'Alpaca HTTP {r.status_code}')
+            if 'code' in payload:
+                payload['alpaca_code'] = payload['code']       # el código numérico de Alpaca se conserva
+            payload['code'] = 'broker_rejected'
+    return jsonify(payload), r.status_code
 
 
 @app.route('/api/news/<ticker>')
@@ -1691,7 +2321,7 @@ def company_news(ticker):
         f'https://finnhub.io/api/v1/company-news?symbol={ticker}'
         f'&from={month_ago}&to={today}&token={FINNHUB}')
     if err or not isinstance(data, list):
-        return jsonify([])
+        return _degraded(jsonify([]))
     return jsonify(data[:20])
 
 
@@ -1942,7 +2572,7 @@ def earnings(ticker):
         f'https://finnhub.io/api/v1/calendar/earnings?symbol={ticker}'
         f'&from={frm}&to={to}&token={FINNHUB}')
     if err:
-        return jsonify({'earningsCalendar': []})
+        return _degraded(jsonify({'earningsCalendar': []}))
     return jsonify(data)
 
 
@@ -2043,7 +2673,7 @@ def insiders(ticker):
         return jsonify([])
     data, err = _safe_get(f'https://financialmodelingprep.com/stable/insider-trading?symbol={ticker}&limit=10&apikey={FMP}')
     if err or not isinstance(data, list):
-        return jsonify([])
+        return _degraded(jsonify([]))
     return jsonify(data)
 
 
@@ -2446,7 +3076,8 @@ def space_tle():
 
     if not any_ok:
         # Fallback sintético (p.ej. red sin egress a CelesTrak): órbitas plausibles.
-        return jsonify(_fallback_tle())
+        # NO se cachea (antes quedaba 24 h aunque CelesTrak volviera).
+        return _degraded(jsonify(_fallback_tle()))
 
     total = sum(c['count'] for c in constellations)
     # comparte los conteos REALES con el Khipu de TEXTO (para que reuse estos
@@ -2456,8 +3087,10 @@ def space_tle():
                   [(c['name'], c['count'], True) for c in constellations if c.get('count')], timeout=86400)
     except Exception:  # noqa: BLE001
         pass
-    return jsonify({'constellations': constellations, 'sats': sats,
+    resp = jsonify({'constellations': constellations, 'sats': sats,
                     'total_real': total, 'rendered': len(sats), 'source': 'celestrak'})
+    # si alguna constelación falló, el resultado parcial no se guarda 24 h
+    return _degraded(resp) if any(c.get('error') for c in constellations) else resp
 
 
 def _fallback_tle():
@@ -3144,8 +3777,12 @@ def _sync_bixby_agent():
 
 
 @app.route('/api/voice/sync-agent', methods=['GET', 'POST'])
+@rate_limit(limit=6, window=3600)
+@_require_operator
 def voice_sync_agent():
-    """Sincroniza el agente de ElevenLabs con el cerebro definido aquí."""
+    """Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH
+    del agente). PIN de operador: antes cualquiera podía dispararlo en bucle.
+    El autosync del arranque no pasa por aquí."""
     res = _sync_bixby_agent()
     return jsonify(res), (200 if res.get('ok') else 502)
 
@@ -3718,7 +4355,8 @@ def macro_fred():
                 out[sid] = [{'date': d, 'value': float(v)} for d, v in data_rows]
         except Exception:  # noqa: BLE001
             out[sid] = []
-    return jsonify(out)
+    resp = jsonify(out)
+    return _degraded(resp) if any(not out.get(sid) for sid in series_ids) else resp
 
 
 # ── /api/investors/13f/<ticker> — SEC 13F institutional holders ───────────────
@@ -3801,6 +4439,7 @@ def trade_flows():
 
     hs_codes = [product] if product else ['8541', '8542', '8471', '8473']
     combined = []
+    failed = 0
     for hs in hs_codes:
         url = (
             f'https://comtradeapi.un.org/public/v1/preview/C/A/HS'
@@ -3823,19 +4462,36 @@ def trade_flows():
                         'quantity': item.get('netWgt'),
                         'year': item.get('period'),
                     })
+            else:
+                failed += 1
         except Exception:  # noqa: BLE001
-            pass
+            failed += 1
 
-    return jsonify({
+    resp = jsonify({
         'reporter': reporter,
         'partner': partner,
         'hs_codes': hs_codes,
         'flows': combined,
         'source': 'UN Comtrade public preview',
     })
+    return _degraded(resp) if failed else resp
 
 
 # ── AI Trading Agent ─────────────────────────────────────────────────────────
+# Endurecimiento (auditoría estructural 2026-09-30, #11/#12/#21):
+#  · parámetros ACOTADOS (max_pos_pct 0.5-10, max_daily_loss_pct 0.5-5,
+#    stop_loss_pct 0.5-20, min_confidence 50-100, órdenes/ciclo 1-5,
+#    intervalo 5-1440 min) y mode ∈ {manual, auto}; arranque bajo lock (sin
+#    dos hilos a la vez);
+#  · modo AUTO (órdenes sin aprobación por orden) SOLO en cuenta de PAPEL: con
+#    dinero real se rechaza (403 'auto_live_refused') y el ciclo no envía nada;
+#  · interruptor BROKERAGE_TRADING_ENABLED=off → el agente no envía órdenes;
+#  · una orden que Alpaca RECHAZA (4xx/5xx) queda como ERROR, nunca como
+#    ejecutada; cada intento va a broker_audit (o al log sin base);
+#  · stop-loss cripto con time_in_force 'gtc' (Alpaca no acepta 'day' en
+#    cripto) y sin reenviar el cierre si ya hay uno pendiente;
+#  · universo saneado: solo acciones de EE.UU. operables en Alpaca (los
+#    tickers extranjeros del grafo se descartan; ya no van crudos a la URL).
 
 _AGENT: dict = {
     'running': False,
@@ -3853,7 +4509,117 @@ _AGENT: dict = {
     'status': 'stopped',
     'daily_pnl_pct': 0.0,
     'broker_error': None,      # último error de Alpaca (bilingüe) para diagnóstico
+    'pending_close': {},       # símbolo (sin '/') → ts del último cierre enviado
 }
+_AGENT_LOCK = threading.Lock()          # arranque/parada/config
+_AGENT_LOG_LOCK = threading.Lock()
+_AGENT_LOG_MAX = 100
+_AGENT_PENDING_CLOSE_S = 1800           # no reenviar un stop-loss en 30 min
+_AGENT_BOUNDS = {                        # clave → (mínimo, máximo, tipo)
+    'max_pos_pct': (0.5, 10.0, float),
+    'max_daily_loss_pct': (0.5, 5.0, float),
+    'stop_loss_pct': (0.5, 20.0, float),
+    'min_confidence': (50, 100, int),
+    'max_orders_per_cycle': (1, 5, int),
+    'interval_min': (5, 1440, int),
+}
+_AGENT_MODES = ('manual', 'auto')
+# Acciones de EE.UU. operables en Alpaca: 1-5 letras + clase opcional (BRK.B).
+# Deja fuera sufijos de bolsas extranjeras del grafo (8411.T, SAP.DE, 0700.HK…).
+_AGENT_SYM_RE = re.compile(r'^[A-Z]{1,5}(\.[A-C])?$')
+_TRADABLE_CACHE: dict = {}
+_AGENT_CFG_KEYS = ('mode', 'interval_min', 'max_pos_pct', 'max_daily_loss_pct', 'stop_loss_pct',
+                   'min_confidence', 'max_orders_per_cycle', 'universe')
+
+
+class _AgentOrderError(RuntimeError):
+    """Alpaca no aceptó la orden (o no respondió): NO cuenta como ejecutada."""
+
+
+def _agent_log(entry):
+    entry.setdefault('ts', time.strftime('%H:%M:%S'))
+    with _AGENT_LOG_LOCK:
+        _AGENT['log'].append(entry)
+        if len(_AGENT['log']) > _AGENT_LOG_MAX:
+            _AGENT['log'] = _AGENT['log'][-_AGENT_LOG_MAX:]
+
+
+def _agent_universe(raw):
+    """→ (símbolos operables, descartados). None si `raw` no es una lista."""
+    if not isinstance(raw, (list, tuple)):
+        return None, []
+    ok, skipped = [], []
+    for t in list(raw)[:60]:
+        sym = _safe_ticker(t)
+        if sym and _AGENT_SYM_RE.match(sym):
+            if sym not in ok:
+                ok.append(sym)
+        else:
+            skipped.append(str(t)[:16])
+    return ok[:30], skipped
+
+
+def _agent_parse(data):
+    """Valida y ACOTA la configuración → (cambios, avisos, (error_es, error_en)|None)."""
+    changes, notes = {}, []
+    for k, (lo, hi, typ) in _AGENT_BOUNDS.items():
+        if k not in data or data[k] is None or data[k] == '':
+            continue
+        try:
+            v = float(data[k])
+            if v != v or v in (float('inf'), float('-inf')):
+                raise ValueError
+        except (TypeError, ValueError):
+            return None, None, (f'{k} debe ser numérico', f'{k} must be numeric')
+        cv = min(hi, max(lo, v))
+        cv = int(round(cv)) if typ is int else float(cv)
+        if cv != v:
+            notes.append(f'{k}: {data[k]} → {cv}')
+        changes[k] = cv
+    if data.get('mode') not in (None, ''):
+        m = str(data['mode']).strip().lower()
+        if m not in _AGENT_MODES:
+            return None, None, ("mode debe ser 'manual' o 'auto'", "mode must be 'manual' or 'auto'")
+        changes['mode'] = m
+    if data.get('universe') not in (None, [], ''):
+        uni, skipped = _agent_universe(data['universe'])
+        if uni is None:
+            return None, None, ('universe debe ser una lista de tickers', 'universe must be a list of tickers')
+        if not uni:
+            return None, None, ('Ningún ticker del universo es una acción de EE.UU. operable en Alpaca',
+                                'No ticker in the universe is a US stock tradable on Alpaca')
+        changes['universe'] = uni
+        if skipped:
+            notes.append('descartados (no operables en Alpaca) · skipped (not tradable on Alpaca): '
+                         + ', '.join(skipped[:12]) + ('…' if len(skipped) > 12 else ''))
+    return changes, notes, None
+
+
+def _agent_config_view():
+    return {k: _AGENT[k] for k in _AGENT_CFG_KEYS}
+
+
+def _auto_live_refused():
+    log.warning('agente de trading: modo AUTO rechazado — la cuenta de Alpaca es de DINERO REAL')
+    _trade_audit('agent_config', {'outcome': 'rejected', 'reason': 'auto_live_refused'})
+    return _bad('El modo AUTO (órdenes sin tu aprobación una a una) solo se permite en la cuenta de PAPEL. '
+                'Con dinero real usa el modo manual (consejos) y opera tú.',
+                'AUTO mode (orders without your one-by-one approval) is only allowed on the PAPER account. '
+                'With real money use manual mode (advice) and place orders yourself.',
+                code='auto_live_refused', status=403)
+
+
+def _agent_exec_block(account=None):
+    """None si el agente puede enviar órdenes ahora; si no, el motivo (bilingüe).
+    `account` (/v2/account): si su account_number no es de papel ('PA…') se
+    bloquea aunque la URL parezca de papel."""
+    if not _house_trading_enabled():
+        return ('Interruptor general APAGADO (BROKERAGE_TRADING_ENABLED=off) · '
+                'Master switch OFF (BROKERAGE_TRADING_ENABLED=off)')
+    if not _paper() or _account_is_live(account) is True:
+        return 'Cuenta de DINERO REAL: el modo auto no envía órdenes · REAL-MONEY account: auto mode sends no orders'
+    return None
+
 
 def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> dict:
     """Ask Claude to analyze one ticker and recommend action."""
@@ -3876,7 +4642,27 @@ def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> 
         return out if isinstance(out, dict) else {'action': 'hold', 'confidence': 0,
                                                   'reason': 'respuesta no-JSON', 'size_pct': 0}
     except Exception as e:  # noqa: BLE001
-        return {'action': 'hold', 'confidence': 0, 'reason': str(e)[:80], 'size_pct': 0}
+        return {'action': 'hold', 'confidence': 0, 'reason': _diag_redact(e)[:80], 'size_pct': 0}
+
+
+def _agent_clean_analysis(a):
+    """La IA puede devolver cualquier cosa: se normaliza sin reventar el ciclo."""
+    a = a if isinstance(a, dict) else {}
+    action = str(a.get('action') or 'hold').strip().lower()
+    if action not in ('buy', 'sell', 'hold'):
+        action = 'hold'
+    try:
+        confidence = int(float(a.get('confidence') or 0))
+    except (TypeError, ValueError):
+        confidence = 0
+    try:
+        size_pct = float(a.get('size_pct') or 0)
+        if size_pct != size_pct:
+            size_pct = 0.0
+    except (TypeError, ValueError):
+        size_pct = 0.0
+    return action, max(0, min(100, confidence)), str(a.get('reason') or '')[:200], \
+        max(0.0, min(size_pct, float(_AGENT['max_pos_pct'])))
 
 
 def _agent_get_positions() -> dict:
@@ -3889,6 +4675,27 @@ def _agent_get_positions() -> dict:
     except Exception:  # noqa: BLE001
         pass
     return {}
+
+
+def _agent_open_order_symbols():
+    """{símbolo sin '/': {lados}} de las órdenes ABIERTAS en Alpaca; None si no
+    se pudo leer. El LADO importa: una compra límite abierta (p. ej. 'comprar
+    la caída' GTC) NO es un cierre pendiente de una posición larga — antes
+    cualquier orden abierta del símbolo apagaba el stop-loss."""
+    try:
+        r = requests.get(f'{ALPACA_BASE}/v2/orders', params={'status': 'open', 'limit': 500},
+                         headers=_alpaca_hdrs(), timeout=10)
+        if r.status_code != 200:
+            return None
+        out = {}
+        for o in (r.json() or []):
+            if not isinstance(o, dict):
+                continue
+            sym = str(o.get('symbol') or '').replace('/', '').upper()
+            out.setdefault(sym, set()).add(str(o.get('side') or '').strip().lower())
+        return out
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _agent_get_account() -> dict:
@@ -3904,32 +4711,126 @@ def _agent_get_account() -> dict:
         # base mal configurada, 401/403 por claves inválidas).
         _AGENT['broker_error'] = f'Alpaca /v2/account HTTP {r.status_code}: {(r.text or "")[:120]}'
     except Exception as e:  # noqa: BLE001
-        _AGENT['broker_error'] = f'Alpaca /v2/account: {str(e)[:120]}'
+        _AGENT['broker_error'] = f'Alpaca /v2/account: {_diag_redact(e)[:120]}'
     return {}
 
 
+def _alpaca_tradable(sym):
+    """¿Alpaca opera este símbolo? Caché 24 h. Si no se puede verificar → True
+    (que Alpaca decida; su rechazo queda registrado como ERROR)."""
+    e = _TRADABLE_CACHE.get(sym)
+    if e and time.time() - e[0] < 86400:
+        return e[1]
+    try:
+        from urllib.parse import quote as _q
+        r = requests.get(f'{ALPACA_BASE}/v2/assets/{_q(sym, safe="")}', headers=_alpaca_hdrs(), timeout=8)
+        if r.status_code == 404:
+            ok = False
+        elif r.status_code == 200:
+            a = r.json() or {}
+            ok = bool(a.get('tradable')) and str(a.get('status') or 'active') == 'active'
+        else:
+            return True
+    except Exception:  # noqa: BLE001
+        return True
+    _TRADABLE_CACHE[sym] = (time.time(), ok)
+    return ok
+
+
+def _agent_submit(body, action, detail):
+    """POST /v2/orders. 2xx con id → payload; si no → _AgentOrderError. Audita SIEMPRE."""
+    body = dict(body)
+    body.setdefault('client_order_id', 'kh-agent-' + uuid.uuid4().hex[:24])
+    detail = dict(detail, client_order_id=body['client_order_id'], tif=body.get('time_in_force'))
+    try:
+        r = requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(), json=body, timeout=15)
+    except Exception as e:  # noqa: BLE001
+        _trade_audit(action, dict(detail, outcome='unknown_error', error=type(e).__name__), actor='agente-trading')
+        raise _AgentOrderError(f'sin respuesta de Alpaca · no answer from Alpaca ({type(e).__name__})') from e
+    payload = _alpaca_json(r)
+    ok = 200 <= r.status_code < 300 and isinstance(payload, dict) and bool(payload.get('id'))
+    msg = ''
+    if isinstance(payload, dict):
+        msg = str(payload.get('message') or payload.get('error') or '')[:140]
+    elif r.text:
+        msg = r.text[:140]
+    _trade_audit(action, dict(detail, outcome='submitted' if ok else 'rejected', http_status=r.status_code,
+                              alpaca_order_id=(payload.get('id') if isinstance(payload, dict) else None),
+                              alpaca_status=(payload.get('status') if isinstance(payload, dict) else None),
+                              alpaca_message=msg or None), actor='agente-trading')
+    if not ok:
+        raise _AgentOrderError(f'Alpaca HTTP {r.status_code}: {msg or "orden rechazada · order rejected"}')
+    return payload
+
+
 def _agent_place(ticker: str, side: str, notional: float) -> dict:
-    """Place a notional-dollar market order."""
+    """Orden market por monto (USD). Lanza _AgentOrderError si Alpaca no la acepta."""
     body = {
         'symbol': ticker,
         'notional': f'{notional:.2f}',
         'side': side,
         'type': 'market',
-        'time_in_force': 'day',
+        'time_in_force': 'gtc' if '/' in ticker else 'day',   # cripto: Alpaca exige gtc/ioc
     }
-    r = requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(), json=body, timeout=15)
-    return r.json()
+    return _agent_submit(body, 'agent_order', {'symbol': ticker, 'side': side, 'notional': round(notional, 2)})
+
+
+def _agent_stop_losses(positions, block):
+    """Cierra las posiciones que superan el stop. Devuelve los símbolos tocados
+    (no se vuelve a operar sobre ellos en este ciclo)."""
+    touched = set()
+    now = time.time()
+    pend = _AGENT.setdefault('pending_close', {})
+    for k in [k for k, ts in pend.items() if now - ts > _AGENT_PENDING_CLOSE_S]:
+        pend.pop(k, None)
+    open_syms = None
+    for sym, p in list(positions.items()):
+        try:
+            pl_pct = float(p.get('unrealized_plpc') or 0) * 100
+            qty = float(p.get('qty') or 0)
+        except (TypeError, ValueError):
+            continue
+        if not qty or pl_pct > -_AGENT['stop_loss_pct']:
+            continue
+        key = str(sym).replace('/', '').upper()
+        close_side = 'sell' if qty > 0 else 'buy'
+        touched.add(sym)
+        if block:
+            _agent_log({'ticker': sym, 'level': 'warn',
+                        'msg': f'🛑 Stop-loss {pl_pct:.1f}% NO enviado · NOT sent — {block}'})
+            continue
+        if open_syms is None:
+            open_syms = _agent_open_order_symbols()
+        # Solo cuenta como "cierre pendiente" una orden abierta del lado que CIERRA
+        # (venta si es larga, compra si es corta); una del otro lado no apaga el stop.
+        if key in pend or (open_syms is not None and close_side in open_syms.get(key, ())):
+            _agent_log({'ticker': sym, 'level': 'info',
+                        'msg': '⏳ Stop-loss: ya hay un cierre pendiente — no se reenvía · close already pending'})
+            continue
+        is_crypto = str(p.get('asset_class') or '') == 'crypto' or '/' in str(sym)
+        body = {'symbol': sym, 'qty': _num_str(abs(qty)), 'side': close_side,
+                'type': 'market', 'time_in_force': 'gtc' if is_crypto else 'day'}
+        try:
+            res = _agent_submit(body, 'agent_stop_loss', {'symbol': sym, 'side': body['side'], 'qty': body['qty'],
+                                                           'pl_pct': round(pl_pct, 2)})
+            pend[key] = now
+            _agent_log({'ticker': sym, 'level': 'warn', 'order_id': str(res.get('id') or '')[:12],
+                        'msg': f'🛑 Stop-loss {pl_pct:.1f}% — orden de cierre enviada · close order sent '
+                               f'({res.get("status") or "accepted"})'})
+        except Exception as e:  # noqa: BLE001
+            _agent_log({'ticker': sym, 'level': 'error',
+                        'msg': f'Stop-loss error: {_diag_redact(e)[:160]}'})
+    return touched
 
 
 def _agent_run_cycle():
     """One analysis + execution cycle for all tickers in universe."""
-    log_entries = _AGENT['log']
     account = _agent_get_account()
     equity = float(account.get('equity', 0) or 0)
     if equity <= 0 and ALPACA_KEY:
         be = _AGENT.get('broker_error') or 'Alpaca no devolvió capital · Alpaca returned no equity'
-        log_entries.append({'ts': time.strftime('%H:%M:%S'), 'level': 'warn',
-                            'msg': f'⚠️ No se pudo leer el capital de Alpaca · Could not read Alpaca equity — {be}'})
+        _agent_log({'level': 'warn',
+                    'msg': f'⚠️ No se pudo leer el capital de Alpaca · Could not read Alpaca equity — {be}'})
         return
 
     # P&L real del día desde Alpaca (equity vs cierre de ayer) — sin esto el
@@ -3939,68 +4840,50 @@ def _agent_run_cycle():
         _AGENT['daily_pnl_pct'] = (equity - last_equity) / last_equity * 100
 
     # Circuit-breaker diario: bloquea ENTRADAS NUEVAS pero NUNCA la protección
-    # de salida. (Bug de diseño corregido — auditoría Track D 2026-08-01: el
-    # `return` temprano de antes también saltaba el stop-loss, así que en el
-    # peor momento (límite diario ya perdido) las posiciones perdedoras
-    # quedaban sin cerrar hasta el día siguiente. Un breaker debe frenar
-    # compras, no apagar el freno de emergencia.)
+    # de salida (auditoría Track D 2026-08-01).
     breaker_on = _AGENT['daily_pnl_pct'] <= -_AGENT['max_daily_loss_pct']
     if breaker_on:
-        log_entries.append({'ts': time.strftime('%H:%M:%S'),
-                            'msg': f'🛑 Daily loss limit hit ({_AGENT["daily_pnl_pct"]:.2f}%) — sin entradas nuevas; stop-loss sigue activo',
-                            'level': 'warn'})
+        _agent_log({'level': 'warn',
+                    'msg': f'🛑 Daily loss limit hit ({_AGENT["daily_pnl_pct"]:.2f}%) — sin entradas nuevas; stop-loss sigue activo'})
+
+    auto = _AGENT['mode'] == 'auto'
+    block = _agent_exec_block(account) if auto else None
+    if block:
+        _agent_log({'level': 'warn', 'msg': f'⏸ Órdenes en pausa · Orders paused — {block}'})
 
     positions = _agent_get_positions()
+    stopped = _agent_stop_losses(positions, block) if auto else set()
+    for sym in stopped:
+        positions.pop(sym, None)
 
-    # stop-loss por posición: cierra las que exceden la pérdida configurada
-    if _AGENT['mode'] == 'auto':
-        for sym, p in list(positions.items()):
-            try:
-                pl_pct = float(p.get('unrealized_plpc') or 0) * 100
-                qty = float(p.get('qty') or 0)
-            except (TypeError, ValueError):
-                continue
-            if qty and pl_pct <= -_AGENT['stop_loss_pct']:
-                try:
-                    body = {'symbol': sym, 'qty': str(abs(qty)),
-                            'side': 'sell' if qty > 0 else 'buy',
-                            'type': 'market', 'time_in_force': 'day'}
-                    requests.post(f'{ALPACA_BASE}/v2/orders', headers=_alpaca_hdrs(),
-                                  json=body, timeout=15)
-                    log_entries.append({'ts': time.strftime('%H:%M:%S'), 'ticker': sym,
-                                        'msg': f'🛑 Stop-loss {pl_pct:.1f}% — posición cerrada',
-                                        'level': 'warn'})
-                    positions.pop(sym, None)
-                except Exception as e:  # noqa: BLE001
-                    log_entries.append({'ts': time.strftime('%H:%M:%S'), 'ticker': sym,
-                                        'msg': f'Stop-loss error: {str(e)[:60]}', 'level': 'error'})
-
-    # Con el breaker activo y en modo auto no hay nada que ejecutar: ahorramos
-    # además el costo de analizar 10-30 tickers con IA. En modo manual (solo
-    # consejos) se sigue analizando — el log asesor no abre posiciones.
-    if breaker_on and _AGENT['mode'] == 'auto':
+    # Con el breaker activo (o las órdenes en pausa) y en modo auto no hay nada
+    # que ejecutar: ahorramos además el costo de analizar 10-30 tickers con IA.
+    # En modo manual (solo consejos) se sigue analizando — el log asesor no
+    # abre posiciones.
+    if auto and (breaker_on or block):
         _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
         return
 
+    universe, _skipped = _agent_universe(_AGENT['universe'])
     orders_this_cycle = 0
-    for ticker in _AGENT['universe']:
+    for ticker in universe or []:
         if not _AGENT['running']:
             break
-        # get price from Finnhub
         price, prev, sentiment = 0.0, 0.0, 0.0
-        try:
-            r = requests.get(f'https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB}', timeout=8)
-            q = r.json()
-            price = float(q.get('c') or 0)
-            prev  = float(q.get('pc') or 0)
-        except Exception:  # noqa: BLE001
-            pass
+        if FINNHUB:
+            data, err = _fetch_quote_raw(ticker, timeout=8)
+            if not err and isinstance(data, dict):
+                try:
+                    price = float(data.get('c') or 0)
+                    prev = float(data.get('pc') or 0)
+                except (TypeError, ValueError):
+                    price = 0.0
 
         # lightweight GDELT sentiment
         try:
-            gurl = (f'https://api.gdeltproject.org/api/v2/doc/doc?query={ticker}'
-                    f'&mode=tonechart&format=json&maxrecords=5')
-            gr = requests.get(gurl, timeout=6)
+            gr = requests.get('https://api.gdeltproject.org/api/v2/doc/doc',
+                              params={'query': ticker, 'mode': 'tonechart', 'format': 'json', 'maxrecords': 5},
+                              timeout=6)
             gdata = gr.json()
             tones = [float(x.get('avgtone', 0) or 0) for x in (gdata.get('tonechart') or [])[:5]]
             sentiment = sum(tones) / len(tones) if tones else 0.0
@@ -4010,12 +4893,7 @@ def _agent_run_cycle():
         if price <= 0:
             continue
 
-        analysis = _agent_analyze(ticker, price, prev, sentiment)
-        action     = analysis.get('action', 'hold')
-        confidence = int(analysis.get('confidence', 0))
-        reason     = analysis.get('reason', '')
-        size_pct   = min(float(analysis.get('size_pct', 1)), _AGENT['max_pos_pct'])
-
+        action, confidence, reason, size_pct = _agent_clean_analysis(_agent_analyze(ticker, price, prev, sentiment))
         entry = {
             'ts': time.strftime('%H:%M:%S'),
             'ticker': ticker,
@@ -4027,8 +4905,7 @@ def _agent_run_cycle():
             'level': 'info',
         }
 
-        if (_AGENT['mode'] == 'auto' and ALPACA_KEY and action != 'hold'
-                and confidence >= _AGENT.get('min_confidence', 65)):
+        if auto and ALPACA_KEY and action != 'hold' and confidence >= _AGENT.get('min_confidence', 65):
             # Endurecimientos (auditoría Track D): freno duro de órdenes por
             # ciclo, no acumular por encima del tope en el mismo ticker, y no
             # vender sin tenencia (evita shorts no intencionados con margen).
@@ -4038,17 +4915,25 @@ def _agent_run_cycle():
             except (TypeError, ValueError):
                 existing_mv = 0.0
             skip = None
-            if orders_this_cycle >= _AGENT.get('max_orders_per_cycle', 3):
+            if block:
+                skip = block
+            elif ticker in stopped:
+                skip = 'stop-loss en este ciclo · stop-loss this cycle'
+            elif orders_this_cycle >= _AGENT.get('max_orders_per_cycle', 3):
                 skip = 'freno: tope de órdenes por ciclo'
+            elif size_pct <= 0:
+                skip = 'tamaño 0 · size 0'
             elif action == 'buy' and equity > 0 and existing_mv >= equity * _AGENT['max_pos_pct'] / 100:
                 skip = f'posición ya en tope ({existing_mv / equity * 100:.1f}% ≥ {_AGENT["max_pos_pct"]}%)'
             elif action == 'sell' and not existing:
                 skip = 'sin tenencia — no se abre corto'
+            elif not _alpaca_tradable(ticker):
+                skip = 'no operable en Alpaca · not tradable on Alpaca'
             if skip:
                 entry['skipped'] = skip
             else:
                 notional = equity * size_pct / 100
-                notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100))
+                notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100, MAX_ORDER_USD))
                 if action == 'buy' and equity > 0:
                     # que la orden no empuje la posición total por encima del tope
                     room = equity * _AGENT['max_pos_pct'] / 100 - existing_mv
@@ -4056,36 +4941,36 @@ def _agent_run_cycle():
                 try:
                     result = _agent_place(ticker, action, notional)
                     entry['executed'] = True
-                    entry['order_id'] = result.get('id', '')[:12]
+                    entry['order_id'] = str(result.get('id') or '')[:12]
+                    entry['order_status'] = result.get('status')
                     entry['notional'] = round(notional, 2)
                     entry['level'] = 'success'
                     orders_this_cycle += 1
-                except Exception as e:  # noqa: BLE001
-                    entry['exec_error'] = str(e)[:60]
+                except Exception as e:  # noqa: BLE001 — rechazo de Alpaca o red: ERROR, no ejecutada
+                    entry['exec_error'] = _diag_redact(e)[:160]
                     entry['level'] = 'error'
 
-        log_entries.append(entry)
-        # keep last 100 entries
-        if len(log_entries) > 100:
-            _AGENT['log'] = log_entries[-100:]
-            log_entries = _AGENT['log']
+        _agent_log(entry)
 
     _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def _agent_thread_fn():
     _AGENT['status'] = 'running'
-    while _AGENT['running']:
-        try:
-            _agent_run_cycle()
-        except Exception as e:  # noqa: BLE001
-            _AGENT['log'].append({'ts': time.strftime('%H:%M:%S'), 'msg': f'Cycle error: {e}', 'level': 'error'})
-        interval = max(1, _AGENT['interval_min']) * 60
-        for _ in range(interval):
-            if not _AGENT['running']:
-                break
-            time.sleep(1)
-    _AGENT['status'] = 'stopped'
+    try:
+        while _AGENT['running']:
+            try:
+                _agent_run_cycle()
+            except Exception as e:  # noqa: BLE001
+                _agent_log({'msg': f'Cycle error: {_diag_redact(e)}', 'level': 'error'})
+            lo, hi, _t = _AGENT_BOUNDS['interval_min']
+            interval = int(min(hi, max(lo, _AGENT['interval_min']))) * 60
+            for _ in range(interval):
+                if not _AGENT['running']:
+                    break
+                time.sleep(1)
+    finally:
+        _AGENT['status'] = 'stopped'
 
 
 @app.route('/api/trade/agent/start', methods=['POST'])
@@ -4093,39 +4978,52 @@ def _agent_thread_fn():
 @_trade_auth
 def agent_start():
     if not ALPACA_KEY:
-        return jsonify({'error': 'ALPACA_KEY not configured'}), 400
-    data = request.get_json(silent=True) or {}
-    if data.get('mode'):          _AGENT['mode']             = data['mode']
-    if data.get('interval_min'):  _AGENT['interval_min']     = int(data['interval_min'])
-    if data.get('universe'):      _AGENT['universe']         = data['universe']
-    if data.get('max_pos_pct'):   _AGENT['max_pos_pct']      = float(data['max_pos_pct'])
-    if data.get('max_daily_loss_pct'): _AGENT['max_daily_loss_pct'] = float(data['max_daily_loss_pct'])
-    if data.get('stop_loss_pct'): _AGENT['stop_loss_pct']   = float(data['stop_loss_pct'])
-    if data.get('min_confidence'): _AGENT['min_confidence'] = int(data['min_confidence'])
-    if data.get('max_orders_per_cycle'): _AGENT['max_orders_per_cycle'] = int(data['max_orders_per_cycle'])
-
-    if _AGENT['running']:
-        return jsonify({'status': 'already_running'})
-
-    _AGENT['running'] = True
-    _AGENT['daily_pnl_pct'] = 0.0
-    t = threading.Thread(target=_agent_thread_fn, daemon=True)
-    _AGENT['thread'] = t
-    t.start()
-    return jsonify({'status': 'started', 'mode': _AGENT['mode']})
+        return _broker_missing_response()
+    data, bad = _json_object_body()
+    if bad:
+        return bad
+    changes, notes, err = _agent_parse(data)
+    if err:
+        return _bad(*err)
+    if changes.get('mode', _AGENT['mode']) == 'auto' and not _paper():
+        return _auto_live_refused()
+    with _AGENT_LOCK:
+        _AGENT.update(changes)
+        if _AGENT['running']:
+            return jsonify({'status': 'already_running', 'mode': _AGENT['mode'], 'notes': notes,
+                            'config': _agent_config_view()})
+        prev_t = _AGENT.get('thread')
+        if prev_t is not None and prev_t.is_alive():
+            return _bad('El agente aún se está deteniendo; reintenta en unos segundos',
+                        'The agent is still stopping; retry in a few seconds', code='agent_stopping', status=409)
+        _AGENT['running'] = True
+        _AGENT['daily_pnl_pct'] = 0.0
+        t = threading.Thread(target=_agent_thread_fn, daemon=True, name='khipu-trading-agent')
+        _AGENT['thread'] = t
+        t.start()
+    _trade_audit('agent_start', {'outcome': 'started', **{k: v for k, v in _agent_config_view().items()
+                                                          if k != 'universe'},
+                                 'universe_n': len(_AGENT['universe'])})
+    return jsonify({'status': 'started', 'mode': _AGENT['mode'], 'paper': _paper(), 'notes': notes,
+                    'config': _agent_config_view()})
 
 
 @app.route('/api/trade/agent/stop', methods=['POST'])
 @rate_limit(limit=20, window=60)
 @_trade_auth
 def agent_stop():
-    _AGENT['running'] = False
+    with _AGENT_LOCK:
+        _AGENT['running'] = False
+    _trade_audit('agent_stop', {'outcome': 'stopping'})
     return jsonify({'status': 'stopping'})
 
 
 @app.route('/api/trade/agent/status', methods=['GET'])
+@rate_limit(limit=120, window=60)
 @_trade_auth
 def agent_status():
+    with _AGENT_LOG_LOCK:
+        recent = list(_AGENT['log'][-20:])
     return jsonify({
         'running': _AGENT['running'],
         'status': _AGENT['status'],
@@ -4137,11 +5035,14 @@ def agent_status():
         'stop_loss_pct': _AGENT['stop_loss_pct'],
         'min_confidence': _AGENT.get('min_confidence', 65),
         'max_orders_per_cycle': _AGENT.get('max_orders_per_cycle', 3),
-        'paper': 'paper-api' in ALPACA_BASE,
+        'paper': _paper(),
+        'auto_allowed': _paper(),
+        'trading_enabled': _house_trading_enabled(),
+        'bounds': {k: [lo, hi] for k, (lo, hi, _t) in _AGENT_BOUNDS.items()},
         'last_run': _AGENT['last_run'],
         'daily_pnl_pct': _AGENT['daily_pnl_pct'],
         'broker_error': _AGENT.get('broker_error'),
-        'log': _AGENT['log'][-20:],
+        'log': recent,
     })
 
 
@@ -4149,22 +5050,24 @@ def agent_status():
 @rate_limit(limit=20, window=60)
 @_trade_auth
 def agent_config():
-    data = request.get_json(silent=True) or {}
-    if 'mode'               in data: _AGENT['mode']             = data['mode']
-    if 'interval_min'       in data: _AGENT['interval_min']     = int(data['interval_min'])
-    if 'max_pos_pct'        in data: _AGENT['max_pos_pct']      = float(data['max_pos_pct'])
-    if 'max_daily_loss_pct' in data: _AGENT['max_daily_loss_pct'] = float(data['max_daily_loss_pct'])
-    if 'stop_loss_pct'      in data: _AGENT['stop_loss_pct']    = float(data['stop_loss_pct'])
-    if 'min_confidence'     in data: _AGENT['min_confidence']   = int(data['min_confidence'])
-    if 'max_orders_per_cycle' in data: _AGENT['max_orders_per_cycle'] = int(data['max_orders_per_cycle'])
-    if 'universe'           in data and isinstance(data['universe'], list) and data['universe']:
-        _AGENT['universe'] = [str(t)[:12] for t in data['universe'][:30]]
-    return jsonify({'status': 'updated', **{k: _AGENT[k] for k in
-                    ['mode','interval_min','max_pos_pct','max_daily_loss_pct','stop_loss_pct',
-                     'min_confidence','max_orders_per_cycle','universe']}})
+    data, bad = _json_object_body()
+    if bad:
+        return bad
+    changes, notes, err = _agent_parse(data)
+    if err:
+        return _bad(*err)
+    if changes.get('mode', _AGENT['mode']) == 'auto' and not _paper():
+        return _auto_live_refused()
+    with _AGENT_LOCK:
+        _AGENT.update(changes)
+    if changes:
+        _trade_audit('agent_config', {'outcome': 'updated', **{k: v for k, v in changes.items() if k != 'universe'},
+                                      **({'universe_n': len(changes['universe'])} if 'universe' in changes else {})})
+    return jsonify({'status': 'updated', 'notes': notes, **_agent_config_view()})
 
 
 @app.route('/api/trade/history', methods=['GET'])
+@rate_limit(limit=60, window=60)
 @_trade_auth
 def trade_history():
     if not ALPACA_KEY:
@@ -4340,6 +5243,7 @@ def portfolio_advice():
 
 
 @app.route('/api/trade/positions/detail', methods=['GET'])
+@rate_limit(limit=60, window=60)
 @_trade_auth
 def trade_positions_detail():
     if not ALPACA_KEY:

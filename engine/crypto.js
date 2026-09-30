@@ -418,7 +418,7 @@
      - Activo no tradeable u otros errores → la caja no se muestra.
      - NINGUNA orden sale sin confirmación explícita (Confirmar/Cancelar).
      - Nunca se da consejo de inversión: solo se ejecuta lo pedido. */
-  function _pinNow() { try { return localStorage.getItem('khipu_trade_pin') || ''; } catch (e) { return ''; } }
+  function _pinNow() { return (window._tradePinStored && window._tradePinStored()) || ''; }   // PIN vigente (12 h, app.html)
 
   function loadTradeAssets(cb) {
     var pin = _pinNow();
@@ -537,15 +537,46 @@
     var msg = document.getElementById('cr-trade-msg');
     if (!msg || !o || typeof window._tradeFetch !== 'function') return;
     msg.innerHTML = '<div style="color:#7C87A3;font-size:12px">' + T2('cr_trade_sending', 'Enviando orden…', 'Sending order…') + '</div>';
+    // client_order_id estable por orden (app.html): un reintento de la MISMA
+    // orden tras un error ambiguo no la duplica (Alpaca rechaza el id repetido).
+    var sig = 'crypto|' + o.pair + '|' + o.side + '|' + o.amt;
+    var coid = window._tradeOrderId ? window._tradeOrderId(sig) : undefined;
+    var settle = function (amb) { if (window._tradeOrderSettle) window._tradeOrderSettle(sig, amb); };
+    var errBox = function (html) {
+      var m3 = document.getElementById('cr-trade-msg'); if (!m3) return;
+      m3.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.07);color:#FF8FA3;font-size:12.5px;line-height:1.6">' + html + '</div>';
+    };
+    var ambMsg = function () {
+      return T2('cr_trade_amb',
+        'No se pudo confirmar la orden. Puede que SÍ haya llegado al bróker: revisa tus órdenes antes de reintentar (reintentar esta misma orden no la duplica).',
+        'The order could not be confirmed. It MAY have reached the broker: check your orders before retrying (retrying this same order will not duplicate it).');
+    };
     window._tradeFetch('/api/trade/order', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, timeout: 30000,
       // cripto: el server fuerza time_in_force='gtc' — no se envía aquí
-      body: JSON.stringify({ symbol: o.pair, side: o.side, notional: o.amt, type: 'market' })
+      body: JSON.stringify({ symbol: o.pair, side: o.side, notional: o.amt, type: 'market', client_order_id: coid })
     }, true)
-      .then(function (r) { return r.json().catch(function () { return { error: 'HTTP ' + r.status }; }); })
-      .then(function (d) {
+      .then(function (r) { return r.json().catch(function () { return null; }).then(function (d) { return { r: r, d: d }; }); })
+      .then(function (x) {
+        var d = x.d, st = x.r.status;
+        var dup = !!(window._tradeOrderIsDup && window._tradeOrderIsDup(st, d));
+        var amb = !dup && !x.r.ok && (window._tradeOrderAmbiguous ? window._tradeOrderAmbiguous(st) : st >= 500);
+        settle(amb);   // antes de pintar: el usuario pudo cambiar de ficha
         var m2 = document.getElementById('cr-trade-msg'); if (!m2) return;
-        if (d && (d.id || d.status === 'accepted' || d.status === 'pending_new')) {
+        // duplicado = el server devolvió (HTTP 200, duplicate:true) la orden que
+        // YA existía con este client_order_id: NO es una orden nueva.
+        if (dup) {
+          m2.innerHTML = '<div style="color:#FFB300;font-size:12.5px;line-height:1.6">' + T2('cr_trade_dup',
+            'Esta orden ya había llegado al bróker — no se envió dos veces. Si quieres OTRA orden igual, vuelve a enviarla.',
+            'This order had already reached the broker — it was not sent twice. If you want ANOTHER identical order, send it again.') +
+            (d && d.status ? ' (' + esc(String(d.status)) + ')' : '') + '</div>';
+          return;
+        }
+        if (amb) {
+          errBox(esc(ambMsg()));
+          return;
+        }
+        if (x.r.ok && d && (d.id || d.status === 'accepted' || d.status === 'pending_new')) {
           var broker = (window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function' && typeof window._surface === 'function')
             ? ' <a onclick="window.KhipuCrypto.openBroker()" style="color:#00E0FF;font-weight:600;text-decoration:underline;cursor:pointer">' +
                 T2('cr_trade_broker', 'Ver mi broker', 'View my broker') + '</a>'
@@ -555,18 +586,20 @@
             (o.side === 'buy' ? T2('cr_trade_buy', 'Comprar', 'Buy') : T2('cr_trade_sell', 'Vender', 'Sell')) +
             ' ' + fmtAmt(o.amt) + ' · ' + esc(o.pair) +
             (d.id ? ' · id <span style="font-family:ui-monospace,Consolas,monospace;font-size:10.5px">' + esc(String(d.id)) + '</span>' : '') +
-            (d.status ? ' · ' + esc(String(d.status)) : '') + '.' + broker + '</div>';
+            (d.status ? ' · ' + esc(String(d.status)) : '') + ' · ' +
+            // modo obligatorio: papel SOLO si la caja y la respuesta lo dicen; ante la duda, DINERO REAL
+            ((o.paper && d.paper !== false)
+              ? T2('cr_trade_paper', '🧪 SIMULADO (papel)', '🧪 SIMULATED (paper)')
+              : T2('cr_trade_real', '🔴 DINERO REAL', '🔴 REAL MONEY')) + '.' + broker + '</div>';
         } else {
           // error del server TAL CUAL (contrato: 4xx de Alpaca se pasa directo)
-          m2.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.07);color:#FF8FA3;font-size:12.5px;line-height:1.6">' +
-            esc((d && (d.error || d.message)) || 'Error') + '</div>';
+          errBox(esc(window._tradeErrText ? window._tradeErrText(d, st) : ((d && (d.error || d.message)) || 'Error')));
         }
       })
       .catch(function () {
-        var m2 = document.getElementById('cr-trade-msg'); if (!m2) return;
-        m2.innerHTML = '<div style="color:#FF8FA3;font-size:12px">' + T2('cr_trade_neterr',
-          'No se pudo enviar la orden. Revisa tu conexión e inténtalo de nuevo.',
-          'Could not send the order. Check your connection and try again.') + '</div>';
+        // sin respuesta (red/timeout): la orden PUDO haber llegado
+        settle(true);
+        errBox(esc(ambMsg()));
       });
   }
 

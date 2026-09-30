@@ -79,8 +79,21 @@ def crypto_available():
         return False
 
 
+def _in_production():
+    return any((os.getenv(n) or '').strip() for n in
+               ('RAILWAY_ENVIRONMENT', 'RAILWAY_ENVIRONMENT_NAME', 'RAILWAY_PROJECT_ID'))
+
+
 def encrypt_json(data):
-    """dict → token Fernet (str). Lanza CryptoUnavailable si no hay cifrado."""
+    """dict → token Fernet (str). Lanza CryptoUnavailable si no hay cifrado.
+
+    Auditoría #15 (defensa en profundidad; service.set_credentials/oauth ya lo
+    rechazan antes): en PRODUCCIÓN (Railway) con la clave derivada del
+    SECRET_KEY por defecto —pública— NUNCA se cifra/guarda una credencial."""
+    if key_source() == 'default' and _in_production():
+        raise CryptoUnavailable('Falta BROKERAGE_ENC_KEY y SECRET_KEY es la de por defecto: no se guardan '
+                                'credenciales en producción · BROKERAGE_ENC_KEY missing and SECRET_KEY is the '
+                                'default: credentials are not stored in production')
     return _fernet().encrypt(json.dumps(data or {}, separators=(',', ':')).encode()).decode()
 
 

@@ -52,6 +52,41 @@ def _normalize_url(url):
     return url
 
 
+def _env_int(name, default, lo, hi):
+    try:
+        v = int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        v = default
+    return max(lo, min(hi, v))
+
+
+# Límites anti-hambre-de-hilos (auditoría estructural 2026-09-30, #2): gunicorn
+# corre 1 worker con pocos hilos; sin estos topes una base lenta o caída dejaba
+# cada hilo esperando indefinidamente (conexión, cupo del pool o consulta).
+DB_POOL_TIMEOUT_S = _env_int('DB_POOL_TIMEOUT_S', 10, 1, 120)          # esperar cupo del pool
+DB_CONNECT_TIMEOUT_S = _env_int('DB_CONNECT_TIMEOUT_S', 5, 1, 60)      # abrir la conexión TCP
+DB_STATEMENT_TIMEOUT_MS = _env_int('DB_STATEMENT_TIMEOUT_MS', 30000, 1000, 600000)  # cada consulta
+# Tamaño del pool (revisión 2026-09-30): gunicorn pasó a 12 hilos y además hay
+# hilos de fondo con sesión abierta (research, comité, ciclo de agentes,
+# warmers). Con 5+5 = 10 conexiones y pool_timeout 10 s, 10+ usuarios de la base
+# a la vez daban QueuePool TimeoutError (500). 10+10 = 20 cubre los 12 hilos +
+# el fondo; el Postgres de Railway admite 100 conexiones. Ajustables sin tocar
+# código con DB_POOL_SIZE / DB_MAX_OVERFLOW.
+DB_POOL_SIZE = _env_int('DB_POOL_SIZE', 10, 1, 50)
+DB_MAX_OVERFLOW = _env_int('DB_MAX_OVERFLOW', 10, 0, 50)
+
+
+def _engine_kwargs(url):
+    """Opciones del engine. connect_timeout/statement_timeout son parámetros de
+    libpq: solo se pasan con psycopg2/psycopg (con otro driver romperían)."""
+    kw = dict(pool_pre_ping=True, pool_size=DB_POOL_SIZE, max_overflow=DB_MAX_OVERFLOW,
+              pool_timeout=DB_POOL_TIMEOUT_S, pool_recycle=1800)
+    if url.startswith('postgresql+psycopg2://') or url.startswith('postgresql+psycopg://'):
+        kw['connect_args'] = {'connect_timeout': DB_CONNECT_TIMEOUT_S,
+                              'options': f'-c statement_timeout={DB_STATEMENT_TIMEOUT_MS}'}
+    return kw
+
+
 def _get_engine():
     global _engine, _SessionLocal
     if _engine is None:
@@ -61,7 +96,7 @@ def _get_engine():
         # Railway a veces entrega postgres:// (esquema viejo); SQLAlchemy 1.4+/2.x
         # requiere postgresql://
         url = _normalize_url(url)
-        _engine = create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
+        _engine = create_engine(url, **_engine_kwargs(url))
         _SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
     return _engine
 

@@ -423,8 +423,10 @@ def _mcp_post_body(principal, ip):
 
 
 # ── administración (PIN) ────────────────────────────────────────────────────
-def _pin_guard():
-    bad = _auth.check_pin(request.headers.get('X-Trade-Pin', ''), ip=_ip(), where='admin_api')
+def _pin_guard(safety=False):
+    """safety=True: listar/revocar tokens (emergencia) — una IP de confianza
+    sortea el bloqueo propio de MCP (ver auth.check_pin)."""
+    bad = _auth.check_pin(request.headers.get('X-Trade-Pin', ''), ip=_ip(), where='admin_api', safety=safety)
     if bad:
         resp = jsonify(bad[0])
         resp.status_code = bad[1]
@@ -452,6 +454,15 @@ def _brokerage_available():
         return False
 
 
+def _secret_key_insecure():
+    """Producción con SECRET_KEY por defecto → OAuth de MCP se niega (ver oauth.py)."""
+    try:
+        from core.pin import insecure_production_secret
+        return insecure_production_secret()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 @mcp_bp.route('/api/mcp/status')
 @rate_limit(60, 60)
 def mcp_status():
@@ -473,6 +484,7 @@ def mcp_status():
         'mcp_trading_enabled': _tools.trading_enabled(), 'brokerage_available': _brokerage_available(),
         'pin_set': bool(os.getenv('TRADE_PIN', '')), 'pin_strong': _auth.pin_strong(),
         'pin_min_length': _auth.MIN_STRONG_PIN, 'pin_locked_s': _auth.pin_locked_for(),
+        'secret_key_insecure': _secret_key_insecure(),
         'origins_configured': sorted(known_origins()),
         'static_token_configured': bool(os.getenv('MCP_STATIC_TOKEN', '')),
         'limits': _auth.limits(),
@@ -488,7 +500,7 @@ def mcp_tools_catalog():
 @mcp_bp.route('/api/mcp/tokens', methods=['GET'])
 @rate_limit(120, 60)
 def mcp_tokens_list():
-    bad = _pin_guard()
+    bad = _pin_guard(safety=True)       # listar hace falta para revocar (emergencia)
     if bad:
         return bad
     from ontology.db import session_scope
@@ -539,7 +551,7 @@ def mcp_tokens_create():
 @mcp_bp.route('/api/mcp/tokens/<token_id>/revoke', methods=['POST'])
 @rate_limit(30, 60)
 def mcp_tokens_revoke(token_id):
-    bad = _pin_guard()
+    bad = _pin_guard(safety=True)
     if bad:
         return bad
     body = request.get_json(silent=True) or {}

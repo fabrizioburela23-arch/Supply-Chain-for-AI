@@ -625,7 +625,7 @@
     if (S.running) { S.entity = S.running.entity || S.entity; startPoll(S.running.memo_id); } else { S.busy = false; }
     render();
     if (S.clients === null) {
-      var hasPin = false; try { hasPin = !!localStorage.getItem('khipu_trade_pin'); } catch (e) {}
+      var hasPin = !!(window._tradePinStored && window._tradePinStored());   // PIN vigente (12 h, app.html)
       if (hasPin) loadClients(false);
     }
     if (S.entity) loadEntity(S.entity);

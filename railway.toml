@@ -3,7 +3,23 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+# Railway prueba esta ruta SOLO al desplegar (no es un monitor de vida): la
+# versión nueva recibe tráfico cuando responde 200 aquí.
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
+# ALWAYS (auditoría estructural 2026-09-30, #16): antes era "on_failure" con
+# 3 reintentos — tras el 3er fallo el servicio quedaba CAÍDO hasta un deploy
+# manual. Valores válidos en el esquema de Railway: ON_FAILURE | ALWAYS | NEVER
+# (en MAYÚSCULAS). Con ALWAYS no aplica restartPolicyMaxRetries.
+restartPolicyType = "ALWAYS"
+# Segundos entre el SIGTERM y el SIGKILL al reemplazar/apagar el contenedor:
+# gunicorn (exec en el Dockerfile, --graceful-timeout 25 = 30 − 5 de margen)
+# termina lo que está en curso — p. ej. una orden a Alpaca — en vez de morir a
+# la mitad. Mantener graceful-timeout ≤ drainingSeconds − 5.
+# NO VERIFICADO contra el esquema de Railway (docs inaccesibles desde aquí):
+# tras el deploy, confirmar en Settings → Deploy que aparece; si el build
+# rechaza la config, borrar SOLO esta línea.
+drainingSeconds = 30
+# Vigilancia de vida: Railway no hace liveness checks después del deploy.
+# Recomendado un monitor externo gratuito (UptimeRobot / Better Stack) que
+# pida https://<tu-app>/api/health cada 5 min y avise por email.

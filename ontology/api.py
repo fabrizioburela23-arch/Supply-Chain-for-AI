@@ -6,11 +6,41 @@ pública monetizado por tiers de Khipu Finance — ver server.py:khipu_auth).
 Sigue el patrón de "feature opcional" ya usado con Neo4j: si DATABASE_URL no
 está configurada, todas las rutas devuelven 503 con un mensaje claro en vez
 de romper el arranque del servidor.
+
+Seguridad (auditoría estructural 2026-09-30, #20/#22):
+  · las ESCRITURAS que alimentan el análisis de inversión (Acciones, eventos,
+    carga masiva, correr agentes, aprobar/rechazar propuestas) exigen el PIN de
+    operador (X-Trade-Pin) vía core.pin.require_operator: sin TRADE_PIN
+    configurado se permiten (modo desarrollo, con aviso en el log); con
+    TRADE_PIN, sin PIN correcto → 401 (y bloqueo por IP/global compartido).
+    La UI debe llamarlas con window._tradeFetch(url, opts, true);
+  · /ingest/news, /alerts y /agents/brief siguen abiertas pero con límite de
+    tasa por IP (core.http.rate_limit);
+  · aprobar/rechazar una propuesta es un RECLAMO ATÓMICO
+    (UPDATE … WHERE status='pending'): dos clics o dos pestañas a la vez ya no
+    ejecutan la Acción dos veces.
+
+Revisión 2026-09-30:
+  · POST /agents/cycle: el "latido" del Radar (engine/live.js, cada 10 min) SIN
+    PIN y SIN force sigue funcionando — no recibe datos del cliente, así que no
+    sirve para envenenar el grafo, y el servidor ya lo limita a UNA corrida
+    cada 5 min en total. Forzar una corrida (force:true) o mandar un PIN exige
+    el PIN correcto (y un PIN errado cuenta para el bloqueo). Antes, con
+    TRADE_PIN puesto, el Radar recibía 401 en silencio y dejaba de
+    auto-aplicar propuestas seguras y de evaluar alertas;
+  · el estado de los ciclos de fondo (_cycle_state/_invest_state) se toma con
+    un lock: dos peticiones simultáneas ya no arrancan dos corridas;
+  · un cuerpo JSON que no es objeto (p. ej. una lista) se trata como {} y los
+    parámetros numéricos de la URL inválidos dan 400 bilingüe (antes 500).
 """
+import threading
+import time
 from datetime import datetime, timezone
 
 from flask import Blueprint, jsonify, request
 
+from core.http import rate_limit
+from core.pin import pin_error, require_operator
 from ontology.db import ontology_available, session_scope
 from ontology.service import (
     OntologyError, apply_event, get_object, list_objects, object_links,
@@ -25,6 +55,33 @@ def _unavailable():
         'error': 'ontología no configurada',
         'detail': 'Falta DATABASE_URL (añade el plugin de Postgres en Railway).',
     }), 503
+
+
+def _body():
+    """Cuerpo JSON como dict SIEMPRE (una lista/número/texto → {}): antes un
+    `[...]` en approve/reject/agents/run reventaba con AttributeError (500)."""
+    b = request.get_json(force=True, silent=True)
+    return b if isinstance(b, dict) else {}
+
+
+class _BadArg(ValueError):
+    pass
+
+
+def _int_arg(name, default, lo, hi):
+    """Entero de la query acotado a [lo, hi]; no numérico → _BadArg (400)."""
+    raw = request.args.get(name)
+    if raw in (None, ''):
+        return default
+    try:
+        return max(lo, min(hi, int(raw)))
+    except (TypeError, ValueError):
+        raise _BadArg(name) from None
+
+
+def _bad_arg(name):
+    return jsonify({'error': f'parámetro inválido: {name} (debe ser un entero)',
+                    'error_en': f'invalid parameter: {name} (must be an integer)'}), 400
 
 
 def _require_db(fn):
@@ -79,7 +136,10 @@ def status():
 def objects_list():
     type_ = request.args.get('type')
     q = request.args.get('q')
-    limit = int(request.args.get('limit', 200))
+    try:
+        limit = _int_arg('limit', 200, 1, 2000)
+    except _BadArg as e:
+        return _bad_arg(str(e))
     with session_scope() as s:
         objs = list_objects(s, type_=type_, q=q, limit=limit)
         return jsonify({'count': len(objs), 'objects': [_obj_to_dict(o) for o in objs]})
@@ -153,7 +213,10 @@ def actions_list():
     actor = request.args.get('actor')
     action_type = request.args.get('type')
     object_id = request.args.get('object_id')
-    limit = int(request.args.get('limit', 100))
+    try:
+        limit = _int_arg('limit', 100, 1, 500)
+    except _BadArg as e:
+        return _bad_arg(str(e))
     with session_scope() as s:
         events = list_actions(s, actor=actor, action_type=action_type, object_id=object_id, limit=limit)
         return jsonify({'count': len(events), 'actions': [_action_event_to_dict(e) for e in events]})
@@ -161,12 +224,14 @@ def actions_list():
 
 @ontology_bp.route('/actions/<action_type>', methods=['POST'])
 @_require_db
+@require_operator
+@rate_limit(120, 600)
 def actions_execute(action_type):
     """Catálogo de Acciones (Fase 2): CrearTesis, AnotarObjeto, MarcarRiesgo,
     ProponerVinculo, Confirmar/RechazarVinculo, RegistrarDecision,
     AjustarPosicion, CorregirDato. Body: {actor, ...campos del esquema}."""
     from ontology.actions import execute_action, ActionError
-    body = request.get_json(force=True, silent=True) or {}
+    body = _body()
     actor = body.pop('actor', None)
     body.pop('action', None)  # por si el cliente reenvía el nombre dentro del body
     try:
@@ -188,12 +253,14 @@ def _proposal_to_dict(p):
 
 @ontology_bp.route('/agents/run', methods=['POST'])
 @_require_db
+@require_operator
+@rate_limit(10, 600)
 def agents_run():
     """Dispara una corrida de todos los agentes (o los que pida `only`).
     Pensado para un botón manual o un cron externo — ver ontology/agents.py
     para por qué NO corre en un scheduler interno de gunicorn."""
     from ontology.agents import run_agents
-    body = request.get_json(force=True, silent=True) or {}
+    body = _body()
     only = body.get('only')  # lista opcional de nombres de agente
     with session_scope() as s:
         summary = run_agents(s, only=only)
@@ -205,11 +272,13 @@ def agents_run():
 # instante con el último resultado y lanza una corrida nueva si toca; el
 # cliente (engine/live.js) recoge el resultado en su siguiente poll.
 _cycle_state = {'running': False, 'last': None, 'last_at': 0.0}
+_cycle_lock = threading.Lock()      # check-and-set de 'running' (dos POST a la vez = una corrida)
+CYCLE_MIN_INTERVAL_S = 300          # corrida nueva como mucho cada 5 min (salvo force con PIN)
 
 
 def _cycle_bg():
-    import time as _t
     from ontology.agents import auto_cycle, check_alerts
+    last = None
     try:
         with session_scope() as s:
             result = auto_cycle(s)
@@ -217,41 +286,70 @@ def _cycle_bg():
                 fired = check_alerts(s)
             except Exception:  # noqa: BLE001
                 fired = []
-        _cycle_state['last'] = {'status': 'ok', 'auto_applied': result['auto_applied'],
-                                'left_for_human': result['left_for_human'],
-                                'agents': result['agents'], 'alerts_fired': fired}
+        last = {'status': 'ok', 'auto_applied': result['auto_applied'],
+                'left_for_human': result['left_for_human'],
+                'agents': result['agents'], 'alerts_fired': fired}
     except Exception as e:  # noqa: BLE001
-        _cycle_state['last'] = {'status': 'error', 'error': str(e)[:300]}
+        last = {'status': 'error', 'error': str(e)[:300]}
     finally:
-        _cycle_state['last_at'] = _t.time()
-        _cycle_state['running'] = False
+        with _cycle_lock:
+            _cycle_state['last'] = last
+            _cycle_state['last_at'] = time.time()
+            _cycle_state['running'] = False
+
+
+def _try_start_cycle(force):
+    """Arranca una corrida en segundo plano si toca. Atómico (lock): True si
+    ESTA llamada la arrancó."""
+    with _cycle_lock:
+        if _cycle_state['running']:
+            return False
+        if not force and time.time() - _cycle_state['last_at'] <= CYCLE_MIN_INTERVAL_S:
+            return False
+        _cycle_state['running'] = True
+    try:
+        threading.Thread(target=_cycle_bg, name='ontology-cycle', daemon=True).start()
+    except Exception:  # noqa: BLE001 — sin hilo: no dejar 'running' pegado para siempre
+        with _cycle_lock:
+            _cycle_state['running'] = False
+        raise
+    return True
 
 
 @ontology_bp.route('/agents/cycle', methods=['POST'])
 @_require_db
+@rate_limit(30, 600)
 def agents_cycle():
     """Ciclo EN VIVO (elección de Fabrizio 2026-07-10: automático + reversible):
     corre los 5 agentes, auto-aprueba las propuestas SEGURAS (anotar, marcar
     riesgo, proponer vínculo, incorporar empresa — actor 'agent:auto'), deja lo
     que toca dinero para el humano, y evalúa las alertas. El grafo se mantiene
-    relevante solo; todo queda auditado en la ontología."""
-    import threading as _th
-    import time as _t
-    force = bool((request.get_json(force=True, silent=True) or {}).get('force'))
-    started = False
-    if not _cycle_state['running'] and (force or _t.time() - _cycle_state['last_at'] > 300):
-        _cycle_state['running'] = True
-        _th.Thread(target=_cycle_bg, daemon=True).start()
-        started = True
+    relevante solo; todo queda auditado en la ontología.
+
+    PIN: el latido normal (sin force, sin PIN) NO lo exige — no lleva datos del
+    cliente y el servidor lo limita a una corrida cada 5 min en total. force:true
+    (saltarse esa espera) o cualquier X-Trade-Pin enviado → PIN de operador
+    (core.pin, mismo bloqueo compartido). Un cron externo que quiera forzar
+    corridas debe mandar X-Trade-Pin."""
+    force = bool(_body().get('force'))
+    if force or request.headers.get('X-Trade-Pin'):
+        err = pin_error(where='agents_cycle', strict=False)
+        if err:
+            return err
+    started = _try_start_cycle(force)
+    with _cycle_lock:
+        snap = dict(_cycle_state)
     return jsonify({'status': 'ok', 'started_new_run': started,
-                    'running': _cycle_state['running'],
-                    'last_at': _cycle_state['last_at'],
-                    'last': _cycle_state['last']})
+                    'running': snap['running'],
+                    'last_at': snap['last_at'],
+                    'last': snap['last']})
 
 
 # ── Ingesta masiva (expansión multicapa y futuras) ───────────────────────────
 @ontology_bp.route('/bulk/import', methods=['POST'])
 @_require_db
+@require_operator
+@rate_limit(30, 600)
 def bulk_import_route():
     """Carga masiva AUDITADA: objects (solo tipos NO económicos del registro,
     p.ej. Seat) + links (vía ontology.bulk_import: validación de integridad,
@@ -259,7 +357,7 @@ def bulk_import_route():
     {actor, provenance, objects?: [{id,type,label,properties}], links?: [...]}.
     Mismo modelo de seguridad que las Acciones (actor obligatorio, todo queda
     como eventos inmutables reversibles) + límite de tamaño por request."""
-    b = request.get_json(force=True, silent=True) or {}
+    b = _body()
     actor = (b.get('actor') or '').strip()[:80]
     provenance = (b.get('provenance') or 'bulk').strip()[:60]
     if not actor:
@@ -305,6 +403,7 @@ def bulk_import_route():
 # aprieta el botón dos veces. Este endpoint NO depende de INVESTIGADOR_AUTO —
 # es el camino "cuando yo pida" y queda activo desde el primer deploy.
 _invest_state = {'running': False, 'last': None, 'last_at': 0.0, 'last_query': ''}
+_invest_lock = threading.Lock()
 
 
 def _invest_bg(query, actor, empresa_id):
@@ -332,13 +431,15 @@ def _invest_bg(query, actor, empresa_id):
     except Exception as e:  # noqa: BLE001
         _invest_state['last'] = {'status': 'error', 'error': str(e)[:300]}
     finally:
-        import time as _t
-        _invest_state['last_at'] = _t.time()
-        _invest_state['running'] = False
+        with _invest_lock:
+            _invest_state['last_at'] = time.time()
+            _invest_state['running'] = False
 
 
 @ontology_bp.route('/agents/investigar', methods=['POST'])
 @_require_db
+@require_operator
+@rate_limit(20, 600)
 def agents_investigar():
     """Body: {query, actor, empresa_id?}. Responde al instante; el resultado
     aparece como ProposedAction en 🔔 Propuestas (y en GET de este estado)."""
@@ -348,17 +449,24 @@ def agents_investigar():
     if not _web_search_available():
         return jsonify({'ok': False, 'error': 'TAVILY_KEY no configurada — añádela en Railway '
                         '(tavily.com, tier gratis) para habilitar la investigación web.'}), 400
-    b = request.get_json(force=True, silent=True) or {}
+    b = _body()
     query = (b.get('query') or '').strip()[:300]
     actor = (b.get('actor') or 'anónimo').strip()[:80]
     empresa_id = (b.get('empresa_id') or None)
     if not query:
         return jsonify({'ok': False, 'error': 'query requerida'}), 400
     started = False
-    if not _invest_state['running'] and _t.time() - _invest_state['last_at'] > 180:
-        _invest_state.update(running=True, last_query=query)
-        _th.Thread(target=_invest_bg, args=(query, actor, empresa_id), daemon=True).start()
-        started = True
+    with _invest_lock:                 # check-and-set atómico: dos clics = una investigación
+        if not _invest_state['running'] and _t.time() - _invest_state['last_at'] > 180:
+            _invest_state.update(running=True, last_query=query)
+            started = True
+    if started:
+        try:
+            _th.Thread(target=_invest_bg, args=(query, actor, empresa_id), daemon=True).start()
+        except Exception:  # noqa: BLE001
+            with _invest_lock:
+                _invest_state['running'] = False
+            raise
     return jsonify({'ok': True, 'started': started, 'running': _invest_state['running'],
                     'last': _invest_state['last'], 'last_query': _invest_state['last_query']})
 
@@ -368,7 +476,10 @@ def agents_investigar():
 def agents_proposals_list():
     from ontology.models import ProposedAction
     status = request.args.get('status', 'pending')
-    limit = int(request.args.get('limit', 100))
+    try:
+        limit = _int_arg('limit', 100, 1, 500)
+    except _BadArg as e:
+        return _bad_arg(str(e))
     with session_scope() as s:
         q = select_proposed(status, limit)
         props = s.scalars(q).all()
@@ -384,36 +495,95 @@ def select_proposed(status, limit):
     return q.order_by(ProposedAction.created_at.desc()).limit(min(limit, 500))
 
 
-@ontology_bp.route('/agents/proposals/<proposal_id>/approve', methods=['POST'])
-@_require_db
-def agents_proposal_approve(proposal_id):
-    """Aprueba (con ediciones opcionales) → ejecuta la Acción real, auditada
-    con actor='<agente>, aprobado por <humano>'."""
-    import uuid as _uuid
+def _claim_proposal(s, pid, new_status, actor):
+    """RECLAMO ATÓMICO de una propuesta pendiente (auditoría #22).
+
+    UPDATE … WHERE id=… AND status='pending': Postgres bloquea la fila, así que
+    una segunda petición simultánea espera y, cuando la primera confirma, ya no
+    encuentra 'pending' → rowcount 0 → 409. Antes era leer-y-luego-escribir y
+    dos clics a la vez ejecutaban la Acción DOS veces. Todo va en la MISMA
+    transacción que la Acción: si la Acción falla, el rollback devuelve la
+    propuesta a 'pending'. Devuelve (propuesta, None) o (None, (json, status)).
+
+    Mientras el ciclo del Radar corre (_cycle_state['running']), una propuesta
+    que el ciclo PODRÍA auto-aplicar (tipo seguro con confianza suficiente) no
+    se resuelve a mano → 409 'cycle_running': auto_cycle (ontology/agents.py)
+    aún lee-y-luego-escribe sin reclamo atómico, así que aprobarla a la vez la
+    ejecutaría dos veces. El ciclo dura 30-60 s; basta reintentar."""
+    from sqlalchemy import update
     from ontology.models import ProposedAction
-    from ontology.actions import execute_action, ActionError
-    body = request.get_json(force=True, silent=True) or {}
-    actor = body.get('actor')
-    edits = body.get('edits') or {}
+    busy = _cycle_may_auto_apply(s, pid)
+    if busy:
+        return None, busy
+    res = s.execute(update(ProposedAction)
+                    .where(ProposedAction.id == pid, ProposedAction.status == 'pending')
+                    .values(status=new_status, resolved_at=datetime.now(timezone.utc), resolved_by=actor)
+                    .execution_options(synchronize_session=False))
+    p = s.get(ProposedAction, pid, populate_existing=True)
+    if res.rowcount != 1:
+        if not p:
+            return None, (jsonify({'error': 'propuesta no encontrada', 'error_en': 'proposal not found'}), 404)
+        return None, (jsonify({'error': f'la propuesta ya está resuelta ({p.status})',
+                               'error_en': f'proposal already resolved ({p.status})',
+                               'code': 'already_resolved'}), 409)
+    return p, None
+
+
+def _cycle_may_auto_apply(s, pid):
+    """(json, 409) si el ciclo en curso podría auto-aplicar esta propuesta; si no, None."""
+    with _cycle_lock:
+        running = _cycle_state['running']
+    if not running:
+        return None
+    try:
+        from ontology.agents import AUTO_MIN_CONFIDENCE, SAFE_AUTO
+        from ontology.models import ProposedAction
+        p = s.get(ProposedAction, pid)
+    except Exception:  # noqa: BLE001 — ante la duda, dejar que el reclamo decida
+        return None
+    if (p is None or p.status != 'pending' or p.action_type not in SAFE_AUTO
+            or (p.confidence or 0) < AUTO_MIN_CONFIDENCE):
+        return None
+    return (jsonify({'error': 'El Radar está procesando propuestas ahora mismo; reintenta en un minuto',
+                     'error_en': 'The Radar is processing proposals right now; retry in a minute',
+                     'code': 'cycle_running', 'retry_after': 60}), 409)
+
+
+def _proposal_actor_and_id(body, proposal_id):
+    import uuid as _uuid
+    actor = str(body.get('actor') or '').strip()[:120]
     if not actor:
-        return jsonify({'error': 'actor es requerido'}), 400
+        return None, None, (jsonify({'error': 'actor es requerido', 'error_en': 'actor is required'}), 400)
     try:
         pid = _uuid.UUID(proposal_id)
     except ValueError:
-        return jsonify({'error': 'proposal_id inválido'}), 400
+        return None, None, (jsonify({'error': 'proposal_id inválido', 'error_en': 'invalid proposal_id'}), 400)
+    return actor, pid, None
+
+
+@ontology_bp.route('/agents/proposals/<proposal_id>/approve', methods=['POST'])
+@_require_db
+@require_operator
+def agents_proposal_approve(proposal_id):
+    """Aprueba (con ediciones opcionales) → ejecuta la Acción real, auditada
+    con actor='<agente>, aprobado por <humano>'. Reclamo atómico: ver
+    _claim_proposal."""
+    from ontology.actions import execute_action, ActionError
+    body = _body()
+    actor, pid, err = _proposal_actor_and_id(body, proposal_id)
+    if err:
+        return err
+    edits = body.get('edits') or {}
+    if not isinstance(edits, dict):
+        return jsonify({'error': 'edits debe ser un objeto', 'error_en': 'edits must be an object'}), 400
     try:
         with session_scope() as s:
-            p = s.get(ProposedAction, pid)
-            if not p:
-                return jsonify({'error': 'propuesta no encontrada'}), 404
-            if p.status != 'pending':
-                return jsonify({'error': f'la propuesta ya está resuelta ({p.status})'}), 409
-            payload = {**p.payload, **edits}
+            p, err = _claim_proposal(s, pid, 'approved', actor)
+            if err:
+                return err
+            payload = {**(p.payload or {}), **edits}
             combined_actor = f'{p.agent} → aprobado por {actor}'
             result = execute_action(s, p.action_type, payload, combined_actor)
-            p.status = 'approved'
-            p.resolved_at = datetime.now(timezone.utc)
-            p.resolved_by = actor
             return jsonify({'status': 'ok', 'result': result})
     except ActionError as e:
         return jsonify({'error': str(e)}), 400
@@ -423,35 +593,29 @@ def agents_proposal_approve(proposal_id):
 
 @ontology_bp.route('/agents/proposals/<proposal_id>/reject', methods=['POST'])
 @_require_db
+@require_operator
 def agents_proposal_reject(proposal_id):
-    import uuid as _uuid
-    from ontology.models import ProposedAction
-    body = request.get_json(force=True, silent=True) or {}
-    actor = body.get('actor')
-    if not actor:
-        return jsonify({'error': 'actor es requerido'}), 400
-    try:
-        pid = _uuid.UUID(proposal_id)
-    except ValueError:
-        return jsonify({'error': 'proposal_id inválido'}), 400
+    body = _body()
+    actor, pid, err = _proposal_actor_and_id(body, proposal_id)
+    if err:
+        return err
     with session_scope() as s:
-        p = s.get(ProposedAction, pid)
-        if not p:
-            return jsonify({'error': 'propuesta no encontrada'}), 404
-        if p.status != 'pending':
-            return jsonify({'error': f'la propuesta ya está resuelta ({p.status})'}), 409
-        p.status = 'rejected'
-        p.resolved_at = datetime.now(timezone.utc)
-        p.resolved_by = actor
+        _p, err = _claim_proposal(s, pid, 'rejected', actor)
+        if err:
+            return err
         return jsonify({'status': 'ok'})
 
 
 @ontology_bp.route('/agents/brief')
 @_require_db
+@rate_limit(20, 600)          # abierta pero llama a la IA (tier deep) → con tope por IP
 def agents_brief():
     """Cronista: Brief Matinal — no requiere aprobación, es informativo."""
     from ontology.agents import brief_matinal
-    hours = int(request.args.get('hours', 24))
+    try:
+        hours = _int_arg('hours', 24, 1, 168)
+    except _BadArg as e:
+        return _bad_arg(str(e))
     with session_scope() as s:
         return jsonify(brief_matinal(s, hours=hours))
 
@@ -484,14 +648,18 @@ def select_alerts(owner):
 
 @ontology_bp.route('/alerts', methods=['POST'])
 @_require_db
+@rate_limit(30, 600)
 def alerts_create():
     """Body: {owner, rule:{entity,metric,op,value} o {region,event_type}, channel?}."""
     from ontology.models import Alert
-    body = request.get_json(force=True, silent=True) or {}
+    body = _body()
     owner = body.get('owner')
     rule = body.get('rule')
     if not owner or not rule:
         return jsonify({'error': "'owner' y 'rule' son requeridos"}), 400
+    if not isinstance(rule, dict) or not isinstance(owner, str):
+        return jsonify({'error': "'rule' debe ser un objeto y 'owner' un texto",
+                        'error_en': "'rule' must be an object and 'owner' a string"}), 400
     if not (rule.get('metric') in ('price', 'nrs', 'news_region') or rule.get('event_type')):
         return jsonify({'error': "rule.metric debe ser 'price'|'nrs'|'news_region'"}), 400
     with session_scope() as s:
@@ -503,6 +671,7 @@ def alerts_create():
 
 @ontology_bp.route('/alerts/<alert_id>', methods=['DELETE'])
 @_require_db
+@rate_limit(60, 600)
 def alerts_delete(alert_id):
     import uuid as _uuid
     from ontology.models import Alert
@@ -520,6 +689,7 @@ def alerts_delete(alert_id):
 
 @ontology_bp.route('/alerts/check', methods=['GET'])
 @_require_db
+@rate_limit(120, 600)
 def alerts_check():
     """Evalúa las alertas activas (de `owner` si se pasa) y devuelve las que
     dispararon ahora — el cliente las convierte en notificaciones del navegador."""
@@ -689,6 +859,7 @@ def object_news(object_id):
 
 @ontology_bp.route('/ingest/news', methods=['POST'])
 @_require_db
+@rate_limit(60, 600)          # abierta (observación con fuente) pero llama a proveedores → tope por IP
 def ingest_news():
     """Ingiere noticias de una entidad AL GRAFO (Phase 1 · M4).
     Body: {entity_id, query?, limit?, actor?}.
@@ -698,7 +869,7 @@ def ingest_news():
     duplica. La noticia entra directo por ser una observación con fuente
     comprobable; su interpretación sigue pasando por la cola de aprobación."""
     from ontology.ingest_news import ingest_news_for
-    body = request.get_json(force=True, silent=True) or {}
+    body = _body()
     entity_id = (body.get('entity_id') or '').strip()
     if not entity_id:
         return jsonify({'error': 'entity_id es requerido'}), 400
@@ -781,11 +952,13 @@ def object_provenance(object_id):
 
 @ontology_bp.route('/events', methods=['POST'])
 @_require_db
+@require_operator
+@rate_limit(120, 600)
 def events_create():
     """Escritura de bajo nivel. En Fase 2 esto se envuelve con el catálogo de
     Acciones (validación por tipo, auditoría de actor humano). Por ahora
     requiere explícitamente source+actor para que nada quede sin trazar."""
-    body = request.get_json(force=True, silent=True) or {}
+    body = _body()
     required = ('event_type', 'valid_from', 'source', 'actor')
     missing = [k for k in required if not body.get(k)]
     if missing:

@@ -11,10 +11,11 @@ Modelo de seguridad (ver docs/MCP.md):
     SOLO LECTURA para instalaciones sin base.
   · Auditoría append-only en mcp_audit (sin secretos) — escribirla nunca rompe
     la llamada.
-  · PIN (TRADE_PIN): además del límite por IP, un contador GLOBAL de fallos
-    bloquea TODA comprobación de PIN de MCP (MCP_PIN_MAX_FAILS=10 por hora →
-    MCP_PIN_LOCK_MIN=30 min) y queda en la auditoría: rotar IPs o cabeceras no
-    sirve para adivinarlo. La IP de los límites es la que añade el proxy de
+  · PIN (TRADE_PIN): los fallos suman en el contador COMPARTIDO de core/pin.py
+    (por IP y global, el mismo de /api/trade y /api/brokerage) y, además, un
+    contador GLOBAL propio bloquea TODA comprobación de PIN de MCP
+    (MCP_PIN_MAX_FAILS=10 por hora → MCP_PIN_LOCK_MIN=30 min) y queda en la
+    auditoría: rotar IPs, cabeceras o superficies no sirve para adivinarlo. La IP de los límites es la que añade el proxy de
     confianza (MCP_TRUSTED_PROXY_HOPS=1, Railway), nunca el primer valor de
     X-Forwarded-For (lo controla el cliente).
   · Base caída ≠ token inválido: authenticate() lanza AuthUnavailable (→ 503 +
@@ -142,7 +143,7 @@ def client_ip():
         return 'unknown'
 
 
-# ── PIN (misma semántica que server._trade_auth + bloqueo GLOBAL) ───────────
+# ── PIN (contador compartido core/pin.py + bloqueo GLOBAL propio de MCP) ──
 _PIN_LOCK = threading.Lock()
 _PIN_STATE = {'fails': [], 'locked_until': 0.0}
 PIN_FAIL_WINDOW_S = 3600
@@ -165,9 +166,16 @@ def pin_locked_for():
 
 
 def reset_pin_guard():
+    """Limpia el bloqueo propio de MCP y el contador COMPARTIDO de core.pin
+    (solo tests / soporte)."""
     with _PIN_LOCK:
         _PIN_STATE['fails'] = []
         _PIN_STATE['locked_until'] = 0.0
+    try:
+        from core import pin as _core_pin
+        _core_pin._reset_for_tests()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _register_pin_fail(ip, where):
@@ -190,19 +198,31 @@ def _register_pin_fail(ip, where):
                     error=f'{pol["max_fails"]} wrong PINs → PIN locked {pol["lock_s"] // 60} min', ip=ip)
 
 
-def check_pin(got, ip=None, where='mcp'):
+def check_pin(got, ip=None, where='mcp', safety=False):
     """→ None si el PIN es válido; si no, (dict_error, código_http).
 
-    Bloqueo GLOBAL: tras MCP_PIN_MAX_FAILS PIN incorrectos en una hora se
-    rechaza TODO PIN (también el correcto) durante MCP_PIN_LOCK_MIN minutos →
-    429 code='pin_locked'. Un PIN vacío (la UI aún no lo pidió) no cuenta.
-    Pensado para que server._trade_auth y brokerage lo reutilicen."""
+    Dos frenos, en este orden:
+      1. el bloqueo propio de MCP (más estricto): tras MCP_PIN_MAX_FAILS PIN
+         incorrectos en una hora se rechaza TODO PIN (también el correcto)
+         durante MCP_PIN_LOCK_MIN minutos → 429 code='pin_locked'. Excepción
+         `safety=True` (listar/REVOCAR tokens: la acción de emergencia ante un
+         token filtrado): una IP de CONFIANZA (core.pin.trusted: acertó el PIN
+         hace poco y casi no falla) pasa; una IP nueva sigue bloqueada;
+      2. el contador COMPARTIDO de core/pin.py (por IP y global, el mismo de
+         /api/trade/* y /api/brokerage/*): los intentos fallidos de cualquier
+         superficie suman juntos y su bloqueo también frena a MCP.
+    Un PIN vacío (la UI aún no lo pidió) no cuenta en ninguno."""
     want = os.getenv('TRADE_PIN', '')
     if not want:
         return ({'error': 'Trading deshabilitado — configura TRADE_PIN en Railway',
                  'error_en': 'Trading disabled — set TRADE_PIN in Railway', 'code': 'trading_disabled'}, 403)
+    ip = ip or client_ip()
+    from core import pin as _core_pin
     left = pin_locked_for()
-    if left > 0:
+    # Acciones de EMERGENCIA (safety) desde una IP de confianza: el bloqueo de
+    # MCP no la deja fuera — si no, 10 PIN malos en la página pública de OAuth
+    # impedían al dueño revocar un token filtrado durante 30 min (core/pin.py).
+    if left > 0 and not (safety and _core_pin.trusted(ip)):
         mins = max(1, (left + 59) // 60)
         return ({'error': f'Demasiados PIN incorrectos: por seguridad el PIN queda bloqueado ~{mins} min. '
                           'Si no fuiste tú, cambia TRADE_PIN en Railway.',
@@ -210,12 +230,15 @@ def check_pin(got, ip=None, where='mcp'):
                              'If it was not you, change TRADE_PIN in Railway.',
                  'code': 'pin_locked', 'retry_after': left}, 429)
     got = str(got or '')
-    if hmac.compare_digest(got.encode(), want.encode()):
+    bad = _core_pin.check(got=got, where=where, strict=True, ip=ip)
+    if bad is None:
         return None
-    if got:
-        _register_pin_fail(ip or client_ip(), where)
-    return ({'error': 'PIN de trading incorrecto o faltante',
-             'error_en': 'Wrong or missing trading PIN', 'code': 'invalid_pin'}, 401)
+    if bad[1] == 401:
+        if got:
+            _register_pin_fail(ip, where)
+        return ({'error': 'PIN de trading incorrecto o faltante',
+                 'error_en': 'Wrong or missing trading PIN', 'code': 'invalid_pin'}, 401)
+    return bad
 
 
 # ── principal autenticado ───────────────────────────────────────────────────

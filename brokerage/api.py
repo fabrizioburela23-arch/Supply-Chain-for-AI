@@ -6,14 +6,17 @@ server._trade_auth: sin TRADE_PIN → 403; PIN malo → 401).
 Excepciones SIN PIN: GET /status (solo `available` y `trading_enabled`) y
 GET /oauth/callback (Alpaca redirige ahí; se valida el `state` firmado).
 
-Freno a la adivinación del PIN (en memoria; 1 worker, ver CLAUDE.md):
+Freno a la adivinación del PIN: vive en core/pin.py y es COMPARTIDO con
+/api/trade/* y /api/mcp/* (antes cada superficie contaba por separado y se
+podían repartir los intentos):
   · por IP: 10 fallos en 10 min → 429. La IP es el ÚLTIMO salto de
     X-Forwarded-For (el que añade el proxy de Railway), NO el primero (ese lo
     escribe el cliente y se puede falsificar para esquivar el freno o para
     bloquear a otra persona). Sin X-Forwarded-For → remote_addr.
   · global (respaldo contra ataques repartidos entre muchas IP): 30 fallos en
     10 min desde cualquier IP → todas las rutas con PIN dan 429 hasta que
-    pase la ventana, y queda una fila 'pin_lockout' en broker_audit.
+    pase la ventana, y queda una fila 'pin_lockout' en broker_audit (callback
+    registrado aquí con core.pin.on_global_lock).
 
 GET    /status                          (sin PIN) {available, trading_enabled}
 GET    /status/detail                   (PIN) dinero real, OAuth, cifrado, auto-aprobación…
@@ -36,12 +39,8 @@ POST   /approvals/<id>/approve          {actor}
 POST   /approvals/<id>/reject           {actor, reason?}
 GET    /audit                           registro global (últimas 200)
 """
-import hmac
 import html
 import logging
-import os
-import threading
-import time
 from functools import wraps
 
 from flask import Blueprint, Response, jsonify, request
@@ -67,82 +66,40 @@ def _unavailable():
                     'available': False, 'code': 'no_database'}), 503
 
 
-# Freno a la adivinación del PIN (ver docstring). Estructuras acotadas y con lock
-# (gunicorn corre 8 hilos): solo se guardan IPs con fallos recientes.
-_PIN_FAILS = {}                 # ip → [timestamps de fallos]
-_PIN_GLOBAL = []                # timestamps de fallos de cualquier IP
-_PIN_LOCK = threading.Lock()
-_PIN_STATE = {'global_audited_at': 0.0}
-PIN_MAX_FAILS, PIN_WINDOW_S = 10, 600
-PIN_GLOBAL_MAX = 30
-PIN_MAX_IPS = 5000
+# Freno a la adivinación del PIN → core/pin.py (compartido por TODAS las
+# superficies). Los nombres de abajo se conservan como ALIAS de las mismas
+# estructuras (los tests y herramientas de soporte las limpian por aquí).
+from core import pin as _core_pin  # noqa: E402
+
+_PIN_FAILS = _core_pin._FAILS
+_PIN_GLOBAL = _core_pin._GLOBAL
+_PIN_LOCK = _core_pin._LOCK
+_PIN_STATE = _core_pin._STATE
+PIN_MAX_FAILS, PIN_WINDOW_S = _core_pin.PIN_MAX_FAILS, _core_pin.PIN_WINDOW_S
+PIN_GLOBAL_MAX = _core_pin.PIN_GLOBAL_MAX
+PIN_MAX_IPS = _core_pin.PIN_MAX_IPS
+_client_ip = _core_pin.client_ip
 
 
-def _client_ip():
-    """ÚLTIMO salto de X-Forwarded-For (lo añade el proxy de confianza); el
-    primero lo controla quien hace la petición."""
-    xff = request.headers.get('X-Forwarded-For', '')
-    hops = [h.strip() for h in xff.split(',') if h.strip()]
-    return (hops[-1] if hops else (request.remote_addr or 'unknown'))[:64]
-
-
-def _prune(now):
-    cut = now - PIN_WINDOW_S
-    _PIN_GLOBAL[:] = [t for t in _PIN_GLOBAL if t > cut]
-    for ip in [k for k, v in _PIN_FAILS.items() if not v or v[-1] <= cut]:
-        _PIN_FAILS.pop(ip, None)
-    if len(_PIN_FAILS) > PIN_MAX_IPS:             # tope duro de memoria: se descartan las más viejas
-        for ip in sorted(_PIN_FAILS, key=lambda k: _PIN_FAILS[k][-1])[:len(_PIN_FAILS) - PIN_MAX_IPS]:
-            _PIN_FAILS.pop(ip, None)
-
-
-def _audit_global_lock(n):
+def _audit_global_lock(scope='global', n=0):
+    """Callback de core.pin.on_global_lock: deja la fila 'pin_lockout' en
+    broker_audit (append-only) venga el ataque de /api/trade, /api/brokerage o MCP."""
     try:
         if not _db_ok():
             return
         from ontology.db import session_scope
         from brokerage.service import audit
         with session_scope() as s:
-            audit(s, 'sistema', 'pin_lockout', detail={'scope': 'global', 'failures_10min': n})
+            audit(s, 'sistema', 'pin_lockout', detail={'scope': scope, 'failures_10min': n})
     except Exception as e:  # noqa: BLE001
         log.warning('brokerage: no se registró el bloqueo global del PIN (%s)', type(e).__name__)
 
 
+_core_pin.on_global_lock(_audit_global_lock)
+
+
 def _pin_error():
-    want = os.getenv('TRADE_PIN', '')
-    if not want:
-        return jsonify({'error': 'Trading deshabilitado — configura TRADE_PIN en Railway',
-                        'error_en': 'Trading disabled — set TRADE_PIN in Railway',
-                        'code': 'trading_disabled'}), 403
-    ip, now = _client_ip(), time.time()
-    with _PIN_LOCK:
-        _prune(now)
-        n_global = len(_PIN_GLOBAL)
-        n_ip = len(_PIN_FAILS.get(ip) or ())
-    if n_global >= PIN_GLOBAL_MAX:
-        log.warning('brokerage: PIN bloqueado globalmente (%d fallos en 10 min)', n_global)
-        return jsonify({'error': 'Demasiados intentos de PIN fallidos (desde varias direcciones): el corretaje '
-                                 'queda bloqueado 10 minutos',
-                        'error_en': 'Too many failed PIN attempts (from several addresses): brokerage is locked '
-                                    'for 10 minutes', 'code': 'pin_locked_global'}), 429
-    if n_ip >= PIN_MAX_FAILS:
-        return jsonify({'error': 'Demasiados intentos de PIN fallidos: espera 10 minutos',
-                        'error_en': 'Too many failed PIN attempts: wait 10 minutes', 'code': 'pin_locked'}), 429
-    got = request.headers.get('X-Trade-Pin', '')
-    if not hmac.compare_digest(got.encode(), want.encode()):
-        audit_now = False
-        with _PIN_LOCK:
-            _PIN_FAILS.setdefault(ip, []).append(now)
-            _PIN_GLOBAL.append(now)
-            n_global = len(_PIN_GLOBAL)
-            if n_global >= PIN_GLOBAL_MAX and now - _PIN_STATE['global_audited_at'] > PIN_WINDOW_S:
-                _PIN_STATE['global_audited_at'] = now
-                audit_now = True
-        if audit_now:
-            _audit_global_lock(n_global)
-        return jsonify({'error': 'PIN de trading incorrecto o faltante', 'error_en': 'Wrong or missing trading PIN',
-                        'code': 'invalid_pin'}), 401
-    return None
+    return _core_pin.pin_error(where='brokerage', strict=True)
 
 
 def guarded(f):

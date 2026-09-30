@@ -55,7 +55,7 @@
   function tfetch(url, opts, interactive) {
     if (window._tradeFetch) return window._tradeFetch(url, opts || {}, interactive !== false);
     var o = Object.assign({}, opts || {});
-    var pin = ''; try { pin = localStorage.getItem('khipu_trade_pin') || ''; } catch (e) {}
+    var pin = (window._tradePinStored && window._tradePinStored()) || '';   // PIN vigente (12 h, app.html)
     o.headers = Object.assign({}, o.headers, { 'X-Trade-Pin': pin });
     return fetch(url, o);
   }
@@ -735,7 +735,7 @@
   }
   function pendingCount() {
     // para badges/sondeos: SIN prompt de PIN; sin PIN guardado o PIN malo → null, en silencio
-    var pin = ''; try { pin = localStorage.getItem('khipu_trade_pin') || ''; } catch (e) {}
+    var pin = (window._tradePinStored && window._tradePinStored()) || '';   // PIN vigente (12 h, app.html)
     if (!pin) return Promise.resolve(null);
     return call('GET', '/approvals', null, false).then(function (d) {
       if (!d || d._http === 401 || d._http === 403 || d._http === 429) return null;

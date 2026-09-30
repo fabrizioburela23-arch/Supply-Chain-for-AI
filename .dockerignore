@@ -1,0 +1,22 @@
+# Lo que NO entra a la imagen de Docker (auditoría estructural 2026-09-30, #19):
+# historia de git, secretos locales, tests y cachés — imagen más chica y sin
+# riesgo de hornear un .env con keys dentro.
+.git
+.gitignore
+.github
+.claude
+.env
+.env.*
+!.env.example
+tests
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.pytest_cache
+.venv
+venv
+node_modules
+frontend/dist
+*.log
+.DS_Store
+Thumbs.db

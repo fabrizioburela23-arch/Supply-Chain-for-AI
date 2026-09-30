@@ -86,6 +86,24 @@ def _sign_key():
     return hashlib.sha256(('mcp-oauth:' + k).encode()).digest()
 
 
+def _insecure_secret():
+    """Auditoría #15: en PRODUCCIÓN (Railway) con SECRET_KEY por defecto el
+    flujo OAuth se NIEGA (registro y autorización): la firma del formulario de
+    consentimiento no debe depender de una clave pública ni de una clave de
+    proceso que cambia en cada reinicio. En desarrollo sigue funcionando."""
+    try:
+        from core.pin import insecure_production_secret
+        return insecure_production_secret()
+    except Exception:  # noqa: BLE001
+        return False
+
+
+_INSECURE_ES = ('El servidor usa la SECRET_KEY por defecto: por seguridad la conexión de IAs (OAuth) está '
+                'desactivada. Configura SECRET_KEY en Railway (Variables) y vuelve a intentarlo.')
+_INSECURE_EN = ('The server uses the default SECRET_KEY: for safety AI connections (OAuth) are disabled. '
+                'Set SECRET_KEY in Railway (Variables) and try again.')
+
+
 def _b64u(b):
     return base64.urlsafe_b64encode(b).decode().rstrip('=')
 
@@ -134,8 +152,13 @@ def valid_redirect_uri(uri):
     return sch not in _BAD_SCHEMES and all(c.isalnum() or c in '+.-' for c in sch)
 
 
-def _json_err(error, desc, status=400, headers=None):
-    resp = jsonify({'error': error, 'error_description': desc})
+def _json_err(error, desc, status=400, headers=None, desc_es=None):
+    """Error OAuth (RFC 6749: error + error_description en inglés). `desc_es`
+    añade error_description_es (regla bilingüe) sin romper a los clientes."""
+    body = {'error': error, 'error_description': desc}
+    if desc_es:
+        body['error_description_es'] = desc_es
+    resp = jsonify(body)
     resp.status_code = status
     resp.headers['Cache-Control'] = 'no-store'
     for k, v in (headers or {}).items():
@@ -433,6 +456,8 @@ def register(bp):
             return _cors_public(Response(status=204))
         if not oauth_enabled():
             return _cors_public(_json_err('temporarily_unavailable', 'OAuth needs DATABASE_URL on this server', 503))
+        if _insecure_secret():
+            return _cors_public(_json_err('temporarily_unavailable', _INSECURE_EN, 503, desc_es=_INSECURE_ES))
         body = request.get_json(silent=True)
         if not isinstance(body, dict):
             return _cors_public(_json_err('invalid_client_metadata', 'JSON body required'))
@@ -483,6 +508,8 @@ def register(bp):
         if not oauth_enabled():
             return _error_page('OAuth no está disponible (falta DATABASE_URL o MCP_OAUTH_ENABLED=off).',
                                'OAuth is not available (DATABASE_URL missing or MCP_OAUTH_ENABLED=off).', 503)
+        if _insecure_secret():
+            return _error_page(_INSECURE_ES, _INSECURE_EN, 503)
         p = {k: request.args.get(k) for k in _AUTH_PARAMS}
         with _session() as s:
             client, page, rerr = _validate_auth_request(s, p)
@@ -498,6 +525,8 @@ def register(bp):
     def oauth_authorize_post():
         if not oauth_enabled():
             return _error_page('OAuth no está disponible.', 'OAuth is not available.', 503)
+        if _insecure_secret():
+            return _error_page(_INSECURE_ES, _INSECURE_EN, 503)
         f = request.form
         step = f.get('step')
         if step == 'pin':

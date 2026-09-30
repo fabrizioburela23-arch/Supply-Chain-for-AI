@@ -9,6 +9,44 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-30 — PHASE 3 + WORLD MONITOR + CORRETAJE + MCP + ENDURECIMIENTO (sw v170)
+
+Pedido: "algo enorme mientras duermo": geopolítica como World Monitor en UN
+globo 3D; Phase 3 avanzada para la reunión con Diego; invertir dinero de
+otros vía Alpaca desde la próxima semana; MCP para que IAs inviertan con la
+info de la ontología; "resueltos los detalles estructurales".
+Hecho con 2 workflows (27 agentes: construir → 2 revisiones → corregir):
+- World Monitor (core/world.py, engine/worldmonitor.js): GDELT/USGS/EONET +
+  estrechos/inestabilidad, exposición de la cadena por evento, brief
+  determinista, capas de referencia rotuladas; coordenadas de sede
+  corregidas (~150 nodos estaban en Singapur); colores NRS del globo
+  estaban invertidos. RIESGO: queries de GDELT GEO no verificadas en vivo →
+  ajustables por env WORLD_GDELT_*.
+- Phase 3 (research/outcomes, committee, committee_api, engine/committee.js):
+  ver docs/PHASE3.md. El track record se llena con el tiempo (1×/día).
+- Corretaje multi-cliente (brokerage/, engine/clients.js): ver
+  docs/BROKERAGE.md. Falta en Railway: BROKERAGE_ENC_KEY (obligatoria para
+  guardar llaves), OAuth de Alpaca (app registrada) si se usa.
+- MCP (mcp_server/, engine/mcpconnect.js): ver docs/MCP.md. Verificado de
+  punta a punta local (initialize → tools/list → get_company).
+- Legal: docs/INVERSION_TERCEROS.md — NO juntar dinero de terceros en la
+  cuenta propia (Alpaca ToS; Perú: Ley 26702 art. 11, CP art. 246); cada
+  persona en SU cuenta, papel primero, abogado antes de dinero real.
+- Endurecimiento (auditoría de 25 hallazgos): PIN único con bloqueo
+  (core/pin.py), validación de trade_order/close (un símbolo malo podía
+  cerrar TODO), client_order_id, el agente registraba órdenes rechazadas como
+  éxito, SW ya no cachea API/errores, errores JSON, timeouts de IA y DB,
+  Dockerfile exec, railway.toml ALWAYS, constraints.txt, REMIGRATE seguro,
+  escrituras de ontología con PIN, XSS en enlaces, reclamo atómico de
+  propuestas en auto_cycle. Tests: 668.
+- PENDIENTE: verificar en prod GDELT GEO, Alpaca OAuth y drainingSeconds en
+  Railway; backups de Postgres (activar en Railway); monitor externo de
+  /api/health; decidir si /api/matrix/simulations exige PIN; UI para 409
+  agent_stopping / 423 trading_halted; el kill switch es solo por env (y
+  bloquea también cierres).
+
+---
+
 # SESIÓN 2026-09-29 (día) — REPORTE DE RIESGO: VaR + VEGA/KAPPA (sw v164)
 
 Pedido (curso MIT): "reporte Vega" para medir la sensibilidad a la volatilidad

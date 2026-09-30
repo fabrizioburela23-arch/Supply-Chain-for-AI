@@ -167,7 +167,7 @@
     if (!e || e.status === 'private' || e.status === 'unknown') return '';
     var txt = L(e.note_es || '', e.note_en || e.note_es || '');
     if (!txt) return '';
-    var src = e.source_url ? ' · <a href="' + esc(e.source_url) + '" target="_blank" rel="noopener noreferrer" style="color:#7C87A3">' + L('fuente', 'source') + ' ↗</a>' : '';
+    var src = (e.source_url && /^https?:\/\//i.test(e.source_url)) ? ' · <a href="' + esc(e.source_url) + '" target="_blank" rel="noopener noreferrer" style="color:#7C87A3">' + L('fuente', 'source') + ' ↗</a>' : '';
     return '<div class="xr-note" style="margin-top:6px">✓ ' + esc(txt) +
       '<span style="color:#7C87A3;font-size:10.5px"> · ' + L('verificado', 'verified') + ' ' + esc(e.as_of || '') + src + '</span></div>';
   }

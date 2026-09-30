@@ -137,14 +137,19 @@
   async function _createThesis(id, label, texto) {
     const actor = _getActorKhipu();
     try {
-      const r = await fetch(`${_base()}/api/ontology/actions/CrearTesis`, {
+      // escritura de la ontología → PIN de operador vía window._tradeFetch
+      const url = `${_base()}/api/ontology/actions/CrearTesis`;
+      const opts = {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actor, company_id: id, stance: 'watch', confidence: 0.6, rationale: texto }),
-      });
-      const d = await r.json();
-      if (r.ok) return { answer: `Tesis registrada sobre ${label}: "${texto}".`, actions: [{ type: 'tkg_object', arg: id }] };
-      return { answer: `No se pudo registrar la tesis: ${d.error || 'error'} (¿está la ontología configurada?)`, actions: [] };
-    } catch (e) { return { answer: 'Error de red al registrar la tesis.', actions: [] }; }
+      };
+      const r = await (typeof window._tradeFetch === 'function' ? window._tradeFetch(url, opts, true) : fetch(url, opts));
+      const d = await r.json().catch(() => null);
+      const en = (window.LANG || '') === 'en';
+      if (r.ok) return { answer: en ? `Thesis recorded on ${label}: "${texto}".` : `Tesis registrada sobre ${label}: "${texto}".`, actions: [{ type: 'tkg_object', arg: id }] };
+      const m = window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && d.error) || 'error');
+      return { answer: en ? `Could not record the thesis: ${m}` : `No se pudo registrar la tesis: ${m}`, actions: [] };
+    } catch (e) { return { answer: ((window.LANG || '') === 'en') ? 'Network error while recording the thesis.' : 'Error de red al registrar la tesis.', actions: [] }; }
   }
 
   function _handleKeyword(kw, args) {

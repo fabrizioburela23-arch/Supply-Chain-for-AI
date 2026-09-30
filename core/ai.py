@@ -2,10 +2,37 @@
 
 Compartida por las rutas del server, los agentes de la ontología y (próximo)
 el motor de matrices. Un solo lugar para proveedores, orden y parsing.
+
+Endurecimiento (auditoría estructural 2026-09-30):
+  · #2 hambre de hilos: gunicorn corre 1 worker con pocos hilos; el cliente de
+    Anthropic por defecto espera hasta 10 min y reintenta 2 veces → unas pocas
+    llamadas colgadas dejaban la app entera sin hilos. Ahora: timeout corto
+    (AI_CLAUDE_TIMEOUT_S, 60 s fast / 110 s deep), SIN reintentos del SDK en
+    timeouts (un cuelgue no se repite: la cascada pasa a Gemini/NVIDIA) y UN
+    reintento propio, corto, solo para 429/5xx/529 (sobrecarga pasajera). Un
+    SEMÁFORO limita las llamadas de IA simultáneas (AI_MAX_CONCURRENCY, 4); si
+    no hay cupo en AI_BUSY_WAIT_S (20 s) se lanza AIBusyError ("IA ocupada /
+    AI busy") y el caller devuelve su error normal en vez de colgar un hilo más.
+  · Cupo RESERVADO para el usuario (revisión 2026-09-30): el trabajo de fondo
+    (hilos sin petición HTTP: research, comité, ciclo de agentes, agente de
+    trading…) solo puede ocupar AI_MAX_CONCURRENCY − AI_INTERACTIVE_RESERVE
+    cupos (4 − 1 = 3). Así una tanda de investigaciones automáticas no deja a
+    Khipu (voz/texto) respondiendo "IA ocupada". Un hilo se considera de fondo
+    si no tiene contexto de petición de Flask; `ai_background()` lo fuerza.
+    Los pings del 🩺 (max_tokens ≤ 4) no piden cupo: un diagnóstico no debe
+    informar "falla" solo porque la IA está ocupada.
+  · #13 fugas de secretos: la key de Gemini viaja en la cabecera
+    x-goog-api-key (antes en la URL ?key=, y la URL acababa dentro del texto de
+    las excepciones de requests); los errores de proveedor se redactan con
+    core.http.redact_secrets antes de salir de aquí.
 """
 import json
-import re
 import logging
+import os
+import re
+import threading
+import time
+from contextlib import contextmanager
 
 import requests
 
@@ -15,9 +42,150 @@ from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, CLAUDE,
 log = logging.getLogger(__name__)
 
 
+def _env_num(name, default, lo, hi, cast=float):
+    try:
+        v = cast(os.getenv(name, default))
+    except (TypeError, ValueError):
+        v = cast(default)
+    return max(lo, min(hi, v))
+
+
+# ── Límite de concurrencia de IA (auditoría #2) ─────────────────────────────
+AI_MAX_CONCURRENCY = _env_num('AI_MAX_CONCURRENCY', 4, 1, 32, int)
+AI_BUSY_WAIT_S = _env_num('AI_BUSY_WAIT_S', 20, 1, 120)
+CLAUDE_TIMEOUT_FAST_S = _env_num('AI_CLAUDE_TIMEOUT_S', 60, 5, 600)
+CLAUDE_TIMEOUT_DEEP_S = _env_num('AI_CLAUDE_TIMEOUT_DEEP_S', 110, 5, 600)
+# cupos que el trabajo de fondo NUNCA puede ocupar (quedan para el usuario)
+AI_INTERACTIVE_RESERVE = _env_num('AI_INTERACTIVE_RESERVE', 1, 0, 16, int)
+AI_PING_MAX_TOKENS = 4      # llamadas de ≤ 4 tokens = ping de diagnóstico → sin cupo
+CLAUDE_RETRY_SLEEP_S = 1.0  # espera antes del único reintento por 429/5xx/529
+_AI_SEM = threading.BoundedSemaphore(AI_MAX_CONCURRENCY)
+_AI_BG_SEM = threading.BoundedSemaphore(max(1, AI_MAX_CONCURRENCY - AI_INTERACTIVE_RESERVE))
+_AI_TLS = threading.local()
+
+
+class AIBusyError(RuntimeError):
+    """Demasiadas llamadas de IA simultáneas: se rechaza en vez de colgar un hilo."""
+
+    def __init__(self, msg=None):
+        super().__init__(msg or 'IA ocupada: demasiadas consultas a la vez, reintenta en unos segundos '
+                                '/ AI busy: too many concurrent requests, retry in a few seconds')
+
+
+def _is_background():
+    """¿Este hilo es trabajo de FONDO? `ai_background()` manda; si no, un hilo
+    sin contexto de petición de Flask (research, comité, ciclo de agentes,
+    agente de trading, warmers) es de fondo y una petición HTTP es interactiva."""
+    forced = getattr(_AI_TLS, 'background', None)
+    if forced is not None:
+        return bool(forced)
+    try:
+        from flask import has_request_context
+        return not has_request_context()
+    except Exception:  # noqa: BLE001 — sin Flask: se trata como interactivo
+        return False
+
+
+@contextmanager
+def ai_background(flag=True):
+    """Marca explícitamente las llamadas de IA de este hilo como de fondo
+    (flag=True) o interactivas (flag=False), p. ej. un hilo que atiende a un
+    usuario que espera la respuesta."""
+    prev = getattr(_AI_TLS, 'background', None)
+    _AI_TLS.background = flag
+    try:
+        yield
+    finally:
+        _AI_TLS.background = prev
+
+
+@contextmanager
+def _ai_slot(max_tokens=None):
+    """Ocupa un cupo del semáforo de IA. REENTRANTE por hilo: la cascada
+    (_ai_complete_raw) toma el cupo una vez y los proveedores que llama no
+    vuelven a pedirlo; research/llm.py y el 🩺 llaman a los proveedores directo
+    y así también quedan limitados. El trabajo de fondo pasa ANTES por
+    _AI_BG_SEM (más chico) → nunca ocupa los AI_INTERACTIVE_RESERVE cupos del
+    usuario. max_tokens ≤ AI_PING_MAX_TOKENS (ping del 🩺) → sin cupo."""
+    depth = getattr(_AI_TLS, 'depth', 0)
+    if depth > 0 or (max_tokens is not None and _small(max_tokens)):
+        _AI_TLS.depth = depth + 1
+        try:
+            yield
+        finally:
+            _AI_TLS.depth -= 1
+        return
+    sem = _AI_SEM
+    bg_sem = _AI_BG_SEM if _is_background() else None   # se libera EL MISMO que se tomó
+    t0 = time.monotonic()
+    if bg_sem is not None and not bg_sem.acquire(timeout=AI_BUSY_WAIT_S):
+        log.warning('IA ocupada (fondo): cupos de fondo llenos tras %.0f s', AI_BUSY_WAIT_S)
+        raise AIBusyError()
+    left = max(0.05, AI_BUSY_WAIT_S - (time.monotonic() - t0))
+    if not sem.acquire(timeout=left):
+        if bg_sem is not None:
+            bg_sem.release()
+        log.warning('IA ocupada: %d llamadas en curso, se rechaza una más tras %.0f s',
+                    AI_MAX_CONCURRENCY, AI_BUSY_WAIT_S)
+        raise AIBusyError()
+    _AI_TLS.depth = 1
+    try:
+        yield
+    finally:
+        _AI_TLS.depth = 0
+        sem.release()
+        if bg_sem is not None:
+            bg_sem.release()
+
+
+def _small(max_tokens):
+    try:
+        return int(max_tokens) <= AI_PING_MAX_TOKENS
+    except (TypeError, ValueError):
+        return False
+
+
+def _redact(e, limit=160):
+    """Texto de error SIN secretos (valores de env + patrones key=/Bearer/…)."""
+    try:
+        from core.http import redact_secrets
+        return redact_secrets(e, extra=(CLAUDE, GEMINI_KEY, NVIDIA_KEY), limit=limit)
+    except Exception:  # noqa: BLE001 — nunca romper el camino de error
+        return type(e).__name__ if isinstance(e, BaseException) else '(error)'
+
+
 def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
+    with _ai_slot(max_tokens):
+        return _complete_claude_inner(system, prompt, max_tokens, tier, model)
+
+
+def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
     import anthropic
-    client = anthropic.Anthropic(api_key=CLAUDE)
+    # timeout corto y SIN reintentos del SDK (el default: 10 min y 2 reintentos →
+    # un hilo de gunicorn podía quedar atado media hora a una llamada colgada; y
+    # el SDK también reintenta los TIMEOUTS, lo que duplicaba el cuelgue). Solo
+    # 429/5xx/529 se reintentan UNA vez, aquí abajo, tras CLAUDE_RETRY_SLEEP_S.
+    client = anthropic.Anthropic(api_key=CLAUDE, max_retries=0,
+                                 timeout=CLAUDE_TIMEOUT_DEEP_S if tier == 'deep' else CLAUDE_TIMEOUT_FAST_S)
+    _net_errors = tuple(c for c in (getattr(anthropic, 'APITimeoutError', None),
+                                    getattr(anthropic, 'APIConnectionError', None)) if c)
+    _status_error = getattr(anthropic, 'APIStatusError', None)
+
+    def _transient(e):
+        # sobrecarga/límite pasajero: 408/409/429 o 5xx (incluye 529 overloaded)
+        if not (_status_error and isinstance(e, _status_error)):
+            return False
+        code = getattr(e, 'status_code', None) or getattr(getattr(e, 'response', None), 'status_code', 0) or 0
+        return code in (408, 409, 429) or code >= 500
+
+    def _create(**kw):
+        try:
+            return client.messages.create(**kw)
+        except Exception as e:  # noqa: BLE001
+            if not _transient(e):
+                raise
+            time.sleep(CLAUDE_RETRY_SLEEP_S)
+            return client.messages.create(**kw)     # un solo reintento; si falla, sale
     # Híbrido: el tier elige el modelo (misma ANTHROPIC_KEY). `model` lo SOBRESCRIBE
     # para elegir el mejor modelo POR TAREA (p.ej. claude-opus-4-8 en la capa
     # proactiva, donde el juicio importa más que la latencia).
@@ -54,22 +222,45 @@ def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
         ]
         for extra, mt in attempts:
             try:
-                msg = client.messages.create(
+                msg = _create(
                     model=m, max_tokens=mt, system=base['system'],
                     messages=base['messages'], **extra)
             except TypeError:
                 continue           # SDK no conoce `thinking` → intento sin él
             except Exception as e:  # noqa: BLE001 — error de API con este modelo
+                if _net_errors and isinstance(e, _net_errors):
+                    # timeout / red caída: probar OTRO modelo Claude no ayuda y
+                    # ataría el hilo N veces más → pasa directo a Gemini/NVIDIA.
+                    raise RuntimeError(f'{type(e).__name__}: ' + _redact(e, 120)) from None
                 last_err = e
                 break              # prueba el siguiente modelo Claude
             text = _text_of(msg)
             if text.strip():
                 return text, msg.model
             # texto vacío (el pensamiento se comió el budget) → siguiente intento
-    raise last_err or RuntimeError('claude: sin texto de ningún modelo')
+    if last_err is not None:
+        raise RuntimeError(_redact(last_err, 160)) from None
+    raise RuntimeError('claude: sin texto de ningún modelo')
 
 
-def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False):  # noqa: ARG001 — tier no aplica
+def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False):
+    with _ai_slot(max_tokens):
+        return _complete_gemini_inner(system, prompt, max_tokens, tier, json_mode)
+
+
+def _gemini_post(url, body, timeout):
+    """POST a Gemini con la key en la CABECERA x-goog-api-key (nunca en la URL:
+    la URL termina dentro del texto de las excepciones de requests → logs/🩺)."""
+    try:
+        return requests.post(url, json=body, timeout=timeout,
+                             headers={'x-goog-api-key': GEMINI_KEY, 'Content-Type': 'application/json'})
+    except requests.exceptions.Timeout:
+        raise RuntimeError('Gemini timeout') from None
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f'Gemini red ({type(e).__name__})') from None
+
+
+def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False):  # noqa: ARG001 — tier no aplica
     """json_mode (lo usa research/): pide JSON estricto (responseMimeType), da
     más presupuesto y apaga el "pensamiento" en modelos flash — en 2.5 el
     pensamiento consume maxOutputTokens y cortaba el JSON a la mitad
@@ -82,13 +273,21 @@ def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False): 
             gen['thinkingConfig'] = {'thinkingBudget': 0}
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
             'generationConfig': gen}
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent?key={GEMINI_KEY}'
-    r = requests.post(url, json=body, timeout=90 if json_mode else 45)
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
+    r = _gemini_post(url, body, 90 if json_mode else 45)
     if r.status_code == 400 and 'thinkingConfig' in gen:
         gen.pop('thinkingConfig')            # modelo que no acepta apagar el pensamiento
-        r = requests.post(url, json=body, timeout=90)
+        r = _gemini_post(url, body, 90)
     if not r.ok:
-        raise RuntimeError(f'Gemini HTTP {r.status_code}')
+        # solo el código + el estado simbólico de Google (NOT_FOUND, PERMISSION_DENIED…):
+        # nada del cuerpo libre, que podría repetir datos de la petición.
+        st = ''
+        try:
+            st = str(((r.json() or {}).get('error') or {}).get('status') or '')
+        except Exception:  # noqa: BLE001
+            st = ''
+        st = st if re.fullmatch(r'[A-Z_]{3,40}', st or '') else ''
+        raise RuntimeError(f'Gemini HTTP {r.status_code}' + (f' {st}' if st else ''))
     cands = (r.json() or {}).get('candidates') or []
     if not cands:
         raise RuntimeError('Gemini sin candidates')
@@ -99,13 +298,23 @@ def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False): 
     return text, 'gemini:' + GEMINI_MODEL
 
 
-def _complete_nvidia(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
+def _complete_nvidia(system, prompt, max_tokens, tier='fast'):
+    with _ai_slot(max_tokens):
+        return _complete_nvidia_inner(system, prompt, max_tokens, tier)
+
+
+def _complete_nvidia_inner(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
     body = {'model': NVIDIA_MODEL, 'max_tokens': max_tokens, 'temperature': 0.6,
             'messages': [{'role': 'system', 'content': system or ''},
                          {'role': 'user', 'content': prompt or ''}]}
-    r = requests.post('https://integrate.api.nvidia.com/v1/chat/completions',
-                      headers={'Authorization': f'Bearer {NVIDIA_KEY}', 'Accept': 'application/json'},
-                      json=body, timeout=45)
+    try:
+        r = requests.post('https://integrate.api.nvidia.com/v1/chat/completions',
+                          headers={'Authorization': f'Bearer {NVIDIA_KEY}', 'Accept': 'application/json'},
+                          json=body, timeout=45)
+    except requests.exceptions.Timeout:
+        raise RuntimeError('NVIDIA timeout') from None
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f'NVIDIA red ({type(e).__name__})') from None
     if not r.ok:
         raise RuntimeError(f'NVIDIA HTTP {r.status_code}')
     return (r.json()['choices'][0]['message']['content']), 'nvidia:' + NVIDIA_MODEL
@@ -169,20 +378,26 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
     if CLAUDE:
         order = ['claude'] + [n for n in order if n != 'claude']
     errors = []
-    for name in order:
-        prov = _AI_PROVIDERS.get(name)
-        if not prov or not prov[0]():
-            continue
-        try:
-            if name == 'claude':
-                text, used = prov[1](system, prompt, max_tokens, tier, model=model)
-            else:
-                text, used = prov[1](system, prompt, max_tokens, tier)
-            if text and text.strip():
-                return text, used
-            errors.append(f'{name}: respuesta vacía')
-        except Exception as e:  # noqa: BLE001
-            errors.append(f'{name}: {str(e)[:80]}')
+    # UN cupo del semáforo para toda la cascada (los proveedores son reentrantes):
+    # si no hay cupo, AIBusyError sale tal cual — probar el siguiente proveedor
+    # esperaría otra vez y ataría el hilo el triple.
+    with _ai_slot():
+        for name in order:
+            prov = _AI_PROVIDERS.get(name)
+            if not prov or not prov[0]():
+                continue
+            try:
+                if name == 'claude':
+                    text, used = prov[1](system, prompt, max_tokens, tier, model=model)
+                else:
+                    text, used = prov[1](system, prompt, max_tokens, tier)
+                if text and text.strip():
+                    return text, used
+                errors.append(f'{name}: respuesta vacía')
+            except AIBusyError:
+                raise
+            except Exception as e:  # noqa: BLE001
+                errors.append(f'{name}: {_redact(e, 100)}')
     raise RuntimeError('Ningún proveedor de IA respondió. ' + ('; '.join(errors) or 'sin keys configuradas'))
 
 

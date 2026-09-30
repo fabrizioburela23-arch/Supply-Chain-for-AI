@@ -1,0 +1,80 @@
+# constraints.txt — versiones EXACTAS probadas (auditoría estructural 2026-09-30, #19).
+#
+# requirements.txt dice QUÉ necesita la app (con rangos >=); este archivo fija
+# CON QUÉ versión exacta se construye la imagen:
+#     pip install -r requirements.txt -c constraints.txt      (ver Dockerfile)
+# Sin él, cada deploy instalaba "lo último" y una versión mayor nueva podía
+# romper producción sin tocar código (pasó: SQLAlchemy 2.1 → psycopg 3 →
+# "No module named 'psycopg'", 2026-09-28).
+#
+# Estas versiones pasan `pytest tests/` (Python 3.11, igual que la imagen
+# python:3.11-slim). Para actualizar: subir la versión aquí, correr los tests
+# y desplegar. Un paquete que no está en requirements.txt no se instala por
+# estar aquí (-c solo restringe versiones).
+
+# ── requirements.txt ────────────────────────────────────────────────────────
+Flask==3.1.3
+requests==2.33.1
+python-dotenv==1.2.3
+Flask-Caching==2.5.1
+Flask-Compress==1.25
+brotli==1.2.0
+anthropic==1.7.0
+gunicorn==26.2.0
+PyJWT==2.14.0
+numpy==2.4.6
+scipy==1.17.1
+pytest==9.1.1
+neo4j==6.3.1
+# <2.1 obligatorio: SQLAlchemy 2.1 usa psycopg 3 por defecto (no instalado).
+SQLAlchemy==2.0.54
+psycopg2-binary==2.9.13
+pydantic==2.13.5
+# Fernet de brokerage/crypto.py. Se fija la versión ACTUAL de PyPI (no la 41.x
+# del sistema de desarrollo, que tiene CVEs conocidos); probada con
+# tests/test_brokerage.py en un entorno limpio.
+cryptography==50.0.1
+
+# ── dependencias transitivas importantes ────────────────────────────────────
+# Flask
+Werkzeug==3.1.8
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+itsdangerous==2.2.0
+click==8.5.0
+blinker==1.9.0
+# Flask-Caching / Flask-Compress
+cachelib==0.17.0
+backports.zstd==1.7.0
+# requests
+urllib3==2.6.3
+certifi==2026.2.25
+charset-normalizer==3.4.6
+# 3.18 (no la 3.11 del sistema de desarrollo): httpx2 2.13 exige idna>=3.18
+idna==3.18
+# anthropic
+anyio==4.15.1
+sniffio==1.3.1
+jiter==0.17.0
+docstring_parser==0.18.0
+httpx2==2.13.0
+httpcore2==2.13.0
+h11==0.16.0
+truststore==0.10.4
+# pydantic
+pydantic_core==2.46.5
+annotated-types==0.8.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+# SQLAlchemy
+greenlet==3.5.6
+# neo4j
+pytz==2026.3.post1
+# cryptography
+cffi==2.1.1
+pycparser==3.0
+# pytest
+iniconfig==2.3.0
+pluggy==1.6.0
+Pygments==2.21.0
+packaging==26.3

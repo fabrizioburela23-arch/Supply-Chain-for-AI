@@ -21,7 +21,7 @@
   var NEON = '#00E0FF', VIOLET = '#8e5aff', UP = '#2BE38B', DOWN = '#FF4D6A';
   var open = false;
 
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   // idioma para los textos de la Cabina (regla bilingüe)
   function ckLang() {
@@ -72,6 +72,8 @@
     sending:     { es: 'Enviando orden…', en: 'Sending order…' },
     sent:        { es: '✓ Orden enviada', en: '✓ Order sent' },
     dedup:       { es: '(ya se había enviado — no se duplicó)', en: '(already sent — not duplicated)' },
+    brokerDup:   { es: 'Esa orden ya había llegado al bróker — no se envió dos veces. Si quieres OTRA igual, vuelve a enviarla.',
+                   en: 'That order had already reached the broker — it was not sent twice. If you want ANOTHER identical one, send it again.' },
     canceled:    { es: 'Orden cancelada — no se envió nada.', en: 'Order canceled — nothing was sent.' },
     loading:     { es: 'Cargando cuenta del bróker…', en: 'Loading broker account…' },
     connectErr:  { es: 'No pude conectar con el bróker.', en: 'Could not reach the broker.' },
@@ -1035,7 +1037,15 @@
   }
   function paintConfirmBadge() {
     var el = document.getElementById('bcp-bk-cbadge');
-    if (el && _bkAcct) el.innerHTML = badgeHTML(typeof _bkAcct.paper === 'boolean' ? _bkAcct.paper : null);
+    if (!el) return;
+    if (_bkAcct && typeof _bkAcct.paper === 'boolean') { el.innerHTML = badgeHTML(_bkAcct.paper); return; }
+    // Cuenta aún sin cargar (sin PIN guardado, p. ej. tras caducar las 12 h):
+    // el modo sale de /api/trade/status, público → la tarjeta de confirmación
+    // NUNCA queda sin 🧪/🔴 (la cuenta, cuando llegue, manda sobre éste).
+    if (window._tradeStatusInfo) window._tradeStatusInfo().then(function (s) {
+      var e2 = document.getElementById('bcp-bk-cbadge');
+      if (e2 && s && typeof s.paper === 'boolean' && !(_bkAcct && typeof _bkAcct.paper === 'boolean')) e2.innerHTML = badgeHTML(s.paper);
+    }).catch(function () {});
   }
   function fmtUsd(v) { return '$' + (Number(v) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 
@@ -1204,7 +1214,8 @@
       if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">' + esc(res.error || L('símbolo', 'symbol')) + '</span>'; return; }
       var r = await window._executeTradeOrder({ symbol: res.symbol, side: side, label: res.label, kind: res.kind, notional: _scalpAmt });
       st = document.getElementById('bcp-scalp-status');
-      if (r && r.ok) { if (st) st.innerHTML = '<span style="color:' + col + '">✓ ' + (side === 'buy' ? (en ? 'Bought' : 'Compraste') : (en ? 'Sold' : 'Vendiste')) + ' $' + _scalpAmt + ' ' + esc(res.label) + '</span>'; setTimeout(_scalpLoadPos, 900); }
+      if (r && r.ok && r.dedup) { if (st) st.innerHTML = '<span style="color:#FFB300">' + (r.broker_dup ? esc(tb('brokerDup')) : (en ? 'That same order was already sent a moment ago — it was not sent twice.' : 'Esa misma orden ya se envió hace un momento — no se envió dos veces.')) + '</span>'; setTimeout(_scalpLoadPos, 900); }
+      else if (r && r.ok) { if (st) st.innerHTML = '<span style="color:' + col + '">✓ ' + (side === 'buy' ? (en ? 'Bought' : 'Compraste') : (en ? 'Sold' : 'Vendiste')) + ' $' + _scalpAmt + ' ' + esc(res.label) + '</span>'; setTimeout(_scalpLoadPos, 900); }
       else if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((r && r.error) || 'error') + '</span>';
     } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
   }
@@ -1236,7 +1247,7 @@
       var r = await window._tradeFetch('/api/trade/close', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ symbol: _scalpSym }) }, false);
       st = document.getElementById('bcp-scalp-status');
       if (r && r.status < 400) { if (st) st.innerHTML = '<span style="color:#34d399">✓ ' + (en ? 'Position closed' : 'Posición cerrada') + '</span>'; setTimeout(_scalpLoadPos, 900); }
-      else { var d = {}; try { d = await r.json(); } catch (e2) {} if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((d && (d.message || d.error)) || 'error') + '</span>'; }
+      else { var d = {}; try { d = await r.json(); } catch (e2) {} if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc(window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && (d.message || d.error)) || 'error')) + '</span>'; }
     } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
   }
   function stageScalp(s, arg) {
@@ -1359,7 +1370,7 @@
   async function _homePulse() {
     var el = document.getElementById('bcp-home-pulse');
     if (!el) return;
-    var hasPin = false; try { hasPin = !!localStorage.getItem('khipu_trade_pin'); } catch (e) {}
+    var hasPin = !!(window._tradePinStored && window._tradePinStored());
     if (!hasPin || !window._tradeAccountInfo || !window._tradeFetch) return;
     var en = ckLang() === 'en';
     try {
@@ -1480,12 +1491,17 @@
       : Promise.resolve({ ok: false, error: L('trading no disponible', 'trading unavailable') });
     exec.then(function (r) {
       var st = document.getElementById('bcp-bk-cstatus');   // pudo cambiar de escena
-      if (r && r.ok) {
+      if (r && r.ok && r.broker_dup) {
+        // el server devolvió la orden que YA existía (duplicate:true): no hay orden nueva
+        if (st) { st.style.color = '#FFB300'; st.textContent = tb('brokerDup'); }
+        setTimeout(function () { loadBroker(false, true); }, 1000);
+      } else if (r && r.ok) {
         if (st) { st.style.color = UP; st.textContent = '✓ ' + tb('sent') + ' — ' + ((r.data && r.data.status) || 'accepted') + (r.dedup ? ' ' + tb('dedup') : ''); }
         setTimeout(function () { loadBroker(false, true); }, 1000);
       } else if (st) {
         st.style.color = DOWN;
-        st.textContent = '⚠ ' + (en ? 'The broker rejected it: ' : 'El bróker la rechazó: ') + ((r && r.error) || 'error');
+        // ambigua (red/timeout/5xx) = NO es un rechazo: pudo haber entrado
+        st.textContent = '⚠ ' + ((r && r.ambiguous) ? '' : (en ? 'The broker rejected it: ' : 'El bróker la rechazó: ')) + ((r && r.error) || 'error');
       }
     }).catch(function (e) {
       var st = document.getElementById('bcp-bk-cstatus');
@@ -1512,8 +1528,8 @@
           '<div style="padding:16px;border:1px solid rgba(0,224,255,.25);border-radius:12px;background:rgba(0,224,255,.05)">' +
             '<div style="font-size:13.5px;font-weight:700;margin-bottom:6px">🔒 ' + (en2 ? 'Trading PIN' : 'PIN de trading') + '</div>' +
             '<div style="font-size:12px;color:#7C87A3;margin-bottom:10px">' +
-              (en2 ? 'Enter the PIN you set as TRADE_PIN in Railway. Asked only once per device.'
-                   : 'Ingresa el PIN que configuraste como TRADE_PIN en Railway. Se pide una sola vez por dispositivo.') + '</div>' +
+              (en2 ? 'Enter the PIN you set as TRADE_PIN in Railway. It is remembered on this device for 12 hours.'
+                   : 'Ingresa el PIN que configuraste como TRADE_PIN en Railway. Se recuerda 12 horas en este dispositivo.') + '</div>' +
             '<div style="display:flex;gap:8px"><input id="bcp-bk-pin" type="password" inputmode="numeric" autocomplete="off" ' +
               'style="flex:1;max-width:200px;padding:8px 12px;border-radius:8px;border:1px solid rgba(122,158,255,.3);background:rgba(8,14,26,.8);color:#E8EDFB;font-size:14px" ' +
               'placeholder="' + (en2 ? 'PIN' : 'PIN') + '">' +
@@ -1524,7 +1540,7 @@
         var submitPin = function () {
           var v = (pinInp.value || '').trim();
           if (!v) return;
-          try { localStorage.setItem('khipu_trade_pin', v); } catch (e) {}
+          if (window._tradePinSave) window._tradePinSave(v);   // recordado 12 h (app.html)
           loadBroker(false, true);
         };
         pinBtn.addEventListener('click', submitPin);

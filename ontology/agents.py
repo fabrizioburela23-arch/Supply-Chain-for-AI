@@ -17,7 +17,7 @@ Contrato de un agente: observe(session) -> list[Signal]; propose(session, Signal
 import time as _time
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, func as sqlfunc
+from sqlalchemy import select, update, func as sqlfunc
 
 from ontology.models import ObjectRecord, LinkRecord, ProposedAction, Event
 
@@ -713,14 +713,23 @@ def auto_cycle(session, actor='agent:auto'):
         if p.action_type not in SAFE_AUTO or (p.confidence or 0) < AUTO_MIN_CONFIDENCE:
             left += 1
             continue
-        # SAVEPOINT por propuesta: una acción que falle en SQL no aborta el ciclo
+        # SAVEPOINT por propuesta: una acción que falle en SQL no aborta el ciclo.
+        # RECLAMO ATÓMICO antes de ejecutar (auditoría 2026-09-30, #22): si un
+        # humano (o otro ciclo) la aprobó/rechazó en paralelo, rowcount != 1 y
+        # no se ejecuta dos veces.
         sp = session.begin_nested()
         try:
+            claimed = session.execute(
+                update(ProposedAction)
+                .where(ProposedAction.id == p.id, ProposedAction.status == 'pending')
+                .values(status='approved', resolved_at=_utcnow(), resolved_by=actor)
+                .execution_options(synchronize_session=False)).rowcount
+            if claimed != 1:
+                sp.rollback()
+                continue
             execute_action(session, p.action_type, p.payload, f'{p.agent} → {actor}')
             sp.commit()
-            p.status = 'approved'
-            p.resolved_at = _utcnow()
-            p.resolved_by = actor
+            session.refresh(p)
             applied.append({'agent': p.agent, 'action': p.action_type,
                             'object': p.object_id, 'explanation': (p.explanation or '')[:160]})
         except Exception as e:  # noqa: BLE001 — una propuesta inválida no tumba el ciclo
@@ -728,9 +737,15 @@ def auto_cycle(session, actor='agent:auto'):
                 sp.rollback()
             except Exception:  # noqa: BLE001
                 pass
-            p.status = 'rejected'
-            p.resolved_at = _utcnow()
-            p.resolved_by = f'{actor} (error: {str(e)[:80]})'
+            session.execute(
+                update(ProposedAction)
+                .where(ProposedAction.id == p.id, ProposedAction.status == 'pending')
+                .values(status='rejected', resolved_at=_utcnow(), resolved_by=f'{actor} (error: {str(e)[:80]})')
+                .execution_options(synchronize_session=False))
+            try:
+                session.refresh(p)
+            except Exception:  # noqa: BLE001
+                pass
     return {'agents': summary, 'auto_applied': applied, 'left_for_human': left}
 
 

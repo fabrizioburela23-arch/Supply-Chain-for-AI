@@ -140,7 +140,7 @@ class SecondBrain {
         ${news.length === 0 ? '<div style="color:var(--ink-3);font-size:12px">Sin noticias disponibles</div>' :
           news.slice(0, 8).map(item => {
             const s = (typeof sentiment === 'function') ? sentiment(item.headline) : { cls: '', icon: '' };
-            return `<a href="${esc(item.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
+            return `<a href="${window.safeUrl ? window.safeUrl(item.url) : esc(/^https?:\/\//i.test(item.url || '') ? item.url : '#')}" target="_blank" rel="noopener" style="display:block;padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
               <div style="display:flex;gap:8px;font-size:10.5px;color:var(--ink-3);margin-bottom:3px">
                 <span>${esc(item.source || '')}</span><span>${typeof relTime === 'function' ? relTime(item.datetime) : ''}</span>
                 <span class="${s.cls}">${s.icon}</span></div>

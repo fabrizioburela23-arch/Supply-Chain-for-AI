@@ -21,7 +21,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   inline. Tabs: map, market, analysis, geo, simulation, space, terminal,
   canvas, tkg (◈ Grafo Temporal — ya SIN botón de pestaña: se abre como vista
   desde ⏱ del mapa, engine/maptime.js), guia (❓ Guía).
-- `server.py` (~2,500 líneas): Flask sync + gunicorn **1 worker + 8 threads**
+- `server.py` (~2,500 líneas): Flask sync + gunicorn **1 worker + GUNICORN_THREADS (12)**, `exec` + `--graceful-timeout 25`
   (NO subir workers: el estado en memoria — caché, rate limits, agente de
   trading — divergiría entre workers). Proxy de todas las APIs externas.
 - `core/` (paquete Python): helpers compartidos server/ontology/matrix —
@@ -239,8 +239,8 @@ nuevas en command_center: xray, compare, insights, livesim.
    `git checkout main && git merge --ff-only` → push AMBAS ramas (con
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
-   `py_compile` de los .py tocados; los 8 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (279 tests; los de ontología se
+   `py_compile` de los .py tocados; los 10 bloques inline de app.html con
+   `new vm.Script()`; `pytest tests/ -q` (668 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -266,6 +266,9 @@ BROKERAGE_LIVE_ENABLED (off), BROKERAGE_AUTO_APPROVE_PAPER (off), BROKERAGE_APPR
 ALPACA_OAUTH_CLIENT_ID / ALPACA_OAUTH_CLIENT_SECRET / ALPACA_OAUTH_REDIRECT_URI  ← corretaje multi-cliente
 MCP_ENABLED, MCP_TRADING_ENABLED, MCP_OAUTH_ENABLED, MCP_PUBLIC_URL, MCP_ALLOWED_ORIGINS/HOSTS  ← MCP
 WORLD_GDELT_QUERY_CONFLICT / _UNREST / _TRADE, WORLD_GDELT_GEO_URL  ← World Monitor (ajustar sin tocar código)
+FINNHUB_WS_KEY (clave Finnhub separada para el navegador), GUNICORN_THREADS (12), GUNICORN_MAX_REQUESTS (0 — dejar en 0),
+AI_MAX_CONCURRENCY (4), AI_INTERACTIVE_RESERVE (1), AI_CLAUDE_TIMEOUT_S, DB_POOL_SIZE/DB_MAX_OVERFLOW (10/10),
+DB_STATEMENT_TIMEOUT_MS, MATRIX_HEAVY_CONCURRENCY (1), REMIGRATE_ON_BOOT=<nombre de la base>  ← estructura
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)
@@ -297,6 +300,32 @@ bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:
 - **NO correr `REMIGRATE_ON_BOOT` sobre la base de producción**: es la base
   ORIGINAL (1.294 objetos, reconectada 2026-09-22), con ~216 objetos que el
   repo no puede reconstruir. Es destructiva. Solo para bases nuevas y vacías.
+- **ENDURECIMIENTO 2026-09-30 (auditoría estructural, no revertir)**:
+  - PIN: `core/pin.py` es el ÚNICO verificador (trade, brokerage, MCP, comité,
+    escrituras de ontología con `require_operator`). En el cliente el PIN dura
+    12 h (`khipu_trade_pin` + `khipu_trade_pin_exp`): leer SIEMPRE con
+    `window._tradePinStored()` / guardar con `_tradePinSave()`; llamadas con
+    PIN SIEMPRE por `window._tradeFetch(url, opts, interactive)` (acepta
+    `opts.timeout`).
+  - Órdenes: `client_order_id` en todo envío (`_tradeOrderId`/`_tradeOrderSettle`/
+    `_tradeOrderIsDup`, pendientes en `khipu_coid_pending` 24 h); el panel ya NO
+    simula en silencio si falla (solo con trading_disabled/broker_not_configured).
+  - Enlaces externos: `window.safeUrl(u)` (solo http/https, escapado) + guard de
+    clic que bloquea javascript:/vbscript:/data:. `esc()` escapa `'`.
+  - Service worker: NUNCA cachea /api, /v1, /mcp, /oauth, /.well-known (offline
+    → JSON 503 {offline:true}); estático solo si res.ok && basic; navegación con
+    10 s de límite → shell guardado con `window.__KHIPU_STALE_SHELL=1`; la
+    franja roja de "servidor no disponible" vive en el PRIMER bloque inline.
+    `const CACHE` debe quedar en los primeros 2048 caracteres de sw.js
+    (server._sw_version los lee para el ?v=N).
+  - `window.khJSON(r)` valida que la respuesta sea JSON; `window.LANG` ahora es
+    un getter (antes los módulos engine/* leían undefined).
+  - Server: errores JSON en /api; `@cache.cached` no guarda errores (fallbacks
+    60 s); IA con timeout y semáforo (AI_MAX_CONCURRENCY 4, reserva interactiva
+    1); DB con pool/statement timeout; matrix con topes y semáforo pesado.
+  - `REMIGRATE_ON_BOOT` ahora debe ser EXACTAMENTE el nombre de la base (una
+    vez; `<nombre>:2` para repetir) y NUNCA borra tablas broker_*/mcp_*/research_*.
+  - requirements + `constraints.txt` (versiones exactas) — no quitar.
 - **Mapa principal**: la física se asienta SIN dibujar (`settleGraph()`); solo
   el arrastre pinta en vivo (`_liveTick`). No reintroducir `sim.alpha().restart()`
   fuera del drag: son ~11.000 escrituras al DOM por fotograma.

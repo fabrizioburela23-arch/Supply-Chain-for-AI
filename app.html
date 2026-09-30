@@ -1365,6 +1365,306 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     if(l&&l.parentNode){ l.style.opacity='0'; setTimeout(function(){ if(l.parentNode) l.parentNode.removeChild(l); },600); }
   }, 7000);
 })();
+
+/* ── Seguridad compartida del cliente (auditoría estructural 2026-09-30) ──────
+   Va en el PRIMER bloque inline para que todo engine/*.js lo encuentre ya
+   definido. UN solo lugar para:
+   - safeUrl(u): href seguro (solo http/https, escapado) para URLs externas (#18)
+   - khJSON(r): parsea JSON o lanza {offline:true,status} bilingüe si el server
+     devolvió HTML/otra cosa (502 del proxy, shell viejo) (#4)
+   - PIN de trading/operador: localStorage.khipu_trade_pin + _exp (12 h);
+     vencido = ausente. Lectores: window._tradePinStored() (#18)
+   - window._tradeFetch(url, opts, interactive): header X-Trade-Pin. Nunca
+     manda una petición SIN PIN a un server que lo exige (cada intento sin PIN
+     cuenta para el bloqueo global de core/pin.py) → 401 sintético local.
+   - window._tradeStatusInfo(): /api/trade/status público → {pin_set, paper}
+     (el badge 🧪/🔴 se pinta sin PIN).
+   - client_order_id (UUID) estable por orden: un reintento de la MISMA orden
+     tras un error ambiguo (red/timeout/5xx) reusa el id — también tras
+     recargar u otra pestaña (localStorage khipu_coid_pending, 24 h) → el
+     server responde 200 {duplicate:true} con la orden existente en vez de
+     comprar dos veces; _tradeOrderIsDup lo reconoce (#9/#10).
+   - Guardia de enlaces: clic en href javascript:/data:/vbscript: bloqueado.
+   - window._khSrvBanner(on): franja "servidor no disponible" (sale YA si el
+     SW sirvió el shell viejo, antes de los scripts externos). */
+(function(){
+  'use strict';
+  function en(){ try { return (window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en'; } catch (e) { return false; } }
+  function escA(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  // href seguro: solo http(s) (relativas se resuelven contra este origen);
+  // javascript:/data:/vbscript: → '#'. Devuelve el valor YA escapado para
+  // un atributo HTML: usar como href="${safeUrl(x)}" (sin esc() encima).
+  window.safeUrl = function (u) {
+    var s = String(u == null ? '' : u).trim();
+    if (!s) return '#';
+    try {
+      var p = new URL(s, location.href);
+      if (p.protocol !== 'http:' && p.protocol !== 'https:') return '#';
+      return escA(p.href);
+    } catch (e) { return '#'; }
+  };
+
+  var OFF_ES = 'El servidor no respondió con datos (puede estar caído o reiniciándose).';
+  var OFF_EN = 'The server did not answer with data (it may be down or restarting).';
+  window.khJSON = function (r) {
+    var ct = '';
+    try { ct = ((r && r.headers && r.headers.get('content-type')) || '').toLowerCase(); } catch (e) {}
+    if (ct.indexOf('json') < 0) {
+      var err = new Error(en() ? OFF_EN : OFF_ES);
+      err.offline = true; err.status = r ? r.status : 0; err.error = OFF_ES; err.error_en = OFF_EN;
+      return Promise.reject(err);
+    }
+    return r.json();
+  };
+
+  // ── PIN (12 h) ──────────────────────────────────────────────────────────
+  var PIN_KEY = 'khipu_trade_pin', PIN_EXP = 'khipu_trade_pin_exp', PIN_TTL = 12 * 3600 * 1000;
+  window._tradePinClear = function () {
+    try { localStorage.removeItem(PIN_KEY); localStorage.removeItem(PIN_EXP); } catch (e) {}
+  };
+  window._tradePinSave = function (pin) {
+    pin = String(pin == null ? '' : pin).trim();
+    if (!pin) { window._tradePinClear(); return ''; }
+    try { localStorage.setItem(PIN_KEY, pin); localStorage.setItem(PIN_EXP, String(Date.now() + PIN_TTL)); } catch (e) {}
+    return pin;
+  };
+  window._tradePinStored = function () {
+    try {
+      var pin = localStorage.getItem(PIN_KEY) || '';
+      if (!pin) return '';
+      var exp = +localStorage.getItem(PIN_EXP) || 0;
+      if (!exp) {   // PIN guardado antes de la caducidad → arranca su reloj de 12 h
+        localStorage.setItem(PIN_EXP, String(Date.now() + PIN_TTL));
+        return pin;
+      }
+      if (Date.now() > exp) { window._tradePinClear(); return ''; }
+      return pin;
+    } catch (e) { return ''; }
+  };
+
+  // ¿El server exige PIN? ¿Cuenta de papel o DINERO REAL? /api/trade/status
+  // es PÚBLICO (sin PIN) y dice pin_set y paper → el badge 🧪/🔴 se puede
+  // pintar ANTES de tener el PIN. Caché 5 min; null = no se sabe (PIN: se
+  // trata como "sí"; paper: el badge espera a /api/trade/account).
+  var _pinReq = { ts: 0, v: null, paper: null, p: null };
+  function _statusFresh() { return _pinReq.v !== null && Date.now() - _pinReq.ts < 300000; }
+  window._tradeStatusInfo = function () {
+    if (_statusFresh()) return Promise.resolve({ pin_set: _pinReq.v, paper: _pinReq.paper });
+    if (_pinReq.p) return _pinReq.p;
+    var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var t = ac ? setTimeout(function () { ac.abort(); }, 5000) : null;
+    _pinReq.p = fetch((window.BASE || '') + '/api/trade/status', { cache: 'no-store', signal: ac ? ac.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var v = (d && typeof d.pin_set === 'boolean') ? d.pin_set : null;
+        var pp = (d && typeof d.paper === 'boolean') ? d.paper : null;
+        if (v !== null) { _pinReq.v = v; _pinReq.paper = pp; _pinReq.ts = Date.now(); }
+        return v === null ? null : { pin_set: v, paper: pp };
+      })
+      .catch(function () { return null; })
+      .then(function (x) { if (t) clearTimeout(t); _pinReq.p = null; return x; });
+    return _pinReq.p;
+  };
+  window._tradePinRequired = function () {
+    return window._tradeStatusInfo().then(function (x) { return x ? x.pin_set : null; });
+  };
+
+  function askPin() {
+    var msg = en()
+      ? 'Trading PIN (the TRADE_PIN value set in Railway). It is remembered on this device for 12 hours:'
+      : 'PIN de trading (el valor de TRADE_PIN configurado en Railway). Se recuerda 12 horas en este dispositivo:';
+    var p = '';
+    try { p = String(window.prompt(msg) || '').trim(); } catch (e) {}
+    return p ? window._tradePinSave(p) : '';
+  }
+  function jsonResp(status, body) {
+    return new Response(JSON.stringify(body), { status: status, headers: { 'Content-Type': 'application/json' } });
+  }
+  function send(url, o, pin, timeout) {
+    var opts = Object.assign({}, o);
+    opts.headers = Object.assign({}, o.headers || {});
+    if (pin) opts.headers['X-Trade-Pin'] = pin; else delete opts.headers['X-Trade-Pin'];
+    if (!(timeout > 0) || typeof AbortController === 'undefined' || opts.signal) return fetch(url, opts);
+    var ac = new AbortController(); opts.signal = ac.signal;
+    var t = setTimeout(function () { ac.abort(); }, timeout);
+    return fetch(url, opts).then(function (r) { clearTimeout(t); return r; }, function (e) { clearTimeout(t); throw e; });
+  }
+  // interactive=true → puede pedir el PIN (una vez; y otra si el server dice
+  // que es incorrecto). opts.timeout (ms) opcional → AbortError al vencer.
+  window._tradeFetch = async function (url, opts, interactive) {
+    var o = Object.assign({}, opts || {});
+    var timeout = +o.timeout || 0; delete o.timeout;
+    var pin = window._tradePinStored();
+    if (!pin) {
+      var required = await window._tradePinRequired();
+      if (required !== false) {
+        if (interactive) pin = askPin();
+        if (!pin) return jsonResp(401, { error: 'Falta el PIN de trading', error_en: 'Trading PIN required', code: 'pin_required' });
+      }
+    }
+    var r = await send(url, o, pin, timeout);
+    if (r.status === 401) {
+      var d = null; try { d = await r.clone().json(); } catch (e) {}
+      // solo si el 401 es NUESTRO (PIN malo/faltante), no uno de Alpaca pasado tal cual
+      if (d && (d.code === 'invalid_pin' || d.code === 'pin_required')) {
+        _pinReq.v = true; _pinReq.ts = Date.now();   // el server SÍ exige PIN (p. ej. recién configurado)
+        if (pin) window._tradePinClear();
+        if (interactive) { var p2 = askPin(); if (p2) r = await send(url, o, p2, timeout); }
+      }
+    }
+    return r;
+  };
+
+  // Texto de error del server en el idioma activo (error/error_en/message de Alpaca).
+  window._tradeErrText = function (d, status) {
+    if (d && typeof d === 'object') {
+      var m = en() ? (d.error_en || d.error || d.message) : (d.error || d.message || d.error_en);
+      if (m) return String(m);
+    }
+    return (en() ? 'Server error' : 'Error del servidor') + (status ? ' (HTTP ' + status + ')' : '');
+  };
+
+  // ── client_order_id ─────────────────────────────────────────────────────
+  window._newClientOrderId = function () {
+    try { if (window.crypto && typeof crypto.randomUUID === 'function') return crypto.randomUUID(); } catch (e) {}
+    var b = new Uint8Array(16);
+    if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
+    else for (var i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256);
+    b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    var h = Array.prototype.map.call(b, function (x) { return (x + 0x100).toString(16).slice(1); }).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  };
+  // sig = firma de la orden (símbolo|lado|monto|tipo…). Mientras la orden
+  // está en vuelo o terminó en error AMBIGUO, la misma firma reusa el id.
+  // Se guarda en localStorage (khipu_coid_pending) y no solo en memoria: tras
+  // un error ambiguo la gente RECARGA la página o abre otra pestaña, y con un
+  // id nuevo la orden se ejecutaría dos veces. 24 h: reusar el id nunca crea
+  // una orden de más (si no llegó, Alpaca la acepta como nueva; si llegó, el
+  // server responde duplicate:true y la UI lo dice y olvida el id).
+  var COID_KEY = 'khipu_coid_pending', COID_TTL = 24 * 3600 * 1000, COID_MAX = 50;
+  var _coidsMem = {}, _coidLS = true;   // _coidLS=false → localStorage no sirve: solo memoria
+  function coidLoad() {
+    var m = _coidsMem;
+    if (_coidLS) {
+      // clave ausente = nada pendiente (otra pestaña pudo resolverla); ilegible → memoria
+      try { var raw = localStorage.getItem(COID_KEY); m = raw ? JSON.parse(raw) : {}; } catch (e) { m = _coidsMem; }
+    }
+    if (!m || typeof m !== 'object' || Array.isArray(m)) m = {};
+    var now = Date.now(), out = {};
+    Object.keys(m).forEach(function (k) {
+      var e = m[k];
+      if (e && typeof e.id === 'string' && +e.ts > 0 && now - e.ts <= COID_TTL) out[k] = { id: e.id, ts: +e.ts };
+    });
+    return out;
+  }
+  function coidStore(m) {
+    var keys = Object.keys(m);
+    if (keys.length > COID_MAX) {
+      keys.sort(function (a, b) { return m[a].ts - m[b].ts; })
+        .slice(0, keys.length - COID_MAX).forEach(function (k) { delete m[k]; });
+    }
+    _coidsMem = m;
+    if (!_coidLS) return;
+    try {
+      if (Object.keys(m).length) localStorage.setItem(COID_KEY, JSON.stringify(m));
+      else localStorage.removeItem(COID_KEY);
+    } catch (e) { _coidLS = false; }   // cuota/privado: seguir en memoria (sin perder ids)
+  }
+  window._tradeOrderId = function (sig) {
+    var m = coidLoad(), e = m[sig];
+    if (!e) { e = m[sig] = { id: window._newClientOrderId(), ts: Date.now() }; coidStore(m); }
+    return e.id;
+  };
+  // ambiguous=true (red/timeout/5xx: pudo llegar al bróker) → conservar el id
+  // para el reintento; false (aceptada, duplicada o rechazada con certeza) →
+  // olvidarlo (una orden igual más tarde es una orden NUEVA).
+  window._tradeOrderSettle = function (sig, ambiguous) {
+    var m = coidLoad();
+    if (ambiguous) { if (m[sig]) m[sig].ts = Date.now(); }
+    else delete m[sig];
+    coidStore(m);
+  };
+  // ¿El historial del bróker ya muestra la orden ambigua de esta firma?
+  // → devuelve esa orden para que la UI diga "SÍ llegó". El id NO se olvida:
+  // un reintento a ciegas recibe duplicate:true (y ENTONCES se olvida), así
+  // que repetir una orden igual a propósito exige un clic más, avisado.
+  window._tradeOrderResolve = function (sig, orders) {
+    var e = coidLoad()[sig];
+    if (!e || !Array.isArray(orders)) return null;
+    for (var i = 0; i < orders.length; i++) {
+      var o = orders[i];
+      if (o && o.client_order_id === e.id) return o;
+    }
+    return null;
+  };
+  window._tradeOrderAmbiguous = function (status) {
+    return !status || status === 408 || status >= 500;
+  };
+  // ¿Esa orden YA había entrado? Contrato de server.py trade_order: el 422 de
+  // Alpaca "client_order_id must be unique" se convierte en HTTP 200 con la
+  // orden existente y duplicate:true. Si esa consulta falla, llega el 422
+  // (code broker_rejected) — se reconocen ambos.
+  window._tradeOrderIsDup = function (status, d) {
+    if (status >= 200 && status < 300) return !!(d && typeof d === 'object' && d.duplicate === true);
+    if (status !== 422 && status !== 409) return false;
+    try { return /client_order_id/i.test(JSON.stringify(d || {})); } catch (e) { return false; }
+  };
+
+  // ── Enlaces con esquema peligroso (#18, defensa en profundidad) ─────────
+  // Ningún enlace de la app usa javascript:/data:/vbscript:. Si alguno llega
+  // desde datos externos (noticias, fuentes) a un href sin safeUrl — p. ej. en
+  // un módulo engine/*.js — su activación se bloquea aquí (clic, clic central,
+  // Enter). Así una URL maliciosa no puede ejecutar código ni leer el PIN.
+  var XLINK = 'http://www.w3.org/1999/xlink';
+  function badScheme(h) {
+    if (!h) return false;
+    try { var p = new URL(String(h), location.href).protocol; return p === 'javascript:' || p === 'data:' || p === 'vbscript:'; }
+    catch (e) { return /^\s*(javascript|data|vbscript):/i.test(String(h).replace(/[\u0000-\u001f]/g, '')); }
+  }
+  function guardLinks(ev) {
+    var n = ev.target;
+    while (n && n.nodeType === 1) {
+      if (String(n.localName || n.nodeName).toLowerCase() === 'a') {
+        var h = n.getAttribute('href') || (n.getAttributeNS && n.getAttributeNS(XLINK, 'href'));
+        // data: + download = descarga (export CSV), no navegación → se permite
+        var dl = n.hasAttribute && n.hasAttribute('download') && /^\s*data:/i.test(String(h || ''));
+        if (!dl && badScheme(h)) { ev.preventDefault(); ev.stopImmediatePropagation(); }
+        return;
+      }
+      n = n.parentNode;
+    }
+  }
+  ['click', 'auxclick'].forEach(function (t) { document.addEventListener(t, guardLinks, true); });
+
+  // ── Franja "servidor no disponible" (#3/#4) ─────────────────────────────
+  // Vive aquí (primer bloque, al inicio de <body>) para que el shell viejo del
+  // service worker (__KHIPU_STALE_SHELL) la muestre ANTES de que carguen los
+  // ~60 scripts externos. El sondeo /api/health está más abajo (bloque del
+  // aviso) y usa estas mismas funciones.
+  var _srvEl = null;
+  window._khSrvBanner = function (on) {
+    if (!on) { if (_srvEl) _srvEl.style.display = 'none'; return; }
+    if (!document.body) return;
+    if (!_srvEl) {
+      _srvEl = document.createElement('div'); _srvEl.id = 'srv-down';
+      _srvEl.setAttribute('role', 'alert');
+      _srvEl.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:12000;background:#7f1d1d;color:#fff;font:600 13px/1.45 Inter,system-ui,sans-serif;padding:9px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 4px 18px rgba(0,0,0,.45)';
+      document.body.appendChild(_srvEl);
+    }
+    var E = en();
+    _srvEl.innerHTML = '⚠ ' + (E
+      ? 'The Khipus server is not responding. You are seeing the last saved version: prices, AI and data are NOT updating. If it persists, check Railway (billing / Deployments).'
+      : 'El servidor de Khipus no responde. Estás viendo la última versión guardada: precios, IA y datos NO se actualizan. Si sigue así, revisa Railway (pago / Deployments).') +
+      ' <button id="srv-retry" style="background:#fff;color:#7f1d1d;border:0;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer">' + (E ? 'Retry' : 'Reintentar') + '</button>';
+    document.getElementById('srv-retry').onclick = function () {
+      if (typeof window._khipuServerCheck === 'function') window._khipuServerCheck();
+      else location.reload();
+    };
+    _srvEl.style.display = 'flex';
+  };
+  if (window.__KHIPU_STALE_SHELL) window._khSrvBanner(true);
+})();
 </script>
 <div class="app">
   <header>
@@ -2221,6 +2521,10 @@ let colorMode = localStorage.getItem('eco_colormode') || 'sector';
 
 /* ---- i18n base ---- */
 let LANG = localStorage.getItem('eco_lang')||'es';
+// window.LANG = idioma VIVO: un `let` global NO crea propiedad en window y
+// muchos módulos (engine/*, avisos de trading, franja "servidor caído") leen
+// window.LANG → antes era siempre undefined y salían en español.
+try { Object.defineProperty(window, 'LANG', { get(){ return LANG; }, configurable: true }); } catch(e) {}
 if(localStorage.getItem('eco_theme')!=='light') document.body.classList.add('dark'); /* v8.1: terminal dark por defecto */
 const catLabel = k => CATS[k] ? (LANG==='en' ? CATS[k].en : CATS[k].label) : (k||'?');
 const countryLabel = k => (COUNTRIES[k]||COUNTRIES.RestoMundo)[LANG==='en'?'en':'es'];
@@ -3038,7 +3342,7 @@ window.jumpTo=function(id){
 /* ===================== Panel de detalle ===================== */
 function pfLabel(p){return p==='C1+C2'?t('pf_both'):p==='C1'?t('pf_c1'):p==='C2'?t('pf_c2'):'';}
 function pfClass(p){return p==='C1+C2'?'both':p==='C1'?'c1':p==='C2'?'c2':'';}
-const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 window.esc = esc;
 const isPreipoTicker=t=>/pre-ipo/i.test(t||'');
 
@@ -3231,7 +3535,7 @@ function renderDetail(id){
         const hasProxy = ip && ip.parent && ip.ticker === d.mkt;
         const parentNote = hasProxy ? `<div style="font-size:10px;color:#7a9cc4;margin-top:4px">Vía ${ip.parent} · ${ip.note}</div>` : '';
         return `<div style="padding:0 16px 10px">
-          <button onclick="openTradeModal('${id}','${d.mkt}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #22c55e;border-radius:6px;background:none;color:#22c55e;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(34,197,94,.12)'" onmouseout="this.style.background='none'">💹 Operar ${d.mkt} ${hasProxy?'('+ip.parent+')':''}</button>
+          <button onclick="openTradeModal(${esc(JSON.stringify(String(id)))},${esc(JSON.stringify(String(d.mkt)))},${esc(JSON.stringify(String(d.label)))})" style="width:100%;padding:8px 12px;border:1.5px solid #22c55e;border-radius:6px;background:none;color:#22c55e;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(34,197,94,.12)'" onmouseout="this.style.background='none'">💹 Operar ${d.mkt} ${hasProxy?'('+ip.parent+')':''}</button>
           ${parentNote}
         </div>`;
       }
@@ -3240,14 +3544,14 @@ function renderDetail(id){
         if(ip.ticker){
           return `<div style="padding:0 16px 10px">
             <div style="font-size:10px;color:#f59e0b;margin-bottom:6px;font-weight:600">⚡ Inversión indirecta disponible</div>
-            <button onclick="openTradeModal('${id}','${ip.ticker}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #f59e0b;border-radius:6px;background:none;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(245,158,11,.1)'" onmouseout="this.style.background='none'">📊 Operar vía ${ip.parent} (${ip.ticker})</button>
+            <button onclick="openTradeModal(${esc(JSON.stringify(String(id)))},${esc(JSON.stringify(String(ip.ticker)))},${esc(JSON.stringify(String(d.label)))})" style="width:100%;padding:8px 12px;border:1.5px solid #f59e0b;border-radius:6px;background:none;color:#f59e0b;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(245,158,11,.1)'" onmouseout="this.style.background='none'">📊 Operar vía ${ip.parent} (${ip.ticker})</button>
             <div style="font-size:10px;color:#7a9cc4;margin-top:5px;line-height:1.4">${ip.note}</div>
           </div>`;
         }
         if(ip.etf){
           return `<div style="padding:0 16px 10px">
             <div style="font-size:10px;color:#7a9cc4;margin-bottom:6px;font-weight:600">📡 Exposición vía ETF</div>
-            <button onclick="openTradeModal('${id}','${ip.etf}','${esc(d.label)}')" style="width:100%;padding:8px 12px;border:1.5px solid #7a9cc4;border-radius:6px;background:none;color:#7a9cc4;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(122,156,196,.1)'" onmouseout="this.style.background='none'">📊 ${ip.etfName} (${ip.etf})</button>
+            <button onclick="openTradeModal(${esc(JSON.stringify(String(id)))},${esc(JSON.stringify(String(ip.etf)))},${esc(JSON.stringify(String(d.label)))})" style="width:100%;padding:8px 12px;border:1.5px solid #7a9cc4;border-radius:6px;background:none;color:#7a9cc4;font-size:12px;font-weight:600;cursor:pointer;transition:.15s" onmouseover="this.style.background='rgba(122,156,196,.1)'" onmouseout="this.style.background='none'">📊 ${ip.etfName} (${ip.etf})</button>
             <div style="font-size:10px;color:#5b8ab8;margin-top:5px;line-height:1.4">${ip.note}</div>
           </div>`;
         }
@@ -4669,12 +4973,30 @@ const daysAgo = n => new Date(Date.now()-n*864e5).toISOString().slice(0,10);
 
 const DataLayer = {
   serverMode: true,   // compat: siempre servida por server.py (solo-Railway)
+  // Límite de 6 s: initV8 la espera antes de registrar el service worker y
+  // de pasar la UI a inglés — un server colgado no puede congelar el arranque.
   async health(){
-    try{ const r=await fetch(BASE+'/api/health'); const j=await r.json();
-      Object.assign(health,j); }catch(e){}
+    const ac = (typeof AbortController!=='undefined') ? new AbortController() : null;
+    const t = ac ? setTimeout(()=>ac.abort(), 6000) : null;
+    try{ const r=await fetch(BASE+'/api/health',{cache:'no-store', signal: ac ? ac.signal : undefined}); const j=await khJSON(r);
+      if(j && !j.offline) Object.assign(health,j); }catch(e){}
+    finally{ if(t) clearTimeout(t); }
     return health;
   },
-  async _json(url, opts){ const r=await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); },
+  // JSON o error claro: HTTP ≠ 2xx → Error('HTTP n — mensaje del server') con
+  // .status/.offline; 200 que no es JSON (HTML de un proxy caído, shell viejo)
+  // → error bilingüe offline (khJSON) en vez de "Unexpected token '<'".
+  async _json(url, opts){
+    const r=await fetch(url,opts);
+    if(!r.ok){
+      let j=null; try{ j=await r.clone().json(); }catch(e){}
+      const m = j ? ((window.LANG==='en') ? (j.error_en||j.error) : (j.error||j.error_en)) : '';
+      const err=new Error('HTTP '+r.status+(m?' — '+m:''));
+      err.status=r.status; if(j && j.offline) err.offline=true;
+      throw err;
+    }
+    return khJSON(r);
+  },
 
   async quote(ticker){ // {c, pc}
     return this._json(BASE+'/api/quote/'+encodeURIComponent(ticker));
@@ -4892,7 +5214,7 @@ function _propuestaCard(p){
   const fuentes = Array.isArray(p.payload&&p.payload.fuentes) ? p.payload.fuentes : [];
   const fuentesHtml = fuentes.length ? `<div style="margin:6px 0 8px">
       <label style="font-size:10px;color:var(--ink-3);display:block;margin-bottom:3px">📎 Fuentes citadas (${fuentes.length})</label>
-      ${fuentes.slice(0,8).map(f=>`<a href="${esc(f.url||'#')}" target="_blank" rel="noopener noreferrer" style="display:block;font-size:11px;color:#7aa2ff;text-decoration:none;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↗ ${esc(f.titulo||f.publicador||f.url||'')}</a>`).join('')}
+      ${fuentes.slice(0,8).map(f=>`<a href="${safeUrl(f.url)}" target="_blank" rel="noopener noreferrer" style="display:block;font-size:11px;color:#7aa2ff;text-decoration:none;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↗ ${esc(f.titulo||f.publicador||f.url||'')}</a>`).join('')}
     </div>` : '';
   const noVerif = Array.isArray(p.payload&&p.payload.datos_no_verificados) ? p.payload.datos_no_verificados : [];
   const noVerifHtml = noVerif.length ? `<div style="margin:0 0 8px;font-size:10.5px;color:#d9a441">⚠ Sin verificar: ${esc(noVerif.slice(0,4).join(' · '))}</div>` : '';
@@ -4931,19 +5253,26 @@ window.lanzarInvestigacion = async function(){
   if(!q){ if(st) st.textContent = 'Escribe qué investigar.'; return; }
   const base = (typeof BASE!=='undefined') ? BASE : '';
   let actor = 'anónimo'; try{ actor = localStorage.getItem('khipu_actor')||'anónimo'; }catch(e){}
-  const post = async()=>{ const r = await fetch(`${base}/api/ontology/agents/investigar`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({query:q, actor})}); return {ok:r.ok, code:r.status, data:await r.json().catch(()=>null)}; };
+  // Escritura de la ontología → PIN de operador (X-Trade-Pin) vía _tradeFetch.
+  // El primer envío puede pedir el PIN; los sondeos NUNCA (interactive=false).
+  const post = async(interactive)=>{
+    try{
+      const r = await window._tradeFetch(`${base}/api/ontology/agents/investigar`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({query:q, actor})}, interactive);
+      return {ok:r.ok, code:r.status, data:await r.json().catch(()=>null)};
+    }catch(e){ return {ok:false, code:0, data:{error:'Error de red', error_en:'Network error'}}; }
+  };
   if(st) st.textContent = '🌐 Investigando en la web… (20-60s)';
-  let res = await post();
+  let res = await post(true);
   if(!res.ok){
-    if(st) st.textContent = (res.data&&res.data.error) ? res.data.error : `Error ${res.code}`;
+    if(st) st.textContent = window._tradeErrText(res.data, res.code);
     return;
   }
   let tries = 0;
   const poll = async()=>{
     tries++;
-    const r = await post();                      // re-POST = consulta estado (throttle server)
+    const r = await post(false);                 // re-POST = consulta estado (throttle server)
     const d = r.data||{};
     if(d.running && tries < 24){ setTimeout(poll, 5000); return; }
     const last = d.last||{};
@@ -4995,26 +5324,28 @@ function _resolveProposal(card, id, verb){
     });
     body.edits = edits;
   }
-  fetch(`${base}/api/ontology/agents/proposals/${id}/${verb}`, {
+  // Aprobar/rechazar = escritura de la ontología → PIN de operador.
+  window._tradeFetch(`${base}/api/ontology/agents/proposals/${encodeURIComponent(id)}/${verb}`, {
     method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body),
-  }).then(r=>r.json().then(d=>({ok:r.ok,d}))).then(({ok,d})=>{
+  }, true).then(r=>r.json().catch(()=>null).then(d=>({ok:r.ok,d,code:r.status}))).then(({ok,d,code})=>{
     if(ok){ status.textContent = verb==='approve' ? '✓ aprobado' : '✗ rechazado'; status.style.color = verb==='approve' ? '#43C896' : 'var(--ink-3)';
       setTimeout(()=>{ card.style.opacity='0.4'; card.style.pointerEvents='none'; }, 300);
-    } else { status.textContent = '⚠ '+(d.error||'error'); status.style.color='#f87171'; }
-  }).catch(()=>{ status.textContent='⚠ error de red'; status.style.color='#f87171'; });
+    } else { status.textContent = '⚠ '+window._tradeErrText(d, code); status.style.color='#f87171'; }
+  }).catch(()=>{ status.textContent='⚠ '+((window.LANG==='en')?'network error':'error de red'); status.style.color='#f87171'; });
 }
 window.runAgentes = function(){
   const summary = $('propuestas-summary');
   summary.textContent = 'revisando…';
   const base = (typeof BASE!=='undefined') ? BASE : '';
-  fetch(`${base}/api/ontology/agents/run`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' })
-    .then(r=>r.json()).then(d=>{
-      if(d.status==='ok'){
+  // Correr agentes = escritura de la ontología → PIN de operador.
+  window._tradeFetch(`${base}/api/ontology/agents/run`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }, true)
+    .then(r=>r.json().catch(()=>null).then(d=>({d, code:r.status}))).then(({d, code})=>{
+      if(d && d.status==='ok'){
         const total = Object.values(d.summary||{}).reduce((s,a)=>s+(a.proposals||0),0);
         summary.textContent = `${total} propuesta${total===1?'':'s'} nueva${total===1?'':'s'}`;
         window.openPropuestas(true);
-      } else { summary.textContent = '⚠ ' + (d.error||'error'); }
-    }).catch(()=>{ summary.textContent = '⚠ error de red'; });
+      } else { summary.textContent = '⚠ ' + window._tradeErrText(d, code); }
+    }).catch(()=>{ summary.textContent = '⚠ ' + ((window.LANG==='en')?'network error':'error de red'); });
 };
 window.closePropuestas = function(){ window.closeSistema && window.closeSistema(); };
 
@@ -5224,7 +5555,7 @@ const V8detail = {
                 <div style="display:flex;gap:6px;align-items:baseline">
                   <span style="font-size:11.5px;color:var(--ink-2);flex:1">${e.kind==='news'?'📰 ':''}${esc(e.title||'')}</span>
                   <span style="font-size:10px;color:var(--ink-3);white-space:nowrap">${esc(when(e.at))}</span></div>
-                ${src?`<a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none">${dot(src.trust)}${esc(host)} ↗</a>`:''}
+                ${src?`<a href="${safeUrl(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none">${dot(src.trust)}${esc(host)} ↗</a>`:''}
               </div>`;}).join('');
         }
         this.ingestOnce(id,my);
@@ -5381,7 +5712,7 @@ const V8detail = {
       if(!list.length){ el.innerHTML=`<div class="v8-loading">${LANG==='en'?'No recent news.':'Sin noticias recientes.'}</div>`; return; }
       el.innerHTML=list.slice(0,8).map(n=>{
         const s=sentiment(n.headline);
-        return `<a class="news-item" href="${esc(n.url)}" target="_blank" rel="noopener">
+        return `<a class="news-item" href="${safeUrl(n.url)}" target="_blank" rel="noopener noreferrer">
           <div class="news-top"><span class="news-src">${esc(n.source||'')}</span><span>${relTime(n.datetime)}</span>
             <span class="news-sent ${s.cls}">${s.icon}</span></div>
           <div class="news-title">${esc(n.headline)}</div></a>`;
@@ -5705,7 +6036,7 @@ const V8feed = {
               <span style="flex-shrink:0">${ico[e.event_type]||'•'}</span>
               <span style="flex:1;color:var(--ink-2)">${subj}${subj?' · ':''}${esc(e.title||'')}</span>
               <span style="font-size:10px;color:var(--ink-3);white-space:nowrap">${esc(ago(e.recorded_at))}</span></div>
-            ${src?`<a href="${esc(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none;margin-left:20px">${esc(host)} ↗</a>`:''}
+            ${src?`<a href="${safeUrl(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none;margin-left:20px">${esc(host)} ↗</a>`:''}
           </div>`;}).join('');
       }).catch(()=>{ box.style.display='none'; });
   },
@@ -6390,32 +6721,45 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
    45 s y al volver a la pestaña; 2 fallos seguidos (red, HTTP ≠ 200 o
    respuesta no-JSON) → franja roja fija con qué significa y botón Reintentar. */
 (function(){
-  var fails = 0, el = null;
-  function en(){ return (window.LANG||'')==='en'; }
-  function show(){
-    if(!el){
-      el = document.createElement('div'); el.id = 'srv-down';
-      el.setAttribute('role','alert');
-      el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:12000;background:#7f1d1d;color:#fff;font:600 13px/1.45 Inter,system-ui,sans-serif;padding:9px 14px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 4px 18px rgba(0,0,0,.45)';
-      document.body.appendChild(el);
-    }
-    el.innerHTML = '⚠ ' + (en()
-      ? 'The Khipus server is not responding. You are seeing the last saved version: prices, AI and data are NOT updating. If it persists, check Railway (billing / Deployments).'
-      : 'El servidor de Khipus no responde. Estás viendo la última versión guardada: precios, IA y datos NO se actualizan. Si sigue así, revisa Railway (pago / Deployments).') +
-      ' <button id="srv-retry" style="background:#fff;color:#7f1d1d;border:0;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer">' + (en()?'Retry':'Reintentar') + '</button>';
-    document.getElementById('srv-retry').onclick = check;
-    el.style.display = 'flex';
-  }
-  function hide(){ if(el) el.style.display = 'none'; }
+  var fails = 0;
+  // la franja la dibuja window._khSrvBanner (primer bloque inline)
+  function show(){ window._khSrvBanner(true); }
+  function hide(){ window._khSrvBanner(false); }
+  // Timeout de 6 s: un server COLGADO (acepta la conexión y no contesta) antes
+  // dejaba el fetch pendiente para siempre y la franja nunca salía.
+  // offline:true = respuesta sintética del service worker (sin red / 5xx del
+  // proxy) → franja YA, sin esperar al segundo fallo.
   function check(){
-    fetch((window.BASE||'') + '/api/health', {cache:'no-store'}).then(function(r){
+    var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var t = ac ? setTimeout(function(){ ac.abort(); }, 6000) : null;
+    fetch((window.BASE||'') + '/api/health', {cache:'no-store', signal: ac ? ac.signal : undefined}).then(function(r){
       var ct = r.headers.get('content-type')||'';
-      if(!r.ok || ct.indexOf('json') < 0) throw new Error('bad');
-      return r.json();
-    }).then(function(j){ if(j && j.server){ fails = 0; hide(); } else throw new Error('bad'); })
-      .catch(function(){ fails++; if(fails >= 2) show(); else setTimeout(check, 4000); });
+      if(ct.indexOf('json') < 0) throw new Error('bad');
+      return r.json().then(function(j){
+        if(j && j.offline){ var e = new Error('offline'); e.offline = true; throw e; }
+        if(!r.ok) throw new Error('bad');
+        return j;
+      });
+    }).then(function(j){
+      if(t) clearTimeout(t);
+      if(j && j.server){
+        fails = 0; hide();
+        // la app vino del shell viejo del SW y el server ya volvió → recarga
+        // silenciosa (misma política que las actualizaciones de versión)
+        if(window.__KHIPU_STALE_SHELL && !window.__khStaleReloaded && typeof window._showUpdatePill === 'function'){
+          window.__khStaleReloaded = true; window._showUpdatePill();
+        }
+      } else throw new Error('bad');
+    }).catch(function(e){
+      if(t) clearTimeout(t);
+      fails++;
+      if((e && e.offline) || fails >= 2) show(); else setTimeout(check, 4000);
+    });
   }
-  window.addEventListener('load', function(){ setTimeout(check, 3000); });
+  // Shell servido por el SW porque la red falló → aviso inmediato (ya lo
+  // pintó el primer bloque; aquí se re-pinta por si cambió el idioma).
+  if(window.__KHIPU_STALE_SHELL){ fails = 2; show(); }
+  window.addEventListener('load', function(){ setTimeout(check, window.__KHIPU_STALE_SHELL ? 500 : 3000); });
   setInterval(function(){ if(!document.hidden) check(); }, 45000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) check(); });
   window.addEventListener('online', check);
@@ -6849,8 +7193,8 @@ function initGdelt() {
         const title = esc(a.title || a.url || 'Artículo');
         const src = esc(a.domain || a.source || '');
         const ts = a.seendate ? new Date(a.seendate.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$1-$2-$3T$4:$5:$6Z')).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '';
-        const url = a.url || '#';
-        return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
+        const url = safeUrl(a.url);
+        return `<div style="padding:7px 0;border-bottom:1px solid var(--line)"><a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--violet);font-size:12px;font-weight:600;text-decoration:none">${title}</a><div style="font-size:10px;color:var(--ink-3);margin-top:2px">${src}${ts?' · '+ts:''}</div></div>`;
       }).join('');
       // Auto-create hyperedge in TemporalHypergraph if 3D is active
       if (window._hypergraph && articles.length >= 2) {
@@ -6879,7 +7223,7 @@ function initGdelt() {
   if (_gdeltHistory.length) {
     const hist = document.createElement('div');
     hist.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px';
-    hist.innerHTML = _gdeltHistory.slice(0,5).map(h => `<button onclick="document.getElementById('gdelt-query').value='${esc(h)}';initGdelt&&document.getElementById('gdelt-search').click()" style="padding:2px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:10px;cursor:pointer;color:var(--ink-3)">${esc(h)}</button>`).join('');
+    hist.innerHTML = _gdeltHistory.slice(0,5).map(h => `<button onclick="document.getElementById('gdelt-query').value=${esc(JSON.stringify(String(h)))};initGdelt&&document.getElementById('gdelt-search').click()" style="padding:2px 8px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);font-size:10px;cursor:pointer;color:var(--ink-3)">${esc(h)}</button>`).join('');
     out.parentElement.insertBefore(hist, out);
   }
 }
@@ -6936,7 +7280,7 @@ window._simGroundFactor = async function (presetId) {
   }
   const fid = presetId && window.ScenarioBuilder?.PRESETS?.[presetId]?.factorId;
   if (!fid) { box.innerHTML = ''; return; }
-  const h = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const h = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   box.innerHTML = `<div style="margin:0 0 10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:12px;color:var(--ink-3)">📐 Anclando con el motor de matrices…</div>`;
   try {
     const r = await fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/matrix/factor/fire', {
@@ -8085,7 +8429,7 @@ window._openResearch = async function(ticker, nodeId){
     const sevCol=s=>/alta|high/i.test(s)?'#f87171':/media|med/i.test(s)?'#f59e0b':'#34d399';
     const bullets=arr=>(arr||[]).map(x=>`<div style="font-size:12.5px;line-height:1.45;margin-bottom:5px;padding-left:14px;position:relative"><span style="position:absolute;left:0;color:var(--blue)">•</span>${esc(x)}</div>`).join('');
     body.innerHTML = `
-      <div style="font-size:11px;color:var(--ink-3);margin-bottom:6px">${esc(d.form_type||'')} · ${esc(d.filing_date||'')} · <a href="${d.source_url}" target="_blank" rel="noopener" style="color:var(--blue)">ver filing ↗</a></div>
+      <div style="font-size:11px;color:var(--ink-3);margin-bottom:6px">${esc(d.form_type||'')} · ${esc(d.filing_date||'')} · <a href="${safeUrl(d.source_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">ver filing ↗</a></div>
       ${(a.resumen&&a.resumen.length)?`<div style="${rh}">Resumen del negocio</div>${bullets(a.resumen)}`:''}
       ${(a.riesgos&&a.riesgos.length)?`<div style="${rh}">Riesgos clave</div>${a.riesgos.map(rk=>`<div style="display:flex;gap:8px;align-items:baseline;padding:4px 0"><span style="font-size:9px;font-weight:800;color:${sevCol(rk.severidad||'')};min-width:46px">${esc((rk.severidad||'').toUpperCase())}</span><span style="font-size:12.5px;line-height:1.4">${esc(rk.riesgo||'')}</span></div>`).join('')}`:''}
       ${(a.tendencias&&a.tendencias.length)?`<div style="${rh}">Tendencias (MD&A)</div>${bullets(a.tendencias)}`:''}
@@ -9080,7 +9424,7 @@ window.loadTradeFlows = loadTradeFlows;
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="tp-account-info" style="font-size:11px;color:rgba(229,226,225,0.5);font-family:'JetBrains Mono',monospace"></span>
-    <span id="tp-paper-badge" style="font-size:10px;background:rgba(255,204,0,0.15);color:#FFCC00;border:1px solid rgba(255,204,0,0.3);padding:2px 8px;border-radius:2px;letter-spacing:.08em">PAPER</span>
+    <span id="tp-paper-badge" style="display:none;font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:.08em"></span>
     <button onclick="closeTradePanelFn()" style="background:none;border:1px solid rgba(255,255,255,0.12);color:#e5e2e1;border-radius:2px;padding:5px 12px;cursor:pointer;font-size:12px">✕ Cerrar</button>
   </div>
 </div>
@@ -9133,22 +9477,12 @@ window.loadTradeFlows = loadTradeFlows;
       <select id="tp-order-type" class="tp-select" onchange="updateTradePanelRisk()">
         <option value="market">Market — ejecución inmediata</option>
         <option value="limit">Limit — precio específico</option>
-        <option value="stop">Stop — precio de corte</option>
-        <option value="trailing_stop">Trailing Stop — % del precio</option>
       </select>
     </div>
 
     <div class="tp-card" id="tp-limit-row" style="display:none">
       <div class="tp-label">Precio límite</div>
-      <input id="tp-limit-price" type="number" step="0.01" class="tp-input" placeholder="0.00" oninput="updateTradePanelRisk()">
-    </div>
-    <div class="tp-card" id="tp-stop-row" style="display:none">
-      <div class="tp-label">Stop price</div>
-      <input id="tp-stop-price" type="number" step="0.01" class="tp-input" placeholder="0.00" oninput="updateTradePanelRisk()">
-    </div>
-    <div class="tp-card" id="tp-trail-row" style="display:none">
-      <div class="tp-label">Trailing %</div>
-      <input id="tp-trail-pct" type="number" step="0.1" min="0.1" max="20" value="2" class="tp-input" oninput="updateTradePanelRisk()">
+      <input id="tp-limit-price" type="number" step="0.01" min="0.01" class="tp-input" placeholder="0.00" oninput="updateTradePanelRisk()">
     </div>
 
     <div class="tp-card">
@@ -9208,7 +9542,7 @@ window.loadTradeFlows = loadTradeFlows;
       <div class="tp-row" style="gap:6px;margin-bottom:10px">
         <div style="flex:1">
           <div class="tp-label">Max posición %</div>
-          <input id="tp-agent-maxpos" type="number" step="0.5" min="0.5" max="20" value="5" class="tp-input">
+          <input id="tp-agent-maxpos" type="number" step="0.5" min="0.5" max="10" value="5" class="tp-input">
         </div>
         <div style="flex:1">
           <div class="tp-label">Stop-loss %</div>
@@ -9216,7 +9550,7 @@ window.loadTradeFlows = loadTradeFlows;
         </div>
       </div>
       <div class="tp-label">Pérdida diaria máx %</div>
-      <input id="tp-agent-maxloss" type="number" step="0.5" min="0.5" max="10" value="2" class="tp-input" style="margin-bottom:12px">
+      <input id="tp-agent-maxloss" type="number" step="0.5" min="0.5" max="5" value="2" class="tp-input" style="margin-bottom:12px">
 
       <div class="tp-row" style="gap:8px">
         <button id="tp-agent-start-btn" onclick="toggleTradingAgent()" class="tp-btn" style="flex:1;background:rgba(0,204,255,0.15);color:#00CCFF;border:1px solid rgba(0,204,255,0.3)">▶ INICIAR</button>
@@ -9247,13 +9581,14 @@ window.loadTradeFlows = loadTradeFlows;
 <script>
 /* ===== Professional Trade Panel ===== */
 (function(){
-  let _tp = { ticker:'', label:'', side:'buy', price:0, prev:0, buyingPower:0, agentRunning:false, chart:null };
+  let _tp = { ticker:'', label:'', side:'buy', price:0, prev:0, buyingPower:0, agentRunning:false, chart:null, paper:null, sending:false, ambSig:null };
 
   window.openTradeModal = function(nodeId, ticker, label) {
     openTradePanelFn(nodeId, ticker, label);
   };
 
   window.openTradePanelFn = function(nodeId, ticker, label) {
+    if (_tp.ticker !== ticker) _tp.ambSig = null;   // el aviso de orden ambigua es de otro ticker
     _tp.ticker = ticker; _tp.label = label || ticker;
     const q = MKT.quotes[ticker] || {};
     _tp.price = parseFloat(q.live || q.close || 0) || 0;
@@ -9269,6 +9604,11 @@ window.loadTradeFlows = loadTradeFlows;
     document.getElementById('trade-panel').style.display = 'block';
     setTradePanelSide('buy');
     updateTradePanelRisk();
+    // Badge 🧪/🔴 YA, sin PIN: /api/trade/status es público y dice `paper`.
+    // /api/trade/account (con PIN) lo confirma después y manda sobre éste.
+    if (window._tradeStatusInfo) window._tradeStatusInfo().then(s => {
+      if (s && typeof s.paper === 'boolean' && _tp.paper === null) { _tp.paper = s.paper; _tpPaintBadge(s.paper); }
+    }).catch(() => {});
     _tpLoadAccount();
     _tpLoadChart(ticker);
     _tpRefreshPositions();
@@ -9302,8 +9642,6 @@ window.loadTradeFlows = loadTradeFlows;
   window.updateTradePanelRisk = function() {
     const otype = document.getElementById('tp-order-type').value;
     document.getElementById('tp-limit-row').style.display = otype === 'limit' ? '' : 'none';
-    document.getElementById('tp-stop-row').style.display  = otype === 'stop'  ? '' : 'none';
-    document.getElementById('tp-trail-row').style.display = otype === 'trailing_stop' ? '' : 'none';
 
     const qty   = parseFloat(document.getElementById('tp-qty').value) || 0;
     const price = _tp.price || 0;
@@ -9329,97 +9667,171 @@ window.loadTradeFlows = loadTradeFlows;
 
   // ── PIN de trading ────────────────────────────────────────────────────────
   // El server exige X-Trade-Pin (env TRADE_PIN) en todas las rutas /api/trade/*.
-  // Se pide UNA vez al usuario en una acción interactiva y se recuerda.
-  function _tradePin(interactive) {
-    let pin = localStorage.getItem('khipu_trade_pin') || '';
-    if (!pin && interactive) {
-      pin = prompt('PIN de trading (el valor de TRADE_PIN configurado en Railway):') || '';
-      if (pin) localStorage.setItem('khipu_trade_pin', pin);
+  // El manejo del PIN vive en UN solo lugar: window._tradeFetch (primer bloque
+  // inline de app.html; lo usan también crypto.js, voice.js y cockpit.js).
+  const _tradeFetch = (url, opts, interactive) => window._tradeFetch(url, opts, interactive);
+  const _tpL = (es, en) => ((window.LANG || '') === 'en' ? en : es);
+  const _tpE = s => (typeof esc === 'function' ? esc(s) : String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+  const TP_MAX_NOTIONAL = 100000;              // mismo tope que el server por orden
+  const TP_TIFS = ['day', 'gtc', 'ioc', 'fok'];
+
+  // Badge obligatorio 🧪 SIMULADO / 🔴 DINERO REAL según account.paper.
+  function _tpPaintBadge(paper) {
+    const b = document.getElementById('tp-paper-badge');
+    if (!b) return;
+    if (paper === true) {
+      b.textContent = _tpL('🧪 SIMULADO', '🧪 SIMULATED');
+      b.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:.08em;background:rgba(255,204,0,0.15);color:#FFCC00;border:1px solid rgba(255,204,0,0.3)';
+    } else if (paper === false) {
+      b.textContent = _tpL('🔴 DINERO REAL', '🔴 REAL MONEY');
+      b.style.cssText = 'font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:.08em;font-weight:800;background:rgba(220,38,38,0.18);color:#f87171;border:1px solid rgba(220,38,38,0.5)';
+    } else {
+      b.style.display = 'none';
     }
-    return pin;
   }
-  async function _tradeFetch(url, opts, interactive) {
-    const o = Object.assign({}, opts);
-    o.headers = Object.assign({}, o.headers, { 'X-Trade-Pin': _tradePin(interactive) });
-    let r = await fetch(url, o);
-    if (r.status === 401 && interactive) {
-      localStorage.removeItem('khipu_trade_pin');
-      o.headers['X-Trade-Pin'] = _tradePin(true);
-      r = await fetch(url, o);
+
+  // ÚNICO caso en el que se permite la operación simulada LOCAL (portafolio del
+  // navegador): el trading NO está configurado en el server (sin TRADE_PIN o
+  // sin Alpaca). Cualquier otro fallo (PIN malo, rechazo de Alpaca, red, 5xx,
+  // interruptor de apagado) se MUESTRA — nunca se disfraza de "✓ simulada",
+  // porque el usuario reintentaría y podría duplicar una orden real.
+  function _tpNotConfigured(status, d) {
+    const code = d && d.code;
+    if (['trading_disabled', 'broker_not_configured', 'alpaca_not_configured', 'not_configured'].indexOf(code) >= 0) return true;
+    const msg = String((d && d.error) || '');
+    return status === 400 && /ALPACA_KEY/i.test(msg) && /(not configured|sin configurar)/i.test(msg);
+  }
+
+  function _tpLocalSim(ticker, side, qty, setS) {
+    const node = (window.NODES || []).find(n => n.mkt === ticker);
+    const q = (window.MKT && MKT.quotes && MKT.quotes[ticker]) || {};
+    const px = q.close || q.live || q.prev || 0;
+    if (node && px > 0) {
+      const cur = (MKT.pos[node.id]) || { sh: 0, bp: px };
+      const newSh = side === 'sell' ? Math.max(0, (cur.sh || 0) - qty) : (cur.sh || 0) + qty;
+      const bp = side === 'sell' ? (cur.bp || px)
+        : (((cur.sh || 0) * (cur.bp || px) + qty * px) / Math.max(1, newSh));
+      if (newSh <= 0) delete MKT.pos[node.id]; else MKT.pos[node.id] = { sh: newSh, bp };
+      if (typeof savePos === 'function') savePos();
+      if (typeof renderMarket === 'function' && typeof activeTab !== 'undefined' && activeTab === 'market') renderMarket(true);
+      setS('#fbbf24', _tpL(
+        `✓ Operación <b>simulada en tu portafolio local</b> (no hay bróker configurado): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">Para operar en el bróker hay que configurar TRADE_PIN y Alpaca en Railway (revisa 🩺).</span>`,
+        `✓ <b>Simulated in your local portfolio</b> (no broker configured): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">To trade on the broker, set TRADE_PIN and Alpaca in Railway (see 🩺).</span>`));
+      if (typeof toast === 'function') toast(_tpL('Simulada (local): ', 'Simulated (local): ') + `${side} ${qty}× ${ticker}`);
+    } else {
+      setS('#f87171', _tpL(
+        `No se pudo simular ${_tpE(ticker)}: todavía no hay precio. El trading en el bróker requiere TRADE_PIN y Alpaca (revisa 🩺).`,
+        `Could not simulate ${_tpE(ticker)}: no price available yet. Broker trading requires TRADE_PIN and Alpaca (see 🩺).`));
     }
-    return r;
   }
-  // compartido: lo usan engine/crypto.js (Operar en la ficha cripto),
-  // engine/voice.js y engine/cockpit.js (broker de Khipu) — mantiene el
-  // manejo del PIN en UN solo lugar.
-  window._tradeFetch = _tradeFetch;
 
   window.submitTradePanelOrder = async function() {
     const ticker = _tp && _tp.ticker;
     const qtyEl = document.getElementById('tp-qty');
     const qty   = parseFloat(qtyEl && qtyEl.value);
-    const side  = (_tp && _tp.side) || 'buy';
+    const side  = (_tp && _tp.side) === 'sell' ? 'sell' : 'buy';
     const otypeEl = document.getElementById('tp-order-type');
     const otype = (otypeEl && otypeEl.value) || 'market';
     const tifEl = document.getElementById('tp-tif');
-    const tif   = (tifEl && tifEl.value) || 'day';
+    let tif     = (tifEl && tifEl.value) || 'day';
     const status = document.getElementById('tp-order-status');
     const setS = (color, html) => { if (status) { status.style.color = color; status.innerHTML = html; } };
-    if (!ticker || !qty || qty <= 0) { setS('#f87171', 'Introduce una cantidad válida'); return; }
+    if (_tp.sending) return;                                   // anti doble clic
+    if (!ticker || !isFinite(qty) || qty <= 0) { setS('#f87171', _tpL('Introduce una cantidad válida', 'Enter a valid quantity')); return; }
+    if (otype !== 'market' && otype !== 'limit') { setS('#f87171', _tpL('Tipo de orden no soportado', 'Unsupported order type')); return; }
+    if (TP_TIFS.indexOf(tif) < 0) tif = 'day';
+    if (ticker.indexOf('/') >= 0) tif = 'gtc';                // cripto: Alpaca solo acepta gtc/ioc
 
     const body = { symbol: ticker, qty, side, type: otype, time_in_force: tif };
-    if (otype === 'limit')         body.limit_price   = parseFloat(document.getElementById('tp-limit-price')?.value);
-    if (otype === 'stop')          body.stop_price    = parseFloat(document.getElementById('tp-stop-price')?.value);
-    if (otype === 'trailing_stop') body.trail_percent = parseFloat(document.getElementById('tp-trail-pct')?.value);
-
-    setS('rgba(229,226,225,0.6)', 'Enviando…');
-    const btn = document.getElementById('tp-submit-btn'); if (btn) btn.disabled = true;
-
-    let realOk = false;
-    try {
-      const r = await _tradeFetch('/api/trade/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) }, true);
-      const d = await r.json().catch(() => ({ error: 'respuesta inválida del servidor' }));
-      if (d.id || d.status === 'accepted' || d.status === 'pending_new') {
-        realOk = true;
-        setS('#4ade80', `✓ ${side.toUpperCase()} ${qty}× ${ticker} — ${d.status || 'accepted'} (real)`);
-        if (typeof toast === 'function') toast(`Orden ${side} enviada: ${qty}× ${ticker}`);
-        setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); }, 2000);
-      }
-    } catch (e) { /* cae a operación simulada */ }
-
-    if (!realOk) {
-      // Fallback: operación SIMULADA (paper) en el portafolio local — siempre funciona
-      const node = (window.NODES || []).find(n => n.mkt === ticker);
-      const q = (window.MKT && MKT.quotes && MKT.quotes[ticker]) || {};
-      const px = q.close || q.live || q.prev || 0;
-      if (node && px > 0) {
-        const cur = (MKT.pos[node.id]) || { sh: 0, bp: px };
-        const newSh = side === 'sell' ? Math.max(0, (cur.sh || 0) - qty) : (cur.sh || 0) + qty;
-        const bp = side === 'sell' ? (cur.bp || px)
-          : (((cur.sh || 0) * (cur.bp || px) + qty * px) / Math.max(1, newSh));
-        if (newSh <= 0) delete MKT.pos[node.id]; else MKT.pos[node.id] = { sh: newSh, bp };
-        if (typeof savePos === 'function') savePos();
-        if (typeof renderMarket === 'function' && typeof activeTab !== 'undefined' && activeTab === 'market') renderMarket(true);
-        setS('#fbbf24', `✓ Operación <b>simulada</b> (paper): ${side.toUpperCase()} ${qty}× ${ticker} @ $${px.toFixed(2)} — añadida a tu portafolio.<br><span style="font-size:10px;opacity:.7">El trading real requiere Alpaca configurado (revisa 🩺).</span>`);
-        if (typeof toast === 'function') toast(`Paper: ${side} ${qty}× ${ticker}`);
-      } else {
-        setS('#f87171', `No se pudo operar ${ticker}: sin precio disponible todavía. El trading real requiere Alpaca (revisa el panel 🩺).`);
-      }
+    if (otype === 'limit') {
+      const lp = parseFloat(document.getElementById('tp-limit-price')?.value);
+      if (!isFinite(lp) || lp <= 0) { setS('#f87171', _tpL('Precio límite inválido: debe ser mayor que 0', 'Invalid limit price: it must be greater than 0')); return; }
+      body.limit_price = lp;
     }
+    const refPx = otype === 'limit' ? body.limit_price : (_tp.price || 0);
+    if (refPx > 0 && qty * refPx > TP_MAX_NOTIONAL) {
+      setS('#f87171', _tpL('La orden supera el máximo de $100,000 por orden (cantidad × precio).', 'The order exceeds the $100,000 per-order limit (quantity × price).'));
+      return;
+    }
+    // client_order_id estable para ESTA orden: si el envío termina en error
+    // ambiguo y el usuario reintenta lo mismo, Alpaca rechaza el duplicado.
+    const sig = ['panel', ticker, side, otype, qty, body.limit_price || '', tif].join('|');
+    body.client_order_id = window._tradeOrderId(sig);
+
+    setS('rgba(229,226,225,0.6)', _tpL('Enviando…', 'Sending…'));
+    const btn = document.getElementById('tp-submit-btn'); if (btn) btn.disabled = true;
+    _tp.sending = true;
+
+    let r = null, d = null, netErr = null;
+    _tp.ambSig = null;
+    try {
+      r = await _tradeFetch('/api/trade/order', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), timeout: 30000 }, true);
+      d = await r.json().catch(() => null);
+    } catch (e) { netErr = e || new Error('network'); }
+    const st = r ? r.status : 0;
+    // Modo (obligatorio): la cuenta (_tp.paper) y la respuesta de la orden
+    // (d.paper); ante la duda manda DINERO REAL.
+    const pp = (_tp.paper === false || (d && d.paper === false)) ? false
+      : (_tp.paper === true || (d && d.paper === true)) ? true : null;
+    if (pp !== null && _tp.paper === null) { _tp.paper = pp; _tpPaintBadge(pp); }
+    const mode = pp === false ? _tpL('🔴 DINERO REAL', '🔴 REAL MONEY') : pp === true ? _tpL('🧪 simulada (papel)', '🧪 simulated (paper)') : '';
+
+    // PRIMERO el duplicado: el server responde 200 + duplicate:true con la
+    // orden que YA existía (mismo client_order_id). No es una orden nueva.
+    if (!netErr && r && window._tradeOrderIsDup(st, d)) {
+      window._tradeOrderSettle(sig, false);
+      const prevSt = d && d.status ? ` (${_tpL('estado', 'status')}: ${_tpE(d.status)})` : '';
+      setS('#fbbf24', _tpL(
+        `Esta orden ya había llegado al bróker${prevSt} — no se envió dos veces. Revisa «Órdenes recientes». Si quieres OTRA orden igual, vuelve a enviarla.`,
+        `This order had already reached the broker${prevSt} — it was not sent twice. Check "Recent orders". If you want ANOTHER identical order, send it again.`));
+      if (typeof toast === 'function') toast(_tpL('Ya estaba en el bróker — no se duplicó', 'Already at the broker — not duplicated'));
+      window.__tradeAcctCache = null;
+      setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); }, 800);
+    } else if (!netErr && r && r.ok && d && (d.id || d.status)) {
+      window._tradeOrderSettle(sig, false);
+      setS('#4ade80', `✓ ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} — ${_tpE(d.status || 'accepted')}${mode ? ' · ' + mode : ''}`);
+      if (typeof toast === 'function') toast(_tpL('Orden enviada: ', 'Order sent: ') + `${side} ${qty}× ${ticker}`);
+      window.__tradeAcctCache = null;
+      setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); _tpLoadAccount(); }, 2000);
+    } else if (!netErr && r && _tpNotConfigured(st, d)) {
+      window._tradeOrderSettle(sig, false);
+      _tpLocalSim(ticker, side, qty, setS);
+    } else if (netErr || window._tradeOrderAmbiguous(st)) {
+      // Sin respuesta clara: la orden PUDO haber llegado. Se conserva el
+      // client_order_id (también tras recargar, 24 h) para que un reintento
+      // idéntico no la duplique; el blotter avisa si aparece.
+      window._tradeOrderSettle(sig, true);
+      _tp.ambSig = sig;
+      const why = (d && (d.offline || st >= 500)) ? _tpL('el servidor no respondió', 'the server did not respond')
+        : _tpL('sin respuesta (red o tiempo agotado)', 'no response (network or timeout)');
+      setS('#f87171', _tpL(
+        `⚠ No se pudo confirmar la orden (${why}). Puede que SÍ haya llegado al bróker: revisa «Órdenes recientes» antes de reintentar. Si reintentas esta misma orden (aunque recargues la página) no se duplicará.`,
+        `⚠ The order could not be confirmed (${why}). It MAY have reached the broker: check "Recent orders" before retrying. Retrying this same order (even after reloading the page) will not duplicate it.`));
+      setTimeout(_tpRefreshBlotter, 2500);
+    } else {
+      window._tradeOrderSettle(sig, false);
+      setS('#f87171', '⚠ ' + _tpE(window._tradeErrText(d, st)));
+    }
+    _tp.sending = false;
     if (btn) btn.disabled = false;
   };
 
   async function _tpLoadAccount() {
+    const info = document.getElementById('tp-account-info');
     try {
-      const d = await _tradeFetch('/api/trade/account').then(r=>r.json());
-      if (d.buying_power) {
+      const r = await _tradeFetch('/api/trade/account');
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d && typeof d.paper === 'boolean') { _tp.paper = d.paper; _tpPaintBadge(d.paper); }
+      if (r.ok && d.buying_power) {
         _tp.buyingPower = parseFloat(d.buying_power);
-        document.getElementById('tp-account-info').textContent =
+        if (info) info.textContent =
           'BP: $' + _tp.buyingPower.toLocaleString('en-US',{maximumFractionDigits:0}) +
           ' | Equity: $' + parseFloat(d.equity||0).toLocaleString('en-US',{maximumFractionDigits:0});
         updateTradePanelRisk();
-      } else if (d.error) {
-        document.getElementById('tp-account-info').textContent = d.error;
+      } else if (info) {
+        info.textContent = d && d.code === 'pin_required'
+          ? _tpL('🔒 El PIN se pedirá al enviar la orden', '🔒 The PIN will be asked when you send the order')
+          : window._tradeErrText(d, r.status);
       }
     } catch(e) {}
   }
@@ -9460,18 +9872,20 @@ window.loadTradeFlows = loadTradeFlows;
     try {
       const d = await _tradeFetch('/api/trade/positions/detail').then(r=>r.json());
       if (!Array.isArray(d) || !d.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="color:rgba(229,226,225,0.3);text-align:center;padding:16px">Sin posiciones abiertas</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="color:rgba(229,226,225,0.3);text-align:center;padding:16px">' + _tpL('Sin posiciones abiertas', 'No open positions') + '</td></tr>';
         return;
       }
-      tbody.innerHTML = d.map(p => {
-        const plColor = p.unrealized >= 0 ? '#4ade80' : '#f87171';
+      const n2 = v => (+v || 0).toFixed(2);
+      tbody.innerHTML = d.filter(Boolean).map(p => {
+        const u = +p.unrealized || 0, up = +p.unrealized_pct || 0;
+        const plColor = u >= 0 ? '#4ade80' : '#f87171';
         return `<tr>
-          <td class="tp-mono" style="color:#e5e2e1;font-weight:600">${p.symbol}</td>
-          <td class="tp-mono">${p.qty}</td>
-          <td class="tp-mono">$${p.avg_entry.toFixed(2)}</td>
-          <td class="tp-mono">$${p.current.toFixed(2)}</td>
-          <td class="tp-mono" style="color:${plColor}">${p.unrealized >= 0 ? '+' : ''}$${p.unrealized.toFixed(2)}</td>
-          <td class="tp-mono" style="color:${plColor}">${p.unrealized_pct >= 0 ? '+' : ''}${p.unrealized_pct.toFixed(2)}%</td>
+          <td class="tp-mono" style="color:#e5e2e1;font-weight:600">${_tpE(p.symbol)}</td>
+          <td class="tp-mono">${_tpE(p.qty)}</td>
+          <td class="tp-mono">$${n2(p.avg_entry)}</td>
+          <td class="tp-mono">$${n2(p.current)}</td>
+          <td class="tp-mono" style="color:${plColor}">${u >= 0 ? '+' : ''}$${n2(u)}</td>
+          <td class="tp-mono" style="color:${plColor}">${up >= 0 ? '+' : ''}${n2(up)}%</td>
         </tr>`;
       }).join('');
     } catch(e) { tbody.innerHTML = '<tr><td colspan="6" style="color:#f87171;text-align:center">Error</td></tr>'; }
@@ -9482,54 +9896,72 @@ window.loadTradeFlows = loadTradeFlows;
     if (!el) return;
     try {
       const d = await _tradeFetch('/api/trade/history').then(r=>r.json());
-      if (!Array.isArray(d) || !d.length) { el.textContent = 'Sin órdenes recientes'; return; }
-      el.innerHTML = d.slice(0,20).map(o => {
-        const ts = new Date(o.created_at||'').toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+      // ¿La orden que quedó AMBIGUA aparece ya en el bróker? → decirlo (el id
+      // se conserva: un reintento igual recibe "ya había llegado").
+      if (_tp.ambSig && Array.isArray(d)) {
+        const hit = window._tradeOrderResolve(_tp.ambSig, d);
+        if (hit) {
+          _tp.ambSig = null;
+          const stEl = document.getElementById('tp-order-status');
+          if (stEl) {
+            stEl.style.color = '#4ade80';
+            stEl.innerHTML = _tpL(
+              `✓ Confirmado: la orden SÍ llegó al bróker (estado: ${_tpE(hit.status || '?')}). No hace falta reintentarla.`,
+              `✓ Confirmed: the order DID reach the broker (status: ${_tpE(hit.status || '?')}). No need to retry it.`);
+          }
+        }
+      }
+      if (!Array.isArray(d) || !d.length) { el.textContent = _tpL('Sin órdenes recientes', 'No recent orders'); return; }
+      el.innerHTML = d.slice(0,20).filter(Boolean).map(o => {
+        const ts = new Date(o.created_at||'').toLocaleTimeString((window.LANG||'')==='en'?'en':'es',{hour:'2-digit',minute:'2-digit'});
         const sColor = o.side === 'buy' ? '#4ade80' : '#f87171';
         const stColor = o.status === 'filled' ? '#4ade80' : o.status === 'canceled' ? 'rgba(229,226,225,0.35)' : '#fbbf24';
         return `<div style="display:flex;gap:8px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
-          <span style="color:rgba(229,226,225,0.4);min-width:36px">${ts}</span>
-          <span style="color:${sColor};min-width:28px;font-weight:700">${o.side?.toUpperCase()}</span>
-          <span style="color:#e5e2e1;min-width:48px">${o.symbol}</span>
-          <span style="color:rgba(229,226,225,0.7);min-width:32px">${parseFloat(o.qty||o.filled_qty||0).toFixed(0)}x</span>
-          <span style="color:${stColor}">${o.status}</span>
+          <span style="color:rgba(229,226,225,0.4);min-width:36px">${_tpE(ts)}</span>
+          <span style="color:${sColor};min-width:28px;font-weight:700">${_tpE(String(o.side||'').toUpperCase())}</span>
+          <span style="color:#e5e2e1;min-width:48px">${_tpE(o.symbol)}</span>
+          <span style="color:rgba(229,226,225,0.7);min-width:32px">${(parseFloat(o.qty||o.filled_qty||0)||0).toFixed(0)}x</span>
+          <span style="color:${stColor}">${_tpE(o.status)}</span>
         </div>`;
       }).join('');
-    } catch(e) { el.textContent = 'Error al cargar órdenes'; }
+    } catch(e) { el.textContent = _tpL('Error al cargar órdenes', 'Could not load orders'); }
   };
 
   window._tpRefreshAgentStatus = async function() {
     try {
       const d = await _tradeFetch('/api/trade/agent/status').then(r=>r.json());
-      _tp.agentRunning = d.running;
+      _tp.agentRunning = !!d.running;
       const badge = document.getElementById('tp-agent-badge');
       const btn   = document.getElementById('tp-agent-start-btn');
       if (badge) {
-        badge.textContent = d.running ? (d.mode === 'auto' ? 'AUTO' : 'ANÁLISIS') : 'OFFLINE';
+        badge.textContent = d.running ? (d.mode === 'auto' ? 'AUTO' : _tpL('ANÁLISIS', 'ANALYSIS')) : 'OFFLINE';
         badge.style.background = d.running ? 'rgba(0,204,255,0.15)' : 'rgba(255,255,255,0.06)';
         badge.style.color      = d.running ? '#00CCFF' : 'rgba(229,226,225,0.5)';
         badge.style.border     = d.running ? '1px solid rgba(0,204,255,0.3)' : '1px solid rgba(255,255,255,0.1)';
       }
       if (btn) {
-        btn.textContent = d.running ? '■ DETENER' : '▶ INICIAR';
+        btn.textContent = d.running ? _tpL('■ DETENER', '■ STOP') : _tpL('▶ INICIAR', '▶ START');
         btn.style.background = d.running ? 'rgba(220,38,38,0.15)' : 'rgba(0,204,255,0.15)';
         btn.style.color = d.running ? '#f87171' : '#00CCFF';
         btn.style.border = d.running ? '1px solid rgba(220,38,38,0.3)' : '1px solid rgba(0,204,255,0.3)';
       }
       const lastEl = document.getElementById('tp-agent-last-run');
-      if (lastEl && d.last_run) lastEl.textContent = 'Last: ' + d.last_run.split(' ')[1];
+      if (lastEl && d.last_run) lastEl.textContent = 'Last: ' + String(d.last_run).split(' ')[1];
 
+      // El log trae texto de la IA (razones) → SIEMPRE escapado.
       const logEl = document.getElementById('tp-agent-log');
-      if (logEl && d.log && d.log.length) {
-        logEl.innerHTML = d.log.slice().reverse().map(entry => {
-          const cls = 'tp-log-' + (entry.level || 'info');
-          const ticker = entry.ticker ? `<b style="color:#e5e2e1">${entry.ticker}</b> ` : '';
-          const action = entry.action ? `<span style="color:${entry.action==='buy'?'#4ade80':entry.action==='sell'?'#f87171':'#a8a8b3'}">[${entry.action?.toUpperCase()}]</span> ` : '';
-          const conf   = entry.confidence != null ? `<span style="color:rgba(229,226,225,0.4)">(${entry.confidence}%)</span> ` : '';
-          const exec   = entry.executed ? `<span style="color:#4ade80">✓ ejecutado</span>` : '';
-          const msg    = entry.msg ? `<span>${entry.msg}</span>` : '';
+      if (logEl && Array.isArray(d.log) && d.log.length) {
+        logEl.innerHTML = d.log.slice().reverse().filter(Boolean).map(entry => {
+          const lvl = /^(info|success|warn|error)$/.test(entry.level || '') ? entry.level : 'info';
+          const cls = 'tp-log-' + lvl;
+          const act = String(entry.action || '');
+          const ticker = entry.ticker ? `<b style="color:#e5e2e1">${_tpE(entry.ticker)}</b> ` : '';
+          const action = act ? `<span style="color:${act==='buy'?'#4ade80':act==='sell'?'#f87171':'#a8a8b3'}">[${_tpE(act.toUpperCase())}]</span> ` : '';
+          const conf   = entry.confidence != null ? `<span style="color:rgba(229,226,225,0.4)">(${_tpE(entry.confidence)}%)</span> ` : '';
+          const exec   = entry.executed ? `<span style="color:#4ade80">✓ ${_tpL('ejecutado', 'executed')}</span>` : '';
+          const msg    = entry.msg ? `<span>${_tpE(entry.msg)}</span>` : '';
           return `<div class="${cls}" style="border-bottom:1px solid rgba(255,255,255,0.04);padding:2px 0">
-            <span style="color:rgba(229,226,225,0.3)">${entry.ts} </span>${ticker}${action}${conf}<span style="color:rgba(229,226,225,0.6)">${entry.reason||''}</span>${exec}${msg}
+            <span style="color:rgba(229,226,225,0.3)">${_tpE(entry.ts)} </span>${ticker}${action}${conf}<span style="color:rgba(229,226,225,0.6)">${_tpE(entry.reason||'')}</span>${exec}${msg}
           </div>`;
         }).join('');
         logEl.scrollTop = 0;
@@ -9537,30 +9969,52 @@ window.loadTradeFlows = loadTradeFlows;
     } catch(e) {}
   };
 
+  // Universo del agente: solo tickers de EE. UU. operables en Alpaca (sin
+  // sufijos de bolsa extranjera tipo .HK/.AS/.T). El server lo vuelve a sanear.
+  function _tpUniverse() {
+    return (window.NODES || []).map(n => n && n.mkt).filter(t => typeof t === 'string' && /^[A-Z]{1,5}(\.[AB])?$/.test(t))
+      .filter((t, i, a) => a.indexOf(t) === i).slice(0, 30);
+  }
+
   window.toggleTradingAgent = async function() {
-    if (_tp.agentRunning) {
-      await _tradeFetch('/api/trade/agent/stop', {method:'POST'}, true);
-      setTimeout(_tpRefreshAgentStatus, 500);
-    } else {
-      const body = {
-        mode:             document.getElementById('tp-agent-mode').value,
-        interval_min:     parseInt(document.getElementById('tp-agent-interval').value),
-        max_pos_pct:      parseFloat(document.getElementById('tp-agent-maxpos').value),
-        stop_loss_pct:    parseFloat(document.getElementById('tp-agent-sl').value),
-        max_daily_loss_pct: parseFloat(document.getElementById('tp-agent-maxloss').value),
-        universe: NODES.filter(n=>n.mkt).map(n=>n.mkt).filter(Boolean).slice(0,30),
-      };
-      await _tradeFetch('/api/trade/agent/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}, true);
-      setTimeout(_tpRefreshAgentStatus, 800);
+    const logEl = document.getElementById('tp-agent-log');
+    const showErr = (d, st) => {
+      if (logEl) logEl.insertAdjacentHTML('afterbegin', `<div class="tp-log-error" style="padding:2px 0">⚠ ${_tpE(window._tradeErrText(d, st))}</div>`);
+    };
+    try {
+      if (_tp.agentRunning) {
+        const r = await _tradeFetch('/api/trade/agent/stop', {method:'POST'}, true);
+        if (!r.ok) showErr(await r.json().catch(() => null), r.status);
+        setTimeout(_tpRefreshAgentStatus, 500);
+      } else {
+        const mode = document.getElementById('tp-agent-mode').value === 'auto' ? 'auto' : 'manual';
+        if (mode === 'auto' && _tp.paper === false) {
+          showErr({ error: 'El modo Auto no se permite con DINERO REAL: usa Manual (solo analiza) o una cuenta de papel.',
+                    error_en: 'Auto mode is not allowed with REAL MONEY: use Manual (analysis only) or a paper account.' }, 0);
+          return;
+        }
+        const body = {
+          mode,
+          interval_min:     parseInt(document.getElementById('tp-agent-interval').value),
+          max_pos_pct:      parseFloat(document.getElementById('tp-agent-maxpos').value),
+          stop_loss_pct:    parseFloat(document.getElementById('tp-agent-sl').value),
+          max_daily_loss_pct: parseFloat(document.getElementById('tp-agent-maxloss').value),
+          universe: _tpUniverse(),
+        };
+        const r = await _tradeFetch('/api/trade/agent/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}, true);
+        if (!r.ok) showErr(await r.json().catch(() => null), r.status);
+        setTimeout(_tpRefreshAgentStatus, 800);
+      }
+    } catch (e) {
+      showErr({ error: 'Error de red — el servidor no respondió', error_en: 'Network error — the server did not respond' }, 0);
     }
   };
 
   function _tpBuildUniverseChips() {
     const el = document.getElementById('tp-universe-chips');
     if (!el) return;
-    const tickers = NODES.filter(n=>n.mkt).map(n=>n.mkt).filter(Boolean).slice(0,30);
-    el.innerHTML = tickers.map(t =>
-      `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:rgba(229,226,225,0.7)">${t}</span>`
+    el.innerHTML = _tpUniverse().map(t =>
+      `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 7px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:rgba(229,226,225,0.7)">${_tpE(t)}</span>`
     ).join('');
   }
 
@@ -9721,7 +10175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const CV_PAL = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80',
                 '#e879f9','#22d3ee','#fbbf24','#86efac'];
 function cvCol(i){ return CV_PAL[i % CV_PAL.length]; }
-function cvEsc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function cvEsc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function cvFmt(v){
   if(v==null) return '—';
   if(typeof v==='boolean') return v?'Sí':'No';

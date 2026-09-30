@@ -69,10 +69,11 @@
     versionCheck();
     // el server corre el ciclo en background; esta llamada arranca una corrida
     // si toca y devuelve el resultado de la ÚLTIMA corrida terminada
-    fetch((window.BASE || '') + '/api/ontology/agents/cycle', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ actor: 'live' }),
-    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    // PIN guardado si existe (nunca lo pide): el ciclo sin PIN también está
+    // permitido por el server (limitado a 1×5 min), con PIN puede forzarse.
+    var _cycUrl = (window.BASE || '') + '/api/ontology/agents/cycle';
+    var _cycOpts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actor: 'live' }) };
+    (window._tradeFetch ? window._tradeFetch(_cycUrl, _cycOpts, false) : fetch(_cycUrl, _cycOpts)).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d || d.status !== 'ok') return;
       var last = d.last;
       if (!last || last.status !== 'ok' || !d.last_at || d.last_at <= lastSeenRun) { pulse(); return; }

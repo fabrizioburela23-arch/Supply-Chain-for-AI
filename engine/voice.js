@@ -1115,6 +1115,14 @@ const BixbyVoice = {
       const acct = await window._tradeAccountInfo(false);
       if (acct && typeof acct.paper === 'boolean') paper = acct.paper;
     } catch (e) {}
+    // sin PIN guardado la cuenta no carga: el modo sale de /api/trade/status
+    // (público) → el resumen hablado SIEMPRE dice papel o DINERO REAL
+    if (paper === null && window._tradeStatusInfo) {
+      try {
+        const s = await window._tradeStatusInfo();
+        if (s && typeof s.paper === 'boolean') paper = s.paper;
+      } catch (e) {}
+    }
 
     const orderObj = { symbol: res.symbol, side, label: res.label, kind: res.kind };
     if (notional != null) orderObj.notional = notional; else orderObj.qty = qty;
@@ -1145,6 +1153,11 @@ const BixbyVoice = {
       } catch (e) {}
     }
     if (r.dedup) {
+      if (r.broker_dup) {
+        return { success: true, already_sent: true, symbol: res.symbol, paper, summary: en
+          ? 'That order had already reached the broker — I did not send it twice. If you want ANOTHER identical order, ask me again.'
+          : 'Esa orden ya había llegado al bróker — no la envié dos veces. Si quieres OTRA orden igual, pídemela de nuevo.' };
+      }
       return { success: true, already_sent: true, symbol: res.symbol, paper, summary: en
         ? 'That same order was already sent a moment ago — I did not send it twice.'
         : 'Esa misma orden ya se envió hace un momento — no la envié dos veces.' };
@@ -1519,7 +1532,7 @@ window.BixbyVoice = BixbyVoice;
     try {
       var r = await window._tradeFetch('/api/trade/account', {}, !!interactive);
       var d = await r.json().catch(function () { return {}; });
-      if (!r.ok) return { error: (d && d.error) || ('HTTP ' + r.status), status: r.status };
+      if (!r.ok) return { error: window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && d.error) || ('HTTP ' + r.status)), status: r.status, code: d && d.code };
       window.__tradeAcctCache = { ts: Date.now(), data: d };
       return d;
     } catch (e) { return { error: String((e && e.message) || e) }; }
@@ -1557,18 +1570,60 @@ window.BixbyVoice = BixbyVoice;
     if (last && last.key === key && (Date.now() - last.ts) < 90000) {
       return { ok: true, dedup: true, data: last.data };
     }
-    try {
-      var r = await window._tradeFetch('/api/trade/order', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
-      }, true);
-      var d = await r.json().catch(function () { return { error: 'respuesta inválida del servidor' }; });
-      if (r.ok && (d.id || d.status)) {
-        window.__lastTradeExec = { key: key, ts: Date.now(), data: d };
-        window.__tradeAcctCache = null;   // la cuenta cambió — invalidar caché
-        return { ok: true, data: d };
+    // La MISMA orden ya en vuelo (sí verbal + clic en la Cabina a la vez) →
+    // se espera a esa, no se manda otra.
+    var inflight = window.__tradeInflight || (window.__tradeInflight = {});
+    if (inflight[key]) {
+      return inflight[key].then(function (res) { return res && res.ok ? { ok: true, dedup: true, data: res.data } : res; });
+    }
+    // client_order_id estable por orden (window._tradeOrderId, app.html): si la
+    // respuesta se pierde (red/timeout/5xx) y se reintenta la misma orden,
+    // Alpaca rechaza el duplicado en vez de ejecutarla dos veces.
+    var sig = 'khipu|' + key;
+    if (window._tradeOrderId) body.client_order_id = window._tradeOrderId(sig);
+    var settle = function (ambiguous) { if (window._tradeOrderSettle) window._tradeOrderSettle(sig, ambiguous); };
+    var p = (async function () {
+      try {
+        var r = await window._tradeFetch('/api/trade/order', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), timeout: 30000,
+        }, true);
+        var d = await r.json().catch(function () { return null; });
+        // PRIMERO el duplicado: el server responde 200 + duplicate:true con la
+        // orden que YA existía (mismo client_order_id) — NO es una orden nueva
+        // y no se puede anunciar como "orden enviada".
+        var isDup = window._tradeOrderIsDup ? window._tradeOrderIsDup(r.status, d)
+          : !!(r.ok && d && d.duplicate === true);
+        if (isDup) {
+          settle(false);
+          window.__tradeAcctCache = null;
+          return { ok: true, dedup: true, broker_dup: true, data: d || {} };
+        }
+        if (r.ok && d && (d.id || d.status)) {
+          settle(false);
+          window.__lastTradeExec = { key: key, ts: Date.now(), data: d };
+          window.__tradeAcctCache = null;   // la cuenta cambió — invalidar caché
+          return { ok: true, data: d };
+        }
+        var amb = window._tradeOrderAmbiguous ? window._tradeOrderAmbiguous(r.status) : r.status >= 500;
+        settle(amb);
+        var msg = window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && (d.error || d.message)) || ('HTTP ' + r.status));
+        if (amb) {
+          msg = (en ? 'The order could not be confirmed (' : 'No se pudo confirmar la orden (') + msg + ').' + (en
+            ? ' It MAY have reached the broker: check your orders before retrying — retrying this same order will not duplicate it.'
+            : ' Puede que SÍ haya llegado al bróker: revisa tus órdenes antes de reintentar — reintentar esta misma orden no la duplica.');
+        }
+        return { ok: false, status: r.status, ambiguous: amb, error: msg };
+      } catch (e) {
+        settle(true);   // sin respuesta: pudo haber llegado
+        return { ok: false, ambiguous: true, error: en
+          ? 'No response from the server (network or timeout). The order MAY have reached the broker: check your orders before retrying — retrying this same order will not duplicate it.'
+          : 'Sin respuesta del servidor (red o tiempo agotado). Puede que la orden SÍ haya llegado al bróker: revisa tus órdenes antes de reintentar — reintentar esta misma orden no la duplica.' };
+      } finally {
+        delete inflight[key];
       }
-      return { ok: false, status: r.status, error: (d && (d.error || d.message)) || ('HTTP ' + r.status) };
-    } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+    })();
+    inflight[key] = p;
+    return p;
   };
 
   // Abre el stage 'broker' de la Cabina (y abre la Cabina si está cerrada).
