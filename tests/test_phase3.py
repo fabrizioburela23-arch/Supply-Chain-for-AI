@@ -1049,3 +1049,32 @@ def test_api_sync_solo_con_pin_dedupe_y_tope(db, monkeypatch):
     monkeypatch.setattr(rc, 'acquire_run_slot', lambda: False)
     r3 = c.post('/api/committee/run', json={'entity': 'Broadcom', 'actor': 'pytest'})
     assert r3.status_code == 429 and r3.get_json()['error_en']
+
+
+def test_progreso_del_comite_y_memo_huerfano():
+    """La pantalla de carga recibe el paso real; un memo 'running' sin nadie
+    calculándolo (reinicio) se marca 'failed' en vez de cargar para siempre."""
+    from research.committee import progress_clear, progress_get, progress_set
+    progress_set('m1', 'claims')
+    progress_set('m1', 'live', n_claims=3)
+    progress_set('m1', 'chair')
+    p = progress_get('m1')
+    assert p['stage'] == 'chair' and p['done'] == ['claims', 'live'] and p['n_claims'] == 3
+    assert 'chair' in p['stages'] and p['elapsed_s'] >= 0
+    progress_clear('m1')
+    assert progress_get('m1') is None
+
+
+@needs_db
+def test_memo_huerfano_se_marca_fallido(db):
+    from datetime import datetime, timedelta, timezone
+    import server
+    from ontology.db import session_scope
+    from research.committee import create_placeholder
+    with session_scope() as s:
+        m = create_placeholder(s, 'Nvidia', 'pytest')
+        m.created_at = datetime.now(timezone.utc) - timedelta(minutes=5)
+        mid = m.id
+    r = server.app.test_client().get(f'/api/committee/memo/{mid}')
+    d = r.get_json()
+    assert d['status'] == 'failed' and 'reinici' in (d.get('error') or '')

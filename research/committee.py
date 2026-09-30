@@ -796,6 +796,51 @@ def _dominant_horizon(conv):
     return best or 'MEDIUM_TERM'
 
 
+# ── PROGRESO EN VIVO (pantalla de carga del comité) ─────────────────────────
+# En memoria del proceso (1 worker, ver CLAUDE.md). La UI lo consulta en
+# GET /api/committee/memo/<id> mientras status == 'running'. Si el proceso se
+# reinicia a mitad, la entrada desaparece y la API marca el memo 'failed'
+# (en vez de "cargando" para siempre).
+import threading as _threading
+import time as _time_mod
+
+PROGRESS_STAGES = ('claims', 'live', 'risk', 'client', 'scoring', 'chair', 'saving')
+_PROGRESS = {}
+_PROGRESS_LOCK = _threading.Lock()
+
+
+def progress_set(memo_id, stage, **extra):
+    if not memo_id:
+        return
+    now = _time_mod.time()
+    with _PROGRESS_LOCK:
+        p = _PROGRESS.get(memo_id) or {'started': now, 'done': [], 'stage': None}
+        if p['stage'] and p['stage'] != stage and p['stage'] not in p['done']:
+            p['done'].append(p['stage'])
+        p['stage'], p['updated'] = stage, now
+        p.update(extra)
+        _PROGRESS[memo_id] = p
+        for k in [k for k, v in _PROGRESS.items() if now - v.get('updated', now) > 3600]:
+            _PROGRESS.pop(k, None)
+
+
+def progress_get(memo_id):
+    with _PROGRESS_LOCK:
+        p = _PROGRESS.get(memo_id)
+        if not p:
+            return None
+        out = dict(p)
+    out['done'] = list(out.get('done') or [])
+    out['elapsed_s'] = round(_time_mod.time() - out['started'], 1)
+    out['stages'] = list(PROGRESS_STAGES)
+    return out
+
+
+def progress_clear(memo_id):
+    with _PROGRESS_LOCK:
+        _PROGRESS.pop(memo_id, None)
+
+
 def run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None):
     """Corre el comité completo y persiste el memo. Devuelve el memo (dict)."""
     from research.outcomes import (agent_reliability, calibrated_confidence, calibration_table, is_us_listing,
@@ -813,6 +858,8 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
         session.add(memo)
         session.flush()
         _audit(memo, requested_by, 'run', {'client_id': client_id})
+    _pid = memo.id
+    progress_set(_pid, 'claims')
 
     # ── evidencia de investigación ──
     rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
@@ -832,11 +879,16 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
     scored_claims = sum(r['n_claims'] for h, r in conv.items() if HZ_WEIGHTS.get(h, 0) > 0)
 
     # ── datos en vivo, riesgo y cliente (acotados en tiempo) ──
+    progress_set(_pid, 'live', n_claims=len(rows))
     live = _bounded(deps.get('live_fn') or _default_live, 10, eid, symbol)
+    progress_set(_pid, 'risk')
     risk = (_bounded(deps.get('risk_fn') or _default_risk, 15, symbol) if symbol
             else {'ok': False, 'error': 'no cotiza', 'error_en': 'not listed'})
     svc = deps['brokerage'] if 'brokerage' in deps else (brokerage_service() if client_id else None)
+    if client_id:
+        progress_set(_pid, 'client')
     client = _client_context(session, svc, client_id, symbol) if client_id else None
+    progress_set(_pid, 'scoring')
     mandate = (client or {}).get('mandate') or mandate_from(None)
     asym = alpaca_symbol(symbol) if symbol else None
     blocked = bool(symbol and ((symbol in mandate['blocked_symbols'] or asym in mandate['blocked_symbols']) or
@@ -884,6 +936,7 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
         ai_err = ('sin conclusiones activas: el presidente IA no se consulta (primero corre Investigación IA)',
                   'no active conclusions: the AI chair is not consulted (run AI research first)')
     else:
+        progress_set(_pid, 'chair')
         body, meta, ai_err = _chair(session, provider, eid, requested_by, text, valid_refs, decision, min_d, max_d,
                                     ev_items, agent_types, now)
         ai_err = ai_err or (None, None)
@@ -897,6 +950,7 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
     if final_decision != decision:           # el presidente rebajó a HOLD (explicado)
         sizing = compute_sizing('HOLD', vol, mandate, equity=equity, current_value=cur_val, price=price,
                                 price_is_usd=price_is_usd)
+    progress_set(_pid, 'saving')
     body['decision_label_es'], body['decision_label_en'] = DECISION_LABEL.get(final_decision, (final_decision,) * 2)
     body['quant_reason_es'], body['quant_reason_en'] = reason_es, reason_en
     body['ref_map'] = {v: k for k, v in cref.items()}

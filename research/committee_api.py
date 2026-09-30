@@ -67,7 +67,8 @@ def _run_async(memo_id, eid, actor, client_id):
     """Corre el comité en un hilo. El cupo (acquire_run_slot) ya se tomó: se
     libera al terminar, pase lo que pase."""
     def _work():
-        from research.committee import fail_memo, release_run_slot, run_committee
+        from research.committee import fail_memo, progress_clear, progress_set, release_run_slot, run_committee
+        progress_set(memo_id, 'claims')
         try:
             with session_scope() as s:
                 run_committee(s, eid, actor, client_id=client_id, memo_id=memo_id)
@@ -80,6 +81,7 @@ def _run_async(memo_id, eid, actor, client_id):
                 pass
         finally:
             release_run_slot()
+            progress_clear(memo_id)
     t = threading.Thread(target=_work, name=f'committee-{memo_id[:8]}', daemon=True)
     t.start()
     return t
@@ -161,12 +163,33 @@ def run():
 def memo(memo_id):
     if not ontology_available():
         return _unavailable()
-    from research.committee import get_memo
+    from research.committee import fail_memo, get_memo, progress_get
     with session_scope() as s:
         d = get_memo(s, memo_id, redact_client=not _pin_ok())
+        if d and d.get('status') == 'running':
+            prog = progress_get(memo_id)
+            if prog:
+                d['progress'] = prog
+            elif _age_s(d.get('created_at')) > 90:
+                # nadie lo está calculando (reinicio del servidor a mitad): no
+                # dejar la pantalla "cargando" para siempre
+                fail_memo(s, memo_id, 'se interrumpió (el servidor se reinició); vuelve a correr el comité',
+                          'interrupted (the server restarted); run the committee again')
+                d = get_memo(s, memo_id, redact_client=not _pin_ok())
     if not d:
         return jsonify({'error': 'memo no encontrado', 'error_en': 'memo not found'}), 404
     return jsonify(d)
+
+
+def _age_s(iso):
+    from datetime import datetime, timezone
+    try:
+        t = datetime.fromisoformat(str(iso).replace('Z', '+00:00'))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - t).total_seconds()
+    except Exception:  # noqa: BLE001
+        return 0
 
 
 @committee_bp.route('/entity/<entity_id>')

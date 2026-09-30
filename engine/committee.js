@@ -139,6 +139,7 @@
       '#cm .cm-learn p{font-size:13px;line-height:1.65;color:#C9D2EA;margin:0 0 10px}' +
       '#cm .cm-learn h4{font-size:13.5px;margin:14px 0 6px;color:#E8EDFB}' +
       '@media(max-width:760px){#cm .cm-grid{grid-template-columns:minmax(0,1fr)}#cm{padding:16px 12px;width:100vw;max-height:100vh;border-radius:0}#cm .cm-g{grid-template-columns:86px minmax(0,1fr) 40px}}';
+    css += '@keyframes cmspin{to{transform:rotate(360deg)}}.cm-spin{display:inline-block;animation:cmspin 1s linear infinite;color:#00E0FF}';
     var st = document.createElement('style'); st.id = 'cm-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
@@ -163,6 +164,11 @@
   }
   function getJSON(url, opts) { return fetch(base() + url, opts).then(parse); }
   function pinJSON(url, opts, interactive) {
+    // Lecturas NO interactivas sin PIN guardado → pedido normal (el server
+    // oculta los datos del cliente). Antes _tradeFetch respondía 401 local y la
+    // pantalla del comité quedaba "cargando" para siempre (bug 2026-09-30).
+    var stored = window._tradePinStored ? window._tradePinStored() : null;
+    if (!interactive && !stored) return getJSON(url, opts);
     if (typeof window._tradeFetch === 'function') return window._tradeFetch(base() + url, opts || {}, !!interactive).then(parse);
     return getJSON(url, opts);
   }
@@ -239,7 +245,7 @@
         '<button class="cm-btn" id="cm-run"' + (S.busy ? ' disabled' : '') + '>' + esc(S.busy ? L('El comité delibera…', 'Committee deliberating…') : L('Correr comité', 'Run committee')) + '</button>' +
       '</div>' +
       (S.clientsErr ? '<div class="cm-note" style="margin:-4px 0 10px">' + esc(S.clientsErr) + '</div>' : '') +
-      (S.busy ? '<div class="cm-cell"><div class="cm-note">⏳ ' + esc(L('Reuniendo investigación, historial de los agentes, riesgo medido y datos en vivo; el presidente IA redacta el memo (hasta ~1 minuto).', 'Gathering research, agent track records, measured risk and live data; the AI chair writes the memo (up to ~1 minute).')) + '</div></div>' : '') +
+      (S.busy ? progressHtml() : '') +
       (m && !S.busy ? memoHtml(m) : (!S.busy ? '<div class="cm-cell"><div class="cm-note">' + esc(S.entity ? L('Todavía no hay memo del comité para esta empresa. Pulsa «Correr comité». Consejo: primero corre 🔬 Investigación IA para que el comité tenga conclusiones.', 'No committee memo for this company yet. Press “Run committee”. Tip: run 🔬 AI research first so the committee has conclusions.') : L('Escribe una empresa y pulsa «Correr comité».', 'Type a company and press “Run committee”.')) + '</div>' +
         (S.entity && window.KhipuResearch ? '<div style="margin-top:8px"><button class="cm-btn ghost" onclick="window.KhipuResearch.open(\'' + esc(S.entity) + '\')">🔬 ' + esc(L('Investigación IA', 'AI research')) + '</button></div>' : '') + '</div>' : '')) +
       (S.history && S.history.length > 1 ? '<div class="cm-cell"><div class="cm-t">🗂 ' + esc(L('Memos anteriores', 'Previous memos')) + '</div>' +
@@ -430,23 +436,66 @@
     });
   }
 
+  // ── PANTALLA DE PROGRESO: pasos reales que reporta el servidor ──────────
+  var STAGES = [
+    ['claims', '📚', 'Leyendo las conclusiones de los analistas IA', 'Reading the AI analysts\' conclusions'],
+    ['live', '📡', 'Consultando precio y datos en vivo', 'Fetching live price and data'],
+    ['risk', '📉', 'Midiendo el riesgo con 1 año de precios reales', 'Measuring risk with 1 year of real prices'],
+    ['client', '👤', 'Revisando la cuenta y el mandato del cliente', 'Checking the client account and mandate'],
+    ['scoring', '🧮', 'Calculando convicción y tamaño de la posición', 'Computing conviction and position size'],
+    ['chair', '🏛', 'El presidente IA redacta el memo (suele tardar 20–90 s)', 'The AI chair writes the memo (usually 20–90 s)'],
+    ['saving', '💾', 'Guardando la propuesta', 'Saving the proposal'],
+  ];
+  function fmtT(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  function progressHtml() {
+    var p = S.progress || {}, done = p.done || [], cur = p.stage || 'claims';
+    var list = STAGES.filter(function (st) { return st[0] !== 'client' || S.clientId; });
+    var idx = list.map(function (x) { return x[0]; }).indexOf(cur);
+    var pct = Math.round(100 * Math.max(0, idx) / list.length) + (cur === 'chair' ? Math.min(12, Math.round((p.elapsed_s || 0) / 10)) : 0);
+    var el = S.runStart ? (Date.now() - S.runStart) / 1000 : (p.elapsed_s || 0);
+    return '<div class="cm-cell" style="padding:16px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🏛 ' + esc(L('El comité está deliberando', 'The committee is deliberating')) + '</b>' +
+      '<span style="font-variant-numeric:tabular-nums;color:#9BA6C4">⏱ ' + fmtT(el) + '</span></div>' +
+      '<div style="height:6px;border-radius:4px;background:rgba(122,158,255,.15);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:' + Math.min(96, pct) + '%;background:linear-gradient(90deg,#00E0FF,#FFB300);transition:width .6s"></i></div>' +
+      list.map(function (st) {
+        var isDone = done.indexOf(st[0]) >= 0 || (idx >= 0 && list.map(function (x) { return x[0]; }).indexOf(st[0]) < idx);
+        var isCur = st[0] === cur;
+        return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;font-size:13px;color:' + (isDone ? '#2BE38B' : isCur ? '#E8EDFB' : '#5f6b8a') + '">' +
+          '<span style="width:18px;text-align:center">' + (isDone ? '✓' : isCur ? '<span class="cm-spin">◌</span>' : '·') + '</span><span>' + st[1] + ' ' + esc(L(st[2], st[3])) + '</span></div>';
+      }).join('') +
+      '<div class="cm-note" style="margin-top:10px">' + esc(el > 150
+        ? L('Está tardando más de lo normal (la IA puede estar lenta). Puedes cerrar esta ventana: el comité sigue trabajando y el resultado aparecerá aquí al volver.', 'Taking longer than usual (the AI may be slow). You can close this window: the committee keeps working and the result will appear here when you come back.')
+        : L('En total suele tardar entre 30 segundos y 2 minutos. Puedes cerrar esta ventana: el comité sigue trabajando.', 'It usually takes 30 seconds to 2 minutes. You can close this window: the committee keeps working.')) + '</div></div>';
+  }
+
   function startPoll(mid) {
     S.running = { memo_id: mid, entity: S.entity }; S.busy = true;
-    var n = 0;
+    if (!S.runStart) S.runStart = Date.now();
+    var n = 0, errs = 0;
     if (S.poll) clearInterval(S.poll);
+    function stop(msg) {
+      clearInterval(S.poll); S.poll = null; S.busy = false; S.running = null; S.progress = null; S.runStart = null;
+      if (msg) S.msg = msg;
+    }
     S.poll = setInterval(function () {
       n++;
       loadMemo(mid).then(function (m) {
         if (!S.running || S.running.memo_id !== mid) return;
-        if (m.status && m.status !== 'running') {
-          clearInterval(S.poll); S.poll = null; S.busy = false; S.running = null;
-          if (m.status === 'failed') S.msg = { bad: true, text: L('El comité falló: ', 'The committee failed: ') + (T(m, 'error') || '') };
-          loadEntity(S.entity);
-        } else if (n > 60) {
-          clearInterval(S.poll); S.poll = null; S.busy = false; S.running = null;
-          S.msg = { bad: true, text: L('El comité tarda más de lo normal. Vuelve a abrir esta ventana en un minuto.', 'The committee is taking longer than usual. Reopen this window in a minute.') }; render();
+        if (!m || !m.memo_id) {                     // error HTTP (401/404/500/sin red): decirlo, no girar para siempre
+          errs++;
+          if (errs >= 3) { stop({ bad: true, text: errText(m || {}) }); render(); }
+          return;
         }
-      }).catch(function () {});
+        errs = 0;
+        if (m.status && m.status !== 'running') {
+          stop(m.status === 'failed' ? { bad: true, text: L('El comité no pudo terminar: ', 'The committee could not finish: ') + (T(m, 'error') || '') } : null);
+          loadEntity(S.entity);
+        } else if (n > 180) {                        // 6 min
+          stop({ bad: true, text: L('El comité sigue sin terminar tras 6 minutos. Vuelve a intentar más tarde (revisa 🩺 Sistema → IA).', 'The committee has not finished after 6 minutes. Try again later (check 🩺 System → AI).') }); render();
+        } else {
+          S.progress = m.progress || S.progress; render();
+        }
+      }).catch(function () { errs++; if (errs >= 3) { stop({ bad: true, text: L('Sin conexión con el servidor.', 'No connection to the server.') }); render(); } });
     }, 2000);
   }
 
@@ -458,7 +507,7 @@
     var ent = (S.entity && q === nodeLabel(S.entity)) ? S.entity : q;
     var body = { entity: ent, actor: actor() };
     if (S.clientId) body.client_id = S.clientId;
-    S.busy = true; S.msg = null; S.memo = null; render();
+    S.busy = true; S.msg = null; S.memo = null; S.progress = null; S.runStart = Date.now(); render();
     var opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
     (S.clientId ? pinJSON('/api/committee/run', opts, true) : getJSON('/api/committee/run', opts)).then(function (d) {
       if (!d.memo_id) { S.busy = false; S.msg = { bad: true, text: errText(d) }; render(); return; }
