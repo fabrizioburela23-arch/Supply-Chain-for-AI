@@ -4087,7 +4087,7 @@ def portfolio_risk_report():
     body = request.get_json(silent=True) or {}
     pos = body.get('positions')
     if not isinstance(pos, list) or not pos:
-        return jsonify({'ok': False, 'error': 'positions requerido: [{symbol, shares}]'}), 400
+        return jsonify({'ok': False, 'error': 'positions requerido: [{symbol, shares} o {symbol, usd}]'}), 400
     try:
         horizon = min(max(int(body.get('horizon_days') or 10), 1), 30)
     except (TypeError, ValueError):

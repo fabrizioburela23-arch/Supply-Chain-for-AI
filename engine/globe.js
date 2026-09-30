@@ -688,7 +688,7 @@
         g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         const station = c.name === 'Estaciones (ISS/CSS)';
         const pts = new THREE.Points(g, new THREE.PointsMaterial(opts.monitor
-          ? { color: new THREE.Color(c.color || '#9bd1ff'), size: station ? 5.5 : (opts.size || 2.1),
+          ? { color: new THREE.Color(c.color || '#9bd1ff'), size: station ? 6 : (opts.size || 2.7),
             sizeAttenuation: true, transparent: true, opacity: 0.95, depthWrite: false,
             map: this._discTex(), alphaTest: 0.03, blending: THREE.AdditiveBlending }
           : { color: new THREE.Color(c.color || '#9bd1ff'), size: station ? 6 : 2.4,

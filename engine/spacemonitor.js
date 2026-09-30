@@ -278,11 +278,12 @@
       '.sm-now span{position:absolute;top:0;left:3px;font-size:8.5px;font-weight:800;letter-spacing:.1em;color:#FFD166}',
       '.sm-cur{position:absolute;top:0;bottom:18px;width:0;border-left:1px solid rgba(0,224,255,.8);pointer-events:none;display:none;box-shadow:0 0 8px rgba(0,224,255,.6)}',
       '.sm-cur span{position:absolute;bottom:2px;left:4px;font-size:9px;color:#00E0FF;font-family:"JetBrains Mono",ui-monospace,monospace;white-space:nowrap;background:rgba(2,4,12,.85);padding:1px 4px;border-radius:4px}',
-      '.sm-mk{position:absolute;display:flex;align-items:center;gap:5px;height:22px;padding:0 8px 0 4px;border-radius:999px;background:rgba(12,18,40,.92);border:1px solid rgba(140,160,255,.22);font-size:10.5px;color:#C7D0EA;white-space:nowrap;cursor:pointer;transform:translateX(-9px);transition:border-color .12s,background .12s;max-width:170px}',
-      '.sm-mk:hover,.sm-mk.hot{border-color:#00E0FF;color:#fff;background:rgba(0,224,255,.12);z-index:3}',
-      '.sm-mk.sel{border-color:#FFD166;color:#fff;background:rgba(255,209,102,.16);box-shadow:0 0 12px rgba(255,209,102,.35);z-index:4}',
+      '.sm-mk{position:absolute;display:flex;align-items:center;gap:5px;height:22px;padding:0 8px 0 4px;border-radius:999px;background:rgba(12,18,40,.92);border:1px solid rgba(140,160,255,.22);font-size:10.5px;color:#C7D0EA;white-space:nowrap;cursor:pointer;transform:translateX(-9px);transition:border-color .12s,background .12s;max-width:170px;overflow:hidden}',
+      '.sm-mk:hover,.sm-mk.hot{border-color:#00E0FF;color:#fff;background:rgba(0,224,255,.12);z-index:3;max-width:220px!important}',
+      '.sm-mk.sel{border-color:#FFD166;color:#fff;background:rgba(255,209,102,.16);box-shadow:0 0 12px rgba(255,209,102,.35);z-index:4;max-width:220px!important}',
       '.sm-mk i{width:10px;height:10px;border-radius:50%;flex:0 0 10px;box-shadow:0 0 6px currentColor}',
-      '.sm-mk b{font-weight:700;overflow:hidden;text-overflow:ellipsis}',
+      '.sm-mk b{font-weight:700;overflow:hidden;text-overflow:ellipsis;min-width:0}',
+      '.sm-mk .g{flex:0 0 auto}',
       '.sm-mk .g{font-size:9px;color:#34d399}',
       '.sm-stem{position:absolute;width:1px;bottom:18px;background:rgba(140,160,255,.25);pointer-events:none}',
       '.sm-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9BA6C4;font-size:12px;text-align:center;padding:10px}',
@@ -350,7 +351,8 @@
       '.sm.nr .sm-mbar{display:flex;position:absolute;z-index:4;left:8px;right:8px;bottom:8px;gap:6px;justify-content:space-between;align-items:center}',
       '.sm.nr .sm-mbar .sm-btn{flex:1;text-align:center;padding:8px 6px;font-size:11.5px}',
       '.sm.nr .sm-ph .grab{display:block;position:absolute;left:50%;top:4px;width:38px;height:4px;border-radius:3px;background:rgba(140,160,255,.3);transform:translateX(-50%)}',
-      '.sm.nr .sm-tlh .sc{display:none}',
+      '.sm.nr .sm-tlh .sc,.sm.nr .sm-tlh .ttl,.sm.nr .sm-tlh .nv .z{display:none}',
+      '.sm.nr .sm-tlh{justify-content:space-between}',
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -564,7 +566,7 @@
       (src && src.stale ? ' · ⚠ ' + L('datos de ', 'data from ') + fmtIso(src.as_of) : '') + ' · ' + L('arrastra para explorar', 'drag to scrub');
     var h = '<div class="sm-tlh"><span class="ttl">⏱ ' + esc(L('Línea de tiempo', 'Timeline')) + '</span>' + seg + '<span class="sc">' + esc(scope) + '</span>' +
       '<span class="nv"><button data-act="step" data-d="-1" title="' + esc(L('Anterior', 'Previous')) + '">◀</button><button data-act="step" data-d="1" title="' + esc(L('Siguiente', 'Next')) + '">▶</button>' +
-      '<button data-act="zoom" data-f="0.8" title="Zoom +">＋</button><button data-act="zoom" data-f="1.25" title="Zoom −">－</button><button data-act="reset" title="' + esc(L('Vista', 'View')) + '">⟲</button></span></div>';
+      '<button class="z" data-act="zoom" data-f="0.8" title="Zoom +">＋</button><button class="z" data-act="zoom" data-f="1.25" title="Zoom −">－</button><button class="z" data-act="reset" title="' + esc(L('Vista', 'View')) + '">⟲</button></span></div>';
     h += '<div class="sm-tlw" id="sm-tlw"><div class="sm-tlt" id="sm-tlt" tabindex="0" aria-label="' + esc(L('Línea de tiempo de lanzamientos', 'Launch timeline')) + '"></div></div>';
     el.innerHTML = h;
     layoutTimeline();
@@ -572,7 +574,7 @@
   function layoutTimeline() {
     var w = $('sm-tlw'), t = $('sm-tlt'); if (!w || !t) return;
     var list = tlList(), dom = tlDomain(list), days = (dom[1] - dom[0]) / 86400;
-    var W = Math.max(w.clientWidth || 300, Math.round(days * (S.narrow ? 64 : 34)));
+    var W = Math.max(w.clientWidth || 300, Math.round(days * (S.narrow ? 92 : 66)));
     t.style.width = W + 'px';
     S.tl = { list: list, dom: dom, W: W };
     var x = function (ts) { return 14 + (ts - dom[0]) / (dom[1] - dom[0]) * (W - 28); };
@@ -586,18 +588,27 @@
     }
     var now = Date.now() / 1000;
     h += '<div class="sm-now" style="left:' + x(now).toFixed(1) + 'px"><span>' + esc(L('AHORA', 'NOW')) + '</span></div>';
-    var lanes = S.narrow ? 2 : 3, last = [], gap = S.narrow ? 118 : 132;
+    var lanes = S.narrow ? 2 : 3, last = [], gap = S.narrow ? 124 : 136;
     for (var i = 0; i < lanes; i++) last.push(-1e9);
     var selId = S.sel && S.sel.kind === 'launch' ? S.sel.data.id : null;
-    list.forEach(function (l, idx) {
+    var placed = list.map(function (l, idx) {
       var px = x(l.net_ts), lane = -1;
       for (var j = 0; j < lanes; j++) { if (px - last[j] >= gap) { lane = j; break; } }
       if (lane < 0) { lane = 0; for (var q = 1; q < lanes; q++) if (last[q] < last[lane]) lane = q; }
       last[lane] = px;
-      var top = 4 + lane * 25, c = S.tlMode === 'previous' ? ST_C[(l.status && l.status.kind) || 'other'] : hashC(provName(l));
-      var g = (l.graph || []).length;
+      return { l: l, idx: idx, px: px, lane: lane };
+    });
+    // si una fila queda apretada, el chip se acorta hasta el siguiente de su fila (sin solaparse)
+    placed.forEach(function (p, i) {
+      var nx = null;
+      for (var k = i + 1; k < placed.length; k++) if (placed[k].lane === p.lane) { nx = placed[k]; break; }
+      p.maxw = nx ? Math.max(22, Math.min(170, nx.px - p.px - 4)) : 170;
+    });
+    placed.forEach(function (p) {
+      var l = p.l, px = p.px, top = 4 + p.lane * 25, c = S.tlMode === 'previous' ? ST_C[(l.status && l.status.kind) || 'other'] : hashC(provName(l));
+      var g = (l.graph || []).length, tiny = p.maxw < 60;
       h += '<div class="sm-stem" style="left:' + px.toFixed(1) + 'px;top:' + (top + 22) + 'px"></div>' +
-        '<div class="sm-mk' + (l.id === selId ? ' sel' : '') + '" data-act="launch" data-id="' + esc(l.id) + '" data-i="' + idx + '" style="left:' + px.toFixed(1) + 'px;top:' + top + 'px" title="' + esc(provName(l) + ' · ' + rocketName(l) + ' · ' + missionName(l) + ' · ' + fmtDate(l.net_ts, true)) + '">' +
+        '<div class="sm-mk' + (l.id === selId ? ' sel' : '') + '" data-act="launch" data-id="' + esc(l.id) + '" data-i="' + p.idx + '" style="left:' + px.toFixed(1) + 'px;top:' + top + 'px;max-width:' + Math.round(p.maxw) + 'px' + (tiny ? ';padding-right:4px' : '') + '" title="' + esc(provName(l) + ' · ' + rocketName(l) + ' · ' + missionName(l) + ' · ' + fmtDate(l.net_ts, true)) + '">' +
         '<i style="background:' + c + ';color:' + c + '"></i><b>' + esc(rocketName(l)) + '</b>' + (g ? '<span class="g" title="' + esc(L('empresas de tu grafo', 'companies in your graph')) + '">◆' + g + '</span>' : '') + '</div>';
     });
     h += '<div class="sm-cur" id="sm-cur"><span></span></div>';
@@ -695,9 +706,9 @@
       [L('Próx. 7 días', 'Next 7 days'), sm ? (sm.upcoming_7d_truncated ? '≥' : '') + sm.upcoming_7d : ge, '#FFD166', L('lanzamientos', 'launches')],
       [L('Próx. 30 días', 'Next 30 days'), sm ? (sm.upcoming_30d_truncated ? '≥' : '') + sm.upcoming_30d : ge, '#FF8A3D', L('lanzamientos', 'launches')],
       [L('Últimos 30 d', 'Last 30 d'), sm ? (sm.previous_30d_truncated ? '≥' : '') + sm.previous_30d : ge, '#2BE38B', rate != null ? rate + '% ' + L('éxito', 'success') : ''],
-      [L('Satélites', 'Satellites'), t ? (fb ? '—' : Number(t.total_real || 0).toLocaleString(en() ? 'en-US' : 'es-ES')) : '…', '#9bd1ff', fb ? L('fuente caída', 'source down') : 'CelesTrak'],
-      [L('Constelac.', 'Constell.'), t ? (fb ? '—' : (t.constellations || []).filter(function (c) { return c.count > 0; }).length) : '…', '#B983FF', L('rastreadas', 'tracked')],
-      [L('Plataformas', 'Pads'), S.up ? padsAgg().filter(function (p) { return p.up.length; }).length : '…', '#00E0FF', L('con próximos', 'with upcoming')],
+      [L('Satélites', 'Satellites'), t ? (fb ? '—' : Number(t.total_real || 0).toLocaleString(en() ? 'en-US' : 'es-ES')) : (S.tleErr ? '—' : '…'), '#9bd1ff', fb || S.tleErr ? L('fuente caída', 'source down') : 'CelesTrak'],
+      [L('Constelac.', 'Constell.'), t ? (fb ? '—' : (t.constellations || []).filter(function (c) { return c.count > 0; }).length) : (S.tleErr ? '—' : '…'), '#B983FF', L('rastreadas', 'tracked')],
+      [L('Plataformas', 'Pads'), S.up ? padsAgg().filter(function (p) { return p.up.length; }).length : (S.upErr ? '—' : '…'), '#00E0FF', L('con próximos', 'with upcoming')],
     ];
     return '<div class="sm-kpis">' + k.map(function (x) {
       return '<div class="sm-kpi"><div class="k">' + esc(x[0]) + '</div><div class="v" style="color:' + x[2] + '">' + esc(x[1]) + '</div><div class="s">' + esc(x[3]) + '</div></div>';
@@ -871,7 +882,9 @@
     h += '<div class="sm-note">' + esc(d.modeled ? L('⚠ Posición MODELADA (sin SGP4 o datos de referencia): no es la posición real.', '⚠ MODELED position (no SGP4 or reference data): not the real position.')
       : S.tle && S.tle.source === 'fallback' ? L('⚠ Órbita de referencia (CelesTrak no responde): no es la posición real.', '⚠ Reference orbit (CelesTrak unreachable): not the real position.')
         : L('Posición calculada en tu navegador con SGP4 a partir de los elementos orbitales de CelesTrak; se actualiza cada ~1 s.', 'Position computed in your browser with SGP4 from CelesTrak orbital elements; updates every ~1 s.')) + chip('sm_altitude') + '</div>';
-    var node = d.node && (window.NODE_BY_ID || {})[d.node];
+    // /api/space/tle nombra algunos operadores con ids viejos: se mapean a los del grafo
+    var NB = window.NODE_BY_ID || {}, nid = d.node && (NB[d.node] ? d.node : ({ EutelsatOneWeb: 'Eutelsat', Spire: 'SpireGlobal' })[d.node]);
+    var node = nid && NB[nid];
     if (node) h += '<div class="sm-sec"><div class="sm-sh">◆ ' + esc(L('Operador en tu grafo', 'Operator in your graph')) + '</div>' + coRow({ id: node.id, label: node.label, role: 'payload', method: 'constellation' }).replace(esc(LL(ROLE.payload)), esc(L('Operador de la constelación', 'Constellation operator'))) + '</div>';
     return h + '</div>';
   }
@@ -992,7 +1005,13 @@
     G.setPoints('pads', pads.map(function (a) { return { lat: a.lat, lon: a.lon, color: a.up.length ? (a.week ? '#9EF6FF' : '#8FB0FF') : '#9BA6C4', size: a.up.length ? 5.5 : 4, pulse: a.soon }; }),
       { hitPx: 11, renderOrder: 7, alt: 0.006 });
     G.gl.pads.items = pads;
-    var lab = pads.filter(function (a) { return a.up.length; }).sort(function (a, b) { return b.up.length - a.up.length; }).slice(0, S.narrow ? 4 : 7);
+    var lab = [];
+    pads.filter(function (a) { return a.up.length; }).sort(function (a, b) { return b.up.length - a.up.length; }).forEach(function (a) {
+      if (lab.length >= (S.narrow ? 4 : 7)) return;
+      // plataformas vecinas (p.ej. SLC-40 y LC-39A): una sola etiqueta por sitio
+      if (lab.some(function (b) { return Math.abs(b.lat - a.lat) < 2.5 && Math.abs(b.lon - a.lon) < 2.5; })) return;
+      lab.push(a);
+    });
     G.setLabels('pad_labels', lab.map(function (a) { return { lat: a.lat + 3.2, lon: a.lon, text: String(a.location || a.name || '').split(',')[0] + ' · ' + a.up.length, color: '#9EF6FF' }; }), { px: 24, w: 20, alt: 0.03 });
     var rec = recentList().filter(hasLL);
     G.setPoints('recent', rec.map(function (l) { return { lat: l.pad.lat, lon: l.pad.lon, color: ST_C[l.status.kind] || ST_C.other, size: 11 }; }), { shape: 3, pickable: false, opacity: 0.8, renderOrder: 6, alt: 0.008 });
@@ -1075,7 +1094,7 @@
     var l = $('sm-left'), r = $('sm-right');
     if (l) l.classList.toggle('open', side === 'left');
     if (r) r.classList.toggle('open', side === 'right');
-    if (S.globe && S.globe.setViewShift) S.globe.setViewShift(S.narrow && side ? 0.3 : 0);
+    if (S.globe && S.globe.setViewShift) S.globe.setViewShift(S.narrow ? (side ? 0.3 : 0.1) : 0);
   }
   function checkNarrow() {
     var w = S.root ? S.root.clientWidth : 0;
@@ -1084,7 +1103,7 @@
     if (nr !== S.narrow) {
       S.narrow = nr;
       var sm = $('sm'); if (sm) sm.classList.toggle('nr', nr);
-      if (!nr) openSheet(null);
+      openSheet(null);
       applyCollapse(); renderMbar();
       if (S.globe) drawLaunches();
     }
@@ -1179,6 +1198,7 @@
       G.onPick = onGlobePick;
       G.onHover = onGlobeHover;
       S.globe = G; window._smGlobe = G;
+      if (S.narrow) G.setViewShift(0.1);
       drawShells(); drawCompanies();
       if (S.up || S.prev) drawLaunches();
       fetch(base() + '/vendor/world-110m.json').then(function (r) { if (!r.ok) throw new Error('topo'); return r.json(); })

@@ -106,6 +106,14 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     inestabilidad, exposure, brief, reference) + `engine/worldmonitor.js`
     (`KhipuWorld`): la pestaña Geopolítica ES el World Monitor (un solo globo;
     geosituation.js quedó como alias).
+  - `core/space.py` (/api/space2/*: Launch Library 2 normalizado, caché con
+    presupuesto de 12 req/h, stale honesto) + `engine/spacemonitor.js`
+    (`KhipuSpace`): la pestaña Espacio ES el Space Monitor (globo + lanzamientos).
+  - `core/portfolio_ai.py` (/api/portfolio-ai/ask|propose|themes): asistente de
+    carteras (construcción determinista + explicación IA con guardián) dentro de
+    engine/portfolios.js; crea carteras SIMULADAS, nunca órdenes.
+  - engine/riskreport.js: pantalla guiada (mis posiciones / cartera rápida en
+    USD / ejemplo) y resultado en lenguaje simple; build_report acepta {symbol, usd}.
   - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
     por IP (último salto XFF) y global compartido — `require_pin` (trading) /
     `require_operator` (escrituras de ontología). Nunca reimplementar.
@@ -240,7 +248,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (668 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (725 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
