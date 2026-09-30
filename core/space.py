@@ -190,29 +190,35 @@ def _resolve(text):
 
 def resolve_org(name, abbrev=None):
     """Resuelve un nombre de organización de LL2 al grafo. Intenta: nombre
-    completo · abreviatura · texto entre paréntesis · nombre sin cola genérica
-    ('Space Systems', 'Aerospace'…). Devuelve el hit de resolve() o None."""
+    completo · abreviatura (solo coincidencia exacta de id/label/alias: una
+    sigla que choca con un ticker NO cuenta) · sigla entre paréntesis
+    ('… (ROSCOSMOS)') y el nombre sin ella · nombre sin cola genérica
+    ('Space Systems', 'Aerospace'…). Un paréntesis que NO es sigla es un
+    calificativo ('iSpace (China)' ≠ ispace de Japón): entonces no se recorta.
+    Devuelve el hit de resolve() o None."""
     tries = []
     if name:
-        tries.append(name)
+        tries.append((name, None))
     if abbrev and abbrev != name and len(str(abbrev)) >= 3:
-        tries.append(abbrev)
+        tries.append((abbrev, ('id', 'label', 'alias')))
     if name:
         m = _PAREN.search(name)
-        if m:
-            tries.append(m.group(1))
-            tries.append(_PAREN.sub('', name).strip())
-        tail = _GENERIC_TAIL.sub('', _PAREN.sub('', name)).strip()
-        if tail and tail != name and len(tail) >= 4:
-            tries.append(tail)
+        acr = bool(m and re.fullmatch(r'[A-Z0-9][A-Z0-9 .&-]{2,}', m.group(1).strip()))
+        if m and acr:
+            tries.append((m.group(1).strip(), ('id', 'label', 'alias')))
+            tries.append((_PAREN.sub('', name).strip(), None))
+        if not m or acr:
+            tail = _GENERIC_TAIL.sub('', _PAREN.sub('', name)).strip()
+            if tail and tail != name and len(tail) >= 4:
+                tries.append((tail, None))
     seen = set()
-    for t in tries:
+    for t, methods in tries:
         k = str(t).strip().lower()
         if not k or k in seen:
             continue
         seen.add(k)
         r = _resolve(t)
-        if r:
+        if r and (methods is None or r.get('method') in methods):
             return r
     return None
 
