@@ -17,6 +17,10 @@
        positions:[{ nodeId, shares, avgPrice, ts }], createdAt }
    La cartera activa se recuerda en localStorage 'kh_pf_active'.
 
+   🤖 Asistente de carteras (pestaña interna 'Asistente'): preguntas y
+   propuestas vía /api/portfolio-ai/* (core/portfolio_ai.py). "Crear esta
+   cartera" guarda una cartera SIMULADA más con origin:{kind:'ai_proposal'}.
+
    Precios:
      - Pública con ticker (n.mkt): MKT.quotes[ticker].close (precio vivo/caché).
      - Privada/pre-IPO sin ticker: valor ESTIMADO del nodo (NODE_META.mktcap_b,
@@ -371,8 +375,11 @@
       '<div style="font-size:13px;color:' + MUTE + ';line-height:1.6;max-width:460px;margin:0 auto 18px">' +
         T('Invierte dinero virtual en cualquiera de las ' + nodes().length + ' empresas del grafo y prueba tu tesis sin arriesgar nada real.',
           'Invest virtual money in any of the ' + nodes().length + ' companies in the graph and test your thesis risking nothing real.') + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">' +
       '<button id="kpf-new2" class="kpf-btn kpf-primary" style="font-size:14px;padding:11px 20px">＋ ' +
-        T('Nueva cartera', 'New portfolio') + '</button></div>';
+        T('Nueva cartera', 'New portfolio') + '</button>' +
+      '<button class="kpf-btn kpf-ghost kpf-tab-ai" style="font-size:14px;padding:11px 20px">🤖 ' +
+        T('Que la IA me proponga una', 'Let the AI propose one') + '</button></div></div>';
   }
 
   // fila de resumen (4 tarjetas)
@@ -518,7 +525,8 @@
       '.kpf-primary{background:linear-gradient(135deg,#00E0FF,#4A7BFF);color:#04121C}' +
       '.kpf-ghost{background:rgba(122,158,255,.08);color:#C9D4EC;border-color:rgba(122,158,255,.20)}' +
       '.kpf-sell{background:rgba(255,107,133,.12);color:#FF9DB0;border-color:rgba(255,107,133,.3)}' +
-      '.kpf-btn:disabled{cursor:not-allowed}' +
+      '.kpf-btn:disabled{cursor:not-allowed;opacity:.6}' +
+      aiStyle() +
       '</style>';
   }
 
@@ -532,9 +540,16 @@
     if (pf) setActiveId(pf.id);
 
     var html = styleTag() +
-      '<div style="max-width:1000px;margin:0 auto;padding:20px 18px 60px">' +
-      topBar(list, pf) +
-      (_creating ? createForm() : '');
+      '<div style="max-width:1000px;margin:0 auto;padding:20px 16px 60px;box-sizing:border-box">' +
+      viewTabs();
+
+    if (_view === 'ai') {
+      _container.innerHTML = html + aiView() + '</div>';
+      wireTabs();
+      wireAI();
+      return;
+    }
+    html += topBar(list, pf) + (_creating ? createForm() : '');
 
     if (!pf) {
       html += emptyState();
@@ -550,8 +565,445 @@
     }
     html += '</div>';
     _container.innerHTML = html;
+    wireTabs();
     wire(pf);
   }
+
+  function wireTabs() {
+    $all('.kpf-tab').forEach(function (b) {
+      b.onclick = function () { if (_view === 'ai') readFormSafe(); setView(b.getAttribute('data-view')); render(); };
+    });
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     🤖 ASISTENTE DE CARTERAS (pedido: "que puedas responder preguntas y que
+     te proponga carteras con AI"). Server: core/portfolio_ai.py
+       POST /api/portfolio-ai/ask      → {answer, sources, answer_source}
+       POST /api/portfolio-ai/propose  → {portfolios:[…], excluded, disclaimer}
+       GET  /api/portfolio-ai/themes   → chips de temas (sectores del grafo)
+     La construcción es DETERMINISTA (datos reales); la IA solo redacta. Crear
+     una propuesta = cartera SIMULADA local (kh_portfolios). Nunca órdenes.
+     ══════════════════════════════════════════════════════════════════════ */
+  var LS_VIEW = 'kh_pf_view';
+  var _view = (function () { try { return localStorage.getItem(LS_VIEW) === 'ai' ? 'ai' : 'pf'; } catch (e) { return 'pf'; } })();
+  var _aiMode = 'propose';          // 'propose' | 'ask'
+  var _chat = [];                   // [{role:'user'|'assistant', text, sources, src, error}]
+  var _asking = false;
+  var _askDraft = '';
+  var _useMyPf = true;
+  var _form = { goal: 'equilibrio', horizon: '1-3', risk: 'medio', amount: 10000, themes: [], exclude: '' };
+  var _themes = null;               // [{key,label,count}] del server
+  var _themesLang = '';
+  var _proposing = false;
+  var _proposal = null;             // respuesta de /propose
+  var _propError = '';
+  var _created = {};                // id de propuesta → id de cartera creada
+
+  var THEME_FALLBACK = [
+    ['semis', 'Semiconductores', 'Semiconductors'], ['cloud_ia', 'Cloud & IA', 'Cloud & AI'],
+    ['infra', 'Infra física', 'Physical Infra'], ['energia', 'Energía & Nuclear', 'Energy & Nuclear'],
+    ['espacio', 'Espacio', 'Space'], ['defensa', 'Defensa', 'Defense'], ['robotica', 'Robótica', 'Robotics'],
+    ['materiales', 'Materiales', 'Materials'], ['logistica', 'Logística', 'Logistics'],
+    ['inmobiliario', 'Inmobiliario', 'Real Estate'], ['macro_credito', 'Macro & Crédito', 'Macro & Credit']
+  ];
+
+  function setView(v) { _view = v; try { localStorage.setItem(LS_VIEW, v); } catch (e) {} }
+
+  function registerExplainAI() {
+    if (!window.explainRegister || registerExplainAI.done) return;
+    registerExplainAI.done = true;
+    window.explainRegister('pf_diversif', {
+      es: { t: '¿Qué es el ratio de diversificación?', b: 'Compara el riesgo de cada empresa por separado con el riesgo de la cartera entera.<br><br><b>1,0</b> = no ganas nada al mezclar (todas se mueven igual). <b>1,5</b> o más = la mezcla reduce bastante los sustos porque las empresas no caen todas a la vez.<br><br>Se calcula con 1 año de precios reales.' },
+      en: { t: 'What is the diversification ratio?', b: 'It compares the risk of each company on its own with the risk of the whole portfolio.<br><br><b>1.0</b> = mixing gains nothing (they all move together). <b>1.5</b> or more = the mix clearly reduces scares because the companies do not all fall at once.<br><br>Computed from 1 year of real prices.' }
+    });
+    window.explainRegister('pf_sizing', {
+      es: { t: '¿Cómo se deciden los pesos?', b: '<b>Inversa de la volatilidad</b>: las acciones más tranquilas reciben más dinero y las más nerviosas, menos.<br><br><b>Paridad de riesgo</b>: se ajustan los pesos para que cada empresa aporte un riesgo parecido a la cartera.<br><br>En ambos casos se respetan <b>topes</b> por empresa, sector y país según el riesgo que elegiste, para no depender de una sola apuesta. Todo con 1 año de precios reales.' },
+      en: { t: 'How are the weights decided?', b: '<b>Inverse volatility</b>: calmer stocks get more money and jumpier ones less.<br><br><b>Risk parity</b>: weights are tuned so each company contributes a similar amount of risk.<br><br>Both respect <b>caps</b> per company, sector and country based on the risk you chose, so you do not depend on a single bet. All from 1 year of real prices.' }
+    });
+  }
+
+  function apiPost(url, body) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var to = ctl ? setTimeout(function () { ctl.abort(); }, 90000) : null;
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+      .then(function (r) {
+        if (to) clearTimeout(to);
+        return r.json().catch(function () { return {}; }).then(function (d) { d = d || {}; d._status = r.status; return d; });
+      }, function (e) {
+        if (to) clearTimeout(to);
+        throw e;
+      });
+  }
+  function errText(d, e) {
+    if (d && (d.error || d.error_en)) return lang() === 'en' ? (d.error_en || d.error) : (d.error || d.error_en);
+    if (e && e.name === 'AbortError') return T('Tardó demasiado. Inténtalo de nuevo.', 'It took too long. Please try again.');
+    return T('No se pudo conectar con el servidor.', 'Could not reach the server.');
+  }
+
+  function loadThemes() {
+    if (_themes && _themesLang === lang()) return;
+    _themesLang = lang();
+    fetch('/api/portfolio-ai/themes?lang=' + lang()).then(function (r) { return r.json(); }).then(function (d) {
+      if (d && Array.isArray(d.themes) && d.themes.length) { _themes = d.themes; if (_view === 'ai') render(); }
+    }).catch(function () {});
+  }
+  function themeList() {
+    if (_themes && _themesLang === lang()) return _themes;
+    return THEME_FALLBACK.map(function (t) { return { key: t[0], label: lang() === 'en' ? t[2] : t[1] }; });
+  }
+
+  // cartera activa → posiciones para /ask
+  function pfForAsk() {
+    var pf = activePortfolio();
+    if (!pf || !(pf.positions || []).length) return null;
+    return { name: pf.name, positions: pf.positions.slice(0, 30).map(function (p) {
+      var n = nodeById(p.nodeId) || {};
+      return { node_id: p.nodeId, symbol: n.mkt || '', label: n.label || p.nodeId, shares: p.shares };
+    }) };
+  }
+
+  function viewTabs() {
+    var tab = function (id, icon, es, en) {
+      var on = _view === id;
+      return '<button class="kpf-tab' + (on ? ' on' : '') + '" data-view="' + id + '">' + icon + ' ' + T(es, en) + '</button>';
+    };
+    return '<div class="kpf-tabs">' + tab('pf', '💼', 'Mis carteras', 'My portfolios') +
+      tab('ai', '🤖', 'Asistente de carteras', 'Portfolio assistant') + '</div>';
+  }
+
+  function aiView() {
+    registerExplainAI();
+    loadThemes();
+    var mode = function (id, txt) {
+      return '<button class="kpf-mode' + (_aiMode === id ? ' on' : '') + '" data-mode="' + id + '">' + txt + '</button>';
+    };
+    return '<div style="margin-bottom:14px;font-size:13px;color:' + MUTE + ';line-height:1.6">' +
+        T('Te ayudo a armar carteras con datos reales de Khipus: el grafo de la cadena de suministro, precios de 1 año y el riesgo de cada empresa. Es educativo: nada se ejecuta.',
+          'I help you build portfolios with real Khipus data: the supply-chain graph, 1 year of prices and each company\'s risk. It is educational: nothing is executed.') +
+      '</div>' +
+      '<div class="kpf-modes">' + mode('propose', '✨ ' + T('Proponme una cartera', 'Propose a portfolio')) +
+        mode('ask', '💬 ' + T('Hazme una pregunta', 'Ask me a question')) + '</div>' +
+      (_aiMode === 'ask' ? askView() : proposeView());
+  }
+
+  /* ── 💬 preguntas ─────────────────────────────────────────────────────── */
+  function askView() {
+    var pf = pfForAsk();
+    var sugg = [T('¿Qué es diversificar?', 'What does diversifying mean?'),
+                T('¿Nvidia y AMD se mueven juntas?', 'Do Nvidia and AMD move together?'),
+                T('Quiero algo menos riesgoso', 'I want something less risky')];
+    if (pf) sugg.push(T('¿Qué riesgo tiene mi cartera?', 'How risky is my portfolio?'));
+    var msgs = _chat.map(function (m) {
+      if (m.role === 'user') return '<div class="kpf-msg kpf-me">' + esc(m.text) + '</div>';
+      var src = (m.sources || []).map(function (s) { return '<span class="kpf-src">' + esc(s.label) + '</span>'; }).join('');
+      var tag = m.error ? '' : '<span class="kpf-src" style="border-color:' + (m.src === 'ai' ? 'rgba(0,224,255,.4);color:#00E0FF' : 'rgba(255,179,0,.4);color:#FFB300') + '">' +
+        (m.src === 'ai' ? '🤖 IA' : T('sin IA', 'no AI')) + '</span>';
+      return '<div class="kpf-msg kpf-bot' + (m.error ? ' kpf-err' : '') + '">' + esc(m.text).replace(/\n/g, '<br>') +
+        (m.error ? '' : '<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">' + tag + src + '</div>') + '</div>';
+    }).join('');
+    if (_asking) msgs += '<div class="kpf-msg kpf-bot" style="color:' + MUTE + '">⏳ ' + T('Pensando con los datos de Khipus…', 'Thinking with Khipus data…') + '</div>';
+    if (!msgs) msgs = '<div style="color:' + MUTE + ';font-size:13px;padding:6px 2px">' +
+      T('Pregunta lo que quieras sobre carteras, empresas del grafo, diversificación o riesgo. Ejemplos:', 'Ask anything about portfolios, graph companies, diversification or risk. Examples:') + '</div>';
+    return '<div class="kpf-card">' +
+      '<div id="kpf-chat" class="kpf-chat">' + msgs + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">' + sugg.map(function (s) {
+        return '<button class="kpf-chip kpf-sugg" data-q="' + esc(s) + '"' + (_asking ? ' disabled' : '') + '>' + esc(s) + '</button>';
+      }).join('') + '</div>' +
+      (pf ? '<label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:' + INK + ';margin-bottom:10px;cursor:pointer">' +
+        '<input id="kpf-usepf" type="checkbox"' + (_useMyPf ? ' checked' : '') + ' style="width:17px;height:17px">' +
+        T('Usar mi cartera «' + esc(pf.name) + '» para responder', 'Use my portfolio «' + esc(pf.name) + '» to answer') + '</label>' : '') +
+      '<div style="display:flex;gap:8px">' +
+        '<input id="kpf-ask" type="text" maxlength="800" value="' + esc(_askDraft) + '" placeholder="' +
+          T('Escribe tu pregunta…', 'Type your question…') + '" class="kpf-input" style="flex:1" autocomplete="off">' +
+        '<button id="kpf-ask-go" class="kpf-btn kpf-primary kpf-big"' + (_asking ? ' disabled' : '') + '>' + T('Preguntar', 'Ask') + '</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:' + MUTE + ';margin-top:10px;line-height:1.5">ℹ️ ' +
+        T('Respuestas educativas con datos de Khipus. No es asesoría personalizada ni promete rendimientos.',
+          'Educational answers with Khipus data. Not personalized advice and no promise of returns.') + '</div>' +
+      '</div>';
+  }
+
+  function sendAsk(q) {
+    q = String(q || '').trim();
+    if (!q || _asking) return;
+    var history = _chat.filter(function (m) { return !m.error; }).slice(-6).map(function (m) { return { role: m.role, text: m.text }; });
+    _chat.push({ role: 'user', text: q });
+    _asking = true; _askDraft = '';
+    render();
+    var body = { question: q, lang: lang(), history: history };
+    var pf = _useMyPf ? pfForAsk() : null;
+    if (pf) body.portfolio = pf;
+    apiPost('/api/portfolio-ai/ask', body).then(function (d) {
+      if (d._status >= 400 || !d.answer) _chat.push({ role: 'assistant', text: errText(d), error: true });
+      else _chat.push({ role: 'assistant', text: d.answer, sources: d.sources, src: d.answer_source });
+    }, function (e) {
+      _chat.push({ role: 'assistant', text: errText(null, e), error: true });
+    }).then(function () {
+      _asking = false; render();
+      var c = $('#kpf-chat'); if (c) c.scrollTop = c.scrollHeight;
+    });
+  }
+
+  /* ── ✨ propuesta ─────────────────────────────────────────────────────── */
+  function optGroup(name, value, opts) {
+    return '<div class="kpf-opts">' + opts.map(function (o) {
+      return '<button class="kpf-opt' + (value === o[0] ? ' on' : '') + '" data-f="' + name + '" data-v="' + o[0] + '">' +
+        '<b>' + o[1] + '</b>' + (o[2] ? '<span>' + o[2] + '</span>' : '') + '</button>';
+    }).join('') + '</div>';
+  }
+  function fieldLabel(n, txt) {
+    return '<div class="kpf-flabel"><span class="kpf-num">' + n + '</span>' + txt + '</div>';
+  }
+
+  function proposeView() {
+    var f = _form;
+    var html = '<div class="kpf-card">' +
+      fieldLabel(1, T('¿Qué buscas?', 'What are you looking for?')) +
+      optGroup('goal', f.goal, [
+        ['crecimiento', '🌱 ' + T('Crecimiento', 'Growth'), T('Que crezca más, aceptando sustos', 'Grow more, accepting scares')],
+        ['equilibrio', '⚖️ ' + T('Equilibrio', 'Balanced'), T('Un punto medio', 'A middle ground')],
+        ['defensivo', '🛡 ' + T('Defensivo', 'Defensive'), T('Proteger antes que ganar', 'Protect before gaining')]]) +
+      fieldLabel(2, T('¿Por cuánto tiempo?', 'For how long?')) +
+      optGroup('horizon', f.horizon, [['lt1', T('Menos de 1 año', 'Under 1 year')], ['1-3', T('1 a 3 años', '1 to 3 years')],
+                                      ['3+', T('Más de 3 años', 'Over 3 years')]]) +
+      fieldLabel(3, T('¿Cuánto riesgo toleras?', 'How much risk can you take?')) +
+      optGroup('risk', f.risk, [['bajo', '🟢 ' + T('Bajo', 'Low'), T('Más empresas, topes estrictos', 'More names, strict caps')],
+                                ['medio', '🟡 ' + T('Medio', 'Medium')],
+                                ['alto', '🔴 ' + T('Alto', 'High'), T('Menos empresas, más concentración', 'Fewer names, more concentration')]]) +
+      fieldLabel(4, T('¿Cuánto dinero (virtual)?', 'How much (virtual) money?')) +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><span style="color:' + MUTE + ';font-size:15px">$</span>' +
+        '<input id="kpf-amt" type="number" min="100" max="10000000" step="1000" value="' + esc(f.amount) + '" class="kpf-input" style="max-width:200px;font-size:15px;font-weight:700">' +
+        '<span style="color:' + MUTE + ';font-size:12px">USD</span></div>' +
+      fieldLabel(5, T('Temas (opcional)', 'Themes (optional)') + ' <span style="font-weight:400;color:' + MUTE + ';font-size:11.5px">' +
+        T('— sin elegir = todos', '— none = all') + '</span>') +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + themeList().map(function (t) {
+        var on = f.themes.indexOf(t.key) >= 0;
+        return '<button class="kpf-chip kpf-theme' + (on ? ' on' : '') + '" data-k="' + esc(t.key) + '">' + (on ? '✓ ' : '') + esc(t.label) +
+          (t.count ? ' <span style="opacity:.6">' + t.count + '</span>' : '') + '</button>';
+      }).join('') + '</div>' +
+      fieldLabel(6, T('Excluir (opcional)', 'Exclude (optional)')) +
+      '<input id="kpf-excl" type="text" maxlength="400" value="' + esc(f.exclude) + '" class="kpf-input" style="width:100%;margin-bottom:16px" placeholder="' +
+        T('ej.: China, Tesla, energía', 'e.g.: China, Tesla, energy') + '">' +
+      '<button id="kpf-prop-go" class="kpf-btn kpf-primary kpf-big" style="width:100%"' + (_proposing ? ' disabled' : '') + '>' +
+        (_proposing ? '⏳ ' + T('Calculando con 1 año de precios reales…', 'Computing with 1 year of real prices…')
+                    : '✨ ' + T('Proponme carteras', 'Propose portfolios')) + '</button>' +
+      (_proposing ? '<div style="font-size:11.5px;color:' + MUTE + ';margin-top:8px;text-align:center">' +
+        T('Puede tardar unos 20-40 segundos.', 'It may take about 20-40 seconds.') + '</div>' : '') +
+      '</div>';
+    if (_propError) html += '<div class="kpf-card kpf-err" style="margin-top:12px">⚠️ ' + esc(_propError) + excludedBlock(_proposal) + '</div>';
+    if (_proposal && _proposal.portfolios && _proposal.portfolios.length) html += proposalResults(_proposal);
+    return html;
+  }
+
+  function reasonOf(e) { return lang() === 'en' ? (e.reason_en || e.reason) : e.reason; }
+  function excludedBlock(d) {
+    var ex = (d && d.excluded) || [];
+    if (!ex.length) return '';
+    return '<details style="margin-top:10px;font-size:12px;color:' + MUTE + '"><summary style="cursor:pointer">' +
+      T('Qué quedó fuera y por qué', 'What was left out and why') + ' (' + ex.length + ')</summary>' +
+      '<ul style="margin:8px 0 0;padding-left:18px;line-height:1.6">' + ex.slice(0, 40).map(function (e) {
+        return '<li>' + esc(e.label) + (e.symbol ? ' (' + esc(e.symbol) + ')' : '') + ' — ' + esc(reasonOf(e)) + '</li>';
+      }).join('') + '</ul></details>';
+  }
+
+  function metricTile(label, value, key, sub) {
+    var chip = (key && window.explainChip) ? window.explainChip(key) : '';
+    return '<div class="kpf-tile"><div class="kpf-tl">' + label + chip + '</div><div class="kpf-tv">' + value + '</div>' +
+      (sub ? '<div class="kpf-ts">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function proposalResults(d) {
+    var en = lang() === 'en';
+    var disc = en ? (d.disclaimer_en || d.disclaimer) : (d.disclaimer_es || d.disclaimer);
+    var html = '<div class="kpf-disc">⚠️ ' + esc(disc) + '</div>';
+    d.portfolios.forEach(function (pf, i) {
+      var m = pf.metrics || {};
+      var name = en ? (pf.name_en || pf.name) : (pf.name_es || pf.name);
+      var method = pf.method === 'risk_parity' ? T('paridad de riesgo', 'risk parity') : T('inversa de la volatilidad', 'inverse volatility');
+      var risks = (en ? pf.risks_en : pf.risks_es) || pf.risks || [];
+      var rows = (pf.positions || []).map(function (p) {
+        var w = (p.weight * 100);
+        return '<tr><td><div style="font-weight:600;color:' + INK + '">' + esc(p.label) + '</div>' +
+            '<div style="font-size:10.5px;color:' + MUTE + '">' + esc(p.symbol) + ' · ' + esc(p.sector_label || p.sector) + ' · ' + esc(p.country) + '</div></td>' +
+          '<td style="min-width:90px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:rgba(122,158,255,.12);border-radius:4px;overflow:hidden">' +
+            '<div style="width:' + Math.min(100, w / 0.25).toFixed(1) + '%;height:100%;background:#00E0FF"></div></div>' +
+            '<b style="color:' + INK + ';font-variant-numeric:tabular-nums">' + w.toFixed(1) + '%</b></div></td>' +
+          '<td style="text-align:right;color:' + INK + ';font-variant-numeric:tabular-nums">' + money0(p.usd) + '</td>' +
+          '<td class="kpf-hide-sm" style="text-align:right;color:' + MUTE + ';font-variant-numeric:tabular-nums">' + money(p.price) + '</td>' +
+          '<td class="kpf-hide-sm" style="text-align:right;color:' + MUTE + '">' + (p.vol_ann_pct != null ? p.vol_ann_pct.toFixed(0) + '%' : '—') + '</td></tr>';
+      }).join('');
+      var srcTag = pf.rationale_source === 'ai'
+        ? '<span class="kpf-src" style="border-color:rgba(0,224,255,.4);color:#00E0FF">🤖 ' + T('redactado por IA', 'written by AI') + '</span>'
+        : '<span class="kpf-src" style="border-color:rgba(255,179,0,.4);color:#FFB300">' + T('sin IA — texto automático', 'no AI — automatic text') + '</span>';
+      var created = _created[pf.id];
+      html += '<div class="kpf-card kpf-prop" style="margin-top:14px">' +
+        '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px">' +
+          '<div style="font-size:16px;font-weight:800;color:' + INK + '">' + (i + 1) + '. ' + esc(name) + '</div>' +
+          '<span class="kpf-src">' + esc(method) + (window.explainChip ? window.explainChip('pf_sizing') : '') + '</span>' +
+        '</div>' +
+        '<div class="kpf-tiles">' +
+          metricTile(T('Volatilidad anual', 'Annual volatility'), (m.vol_ann_pct != null ? m.vol_ann_pct.toFixed(1) + '%' : '—'), 'vol_ann') +
+          metricTile(T('Mal día (VaR 95%)', 'Bad day (VaR 95%)'), money0(m.var95_1d_usd), 'var', T('pérdida en 1 día, 1 de cada 20', '1-day loss, 1 in 20')) +
+          metricTile(T('Peor caída (1 año)', 'Worst drop (1 year)'), (m.max_drawdown_pct != null ? m.max_drawdown_pct.toFixed(1) + '%' : '—'), 'drawdown') +
+          metricTile(T('Diversificación', 'Diversification'), (m.diversification_ratio != null ? m.diversification_ratio.toFixed(2) : '—'), 'pf_diversif',
+            m.n_names + ' ' + T('empresas', 'companies') + ' · ' + m.n_sectors + ' ' + T('sectores', 'sectors') + ' · ' + m.n_countries + ' ' + T('países', 'countries')) +
+        '</div>' +
+        '<div style="overflow-x:auto;margin:12px 0"><table class="kpf-ptable"><thead><tr>' +
+          '<th>' + T('Empresa', 'Company') + '</th><th>' + T('Peso', 'Weight') + '</th><th style="text-align:right">USD</th>' +
+          '<th class="kpf-hide-sm" style="text-align:right">' + T('Precio', 'Price') + '</th><th class="kpf-hide-sm" style="text-align:right">' + T('Vol.', 'Vol.') + '</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div style="font-size:12px;font-weight:700;color:' + INK + ';margin-bottom:6px">💡 ' + T('Por qué esta cartera', 'Why this portfolio') + ' ' + srcTag + '</div>' +
+        '<div style="font-size:13px;color:#C9D4EC;line-height:1.65;margin-bottom:12px">' + esc(pf.rationale || '').replace(/\n/g, '<br>') + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:' + INK + ';margin-bottom:6px">⚠️ ' + T('Riesgos principales', 'Main risks') + '</div>' +
+        '<ul style="margin:0 0 12px;padding-left:18px;font-size:12.5px;color:#C9D4EC;line-height:1.6">' +
+          risks.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>' +
+        ((pf.notes || []).length ? '<div style="font-size:11.5px;color:#FFB300;margin-bottom:10px">' + pf.notes.map(function (n) { return esc(en ? n.en : n.es); }).join('<br>') + '</div>' : '') +
+        '<div style="font-size:11px;color:' + MUTE + ';margin-bottom:12px">' +
+          T('Precios de cierre del ', 'Closing prices as of ') + esc(m.as_of || '') + ' · ' + T('historia desde ', 'history since ') + esc(m.from || '') +
+          ' (' + (m.days || 0) + ' ' + T('días', 'days') + ') · Yahoo Finance</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+          (created
+            ? '<button class="kpf-btn kpf-ghost kpf-big kpf-goto" data-pf="' + esc(created) + '">✓ ' + T('Creada — ver en Mis carteras', 'Created — see in My portfolios') + '</button>' +
+              (window.KhipuRisk ? '<button class="kpf-btn kpf-ghost kpf-big kpf-riskgo" data-pf="' + esc(created) + '">📉 ' + T('Analizar riesgo', 'Analyze risk') + '</button>' : '')
+            : '<button class="kpf-btn kpf-primary kpf-big kpf-create" data-i="' + i + '">➕ ' + T('Crear esta cartera (simulada)', 'Create this portfolio (simulated)') + '</button>') +
+        '</div></div>';
+    });
+    html += '<div class="kpf-card" style="margin-top:14px">' +
+      '<div style="font-size:12px;color:' + MUTE + ';line-height:1.6">' +
+        T('Cómo se armó: empresas cotizadas del grafo filtradas por tus temas, ordenadas por riesgo (NRS), tamaño, papel en la cadena de suministro y la postura de los agentes de investigación; con topes por empresa/sector/país según tu riesgo y pesos calculados con 1 año de precios reales.',
+          'How it was built: listed companies from the graph filtered by your themes, ranked by risk (NRS), size, role in the supply chain and the research agents\' stance; with caps per company/sector/country based on your risk and weights computed from 1 year of real prices.') +
+        (window.explainChip ? window.explainChip('nrs') : '') + '</div>' + excludedBlock(d) + '</div>';
+    return html;
+  }
+
+  function readForm() {
+    var a = num(($('#kpf-amt') || {}).value);
+    if (isFinite(a)) _form.amount = a;
+    var ex = $('#kpf-excl');
+    if (ex) _form.exclude = ex.value;
+  }
+
+  function sendPropose() {
+    readForm();
+    if (!isFinite(_form.amount) || _form.amount < 100 || _form.amount > 10000000) {
+      _propError = T('El monto debe estar entre $100 y $10.000.000.', 'The amount must be between $100 and $10,000,000.');
+      _proposal = null; render(); return;
+    }
+    _proposing = true; _propError = ''; _proposal = null; _created = {};
+    render();
+    apiPost('/api/portfolio-ai/propose', {
+      goal: _form.goal, horizon: _form.horizon, risk: _form.risk, amount_usd: _form.amount,
+      themes: _form.themes, exclude: _form.exclude, lang: lang()
+    }).then(function (d) {
+      if (d._status >= 400 || !d.portfolios || !d.portfolios.length) { _propError = errText(d); _proposal = d; }
+      else _proposal = d;
+    }, function (e) { _propError = errText(null, e); }).then(function () {
+      _proposing = false; render();
+      var first = $('.kpf-disc'); if (first && first.scrollIntoView) try { first.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    });
+  }
+
+  // "Crear esta cartera": cartera SIMULADA local; acciones = monto / precio actual.
+  // Precio: el mismo que usa Carteras (MKT.quotes, USD) y, si no está cargado,
+  // el cierre real que devolvió el server. Nunca se envía ninguna orden.
+  function createFromProposal(idx) {
+    var pfp = _proposal && _proposal.portfolios && _proposal.portfolios[idx];
+    if (!pfp) return;
+    var amount = (pfp.metrics && pfp.metrics.amount_usd) || _form.amount;
+    var list = loadAll();
+    var name = '🤖 ' + (lang() === 'en' ? (pfp.name_en || pfp.name) : (pfp.name_es || pfp.name));
+    var pf = { id: uid(), name: name, cash: amount, startCash: amount, positions: [], createdAt: Date.now(),
+               origin: { kind: 'ai_proposal', method: pfp.method, as_of: _proposal.as_of } };
+    var skipped = [];
+    (pfp.positions || []).forEach(function (p) {
+      var n = nodeById(p.node_id);
+      var pr = priceOf(n);
+      var price = (!pr.unavailable && isFinite(pr.price) && pr.price > 0) ? pr.price : p.price;
+      if (!n || !isFinite(price) || price <= 0 || !(p.usd > 0) || p.usd > pf.cash + 1e-6) { skipped.push(p.label); return; }
+      pf.positions.push({ nodeId: p.node_id, shares: p.usd / price, avgPrice: price, ts: Date.now() });
+      pf.cash -= p.usd;
+    });
+    if (pf.cash < 0.005) pf.cash = 0;
+    list.push(pf); saveAll(list); setActiveId(pf.id);
+    _created[pfp.id] = pf.id;
+    toast(T('Cartera simulada creada: ', 'Simulated portfolio created: ') + name +
+          (skipped.length ? T(' (sin precio: ', ' (no price: ') + skipped.join(', ') + ')' : ''));
+    setView('pf'); _search = ''; _buyFor = null;
+    render();
+  }
+
+  function aiStyle() {
+    return '.kpf-tabs{display:flex;gap:6px;margin-bottom:16px;background:rgba(20,26,44,.5);border:1px solid rgba(122,158,255,.14);border-radius:12px;padding:4px}' +
+      '.kpf-tab{flex:1;cursor:pointer;border:none;background:transparent;color:#9AA6C4;font:inherit;font-size:13.5px;font-weight:700;padding:11px 10px;border-radius:9px}' +
+      '.kpf-tab.on{background:linear-gradient(135deg,rgba(0,224,255,.18),rgba(74,123,255,.18));color:#E8EDFB;box-shadow:inset 0 0 0 1px rgba(0,224,255,.35)}' +
+      '.kpf-modes{display:flex;gap:8px;margin-bottom:14px}' +
+      '.kpf-mode{flex:1;cursor:pointer;font:inherit;font-size:14px;font-weight:700;padding:13px 10px;border-radius:11px;border:1px solid rgba(122,158,255,.22);background:rgba(20,26,44,.55);color:#C9D4EC}' +
+      '.kpf-mode.on{border-color:rgba(0,224,255,.55);color:#00E0FF;background:rgba(0,224,255,.08)}' +
+      '.kpf-card{border:1px solid rgba(122,158,255,.16);background:rgba(20,26,44,.45);border-radius:14px;padding:16px}' +
+      '.kpf-err{border-color:rgba(255,107,133,.35)!important;color:#FF9DB0}' +
+      '.kpf-flabel{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#E8EDFB;margin-bottom:8px}' +
+      '.kpf-num{display:inline-flex;align-items:center;justify-content:center;width:21px;height:21px;border-radius:50%;background:rgba(0,224,255,.15);color:#00E0FF;font-size:11.5px}' +
+      '.kpf-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}' +
+      '.kpf-opt{cursor:pointer;font:inherit;text-align:left;padding:11px 12px;border-radius:10px;border:1px solid rgba(122,158,255,.2);background:rgba(14,20,38,.7);color:#C9D4EC;display:flex;flex-direction:column;gap:3px;min-height:48px}' +
+      '.kpf-opt b{font-size:13.5px}.kpf-opt span{font-size:11px;color:#7C87A3;font-weight:400}' +
+      '.kpf-opt.on{border-color:#00E0FF;background:rgba(0,224,255,.10);color:#E8EDFB;box-shadow:0 0 0 1px rgba(0,224,255,.4)}' +
+      '.kpf-chip{cursor:pointer;font:inherit;font-size:12.5px;padding:8px 12px;border-radius:20px;border:1px solid rgba(122,158,255,.25);background:rgba(14,20,38,.7);color:#C9D4EC}' +
+      '.kpf-chip.on{border-color:#00E0FF;color:#00E0FF;background:rgba(0,224,255,.10)}' +
+      '.kpf-chip:disabled{opacity:.5;cursor:not-allowed}' +
+      '.kpf-input{background:#0E1426;color:#E8EDFB;border:1px solid rgba(122,158,255,.25);border-radius:9px;padding:11px 12px;font-size:14px;font-family:inherit;box-sizing:border-box}' +
+      '.kpf-big{font-size:14px;padding:12px 18px;border-radius:10px}' +
+      '.kpf-chat{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}' +
+      '.kpf-msg{max-width:88%;padding:10px 13px;border-radius:12px;font-size:13.5px;line-height:1.6}' +
+      '.kpf-me{align-self:flex-end;background:rgba(74,123,255,.22);color:#E8EDFB;border-bottom-right-radius:4px}' +
+      '.kpf-bot{align-self:flex-start;background:rgba(14,20,38,.85);border:1px solid rgba(122,158,255,.16);color:#C9D4EC;border-bottom-left-radius:4px}' +
+      '.kpf-src{display:inline-flex;align-items:center;font-size:10.5px;padding:2px 8px;border-radius:12px;border:1px solid rgba(122,158,255,.25);color:#9AA6C4}' +
+      '.kpf-disc{margin-top:14px;padding:11px 14px;border-radius:11px;background:rgba(255,179,0,.08);border:1px solid rgba(255,179,0,.35);color:#FFD27A;font-size:12.5px;line-height:1.55}' +
+      '.kpf-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}' +
+      '.kpf-tile{background:rgba(14,20,38,.7);border:1px solid rgba(122,158,255,.12);border-radius:10px;padding:10px 12px}' +
+      '.kpf-tl{font-size:10.5px;color:#7C87A3;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}' +
+      '.kpf-tv{font-size:18px;font-weight:800;color:#E8EDFB}.kpf-ts{font-size:10.5px;color:#7C87A3;margin-top:2px}' +
+      '.kpf-ptable{width:100%;border-collapse:collapse;font-size:12.5px}' +
+      '.kpf-ptable th{font-size:10.5px;color:#7C87A3;text-transform:uppercase;letter-spacing:.4px;font-weight:600;text-align:left;padding:6px}' +
+      '.kpf-ptable td{padding:7px 6px;border-top:1px solid rgba(122,158,255,.08)}' +
+      '@media (max-width:560px){.kpf-opts{grid-template-columns:1fr}.kpf-tiles{grid-template-columns:repeat(2,1fr)}' +
+        '.kpf-hide-sm{display:none}.kpf-tab{font-size:12.5px;padding:10px 6px}.kpf-mode{font-size:13px;padding:12px 6px}.kpf-msg{max-width:96%}}';
+  }
+
+  function wireAI() {
+    $all('.kpf-mode').forEach(function (b) {
+      b.onclick = function () { readFormSafe(); _aiMode = b.getAttribute('data-mode'); render(); };
+    });
+    $all('.kpf-opt').forEach(function (b) {
+      b.onclick = function () { readForm(); _form[b.getAttribute('data-f')] = b.getAttribute('data-v'); render(); };
+    });
+    $all('.kpf-theme').forEach(function (b) {
+      b.onclick = function () {
+        readForm();
+        var k = b.getAttribute('data-k'), i = _form.themes.indexOf(k);
+        if (i >= 0) _form.themes.splice(i, 1); else _form.themes.push(k);
+        render();
+      };
+    });
+    var el;
+    if ((el = $('#kpf-prop-go'))) el.onclick = sendPropose;
+    $all('.kpf-create').forEach(function (b) { b.onclick = function () { createFromProposal(+b.getAttribute('data-i')); }; });
+    $all('.kpf-goto').forEach(function (b) { b.onclick = function () { setActiveId(b.getAttribute('data-pf')); setView('pf'); render(); }; });
+    $all('.kpf-riskgo').forEach(function (b) {
+      b.onclick = function () { if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'var', source: 'pf:' + b.getAttribute('data-pf'), autorun: true }); };
+    });
+    // chat
+    var askEl = $('#kpf-ask');
+    if (askEl) {
+      askEl.oninput = function () { _askDraft = askEl.value; };
+      askEl.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); sendAsk(askEl.value); } };
+    }
+    if ((el = $('#kpf-ask-go'))) el.onclick = function () { sendAsk(($('#kpf-ask') || {}).value); };
+    $all('.kpf-sugg').forEach(function (b) { b.onclick = function () { sendAsk(b.getAttribute('data-q')); }; });
+    if ((el = $('#kpf-usepf'))) el.onchange = function () { _useMyPf = !!el.checked; };
+    var c = $('#kpf-chat'); if (c) c.scrollTop = c.scrollHeight;
+  }
+  function readFormSafe() { try { readForm(); } catch (e) {} }
 
   /* ── wiring de eventos (tras cada render) ─────────────────────────────── */
   function $(sel) { return _container ? _container.querySelector(sel) : null; }
@@ -568,6 +1020,7 @@
       var b = $('#' + id);
       if (b) b.onclick = function () { _creating = true; render(); };
     });
+    $all('.kpf-tab-ai').forEach(function (b) { b.onclick = function () { setView('ai'); _aiMode = 'propose'; render(); }; });
     if ((el = $('#kpf-cancel'))) el.onclick = function () { _creating = false; render(); };
     if ((el = $('#kpf-create'))) el.onclick = function () {
       var name = ($('#kpf-nn') || {}).value;

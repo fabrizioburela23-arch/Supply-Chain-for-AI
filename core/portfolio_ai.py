@@ -456,8 +456,11 @@ def apply_caps(w, meta, max_name, max_sector, max_country):
     relaxed = []
     max_name = max(max_name, 1.0 / len(w))
     for key, cap in (('sector', max_sector), ('country', max_country)):
-        groups = {meta[s][key] for s in w}
-        if len(groups) * cap < 1 - 1e-9:
+        # factible solo si los grupos, llenos hasta su tope (y el de nombre), suman ≥ 100 %
+        sizes = defaultdict(int)
+        for s in w:
+            sizes[meta[s][key]] += 1
+        if sum(min(cap, k * max_name) for k in sizes.values()) < 1 - 1e-9:
             relaxed.append(key)
     for _ in range(200):
         w = _waterfill(w, max_name)
@@ -486,7 +489,14 @@ def apply_caps(w, meta, max_name, max_sector, max_country):
         if not moved and max(w.values()) <= max_name + 1e-9:
             break
     tot = sum(w.values())
-    return {s: v / tot for s, v in w.items()}, relaxed
+    w = _waterfill({s: v / tot for s, v in w.items()}, max_name)   # el tope por nombre manda
+    for key, cap in (('sector', max_sector), ('country', max_country)):
+        gt = defaultdict(float)
+        for s, v in w.items():
+            gt[meta[s][key]] += v
+        if key not in relaxed and max(gt.values()) > cap + 1e-4:
+            relaxed.append(key)       # topes combinados incompatibles → se informa
+    return w, relaxed
 
 
 def score(c, prof_w, goal, max_deg, research):
@@ -523,15 +533,19 @@ def _pick(ranked, n, max_sector, max_country):
     """n nombres respetando cuántos caben por sector/país con los topes."""
     per_sec = max(1, int(max_sector * n + 1e-9))
     per_cty = max(1, int(max_country * n + 1e-9))
-    chosen, sc, cc = [], defaultdict(int), defaultdict(int)
+    # con varios temas elegidos, ninguno se come la cartera: tope por tema
+    k_themes = len({c.get('theme') for c in ranked})
+    per_th = max(1, math.ceil(n / k_themes)) if k_themes > 1 else n
+    chosen, sc, cc, tc = [], defaultdict(int), defaultdict(int), defaultdict(int)
     for c in ranked:
         if len(chosen) >= n:
             break
-        if sc[c['sector']] >= per_sec or cc[c['country']] >= per_cty:
+        if sc[c['sector']] >= per_sec or cc[c['country']] >= per_cty or tc[c.get('theme')] >= per_th:
             continue
         chosen.append(c)
         sc[c['sector']] += 1
         cc[c['country']] += 1
+        tc[c.get('theme')] += 1
     for c in ranked:            # si los topes dejaron hueco (temas estrechos), completar
         if len(chosen) >= n:
             break
@@ -567,7 +581,8 @@ def build_proposals(p, history_fn=None, fx_fn=None, caps=None, claims=None):
             n_ex += 1
             continue
         live = caps.get(c['id']) or {}
-        c = dict(c, mcap_b=live.get('mcap_b'), live=bool(live.get('price')))
+        theme = next((t for t in p['themes'] if c['sector'] in THEMES[t]['sectors']), None) if p['themes'] else None
+        c = dict(c, mcap_b=live.get('mcap_b'), live=bool(live.get('price')), theme=theme)
         uni.append(c)
     if n_ex:
         excluded.append({'label': f'{n_ex}', 'reason': 'empresas excluidas por tu filtro',
