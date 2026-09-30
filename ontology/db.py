@@ -136,6 +136,11 @@ def init_schema(retries=6, delay=2.0):
         import research.models  # noqa: F401 — Phase 2: registra research_* en el mismo Base
     except Exception as e:  # noqa: BLE001
         log.warning('init_schema: research.models no cargó (%s)', type(e).__name__)
+    for _m in ('brokerage.models', 'mcp_server.models'):   # Phase 3 (2026-09-30), opcionales
+        try:
+            __import__(_m)
+        except Exception as e:  # noqa: BLE001
+            log.warning('init_schema: %s no cargó (%s)', _m, type(e).__name__)
 
     ultimo = None
     for intento in range(1, max(1, retries) + 1):

@@ -20,7 +20,7 @@ const SHELL = ['/', '/app.html',
   '/engine/geosituation.js', '/engine/canvas-data.js', '/engine/command_center.js',
   '/engine/temporal-graph.js', '/nodes/temporal_seed_facts.js',
   '/nodes/temporal_seed_facts2.js', '/nodes/ontology.js', '/nodes/ontology_facts.js', '/nodes/legal_names.js',
-  '/engine/timeline3d.js', '/engine/maptime.js', '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/research.js', '/engine/riskreport.js', '/engine/insights.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js', '/engine/termdata.js', '/engine/explain.js', '/engine/crypto.js', '/engine/portfolios.js',
+  '/engine/timeline3d.js', '/engine/maptime.js', '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/research.js', '/engine/riskreport.js', '/engine/worldmonitor.js', '/engine/committee.js', '/engine/clients.js', '/engine/mcpconnect.js', '/engine/insights.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js', '/engine/termdata.js', '/engine/explain.js', '/engine/crypto.js', '/engine/portfolios.js',
   '/nodes/crypto_intel.js', '/nodes/crypto_intel2.js',
   '/sim/scenario_builder.js',
 ];

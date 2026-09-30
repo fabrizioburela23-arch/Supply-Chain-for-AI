@@ -106,6 +106,18 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Investigación (Phase 2) no registrada (opcional): %s', _e)
 
+# ── PHASE 3 + World Monitor + Corretaje multi-cliente + MCP (2026-09-30) ─────
+# Cada módulo es OPCIONAL (patrón try/except): si falta o falla al importar, la
+# app arranca igual. Registro centralizado aquí para que los módulos no toquen
+# server.py. Blueprints: /api/world/* · /api/committee/* · /api/brokerage/* · /mcp
+import importlib as _importlib
+for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'committee_bp'),
+                       ('brokerage.api', 'brokerage_bp'), ('mcp_server.api', 'mcp_bp')):
+    try:
+        app.register_blueprint(getattr(_importlib.import_module(_mod), _bp_name))
+    except Exception as _e:  # noqa: BLE001
+        log.warning('Módulo %s no registrado (opcional): %s', _mod, _e)
+
 # ── Motor de matrices (Etapa 3, opcional) — /api/matrix/* ────────────────────
 try:
     from matrix.api import matrix_bp
