@@ -203,24 +203,49 @@ def _histogram(x, bins):
 
 # ── orquestación (red) ───────────────────────────────────────────────────────
 def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
-    """positions: [{symbol, shares, label?}] → reporte + lo excluido."""
+    """positions: [{symbol, shares, label?}] o [{symbol, usd, label?}] → reporte
+    + lo excluido.
+
+    `usd` (pedido 2026-09-30, "armar una cartera rápida" en DÓLARES): se
+    convierte a acciones con el ÚLTIMO CIERRE COMÚN de la misma historia que se
+    usa para el cálculo (convertido a USD) — nunca se adivina un precio. La
+    conversión se devuelve en `converted` para que la UI la muestre.
+
+    Los errores llevan `error_code` estable (no_positions · data_unavailable ·
+    short_history · zero_value) para que la UI dé un mensaje bilingüe claro."""
     from concurrent.futures import ThreadPoolExecutor
+    from core.http import _safe_ticker
     if fx_fn is None:
         from core.quotes import _fx_to_usd as fx_fn
-    clean = {}
-    labels = {}
+    clean, usd_amt, labels = {}, {}, {}
     for p in positions[:30]:
-        from core.http import _safe_ticker
-        sym = _safe_ticker(p.get('symbol')) or ''     # va en la URL: validar
-        try:
-            sh = float(p.get('shares'))
-        except (TypeError, ValueError):
+        if not isinstance(p, dict):
             continue
-        if sym and sh > 0:
+        sym = _safe_ticker(p.get('symbol')) or ''     # va en la URL: validar
+        if not sym:
+            continue
+        sh = us = None
+        try:
+            sh = float(p['shares']) if p.get('shares') not in (None, '') else None
+        except (TypeError, ValueError):
+            sh = None
+        try:
+            us = float(p['usd']) if p.get('usd') not in (None, '') else None
+        except (TypeError, ValueError):
+            us = None
+        ok = False
+        if sh is not None and math.isfinite(sh) and sh > 0:
             clean[sym] = clean.get(sym, 0) + sh
-            labels[sym] = p.get('label') or sym
+            ok = True
+        if us is not None and math.isfinite(us) and 0 < us <= 1e10:
+            usd_amt[sym] = usd_amt.get(sym, 0) + us
+            clean.setdefault(sym, 0.0)
+            ok = True
+        if ok:
+            labels[sym] = str(p.get('label') or sym)[:80]
     if not clean:
-        return {'ok': False, 'error': 'no hay posiciones con ticker y cantidad'}
+        return {'ok': False, 'error_code': 'no_positions',
+                'error': 'no hay posiciones con ticker y cantidad (acciones o dólares)'}
     syms = list(clean) + [BENCH]
     with ThreadPoolExecutor(max_workers=8) as ex:
         got = dict(zip(syms, ex.map(lambda s: fetch_history(s, rng, getter), syms)))
@@ -228,20 +253,48 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
     for s in clean:
         h, cur = got[s]
         if len(h) < 60:
-            excluded.append({'symbol': s, 'label': labels[s], 'reason': 'sin historia suficiente de precios'})
+            excluded.append({'symbol': s, 'label': labels[s], 'reason': 'sin historia suficiente de precios',
+                             'reason_code': 'no_history'})
             continue
         cur = 'GBP' if cur == 'GBp' else (cur or 'USD').upper()
         rate = fx_fn(cur)
         if not rate:
-            excluded.append({'symbol': s, 'label': labels[s], 'reason': f'sin tipo de cambio {cur}→USD'})
+            excluded.append({'symbol': s, 'label': labels[s], 'reason': f'sin tipo de cambio {cur}→USD',
+                             'reason_code': 'no_fx'})
             continue
         if (got[s][1] or '') == 'GBp':
             rate = rate / 100.0            # precio en peniques
         histories[s], fx[s] = h, rate
-    rep = compute(histories, {s: clean[s] for s in histories}, fx, bench=got[BENCH][0] or None,
-                  horizon=horizon)
+    # dólares → acciones al último cierre COMÚN (la fecha que usa compute)
+    converted = []
+    if usd_amt and histories:
+        common = set.intersection(*(set(histories[s]) for s in histories))
+        last = max(common) if common else None
+        for s in list(usd_amt):
+            if s not in histories:
+                continue
+            h = histories[s]
+            d = last if last in h else max(h)
+            px_usd = h[d] * fx[s]
+            if px_usd > 0:
+                n = usd_amt[s] / px_usd
+                clean[s] += n
+                converted.append({'symbol': s, 'usd': round(usd_amt[s], 2), 'price_usd': round(px_usd, 4),
+                                  'shares': round(n, 6), 'date': d})
+    shares = {s: clean[s] for s in histories if clean[s] > 0}
+    if not histories:
+        rep = {'ok': False, 'error_code': 'data_unavailable',
+               'error': 'no se pudieron obtener precios históricos (proveedor de datos no disponible o tickers sin historia)'}
+    else:
+        rep = compute({s: histories[s] for s in shares}, shares, fx, bench=got[BENCH][0] or None,
+                      horizon=horizon)
+        if not rep.get('ok') and 'error_code' not in rep:
+            err = rep.get('error') or ''
+            rep['error_code'] = ('short_history' if 'insuficiente' in err
+                                 else 'zero_value' if 'cero' in err else 'data_unavailable')
     rep['excluded'] = excluded
     rep['labels'] = labels
+    rep['converted'] = converted
     rep['source'] = 'Yahoo Finance (precios diarios ajustados)'
     rep['generated_at'] = datetime.now(timezone.utc).isoformat()
     return rep

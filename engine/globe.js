@@ -15,6 +15,14 @@
 // retícula, picking/hover unificado, focusOn(lat,lon) animado, pausa cuando el
 // canvas no se ve (IntersectionObserver + document.hidden) y dispose() completo.
 // Look 'monitor': Tierra oscura (earth-dark) + bordes + halo Fresnel.
+//
+// 2026-09-30 · SPACE MONITOR (engine/spacemonitor.js), extensiones OPCIONALES
+// (sin opts todo se comporta igual que antes): init opts.fitR/opts.view,
+// setFlowLines opts.colors/normalized/reverse (arcos de ascenso con un cometa
+// por arco), ascentPath()/orbitPath() (trayectorias esquemáticas desde una
+// plataforma real), loadSatellites(data, {monitor, altScale, pick}) (discos
+// brillantes, altitud comprimida por encima de LEO, picking genérico de
+// satélites vía onPick) y setSatVisible(nombre, v) por constelación.
 (function () {
   'use strict';
   const THREE = window.THREE;
@@ -142,6 +150,8 @@
       this.onPick = null; this.onHover = null;
       this._t0 = performance.now();
       this._handlers = [];
+      this._fitR = opts.fitR || 1.12;          // radio (en R) que debe caber en pantalla (look monitor)
+      this._view0 = opts.view || null;          // {lat, lon} vista inicial (look monitor)
     }
 
     init() {
@@ -168,6 +178,10 @@
         this._dist = this._fitDist;
         this._zoomLim = [125, Math.max(700, Math.round(this._fitDist * 1.4))];
         this._rot = { x: 22 * Math.PI / 180, y: Math.PI / 2 - (75 + 180) * Math.PI / 180 };
+        if (this._view0) {
+          this._rot = { x: Math.max(-1.3, Math.min(1.3, this._view0.lat * Math.PI / 180)),
+            y: Math.PI / 2 - (this._view0.lon + 180) * Math.PI / 180 };
+        }
       }
 
       this.world = new THREE.Group();
@@ -237,7 +251,7 @@
 
     _fit(w, h) {
       const vh = 22.5 * Math.PI / 180, hh = Math.atan(Math.tan(vh) * (w / Math.max(1, h)));
-      return Math.max(260, Math.min(900, R * 1.12 / Math.sin(Math.min(vh, hh))));
+      return Math.max(260, Math.min(900, R * (this._fitR || 1.12) / Math.sin(Math.min(vh, hh))));
     }
 
     _discTex() {
@@ -430,19 +444,29 @@
     }
 
     // Líneas con "flujo" animado: segs = [[Vector3…], …] o [[[lat,lon]…]…] (gc=true)
+    // opts.colors[si] = color por línea · opts.normalized: aT va 0→1 en cada
+    // línea (con dash 1 = UN cometa por línea) · opts.reverse: cabeza del cometa
+    // al frente (sentido de avance = del primer punto al último).
     setFlowLines(id, segs, opts) {
       opts = opts || {};
       this._drop(id);
       const P = [], C = [], T = [];
-      const c = rgb(opts.color != null ? opts.color : 0x4a9bff);
+      const c0 = rgb(opts.color != null ? opts.color : 0x4a9bff);
       segs.forEach((pts, si) => {
-        let acc = (si * 37) % 97;           // desfase por línea: los cometas no van sincronizados
+        const c = opts.colors && opts.colors[si] != null ? rgb(opts.colors[si]) : c0;
+        let total = 0;
+        if (opts.normalized) for (let i = 1; i < pts.length; i++) total += pts[i - 1].distanceTo(pts[i]);
+        const off = opts.normalized ? ((si * 0.37) % 1) : 0;
+        let acc = opts.normalized ? 0 : (si * 37) % 97;           // desfase por línea: los cometas no van sincronizados
         for (let i = 1; i < pts.length; i++) {
           const a = pts[i - 1], b = pts[i];
           const d = a.distanceTo(b);
           P.push(a.x, a.y, a.z, b.x, b.y, b.z);
           C.push(c[0], c[1], c[2], c[0], c[1], c[2]);
-          T.push(acc, acc + d);
+          if (opts.normalized) {
+            const t0 = total ? acc / total : 0, t1 = total ? (acc + d) / total : 1;
+            if (opts.reverse) T.push(1 - t0 + off, 1 - t1 + off); else T.push(t0 + off, t1 + off);
+          } else T.push(acc, acc + d);
           acc += d;
         }
       });
@@ -453,7 +477,7 @@
       const m = new THREE.ShaderMaterial({ vertexShader: FLOW_VS, fragmentShader: FLOW_FS, transparent: true,
         depthWrite: false, blending: THREE.AdditiveBlending,
         uniforms: { uTime: { value: 0 }, uOpacity: { value: opts.opacity != null ? opts.opacity : 0.5 },
-          uSpeed: { value: opts.speed != null ? opts.speed : 0.25 }, uDash: { value: opts.dash || (1 / 50) },
+          uSpeed: { value: (opts.speed != null ? opts.speed : 0.25) * (opts.reverse ? -1 : 1) }, uDash: { value: opts.dash || (1 / 50) },
           uFlow: { value: opts.flow === false ? 0 : 1 } } });
       const ls = new THREE.LineSegments(g, m);
       ls.renderOrder = opts.renderOrder || 3;
@@ -475,6 +499,43 @@
             .add(b.clone().multiplyScalar(Math.sin(t * ang) / s));
           out.push(v.normalize().multiplyScalar(r));
         }
+      }
+      return out;
+    }
+    // Trayectoria de ascenso ESQUEMÁTICA desde una plataforma: sigue el gran
+    // círculo con rumbo headingDeg durante downrangeDeg grados mientras sube
+    // hasta altFrac (fracción de R). No es la trayectoria real del vehículo.
+    _tangents(lat, lon) {
+      const p = lv(lat, lon, 1).normalize();
+      const n = lv(Math.min(89.99, lat + 0.01), lon, 1).normalize().sub(p).normalize();
+      const e = new THREE.Vector3().crossVectors(n, p).normalize();
+      // e = norte × radial → apunta al este en el sistema de latLng (se verifica con un punto al este)
+      const east = lv(lat, lon + 0.01, 1).normalize().sub(p);
+      if (east.dot(e) < 0) e.negate();
+      return { p, n, e };
+    }
+    ascentPath(lat, lon, headingDeg, downrangeDeg, altFrac, steps) {
+      const { p, n, e } = this._tangents(lat, lon);
+      const h = headingDeg * Math.PI / 180, dr = downrangeDeg * Math.PI / 180, k = steps || 48;
+      const dir = n.clone().multiplyScalar(Math.cos(h)).add(e.clone().multiplyScalar(Math.sin(h)));
+      const out = [];
+      for (let i = 0; i <= k; i++) {
+        const t = i / k;
+        const th = dr * Math.pow(t, 1.5);
+        const alt = 0.008 + altFrac * Math.pow(Math.sin(t * Math.PI / 2), 0.75);
+        out.push(p.clone().multiplyScalar(Math.cos(th)).add(dir.clone().multiplyScalar(Math.sin(th))).multiplyScalar(R * (1 + alt)));
+      }
+      return out;
+    }
+    // Círculo orbital (plano del gran círculo que pasa por la plataforma con ese rumbo).
+    orbitPath(lat, lon, headingDeg, altFrac, steps) {
+      const { p, n, e } = this._tangents(lat, lon);
+      const h = headingDeg * Math.PI / 180, k = steps || 160;
+      const dir = n.clone().multiplyScalar(Math.cos(h)).add(e.clone().multiplyScalar(Math.sin(h)));
+      const out = [];
+      for (let i = 0; i <= k; i++) {
+        const th = 2 * Math.PI * i / k;
+        out.push(p.clone().multiplyScalar(Math.cos(th)).add(dir.clone().multiplyScalar(Math.sin(th))).multiplyScalar(R * (1 + altFrac)));
       }
       return out;
     }
@@ -601,7 +662,13 @@
     }
 
     // ── CAPA SATÉLITES (ex planetarium.loadConstellations) ─────────────────
-    loadSatellites(data) {
+    // opts (opcional): monitor → discos brillantes aditivos · altScale(km)→km
+    // mostrado (p.ej. comprimir MEO/GEO para que quepan) · pick → los satélites
+    // entran al picking genérico (onPick/onHover) como layer 'satellites'.
+    loadSatellites(data, opts) {
+      opts = opts || {};
+      this._satOpts = opts;
+      this._satPick = !!opts.pick;
       this.constellations = data.constellations || [];
       this.meta = data;
       const byC = {};
@@ -619,14 +686,17 @@
         const positions = new Float32Array(satrecs.length * 3);
         const g = new THREE.BufferGeometry();
         g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const pts = new THREE.Points(g, new THREE.PointsMaterial({
-          color: new THREE.Color(c.color || '#9bd1ff'),
-          size: c.name === 'Estaciones (ISS/CSS)' ? 6 : 2.4,
-          sizeAttenuation: true, transparent: true, opacity: 0.95 }));
+        const station = c.name === 'Estaciones (ISS/CSS)';
+        const pts = new THREE.Points(g, new THREE.PointsMaterial(opts.monitor
+          ? { color: new THREE.Color(c.color || '#9bd1ff'), size: station ? 5.5 : (opts.size || 2.1),
+            sizeAttenuation: true, transparent: true, opacity: 0.95, depthWrite: false,
+            map: this._discTex(), alphaTest: 0.03, blending: THREE.AdditiveBlending }
+          : { color: new THREE.Color(c.color || '#9bd1ff'), size: station ? 6 : 2.4,
+            sizeAttenuation: true, transparent: true, opacity: 0.95 }));
         pts.userData.layerIdx = this.layers.length;
         this.world.add(pts);
         this.layers.push({ name: c.name, color: c.color, node: c.node, count: c.count,
-          points: pts, satrecs, positions, geom: g, visible: true });
+          points: pts, satrecs, positions, geom: g, visible: true, idx });
       });
       this._lastProp = 0;
       this._propagate(true);
@@ -651,7 +721,7 @@
                 const lat = geo.latitude * 180 / Math.PI, lon = geo.longitude * 180 / Math.PI, altKm = geo.height;
                 recs[i].tel = { lat, lon, altKm,
                   vel: pv.velocity ? Math.sqrt(pv.velocity.x ** 2 + pv.velocity.y ** 2 + pv.velocity.z ** 2) : 0 };
-                v = latLng(lat, lon, R + altKm * KM);
+                v = latLng(lat, lon, R + (this._satOpts && this._satOpts.altScale ? this._satOpts.altScale(altKm) : altKm) * KM);
               }
             } catch (e) { v = null; }
           }
@@ -672,6 +742,11 @@
     setFilter(name) {
       this._filter = name;
       this.layers.forEach(l => { l.points.visible = !name || l.name === name; });
+    }
+    // Visibilidad por constelación (nombre o índice en data.constellations).
+    setSatVisible(name, v) {
+      this.layers.forEach(l => { if (l.name === name || l.idx === name) { l.points.visible = !!v; l.visible = !!v; } });
+      this._wake();
     }
 
     // ── interacción compartida (mouse + táctil, feedback tablet) ───────────
@@ -765,8 +840,31 @@
       if (this.nodePoints && this.nodePoints.visible !== false && this._companiesVisible !== false) {
         this.nodePos.forEach((v, i) => test('companies', v, i, 6, 'company'));
       }
+      // satélites (solo si loadSatellites(…, {pick:true})): ocultos si la
+      // Tierra los tapa (detrás del disco visto desde la cámara)
+      if (this._satPick && this.layers.length) {
+        const R2 = R * R, hit = 7;
+        this.layers.forEach((layer, li) => {
+          if (!layer.points.visible) return;
+          const p = layer.positions;
+          for (let i = 0; i < layer.satrecs.length; i++) {
+            tmp.set(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]).applyMatrix4(mw);
+            if (tmp.z < 0 && tmp.x * tmp.x + tmp.y * tmp.y < R2) continue;
+            tmp.project(cam);
+            const sx = (tmp.x + 1) / 2 * rect.width, sy = (1 - tmp.y) / 2 * rect.height;
+            const d = Math.hypot(sx - mx, sy - my);
+            if (d <= hit && (!best || d < best.d)) best = { d, layer: 'satellites', index: i, li, kind: 'satellite' };
+          }
+        });
+      }
       if (!best) return null;
       if (best.layer === 'companies') return { layer: 'companies', index: best.index, data: this.nodeRef[best.index] };
+      if (best.layer === 'satellites') {
+        const layer = this.layers[best.li], rec = layer.satrecs[best.index], tel = rec.tel || {};
+        return { layer: 'satellites', index: best.index, data: { name: rec.name, constellation: layer.name,
+          node: layer.node, color: layer.color, lat: tel.lat, lon: tel.lon, altKm: tel.altKm, vel: tel.vel,
+          modeled: !rec.rec } };
+      }
       const L = this.gl[best.layer];
       return { layer: best.layer, index: best.index, data: L.items ? L.items[best.index] : null };
     }

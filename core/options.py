@@ -110,11 +110,15 @@ def chain_meta(symbol, expiry=None, fetch=None):
         params['date'] = int(datetime.fromisoformat(str(expiry)[:10]).replace(tzinfo=timezone.utc).timestamp())
     d = fetch(f'https://query2.finance.yahoo.com/v7/finance/options/{symbol}', params)
     res = (((d or {}).get('optionChain') or {}).get('result') or [None])[0] or {}
-    return {'symbol': symbol, 'spot': (res.get('quote') or {}).get('regularMarketPrice'),
-            'expirations': [datetime.fromtimestamp(x, tz=timezone.utc).date().isoformat()
-                            for x in (res.get('expirationDates') or [])][:30],
-            'strikes': [float(x) for x in (res.get('strikes') or [])][:300],
-            'available': bool(res.get('expirationDates'))}
+    out = {'symbol': symbol, 'spot': (res.get('quote') or {}).get('regularMarketPrice'),
+           'expirations': [datetime.fromtimestamp(x, tz=timezone.utc).date().isoformat()
+                           for x in (res.get('expirationDates') or [])][:30],
+           'strikes': [float(x) for x in (res.get('strikes') or [])][:300],
+           'available': bool(res.get('expirationDates'))}
+    if not out['available']:
+        # la UI distingue "el proveedor no respondió" de "esta acción no tiene opciones"
+        out['reason'] = 'data_unavailable' if d is None else 'no_options'
+    return out
 
 
 def risk_free_rate(fetch_hist=None):
@@ -197,7 +201,8 @@ def vega_report(options, live=None, rate=None, hvol=None, today=None):
             s2 = max(0.0001, iv + k / 100.0)
             scen[k] += (bs(S, K, T, r, s2, kind)['price'] - g['price']) * mult
     if not rows:
-        return {'ok': False, 'error': 'ninguna opción se pudo valorar', 'excluded': excluded}
+        return {'ok': False, 'error_code': 'none_valued', 'error': 'ninguna opción se pudo valorar',
+                'excluded': excluded}
     return {'ok': True, 'positions': rows, 'excluded': excluded,
             'totals': {'value_usd': round(tot['value'], 2), 'delta_shares': round(tot['delta_sh'], 2),
                        'gamma': round(tot['gamma'], 4), 'vega_usd': round(tot['vega'], 2),
