@@ -85,6 +85,30 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   COMPRA/VENTA. Env: RESEARCH_MODEL_DEFAULT / RESEARCH_MODEL_<TIPO>,
   RESEARCH_DAILY_BUDGET_USD (2.0), RESEARCH_AUTO_EVENTS (off). Docs:
   AGENT_ARCHITECTURE, CLAIM_MODEL, MODEL_ROUTING, AGENT_SECURITY.
+- **PHASE 3 (2026-09-30)** — ver docs/PHASE3.md, BROKERAGE.md, MCP.md, INVERSION_TERCEROS.md:
+  - `research/outcomes.py` (línea base de precio por claim → evaluación por
+    horizonte vs SPY, track record, Brier, confianza calibrada; `evaluate_due`
+    corre 1×/día desde core/live_caps) · `research/committee.py` +
+    `committee_api.py` (/api/committee/*: comité de inversión — convicción por
+    horizonte, tamaño por volatilidad objetivo, memo IA con guardián de cifras o
+    determinista; SIEMPRE aprobación humana) · UI `engine/committee.js`
+    (`KhipuCommittee.open(id)`, Mercado → 🏛 Comité, X-Ray, `NVDA COMITE`).
+  - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves
+    cifradas Fernet BROKERAGE_ENC_KEY / OAuth), papel por defecto, dinero real
+    = BROKERAGE_LIVE_ENABLED=on + client.live_enabled, controles previos
+    (risk.py), preview→confirm, cola de aprobación, auditoría append-only,
+    kill switch BROKERAGE_TRADING_ENABLED. UI `engine/clients.js`
+    (`KhipuClients.open()`, Mercado → 👥 Clientes con insignia de pendientes).
+  - `mcp_server/` (POST /mcp JSON-RPC, MCP 2025-06-18/2025-03-26; /api/mcp/*
+    tokens kmcp_ con scopes read|research|trade hasheados; OAuth 2.1+PKCE en
+    /oauth/* y /.well-known/*). UI `engine/mcpconnect.js` (🩺 → 🤖 Conectar IAs).
+  - `core/world.py` (/api/world/*: events GDELT/USGS/EONET + estrechos +
+    inestabilidad, exposure, brief, reference) + `engine/worldmonitor.js`
+    (`KhipuWorld`): la pestaña Geopolítica ES el World Monitor (un solo globo;
+    geosituation.js quedó como alias).
+  - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
+    por IP (último salto XFF) y global compartido — `require_pin` (trading) /
+    `require_operator` (escrituras de ontología). Nunca reimplementar.
 - `sim/`: scenario_builder.js (seeds de escenario; `buildScenarioSeed`).
 - ELIMINADOS (no recrear): `rag/` (nunca desplegado), `litellm/`,
   `nodes/nodes_core.js` (duplicado), el modo standalone y el stack de keys en
@@ -109,6 +133,14 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 - `/api/ontology/*` — ontología (objects, graph, actions, agents, alerts).
 - `/v1/*` — **API pública MONETIZADA por tiers (JWT, `khipu_auth`). NO tocar,
   NO usar para features internas.**
+- `/mcp` (+ `/oauth/*`, `/.well-known/*`) — servidor MCP para IAs externas
+  (tokens kmcp_ propios, NO los JWT de /v1). `/api/brokerage/*`,
+  `/api/committee/*`, `/api/world/*` — Phase 3.
+- **DINERO — regla de oro**: toda orden de clientes pasa por
+  `brokerage.service.preview_order → confirm_order/approve_preview`. Lo que
+  proponen `mcp` o `committee` SIEMPRE espera aprobación humana (PIN) salvo
+  BROKERAGE_AUTO_APPROVE_PAPER=on en cuentas de papel. Nunca crear otro camino
+  que envíe órdenes a Alpaca.
 
 ## Convenciones de datos críticas
 
@@ -228,6 +260,12 @@ DATABASE_URL                              ← Ontología (Postgres en Railway)
 RESEARCH_DAILY_BUDGET_USD, RESEARCH_AUTO_EVENTS, RESEARCH_MODEL_DEFAULT  ← Phase 2
 RESEARCH_ANOMALY_PCT (8), RESEARCH_ANOMALY_MAX (3)  ← movimientos anómalos → investigación auto
 RESEARCH_EARNINGS_MAX (5)  ← resultados trimestrales (Finnhub, requiere FINNHUB_KEY) → investigación auto
+RESEARCH_OUTCOME_BAND (0.02), RESEARCH_CALIBRATION_K (10), COMMITTEE_MAX_CONCURRENT, COMMITTEE_MEMO_TTL_HOURS  ← Phase 3
+BROKERAGE_ENC_KEY (Fernet; OBLIGATORIA para guardar llaves de clientes), BROKERAGE_TRADING_ENABLED (on),
+BROKERAGE_LIVE_ENABLED (off), BROKERAGE_AUTO_APPROVE_PAPER (off), BROKERAGE_APPROVAL_TTL_MIN,
+ALPACA_OAUTH_CLIENT_ID / ALPACA_OAUTH_CLIENT_SECRET / ALPACA_OAUTH_REDIRECT_URI  ← corretaje multi-cliente
+MCP_ENABLED, MCP_TRADING_ENABLED, MCP_OAUTH_ENABLED, MCP_PUBLIC_URL, MCP_ALLOWED_ORIGINS/HOSTS  ← MCP
+WORLD_GDELT_QUERY_CONFLICT / _UNREST / _TRADE, WORLD_GDELT_GEO_URL  ← World Monitor (ajustar sin tocar código)
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)
