@@ -186,6 +186,12 @@
     document.getElementById('xpl-ov').style.display = 'flex';
   };
 
+  // Registro desde otros módulos (sin editar este archivo):
+  //   window.explainRegister('mi_metrica', { es: {t, b}, en: {t, b} })
+  window.explainRegister = function (key, entry) {
+    if (key && entry && (entry.es || entry.en)) EXPLAIN[key] = entry;
+  };
+
   // botoncito "?" reutilizable — pegarlo junto a cualquier métrica
   window.explainChip = function (key) {
     var tip = lang() === 'en' ? 'What is this?' : '¿Qué es esto?';

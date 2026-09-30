@@ -58,6 +58,12 @@ def refresh(fetch=None):
                 dispatch_earnings()          # 1 vez al día como máximo
             except Exception as e:  # noqa: BLE001
                 log.warning('live_caps → auto_events: %s', type(e).__name__)
+            # Phase 3: calificar predicciones vencidas de los agentes (1×/día;
+            # no depende de RESEARCH_AUTO_EVENTS: no gasta IA, solo precios)
+            try:
+                _daily_outcomes()
+            except Exception as e:  # noqa: BLE001
+                log.warning('live_caps → outcomes: %s', type(e).__name__)
     except Exception as e:  # noqa: BLE001
         log.warning('live_caps: %s', e)
         with _LOCK:
@@ -65,6 +71,27 @@ def refresh(fetch=None):
     finally:
         with _LOCK:
             _STATE['running'] = False
+
+
+_OUT_STATE = {'day': None}
+
+
+def _daily_outcomes():
+    day = datetime.now(timezone.utc).date().isoformat()
+    if _OUT_STATE['day'] == day:
+        return None
+    try:
+        from ontology.db import ontology_available, session_scope
+        from research.outcomes import evaluate_due
+    except Exception:  # noqa: BLE001 — Phase 3 aún no instalada
+        return None
+    if not ontology_available():
+        return None
+    _OUT_STATE['day'] = day
+    with session_scope() as s:
+        res = evaluate_due(s)
+    log.info('outcomes diarios: %s', res)
+    return res
 
 
 def get_caps(start=True):

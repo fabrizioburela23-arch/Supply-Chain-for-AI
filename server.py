@@ -654,6 +654,33 @@ def api_vocabulary_unknown():
                     'hint': 'Si un valor es legítimo, añádelo a ontology/vocabulary.json'})
 
 
+# Errores de Flask en /api/*, /mcp y /oauth → JSON (antes: página HTML por
+# defecto, y el navegador mostraba "Unexpected token '<'" — incidente 2026-09-29).
+_JSON_ERR_PREFIXES = ('/api/', '/mcp', '/oauth', '/v1/', '/.well-known/')
+
+
+def _json_error(code, es, en):
+    from werkzeug.exceptions import HTTPException  # noqa: F401 (import local, barato)
+
+    def handler(e):
+        if request.path.startswith(_JSON_ERR_PREFIXES):
+            if code >= 500:
+                log.warning('HTTP %s en %s: %s', code, request.path, str(e)[:200])
+            resp = jsonify({'error': es, 'error_en': en, 'status': code})
+            if getattr(e, 'valid_methods', None):
+                resp.headers['Allow'] = ', '.join(e.valid_methods)
+            return resp, code
+        return e if hasattr(e, 'get_response') else (str(e), code)
+    return handler
+
+
+for _code, _es, _en in ((400, 'solicitud inválida', 'bad request'), (404, 'no encontrado', 'not found'),
+                        (405, 'método no permitido', 'method not allowed'),
+                        (413, 'el contenido es demasiado grande (máx. 1 MB)', 'payload too large (max 1 MB)'),
+                        (500, 'error interno del servidor', 'internal server error')):
+    app.register_error_handler(_code, _json_error(_code, _es, _en))
+
+
 @app.route('/api/health')
 def health():
     # Sin llamadas de red: /api/health debe ser instantáneo. (Antes pagaba
