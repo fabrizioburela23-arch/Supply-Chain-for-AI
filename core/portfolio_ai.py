@@ -537,20 +537,22 @@ def _pick(ranked, n, max_sector, max_country):
     k_themes = len({c.get('theme') for c in ranked})
     per_th = max(1, math.ceil(n / k_themes)) if k_themes > 1 else n
     chosen, sc, cc, tc = [], defaultdict(int), defaultdict(int), defaultdict(int)
-    for c in ranked:
-        if len(chosen) >= n:
-            break
-        if sc[c['sector']] >= per_sec or cc[c['country']] >= per_cty or tc[c.get('theme')] >= per_th:
-            continue
-        chosen.append(c)
-        sc[c['sector']] += 1
-        cc[c['country']] += 1
-        tc[c.get('theme')] += 1
-    for c in ranked:            # si los topes dejaron hueco (temas estrechos), completar
-        if len(chosen) >= n:
-            break
-        if c not in chosen:
+    # pasadas cada vez más laxas: todos los topes → sin tope de tema → sin tope
+    # de país → cualquiera (temas estrechos). Así se completa sin romper el
+    # tope por sector mientras se pueda.
+    for use_th, use_cty, use_sec in ((1, 1, 1), (0, 1, 1), (0, 0, 1), (0, 0, 0)):
+        for c in ranked:
+            if len(chosen) >= n:
+                break
+            if c in chosen:
+                continue
+            if (use_sec and sc[c['sector']] >= per_sec) or (use_cty and cc[c['country']] >= per_cty) or \
+               (use_th and tc[c.get('theme')] >= per_th):
+                continue
             chosen.append(c)
+            sc[c['sector']] += 1
+            cc[c['country']] += 1
+            tc[c.get('theme')] += 1
     return chosen
 
 
