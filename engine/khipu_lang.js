@@ -50,8 +50,8 @@
     return en ? fallbackEn : fallbackEs;
   }
 
-  const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY', 'RESEARCH']);
-  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX', 'FACTOR', 'FEED']);
+  const FUNCS = new Set(['DES', 'GP', 'SUP', 'CLI', 'RISK', 'SIM', 'NEWS', 'FA', 'THESIS', 'XRAY', 'RESEARCH', 'COMMITTEE', 'COMITE', 'COMITÉ']);
+  const KEYWORDS = new Set(['PORT', 'GRAPH', 'ALERT', 'COMPARE', 'SHOCK', 'INSIGHTS', 'MATRIX', 'FACTOR', 'FEED', 'CLIENTS', 'CLIENTES', 'WORLD', 'MUNDO', 'MCP', 'COMMITTEE', 'COMITE', 'COMITÉ']);
 
   function tryParse(text) {
     const raw = (text || '').trim();
@@ -60,7 +60,7 @@
     const first = parts[0].toUpperCase();
     // palabras clave que funcionan SOLAS ("FEED", "INSIGHTS", "MATRIX"):
     // antes exigía 2 palabras y estas caían a la IA sin necesidad
-    if (KEYWORDS.has(first) && (parts.length >= 2 || ['FEED', 'INSIGHTS', 'MATRIX', 'PORT'].indexOf(first) >= 0))
+    if (KEYWORDS.has(first) && (parts.length >= 2 || ['FEED', 'INSIGHTS', 'MATRIX', 'PORT', 'CLIENTS', 'CLIENTES', 'WORLD', 'MUNDO', 'MCP', 'COMMITTEE', 'COMITE', 'COMITÉ'].indexOf(first) >= 0))
       return _handleKeyword(first, parts.slice(1));
     if (parts.length < 2) return null;
 
@@ -87,6 +87,12 @@
         const en = (window.LANG || '') === 'en';
         if (window.KhipuResearch) { window.KhipuResearch.open(id); window.KhipuResearch.run(id, 'STANDARD'); }
         return { answer: en ? `Research agents started for ${label} — you can watch them work.` : `Agentes investigando ${label} — puedes verlos trabajar.`, actions: [] };
+      }
+      case 'COMMITTEE': case 'COMITE': case 'COMITÉ': {
+        // Phase 3: comité de inversión (propuesta con aprobación humana)
+        const en = (window.LANG || '') === 'en';
+        if (window.KhipuCommittee) window.KhipuCommittee.open(id);
+        return { answer: en ? `Opening the investment committee for ${label}. Nothing executes without your approval.` : `Abriendo el comité de inversión para ${label}. Nada se ejecuta sin tu aprobación.`, actions: [] };
       }
       case 'DES':
         return { answer: `Abriendo ficha de ${label}.`, actions: [{ type: 'second_brain', arg: id }] };
@@ -150,6 +156,23 @@
     if (kw === 'FACTOR') return _handleFactor(args);
     if (kw === 'FEED') return _handleFeed(args);
     if (kw === 'INSIGHTS') return { answer: 'Abriendo insights automáticos de la red.', actions: [{ type: 'insights' }] };
+    const _en = (window.LANG || '') === 'en';
+    if (kw === 'CLIENTS' || kw === 'CLIENTES') {
+      if (window.KhipuClients) window.KhipuClients.open();
+      return { answer: _en ? 'Opening clients, orders and approvals.' : 'Abriendo clientes, órdenes y aprobaciones.', actions: [] };
+    }
+    if (kw === 'WORLD' || kw === 'MUNDO') {
+      if (typeof window.switchTab === 'function') window.switchTab('geo');
+      return { answer: _en ? 'Opening the World Monitor.' : 'Abriendo el World Monitor.', actions: [] };
+    }
+    if (kw === 'MCP') {
+      if (window.KhipuMCP) window.KhipuMCP.open();
+      return { answer: _en ? 'Opening AI connections (MCP).' : 'Abriendo conexiones de IAs (MCP).', actions: [] };
+    }
+    if (kw === 'COMMITTEE' || kw === 'COMITE' || kw === 'COMITÉ') {
+      if (window.KhipuCommittee) window.KhipuCommittee.open(args[0] || undefined);
+      return { answer: _en ? 'Opening the investment committee.' : 'Abriendo el comité de inversión.', actions: [] };
+    }
     if (kw === 'MATRIX') return { answer: 'Abriendo las 9 matrices de relación.', actions: [{ type: 'insights' }] };
     return null;
   }

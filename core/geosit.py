@@ -132,21 +132,24 @@ FABS = [
 ]
 
 # ── Inestabilidad por país (índice ESTRUCTURAL curado 0-100 + noticias) ──────
+# lat/lon: marcador del país en el globo del World Monitor (centro aproximado).
+# ck: clave de país del catálogo (engine/geo_coords.js · core/world.py) para
+# cruzar con las empresas registradas en ese país.
 COUNTRIES = [
-    dict(id='ukraine', es='Ucrania', en='Ukraine', base=78, q='Ukraine war'),
-    dict(id='russia', es='Rusia', en='Russia', base=74, q='Russia sanctions'),
-    dict(id='iran', es='Irán', en='Iran', base=70, q='Iran conflict'),
-    dict(id='taiwan', es='Taiwán', en='Taiwan', base=62, q='Taiwan China military'),
-    dict(id='china', es='China', en='China', base=58, q='China export controls'),
-    dict(id='israel', es='Israel', en='Israel', base=55, q='Israel conflict'),
-    dict(id='mexico', es='México', en='Mexico', base=44, q='Mexico security crisis'),
-    dict(id='india', es='India', en='India', base=40, q='India Pakistan tension'),
-    dict(id='korea', es='Corea del Sur', en='South Korea', base=38, q='"South Korea" "North Korea" tension'),
-    dict(id='japan', es='Japón', en='Japan', base=30, q='Japan security'),
-    dict(id='usa', es='EE.UU.', en='United States', base=28, q='"United States" trade war'),
-    dict(id='germany', es='Alemania', en='Germany', base=24, q='Germany energy crisis'),
-    dict(id='netherlands', es='Países Bajos', en='Netherlands', base=22, q='ASML export restrictions'),
-    dict(id='singapore', es='Singapur', en='Singapore', base=18, q='Singapore trade'),
+    dict(id='ukraine', es='Ucrania', en='Ukraine', base=78, q='Ukraine war', lat=49.0, lon=31.4, ck='Ucrania'),
+    dict(id='russia', es='Rusia', en='Russia', base=74, q='Russia sanctions', lat=56.0, lon=40.0, ck='Rusia'),
+    dict(id='iran', es='Irán', en='Iran', base=70, q='Iran conflict', lat=32.4, lon=53.7, ck='Iran'),
+    dict(id='taiwan', es='Taiwán', en='Taiwan', base=62, q='Taiwan China military', lat=23.7, lon=121.0, ck='Taiwan'),
+    dict(id='china', es='China', en='China', base=58, q='China export controls', lat=34.0, lon=108.9, ck='China'),
+    dict(id='israel', es='Israel', en='Israel', base=55, q='Israel conflict', lat=31.4, lon=35.0, ck='Israel'),
+    dict(id='mexico', es='México', en='Mexico', base=44, q='Mexico security crisis', lat=23.6, lon=-102.5, ck='Mexico'),
+    dict(id='india', es='India', en='India', base=40, q='India Pakistan tension', lat=22.0, lon=79.0, ck='India'),
+    dict(id='korea', es='Corea del Sur', en='South Korea', base=38, q='"South Korea" "North Korea" tension', lat=36.5, lon=127.9, ck='Corea'),
+    dict(id='japan', es='Japón', en='Japan', base=30, q='Japan security', lat=36.2, lon=138.3, ck='Japon'),
+    dict(id='usa', es='EE.UU.', en='United States', base=28, q='"United States" trade war', lat=39.8, lon=-98.6, ck='EEUU'),
+    dict(id='germany', es='Alemania', en='Germany', base=24, q='Germany energy crisis', lat=51.2, lon=10.4, ck='Alemania'),
+    dict(id='netherlands', es='Países Bajos', en='Netherlands', base=22, q='ASML export restrictions', lat=52.1, lon=5.3, ck='PaisesBajos'),
+    dict(id='singapore', es='Singapur', en='Singapore', base=18, q='Singapore trade', lat=1.35, lon=103.82, ck='Singapur'),
 ]
 
 # nombre del país en el topojson (world-atlas 110m) → id nuestro, para el
@@ -170,8 +173,19 @@ _WARM_EVERY = 11       # segundos entre consultas GDELT por worker
 
 def _gdelt_activity(query):
     """Actividad de noticias 7d para una consulta: (nº artículos, tono medio).
-    GDELT DOC 2.0 artlist. Falla → None (se mantiene lo cacheado)."""
+    GDELT DOC 2.0 artlist. Falla → None (se mantiene lo cacheado).
+    Pasa por el acelerador COMPARTIDO de GDELT (core.world.gdelt_throttle):
+    el World Monitor también consulta GDELT y el límite (~1 consulta / 5 s por
+    IP) es de todo el proceso, no de cada módulo."""
     try:
+        try:
+            from core.world import gdelt_throttle
+        except ImportError:
+            gdelt_throttle = None
+        # turno reservado en el acelerador compartido; si cae demasiado lejos
+        # (World Monitor consultando), NO se consulta: el calentador reintenta
+        if gdelt_throttle is not None and not gdelt_throttle(max_wait=30.0):
+            return None
         r = requests.get(
             'https://api.gdeltproject.org/api/v2/doc/doc',
             params={'query': query, 'mode': 'artlist', 'maxrecords': 50,
@@ -324,6 +338,12 @@ def _score(base, news, factors):
 def geo_situation():
     """La foto completa de la Sala de Situación en UNA llamada (instantánea:
     las noticias las calienta el hilo de fondo, nunca este request)."""
+    return jsonify(situation_data())
+
+
+def situation_data():
+    """Datos de /api/geo/situation como dict (lo consume también el World
+    Monitor, core/world.py, para sus capas de chokepoints e inestabilidad)."""
     _ensure_warmer()
     fmatch = _active_factor_matches()
     known = _known_ids()
@@ -355,6 +375,7 @@ def geo_situation():
         factors = fmatch.get(c['id'], [])
         instability.append({
             'id': c['id'], 'es': c['es'], 'en': c['en'],
+            'lat': c.get('lat'), 'lon': c.get('lon'), 'country_key': c.get('ck'),
             'base': c['base'], 'news': news, 'factors': factors,
             'score': _score(c['base'], news, factors),
         })
@@ -365,7 +386,7 @@ def geo_situation():
         fabs.append({**f, 'company_known': bool(known and f.get('company') in known)})
 
     warm = sum(1 for k in _NEWS_CACHE.values() if k.get('count') is not None)
-    return jsonify({
+    return {
         'chokepoints': chokepoints,
         'instability': instability,
         'topo_name_map': TOPO_NAME_MAP,
@@ -374,4 +395,6 @@ def geo_situation():
                          'window': '7d', 'provider': 'GDELT'},
         'method_es': 'score = severidad estructural curada + actividad de noticias (GDELT 7d) '
                      '+ factores activos del grafo. Sin datos AIS: no se inventan.',
-    })
+        'method_en': 'score = curated structural severity + news activity (GDELT 7d) '
+                     '+ active graph factors. No AIS data: nothing is made up.',
+    }

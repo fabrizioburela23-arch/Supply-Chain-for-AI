@@ -1440,6 +1440,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab" data-tab="market" data-group="mercado" id="tab-market">📈 <span data-i18n="tab_market">Mercado en Vivo</span></button>
       <button class="tab" data-tab="crypto" data-group="mercado" id="tab-crypto">₿ <span>Cripto</span></button>
       <button class="tab" data-tab="portfolios" data-group="mercado" id="tab-portfolios">💼 <span data-i18n="tab_portfolios">Carteras</span></button>
+      <button class="tab" data-group="mercado" id="tab-committee" onclick="window.KhipuCommittee&&window.KhipuCommittee.open()" title="Comité de inversión — propuestas con aprobación humana · Investment committee">🏛 <span data-i18n="tab_committee">Comité</span></button>
+      <button class="tab" data-group="mercado" id="tab-clients" onclick="window.KhipuClients&&window.KhipuClients.open()" title="Clientes, órdenes y aprobaciones · Clients, orders and approvals">👥 <span data-i18n="tab_clients">Clientes</span><b id="tab-clients-badge" style="display:none;margin-left:5px;background:#FFB300;color:#1a1200;border-radius:9px;padding:0 6px;font-size:10px"></b></button>
       <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
       <button class="tab" data-tab="canvas" data-group="insights" id="tab-canvas">✦ <span>Canvas IA</span></button>
       <button class="tab" data-tab="terminal" data-group="insights" id="tab-terminal">⬛ <span>Terminal</span></button>
@@ -1708,60 +1710,12 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   </div>
 </section>
 
-<section id="geo-panel" style="display:none;overflow-y:auto;background:var(--bg);flex:1;min-height:0">
-  <div style="max-width:1200px;margin:0 auto;padding:24px 24px 40px">
-    <h2 id="geo-title" style="font-family:\'Fraunces\',serif;font-size:26px;font-weight:700;margin:0 0 4px;letter-spacing:-.02em">Geopolítica del Ecosistema</h2>
-    <p id="geo-sub" style="font-size:13px;color:var(--ink-3);margin-bottom:16px">Sala de Situación en vivo · chokepoints simulables sobre el grafo real · fabs críticas · inestabilidad por país · globo 3D abajo</p>
-
-    <!-- SALA DE SITUACIÓN (engine/geosituation.js) — vista principal -->
-    <div id="geosit-root"></div>
-
-    <!-- Globo geopolítico 3D — vista secundaria -->
-    <div id="geo-globe-wrap" style="margin-bottom:18px">
-      <div class="mkt-tablewrap" style="padding:0;position:relative;overflow:hidden;background:radial-gradient(130% 130% at 50% -10%, #0e1a30 0%, #08101e 55%, #05070d 100%)">
-        <canvas id="geo-globe-canvas" style="width:100%;height:560px;display:block;cursor:grab"></canvas>
-        <div id="geo-globe-legend" style="position:absolute;top:14px;left:16px;display:flex;flex-direction:column;gap:5px;font-size:11px"></div>
-        <div id="geo-globe-info" style="display:none;position:absolute;top:14px;right:14px;background:rgba(8,14,24,.93);border:1px solid rgba(80,130,200,.35);border-radius:10px;padding:14px 16px;min-width:210px;max-width:250px;backdrop-filter:blur(8px);z-index:10"></div>
-        <div style="position:absolute;bottom:10px;right:16px;font-size:10px;color:rgba(180,200,225,.55)">🌐 Empresas por región real · arcos = cadena de suministro · ◉ chokepoints · arrastra/rueda/clic</div>
-      </div>
-    </div>
-
-    <!-- Controls -->
-    <div style="display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Capa</span>
-        <div id="geo-layer-seg" class="seg">
-          <button data-layer="geo" class="active">◉ Riesgo</button>
-          <button data-layer="invest">$ Cartera</button>
-          <button data-layer="news">📰 Noticias</button>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span style="font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)">Escenario</span>
-        <div id="geo-scen-seg" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      </div>
-    </div>
-
-    <!-- Regional dashboard cards -->
-    <div id="geo-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:20px"></div>
-
-    <!-- Expanded region detail -->
-    <div id="geo-expanded" style="display:none" class="mkt-tablewrap">
-      <div style="padding:16px" id="geo-expanded-inner"></div>
-    </div>
-
-    <!-- Systemic risk ranking -->
-    <div class="mkt-tablewrap" style="margin-top:16px">
-      <div class="mkt-sec-head" id="geo-rank-title">Ranking de riesgo sistémico</div>
-      <table class="mkt-table"><thead><tr>
-        <th style="text-align:left">Región</th>
-        <th style="text-align:right">Empresas</th>
-        <th style="text-align:right">NRS avg</th>
-        <th style="text-align:right">Score</th>
-        <th style="text-align:right">Cartera</th>
-      </tr></thead><tbody id="geo-ranking"></tbody></table>
-    </div>
-  </div>
+<section id="geo-panel" style="display:none;overflow-y:auto;overflow-x:hidden;background:#02040a;flex:1;min-height:0;position:relative">
+  <!-- WORLD MONITOR (engine/worldmonitor.js, 2026-09-30): UNA sola vista geopolítica —
+       globo 3D + eventos en vivo (GDELT/USGS/NASA EONET) + estrechos con score +
+       exposición de la cadena. Reemplaza al mapa 2D de la Sala de Situación y al
+       globo secundario (ya no hay dos vistas). Backend: core/world.py (/api/world/*). -->
+  <div id="wm-root" style="position:relative;width:100%;height:100%;min-height:520px"></div>
 </section>
 
   <footer>
@@ -3811,7 +3765,7 @@ setTimeout(resize,60);
 const I18N = {
 es: {
   sub:'Cadena de valor global 2026 · 450+ empresas · 900+ conexiones · 35 categorías',
-  tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo', tab_portfolios:'Carteras',
+  tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo', tab_portfolios:'Carteras', tab_committee:'Comité', tab_clients:'Clientes',
   tab_analysis:'Análisis de Red', tab_geo:'Geopolítica',
   tab_sim:'Simulación', tab_space:'Espacio',
   an_history_h:'Historial de lecturas',
@@ -3879,7 +3833,7 @@ es: {
 },
 en: {
   sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
-  tab_map:'Chain Map', tab_market:'Live Market', tab_portfolios:'Portfolios',
+  tab_map:'Chain Map', tab_market:'Live Market', tab_portfolios:'Portfolios', tab_committee:'Committee', tab_clients:'Clients',
   tab_analysis:'Network Analysis', tab_geo:'Geopolitics',
   tab_sim:'Simulation', tab_space:'Space Economy',
   an_history_h:'Reading history',
@@ -4273,242 +4227,12 @@ const GEO_REGIONS={
   row:   {es:'Resto del mundo', en:'Rest of World', tint:'#8A857A'},
 };
 function renderGeoPanel(){
-  /* ── Region definitions — countries grouped into 7 geo blocks ── */
-  const GEO_BLOCKS=[
-    {id:'usa',    flag:'🇺🇸', name:'EE.UU.',     keys:['EEUU'],                               accent:'#2E6FB7', risk:'high'},
-    {id:'taiwan', flag:'🇹🇼', name:'Taiwán',      keys:['Taiwan','Taiwán'],                    accent:'#18A05A', risk:'critical'},
-    {id:'china',  flag:'🇨🇳', name:'China',        keys:['China'],                              accent:'#C8392F', risk:'critical'},
-    {id:'japan',  flag:'🇯🇵', name:'Japón',        keys:['Japon','Japón'],                      accent:'#C2185B', risk:'high'},
-    {id:'korea',  flag:'🇰🇷', name:'Corea Sur',    keys:['Corea'],                              accent:'#6B5DD3', risk:'high'},
-    {id:'europe', flag:'🇪🇺', name:'Europa',        keys:['ReinoUnido','PaisesBajos','Alemania','Francia','RestoEuropa','Israel','India','Alemania'], accent:'#5F6B52', risk:'low'},
-    {id:'row',    flag:'🌐',  name:'Resto del mundo',keys:['RestoMundo'],                        accent:'#8A857A', risk:'medium'},
-  ];
-
-  const activeLayer=document.querySelector('#geo-layer-seg button.active')?.dataset?.layer||'geo';
-
-  /* ── Globo 3D: vista principal, siempre visible al entrar a Geopolítica ── */
-  setTimeout(()=>window._initGeoGlobe&&window._initGeoGlobe(),60);
-
-  /* ── Compute node metrics per block ── */
-  const inDeg={};
-  LINKS.forEach(l=>{ const tg=lid(l.target); inDeg[tg]=(inDeg[tg]||0)+1; });
-
-  GEO_BLOCKS.forEach(blk=>{
-    const keySet=new Set(blk.keys);
-    blk.nodes=NODES.filter(n=>keySet.has(n.country||'RestoMundo'));
-    blk.count=blk.nodes.length;
-    const nrsArr=blk.nodes.map(n=>typeof computeNRS==='function'?computeNRS(n.id):50);
-    blk.avgNRS=nrsArr.length?Math.round(nrsArr.reduce((a,b)=>a+b,0)/nrsArr.length):50;
-    blk.portNodes=blk.nodes.filter(n=>n.port==='C1'||n.port==='C2');
-    blk.riskScore=blk.nodes.reduce((s,n)=>{
-      const meta=NODE_META[n.id]||{};
-      return s+(inDeg[n.id]||0)*({critical:4,high:3,medium:2,low:1}[meta.risk||'low']||1);
-    },0);
-    // Top nodes by (in-degree × criticality), capped at 8
-    blk.topNodes=[...blk.nodes]
-      .sort((a,b)=>((inDeg[b.id]||0)+(NODE_META[b.id]?.risk==='critical'?20:0))
-                  -((inDeg[a.id]||0)+(NODE_META[a.id]?.risk==='critical'?20:0)))
-      .slice(0,8);
-    blk.criticalCount=blk.nodes.filter(n=>NODE_META[n.id]?.risk==='critical').length;
-    blk.highCount=blk.nodes.filter(n=>NODE_META[n.id]?.risk==='high').length;
-  });
-
-  /* ── NRS badge colour ── */
-  function nrsColor(n){ return n<40?'#f87171':n<60?'#f59e0b':'#34d399'; }
-  function riskChip(r){
-    const m={critical:['CRÍTICO','#ef4444'],high:['ALTO','#f59e0b'],medium:['MEDIO','#60a5fa'],low:['BAJO','#34d399']};
-    const [lbl,col]=m[r]||m.medium;
-    return `<span style="font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;background:${col}22;color:${col};border:1px solid ${col}44">${lbl}</span>`;
-  }
-
-  /* ── Build cards ── */
-  const grid=document.getElementById('geo-cards-grid');
-  if(!grid) return;
-
-  if(activeLayer==='geo'){
-    grid.innerHTML=GEO_BLOCKS.map(blk=>`
-      <div onclick="window._geoExpand('${blk.id}')" style="background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer;transition:box-shadow .15s;border-left:3px solid ${blk.accent}" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.18)'" onmouseout="this.style.boxShadow=''">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-          <div>
-            <div style="font-size:20px;line-height:1">${blk.flag}</div>
-            <div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-top:4px">${esc(blk.name)}</div>
-          </div>
-          <div>${riskChip(blk.risk)}</div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div style="background:var(--surface);border-radius:6px;padding:7px;text-align:center">
-            <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">Empresas</div>
-            <div style="font-size:20px;font-weight:800;color:${blk.accent}">${blk.count}</div>
-          </div>
-          <div style="background:var(--surface);border-radius:6px;padding:7px;text-align:center">
-            <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em">NRS avg</div>
-            <div style="font-size:20px;font-weight:800;color:${nrsColor(blk.avgNRS)}">${blk.avgNRS}</div>
-          </div>
-        </div>
-        ${blk.criticalCount||blk.highCount?`<div style="font-size:10px;color:var(--ink-3);margin-bottom:6px">⚠ ${blk.criticalCount} críticos · ${blk.highCount} altos</div>`:''}
-        <div style="display:flex;flex-wrap:wrap;gap:4px">
-          ${blk.topNodes.slice(0,5).map(n=>`<span style="font-size:10px;padding:2px 7px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink-2);cursor:pointer" onclick="event.stopPropagation();goMap('${n.id}')">${esc(n.label)}</span>`).join('')}
-        </div>
-      </div>`).join('');
-
-  } else if(activeLayer==='invest'){
-    const hasPortfolio=GEO_BLOCKS.some(b=>b.portNodes.length>0);
-    grid.innerHTML=GEO_BLOCKS.map(blk=>{
-      const c1=blk.nodes.filter(n=>inPortfolio(n,'C1'));
-      const c2=blk.nodes.filter(n=>inPortfolio(n,'C2'));
-      const hasPos=c1.length||c2.length;
-      return `<div onclick="window._geoExpand('${blk.id}')" style="background:var(--surface-2);border:1px solid ${hasPos?blk.accent:'var(--line)'};border-radius:12px;padding:16px;cursor:pointer;opacity:${hasPos?1:.55};transition:all .15s" onmouseover="this.style.boxShadow='0 4px 20px rgba(0,0,0,.18)'" onmouseout="this.style.boxShadow=''">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-          <span style="font-size:18px">${blk.flag}</span>
-          <div style="font-size:13px;font-weight:700;color:var(--ink-1)">${esc(blk.name)}</div>
-          ${hasPos?`<span style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;background:${blk.accent}22;color:${blk.accent}">● EXPOSICIÓN</span>`:''}
-        </div>
-        ${c1.length?`<div style="margin-bottom:6px"><div style="font-size:9px;color:#f59e0b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">C1 · Corto plazo (${c1.length})</div><div style="display:flex;flex-wrap:wrap;gap:3px">${c1.map(n=>`<span style="font-size:10px;padding:2px 7px;background:rgba(245,158,11,.12);border:1px solid #f59e0b44;border-radius:10px;color:#f59e0b;cursor:pointer" onclick="event.stopPropagation();goMap('${n.id}')">${esc(n.label)}</span>`).join('')}</div></div>`:''}
-        ${c2.length?`<div style="margin-bottom:6px"><div style="font-size:9px;color:#3b82f6;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">C2 · Mediano plazo (${c2.length})</div><div style="display:flex;flex-wrap:wrap;gap:3px">${c2.map(n=>`<span style="font-size:10px;padding:2px 7px;background:rgba(59,130,246,.12);border:1px solid #3b82f644;border-radius:10px;color:#3b82f6;cursor:pointer" onclick="event.stopPropagation();goMap('${n.id}')">${esc(n.label)}</span>`).join('')}</div></div>`:''}
-        ${!hasPos?`<div style="font-size:11px;color:var(--ink-3);text-align:center;padding:10px 0">Sin posiciones</div>`:''}
-      </div>`;
-    }).join('');
-
-  } else if(activeLayer==='news'){
-    grid.innerHTML=GEO_BLOCKS.filter(b=>b.count>0).map(blk=>`
-      <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-          <span style="font-size:18px">${blk.flag}</span>
-          <div style="font-size:13px;font-weight:700;color:var(--ink-1)">${esc(blk.name)}</div>
-          <span style="margin-left:auto;font-size:10px;color:var(--ink-3)">${blk.count} emp.</span>
-        </div>
-        <div id="geo-news-${blk.id}" style="font-size:11px;color:var(--ink-3);min-height:40px">
-          <button onclick="window._geoLoadNews('${blk.id}')" style="font-size:11px;padding:5px 12px;background:var(--surface);border:1px solid var(--line);border-radius:6px;cursor:pointer;width:100%">📰 Cargar noticias</button>
-        </div>
-      </div>`).join('');
-  }
-
-  /* ── Ranking table ── */
-  const sorted=[...GEO_BLOCKS].filter(b=>b.count>0).sort((a,b)=>b.riskScore-a.riskScore);
-  document.getElementById('geo-ranking').innerHTML=sorted.map(blk=>`
-    <tr style="cursor:pointer" onclick="window._geoExpand('${blk.id}')">
-      <td style="font-weight:600"><span style="font-size:14px;margin-right:6px">${blk.flag}</span>${esc(blk.name)}</td>
-      <td style="text-align:right">${blk.count}</td>
-      <td style="text-align:right;font-weight:700;color:${nrsColor(blk.avgNRS)}">${blk.avgNRS}</td>
-      <td style="text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace">${blk.riskScore}</td>
-      <td style="text-align:right">${blk.portNodes.length?`<span style="color:${blk.accent};font-weight:700">${blk.portNodes.length}</span>`:'—'}</td>
-    </tr>`).join('');
-
-  /* ── Expand handler ── */
-  window._geoExpand=function(blockId){
-    const blk=GEO_BLOCKS.find(b=>b.id===blockId); if(!blk) return;
-    const exp=document.getElementById('geo-expanded');
-    const inner=document.getElementById('geo-expanded-inner');
-    if(!exp||!inner) return;
-    const isOpen=exp.style.display!=='none'&&inner.dataset.open===blockId;
-    if(isOpen){ exp.style.display='none'; return; }
-    inner.dataset.open=blockId;
-    exp.style.display='block';
-    exp.scrollIntoView({behavior:'smooth',block:'nearest'});
-
-    const nrsArr=blk.nodes.map(n=>typeof computeNRS==='function'?computeNRS(n.id):50);
-    const nrsDist={low:0,mid:0,high:0};
-    nrsArr.forEach(v=>{ if(v<40)nrsDist.low++; else if(v<70)nrsDist.mid++; else nrsDist.high++; });
-    const topConn=[...blk.nodes].sort((a,b)=>(inDeg[b.id]||0)-(inDeg[a.id]||0)).slice(0,12);
-
-    inner.innerHTML=`
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <span style="font-size:28px">${blk.flag}</span>
-        <div>
-          <div style="font-size:16px;font-weight:700;color:var(--ink-1)">${esc(blk.name)}</div>
-          <div style="font-size:11px;color:var(--ink-3)">${blk.count} empresas · NRS promedio ${blk.avgNRS} · ${blk.criticalCount} críticas</div>
-        </div>
-        <button onclick="document.getElementById('geo-expanded').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--ink-3);font-size:18px;cursor:pointer">✕</button>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-        <div style="padding:10px;background:var(--surface);border-radius:8px;text-align:center">
-          <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase">NRS bajo (&lt;40)</div>
-          <div style="font-size:22px;font-weight:800;color:#f87171">${nrsDist.low}</div>
-        </div>
-        <div style="padding:10px;background:var(--surface);border-radius:8px;text-align:center">
-          <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase">NRS medio</div>
-          <div style="font-size:22px;font-weight:800;color:#f59e0b">${nrsDist.mid}</div>
-        </div>
-        <div style="padding:10px;background:var(--surface);border-radius:8px;text-align:center">
-          <div style="font-size:9px;color:var(--ink-3);text-transform:uppercase">NRS alto (&gt;70)</div>
-          <div style="font-size:22px;font-weight:800;color:#34d399">${nrsDist.high}</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--ink-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Nodos más conectados</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${topConn.map(n=>{
-          const nrs=typeof computeNRS==='function'?Math.round(computeNRS(n.id)):50;
-          const col=nrsColor(nrs);
-          return `<span onclick="goMap('${n.id}')" title="NRS: ${nrs} · Conexiones: ${inDeg[n.id]||0}" style="font-size:11px;padding:4px 10px;background:var(--surface);border:1px solid var(--line);border-left:3px solid ${col};border-radius:8px;cursor:pointer;color:var(--ink-1)">${esc(n.label)} <span style="color:${col};font-weight:700">${nrs}</span></span>`;
-        }).join('')}
-      </div>`;
-  };
-
-  /* ── News loader ── */
-  window._geoLoadNews=async function(blockId){
-    const blk=GEO_BLOCKS.find(b=>b.id===blockId); if(!blk) return;
-    const el=document.getElementById(`geo-news-${blockId}`);
-    if(!el) return;
-    el.innerHTML='<div style="color:var(--ink-3);font-size:11px">Cargando noticias…</div>';
-    try{
-      // fetch GDELT for top 2 companies in block
-      const company=blk.topNodes[0]?.label||blk.name;
-      const r=await fetch(`${BASE||''}/api/news/gdelt/${encodeURIComponent(company)}`);
-      const arts=await r.json();
-      if(!arts||!arts.length){ el.innerHTML='<div style="font-size:11px;color:var(--ink-3)">Sin noticias recientes</div>'; return; }
-      el.innerHTML=arts.slice(0,4).map(a=>`
-        <div style="border-bottom:1px solid var(--line);padding:6px 0;last-child:border:none">
-          <a href="${esc(a.url||'#')}" target="_blank" rel="noopener" style="font-size:11px;color:var(--ink-1);text-decoration:none;display:block;line-height:1.4">${esc((a.title||a.headline||'').slice(0,80))}</a>
-          <div style="font-size:10px;color:var(--ink-3);margin-top:2px">${esc(company)} · ${a.date||''} · ${a.source||''}</div>
-        </div>`).join('');
-    }catch(e){ el.innerHTML=`<div style="font-size:11px;color:#f87171">Error: ${e.message}</div>`; }
-  };
-
-  /* ── Scenario buttons (build once) ── */
-  const scenEl=document.getElementById('geo-scen-seg');
-  if(scenEl&&!scenEl.children.length){
-    [
-      {label:'⚔️ Taiwan', keys:['Taiwan','Taiwán'], detail:'Bloqueo TSMC — impacto global en semiconductores', presetId:'taiwan_conflict'},
-      {label:'🚫 China Ban', keys:['China'], detail:'Export controls totales — SMIC, Huawei, YMTC', presetId:'china_chip_ban_total'},
-      {label:'💾 HBM Shortage', keys:['Corea','Taiwan'], detail:'Escasez HBM — Nvidia bloqueada, AI servers parados', presetId:'hbm_shortage_2027'},
-    ].forEach(sc=>{
-      const btn=document.createElement('button');
-      btn.className='chip'; btn.textContent=sc.label;
-      btn.style.cssText='font-size:11px;padding:3px 10px;border:1px solid rgba(239,68,68,.4);color:#ef4444;';
-      btn.title=sc.detail;
-      btn.onclick=()=>{
-        const keySet=new Set(sc.keys);
-        // Highlight nodes in these regions in the main graph
-        const affectedIds=NODES.filter(n=>keySet.has(n.country||'')).map(n=>n.id);
-        window.nexusCore?.runPreset(sc.presetId);
-        if(typeof toast==='function') toast(`Simulando: ${sc.label} — ${affectedIds.length} nodos afectados`);
-        // Also highlight in current card grid
-        document.querySelectorAll('#geo-cards-grid > div').forEach((card,i)=>{
-          const blk=GEO_BLOCKS[i];
-          const affected=blk&&blk.keys.some(k=>sc.keys.includes(k));
-          card.style.opacity=affected?'1':'0.3';
-          card.style.transform=affected?'scale(1.02)':'';
-        });
-        setTimeout(()=>{
-          document.querySelectorAll('#geo-cards-grid > div').forEach(c=>{c.style.opacity='';c.style.transform='';});
-        }, 2500);
-      };
-      scenEl.appendChild(btn);
-    });
-  }
-
-  /* ── Wire layer tabs → re-render ── */
-  if(!renderGeoPanel._layersWired){
-    renderGeoPanel._layersWired=true;
-    document.querySelectorAll('#geo-layer-seg button').forEach(btn=>{
-      btn.onclick=()=>{
-        document.querySelectorAll('#geo-layer-seg button').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('geo-expanded').style.display='none';
-        renderGeoPanel();
-      };
-    });
-  }
+  /* Pestaña Geopolítica = WORLD MONITOR (engine/worldmonitor.js). mount() es
+     idempotente: la 1ª vez arma el globo y carga los datos; después re-etiqueta
+     (idioma/tema), redimensiona y reanuda el render. Lo llaman switchTab('geo'),
+     la Cabina (ADOPT_TABS.geo) y los cambios de idioma/tema. */
+  const root=document.getElementById('wm-root');
+  if(root && window.KhipuWorld) window.KhipuWorld.mount(root);
 }
 
 // Cablea cada sub-pestaña a switchTab por su data-tab. EXCEPCIÓN: los botones
@@ -6703,6 +6427,22 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 <script src="engine/committee.js"></script>
 <script src="engine/clients.js"></script>
 <script src="engine/mcpconnect.js"></script>
+<script>
+/* Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando
+   aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). */
+(function(){
+  function upd(){
+    var b = document.getElementById('tab-clients-badge');
+    if(!b || !window.KhipuClients || !window.KhipuClients.pendingCount || document.hidden) return;
+    window.KhipuClients.pendingCount().then(function(n){
+      if(n){ b.textContent = n; b.style.display = 'inline-block'; b.title = (window.LANG==='en'?'awaiting your approval':'esperando tu aprobación'); }
+      else b.style.display = 'none';
+    }).catch(function(){});
+  }
+  window.addEventListener('load', function(){ setTimeout(upd, 8000); });
+  setInterval(upd, 60000);
+})();
+</script>
 <script src="engine/insights.js"></script>
 <script src="engine/statematrix.js"></script>
 <script src="engine/livesim.js"></script>
@@ -8982,53 +8722,9 @@ function telCell(label, val) {
     <div style="font-size:13px;color:#9bd1ff;font-weight:700;font-family:'JetBrains Mono',monospace">${val}</div></div>`;
 }
 
-// ── Globo geopolítico 3D ────────────────────────────────────────────────────
-window._initGeoGlobe = function() {
-  const canvas = document.getElementById('geo-globe-canvas');
-  if (!canvas) return;
-  if (!window.THREE || !window.KhipuGeoGlobe || !window.GeoCoords) {
-    canvas.parentElement.insertAdjacentHTML('beforeend',
-      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9bd1ff;font-size:13px">El globo 3D necesita Three.js (revisa conexión)</div>');
-    return;
-  }
-  if (window._geoGlobe) { try { window._geoGlobe._resize(); } catch(e){} return; }
-  try {
-    window._geoGlobe = new window.KhipuGeoGlobe('geo-globe-canvas');
-    window._geoGlobe.init();
-    window._geoGlobe.loadData();
-    renderGeoGlobeLegend();
-    if (!window._geoSatListener) {
-      window._geoSatListener = true;
-      window.addEventListener('khipu-geo-selected', e => renderGeoInfoCard(e.detail));
-    }
-  } catch(e) { console.warn('GeoGlobe init falló:', e); }
-};
-function renderGeoGlobeLegend() {
-  const el = document.getElementById('geo-globe-legend');
-  if (!el) return;
-  el.innerHTML = `<div style="font-size:10px;letter-spacing:.08em;color:rgba(180,200,225,.6);text-transform:uppercase;margin-bottom:2px">Riesgo NRS</div>` +
-    [['#34d399','Resiliente (60+)'],['#f59e0b','Medio (40-60)'],['#f87171','Frágil (<40)']]
-      .map(([c,l])=>`<div style="display:flex;align-items:center;gap:7px;color:#cfe2f5"><span style="width:8px;height:8px;border-radius:50%;background:${c};box-shadow:0 0 6px ${c}"></span>${l}</div>`).join('') +
-    `<div style="font-size:10px;letter-spacing:.08em;color:rgba(180,200,225,.6);text-transform:uppercase;margin:6px 0 2px">Chokepoints</div>` +
-    `<div style="display:flex;align-items:center;gap:7px;color:#cfe2f5"><span style="width:8px;height:8px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 6px #ff3b3b"></span>Taiwán · Malaca · Ormuz…</div>`;
-}
-function renderGeoInfoCard(d) {
-  const el = document.getElementById('geo-globe-info');
-  if (!el) return;
-  const col = d.nrs<40?'#f87171':d.nrs<60?'#f59e0b':'#34d399';
-  el.style.display = 'block';
-  el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <b style="font-size:13px;color:#fff">${esc(d.label)}</b>
-      <span onclick="document.getElementById('geo-globe-info').style.display='none'" style="cursor:pointer;color:rgba(180,200,225,.6)">✕</span>
-    </div>
-    <div style="font-size:11px;color:#9fb4d6;margin-bottom:8px">${esc(d.ticker||'')} · ${esc(d.region||'')}</div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-      <div style="flex:1;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.max(4,d.nrs)}%;background:${col}"></div></div>
-      <span style="font-size:13px;font-weight:700;color:${col};font-family:'JetBrains Mono',monospace">${d.nrs}</span>
-    </div>
-    <button onclick="switchTab('map');setTimeout(()=>jumpTo('${d.id}'),80)" style="width:100%;padding:7px;background:linear-gradient(90deg,#2a5298,#1e3c72);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer">🔗 Ver en el grafo</button>`;
-}
+// ── Globo geopolítico 3D → ahora es el World Monitor (engine/worldmonitor.js).
+// Alias de compatibilidad por si algún llamador externo aún lo usa.
+window._initGeoGlobe = function() { if (window.KhipuWorld) window.KhipuWorld.mount(); };
 
 const _LAUNCHES_FALLBACK = [
   {name:'Falcon 9 · Starlink Group 10-1',provider:'SpaceX',rocket:'Falcon 9',net:null,khipu_nodes:['SpaceX']},

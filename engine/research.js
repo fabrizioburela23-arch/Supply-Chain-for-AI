@@ -31,6 +31,7 @@
     news: ['📰', 'Noticias', 'News'], supply_chain: ['🔗', 'Cadena de suministro', 'Supply chain'],
     geopolitical: ['🗺️', 'Geopolítica', 'Geopolitics'], macro: ['🌐', 'Macro', 'Macro'],
     crypto: ['₿', 'Cripto', 'Crypto'], risk_observation: ['⚠️', 'Riesgos', 'Risks'],
+    committee: ['🏛', 'Comité', 'Committee'],
   };
   var HZ = {
     INTRADAY: ['Intradía', 'Intraday'], SHORT_TERM: ['Corto plazo', 'Short term'],
@@ -109,7 +110,49 @@
     document.head.appendChild(st);
   }
 
-  var S = { entity: null, tab: null, data: null, poll: null, job: null };
+  var S = { entity: null, tab: null, data: null, poll: null, job: null, tr: null, cal: null };
+
+  // ── PHASE 3: historial real por agente + confianza calibrada ───────────────
+  // /api/committee/* (research/outcomes.py). Si no existe (sin base, módulo
+  // ausente) no se muestra nada: la investigación funciona igual.
+  function loadLearning() {
+    getJSON('/api/committee/track-record').then(function (d) {
+      if (d._status !== 200) return;
+      var by = {}; (d.agents || []).forEach(function (a) { by[a.agent_type] = a; });
+      S.tr = { by: by, min_n: d.min_n || 5 }; if (S.data && S.view === 'main') render();
+    }).catch(function () {});
+    getJSON('/api/committee/calibration').then(function (d) {
+      if (d._status !== 200) return;
+      S.cal = { table: d.table || {}, k: d.k == null ? 10 : d.k, min_n: d.min_n || 5 }; if (S.data && S.view === 'main') render();
+    }).catch(function () {});
+  }
+  // misma fórmula que research/outcomes.calibration_detail:
+  // (aciertos_tramo + k·cruda) / (n_tramo + k), tramos de 0.2
+  function calibrated(c) {
+    var raw = Math.max(0, Math.min(1, Number(c.confidence) || 0));
+    if (S.cal) {
+      var a = S.cal.table[c.agent_type] || {};
+      var i = Math.min(4, Math.floor(raw * 5));
+      var b = (a.buckets || [])[i] || [0, 0];
+      var k = S.cal.k;
+      return { value: (b[1] + k * raw) / (b[0] + k), n: b[0], ok: b[0] >= S.cal.min_n };
+    }
+    var st = (c.confidence_components || {}).calibration;
+    return st ? { value: st.calibrated, n: st.n_bucket, ok: !!st.sufficient } : null;
+  }
+  function calHtml(c) {
+    var k = calibrated(c);
+    if (!k) return '';
+    return k.ok
+      ? '<span title="' + esc(L('confianza calibrada con resultados reales (n=' + k.n + ')', 'confidence calibrated with real outcomes (n=' + k.n + ')')) + '">🎯 ' + esc(L('calibrada ', 'calibrated ')) + Math.round(k.value * 100) + '%</span>' + chip('calibration')
+      : '<span style="color:#7C87A3">🎯 ' + esc(L('calibrada: sin historial suficiente', 'calibrated: not enough history')) + '</span>' + chip('calibration');
+  }
+  function trBadge(t) {
+    var a = S.tr && S.tr.by[t];
+    if (!S.tr) return '';
+    if (!a || a.n_scored < S.tr.min_n) return ' <span style="font-size:10px;color:#7C87A3">· ' + esc(L('sin historial', 'no track record')) + (a && a.n_scored ? ' (n=' + a.n_scored + ')' : '') + '</span>';
+    return ' <span style="font-size:10px;color:#9BA6C4" title="' + esc(L('aciertos reales · Brier', 'real hit rate · Brier')) + '">· 🎯 ' + Math.round(a.hit_rate * 100) + '% n=' + a.n_scored + (a.brier != null ? ' · B ' + a.brier.toFixed(2) : '') + '</span>';
+  }
 
   function shell() {
     ensureStyles();
@@ -177,6 +220,7 @@
       '<div class="rs-meta">' +
         '<span class="rs-badge">' + esc(hz(c.horizon)) + '</span>' + chip('horizon') +
         '<span title="' + esc(L('confianza calculada', 'computed confidence')) + '"><span class="rs-bar"><i style="width:' + pct + '%"></i></span> ' + pct + '%</span>' + chip('claim_conf') +
+        calHtml(c) +
         (compact ? '' : '<span>' + esc(ag(c.agent_type)) + '</span>') +
         '<span>📎 ' + (c.n_supporting || 0) + ' ' + esc(L('a favor', 'for')) + ' · ' + (c.n_counter || 0) + ' ' + esc(L('en contra', 'against')) + '</span>' +
         '<span>' + esc(clock(c.created_at)) + '</span>' +
@@ -186,6 +230,7 @@
 
   function render() {
     var rs = document.getElementById('rs'); if (!rs) return;
+    S.view = 'main';
     var d = S.data || {};
     var by = d.by_agent || {};
     var types = Object.keys(AG).filter(function (t) { return by[t] && by[t].length; });
@@ -196,6 +241,7 @@
       '<div class="rs-hd"><span class="rs-name">🔬 ' + esc(L('Investigación IA', 'AI research')) + ' · ' + esc(nodeLabel(S.entity)) + '</span>' +
         '<select id="rs-depth"><option value="QUICK">' + esc(L('Rápida', 'Quick')) + '</option><option value="STANDARD" selected>' + esc(L('Normal', 'Standard')) + '</option><option value="DEEP">' + esc(L('Profunda', 'Deep')) + '</option></select>' +
         '<button class="rs-btn" id="rs-go"' + (S.job ? ' disabled' : '') + '>' + esc(S.job ? L('Investigando…', 'Researching…') : L('Investigar', 'Research')) + '</button>' +
+        (window.KhipuCommittee ? '<button class="rs-btn" style="border-color:#FFB300;color:#FFB300;background:rgba(255,179,0,.08)" onclick="window.KhipuCommittee.open(\'' + esc(S.entity) + '\')" title="' + esc(L('Comité de inversión: propuesta con aprobación humana', 'Investment committee: proposal with human approval')) + '">🏛 ' + esc(L('Comité', 'Committee')) + '</button>' : '') +
         '<button class="rs-x" onclick="window.KhipuResearch.close()" title="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
       '<div class="rs-sub">' + esc(L('Agentes especializados leen datos reales (estados financieros, mercado, noticias, grafo) y escriben conclusiones con evidencia a favor y en contra. No son recomendaciones de compra o venta. Los agentes pueden discrepar: se muestran ambas posturas.',
         'Specialized agents read real data (financial statements, market, news, graph) and write conclusions with evidence for and against. Not buy or sell recommendations. Agents may disagree: both views are shown.')) + '</div>' +
@@ -203,9 +249,10 @@
       '<div class="rs-grid"><div>' +
         '<div class="rs-cell"><div class="rs-t">' + esc(L('Conclusiones por perspectiva', 'Conclusions by perspective')) + '</div>' +
           (types.length ? '<div class="rs-tabs">' + types.map(function (t) {
-            return '<button class="rs-tab' + (t === S.tab ? ' on' : '') + '" data-t="' + t + '">' + esc(ag(t)) + ' (' + by[t].length + ')</button>'; }).join('') + '</div>' +
+            return '<button class="rs-tab' + (t === S.tab ? ' on' : '') + '" data-t="' + t + '">' + esc(ag(t)) + ' (' + by[t].length + ')' + trBadge(t) + '</button>'; }).join('') + '</div>' +
             claims.map(function (c) { return claimCard(c, true); }).join('')
-            : '<div class="rs-note">' + esc(d._status === 503 ? L('La investigación necesita la base de datos (DATABASE_URL en Railway).', 'Research needs the database (DATABASE_URL on Railway).')
+            : '<div class="rs-note">' + esc(S.data === null ? L('Cargando investigación…', 'Loading research…')
+              : d._status === 503 ? L('La investigación necesita la base de datos (DATABASE_URL en Railway).', 'Research needs the database (DATABASE_URL on Railway).')
               : L('Todavía no hay investigación de esta empresa. Pulsa «Investigar».', 'No research for this company yet. Press “Research”.')) + '</div>') +
         '</div>' +
         (d.contradictions && d.contradictions.length ? '<div class="rs-cell" style="margin-top:12px"><div class="rs-t">⚖️ ' + esc(L('Señales en conflicto (no se resuelven aquí)', 'Conflicting signals (not resolved here)')) + '</div>' +
@@ -246,7 +293,7 @@
         var st = ST[r.status] || [r.status, r.status];
         var trig = r.trigger && r.trigger.kind === 'event' ? L('por evento', 'by event') : L('pedido por ', 'requested by ') + ((r.trigger && r.trigger.by) || '—');
         return '<div class="rs-act"><b>' + esc(clock(r.started_at)) + '</b> · ' + esc(ag(r.agent_type)) + ' · ' + esc(L(st[0], st[1])) +
-          (r.status === 'done' ? ' · ' + (r.claims_generated || 0) + ' ' + esc(L('conclusiones', 'conclusions')) : '') +
+          (r.status === 'done' ? ' · ' + (r.agent_type === 'committee' ? esc(L('memo del comité', 'committee memo')) : (r.claims_generated || 0) + ' ' + esc(L('conclusiones', 'conclusions'))) : '') +
           '<div style="color:#7C87A3">' + esc(trig) + (r.model ? ' · ' + esc(r.model) : '') + (r.latency_ms ? ' · ' + (r.latency_ms / 1000).toFixed(1) + ' s' : '') +
           (r.est_cost_usd != null ? ' · ≈$' + Number(r.est_cost_usd).toFixed(4) + ' ' + esc(L('est.', 'est.')) : '') + '</div>' +
           (r.status === 'failed' || r.status === 'skipped' ? '<div style="color:#FFB300">' + esc(String((r.errors || [])[0] || '')) + '</div>' : '') + '</div>';
@@ -254,16 +301,18 @@
     }).catch(function () {});
   }
 
+  // Si mientras carga se abrió «¿Por qué?» (p. ej. desde un [C#] del comité), no se pisa esa vista.
   function load(entity) {
     return getJSON('/api/research/entity/' + encodeURIComponent(entity)).then(function (d) {
       if (d.entity_id) S.entity = d.entity_id;
-      S.data = d; render(); return d;
-    }).catch(function () { S.data = {}; render(); });
+      S.data = d; if (S.view !== 'why') render(); return d;
+    }).catch(function () { S.data = {}; if (S.view !== 'why') render(); });
   }
 
   function open(entityId) {
-    S.entity = entityId; S.data = null; S.tab = null; S.msg = null;
+    S.entity = entityId; S.data = null; S.tab = null; S.msg = null; S.view = 'loading';
     var ov = shell(); ov.classList.add('show');
+    loadLearning();
     document.getElementById('rs').innerHTML = '<div class="rs-note" style="padding:30px">' + esc(L('Cargando investigación…', 'Loading research…')) + '</div>';
     load(entityId);
   }
@@ -302,6 +351,7 @@
   function why(claimId) {
     getJSON('/api/research/claims/' + encodeURIComponent(claimId)).then(function (d) {
       var rs = document.getElementById('rs'); if (!rs || !d.claim) return;
+      S.view = 'why';
       var c = d.claim;
       var ev = function (e, cnt) {
         var u = safeUrl(e.source_reference) || safeUrl(e.source && e.source.url);

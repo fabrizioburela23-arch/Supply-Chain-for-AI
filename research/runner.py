@@ -124,8 +124,9 @@ def _completeness(ctx):
     return (len(targets & got) / len(targets)) if targets else 1.0
 
 
-def run_agent(session, job, agent_type, provider=None, fetchers=None):
-    """Ejecuta UN agente para el job. Devuelve el AgentRun (siempre registrado)."""
+def run_agent(session, job, agent_type, provider=None, fetchers=None, quotes=None):
+    """Ejecuta UN agente para el job. Devuelve el AgentRun (siempre registrado).
+    quotes: precios en vivo {símbolo: {...}} para la foto de partida (Phase 3)."""
     agent = AGENTS_BY_TYPE[agent_type]
     run = AgentRun(job_id=job.id, agent_id=agent.agent_id, agent_type=agent_type,
                    entity_id=job.entity_id, trigger=job.trigger or {}, depth=job.depth,
@@ -156,7 +157,9 @@ def run_agent(session, job, agent_type, provider=None, fetchers=None):
         run.validation = {'attempts': meta.get('attempts'), 'repaired': meta.get('repaired'),
                           'fallbacks': meta.get('fallbacks', []), 'errors': meta.get('errors', [])[:3]}
         run.summary = result.summary_es
-        n = persist_result(session, job, run, agent, ctx, result)
+        if quotes is None:
+            quotes = baseline_quotes(job.entity_id, fetchers)
+        n = persist_result(session, job, run, agent, ctx, result, quotes=quotes)
         run.claims_generated = n
         run.status = 'done'
         run.errors = [{'unresolved_questions': result.unresolved_questions}] if result.unresolved_questions else []
@@ -174,14 +177,17 @@ def run_agent(session, job, agent_type, provider=None, fetchers=None):
     return run
 
 
-def persist_result(session, job, run, agent, ctx, result):
+def persist_result(session, job, run, agent, ctx, result, quotes=None):
     """Escribe claims + evidencia. SOLO tablas research_* (+ registrar Source
-    citada, idempotente). Nunca toca hechos del grafo ni datos de mercado."""
+    citada, idempotente). Nunca toca hechos del grafo ni datos de mercado.
+    Phase 3: guarda la confianza CALIBRADA vigente (en confidence_components)
+    y la foto de partida de la claim (claim_baselines) para calificarla después."""
     from core.entities import get_index
     ev_by_ref = {e['ref']: e for e in ctx['evidence']}
     known = get_index()['nodos']
     comp = _completeness(ctx)
     now = _now()
+    cal_table = _calibration_table(session)
     n = 0
     for c in result.claims:
         support = [ev_by_ref[r] for r in c.evidence_refs if r in ev_by_ref]
@@ -189,6 +195,9 @@ def persist_result(session, job, run, agent, ctx, result):
         if not support:
             continue   # sin evidencia de apoyo NO hay claim material (spec §3)
         conf, parts = compute_confidence(support, counter, c.agent_certainty, comp, now=now)
+        cal = _calibration_for(agent.agent_type, conf, cal_table)
+        if cal:
+            parts = dict(parts, calibration=cal)
         affected = [x for x in c.affected_entities if x in known and x != job.entity_id][:15]
         days = _HZ_DAYS.get(c.horizon)
         claim = ResearchClaim(
@@ -218,9 +227,58 @@ def persist_result(session, job, run, agent, ctx, result):
                  ResearchClaim.status == 'active', ResearchClaim.id != claim.id)
          .update({'status': 'superseded'}, synchronize_session=False))
         detect_for(session, claim)
+        _record_baseline(session, claim, quotes)
         n += 1
     session.flush()
     return n
+
+
+# ── Phase 3 (research/outcomes.py): enganches que NUNCA rompen la investigación ──
+def baseline_quotes(entity_id, fetchers=None):
+    """Precio en vivo de la entidad y de SPY al crear las claims (auditoría de
+    la foto de partida). Usa el fetcher 'profile' (caché 90 s; inyectable)."""
+    try:
+        from research.outcomes import BENCH, live_quotes, symbol_for
+        sym = symbol_for(entity_id)
+        if not sym:
+            return {}
+        prof = (fetchers or {}).get('profile')
+        return live_quotes([sym, BENCH], profile_fn=prof)
+    except Exception as e:  # noqa: BLE001
+        log.warning('research baseline quotes %s: %s', entity_id, type(e).__name__)
+        return {}
+
+
+def _calibration_table(session):
+    """Tabla de calibración (caché 10 min). La consulta va en un SAVEPOINT: si
+    falla en Postgres (tablas de Phase 3 aún sin crear, tiempo agotado…) solo
+    se deshace el SAVEPOINT y la transacción del job sigue sana."""
+    try:
+        from research.outcomes import calibration_table
+        with session.begin_nested():
+            return calibration_table(session)
+    except Exception as e:  # noqa: BLE001
+        log.warning('research calibration table: %s', type(e).__name__)
+        return None
+
+
+def _calibration_for(agent_type, conf, table):
+    if table is None:
+        return None
+    try:
+        from research.outcomes import calibration_detail
+        return calibration_detail(agent_type, conf, table=table)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _record_baseline(session, claim, quotes):
+    try:
+        from research.outcomes import record_baseline
+        with session.begin_nested():
+            record_baseline(session, claim, quotes=quotes)
+    except Exception as e:  # noqa: BLE001 — sin foto de partida, el backfill la crea después
+        log.warning('research baseline %s: %s', claim.id, type(e).__name__)
 
 
 def _register_source(session, item, agent):
@@ -270,9 +328,10 @@ def execute_job(session, job, provider_factory=None, fetchers=None):
     job.status = 'running'
     session.flush()
     ok = 0
+    quotes = baseline_quotes(job.entity_id, fetchers) if job.agents else {}
     for agent_type in job.agents or []:
         prov = provider_factory(agent_type) if provider_factory else None
-        run = run_agent(session, job, agent_type, provider=prov, fetchers=fetchers)
+        run = run_agent(session, job, agent_type, provider=prov, fetchers=fetchers, quotes=quotes)
         ok += 1 if getattr(run, 'status', None) == 'done' else 0
         session.commit()   # cada agente visible en vivo (feed de actividad)
     # contradicciones SEMÁNTICAS (IA, acotadas) — solo Normal/Profunda

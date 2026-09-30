@@ -146,3 +146,139 @@ class ResearchJob(Base):
     dedupe_key = Column(String(200), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# PHASE 3 — aprendizaje (resultados + calibración) y comité de inversión.
+# Tablas NUEVAS; no cambian ninguna columna de Phase 2. Todas append-only o
+# con auditoría: una evaluación nunca se reescribe, un memo guarda su historia.
+# ════════════════════════════════════════════════════════════════════════════
+from sqlalchemy import Boolean, UniqueConstraint  # noqa: E402
+
+OUTCOME_RESULTS = ('hit', 'miss', 'n/a')
+MEMO_STATUSES = ('running', 'failed', 'proposed', 'approved', 'rejected', 'executed')
+DECISIONS = ('BUY', 'ADD', 'HOLD', 'TRIM', 'SELL', 'AVOID')
+
+
+class ClaimBaseline(Base):
+    """Foto de partida de una claim (una por claim): con qué precio y en qué
+    fecha se hizo la predicción, contra qué referencia (SPY) y cuándo se
+    califica (checkpoints). Se crea al persistir la claim (runner) o, para
+    claims anteriores a Phase 3, en la primera evaluación (backfill)."""
+    __tablename__ = 'claim_baselines'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    claim_id = Column(String(40), nullable=False, unique=True, index=True)
+    entity_id = Column(String(120), nullable=False, index=True)
+    agent_type = Column(String(40), nullable=False, index=True)
+    stance = Column(String(12), nullable=False)
+    horizon = Column(String(16), nullable=False)
+    confidence = Column(Float, nullable=False)                  # confianza calculada (conf-v1) al crearla
+    calibrated_confidence = Column(Float, nullable=True)        # la calibrada vigente en ese momento
+    symbol = Column(String(20), nullable=True)                  # ticker si cotiza
+    scoreable = Column(Boolean, nullable=False, default=True)
+    na_reason = Column(Text, nullable=True)                     # por qué NO se califica (mixta, no cotiza…)
+    baseline_date = Column(String(10), nullable=False)          # fecha de mercado (Nueva York) de la predicción
+    baseline_price = Column(Float, nullable=True)               # precio EN VIVO al crearla (auditoría)
+    baseline_currency = Column(String(8), nullable=True)
+    baseline_source = Column(String(40), nullable=True)
+    benchmark_symbol = Column(String(12), nullable=False, default='SPY')
+    benchmark_price = Column(Float, nullable=True)              # SPY en vivo al crearla (auditoría)
+    band = Column(Float, nullable=False, default=0.02)
+    checkpoints = Column(JSONB, nullable=False, default=list)   # [{label, days, due_date, final}]
+    claim_created_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+
+
+class ClaimOutcome(Base):
+    """UNA evaluación de UN checkpoint de una claim (append-only, idempotente
+    por (claim_id, checkpoint)). Guarda los precios usados y la cuenta."""
+    __tablename__ = 'claim_outcomes'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    claim_id = Column(String(40), nullable=False, index=True)
+    baseline_id = Column(String(40), nullable=True)
+    entity_id = Column(String(120), nullable=False, index=True)
+    agent_type = Column(String(40), nullable=False, index=True)
+    horizon = Column(String(16), nullable=False)
+    stance = Column(String(12), nullable=False)
+    confidence = Column(Float, nullable=False)
+    checkpoint = Column(String(24), nullable=False)             # p.ej. interim_7d / final_30d
+    checkpoint_days = Column(Integer, nullable=False)
+    final = Column(Boolean, nullable=False, default=False)
+    due_date = Column(String(10), nullable=False)
+    symbol = Column(String(20), nullable=True)
+    base_date = Column(String(10), nullable=True)
+    base_price = Column(Float, nullable=True)                   # cierre AJUSTADO (misma serie que eval)
+    eval_date = Column(String(10), nullable=True)
+    eval_price = Column(Float, nullable=True)
+    bench_base_price = Column(Float, nullable=True)
+    bench_eval_price = Column(Float, nullable=True)
+    asset_return = Column(Float, nullable=True)
+    bench_return = Column(Float, nullable=True)
+    excess_return = Column(Float, nullable=True)
+    band = Column(Float, nullable=False, default=0.02)
+    result = Column(String(4), nullable=False)                  # hit / miss / n/a
+    reason = Column(Text, nullable=True)
+    reason_en = Column(Text, nullable=True)                     # la misma cuenta en inglés (UI bilingüe)
+    claim_status = Column(String(12), nullable=True)            # active/superseded/retracted al evaluar
+    price_source = Column(String(60), nullable=True)
+    method = Column(String(20), nullable=False, default='outcome-v1')
+    evaluated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+
+    __table_args__ = (UniqueConstraint('claim_id', 'checkpoint', name='uq_outcome_claim_checkpoint'),)
+
+
+class CalibrationSnapshot(Base):
+    """Foto periódica del historial (track record) por agente — para ver cómo
+    evoluciona la calibración en el tiempo. agent_type NULL = global."""
+    __tablename__ = 'calibration_snapshots'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    as_of = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+    agent_type = Column(String(40), nullable=True, index=True)
+    n_scored = Column(Integer, nullable=False, default=0)
+    hits = Column(Integer, nullable=False, default=0)
+    hit_rate = Column(Float, nullable=True)
+    brier = Column(Float, nullable=True)
+    reliability = Column(Float, nullable=True)
+    buckets = Column(JSONB, nullable=False, default=list)
+    method = Column(String(20), nullable=False, default='cal-v1')
+
+
+class CommitteeMemo(Base):
+    """Memo del COMITÉ DE INVERSIÓN automatizado: decisión propuesta + tamaño
+    (determinista) + tesis/riesgos/disenso (presidente IA o plantilla sin IA).
+    Una propuesta: NUNCA se ejecuta sin aprobación humana (docs/PHASE3.md)."""
+    __tablename__ = 'committee_memos'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    entity_id = Column(String(120), nullable=False, index=True)
+    symbol = Column(String(20), nullable=True)
+    client_id = Column(String(60), nullable=True, index=True)
+    requested_by = Column(String(120), nullable=False)
+    status = Column(String(12), nullable=False, default='proposed', index=True)
+    decision = Column(String(8), nullable=True)
+    quant_decision = Column(String(8), nullable=True)           # la del núcleo determinista
+    overall_conviction = Column(Float, nullable=True)           # −100..+100
+    conviction = Column(JSONB, nullable=False, default=dict)    # por horizonte (con sus componentes)
+    sizing = Column(JSONB, nullable=False, default=dict)        # cuenta del tamaño (vol-targeting)
+    memo = Column(JSONB, nullable=False, default=dict)          # tesis, riesgos, disenso, falsadores…
+    inputs = Column(JSONB, nullable=False, default=dict)        # paquete de evidencia (auditoría)
+    ai_used = Column(Boolean, nullable=False, default=False)
+    model = Column(String(80), nullable=True)
+    provider = Column(String(60), nullable=True)
+    validation = Column(JSONB, nullable=False, default=dict)
+    disclaimer_es = Column(Text, nullable=True)
+    disclaimer_en = Column(Text, nullable=True)
+    preview_id = Column(String(60), nullable=True)
+    preview = Column(JSONB, nullable=True)
+    decided_by = Column(String(120), nullable=True)
+    decided_at = Column(DateTime(timezone=True), nullable=True)
+    decision_note = Column(Text, nullable=True)
+    error = Column(Text, nullable=True)
+    error_en = Column(Text, nullable=True)
+    audit = Column(JSONB, nullable=False, default=list)         # [{at, actor, action, detail}]
+    method = Column(String(20), nullable=False, default='committee-v1')
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), nullable=True)

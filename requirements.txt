@@ -33,3 +33,7 @@ psycopg2-binary>=2.9.0
 # humana (CrearTesis, AnotarObjeto, MarcarRiesgo…) igual que Zod en el roadmap
 # original, pero en Python.
 pydantic>=2.6.0
+# Corretaje multi-cliente (brokerage/, 2026-09-30): cifra las credenciales de
+# Alpaca de cada cliente con Fernet (clave BROKERAGE_ENC_KEY). Sin este paquete
+# el resto de la app funciona; solo no se pueden guardar credenciales.
+cryptography>=41.0.0

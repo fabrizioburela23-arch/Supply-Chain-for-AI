@@ -256,6 +256,7 @@
         (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ ' + L('Comparar', 'Compare') + '</span>' : '') +
         (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ ' + L('En el tiempo', 'Over time') + '</span>' : '') +
         (window.KhipuResearch ? '<span class="xrb" onclick="window.KhipuResearch.open(\'' + esc(id) + '\')">🔬 ' + L('Investigación IA', 'AI research') + '</span>' : '') +
+        (window.KhipuCommittee ? '<span class="xrb" onclick="window.KhipuCommittee.open(\'' + esc(id) + '\')">🏛 ' + L('Comité', 'Committee') + '</span>' : '') +
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
       '</div>';
 
