@@ -48,10 +48,9 @@ def test_dockerfile_exec_gunicorn_un_worker_y_apagado_ordenado():
     # iguales, una orden que termina justo en el límite competía con el SIGKILL
     m = re.search(r'--graceful-timeout (\d+)', c)
     assert m, c
-    import tomllib
-    with open(os.path.join(ROOT, 'railway.toml'), 'rb') as fh:
-        draining = int(tomllib.load(fh)['deploy'].get('drainingSeconds', 0))
-    assert 0 < int(m.group(1)) <= draining - 5, (m.group(1), draining)
+    # drainingSeconds se quitó de railway.toml (no verificado en el esquema de
+    # Railway); el default de Railway deja ~30 s: graceful-timeout ≤ 25
+    assert 0 < int(m.group(1)) <= 25, m.group(1)
     # reciclaje de worker APAGADO por defecto (borraría agente/rate limits/bloqueo del PIN)
     assert '${GUNICORN_MAX_REQUESTS:-0}' in c
     assert 'pip install --no-cache-dir -r requirements.txt -c constraints.txt' in df
@@ -66,7 +65,7 @@ def test_railway_reinicia_siempre_y_drena():
     assert dep['restartPolicyType'] == 'ALWAYS'
     assert 'restartPolicyMaxRetries' not in dep   # con 3 reintentos quedaba caído
     assert dep['healthcheckPath'] == '/api/health'
-    assert int(dep.get('drainingSeconds', 0)) >= 30
+    assert 'drainingSeconds' not in dep   # no verificado en el esquema de Railway
 
 
 def _req_names():

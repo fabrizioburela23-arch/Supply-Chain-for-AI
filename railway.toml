@@ -12,14 +12,8 @@ healthcheckTimeout = 300
 # manual. Valores válidos en el esquema de Railway: ON_FAILURE | ALWAYS | NEVER
 # (en MAYÚSCULAS). Con ALWAYS no aplica restartPolicyMaxRetries.
 restartPolicyType = "ALWAYS"
-# Segundos entre el SIGTERM y el SIGKILL al reemplazar/apagar el contenedor:
-# gunicorn (exec en el Dockerfile, --graceful-timeout 25 = 30 − 5 de margen)
-# termina lo que está en curso — p. ej. una orden a Alpaca — en vez de morir a
-# la mitad. Mantener graceful-timeout ≤ drainingSeconds − 5.
-# NO VERIFICADO contra el esquema de Railway (docs inaccesibles desde aquí):
-# tras el deploy, confirmar en Settings → Deploy que aparece; si el build
-# rechaza la config, borrar SOLO esta línea.
-drainingSeconds = 30
+# (drainingSeconds se quitó 2026-10-01: no verificado contra el esquema de
+#  Railway; si el build rechazaba la config, TODOS los deploys fallaban.)
 # Vigilancia de vida: Railway no hace liveness checks después del deploy.
 # Recomendado un monitor externo gratuito (UptimeRobot / Better Stack) que
 # pida https://<tu-app>/api/health cada 5 min y avise por email.
