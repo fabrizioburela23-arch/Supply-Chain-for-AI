@@ -278,6 +278,28 @@
 .bcp-rs-txt{font-size:13.5px;line-height:1.6;color:#D5DCF0}
 .bcp-rs-list{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.6;color:#C6CEE6}
 .bcp-rs-list li{margin-bottom:4px}
+/* CHAT de Khipu (2026-09-30): el hilo vive a pantalla completa en la escena
+   'chat'; cuando una acción cambia la escena (X-Ray, mapa, gráfico…) el hilo
+   baja a este DOCK sobre la barra → la respuesta NUNCA desaparece. */
+/* z-index: por encima de la hoja inferior del mapa en el celular (.panel, z 50) */
+#bcp-chatdock,#bcp-barwrap{position:relative;z-index:60}
+#bcp-chatdock{flex-shrink:0;display:none;flex-direction:column;border-top:1px solid rgba(122,158,255,.16);
+  background:rgba(6,10,20,.92);max-height:34vh;min-height:0}
+#bcp-chatdock.show{display:flex}
+#bcp-chatdock.min .bd{display:none}
+#bcp-chatdock .hd{display:flex;align-items:center;gap:8px;padding:6px 22px;font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:#8e9dff;flex-shrink:0}
+#bcp-chatdock .hd .sp{flex:1}
+#bcp-chatdock .hd .ttl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#bcp-chatdock .hd button{background:none;border:1px solid rgba(122,158,255,.25);color:#9BA6C4;border-radius:8px;
+  padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+#bcp-chatdock .hd button:hover{color:#00E0FF;border-color:rgba(0,224,255,.5)}
+#bcp-chatdock .bd{overflow-y:auto;padding:4px 22px 10px;min-height:0;scrollbar-width:thin}
+.bcp-chatwrap{max-width:900px;margin:0 auto}
+.bcp-chattools{display:flex;justify-content:flex-end;gap:8px;max-width:860px;margin:0 auto 10px}
+.bcp-chattools button{background:none;border:1px solid rgba(122,158,255,.25);color:#9BA6C4;border-radius:8px;
+  padding:4px 10px;font-size:11.5px;cursor:pointer;font-family:inherit}
+@media(max-width:700px){#bcp-chatdock{max-height:40vh}#bcp-chatdock .hd,#bcp-chatdock .bd{padding-left:12px;padding-right:12px}}
 `;
     var st = document.createElement('style'); st.id = 'bcp-styles'; st.textContent = css;
     document.head.appendChild(st);
@@ -318,8 +340,8 @@
       if (labels[k]) b.textContent = labels[k];
     });
     var inp = ov.querySelector('#bcp-input');
-    if (inp) inp.setAttribute('placeholder', L('Pídele algo a Khipu…  «desármame Nvidia»  ·  «¿qué pasa si cae TSMC?»',
-      'Ask Khipu anything…  “break down Nvidia”  ·  “what if TSMC falls?”'));
+    if (inp) inp.setAttribute('placeholder', L('Pregúntale lo que sea a Khipu…  «¿qué riesgos tiene TSMC?»  ·  «desármame Nvidia»',
+      'Ask Khipu anything…  “what are TSMC’s main risks?”  ·  “break down Nvidia”'));
     var setT = function (sel, es, en) {
       var el = ov.querySelector(sel);
       if (el) { el.setAttribute('title', L(es, en)); el.setAttribute('aria-label', L(es, en)); }
@@ -327,6 +349,12 @@
     setT('#bcp-close', 'Cerrar (Esc)', 'Close (Esc)');
     setT('#bcp-send', 'Enviar', 'Send');
     setT('#bcp-mic', 'Hablar con Khipu', 'Talk to Khipu');
+    var cd = ov.querySelector('#bcp-chatdock');
+    if (cd) {
+      cd.querySelector('.ttl').textContent = '💬 ' + L('Conversación con Khipu', 'Conversation with Khipu');
+      cd.querySelector('[data-cd="full"]').textContent = L('⤢ Ampliar', '⤢ Expand');
+      cd.querySelector('[data-cd="min"]').textContent = cd.classList.contains('min') ? L('▴ Mostrar', '▴ Show') : L('▾ Ocultar', '▾ Hide');
+    }
     var st = ov.querySelector('#bcp-state');
     var tx = st && st.querySelector('.txt');
     // solo el estado de reposo se re-traduce (no pisar "Escuchando"/"Pensando")
@@ -358,6 +386,9 @@
         }).join('') +
       '</div>' +
       '<div id="bcp-stage"></div>' +
+      '<div id="bcp-chatdock"><div class="hd"><span class="ttl"></span><span class="sp"></span>' +
+        '<button type="button" data-cd="full"></button><button type="button" data-cd="min"></button></div>' +
+        '<div class="bd"></div></div>' +
       // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Khipu abajo").
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
         '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false">' +
@@ -399,6 +430,13 @@
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
     ov.querySelector('#bcp-mic').addEventListener('click', toggleMic);
     ov.querySelector('#bcp-close').addEventListener('click', close);
+    ov.querySelectorAll('#bcp-chatdock [data-cd]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var d = document.getElementById('bcp-chatdock');
+        if (b.getAttribute('data-cd') === 'full') return stage('chat');
+        d.classList.toggle('min'); relabelShell();
+      });
+    });
     function submit() { var v = (input.value || '').trim(); if (!v) return; input.value = ''; ask(v); }
 
     mountCockpitOrb();
@@ -496,6 +534,8 @@
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
     _scalpStop();       // detener el polling de scalping al cambiar de escena
     _curKind = kind;
+    _placeThread(kind);
+    if (kind === 'chat') { markActive(null); return stageChat(s); }
     markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'].indexOf(kind) >= 0 ? kind : null);
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'scalp') return stageScalp(s, arg);
@@ -604,6 +644,7 @@
   function stageEmpty(s) {
     var en = ckLang() === 'en';
     var chips = en ? [
+      ['', 'What are the main risks for TSMC?', '💬 Ask anything'],
       ['', 'spot breakouts', '🚀 Breakouts'],
       ['break down ', 'Nvidia', 'Full X-Ray'],
       ['simulate that ', 'China bans HBM exports', 'Agent simulation'],
@@ -616,6 +657,7 @@
       ['', 'blank canvas', 'Start from scratch'],
       ['', 'demo', '▶ Guided tour'],
     ] : [
+      ['', '¿Cuáles son los riesgos de TSMC?', '💬 Pregunta libre'],
       ['', 'spotea explosivas', '🚀 Explosivas'],
       ['desármame ', 'Nvidia', 'Radiografía completa'],
       ['simula que ', 'China prohíbe exportar HBM', 'Sim por agentes'],
@@ -630,8 +672,8 @@
     ];
     var h2 = en ? "I'm Khipu. Ask me anything." : 'Soy Khipu. Pregúntame lo que sea.';
     var pp = en
-      ? 'I can break down any company, simulate what happens if something falls, compare, and chart your data.'
-      : 'Puedo desarmar cualquier empresa, simular qué pasa si algo cae, comparar, y dibujarte los datos.';
+      ? 'Ask me in your own words: I look up real data (prices, suppliers, risk, news) before answering. I can also break down a company, simulate, compare and chart.'
+      : 'Pregúntame con tus palabras: consulto datos reales (precios, proveedores, riesgo, noticias) antes de responder. También desarmo empresas, simulo, comparo y grafico.';
     s.innerHTML = '<div id="bcp-empty"><div id="bcp-home-hyper" style="margin-bottom:12px"></div><div id="bcp-home-pulse" style="margin-bottom:16px"></div><h2>' + esc(h2) + '</h2>' +
       '<p>' + esc(pp) + '</p>' +
       '<div class="bcp-chips">' + chips.map(function (c) {
@@ -2044,135 +2086,148 @@
     return p || Promise.resolve({ ok: false, error: 'no fetch' });
   };
 
+  // ══ CHAT: hilo de conversación (engine/khipu_chat.js → /api/khipu/chat) ══
+  var _thread = null;
+  function chatThread() {
+    if (!_thread) {
+      _thread = document.createElement('div');
+      _thread.id = 'bcp-thread';
+      _thread.className = 'kc-thread';
+      if (window.KhipuChat) window.KhipuChat.ensureStyles();
+    }
+    return _thread;
+  }
+  // el hilo va a la escena 'chat' (pantalla completa) o al dock (sobre la barra)
+  function _placeThread(kind) {
+    var th = chatThread();
+    var dock = document.getElementById('bcp-chatdock');
+    if (!dock) return;
+    if (kind === 'chat') { dock.classList.remove('show'); return; }   // stageChat lo adopta
+    var bd = dock.querySelector('.bd');
+    if (th.parentNode !== bd) bd.appendChild(th);
+    dock.classList.toggle('show', th.children.length > 0 && kind !== 'empty');
+    if (th.children.length) setTimeout(function () { bd.scrollTop = bd.scrollHeight; }, 30);
+  }
+  function stageChat(s) {
+    var en = ckLang() === 'en';
+    s.innerHTML = backBar(en ? 'Conversation' : 'Conversación') +
+      '<div class="bcp-chatwrap"><div class="bcp-chattools"><button type="button" id="bcp-chat-clear">' +
+      esc(en ? '🧹 New conversation' : '🧹 Nueva conversación') + '</button></div></div>';
+    var th = chatThread();
+    s.querySelector('.bcp-chatwrap').appendChild(th);
+    s.querySelector('#bcp-chat-clear').addEventListener('click', function () {
+      if (window.KhipuChat) window.KhipuChat.clear();
+      th.innerHTML = '';
+      stage('empty');
+    });
+    setTimeout(function () { s.scrollTop = s.scrollHeight; }, 30);
+  }
+  // acción devuelta por el cerebro → escena de la Cabina (la respuesta queda en el dock)
+  function runChatAction(a) {
+    if (!a || !a.type) return;
+    if (a.type === 'open_xray') return stage('xray', a.arg);
+    if (a.type === 'navigate') return stage('graph', a.arg);
+    if (a.type === 'compare') return stage('compare', a.arg);
+    if (a.type === 'chart') return stage('canvas', a.arg);
+    if (a.type === 'agent_sim') return stage('agentsim', { scenario: a.arg, seeds: extractSeeds(a.arg) });
+    if (a.type === 'broker') return stage('broker');
+    if (window.KhipuChat) window.KhipuChat.runAction(a);
+  }
+  // pregunta libre → cerebro con herramientas
+  function chatAsk(text) {
+    var K = window.KhipuChat;
+    if (!K) { stage('deep', text); return; }
+    if (_curKind !== 'chat') stage('chat');
+    var th = chatThread();
+    K.appendUser(th, text);
+    var pend = K.appendPending(th);
+    setState('think', L('Pensando', 'Thinking'));
+    K.send(text).then(function (d) {
+      // en el celular NO se auto-ejecuta: la vista nueva taparía la respuesta
+      // (queda como botón); en escritorio la respuesta sigue visible en el dock
+      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) >= 700 });
+      setState('', L('Listo', 'Ready'));
+    }).catch(function (e) {
+      K.fillError(pend, (e && e.message) || String(e));
+      setState('', L('Listo', 'Ready'));
+    });
+  }
+  // respuesta de un comando KHIPU (no-escena) → al hilo, como cualquier respuesta
+  function commandToThread(text, r) {
+    var K = window.KhipuChat;
+    if (!K) return;
+    if (_curKind !== 'chat') stage('chat');
+    var th = chatThread();
+    K.appendUser(th, text);
+    var el = K.appendPending(th);
+    var acts = ((r && r.actions) || []).map(function (a) {
+      if (a.type === 'second_brain' || a.type === 'xray') return { type: 'open_xray', arg: a.arg };
+      if (a.type === 'tkg_object') return null;
+      return a;
+    }).filter(Boolean);
+    K.fillReply(el, { answer: (r && r.answer) || L('Listo.', 'Done.'), actions: acts }, { onAction: runChatAction });
+    ((r && r.actions) || []).forEach(function (a) {
+      if (a.type === 'tkg_object') {
+        if (window._surface) window._surface('tab', 'tkg');
+        setTimeout(function () { if (window.__tkgOpenObj) window.__tkgOpenObj(a.arg); }, 250);
+      }
+    });
+  }
+  function _resolveHit(q) {
+    if (window.KhipuResolve) { var r = window.KhipuResolve.find(q); if (r && r.node) return r; return null; }
+    var n = resolveNode(q); return n ? { node: n, score: 90 } : null;
+  }
+
   // ══ ENRUTADOR de lo que pides (texto) ══
+  // Solo atajos EXPLÍCITOS y de alta precisión (engine/khipu_chat.js:classify);
+  // todo lo demás —y SIEMPRE las preguntas— va al cerebro de Khipu. Antes una
+  // cadena de regex sueltas secuestraba preguntas normales y lo que no calzaba
+  // terminaba dibujado como gráfico (feedback de Fabrizio, 2026-09-30).
   function ask(text) {
     text = (text || '').trim(); if (!text) return;
     ensureShell();
+    var K = window.KhipuChat;
+    var route = K ? K.classify(text, {
+      resolve: _resolveHit,
+      tryParse: (window.KHIPU && window.KHIPU.tryParse) ? window.KHIPU.tryParse : null,
+      parseTrade: window._parseTradeCommand || null,
+    }) : { kind: 'brain' };
 
-    // 0) MODO DEMOSTRACIÓN — SOLO con petición EXPLÍCITA y exacta (feedback de
-    //    Fabrizio: "casi lo da de una" — el prefijo suelto secuestraba frases
-    //    normales; el recorrido es solo cuando se PIDE).
-    if (/^(ver\s+)?(la\s+)?(demo|demostraci[óo]n|tour|recorrido(\s+guiado)?|guided\s+(demo|tour))\s*$/i.test(text)
-        || /^(hazme|dame)\s+(una\s+demo|un\s+tour|un\s+recorrido)\s*$/i.test(text)) {
-      demoStart();
-      return;
-    }
-
-    // 0.5) SCREENER de explosivas — la tesis de la app en un clic
-    if (/^(spotea|spot)\b/i.test(text) || /\bexplosivas?\b/i.test(text) || /\bbreakouts?\b/i.test(text)) {
-      stage('screener');
-      return;
-    }
-
-    // 1) ¿es un comando KHIPU? (rápido, sin IA)
-    if (window.KHIPU && window.KHIPU.tryParse) {
-      try {
-        var act = window.KHIPU.tryParse(text);
-        if (act && dispatchAction(act)) return;
-      } catch (e) {}
-    }
-
-    var low = text.toLowerCase();
-
-    // 1.5) BRÓKER (Etapa M): "compra 100 dólares de bitcoin" · "vende 20 de eth"
-    //      → tarjeta de confirmación; "mi cuenta" / "broker" / "portafolio" → cuenta
-    var tcmd = window._parseTradeCommand ? window._parseTradeCommand(text) : null;
-    if (tcmd) {
-      if (window._openBrokerConfirm) window._openBrokerConfirm(tcmd);
-      else stage('broker');
-      return;
-    }
-    if (/^(mi\s+|la\s+|my\s+)?(cuenta|br[oó]ker|broker|account)\s*$/.test(low) ||
-        /^(mi\s+|my\s+)?(portafolio|portfolio|posiciones|positions)(\s+del?\s+(br[oó]ker|broker|alpaca))?\s*$/.test(low)) {
-      stage('broker'); return;
-    }
-
-    // 2) lienzo en blanco / gráfico
-    if (/^(l[ií]enzo|canvas)\b/.test(low) || /lienzo en blanco|blank canvas/.test(low)) { stage('canvas'); return; }
-    if (/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\b[:\s]/.test(low) || low.indexOf('gráfico:') >= 0) {
-      stage('canvas', text.replace(/^(gr[aá]fico|gr[aá]fica|graf|chart|dibuja|tabla|visualiza)\s*:?\s*/i, '')); return;
-    }
-
-    // 2.5) investigación profunda. Si nombra una EMPRESA → informe estructurado
-    //      (sector/competidores/geopolítica/tesis, /api/research/deep). Si es una
-    //      pregunta abierta → el bucle multi-paso (Capa 4, /api/deep/analyze).
-    var invM = low.match(/(?:investiga(?:ci[oó]n)?(?:\s+(?:de|sobre|a))?|research|reporte\s+de|informe\s+de|tesis\s+(?:de|sobre))\s+(.+)/);
-    if (invM) {
-      var invT = invM[1].replace(/\?+$/, '').trim();
-      var invN = resolveNode(invT);
-      if (invN) { stage('research', { id: invN.id }); return; }
-      stage('deep', text); return;   // pregunta abierta → multi-paso
-    }
-    if (/investiga|a fondo|an[aá]lisis profundo|profundiza|\bdeep\b/.test(low)) {
-      stage('deep', text); return;
-    }
-
-    // 2.55) dossier financiero (ingresos, dilución, FCF, márgenes, ROE…)
-    // vía _surface: con la Cabina abierta lo sube POR ENCIMA (z), no atrás
-    var dosM = low.match(/(?:dossier|fundamentales|financieros)\s+(?:de\s+)?(.+)/);
-    if (dosM && window.openFinCard) {
-      var dn = resolveNode(dosM[1].replace(/\?+$/, '').trim());
-      if (dn) {
-        if (window._surface) { window._surface('dossier', dn.mkt || dn.id); return; }
-        window.openFinCard(dn.mkt || dn.id); return;
+    switch (route.kind) {
+      case 'none': return;
+      case 'demo': demoStart(); return;
+      case 'trade':
+        if (window._openBrokerConfirm) window._openBrokerConfirm(route.parsed); else stage('broker');
+        return;
+      case 'account': stage('broker'); return;
+      case 'command':
+        Promise.resolve(route.pending).then(function (r) {
+          if (r && r.actions && r.actions.length === 1 && dispatchAction(r.actions[0])) return;
+          commandToThread(text, r);
+        }).catch(function () { chatAsk(text); });
+        return;
+      case 'chart': stage('canvas', route.spec); return;
+      case 'screen':
+        if (route.screen === 'universe') { close(); if (window._go3D) window._go3D(); return; }
+        if (route.screen === 'portfolios') { if (window.KhipuChat) window.KhipuChat.runAction({ type: 'switch_tab', arg: 'portfolios' }); return; }
+        stage(route.screen); return;
+      case 'shock': stage('sim', { id: route.id, kind: 'collapse' }); return;
+      case 'xray': stage('xray', route.id); return;
+      case 'compare': stage('compare', { a: route.a, b: route.b }); return;
+      case 'agentsim': stage('agentsim', { scenario: route.scenario, seeds: extractSeeds(route.scenario) }); return;
+      case 'research': stage('research', { id: route.id }); return;
+      case 'dossier': {
+        var dn = (window.NODE_BY_ID || {})[route.id];
+        if (window._surface) window._surface('dossier', (dn && dn.mkt) || route.id);
+        else if (window.openFinCard) window.openFinCard((dn && dn.mkt) || route.id);
+        return;
       }
-      stageNotFound(document.getElementById('bcp-stage'), dosM[1].replace(/\?+$/, '').trim()); return;
+      case 'terminal': {
+        var tn = (window.NODE_BY_ID || {})[route.id];
+        stage('terminal', { ticker: (tn && tn.mkt) || route.id }); return;
+      }
     }
-
-    // 2.6) el grafo o la terminal, DENTRO de la pantalla de Khipu
-    if (/universo|\b3d\b/.test(low)) { close(); if (window._go3D) { window._go3D(); return; } }
-    if (/^(mu[eé]strame |ver |abre |abrir )?(el )?(grafo|mapa)\b/.test(low)) { stage('graph'); return; }
-    var termM = low.match(/^(mu[eé]strame |ver |abre |abrir )?(la )?terminal(?:\s+(?:de|con)\s+(.+))?/);
-    if (termM) {
-      var tn = termM[3] ? resolveNode(termM[3].replace(/\?+$/, '').trim()) : null;
-      stage('terminal', tn ? { ticker: tn.mkt || tn.id } : {}); return;
-    }
-
-    // 3) oportunidades / insights
-    if (/oportunidad|opportunit|insight|d[oó]nde inv|qu[eé] compr|where to invest/.test(low)) { stage('insights'); return; }
-
-    // 4) comparar A y B
-    var cmp = low.match(/compar[aoe]?r?\s+(.+?)\s+(?:y|and|vs|versus|con|contra|with)\s+(.+)/);
-    if (cmp) { stage('compare', { a: cmp[1], b: cmp[2] }); return; }
-
-    // 4.5) SIMULACIÓN POR AGENTES (motor interno): escenarios abiertos en lenguaje
-    //      natural — "simula que China prohíbe HBM", "qué pasaría si cae Taiwán".
-    //      El "qué pasa si cae X" simple (present) sigue yendo al sim local rápido.
-    var agM = low.match(/^(?:simulate|simula(?:r|me|ci[oó]n)?|run\s+a\s+simulation(?:\s+of)?)\b\s*(?:that|the scenario|un escenario|el escenario|que|del?|:)?\s*(.+)$/)
-           || low.match(/^(?:qu[eé]\s+pasar[ií]a|what\s+would\s+happen(?:\s+if)?|what\s+if)\s+(?:si\s+|if\s+)?(.+)$/);
-    if (agM) {
-      var scen = agM[1].replace(/\?+$/, '').trim();
-      if (scen) { stage('agentsim', { scenario: scen, seeds: extractSeeds(scen) }); return; }
-    }
-
-    // 5) simular / caída — si el nombre no resuelve, decirlo CON sugerencias
-    var sim = low.match(/(?:qu[eé] pasa si cae|si cae|cae|colaps|corte de|corta[nr]?|sanci[oó]n(?:a[nr]?)?|prohib|auge de|boom de|demanda de|simula[nr]?|shock)\s+(.+)/);
-    if (sim) {
-      var kind = /auge|boom|demanda/.test(low) ? 'demand' : /sanci|prohib/.test(low) ? 'sanction' : /precio/.test(low) ? 'price' : 'collapse';
-      var target = sim[1].replace(/\?+$/, '').trim();
-      var nn = resolveNode(target);
-      if (nn) { stage('sim', { id: nn.id, kind: kind }); return; }
-      stageNotFound(document.getElementById('bcp-stage'), target); return;
-    }
-
-    // 6) desármame / radiografía / x-ray → X-Ray; el nombre es claramente una
-    //    empresa: si no resuelve, mensaje con sugerencias (no "no existe")
-    var xrStrong = low.match(/(?:des[aá]rma(?:me)?|radiograf[ií]a|x-?ray|destripa(?:me)?|break\s*down)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
-    if (xrStrong) {
-      var nxs = resolveNode(xrStrong[1].replace(/\?+$/, '').trim());
-      if (nxs) { stage('xray', nxs.id); return; }
-      stageNotFound(document.getElementById('bcp-stage'), xrStrong[1].replace(/\?+$/, '').trim()); return;
-    }
-    // verbos genéricos (analiza/abre/muéstrame): si no resuelven, seguimos al fallback
-    var xr = low.match(/(?:anal[ií]za|abre|mu[eé]strame)\s+(?:la\s+empresa\s+|a\s+)?(.+)/);
-    if (xr) { var nx = resolveNode(xr[1].replace(/\?+$/, '').trim()); if (nx) { stage('xray', nx.id); return; } }
-
-    // 7) ¿el texto ES una empresa? → X-Ray directo
-    var nDirect = resolveNode(text);
-    if (nDirect && text.length <= 40) { stage('xray', nDirect.id); return; }
-
-    // 8) fallback: intentar dibujarlo como datos
-    stage('canvas', text);
+    chatAsk(text);
   }
 
   // convierte una acción del parser KHIPU en escena
@@ -2182,6 +2237,8 @@
     if (act.type === 'compare' && act.arg) { stage('compare', { a: act.arg.a, b: act.arg.b }); return true; }
     if (act.type === 'insights') { stage('insights'); return true; }
     if (act.type === 'livesim' && act.arg) { stage('sim', { id: act.arg.id || act.arg, kind: act.arg.kind || 'collapse' }); return true; }
+    if (act.type === 'stress' && act.arg && window._surface) { window._surface('stress', act.arg); return true; }
+    if (act.type === 'navigate' && act.arg) { stage('graph', act.arg); return true; }
     return false;
   }
 
@@ -2423,6 +2480,11 @@
     isOpen: function () { return open; },
     stage: stage,
     ask: ask,
+    agentSim: function (scenario) {
+      if (!open) openCockpit();
+      stage('agentsim', { scenario: String(scenario || ''), seeds: extractSeeds(String(scenario || '')) });
+    },
+    chat: function (text) { if (!open) openCockpit(); chatAsk(String(text || '')); },
     setState: setState,
     demo: demoStart,
     demoStop: demoStop,

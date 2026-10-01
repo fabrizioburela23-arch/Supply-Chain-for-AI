@@ -5,7 +5,8 @@
 // Escribe O habla; Khipu ejecuta y muestra la respuesta inline.
 // Reutiliza: switchTab, jumpTo, activateStress, nexusCore.runPreset,
 // _openSecondBrain, canvasGenerate (_cvRenderCard) y BixbyVoice (voz).
-// Endpoint: /api/ai/command. Expone window.BixbyCC.
+// Endpoint: /api/khipu/chat (cerebro con herramientas, engine/khipu_chat.js);
+// /api/ai/command queda solo por compatibilidad. Expone window.BixbyCC.
 
 (function () {
   'use strict';
@@ -44,6 +45,8 @@
   #bcc-collapse{background:rgba(255,255,255,.06);color:#9fb0d0}
   /* feedback en el botón original del header */
   #bixby-btn.bcc-on{background:rgba(138,90,255,.16)!important;box-shadow:0 0 0 2px rgba(138,90,255,.45),0 0 18px rgba(138,90,255,.4)!important}
+  .bcc-card .kc-msg.kc-bot{background:none;border:none;padding:0;max-width:100%}
+  .bcc-card .kc-who{display:none}
   #bixby-btn.bcc-thinking #bixby-btn-orb{box-shadow:0 0 18px 4px rgba(138,90,255,.9)!important}
   `;
 
@@ -57,12 +60,13 @@
       root.innerHTML = `
         <div id="bcc-feed"></div>
         <div id="bcc-bar">
-          <input id="bcc-input" type="text" autocomplete="off" placeholder="Pregúntale a Khipu… (⌘K)">
+          <input id="bcc-input" type="text" autocomplete="off" placeholder="">
           <button id="bcc-mic" class="bcc-mini" title="Hablar por voz">🎙</button>
           <button id="bcc-send" class="bcc-mini" title="Enviar">➤</button>
           <button id="bcc-collapse" class="bcc-mini" title="Cerrar">✕</button>
         </div>`;
       document.body.appendChild(root); this.root = root;
+      this._relabel();
 
       const input = document.getElementById('bcc-input');
       input.addEventListener('keydown', e => { if (e.key === 'Enter') this.submit(input.value); });
@@ -95,11 +99,20 @@
       if (!this.inited) this.init();
       this.open = v;
       this.root.classList.toggle('open', v);
+      if (v) this._relabel();
       const hb = document.getElementById('bixby-btn'); if (hb) hb.classList.toggle('bcc-on', v);
       if (v) setTimeout(() => this.focus(), 60);
     },
 
     focus() { const i = document.getElementById('bcc-input'); if (i) { i.focus(); i.select(); } },
+
+    _relabel() {
+      const en = ((window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en');
+      const i = document.getElementById('bcc-input');
+      if (i) i.setAttribute('placeholder', en ? 'Ask Khipu anything… (⌘K)' : 'Pregúntale lo que sea a Khipu… (⌘K)');
+      const t = { 'bcc-mic': en ? 'Talk by voice' : 'Hablar por voz', 'bcc-send': en ? 'Send' : 'Enviar', 'bcc-collapse': en ? 'Close' : 'Cerrar' };
+      Object.keys(t).forEach(id => { const b = document.getElementById(id); if (b) b.title = t[id]; });
+    },
 
     setOrbState(s) {
       const hb = document.getElementById('bixby-btn');
@@ -195,30 +208,70 @@
           return;
         }
 
-        // Fase 4: lenguaje KHIPU — comandos exactos tipo "NVDA SUP" se resuelven
-        // localmente, SIN llamar a la IA (más rápido, cero costo de tokens).
-        // Si no calza con la gramática, tryParse devuelve null y seguimos con Khipu normal.
-        const khipuResult = (window.KHIPU && window.KHIPU.tryParse) ? window.KHIPU.tryParse(text) : null;
-        if (khipuResult) {
-          const r = await khipuResult;
-          ans.textContent = (r && r.answer) || 'Listo.';
+        // Enrutador compartido (engine/khipu_chat.js): SOLO atajos explícitos
+        // (gramática KHIPU, gráfico:, pantallas exactas, imperativos con
+        // empresa reconocida). Todo lo demás —y siempre las preguntas— va al
+        // cerebro de Khipu (/api/khipu/chat), que consulta datos reales.
+        const K = window.KhipuChat;
+        const route = K ? K.classify(text, {
+          resolve: (q) => { if (!window.KhipuResolve) return null; const r = window.KhipuResolve.find(q); return r && r.node ? r : null; },
+          tryParse: (window.KHIPU && window.KHIPU.tryParse) ? window.KHIPU.tryParse : null,
+          parseTrade: null,   // ya resuelto arriba
+        }) : { kind: 'brain' };
+        if (route.kind === 'command') {
+          const r = await route.pending;
+          ans.textContent = (r && r.answer) || (enCC ? 'Done.' : 'Listo.');
           if (r && Array.isArray(r.actions) && r.actions.length) await this._runActions(r.actions, card);
           return;
         }
+        if (route.kind === 'chart') {
+          ans.textContent = enCC ? 'Here is the chart:' : 'Aquí tienes el gráfico:';
+          await this._chartInline(route.spec, card);
+          return;
+        }
+        if ((['demo', 'agentsim', 'research', 'dossier', 'terminal'].indexOf(route.kind) >= 0 ||
+             (route.kind === 'screen' && route.screen === 'screener')) && window.BixbyCockpit) {
+          // escenas que viven en la Cabina: se delega en su enrutador
+          ans.textContent = enCC ? 'Opening it in the Khipu cockpit…' : 'Abriéndolo en la Cabina de Khipu…';
+          window.BixbyCockpit.open(); window.BixbyCockpit.ask(text);
+          return;
+        }
 
-        const base = (typeof BASE !== 'undefined') ? BASE : '';
-        const sel = window._selectedNode || null;
-        const r = await fetch(`${base}/api/ai/command`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: text, nodes: this._nodesCtx(), selected: sel }),
-        });
-        const ct = r.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) throw new Error(r.status >= 500 ? 'Servidor reiniciándose (¿despliegue en curso?). Reintenta en ~1 min.' : 'Respuesta inesperada (HTTP ' + r.status + ')');
-        const d = await r.json();
-        ans.textContent = d.answer || (d.error ? '⚠ ' + d.error : 'Listo.');
-        if (Array.isArray(d.actions) && d.actions.length) await this._runActions(d.actions, card);
+        const shortcut = {
+          xray: () => [{ type: 'xray', arg: route.id }],
+          compare: () => [{ type: 'compare', arg: { a: route.a, b: route.b } }],
+          shock: () => [{ type: 'livesim', arg: { id: route.id, kind: 'collapse' } }],
+          screen: () => (route.screen === 'insights' ? [{ type: 'insights' }]
+            : [{ type: 'switch_tab', arg: ({ graph: 'map', screener: 'analysis', universe: 'map' })[route.screen] || route.screen }]),
+        }[route.kind];
+        if (shortcut) {
+          ans.textContent = enCC ? 'Opening it…' : 'Abriéndolo…';
+          await this._runActions(shortcut(), card);
+          return;
+        }
+        // ── el CEREBRO: pregunta libre con herramientas y datos reales ──
+        if (!K) throw new Error(enCC ? 'Chat module not loaded' : 'Módulo de chat no cargado');
+        card.classList.add('kc-bot-card');
+        const pend = ans;
+        pend.innerHTML = '';
+        const holder = K.appendPending(pend);
+        try {
+          const d = await K.send(text);
+          K.fillReply(holder, d, {
+            // en el desplegable: el gráfico se dibuja DENTRO de la tarjeta; lo que
+            // abre otra vista (X-Ray, comparador…) queda como botón para no tapar la respuesta
+            onAction: (a) => {
+              if (a.type === 'chart') return this._chartInline(a.arg, card);
+              return K.runAction(a);
+            },
+            autoFilter: (a) => a.type === 'chart' || a.type === 'navigate' || a.type === 'stress' || a.type === 'switch_tab',
+          });
+        } catch (err) {
+          K.fillError(holder, (err && err.message) || String(err));
+        }
       } catch (e) {
-        ans.innerHTML = `<span style="color:#f6a">No pude procesar eso: ${this._esc(e.message || e)}</span>`;
+        const en2 = ((window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en');
+        ans.innerHTML = `<span style="color:#f6a">${en2 ? 'I could not process that' : 'No pude procesar eso'}: ${this._esc(e.message || e)}</span>`;
       } finally {
         this.busy = false;
         if (send) send.disabled = false;
@@ -231,7 +284,7 @@
       const feed = document.getElementById('bcc-feed');
       const card = document.createElement('div'); card.className = 'bcc-card';
       card.innerHTML = `<div class="bcc-q">🔮 ${this._esc(query)}</div>
-        <div class="bcc-a"><span style="opacity:.6">pensando…</span></div>`;
+        <div class="bcc-a"><span style="opacity:.6">${((window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en') ? 'thinking…' : 'pensando…'}</span></div>`;
       feed.appendChild(card);
       while (feed.children.length > 8) feed.removeChild(feed.firstChild);
       feed.scrollTop = feed.scrollHeight;

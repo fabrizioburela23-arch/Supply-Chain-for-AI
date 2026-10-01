@@ -114,6 +114,13 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     engine/portfolios.js; crea carteras SIMULADAS, nunca órdenes.
   - engine/riskreport.js: pantalla guiada (mis posiciones / cartera rápida en
     USD / ejemplo) y resultado en lenguaje simple; build_report acepta {symbol, usd}.
+  - **Khipu chat (2026-10-01)**: `core/khipu_chat.py` (POST /api/khipu/chat):
+    cerebro con herramientas (bucle JSON, máx 5 rondas, ~45 s; reutiliza
+    mcp_server/tools.py — SOLO lectura, nunca órdenes) + `engine/khipu_chat.js`
+    (router compartido por la Cabina y command_center). Regla: SOLO atajos
+    explícitos (gramática KHIPU, demo, compra/venta con confirmación,
+    "gráfico:", nombres exactos de pantallas); toda pregunta va al cerebro.
+    NO reintroducir el router de regex sueltos ni el "fallback = gráfico".
   - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
     por IP (último salto XFF) y global compartido — `require_pin` (trading) /
     `require_operator` (escrituras de ontología). Nunca reimplementar.
@@ -248,7 +255,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (725 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (753 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
