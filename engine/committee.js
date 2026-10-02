@@ -412,6 +412,9 @@
   function debateNote(b) {
     var d = b.debate;
     if (!d) return '';
+    if (d.no_research) return '<div class="cm-note" style="margin-top:8px;font-size:12px;color:#FFB300;border:1px solid rgba(255,179,0,.35);border-radius:9px;padding:7px 10px">⚠ ' +
+      esc(L('No hubo análisis: ' + (d.reason_es || 'no hay investigación') + '. Sin investigación los analistas no tienen nada que debatir. Revisa 🩺 Sistema → IA y vuelve a correr el comité (los analistas investigarán primero).',
+        'No analysis happened: ' + (d.reason_en || 'no research') + '. Without research the analysts have nothing to debate. Check 🩺 System → AI and run the committee again (the analysts will research first).')) + '</div>';
     if (d.ai) return '<div class="cm-note" style="margin-top:8px;font-size:11.5px;color:#B48CFF">🧠 ' +
       esc(L(d.n_ai + ' analistas razonaron con IA y hubo ' + d.n_rebuttals + ' réplica(s)' + (d.seconds ? ' · ' + Math.round(d.seconds) + ' s de debate' : '') + '. Sus cifras pasaron el guardián.',
         d.n_ai + ' analysts reasoned with AI with ' + d.n_rebuttals + ' rebuttal(s)' + (d.seconds ? ' · ' + Math.round(d.seconds) + ' s of debate' : '') + '. Their figures passed the guardian.')) + '</div>';

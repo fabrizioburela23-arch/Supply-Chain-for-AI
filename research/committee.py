@@ -767,9 +767,13 @@ def deterministic_memo(label, decision, reason_es, reason_en, conv, overall, cla
     conf = (aw / tw) * (sum(c['calibrated'] * c['weight'] for c in aligned) / aw) if (tw > 0 and aw > 0) else 0.0
     dl = DECISION_LABEL.get(decision, (decision, decision))
     concl = []
-    for t in thesis[:3]:
+    if not all_claims:                     # sin investigación no hay conclusiones que dar
+        thesis_src = []
+    else:
+        thesis_src = thesis
+    for t in thesis_src[:3]:
         concl.append({'text_es': t['thesis_es'], 'text_en': t['thesis_en'], 'refs': t['refs']})
-    if risks:
+    if risks and all_claims:
         concl.append({'text_es': 'Riesgo principal: ' + risks[0]['risk_es'], 'text_en': 'Main risk: ' + risks[0]['risk_en'],
                       'refs': risks[0]['refs']})
     return {
@@ -1001,7 +1005,12 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
                                                      sizing, decision, reason_es, client)
 
     # ── DEBATE: cada puesto analiza con IA (research/debate.py) o, sin IA, plantillas ──
-    debate = {'ai': False, 'n_ai': 0, 'n_rebuttals': 0, 'reason_es': None, 'reason_en': None, 'seconds': None}
+    debate = {'ai': False, 'n_ai': 0, 'n_rebuttals': 0, 'reason_es': None, 'reason_en': None, 'seconds': None,
+              'no_research': not seats}
+    if not seats:
+        why = AI_WHY.get(ai_why) if not ai_ok else None
+        debate['reason_es'], debate['reason_en'] = why or ('no hay investigación de los analistas sobre esta empresa',
+                                                           'there is no analyst research on this company')
     if seats:
         progress_set(_pid, 'debate')
         t_deb = _time_mod.time()
