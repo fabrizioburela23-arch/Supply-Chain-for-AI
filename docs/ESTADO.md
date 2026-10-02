@@ -9,6 +9,19 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 (e) — RESPUESTAS CORTADAS + HERRAMIENTA DE ESCENARIOS EN EL CHAT
+
+Captura: "3 empresas más expuestas a una guerra en Taiwán" → respuesta cortada ("NRS), son Hon Hai…
+**Hon Hai (Fox") y pobre (Kneron, por ranking genérico de riesgo).
+- core/ai.py `strip_reasoning()`: quita <think>…</think> de TODOS los proveedores (sin cerrar → '');
+  NVIDIA recibe max_tokens ×2 (mín. 2048) por los modelos de razonamiento.
+- core/khipu_chat.py `truncated()` (negrita/paréntesis sin cerrar u oración larga sin final; exime
+  línea de fuentes e ítems de lista): respuesta cortada → `synthesize()` la reescribe; synthesize
+  reintenta 1 vez si sale sucia o cortada.
+- Herramienta NUEVA `scenario_exposure` (core/scenario_engine): golpe directo, posibles ganadores,
+  impactos con CAMINO en la cadena y qué vigilar; regla 11 del sistema: usarla para "qué pasaría si /
+  más expuestas a…" en vez de un ranking genérico.
+
 # SESIÓN 2026-10-03 (d) — KHIPU YA NO FILTRA SU BORRADOR; EL AGENTE REDACTA SIEMPRE
 
 Captura: "¿cuáles son las 3 empresas más expuestas a una guerra en Taiwán?" respondió con restos del

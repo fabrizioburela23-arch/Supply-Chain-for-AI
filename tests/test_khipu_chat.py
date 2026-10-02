@@ -160,8 +160,9 @@ def test_step_limit(fake_ai):
     f = fake_ai([])        # el guion vacío siempre pide herramientas
     out = kc.run_chat('cuéntame de TSMC', [], 'es', {})
     # 5 rondas + 1 exigiendo la respuesta final + 1 redacción en prosa del agente (2026-10-03)
-    assert len(f.prompts) == kc.MAX_STEPS + 2
-    assert 'No quedan rondas' in f.prompts[-2] and 'DATOS CONSULTADOS' in f.prompts[-1]
+    # (+1 reintento de la redacción si la primera también vino sucia)
+    assert len(f.prompts) in (kc.MAX_STEPS + 2, kc.MAX_STEPS + 3)
+    assert 'No quedan rondas' in f.prompts[kc.MAX_STEPS] and 'DATOS CONSULTADOS' in f.prompts[-1]
     assert out['answer_source'] == 'fallback' and out['degraded'] == 'budget'
     assert out['answer']                              # nunca vacío
     assert len([t for t in out['tools_used'] if t['name'] == 'search_companies']) == kc.MAX_STEPS
@@ -433,3 +434,27 @@ def test_respuesta_con_restos_se_reescribe_por_el_agente(fake_ai):
 def test_leaked_detecta_borradores_y_no_prosa_normal():
     assert kc.leaked('"actions": [{"type": "x"}]') and kc.leaked('Hola\nWait, is it?') and kc.leaked('```json')
     assert not kc.leaked('TSMC fabrica el 90 % de los chips avanzados. Conviene vigilar el estrecho.')
+
+
+def test_razonamiento_oculto_y_respuestas_cortadas():
+    assert core_ai.strip_reasoning('<think>pienso mucho…</think>Respuesta final.') == 'Respuesta final.'
+    assert core_ai.strip_reasoning('<think>pensé y se acabaron los tokens') == ''
+    assert kc.truncated('Las más expuestas son **Hon Hai (Fox')
+    assert kc.truncated('Las más expuestas por su dependencia de fábricas en la isla son TSMC, MediaTek y la cadena de')
+    assert not kc.truncated('Las más expuestas son **TSMC**, **MediaTek** y **Foxconn**.\nFuente: grafo Khipus · Yahoo')
+    assert not kc.truncated('Resumen:\n- TSMC: fabrica el 90 % de los chips avanzados\n- MediaTek: diseña en Taiwán')
+
+
+def test_respuesta_cortada_se_reescribe(fake_ai):
+    cortada = {'final': {'answer': 'NRS), son **Hon Hai (Foxconn)**, **Quanta Computer** y **Kneron**.\n- *Explanation*:\n- **Hon Hai (Fox'}}
+    buena = 'Las más expuestas son **TSMC**, **MediaTek** y **Foxconn**: producen en Taiwán y abastecen a medio mundo.'
+    fake_ai([cortada, buena])
+    out = kc.run_chat('¿cuáles son las 3 empresas más expuestas a una guerra en Taiwán?', [], 'es', {})
+    assert out['answer'] == buena
+
+
+def test_herramienta_de_escenario():
+    ok, res = kc.execute_tool('scenario_exposure', {'scenario': 'guerra en Taiwán'})
+    assert ok and 'TSMC' in res['direct_hit'] and res['impacts'] and res['impacts'][0]['path'] is not None
+    ok, res = kc.execute_tool('scenario_exposure', {'scenario': 'zzzz qqqq'})
+    assert not ok

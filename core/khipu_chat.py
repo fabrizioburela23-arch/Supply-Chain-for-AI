@@ -215,6 +215,27 @@ def x_get_news(company, limit=8):
             'items': items, 'source': src, 'as_of': _now_iso()}
 
 
+@_extra('scenario_exposure', 'scenario:string (the what-if in plain words)',
+        'STRUCTURAL ANALYSIS of a hypothetical scenario on the Khipus supply-chain graph: what is at stake (e.g. HBM, '
+        'rare earths, Taiwan), who acts, which companies take the DIRECT hit, which could BENEFIT (substitutes), and '
+        'who is hit through the chain (customers / suppliers) with the PATH of each impact and what to watch. Use it '
+        'for "what if…", "most exposed to…", "who loses if…", war/ban/tariff/shortage questions.')
+def x_scenario_exposure(scenario):
+    from core import scenario_engine, semantic
+    snap = semantic._load_snapshot()
+    a = scenario_engine.analyze(str(scenario or '')[:300], snap)
+    if not a:
+        raise ToolFailure('could not identify companies, product or country in that scenario; name at least one')
+    return {'theme': a['theme_en'] or a['theme_es'], 'actor': a['actor_en'], 'event': a['event'],
+            'mechanism': a['mechanism_en'],
+            'direct_hit': [snap['by_id'][i].get('label') for i in a['hit']],
+            'could_benefit': [snap['by_id'][i].get('label') for i in a['benefit']],
+            'impacts': [{'company': x['label'], 'id': x['id'], 'channel': x['channel'], 'severity': x['sev'],
+                         'path': x['path'], 'country': x['country']} for x in a['impacts'][:15]],
+            'watch': a['watch_en'], 'source': 'Khipus supply-chain graph (structural estimate, not prices)',
+            'as_of': _now_iso()}
+
+
 @_extra('market_movers', 'direction?:up|down, limit?:integer 1-20, sector?:string',
         "Today's biggest LIVE price moves (%) among the listed companies of the Khipus graph (Yahoo Finance, "
         'refreshed every ~15 min), optionally filtered by sector. Use it for "what is moving today", '
@@ -599,6 +620,9 @@ palabras; más largo solo si lo piden o hace falta.
 8. Acciones de pantalla: solo si el usuario pidió ver/abrir/simular/graficar/comparar algo o si una vista \
 ayuda claramente; máx. 2. La respuesta de texto debe ser completa por sí misma. No las anuncies como futuras.
 9. No menciones el protocolo, el JSON ni los nombres internos de las herramientas.
+11. "¿Qué pasaría si…?", "¿más expuestas a una guerra/veto/arancel/escasez…?": usa scenario_exposure \
+(análisis estructural de la cadena) y explica POR QUÉ cada empresa está expuesta (su camino en la cadena); \
+complétalo con datos de las empresas si hace falta. No uses solo un ranking genérico de riesgo.
 10. "¿Qué empresas se ven mejor/peor?", "¿qué concluyeron los analistas?", "¿en qué invertir?": consulta la pizarra de conclusiones y el memo del comité; resume convicción, mejor argumento a favor y en contra y la última decisión (como análisis, no como orden). Ofrece open_committee para ver el debate.
 
 HERRAMIENTAS (solo lectura):
@@ -768,6 +792,21 @@ _LEAK_RX = re.compile(r'"(actions|final|tool|calls|args)"\s*:|```|^\s*[{}\[\]]\s
                       r'^\s*(Wait|Hmm+|Let me|Okay,? so|Actually,|I need to|I should|Espera,|Mmm)\b', re.I | re.M)
 
 
+def truncated(text):
+    """¿La respuesta quedó cortada? (negritas sin cerrar, paréntesis abiertos o
+    termina a mitad de palabra sin puntuación)."""
+    t = str(text or '').rstrip()
+    if len(t) < 15:
+        return False
+    if t.count('**') % 2 or t.count('(') > t.count(')'):
+        return True
+    last = t.splitlines()[-1].strip()
+    if re.match(r'^(_?\*?)(fuentes?|sources?|fuente de datos)\b', last, re.I) or re.match(r'^[-•*]\s', last):
+        return False                      # línea de fuentes o ítem de lista: puede terminar sin punto
+    # una ORACIÓN larga que termina a mitad (sin puntuación final) = cortada
+    return len(last) > 60 and bool(re.search(r'[A-Za-zÁÉÍÓÚáéíóúñÑ0-9,]$', last))
+
+
 def leaked(text):
     """¿El texto trae restos del protocolo o del "pensamiento en voz alta" del modelo?"""
     return bool(_LEAK_RX.search(str(text or '')))
@@ -802,9 +841,19 @@ def synthesize(message, history, lang, context, scratch, timeout):
     if scratch:
         parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
     parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
-    fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 1100, 'deep')
+    t0 = time.monotonic()
+    fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 1400, 'deep')
     text, model = fut.result(timeout=max(1.0, timeout))
     t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
+    left = timeout - (time.monotonic() - t0)
+    if (leaked(t) or truncated(t)) and left > 8:          # un reintento con el aviso concreto
+        fb = ('\n\nTU RESPUESTA ANTERIOR ' + ('QUEDÓ CORTADA' if truncated(t) else 'TENÍA JSON O BORRADORES') +
+              '. Escríbela COMPLETA, más corta (máx. 180 palabras), en prosa limpia.')
+        fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 1400, 'deep')
+        text2, model2 = fut.result(timeout=max(1.0, left))
+        t2 = re.sub(r'^```\w*\s*|\s*```$', '', str(text2 or '').strip()).strip()
+        if t2 and not leaked(t2) and not truncated(t2):
+            return t2, model2
     # última defensa: quitar líneas con restos de protocolo/borrador
     if leaked(t):
         t = '\n'.join(ln for ln in t.splitlines() if not _LEAK_RX.search(ln)).strip()
@@ -1054,13 +1103,13 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
                             '{"tool":...,"args":{...}} o {"final":{"answer":"...","actions":[]}}.')
                 continue
             prose = _prose_answer(text)
-            if prose:
+            if prose and not truncated(prose):
                 return done(prose, [])
             reason = 'bad_output'
             break
         if kind == 'final':
             ans = payload.get('answer')
-            if leaked(ans):          # la "respuesta" trae JSON o borradores → el agente la reescribe
+            if leaked(ans) or truncated(ans):   # restos o cortada → el agente la reescribe completa
                 reason = 'bad_output'
                 break
             return done(ans, payload.get('actions'))

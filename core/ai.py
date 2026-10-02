@@ -330,7 +330,9 @@ def _complete_nvidia(system, prompt, max_tokens, tier='fast'):
 
 
 def _complete_nvidia_inner(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
-    body = {'model': NVIDIA_MODEL, 'max_tokens': max_tokens, 'temperature': 0.6,
+    # modelos de razonamiento gastan tokens "pensando": más margen para que quepa la respuesta
+    body = {'model': NVIDIA_MODEL, 'max_tokens': max(int(max_tokens) * 2, 2048) if int(max_tokens) > 4 else max_tokens,
+            'temperature': 0.6,
             'messages': [{'role': 'system', 'content': system or ''},
                          {'role': 'user', 'content': prompt or ''}]}
     try:
@@ -424,6 +426,7 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
                     text, used = prov[1](system, prompt, max_tokens, tier, model=model)
                 else:
                     text, used = prov[1](system, prompt, max_tokens, tier)
+                text = strip_reasoning(text)
                 if text and text.strip():
                     return text, used
                 errors.append(f'{name}: respuesta vacía')
@@ -439,6 +442,24 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
 # Compat: las features existentes llaman _claude_complete → ahora multi-proveedor.
 def _claude_complete(system, prompt, max_tokens, tier='fast'):
     return _ai_complete(system, prompt, max_tokens, tier)
+
+
+_THINK_RX = re.compile(r'<(think|thinking|reasoning)>.*?</\1>', re.S | re.I)
+
+
+def strip_reasoning(text):
+    """Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…)
+    escriben en <think>…</think>. Si el bloque quedó sin cerrar (se acabaron los
+    tokens pensando), no hay respuesta útil → ''. (2026-10-03: el chat mostraba
+    respuestas cortadas a la mitad por esto.)"""
+    t = str(text or '')
+    t = _THINK_RX.sub('', t)
+    m = re.search(r'<(think|thinking|reasoning)>', t, re.I)
+    if m:
+        t = t[:m.start()]
+    if re.search(r'</(think|thinking|reasoning)>', t, re.I):
+        t = re.split(r'</(?:think|thinking|reasoning)>', t, flags=re.I)[-1]
+    return t.strip()
 
 
 def _extract_json(text):
