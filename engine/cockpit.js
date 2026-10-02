@@ -533,6 +533,7 @@
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
+    closeConfirmDialog();   // un diálogo de orden pendiente no sobrevive al cambio de escena
     _scalpStop();       // detener el polling de scalping al cambiar de escena
     _curKind = kind;
     _placeThread(kind);
@@ -1264,6 +1265,15 @@
     try {
       var res = await window._resolveTradeSymbol(_scalpSym);
       if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">' + esc(res.error || L('símbolo', 'symbol')) + '</span>'; return; }
+      // 1 clic SOLO en papel (elección de Fabrizio: la velocidad es el punto y es
+      // dinero simulado). Con DINERO REAL — o si no se sabe el modo — pide la
+      // confirmación pop-up como cualquier otra orden.
+      var KT = window.KhipuToast;
+      var mode = KT ? await KT.order.resolveMode({}) : null;
+      if (KT && mode !== 'paper') {
+        var yes = await KT.confirmOrder({ side: side, symbol: res.symbol, label: res.label, kind: res.kind, notional: _scalpAmt, mode: mode });
+        if (!yes) { st = document.getElementById('bcp-scalp-status'); if (st) { st.style.color = '#7C87A3'; st.textContent = tb('canceled'); } return; }
+      }
       var r = await window._executeTradeOrder({ symbol: res.symbol, side: side, label: res.label, kind: res.kind, notional: _scalpAmt });
       st = document.getElementById('bcp-scalp-status');
       if (r && r.ok && r.dedup) { if (st) st.innerHTML = '<span style="color:#FFB300">' + (r.broker_dup ? esc(tb('brokerDup')) : (en ? 'That same order was already sent a moment ago — it was not sent twice.' : 'Esa misma orden ya se envió hace un momento — no se envió dos veces.')) + '</span>'; setTimeout(_scalpLoadPos, 900); }
@@ -1302,6 +1312,8 @@
       else { var d = {}; try { d = await r.json(); } catch (e2) {} if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc(window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && (d.message || d.error)) || 'error')) + '</span>'; }
     } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
   }
+  // modo ya conocido (cuenta cargada) para pintar la insignia sin esperar; null = aún no
+  function _scalpPaperGuess() { return (_bkAcct && typeof _bkAcct.paper === 'boolean') ? _bkAcct.paper : null; }
   function stageScalp(s, arg) {
     arg = arg || {}; _scalpStop();
     var en = ckLang() === 'en';
@@ -1321,7 +1333,7 @@
       '<div class="bcp-inner" style="max-width:720px">' +
         '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px">' + symChips + '</div>' +
         '<div style="text-align:center;padding:18px;border:1px solid rgba(122,158,255,.18);border-radius:16px;background:rgba(12,18,32,.5);margin-bottom:16px">' +
-          '<div style="font-size:13px;color:#7C87A3;margin-bottom:4px">' + esc(_scalpSym) + ' <span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:2px 8px;border-radius:999px;background:rgba(255,179,0,.14);color:#FFB300;border:1px solid rgba(255,179,0,.4);margin-left:6px">' + (en ? 'PAPER' : 'PAPEL') + '</span></div>' +
+          '<div style="font-size:13px;color:#7C87A3;margin-bottom:4px">' + esc(_scalpSym) + ' <span id="bcp-scalp-mode" style="margin-left:6px">' + badgeHTML(_scalpPaperGuess()) + '</span></div>' +
           '<div id="bcp-scalp-price" style="font-size:38px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:#E8EDFB">—</div>' +
           '<div id="bcp-scalp-chg" style="font-size:13px;color:#7C87A3;margin-top:2px">&nbsp;</div>' +
           '<svg id="bcp-scalp-spark" viewBox="0 0 320 60" preserveAspectRatio="none" style="width:100%;max-width:320px;height:60px;margin-top:10px"></svg>' +
@@ -1339,6 +1351,11 @@
     var buy = s.querySelector('#bcp-scalp-buy'), sell = s.querySelector('#bcp-scalp-sell');
     if (buy) buy.addEventListener('click', function () { _scalpOrder('buy'); });
     if (sell) sell.addEventListener('click', function () { _scalpOrder('sell'); });
+    // insignia según la cuenta REAL (antes decía PAPEL siempre): /api/trade/status
+    if (window._tradeStatusInfo) window._tradeStatusInfo().then(function (x) {
+      var b = document.getElementById('bcp-scalp-mode');
+      if (b) b.innerHTML = badgeHTML(x && typeof x.paper === 'boolean' ? x.paper : false);
+    }).catch(function () {});
     _scalpPoll(); _scalpTimer = setInterval(_scalpPoll, 2500);
     _scalpLoadPos(); _scalpPosTimer = setInterval(_scalpLoadPos, 5000);
   }
@@ -1480,11 +1497,51 @@
     loadBroker(false, false);
   }
 
-  // tarjeta de confirmación — SOLO el clic en Confirmar envía la orden
+  // Diálogo pop-up de confirmación abierto (engine/toast.js) para _pendingOrder
+  var _confirmH = null;
+  function closeConfirmDialog() {
+    if (_confirmH) { var h = _confirmH; _confirmH = null; try { h.close('dismissed'); } catch (e) {} }
+  }
+
+  // confirmación — SOLO el clic en Confirmar (o el «sí» por voz) envía la orden.
+  // Con engine/toast.js es un POP-UP (mismo diálogo que el panel de trading:
+  // lado, activo, monto, cuenta 🧪/🔴, fichas de monto rápido); sin él, la
+  // tarjeta en línea de siempre.
   function renderTradeConfirm(o) {
     var box = document.getElementById('bcp-bk-confirm');
     if (!box || !o || !o.symbol) return;
     _pendingOrder = o;
+    var KT = window.KhipuToast;
+    if (KT && KT.confirmOrder) {
+      closeConfirmDialog();
+      box.innerHTML = '<div id="bcp-bk-cstatus" style="font-size:12.5px;color:#7C87A3;padding:2px 0 14px">' +
+        esc(L('Esperando tu confirmación en la ventana emergente…', 'Waiting for your confirmation in the pop-up…')) + '</div>';
+      var acctMode = (_bkAcct && typeof _bkAcct.paper === 'boolean') ? (_bkAcct.paper ? 'paper' : 'live') : undefined;
+      var ord = { side: o.side, symbol: o.symbol, label: o.label, kind: o.kind, notional: o.notional, qty: o.qty, mode: acctMode };
+      var handle = null;
+      KT.confirmOrder(ord, {
+        amounts: o.notional != null ? [100, 500, 1000, 5000] : null,
+        onAmount: function (v) { if (_pendingOrder === o) o.notional = v; },
+        onHandle: function (h) {
+          handle = h;
+          // la escena cambió mientras se resolvía el modo de la cuenta → no abrirlo huérfano
+          if (_pendingOrder !== o || !document.getElementById('bcp-bk-confirm')) { h.close('dismissed'); return; }
+          _confirmH = h;
+        },
+      }).then(function (yes) {
+        if (_confirmH === handle) _confirmH = null;
+        var why = handle && handle.reason;
+        if (why === 'superseded') return;            // el «sí» por voz ya la está enviando
+        if (_pendingOrder !== o) return;              // otra orden/escena tomó su lugar
+        if (yes) { confirmPendingOrder(); return; }
+        _pendingOrder = null;
+        var b = document.getElementById('bcp-bk-confirm');
+        if (!b) return;
+        b.innerHTML = why === 'dismissed' ? '' : '<div style="color:#7C87A3;font-size:12.5px;padding:6px 0 16px">' + tb('canceled') + '</div>';
+        setTimeout(function () { var b2 = document.getElementById('bcp-bk-confirm'); if (b2 && !_pendingOrder) b2.innerHTML = ''; }, 3000);
+      });
+      return;
+    }
     var side = o.side === 'sell' ? 'sell' : 'buy';
     var col = side === 'buy' ? UP : DOWN;
     var amount = o.notional != null ? fmtUsd(o.notional) : ((+o.qty || 0) + ' ' + tb('units'));
@@ -1533,6 +1590,7 @@
     var stEl = document.getElementById('bcp-bk-cstatus');
     if (ok) ok.disabled = true;
     if (no) no.disabled = true;
+    // (los avisos pop-up de enviando/enviada/ejecutada los da window._executeTradeOrder)
     // OPTIMISTA (feedback Fabrizio: "invertí y se quedó cargando"): mostramos
     // ENVIADA ✓ al instante y ejecutamos en segundo plano; si el bróker la
     // rechaza, avisamos claramente. Se siente inmediato.
@@ -2310,6 +2368,7 @@
     setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
   }
   function close() {
+    closeConfirmDialog();
     restoreAdopted();   // devolver grafo/terminal a su sitio original
     _scalpStop();       // detener el polling de scalping al cerrar la Cabina
     demoStop();         // cortar la demostración (timers + voz) al cerrar

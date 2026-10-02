@@ -9,6 +9,21 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 (c) — TERMINAL REDISEÑADA + POP-UPS DE COMPRA/VENTA (sw v182)
+
+- Terminal (app.html + engine/termdata.js): nuevo layout con tokens --kt-* (oscuro/claro), cabecera por
+  panel (ticker, precio, cambio, periodos, Operar), línea de stats del periodo, filtro por los 13 sectores,
+  📋 Datos como TERCERA columna (BUG arreglado: en escritorio el panel de datos aplastaba los gráficos a 0 px),
+  cajón en 820-1180 px y Lista/Gráficos en móvil; prellenado con tu cartera + NVDA/TSM/ASML/AVGO
+  (`_termSeed`); textos bilingües (_TT/_tt, window._termRelabel).
+- `engine/toast.js` (NUEVO): window.KhipuToast — show/update/dismiss, confirm(), confirmOrder() (lado,
+  activo, cantidad, tipo, vigencia, monto estimado = cantidad × precio real; DINERO REAL exige casilla),
+  order.sending/result/watch/filled (sondeo de /api/trade/history ≤ 60 s, evento `khipu:order`).
+  Conectado en: panel de trading (paso de confirmación NUEVO), voice._executeTradeOrder, tarjeta del bróker
+  en la Cabina, scalping (insignia real del modo), crypto.js, clients.js (aprobaciones), portfolios.js
+  (simulado) y "Aplicar en simulación" del comité de cartera. Ninguna ruta nueva envía órdenes.
+- Pendiente: textos fijos del panel de trading solo en español y su layout de 3 columnas en teléfono.
+
 # SESIÓN 2026-10-03 (b) — REPORTES DE CARTERA, "PREGÚNTALE A TU CARTERA", NOTICIAS DE TU CARTERA
 
 Pedido: reportes diarios/mensuales/a pedido vs posición inicial con gráficos, "como un NotebookLM con el

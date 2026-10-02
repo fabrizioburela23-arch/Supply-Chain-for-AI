@@ -598,11 +598,7 @@ footer .disc{line-height:1.4}
   /* Simulación: una sola columna (la de resultados quedaba fuera de pantalla) */
   .sim-grid{grid-template-columns:1fr !important}
   #simulation-panel > div{padding:18px 14px 40px !important}
-  /* Terminal: lista arriba, gráficos abajo (lado a lado no cabían) */
-  #terminal-panel > div:first-child{flex-direction:column !important}
-  #terminal-panel #term-sidebar{width:100% !important;min-width:0 !important;height:44% !important;flex-shrink:0;
-    border-right:none !important;border-bottom:1px solid rgba(255,255,255,0.1)}
-  #term-cats{flex-wrap:nowrap !important;overflow-x:auto !important}
+  /* Terminal: en el teléfono Lista y Gráficos se alternan (bloque TERMINAL) */
 }
 @media(max-width:430px){
   .brand h1{font-size:15px}
@@ -2145,80 +2141,65 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   </div>
 </section>
 
-<!-- ═══ Terminal Tab — Multi-chart drag & drop ═════════════════════ -->
-<section id="terminal-panel" style="display:none;flex:1;min-height:0;overflow:hidden;background:#000;font-family:'Geist',sans-serif">
-  <div style="display:flex;height:100%;overflow:hidden">
+<!-- ═══ Terminal — lista + multi-gráfico + datos (rediseño 2026-10-02) ═══════
+     Ids que usa otro código (no renombrar): terminal-panel, term-sidebar,
+     term-search, term-cats, term-list, term-grid, term-cmdbar, term-cmd,
+     term-cmd-hint, .term-layout-btn[data-l], .term-item, .term-cell*.
+     Estilos: bloque «TERMINAL (rediseño 2026-10-02)»; textos ES/EN: _TT. -->
+<section id="terminal-panel" style="display:none">
+  <div class="kt-shell" id="term-shell" data-view="list">
 
-    <!-- LEFT: Company list -->
-    <div id="term-sidebar" style="width:260px;min-width:260px;border-right:1px solid rgba(255,255,255,0.07);
-      background:rgba(6,6,6,0.95);display:flex;flex-direction:column;overflow:hidden">
-
-      <!-- Search -->
-      <div style="padding:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
-        <div style="position:relative">
-          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.25);font-size:12px">⌕</span>
-          <input id="term-search" placeholder="Buscar empresa / ticker…"
-            style="width:100%;padding:7px 10px 7px 28px;background:rgba(255,255,255,0.04);
-              border:1px solid rgba(255,255,255,0.08);border-radius:2px;color:#fff;
-              font-size:12px;font-family:'JetBrains Mono',monospace;outline:none"
-            oninput="window._termFilter(this.value)">
-        </div>
-      </div>
-
-      <!-- Category filter chips -->
-      <div id="term-cats" style="display:flex;gap:4px;flex-wrap:wrap;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.05);overflow:hidden"></div>
-
-      <!-- Company list -->
-      <div id="term-list" style="flex:1;overflow-y:auto;padding:4px 0"></div>
+    <!-- teléfono: alternar Lista / Gráficos (en escritorio están lado a lado) -->
+    <div class="kt-mbar" role="tablist" aria-label="Terminal">
+      <button type="button" role="tab" class="kt-mtab" data-v="list" aria-selected="true" onclick="window._termView('list', true)"><span data-tt="mList">Lista</span></button>
+      <button type="button" role="tab" class="kt-mtab" data-v="charts" aria-selected="false" onclick="window._termView('charts', true)"><span data-tt="mCharts">Gráficos</span> <span class="kt-mcount" id="term-mcount"></span></button>
     </div>
 
-    <!-- RIGHT: Chart grid -->
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-
-      <!-- Toolbar -->
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;
-        border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.6);flex-shrink:0">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.15em;color:rgba(255,255,255,0.3)">LAYOUT</span>
-        <div style="display:flex;gap:2px">
-          <button onclick="window._termSetLayout(1)" class="term-layout-btn" data-l="1" title="1 panel"
-            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">1</button>
-          <button onclick="window._termSetLayout(2)" class="term-layout-btn" data-l="2" title="2 paneles"
-            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">2</button>
-          <button onclick="window._termSetLayout(4)" class="term-layout-btn active-layout" data-l="4" title="4 paneles"
-            style="width:26px;height:22px;background:rgba(142,90,255,0.3);border:1px solid rgba(142,90,255,0.5);
-              border-radius:2px;color:#cabeff;font-size:10px;cursor:pointer">4</button>
-          <button onclick="window._termSetLayout(6)" class="term-layout-btn" data-l="6" title="6 paneles"
-            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">6</button>
-          <button onclick="window._termSetLayout(9)" class="term-layout-btn" data-l="9" title="9 paneles"
-            style="width:26px;height:22px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-              border-radius:2px;color:rgba(255,255,255,0.5);font-size:10px;cursor:pointer">9</button>
+    <!-- LISTA de empresas (precio y variación del día) -->
+    <aside id="term-sidebar" class="kt-side" data-tt-aria="listAria" aria-label="Lista de empresas">
+      <div class="kt-side-hd">
+        <div class="kt-side-top">
+          <span class="kt-h" data-tt="list">Empresas</span>
+          <span class="kt-qs" id="term-qstatus" role="status"></span>
         </div>
-        <div style="width:1px;height:16px;background:rgba(255,255,255,0.08)"></div>
-        <button onclick="window._termClearAll()"
-          style="padding:3px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-            border-radius:2px;color:rgba(255,255,255,0.4);font-size:10px;font-family:'JetBrains Mono',monospace;
-            cursor:pointer;letter-spacing:0.05em">LIMPIAR</button>
-        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2)">
-          Arrastrá empresas al panel →
-        </span>
+        <label class="kt-search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="term-search" type="search" autocomplete="off" spellcheck="false" data-tt-ph="search" data-tt-aria="searchAria"
+            placeholder="Empresa o ticker…" aria-label="Buscar empresa o ticker"
+            oninput="window._termFilter(this.value, window._termCat ? window._termCat() : '')">
+        </label>
+        <div id="term-cats" class="kt-cats"></div>
+      </div>
+      <div class="kt-list-hd" aria-hidden="true"><span data-tt="colName">Empresa</span><span data-tt="colPx">Precio · Día</span></div>
+      <div id="term-list" class="kt-list" role="list"></div>
+    </aside>
+
+    <!-- ESPACIO DE TRABAJO: barra, grilla de gráficos y línea de comandos -->
+    <div class="kt-work" id="term-work">
+      <div class="kt-toolbar" id="term-toolbar">
+        <div class="kt-seg" role="group" data-tt-aria="panels" aria-label="Paneles">
+          <span class="kt-seg-l" data-tt="panels">Paneles</span>
+          <button type="button" onclick="window._termSetLayout(1)" class="term-layout-btn" data-l="1" aria-pressed="false" data-tt-title="l1" title="1 gráfico">1</button>
+          <button type="button" onclick="window._termSetLayout(2)" class="term-layout-btn" data-l="2" aria-pressed="false" data-tt-title="l2" title="2 gráficos">2</button>
+          <button type="button" onclick="window._termSetLayout(4)" class="term-layout-btn active-layout" data-l="4" aria-pressed="true" data-tt-title="l4" title="4 gráficos">4</button>
+          <button type="button" onclick="window._termSetLayout(6)" class="term-layout-btn" data-l="6" aria-pressed="false" data-tt-title="l6" title="6 gráficos">6</button>
+          <button type="button" onclick="window._termSetLayout(9)" class="term-layout-btn" data-l="9" aria-pressed="false" data-tt-title="l9" title="9 gráficos">9</button>
+        </div>
+        <button type="button" class="kt-btn" onclick="window._termClearAll()" data-tt-title="clearTip" title="Vaciar todos los paneles"><span data-tt="clear">Limpiar</span></button>
+        <span class="kt-hint" data-tt="hint">Toca o arrastra una empresa de la lista para ver su gráfico</span>
+        <span class="kt-tb-right" id="term-tb-actions"></span>
       </div>
 
-      <!-- Grid -->
-      <div id="term-grid" style="flex:1;display:grid;grid-template-columns:1fr 1fr;
-        grid-template-rows:1fr 1fr;gap:1px;background:rgba(255,255,255,0.05);overflow:hidden">
-      </div>
+      <div id="term-grid" class="kt-grid"></div>
 
-      <!-- Command bar Bloomberg-style -->
-      <div id="term-cmdbar" style="padding:8px 14px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.85);display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(142,90,255,0.8);font-weight:700">KHIPU&gt;</span>
-        <input id="term-cmd" placeholder="NVDA Equity · TSMC US · /sim taiwan · /geo taiwan · /chart NVDA AMD 6M…"
-          style="flex:1;background:transparent;border:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:#fff;letter-spacing:.02em">
-        <span id="term-cmd-hint" style="font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.2)">↵ ejecutar</span>
+      <div id="term-cmdbar" class="kt-cmd">
+        <span class="kt-prompt" aria-hidden="true">KHIPU&gt;</span>
+        <input id="term-cmd" autocomplete="off" spellcheck="false" data-tt-ph="cmdPh" data-tt-aria="cmdAria" aria-label="Línea de comandos"
+          placeholder="NVDA · /chart NVDA AMD · /sim taiwan · /geo">
+        <span id="term-cmd-hint" data-tt="cmdHint">↵ ejecutar</span>
       </div>
     </div>
+    <!-- #term-data (engine/termdata.js) se monta aquí como 3ª columna -->
   </div>
 </section>
 
@@ -6571,37 +6552,174 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 .dark #simulation-panel, .dark #space-panel { background: var(--bg); }
 .dark #sim-output { color: var(--ink-2); }
 
-/* ── Terminal multi-chart ── */
-#term-list .term-item {
-  display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:grab;
-  border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s;
-  user-select:none;
+/* ═══ TERMINAL (rediseño 2026-10-02) ═══════════════════════════════════════
+   Pedido de Fabrizio: "estéticamente no es muy buena, no da la impresión
+   correcta". Jerarquía clara, sans para textos y MONO solo para cifras y
+   tickers (tabular), paneles con cabecera, color SOLO con significado
+   (verde sube · rojo baja · ámbar aviso). Tokens --kt-*: oscuro por defecto,
+   claro con el tema claro (la Cabina siempre es oscura). */
+#terminal-panel{
+  --kt-bg:#0B0D12; --kt-panel:#10131A; --kt-panel-2:#171B25; --kt-hover:rgba(255,255,255,.035);
+  --kt-sel:rgba(139,140,246,.11); --kt-line:rgba(255,255,255,.07); --kt-line-2:rgba(255,255,255,.13);
+  --kt-ink:#E7E9EF; --kt-ink-2:#A3A9B8; --kt-ink-3:#6E7586;
+  --kt-accent:#8B8CF6; --kt-up:#2EBD85; --kt-down:#F6465D; --kt-warn:#F0A92E;
+  --kt-shadow:0 18px 50px rgba(0,0,0,.55);
+  --kt-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --kt-sans:'Geist','Inter',system-ui,sans-serif;
+  flex:1;min-width:0;min-height:0;overflow:hidden;background:var(--kt-bg);color:var(--kt-ink);
+  font-family:var(--kt-sans);font-size:13px;line-height:1.4;
 }
-#term-list .term-item:hover { background:rgba(255,255,255,0.05); }
-#term-list .term-item:active { cursor:grabbing; }
-#term-list .term-item.dragging { opacity:0.4; }
-.term-cell {
-  background:#080808;position:relative;display:flex;flex-direction:column;
-  overflow:hidden;transition:box-shadow .15s;
+body:not(.dark) :not(.bcp-embed) > #terminal-panel{
+  --kt-bg:#F4F5F8; --kt-panel:#FFFFFF; --kt-panel-2:#EEF0F4; --kt-hover:rgba(15,23,42,.035);
+  --kt-sel:rgba(91,77,214,.08); --kt-line:rgba(15,23,42,.08); --kt-line-2:rgba(15,23,42,.15);
+  --kt-ink:#0F172A; --kt-ink-2:#475467; --kt-ink-3:#8A93A6;
+  --kt-accent:#5B4DD6; --kt-up:#0B9B63; --kt-down:#D9334B; --kt-warn:#B7791F;
+  --kt-shadow:0 18px 50px rgba(15,23,42,.18);
 }
-.term-cell.drag-over { box-shadow:inset 0 0 0 2px #8e5aff; }
-.term-cell-empty {
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;color:rgba(255,255,255,0.1);font-family:'JetBrains Mono',monospace;font-size:11px;
-  letter-spacing:0.1em;gap:8px;
+#terminal-panel button{font-family:inherit}
+#terminal-panel :focus-visible{outline:2px solid var(--kt-accent);outline-offset:1px}
+.kt-shell{display:flex;flex:1;min-width:0;min-height:0;height:100%;position:relative}
+.kt-mbar{display:none}
+/* — lista — */
+.kt-side{width:276px;flex:0 0 276px;display:flex;flex-direction:column;min-height:0;background:var(--kt-panel);border-right:1px solid var(--kt-line)}
+.kt-side-hd{padding:12px 12px 10px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--kt-line)}
+.kt-side-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:18px}
+.kt-h{font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:var(--kt-ink-3)}
+.kt-qs{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--kt-ink-3);white-space:nowrap}
+.kt-qs i{width:6px;height:6px;border-radius:50%;background:var(--kt-ink-3);flex-shrink:0}
+.kt-qs.ok i{background:var(--kt-up)} .kt-qs.warn{color:var(--kt-warn)} .kt-qs.warn i{background:var(--kt-warn)}
+.kt-search{position:relative;display:block}
+.kt-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--kt-ink-3);pointer-events:none}
+.kt-search input,.kt-select{width:100%;height:34px;border-radius:8px;border:1px solid var(--kt-line-2);background:var(--kt-bg);color:var(--kt-ink);font:13px var(--kt-sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.kt-search input{padding:0 10px 0 32px}
+.kt-search input::placeholder{color:var(--kt-ink-3)}
+.kt-search input:focus,.kt-select:focus{border-color:var(--kt-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--kt-accent) 22%,transparent)}
+.kt-select{padding:0 30px 0 10px;cursor:pointer;-webkit-appearance:none;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--kt-ink-3) 50%),linear-gradient(135deg,var(--kt-ink-3) 50%,transparent 50%);
+  background-position:calc(100% - 15px) 15px,calc(100% - 10px) 15px;background-size:5px 5px;background-repeat:no-repeat}
+.kt-select option{background:var(--kt-panel);color:var(--kt-ink)}
+.kt-list-hd{display:flex;justify-content:space-between;gap:8px;padding:8px 14px 7px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--kt-ink-3);border-bottom:1px solid var(--kt-line)}
+.kt-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.kt-list::-webkit-scrollbar,#term-data #td-body::-webkit-scrollbar{width:8px}
+.kt-list::-webkit-scrollbar-thumb,#term-data #td-body::-webkit-scrollbar-thumb{background:var(--kt-line-2);border-radius:8px;border:2px solid var(--kt-panel)}
+#term-list .term-item{display:grid;grid-template-columns:8px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 14px;
+  border-bottom:1px solid var(--kt-line);cursor:pointer;user-select:none;transition:background .12s}
+#term-list .term-item:hover{background:var(--kt-hover)}
+#term-list .term-item:active{cursor:grabbing}
+#term-list .term-item.dragging{opacity:.4}
+#term-list .term-item.on{background:var(--kt-sel);box-shadow:inset 2px 0 0 var(--kt-accent)}
+.kt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.kt-nm{font-size:13px;font-weight:550;color:var(--kt-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt-tk{font:500 11px/1.3 var(--kt-mono);color:var(--kt-ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt-q{text-align:right;font-family:var(--kt-mono);font-variant-numeric:tabular-nums}
+.kt-px{font-size:12.5px;font-weight:500;color:var(--kt-ink)}
+.kt-chg{font-size:11.5px;margin-top:2px}
+.kt-up{color:var(--kt-up)} .kt-down{color:var(--kt-down)} .kt-flat{color:var(--kt-ink-3)}
+.kt-empty-list{padding:28px 18px;text-align:center;color:var(--kt-ink-3);font-size:12.5px;line-height:1.5}
+/* — espacio de trabajo — */
+.kt-work{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}
+.kt-toolbar{display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 12px;background:var(--kt-panel);border-bottom:1px solid var(--kt-line);flex-shrink:0}
+.kt-seg{display:inline-flex;align-items:center;gap:2px;padding:2px;border-radius:9px;background:var(--kt-bg);border:1px solid var(--kt-line)}
+.kt-seg-l{font-size:11.5px;color:var(--kt-ink-3);padding:0 6px 0 8px}
+.term-layout-btn{min-width:28px;height:26px;padding:0 7px;border:0;border-radius:7px;background:transparent;color:var(--kt-ink-2);
+  font:600 12px var(--kt-mono);cursor:pointer;transition:background .12s,color .12s}
+.term-layout-btn:hover{color:var(--kt-ink);background:var(--kt-hover)}
+.term-layout-btn.active-layout{background:var(--kt-panel-2);color:var(--kt-ink);box-shadow:0 0 0 1px var(--kt-line-2)}
+.kt-btn{height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--kt-line-2);background:transparent;color:var(--kt-ink-2);
+  font:550 12.5px var(--kt-sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:background .12s,color .12s,border-color .12s}
+.kt-btn:hover{color:var(--kt-ink);background:var(--kt-hover);border-color:var(--kt-line-2)}
+.kt-btn[aria-pressed="true"]{color:var(--kt-ink);background:var(--kt-sel);border-color:color-mix(in srgb,var(--kt-accent) 45%,transparent)}
+.kt-hint{flex:1;min-width:0;font-size:12px;color:var(--kt-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kt-tb-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.kt-grid{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--kt-line);overflow:hidden}
+/* — panel de gráfico — */
+.term-cell{background:var(--kt-bg);position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;container-type:size;transition:box-shadow .15s}
+.term-cell.drag-over{box-shadow:inset 0 0 0 2px var(--kt-accent)}
+.term-cell-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin:12px;padding:16px;
+  border:1px dashed var(--kt-line-2);border-radius:12px;color:var(--kt-ink-3);font-size:12.5px;text-align:center;line-height:1.45}
+.term-cell-empty svg{width:26px;height:26px;opacity:.55}
+.term-cell-empty b{color:var(--kt-ink-2);font-weight:600;font-size:13px}
+.term-cell-header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"id q" "ctl ctl";gap:8px 12px;align-items:center;
+  padding:10px 12px 8px;background:var(--kt-panel);border-bottom:1px solid var(--kt-line);flex-shrink:0}
+@container (min-width:600px){ .term-cell-header{grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"id q ctl"} }
+.kt-ch-id{grid-area:id;display:flex;align-items:baseline;gap:8px;min-width:0}
+.kt-ch-id .kt-dot{align-self:center}
+.kt-ch-tk{font:700 13.5px var(--kt-mono);color:var(--kt-ink);letter-spacing:.01em;white-space:nowrap}
+.kt-ch-nm{font-size:12.5px;color:var(--kt-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.kt-ch-q{grid-area:q;display:flex;align-items:baseline;gap:8px;font-family:var(--kt-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kt-ch-px{font-size:15px;font-weight:600;color:var(--kt-ink)}
+.kt-ch-chg{font-size:12px;font-weight:500}
+.kt-ch-ctl{grid-area:ctl;display:flex;align-items:center;gap:6px;min-width:0}
+.kt-tf{display:inline-flex;gap:1px;padding:2px;border-radius:8px;background:var(--kt-bg);border:1px solid var(--kt-line);margin-right:auto}
+.term-tf-btn{min-width:30px;height:24px;padding:0 6px;border:0;border-radius:6px;background:transparent;color:var(--kt-ink-3);font:600 11px var(--kt-mono);cursor:pointer;transition:background .12s,color .12s}
+.term-tf-btn:hover{color:var(--kt-ink)}
+.term-tf-btn.active{background:var(--kt-panel-2);color:var(--kt-ink);box-shadow:0 0 0 1px var(--kt-line-2)}
+.kt-ic{width:30px;height:30px;flex-shrink:0;border-radius:8px;border:1px solid var(--kt-line-2);background:transparent;color:var(--kt-ink-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .12s,color .12s}
+.kt-ic svg{width:15px;height:15px}
+.kt-ic:hover{color:var(--kt-ink);background:var(--kt-hover)}
+.kt-trade{height:30px;padding:0 14px;border-radius:8px;border:1px solid color-mix(in srgb,var(--kt-accent) 45%,transparent);
+  background:color-mix(in srgb,var(--kt-accent) 16%,transparent);color:var(--kt-ink);font:650 12.5px var(--kt-sans);cursor:pointer;white-space:nowrap;transition:background .12s}
+.kt-trade:hover{background:color-mix(in srgb,var(--kt-accent) 28%,transparent)}
+.kt-stats{display:flex;gap:16px;padding:7px 12px 0;font-size:11px;color:var(--kt-ink-3);white-space:nowrap;overflow:hidden;min-height:24px;flex-shrink:0}
+.kt-stats i{font-style:normal}
+.kt-stats b{font:500 11.5px var(--kt-mono);font-variant-numeric:tabular-nums;color:var(--kt-ink-2);margin-left:5px}
+.term-chart-wrap{flex:1;position:relative;min-height:0;padding:4px 6px 6px}
+.kt-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:var(--kt-ink-3)}
+.kt-loading.err{color:var(--kt-warn)}
+.kt-spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--kt-line-2);border-top-color:var(--kt-accent);animation:kt-spin .8s linear infinite}
+@keyframes kt-spin{to{transform:rotate(360deg)}}
+/* — línea de comandos — */
+.kt-cmd{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;background:var(--kt-panel);border-top:1px solid var(--kt-line);flex-shrink:0;transition:box-shadow .15s}
+.kt-cmd:focus-within{box-shadow:inset 0 2px 0 var(--kt-accent)}
+.kt-prompt{font:700 12px var(--kt-mono);color:var(--kt-accent);letter-spacing:.02em}
+#term-cmd{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:none;color:var(--kt-ink);font:13px var(--kt-mono)}
+#term-cmd::placeholder{color:var(--kt-ink-3)}
+#term-cmd-hint{font-size:11.5px;color:var(--kt-ink-3);white-space:nowrap}
+/* paneles angostos (6/9 paneles, tableta): controles compactos; muy angostos: el
+   periodo baja a su propia fila y se oculta el nombre largo (queda el ticker) */
+@container (max-width:380px){
+  .term-cell-header{padding:9px 10px 8px;gap:7px 8px}
+  .kt-ch-ctl{gap:4px}
+  .term-tf-btn{min-width:24px;padding:0 3px;font-size:10.5px}
+  .kt-ic{width:28px;height:28px}
+  .kt-trade{padding:0 10px;height:28px}
+  .kt-ch-px{font-size:14px}
+  .kt-stats{gap:10px;padding:6px 10px 0}
 }
-.term-cell-header {
-  display:flex;align-items:center;gap:8px;padding:6px 10px;
-  border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;
+@container (max-width:300px){
+  .kt-ch-nm{display:none}
+  .kt-tf{flex:1 1 auto;min-width:0}
+  .kt-tf .term-tf-btn{flex:1;min-width:0;padding:0 1px;font-size:10px}
+  .kt-ic{width:26px;height:26px}
+  .kt-trade{padding:0 8px;height:26px;font-size:12px}
+  .kt-stats span:nth-child(n+2){display:none}
 }
-.term-tf-btn {
-  padding:2px 6px;font-size:9px;font-family:'JetBrains Mono',monospace;letter-spacing:0.05em;
-  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-  border-radius:2px;color:rgba(255,255,255,0.35);cursor:pointer;transition:all .1s;
+/* paneles bajos (6/9 paneles): sin la fila de estadísticas → más gráfico */
+@container (max-height:250px){ .kt-stats{display:none} .term-chart-wrap{padding-top:6px} }
+/* dentro de la Cabina la barra de Khipu ya ES la línea de comandos: no duplicarla,
+   y la Terminal termina ANTES de esa barra (antes quedaba ~25 px tapada) */
+.bcp-embed #term-cmdbar{display:none}
+#bcp-embed-term.bcp-embed{height:calc(100vh - 292px)}
+/* — tableta: lista más angosta; el panel 📋 Datos pasa a cajón — */
+@media(max-width:900px){ .kt-side{width:228px;flex-basis:228px} .kt-hint{display:none} }
+/* — teléfono: Lista y Gráficos se ALTERNAN (lado a lado no se leen) — */
+@media(max-width:560px){
+  .kt-shell{flex-direction:column}
+  .kt-mbar{display:flex;gap:4px;padding:8px 10px;background:var(--kt-panel);border-bottom:1px solid var(--kt-line);flex-shrink:0}
+  .kt-mtab{flex:1;height:34px;border-radius:9px;border:1px solid var(--kt-line);background:transparent;color:var(--kt-ink-2);font:600 13px var(--kt-sans);cursor:pointer}
+  .kt-mtab[aria-selected="true"]{background:var(--kt-sel);color:var(--kt-ink);border-color:color-mix(in srgb,var(--kt-accent) 45%,transparent)}
+  .kt-mcount{font:600 11px var(--kt-mono);color:var(--kt-ink-3)}
+  .kt-side{width:auto;flex:1 1 auto;border-right:0}
+  .kt-shell[data-view="list"] .kt-work{display:none}
+  .kt-shell[data-view="charts"] .kt-side{display:none}
+  .kt-toolbar{gap:8px;padding:8px 10px}
+  .kt-seg-l{display:none}
+  .term-layout-btn[data-l="4"],.term-layout-btn[data-l="6"],.term-layout-btn[data-l="9"]{display:none}
+  .term-cell-header{padding:10px 10px 8px}
+  .kt-cmd{padding:0 10px}
+  #term-cmd-hint{display:none}
 }
-.term-tf-btn.active { background:rgba(142,90,255,0.2);border-color:rgba(142,90,255,0.5);color:#cabeff; }
-.term-tf-btn:hover { color:rgba(255,255,255,0.7); }
-.term-chart-wrap { flex:1;position:relative;min-height:0;padding:4px; }
+
 </style>
 
 <!-- Khipu Plasma Orb -->
@@ -6727,6 +6845,7 @@ if(typeof renderDetail==='function'){ const _rd=renderDetail; renderDetail=funct
 
 <!-- Khipu Finance Engine -->
 <script src="engine/loading.js"></script>
+<script src="engine/toast.js"></script>
 <script src="engine/graph3d.js"></script>
 <script src="engine/universe2d.js"></script>
 <script src="engine/hypergraph.js"></script>
@@ -8579,39 +8698,174 @@ function initSimTab() {
   });
 }
 
-// ── Terminal Tab — Multi-chart Bloomberg-style ─────────────────────────────
+// ── Terminal — lista + multi-gráfico (rediseño 2026-10-02) ─────────────────
+// Pedido de Fabrizio: que la terminal "dé la impresión correcta". Misma lógica
+// de siempre (lista → paneles con gráfico → 📋 datos → Operar), con jerarquía
+// clara, textos ES/EN (_TT) y, en el teléfono, Lista y Gráficos alternados.
 const _term = {
   layout: 4,
   cells: [],       // array of {nodeId, ticker, tf, chartInst}
   inited: false,
   _lastQuery: '',  // last sidebar filter query
-  _lastCat: '',    // last sidebar category filter
+  _lastCat: '',    // last sidebar sector/category filter
+  view: 'list',    // teléfono: 'list' | 'charts'
 };
+
+// textos de la Terminal (regla bilingüe ES/EN)
+const _TT = {
+  es: {
+    list: 'Empresas', listAria: 'Lista de empresas', search: 'Empresa o ticker…', searchAria: 'Buscar empresa o ticker',
+    colName: 'Empresa', colPx: 'Precio · Día', allSectors: 'Todos los sectores', sectorAria: 'Filtrar por sector',
+    panels: 'Paneles', l1: '1 gráfico', l2: '2 gráficos', l4: '4 gráficos', l6: '6 gráficos', l9: '9 gráficos',
+    clear: 'Limpiar', clearTip: 'Vaciar todos los paneles',
+    hint: 'Toca o arrastra una empresa de la lista para ver su gráfico',
+    cmdPh: 'NVDA · /chart NVDA AMD · /sim taiwan · /geo', cmdAria: 'Línea de comandos', cmdHint: '↵ ejecutar',
+    mList: 'Lista', mCharts: 'Gráficos',
+    qLoading: 'Cargando precios…', qNone: 'Sin precios', qNoneTip: 'No llegaron precios: revisa MARKETSTACK_KEY en Railway (🩺).',
+    qOk: '{n} con precio', qOkTip: 'Precio de cierre del último día hábil y su variación frente al cierre anterior.',
+    noMatch: 'Ninguna empresa coincide con «{q}».',
+    emptyT: 'Panel libre', emptyB: 'Toca una empresa de la lista o arrástrala aquí.',
+    dossier: 'Dossier financiero: ingresos, márgenes, flujo de caja…', trade: 'Operar', tradeTip: 'Abrir el panel de compra / venta',
+    close: 'Cerrar este panel', tfAria: 'Periodo del gráfico', loading: 'Cargando gráfico…', noData: 'Sin datos de precio para este periodo',
+    hi: 'Máx', lo: 'Mín', dragTip: 'Toca para abrir · arrastra a un panel',
+    unknownCmd: 'Comando no reconocido: ', noTickers: 'Sin tickers reconocidos: ',
+    presets: 'Escenarios: taiwan · china · hbm · openai · star',
+  },
+  en: {
+    list: 'Companies', listAria: 'Company list', search: 'Company or ticker…', searchAria: 'Search company or ticker',
+    colName: 'Company', colPx: 'Price · Day', allSectors: 'All sectors', sectorAria: 'Filter by sector',
+    panels: 'Panels', l1: '1 chart', l2: '2 charts', l4: '4 charts', l6: '6 charts', l9: '9 charts',
+    clear: 'Clear', clearTip: 'Empty every panel',
+    hint: 'Tap or drag a company from the list to see its chart',
+    cmdPh: 'NVDA · /chart NVDA AMD · /sim taiwan · /geo', cmdAria: 'Command line', cmdHint: '↵ run',
+    mList: 'List', mCharts: 'Charts',
+    qLoading: 'Loading prices…', qNone: 'No prices', qNoneTip: 'No prices arrived: check MARKETSTACK_KEY in Railway (🩺).',
+    qOk: '{n} priced', qOkTip: 'Close of the last trading day and its change versus the previous close.',
+    noMatch: 'No company matches “{q}”.',
+    emptyT: 'Empty panel', emptyB: 'Tap a company in the list or drag it here.',
+    dossier: 'Financial dossier: revenue, margins, cash flow…', trade: 'Trade', tradeTip: 'Open the buy / sell panel',
+    close: 'Close this panel', tfAria: 'Chart period', loading: 'Loading chart…', noData: 'No price data for this period',
+    hi: 'High', lo: 'Low', dragTip: 'Tap to open · drag to a panel',
+    unknownCmd: 'Unknown command: ', noTickers: 'No recognized tickers: ',
+    presets: 'Scenarios: taiwan · china · hbm · openai · star',
+  },
+};
+function _tt(k) {
+  const d = _TT[(typeof LANG !== 'undefined' && LANG === 'en') ? 'en' : 'es'];
+  return d[k] != null ? d[k] : (_TT.es[k] != null ? _TT.es[k] : k);
+}
+const _termIsPhone = () => window.innerWidth <= 560;
+const _TERM_ICON = {
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+};
+
+// Re-etiqueta los textos fijos (data-tt / -ph / -title / -aria) al cambiar de idioma
+window._termRelabel = function() {
+  const root = document.getElementById('terminal-panel');
+  if (!root) return;
+  root.querySelectorAll('[data-tt]').forEach(el => { el.textContent = _tt(el.dataset.tt); });
+  root.querySelectorAll('[data-tt-ph]').forEach(el => { el.placeholder = _tt(el.dataset.ttPh); });
+  root.querySelectorAll('[data-tt-title]').forEach(el => { el.title = _tt(el.dataset.ttTitle); });
+  root.querySelectorAll('[data-tt-aria]').forEach(el => { el.setAttribute('aria-label', _tt(el.dataset.ttAria)); });
+  if (_term.inited) {
+    _termBuildSidebar();
+    try { if (window.TermData && window.TermData.relabel) window.TermData.relabel(); } catch (e) {}
+  }
+};
+if (typeof applyLang === 'function') {
+  const _applyLangTerm = applyLang;
+  applyLang = function() { _applyLangTerm.apply(this, arguments); try { window._termRelabel(); } catch (e) {} };
+}
 
 function initTerminalTab() {
   if (!_term.inited) {
     _term.inited = true;
     // teléfono: 4 gráficos en 390px no se leen — arranca con uno grande
-    if (window.innerWidth <= 560 && _term.layout > 1) _term.layout = 1;
-    _termBuildSidebar();
-    // Tocar/clic en una empresa la abre en el primer panel libre (antes solo
-    // se podía ARRASTRAR — y en el teléfono no existe arrastrar).
+    if (_termIsPhone() && _term.layout > 1) _term.layout = 1;
+    // panel 📋 Datos montado desde el inicio: su interruptor queda SIEMPRE en la barra
+    try { if (window.TermData && window.TermData.mount) window.TermData.mount(); } catch (e) {}
+    window._termRelabel();   // textos ES/EN + arma la lista (sectores y empresas)
+    // Tocar/clic (o Enter) en una empresa la abre en el primer panel libre;
+    // arrastrarla la deja en el panel que elijas.
     const tl = document.getElementById('term-list');
-    if (tl) tl.addEventListener('click', e => {
-      const it = e.target.closest('.term-item'); if (!it) return;
-      let idx = _term.cells.findIndex(c => !c.nodeId);
-      if (idx < 0) idx = 0;
-      _termLoadCell(idx, it.dataset.id, it.dataset.mkt, (_term.cells[idx] && _term.cells[idx].tf) || '1M');
-    });
+    if (tl) {
+      tl.addEventListener('click', e => { const it = e.target.closest('.term-item'); if (it) _termOpenFromList(it); });
+      tl.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const it = e.target.closest('.term-item'); if (!it) return;
+        e.preventDefault(); _termOpenFromList(it);
+      });
+      tl.addEventListener('dragstart', e => { const it = e.target.closest('.term-item'); if (it) window._termDragStart(e, it.dataset.id, it.dataset.mkt); });
+      tl.addEventListener('dragend', e => { const it = e.target.closest('.term-item'); if (it) it.classList.remove('dragging'); });
+    }
+    const grid = document.getElementById('term-grid');
+    if (grid) grid.addEventListener('click', _termGridClick);
+    // cambio de tema claro/oscuro: los gráficos (canvas) toman los colores nuevos
+    try { new MutationObserver(_termRecolor).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+    let rt = null;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => _termApplyGrid(_term.layout), 120); });
   }
+  const hadCharts = _term.cells.some(c => c && c.nodeId);   // antes de reconstruir la grilla
   _termSetLayout(_term.layout, true);
   _initTermCmdBar();
+  if (!_term.seeded) { _term.seeded = true; setTimeout(_termSeed, 400); }
+  // teléfono: respeta la última vista elegida; si no, gráficos cuando hay alguno abierto
+  if (_termIsPhone()) window._termView(_term.userView ? _term.view : (hadCharts ? 'charts' : 'list'));
   // If quotes are absent or stale (>10 min), refresh them now so the sidebar
   // can show live prices.  MKT.ts is null until the first successful fetch.
   const STALE_MS = 10 * 60 * 1000;
   if (!MKT.ts || Date.now() - MKT.ts > STALE_MS) {
     if (typeof fetchQuotes === 'function') fetchQuotes();
   }
+}
+
+// Primera apertura: los paneles VACÍOS se llenan con tus posiciones (cartera
+// local MKT.pos) y luego con anclas de la cadena de IA — así la Terminal nunca
+// abre como cuatro cajas vacías. Solo gráficos de datos reales (/api/candles).
+const _TERM_SEED = ['NVDA', 'TSM', 'ASML', 'AVGO', 'AMD', 'MSFT', 'GOOGL', 'MU', 'META'];
+function _termSeed() {
+  const NDS = window.NODES || [];
+  const byMkt = {}; NDS.forEach(n => { if (n.mkt && !byMkt[n.mkt]) byMkt[n.mkt] = n; });
+  const mine = Object.keys((window.MKT && MKT.pos) || {}).map(id => (window.NODE_BY_ID || {})[id]).filter(n => n && n.mkt);
+  const pool = mine.concat(_TERM_SEED.map(t => byMkt[t]).filter(Boolean));
+  const seen = new Set(_term.cells.filter(c => c && c.nodeId).map(c => c.nodeId));
+  let any = false;
+  _term.cells.forEach((c, i) => {
+    if (c && c.nodeId) return;
+    const n = pool.find(x => !seen.has(x.id));
+    if (!n) return;
+    seen.add(n.id); any = true;
+    _termLoadCell(i, n.id, n.mkt, '1M');
+  });
+  if (any && _termIsPhone() && _term.view === 'list' && !_term.userView) window._termView('charts');
+}
+
+// teléfono: alterna Lista / Gráficos (en pantallas anchas ambas se ven siempre)
+window._termView = function(v, byUser) {
+  const sh = document.getElementById('term-shell');
+  if (!sh) return;
+  if (byUser) _term.userView = true;
+  _term.view = v === 'charts' ? 'charts' : 'list';
+  sh.dataset.view = _term.view;
+  sh.querySelectorAll('.kt-mtab').forEach(b => b.setAttribute('aria-selected', b.dataset.v === _term.view ? 'true' : 'false'));
+  if (_term.view === 'charts') setTimeout(() => _term.cells.forEach(c => { try { if (c && c.chartInst) c.chartInst.resize(); } catch (e) {} }), 40);
+};
+
+function _termOpenFromList(it) {
+  const id = it.dataset.id, mkt = it.dataset.mkt;
+  const open = _term.cells.findIndex(c => c && c.nodeId === id);
+  if (open >= 0) {
+    // ya está abierta: no duplicarla — se resalta su panel y se muestran sus datos
+    try { window.TermData && window.TermData.load(id, mkt); } catch (e) {}
+    _termFlash(open);
+  } else {
+    let idx = _term.cells.findIndex(c => !c.nodeId);
+    if (idx < 0) idx = 0;
+    _termLoadCell(idx, id, mkt, (_term.cells[idx] && _term.cells[idx].tf) || '1M');
+  }
+  if (_termIsPhone()) window._termView('charts');
 }
 
 function _initTermCmdBar() {
@@ -8639,7 +8893,7 @@ function _execTermCmd(cmd) {
     const presetMap = { taiwan: 'taiwan_conflict', china: 'china_chip_ban_total', hbm: 'hbm_shortage_2027', openai: 'openai_ipo_impact', star: 'starshield_reveal' };
     const key = Object.keys(presetMap).find(k => lower.includes(k));
     if (key && window.nexusCore?.runPreset) { window.nexusCore.runPreset(presetMap[key]); return; }
-    if (typeof toast === 'function') toast('Presets: taiwan · china · hbm · openai · star');
+    if (typeof toast === 'function') toast(_tt('presets'));
     return;
   }
   // /geo
@@ -8659,46 +8913,57 @@ function _execTermCmd(cmd) {
         loaded++;
       }
     });
-    if (!loaded && typeof toast === 'function') toast('Sin tickers reconocidos: ' + syms.join(', '));
+    if (!loaded && typeof toast === 'function') toast(_tt('noTickers') + syms.join(', '));
+    else if (loaded && _termIsPhone()) window._termView('charts');
     return;
   }
 
   // Single ticker lookup: NVDA, TSMC, "NVDA Equity"…
   const sym = (cmd.trim().toUpperCase().split(/\s+/)[0]) || '';
   const n = findNode(sym);
-  if (n) { window._termLoadToFirstEmpty(n.id, n.mkt); return; }
+  if (n) { window._termLoadToFirstEmpty(n.id, n.mkt); if (_termIsPhone()) window._termView('charts'); return; }
 
   // Fallback: send to Claude analysis
   switchTab('analysis');
   const ai = document.getElementById('ai-input');
   if (ai) { ai.value = cmd; document.getElementById('ai-ask-btn')?.click(); }
-  else if (typeof toast === 'function') toast('Comando no reconocido: ' + cmd);
+  else if (typeof toast === 'function') toast(_tt('unknownCmd') + cmd);
 }
 
+// panel que ya muestra esa empresa → se resalta (no se duplica)
+function _termFlash(idx) {
+  const cell = document.getElementById('term-grid')?.children[idx];
+  if (cell) { cell.classList.add('drag-over'); setTimeout(() => cell.classList.remove('drag-over'), 650); }
+}
 window._termLoadToFirstEmpty = function(nodeId, ticker) {
   const node = (window.NODES || []).find(n => n.id === nodeId);
   const tk = ticker || node?.mkt || nodeId;
+  const open = _term.cells.findIndex(c => c && c.nodeId === nodeId);
+  if (open >= 0) { _termFlash(open); try { window.TermData && window.TermData.load(nodeId, tk); } catch (e) {} return; }
   let idx = _term.cells.findIndex(c => !c.nodeId);
   if (idx < 0) idx = 0; // grid full → overwrite first panel
   _termLoadCell(idx, nodeId, tk, _term.cells[idx]?.tf || '1M');
 };
 
-function _termBuildSidebar() {
-  const nodes = (window.NODES || []).filter(n => n.mkt).sort((a,b) => a.label.localeCompare(b.label));
+// macro-sector (SECTORS9) de una empresa: 13 grupos legibles en vez de 40 categorías
+const _termSectorOf = n => (window.CAT_TO_SECTOR || {})[n.cat] || 'cloud_ia';
+window._termCat = () => _term._lastCat || '';
 
-  // Category chips
-  const cats = [...new Set(nodes.map(n => n.cat))].slice(0, 12);
+function _termBuildSidebar() {
+  const nodes = (window.NODES || []).filter(n => n.mkt);
+  const cnt = {};
+  nodes.forEach(n => { const k = _termSectorOf(n); cnt[k] = (cnt[k] || 0) + 1; });
+  const keys = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]);
   const catEl = document.getElementById('term-cats');
   if (catEl) {
-    catEl.innerHTML = `<button onclick="window._termFilter('')" style="padding:2px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;
-      background:rgba(142,90,255,0.2);border:1px solid rgba(142,90,255,0.4);border-radius:2px;color:#cabeff;cursor:pointer;letter-spacing:0.05em">ALL</button>` +
-      cats.map(c => `<button onclick="window._termFilter('',\'${c}\')" style="padding:2px 8px;font-size:9px;font-family:'JetBrains Mono',monospace;
-        background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:2px;
-        color:rgba(255,255,255,0.4);cursor:pointer;letter-spacing:0.05em"
-        title="${c}">${c.replace(/_/g,' ').toUpperCase().slice(0,8)}</button>`).join('');
+    const cur = _term._lastCat || '';
+    catEl.innerHTML = `<select class="kt-select" id="term-sector" aria-label="${esc(_tt('sectorAria'))}">` +
+      `<option value="">${esc(_tt('allSectors'))} · ${nodes.length}</option>` +
+      keys.map(k => `<option value="${esc(k)}"${k === cur ? ' selected' : ''}>${esc(window.sectorName ? window.sectorName(k) : k)} · ${cnt[k]}</option>`).join('') +
+      `</select>`;
+    catEl.querySelector('select').onchange = e => window._termFilter(document.getElementById('term-search')?.value || '', e.target.value);
   }
-
-  _termRenderList(nodes);
+  window._termFilter(_term._lastQuery, _term._lastCat);
 }
 
 // Re-render sidebar prices after a quote refresh without a full rebuild.
@@ -8708,78 +8973,101 @@ window._termRefreshPrices = function() {
   if (!_term.inited) return; // Terminal never opened — nothing to update
   const filter = document.getElementById('term-search')?.value || _term._lastQuery || '';
   window._termFilter(filter, _term._lastCat || '');
+  // cabeceras de los paneles abiertos (precio/variación del día)
+  _term.cells.forEach((c, i) => { if (c && c.nodeId) _termPaintQuote(i, c.ticker); });
 };
+
+// cotización del catálogo (MKT.quotes: cierre EOD + cierre anterior)
+function _termQuote(tk) {
+  const q = (window.MKT && MKT.quotes && MKT.quotes[tk]) || {};
+  const px = parseFloat(q.live || q.close || 0) || 0;
+  const prev = parseFloat(q.prev || 0) || 0;
+  return { px, pct: px && prev ? (px - prev) / prev * 100 : null };
+}
+function _termFmtPx(v) {
+  if (!v || !isFinite(v)) return '—';
+  const d = Math.abs(v) < 1 ? 4 : 2;
+  return '$' + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+// variación: color SOLO con significado (sube / baja / sin dato)
+function _termFmtPct(p, arrow) {
+  if (p == null || !isFinite(p)) return { t: '—', c: 'kt-flat' };
+  const c = p > 0.0049 ? 'kt-up' : p < -0.0049 ? 'kt-down' : 'kt-flat';
+  const a = arrow ? (c === 'kt-up' ? '▲ ' : c === 'kt-down' ? '▼ ' : '') : '';
+  return { t: a + (p > 0 ? '+' : p < 0 ? '−' : '') + Math.abs(p).toFixed(2) + '%', c };
+}
 
 function _termRenderList(nodes) {
   const el = document.getElementById('term-list');
   if (!el) return;
-  // Banner: show how many have live prices
-  const withPrice = nodes.filter(n => { const q=MKT?.quotes?.[n.mkt]||{}; return parseFloat(q.live||q.close||0)>0; }).length;
-  const quotesLoaded = MKT?.ts;
-  const banner = quotesLoaded
-    ? (withPrice === 0
-        ? `<div style="padding:6px 10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:#f59e0b;background:rgba(245,158,11,.08);border-bottom:1px solid rgba(245,158,11,.2)">⚠ Sin precios — verificá MARKETSTACK_KEY en Railway</div>`
-        : `<div style="padding:4px 10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.25)">💹 ${withPrice}/${nodes.length} con cotización · EOD</div>`)
-    : `<div style="padding:4px 10px;font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.2)">⟳ Cargando precios…</div>`;
-
-  el.innerHTML = banner + nodes.map(n => {
-    const q = MKT?.quotes?.[n.mkt] || {};
-    const price = parseFloat(q.live || q.close || 0) || 0;
-    const prev = parseFloat(q.prev || 0) || 0;
-    const pct = price && prev ? ((price - prev) / prev * 100) : 0;
-    const pctStr = pct ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '—';
-    const pctColor = pct > 0 ? '#00ff88' : pct < 0 ? '#ff4444' : 'rgba(255,255,255,0.3)';
-    const catColor = `var(--c-${n.cat}, #888)`;
-    return `<div class="term-item" draggable="true"
-        data-id="${n.id}" data-mkt="${n.mkt}"
-        ondragstart="window._termDragStart(event,\'${n.id}\',\'${n.mkt}\')"
-        ondragend="this.classList.remove('dragging')"
-        title="Arrastrá al panel · ${n.mkt}">
-      <span style="width:6px;height:6px;border-radius:50%;background:${catColor};flex-shrink:0"></span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:#e5e2e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.label}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3)">${n.mkt}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#e5e2e1">${price ? '$'+price.toFixed(2) : '—'}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pctColor}">${pctStr}</div>
-      </div>
-    </div>`;
-  }).join('');
+  // estado de precios (sobre TODO el catálogo con ticker, no solo el filtro)
+  const st = document.getElementById('term-qstatus');
+  if (st) {
+    const all = (window.NODES || []).filter(n => n.mkt);
+    const withPrice = all.filter(n => _termQuote(n.mkt).px > 0).length;
+    if (!MKT?.ts) { st.className = 'kt-qs'; st.title = ''; st.innerHTML = '<i></i>' + esc(_tt('qLoading')); }
+    else if (!withPrice) { st.className = 'kt-qs warn'; st.title = _tt('qNoneTip'); st.innerHTML = '<i></i>' + esc(_tt('qNone')); }
+    else { st.className = 'kt-qs ok'; st.title = _tt('qOkTip'); st.innerHTML = '<i></i>' + esc(_tt('qOk').replace('{n}', withPrice)); }
+  }
+  const open = new Set(_term.cells.filter(c => c && c.nodeId).map(c => c.nodeId));
+  const tip = esc(_tt('dragTip'));
+  el.innerHTML = nodes.length ? nodes.map(n => {
+    const q = _termQuote(n.mkt), f = _termFmtPct(q.pct);
+    return `<div class="term-item${open.has(n.id) ? ' on' : ''}" role="listitem" tabindex="0" draggable="true" data-id="${esc(n.id)}" data-mkt="${esc(n.mkt)}" title="${tip}">` +
+      `<span class="kt-dot" style="background:${sectorColorFor(n.cat)}"></span>` +
+      `<div style="min-width:0"><div class="kt-nm">${esc(n.label)}</div><div class="kt-tk">${esc(n.mkt)}</div></div>` +
+      `<div class="kt-q"><div class="kt-px">${_termFmtPx(q.px)}</div><div class="kt-chg ${f.c}">${f.t}</div></div></div>`;
+  }).join('') : `<div class="kt-empty-list">${esc(_tt('noMatch').replace('{q}', _term._lastQuery || ''))}</div>`;
+}
+// marca en la lista las empresas abiertas en algún panel + contador del teléfono
+function _termMarkOpen() {
+  const open = new Set(_term.cells.filter(c => c && c.nodeId).map(c => c.nodeId));
+  document.querySelectorAll('#term-list .term-item').forEach(it => it.classList.toggle('on', open.has(it.dataset.id)));
+  const mc = document.getElementById('term-mcount');
+  if (mc) mc.textContent = open.size ? String(open.size) : '';
 }
 
 window._termFilter = function(query, cat) {
   _term._lastQuery = query || '';
   _term._lastCat = cat || '';
   let nodes = (window.NODES || []).filter(n => n.mkt);
-  if (cat) nodes = nodes.filter(n => n.cat === cat);
+  if (cat) {
+    // acepta un macro-sector (SECTORS9) o, por compatibilidad, una categoría
+    const isSector = !!(window.SECTORS9 || {})[cat];
+    nodes = nodes.filter(n => isSector ? _termSectorOf(n) === cat : n.cat === cat);
+  }
   if (query) {
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().trim();
     nodes = nodes.filter(n => n.label.toLowerCase().includes(q) || n.mkt.toLowerCase().includes(q));
   }
   nodes.sort((a,b) => a.label.localeCompare(b.label));
   _termRenderList(nodes);
 };
 
-window._termSetLayout = function(n, silent) {
-  _term.layout = n;
-  // Update buttons
-  document.querySelectorAll('.term-layout-btn').forEach(b => {
-    const isActive = +b.dataset.l === n;
-    b.style.background = isActive ? 'rgba(142,90,255,0.3)' : 'rgba(255,255,255,0.06)';
-    b.style.borderColor = isActive ? 'rgba(142,90,255,0.5)' : 'rgba(255,255,255,0.1)';
-    b.style.color = isActive ? '#cabeff' : 'rgba(255,255,255,0.5)';
-  });
-  // Update grid
+// columnas/filas de la grilla (teléfono: siempre una columna)
+function _termApplyGrid(n) {
   const grid = document.getElementById('term-grid');
   if (!grid) return;
-  const cols = n <= 1 ? 1 : n <= 2 ? 2 : n <= 4 ? 2 : 3;
-  const rows = n <= 1 ? 1 : n <= 2 ? 1 : n <= 4 ? 2 : n <= 6 ? 2 : 3;
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-  grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  const cols = _termIsPhone() ? 1 : n <= 1 ? 1 : n <= 4 ? 2 : 3;
+  const rows = Math.max(1, Math.ceil(n / cols));
+  grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+  grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+}
+
+window._termSetLayout = function(n, silent) {
+  _term.layout = n;
+  document.querySelectorAll('.term-layout-btn').forEach(b => {
+    const isActive = +b.dataset.l === n;
+    b.classList.toggle('active-layout', isActive);
+    b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  const grid = document.getElementById('term-grid');
+  if (!grid) return;
+  _termApplyGrid(n);
 
   // Preserve existing assignments
   const existing = _term.cells.slice(0, n);
+  _term.cells.forEach(c => { try { if (c && c.chartInst) c.chartInst.destroy(); } catch (e) {} });
   _term.cells = [];
   grid.innerHTML = '';
   for (let i = 0; i < n; i++) {
@@ -8790,16 +9078,15 @@ window._termSetLayout = function(n, silent) {
       setTimeout(() => _termLoadCell(i, existing[i].nodeId, existing[i].ticker, existing[i].tf), 50);
     }
   }
+  _termMarkOpen();
 };
 
 function _termMakeCell(idx) {
   const div = document.createElement('div');
   div.className = 'term-cell';
   div.dataset.idx = idx;
-  div.innerHTML = `<div class="term-cell-empty">
-    <span style="font-size:22px;opacity:0.2">⬛</span>
-    <span>Arrastrá una empresa aquí</span>
-  </div>`;
+  div.innerHTML = `<div class="term-cell-empty">${_TERM_ICON.chart}` +
+    `<b data-tt="emptyT">${esc(_tt('emptyT'))}</b><span data-tt="emptyB">${esc(_tt('emptyB'))}</span></div>`;
   div.addEventListener('dragover', e => { e.preventDefault(); div.classList.add('drag-over'); });
   div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
   div.addEventListener('drop', e => {
@@ -8815,8 +9102,55 @@ function _termMakeCell(idx) {
 window._termDragStart = function(e, id, mkt) {
   e.dataTransfer.setData('nodeId', id);
   e.dataTransfer.setData('ticker', mkt);
-  e.currentTarget.classList.add('dragging');
+  const it = (e.target && e.target.closest && e.target.closest('.term-item')) || e.currentTarget;
+  if (it && it.classList) it.classList.add('dragging');
 };
+
+// botones de los paneles (delegado): periodo, dossier, operar, cerrar; panel vacío → buscar
+function _termGridClick(e) {
+  const b = e.target.closest('[data-act]');
+  const cellEl = e.target.closest('.term-cell');
+  if (!cellEl) return;
+  const idx = +cellEl.dataset.idx;
+  const c = _term.cells[idx];
+  if (!b) {
+    if (!c || !c.nodeId) {
+      if (_termIsPhone()) window._termView('list');
+      else document.getElementById('term-search')?.focus();
+    }
+    return;
+  }
+  const act = b.dataset.act;
+  if (act === 'tf') return window._termChangeTf(idx, b.dataset.tf);
+  if (act === 'close') return window._termClearCell(idx);
+  if (!c || !c.nodeId) return;
+  if (act === 'dossier') { if (window.openFinCard) window.openFinCard(c.ticker); return; }
+  if (act === 'trade') {
+    const node = (window.NODES || []).find(n => n.id === c.nodeId);
+    if (typeof openTradeModal === 'function') openTradeModal(c.nodeId, c.ticker, node?.label || c.ticker);
+  }
+}
+
+// precio y variación del día en la cabecera de un panel
+function _termPaintQuote(idx, ticker, fallbackPx) {
+  const q = _termQuote(ticker);
+  const pxEl = document.getElementById(`term-px-${idx}`), chEl = document.getElementById(`term-chg-${idx}`);
+  const px = q.px || fallbackPx || 0;
+  if (pxEl) pxEl.textContent = _termFmtPx(px);
+  if (chEl) { const f = _termFmtPct(q.px ? q.pct : null, true); chEl.className = 'kt-ch-chg ' + f.c; chEl.textContent = f.t; }
+}
+
+// color del token CSS de la Terminal (los gráficos de canvas no leen var())
+function _termTok(name, dflt) {
+  try { const v = getComputedStyle(document.getElementById('terminal-panel')).getPropertyValue(name).trim(); return v || dflt; }
+  catch (e) { return dflt; }
+}
+function _termAlpha(color, a) {
+  const m = /^#([0-9a-f]{6})$/i.exec(color || '');
+  if (!m) return color;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
 
 async function _termLoadCell(idx, nodeId, ticker, tf) {
   const grid = document.getElementById('term-grid');
@@ -8824,121 +9158,152 @@ async function _termLoadCell(idx, nodeId, ticker, tf) {
   const cell = grid.children[idx];
   if (!cell) return;
 
-  _term.cells[idx] = { nodeId, ticker, tf, chartInst: null };
+  if (_term.cells[idx]?.chartInst) { try { _term.cells[idx].chartInst.destroy(); } catch (e) {} }
+  const slot = { nodeId, ticker, tf, chartInst: null };
+  _term.cells[idx] = slot;
   // panel de datos (📋): ficha + valuación + fundamentales + cadena
   try { window.TermData?.load(nodeId, ticker); } catch (e) {}
 
   const node = (window.NODES || []).find(n => n.id === nodeId);
-  const q = MKT?.quotes?.[ticker] || {};
-  const price = parseFloat(q.live || q.close || 0) || 0;
-  const prev = parseFloat(q.prev || 0) || 0;
-  const pct = price && prev ? ((price - prev) / prev * 100) : 0;
-  const pctColor = pct > 0 ? '#00ff88' : pct < 0 ? '#ff4444' : 'rgba(255,255,255,0.4)';
-  const catColor = node ? `var(--c-${node.cat}, #8e5aff)` : '#8e5aff';
+  const label = node?.label || ticker;
+  const dot = node ? sectorColorFor(node.cat) : 'var(--kt-accent)';
   const tfs = ['1D','1W','1M','3M','1Y'];
 
-  cell.innerHTML = `
-    <div class="term-cell-header">
-      <span style="width:5px;height:5px;border-radius:50%;background:${catColor};flex-shrink:0"></span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#fff;flex:1">${ticker}</span>
-      <span style="font-size:10px;color:rgba(255,255,255,0.5);margin-right:4px">${node?.label || ''}</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#fff;margin-right:6px">${price ? '$'+price.toFixed(2) : '—'}</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pctColor};margin-right:8px">${pct?(pct>0?'+':'')+pct.toFixed(2)+'%':'—'}</span>
-      <div style="display:flex;gap:2px;margin-right:8px">
-        ${tfs.map(t=>`<button class="term-tf-btn${t===tf?' active':''}" onclick="window._termChangeTf(${idx},'${t}')">${t}</button>`).join('')}
-      </div>
-      <button onclick="window.openFinCard&&window.openFinCard('${ticker}')" title="Dossier financiero: ingresos, dilución, FCF, márgenes, ROE…"
-        style="padding:2px 10px;background:rgba(0,224,255,0.08);border:1px solid rgba(0,224,255,0.35);
-          border-radius:2px;color:#00E0FF;font-size:9px;font-family:'JetBrains Mono',monospace;
-          letter-spacing:0.08em;cursor:pointer;transition:background .15s;margin-right:6px"
-        onmouseover="this.style.background='rgba(0,224,255,0.18)'"
-        onmouseout="this.style.background='rgba(0,224,255,0.08)'">📊 DOSSIER</button>
-      <button onclick="openTradeModal('${nodeId}','${ticker}','${(node?.label||ticker).replace(/'/g,"\\'")}')"
-        style="padding:2px 10px;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.35);
-          border-radius:2px;color:#00ff88;font-size:9px;font-family:'JetBrains Mono',monospace;
-          letter-spacing:0.08em;cursor:pointer;transition:background .15s;margin-right:6px"
-        onmouseover="this.style.background='rgba(0,255,136,0.2)'"
-        onmouseout="this.style.background='rgba(0,255,136,0.1)'">OPERAR</button>
-      <button onclick="window._termClearCell(${idx})"
-        style="width:18px;height:18px;border-radius:2px;background:rgba(255,255,255,0.06);
-          border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);font-size:10px;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
-    </div>
-    <div class="term-chart-wrap">
-      <canvas id="term-canvas-${idx}" style="width:100%;height:100%"></canvas>
-      <div id="term-loading-${idx}" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-        font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:0.1em">
-        CARGANDO…
-      </div>
-    </div>`;
+  cell.innerHTML =
+    `<div class="term-cell-header">` +
+      `<div class="kt-ch-id"><span class="kt-dot" style="background:${dot}"></span>` +
+        `<span class="kt-ch-tk">${esc(ticker)}</span><span class="kt-ch-nm" title="${esc(label)}">${esc(label)}</span></div>` +
+      `<div class="kt-ch-q"><span class="kt-ch-px" id="term-px-${idx}">—</span><span class="kt-ch-chg kt-flat" id="term-chg-${idx}">—</span></div>` +
+      `<div class="kt-ch-ctl">` +
+        `<div class="kt-tf" role="group" data-tt-aria="tfAria" aria-label="${esc(_tt('tfAria'))}">` +
+          tfs.map(t => `<button type="button" class="term-tf-btn${t === tf ? ' active' : ''}" aria-pressed="${t === tf}" data-act="tf" data-tf="${t}">${t}</button>`).join('') +
+        `</div>` +
+        `<button type="button" class="kt-ic" data-act="dossier" data-tt-title="dossier" data-tt-aria="dossier" title="${esc(_tt('dossier'))}" aria-label="${esc(_tt('dossier'))}">${_TERM_ICON.doc}</button>` +
+        `<button type="button" class="kt-trade" data-act="trade" data-tt-title="tradeTip" title="${esc(_tt('tradeTip'))}"><span data-tt="trade">${esc(_tt('trade'))}</span></button>` +
+        `<button type="button" class="kt-ic" data-act="close" data-tt-title="close" data-tt-aria="close" title="${esc(_tt('close'))}" aria-label="${esc(_tt('close'))}">${_TERM_ICON.x}</button>` +
+      `</div>` +
+    `</div>` +
+    `<div class="kt-stats" id="term-stats-${idx}" aria-live="polite"></div>` +
+    `<div class="term-chart-wrap">` +
+      `<canvas id="term-canvas-${idx}" role="img" aria-label="${esc(label)} · ${tf}"></canvas>` +
+      `<div class="kt-loading" id="term-loading-${idx}"><span class="kt-spin" aria-hidden="true"></span><span data-tt="loading">${esc(_tt('loading'))}</span></div>` +
+    `</div>`;
+  _termPaintQuote(idx, ticker);
+  _termMarkOpen();
 
   // Load chart data
   try {
     const BASE = '';
     const rangeMap = {'1D':'1d','1W':'5d','1M':'1mo','3M':'3mo','1Y':'1y'};
-    const res = await fetch(`${BASE}/api/candles/${ticker}?range=${rangeMap[tf]||'1mo'}&interval=${tf==='1D'?'5m':tf==='1W'?'30m':'1d'}`);
+    const res = await fetch(`${BASE}/api/candles/${encodeURIComponent(ticker)}?range=${rangeMap[tf]||'1mo'}&interval=${tf==='1D'?'5m':tf==='1W'?'30m':'1d'}`);
     const data = await res.json();
+    if (_term.cells[idx] !== slot) return;          // otro ticker/periodo tomó el panel mientras cargaba
     const loader = document.getElementById(`term-loading-${idx}`);
+    const canvas = document.getElementById(`term-canvas-${idx}`);
+    const closes = (data && Array.isArray(data.c)) ? data.c.map(Number) : [];
+    const pts = closes.filter(v => isFinite(v) && v > 0);
+    if (!canvas || pts.length < 2) {
+      if (loader) { loader.className = 'kt-loading err'; loader.innerHTML = `<span data-tt="noData">${esc(_tt('noData'))}</span>`; }
+      return;
+    }
     if (loader) loader.style.display = 'none';
 
-    const canvas = document.getElementById(`term-canvas-${idx}`);
-    if (!canvas || !data.c?.length) return;
+    // estadísticas del periodo (de la serie real): variación, máximo, mínimo
+    const first = pts[0], last = pts[pts.length - 1];
+    const chg = (last / first - 1) * 100, f = _termFmtPct(chg);
+    const stats = document.getElementById(`term-stats-${idx}`);
+    if (stats) stats.innerHTML =
+      `<span>${tf}<b class="${f.c}">${f.t}</b></span>` +
+      `<span><i data-tt="hi">${esc(_tt('hi'))}</i><b>${_termFmtPx(Math.max(...pts))}</b></span>` +
+      `<span><i data-tt="lo">${esc(_tt('lo'))}</i><b>${_termFmtPx(Math.min(...pts))}</b></span>`;
+    if (!_termQuote(ticker).px) _termPaintQuote(idx, ticker, last);   // sin cotización: último cierre de la serie
 
-    if (_term.cells[idx]?.chartInst) {
-      _term.cells[idx].chartInst.destroy();
-    }
-
+    const loc = (typeof LANG !== 'undefined' && LANG === 'en') ? 'en-US' : 'es';
     const labels = data.t ? data.t.map(t => {
       const d = new Date(t * 1000);
-      return tf === '1D' ? d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})
-           : d.toLocaleDateString('es',{month:'short',day:'numeric'});
-    }) : data.c.map((_,i)=>i);
+      return tf === '1D' ? d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+           : d.toLocaleDateString(loc, { month: 'short', day: 'numeric' });
+    }) : closes.map((_, i) => i);
 
-    const color = pct >= 0 ? '#00ff88' : '#ff4444';
+    const color = chg >= 0 ? _termTok('--kt-up', '#2EBD85') : _termTok('--kt-down', '#F6465D');
+    const TICK = _termTok('--kt-ink-3', '#6E7586'), GRIDC = _termTok('--kt-line', 'rgba(255,255,255,.07)');
+    const TIPBG = _termTok('--kt-panel-2', '#171B25'), INK = _termTok('--kt-ink', '#E7E9EF'), LINE2 = _termTok('--kt-line-2', 'rgba(255,255,255,.13)');
+    const MONO = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";   // sin la fuente → monoespaciada del sistema, nunca serif
     const inst = new Chart(canvas, {
       type: 'line',
       data: {
         labels,
         datasets: [{
-          data: data.c,
+          data: closes,
           borderColor: color,
-          borderWidth: 1.5,
+          borderWidth: 1.6,
           pointRadius: 0,
+          pointHoverRadius: 3,
+          pointHoverBackgroundColor: color,
           fill: true,
           backgroundColor: (ctx) => {
-            const g = ctx.chart.ctx.createLinearGradient(0,0,0,ctx.chart.height);
-            g.addColorStop(0, color.replace(')', ',0.15)').replace('rgb','rgba'));
-            g.addColorStop(1, color.replace(')', ',0)').replace('rgb','rgba'));
+            const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height || 200);
+            g.addColorStop(0, _termAlpha(color, 0.18));
+            g.addColorStop(1, _termAlpha(color, 0));
             return g;
           },
-          tension: 0.3,
+          tension: 0.25,
+          spanGaps: true,
         }]
       },
       options: {
         responsive: true, maintainAspectRatio: false, animation: false,
+        interaction: { mode: 'index', intersect: false },
+        // panel bajo (6/9 paneles): sin fechas abajo → la línea usa todo el alto
+        onResize: (ch, size) => { const show = size.height > 150; if (ch.options.scales.x.ticks.display !== show) { ch.options.scales.x.ticks.display = show; ch.update('none'); } },
         plugins: { legend: { display: false }, tooltip: {
-          backgroundColor: 'rgba(10,10,10,0.9)', borderColor: 'rgba(255,255,255,0.1)',
-          borderWidth: 1, titleColor: '#fff', bodyColor: 'rgba(255,255,255,0.6)',
-          titleFont: { family: 'JetBrains Mono', size: 10 },
-          bodyFont: { family: 'JetBrains Mono', size: 11 },
-          callbacks: { label: ctx => '$' + ctx.parsed.y.toFixed(2) }
+          backgroundColor: TIPBG, borderColor: LINE2, borderWidth: 1, titleColor: TICK, bodyColor: INK,
+          titleFont: { family: MONO, size: 10 }, bodyFont: { family: MONO, size: 12, weight: '600' },
+          displayColors: false, padding: 8,
+          callbacks: { label: ctx => _termFmtPx(ctx.parsed.y) }
         }},
         scales: {
-          x: { display: false },
+          x: { grid: { display: false }, border: { display: false },
+            ticks: { display: (canvas.parentElement?.clientHeight || 0) > 150, color: TICK, font: { family: MONO, size: 10 }, maxTicksLimit: 5, maxRotation: 0, autoSkip: true } },
           y: {
             position: 'right',
-            grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
-            ticks: { color: 'rgba(255,255,255,0.25)', font: { family: 'JetBrains Mono', size: 9 },
-              maxTicksLimit: 4, callback: v => '$'+v.toFixed(0) }
+            grid: { color: GRIDC }, border: { display: false },
+            ticks: { color: TICK, font: { family: MONO, size: 10 }, maxTicksLimit: 5,
+              callback: v => '$' + (Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(2) : v.toFixed(4)) }
           }
         }
       }
     });
-    if (_term.cells[idx]) _term.cells[idx].chartInst = inst;
+    if (_term.cells[idx] === slot) slot.chartInst = inst; else inst.destroy();
+    _term._themeDark = document.body.classList.contains('dark');
   } catch(e) {
+    try { console.warn('[terminal] gráfico', ticker, tf, e); } catch (e2) {}
+    if (_term.cells[idx] !== slot) return;
     const loader = document.getElementById(`term-loading-${idx}`);
-    if (loader) { loader.textContent = 'Sin datos'; loader.style.color = 'rgba(255,80,80,0.5)'; }
+    if (loader) { loader.className = 'kt-loading err'; loader.innerHTML = `<span data-tt="noData">${esc(_tt('noData'))}</span>`; }
   }
+}
+
+// re-pinta los gráficos abiertos con los tokens del tema activo (sin pedir datos otra vez)
+function _termRecolor() {
+  const dark = document.body.classList.contains('dark');
+  if (_term._themeDark === dark) return;
+  _term._themeDark = dark;
+  const UP = _termTok('--kt-up', '#2EBD85'), DOWN = _termTok('--kt-down', '#F6465D');
+  const TICK = _termTok('--kt-ink-3', '#6E7586'), GRIDC = _termTok('--kt-line', 'rgba(255,255,255,.07)');
+  const TIPBG = _termTok('--kt-panel-2', '#171B25'), INK = _termTok('--kt-ink', '#E7E9EF'), LINE2 = _termTok('--kt-line-2', 'rgba(255,255,255,.13)');
+  _term.cells.forEach(c => {
+    const ch = c && c.chartInst; if (!ch) return;
+    try {
+      const ds = ch.data.datasets[0], v = (ds.data || []).filter(x => isFinite(x) && x > 0);
+      const col = v.length > 1 && v[v.length - 1] < v[0] ? DOWN : UP;
+      ds.borderColor = col; ds.pointHoverBackgroundColor = col;
+      ds.backgroundColor = (ctx) => { const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height || 200); g.addColorStop(0, _termAlpha(col, 0.18)); g.addColorStop(1, _termAlpha(col, 0)); return g; };
+      ch.options.scales.x.ticks.color = TICK; ch.options.scales.y.ticks.color = TICK; ch.options.scales.y.grid.color = GRIDC;
+      Object.assign(ch.options.plugins.tooltip, { backgroundColor: TIPBG, borderColor: LINE2, titleColor: TICK, bodyColor: INK });
+      ch.update('none');
+    } catch (e) {}
+  });
 }
 
 window._termChangeTf = function(idx, tf) {
@@ -8958,6 +9323,7 @@ window._termClearCell = function(idx) {
     const fresh = _termMakeCell(idx);
     grid.replaceChild(fresh, old);
   }
+  _termMarkOpen();
 };
 
 window._termClearAll = function() {
@@ -8973,10 +9339,8 @@ window._termOpenTicker = function(ticker) {
   if (typeof switchTab === 'function') switchTab('terminal');
   setTimeout(() => {
     if (!_term.inited) initTerminalTab();
-    // Find first empty cell
-    let idx = _term.cells.findIndex(c => !c.nodeId);
-    if (idx === -1) idx = 0; // overwrite first if all full
-    _termLoadCell(idx, node.id, node.mkt, '1M');
+    window._termLoadToFirstEmpty(node.id, node.mkt);   // ya abierta → se resalta, no se duplica
+    if (_termIsPhone()) window._termView('charts');
   }, 300);
   return true;
 };
@@ -9509,6 +9873,15 @@ window.loadTradeFlows = loadTradeFlows;
   window.closeTradePanelFn = function() {
     document.getElementById('trade-panel').style.display = 'none';
   };
+  // Orden ejecutada/cerrada (aviso de engine/toast.js) → refrescar el panel si está abierto
+  window.addEventListener('khipu:order', e => {
+    const ph = e && e.detail && e.detail.phase;
+    const tp = document.getElementById('trade-panel');
+    if ((ph === 'filled' || ph === 'closed') && tp && tp.style.display !== 'none') {
+      window.__tradeAcctCache = null;
+      _tpRefreshPositions(); _tpRefreshBlotter(); _tpLoadAccount();
+    }
+  });
 
   window.setTradePanelSide = function(side) {
     _tp.side = side;
@@ -9591,7 +9964,7 @@ window.loadTradeFlows = loadTradeFlows;
     return status === 400 && /ALPACA_KEY/i.test(msg) && /(not configured|sin configurar)/i.test(msg);
   }
 
-  function _tpLocalSim(ticker, side, qty, setS) {
+  function _tpLocalSim(ticker, side, qty, setS, ord, tid) {
     const node = (window.NODES || []).find(n => n.mkt === ticker);
     const q = (window.MKT && MKT.quotes && MKT.quotes[ticker]) || {};
     const px = q.close || q.live || q.prev || 0;
@@ -9606,11 +9979,14 @@ window.loadTradeFlows = loadTradeFlows;
       setS('#fbbf24', _tpL(
         `✓ Operación <b>simulada en tu portafolio local</b> (no hay bróker configurado): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">Para operar en el bróker hay que configurar TRADE_PIN y Alpaca en Railway (revisa 🩺).</span>`,
         `✓ <b>Simulated in your local portfolio</b> (no broker configured): ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} @ $${px.toFixed(2)}.<br><span style="font-size:10px;opacity:.7">To trade on the broker, set TRADE_PIN and Alpaca in Railway (see 🩺).</span>`));
-      if (typeof toast === 'function') toast(_tpL('Simulada (local): ', 'Simulated (local): ') + `${side} ${qty}× ${ticker}`);
+      if (window.KhipuToast) window.KhipuToast.order.result(Object.assign({}, ord || { side, symbol: ticker, qty }, { price: px }), { ok: true, local: true }, tid);
+      else if (typeof toast === 'function') toast(_tpL('Simulada (local): ', 'Simulated (local): ') + `${side} ${qty}× ${ticker}`);
     } else {
-      setS('#f87171', _tpL(
-        `No se pudo simular ${_tpE(ticker)}: todavía no hay precio. El trading en el bróker requiere TRADE_PIN y Alpaca (revisa 🩺).`,
-        `Could not simulate ${_tpE(ticker)}: no price available yet. Broker trading requires TRADE_PIN and Alpaca (see 🩺).`));
+      const msg = _tpL(
+        `No se pudo simular ${ticker}: todavía no hay precio. El trading en el bróker requiere TRADE_PIN y Alpaca (revisa 🩺).`,
+        `Could not simulate ${ticker}: no price available yet. Broker trading requires TRADE_PIN and Alpaca (see 🩺).`);
+      setS('#f87171', _tpE(msg));
+      if (window.KhipuToast) window.KhipuToast.order.result(Object.assign({}, ord || { side, symbol: ticker, qty }, { mode: 'sim' }), { ok: false, error: msg }, tid);
     }
   }
 
@@ -9642,14 +10018,33 @@ window.loadTradeFlows = loadTradeFlows;
       setS('#f87171', _tpL('La orden supera el máximo de $100,000 por orden (cantidad × precio).', 'The order exceeds the $100,000 per-order limit (quantity × price).'));
       return;
     }
+    // ── CONFIRMACIÓN EXPLÍCITA (pop-up): lado, activo, cantidad, tipo,
+    // vigencia, monto estimado y cuenta 🧪/🔴. NADA sale sin «Confirmar».
+    const KT = window.KhipuToast;
+    const ord = { side, symbol: ticker, label: _tp.label, qty, orderType: otype, limitPrice: body.limit_price, tif,
+      price: _tp.price || null, mode: _tp.paper === true ? 'paper' : _tp.paper === false ? 'live' : undefined };
+    const btn = document.getElementById('tp-submit-btn'); if (btn) btn.disabled = true;
+    _tp.sending = true;                                        // también mientras el diálogo está abierto
+    let go = false;
+    try {
+      go = (KT && KT.confirmOrder) ? await KT.confirmOrder(ord)
+        : window.confirm(_tpL('¿Confirmas la orden? ', 'Confirm the order? ') + `${side.toUpperCase()} ${qty}× ${ticker} (${otype})` +
+            (_tp.paper === false ? _tpL(' — 🔴 DINERO REAL', ' — 🔴 REAL MONEY') : ''));
+    } catch (e) { go = false; }
+    if (!go) {
+      _tp.sending = false; if (btn) btn.disabled = false;
+      setS('rgba(229,226,225,0.55)', _tpL('Orden cancelada — no se envió nada.', 'Order canceled — nothing was sent.'));
+      return;
+    }
+
     // client_order_id estable para ESTA orden: si el envío termina en error
     // ambiguo y el usuario reintenta lo mismo, Alpaca rechaza el duplicado.
     const sig = ['panel', ticker, side, otype, qty, body.limit_price || '', tif].join('|');
     body.client_order_id = window._tradeOrderId(sig);
+    ord.client_order_id = body.client_order_id;
 
     setS('rgba(229,226,225,0.6)', _tpL('Enviando…', 'Sending…'));
-    const btn = document.getElementById('tp-submit-btn'); if (btn) btn.disabled = true;
-    _tp.sending = true;
+    const tid = KT ? KT.order.sending(ord) : null;            // aviso: «Enviando orden de compra/venta…»
 
     let r = null, d = null, netErr = null;
     _tp.ambSig = null;
@@ -9664,6 +10059,8 @@ window.loadTradeFlows = loadTradeFlows;
       : (_tp.paper === true || (d && d.paper === true)) ? true : null;
     if (pp !== null && _tp.paper === null) { _tp.paper = pp; _tpPaintBadge(pp); }
     const mode = pp === false ? _tpL('🔴 DINERO REAL', '🔴 REAL MONEY') : pp === true ? _tpL('🧪 simulada (papel)', '🧪 simulated (paper)') : '';
+    if (pp !== null) ord.mode = pp ? 'paper' : 'live';
+    const note = (res) => { if (KT) KT.order.result(ord, res, tid); };
 
     // PRIMERO el duplicado: el server responde 200 + duplicate:true con la
     // orden que YA existía (mismo client_order_id). No es una orden nueva.
@@ -9673,18 +10070,21 @@ window.loadTradeFlows = loadTradeFlows;
       setS('#fbbf24', _tpL(
         `Esta orden ya había llegado al bróker${prevSt} — no se envió dos veces. Revisa «Órdenes recientes». Si quieres OTRA orden igual, vuelve a enviarla.`,
         `This order had already reached the broker${prevSt} — it was not sent twice. Check "Recent orders". If you want ANOTHER identical order, send it again.`));
-      if (typeof toast === 'function') toast(_tpL('Ya estaba en el bróker — no se duplicó', 'Already at the broker — not duplicated'));
+      if (KT) note({ ok: true, dedup: true, broker_dup: true, data: d });
+      else if (typeof toast === 'function') toast(_tpL('Ya estaba en el bróker — no se duplicó', 'Already at the broker — not duplicated'));
       window.__tradeAcctCache = null;
       setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); }, 800);
     } else if (!netErr && r && r.ok && d && (d.id || d.status)) {
       window._tradeOrderSettle(sig, false);
       setS('#4ade80', `✓ ${side.toUpperCase()} ${qty}× ${_tpE(ticker)} — ${_tpE(d.status || 'accepted')}${mode ? ' · ' + mode : ''}`);
-      if (typeof toast === 'function') toast(_tpL('Orden enviada: ', 'Order sent: ') + `${side} ${qty}× ${ticker}`);
+      // aviso «Orden enviada» + sondeo ligero hasta «Compra/Venta ejecutada ✓»
+      if (KT) note({ ok: true, data: Object.assign({ client_order_id: body.client_order_id }, d) });
+      else if (typeof toast === 'function') toast(_tpL('Orden enviada: ', 'Order sent: ') + `${side} ${qty}× ${ticker}`);
       window.__tradeAcctCache = null;
       setTimeout(() => { _tpRefreshPositions(); _tpRefreshBlotter(); _tpLoadAccount(); }, 2000);
     } else if (!netErr && r && _tpNotConfigured(st, d)) {
       window._tradeOrderSettle(sig, false);
-      _tpLocalSim(ticker, side, qty, setS);
+      _tpLocalSim(ticker, side, qty, setS, ord, tid);
     } else if (netErr || window._tradeOrderAmbiguous(st)) {
       // Sin respuesta clara: la orden PUDO haber llegado. Se conserva el
       // client_order_id (también tras recargar, 24 h) para que un reintento
@@ -9696,10 +10096,14 @@ window.loadTradeFlows = loadTradeFlows;
       setS('#f87171', _tpL(
         `⚠ No se pudo confirmar la orden (${why}). Puede que SÍ haya llegado al bróker: revisa «Órdenes recientes» antes de reintentar. Si reintentas esta misma orden (aunque recargues la página) no se duplicará.`,
         `⚠ The order could not be confirmed (${why}). It MAY have reached the broker: check "Recent orders" before retrying. Retrying this same order (even after reloading the page) will not duplicate it.`));
+      note({ ok: false, ambiguous: true, error: _tpL(
+        `Motivo: ${why}. Puede que SÍ haya llegado al bróker: revisa «Órdenes recientes» antes de reintentar (reintentar esta misma orden no la duplica).`,
+        `Reason: ${why}. It MAY have reached the broker: check "Recent orders" before retrying (retrying this same order will not duplicate it).`) });
       setTimeout(_tpRefreshBlotter, 2500);
     } else {
       window._tradeOrderSettle(sig, false);
       setS('#f87171', '⚠ ' + _tpE(window._tradeErrText(d, st)));
+      note({ ok: false, error: window._tradeErrText(d, st) });   // el texto del server tal cual
     }
     _tp.sending = false;
     if (btn) btn.disabled = false;

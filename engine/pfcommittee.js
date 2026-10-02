@@ -252,9 +252,14 @@
   function apply(aid) {
     var r = S.res, src = S.lastSrc; if (!r || !src || !src.pfId || !window.KhipuPortfolios) return;
     var a = r.actions.filter(function (x) { return x.id === aid; })[0]; if (!a) return;
+    var msg = (a.label || '') + ': ' + pct(a.from_pct) + ' → ' + pct(a.to_pct) + ' (' + usd(a.delta_usd) + ')';
+    var T = window.KhipuToast;
+    var ask = T && T.confirm ? T.confirm({ title: L('¿Aplicar en tu cartera SIMULADA?', 'Apply to your SIMULATED portfolio?'), subtitle: msg, mode: 'sim',
+      confirmLabel: L('Aplicar', 'Apply') }) : Promise.resolve(window.confirm(L('¿Aplicar en tu cartera SIMULADA?\n\n', 'Apply to your SIMULATED portfolio?\n\n') + msg));
+    ask.then(function (ok) { if (ok) doApply(a, src); });
+  }
+  function doApply(a, src) {
     var KP = window.KhipuPortfolios, out;
-    var ok = window.confirm(L('¿Aplicar en tu cartera SIMULADA?\n\n', 'Apply to your SIMULATED portfolio?\n\n') + (a.label || '') + ': ' + pct(a.from_pct) + ' → ' + pct(a.to_pct) + ' (' + usd(a.delta_usd) + ')');
-    if (!ok) return;
     if (a.delta_usd < 0 && KP._sell) {
       var pos = (src.positions || []).filter(function (p) { return p.id === a.entity_id || p.symbol === a.symbol; })[0];
       var frac = a.from_pct > 0 ? Math.min(1, Math.abs(a.to_pct - a.from_pct) / a.from_pct) : 1;

@@ -551,6 +551,12 @@
         'No se pudo confirmar la orden. Puede que SÍ haya llegado al bróker: revisa tus órdenes antes de reintentar (reintentar esta misma orden no la duplica).',
         'The order could not be confirmed. It MAY have reached the broker: check your orders before retrying (retrying this same order will not duplicate it).');
     };
+    // AVISOS pop-up (engine/toast.js): enviando → enviada/rechazada → ejecutada.
+    // Salen aunque el usuario ya haya cambiado de ficha.
+    var KT = window.KhipuToast;
+    var info = { side: o.side, symbol: o.pair, label: o.name, kind: 'crypto', notional: o.amt, mode: o.paper ? 'paper' : 'live', client_order_id: coid };
+    var tid = KT ? KT.order.sending(info) : null;
+    var note = function (res) { if (KT) { try { KT.order.result(info, res, tid); } catch (e) {} } };
     window._tradeFetch('/api/trade/order', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, timeout: 30000,
       // cripto: el server fuerza time_in_force='gtc' — no se envía aquí
@@ -562,6 +568,12 @@
         var dup = !!(window._tradeOrderIsDup && window._tradeOrderIsDup(st, d));
         var amb = !dup && !x.r.ok && (window._tradeOrderAmbiguous ? window._tradeOrderAmbiguous(st) : st >= 500);
         settle(amb);   // antes de pintar: el usuario pudo cambiar de ficha
+        if (dup) note({ ok: true, dedup: true, broker_dup: true, data: d });
+        else if (amb) note({ ok: false, ambiguous: true, error: ambMsg() });
+        else if (x.r.ok && d && (d.id || d.status === 'accepted' || d.status === 'pending_new')) {
+          info.mode = (o.paper && d.paper !== false) ? 'paper' : 'live';   // misma regla que el mensaje de abajo
+          note({ ok: true, data: Object.assign({ client_order_id: coid }, d) });
+        } else note({ ok: false, error: window._tradeErrText ? window._tradeErrText(d, st) : ((d && (d.error || d.message)) || 'Error') });
         var m2 = document.getElementById('cr-trade-msg'); if (!m2) return;
         // duplicado = el server devolvió (HTTP 200, duplicate:true) la orden que
         // YA existía con este client_order_id: NO es una orden nueva.
@@ -599,6 +611,7 @@
       .catch(function () {
         // sin respuesta (red/timeout): la orden PUDO haber llegado
         settle(true);
+        note({ ok: false, ambiguous: true, error: ambMsg() });
         errBox(esc(ambMsg()));
       });
   }

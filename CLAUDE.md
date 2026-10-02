@@ -231,6 +231,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 - `window._surface(kind, arg)`: lo que Khipu muestra queda SIEMPRE al frente
   (dentro de la Cabina si está abierta; si no, switchTab + cierra overlays).
   No mostrar resultados sin pasar por _surface.
+- `window.KhipuToast` (engine/toast.js): EL sistema de pop-ups/confirmaciones —
+  `show({kind,title,body,mode})`, `confirm(opts)`, `confirmOrder(order)` y
+  `order.sending/result/watch/filled`. Toda compra/venta (real o simulada) debe
+  confirmar y notificar por aquí; no volver a `window.confirm` para dinero.
 - `window.CRYPTO_INTEL` + `window.CRYPTO_CATS` (nodes/crypto_intel*.js):
   expediente cripto Top 50 bilingüe, capa estática jul-2026 (refrescar cada
   3-6 meses). UI en engine/crypto.js — tab 'crypto', vistas Mapa/Lista/Detalle.

@@ -1586,8 +1586,14 @@ window.BixbyVoice = BixbyVoice;
     body.time_in_force = (o.kind === 'crypto' || o.symbol.indexOf('/') >= 0) ? 'gtc' : 'day';
 
     var key = body.symbol + '|' + side + '|' + (body.notional || '') + '|' + (body.qty || '');
+    // AVISOS pop-up (engine/toast.js): enviando → enviada/rechazada → ejecutada.
+    // Solo informan: no cambian qué se envía ni cuándo.
+    var KT = window.KhipuToast;
+    var info = { side: side, symbol: body.symbol, label: o.label || body.symbol, kind: o.kind,
+      notional: body.notional != null ? body.notional : undefined, qty: body.qty != null ? body.qty : undefined };
     var last = window.__lastTradeExec;
     if (last && last.key === key && (Date.now() - last.ts) < 90000) {
+      if (KT) KT.order.result(info, { ok: true, dedup: true, data: last.data });
       return { ok: true, dedup: true, data: last.data };
     }
     // La MISMA orden ya en vuelo (sí verbal + clic en la Cabina a la vez) →
@@ -1601,7 +1607,9 @@ window.BixbyVoice = BixbyVoice;
     // Alpaca rechaza el duplicado en vez de ejecutarla dos veces.
     var sig = 'khipu|' + key;
     if (window._tradeOrderId) body.client_order_id = window._tradeOrderId(sig);
+    info.client_order_id = body.client_order_id;
     var settle = function (ambiguous) { if (window._tradeOrderSettle) window._tradeOrderSettle(sig, ambiguous); };
+    var tid = KT ? KT.order.sending(info) : null;
     var p = (async function () {
       try {
         var r = await window._tradeFetch('/api/trade/order', {
@@ -1643,6 +1651,9 @@ window.BixbyVoice = BixbyVoice;
       }
     })();
     inflight[key] = p;
+    if (KT) p.then(function (res) {
+      try { KT.order.result(info, res, tid); } catch (e) {}
+    });
     return p;
   };
 

@@ -561,6 +561,94 @@
     });
   }
 
+  /* ── avisos pop-up (engine/toast.js): confirmar, enviada, rechazada, ejecutada ──
+     Solo informan y piden la confirmación explícita: el envío sigue siendo
+     preview → confirm / approve del server (regla de oro del dinero). */
+  function KT() { return window.KhipuToast || null; }
+  function ordInfo(x) {
+    x = x || {};
+    return { side: x.side, symbol: x.symbol, label: x.symbol, qty: x.qty, notional: x.notional,
+      orderType: x.order_type, limitPrice: x.limit_price, tif: x.time_in_force, price: x.est_price, estUsd: x.est_usd,
+      mode: x.mode === 'live' ? 'live' : 'paper', client: x.client_name || x.client_id };
+  }
+  // pop-up con el resumen de la orden; sin engine/toast.js → window.confirm de siempre
+  function askOrder(x, opts, fallbackText) {
+    var k = KT();
+    if (k && k.confirmOrder) return k.confirmOrder(ordInfo(x), opts);
+    if (!window.confirm(fallbackText)) return Promise.resolve(false);
+    if (x && x.mode === 'live' && !window.confirm(L('🔴 Es DINERO REAL. ¿Seguro?', '🔴 This is REAL MONEY. Sure?'))) return Promise.resolve(false);
+    return Promise.resolve(true);
+  }
+  function what(x) {
+    var amt = x.notional != null ? usd(x.notional) + ' ' + L('de', 'of') : (x.qty != null ? num(x.qty) + ' ×' : '');
+    return (amt ? amt + ' ' : '') + (x.symbol || '') + (x.client_name ? ' · ' + x.client_name : '');
+  }
+  function sendingToast(x) {
+    var k = KT(); if (!k) return null;
+    return k.show({ kind: x.side === 'sell' ? 'sell' : 'buy', busy: true, mode: x.mode === 'live' ? 'live' : 'paper',
+      title: x.side === 'sell' ? L('Enviando orden de venta…', 'Sending sell order…') : L('Enviando orden de compra…', 'Sending buy order…'),
+      body: what(x) });
+  }
+  // resultado de confirm/approve: {ok, order} o error (texto del server tal cual)
+  function resultToast(x, d, tid) {
+    var k = KT(); if (!k) return;
+    var o = (d && d.order) || x || {};
+    var mode = (o.mode || x.mode) === 'live' ? 'live' : 'paper';
+    var put = function (opts) { opts.busy = false; opts.mode = mode; return tid ? k.update(tid, opts) : k.show(opts); };
+    if (isErr(d)) {
+      var unknown = d && d.code === 'unknown_state';
+      put({ kind: unknown ? 'warn' : 'error', title: unknown ? L('No se pudo confirmar la orden', 'The order could not be confirmed')
+        : (x.side === 'sell' ? L('La venta no se envió', 'The sell order was not sent') : L('La compra no se envió', 'The buy order was not sent')),
+        body: errText(d) });
+      return;
+    }
+    if (o.status === 'filled') return filledToast(o, tid, mode);
+    put({ kind: x.side === 'sell' ? 'sell' : 'buy', timeout: 0,
+      title: x.side === 'sell' ? L('Orden de venta enviada', 'Sell order sent') : L('Orden de compra enviada', 'Buy order sent'),
+      body: what(Object.assign({}, x, o)) + ' · ' + L('estado: ', 'status: ') + (o.status || '—') + '. ' + L('Te aviso cuando se ejecute.', "I'll let you know when it fills.") });
+    watchClientOrder(o, tid, mode);
+  }
+  function filledToast(o, tid, mode) {
+    var k = KT(); if (!k) return;
+    k.order.filled({ side: o.side, symbol: o.symbol, mode: mode },
+      { symbol: o.symbol, filled_qty: o.filled_qty, filled_avg_price: o.filled_avg_price }, tid, mode);
+    if (S.tab === 'orders') loadOrders().then(render);
+  }
+  // Sondeo LIGERO (≤ 60 s): ⇅ Sincronizar de ese cliente (el mismo endpoint del
+  // botón; audita solo si el estado cambia) + leer la orden. Sin pedir PIN.
+  var WATCH_AT = [5000, 12000, 25000, 40000, 60000];
+  var FINAL_BAD = { canceled: 1, cancelled: 1, rejected: 1, expired: 1, failed: 1, done_for_day: 1 };
+  function watchClientOrder(o, tid, mode) {
+    var k = KT(); if (!k || !o || !o.id || !o.client_id) return;
+    var t0 = Date.now(), i = 0;
+    function tick() {
+      if (i >= WATCH_AT.length) {
+        if (tid) k.update(tid, { kind: 'info', timeout: 12000, title: L('La orden sigue pendiente', 'The order is still pending'),
+          body: what(o) + ' — ' + L('aún no se ejecuta (¿mercado cerrado?). Revisa la pestaña Órdenes.', 'it has not filled yet (market closed?). Check the Orders tab.') });
+        return;
+      }
+      setTimeout(function () {
+        call('POST', '/clients/' + encodeURIComponent(o.client_id) + '/sync', { actor: actor() }, false)
+          .then(function () { return call('GET', '/orders?limit=40&client_id=' + encodeURIComponent(o.client_id), null, false); })
+          .then(function (d) {
+            var hit = null;
+            ((d && d.orders) || []).forEach(function (x) { if (x.id === o.id) hit = x; });
+            if (!hit) return tick();
+            if (hit.status === 'filled') return filledToast(hit, tid, mode);
+            if (FINAL_BAD[hit.status]) {
+              var opt = { busy: false, mode: mode, kind: hit.status === 'rejected' || hit.status === 'failed' ? 'error' : 'warn', timeout: 12000,
+                title: L('La orden no se ejecutó', 'The order did not fill'),
+                body: what(hit) + ' · ' + L('estado final: ', 'final status: ') + hit.status + (hit.error ? ' — ' + errText(hit) : '') };
+              if (tid) k.update(tid, opt); else k.show(opt);
+              return;
+            }
+            tick();
+          });
+      }, Math.max(0, WATCH_AT[i++] - (Date.now() - t0)));
+    }
+    tick();
+  }
+
   function onChange(e) {
     var t = e.target;
     saveForm();
@@ -646,23 +734,41 @@
       var p = S.preview;
       if (!p) return;
       if (!checked('kc-confirm-ck')) { flash('err', L('Marca «confirmo» para enviar.', 'Tick "I confirm" to send.')); return; }
-      if (p.mode === 'live' && !window.confirm(L('🔴 DINERO REAL — ¿enviar la orden ahora?', '🔴 REAL MONEY — send the order now?'))) return;
-      S.busy = true; render();
-      call('POST', '/orders/' + encodeURIComponent(p.preview_id) + '/confirm', { confirm: true, actor: actor() }).then(function (d) {
-        S.busy = false; S.result = d; S.preview = null; S.msg = null; render();
-        loadApprovals().then(render);
+      // DINERO REAL: además del «confirmo», el pop-up con el resumen y su casilla
+      (p.mode === 'live'
+        ? askOrder(p, { title: L('🔴 DINERO REAL — ¿enviar la orden ahora?', '🔴 REAL MONEY — send the order now?'),
+            subtitle: en() ? (p.summary_en || p.summary_es) : p.summary_es, confirmLabel: L('Enviar orden', 'Send order') },
+            L('🔴 DINERO REAL — ¿enviar la orden ahora?', '🔴 REAL MONEY — send the order now?'))
+        : Promise.resolve(true)
+      ).then(function (go) {
+        if (!go || S.preview !== p) return;
+        S.busy = true; render();
+        var tid = sendingToast(p);
+        call('POST', '/orders/' + encodeURIComponent(p.preview_id) + '/confirm', { confirm: true, actor: actor() }).then(function (d) {
+          S.busy = false; S.result = d; S.preview = null; S.msg = null; render();
+          resultToast(p, d, tid);
+          loadApprovals().then(render);
+        });
       });
       return;
     }
     if (act === 'approve') {
       var a = null; S.approvals.forEach(function (x) { if (x.preview_id === id) a = x; });
       var txt = a ? (en() ? (a.summary_en || a.summary_es) : a.summary_es) : '';
-      if (!window.confirm(L('¿Aprobar y ENVIAR esta orden?\n\n', 'Approve and SEND this order?\n\n') + txt)) return;
-      if (a && a.mode === 'live' && !window.confirm(L('🔴 Es DINERO REAL. ¿Seguro?', '🔴 This is REAL MONEY. Sure?'))) return;
-      S.busy = true; render();
-      call('POST', '/approvals/' + encodeURIComponent(id) + '/approve', { actor: actor() }).then(function (d) {
-        after(d, L('Aprobada y enviada a Alpaca ✓ (estado: ', 'Approved and sent to Alpaca ✓ (status: ') + ((d.order && d.order.status) || '') + ')');
-        loadApprovals().then(render);
+      // pop-up: resumen + cuenta 🧪/🔴 (con DINERO REAL exige marcar la casilla)
+      (a ? askOrder(a, { title: L('¿Aprobar y ENVIAR esta orden?', 'Approve and SEND this order?'), subtitle: txt,
+          confirmLabel: L('Aprobar y enviar', 'Approve & send') },
+        L('¿Aprobar y ENVIAR esta orden?\n\n', 'Approve and SEND this order?\n\n') + txt)
+        : Promise.resolve(window.confirm(L('¿Aprobar y ENVIAR esta orden?', 'Approve and SEND this order?')))
+      ).then(function (go) {
+        if (!go) return;
+        S.busy = true; render();
+        var tid = a ? sendingToast(a) : null;
+        call('POST', '/approvals/' + encodeURIComponent(id) + '/approve', { actor: actor() }).then(function (d) {
+          after(d, L('Aprobada y enviada a Alpaca ✓ (estado: ', 'Approved and sent to Alpaca ✓ (status: ') + ((d.order && d.order.status) || '') + ')');
+          if (a) resultToast(a, d, tid);
+          loadApprovals().then(render);
+        });
       });
       return;
     }
@@ -672,16 +778,27 @@
       S.busy = true; render();
       call('POST', '/approvals/' + encodeURIComponent(id) + '/reject', { actor: actor(), reason: reason }).then(function (d) {
         after(d, L('Propuesta rechazada.', 'Proposal rejected.'));
+        if (KT() && !isErr(d)) KT().show({ kind: 'info', title: L('Propuesta rechazada', 'Proposal rejected'),
+          body: L('No se envió ninguna orden.', 'No order was sent.') });
         loadApprovals().then(render);
       });
       return;
     }
     if (act === 'cancel') {
-      if (!window.confirm(L('¿Cancelar esta orden?', 'Cancel this order?'))) return;
-      S.busy = true; render();
-      call('POST', '/orders/' + encodeURIComponent(id) + '/cancel', { actor: actor() }).then(function (d) {
-        after(d, L('Orden cancelada (estado: ', 'Order canceled (status: ') + (d.status || '') + ')');
-        Promise.all([loadOrders(), loadApprovals()]).then(render);
+      var co = null; S.orders.forEach(function (x) { if (x.id === id) co = x; });
+      (KT() ? KT().confirm({ title: L('¿Cancelar esta orden?', 'Cancel this order?'), subtitle: co ? what(co) : '',
+          mode: co ? (co.mode === 'live' ? 'live' : 'paper') : undefined, confirmLabel: L('Sí, cancelarla', 'Yes, cancel it'), cancelLabel: L('No', 'No') })
+        : Promise.resolve(window.confirm(L('¿Cancelar esta orden?', 'Cancel this order?')))
+      ).then(function (go) {
+        if (!go) return;
+        S.busy = true; render();
+        call('POST', '/orders/' + encodeURIComponent(id) + '/cancel', { actor: actor() }).then(function (d) {
+          after(d, L('Orden cancelada (estado: ', 'Order canceled (status: ') + (d.status || '') + ')');
+          if (KT()) KT().show(isErr(d)
+            ? { kind: 'error', title: L('No se pudo cancelar', 'Could not cancel'), body: errText(d) }
+            : { kind: 'info', title: L('Orden cancelada', 'Order canceled'), body: (co ? what(co) + ' · ' : '') + L('estado: ', 'status: ') + (d.status || '—') });
+          Promise.all([loadOrders(), loadApprovals()]).then(render);
+        });
       });
       return;
     }

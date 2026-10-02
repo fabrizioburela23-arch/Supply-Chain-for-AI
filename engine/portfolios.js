@@ -268,7 +268,9 @@
     }
     pf.cash -= cost;
     saveAll(list);
-    return { ok: true, msg: T('Compra simulada ejecutada', 'Simulated buy executed') };
+    // detalle para el aviso pop-up (cifras = las de esta operación simulada)
+    return { ok: true, msg: T('Compra simulada ejecutada', 'Simulated buy executed'),
+      side: 'buy', label: n.label, ticker: n.mkt || '', shares: shares, price: pr.price, amount: cost, pfName: pf.name };
   }
   // vende `shares` (o todo si no se indica). Devuelve {ok,msg}.
   function sell(pfId, nodeId, sharesToSell) {
@@ -287,12 +289,34 @@
     pos.shares -= qty;
     if (pos.shares <= 1e-9) pf.positions.splice(idx, 1);
     saveAll(list);
-    return { ok: true, msg: T('Venta simulada por ' + money(proceeds), 'Simulated sell for ' + money(proceeds)) };
+    return { ok: true, msg: T('Venta simulada por ' + money(proceeds), 'Simulated sell for ' + money(proceeds)),
+      side: 'sell', label: (n && n.label) || nodeId, ticker: (n && n.mkt) || '', shares: qty, price: price, amount: proceeds, pfName: pf.name };
   }
 
-  /* ── toast local (usa el global si existe) ────────────────────────────── */
+  /* ── avisos: pop-up de engine/toast.js si existe; si no, el toast global ─ */
   function toast(msg) {
+    try { if (window.KhipuToast) { window.KhipuToast.show({ kind: 'info', title: msg }); return; } } catch (e) {}
     try { if (typeof window.toast === 'function') { window.toast(msg); return; } } catch (e) {}
+  }
+  // compra/venta en la cartera SIMULADA: insignia 🧪 SIMULADO + qué, cuánto y a qué precio
+  function tradeToast(side, res) {
+    var KT = window.KhipuToast;
+    if (!res || !KT) { if (res) toast(res.msg); return; }
+    try {
+      if (!res.ok) {
+        KT.show({ kind: 'error', mode: 'sim', body: res.msg,
+          title: side === 'sell' ? T('La venta simulada no se hizo', 'The simulated sell did not go through')
+            : T('La compra simulada no se hizo', 'The simulated buy did not go through') });
+        return;
+      }
+      var mono = function (x) { return '<span class="kht-num">' + esc(x) + '</span>'; };
+      KT.show({ kind: res.side === 'sell' ? 'sell' : 'buy', mode: 'sim',
+        title: res.side === 'sell' ? T('Venta simulada ejecutada', 'Simulated sell executed') : T('Compra simulada ejecutada', 'Simulated buy executed'),
+        html: mono(fmtShares(res.shares)) + ' ' + esc(T('acciones de', 'shares of')) + ' <b>' + esc(res.label) + '</b>' +
+          (res.ticker ? ' ' + mono('(' + res.ticker + ')') : '') + ' @ ' + mono(money(res.price)) +
+          ' · ' + esc(T('total ', 'total ')) + mono(money(res.amount)) +
+          (res.pfName ? '<br>' + esc(T('Cartera: ', 'Portfolio: ')) + esc(res.pfName) : '') });
+    } catch (e) { toast(res.msg); }
   }
 
   /* ── refresco de precios (públicas) ───────────────────────────────────── */
@@ -1078,7 +1102,7 @@
         var sh = num((_container.querySelector('.kpf-buy-sh[data-id="' + cssEsc(id) + '"]') || {}).value);
         var opts = isFinite(usd) && usd > 0 ? { usd: usd } : { shares: sh };
         var res = buy(pf.id, id, opts);
-        toast(res.msg);
+        tradeToast('buy', res);
         if (res.ok) { _buyFor = null; }
         render();
       };
@@ -1090,7 +1114,7 @@
         var id = b.getAttribute('data-id');
         var sh = num((_container.querySelector('.kpf-sell-sh[data-id="' + cssEsc(id) + '"]') || {}).value);
         var res = sell(pf.id, id, isFinite(sh) && sh > 0 ? sh : undefined);
-        toast(res.msg);
+        tradeToast('sell', res);
         render();
       };
     });
