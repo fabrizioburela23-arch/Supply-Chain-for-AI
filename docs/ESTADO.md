@@ -9,6 +9,27 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-02 (noche) — ANÁLISIS MÁS PROFUNDO + CONCLUSIONES EN TODAS PARTES (sw v179)
+
+Pedido: "mientras duermo, dale con todo, haz algo grande" (tema: análisis mejores, conclusiones ya).
+- `research/analytics.py` (NUEVO, puro): fundamental_ratios (crecimiento interanual y compuesto,
+  márgenes y su tendencia, caja/deuda neta, deuda/EBITDA, rendimiento FCF y P/FCF con la capitalización en
+  vivo, ROIC/ROE, dilución), technical_indicators (1 año: medias 50/200, RSI14, máximo/mínimo 52s, máxima
+  caída, rendimientos 1/3/6/12 m, fuerza relativa vs SPY), peer_table (P/E, márgenes, crecimiento vs mediana
+  de pares del grafo con perfiles en vivo). Entran como evidencia source_type='analysis' (fresca).
+- `research/context.py`: noticias de la empresa con RESUMEN (Finnhub company-news, 30 días) + GDELT;
+  velas de 1 año + SPY; fundamental/risk_observation reciben ratios; fundamental recibe pares (no QUICK).
+- `research/runner.py`: agentes EN PARALELO (_prepare_run / _agent_work en hilos / _finish_run en el hilo
+  del job; RESEARCH_PARALLEL=3). run_agent sigue existiendo (secuencial).
+- `research/errors.py`: errores en lenguaje simple con qué hacer (saldo, clave, modelo retirado, límite,
+  presupuesto, timeout, validación) → hint_es/en en /api/research (runs) y en la sala del comité.
+- `core/numbers`: porcentajes/múltiplos ("1.38 %", "12.5x") y fechas ya no respaldan cifras de dinero.
+- Comité → 📋 Pizarra (pestaña por defecto sin empresa): GET /api/committee/board (convicción, mejor
+  argumento a favor/en contra, contradicciones, última decisión y conclusión) + POST /board/refresh
+  (hasta 3 empresas viejas >7 días o clave si está vacía; en serie en un hilo; 4/h).
+- Khipu chat/voz y MCP: herramienta get_conclusions_board; get_committee_memo resume el debate.
+- Brief matinal: tarjeta 🏛 Conclusiones (abre la Pizarra) y textos bilingües.
+
 # SESIÓN 2026-10-02 (b) — COMITÉ CON ANÁLISIS REAL DE IA + INVESTIGACIÓN QUE NO SE CAE (sw v176)
 
 Feedback: "la investigación falló; el comité se siente falso, no tarda nada, casi no hay análisis real;

@@ -816,7 +816,8 @@
   // ── pestaña Cómo aprende ──────────────────────────────────────────────────
   // ── PIZARRA: conclusiones de todas las empresas investigadas (sin IA) ────
   function renderBoard(body) {
-    body.innerHTML = '<div class="cm-cell"><div class="cm-note"><span class="cm-spin">◌</span> ' + esc(L('Armando la pizarra…', 'Building the board…')) + '</div></div>';
+    if (!S.board) body.innerHTML = '<div class="cm-cell"><div class="cm-note"><span class="cm-spin">◌</span> ' + esc(L('Armando la pizarra…', 'Building the board…')) + '</div></div>';
+    else paintBoard(body);
     getJSON('/api/committee/board?limit=60').then(function (d) {
       if (S.tab !== 'board') return;
       if (d._status !== 200) { body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="color:#FFB300">' + esc(errText(d)) + '</div></div>'; return; }
@@ -838,14 +839,48 @@
     body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="margin-bottom:8px">' +
       esc(L('Todas las empresas que los analistas ya investigaron, ordenadas por convicción (de más favorable a menos). Cada fila resume el argumento más fuerte a favor y en contra, y la última decisión del comité. Pulsa 🏛 para que el comité debata esa empresa.',
         'Every company the analysts already researched, ranked by conviction (most to least favorable). Each row summarizes the strongest argument for and against, and the latest committee decision. Press 🏛 to have the committee debate that company.')) + chip('conviction') + '</div>' +
-      '<div class="cm-tabs" style="margin-bottom:0">' + flt.map(function (x) { return '<button class="cm-tab' + (f === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div></div>' +
+      '<div class="cm-tabs" style="margin-bottom:0;align-items:center">' + flt.map(function (x) { return '<button class="cm-tab' + (f === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') +
+        '<button class="cm-btn ghost" id="cm-refresh" style="margin-left:auto"' + (S.refreshing ? ' disabled' : '') + ' title="' + esc(L('Pone a investigar hasta 3 empresas: las de investigación más vieja (más de 7 días) o, si la pizarra está vacía, empresas clave de la cadena de IA. Gasta presupuesto de IA.', 'Puts up to 3 companies under research: those with the oldest research (over 7 days) or, if the board is empty, key AI supply-chain companies. Uses AI budget.')) + '">' +
+        (S.refreshing ? '<span class="cm-spin">◌</span> ' + esc(L('Investigando…', 'Researching…')) : '🔬 ' + esc(L('Actualizar investigación', 'Refresh research'))) + '</button></div>' +
+      (S.refreshMsg ? '<div class="cm-note" style="margin-top:8px;color:' + (S.refreshMsg.bad ? '#FFB300' : '#2BE38B') + '">' + esc(S.refreshMsg.text) + '</div>' : '') + '</div>' +
       (shown.length ? shown.map(boardRow).join('') : '<div class="cm-cell"><div class="cm-note">' + esc(items.length ? L('Nada en este filtro.', 'Nothing in this filter.') :
         L('Todavía no hay empresas investigadas. Escribe una en la pestaña 🏛 Comité y pulsa «Correr comité»: los analistas la investigarán primero.', 'No researched companies yet. Type one in the 🏛 Committee tab and press “Run committee”: the analysts will research it first.')) + '</div></div>');
     body.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { S.boardFilter = b.getAttribute('data-f'); paintBoard(body); }; });
+    var rf = document.getElementById('cm-refresh'); if (rf) rf.onclick = function () { refreshBoard(body); };
     body.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () {
       S.entity = b.getAttribute('data-go'); S.tab = 'committee'; S.memo = null; S.msg = null; render(); loadEntity(S.entity); }; });
     body.querySelectorAll('[data-rs]').forEach(function (b) { b.onclick = function () { if (window.KhipuResearch) window.KhipuResearch.open(b.getAttribute('data-rs')); }; });
   }
+  function refreshBoard(body) {
+    if (S.refreshing) return;
+    S.refreshing = true; S.refreshMsg = null; paintBoard(body);
+    getJSON('/api/committee/board/refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actor: actor() }) }).then(function (d) {
+      if (d._status !== 202) { S.refreshing = false; S.refreshMsg = { bad: true, text: d._status === 429 ? L('Ya pediste varias actualizaciones esta hora. Espera un poco.', 'You already asked for several refreshes this hour. Wait a bit.') : errText(d) }; paintBoard(body); return; }
+      var jobs = d.jobs || [];
+      if (!jobs.length) { S.refreshing = false; S.refreshMsg = { bad: false, text: L('Todo está al día: ninguna investigación tiene más de 7 días.', 'Everything is up to date: no research is older than 7 days.') }; paintBoard(body); return; }
+      var names = jobs.map(function (j) { return nodeLabel(j.entity_id); }).join(', ');
+      S.refreshMsg = { bad: false, text: L('Los analistas están investigando ' + names + ' (una tras otra, ~1-2 min cada una). La pizarra se actualiza sola.', 'The analysts are researching ' + names + ' (one after another, ~1-2 min each). The board updates by itself.') };
+      paintBoard(body);
+      var ids = jobs.map(function (j) { return j.job_id; }), n = 0;
+      if (S.refreshPoll) clearInterval(S.refreshPoll);
+      S.refreshPoll = setInterval(function () {
+        n++;
+        Promise.all(ids.map(function (id) { return getJSON('/api/research/jobs/' + encodeURIComponent(id)).catch(function () { return {}; }); })).then(function (rs) {
+          var done = rs.filter(function (r) { return r.status === 'done' || r.status === 'failed' || r._status === 404; }).length;
+          var failed = rs.filter(function (r) { return r.status === 'failed'; }).length;
+          if (done >= ids.length || n > 60) {
+            clearInterval(S.refreshPoll); S.refreshPoll = null; S.refreshing = false;
+            S.refreshMsg = failed ? { bad: true, text: L(failed + ' investigación(es) fallaron: ábrelas con 🔬 para ver el motivo.', failed + ' research job(s) failed: open them with 🔬 to see why.') }
+              : { bad: false, text: L('Listo: investigación actualizada.', 'Done: research refreshed.') };
+          } else {
+            S.refreshMsg = { bad: false, text: L('Investigando… ' + done + ' de ' + ids.length + ' listas.', 'Researching… ' + done + ' of ' + ids.length + ' done.') };
+          }
+          if (S.tab === 'board') renderBoard(document.getElementById('cm-body'));
+        });
+      }, 20000);
+    }).catch(function () { S.refreshing = false; S.refreshMsg = { bad: true, text: L('Sin conexión con el servidor.', 'No connection to the server.') }; paintBoard(body); });
+  }
+
   function boardRow(x) {
     var v = Math.round(x.overall_conviction || 0), col = v >= 15 ? '#2BE38B' : v <= -15 ? '#FF4D6A' : '#9BA6C4';
     var arg = function (a, icon) {

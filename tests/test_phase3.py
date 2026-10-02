@@ -1224,3 +1224,28 @@ def test_pizarra_de_conclusiones(db):
     server.app.config['TESTING'] = True
     r = server.app.test_client().get('/api/committee/board?limit=5')
     assert r.status_code == 200 and len(r.get_json()['items']) <= 5
+
+
+@needs_db
+def test_pizarra_actualizar_investigacion(db, monkeypatch):
+    import core.ai
+    import research.runner as rr
+    import server
+    from ontology.db import session_scope
+    from research.committee import refresh_targets
+    with session_scope() as s:
+        assert refresh_targets(s, entities=['nvda', 'zzqqxx', 'TSMC']) == ['Nvidia', 'TSMC']
+    monkeypatch.setattr(core.ai, '_ai_configured', lambda: True)
+    ran = []
+    monkeypatch.setattr(rr, 'execute_job', lambda s, job, **k: ran.append(job.entity_id))
+    server.app.config['TESTING'] = True
+    c = server.app.test_client()
+    assert c.post('/api/committee/board/refresh', json={}).status_code == 400
+    r = c.post('/api/committee/board/refresh', json={'actor': 'pytest', 'entities': ['Rigetti']})
+    assert r.status_code == 202 and r.get_json()['jobs'][0]['entity_id'] == 'Rigetti'
+    import time
+    for _ in range(50):
+        if ran:
+            break
+        time.sleep(0.05)
+    assert ran == ['Rigetti']

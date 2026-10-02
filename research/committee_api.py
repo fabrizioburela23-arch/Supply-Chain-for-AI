@@ -266,6 +266,55 @@ def board_route():
                         'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
 
 
+@committee_bp.route('/board/refresh', methods=['POST'])
+@rate_limit(limit=4, window=3600)
+def board_refresh():
+    """Encarga investigación para hasta 3 empresas (viejas, pedidas o clave) y la
+    corre EN SERIE en un hilo (una a la vez: respeta el presupuesto y la IA)."""
+    if not ontology_available():
+        return _unavailable()
+    from core.ai import _ai_configured
+    body = request.get_json(silent=True) or {}
+    actor = str(body.get('actor') or '').strip()[:120]
+    if not actor:
+        return jsonify({'error': 'actor obligatorio', 'error_en': 'actor required'}), 400
+    if not _ai_configured():
+        return jsonify({'error': 'ningún proveedor de IA configurado', 'error_en': 'no AI provider configured'}), 503
+    from research.committee import refresh_targets
+    from research.runner import create_job, execute_job
+    ents = body.get('entities') if isinstance(body.get('entities'), list) else None
+    try:
+        def _plan():
+            with session_scope() as s:
+                targets = refresh_targets(s, max_n=3, entities=ents)
+                jobs = []
+                for eid in targets:
+                    job, reused = create_job(s, eid, depth='STANDARD', trigger={'kind': 'board', 'by': actor},
+                                             requested_by=actor)
+                    jobs.append({'entity_id': eid, 'job_id': job.id, 'reused': reused, 'status': job.status})
+                return jobs
+        jobs = _with_schema(_plan)
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': 'no se pudo encargar la investigación', 'error_en': 'could not queue research',
+                        'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
+    todo = [j['job_id'] for j in jobs if not j['reused']]
+    if todo:
+        import threading
+
+        def _work():
+            from research.models import ResearchJob
+            for jid in todo:
+                try:
+                    with session_scope() as s:
+                        job = s.get(ResearchJob, jid)
+                        if job and job.status == 'queued':
+                            execute_job(s, job)
+                except Exception as e:  # noqa: BLE001
+                    log.warning('board refresh %s: %s', jid, e)
+        threading.Thread(target=_work, name='board-refresh', daemon=True).start()
+    return jsonify({'jobs': jobs, 'n': len(jobs)}), 202
+
+
 @committee_bp.route('/track-record')
 def track_record():
     if not ontology_available():

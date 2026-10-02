@@ -1814,3 +1814,33 @@ def board(session, limit=40):
             'note_es': 'Convicción calculada con las conclusiones vigentes de los analistas. No es una recomendación.',
             'note_en': 'Conviction computed from the analysts\' current conclusions. Not a recommendation.'}
 
+
+STARTERS = ('Nvidia', 'TSMC', 'ASML', 'Broadcom', 'Microsoft', 'SK Hynix')
+
+
+def refresh_targets(session, max_n=3, stale_days=7, entities=None):
+    """Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas,
+    o las de investigación más vieja (> stale_days), o — pizarra vacía — las
+    empresas clave de la cadena de IA."""
+    from core.entities import resolve
+    out = []
+    if entities:
+        for e in entities:
+            r = resolve(str(e)[:120])
+            if r and r['id'] not in out:
+                out.append(r['id'])
+        return out[:max_n]
+    b = board(session, limit=80)
+    cut = _now() - timedelta(days=stale_days)
+    stale = sorted((x for x in b['items'] if datetime.fromisoformat(x['last_research']) < cut),
+                   key=lambda x: x['last_research'])
+    out = [x['entity_id'] for x in stale][:max_n]
+    if not out and not b['items']:
+        for e in STARTERS:
+            r = resolve(e)
+            if r and r['id'] not in out:
+                out.append(r['id'])
+            if len(out) >= max_n:
+                break
+    return out
+
