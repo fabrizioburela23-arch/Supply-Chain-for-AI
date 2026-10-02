@@ -824,12 +824,29 @@ def progress_set(memo_id, stage, **extra):
             _PROGRESS.pop(k, None)
 
 
+def progress_say(memo_id, *msgs):
+    """Publica mensajes de la sala del comité (research/deliberation) EN VIVO."""
+    if not memo_id:
+        return
+    now = _time_mod.time()
+    with _PROGRESS_LOCK:
+        p = _PROGRESS.get(memo_id)
+        if p is None:
+            return
+        lst = p.setdefault('messages', [])
+        for m in msgs:
+            if m:
+                lst.append(dict(m, t=round(now - p['started'], 1)))
+        p['updated'] = now
+
+
 def progress_get(memo_id):
     with _PROGRESS_LOCK:
         p = _PROGRESS.get(memo_id)
         if not p:
             return None
         out = dict(p)
+        out['messages'] = list(p.get('messages') or [])
     out['done'] = list(out.get('done') or [])
     out['elapsed_s'] = round(_time_mod.time() - out['started'], 1)
     out['stages'] = list(PROGRESS_STAGES)
@@ -843,9 +860,11 @@ def progress_clear(memo_id):
 
 def run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None):
     """Corre el comité completo y persiste el memo. Devuelve el memo (dict)."""
+    from research import deliberation as dl8
     from research.outcomes import (agent_reliability, calibrated_confidence, calibration_table, is_us_listing,
                                    symbol_for)
     deps = deps or {}
+    transcript = []
     now = deps.get('now') or _now()
     eid, node = _resolve_entity(entity_id)
     label = node.get('label') or eid
@@ -860,6 +879,13 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
         _audit(memo, requested_by, 'run', {'client_id': client_id})
     _pid = memo.id
     progress_set(_pid, 'claims')
+
+    def say(*msgs):                       # sala del comité: en vivo + guardado en el memo
+        msgs = [m for m in msgs if m]
+        t0 = (progress_get(_pid) or {}).get('elapsed_s')
+        for m in msgs:
+            transcript.append(dict(m, t=t0) if t0 is not None else dict(m))
+        progress_say(_pid, *msgs)
 
     # ── evidencia de investigación ──
     rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
@@ -877,17 +903,33 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
     views = agent_views(conv)
     claims_by_id = {c.id: c for c in rows}
     scored_claims = sum(r['n_claims'] for h, r in conv.items() if HZ_WEIGHTS.get(h, 0) > 0)
+    agent_types0 = sorted({c.agent_type for c in rows})
+    track = {a: {'n': (table.get(a) or {}).get('n', 0), 'hits': (table.get(a) or {}).get('hits', 0),
+                 'reliability': agent_reliability(a, table=table)} for a in agent_types0}
+    seats = dl8.build_seats(conv, views, track)
+    _cref0 = {cc['id']: f'C{i}' for i, cc in
+              enumerate((c for h in HZ_ORDER for c in (conv.get(h) or {}).get('claims', [])), 1)}
+    progress_set(_pid, 'claims', seats=seats)
+    say(*dl8.opening(label, symbol, seats, len(rows), len(rels)))
+    try:
+        say(*dl8.positions(seats, conv, claims_by_id, _cref0, _top_evidence(session, list(claims_by_id))))
+        say(*dl8.rebuttals(rels, claims_by_id, _cref0, seats))
+    except Exception as e:  # noqa: BLE001 — la sala nunca rompe el comité
+        log.warning('committee deliberation %s: %s', eid, e)
 
     # ── datos en vivo, riesgo y cliente (acotados en tiempo) ──
     progress_set(_pid, 'live', n_claims=len(rows))
     live = _bounded(deps.get('live_fn') or _default_live, 10, eid, symbol)
+    say(dl8.market_msg(live, symbol))
     progress_set(_pid, 'risk')
     risk = (_bounded(deps.get('risk_fn') or _default_risk, 15, symbol) if symbol
             else {'ok': False, 'error': 'no cotiza', 'error_en': 'not listed'})
+    say(dl8.risk_msg(risk, symbol))
     svc = deps['brokerage'] if 'brokerage' in deps else (brokerage_service() if client_id else None)
     if client_id:
         progress_set(_pid, 'client')
     client = _client_context(session, svc, client_id, symbol) if client_id else None
+    say(dl8.mandate_msg(client))
     progress_set(_pid, 'scoring')
     mandate = (client or {}).get('mandate') or mandate_from(None)
     asym = alpaca_symbol(symbol) if symbol else None
@@ -922,6 +964,8 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
         sizing = compute_sizing('HOLD', vol, mandate, equity=equity, current_value=cur_val, price=price,
                                 price_is_usd=price_is_usd)
 
+    say(dl8.quant_msg(overall, conv, decision, reason_es, reason_en, sizing, seats,
+                      DECISION_LABEL.get(decision, (decision, decision))))
     text, ev_items, valid_refs, cref = build_package(label, symbol, claims_by_id, conv, overall, rels, live, risk,
                                                      sizing, decision, reason_es, client)
     dom = _dominant_horizon(conv)
@@ -951,6 +995,14 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
         sizing = compute_sizing('HOLD', vol, mandate, equity=equity, current_value=cur_val, price=price,
                                 price_is_usd=price_is_usd)
     progress_set(_pid, 'saving')
+    try:
+        say(*dl8.chair_close(body, final_decision, decision, DECISION_LABEL.get(final_decision, (final_decision,) * 2),
+                             memo.ai_used))
+    except Exception as e:  # noqa: BLE001
+        log.warning('committee chair close %s: %s', eid, e)
+    body['transcript'] = transcript[:60]
+    body['seats'] = seats
+    body['tally'] = dl8.tally(seats)
     body['decision_label_es'], body['decision_label_en'] = DECISION_LABEL.get(final_decision, (final_decision,) * 2)
     body['quant_reason_es'], body['quant_reason_en'] = reason_es, reason_en
     body['ref_map'] = {v: k for k, v in cref.items()}
@@ -984,6 +1036,30 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
                                            'ai': memo.ai_used, 'overall': overall})
     session.flush()
     return memo_dict(memo)
+
+
+def _top_evidence(session, claim_ids):
+    """{claim_id: {title, url, type, date}} — la fuente principal (de apoyo, más
+    relevante) de cada conclusión, para que cada puesto muestre en qué se basa."""
+    from research.models import ResearchEvidence
+    if not claim_ids:
+        return {}
+    out = {}
+    try:
+        rows = (session.query(ResearchEvidence).filter(ResearchEvidence.claim_id.in_(claim_ids)).all())
+    except Exception:  # noqa: BLE001
+        return {}
+    def rank(e):
+        return (e.stance == 'supporting', e.relevance or 0, e.reliability or 0)
+    for e in sorted(rows, key=rank, reverse=True):
+        if e.claim_id in out:
+            continue
+        ref = e.source_reference or ''
+        out[e.claim_id] = {'title': (e.title or e.source_type or '')[:160],
+                           'url': ref if ref.startswith(('http://', 'https://')) else None,
+                           'type': e.source_type,
+                           'date': e.published_at.date().isoformat() if e.published_at else None}
+    return out
 
 
 def _chair(session, provider, eid, requested_by, text, valid_refs, decision, min_d, max_d, ev_items, agent_types,

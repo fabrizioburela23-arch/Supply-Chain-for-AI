@@ -1078,3 +1078,41 @@ def test_memo_huerfano_se_marca_fallido(db):
     r = server.app.test_client().get(f'/api/committee/memo/{mid}')
     d = r.get_json()
     assert d['status'] == 'failed' and 'reinici' in (d.get('error') or '')
+
+
+@needs_db
+def test_sala_del_comite_puestos_y_conversacion(db):
+    """Pedido 2026-10-02: puestos + comunicación visible, sin texto inventado."""
+    from ontology.db import session_scope
+    from research.committee import progress_get, run_committee
+    from research.llm import FakeProvider
+    with session_scope() as s:
+        cl = _fresh_entity_claims(s, 'Broadcom')
+        prov = FakeProvider([lambda p: _chair_json(p)])
+        m = run_committee(s, 'Broadcom', 'pytest', provider=prov, deps=DEPS)
+        b = m['memo']
+        seats = {x['seat']: x for x in b['seats']}
+        assert set(seats) == {'fundamental', 'supply_chain', 'macro', 'news', 'technical'}
+        assert seats['technical']['stance'] == 'against' and seats['fundamental']['stance'] == 'for'
+        assert b['tally']['for'] >= 3 and b['tally']['against'] == 1
+        tr = b['transcript']
+        kinds = [x['kind'] for x in tr]
+        assert tr[0]['seat'] == 'chair' and kinds[0] == 'open'
+        assert kinds.count('position') == 5 and 'rebuttal' in kinds
+        assert any(x['seat'] == 'quant' and 'Q1' in x.get('refs', []) for x in tr)
+        assert any(x['seat'] == 'risk_officer' for x in tr) and tr[-1]['seat'] == 'chair'
+        assert tr[-1]['kind'] == 'verdict' and 'PROPUESTA' in tr[-1]['text_es'] and tr[-1]['text_en']
+        # lo que "dice" cada analista es SU conclusión real (texto del claim), con su C#
+        pos = next(x for x in tr if x['kind'] == 'position' and x['seat'] == 'fundamental')
+        assert cl[0].statement_es[:40] in pos['text_es'] and pos['refs'][0] in m['inputs']['valid_refs']
+        # la contradicción X1 se debate entre los dos puestos
+        assert any(x['kind'] == 'rebuttal' and 'X1' in x.get('refs', []) for x in tr)
+        assert progress_get(m['memo_id'])['messages']              # en vivo durante la corrida
+
+
+def test_deliberacion_sin_conclusiones_y_sin_cotizar():
+    from research import deliberation as d
+    assert 'Investigación' in d.opening('X', None, [], 0, 0)[0]['text_es']
+    assert d.risk_msg({'ok': True}, None) is None
+    assert 'no cotiza' in d.market_msg({}, None)['text_es']
+    assert d.stance_of(0.5) == 'for' and d.stance_of(-0.5) == 'against' and d.stance_of(0.05) == 'neutral'

@@ -9,6 +9,25 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-02 — SALA DEL COMITÉ: PUESTOS + DEBATE EN VIVO (sw v175)
+
+Pedido: "que el comité esté más claro y en vivo, que tenga puestos, que se vea su comunicación".
+- `research/deliberation.py` (NUEVO, puro): puestos = un analista por agent_type con conclusiones
+  (postura neta a favor/en contra/neutral, fiabilidad, aciertos) + mesa fija (📡 mercado, 🛡️ riesgo,
+  👤 mandato, 🧮 núcleo cuantitativo, 🏛 presidente). Mensajes = PLANTILLAS sobre datos reales: el
+  texto de la claim de mayor peso + su fuente principal (ResearchEvidence), réplicas a partir de las
+  contradicciones X#, precio D1, riesgo R1, la cuenta Q1 y el veredicto/respuestas al disenso del
+  presidente. NO hay llamadas extra a la IA (cero costo, cero cifras inventadas).
+- `research/committee.py`: `progress_say` publica los mensajes EN VIVO en el registro de progreso
+  (GET /api/committee/memo/<id> → progress.messages + progress.seats); al terminar quedan en
+  memo.memo['transcript'|'seats'|'tally'] (JSON, sin migración). MCP y modo sync limpian el progreso.
+- `engine/committee.js`: "🏛 Sala del comité" — mesa con avatares (anillo verde/rojo/gris al hablar,
+  el que habla brilla), chat con burbujas (postura, tipo, refs [C#], 📎 fuente), "● EN VIVO",
+  revelado de 1 mensaje/s, ▶ Repetir la sesión, tira compacta de etapas. Memo: decisión + votos
+  (👍/👎/✋) arriba → sala → "Tu decisión" → detalle técnico. "?" committee_room. Bilingüe, 375px OK.
+- Tests: test_sala_del_comite_puestos_y_conversacion + test_deliberacion_sin_conclusiones (755).
+- Memos viejos (sin transcript) muestran "vuelve a correrlo para ver el debate".
+
 # SESIÓN 2026-09-30 → 10-02 — MONITORES, RIESGO FÁCIL, ASISTENTE, CEREBRO DE KHIPU (sw v174)
 
 - Espacio = Space Monitor (core/space.py /api/space2/*, engine/spacemonitor.js):

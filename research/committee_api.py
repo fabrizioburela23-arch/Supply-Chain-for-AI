@@ -139,7 +139,11 @@ def run():
         if sync:
             def _sync():
                 with session_scope() as s:
-                    return run_committee(s, eid, actor, client_id=client_id)
+                    out = run_committee(s, eid, actor, client_id=client_id)
+                if out and out.get('memo_id'):
+                    from research.committee import progress_clear
+                    progress_clear(out['memo_id'])
+                return out
             return jsonify(_with_schema(_sync))
 
         def _ph():

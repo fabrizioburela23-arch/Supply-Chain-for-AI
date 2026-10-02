@@ -987,6 +987,11 @@ def _run_committee_async(memo_id, eid, actor, client_id, release=None):
                 except Exception:  # noqa: BLE001
                     pass
         finally:
+            try:
+                from research.committee import progress_clear
+                progress_clear(memo_id)
+            except Exception:  # noqa: BLE001
+                pass
             if release is not None:
                 release()
     t = threading.Thread(target=_work, name=f'mcp-committee-{str(memo_id)[:8]}', daemon=True)

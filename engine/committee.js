@@ -74,6 +74,9 @@
     R('early_signal', {
       es: { t: 'Señal temprana', b: 'Tasa de acierto en las revisiones INTERMEDIAS (por ejemplo a los 7 días de una conclusión de 30 días, o a los 90 y 180 días de una de largo plazo). Sirve para ver cómo va un agente antes de que venzan sus predicciones, pero NO cuenta para su fiabilidad ni para la calibración: solo cuentan las revisiones finales.' },
       en: { t: 'Early signal', b: 'Hit rate on INTERMEDIATE checks (e.g. at 7 days for a 30-day conclusion, or at 90 and 180 days for a long-term one). It shows how an agent is doing before its predictions come due, but it does NOT count toward its reliability or calibration: only final checks count.' } });
+    R('committee_room', {
+      es: { t: 'La sala del comité', b: 'Cada <b>puesto</b> es un analista de IA que ya investigó la empresa (📊 fundamental, 📰 noticias, 🔗 cadena…), más la 📡 mesa de mercado (precio en vivo), el 🛡️ oficial de riesgo (volatilidad real), el 🧮 núcleo cuantitativo (la cuenta) y el 🏛 presidente. <b>Lo que dice cada uno NO es inventado</b>: es su conclusión real con su fuente, su historial de aciertos y las contradicciones detectadas. Verde = a favor, rojo = en contra, gris = neutral. Solo el presidente usa IA al final, y sus cifras pasan por el guardián.' },
+      en: { t: 'The committee room', b: 'Each <b>seat</b> is an AI analyst that already researched the company (📊 fundamental, 📰 news, 🔗 supply chain…), plus the 📡 market desk (live price), the 🛡️ risk officer (real volatility), the 🧮 quant core (the math) and the 🏛 chair. <b>What each one says is NOT made up</b>: it is its real conclusion with its source, its hit record and the detected contradictions. Green = for, red = against, grey = neutral. Only the chair uses AI at the end, and its figures go through the guardian.' } });
     R('committee_confidence', {
       es: { t: 'Confianza del comité', b: 'Qué tan seguro está el comité de SU decisión (0–100 %). Con presidente IA es su estimación honesta considerando el disenso y la calidad de la evidencia; sin IA se calcula: qué parte del peso de las conclusiones apoya la dirección elegida × su confianza calibrada promedio. No es la probabilidad de ganar dinero.' },
       en: { t: 'Committee confidence', b: 'How sure the committee is of ITS decision (0–100%). With the AI chair it is its honest estimate given dissent and evidence quality; without AI it is computed: the share of conclusion weight that supports the chosen direction × their average calibrated confidence. It is not the probability of making money.' } });
@@ -140,13 +143,40 @@
       '#cm .cm-learn h4{font-size:13.5px;margin:14px 0 6px;color:#E8EDFB}' +
       '@media(max-width:760px){#cm .cm-grid{grid-template-columns:minmax(0,1fr)}#cm{padding:16px 12px;width:100vw;max-height:100vh;border-radius:0}#cm .cm-g{grid-template-columns:86px minmax(0,1fr) 40px}}';
     css += '@keyframes cmspin{to{transform:rotate(360deg)}}.cm-spin{display:inline-block;animation:cmspin 1s linear infinite;color:#00E0FF}';
+    // ── sala del comité (puestos + conversación) ──
+    css += '#cm .cm-room{border:1px solid rgba(122,158,255,.18);border-radius:14px;background:radial-gradient(600px 220px at 50% 0%,rgba(0,224,255,.07),rgba(11,18,34,.6));padding:12px 12px 10px;margin-bottom:12px;min-width:0}' +
+      '#cm .cm-table{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 8px;padding:10px 6px 12px;border-radius:999px/60px;background:rgba(122,158,255,.05);border:1px dashed rgba(122,158,255,.18);margin-bottom:10px}' +
+      '#cm .cm-seat{width:84px;text-align:center;font-size:10.5px;line-height:1.25;color:#9BA6C4;transition:transform .3s,opacity .3s;opacity:.55}' +
+      '#cm .cm-seat.spoke{opacity:1}#cm .cm-seat.talk{transform:scale(1.08);opacity:1}' +
+      '#cm .cm-av{width:44px;height:44px;margin:0 auto 4px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;background:#0B1222;border:2px solid #3a4560;position:relative}' +
+      '#cm .cm-seat.talk .cm-av{box-shadow:0 0 0 4px rgba(0,224,255,.18),0 0 18px rgba(0,224,255,.45)}' +
+      '#cm .cm-seat .cm-sn{color:#E8EDFB;font-weight:650;overflow-wrap:anywhere}' +
+      '#cm .cm-seat .cm-ss{font-size:9.5px;font-weight:700;letter-spacing:.04em}' +
+      '#cm .cm-feed{max-height:430px;overflow-y:auto;padding-right:4px}' +
+      '#cm .cm-bub{display:flex;gap:9px;margin:0 0 9px;align-items:flex-start}' +
+      '#cm .cm-bub.new{animation:cmin .45s ease-out}' +
+      '@keyframes cmin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
+      '#cm .cm-bav{flex:0 0 32px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:#0B1222;border:2px solid #3a4560}' +
+      '#cm .cm-btx{flex:1 1 auto;min-width:0;border-radius:4px 12px 12px 12px;padding:7px 11px;background:rgba(21,28,45,.75);border-left:3px solid #3a4560;font-size:12.5px;line-height:1.5;color:#D5DCF0;overflow-wrap:anywhere}' +
+      '#cm .cm-bh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;margin-bottom:2px}' +
+      '#cm .cm-bh b{color:#E8EDFB}#cm .cm-tag{font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:1px 7px;border-radius:999px;border:1px solid currentColor}' +
+      '#cm .cm-src{display:block;font-size:10.5px;color:#7C87A3;margin-top:3px}' +
+      '#cm .cm-typing{font-size:12px;color:#9BA6C4;padding:4px 2px 2px 41px}' +
+      '#cm .cm-typing i{display:inline-block;width:5px;height:5px;margin:0 1px;border-radius:50%;background:#00E0FF;animation:cmdot 1.2s infinite}' +
+      '#cm .cm-typing i:nth-child(2){animation-delay:.2s}#cm .cm-typing i:nth-child(3){animation-delay:.4s}' +
+      '@keyframes cmdot{0%,80%,100%{opacity:.2}40%{opacity:1}}' +
+      '#cm .cm-strip{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}' +
+      '#cm .cm-strip span{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid rgba(122,158,255,.2);color:#5f6b8a}' +
+      '#cm .cm-strip span.d{color:#2BE38B;border-color:rgba(43,227,139,.4)}#cm .cm-strip span.c{color:#E8EDFB;border-color:#00E0FF}' +
+      '#cm .cm-votes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}' +
+      '@media(max-width:760px){#cm .cm-seat{width:76px;font-size:9.5px}#cm .cm-av{width:38px;height:38px;font-size:18px}#cm .cm-feed{max-height:360px}}';
     var st = document.createElement('style'); st.id = 'cm-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
 
   var S = { tab: 'committee', entity: null, clientId: '', memo: null, history: [], poll: null, busy: false, msg: null,
     clients: null, clientsErr: null, tr: null, cal: null, recent: null, agentSel: '__all', chart: null,
-    running: null, deciding: false };
+    running: null, deciding: false, shown: 0, animIdx: -1, reveal: null, replay: null };
   function T(d, k) { return d ? (isEn() ? (d[k + '_en'] || d[k]) : d[k]) : ''; }   // texto del servidor es/en
   function decLabel(code) { var d = DEC[code]; return d ? L(d[1], d[2]) : (code || '—'); }
   function badge(cm) {
@@ -202,6 +232,7 @@
     // volver a abrir se retoma la consulta; si no, «Correr comité» quedaría
     // deshabilitado para siempre
     if (S.poll) { clearInterval(S.poll); S.poll = null; }
+    stopReveal();
     if (S.chart) { try { S.chart.destroy(); } catch (e) {} S.chart = null; }
     S.deciding = false;
   }
@@ -245,7 +276,7 @@
         '<button class="cm-btn" id="cm-run"' + (S.busy ? ' disabled' : '') + '>' + esc(S.busy ? L('El comité delibera…', 'Committee deliberating…') : L('Correr comité', 'Run committee')) + '</button>' +
       '</div>' +
       (S.clientsErr ? '<div class="cm-note" style="margin:-4px 0 10px">' + esc(S.clientsErr) + '</div>' : '') +
-      (S.busy ? progressHtml() : '') +
+      (S.busy ? '<div id="cm-live">' + liveHtml() + '</div>' : '') +
       (m && !S.busy ? memoHtml(m) : (!S.busy ? '<div class="cm-cell"><div class="cm-note">' + esc(S.entity ? L('Todavía no hay memo del comité para esta empresa. Pulsa «Correr comité». Consejo: primero corre 🔬 Investigación IA para que el comité tenga conclusiones.', 'No committee memo for this company yet. Press “Run committee”. Tip: run 🔬 AI research first so the committee has conclusions.') : L('Escribe una empresa y pulsa «Correr comité».', 'Type a company and press “Run committee”.')) + '</div>' +
         (S.entity && window.KhipuResearch ? '<div style="margin-top:8px"><button class="cm-btn ghost" onclick="window.KhipuResearch.open(\'' + esc(S.entity) + '\')">🔬 ' + esc(L('Investigación IA', 'AI research')) + '</button></div>' : '') + '</div>' : '')) +
       (S.history && S.history.length > 1 ? '<div class="cm-cell"><div class="cm-t">🗂 ' + esc(L('Memos anteriores', 'Previous memos')) + '</div>' +
@@ -260,6 +291,7 @@
     var lc = document.getElementById('cm-lc'); if (lc) lc.onclick = function () { loadClients(true); };
     body.querySelectorAll('.cm-hist').forEach(function (x) { x.onclick = function () { loadMemo(x.getAttribute('data-id')); }; });
     body.querySelectorAll('[data-ref]').forEach(function (x) { x.onclick = function () { openRef(x.getAttribute('data-ref')); }; });
+    wireRoom(body); scrollFeed();
     var ap = document.getElementById('cm-approve'); if (ap) ap.onclick = approve;
     var rj = document.getElementById('cm-reject'); if (rj) rj.onclick = reject;
   }
@@ -320,12 +352,25 @@
             ((m.client_mode || cl) ? ' · ' + esc(badge(m.client_mode || cl)) : '') + '</span>' : '') +
         '</div>' +
         '<div class="cm-note" style="font-size:13px;color:#E8EDFB">' + esc(summary || '') + '</div>' +
+        (b.tally ? '<div class="cm-votes"><span class="cm-pill" style="color:#2BE38B;border-color:rgba(43,227,139,.4)">👍 ' + b.tally['for'] + ' ' + esc(L('a favor', 'for')) + '</span>' +
+          '<span class="cm-pill" style="color:#FF4D6A;border-color:rgba(255,77,106,.4)">👎 ' + b.tally.against + ' ' + esc(L('en contra', 'against')) + '</span>' +
+          '<span class="cm-pill">✋ ' + b.tally.neutral + ' ' + esc(L('neutral', 'neutral')) + '</span>' +
+          '<span class="cm-pill">🧭 ' + esc(L('convicción ', 'conviction ')) + (m.overall_conviction > 0 ? '+' : '') + Math.round(m.overall_conviction || 0) + '/100</span></div>' : '') +
         (m.quant_decision && m.quant_decision !== m.decision ? '<div class="cm-note" style="margin-top:6px;color:#FFB300">' + esc(L('El núcleo cuantitativo proponía ', 'The quantitative core proposed ') + decLabel(m.quant_decision) + L('; el presidente rebajó a MANTENER: ', '; the chair downgraded to HOLD: ') + (note || '')) + '</div>' : '') +
         (b.quant_reason_es ? '<div class="cm-note" style="margin-top:6px;font-size:11px">' + esc(L('Regla aplicada: ', 'Rule applied: ') + (isEn() ? b.quant_reason_en : b.quant_reason_es)) + '</div>' : '') +
         (m.symbol && (m.inputs || {}).us_listing === false ? '<div class="cm-note" style="margin-top:4px;font-size:11px;color:#FFB300">' + esc(L('Cotiza fuera de EE.UU. (' + m.symbol + ', en moneda local): Alpaca no la opera, así que el comité no propone órdenes para clientes; su historial se califica en moneda local.', 'Trades outside the US (' + m.symbol + ', in local currency): Alpaca does not trade it, so the committee does not propose client orders; its track record is scored in local currency.')) + '</div>' : '') +
         (b.ai_error ? '<div class="cm-note" style="margin-top:4px;font-size:11px;color:#7C87A3">' + esc(L('Nota: ', 'Note: ') + T(b, 'ai_error')) + '</div>' : '') +
         '<div class="cm-note" style="margin-top:6px;font-size:11px;color:#7C87A3">' + esc(clock(m.created_at) + ' · ' + L('pedido por ', 'requested by ') + (m.requested_by || '—') + (m.expires_at ? ' · ' + L('vence ', 'expires ') + clock(m.expires_at) : '') + (m.expired ? ' · ' + L('VENCIDO: vuelve a correrlo', 'EXPIRED: run it again') : '')) + '</div>' +
       '</div>' +
+      '<div id="cm-live">' + memoRoomHtml(m) + '</div>' +
+        (pv ? previewHtml(pv, m) : '') +
+        ((m.status === 'proposed' && !m.expired) || m.status === 'approved' ? '<div class="cm-cell"><div class="cm-t">✋ ' + esc(L('Tu decisión', 'Your decision')) + '</div>' +
+          (m.status === 'proposed' ? '<div class="cm-note" style="margin-bottom:8px">' + (m.client_id && actionable && m.client_mode ? '<b>' + esc(badge(m.client_mode)) + '</b> · ' : '') + esc(m.client_id && actionable ? L('Aprobar prepara una orden (previsualización) para el cliente; la ejecución se confirma aparte en Clientes.', 'Approving prepares an order (preview) for the client; execution is confirmed separately in Clients.') : L('Aprobar registra la decisión; sin cliente no se prepara ninguna orden.', 'Approving records the decision; with no client no order is prepared.')) + '</div>'
+            : '<div class="cm-note" style="margin-bottom:8px">' + esc(L('Rechazar ahora también retira la orden que espera aprobación en Clientes.', 'Rejecting now also withdraws the order awaiting approval in Clients.')) + '</div>') +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (m.status === 'proposed' ? '<button class="cm-btn ok" id="cm-approve"' + (S.deciding ? ' disabled' : '') + '>' + esc(S.deciding ? L('Procesando…', 'Working…') : '✅ ' + L('Aprobar', 'Approve')) + '</button>' : '') +
+          '<button class="cm-btn no" id="cm-reject"' + (S.deciding ? ' disabled' : '') + '>✖ ' + esc(L('Rechazar', 'Reject')) + '</button></div></div>' : '') +
+        (m.decided_by ? '<div class="cm-cell"><div class="cm-note">' + esc(L('Decidido por ', 'Decided by ') + m.decided_by + ' · ' + clock(m.decided_at) + (m.decision_note ? ' · «' + m.decision_note + '»' : '')) + '</div></div>' : '') +
+      '<div class="cm-t" style="margin:4px 0 8px">🔍 ' + esc(L('El detalle (para quien quiera ver la cuenta)', 'The detail (for those who want to see the math)')) + '</div>' +
       '<div class="cm-grid"><div style="min-width:0">' +
         '<div class="cm-cell"><div class="cm-t">🧭 ' + esc(L('Convicción por horizonte', 'Conviction by horizon')) + chip('conviction') + '</div>' +
           gauge(L('GLOBAL', 'OVERALL'), m.overall_conviction, null) + (hzRows || '<div class="cm-note">' + esc(L('Sin conclusiones activas.', 'No active conclusions.')) + '</div>') + '</div>' +
@@ -350,13 +395,6 @@
           '<div class="cm-kv"><span>' + esc(L('Contradicciones', 'Contradictions')) + '</span><span>' + esc(((m.inputs || {}).n_contradictions) || 0) + '</span></div>' +
           (window.KhipuResearch ? '<div style="margin-top:8px"><button class="cm-btn ghost" onclick="window.KhipuResearch.open(\'' + esc(m.entity_id) + '\')">🔬 ' + esc(L('Ver la investigación', 'See the research')) + '</button></div>' : '') +
         '</div>' +
-        (pv ? previewHtml(pv, m) : '') +
-        ((m.status === 'proposed' && !m.expired) || m.status === 'approved' ? '<div class="cm-cell"><div class="cm-t">✋ ' + esc(L('Tu decisión', 'Your decision')) + '</div>' +
-          (m.status === 'proposed' ? '<div class="cm-note" style="margin-bottom:8px">' + (m.client_id && actionable && m.client_mode ? '<b>' + esc(badge(m.client_mode)) + '</b> · ' : '') + esc(m.client_id && actionable ? L('Aprobar prepara una orden (previsualización) para el cliente; la ejecución se confirma aparte en Clientes.', 'Approving prepares an order (preview) for the client; execution is confirmed separately in Clients.') : L('Aprobar registra la decisión; sin cliente no se prepara ninguna orden.', 'Approving records the decision; with no client no order is prepared.')) + '</div>'
-            : '<div class="cm-note" style="margin-bottom:8px">' + esc(L('Rechazar ahora también retira la orden que espera aprobación en Clientes.', 'Rejecting now also withdraws the order awaiting approval in Clients.')) + '</div>') +
-          '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (m.status === 'proposed' ? '<button class="cm-btn ok" id="cm-approve"' + (S.deciding ? ' disabled' : '') + '>' + esc(S.deciding ? L('Procesando…', 'Working…') : '✅ ' + L('Aprobar', 'Approve')) + '</button>' : '') +
-          '<button class="cm-btn no" id="cm-reject"' + (S.deciding ? ' disabled' : '') + '>✖ ' + esc(L('Rechazar', 'Reject')) + '</button></div></div>' : '') +
-        (m.decided_by ? '<div class="cm-cell"><div class="cm-note">' + esc(L('Decidido por ', 'Decided by ') + m.decided_by + ' · ' + clock(m.decided_at) + (m.decision_note ? ' · «' + m.decision_note + '»' : '')) + '</div></div>' : '') +
       '</div></div>' +
       '<div class="cm-disc">⚖️ ' + esc(isEn() ? (m.disclaimer_en || '') : (m.disclaimer_es || '')) + '</div>';
   }
@@ -436,38 +474,135 @@
     });
   }
 
-  // ── PANTALLA DE PROGRESO: pasos reales que reporta el servidor ──────────
-  var STAGES = [
-    ['claims', '📚', 'Leyendo las conclusiones de los analistas IA', 'Reading the AI analysts\' conclusions'],
-    ['live', '📡', 'Consultando precio y datos en vivo', 'Fetching live price and data'],
-    ['risk', '📉', 'Midiendo el riesgo con 1 año de precios reales', 'Measuring risk with 1 year of real prices'],
-    ['client', '👤', 'Revisando la cuenta y el mandato del cliente', 'Checking the client account and mandate'],
-    ['scoring', '🧮', 'Calculando convicción y tamaño de la posición', 'Computing conviction and position size'],
-    ['chair', '🏛', 'El presidente IA redacta el memo (suele tardar 20–90 s)', 'The AI chair writes the memo (usually 20–90 s)'],
-    ['saving', '💾', 'Guardando la propuesta', 'Saving the proposal'],
-  ];
-  function fmtT(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
-  function progressHtml() {
-    var p = S.progress || {}, done = p.done || [], cur = p.stage || 'claims';
-    var list = STAGES.filter(function (st) { return st[0] !== 'client' || S.clientId; });
-    var idx = list.map(function (x) { return x[0]; }).indexOf(cur);
-    var pct = Math.round(100 * Math.max(0, idx) / list.length) + (cur === 'chair' ? Math.min(12, Math.round((p.elapsed_s || 0) / 10)) : 0);
-    var el = S.runStart ? (Date.now() - S.runStart) / 1000 : (p.elapsed_s || 0);
-    return '<div class="cm-cell" style="padding:16px">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>🏛 ' + esc(L('El comité está deliberando', 'The committee is deliberating')) + '</b>' +
-      '<span style="font-variant-numeric:tabular-nums;color:#9BA6C4">⏱ ' + fmtT(el) + '</span></div>' +
-      '<div style="height:6px;border-radius:4px;background:rgba(122,158,255,.15);overflow:hidden;margin-bottom:12px"><i style="display:block;height:100%;width:' + Math.min(96, pct) + '%;background:linear-gradient(90deg,#00E0FF,#FFB300);transition:width .6s"></i></div>' +
-      list.map(function (st) {
-        var isDone = done.indexOf(st[0]) >= 0 || (idx >= 0 && list.map(function (x) { return x[0]; }).indexOf(st[0]) < idx);
-        var isCur = st[0] === cur;
-        return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;font-size:13px;color:' + (isDone ? '#2BE38B' : isCur ? '#E8EDFB' : '#5f6b8a') + '">' +
-          '<span style="width:18px;text-align:center">' + (isDone ? '✓' : isCur ? '<span class="cm-spin">◌</span>' : '·') + '</span><span>' + st[1] + ' ' + esc(L(st[2], st[3])) + '</span></div>';
-      }).join('') +
-      '<div class="cm-note" style="margin-top:10px">' + esc(el > 150
-        ? L('Está tardando más de lo normal (la IA puede estar lenta). Puedes cerrar esta ventana: el comité sigue trabajando y el resultado aparecerá aquí al volver.', 'Taking longer than usual (the AI may be slow). You can close this window: the committee keeps working and the result will appear here when you come back.')
-        : L('En total suele tardar entre 30 segundos y 2 minutos. Puedes cerrar esta ventana: el comité sigue trabajando.', 'It usually takes 30 seconds to 2 minutes. You can close this window: the committee keeps working.')) + '</div></div>';
+
+  // ── SALA DEL COMITÉ: puestos + conversación (research/deliberation.py) ──
+  // Los mensajes llegan del servidor a medida que ocurre cada etapa; aquí se
+  // revelan de a uno (≈1 s) para que se pueda leer el debate "en vivo".
+  var STANCE = { 'for': ['#2BE38B', 'A FAVOR', 'FOR'], against: ['#FF4D6A', 'EN CONTRA', 'AGAINST'], neutral: ['#9BA6C4', 'NEUTRAL', 'NEUTRAL'] };
+  var KIND = { open: ['Apertura', 'Opening'], position: ['Postura', 'Position'], rebuttal: ['Réplica', 'Rebuttal'], moderate: ['Moderación', 'Moderation'],
+    data: ['Dato', 'Data'], verdict: ['Veredicto', 'Verdict'], reply: ['Respuesta', 'Reply'] };
+  var DESK = [['market', '📡', 'Mesa de mercado', 'Market desk'], ['risk_officer', '🛡️', 'Oficial de riesgo', 'Risk officer'],
+    ['mandate', '👤', 'Mandato', 'Mandate'], ['quant', '🧮', 'Núcleo cuantitativo', 'Quant core'], ['chair', '🏛', 'Presidente', 'Chair']];
+  function tx(m) { return isEn() ? (m.text_en || m.text_es) : m.text_es; }
+  function nm(m) { return isEn() ? (m.name_en || m.name_es) : m.name_es; }
+  function shortName(n) { var x = String(n || '').replace(/^Analista (de |del )?/i, '').replace(/ analyst$/i, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
+
+  function seatsHtml(seats, msgs, withClient) {
+    var spoke = {}, last = msgs.length ? msgs[msgs.length - 1].seat : null;
+    msgs.forEach(function (m) { spoke[m.seat] = m.stance || spoke[m.seat] || 'spoke'; });
+    var agents = (seats || []).map(function (st) {
+      var said = spoke[st.seat], col = said && STANCE[st.stance] ? STANCE[st.stance][0] : '#3a4560';
+      var rec = st.n_scored > 0 ? st.hits + '/' + st.n_scored + ' ✓' : L('sin historial', 'no record');
+      return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === st.seat ? ' talk' : '') + '" title="' + esc(L('Fiabilidad ', 'Reliability ') + pct(st.reliability) + ' · ' + rec) + '">' +
+        '<div class="cm-av" style="border-color:' + col + '">' + esc(st.emoji) + '</div>' +
+        '<div class="cm-sn">' + esc(shortName(L(st.name_es, st.name_en))) + '</div>' +
+        '<div class="cm-ss" style="color:' + (said ? col : '#5f6b8a') + '">' + esc(said ? L(STANCE[st.stance][1], STANCE[st.stance][2]) : L('por hablar', 'to speak')) + '</div>' +
+        '<div style="font-size:9.5px;color:#5f6b8a">' + esc(rec) + '</div></div>';
+    }).join('');
+    var desk = DESK.filter(function (d) { return d[0] !== 'mandate' || withClient; }).map(function (d) {
+      var said = spoke[d[0]];
+      return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === d[0] ? ' talk' : '') + '">' +
+        '<div class="cm-av" style="border-color:' + (said ? '#5FC6E8' : '#3a4560') + '">' + d[1] + '</div>' +
+        '<div class="cm-sn">' + esc(L(d[2], d[3])) + '</div></div>';
+    }).join('');
+    return '<div class="cm-table">' + (agents || '<div class="cm-note" style="align-self:center">' + esc(L('Sentando a los analistas…', 'Seating the analysts…')) + '</div>') +
+      '<div style="flex-basis:100%;height:0"></div>' + desk + '</div>';
   }
 
+  function bubbleHtml(m, isNew) {
+    var st = m.stance && STANCE[m.stance];
+    var col = st ? st[0] : (m.seat === 'chair' ? '#FFB300' : '#5FC6E8');
+    var k = KIND[m.kind] || [m.kind || '', m.kind || ''];
+    var src = m.source && (m.source.title || m.source.url)
+      ? '<span class="cm-src">📎 ' + (m.source.url ? '<a href="' + esc(window.safeUrl ? window.safeUrl(m.source.url) : m.source.url) + '" target="_blank" rel="noopener">' + esc(m.source.title || m.source.url) + '</a>' : esc(m.source.title)) +
+        (m.source.date ? ' · ' + esc(day(m.source.date)) : '') + '</span>' : '';
+    return '<div class="cm-bub' + (isNew ? ' new' : '') + '"><div class="cm-bav" style="border-color:' + col + '">' + esc(m.emoji || '🤖') + '</div>' +
+      '<div class="cm-btx" style="border-left-color:' + col + '"><div class="cm-bh"><b>' + esc(nm(m)) + '</b>' +
+      (st ? '<span class="cm-tag" style="color:' + col + '">' + esc(L(st[1], st[2])) + '</span>' : '') +
+      '<span style="color:#5f6b8a">' + esc(L(k[0], k[1])) + '</span></div>' + esc(tx(m)) + refs(m.refs) + src + '</div></div>';
+  }
+
+  function typingHtml(msgs, total, stage) {
+    var next = total > msgs.length ? S._allMsgs[msgs.length] : null;
+    var who = next ? (next.emoji + ' ' + nm(next)) : stage === 'chair' ? '🏛 ' + L('Presidente', 'Chair') : stage === 'saving' ? '💾' : '';
+    var what = next ? L('está hablando', 'is speaking') : stage === 'chair' ? L('está redactando el veredicto (suele tardar 20–90 s)', 'is writing the verdict (usually 20–90 s)')
+      : stage === 'live' ? L('📡 consultando el precio en vivo', '📡 fetching the live price') : stage === 'risk' ? L('🛡️ midiendo el riesgo con precios reales', '🛡️ measuring risk with real prices')
+      : stage === 'scoring' ? L('🧮 haciendo la cuenta', '🧮 running the numbers') : L('el comité se está reuniendo', 'the committee is gathering');
+    return '<div class="cm-typing">' + esc(who) + ' ' + esc(what) + ' <i></i><i></i><i></i></div>';
+  }
+
+  // msgs visibles · seats · ¿en vivo? · etapa
+  function roomHtml(all, shown, seats, live, stage, withClient) {
+    S._allMsgs = all;
+    var msgs = all.slice(0, shown);
+    var t = { 'for': 0, against: 0, neutral: 0 };
+    (seats || []).forEach(function (st) { if (msgs.some(function (m) { return m.seat === st.seat && m.kind === 'position'; })) t[st.stance]++; });
+    return '<div class="cm-room"><div class="cm-t">🏛 ' + esc(L('Sala del comité', 'Committee room')) + chip('committee_room') +
+      (live ? ' <span style="margin-left:6px;color:#FF4D6A;letter-spacing:.05em">● ' + esc(L('EN VIVO', 'LIVE')) + '</span>' : '') +
+      '<span style="margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600">' +
+        '<span style="color:#2BE38B">👍 ' + t['for'] + '</span> · <span style="color:#FF4D6A">👎 ' + t.against + '</span> · <span style="color:#9BA6C4">✋ ' + t.neutral + '</span></span></div>' +
+      seatsHtml(seats, msgs, withClient) +
+      '<div class="cm-feed" id="cm-feed">' + msgs.map(function (m, i) { return bubbleHtml(m, i === S.animIdx); }).join('') +
+      (live || shown < all.length ? typingHtml(msgs, all.length, stage) : '') + '</div>' +
+      (!live && shown >= all.length && all.length ? '<div style="text-align:right;margin-top:6px"><button class="cm-btn ghost" id="cm-replay">▶ ' + esc(L('Repetir la sesión', 'Replay the session')) + '</button></div>' : '') +
+      '</div>';
+  }
+
+  function scrollFeed() { var f = document.getElementById('cm-feed'); if (f) f.scrollTop = f.scrollHeight; }
+
+  // Revela de a un mensaje mientras haya pendientes (en vivo o repetición)
+  function tickReveal() {
+    var all = S._allMsgs || [];
+    if (S.shown < all.length) { S.animIdx = S.shown; S.shown++; paintLive(); }
+    else if (!S.busy && S.replay) { stopReveal(); render(); }
+  }
+  function startReveal() { if (!S.reveal) S.reveal = setInterval(tickReveal, 1000); }
+  function stopReveal() { if (S.reveal) { clearInterval(S.reveal); S.reveal = null; } S.replay = null; S.animIdx = -1; }
+
+  function liveHtml() {
+    var p = S.progress || {}, done = p.done || [], cur = p.stage || 'claims';
+    var list = STAGES.filter(function (st) { return st[0] !== 'client' || S.clientId; });
+    var el = S.runStart ? (Date.now() - S.runStart) / 1000 : (p.elapsed_s || 0);
+    var strip = '<div class="cm-strip">' + list.map(function (st) {
+      var cls = done.indexOf(st[0]) >= 0 ? 'd' : st[0] === cur ? 'c' : '';
+      return '<span class="' + cls + '">' + (cls === 'd' ? '✓ ' : '') + st[1] + ' ' + esc(L(st[4], st[5])) + '</span>'; }).join('') +
+      '<span style="margin-left:auto;border:none;color:#9BA6C4;font-variant-numeric:tabular-nums">⏱ ' + fmtT(el) + '</span></div>';
+    return strip + roomHtml(p.messages || [], S.shown, p.seats || [], true, cur, !!S.clientId) +
+      '<div class="cm-note" style="margin:-4px 0 12px">' + esc(el > 150
+        ? L('Está tardando más de lo normal (la IA puede estar lenta). Puedes cerrar esta ventana: el comité sigue trabajando y el resultado aparecerá aquí al volver.', 'Taking longer than usual (the AI may be slow). You can close this window: the committee keeps working and the result will appear here when you come back.')
+        : L('Suele tardar entre 30 segundos y 2 minutos. Puedes cerrar esta ventana: el comité sigue trabajando.', 'It usually takes 30 seconds to 2 minutes. You can close this window: the committee keeps working.')) + '</div>';
+  }
+  // repinta SOLO la sala (sin reconstruir el formulario ni perder el foco)
+  function paintLive() {
+    var box = document.getElementById('cm-live');
+    if (!box) { render(); return; }
+    if (S.busy) box.innerHTML = liveHtml();
+    else if (S.memo) box.innerHTML = memoRoomHtml(S.memo);
+    wireRoom(box); scrollFeed();
+  }
+  function wireRoom(root) {
+    (root || document).querySelectorAll('[data-ref]').forEach(function (x) { x.onclick = function () { openRef(x.getAttribute('data-ref')); }; });
+    var rp = document.getElementById('cm-replay');
+    if (rp) rp.onclick = function () { S.replay = true; S.shown = 0; S.animIdx = -1; paintLive(); startReveal(); };
+  }
+  function memoRoomHtml(m) {
+    var b = m.memo || {}, tr = b.transcript || [];
+    if (!tr.length) return '<div class="cm-room"><div class="cm-note">' + esc(L('Este memo es anterior a la sala del comité: vuelve a correrlo para ver el debate entre los analistas.', 'This memo predates the committee room: run it again to see the debate between the analysts.')) + '</div></div>';
+    var shown = S.replay ? S.shown : tr.length;
+    return roomHtml(tr, shown, b.seats || [], false, null, !!m.client_id);
+  }
+
+  // ── PANTALLA DE PROGRESO: pasos reales que reporta el servidor ──────────
+  var STAGES = [
+    ['claims', '📚', 'Leyendo las conclusiones de los analistas IA', 'Reading the AI analysts\' conclusions', 'Analistas', 'Analysts'],
+    ['live', '📡', 'Consultando precio y datos en vivo', 'Fetching live price and data', 'En vivo', 'Live'],
+    ['risk', '📉', 'Midiendo el riesgo con 1 año de precios reales', 'Measuring risk with 1 year of real prices', 'Riesgo', 'Risk'],
+    ['client', '👤', 'Revisando la cuenta y el mandato del cliente', 'Checking the client account and mandate', 'Cliente', 'Client'],
+    ['scoring', '🧮', 'Calculando convicción y tamaño de la posición', 'Computing conviction and position size', 'Cuenta', 'Math'],
+    ['chair', '🏛', 'El presidente IA redacta el memo (suele tardar 20–90 s)', 'The AI chair writes the memo (usually 20–90 s)', 'Presidente', 'Chair'],
+    ['saving', '💾', 'Guardando la propuesta', 'Saving the proposal', 'Guardar', 'Save'],
+  ];
+  function fmtT(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function startPoll(mid) {
     S.running = { memo_id: mid, entity: S.entity }; S.busy = true;
     if (!S.runStart) S.runStart = Date.now();
@@ -475,6 +610,9 @@
     if (S.poll) clearInterval(S.poll);
     function stop(msg) {
       clearInterval(S.poll); S.poll = null; S.busy = false; S.running = null; S.progress = null; S.runStart = null;
+      // lo que no se alcanzó a leer en vivo se sigue revelando sobre el memo final
+      var pend = (S._allMsgs || []).length - S.shown;
+      if (pend > 0 && S.shown > 0) { S.replay = true; startReveal(); } else stopReveal();
       if (msg) S.msg = msg;
     }
     S.poll = setInterval(function () {
@@ -493,7 +631,9 @@
         } else if (n > 180) {                        // 6 min
           stop({ bad: true, text: L('El comité sigue sin terminar tras 6 minutos. Vuelve a intentar más tarde (revisa 🩺 Sistema → IA).', 'The committee has not finished after 6 minutes. Try again later (check 🩺 System → AI).') }); render();
         } else {
-          S.progress = m.progress || S.progress; render();
+          S.progress = m.progress || S.progress;
+          if (document.getElementById('cm-live')) paintLive(); else render();
+          startReveal();
         }
       }).catch(function () { errs++; if (errs >= 3) { stop({ bad: true, text: L('Sin conexión con el servidor.', 'No connection to the server.') }); render(); } });
     }, 2000);
@@ -507,6 +647,7 @@
     var ent = (S.entity && q === nodeLabel(S.entity)) ? S.entity : q;
     var body = { entity: ent, actor: actor() };
     if (S.clientId) body.client_id = S.clientId;
+    stopReveal(); S.shown = 0; S.animIdx = -1;
     S.busy = true; S.msg = null; S.memo = null; S.progress = null; S.runStart = Date.now(); render();
     var opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
     (S.clientId ? pinJSON('/api/committee/run', opts, true) : getJSON('/api/committee/run', opts)).then(function (d) {
