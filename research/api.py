@@ -41,7 +41,9 @@ def _claim_dict(c, n_sup=None, n_cnt=None):
 
 
 def _run_dict(r):
-    return {'run_id': r.id, 'job_id': r.job_id, 'agent_id': r.agent_id, 'agent_type': r.agent_type,
+    from research.errors import run_hint
+    hint = run_hint(r.errors) if r.status in ('failed', 'skipped') else (None, None)
+    return {'hint_es': hint[0], 'hint_en': hint[1],'run_id': r.id, 'job_id': r.job_id, 'agent_id': r.agent_id, 'agent_type': r.agent_type,
             'entity_id': r.entity_id, 'trigger': r.trigger, 'depth': r.depth, 'status': r.status,
             'model': r.model, 'provider': r.provider, 'tokens_in': r.tokens_in, 'tokens_out': r.tokens_out,
             'est_cost_usd': r.est_cost_usd, 'claims_generated': r.claims_generated,

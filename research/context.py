@@ -21,14 +21,14 @@ from core.entities import get_index
 
 # qué datos pide cada tipo de agente (capabilities → fuentes)
 AGENT_NEEDS = {
-    'fundamental': ('financials', 'profile', 'sec', 'news', 'catalog', 'graph'),
+    'fundamental': ('financials', 'profile', 'ratios', 'peers', 'sec', 'news', 'catalog', 'graph'),
     'technical': ('profile', 'candles', 'news'),
     'macro': ('catalog', 'graph', 'news'),
     'news': ('news', 'sec', 'catalog'),
     'geopolitical': ('catalog', 'graph', 'news'),
     'supply_chain': ('graph', 'catalog', 'news', 'profile'),
     'crypto': ('news', 'catalog'),
-    'risk_observation': ('profile', 'sec', 'graph', 'news', 'catalog'),
+    'risk_observation': ('financials', 'profile', 'ratios', 'sec', 'graph', 'news', 'catalog'),
 }
 
 LIMITS = {   # por profundidad: cuánto contexto (y costo) se permite
@@ -81,11 +81,40 @@ def _fetch_news(label, limit):
              'published_at': a.get('seendate')} for a in (data.get('articles') or [])[:limit]]
 
 
+def _fetch_company_news(symbol, limit):
+    """Noticias de la EMPRESA con RESUMEN (Finnhub, 30 días; requiere FINNHUB_KEY).
+    GDELT solo da titulares: con el resumen la IA entiende qué pasó."""
+    from datetime import date, timedelta
+
+    from core.config import FINNHUB
+    from core.http import _safe_get, _safe_ticker
+    sym = _safe_ticker(symbol)
+    if not FINNHUB or not sym or '.' in sym:
+        return []
+    data, err = _safe_get(f'https://finnhub.io/api/v1/company-news?symbol={sym}'
+                          f'&from={(date.today() - timedelta(days=30)).isoformat()}&to={date.today().isoformat()}'
+                          f'&token={FINNHUB}')
+    if err or not isinstance(data, list):
+        return []
+    out, seen = [], set()
+    for a in data:
+        h = (a.get('headline') or '').strip()
+        if not h or not a.get('url') or h.lower() in seen:
+            continue
+        seen.add(h.lower())
+        ts = a.get('datetime')
+        out.append({'title': h, 'url': a.get('url'), 'source': a.get('source'), 'summary': a.get('summary') or '',
+                    'published_at': datetime.fromtimestamp(ts, tz=timezone.utc).isoformat() if ts else None})
+        if len(out) >= limit:
+            break
+    return out
+
+
 def _fetch_candles(symbol):
-    """Cierres diarios ~6 meses (Yahoo chart) → lista de (ts, close)."""
+    """Cierres diarios ~1 año (Yahoo chart) → lista de (ts, close)."""
     from core.company_data import _get_json
     data, err = _get_json(f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
-                          params={'interval': '1d', 'range': '6mo'}, timeout=10)
+                          params={'interval': '1d', 'range': '1y'}, timeout=10)
     if err or not isinstance(data, dict):
         return []
     res = ((data.get('chart') or {}).get('result') or [None])[0] or {}
@@ -134,7 +163,7 @@ def _fetch_mcap(symbol):
 
 
 DEFAULT_FETCHERS = {'profile': _fetch_profile, 'financials': _fetch_financials,
-                    'news': _fetch_news, 'web': _fetch_web, 'candles': _fetch_candles,
+                    'news': _fetch_news, 'company_news': _fetch_company_news, 'web': _fetch_web, 'candles': _fetch_candles,
                     'mcap': _fetch_mcap, 'sec_filings': _fetch_sec_filings,
                     'sec_sections': _fetch_sec_sections}
 
@@ -252,6 +281,7 @@ class ContextBuilder:
                 reference=f'khipus:catalog:{entity_id}', reliability=0.5, source_kind='corporate')
 
         # estados financieros anuales (dato de proveedor: alta confiabilidad)
+        fin, prof = {}, {}
         if 'financials' in needs and mkt:
             tools.append('financials')
             try:
@@ -277,6 +307,7 @@ class ContextBuilder:
                 p = self.f['profile'](mkt) or {}
             except Exception:  # noqa: BLE001
                 p = {}
+            prof = p
             if p.get('available'):
                 keys = ('price', 'change_pct', 'currency', 'market_cap_usd_b', 'revenue_ttm_usd_b',
                         'gross_margin', 'operating_margin', 'profit_margin', 'revenue_growth',
@@ -302,18 +333,60 @@ class ContextBuilder:
                         published_at=datetime.now(timezone.utc).isoformat(), reliability=0.85,
                         source_kind='primary')
 
-        # indicadores de precio calculados (sin IA)
+        # RATIOS calculados por Khipus (research/analytics): la IA recibe las cuentas hechas
+        if 'ratios' in needs and fin.get('available'):
+            tools.append('ratios')
+            try:
+                from research.analytics import fundamental_ratios
+                _r, txt = fundamental_ratios(fin, prof)
+            except Exception:  # noqa: BLE001
+                txt = ''
+            if txt:
+                add('analysis', f'Ratios financieros de {node.get("label")} calculados por Khipus '
+                    f'(estados anuales en USD + capitalización en vivo)', txt,
+                    reference=f'khipus:ratios:{mkt}', reliability=0.85, source_kind='primary', max_chars=1400)
+
+        # VALUACIÓN RELATIVA frente a pares del grafo (perfiles en vivo)
+        if 'peers' in needs and mkt and prof.get('available') and depth != 'QUICK':
+            tools.append('peers')
+            try:
+                from research.analytics import peer_table
+                peers = self._peer_profiles(entity_id, node, max_peers=5)
+                _t, txt = peer_table(node.get('label'), prof, peers)
+            except Exception:  # noqa: BLE001
+                txt = ''
+            if txt:
+                add('analysis', f'Valuación y calidad de {node.get("label")} frente a sus pares (perfiles en vivo)',
+                    txt, reference=f'khipus:peers:{entity_id}', reliability=0.8, source_kind='primary',
+                    max_chars=1400)
+
+        # indicadores de precio calculados (sin IA): 1 año vs S&P 500
         if 'candles' in needs and mkt:
             tools.append('candles')
             try:
-                ind = price_indicators(self.f['candles'](mkt) or [])
+                series = self.f['candles'](mkt) or []
             except Exception:  # noqa: BLE001
-                ind = None
-            if ind:
-                add('market', f'Indicadores de precio {mkt} (~6 meses diarios, calculados por Khipus)',
-                    ', '.join(f'{k}={v}' for k, v in ind.items() if v is not None),
+                series = []
+            try:
+                bench = self.f['candles']('SPY') or [] if mkt != 'SPY' else []
+            except Exception:  # noqa: BLE001
+                bench = []
+            try:
+                from research.analytics import technical_indicators
+                _ti, txt = technical_indicators(series, bench)
+            except Exception:  # noqa: BLE001
+                txt = ''
+            if txt:
+                add('market', f'Análisis técnico de {mkt} (1 año diario vs S&P 500, calculado por Khipus)', txt,
                     reference=f'https://finance.yahoo.com/quote/{mkt}/history', reliability=0.85,
-                    source_kind='primary')
+                    source_kind='primary', max_chars=1200)
+            else:
+                ind = price_indicators(series)
+                if ind:
+                    add('market', f'Indicadores de precio {mkt} (diarios, calculados por Khipus)',
+                        ', '.join(f'{k}={v}' for k, v in ind.items() if v is not None),
+                        reference=f'https://finance.yahoo.com/quote/{mkt}/history', reliability=0.85,
+                        source_kind='primary')
 
         # reportes oficiales SEC (fuente PRIMARIA regulatoria)
         if 'sec' in needs and mkt:
@@ -343,12 +416,27 @@ class ContextBuilder:
         # noticias recientes (externas → DATO)
         if 'news' in needs:
             tools.append('news')
+            cn = []
+            if mkt:
+                try:
+                    cn = self.f['company_news'](mkt, lim['max_news']) or []
+                except Exception:  # noqa: BLE001
+                    cn = []
+            seen_t = set()
+            for it in cn:
+                if not it.get('url') or not it.get('title'):
+                    continue
+                seen_t.add(it['title'].strip().lower())
+                add('news', it['title'], f"{it.get('source') or ''} · {it.get('published_at') or ''} · "
+                    f"{it.get('summary') or ''}", reference=it['url'], published_at=it.get('published_at'),
+                    reliability=_reliability_for_url(it['url']), max_chars=700)
+            room = max(2, lim['max_news'] - len(cn)) if cn else lim['max_news']
             try:
-                items = self.f['news'](node.get('label') or entity_id, lim['max_news']) or []
+                items = self.f['news'](node.get('label') or entity_id, room) or []
             except Exception:  # noqa: BLE001
                 items = []
             for it in items:
-                if not it.get('url') or not it.get('title'):
+                if not it.get('url') or not it.get('title') or it['title'].strip().lower() in seen_t:
                     continue
                 add('news', it['title'], f"{it.get('source') or ''} · {it.get('published_at') or ''}",
                     reference=it['url'], published_at=it.get('published_at'),
@@ -392,6 +480,38 @@ class ContextBuilder:
             'refs_log': [{'ref': e['ref'], 'source_type': e['source_type'], 'reference': e['reference']}
                          for e in ev],
         }
+
+    def _peer_profiles(self, entity_id, node, max_peers=5):
+        """Pares = vecinos del grafo cotizados de la MISMA categoría, completados con
+        empresas cotizadas de la misma categoría. Perfiles en vivo en paralelo."""
+        from concurrent.futures import ThreadPoolExecutor
+        nodes = get_index()['nodos']
+        cat = node.get('cat')
+        sub = self.subgraph(entity_id, max_nodes=25, max_depth=1)
+        cand = [n['id'] for n in sub['nodes'] if n.get('cat') == cat]
+        cand += [i for i, n in nodes.items() if n.get('cat') == cat and i not in cand]
+        picked = []
+        for i in cand:
+            n = nodes.get(i) or {}
+            sym = (n.get('mkt') or '').strip().upper()
+            if i == entity_id or not sym or sym == (node.get('mkt') or '').upper():
+                continue
+            if (n.get('listing') or {}).get('status') in ('private', 'acquired', 'delisted', 'bankrupt'):
+                continue
+            picked.append((n.get('label') or i, sym))
+            if len(picked) >= max_peers + 2:
+                break
+        if not picked:
+            return []
+
+        def one(pair):
+            try:
+                return pair[0], self.f['profile'](pair[1]) or {}
+            except Exception:  # noqa: BLE001
+                return pair[0], {}
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            res = list(ex.map(one, picked))
+        return [(lbl, p) for lbl, p in res if p.get('available')][:max_peers]
 
     def _prior_claims(self, entity_id, agent_type, limit=5):
         """Memoria SELECTIVA: últimas claims activas del mismo tipo de agente."""

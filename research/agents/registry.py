@@ -10,7 +10,11 @@ AGENTS = [
           focus=('Ingresos y su crecimiento, márgenes (bruto/operativo/neto), flujo de caja libre, balance '
                  '(deuda vs caja), dilución y valuación relativa (P/E) según los estados anuales y el perfil '
                  'de mercado. Distingue tendencias de varios años (LONG_TERM/STRUCTURAL) de lo reciente '
-                 '(MEDIUM_TERM). Señala cuando un dato del catálogo contradice los estados financieros.'),
+                 '(MEDIUM_TERM). Señala cuando un dato del catálogo contradice los estados financieros.\n'
+                 'USA LOS RATIOS YA CALCULADOS del paquete ("Ratios financieros… calculados por Khipus" y '
+                 '"frente a sus pares"): no recalcules. Una buena conclusión dice QUÉ cambió (ej. margen de FCF '
+                 'de X % a Y %), POR QUÉ importa para el valor (calidad del crecimiento, caja, dilución) y si la '
+                 'valuación ya lo descuenta (P/E o precio/FCF vs la mediana de pares). Evita frases genéricas.'),
           capabilities=('read:financials', 'read:market_profile', 'read:news', 'read:graph', 'read:claims'),
           permitted_tools=('financials', 'live_profile', 'news', 'graph', 'catalog'),
           subscribed_events=('USER_RESEARCH', 'EARNINGS', 'FILING', 'GUIDANCE_CHANGE'),
@@ -23,9 +27,11 @@ AGENTS = [
           subscribed_events=('USER_RESEARCH', 'NEWS', 'EARNINGS', 'PRICE_ANOMALY'),
           default_horizons=('SHORT_TERM', 'MEDIUM_TERM')),
     Agent('technical', 'TechnicalAgent', 'comportamiento del precio',
-          focus=('Momentum, tendencia y volatilidad a partir de los indicadores de precio calculados en el '
-                 'paquete (rendimientos, posición en el rango de 52 semanas, volatilidad). Solo INTRADAY o '
-                 'SHORT_TERM. No extrapoles el precio a largo plazo.'),
+          focus=('Momentum, tendencia y volatilidad a partir del "Análisis técnico… calculado por Khipus" '
+                 '(medias de 50/200 días, RSI, distancia al máximo de 52 semanas, máxima caída, fuerza relativa '
+                 'vs el S&P 500). Solo INTRADAY o SHORT_TERM. Di si la acción le gana o pierde al mercado y si '
+                 'la tendencia está confirmada (precio y media de 50 sobre la de 200) o en duda (RSI extremo, '
+                 'lejos del máximo). No extrapoles el precio a largo plazo.'),
           capabilities=('read:prices', 'read:news'), permitted_tools=('live_profile', 'candles', 'news'),
           subscribed_events=('USER_RESEARCH', 'PRICE_ANOMALY', 'CRYPTO_EVENT'),
           default_horizons=('INTRADAY', 'SHORT_TERM')),

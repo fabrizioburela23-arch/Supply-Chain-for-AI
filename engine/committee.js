@@ -240,7 +240,7 @@
   function render() {
     var el = document.getElementById('cm'); if (!el) return;
     if (S.chart) { try { S.chart.destroy(); } catch (e) {} S.chart = null; }
-    var tabs = [['committee', '🏛 ' + L('Comité', 'Committee')], ['history', '🎯 ' + L('Historial', 'Track record')], ['learn', '🧠 ' + L('Cómo aprende', 'How it learns')]];
+    var tabs = [['board', '📋 ' + L('Pizarra', 'Board')], ['committee', '🏛 ' + L('Comité', 'Committee')], ['history', '🎯 ' + L('Historial', 'Track record')], ['learn', '🧠 ' + L('Cómo aprende', 'How it learns')]];
     el.innerHTML =
       '<div class="cm-hd"><span class="cm-name">🏛 ' + esc(L('Comité de inversión', 'Investment committee')) + (S.entity ? ' · ' + esc(nodeLabel(S.entity)) : '') + '</span>' +
         '<button class="cm-x" onclick="window.KhipuCommittee.close()" title="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
@@ -251,7 +251,8 @@
       '<div id="cm-body"></div>';
     el.querySelectorAll('.cm-tab').forEach(function (b) { b.onclick = function () { S.tab = b.getAttribute('data-t'); S.msg = null; render(); }; });
     var body = document.getElementById('cm-body');
-    if (S.tab === 'history') renderHistory(body);
+    if (S.tab === 'board') renderBoard(body);
+    else if (S.tab === 'history') renderHistory(body);
     else if (S.tab === 'learn') renderLearn(body);
     else renderCommittee(body);
   }
@@ -813,6 +814,57 @@
   }
 
   // ── pestaña Cómo aprende ──────────────────────────────────────────────────
+  // ── PIZARRA: conclusiones de todas las empresas investigadas (sin IA) ────
+  function renderBoard(body) {
+    body.innerHTML = '<div class="cm-cell"><div class="cm-note"><span class="cm-spin">◌</span> ' + esc(L('Armando la pizarra…', 'Building the board…')) + '</div></div>';
+    getJSON('/api/committee/board?limit=60').then(function (d) {
+      if (S.tab !== 'board') return;
+      if (d._status !== 200) { body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="color:#FFB300">' + esc(errText(d)) + '</div></div>'; return; }
+      S.board = d.items || [];
+      paintBoard(body);
+    }).catch(function () { body.innerHTML = '<div class="cm-cell"><div class="cm-note">' + esc(L('Sin conexión con el servidor.', 'No connection to the server.')) + '</div></div>'; });
+  }
+  function ageTxt(iso) {
+    var h = (Date.now() - new Date(iso).getTime()) / 3.6e6;
+    if (isNaN(h)) return '';
+    if (h < 1) return L('hace minutos', 'minutes ago');
+    if (h < 48) return L('hace ' + Math.round(h) + ' h', Math.round(h) + ' h ago');
+    return L('hace ' + Math.round(h / 24) + ' días', Math.round(h / 24) + ' days ago');
+  }
+  function paintBoard(body) {
+    var items = S.board || [], f = S.boardFilter || 'all';
+    var shown = items.filter(function (x) { return f === 'all' || (f === 'for' ? x.overall_conviction >= 15 : f === 'against' ? x.overall_conviction <= -15 : Math.abs(x.overall_conviction) < 15); });
+    var flt = [['all', L('Todas', 'All')], ['for', '👍 ' + L('A favor', 'Favorable')], ['against', '👎 ' + L('En contra', 'Unfavorable')], ['mixed', '✋ ' + L('Sin consenso', 'No consensus')]];
+    body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="margin-bottom:8px">' +
+      esc(L('Todas las empresas que los analistas ya investigaron, ordenadas por convicción (de más favorable a menos). Cada fila resume el argumento más fuerte a favor y en contra, y la última decisión del comité. Pulsa 🏛 para que el comité debata esa empresa.',
+        'Every company the analysts already researched, ranked by conviction (most to least favorable). Each row summarizes the strongest argument for and against, and the latest committee decision. Press 🏛 to have the committee debate that company.')) + chip('conviction') + '</div>' +
+      '<div class="cm-tabs" style="margin-bottom:0">' + flt.map(function (x) { return '<button class="cm-tab' + (f === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') + '</div></div>' +
+      (shown.length ? shown.map(boardRow).join('') : '<div class="cm-cell"><div class="cm-note">' + esc(items.length ? L('Nada en este filtro.', 'Nothing in this filter.') :
+        L('Todavía no hay empresas investigadas. Escribe una en la pestaña 🏛 Comité y pulsa «Correr comité»: los analistas la investigarán primero.', 'No researched companies yet. Type one in the 🏛 Committee tab and press “Run committee”: the analysts will research it first.')) + '</div></div>');
+    body.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { S.boardFilter = b.getAttribute('data-f'); paintBoard(body); }; });
+    body.querySelectorAll('[data-go]').forEach(function (b) { b.onclick = function () {
+      S.entity = b.getAttribute('data-go'); S.tab = 'committee'; S.memo = null; S.msg = null; render(); loadEntity(S.entity); }; });
+    body.querySelectorAll('[data-rs]').forEach(function (b) { b.onclick = function () { if (window.KhipuResearch) window.KhipuResearch.open(b.getAttribute('data-rs')); }; });
+  }
+  function boardRow(x) {
+    var v = Math.round(x.overall_conviction || 0), col = v >= 15 ? '#2BE38B' : v <= -15 ? '#FF4D6A' : '#9BA6C4';
+    var arg = function (a, icon) {
+      if (!a) return '';
+      return '<div class="cm-note" style="margin-top:4px;font-size:12px">' + icon + ' <b>' + esc(ag(a.agent_type)) + '</b> · ' + esc(hz(a.horizon)) + ': ' + esc(isEn() ? a.text_en : a.text_es) + '</div>';
+    };
+    var m = x.memo, d = m ? (DEC[m.decision] || ['#9BA6C4', m.decision, m.decision]) : null;
+    return '<div class="cm-cell" style="padding:10px 12px">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+        '<span style="font-size:20px;font-weight:800;color:' + col + ';min-width:48px;font-variant-numeric:tabular-nums">' + (v > 0 ? '+' : '') + v + '</span>' +
+        '<b style="font-size:14px;overflow-wrap:anywhere">' + esc(x.label) + '</b>' +
+        (d ? '<span class="cm-pill" style="color:' + d[0] + ';border-color:' + d[0] + '">🏛 ' + esc(L(d[1], d[2])) + ' · ' + esc(ageTxt(m.created_at)) + (m.ai ? '' : ' · ' + esc(L('sin IA', 'no AI'))) + '</span>' : '') +
+        '<span class="cm-pill">' + x.n_claims + ' ' + esc(L('concl.', 'concl.')) + ' · ' + x.agents.length + ' ' + esc(L('analistas', 'analysts')) + (x.n_contradictions ? ' · ⚡' + x.n_contradictions : '') + ' · ' + esc(ageTxt(x.last_research)) + '</span>' +
+        '<span style="margin-left:auto;display:flex;gap:6px"><button class="cm-btn" data-go="' + esc(x.entity_id) + '">🏛 ' + esc(L('Comité', 'Committee')) + '</button>' +
+        (window.KhipuResearch ? '<button class="cm-btn ghost" data-rs="' + esc(x.entity_id) + '">🔬</button>' : '') + '</span></div>' +
+      (m && (isEn() ? m.conclusion_en : m.conclusion_es) ? '<div class="cm-note" style="margin-top:6px;font-size:12.5px;color:#E8EDFB">✅ ' + esc(isEn() ? (m.conclusion_en || m.conclusion_es) : m.conclusion_es) + '</div>' : '') +
+      arg(x.best_for, '👍') + arg(x.best_against, '👎') + '</div>';
+  }
+
   function renderLearn(body) {
     var P = function (es, en) { return '<p>' + L(es, en) + '</p>'; };
     body.innerHTML = '<div class="cm-cell cm-learn">' +
@@ -842,7 +894,7 @@
     var rov = document.getElementById('rs-ov');
     if (rov && rov.classList.contains('show') && window.KhipuResearch && window.KhipuResearch.close) window.KhipuResearch.close();
     var ov = shell(); ov.classList.add('show');
-    S.tab = 'committee'; S.msg = null; S.memo = null; S.history = []; S.deciding = false;
+    S.tab = (entityId || S.running) ? 'committee' : 'board'; S.msg = null; S.memo = null; S.history = []; S.deciding = false;
     if (S.running && entityId && S.running.entity && entityId !== S.running.entity) {
       S.running = null; S.busy = false;                 // otra empresa: el comité anterior sigue en el servidor
     }

@@ -124,57 +124,98 @@ def _completeness(ctx):
     return (len(targets & got) / len(targets)) if targets else 1.0
 
 
-def run_agent(session, job, agent_type, provider=None, fetchers=None, quotes=None):
-    """Ejecuta UN agente para el job. Devuelve el AgentRun (siempre registrado).
-    quotes: precios en vivo {símbolo: {...}} para la foto de partida (Phase 3)."""
+def _prepare_run(session, job, agent_type):
+    """Hilo principal: registra el AgentRun y revisa el presupuesto.
+    Devuelve (run, prior_claims, listo?)."""
     agent = AGENTS_BY_TYPE[agent_type]
     run = AgentRun(job_id=job.id, agent_id=agent.agent_id, agent_type=agent_type,
                    entity_id=job.entity_id, trigger=job.trigger or {}, depth=job.depth,
                    status='running', started_at=_now())
     session.add(run)
     session.flush()
+    budget = _cfg('RESEARCH_DAILY_BUDGET_USD', 2.0)
+    if spent_today(session) >= budget:
+        run.status = 'skipped'
+        run.errors = [f'presupuesto diario agotado (≈${budget:.2f} estimados)']
+        run.completed_at = _now()
+        session.flush()
+        return run, [], False
+    prior = ContextBuilder(session=session)._prior_claims(job.entity_id, agent_type)
+    return run, prior, True
+
+
+def _agent_work(entity_id, trigger, depth, agent_type, provider, fetchers, prior):
+    """SIN base de datos (corre en un hilo): arma el contexto y consulta a la IA.
+    Devuelve dict {ctx, result, meta, error, skipped}."""
+    agent = AGENTS_BY_TYPE[agent_type]
     t0 = time.time()
+    out = {'ctx': None, 'result': None, 'meta': {}, 'error': None, 'skipped': None}
     try:
-        budget = _cfg('RESEARCH_DAILY_BUDGET_USD', 2.0)
-        if spent_today(session) >= budget:
-            run.status = 'skipped'
-            run.errors = [f'presupuesto diario agotado (≈${budget:.2f} estimados)']
-            return run
-        ctx = ContextBuilder(fetchers=fetchers, session=session).build(job.entity_id, agent_type,
-                                                                      event=(job.trigger or {}).get('event'),
-                                                                      depth=job.depth)
-        run.context_refs = ctx['refs_log']
-        run.tools_used = ctx['tools_used']
+        ctx = ContextBuilder(fetchers=fetchers).build(entity_id, agent_type,
+                                                      event=(trigger or {}).get('event'), depth=depth)
+        ctx['prior_claims'] = prior
+        out['ctx'] = ctx
         if not ctx['evidence']:
-            run.status = 'skipped'
-            run.errors = ['sin evidencia disponible para esta entidad (no se consulta al modelo)']
-            return run
-        result, meta = agent.run(ctx, provider)
-        run.model = meta.get('model')
-        run.provider = meta.get('provider')
-        run.tokens_in, run.tokens_out = meta.get('tokens_in'), meta.get('tokens_out')
-        run.est_cost_usd = estimate_cost(run.model, run.tokens_in or 0, run.tokens_out or 0)
-        run.validation = {'attempts': meta.get('attempts'), 'repaired': meta.get('repaired'),
-                          'fallbacks': meta.get('fallbacks', []), 'errors': meta.get('errors', [])[:3]}
-        run.summary = result.summary_es
-        if quotes is None:
-            quotes = baseline_quotes(job.entity_id, fetchers)
-        n = persist_result(session, job, run, agent, ctx, result, quotes=quotes)
-        run.claims_generated = n
-        run.status = 'done'
-        run.errors = [{'unresolved_questions': result.unresolved_questions}] if result.unresolved_questions else []
+            out['skipped'] = 'sin evidencia disponible para esta entidad (no se consulta al modelo)'
+            return out
+        out['result'], out['meta'] = agent.run(ctx, provider)
     except LLMError as e:
-        run.status = 'failed'
-        run.errors = [f'modelo: {str(e)[:400]}']
+        out['error'] = f'modelo: {str(e)[:400]}'
     except Exception as e:  # noqa: BLE001 — un agente roto no tumba el job
+        out['error'] = f'{type(e).__name__}: {str(e)[:300]}'
+        log.warning('research run %s/%s: %s', entity_id, agent_type, e)
+    finally:
+        out['seconds'] = time.time() - t0
+    return out
+
+
+def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None):
+    """Hilo principal: persiste claims/evidencia y cierra el AgentRun."""
+    agent = AGENTS_BY_TYPE[agent_type]
+    ctx = work.get('ctx')
+    try:
+        if ctx is not None:
+            run.context_refs = ctx['refs_log']
+            run.tools_used = ctx['tools_used']
+        if work.get('skipped'):
+            run.status, run.errors = 'skipped', [work['skipped']]
+        elif work.get('error'):
+            run.status, run.errors = 'failed', [work['error']]
+        else:
+            result, meta = work['result'], work['meta']
+            run.model = meta.get('model')
+            run.provider = meta.get('provider')
+            run.tokens_in, run.tokens_out = meta.get('tokens_in'), meta.get('tokens_out')
+            run.est_cost_usd = estimate_cost(run.model, run.tokens_in or 0, run.tokens_out or 0)
+            run.validation = {'attempts': meta.get('attempts'), 'repaired': meta.get('repaired'),
+                              'fallbacks': meta.get('fallbacks', []), 'errors': meta.get('errors', [])[:3]}
+            run.summary = result.summary_es
+            if quotes is None:
+                quotes = baseline_quotes(job.entity_id, fetchers)
+            n = persist_result(session, job, run, agent, ctx, result, quotes=quotes)
+            run.claims_generated = n
+            run.status = 'done'
+            run.errors = ([{'unresolved_questions': result.unresolved_questions}]
+                          if result.unresolved_questions else [])
+    except Exception as e:  # noqa: BLE001
         run.status = 'failed'
         run.errors = [f'{type(e).__name__}: {str(e)[:300]}']
-        log.warning('research run %s/%s: %s', job.entity_id, agent_type, e)
+        log.warning('research persist %s/%s: %s', job.entity_id, agent_type, e)
     finally:
         run.completed_at = _now()
-        run.latency_ms = int((time.time() - t0) * 1000)
+        run.latency_ms = int((work.get('seconds') or 0) * 1000)
         session.flush()
     return run
+
+
+def run_agent(session, job, agent_type, provider=None, fetchers=None, quotes=None):
+    """Ejecuta UN agente para el job (secuencial). Devuelve el AgentRun (siempre registrado).
+    quotes: precios en vivo {símbolo: {...}} para la foto de partida (Phase 3)."""
+    run, prior, ready = _prepare_run(session, job, agent_type)
+    if not ready:
+        return run
+    work = _agent_work(job.entity_id, job.trigger, job.depth, agent_type, provider, fetchers, prior)
+    return _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
 
 
 def persist_result(session, job, run, agent, ctx, result, quotes=None):
@@ -330,15 +371,41 @@ def execute_job(session, job, provider_factory=None, fetchers=None, on_start=Non
     session.flush()
     ok = 0
     quotes = baseline_quotes(job.entity_id, fetchers) if job.agents else {}
+    # Los agentes trabajan EN PARALELO (contexto + IA en hilos, sin base); la
+    # base solo se toca aquí, en el hilo del job. Antes iban de a uno: 4 agentes
+    # × ~40 s. RESEARCH_PARALLEL (3) acota la concurrencia hacia la IA.
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    pending = []
     for agent_type in job.agents or []:
-        prov = provider_factory(agent_type) if provider_factory else None
-        if on_start:
-            on_start(agent_type)
-        run = run_agent(session, job, agent_type, provider=prov, fetchers=fetchers, quotes=quotes)
-        ok += 1 if getattr(run, 'status', None) == 'done' else 0
-        session.commit()   # cada agente visible en vivo (feed de actividad)
-        if on_done:
-            on_done(agent_type, run)
+        run, prior, ready = _prepare_run(session, job, agent_type)
+        if not ready:
+            session.commit()
+            if on_done:
+                on_done(agent_type, run)
+            continue
+        pending.append((agent_type, run, prior))
+    session.commit()
+    if pending:
+        par = max(1, min(_cfg('RESEARCH_PARALLEL', 3, int), len(pending)))
+        with ThreadPoolExecutor(max_workers=par, thread_name_prefix='research-agent') as ex:
+            futs = {}
+            for agent_type, run, prior in pending:
+                prov = provider_factory(agent_type) if provider_factory else None
+                if on_start:
+                    on_start(agent_type)
+                futs[ex.submit(_agent_work, job.entity_id, job.trigger, job.depth, agent_type, prov,
+                               fetchers, prior)] = (agent_type, run)
+            for fut in as_completed(futs):
+                agent_type, run = futs[fut]
+                try:
+                    work = fut.result()
+                except Exception as e:  # noqa: BLE001
+                    work = {'error': f'{type(e).__name__}: {str(e)[:300]}'}
+                _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
+                ok += 1 if run.status == 'done' else 0
+                session.commit()   # cada agente visible en vivo (feed de actividad)
+                if on_done:
+                    on_done(agent_type, run)
     # contradicciones SEMÁNTICAS (IA, acotadas) — solo Normal/Profunda
     if ok and job.depth != 'QUICK':
         try:

@@ -1132,9 +1132,11 @@ def _auto_research(session, eid, label, requested_by, say, deps):
         if getattr(run, 'status', '') == 'done' and n:
             es, en = f'Listo: {n} conclusión(es) con evidencia citada.', f'Done: {n} conclusion(s) with cited evidence.'
         else:
+            from research.errors import friendly
             err = str((getattr(run, 'errors', None) or [''])[0])[:200]
-            es = f'No pude concluir nada sólido ({err or getattr(run, "status", "?")}).'
-            en = f'I could not reach a solid conclusion ({err or getattr(run, "status", "?")}).'
+            hes, hen = friendly(err)
+            es = f'No pude concluir nada sólido: {hes or err or getattr(run, "status", "?")}'
+            en = f'I could not reach a solid conclusion: {hen or err or getattr(run, "status", "?")}'
         say(dl8._msg(agent_type, 'data', es, en, stage='research'))
     execute_job(session, job, provider_factory=deps.get('research_provider_factory'), fetchers=deps.get('fetchers'),
                 on_start=started, on_done=finished)
@@ -1230,8 +1232,11 @@ def _run_debate(session, seats, label, symbol, conv, claims_by_id, cref, rels, t
             s['quant_stance'] = s['stance']
             s['stance'] = s['debate_stance']
     if not info['ai']:
+        from research.errors import friendly
         err = next((v.get('error') for v in stmts.values() if v.get('error')), '')
-        info['reason_es'] = info['reason_en'] = f'la IA no respondió: {str(err)[:160]}'
+        hes, hen = friendly(err)
+        info['reason_es'] = hes or f'la IA no respondió: {str(err)[:160]}'
+        info['reason_en'] = hen or f'the AI did not answer: {str(err)[:160]}'
     lines, items = dbt.debate_lines(stmts, rebs, by_id)
     return lines, items, info
 
@@ -1738,3 +1743,74 @@ def recent_memo(session, entity_id, client_id=None, now=None):
     if r is not None and not ((r.memo or {}).get('debate') or {}).get('ai'):
         return None
     return r
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# PIZARRA (2026-10-02): "quiero que ya salgan conclusiones" — todas las empresas
+# investigadas, ordenadas por convicción, con su mejor argumento a favor y en
+# contra y la última decisión del comité. Sin IA (lectura de lo ya calculado).
+# ════════════════════════════════════════════════════════════════════════════
+def board(session, limit=40):
+    from research.outcomes import agent_reliability, calibrated_confidence, calibration_table
+    rows = (session.query(ResearchClaim).filter(ResearchClaim.status == 'active')
+            .order_by(ResearchClaim.created_at.desc()).limit(3000).all())
+    by = {}
+    for c in rows:
+        by.setdefault(c.subject_entity_id, []).append(c)
+    if not by:
+        return {'items': [], 'generated_at': _now().isoformat()}
+    ids = [c.id for c in rows]
+    rels = session.query(ClaimRelation).filter(ClaimRelation.claim_a.in_(ids) & ClaimRelation.claim_b.in_(ids)).all()
+    contra = {r.claim_a for r in rels} | {r.claim_b for r in rels}
+    table = calibration_table(session)
+    ents = sorted(by, key=lambda e: max(c.created_at for c in by[e]), reverse=True)[:limit]
+    memos = {}
+    for m in (session.query(CommitteeMemo).filter(CommitteeMemo.entity_id.in_(ents),
+                                                  CommitteeMemo.client_id.is_(None),
+                                                  CommitteeMemo.status.in_(('proposed', 'approved', 'rejected',
+                                                                            'executed')))
+              .order_by(CommitteeMemo.created_at.desc()).all()):
+        memos.setdefault(m.entity_id, m)
+    items = []
+    for e in ents:
+        cs = by[e]
+        conv, overall = conviction_by_horizon(
+            [{'id': c.id, 'agent_type': c.agent_type, 'stance': c.stance, 'horizon': c.horizon,
+              'confidence': c.confidence} for c in cs], contra,
+            calib=lambda a, r: calibrated_confidence(a, r, table=table),
+            reliab=lambda a: agent_reliability(a, table=table))
+        flat = sorted((cc for r in conv.values() for cc in r['claims']), key=lambda x: -x['weight'])
+        cmap = {c.id: c for c in cs}
+
+        def best(sign):
+            cc = next((x for x in flat if SIGN.get(x['stance'], 0) == sign), None)
+            if not cc:
+                return None
+            c = cmap[cc['id']]
+            return {'agent_type': c.agent_type, 'horizon': c.horizon, 'text_es': c.statement_es,
+                    'text_en': c.statement_en or c.statement_es, 'confidence': cc['calibrated']}
+        m = memos.get(e)
+        mb = (m.memo or {}) if m else {}
+        try:
+            _eid, node = _resolve_entity(e)
+            label = node.get('label') or e
+        except Exception:  # noqa: BLE001
+            label = e
+        items.append({
+            'entity_id': e, 'label': label, 'overall_conviction': overall,
+            'n_claims': len(cs), 'agents': sorted({c.agent_type for c in cs}),
+            'n_contradictions': sum(1 for r in rels if r.claim_a in cmap and r.claim_b in cmap),
+            'last_research': max(c.created_at for c in cs).isoformat(),
+            'by_horizon': {h: r['score'] for h, r in conv.items()},
+            'best_for': best(1), 'best_against': best(-1),
+            'memo': ({'memo_id': m.id, 'decision': m.decision, 'status': m.status,
+                      'created_at': m.created_at.isoformat() if m.created_at else None,
+                      'ai': bool((mb.get('debate') or {}).get('ai')),
+                      'conclusion_es': ((mb.get('key_conclusions') or [{}])[0] or {}).get('text_es'),
+                      'conclusion_en': ((mb.get('key_conclusions') or [{}])[0] or {}).get('text_en')}
+                     if m else None)})
+    items.sort(key=lambda x: -x['overall_conviction'])
+    return {'items': items, 'generated_at': _now().isoformat(),
+            'note_es': 'Convicción calculada con las conclusiones vigentes de los analistas. No es una recomendación.',
+            'note_en': 'Conviction computed from the analysts\' current conclusions. Not a recommendation.'}
+

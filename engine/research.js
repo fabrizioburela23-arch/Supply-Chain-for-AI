@@ -194,7 +194,8 @@
     (j.runs || []).forEach(function (r) {
       if (r.status === 'failed' || r.status === 'skipped') {
         var e = (r.errors || [])[0];
-        out.push(ag(r.agent_type) + ': ' + (typeof e === 'string' ? e : L('sin detalle', 'no detail')));
+        var hint = isEn() ? r.hint_en : r.hint_es;
+        out.push(ag(r.agent_type) + ': ' + (hint ? hint + ' — ' : '') + (typeof e === 'string' ? e : L('sin detalle', 'no detail')));
       }
     });
     if (j.error) out.push(j.error);
@@ -296,7 +297,8 @@
           (r.status === 'done' ? ' · ' + (r.agent_type === 'committee' ? esc(L('memo del comité', 'committee memo')) : (r.claims_generated || 0) + ' ' + esc(L('conclusiones', 'conclusions'))) : '') +
           '<div style="color:#7C87A3">' + esc(trig) + (r.model ? ' · ' + esc(r.model) : '') + (r.latency_ms ? ' · ' + (r.latency_ms / 1000).toFixed(1) + ' s' : '') +
           (r.est_cost_usd != null ? ' · ≈$' + Number(r.est_cost_usd).toFixed(4) + ' ' + esc(L('est.', 'est.')) : '') + '</div>' +
-          (r.status === 'failed' || r.status === 'skipped' ? '<div style="color:#FFB300">' + esc(String((r.errors || [])[0] || '')) + '</div>' : '') + '</div>';
+          (r.status === 'failed' || r.status === 'skipped' ? ((isEn() ? r.hint_en : r.hint_es) ? '<div style="color:#FFB300;font-weight:600">💡 ' + esc(isEn() ? r.hint_en : r.hint_es) + '</div>' : '') +
+            '<div style="color:#FFB300">' + esc(String((r.errors || [])[0] || '')) + '</div>' : '') + '</div>';
       }).join('');
     }).catch(function () {});
   }

@@ -1205,3 +1205,22 @@ def test_rescate_de_resultado_casi_valido():
     assert salvage(obj, ['E1'], [{'title': 'E1', 'excerpt': 'ventas suben'}]) == []
     assert len(obj.claims) == 1 and obj.claims[0].evidence_refs == ['E1']
     assert any('Descartada' in q for q in obj.unresolved_questions)
+
+
+@needs_db
+def test_pizarra_de_conclusiones(db):
+    import server
+    from ontology.db import session_scope
+    from research.committee import board
+    with session_scope() as s:
+        _fresh_entity_claims(s, 'IonQ')
+        b = board(s, limit=80)
+        it = next(x for x in b['items'] if x['entity_id'] == 'IonQ')
+        assert it['n_claims'] == 6 and it['n_contradictions'] == 1 and it['overall_conviction'] > 0
+        assert it['best_for']['agent_type'] in ('fundamental', 'supply_chain', 'macro', 'news')
+        assert it['best_against']['agent_type'] == 'technical' and it['label']
+        convs = [x['overall_conviction'] for x in b['items']]
+        assert convs == sorted(convs, reverse=True)
+    server.app.config['TESTING'] = True
+    r = server.app.test_client().get('/api/committee/board?limit=5')
+    assert r.status_code == 200 and len(r.get_json()['items']) <= 5

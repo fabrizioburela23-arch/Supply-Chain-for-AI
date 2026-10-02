@@ -247,6 +247,25 @@ def reject(memo_id):
     return _decide(memo_id, lambda s, mid, actor, b: reject_memo(s, mid, actor, reason=str(b.get('reason') or '')))
 
 
+@committee_bp.route('/board')
+def board_route():
+    if not ontology_available():
+        return _unavailable()
+    from research.committee import board
+    try:
+        lim = max(1, min(int(request.args.get('limit', 40)), 80))
+    except (TypeError, ValueError):
+        lim = 40
+    try:
+        def _q():
+            with session_scope() as s:
+                return board(s, limit=lim)
+        return jsonify(_with_schema(_q))
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': 'no se pudo armar la pizarra', 'error_en': 'could not build the board',
+                        'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
+
+
 @committee_bp.route('/track-record')
 def track_record():
     if not ontology_available():
