@@ -106,6 +106,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     COMITÉ DE CARTERA (2026-10-03): core/portfolio_advisor.py + POST
     /api/committee/portfolio + engine/pfcommittee.js (Comité → 💼 Mi cartera; perfil
     kh_investor_profile). Consejo de IA, nunca órdenes.
+    REPORTES/NOTICIAS/PREGÚNTALE de la cartera: core/portfolio_report.py, core/news_feed.py,
+    core/portfolio_reports_api.py (/api/portfolio-report/*, /api/news/portfolio; dueño =
+    X-Khipu-Owner) + engine/pfreports.js.
   - **GASTO DE IA**: `core/ai_usage.py` registra TODA llamada (core/ai.py check/record),
     límites con PIN (/api/ai/usage, /api/ai/usage/limits), UI 🩺 → 💰 Gasto IA
     (engine/aispend.js). Atribuir trabajo de fondo con `ai_context(feature, who)` /
@@ -274,7 +277,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (798 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (802 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

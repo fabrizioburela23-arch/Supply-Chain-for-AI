@@ -231,7 +231,8 @@ import importlib as _importlib
 for _mod, _bp_name in (('core.world', 'world_bp'), ('research.committee_api', 'committee_bp'),
                        ('brokerage.api', 'brokerage_bp'), ('mcp_server.api', 'mcp_bp'),
                        ('core.space', 'space_bp'), ('core.portfolio_ai', 'portfolio_ai_bp'),
-                       ('core.khipu_chat', 'khipu_chat_bp')):
+                       ('core.khipu_chat', 'khipu_chat_bp'),
+                       ('core.portfolio_reports_api', 'portfolio_reports_bp')):
     try:
         app.register_blueprint(getattr(_importlib.import_module(_mod), _bp_name))
     except Exception as _e:  # noqa: BLE001

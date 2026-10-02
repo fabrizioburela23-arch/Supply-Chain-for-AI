@@ -650,6 +650,10 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
     if context.get('portfolio'):
         ctx.append('cartera del usuario (posiciones locales, acciones): ' +
                    ', '.join(f'{p["symbol"]} {p["shares"]:g}' for p in context['portfolio']))
+    if context.get('portfolio_notes'):
+        # "Pregúntale a tu cartera" (core/portfolio_reports_api): reporte y consejos YA calculados
+        ctx.append('INFORME DE LA CARTERA DEL USUARIO (datos verificados; úsalos para responder sobre SU cartera):\n'
+                   + str(context['portfolio_notes'])[:3500])
     parts.append('CONTEXTO DE LA APP:\n- ' + '\n- '.join(ctx))
     if scratch:
         body, used = [], 0

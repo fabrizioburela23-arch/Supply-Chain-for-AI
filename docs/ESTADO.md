@@ -9,6 +9,25 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 (b) — REPORTES DE CARTERA, "PREGÚNTALE A TU CARTERA", NOTICIAS DE TU CARTERA
+
+Pedido: reportes diarios/mensuales/a pedido vs posición inicial con gráficos, "como un NotebookLM con el
+contexto de tu cartera", nivel de involucramiento, noticias en vivo según tu cartera (no emergencias viejas).
+- `core/portfolio_report.py`: rendimiento del periodo y desde la posición INICIAL (capital de partida o
+  costo), vs S&P 500, curva diaria base 100 (supone mismas acciones; se rotula), contribución por posición,
+  peor caída, acciones del comité de cartera, noticias del periodo y resumen (IA con guardián / plantilla).
+- `core/news_feed.py`: noticias de las posiciones (Finnhub con resumen + GDELT), SOLO con fecha y dentro de
+  la ventana, sin duplicados (agrupa empresas), relevancia = peso × frescura; etiquetas 🆕 hoy / hace N días.
+- `core/portfolio_reports_api.py` (blueprint): POST /api/portfolio-report/generate · GET /list · GET|DELETE
+  /<id> · POST /watch (reportes automáticos off|daily|weekly|monthly) · GET /watches · POST
+  /api/news/portfolio · POST /api/portfolio-report/ask (cerebro de Khipu con context.portfolio_notes).
+  Dueño = llave aleatoria del navegador (localStorage kh_owner_key → X-Khipu-Owner; solo se guarda el
+  SHA-256). Hilo programador cada 20 min (daily ≥21:00 UTC, weekly viernes, monthly día 1). Tablas
+  portfolio_watches / portfolio_reports (research/models.py).
+- UI: Comité → 💼 Mi cartera ahora tiene secciones 🩺 Diagnóstico · 📄 Reportes · 📰 Noticias · 💬 Pregúntale
+  (engine/pfreports.js, window.KhipuPortfolioExtras). Programación sugerida por el nivel de involucramiento
+  (piloto→mensual, informado→semanal, activo→diario). Imprimir/PDF. Aviso al abrir la app si hay reportes nuevos.
+
 # SESIÓN 2026-10-03 — GASTO DE IA, SIM. ESTRUCTURAL, AVATARES, CANVAS, COMITÉ DE CARTERA (sw v181)
 
 Pedidos: sim "China prohíbe exportar HBM" sin info útil (semilla XPO por "eXPOrtar"); comité con

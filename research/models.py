@@ -313,3 +313,44 @@ class AISetting(Base):
     value = Column(JSONB, nullable=False, default=dict)
     updated_by = Column(String(120), nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# REPORTES DE CARTERA (2026-10-03, pedido: "reportes diarios, mensuales o a
+# pedido en base a tus carteras en relación con tu posición inicial")
+# El dueño se identifica por una llave aleatoria del navegador (solo se guarda
+# su hash): nadie más puede leer tus reportes ni tu cartera.
+# ════════════════════════════════════════════════════════════════════════════
+class PortfolioWatch(Base):
+    __tablename__ = 'portfolio_watches'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    owner_hash = Column(String(64), nullable=False, index=True)
+    owner_name = Column(String(120), nullable=True)
+    source_key = Column(String(80), nullable=False)              # market | pf:<id> | broker
+    name = Column(String(160), nullable=False)
+    positions = Column(JSONB, nullable=False, default=list)      # [{id, symbol, label, shares, cost_usd}]
+    start_value_usd = Column(Float, nullable=True)
+    start_date = Column(String(10), nullable=True)
+    cash_usd = Column(Float, nullable=False, default=0.0)
+    profile = Column(JSONB, nullable=False, default=dict)
+    schedule = Column(String(10), nullable=False, default='off')  # off | daily | weekly | monthly
+    last_report_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+
+
+class PortfolioReport(Base):
+    __tablename__ = 'portfolio_reports'
+
+    id = Column(String(40), primary_key=True, default=_uuid)
+    owner_hash = Column(String(64), nullable=False, index=True)
+    watch_id = Column(String(40), nullable=True, index=True)
+    kind = Column(String(10), nullable=False, default='manual')  # manual | daily | weekly | monthly
+    title = Column(String(200), nullable=False)
+    period_from = Column(String(10), nullable=True)
+    period_to = Column(String(10), nullable=True)
+    summary = Column(Text, nullable=True)
+    data = Column(JSONB, nullable=False, default=dict)
+    read = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)

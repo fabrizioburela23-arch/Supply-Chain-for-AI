@@ -42,7 +42,9 @@
   function saveProfile(p) { try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch (e) {} }
   window.KhipuProfile = { get: getProfile, save: saveProfile };
 
-  var S = { el: null, src: null, editingProfile: false, answers: {}, busy: false, res: null, err: null, applied: {}, brokerPos: null };
+  var S = { el: null, src: null, editingProfile: false, answers: {}, busy: false, res: null, err: null, applied: {}, brokerPos: null, section: 'diag' };
+  var SECTIONS = [['diag', '🩺', 'Diagnóstico y consejos', 'Diagnosis & advice'], ['reports', '📄', 'Reportes', 'Reports'],
+    ['news', '📰', 'Noticias', 'News'], ['ask', '💬', 'Pregúntale', 'Ask it']];
 
   // ── fuentes de posiciones ──────────────────────────────────────────────────
   function sources() {
@@ -71,7 +73,8 @@
       return Promise.resolve({ positions: pf.positions.map(function (p) {
         var n = nodeOf(p.nodeId);
         return { id: p.nodeId, symbol: n && n.mkt, label: n ? n.label : p.nodeId, shares: p.shares, cost_usd: p.shares * p.avgPrice };
-      }), cash: pf.cash, start: pf.startCash, pfId: pf.id });
+      }), cash: pf.cash, start: pf.startCash, pfId: pf.id, label: pf.name,
+        startDate: pf.createdAt ? new Date(pf.createdAt).toISOString().slice(0, 10) : null });
     }
     if (key === 'broker') {
       var f = typeof window._tradeFetch === 'function' ? window._tradeFetch((window.BASE || '') + '/api/trade/positions/detail', {}, true) : fetch('/api/trade/positions/detail');
@@ -185,10 +188,12 @@
       (getProfile() && !S.editingProfile ? '<div class="cm-form">' +
         '<select id="pfc-src">' + srcs.map(function (s) { return '<option value="' + esc(s.key) + '"' + (S.src === s.key ? ' selected' : '') + '>' + esc(s.label) + '</option>'; }).join('') + '</select>' +
         '<button class="cm-btn" id="pfc-run"' + (S.busy ? ' disabled' : '') + '>' + esc(S.busy ? L('El comité analiza tu cartera…', 'The committee is analyzing your portfolio…') : L('💼 Analizar mi cartera', '💼 Analyze my portfolio')) + '</button></div>' +
+        '<div class="cm-tabs" style="margin:-2px 0 12px">' + SECTIONS.map(function (x) { return '<button class="cm-tab' + (S.section === x[0] ? ' on' : '') + '" data-sec="' + x[0] + '">' + x[1] + ' ' + esc(L(x[2], x[3])) + '</button>'; }).join('') + '</div>' +
         (srcs.length === 1 ? '<div class="cm-note" style="margin:-4px 0 10px">' + esc(L('No tienes posiciones en Mercado ni carteras simuladas. Crea una en Mercado → Carteras (o pídele una al 🤖 Asistente) y vuelve.', 'You have no positions in Market nor simulated portfolios. Create one in Market → Portfolios (or ask the 🤖 Assistant) and come back.')) + '</div>' : '') : '') +
+      (S.section !== 'diag' && getProfile() && !S.editingProfile ? '<div id="pfx"></div>' : '') +
       (S.err ? card('<div class="cm-note" style="color:#FFB300">' + esc(S.err) + '</div>') : '') +
-      (S.busy ? card('<div class="cm-note"><span class="cm-spin">◌</span> ' + esc(L('Midiendo el riesgo con precios reales, cruzando con la investigación y preparando consejos… (10-40 s)', 'Measuring risk with real prices, crossing with research and preparing advice… (10-40 s)')) + '</div>') : '') +
-      (S.res && !S.busy ? resultHtml(S.res) : '');
+      (S.section !== 'diag' ? '' : S.busy ? card('<div class="cm-note"><span class="cm-spin">◌</span> ' + esc(L('Midiendo el riesgo con precios reales, cruzando con la investigación y preparando consejos… (10-40 s)', 'Measuring risk with real prices, crossing with research and preparing advice… (10-40 s)')) + '</div>') : '') +
+      (S.section === 'diag' && S.res && !S.busy ? resultHtml(S.res) : '');
     el.querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { S.answers[b.getAttribute('data-q')] = b.getAttribute('data-v'); paint(); }; });
     var sp = document.getElementById('pfc-save-prof');
     if (sp) sp.onclick = function () {
@@ -199,10 +204,28 @@
     };
     var cp = document.getElementById('pfc-cancel-prof'); if (cp) cp.onclick = function () { S.editingProfile = false; paint(); };
     var ep = document.getElementById('pfc-edit-prof'); if (ep) ep.onclick = function () { var p = getProfile(); S.answers = (p && p.answers) || {}; S.editingProfile = true; paint(); };
-    var ss = document.getElementById('pfc-src'); if (ss) ss.onchange = function () { S.src = ss.value; };
+    var ss = document.getElementById('pfc-src'); if (ss) ss.onchange = function () { S.src = ss.value; S.res = null; if (S.section !== 'diag') extras(); };
+    el.querySelectorAll('[data-sec]').forEach(function (b) { b.onclick = function () { S.section = b.getAttribute('data-sec'); S.err = null; paint(); }; });
+    if (S.section !== 'diag') extras();
     var rb = document.getElementById('pfc-run'); if (rb) rb.onclick = run;
     el.querySelectorAll('[data-apply]').forEach(function (b) { b.onclick = function () { apply(b.getAttribute('data-apply')); }; });
     el.querySelectorAll('[data-trade]').forEach(function (b) { b.onclick = function () { if (window._surface) { if (window.KhipuCommittee) window.KhipuCommittee.close(); window._surface('trade'); } }; });
+  }
+
+  // 📄 Reportes · 📰 Noticias · 💬 Pregúntale (engine/pfreports.js)
+  function extras() {
+    var box = document.getElementById('pfx'); if (!box || !window.KhipuPortfolioExtras) return;
+    var key = S.src, label = (sources().filter(function (s) { return s.key === key; })[0] || {}).label;
+    if (S._srcCache && S._srcCache.key === key) { go(S._srcCache.src); return; }
+    box.innerHTML = card('<div class="cm-note"><span class="cm-spin">◌</span></div>');
+    positionsFor(key).then(function (src) { S._srcCache = { key: key, src: src }; go(src); })
+      .catch(function (e) { box.innerHTML = card('<div class="cm-note" style="color:#FFB300">' + esc(String((e && e.message) || e)) + '</div>'); });
+    function go(src) {
+      var b = document.getElementById('pfx'); if (!b) return;
+      if (!src.positions.length) { b.innerHTML = card('<div class="cm-note">' + esc(L('Esa cartera está vacía.', 'That portfolio is empty.')) + '</div>'); return; }
+      window.KhipuPortfolioExtras.render(b, S.section, { source: { key: key, label: src.label || label, positions: src.positions, cash: src.cash, start: src.start, startDate: src.startDate },
+        profile: getProfile(), analysis: S.res });
+    }
   }
 
   function run() {
@@ -217,7 +240,11 @@
     }).then(function (d) {
       S.busy = false;
       if (!d.ok) { S.err = (isEn() ? (d.error_en || d.error) : d.error) || L('No se pudo analizar.', 'Could not analyze.'); }
-      else S.res = d;
+      else {
+        S.res = d;
+        if (window.KhipuPortfolioExtras && S.lastSrc) window.KhipuPortfolioExtras.syncWatch({ source: { key: S.src, label: S.lastSrc.label, positions: S.lastSrc.positions,
+          cash: S.lastSrc.cash, start: S.lastSrc.start, startDate: S.lastSrc.startDate }, profile: getProfile() });
+      }
       paint();
     }).catch(function (e) { S.busy = false; S.err = String((e && e.message) || e); paint(); });
   }
@@ -235,7 +262,7 @@
     } else if (a.delta_usd > 0 && KP._buy) {
       out = KP._buy(src.pfId, a.entity_id, { usd: a.delta_usd });
     }
-    if (out && out.ok) { S.applied[aid] = 1; if (KP.refresh) try { KP.refresh(); } catch (e) {} }
+    if (out && out.ok) { S.applied[aid] = 1; S._srcCache = null; if (KP.refresh) try { KP.refresh(); } catch (e) {} }
     else S.err = (out && out.msg) || L('No se pudo aplicar.', 'Could not apply.');
     paint();
   }
