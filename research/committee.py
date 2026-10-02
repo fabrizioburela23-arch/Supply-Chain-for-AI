@@ -884,6 +884,12 @@ def progress_clear(memo_id):
 
 def run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None):
     """Corre el comité completo y persiste el memo. Devuelve el memo (dict)."""
+    from core.ai_usage import ai_context       # gasto de IA atribuido al Comité y a quien lo pidió
+    with ai_context('comite', requested_by or 'usuario'):
+        return _run_committee(session, entity_id, requested_by, client_id, provider, deps, memo_id)
+
+
+def _run_committee(session, entity_id, requested_by, client_id=None, provider=None, deps=None, memo_id=None):
     from research import deliberation as dl8
     from research.outcomes import (agent_reliability, calibrated_confidence, calibration_table, is_us_listing,
                                    symbol_for)

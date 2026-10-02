@@ -103,6 +103,15 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     herramienta get_conclusions_board (MCP/Khipu) + tarjeta en el brief matinal.
     `research/analytics.py`: ratios/pares/técnico CALCULADOS como evidencia
     'analysis'; agentes en paralelo (RESEARCH_PARALLEL); research/errors.py.
+    COMITÉ DE CARTERA (2026-10-03): core/portfolio_advisor.py + POST
+    /api/committee/portfolio + engine/pfcommittee.js (Comité → 💼 Mi cartera; perfil
+    kh_investor_profile). Consejo de IA, nunca órdenes.
+  - **GASTO DE IA**: `core/ai_usage.py` registra TODA llamada (core/ai.py check/record),
+    límites con PIN (/api/ai/usage, /api/ai/usage/limits), UI 🩺 → 💰 Gasto IA
+    (engine/aispend.js). Atribuir trabajo de fondo con `ai_context(feature, who)` /
+    `bind(fn)` para hilos. No crear llamadas a proveedores fuera de core/ai.py.
+  - `core/scenario_engine.py`: análisis estructural de escenarios (tema/actor/evento →
+    golpeados/ganadores/caminos) para la simulación por agentes.
   - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves
     cifradas Fernet BROKERAGE_ENC_KEY / OAuth), papel por defecto, dinero real
     = BROKERAGE_LIVE_ENABLED=on + client.live_enabled, controles previos
@@ -265,7 +274,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (767 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (798 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

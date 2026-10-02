@@ -1110,6 +1110,8 @@
     refresh: function () { render(); },
     // utilidades por si otro módulo (Khipu, KHIPU) las necesita
     _list: loadAll,
+    _buy: buy,           // los usa el comité de cartera (engine/pfcommittee.js) para aplicar consejos en SIMULACIÓN
+    _sell: sell,
     _stats: pfStats,
     _priceOf: priceOf
   };

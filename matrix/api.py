@@ -24,6 +24,7 @@ muestras. Con 1 worker de gunicorn eso bastaba para dejar la app lenta. Ahora:
     él se usa 'fast'. Pasado el presupuesto de IA por IP narra la plantilla.
 """
 import json
+from datetime import datetime, timezone
 import logging
 import math
 import os
@@ -406,6 +407,22 @@ def matrix_list_sims():
     return jsonify({'simulations': sims[:limit]})
 
 
+FACTOR_FRESH_DAYS = 45
+
+
+def _age_days(iso):
+    """Días desde una fecha ISO (9999 si no hay fecha: se trata como vieja)."""
+    if not iso:
+        return 9999
+    try:
+        d = datetime.fromisoformat(str(iso).replace('Z', '+00:00'))
+        if d.tzinfo is None:
+            d = d.replace(tzinfo=timezone.utc)
+        return max(0, (datetime.now(timezone.utc) - d).days)
+    except ValueError:
+        return 9999
+
+
 def _fallback_insights(situation, lang):
     """Narración de plantilla (sin IA) — el panel NUNCA sale vacío."""
     es = lang != 'en'
@@ -413,8 +430,10 @@ def _fallback_insights(situation, lang):
     for f in (situation.get('factors') or [])[:2]:
         mem = ', '.join(f.get('members', [])[:4])
         out.append({'kind': 'riesgo',
-            'title': (f"Factor activo: {f['label']}" if es else f"Active factor: {f['label']}"),
-            'detail': (f"Severidad {f.get('severity', 5):.0f}/10. Toca a {mem}. "
+            'title': ((f"Factor activo: {f['label']}" if es else f"Active factor: {f['label']}") if f.get('fresh') else
+                      (f"Factor estructural: {f['label']}" if es else f"Structural factor: {f['label']}")),
+            'detail': ((f"Vigente desde {f['since']}. " if es else f"In force since {f['since']}. ") if f.get('since') else '') +
+                      (f"Severidad {f.get('severity', 5):.0f}/10. Toca a {mem}. "
                        f"Amplifica el daño que se propaga a sus dependientes." if es else
                        f"Severity {f.get('severity', 5):.0f}/10. Hits {mem}. "
                        f"Amplifies the damage cascading to their dependents.")})
@@ -448,7 +467,9 @@ def _narrate_insights(situation, lang, tier):
            'suministro de IA, semiconductores, espacio y nuclear. Te doy el ESTADO del sistema '
            '(factores sistémicos activos = hiperaristas, puntos de estrangulamiento, y una '
            'cascada ya simulada por el motor). Devuelve 2-4 INSIGHTS accionables, cortos y '
-           'ESPECÍFICOS: nombra empresas reales del estado, no generalidades. Cauto: es '
+           'ESPECÍFICOS: nombra empresas reales del estado, no generalidades. FECHAS: cada factor trae '
+           '"since" (desde cuándo rige) y "fresh"; si fresh=false NO lo presentes como noticia nueva: '
+           'di que es un factor estructural vigente desde esa fecha. Cauto: es '
            'análisis, no asesoría financiera; nada de "compra/vende" tajante. '
            'Responde SOLO un objeto JSON válido, sin markdown: '
            '{"insights":[{"title":str,"detail":str,"kind":str}]}. '
@@ -543,7 +564,10 @@ def matrix_insights():
         shock = [x for x in manual_shock if x in idx]
         trigger = 'shock manual'
     elif factors:
-        fx = max(factors, key=lambda f: f['severity'] * max(1, len(f['members'])))
+        # FRESCURA (2026-10-02): se prefiere un factor reciente (≤ FACTOR_FRESH_DAYS);
+        # uno viejo solo se usa marcado como estructural (no como noticia)
+        fresh = [f for f in factors if _age_days(f.get('updated') or f.get('since')) <= FACTOR_FRESH_DAYS]
+        fx = max(fresh or factors, key=lambda f: f['severity'] * max(1, len(f['members'])))
         shock = [m for m in fx['members'] if m in idx]
         trigger = fx['label']
     else:
@@ -559,8 +583,14 @@ def matrix_insights():
                         'impact': o['impact'], 'hop': o['hop']} for o in order[:8]]
 
     situation = {
+        'today': datetime.now(timezone.utc).date().isoformat(),
         'factors': [{'label': f['label'], 'severity': f['severity'],
-                     'members': [nm(m) for m in list(f['members'])[:8]]} for f in factors[:5]],
+                     'since': (f.get('since') or '')[:10] or None, 'updated': (f.get('updated') or '')[:10] or None,
+                     'age_days': _age_days(f.get('updated') or f.get('since')),
+                     'fresh': _age_days(f.get('updated') or f.get('since')) <= FACTOR_FRESH_DAYS,
+                     'members': [nm(m) for m in list(f['members'])[:8]]}
+                    for f in sorted(factors, key=lambda f: (_age_days(f.get('updated') or f.get('since')) > FACTOR_FRESH_DAYS,
+                                                             -f['severity']))[:5]],
         'chokepoints': [nm(i) for i in top_choke],
         'trigger': trigger,
         'cascade_top': [{'name': c['name'], 'impact': c['impact']} for c in cascade_top],
@@ -574,7 +604,8 @@ def matrix_insights():
         insights, model = _narrate_insights(situation, lang, tier)
     else:
         insights, model = _fallback_insights(situation, lang), 'plantilla'
-    payload = {'available': True, 'as_of': as_of, 'situation': situation,
+    situation_fresh = any(f['fresh'] for f in situation['factors'])
+    payload = {'available': True, 'as_of': as_of, 'situation': situation, 'fresh': situation_fresh,
                'insights': insights, 'factors': situation['factors'],
                'chokepoints': situation['chokepoints'], 'cascade': cascade_top,
                'trigger': trigger, 'affected': affected, 'model': model}

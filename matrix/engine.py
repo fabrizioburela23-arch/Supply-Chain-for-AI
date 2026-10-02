@@ -253,17 +253,20 @@ def active_factors(session, as_of=None):
             LinkRecord.rel_type == 'affects',
             LinkRecord.valid_to.is_(None))).all()
         links = [{'source': l.source_id, 'target': l.target_id,
-                  'weight': float(l.weight or 1)} for l in rows]
+                  'weight': float(l.weight or 1), 'valid_from': l.valid_from} for l in rows]
     else:
         as_of_dt = _parse_dt(as_of)
         links = [{'source': l['source'], 'target': l['target'],
-                  'weight': float(l.get('weight') or 1)}
+                  'weight': float(l.get('weight') or 1), 'valid_from': l.get('valid_from')}
                  for l in _links_active_at(session, as_of_dt)
                  if l['rel_type'] == 'affects']
 
-    by_factor = {}
+    by_factor, since = {}, {}
     for l in links:
         by_factor.setdefault(l['source'], {})[l['target']] = l['weight']
+        vf = l.get('valid_from')
+        if vf is not None and (l['source'] not in since or vf < since[l['source']]):
+            since[l['source']] = vf
     if by_factor:
         objs = {o.id: o for o in session.scalars(select(ObjectRecord).where(
             ObjectRecord.id.in_(list(by_factor.keys())),
@@ -285,8 +288,20 @@ def active_factors(session, as_of=None):
                             # Track B: el porqué del factor (razon/rationale en
                             # JSONB) — antes se perdía al servirlo
                             'rationale': props.get('razon') or props.get('rationale', ''),
+                            # DESDE CUÁNDO rige (fecha del vínculo más antiguo o alta
+                            # del objeto) y su última actualización: sin esto un factor
+                            # de hace meses se narraba como noticia de hoy (2026-10-02)
+                            'since': _iso_or_none(since.get(fid) or o.created_at),
+                            'updated': _iso_or_none(o.updated_at),
                             'members': members})
     return factors
+
+
+def _iso_or_none(v):
+    try:
+        return v.isoformat() if v is not None else None
+    except AttributeError:
+        return str(v)
 
 
 def fragility_cap():

@@ -154,7 +154,13 @@ def _redact(e, limit=160):
         return type(e).__name__ if isinstance(e, BaseException) else '(error)'
 
 
+def _usage():
+    from core import ai_usage
+    return ai_usage
+
+
 def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
+    _usage().check('claude', max_tokens)          # límite de gasto: no se llama (ni se cobra)
     with _ai_slot(max_tokens):
         return _complete_claude_inner(system, prompt, max_tokens, tier, model)
 
@@ -179,13 +185,23 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
         return code in (408, 409, 429) or code >= 500
 
     def _create(**kw):
+        t0 = time.monotonic()
         try:
-            return client.messages.create(**kw)
+            msg = client.messages.create(**kw)
         except Exception as e:  # noqa: BLE001
             if not _transient(e):
                 raise
             time.sleep(CLAUDE_RETRY_SLEEP_S)
-            return client.messages.create(**kw)     # un solo reintento; si falla, sale
+            msg = client.messages.create(**kw)     # un solo reintento; si falla, sale
+        try:   # gasto: tokens REALES que reporta Anthropic (incluida la caché)
+            u = getattr(msg, 'usage', None)
+            tin = (getattr(u, 'input_tokens', 0) or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0) \
+                + int((getattr(u, 'cache_read_input_tokens', 0) or 0) * 0.1)
+            _usage().record('claude', getattr(msg, 'model', kw.get('model')), tin, getattr(u, 'output_tokens', 0) or 0,
+                            ms=(time.monotonic() - t0) * 1000, estimated=u is None)
+        except Exception:  # noqa: BLE001
+            pass
+        return msg
     # Híbrido: el tier elige el modelo (misma ANTHROPIC_KEY). `model` lo SOBRESCRIBE
     # para elegir el mejor modelo POR TAREA (p.ej. claude-opus-4-8 en la capa
     # proactiva, donde el juicio importa más que la latencia).
@@ -244,6 +260,7 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
 
 
 def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False):
+    _usage().check('gemini', max_tokens)
     with _ai_slot(max_tokens):
         return _complete_gemini_inner(system, prompt, max_tokens, tier, json_mode)
 
@@ -288,7 +305,15 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
             st = ''
         st = st if re.fullmatch(r'[A-Z_]{3,40}', st or '') else ''
         raise RuntimeError(f'Gemini HTTP {r.status_code}' + (f' {st}' if st else ''))
-    cands = (r.json() or {}).get('candidates') or []
+    data = r.json() or {}
+    try:   # gasto: usageMetadata de Google (el "pensamiento" se cobra como salida)
+        um = data.get('usageMetadata') or {}
+        _usage().record('gemini', GEMINI_MODEL, um.get('promptTokenCount') or _usage().estimate_tokens(body['contents'][0]['parts'][0]['text']),
+                        (um.get('candidatesTokenCount') or 0) + (um.get('thoughtsTokenCount') or 0),
+                        estimated=not um)
+    except Exception:  # noqa: BLE001
+        pass
+    cands = data.get('candidates') or []
     if not cands:
         raise RuntimeError('Gemini sin candidates')
     parts = cands[0].get('content', {}).get('parts', [])
@@ -299,6 +324,7 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
 
 
 def _complete_nvidia(system, prompt, max_tokens, tier='fast'):
+    _usage().check('nvidia', max_tokens)
     with _ai_slot(max_tokens):
         return _complete_nvidia_inner(system, prompt, max_tokens, tier)
 
@@ -317,7 +343,14 @@ def _complete_nvidia_inner(system, prompt, max_tokens, tier='fast'):  # noqa: AR
         raise RuntimeError(f'NVIDIA red ({type(e).__name__})') from None
     if not r.ok:
         raise RuntimeError(f'NVIDIA HTTP {r.status_code}')
-    return (r.json()['choices'][0]['message']['content']), 'nvidia:' + NVIDIA_MODEL
+    data = r.json()
+    try:
+        u = data.get('usage') or {}
+        _usage().record('nvidia', NVIDIA_MODEL, u.get('prompt_tokens') or _usage().estimate_tokens((system or '') + (prompt or '')),
+                        u.get('completion_tokens') or 0, estimated=not u)
+    except Exception:  # noqa: BLE001
+        pass
+    return (data['choices'][0]['message']['content']), 'nvidia:' + NVIDIA_MODEL
 
 
 _AI_PROVIDERS = {
@@ -397,6 +430,8 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
             except AIBusyError:
                 raise
             except Exception as e:  # noqa: BLE001
+                if type(e).__name__ == 'AIBudgetError' and getattr(e, 'scope', None) != 'provider':
+                    raise              # límite de gasto: los demás proveedores tampoco deben gastar
                 errors.append(f'{name}: {_redact(e, 100)}')
     raise RuntimeError('Ningún proveedor de IA respondió. ' + ('; '.join(errors) or 'sin keys configuradas'))
 

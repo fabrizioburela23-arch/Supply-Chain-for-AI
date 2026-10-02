@@ -148,20 +148,31 @@
       '#cm .cm-table{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 8px;padding:10px 6px 12px;border-radius:999px/60px;background:rgba(122,158,255,.05);border:1px dashed rgba(122,158,255,.18);margin-bottom:10px}' +
       '#cm .cm-seat{width:84px;text-align:center;font-size:10.5px;line-height:1.25;color:#9BA6C4;transition:transform .3s,opacity .3s;opacity:.55}' +
       '#cm .cm-seat.spoke{opacity:1}#cm .cm-seat.talk{transform:scale(1.08);opacity:1}' +
-      '#cm .cm-av{width:44px;height:44px;margin:0 auto 4px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:21px;background:#0B1222;border:2px solid #3a4560;position:relative}' +
-      '#cm .cm-seat.talk .cm-av{box-shadow:0 0 0 4px rgba(0,224,255,.18),0 0 18px rgba(0,224,255,.45)}' +
+      '#cm .cm-av{width:58px;height:58px;margin:0 auto 4px;border-radius:50%;overflow:hidden;background:#0B1222;border:2.5px solid #3a4560;position:relative;transition:border-color .4s,filter .4s}' +
+      '#cm .cm-av svg,#cm .cm-bav svg,#cm .cm-tav svg{display:block}' +
+      '#cm .cm-seat:not(.spoke):not(.talk) .cm-av{filter:saturate(.5)}' +
+      '#cm .cm-seat.talk .cm-av{box-shadow:0 0 0 4px rgba(0,224,255,.18),0 0 18px rgba(0,224,255,.45);animation:cmglow 1.6s ease-in-out infinite}' +
+      '#cm .cm-seat.talk .cm-fig{animation:cmbob .9s ease-in-out infinite}' +
+      '#cm .cm-mouth{transform-box:fill-box;transform-origin:50% 0}' +
+      '#cm .cm-seat.talk .cm-mouth{animation:cmtalk .32s ease-in-out infinite alternate}' +
+      '@keyframes cmbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}' +
+      '@keyframes cmtalk{from{transform:scaleY(.35)}to{transform:scaleY(1.25)}}' +
+      '@keyframes cmglow{0%,100%{box-shadow:0 0 0 3px rgba(0,224,255,.14),0 0 12px rgba(0,224,255,.3)}50%{box-shadow:0 0 0 5px rgba(0,224,255,.22),0 0 22px rgba(0,224,255,.55)}}' +
+      '@media(prefers-reduced-motion:reduce){#cm .cm-seat.talk .cm-av,#cm .cm-seat.talk .cm-fig,#cm .cm-seat.talk .cm-mouth{animation:none}}' +
+      '#cm .cm-seat .cm-sr{font-size:9px;color:#7C87A3;margin-top:1px;overflow-wrap:anywhere}' +
       '#cm .cm-seat .cm-sn{color:#E8EDFB;font-weight:650;overflow-wrap:anywhere}' +
       '#cm .cm-seat .cm-ss{font-size:9.5px;font-weight:700;letter-spacing:.04em}' +
       '#cm .cm-feed{max-height:560px;overflow-y:auto;padding-right:4px}' +
       '#cm .cm-bub{display:flex;gap:9px;margin:0 0 9px;align-items:flex-start}' +
       '#cm .cm-bub.new{animation:cmin .45s ease-out}' +
       '@keyframes cmin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
-      '#cm .cm-bav{flex:0 0 32px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;background:#0B1222;border:2px solid #3a4560}' +
+      '#cm .cm-bav{flex:0 0 34px;width:34px;height:34px;border-radius:50%;overflow:hidden;background:#0B1222;border:2px solid #3a4560}' +
+      '#cm .cm-tav{display:inline-block;width:22px;height:22px;border-radius:50%;overflow:hidden;vertical-align:middle;margin-right:6px;background:#0B1222;border:1.5px solid #00E0FF}' +
       '#cm .cm-btx{flex:1 1 auto;min-width:0;border-radius:4px 12px 12px 12px;padding:7px 11px;background:rgba(21,28,45,.75);border-left:3px solid #3a4560;font-size:12.5px;line-height:1.5;color:#D5DCF0;overflow-wrap:anywhere}' +
       '#cm .cm-bh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;margin-bottom:2px}' +
       '#cm .cm-bh b{color:#E8EDFB}#cm .cm-tag{font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:1px 7px;border-radius:999px;border:1px solid currentColor}' +
       '#cm .cm-src{display:block;font-size:10.5px;color:#7C87A3;margin-top:3px}' +
-      '#cm .cm-typing{font-size:12px;color:#9BA6C4;padding:4px 2px 2px 41px}' +
+      '#cm .cm-typing{font-size:12px;color:#9BA6C4;padding:4px 2px 2px 6px}' +
       '#cm .cm-typing i{display:inline-block;width:5px;height:5px;margin:0 1px;border-radius:50%;background:#00E0FF;animation:cmdot 1.2s infinite}' +
       '#cm .cm-typing i:nth-child(2){animation-delay:.2s}#cm .cm-typing i:nth-child(3){animation-delay:.4s}' +
       '@keyframes cmdot{0%,80%,100%{opacity:.2}40%{opacity:1}}' +
@@ -169,7 +180,7 @@
       '#cm .cm-strip span{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid rgba(122,158,255,.2);color:#5f6b8a}' +
       '#cm .cm-strip span.d{color:#2BE38B;border-color:rgba(43,227,139,.4)}#cm .cm-strip span.c{color:#E8EDFB;border-color:#00E0FF}' +
       '#cm .cm-votes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}' +
-      '@media(max-width:760px){#cm .cm-seat{width:76px;font-size:9.5px}#cm .cm-av{width:38px;height:38px;font-size:18px}#cm .cm-feed{max-height:360px}}';
+      '@media(max-width:760px){#cm .cm-seat{width:76px;font-size:9.5px}#cm .cm-av{width:50px;height:50px}#cm .cm-feed{max-height:360px}}';
     var st = document.createElement('style'); st.id = 'cm-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
@@ -240,7 +251,7 @@
   function render() {
     var el = document.getElementById('cm'); if (!el) return;
     if (S.chart) { try { S.chart.destroy(); } catch (e) {} S.chart = null; }
-    var tabs = [['board', '📋 ' + L('Pizarra', 'Board')], ['committee', '🏛 ' + L('Comité', 'Committee')], ['history', '🎯 ' + L('Historial', 'Track record')], ['learn', '🧠 ' + L('Cómo aprende', 'How it learns')]];
+    var tabs = [['board', '📋 ' + L('Pizarra', 'Board')], ['committee', '🏛 ' + L('Comité', 'Committee')], ['portfolio', '💼 ' + L('Mi cartera', 'My portfolio')], ['history', '🎯 ' + L('Historial', 'Track record')], ['learn', '🧠 ' + L('Cómo aprende', 'How it learns')]];
     el.innerHTML =
       '<div class="cm-hd"><span class="cm-name">🏛 ' + esc(L('Comité de inversión', 'Investment committee')) + (S.entity ? ' · ' + esc(nodeLabel(S.entity)) : '') + '</span>' +
         '<button class="cm-x" onclick="window.KhipuCommittee.close()" title="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
@@ -252,6 +263,7 @@
     el.querySelectorAll('.cm-tab').forEach(function (b) { b.onclick = function () { S.tab = b.getAttribute('data-t'); S.msg = null; render(); }; });
     var body = document.getElementById('cm-body');
     if (S.tab === 'board') renderBoard(body);
+    else if (S.tab === 'portfolio') { if (window.KhipuPortfolioCommittee) window.KhipuPortfolioCommittee.render(body); else body.innerHTML = ''; }
     else if (S.tab === 'history') renderHistory(body);
     else if (S.tab === 'learn') renderLearn(body);
     else renderCommittee(body);
@@ -507,6 +519,112 @@
     data: ['Dato', 'Data'], verdict: ['Veredicto', 'Verdict'], reply: ['Respuesta', 'Reply'] };
   var DESK = [['market', '📡', 'Mesa de mercado', 'Market desk'], ['risk_officer', '🛡️', 'Oficial de riesgo', 'Risk officer'],
     ['mandate', '👤', 'Mandato', 'Mandate'], ['quant', '🧮', 'Núcleo cuantitativo', 'Quant core'], ['chair', '🏛', 'Presidente', 'Chair']];
+  // ── PERSONAJES DEL COMITÉ: cada puesto es una persona con cara (SVG inline,
+  // sin imágenes externas). Se mapea por `seat`; un puesto desconocido usa un
+  // personaje genérico con su emoji. viewBox 64×64: cabeza en (32,30).
+  // n=nombre · r=rol corto [es,en] · rl=rol largo [es,en] · s=piel · h=pelo ·
+  // hs=peinado · c=color propio · a=accesorios · p=objeto del rol
+  var CAST = {
+    fundamental: { n: 'Valeria', r: ['Fundamental', 'Fundamental'], rl: ['Analista fundamental', 'Fundamental analyst'], s: '#E8B48A', h: '#3B2418', hs: 'bob', c: '#2BB3A3', a: ['glasses'], p: 'coin' },
+    technical: { n: 'Kenji', r: ['Técnico', 'Technical'], rl: ['Analista técnico', 'Technical analyst'], s: '#F1C9A5', h: '#1A1C24', hs: 'spiky', c: '#00B8D9', a: ['phones'], p: 'chart' },
+    news: { n: 'Amara', r: ['Noticias', 'News'], rl: ['Analista de noticias', 'News analyst'], s: '#8D5A3B', h: '#1E140F', hs: 'puff', c: '#F5A524', a: ['hoops'], p: 'paper' },
+    supply_chain: { n: 'Diego', r: ['Suministro', 'Supply chain'], rl: ['Analista de cadena de suministro', 'Supply-chain analyst'], s: '#C98B5E', h: '#2A1B12', hs: 'short', c: '#FF8A3D', a: ['hardhat', 'beard'], p: 'link' },
+    geopolitical: { n: 'Leila', r: ['Geopolítica', 'Geopolitics'], rl: ['Analista geopolítica', 'Geopolitical analyst'], s: '#D9A47C', h: '#4A2A1A', hs: 'long', c: '#7C8CFF', a: ['scarf'], p: 'globe' },
+    macro: { n: 'Henrik', r: ['Macro', 'Macro'], rl: ['Analista macro', 'Macro analyst'], s: '#F5D3B8', h: '#C9CED8', hs: 'side', c: '#9B7BFF', a: ['bowtie', 'stache'], p: 'pct' },
+    crypto: { n: 'Noa', r: ['Cripto', 'Crypto'], rl: ['Analista cripto', 'Crypto analyst'], s: '#E6B892', h: '#2B2238', hs: 'hood', c: '#F7931A', a: [], p: 'btc' },
+    risk_observation: { n: 'Ingrid', r: ['Riesgos', 'Risks'], rl: ['Analista de riesgos', 'Risk analyst'], s: '#F7D9C4', h: '#E3BC62', hs: 'bun', c: '#FF4D6A', a: [], p: 'warn' },
+    market: { n: 'Priya', r: ['Mesa de mercado', 'Market desk'], rl: ['Mesa de mercado', 'Market desk'], s: '#B57A50', h: '#1A1210', hs: 'pony', c: '#00E0FF', a: ['mic'], p: 'signal' },
+    risk_officer: { n: 'Kwame', r: ['Oficial de riesgo', 'Risk officer'], rl: ['Oficial de riesgo', 'Risk officer'], s: '#6B4226', h: '#120D0A', hs: 'buzz', c: '#3FA7FF', a: ['cap'], p: 'shield' },
+    quant: { n: 'Mei', r: ['Cuantitativo', 'Quant'], rl: ['Núcleo cuantitativo', 'Quant core'], s: '#F3D1B0', h: '#111318', hs: 'bangs', c: '#B48CFF', a: ['visor'], p: 'calc' },
+    chair: { n: 'Isabel', r: ['Presidenta', 'Chair'], rl: ['Presidenta del comité', 'Committee chair'], s: '#E9BC94', h: '#D8DCE6', hs: 'updo', c: '#FFB300', a: ['laurel', 'pearls'], p: 'gavel' },
+    mandate: { n: 'Alex', r: ['Mandato', 'Mandate'], rl: ['Mandato del cliente', 'Client mandate'], s: '#DDAA82', h: '#5A3A22', hs: 'short', c: '#5FC6E8', a: ['tie'], p: 'case' },
+  };
+  var INK = '#1B1F2B';
+  // peinados: [detrás de la cabeza, delante]
+  var HAIR = {
+    bob: ['<path d="M18 30Q17 14 32 14Q47 14 46 30L46 41Q46 43 43 43L21 43Q18 43 18 41Z"/>', '<path d="M20 27Q21 15 32 15Q43 15 44 27Q38 20 29 22Q24 23 20 27Z"/>'],
+    spiky: ['', '<path d="M20 27L20 18L24 20L26 13L30 18L33 12L36 18L40 14L41 20L44 19L44 27Q40 21 32 21Q24 21 20 27Z"/>'],
+    puff: ['<circle cx="32" cy="18" r="13"/><circle cx="21" cy="24" r="7"/><circle cx="43" cy="24" r="7"/>', '<path d="M20 26Q22 18 32 18Q42 18 44 26Q38 22 32 22Q26 22 20 26Z"/>'],
+    short: ['', '<path d="M20 28Q19 15 32 15Q45 15 44 28Q43 21 32 20Q24 20 20 28Z"/>'],
+    long: ['<path d="M17 30Q17 13 32 13Q47 13 47 30L48 52L16 52Z"/>', '<path d="M20 28Q21 15 33 15Q44 15 44 27Q38 18 30 21Q24 23 20 28Z"/>'],
+    side: ['', '<path d="M20 29Q19 16 31 16Q44 15 44 28Q42 20 36 20Q30 21 24 20Q21 22 20 29Z"/>'],
+    hood: ['<path d="M13 54Q11 13 32 11Q53 13 51 54Z"/>', '<path d="M22 24Q25 18 32 18Q39 18 42 24Q37 21 31 22Q26 22 22 24Z"/>'],
+    bun: ['<circle cx="32" cy="12" r="6"/>', '<path d="M20 28Q20 15 32 15Q44 15 44 28Q41 19 32 19Q23 19 20 28Z"/>'],
+    pony: ['<path d="M42 22Q52 26 49 44Q47 36 43 31Z"/>', '<path d="M20 28Q20 15 32 15Q44 15 44 28Q40 20 30 20Q24 21 20 28Z"/>'],
+    buzz: ['', '<path d="M20.5 26Q21 16 32 16Q43 16 43.5 26Q40 21 32 21Q24 21 20.5 26Z"/>'],
+    bangs: ['<path d="M18 30Q17 14 32 14Q47 14 46 30L46 40L18 40Z"/>', '<path d="M19.5 26Q20 15 32 15Q44 15 44.5 26Z"/>'],
+    updo: ['<ellipse cx="32" cy="13" rx="9" ry="5"/>', '<path d="M20 27Q20 15 32 15Q44 15 44 27Q42 20 34 19Q26 19 20 27Z"/>'],
+  };
+  // accesorios sobre la cara (c = color propio)
+  function accSvg(k, c) {
+    switch (k) {
+      case 'glasses': return '<g fill="none" stroke="' + INK + '" stroke-width="1.6"><circle cx="27" cy="31" r="4.2"/><circle cx="37" cy="31" r="4.2"/><path d="M31.2 31h1.6"/></g>';
+      case 'phones': return '<path d="M18.5 31C18.5 8.5 45.5 8.5 45.5 31" fill="none" stroke="' + c + '" stroke-width="2.6"/><rect x="15.5" y="27" width="5" height="9" rx="2.5" fill="' + c + '"/><rect x="43.5" y="27" width="5" height="9" rx="2.5" fill="' + c + '"/>';
+      case 'mic': return '<rect x="16" y="27" width="5" height="8" rx="2.5" fill="' + c + '"/><path d="M19 34Q20 40 27 39.5" fill="none" stroke="' + c + '" stroke-width="1.6"/><circle cx="27.5" cy="39.5" r="1.6" fill="' + c + '"/>';
+      case 'hoops': return '<circle cx="19.5" cy="36" r="2.2" fill="none" stroke="' + c + '" stroke-width="1.3"/><circle cx="44.5" cy="36" r="2.2" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
+      case 'hardhat': return '<path d="M19 24Q19 11 32 11Q45 11 45 24Z" fill="' + c + '"/><rect x="16" y="22.5" width="32" height="3.6" rx="1.8" fill="' + c + '"/><path d="M32 11v9" stroke="rgba(0,0,0,.18)" stroke-width="2"/>';
+      case 'beard': return '<path d="M21 34Q22 44 32 44.5Q42 44 43 34Q40 39 32 39.5Q24 39 21 34Z" fill="#2A1B12"/>';
+      case 'scarf': return '<path d="M20 45Q32 51 44 45L45 49Q32 55 19 49Z" fill="' + c + '"/>';
+      case 'bowtie': return '<path d="M32 47L25 43.5V50.5ZM32 47L39 43.5V50.5Z" fill="' + c + '"/><circle cx="32" cy="47" r="1.6" fill="' + c + '"/>';
+      case 'stache': return '<path d="M26.5 36Q29.5 33.8 32 35.2Q34.5 33.8 37.5 36Q34.5 36.8 32 36.2Q29.5 36.8 26.5 36Z" fill="#B8BEC9"/>';
+      case 'cap': return '<path d="M19.5 24Q20 13 32 13Q44 13 44.5 24Z" fill="' + c + '"/><path d="M18 23.5h28l-2 3H20Z" fill="' + INK + '"/><path d="M32 15.5l2.2 1v2.3q0 1.6-2.2 2.4-2.2-.8-2.2-2.4v-2.3Z" fill="#FFD25A"/>';
+      case 'visor': return '<rect x="19.5" y="27" width="25" height="7.5" rx="3.7" fill="' + c + '"/><rect x="22" y="28.6" width="8" height="2" rx="1" fill="rgba(255,255,255,.55)"/>';
+      case 'laurel': return '<g fill="#7FBF5A"><ellipse cx="21" cy="19" rx="1.6" ry="3.2" transform="rotate(-40 21 19)"/><ellipse cx="24.5" cy="15.5" rx="1.6" ry="3.2" transform="rotate(-62 24.5 15.5)"/><ellipse cx="43" cy="19" rx="1.6" ry="3.2" transform="rotate(40 43 19)"/><ellipse cx="39.5" cy="15.5" rx="1.6" ry="3.2" transform="rotate(62 39.5 15.5)"/></g>';
+      case 'pearls': return '<g fill="#F4F1EA"><circle cx="26" cy="46" r="1.3"/><circle cx="29" cy="47.3" r="1.3"/><circle cx="32" cy="47.7" r="1.3"/><circle cx="35" cy="47.3" r="1.3"/><circle cx="38" cy="46" r="1.3"/></g>';
+      case 'tie': return '<path d="M30 45h4l-1 2.5 2 7h-6l2-7Z" fill="' + c + '"/>';
+    }
+    return '';
+  }
+  // objeto del rol, en una insignia abajo a la derecha (centro 51,51)
+  function propSvg(k, c) {
+    var w = 'fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+    var t = function (s, fs) { return '<text x="51" y="' + (51 + fs * 0.36) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" font-family="system-ui,sans-serif" fill="#fff">' + s + '</text>'; };
+    var g = '';
+    switch (k) {
+      case 'coin': g = t('$', 11); break;
+      case 'btc': g = t('₿', 11); break;
+      case 'pct': g = t('%', 10); break;
+      case 'chart': g = '<path d="M45 55l4-5 3 3 5-7" ' + w + '/>'; break;
+      case 'paper': g = '<rect x="45.5" y="46" width="11" height="10" rx="1.2" ' + w + '/><path d="M48 49.5h6M48 52.5h4" ' + w + '/>'; break;
+      case 'link': g = '<rect x="44.5" y="48.5" width="7" height="5" rx="2.5" ' + w + '/><rect x="50.5" y="48.5" width="7" height="5" rx="2.5" ' + w + '/>'; break;
+      case 'globe': g = '<circle cx="51" cy="51" r="5.5" ' + w + '/><path d="M45.5 51h11M51 45.5q-3 5.5 0 11q3-5.5 0-11" ' + w + '/>'; break;
+      case 'warn': g = '<path d="M51 45.5l5.5 10h-11Z" ' + w + '/><path d="M51 49v3" ' + w + '/>'; break;
+      case 'signal': g = '<circle cx="51" cy="53" r="1.3" fill="#fff"/><path d="M47.5 50.5q3.5-3.5 7 0M45.5 48q5.5-5.5 11 0" ' + w + '/>'; break;
+      case 'shield': g = '<path d="M51 45l5 2v3.5q0 4-5 6q-5-2-5-6V47Z" ' + w + '/>'; break;
+      case 'calc': g = '<rect x="46.5" y="45.5" width="9" height="11" rx="1.5" ' + w + '/><path d="M48.8 48.5h4.4M49 52h.1M53 52h.1M49 54.5h.1M53 54.5h.1" ' + w + '/>'; break;
+      case 'gavel': g = '<path d="M46 56.5h6M48.5 52.5l6-6M47 48l4.5-4.5M52 53l4.5-4.5M47 48l5 5" ' + w + '/>'; break;
+      case 'case': g = '<rect x="45" y="48" width="12" height="8" rx="1.5" ' + w + '/><path d="M49 48v-2h4v2" ' + w + '/>'; break;
+      default: g = t(esc(k), 10);
+    }
+    return '<circle cx="51" cy="51" r="10" fill="' + c + '" stroke="#0B1222" stroke-width="2"/>' + g;
+  }
+  function castOf(seat) { return CAST[seat] || null; }
+  function personName(seat, fallback) { var p = castOf(seat); return p ? p.n : (fallback || ''); }
+  function roleLong(seat, fallback) { var p = castOf(seat); return p ? L(p.rl[0], p.rl[1]) : (fallback || ''); }
+  // SVG del personaje. mini=true omite la insignia del objeto (≤32 px)
+  function avatarSvg(seat, emoji, mini) {
+    var p = castOf(seat) || { s: '#C9A88A', h: '#4B5468', hs: 'short', c: '#5FC6E8', a: [], p: emoji || '🤖' };
+    var hair = HAIR[p.hs] || ['', ''];
+    var c = p.c;
+    return '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">' +
+      '<circle cx="32" cy="32" r="32" fill="' + c + '" fill-opacity=".22"/>' +
+      '<g class="cm-fig">' +
+        '<g fill="' + (p.hs === 'hood' ? c : p.h) + '">' + hair[0] + '</g>' +
+        (p.hs === 'hood' ? '<path d="M17 50Q16 17 32 15.5Q48 17 47 50Z" fill="rgba(0,0,0,.28)"/>' : '') +
+        '<path d="M9 66Q10 47 32 45Q54 47 55 66Z" fill="' + c + '"/>' +
+        '<path d="M28 40h8v6q-4 3-8 0Z" fill="' + p.s + '"/>' +
+        '<ellipse cx="19.5" cy="32" rx="2.2" ry="3" fill="' + p.s + '"/><ellipse cx="44.5" cy="32" rx="2.2" ry="3" fill="' + p.s + '"/>' +
+        '<ellipse cx="32" cy="30" rx="12.5" ry="13.5" fill="' + p.s + '"/>' +
+        '<g fill="' + p.h + '">' + hair[1] + '</g>' +
+        (p.hs === 'hood' ? '<path d="M28 47v6M36 47v6" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>' : '') +
+        '<circle cx="24.5" cy="35.5" r="2.2" fill="#FF7A8A" opacity=".28"/><circle cx="39.5" cy="35.5" r="2.2" fill="#FF7A8A" opacity=".28"/>' +
+        '<ellipse cx="27.5" cy="31" rx="1.5" ry="1.9" fill="' + INK + '"/><ellipse cx="36.5" cy="31" rx="1.5" ry="1.9" fill="' + INK + '"/>' +
+        '<path class="cm-mouth" d="M28.6 36.6Q32 40.6 35.4 36.6Z" fill="' + INK + '"/>' +
+        p.a.map(function (k) { return accSvg(k, c); }).join('') +
+      '</g>' +
+      (mini ? '' : propSvg(p.p, c)) + '</svg>';
+  }
+
   function tx(m) { return isEn() ? (m.text_en || m.text_es) : m.text_es; }
   function nm(m) { return isEn() ? (m.name_en || m.name_es) : m.name_es; }
   function shortName(n) { var x = String(n || '').replace(/^Analista (de |del )?/i, '').replace(/ analyst$/i, ''); return x.charAt(0).toUpperCase() + x.slice(1); }
@@ -518,16 +636,18 @@
       var said = spoke[st.seat], col = said && STANCE[st.stance] ? STANCE[st.stance][0] : '#3a4560';
       var rec = st.n_scored > 0 ? st.hits + '/' + st.n_scored + ' ✓' : L('sin historial', 'no record');
       return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === st.seat ? ' talk' : '') + '" title="' + esc(L('Fiabilidad ', 'Reliability ') + pct(st.reliability) + ' · ' + rec) + '">' +
-        '<div class="cm-av" style="border-color:' + col + '">' + esc(st.emoji) + '</div>' +
-        '<div class="cm-sn">' + esc(shortName(L(st.name_es, st.name_en))) + '</div>' +
+        '<div class="cm-av" style="border-color:' + col + '">' + avatarSvg(st.seat, st.emoji) + '</div>' +
+        '<div class="cm-sn">' + esc(personName(st.seat, shortName(L(st.name_es, st.name_en)))) + '</div>' +
+        (castOf(st.seat) ? '<div class="cm-sr">' + esc(L(castOf(st.seat).r[0], castOf(st.seat).r[1])) + '</div>' : '') +
         '<div class="cm-ss" style="color:' + (said ? col : '#5f6b8a') + '">' + esc(said ? L(STANCE[st.stance][1], STANCE[st.stance][2]) : L('por hablar', 'to speak')) + '</div>' +
         '<div style="font-size:9.5px;color:#5f6b8a">' + esc(rec) + '</div></div>';
     }).join('');
     var desk = DESK.filter(function (d) { return d[0] !== 'mandate' || withClient; }).map(function (d) {
-      var said = spoke[d[0]];
-      return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === d[0] ? ' talk' : '') + '">' +
-        '<div class="cm-av" style="border-color:' + (said ? '#5FC6E8' : '#3a4560') + '">' + d[1] + '</div>' +
-        '<div class="cm-sn">' + esc(L(d[2], d[3])) + '</div></div>';
+      var said = spoke[d[0]], p = castOf(d[0]);
+      return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === d[0] ? ' talk' : '') + '" title="' + esc(L(d[2], d[3])) + '">' +
+        '<div class="cm-av" style="border-color:' + (said ? '#5FC6E8' : '#3a4560') + '">' + avatarSvg(d[0], d[1]) + '</div>' +
+        '<div class="cm-sn">' + esc(p ? p.n : L(d[2], d[3])) + '</div>' +
+        (p ? '<div class="cm-sr">' + esc(L(p.r[0], p.r[1])) + '</div>' : '') + '</div>';
     }).join('');
     return '<div class="cm-table">' + (agents || '<div class="cm-note" style="align-self:center">' + esc(L('Sentando a los analistas…', 'Seating the analysts…')) + '</div>') +
       '<div style="flex-basis:100%;height:0"></div>' + desk + '</div>';
@@ -540,8 +660,9 @@
     var src = m.source && (m.source.title || m.source.url)
       ? '<span class="cm-src">📎 ' + (m.source.url ? '<a href="' + esc(window.safeUrl ? window.safeUrl(m.source.url) : m.source.url) + '" target="_blank" rel="noopener">' + esc(m.source.title || m.source.url) + '</a>' : esc(m.source.title)) +
         (m.source.date ? ' · ' + esc(day(m.source.date)) : '') + '</span>' : '';
-    return '<div class="cm-bub' + (isNew ? ' new' : '') + '"><div class="cm-bav" style="border-color:' + col + '">' + esc(m.emoji || '🤖') + '</div>' +
-      '<div class="cm-btx" style="border-left-color:' + col + '"><div class="cm-bh"><b>' + esc(nm(m)) + '</b>' +
+    return '<div class="cm-bub' + (isNew ? ' new' : '') + '"><div class="cm-bav" style="border-color:' + col + '">' + avatarSvg(m.seat, m.emoji || '🤖', true) + '</div>' +
+      '<div class="cm-btx" style="border-left-color:' + col + '"><div class="cm-bh"><b>' + esc(castOf(m.seat) ? personName(m.seat) : nm(m)) + '</b>' +
+      (castOf(m.seat) ? '<span style="color:#9BA6C4">(' + esc(roleLong(m.seat)) + ')</span>' : '') +
       (st ? '<span class="cm-tag" style="color:' + col + '">' + esc(L(st[1], st[2])) + '</span>' : '') +
       '<span style="color:#5f6b8a">' + esc(L(k[0], k[1])) + '</span>' +
       (m.ai ? '<span class="cm-tag" style="color:#B48CFF" title="' + esc(L('Razonado por IA a partir de su evidencia; cifras verificadas por el guardián', 'Reasoned by AI from its evidence; figures checked by the guardian')) + '">🧠 IA' + (m.secs ? ' · ' + Math.round(m.secs) + ' s' : '') + '</span>' : '') +
@@ -559,13 +680,15 @@
 
   function typingHtml(msgs, total, stage) {
     var next = total > msgs.length ? S._allMsgs[msgs.length] : null;
-    var who = next ? (next.emoji + ' ' + nm(next)) : stage === 'chair' ? '🏛 ' + L('Presidente', 'Chair') : stage === 'saving' ? '💾' : '';
+    var whoSeat = next ? next.seat : stage === 'chair' ? 'chair' : null;
+    var who = next ? (castOf(next.seat) ? personName(next.seat) : next.emoji + ' ' + nm(next)) : stage === 'chair' ? personName('chair') + ' (' + roleLong('chair') + ')' : stage === 'saving' ? '💾' : '';
     var what = next ? L('está hablando', 'is speaking') : stage === 'chair' ? L('está redactando el veredicto (suele tardar 20–90 s)', 'is writing the verdict (usually 20–90 s)')
       : stage === 'live' ? L('📡 consultando el precio en vivo', '📡 fetching the live price') : stage === 'risk' ? L('🛡️ midiendo el riesgo con precios reales', '🛡️ measuring risk with real prices')
       : stage === 'scoring' ? L('🧮 haciendo la cuenta', '🧮 running the numbers')
       : stage === 'research' ? L('🔬 los analistas están investigando (puede tardar unos minutos)', '🔬 the analysts are researching (may take a few minutes)')
       : stage === 'debate' ? L('🧠 los analistas están razonando con IA', '🧠 the analysts are reasoning with AI') : L('el comité se está reuniendo', 'the committee is gathering');
-    return '<div class="cm-typing">' + esc(who) + ' ' + esc(what) + ' <i></i><i></i><i></i></div>';
+    return '<div class="cm-typing">' + (whoSeat ? '<span class="cm-tav">' + avatarSvg(whoSeat, next && next.emoji, true) + '</span>' : '') +
+      esc(who) + ' ' + esc(what) + ' <i></i><i></i><i></i></div>';
   }
 
   // msgs visibles · seats · ¿en vivo? · etapa
@@ -946,6 +1069,8 @@
     if (S.entity) loadEntity(S.entity);
   }
 
-  window.KhipuCommittee = { open: open, close: close };
+  window.KhipuCommittee = { open: open, close: close,
+    // abre directo en una pestaña: 'board' | 'committee' | 'portfolio' | 'history' | 'learn'
+    openTab: function (tab) { open(); S.tab = tab || 'board'; render(); } };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = document.getElementById('cm-ov'); if (ov && ov.classList.contains('show')) close(); } });
 })();

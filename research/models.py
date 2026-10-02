@@ -282,3 +282,34 @@ class CommitteeMemo(Base):
     method = Column(String(20), nullable=False, default='committee-v1')
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     updated_at = Column(DateTime(timezone=True), nullable=True)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# GASTO DE IA (2026-10-02, pedido: "saber cuánto gasto, de dónde y controlarlo")
+# Un registro por llamada a un proveedor de IA (core/ai_usage.py lo escribe en
+# lotes, sin frenar la llamada) + ajustes editables con PIN (límites).
+# ════════════════════════════════════════════════════════════════════════════
+class AIUsage(Base):
+    __tablename__ = 'ai_usage'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    at = Column(DateTime(timezone=True), nullable=False, index=True)
+    provider = Column(String(20), nullable=False, index=True)       # claude | gemini | nvidia
+    model = Column(String(80), nullable=True)
+    feature = Column(String(40), nullable=False, index=True)        # khipu_chat, comite, investigacion…
+    who = Column(String(120), nullable=True, index=True)            # usuario/cliente que lo pidió
+    tokens_in = Column(Integer, nullable=False, default=0)
+    tokens_out = Column(Integer, nullable=False, default=0)
+    cost_usd = Column(Float, nullable=False, default=0.0)
+    estimated = Column(Boolean, nullable=False, default=False)      # tokens estimados (proveedor no los dio)
+    ok = Column(Boolean, nullable=False, default=True)
+    ms = Column(Integer, nullable=True)
+
+
+class AISetting(Base):
+    __tablename__ = 'ai_settings'
+
+    key = Column(String(60), primary_key=True)
+    value = Column(JSONB, nullable=False, default=dict)
+    updated_by = Column(String(120), nullable=True)
+    updated_at = Column(DateTime(timezone=True), nullable=True)

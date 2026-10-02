@@ -2531,6 +2531,42 @@ def research_deep():
 # ── Simulación POR AGENTES (motor interno) — la lógica vive en core.sim_agents
 # (módulo del agente SIM). Aquí SOLO la ruta: valida el body y delega, sin romper
 # el JSON si el módulo aún no existe o falla. ──────────────────────────────────
+# ── GASTO DE IA (core/ai_usage.py): cuánto, en qué proveedor, en qué función y quién ──
+@app.route('/api/ai/usage')
+@rate_limit(limit=120, window=3600)
+def ai_usage_report():
+    from core import ai_usage
+    try:
+        days = max(1, min(int(request.args.get('days', 30)), 90))
+    except (TypeError, ValueError):
+        days = 30
+    lang = 'en' if str(request.args.get('lang', 'es')).lower().startswith('en') else 'es'
+    try:
+        return jsonify(ai_usage.report(days=days, lang=lang))
+    except Exception as e:  # noqa: BLE001
+        return jsonify({'error': 'no se pudo leer el gasto de IA', 'error_en': 'could not read AI spend',
+                        'detail': f'{type(e).__name__}: {str(e)[:160]}'}), 500
+
+
+@app.route('/api/ai/usage/limits', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+@_require_pin
+def ai_usage_limits():
+    from core import ai_usage
+    from ontology.db import ontology_available
+    if not ontology_available():
+        return jsonify({'error': 'Guardar límites necesita la base de datos (DATABASE_URL); mientras tanto usa '
+                                 'AI_DAILY_LIMIT_USD / AI_MONTHLY_LIMIT_USD en Railway.',
+                        'error_en': 'Saving limits needs the database (DATABASE_URL); meanwhile use '
+                                    'AI_DAILY_LIMIT_USD / AI_MONTHLY_LIMIT_USD on Railway.'}), 503
+    body = request.get_json(silent=True) or {}
+    actor = str(body.get('actor') or '').strip()[:120] or 'operador'
+    try:
+        return jsonify({'ok': True, 'limits': ai_usage.save_settings(body.get('limits') or {}, actor)})
+    except (TypeError, ValueError) as e:
+        return jsonify({'error': f'valor inválido: {str(e)[:80]}', 'error_en': f'invalid value: {str(e)[:80]}'}), 400
+
+
 @app.route('/api/sim/agents', methods=['POST'])
 @rate_limit(limit=30, window=3600)
 def sim_agents_route():
@@ -2722,36 +2758,46 @@ Given a user query and a JSON context with node data and market quotes, produce 
 data visualization spec. Respond ONLY with valid JSON — no markdown fences, no explanation.
 
 Supported types and their data schemas:
-• bar     – data:[{label,value,color?}]              config:{unit?,axis_label?}
-• line    – data:[{label,values:[n,…],color?}]       config:{unit?,series_labels:[…]}
-• bubble  – data:[{id,label,x,y,r,color?}]           config:{x_label,y_label,r_label}
-• treemap – data:[{label,value,color?,cat?}]          config:{}
-• heatmap – data:[{row,col,value}]                   config:{rows:[…],cols:[…],unit?}
-• radar   – data:[{label,values:[0-100,…]}]           config:{axes:[…]}  (≤3 series, 4-8 axes)
-• scatter – data:[{label,x,y,color?}]                config:{x_label,y_label}
-• table   – data:[{col:val,…}]                       config:{columns:[…]}
+• bar       – data:[{label,value,color?}]                 config:{unit?}
+• grouped   – data:[{label:<metric or category>,values:[n per series],unit?}]  config:{series_labels:[…]}
+• line      – data:[{label,values:[n,…],color?}]          config:{unit?,series_labels:[…],labels:[x labels…]}
+• kpi       – data:[{label,value,unit?,sub?}]  (1-6 tiles)  config:{}
+• donut     – data:[{label,value,color?}]  (≤6 slices)      config:{unit?}
+• treemap   – data:[{label,value,color?}]                   config:{unit?}
+• histogram – data:[{label:<range>,value:<count>}]          config:{x_label?}
+• scatter   – data:[{label,x,y,color?}]                     config:{x_label,y_label}
+• bubble    – data:[{label,x,y,r,color?}]                   config:{x_label,y_label,r_label}
+• heatmap   – data:[{row,col,value}]                        config:{rows:[…],cols:[…],unit?}
+• radar     – data:[{label,values:[0-100,…]}]               config:{axes:[…]}  (≤3 series, 4-8 axes)
+• table     – data:[{col:val,…}]                            config:{columns:[…]}
 
 Always respond with exactly:
-{"type":"<type>","title":"<concise title>","subtitle":"<1 sentence insight>","data":[…],"config":{…}}
+{"type":"<type>","title":"<concise title>","subtitle":"<1 sentence insight>","data":[…],"config":{…},
+ "source":"<short 'how computed' line: which context fields you used>"}
 
-Rules:
-- bar: sort by value descending, max 20 items.
-- table: max 15 rows; only the most relevant columns.
-- radar: axes normalized 0-100; each data item is one company/series.
-- heatmap: ≤10 rows, ≤10 cols.
-- Use node data from context — do NOT invent prices or market caps not provided.
-- nrs field in nodes is already a 0-100 score (Node Risk/Resilience Score).
-- context.live = {SYMBOL:{price,change_pct}} holds REAL live market prices. When the query
-  is about price / today's change / comparison of listed companies, USE these real values
-  (price in USD, change_pct in %). Never invent a price when context.live has it.
-- CHOOSE THE BEST CHART TYPE per what best communicates the metric (unless the user asked for a specific type — then honor it):
-  · Trend over time (revenue, margins, ROE, valuation, price) → line.
-  · Annual discrete amounts or growth % that can be negative (capex, free cash flow, revenue growth) → bar.
-  · One metric ranked across many companies → bar (sorted desc).
-  · One company profiled across several normalized metrics → radar.
-  · Composition / share of a whole (sector weights, market cap split) → treemap.
-  · Correlation of two metrics (risk vs margin) → scatter.
-  · Many rows with mixed columns → table.
+CHART-TYPE CRITERION (follow it; the server re-checks it):
+  · compare few items (2-6): bar sorted (one metric) or grouped (several metrics); radar only if asked; table if >6 items.
+  · time / trend: line (bar only for annual amounts that can be negative: capex, free cash flow, growth %).
+  · ranking / top N: bar, sorted descending, max 20.
+  · composition / share of a whole: donut if ≤6 slices, otherwise treemap.
+  · distribution: histogram of pre-binned counts.
+  · relationship between two metrics: scatter (bubble if a third metric sizes the dots).
+  · a single number: kpi.  · detailed multi-attribute: table.  · country × sector: heatmap.
+  If the user asked for a specific type, honor it unless the data shape makes it unreadable.
+  If a PARSED REQUEST block is present, it is the app router's reading of the query — use its
+  intent, companies and metrics.
+
+Units: put the unit in config.unit (or per item) — "$B" (USD billions), "%", "$" (price), "x", "NRS", "year", "".
+Values are plain numbers in that unit (62 not "62%").
+
+DATA RULES (critical — investors rely on this):
+- Use ONLY numbers present in the context. NEVER invent prices, market caps, revenues, margins or counts.
+- If the context lacks the requested metric, chart the closest metric you DO have and say so in subtitle
+  (e.g. "No P/E in the data — showing margin and market cap"), or use a table with "—" for missing values.
+- nodes[].nrs is a 0-100 RISK score (higher = riskier). nodes[].margin is a fraction (0.62 = 62 %).
+  nodes[].mktcap_b and revenue_b are USD billions; employees and founded are plain numbers.
+- context.live = {SYMBOL:{price,change_pct}} holds REAL live prices — use them for price questions.
+- sector_summary has catalog aggregates per category.
 - Colors palette: #60a5fa #34d399 #f59e0b #f87171 #a78bfa #38bdf8 #fb923c #4ade80
 """
 
@@ -2767,8 +2813,15 @@ def canvas_generate():
     if not query:
         return jsonify({'error': 'query is required'}), 400
     ctx = body.get('context', {})
-    nodes_raw = ctx.get('nodes') or []
+    if not isinstance(ctx, dict):
+        ctx = {}
+    nodes_raw = [n for n in (ctx.get('nodes') or []) if isinstance(n, dict)]
     quotes_raw = ctx.get('quotes') or {}
+    # ROUTER (2026-10-02): el cliente manda la consulta ya parseada
+    # (intención, empresas, métricas) → la IA elige el gráfico con el MISMO
+    # criterio y validate_spec corrige el tipo si no encaja.
+    from core.canvas_spec import sanitize_hints, hints_prompt, validate_spec
+    hints = sanitize_hints(body.get('hints'))
 
     # ── ADELGAZAR EL CONTEXTO (fix "los gráficos tardan full") ───────────────
     # Antes: las 555 empresas completas viajaban a la IA (~150 KB de prompt →
@@ -2776,7 +2829,9 @@ def canvas_generate():
     # esas + un resumen por sector; si no, el top relevante + el resumen.
     # Los pedidos comunes ya ni llegan aquí (engine/localcharts.js, 0 ms).
     _clip = lambda n: {k: n.get(k) for k in ('id', 'label', 'cat', 'mkt', 'margin',  # noqa: E731
-                                             'growth', 'port', 'country', 'preipo', 'nrs')}
+                                             'growth', 'port', 'country', 'preipo', 'nrs',
+                                             'mktcap_b', 'revenue_b', 'employees', 'founded')
+                       if n.get(k) is not None}
     mentioned = []
     try:
         from core.semantic import extract_companies
@@ -2785,8 +2840,20 @@ def canvas_generate():
             mentioned = [n for n in nodes_raw if n.get('id') in mset]
     except Exception:  # noqa: BLE001
         pass
-    if mentioned:
+    _hint_ids = [e['id'] for e in hints.get('entities', [])]
+    if _hint_ids:
+        _have = {n.get('id') for n in mentioned}
+        mentioned += [n for n in nodes_raw if n.get('id') in _hint_ids and n.get('id') not in _have]
+    if mentioned and hints.get('intent') not in ('rank', 'distribution', 'relationship', 'composition', 'cross'):
         nodes_compact = [_clip(n) for n in mentioned[:40]]
+    elif mentioned or hints.get('metrics'):
+        # consultas panorámicas: las mencionadas + el top por la métrica pedida
+        _mk = {'nrs': 'nrs', 'margin': 'margin', 'mktcap': 'mktcap_b', 'revenue': 'revenue_b',
+               'employees': 'employees'}.get((hints.get('metrics') or ['nrs'])[0], 'nrs')
+        _srt = sorted([n for n in nodes_raw if n.get(_mk) is not None], key=lambda n: -(n.get(_mk) or 0))
+        _ranked = _srt[:50] + [n for n in _srt[-25:] if n not in _srt[:50]]   # ambos extremos (mayor y menor)
+        _ids = {n.get('id') for n in mentioned}
+        nodes_compact = [_clip(n) for n in (mentioned[:30] + [n for n in _ranked if n.get('id') not in _ids])[:90]]
     else:
         ranked = sorted(nodes_raw, key=lambda n: -(n.get('nrs') or 0))[:60]
         ranked += [n for n in nodes_raw if n.get('port') and n not in ranked][:20]
@@ -2811,7 +2878,7 @@ def canvas_generate():
     live_raw = ctx.get('live') or {}
     # caché por consulta (30 min): la misma pregunta no debe pagar otra llamada
     # de IA de varios segundos. Si hay precios en vivo en juego, TTL corto (2 min).
-    _ck = 'canvas:' + hashlib.sha256(query.lower().encode('utf-8')).hexdigest()[:24]
+    _ck = 'canvas2:' + hashlib.sha256((query.lower() + '\x00' + json.dumps(hints, sort_keys=True)).encode('utf-8')).hexdigest()[:24]
     _hit = cache.get(_ck)
     if _hit:
         return jsonify({'spec': _hit['spec'], 'model': _hit['model'], 'cached': True})
@@ -2819,16 +2886,19 @@ def canvas_generate():
                           'quotes': quotes_raw, 'live': live_raw,
                           'selected': ctx.get('selected_id')},
                          ensure_ascii=False)
-    prompt = f'USER QUERY: {query}\n\nCONTEXT:\n{ctx_str}'
+    _hp = hints_prompt(hints)
+    prompt = f'USER QUERY: {query}\n\n' + (_hp + '\n\n' if _hp else '') + f'CONTEXT:\n{ctx_str}'
     try:
         # Canvas IA = análisis que importa → tier 'deep' (Sonnet 5)
         text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1600, tier='fast')
         # extrae el JSON aunque venga con fences o texto alrededor
         spec = _extract_json(text)
-        valid_types = {'bar','line','bubble','treemap','heatmap','radar','scatter','table'}
-        if not isinstance(spec, dict) or spec.get('type') not in valid_types:
-            return jsonify({'error': f'invalid type: {spec.get("type") if isinstance(spec, dict) else type(spec).__name__}',
-                            'raw': (text or '')[:300]}), 502
+        # CRITERIO DE GRÁFICO + limpieza (alias de tipos, pie de 40 porciones →
+        # barras/treemap, línea sin eje de tiempo → barras, barras ordenadas…)
+        try:
+            spec, _fixes = validate_spec(spec, hints, query)
+        except ValueError as ve:
+            return jsonify({'error': f'invalid chart spec: {ve}', 'raw': (text or '')[:300]}), 502
         cache.set(_ck, {'spec': spec, 'model': model},
                   timeout=(120 if live_raw else 1800))
         return jsonify({'spec': spec, 'model': model})

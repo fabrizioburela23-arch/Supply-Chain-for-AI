@@ -154,9 +154,32 @@ def _neighbors(snap, nid, k):
     return out
 
 
+def _mentioned(nid, snap, text):
+    """¿La empresa aparece como PALABRA completa en el escenario? (antes "XPO"
+    entraba como semilla porque la sigla está dentro de "eXPOrtar")."""
+    n = snap['by_id'].get(nid) or {}
+    import re as _re
+    for cand in (n.get('label'), n.get('mkt'), nid):
+        c = str(cand or '').strip()
+        if len(c) >= 2 and _re.search(r'(?<![\w])' + _re.escape(c) + r'(?![\w])', text, _re.I):
+            return True
+    return False
+
+
+def _inside_word(nid, snap, text):
+    n = snap['by_id'].get(nid) or {}
+    low = (text or '').lower()
+    return any(len(str(c or '')) >= 2 and str(c).lower() in low for c in (n.get('label'), n.get('mkt'), nid))
+
+
 def _seed_ids(seeds, snap, scenario=''):
     ids = semantic.resolve_ids(seeds) if seeds else []
     ids = [i for i in ids if i in snap['by_id']]
+    if scenario:
+        # se descarta una semilla SOLO si su nombre/sigla aparece DENTRO de otra palabra
+        # y nunca como palabra completa ("XPO" en "eXPOrtar"); una semilla explícita
+        # (voz, usuario) que no figura en el texto se respeta
+        ids = [i for i in ids if _mentioned(i, snap, scenario) or not _inside_word(i, snap, scenario)]
     if not ids and scenario:
         # las empresas NOMBRADAS en el texto del escenario (nombre o ticker)
         try:
@@ -302,7 +325,7 @@ def _system(lang):
     )
 
 
-def _round_prompt(scenario, company_agents, externals, edges, state, rnd, total, lang):
+def _round_prompt(scenario, company_agents, externals, edges, state, rnd, total, lang, analysis=None):
     empresas = [{
         'id': a['id'], 'label': a['label'], 'sector': a['sector'],
         'pais': a['country'], 'nrs': a['nrs'], 'tamano': a['size'],
@@ -320,12 +343,20 @@ def _round_prompt(scenario, company_agents, externals, edges, state, rnd, total,
         'cadena_de_suministro': edges,
         'estado_acumulado_previo_pct': estado,
     }
+    if analysis:
+        payload['analisis_estructural'] = {
+            'tema': analysis.get('theme_es'), 'actor': analysis.get('actor_es'), 'evento': analysis.get('event'),
+            'mecanismo': analysis.get('mechanism_es'),
+            'impactos_por_cadena': [{'id': x['id'], 'canal': x['channel'], 'severidad': x['sev'],
+                                     'camino': x['path']} for x in analysis['impacts'][:14]]}
     forma = (
         '{\n'
         '  "events": ["hecho concreto de esta ronda", ...],\n'
         '  "impacts": [{"id": "<id de empresa>", "pct": <número, impacto ACUMULADO en %>, '
         '"rationale": "<por qué, breve>"}, ...],\n'
-        '  "narrative": "<síntesis breve para un inversor NO experto>"\n'
+        '  "narrative": "<síntesis breve para un inversor NO experto>",\n'
+        '  "quotes": [{"agent": "<nombre del agente>", "quote": "<qué diría, 1 frase>"}, ...],\n'
+        '  "watch": ["<dato concreto que conviene vigilar>", ...]\n'
         '}'
     )
     return (
@@ -333,7 +364,9 @@ def _round_prompt(scenario, company_agents, externals, edges, state, rnd, total,
         f"Es la ronda {rnd} de {total}. Razona cómo reacciona CADA agente al escenario "
         f"y cómo se propaga por la cadena de suministro, partiendo del estado acumulado. "
         f"Actualiza los impactos ACUMULADOS (no incrementales) de las empresas afectadas, "
-        f"respetando 'limite_pct'. Devuelve SOLO este JSON:\n{forma}"
+        f"respetando 'limite_pct'. Usa 'analisis_estructural' (si existe) como base: quién recibe el golpe, "
+        f"quién podría ganar y por qué camino; corrígelo si tu razonamiento lo justifica. "
+        f"Devuelve SOLO este JSON:\n{forma}"
     )
 
 
@@ -363,8 +396,78 @@ def _default_event(rnd, lang):
     return f"Round {rnd}: agents readjust and the impact propagates through the chain."
 
 
+# ── Análisis estructural (core/scenario_engine) → impactos y extras ─────────
+def _struct_pct(sev, size, direct=False):
+    return _clamp_pct(sev * _BOUNDS.get(size, 20.0) * (1.0 if direct else 0.7), size)
+
+
+_CHANNEL = {
+    'direct': ('Golpe directo del escenario.', 'Direct hit from the scenario.'),
+    'substitute': ('Podría ganar cuota como alternativa.', 'Could gain share as an alternative.'),
+    'customer': ('Cliente: depende de ese suministro.', 'Customer: depends on that supply.'),
+    'second_order': ('Efecto de segundo orden por la cadena.', 'Second-order effect through the chain.'),
+    'supplier': ('Proveedor: cambian sus pedidos.', 'Supplier: its orders change.'),
+}
+
+
+def _struct_impacts(analysis, snap, lang):
+    out = []
+    for x in analysis['impacts']:
+        n = snap['by_id'].get(x['id']) or {}
+        p = _struct_pct(x['sev'], _size_class(n), direct=x['channel'] == 'direct')
+        if abs(p) < 0.5:
+            continue
+        ch = _CHANNEL.get(x['channel'], ('', ''))
+        why = ch[0] if _es(lang) else ch[1]
+        out.append({'id': x['id'], 'label': x['label'], 'pct': p, 'channel': x['channel'],
+                    'path': x['path'], 'rationale': (why + (' ' + x['path'] if x['path'] and '→' in x['path'] else '')).strip()})
+    return out          # orden del análisis: magnitud × relevancia (no solo el %)
+
+
+def _struct_extras(analysis, lang):
+    es = _es(lang)
+    return {'mechanism': analysis['mechanism_es'] if es else analysis['mechanism_en'],
+            'theme': analysis['theme_es'] if es else analysis['theme_en'],
+            'actor': analysis['actor_es'] if es else analysis['actor_en'],
+            'event': analysis['event'],
+            'watch': analysis['watch_es'] if es else analysis['watch_en'],
+            'summary': analysis['summary']}
+
+
+def _struct_narrative(scenario, analysis, impacts, lang):
+    es = _es(lang)
+    losers = [i for i in impacts if i['pct'] < 0][:3]
+    winners = [i for i in impacts if i['pct'] > 0][:3]
+    f = lambda i: f"{i['label']} {'+' if i['pct'] >= 0 else ''}{i['pct']}%"  # noqa: E731
+    parts = []
+    th = analysis['theme_es'] if es else analysis['theme_en']
+    if th:
+        parts.append((f'En juego: {th}.' if es else f'At stake: {th}.'))
+    mech = analysis['mechanism_es'] if es else analysis['mechanism_en']
+    if mech:
+        parts.append(mech)
+    if losers:
+        parts.append(('Más perjudicadas: ' if es else 'Most hit: ') + ', '.join(f(i) for i in losers) + '.')
+    if winners:
+        parts.append(('Posibles ganadoras: ' if es else 'Possible winners: ') + ', '.join(f(i) for i in winners) + '.')
+    return ' '.join(parts) or _synth_narrative(scenario, impacts, lang)
+
+
 # ── Fallback determinista (IA caída) ────────────────────────────────────────
-def _fallback(scenario, seed_ids, company_agents, externals, snap, lang):
+def _fallback(scenario, seed_ids, company_agents, externals, snap, lang, analysis=None):
+    if analysis:
+        impacts = _struct_impacts(analysis, snap, lang)
+        prefix = '(estimación estructural, sin IA) ' if _es(lang) else '(structural estimate, no AI) '
+        agents = _roster(company_agents, externals, {i['id']: i['pct'] for i in impacts}, lang)
+        out = {'ok': True, 'fallback': True, 'structural': True, 'seeds': list(seed_ids),
+               'narrative': prefix + _struct_narrative(scenario, analysis, impacts, lang),
+               'impacts': impacts, 'agents': agents, 'rounds': analysis['timeline']}
+        out.update(_struct_extras(analysis, lang))
+        return out
+    return _fallback_basic(scenario, seed_ids, company_agents, externals, snap, lang)
+
+
+def _fallback_basic(scenario, seed_ids, company_agents, externals, snap, lang):
     """Propagación acotada por la cadena, sin IA. Las semillas reciben un golpe
     base y los vecinos lo reciben atenuado. Magnitudes SIEMPRE acotadas."""
     seedset = set(seed_ids)
@@ -461,20 +564,40 @@ def run(scenario, seeds, lang='es'):
                     'impacts': [], 'agents': _external_agents([], lang), 'rounds': []}
 
 
+def _cast_from_analysis(analysis, snap):
+    seedset = set(analysis['hit']) | set(analysis['benefit']) | set(analysis['producers'])
+    agents = []
+    for x in analysis['impacts'][:MAX_COMPANIES]:
+        n = snap['by_id'][x['id']]
+        agents.append({'id': x['id'], 'label': n.get('label') or x['id'], 'sector': n.get('sector'),
+                       'country': n.get('country'), 'nrs': _approx_nrs(snap, x['id']),
+                       'role': (n.get('role') or n.get('role_en') or '')[:160], 'size': _size_class(n),
+                       'is_seed': x['id'] in seedset})
+    return agents
+
+
 def _run_impl(scenario, seeds, lang):
+    from core import scenario_engine
     snap = semantic._load_snapshot()
     seed_ids = _seed_ids(seeds, snap, scenario)
+    try:
+        analysis = scenario_engine.analyze(scenario, snap, named_ids=seed_ids, lang=lang)
+    except Exception:  # noqa: BLE001 — el análisis estructural nunca rompe la simulación
+        analysis = None
+    if analysis:
+        seed_ids = list(dict.fromkeys(analysis['hit'] + analysis['benefit'] + seed_ids))
     if not seed_ids:
         return _no_seeds(lang)
-    company_agents = _build_company_agents(seed_ids, snap)
+    company_agents = _cast_from_analysis(analysis, snap) if analysis else _build_company_agents(seed_ids, snap)
     externals = _external_agents(company_agents, lang)
     edges = _cast_edges([a['id'] for a in company_agents], snap)
     cast_by_id = {a['id']: a for a in company_agents}
 
     if not ai._ai_configured():
-        return _fallback(scenario, seed_ids, company_agents, externals, snap, lang)
+        return _fallback(scenario, seed_ids, company_agents, externals, snap, lang, analysis)
 
     state = {}          # id -> {'pct': float, 'rationale': str}
+    quotes, watch_ai = [], []
     rounds_out = []
     model_narrative = ''
     ai_ok = False
@@ -485,7 +608,7 @@ def _run_impl(scenario, seeds, lang):
         try:
             raw, _model = ai._ai_complete(
                 _system(lang),
-                _round_prompt(scenario, company_agents, externals, edges, state, r, ROUNDS, lang),
+                _round_prompt(scenario, company_agents, externals, edges, state, r, ROUNDS, lang, analysis),
                 max_tokens=1900, tier='deep')
             data = ai._extract_json(raw)
         except Exception as e:  # noqa: BLE001 — una ronda que falla no rompe la demo
@@ -517,9 +640,13 @@ def _run_impl(scenario, seeds, lang):
         nar = str(data.get('narrative') or '').strip()
         if nar:
             model_narrative = nar
+        for q in (data.get('quotes') or []):
+            if isinstance(q, dict) and q.get('agent') and q.get('quote'):
+                quotes.append({'agent': str(q['agent'])[:60], 'quote': str(q['quote'])[:260]})
+        watch_ai = [str(w)[:160] for w in (data.get('watch') or []) if str(w).strip()][:4] or watch_ai
 
     if not ai_ok or not state:
-        _res = _fallback(scenario, seed_ids, company_agents, externals, snap, lang)
+        _res = _fallback(scenario, seed_ids, company_agents, externals, snap, lang, analysis)
         _res['_dbg'] = dbg + ['-> fallback (ai_ok=%s state=%d)' % (ai_ok, len(state))]
         return _res
 
@@ -534,5 +661,15 @@ def _run_impl(scenario, seeds, lang):
     narrative = model_narrative or _synth_narrative(scenario, impacts, lang)
     agents = _roster(company_agents, externals, {i['id']: i['pct'] for i in impacts}, lang)
 
-    return {'ok': True, 'narrative': narrative, 'impacts': impacts,
-            'agents': agents, 'rounds': rounds_out, 'model': used_model}
+    out = {'ok': True, 'narrative': narrative, 'impacts': impacts,
+           'agents': agents, 'rounds': rounds_out, 'model': used_model, 'quotes': quotes[:8]}
+    if analysis:
+        paths = {x['id']: x['path'] for x in analysis['impacts']}
+        chans = {x['id']: x['channel'] for x in analysis['impacts']}
+        for i in impacts:
+            i.setdefault('path', paths.get(i['id'], ''))
+            i.setdefault('channel', chans.get(i['id']))
+        out.update(_struct_extras(analysis, lang))
+        if watch_ai:
+            out['watch'] = list(dict.fromkeys(watch_ai + out.get('watch', [])))[:7]
+    return out

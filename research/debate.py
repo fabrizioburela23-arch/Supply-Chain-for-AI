@@ -220,7 +220,8 @@ def run_statements(seats, label, symbol, conv, claims_by_id, cref, evidence_rows
             system = SEAT_SYSTEM.format(name=s['name_es'], label=label,
                                         schema=json.dumps(_seat_schema(), ensure_ascii=False))
             prompt = text + '\n\nTAREA: expón tu análisis ante el comité en JSON.'
-            fut = ex.submit(_call, provider_factory, system, prompt, SeatStatement,
+            from core.ai_usage import bind
+            fut = ex.submit(bind(_call), provider_factory, system, prompt, SeatStatement,
                             lambda o, v=valid, it=items: _check_seat(o, v, it), 1800)
             jobs[fut] = (s, text, items)
         try:
@@ -283,7 +284,8 @@ def run_rebuttals(pairs, statements, seats_by_id, label, provider_factory, on_re
             valid = sorted(set(_valid_refs(mine['text'])) | set(_valid_refs(theirs['text'])))
             system = REBUTTAL_SYSTEM.format(name=s['name_es'], label=label,
                                             schema=json.dumps(_reb_schema(), ensure_ascii=False))
-            fut = ex.submit(_call, provider_factory, system, text + '\n\nTAREA: tu réplica en JSON.', Rebuttal,
+            from core.ai_usage import bind
+            fut = ex.submit(bind(_call), provider_factory, system, text + '\n\nTAREA: tu réplica en JSON.', Rebuttal,
                             lambda ob, v=valid, it=items: _check_reb(ob, v, it), 900)
             jobs[fut] = (me, opp)
         order = {p: i for i, p in enumerate(pairs)}

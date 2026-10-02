@@ -9,6 +9,49 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 — GASTO DE IA, SIM. ESTRUCTURAL, AVATARES, CANVAS, COMITÉ DE CARTERA (sw v181)
+
+Pedidos: sim "China prohíbe exportar HBM" sin info útil (semilla XPO por "eXPOrtar"); comité con
+personajes 2D; Canvas sin IA flojo (criterio de gráfico + IA cuando no hay precisión); "saber el saldo
+del API, controlar el gasto y de dónde"; comité de CARTERAS con acciones concretas; noticias viejas
+repetidas ("crisis de Samsung" desde hace meses).
+- `core/scenario_engine.py` (NUEVO): tema (HBM, CoWoS, EUV, GPUs, tierras raras, galio, litio, cobre,
+  uranio, energía, gases, obleas…) → productores; actor (país) y evento (veto de exportación, arancel,
+  disrupción, impulso); golpeados vs ganadores (sustitutos), propagación por la cadena con caminos,
+  timeline, qué vigilar. `core/sim_agents.py` lo usa como elenco/base de la IA y como respaldo sin IA
+  (impactos por canal: directo/sustituto/cliente/2º orden/proveedor). Semillas: se descarta solo la que
+  aparece DENTRO de otra palabra. UI (cockpit agentsim): Lo esencial, ganadoras/perdedoras, citas de
+  agentes, cómo se desarrolla, qué vigilar, camino de cada impacto. extractSeeds con palabra completa.
+  BUG arreglado: app.html definía otra `_runAgentSim` global que pisaba la de cockpit.js (la voz
+  llamaba a la equivocada) → ahora `_runAgentSimTab`.
+- GASTO DE IA: `core/ai_usage.py` (registro por llamada: proveedor, modelo, tokens REALES del proveedor,
+  costo estimado por lista de precios, FUNCIÓN de la app y QUIÉN; en memoria + tabla `ai_usage` en lotes;
+  límites diario/mensual/por función/por persona en `ai_settings` editables con PIN; AIBudgetError antes de
+  llamar = no cobra; la cascada se detiene). core/ai.py: check() + record() en los 3 proveedores.
+  Contexto: ai_context()/bind() (research, comité, debate). GET /api/ai/usage, POST /api/ai/usage/limits
+  (PIN). UI: 🩺 Sistema → 💰 Gasto IA (engine/aispend.js). SALDO: ningún proveedor lo publica por API;
+  con ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones) se muestra lo FACTURADO por Anthropic
+  (cost_report). Env: AI_DAILY_LIMIT_USD (10), AI_MONTHLY_LIMIT_USD (150), AI_PER_USER_DAILY_USD (0),
+  AI_PRICES_JSON.
+- Comité: avatares SVG 2D por puesto (Valeria, Kenji, Amara, Diego, Leila, Henrik, Noa, Ingrid, Priya,
+  Kwame, Mei, Isabel=Presidenta, Alex), en engine/committee.js (CAST/avatarSvg).
+- CANVAS IA (subagente): router intención+confianza en engine/localcharts.js (local solo con confianza
+  ≥0.75; si no → IA con hints; sin IA → tarjeta honesta + respuesta parcial correcta), criterio de tipo de
+  gráfico (core/canvas_spec.py validate_spec corrige lo que elige la IA), renderers nuevos (KPI, donut,
+  histograma, barras agrupadas, heatmap, treemap squarified). tests/test_canvas.py.
+- COMITÉ DE CARTERA: `core/portfolio_advisor.py` (riesgo medido + PERFIL conservador/moderado/agresivo +
+  convicción de la Pizarra → acciones: vender, reducir, consolidar, aumentar, añadir nueva para
+  diversificar; salud 0-100; explicación IA con guardián o determinista; disclaimer IA). POST
+  /api/committee/portfolio. UI: Comité → 💼 Mi cartera (engine/pfcommittee.js): perfil de 4 preguntas
+  (incluye NIVEL DE INVOLUCRAMIENTO; localStorage kh_investor_profile, window.KhipuProfile), fuentes
+  MKT.pos / carteras simuladas / bróker (PIN), gráficos, "Aplicar en simulación" (KhipuPortfolios._buy/_sell).
+- FRESCURA: matrix/engine.active_factors devuelve since/updated; insights prefieren factores ≤45 días y
+  marcan los viejos como ESTRUCTURALES con su fecha (la IA no puede presentarlos como noticia); el banner
+  de inicio dice NUEVO vs ESTRUCTURAL y "desde <mes año>".
+- PENDIENTE (pedidos 2026-10-02): reportes diarios/mensuales/a pedido vs posición inicial con gráficos y
+  "notebook" sobre la cartera; noticias en vivo según la cartera; terminal más estética; pop-ups al
+  comprar/vender.
+
 # SESIÓN 2026-10-02 (noche) — ANÁLISIS MÁS PROFUNDO + CONCLUSIONES EN TODAS PARTES (sw v179)
 
 Pedido: "mientras duermo, dale con todo, haz algo grande" (tema: análisis mejores, conclusiones ya).

@@ -247,6 +247,29 @@ def reject(memo_id):
     return _decide(memo_id, lambda s, mid, actor, b: reject_memo(s, mid, actor, reason=str(b.get('reason') or '')))
 
 
+@committee_bp.route('/portfolio', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+def portfolio_committee():
+    """Comité de CARTERA (core/portfolio_advisor): riesgo medido + perfil +
+    investigación → acciones concretas como consejo. Nunca ejecuta nada."""
+    from core import portfolio_advisor as pa
+    from core.ai_usage import ai_context
+    body = request.get_json(silent=True) or {}
+    positions = body.get('positions') if isinstance(body.get('positions'), list) else []
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    profile = body.get('profile') if isinstance(body.get('profile'), dict) else {}
+    with ai_context('comite_cartera', str(body.get('actor') or '').strip()[:120] or None):
+        try:
+            out = pa.analyze(positions, profile=profile, lang=lang, cash_usd=body.get('cash_usd') or 0)
+        except Exception as e:  # noqa: BLE001
+            log.warning('portfolio committee: %s', e)
+            return jsonify({'ok': False, 'error': 'no se pudo analizar la cartera', 'error_en': 'could not analyze the portfolio',
+                            'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
+        if out.get('ok') and body.get('explain', True):
+            out['explanation'] = pa.explain(out, lang)
+    return jsonify(out), (200 if out.get('ok') else 422)
+
+
 @committee_bp.route('/board')
 def board_route():
     if not ontology_available():

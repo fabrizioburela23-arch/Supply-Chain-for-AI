@@ -40,7 +40,8 @@
     (window.NODES || []).forEach(function (n) {
       if (out.length >= 8 || seen[n.id]) return;
       var lab = norm(n.label || '');
-      if (lab && lab.length >= 3 && nt.indexOf(lab) >= 0) { seen[n.id] = 1; out.push(n.id); return; }
+      // palabra COMPLETA: antes "XPO" entraba por estar dentro de "eXPOrtar"
+      if (lab && lab.length >= 3 && new RegExp('(^|[^a-z0-9])' + lab.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)').test(nt)) { seen[n.id] = 1; out.push(n.id); return; }
       if (n.mkt) {
         var tk = String(n.mkt).toLowerCase();
         if (tk.length >= 2 && nt.indexOf(' ' + tk + ' ') >= 0) { seen[n.id] = 1; out.push(n.id); }
@@ -703,11 +704,20 @@
       if (!d || d.available === false || !(d.insights && d.insights.length)) return;
       var top = d.insights[0];
       var kico = { riesgo: '⚠️', oportunidad: '📈', estructura: '🕸' };
+      // FECHAS (2026-10-02): cada factor dice desde cuándo rige; uno viejo no es "noticia"
+      function since(f) {
+        if (!f.since) return '';
+        var dt = new Date(f.since);
+        return isNaN(dt) ? '' : ' · ' + (en ? 'since ' : 'desde ') + dt.toLocaleDateString(en ? 'en' : 'es', { month: 'short', year: 'numeric' });
+      }
       var facts = (d.factors || []).slice(0, 2).map(function (f) {
-        return '<span style="font-size:10.5px;color:#FFD27A;border:1px solid rgba(255,179,0,.3);border-radius:999px;padding:1px 8px">⚡ ' + esc(f.label) + '</span>';
+        return '<span title="' + esc(f.fresh ? (en ? 'Recent factor' : 'Factor reciente') : (en ? 'Structural factor (not news)' : 'Factor estructural (no es noticia nueva)')) +
+          '" style="font-size:10.5px;color:' + (f.fresh ? '#FFD27A' : '#9BA6C4') + ';border:1px solid ' + (f.fresh ? 'rgba(255,179,0,.3)' : 'rgba(155,166,196,.3)') + ';border-radius:999px;padding:1px 8px">' +
+          (f.fresh ? '⚡ ' : '◈ ') + esc(f.label) + esc(since(f)) + '</span>';
       }).join(' ');
       el.innerHTML = '<div style="display:inline-flex;max-width:700px;align-items:center;gap:11px;flex-wrap:wrap;justify-content:center;text-align:left;padding:10px 16px;border:1px solid rgba(0,224,255,.22);border-radius:14px;background:rgba(0,224,255,.05)">' +
-        '<span style="font-size:9px;font-weight:800;letter-spacing:.1em;color:#00E0FF;border:1px solid rgba(0,224,255,.4);border-radius:999px;padding:2px 8px">' + (en ? 'LIVE' : 'EN VIVO') + '</span>' +
+        '<span style="font-size:9px;font-weight:800;letter-spacing:.1em;color:' + (d.fresh ? '#00E0FF' : '#9BA6C4') + ';border:1px solid ' + (d.fresh ? 'rgba(0,224,255,.4)' : 'rgba(155,166,196,.35)') + ';border-radius:999px;padding:2px 8px">' +
+          (d.fresh ? (en ? 'NEW' : 'NUEVO') : (en ? 'STRUCTURAL' : 'ESTRUCTURAL')) + '</span>' +
         '<span style="font-size:13px;color:#E8EDFB"><b>' + (kico[top.kind] || '🕸') + ' ' + esc(top.title) + '</b></span>' +
         (facts ? '<span style="display:inline-flex;gap:6px;flex-wrap:wrap">' + facts + '</span>' : '') +
         '<button id="bcp-home-hyperbtn" style="padding:4px 12px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid rgba(0,224,255,.5);background:rgba(0,224,255,.12);color:#00E0FF">' + (en ? 'See insights' : 'Ver insights') + '</button>' +
@@ -1790,34 +1800,10 @@
     if (query) { q.value = query; cockpitCanvas(query); } else { q.focus(); }
   }
 
-  // Respaldo determinista: SIEMPRE devuelve un gráfico útil (feedback Fabrizio:
-  // "muchas veces los gráficos que pido no los hace"). Si menciona empresas, su
-  // NRS; si no, el top por resiliencia. Nunca un error rojo.
-  function _cvFallbackSpec(query) {
-    var nodes = window.NODES || [];
-    var en = ckLang() === 'en';
-    var nrs = function (id) { try { return typeof computeNRS === 'function' ? computeNRS(id) : null; } catch (e) { return null; } };
-    var ql = ' ' + String(query || '').toLowerCase() + ' ';
-    var hits = nodes.filter(function (n) {
-      var lb = (n.label || '').toLowerCase(), mk = (n.mkt || '').toLowerCase();
-      return (lb && lb.length >= 3 && ql.indexOf(lb) >= 0) || (mk && mk.length >= 2 && ql.indexOf(' ' + mk + ' ') >= 0);
-    });
-    var picked, title, sub;
-    if (hits.length >= 1) {
-      picked = hits.slice(0, 12);
-      // NRS es un puntaje de RIESGO: más alto = MÁS riesgoso (antes decía lo contrario)
-      title = (en ? 'Risk (NRS): ' : 'Riesgo (NRS): ') + picked.slice(0, 4).map(function (n) { return n.label; }).join(', ') + (picked.length > 4 ? '…' : '');
-      sub = en ? 'Network Risk Score 0-100 · higher = riskier' : 'Puntaje NRS 0-100 · más alto = más riesgo';
-    } else {
-      picked = nodes.map(function (n) { return { n: n, v: nrs(n.id) }; }).filter(function (x) { return x.v != null; })
-        .sort(function (a, b) { return b.v - a.v; }).slice(0, 12).map(function (x) { return x.n; });
-      title = en ? 'Highest-risk companies (NRS)' : 'Empresas de mayor riesgo (NRS)';
-      sub = en ? 'NRS 0-100, higher = riskier · a default chart (the exact one was unavailable)' : 'NRS 0-100, más alto = más riesgo · gráfico por defecto (el exacto no estuvo disponible)';
-    }
-    // sin NRS → se omite (antes se dibujaba un 50 inventado)
-    var data = picked.map(function (n) { var v = nrs(n.id); return v == null ? null : { label: n.label, value: Math.round(v) }; }).filter(Boolean);
-    return { type: 'bar', title: title, subtitle: sub, data: data, config: { unit: '' } };
-  }
+  // (2026-10-02) Se eliminó _cvFallbackSpec: ante una falla de la IA dibujaba
+  // "empresas de mayor riesgo" aunque la pregunta fuera otra (gráfico sin
+  // relación presentado como respuesta). Ahora: KhipuLocalCharts.honest →
+  // "no puedo responder esto con precisión sin IA" + la parcial correcta.
 
   async function cockpitCanvas(query) {
     var cards = document.getElementById('bcp-cv-cards');
@@ -1828,12 +1814,13 @@
       '</div><div class="cv-card-sub">' + L('Generando…', 'Generating…') + '</div></div></div>' +
       '<div style="height:180px;display:flex;align-items:center;justify-content:center"><div class="cv-spinner"></div></div></div>');
     // 1º: generador LOCAL determinista (0 ms, 0 errores) — la IA solo para lo exótico
+    // (router de intención: solo responde local si la confianza es alta)
     var local = window.KhipuLocalCharts && window.KhipuLocalCharts.try(query);
-    if (local && window._cvRenderCard) { window._cvRenderCard(cardId, query, local, L('local ⚡ instantáneo', 'local ⚡ instant')); return; }
-    // 2º: patrones locales con datos del servidor (precio histórico, ~300ms)
+    if (local && window._cvRenderCard) { window._cvRenderCard(cardId, query, local, 'local'); return; }
+    // 2º: local con datos del servidor (precio histórico, estados anuales, cripto)
     if (window.KhipuLocalCharts && window.KhipuLocalCharts.tryAsync) {
       var localA = await window.KhipuLocalCharts.tryAsync(query);
-      if (localA && window._cvRenderCard) { window._cvRenderCard(cardId, query, localA, L('local ⚡ sin IA', 'local ⚡ no AI')); return; }
+      if (localA && window._cvRenderCard) { window._cvRenderCard(cardId, query, localA, 'local'); return; }
     }
     try {
       var nodeCtx = (window.NODES || []).slice(0, 600).map(function (n) {
@@ -1858,14 +1845,11 @@
       if (d.error) throw new Error(d.error);
       if (window._cvRenderCard) window._cvRenderCard(cardId, query, d.spec, d.model);
     } catch (e) {
-      // GRÁFICOS QUE SIEMPRE SALEN: si la IA falla/está ocupada, renderizamos un
-      // gráfico de respaldo determinista en vez de un error rojo (feedback Fabrizio).
+      // Sin IA: respuesta HONESTA + la parcial correcta más cercana (nunca un
+      // gráfico por defecto sin relación con la pregunta).
       try {
-        var fb = _cvFallbackSpec(query);
-        if (fb && fb.data && fb.data.length && window._cvRenderCard) {
-          window._cvRenderCard(cardId, query, fb, L('local ⚡ respaldo', 'local ⚡ fallback'));
-          return;
-        }
+        var hs = (window.KhipuLocalCharts && window.KhipuLocalCharts.honest) ? await window.KhipuLocalCharts.honest(query, e && e.message) : null;
+        if (hs && window._cvRenderCard) { window._cvRenderCard(cardId, query, hs, 'local'); return; }
       } catch (e2) {}
       var card = document.getElementById(cardId);
       if (card) card.innerHTML = '<div class="cv-card-hdr"><div class="cv-card-title">' + esc(query) + '</div></div>' +
@@ -1894,6 +1878,56 @@
     if (/gob|gover|state|estad|regul|polic|central bank|banco central/.test(t)) return VIOLET;
     if (/geo|pol[ií]t|macro|milit|defens|nation/.test(t)) return '#FFB300';
     return NEON; // empresa / mercado / industria
+  }
+
+  var CHAN = { direct: ['#FF4D6A', 'Golpe directo', 'Direct hit'], substitute: ['#2BE38B', 'Podría ganar cuota', 'Could gain share'],
+    customer: ['#FFB300', 'Cliente: pierde suministro', 'Customer: loses supply'], second_order: ['#9BA6C4', 'Efecto de segundo orden', 'Second-order effect'],
+    supplier: ['#7AA2FF', 'Proveedor: cambian sus pedidos', 'Supplier: its orders change'] };
+  function simBox(inner, col) {
+    return '<div style="border:1px solid ' + (col || 'rgba(122,158,255,.16)') + ';border-radius:14px;background:rgba(11,18,34,.55);padding:14px 16px;margin-bottom:14px">' + inner + '</div>';
+  }
+  function essentialsHTML(d, en) {
+    var sm = d.summary || {}, bits = [];
+    if (d.theme) bits.push('<div style="font-size:13.5px;color:#E8EDFB"><b>' + (en ? 'At stake: ' : 'En juego: ') + '</b>' + esc(d.theme) + '</div>');
+    if (d.actor) bits.push('<div style="font-size:12.5px;color:#9BA6C4">' + (en ? 'Who acts: ' : 'Quién actúa: ') + esc(d.actor) + '</div>');
+    if (d.mechanism) bits.push('<div style="font-size:13px;line-height:1.55;color:#C9D2EA;margin-top:6px">💡 ' + esc(d.mechanism) + '</div>');
+    if (sm.n_hit != null) {
+      bits.push('<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+        '<span style="padding:4px 10px;border-radius:999px;border:1px solid ' + DOWN + '66;color:' + DOWN + ';font-size:12px;font-weight:700">▼ ' + sm.n_hit + (en ? ' hit' : ' perjudicadas') + '</span>' +
+        '<span style="padding:4px 10px;border-radius:999px;border:1px solid ' + UP + '66;color:' + UP + ';font-size:12px;font-weight:700">▲ ' + sm.n_benefit + (en ? ' could benefit' : ' podrían ganar') + '</span>' +
+        (sm.sectors && sm.sectors.length ? '<span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(122,158,255,.3);color:#9BA6C4;font-size:12px">' + sm.sectors.length + (en ? ' sectors' : ' sectores') + '</span>' : '') + '</div>');
+    }
+    return bits.length ? simBox('<div class="bcp-lh" style="margin-top:0">' + (en ? 'The essentials' : 'Lo esencial') + '</div>' + bits.join('')) : '';
+  }
+  function sidesHTML(impacts, en) {
+    var lose = impacts.filter(function (x) { return x.pct < 0; }).slice(0, 5), win = impacts.filter(function (x) { return x.pct > 0; }).slice(0, 5);
+    if (!lose.length && !win.length) return '';
+    function col(title, arr, c) {
+      return '<div style="flex:1 1 240px;min-width:0"><div class="bcp-lh" style="color:' + c + ';margin-top:0">' + title + '</div>' +
+        (arr.length ? arr.map(function (x) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:3px 0"><span style="overflow-wrap:anywhere">' + esc(x.label) + '</span><b style="color:' + c + '">' + (x.pct > 0 ? '+' : '') + x.pct + '%</b></div>'; }).join('')
+          : '<div style="font-size:12px;color:#7C87A3">' + (en ? 'None clear' : 'Ninguna clara') + '</div>') + '</div>';
+    }
+    return simBox('<div style="display:flex;gap:18px;flex-wrap:wrap">' + col(en ? '▼ Most hit' : '▼ Más perjudicadas', lose, DOWN) + col(en ? '▲ Possible winners' : '▲ Posibles ganadoras', win, UP) + '</div>');
+  }
+  function quotesHTML(d, en) {
+    var q = Array.isArray(d.quotes) ? d.quotes : [];
+    if (!q.length) return '';
+    return '<div class="bcp-lh">' + (en ? 'What the agents say' : 'Lo que dicen los agentes') + '</div>' +
+      q.map(function (x) { return '<div style="border-left:3px solid ' + NEON + ';padding:6px 12px;margin:0 0 8px;background:rgba(0,224,255,.04);border-radius:0 10px 10px 0;font-size:13px;color:#D5DCF0"><b>' + esc(x.agent) + ':</b> «' + esc(x.quote) + '»</div>'; }).join('');
+  }
+  function timelineHTML(d, en) {
+    var r = Array.isArray(d.rounds) ? d.rounds : [];
+    if (!r.length) return '';
+    return '<div class="bcp-lh">' + (en ? 'How it unfolds' : 'Cómo se desarrolla') + '</div>' + simBox(r.map(function (x) {
+      return '<div style="display:flex;gap:10px;align-items:flex-start;margin:4px 0"><span style="flex:0 0 22px;height:22px;border-radius:50%;background:' + NEON + '22;color:' + NEON + ';font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">' + esc(x.round) + '</span>' +
+        '<div style="font-size:13px;line-height:1.5;color:#C9D2EA">' + (x.events || []).map(esc).join('<br>') + '</div></div>';
+    }).join(''));
+  }
+  function watchHTML(d, en) {
+    var w = Array.isArray(d.watch) ? d.watch : [];
+    if (!w.length) return '';
+    return '<div class="bcp-lh">👁 ' + (en ? 'What to watch' : 'Qué vigilar') + '</div>' + simBox('<ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:#C9D2EA">' +
+      w.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>');
   }
 
   function renderAgentSim(d, en) {
@@ -1928,7 +1962,9 @@
           '<span class="bar" style="background:' + col + '22"><i style="width:' + w + '%;background:' + col + '"></i></span>' +
           '<span class="pv" style="color:' + col + '">' + (pct >= 0 ? '+' : '') + Math.round(pct) + '%</span>' +
         '</div>' +
-        (x.rationale ? '<div class="bcp-agwhy">' + esc(x.rationale) + '</div>' : '') +
+        (x.channel && CHAN[x.channel] ? '<div class="bcp-agwhy"><span style="color:' + CHAN[x.channel][0] + ';font-weight:700">' + esc(en ? CHAN[x.channel][2] : CHAN[x.channel][1]) + '</span>' +
+          (x.path && x.path.indexOf('→') >= 0 ? ' · ' + esc(x.path) : '') + '</div>'
+          : (x.rationale ? '<div class="bcp-agwhy">' + esc(x.rationale) + '</div>' : '')) +
       '</div>';
     }).join('') : '<div class="bcp-loading">' + (en ? 'No quantified impacts.' : 'Sin impactos cuantificados.') + '</div>';
     // sello del modelo que razonó (transparencia: Sonnet 5 vs respaldo sin IA)
@@ -1946,10 +1982,14 @@
     var simNote = '<div style="margin-bottom:12px;padding:8px 12px;border:1px dashed #f59e0b;border-radius:10px;background:rgba(245,158,11,.08);font-size:11.5px;color:#fbbf24;line-height:1.5">🧪 ' +
       (en ? 'SIMULATION of a hypothetical scenario: the % are model estimates, not real prices nor recommendations.'
           : 'SIMULACIÓN de un escenario hipotético: los % son estimaciones del modelo, no precios reales ni recomendaciones.') +
-      (d.fallback ? ' <b>' + (en ? 'No AI was available: rough fixed-magnitude estimate by supply-chain proximity.'
-                                 : 'Sin IA disponible: estimación gruesa de magnitud fija según cercanía en la cadena.') + '</b>' : '') + '</div>';
-    return modelHTML + simNote + agentsHTML + narrHTML +
-      '<div class="bcp-lh">' + (en ? 'Estimated impact by company' : 'Impacto estimado por empresa') + '</div>' + impactsHTML;
+      (d.fallback ? ' <b>' + (d.structural
+        ? (en ? 'No AI available: structural estimate (who produces it, who acts, and the strength of each supply-chain link).'
+              : 'Sin IA disponible: estimación estructural (quién lo produce, quién actúa y la fuerza de cada vínculo de la cadena).')
+        : (en ? 'No AI was available: rough fixed-magnitude estimate by supply-chain proximity.'
+              : 'Sin IA disponible: estimación gruesa de magnitud fija según cercanía en la cadena.')) + '</b>' : '') + '</div>';
+    return modelHTML + simNote + essentialsHTML(d, en) + narrHTML + sidesHTML(impacts, en) + agentsHTML + quotesHTML(d, en) +
+      timelineHTML(d, en) + watchHTML(d, en) +
+      '<div class="bcp-lh">' + (en ? 'Estimated impact by company (and how it reaches each one)' : 'Impacto estimado por empresa (y cómo le llega)') + '</div>' + impactsHTML;
   }
 
   function stageAgentSim(s, arg) {

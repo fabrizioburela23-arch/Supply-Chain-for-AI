@@ -367,6 +367,12 @@ def synthesize(session, job):
 
 def execute_job(session, job, provider_factory=None, fetchers=None, on_start=None, on_done=None):
     """on_start(agent_type) / on_done(agent_type, run): avisos opcionales (la sala del comité los narra)."""
+    from core.ai_usage import ai_context      # gasto de IA atribuido a "Investigación IA" y a quien la pidió
+    with ai_context('investigacion', job.requested_by or (job.trigger or {}).get('by') or 'sistema'):
+        return _execute_job(session, job, provider_factory, fetchers, on_start, on_done)
+
+
+def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=None, on_done=None):
     job.status = 'running'
     session.flush()
     ok = 0
@@ -393,7 +399,8 @@ def execute_job(session, job, provider_factory=None, fetchers=None, on_start=Non
                 prov = provider_factory(agent_type) if provider_factory else None
                 if on_start:
                     on_start(agent_type)
-                futs[ex.submit(_agent_work, job.entity_id, job.trigger, job.depth, agent_type, prov,
+                from core.ai_usage import bind
+                futs[ex.submit(bind(_agent_work), job.entity_id, job.trigger, job.depth, agent_type, prov,
                                fetchers, prior)] = (agent_type, run)
             for fut in as_completed(futs):
                 agent_type, run = futs[fut]

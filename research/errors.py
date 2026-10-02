@@ -7,6 +7,9 @@ esta explicación con QUÉ HACER, en español e inglés.
 import re
 
 _RULES = (
+    (r'l[ií]mite (diario|mensual) de gasto|lleg[oó] a su l[ií]mite|spend limit|AI limit',
+     'Se alcanzó un límite de gasto de IA que tú configuraste. Míralo y ajústalo en 🩺 Sistema → 💰 Gasto IA.',
+     'An AI spend limit you configured was reached. Review and adjust it in 🩺 System → 💰 AI spend.'),
     (r'presupuesto diario agotado|budget',
      'Se acabó el presupuesto diario de IA. Espera a mañana o sube RESEARCH_DAILY_BUDGET_USD en Railway → Variables.',
      'The daily AI budget is used up. Wait until tomorrow or raise RESEARCH_DAILY_BUDGET_USD in Railway → Variables.'),
