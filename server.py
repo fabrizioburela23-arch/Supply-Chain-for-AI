@@ -3646,6 +3646,7 @@ War-Room scenarios (5 presets; HYPOTHETICAL — outcomes come from running the s
 - Amounts are in US dollars (notional): minimum $1, maximum $100,000 per order.
 
 ## ANALYST BEHAVIOR RULES
+- For ANY question that needs facts or analysis, call ask_khipu_brain FIRST and answer from what it returns (it has live data and sources); only answer from your own knowledge for pure definitions or small talk.
 - You are a financial analyst first, voice assistant second. Give real insight, not just navigation.
 - ACT FIRST, TALK SECOND: on almost every user request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never just speak without acting, and never ask permission to act.
 - Deep question about ONE company → open_xray + your sharpest take ("Su talón de Aquiles es…").
@@ -3676,6 +3677,7 @@ def _bixby_client_tools():
     N = lambda d: {'type': 'number', 'description': d}  # noqa: E731
     company = {'company_name': S('Company name or ticker, any casing (e.g. "Nvidia", "NVDA", "tsmc")')}
     return [
+        T('ask_khipu_brain', 'THE DEFAULT TOOL FOR ANY QUESTION. Sends the user question to the Khipus analyst brain, which LOOKS UP real data in the app (company profiles, supply chain, live prices and news, AI research conclusions, portfolio risk, geopolitical and space events, committee memos, track record) and returns a sourced answer. Use it for every analysis/knowledge question ("what are TSMC risks?", "what happened with Nvidia today?", "which companies are most critical?", follow-ups). Read the returned answer aloud naturally and briefly (summarize long lists); never contradict its figures with your own memory. It is read-only: it never places orders.', {'question': S('The user question, in their own words, including enough context for follow-ups (e.g. "and who depends on TSMC?").')}, ['question']),
         T('open_xray', 'Open the full X-Ray dossier of a company (NRS breakdown, dependency threads, impact wave: who suffers and who wins if it falls). Use for ANY deep question about one company.', company, ['company_name']),
         T('run_live_simulation', 'Run a live shock/boom simulation on the supply-chain map. Returns affected count and most impacted companies.', dict(company, kind=S('collapse | demand | price | sanction (default collapse)'), severity=N('0-100, default 100')), ['company_name']),
         T('compare_companies', 'Compare two companies side by side. Returns NRS of each and which has lower risk.', {'company_a': S('First company name/ticker'), 'company_b': S('Second company name/ticker')}, ['company_a', 'company_b']),

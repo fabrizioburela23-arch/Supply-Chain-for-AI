@@ -9,6 +9,36 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-09-30 → 10-02 — MONITORES, RIESGO FÁCIL, ASISTENTE, CEREBRO DE KHIPU (sw v174)
+
+- Espacio = Space Monitor (core/space.py /api/space2/*, engine/spacemonitor.js):
+  globo con satélites reales + lanzamientos dinámicos (arcos, cuenta
+  regresiva, línea de tiempo, empresas del grafo por misión).
+- Reporte de riesgo fácil (engine/riskreport.js): "no me deja" era MKT.pos
+  vacío → callejón sin salida. Ahora pantalla guiada (mis posiciones / cartera
+  rápida en USD / ejemplos), semáforo y frases simples; detalle plegable.
+- Carteras → 🤖 Asistente (core/portfolio_ai.py): preguntas + propuestas de
+  2–3 carteras (determinista con precios reales + explicación IA); crea
+  carteras SIMULADAS.
+- Comité: pantalla de progreso por pasos (progress en memoria, GET /memo);
+  bug: el sondeo pedía PIN sin tenerlo → giraba para siempre; memo huérfano
+  tras reinicio → failed.
+- Khipu "tonto": el router de la Cabina secuestraba preguntas con regex y lo
+  no reconocido lo convertía en GRÁFICO; /api/ai/command solo veía nombres.
+  Ahora core/khipu_chat.py (POST /api/khipu/chat, herramientas de solo
+  lectura del MCP + noticias/movers/espacio, memoria, fuentes) +
+  engine/khipu_chat.js (solo atajos explícitos). La VOZ usa el mismo cerebro
+  vía la herramienta cliente ask_khipu_brain (ElevenLabs se re-sincroniza solo
+  al arrancar el server).
+- Railway: tras pagar seguía caído; se quitó drainingSeconds de railway.toml
+  (no verificado en su esquema) y volvió. Recordar: Custom Start Command vacío.
+- Tests: 753.
+- PENDIENTE: verificar en prod GDELT/LL2/Alpaca OAuth; velocidad del mapa
+  (#9); decidir trading agent / portfolio advice "comprar/vender";
+  /api/ai/command quedó sin uso (borrable).
+
+---
+
 # SESIÓN 2026-09-30 — PHASE 3 + WORLD MONITOR + CORRETAJE + MCP + ENDURECIMIENTO (sw v170)
 
 Pedido: "algo enorme mientras duermo": geopolítica como World Monitor en UN

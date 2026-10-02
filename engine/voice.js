@@ -811,6 +811,26 @@ const BixbyVoice = {
           .catch(e => respond({ success: false, error: 'portfolio tool error: ' + ((e && e.message) || e) }));
         break;
       }
+      case 'ask_khipu_brain': {
+        // El MISMO cerebro con herramientas del chat (POST /api/khipu/chat):
+        // consulta datos reales de la app y devuelve una respuesta con fuentes.
+        const q = String((params && (params.question || params.query)) || '').trim();
+        if (!q || !window.KhipuChat || !window.KhipuChat.send) {
+          respond({ success: false, error: 'brain unavailable' });
+          break;
+        }
+        window.KhipuChat.send(q, { timeout: 55000 }).then(d => {
+          // abre en pantalla la primera acción útil (X-Ray, mapa…) sin tapar la voz
+          try { const a = (d.actions || [])[0]; if (a && window.KhipuChat.runAction) window.KhipuChat.runAction(a); } catch (e) {}
+          respond({
+            success: true,
+            answer: String(d.answer || '').replace(/\*\*/g, '').slice(0, 2500),
+            sources: (d.sources || []).slice(0, 5),
+            consulted: (d.tools_used || []).map(t => t.name).slice(0, 6),
+          });
+        }).catch(e => respond({ success: false, error: 'brain error: ' + ((e && e.message) || e) }));
+        break;
+      }
       case 'get_space_summary': {
         this._toolSpaceSummary(params)
           .then(respond)
