@@ -10,6 +10,8 @@
   'use strict';
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function isEn() { var l = window.LANG; if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } } return l === 'en'; }
+  function L(es, en) { return isEn() ? en : es; }
   function nm(id) { var n = window.NODE_BY_ID && window.NODE_BY_ID[id]; return n ? n.label : id; }
   function secColor(id) {
     var n = window.NODE_BY_ID && window.NODE_BY_ID[id];
@@ -22,7 +24,7 @@
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
   }
   function fechaLarga() {
-    try { return new Date().toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' }); }
+    try { return new Date().toLocaleDateString(isEn() ? 'en' : 'es', { weekday: 'long', day: 'numeric', month: 'long' }); }
     catch (e) { return ''; }
   }
 
@@ -66,14 +68,45 @@
     risk:   { ic: '△', bg: 'rgba(255,179,0,.15)',  col: '#FFB300', tag: 'RIESGO' },
     factor: { ic: '◈', bg: 'rgba(157,107,255,.15)', col: '#9D6BFF', tag: 'FACTOR ACTIVO' },
     oport:  { ic: '↑', bg: 'rgba(43,227,139,.15)', col: '#2BE38B', tag: 'OPORTUNIDAD' },
+    concl:  { ic: '🏛', bg: 'rgba(0,224,255,.12)', col: '#00E0FF', tag: 'CONCLUSIONES', tag_en: 'CONCLUSIONS' },
   };
 
   function card(c) {
     var k = KIND[c.kind] || KIND.shock;
-    return '<div class="brc" ' + (c.node ? 'onclick="window._briefJump(\'' + esc(c.node) + '\')"' : '') + '>' +
+    var click = c.committee ? 'onclick="window._briefCommittee(\'' + esc(c.committee) + '\')"'
+      : c.node ? 'onclick="window._briefJump(\'' + esc(c.node) + '\')"' : '';
+    return '<div class="brc" ' + click + '>' +
       '<div class="ic" style="background:' + k.bg + ';color:' + k.col + '">' + k.ic + '</div>' +
-      '<div class="bd"><div class="tag" style="color:' + k.col + '">' + k.tag + '</div>' +
+      '<div class="bd"><div class="tag" style="color:' + k.col + '">' + (isEn() && k.tag_en ? k.tag_en : k.tag) + '</div>' +
       '<div class="tx">' + c.text + '</div></div></div>';
+  }
+
+  window._briefCommittee = function (id) {
+    close();
+    if (window.KhipuCommittee) window.KhipuCommittee.open(id === '__board' ? undefined : id);
+  };
+
+  // ── lo que concluyeron los analistas (pizarra del comité; sin IA) ──
+  function conclusionsCard() {
+    return fetch('/api/committee/board?limit=60').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+      .then(function (d) {
+        var it = (d && d.items) || [];
+        if (!it.length) return null;
+        var best = it[0], worst = it[it.length - 1];
+        var parts = [];
+        if (best.overall_conviction >= 20) {
+          var bf = best.best_for ? (isEn() ? best.best_for.text_en : best.best_for.text_es) : '';
+          parts.push(L('Los analistas ven más favorable a ', 'The analysts see the most favorable case for ') + '<b>' + esc(best.label) + '</b> (' +
+            L('convicción', 'conviction') + ' <b>+' + Math.round(best.overall_conviction) + '</b>)' + (bf ? ': ' + esc(String(bf).slice(0, 180)) : '.'));
+        }
+        if (worst !== best && worst.overall_conviction <= -20) {
+          parts.push(L('La más desfavorable: ', 'The most unfavorable: ') + '<b>' + esc(worst.label) + '</b> (<b>' + Math.round(worst.overall_conviction) + '</b>).');
+        }
+        if (!parts.length) parts.push(L('Los analistas investigaron ', 'The analysts researched ') + '<b>' + it.length + '</b> ' +
+          L('empresa(s), sin una convicción fuerte en ninguna dirección.', 'company(ies), with no strong conviction either way.'));
+        parts.push('<span style="color:#00E0FF">' + L('Ver la pizarra →', 'See the board →') + '</span>');
+        return { kind: 'concl', committee: '__board', text: parts.join(' ') };
+      });
   }
 
   window._briefJump = function (id) {
@@ -118,7 +151,11 @@
             cards.push({ kind: 'factor',
               text: '<b>' + m.factors_active.length + '</b> factor(es) externo(s) modulando la red: ' + esc(m.factors_active.slice(0, 2).join(', ')) + '.' });
           }
-          return cards.slice(0, 4);
+          return conclusionsCard().then(function (cc) {
+            cards = cards.slice(0, 4);
+            if (cc) cards.splice(1, 0, cc);
+            return cards.slice(0, 5);
+          });
         });
     });
   }
@@ -134,13 +171,13 @@
     }
     var seen = localStorage.getItem('khipu_brief_day');
     document.getElementById('brief').innerHTML =
-      '<div class="eb">Brief matinal</div>' +
+      '<div class="eb">' + L('Brief matinal', 'Morning brief') + '</div>' +
       '<h2>' + esc(fechaLarga()) + '</h2>' +
-      '<div class="sub">Tu resumen de inteligencia de la cadena de IA</div>' +
-      '<div class="lead" id="brief-lead">Leyendo la red…</div>' +
+      '<div class="sub">' + L('Tu resumen de inteligencia de la cadena de IA', 'Your AI supply-chain intelligence summary') + '</div>' +
+      '<div class="lead" id="brief-lead">' + L('Leyendo la red…', 'Reading the network…') + '</div>' +
       '<div class="cards" id="brief-cards"></div>' +
-      '<div class="foot"><label class="dismiss"><input type="checkbox" id="brief-mute" ' + (seen === 'muted' ? 'checked' : '') + '> no mostrar automáticamente</label>' +
-      '<button class="ok" onclick="window._briefClose()">Entendido</button></div>';
+      '<div class="foot"><label class="dismiss"><input type="checkbox" id="brief-mute" ' + (seen === 'muted' ? 'checked' : '') + '> ' + L('no mostrar automáticamente', 'do not show automatically') + '</label>' +
+      '<button class="ok" onclick="window._briefClose()">' + L('Entendido', 'Got it') + '</button></div>';
     document.getElementById('brief-mute').onchange = function (e) {
       localStorage.setItem('khipu_brief_day', e.target.checked ? 'muted' : todayKey());
     };

@@ -86,7 +86,8 @@ class ToolFailure(Exception):
 # ════════════════════════════════════════════════════════════════════════════
 # Herramientas de SOLO LECTURA del servidor MCP que el cerebro reutiliza.
 MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_claim_evidence',
-                  'get_ontology_object', 'get_committee_memo', 'get_track_record', 'get_risk_report',
+                  'get_ontology_object', 'get_committee_memo', 'get_conclusions_board', 'get_track_record',
+                  'get_risk_report',
                   'get_option_greeks', 'get_world_events')
 
 _EXTRA = {}     # nombre → {'sig', 'desc', 'fn', 'available'}
@@ -596,6 +597,7 @@ palabras; más largo solo si lo piden o hace falta.
 8. Acciones de pantalla: solo si el usuario pidió ver/abrir/simular/graficar/comparar algo o si una vista \
 ayuda claramente; máx. 2. La respuesta de texto debe ser completa por sí misma. No las anuncies como futuras.
 9. No menciones el protocolo, el JSON ni los nombres internos de las herramientas.
+10. "¿Qué empresas se ven mejor/peor?", "¿qué concluyeron los analistas?", "¿en qué invertir?": consulta la pizarra de conclusiones y el memo del comité; resume convicción, mejor argumento a favor y en contra y la última decisión (como análisis, no como orden). Ofrece open_committee para ver el debate.
 
 HERRAMIENTAS (solo lectura):
 {tools}

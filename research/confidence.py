@@ -32,7 +32,7 @@ def _parse(ts):
 
 
 def _recency(item, now):
-    if item.get('source_type') in ('financials', 'market', 'graph'):
+    if item.get('source_type') in ('financials', 'market', 'graph', 'analysis'):
         return 1.0          # recuperado ahora mismo del proveedor/grafo
     if item.get('source_type') == 'catalog':
         return 0.5          # curado a mano, fecha incierta

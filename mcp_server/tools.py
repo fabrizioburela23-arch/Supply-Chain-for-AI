@@ -859,6 +859,15 @@ def _trim_memo(m):
         m['audit'] = m['audit'][-10:]
     if isinstance(m.get('inputs'), dict):
         m['inputs'] = {k: v for k, v in m['inputs'].items() if k != 'package'}
+    if isinstance(m.get('memo'), dict) and isinstance(m['memo'].get('transcript'), list):
+        # el debate completo pesa mucho: se resume (quién, postura, titular o inicio del texto)
+        body = dict(m['memo'])
+        body['transcript'] = [
+            {'seat': x.get('seat'), 'kind': x.get('kind'), 'stance': x.get('stance'), 'ai': x.get('ai'),
+             'said': (x.get('headline_en') or x.get('headline_es') or str(x.get('text_en') or x.get('text_es') or ''))[:260]}
+            for x in body['transcript'] if x.get('kind') in ('position', 'rebuttal', 'verdict')][:16]
+        body.pop('seats', None)
+        m['memo'] = body
     return m
 
 
@@ -896,6 +905,40 @@ def t_get_committee_memo(ctx, entity=None, memo_id=None):
     out['source'] = 'Khipus investment committee (research.committee)'
     out['as_of'] = _now_iso()
     return out
+
+
+@tool('get_conclusions_board', 'Committee conclusions board', 'read',
+      'Every researched company ranked by the agents\' overall conviction (−100..+100), with the strongest '
+      'argument for and against, contradiction count and the latest committee decision/conclusion. Use it for '
+      '"which companies look best/worst?" or "what have the analysts concluded?". Research, not advice.',
+      {'limit': {'type': 'integer', 'minimum': 1, 'maximum': 60, 'default': 20},
+       'side': {'type': 'string', 'enum': ['all', 'favorable', 'unfavorable'], 'default': 'all'}})
+def t_get_conclusions_board(ctx, limit=20, side='all'):
+    _need_db('get_conclusions_board')
+    cm = _module('research.committee', 'the investment committee')
+    from ontology.db import session_scope
+
+    def _q():
+        with session_scope() as s:
+            return cm.board(s, limit=60)
+    res = _auth.with_schema(_q) or {}
+    items = list(res.get('items') or [])
+    if side == 'favorable':
+        items = [x for x in items if x['overall_conviction'] > 0]
+    elif side == 'unfavorable':
+        items = sorted([x for x in items if x['overall_conviction'] < 0], key=lambda x: x['overall_conviction'])
+    out = []
+    for x in items[:max(1, min(int(limit or 20), 60))]:
+        out.append({'entity_id': x['entity_id'], 'label': x['label'], 'conviction': x['overall_conviction'],
+                    'n_claims': x['n_claims'], 'agents': x['agents'], 'contradictions': x['n_contradictions'],
+                    'last_research': x['last_research'],
+                    'best_for': (x['best_for'] or {}).get('text_en') if x.get('best_for') else None,
+                    'best_against': (x['best_against'] or {}).get('text_en') if x.get('best_against') else None,
+                    'committee': ({'decision': x['memo']['decision'], 'status': x['memo']['status'],
+                                   'date': x['memo']['created_at'], 'ai_debate': x['memo']['ai'],
+                                   'conclusion': x['memo'].get('conclusion_en')} if x.get('memo') else None)})
+    return {'items': out, 'n': len(out), 'source': 'Khipus research claims + committee memos',
+            'note': res.get('note_en'), 'as_of': _now_iso()}
 
 
 @tool('get_track_record', 'Agent track record & calibration', 'read',

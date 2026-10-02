@@ -1480,3 +1480,23 @@ def test_late_columns_self_heal(client, db):
         cols = {r[0] for r in conn.execute(text(
             "SELECT column_name FROM information_schema.columns WHERE table_name IN ('mcp_tokens','mcp_oauth_codes')"))}
     assert {'oauth_code_hash', 'consent_nonce'} <= cols
+
+
+@needs_db
+def test_conclusions_board_tool(client, db, monkeypatch):
+    fake = types.ModuleType('research.committee')
+    item = lambda e, v: {'entity_id': e, 'label': e, 'overall_conviction': v, 'n_claims': 3, 'agents': ['news'],  # noqa: E731
+                         'n_contradictions': 0, 'last_research': '2026-10-02T00:00:00+00:00',
+                         'best_for': {'text_en': 'strong FCF'} if v > 0 else None,
+                         'best_against': {'text_en': 'weak trend'},
+                         'memo': {'decision': 'BUY', 'status': 'proposed', 'created_at': 'x', 'ai': True,
+                                  'conclusion_en': 'cash supports the thesis'} if v > 40 else None}
+    fake.board = lambda s, limit=60: {'items': [item('A', 60), item('B', 10), item('C', -30)], 'note_en': 'n'}
+    monkeypatch.setitem(sys.modules, 'research.committee', fake)
+    tok = make_token(client, ['read'])['token']
+    _, d = call_tool(client, tok, 'get_conclusions_board', {'side': 'unfavorable'})
+    sc = d['result']['structuredContent']
+    assert [x['entity_id'] for x in sc['items']] == ['C'] and sc['items'][0]['best_against'] == 'weak trend'
+    _, d = call_tool(client, tok, 'get_conclusions_board', {'limit': 1})
+    sc = d['result']['structuredContent']
+    assert sc['n'] == 1 and sc['items'][0]['committee']['conclusion'] == 'cash supports the thesis'
