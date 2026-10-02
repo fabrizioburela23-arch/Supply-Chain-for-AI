@@ -324,16 +324,21 @@ def synthesize(session, job):
             'note': 'Síntesis de investigación: no es una recomendación de compra/venta.'}
 
 
-def execute_job(session, job, provider_factory=None, fetchers=None):
+def execute_job(session, job, provider_factory=None, fetchers=None, on_start=None, on_done=None):
+    """on_start(agent_type) / on_done(agent_type, run): avisos opcionales (la sala del comité los narra)."""
     job.status = 'running'
     session.flush()
     ok = 0
     quotes = baseline_quotes(job.entity_id, fetchers) if job.agents else {}
     for agent_type in job.agents or []:
         prov = provider_factory(agent_type) if provider_factory else None
+        if on_start:
+            on_start(agent_type)
         run = run_agent(session, job, agent_type, provider=prov, fetchers=fetchers, quotes=quotes)
         ok += 1 if getattr(run, 'status', None) == 'done' else 0
         session.commit()   # cada agente visible en vivo (feed de actividad)
+        if on_done:
+            on_done(agent_type, run)
     # contradicciones SEMÁNTICAS (IA, acotadas) — solo Normal/Profunda
     if ok and job.depth != 'QUICK':
         try:

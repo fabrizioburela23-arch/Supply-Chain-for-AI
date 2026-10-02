@@ -93,7 +93,47 @@ class Agent:
     def run(self, ctx, provider=None):
         provider = provider or RoutedProvider(route_for(self.agent_type))
         valid_refs = [e['ref'] for e in ctx['evidence']]
+        max_attempts = 3
+        tries = {'n': 0}
+
+        def check(obj):
+            # Intentos 1..n-1: estricto (la IA repara con el feedback). En el
+            # ÚLTIMO intento se RESCATA lo bueno: se quitan las refs inexistentes
+            # y se DESCARTAN las claims con cifras sin respaldo, en vez de tirar
+            # todo el trabajo del agente (antes una sola cifra mala → "falló").
+            tries['n'] += 1
+            errs = check_refs(obj, valid_refs) + check_numbers(obj, ctx['evidence'])
+            if not errs or tries['n'] < max_attempts:
+                return errs
+            return salvage(obj, valid_refs, ctx['evidence'])
         return provider.structured_generate(
             self.system_prompt(), self.user_prompt(ctx), AgentResearchResult,
-            max_tokens=2600, max_attempts=3,
-            extra_check=lambda obj: check_refs(obj, valid_refs) + check_numbers(obj, ctx['evidence']))
+            max_tokens=3200, max_attempts=max_attempts, extra_check=check)
+
+
+def salvage(obj, valid_refs, evidence):
+    """Limpia en el lugar un resultado casi válido. Devuelve los errores que
+    persisten (lista vacía = rescatado). Las claims descartadas se anotan en
+    unresolved_questions para que quede rastro."""
+    from core.numbers import evidence_numbers, unsupported_money
+    valid = {r.upper() for r in valid_refs}
+    vals = evidence_numbers(evidence)
+    keep, dropped = [], []
+    for c in obj.claims:
+        c.evidence_refs = [r for r in c.evidence_refs if r.upper() in valid]
+        c.counter_evidence_refs = [r for r in c.counter_evidence_refs
+                                   if r.upper() in valid and r not in c.evidence_refs]
+        txt = ' '.join(filter(None, [c.statement_es, c.statement_en, c.reasoning_summary, c.object]))
+        if not c.evidence_refs or unsupported_money(txt, vals):
+            dropped.append(c.statement_es[:120])
+            continue
+        keep.append(c)
+    obj.claims = keep
+    for fld in ('summary_es', 'summary_en'):
+        if unsupported_money(getattr(obj, fld, '') or '', vals):
+            setattr(obj, fld, '(resumen omitido: citaba cifras sin respaldo)' if fld == 'summary_es'
+                    else '(summary omitted: it cited unsupported figures)')
+    if dropped:
+        obj.unresolved_questions = (list(obj.unresolved_questions or []) + [
+            f'Descartada por cifras o evidencia sin respaldo: {d}' for d in dropped])[:8]
+    return []

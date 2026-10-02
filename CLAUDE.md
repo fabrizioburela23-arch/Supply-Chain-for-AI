@@ -96,6 +96,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     SALA DEL COMITÉ (2026-10-02): `research/deliberation.py` arma puestos + debate
     con PLANTILLAS sobre claims/evidencia/X#/D1/R1/Q1 reales (sin IA extra);
     en vivo vía progress.messages, guardado en memo.memo.transcript.
+    DEBATE CON IA (2026-10-02 b): `research/debate.py` — cada puesto razona con IA
+    + réplicas (guardián de cifras; S# al presidente; AgentRun por llamada); sin
+    claims el comité ENCARGA la investigación primero; key_conclusions en el memo.
   - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves
     cifradas Fernet BROKERAGE_ENC_KEY / OAuth), papel por defecto, dinero real
     = BROKERAGE_LIVE_ENABLED=on + client.live_enabled, controles previos
@@ -258,7 +261,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (755 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (758 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

@@ -400,8 +400,15 @@ class DissentItem(BaseModel):
     refs: List[str] = Field(default_factory=list, max_length=10)
 
 
+class ConclusionItem(BaseModel):
+    text_es: str = Field(min_length=10, max_length=400)
+    text_en: str = Field(min_length=10, max_length=400)
+    refs: List[str] = Field(default_factory=list, max_length=10)
+
+
 class ChairMemo(BaseModel):
     decision: str
+    key_conclusions: List[ConclusionItem] = Field(default_factory=list, max_length=6)
     summary_es: str = Field(min_length=20, max_length=1200)
     summary_en: str = Field(min_length=20, max_length=1200)
     thesis: List[ThesisItem] = Field(min_length=1, max_length=5)
@@ -424,7 +431,9 @@ class ChairMemo(BaseModel):
 
 
 def _schema_hint():
-    return {'decision': '|'.join(DECISIONS), 'summary_es': 'str', 'summary_en': 'str',
+    return {'decision': '|'.join(DECISIONS),
+            'key_conclusions': [{'text_es': 'conclusión concreta y útil', 'text_en': 'str', 'refs': ['C1', 'S2']}],
+            'summary_es': 'str', 'summary_en': 'str',
             'thesis': [{'horizon': '|'.join(HORIZONS), 'thesis_es': 'str', 'thesis_en': 'str', 'refs': ['C1']}],
             'key_risks': [{'risk_es': 'str', 'risk_en': 'str', 'refs': ['C3', 'R1']}],
             'dissent': [{'agent_type': 'tipo de agente', 'view_es': 'str', 'view_en': 'str', 'refs': ['C2']}],
@@ -447,6 +456,10 @@ REGLAS INNEGOCIABLES
 4. CIFRAS: toda cifra de dinero o precio debe COPIARSE del paquete. Nunca de tu memoria.
 5. Tesis por horizonte (solo los horizontes que tienen conclusiones), riesgos clave, DISENSO (qué agentes no
    están de acuerdo y por qué, citando sus C#), falsadores (qué dato futuro demostraría que la tesis es incorrecta).
+5b. Si hay DEBATE (S#), úsalo: quién convenció a quién, qué se concedió, qué quedó sin resolver. Cita S#.
+5c. key_conclusions: 3 a 5 CONCLUSIONES concretas y útiles para el inversionista, de lo más importante a lo
+   menos (qué significa, en qué plazo, qué tan sólido es). Nada genérico: cada una debe poder verificarse
+   con la evidencia que cita.
 6. review_date: una fecha YYYY-MM-DD entre {min_date} y {max_date}.
 7. confidence: tu confianza honesta (0-1) en la decisión, considerando el disenso y la calidad de la evidencia.
 8. No prometas rentabilidades. Es una propuesta que un humano debe aprobar, no asesoría personalizada.
@@ -462,6 +475,7 @@ def _money_check(obj, evidence_items):
     parts += [d.view_es + ' ' + d.view_en for d in obj.dissent]
     parts += list(obj.falsifiers_es) + list(obj.falsifiers_en)
     parts += [obj.chair_note_es or '', obj.chair_note_en or '']
+    parts += [k.text_es + ' ' + k.text_en for k in obj.key_conclusions]
     adapter = SimpleNamespace(
         claims=[SimpleNamespace(statement_es=p, statement_en='', reasoning_summary='', object='') for p in parts if p],
         summary_es=obj.summary_es, summary_en=obj.summary_en)
@@ -472,7 +486,7 @@ def chair_checks(obj, valid_refs, quant_decision, min_date, max_date, evidence_i
     errs = []
     valid = {r.upper() for r in valid_refs}
     refs = [r for t in obj.thesis for r in t.refs] + [r for x in obj.key_risks for r in x.refs] + \
-           [r for d in obj.dissent for r in d.refs]
+           [r for d in obj.dissent for r in d.refs] + [r for k in obj.key_conclusions for r in k.refs]
     bad = sorted({str(r).strip().upper() for r in refs} - valid)
     if bad:
         errs.append(f'refs inexistentes: {bad} (válidas: {sorted(valid)})')
@@ -752,8 +766,14 @@ def deterministic_memo(label, decision, reason_es, reason_en, conv, overall, cla
     aw = sum(c['weight'] for c in aligned)
     conf = (aw / tw) * (sum(c['calibrated'] * c['weight'] for c in aligned) / aw) if (tw > 0 and aw > 0) else 0.0
     dl = DECISION_LABEL.get(decision, (decision, decision))
+    concl = []
+    for t in thesis[:3]:
+        concl.append({'text_es': t['thesis_es'], 'text_en': t['thesis_en'], 'refs': t['refs']})
+    if risks:
+        concl.append({'text_es': 'Riesgo principal: ' + risks[0]['risk_es'], 'text_en': 'Main risk: ' + risks[0]['risk_en'],
+                      'refs': risks[0]['refs']})
     return {
-        'decision': decision,
+        'decision': decision, 'key_conclusions': concl[:5],
         'summary_es': (f"Comité (sin IA) sobre {label}: {dl[0]}. Motivo: {reason_es}. Convicción global {overall:+.0f} "
                        f"sobre {len(all_claims)} conclusiones de {len({c['agent_type'] for c in all_claims})} agentes."),
         'summary_en': (f"Committee (no AI) on {label}: {dl[1]}. Reason: {reason_en}. Overall conviction {overall:+.0f} "
@@ -804,7 +824,7 @@ def _dominant_horizon(conv):
 import threading as _threading
 import time as _time_mod
 
-PROGRESS_STAGES = ('claims', 'live', 'risk', 'client', 'scoring', 'chair', 'saving')
+PROGRESS_STAGES = ('research', 'claims', 'live', 'risk', 'client', 'scoring', 'debate', 'chair', 'saving')
 _PROGRESS = {}
 _PROGRESS_LOCK = _threading.Lock()
 
@@ -888,18 +908,36 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
         progress_say(_pid, *msgs)
 
     # ── evidencia de investigación ──
-    rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
-                                                ResearchClaim.status == 'active').all())
-    ids = [c.id for c in rows]
-    rels = (session.query(ClaimRelation).filter(ClaimRelation.claim_a.in_(ids) & ClaimRelation.claim_b.in_(ids)).all()
-            if ids else [])
-    contradicted = {r.claim_a for r in rels} | {r.claim_b for r in rels}
     table = calibration_table(session)
-    conv, overall = conviction_by_horizon(
-        [{'id': c.id, 'agent_type': c.agent_type, 'stance': c.stance, 'horizon': c.horizon,
-          'confidence': c.confidence} for c in rows], contradicted,
-        calib=lambda a, r: calibrated_confidence(a, r, table=table),
-        reliab=lambda a: agent_reliability(a, table=table))
+
+    def _load():
+        rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
+                                                    ResearchClaim.status == 'active').all())
+        ids = [c.id for c in rows]
+        rels = (session.query(ClaimRelation).filter(ClaimRelation.claim_a.in_(ids) &
+                                                    ClaimRelation.claim_b.in_(ids)).all() if ids else [])
+        contradicted = {r.claim_a for r in rels} | {r.claim_b for r in rels}
+        conv, overall = conviction_by_horizon(
+            [{'id': c.id, 'agent_type': c.agent_type, 'stance': c.stance, 'horizon': c.horizon,
+              'confidence': c.confidence} for c in rows], contradicted,
+            calib=lambda a, r: calibrated_confidence(a, r, table=table),
+            reliab=lambda a: agent_reliability(a, table=table))
+        return rows, rels, conv, overall
+
+    rows, rels, conv, overall = _load()
+    # Sin investigación suficiente → el comité la ENCARGA ahora (antes solo decía
+    # "corre primero Investigación IA" y salía un memo vacío en 1 segundo).
+    ai_ok, ai_why = _ai_ready(session, provider, deps)
+    if (len(rows) < MIN_CLAIMS and deps.get('auto_research', True) and ai_ok
+            and (provider is None or 'research_provider_factory' in deps)):
+        progress_set(_pid, 'research')
+        try:
+            _auto_research(session, eid, label, requested_by, say, deps)
+            rows, rels, conv, overall = _load()
+        except Exception as e:  # noqa: BLE001 — sin investigación nueva, el comité sigue con lo que hay
+            log.warning('committee auto research %s: %s', eid, e)
+            say(dl8._msg('chair', 'moderate', f'La investigación automática falló ({type(e).__name__}): sigo con lo que hay.',
+                         f'Automatic research failed ({type(e).__name__}): continuing with what we have.'))
     views = agent_views(conv)
     claims_by_id = {c.id: c for c in rows}
     scored_claims = sum(r['n_claims'] for h, r in conv.items() if HZ_WEIGHTS.get(h, 0) > 0)
@@ -907,15 +945,8 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
     track = {a: {'n': (table.get(a) or {}).get('n', 0), 'hits': (table.get(a) or {}).get('hits', 0),
                  'reliability': agent_reliability(a, table=table)} for a in agent_types0}
     seats = dl8.build_seats(conv, views, track)
-    _cref0 = {cc['id']: f'C{i}' for i, cc in
-              enumerate((c for h in HZ_ORDER for c in (conv.get(h) or {}).get('claims', [])), 1)}
     progress_set(_pid, 'claims', seats=seats)
     say(*dl8.opening(label, symbol, seats, len(rows), len(rels)))
-    try:
-        say(*dl8.positions(seats, conv, claims_by_id, _cref0, _top_evidence(session, list(claims_by_id))))
-        say(*dl8.rebuttals(rels, claims_by_id, _cref0, seats))
-    except Exception as e:  # noqa: BLE001 — la sala nunca rompe el comité
-        log.warning('committee deliberation %s: %s', eid, e)
 
     # ── datos en vivo, riesgo y cliente (acotados en tiempo) ──
     progress_set(_pid, 'live', n_claims=len(rows))
@@ -968,6 +999,23 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
                       DECISION_LABEL.get(decision, (decision, decision))))
     text, ev_items, valid_refs, cref = build_package(label, symbol, claims_by_id, conv, overall, rels, live, risk,
                                                      sizing, decision, reason_es, client)
+
+    # ── DEBATE: cada puesto analiza con IA (research/debate.py) o, sin IA, plantillas ──
+    debate = {'ai': False, 'n_ai': 0, 'n_rebuttals': 0, 'reason_es': None, 'reason_en': None, 'seconds': None}
+    if seats:
+        progress_set(_pid, 'debate')
+        t_deb = _time_mod.time()
+        try:
+            lines, items, debate = _run_debate(session, seats, label, symbol, conv, claims_by_id, cref, rels,
+                                               text, ai_ok, ai_why, provider, deps, say, eid, requested_by, now)
+            if lines:
+                text += '\n\nDEBATE DEL COMITÉ (intervenciones S#, ya pasaron el guardián de cifras):\n' + '\n'.join(lines)
+                ev_items = ev_items + items
+                valid_refs = valid_refs + [it['title'] for it in items]
+        except Exception as e:  # noqa: BLE001 — la sala nunca rompe el comité
+            log.warning('committee debate %s: %s', eid, e)
+            debate['reason_es'] = debate['reason_en'] = f'{type(e).__name__}'
+        debate['seconds'] = round(_time_mod.time() - t_deb, 1)
     dom = _dominant_horizon(conv)
     today = now.date()
     review = today + timedelta(days=REVIEW_DAYS.get(dom, 90))
@@ -1000,9 +1048,10 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
                              memo.ai_used))
     except Exception as e:  # noqa: BLE001
         log.warning('committee chair close %s: %s', eid, e)
-    body['transcript'] = transcript[:60]
+    body['transcript'] = transcript[:80]
     body['seats'] = seats
     body['tally'] = dl8.tally(seats)
+    body['debate'] = debate
     body['decision_label_es'], body['decision_label_en'] = DECISION_LABEL.get(final_decision, (final_decision,) * 2)
     body['quant_reason_es'], body['quant_reason_en'] = reason_es, reason_en
     body['ref_map'] = {v: k for k, v in cref.items()}
@@ -1036,6 +1085,183 @@ def run_committee(session, entity_id, requested_by, client_id=None, provider=Non
                                            'ai': memo.ai_used, 'overall': overall})
     session.flush()
     return memo_dict(memo)
+
+
+def _ai_ready(session, provider, deps):
+    """(¿hay IA y presupuesto?, motivo_si_no). Un provider inyectado (tests) cuenta."""
+    try:
+        if provider is not None:
+            return bool(provider.available()), (None if provider.available() else 'sin proveedor')
+        from research.llm import RoutedProvider, route_for
+        from research.runner import _cfg, spent_today
+        if not RoutedProvider(route_for('committee')).available():
+            return False, 'no_provider'
+        if spent_today(session) >= _cfg('RESEARCH_DAILY_BUDGET_USD', 2.0):
+            return False, 'budget'
+        return True, None
+    except Exception as e:  # noqa: BLE001
+        return False, type(e).__name__
+
+
+AI_WHY = {'no_provider': ('no hay ningún proveedor de IA con clave en Railway', 'no AI provider has a key on Railway'),
+          'budget': ('se agotó el presupuesto diario de IA (RESEARCH_DAILY_BUDGET_USD)',
+                     'the daily AI budget is used up (RESEARCH_DAILY_BUDGET_USD)'),
+          'test': ('modo de prueba', 'test mode')}
+
+
+def _auto_research(session, eid, label, requested_by, say, deps):
+    """Encarga la investigación (los 4 analistas por defecto) y narra cada uno en la sala."""
+    from research import deliberation as dl8
+    from research.runner import create_job, execute_job
+    job, _reused = create_job(session, eid, depth='STANDARD', trigger={'kind': 'committee', 'by': requested_by},
+                              requested_by=requested_by, force=True)
+    names = ', '.join(dl8.seat_name(a)[0] + ' ' + dl8.seat_name(a)[1] for a in job.agents)
+    names_en = ', '.join(dl8.seat_name(a)[0] + ' ' + dl8.seat_name(a)[2] for a in job.agents)
+    say(dl8._msg('chair', 'moderate',
+                 f'No hay investigación reciente suficiente sobre {label}. Antes de debatir, pido a {names} que '
+                 f'investiguen ahora con datos en vivo (cada uno tarda ~20-60 s).',
+                 f'There is not enough recent research on {label}. Before debating, I ask {names_en} to research '
+                 f'now with live data (each takes ~20-60 s).', stage='research'))
+
+    def started(agent_type):
+        say(dl8._msg(agent_type, 'data', 'Investigando: leyendo estados financieros, noticias y datos en vivo…',
+                     'Researching: reading financials, news and live data…', stage='research'))
+
+    def finished(agent_type, run):
+        n = getattr(run, 'claims_generated', 0) or 0
+        if getattr(run, 'status', '') == 'done' and n:
+            es, en = f'Listo: {n} conclusión(es) con evidencia citada.', f'Done: {n} conclusion(s) with cited evidence.'
+        else:
+            err = str((getattr(run, 'errors', None) or [''])[0])[:200]
+            es = f'No pude concluir nada sólido ({err or getattr(run, "status", "?")}).'
+            en = f'I could not reach a solid conclusion ({err or getattr(run, "status", "?")}).'
+        say(dl8._msg(agent_type, 'data', es, en, stage='research'))
+    execute_job(session, job, provider_factory=deps.get('research_provider_factory'), fetchers=deps.get('fetchers'),
+                on_start=started, on_done=finished)
+
+
+def _seat_run(session, eid, requested_by, now, meta, kind, ok=True, err=None):
+    """Registra cada intervención con IA en agent_runs (costo + presupuesto diario)."""
+    try:
+        session.add(AgentRun(agent_id=f'committee_{kind}', agent_type='committee', entity_id=eid,
+                             trigger={'kind': 'committee', 'by': requested_by}, depth='STANDARD',
+                             status='done' if ok else 'failed', started_at=now, completed_at=_now(),
+                             model=meta.get('model'), provider=meta.get('provider'),
+                             tokens_in=meta.get('tokens_in'), tokens_out=meta.get('tokens_out'),
+                             est_cost_usd=meta.get('cost') or 0.0,
+                             latency_ms=int((meta.get('seconds') or 0) * 1000),
+                             errors=[err] if err else [], context_refs=[], tools_used=['committee']))
+        session.flush()
+    except Exception as e:  # noqa: BLE001
+        log.warning('committee seat run: %s', type(e).__name__)
+
+
+def _run_debate(session, seats, label, symbol, conv, claims_by_id, cref, rels, text, ai_ok, ai_why, provider,
+                deps, say, eid, requested_by, now):
+    """Devuelve (líneas S# para el presidente, items del guardián, info del debate)."""
+    from research import debate as dbt
+    from research import deliberation as dl8
+    info = {'ai': False, 'n_ai': 0, 'n_rebuttals': 0, 'reason_es': None, 'reason_en': None}
+    factory = deps.get('seat_provider_factory')
+    if factory is None and provider is None and ai_ok:
+        from research.llm import RoutedProvider, route_for
+        factory = lambda: RoutedProvider(route_for('committee'))  # noqa: E731
+    if factory is None or not ai_ok:
+        why = AI_WHY.get(ai_why or ('test' if provider is not None else 'no_provider'), (str(ai_why), str(ai_why)))
+        info['reason_es'], info['reason_en'] = why
+        say(dl8._msg('chair', 'moderate',
+                     f'⚠ Hoy los analistas NO pueden razonar con IA ({why[0]}): cada uno lee su conclusión guardada.',
+                     f'⚠ Today the analysts CANNOT reason with AI ({why[1]}): each one reads its saved conclusion.',
+                     stage='debate'))
+        evid = _top_evidence(session, list(claims_by_id))
+        say(*dl8.positions(seats, conv, claims_by_id, cref, evid))
+        say(*dl8.rebuttals(rels, claims_by_id, cref, seats))
+        return [], [], info
+
+    say(dl8._msg('chair', 'moderate',
+                 f'Pido a cada analista su análisis completo sobre {label}: qué dice su evidencia, por qué importa y '
+                 f'qué lo haría cambiar de idea. Hablan a medida que terminan de razonar.',
+                 f'I ask each analyst for its full analysis of {label}: what its evidence says, why it matters and '
+                 f'what would change its mind. They speak as they finish reasoning.', stage='debate'))
+    live_line = next((ln for ln in text.split('\n') if ln.startswith('D1 ')), '')
+    risk_line = next((ln for ln in text.split('\n') if ln.startswith('R1 ')), '')
+    evid_rows = _evidence_rows(session, list(claims_by_id))
+    evid_top = {cid: (rows[0] if rows else None) for cid, rows in evid_rows.items()}
+    by_id = {s['seat']: s for s in seats}
+
+    def main_claim(seat_id):
+        best = None
+        for r in conv.values():
+            for cc in r['claims']:
+                if cc['agent_type'] == seat_id and (best is None or cc['weight'] > best['weight']):
+                    best = cc
+        return best
+
+    def on_stmt(seat, obj, meta):
+        if obj is None:
+            _seat_run(session, eid, requested_by, now, meta, 'seat', ok=False, err=meta.get('error'))
+            say(*dl8.positions([seat], conv, claims_by_id, cref, {}))
+            return
+        _seat_run(session, eid, requested_by, now, meta, 'seat')
+        seat['debate_stance'] = obj.stance
+        mc = main_claim(seat['seat'])
+        src = evid_top.get(mc['id']) if mc else None
+        say(dbt.statement_msg(seat, obj, meta, source=_src_dict(src)))
+
+    stmts = dbt.run_statements(seats, label, symbol, conv, claims_by_id, cref, evid_rows, live_line, risk_line,
+                               factory, on_result=on_stmt)
+    info['n_ai'] = sum(1 for v in stmts.values() if v.get('obj'))
+    info['ai'] = info['n_ai'] > 0
+    rebs = []
+    pairs = dbt.pick_pairs(stmts)
+    if pairs:
+        say(dl8._msg('chair', 'moderate', 'Ronda de réplicas: quien piensa distinto responde al argumento más fuerte del otro lado.',
+                     'Rebuttal round: whoever disagrees answers the strongest argument from the other side.',
+                     stage='debate'))
+
+        def on_reb(me, opp, obj, meta):
+            _seat_run(session, eid, requested_by, now, meta, 'rebuttal')
+            say(dbt.rebuttal_msg(by_id[me], by_id[opp], obj, meta))
+            by_id[me]['debate_stance'] = obj.stance_after
+        rebs = dbt.run_rebuttals(pairs, stmts, by_id, label, factory, on_result=on_reb)
+    info['n_rebuttals'] = len(rebs)
+    for s in seats:                                   # la mesa muestra la postura FINAL tras el debate
+        if s.get('debate_stance'):
+            s['quant_stance'] = s['stance']
+            s['stance'] = s['debate_stance']
+    if not info['ai']:
+        err = next((v.get('error') for v in stmts.values() if v.get('error')), '')
+        info['reason_es'] = info['reason_en'] = f'la IA no respondió: {str(err)[:160]}'
+    lines, items = dbt.debate_lines(stmts, rebs, by_id)
+    return lines, items, info
+
+
+def _src_dict(e):
+    if not e:
+        return None
+    ref = e.get('reference') or ''
+    return {'title': (e.get('title') or e.get('type') or '')[:160],
+            'url': ref if ref.startswith(('http://', 'https://')) else None,
+            'type': e.get('type'), 'date': e.get('date')}
+
+
+def _evidence_rows(session, claim_ids):
+    """{claim_id: [{title, excerpt, date, type, reference}]} ordenado por apoyo/relevancia."""
+    from research.models import ResearchEvidence
+    if not claim_ids:
+        return {}
+    try:
+        rows = session.query(ResearchEvidence).filter(ResearchEvidence.claim_id.in_(claim_ids)).all()
+    except Exception:  # noqa: BLE001
+        return {}
+    out = {}
+    for e in sorted(rows, key=lambda e: (e.stance == 'supporting', e.relevance or 0, e.reliability or 0),
+                    reverse=True):
+        out.setdefault(e.claim_id, []).append({
+            'title': e.title or '', 'excerpt': e.excerpt or '', 'type': e.source_type,
+            'reference': e.source_reference or '',
+            'date': e.published_at.date().isoformat() if e.published_at else None})
+    return out
 
 
 def _top_evidence(session, claim_ids):
@@ -1092,7 +1318,7 @@ def _chair(session, provider, eid, requested_by, text, valid_refs, decision, min
         prompt = (text + '\n\nTAREA: redacta el memo del comité en JSON. Decisión del núcleo: ' + decision +
                   '. Recuerda: no cambies el tamaño ni inventes cifras.')
         obj, meta = prov.structured_generate(
-            system, prompt, ChairMemo, max_tokens=2600, max_attempts=2,
+            system, prompt, ChairMemo, max_tokens=3600, max_attempts=2,
             extra_check=lambda o: chair_checks(o, valid_refs, decision, min_d, max_d, ev_items, agent_types))
         run.model, run.provider = meta.get('model'), meta.get('provider') or getattr(prov, 'name', None)
         run.tokens_in, run.tokens_out = meta.get('tokens_in'), meta.get('tokens_out')
@@ -1462,7 +1688,7 @@ def create_placeholder(session, entity_id, requested_by, client_id=None):
 
 
 # ── control de carga: dedupe y tope de comités simultáneos ───────────────────
-RUNNING_STALE_MIN = 10       # un 'running' más viejo = hilo muerto (reinicio del servidor)
+RUNNING_STALE_MIN = 20       # un 'running' más viejo = hilo muerto (reinicio del servidor)
 REUSE_DONE_MIN = 2           # mismo pedido hace < 2 min → se reutiliza el memo
 
 
@@ -1504,6 +1730,11 @@ def recent_memo(session, entity_id, client_id=None, now=None):
          .order_by(CommitteeMemo.created_at.desc()).first())
     if r:
         return r
-    return (q.filter(CommitteeMemo.status == 'proposed',
-                     CommitteeMemo.created_at >= now - timedelta(minutes=REUSE_DONE_MIN))
-            .order_by(CommitteeMemo.created_at.desc()).first())
+    r = (q.filter(CommitteeMemo.status == 'proposed',
+                  CommitteeMemo.created_at >= now - timedelta(minutes=REUSE_DONE_MIN))
+         .order_by(CommitteeMemo.created_at.desc()).first())
+    # un memo SIN debate de IA (sin IA en ese momento, o anterior a la sala) no se
+    # reutiliza: volver a correr debe dar la oportunidad de un análisis real
+    if r is not None and not ((r.memo or {}).get('debate') or {}).get('ai'):
+        return None
+    return r

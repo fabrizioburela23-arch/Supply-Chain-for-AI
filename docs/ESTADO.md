@@ -9,6 +9,29 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-02 (b) — COMITÉ CON ANÁLISIS REAL DE IA + INVESTIGACIÓN QUE NO SE CAE (sw v176)
+
+Feedback: "la investigación falló; el comité se siente falso, no tarda nada, casi no hay análisis real;
+quiero que la IA haga lo suyo y que ya salgan conclusiones".
+- `research/debate.py` (NUEVO): Ronda 1 = cada puesto RAZONA con IA (SeatStatement: postura, titular,
+  argumento 3-6 frases, qué vigila, qué le haría cambiar de idea, convicción, refs) sobre SUS claims +
+  razonamiento + extractos de evidencia + D1/R1 + resumen de los otros; Ronda 2 = hasta 3 réplicas entre
+  posturas opuestas (Rebuttal: respuesta, qué concede, postura final). 3 en paralelo; la base solo se toca
+  en el hilo del comité (AgentRun committee_seat/committee_rebuttal → cuenta para el presupuesto).
+  Guardián de cifras + refs válidas; si un puesto falla → su plantilla. El debate entra al paquete del
+  presidente como S# (citables). Sin IA/presupuesto → aviso ⚠ honesto en la sala y en el memo.
+- `research/committee.py`: si hay < 2 claims activas y hay IA → ENCARGA la investigación (4 analistas por
+  defecto, etapa 'research', narrada en la sala vía execute_job(on_start/on_done)). ChairMemo +
+  key_conclusions (3-5 conclusiones; el determinista también las arma). memo.memo.debate =
+  {ai, n_ai, n_rebuttals, reason, seconds}. No se reutiliza un memo SIN debate de IA. RUNNING_STALE_MIN 20.
+- `research/agents/base.py`: RESCATE en el último intento — se quitan refs inexistentes y se descartan
+  SOLO las claims con cifras sin respaldo (antes una cifra mala tiraba todo el agente → "falló").
+- `core/numbers.evidence_numbers`: ignora fechas (el "09" de 2026-09-29 respaldaba "$9,999 mil millones").
+- UI: etapas 🔬 Investigación y 🗣 Debate, insignia 🧠 IA · N s en cada burbuja, titular en negrita,
+  "✅ Conclusiones del comité" arriba, nota de debate (o aviso ⚠ sin IA), sondeo hasta 15 min.
+- Pendiente: NO pude ver el error real de la investigación en producción (el sandbox no llega a Railway):
+  si sigue fallando, mirar 🩺 Sistema → IA (proveedor/saldo/modelo retirado) o el error por agente en 🔬.
+
 # SESIÓN 2026-10-02 — SALA DEL COMITÉ: PUESTOS + DEBATE EN VIVO (sw v175)
 
 Pedido: "que el comité esté más claro y en vivo, que tenga puestos, que se vea su comunicación".

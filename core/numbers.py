@@ -32,6 +32,7 @@ _MONEY_GLUED = re.compile(r'(?<![\w$.,])' + _NUM + r'(B|T|bn|tn)\b')
 # números de la evidencia: cualquier número, con unidad opcional
 _ANY_NUM = re.compile(r'(?<![\w])' + r'(-?\d+(?:[.,]\d+)*)' + r'\s?(' + _UNIT_RE + r')?', re.I)
 
+_DATE_RX = re.compile(r'\b\d{4}-\d{2}-\d{2}(?:[T ][\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?\b')
 TOLERANCE = 0.15   # redondeos tipo "~$1,1 billones" o "más de $1T" sobre 1.100B
 
 
@@ -84,6 +85,9 @@ def evidence_numbers(evidence):
     vals = set()
     for e in evidence or []:
         txt = f"{e.get('title') or ''} {e.get('excerpt') or ''}"
+        # las fechas (2026-09-29, 2026-09-30T12:00:00Z) no son cifras: su "09" o "29"
+        # respaldaba cifras inventadas como "$9,999 mil millones" (tolerancia 15 % × 1000)
+        txt = _DATE_RX.sub(' ', txt)
         for m in _ANY_NUM.finditer(txt):
             v = _to_float(m.group(1).lstrip('-'))
             if v is None:

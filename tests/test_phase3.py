@@ -1116,3 +1116,92 @@ def test_deliberacion_sin_conclusiones_y_sin_cotizar():
     assert d.risk_msg({'ok': True}, None) is None
     assert 'no cotiza' in d.market_msg({}, None)['text_es']
     assert d.stance_of(0.5) == 'for' and d.stance_of(-0.5) == 'against' and d.stance_of(0.05) == 'neutral'
+
+
+def _seat_ai(prompt):
+    """IA falsa de un puesto: postura según SU propia conclusión (sección TUS CONCLUSIONES)."""
+    if 'TAREA: tu réplica' in prompt:
+        own = re.search(r'\b(C\d+) \[', prompt.split('TUS CONCLUSIONES')[1]).group(1)
+        return json.dumps({'reply_es': f'Mi evidencia de corto plazo pesa más que tu lectura de largo plazo [{own}].',
+                           'reply_en': f'My short-term evidence outweighs your long-term reading [{own}].',
+                           'concedes_es': 'El largo plazo se ve bien.', 'concedes_en': 'Long term looks fine.',
+                           'stance_after': 'against' if 'postura negative' in prompt.split('LO QUE SOSTIENEN')[0] else 'for',
+                           'refs': [own]})
+    mine = prompt.split('TUS CONCLUSIONES')[1].split('LO QUE SOSTIENEN')[0]
+    ref = re.search(r'\b(C\d+) \[', mine).group(1)
+    st = 'against' if 'postura negative' in mine else 'for'
+    return json.dumps({'stance': st, 'headline_es': 'Mi conclusión principal es clara',
+                       'headline_en': 'My main conclusion is clear',
+                       'argument_es': f'La evidencia [{ref}] muestra una tendencia que importa para el valor de la empresa en este plazo.',
+                       'argument_en': f'The evidence [{ref}] shows a trend that matters for the company value in this horizon.',
+                       'watch_es': 'el próximo trimestre', 'watch_en': 'next quarter',
+                       'change_mind_es': 'si cambia la demanda', 'change_mind_en': 'if demand changes',
+                       'conviction': 0.7, 'refs': [ref, 'D1']})
+
+
+@needs_db
+def test_debate_con_ia_por_puesto_y_replicas(db):
+    from ontology.db import session_scope
+    from research.committee import run_committee
+    from research.llm import FakeProvider
+    from research.models import AgentRun
+    with session_scope() as s:
+        _fresh_entity_claims(s, 'Micron')
+        prov = FakeProvider([lambda p: _chair_json(p)])
+        deps = dict(DEPS, seat_provider_factory=lambda: FakeProvider([_seat_ai, _seat_ai]))
+        m = run_committee(s, 'Micron', 'pytest', provider=prov, deps=deps)
+        b = m['memo']
+        assert b['debate']['ai'] and b['debate']['n_ai'] == 5 and b['debate']['n_rebuttals'] >= 2
+        tr = b['transcript']
+        ai_pos = [x for x in tr if x['kind'] == 'position' and x.get('ai')]
+        assert len(ai_pos) == 5 and all(x['stage'] == 'debate' for x in ai_pos)
+        assert any(x['kind'] == 'rebuttal' and x.get('ai') and 'Concedo' in x['text_es'] for x in tr)
+        tech = next(x for x in ai_pos if x['seat'] == 'technical')
+        assert tech['stance'] == 'against' and 'Vigilo' in tech['text_es']
+        # el presidente recibió el debate (S#) en su paquete
+        assert 'DEBATE DEL COMITÉ' in prov.calls[0] and 'S1 [debate' in prov.calls[0]
+        assert 'S1' in m['inputs']['valid_refs']
+        # cada intervención con IA cuenta para el presupuesto
+        n = s.query(AgentRun).filter(AgentRun.agent_id.in_(('committee_seat', 'committee_rebuttal')),
+                                     AgentRun.entity_id == 'Micron').count()
+        assert n >= 7
+
+
+@needs_db
+def test_debate_ia_cifra_inventada_cae_a_plantilla(db):
+    from ontology.db import session_scope
+    from research.committee import run_committee
+    from research.llm import FakeProvider
+
+    def liar(prompt):
+        d = json.loads(_seat_ai(prompt))
+        if 'argument_es' in d:
+            d['argument_es'] += ' Su capitalización es de $9,999 mil millones.'
+        return json.dumps(d)
+    with session_scope() as s:
+        _fresh_entity_claims(s, 'AMD')
+        deps = dict(DEPS, seat_provider_factory=lambda: FakeProvider([liar, liar]))
+        m = run_committee(s, 'AMD', 'pytest', provider=FakeProvider([lambda p: _chair_json(p)]), deps=deps)
+        tr = m['memo']['transcript']
+        assert not any('9,999' in x['text_es'] for x in tr)              # el guardián la rechazó
+        assert m['memo']['debate']['n_ai'] == 0 and not m['memo']['debate']['ai']
+        assert sum(1 for x in tr if x['kind'] == 'position') == 5          # plantillas con su conclusión real
+
+
+def test_rescate_de_resultado_casi_valido():
+    from research.agents.base import salvage
+    from research.schemas import AgentResearchResult
+    obj = AgentResearchResult.model_validate({
+        'summary_es': 'Resumen de prueba suficiente', 'summary_en': 'Test summary enough',
+        'claims': [
+            {'predicate': 'AAA', 'claim_type': 'forecast', 'topic': 'revenue_growth', 'stance': 'positive',
+             'horizon': 'LONG_TERM', 'statement_es': 'Crece por centros de datos.', 'statement_en': 'Grows via data centers.',
+             'reasoning_summary': 'razonamiento de prueba', 'evidence_refs': ['E1', 'E9'], 'counter_evidence_refs': [],
+             'agent_certainty': 0.6, 'falsifiers': ['f'], 'affected_entities': []},
+            {'predicate': 'BBB', 'claim_type': 'forecast', 'topic': 'revenue_growth', 'stance': 'positive',
+             'horizon': 'LONG_TERM', 'statement_es': 'Vale $5,000 mil millones.', 'statement_en': 'Worth $5,000 billion.',
+             'reasoning_summary': 'razonamiento de prueba', 'evidence_refs': ['E1'], 'counter_evidence_refs': [],
+             'agent_certainty': 0.6, 'falsifiers': ['f'], 'affected_entities': []}]})
+    assert salvage(obj, ['E1'], [{'title': 'E1', 'excerpt': 'ventas suben'}]) == []
+    assert len(obj.claims) == 1 and obj.claims[0].evidence_refs == ['E1']
+    assert any('Descartada' in q for q in obj.unresolved_questions)

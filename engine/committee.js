@@ -152,7 +152,7 @@
       '#cm .cm-seat.talk .cm-av{box-shadow:0 0 0 4px rgba(0,224,255,.18),0 0 18px rgba(0,224,255,.45)}' +
       '#cm .cm-seat .cm-sn{color:#E8EDFB;font-weight:650;overflow-wrap:anywhere}' +
       '#cm .cm-seat .cm-ss{font-size:9.5px;font-weight:700;letter-spacing:.04em}' +
-      '#cm .cm-feed{max-height:430px;overflow-y:auto;padding-right:4px}' +
+      '#cm .cm-feed{max-height:560px;overflow-y:auto;padding-right:4px}' +
       '#cm .cm-bub{display:flex;gap:9px;margin:0 0 9px;align-items:flex-start}' +
       '#cm .cm-bub.new{animation:cmin .45s ease-out}' +
       '@keyframes cmin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
@@ -357,6 +357,7 @@
           '<span class="cm-pill">✋ ' + b.tally.neutral + ' ' + esc(L('neutral', 'neutral')) + '</span>' +
           '<span class="cm-pill">🧭 ' + esc(L('convicción ', 'conviction ')) + (m.overall_conviction > 0 ? '+' : '') + Math.round(m.overall_conviction || 0) + '/100</span></div>' : '') +
         (m.quant_decision && m.quant_decision !== m.decision ? '<div class="cm-note" style="margin-top:6px;color:#FFB300">' + esc(L('El núcleo cuantitativo proponía ', 'The quantitative core proposed ') + decLabel(m.quant_decision) + L('; el presidente rebajó a MANTENER: ', '; the chair downgraded to HOLD: ') + (note || '')) + '</div>' : '') +
+        conclusionsHtml(b) + debateNote(b) +
         (b.quant_reason_es ? '<div class="cm-note" style="margin-top:6px;font-size:11px">' + esc(L('Regla aplicada: ', 'Rule applied: ') + (isEn() ? b.quant_reason_en : b.quant_reason_es)) + '</div>' : '') +
         (m.symbol && (m.inputs || {}).us_listing === false ? '<div class="cm-note" style="margin-top:4px;font-size:11px;color:#FFB300">' + esc(L('Cotiza fuera de EE.UU. (' + m.symbol + ', en moneda local): Alpaca no la opera, así que el comité no propone órdenes para clientes; su historial se califica en moneda local.', 'Trades outside the US (' + m.symbol + ', in local currency): Alpaca does not trade it, so the committee does not propose client orders; its track record is scored in local currency.')) + '</div>' : '') +
         (b.ai_error ? '<div class="cm-note" style="margin-top:4px;font-size:11px;color:#7C87A3">' + esc(L('Nota: ', 'Note: ') + T(b, 'ai_error')) + '</div>' : '') +
@@ -397,6 +398,25 @@
         '</div>' +
       '</div></div>' +
       '<div class="cm-disc">⚖️ ' + esc(isEn() ? (m.disclaimer_en || '') : (m.disclaimer_es || '')) + '</div>';
+  }
+
+  function conclusionsHtml(b) {
+    var k = b.key_conclusions || [];
+    if (!k.length) return '';
+    return '<div style="margin-top:10px;border:1px solid rgba(43,227,139,.3);background:rgba(43,227,139,.05);border-radius:11px;padding:9px 12px">' +
+      '<div class="cm-t" style="color:#2BE38B;margin-bottom:4px">✅ ' + esc(L('Conclusiones del comité', 'Committee conclusions')) + '</div>' +
+      '<ol class="cm-list" style="margin-left:16px">' + k.map(function (c) {
+        return '<li>' + esc(isEn() ? (c.text_en || c.text_es) : c.text_es) + refs(c.refs) + '</li>'; }).join('') + '</ol></div>';
+  }
+  function debateNote(b) {
+    var d = b.debate;
+    if (!d) return '';
+    if (d.ai) return '<div class="cm-note" style="margin-top:8px;font-size:11.5px;color:#B48CFF">🧠 ' +
+      esc(L(d.n_ai + ' analistas razonaron con IA y hubo ' + d.n_rebuttals + ' réplica(s)' + (d.seconds ? ' · ' + Math.round(d.seconds) + ' s de debate' : '') + '. Sus cifras pasaron el guardián.',
+        d.n_ai + ' analysts reasoned with AI with ' + d.n_rebuttals + ' rebuttal(s)' + (d.seconds ? ' · ' + Math.round(d.seconds) + ' s of debate' : '') + '. Their figures passed the guardian.')) + '</div>';
+    return '<div class="cm-note" style="margin-top:8px;font-size:12px;color:#FFB300;border:1px solid rgba(255,179,0,.35);border-radius:9px;padding:7px 10px">⚠ ' +
+      esc(L('Este comité corrió SIN razonamiento de IA' + (d.reason_es ? ' (' + d.reason_es + ')' : '') + ': los analistas solo leyeron sus conclusiones guardadas. Revisa 🩺 Sistema → IA y vuelve a correrlo.',
+        'This committee ran WITHOUT AI reasoning' + (d.reason_en ? ' (' + d.reason_en + ')' : '') + ': the analysts only read their saved conclusions. Check 🩺 System → AI and run it again.')) + '</div>';
   }
 
   function riskHtml(m) {
@@ -519,7 +539,18 @@
     return '<div class="cm-bub' + (isNew ? ' new' : '') + '"><div class="cm-bav" style="border-color:' + col + '">' + esc(m.emoji || '🤖') + '</div>' +
       '<div class="cm-btx" style="border-left-color:' + col + '"><div class="cm-bh"><b>' + esc(nm(m)) + '</b>' +
       (st ? '<span class="cm-tag" style="color:' + col + '">' + esc(L(st[1], st[2])) + '</span>' : '') +
-      '<span style="color:#5f6b8a">' + esc(L(k[0], k[1])) + '</span></div>' + esc(tx(m)) + refs(m.refs) + src + '</div></div>';
+      '<span style="color:#5f6b8a">' + esc(L(k[0], k[1])) + '</span>' +
+      (m.ai ? '<span class="cm-tag" style="color:#B48CFF" title="' + esc(L('Razonado por IA a partir de su evidencia; cifras verificadas por el guardián', 'Reasoned by AI from its evidence; figures checked by the guardian')) + '">🧠 IA' + (m.secs ? ' · ' + Math.round(m.secs) + ' s' : '') + '</span>' : '') +
+      '</div>' + bodyText(m) + refs(m.refs) + src + '</div></div>';
+  }
+
+  function bodyText(m) {
+    var t = esc(tx(m));
+    if (m.ai && m.kind === 'position') {           // 1ª línea = titular
+      var i = t.indexOf('\n');
+      if (i > 0) t = '<b style="color:#E8EDFB">' + t.slice(0, i) + '</b>' + t.slice(i);
+    }
+    return t.replace(/\n/g, '<br>');
   }
 
   function typingHtml(msgs, total, stage) {
@@ -527,7 +558,9 @@
     var who = next ? (next.emoji + ' ' + nm(next)) : stage === 'chair' ? '🏛 ' + L('Presidente', 'Chair') : stage === 'saving' ? '💾' : '';
     var what = next ? L('está hablando', 'is speaking') : stage === 'chair' ? L('está redactando el veredicto (suele tardar 20–90 s)', 'is writing the verdict (usually 20–90 s)')
       : stage === 'live' ? L('📡 consultando el precio en vivo', '📡 fetching the live price') : stage === 'risk' ? L('🛡️ midiendo el riesgo con precios reales', '🛡️ measuring risk with real prices')
-      : stage === 'scoring' ? L('🧮 haciendo la cuenta', '🧮 running the numbers') : L('el comité se está reuniendo', 'the committee is gathering');
+      : stage === 'scoring' ? L('🧮 haciendo la cuenta', '🧮 running the numbers')
+      : stage === 'research' ? L('🔬 los analistas están investigando (puede tardar unos minutos)', '🔬 the analysts are researching (may take a few minutes)')
+      : stage === 'debate' ? L('🧠 los analistas están razonando con IA', '🧠 the analysts are reasoning with AI') : L('el comité se está reuniendo', 'the committee is gathering');
     return '<div class="cm-typing">' + esc(who) + ' ' + esc(what) + ' <i></i><i></i><i></i></div>';
   }
 
@@ -561,16 +594,16 @@
 
   function liveHtml() {
     var p = S.progress || {}, done = p.done || [], cur = p.stage || 'claims';
-    var list = STAGES.filter(function (st) { return st[0] !== 'client' || S.clientId; });
+    var list = STAGES.filter(function (st) { return (st[0] !== 'client' || S.clientId) && (st[0] !== 'research' || cur === 'research' || done.indexOf('research') >= 0); });
     var el = S.runStart ? (Date.now() - S.runStart) / 1000 : (p.elapsed_s || 0);
     var strip = '<div class="cm-strip">' + list.map(function (st) {
       var cls = done.indexOf(st[0]) >= 0 ? 'd' : st[0] === cur ? 'c' : '';
       return '<span class="' + cls + '">' + (cls === 'd' ? '✓ ' : '') + st[1] + ' ' + esc(L(st[4], st[5])) + '</span>'; }).join('') +
       '<span style="margin-left:auto;border:none;color:#9BA6C4;font-variant-numeric:tabular-nums">⏱ ' + fmtT(el) + '</span></div>';
     return strip + roomHtml(p.messages || [], S.shown, p.seats || [], true, cur, !!S.clientId) +
-      '<div class="cm-note" style="margin:-4px 0 12px">' + esc(el > 150
+      '<div class="cm-note" style="margin:-4px 0 12px">' + esc(el > 420
         ? L('Está tardando más de lo normal (la IA puede estar lenta). Puedes cerrar esta ventana: el comité sigue trabajando y el resultado aparecerá aquí al volver.', 'Taking longer than usual (the AI may be slow). You can close this window: the committee keeps working and the result will appear here when you come back.')
-        : L('Suele tardar entre 30 segundos y 2 minutos. Puedes cerrar esta ventana: el comité sigue trabajando.', 'It usually takes 30 seconds to 2 minutes. You can close this window: the committee keeps working.')) + '</div>';
+        : L('Un comité con análisis real tarda: 1–3 minutos si ya hay investigación, 3–6 si los analistas investigan primero. Puedes cerrar esta ventana: sigue trabajando.', 'A committee with real analysis takes time: 1–3 minutes if research exists, 3–6 if the analysts research first. You can close this window: it keeps working.')) + '</div>';
   }
   // repinta SOLO la sala (sin reconstruir el formulario ni perder el foco)
   function paintLive() {
@@ -594,11 +627,13 @@
 
   // ── PANTALLA DE PROGRESO: pasos reales que reporta el servidor ──────────
   var STAGES = [
+    ['research', '🔬', 'Los analistas investigan con datos en vivo', 'The analysts research with live data', 'Investigación', 'Research'],
     ['claims', '📚', 'Leyendo las conclusiones de los analistas IA', 'Reading the AI analysts\' conclusions', 'Analistas', 'Analysts'],
     ['live', '📡', 'Consultando precio y datos en vivo', 'Fetching live price and data', 'En vivo', 'Live'],
     ['risk', '📉', 'Midiendo el riesgo con 1 año de precios reales', 'Measuring risk with 1 year of real prices', 'Riesgo', 'Risk'],
     ['client', '👤', 'Revisando la cuenta y el mandato del cliente', 'Checking the client account and mandate', 'Cliente', 'Client'],
     ['scoring', '🧮', 'Calculando convicción y tamaño de la posición', 'Computing conviction and position size', 'Cuenta', 'Math'],
+    ['debate', '🗣', 'Debate: cada analista razona con IA', 'Debate: each analyst reasons with AI', 'Debate', 'Debate'],
     ['chair', '🏛', 'El presidente IA redacta el memo (suele tardar 20–90 s)', 'The AI chair writes the memo (usually 20–90 s)', 'Presidente', 'Chair'],
     ['saving', '💾', 'Guardando la propuesta', 'Saving the proposal', 'Guardar', 'Save'],
   ];
@@ -628,8 +663,8 @@
         if (m.status && m.status !== 'running') {
           stop(m.status === 'failed' ? { bad: true, text: L('El comité no pudo terminar: ', 'The committee could not finish: ') + (T(m, 'error') || '') } : null);
           loadEntity(S.entity);
-        } else if (n > 180) {                        // 6 min
-          stop({ bad: true, text: L('El comité sigue sin terminar tras 6 minutos. Vuelve a intentar más tarde (revisa 🩺 Sistema → IA).', 'The committee has not finished after 6 minutes. Try again later (check 🩺 System → AI).') }); render();
+        } else if (n > 450) {                        // 15 min
+          stop({ bad: true, text: L('El comité sigue sin terminar tras 15 minutos. Vuelve a intentar más tarde (revisa 🩺 Sistema → IA).', 'The committee has not finished after 15 minutes. Try again later (check 🩺 System → AI).') }); render();
         } else {
           S.progress = m.progress || S.progress;
           if (document.getElementById('cm-live')) paintLive(); else render();
