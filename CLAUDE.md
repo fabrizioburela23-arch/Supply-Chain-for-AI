@@ -143,6 +143,8 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     explícitos (gramática KHIPU, demo, compra/venta con confirmación,
     "gráfico:", nombres exactos de pantallas); toda pregunta va al cerebro.
     NO reintroducir el router de regex sueltos ni el "fallback = gráfico".
+    Nunca mostrar texto crudo del modelo: si el paso JSON falla o trae restos
+    (`leaked()`), `synthesize()` hace que el agente redacte la respuesta en prosa.
   - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
     por IP (último salto XFF) y global compartido — `require_pin` (trading) /
     `require_operator` (escrituras de ontología). Nunca reimplementar.
@@ -281,7 +283,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (802 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (805 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

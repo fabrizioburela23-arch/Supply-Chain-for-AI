@@ -159,8 +159,9 @@ def test_invalid_tool_args_are_reported(fake_ai):
 def test_step_limit(fake_ai):
     f = fake_ai([])        # el guion vacío siempre pide herramientas
     out = kc.run_chat('cuéntame de TSMC', [], 'es', {})
-    assert len(f.prompts) == kc.MAX_STEPS + 1      # 5 rondas + 1 exigiendo la respuesta final
-    assert 'No quedan rondas' in f.prompts[-1]
+    # 5 rondas + 1 exigiendo la respuesta final + 1 redacción en prosa del agente (2026-10-03)
+    assert len(f.prompts) == kc.MAX_STEPS + 2
+    assert 'No quedan rondas' in f.prompts[-2] and 'DATOS CONSULTADOS' in f.prompts[-1]
     assert out['answer_source'] == 'fallback' and out['degraded'] == 'budget'
     assert out['answer']                              # nunca vacío
     assert len([t for t in out['tools_used'] if t['name'] == 'search_companies']) == kc.MAX_STEPS
@@ -407,3 +408,28 @@ def test_client_router_and_markdown():
     assert '<ul><li>uno</li><li>dos</li></ul>' in md
     assert '<a href="https://example.com/a?b=1&amp;c=2"' in md
     assert 'javascript:alert(1)' in md and 'href="javascript' not in md
+
+
+# ── 2026-10-03: el cerebro filtraba su borrador ("actions": [...] … Wait, is…) ──
+def test_borrador_con_json_y_pensamiento_se_interpreta(fake_ai):
+    leak = ('Ok, mirando los datos.\n{"tool": "rank_companies"}\n... borrador ...\n'
+            '{"final": {"answer": "Las más expuestas son **TSMC**, **ASE** y **MediaTek**.", '
+            '"actions": [{"type": "simulate", "arg": "taiwan_conflict"}]}}\nWait, is simulate arg a string? Yes.')
+    fake_ai([leak])
+    out = kc.run_chat('¿cuáles son las 3 empresas más expuestas a una guerra en Taiwán?', [], 'es', {})
+    assert out['answer'].startswith('Las más expuestas') and 'Wait' not in out['answer']
+    assert out['ai'] is True
+
+
+def test_respuesta_con_restos_se_reescribe_por_el_agente(fake_ai):
+    sucia = {'final': {'answer': '"actions": [\n{"type": "simulate"}\n]\n}\nWait, is simulate arg a string?'}}
+    limpia = 'Las 3 más expuestas son **TSMC**, **MediaTek** y **ASE**: todas dependen de fábricas en Taiwán.'
+    f = fake_ai([{'tool': 'search_companies', 'args': {'query': 'TSMC'}}, sucia, limpia])
+    out = kc.run_chat('empresas más expuestas a Taiwán', [], 'es', {})
+    assert out['answer'] == limpia and out['answer_source'] == 'ai'
+    assert 'DATOS CONSULTADOS' in f.prompts[-1] and 'PREGUNTA' in f.prompts[-1]
+
+
+def test_leaked_detecta_borradores_y_no_prosa_normal():
+    assert kc.leaked('"actions": [{"type": "x"}]') and kc.leaked('Hola\nWait, is it?') and kc.leaked('```json')
+    assert not kc.leaked('TSMC fabrica el 90 % de los chips avanzados. Conviene vigilar el estrecho.')

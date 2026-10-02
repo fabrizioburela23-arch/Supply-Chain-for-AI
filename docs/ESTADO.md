@@ -9,6 +9,19 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 (d) — KHIPU YA NO FILTRA SU BORRADOR; EL AGENTE REDACTA SIEMPRE
+
+Captura: "¿cuáles son las 3 empresas más expuestas a una guerra en Taiwán?" respondió con restos del
+protocolo ('"actions": [...]', '```', "Wait, is simulate arg a string?"). Causa: cuando el modelo
+"pensaba en voz alta" o escribía varios JSON, parse_step fallaba y se mostraba el texto crudo; si se
+acababa el tiempo, salía la plantilla sin IA.
+- core/khipu_chat.py: `_json_objects()` (todos los JSON balanceados; se usa el ÚLTIMO que cumple el
+  protocolo), `leaked()` (restos de JSON/código o "Wait/Hmm/Let me…" al inicio de línea) y
+  `synthesize()`: si el protocolo falla, la respuesta trae restos o se acaban las rondas, el AGENTE
+  (tier deep) redacta la respuesta final en prosa con los datos ya consultados. La plantilla sin IA
+  queda solo si la IA no responde (o respondió lento: no se le pide otra redacción).
+  SYNTH_TIMEOUT_S 25 · SYNTH_GRACE_S 10.
+
 # SESIÓN 2026-10-03 (c) — TERMINAL REDISEÑADA + POP-UPS DE COMPRA/VENTA (sw v182)
 
 - Terminal (app.html + engine/termdata.js): nuevo layout con tokens --kt-* (oscuro/claro), cabecera por

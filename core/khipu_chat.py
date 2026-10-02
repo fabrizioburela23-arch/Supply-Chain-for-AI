@@ -58,6 +58,8 @@ MAX_SCRATCH_CHARS = 26000
 MAX_CALLS_PER_STEP = 3
 MAX_ACTIONS = 3
 MAX_ANSWER = 6000
+SYNTH_TIMEOUT_S = 25.0         # redacción final en prosa (cuando el protocolo falla)
+SYNTH_GRACE_S = 10.0           # margen extra sobre el presupuesto para esa redacción
 STEP_MAX_TOKENS = 1600
 TOOL_TIMEOUT_S = 30.0
 
@@ -682,12 +684,57 @@ class StepParseError(ValueError):
     pass
 
 
+def _json_objects(text):
+    """Todos los objetos JSON BALANCEADOS del texto (respetando strings), en orden.
+    Los modelos a veces "piensan en voz alta" antes/después del JSON o escriben
+    varios borradores: nos quedamos con el último que cumpla el protocolo."""
+    t = str(text or '')
+    out, i, n = [], 0, len(t)
+    while i < n:
+        if t[i] != '{':
+            i += 1
+            continue
+        depth, j, in_str, esc_ = 0, i, False, False
+        while j < n:
+            ch = t[j]
+            if in_str:
+                if esc_:
+                    esc_ = False
+                elif ch == '\\':
+                    esc_ = True
+                elif ch == '"':
+                    in_str = False
+            elif ch == '"':
+                in_str = True
+            elif ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    try:
+                        out.append(json.loads(t[i:j + 1]))
+                    except ValueError:
+                        pass
+                    break
+            j += 1
+        i = j + 1 if j > i else i + 1
+    return out
+
+
 def parse_step(text):
     """→ ('final', {'answer','actions'}) | ('tools', [{'tool','args'}]). Lanza StepParseError."""
     try:
         data = _ai._extract_json(text)
     except (json.JSONDecodeError, ValueError, TypeError) as e:
-        raise StepParseError(f'not valid JSON ({type(e).__name__})') from None
+        data = None
+        err = e
+    if not (isinstance(data, dict) and ('final' in data or 'tool' in data or 'calls' in data or data.get('answer'))):
+        cands = [o for o in _json_objects(text) if isinstance(o, dict)
+                 and ('final' in o or 'tool' in o or 'calls' in o or o.get('answer'))]
+        if cands:
+            data = cands[-1]
+        elif data is None:
+            raise StepParseError(f'not valid JSON ({type(err).__name__})') from None
     if isinstance(data, list) and data and all(isinstance(x, dict) and x.get('tool') for x in data):
         data = {'calls': data}
     if not isinstance(data, dict):
@@ -716,12 +763,52 @@ def parse_step(text):
     raise StepParseError('expected {"tool":...} or {"final":{"answer":...}}')
 
 
+# restos del protocolo JSON o "pensamiento en voz alta" al INICIO de una línea
+_LEAK_RX = re.compile(r'"(actions|final|tool|calls|args)"\s*:|```|^\s*[{}\[\]]\s*,?\s*$|'
+                      r'^\s*(Wait|Hmm+|Let me|Okay,? so|Actually,|I need to|I should|Espera,|Mmm)\b', re.I | re.M)
+
+
+def leaked(text):
+    """¿El texto trae restos del protocolo o del "pensamiento en voz alta" del modelo?"""
+    return bool(_LEAK_RX.search(str(text or '')))
+
+
 def _prose_answer(text):
-    """Si el modelo respondió en prosa (no JSON), úsala como respuesta."""
+    """Si el modelo respondió en prosa LIMPIA (no JSON ni borradores), úsala como respuesta."""
     t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
-    if len(t) < 2 or t.startswith('{') or t.startswith('['):
+    if len(t) < 2 or t.startswith('{') or t.startswith('[') or leaked(t):
         return None
     return t
+
+
+SYNTH_SYSTEM = (
+    'Eres Khipu, analista senior de Khipus Finance AI. Te doy la PREGUNTA del usuario y los DATOS que ya '
+    'consultaste con las herramientas de la app. Escribe AHORA la respuesta final, analizando la pregunta '
+    'CONCRETA (no otra cosa): primero la respuesta directa en 1-2 frases, luego el porqué con los datos '
+    '(nombra empresas, cifras y relaciones que aparecen en los datos), y una línea de fuentes al final. '
+    'Si un dato no está, dilo. Prosa clara en markdown ligero, 80-250 palabras. PROHIBIDO: JSON, código, '
+    'llaves, pensar en voz alta, mencionar herramientas o el protocolo. No des órdenes de compra/venta.')
+
+
+def synthesize(message, history, lang, context, scratch, timeout):
+    """El AGENTE redacta la respuesta final en prosa a partir de lo consultado
+    (cuando el paso con protocolo JSON falló o se acabó el tiempo de rondas)."""
+    parts = [f'PREGUNTA: {message}']
+    if history:
+        parts.append('CONVERSACIÓN PREVIA:\n' + '\n'.join(
+            f'{"Usuario" if h["role"] == "user" else "Khipu"}: {h["content"]}' for h in history[-6:]))
+    if context.get('portfolio_notes'):
+        parts.append('INFORME DE LA CARTERA:\n' + str(context['portfolio_notes'])[:3000])
+    if scratch:
+        parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
+    parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
+    fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 1100, 'deep')
+    text, model = fut.result(timeout=max(1.0, timeout))
+    t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
+    # última defensa: quitar líneas con restos de protocolo/borrador
+    if leaked(t):
+        t = '\n'.join(ln for ln in t.splitlines() if not _LEAK_RX.search(ln)).strip()
+    return (t or None), model
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -914,6 +1001,7 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     feedback = None
     repaired = False
     rounds = 0
+    ai_slow = False
 
     def done(answer, actions, answer_source='ai'):
         return {'answer': str(answer or '').strip()[:MAX_ANSWER], 'actions': validate_actions(actions),
@@ -948,6 +1036,7 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
             text, model = _call_ai(system, prompt, remaining)
         except _FutTimeout:
             reason = 'budget'
+            ai_slow = True          # la IA no alcanzó a responder: no tiene sentido pedirle otra redacción
             break
         except _ai.AIBusyError:
             reason = 'busy'
@@ -970,7 +1059,11 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
             reason = 'bad_output'
             break
         if kind == 'final':
-            return done(payload.get('answer'), payload.get('actions'))
+            ans = payload.get('answer')
+            if leaked(ans):          # la "respuesta" trae JSON o borradores → el agente la reescribe
+                reason = 'bad_output'
+                break
+            return done(ans, payload.get('actions'))
         if force_final:
             reason = 'budget'
             break
@@ -1004,6 +1097,19 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
                 _collect_sources(c['tool'], res, sources, lang)
             scratch.append(f'{c["tool"]}({json.dumps(c["args"], ensure_ascii=False, default=str)}) → '
                            + ('' if ok else 'ERROR: ') + _fmt_result(res))
+    # El AGENTE intercede SIEMPRE que haya IA: si el protocolo falló o se acabó el
+    # tiempo de rondas, redacta la respuesta en prosa con lo ya consultado. La
+    # plantilla sin IA queda solo para cuando la IA no responde de verdad.
+    left = min(SYNTH_TIMEOUT_S, deadline + SYNTH_GRACE_S - time.monotonic())
+    if reason in ('budget', 'bad_output') and not ai_slow and left >= 6.0:
+        try:
+            ai_calls += 1
+            ans, m = synthesize(message, history, lang, context, scratch, left)
+            if ans and len(ans) > 20:
+                model = m or model
+                return done(ans, [])
+        except Exception as e:  # noqa: BLE001
+            log.warning('khipu_chat: síntesis falló (%s)', _clip(e, 160))
     return fallback(reason or 'budget')
 
 
