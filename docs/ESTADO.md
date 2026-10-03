@@ -1669,6 +1669,33 @@ Presentación mañana en OTRA máquina. Workflow de 9 agentes (archivos disjunto
    pestaña INSIGHTS (feed + brief + panel junto al mapa), control único de
    frecuencia (manual por defecto).
 
+### 🪟 VISIÓN PRÓXIMA ETAPA (pedido 2026-10-03, NO es parte de Phase 3)
+
+"La vista general sea como el interfaz de Khipu; poco a poco será el ÚNICO
+interfaz. Todo lo que se genere o abra, como una pestaña/ventana que se puede
+mover y cambiar de tamaño. Punto medio entre ChatGPT y Windows 11: ajustar la
+información que se muestra sin dejar de ser un chatbot."
+
+Plan acordado (escritorio Khipu = evolución de la Cabina, engine/cockpit.js):
+- **K1 — Gestor de ventanas** (`engine/desktop.js`, `window.KhipuDesk`):
+  `open(kind,arg)`, ventanas con barra (título, minimizar, maximizar, cerrar),
+  arrastrar/redimensionar, foco/z-index, snap a mitades/cuartos (estilo Win 11),
+  barra de tareas con lo abierto. `_surface()` pasa a abrir ventanas en vez de
+  reemplazar el stage (una sola puerta: no crear otra).
+- **K2 — Chat siempre presente**: el chat de Khipu es el "fondo"/panel fijo;
+  las respuestas traen botones "abrir en ventana" (dossier, gráfico, comité,
+  cartera…). Mobile: ventanas = hojas apiladas a pantalla completa (sin
+  arrastre).
+- **K3 — Migrar vistas**: cada pestaña vieja (mapa, mercado, análisis, geo,
+  espacio, terminal, canvas, comité, cartera) como contenido de ventana;
+  las pestañas clásicas quedan como modo "clásico" hasta retirarlas.
+- **K4 — Espacios guardados**: disposición de ventanas persistida
+  (`kh_desk_layout`, sincronizada por engine/sync.js) + layouts predefinidos
+  ("Mañana", "Trading", "Investigación"); Khipu puede ordenar ventanas por voz/texto.
+- Riesgos: vistas que asumen ser únicas en el DOM (ids fijos, globo/mapa
+  WebGL único) → al inicio, 1 instancia por vista pesada; rendimiento con
+  varias ventanas vivas (pausar las ocultas/minimizadas).
+
 Entorno de desarrollo local (Windows, PC de Fabrizio, instalado 2026-07-03):
 Python 3.11 (winget) + PostgreSQL 16 (winget, postgres/devpass, DB
 khipus_test). Correr tests completos:
