@@ -964,6 +964,22 @@ def _definitive_reject(e):
     return 400 <= st < 500
 
 
+def _committee_memo_ok(session, row):
+    """Segundo candado: una orden del comité solo sale si su memo está aprobado
+    por un humano. Falla CERRADO: sin memo o sin módulo de comité → no se envía."""
+    if not row.proposal_id:
+        return False, 'missing'
+    try:
+        from research.committee import memo_allows_order
+    except Exception:  # noqa: BLE001
+        return False, 'committee_unavailable'
+    try:
+        return memo_allows_order(session, row.proposal_id, preview_id=row.id)
+    except Exception as e:  # noqa: BLE001
+        log.info('brokerage: no se pudo verificar el memo %s (%s)', row.proposal_id, type(e).__name__)
+        return False, 'unverifiable'
+
+
 def _execute(session, row, actor, source):
     """Misma cuenta → controles otra vez → Alpaca con client_order_id = row.id (idempotente)."""
     rec = session.get(BrokerClient, row.client_id)
@@ -976,6 +992,20 @@ def _execute(session, row, actor, source):
         return _err('account_changed', row.error or 'la cuenta cambió: vuelve a previsualizar',
                     row.error_en or 'the account changed: preview again', status='expired',
                     order=order_dict(row, rec.name))
+    if row.source == 'committee':
+        ok_memo, memo_st = _committee_memo_ok(session, row)
+        if not ok_memo:
+            row.status, row.updated_at = 'rejected', _now()
+            row.error = (f'el memo del comité no está aprobado (estado «{memo_st}»): no se envió nada; '
+                         'apruébalo en 🏛 Comité y vuelve a intentarlo')
+            row.error_en = (f'the committee memo is not approved (status "{memo_st}"): nothing was sent; '
+                            'approve it in 🏛 Committee and try again')
+            audit(session, actor, 'order_blocked', rec.id, row.id,
+                  detail={'source': source, 'reason': 'memo_not_approved', 'memo_status': memo_st,
+                          'memo_id': row.proposal_id})
+            session.flush()
+            return _err('memo_not_approved', row.error, row.error_en, status=row.status,
+                        order=order_dict(row, rec.name))
     # ¿la cuenta/modo sigue siendo la de la previsualización? (papel → real = NO se envía)
     if (row.mode and row.mode != rec.mode) or (row.account_fp and row.account_fp != account_fingerprint(rec)):
         row.status, row.updated_at = 'rejected', _now()

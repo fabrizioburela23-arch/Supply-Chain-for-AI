@@ -262,9 +262,11 @@ Mandato del cliente (lo lee el comité de `brokerage.service.get_client`, dentro
 * El límite diario disponible se lee de una función interna del corretaje
   (`_daily_used`); si no existe, el comité usa el límite diario completo como
   tope y el control del corretaje vuelve a verificarlo con el dato real.
-* Segundo candado pendiente (track de corretaje): que `approve_preview` /
-  `confirm_order` rechacen una orden `source='committee'` cuyo memo no esté
-  `approved`. Hoy lo garantiza el rechazo del memo (retira la orden).
+* Segundo candado (HECHO 2026-10-03): `brokerage.service._execute` (camino
+  común de `approve_preview` y `confirm_order`) rechaza una orden
+  `source='committee'` si su memo no está `approved` o si el memo preparó otra
+  orden (`research.committee.memo_allows_order`). Falla CERRADO: sin memo o sin
+  módulo de comité → `memo_not_approved`, auditado como `order_blocked`.
 * Sin historia (primeras semanas) todo sale "sin historial suficiente": los
   primeros finales de corto plazo llegan a los 30 días.
 * El guardián de cifras (`core/numbers.py`) acepta coincidencias con cambio de

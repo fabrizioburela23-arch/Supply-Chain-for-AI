@@ -1663,6 +1663,20 @@ def reject_memo(session, memo_id, actor, reason='', brokerage=None):
     return {'ok': True, 'memo': memo_dict(m), 'withdrawn': withdrawn}
 
 
+def memo_allows_order(session, memo_id, preview_id=None):
+    """SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una
+    orden source='committee'): solo se envía si su memo está 'approved' por un
+    humano y la orden es la que ese memo preparó. Devuelve (ok, estado_del_memo)."""
+    m = session.get(CommitteeMemo, str(memo_id or '')[:40]) if memo_id else None
+    if not m:
+        return False, 'missing'
+    if m.status != 'approved':
+        return False, m.status
+    if preview_id and m.preview_id and m.preview_id != preview_id:
+        return False, 'other_preview'
+    return True, m.status
+
+
 def mark_executed(session, memo_id, order=None, actor='brokerage'):
     """Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera
     un bloqueo (SKIP LOCKED): la llama el corretaje con su orden bloqueada."""

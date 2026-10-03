@@ -423,6 +423,7 @@ footer .disc{line-height:1.4}
 
 .node-label{font-family:'Geist',sans-serif;font-size:10px;font-weight:500;pointer-events:none;text-shadow:0 1px 3px rgba(255,255,255,.7);paint-order:stroke;stroke-width:3px;stroke-linejoin:round}
 .node-label.big{font-size:12px;font-weight:700}
+.node-label.lbl-off{display:none}
 .dark .node-label{text-shadow:0 1px 3px rgba(0,0,0,.8);stroke:rgba(8,11,16,.92)}
 .region-label{
   font-family:'Geist',sans-serif;font-size:30px;font-weight:800;letter-spacing:.04em;
@@ -2907,7 +2908,7 @@ function growCore(d,on){
   nodeSel.filter(n=>n.id===d.id).select('.n-core')
     .attr('r',on?computeNodeRadius(d.id)+3:computeNodeRadius(d.id));
   nodeSel.filter(n=>n.id===d.id).select('.node-label')
-    .style('opacity', on ? 1 : (computeNodeRadius(d.id) >= 13 ? 1 : 0));
+    .classed('lbl-off', !on && computeNodeRadius(d.id) < 13);
 }
 
 function ringStroke(d){
@@ -2960,7 +2961,10 @@ nodeSel.append('text')
   .attr('text-anchor','middle')
   .attr('dy',d=>computeNodeRadius(d.id)+13)
   .style('fill','var(--ink)')
-  .style('opacity', d => computeNodeRadius(d.id) >= 13 ? 1 : 0);
+  /* VELOCIDAD (2026-10-03, medido): las etiquetas de nodos chicos ANTES quedaban
+     con opacity:0 — invisibles pero el navegador igual las maquetaba y pintaba
+     (~800 textos con halo en cada zoom/pan). display:none las saca del render. */
+  .classed('lbl-off', d => computeNodeRadius(d.id) < 13);
 
 nodeSel.call(d3.drag()
   .on('start',(e,d)=>{if(!e.active){_liveTick=true;sim.alphaTarget(.2).restart();}d.fx=d.x;d.fy=d.y;})

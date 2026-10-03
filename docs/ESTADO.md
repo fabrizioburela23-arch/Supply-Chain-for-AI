@@ -700,10 +700,15 @@ dibujo bajo demanda (sin bucle continuo). Decisión explícita: **3D solo donde
 la profundidad significa algo**; el 3D decorativo del mapa NO vuelve.
 
 **Pendiente:**
-- ⏸️ Velocidad paso 2 (enlaces del mapa a `<canvas>`): APLAZADO tras
-  inspección — `linkSel` se usa en 10 sitios (estilos, selección, cascada de
-  estrés, clase CSS `.flowing` animada) y el zoom es una transformación SVG.
-  Riesgo alto sobre la pantalla principal; requiere plan propio.
+- ✅ Velocidad paso 2 (2026-10-03) — RESUELTO DE OTRA FORMA, MEDIDO:
+  se probó pasar los enlaces a `<canvas>` (shim con la misma API de linkSel)
+  y NO mejoró (wheel-zoom 41→55 ms CPU/paso: redibujar el lienzo entero cuesta
+  más que la transformación SVG compuesta) → REVERTIDO, no reintentar sin
+  medir. El costo real eran las ~930 etiquetas `.node-label` con opacity:0
+  (invisibles pero maquetadas/pintadas con halo). Ahora `.lbl-off` =
+  display:none → wheel-zoom ~40 → ~19 ms CPU/paso, layout 12 → 3.4 ms, misma
+  vista (21 etiquetas visibles, hover idéntico). Ojo: layers.js oculta capas
+  con selectores `#graph line` / `#graph .node-label` (dependen del SVG).
 - Sub-pendientes de cada milestone listados en `docs/ROADMAP_PHASE1.md`.
 - Manual de Fabrizio: recargar Claude (opcional, Gemini cubre), `NVIDIA_MODEL`
   vigente (opcional), Neo4j (opcional de verdad).
@@ -1668,6 +1673,15 @@ Presentación mañana en OTRA máquina. Workflow de 9 agentes (archivos disjunto
    presets como hiperaristas nombradas, War-Room como visualización,
    pestaña INSIGHTS (feed + brief + panel junto al mapa), control único de
    frecuencia (manual por defecto).
+
+### Cierre de Phase 3 (2026-10-03)
+- ✅ Segundo candado del dinero: `brokerage.service._execute` exige memo del
+  comité `approved` (y que sea el memo que preparó ESA orden) para toda orden
+  `source='committee'` — falla cerrado (`memo_not_approved`). Ver PHASE3.md.
+- ✅ Velocidad del mapa (etiquetas display:none; ver nota de Velocidad paso 2).
+- Queda para Fabrizio: probar en producción, llaves de Railway
+  (BROKERAGE_ENC_KEY, TRADE_PIN fuerte, FINNHUB_WS_KEY, opc. ANTHROPIC_ADMIN_KEY),
+  backups de Postgres, decidir el tono del agente de trading.
 
 ### 🪟 VISIÓN PRÓXIMA ETAPA (pedido 2026-10-03, NO es parte de Phase 3)
 

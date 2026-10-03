@@ -355,6 +355,7 @@ def db():
     from ontology.db import _get_engine, init_schema
     from ontology.models import Base
     import brokerage.models  # noqa: F401
+    import research.models  # noqa: F401  (memos del comité: segundo candado)
     engine = _get_engine()
     Base.metadata.drop_all(engine)
     assert init_schema(retries=1)
@@ -395,6 +396,16 @@ def fakes(env):
         return table[rec.id]
     env.setattr(service, 'make_alpaca', factory)
     return table
+
+
+def _memo(s, status='approved', memo_id=None):
+    """Memo del comité (segundo candado: una orden source='committee' solo sale
+    si su memo está 'approved')."""
+    from research.models import CommitteeMemo
+    m = CommitteeMemo(id=memo_id, entity_id='tsmc', symbol='TSM', requested_by='pytest', status=status, audit=[])
+    s.add(m)
+    s.flush()
+    return m.id
 
 
 def _new_client(s, name='Ana Test', **kw):
@@ -576,7 +587,7 @@ def test_approval_queue_for_mcp_and_committee(db, fakes):
         pm = service.preview_order(s, cid, 'AMD', 'buy', notional=200, source='mcp', requested_by='agent:gpt',
                                    rationale='tesis X')
         pc = service.preview_order(s, cid, 'TSM', 'buy', notional=300, source='committee', requested_by='fab',
-                                   proposal_id='memo-123')
+                                   proposal_id=_memo(s))
     for p in (pm, pc):
         assert p['ok'] and p['status'] == 'pending_approval' and p['requires_human_approval'], p
         assert 'aprobación humana' in p['summary_es']
@@ -822,9 +833,36 @@ def test_committee_proposal_executes_after_approval(db, fakes):
     from brokerage import service
     with session_scope() as s:
         cid = _new_client(s, 'Comite')
-        p = service.preview_order(s, cid, 'AAPL', 'buy', notional=100, source='committee', proposal_id='no-existe')
+        mid = _memo(s)
+        p = service.preview_order(s, cid, 'AAPL', 'buy', notional=100, source='committee', proposal_id=mid)
         r = service.approve_preview(s, p['preview_id'], 'Fabrizio')
-    assert r['ok'] and r['order']['proposal_id'] == 'no-existe'
+    assert r['ok'] and r['order']['proposal_id'] == mid
+
+
+@needs_db
+def test_committee_order_needs_approved_memo(db, fakes):
+    """SEGUNDO CANDADO: una orden del comité NO sale si su memo no está aprobado
+    (propuesto, rechazado, inexistente) — aunque una persona la apruebe en Clientes."""
+    from ontology.db import session_scope
+    from brokerage import service
+    with session_scope() as s:
+        cid = _new_client(s, 'Candado')
+        for pid in (_memo(s, 'proposed'), _memo(s, 'rejected'), 'no-existe', None):
+            p = service.preview_order(s, cid, 'AAPL', 'buy', notional=100, source='committee', proposal_id=pid)
+            assert p['ok'] and p['status'] == 'pending_approval', p
+            r = service.approve_preview(s, p['preview_id'], 'Fabrizio')
+            assert not r['ok'] and r['code'] == 'memo_not_approved' and r['status'] == 'rejected', r
+            assert not r['order']['alpaca_order_id']
+        # memo aprobado pero que preparó OTRA orden → tampoco
+        from research.models import CommitteeMemo
+        mid = _memo(s)
+        s.get(CommitteeMemo, mid).preview_id = 'otra-orden'
+        s.flush()
+        p = service.preview_order(s, cid, 'AAPL', 'buy', notional=100, source='committee', proposal_id=mid)
+        r = service.approve_preview(s, p['preview_id'], 'Fabrizio')
+        assert not r['ok'] and r['code'] == 'memo_not_approved'
+        assert any(a['action'] == 'order_blocked' and (a.get('detail') or {}).get('reason') == 'memo_not_approved'
+                   for a in service.list_audit(s, cid))
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -1192,7 +1230,7 @@ def test_auto_approval_rechecked_at_confirm(db, fakes):
             cid = _new_client(s, 'Auto Recheck')
             a = service.preview_order(s, cid, 'AMD', 'buy', notional=50, source='mcp')
             b = service.preview_order(s, cid, 'INTC', 'buy', notional=50, source='mcp')
-            cm = service.preview_order(s, cid, 'TSM', 'buy', notional=50, source='committee', proposal_id='memo-x')
+            cm = service.preview_order(s, cid, 'TSM', 'buy', notional=50, source='committee', proposal_id=_memo(s))
             assert a['status'] == b['status'] == cm['status'] == 'previewed'
             # el comité confirma su propia previsualización (research.committee.approve_memo lo hace)
             r = service.confirm_order(s, cm['preview_id'], 'Fabrizio', source='committee')
@@ -1292,13 +1330,13 @@ def test_committee_hooks_run_in_savepoints(db, fakes, monkeypatch):
                         closed.append((memo_id, preview_id, status)), raising=False)
     with session_scope() as s:
         cid = _new_client(s, 'Comite Hooks')
-        p = service.preview_order(s, cid, 'AAPL', 'buy', notional=100, source='committee', proposal_id='memo-a')
+        p = service.preview_order(s, cid, 'AAPL', 'buy', notional=100, source='committee', proposal_id=_memo(s, memo_id='memo-a'))
         r = service.approve_preview(s, p['preview_id'], 'Fabrizio')
         assert r['ok']
     with session_scope() as s:                                        # el commit NO falló
         o = service.get_order(s, p['preview_id'])
         assert o['status'] == 'submitted' and o['alpaca_order_id']
-        q = service.preview_order(s, cid, 'MSFT', 'buy', notional=100, source='committee', proposal_id='memo-b')
+        q = service.preview_order(s, cid, 'MSFT', 'buy', notional=100, source='committee', proposal_id=_memo(s, memo_id='memo-b'))
         service.reject_preview(s, q['preview_id'], 'Fabrizio', reason='no')
     assert ('memo-b', q['preview_id'], 'rejected') in closed
 
