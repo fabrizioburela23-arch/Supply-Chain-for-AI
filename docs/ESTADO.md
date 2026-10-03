@@ -9,6 +9,15 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 (f) — PANEL DE TRADING BILINGÜE Y MÓVIL + APROBACIÓN DEL COMITÉ CON POP-UP (sw v183)
+
+- app.html #trade-panel: todos los textos ES/EN (`_TPT` + `_tpt()`, atributos data-tpt*, `window._tpRelabel()`
+  enganchado a applyLang como _termRelabel); responsive (≤900 px 2 columnas, ≤600 px una columna con el
+  ticket primero; controles ≥40 px; inputs 16 px en móvil); estilos con tokens --kt-*; datos guardados en
+  _tp.acct/positions/history/agent y pintados por _tpPaint*. Lógica de envío/PIN/duplicados intacta.
+- engine/committee.js: "Aprobar" usa KhipuToast.confirm (casilla obligatoria si DINERO REAL); sendDecision().
+- engine/guide.js: Pizarra, Sala del comité, Mi cartera, simulación estructural, 💰 Gasto IA, avisos de órdenes.
+
 # SESIÓN 2026-10-03 (e) — RESPUESTAS CORTADAS + HERRAMIENTA DE ESCENARIOS EN EL CHAT
 
 Captura: "3 empresas más expuestas a una guerra en Taiwán" → respuesta cortada ("NRS), son Hon Hai…
