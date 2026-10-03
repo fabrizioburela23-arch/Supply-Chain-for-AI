@@ -354,3 +354,14 @@ class PortfolioReport(Base):
     data = Column(JSONB, nullable=False, default=dict)
     read = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
+
+
+class UserState(Base):
+    """Sincronización entre dispositivos (2026-10-03): carteras, perfil y posiciones
+    del usuario, por dueño (hash de la llave del navegador). Último que escribe gana."""
+    __tablename__ = 'user_state'
+
+    owner_hash = Column(String(64), primary_key=True)
+    key = Column(String(40), primary_key=True)
+    value = Column(JSONB, nullable=True)
+    updated_at = Column(DateTime(timezone=True), nullable=False)

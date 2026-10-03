@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-03 (g) — SINCRONIZACIÓN ENTRE DISPOSITIVOS (sw v184)
+
+- `engine/sync.js` (NUEVO, window.KhipuSync): sincroniza kh_portfolios, kh_pf_active, kh_investor_profile
+  y eco_pos (MKT.pos) con el servidor; parchea Storage.prototype.setItem para subir cada cambio (1,5 s),
+  baja al abrir, cada 2 min y al volver a la pestaña; último que escribe gana (kh_sync_meta). Vincular otro
+  dispositivo = pegar el código (la llave kh_owner_key) en Comité → 💼 Mi cartera → 📱 Otros dispositivos.
+- Servidor: GET/PUT /api/user-state (tabla user_state, por owner_hash; 409 si la escritura es más vieja;
+  máx. 300 KB) en core/portfolio_reports_api.py. `current_positions()`: los reportes PROGRAMADOS usan la
+  cartera sincronizada de HOY (pf:<id> o market), no la guardada al programar.
+- Nota: MKT.pos ya no vive solo en el navegador (CLAUDE.md "Portafolio del usuario" actualizado).
+
 # SESIÓN 2026-10-03 (f) — PANEL DE TRADING BILINGÜE Y MÓVIL + APROBACIÓN DEL COMITÉ CON POP-UP (sw v183)
 
 - app.html #trade-panel: todos los textos ES/EN (`_TPT` + `_tpt()`, atributos data-tpt*, `window._tpRelabel()`

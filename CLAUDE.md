@@ -193,7 +193,8 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 - `LINKS` (post-merge): objetos `{source, target, w, rel, type}` — usar
   `lid(l.source)` para el id.
 - `MKT.quotes[ticker] = {close, prev, live}` — NO usar `q.c` ni `q.pc`.
-  Portafolio del usuario: `MKT.pos` en localStorage (NO en el server aún).
+  Portafolio del usuario: `MKT.pos` en localStorage `eco_pos`, SINCRONIZADO con el
+  server por engine/sync.js (junto a kh_portfolios / kh_investor_profile; /api/user-state).
 - `window.NODE_BY_ID` SÍ está expuesto (antes era undefined — rompía el Grafo
   Temporal en silencio; no quitar la línea `window.NODE_BY_ID = NODE_BY_ID`).
 - `window.TEMPORAL_SEED_FACTS` + `window.ONTOLOGY` ({types, rels, objects})
@@ -283,7 +284,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (808 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (809 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y

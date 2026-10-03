@@ -300,6 +300,90 @@ def _report_notes(rep):
     return '\n'.join(lines)
 
 
+# ── sincronización entre dispositivos ───────────────────────────────────────
+SYNC_KEYS = ('kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos')
+SYNC_MAX_BYTES = 300_000
+
+
+@portfolio_reports_bp.route('/api/user-state', methods=['GET', 'PUT'])
+@rate_limit(limit=600, window=3600)
+def user_state():
+    """GET → {key: {value, updated_at}} · PUT {key, value, updated_at?} (último que escribe gana)."""
+    owner = _owner()
+    if not owner:
+        return _need_owner()
+    if not _db():
+        return jsonify({'available': False, 'state': {}})
+    import json as _json
+
+    from ontology.db import session_scope
+    from research.models import UserState
+    if request.method == 'GET':
+        with session_scope() as s:
+            rows = s.query(UserState).filter(UserState.owner_hash == owner, UserState.key.in_(SYNC_KEYS)).all()
+            return jsonify({'available': True, 'state': {r.key: {'value': r.value, 'updated_at': r.updated_at.isoformat()}
+                                                         for r in rows}})
+    body = request.get_json(silent=True) or {}
+    key = str(body.get('key') or '')
+    if key not in SYNC_KEYS:
+        return jsonify({'error': 'clave no sincronizable', 'error_en': 'key not syncable'}), 400
+    if len(_json.dumps(body.get('value'), default=str)) > SYNC_MAX_BYTES:
+        return jsonify({'error': 'demasiado grande', 'error_en': 'too large'}), 413
+    now = datetime.now(timezone.utc)
+    try:
+        ts = datetime.fromisoformat(str(body.get('updated_at')).replace('Z', '+00:00')) if body.get('updated_at') else now
+        ts = min(ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc), now)
+    except ValueError:
+        ts = now
+    with session_scope() as s:
+        r = s.get(UserState, (owner, key))
+        if r is not None and r.updated_at and r.updated_at > ts:
+            return jsonify({'ok': False, 'stale': True, 'updated_at': r.updated_at.isoformat(), 'value': r.value}), 409
+        if r is None:
+            r = UserState(owner_hash=owner, key=key)
+            s.add(r)
+        r.value, r.updated_at = body.get('value'), ts
+    return jsonify({'ok': True, 'updated_at': ts.isoformat()})
+
+
+def current_positions(owner, source_key):
+    """Posiciones ACTUALES de una cartera sincronizada (para los reportes programados):
+    pf:<id> → kh_portfolios · market → eco_pos. None si no hay datos sincronizados."""
+    try:
+        from core.semantic import _load_snapshot
+        from ontology.db import session_scope
+        from research.models import UserState
+        snap = _load_snapshot()
+        key = 'kh_portfolios' if source_key.startswith('pf:') else 'eco_pos' if source_key == 'market' else None
+        if not key:
+            return None
+        with session_scope() as s:
+            r = s.get(UserState, (owner, key))
+            val = r.value if r is not None else None
+        if val is None:
+            return None
+        rows = []
+        if key == 'kh_portfolios':
+            pf = next((p for p in (val or []) if isinstance(p, dict) and 'pf:' + str(p.get('id')) == source_key), None)
+            if pf is None:
+                return None
+            for p in pf.get('positions') or []:
+                n = snap['by_id'].get(p.get('nodeId')) or {}
+                if n.get('mkt'):
+                    rows.append({'id': p.get('nodeId'), 'symbol': n['mkt'], 'label': n.get('label'),
+                                 'shares': p.get('shares'), 'cost_usd': (p.get('shares') or 0) * (p.get('avgPrice') or 0)})
+            return {'positions': _clean_positions(rows), 'cash': pf.get('cash'), 'start_value': pf.get('startCash')}
+        for nid, p in (val or {}).items():
+            n = snap['by_id'].get(nid) or {}
+            if n.get('mkt') and isinstance(p, dict):
+                rows.append({'id': nid, 'symbol': n['mkt'], 'label': n.get('label'), 'shares': p.get('sh'),
+                             'cost_usd': (p.get('sh') or 0) * (p.get('bp') or 0)})
+        return {'positions': _clean_positions(rows)}
+    except Exception as e:  # noqa: BLE001
+        log.info('current_positions: %s', type(e).__name__)
+        return None
+
+
 # ── programación ─────────────────────────────────────────────────────────────
 def due(w, now):
     last = w.last_report_at
@@ -323,10 +407,15 @@ def run_due(now=None, build=None):
     done = 0
     with session_scope() as s:
         todo = [(w.id, w.owner_hash, w.schedule, w.name, list(w.positions or []), w.start_value_usd, w.start_date,
-                 w.cash_usd, dict(w.profile or {}), w.owner_name)
+                 w.cash_usd, dict(w.profile or {}), w.owner_name, w.source_key)
                 for w in s.query(PortfolioWatch).filter(PortfolioWatch.schedule != 'off').all() if due(w, now)]
-    for wid, owner, sched, name, pos, sv, sd, cash, prof, who in todo:
+    for wid, owner, sched, name, pos, sv, sd, cash, prof, who, skey in todo:
         try:
+            cur = current_positions(owner, skey or '')     # la cartera de HOY si está sincronizada
+            if cur and cur.get('positions'):
+                pos = cur['positions']
+                cash = cur.get('cash') if cur.get('cash') is not None else cash
+                sv = cur.get('start_value') or sv
             lang = 'en' if str(prof.get('lang') or 'es').startswith('en') else 'es'
             with ai_context('reporte_cartera', who or 'programado'):
                 rep = build(pos, start_value=sv, start_date=sd, period=KIND_PERIOD[sched], profile=prof,

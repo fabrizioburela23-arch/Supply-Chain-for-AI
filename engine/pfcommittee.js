@@ -104,8 +104,22 @@
     }
     var inv = INVOLVE.filter(function (x) { return x[0] === p.involvement; })[0] || INVOLVE[1];
     return '<div class="cm-note" style="margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">🧭 ' + esc(L('Perfil', 'Profile')) + ': <b style="color:#E8EDFB">' + esc(L(RISK_LBL[p.risk][0], RISK_LBL[p.risk][1])) + '</b> · ' +
-      esc(L(inv[1], inv[2])) + ' <button class="cm-btn ghost" id="pfc-edit-prof" style="padding:3px 10px;font-size:11.5px">✎ ' + esc(L('Cambiar', 'Change')) + '</button></div>';
+      esc(L(inv[1], inv[2])) + ' <button class="cm-btn ghost" id="pfc-edit-prof" style="padding:3px 10px;font-size:11.5px">✎ ' + esc(L('Cambiar', 'Change')) + '</button>' +
+      (window.KhipuSync ? ' <button class="cm-btn ghost" id="pfc-sync" style="padding:3px 10px;font-size:11.5px">📱 ' + esc(L('Otros dispositivos', 'Other devices')) + '</button>' : '') + '</div>' +
+      (S.showSync && window.KhipuSync ? syncHtml() : '');
   }
+  // 📱 sincronización entre dispositivos (engine/sync.js)
+  function syncHtml() {
+    return card('<div class="cm-t">📱 ' + esc(L('Usar tus carteras en otro dispositivo', 'Use your portfolios on another device')) + '</div>' +
+      '<div class="cm-note" style="margin-bottom:8px">' + esc(L('Tus carteras simuladas, tu perfil y tus posiciones se guardan solos en el servidor. Para verlos en el teléfono (u otra PC), copia este código y pégalo allá en esta misma pantalla. Guárdalo en privado: quien lo tenga ve tus carteras.',
+        'Your simulated portfolios, profile and positions are saved to the server automatically. To see them on your phone (or another PC), copy this code and paste it there on this same screen. Keep it private: whoever has it sees your portfolios.')) + '</div>' +
+      '<div class="cm-form" style="margin-bottom:8px"><input id="pfc-sync-code" readonly value="' + esc(window.KhipuSync.code()) + '" style="font-family:monospace;letter-spacing:.04em">' +
+        '<button class="cm-btn ghost" id="pfc-sync-copy">📋 ' + esc(L('Copiar', 'Copy')) + '</button></div>' +
+      '<div class="cm-form" style="margin:0"><input id="pfc-sync-in" placeholder="' + esc(L('Pega aquí el código de tu otro dispositivo', 'Paste the code from your other device')) + '">' +
+        '<button class="cm-btn" id="pfc-sync-link">🔗 ' + esc(L('Vincular', 'Link')) + '</button></div>' +
+      (S.syncMsg ? '<div class="cm-note" style="margin-top:6px;color:' + (S.syncMsg.bad ? '#FFB300' : '#2BE38B') + '">' + esc(S.syncMsg.text) + '</div>' : ''));
+  }
+
   function riskFromAnswers(a) {
     var sc = 0, n = 0;
     QUESTIONS.forEach(function (q) { var o = q.opts.filter(function (x) { return x[0] === a[q.k]; })[0]; if (o) { sc += o[3]; n++; } });
@@ -203,6 +217,24 @@
       S.editingProfile = false; S.err = null; paint();
     };
     var cp = document.getElementById('pfc-cancel-prof'); if (cp) cp.onclick = function () { S.editingProfile = false; paint(); };
+    var sy = document.getElementById('pfc-sync'); if (sy) sy.onclick = function () { S.showSync = !S.showSync; S.syncMsg = null; paint(); };
+    var sc = document.getElementById('pfc-sync-copy');
+    if (sc) sc.onclick = function () {
+      var t = window.KhipuSync.code();
+      (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () {
+        S.syncMsg = { text: L('Código copiado.', 'Code copied.') }; paint();
+      }).catch(function () { var i = document.getElementById('pfc-sync-code'); if (i) { i.select(); } });
+    };
+    var sl = document.getElementById('pfc-sync-link');
+    if (sl) sl.onclick = function () {
+      var v = (document.getElementById('pfc-sync-in') || {}).value || '';
+      window.KhipuSync.link(v).then(function (r) {
+        S.syncMsg = r.ok ? { text: L('Vinculado: ', 'Linked: ') + (r.changed ? L('se trajeron tus carteras.', 'your portfolios were loaded.') : L('no había datos nuevos en ese código.', 'no new data under that code.')) }
+          : { bad: true, text: L('Código inválido.', 'Invalid code.') };
+        S._srcCache = null; if (r.ok) S.src = null;   // vuelve a elegir la primera cartera disponible (la recién traída)
+        paint();
+      });
+    };
     var ep = document.getElementById('pfc-edit-prof'); if (ep) ep.onclick = function () { var p = getProfile(); S.answers = (p && p.answers) || {}; S.editingProfile = true; paint(); };
     var ss = document.getElementById('pfc-src'); if (ss) ss.onchange = function () { S.src = ss.value; S.res = null; if (S.section !== 'diag') extras(); };
     el.querySelectorAll('[data-sec]').forEach(function (b) { b.onclick = function () { S.section = b.getAttribute('data-sec'); S.err = null; paint(); }; });

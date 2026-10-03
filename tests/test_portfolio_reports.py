@@ -113,3 +113,39 @@ def _fake_build(pos, **k):
     return {'ok': True, 'lang': 'es', 'performance': {'period_from': '2026-09-01', 'period_to': '2026-10-01',
                                                       'value_now_usd': 123.0, 'period_change_pct': 1.0},
             'summary': {'text': 'ok'}, 'contributions': [], 'news': []}
+
+
+@needs_db
+def test_sincronizacion_entre_dispositivos_y_reporte_con_cartera_actual():
+    from ontology.db import init_schema
+    init_schema(retries=1)
+    import server
+    from core import portfolio_reports_api as api
+    server.app.config['TESTING'] = True
+    c = server.app.test_client()
+    H = {'X-Khipu-Owner': 's' * 24}
+    pf = [{'id': 'p9', 'name': 'Sync', 'cash': 50, 'startCash': 1000,
+           'positions': [{'nodeId': 'Nvidia', 'shares': 2, 'avgPrice': 100}]}]
+    assert c.put('/api/user-state', json={'key': 'kh_portfolios', 'value': pf, 'updated_at': '2026-10-01T00:00:00Z'},
+                 headers=H).get_json()['ok']
+    assert c.put('/api/user-state', json={'key': 'otra', 'value': 1}, headers=H).status_code == 400
+    # el "teléfono" (misma llave) lo lee
+    st = c.get('/api/user-state', headers=H).get_json()['state']
+    assert st['kh_portfolios']['value'][0]['name'] == 'Sync'
+    # una escritura más VIEJA no pisa la nueva
+    r = c.put('/api/user-state', json={'key': 'kh_portfolios', 'value': [], 'updated_at': '2026-09-01T00:00:00Z'}, headers=H)
+    assert r.status_code == 409 and r.get_json()['value'][0]['name'] == 'Sync'
+    assert c.get('/api/user-state').status_code == 401
+    import hashlib
+    owner = hashlib.sha256(('s' * 24).encode()).hexdigest()
+    cur = api.current_positions(owner, 'pf:p9')
+    assert cur['positions'][0]['symbol'] == 'NVDA' and cur['positions'][0]['shares'] == 2 and cur['start_value'] == 1000
+    seen = {}
+
+    def build(pos, **k):
+        seen['pos'] = pos
+        return _fake_build(pos, **k)
+    c.post('/api/portfolio-report/watch', json={'source_key': 'pf:p9', 'name': 'Sync', 'schedule': 'daily',
+                                                'positions': [{'symbol': 'AMD', 'shares': 1}]}, headers=H)
+    api.run_due(now=datetime(2026, 10, 9, 22, tzinfo=timezone.utc), build=build)
+    assert seen['pos'][0]['symbol'] == 'NVDA'          # usa la cartera sincronizada de hoy, no la vieja
