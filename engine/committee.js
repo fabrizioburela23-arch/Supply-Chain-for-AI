@@ -829,13 +829,27 @@
       var what = decLabel(m.decision) + ' ' + (m.symbol || '') +
         (sz.side && !sz.reference_only && (sz.notional || sz.qty) ? ' · ' + (sz.qty ? sz.qty + ' ' + L('acciones', 'shares') : money(sz.notional)) : '');
       var mode = m.client_id ? '\n' + (m.client_mode ? badge(m.client_mode) : L('Modo de la cuenta: se muestra en Clientes', 'Account mode: shown in Clients')) : '';
-      if (!window.confirm(L('¿Aprobar la propuesta del comité?\n\n', 'Approve the committee proposal?\n\n') + what + mode + '\n\n' +
-        (m.client_id ? L('Se preparará una orden que TAMBIÉN tendrás que aprobar en Clientes antes de ejecutarse (salvo que el servidor tenga activada la auto-aprobación de cuentas SIMULADAS).', 'An order will be prepared that you will ALSO have to approve in Clients before it executes (unless the server has auto-approval of PAPER accounts turned on).') : L('Sin cliente: solo se registra tu aprobación.', 'No client: only your approval is recorded.')))) return;
+      var note = m.client_id ? L('Se preparará una orden que TAMBIÉN tendrás que aprobar en Clientes antes de ejecutarse (salvo que el servidor tenga activada la auto-aprobación de cuentas SIMULADAS).', 'An order will be prepared that you will ALSO have to approve in Clients before it executes (unless the server has auto-approval of PAPER accounts turned on).') : L('Sin cliente: solo se registra tu aprobación.', 'No client: only your approval is recorded.');
+      var T = window.KhipuToast, live = m.client_mode && (m.client_mode.paper === false || m.client_mode.mode === 'live');
+      var side = { BUY: 'buy', ADD: 'buy', TRIM: 'sell', SELL: 'sell' }[m.decision];
+      // pop-up de confirmación (engine/toast.js); DINERO REAL exige marcar la casilla
+      var ask = T && T.confirm ? T.confirm({ title: L('¿Aprobar la propuesta del comité?', 'Approve the committee proposal?'), side: side,
+          sideLabel: decLabel(m.decision), mode: m.client_id ? (live ? 'live' : 'paper') : undefined,
+          rows: [[L('Empresa', 'Company'), (m.label || '') + (m.symbol ? ' · ' + m.symbol : '')], [L('Decisión', 'Decision'), what]],
+          note: note, requireCheck: live ? L('Entiendo que esta orden usa DINERO REAL.', 'I understand this order uses REAL MONEY.') : null,
+          confirmLabel: L('Aprobar', 'Approve') })
+        : Promise.resolve(window.confirm(L('¿Aprobar la propuesta del comité?\n\n', 'Approve the committee proposal?\n\n') + what + mode + '\n\n' + note));
+      ask.then(function (ok) { if (ok) sendDecision(kind, body); });
+      return;
     } else {
       var why = window.prompt(L('¿Por qué la rechazas? (opcional)', 'Why do you reject it? (optional)'), '');
       if (why === null) return;
       body.reason = why;
     }
+    sendDecision(kind, body);
+  }
+  function sendDecision(kind, body) {
+    var m = S.memo; if (!m) return;
     S.deciding = true; render();
     pinJSON('/api/committee/memo/' + encodeURIComponent(m.memo_id) + '/' + kind, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, true).then(function (d) {
       S.deciding = false;
