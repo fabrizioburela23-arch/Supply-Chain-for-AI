@@ -2376,6 +2376,23 @@ def crypto_history(coin_id):
 
 
 # ── Cripto IA — análisis CAUTO bilingüe (Sonnet 5, tier deep) ───────────────
+def _ai_friendly_error(e):
+    """Texto para personas cuando una función de IA falla (nunca la excepción cruda)."""
+    try:
+        from research.errors import friendly
+        es, en = friendly(e)
+    except Exception:  # noqa: BLE001
+        es = en = None
+    t = str(e or '')
+    if not es and ('formato esperado' in t or 'no-JSON' in t):
+        es = 'La IA respondió, pero no en el formato esperado. Vuelve a intentarlo en un momento.'
+        en = 'The AI answered, but not in the expected format. Try again in a moment.'
+    if not es and ('Expecting value' in t or 'Ningún proveedor' in t or not t.strip()):
+        es = 'La IA no respondió (sin saldo o proveedor caído). Revisa 🩺 Sistema → 💰 Gasto IA.'
+        en = 'The AI did not answer (no credit or provider down). Check 🩺 System → 💰 AI spend.'
+    return (f'{es} · {en}' if es else f'IA falló · AI failed: {t[:160]}'), t[:160]
+
+
 @app.route('/api/crypto/analyze', methods=['POST'])
 @rate_limit(limit=30, window=3600)
 def crypto_analyze():
@@ -2423,23 +2440,13 @@ def crypto_analyze():
     prompt = ('Analiza este cripto con cautela.\n\nDATOS (JSON):\n'
               + json.dumps({'asset': asset, 'intel': intel}, ensure_ascii=False)[:6000])
     try:
-        text, model = _ai_complete(sys, prompt, max_tokens=1400, tier='deep')
-        parsed = _extract_json(text)
+        from core.ai import _ai_json
+        parsed, model = _ai_json(sys, prompt, max_tokens=1400, tier='deep')
         if not isinstance(parsed, dict):
             raise ValueError('respuesta no-JSON')
     except Exception as e:  # noqa: BLE001
-        # mensaje para personas, no la excepción cruda ("Expecting value: line 1…" =
-        # la IA devolvió vacío: sin saldo o proveedor caído)
-        try:
-            from research.errors import friendly
-            es, en = friendly(e)
-        except Exception:  # noqa: BLE001
-            es = en = None
-        if not es and ('Expecting value' in str(e) or 'no-JSON' in str(e) or not str(e).strip()):
-            es = 'La IA no respondió (sin saldo o proveedor caído). Revisa 🩺 Sistema → 💰 Gasto IA.'
-            en = 'The AI did not answer (no credit or provider down). Check 🩺 System → 💰 AI spend.'
-        msg = f'{es} · {en}' if es else f'IA falló · AI failed: {str(e)[:160]}'
-        return jsonify({'ok': False, 'error': msg, 'detail': str(e)[:160]}), 502
+        msg, det = _ai_friendly_error(e)
+        return jsonify({'ok': False, 'error': msg, 'detail': det}), 502
 
     def _slist(v):
         if isinstance(v, list):
@@ -2512,12 +2519,13 @@ def research_deep():
     prompt = (f'Empresa foco: {label} (id {nid}).\n\nCONTEXTO (JSON):\n'
               + json.dumps(ctx, ensure_ascii=False)[:12000])
     try:
-        text, model = _ai_complete(sys, prompt, max_tokens=2600, tier='deep')
-        parsed = _extract_json(text)
+        from core.ai import _ai_json
+        parsed, model = _ai_json(sys, prompt, max_tokens=2600, tier='deep')
         if not isinstance(parsed, dict):
             raise ValueError('respuesta no-JSON')
     except Exception as e:  # noqa: BLE001
-        return jsonify({'ok': False, 'error': f'IA falló · AI failed: {str(e)[:160]}'}), 502
+        msg, det = _ai_friendly_error(e)
+        return jsonify({'ok': False, 'error': msg, 'detail': det}), 502
 
     def _slist(v):
         if isinstance(v, list):

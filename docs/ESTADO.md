@@ -9,6 +9,19 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (f) — "EXPECTING VALUE" EN INVESTIGAR: JSON ESTRICTO + MENSAJES PARA PERSONAS
+
+Fabrizio tiene saldo en Gemini pero Investigar daba "IA falló · Expecting value: line 1 column 1":
+un proveedor SÍ respondió, pero sin JSON (Gemini 2.5 flash "pensando" se come los tokens y corta,
+o contesta en prosa). `core.ai._ai_json(system, prompt, …)`: _ai_complete + _extract_json y, si no
+hay JSON y existe GEMINI_KEY, UN reintento con `_complete_gemini(json_mode=True)` (JSON estricto,
+sin pensamiento, 8k tokens). Lo usan /api/research/deep y /api/crypto/analyze. `server._ai_friendly_error`
+traduce la excepción a texto ES/EN ("La IA respondió, pero no en el formato esperado…" / "La IA no
+respondió (sin saldo o proveedor caído)…"). Ventanas del escritorio opacas (#070B14) — el inicio
+nuevo se transparentaba detrás. Tests: tests/test_ai_json.py (4). sw v192.
+
+---
+
 # SESIÓN 2026-10-04 (e) — INICIO DE LA CABINA REDISEÑADO + FEED SIN NOTICIAS VIEJAS (sw v190)
 
 - Inicio de la Cabina (stageEmpty, cockpit.js) rediseñado con el skill frontend-design: saludo en

@@ -439,6 +439,27 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
     raise RuntimeError('Ningún proveedor de IA respondió. ' + ('; '.join(errors) or 'sin keys configuradas'))
 
 
+def _ai_json(system, prompt, max_tokens=1000, tier='fast', model=None):
+    """Como _ai_complete pero la respuesta DEBE ser JSON (dict/list). Si el texto
+    no trae JSON (Gemini flash "pensando" se come los tokens y corta, o un modelo
+    contesta en prosa) y hay Gemini, reintenta UNA vez en json_mode (JSON estricto,
+    sin pensamiento, más presupuesto). Devuelve (parsed, modelo). Lanza si nada
+    sirve. (2026-10-04: Investigar mostraba "Expecting value: line 1 column 1".)"""
+    text, used = _ai_complete(system, prompt, max_tokens, tier, model=model)
+    try:
+        parsed = _extract_json(text)
+        if isinstance(parsed, (dict, list)):
+            return parsed, used
+    except Exception:  # noqa: BLE001
+        pass
+    if GEMINI_KEY:
+        text2, used2 = _complete_gemini(system, prompt, max_tokens, tier, json_mode=True)
+        parsed = _extract_json(strip_reasoning(text2))
+        if isinstance(parsed, (dict, list)):
+            return parsed, used2
+    raise ValueError('la IA respondió pero no en el formato esperado (JSON)')
+
+
 # Compat: las features existentes llaman _claude_complete → ahora multi-proveedor.
 def _claude_complete(system, prompt, max_tokens, tier='fast'):
     return _ai_complete(system, prompt, max_tokens, tier)
