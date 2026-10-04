@@ -2548,6 +2548,21 @@ const NODE_ID_ALIAS = {
   'TowerSemi': 'TowerSemiconductor',
   'Kratos': 'Kratos_Defense',
   'Scale_AI': 'ScaleAI',
+  // ── G1b (misión de reparación 2026-10-04) ────────────────────────────────
+  // Duplicados destapados por scripts/audit_graph.py (mismo ticker y/o misma
+  // etiqueta, sin alias): la misma empresa entró dos veces por nodes_expand5
+  // (ids en kebab-case) y nodes_multicapa (CamelCase / con espacios).
+  // Canónico = el id con MÁS enlaces en data/grafo_v0.json (empate → el id
+  // sin espacios, con sufijo de bolsa en mkt). tests/test_graph_audit.py.
+  'SouthernCompany': 'SouthernCo',
+  'Kuehne_Nagel': 'KuehneNagel',
+  'air-products': 'AirProducts',
+  'SumitomoChemical': 'sumitomo-chemical',
+  'iluka-resources': 'IlukaResources',
+  'ucore-rare-metals': 'UcoreRareMetals',
+  'StellaChemifa': 'stella-chemifa',
+  'Mapletree Industrial Trust': 'MapletreeIndustrialTrust',
+  'ESR Group': 'ESR_Group',
   // NO fusionados a propósito (colisión de ticker, no duplicado): HashiCorp≠IBM,
   // Qwen≠AlibabaCloud, Aerojet⊂L3Harris, Altium⊂Renesas, Agility≠Amazon.
 };

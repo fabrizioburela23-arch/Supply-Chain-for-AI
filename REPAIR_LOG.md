@@ -474,8 +474,6 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 
 ---
 
-## P1 · Grafo y ontología
-
 ### G1 — Auditoría automática del grafo (`scripts/audit_graph.py`) + trinquete
 
 - **Problema.** Dos verdades del grafo (catálogo `nodes/*.js` → `data/grafo_v0.json`
@@ -515,6 +513,42 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   por categoría + contraejemplos de perspectiva, exit codes y el trinquete sobre el
   snapshot real. `python scripts/audit_graph.py --format md | head -60`.
 - **Rollback.** Revertir el commit; no toca datos ni la base.
+
+### G1b — 9 entidades duplicadas sin alias (misma empresa dos veces en el catálogo)
+
+- **Problema.** La auditoría G1 cuenta 11 pares de ids distintos que son la misma
+  empresa (mismo `mkt` y/o misma etiqueta) y NO están en `NODE_ID_ALIAS`: Southern
+  Company, Kuehne+Nagel, Air Products, Sumitomo Chemical, Iluka, Ucore, Stella
+  Chemifa, Mapletree Industrial Trust y ESR Group (+ Kanto Denka, China Northern
+  Rare Earth y AlphaSense, fuera de esta tarea). En la app aparecen como dos
+  nodos, con sus enlaces repartidos; `SumitomoChemical` quedaba incluso huérfano.
+- **Causa raíz.** La misma empresa entró por `nodes/nodes_expand5.js` (ids en
+  kebab-case: `air-products`) y por `nodes/nodes_multicapa.js` (CamelCase o con
+  espacios: `AirProducts`, `'ESR Group'`); el merge solo fusiona lo que está en la
+  tabla de alias y nadie la actualizó (no había auditoría).
+- **Cambio.** `nodes/nodes_seed.js` `NODE_ID_ALIAS` (bloque G1b): alias → canónico
+  con canónico = el id con MÁS enlaces en `data/grafo_v0.json` (empate → id sin
+  espacios / CamelCase, con sufijo de bolsa en `mkt`): SouthernCompany→SouthernCo
+  (2 vs 5), Kuehne_Nagel→KuehneNagel (2 vs 5), air-products→AirProducts (2 vs 6),
+  SumitomoChemical→sumitomo-chemical (0 vs 3), iluka-resources→IlukaResources
+  (2=2), ucore-rare-metals→UcoreRareMetals (2 vs 3), StellaChemifa→stella-chemifa
+  (1 vs 2), 'Mapletree Industrial Trust'→MapletreeIndustrialTrust (2=2),
+  'ESR Group'→ESR_Group (2=2). `nodes/nodes_multicapa.js`: la etiqueta visible de
+  `ESR_Group` pasa de "ESR_Group" a "ESR Group" (el merge conserva la etiqueta del
+  nodo que carga primero). Ensayo del merge (misma tubería que
+  `scripts/export_graph_v0.js`, sin escribir): 949 → 940 nodos, 2.526 → 2.524
+  enlaces, 0 avisos. El snapshot `data/grafo_v0.json` NO se regenera en este commit
+  (se regenera al integrar: `node scripts/export_graph_v0.js`); la línea base de G1
+  bajará entonces (duplicados 11 → 3, huérfanos 25 → 24) y se vuelve a escribir con
+  `--write-baseline`. sw v205 (los nodes/*.js los carga el navegador).
+- **Verificar.** `pytest tests/test_graph_audit.py -k g1b` (antes: `'SouthernCompany'
+  debería ser alias de 'SouthernCo' (hoy: None)`): lee `NODE_ID_ALIAS` ejecutando
+  `nodes/nodes_seed.js` en Node (regex si no hay Node), comprueba las 9 parejas, que
+  el canónico exista y no sea alias, que tenga ≥ enlaces, y que con esa tabla la
+  auditoría deje de contar los pares. `node --check nodes/nodes_seed.js`.
+- **Rollback.** Revertir el commit (y regenerar el snapshot si ya se había
+  regenerado); no toca la base — la fusión de los objetos duplicados en Postgres es
+  el commit 12 del plan (`ObjectMerged`, append-only).
 
 ### G2 — La ontología se corrige SIN borrar: dedupe de vínculos, retracción dirigida y fusión de entidades por eventos
 - **Síntoma.** El diagnóstico encontró en producción vínculos repetidos (mismo

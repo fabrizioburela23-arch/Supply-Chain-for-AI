@@ -146,3 +146,69 @@ def test_auditoria_no_empeora_respecto_al_baseline():
     # el snapshot real no tiene triplas repetidas (el merge dedupa por (s,t,type)) ni tipos fuera de vocabulario
     assert res['metrics']['duplicate_links'] == 0
     assert res['metrics']['bad_vocab'] == 0
+
+
+# ── (iii) G1b: alias faltantes que la auditoría destapó ─────────────────────
+
+# alias → canónico. Canónico = el id con MÁS enlaces en data/grafo_v0.json
+# (empate → el id sin espacios / CamelCase, con sufijo de bolsa en `mkt`).
+ALIAS_PAIRS_G1B = {
+    'SouthernCompany': 'SouthernCo',
+    'Kuehne_Nagel': 'KuehneNagel',
+    'air-products': 'AirProducts',
+    'SumitomoChemical': 'sumitomo-chemical',
+    'iluka-resources': 'IlukaResources',
+    'ucore-rare-metals': 'UcoreRareMetals',
+    'StellaChemifa': 'stella-chemifa',
+    'Mapletree Industrial Trust': 'MapletreeIndustrialTrust',
+    'ESR Group': 'ESR_Group',
+}
+
+
+def _alias_from_js():
+    """NODE_ID_ALIAS tal como lo ve el navegador: ejecuta nodes/nodes_seed.js en
+    un sandbox de Node (igual que scripts/export_graph_v0.js). Sin Node, regex
+    sobre el bloque `const NODE_ID_ALIAS = {…};`."""
+    node = shutil.which('node')
+    if node:
+        js = ("const vm=require('vm'),fs=require('fs');const ctx=vm.createContext({window:{},console});"
+              "vm.runInContext(fs.readFileSync(process.argv[1],'utf-8'),ctx,{filename:'nodes_seed.js'});"
+              "process.stdout.write(JSON.stringify(vm.runInContext('NODE_ID_ALIAS',ctx)));")
+        try:
+            out = subprocess.run([node, '-e', js, SEED_JS], capture_output=True, text=True, timeout=30, check=True).stdout
+            return json.loads(out)
+        except (subprocess.SubprocessError, ValueError):
+            pass
+    with open(SEED_JS, encoding='utf-8') as fh:
+        src = fh.read()
+    m = re.search(r'const NODE_ID_ALIAS = \{(.*?)\n\};', src, re.S)
+    assert m, 'no encuentro NODE_ID_ALIAS en nodes/nodes_seed.js'
+    body = '\n'.join(line.split('//')[0] for line in m.group(1).splitlines())
+    return dict(re.findall(r"'([^']+)'\s*:\s*'([^']+)'", body))
+
+
+def test_alias_g1b_cubre_los_nueve_pares():
+    """Los 9 pares duplicados (mismo ticker y/o misma etiqueta) que destapó la
+    auditoría deben estar en NODE_ID_ALIAS (nodes/nodes_seed.js), apuntando al
+    id con más enlaces; el snapshot se regenera al integrar (no aquí)."""
+    from scripts.audit_graph import audit_snapshot, load_snapshot
+
+    alias = _alias_from_js()
+    assert len(alias) >= 80
+    snap = load_snapshot(SNAPSHOT)
+    ids = {n['id'] for n in snap['nodes']}
+    grado = {}
+    for l in snap['links']:
+        grado[l['source']] = grado.get(l['source'], 0) + 1
+        grado[l['target']] = grado.get(l['target'], 0) + 1
+    for a, canon in ALIAS_PAIRS_G1B.items():
+        assert alias.get(a) == canon, f'{a!r} debería ser alias de {canon!r} (hoy: {alias.get(a)!r})'
+        assert canon in ids, f'el canónico {canon!r} no existe en el snapshot'
+        assert canon not in alias, f'el canónico {canon!r} no puede ser a su vez un alias'
+        if a in ids:  # hasta que se regenere el snapshot, los dos ids conviven
+            assert grado.get(canon, 0) >= grado.get(a, 0), f'{canon!r} tiene menos enlaces que {a!r}'
+    # con la tabla del JS, la auditoría deja de contar esos pares como duplicados
+    snap['node_id_alias'] = dict(snap.get('node_id_alias') or {}, **alias)
+    dups = {tuple(x['ids']) for x in audit_snapshot(snap)['findings']['duplicate_entities']}
+    for a, canon in ALIAS_PAIRS_G1B.items():
+        assert tuple(sorted((a, canon))) not in dups
