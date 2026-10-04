@@ -335,3 +335,58 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   `ImportError: business_days_after`, el día quedaba marcado tras un fallo, la
   evaluación no corría con lote vacío, el reloj no tenía la tarea).
 - **Rollback.** Revertir el commit; las claims nuevas vuelven a 7/30/90 días.
+
+---
+
+## P1 · Motor de riesgo
+
+### D1 — Referencia independiente (numpy), alineación visible, fecha de la bolsa y rótulo "no ajustado"
+
+- **Problema.** Nadie podía demostrar que el emparejamiento con el índice era
+  correcto (las correlaciones bajas de LIN–SPY 0,056 sembraban la duda); la
+  fecha de la vela se tomaba en UTC (una bolsa que abre antes de medianoche UTC
+  quedaba corrida un día) y si Yahoo no entregaba `adjclose` se usaba el cierre
+  sin ajustar mientras el reporte decía "ajustados".
+- **Cambio.** `tests/test_repair_risk.py`: el motor coincide con numpy (beta,
+  correlación, matriz, VaR, CVaR, vol) y la cartera solo-SPY da beta/corr 1,0;
+  un índice corrido 1 día hunde la correlación y se VE en `bench_overlap_days`.
+  `core/risk_report.py`: `fetch_history` usa `meta.gmtoffset` (fecha del día de la
+  bolsa) y guarda `history_meta(sym)` {adjusted, tz}; `compute` publica
+  `bench_overlap_days` y `aligned_dates`; `build_report` publica `positions[].
+  adjusted/exchange_tz`, `unadjusted_symbols` y un `source` honesto; la UI avisa.
+  Conclusión del diagnóstico: el emparejamiento es correcto; las correlaciones
+  bajas son las de la serie de Yahoo 2025-10→2026-10 (pendiente contraste externo
+  desde la PC de Fabrizio).
+- **Verificar.** `pytest tests/test_repair_risk.py -k d1` (5 tests; antes:
+  `bench_overlap_days`/`history_meta` inexistentes, fecha corrida en Sídney).
+
+### D2 — Retorno anual compuesto y Sharpe con tasa libre de riesgo real (^IRX)
+
+- **Problema.** `return_ann_pct` componía la media ARITMÉTICA diaria 252 veces
+  (MSFT 6,3 % publicado vs ≈0,8 % real compuesto) y el Sharpe usaba rf = 0 con
+  esa media: SPY 1,23 publicado vs ≈0,92 con el T-bill del 3,99 % que el propio
+  sistema ya baja para opciones. Tres fórmulas distintas en la misma tarjeta.
+- **Cambio.** `compute(..., rf, rf_source)`: `return_ann_pct` = compuesto
+  (eq^(252/n) − 1), `return_arith_ann_pct` aparte, `sharpe = (compuesto − rf) /
+  vol`, `risk_free_pct`, `risk_free_source`, `sharpe_method`. `build_report`
+  baja `^IRX` (1 mes) en el mismo pool/caché; sin dato → 0 % y se dice.
+  `core/options.risk_free_rate` usa el mismo símbolo. UI: tarjeta "retorno anual
+  compuesto X % − tasa libre Y %" y "?" actualizado. **Los Sharpe y retornos BAJAN
+  en todas las carteras: hoy estaban inflados** (avisado a Fabrizio).
+- **Verificar.** `pytest tests/test_repair_risk.py -k d2` (3 tests).
+
+### D3 — Backtest del VaR fuera de muestra + prueba de Kupiec
+
+- **Problema.** `backtest95` era una tautología: el umbral salía del cuantil 5 %
+  de la MISMA muestra → siempre 13 de 250 (SPY, LIN, MSFT, carteras…) y el aviso
+  "el VaR subestima" no podía dispararse nunca.
+- **Cambio.** `rolling_backtest`: VaR de cada día estimado solo con los W días
+  previos (W = max(60, min(125, n//2))), excepciones contadas fuera de muestra,
+  `kupiec_pof` (LR y p-valor χ²(1), sin scipy), `verdict` ok/subestima/
+  sobreestima, `low_power` si < 100 días; el conteo en muestra queda en
+  `in_sample` solo de referencia. UI y "?" explican el método; el aviso ámbar
+  sale por veredicto, no por un 1,5× arbitrario. Único consumidor de
+  `backtest95`: engine/riskreport.js (el MCP lo pasa tal cual: campos nuevos).
+- **Verificar.** `pytest tests/test_repair_risk.py -k d3` (2 tests: Kupiec con
+  valores conocidos; iid/tormenta/calma → ok/subestima/sobreestima).
+- **Rollback (D1-D3).** Revertir el commit; no toca datos.

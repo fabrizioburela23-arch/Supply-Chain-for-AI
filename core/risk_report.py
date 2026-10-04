@@ -12,10 +12,12 @@ Métricas (retornos diarios, días comunes a todas las posiciones):
   · contribución de cada posición al riesgo (w_i·(Σw)_i / σ²)
   · beta y correlación contra el S&P 500 (SPY)
   · matriz de correlaciones entre posiciones
-  · máxima caída (drawdown), Sharpe (tasa libre de riesgo = 0, se dice)
+  · máxima caída (drawdown), retorno anual COMPUESTO (+ aritmético aparte) y
+    Sharpe = (compuesto − tasa libre de riesgo T-bill 13 semanas ^IRX) / vol (D2)
   · ratio de diversificación (Σ w_i σ_i / σ_p)
   · peores días reales de la cartera (con fecha)
-  · backtest del VaR 95 %: cuántas veces la pérdida real lo superó (esperado ≈ 5 %)
+  · backtest del VaR 95 % FUERA de muestra (ventana móvil) + prueba de Kupiec (D3);
+    el conteo en muestra (siempre ≈5 %, tautológico) queda solo de referencia
 
 El VaR es una ESTIMACIÓN estadística basada en el pasado, no una predicción.
 """
@@ -26,7 +28,9 @@ from datetime import datetime, timezone
 TRADING_DAYS = 252
 Z = {0.95: 1.6448536, 0.99: 2.3263479}
 BENCH = 'SPY'
+RF_SYMBOL = '^IRX'       # T-bill 13 semanas (D2): la misma que usa core/options.risk_free_rate
 _HIST_CACHE = {}          # (símbolo, rango) → (ts, {date: price}, currency)
+_HIST_META = {}           # (símbolo, rango) → {adjusted, tz, gmtoffset, n}   (D1, misión de reparación)
 _HIST_TTL = 6 * 3600
 
 
@@ -46,17 +50,33 @@ def fetch_history(symbol, rng='1y', getter=None):
     res = ((data.get('chart') or {}).get('result') or [None])[0] or {}
     ts = res.get('timestamp') or []
     ind = res.get('indicators') or {}
+    meta = res.get('meta') or {}
     adj = ((ind.get('adjclose') or [{}])[0] or {}).get('adjclose')
     close = ((ind.get('quote') or [{}])[0] or {}).get('close')
-    series = adj if adj and len(adj) == len(ts) else close
+    adjusted = bool(adj and len(adj) == len(ts))
+    series = adj if adjusted else close
+    # D1: la fecha de la vela es la del DÍA DE LA BOLSA (gmtoffset de Yahoo), no la
+    # UTC: una sesión de Sídney/Tokio que abre antes de medianoche UTC quedaba
+    # corrida un día y se emparejaba con otra sesión de EE.UU.
+    try:
+        off = int(meta.get('gmtoffset') or 0)
+    except (TypeError, ValueError):
+        off = 0
     out = {}
     for t, p in zip(ts, series or []):
         if p is not None and p > 0:
-            out[datetime.fromtimestamp(t, tz=timezone.utc).strftime('%Y-%m-%d')] = float(p)
-    cur = (res.get('meta') or {}).get('currency')
+            out[datetime.fromtimestamp(int(t) + off, tz=timezone.utc).strftime('%Y-%m-%d')] = float(p)
+    cur = meta.get('currency')
     if out:
         _HIST_CACHE[key] = (time.time(), out, cur)
+        _HIST_META[key] = {'adjusted': adjusted, 'tz': meta.get('exchangeTimezoneName'), 'gmtoffset': off,
+                           'n': len(out)}
     return out, cur
+
+
+def history_meta(symbol, rng='1y'):
+    """{adjusted, tz, gmtoffset, n} de la última serie bajada (D1) o None."""
+    return _HIST_META.get((symbol, rng))
 
 
 # ── matemática pura (testeable sin red) ──────────────────────────────────────
@@ -89,9 +109,57 @@ def _quantile(sorted_x, q):
     return sorted_x[lo] + (sorted_x[hi] - sorted_x[lo]) * (pos - lo)
 
 
-def compute(histories, shares, fx, bench=None, horizon=10):
+def kupiec_pof(x, n, p=0.05):
+    """Prueba de Kupiec (proportion of failures): x excepciones en n días con
+    probabilidad p. Devuelve (LR, p-valor χ²(1)); sin scipy (erfc)."""
+    x, n = int(x), int(n)
+    if n <= 0:
+        return 0.0, 1.0
+    if x <= 0:
+        lr = -2.0 * n * math.log(1.0 - p)
+    elif x >= n:
+        lr = -2.0 * n * math.log(p)
+    else:
+        f = x / n
+        lr = 2.0 * ((n - x) * math.log((1 - f) / (1 - p)) + x * math.log(f / p))
+    lr = max(0.0, lr)
+    pval = math.erfc(math.sqrt(lr / 2.0))
+    return round(lr, 4), round(min(1.0, max(0.0, pval)), 6)
+
+
+def rolling_backtest(port, srt, conf=0.95):
+    """D3: backtest FUERA DE MUESTRA: el VaR de cada día se estima solo con los W días
+    anteriores (W = max(60, min(125, n//2))) y se cuenta si la pérdida real lo superó.
+    El viejo conteo dentro de la muestra (tautológico: siempre ≈5 %) queda como
+    `in_sample`, solo de referencia."""
+    n = len(port)
+    q = 1 - conf
+    w = max(60, min(125, n // 2))
+    breaches, days = 0, 0
+    for t in range(w, n):
+        window = sorted(port[t - w:t])
+        var_t = -_quantile(window, q)
+        days += 1
+        if port[t] < -var_t:
+            breaches += 1
+    expected = round(q * days, 2)
+    lr, pval = kupiec_pof(breaches, days, q)
+    if breaches > expected and pval < 0.05:
+        verdict = 'subestima'
+    elif breaches < expected and pval < 0.05:
+        verdict = 'sobreestima'
+    else:
+        verdict = 'ok'
+    thr = _quantile(srt, q)
+    return {'breaches': breaches, 'days': days, 'expected': expected, 'window': w, 'method': 'rolling_oos',
+            'kupiec_lr': lr, 'kupiec_p': pval, 'verdict': verdict, 'low_power': days < 100,
+            'in_sample': {'breaches': sum(1 for r in port if r < thr), 'days': n, 'expected': round(n * q, 1)}}
+
+
+def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=None):
     """histories: {sym: {date: price}} · shares: {sym: n} · fx: {sym: moneda→USD}.
-    bench: {date: price} del S&P 500 (opcional). Devuelve el reporte (dict)."""
+    bench: {date: price} del S&P 500 (opcional). rf: tasa libre de riesgo anual
+    (decimal; D2: T-bill 13 semanas ^IRX) con su fuente. Devuelve el reporte (dict)."""
     syms = [s for s in shares if histories.get(s)]
     if not syms:
         return {'ok': False, 'error': 'sin historia de precios para ninguna posición'}
@@ -147,6 +215,7 @@ def compute(histories, shares, fx, bench=None, horizon=10):
 
     # beta vs S&P 500 (mismos pares de días consecutivos en ambas series)
     beta = corr_mkt = None
+    overlap = 0
     if bench:
         pr, br = [], []
         for i in range(1, len(common)):
@@ -154,16 +223,26 @@ def compute(histories, shares, fx, bench=None, horizon=10):
             if d0 in bench and d1 in bench:
                 pr.append(port[i - 1])
                 br.append(bench[d1] / bench[d0] - 1)
+        overlap = len(pr)
         vb = _cov(br, br)
         if len(pr) > 30 and vb > 0:
             beta = round(_cov(pr, br) / vb, 3)
             sp, sb = _std(pr), _std(br)
             corr_mkt = round(_cov(pr, br) / (sp * sb), 3) if sp and sb else None
+    # D1: cuántos días se emparejaron de verdad con el índice y qué rango usó cada símbolo
+    # (un índice corrido un día hunde la correlación: aquí se ve, no se adivina)
+    aligned = {s: {'from': common[0], 'to': common[-1], 'n': len(common)} for s in syms}
 
-    # backtest del VaR 95 % (dentro de la muestra)
-    thr = _quantile(srt, 0.05)
-    breaches = sum(1 for r in port if r < thr)
+    # backtest del VaR 95 % fuera de muestra (D3) — el "en muestra" va dentro, de referencia
+    backtest = rolling_backtest(port, srt, 0.95)
     worst = sorted(((port[i], common[i + 1]) for i in range(n)))[:5]
+    # D2: retorno anual COMPUESTO (lo que de verdad ganó quien mantuvo la cartera) y
+    # aritmético aparte (insumo del VaR paramétrico); Sharpe = (compuesto − rf) / vol
+    vol_ann = sig_d * math.sqrt(TRADING_DAYS)
+    ret_geom = (eq ** (TRADING_DAYS / n) - 1.0) if (n > 0 and eq > 0) else 0.0
+    ret_arith = mu_d * TRADING_DAYS
+    rf = float(rf or 0.0)
+    sharpe = round((ret_geom - rf) / vol_ann, 2) if vol_ann else None
 
     positions = [{'symbol': s, 'shares': shares[s], 'price': round(histories[s][last], 4),
                   'value_usd': round(values[s], 2), 'weight_pct': round(w[s] * 100, 2),
@@ -175,14 +254,17 @@ def compute(histories, shares, fx, bench=None, horizon=10):
         'ok': True, 'as_of': last, 'days': n, 'from': common[0], 'horizon_days': horizon,
         'portfolio_value_usd': round(total, 2),
         'vol_daily_pct': round(sig_d * 100, 3),
-        'vol_ann_pct': round(sig_d * math.sqrt(TRADING_DAYS) * 100, 2),
-        'return_ann_pct': round(((1 + mu_d) ** TRADING_DAYS - 1) * 100, 2),
-        'sharpe': round(mu_d / sig_d * math.sqrt(TRADING_DAYS), 2) if sig_d else None,
+        'vol_ann_pct': round(vol_ann * 100, 2),
+        'return_ann_pct': round(ret_geom * 100, 2),            # compuesto (geométrico)
+        'return_arith_ann_pct': round(ret_arith * 100, 2),     # media diaria × 252
+        'sharpe': sharpe, 'risk_free_pct': round(rf * 100, 2),
+        'risk_free_source': rf_source or 'sin dato — 0 %',
+        'sharpe_method': '(retorno anual compuesto − tasa libre de riesgo) / volatilidad anual',
         'var95': v95, 'var99': v99,
         'max_drawdown_pct': round(mdd * 100, 2), 'max_drawdown_date': mdd_date,
-        'beta_spy': beta, 'corr_spy': corr_mkt,
+        'beta_spy': beta, 'corr_spy': corr_mkt, 'bench_overlap_days': overlap, 'aligned_dates': aligned,
         'diversification_ratio': round(divers, 2) if divers else None,
-        'backtest95': {'breaches': breaches, 'days': n, 'expected': round(n * 0.05, 1)},
+        'backtest95': backtest,
         'worst_days': [{'date': d, 'pct': round(r * 100, 2), 'usd': round(r * total, 2)} for r, d in worst],
         'positions': positions,
         'correlation': {'symbols': syms, 'matrix': [[corr[a][b] for b in syms] for a in syms]},
@@ -248,7 +330,14 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
                 'error': 'no hay posiciones con ticker y cantidad (acciones o dólares)'}
     syms = list(clean) + [BENCH]
     with ThreadPoolExecutor(max_workers=8) as ex:
+        irx_fut = ex.submit(fetch_history, RF_SYMBOL, '1mo', getter)       # D2: tasa libre de riesgo, misma caché
         got = dict(zip(syms, ex.map(lambda s: fetch_history(s, rng, getter), syms)))
+        try:
+            irx, _c = irx_fut.result()
+        except Exception:  # noqa: BLE001
+            irx = {}
+    rf, rf_source = (irx[max(irx)] / 100.0, f'T-bill 13 semanas ({RF_SYMBOL}) {irx[max(irx)]:.2f} % al {max(irx)}') \
+        if irx else (0.0, 'sin dato — 0 % (no se pudo bajar ^IRX)')
     histories, fx, excluded = {}, {}, []
     for s in clean:
         h, cur = got[s]
@@ -287,7 +376,7 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
                'error': 'no se pudieron obtener precios históricos (proveedor de datos no disponible o tickers sin historia)'}
     else:
         rep = compute({s: histories[s] for s in shares}, shares, fx, bench=got[BENCH][0] or None,
-                      horizon=horizon)
+                      horizon=horizon, rf=rf, rf_source=rf_source)
         if not rep.get('ok') and 'error_code' not in rep:
             err = rep.get('error') or ''
             rep['error_code'] = ('short_history' if 'insuficiente' in err
@@ -295,6 +384,15 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
     rep['excluded'] = excluded
     rep['labels'] = labels
     rep['converted'] = converted
-    rep['source'] = 'Yahoo Finance (precios diarios ajustados)'
+    unadj = []
+    for p in rep.get('positions') or []:
+        m = history_meta(p['symbol'], rng) or {}
+        p['adjusted'] = bool(m.get('adjusted', True))
+        p['exchange_tz'] = m.get('tz')
+        if not p['adjusted']:
+            unadj.append(p['symbol'])
+    rep['unadjusted_symbols'] = unadj
+    rep['source'] = ('Yahoo Finance (precios diarios ajustados' +
+                     ('; cierres SIN ajustar por dividendos/splits en: ' + ', '.join(unadj) if unadj else '') + ')')
     rep['generated_at'] = datetime.now(timezone.utc).isoformat()
     return rep

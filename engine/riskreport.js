@@ -346,8 +346,8 @@
     if (lv.k === 'high') out.push(L('Si una caída como la de arriba te quitaría el sueño, tener una parte en activos más estables (por ejemplo fondos amplios o bonos) baja el riesgo total.',
       'If a drop like the one above would keep you up at night, holding part in steadier assets (for example broad funds or bonds) lowers total risk.'));
     var bt = r.backtest95;
-    if (bt && bt.breaches > bt.expected * 1.5) out.push(L('En el último año las pérdidas reales superaron el "día malo" más veces de lo esperado: toma estas cifras como un mínimo.',
-      'Last year real losses beat the "bad day" figure more often than expected: treat these numbers as a floor.'));
+    if (bt && bt.verdict === 'subestima') out.push(L('En los últimos meses las pérdidas reales superaron el "día malo" más veces de lo esperado (prueba de Kupiec): toma estas cifras como un mínimo.',
+      'In recent months real losses beat the "bad day" figure more often than expected (Kupiec test): treat these numbers as a floor.'));
     if (!out.length) out.push(L('Tu cartera no muestra una concentración fuerte. Revisa el riesgo de nuevo cuando cambies posiciones.',
       'Your portfolio shows no strong concentration. Check the risk again when you change positions.'));
     return out;
@@ -418,14 +418,25 @@
       card('VaR 95% · ' + r.horizon_days + ' ' + L('días', 'days'), usd(v95.hist_nd_usd), pct(v95.hist_nd_pct) + ' (√' + r.horizon_days + ')') +
       card(L('Máxima caída', 'Max drawdown') + chip('drawdown'), pct(r.max_drawdown_pct, 1), r.max_drawdown_date ? L('fondo el ', 'trough on ') + r.max_drawdown_date : '') +
       card(L('Beta vs S&P 500', 'Beta vs S&P 500') + chip('beta'), r.beta_spy == null ? '—' : num(r.beta_spy, 2), r.corr_spy == null ? '' : L('correlación ', 'correlation ') + num(r.corr_spy, 2)) +
-      card('Sharpe' + chip('sharpe'), r.sharpe == null ? '—' : num(r.sharpe, 2), L('retorno anual ', 'annual return ') + pct(r.return_ann_pct, 1)) +
+      card('Sharpe' + chip('sharpe'), r.sharpe == null ? '—' : num(r.sharpe, 2), L('retorno anual compuesto ', 'compounded annual return ') + pct(r.return_ann_pct, 1) + (r.risk_free_pct != null ? ' − ' + L('tasa libre ', 'risk-free ') + pct(r.risk_free_pct, 2) : '')) +
       card(L('Diversificación', 'Diversification') + chip('correlation'), r.diversification_ratio == null ? '—' : num(r.diversification_ratio, 2) + '×', L('1 = sin beneficio', '1 = no benefit')) +
       '</div>';
     var bt = r.backtest95;
-    h += '<div class="note">' + chip('backtest') + ' ' + esc(L(
-      'En el último año la pérdida real superó el VaR 95% en ' + bt.breaches + ' de ' + bt.days + ' días (lo esperado es ~' + num(bt.expected, 1) + ').',
-      'Over the last year the real loss exceeded the 95% VaR on ' + bt.breaches + ' of ' + bt.days + ' days (about ' + num(bt.expected, 1) + ' expected).')) +
-      (bt.breaches > bt.expected * 1.5 ? ' <b style="color:#FFB300">' + esc(L('El VaR estaría subestimando el riesgo.', 'VaR would be underestimating risk.')) + '</b>' : '') + '</div>';
+    if (bt && bt.method === 'rolling_oos') {
+      h += '<div class="note">' + chip('backtest') + ' ' + esc(L(
+        'Backtest fuera de muestra: en los últimos ' + bt.days + ' días la pérdida real superó el VaR 95% (calculado cada día con los ' + bt.window + ' días previos) ' + bt.breaches + ' veces; lo esperado es ~' + num(bt.expected, 1) + ' (prueba de Kupiec p = ' + num(bt.kupiec_p, 3) + ').',
+        'Out-of-sample backtest: over the last ' + bt.days + ' days the real loss exceeded the 95% VaR (computed each day from the previous ' + bt.window + ' days) ' + bt.breaches + ' times; about ' + num(bt.expected, 1) + ' expected (Kupiec test p = ' + num(bt.kupiec_p, 3) + ').')) +
+        (bt.verdict === 'subestima' ? ' <b style="color:#FFB300">' + esc(L('El VaR está subestimando el riesgo.', 'VaR is underestimating risk.')) + '</b>' : '') +
+        (bt.verdict === 'sobreestima' ? ' <b style="color:#5FC6E8">' + esc(L('El VaR fue más prudente de lo necesario en este período.', 'VaR was more cautious than needed in this period.')) + '</b>' : '') +
+        (bt.low_power ? ' ' + esc(L('(Pocos días para concluir con fuerza.)', '(Few days to conclude strongly.)')) : '') + '</div>';
+    } else if (bt) {
+      h += '<div class="note">' + chip('backtest') + ' ' + esc(L(
+        'En el último año la pérdida real superó el VaR 95% en ' + bt.breaches + ' de ' + bt.days + ' días (lo esperado es ~' + num(bt.expected, 1) + ').',
+        'Over the last year the real loss exceeded the 95% VaR on ' + bt.breaches + ' of ' + bt.days + ' days (about ' + num(bt.expected, 1) + ' expected).')) + '</div>';
+    }
+    if (r.unadjusted_symbols && r.unadjusted_symbols.length) {
+      h += '<div class="warn">' + esc(L('Cierres SIN ajustar por dividendos/splits en: ' + r.unadjusted_symbols.join(', ') + ' (el proveedor no entregó la serie ajustada).', 'Closes NOT adjusted for dividends/splits in: ' + r.unadjusted_symbols.join(', ') + ' (the provider did not return the adjusted series).')) + '</div>';
+    }
     h += '<div class="grid2"><div class="sec"><h3>' + esc(L('Distribución de retornos diarios', 'Daily return distribution')) + '</h3>' +
       '<div style="height:220px"><canvas id="krr-hist"></canvas></div><div class="note">' + esc(L('En rojo: días peores que el VaR 95%.', 'In red: days worse than the 95% VaR.')) + '</div></div>' +
       '<div class="sec"><h3>' + esc(L('Peores días reales', 'Worst real days')) + '</h3><table><tr><th>' + esc(L('Fecha', 'Date')) + '</th><th>%</th><th>USD</th></tr>' +

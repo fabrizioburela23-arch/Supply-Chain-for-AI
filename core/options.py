@@ -124,8 +124,8 @@ def chain_meta(symbol, expiry=None, fetch=None):
 def risk_free_rate(fetch_hist=None):
     """Rendimiento del T-bill 13 semanas (^IRX, en %) como decimal, o (0, False)."""
     try:
-        from core.risk_report import fetch_history
-        h, _ = (fetch_hist or fetch_history)('^IRX', '1mo')
+        from core.risk_report import RF_SYMBOL, fetch_history
+        h, _ = (fetch_hist or fetch_history)(RF_SYMBOL, '1mo')
         if h:
             return h[max(h)] / 100.0, True
     except Exception:  # noqa: BLE001
