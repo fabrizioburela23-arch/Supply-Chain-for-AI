@@ -464,12 +464,14 @@ if os.getenv('REMIGRATE_ON_BOOT', '').strip():
 # KHIPU_SCHEDULER=off lo apaga (tests). Las tareas se registran aquí; nunca IA.
 try:
     from core import scheduler as _sched
+    try:
+        from research.runner import recover_orphans_job as _recover_orphans_job
+        from research.runner import resume_deferred_job as _resume_deferred
+        _sched.register('research_recover_orphans', _recover_orphans_job, every_s=600)   # R7: al arrancar y cada 10 min
+        _sched.register('research_resume_deferred', _resume_deferred, every_s=600)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: research no registrado (%s)', type(_e).__name__)
     if _sched.enabled():
-        try:
-            from research.runner import resume_deferred_job as _resume_deferred
-            _sched.register('research_resume_deferred', _resume_deferred, every_s=600)
-        except Exception as _e:  # noqa: BLE001
-            log.warning('scheduler: research no registrado (%s)', type(_e).__name__)
         _sched.start()
 except Exception as _e:  # noqa: BLE001
     log.warning('scheduler no arrancó: %s', _e)

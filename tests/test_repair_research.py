@@ -616,3 +616,146 @@ def test_r6_mcp_expone_get_research_health_con_scope_read(monkeypatch):
     assert d['result']['isError'] is False and 'providers' in sc and 'queue' in sc and sc['hint_en']
     assert sc['budget']['research']['spent_today_usd'] is None        # sin base: lo dice, no inventa
     assert json.dumps(sc)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R7 · Correcciones de la revisión adversarial de R1-R6
+# ════════════════════════════════════════════════════════════════════════════
+
+@needs_db
+def test_r7_un_job_se_reclama_una_sola_vez_aunque_dos_ejecutores_lo_intenten(db, monkeypatch):
+    import threading
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    runner._reset_workers()
+    with session_scope() as s:
+        job, _ = runner.create_job(s, 'Nvidia', agents=['fundamental'], force=True)
+        jid = job.id
+    with session_scope() as s:
+        assert runner.claim_job(s, jid) is True and runner.claim_job(s, jid) is False
+        s.get(ResearchJob, jid).status = 'queued'          # lo dejamos 'queued' para la carrera de abajo
+    runs = []
+    monkeypatch.setattr(runner, 'execute_job', lambda session, job, **kw: (runs.append(job.id), setattr(job, 'status', 'done')))
+    ts = [threading.Thread(target=runner._run_job_id, args=(jid,)) for _ in range(4)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join(10)
+    assert runs == [jid]                                  # antes: hasta 4 ejecuciones del mismo job
+    with session_scope() as s:
+        assert s.get(ResearchJob, jid).status == 'done'
+    # un job que ya no está 'queued' (done/partial/deferred) no se vuelve a ejecutar aunque lo pidan directo
+    with session_scope() as s:
+        j = s.get(ResearchJob, jid)
+        from research.runner import _execute_job
+        assert _execute_job(s, j).status == 'done'
+
+
+@needs_db
+def test_r7_una_excepcion_a_mitad_del_job_cierra_el_job_y_sus_runs(db, monkeypatch):
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import AgentRun, ResearchJob
+
+    def boom(session, job, **kw):
+        session.add(AgentRun(job_id=job.id, agent_id='x', agent_type='fundamental', entity_id=job.entity_id,
+                             trigger={}, depth='STANDARD', status='running', started_at=runner._now()))
+        session.flush()
+        session.commit()
+        raise RuntimeError('se cayó la base a mitad')
+    monkeypatch.setattr(runner, 'execute_job', boom)
+    with session_scope() as s:
+        job, _ = runner.create_job(s, 'AMD', agents=['fundamental'], force=True)
+        jid = job.id
+    runner._run_job_id(jid)
+    with session_scope() as s:
+        assert s.get(ResearchJob, jid).status == 'failed'
+        run = s.query(AgentRun).filter_by(job_id=jid).one()
+        assert run.status == 'failed' and 'RuntimeError' in run.errors[0]
+
+
+@needs_db
+def test_r7_al_arrancar_el_proceso_todo_running_es_huerfano_y_la_pizarra_cuenta_como_persona(db, monkeypatch):
+    from datetime import datetime, timedelta
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    runner._reset_workers()
+    monkeypatch.setattr(runner, 'execute_job', lambda session, job, **kw: setattr(job, 'status', 'done'))
+    now = datetime.now(runner.timezone.utc)
+    with session_scope() as s:
+        fresh, _ = runner.create_job(s, 'TSMC', agents=['news'], force=True)
+        fresh.status = 'running'                           # hace 1 minuto, pero el proceso acaba de arrancar
+        fresh.created_at = now - timedelta(minutes=1)
+        a, _ = runner.create_job(s, 'ASML', agents=['news'], trigger={'kind': 'board', 'by': 'fabrizio'}, force=True)
+        runner.defer_job(s, a, now=now - timedelta(days=2))
+        b, _ = runner.create_job(s, 'ASML', agents=['news'], trigger={'kind': 'board', 'by': 'fabrizio'}, force=True)
+        runner.defer_job(s, b, now=now - timedelta(days=2))         # el mismo pedido diferido dos veces
+        fresh_id, a_id, b_id = fresh.id, a.id, b.id
+    rec = runner._recover_orphans(boot=True)
+    assert rec['failed'] == 1
+    with session_scope() as s:
+        assert s.get(ResearchJob, fresh_id).status == 'failed' and 'reinicio' in s.get(ResearchJob, fresh_id).error
+        out = runner.resume_deferred(s, now=now)
+        assert out['resumed'] == [a_id] and out['discarded'] == [b_id]
+        assert 'duplicado' in s.get(ResearchJob, b_id).error
+    runner._reset_workers()
+
+
+def test_r7_sobrecarga_pasajera_en_un_modelo_claude_no_abre_el_circuito(monkeypatch):
+    from core import ai
+    from tests.test_infra import _status_error
+    monkeypatch.setattr(ai, 'AI_MODEL_FAST', 'claude-b')
+    monkeypatch.setattr(ai, 'AI_MODEL_DEEP', 'claude-a')
+    monkeypatch.setattr(ai, 'AI_TRANSIENT_RETRIES', 1)
+    plan = [_status_error(529), _status_error(529), _status_error(404)]     # a saturado, b saturado, haiku retirado
+    _fake_anthropic(monkeypatch, plan)
+    with pytest.raises(RuntimeError) as ei:
+        ai._complete_claude('s', 'p', 10, tier='deep')
+    assert 'pasajera' in str(ei.value) and ai.ai_circuit_state()['claude']['open'] is False
+    plan[:] = [_status_error(404)]                                            # TODOS retirados → sí se abre
+    with pytest.raises(RuntimeError):
+        ai._complete_claude('s', 'p', 10, tier='deep')
+    assert ai.ai_circuit_state()['claude']['kind'] == 'model'
+
+
+def test_r7_clave_de_gemini_invalida_abre_el_circuito(monkeypatch):
+    from core import ai
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-pro-x')
+    monkeypatch.setattr(ai.requests, 'post', lambda url, **kw: _Resp(400, {'error': {
+        'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'x', 'reason': 'API_KEY_INVALID'}]}}))
+    with pytest.raises(RuntimeError) as ei:
+        ai._complete_gemini('', 'p', 10)
+    assert 'API_KEY_INVALID' in str(ei.value) and ai.ai_circuit_state()['gemini']['kind'] == 'auth'
+
+
+def test_r7_un_limite_de_gasto_no_salta_al_siguiente_proveedor():
+    from core.ai_usage import AIBudgetError
+    from research.llm import FakeProvider, LLMError, RoutedProvider
+    from research.schemas import AgentResearchResult
+    a = FakeProvider([AIBudgetError('límite diario', 'daily limit', 'daily')])
+    b = FakeProvider([_ok_result()])
+    with pytest.raises(LLMError) as ei:
+        RoutedProvider([a, b]).structured_generate('s', 'p', AgentResearchResult)
+    assert 'límite de gasto' in str(ei.value) and b.calls == []
+    # proveedor DESACTIVADO a mano (scope 'provider') sí pasa al siguiente
+    a2 = FakeProvider([AIBudgetError('claude desactivado', 'claude disabled', 'provider')])
+    b2 = FakeProvider([_ok_result()])
+    obj, meta = RoutedProvider([a2, b2]).structured_generate('s', 'p', AgentResearchResult)
+    assert obj.claims and b2.calls
+
+
+def test_r7_el_chat_de_khipu_es_trabajo_interactivo_no_de_fondo(monkeypatch):
+    from core import ai, khipu_chat
+    seen = []
+
+    def fake(system, prompt, max_tokens, tier='fast', **kw):
+        seen.append(ai._is_background())
+        return '{"final": "ok"}', 'fake'
+    monkeypatch.setattr(ai, '_ai_complete', fake)
+    khipu_chat._call_ai('s', 'p', 5)
+    assert seen == [False]          # antes: True → solo cupos de fondo, "IA ocupada" con el cupo del usuario libre

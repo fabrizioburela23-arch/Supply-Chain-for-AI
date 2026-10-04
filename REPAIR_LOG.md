@@ -159,3 +159,39 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_research.py -k r6` (3 tests; antes 404
   y herramienta inexistente). En producción: `/api/research/health`.
 - **Rollback.** Revertir el commit; no toca datos.
+
+### R7 — Correcciones de la revisión adversarial de R1-R6 (lentes "cola" e "IA")
+
+- **Hallazgos aceptados.** (1) La recuperación de huérfanos corría una sola vez,
+  perezosa, e ignoraba los `running` de menos de 30 min: tras un deploy un job
+  recién interrumpido quedaba `running` para siempre. (2) Sin reclamo atómico, dos
+  ejecutores (cola, Pizarra, comité, recuperación) podían correr el mismo job.
+  (3) Una excepción a mitad del job dejaba sus runs `running`. (4) El mismo pedido
+  diferido varias veces se reanudaba varias veces; los pedidos de la Pizarra
+  (`kind='board'`, clic humano) se descartaban como "evento automático". (5) En
+  Claude el corta-circuito se decidía por el ÚLTIMO modelo candidato: Sonnet
+  saturado (529) + haiku retirado (404) abría la pausa de todo el proveedor. (6) Una
+  clave de Gemini inválida llega como 400 INVALID_ARGUMENT con `reason:
+  API_KEY_INVALID` en `details` y nunca abría el circuito. (7) Un límite de 💰
+  Gasto IA se trataba como fallo del proveedor y la cascada seguía gastando en el
+  siguiente. (8) El chat de Khipu corre sus llamadas de IA en un pool sin contexto
+  de petición → contaba como FONDO y recibía "IA ocupada" con el cupo del usuario
+  libre.
+- **Cambios.** `research/runner.py`: `claim_job` (UPDATE atómico queued→running)
+  usado por la cola y por `_execute_job` (un job que ya no está `queued` no se
+  re-ejecuta); `_run_job_id` cierra los runs al fallar; `_recover_orphans(boot=)`
+  (al arrancar TODO `running` es huérfano; después los > RESEARCH_STALE_MIN que no
+  corren en este proceso) como tarea periódica `research_recover_orphans` (cada
+  10 min, primera pasada al arrancar); `resume_deferred` descarta duplicados por
+  `dedupe_key`; `_HUMAN_KINDS` + 'board'; `create_job` reutiliza sub-jobs
+  diferidos. `core/ai.py`: Claude → si algún modelo falló por sobrecarga pasajera
+  el error final no es definitivo (no abre circuito) y el código HTTP va explícito;
+  Gemini → el `reason` simbólico de `details` entra en el mensaje (API_KEY_INVALID
+  → pausa 'auth'). `research/llm.py`: `AIBudgetError` (diario/mensual/función)
+  corta la cascada (solo 'provider' desactivado pasa al siguiente). `core/
+  khipu_chat.py`: `_ai_interactive` (ai_background(False)) en las llamadas del chat.
+- **Descartados / conocidos.** El debate del comité (3 hilos) y las contradicciones
+  semánticas no pasan por el pool de agentes: el semáforo de IA (cupos de fondo)
+  sigue acotándolos — se deja documentado. "IA ocupada" en el 2.º intento de un
+  structured_generate repite el 1.º (raro; tokens ya contados por R5).
+- **Verificar.** `pytest tests/test_repair_research.py -k r7` (7 tests).

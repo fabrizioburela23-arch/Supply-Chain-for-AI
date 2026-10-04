@@ -421,7 +421,7 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
     #  intento 1 → desactivar el pensamiento (budget normal, respuesta directa);
     #  intento 2 → sin ese kwarg (por si el SDK es viejo) pero con MUCHO más
     #              presupuesto, para que quepan pensamiento + respuesta.
-    last_err = None
+    last_err, transient_seen = None, None
     for m in candidates:
         attempts = [
             ({'thinking': {'type': 'disabled'}}, max_tokens),
@@ -439,14 +439,25 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
                     # timeout / red caída: probar OTRO modelo Claude no ayuda y
                     # ataría el hilo N veces más → pasa directo a Gemini/NVIDIA.
                     raise RuntimeError(f'{type(e).__name__}: ' + _redact(e, 120)) from None
+                if _transient(e):
+                    transient_seen = e
                 last_err = e
                 break              # prueba el siguiente modelo Claude
             text = _text_of(msg)
             if text.strip():
                 return text, msg.model
             # texto vacío (el pensamiento se comió el budget) → siguiente intento
+    if transient_seen is not None:
+        # R7: si ALGÚN modelo falló por sobrecarga pasajera, el error final no es
+        # definitivo (antes el 404 de un modelo de respaldo abría la pausa de TODO
+        # el proveedor 30 min aunque el modelo principal solo estuviera saturado).
+        raise RuntimeError('claude: sobrecarga pasajera en ' + ', '.join(candidates) + ': ' +
+                           _redact(transient_seen, 100)) from None
     if last_err is not None:
-        raise RuntimeError(_redact(last_err, 160)) from None
+        # el código HTTP va explícito: el texto del SDK puede no traerlo y el
+        # corta-circuito (R1) clasifica por él (401/403/404/410 vs pasajeros)
+        code = getattr(last_err, 'status_code', None) or getattr(getattr(last_err, 'response', None), 'status_code', None)
+        raise RuntimeError((f'claude HTTP {code}: ' if code else '') + _redact(last_err, 160)) from None
     raise RuntimeError('claude: sin texto de ningún modelo')
 
 
@@ -515,13 +526,20 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
     if not r.ok:
         # solo el código + el estado simbólico de Google (NOT_FOUND, PERMISSION_DENIED…):
         # nada del cuerpo libre, que podría repetir datos de la petición.
-        st = ''
+        st, reason = '', ''
         try:
-            st = str(((r.json() or {}).get('error') or {}).get('status') or '')
+            err = (r.json() or {}).get('error') or {}
+            st = str(err.get('status') or '')
+            # R7: el MOTIVO simbólico (p. ej. API_KEY_INVALID bajo un 400 INVALID_ARGUMENT):
+            # sin él una clave inválida nunca abría el corta-circuito
+            for d in (err.get('details') or []):
+                if isinstance(d, dict) and re.fullmatch(r'[A-Z_]{3,40}', str(d.get('reason') or '')):
+                    reason = str(d['reason'])
+                    break
         except Exception:  # noqa: BLE001
             st = ''
         st = st if re.fullmatch(r'[A-Z_]{3,40}', st or '') else ''
-        raise RuntimeError(f'Gemini HTTP {r.status_code}' + (f' {st}' if st else ''))
+        raise RuntimeError(f'Gemini HTTP {r.status_code}' + (f' {st}' if st else '') + (f' {reason}' if reason else ''))
     data = r.json() or {}
     try:   # gasto: usageMetadata de Google (el "pensamiento" se cobra como salida)
         um = data.get('usageMetadata') or {}

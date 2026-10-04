@@ -65,6 +65,14 @@ TOOL_TIMEOUT_S = 14.0
 
 _POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix='khipu-chat')
 
+
+def _ai_interactive(fn, *a, **kw):
+    """R7: las llamadas de IA del chat corren en un hilo del pool (sin contexto de
+    petición) y core/ai las tomaba por trabajo de FONDO: nunca usaban el cupo
+    reservado al usuario y recibían 'IA ocupada' mientras ese cupo estaba libre."""
+    with _ai.ai_background(False):
+        return fn(*a, **kw)
+
 TABS = ('map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'portfolios', 'guia')
 PRESETS = ('taiwan_conflict', 'china_chip_ban_total', 'hbm_shortage_2027', 'openai_ipo_impact', 'starshield_reveal')
 
@@ -874,7 +882,7 @@ def synthesize(message, history, lang, context, scratch, timeout):
         parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
     parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
     t0 = time.monotonic()
-    fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, 'fast',
+    fut = _POOL.submit(_ai_interactive, _ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, 'fast',
                        timeout_s=max(5.0, min(float(timeout), 30.0)))
     text, model = fut.result(timeout=max(1.0, timeout))
     t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
@@ -882,7 +890,7 @@ def synthesize(message, history, lang, context, scratch, timeout):
     if (leaked(t) or truncated(t)) and left > 8:          # un reintento con el aviso concreto
         fb = ('\n\nTU RESPUESTA ANTERIOR ' + ('QUEDÓ CORTADA' if truncated(t) else 'TENÍA JSON O BORRADORES') +
               '. Escríbela COMPLETA, más corta (máx. 180 palabras), en prosa limpia.')
-        fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, 'fast',
+        fut = _POOL.submit(_ai_interactive, _ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, 'fast',
                            timeout_s=max(5.0, min(float(left), 30.0)))
         text2, model2 = fut.result(timeout=max(1.0, left))
         t2 = re.sub(r'^```\w*\s*|\s*```$', '', str(text2 or '').strip()).strip()
@@ -1068,7 +1076,7 @@ def _call_ai(system, prompt, timeout):
     # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento.
     # timeout_s: el proveedor corta a la vez que el chat (antes el hilo seguía 90 s ocupando cupo).
     # live_facts=False: el bloque "DATOS EN VIVO" se calcula UNA vez por pregunta en _run_chat.
-    fut = _POOL.submit(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True,
+    fut = _POOL.submit(_ai_interactive, _ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True,
                        timeout_s=max(5.0, min(float(timeout), 30.0)), live_facts=False)
     return fut.result(timeout=max(1.0, timeout))
 

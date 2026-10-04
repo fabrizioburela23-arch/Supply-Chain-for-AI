@@ -234,6 +234,12 @@ class RoutedProvider(LLMProvider):
         return LLMError(f'IA ocupada tras {n} esperas (cupos de IA llenos: comité/chat/otras investigaciones); '
                         f'se reintentará / AI busy after {n} waits (AI slots full); will be retried')
 
+    @staticmethod
+    def _is_spend_limit(e):
+        """R7: un límite de 💰 Gasto IA (diario/mensual/por función) frena a TODOS
+        los proveedores; solo 'provider' (proveedor desactivado) pasa al siguiente."""
+        return type(e).__name__ == 'AIBudgetError' and getattr(e, 'scope', None) != 'provider'
+
     def generate(self, system, prompt, max_tokens=1500):
         errs = []
         for p in self.providers:
@@ -244,6 +250,8 @@ class RoutedProvider(LLMProvider):
             except _BusyExhausted as e:
                 raise self._busy_error(e.args[0]) from None
             except Exception as e:  # noqa: BLE001
+                if self._is_spend_limit(e):
+                    raise LLMError(f'límite de gasto de IA: {str(e)[:200]}') from None
                 errs.append(f'{p.name}: {str(e)[:120]}')
                 self.fallbacks.append(p.name)
         raise LLMError('ningún proveedor respondió: ' + '; '.join(errs or ['sin proveedores configurados']))
@@ -269,6 +277,8 @@ class RoutedProvider(LLMProvider):
                 raise self._busy_error(e.args[0]) from None
             except Exception as e:  # noqa: BLE001
                 self._note_spent(e)
+                if self._is_spend_limit(e):
+                    raise LLMError(f'límite de gasto de IA: {str(e)[:200]}', meta=dict(self.spent)) from None
                 errs.append(f'{p.name}: {str(e)[:200]}')
                 self.fallbacks.append(p.name)
         raise LLMError('; '.join(errs) or 'sin proveedores configurados', meta=dict(self.spent))

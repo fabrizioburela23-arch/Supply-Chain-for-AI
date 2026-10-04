@@ -242,7 +242,7 @@ def _parse_iso(v):
         return None
 
 
-_HUMAN_KINDS = ('user', 'mcp', 'committee')
+_HUMAN_KINDS = ('user', 'mcp', 'committee', 'board')     # pedidos de personas (la Pizarra la pulsa alguien)
 
 
 def resume_deferred(session, now=None, max_jobs=None):
@@ -256,11 +256,19 @@ def resume_deferred(session, now=None, max_jobs=None):
     out = {'resumed': [], 'discarded': [], 'waiting': 0, 'budget_exhausted': False}
     rows = (session.query(ResearchJob).filter(ResearchJob.status == 'deferred')
             .order_by(ResearchJob.created_at).all())
+    seen_keys = set()
     for j in rows:
         ra = _parse_iso((j.trigger or {}).get('resume_after'))
         if ra and ra > now:
             out['waiting'] += 1
             continue
+        if j.dedupe_key in seen_keys:            # R7: el mismo pedido diferido varias veces → uno solo
+            j.status = 'failed'
+            j.error = 'duplicado: el mismo pedido ya estaba en espera / duplicate: the same request was already waiting'
+            j.completed_at = now
+            out['discarded'].append(j.id)
+            continue
+        seen_keys.add(j.dedupe_key)
         if (j.trigger or {}).get('kind') not in _HUMAN_KINDS:
             j.status = 'failed'
             j.error = ('descartado: presupuesto agotado y el pedido venía de un evento automático / '
@@ -364,7 +372,8 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
                 sub_key = f'{entity_id}|{depth}|{",".join(sorted(missing))}'
                 sub = (session.query(ResearchJob).filter(ResearchJob.dedupe_key == sub_key,
                                                          ResearchJob.created_at >= since,
-                                                         ResearchJob.status.in_(('queued', 'running', 'done')))
+                                                         ResearchJob.status.in_(('queued', 'running', 'done',
+                                                                                 'deferred')))
                        .order_by(ResearchJob.created_at.desc()).first())
                 if sub and not (sub.status == 'done' and not session.query(AgentRun).filter(
                         AgentRun.job_id == sub.id, AgentRun.status == 'done').first()):
@@ -676,12 +685,27 @@ def execute_job(session, job, provider_factory=None, fetchers=None, on_start=Non
         return _execute_job(session, job, provider_factory, fetchers, on_start, on_done)
 
 
+def claim_job(session, job_id):
+    """R7: reclamo ATÓMICO del job ('queued' → 'running' en un solo UPDATE). Dos
+    ejecutores (cola, recuperación, Pizarra, comité) no pueden correr el mismo."""
+    n = (session.query(ResearchJob).filter(ResearchJob.id == job_id, ResearchJob.status == 'queued')
+         .update({'status': 'running'}, synchronize_session=False))
+    session.flush()
+    return bool(n)
+
+
 def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=None, on_done=None):
+    if job.status == 'queued':
+        if not claim_job(session, job.id):          # otro ejecutor lo tomó → no se duplica
+            session.refresh(job)
+            return job
+        job.status = 'running'
+    elif not (job.status == 'running' and getattr(job, '_claimed', False)):
+        return job                                   # done/failed/partial/deferred: no se re-ejecuta
     # R5: sin presupuesto no se arranca nada — el job se DIFIERE a mañana (antes:
     # 4 runs 'skipped' y el job 'failed', y nadie lo reanudaba).
     if job.agents and budget_exhausted(session):
         return defer_job(session, job)
-    job.status = 'running'
     session.flush()
     ok = 0
     quotes = baseline_quotes(job.entity_id, fetchers) if job.agents else {}
@@ -755,8 +779,11 @@ def _run_job_id(job_id):
     from ontology.db import session_scope
     try:
         with session_scope() as s:
+            if not claim_job(s, job_id):             # R7: ya lo tomó otro ejecutor (o ya no está 'queued')
+                return
             job = s.get(ResearchJob, job_id)
-            if job and job.status == 'queued':
+            if job is not None:
+                job._claimed = True
                 execute_job(s, job)
     except Exception as e:  # noqa: BLE001
         log.warning('research job %s: %s', job_id, e)
@@ -765,6 +792,10 @@ def _run_job_id(job_id):
                 job = s.get(ResearchJob, job_id)
                 if job:
                     job.status, job.error, job.completed_at = 'failed', str(e)[:300], _now()
+                    # R7: sus runs 'running' también se cierran (antes quedaban así para siempre)
+                    s.query(AgentRun).filter(AgentRun.job_id == job_id, AgentRun.status == 'running').update(
+                        {'status': 'failed', 'errors': [f'{type(e).__name__}: {str(e)[:200]}'], 'completed_at': _now()},
+                        synchronize_session=False)
         except Exception:  # noqa: BLE001
             pass
 
@@ -825,18 +856,31 @@ def execute_job_async(job_id):
     return _enqueue(job_id)
 
 
-def _recover_orphans():
+_BOOT = {'done': False}
+
+
+def _recover_orphans(boot=None):
     """Tras un reinicio (deploy): los jobs 'queued' de las últimas 24 h vuelven a la
-    cola; los 'running' más viejos que RESEARCH_STALE_MIN (hilo muerto) quedan
-    'failed' con motivo claro, igual que sus runs."""
+    cola; los 'running' huérfanos quedan 'failed' con motivo claro, igual que sus
+    runs. R7: en el PRIMER arranque del proceso (boot) TODO 'running' es huérfano
+    (gunicorn 1 worker: ningún hilo sobrevive al reinicio); después solo los más
+    viejos que RESEARCH_STALE_MIN que no estén en ejecución en este proceso."""
     from ontology.db import ontology_available, session_scope
     out = {'requeued': 0, 'failed': 0}
     if not ontology_available():
         return out
-    stale = _now() - timedelta(minutes=_cfg('RESEARCH_STALE_MIN', RESEARCH_STALE_MIN_DEFAULT, int))
+    if boot is None:
+        boot = not _BOOT['done']
+    _BOOT['done'] = True
+    stale_min = 0 if boot else _cfg('RESEARCH_STALE_MIN', RESEARCH_STALE_MIN_DEFAULT, int)
+    stale = _now() - timedelta(minutes=stale_min)
     recent = _now() - timedelta(hours=24)
+    with _W_LOCK:
+        running_here = set(_RUNNING)
     with session_scope() as s:
         for j in s.query(ResearchJob).filter(ResearchJob.status == 'running', ResearchJob.created_at < stale).all():
+            if j.id in running_here:
+                continue
             j.status = 'failed'
             j.error = 'investigación interrumpida (reinicio del servidor) / research interrupted (server restart)'
             j.completed_at = _now()
@@ -854,6 +898,15 @@ def _recover_orphans():
     if out['requeued'] or out['failed']:
         log.info('research: recuperación tras reinicio %s', out)
     return out
+
+
+def recover_orphans_job():
+    """Tarea periódica (core/scheduler): recuperación de huérfanos. Nunca lanza."""
+    try:
+        return _recover_orphans()
+    except Exception as e:  # noqa: BLE001
+        log.warning('research recover orphans: %s', type(e).__name__)
+        return None
 
 
 def _ensure_workers_quiet():
