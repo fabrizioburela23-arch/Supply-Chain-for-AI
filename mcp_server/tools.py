@@ -790,7 +790,9 @@ def t_get_research_job(ctx, job_id):
                          ('coverage incomplete (missing ' + ', '.join((cov or {}).get('missing') or []) +
                           '): read get_research(entity) as PARTIAL, or call run_research(entity, only_missing=true) '
                           'to complete the missing agents') if j.status == 'partial' else
-                         'still working — poll again in ~20-40 s' if j.status in ('queued', 'running') else None),
+                         'still working — poll again in ~20-40 s' if j.status in ('queued', 'running') else
+                         ('deferred: daily budget used up; resumes automatically after ' +
+                          str((j.trigger or {}).get('resume_after')) + ' UTC') if j.status == 'deferred' else None),
                 'source': 'Khipus research swarm', 'as_of': _now_iso()}
 
 
@@ -1030,18 +1032,26 @@ def t_run_research(ctx, entity, depth='STANDARD', only_missing=False):
     def _crear():
         with session_scope() as s:
             spent = runner.spent_today(s)
-            if spent >= budget:
-                raise ToolError(f'daily research budget exhausted (~${spent:.2f} of ${budget:.2f} estimated); '
-                                'try again tomorrow', code='budget_exhausted')
             job, reused = runner.create_job(s, r['id'], depth=depth, trigger={'kind': 'mcp', 'by': p.actor},
                                             requested_by=p.actor, only_missing=bool(only_missing))
+            # R5: presupuesto agotado → el pedido NO se pierde: queda diferido y se
+            # reanuda solo después de las 00:00 UTC (máx. 3 por día, pedidos de personas)
+            if not reused and job.status == 'queued' and spent >= budget:
+                runner.defer_job(s, job)
             return {'job_id': job.id, 'entity_id': r['id'], 'label': r['label'], 'status': job.status,
                     'reused': reused, 'agents': job.agents, 'depth': job.depth,
+                    'resume_after': (job.trigger or {}).get('resume_after'),
                     'spent_today_usd_est': round(spent, 4), 'daily_budget_usd': budget}
     out = _auth.with_schema(_crear)
-    if not out['reused']:
+    if not out['reused'] and out['status'] == 'queued':
         runner.execute_job_async(out['job_id'])
-    out['next'] = 'poll get_research_job(job_id) every ~30 s; when done read get_research(entity)'
+    if out['status'] == 'deferred':
+        out['next'] = (f"daily research budget used up (~${out['spent_today_usd_est']:.2f} of ${budget:.2f}); "
+                       f"the job is DEFERRED and resumes automatically after {out['resume_after']} "
+                       '(max 3 per day). Poll get_research_job(job_id) later; existing claims are still readable '
+                       'with get_research(entity).')
+    else:
+        out['next'] = 'poll get_research_job(job_id) every ~30 s; when done read get_research(entity)'
     out['as_of'] = _now_iso()
     return out
 

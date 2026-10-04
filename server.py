@@ -459,6 +459,21 @@ if os.getenv('REMIGRATE_ON_BOOT', '').strip():
     except Exception as _e:  # noqa: BLE001
         log.error('REMIGRATE_ON_BOOT falló (la app sigue): %s', _e)
 
+# ── R5 (misión de reparación): reloj del servidor para lo "diario" ───────────
+# Antes lo periódico colgaba del refresco de capitalizaciones (solo con tráfico).
+# KHIPU_SCHEDULER=off lo apaga (tests). Las tareas se registran aquí; nunca IA.
+try:
+    from core import scheduler as _sched
+    if _sched.enabled():
+        try:
+            from research.runner import resume_deferred_job as _resume_deferred
+            _sched.register('research_resume_deferred', _resume_deferred, every_s=600)
+        except Exception as _e:  # noqa: BLE001
+            log.warning('scheduler: research no registrado (%s)', type(_e).__name__)
+        _sched.start()
+except Exception as _e:  # noqa: BLE001
+    log.warning('scheduler no arrancó: %s', _e)
+
 # Config compartida server/ontology (keys de IA, Finnhub, timeout) → core/config.py
 # Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
 from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,

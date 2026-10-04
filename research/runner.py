@@ -204,6 +204,98 @@ def missing_agents(session, job):
     return list(cov.get('missing') or [])
 
 
+# ── R5: presupuesto agotado → DIFERIR (no "skipped"), reanudar mañana ────────
+def daily_budget():
+    return _cfg('RESEARCH_DAILY_BUDGET_USD', 2.0)
+
+
+def budget_exhausted(session):
+    return spent_today(session) >= daily_budget()
+
+
+def next_resume_time(now=None):
+    """00:05 UTC del día siguiente (el gasto diario se cuenta por día UTC)."""
+    now = now or _now()
+    nxt = (now + timedelta(days=1)).replace(hour=0, minute=5, second=0, microsecond=0)
+    return nxt
+
+
+def defer_job(session, job, now=None):
+    """Marca el job 'deferred' con hora de reanudación. No crea runs ni gasta."""
+    now = now or _now()
+    ra = next_resume_time(now)
+    job.status = 'deferred'
+    job.error = (f'presupuesto diario de IA agotado (≈${daily_budget():.2f}): se reanuda el '
+                 f'{ra.strftime("%Y-%m-%d %H:%M")} UTC / daily AI budget used up: resumes at '
+                 f'{ra.strftime("%Y-%m-%d %H:%M")} UTC')
+    job.trigger = dict(job.trigger or {}, resume_after=ra.isoformat(), deferred_at=now.isoformat())
+    job.completed_at = None
+    session.flush()
+    return job
+
+
+def _parse_iso(v):
+    try:
+        d = datetime.fromisoformat(str(v))
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+_HUMAN_KINDS = ('user', 'mcp', 'committee')
+
+
+def resume_deferred(session, now=None, max_jobs=None):
+    """Reanuda (→ 'queued') los jobs diferidos cuya hora llegó, SOLO los pedidos
+    por personas (user/mcp/comité), máx. RESEARCH_RESUME_MAX (3) por pasada y solo
+    si hay presupuesto; los de eventos automáticos se descartan ('failed' con
+    motivo). Devuelve {resumed, discarded, waiting, budget_exhausted}; el que
+    llama encola los `resumed` tras el commit."""
+    now = now or _now()
+    max_jobs = max_jobs or _cfg('RESEARCH_RESUME_MAX', 3, int)
+    out = {'resumed': [], 'discarded': [], 'waiting': 0, 'budget_exhausted': False}
+    rows = (session.query(ResearchJob).filter(ResearchJob.status == 'deferred')
+            .order_by(ResearchJob.created_at).all())
+    for j in rows:
+        ra = _parse_iso((j.trigger or {}).get('resume_after'))
+        if ra and ra > now:
+            out['waiting'] += 1
+            continue
+        if (j.trigger or {}).get('kind') not in _HUMAN_KINDS:
+            j.status = 'failed'
+            j.error = ('descartado: presupuesto agotado y el pedido venía de un evento automático / '
+                       'discarded: budget was exhausted and the request came from an automatic event')
+            j.completed_at = now
+            out['discarded'].append(j.id)
+            continue
+        if budget_exhausted(session):
+            out['budget_exhausted'] = True
+            out['waiting'] += 1
+            continue
+        if len(out['resumed']) >= max_jobs:
+            out['waiting'] += 1
+            continue
+        j.status, j.error = 'queued', None
+        j.trigger = dict(j.trigger or {}, resumed_at=now.isoformat())
+        out['resumed'].append(j.id)
+    session.flush()
+    return out
+
+
+def resume_deferred_job():
+    """Tarea periódica (core/scheduler): reanuda y ENCOLA. Nunca lanza."""
+    from ontology.db import ontology_available, session_scope
+    if not ontology_available():
+        return None
+    with session_scope() as s:
+        out = resume_deferred(s)
+    for jid in out['resumed']:
+        execute_job_async(jid)
+    if out['resumed'] or out['discarded']:
+        log.info('research: diferidos reanudados %s', out)
+    return out
+
+
 def _now():
     return datetime.now(timezone.utc)
 
@@ -254,7 +346,8 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
     if not force or only_missing:
         since = _now() - timedelta(minutes=_cfg('RESEARCH_DEDUPE_MINUTES', 30, int))
         q = session.query(ResearchJob).filter(ResearchJob.dedupe_key == key,
-                                              ResearchJob.status.in_(('queued', 'running', 'done', 'partial')))
+                                              ResearchJob.status.in_(('queued', 'running', 'done', 'partial',
+                                                                      'deferred')))
         if not only_missing:
             q = q.filter(ResearchJob.created_at >= since)
         prev = q.order_by(ResearchJob.created_at.desc()).first()
@@ -366,6 +459,7 @@ def _agent_work(entity_id, trigger, depth, agent_type, provider, fetchers, prior
         out['result'], out['meta'] = agent.run(ctx, provider)
     except LLMError as e:
         out['error'] = f'modelo: {str(e)[:400]}'
+        out['meta'] = dict(getattr(e, 'meta', None) or {})      # R5: tokens gastados aunque falló
     except Exception as e:  # noqa: BLE001 — un agente roto no tumba el job
         out['error'] = f'{type(e).__name__}: {str(e)[:300]}'
         log.warning('research run %s/%s: %s', entity_id, agent_type, e)
@@ -386,6 +480,11 @@ def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None)
             run.status, run.errors = 'skipped', [work['skipped']]
         elif work.get('error'):
             run.status, run.errors = 'failed', [work['error']]
+            m = work.get('meta') or {}
+            if m.get('tokens_in') or m.get('tokens_out'):      # R5: lo gastado cuenta para el tope
+                run.model = m.get('model') or run.model
+                run.tokens_in, run.tokens_out = int(m.get('tokens_in') or 0), int(m.get('tokens_out') or 0)
+                run.est_cost_usd = estimate_cost(run.model, run.tokens_in, run.tokens_out)
         else:
             result, meta = work['result'], work['meta']
             run.model = meta.get('model')
@@ -578,6 +677,10 @@ def execute_job(session, job, provider_factory=None, fetchers=None, on_start=Non
 
 
 def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=None, on_done=None):
+    # R5: sin presupuesto no se arranca nada — el job se DIFIERE a mañana (antes:
+    # 4 runs 'skipped' y el job 'failed', y nadie lo reanudaba).
+    if job.agents and budget_exhausted(session):
+        return defer_job(session, job)
     job.status = 'running'
     session.flush()
     ok = 0

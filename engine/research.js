@@ -41,7 +41,8 @@
   var STANCE = { positive: ['#2BE38B', 'a favor', 'positive'], negative: ['#FF4D6A', 'en contra', 'negative'],
     neutral: ['#9BA6C4', 'neutral', 'neutral'], mixed: ['#FFB300', 'mixta', 'mixed'] };
   var ST = { running: ['investigando…', 'investigating…'], done: ['listo', 'done'], failed: ['falló', 'failed'],
-    skipped: ['omitido', 'skipped'], queued: ['en cola', 'queued'], partial: ['parcial', 'partial'] };
+    skipped: ['omitido', 'skipped'], queued: ['en cola', 'queued'], partial: ['parcial', 'partial'],
+    deferred: ['en espera (presupuesto)', 'waiting (budget)'] };
   // R4 (misión de reparación): etiqueta corta del analista para la cobertura
   var AGL = { fundamental: ['Fundamental', 'Fundamental'], news: ['Noticias', 'News'], technical: ['Técnico', 'Technical'],
     supply_chain: ['Cadena de suministro', 'Supply chain'], geopolitical: ['Geopolítico', 'Geopolitical'], macro: ['Macro', 'Macro'],
@@ -347,11 +348,21 @@
     getJSON('/api/research/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity: entityId, depth: depth || 'STANDARD', actor: who, only_missing: !!onlyMissing }) }).then(function (d) {
       if (!d.job_id) { S.msg = { bad: true, text: friendlyError(d) }; render(); return; }
+      if (d.status === 'deferred') {
+        S.msg = { bad: true, text: L('Se acabó el presupuesto diario de IA. Tu pedido quedó guardado y se reanuda solo mañana (00:05 UTC). Las conclusiones que ya existen siguen abajo.',
+          'The daily AI budget is used up. Your request is saved and resumes automatically tomorrow (00:05 UTC). Existing conclusions remain below.') };
+        render(); return;
+      }
       S.job = d.job_id; render();
       if (S.poll) clearInterval(S.poll);
       S.poll = setInterval(function () {
         getJSON('/api/research/jobs/' + encodeURIComponent(S.job)).then(function (j) {
           loadActivity();
+          if (j.status === 'deferred') {
+            clearInterval(S.poll); S.poll = null; S.job = null;
+            S.msg = { bad: true, text: L('Se acabó el presupuesto diario de IA: la investigación se reanuda sola mañana (00:05 UTC).', 'The daily AI budget is used up: the research resumes automatically tomorrow (00:05 UTC).') };
+            load(S.entity); return;
+          }
           if (j.status === 'done' || j.status === 'partial' || j.status === 'failed' || j._status === 404) {
             clearInterval(S.poll); S.poll = null; S.job = null;
             var errs = runErrors(j), n = (j.claims || []).length, cov = j.coverage;

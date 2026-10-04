@@ -256,14 +256,17 @@ def test_dedupe_de_jobs_y_eventos(db):
 
 
 @needs_db
-def test_presupuesto_diario_detiene_agentes(db, monkeypatch):
+def test_presupuesto_diario_difiere_el_job(db, monkeypatch):
+    """R5 (misión de reparación): sin presupuesto el job se DIFIERE a mañana (antes:
+    runs 'skipped' y job 'failed' que nadie reanudaba)."""
     from ontology.db import session_scope
-    from research.models import AgentRun
+    from research.models import AgentRun, ResearchJob
     monkeypatch.setenv('RESEARCH_DAILY_BUDGET_USD', '0')
     jid = _run('Broadcom', ['fundamental'], {'fundamental': [_result([_claim()])]})
     with session_scope() as s:
-        run = s.query(AgentRun).filter_by(job_id=jid).one()
-        assert run.status == 'skipped' and 'presupuesto' in run.errors[0]
+        j = s.get(ResearchJob, jid)
+        assert j.status == 'deferred' and 'presupuesto' in j.error and j.trigger.get('resume_after')
+        assert s.query(AgentRun).filter_by(job_id=jid).count() == 0
 
 
 @needs_db

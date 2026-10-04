@@ -435,3 +435,113 @@ def test_r4_api_y_mcp_exponen_la_cobertura(db, monkeypatch):
     sc = r['result']['structuredContent']
     assert sc['status'] == 'partial' and sc['coverage']['n_done'] == 1 and 'only_missing' in sc['next']
     assert json.dumps(sc)       # serializable
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R5 · Presupuesto agotado → el job se DIFIERE y se reanuda mañana; costo real de runs fallidos; una sola tabla de precios
+# ════════════════════════════════════════════════════════════════════════════
+
+@needs_db
+def test_r5_presupuesto_agotado_difiere_el_job_y_se_reanuda_al_dia_siguiente(db, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import AgentRun, ResearchJob
+    from tests.test_research import _run
+    runner._reset_workers()
+    monkeypatch.setenv('RESEARCH_DAILY_BUDGET_USD', '0.0000001')
+    monkeypatch.setattr(runner, 'spent_today', lambda s: 1.0)
+    jid = _run('Broadcom', ['fundamental'], {'fundamental': [_ok_result()]})
+    with session_scope() as s:
+        j = s.get(ResearchJob, jid)
+        assert j.status == 'deferred' and 'presupuesto' in (j.error or '') and 'budget' in (j.error or '')
+        ra = j.trigger.get('resume_after')
+        assert ra and datetime.fromisoformat(ra) > datetime.now(timezone.utc)
+        assert s.query(AgentRun).filter_by(job_id=jid).count() == 0          # no se creó ningún run
+        # mientras está diferido, el mismo pedido se reutiliza ("ya está en cola para mañana")
+        j2, reused = runner.create_job(s, 'Broadcom', agents=['fundamental'])
+        assert reused and j2.id == jid
+    # llega mañana y hay presupuesto: se reanuda (máx. 3 por pasada), solo pedidos de personas
+    monkeypatch.setattr(runner, 'spent_today', lambda s: 0.0)
+    done = []
+    monkeypatch.setattr(runner, 'execute_job', lambda session, job, **kw: (done.append(job.entity_id), setattr(job, 'status', 'done')))
+    with session_scope() as s:
+        out = runner.resume_deferred(s, now=datetime.fromisoformat(ra) + timedelta(seconds=1))
+        assert out['resumed'] == [jid] and out['discarded'] == []
+    for jid_ in out['resumed']:
+        runner.execute_job_async(jid_)
+    import time
+    for _ in range(100):
+        if done:
+            break
+        time.sleep(0.05)
+    assert done == ['Broadcom']
+    runner._reset_workers()
+
+
+@needs_db
+def test_r5_los_diferidos_de_eventos_automaticos_se_descartan_y_antes_de_la_hora_esperan(db, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    now = datetime.now(timezone.utc)
+    with session_scope() as s:
+        ev, _ = runner.create_job(s, 'TSMC', agents=['news'], trigger={'kind': 'event', 'event_key': 'k'}, force=True)
+        runner.defer_job(s, ev, now=now)
+        hu, _ = runner.create_job(s, 'ASML', agents=['news'], trigger={'kind': 'user', 'by': 'fabrizio'}, force=True)
+        runner.defer_job(s, hu, now=now)
+        ev_id, hu_id = ev.id, hu.id
+        out = runner.resume_deferred(s, now=now)                     # todavía no es mañana
+        assert out['resumed'] == [] and out['waiting'] == 2
+        out = runner.resume_deferred(s, now=now + timedelta(days=1, minutes=10))
+        assert out['discarded'] == [ev_id] and out['resumed'] == [hu_id]
+        assert s.get(ResearchJob, ev_id).status == 'failed' and 'descartado' in s.get(ResearchJob, ev_id).error
+        assert s.get(ResearchJob, hu_id).status == 'queued'
+
+
+def test_r5_una_sola_tabla_de_precios_y_el_fallo_tambien_cuenta_tokens():
+    from core import ai_usage
+    from research.llm import FakeProvider, LLMError, RoutedProvider, estimate_cost
+    from research.schemas import AgentResearchResult
+    # precios: research usa la MISMA tabla que 💰 Gasto IA (antes claude-sonnet 3/15 vs 2/10)
+    assert estimate_cost('claude-sonnet-5', 1_000_000, 1_000_000) == ai_usage.cost_of('claude', 'claude-sonnet-5', 1_000_000, 1_000_000)
+    assert estimate_cost('gemini:gemini-2.5-flash', 1_000_000, 0) == ai_usage.cost_of('gemini', 'gemini:gemini-2.5-flash', 1_000_000, 0)
+    assert estimate_cost('fake-model', 1_000_000, 1_000_000) == 0.0
+    # un proveedor que gasta 3 intentos y falla deja sus tokens en el error (para el presupuesto)
+    p = FakeProvider(['no json', 'tampoco', 'ni esto'])
+    with pytest.raises(LLMError) as ei:
+        RoutedProvider([p]).structured_generate('s', 'p', AgentResearchResult, max_attempts=3)
+    meta = getattr(ei.value, 'meta', None)
+    assert meta and meta['tokens_in'] > 0 and meta['attempts'] == 3
+
+
+@needs_db
+def test_r5_el_run_fallido_registra_tokens_y_costo(db, monkeypatch):
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import AgentRun
+    from tests.test_research import _run
+    monkeypatch.setattr(runner, 'estimate_cost', lambda model, tin, tout: 0.0123 if tin else 0.0)
+    jid = _run('AMD', ['fundamental'], {'fundamental': ['no json', 'tampoco', 'ni esto']}, depth='QUICK')
+    with session_scope() as s:
+        run = s.query(AgentRun).filter_by(job_id=jid).one()
+        assert run.status == 'failed' and (run.tokens_in or 0) > 0 and run.est_cost_usd == 0.0123
+
+
+def test_r5_scheduler_corre_tareas_vencidas_y_sobrevive_a_errores():
+    from core import scheduler
+    scheduler._reset()
+    calls = []
+    scheduler.register('ok', lambda: calls.append('ok') or {'n': 1}, every_s=60)
+    scheduler.register('boom', lambda: (_ for _ in ()).throw(RuntimeError('x')), every_s=60)
+    scheduler.tick(now=1000.0)
+    scheduler.tick(now=1030.0)             # no vence todavía
+    scheduler.tick(now=1061.0)
+    assert calls == ['ok', 'ok']
+    st = scheduler.state()
+    assert st['ok']['runs'] == 2 and st['ok']['last_result'] == {'n': 1} and st['ok']['last_error'] is None
+    assert st['boom']['errors'] == 2 and 'RuntimeError' in st['boom']['last_error']
+    scheduler._reset()

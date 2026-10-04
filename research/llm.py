@@ -48,28 +48,29 @@ def _sleep(seconds):          # inyectable en tests
 class _BusyExhausted(Exception):
     pass
 
-# precio aproximado USD por 1M tokens (entrada, salida) — SOLO para el
-# control de presupuesto; se rotula "estimado" en la UI.
-_PRICE = {
-    'claude-sonnet': (3.0, 15.0), 'claude-haiku': (1.0, 5.0), 'claude-opus': (15.0, 75.0),
-    'claude': (3.0, 15.0), 'gemini': (0.3, 2.5), 'nvidia': (0.0, 0.0), 'fake': (0.0, 0.0),
-}
-
-
 def estimate_tokens(text):
     return max(1, len(text or '') // 4)
 
 
 def estimate_cost(model_label, tokens_in, tokens_out):
+    """USD estimados. R5: UNA sola tabla de precios para todo (core.ai_usage.PRICES
+    + AI_PRICES_JSON): antes research tenía la suya (claude-sonnet 3/15 vs 2/10)
+    y "presupuesto research" y "💰 Gasto IA" no cuadraban. 'fake' (tests) = $0."""
     ml = (model_label or '').lower()
-    key = next((k for k in ('claude-opus', 'claude-sonnet', 'claude-haiku', 'claude', 'gemini', 'nvidia', 'fake')
-                if k in ml), 'claude')
-    pin, pout = _PRICE[key]
-    return round((tokens_in * pin + tokens_out * pout) / 1e6, 6)
+    if not ml or ml.startswith('fake'):
+        return 0.0
+    from core.ai_usage import cost_of
+    provider = 'gemini' if ml.startswith('gemini') else 'nvidia' if ml.startswith('nvidia') \
+        else 'typesafe' if ml.startswith('typesafe') else 'claude'
+    return round(cost_of(provider, ml, tokens_in or 0, tokens_out or 0), 6)
 
 
 class LLMError(RuntimeError):
-    pass
+    """`meta` (opcional): tokens ya gastados antes de fallar — el presupuesto los cuenta (R5)."""
+
+    def __init__(self, msg, meta=None):
+        super().__init__(msg)
+        self.meta = meta
 
 
 class LLMProvider:
@@ -109,7 +110,7 @@ class LLMProvider:
             except (ValidationError, ValueError, json.JSONDecodeError, TypeError) as e:
                 feedback = str(e)[:1500]
                 meta['errors'].append(feedback[:300])
-        raise LLMError('salida inválida tras %d intentos: %s' % (meta['attempts'], feedback[:300]))
+        raise LLMError('salida inválida tras %d intentos: %s' % (meta['attempts'], feedback[:300]), meta=meta)
 
     def tool_call(self, *a, **k):   # reservado (Phase 2+: herramientas nativas)
         raise NotImplementedError
@@ -201,6 +202,14 @@ class RoutedProvider(LLMProvider):
         self.name = '>'.join(p.name for p in self.providers) or 'none'
         self.fallbacks = []
         self.busy_retries = 0
+        self.spent = {'tokens_in': 0, 'tokens_out': 0, 'attempts': 0, 'model': None}   # tokens de intentos fallidos
+
+    def _note_spent(self, e):
+        m = getattr(e, 'meta', None) or {}
+        for k in ('tokens_in', 'tokens_out', 'attempts'):
+            self.spent[k] += int(m.get(k) or 0)
+        if m.get('model'):
+            self.spent['model'] = m['model']
 
     def available(self):
         return any(p.available() for p in self.providers)
@@ -252,11 +261,14 @@ class RoutedProvider(LLMProvider):
                 meta['provider'] = p.name
                 meta['fallbacks'] = list(self.fallbacks)
                 meta['busy_retries'] = self.busy_retries
+                meta['tokens_in'] = int(meta.get('tokens_in') or 0) + self.spent['tokens_in']
+                meta['tokens_out'] = int(meta.get('tokens_out') or 0) + self.spent['tokens_out']
                 meta['seconds'] = round(time.time() - t0, 2)
                 return obj, meta
             except _BusyExhausted as e:
                 raise self._busy_error(e.args[0]) from None
             except Exception as e:  # noqa: BLE001
+                self._note_spent(e)
                 errs.append(f'{p.name}: {str(e)[:200]}')
                 self.fallbacks.append(p.name)
-        raise LLMError('; '.join(errs) or 'sin proveedores configurados')
+        raise LLMError('; '.join(errs) or 'sin proveedores configurados', meta=dict(self.spent))

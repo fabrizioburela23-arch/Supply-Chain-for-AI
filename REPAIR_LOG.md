@@ -108,3 +108,34 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Rollback.** Revertir el commit. Los jobs ya guardados conservan su estado;
   un `partial` nuevo no rompe clientes que solo esperaban `done` (lo tratan como
   "no terminado" → siguen sondeando: por eso la UI y el MCP se actualizan aquí).
+
+### R5 — Presupuesto agotado → el pedido se difiere y se reanuda solo; costo honesto; reloj del servidor
+
+- **Problema.** Con el tope diario (USD 2) alcanzado, cada agente quedaba
+  `skipped` y el job `failed`; nadie lo reanudaba y el MCP respondía con error.
+  Las corridas fallidas costaban $0 para el tope aunque gastaron tokens, y
+  research tenía su propia tabla de precios (claude-sonnet 3/15 vs 2/10 en 💰).
+  Lo "diario" dependía de que alguien abriera el mapa.
+- **Causa raíz.** `runner._prepare_run` evaluaba el tope por agente con una sola
+  salida (`skipped`); no había estado diferido ni reanudador ni reloj.
+- **Cambio.** `research/runner.py`: `budget_exhausted`, `defer_job` (estado
+  `deferred`, `trigger.resume_after` = 00:05 UTC del día siguiente, sin runs),
+  chequeo ÚNICO al inicio de `_execute_job`, `resume_deferred` (solo pedidos de
+  personas user/mcp/comité, máx. `RESEARCH_RESUME_MAX`=3 por pasada y solo con
+  presupuesto; los de eventos automáticos se descartan con motivo) y
+  `resume_deferred_job` (tarea periódica). Dedupe: `deferred` se reutiliza
+  ("ya está en cola para mañana"). `core/scheduler.py` (nuevo): hilo demonio con
+  `register/tick/state`, arranca en `server.py` (`KHIPU_SCHEDULER=off` lo apaga;
+  los tests lo apagan en conftest); tarea `research_resume_deferred` cada 10 min.
+  `research/llm.py`: `LLMError.meta` con los tokens gastados antes de fallar y
+  `RoutedProvider.spent`; `runner._finish_run` registra tokens y `est_cost_usd`
+  en runs fallidos; `estimate_cost` usa `core.ai_usage.cost_of` (UNA tabla).
+  `/api/research/jobs` POST y MCP `run_research` devuelven `status: deferred` +
+  `resume_after` (ya no `budget_exhausted` salvo con tope 0); `get_research_job.
+  next` lo explica. `engine/research.js`: mensaje claro. sw v200.
+- **Verificar.** `DATABASE_URL=… pytest tests/test_repair_research.py -k r5`
+  (5 tests) + `tests/test_research.py::test_presupuesto_diario_difiere_el_job` +
+  `tests/test_mcp.py::test_run_research_budget_and_job` (actualizados: antes
+  fijaban `skipped`/`budget_exhausted`).
+- **Rollback.** Revertir el commit; los jobs `deferred` existentes quedarían en
+  ese estado (no se ejecutan): marcar `failed` a mano si se revierte.

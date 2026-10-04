@@ -4,9 +4,12 @@ R1 (misión de reparación 2026-10-04): el corta-circuito de proveedores de IA
 (core.ai._CIRCUIT) es memoria de proceso; un test que simula "modelo retirado"
 dejaría al proveedor en pausa para los tests siguientes.
 """
+import os
 import sys
 
 import pytest
+
+os.environ.setdefault('KHIPU_SCHEDULER', 'off')   # R5: el hilo periódico no arranca al importar server en tests
 
 
 @pytest.fixture(autouse=True)

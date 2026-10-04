@@ -83,13 +83,18 @@ def create():
     agents_req = body.get('agents') if isinstance(body.get('agents'), list) else None
 
     def _crear():
+        from research.runner import budget_exhausted, defer_job
         with session_scope() as s:
             job, reused = create_job(s, eid, depth=str(body.get('depth') or 'STANDARD').upper(),
                                      agents=agents_req, trigger={'kind': 'user', 'by': actor},
                                      requested_by=actor, force=bool(body.get('force')),
                                      only_missing=bool(body.get('only_missing')))
+            if not reused and job.status == 'queued' and budget_exhausted(s):
+                defer_job(s, job)          # R5: se reanuda solo mañana (no se pierde el pedido)
             return job.id, reused, {'job_id': job.id, 'entity_id': eid, 'status': job.status,
-                                    'reused': reused, 'agents': job.agents, 'depth': job.depth}
+                                    'reused': reused, 'agents': job.agents, 'depth': job.depth,
+                                    'resume_after': (job.trigger or {}).get('resume_after'),
+                                    'error': job.error}
     try:
         try:
             jid, reused, out = _crear()
@@ -106,7 +111,7 @@ def create():
         logging.getLogger(__name__).warning('research create: %s', e)
         return jsonify({'error': 'no se pudo crear la investigación',
                         'detail': f'{type(e).__name__}: {str(e)[:240]}'}), 500
-    if not reused:
+    if not reused and out['status'] == 'queued':
         execute_job_async(jid)
     return jsonify(out), (200 if reused else 202)
 

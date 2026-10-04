@@ -575,7 +575,11 @@ def test_run_research_budget_and_job(client, db, monkeypatch):
     assert d['result']['structuredContent']['reused'] is True and len(started) == 1
     monkeypatch.setattr(runner, 'spent_today', lambda s: 99.0)
     _, d = call_tool(client, tok, 'run_research', {'entity': 'Intel'})
-    assert d['result']['isError'] and d['result']['structuredContent']['code'] == 'budget_exhausted'
+    sc = d['result']['structuredContent']        # R5: diferido, no error — el pedido no se pierde
+    assert d['result']['isError'] is False and sc['status'] == 'deferred' and sc['resume_after']
+    assert 'DEFERRED' in sc['next'] and len(started) == 1
+    _, d = call_tool(client, tok, 'get_research_job', {'job_id': sc['job_id']})
+    assert d['result']['structuredContent']['status'] == 'deferred' and 'deferred' in d['result']['structuredContent']['next']
     _, d = call_tool(client, tok, 'run_research', {'entity': 'X', 'depth': 'DEEP'})
     assert d['error']['code'] == -32602
 
