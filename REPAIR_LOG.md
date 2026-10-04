@@ -746,12 +746,20 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   **Efecto colateral documentado:** los 86 links de hechos temporales ya traían
   `properties.confidence` 0.8-0.98 en la base de producción y desde ahora pesan
   w × conf (antes se ignoraba).
+  **Base de producción (no re-migrable):** sus links del catálogo se migraron con
+  el texto en `properties.rel_label` y sin `confidence`; `link_confidence` cae a
+  la MISMA regex sobre `rel_label` (orden: `confidence` declarada > `verified` >
+  texto), así el descuento rige en producción sin tocar ni crear eventos. La regex
+  vive UNA vez en Python (`ontology.vocabulary.UNVERIFIED_RX`/`UNVERIFIED_CONF`/
+  `text_says_unverified`; la usan el MCP y el motor) y su gemela JS en
+  `nodes/merge_graph.js` (un test exige que sean idénticas).
 - **Verificar.** `pytest tests/test_repair_graph.py -k g4c` (6 tests; 5 fallaban
   en HEAD): merge sintético (FedEx→TSMC 0.3/false, 6.º elemento, dedupe), merge
   REAL vía `buildSnapshot` (949 nodos / 2.526 links iguales, 25 no verificados,
   el snapshot en disco no cambia), `_link_trust` con y sin campos del snapshot,
   `_eff_weight(3, None, 0.3) ≈ 0.9`, matrices con base (2 × 0.5 = 1.0 vigente y
-  as_of), statematrix.
+  as_of; link con forma de producción solo `rel_label` → 1 × 0.3), regex única
+  Python = JS, statematrix. (7 tests.)
 - **Rollback.** Revertir el commit. Si ya se regeneró el snapshot con
   `conf/verified`, los campos extra son inofensivos para el código viejo.
 

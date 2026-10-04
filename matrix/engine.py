@@ -87,16 +87,24 @@ def bulk_weight_factor():
 # Confianza de un link sin fuente que la respalde (G4c): el texto curado dice
 # "no verificado"/"posible" → nodes/merge_graph.js exporta conf 0.3 y la
 # migración lo guarda en properties.confidence. Si solo llega verified=false
-# (sin número), se usa este mismo valor.
-UNVERIFIED_CONF = 0.3
+# (sin número), se usa este mismo valor. La base de PRODUCCIÓN se migró antes
+# de que existiera ese campo (y no se puede re-migrar), pero guardó el texto en
+# properties.rel_label: se lee con la MISMA regex para que el descuento rija
+# también allí sin tocar eventos.
+UNVERIFIED_CONF = vocab.UNVERIFIED_CONF
 
 
 def link_confidence(props):
-    """properties → confianza 0-1 o None (= sin dato, no se descuenta)."""
+    """properties → confianza 0-1 o None (= sin dato, no se descuenta).
+    Orden: confidence declarada > verified=false > texto rel_label."""
     props = props or {}
     c = props.get('confidence')
     if c is None:
-        return UNVERIFIED_CONF if props.get('verified') is False else None
+        if props.get('verified') is False:
+            return UNVERIFIED_CONF
+        if props.get('verified') is None and vocab.text_says_unverified(props.get('rel_label')):
+            return UNVERIFIED_CONF
+        return None
     try:
         c = float(c)
     except (TypeError, ValueError):

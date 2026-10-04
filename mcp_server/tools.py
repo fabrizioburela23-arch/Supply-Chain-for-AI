@@ -358,8 +358,7 @@ def flow_types():
 # verificados. La MISMA regex vive en nodes/merge_graph.js (que exporta
 # conf/verified al snapshot); aquí es el RESPALDO para snapshots que aún no
 # traen esos campos. Si el link ya los trae, se respetan.
-_UNVERIFIED_RX = re.compile(r'no verificad|no revisad|posible(mente)?|sin confirmar', re.I)
-UNVERIFIED_CONF = 0.3
+from ontology.vocabulary import UNVERIFIED_CONF, UNVERIFIED_RX as _UNVERIFIED_RX  # noqa: E402 (una sola regex)
 
 
 def _link_trust(rel, link=None):

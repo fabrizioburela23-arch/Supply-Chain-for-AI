@@ -168,6 +168,10 @@ def db():
         # G4c: vínculo con confianza declarada en properties → peso efectivo = w × conf
         obj('Cx'); obj('Cy')
         link('Cx', 'Cy', w=2, props={'confidence': 0.5})
+        # G4c: vínculo con la forma de PRODUCCIÓN (migrado antes de conf/verified:
+        # solo el texto en rel_label) → la misma regex lo descuenta
+        obj('Fx'); obj('Tx')
+        link('Fx', 'Tx', w=1, props={'rel_label': 'Transporte; contrato específico no verificado públicamente'})
     yield
     Base.metadata.drop_all(engine)
 
@@ -336,6 +340,21 @@ def test_g4c_eff_weight_multiplica_por_la_confianza():
     assert link_confidence({'verified': False}) == 0.3 and link_confidence({}) is None
     assert link_confidence({'confidence': 'basura'}) is None and link_confidence(None) is None
     assert link_confidence({'confidence': 7}) == 1.0
+    # base de producción: solo rel_label (la migró el script antes de G4c)
+    assert link_confidence({'rel_label': 'contrato específico no verificado públicamente'}) == 0.3
+    assert link_confidence({'rel_label': 'Máquinas EUV'}) is None
+    assert link_confidence({'rel_label': 'no verificado', 'verified': True}) is None      # lo declarado manda
+    assert link_confidence({'rel_label': 'no verificado', 'confidence': 0.9}) == 0.9
+
+
+def test_g4c_una_sola_regex_en_python():
+    from matrix import engine
+    from mcp_server import tools
+    from ontology import vocabulary
+    assert tools._UNVERIFIED_RX is vocabulary.UNVERIFIED_RX
+    assert tools.UNVERIFIED_CONF == engine.UNVERIFIED_CONF == vocabulary.UNVERIFIED_CONF == 0.3
+    js = open(os.path.join(ROOT, 'nodes', 'merge_graph.js'), encoding='utf-8').read()
+    assert 'var UNVERIFIED_RX = /' + vocabulary.UNVERIFIED_RX.pattern + '/i;' in js          # gemela JS idéntica
 
 
 @needs_db
@@ -348,6 +367,8 @@ def test_g4c_matrices_descuentan_la_confianza_declarada(db):
     assert mats['supply'][idx['Cx'], idx['Cy']] == pytest.approx(1.0)         # 2 × 0.5
     assert as_of['supply'][idx2['Cx'], idx2['Cy']] == pytest.approx(1.0)      # time-travel: igual
     assert mats['supply'][idx['Prov'], idx['Acme']] == pytest.approx(2.0)     # sin confianza: histórico
+    assert mats['supply'][idx['Fx'], idx['Tx']] == pytest.approx(0.3)         # producción: rel_label → 1 × 0.3
+    assert as_of['supply'][idx2['Fx'], idx2['Tx']] == pytest.approx(0.3)
 
 
 def test_g4c_statematrix_cliente_pesa_la_confianza_como_el_servidor():

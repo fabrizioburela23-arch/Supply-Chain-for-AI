@@ -23,6 +23,7 @@ para no romper el arranque — patrón "todo opcional" del proyecto.
 import json
 import logging
 import os
+import re
 import threading
 
 log = logging.getLogger('ontology.vocabulary')
@@ -148,6 +149,18 @@ def flow_relation_types():
     rt = relation_types_all()
     flow = [k for k, v in rt.items() if (v or {}).get('structural') and (v or {}).get('flow')]
     return flow or list(_FLOW_FALLBACK)
+
+
+# Confianza de un vínculo según su TEXTO curado (G4c). ÚNICA definición en
+# Python: la usan mcp_server/tools._link_trust y matrix/engine.link_confidence.
+# Su gemela JS vive en nodes/merge_graph.js (UNVERIFIED_RX) — cambiar las dos.
+UNVERIFIED_RX = re.compile(r'no verificad|no revisad|posible(mente)?|sin confirmar', re.I)
+UNVERIFIED_CONF = 0.3
+
+
+def text_says_unverified(text):
+    """¿El texto curado de la relación dice que no está verificada?"""
+    return bool(UNVERIFIED_RX.search(str(text or '')))
 
 
 def is_flow_relation(rel):
