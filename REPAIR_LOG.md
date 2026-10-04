@@ -505,3 +505,21 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   `ObjectUpdated{retired:false, merged_into:null}` + re-crear los vínculos
   con `allow_duplicate`. La columna `event_id` es inocua si se vuelve al código
   anterior (la ignora).
+
+### G2b — Las correcciones valen para TODO el pasado; un hecho con fecha nunca se toma por duplicado
+- **Síntoma (revisión propia de G2).** Con G2 tal cual, retractar un duplicado o
+  fusionar `Luminar_Lidar` en `Luminar` dejaba al time-travel mostrando el
+  error en fechas pasadas: en 2020 aparecían el alias Y el canónico proveyendo a
+  Volvo (doble conteo), y "ayer" seguía el duplicado. Además el dedupe miraba
+  solo par/relación/peso: un hecho con ventana propia (p. ej. 2019-2021) o que
+  empieza ANTES de la fila vigente se habría marcado como duplicado y perdido.
+- **Causa.** La retracción usaba `valid_from = ahora` (semántica de "la relación
+  terminó hoy") cuando es una CORRECCIÓN ("esta fila nunca fue cierta").
+- **Cambios.** `RetractarVinculo` emite el `LinkRemoved` con `valid_from` = el
+  de la creación (retroactivo en tiempo de validez; la hora real queda en
+  `recorded_at` y en `properties.retracted_at`): ninguna fecha de `as_of`
+  muestra la fila corregida, y la bitácora conserva lo que se creía. El dedupe
+  solo aplica si el nuevo `LinkCreated` no trae `valid_to` y la fila vigente ya
+  lo cubre (`valid_from` del gemelo ≤ el nuevo).
+- **Verificar.** `pytest tests/test_repair_ontology.py` (9): sin el cambio fallan
+  3 (ventana deduplicada, duplicado visible ayer, alias visible en 2020).

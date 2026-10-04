@@ -123,9 +123,10 @@ class RetractarVinculoInput(BaseModel):
 
 class FusionarEntidadInput(BaseModel):
     """G2: fusiona un objeto duplicado (alias) en el canónico: el alias queda
-    retired + merged_into, sus vínculos vigentes se retractan (dirigido) y se
-    re-crean en el canónico conservando valid_from/peso/propiedades
-    (`merged_from`). Nada se borra: as_of sigue mostrando la historia."""
+    retired + merged_into, sus vínculos vigentes se retractan (dirigido,
+    retroactivo) y se re-crean en el canónico conservando valid_from/peso/
+    propiedades (`merged_from`): as_of de cualquier fecha muestra la empresa
+    UNA vez. Nada se borra: los eventos guardan lo que se creía antes."""
     alias_id: str = Field(min_length=1, max_length=120)
     canonical_id: str = Field(min_length=1, max_length=120)
     razon: str = Field(min_length=1, max_length=1000)
@@ -340,7 +341,14 @@ def _link_by_id(session, link_id):
 
 
 def retractar_vinculo(session, inp: RetractarVinculoInput, actor, source='manual', log=True):
-    """G2: LinkRemoved dirigido a la creación de ESTA fila. Devuelve el evento."""
+    """G2: LinkRemoved dirigido a la creación de ESTA fila.
+
+    Es una CORRECCIÓN ("esta fila nunca fue cierta": duplicado, dirección al
+    revés, alias), no "la relación terminó hoy" (para eso está RechazarVinculo /
+    LinkRemoved con fecha). Por eso es RETROACTIVA en tiempo de validez: el
+    LinkRemoved lleva valid_from = el de la creación, y el time-travel (as_of)
+    ya no la muestra en ninguna fecha. La historia de lo que se CREYÓ queda en
+    los eventos (recorded_at): nada se borra."""
     from ontology.service import _creation_event_for
     link = _link_by_id(session, inp.link_id)
     if link.valid_to is not None:
@@ -353,8 +361,8 @@ def retractar_vinculo(session, inp: RetractarVinculoInput, actor, source='manual
     ev = apply_event(session, 'LinkRemoved', {
         'rel_type': link.rel_type,
         'properties': {'retracts_event_id': str(cev.id), 'reason': inp.razon, 'link_id': str(link.id),
-                       'retracted_by': actor},
-    }, valid_from=_utcnow(), source=source, actor=actor, object_id=link.source_id, target_id=link.target_id)
+                       'retracted_by': actor, 'retracted_at': _utcnow().isoformat(timespec='seconds')},
+    }, valid_from=cev.valid_from, source=source, actor=actor, object_id=link.source_id, target_id=link.target_id)
     if log:
         _log_action(session, 'RetractarVinculo', link.source_id, link.target_id,
                     {'link_id': str(link.id), 'razon': inp.razon, 'event_id': str(ev.id)}, actor, source=source)

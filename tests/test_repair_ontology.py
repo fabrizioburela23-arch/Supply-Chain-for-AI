@@ -96,6 +96,27 @@ def test_g2_peso_distinto_o_allow_duplicate_si_abre_fila(db):
         assert len(_replay(s, 'TSMC', 'NVDA')) == 3
 
 
+def test_g2_hecho_con_ventana_o_anterior_no_es_duplicado(db):
+    """Un hecho con fecha de fin (Qualcomm→Huawei 2019-2021) o que empieza ANTES
+    que la fila vigente aporta historia: no se deduplica."""
+    from ontology.db import session_scope
+    from ontology.service import apply_event
+    with session_scope() as s:
+        apply_event(s, 'LinkCreated', {'rel_type': 'license', 'weight': 1},
+                    valid_from='2022-01-01', source='test', actor='pytest', object_id='AMD', target_id='NVDA')
+    with session_scope() as s:
+        e = apply_event(s, 'LinkCreated', {'rel_type': 'license', 'weight': 1},
+                        valid_from='2019-01-01', valid_to='2021-01-01', source='test', actor='pytest',
+                        object_id='AMD', target_id='NVDA')
+        assert not (e.payload.get('properties') or {}).get('dedup_of')
+        e2 = apply_event(s, 'LinkCreated', {'rel_type': 'license', 'weight': 1},
+                         valid_from='2018-01-01', source='test', actor='pytest', object_id='AMD', target_id='NVDA')
+        assert not (e2.payload.get('properties') or {}).get('dedup_of'), 'empieza antes: amplía la historia'
+    with session_scope() as s:
+        assert len(_rows(s, 'AMD', 'NVDA', rel='license', vigentes=False)) == 3
+        assert len(_replay(s, 'AMD', 'NVDA', '2020-01-01')) == 2   # ventana 2019-21 + la de 2018
+
+
 # ───────────────────────── G2b · retracción dirigida ─────────────────────────
 
 def test_g2_retraccion_dirigida_cierra_solo_una_fila(db):
@@ -117,9 +138,15 @@ def test_g2_retraccion_dirigida_cierra_solo_una_fila(db):
         assert len(cerradas) == 1 and str(cerradas[0].id) == victim_id
         rep = _replay(s, 'TSMC', 'NVDA')
         assert len(rep) == 2 and all(abs(float(l['weight']) - 0.8) < 1e-9 for l in rep)
-        # ayer seguía vigente: el time-travel no reescribe el pasado
+        # la retracción es una CORRECCIÓN: retroactiva en tiempo de validez (ni
+        # ayer ni en 2022 se muestra la fila errónea)…
         ayer = datetime.now(timezone.utc) - timedelta(days=1)
-        assert len(_replay(s, 'TSMC', 'NVDA', ayer)) == 3
+        assert len(_replay(s, 'TSMC', 'NVDA', ayer)) == 2
+        assert all(abs(float(l['weight']) - 0.5) > 1e-9 for l in _replay(s, 'TSMC', 'NVDA', '2022-06-01'))
+        # …pero lo que se CREÍA queda en la bitácora (nada se borra)
+        from sqlalchemy import select
+        from ontology.models import Event
+        assert s.get(Event, __import__('uuid').UUID(victim_ev)) is not None
 
 
 def test_g2_retraccion_dirigida_en_filas_sin_event_id(db):
@@ -209,10 +236,15 @@ def test_g2_fusionar_entidad_mueve_links_y_conserva_historia(db):
         hoy = as_of_graph(s)['links']
         assert any(l['source'] == 'Luminar' and l['target'] == 'Volvo' for l in hoy)
         assert not any('Luminar_Lidar' in (l['source'], l['target']) for l in hoy)
-        # pero en 2020 el alias existía y proveía a Volvo: la historia no se reescribe
+        # en 2020 la empresa aparece UNA vez, con su nombre canónico y su fecha
+        # real (la fusión corrige el pasado en tiempo de validez)…
         g2020 = as_of_graph(s, '2020-06-01')['links']
-        assert any(l['source'] == 'Luminar_Lidar' and l['target'] == 'Volvo' for l in g2020)
-        assert any(l['source'] == 'Luminar_Lidar' and l['target'] == 'Luminar' for l in g2020)
+        assert any(l['source'] == 'Luminar' and l['target'] == 'Volvo' for l in g2020)
+        assert not any('Luminar_Lidar' in (l['source'], l['target']) for l in g2020)
+        assert not any(l['source'] == 'Luminar' and l['target'] == 'Volvo' for l in as_of_graph(s, '2019-01-01')['links'])
+        # …y la bitácora conserva lo que se creía (los eventos del alias siguen ahí)
+        from ontology.service import object_history
+        assert any(e.event_type == 'LinkCreated' and e.object_id == 'Luminar_Lidar' for e in object_history(s, 'Luminar_Lidar'))
         # rastro auditable
         acts = [a for a in list_actions(s, action_type='FusionarEntidad')]
         assert acts and acts[0].actor == 'fabrizio' and acts[0].payload.get('links_moved') == 1

@@ -94,12 +94,14 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
         except (TypeError, ValueError):
             confidence = None
 
-    # G2: un LinkCreated idéntico a una fila VIGENTE (mismo par, rel y peso) no
-    # abre una segunda fila: el evento se registra (append-only) marcado como
-    # `dedup_of` y es un no-op en tablas y en el replay. `allow_duplicate: true`
-    # (hechos temporales con otra ventana) lo desactiva.
-    if event_type == EventType.LINK_CREATED.value and object_id and target_id:
-        payload = _dedup_link_payload(session, payload or {}, object_id, target_id)
+    # G2: un LinkCreated idéntico a una fila VIGENTE (mismo par, rel y peso) que
+    # ya lo cubre (empezó antes o igual y el nuevo no trae fin) no abre una
+    # segunda fila: el evento se registra (append-only) marcado como `dedup_of`
+    # y es un no-op en tablas y en el replay. Un hecho con ventana propia
+    # (valid_to) o que empieza ANTES no es duplicado. `allow_duplicate: true`
+    # lo desactiva explícitamente.
+    if event_type == EventType.LINK_CREATED.value and object_id and target_id and valid_to is None:
+        payload = _dedup_link_payload(session, payload or {}, object_id, target_id, valid_from)
 
     ev = Event(
         id=uuid.uuid4(), event_type=event_type, object_id=object_id, target_id=target_id,
@@ -122,15 +124,19 @@ def _same_weight(a, b):
         return False
 
 
-def _dedup_link_payload(session, payload, source_id, target_id):
+def _dedup_link_payload(session, payload, source_id, target_id, valid_from=None):
     props = dict(payload.get('properties') or {})
     if props.get('allow_duplicate'):
         return payload
     rel = payload.get('rel_type') or payload.get('type') or 'supply'
-    twin = session.scalars(select(LinkRecord).where(
+    q = select(LinkRecord).where(
         LinkRecord.source_id == source_id, LinkRecord.target_id == target_id,
-        LinkRecord.rel_type == rel, LinkRecord.valid_to.is_(None)).order_by(LinkRecord.valid_from)).first()
-    if twin is not None and _same_weight(twin.weight, payload.get('weight')):
+        LinkRecord.rel_type == rel, LinkRecord.valid_to.is_(None))
+    if valid_from is not None:
+        q = q.where(LinkRecord.valid_from <= valid_from)      # el gemelo ya cubre esa fecha
+    twins = session.scalars(q.order_by(LinkRecord.valid_from)).all()
+    twin = next((t for t in twins if _same_weight(t.weight, payload.get('weight'))), None)
+    if twin is not None:
         props['dedup_of'] = str(twin.id)
         if twin.event_id:
             props['dedup_event_id'] = str(twin.event_id)
