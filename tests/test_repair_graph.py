@@ -459,3 +459,40 @@ def test_g4d_explicacion_bilingue_y_documentacion():
     assert 'socios e inversionistas no cuentan' in js and 'partners and investors do not count' in js
     md = open(os.path.join(ROOT, 'CLAUDE.md'), encoding='utf-8').read()
     assert 'El grado es ESTRUCTURAL' in md
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# G4e — cifras del catálogo: unidad explícita, sin fecha propia (honesto)
+# ════════════════════════════════════════════════════════════════════════════
+def test_g4e_margen_del_catalogo_en_la_misma_unidad_que_live_market(nodb):
+    """Equinix (producción): catalog.operating_margin 0.17 (fracción) junto a
+    live_market.operating_margin 27.02 (porcentaje), con un as_of que era la
+    fecha de exportación del snapshot. Ahora: _pct en la misma unidad, el
+    campo viejo se conserva y las cifras se declaran sin fecha propia."""
+    from mcp_server import tools
+    c = tools.t_get_company(None, id_or_ticker='Equinix', include_live=False)['catalog']
+    assert c['operating_margin'] == 0.17                       # contrato viejo intacto
+    assert c['operating_margin_pct'] == 17.0
+    assert c['figures_as_of'] is None
+    assert c['figures_note'] == 'undated curated figures (catalog); prefer live_market when available'
+    assert c['figures_note_es'].startswith('cifras curadas sin fecha propia')
+    assert c['as_of'] and 'NOT the date of the figures' in c['as_of_note']
+    # pre-revenue (fracción negativa) se convierte igual; sin margen → None sin nota
+    r = tools.t_get_company(None, id_or_ticker='Rigetti', include_live=False)['catalog']
+    assert r['operating_margin'] == -2.5 and r['operating_margin_pct'] == -250.0
+    sin_id = sorted(i for i, n in tools._snapshot()['nodes'].items() if n.get('margin') is None)[0]
+    sin = tools.t_get_company(None, id_or_ticker=sin_id, include_live=False)['catalog']
+    assert sin['operating_margin'] is None and sin['operating_margin_pct'] is None
+    assert 'operating_margin_note' not in sin
+
+
+def test_g4e_margen_fuera_de_rango_no_se_adivina(nodb):
+    """Envicool trae margin 20.25 (alguien lo tecleó ya en %): la unidad es
+    dudosa → _pct None + nota, nunca 2025 %."""
+    from mcp_server import tools
+    assert tools._margin_pct(0.17) == 17.0 and tools._margin_pct(-2.5) == -250.0
+    assert tools._margin_pct(None) is None and tools._margin_pct('x') is None
+    assert tools._margin_pct(20.25) is None and tools._margin_pct(float('nan')) is None
+    c = tools.t_get_company(None, id_or_ticker='Envicool', include_live=False)['catalog']
+    assert c['operating_margin'] == 20.25 and c['operating_margin_pct'] is None
+    assert 'unit unknown' in c['operating_margin_note']

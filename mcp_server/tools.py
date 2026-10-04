@@ -509,6 +509,21 @@ def _live_profile(symbol):
     return get_live_profile(symbol)
 
 
+def _margin_pct(margin):
+    """Margen del catálogo (fracción: 0.17 = 17 %) → porcentaje, la unidad de
+    live_market.operating_margin (27.02). Fuera de ±5 (p. ej. un 20.25 que
+    alguien tecleó ya en %) la unidad es dudosa: None, nunca se adivina."""
+    if margin is None:
+        return None
+    try:
+        m = float(margin)
+    except (TypeError, ValueError):
+        return None
+    if m != m or abs(m) > 5:
+        return None
+    return round(m * 100, 2)
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # READ — grafo y empresas
 # ════════════════════════════════════════════════════════════════════════════
@@ -546,11 +561,25 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
     out.update({k: v for k, v in _brief(n).items() if k not in ('id', 'label')})
     out['catalog'] = {
         'source': SNAPSHOT_SOURCE + ' — descriptive text curated by Khipus; figures inside may be approximate',
-        'as_of': snap['as_of'], 'ticker_text': n.get('ticker'), 'location': n.get('loc'),
+        'as_of': snap['as_of'],
+        # G4e: `as_of` es la fecha de EXPORTACIÓN del snapshot, no la de las
+        # cifras: las cifras del catálogo (margen, capex…) se escribieron a mano
+        # sin fecha propia. Se dice explícitamente y se da el margen en la
+        # MISMA unidad que live_market (porcentaje) junto al campo histórico.
+        'as_of_note': 'date the catalog snapshot was exported — NOT the date of the figures',
+        'figures_as_of': None,
+        'figures_note': 'undated curated figures (catalog); prefer live_market when available',
+        'figures_note_es': 'cifras curadas sin fecha propia (catálogo); preferir live_market cuando exista',
+        'ticker_text': n.get('ticker'), 'location': n.get('loc'),
         'role': n.get('role_en') or n.get('role'), 'supplies': n.get('supplies_en') or n.get('supplies'),
         'moat_and_risks': n.get('moat_en') or n.get('moat'), 'growth_note': n.get('growth_en') or n.get('growth'),
-        'operating_margin': n.get('margin'), 'capex_2026_note': n.get('capex_2026_en') or n.get('capex_2026'),
+        'operating_margin': n.get('margin'),                      # fracción histórica (0.17 = 17 %), se conserva
+        'operating_margin_pct': _margin_pct(n.get('margin')),     # misma unidad que live_market.operating_margin
+        'capex_2026_note': n.get('capex_2026_en') or n.get('capex_2026'),
         'backlog_note': n.get('backlog_status_en') or n.get('backlog_status')}
+    if n.get('margin') is not None and out['catalog']['operating_margin_pct'] is None:
+        out['catalog']['operating_margin_note'] = ('catalog value outside the fraction range (-5..5): unit unknown, '
+                                                  'not converted')
     if n.get('listing'):
         out['listing_status'] = dict(n['listing'], source='verified listing status (nodes/listing_status.js)')
     pv = _private_valuations()

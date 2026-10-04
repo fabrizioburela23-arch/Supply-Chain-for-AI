@@ -49,7 +49,17 @@ arreglo en `REPAIR_LOG.md`; tests en `tests/test_repair_research.py` (26, fallab
   Los tests de Phase 3 que fijaban 5 %/$5.000 pasan a 2,5 %/$2.500 (decisión D1).
 - El commit de precios en vivo (cc1dfed, agente de la sesión (g)) entró en la misma revisión
   adversarial antes de desplegar. SIGUIENTE: P1 grafo (auditoría, fusión por eventos, lista de
-  direcciones para Fabrizio), P1 riesgo, P2. Los informes de los investigadores de fondo con tests
+  direcciones para Fabrizio), P1 riesgo, P2.
+- P1 GRAFO · G4 (contratos y cálculos, `tests/test_repair_graph.py`, 21 tests; commit 14 del plan):
+  G4a proveedores/clientes = solo relaciones de FLUJO (vocabulary.json `flow:true`), partner/invest
+  aparte en `related`, `relation_class` + `verified`/`confidence` por arista, `include_partners`;
+  G4b centinela 2000-01-01 (`GENESIS_SENTINEL`/`is_genesis`) marcado `valid_from_known:false` en
+  API/timeline/MCP (+ nota bilingüe) y `provenance_note` cuando no hay fuente; UI "desde que se
+  rastrea"; G4c `conf`/`verified` por link desde el texto curado ("no verificado"/"posible" → 0,3)
+  en merge_graph.js → snapshot → migración → `matrix/engine._eff_weight(…, confidence)` y
+  statematrix.js; G4d NRS estructural (grado = pares distintos de flujo; cliente, servidor y
+  catálogo; los NRS visibles bajan); G4e `catalog.operating_margin_pct` + `figures_as_of:null` +
+  `figures_note`. Pendiente al integrar: regenerar `data/grafo_v0.json` (traerá conf/verified). Los informes de los investigadores de fondo con tests
   propuestos están en el journal del workflow wf_0017fa17-625.
 
 ---
