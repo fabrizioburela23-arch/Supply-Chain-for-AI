@@ -852,6 +852,24 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_ontology_review.py` (15): sin G5 fallan
   los 15. Todo G2/G3 sigue verde (29 con los de antes).
 
+### G5b — Ensayo realista de G5: el "ascenso" de duplicados solo al DESHACER
+- **Síntoma (ensayo con una base como la de producción).** Con G5, al aplicar
+  la reconciliación completa quedaban 20 direcciones y 1 peso sin corregir, y al
+  deshacer las dos corridas sobraban vínculos (p. ej. SubCom→Alphabet): una
+  corrección ("esta fila es falsa") hacía ascender una COPIA del mismo hecho
+  falso, y un duplicado escrito por la misma corrida ascendía al deshacerla.
+- **Causa.** G5 trataba todo LinkCreated deduplicado como un hecho
+  independiente, también cuando su gemela se retractaba por ser falsa.
+- **Cambios.** `ontology/service.py`: una sola regla para tablas y replay
+  (`_promotion_choice`): asciende solo si la gemela se retractó con un DESHACER
+  (`promote_dedups: true`, solo lo emite `rollback_run`), si el duplicado es de
+  OTRO canal y si no queda ninguna copia idéntica viva. `ontology/bulk_import.py`:
+  la primera afirmación de una fuente se registra (aunque duplique otra fila) y
+  las siguientes no; `created` ya no cuenta duplicados.
+- **Verificar.** Ensayo: base migrada desde el snapshot de julio → aplicar todo
+  → 0 diferencias, tablas == replay en cada paso → deshacer ambas corridas → los
+  1.451 vínculos originales EXACTOS. `pytest tests/test_repair_ontology_review.py` (18).
+
 ### G6 — Revisión adversarial de G4 (lente "contratos"): el mismo NRS en todas partes, el chat ve todo
 - **Hallazgos y cambios.** (media) El chat (`rank_companies`), el asistente de
   carteras (`core/portfolio_ai.py`) y Second Brain calculaban el NRS con el

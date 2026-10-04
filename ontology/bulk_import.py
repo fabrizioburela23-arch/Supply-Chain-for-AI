@@ -116,20 +116,26 @@ def import_links_bulk(session, records, provenance, batch_size=1000,
                 seen.add(('ext', provenance, str(props['external_id'])))
             seen.add(('triple', l.source_id, l.target_id, l.rel_type))
 
-    # G5 (revisión): un vínculo VIGENTE idéntico (mismo par, relación y peso) de
-    # CUALQUIER fuente ya cubre el registro — antes se escribía un evento no-op
-    # (dedup_of) en cada re-ejecución y 'created' contaba algo que no se creó.
-    from ontology.service import _same_weight
-    vig = {}
-    for l in session.scalars(select(LinkRecord).where(LinkRecord.valid_to.is_(None))).all():
-        vig.setdefault((l.source_id, l.target_id, l.rel_type), []).append(l.weight)
+    # G5 (revisión): si esta FUENTE ya afirmó la tripla (aunque se haya
+    # deduplicado contra una fila de otra fuente), no se vuelve a escribir: antes
+    # cada re-ejecución añadía un evento no-op y 'created' lo contaba. La PRIMERA
+    # afirmación sí se registra (dedup_of): si luego se deshace la fila gemela,
+    # el hecho independiente de esta fuente no se pierde.
+    from ontology.models import Event
+    for e in session.scalars(select(Event).where(
+            Event.event_type == 'LinkCreated', Event.source == provenance,
+            Event.payload['properties']['dedup_of'].astext.isnot(None))).all():
+        p = e.payload or {}
+        seen.add(('triple', e.object_id, e.target_id, p.get('rel_type') or 'supply'))
+        ext = (p.get('properties') or {}).get('external_id')
+        if ext:
+            seen.add(('ext', provenance, str(ext)))
 
     created, skipped, batches = 0, 0, 0
     batch = []
     for rec in accepted:
         key = _idempotency_key(rec, provenance)
-        if key in seen or any(_same_weight(w, rec['weight'])
-                              for w in vig.get((rec['source'], rec['target'], rec['rel_type']), [])):
+        if key in seen:
             skipped += 1
             continue
         seen.add(key)
@@ -157,10 +163,11 @@ def _flush_batch(session, batch, provenance, valid_from, actor):
         props['source'] = provenance          # ← el motor lo lee para descontar el peso
         if rec.get('external_id'):
             props['external_id'] = str(rec['external_id'])
-        apply_event(session, 'LinkCreated', {
+        ev = apply_event(session, 'LinkCreated', {
             'rel_type': rec['rel_type'], 'weight': rec['weight'], 'properties': props,
         }, valid_from=valid_from, source=provenance, actor=actor,
             object_id=rec['source'], target_id=rec['target'])
-        n += 1
+        if not ((ev.payload or {}).get('properties') or {}).get('dedup_of'):
+            n += 1                            # G5: un duplicado de otra fuente no cuenta como creado
     session.flush()   # aísla errores por lote sin cerrar la transacción entera
     return n

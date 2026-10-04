@@ -207,33 +207,105 @@ def _creation_event_for(session, link):
     return best
 
 
-def _promote_dedup(session, rid):
-    """G5 (revisión adversarial): al retractar la creación `rid`, un LinkCreated
-    INDEPENDIENTE que se había deduplicado contra ella (otra fuente afirmó lo
-    mismo) deja de ser un no-op: el más antiguo pasa a tener su propia fila.
-    El replay (_links_active_at) aplica la misma regla."""
-    dups = _dedup_events_for(session, {str(rid)}).get(str(rid))
-    if not dups:
+def _wkey(w):
+    try:
+        return None if w is None else round(float(w), 9)
+    except (TypeError, ValueError):
+        return None
+
+
+def _pair_history(session, src, tgt):
+    """(creaciones, retracciones dirigidas {creación: evento}, remociones no dirigidas [(fecha, rel, registrada)])."""
+    evs = session.scalars(select(Event).where(
+        Event.object_id == src, Event.target_id == tgt,
+        Event.event_type.in_([EventType.LINK_CREATED.value, EventType.LINK_REMOVED.value]))
+        .order_by(Event.recorded_at, Event.id)).all()
+    created, dirs, rms = [], {}, []
+    for e in evs:
+        p = e.payload or {}
+        if e.event_type == EventType.LINK_CREATED.value:
+            created.append(e)
+            continue
+        rid = (p.get('properties') or {}).get('retracts_event_id')
+        if rid:
+            dirs[_uuid_str(rid)] = e
+        else:
+            rms.append((e.valid_from, p.get('rel_type') or p.get('type'), e.recorded_at))
+    return created, dirs, rms
+
+
+def _killed(e, rel, rms, at):
+    """¿Una remoción NO dirigida (anterior en validez y en registro) mata esta creación en `at`?"""
+    return any(rm_rel in (None, rel) and e.valid_from <= rm_at <= at
+               and (e.recorded_at is None or rm_rec is None or e.recorded_at <= rm_rec)
+               for rm_at, rm_rel, rm_rec in rms)
+
+
+def _promotion_choice(session, src, tgt, rel, wk, now=None):
+    """G5 — regla ÚNICA (tablas y replay) para un LinkCreated deduplicado:
+    asciende el más antiguo cuya creación gemela fue retractada por un DESHACER
+    (LinkRemoved dirigido con `promote_dedups: true`, solo lo emite rollback_run)
+    y que no está él mismo retractado ni muerto por una remoción, SOLO si no
+    queda ninguna creación no deduplicada idéntica (par, rel, peso) viva AHORA.
+    Una CORRECCIÓN ("esta fila es falsa": dirección, peso, sobrante, fusión) no
+    asciende nada: el mismo hecho repetido es igual de falso. Devuelve el evento o None."""
+    now = now or _utcnow()
+    created, dirs, rms = _pair_history(session, src, tgt)
+
+    def same(e):
+        p = e.payload or {}
+        return (p.get('rel_type') or p.get('type') or 'supply') == rel and _wkey(p.get('weight')) == wk
+
+    def alive(e):
+        return (str(e.id) not in dirs and not (e.valid_to is not None and e.valid_to <= now)
+                and not _killed(e, rel, rms, now))
+    pool = [e for e in created if same(e)]
+    if any(alive(e) for e in pool if not ((e.payload or {}).get('properties') or {}).get('dedup_of')):
+        return None
+    for d in pool:
+        dp = (d.payload or {}).get('properties') or {}
+        if not dp.get('dedup_of'):
+            continue
+        tid = dp.get('dedup_event_id')
+        rm = dirs.get(_uuid_str(tid)) if tid else None
+        if rm is None or not ((rm.payload or {}).get('properties') or {}).get('promote_dedups') or not alive(d):
+            continue
+        twin = next((e for e in created if str(e.id) == _uuid_str(tid)), None)
+        if twin is not None and (twin.source or '') == (d.source or ''):
+            continue                 # mismo canal que su gemela: no es un hecho independiente
+        return d
+    return None
+
+
+def _promote_dedup(session, src, tgt, rel, weight):
+    """Tablas: tras una retracción dirigida, aplica _promotion_choice."""
+    session.flush()
+    d = _promotion_choice(session, src, tgt, rel, _wkey(weight))
+    if d is None:
         return
-    d = dups[0]
+    if session.scalars(select(LinkRecord).where(LinkRecord.event_id == d.id)).first() is not None:
+        return
     p = d.payload or {}
     props = {k: v for k, v in (p.get('properties') or {}).items() if k not in ('dedup_of', 'dedup_event_id')}
     session.add(LinkRecord(id=uuid.uuid4(), source_id=d.object_id, target_id=d.target_id,
-                           rel_type=p.get('rel_type') or p.get('type') or 'supply', weight=p.get('weight'),
+                           rel_type=rel, weight=p.get('weight'),
                            properties=props, valid_from=d.valid_from, valid_to=d.valid_to, event_id=d.id))
 
 
-def _dedup_events_for(session, rids):
-    """{rid: [eventos LinkCreated dedup_of de esa creación, más antiguo primero]}."""
-    if not rids:
-        return {}
-    evs = session.scalars(select(Event).where(
+def _replay_promotions(session):
+    """Replay: el conjunto de eventos deduplicados que ascienden (misma regla)."""
+    dedups = session.scalars(select(Event).where(
         Event.event_type == EventType.LINK_CREATED.value,
-        Event.payload['properties']['dedup_event_id'].astext.in_(list(rids)))
-        .order_by(Event.recorded_at, Event.id)).all()
-    out = {}
-    for e in evs:
-        out.setdefault(((e.payload or {}).get('properties') or {}).get('dedup_event_id'), []).append(e)
+        Event.payload['properties']['dedup_of'].astext.isnot(None))).all()
+    keys = set()
+    for d in dedups:
+        p = d.payload or {}
+        keys.add((d.object_id, d.target_id, p.get('rel_type') or p.get('type') or 'supply', _wkey(p.get('weight'))))
+    out = set()
+    for src, tgt, rel, wk in keys:
+        d = _promotion_choice(session, src, tgt, rel, wk)
+        if d is not None:
+            out.add(d.id)
     return out
 
 
@@ -307,8 +379,9 @@ def _materialize(session, ev):
                         r.event_id = cev.id
             for r in rows:
                 r.valid_to = ev.valid_from
-            if rows:
-                _promote_dedup(session, rid_u)
+            if (p.get('properties') or {}).get('promote_dedups'):     # solo un DESHACER asciende
+                for r in rows:
+                    _promote_dedup(session, r.source_id, r.target_id, r.rel_type, r.weight)
             return
         rel_type = p.get('rel_type') or p.get('type')
         q = select(LinkRecord).where(
@@ -400,8 +473,8 @@ def _links_active_at(session, as_of_dt):
             continue
         rel = (ev.payload or {}).get('rel_type') or (ev.payload or {}).get('type')
         removals.setdefault((ev.object_id, ev.target_id), []).append((ev.valid_from, rel, ev.recorded_at))
-    # G5: deduplicadas cuya creación original fue retractada → la más antigua "asciende"
-    promoted = {d[0].id for d in _dedup_events_for(session, set(directed)).values() if d}
+    # G5: deduplicadas que "ascienden" (misma regla que las tablas: _promotion_choice)
+    promoted = _replay_promotions(session)
 
     active = []
     for ev in created:
@@ -419,10 +492,7 @@ def _links_active_at(session, as_of_dt):
         # también en tiempo de REGISTRO — una re-creación registrada DESPUÉS de
         # la remoción (fusión, reconciliación, deshacer) no muere aunque su
         # valid_from sea viejo; igual que en las tablas.
-        rms = removals.get((ev.object_id, ev.target_id), [])
-        if any(rm_rel in (None, rel) and ev.valid_from <= rm_at <= as_of_dt
-               and (ev.recorded_at is None or rm_rec is None or ev.recorded_at <= rm_rec)
-               for rm_at, rm_rel, rm_rec in rms):
+        if _killed(ev, rel, removals.get((ev.object_id, ev.target_id), []), as_of_dt):
             continue
         row = {
             'source': ev.object_id, 'target': ev.target_id, 'rel_type': rel,

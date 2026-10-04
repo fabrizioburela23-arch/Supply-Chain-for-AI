@@ -723,7 +723,8 @@ def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
                 continue
             tp = target.payload or {}
             apply_event(session, 'LinkRemoved', {'rel_type': tp.get('rel_type') or tp.get('type') or 'supply',
-                                                 'properties': {'retracts_event_id': str(target.id), 'reason': f'rollback {run_id}'}},
+                                                 'properties': {'retracts_event_id': str(target.id), 'reason': f'rollback {run_id}',
+                                                                'promote_dedups': True}},
                         valid_from=target.valid_from, source=rb, actor=actor, object_id=target.object_id,
                         target_id=target.target_id)
             done['links_retracted'] += 1

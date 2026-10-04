@@ -147,23 +147,41 @@ def test_g5_replay_respeta_el_orden_de_registro(db):
         assert _state(s) == _replay(s) and sum(_state(s).values()) == 1
 
 
-# ── O-4: un hecho independiente deduplicado "asciende" si su gemela se retracta
-def test_g5_hecho_deduplicado_asciende_al_retractar_su_gemela(db):
+# ── O-4: un hecho INDEPENDIENTE deduplicado sobrevive al DESHACER de su gemela;
+#    una CORRECCIÓN (RetractarVinculo) no resucita copias del mismo hecho falso
+def test_g5_deshacer_fusion_no_pierde_un_hecho_independiente(db):
     from ontology.db import session_scope
-    from ontology.actions import execute_action
-    _objs('Luminar', 'Volvo')
-    _link('Luminar', 'Volvo', w=1, props={'rel_label': 'merge'}, dup=False)
-    eid = _link('Luminar', 'Volvo', w=1, props={'source': 'wikidata', 'rel_label': 'wd'}, source='wikidata',
-                vf='2024-01-01', dup=False)
+    from ontology.bulk_import import import_links_bulk
+    from ontology.reconcile import apply_plan, rollback_run
+    _objs('Luminar', 'Luminar_Lidar', 'Volvo')
+    _link('Luminar_Lidar', 'Volvo', w=1.0, props={'rel_label': 'lidar'})
+    snap = _snap([{'source': 'Luminar', 'target': 'Volvo', 'w': 1, 'type': 'supply', 'rel': 'lidar'}],
+                 alias={'Luminar_Lidar': 'Luminar'})
+    r = apply_plan(session_scope, snap, include=['alias'], confirm_db=_dbname())
+    with session_scope() as s:                 # Wikidata afirma lo mismo DESPUÉS, por su cuenta
+        out = import_links_bulk(s, [{'source': 'Luminar', 'target': 'Volvo', 'rel_type': 'supply', 'weight': 1.0}],
+                                'wikidata')
+        assert out['created'] == 0
     with session_scope() as s:
-        from ontology.models import Event
-        assert (s.get(Event, uuid.UUID(eid)).payload['properties']).get('dedup_of')
-        row = _rows(s, 'Luminar', 'Volvo')[0]
-        execute_action(s, 'RetractarVinculo', {'link_id': str(row.id), 'razon': 'deshacer fusión'}, actor='f')
+        rollback_run(s, r['run_id'], confirm_db=_dbname())
     with session_scope() as s:
         st = _state(s)
-        assert st == _replay(s) == Counter({('Luminar', 'Volvo', 'supply', 1.0, 'wd'): 1})
-        assert str(_rows(s, 'Luminar', 'Volvo')[0].event_id) == eid
+        assert st == _replay(s)
+        assert st[('Luminar_Lidar', 'Volvo', 'supply', 1.0, 'lidar')] == 1          # el alias vuelve
+        assert sum(v for k, v in st.items() if k[:2] == ('Luminar', 'Volvo')) == 1    # y el hecho de Wikidata sigue
+
+
+def test_g5_una_correccion_no_resucita_copias(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    _objs('X', 'TSMC')
+    _link('X', 'TSMC', w=2, dup=False)
+    _link('X', 'TSMC', w=2, props={'source': 'wikidata'}, source='wikidata', vf='2024-01-01', dup=False)   # dedup
+    with session_scope() as s:
+        execute_action(s, 'RetractarVinculo', {'link_id': str(_rows(s, 'X', 'TSMC')[0].id),
+                                               'razon': 'dirección al revés'}, actor='f')
+    with session_scope() as s:
+        assert _state(s) == _replay(s) == Counter()
 
 
 # ── O-5 / D-1: aplicar y deshacer nunca corren dos a la vez
@@ -242,19 +260,23 @@ def test_g5_deshacer_cadena_de_alias_exacto(db):
         assert _state(s) == _replay(s) == before
 
 
-# ── O-9: la importación masiva no escribe no-ops ni cuenta lo que no creó
-def test_g5_bulk_import_idempotente_contra_cualquier_fuente(db):
+# ── O-9: la importación masiva no repite eventos no-op ni cuenta lo que no creó
+def test_g5_bulk_import_idempotente_por_fuente(db):
     from ontology.db import session_scope
     from ontology.bulk_import import import_links_bulk
     from ontology.models import Event
     _objs('Luminar', 'Volvo')
     _link('Luminar', 'Volvo', w=1.0, dup=False)
+    rec = [{'source': 'Luminar', 'target': 'Volvo', 'rel_type': 'supply', 'weight': 1.0}]
     with session_scope() as s:
         n0 = s.query(Event).count()
-        r = import_links_bulk(s, [{'source': 'Luminar', 'target': 'Volvo', 'rel_type': 'supply', 'weight': 1.0}],
-                              'wikidata')
-        assert r['created'] == 0 and r['skipped_duplicates'] == 1
-        assert s.query(Event).count() == n0
+        r1 = import_links_bulk(s, rec, 'wikidata')
+        assert r1['created'] == 0                              # se registró como duplicado, no como creado
+    with session_scope() as s:
+        n1 = s.query(Event).count()
+        assert n1 == n0 + 1
+        r2 = import_links_bulk(s, rec, 'wikidata')
+        assert r2['created'] == 0 and r2['skipped_duplicates'] == 1 and s.query(Event).count() == n1
 
 
 # ── O-10: si el canónico no existe en la base, el ítem no rompe la categoría
@@ -352,3 +374,20 @@ def test_g5_api_exige_pin_configurado_y_valida_tipos(db, monkeypatch):
     assert c.post('/api/ontology/reconcile/rollback', json={'actor': 'a', 'run_id': 5}, headers=h).status_code == 400
     g = c.get('/api/ontology/reconcile/plan?summary=1')
     assert g.status_code == 200 and 'path' not in (g.get_json().get('snapshot') or {})
+
+
+# ── revisión de G5 (ensayo realista): un duplicado escrito por la MISMA corrida no asciende al deshacerla
+def test_g5_deshacer_no_asciende_duplicados_de_la_misma_corrida(db):
+    from ontology.db import session_scope
+    from ontology.reconcile import rollback_run, RUN_PREFIX
+    _objs('A', 'B')
+    with session_scope() as s:
+        before = _state(s)
+    run = '20990101T000000Z-abcdef'
+    _link('A', 'B', w=2, source=RUN_PREFIX + run, dup=False)
+    _link('A', 'B', w=2, source=RUN_PREFIX + run, dup=False)          # deduplicado (misma corrida)
+    with session_scope() as s:
+        out = rollback_run(s, run, confirm_db=_dbname())
+        assert out['links_retracted'] == 1
+    with session_scope() as s:
+        assert _state(s) == _replay(s) == before
