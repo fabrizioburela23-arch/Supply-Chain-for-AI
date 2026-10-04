@@ -674,14 +674,22 @@ def t_get_research(ctx, entity, limit=30):
         for c in claims:
             by_agent.setdefault(c.agent_type, []).append(
                 _claim_brief(c, counts.get(c.id, {}).get('supporting', 0), counts.get(c.id, {}).get('counter', 0)))
+        last_job = None
+        if last:
+            cov = _job_coverage(s, last)
+            last_job = {'job_id': last.id, 'status': last.status, 'created_at': _iso(last.created_at),
+                        'completed_at': _iso(last.completed_at), 'synthesis': last.synthesis,
+                        'coverage': cov, 'error': last.error}
+            if cov and not cov.get('complete'):
+                last_job['hint'] = (f"coverage incomplete: {cov['n_done']} of {cov['n_effective']} agents answered, "
+                                    f"missing {', '.join(cov['missing'])}. Treat the synthesis as partial; "
+                                    "run_research(entity, only_missing=true) completes the missing agents.")
         return {'entity_id': eid, 'label': (r or {}).get('label', eid), 'n_claims': len(claims),
                 'claims_by_agent': by_agent,
                 'contradictions': [{'claim_a': x.claim_a, 'claim_b': x.claim_b, 'type': x.rel_type,
                                     'reason': x.reason} for x in rels],
                 'withheld_unsupported_figures': len(withheld),
-                'last_job': ({'job_id': last.id, 'status': last.status, 'created_at': _iso(last.created_at),
-                              'completed_at': _iso(last.completed_at), 'synthesis': last.synthesis}
-                             if last else None),
+                'last_job': last_job,
                 'hint': (None if claims else 'no active research yet — run_research (research scope) can start one'),
                 'source': 'Khipus research swarm (research_claims, Postgres)', 'as_of': _now_iso(),
                 'disclaimer': DISCLAIMER_EN}
@@ -736,9 +744,22 @@ def t_get_claim_evidence(ctx, claim_id):
         return out
 
 
+def _job_coverage(session, job):
+    """R4: cobertura guardada (terminado) o en vivo (en curso); None si el runner no está."""
+    try:
+        syn = job.synthesis if isinstance(job.synthesis, dict) else None
+        if syn and syn.get('coverage'):
+            return syn['coverage']
+        from research.runner import job_coverage
+        return job_coverage(session, job)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 @tool('get_research_job', 'Research job status', 'read',
-      'Status of a research job started with run_research: queued/running/done/failed, per-agent runs, number '
-      'of claims produced and the synthesis when done.',
+      'Status of a research job started with run_research: queued/running/done/partial/failed, per-agent runs, '
+      'coverage (which agents answered), number of claims produced and the synthesis when done. '
+      '`partial` = some agents did not answer: the synthesis is incomplete.',
       {'job_id': {'type': 'string', 'maxLength': 40, 'minLength': 1}},
       required=['job_id'])
 def t_get_research_job(ctx, job_id):
@@ -756,14 +777,19 @@ def t_get_research_job(ctx, job_id):
             qpos, qs = (queue_position(j.id) if j.status == 'queued' else None), research_queue_state()
         except Exception:  # noqa: BLE001
             qpos, qs = None, {'jobs_queued': None, 'jobs_running': None}
+        cov = _job_coverage(s, j)
         return {'job_id': j.id, 'entity_id': j.entity_id, 'status': j.status, 'depth': j.depth, 'agents': j.agents,
                 'created_at': _iso(j.created_at), 'completed_at': _iso(j.completed_at), 'error': j.error,
                 'queue_position': qpos, 'queue_length': qs['jobs_queued'], 'jobs_running': qs['jobs_running'],
+                'coverage': cov,
                 'synthesis': j.synthesis, 'claims_produced': n_claims,
                 'runs': [{'agent_type': x.agent_type, 'status': x.status, 'model': x.model,
                           'claims_generated': x.claims_generated, 'errors': x.errors,
                           'latency_ms': x.latency_ms} for x in runs],
                 'next': ('call get_research(entity) to read the claims' if j.status == 'done' else
+                         ('coverage incomplete (missing ' + ', '.join((cov or {}).get('missing') or []) +
+                          '): read get_research(entity) as PARTIAL, or call run_research(entity, only_missing=true) '
+                          'to complete the missing agents') if j.status == 'partial' else
                          'still working — poll again in ~20-40 s' if j.status in ('queued', 'running') else None),
                 'source': 'Khipus research swarm', 'as_of': _now_iso()}
 
@@ -974,9 +1000,11 @@ def t_get_track_record(ctx, agent_type=None):
       'returns a job_id; poll get_research_job, then read get_research. Respects the server daily AI budget. '
       'Agents cite evidence and never give buy/sell orders.',
       {'entity': {'type': 'string', 'maxLength': 120, 'minLength': 1},
-       'depth': {'type': 'string', 'enum': ['QUICK', 'STANDARD'], 'default': 'STANDARD'}},
+       'depth': {'type': 'string', 'enum': ['QUICK', 'STANDARD'], 'default': 'STANDARD'},
+       'only_missing': {'type': 'boolean', 'default': False,
+                        'description': 'Only re-run the agents that did not answer in the last (partial) job.'}},
       required=['entity'], read_only=False, idempotent=False, open_world=True)
-def t_run_research(ctx, entity, depth='STANDARD'):
+def t_run_research(ctx, entity, depth='STANDARD', only_missing=False):
     _need_db('run_research')
     r = _resolve_or_fail(entity)
     try:
@@ -1006,7 +1034,7 @@ def t_run_research(ctx, entity, depth='STANDARD'):
                 raise ToolError(f'daily research budget exhausted (~${spent:.2f} of ${budget:.2f} estimated); '
                                 'try again tomorrow', code='budget_exhausted')
             job, reused = runner.create_job(s, r['id'], depth=depth, trigger={'kind': 'mcp', 'by': p.actor},
-                                            requested_by=p.actor)
+                                            requested_by=p.actor, only_missing=bool(only_missing))
             return {'job_id': job.id, 'entity_id': r['id'], 'label': r['label'], 'status': job.status,
                     'reused': reused, 'agents': job.agents, 'depth': job.depth,
                     'spent_today_usd_est': round(spent, 4), 'daily_budget_usd': budget}

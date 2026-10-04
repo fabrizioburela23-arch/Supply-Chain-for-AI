@@ -41,7 +41,23 @@
   var STANCE = { positive: ['#2BE38B', 'a favor', 'positive'], negative: ['#FF4D6A', 'en contra', 'negative'],
     neutral: ['#9BA6C4', 'neutral', 'neutral'], mixed: ['#FFB300', 'mixta', 'mixed'] };
   var ST = { running: ['investigando…', 'investigating…'], done: ['listo', 'done'], failed: ['falló', 'failed'],
-    skipped: ['omitido', 'skipped'], queued: ['en cola', 'queued'] };
+    skipped: ['omitido', 'skipped'], queued: ['en cola', 'queued'], partial: ['parcial', 'partial'] };
+  // R4 (misión de reparación): etiqueta corta del analista para la cobertura
+  var AGL = { fundamental: ['Fundamental', 'Fundamental'], news: ['Noticias', 'News'], technical: ['Técnico', 'Technical'],
+    supply_chain: ['Cadena de suministro', 'Supply chain'], geopolitical: ['Geopolítico', 'Geopolitical'], macro: ['Macro', 'Macro'],
+    crypto: ['Cripto', 'Crypto'], risk_observation: ['Riesgos', 'Risk'] };
+  function agl(t) { var a = AGL[t] || [t, t]; return L(a[0], a[1]); }
+  // Franja de cobertura: qué analistas respondieron y cuáles faltan (nunca se esconde un parcial)
+  function coverageHtml(cov, withButton) {
+    if (!cov) return '';
+    if (cov.complete) {
+      return cov.note_es ? '<div class="rs-note" style="font-size:11.5px;color:#9BA6C4">ℹ️ ' + esc(isEn() ? (cov.note_en || cov.note_es) : cov.note_es) + '</div>' : '';
+    }
+    return '<div class="rs-cell" style="margin-bottom:10px;border-color:#FFB300;color:#FFB300;font-size:13px">⚠️ ' +
+      esc(isEn() ? (cov.note_en || cov.note_es || '') : (cov.note_es || '')) +
+      (withButton ? ' <button class="rs-btn" id="rs-complete" style="border-color:#FFB300;color:#FFB300;margin-left:8px"' + (S.job ? ' disabled' : '') + '>↻ ' +
+        esc(L('Completar lo que falta', 'Complete the missing part')) + ' (' + esc((cov.missing || []).map(agl).join(', ')) + ')</button>' : '') + '</div>';
+  }
   var TOPIC = { revenue_growth: ['crecimiento de ingresos', 'revenue growth'], margins: ['márgenes', 'margins'],
     profitability: ['rentabilidad', 'profitability'], cash_flow: ['flujo de caja', 'cash flow'], balance_sheet: ['balance', 'balance sheet'],
     valuation: ['valuación', 'valuation'], demand: ['demanda', 'demand'], competition: ['competencia', 'competition'],
@@ -247,6 +263,7 @@
       '<div class="rs-sub">' + esc(L('Agentes especializados leen datos reales (estados financieros, mercado, noticias, grafo) y escriben conclusiones con evidencia a favor y en contra. No son recomendaciones de compra o venta. Los agentes pueden discrepar: se muestran ambas posturas.',
         'Specialized agents read real data (financial statements, market, news, graph) and write conclusions with evidence for and against. Not buy or sell recommendations. Agents may disagree: both views are shown.')) + '</div>' +
       (S.msg ? '<div class="rs-cell" style="margin-bottom:10px;border-color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';font-size:13px">' + esc(S.msg.text) + '</div>' : '') +
+      (d.last_job && d.last_job.coverage && !d.last_job.coverage.complete && d.last_job.status !== 'running' && d.last_job.status !== 'queued' ? coverageHtml(d.last_job.coverage, true) : '') +
       '<div class="rs-grid"><div>' +
         '<div class="rs-cell"><div class="rs-t">' + esc(L('Conclusiones por perspectiva', 'Conclusions by perspective')) + '</div>' +
           (types.length ? '<div class="rs-tabs">' + types.map(function (t) {
@@ -265,6 +282,8 @@
     rs.querySelectorAll('.rs-tab').forEach(function (b) { b.onclick = function () { S.tab = b.getAttribute('data-t'); render(); loadActivity(); }; });
     var go = document.getElementById('rs-go');
     if (go) go.onclick = function () { run(S.entity, (document.getElementById('rs-depth') || {}).value || 'STANDARD'); };
+    var comp = document.getElementById('rs-complete');
+    if (comp) comp.onclick = function () { run(S.entity, (document.getElementById('rs-depth') || {}).value || 'STANDARD', true); };
     loadActivity();
   }
 
@@ -273,7 +292,9 @@
     var hs = order.filter(function (h) { return syn.by_horizon && syn.by_horizon[h]; });
     if (!hs.length) return '';
     var li = function (arr) { return arr.map(function (x) { return '<li>' + esc(isEn() ? (x.en || x.es) : x.es) + ' <span style="color:#7C87A3">(' + esc(ag(x.agent)) + ', ' + Math.round(x.confidence * 100) + '%)</span></li>'; }).join(''); };
-    return '<div class="rs-cell" style="margin-top:12px"><div class="rs-t">🧭 ' + esc(L('Síntesis de investigación', 'Research synthesis')) + '</div>' +
+    return '<div class="rs-cell" style="margin-top:12px"><div class="rs-t">🧭 ' + esc(L('Síntesis de investigación', 'Research synthesis')) +
+      (syn.coverage && !syn.coverage.complete ? ' <span style="color:#FFB300;font-size:11px">· ' + esc(L('PARCIAL', 'PARTIAL')) + '</span>' : '') + '</div>' +
+      coverageHtml(syn.coverage, false) +
       hs.map(function (h) {
         var b = syn.by_horizon[h];
         return '<div style="margin-bottom:10px"><div style="font-weight:700;font-size:12.5px;margin-bottom:4px">' + esc(hz(h)) + '</div>' +
@@ -319,25 +340,29 @@
     load(entityId);
   }
 
-  function run(entityId, depth) {
+  function run(entityId, depth, onlyMissing) {
     var who = actor();
     S.entity = entityId; S.msg = null;
     if (depth === 'DEEP' && !window.confirm(L('La investigación profunda usa más IA (y más costo). ¿Continuar?', 'Deep research uses more AI (and cost). Continue?'))) return;
     getJSON('/api/research/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entity: entityId, depth: depth || 'STANDARD', actor: who }) }).then(function (d) {
+      body: JSON.stringify({ entity: entityId, depth: depth || 'STANDARD', actor: who, only_missing: !!onlyMissing }) }).then(function (d) {
       if (!d.job_id) { S.msg = { bad: true, text: friendlyError(d) }; render(); return; }
       S.job = d.job_id; render();
       if (S.poll) clearInterval(S.poll);
       S.poll = setInterval(function () {
         getJSON('/api/research/jobs/' + encodeURIComponent(S.job)).then(function (j) {
           loadActivity();
-          if (j.status === 'done' || j.status === 'failed' || j._status === 404) {
+          if (j.status === 'done' || j.status === 'partial' || j.status === 'failed' || j._status === 404) {
             clearInterval(S.poll); S.poll = null; S.job = null;
-            var errs = runErrors(j), n = (j.claims || []).length;
+            var errs = runErrors(j), n = (j.claims || []).length, cov = j.coverage;
             if (!n) S.msg = { bad: true, text: L('La investigación no produjo conclusiones.', 'The research produced no conclusions.') + (errs.length ? ' ' + L('Motivo: ', 'Reason: ') + errs.join(' · ') : '') };
+            else if (j.status === 'partial' && cov) S.msg = { bad: true, text: n + ' ' + L('conclusiones nuevas, pero la cobertura es PARCIAL: ', 'new conclusions, but coverage is PARTIAL: ') + (isEn() ? (cov.note_en || cov.note_es) : cov.note_es) };
             else if (errs.length) S.msg = { bad: false, text: n + ' ' + L('conclusiones nuevas. Algunos agentes fallaron: ', 'new conclusions. Some agents failed: ') + errs.join(' · ') };
             else S.msg = { bad: false, text: n + ' ' + L('conclusiones nuevas.', 'new conclusions.') };
             load(S.entity);
+          } else if (j.status === 'queued' && j.queue_position) {
+            S.msg = { bad: false, text: L('En cola: posición ', 'Queued: position ') + j.queue_position + (j.jobs_running ? ' · ' + j.jobs_running + ' ' + L('en curso', 'running') : '') };
+            render();
           }
         });
       }, 3000);

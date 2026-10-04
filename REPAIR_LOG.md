@@ -80,3 +80,31 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   (3 tests; antes: `AttributeError: _AGENT_POOL`, máximo simultáneo 2-4).
 - **Rollback.** Revertir el commit; no toca datos (los jobs huérfanos marcados
   `failed` ya estaban muertos).
+
+### R4 — Estado honesto `partial`, cobertura visible y "completar solo lo que falta"
+
+- **Problema.** TSMC (`2ac4552d…`) quedó `done` con Noticias y Técnico caídos y su
+  síntesis (6 positivas / 1 riesgo) se presentaba como completa en la app y en el
+  MCP. El dedupe reutilizaba ese job 30 min y nadie podía completarlo.
+- **Causa raíz.** `research/runner.py:431` decidía el estado con un booleano
+  (≥1 agente ok → `done`); la cobertura vivía en `agent_runs` y ni la síntesis, ni
+  `/api/research/entity`, ni `get_research` la leían.
+- **Cambio.** `research/runner.py`: `coverage_of(runs, requested)` (puro) →
+  {done, failed(+hint es/en), skipped, not_applicable ("sin evidencia": empresas
+  privadas sin noticias/precio), running, missing, complete, note_es/en};
+  `job.synthesis['coverage']`; estado `partial` (con `error` "parcial: faltan X")
+  cuando falta algún analista pero hubo resultados. `create_job(..., only_missing)`:
+  un pedido igual tras un `partial` crea un job SOLO con los analistas que faltan
+  (`trigger.completes`); `only_missing=True` lo fuerza fuera de la ventana.
+  `research/api.py`: `coverage` en `/jobs/<id>` (en vivo mientras corre) y en
+  `/entity/<id>.last_job`; POST `/jobs` acepta `only_missing`. MCP: `get_research.
+  last_job.coverage` + `hint`, `get_research_job.coverage` + `next` accionable,
+  `run_research(only_missing)` (parámetro opcional; nombres y campos existentes
+  intactos). `engine/research.js`: franja ⚠ "Cobertura parcial… faltan …" con
+  botón "↻ Completar lo que falta", el sondeo termina también en `partial`,
+  posición en cola visible; `research/errors.py` explica "IA ocupada". sw v199.
+- **Verificar.** `DATABASE_URL=… pytest tests/test_repair_research.py -k r4`
+  (4 tests; antes: `ImportError: coverage_of`, status `done` con agentes caídos).
+- **Rollback.** Revertir el commit. Los jobs ya guardados conservan su estado;
+  un `partial` nuevo no rompe clientes que solo esperaban `done` (lo tratan como
+  "no terminado" → siguen sondeando: por eso la UI y el MCP se actualizan aquí).

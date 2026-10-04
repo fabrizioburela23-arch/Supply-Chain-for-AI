@@ -7,6 +7,9 @@ esta explicación con QUÉ HACER, en español e inglés.
 import re
 
 _RULES = (
+    (r'IA ocupada|AI busy',
+     'La IA estaba ocupada atendiendo otras consultas (comité, chat u otras investigaciones) y se agotaron las esperas. Vuelve a intentarlo en un minuto.',
+     'The AI was busy with other requests (committee, chat or other research) and the waits ran out. Try again in a minute.'),
     (r'respuesta vac[ií]a|empty response|sin candidates',
      'La IA (Gemini) gastó su espacio "pensando" y no alcanzó a escribir la respuesta. Vuelve a intentarlo; si se repite, avísame.',
      'The AI (Gemini) used up its space "thinking" and did not get to write the answer. Try again; if it repeats, tell me.'),

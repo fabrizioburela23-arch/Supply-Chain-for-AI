@@ -116,6 +116,94 @@ def queue_position(job_id):
             return None
 
 
+# ── R4: cobertura honesta de un job (qué analistas respondieron y cuáles no) ──
+AGENT_LABELS = {
+    'fundamental': ('Fundamental', 'Fundamental'), 'news': ('Noticias', 'News'),
+    'technical': ('Técnico', 'Technical'), 'supply_chain': ('Cadena de suministro', 'Supply chain'),
+    'geopolitical': ('Geopolítico', 'Geopolitical'), 'macro': ('Macro', 'Macro'),
+    'crypto': ('Cripto', 'Crypto'), 'risk_observation': ('Riesgos', 'Risk'),
+}
+_NA_SKIP = re.compile(r'sin evidencia', re.I)
+
+
+def agent_label(agent_type, lang='es'):
+    es, en = AGENT_LABELS.get(agent_type, (agent_type, agent_type))
+    return en if lang == 'en' else es
+
+
+def coverage_of(runs, requested):
+    """Cobertura PURA (sin base): runs = AgentRun (o algo con agent_type/status/
+    errors), requested = agentes pedidos. Un agente 'skipped' por "sin evidencia"
+    (empresa privada sin noticias/estados) NO es un faltante: es no aplicable."""
+    from research.errors import run_hint
+    requested = list(requested or [])
+    last = {}
+    for r in runs or []:
+        last[getattr(r, 'agent_type', None)] = r        # el último run del agente manda
+    done, failed, skipped, na, running, missing = [], [], [], [], [], []
+    for a in requested:
+        r = last.get(a)
+        st = getattr(r, 'status', None) if r is not None else None
+        errs = list(getattr(r, 'errors', None) or []) if r is not None else []
+        first = next((e for e in errs if isinstance(e, str)), '')
+        if st == 'done':
+            done.append(a)
+        elif st == 'running':
+            running.append(a)
+            missing.append(a)
+        elif st == 'skipped' and _NA_SKIP.search(first or ''):
+            na.append(a)
+        elif st == 'skipped':
+            skipped.append({'agent': a, 'reason': first[:200]})
+            missing.append(a)
+        else:
+            if st == 'failed':
+                hes, hen = run_hint(errs)
+                failed.append({'agent': a, 'error': first[:300], 'hint_es': hes, 'hint_en': hen})
+            missing.append(a)
+    complete = not missing
+    n_req = len(requested)
+    n_eff = n_req - len(na)
+    if complete:
+        note_es = note_en = None
+        if na:
+            note_es = 'Sin datos para: ' + ', '.join(agent_label(a) for a in na) + ' (no aplica a esta empresa).'
+            note_en = 'No data for: ' + ', '.join(agent_label(a, 'en') for a in na) + ' (not applicable to this company).'
+    else:
+        miss_es = ', '.join(agent_label(a) for a in missing)
+        miss_en = ', '.join(agent_label(a, 'en') for a in missing)
+        why = ''
+        for f in failed:
+            if f.get('hint_es'):
+                why = f' Motivo: {f["hint_es"]}'
+                break
+        why_en = ''
+        for f in failed:
+            if f.get('hint_en'):
+                why_en = f' Reason: {f["hint_en"]}'
+                break
+        note_es = (f'Cobertura parcial: respondieron {len(done)} de {n_eff} analistas; faltan: {miss_es}.'
+                   f'{why} La síntesis puede estar incompleta (p. ej. riesgos de corto plazo sin noticias).')
+        note_en = (f'Partial coverage: {len(done)} of {n_eff} analysts answered; missing: {miss_en}.'
+                   f'{why_en} The synthesis may be incomplete (e.g. short-term risks without news).')
+    return {'requested': requested, 'done': done, 'failed': failed, 'skipped': skipped, 'not_applicable': na,
+            'running': running, 'missing': missing, 'complete': complete, 'n_done': len(done),
+            'n_requested': n_req, 'n_effective': n_eff, 'note_es': note_es, 'note_en': note_en}
+
+
+def job_coverage(session, job):
+    runs = session.query(AgentRun).filter(AgentRun.job_id == job.id).order_by(AgentRun.started_at).all()
+    return coverage_of(runs, job.agents or [])
+
+
+def missing_agents(session, job):
+    """Agentes que faltan en un job (según su cobertura guardada o sus runs)."""
+    cov = (job.synthesis or {}).get('coverage') if isinstance(job.synthesis, dict) else None
+    if not cov:
+        cov = job_coverage(session, job)
+    return list(cov.get('missing') or [])
+
+
 def _now():
     return datetime.now(timezone.utc)
 
@@ -151,27 +239,59 @@ _HZ_DAYS = {'INTRADAY': 2, 'SHORT_TERM': 90, 'MEDIUM_TERM': 365, 'LONG_TERM': 5 
 
 
 def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, requested_by=None,
-               force=False):
-    """Crea (o REUTILIZA si hay uno igual reciente) un ResearchJob. No ejecuta."""
+               force=False, only_missing=False):
+    """Crea (o REUTILIZA si hay uno igual reciente) un ResearchJob. No ejecuta.
+
+    R4: si el pedido igual más reciente quedó `partial` (algún analista no
+    respondió), NO se reutiliza: se crea un job SOLO con los analistas que faltan
+    (`trigger.completes` = id del parcial). `only_missing=True` fuerza ese
+    comportamiento aunque el anterior esté fuera de la ventana de dedupe."""
     depth = depth if depth in DEPTHS else 'STANDARD'
     max_agents = _cfg('RESEARCH_MAX_AGENTS_PER_JOB', 4, int)
     agents = [a for a in (agents or DEFAULT_AGENTS) if a in AGENTS_BY_TYPE][:max_agents]
     key = f'{entity_id}|{depth}|{",".join(sorted(agents))}'
-    if not force:
+    trig = dict(trigger or {'kind': 'user'})
+    if not force or only_missing:
         since = _now() - timedelta(minutes=_cfg('RESEARCH_DEDUPE_MINUTES', 30, int))
-        prev = (session.query(ResearchJob).filter(ResearchJob.dedupe_key == key,
-                                                  ResearchJob.created_at >= since,
-                                                  ResearchJob.status.in_(('queued', 'running', 'done')))
-                .order_by(ResearchJob.created_at.desc()).first())
+        q = session.query(ResearchJob).filter(ResearchJob.dedupe_key == key,
+                                              ResearchJob.status.in_(('queued', 'running', 'done', 'partial')))
+        if not only_missing:
+            q = q.filter(ResearchJob.created_at >= since)
+        prev = q.order_by(ResearchJob.created_at.desc()).first()
         # Un job 'done' SIN ningún agente exitoso (p. ej. creado antes del fix
         # que lo marca 'failed') no se reutiliza: dejaría al usuario atascado.
         if prev and prev.status == 'done' and not (session.query(AgentRun)
                                                    .filter(AgentRun.job_id == prev.id,
                                                            AgentRun.status == 'done').first()):
             prev = None
-        if prev:
+        if prev and prev.status in ('done', 'partial'):
+            missing = [a for a in missing_agents(session, prev) if a in agents]
+            if missing:
+                # ¿ya hay un job "completando" ese parcial en curso o reciente? → reutilizarlo
+                sub_key = f'{entity_id}|{depth}|{",".join(sorted(missing))}'
+                sub = (session.query(ResearchJob).filter(ResearchJob.dedupe_key == sub_key,
+                                                         ResearchJob.created_at >= since,
+                                                         ResearchJob.status.in_(('queued', 'running', 'done')))
+                       .order_by(ResearchJob.created_at.desc()).first())
+                if sub and not (sub.status == 'done' and not session.query(AgentRun).filter(
+                        AgentRun.job_id == sub.id, AgentRun.status == 'done').first()):
+                    return sub, True
+                trig['completes'] = prev.id
+                job = ResearchJob(entity_id=entity_id, depth=depth, agents=missing, trigger=trig,
+                                  requested_by=requested_by, status='queued', dedupe_key=sub_key)
+                session.add(job)
+                session.flush()
+                return job, False
+            if prev.status == 'partial' and not missing:
+                # lo que faltaba ya se completó en otro job → el último completo manda
+                sub_prev = (session.query(ResearchJob).filter(ResearchJob.entity_id == entity_id,
+                                                              ResearchJob.status == 'done',
+                                                              ResearchJob.created_at >= since)
+                            .order_by(ResearchJob.created_at.desc()).first())
+                return (sub_prev or prev), True
+        if prev and (not force or only_missing):
             return prev, True
-    job = ResearchJob(entity_id=entity_id, depth=depth, agents=agents, trigger=trigger or {'kind': 'user'},
+    job = ResearchJob(entity_id=entity_id, depth=depth, agents=agents, trigger=trig,
                       requested_by=requested_by, status='queued', dedupe_key=key)
     session.add(job)
     session.flush()
@@ -507,11 +627,20 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
             session.commit()
         except Exception as e:  # noqa: BLE001
             log.warning('semantic contradictions: %s', type(e).__name__)
-    job.synthesis = synthesize(session, job)
-    # Si NINGÚN agente terminó bien, el job es 'failed' → el dedupe (que solo
-    # reutiliza queued/running/done) deja reintentar enseguida.
-    job.status = 'done' if ok or not job.agents else 'failed'
-    if not ok and job.agents:
+    cov = job_coverage(session, job)
+    job.synthesis = dict(synthesize(session, job), coverage=cov)
+    # R4 — estado HONESTO: 'done' solo si TODOS los analistas pedidos respondieron
+    # (los "sin evidencia" no cuentan como faltantes); 'partial' si falta alguno
+    # pero hubo resultados; 'failed' si ninguno produjo nada (el dedupe deja
+    # reintentar enseguida y, con 'partial', completa solo lo que falta).
+    if not job.agents or cov['complete']:
+        job.status = 'done'
+    elif ok:
+        job.status = 'partial'
+        job.error = ('parcial: faltan ' + ', '.join(f'{agent_label(a)} [{a}]' for a in cov['missing']) +
+                     ' / partial: missing ' + ', '.join(f'{agent_label(a, "en")} [{a}]' for a in cov['missing']))
+    else:
+        job.status = 'failed'
         job.error = 'ningún agente produjo resultado'
     job.completed_at = _now()
     session.flush()

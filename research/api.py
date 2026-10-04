@@ -86,7 +86,8 @@ def create():
         with session_scope() as s:
             job, reused = create_job(s, eid, depth=str(body.get('depth') or 'STANDARD').upper(),
                                      agents=agents_req, trigger={'kind': 'user', 'by': actor},
-                                     requested_by=actor, force=bool(body.get('force')))
+                                     requested_by=actor, force=bool(body.get('force')),
+                                     only_missing=bool(body.get('only_missing')))
             return job.id, reused, {'job_id': job.id, 'entity_id': eid, 'status': job.status,
                                     'reused': reused, 'agents': job.agents, 'depth': job.depth}
     try:
@@ -121,11 +122,12 @@ def job(job_id):
             return jsonify({'error': 'job no encontrado'}), 404
         runs = s.query(AgentRun).filter(AgentRun.job_id == j.id).order_by(AgentRun.started_at).all()
         claims = s.query(ResearchClaim).filter(ResearchClaim.job_id == j.id).all()
-        from research.runner import queue_position, research_queue_state
+        from research.runner import coverage_of, queue_position, research_queue_state
         qs = research_queue_state()
         return jsonify({'job_id': j.id, 'entity_id': j.entity_id, 'status': j.status, 'depth': j.depth,
                         'agents': j.agents, 'trigger': j.trigger, 'created_at': _iso(j.created_at),
                         'completed_at': _iso(j.completed_at), 'error': j.error, 'synthesis': j.synthesis,
+                        'coverage': coverage_of(runs, j.agents or []),
                         'queue_position': queue_position(j.id) if j.status == 'queued' else None,
                         'queue_length': qs['jobs_queued'], 'jobs_running': qs['jobs_running'],
                         'runs': [_run_dict(r) for r in runs], 'claims': [_claim_dict(c) for c in claims]})
@@ -174,8 +176,21 @@ def entity(entity_id):
                                             'a_info': _side(r.claim_a), 'b_info': _side(r.claim_b)}
                                            for r in rels],
                         'last_job': ({'job_id': last.id, 'status': last.status, 'created_at': _iso(last.created_at),
-                                      'completed_at': _iso(last.completed_at), 'synthesis': last.synthesis}
+                                      'completed_at': _iso(last.completed_at), 'synthesis': last.synthesis,
+                                      'coverage': _coverage(s, last), 'error': last.error}
                                      if last else None)})
+
+
+def _coverage(session, job):
+    """Cobertura guardada (jobs terminados) o calculada en vivo (en curso)."""
+    try:
+        syn = job.synthesis if isinstance(job.synthesis, dict) else None
+        if syn and syn.get('coverage'):
+            return syn['coverage']
+        from research.runner import job_coverage
+        return job_coverage(session, job)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 @research_bp.route('/claims/<claim_id>')

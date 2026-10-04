@@ -335,3 +335,103 @@ def test_r3_tras_un_reinicio_se_reencolan_los_queued_y_se_cierran_los_running_vi
         assert run.status == 'failed'
         assert s.get(ResearchJob, a_id).status == 'done'
     runner._reset_workers()
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R4 · Estado honesto `partial` + cobertura en síntesis/API/MCP + completar solo lo que falta
+# ════════════════════════════════════════════════════════════════════════════
+
+class _Run:
+    def __init__(self, agent_type, status, errors=None):
+        self.agent_type, self.status, self.errors = agent_type, status, errors or []
+
+
+def test_r4_cobertura_pura_marca_agentes_caidos_y_no_aplicables():
+    from research.runner import coverage_of
+    cov = coverage_of([_Run('fundamental', 'done'), _Run('news', 'failed', ['modelo: claude: IA ocupada tras 4 esperas']),
+                       _Run('supply_chain', 'skipped', ['sin evidencia disponible para esta entidad'])],
+                      ['fundamental', 'news', 'technical', 'supply_chain'])
+    assert cov['complete'] is False and cov['done'] == ['fundamental']
+    assert [f['agent'] for f in cov['failed']] == ['news'] and cov['failed'][0]['hint_es']
+    assert cov['missing'] == ['news', 'technical'] and cov['not_applicable'] == ['supply_chain']
+    assert cov['n_done'] == 1 and cov['n_requested'] == 4
+    assert 'Noticias' in cov['note_es'] and 'News' in cov['note_en'] and 'Técnico' in cov['note_es']
+    ok = coverage_of([_Run('fundamental', 'done'), _Run('news', 'skipped', ['sin evidencia disponible'])],
+                     ['fundamental', 'news'])
+    assert ok['complete'] is True and ok['missing'] == [] and ok['not_applicable'] == ['news']
+
+
+@needs_db
+def test_r4_job_con_agentes_fallidos_queda_parcial_y_el_siguiente_pedido_completa_lo_que_falta(db):
+    from ontology.db import session_scope
+    from research.models import ResearchJob
+    from research.runner import create_job
+    from tests.test_research import _run
+    jid = _run('AMD', ['fundamental', 'news'], {'fundamental': [_ok_result()], 'news': ['no json', 'tampoco', 'ni esto']},
+               depth='QUICK', force=False)
+    with session_scope() as s:
+        j = s.get(ResearchJob, jid)
+        assert j.status == 'partial' and 'news' in (j.error or '')
+        cov = j.synthesis['coverage']
+        assert cov['complete'] is False and cov['missing'] == ['news'] and cov['done'] == ['fundamental']
+        # el mismo pedido dentro de la ventana de dedupe NO reutiliza lo parcial: completa solo lo que falta
+        j2, reused = create_job(s, 'AMD', depth='QUICK', agents=['fundamental', 'news'])
+        assert not reused and j2.id != jid and j2.agents == ['news'] and j2.trigger.get('completes') == jid
+        # un pedido explícito de "solo lo que falta" sobre un job completo no hace nada nuevo
+        j3, reused3 = create_job(s, 'AMD', depth='QUICK', agents=['fundamental', 'news'], only_missing=True)
+        assert j3.id == j2.id and reused3
+
+
+@needs_db
+def test_r4_agente_sin_evidencia_no_deja_el_job_parcial(db):
+    from ontology.db import session_scope
+    from research.llm import FakeProvider
+    from research.models import ResearchJob
+    from research.runner import create_job, execute_job
+    from tests.test_research import FETCH
+    from tests.test_research import _claim, _result
+    # empresa privada: sin precio, sin velas, sin noticias → el analista técnico no tiene NADA que leer
+    fetch = dict(FETCH, news=lambda q, n: [], candles=lambda s: [], profile=lambda s: {'available': False})
+    ok = _result([_claim(evidence_refs=['E1'], counter_evidence_refs=[])])
+    with session_scope() as s:
+        job, _ = create_job(s, 'Cerebras', depth='QUICK', agents=['fundamental', 'technical'], requested_by='t',
+                            force=True)
+        execute_job(s, job, provider_factory=lambda a: FakeProvider([ok]), fetchers=fetch)
+        jid = job.id
+    with session_scope() as s:
+        j = s.get(ResearchJob, jid)
+        assert j.status == 'done' and j.synthesis['coverage']['not_applicable'] == ['technical']
+        assert j.synthesis['coverage']['complete'] is True and j.synthesis['coverage']['note_es']
+
+
+@needs_db
+def test_r4_api_y_mcp_exponen_la_cobertura(db, monkeypatch):
+    import json
+    monkeypatch.setenv('TRADE_PIN', '4321')
+
+    from tests.test_mcp import app as _mcp_app, call_tool, make_token  # noqa: F401
+    from tests.test_research import _run
+    jid = _run('AMD', ['fundamental', 'news'], {'fundamental': [_ok_result()], 'news': ['x', 'y', 'z']},
+               depth='QUICK', force=True)
+    import server as srv
+    c = srv.app.test_client()
+    d = c.get(f'/api/research/jobs/{jid}').get_json()
+    assert d['status'] == 'partial' and d['coverage']['missing'] == ['news'] and d['queue_position'] is None
+    e = c.get('/api/research/entity/AMD').get_json()
+    assert e['last_job']['status'] == 'partial' and e['last_job']['coverage']['complete'] is False
+    # MCP: get_research / get_research_job llevan `coverage` y un `next` accionable (solo campos nuevos)
+    from flask import Flask
+    from mcp_server.api import mcp_bp
+    a = Flask('mcp-test-r4')
+    a.config['TESTING'] = True
+    a.register_blueprint(mcp_bp)
+    mc = a.test_client()
+    tok = make_token(mc, ['read'])['token']
+    _, r = call_tool(mc, tok, 'get_research', {'entity': 'AMD'})
+    sc = r['result']['structuredContent']
+    assert sc['last_job']['status'] == 'partial' and sc['last_job']['coverage']['missing'] == ['news']
+    assert 'only_missing' in (sc['last_job'].get('hint') or '')
+    _, r = call_tool(mc, tok, 'get_research_job', {'job_id': jid})
+    sc = r['result']['structuredContent']
+    assert sc['status'] == 'partial' and sc['coverage']['n_done'] == 1 and 'only_missing' in sc['next']
+    assert json.dumps(sc)       # serializable
