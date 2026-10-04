@@ -11,9 +11,11 @@ Control de costo (docs/MODEL_ROUTING.md):
 """
 import logging
 import os
+import queue
 import re
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func
@@ -29,6 +31,89 @@ from research.models import (DEPTHS, AgentRun, ClaimRelation, ResearchClaim, Res
 log = logging.getLogger('khipu')
 
 DEFAULT_AGENTS = ('fundamental', 'news', 'technical', 'supply_chain')
+
+# ── R3 (misión de reparación 2026-10-04): límite GLOBAL + cola FIFO ──────────
+# Antes: un hilo por job (sin tope) y un pool de 3 hilos POR job → 5 jobs = 15
+# agentes compitiendo por 3 cupos de IA de fondo → "IA ocupada" en cadena.
+# Ahora: (1) UN pool de agentes para todo el proceso (RESEARCH_PARALLEL, default
+# 2, nunca más que los cupos de fondo del semáforo); (2) los jobs esperan en una
+# cola FIFO atendida por RESEARCH_JOB_CONCURRENCY (2) hilos — así un job en cola
+# no retiene una sesión de base ni un hilo. gunicorn corre 1 worker: el estado
+# en memoria es el del proceso.
+RESEARCH_STALE_MIN_DEFAULT = 30
+_AGENT_POOL = None
+_AGENTS_IN_FLIGHT = [0]
+_Q = queue.Queue()
+_QUEUED = []            # ids en orden de llegada (espejo de _Q, para posición)
+_RUNNING = set()
+_WORKERS = []
+_W_LOCK = threading.Lock()
+_STOP = object()
+
+
+def _bg_slots():
+    try:
+        from core.ai import AI_INTERACTIVE_RESERVE, AI_MAX_CONCURRENCY
+        return max(1, int(AI_MAX_CONCURRENCY) - int(AI_INTERACTIVE_RESERVE))
+    except Exception:  # noqa: BLE001
+        return 2
+
+
+def agent_parallelism():
+    return max(1, min(_cfg('RESEARCH_PARALLEL', 2, int), _bg_slots(), 8))
+
+
+def _agent_pool():
+    global _AGENT_POOL
+    if _AGENT_POOL is None:
+        with _W_LOCK:
+            if _AGENT_POOL is None:
+                _AGENT_POOL = ThreadPoolExecutor(max_workers=agent_parallelism(), thread_name_prefix='research-agent')
+    return _AGENT_POOL
+
+
+def _pool_submit(fn, *args):
+    def _wrapped():
+        with _W_LOCK:
+            _AGENTS_IN_FLIGHT[0] += 1
+        try:
+            return fn(*args)
+        finally:
+            with _W_LOCK:
+                _AGENTS_IN_FLIGHT[0] -= 1
+    return _agent_pool().submit(_wrapped)
+
+
+def job_concurrency():
+    return max(1, min(_cfg('RESEARCH_JOB_CONCURRENCY', 2, int), 8))
+
+
+def research_queue_state():
+    """Foto de la cola (para /api/research/health y el 🩺): sin red, sin base."""
+    pool = _AGENT_POOL
+    with _W_LOCK:
+        queued = list(_QUEUED)
+        running = sorted(_RUNNING)
+        in_flight = _AGENTS_IN_FLIGHT[0]
+        workers = sum(1 for t in _WORKERS if t.is_alive())
+    waiting = 0
+    if pool is not None:
+        try:
+            waiting = pool._work_queue.qsize()
+        except Exception:  # noqa: BLE001
+            waiting = 0
+    return {'jobs_queued': len(queued), 'queued_ids': queued, 'jobs_running': len(running), 'running_ids': running,
+            'job_concurrency': job_concurrency(), 'workers_alive': workers,
+            'agents_in_flight': in_flight, 'agents_waiting': waiting, 'agent_parallelism': agent_parallelism()}
+
+
+def queue_position(job_id):
+    """1 = el siguiente en salir; None si no está en la cola."""
+    with _W_LOCK:
+        try:
+            return _QUEUED.index(job_id) + 1
+        except ValueError:
+            return None
 
 
 def _now():
@@ -378,9 +463,8 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
     ok = 0
     quotes = baseline_quotes(job.entity_id, fetchers) if job.agents else {}
     # Los agentes trabajan EN PARALELO (contexto + IA en hilos, sin base); la
-    # base solo se toca aquí, en el hilo del job. Antes iban de a uno: 4 agentes
-    # × ~40 s. RESEARCH_PARALLEL (3) acota la concurrencia hacia la IA.
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+    # base solo se toca aquí, en el hilo del job. R3: el pool es COMPARTIDO por
+    # todos los jobs (RESEARCH_PARALLEL, default 2): FIFO global hacia la IA.
     pending = []
     for agent_type in job.agents or []:
         run, prior, ready = _prepare_run(session, job, agent_type)
@@ -392,27 +476,25 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
         pending.append((agent_type, run, prior))
     session.commit()
     if pending:
-        par = max(1, min(_cfg('RESEARCH_PARALLEL', 3, int), len(pending)))
-        with ThreadPoolExecutor(max_workers=par, thread_name_prefix='research-agent') as ex:
-            futs = {}
-            for agent_type, run, prior in pending:
-                prov = provider_factory(agent_type) if provider_factory else None
-                if on_start:
-                    on_start(agent_type)
-                from core.ai_usage import bind
-                futs[ex.submit(bind(_agent_work), job.entity_id, job.trigger, job.depth, agent_type, prov,
-                               fetchers, prior)] = (agent_type, run)
-            for fut in as_completed(futs):
-                agent_type, run = futs[fut]
-                try:
-                    work = fut.result()
-                except Exception as e:  # noqa: BLE001
-                    work = {'error': f'{type(e).__name__}: {str(e)[:300]}'}
-                _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
-                ok += 1 if run.status == 'done' else 0
-                session.commit()   # cada agente visible en vivo (feed de actividad)
-                if on_done:
-                    on_done(agent_type, run)
+        futs = {}
+        for agent_type, run, prior in pending:
+            prov = provider_factory(agent_type) if provider_factory else None
+            if on_start:
+                on_start(agent_type)
+            from core.ai_usage import bind
+            futs[_pool_submit(bind(_agent_work), job.entity_id, job.trigger, job.depth, agent_type, prov,
+                              fetchers, prior)] = (agent_type, run)
+        for fut in as_completed(futs):
+            agent_type, run = futs[fut]
+            try:
+                work = fut.result()
+            except Exception as e:  # noqa: BLE001
+                work = {'error': f'{type(e).__name__}: {str(e)[:300]}'}
+            _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
+            ok += 1 if run.status == 'done' else 0
+            session.commit()   # cada agente visible en vivo (feed de actividad)
+            if on_done:
+                on_done(agent_type, run)
     # contradicciones SEMÁNTICAS (IA, acotadas) — solo Normal/Profunda
     if ok and job.depth != 'QUICK':
         try:
@@ -436,25 +518,135 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
     return job
 
 
-def execute_job_async(job_id):
-    """Corre el job en un hilo (gunicorn: 1 worker × 8 hilos). El cliente
-    consulta /api/research/jobs/<id> para ver el progreso real."""
-    def _work():
-        from ontology.db import session_scope
+def _run_job_id(job_id):
+    """Ejecuta UN job por id (dentro de un hilo de la cola). Nunca lanza."""
+    from ontology.db import session_scope
+    try:
+        with session_scope() as s:
+            job = s.get(ResearchJob, job_id)
+            if job and job.status == 'queued':
+                execute_job(s, job)
+    except Exception as e:  # noqa: BLE001
+        log.warning('research job %s: %s', job_id, e)
         try:
             with session_scope() as s:
                 job = s.get(ResearchJob, job_id)
-                if job and job.status == 'queued':
-                    execute_job(s, job)
-        except Exception as e:  # noqa: BLE001
-            log.warning('research job %s: %s', job_id, e)
+                if job:
+                    job.status, job.error, job.completed_at = 'failed', str(e)[:300], _now()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def _worker(idx):
+    while True:
+        item = _Q.get()
+        if item is _STOP:
+            _Q.task_done()
+            return
+        with _W_LOCK:
             try:
-                with session_scope() as s:
-                    job = s.get(ResearchJob, job_id)
-                    if job:
-                        job.status, job.error, job.completed_at = 'failed', str(e)[:300], _now()
-            except Exception:  # noqa: BLE001
+                _QUEUED.remove(item)
+            except ValueError:
                 pass
-    t = threading.Thread(target=_work, name=f'research-{job_id[:8]}', daemon=True)
-    t.start()
-    return t
+            _RUNNING.add(item)
+        try:
+            _run_job_id(item)
+        finally:
+            with _W_LOCK:
+                _RUNNING.discard(item)
+            _Q.task_done()
+
+
+def _ensure_workers():
+    """Arranca (perezosamente) los hilos de la cola; la primera vez recupera los
+    jobs huérfanos de un reinicio. Devuelve True si fue el primer arranque."""
+    with _W_LOCK:
+        alive = [t for t in _WORKERS if t.is_alive()]
+        first = not alive
+        while len(alive) < job_concurrency():
+            t = threading.Thread(target=_worker, args=(len(alive),), name=f'research-worker-{len(alive)}',
+                                 daemon=True)
+            t.start()
+            alive.append(t)
+        _WORKERS[:] = alive
+    if first:
+        try:
+            _recover_orphans()
+        except Exception as e:  # noqa: BLE001
+            log.warning('research recover orphans: %s', type(e).__name__)
+    return first
+
+
+def _enqueue(job_id):
+    with _W_LOCK:
+        if job_id in _QUEUED or job_id in _RUNNING:
+            return False
+        _QUEUED.append(job_id)
+    _Q.put(job_id)
+    return True
+
+
+def execute_job_async(job_id):
+    """Encola el job (FIFO; RESEARCH_JOB_CONCURRENCY hilos). El cliente consulta
+    /api/research/jobs/<id> (queue_position) para ver el progreso real."""
+    _ensure_workers()
+    return _enqueue(job_id)
+
+
+def _recover_orphans():
+    """Tras un reinicio (deploy): los jobs 'queued' de las últimas 24 h vuelven a la
+    cola; los 'running' más viejos que RESEARCH_STALE_MIN (hilo muerto) quedan
+    'failed' con motivo claro, igual que sus runs."""
+    from ontology.db import ontology_available, session_scope
+    out = {'requeued': 0, 'failed': 0}
+    if not ontology_available():
+        return out
+    stale = _now() - timedelta(minutes=_cfg('RESEARCH_STALE_MIN', RESEARCH_STALE_MIN_DEFAULT, int))
+    recent = _now() - timedelta(hours=24)
+    with session_scope() as s:
+        for j in s.query(ResearchJob).filter(ResearchJob.status == 'running', ResearchJob.created_at < stale).all():
+            j.status = 'failed'
+            j.error = 'investigación interrumpida (reinicio del servidor) / research interrupted (server restart)'
+            j.completed_at = _now()
+            s.query(AgentRun).filter(AgentRun.job_id == j.id, AgentRun.status == 'running').update(
+                {'status': 'failed', 'errors': ['interrumpido por reinicio del servidor / interrupted by server restart'],
+                 'completed_at': _now()}, synchronize_session=False)
+            out['failed'] += 1
+        ids = [j.id for j in s.query(ResearchJob).filter(ResearchJob.status == 'queued',
+                                                         ResearchJob.created_at >= recent)
+               .order_by(ResearchJob.created_at).all()]
+    _ensure_workers_quiet()
+    for jid in ids:
+        if _enqueue(jid):
+            out['requeued'] += 1
+    if out['requeued'] or out['failed']:
+        log.info('research: recuperación tras reinicio %s', out)
+    return out
+
+
+def _ensure_workers_quiet():
+    """Arranca hilos sin volver a recuperar huérfanos (lo llama la recuperación)."""
+    with _W_LOCK:
+        alive = [t for t in _WORKERS if t.is_alive()]
+        while len(alive) < job_concurrency():
+            t = threading.Thread(target=_worker, args=(len(alive),), name=f'research-worker-{len(alive)}',
+                                 daemon=True)
+            t.start()
+            alive.append(t)
+        _WORKERS[:] = alive
+
+
+def _reset_workers():
+    """Solo para tests: detiene los hilos y vacía la cola."""
+    global _Q
+    with _W_LOCK:
+        alive = [t for t in _WORKERS if t.is_alive()]
+    for _ in alive:
+        _Q.put(_STOP)
+    for t in alive:
+        t.join(5)
+    with _W_LOCK:
+        _WORKERS[:] = []
+        _QUEUED[:] = []
+        _RUNNING.clear()
+        _Q = queue.Queue()

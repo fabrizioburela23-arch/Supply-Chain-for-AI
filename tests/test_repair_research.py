@@ -16,6 +16,18 @@ DATABASE_URL = os.getenv('DATABASE_URL', '')
 needs_db = pytest.mark.skipif(not DATABASE_URL, reason='requiere DATABASE_URL (Postgres)')
 
 
+@pytest.fixture
+def db():
+    from ontology.db import _get_engine, init_schema
+    from ontology.models import Base
+    import research.models  # noqa: F401
+    engine = _get_engine()
+    Base.metadata.drop_all(engine)
+    init_schema()
+    yield
+    Base.metadata.drop_all(engine)
+
+
 @pytest.fixture(autouse=True)
 def _circuitos_limpios(monkeypatch):
     """Cada test arranca con todos los corta-circuitos cerrados."""
@@ -210,3 +222,116 @@ def test_r2_nvidia_reintenta_429_y_luego_responde(monkeypatch):
         plan.pop(0), {'choices': [{'message': {'content': 'ok'}}], 'usage': {}}) if plan[0] == 200 else _Resp(plan.pop(0), {}))
     assert ai._complete_nvidia('', 'p', 10)[0] == 'ok'
     assert len(waits) == 1
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R3 · Cola de investigación: límite GLOBAL de agentes en vuelo + cola FIFO de jobs
+# ════════════════════════════════════════════════════════════════════════════
+
+@needs_db
+def test_r3_los_agentes_de_todos_los_jobs_comparten_un_limite_global(db, monkeypatch):
+    import threading
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    from research import runner
+    from tests.test_research import _run
+    monkeypatch.setattr(runner, '_AGENT_POOL', ThreadPoolExecutor(max_workers=1, thread_name_prefix='t-agent'))
+    state, lock = {'now': 0, 'max': 0}, threading.Lock()
+
+    def slow(prompt):
+        with lock:
+            state['now'] += 1
+            state['max'] = max(state['max'], state['now'])
+        time.sleep(0.25)
+        with lock:
+            state['now'] -= 1
+        return _ok_result()
+
+    ts = [threading.Thread(target=lambda e=e: _run(e, ['fundamental', 'news'], {'fundamental': [slow], 'news': [slow]}))
+          for e in ('Nvidia', 'AMD')]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join(30)
+    assert state['max'] == 1            # antes: cada job abría su propio pool → 2-4 a la vez
+
+
+@needs_db
+def test_r3_cola_fifo_de_jobs_con_concurrencia_1_y_posicion_visible(db, monkeypatch):
+    import threading
+    import time
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    from research.runner import create_job
+    monkeypatch.setenv('RESEARCH_JOB_CONCURRENCY', '1')
+    runner._reset_workers()
+    order, state, lock = [], {'now': 0, 'max': 0}, threading.Lock()
+
+    def fake_exec(session, job, **kw):
+        with lock:
+            state['now'] += 1
+            state['max'] = max(state['max'], state['now'])
+        order.append(job.entity_id)
+        time.sleep(0.2)
+        job.status, job.completed_at = 'done', runner._now()
+        with lock:
+            state['now'] -= 1
+
+    monkeypatch.setattr(runner, 'execute_job', fake_exec)
+    ids = []
+    with session_scope() as s:
+        for e in ('Nvidia', 'AMD', 'TSMC'):
+            job, _ = create_job(s, e, agents=['fundamental'], force=True)
+            ids.append(job.id)
+    for jid in ids:
+        runner.execute_job_async(jid)
+    st = runner.research_queue_state()
+    assert st['job_concurrency'] == 1 and st['jobs_queued'] + st['jobs_running'] >= 2
+    pos = runner.queue_position(ids[2])
+    assert pos is None or pos >= 1
+    for _ in range(100):
+        with session_scope() as s:
+            if all(s.get(ResearchJob, j).status == 'done' for j in ids):
+                break
+        time.sleep(0.05)
+    assert order == ['Nvidia', 'AMD', 'TSMC'] and state['max'] == 1
+    runner._reset_workers()
+
+
+@needs_db
+def test_r3_tras_un_reinicio_se_reencolan_los_queued_y_se_cierran_los_running_viejos(db, monkeypatch):
+    import time
+    from datetime import timedelta
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import AgentRun, ResearchJob
+    from research.runner import create_job
+    runner._reset_workers()
+    done = []
+    monkeypatch.setattr(runner, 'execute_job', lambda session, job, **kw: (done.append(job.entity_id),
+                                                                           setattr(job, 'status', 'done')))
+    with session_scope() as s:
+        a, _ = create_job(s, 'Nvidia', agents=['fundamental'], force=True)          # queued huérfano
+        b, _ = create_job(s, 'AMD', agents=['fundamental'], force=True)
+        b.status, b.created_at = 'running', runner._now() - timedelta(minutes=45)   # hilo muerto
+        s.add(AgentRun(job_id=b.id, agent_id='x', agent_type='fundamental', entity_id='AMD', trigger={},
+                       depth='STANDARD', status='running', started_at=runner._now() - timedelta(minutes=45)))
+        a_id, b_id = a.id, b.id
+    rec = runner._recover_orphans()
+    assert rec['requeued'] == 1 and rec['failed'] == 1
+    for _ in range(100):
+        if done:
+            break
+        time.sleep(0.05)
+    assert done == ['Nvidia']
+    with session_scope() as s:
+        jb = s.get(ResearchJob, b_id)
+        assert jb.status == 'failed' and 'reinicio' in (jb.error or '')
+        run = s.query(AgentRun).filter_by(job_id=b_id).one()
+        assert run.status == 'failed'
+        assert s.get(ResearchJob, a_id).status == 'done'
+    runner._reset_workers()

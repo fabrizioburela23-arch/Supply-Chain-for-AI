@@ -56,3 +56,27 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_research.py -k r2` (5 tests; antes:
   B.calls tenía 1 llamada / 'Gemini HTTP 503' a la primera).
 - **Rollback.** Revertir el commit; no toca datos.
+
+### R3 — Cola de investigación: límite global de agentes + cola FIFO de jobs + recuperación tras reinicio
+
+- **Problema.** Cada job abría su propio hilo (sin tope) y su propio pool de 3
+  agentes: 5 investigaciones a la vez = 15 agentes peleando por 3 cupos de IA de
+  fondo → "IA ocupada" en cadena (TSMC `2ac4552d…`). Un job en espera retenía
+  una sesión de base y un hilo. Tras un deploy, los jobs `queued`/`running`
+  quedaban huérfanos para siempre.
+- **Causa raíz.** `research/runner.py` `execute_job_async` = `threading.Thread`
+  por job; `_execute_job` creaba `ThreadPoolExecutor(RESEARCH_PARALLEL=3)` por job.
+  Nada serializaba jobs entre sí ni frente al comité.
+- **Cambio.** `research/runner.py`: pool de agentes COMPARTIDO (`_AGENT_POOL`,
+  `RESEARCH_PARALLEL` default 2, nunca más que los cupos de fondo del semáforo);
+  cola FIFO de jobs (`_Q`) atendida por `RESEARCH_JOB_CONCURRENCY` (2) hilos
+  demonio; `research_queue_state()` y `queue_position(job_id)`; `_recover_orphans()`
+  al primer arranque: `queued` de las últimas 24 h vuelven a la cola, `running`
+  más viejos que `RESEARCH_STALE_MIN` (30) → `failed` "interrumpida (reinicio del
+  servidor)" junto con sus runs. `/api/research/jobs/<id>` y MCP `get_research_job`
+  añaden `queue_position`, `queue_length`, `jobs_running` (solo campos nuevos).
+  El comité (`_auto_research`, síncrono) usa el mismo pool: ya no compite.
+- **Verificar.** `DATABASE_URL=… pytest tests/test_repair_research.py -k r3`
+  (3 tests; antes: `AttributeError: _AGENT_POOL`, máximo simultáneo 2-4).
+- **Rollback.** Revertir el commit; no toca datos (los jobs huérfanos marcados
+  `failed` ya estaban muertos).

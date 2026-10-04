@@ -121,9 +121,13 @@ def job(job_id):
             return jsonify({'error': 'job no encontrado'}), 404
         runs = s.query(AgentRun).filter(AgentRun.job_id == j.id).order_by(AgentRun.started_at).all()
         claims = s.query(ResearchClaim).filter(ResearchClaim.job_id == j.id).all()
+        from research.runner import queue_position, research_queue_state
+        qs = research_queue_state()
         return jsonify({'job_id': j.id, 'entity_id': j.entity_id, 'status': j.status, 'depth': j.depth,
                         'agents': j.agents, 'trigger': j.trigger, 'created_at': _iso(j.created_at),
                         'completed_at': _iso(j.completed_at), 'error': j.error, 'synthesis': j.synthesis,
+                        'queue_position': queue_position(j.id) if j.status == 'queued' else None,
+                        'queue_length': qs['jobs_queued'], 'jobs_running': qs['jobs_running'],
                         'runs': [_run_dict(r) for r in runs], 'claims': [_claim_dict(c) for c in claims]})
 
 

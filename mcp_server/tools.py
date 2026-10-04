@@ -751,8 +751,14 @@ def t_get_research_job(ctx, job_id):
             raise ToolError('research job not found', code='not_found')
         runs = s.query(AgentRun).filter(AgentRun.job_id == j.id).order_by(AgentRun.started_at).all()
         n_claims = s.query(ResearchClaim).filter(ResearchClaim.job_id == j.id).count()
+        try:   # R3: posición en la cola (campos nuevos; el contrato no cambia)
+            from research.runner import queue_position, research_queue_state
+            qpos, qs = (queue_position(j.id) if j.status == 'queued' else None), research_queue_state()
+        except Exception:  # noqa: BLE001
+            qpos, qs = None, {'jobs_queued': None, 'jobs_running': None}
         return {'job_id': j.id, 'entity_id': j.entity_id, 'status': j.status, 'depth': j.depth, 'agents': j.agents,
                 'created_at': _iso(j.created_at), 'completed_at': _iso(j.completed_at), 'error': j.error,
+                'queue_position': qpos, 'queue_length': qs['jobs_queued'], 'jobs_running': qs['jobs_running'],
                 'synthesis': j.synthesis, 'claims_produced': n_claims,
                 'runs': [{'agent_type': x.agent_type, 'status': x.status, 'model': x.model,
                           'claims_generated': x.claims_generated, 'errors': x.errors,
