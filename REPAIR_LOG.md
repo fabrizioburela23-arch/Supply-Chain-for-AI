@@ -472,6 +472,50 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 
 ## P1 · Grafo y ontología
 
+---
+
+## P1 · Grafo y ontología
+
+### G1 — Auditoría automática del grafo (`scripts/audit_graph.py`) + trinquete
+
+- **Problema.** Dos verdades del grafo (catálogo `nodes/*.js` → `data/grafo_v0.json`
+  y Postgres) sin NINGÚN chequeo de consistencia (C10). El diagnóstico encontró a
+  mano entidades duplicadas (C3a), 48 pares con más de un enlace (C3b), enlaces al
+  revés (C4), enlaces "no verificados" con peso (C6), taxonomía mezclada (C7), 303
+  enlaces sin texto, 526 cifras sin fecha (C8) y Analog Devices ausente (C9). Nada
+  impedía que la próxima expansión del catálogo volviera a meter lo mismo.
+- **Causa raíz.** No existía un script de auditoría ni una línea base: los
+  hallazgos vivían en un documento, no en un test.
+- **Cambio.** `scripts/audit_graph.py` (puro: sin red ni base por defecto) lee el
+  snapshot y cuenta por categoría — RATCHET: `duplicate_links` (triplas
+  source/target/type repetidas), `duplicate_entities` (ids distintos NO cubiertos
+  por `node_id_alias` con la misma etiqueta normalizada — sin Inc/Corp/Ltd/Co/
+  Company/Group/Trust/Holdings/PLC, espacios ni guiones — o el mismo `mkt`),
+  `suspicious_directions` (supply/fab/cloud cuyo `rel` empieza por verbo de consumo
+  y nombra al TARGET como proveedor sin nombrar al source; fuentes de servicio no
+  industrial — rating, broker inmobiliario, índice, banco, fondo, trader de
+  energía; pares A→B y B→A con el MISMO tipo no simétrico, partner es simétrica
+  según `ontology/vocabulary.json`), `no_source_text`, `unverified_weighted` ("no
+  verificad"/"posible"/"no revisad"/"no confirmad"/"sin confirmar" con w > 1),
+  `orphans`, `bad_vocab` (type fuera del vocabulario, cat/sector fuera del
+  snapshot); INFORMATIVAS: `undated_figures`, `missing_coverage` (ADI, TXN, MCHP,
+  NXPI, ON, STM) y `pairs_multi_type`. Decisión documentada: el texto del catálogo
+  suele estar escrito desde el CLIENTE ("TSMC→Achronix fab: Fabrica sus FPGA en
+  TSMC" es correcto), así que el verbo de consumo solo cuenta si el target aparece
+  como proveedor; quedan 3 reales (Chevron→KinderMorgan, PetroChina→Gazprom,
+  CheniereEnergy→KinderMorgan). `--format json|md`, resumen bilingüe ES/EN,
+  `--write-baseline` → `data/graph_audit_baseline.json`, salida 1 si una categoría
+  ratchet supera la base (`--strict`: si alguna > 0). `--db` (solo con
+  DATABASE_URL, transacción READ ONLY) compara links vigentes base vs snapshot
+  (faltantes en cada lado, duplicados exactos, % de `valid_from` 2000-01-01 y
+  eventos sin `source_id` por canal). Línea base hoy (snapshot 2026-09-29): 0 /
+  11 / 59 / 303 / 28 / 25 / 0 · info 556 / 1 / 48.
+- **Verificar.** `pytest tests/test_graph_audit.py` (4 tests; antes:
+  `ModuleNotFoundError: scripts.audit_graph`): mini-grafo de juguete con un caso
+  por categoría + contraejemplos de perspectiva, exit codes y el trinquete sobre el
+  snapshot real. `python scripts/audit_graph.py --format md | head -60`.
+- **Rollback.** Revertir el commit; no toca datos ni la base.
+
 ### G2 — La ontología se corrige SIN borrar: dedupe de vínculos, retracción dirigida y fusión de entidades por eventos
 - **Síntoma.** El diagnóstico encontró en producción vínculos repetidos (mismo
   par, misma relación, mismo peso: la migración y el bulk import los volvían a
