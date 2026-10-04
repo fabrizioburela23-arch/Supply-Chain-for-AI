@@ -1066,6 +1066,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     model = None
     ai_calls = 0
     reason = None
+    ai_detail = None
     feedback = None
     repaired = False
     rounds = 0
@@ -1085,6 +1086,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                 _collect_sources(name, res, sources, lang)
         out = done(ans, acts, answer_source='fallback')
         out['degraded'] = why
+        if ai_detail:
+            out['ai_detail'] = ai_detail   # p. ej. "claude: credit balance…; gemini: HTTP 404 NOT_FOUND"
         return out
 
     if not _ai._ai_configured():
@@ -1112,6 +1115,7 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         except Exception as e:  # noqa: BLE001
             log.warning('khipu_chat: IA falló (%s)', _clip(e, 160))
             reason = 'ai_error'
+            ai_detail = _ai._redact(e, 220)   # qué proveedor falló y por qué (sin secretos) → se muestra en el chat
             break
         try:
             kind, payload = parse_step(text)

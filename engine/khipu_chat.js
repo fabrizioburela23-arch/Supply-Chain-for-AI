@@ -335,7 +335,8 @@
     el.classList.remove('kc-pending');
     d = d || {};
     var h = '<div class="kc-who">Khipu</div><div class="kc-body">' + md(d.answer || L('(sin respuesta)', '(no answer)')) + '</div>';
-    if (d.degraded) h += '<div class="kc-note">⚠ ' + esc(L('Respuesta sin IA (solo datos).', 'Answer without AI (data only).')) + '</div>';
+    if (d.degraded) h += '<div class="kc-note">⚠ ' + esc(L('Respuesta sin IA (solo datos).', 'Answer without AI (data only).')) +
+      (d.ai_detail ? ' <span style="opacity:.8">' + esc(L('Motivo: ', 'Reason: ') + d.ai_detail) + '</span> ' + esc(L('Revisa 🩺 Sistema → Diagnóstico.', 'Check 🩺 System → Diagnostics.')) : '') + '</div>';
     var tu = Array.isArray(d.tools_used) ? d.tools_used : [];
     if (tu.length) {
       h += '<div class="kc-tools">🔎 ' + esc(L('Consultó', 'Checked')) + ': ' + tu.slice(0, 8).map(function (t) {
