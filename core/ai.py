@@ -259,10 +259,10 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
     raise RuntimeError('claude: sin texto de ningún modelo')
 
 
-def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False):
+def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
     _usage().check('gemini', max_tokens)
     with _ai_slot(max_tokens):
-        return _complete_gemini_inner(system, prompt, max_tokens, tier, json_mode)
+        return _complete_gemini_inner(system, prompt, max_tokens, tier, json_mode, timeout_s)
 
 
 def _gemini_post(url, body, timeout):
@@ -277,24 +277,29 @@ def _gemini_post(url, body, timeout):
         raise RuntimeError(f'Gemini red ({type(e).__name__})') from None
 
 
-def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False):  # noqa: ARG001 — tier no aplica
+def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
     """json_mode (lo usa research/): pide JSON estricto (responseMimeType), da
     más presupuesto y apaga el "pensamiento" en modelos flash — en 2.5 el
     pensamiento consume maxOutputTokens y cortaba el JSON a la mitad
     ("Unterminated string", visto en prod 2026-09-28)."""
     gen = {'maxOutputTokens': max_tokens, 'temperature': 0.6}
     if json_mode:
-        gen.update({'responseMimeType': 'application/json', 'temperature': 0.3,
-                    'maxOutputTokens': max(max_tokens, 8192)})
+        # research (max_tokens ≥ 3000) necesita mucho JSON; los pasos del chat (1600) no: 2500
+        gen.update({'responseMimeType': 'application/json', 'temperature': 0.2,
+                    'maxOutputTokens': max(max_tokens, 8192 if int(max_tokens) >= 3000 else 2500)})
     # 2026-10-04 (chat caía a "sin IA" con Gemini como único proveedor): en modelos
     # flash el "pensamiento" consume maxOutputTokens y segundos; en el nivel RÁPIDO
     # (chat, comandos, radar) y en JSON estricto se apaga. GEMINI_THINKING=on lo devuelve.
     if 'flash' in GEMINI_MODEL and (json_mode or tier != 'deep') and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on':
         gen['thinkingConfig'] = {'thinkingBudget': 0}
+    elif 'flash' in GEMINI_MODEL:
+        # nivel profundo: piensa, pero con presupuesto acotado y SIN comerse la respuesta
+        gen['thinkingConfig'] = {'thinkingBudget': 1024}
+        gen['maxOutputTokens'] = int(gen['maxOutputTokens']) + 1024
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
             'generationConfig': gen}
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
-    r = _gemini_post(url, body, 90 if json_mode else 45)
+    r = _gemini_post(url, body, min(float(timeout_s), 90.0) if timeout_s else (90 if json_mode else 45))
     if r.status_code == 400 and 'thinkingConfig' in gen:
         gen.pop('thinkingConfig')            # modelo que no acepta apagar el pensamiento
         r = _gemini_post(url, body, 90)
@@ -369,20 +374,22 @@ def _ai_configured():
     return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
 
 
-def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True, want_json=False):
+def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True, want_json=False,
+                 timeout_s=None, live_facts=True):
     """Llamada de IA con GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito:
     "necesito que todo esté en vivo; los datos falsos perjudican la tesis").
     Toda cifra de dinero de la respuesta debe estar en el input (system+prompt);
     si no: 1 reintento con el error como feedback y, si persiste, la cifra se
     MARCA "(⚠ cifra no verificada)". verify_numbers=False solo para diagnóstico."""
     if not verify_numbers:
-        return _ai_complete_raw(system, prompt, max_tokens, tier, model, want_json=want_json)
+        return _ai_complete_raw(system, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
     from core.live_facts import live_facts_block
     from core.numbers import NUMBERS_RULE, mark_unsupported, unsupported_in
-    prompt = (prompt or '') + live_facts_block(prompt)   # cifras CORRECTAS, en vivo
+    if live_facts:   # cifras CORRECTAS, en vivo (el chat lo calcula UNA vez por pregunta y lo pasa en el prompt)
+        prompt = (prompt or '') + live_facts_block(prompt)
     source = f'{system or ""}\n{prompt or ""}'
     sys2 = (system or '') + NUMBERS_RULE
-    text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model, want_json=want_json)
+    text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
     bad = unsupported_in(text, source)
     if bad:
         log.warning('guardián de cifras: %s sin respaldo → reintento', bad)
@@ -390,7 +397,7 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
             fb = (prompt + '\n\nTU RESPUESTA ANTERIOR USÓ CIFRAS QUE NO ESTÁN EN LOS DATOS: ' + ', '.join(bad) +
                   '. Reescribe la respuesta completa (mismo formato) usando SOLO cifras de los datos dados, '
                   'o sin esas cifras.')
-            text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model, want_json=want_json)
+            text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
             bad2 = unsupported_in(text2, source)
             if len(bad2) <= len(bad):
                 text, used, bad = text2, used2, bad2
@@ -400,7 +407,7 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
     return text, used
 
 
-def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, want_json=False):
+def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, want_json=False, timeout_s=None):
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
     pasa al siguiente. Devuelve (texto, etiqueta_modelo).
 
@@ -429,7 +436,7 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, w
                     text, used = prov[1](system, prompt, max_tokens, tier, model=model)
                 elif name == 'gemini':
                     # want_json (pasos del chat, specs): JSON estricto, sin "pensamiento" → no se corta
-                    text, used = prov[1](system, prompt, max_tokens, tier, json_mode=want_json)
+                    text, used = prov[1](system, prompt, max_tokens, tier, json_mode=want_json, timeout_s=timeout_s)
                 else:
                     text, used = prov[1](system, prompt, max_tokens, tier)
                 text = strip_reasoning(text)

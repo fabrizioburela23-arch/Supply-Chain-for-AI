@@ -152,7 +152,7 @@ def shadow(feature, key, decision, actual, agree):
 
 def _persist(row):
     try:
-        from ontology.db import available as db_ok, session_scope
+        from ontology.db import ontology_available as db_ok, session_scope
         if not db_ok():
             return
         from research.models import DecisionShadow
@@ -167,7 +167,7 @@ def shadow_report(days=30, limit=50):
     """Acuerdo Jev ↔ sistema por función (Postgres si hay; si no, memoria)."""
     feats = {}
     try:
-        from ontology.db import available as db_ok, session_scope
+        from ontology.db import ontology_available as db_ok, session_scope
         from research.models import DecisionShadow
         if db_ok():
             since = _now() - timedelta(days=int(days))

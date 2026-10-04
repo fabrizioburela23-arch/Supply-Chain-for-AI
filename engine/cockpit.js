@@ -598,6 +598,7 @@
       _placeThread(kind);
       opts = opts || {};
       if (_demo.on) { opts.solo = true; opts.max = true; }   // la demostración: una ventana a la vez, grande
+      _noteEntity(kind, arg);
       D.open(kind, arg, opts);
       return;
     }
@@ -608,6 +609,17 @@
     _placeThread(kind);
     markActive(kind === 'chat' ? null : (CHIP_KINDS.indexOf(kind) >= 0 ? kind : null));
     return render(s, kind, arg);
+  }
+  // la empresa de la escena → memoria corta del chat ("ella", "su proveedor", "este")
+  function _noteEntity(kind, arg) {
+    try {
+      if (!window.KhipuChat || !window.KhipuChat.noteEntity) return;
+      var id = null;
+      if (kind === 'compare' && arg && arg.a) { window.KhipuChat.noteEntity(arg.b); id = arg.a; }
+      else if (arg && typeof arg === 'object') id = arg.id || (arg.ticker && (resolveNode(arg.ticker) || {}).id);
+      else if (typeof arg === 'string' && ['xray', 'sim', 'research', 'graph', 'terminal'].indexOf(kind) >= 0) id = (resolveNode(arg) || {}).id;
+      if (id) window.KhipuChat.noteEntity(id);
+    } catch (e) {}
   }
   // pinta la escena `kind` DENTRO de `s` (el escenario clásico o el cuerpo de una ventana)
   function render(s, kind, arg) {
@@ -2512,7 +2524,8 @@
     K.send(text).then(function (d) {
       // en el celular NO se auto-ejecuta: la vista nueva taparía la respuesta
       // (queda como botón); en escritorio la respuesta sigue visible en el dock
-      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) >= 700 });
+      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) >= 700, retry: true });
+      var rb = pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAsk(text); });
       setState('', L('Listo', 'Ready'));
     }).catch(function (e) {
       K.fillError(pend, (e && e.message) || String(e));
@@ -2561,6 +2574,16 @@
       parseTrade: window._parseTradeCommand || null,
     }) : { kind: 'brain' };
 
+    if (K && K.remember && route.kind !== 'none' && route.kind !== 'brain' && route.kind !== 'command') {
+      try {
+        K.remember('user', text);
+        var what = { xray: L('Abrí la radiografía de ', 'Opened the X-Ray of '), shock: L('Simulé la caída de ', 'Simulated the failure of '),
+                     compare: L('Abrí la comparación ', 'Opened the comparison '), research: L('Abrí la investigación de ', 'Opened the research on '),
+                     dossier: L('Abrí el dossier de ', 'Opened the dossier of '), terminal: L('Abrí la terminal de ', 'Opened the terminal for ') }[route.kind];
+        var lbl = route.id ? ((window.NODE_BY_ID || {})[route.id] || {}).label || route.id : (route.a ? route.a + ' vs ' + route.b : (route.screen || ''));
+        if (what) K.remember('assistant', what + lbl + '.');
+      } catch (e) {}
+    }
     switch (route.kind) {
       case 'none': return;
       case 'demo': demoStart(); return;

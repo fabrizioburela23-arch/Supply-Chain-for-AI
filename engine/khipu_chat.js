@@ -145,18 +145,30 @@
   }
 
   /* ══ 2) MEMORIA + LLAMADA AL CEREBRO ═══════════════════════════════════ */
+  // historial en localStorage con caducidad de 24 h (antes sessionStorage: se perdía al cerrar la pestaña)
   var history = [];
-  try { var raw = W.sessionStorage && W.sessionStorage.getItem(HIST_KEY); if (raw) history = JSON.parse(raw) || []; } catch (e) { history = []; }
+  var HIST_TTL = 24 * 3600e3;
+  try {
+    var raw = W.localStorage && W.localStorage.getItem(HIST_KEY);
+    if (raw) { var saved = JSON.parse(raw) || {}; if (saved && Array.isArray(saved.items) && Date.now() - (saved.ts || 0) < HIST_TTL) history = saved.items; }
+  } catch (e) { history = []; }
   if (!Array.isArray(history)) history = [];
 
   function saveHistory() {
-    try { if (W.sessionStorage) W.sessionStorage.setItem(HIST_KEY, JSON.stringify(history.slice(-MAX_TURNS * 2))); } catch (e) {}
+    try { if (W.localStorage) W.localStorage.setItem(HIST_KEY, JSON.stringify({ ts: Date.now(), items: history.slice(-MAX_TURNS * 2) })); } catch (e) {}
   }
   function remember(role, content) {
     if (!content) return;
     history.push({ role: role === 'user' ? 'user' : 'assistant', content: String(content).slice(0, 1500) });
     if (history.length > MAX_TURNS * 2) history = history.slice(-MAX_TURNS * 2);
     saveHistory();
+  }
+  // empresas vistas hace poco (X-Ray, simulación, comparar…): la Cabina las anota al abrir cada escena
+  var recent = [];
+  function noteEntity(id) {
+    if (!id) return;
+    id = String(id);
+    recent = [id].concat(recent.filter(function (x) { return x !== id; })).slice(0, 5);
   }
   function clearHistory() { history = []; saveHistory(); }
 
@@ -167,6 +179,16 @@
       if (sel) ctx.selected_node = String(sel).slice(0, 120);
     } catch (e) {}
     try { if (typeof activeTab !== 'undefined' && activeTab) ctx.tab = String(activeTab); } catch (e) {}   // eslint-disable-line no-undef
+    // qué hay EN PANTALLA (escritorio Khipu) y qué empresas se vieron hace poco → "ella / su / este"
+    try {
+      if (W.KhipuDesk && W.KhipuDesk.active && W.KhipuDesk.active()) {
+        var ws = W.KhipuDesk.list().filter(function (w) { return !w.min; }).slice(0, 8);
+        var titles = [];
+        ws.forEach(function (w) { var el = W.document.querySelector('.kd-win[data-id="' + w.id + '"] .kd-name'); if (el && el.textContent) titles.push(el.textContent.slice(0, 60)); });
+        if (titles.length) ctx.open_windows = titles;
+      }
+    } catch (e) {}
+    if (recent.length) ctx.recent_entities = recent.slice();
     try {
       var pos = (W.MKT && W.MKT.pos) || {}, NB = W.NODE_BY_ID || {}, out = [];
       Object.keys(pos).forEach(function (id) {
@@ -196,7 +218,7 @@
       return r.json().then(function (d) {
         if (!r.ok) throw new Error((lang() === 'en' ? d.error_en : d.error) || d.error || ('HTTP ' + r.status));
         remember('user', text);
-        remember('assistant', d.answer || '');
+        if (!d.degraded) remember('assistant', d.answer || '');   // una respuesta sin IA no es memoria útil
         return d;
       });
     }).catch(function (e) {
@@ -244,6 +266,12 @@
     '.kc-bot code{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:rgba(122,158,255,.12);padding:1px 5px;border-radius:5px}' +
     '.kc-bot a{color:#7ecbff}.kc-h{font-weight:750;margin:6px 0 4px;color:#fff}' +
     '.kc-who{font-size:10px;font-weight:800;letter-spacing:.12em;color:#8e9dff;margin-bottom:4px;text-transform:uppercase}' +
+    '.kc-agent{display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#C7D0EA}' +
+    '.kc-meta{font-size:10.5px;color:#5E6884;margin-top:6px}' +
+    '.kc-retry{margin-left:8px;border:1px solid rgba(122,158,255,.3);background:transparent;color:#C7D0EA;border-radius:7px;padding:2px 9px;cursor:pointer;font-size:11.5px;font-family:inherit}' +
+    '.kc-retry:hover{border-color:#00E0FF;color:#00E0FF}' +
+    '.kc-agent-av{display:inline-flex;width:22px;height:22px;border-radius:50%;overflow:hidden;border:1px solid rgba(122,158,255,.35)}' +
+    '.kc-agent-av svg{width:100%;height:100%}.kc-agent-ent{color:#8E9AB8;font-weight:500}' +
     '.kc-tools{margin-top:8px;font-size:11.5px;color:#8FA0C4}.kc-tools .bad{color:#f6a0b5}' +
     '.kc-src{margin-top:6px;font-size:11px;color:#6F7C99}.kc-src a{color:#8fb7ff}' +
     '.kc-note{margin-top:8px;font-size:11.5px;color:#FFD27A}' +
@@ -334,9 +362,25 @@
     if (el._timer) { clearInterval(el._timer); el._timer = null; }
     el.classList.remove('kc-pending');
     d = d || {};
-    var h = '<div class="kc-who">Khipu</div><div class="kc-body">' + md(d.answer || L('(sin respuesta)', '(no answer)')) + '</div>';
-    if (d.degraded) h += '<div class="kc-note">⚠ ' + esc(L('Respuesta sin IA (solo datos).', 'Answer without AI (data only).')) +
-      (d.ai_detail ? ' <span style="opacity:.8">' + esc(L('Motivo: ', 'Reason: ') + d.ai_detail) + '</span> ' + esc(L('Revisa 🩺 Sistema → Diagnóstico.', 'Check 🩺 System → Diagnostics.')) : '') + '</div>';
+    // un ANALISTA respondió en persona (@fundamental, @noticias, @todos…): su avatar y su nombre
+    var who = 'Khipu';
+    if (d.agent && d.agent.name) {
+      var av = '';
+      try { av = (W.KhipuCommittee && W.KhipuCommittee.avatar && d.agent.seat !== 'all') ? W.KhipuCommittee.avatar(d.agent.seat, d.agent.emoji, true) : ''; } catch (e) { av = ''; }
+      who = '<span class="kc-agent">' + (av ? '<span class="kc-agent-av">' + av + '</span>' : esc(d.agent.emoji || '🤖') + ' ') + esc(d.agent.name) +
+        (d.agent.label ? '<span class="kc-agent-ent"> · ' + esc(d.agent.label) + '</span>' : '') + '</span>';
+    }
+    var h = '<div class="kc-who">' + who + '</div><div class="kc-body">' + md(d.answer || L('(sin respuesta)', '(no answer)')) + '</div>';
+    if (d.degraded) {
+      var why = (lang() === 'en' ? d.ai_detail_en : d.ai_detail_es) || d.ai_detail || '';
+      h += '<div class="kc-note">⚠ ' + esc(L('Respuesta sin IA (solo datos).', 'Answer without AI (data only).')) +
+        (why ? ' <span style="opacity:.85">' + esc(why) + '</span>' : '') +
+        (opts.retry ? ' <button type="button" class="kc-retry">↻ ' + esc(L('Reintentar', 'Retry')) + '</button>' : '') + '</div>';
+    } else if (d.ai && (d.model || d.elapsed_ms)) {
+      var mdl = String(d.model || '').replace(/^gemini:/, 'Gemini ').replace(/^claude-/, 'Claude ').replace(/^nvidia:/, 'NVIDIA ');
+      h += '<div class="kc-meta">' + esc(mdl) + (d.steps ? ' · ' + d.steps + ' ' + esc(d.steps === 1 ? L('consulta', 'query') : L('consultas', 'queries')) : '') +
+        (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(0) + ' s' : '') + '</div>';
+    }
     var tu = Array.isArray(d.tools_used) ? d.tools_used : [];
     if (tu.length) {
       h += '<div class="kc-tools">🔎 ' + esc(L('Consultó', 'Checked')) + ': ' + tu.slice(0, 8).map(function (t) {
@@ -427,6 +471,7 @@
   }
 
   W.KhipuChat = {
+    noteEntity: noteEntity,
     classify: classify, isQuestion: isQuestion, send: send, md: md, esc: esc,
     appendUser: appendUser, appendPending: appendPending, fillReply: fillReply, fillError: fillError,
     runAction: runAction, actionLabel: actionLabel, remember: remember, context: context,

@@ -71,8 +71,8 @@ def test_tool_call_then_final(fake_ai):
     assert out['answer'].startswith('**TSMC**')
     assert out['ai'] is True and out['answer_source'] == 'ai' and out['model'] == 'fake:model'
     assert out['steps'] == 2
-    assert out['tools_used'][0]['name'] == 'search_companies' and out['tools_used'][0]['ok'] is True
-    assert out['tools_used'][0]['args_summary'] == 'TSMC'
+    sc = [t for t in out['tools_used'] if t['name'] == 'search_companies'][0]   # (la ficha pre-consultada va antes)
+    assert sc['ok'] is True and sc['args_summary'] == 'TSMC'
     # el resultado REAL de la herramienta se le dio al modelo en el 2º paso
     assert 'RESULTADOS DE HERRAMIENTAS' in f.prompts[1] and 'search_companies' in f.prompts[1]
     assert 'TSMC' in f.prompts[1]
@@ -255,7 +255,9 @@ def test_history_truncation_and_context():
     assert req['context']['selected_node']['id'] == kc.resolve_node('NVDA')
     assert req['context']['portfolio'] == [{'symbol': 'NVDA', 'shares': 10.0}]
     p = kc.build_prompt(req['message'], req['history'], 'es', req['context'], [], 5, False)
-    assert p.startswith('PREGUNTA ACTUAL DEL USUARIO: ¿y su competidor?')
+    # la PREGUNTA va al FINAL del prompt (los modelos pesan lo último que leen)
+    assert 'PREGUNTA ACTUAL DEL USUARIO (responde EXACTAMENTE esto): ¿y su competidor?' in p
+    assert p.index('PREGUNTA ACTUAL') > p.index('CONVERSACIÓN PREVIA') > p.index('CONTEXTO DE LA APP')
     assert 'CONVERSACIÓN PREVIA' in p and 'NVDA 10' in p and 'pestaña abierta: map' in p
 
 

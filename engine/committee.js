@@ -1083,7 +1083,8 @@
     if (S.entity) loadEntity(S.entity);
   }
 
-  window.KhipuCommittee = { open: open, close: close,
+  window.KhipuCommittee = {
+    avatar: function (seat, emoji, mini) { try { return avatarSvg(seat, emoji, mini); } catch (e) { return ''; } }, open: open, close: close,
     // abre directo en una pestaña: 'board' | 'committee' | 'portfolio' | 'history' | 'learn'
     openTab: function (tab) { open(); S.tab = tab || 'board'; render(); } };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = document.getElementById('cm-ov'); if (ov && ov.classList.contains('show')) close(); } });

@@ -58,10 +58,10 @@ MAX_SCRATCH_CHARS = 26000
 MAX_CALLS_PER_STEP = 3
 MAX_ACTIONS = 3
 MAX_ANSWER = 6000
-SYNTH_TIMEOUT_S = 25.0         # redacción final en prosa (cuando el protocolo falla)
-SYNTH_GRACE_S = 10.0           # margen extra sobre el presupuesto para esa redacción
+SYNTH_TIMEOUT_S = 20.0         # redacción final en prosa (cuando el protocolo falla)
+SYNTH_GRACE_S = 4.0            # margen extra sobre el presupuesto para esa redacción (45+4+20 < 70 s del cliente)
 STEP_MAX_TOKENS = 1600
-TOOL_TIMEOUT_S = 30.0
+TOOL_TIMEOUT_S = 14.0
 
 _POOL = ThreadPoolExecutor(max_workers=8, thread_name_prefix='khipu-chat')
 
@@ -87,10 +87,11 @@ class ToolFailure(Exception):
 # herramientas
 # ════════════════════════════════════════════════════════════════════════════
 # Herramientas de SOLO LECTURA del servidor MCP que el cerebro reutiliza.
+# (2026-10-04) fuera del catálogo del chat: get_ontology_object y get_option_greeks (ruido para el modelo;
+# siguen en el MCP). Menos herramientas = decisiones mejores y más rápidas.
 MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_claim_evidence',
-                  'get_ontology_object', 'get_committee_memo', 'get_conclusions_board', 'get_track_record',
-                  'get_risk_report',
-                  'get_option_greeks', 'get_world_events')
+                  'get_committee_memo', 'get_conclusions_board', 'get_track_record', 'get_risk_report',
+                  'get_world_events')
 
 _EXTRA = {}     # nombre → {'sig', 'desc', 'fn', 'available'}
 
@@ -147,7 +148,7 @@ def tool_catalog():
         for name in MCP_READ_TOOLS:
             t = reg.get(name)
             if t is not None and t.scope == 'read':
-                out.append((name, _schema_sig(t.input_schema), _clip(t.description, 300)))
+                out.append((name, _schema_sig(t.input_schema), _clip(t.description, 170)))
     except Exception as e:  # noqa: BLE001
         log.warning('khipu_chat: catálogo MCP no disponible (%s)', type(e).__name__)
     for name, spec in _EXTRA.items():
@@ -213,6 +214,29 @@ def x_get_news(company, limit=8):
                           '(news sources unavailable or nothing recent)')
     return {'company': {'id': r['id'], 'label': n.get('label'), 'symbol': n.get('mkt')}, 'count': len(items),
             'items': items, 'source': src, 'as_of': _now_iso()}
+
+
+@_extra('ask_agent', 'seat:fundamental|technical|news|supply_chain|geopolitical|macro|crypto|all, question:string, company:string',
+        'Ask ONE of the Khipus research analysts (the committee seats) — or all of them — a question about a company, '
+        'IN THEIR OWN VOICE, grounded ONLY in their active research conclusions and evidence. Use it when the user '
+        'wants a specific analyst\'s view ("what does the technical analyst think", "pregúntale al de noticias", '
+        '"@fundamental"). If the analyst has no research on that company, the answer says so and offers to research.')
+def x_ask_agent(seat, question, company):
+    from ontology.db import ontology_available as db_ok, session_scope
+    from research import ask_agent as aa
+    if not db_ok():
+        return {'available': False, 'error': 'the research database is not available right now'}
+    seat = aa.seat_from_words(str(seat or '')) or str(seat or '').strip().lower()
+    with session_scope() as s:
+        if seat == 'all':
+            r = aa.ask_all(s, str(question or ''), str(company or ''), _PRINCIPAL.get('lang') or 'es')
+        else:
+            r = aa.ask(s, seat, str(question or ''), str(company or ''), _PRINCIPAL.get('lang') or 'es')
+    out = {k: v for k, v in (r or {}).items() if k in ('ok', 'seat', 'emoji', 'name', 'entity', 'label', 'answer', 'n_claims', 'needs_research')}
+    if r and r.get('answers'):
+        out['answers'] = [{k: a.get(k) for k in ('seat', 'emoji', 'name', 'answer', 'n_claims', 'needs_research')} for a in r['answers']]
+    out['source'] = 'Khipus research claims + evidence (Postgres); answer written by the analyst persona (AI)'
+    return out
 
 
 @_extra('scenario_exposure', 'scenario:string (the what-if in plain words)',
@@ -567,6 +591,18 @@ def validate_request(body):
     tab = str(ctx_raw.get('tab') or '').strip().lower()[:20]
     if tab:
         ctx['tab'] = tab if re.fullmatch(r'[a-z_]{2,20}', tab) else None
+    ow = ctx_raw.get('open_windows')
+    if isinstance(ow, list):
+        ctx['open_windows'] = [re.sub(r'[^\w .:·()\-/+&]', '', str(w))[:60] for w in ow[:8] if str(w).strip()]
+    re_ = ctx_raw.get('recent_entities')
+    if isinstance(re_, list):
+        ids = []
+        for x in re_[:5]:
+            nid = resolve_node(x)
+            if nid and nid not in ids:
+                ids.append(nid)
+        if ids:
+            ctx['recent_entities'] = ids
     pf = ctx_raw.get('portfolio')
     if isinstance(pf, dict) and isinstance(pf.get('positions'), list):
         pos = []
@@ -591,53 +627,34 @@ def validate_request(body):
 def build_system(lang):
     tools = '\n'.join(f'- {n}({sig}): {desc}' for n, sig, desc in tool_catalog())
     idioma = 'inglés' if lang == 'en' else 'español'
-    return f"""Eres Khipu, el copiloto y analista senior de Khipus Finance AI: un terminal financiero sobre la \
-cadena de suministro de la IA (chips, fundiciones, memoria, equipos, nube, laboratorios de IA, energía, \
-materiales, logística, espacio, cripto y macro) con un grafo curado de ~950 empresas y sus relaciones \
-(proveedor → cliente). Conversas con inversionistas, muchos NO expertos.
+    return f"""Eres Khipu, el asistente de inversión de Khipus Finance AI (terminal sobre la cadena de suministro de la \
+IA: ~950 empresas y sus relaciones proveedor → cliente, precios en vivo, investigación de analistas, comité). \
+Hablas con inversionistas NO expertos: claro, corto y concreto, en {idioma} (o el idioma del usuario).
 
-PROTOCOLO (obligatorio): responde SIEMPRE con UN SOLO objeto JSON válido, sin texto fuera de él:
-  a) Consultar datos: {{"tool":"<nombre>","args":{{...}},"why":"<para qué, 1 frase>"}}
-     o varias a la vez (máx. {MAX_CALLS_PER_STEP}): {{"calls":[{{"tool":"...","args":{{...}}}}],"why":"..."}}
-  b) Responder: {{"final":{{"answer":"<tu respuesta>","actions":[{{"type":"...","arg":...}}]}}}}
-Recibirás los resultados y podrás consultar más (máx. {MAX_STEPS} rondas) antes de responder.
+PROTOCOLO: responde SIEMPRE con UN SOLO objeto JSON válido, sin texto fuera:
+  a) consultar: {{"tool":"<nombre>","args":{{...}},"why":"<1 frase>"}}  o varias a la vez (máx. {MAX_CALLS_PER_STEP}): \
+{{"calls":[{{"tool":"...","args":{{...}}}}],"why":"..."}}
+  b) responder: {{"final":{{"answer":"<respuesta>","actions":[{{"type":"...","arg":...}}]}}}}
+Hasta {MAX_STEPS} rondas de consulta; lo normal es UNA.
 
-CÓMO RESPONDER:
-1. Responde PRIMERO exactamente lo que se preguntó (1-2 frases directas); después el contexto útil. No cambies \
-de tema ni respondas otra cosa. Si la pregunta es ambigua, da tu mejor interpretación y dilo.
-2. Hechos con herramientas: precios, capitalización, valuaciones, proveedores/clientes, riesgo, noticias, \
-eventos, investigación. Nunca inventes cifras ni datos de empresas; si algo no está disponible, dilo claro. \
-Preguntas conceptuales o generales (qué es un VaR, cómo funciona el HBM, historia, macro) puedes responderlas \
-directamente con tu conocimiento, sin herramientas.
-3. Cita brevemente las fuentes al final en una línea (ej. «Fuente: grafo Khipus · Yahoo Finance en vivo»).
-4. Educativo: no des recomendaciones personalizadas de comprar/vender; sí puedes discutir pros, contras, \
-riesgos y escenarios. Si piden comprar o vender, explica que la orden se prepara y confirma en el bróker de la \
-app (nunca se ejecuta sola) y ofrece la acción "broker".
-5. Idioma de la respuesta: el del usuario (por defecto {idioma}).
-6. Formato: markdown ligero (**negrita**, listas con "- ", saltos de línea). Conciso: normalmente 60-220 \
-palabras; más largo solo si lo piden o hace falta.
-7. Es una conversación: usa el historial ("¿y su competidor?" se refiere a lo anterior).
-8. Acciones de pantalla: solo si el usuario pidió ver/abrir/simular/graficar/comparar algo o si una vista \
-ayuda claramente; máx. 2. La respuesta de texto debe ser completa por sí misma. No las anuncies como futuras.
-9. No menciones el protocolo, el JSON ni los nombres internos de las herramientas.
-11. "¿Qué pasaría si…?", "¿más expuestas a una guerra/veto/arancel/escasez…?": usa scenario_exposure \
-(análisis estructural de la cadena) y explica POR QUÉ cada empresa está expuesta (su camino en la cadena); \
-complétalo con datos de las empresas si hace falta. No uses solo un ranking genérico de riesgo.
-10. "¿Qué empresas se ven mejor/peor?", "¿qué concluyeron los analistas?", "¿en qué invertir?": consulta la pizarra de conclusiones y el memo del comité; resume convicción, mejor argumento a favor y en contra y la última decisión (como análisis, no como orden). Ofrece open_committee para ver el debate.
+RECETAS (una ronda): "¿cómo va X?" / "¿qué pasa con X?" → get_company(include_live=true) + get_news juntas. \
+"precio / capitalización de X" → get_company. "proveedores / clientes de X" → get_supply_chain. \
+"qué piensan los analistas / qué dice el comité" → get_conclusions_board o get_research. "@analista / pregúntale \
+al analista" → ask_agent. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
+peores" → rank_companies o market_movers. Preguntas conceptuales (qué es el VaR, cómo funciona HBM) → sin \
+herramientas. get_company ya entiende nombres y tickers: NO gastes una ronda en search_companies salvo \
+ambigüedad real.
 
-HERRAMIENTAS (solo lectura):
+RESPUESTA: primero la respuesta directa a lo preguntado (1-2 frases), luego el porqué (3-6 líneas, máx. una \
+lista). Cada cifra con su fuente y fecha en la misma frase, p. ej. «233,95 USD (Yahoo, hoy)». Nunca inventes \
+cifras ni datos: si no están, dilo. Usa el historial y lo que hay EN PANTALLA para resolver "ella / su / este". \
+Markdown ligero. Sin recomendaciones personalizadas de comprar/vender (sí riesgos, pros, contras, escenarios); \
+si piden operar, explica que la orden se prepara y confirma en el bróker de la app y ofrece la acción "broker". \
+Acciones de pantalla solo si ayudan (máx. 2) y sin anunciarlas. No menciones el protocolo ni nombres internos.
+
+HERRAMIENTAS:
 {tools}
-
-ACCIONES DE PANTALLA (type → arg):
-- open_xray → id de empresa (radiografía completa) · dossier → id (estados financieros)
-- navigate → id (la centra en el mapa) · stress → id (cascada de caída en el mapa)
-- compare → {{"a": id, "b": id}} · chart → descripción en lenguaje natural de un gráfico/tabla
-- simulate → uno de {', '.join(PRESETS)}
-- agent_sim → escenario en texto («China prohíbe exportar HBM») para la simulación por agentes
-- open_research → id (investigación de agentes) · open_committee → id (comité de inversión)
-- open_risk_report → null (riesgo de la cartera) · broker → null (bróker para operar, con confirmación)
-- switch_tab → uno de {', '.join(TABS)} · open_world → {{"lat":..,"lon":..}} o null (monitor mundial)
-Usa ids de empresa que aparezcan en los resultados de herramientas (o el nombre exacto de la empresa)."""
+Usa ids de empresa de los resultados (o el nombre exacto)."""
 
 
 def _fmt_result(res):
@@ -660,11 +677,11 @@ def _args_summary(args):
     return _clip(', '.join(vals), 80)
 
 
-def build_prompt(message, history, lang, context, scratch, rounds_left, force_final, feedback=None):
-    parts = [f'PREGUNTA ACTUAL DEL USUARIO: {message}']
-    if history:
-        parts.append('CONVERSACIÓN PREVIA (antigua → reciente):\n' + '\n'.join(
-            f'{"Usuario" if h["role"] == "user" else "Khipu"}: {h["content"]}' for h in history))
+def build_prompt(message, history, lang, context, scratch, rounds_left, force_final, feedback=None, live=''):
+    """Orden (2026-10-04): contexto → historial → resultados → PREGUNTA ACTUAL al FINAL → formato.
+    Los modelos pesan el final del prompt: antes la pregunta quedaba a 20-30k caracteres de
+    distancia y Khipu "respondía otra cosa"."""
+    parts = []
     ctx = [f'fecha actual (UTC): {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")}',
            f'idioma de la interfaz: {lang}']
     if context.get('tab'):
@@ -673,6 +690,11 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
     if sel:
         ctx.append(f'empresa seleccionada en pantalla: {sel["label"]} (id {sel["id"]}'
                    + (f', ticker {sel["symbol"]}' if sel.get('symbol') else '') + ')')
+    if context.get('open_windows'):
+        ctx.append('EN PANTALLA AHORA (ventanas abiertas): ' + ' · '.join(context['open_windows']))
+    if context.get('recent_entities'):
+        ctx.append('empresas vistas hace poco (de más reciente a más antigua): ' +
+                   ', '.join(f'{_node_label(i)} (id {i})' for i in context['recent_entities']))
     if context.get('portfolio'):
         ctx.append('cartera del usuario (posiciones locales, acciones): ' +
                    ', '.join(f'{p["symbol"]} {p["shares"]:g}' for p in context['portfolio']))
@@ -681,16 +703,26 @@ def build_prompt(message, history, lang, context, scratch, rounds_left, force_fi
         ctx.append('INFORME DE LA CARTERA DEL USUARIO (datos verificados; úsalos para responder sobre SU cartera):\n'
                    + str(context['portfolio_notes'])[:3500])
     parts.append('CONTEXTO DE LA APP:\n- ' + '\n- '.join(ctx))
+    if history:
+        parts.append('CONVERSACIÓN PREVIA (antigua → reciente):\n' + '\n'.join(
+            f'{"Usuario" if h["role"] == "user" else "Khipu"}: {h["content"]}' for h in history))
+    if live:
+        parts.append(live.strip())
     if scratch:
         body, used = [], 0
-        for i, s in enumerate(scratch, 1):
-            line = f'[{i}] {s}'
+        for i, s_ in enumerate(scratch, 1):
+            line = f'[{i}] {s_}'
             used += len(line)
             body.append(line)
         txt = '\n'.join(body)
         if used > MAX_SCRATCH_CHARS:
             txt = '…[resultados antiguos recortados]\n' + txt[-MAX_SCRATCH_CHARS:]
         parts.append('RESULTADOS DE HERRAMIENTAS (de esta respuesta):\n' + txt)
+    ents = _entities_in(message)
+    q = f'PREGUNTA ACTUAL DEL USUARIO (responde EXACTAMENTE esto): {message}'
+    if ents:
+        q += '\nEMPRESAS DETECTADAS EN LA PREGUNTA: ' + ', '.join(f'{_node_label(i)} (id {i})' for i in ents[:3])
+    parts.append(q)
     if feedback:
         parts.append('AVISO: ' + feedback)
     if force_final:
@@ -842,14 +874,16 @@ def synthesize(message, history, lang, context, scratch, timeout):
         parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
     parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
     t0 = time.monotonic()
-    fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 1400, 'deep')
+    fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, 'fast',
+                       timeout_s=max(5.0, min(float(timeout), 30.0)))
     text, model = fut.result(timeout=max(1.0, timeout))
     t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
     left = timeout - (time.monotonic() - t0)
     if (leaked(t) or truncated(t)) and left > 8:          # un reintento con el aviso concreto
         fb = ('\n\nTU RESPUESTA ANTERIOR ' + ('QUEDÓ CORTADA' if truncated(t) else 'TENÍA JSON O BORRADORES') +
               '. Escríbela COMPLETA, más corta (máx. 180 palabras), en prosa limpia.')
-        fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 1400, 'deep')
+        fut = _POOL.submit(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, 'fast',
+                           timeout_s=max(5.0, min(float(left), 30.0)))
         text2, model2 = fut.result(timeout=max(1.0, left))
         t2 = re.sub(r'^```\w*\s*|\s*```$', '', str(text2 or '').strip()).strip()
         if t2 and not leaked(t2) and not truncated(t2):
@@ -1031,8 +1065,11 @@ def _collect_sources(tool_name, res, into, lang='es'):
 
 
 def _call_ai(system, prompt, timeout):
-    # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento
-    fut = _POOL.submit(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True)
+    # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento.
+    # timeout_s: el proveedor corta a la vez que el chat (antes el hilo seguía 90 s ocupando cupo).
+    # live_facts=False: el bloque "DATOS EN VIVO" se calcula UNA vez por pregunta en _run_chat.
+    fut = _POOL.submit(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True,
+                       timeout_s=max(5.0, min(float(timeout), 30.0)), live_facts=False)
     return fut.result(timeout=max(1.0, timeout))
 
 
@@ -1046,13 +1083,76 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
         gate = _decide.chat_gate_start(message, lang)
     except Exception:  # noqa: BLE001
         gate = None
-    out = _run_chat(message, history, lang, context, app, budget_s, max_steps)
+    direct = _mention_route(message, history, lang, context)
+    out = direct if direct is not None else _run_chat(message, history, lang, context, app, budget_s, max_steps)
     if gate is not None:
         try:
             _decide.chat_gate_finish(gate, out, message)
         except Exception:  # noqa: BLE001
             pass
     return out
+
+
+def _mention_route(message, history, lang, context):
+    """'@fundamental ¿qué opinas de TSMC?' / 'pregúntale al analista técnico: …' → el puesto responde
+    en persona (research/ask_agent). Devuelve None si no es una mención."""
+    try:
+        from research import ask_agent as aa
+        seat, question = aa.parse_mention(message)
+    except Exception:  # noqa: BLE001
+        return None
+    if not seat:
+        return None
+    t0 = time.monotonic()
+    ents = _entities_in(question) or _entities_in(message)
+    if not ents and isinstance(context, dict):
+        for k in ('entity', 'company', 'selected'):
+            if context.get(k):
+                ents = [str(context[k])]
+                break
+    if not ents:
+        # la empresa de la que se venía hablando
+        for h in reversed(list(history or [])):
+            txt = h.get('content') if isinstance(h, dict) else str(h)
+            ents = _entities_in(str(txt or ''))
+            if ents:
+                break
+    meta = aa.seat_meta(seat) if seat != 'all' else {'seat': 'all', 'emoji': '🏛', 'name_es': 'Todos los analistas', 'name_en': 'All analysts'}
+    agent = {'seat': seat, 'emoji': meta['emoji'], 'name': meta['name_en'] if lang == 'en' else meta['name_es']}
+    base = {'actions': [], 'tools_used': [{'name': 'ask_agent', 'args_summary': seat, 'ok': True}], 'sources': [],
+            'model': None, 'answer_source': 'agent', 'ai': True, 'lang': lang, 'steps': 1, 'agent': agent,
+            'elapsed_ms': 0, 'as_of': _now_iso()}
+    if not ents:
+        base['answer'] = ('Which company should I ask about?' if lang == 'en' else '¿Sobre qué empresa quieres que responda?')
+        base['ai'] = False
+        return base
+    from ontology.db import ontology_available as db_ok, session_scope
+    if not db_ok():
+        base['answer'] = ('The research database is not available right now.' if lang == 'en'
+                          else 'La base de investigación no está disponible ahora mismo.')
+        base['ai'] = False
+        return base
+    try:
+        with session_scope() as s:
+            r = aa.ask_all(s, question, ents[0], lang) if seat == 'all' else aa.ask(s, seat, question, ents[0], lang)
+    except Exception as e:  # noqa: BLE001
+        log.warning('ask_agent: %s', _clip(e, 160))
+        base['answer'] = ('The analyst could not answer right now.' if lang == 'en' else 'El analista no pudo responder ahora mismo.')
+        base['ai'] = False
+        base['degraded'] = 'ai_error'
+        base['ai_detail'] = _ai._redact(e, 200)
+        return base
+    base['answer'] = str((r or {}).get('answer') or '')[:MAX_ANSWER]
+    base['model'] = (r or {}).get('model')
+    if (r or {}).get('entity'):
+        base['agent']['entity'] = r['entity']
+        base['agent']['label'] = r.get('label')
+    if (r or {}).get('answers'):
+        base['agent']['answers'] = [{k: a.get(k) for k in ('seat', 'emoji', 'name', 'answer')} for a in r['answers']]
+    if (r or {}).get('needs_research') and (r or {}).get('entity'):
+        base['actions'] = validate_actions([{'type': 'open_research', 'arg': r['entity']}])
+    base['elapsed_ms'] = int((time.monotonic() - t0) * 1000)
+    return base
 
 
 def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None):
@@ -1089,19 +1189,56 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         out['degraded'] = why
         if ai_detail:
             out['ai_detail'] = ai_detail   # p. ej. "claude: credit balance…; gemini: HTTP 404 NOT_FOUND"
+            try:
+                from research.errors import friendly
+                es, en = friendly(ai_detail)
+                if es:
+                    out['ai_detail_es'], out['ai_detail_en'] = es, en
+            except Exception:  # noqa: BLE001
+                pass
         return out
 
     if not _ai._ai_configured():
         return fallback('no_ai')
 
     system = build_system(lang)
+    # DATOS EN VIVO una sola vez por pregunta (antes se recalculaban en cada paso sobre 26k chars)
+    live = ''
+    try:
+        from core.live_facts import live_facts_block
+        live = _POOL.submit(live_facts_block, message).result(timeout=3.5) or ''
+    except Exception:  # noqa: BLE001
+        live = ''
+    # PRE-CONSULTA especulativa: la ficha de la(s) empresa(s) mencionada(s) se pide YA, en paralelo
+    # con la primera llamada a la IA → la mayoría de preguntas simples se resuelven en UNA ronda
+    pre = {}
+    for nid in _entities_in(message)[:2]:
+        pre[nid] = _POOL.submit(execute_tool, 'get_company', {'id_or_ticker': nid, 'include_live': True}, app)
+    if pre:
+        wait(list(pre.values()), timeout=min(2.5, max(0.5, deadline - time.monotonic() - 10)))
+        for nid, fut in pre.items():
+            if not fut.done():
+                continue
+            try:
+                ok, res = fut.result()
+            except Exception:  # noqa: BLE001
+                continue
+            key = 'get_company' + json.dumps({'id_or_ticker': nid, 'include_live': True}, sort_keys=True, default=str)
+            cache[key] = (ok, res)
+            results.append(('get_company', ok, res))
+            tools_used.append({'name': 'get_company', 'args_summary': _args_summary({'id_or_ticker': nid}), 'ok': bool(ok),
+                               **({} if ok else {'error': _clip(res.get('error'), 160)})})
+            if ok:
+                _collect_sources('get_company', res, sources, lang)
+            scratch.append(f'get_company({json.dumps({"id_or_ticker": nid}, ensure_ascii=False)}) → '
+                           + ('' if ok else 'ERROR: ') + _fmt_result(res))
     while True:
         remaining = deadline - time.monotonic()
         if remaining < MIN_STEP_S:
             reason = 'budget'
             break
         force_final = rounds >= steps_max or remaining < FINAL_RESERVE_S
-        prompt = build_prompt(message, history, lang, context, scratch, steps_max - rounds, force_final, feedback)
+        prompt = build_prompt(message, history, lang, context, scratch, steps_max - rounds, force_final, feedback, live=live)
         feedback = None
         try:
             ai_calls += 1

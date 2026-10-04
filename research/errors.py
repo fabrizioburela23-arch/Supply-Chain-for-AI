@@ -7,6 +7,18 @@ esta explicación con QUÉ HACER, en español e inglés.
 import re
 
 _RULES = (
+    (r'respuesta vac[ií]a|empty response|sin candidates',
+     'La IA (Gemini) gastó su espacio "pensando" y no alcanzó a escribir la respuesta. Vuelve a intentarlo; si se repite, avísame.',
+     'The AI (Gemini) used up its space "thinking" and did not get to write the answer. Try again; if it repeats, tell me.'),
+    (r'404|NOT_FOUND|410|not found',
+     'El modelo de IA configurado ya no existe en el proveedor (lo retiraron). Cambia GEMINI_MODEL / NVIDIA_MODEL en Railway → Variables.',
+     'The configured AI model no longer exists at the provider (retired). Change GEMINI_MODEL / NVIDIA_MODEL in Railway → Variables.'),
+    (r'429|RESOURCE_EXHAUSTED|rate limit|too many',
+     'El proveedor de IA limitó las llamadas por un momento (cuota). Espera un minuto y reintenta.',
+     'The AI provider throttled calls for a moment (quota). Wait a minute and retry.'),
+    (r'timeout|tard[oó] demasiado|no respondi[oó] a tiempo',
+     'La IA tardó demasiado en responder. Reintenta; si pasa seguido, prueba un modelo más rápido en Railway.',
+     'The AI took too long to answer. Retry; if it keeps happening, try a faster model in Railway.'),
     (r'l[ií]mite (diario|mensual) de gasto|lleg[oó] a su l[ií]mite|spend limit|AI limit',
      'Se alcanzó un límite de gasto de IA que tú configuraste. Míralo y ajústalo en 🩺 Sistema → 💰 Gasto IA.',
      'An AI spend limit you configured was reached. Review and adjust it in 🩺 System → 💰 AI spend.'),

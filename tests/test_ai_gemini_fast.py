@@ -23,8 +23,8 @@ def test_want_json_llega_a_gemini_como_json_mode(monkeypatch):
     monkeypatch.setattr(ai, 'NVIDIA_KEY', '')
     seen = {}
 
-    def gem(system, prompt, max_tokens, tier='fast', json_mode=False):
-        seen['json_mode'] = json_mode
+    def gem(system, prompt, max_tokens, tier='fast', json_mode=False, **kw):
+        seen['json_mode'] = json_mode; seen['timeout_s'] = kw.get('timeout_s')
         return '{"ok": 1}', 'gemini:x'
     monkeypatch.setitem(ai._AI_PROVIDERS, 'gemini', (lambda: True, gem))
     text, used = ai._ai_complete('s', 'p', 100, 'fast', verify_numbers=False, want_json=True)
@@ -44,7 +44,8 @@ def test_flash_nivel_rapido_sin_pensamiento(monkeypatch):
     ai._complete_gemini_inner('s', 'p', 200, 'fast')
     assert bodies[-1]['generationConfig'].get('thinkingConfig') == {'thinkingBudget': 0}
     ai._complete_gemini_inner('s', 'p', 200, 'deep')
-    assert 'thinkingConfig' not in bodies[-1]['generationConfig']      # el nivel profundo sí piensa
+    g = bodies[-1]['generationConfig']                                   # el nivel profundo sí piensa, acotado
+    assert g.get('thinkingConfig') == {'thinkingBudget': 1024} and g['maxOutputTokens'] == 200 + 1024
     ai._complete_gemini_inner('s', 'p', 200, 'deep', json_mode=True)
     assert bodies[-1]['generationConfig']['responseMimeType'] == 'application/json'
     assert bodies[-1]['generationConfig'].get('thinkingConfig') == {'thinkingBudget': 0}
