@@ -670,18 +670,33 @@ Usa ids de empresa de los resultados (o el nombre exacto)."""
 
 _CHAT_DROP_KEYS = {'edge_semantics', 'explain', 'figures_note', 'figures_note_es', 'as_of_note', 'provenance_note',
                    'provenance_note_es', 'valid_from_note_es', 'valid_from_note_en', 'convention'}
-_CHAT_MAX_STR = 160
-_CHAT_MAX_LIST = 10
-_CHAT_MAX_RELATED = 6
+# niveles de compactación: (largo máx. de texto, tope de listas, tope de `related`)
+_CHAT_LEVELS = ((220, None, None), (140, 25, 8), (100, 12, 6))
 
 
-def _compact_for_chat(v, depth=0):
-    """Revisión G4 (2026-10-04): get_company/get_supply_chain crecieron (clase,
-    confianza y dirección por vecino, `related`, notas). Cortar el JSON a ciegas
-    a MAX_TOOL_RESULT_CHARS dejaba al cerebro sin la mitad de los clientes y sin
-    `related`. Aquí se quita lo que no aporta a la respuesta (notas largas,
-    semántica repetida, verified=True/confidence=1 por defecto) ANTES de cortar."""
+def _balance_edges(edges, root):
+    """Proveedores y clientes INTERCALADOS: al recortar, el chat ve de los dos lados."""
+    up = [e for e in edges if isinstance(e, dict) and e.get('target') == root]
+    down = [e for e in edges if isinstance(e, dict) and e.get('source') == root]
+    rest = [e for e in edges if not (isinstance(e, dict) and root in (e.get('source'), e.get('target')))]
+    out = []
+    for k in range(max(len(up), len(down))):
+        if k < len(up):
+            out.append(up[k])
+        if k < len(down):
+            out.append(down[k])
+    return out + rest
+
+
+def _compact_for_chat(v, level=0, depth=0, root=None):
+    """Revisión G4/G6b: get_company/get_supply_chain crecieron (clase, confianza,
+    `related`, notas). Cortar el JSON a ciegas a MAX_TOOL_RESULT_CHARS dejaba al
+    cerebro sin clientes. Se compacta por NIVELES (solo lo necesario): primero se
+    quitan notas largas y valores por defecto; si no alcanza, se acortan textos y
+    listas — las aristas, intercalando proveedores y clientes."""
+    maxs, maxl, maxrel = _CHAT_LEVELS[level]
     if isinstance(v, dict):
+        root = v.get('root', root) if depth == 0 else root
         out = {}
         for k, x in v.items():
             if k in _CHAT_DROP_KEYS:
@@ -690,28 +705,30 @@ def _compact_for_chat(v, depth=0):
                 continue
             if k == 'confidence' and isinstance(x, (int, float)) and x >= 1:
                 continue
-            if k == 'direction' and depth >= 2:
-                continue
-            out[k] = _compact_for_chat(x, depth + 1)
-        if depth == 0 and isinstance(out.get('related'), list):
-            rel = out.pop('related')                       # lo menos importante, al final y acotado
-            out['related'] = rel[:_CHAT_MAX_RELATED] + ([f'…+{len(rel) - _CHAT_MAX_RELATED}']
-                                                        if len(rel) > _CHAT_MAX_RELATED else [])
+            if k == 'edges' and isinstance(x, list) and root:
+                x = _balance_edges(x, root)
+            out[k] = _compact_for_chat(x, level, depth + 1, root)
+        if depth == 0 and isinstance(v.get('related'), list) and maxrel:
+            rel = v['related']                          # lo menos importante: al final, acotado sobre la lista ORIGINAL
+            out.pop('related', None)
+            out['related'] = [_compact_for_chat(x, level, depth + 1, root) for x in rel[:maxrel]] + (
+                [f'…+{len(rel) - maxrel}'] if len(rel) > maxrel else [])
         return out
     if isinstance(v, list):
-        items = [_compact_for_chat(x, depth + 1) for x in v[:_CHAT_MAX_LIST]]
-        if len(v) > _CHAT_MAX_LIST:
-            items.append(f'…+{len(v) - _CHAT_MAX_LIST}')
-        return items
-    if isinstance(v, str) and len(v) > _CHAT_MAX_STR:
-        return v[:_CHAT_MAX_STR] + '…'
+        if maxl and len(v) > maxl:
+            return [_compact_for_chat(x, level, depth + 1, root) for x in v[:maxl]] + [f'…+{len(v) - maxl}']
+        return [_compact_for_chat(x, level, depth + 1, root) for x in v]
+    if isinstance(v, str) and len(v) > maxs:
+        return v[:maxs] + '…'
     return v
 
 
 def _fmt_result(res):
     txt = json.dumps(res, ensure_ascii=False, default=str, separators=(',', ':'))
-    if len(txt) > MAX_TOOL_RESULT_CHARS:
-        txt = json.dumps(_compact_for_chat(res), ensure_ascii=False, default=str, separators=(',', ':'))
+    level = 0
+    while len(txt) > MAX_TOOL_RESULT_CHARS and level < len(_CHAT_LEVELS):
+        txt = json.dumps(_compact_for_chat(res, level), ensure_ascii=False, default=str, separators=(',', ':'))
+        level += 1
     if len(txt) > MAX_TOOL_RESULT_CHARS:
         txt = txt[:MAX_TOOL_RESULT_CHARS] + '…[truncated]'
     return txt

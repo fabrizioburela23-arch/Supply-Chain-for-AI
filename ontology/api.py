@@ -1054,7 +1054,10 @@ def reconcile_plan():
     lang = 'en' if (request.args.get('lang') or '').lower() == 'en' else 'es'
     fresh = False
     if request.args.get('fresh') == '1':      # G5: recalcular a demanda solo con PIN de operador
-        fresh = pin_error(where='reconcile_plan', strict=True) is None
+        err = pin_error(where='reconcile_plan', strict=True)
+        if err:
+            return err                        # G6b: un PIN malo NO recibe un plan viejo como si fuera fresco
+        fresh = True
     try:
         _snap, plan = _recon_plan(fresh=fresh)
     except FileNotFoundError:
@@ -1080,6 +1083,20 @@ def _strict_operator():
     return pin_error(where='reconcile', strict=True)
 
 
+def _strict_operator_required(fn):
+    """G6b: el PIN se comprueba ANTES del límite de frecuencia: un PIN viejo no
+    agota el cupo de aplicar/deshacer de la IP del operador."""
+    from functools import wraps
+
+    @wraps(fn)
+    def wrapper(*a, **k):
+        err = _strict_operator()
+        if err:
+            return err
+        return fn(*a, **k)
+    return wrapper
+
+
 def _str_arg(b, k, n):
     v = b.get(k)
     return v.strip()[:n] if isinstance(v, str) else ''
@@ -1087,12 +1104,10 @@ def _str_arg(b, k, n):
 
 @ontology_bp.route('/reconcile/apply', methods=['POST'])
 @_require_db
+@_strict_operator_required
 @rate_limit(5, 600)
 def reconcile_apply():
     """Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id."""
-    err = _strict_operator()
-    if err:
-        return err
     from ontology import reconcile as R
     b = _body()
     actor = _str_arg(b, 'actor', 80)
@@ -1122,12 +1137,10 @@ def reconcile_apply():
 
 @ontology_bp.route('/reconcile/rollback', methods=['POST'])
 @_require_db
+@_strict_operator_required
 @rate_limit(5, 600)
 def reconcile_rollback():
     """Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos."""
-    err = _strict_operator()
-    if err:
-        return err
     from ontology import reconcile as R
     b = _body()
     actor = _str_arg(b, 'actor', 80)

@@ -99,10 +99,12 @@ def link_confidence(props):
     Orden: confidence declarada > confirmado por una persona (status) / verified=true
     > verified=false > texto rel_label."""
     props = props or {}
+    if props.get('status') == 'confirmed':
+        return None                     # G6b: una persona lo confirmó → sin descuento (aunque haya confianza 0.3 heredada)
     c = props.get('confidence')
     if c is None:
-        if props.get('status') == 'confirmed' or props.get('verified') is True:
-            return None                 # revisión: ConfirmarVinculo (status) o verificado explícito → sin descuento
+        if props.get('verified') is True:
+            return None
         if props.get('verified') is False:
             return UNVERIFIED_CONF
         if props.get('verified') is None and vocab.text_says_unverified(props.get('rel_label')):

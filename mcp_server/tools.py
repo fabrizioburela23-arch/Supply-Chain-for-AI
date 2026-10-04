@@ -625,7 +625,8 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
                              'note': 'top_suppliers/top_customers list only FLOW relations (goods, fab, cloud, '
                                      'license, power, ownership, deployment). partner/invest are in `related`. '
                                      'verified=false / confidence=0.3 when the curated text says the link is '
-                                     'unverified or only possible.'}
+                                     'unverified or only possible.',
+                             'relation_class': 'supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other'}
     out['as_of'] = _now_iso()
     out['sources'] = ['Khipus graph snapshot', 'nodes/private_valuations.js (verified)',
                       'live profile: ' + str((out.get('live_market') or {}).get('source') or 'n/a')]
@@ -699,7 +700,7 @@ def t_get_supply_chain(ctx, id, direction='both', depth=1, min_weight=0, limit=2
             'truncated': truncated,
             'convention': 'edge source SUPPLIES target',
             'edge_semantics': {'flow_types': list(fl), 'related_types': list(RELATED_TYPES),
-                               'relation_class': 'supply|fab|customer|invest|ppa|partner|coverage|competitor|other',
+                               'relation_class': 'supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other',
                                'verified': 'false (confidence 0.3) when the curated text says the link is '
                                            'unverified or only possible'},
             'source': SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
@@ -837,9 +838,9 @@ def t_get_research(ctx, entity, limit=30):
     from ontology.db import session_scope
     from research.models import ClaimRelation, ResearchClaim, ResearchEvidence, ResearchJob
     with session_scope() as s:
-        claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
+        claims = _prefer_canonical(s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
                                                 ResearchClaim.status == 'active')
-                  .order_by(ResearchClaim.created_at.desc()).limit(limit).all())
+                  .order_by(ResearchClaim.created_at.desc()).limit(limit).all(), eid)
         withheld = [c.id for c in claims if _unsupported_money(s, c)]
         claims = [c for c in claims if c.id not in withheld]
         ids = [c.id for c in claims]
@@ -1641,6 +1642,13 @@ def reset_caches():
 
 __all__ = ['REGISTRY', 'Tool', 'ToolError', 'InvalidParams', 'Ctx', 'call', 'visible_tools', 'catalog',
            'validate']
+
+
+def _prefer_canonical(claims, eid):
+    """G6b: con conclusiones del id canónico Y de un id viejo (alias) para el mismo
+    agente/tema/horizonte, solo cuenta la del canónico (la vieja es anterior)."""
+    have = {(c.agent_type, c.topic, c.horizon) for c in claims if c.subject_entity_id == eid}
+    return [c for c in claims if c.subject_entity_id == eid or (c.agent_type, c.topic, c.horizon) not in have]
 
 
 def _entity_ids_for(eid):

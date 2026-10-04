@@ -153,15 +153,15 @@ def entity(entity_id):
     from research.models import ClaimRelation, ResearchClaim, ResearchEvidence, ResearchJob
     eid = _resolve(entity_id[:120]) or entity_id[:120]
     try:
-        from research.runner import retract_unsupported
+        from research.runner import retract_unsupported     # G6b: revisa también los ids viejos (alias)
         with session_scope() as s:
             retract_unsupported(s, eid)
     except Exception:  # noqa: BLE001 — nunca impide mostrar la investigación
         pass
     with session_scope() as s:
-        claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
+        claims = _prefer_canonical(s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
                                                 ResearchClaim.status == 'active')
-                  .order_by(ResearchClaim.created_at.desc()).limit(60).all())
+                  .order_by(ResearchClaim.created_at.desc()).limit(60).all(), eid)
         ids = [c.id for c in claims]
         counts = {}
         if ids:
@@ -304,6 +304,13 @@ def events():
         out = dispatch_event(s, body.get('event') or {}, actor=actor,
                              execute=bool(body.get('execute', True)))
     return jsonify(out)
+
+
+def _prefer_canonical(claims, eid):
+    """G6b: con conclusiones del id canónico Y de un id viejo (alias) para el mismo
+    agente/tema/horizonte, solo cuenta la del canónico (la vieja es anterior)."""
+    have = {(c.agent_type, c.topic, c.horizon) for c in claims if c.subject_entity_id == eid}
+    return [c for c in claims if c.subject_entity_id == eid or (c.agent_type, c.topic, c.horizon) not in have]
 
 
 def _entity_ids_for(eid):

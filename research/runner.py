@@ -421,13 +421,22 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
     return job, False
 
 
+def _ids_with_aliases(eid):
+    try:
+        from core.entities import entity_ids_for
+        return entity_ids_for(eid) or [eid]
+    except Exception:  # noqa: BLE001
+        return [eid]
+
+
 def retract_unsupported(session, entity_id):
     """Retira (status='retracted') las claims ACTIVAS de la entidad cuyas cifras
     de dinero no aparecen en su propia evidencia guardada — p. ej. las escritas
     antes del guardián de cifras (Broadcom "~$350B", 2026-09-28). Devuelve n."""
     from core.numbers import evidence_numbers, unsupported_money
     claims = (session.query(ResearchClaim)
-              .filter(ResearchClaim.subject_entity_id == entity_id, ResearchClaim.status == 'active').all())
+              .filter(ResearchClaim.subject_entity_id.in_(_ids_with_aliases(entity_id)),     # G6b
+                      ResearchClaim.status == 'active').all())
     n = 0
     for c in claims:
         txt = ' '.join(filter(None, [c.statement_es, c.statement_en, c.reasoning_summary, c.object]))
@@ -605,7 +614,8 @@ def persist_result(session, job, run, agent, ctx, result, quotes=None):
                     relevance=None, reliability=it.get('reliability')))
         # memoria: la conclusión previa del MISMO agente/tema/horizonte queda superada
         (session.query(ResearchClaim)
-         .filter(ResearchClaim.subject_entity_id == job.entity_id, ResearchClaim.agent_type == agent.agent_type,
+         .filter(ResearchClaim.subject_entity_id.in_(_ids_with_aliases(job.entity_id)),   # G6b: también ids viejos
+                 ResearchClaim.agent_type == agent.agent_type,
                  ResearchClaim.topic == c.topic, ResearchClaim.horizon == c.horizon,
                  ResearchClaim.status == 'active', ResearchClaim.id != claim.id)
          .update({'status': 'superseded'}, synchronize_session=False))
@@ -718,8 +728,13 @@ def execute_job(session, job, provider_factory=None, fetchers=None, on_start=Non
         try:
             return _execute_job(session, job, provider_factory, fetchers, on_start, on_done)
         finally:
-            event('research_job_end', status=job.status, seconds=round(time.time() - t0, 1),
-                  error=(job.error or None) and str(job.error)[:200])
+            from core.logjson import enabled as _lj_on
+            if _lj_on():
+                try:          # G6b: tras un fallo de flush, leer atributos lanza otra excepción
+                    st, er = job.status, job.error
+                except Exception:  # noqa: BLE001
+                    st, er = 'unknown', None
+                event('research_job_end', status=st, seconds=round(time.time() - t0, 1), error=(er or None) and str(er)[:200])
 
 
 def _heartbeat(job, now=None):

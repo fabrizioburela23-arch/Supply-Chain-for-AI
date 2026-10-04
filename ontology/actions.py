@@ -324,8 +324,15 @@ def _resolver_vinculo(session, inp: ResolverVinculoInput, actor, resolution):
                            'link_id': inp.link_id},
         }, valid_from=_utcnow(), source='manual', actor=actor,
             object_id=link.source_id, target_id=link.target_id)
+    from ontology.service import _creation_event_for
+    cev = _creation_event_for(session, link) if link.event_id is None else None
+    if cev is not None:
+        link.event_id = cev.id
     _log_action(session, 'ConfirmarVinculo' if resolution == 'confirmed' else 'RechazarVinculo',
-                link.source_id, link.target_id, {'link_id': inp.link_id, 'resolution': resolution}, actor)
+                link.source_id, link.target_id, {'link_id': inp.link_id, 'resolution': resolution,
+                                                  # G6b: el replay (as_of) aplica la confirmación a ESTA creación
+                                                  'creation_event_id': str(link.event_id) if link.event_id else None},
+                actor)
     return {'link_id': inp.link_id, 'status': resolution}
 
 

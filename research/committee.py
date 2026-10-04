@@ -999,8 +999,8 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     table = calibration_table(session)
 
     def _load():
-        rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
-                                                    ResearchClaim.status == 'active').all())
+        rows = _prefer_canonical(session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
+                                                                     ResearchClaim.status == 'active').all(), eid)
         ids = [c.id for c in rows]
         rels = (session.query(ClaimRelation).filter(ClaimRelation.claim_a.in_(ids) &
                                                     ClaimRelation.claim_b.in_(ids)).all() if ids else [])
@@ -1999,6 +1999,13 @@ def refresh_targets(session, max_n=3, stale_days=7, entities=None):
             if len(out) >= max_n:
                 break
     return out
+
+
+def _prefer_canonical(claims, eid):
+    """G6b: con conclusiones del id canónico Y de un id viejo (alias) para el mismo
+    agente/tema/horizonte, solo cuenta la del canónico (la vieja es anterior)."""
+    have = {(c.agent_type, c.topic, c.horizon) for c in claims if c.subject_entity_id == eid}
+    return [c for c in claims if c.subject_entity_id == eid or (c.agent_type, c.topic, c.horizon) not in have]
 
 
 def _entity_ids_for(eid):

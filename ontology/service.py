@@ -509,6 +509,22 @@ def _links_active_at(session, as_of_dt):
         if is_genesis(ev.valid_from):
             row['valid_from_known'] = False
         active.append(row)
+    # G6b: ConfirmarVinculo cambia el estado de la fila materializada; el replay
+    # lo aplica desde su ActionExecuted (creation_event_id) para que as_of y el
+    # presente coincidan (p. ej. el descuento por "no verificado" en las matrices).
+    if active:
+        conf = {}
+        for a in session.scalars(select(Event).where(
+                Event.event_type == 'ActionExecuted',
+                Event.payload['action'].astext == 'ConfirmarVinculo')).all():
+            cid = (a.payload or {}).get('creation_event_id')
+            if cid:
+                conf[_uuid_str(cid)] = a.actor
+        if conf:
+            for row in active:
+                who = conf.get(row['event_id'])
+                if who is not None:
+                    row['properties'] = dict(row['properties'] or {}, status='confirmed', confirmed_by=who)
     return active
 
 

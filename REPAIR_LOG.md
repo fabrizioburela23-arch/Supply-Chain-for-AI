@@ -916,6 +916,26 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   revisión del motor.
 - **Verificar.** `pytest tests/test_repair_graph.py -k "revision"` (5).
 
+### G6b — Segunda revisión adversarial (lente "contratos y operación"): 7 hallazgos corregidos
+- **Hallazgos y cambios.** (media) Las conclusiones guardadas con un id viejo
+  (alias) se mostraban pero nunca se superaban: el comité las contaba DOS veces
+  junto a las nuevas (convicción 0 en vez de −41) → la investigación nueva
+  supera también las del id viejo, y si hay conclusión del id canónico para el
+  mismo agente/tema/horizonte la vieja se ignora (`_prefer_canonical` en comité,
+  X-Ray y MCP). (media) El guardián de cifras no revisaba las conclusiones de
+  ids viejos → ahora sí. (media) En "clientes de TSMC" (get_supply_chain) el chat
+  veía 0 clientes (las 10 primeras aristas eran proveedores) → compactación por
+  niveles que intercala proveedores y clientes y conserva los totales. (media)
+  La confirmación humana no llegaba al time-travel ni liberaba una confianza
+  0,3 heredada → `status: confirmed` manda, y ConfirmarVinculo guarda la
+  creación confirmada para que el replay la aplique. (baja) Con `LOG_JSON`
+  apagado, el cierre de un job leía atributos tras un fallo y tapaba la causa
+  real → solo se leen con LOG_JSON activo y sin romper. (baja) Un PIN viejo
+  agotaba el cupo de aplicar/deshacer y `fresh=1` con PIN malo devolvía un plan
+  viejo → el PIN se comprueba ANTES del límite y un PIN malo recibe 401. (baja)
+  `edge_semantics` del MCP declara `ownership`.
+- **Verificar.** `pytest tests/test_repair_review2.py` (8): sin el cambio fallan los 8.
+
 ## P2 · World Monitor
 
 ### W1 — GDELT respondía 404: pausa honesta de 1 h, capas curadas declaradas como curadas, precalentado
