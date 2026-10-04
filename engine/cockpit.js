@@ -174,6 +174,16 @@
 .bcp-cols a{color:#E8EDFB;font-size:14.5px;line-height:1.4;text-decoration:none;border-bottom:1px solid rgba(122,158,255,.22);padding-bottom:1px;transition:border-color .12s,color .12s}
 .bcp-cols a:hover,.bcp-cols a:focus-visible{color:#00E0FF;border-bottom-color:#00E0FF;outline:none}
 .bcp-foot{margin:28px 0 0;font-size:13px;color:#7C87A3}
+.bcp-pick-h{font-size:18px;font-weight:650;margin:6px 0 4px;color:#E8EDFB}
+.bcp-pick-p{color:#8E9AB8;font-size:13px;margin:0 0 16px}
+.bcp-pick-f{position:relative;margin:0 0 12px}
+.bcp-pick-f input{width:100%;box-sizing:border-box;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.25);border-radius:10px;color:#E8EDFB;font-size:15px;padding:11px 14px;outline:none;font-family:inherit}
+.bcp-pick-f input:focus{border-color:rgba(0,224,255,.55)}
+.bcp-pick-sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.bcp-pick-it{text-align:left;border:1px solid rgba(122,158,255,.16);background:rgba(11,18,34,.6);color:#E8EDFB;border-radius:9px;padding:9px 12px;cursor:pointer;font-size:13.5px;font-family:inherit}
+.bcp-pick-it span{color:#8E9AB8;font-size:12px;margin-left:6px}
+.bcp-pick-it:hover{border-color:rgba(0,224,255,.5)}
+.bcp-pick-go{margin-top:6px}
 .bcp-foot a{margin-left:0}
 .bcp-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:680px;margin:0 auto}
 .bcp-chip{font-size:13px;padding:10px 16px;border-radius:12px;cursor:pointer;color:#E8EDFB;
@@ -441,10 +451,12 @@
         // acciones que necesitan una empresa → prellenar la barra (enseña la sintaxis)
         var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null;
         var name = sel && window.NODE_BY_ID && window.NODE_BY_ID[sel] ? window.NODE_BY_ID[sel].label : '';
-        if (act === 'xray') { if (name) return stage('xray', sel); input.value = L('desármame ', 'break down '); }
-        if (act === 'sim') { if (name) return stage('sim', { id: sel, kind: 'collapse' }); input.value = L('¿qué pasa si cae ', 'shock '); }
-        if (act === 'compare') { input.value = L('compara ', 'compare ') + (name ? name + L(' y ', ' and ') : ''); }
-        if (act === 'deep') { input.value = L('investiga ', 'research '); }
+        // sin empresa elegida, estos chips abren un SELECTOR (antes solo prellenaban la
+        // barra y parecía que "el botón no hacía nada" — feedback 2026-10-04)
+        if (act === 'xray') return name ? stage('xray', sel) : stage('pick', { for: 'xray' });
+        if (act === 'sim') return name ? stage('sim', { id: sel, kind: 'collapse' }) : stage('pick', { for: 'sim' });
+        if (act === 'compare') return stage('pick', { for: 'compare', a: name ? sel : null });
+        if (act === 'deep') return stage('pick', { for: 'research' });
         input.focus();
       });
     });
@@ -605,6 +617,7 @@
     if (kind === 'scalp') return stageScalp(s, arg);
     if (kind === 'crypto') return stageCrypto(s, arg);
     if (ADOPT_TABS[kind]) return stageAdoptTab(s, kind);
+    if (kind === 'pick') return stagePick(s, arg);
     if (kind === 'xray') return stageXRay(s, arg);
     if (kind === 'compare') return stageCompare(s, arg);
     if (kind === 'agentsim') return stageAgentSim(s, arg);
@@ -630,6 +643,7 @@
     xray: ['🔬', 'X-Ray', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['◉', 'Simulación', 'Simulation'],
     agentsim: ['🧪', 'Simulación por agentes', 'Agent simulation'], research: ['🧠', 'Investigación', 'Research'],
     screener: ['🚀', 'Explosivas', 'Breakouts'], chat: ['💬', 'Conversación', 'Conversation'],
+    pick: ['🔎', 'Elegir empresa', 'Choose a company'],
   };
   function _argLabel(kind, arg) {
     try {
@@ -888,6 +902,70 @@
       var b = document.getElementById('bcp-home-hyperbtn');
       if (b) b.addEventListener('click', function (e) { e.preventDefault(); stage('insights'); });
     } catch (e) {}
+  }
+
+  // ── SELECTOR DE EMPRESA: X-Ray / Simular / Comparar / Investigar sin empresa elegida ──
+  var PICK_META = {
+    xray: ['¿Qué empresa desarmo?', 'Which company should I take apart?'],
+    sim: ['¿Qué empresa simulo que cae?', 'Which company should I simulate failing?'],
+    compare: ['¿Qué dos empresas comparo?', 'Which two companies should I compare?'],
+    research: ['¿Qué empresa investigo a fondo?', 'Which company should I research in depth?'],
+  };
+  function stagePick(s, arg) {
+    arg = arg || {};
+    var en = ckLang() === 'en', kind = PICK_META[arg.for] ? arg.for : 'xray';
+    var two = kind === 'compare';
+    var aNode = arg.a ? resolveNode(arg.a) : null;
+    function field(id, ph, val) {
+      return '<div class="bcp-pick-f"><input id="' + id + '" type="text" autocomplete="off" spellcheck="false" placeholder="' + esc(ph) + '"' + (val ? ' value="' + esc(val) + '"' : '') + '><div class="bcp-pick-sug" data-for="' + id + '"></div></div>';
+    }
+    s.innerHTML = backBar(en ? PICK_META[kind][1] : PICK_META[kind][0]) +
+      '<div class="bcp-inner bcp-pick" style="max-width:640px">' +
+        '<h3 class="bcp-pick-h">' + esc(en ? PICK_META[kind][1] : PICK_META[kind][0]) + '</h3>' +
+        '<p class="bcp-pick-p">' + esc(en ? 'Type a name or ticker and pick from the list.' : 'Escribe un nombre o ticker y elige de la lista.') + '</p>' +
+        field('bcp-pick-a', en ? 'e.g. Nvidia, TSM, SK Hynix' : 'p. ej. Nvidia, TSM, SK Hynix', aNode ? aNode.label : '') +
+        (two ? field('bcp-pick-b', en ? 'Second company' : 'Segunda empresa', '') : '') +
+        '<div class="bcp-pick-go"><button type="button" class="bcp-back" id="bcp-pick-ok">' + esc(en ? 'Continue' : 'Continuar') + '</button></div>' +
+      '</div>';
+    var chosen = { a: aNode ? aNode.id : null, b: null };
+    function suggest(inp, box, key) {
+      var q = (inp.value || '').trim();
+      chosen[key] = null;
+      if (q.length < 2) { box.innerHTML = ''; return; }
+      var hits = [];
+      try {
+        var r = window.KhipuResolve ? window.KhipuResolve.find(q) : null;
+        if (r && r.node) hits.push(r.node);
+        (r && r.suggestions || []).forEach(function (n) { if (n && n.id && !hits.some(function (h) { return h.id === n.id; })) hits.push(n); });
+      } catch (e) {}
+      if (!hits.length && typeof NODES !== 'undefined') {
+        var lc = q.toLowerCase();
+        hits = NODES.filter(function (n) { return (n.label || '').toLowerCase().indexOf(lc) >= 0 || (n.mkt || '').toLowerCase() === lc; }).slice(0, 6);
+      }
+      box.innerHTML = hits.slice(0, 6).map(function (n) {
+        return '<button type="button" class="bcp-pick-it" data-id="' + esc(n.id) + '"><b>' + esc(n.label) + '</b>' + (n.mkt ? ' <span>' + esc(n.mkt) + '</span>' : '') + '</button>';
+      }).join('');
+      box.querySelectorAll('.bcp-pick-it').forEach(function (b) {
+        b.addEventListener('click', function () { chosen[key] = b.getAttribute('data-id'); inp.value = b.querySelector('b').textContent; box.innerHTML = ''; if (!two || (chosen.a && chosen.b)) go(); else { var nb = s.querySelector('#bcp-pick-' + (key === 'a' ? 'b' : 'a')); if (nb && !nb.value) nb.focus(); } });
+      });
+    }
+    function go() {
+      var a = chosen.a || (resolveNode(s.querySelector('#bcp-pick-a').value || '') || {}).id;
+      var b = two ? (chosen.b || (resolveNode(s.querySelector('#bcp-pick-b').value || '') || {}).id) : null;
+      if (!a || (two && !b)) { var okb = s.querySelector('#bcp-pick-ok'); if (okb) { okb.textContent = en ? 'Pick a company from the list' : 'Elige una empresa de la lista'; } return; }
+      if (kind === 'xray') return stage('xray', a);
+      if (kind === 'sim') return stage('sim', { id: a, kind: 'collapse' });
+      if (kind === 'compare') return stage('compare', { a: a, b: b });
+      if (kind === 'research') return stage('research', { id: a });
+    }
+    ['a', 'b'].forEach(function (key) {
+      var inp = s.querySelector('#bcp-pick-' + key); if (!inp) return;
+      var box = s.querySelector('.bcp-pick-sug[data-for="bcp-pick-' + key + '"]');
+      inp.addEventListener('input', function () { suggest(inp, box, key); });
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); var first = box.querySelector('.bcp-pick-it'); if (first) first.click(); else go(); } });
+    });
+    s.querySelector('#bcp-pick-ok').addEventListener('click', go);
+    setTimeout(function () { var f = s.querySelector(aNode ? '#bcp-pick-b' : '#bcp-pick-a'); if (f) f.focus(); }, 60);
   }
 
   // ── "no encontré esa empresa": mensaje bilingüe + sugerencias clicables ──

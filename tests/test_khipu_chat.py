@@ -30,7 +30,7 @@ class FakeAI:
         self.systems = []
         self.delay = delay
 
-    def __call__(self, system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True):
+    def __call__(self, system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True, **kw):
         self.systems.append(system)
         self.prompts.append(prompt)
         if self.delay:

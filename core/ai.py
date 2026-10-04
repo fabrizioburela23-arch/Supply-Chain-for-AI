@@ -286,8 +286,11 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
     if json_mode:
         gen.update({'responseMimeType': 'application/json', 'temperature': 0.3,
                     'maxOutputTokens': max(max_tokens, 8192)})
-        if 'flash' in GEMINI_MODEL:
-            gen['thinkingConfig'] = {'thinkingBudget': 0}
+    # 2026-10-04 (chat caía a "sin IA" con Gemini como único proveedor): en modelos
+    # flash el "pensamiento" consume maxOutputTokens y segundos; en el nivel RÁPIDO
+    # (chat, comandos, radar) y en JSON estricto se apaga. GEMINI_THINKING=on lo devuelve.
+    if 'flash' in GEMINI_MODEL and (json_mode or tier != 'deep') and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on':
+        gen['thinkingConfig'] = {'thinkingBudget': 0}
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
             'generationConfig': gen}
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
@@ -366,20 +369,20 @@ def _ai_configured():
     return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
 
 
-def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True):
+def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True, want_json=False):
     """Llamada de IA con GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito:
     "necesito que todo esté en vivo; los datos falsos perjudican la tesis").
     Toda cifra de dinero de la respuesta debe estar en el input (system+prompt);
     si no: 1 reintento con el error como feedback y, si persiste, la cifra se
     MARCA "(⚠ cifra no verificada)". verify_numbers=False solo para diagnóstico."""
     if not verify_numbers:
-        return _ai_complete_raw(system, prompt, max_tokens, tier, model)
+        return _ai_complete_raw(system, prompt, max_tokens, tier, model, want_json=want_json)
     from core.live_facts import live_facts_block
     from core.numbers import NUMBERS_RULE, mark_unsupported, unsupported_in
     prompt = (prompt or '') + live_facts_block(prompt)   # cifras CORRECTAS, en vivo
     source = f'{system or ""}\n{prompt or ""}'
     sys2 = (system or '') + NUMBERS_RULE
-    text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model)
+    text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model, want_json=want_json)
     bad = unsupported_in(text, source)
     if bad:
         log.warning('guardián de cifras: %s sin respaldo → reintento', bad)
@@ -387,7 +390,7 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
             fb = (prompt + '\n\nTU RESPUESTA ANTERIOR USÓ CIFRAS QUE NO ESTÁN EN LOS DATOS: ' + ', '.join(bad) +
                   '. Reescribe la respuesta completa (mismo formato) usando SOLO cifras de los datos dados, '
                   'o sin esas cifras.')
-            text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model)
+            text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model, want_json=want_json)
             bad2 = unsupported_in(text2, source)
             if len(bad2) <= len(bad):
                 text, used, bad = text2, used2, bad2
@@ -397,7 +400,7 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
     return text, used
 
 
-def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
+def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, want_json=False):
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
     pasa al siguiente. Devuelve (texto, etiqueta_modelo).
 
@@ -424,6 +427,9 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None):
             try:
                 if name == 'claude':
                     text, used = prov[1](system, prompt, max_tokens, tier, model=model)
+                elif name == 'gemini':
+                    # want_json (pasos del chat, specs): JSON estricto, sin "pensamiento" → no se corta
+                    text, used = prov[1](system, prompt, max_tokens, tier, json_mode=want_json)
                 else:
                     text, used = prov[1](system, prompt, max_tokens, tier)
                 text = strip_reasoning(text)

@@ -429,7 +429,7 @@
   function pin(id, side) {
     var w = get(id); if (!w) return;
     if (side === undefined) side = w.pinned ? null : (wins.some(function (o) { return o !== w && o.pinned === 'right'; }) && !wins.some(function (o) { return o !== w && o.pinned === 'left'; }) ? 'left' : 'right');
-    w.pinned = side || null; w.max = false; w.snap = null; w.min = false; w.el.classList.remove('kd-min');
+    w.pinned = side || null; w.max = false; w.snap = null; w.min = false; w.manual = false; w.el.classList.remove('kd-min');
     var ps = pinStore(); if (side) ps[w.kind] = side; else delete ps[w.kind]; lsSet(LS_PINS, JSON.stringify(ps));
     relabelWin(w);
     arrange(true);
@@ -444,8 +444,10 @@
     if (isMobile() || !visible()) { renderBar(); return; }
     if (!force && !autoOn()) { renderBar(); return; }
     var d = deskSize(); if (!d) return;
+    if (force) wins.forEach(function (w) { w.manual = false; });   // "Ordenar ahora" / fijar: vuelve a mandar el orden
     var L = wins.filter(function (w) { return w.pinned === 'left'; }), R = wins.filter(function (w) { return w.pinned === 'right'; });
-    var C = wins.filter(function (w) { return !w.pinned && !w.min; });
+    // una ventana que el usuario movió o redimensionó a mano se respeta (w.manual) hasta "Ordenar ahora"
+    var C = wins.filter(function (w) { return !w.pinned && !w.min && !w.manual; });
     // demasiadas sueltas: las más antiguas (menor z) esperan en la barra
     C.sort(function (a, b) { return (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0); });
     while (C.length > MAX_CENTER) { var old = C.shift(); old.min = true; old.el.classList.add('kd-min'); }
@@ -714,6 +716,7 @@
         done();
         if (!moved) return;
         var z = zoneAt(ev.clientX - sr.left, ev.clientY - sr.top);
+        w.manual = true;   // la movió a mano: el orden automático ya no la toca
         if (z) snapTo(w.id, z); else { w.snap = null; saveGeom(w); fireResize(w); }
       }
       function cancel() {   // el sistema tomó el gesto (scroll, palma, cambio de app): se revierte, no se "suelta"
@@ -751,7 +754,7 @@
           h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', cancel);
           try { h.releasePointerCapture(pid); } catch (err) {}
         }
-        function up() { done(); saveGeom(w); fireResize(w); }
+        function up() { done(); w.manual = true; saveGeom(w); fireResize(w); }
         function cancel() { done(); w.x = o.x; w.y = o.y; w.w = o.w; w.h = o.h; w.snap = o.snap; place(w); }
         h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', cancel);
       });

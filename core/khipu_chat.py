@@ -1031,7 +1031,8 @@ def _collect_sources(tool_name, res, into, lang='es'):
 
 
 def _call_ai(system, prompt, timeout):
-    fut = _POOL.submit(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast')
+    # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento
+    fut = _POOL.submit(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True)
     return fut.result(timeout=max(1.0, timeout))
 
 
