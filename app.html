@@ -2359,6 +2359,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <span id="diag-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
     </div>
     <div id="diag-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando diagnóstico…</div></div>
+    <!-- G3 (misión de reparación): grafo base vs catálogo — engine/reconcile.js -->
+    <div id="recon-box"></div>
   </div>
 
   <div id="sistema-registro" style="display:none">
@@ -5311,6 +5313,7 @@ window.openDiagnostics = async function(fresh){
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
     sum.innerHTML = `<b style="color:${c}">${ok}/${tot} operativos</b> · modelo IA: <code style="font-size:10px">${d.ai_model||'?'}</code>${d.cached?' · <span style="opacity:.6">caché</span>':''}`;
+    if(window.KhipuReconcile && d.services && d.services.ontologia && d.services.ontologia.configured) window.KhipuReconcile.mount('recon-box');
   }catch(e){
     body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">
       No se pudo obtener el diagnóstico: ${String(e.message||e)}.<br><br>
@@ -7180,6 +7183,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <script src="engine/fincard.js"></script>
 <script src="engine/termdata.js"></script>
 <script src="engine/explain.js"></script>
+<script src="engine/reconcile.js"></script>
 <script src="nodes/crypto_intel.js"></script>
 <script src="nodes/crypto_intel2.js"></script>
 <script src="engine/crypto.js"></script>

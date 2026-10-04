@@ -20,3 +20,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# salida local del dry-run de reconciliación (G3)
+reconcile_out/

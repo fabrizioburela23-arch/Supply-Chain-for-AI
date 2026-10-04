@@ -523,3 +523,39 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   lo cubre (`valid_from` del gemelo ≤ el nuevo).
 - **Verificar.** `pytest tests/test_repair_ontology.py` (9): sin el cambio fallan
   3 (ventana deduplicada, duplicado visible ayer, alias visible en 2020).
+
+### G3 — Reconciliación catálogo ↔ base SOLO con eventos: lista para revisar, aplicar por categoría y deshacer
+- **Síntoma.** Dos verdades distintas: el mapa y el MCP leen el catálogo
+  (limpio desde julio), mientras el motor de shocks, el NRS del servidor y el
+  Grafo Temporal leen Postgres, que conserva el grafo PRE-limpieza (empresas
+  repetidas como `Mobileye_Auto`/`Mobileye`, vínculos dobles TSMC→Nvidia,
+  ~400 flechas al revés X→TSMC). El mismo shock daba resultados distintos según
+  la pantalla. La base de producción NO puede re-migrarse (216 objetos únicos).
+- **Causa.** La limpieza de Etapa 2 reescribió `nodes/*.js` y el snapshot, pero
+  nunca se reprodujo como eventos en Postgres; no existía forma append-only de
+  corregir.
+- **Cambios.** `ontology/reconcile.py` (lógica) + `scripts/reconcile_v0_to_ontology.py`
+  (terminal) + `/api/ontology/reconcile/plan|apply|rollback` + panel 🩺 →
+  Diagnóstico → *Grafo: base vs catálogo* (`engine/reconcile.js`, ES/EN, "?").
+  El plan (solo lectura) clasifica en: alias, repetidos, direcciones, pesos
+  distintos, faltantes y sobrantes; SOLO toca filas vigentes con fecha GENESIS,
+  relación del catálogo, sin fuente externa/factor y con extremos del catálogo
+  (los hechos con fecha, noticias, factores y objetos propios de la base nunca
+  se tocan). Aplicar exige PIN de operador + el nombre EXACTO de la base +
+  actor; por defecto solo lo seguro (alias + repetidos); direcciones y demás
+  solo si se marcan (decisión D5). Cada corrida usa el canal
+  `reconcile_v0:<run_id>`; deshacer emite eventos nuevos
+  (`reconcile_v0_rollback:<run_id>`), sigue la cadena si otra corrida re-abrió
+  el vínculo, se niega a deshacer dos veces o fuera de orden.
+- **Verificar.** `DATABASE_URL=… pytest tests/test_reconcile.py` (5): base
+  "vieja" con filas sin event_id → plan exacto por categoría, dry-run sin
+  escrituras, `confirm_db` obligatorio, aplicar → 0 diferencias, tablas ==
+  replay, fuera-de-alcance intacto, deshacer → estado original exacto, API con
+  PIN. Ensayo realista (base migrada desde el snapshot de julio, como
+  producción): 56 alias · 31 repetidos · 393 direcciones · 53 pesos · 273
+  faltantes · 4 sobrantes → todo aplicado en ~6 s, 0 diferencias, tablas ==
+  replay; deshacer ambas corridas → los 1.451 vínculos originales exactos. Una
+  base recién migrada desde el catálogo actual → 0 diferencias (sin falsos
+  positivos).
+- **Producción.** NO se aplicó nada: se espera la revisión de Fabrizio
+  (copia de seguridad → *Aplicar lo seguro* → revisar direcciones).

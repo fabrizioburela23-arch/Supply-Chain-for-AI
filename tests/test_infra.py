@@ -351,6 +351,8 @@ PROTECTED = [
     ('/api/ontology/agents/investigar', {'query': 'q', 'actor': 'x'}),
     (f'/api/ontology/agents/proposals/{uuid.uuid4()}/approve', {'actor': 'x'}),
     (f'/api/ontology/agents/proposals/{uuid.uuid4()}/reject', {'actor': 'x'}),
+    ('/api/ontology/reconcile/apply', {'actor': 'x', 'confirm_db': 'x'}),        # G3
+    ('/api/ontology/reconcile/rollback', {'actor': 'x', 'confirm_db': 'x', 'run_id': 'r'}),
 ]
 
 

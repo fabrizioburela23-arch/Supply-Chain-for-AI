@@ -993,3 +993,99 @@ def events_create():
             return jsonify({'status': 'ok', 'event': _event_to_dict(ev)})
     except OntologyError as e:
         return jsonify({'error': str(e)}), 400
+
+
+# ── G3 (misión de reparación 2026-10-04): reconciliación catálogo ↔ base ──────
+# Solo lectura por defecto. Aplicar/deshacer = PIN de operador + nombre EXACTO
+# de la base (lo devuelve el plan) + actor; todo por eventos (ontology/reconcile.py).
+_RECON_CACHE = {'ts': 0.0, 'key': None, 'data': None}
+
+
+def _recon_plan(fresh=False):
+    import time as _t
+    from ontology import reconcile as R
+    snap = R.load_snapshot()
+    key = snap.get('exported_at')
+    if (not fresh and _RECON_CACHE['data'] is not None and _RECON_CACHE['key'] == key
+            and _t.time() - _RECON_CACHE['ts'] < 60):
+        return snap, _RECON_CACHE['data']
+    with session_scope() as s:
+        plan = R.build_plan(s, snap)
+        plan['db'] = R._db_name(s)
+        plan['runs'] = R.list_runs(s, limit=10)
+    _RECON_CACHE.update(ts=_t.time(), key=key, data=plan)
+    return snap, plan
+
+
+@ontology_bp.route('/reconcile/plan')
+@_require_db
+@rate_limit(20, 600)
+def reconcile_plan():
+    """Dry-run: ?format=json (default) | md | html · ?lang=es|en · ?fresh=1.
+    No escribe nada."""
+    from flask import Response
+    from ontology import reconcile as R
+    fmt = (request.args.get('format') or 'json').lower()
+    lang = 'en' if (request.args.get('lang') or '').lower() == 'en' else 'es'
+    try:
+        _snap, plan = _recon_plan(fresh=request.args.get('fresh') == '1')
+    except FileNotFoundError:
+        return jsonify({'error': 'falta data/grafo_v0.json en el servidor'}), 503
+    if fmt == 'md':
+        return Response(R.render_markdown(plan, dbname=plan.get('db'), lang=lang, limit_rows=500),
+                        mimetype='text/markdown; charset=utf-8')
+    if fmt == 'html':
+        md = R.render_markdown(plan, dbname=plan.get('db'), lang=lang, limit_rows=500)
+        return Response(R.markdown_to_html(md, title='Khipus · ' + ('Graph review' if lang == 'en' else 'Revisión del grafo')),
+                        mimetype='text/html; charset=utf-8')
+    if request.args.get('summary') == '1':
+        return jsonify({k: plan[k] for k in ('summary', 'out_of_scope', 'db', 'as_of', 'snapshot', 'default_apply', 'runs')})
+    return jsonify(plan)
+
+
+@ontology_bp.route('/reconcile/apply', methods=['POST'])
+@_require_db
+@require_operator
+@rate_limit(5, 600)
+def reconcile_apply():
+    """Body: {actor, confirm_db, include: ['alias','duplicates',…]}. Devuelve run_id."""
+    from ontology import reconcile as R
+    b = _body()
+    actor = (b.get('actor') or '').strip()[:80]
+    if not actor:
+        return jsonify({'error': 'actor requerido'}), 400
+    include = b.get('include') or list(R.DEFAULT_APPLY)
+    if not isinstance(include, list) or any(c not in R.CATEGORIES for c in include):
+        return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}'}), 400
+    try:
+        res = R.apply_plan(session_scope, R.load_snapshot(), include=include, confirm_db=b.get('confirm_db'),
+                           actor=actor)
+    except R.ReconcileError as e:
+        return jsonify({'error': str(e)}), 400
+    except (OntologyError, ValueError) as e:
+        return jsonify({'error': str(e)[:300]}), 400
+    _RECON_CACHE.update(data=None)
+    return jsonify({'status': 'ok', **res})
+
+
+@ontology_bp.route('/reconcile/rollback', methods=['POST'])
+@_require_db
+@require_operator
+@rate_limit(5, 600)
+def reconcile_rollback():
+    """Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos."""
+    from ontology import reconcile as R
+    b = _body()
+    actor = (b.get('actor') or '').strip()[:80]
+    run_id = (b.get('run_id') or '').strip()[:60]
+    if not actor or not run_id:
+        return jsonify({'error': 'actor y run_id requeridos'}), 400
+    try:
+        with session_scope() as s:
+            res = R.rollback_run(s, run_id, confirm_db=b.get('confirm_db'), actor=actor)
+    except R.ReconcileError as e:
+        return jsonify({'error': str(e)}), 400
+    except (OntologyError, ValueError) as e:
+        return jsonify({'error': str(e)[:300]}), 400
+    _RECON_CACHE.update(data=None)
+    return jsonify({'status': 'ok', **res})
