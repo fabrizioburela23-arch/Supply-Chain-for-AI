@@ -9,6 +9,37 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (b) — ESCRITORIO: REVISIÓN ADVERSARIAL Y CORRECCIONES (sw v187)
+
+Workflow de revisión (5 lentes × 2 refutadores por hallazgo, 61 agentes): 20 hallazgos confirmados,
+8 rechazados. Corregido TODO lo confirmado (engine/desktop.js reescrito; cockpit.js):
+- GRAVE: bucle de `resize` sintético a 5 Hz (onResize → fireResize → resize → onResize…) que seguía
+  con la Cabina cerrada y hacía settleGraph del mapa sin parar. Ahora onResize ignora `isTrusted=false`
+  y no reemite; el escritorio se re-adapta con un ResizeObserver sobre #kd-wins (también cuando
+  aparece el dock del chat: las ventanas pegadas se re-ajustan a su zona).
+- GRAVE: `place()` medía el escenario oculto (0×0) al cerrar la Cabina y encogía todo a 320×220.
+  `deskSize()` → null si está oculto; nunca se recorta geometría contra una medida inválida.
+- Cerrar/reabrir la Cabina ya NO re-inicializa las ventanas adoptadas: `parkAdopted()` recuerda
+  ventana+caja de cada panel y `readopt()` devuelve el MISMO nodo (la terminal conserva sus gráficos,
+  el mapa su zoom). Scalping se re-pinta (resumeKinds) para que vuelva el polling.
+- Despegar una ventana pegada a la derecha ya no la lanza lejos del cursor (fx relativo a la ventana);
+  pointercancel REVIERTE (no "suelta" en 0,0); el borde superior no empuja el inferior.
+- Chat: con la ventana 💬 abierta, la respuesta que abre otra ventana (X-Ray…) la pone LADO A LADO
+  (resultado izq., conversación der.) en ≥1100 px, o trae 💬 al frente; si 💬 está minimizada o
+  detrás de otra hoja, se enfoca al llegar la respuesta. Chrome compacto en el escritorio
+  (#bcp-ov.desk: orbe 44 px, dock 22vh / 18vh en pantallas bajas).
+- Tablet (dedo, ≥761 px): controles de 40×36, manijas de 16 px, selector de acomodo al TOCAR ▢.
+- Móvil: hojas ocultas con display:none (kd-hide) → globos/burbujas/timers se duermen de verdad.
+- Esc cierra primero el menú ⊞ / selector; giro teléfono↔tablet re-etiqueta (✕ ↔ ‹ Volver); barra de
+  tareas no se reconstruye si nada cambió; kh_desk_geom inválido tolerado; títulos/íconos = chips;
+  interruptor de modo solo en clásico (en el escritorio vive en ⊞); pista de la primera ventana (toast,
+  una vez); role=dialog + aria-label; timers y listeners limpios en unmount.
+- Prueba Playwright ampliada (50 comprobaciones): sin bucle de resize, geometría conservada al cerrar/
+  reabrir, mismo nodo de terminal, Esc con menú, lado a lado, kd-hide en móvil. Nota: la franja roja
+  #srv-down (APIs 503 en la prueba) tapa el alto del teléfono; se quita en el setup del test.
+
+---
+
 # SESIÓN 2026-10-04 — ESCRITORIO KHIPU K1: VENTANAS DENTRO DE LA CABINA (sw v186)
 
 Pedido de Fabrizio: "la vista general sea como el interfaz de Khipu; poco a poco será el ÚNICO

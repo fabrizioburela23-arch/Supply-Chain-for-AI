@@ -284,6 +284,13 @@
    baja a este DOCK sobre la barra → la respuesta NUNCA desaparece. */
 /* z-index: por encima de la hoja inferior del mapa en el celular (.panel, z 50) */
 #bcp-chatdock,#bcp-barwrap{position:relative;z-index:60}
+/* ESCRITORIO (engine/desktop.js): chrome compacto para que las ventanas tengan alto;
+   el dock del chat cede espacio pero sigue SIEMPRE presente (cabecera + barra de entrada) */
+#bcp-ov.desk #bcp-top{padding:8px 22px 8px}
+#bcp-ov.desk #bcp-orb-wrap{width:44px;height:44px}
+#bcp-ov.desk #bcp-orb-canvas{width:44px;height:44px}
+#bcp-ov.desk #bcp-chatdock{max-height:22vh}
+@media(max-height:820px){#bcp-ov.desk #bcp-chatdock{max-height:18vh}#bcp-ov.desk #bcp-barwrap{padding:8px 22px 10px}}
 #bcp-chatdock{flex-shrink:0;display:none;flex-direction:column;border-top:1px solid rgba(122,158,255,.16);
   background:rgba(6,10,20,.92);max-height:34vh;min-height:0}
 #bcp-chatdock.show{display:flex}
@@ -553,6 +560,7 @@
       if (!D.active()) {              // primer uso: el escenario clásico se vacía y pasa a escritorio
         restoreAdopted(); closeConfirmDialog(); _scalpStop();
         D.mount(s);
+        var ovd = document.getElementById('bcp-ov'); if (ovd) ovd.classList.add('desk');
       }
       if (!D.wall().children.length) stageEmpty(D.wall());
       if (kind === 'empty') {
@@ -597,13 +605,14 @@
   }
 
   // ── ESCRITORIO: título, ícono y limpieza por ventana ──
+  // mismo ícono y nombre que el chip de la barra (actChips) para que el usuario los reconozca
   var KIND_META = {
-    graph: ['🕸', 'Grafo en vivo', 'Live graph'], terminal: ['🖥', 'Terminal', 'Terminal'],
-    insights: ['💡', 'Insights', 'Insights'], canvas: ['🎨', 'Lienzo', 'Canvas'], deep: ['🧠', 'Investigación profunda', 'Deep research'],
-    broker: ['💼', 'Mi cuenta', 'My account'], scalp: ['⚡', 'Scalping', 'Scalping'], crypto: ['₿', 'Cripto', 'Crypto'],
+    graph: ['🗺️', 'Grafo', 'Graph'], terminal: ['🖥️', 'Terminal', 'Terminal'],
+    insights: ['💡', 'Oportunidades', 'Opportunities'], canvas: ['✦', 'Gráfico', 'Chart'], deep: ['🧠', 'Investigación', 'Research'],
+    broker: ['💼', 'Mi cuenta', 'My account'], scalp: ['⚡', 'Scalping', 'Scalping'], crypto: ['💠', 'Cripto', 'Crypto'],
     market: ['📈', 'Mercado', 'Market'], geo: ['🌐', 'Geopolítica', 'Geopolitics'], space: ['🚀', 'Espacio', 'Space'],
-    simulation: ['🧬', 'Escenarios', 'Scenarios'], tkg: ['⏱', 'Grafo Temporal', 'Temporal Graph'], guia: ['❓', 'Guía', 'Guide'],
-    xray: ['🔬', 'Radiografía', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['⚡', 'Simulación', 'Simulation'],
+    simulation: ['🔮', 'Escenarios', 'Scenarios'], tkg: ['⏱', 'Grafo Temporal', 'Temporal Graph'], guia: ['❓', 'Guía', 'Guide'],
+    xray: ['🔬', 'X-Ray', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['◉', 'Simulación', 'Simulation'],
     agentsim: ['🧪', 'Simulación por agentes', 'Agent simulation'], research: ['🧠', 'Investigación', 'Research'],
     screener: ['🚀', 'Explosivas', 'Breakouts'], chat: ['💬', 'Conversación', 'Conversation'],
   };
@@ -626,8 +635,27 @@
     var extra = _argLabel(kind, arg);
     return extra ? base + ' · ' + extra : base;
   }
+  // Al cerrar la Cabina los paneles vuelven a su pestaña (parkAdopted) recordando
+  // en qué ventana y caja estaban; al reabrir, readopt() devuelve el MISMO nodo sin
+  // volver a inicializarlo (la terminal conserva sus gráficos, el mapa su zoom).
+  var _parked = [];
+  function parkAdopted() {
+    _parked = _adopted.filter(function (a) { return a.win; })
+      .map(function (a) { return { win: a.win, el: a.el, box: a.el.parentNode, mode: a.el.style.display }; });
+    restoreAdopted();
+  }
+  function readopt(kind, winId, body) {
+    var mine = _parked.filter(function (p) { return p.win === winId; });
+    _parked = _parked.filter(function (p) { return p.win !== winId; });
+    mine = mine.filter(function (p) { return p.box && body.contains(p.box) && p.el && p.el.parentNode; });
+    if (!mine.length) return false;
+    _adoptCtx = winId;
+    try { mine.forEach(function (p) { adoptInto(p.box, p.el, p.mode); }); } finally { _adoptCtx = null; }
+    return true;
+  }
   function winCleanup(kind, winId) {
     restoreAdopted(winId);
+    _parked = _parked.filter(function (p) { return p.win !== winId; });
     if (kind === 'scalp') _scalpStop();
     if (kind === 'broker') closeConfirmDialog();
     if (kind === 'deep' && _deepTimer) { clearInterval(_deepTimer); _deepTimer = null; }
@@ -649,8 +677,14 @@
       _curKind = kind;
       markActive(CHIP_KINDS.indexOf(kind) >= 0 ? kind : null);
     },
-    onModeChange: function () { if (open) stage('empty'); },
+    onModeChange: function (on) {
+      var ov = document.getElementById('bcp-ov');
+      if (ov) ov.classList.toggle('desk', !!on);
+      if (open) stage('empty');
+    },
+    resume: readopt,
     adoptKinds: ['graph', 'terminal', 'crypto', 'tkg', 'guia', 'market', 'geo', 'space', 'simulation'],
+    resumeKinds: ['scalp'],          // sin panel adoptado pero con polling: se re-pinta al reabrir
     multiKinds: ['xray', 'sim'],
   });
 
@@ -781,17 +815,17 @@
     s.querySelectorAll('.bcp-chip').forEach(function (el) {
       el.addEventListener('click', function () { ask(el.getAttribute('data-q')); });
     });
-    // ESCRITORIO: interruptor discreto (ventanas ↔ una sola pantalla)
-    if (window.KhipuDesk) {
-      var on = window.KhipuDesk.enabled();
+    // ESCRITORIO apagado (modo clásico): un solo camino de vuelta a las ventanas
+    // (en el escritorio, "una sola pantalla" vive en el menú ⊞ de la barra de tareas)
+    if (window.KhipuDesk && !window.KhipuDesk.enabled()) {
       var sw = document.createElement('div');
       sw.id = 'bcp-deskmode';
-      sw.style.cssText = 'margin:26px auto 0;font-size:11.5px;color:#5E6884';
-      sw.innerHTML = '🪟 ' + esc(on ? (en ? 'Windows mode' : 'Modo ventanas') : (en ? 'Single-screen mode' : 'Modo una pantalla')) +
-        ' · <a href="#" id="bcp-deskmode-sw" style="color:#9BA6C4;text-decoration:underline dotted">' +
-        esc(on ? (en ? 'use a single screen' : 'usar una sola pantalla') : (en ? 'use windows' : 'usar ventanas')) + '</a>';
+      sw.style.cssText = 'margin:26px auto 0;font-size:12px;color:#8791AC';
+      sw.innerHTML = '🪟 ' + esc(en ? 'Single-screen mode' : 'Modo una pantalla') +
+        ' · <a href="#" id="bcp-deskmode-sw" style="color:#C7D0EA;text-decoration:underline dotted">' +
+        esc(en ? 'use windows' : 'usar ventanas') + '</a>';
       s.querySelector('#bcp-empty').appendChild(sw);
-      sw.querySelector('#bcp-deskmode-sw').addEventListener('click', function (e) { e.preventDefault(); window.KhipuDesk.setEnabled(!on); });
+      sw.querySelector('#bcp-deskmode-sw').addEventListener('click', function (e) { e.preventDefault(); window.KhipuDesk.setEnabled(true); });
     }
     try { _homeHyper(); } catch (e) {}   // banner proactivo del hipergrafo (siempre)
     try { _homePulse(); } catch (e) {}   // pulso ligero del portafolio (capa proactiva)
@@ -2333,26 +2367,41 @@
   }
   // dónde se ve la respuesta: en el escritorio, en el dock de abajo (o en la
   // ventana 💬 si ya está abierta); en la Cabina clásica, en la escena 'chat'
+  function _chatWin() {
+    if (!deskActive()) return null;
+    return desk().list().filter(function (w) { return w.kind === 'chat'; })[0] || null;
+  }
   function _ensureThread() {
     if (deskActive()) {
-      // si la ventana 💬 existe pero está minimizada, la respuesta no se vería: se trae al frente
-      var cw = desk().list().filter(function (w) { return w.kind === 'chat'; })[0];
-      if (cw && cw.min) desk().focus(cw.id);
+      // si la ventana 💬 existe (minimizada o detrás de otra hoja), la respuesta no se vería: al frente
+      var cw = _chatWin();
+      if (cw) desk().focus(cw.id);
       _placeThread(_curKind || 'empty');
       return;
     }
     if (_curKind !== 'chat') stage('chat');
   }
+  // la respuesta abrió una ventana (X-Ray, gráfico…) encima de la ventana 💬 → en pantallas
+  // anchas van lado a lado (resultado a la izquierda, conversación a la derecha); si no, 💬 al frente
+  function _chatBeside() {
+    var cw = _chatWin(); if (!cw) return;
+    var D = desk(), other = D.focused();
+    if (!other || other === cw.id) return;
+    if (!D.isMobile() && (window.innerWidth || 0) >= 1100) { D.snap(other, 'left'); D.snap(cw.id, 'right'); }
+    D.focus(cw.id);
+  }
   // acción devuelta por el cerebro → escena de la Cabina (la respuesta queda en el dock)
   function runChatAction(a) {
     if (!a || !a.type) return;
-    if (a.type === 'open_xray') return stage('xray', a.arg);
-    if (a.type === 'navigate') return stage('graph', a.arg);
-    if (a.type === 'compare') return stage('compare', a.arg);
-    if (a.type === 'chart') return stage('canvas', a.arg);
-    if (a.type === 'agent_sim') return stage('agentsim', { scenario: a.arg, seeds: extractSeeds(a.arg) });
-    if (a.type === 'broker') return stage('broker');
-    if (window.KhipuChat) window.KhipuChat.runAction(a);
+    var opened = true;
+    if (a.type === 'open_xray') stage('xray', a.arg);
+    else if (a.type === 'navigate') stage('graph', a.arg);
+    else if (a.type === 'compare') stage('compare', a.arg);
+    else if (a.type === 'chart') stage('canvas', a.arg);
+    else if (a.type === 'agent_sim') stage('agentsim', { scenario: a.arg, seeds: extractSeeds(a.arg) });
+    else if (a.type === 'broker') stage('broker');
+    else { opened = false; if (window.KhipuChat) window.KhipuChat.runAction(a); }
+    if (opened) setTimeout(_chatBeside, 60);   // la ventana nueva no debe tapar la conversación
   }
   // pregunta libre → cerebro con herramientas
   function chatAsk(text) {
@@ -2495,8 +2544,8 @@
   }
   function close() {
     closeConfirmDialog();
-    restoreAdopted();   // devolver grafo/terminal a su sitio original
-    if (deskActive()) desk().suspend();   // las ventanas recuerdan que deben re-adoptar al volver
+    if (deskActive()) { parkAdopted(); desk().suspend(); }   // paneles a su pestaña; las ventanas recuerdan re-adoptarlos
+    else restoreAdopted();   // devolver grafo/terminal a su sitio original
     _scalpStop();       // detener el polling de scalping al cerrar la Cabina
     demoStop();         // cortar la demostración (timers + voz) al cerrar
     stopCockpitOrb();

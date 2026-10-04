@@ -15,37 +15,52 @@
    y abajo hay una BARRA DE TAREAS con lo abierto. El chat de Khipu sigue
    siempre presente (dock + barra de abajo de la Cabina). En el teléfono las
    ventanas son HOJAS a pantalla completa (sin arrastre) y la barra de tareas
-   son chips para cambiar entre ellas.
+   son chips para cambiar entre ellas. Tablet (dedo, ≥761 px): controles
+   grandes y el selector de acomodo se abre tocando ▢.
 
    La Cabina es quien PINTA el contenido: registra `configure({render,title,
-   onClose,beforeRender,onFocus,adoptKinds})`; este módulo solo gestiona las
-   ventanas. Una sola puerta: BixbyCockpit.stage(kind,arg) → KhipuDesk.open().
-   Geometría recordada por tipo en localStorage kh_desk_geom; modo ON/OFF en
-   kh_desk_mode (OFF = Cabina clásica de una sola pantalla, por si algo falla).
+   icon,onClose,beforeRender,onFocus,onModeChange,resume,adoptKinds,
+   resumeKinds,multiKinds})`; este módulo solo gestiona las ventanas. Una sola
+   puerta: BixbyCockpit.stage(kind,arg) → KhipuDesk.open(). Geometría recordada
+   por tipo en localStorage kh_desk_geom; modo ON/OFF en kh_desk_mode (OFF =
+   Cabina clásica de una sola pantalla, por si algo falla).
+
+   Lecciones de la revisión adversarial (2026-10-04, no repetir):
+   · NUNCA reemitir 'resize' desde el propio escuchador de 'resize' (bucle a
+     5 Hz que seguía con la Cabina cerrada): los 'resize' sintéticos
+     (isTrusted=false) son PARA los motores (mapa/globos/terminal), no para
+     el escritorio; el escritorio se re-adapta con un ResizeObserver.
+   · NUNCA medir ni recortar geometría con el escenario oculto (0×0 →
+     encogía todas las ventanas a 320×220 al cerrar la Cabina).
+   · Clases de botones (kd-b-*) ≠ estados de ventana (kd-min/kd-max/kd-hide).
+   · pointercancel NO es "soltar": revierte.
 
    window.KhipuDesk = { configure, enabled, setEnabled, active, mount, unmount,
-     wall, open, close, closeAll, focus, has, get, list, minimize, maximize,
-     restore, tile, cascade, suspend, resume, isMobile, relabel }
+     wall, open, close, closeKind, closeAll, focus, focused, has, get, list,
+     minimize, maximize, restore, snap, tile, cascade, suspend, resume,
+     isMobile, relabel }
    ============================================================================ */
 (function () {
   'use strict';
 
   var MOBILE_MAX = 760;        // ≤ → hojas a pantalla completa (mismo corte que la Cabina)
-  var BAR_H = 40;              // alto de la barra de tareas
   var MIN_W = 320, MIN_H = 220;
   var SNAP_PX = 14;            // distancia al borde del escritorio que activa el snap
-  var LS_GEOM = 'kh_desk_geom', LS_MODE = 'kh_desk_mode';
+  var FALLBACK = { W: 1000, H: 600 };   // solo para dibujar cuando aún no hay medida; NUNCA para recortar
+  var LS_GEOM = 'kh_desk_geom', LS_MODE = 'kh_desk_mode', LS_TIP = 'kh_desk_tip';
 
   function lang() {
     var l = window.LANG;
     if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } }
     return l === 'en' ? 'en' : 'es';
   }
-  function L(es, en) { return lang() === 'en' ? en : es; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function num(v, d) { v = +v; return isFinite(v) ? v : d; }
+  function coarse() { try { return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); } catch (e) { return false; } }
+  function barH() { return coarse() ? 48 : 40; }
 
   // ── textos de la interfaz (regla bilingüe) ──
   var T = {
@@ -54,12 +69,15 @@
     tile: ['▦ Mosaico', '▦ Tile'], cascade: ['⧉ Cascada', '⧉ Cascade'],
     minAll: ['▁ Minimizar todo', '▁ Minimize all'], closeAll: ['✕ Cerrar todo', '✕ Close all'],
     classic: ['▭ Una sola pantalla (modo clásico)', '▭ Single screen (classic mode)'],
-    menuTip: ['Ventanas', 'Windows'],
+    menuTip: ['Ventanas: mosaico, cascada, cerrar todo…', 'Windows: tile, cascade, close all…'],
     hint: ['Todo lo que abras aparece aquí como ventana: muévela, cámbiale el tamaño o pégala a un borde.',
            'Everything you open shows up here as a window: move it, resize it or snap it to an edge.'],
     hintMobile: ['Lo que abras aparece aquí; cambia entre pantallas con estos botones.',
-                 'What you open shows up here; switch between screens with these buttons.'],
+                 'What you open shows up here; switch between screens with the buttons.'],
     back: ['‹ Volver', '‹ Back'],
+    tipTitle: ['Tu primera ventana', 'Your first window'],
+    tip: ['Arrástrala por la barra de título. Llévala a un borde para pegarla a media pantalla, doble clic para agrandarla, y ▢ para elegir dónde acomodarla.',
+          'Drag it by its title bar. Move it to an edge to snap it to half the screen, double-click to enlarge it, and ▢ to choose where to place it.'],
     zones: { left: ['Mitad izquierda', 'Left half'], right: ['Mitad derecha', 'Right half'],
              tl: ['Cuarto superior izquierdo', 'Top-left quarter'], tr: ['Cuarto superior derecho', 'Top-right quarter'],
              bl: ['Cuarto inferior izquierdo', 'Bottom-left quarter'], br: ['Cuarto inferior derecho', 'Bottom-right quarter'],
@@ -68,23 +86,26 @@
   function t(k) { var v = T[k]; return v ? (lang() === 'en' ? v[1] : v[0]) : k; }
 
   // ── estado ──
-  var hooks = { render: null, title: null, onClose: null, beforeRender: null, onFocus: null, adoptKinds: [] };
+  var hooks = { render: null, title: null, icon: null, onClose: null, beforeRender: null, onFocus: null, onModeChange: null,
+                resume: null, adoptKinds: [], resumeKinds: [], multiKinds: [] };
   var stageEl = null, wallEl = null, winsEl = null, barEl = null, ghostEl = null, menuEl = null, layoutsEl = null;
   var wins = [];            // [{id, kind, arg, key, el, body, x,y,w,h, max, min, snap, prev, needsRender}]
-  var zTop = 10, seq = 0, focused = null, resizeT = null;
+  var zTop = 10, seq = 0, focused = null;
+  var resizeT = null, fireT = null, layT = null, ro = null, wasMobile = null, lastSz = null;
 
   function enabled() { return ls(LS_MODE) !== 'off'; }
   function isMobile() { return (window.innerWidth || 1024) <= MOBILE_MAX; }
-  function active() { return !!(stageEl && stageEl.classList.contains('kd-desk') && stageEl.contains(winsEl)); }
+  function active() { return !!(stageEl && stageEl.classList.contains('kd-desk') && winsEl && stageEl.contains(winsEl)); }
+  function visible() { return !!(winsEl && winsEl.offsetWidth && winsEl.offsetHeight); }   // la Cabina está abierta y con layout
 
   // ── estilos ──
   function ensureStyles() {
     if (document.getElementById('kd-styles')) return;
     var css = '' +
-'#bcp-stage.kd-desk{padding:0!important;overflow:hidden!important;position:relative}' +
+'#bcp-stage.kd-desk{padding:0!important;overflow:hidden!important;position:relative;--kd-bar:40px}' +
 '#bcp-stage.kd-desk>*{animation:none}' +
-'#kd-wall{position:absolute;left:0;right:0;top:0;bottom:' + BAR_H + 'px;overflow-y:auto;padding:22px;scrollbar-width:thin}' +
-'#kd-wins{position:absolute;left:0;right:0;top:0;bottom:' + BAR_H + 'px;pointer-events:none;overflow:hidden}' +
+'#kd-wall{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);overflow-y:auto;padding:22px;scrollbar-width:thin}' +
+'#kd-wins{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);pointer-events:none;overflow:hidden}' +
 '.kd-win{position:absolute;pointer-events:auto;display:flex;flex-direction:column;min-width:' + MIN_W + 'px;min-height:' + MIN_H + 'px;' +
   'border:1px solid rgba(122,158,255,.22);border-radius:14px;background:rgba(7,11,20,.96);' +
   'box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.4);overflow:hidden;animation:kdIn .16s ease;' +
@@ -92,7 +113,7 @@
 '@keyframes kdIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}' +
 '@media(prefers-reduced-motion:reduce){.kd-win{animation:none}}' +
 '.kd-win.kd-focus{border-color:rgba(0,224,255,.55);box-shadow:0 22px 60px rgba(0,0,0,.65),0 0 0 1px rgba(0,224,255,.18)}' +
-'.kd-win.kd-min{display:none}' +
+'.kd-win.kd-min,.kd-win.kd-hide{display:none}' +
 '.kd-win.kd-max{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border-left:0;border-right:0;border-top:0}' +
 '.kd-win.kd-drag{transition:none;opacity:.92}' +
 '.kd-ttl{display:flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 12px;flex-shrink:0;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;' +
@@ -121,7 +142,7 @@
 '.kd-win.kd-max .kd-rs{display:none}' +
 '#kd-ghost{position:absolute;display:none;pointer-events:none;border:1.5px solid rgba(0,224,255,.55);border-radius:14px;' +
   'background:rgba(0,224,255,.08);backdrop-filter:blur(2px);z-index:9000;transition:left .08s,top .08s,width .08s,height .08s}' +
-'#kd-bar{position:absolute;left:0;right:0;bottom:0;height:' + BAR_H + 'px;display:flex;align-items:center;gap:6px;padding:0 10px;' +
+'#kd-bar{position:absolute;left:0;right:0;bottom:0;height:var(--kd-bar);display:flex;align-items:center;gap:6px;padding:0 10px;' +
   'background:rgba(6,10,19,.92);border-top:1px solid rgba(122,158,255,.16);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);z-index:9100;overflow:hidden}' +
 '#kd-bar .kd-tasks{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:center;height:100%}' +
 '#kd-bar .kd-tasks::-webkit-scrollbar{display:none}' +
@@ -131,10 +152,10 @@
 '.kd-task.on{color:#00E0FF;border-color:rgba(0,224,255,.55);background:rgba(0,224,255,.09)}' +
 '.kd-task.dim{opacity:.55}' +
 '.kd-task .tx{overflow:hidden;text-overflow:ellipsis}' +
-'.kd-hint{flex:1;min-width:0;font-size:11.5px;color:#5E6884;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px}' +
+'.kd-hint{flex:1;min-width:0;font-size:11.5px;color:#8791AC;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px}' +
 '#kd-menu-btn{flex:none;width:32px;height:28px;border-radius:9px;border:1px solid rgba(122,158,255,.22);background:rgba(11,18,34,.7);color:#9BA6C4;cursor:pointer;font-size:15px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center}' +
 '#kd-menu-btn:hover,#kd-menu-btn.on{color:#00E0FF;border-color:rgba(0,224,255,.5)}' +
-'#kd-menu{position:absolute;left:10px;bottom:' + (BAR_H + 6) + 'px;display:none;flex-direction:column;gap:2px;padding:6px;min-width:230px;z-index:9200;' +
+'#kd-menu{position:absolute;left:10px;bottom:calc(var(--kd-bar) + 6px);display:none;flex-direction:column;gap:2px;padding:6px;min-width:230px;z-index:9200;' +
   'border:1px solid rgba(122,158,255,.25);border-radius:12px;background:rgba(8,12,22,.97);box-shadow:0 14px 40px rgba(0,0,0,.6)}' +
 '#kd-menu.show{display:flex}' +
 '#kd-menu button{text-align:left;border:0;background:transparent;color:#C7D0EA;font-size:12.5px;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:inherit}' +
@@ -147,6 +168,16 @@
 '.kd-lay:hover{border-color:rgba(0,224,255,.6)}' +
 '.kd-lay i{position:absolute;background:rgba(0,224,255,.35);border-radius:3px}' +
 '.kd-lay:hover i{background:rgba(0,224,255,.7)}' +
+// tablet / pantalla táctil con ventanas (≥761 px): controles para el dedo
+'@media(pointer:coarse){' +
+  '.kd-ttl{height:44px}.kd-b{width:40px;height:36px;font-size:14px}' +
+  '.kd-rs.n,.kd-rs.s{height:16px}.kd-rs.e,.kd-rs.w{width:16px}' +
+  '.kd-rs.n{top:-6px}.kd-rs.s{bottom:-6px}.kd-rs.e{right:-6px}.kd-rs.w{left:-6px}' +
+  '.kd-rs.ne,.kd-rs.nw,.kd-rs.se,.kd-rs.sw{width:26px;height:26px}' +
+  '.kd-task{height:36px}#kd-menu-btn{width:40px;height:36px}' +
+  '.kd-lay{width:64px;height:46px}#kd-layouts{grid-template-columns:repeat(3,64px)}' +
+  '#kd-menu button{padding:11px 12px}' +
+'}' +
 // móvil: hojas a pantalla completa, sin arrastre ni redimensión
 '#bcp-stage.kd-mobile #kd-wall{padding:14px 12px}' +
 '#bcp-stage.kd-mobile .kd-win{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border:0;animation:kdSheet .18s ease}' +
@@ -168,6 +199,7 @@
     if (active()) { applyMode(); return; }
     stage.innerHTML = '';
     stage.classList.add('kd-desk');
+    stage.style.setProperty('--kd-bar', barH() + 'px');
     wallEl = document.createElement('div'); wallEl.id = 'kd-wall';
     winsEl = document.createElement('div'); winsEl.id = 'kd-wins';
     ghostEl = document.createElement('div'); ghostEl.id = 'kd-ghost';
@@ -185,13 +217,19 @@
       stage.addEventListener('pointerdown', function (e) {
         if (!active()) return;
         if (menuEl.classList.contains('show') && !menuEl.contains(e.target) && e.target.id !== 'kd-menu-btn') toggleMenu(false);
-        if (layoutsEl.classList.contains('show') && !layoutsEl.contains(e.target)) hideLayouts();
+        if (layoutsEl.classList.contains('show') && !layoutsEl.contains(e.target) && !(e.target.closest && e.target.closest('.kd-b-max'))) hideLayouts();
       });
     }
     layoutsEl.addEventListener('mouseleave', function () { hideLayouts(); });
-    // re-adaptar al cambiar el tamaño (giro del teléfono, ventana del navegador)
+    // re-adaptar al cambiar el tamaño: del navegador (giro del teléfono) y del propio
+    // escenario (aparece/desaparece el dock del chat). Los 'resize' SINTÉTICOS
+    // (fireResize, adoptInto/restoreAdopted de la Cabina) se ignoran: son para los motores.
     window.removeEventListener('resize', onResize);
     window.addEventListener('resize', onResize);
+    if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; }
+    if (window.ResizeObserver) { try { ro = new ResizeObserver(function () { onResize(); }); ro.observe(winsEl); } catch (e) { ro = null; } }
+    wasMobile = isMobile();
+    barSig = null;
     applyMode();
     renderBar();
     // ventanas existentes (vuelta del modo clásico)
@@ -201,54 +239,83 @@
   function unmount() {
     if (!stageEl) return;
     closeAll();
+    toggleMenu(false); hideLayouts();
+    clearTimeout(resizeT); clearTimeout(fireT); clearTimeout(layT);
     window.removeEventListener('resize', onResize);
+    if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; }
     stageEl.classList.remove('kd-desk', 'kd-mobile');
+    stageEl.style.removeProperty('--kd-bar');
     stageEl.innerHTML = '';
     wallEl = winsEl = barEl = ghostEl = menuEl = layoutsEl = null;
+    lastSz = null; barSig = null;
   }
 
   function applyMode() {
     if (!stageEl) return;
     var m = isMobile();
     stageEl.classList.toggle('kd-mobile', m);
-    if (!m) wins.forEach(function (w) { w.el.style.visibility = ''; if (!w.max) place(w); });
-    else wins.forEach(function (w) { w.el.style.visibility = (focused && w.id !== focused) ? 'hidden' : ''; });
+    stageEl.style.setProperty('--kd-bar', barH() + 'px');
+    if (!visible()) return;               // Cabina cerrada: no hay medida válida, no se toca nada
+    if (m) { showOnly(focused); return; }
+    showOnly(null);
+    wins.forEach(function (w) {
+      if (w.max) return;
+      if (w.snap && w.snap !== 'grid') { var r = zoneRect(w.snap); if (r) { w.x = r.x; w.y = r.y; w.w = r.w; w.h = r.h; } }
+      place(w);
+    });
   }
-  function onResize() {
+  function onResize(e) {
     if (!active()) return;
+    if (e && e.isTrusted === false) return;   // 'resize' emitido por fireResize/la Cabina: es para los motores, no para nosotros
+    if (!visible()) return;
     clearTimeout(resizeT);
-    resizeT = setTimeout(function () { applyMode(); renderBar(); fireResize(); }, 120);
+    resizeT = setTimeout(function () {
+      if (!active() || !visible()) return;
+      var d = deskSize(), changed = !lastSz || !d || d.W !== lastSz.W || d.H !== lastSz.H;
+      lastSz = d;
+      var nowMobile = isMobile();
+      applyMode();
+      if (wasMobile !== nowMobile) { wasMobile = nowMobile; relabel(); } else if (changed) renderBar();
+      // los motores alojados (mapa/globos/terminal) deben re-medir si cambió el área real
+      if (changed && wins.some(function (w) { return !w.min && hooks.adoptKinds.indexOf(w.kind) >= 0; })) fireResize();
+    }, 120);
   }
   // los motores (mapa, globos, terminal) miden su contenedor al evento resize;
   // solo se dispara cuando cambia una ventana que aloja uno (adoptKinds), no por un X-Ray
-  var fireT = null;
   function fireResize(w) {
     if (w && hooks.adoptKinds.indexOf(w.kind) < 0) return;
     clearTimeout(fireT);
     fireT = setTimeout(function () { try { window.dispatchEvent(new Event('resize')); } catch (e) {} }, 80);
   }
 
+  // medida del escritorio; null si está oculto (Cabina cerrada / sin layout)
   function deskSize() {
-    var r = winsEl ? winsEl.getBoundingClientRect() : { width: 1000, height: 600 };
+    if (!winsEl) return null;
+    var r = winsEl.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
     return { W: Math.max(300, Math.round(r.width)), H: Math.max(200, Math.round(r.height)) };
   }
+  function drawSize() { return deskSize() || FALLBACK; }
 
   // ── geometría recordada por tipo ──
-  function geomStore() { try { return JSON.parse(ls(LS_GEOM) || '{}') || {}; } catch (e) { return {}; } }
+  function geomStore() {
+    try { var g = JSON.parse(ls(LS_GEOM) || '{}'); return (g && typeof g === 'object' && !Array.isArray(g)) ? g : {}; } catch (e) { return {}; }
+  }
   function saveGeom(w) {
-    if (isMobile()) return;
+    if (isMobile() || !deskSize()) return;
     var g = geomStore();
     g[w.kind] = { x: w.x, y: w.y, w: w.w, h: w.h, max: !!w.max, snap: w.snap || null };
     lsSet(LS_GEOM, JSON.stringify(g));
   }
   function defaultGeom(kind, n) {
-    var d = deskSize();
+    var d = drawSize();
     var saved = geomStore()[kind];
     var w, h, x, y;
-    if (saved && saved.w >= MIN_W && saved.h >= MIN_H) {
-      w = Math.min(saved.w, d.W); h = Math.min(saved.h, d.H);
-      x = clamp(saved.x, 0, Math.max(0, d.W - 60)); y = clamp(saved.y, 0, Math.max(0, d.H - 40));
-      return { x: x, y: y, w: w, h: h, max: !!saved.max, snap: saved.snap || null };
+    if (saved && typeof saved === 'object' && num(saved.w, 0) >= MIN_W && num(saved.h, 0) >= MIN_H) {
+      w = Math.min(num(saved.w, MIN_W), d.W); h = Math.min(num(saved.h, MIN_H), d.H);
+      x = clamp(num(saved.x, 0), 0, Math.max(0, d.W - 60)); y = clamp(num(saved.y, 0), 0, Math.max(0, d.H - 40));
+      var snap = (typeof saved.snap === 'string' && T.zones[saved.snap]) ? saved.snap : null;
+      return { x: x, y: y, w: w, h: h, max: !!saved.max, snap: snap };
     }
     w = clamp(Math.round(d.W * 0.64), MIN_W, Math.max(MIN_W, d.W - 24));
     h = clamp(Math.round(d.H * 0.74), MIN_H, Math.max(MIN_H, d.H - 24));
@@ -260,10 +327,11 @@
   function place(w) {
     if (!w.el) return;
     var d = deskSize();
-    // nunca se pierde una ventana: siempre quedan ≥ 80 px de barra de título a la vista
-    w.w = clamp(w.w, MIN_W, Math.max(MIN_W, d.W)); w.h = clamp(w.h, MIN_H, Math.max(MIN_H, d.H));
-    w.x = clamp(w.x, -(w.w - 80), Math.max(0, d.W - 80));
-    w.y = clamp(w.y, 0, Math.max(0, d.H - 36));
+    if (d) {   // nunca se recorta contra un escenario oculto; siempre quedan ≥ 80 px de barra de título a la vista
+      w.w = clamp(num(w.w, MIN_W), MIN_W, Math.max(MIN_W, d.W)); w.h = clamp(num(w.h, MIN_H), MIN_H, Math.max(MIN_H, d.H));
+      w.x = clamp(num(w.x, 0), -(w.w - 80), Math.max(0, d.W - 80));
+      w.y = clamp(num(w.y, 0), 0, Math.max(0, d.H - 36));
+    }
     w.el.style.left = w.x + 'px'; w.el.style.top = w.y + 'px';
     w.el.style.width = w.w + 'px'; w.el.style.height = w.h + 'px';
     w.el.classList.toggle('kd-max', !!w.max);
@@ -273,10 +341,13 @@
 
   // ── ventanas ──
   function keyFor(kind, arg) {
-    var multi = hooks.multiKinds && hooks.multiKinds.indexOf(kind) >= 0;
+    var multi = hooks.multiKinds.indexOf(kind) >= 0;
     if (!multi) return kind;
     var a = arg;
-    if (a && typeof a === 'object') a = a.id || a.a || a.scenario || JSON.stringify(a);
+    if (a && typeof a === 'object') {
+      a = a.id || a.a || a.scenario || a.ticker || '';
+      if (typeof a === 'object') a = '';
+    }
     return kind + ':' + String(a == null ? '' : a).toLowerCase();
   }
   function get(id) { for (var i = 0; i < wins.length; i++) if (wins[i].id === id || wins[i].key === id) return wins[i]; return null; }
@@ -286,10 +357,10 @@
   function titleFor(w) {
     var s = '';
     try { s = hooks.title ? hooks.title(w.kind, w.arg) : ''; } catch (e) { s = ''; }
-    return s || w.kind;
+    return String(s || w.kind);
   }
   function iconFor(w) {
-    try { return (hooks.icon && hooks.icon(w.kind)) || '▫'; } catch (e) { return '▫'; }
+    try { return String((hooks.icon && hooks.icon(w.kind)) || '▫'); } catch (e) { return '▫'; }
   }
 
   function open(kind, arg, opts) {
@@ -312,6 +383,7 @@
           max: !!(g.max || opts.max), min: false, snap: g.snap, prev: null, needsRender: false };
     var el = document.createElement('div');
     el.className = 'kd-win'; el.setAttribute('data-id', w.id); el.setAttribute('data-kind', kind);
+    el.setAttribute('role', 'dialog');
     el.innerHTML =
       '<div class="kd-ttl"><span class="kd-ico"></span><span class="kd-name"></span>' +
         '<button type="button" class="kd-b kd-b-min">–</button>' +
@@ -324,16 +396,29 @@
     winsEl.appendChild(el);
     relabelWin(w);
     wireWin(w);
+    if (w.snap && !w.max) { var zr = zoneRect(w.snap); if (zr) { w.x = zr.x; w.y = zr.y; w.w = zr.w; w.h = zr.h; } }
     place(w);
     render(w);
     focus(w.id);
     renderBar();
+    firstTip();
     return w.id;
+  }
+
+  // la primera vez: cómo se usan las ventanas (una sola vez, solo con ratón/tablet)
+  function firstTip() {
+    if (isMobile() || ls(LS_TIP) || wins.length !== 1) return;
+    lsSet(LS_TIP, '1');
+    try {
+      if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'info', title: '🪟 ' + t('tipTitle'), body: t('tip') });
+    } catch (e) {}
   }
 
   function relabelWin(w) {
     w.el.querySelector('.kd-ico').textContent = iconFor(w);
-    w.el.querySelector('.kd-name').textContent = titleFor(w);
+    var ttl = titleFor(w);
+    w.el.querySelector('.kd-name').textContent = ttl;
+    w.el.setAttribute('aria-label', ttl);
     var b = w.el.querySelector('.kd-b-min'); b.title = t('min'); b.setAttribute('aria-label', t('min'));
     b = w.el.querySelector('.kd-b-max'); b.title = w.max ? t('restore') : t('max'); b.setAttribute('aria-label', b.title);
     b = w.el.querySelector('.kd-b-x'); b.title = t('close'); b.setAttribute('aria-label', t('close'));
@@ -341,6 +426,7 @@
   }
   function relabel() {
     wins.forEach(relabelWin);
+    barSig = null;
     renderBar();
   }
 
@@ -362,10 +448,17 @@
     render(w);
   }
 
+  // móvil: solo la hoja enfocada existe para el layout (display:none → los motores
+  // WebGL/burbujas/timers se duermen solos; visibility:hidden no los dormía)
+  function showOnly(id) {
+    wins.forEach(function (o) { o.el.classList.toggle('kd-hide', !!id && o.id !== id); });
+  }
+
   function focus(id) {
     var w = get(id); if (!w) return;
     if (w.min) { w.min = false; w.el.classList.remove('kd-min'); }
-    if (focused !== w.id) {
+    var changed = focused !== w.id;
+    if (changed) {
       if (zTop > 4000) {   // renormalizar (los z de fantasma/barra/menús empiezan en 9000)
         wins.slice().sort(function (a, b) { return (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0); })
           .forEach(function (o, i) { o.el.style.zIndex = 10 + i; });
@@ -375,8 +468,8 @@
       w.el.style.zIndex = zTop;
       wins.forEach(function (o) { o.el.classList.toggle('kd-focus', o === w); });
       focused = w.id;
-      if (isMobile()) wins.forEach(function (o) { if (o !== w) { o.el.style.visibility = 'hidden'; } else o.el.style.visibility = ''; });
     }
+    if (isMobile()) { showOnly(w.id); if (changed) fireResize(w); }   // la hoja pudo girar mientras estaba oculta
     try { if (hooks.onFocus) hooks.onFocus(w.kind, w.id); } catch (e) {}
     renderBar();
   }
@@ -385,14 +478,20 @@
     wins.forEach(function (w) { if (!w.min && (!best || (+w.el.style.zIndex || 0) > (+best.el.style.zIndex || 0))) best = w; });
     return best;
   }
+  function refocusAfter() {
+    focused = null;
+    var nx = topVisible();
+    if (nx) focus(nx.id);
+    else { if (isMobile()) showOnly(null); try { if (hooks.onFocus) hooks.onFocus(null, null); } catch (e) {} }
+  }
 
   function close(id) {
     var w = get(id); if (!w) return false;
     wins = wins.filter(function (o) { return o !== w; });        // primero sale de la lista (has() ya dice que no)
     try { if (hooks.onClose) hooks.onClose(w.kind, w.id); } catch (e) {}   // la Cabina devuelve lo adoptado
     if (w.el && w.el.parentNode) w.el.parentNode.removeChild(w.el);
-    if (focused === w.id) { focused = null; var nx = topVisible(); if (nx) focus(nx.id); else { try { if (hooks.onFocus) hooks.onFocus(null, null); } catch (e) {} } }
-    if (isMobile()) wins.forEach(function (o) { o.el.style.visibility = (focused && o.id !== focused) ? 'hidden' : ''; });
+    if (layoutsFor === w.id) hideLayouts();
+    if (focused === w.id) refocusAfter();
     renderBar();
     return true;
   }
@@ -402,7 +501,8 @@
   function minimize(id) {
     var w = get(id); if (!w) return;
     w.min = true; w.el.classList.add('kd-min');
-    if (focused === w.id) { focused = null; var nx = topVisible(); if (nx) focus(nx.id); else { try { if (hooks.onFocus) hooks.onFocus(null, null); } catch (e) {} } }
+    if (layoutsFor === w.id) hideLayouts();
+    if (focused === w.id) refocusAfter();
     renderBar();
   }
   function maximize(id, on) {
@@ -417,7 +517,7 @@
 
   // zonas de snap (estilo Windows 11)
   function zoneRect(zone) {
-    var d = deskSize(), hw = Math.round(d.W / 2), hh = Math.round(d.H / 2);
+    var d = drawSize(), hw = Math.round(d.W / 2), hh = Math.round(d.H / 2);
     switch (zone) {
       case 'left': return { x: 0, y: 0, w: hw, h: d.H };
       case 'right': return { x: hw, y: 0, w: d.W - hw, h: d.H };
@@ -439,7 +539,7 @@
     place(w); saveGeom(w); fireResize(w);
   }
   function zoneAt(px, py) {
-    var d = deskSize();
+    var d = drawSize();
     var l = px <= SNAP_PX, r = px >= d.W - SNAP_PX, tp = py <= SNAP_PX, b = py >= d.H - SNAP_PX;
     if (tp && !l && !r) return 'max';
     if (l && tp) return 'tl'; if (r && tp) return 'tr'; if (l && b) return 'bl'; if (r && b) return 'br';
@@ -447,16 +547,17 @@
     return null;
   }
   function showGhost(zone) {
+    if (!ghostEl) return;
     if (!zone) { ghostEl.style.display = 'none'; return; }
     var r = zoneRect(zone);
     ghostEl.style.display = 'block';
     ghostEl.style.left = r.x + 'px'; ghostEl.style.top = r.y + 'px'; ghostEl.style.width = r.w + 'px'; ghostEl.style.height = r.h + 'px';
   }
 
-  // selector de acomodo (aparece al pasar por ▢, como en Windows 11)
-  var layoutsFor = null, layT = null;
+  // selector de acomodo (aparece al pasar por ▢ con el ratón; con el dedo, al tocar ▢)
+  var layoutsFor = null;
   function showLayouts(w, btn) {
-    if (isMobile()) return;
+    if (isMobile() || !layoutsEl) return;
     layoutsFor = w.id;
     var zones = ['left', 'right', 'max', 'tl', 'tr', 'bl', 'br'];
     var shape = { left: [[0, 0, 50, 100]], right: [[50, 0, 50, 100]], max: [[0, 0, 100, 100]],
@@ -467,7 +568,7 @@
       return '<button type="button" class="kd-lay" data-z="' + z + '" title="' + esc(tt) + '" aria-label="' + esc(tt) + '">' + rects + '</button>';
     }).join('');
     layoutsEl.querySelectorAll('.kd-lay').forEach(function (b) {
-      b.addEventListener('click', function (e) { e.stopPropagation(); snapTo(layoutsFor, b.getAttribute('data-z')); hideLayouts(); });
+      b.addEventListener('click', function (e) { e.stopPropagation(); var id = layoutsFor; hideLayouts(); if (id) snapTo(id, b.getAttribute('data-z')); });
     });
     var sr = stageEl.getBoundingClientRect(), br = btn.getBoundingClientRect();
     layoutsEl.classList.add('show');
@@ -475,7 +576,7 @@
     layoutsEl.style.left = clamp(br.left - sr.left + br.width / 2 - lw / 2, 6, sr.width - lw - 6) + 'px';
     layoutsEl.style.top = (br.bottom - sr.top + 4) + 'px';
   }
-  function hideLayouts() { clearTimeout(layT); layoutsEl.classList.remove('show'); layoutsFor = null; }
+  function hideLayouts() { clearTimeout(layT); if (layoutsEl) layoutsEl.classList.remove('show'); layoutsFor = null; }
 
   // ── interacción: arrastrar, redimensionar, botones ──
   function wireWin(w) {
@@ -483,9 +584,16 @@
     el.addEventListener('pointerdown', function () { if (focused !== w.id) focus(w.id); }, true);
     el.querySelector('.kd-b-min').addEventListener('click', function (e) { e.stopPropagation(); minimize(w.id); });
     var mb = el.querySelector('.kd-b-max');
-    mb.addEventListener('click', function (e) { e.stopPropagation(); hideLayouts(); maximize(w.id); });
-    mb.addEventListener('mouseenter', function () { clearTimeout(layT); layT = setTimeout(function () { showLayouts(w, mb); }, 350); });
-    mb.addEventListener('mouseleave', function () { clearTimeout(layT); layT = setTimeout(function () { if (!layoutsEl.matches(':hover')) hideLayouts(); }, 250); });
+    mb.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (coarse() && !isMobile()) {   // tablet: no hay hover → tocar ▢ abre el selector (incluye "Pantalla completa")
+        if (layoutsEl.classList.contains('show') && layoutsFor === w.id) hideLayouts(); else showLayouts(w, mb);
+        return;
+      }
+      hideLayouts(); maximize(w.id);
+    });
+    mb.addEventListener('mouseenter', function () { if (coarse()) return; clearTimeout(layT); layT = setTimeout(function () { showLayouts(w, mb); }, 350); });
+    mb.addEventListener('mouseleave', function () { clearTimeout(layT); layT = setTimeout(function () { if (layoutsEl && !layoutsEl.matches(':hover')) hideLayouts(); }, 250); });
     el.querySelector('.kd-b-x').addEventListener('click', function (e) { e.stopPropagation(); close(w.id); });
     ttl.addEventListener('dblclick', function (e) { if (e.target.closest('.kd-b') || isMobile()) return; maximize(w.id); });
 
@@ -496,6 +604,7 @@
       var sr = winsEl.getBoundingClientRect();
       var startX = e.clientX, startY = e.clientY, moved = false;
       var ox = w.x, oy = w.y;
+      var before = { x: w.x, y: w.y, w: w.w, h: w.h, max: w.max, snap: w.snap };   // para revertir si el gesto se cancela
       // una ventana maximizada o pegada se "despega" al arrastrarla (como en Windows)
       var pinned = w.max || w.snap;
       var pid = e.pointerId;
@@ -506,8 +615,10 @@
         if (!moved) { moved = true; el.classList.add('kd-drag'); }
         if (pinned) {
           pinned = false;
-          var pw = w.prev || { w: Math.round(deskSize().W * 0.64), h: Math.round(deskSize().H * 0.74) };
-          var fx = (ev.clientX - sr.left) / Math.max(1, w.el.offsetWidth);   // posición relativa del cursor en la barra
+          var ds = drawSize();
+          var pw = w.prev || { w: Math.round(ds.W * 0.64), h: Math.round(ds.H * 0.74) };
+          // posición relativa del cursor DENTRO de la barra (0..1): la ventana se encoge bajo el cursor
+          var fx = clamp((ev.clientX - sr.left - w.x) / Math.max(1, w.el.offsetWidth), 0, 1);
           w.max = false; w.snap = null; w.w = pw.w; w.h = pw.h;
           ox = Math.round(ev.clientX - sr.left - fx * pw.w); oy = Math.round(ev.clientY - sr.top - 18);
           startX = ev.clientX; startY = ev.clientY; dx = 0; dy = 0;
@@ -517,16 +628,25 @@
         place(w);
         showGhost(zoneAt(ev.clientX - sr.left, ev.clientY - sr.top));
       }
-      function up(ev) {
-        ttl.removeEventListener('pointermove', mv); ttl.removeEventListener('pointerup', up); ttl.removeEventListener('pointercancel', up);
+      function done() {
+        ttl.removeEventListener('pointermove', mv); ttl.removeEventListener('pointerup', up); ttl.removeEventListener('pointercancel', cancel);
         try { ttl.releasePointerCapture(pid); } catch (err) {}
         el.classList.remove('kd-drag');
+        showGhost(null);
+      }
+      function up(ev) {
+        done();
         if (!moved) return;
         var z = zoneAt(ev.clientX - sr.left, ev.clientY - sr.top);
-        showGhost(null);
         if (z) snapTo(w.id, z); else { w.snap = null; saveGeom(w); fireResize(w); }
       }
-      ttl.addEventListener('pointermove', mv); ttl.addEventListener('pointerup', up); ttl.addEventListener('pointercancel', up);
+      function cancel() {   // el sistema tomó el gesto (scroll, palma, cambio de app): se revierte, no se "suelta"
+        done();
+        if (!moved) return;
+        w.x = before.x; w.y = before.y; w.w = before.w; w.h = before.h; w.max = before.max; w.snap = before.snap;
+        place(w);
+      }
+      ttl.addEventListener('pointermove', mv); ttl.addEventListener('pointerup', up); ttl.addEventListener('pointercancel', cancel);
     });
 
     // redimensión por bordes y esquinas
@@ -535,7 +655,7 @@
         if (e.button !== 0 || isMobile() || w.max) return;
         e.preventDefault(); e.stopPropagation();
         var d = h.getAttribute('data-d'), sx = e.clientX, sy = e.clientY;
-        var o = { x: w.x, y: w.y, w: w.w, h: w.h }, pid = e.pointerId;
+        var o = { x: w.x, y: w.y, w: w.w, h: w.h, snap: w.snap }, pid = e.pointerId;
         try { h.setPointerCapture(pid); } catch (err) {}
         function mv(ev) {
           var dx = ev.clientX - sx, dy = ev.clientY - sy;
@@ -543,26 +663,45 @@
           if (d.indexOf('e') >= 0) nw = o.w + dx;
           if (d.indexOf('s') >= 0) nh = o.h + dy;
           if (d.indexOf('w') >= 0) { nw = o.w - dx; nx = o.x + dx; if (nw < MIN_W) { nx -= (MIN_W - nw); nw = MIN_W; } }
-          if (d.indexOf('n') >= 0) { nh = o.h - dy; ny = o.y + dy; if (nh < MIN_H) { ny -= (MIN_H - nh); nh = MIN_H; } }
-          w.x = nx; w.y = Math.max(0, ny); w.w = Math.max(MIN_W, nw); w.h = Math.max(MIN_H, nh); w.snap = null;
+          if (d.indexOf('n') >= 0) {
+            var dyc = Math.max(dy, -o.y);          // el borde superior no pasa del escritorio (y el inferior no se mueve)
+            nh = o.h - dyc; ny = o.y + dyc;
+            if (nh < MIN_H) { ny -= (MIN_H - nh); nh = MIN_H; }
+          }
+          w.x = nx; w.y = ny; w.w = Math.max(MIN_W, nw); w.h = Math.max(MIN_H, nh); w.snap = null;
           place(w);
         }
-        function up() {
-          h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', up);
+        function done() {
+          h.removeEventListener('pointermove', mv); h.removeEventListener('pointerup', up); h.removeEventListener('pointercancel', cancel);
           try { h.releasePointerCapture(pid); } catch (err) {}
-          saveGeom(w); fireResize(w);
         }
-        h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', up);
+        function up() { done(); saveGeom(w); fireResize(w); }
+        function cancel() { done(); w.x = o.x; w.y = o.y; w.w = o.w; w.h = o.h; w.snap = o.snap; place(w); }
+        h.addEventListener('pointermove', mv); h.addEventListener('pointerup', up); h.addEventListener('pointercancel', cancel);
       });
     });
   }
 
+  // Esc: primero cierra el menú ⊞ / el selector de acomodo; si no hay nada abierto,
+  // sigue su camino (la Cabina se cierra con Esc). Este módulo carga antes que cockpit.js.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !active()) return;
+    var open = (menuEl && menuEl.classList.contains('show')) || (layoutsEl && layoutsEl.classList.contains('show'));
+    if (!open) return;
+    toggleMenu(false); hideLayouts();
+    e.stopImmediatePropagation(); e.preventDefault();
+  }, true);
+
   // ── barra de tareas y menú ──
+  var barSig = null;
   function renderBar() {
     if (!barEl) return;
     var tasks = barEl.querySelector('.kd-tasks');
     var mb = barEl.querySelector('#kd-menu-btn');
     mb.title = t('menuTip'); mb.setAttribute('aria-label', t('menuTip'));
+    var sig = lang() + '|' + (isMobile() ? 'm' : 'd') + '|' + wins.map(function (w) { return w.id + ':' + titleFor(w) + ':' + (w.min ? 1 : 0) + ':' + (focused === w.id ? 1 : 0); }).join(';');
+    if (sig === barSig) return;   // no reconstruir botones si nada cambió (los clics no se pierden)
+    barSig = sig;
     if (!wins.length) { tasks.innerHTML = '<span class="kd-hint">' + esc(isMobile() ? t('hintMobile') : t('hint')) + '</span>'; return; }
     tasks.innerHTML = wins.map(function (w) {
       return '<button type="button" class="kd-task' + (focused === w.id && !w.min ? ' on' : '') + (w.min ? ' dim' : '') + '" data-id="' + w.id + '" title="' + esc(titleFor(w)) + '">' +
@@ -589,7 +728,7 @@
       });
     }
     menuEl.classList.toggle('show', on);
-    barEl.querySelector('#kd-menu-btn').classList.toggle('on', on);
+    if (barEl) barEl.querySelector('#kd-menu-btn').classList.toggle('on', on);
   }
   function toClassic() { setEnabled(false); }
 
@@ -601,18 +740,18 @@
     if (n === 1) { maximize(vs[0].id, true); return; }
     var layouts = { 2: ['left', 'right'], 3: ['left', 'tr', 'br'], 4: ['tl', 'tr', 'bl', 'br'] };
     if (layouts[n]) { vs.forEach(function (w, i) { snapTo(w.id, layouts[n][i]); }); return; }
-    var d = deskSize(), cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols);
+    var d = drawSize(), cols = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / cols);
     var cw = Math.floor(d.W / cols), ch = Math.floor(d.H / rows);
     vs.forEach(function (w, i) {
       w.max = false; w.snap = 'grid';
       w.x = (i % cols) * cw; w.y = Math.floor(i / cols) * ch; w.w = Math.max(MIN_W, cw); w.h = Math.max(MIN_H, ch);
       place(w);
     });
-    fireResize();
+    if (vs.some(function (w) { return hooks.adoptKinds.indexOf(w.kind) >= 0; })) fireResize();
   }
   function cascade() {
     if (isMobile()) return;
-    var vs = visibleWins(), d = deskSize();
+    var vs = visibleWins(), d = drawSize();
     vs.forEach(function (w, i) {
       w.max = false; w.snap = null;
       w.w = clamp(Math.round(d.W * 0.64), MIN_W, d.W); w.h = clamp(Math.round(d.H * 0.74), MIN_H, d.H);
@@ -621,17 +760,29 @@
       zTop++; w.el.style.zIndex = zTop;
     });
     if (vs.length) focus(vs[vs.length - 1].id);
-    fireResize();
+    if (vs.some(function (w) { return hooks.adoptKinds.indexOf(w.kind) >= 0; })) fireResize();
   }
 
   // ── la Cabina se cierra/abre: los paneles adoptados vuelven a su sitio y se re-adoptan ──
   function suspend() {
-    wins.forEach(function (w) { if (hooks.adoptKinds.indexOf(w.kind) >= 0) w.needsRender = true; });
+    toggleMenu(false); hideLayouts();
+    wins.forEach(function (w) {
+      if (hooks.adoptKinds.indexOf(w.kind) >= 0 || hooks.resumeKinds.indexOf(w.kind) >= 0) w.needsRender = true;
+    });
   }
   function resume() {
     if (!active()) return;
+    wasMobile = isMobile();
     applyMode();
-    wins.forEach(function (w) { if (w.needsRender) { w.body.innerHTML = ''; render(w); } });
+    lastSz = deskSize();
+    wins.forEach(function (w) {
+      if (!w.needsRender) return;
+      var done = false;
+      // la Cabina puede devolver el MISMO panel a su ventana sin re-inicializarlo (terminal con sus gráficos, mapa con su zoom)
+      try { if (hooks.resume) done = !!hooks.resume(w.kind, w.id, w.body); } catch (e) { done = false; }
+      if (done) { w.needsRender = false; fireResize(w); }
+      else { w.body.innerHTML = ''; render(w); }
+    });
     relabel();
   }
 
@@ -644,6 +795,8 @@
   function configure(h) {
     Object.keys(h || {}).forEach(function (k) { hooks[k] = h[k]; });
     hooks.adoptKinds = hooks.adoptKinds || [];
+    hooks.resumeKinds = hooks.resumeKinds || [];
+    hooks.multiKinds = hooks.multiKinds || [];
   }
 
   window.KhipuDesk = {
