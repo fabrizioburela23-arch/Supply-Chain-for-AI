@@ -13,6 +13,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from research.falsifiers import FalsifierRule
 from research.models import HORIZONS, STANCES
 
 TOPICS = ('revenue_growth', 'margins', 'profitability', 'cash_flow', 'balance_sheet',
@@ -39,6 +40,8 @@ class ClaimOut(BaseModel):
     counter_evidence_refs: List[str] = Field(default_factory=list, max_length=8)
     affected_entities: List[str] = Field(default_factory=list, max_length=15)
     falsifiers: List[str] = Field(min_length=1, max_length=5)
+    # C8: reglas VERIFICABLES (opcional): el job diario las comprueba con precios reales
+    falsifier_rules: List[FalsifierRule] = Field(default_factory=list, max_length=3)
 
     @field_validator('predicate')
     @classmethod
@@ -104,6 +107,8 @@ def check_refs(result, valid_refs):
         both = set(c.evidence_refs) & set(c.counter_evidence_refs)
         if both:
             errs.append(f'claim[{i}] usa {sorted(both)} a favor Y en contra')
+        from research.falsifiers import direction_errors
+        errs += [f'claim[{i}] ' + e for e in direction_errors(c.stance, c.falsifier_rules)]
     return errs
 
 
@@ -122,6 +127,8 @@ def json_schema_hint():
             'agent_certainty': '0..1', 'evidence_refs': ['E1'], 'counter_evidence_refs': ['E3'],
             'affected_entities': ['ids de entidad del contexto'],
             'falsifiers': ['qué dato futuro demostraría que es incorrecta'],
+            'falsifier_rules': [{'metric': 'price|excess_vs_spy', 'op': '<|>', 'threshold': 'número (precio en la moneda del paquete, o % de exceso vs SPY)',
+                                 'by': 'YYYY-MM-DD'}],
         }],
         'unresolved_questions': ['str'],
     }

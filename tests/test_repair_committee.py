@@ -124,3 +124,107 @@ def test_c7_sin_quorum_el_comite_encarga_a_los_que_faltan_y_si_no_llegan_queda_e
         absent = [x for x in m['memo']['seats'] if x.get('absent')]
         assert {x['seat'] for x in absent} == {'fundamental', 'technical', 'supply_chain'}
         assert m['sizing']['notional'] == 0 and m['memo']['generated_by'] == 'deterministic'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# C8 · Falsadores estructurados {metric, op, threshold, by}: dirección válida + chequeo diario → 'falsified'
+# ════════════════════════════════════════════════════════════════════════════
+
+def test_c8_un_falsador_a_favor_de_la_tesis_se_rechaza():
+    from research.falsifiers import FalsifierRule, direction_errors
+    up = [{'metric': 'price', 'op': '>', 'threshold': 236.54, 'by': '2027-04-15'}]
+    down = [{'metric': 'price', 'op': '<', 'threshold': 170, 'by': '2027-04-15'}]
+    assert direction_errors('BUY', up) and 'a favor' in direction_errors('BUY', up)[0]
+    assert direction_errors('positive', up) and direction_errors('positive', down) == []
+    assert direction_errors('SELL', down) and direction_errors('negative', up) == []
+    assert direction_errors('HOLD', up) == [] and direction_errors('neutral', up) == []
+    r = FalsifierRule(metric='Price', op='below', threshold='170', by='2027-01-05')
+    assert r.metric == 'price' and r.op == '<' and r.threshold == 170.0
+    with pytest.raises(Exception):
+        FalsifierRule(metric='margin', op='<', threshold=1, by='2027-01-01')
+
+
+def test_c8_el_presidente_no_puede_copiar_un_falsador_que_confirma_la_compra():
+    import json
+
+    from research.committee import ChairMemo, chair_checks
+    from tests.test_phase3 import _chair_json
+    base = json.loads(_chair_json('Decisión del núcleo: BUY', decision='BUY'))
+    base['falsifier_rules'] = [{'metric': 'price', 'op': '>', 'threshold': 236.54, 'by': '2027-04-15'}]
+    obj = ChairMemo.model_validate(base)
+    today = __import__('datetime').date.today()
+    errs = chair_checks(obj, ['C1', 'R1', 'Q1'], 'BUY', today, today.replace(year=today.year + 1),
+                        [{'title': 'R1', 'excerpt': 'vol 40 %'}], ['fundamental'])
+    assert any('a favor de la tesis' in e for e in errs)
+    base['falsifier_rules'][0]['op'] = '<'
+    ok = chair_checks(ChairMemo.model_validate(base), ['C1', 'R1', 'Q1'], 'BUY', today,
+                      today.replace(year=today.year + 1), [{'title': 'R1', 'excerpt': 'vol 40 %'}], ['fundamental'])
+    assert not any('a favor' in e for e in ok)
+
+
+def test_c8_las_claims_de_los_agentes_aceptan_reglas_y_rechazan_la_direccion_mala():
+    import json
+
+    from research.schemas import AgentResearchResult, check_refs
+    from tests.test_research import _claim, _result
+    good = _claim(falsifier_rules=[{'metric': 'excess_vs_spy', 'op': '<', 'threshold': -10, 'by': '2027-03-01'}])
+    r = AgentResearchResult.model_validate(json.loads(_result([good])))
+    assert r.claims[0].falsifier_rules[0].metric == 'excess_vs_spy' and check_refs(r, ['E2', 'E3', 'E4']) == []
+    bad = _claim(falsifier_rules=[{'metric': 'price', 'op': '>', 'threshold': 999, 'by': '2027-03-01'}])
+    r2 = AgentResearchResult.model_validate(json.loads(_result([bad])))
+    assert any('a favor de la tesis' in e for e in check_refs(r2, ['E2', 'E3', 'E4']))
+    assert AgentResearchResult.model_validate(json.loads(_result([_claim()]))).claims[0].falsifier_rules == []
+
+
+def test_c8_regla_de_precio_se_dispara_con_la_serie():
+    from research.falsifiers import check_rules
+    from tests.test_phase3 import _series, date
+    series = _series(date(2026, 6, 1), date(2026, 7, 1), lambda d: 100.0 if d < date(2026, 6, 20) else 60.0)
+    rules = [{'metric': 'price', 'op': '<', 'threshold': 70, 'by': '2026-07-01'}]
+    hit = check_rules(rules, '2026-06-01', series, today=date(2026, 6, 25))
+    assert hit and hit['date'] == '2026-06-22' and hit['value'] == 60.0          # primer día hábil con 60
+    assert check_rules(rules, '2026-06-01', series, today=date(2026, 6, 10)) is None   # todavía no
+    expired = [{'metric': 'price', 'op': '<', 'threshold': 70, 'by': '2026-06-15'}]
+    assert check_rules(expired, '2026-06-01', series, today=date(2026, 6, 25)) is None  # venció sin dispararse
+    bench = _series(date(2026, 6, 1), date(2026, 7, 1), lambda d: 500.0)
+    ex = [{'metric': 'excess_vs_spy', 'op': '<', 'threshold': -20, 'by': '2026-07-01'}]
+    hit2 = check_rules(ex, '2026-06-01', series, bench, today=date(2026, 6, 25))
+    assert hit2 and hit2['value'] == pytest.approx(-40.0)
+
+
+@needs_db
+def test_c8_el_job_diario_falsa_la_claim_y_el_memo_lo_avisa(db):
+    from datetime import datetime
+
+    from ontology.db import session_scope
+    from research.models import ClaimBaseline, ClaimOutcome, ResearchClaim
+    from research.outcomes import evaluate_due, track_record
+    from tests.test_phase3 import _mk_claim, _series, date
+    crash = {'NVDA': _series(date(2026, 5, 1), date(2027, 7, 1), lambda d: 100.0 if d < date(2026, 6, 20) else 60.0),
+             'SPY': _series(date(2026, 5, 1), date(2027, 7, 1), lambda d: 500.0)}
+    with session_scope() as s:
+        c = _mk_claim(s, 'Nvidia', 'fundamental', 'positive', 'SHORT_TERM', 0.8)
+        c.falsifier_rules = [{'metric': 'price', 'op': '<', 'threshold': 70, 'by': '2026-09-01'}]
+        cid = c.id
+    with session_scope() as s:
+        r = evaluate_due(s, now=datetime(2026, 6, 10, 12, tzinfo=UTC), price_fn=lambda sym, since: crash.get(sym))
+        assert r['falsified'] == 0 and s.get(ResearchClaim, cid).status == 'active'
+    with session_scope() as s:
+        r = evaluate_due(s, now=datetime(2026, 6, 25, 12, tzinfo=UTC), price_fn=lambda sym, since: crash.get(sym))
+        assert r['falsified'] == 1
+        c = s.get(ResearchClaim, cid)
+        assert c.status == 'falsified' and c.valid_to is not None
+        o = s.query(ClaimOutcome).filter_by(claim_id=cid, checkpoint='falsifier').one()
+        assert o.result == 'miss' and o.final and '2026-06-22' in o.reason and 'falsifier triggered' in o.reason_en
+        assert s.query(ClaimBaseline).filter_by(claim_id=cid).one().scoreable is False
+        tr = track_record(s)
+        assert tr['overall']['n_scored'] == 1 and tr['overall']['hits'] == 0      # cuenta como fallo del analista
+    with session_scope() as s:        # idempotente y, falsada, ya no se califican sus checkpoints futuros
+        r = evaluate_due(s, now=datetime(2026, 7, 15, 12, tzinfo=UTC), price_fn=lambda sym, since: crash.get(sym))
+        assert r['falsified'] == 0
+        rows = s.query(ClaimOutcome).filter_by(claim_id=cid).all()
+        assert sum(1 for o in rows if o.checkpoint == 'falsifier') == 1
+        fin = [o for o in rows if o.checkpoint == 'final_30d']
+        assert all(o.result == 'n/a' and 'falsada' in (o.reason or '') for o in fin)   # ya no cuenta como acierto/fallo
+        tr = track_record(s)
+        assert tr['overall']['n_scored'] == 1          # solo el fallo por falsación

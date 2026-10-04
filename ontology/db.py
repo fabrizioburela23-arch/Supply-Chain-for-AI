@@ -129,6 +129,8 @@ _COLUMNAS_TARDIAS = (
     # Phase 1 · M1 — procedencia (ver ontology/provenance.py)
     ('events', 'source_id', 'VARCHAR(120)'),
     ('events', 'confidence', 'DOUBLE PRECISION'),
+    # C8 (misión de reparación 2026-10-04) — falsadores verificables
+    ('research_claims', 'falsifier_rules', 'JSONB'),
 )
 
 

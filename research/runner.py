@@ -574,7 +574,8 @@ def persist_result(session, job, run, agent, ctx, result, quotes=None):
             reasoning_summary=c.reasoning_summary, horizon=c.horizon, depth=job.depth,
             valid_from=now, valid_to=(now + timedelta(days=days)) if days else None,
             confidence=conf, confidence_components=parts, affected_entity_ids=affected,
-            falsifiers=c.falsifiers, status='active', model=run.model, prompt_version=agent.prompt_version)
+            falsifiers=c.falsifiers, falsifier_rules=[r.model_dump() for r in (c.falsifier_rules or [])] or None,
+            status='active', model=run.model, prompt_version=agent.prompt_version)
         session.add(claim)
         session.flush()
         for stance, items in (('supporting', support), ('counter', counter)):

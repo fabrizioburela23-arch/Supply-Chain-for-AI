@@ -39,6 +39,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from research.falsifiers import FalsifierRule, direction_errors
 from research.models import (DECISIONS, HORIZONS, AgentRun, ClaimRelation, CommitteeMemo,
                              ResearchClaim)
 
@@ -487,6 +488,7 @@ class ChairMemo(BaseModel):
     dissent: List[DissentItem] = Field(default_factory=list, max_length=6)
     falsifiers_es: List[str] = Field(min_length=1, max_length=6)
     falsifiers_en: List[str] = Field(default_factory=list, max_length=6)
+    falsifier_rules: List[FalsifierRule] = Field(default_factory=list, max_length=4)   # C8: verificables
     review_date: str
     confidence: float = Field(ge=0, le=1)
     chair_note_es: Optional[str] = Field(default=None, max_length=600)
@@ -509,6 +511,7 @@ def _schema_hint():
             'key_risks': [{'risk_es': 'str', 'risk_en': 'str', 'refs': ['C3', 'R1']}],
             'dissent': [{'agent_type': 'tipo de agente', 'view_es': 'str', 'view_en': 'str', 'refs': ['C2']}],
             'falsifiers_es': ['qué haría incorrecta la tesis'], 'falsifiers_en': ['same in English'],
+            'falsifier_rules': [{'metric': 'price|excess_vs_spy', 'op': '<|>', 'threshold': 'número', 'by': 'YYYY-MM-DD'}],
             'review_date': 'YYYY-MM-DD', 'confidence': '0..1',
             'chair_note_es': 'str|null (obligatoria si rebajas a HOLD)', 'chair_note_en': 'str|null'}
 
@@ -527,6 +530,9 @@ REGLAS INNEGOCIABLES
 4. CIFRAS: toda cifra de dinero o precio debe COPIARSE del paquete. Nunca de tu memoria.
 5. Tesis por horizonte (solo los horizontes que tienen conclusiones), riesgos clave, DISENSO (qué agentes no
    están de acuerdo y por qué, citando sus C#), falsadores (qué dato futuro demostraría que la tesis es incorrecta).
+   Los falsadores deben CONTRADECIR la decisión "{decision}": no copies falsadores de conclusiones con otra postura
+   (un "el precio supera el máximo" NO falsa una compra). Si es cuantificable, añade falsifier_rules
+   (metric price|excess_vs_spy, op '<' para una decisión alcista / '>' para una bajista, threshold, by).
 5b. Si hay DEBATE (S#), úsalo: quién convenció a quién, qué se concedió, qué quedó sin resolver. Cita S#.
 5c. key_conclusions: 3 a 5 CONCLUSIONES concretas y útiles para el inversionista, de lo más importante a lo
    menos (qué significa, en qué plazo, qué tan sólido es). Nada genérico: cada una debe poder verificarse
@@ -574,6 +580,7 @@ def chair_checks(obj, valid_refs, quant_decision, min_date, max_date, evidence_i
     unknown = sorted({d.agent_type for d in obj.dissent} - set(agent_types))
     if unknown:
         errs.append(f'dissent.agent_type desconocido: {unknown} (válidos: {sorted(agent_types)})')
+    errs += direction_errors(obj.decision, obj.falsifier_rules)      # C8: un falsador no puede confirmar la tesis
     errs += _money_check(obj, evidence_items)
     return errs
 
@@ -1557,8 +1564,26 @@ def memo_dict(m, redact_client=False):
             'expired': bool(exp and _now() > exp), 'updated_at': m.updated_at.isoformat() if m.updated_at else None}
 
 
+def falsified_in_memo(session, m):
+    """C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable)."""
+    try:
+        ids = [c['id'] for r in (m.conviction or {}).values() for c in (r.get('claims') or []) if c.get('id')]
+        if not ids:
+            return []
+        rows = session.query(ResearchClaim).filter(ResearchClaim.id.in_(ids),
+                                                   ResearchClaim.status == 'falsified').all()
+        return [{'claim_id': c.id, 'agent_type': c.agent_type, 'stance': c.stance, 'statement_es': c.statement_es,
+                 'statement_en': c.statement_en} for c in rows]
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def get_memo(session, memo_id, redact_client=False):
-    return memo_dict(session.get(CommitteeMemo, str(memo_id)[:40]), redact_client=redact_client)
+    m = session.get(CommitteeMemo, str(memo_id)[:40])
+    out = memo_dict(m, redact_client=redact_client)
+    if out is not None:
+        out['falsified_claims'] = falsified_in_memo(session, m)
+    return out
 
 
 def latest_memo(session, entity_id, redact_client=False):

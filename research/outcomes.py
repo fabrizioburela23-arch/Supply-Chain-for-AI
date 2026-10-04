@@ -445,8 +445,15 @@ def evaluate_due(session, now=None, price_fn=None, limit=500):
             continue
         evaluated += 1
         counts[res['result']] = counts.get(res['result'], 0) + 1
+    # C8: reglas de falsación verificables (precio / exceso vs SPY) sobre claims activas
+    try:
+        from research.falsifiers import apply_falsifiers
+        falsified = apply_falsifiers(session, now, get_series, today)
+    except Exception as e:  # noqa: BLE001 — nunca rompe la calificación
+        log.warning('outcomes: falsadores: %s', type(e).__name__)
+        falsified = 0
     snap = None
-    if evaluated:
+    if evaluated or falsified:
         invalidate_cache()
     if evaluated or not _snapshot_today(session, now):
         try:
@@ -455,7 +462,7 @@ def evaluate_due(session, now=None, price_fn=None, limit=500):
             log.warning('outcomes: snapshot: %s', type(e).__name__)
     session.flush()
     return {'evaluated': evaluated, 'pending': pending, 'hits': counts['hit'], 'misses': counts['miss'],
-            'n_a': counts['n/a'], 'baselines_created': created, 'as_of': now.isoformat(),
+            'n_a': counts['n/a'], 'baselines_created': created, 'falsified': falsified, 'as_of': now.isoformat(),
             'snapshot': bool(snap)}
 
 

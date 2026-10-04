@@ -15,7 +15,7 @@ from ontology.models import Base
 HORIZONS = ('INTRADAY', 'SHORT_TERM', 'MEDIUM_TERM', 'LONG_TERM', 'STRUCTURAL')
 DEPTHS = ('QUICK', 'STANDARD', 'DEEP')
 STANCES = ('positive', 'negative', 'neutral', 'mixed')
-CLAIM_STATUSES = ('active', 'superseded', 'retracted')
+CLAIM_STATUSES = ('active', 'superseded', 'retracted', 'falsified')   # falsified: C8 (regla verificable disparada)
 
 
 def _uuid():
@@ -54,6 +54,7 @@ class ResearchClaim(Base):
     confidence_components = Column(JSONB, nullable=False, default=dict)
     affected_entity_ids = Column(JSONB, nullable=False, default=list)
     falsifiers = Column(JSONB, nullable=False, default=list)     # qué la demostraría incorrecta
+    falsifier_rules = Column(JSONB, nullable=True)               # C8: [{metric, op, threshold, by}] verificables
     status = Column(String(12), nullable=False, default='active', index=True)
     model = Column(String(80), nullable=True)
     prompt_version = Column(String(20), nullable=True)

@@ -379,6 +379,10 @@
         (b.track_validation && !b.track_validation.validated ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FFB300">⚠ ' +
           esc(L('Los analistas todavía no tienen historial validado (' + b.track_validation.min_n + ' predicciones calificadas cada uno): esta propuesta no está probada contra el mercado. Por eso el tamaño sugerido es la mitad del normal. El historial se llena solo con el tiempo (ver pestaña Historial).',
                 'The analysts have no validated track record yet (' + b.track_validation.min_n + ' scored predictions each): this proposal is not yet proven against the market, so the suggested size is half the normal one. The record fills in over time (see the History tab).')) + '</div>' : '') +
+        (m.falsified_claims && m.falsified_claims.length ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FF4D6A">⛔ ' +
+          esc(L('El mercado ya FALSÓ ' + m.falsified_claims.length + ' conclusión(es) de este memo: ', 'The market has already FALSIFIED ' + m.falsified_claims.length + ' conclusion(s) of this memo: ') +
+              m.falsified_claims.map(function (f) { return ag(f.agent_type) + ' — ' + (isEn() ? (f.statement_en || f.statement_es) : f.statement_es); }).join(' · ') + ' ' +
+              L('Vuelve a convocar al comité antes de actuar.', 'Reconvene the committee before acting.')) + '</div>' : '') +
         (b.decision_code === 'INSUFFICIENT_DATA' && b.quorum ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FFB300">' +
           esc(L('Sin quórum no hay decisión: ', 'No quorum, no decision: ') + (isEn() ? (b.quorum.reason_en || '') : (b.quorum.reason_es || '')) + ' ' +
               L('Faltan: ', 'Missing: ') + (b.quorum.to_run || []).map(function (a) { return ag(a); }).join(', ') + '. ' +

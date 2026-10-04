@@ -267,3 +267,27 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_committee.py -k c7` (2 tests; antes
   `ImportError: quorum_check` y BUY con un solo analista).
 - **Rollback.** Revertir el commit.
+
+### C8 — Falsadores estructurados y verificables; chequeo diario → conclusión "falsada"
+
+- **Problema.** Los falsadores eran texto libre: nadie los evaluaba, ninguna
+  conclusión pasaba nunca a "falsada", y el presidente IA copiaba falsadores de
+  conclusiones con OTRA postura (memo Nvidia: "el precio supera el máximo de
+  236,54" como falsador de una COMPRA).
+- **Cambio.** `research/falsifiers.py` (nuevo): `FalsifierRule{metric: price|
+  excess_vs_spy, op: <|>, threshold, by}`, `direction_errors(postura|decisión,
+  reglas)` (alcista exige '<', bajista '>'), `check_rules(reglas, fecha_partida,
+  serie, spy)` y `apply_falsifiers(session)` (job diario: regla disparada →
+  claim `falsified` + `valid_to`, fila `ClaimOutcome('falsifier', miss, final)`
+  que cuenta como FALLO del analista, foto de partida `scoreable=False`). Los
+  agentes pueden emitir `falsifier_rules` (opcional, máx. 3) validadas en
+  `check_refs`; `ResearchClaim.falsifier_rules` (columna JSONB nueva, añadida con
+  `ALTER TABLE … IF NOT EXISTS` en `ontology/db._COLUMNAS_TARDIAS`); el
+  presidente (`ChairMemo.falsifier_rules`, `chair_checks`, regla 5 del prompt)
+  no puede proponer un falsador a favor de la decisión; `CLAIM_STATUSES` +
+  'falsified'; `evaluate_due` devuelve `falsified`; `get_memo` añade
+  `falsified_claims` (conclusiones del memo ya falsadas) y la UI lo avisa en rojo.
+  Los textos libres actuales se conservan (append-only).
+- **Verificar.** `pytest tests/test_repair_committee.py -k c8` (5 tests; antes:
+  `ImportError: research.falsifiers`, claim nunca 'falsified').
+- **Rollback.** Revertir el commit (la columna nueva queda vacía, inocua).
