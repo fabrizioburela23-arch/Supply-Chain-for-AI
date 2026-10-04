@@ -268,6 +268,8 @@
     '.kc-who{font-size:10px;font-weight:800;letter-spacing:.12em;color:#8e9dff;margin-bottom:4px;text-transform:uppercase}' +
     '.kc-agent{display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#C7D0EA}' +
     '.kc-meta{font-size:10.5px;color:#5E6884;margin-top:6px}' +
+    '.kc-chart{margin-top:10px;max-width:760px}.kc-chart .cv-card{margin:0}.kc-chart .cv-card-close{display:none}' +
+    '.kc-chart-open{margin-top:8px}' +
     '.kc-retry{margin-left:8px;border:1px solid rgba(122,158,255,.3);background:transparent;color:#C7D0EA;border-radius:7px;padding:2px 9px;cursor:pointer;font-size:11.5px;font-family:inherit}' +
     '.kc-retry:hover{border-color:#00E0FF;color:#00E0FF}' +
     '.kc-agent-av{display:inline-flex;width:22px;height:22px;border-radius:50%;overflow:hidden;border:1px solid rgba(122,158,255,.35)}' +
@@ -397,6 +399,19 @@
     }
     el.innerHTML = h;
     var acts = Array.isArray(d.actions) ? d.actions : [];
+    // FUSIÓN Khipu + Canvas: un gráfico pedido se dibuja AQUÍ, dentro de la respuesta
+    // (y se puede abrir en ventana); así no hay que saltar a otra pantalla
+    var inlineChart = acts.filter(function (a) { return a.type === 'chart' && typeof a.arg === 'string'; })[0];
+    if (inlineChart && opts.inlineChart !== false && W.BixbyCockpit && W.BixbyCockpit.canvasInto) {
+      var host = W.document.createElement('div'); host.className = 'kc-chart';
+      el.appendChild(host);
+      try { W.BixbyCockpit.canvasInto(host, inlineChart.arg); } catch (e) {}
+      var ow = W.document.createElement('button'); ow.type = 'button'; ow.className = 'kc-act kc-chart-open';
+      ow.textContent = '🪟 ' + L('Abrir en ventana', 'Open in a window');
+      ow.addEventListener('click', function () { (opts.onAction || runAction)(inlineChart); });
+      host.appendChild(ow);
+      acts = acts.filter(function (a) { return a !== inlineChart; });
+    }
     if (acts.length) {
       var box = W.document.createElement('div'); box.className = 'kc-acts';
       acts.forEach(function (a) {

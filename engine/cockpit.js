@@ -2113,11 +2113,18 @@
   // relación presentado como respuesta). Ahora: KhipuLocalCharts.honest →
   // "no puedo responder esto con precisión sin IA" + la parcial correcta.
 
+  var _cvSeq = 0;
   async function cockpitCanvas(query) {
     var cards = document.getElementById('bcp-cv-cards');
     if (!cards) return;
-    var cardId = 'bcpcv-' + (query.length + query.charCodeAt(0) + cards.children.length);
-    cards.insertAdjacentHTML('afterbegin',
+    return canvasInto(cards, query, 'afterbegin');
+  }
+  // FUSIÓN Khipu + Canvas (2026-10-04): el mismo generador pinta una tarjeta de gráfico
+  // DENTRO de cualquier contenedor (la respuesta del chat, una ventana…).
+  async function canvasInto(cards, query, where) {
+    if (!cards || !query) return null;
+    var cardId = 'bcpcv-' + (++_cvSeq);
+    cards.insertAdjacentHTML(where || 'beforeend',
       '<div id="' + cardId + '" class="cv-card"><div class="cv-card-hdr"><div><div class="cv-card-title">' + esc(query) +
       '</div><div class="cv-card-sub">' + L('Generando…', 'Generating…') + '</div></div></div>' +
       '<div style="height:180px;display:flex;align-items:center;justify-content:center"><div class="cv-spinner"></div></div></div>');
@@ -2163,6 +2170,7 @@
       if (card) card.innerHTML = '<div class="cv-card-hdr"><div class="cv-card-title">' + esc(query) + '</div></div>' +
         '<div style="padding:20px;text-align:center;color:#f87171;font-size:13px">⚠ ' + esc(e.message) + '</div>';
     }
+    return cardId;
   }
 
   /* ══ SIMULACIÓN POR AGENTES (motor interno, desde la terminal de Khipu) ══
@@ -2874,6 +2882,7 @@
     isOpen: function () { return open; },
     stage: stage,
     render: render,
+    canvasInto: canvasInto,
     ask: ask,
     agentSim: function (scenario) {
       if (!open) openCockpit();
