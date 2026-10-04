@@ -390,3 +390,48 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_risk.py -k d3` (2 tests: Kupiec con
   valores conocidos; iid/tormenta/calma → ok/subestima/sobreestima).
 - **Rollback (D1-D3).** Revertir el commit; no toca datos.
+
+---
+
+## Precios en vivo (revisión del commit cc1dfed del agente de la sesión (g))
+
+### R9 — Hallazgos de la lente "precios" de la revisión adversarial
+
+- **Hallazgos aceptados.** (1, ALTA) Londres cotiza en peniques (GBp): `fetch_quote_intl`
+  multiplicaba el precio en peniques por el tipo de cambio GBP→USD sin dividir
+  por 100 → 12 tickers .L (BAE, Glencore, LSEG…) ×100 en "$". (2) El lote de
+  capitalizaciones pisaba la cotización directa fuera de la sesión y la sellaba
+  con la hora del lote ("en vivo · hace 1 min" para el cierre de ayer). (3) Un lote
+  que no terminaba antes del deadline se guardaba 15 s como lote completo. (4)
+  Finnhub se consultaba para los 205 tickers de otras bolsas (quema la cuota de
+  60/min; en planes con cobertura internacional etiquetaría JPY como USD). (5)
+  El X-Ray rotulaba 'Finnhub · USD' aunque /api/quote respondiera Yahoo en otra
+  moneda. (6, baja) Entradas viejas de localStorage con `live:true` alimentaban
+  aritmética en spacemonitor.js y graph3d.js.
+- **Cambios.** `core/quotes.py`: `_MINOR_UNITS` en `fetch_quote_intl` (÷100 antes
+  del FX; `currency` = moneda entera; `minor_unit`); `fetch_quotes_live` no cachea
+  lotes truncados (`partial`); el lote Yahoo trae `ts`/`market_state`.
+  `core/providers/market.py`: Finnhub devuelve None para tickers con sufijo de
+  bolsa (van a Yahoo). `core/live_caps.py`: `price_ts`/`market_state` por nodo.
+  `app.html`: `KhipuLiveCaps.apply` solo rellena tickers SIN cotización directa
+  y usa la hora real del precio; `MKT.quotes` se sanea al cargar (live no numérico
+  se borra). `engine/xray.js`: fuente y moneda reales (+ "convertido de X").
+  `engine/spacemonitor.js` y `engine/graph3d.js`: `quotePx`. sw v204.
+- **Verificar.** `pytest tests/test_repair_prices.py` (4 tests: antes BA.L ×100,
+  Finnhub llamado para BA.L, lote truncado cacheado, sin hora real).
+
+### R10 — Calidad de los tests de la misión (lente "tests")
+
+- **Hallazgos aceptados.** La suite completa tenía 6 tests rotos desde la sesión
+  (g) (arreglados en 4156ec8; desde entonces la regla es 0 failed antes de mergear).
+  El test FIFO pasaba aunque `execute_job_async` no encolara (la recuperación de
+  huérfanos encolaba los jobs del propio test); la posición en cola nunca se
+  afirmaba con un valor; el test del pool compartido no detectaba un job muerto;
+  una aserción se comparaba consigo misma; el test de salud dependía del entorno;
+  el fixture del corta-circuito impedía bisecar el archivo.
+- **Cambios.** `tests/test_repair_research.py`: FIFO con hilos arrancados antes,
+  `execute_job_async` afirmado True/False, primer job bloqueado con un Event y
+  `queue_position` 1/2 verificado en el runner y en `/api/research/jobs/<id>`;
+  el test del pool cuenta 4 runs `done`, 2 jobs `done` y 0 excepciones de hilos;
+  aserción vacía borrada; `delenv RESEARCH_DAILY_BUDGET_USD`; fixture con
+  `raising=False`. Suite completa: 887 passed (fresca, con base).

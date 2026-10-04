@@ -1162,7 +1162,8 @@ class KhipuGraph3D {
       if (!node || !node.mkt) return;
       const q = quotesMap[node.mkt];
       if (!q) return;
-      const pct = q.pct != null ? q.pct : ((q.live - q.prev) / q.prev * 100);
+      const px = window.quotePx ? window.quotePx(q) : (typeof q.live === 'number' ? q.live : q.close);   // R9
+      const pct = q.pct != null ? q.pct : ((px - q.prev) / q.prev * 100);
       if (isNaN(pct)) return;
       // color: red(-5%) -> grey(0) -> green(+5%)
       let color;

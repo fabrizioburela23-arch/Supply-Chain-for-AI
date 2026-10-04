@@ -32,7 +32,7 @@ def db():
 def _circuitos_limpios(monkeypatch):
     """Cada test arranca con todos los corta-circuitos cerrados."""
     from core import ai
-    monkeypatch.setattr(ai, '_CIRCUIT', {})
+    monkeypatch.setattr(ai, '_CIRCUIT', {}, raising=False)      # raising=False: el archivo se puede bisecar
     yield
 
 
@@ -115,7 +115,6 @@ def test_r1_clave_invalida_y_modelo_retirado_abren_el_circuito(monkeypatch):
     monkeypatch.setattr(ai.requests, 'post', lambda url, **kw: _Resp(403, {'error': {'status': 'PERMISSION_DENIED'}}))
     with pytest.raises(RuntimeError):
         ai._complete_gemini('', 'p', 10)
-    assert ai.ai_circuit_state()['gemini'] == pytest.approx(ai.ai_circuit_state()['gemini'])
     assert ai.ai_circuit_state()['gemini']['open'] and ai.ai_circuit_state()['gemini']['kind'] == 'auth'
     monkeypatch.setattr(ai.requests, 'post', lambda url, **kw: _Resp(410, {}))
     with pytest.raises(RuntimeError):
@@ -246,15 +245,29 @@ def test_r3_los_agentes_de_todos_los_jobs_comparten_un_limite_global(db, monkeyp
         time.sleep(0.25)
         with lock:
             state['now'] -= 1
-        return _ok_result()
+        from tests.test_research import _claim, _result
+        # válido para cualquier agente: cita E1 y no trae cifras de dinero (el guardián las exigiría en su paquete)
+        return _result([_claim(evidence_refs=['E1'], counter_evidence_refs=[], reasoning_summary='E1 lo respalda.')])
 
-    ts = [threading.Thread(target=lambda e=e: _run(e, ['fundamental', 'news'], {'fundamental': [slow], 'news': [slow]}))
-          for e in ('Nvidia', 'AMD')]
+    errors, jids = [], []
+
+    def go(e):
+        try:
+            jids.append(_run(e, ['fundamental', 'news'], {'fundamental': [slow], 'news': [slow]}))
+        except Exception as ex:  # noqa: BLE001
+            errors.append(repr(ex))
+    ts = [threading.Thread(target=go, args=(e,)) for e in ('Nvidia', 'AMD')]
     for t in ts:
         t.start()
     for t in ts:
         t.join(30)
+    assert not any(t.is_alive() for t in ts) and errors == []
     assert state['max'] == 1            # antes: cada job abría su propio pool → 2-4 a la vez
+    from ontology.db import session_scope
+    from research.models import AgentRun, ResearchJob
+    with session_scope() as s:
+        assert len(jids) == 2 and all(s.get(ResearchJob, j).status == 'done' for j in jids)
+        assert s.query(AgentRun).filter(AgentRun.job_id.in_(jids), AgentRun.status == 'done').count() == 4
 
 
 @needs_db
@@ -268,14 +281,21 @@ def test_r3_cola_fifo_de_jobs_con_concurrencia_1_y_posicion_visible(db, monkeypa
     from research.runner import create_job
     monkeypatch.setenv('RESEARCH_JOB_CONCURRENCY', '1')
     runner._reset_workers()
+    runner._ensure_workers_quiet()          # hilos ANTES de crear jobs: la recuperación de huérfanos no los encola
+    monkeypatch.setattr(runner, '_recover_orphans', lambda boot=None: {'requeued': 0, 'failed': 0})
     order, state, lock = [], {'now': 0, 'max': 0}, threading.Lock()
+    gate, first_started = threading.Event(), threading.Event()
 
     def fake_exec(session, job, **kw):
         with lock:
             state['now'] += 1
             state['max'] = max(state['max'], state['now'])
         order.append(job.entity_id)
-        time.sleep(0.2)
+        if job.entity_id == 'Nvidia':
+            first_started.set()
+            gate.wait(10)                   # el primero se queda ocupando el único hilo
+        else:
+            time.sleep(0.05)
         job.status, job.completed_at = 'done', runner._now()
         with lock:
             state['now'] -= 1
@@ -286,12 +306,16 @@ def test_r3_cola_fifo_de_jobs_con_concurrencia_1_y_posicion_visible(db, monkeypa
         for e in ('Nvidia', 'AMD', 'TSMC'):
             job, _ = create_job(s, e, agents=['fundamental'], force=True)
             ids.append(job.id)
-    for jid in ids:
-        runner.execute_job_async(jid)
+    assert all(runner.execute_job_async(jid) is True for jid in ids)
+    assert runner.execute_job_async(ids[1]) is False          # ya está en cola: no se duplica
+    assert first_started.wait(5)
     st = runner.research_queue_state()
-    assert st['job_concurrency'] == 1 and st['jobs_queued'] + st['jobs_running'] >= 2
-    pos = runner.queue_position(ids[2])
-    assert pos is None or pos >= 1
+    assert st['job_concurrency'] == 1 and st['jobs_running'] == 1 and st['jobs_queued'] == 2
+    assert runner.queue_position(ids[1]) == 1 and runner.queue_position(ids[2]) == 2 and runner.queue_position(ids[0]) is None
+    import server as srv
+    d = srv.app.test_client().get(f'/api/research/jobs/{ids[2]}').get_json()
+    assert d['status'] == 'queued' and d['queue_position'] == 2 and d['queue_length'] == 2 and d['jobs_running'] == 1
+    gate.set()
     for _ in range(100):
         with session_scope() as s:
             if all(s.get(ResearchJob, j).status == 'done' for j in ids):
@@ -556,6 +580,7 @@ def test_r6_research_health_reporta_proveedores_cola_presupuesto_y_reloj(monkeyp
     from research import health as rh
     monkeypatch.setattr(ai, 'CLAUDE', 'sk-test-123456')
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
+    monkeypatch.delenv('RESEARCH_DAILY_BUDGET_USD', raising=False)
     ai._open_circuit('claude', 'credit', 'credit balance too low', 600)
     rh._CACHE.update(ts=0.0, data=None)
     import server as srv

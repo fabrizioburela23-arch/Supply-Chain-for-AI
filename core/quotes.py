@@ -124,16 +124,22 @@ def fetch_quote_intl(symbol, timeout=6):
                               .get('close') or []) if c is not None]
         if len(closes) < 2:
             return None
-        cur = meta.get('currency') or 'USD'
+        raw_cur = meta.get('currency') or 'USD'
+        # R9 (misión de reparación): Yahoo cotiza Londres en PENIQUES (GBp), Sudáfrica en
+        # centavos (ZAc), Israel en agorot (ILA): el precio va ÷100 ANTES del tipo de
+        # cambio (antes BA.L salía ×100 en "$"). `currency` devuelve la moneda ENTERA.
+        minor = _MINOR_UNITS.get(raw_cur)
+        cur = minor[0] if minor else str(raw_cur).upper()
+        div = float(minor[1]) if minor else 1.0
         fx = _fx_to_usd(cur)
         if fx is None:
             return None            # sin tasa de cambio no se publica un precio falso
-        close, prev = closes[-1] * fx, closes[-2] * fx
-        live = float(meta.get('regularMarketPrice') or closes[-1]) * fx
+        close, prev = closes[-1] / div * fx, closes[-2] / div * fx
+        live = float(meta.get('regularMarketPrice') or closes[-1]) / div * fx
         q = {'close': round(close, 4), 'prev': round(prev, 4), 'live': round(live, 4),
              'pct': round((live - prev) / prev * 100, 3) if prev else 0,
              'vol': meta.get('regularMarketVolume', 0),
-             'currency': cur, 'converted': cur != 'USD',
+             'currency': cur, 'converted': cur != 'USD', 'minor_unit': raw_cur if minor else None,
              # hora REAL del precio (UNIX) y estado del mercado (REGULAR/CLOSED/
              # PRE/POST): sin esto la UI no podía decir "hace 3 min" vs "cierre"
              'ts': meta.get('regularMarketTime'),
@@ -256,6 +262,8 @@ def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
                    # precio YA en USD (tipo de cambio en vivo): es el único que
                    # puede pintarse con "$" en la Terminal/Mercado
                    'price_usd': px_usd,
+                   # R9: hora REAL del precio y estado del mercado (no la hora del lote)
+                   'ts': q.get('regularMarketTime'), 'market_state': q.get('marketState'),
                    'change_pct': q.get('regularMarketChangePercent'),
                    'mcap_b': round(float(mc) * rate / 1e9, 2) if (mc and rate and float(mc) > 0) else None}
             if row['mcap_b'] is not None or row['price'] is not None:
@@ -377,6 +385,7 @@ def fetch_quotes_live(tickers, registry=None, ttl=LIVE_TTL_S, deadline=LIVE_DEAD
             else:
                 pending.append(s)
 
+    _not_done = set()
     if pending:
         if registry is None:
             from core.providers.market import market_registry
@@ -411,10 +420,17 @@ def fetch_quotes_live(tickers, registry=None, ttl=LIVE_TTL_S, deadline=LIVE_DEAD
             rows[sym] = row
 
     out = {s: r for s, r in rows.items() if r}
+    partial = bool(pending) and bool(_not_done)
     with _LIVE_LOCK:
-        _LIVE_CACHE['batches'][key] = (time.time(), out)
+        # R9: un lote que NO terminó antes del deadline no se guarda como lote completo
+        # (las filas que llegan tarde entran a la caché por ticker; el próximo pedido
+        # se arma desde ahí). Antes el lote truncado se servía 15 s como "cached".
+        if not partial:
+            _LIVE_CACHE['batches'][key] = (time.time(), out)
         if len(_LIVE_CACHE['batches']) > 64:
             oldest = sorted(_LIVE_CACHE['batches'].items(), key=lambda kv: kv[1][0])[:16]
             for k, _ in oldest:
                 _LIVE_CACHE['batches'].pop(k, None)
-    return _live_payload(out, cached=False)
+    res = _live_payload(out, cached=False)
+    res['partial'] = partial
+    return res

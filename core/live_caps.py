@@ -45,6 +45,7 @@ def refresh(fetch=None):
                              # cliente SOLO pinta con "$" este, nunca `price` local)
                              'price_usd': q.get('price_usd'),
                              'currency': q.get('currency'), 'change_pct': q.get('change_pct'),
+                             'price_ts': q.get('ts'), 'market_state': q.get('market_state'),   # R9: hora real
                              'symbol': sym}
         with _LOCK:
             if caps:     # un fallo total NO borra lo último bueno

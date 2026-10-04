@@ -43,10 +43,12 @@ class FinnhubProvider(MarketDataProvider):
         if not FINNHUB:
             return None
         from core.http import _safe_ticker
-        from core.quotes import _fetch_quote_raw
+        from core.quotes import _fetch_quote_raw, is_intl
 
         tk = _safe_ticker(symbol)
         if not tk:
+            return None
+        if is_intl(tk):          # R9: Finnhub gratis no cubre otras bolsas: no quemar la cuota (van a Yahoo)
             return None
         data, err = _fetch_quote_raw(tk)
         if err or not data:

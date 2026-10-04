@@ -362,7 +362,11 @@
       var pct = q.pc ? (q.c - q.pc) / q.pc * 100 : null;
       // `t` de Finnhub = hora (unix) del último precio; sin ella no se afirma "en vivo"
       var qt = q.t > 0 ? new Date(q.t * 1000) : null;
-      paintPrice(els, q.c, pct, 'USD', 'Finnhub', quoteInfo(null, qt, null));
+      // R9: /api/quote responde Finnhub O Yahoo (cascada): fuente y moneda reales, no un rótulo fijo
+      var src = (window.quoteSrcName && q.provider) ? window.quoteSrcName(q.provider) : (q.provider === 'yahoo' ? 'Yahoo' : 'Finnhub');
+      var cur = q.converted ? 'USD' : (q.currency || 'USD');
+      if (q.converted && q.currency && q.currency !== 'USD') src += ' · ' + L('convertido de ' + q.currency, 'converted from ' + q.currency);
+      paintPrice(els, q.c, pct, cur, src, quoteInfo(null, qt, null));
     }).catch(function () { if (els.px.isConnected) loadPriceLive(els, n); });
   }
   function stopPriceTimer(root) {

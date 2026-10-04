@@ -148,7 +148,7 @@
   function dayChg(n) {
     var q = n && n.mkt && window.MKT && window.MKT.quotes && window.MKT.quotes[n.mkt];
     if (!q) return null;
-    var px = q.live != null ? q.live : q.close;
+    var px = window.quotePx ? window.quotePx(q) : (typeof q.live === 'number' ? q.live : q.close);   // R9: live numérico
     return px != null && q.prev ? (px - q.prev) / q.prev * 100 : null;
   }
 
