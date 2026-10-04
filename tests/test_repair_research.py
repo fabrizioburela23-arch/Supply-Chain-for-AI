@@ -720,13 +720,14 @@ def test_r7_al_arrancar_el_proceso_todo_running_es_huerfano_y_la_pizarra_cuenta_
         b, _ = runner.create_job(s, 'ASML', agents=['news'], trigger={'kind': 'board', 'by': 'fabrizio'}, force=True)
         runner.defer_job(s, b, now=now - timedelta(days=2))         # el mismo pedido diferido dos veces
         fresh_id, a_id, b_id = fresh.id, a.id, b.id
-    rec = runner._recover_orphans(boot=True)
+    rec = runner._recover_orphans(boot=True)          # boot=True: modo explícito "todo running es huérfano"
     assert rec['failed'] == 1
     with session_scope() as s:
         assert s.get(ResearchJob, fresh_id).status == 'failed' and 'reinicio' in s.get(ResearchJob, fresh_id).error
+        # R11: el segundo pedido igual ya quedó marcado duplicado AL diferir (no se acumula)
+        assert s.get(ResearchJob, b_id).status == 'failed' and 'duplicado' in s.get(ResearchJob, b_id).error
         out = runner.resume_deferred(s, now=now)
-        assert out['resumed'] == [a_id] and out['discarded'] == [b_id]
-        assert 'duplicado' in s.get(ResearchJob, b_id).error
+        assert out['resumed'] == [a_id] and out['discarded'] == []
     runner._reset_workers()
 
 
@@ -882,3 +883,110 @@ def test_r8_el_chat_conoce_la_salud_de_la_investigacion():
     assert 'get_research_health' in khipu_chat.MCP_READ_TOOLS
     sysmsg = khipu_chat.build_system('es') if callable(getattr(khipu_chat, 'build_system', None)) else ''
     assert 'get_research_health' in (sysmsg or '') or True
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R11 · Lente "despliegue": /api/health sin base, latido de jobs, sobrecarga de Claude, diferidos duplicados
+# ════════════════════════════════════════════════════════════════════════════
+
+def test_r11_api_health_no_toca_la_base_aunque_este_caida(monkeypatch):
+    import time
+
+    import ontology.db as odb
+    from research import health as rh
+    monkeypatch.setattr(odb, 'ontology_available', lambda: True)
+
+    def hang():
+        time.sleep(5)
+        raise RuntimeError('base caída')
+    monkeypatch.setattr(odb, 'session_scope', hang)
+    rh._CACHE.update(ts=0.0, data=None)
+    rh._DB_FAIL.update(until=0.0, error=None)
+    import server as srv
+    c = srv.app.test_client()
+    t0 = time.time()
+    h = c.get('/api/health').get_json()
+    assert time.time() - t0 < 0.5 and h['research']['ok'] in (True, False) and 'jobs_queued' in h['research']
+    # el endpoint completo sí consulta, pero recuerda el fallo 60 s y no vuelve a esperar
+    monkeypatch.setattr(odb, 'session_scope', lambda: (_ for _ in ()).throw(RuntimeError('base caída')))
+    d = c.get('/api/research/health?fresh=1').get_json()
+    assert d['budget']['research']['spent_today_usd'] is None and 'no se pudo leer' in d['budget']['research']['note']
+    assert rh._DB_FAIL['until'] > time.time()
+    d2 = rh.research_health(fresh=True)
+    assert 'sin responder hace poco' in d2['budget']['research']['note']
+
+
+@needs_db
+def test_r11_la_orfandad_se_mide_por_latido_no_por_fecha_de_creacion(db, monkeypatch):
+    from datetime import timedelta
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    runner._reset_workers()
+    now = runner._now()
+    with session_scope() as s:
+        alive, _ = runner.create_job(s, 'Nvidia', agents=['news'], force=True)
+        alive.status, alive.created_at = 'running', now - timedelta(minutes=50)          # viejo pero LATIENDO
+        runner._heartbeat(alive, now - timedelta(seconds=30))
+        dead, _ = runner.create_job(s, 'AMD', agents=['news'], force=True)
+        dead.status, dead.created_at = 'running', now - timedelta(minutes=2)             # nuevo pero sin latido
+        runner._heartbeat(dead, now - timedelta(minutes=5))
+        legacy, _ = runner.create_job(s, 'TSMC', agents=['news'], force=True)
+        legacy.status, legacy.created_at = 'running', now - timedelta(minutes=45)         # sin latido (pre-R11)
+        a_id, d_id, l_id = alive.id, dead.id, legacy.id
+    rec = runner._recover_orphans()
+    with session_scope() as s:
+        assert s.get(ResearchJob, a_id).status == 'running'
+        assert s.get(ResearchJob, d_id).status == 'failed' and s.get(ResearchJob, l_id).status == 'failed'
+    assert rec['failed'] == 2
+    # el reclamo de un job pone el latido
+    with session_scope() as s:
+        j, _ = runner.create_job(s, 'ASML', agents=['news'], force=True)
+        jid = j.id
+    with session_scope() as s:
+        assert runner.claim_job(s, jid) and s.get(ResearchJob, jid).trigger.get('heartbeat_at')
+
+
+def test_r11_sobrecarga_de_claude_no_recorre_los_demas_modelos_ni_retiene_el_cupo(monkeypatch):
+    from core import ai
+    from tests.test_infra import _status_error
+    monkeypatch.setattr(ai, 'AI_MODEL_FAST', 'claude-b')
+    monkeypatch.setattr(ai, 'AI_MODEL_DEEP', 'claude-a')
+    monkeypatch.setattr(ai, 'AI_TRANSIENT_RETRIES', 3)
+    calls = _fake_anthropic(monkeypatch, [_status_error(529)])
+    with ai.ai_background(True):
+        with pytest.raises(RuntimeError) as ei:
+            ai._complete_claude('s', 'p', 10, tier='deep')
+    assert 'pasajera' in str(ei.value)
+    assert calls == ['claude-a'] * 3                # 3 intentos del PRIMER modelo y fuera (antes: ×4 modelos)
+    calls.clear()
+    with ai.ai_background(False):                   # interactivo: máximo 2 intentos
+        with pytest.raises(RuntimeError):
+            ai._complete_claude('s', 'p', 10, tier='deep')
+    assert calls == ['claude-a'] * 2
+
+
+@needs_db
+def test_r11_un_pedido_igual_ya_en_espera_no_se_acumula_al_diferir(db):
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    with session_scope() as s:
+        a, _ = runner.create_job(s, 'Micron', agents=['news'], trigger={'kind': 'committee', 'by': 'x'}, force=True)
+        runner.defer_job(s, a)
+        b, _ = runner.create_job(s, 'Micron', agents=['news'], trigger={'kind': 'committee', 'by': 'x'}, force=True)
+        runner.defer_job(s, b)
+        assert s.get(ResearchJob, a.id).status == 'deferred' and s.get(ResearchJob, b.id).status == 'failed'
+        assert 'duplicado' in s.get(ResearchJob, b.id).error
+
+
+def test_r11_el_debate_no_ocupa_todos_los_cupos_de_fondo(monkeypatch):
+    from core import ai
+    from research import debate, runner
+    monkeypatch.setattr(ai, 'AI_MAX_CONCURRENCY', 4)
+    monkeypatch.setattr(ai, 'AI_INTERACTIVE_RESERVE', 1)
+    monkeypatch.setenv('RESEARCH_PARALLEL', '2')
+    assert runner._bg_slots() == 3 and runner.agent_parallelism() == 2 and debate._concurrency() == 1
+    monkeypatch.setattr(ai, 'AI_MAX_CONCURRENCY', 8)
+    assert debate._concurrency() == 3

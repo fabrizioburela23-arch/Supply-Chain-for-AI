@@ -196,8 +196,12 @@ def _transient_wait_s(i):
 
 def _retry_transient(call, is_transient, label):
     """call() → respuesta; is_transient(resultado_o_excepción) decide si se
-    reintenta. Hasta AI_TRANSIENT_RETRIES intentos en total."""
+    reintenta. Hasta AI_TRANSIENT_RETRIES intentos en total (R11: las llamadas
+    INTERACTIVAS, con un usuario esperando, como máximo 2: el cupo del semáforo
+    se retiene mientras se duerme)."""
     attempts = max(1, int(AI_TRANSIENT_RETRIES))
+    if not _is_background():
+        attempts = min(attempts, 2)
     last = None
     for i in range(attempts):
         try:
@@ -423,6 +427,8 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
     #              presupuesto, para que quepan pensamiento + respuesta.
     last_err, transient_seen = None, None
     for m in candidates:
+        if transient_seen is not None:
+            break
         attempts = [
             ({'thinking': {'type': 'disabled'}}, max_tokens),
             ({}, max(int(max_tokens) * 4, 6000)),
@@ -440,7 +446,10 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
                     # ataría el hilo N veces más → pasa directo a Gemini/NVIDIA.
                     raise RuntimeError(f'{type(e).__name__}: ' + _redact(e, 120)) from None
                 if _transient(e):
+                    # R11: sobrecarga/límite del proveedor: probar OTRO modelo Claude repite la
+                    # tormenta y retiene el cupo del semáforo durmiendo → pasa directo a Gemini/NVIDIA
                     transient_seen = e
+                    break
                 last_err = e
                 break              # prueba el siguiente modelo Claude
             text = _text_of(msg)
@@ -451,8 +460,7 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
         # R7: si ALGÚN modelo falló por sobrecarga pasajera, el error final no es
         # definitivo (antes el 404 de un modelo de respaldo abría la pausa de TODO
         # el proveedor 30 min aunque el modelo principal solo estuviera saturado).
-        raise RuntimeError('claude: sobrecarga pasajera en ' + ', '.join(candidates) + ': ' +
-                           _redact(transient_seen, 100)) from None
+        raise RuntimeError('claude: sobrecarga pasajera (' + _redact(transient_seen, 100) + ')') from None
     if last_err is not None:
         # el código HTTP va explícito: el texto del SDK puede no traerlo y el
         # corta-circuito (R1) clasifica por él (401/403/404/410 vs pasajeros)

@@ -224,6 +224,15 @@ def defer_job(session, job, now=None):
     """Marca el job 'deferred' con hora de reanudación. No crea runs ni gasta."""
     now = now or _now()
     ra = next_resume_time(now)
+    twin = (session.query(ResearchJob).filter(ResearchJob.dedupe_key == job.dedupe_key, ResearchJob.status == 'deferred',
+                                              ResearchJob.id != job.id).first() if job.dedupe_key else None)
+    if twin is not None:            # R11: el mismo pedido ya está en espera → este no se acumula
+        job.status = 'failed'
+        job.error = (f'duplicado: el mismo pedido ya está en espera ({twin.id[:8]}) / '
+                     f'duplicate: the same request is already waiting ({twin.id[:8]})')
+        job.completed_at = now
+        session.flush()
+        return job
     job.status = 'deferred'
     if daily_budget() <= 0:
         job.error = ('investigación apagada (RESEARCH_DAILY_BUDGET_USD=0): el pedido queda en espera hasta que se '
@@ -699,12 +708,24 @@ def execute_job(session, job, provider_factory=None, fetchers=None, on_start=Non
         return _execute_job(session, job, provider_factory, fetchers, on_start, on_done)
 
 
+def _heartbeat(job, now=None):
+    """R11: latido del job (trigger.heartbeat_at). La orfandad se mide por ACTIVIDAD,
+    no por created_at: en Railway el contenedor viejo sigue corriendo jobs mientras
+    el nuevo arranca, así que "al arrancar todo running es huérfano" mataba jobs vivos."""
+    job.trigger = dict(job.trigger or {}, heartbeat_at=(now or _now()).isoformat())
+
+
 def claim_job(session, job_id):
     """R7: reclamo ATÓMICO del job ('queued' → 'running' en un solo UPDATE). Dos
     ejecutores (cola, recuperación, Pizarra, comité) no pueden correr el mismo."""
     n = (session.query(ResearchJob).filter(ResearchJob.id == job_id, ResearchJob.status == 'queued')
          .update({'status': 'running'}, synchronize_session=False))
     session.flush()
+    if n:
+        j = session.get(ResearchJob, job_id)
+        if j is not None:
+            _heartbeat(j)
+            session.flush()
     return bool(n)
 
 
@@ -714,6 +735,7 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
             session.refresh(job)
             return job
         job.status = 'running'
+        _heartbeat(job)
     elif not (job.status == 'running' and getattr(job, '_claimed', False)):
         return job                                   # done/failed/partial/deferred: no se re-ejecuta
     # R5: sin presupuesto no se arranca nada — el job se DIFIERE a mañana (antes:
@@ -745,17 +767,23 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
             from core.ai_usage import bind
             futs[_pool_submit(bind(_agent_work), job.entity_id, job.trigger, job.depth, agent_type, prov,
                               fetchers, prior)] = (agent_type, run)
-        for fut in as_completed(futs):
-            agent_type, run = futs[fut]
-            try:
-                work = fut.result()
-            except Exception as e:  # noqa: BLE001
-                work = {'error': f'{type(e).__name__}: {str(e)[:300]}'}
-            _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
-            ok += 1 if run.status == 'done' else 0
-            session.commit()   # cada agente visible en vivo (feed de actividad)
-            if on_done:
-                on_done(agent_type, run)
+        try:
+            for fut in as_completed(futs):
+                agent_type, run = futs[fut]
+                try:
+                    work = fut.result()
+                except Exception as e:  # noqa: BLE001
+                    work = {'error': f'{type(e).__name__}: {str(e)[:300]}'}
+                _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
+                ok += 1 if run.status == 'done' else 0
+                _heartbeat(job)
+                session.commit()   # cada agente visible en vivo (feed de actividad)
+                if on_done:
+                    on_done(agent_type, run)
+        except BaseException:
+            for f in futs:          # R11: lo que no arrancó se cancela (no gasta IA a ciegas)
+                f.cancel()
+            raise
     # contradicciones SEMÁNTICAS (IA, acotadas) — solo Normal/Profunda
     if ok and job.depth != 'QUICK':
         try:
@@ -776,6 +804,7 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
     # reintentar enseguida y, con 'partial', completa solo lo que falta).
     if not job.agents or cov['complete']:
         job.status = 'done'
+        job.error = None            # R11: sin restos de un "interrumpido" anterior
     elif ok:
         job.status = 'partial'
         job.error = ('parcial: faltan ' + ', '.join(f'{agent_label(a)} [{a}]' for a in cov['missing']) +
@@ -884,16 +913,28 @@ def _recover_orphans(boot=None):
     if not ontology_available():
         return out
     if boot is None:
-        boot = not _BOOT['done']
+        boot = False                     # R11: ya no hay caso especial de arranque (ver _heartbeat)
     _BOOT['done'] = True
-    stale_min = 0 if boot else _cfg('RESEARCH_STALE_MIN', RESEARCH_STALE_MIN_DEFAULT, int)
-    stale = _now() - timedelta(minutes=stale_min)
-    recent = _now() - timedelta(hours=24)
+    now = _now()
+    hb_stale = now - timedelta(minutes=_cfg('RESEARCH_HEARTBEAT_STALE_MIN', 3, int))
+    old_stale = now - timedelta(minutes=_cfg('RESEARCH_STALE_MIN', RESEARCH_STALE_MIN_DEFAULT, int))
+    recent = now - timedelta(hours=24)
     with _W_LOCK:
         running_here = set(_RUNNING)
+
+    def _is_orphan(j):
+        if j.id in running_here:
+            return False
+        if boot:
+            return True
+        hb = _parse_iso((j.trigger or {}).get('heartbeat_at'))
+        if hb is not None:
+            return hb < hb_stale
+        return bool(j.created_at and j.created_at < old_stale)     # jobs sin latido (anteriores a R11)
+
     with session_scope() as s:
-        for j in s.query(ResearchJob).filter(ResearchJob.status == 'running', ResearchJob.created_at < stale).all():
-            if j.id in running_here:
+        for j in s.query(ResearchJob).filter(ResearchJob.status == 'running').all():
+            if not _is_orphan(j):
                 continue
             j.status = 'failed'
             j.error = 'investigación interrumpida (reinicio del servidor) / research interrupted (server restart)'

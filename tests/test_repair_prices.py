@@ -79,3 +79,27 @@ def test_r9_las_capitalizaciones_llevan_la_hora_real_del_precio(monkeypatch):
                                                     'ts': 1700000000, 'market_state': 'CLOSED', 'change_pct': 1.0}})
     c = live_caps.get_caps(start=False)['caps']['Nvidia']
     assert c['price_ts'] == 1700000000 and c['market_state'] == 'CLOSED'
+
+
+def test_r11_un_ticker_en_vuelo_no_se_vuelve_a_encolar_y_el_backlog_tiene_tope():
+    import threading
+
+    from tests.test_quotes_live import FakeRegistry
+    reg = FakeRegistry(delay=0.4)
+    out = []
+    ts = [threading.Thread(target=lambda: out.append(quotes.fetch_quotes_live(['AAA', 'BBB'], registry=reg, deadline=2.0)))
+          for _ in range(3)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join(10)
+    assert all(set(r['quotes']) == {'AAA', 'BBB'} for r in out)
+    assert len(reg.calls) == 2                       # 3 lotes simultáneos → 2 consultas al proveedor, no 6
+    assert quotes._LIVE_CACHE['inflight'] == {}
+    quotes.LIVE_BACKLOG_MAX, saved = 0, quotes.LIVE_BACKLOG_MAX
+    try:
+        quotes.live_cache_clear()
+        r = quotes.fetch_quotes_live(['CCC'], registry=reg, deadline=0.5)
+        assert r['degraded'] is True and r['quotes'] == {}
+    finally:
+        quotes.LIVE_BACKLOG_MAX = saved

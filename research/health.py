@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 
 _CACHE = {'ts': 0.0, 'data': None}
 CACHE_S = 5.0
+_DB_FAIL = {'until': 0.0, 'error': None}      # R11: una base caída no se vuelve a esperar durante DB_FAIL_S
+DB_FAIL_S = 60.0
 
 
 def _now_iso():
@@ -42,12 +44,20 @@ def _slots():
             'busy_wait_s': float(ai.AI_BUSY_WAIT_S)}
 
 
-def _queue_and_budget():
+def _queue_and_budget(with_db=True):
     from research import runner
     q = runner.research_queue_state()
     budget = {'daily_usd': runner.daily_budget(), 'spent_today_usd': None, 'remaining_usd': None,
               'exhausted': None, 'note': None}
     db_counts = None
+    if not with_db:
+        budget['note'] = 'gasto no consultado (modo ligero, sin base) / spend not queried (light mode)'
+        q['db_counts'] = None
+        return q, budget
+    if time.time() < _DB_FAIL['until']:
+        budget['note'] = f"base de datos sin responder hace poco ({_DB_FAIL['error']}); se reintenta en breve"
+        q['db_counts'] = None
+        return q, budget
     try:
         from ontology.db import ontology_available, session_scope
         if ontology_available():
@@ -64,6 +74,7 @@ def _queue_and_budget():
             budget['note'] = 'sin base de datos: el gasto de investigación no se puede leer / no database'
     except Exception as e:  # noqa: BLE001
         budget['note'] = f'no se pudo leer el gasto: {type(e).__name__}'
+        _DB_FAIL.update(until=time.time() + DB_FAIL_S, error=type(e).__name__)
     q['db_counts'] = db_counts
     return q, budget
 
@@ -131,9 +142,18 @@ def _hint(providers, budget, queue):
     return True, (es + '.', en + '.')
 
 
-def research_health(fresh=False):
-    """Dict serializable. Caché CACHE_S segundos (la llaman UI, MCP y /api/health)."""
+def research_health(fresh=False, light=False):
+    """Dict serializable. Caché CACHE_S segundos (la llaman UI, MCP y /api/health).
+    light=True (R11): SIN tocar la base — para /api/health (healthcheck de Railway):
+    nunca debe esperar 5-10 s a un Postgres caído."""
     now = time.time()
+    if light:
+        providers = _providers()
+        queue, budget = _queue_and_budget(with_db=False)
+        ok, (hint_es, hint_en) = _hint(providers, budget, queue)
+        return {'ok': ok, 'hint_es': hint_es, 'hint_en': hint_en, 'providers': providers, 'queue': queue,
+                'budget': {'research': budget}, 'scheduler': _scheduler(), 'outcomes': _outcomes(),
+                'as_of': _now_iso(), 'light': True}
     if not fresh and _CACHE['data'] is not None and now - _CACHE['ts'] < CACHE_S:
         return dict(_CACHE['data'], cached=True)
     providers = _providers()
@@ -152,14 +172,14 @@ def research_health(fresh=False):
 
 
 def health_brief():
-    """Resumen chico para /api/health (sin base, nunca lanza)."""
+    """Resumen chico para /api/health: 100 % en memoria (sin base), nunca lanza."""
     try:
-        h = research_health()
+        h = research_health(light=True)
         return {'ok': h['ok'], 'hint_es': h['hint_es'], 'hint_en': h['hint_en'],
                 'providers_available': [p for p, v in h['providers'].items() if v['available']],
                 'providers_paused': [p for p, v in h['providers'].items() if v['circuit'].get('open')],
                 'jobs_queued': h['queue'].get('jobs_queued'), 'jobs_running': h['queue'].get('jobs_running'),
-                'budget_exhausted': h['budget']['research'].get('exhausted'),
-                'scheduler_running': (h.get('scheduler') or {}).get('running')}
+                'scheduler_running': (h.get('scheduler') or {}).get('running'),
+                'detail': '/api/research/health'}
     except Exception as e:  # noqa: BLE001
         return {'ok': None, 'error': type(e).__name__}

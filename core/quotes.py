@@ -8,6 +8,7 @@ tipo de cambio en vivo (cacheado 1 h) — mostrar yuanes con el símbolo $ serí
 mentirle al usuario. El resto de la app sigue operando 100% en USD.
 """
 import threading
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor, wait as _wait
 from datetime import datetime, timezone
@@ -284,8 +285,9 @@ def fetch_quotes_batch_yahoo(symbols, chunk=40, timeout=10):
 LIVE_TTL_S = 15
 LIVE_MAX_TICKERS = 150
 LIVE_WORKERS = 8
-LIVE_DEADLINE_S = 25          # gunicorn --timeout 120: nunca acercarse
-_LIVE_CACHE = {'batches': {}, 'tickers': {}}
+LIVE_DEADLINE_S = max(1.0, min(60.0, float(os.getenv('LIVE_DEADLINE_S') or 8)))   # R11: ~8 s (antes 25): lo que falte entra por la caché
+LIVE_BACKLOG_MAX = 400        # R11: tareas pendientes en el pool por encima de esto → no se encola más (degraded)
+_LIVE_CACHE = {'batches': {}, 'tickers': {}, 'inflight': {}}
 _LIVE_LOCK = threading.Lock()
 _LIVE_POOL = {'ex': None}
 
@@ -353,6 +355,7 @@ def live_cache_clear():
     with _LIVE_LOCK:
         _LIVE_CACHE['batches'].clear()
         _LIVE_CACHE['tickers'].clear()
+        _LIVE_CACHE['inflight'].clear()
 
 
 def fetch_quotes_live(tickers, registry=None, ttl=LIVE_TTL_S, deadline=LIVE_DEADLINE_S):
@@ -386,6 +389,7 @@ def fetch_quotes_live(tickers, registry=None, ttl=LIVE_TTL_S, deadline=LIVE_DEAD
                 pending.append(s)
 
     _not_done = set()
+    degraded = False
     if pending:
         if registry is None:
             from core.providers.market import market_registry
@@ -405,13 +409,35 @@ def fetch_quotes_live(tickers, registry=None, ttl=LIVE_TTL_S, deadline=LIVE_DEAD
                 return
             with _LIVE_LOCK:
                 _LIVE_CACHE['tickers'][sym] = (time.time(), row)
+                if _LIVE_CACHE['inflight'].get(sym) is fut:
+                    _LIVE_CACHE['inflight'].pop(sym, None)
                 if len(_LIVE_CACHE['tickers']) > 5000:
                     _LIVE_CACHE['tickers'].clear()
 
-        futs = [_live_pool().submit(_one, s) for s in pending]
-        for f in futs:
+        # R11: registro de futuros EN VUELO — un ticker que ya está consultándose se
+        # espera, no se vuelve a encolar (antes cada lote repetido duplicaba el trabajo
+        # y el backlog del pool crecía sin tope mientras 12 hilos de gunicorn esperaban).
+        pool = _live_pool()
+        futs, fresh = [], []
+        with _LIVE_LOCK:
+            try:
+                backlog = pool._work_queue.qsize()
+            except Exception:  # noqa: BLE001
+                backlog = 0
+            for sym in pending:
+                f = _LIVE_CACHE['inflight'].get(sym)
+                if f is None or f.done():
+                    if backlog >= LIVE_BACKLOG_MAX:
+                        degraded = True
+                        continue
+                    f = pool.submit(_one, sym)
+                    _LIVE_CACHE['inflight'][sym] = f
+                    fresh.append(f)
+                    backlog += 1
+                futs.append(f)
+        for f in fresh:                 # fuera del lock: si ya terminó, el callback corre aquí y toma el lock
             f.add_done_callback(_store)
-        done, _not_done = _wait(futs, timeout=deadline)
+        done, _not_done = _wait(futs, timeout=deadline) if futs else (set(), set())
         for f in done:
             try:
                 sym, row = f.result()
@@ -432,5 +458,6 @@ def fetch_quotes_live(tickers, registry=None, ttl=LIVE_TTL_S, deadline=LIVE_DEAD
             for k, _ in oldest:
                 _LIVE_CACHE['batches'].pop(k, None)
     res = _live_payload(out, cached=False)
-    res['partial'] = partial
+    res['partial'] = partial or degraded
+    res['degraded'] = degraded
     return res

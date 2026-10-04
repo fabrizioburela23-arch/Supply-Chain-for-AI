@@ -680,7 +680,7 @@ def t_get_research(ctx, entity, limit=30):
             last_job = {'job_id': last.id, 'status': last.status, 'created_at': _iso(last.created_at),
                         'completed_at': _iso(last.completed_at), 'synthesis': last.synthesis,
                         'coverage': cov, 'error': last.error}
-            if last.status == 'partial' and cov:
+            if last.status in ('partial', 'done') and cov and not cov.get('complete'):
                 last_job['hint'] = (f"coverage incomplete: {cov['n_done']} of {cov['n_effective']} agents answered, "
                                     f"missing {', '.join(cov['missing'])}. Treat the synthesis as partial; "
                                     "run_research(entity, only_missing=true) completes the missing agents.")

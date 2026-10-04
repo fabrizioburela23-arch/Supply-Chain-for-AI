@@ -435,3 +435,37 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   el test del pool cuenta 4 runs `done`, 2 jobs `done` y 0 excepciones de hilos;
   aserción vacía borrada; `delenv RESEARCH_DAILY_BUDGET_USD`; fixture con
   `raising=False`. Suite completa: 887 passed (fresca, con base).
+
+### R11 — Lente "despliegue" de la revisión adversarial (y restos de "cola")
+
+- **Hallazgos aceptados.** (ALTA) `/api/health` (healthcheck de Railway, monitor
+  externo, `Keys.has` de la UI) abría una sesión de Postgres vía el bloque
+  `research`: con la base caída tardaba 5-10 s por llamada. (ALTA) Los lotes de
+  precios en vivo volvían a encolar tickers que ya estaban en vuelo: backlog sin
+  tope y hasta 12 hilos de gunicorn bloqueados 25 s. (media) "Al arrancar, todo
+  `running` es huérfano" mataba jobs vivos del contenedor viejo de Railway (los
+  dos conviven durante el deploy). (media) Los reintentos pasajeros de Claude se
+  repetían por cada modelo candidato reteniendo el cupo del semáforo (hasta ~18 s
+  durmiendo) y fabricaban "IA ocupada". (media) El debate del comité (3 hilos)
+  ocupaba todos los cupos de fondo. (media) El mismo pedido diferido se acumulaba
+  con `force=True` (comité). (media) Una excepción a mitad del job dejaba futuros
+  corriendo en el pool.
+- **Cambios.** `research/health.py`: `research_health(light=True)` 100 % en
+  memoria para `/api/health` (`health_brief`); el endpoint completo recuerda un
+  fallo de base 60 s (`_DB_FAIL`) y no vuelve a esperar. `core/quotes.py`:
+  registro de futuros en vuelo (`_LIVE_CACHE['inflight']`, callbacks fuera del
+  lock), tope `LIVE_BACKLOG_MAX` (400) → `degraded`, `LIVE_DEADLINE_S` 8 s
+  (env). `research/runner.py`: latido `trigger.heartbeat_at` (al reclamar y tras
+  cada agente); huérfano = `running` sin latido en 3 min (`RESEARCH_HEARTBEAT_STALE_MIN`)
+  y no en ejecución aquí (los jobs sin latido, anteriores, por `created_at` >
+  30 min); tarea `research_recover_orphans` cada 2 min sin correr al importar;
+  futuros cancelados si el job revienta; `job.error` limpio al terminar `done`;
+  `defer_job` marca duplicado si ya hay un diferido igual. `core/ai.py`: una
+  sobrecarga pasajera de Claude no recorre los otros modelos (pasa a Gemini/
+  NVIDIA) y las llamadas interactivas reintentan como máximo 2 veces.
+  `research/debate.py`: concurrencia = cupos de fondo − pool de agentes (mín. 1).
+  MCP `get_research`: hint de cobertura también para jobs `done` anteriores a R4.
+- **Verificar.** `pytest tests/test_repair_research.py -k r11` (5) y
+  `tests/test_repair_prices.py -k r11` (1): antes `/api/health` tardaba 5 s con la
+  base caída; 3 lotes simultáneos hacían 6 consultas; un job con latido fresco se
+  marcaba huérfano; Claude llamaba 3×4 modelos.

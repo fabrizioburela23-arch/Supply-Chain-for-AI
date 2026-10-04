@@ -31,7 +31,18 @@ log = logging.getLogger('khipu')
 
 MAX_SEATS = 6
 MAX_REBUTTALS = 3
-CONCURRENCY = 3
+CONCURRENCY = 3        # tope histórico; el valor efectivo sale de _concurrency() (R11)
+
+
+def _concurrency():
+    """R11: el debate NO puede ocupar todos los cupos de fondo del semáforo de IA
+    (si no, los agentes de investigación reciben 'IA ocupada'): usa lo que queda
+    tras el pool de agentes, mínimo 1."""
+    try:
+        from research.runner import _bg_slots, agent_parallelism
+        return max(1, min(CONCURRENCY, _bg_slots() - agent_parallelism()))
+    except Exception:  # noqa: BLE001
+        return 1
 SEAT_TIMEOUT_S = 75
 
 
@@ -211,7 +222,7 @@ def run_statements(seats, label, symbol, conv, claims_by_id, cref, evidence_rows
                     f"{cref.get(cc['id'], '?')} [{cc['agent_type']} · {h} · {c.stance}] <data>{c.statement_es[:220]}</data>")
     jobs = {}
     out = {}
-    with ThreadPoolExecutor(max_workers=CONCURRENCY) as ex:
+    with ThreadPoolExecutor(max_workers=_concurrency()) as ex:
         for s in seats:
             others = [x for a, lst in others_all.items() if a != s['seat'] for x in lst[:2]][:10]
             text, items = seat_package(s, label, symbol, conv, claims_by_id, cref, evidence_rows, others,
@@ -272,7 +283,7 @@ def pick_pairs(statements, max_n=MAX_REBUTTALS):
 def run_rebuttals(pairs, statements, seats_by_id, label, provider_factory, on_result=None):
     out = []
     jobs = {}
-    with ThreadPoolExecutor(max_workers=CONCURRENCY) as ex:
+    with ThreadPoolExecutor(max_workers=_concurrency()) as ex:
         for me, opp in pairs:
             mine, theirs = statements[me], statements[opp]
             o = theirs['obj']
