@@ -550,6 +550,23 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   regenerado); no toca la base — la fusión de los objetos duplicados en Postgres es
   el commit 12 del plan (`ObjectMerged`, append-only).
 
+### G1c — Un id viejo (alias) siempre lleva a la empresa canónica
+- **Síntoma (lo destapó la auditoría G1).** `NODE_BY_ID['AWS']`,
+  `NODE_BY_ID['SouthernCompany']` y otros 30+ alias no llevaban a ningún nodo:
+  `jumpTo` con el id viejo, un hecho temporal o un link escrito con el alias no
+  encontraban la empresa (los links sí se resolvían por otro camino).
+- **Causa.** `nodes/merge_graph.js::absorbNode` solo mapeaba el alias cuando el
+  canónico ya existía; si el nodo alias se cargaba primero, se renombraba y el
+  id viejo quedaba huérfano. Los alias que nunca fueron nodo propio (p. ej.
+  'AWS') no se mapeaban nunca. En el seed, un alias sin canónico cargado se
+  quedaba con su id viejo.
+- **Cambios.** `absorbNode` guarda el id original y lo mapea; tras las
+  expansiones, todo alias con canónico existente se mapea; el seed renombra al
+  canónico. `engine/hypergraph.js` (el único que enumera NODE_BY_ID) filtra las
+  claves alias.
+- **Verificar.** `pytest tests/test_merge_graph_alias.py`: corre el merge REAL
+  en Node; antes fallaba (AWS→Amazon y decenas más sin mapear).
+
 ### G2 — La ontología se corrige SIN borrar: dedupe de vínculos, retracción dirigida y fusión de entidades por eventos
 - **Síntoma.** El diagnóstico encontró en producción vínculos repetidos (mismo
   par, misma relación, mismo peso: la migración y el bulk import los volvían a

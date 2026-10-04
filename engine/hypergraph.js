@@ -260,7 +260,7 @@ class TemporalHypergraph {
         // Fallback: find nodes of a similar category from the first known affected node
         const firstKnown = he.nodes_affected[0];
         const cat = firstKnown && NODE_BY_ID[firstKnown]?.cat;
-        const fallback = Object.keys(NODE_BY_ID).filter(id =>
+        const fallback = Object.keys(NODE_BY_ID).filter(id => NODE_BY_ID[id]?.id === id &&   // sin claves alias
           !he.nodes_affected.includes(id) && (cat ? NODE_BY_ID[id]?.cat === cat : true)
         ).slice(0, 4 - he.nodes_affected.length);
         he.nodes_affected = [...he.nodes_affected, ...fallback];

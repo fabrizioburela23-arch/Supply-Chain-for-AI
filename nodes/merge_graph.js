@@ -39,21 +39,37 @@ function buildKhipusGraph(env) {
       }
       return;
     }
+    const orig = n.id;
     n.id = cid;
     NODE_BY_ID[cid] = n;
+    // G1c: el id viejo (alias) también debe llevar al nodo canónico, aunque el
+    // alias se haya cargado ANTES que el canónico (antes quedaba sin mapear:
+    // jumpTo('AWS') o un hecho con el id viejo no encontraban la empresa).
+    if (orig !== cid) NODE_BY_ID[orig] = n;
     if (NODES.indexOf(n) === -1) NODES.push(n);
   }
 
   // el seed también pasa por resolución (por si contiene ids alias)
   NODES.slice().forEach(function (n) {
     const cid = resolveId(n.id);
-    if (cid !== n.id && NODE_BY_ID[cid]) {
+    if (cid !== n.id && NODE_BY_ID[cid] && NODE_BY_ID[cid] !== n) {
       const idx = NODES.indexOf(n);
       if (idx >= 0) NODES.splice(idx, 1);
       absorbNode(n);
+    } else if (cid !== n.id) {
+      // G1c: alias en el seed SIN canónico cargado todavía → pasa a ser el
+      // canónico (si no, el canónico de una expansión entraba como 2º nodo)
+      const orig = n.id; n.id = cid; NODE_BY_ID[cid] = n; NODE_BY_ID[orig] = n;
     } else { NODE_BY_ID[n.id] = n; }
   });
   expansions.forEach(function (arr) { if (arr) arr.forEach(absorbNode); });
+  // G1c: TODO id alias lleva a su nodo canónico (también los alias que nunca
+  // fueron un nodo propio, p. ej. 'AWS' → Amazon, usados en links y hechos).
+  // Quien enumere NODE_BY_ID para listar nodos debe filtrar NODE_BY_ID[k].id === k.
+  Object.keys(ALIAS).forEach(function (a) {
+    const c = NODE_BY_ID[resolveId(a)];
+    if (c && !NODE_BY_ID[a]) NODE_BY_ID[a] = c;
+  });
 
   // ── Estado en bolsa VERIFICADO (nodes/listing_status.js) ────────────────
   // El catálogo se escribió en una fecha y envejece: SpaceX figuraba como
