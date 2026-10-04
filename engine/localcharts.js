@@ -66,6 +66,7 @@
       mFnd: 'Año de fundación', mCnt: 'Empresas', mSup: 'Proveedores', mCli: 'Clientes', mPrice: 'Precio',
       riskOf: 'Riesgo de', riskBd: 'de qué se compone el NRS', lowerBetter: 'más alto = más riesgo',
       cryT: 'Top {n} cripto por capitalización', cryS: 'Miles de millones USD · verde = subió en 24 h',
+      cryHT: '{l} — precio, {p}', cryHCap: 'El historial gratuito llega a 12 meses (pediste {p}).', srcCryH: 'Fuente: CoinGecko (precio diario en USD)',
       topBy: 'Top {n} por {m}', botBy: '{n} con menor {m}', oldest: 'Las {n} más antiguas', newest: 'Las {n} más recientes',
       bySector: '{m} por sector', byCountry: '{m} por país', avgOf: 'promedio', sumOf: 'suma', cntOf: 'conteo',
       cmpS1: 'Valores reales del catálogo · ordenado de mayor a menor',
@@ -115,6 +116,7 @@
       mFnd: 'Year founded', mCnt: 'Companies', mSup: 'Suppliers', mCli: 'Customers', mPrice: 'Price',
       riskOf: 'Risk of', riskBd: 'what the NRS is made of', lowerBetter: 'higher = riskier',
       cryT: 'Top {n} crypto by market cap', cryS: 'USD billions · green = up in 24h',
+      cryHT: '{l} — price, {p}', cryHCap: 'Free history goes back 12 months (you asked for {p}).', srcCryH: 'Source: CoinGecko (daily price in USD)',
       topBy: 'Top {n} by {m}', botBy: '{n} with the lowest {m}', oldest: 'The {n} oldest', newest: 'The {n} newest',
       bySector: '{m} by sector', byCountry: '{m} by country', avgOf: 'average', sumOf: 'total', cntOf: 'count',
       cmpS1: 'Real catalog values · sorted high to low',
@@ -491,7 +493,11 @@
   function deriveIntent(P, t) {
     var nE = P.entities.length, ms = P.metrics;
     if (P.explain) return 'explain';
-    if (P.crypto) return 'rank';
+    if (P.crypto) {
+      // una moneda concreta con tiempo o "precio" → su historial; lo demás → ranking
+      var coinQ = cryptoCoinIn(P.query) || cryptoCoinIn(t);
+      return (coinQ && (P.timeframe || RE.trend.test(t) || ms.indexOf('price') >= 0)) ? 'trend' : 'rank';
+    }
     if (P.chart === 'heatmap' || (P.groupBy.length >= 2)) return 'cross';
     if (P.chart === 'histogram' || RE.distribution.test(t)) return 'distribution';
     if (P.chart === 'scatter' || RE.relation.test(t) ||
@@ -1107,6 +1113,45 @@
     }).catch(function () { return null; });
   }
 
+  var CRYPTO_ALIAS = { bitcoin: 'bitcoin', btc: 'bitcoin', ethereum: 'ethereum', eth: 'ethereum', ether: 'ethereum', solana: 'solana', sol: 'solana',
+    xrp: 'ripple', ripple: 'ripple', bnb: 'binancecoin', cardano: 'cardano', ada: 'cardano', dogecoin: 'dogecoin', doge: 'dogecoin',
+    tether: 'tether', usdt: 'tether', usdc: 'usd-coin', tron: 'tron', trx: 'tron', avalanche: 'avalanche-2', avax: 'avalanche-2',
+    polkadot: 'polkadot', dot: 'polkadot', chainlink: 'chainlink', link: 'chainlink', litecoin: 'litecoin', ltc: 'litecoin', monero: 'monero', xmr: 'monero' };
+  function cryptoCoinIn(text) {
+    var words = (text || '').toLowerCase().split(/[^a-z0-9]+/);
+    for (var i = 0; i < words.length; i++) { if (CRYPTO_ALIAS[words[i]]) return CRYPTO_ALIAS[words[i]]; }
+    return null;
+  }
+  // "precio de bitcoin de los últimos 5 años" → LÍNEA con el historial (no un ranking)
+  function buildCryptoHistoryAsync(P) {
+    var coin = cryptoCoinIn(P.text) || cryptoCoinIn(P.query);
+    var pick = coin ? Promise.resolve(coin) : _getCrypto().then(function (d) {
+      var lc = (P.text || '').toLowerCase();
+      var a = ((d && d.assets) || []).filter(function (x) { return x && x.id && (lc.indexOf(String(x.name || '').toLowerCase()) >= 0 || new RegExp('\\b' + String(x.symbol || '').toLowerCase() + '\\b').test(lc)); })[0];
+      return a ? a.id : null;
+    });
+    return pick.then(function (cid) {
+      if (!cid) return null;
+      var asked = P.timeframe ? P.timeframe.days : 365, days = Math.min(365, asked || 365);
+      return fetch((window.BASE || '') + '/api/crypto/' + encodeURIComponent(cid) + '/history?days=' + days)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var pr = (d && d.prices) || [];
+          if (pr.length < 5) return null;
+          var vals = pr.map(function (x) { return Math.round(+x[1] * 100) / 100; });
+          var labs = pr.map(function (x) { return _d(+x[0] / 1000); });
+          var up = vals[vals.length - 1] >= vals[0];
+          var pct = ((vals[vals.length - 1] / vals[0] - 1) * 100).toFixed(1);
+          var name = cid.charAt(0).toUpperCase() + cid.slice(1).replace(/-\d+$/, '');
+          var note = asked > 365 ? TT('cryHCap', { p: periodLabel(asked) }) : '';
+          return spec('line', TT('cryHT', { l: name, p: periodLabel(days) }),
+            TT('lineS', { a: (up ? '▲ +' : '▼ ') + pct + '%', d0: labs[0], d1: labs[labs.length - 1] }),
+            [{ label: name, values: vals, color: up ? GRN : RED }],
+            { series_labels: [name], labels: labs, unit: '$' }, TT('srcCryH'), note);
+        }).catch(function () { return null; });
+    });
+  }
+
   function buildCryptoAsync(P) {
     return _getCrypto().then(function (d) {
       var assets = (d && d.assets) || [];
@@ -1123,6 +1168,10 @@
   }
 
   function buildAsync(P) {
+    // una cripto concreta + tiempo/precio → su historial (antes caía al ranking "Top 10 cripto")
+    if (P.crypto && (cryptoCoinIn(P.text) || cryptoCoinIn(P.query)) && (P.intent === 'trend' || P.timeframe || P.metrics.indexOf('price') >= 0 || P.intent === 'single_metric')) {
+      return buildCryptoHistoryAsync(P).then(function (sp) { return sp || buildCryptoAsync(P); });
+    }
     if (P.crypto && (P.intent === 'rank' || P.intent === 'other' || P.intent === 'composition')) return buildCryptoAsync(P);
     if (P.intent === 'trend' || (P.intent === 'single_metric' && P.metrics.some(isFund)) ||
         (P.intent === 'compare' && P.metrics.length && P.metrics.every(function (k) { return isFund(k) || k === 'price'; }))) {
