@@ -42,13 +42,13 @@ _FALLBACK = {
         'Factor': {'economic': False}, 'Simulation': {'economic': False},
     },
     'relation_types': {
-        'supply': {'weight': 1.0, 'symmetric': False, 'structural': True},
-        'fab': {'weight': 1.0, 'symmetric': False, 'structural': True},
-        'cloud': {'weight': 0.9, 'symmetric': False, 'structural': True},
-        'license': {'weight': 0.8, 'symmetric': False, 'structural': True},
-        'ppa': {'weight': 0.7, 'symmetric': False, 'structural': True},
-        'owns': {'weight': 0.6, 'symmetric': False, 'structural': True},
-        'deploy': {'weight': 0.4, 'symmetric': False, 'structural': True},
+        'supply': {'weight': 1.0, 'symmetric': False, 'structural': True, 'flow': True},
+        'fab': {'weight': 1.0, 'symmetric': False, 'structural': True, 'flow': True},
+        'cloud': {'weight': 0.9, 'symmetric': False, 'structural': True, 'flow': True},
+        'license': {'weight': 0.8, 'symmetric': False, 'structural': True, 'flow': True},
+        'ppa': {'weight': 0.7, 'symmetric': False, 'structural': True, 'flow': True},
+        'owns': {'weight': 0.6, 'symmetric': False, 'structural': True, 'flow': True},
+        'deploy': {'weight': 0.4, 'symmetric': False, 'structural': True, 'flow': True},
         'partner': {'weight': 0.3, 'symmetric': True, 'structural': True},
         'invest': {'weight': 0.25, 'symmetric': False, 'structural': True},
     },
@@ -128,6 +128,55 @@ def relation_weights():
     return {k: float((v or {}).get('weight') or 0) for k, v in rt.items() if (v or {}).get('structural')}
 
 
+# ── relaciones de FLUJO (G4, misión de reparación 2026-10-04) ──────────────
+# "Proveedor" y "cliente" solo tienen sentido para relaciones que MUEVEN algo
+# del source al target (suministro, fabricación, nube, licencia, energía,
+# propiedad, despliegue). partner/invest son estructurales para las matrices
+# pero NO son cadena de suministro: Equinix listaba a Colliers/Fitch/Carlyle
+# como "top_suppliers" por ser `partner`, y el NRS contaba socios y duplicados
+# como si fueran proveedores. Este es el ÚNICO registro de ese conjunto: el
+# MCP (mcp_server/tools.py), el NRS del servidor (ontology/agents.py) y el
+# grado del catálogo (core/world.py) lo leen de aquí; el cliente (app.html
+# `_buildNrsDegree`) lleva la misma lista con un comentario que apunta acá.
+_FLOW_FALLBACK = ('supply', 'fab', 'cloud', 'license', 'ppa', 'owns', 'deploy')
+
+
+def flow_relation_types():
+    """Relaciones de FLUJO (flow=true en vocabulary.json), en el orden del
+    JSON. Si el JSON no marca ninguna (versión vieja), cae a la lista histórica
+    para que proveedor/cliente nunca queden vacíos."""
+    rt = relation_types_all()
+    flow = [k for k, v in rt.items() if (v or {}).get('structural') and (v or {}).get('flow')]
+    return flow or list(_FLOW_FALLBACK)
+
+
+def is_flow_relation(rel):
+    return (rel or 'supply') in flow_relation_types()
+
+
+def flow_degree(links):
+    """Grado ESTRUCTURAL por nodo: número de pares distintos source→target
+    unidos por una relación de flujo (un par con supply+fab cuenta UNA vez;
+    partner/invest/affects/about no cuentan). Acepta dicts {source,target,type}
+    o {s,t,type}. Es la misma regla que app.html `_buildNrsDegree` y que
+    `ontology.agents._compute_server_nrs` (COUNT DISTINCT en SQL)."""
+    flow = set(flow_relation_types())
+    deg, seen = {}, set()
+    for lk in links or []:
+        s = lk.get('source', lk.get('s'))
+        t = lk.get('target', lk.get('t'))
+        if not s or not t or s == t:
+            continue
+        if (lk.get('type') or 'supply') not in flow:
+            continue
+        if (s, t) in seen:
+            continue
+        seen.add((s, t))
+        deg[s] = deg.get(s, 0) + 1
+        deg[t] = deg.get(t, 0) + 1
+    return deg
+
+
 def symmetric_relations():
     rt = relation_types_all()
     return {k for k, v in rt.items() if (v or {}).get('symmetric')}
@@ -176,6 +225,7 @@ def snapshot():
         'economic_types': list(economic_types()),
         'relation_types': relation_types_all(),
         'structural_relations': relation_types(),
+        'flow_relations': flow_relation_types(),
         'relation_weights': relation_weights(),
         'symmetric_relations': sorted(symmetric_relations()),
         'source_kinds': source_kinds(),

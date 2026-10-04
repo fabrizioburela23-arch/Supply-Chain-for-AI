@@ -258,17 +258,28 @@ def _snapshot():
             snap = json.load(fh)
         nodes = {n['id']: n for n in snap.get('nodes') or [] if n.get('id')}
         out_e, in_e, deg = {}, {}, {}
+        kept = []
         for lk in snap.get('links') or []:
             s, t = lk.get('source'), lk.get('target')
             if s not in nodes or t not in nodes:
                 continue
-            e = {'source': s, 'target': t, 'w': lk.get('w'), 'rel': lk.get('rel'), 'type': lk.get('type')}
+            typ = lk.get('type') or 'supply'
+            verified, conf = _link_trust(lk.get('rel'), lk)
+            e = {'source': s, 'target': t, 'w': lk.get('w'), 'rel': lk.get('rel'), 'type': typ,
+                 'relation_class': relation_class(typ), 'verified': verified, 'confidence': conf}
+            if lk.get('since'):
+                e['since'] = lk.get('since')
+            kept.append(e)
             out_e.setdefault(s, []).append(e)
             in_e.setdefault(t, []).append(e)
             deg[s] = deg.get(s, 0) + 1
             if t != s:
                 deg[t] = deg.get(t, 0) + 1
-        _SNAP['data'] = {'nodes': nodes, 'out': out_e, 'in': in_e, 'deg': deg,
+        # grado ESTRUCTURAL (G4d): pares distintos unidos por relaciones de
+        # flujo — el que usa el NRS. `deg` (todo tipo, con duplicados) se
+        # conserva para ordenar búsquedas y para `degree` de las fichas.
+        from ontology import vocabulary as _vocab
+        _SNAP['data'] = {'nodes': nodes, 'out': out_e, 'in': in_e, 'deg': deg, 'flow_deg': _vocab.flow_degree(kept),
                          'sectors': snap.get('sectors9') or {}, 'cats': snap.get('categories') or {},
                          'preipo': snap.get('preipo_intel') or {}, 'as_of': snap.get('exported_at'),
                          'counts': snap.get('counts') or {}}
@@ -298,6 +309,75 @@ def _private_valuations():
 
 
 SNAPSHOT_SOURCE = 'Khipus supply-chain graph snapshot (data/grafo_v0.json, curated catalog)'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# clase, confianza y tipo de cada arista (G4 · misión de reparación 2026-10-04)
+# ════════════════════════════════════════════════════════════════════════════
+# Visto en producción: get_supply_chain('Equinix') listaba a Colliers / Fitch /
+# Carlyle / C&W (tipo `partner`) como "top_suppliers". Un socio o un
+# accionista NO es un proveedor: solo las relaciones de FLUJO (vocabulary.json
+# flow=true: supply, fab, cloud, license, ppa, owns, deploy) mueven algo del
+# source al target. partner/invest van en `related`, misma forma.
+RELATED_TYPES = ('partner', 'invest')
+
+# Clase legible de la relación, derivada del `type` del catálogo. Es un mapa
+# cerrado y explícito (lo desconocido → 'other', nunca se adivina):
+#   supply    el source entrega un bien/servicio (supply, cloud, license)
+#   fab       el source fabrica para el target
+#   customer  el source DESPLIEGA su producto en el target (el target es su cliente)
+#   invest    capital/propiedad (invest, owns)
+#   ppa       energía contratada (power purchase agreement)
+#   partner   alianza sin flujo de suministro
+#   coverage  conocimiento sobre la entidad (noticias, informes, 'about')
+#   competitor
+RELATION_CLASS = {
+    'supply': 'supply', 'cloud': 'supply', 'license': 'supply',
+    'fab': 'fab',
+    'deploy': 'customer',
+    'invest': 'invest', 'owns': 'invest',
+    'ppa': 'ppa',
+    'partner': 'partner',
+    'reports_on': 'coverage', 'about': 'coverage',
+    'compite': 'competitor', 'competitor': 'competitor',
+}
+
+
+def relation_class(rel_type):
+    return RELATION_CLASS.get(rel_type or 'supply', 'other')
+
+
+def flow_types():
+    """Tipos de FLUJO (= proveedor/cliente), leídos del vocabulario."""
+    from ontology import vocabulary as _vocab
+    return tuple(_vocab.flow_relation_types())
+
+
+# Confianza de una arista a partir de su texto. 22+ links del catálogo dicen
+# "no verificado"/"posible"/"sin confirmar" en `rel` y pesaban igual que los
+# verificados. La MISMA regex vive en nodes/merge_graph.js (que exporta
+# conf/verified al snapshot); aquí es el RESPALDO para snapshots que aún no
+# traen esos campos. Si el link ya los trae, se respetan.
+_UNVERIFIED_RX = re.compile(r'no verificad|no revisad|posible(mente)?|sin confirmar', re.I)
+UNVERIFIED_CONF = 0.3
+
+
+def _link_trust(rel, link=None):
+    """→ (verified: bool, confidence: float 0-1)."""
+    link = link or {}
+    conf, ver = link.get('conf'), link.get('verified')
+    if conf is not None or ver is not None:
+        try:
+            conf = None if conf is None else max(0.0, min(1.0, float(conf)))
+        except (TypeError, ValueError):
+            conf = None
+        if ver is None:
+            ver = conf is None or conf >= 1.0
+        if conf is None:
+            conf = 1.0 if ver else UNVERIFIED_CONF
+        return bool(ver), conf
+    unverified = bool(_UNVERIFIED_RX.search(str(rel or '')))
+    return (not unverified), (UNVERIFIED_CONF if unverified else 1.0)
 
 
 def _resolve(text, umbral=60):
@@ -378,12 +458,24 @@ def _search(query, limit=10):
     return out
 
 
-def _edges(nid, direction, min_w=0.0):
+def _edges(nid, direction, min_w=0.0, kinds=None):
+    """Aristas de `nid` ('up' = entrantes, 'down' = salientes) con peso ≥ min_w.
+    `kinds` (iterable de `type`) filtra por tipo; None = todos (G4a)."""
     snap = _snapshot()
     lst = snap['in'].get(nid, []) if direction == 'up' else snap['out'].get(nid, [])
-    out = [e for e in lst if (e.get('w') or 0) >= min_w]
+    ks = None if kinds is None else set(kinds)
+    out = [e for e in lst if (e.get('w') or 0) >= min_w and (ks is None or (e.get('type') or 'supply') in ks)]
     out.sort(key=lambda e: (-(e.get('w') or 0), e['source'], e['target']))
     return out
+
+
+def _neighbor(e, nid):
+    """Arista vista desde `nid`: la otra punta + peso/relación/clase/confianza."""
+    other = e['target'] if e['source'] == nid else e['source']
+    return {'id': other, 'label': (_snapshot()['nodes'].get(other) or {}).get('label'), 'weight': e['w'],
+            'relation': e['rel'], 'type': e['type'], 'relation_class': e['relation_class'],
+            'verified': e['verified'], 'confidence': e['confidence'],
+            'direction': 'up' if e['target'] == nid else 'down'}
 
 
 def _nrs(nid, node):
@@ -405,8 +497,9 @@ def _nrs(nid, node):
             log.info('mcp nrs server: %s', type(e).__name__)
     try:
         from core.world import client_nrs
-        return {'value': client_nrs(node, _snapshot()['deg'].get(nid, 0)),
-                'method': 'catalog formula (same as the app computeNRS)', 'explain': expl}
+        return {'value': client_nrs(node, _snapshot()['flow_deg'].get(nid, 0)),
+                'method': 'catalog formula (same as the app computeNRS; structural degree = flow relations, '
+                          'distinct pairs)', 'explain': expl}
     except Exception as e:  # noqa: BLE001
         return {'value': None, 'method': 'unavailable', 'error': type(e).__name__, 'explain': expl}
 
@@ -488,13 +581,22 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
     else:
         out['live_market'] = {'available': False, 'reason': 'not a listed company (no exchange price exists)'}
     out['network_risk_score'] = _nrs(nid, n)
-    ups, downs = _edges(nid, 'up'), _edges(nid, 'down')
-    nodes = snap['nodes']
-    out['top_suppliers'] = [{'id': x['source'], 'label': (nodes.get(x['source']) or {}).get('label'), 'weight': x['w'],
-                             'relation': x['rel'], 'type': x['type']} for x in ups[:10]]
-    out['top_customers'] = [{'id': x['target'], 'label': (nodes.get(x['target']) or {}).get('label'), 'weight': x['w'],
-                             'relation': x['rel'], 'type': x['type']} for x in downs[:10]]
-    out['counts'] = {'suppliers': len(ups), 'customers': len(downs)}
+    # G4a: proveedores/clientes = SOLO relaciones de flujo; socios e inversores
+    # (partner/invest) van en `related` con la misma forma. Antes Equinix tenía
+    # a Colliers/Fitch/Carlyle como "top_suppliers" por ser `partner`.
+    fl = flow_types()
+    ups, downs = _edges(nid, 'up', kinds=fl), _edges(nid, 'down', kinds=fl)
+    rel = _edges(nid, 'up', kinds=RELATED_TYPES) + _edges(nid, 'down', kinds=RELATED_TYPES)
+    rel.sort(key=lambda e: (-(e.get('w') or 0), e['source'], e['target']))
+    out['top_suppliers'] = [_neighbor(x, nid) for x in ups[:10]]
+    out['top_customers'] = [_neighbor(x, nid) for x in downs[:10]]
+    out['related'] = [_neighbor(x, nid) for x in rel[:10]]
+    out['counts'] = {'suppliers': len(ups), 'customers': len(downs), 'related': len(rel)}
+    out['edge_semantics'] = {'flow_types': list(fl), 'related_types': list(RELATED_TYPES),
+                             'note': 'top_suppliers/top_customers list only FLOW relations (goods, fab, cloud, '
+                                     'license, power, ownership, deployment). partner/invest are in `related`. '
+                                     'verified=false / confidence=0.3 when the curated text says the link is '
+                                     'unverified or only possible.'}
     out['as_of'] = _now_iso()
     out['sources'] = ['Khipus graph snapshot', 'nodes/private_valuations.js (verified)',
                       'live profile: ' + str((out.get('live_market') or {}).get('source') or 'n/a')]
@@ -503,15 +605,22 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
 
 @tool('get_supply_chain', 'Supply-chain neighborhood', 'read',
       'Suppliers (direction "up"), customers ("down") or both of a company in the Khipus graph, up to 2 hops. '
-      'Edge convention: source SUPPLIES target; weight w (1-3+) is the dependency strength curated by Khipus.',
+      'Edge convention: source SUPPLIES target; weight w (1-3+) is the dependency strength curated by Khipus. '
+      '`edges` holds FLOW relations only (supply, fab, cloud, license, ppa, owns, deploy); partners and '
+      'investors are listed separately in `related` (include_partners=true also puts them in `edges`). Each edge '
+      'carries relation_class, verified and confidence.',
       {'id': {'type': 'string', 'maxLength': 120, 'minLength': 1, 'description': 'Graph id, ticker or name.'},
        'direction': {'type': 'string', 'enum': ['up', 'down', 'both'], 'default': 'both'},
        'depth': {'type': 'integer', 'minimum': 1, 'maximum': 2, 'default': 1},
        'min_weight': {'type': 'number', 'minimum': 0, 'maximum': 10, 'default': 0},
        'limit': {'type': 'integer', 'minimum': 1, 'maximum': 60, 'default': 25,
-                 'description': 'Max neighbors per node and direction.'}},
+                 'description': 'Max neighbors per node and direction.'},
+       'include_partners': {'type': 'boolean', 'default': False,
+                            'description': 'Also put partner/invest relations in `edges` (they are always '
+                                           'listed in `related`). Default false: edges = flow relations only.'}},
       required=['id'])
-def t_get_supply_chain(ctx, id, direction='both', depth=1, min_weight=0, limit=25):  # noqa: A002
+def t_get_supply_chain(ctx, id, direction='both', depth=1, min_weight=0, limit=25,  # noqa: A002
+                       include_partners=False):
     r = _resolve_or_fail(id)
     snap = _snapshot()
     root = r['id']
@@ -520,10 +629,13 @@ def t_get_supply_chain(ctx, id, direction='both', depth=1, min_weight=0, limit=2
     edges, ekeys = [], set()
     frontier = [(root, d) for d in dirs]
     truncated = False
+    fl = flow_types()
+    kinds = None if include_partners else fl
+    min_w = float(min_weight or 0)
     for hop in range(1, depth + 1):
         nxt = []
         for nid, d in frontier:
-            lst = _edges(nid, d, float(min_weight or 0))
+            lst = _edges(nid, d, min_w, kinds=kinds)
             if len(lst) > limit:
                 truncated = True
             for e in lst[:limit]:
@@ -545,9 +657,23 @@ def t_get_supply_chain(ctx, id, direction='both', depth=1, min_weight=0, limit=2
         b['hop'] = hop
         nodes.append(b)
     nodes.sort(key=lambda b: (b['hop'], -b['degree']))
+    # socios e inversores de la RAÍZ (un salto), siempre aparte y con la misma
+    # forma que `edges`; con include_partners también entran en `edges`.
+    related = []
+    for d in dirs:
+        for e in _edges(root, d, min_w, kinds=RELATED_TYPES)[:limit]:
+            related.append(dict(e, hop=1, direction=d))
     return {'root': root, 'label': (snap['nodes'].get(root) or {}).get('label'), 'direction': direction,
-            'depth': depth, 'min_weight': min_weight, 'nodes': nodes, 'edges': edges, 'truncated': truncated,
-            'convention': 'edge source SUPPLIES target', 'source': SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
+            'depth': depth, 'min_weight': min_weight, 'include_partners': bool(include_partners),
+            'nodes': nodes, 'edges': edges, 'related': related,
+            'counts': {'nodes': len(nodes), 'edges': len(edges), 'related': len(related)},
+            'truncated': truncated,
+            'convention': 'edge source SUPPLIES target',
+            'edge_semantics': {'flow_types': list(fl), 'related_types': list(RELATED_TYPES),
+                               'relation_class': 'supply|fab|customer|invest|ppa|partner|coverage|competitor|other',
+                               'verified': 'false (confidence 0.3) when the curated text says the link is '
+                                           'unverified or only possible'},
+            'source': SNAPSHOT_SOURCE, 'as_of': snap['as_of']}
 
 
 # ════════════════════════════════════════════════════════════════════════════
