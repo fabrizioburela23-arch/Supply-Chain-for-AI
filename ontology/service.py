@@ -40,6 +40,8 @@ def is_genesis(dt):
     if dt is None:
         return False
     if isinstance(dt, datetime):
+        if dt.tzinfo is not None:          # revisión: una sesión con otra zona horaria lo devolvía como 1999-12-31
+            dt = dt.astimezone(timezone.utc)
         return dt.date().isoformat() == GENESIS_SENTINEL
     if isinstance(dt, date):
         return dt.isoformat() == GENESIS_SENTINEL
@@ -160,6 +162,10 @@ def _dedup_link_payload(session, payload, source_id, target_id, valid_from=None)
     twins = session.scalars(q.order_by(LinkRecord.valid_from)).all()
     twin = next((t for t in twins if _same_weight(t.weight, payload.get('weight'))), None)
     if twin is not None:
+        if not twin.event_id:              # fila heredada: se empareja YA con su evento (G5, revisión)
+            cev = _creation_event_for(session, twin)
+            if cev is not None:
+                twin.event_id = cev.id
         props['dedup_of'] = str(twin.id)
         if twin.event_id:
             props['dedup_event_id'] = str(twin.event_id)
@@ -178,17 +184,64 @@ def _creation_event_for(session, link):
     taken = {str(r.event_id) for r in session.scalars(select(LinkRecord).where(
         LinkRecord.source_id == link.source_id, LinkRecord.target_id == link.target_id,
         LinkRecord.event_id.isnot(None))).all()}
+    # G5 (revisión adversarial): entre los candidatos, preferir el evento cuyas
+    # propiedades son las de ESTA fila (dos filas con el mismo peso pero distinto
+    # texto — p. ej. una "no verificado" — no son intercambiables).
+    lp = dict(link.properties or {})
+    best, best_score = None, -1
     for ev in cands:
         p = ev.payload or {}
         rel = p.get('rel_type') or p.get('type') or 'supply'
         if rel != link.rel_type or not _same_weight(p.get('weight'), link.weight):
             continue
-        if (p.get('properties') or {}).get('dedup_of'):
+        ep = p.get('properties') or {}
+        if ep.get('dedup_of') or str(ev.id) in taken:
             continue
-        if str(ev.id) in taken:
+        if ev.valid_to != link.valid_to and link.valid_to is None and ev.valid_to is not None:
             continue
-        return ev
-    return None
+        score = 2 if ep == lp else (1 if ep.get('rel_label') == lp.get('rel_label') else 0)
+        if score > best_score:
+            best, best_score = ev, score
+            if score == 2:
+                break
+    return best
+
+
+def _promote_dedup(session, rid):
+    """G5 (revisión adversarial): al retractar la creación `rid`, un LinkCreated
+    INDEPENDIENTE que se había deduplicado contra ella (otra fuente afirmó lo
+    mismo) deja de ser un no-op: el más antiguo pasa a tener su propia fila.
+    El replay (_links_active_at) aplica la misma regla."""
+    dups = _dedup_events_for(session, {str(rid)}).get(str(rid))
+    if not dups:
+        return
+    d = dups[0]
+    p = d.payload or {}
+    props = {k: v for k, v in (p.get('properties') or {}).items() if k not in ('dedup_of', 'dedup_event_id')}
+    session.add(LinkRecord(id=uuid.uuid4(), source_id=d.object_id, target_id=d.target_id,
+                           rel_type=p.get('rel_type') or p.get('type') or 'supply', weight=p.get('weight'),
+                           properties=props, valid_from=d.valid_from, valid_to=d.valid_to, event_id=d.id))
+
+
+def _dedup_events_for(session, rids):
+    """{rid: [eventos LinkCreated dedup_of de esa creación, más antiguo primero]}."""
+    if not rids:
+        return {}
+    evs = session.scalars(select(Event).where(
+        Event.event_type == EventType.LINK_CREATED.value,
+        Event.payload['properties']['dedup_event_id'].astext.in_(list(rids)))
+        .order_by(Event.recorded_at, Event.id)).all()
+    out = {}
+    for e in evs:
+        out.setdefault(((e.payload or {}).get('properties') or {}).get('dedup_event_id'), []).append(e)
+    return out
+
+
+def _uuid_str(x):
+    try:
+        return str(uuid.UUID(str(x)))
+    except (TypeError, ValueError):
+        return str(x)
 
 
 def _materialize(session, ev):
@@ -254,6 +307,8 @@ def _materialize(session, ev):
                         r.event_id = cev.id
             for r in rows:
                 r.valid_to = ev.valid_from
+            if rows:
+                _promote_dedup(session, rid_u)
             return
         rel_type = p.get('rel_type') or p.get('type')
         q = select(LinkRecord).where(
@@ -341,16 +396,18 @@ def _links_active_at(session, as_of_dt):
     for ev in removed:
         rid = ((ev.payload or {}).get('properties') or {}).get('retracts_event_id')
         if rid:
-            directed[str(rid)] = ev.valid_from
+            directed[_uuid_str(rid)] = ev.valid_from     # G5: UUID normalizado como en _materialize
             continue
         rel = (ev.payload or {}).get('rel_type') or (ev.payload or {}).get('type')
-        removals.setdefault((ev.object_id, ev.target_id), []).append((ev.valid_from, rel))
+        removals.setdefault((ev.object_id, ev.target_id), []).append((ev.valid_from, rel, ev.recorded_at))
+    # G5: deduplicadas cuya creación original fue retractada → la más antigua "asciende"
+    promoted = {d[0].id for d in _dedup_events_for(session, set(directed)).values() if d}
 
     active = []
     for ev in created:
         p = ev.payload or {}
         rel = p.get('rel_type') or p.get('type') or 'supply'
-        if (p.get('properties') or {}).get('dedup_of'):
+        if (p.get('properties') or {}).get('dedup_of') and ev.id not in promoted:
             continue                                   # G2: creación duplicada = no-op
         if str(ev.id) in directed and directed[str(ev.id)] <= as_of_dt:
             continue                                   # G2: retractada exactamente esta creación
@@ -358,10 +415,14 @@ def _links_active_at(session, as_of_dt):
         if ev.valid_to is not None and ev.valid_to <= as_of_dt:
             continue
         # una remoción solo mata creaciones ANTERIORES a ella: si el vínculo se
-        # re-creó después de la remoción, sigue vigente en as_of.
+        # re-creó después de la remoción, sigue vigente en as_of. G5: "anterior"
+        # también en tiempo de REGISTRO — una re-creación registrada DESPUÉS de
+        # la remoción (fusión, reconciliación, deshacer) no muere aunque su
+        # valid_from sea viejo; igual que en las tablas.
         rms = removals.get((ev.object_id, ev.target_id), [])
         if any(rm_rel in (None, rel) and ev.valid_from <= rm_at <= as_of_dt
-               for rm_at, rm_rel in rms):
+               and (ev.recorded_at is None or rm_rec is None or ev.recorded_at <= rm_rec)
+               for rm_at, rm_rel, rm_rec in rms):
             continue
         row = {
             'source': ev.object_id, 'target': ev.target_id, 'rel_type': rel,

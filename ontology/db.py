@@ -175,7 +175,7 @@ def init_schema(retries=6, delay=2.0):
         import research.models  # noqa: F401 — Phase 2: registra research_* en el mismo Base
     except Exception as e:  # noqa: BLE001
         log.warning('init_schema: research.models no cargó (%s)', type(e).__name__)
-    for _m in ('brokerage.models', 'mcp_server.models'):   # Phase 3 (2026-09-30), opcionales
+    for _m in ('brokerage.models', 'mcp_server.models', 'core.ops_check'):   # Phase 3 + O1 (ops_checks), opcionales
         try:
             __import__(_m)
         except Exception as e:  # noqa: BLE001
@@ -188,11 +188,23 @@ def init_schema(retries=6, delay=2.0):
             Base.metadata.create_all(engine)
 
             with engine.begin() as conn:
+                # G5 (revisión de despliegue): ALTER TABLE … IF NOT EXISTS toma un candado
+                # ACCESS EXCLUSIVE AUNQUE la columna exista — en cada arranque, con el
+                # contenedor viejo atendiendo. Solo se altera lo que falta, y con un
+                # lock_timeout corto: si una transacción larga tiene la tabla, se reintenta.
+                conn.execute(text("SET LOCAL lock_timeout = '5s'"))
+                existentes = {(t, c) for t, c in conn.execute(text(
+                    "SELECT table_name, column_name FROM information_schema.columns "
+                    "WHERE table_schema = current_schema()")).all()}
                 for tabla, columna, tipo in _COLUMNAS_TARDIAS:
-                    conn.execute(text(
-                        f'ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo}'))
-                conn.execute(text(
-                    'CREATE INDEX IF NOT EXISTS ix_events_source_id ON events (source_id)'))
+                    if (tabla, columna) not in existentes:
+                        conn.execute(text(f'ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo}'))
+                indices = {n for (n,) in conn.execute(text(
+                    "SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()")).all()}
+                if 'ix_events_source_id' not in indices:
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_events_source_id ON events (source_id)'))
+                if 'ix_links_event_id' not in indices:   # G5: la retracción dirigida busca por event_id
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_links_event_id ON links (event_id)'))
 
             if intento > 1:
                 log.warning('init_schema: OK en el intento %d (la base tardó en arrancar)', intento)

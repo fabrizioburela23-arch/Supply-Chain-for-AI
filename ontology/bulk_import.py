@@ -116,11 +116,20 @@ def import_links_bulk(session, records, provenance, batch_size=1000,
                 seen.add(('ext', provenance, str(props['external_id'])))
             seen.add(('triple', l.source_id, l.target_id, l.rel_type))
 
+    # G5 (revisión): un vínculo VIGENTE idéntico (mismo par, relación y peso) de
+    # CUALQUIER fuente ya cubre el registro — antes se escribía un evento no-op
+    # (dedup_of) en cada re-ejecución y 'created' contaba algo que no se creó.
+    from ontology.service import _same_weight
+    vig = {}
+    for l in session.scalars(select(LinkRecord).where(LinkRecord.valid_to.is_(None))).all():
+        vig.setdefault((l.source_id, l.target_id, l.rel_type), []).append(l.weight)
+
     created, skipped, batches = 0, 0, 0
     batch = []
     for rec in accepted:
         key = _idempotency_key(rec, provenance)
-        if key in seen:
+        if key in seen or any(_same_weight(w, rec['weight'])
+                              for w in vig.get((rec['source'], rec['target'], rec['rel_type']), [])):
             skipped += 1
             continue
         seen.add(key)

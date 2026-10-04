@@ -379,20 +379,27 @@ def fusionar_entidad(session, inp: FusionarEntidadInput, actor, source='manual')
         (LinkRecord.source_id == inp.alias_id) | (LinkRecord.target_id == inp.alias_id),
         LinkRecord.valid_to.is_(None))).all()
     moved, dropped = 0, 0
+    prev_alias = {k: (alias.properties or {}).get(k) for k in ('retired', 'merged_into', 'retired_razon')}
+    prev_aliases = list((canon.properties or {}).get('aliases') or [])
     for link in links:
         src = inp.canonical_id if link.source_id == inp.alias_id else link.source_id
         tgt = inp.canonical_id if link.target_id == inp.alias_id else link.target_id
-        retractar_vinculo(session, RetractarVinculoInput(link_id=str(link.id), razon=f'fusión en {inp.canonical_id}: {inp.razon}'),
-                          actor, source=source, log=False)
+        r = retractar_vinculo(session, RetractarVinculoInput(link_id=str(link.id), razon=f'fusión en {inp.canonical_id}: {inp.razon}'),
+                              actor, source=source, log=False)
         if src == tgt:
             dropped += 1                      # un vínculo alias↔canónico desaparece (sería un bucle)
             continue
+        cev = session.get(Event, uuid.UUID(r['retracted_event_id']))
         props = dict(link.properties or {})
         props.update({'merged_from': inp.alias_id, 'merge_reason': inp.razon[:300]})
+        if cev is not None and cev.source:
+            props.setdefault('orig_channel', cev.source)     # G5: el canal original queda registrado
         apply_event(session, 'LinkCreated', {'rel_type': link.rel_type, 'weight': link.weight, 'properties': props},
-                    valid_from=link.valid_from, source=source, actor=actor, object_id=src, target_id=tgt)
+                    valid_from=link.valid_from, source=source, actor=actor,      # vigente: sin valid_to
+                    object_id=src, target_id=tgt,
+                    source_id=getattr(cev, 'source_id', None), confidence=getattr(cev, 'confidence', None))
         moved += 1
-    aliases = list((canon.properties or {}).get('aliases') or [])
+    aliases = list(prev_aliases)
     if inp.alias_id not in aliases:
         aliases.append(inp.alias_id)
     apply_event(session, 'ObjectUpdated', {'properties': {'retired': True, 'merged_into': inp.canonical_id,
@@ -401,7 +408,8 @@ def fusionar_entidad(session, inp: FusionarEntidadInput, actor, source='manual')
     apply_event(session, 'ObjectUpdated', {'properties': {'aliases': aliases}},
                 valid_from=_utcnow(), source=source, actor=actor, object_id=inp.canonical_id)
     _log_action(session, 'FusionarEntidad', inp.canonical_id, inp.alias_id,
-                {'alias_id': inp.alias_id, 'razon': inp.razon, 'links_moved': moved, 'links_dropped': dropped},
+                {'alias_id': inp.alias_id, 'razon': inp.razon, 'links_moved': moved, 'links_dropped': dropped,
+                 'prev_alias_props': prev_alias, 'prev_canon_aliases': prev_aliases},   # G5: para deshacer exacto
                 actor, source=source)
     return {'alias_id': inp.alias_id, 'canonical_id': inp.canonical_id, 'links_moved': moved, 'links_dropped': dropped,
             'alias_label': alias.label}

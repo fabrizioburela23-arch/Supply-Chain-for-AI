@@ -816,6 +816,68 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 
 ---
 
+### G5 — Revisión adversarial de G2/G3 (lentes "ontología" y "despliegue"): 20 hallazgos, todos corregidos
+- **Síntoma.** Antes de desplegar, tres revisores independientes atacaron G1-G4/W1.
+  La lente "ontología" encontró 13 defectos en la corrección por eventos y la de
+  "despliegue" 8 (uno se solapa). Los graves: (ALTA) una fila heredada se
+  emparejaba con el evento de su GEMELA (tablas ≠ replay); (ALTA) dos "deshacer"
+  simultáneos duplicaban miles de filas; deshacer resucitaba vínculos que una
+  persona rechazó DESPUÉS; una re-creación con fecha vieja quedaba invisible en
+  el replay; un hecho independiente deduplicado desaparecía si su gemela se
+  retractaba; deshacer una fusión "revivía" empresas en quiebra; la fusión
+  perdía documento de procedencia y confianza; reconcile podía aplicarse sin
+  PIN si faltaba TRADE_PIN; el plan anónimo con `fresh=1` podía saturar el
+  servidor; cada arranque tomaba un candado EXCLUSIVO sobre `links`.
+- **Cambios.** `ontology/service.py`: emparejamiento por propiedades
+  (`_creation_event_for`), `dedup_event_id` siempre (también con filas
+  heredadas), ascenso del hecho deduplicado al retractar su gemela
+  (`_promote_dedup`, igual en el replay), replay que respeta el orden de
+  REGISTRO de una remoción no dirigida, UUID normalizado, `is_genesis` en UTC.
+  `ontology/actions.py`: la fusión copia `source_id`/`confidence`/canal y guarda
+  el estado previo del alias. `ontology/reconcile.py`: candado de Postgres
+  (`pg_try_advisory_lock`) para aplicar y deshacer, `expect` (se aplica SOLO el
+  plan revisado), no se proponen como faltantes los pares rechazados por una
+  persona (`missing_rejected`), los ítems con canónico ausente van a
+  `objects_missing`, la copia que se conserva es la del texto del catálogo,
+  fallo a mitad → respuesta parcial CON run_id, errores ES/EN, sin rutas del
+  servidor en el plan. Deshacer: no reabre lo que la misma corrida creó y
+  retractó, ni lo que alguien cerró después; restaura el estado exacto de la
+  fusión. `ontology/api.py`: PIN de operador CONFIGURADO obligatorio (sin
+  TRADE_PIN → 403), tipos validados, `fresh=1` solo con PIN, un solo cálculo
+  del plan a la vez. `ontology/db.py`: las columnas tardías solo se alteran si
+  faltan (`lock_timeout` 5 s), índice `ix_links_event_id`.
+  `ontology/bulk_import.py`: idempotente contra un vínculo idéntico de
+  cualquier fuente (sin eventos no-op). `engine/reconcile.js`: re-pide el plan
+  con PIN antes de aplicar y se niega si cambió; reabre siempre el plan actual.
+- **Verificar.** `pytest tests/test_repair_ontology_review.py` (15): sin G5 fallan
+  los 15. Todo G2/G3 sigue verde (29 con los de antes).
+
+### G6 — Revisión adversarial de G4 (lente "contratos"): el mismo NRS en todas partes, el chat ve todo
+- **Hallazgos y cambios.** (media) El chat (`rank_companies`), el asistente de
+  carteras (`core/portfolio_ai.py`) y Second Brain calculaban el NRS con el
+  grado viejo (todas las relaciones): ahora usan el grado ESTRUCTURAL igual que
+  la app, el MCP y el servidor. (media) `get_company` creció y el chat lo cortaba
+  a 7.000 caracteres: perdía la mitad de los clientes; `_compact_for_chat`
+  quita lo que no aporta antes de cortar (todos los clientes y proveedores
+  caben). (media) Un vínculo "posible…" CONFIRMADO por una persona seguía
+  descontado al 30 %: `status: confirmed` lo libera. (media) Un id viejo
+  (alias) en la cartera o un hecho daba NRS 0-vínculos y un panel vacío:
+  `_canonId` en `computeNRS`, desglose, `selectNode` y `renderDetail`. (baja)
+  "% exacto no verificado" (accionistas documentados por 13F) y "posible
+  duplicado" (nota del nodo) ya no marcan la RELACIÓN como no verificada
+  (`UNVERIFIED_QUALIFIER_RX`, gemela JS idéntica): 25 → 10 vínculos. (baja)
+  `owns` → `relation_class: 'ownership'` (era 'invest' dentro de proveedores).
+  (baja) Las conclusiones guardadas con un id que luego se fusionó siguen
+  apareciendo (`core.entities.entity_ids_for`, en X-Ray, MCP, comité y contexto).
+- **Límite conocido (documentado, no cambiado).** En el motor de matrices el
+  descuento por "no verificado" solo actúa cuando hay más de un proveedor del
+  mismo tipo: con un proveedor ÚNICO no verificado la columna se normaliza a 1 y
+  la cascada sigue al 100 % × criticidad. Cambiarlo exige una segunda matriz de
+  pesos sin descuento en el núcleo numérico (equivalencia densa/sparse); no
+  es una regresión (antes de G4 no había descuento) y se deja para una
+  revisión del motor.
+- **Verificar.** `pytest tests/test_repair_graph.py -k "revision"` (5).
+
 ## P2 · World Monitor
 
 ### W1 — GDELT respondía 404: pausa honesta de 1 h, capas curadas declaradas como curadas, precalentado
@@ -843,4 +905,38 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_world.py` (11): sin el cambio fallan
   los 11. Si GDELT movió la API, la dirección se cambia SIN tocar código con
   `WORLD_GDELT_GEO_URL` en Railway.
+
+## P2 · Operación
+
+### O1 — Humo del despliegue VIVO + chequeo guardado y consultable
+- **Síntoma.** ~60 tests del MCP con dobles, pero nada comprobaba el servidor
+  desplegado ni quedaba un "último chequeo" que mirar.
+- **Cambios.** `core/ops_check.py`: chequeo EN el servidor (base, catálogo,
+  proveedores de IA sin llamarlos, reloj, fuentes del World Monitor,
+  diferencias catálogo↔base de G3 y las 7 herramientas MCP de LECTURA llamadas
+  en proceso; cualquier herramienta que no sea de lectura se niega). Corre 5 min
+  después de cada arranque (= tras cada deploy) y luego 1×/día (tarea
+  `ops_daily_check`); se guarda en la tabla `ops_checks` (append-only).
+  `GET /api/ops/last_check` (sin PIN ni secretos) y `POST /api/ops/check` (PIN de
+  operador). `scripts/smoke_mcp.py`: el mismo humo contra el MCP público con un
+  token `kmcp_` de scope read — se NIEGA a correr si el token ve herramientas de
+  trading/investigación; código 0/1/2. `.github/workflows/smoke-mcp.yml`: lo
+  corre tras cada push a `main` SOLO si existe el secreto `KHIPU_MCP_TOKEN`
+  (sin él, no hace nada).
+- **Verificar.** `pytest tests/test_repair_ops.py` (6): humo contra un MCP real en
+  proceso (5 ok + 2 avisos sin base, cero llamadas con poder), negativa con token
+  de trading, cadencia arranque→diaria, guardado y lectura en Postgres, POST sin
+  PIN → 401.
+
+### O2 — Logs estructurados opcionales (`LOG_JSON=on`)
+- **Síntoma.** Logs de texto suelto: imposible filtrar por job, analista,
+  proveedor, costo o latencia en Railway.
+- **Cambios.** `core/logjson.py`: con `LOG_JSON=on` cada línea es JSON
+  (`ts, level, logger, msg` + `job_id, entity, agent` del contexto del hilo).
+  El contexto viaja a los hilos del pool de agentes (`core.ai_usage.bind`).
+  Eventos nuevos (solo en modo JSON): `ai_call` (proveedor, modelo, función,
+  quién, tokens, costo, ms, ok) en cada llamada registrada y
+  `research_job_start/end` (estado, segundos, error). Sin la variable NADA
+  cambia: mismos mensajes de texto, sin eventos extra.
+- **Verificar.** `pytest tests/test_repair_logs.py` (4).
 

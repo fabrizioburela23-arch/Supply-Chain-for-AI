@@ -98,10 +98,27 @@
     try {
       var r = await fetch(BASE + '/api/ontology/reconcile/plan?summary=1' + (fresh ? '&fresh=1' : ''));
       var d = await r.json().catch(function () { return {}; });
+      if (r.status === 503 && d.code === 'no_snapshot') { render(L('Falta el catálogo (data/grafo_v0.json) en el servidor.', 'The catalog (data/grafo_v0.json) is missing on the server.')); return; }
+      if (r.status === 503 && d.code === 'busy') { render(L('El plan se está calculando; reintenta en unos segundos.', 'The plan is being computed; retry in a few seconds.')); return; }
       if (r.status === 503) { render(L('Sin base de datos (DATABASE_URL): nada que comparar.', 'No database (DATABASE_URL): nothing to compare.')); return; }
-      if (!r.ok) { render(esc(d.error || ('HTTP ' + r.status))); return; }
+      if (!r.ok) { render(esc(errMsg(d, r.status))); return; }
       _plan = d; render();
     } catch (e) { render(esc(String(e && e.message || e))); }
+  }
+
+  function errMsg(d, status) {
+    d = d || {};
+    return (en() ? (d.error_en || d.error) : (d.error_es || d.error || d.error_en)) || ('HTTP ' + status);
+  }
+
+  // G5: antes de aplicar, se vuelve a pedir el plan (con PIN, recalculado) y se
+  // compara con lo que la persona está viendo; el servidor además exige `expect`.
+  async function freshCounts() {
+    var f = window._tradeFetch || fetch;
+    var r = await f(BASE + '/api/ontology/reconcile/plan?summary=1&fresh=1', {}, true);
+    var d = await r.json().catch(function () { return {}; });
+    if (!r.ok) throw new Error(errMsg(d, r.status));
+    return d;
   }
 
   function actor() {
@@ -123,6 +140,14 @@
     if (_busy || !_plan) return;
     var cats = Array.prototype.map.call(_box.querySelectorAll('input[data-cat]:checked'), function (i) { return i.getAttribute('data-cat'); });
     if (!cats.length) { render(L('Marca al menos una categoría.', 'Tick at least one category.')); return; }
+    var latest;
+    try { latest = await freshCounts(); } catch (e) { render('❌ ' + esc(String(e && e.message || e))); return; }
+    var changed = cats.filter(function (c) { return ((latest.summary || {})[c] || 0) !== ((_plan.summary || {})[c] || 0); });
+    if (changed.length) {
+      _plan = latest; render('⚠ ' + L('La lista cambió desde que la miraste. Revísala de nuevo antes de aplicar.',
+                                       'The list changed since you looked at it. Review it again before applying.'));
+      return;
+    }
     var names = CATS.filter(function (c) { return cats.indexOf(c[0]) >= 0; })
       .map(function (c) { return (en() ? c[2] : c[1]) + ' (' + ((_plan.summary || {})[c[0]] || 0) + ')'; }).join(' · ');
     var risky = cats.some(function (c) { return ['direction', 'variants', 'missing', 'extra'].indexOf(c) >= 0; });
@@ -141,12 +166,17 @@
     var who = actor(); if (!who) return;
     _busy = true; render('⏳ ' + L('Aplicando…', 'Applying…'));
     try {
-      var res = await post('/api/ontology/reconcile/apply', { actor: who, confirm_db: _plan.db, include: cats });
+      var expect = {}; cats.forEach(function (c) { expect[c] = (_plan.summary || {})[c] || 0; });
+      var res = await post('/api/ontology/reconcile/apply', { actor: who, confirm_db: _plan.db, include: cats, expect: expect });
       _busy = false;
-      if (!res.ok) { await load(true); render('❌ ' + esc(window._tradeErrText ? window._tradeErrText(res.d, res.status) : (res.d.error || res.status))); return; }
+      if (!res.ok) {
+        await load(true);
+        var extra = res.d && res.d.run_id ? ' · ' + L('código para deshacer: ', 'undo code: ') + '<code>' + esc(res.d.run_id) + '</code>' : '';
+        render('❌ ' + esc(errMsg(res.d, res.status)) + extra); return;
+      }
       await load(true);
       render('✅ ' + L('Aplicado. Código para deshacer: ', 'Applied. Undo code: ') + '<code>' + esc(res.d.run_id) + '</code>');
-    } catch (e) { _busy = false; render('❌ ' + esc(String(e && e.message || e))); }
+    } catch (e) { _busy = false; await load(true); render('❌ ' + esc(String(e && e.message || e))); }
   }
 
   async function undo(runId) {
@@ -163,15 +193,15 @@
       var res = await post('/api/ontology/reconcile/rollback', { actor: who, confirm_db: _plan.db, run_id: runId });
       _busy = false;
       await load(true);
-      render(res.ok ? '✅ ' + L('Deshecho.', 'Undone.') : '❌ ' + esc(window._tradeErrText ? window._tradeErrText(res.d, res.status) : (res.d.error || res.status)));
-    } catch (e) { _busy = false; render('❌ ' + esc(String(e && e.message || e))); }
+      render(res.ok ? '✅ ' + L('Deshecho.', 'Undone.') : '❌ ' + esc(errMsg(res.d, res.status)));
+    } catch (e) { _busy = false; await load(true); render('❌ ' + esc(String(e && e.message || e))); }
   }
 
   window.KhipuReconcile = {
     mount: function (id) {
       _box = document.getElementById(id);
       if (!_box) return;
-      if (_plan && !_busy) render(); else if (!_busy) load(false);
+      if (!_busy) load(false);      // G5: siempre el plan actual (antes se reusaba uno viejo en memoria)
     },
     reload: function () { return load(true); },
   };

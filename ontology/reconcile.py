@@ -13,14 +13,22 @@ emite SOLO eventos (RetractarVinculo dirigido, FusionarEntidad, LinkCreated)
 con el canal `source='reconcile_v0:<run_id>'`; `rollback_run` las deshace con
 más eventos. Nada se borra ni se actualiza a mano (regla 5).
 
-Alcance — SOLO se tocan filas de `links`:
+Alcance — la reconciliación SOLO toca filas de `links`:
   · vigentes (valid_to IS NULL),
   · con valid_from = GENESIS (2000-01-01: la "foto" del catálogo migrada),
   · con un rel_type del vocabulario del catálogo,
   · sin fuente externa en properties.source (wikidata/gleif…), ni factores,
   · cuyos dos extremos (tras resolver alias) sean nodos del snapshot.
 Los hechos con fecha real, las noticias, los factores y los objetos que solo
-existen en Postgres NO se tocan nunca.
+existen en Postgres NO se tocan — EXCEPTO al fusionar un alias: fusionar una
+empresa duplicada mueve TODOS sus vínculos vigentes al canónico (con su fecha,
+su documento de procedencia y su confianza), porque es la misma empresa.
+
+Seguridad (revisión adversarial G5): aplicar y deshacer toman un candado de
+Postgres (pg_advisory_lock): nunca corren dos a la vez. Aplicar exige que las
+cifras del plan sean las que la persona revisó (`expect`); si cambiaron, se
+niega. Lo que una persona cerró DESPUÉS de una corrida no se resucita al
+deshacerla, y lo que una persona rechazó no se propone como 'faltante'.
 
 Categorías (y si la orden por defecto las aplica):
   alias       empresa duplicada que el catálogo ya fusionó      → sí (FusionarEntidad)
@@ -53,7 +61,13 @@ MAX_ALIAS_HOPS = 5
 
 
 class ReconcileError(RuntimeError):
-    pass
+    """Mensaje en español (args[0]) + inglés (`en`) para la UI bilingüe."""
+    def __init__(self, es, en=None):
+        super().__init__(es)
+        self.en = en or es
+
+
+LOCK_KEY = 74_281_337          # pg_advisory_lock de reconcile (aplicar / deshacer)
 
 
 # ───────────────────────── snapshot ─────────────────────────
@@ -106,7 +120,11 @@ def _same_w(a, b):
 
 
 def _is_genesis(dt):
-    return dt is not None and dt.date().isoformat() == GENESIS
+    if dt is None:
+        return False
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc)
+    return dt.date().isoformat() == GENESIS
 
 
 def _now():
@@ -146,11 +164,27 @@ def _creation_order(session, rows):
     return out
 
 
+def _human_rejections(session):
+    """Pares que una persona/agente cerró (LinkRemoved NO dirigido y fuera de
+    las corridas de reconcile): {(s, t, rel|None)}. No se proponen como faltantes."""
+    out = set()
+    for ev in session.scalars(select(Event).where(Event.event_type == EventType.LINK_REMOVED.value)).all():
+        p = ev.payload or {}
+        if (p.get('properties') or {}).get('retracts_event_id'):
+            continue
+        if str(ev.source or '').startswith((RUN_PREFIX, ROLLBACK_PREFIX)):
+            continue
+        out.add((ev.object_id, ev.target_id, p.get('rel_type') or p.get('type')))
+    return out
+
+
 def build_plan(session, snap):
     objs, links = _load_db(session)
+    rejected = _human_rejections(session)
     alias_map, triples = snap['alias'], snap['triples']
     plan = {k: [] for k in CATEGORIES}
     plan['objects_missing'] = []
+    plan['missing_rejected'] = []
     out_of_scope = defaultdict(int)
 
     # 1) alias: objetos que el catálogo fusionó y en la base siguen vivos
@@ -183,7 +217,10 @@ def build_plan(session, snap):
         if len(rows) < 2:
             continue
         order = _creation_order(session, rows)
-        rows = sorted(rows, key=lambda r: order[str(r.id)])
+        cat = triples.get((canon(alias_map, s), canon(alias_map, t), rel)) or {}
+        # G5: se conserva la copia cuyo texto es el del catálogo (si alguna lo es), si no la más antigua
+        rows = sorted(rows, key=lambda r: (0 if cat and (r.properties or {}).get('rel_label') == cat.get('rel') else 1,
+                                           order[str(r.id)]))
         keep, rest = rows[0], rows[1:]
         dup_retract.update(str(r.id) for r in rest)
         plan['duplicates'].append({'source': s, 'target': t, 'rel': rel, 'weight': w, 'keep_link_id': str(keep.id),
@@ -198,6 +235,12 @@ def build_plan(session, snap):
 
     for (cs, ct, rel), rows in sorted(present.items()):
         via_alias = any(r.source_id != cs or r.target_id != ct for r in rows)
+        if cs not in objs or ct not in objs:
+            # G5: el canónico no existe en la base → re-crear fallaría (FK); se reporta aparte
+            plan['objects_missing'].append({'source': cs, 'target': ct, 'rel': rel,
+                                            'missing': [x for x in (cs, ct) if x not in objs],
+                                            'db_link_ids': [str(r.id) for r in rows]})
+            continue
         if (cs, ct, rel) in triples:
             sw = triples[(cs, ct, rel)]['w']
             exact = any(_same_w(r.weight, sw) for r in rows)
@@ -234,17 +277,22 @@ def build_plan(session, snap):
             plan['objects_missing'].append({'source': s, 'target': t, 'rel': rel,
                                             'missing': [x for x in (s, t) if x not in objs]})
             continue
+        if (s, t, rel) in rejected or (s, t, None) in rejected:
+            plan['missing_rejected'].append({'source': s, 'target': t, 'rel': rel,
+                                             'note': 'una persona o agente lo cerró en la base: no se re-crea'})
+            continue
         plan['missing'].append({'source': s, 'target': t, 'rel': rel, 'weight_catalog': _w(cat['w']),
                                 'rel_label': cat['rel'], 'action': 'LinkCreated (valid_from GENESIS)'})
 
     plan['out_of_scope'] = dict(out_of_scope)
     plan['summary'] = {k: len(plan[k]) for k in CATEGORIES}
     plan['summary']['objects_missing'] = len(plan['objects_missing'])
+    plan['summary']['missing_rejected'] = len(plan['missing_rejected'])
     plan['summary']['db_links_vigentes'] = len(links)
     plan['summary']['db_objects'] = len(objs)
     plan['summary']['catalog_links'] = len(triples)
     plan['summary']['catalog_nodes'] = len(snap['nodes'])
-    plan['snapshot'] = {'path': snap.get('path'), 'exported_at': snap.get('exported_at')}
+    plan['snapshot'] = {'exported_at': snap.get('exported_at')}      # G5: sin rutas del servidor
     plan['as_of'] = _now().isoformat(timespec='seconds')
     plan['default_apply'] = list(DEFAULT_APPLY)
     return plan
@@ -482,29 +530,59 @@ def _db_name(session):
 def _check_confirm(session, confirm_db):
     name = _db_name(session)
     if not confirm_db or confirm_db != name:
-        raise ReconcileError(f'--confirm-db debe ser exactamente el nombre de la base ({name!r}); nada se ha cambiado')
+        raise ReconcileError(f'--confirm-db debe ser exactamente el nombre de la base ({name!r}); nada se ha cambiado',
+                             f'confirm_db must be exactly the database name ({name!r}); nothing was changed')
     return name
 
 
-def apply_plan(session_scope, snap, include=DEFAULT_APPLY, confirm_db=None, actor=ACTOR, run_id=None, log=None):
+def _busy():
+    return ReconcileError('otra reconciliación (aplicar o deshacer) está en curso; inténtalo en un minuto',
+                          'another reconciliation (apply or undo) is running; try again in a minute')
+
+
+def apply_plan(session_scope, snap, include=DEFAULT_APPLY, confirm_db=None, actor=ACTOR, run_id=None, log=None,
+               expect=None):
     """Aplica por categoría, RE-CALCULANDO el plan antes de cada una (la
     fusión de alias cambia qué filas existen). Cada categoría en su propia
     transacción. Devuelve {run_id, applied: {cat: n}, events: n, plan_before}."""
+    from sqlalchemy import text
+    from ontology.db import _get_engine
+    bad = [c for c in (include or ()) if c not in CATEGORIES]
+    if bad:                         # G5: antes se filtraba primero y una errata se descartaba en silencio
+        raise ReconcileError(f'categorías desconocidas: {bad}; válidas: {list(CATEGORIES)}',
+                             f'unknown categories: {bad}; valid: {list(CATEGORIES)}')
+    conn = _get_engine().connect()
+    try:
+        if not conn.execute(text('SELECT pg_try_advisory_lock(:k)'), {'k': LOCK_KEY}).scalar():
+            raise _busy()
+        try:
+            return _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, expect)
+        finally:
+            conn.execute(text('SELECT pg_advisory_unlock(:k)'), {'k': LOCK_KEY})
+    finally:
+        conn.close()
+
+
+def _apply_locked(session_scope, snap, include, confirm_db, actor, run_id, log, expect):
     from ontology.actions import RetractarVinculoInput, FusionarEntidadInput, retractar_vinculo, fusionar_entidad
     from ontology.service import apply_event
     include = [c for c in (include or ()) if c in CATEGORIES]
-    bad = [c for c in (include or ()) if c not in CATEGORIES]
-    if bad:
-        raise ReconcileError(f'categorías desconocidas: {bad}; válidas: {list(CATEGORIES)}')
     run_id = run_id or new_run_id()
     source = RUN_PREFIX + run_id
     log = log or (lambda *_: None)
     with session_scope() as s:
         dbname = _check_confirm(s, confirm_db)
         before = build_plan(s, snap)
-    applied, n_events = {}, 0
+    if expect:                      # G5: se aplica SOLO el plan que la persona revisó
+        changed = {c: (expect.get(c), before['summary'][c]) for c in include
+                   if c in expect and int(expect.get(c) or 0) != before['summary'][c]}
+        if changed:
+            raise ReconcileError(f'la lista cambió desde que la revisaste {changed}: vuelve a mirarla antes de aplicar',
+                                 f'the list changed since you reviewed it {changed}: review it again before applying')
+    applied, n_events, error = {}, 0, None
     order = [c for c in CATEGORIES if c in include]
     for cat in order:
+      try:
         with session_scope() as s:
             plan = build_plan(s, snap)
             items = plan[cat]
@@ -564,10 +642,17 @@ def apply_plan(session_scope, snap, include=DEFAULT_APPLY, confirm_db=None, acto
                     n += 1; n_events += 2
             applied[cat] = n
             log(f'{cat}: {n} aplicados')
+      except Exception as e:  # noqa: BLE001 — G5: lo ya aplicado queda (y se puede deshacer); se informa el run_id
+        error = {'category': cat, 'error': f'{type(e).__name__}: {str(e)[:300]}'}
+        log(f'{cat}: ERROR {error["error"]}')
+        break
     with session_scope() as s:
         after = build_plan(s, snap)
-    return {'run_id': run_id, 'db': dbname, 'include': order, 'applied': applied, 'events_estimated': n_events,
-            'summary_before': before['summary'], 'summary_after': after['summary'], 'source_channel': source}
+    out = {'run_id': run_id, 'db': dbname, 'include': order, 'applied': applied, 'events_estimated': n_events,
+           'summary_before': before['summary'], 'summary_after': after['summary'], 'source_channel': source}
+    if error:
+        out['error'] = error
+    return out
 
 
 # ───────────────────────── rollback ─────────────────────────
@@ -575,33 +660,52 @@ def apply_plan(session_scope, snap, include=DEFAULT_APPLY, confirm_db=None, acto
 def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
     """Deshace una corrida con NUEVOS eventos (canal reconcile_v0_rollback:<run_id>).
     No borra nada. No se puede deshacer un rollback (sería otra corrida)."""
+    from sqlalchemy import text
     from ontology.service import apply_event
     _check_confirm(session, confirm_db)
+    if not session.execute(text('SELECT pg_try_advisory_xact_lock(:k)'), {'k': LOCK_KEY}).scalar():
+        raise _busy()               # G5: dos "deshacer" a la vez duplicaban miles de filas
     source = RUN_PREFIX + run_id
     evs = session.scalars(select(Event).where(Event.source == source).order_by(Event.recorded_at.desc())).all()
     if not evs:
-        raise ReconcileError(f'no hay eventos de la corrida {run_id}')
+        raise ReconcileError(f'no hay eventos de la corrida {run_id}', f'no events for run {run_id}')
     rb = ROLLBACK_PREFIX + run_id
     runs = list_runs(session, limit=500)
     rolled = {r['run_id'] for r in runs if r['rollback']}
     if run_id in rolled:
-        raise ReconcileError(f'la corrida {run_id} ya fue deshecha')
+        raise ReconcileError(f'la corrida {run_id} ya fue deshecha', f'run {run_id} was already undone')
     mine = next((r for r in runs if r['run_id'] == run_id and not r['rollback']), None)
     later = [r['run_id'] for r in runs if not r['rollback'] and r['run_id'] not in rolled and r['run_id'] != run_id
              and mine and r['from'] and mine['to'] and r['from'] > mine['to']]
     if later:
-        raise ReconcileError(f'primero deshaz las corridas posteriores (de la más nueva a la más vieja): {", ".join(later)}')
-    done = {'links_reopened': 0, 'links_retracted': 0, 'merges_undone': 0, 'skipped': 0}
+        raise ReconcileError(f'primero deshaz las corridas posteriores (de la más nueva a la más vieja): {", ".join(later)}',
+                             f'undo the later runs first (newest to oldest): {", ".join(later)}')
+    done = {'links_reopened': 0, 'links_retracted': 0, 'merges_undone': 0, 'skipped': 0, 'skipped_closed_later': 0}
+    run_end = max((e.recorded_at for e in evs if e.recorded_at), default=None)
+    closed_later = set()            # G5: pares que alguien cerró DESPUÉS de la corrida → no se resucitan
+    if run_end is not None:
+        for e in session.scalars(select(Event).where(Event.event_type == EventType.LINK_REMOVED.value,
+                                                     Event.recorded_at > run_end)).all():
+            ep = e.payload or {}
+            if str(e.source or '').startswith((RUN_PREFIX, ROLLBACK_PREFIX)):
+                continue
+            if (ep.get('properties') or {}).get('retracts_event_id'):
+                continue
+            closed_later.add((e.object_id, e.target_id, ep.get('rel_type') or ep.get('type')))
     now = _now()
     for ev in evs:
         p = ev.payload or {}
         props = p.get('properties') or {}
         if ev.event_type == EventType.LINK_REMOVED.value and props.get('retracts_event_id'):
             orig = session.get(Event, uuid.UUID(str(props['retracts_event_id'])))
-            if orig is None:
-                done['skipped'] += 1
+            if orig is None or orig.source == source:
+                done['skipped'] += 1        # G5: creado Y retractado en la misma corrida → efecto neto cero
                 continue
             op = dict(orig.payload or {})
+            orel = op.get('rel_type') or op.get('type') or 'supply'
+            if (orig.object_id, orig.target_id, orel) in closed_later or (orig.object_id, orig.target_id, None) in closed_later:
+                done['skipped_closed_later'] += 1
+                continue
             oprops = {k: v for k, v in (op.get('properties') or {}).items() if k not in ('dedup_of', 'dedup_event_id')}
             oprops.update({'allow_duplicate': True, 'rollback_of': str(ev.id), 'rollback_run': run_id,
                            'restores_event_id': str(orig.id)})
@@ -625,12 +729,17 @@ def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
             done['links_retracted'] += 1
         elif ev.event_type == 'ActionExecuted' and p.get('action') == 'FusionarEntidad':
             alias_id, canonical_id = p.get('alias_id'), ev.object_id
-            apply_event(session, 'ObjectUpdated', {'properties': {'retired': False, 'merged_into': None, 'retired_razon': None,
+            prev = p.get('prev_alias_props')          # G5: se restaura el estado EXACTO de antes de la fusión
+            if not isinstance(prev, dict):
+                prev = {'retired': False, 'merged_into': None, 'retired_razon': None}
+            apply_event(session, 'ObjectUpdated', {'properties': {**{k: prev.get(k) for k in ('retired', 'merged_into', 'retired_razon')},
                                                                   'rollback_run': run_id}},
                         valid_from=now, source=rb, actor=actor, object_id=alias_id)
             canon_obj = session.get(ObjectRecord, canonical_id)
             if canon_obj is not None:
-                aliases = [a for a in ((canon_obj.properties or {}).get('aliases') or []) if a != alias_id]
+                aliases = p.get('prev_canon_aliases')
+                if not isinstance(aliases, list):
+                    aliases = [a for a in ((canon_obj.properties or {}).get('aliases') or []) if a != alias_id]
                 apply_event(session, 'ObjectUpdated', {'properties': {'aliases': aliases}},
                             valid_from=now, source=rb, actor=actor, object_id=canonical_id)
             done['merges_undone'] += 1

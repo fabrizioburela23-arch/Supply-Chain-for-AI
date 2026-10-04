@@ -1009,6 +1009,8 @@ def events_create():
 # Solo lectura por defecto. Aplicar/deshacer = PIN de operador + nombre EXACTO
 # de la base (lo devuelve el plan) + actor; todo por eventos (ontology/reconcile.py).
 _RECON_CACHE = {'ts': 0.0, 'key': None, 'data': None}
+import threading as _threading  # noqa: E402
+_RECON_BUILD = _threading.Lock()     # G5: un solo cálculo del plan a la vez (no se puede saturar el servidor)
 
 
 def _recon_plan(fresh=False):
@@ -1016,15 +1018,28 @@ def _recon_plan(fresh=False):
     from ontology import reconcile as R
     snap = R.load_snapshot()
     key = snap.get('exported_at')
-    if (not fresh and _RECON_CACHE['data'] is not None and _RECON_CACHE['key'] == key
-            and _t.time() - _RECON_CACHE['ts'] < 60):
-        return snap, _RECON_CACHE['data']
-    with session_scope() as s:
-        plan = R.build_plan(s, snap)
-        plan['db'] = R._db_name(s)
-        plan['runs'] = R.list_runs(s, limit=10)
-    _RECON_CACHE.update(ts=_t.time(), key=key, data=plan)
-    return snap, plan
+
+    def cached():
+        if _RECON_CACHE['data'] is not None and _RECON_CACHE['key'] == key:
+            return _RECON_CACHE['data']
+        return None
+    if not fresh and cached() is not None and _t.time() - _RECON_CACHE['ts'] < 120:
+        return snap, cached()
+    if not _RECON_BUILD.acquire(timeout=25):
+        if cached() is not None:
+            return snap, cached()            # otro pedido ya lo está calculando: se sirve el último
+        raise TimeoutError('plan en cálculo')
+    try:
+        if not fresh and cached() is not None and _t.time() - _RECON_CACHE['ts'] < 120:
+            return snap, cached()
+        with session_scope() as s:
+            plan = R.build_plan(s, snap)
+            plan['db'] = R._db_name(s)
+            plan['runs'] = R.list_runs(s, limit=10)
+        _RECON_CACHE.update(ts=_t.time(), key=key, data=plan)
+        return snap, plan
+    finally:
+        _RECON_BUILD.release()
 
 
 @ontology_bp.route('/reconcile/plan')
@@ -1037,10 +1052,17 @@ def reconcile_plan():
     from ontology import reconcile as R
     fmt = (request.args.get('format') or 'json').lower()
     lang = 'en' if (request.args.get('lang') or '').lower() == 'en' else 'es'
+    fresh = False
+    if request.args.get('fresh') == '1':      # G5: recalcular a demanda solo con PIN de operador
+        fresh = pin_error(where='reconcile_plan', strict=True) is None
     try:
-        _snap, plan = _recon_plan(fresh=request.args.get('fresh') == '1')
+        _snap, plan = _recon_plan(fresh=fresh)
     except FileNotFoundError:
-        return jsonify({'error': 'falta data/grafo_v0.json en el servidor'}), 503
+        return jsonify({'error': 'falta data/grafo_v0.json en el servidor', 'error_en': 'data/grafo_v0.json is missing on '
+                        'the server', 'code': 'no_snapshot'}), 503
+    except TimeoutError:
+        return jsonify({'error': 'el plan se está calculando; reintenta en unos segundos',
+                        'error_en': 'the plan is being computed; retry in a few seconds', 'code': 'busy'}), 503
     if fmt == 'md':
         return Response(R.render_markdown(plan, dbname=plan.get('db'), lang=lang, limit_rows=500),
                         mimetype='text/markdown; charset=utf-8')
@@ -1053,49 +1075,69 @@ def reconcile_plan():
     return jsonify(plan)
 
 
+def _strict_operator():
+    """G5: reconcile exige un PIN de operador CONFIGURADO (sin TRADE_PIN → 403, no 'modo desarrollo')."""
+    return pin_error(where='reconcile', strict=True)
+
+
+def _str_arg(b, k, n):
+    v = b.get(k)
+    return v.strip()[:n] if isinstance(v, str) else ''
+
+
 @ontology_bp.route('/reconcile/apply', methods=['POST'])
 @_require_db
-@require_operator
 @rate_limit(5, 600)
 def reconcile_apply():
-    """Body: {actor, confirm_db, include: ['alias','duplicates',…]}. Devuelve run_id."""
+    """Body: {actor, confirm_db, include: ['alias','duplicates',…], expect: {cat: n}}. Devuelve run_id."""
+    err = _strict_operator()
+    if err:
+        return err
     from ontology import reconcile as R
     b = _body()
-    actor = (b.get('actor') or '').strip()[:80]
+    actor = _str_arg(b, 'actor', 80)
     if not actor:
-        return jsonify({'error': 'actor requerido'}), 400
+        return jsonify({'error': 'actor requerido', 'error_en': 'actor is required'}), 400
     include = b.get('include') or list(R.DEFAULT_APPLY)
     if not isinstance(include, list) or any(c not in R.CATEGORIES for c in include):
-        return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}'}), 400
+        return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}',
+                        'error_en': f'invalid include; valid: {list(R.CATEGORIES)}'}), 400
+    expect = b.get('expect') if isinstance(b.get('expect'), dict) else None
     try:
-        res = R.apply_plan(session_scope, R.load_snapshot(), include=include, confirm_db=b.get('confirm_db'),
-                           actor=actor)
+        res = R.apply_plan(session_scope, R.load_snapshot(), include=include, confirm_db=_str_arg(b, 'confirm_db', 120),
+                           actor=actor, expect=expect)
     except R.ReconcileError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'error_en': e.en}), 409 if 'en curso' in str(e) or 'cambió' in str(e) else 400
     except (OntologyError, ValueError) as e:
-        return jsonify({'error': str(e)[:300]}), 400
+        return jsonify({'error': str(e)[:300], 'error_en': str(e)[:300]}), 400
     _RECON_CACHE.update(data=None)
+    if res.get('error'):
+        return jsonify({'status': 'partial', **res, 'error_es': f"falló en «{res['error']['category']}»: lo anterior quedó "
+                        f"aplicado; se puede deshacer con {res['run_id']}", 'error_en': f"failed at '{res['error']['category']}': "
+                        f"earlier categories were applied; undo with {res['run_id']}"}), 409
     return jsonify({'status': 'ok', **res})
 
 
 @ontology_bp.route('/reconcile/rollback', methods=['POST'])
 @_require_db
-@require_operator
 @rate_limit(5, 600)
 def reconcile_rollback():
     """Body: {actor, confirm_db, run_id}. Deshace con eventos nuevos."""
+    err = _strict_operator()
+    if err:
+        return err
     from ontology import reconcile as R
     b = _body()
-    actor = (b.get('actor') or '').strip()[:80]
-    run_id = (b.get('run_id') or '').strip()[:60]
+    actor = _str_arg(b, 'actor', 80)
+    run_id = _str_arg(b, 'run_id', 60)
     if not actor or not run_id:
-        return jsonify({'error': 'actor y run_id requeridos'}), 400
+        return jsonify({'error': 'actor y run_id requeridos', 'error_en': 'actor and run_id are required'}), 400
     try:
         with session_scope() as s:
-            res = R.rollback_run(s, run_id, confirm_db=b.get('confirm_db'), actor=actor)
+            res = R.rollback_run(s, run_id, confirm_db=_str_arg(b, 'confirm_db', 120), actor=actor)
     except R.ReconcileError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': str(e), 'error_en': e.en}), 409 if 'en curso' in str(e) else 400
     except (OntologyError, ValueError) as e:
-        return jsonify({'error': str(e)[:300]}), 400
+        return jsonify({'error': str(e)[:300], 'error_en': str(e)[:300]}), 400
     _RECON_CACHE.update(data=None)
     return jsonify({'status': 'ok', **res})
