@@ -799,7 +799,7 @@
     var h = new Date().getHours();
     var hello = en ? (h < 12 ? 'Good morning.' : h < 19 ? 'Good afternoon.' : 'Good evening.')
                    : (h < 12 ? 'Buenos días.' : h < 19 ? 'Buenas tardes.' : 'Buenas noches.');
-    var ask = en ? [
+    var askList = en ? [
       ['What are the main risks for TSMC?', ''], ['What happened with Nvidia today?', ''],
       ['simulate that China bans HBM exports', 'Simulate that China bans HBM exports'],
       ['compare Nvidia and AMD', 'Compare Nvidia and AMD'], ['research Nvidia', 'Research Nvidia in depth'],
@@ -824,7 +824,7 @@
       '<div id="bcp-home-hyper" class="bcp-live"></div>' +
       '<div id="bcp-home-pulse" class="bcp-live"></div>' +
       '<div class="bcp-cols">' +
-        '<div><h3>' + esc(en ? 'Ask me' : 'Pregúntame') + '</h3><ul>' + ask.map(function (x) { return li(x[0], x[1]); }).join('') + '</ul></div>' +
+        '<div><h3>' + esc(en ? 'Ask me' : 'Pregúntame') + '</h3><ul>' + askList.map(function (x) { return li(x[0], x[1]); }).join('') + '</ul></div>' +
         '<div><h3>' + esc(en ? 'Open' : 'Abre') + '</h3><ul>' + open_.map(function (x) { return '<li><a href="#" class="bcp-ho" data-k="' + x[0] + '">' + esc(x[1]) + '</a></li>'; }).join('') + '</ul></div>' +
       '</div>' +
       '<p class="bcp-foot"><a href="#" class="bcp-hq" data-q="demo">' + esc(en ? 'Watch the one-minute tour' : 'Ver el recorrido de un minuto') + '</a></p>' +
