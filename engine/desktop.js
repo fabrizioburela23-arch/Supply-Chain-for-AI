@@ -113,7 +113,7 @@
 '#kd-wall{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);overflow-y:auto;padding:22px;scrollbar-width:thin}' +
 '#kd-wins{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);pointer-events:none;overflow:hidden}' +
 '.kd-win{position:absolute;pointer-events:auto;display:flex;flex-direction:column;min-width:' + MIN_W + 'px;min-height:' + MIN_H + 'px;' +
-  'border:1px solid rgba(122,158,255,.22);border-radius:14px;background:rgba(7,11,20,.96);' +
+  'border:1px solid rgba(122,158,255,.22);border-radius:14px;background:#070B14;' +
   'box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.4);overflow:hidden;animation:kdIn .16s ease;' +
   'transition:box-shadow .15s,border-color .15s}' +
 '@keyframes kdIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}' +

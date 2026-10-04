@@ -2428,7 +2428,18 @@ def crypto_analyze():
         if not isinstance(parsed, dict):
             raise ValueError('respuesta no-JSON')
     except Exception as e:  # noqa: BLE001
-        return jsonify({'ok': False, 'error': f'IA falló · AI failed: {str(e)[:160]}'}), 502
+        # mensaje para personas, no la excepción cruda ("Expecting value: line 1…" =
+        # la IA devolvió vacío: sin saldo o proveedor caído)
+        try:
+            from research.errors import friendly
+            es, en = friendly(e)
+        except Exception:  # noqa: BLE001
+            es = en = None
+        if not es and ('Expecting value' in str(e) or 'no-JSON' in str(e) or not str(e).strip()):
+            es = 'La IA no respondió (sin saldo o proveedor caído). Revisa 🩺 Sistema → 💰 Gasto IA.'
+            en = 'The AI did not answer (no credit or provider down). Check 🩺 System → 💰 AI spend.'
+        msg = f'{es} · {en}' if es else f'IA falló · AI failed: {str(e)[:160]}'
+        return jsonify({'ok': False, 'error': msg, 'detail': str(e)[:160]}), 502
 
     def _slist(v):
         if isinstance(v, list):
