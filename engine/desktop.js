@@ -47,7 +47,9 @@
   var MIN_W = 320, MIN_H = 220;
   var SNAP_PX = 14;            // distancia al borde del escritorio que activa el snap
   var FALLBACK = { W: 1000, H: 600 };   // solo para dibujar cuando aún no hay medida; NUNCA para recortar
-  var LS_GEOM = 'kh_desk_geom', LS_MODE = 'kh_desk_mode', LS_TIP = 'kh_desk_tip';
+  var LS_GEOM = 'kh_desk_geom', LS_MODE = 'kh_desk_mode', LS_TIP = 'kh_desk_tip', LS_AUTO = 'kh_desk_auto', LS_PINS = 'kh_desk_pins';
+  var MAX_CENTER = 3;          // ventanas sueltas visibles a la vez en el centro; el resto espera en la barra
+  var SIDE_FRAC = 0.32;        // ancho de una columna lateral (ventanas fijadas)
 
   function lang() {
     var l = window.LANG;
@@ -75,6 +77,10 @@
     hintMobile: ['Lo que abras aparece aquí; cambia entre pantallas con estos botones.',
                  'What you open shows up here; switch between screens with the buttons.'],
     back: ['‹ Volver', '‹ Back'],
+    pin: ['Fijar a un costado (seguir viéndola mientras escribes)', 'Pin to a side (keep seeing it while you type)'],
+    unpin: ['Soltar del costado', 'Unpin from the side'],
+    auto: ['✓ Ordenar automáticamente', '✓ Arrange automatically'], autoOff: ['○ Ordenar automáticamente', '○ Arrange automatically'],
+    arrange: ['▦ Ordenar ahora', '▦ Arrange now'],
     tipTitle: ['Tu primera ventana', 'Your first window'],
     tip: ['Arrástrala por la barra de título. Llévala a un borde para pegarla a media pantalla, doble clic para agrandarla, y ▢ para elegir dónde acomodarla.',
           'Drag it by its title bar. Move it to an edge to snap it to half the screen, double-click to enlarge it, and ▢ to choose where to place it.'],
@@ -126,6 +132,9 @@
   'display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex:none;touch-action:manipulation}' +
 '.kd-b:hover{background:rgba(122,158,255,.14);color:#E8EDFB}' +
 '.kd-b.kd-b-x:hover{background:rgba(255,77,106,.22);color:#FF8FA3}' +
+'.kd-b.kd-b-pin{font-size:13px}.kd-win.kd-pinned .kd-b-pin{color:#00E0FF;background:rgba(0,224,255,.12)}' +
+'.kd-win.kd-pinned{border-color:rgba(0,224,255,.3)}.kd-win.kd-pinned .kd-ttl{cursor:default}' +
+'#bcp-stage.kd-mobile .kd-b-pin{display:none}' +
 '.kd-body{flex:1;min-height:0;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:rgba(122,158,255,.35) transparent}' +
 '.kd-body>*{flex-shrink:0}' +
 '.kd-body>.bcp-stagehd{display:none}' +            // en una ventana el "← Inicio" sobra: hay ✕
@@ -258,6 +267,7 @@
     if (!visible()) return;               // Cabina cerrada: no hay medida válida, no se toca nada
     if (m) { showOnly(focused); return; }
     showOnly(null);
+    if (autoOn() && wins.some(function (w) { return !w.min; })) { arrange(); return; }
     wins.forEach(function (w) {
       if (w.max) return;
       if (w.snap && w.snap !== 'grid') { var r = zoneRect(w.snap); if (r) { w.x = r.x; w.y = r.y; w.w = r.w; w.h = r.h; } }
@@ -380,12 +390,14 @@
     }
     var g = defaultGeom(kind, wins.length);
     w = { id: 'kd' + (++seq), kind: kind, arg: arg, key: key, x: g.x, y: g.y, w: g.w, h: g.h,
-          max: !!(g.max || opts.max), min: false, snap: g.snap, prev: null, needsRender: false };
+          max: !!(g.max || opts.max), min: false, snap: g.snap, prev: null, needsRender: false,
+          pinned: (pinStore()[kind] === 'left' || pinStore()[kind] === 'right') ? pinStore()[kind] : null };
     var el = document.createElement('div');
     el.className = 'kd-win'; el.setAttribute('data-id', w.id); el.setAttribute('data-kind', kind);
     el.setAttribute('role', 'dialog');
     el.innerHTML =
       '<div class="kd-ttl"><span class="kd-ico"></span><span class="kd-name"></span>' +
+        '<button type="button" class="kd-b kd-b-pin">📌</button>' +
         '<button type="button" class="kd-b kd-b-min">–</button>' +
         '<button type="button" class="kd-b kd-b-max">▢</button>' +
         '<button type="button" class="kd-b kd-b-x">✕</button></div>' +
@@ -400,9 +412,69 @@
     place(w);
     render(w);
     focus(w.id);
-    renderBar();
+    if (autoOn() && !opts.max) arrange(); else renderBar();
     firstTip();
     return w.id;
+  }
+
+  // ── ORDEN AUTOMÁTICO + FIJAR A UN COSTADO (pedido 2026-10-04: "que no se vea saturado") ──
+  // Ventanas FIJADAS (📌) viven en una columna lateral (izq./der.) apiladas y siguen
+  // a la vista mientras escribes; las sueltas se reparten en el centro (máximo
+  // MAX_CENTER: las más antiguas pasan a la barra de tareas). Se re-ordena al
+  // abrir, cerrar, minimizar o fijar. Arrastrar o redimensionar una ventana es
+  // manual y se respeta hasta el siguiente cambio.
+  function autoOn() { return ls(LS_AUTO) !== 'off'; }
+  function setAuto(on) { lsSet(LS_AUTO, on ? 'on' : 'off'); if (on) arrange(); }
+  function pinStore() { try { var g = JSON.parse(ls(LS_PINS) || '{}'); return (g && typeof g === 'object') ? g : {}; } catch (e) { return {}; } }
+  function pin(id, side) {
+    var w = get(id); if (!w) return;
+    if (side === undefined) side = w.pinned ? null : (wins.some(function (o) { return o !== w && o.pinned === 'right'; }) && !wins.some(function (o) { return o !== w && o.pinned === 'left'; }) ? 'left' : 'right');
+    w.pinned = side || null; w.max = false; w.snap = null; w.min = false; w.el.classList.remove('kd-min');
+    var ps = pinStore(); if (side) ps[w.kind] = side; else delete ps[w.kind]; lsSet(LS_PINS, JSON.stringify(ps));
+    relabelWin(w);
+    arrange(true);
+    focus(w.id);
+  }
+  function setRect(w, r) {
+    w.max = false; w.snap = null;
+    w.x = r.x; w.y = r.y; w.w = Math.max(MIN_W, r.w); w.h = Math.max(MIN_H, r.h);
+    place(w);
+  }
+  function arrange(force) {
+    if (isMobile() || !visible()) { renderBar(); return; }
+    if (!force && !autoOn()) { renderBar(); return; }
+    var d = deskSize(); if (!d) return;
+    var L = wins.filter(function (w) { return w.pinned === 'left'; }), R = wins.filter(function (w) { return w.pinned === 'right'; });
+    var C = wins.filter(function (w) { return !w.pinned && !w.min; });
+    // demasiadas sueltas: las más antiguas (menor z) esperan en la barra
+    C.sort(function (a, b) { return (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0); });
+    while (C.length > MAX_CENTER) { var old = C.shift(); old.min = true; old.el.classList.add('kd-min'); }
+    var colW = Math.max(MIN_W, Math.round(d.W * SIDE_FRAC));
+    if (L.length && R.length && d.W - 2 * colW < MIN_W) colW = Math.max(MIN_W, Math.floor(d.W / 3));
+    var x0 = L.length ? colW : 0, x1 = R.length ? d.W - colW : d.W;
+    function column(list, x) {
+      var h = Math.floor(d.H / list.length);
+      list.forEach(function (w, i) { setRect(w, { x: x, y: i * h, w: colW, h: i === list.length - 1 ? d.H - i * h : h }); });
+    }
+    if (L.length) column(L, 0);
+    if (R.length) column(R, x1);
+    var cw = x1 - x0, hw = Math.round(cw / 2), hh = Math.round(d.H / 2);
+    var n = C.length;
+    if (n === 1) setRect(C[0], { x: x0, y: 0, w: cw, h: d.H });
+    else if (n === 2) {
+      if (cw >= 2 * MIN_W) { setRect(C[0], { x: x0, y: 0, w: hw, h: d.H }); setRect(C[1], { x: x0 + hw, y: 0, w: cw - hw, h: d.H }); }
+      else { setRect(C[0], { x: x0, y: 0, w: cw, h: hh }); setRect(C[1], { x: x0, y: hh, w: cw, h: d.H - hh }); }
+    } else if (n >= 3) {
+      if (cw >= 2 * MIN_W) {
+        setRect(C[n - 1], { x: x0, y: 0, w: hw, h: d.H });   // la más reciente, grande a la izquierda
+        setRect(C[n - 3], { x: x0 + hw, y: 0, w: cw - hw, h: hh }); setRect(C[n - 2], { x: x0 + hw, y: hh, w: cw - hw, h: d.H - hh });
+      } else {
+        var th = Math.floor(d.H / n);
+        C.forEach(function (w, i) { setRect(w, { x: x0, y: i * th, w: cw, h: i === n - 1 ? d.H - i * th : th }); });
+      }
+    }
+    if (wins.some(function (w) { return !w.min && hooks.adoptKinds.indexOf(w.kind) >= 0; })) fireResize();
+    renderBar();
   }
 
   // la primera vez: cómo se usan las ventanas (una sola vez, solo con ratón/tablet)
@@ -423,6 +495,8 @@
     b = w.el.querySelector('.kd-b-max'); b.title = w.max ? t('restore') : t('max'); b.setAttribute('aria-label', b.title);
     b = w.el.querySelector('.kd-b-x'); b.title = t('close'); b.setAttribute('aria-label', t('close'));
     b.textContent = isMobile() ? t('back') : '✕';
+    b = w.el.querySelector('.kd-b-pin'); b.title = w.pinned ? t('unpin') : t('pin'); b.setAttribute('aria-label', b.title);
+    w.el.classList.toggle('kd-pinned', !!w.pinned);
   }
   function relabel() {
     wins.forEach(relabelWin);
@@ -492,7 +566,7 @@
     if (w.el && w.el.parentNode) w.el.parentNode.removeChild(w.el);
     if (layoutsFor === w.id) hideLayouts();
     if (focused === w.id) refocusAfter();
-    renderBar();
+    if (autoOn()) arrange(); else renderBar();
     return true;
   }
   function closeKind(kind) { wins.slice().forEach(function (w) { if (w.kind === kind) close(w.id); }); }
@@ -503,11 +577,12 @@
     w.min = true; w.el.classList.add('kd-min');
     if (layoutsFor === w.id) hideLayouts();
     if (focused === w.id) refocusAfter();
-    renderBar();
+    if (autoOn()) arrange(); else renderBar();
   }
   function maximize(id, on) {
     var w = get(id); if (!w) return;
     if (on == null) on = !w.max;
+    if (on && w.pinned) { w.pinned = null; relabelWin(w); }
     if (on && !w.max) { w.prev = { x: w.x, y: w.y, w: w.w, h: w.h }; }
     if (!on && w.prev) { w.x = w.prev.x; w.y = w.prev.y; w.w = w.prev.w; w.h = w.prev.h; }
     w.max = on; w.snap = null;
@@ -583,6 +658,7 @@
     var el = w.el, ttl = el.querySelector('.kd-ttl');
     el.addEventListener('pointerdown', function () { if (focused !== w.id) focus(w.id); }, true);
     el.querySelector('.kd-b-min').addEventListener('click', function (e) { e.stopPropagation(); minimize(w.id); });
+    el.querySelector('.kd-b-pin').addEventListener('click', function (e) { e.stopPropagation(); hideLayouts(); pin(w.id); });
     var mb = el.querySelector('.kd-b-max');
     mb.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -599,7 +675,7 @@
 
     // arrastre por la barra de título
     ttl.addEventListener('pointerdown', function (e) {
-      if (e.button !== 0 || e.target.closest('.kd-b') || isMobile()) return;
+      if (e.button !== 0 || e.target.closest('.kd-b') || isMobile() || w.pinned) return;
       e.preventDefault();
       var sr = winsEl.getBoundingClientRect();
       var startX = e.clientX, startY = e.clientY, moved = false;
@@ -652,7 +728,7 @@
     // redimensión por bordes y esquinas
     el.querySelectorAll('.kd-rs').forEach(function (h) {
       h.addEventListener('pointerdown', function (e) {
-        if (e.button !== 0 || isMobile() || w.max) return;
+        if (e.button !== 0 || isMobile() || w.max || w.pinned) return;
         e.preventDefault(); e.stopPropagation();
         var d = h.getAttribute('data-d'), sx = e.clientX, sy = e.clientY;
         var o = { x: w.x, y: w.y, w: w.w, h: w.h, snap: w.snap }, pid = e.pointerId;
@@ -720,7 +796,7 @@
     if (on == null) on = !menuEl.classList.contains('show');
     if (on) {
       var items = isMobile() ? [['closeAll', closeAll], ['classic', toClassic]]
-        : [['tile', tile], ['cascade', cascade], ['minAll', function () { wins.slice().forEach(function (w) { minimize(w.id); }); }], ['closeAll', closeAll], ['sep'], ['classic', toClassic]];
+        : [[autoOn() ? 'auto' : 'autoOff', function () { setAuto(!autoOn()); }], ['arrange', function () { arrange(true); }], ['tile', tile], ['cascade', cascade], ['minAll', function () { wins.slice().forEach(function (w) { minimize(w.id); }); }], ['closeAll', closeAll], ['sep'], ['classic', toClassic]];
       menuEl.innerHTML = items.map(function (it) { return it[0] === 'sep' ? '<div class="sep"></div>' : '<button type="button" data-k="' + it[0] + '">' + esc(t(it[0])) + '</button>'; }).join('');
       menuEl.querySelectorAll('button').forEach(function (b) {
         var it = items.filter(function (x) { return x[0] === b.getAttribute('data-k'); })[0];
@@ -784,6 +860,7 @@
       else { w.body.innerHTML = ''; render(w); }
     });
     relabel();
+    if (autoOn()) arrange();
   }
 
   function setEnabled(on) {
@@ -804,6 +881,7 @@
     mount: mount, unmount: unmount, wall: function () { return wallEl; },
     open: open, close: close, closeKind: closeKind, closeAll: closeAll, focus: focus, has: has, get: get, list: list,
     minimize: minimize, maximize: maximize, restore: restore, snap: snapTo, tile: tile, cascade: cascade,
+    arrange: arrange, pin: pin, autoOn: autoOn, setAuto: setAuto,
     suspend: suspend, resume: resume, isMobile: isMobile, relabel: relabel,
     focused: function () { return focused; },
   };

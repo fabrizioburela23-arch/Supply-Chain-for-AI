@@ -2387,6 +2387,7 @@
     var cw = _chatWin(); if (!cw) return;
     var D = desk(), other = D.focused();
     if (!other || other === cw.id) return;
+    if (D.autoOn && D.autoOn()) { D.focus(cw.id); return; }   // el orden automático ya los puso lado a lado
     if (!D.isMobile() && (window.innerWidth || 0) >= 1100) { D.snap(other, 'left'); D.snap(cw.id, 'right'); }
     D.focus(cw.id);
   }

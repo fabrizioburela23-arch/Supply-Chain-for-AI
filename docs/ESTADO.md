@@ -9,6 +9,23 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (d) — ESCRITORIO: ORDEN AUTOMÁTICO + 📌 FIJAR A LOS COSTADOS (sw v189)
+
+Pedido: "que cuando se abre una pestaña se organicen las cosas, que no se vea saturado, fácil de
+ordenar, y fijarlas en los costados del chat para seguir viéndolas mientras escribes".
+- `arrange()` en engine/desktop.js: al abrir/cerrar/minimizar/fijar (y al cambiar el tamaño del
+  escritorio, p. ej. cuando aparece el dock del chat) las ventanas se reparten solas: 1 = todo,
+  2 = mitades, 3 = la nueva grande a la izquierda + dos cuartos; la 4ª suelta manda a la barra a
+  la más antigua (MAX_CENTER=3). kh_desk_auto=off lo apaga (⊞ → "Ordenar automáticamente").
+- 📌 (kd-b-pin): ventana FIJADA a una columna lateral (izq./der., 32 % del ancho, apiladas); no se
+  arrastra ni redimensiona; sigue visible con la conversación abierta. Recordado por tipo
+  (kh_desk_pins). Maximizar o arrastrar la suelta.
+- cockpit `_chatBeside`: con orden automático solo enfoca 💬 (ya quedan lado a lado).
+- Guía actualizada; Playwright +13 comprobaciones (orden 1-4 ventanas, barra, fijar der./izq.,
+  re-ajuste con el dock, soltar, apagar).
+
+---
+
 # SESIÓN 2026-10-04 (c) — JEV (TYPESAFE) EN MODO SOMBRA: PORTERO DEL CHAT (sw v188)
 
 Fabrizio quiere usar Jev (modelo "System One" de TypeSafe: decisiones tipadas con
