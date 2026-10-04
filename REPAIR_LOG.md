@@ -291,3 +291,24 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_committee.py -k c8` (5 tests; antes:
   `ImportError: research.falsifiers`, claim nunca 'falsified').
 - **Rollback.** Revertir el commit (la columna nueva queda vacía, inocua).
+
+### C9 — Evidencia calculada por Khipus = `computed`; lo interno es UNA referencia; cifras sin fuente externa → tope 0,5
+
+- **Problema.** Claim de Alphabet con una sola evidencia `analysis` "Ratios
+  calculados por Khipus" (fiabilidad 0.85, marcada `primary`); la claim de mayor
+  peso del BUY de Nvidia (backlog "$500B", 0.726) solo tenía catálogo + grafo
+  propios y pasaba el guardián de cifras: la independencia se medía por
+  referencia textual y todo lo interno contaba como fuente.
+- **Cambio.** `research/context.py`: ratios y pares → `source_type='computed'`,
+  `source_kind='computed'`; catálogo y grafo → `source_kind='internal'`.
+  `research/confidence.py` **conf-v2**: toda referencia `khipus:*` = una sola
+  familia 'khipus'; lo `computed` no suma independencia; `compute_confidence(...,
+  statement=)`: cifras de dinero (core.numbers.money_mentions) sin NINGUNA fuente
+  http de apoyo → tope `MONEY_NO_EXTERNAL_CAP`=0.5 con la razón en `caps`;
+  `external_sources` en los componentes. `runner.persist_result` pasa el texto de
+  la claim. UI: etiqueta "calculado por Khipus (no es fuente externa)". Las claims
+  conf-v1 existentes NO se recalculan (append-only; `method` lo dice).
+  `docs/CLAIM_MODEL.md` actualizado.
+- **Verificar.** `pytest tests/test_repair_committee.py -k c9` (4 tests; antes:
+  distinct_sources 2 y ≈0.80 sin tope; tipo 'analysis').
+- **Rollback.** Revertir el commit; las claims nuevas vuelven a conf-v1.

@@ -560,7 +560,8 @@ def persist_result(session, job, run, agent, ctx, result, quotes=None):
         counter = [ev_by_ref[r] for r in c.counter_evidence_refs if r in ev_by_ref]
         if not support:
             continue   # sin evidencia de apoyo NO hay claim material (spec §3)
-        conf, parts = compute_confidence(support, counter, c.agent_certainty, comp, now=now)
+        conf, parts = compute_confidence(support, counter, c.agent_certainty, comp, now=now,
+                                         statement=f'{c.statement_es} {c.statement_en or ""} {c.object or ""}')
         cal = _calibration_for(agent.agent_type, conf, cal_table)
         if cal:
             parts = dict(parts, calibration=cal)

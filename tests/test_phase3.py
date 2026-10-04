@@ -314,7 +314,7 @@ def test_foto_de_partida_al_persistir_la_claim(db):
         assert [x['days'] for x in b.checkpoints] == [90, 180, 365] and b.confidence == c.confidence
         cal = c.confidence_components['calibration']
         assert cal['raw'] == pytest.approx(c.confidence, abs=1e-3) and cal['sufficient'] is False
-        assert c.confidence_components['method'] == 'conf-v1'
+        assert c.confidence_components['method'] == 'conf-v2'     # C9
 
 
 @needs_db

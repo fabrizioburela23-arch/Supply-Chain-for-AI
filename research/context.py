@@ -278,7 +278,7 @@ class ContextBuilder:
             if lst.get('note_es'):
                 parts.append('estado en bolsa verificado: ' + lst['note_es'])
             add('catalog', f"Ficha Khipus de {node.get('label')}", ' · '.join(parts),
-                reference=f'khipus:catalog:{entity_id}', reliability=0.5, source_kind='corporate')
+                reference=f'khipus:catalog:{entity_id}', reliability=0.5, source_kind='internal')
 
         # estados financieros anuales (dato de proveedor: alta confiabilidad)
         fin, prof = {}, {}
@@ -342,9 +342,10 @@ class ContextBuilder:
             except Exception:  # noqa: BLE001
                 txt = ''
             if txt:
-                add('analysis', f'Ratios financieros de {node.get("label")} calculados por Khipus '
+                # C9: CALCULADO por Khipus a partir de los estados/perfil ya presentes → 'computed'
+                add('computed', f'Ratios financieros de {node.get("label")} calculados por Khipus '
                     f'(estados anuales en USD + capitalización en vivo)', txt,
-                    reference=f'khipus:ratios:{mkt}', reliability=0.85, source_kind='primary', max_chars=1400)
+                    reference=f'khipus:ratios:{mkt}', reliability=0.85, source_kind='computed', max_chars=1400)
 
         # VALUACIÓN RELATIVA frente a pares del grafo (perfiles en vivo)
         if 'peers' in needs and mkt and prof.get('available') and depth != 'QUICK':
@@ -356,8 +357,8 @@ class ContextBuilder:
             except Exception:  # noqa: BLE001
                 txt = ''
             if txt:
-                add('analysis', f'Valuación y calidad de {node.get("label")} frente a sus pares (perfiles en vivo)',
-                    txt, reference=f'khipus:peers:{entity_id}', reliability=0.8, source_kind='primary',
+                add('computed', f'Valuación y calidad de {node.get("label")} frente a sus pares (perfiles en vivo)',
+                    txt, reference=f'khipus:peers:{entity_id}', reliability=0.8, source_kind='computed',
                     max_chars=1400)
 
         # indicadores de precio calculados (sin IA): 1 año vs S&P 500
@@ -468,7 +469,7 @@ class ContextBuilder:
                                  f"({e['type']}, peso {e['w']}){': ' + e['rel'] if e['rel'] else ''}")
                 add('graph', f'Relaciones de suministro de {node.get("label")} en el grafo Khipus',
                     ' | '.join(lines), reference=f'khipus:graph:{entity_id}', reliability=0.6,
-                    source_kind='corporate')
+                    source_kind='internal')
 
         prior = self._prior_claims(entity_id, agent_type)
         return {

@@ -228,3 +228,53 @@ def test_c8_el_job_diario_falsa_la_claim_y_el_memo_lo_avisa(db):
         assert all(o.result == 'n/a' and 'falsada' in (o.reason or '') for o in fin)   # ya no cuenta como acierto/fallo
         tr = track_record(s)
         assert tr['overall']['n_scored'] == 1          # solo el fallo por falsación
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# C9 · Evidencia calculada por Khipus = 'computed' (no fuente independiente); cifras de dinero sin fuente externa → tope 0.5
+# ════════════════════════════════════════════════════════════════════════════
+
+def test_c9_evidencia_calculada_no_cuenta_como_fuente_independiente():
+    from research.confidence import METHOD, compute_confidence
+    assert METHOD == 'conf-v2'
+    support = [{'source_type': 'financials', 'reference': 'https://finance.yahoo.com/quote/NVDA/financials', 'reliability': 0.9},
+               {'source_type': 'computed', 'reference': 'khipus:ratios:NVDA', 'reliability': 0.85}]
+    score, parts = compute_confidence(support, [], 0.8, 1.0)
+    assert parts['distinct_sources'] == 1 and score <= 0.6 and parts['method'] == 'conf-v2'
+    assert any('una sola referencia' in c for c in parts['caps'])
+
+
+def test_c9_catalogo_y_grafo_propios_son_una_sola_referencia_interna():
+    from research.confidence import compute_confidence
+    support = [{'source_type': 'catalog', 'reference': 'khipus:catalog:Nvidia', 'reliability': 0.5},
+               {'source_type': 'graph', 'reference': 'khipus:graph:Nvidia', 'reliability': 0.6}]
+    score, parts = compute_confidence(support, [], 0.8, 1.0)
+    assert parts['distinct_sources'] == 1 and score <= 0.6
+
+
+def test_c9_cifras_de_dinero_sin_fuente_externa_topan_a_0_5():
+    from research.confidence import compute_confidence
+    internal = [{'source_type': 'catalog', 'reference': 'khipus:catalog:Nvidia', 'reliability': 0.5},
+                {'source_type': 'graph', 'reference': 'khipus:graph:Nvidia', 'reliability': 0.6}]
+    score, parts = compute_confidence(internal, [], 0.9, 1.0, statement='backlog de aproximadamente $500B hasta 2027')
+    assert score <= 0.5 and any('sin fuente primaria externa' in c for c in parts['caps'])
+    external = internal + [{'source_type': 'news', 'reference': 'https://www.reuters.com/x', 'reliability': 0.8,
+                            'published_at': '2026-09-20T12:00:00Z'}]
+    score2, parts2 = compute_confidence(external, [], 0.9, 1.0, statement='backlog de aproximadamente $500B hasta 2027')
+    assert not any('sin fuente primaria externa' in c for c in parts2['caps']) and score2 > 0.5
+    # sin cifras de dinero no aplica el tope
+    score3, parts3 = compute_confidence(internal, [], 0.9, 1.0, statement='la demanda sigue fuerte')
+    assert not any('sin fuente primaria externa' in c for c in parts3['caps'])
+
+
+def test_c9_ratios_y_pares_se_etiquetan_computed_y_catalogo_grafo_internal():
+    from research.context import ContextBuilder
+    from tests.test_research import FETCH
+    ctx = ContextBuilder(fetchers=FETCH).build('Nvidia', 'fundamental')
+    by_ref = {e['reference']: e for e in ctx['evidence'] if e.get('reference')}
+    r = next((e for k, e in by_ref.items() if str(k).startswith('khipus:ratios:')), None)
+    assert r and r['source_type'] == 'computed' and r['source_kind'] == 'computed'
+    cat = next((e for k, e in by_ref.items() if str(k).startswith('khipus:catalog:')), None)
+    assert cat and cat['source_type'] == 'catalog' and cat['source_kind'] == 'internal'
+    g = next((e for k, e in by_ref.items() if str(k).startswith('khipus:graph:')), None)
+    assert g is None or g['source_kind'] == 'internal'

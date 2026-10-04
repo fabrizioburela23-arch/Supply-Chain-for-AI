@@ -171,7 +171,7 @@ def test_vertical_slice_nvidia(db):
         c = s.query(ResearchClaim).filter_by(job_id=jid).one()
         assert c.subject_entity_id == 'Nvidia' and c.horizon == 'LONG_TERM' and c.agent_type == 'fundamental'
         assert c.affected_entity_ids == ['TSMC']                       # id inexistente descartado
-        assert c.confidence_components['method'] == 'conf-v1' and 0 < c.confidence < 0.95
+        assert c.confidence_components['method'] == 'conf-v2' and 0 < c.confidence < 0.95
         ev = s.query(ResearchEvidence).filter_by(claim_id=c.id).all()
         assert {e.stance for e in ev} == {'supporting', 'counter'}
         assert any(e.source_type == 'financials' for e in ev)

@@ -393,7 +393,8 @@
   }
 
   // Nombre legible del tipo de evidencia (es/en)
-  var SRC = { analysis: ['cálculo de Khipus (ratios, pares, técnico)', 'Khipus calculation (ratios, peers, technicals)'], filing: ['reporte oficial SEC', 'official SEC filing'], earnings: ['resultados trimestrales', 'quarterly results'], financials: ['estados financieros', 'financial statements'],
+  var SRC = { analysis: ['cálculo de Khipus (ratios, pares, técnico)', 'Khipus calculation (ratios, peers, technicals)'],
+    computed: ['calculado por Khipus con los estados/perfil (no es fuente externa)', 'computed by Khipus from the statements/profile (not an external source)'], filing: ['reporte oficial SEC', 'official SEC filing'], earnings: ['resultados trimestrales', 'quarterly results'], financials: ['estados financieros', 'financial statements'],
     market: ['mercado en vivo', 'live market'], news: ['noticia', 'news'], catalog: ['ficha Khipus', 'Khipus profile'],
     graph: ['grafo de la cadena', 'supply-chain graph'], web: ['web', 'web'] };
   function srcName(t) { return SRC[t] ? L(SRC[t][0], SRC[t][1]) : (t || ''); }
