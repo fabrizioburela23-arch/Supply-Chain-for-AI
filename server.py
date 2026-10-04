@@ -939,8 +939,17 @@ def health():
         # Auditoría #15: SECRET_KEY por defecto = firmas falsificables. Solo el
         # booleano (nunca el valor); la UI/🩺 lo muestran como alerta.
         'secret_key_default': _secret_key_default(),
+        'research': _research_brief(),           # R6: ¿puedo investigar ahora? (proveedores, cola, presupuesto)
         'ts': int(time.time()),
     })
+
+
+def _research_brief():
+    try:
+        from research.health import health_brief
+        return health_brief()
+    except Exception as e:  # noqa: BLE001
+        return {'ok': None, 'error': type(e).__name__}
 
 
 # ----------------------------------------------------------------------------
@@ -1425,6 +1434,18 @@ def diagnostics():
         'detail': ('Respaldo EOD/histórico activo: ' + ', '.join(_extra_names) + '.') if _extra_names
                   else 'Sin respaldo EOD (MarketStack/AlphaVantage): los precios dependen de Finnhub y Yahoo.',
     }
+
+    # R6: salud de la investigación (cola, presupuesto, reloj) junto a los pings
+    try:
+        from research.health import research_health
+        _rh = research_health()
+        services['investigacion'] = {'configured': True, 'ok': bool(_rh['ok']),
+                                     'detail': _rh['hint_es'] + ' · reloj del servidor: '
+                                     + ('activo' if (_rh.get('scheduler') or {}).get('running') else 'APAGADO'),
+                                     'health': {k: _rh[k] for k in ('queue', 'budget', 'scheduler', 'outcomes', 'last_errors')}}
+    except Exception as _e:  # noqa: BLE001
+        services['investigacion'] = {'configured': True, 'ok': False,
+                                     'detail': f'sin salud de investigación: {type(_e).__name__}'}
 
     n_ok = sum(1 for s in services.values() if s.get('ok'))
     out = {

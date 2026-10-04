@@ -545,3 +545,74 @@ def test_r5_scheduler_corre_tareas_vencidas_y_sobrevive_a_errores():
     assert st['ok']['runs'] == 2 and st['ok']['last_result'] == {'n': 1} and st['ok']['last_error'] is None
     assert st['boom']['errors'] == 2 and 'RuntimeError' in st['boom']['last_error']
     scheduler._reset()
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R6 · Salud del pipeline: /api/research/health, bloque en /api/health, MCP get_research_health
+# ════════════════════════════════════════════════════════════════════════════
+
+def test_r6_research_health_reporta_proveedores_cola_presupuesto_y_reloj(monkeypatch):
+    from core import ai
+    from research import health as rh
+    monkeypatch.setattr(ai, 'CLAUDE', 'sk-test-123456')
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
+    ai._open_circuit('claude', 'credit', 'credit balance too low', 600)
+    rh._CACHE.update(ts=0.0, data=None)
+    import server as srv
+    c = srv.app.test_client()
+    d = c.get('/api/research/health?fresh=1').get_json()
+    assert d['providers']['claude']['configured'] and d['providers']['claude']['available'] is False
+    assert d['providers']['claude']['circuit']['open'] is True and d['providers']['claude']['circuit']['kind'] == 'credit'
+    assert d['providers']['gemini']['available'] is True
+    assert d['slots']['max'] == ai.AI_MAX_CONCURRENCY and d['slots']['bg_max'] >= 1
+    assert d['queue']['agents_in_flight'] == 0 and d['queue']['job_concurrency'] >= 1
+    assert d['budget']['research']['daily_usd'] == 2.0
+    assert d['budget']['research']['spent_today_usd'] in (None, 0.0)
+    assert d['ok'] is True and 'gemini' in d['hint_es'] and 'claude' in d['hint_es'] and d['hint_en']
+    assert 'scheduler' in d and 'last_errors' in d and d['as_of']
+    # sin ningún proveedor disponible → ok False con motivo claro
+    ai._open_circuit('gemini', 'auth', 'invalid key', 600)
+    monkeypatch.setattr(ai, 'NVIDIA_KEY', '')
+    d = c.get('/api/research/health?fresh=1').get_json()
+    assert d['ok'] is False and 'pausa' in d['hint_es'] and 'paused' in d['hint_en']
+    # /api/health lleva el resumen
+    rh._CACHE.update(ts=0.0, data=None)
+    h = c.get('/api/health').get_json()
+    assert h['research']['ok'] is False and 'claude' in h['research']['providers_paused']
+
+
+def test_r6_los_errores_de_proveedor_quedan_visibles_y_redactados(monkeypatch):
+    from core import ai
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'AIzaSy-SECRETO-999')
+    monkeypatch.setattr(ai, '_LAST_ERRORS', [])
+    monkeypatch.setattr(ai, '_sleep', lambda s: None)
+    monkeypatch.setattr(ai.requests, 'post', lambda url, **kw: _Resp(503, {'error': {'status': 'UNAVAILABLE'}}))
+    with pytest.raises(RuntimeError):
+        ai._complete_gemini('', 'p', 10)
+    errs = ai.last_errors()
+    assert errs and errs[0]['provider'] == 'gemini' and '503' in errs[0]['error']
+    assert 'AIzaSy-SECRETO-999' not in str(errs)
+
+
+def test_r6_mcp_expone_get_research_health_con_scope_read(monkeypatch):
+    import json
+
+    from flask import Flask
+    import ontology.db as odb
+    from mcp_server.api import mcp_bp
+    from tests.test_mcp import STATIC, call_tool, rpc
+    monkeypatch.setattr(odb, 'DATABASE_URL', '')
+    monkeypatch.setenv('MCP_STATIC_TOKEN', STATIC)
+    from research import health as rh
+    rh._CACHE.update(ts=0.0, data=None)
+    a = Flask('mcp-test-r6')
+    a.config['TESTING'] = True
+    a.register_blueprint(mcp_bp)
+    c = a.test_client()
+    names = [t['name'] for t in rpc(c, STATIC, 'tools/list').get_json()['result']['tools']]
+    assert 'get_research_health' in names
+    _, d = call_tool(c, STATIC, 'get_research_health', {'fresh': True})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and 'providers' in sc and 'queue' in sc and sc['hint_en']
+    assert sc['budget']['research']['spent_today_usd'] is None        # sin base: lo dice, no inventa
+    assert json.dumps(sc)

@@ -261,6 +261,13 @@ def activity():
         return jsonify({'activity': [_run_dict(r) for r in rows]})
 
 
+@research_bp.route('/health')
+def health():
+    """R6: ¿puedo investigar ahora? Sin PIN, sin red, sin IA (caché 5 s)."""
+    from research.health import research_health
+    return jsonify(research_health(fresh=request.args.get('fresh') == '1'))
+
+
 @research_bp.route('/budget')
 def budget():
     if not ontology_available():

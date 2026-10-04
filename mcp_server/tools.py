@@ -975,6 +975,19 @@ def t_get_conclusions_board(ctx, limit=20, side='all'):
             'note': res.get('note_en'), 'as_of': _now_iso()}
 
 
+@tool('get_research_health', 'Can research run now?', 'read',
+      'Health of the research pipeline in one call, without spending AI: which providers have a key and which are '
+      'paused (no credit / invalid key / retired model), AI slots in use, research queue (waiting/running), daily '
+      'budget spent vs limit, server scheduler and last provider errors. Call it before run_research if a previous '
+      'job came back partial/deferred or failed with "AI busy".',
+      {'fresh': {'type': 'boolean', 'default': False}})
+def t_get_research_health(ctx, fresh=False):
+    hm = _module('research.health', 'the research health module')
+    out = hm.research_health(fresh=bool(fresh))
+    out['source'] = 'Khipus research pipeline (in-process state, no network)'
+    return out
+
+
 @tool('get_track_record', 'Agent track record & calibration', 'read',
       'How accurate the Khipus research agents have been: scored predictions, hit rate, Brier score and '
       'calibration buckets per agent (predictions are scored against real prices after their horizon).',

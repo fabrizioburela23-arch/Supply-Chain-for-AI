@@ -139,3 +139,23 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   fijaban `skipped`/`budget_exhausted`).
 - **Rollback.** Revertir el commit; los jobs `deferred` existentes quedarían en
   ese estado (no se ejecutan): marcar `failed` a mano si se revierte.
+
+### R6 — Salud del pipeline en una sola foto (API, /api/health, 🩺 y MCP)
+
+- **Problema.** No había un lugar que dijera "¿puedo investigar ahora?":
+  `/api/health` solo decía qué claves existen; el 🩺 hace pings (gastan llamadas)
+  pero no muestra pausas, cupos, cola ni presupuesto; una IA externa llamaba
+  `run_research` y recién ~70 s por agente después descubría la cadena caída.
+- **Cambio.** `research/health.py` (nuevo): `research_health()` sin red ni IA
+  (caché 5 s) → proveedores (clave + pausa del corta-circuito), cupos del
+  semáforo en uso, cola (jobs/agentes, conteos en base), presupuesto research
+  (gastado/tope/agotado) y límites de 💰, reloj del servidor (tareas, última
+  corrida, errores), última evaluación de predicciones, últimos 10 errores de
+  proveedor REDACTADOS (`core.ai.last_errors()`), `hint_es/en` en lenguaje
+  simple y `ok`. `GET /api/research/health` (`?fresh=1`), bloque `research` en
+  `/api/health`, tarjeta "investigacion" en `/api/diagnostics` (🩺) y herramienta
+  MCP `get_research_health` (scope read; herramienta NUEVA, las existentes no
+  cambian).
+- **Verificar.** `pytest tests/test_repair_research.py -k r6` (3 tests; antes 404
+  y herramienta inexistente). En producción: `/api/research/health`.
+- **Rollback.** Revertir el commit; no toca datos.

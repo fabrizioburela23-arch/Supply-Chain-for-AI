@@ -290,6 +290,22 @@ def provider_available(name):
     return bool(prov and prov[0]() and circuit_open(name) is None)
 
 
+_LAST_ERRORS = []          # últimos errores de proveedor (redactados) para /api/research/health y 🩺
+_LAST_ERRORS_MAX = 10
+
+
+def _note_error(provider, e):
+    with _CIRCUIT_LOCK:
+        _LAST_ERRORS.append({'at': datetime.now(timezone.utc).isoformat(timespec='seconds'), 'provider': provider,
+                             'kind': type(e).__name__, 'error': _redact(e, 160)})
+        del _LAST_ERRORS[:-_LAST_ERRORS_MAX]
+
+
+def last_errors():
+    with _CIRCUIT_LOCK:
+        return list(reversed(_LAST_ERRORS))
+
+
 def _guarded(provider, max_tokens, fn):
     """Envuelve la llamada real: respeta la pausa (salvo pings), abre el circuito
     ante un error definitivo y lo cierra ante un éxito."""
@@ -303,6 +319,7 @@ def _guarded(provider, max_tokens, fn):
     except Exception as e:  # noqa: BLE001
         if type(e).__name__ == 'AIBudgetError':
             raise
+        _note_error(provider, e)
         kind = _definitive_kind(str(e))
         if kind:
             _open_circuit(provider, kind, str(e))
