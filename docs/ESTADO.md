@@ -9,7 +9,7 @@ está conectado).
 
 ---
 
-# SESIÓN 2026-10-04 (i) — MISIÓN DE REPARACIÓN · P1 GRAFO Y ONTOLOGÍA (G1-G4, sw v208)
+# SESIÓN 2026-10-04 (i) — MISIÓN DE REPARACIÓN · P1 GRAFO + P2 WORLD MONITOR Y OPERACIÓN (sw v210)
 
 Causa raíz de casi todo P1: DOS verdades del grafo. El mapa y el MCP leen el catálogo (limpio desde
 julio); el motor de shocks, el NRS del servidor y el Grafo Temporal leen Postgres, que conserva el grafo
@@ -29,8 +29,17 @@ PRE-limpieza (empresas repetidas, vínculos dobles, ~400 flechas al revés hacia
   `valid_from_known:false`, confianza por link en matrices (w×conf), NRS estructural (pares de flujo
   distintos: varios NRS bajan), cifras del catálogo con unidad y sin fecha propia.
 - Snapshot regenerado: 949 → 938 nodos, 2.526 → 2.524 enlaces. Suite completa verde con base local.
+- Revisión adversarial antes de desplegar (3 lentes): 31 hallazgos → G5/G5b (ontología: emparejamiento,
+  ascenso de duplicados solo al deshacer, candados, plan revisado, PIN obligatorio, arranque sin candado
+  exclusivo) y G6 (mismo NRS en chat/carteras/Second Brain, chat sin cortar clientes, confirmado no se
+  descuenta, ids viejos → canónico, "% exacto no verificado" ya no marca la relación). Límite conocido: con
+  un proveedor ÚNICO no verificado el descuento no actúa en el motor de matrices (documentado en REPAIR_LOG G6).
+- P2 hecho en la misma sesión: W1 (GDELT 404 → pausa honesta 1 h, capas curadas declaradas, precalentado),
+  O1 (chequeo del sistema tras cada arranque y diario: `/api/ops/last_check`; humo del MCP solo lectura
+  `scripts/smoke_mcp.py` + CI opcional con el secreto `KHIPU_MCP_TOKEN`), O2 (`LOG_JSON=on`).
 - Pendiente para Fabrizio: AlphaSense ≈ AlphaSenseFin (¿misma empresa?), Envicool margin 20.25
-  (¿0.2025?), revisar "direcciones al revés" en el informe del 🩺.
+  (¿0.2025?), Sterling→Eaton (nota de duplicado), revisar "direcciones al revés" en el informe del 🩺 y,
+  ANTES de aplicar nada, copia de seguridad de Postgres en Railway.
 
 # SESIÓN 2026-10-04 (h) — MISIÓN DE REPARACIÓN · P0 INVESTIGACIÓN (R1-R6, sw v201)
 

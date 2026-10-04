@@ -200,7 +200,17 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     nombre exacto de la base; direcciones/pesos/faltantes/sobrantes solo si
     Fabrizio los marca; deshacer por corrida (de la más nueva a la más vieja).
     `NODE_BY_ID[alias]` SIEMPRE lleva al canónico (merge_graph.js): quien
-    enumere NODE_BY_ID para listar nodos filtra `NODE_BY_ID[k].id === k`.
+    enumere NODE_BY_ID para listar nodos filtra `NODE_BY_ID[k].id === k`, y quien
+    busque grado/vínculos por id usa `window._canonId(id)`. Revisión G5/G5b: un
+    LinkCreated deduplicado SOLO "asciende" cuando su gemela se retracta con
+    `promote_dedups: true` (lo emite solo `rollback_run`), si es de otro canal y
+    no queda copia viva — misma regla en tablas y replay (`_promotion_choice`);
+    el replay mata una creación con una remoción no dirigida solo si se REGISTRÓ
+    antes. Reconcile: candado `pg_try_advisory_lock`, `expect` (plan revisado),
+    PIN configurado OBLIGATORIO (sin TRADE_PIN → 403). Columnas tardías: solo se
+    alteran si faltan (`lock_timeout`). P2: `core/world.source_down` (fuente con
+    404/403 seguidos en pausa 1 h), `core/ops_check.py` (`/api/ops/last_check`),
+    `scripts/smoke_mcp.py` (solo lectura), `core/logjson.py` (`LOG_JSON=on`).
   - **Khipu chat (2026-10-01)**: `core/khipu_chat.py` (POST /api/khipu/chat):
     cerebro con herramientas (bucle JSON, máx 5 rondas, ~45 s; reutiliza
     mcp_server/tools.py — SOLO lectura, nunca órdenes) + `engine/khipu_chat.js`
