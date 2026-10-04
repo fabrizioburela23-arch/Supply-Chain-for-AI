@@ -185,6 +185,22 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     `core/live_caps._daily_outcomes` (marca el día solo si corrió bien; tarea
     `research_outcomes_daily`). Columnas nuevas van en
     `ontology/db._COLUMNAS_TARDIAS` (ALTER … IF NOT EXISTS), nunca a mano.
+    P1 grafo (G1-G4): `scripts/audit_graph.py` + `data/graph_audit_baseline.json`
+    (trinquete en tests/test_graph_audit.py: tras cambiar el catálogo, exportar y
+    `--write-baseline` si MEJORA). Ontología append-only de verdad: `links.event_id`
+    + `LinkCreated` idéntico vigente → `dedup_of` (no-op; `allow_duplicate` para
+    hechos con ventana) + `LinkRemoved` con `properties.retracts_event_id` =
+    retracción DIRIGIDA y RETROACTIVA (es una corrección: valid_from = el de la
+    creación). Acciones `RetractarVinculo` / `FusionarEntidad` (alias → retired +
+    merged_into; vínculos re-creados en el canónico con su fecha). Para "la
+    relación terminó" seguir usando RechazarVinculo/LinkRemoved con fecha.
+    `ontology/reconcile.py` (+ scripts/reconcile_v0_to_ontology.py, `/api/ontology/
+    reconcile/plan|apply|rollback`, panel 🩺 engine/reconcile.js): catálogo ↔
+    Postgres SOLO con eventos (canal `reconcile_v0:<run_id>`), aplicar = PIN +
+    nombre exacto de la base; direcciones/pesos/faltantes/sobrantes solo si
+    Fabrizio los marca; deshacer por corrida (de la más nueva a la más vieja).
+    `NODE_BY_ID[alias]` SIEMPRE lleva al canónico (merge_graph.js): quien
+    enumere NODE_BY_ID para listar nodos filtra `NODE_BY_ID[k].id === k`.
   - **Khipu chat (2026-10-01)**: `core/khipu_chat.py` (POST /api/khipu/chat):
     cerebro con herramientas (bucle JSON, máx 5 rondas, ~45 s; reutiliza
     mcp_server/tools.py — SOLO lectura, nunca órdenes) + `engine/khipu_chat.js`

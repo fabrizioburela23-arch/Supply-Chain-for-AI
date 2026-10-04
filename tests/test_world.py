@@ -170,7 +170,7 @@ process.stdout.write(JSON.stringify(out));
              {'id': 'ñandú 🦙', 'country': 'Japón'}, {'id': 'ZZ_5', 'country': 'Reino Unido / Noruega'},
              {'id': 'ZZ_6', 'loc': 'Pekín, China'}]
     nodes = snap['nodes'] + extra
-    assert len(js) == len(nodes) >= 949
+    assert len(js) == len(nodes) >= 900          # 938 tras fusionar alias (G1b/G1d)
     for n in nodes:
         py = W.geo_coord(n)
         j = js[n['id']]
@@ -204,7 +204,7 @@ def test_country_key_and_place_country():
 
 def test_graph_snapshot_nrs_matches_client_formula():
     g = W._graph()
-    assert len(g['nodes']) >= 949
+    assert len(g['nodes']) >= 900
     tsmc = g['by_id']['TSMC']
     assert tsmc['precision'] == 'hq' and tsmc['country_key'] == 'Taiwan'
     assert 0 <= tsmc['nrs'] <= 100

@@ -9,6 +9,29 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (i) — MISIÓN DE REPARACIÓN · P1 GRAFO Y ONTOLOGÍA (G1-G4, sw v208)
+
+Causa raíz de casi todo P1: DOS verdades del grafo. El mapa y el MCP leen el catálogo (limpio desde
+julio); el motor de shocks, el NRS del servidor y el Grafo Temporal leen Postgres, que conserva el grafo
+PRE-limpieza (empresas repetidas, vínculos dobles, ~400 flechas al revés hacia TSMC/Nvidia…).
+- G1 auditoría automática (`scripts/audit_graph.py`, línea base + trinquete). G1b/G1d 11 alias nuevos
+  (misma empresa dos veces). G1c `NODE_BY_ID[alias]` siempre lleva al canónico (antes AWS y 30+ no).
+- G2/G2b ontología append-only de verdad: dedupe de LinkCreated (`dedup_of`), retracción DIRIGIDA y
+  retroactiva (`retracts_event_id` + `links.event_id`), Acciones RetractarVinculo / FusionarEntidad.
+- G3 reconciliación catálogo ↔ Postgres SOLO con eventos (ontology/reconcile.py, CLI, /api/ontology/
+  reconcile/*, panel 🩺 → Diagnóstico → "Grafo: base vs catálogo"). Ensayo con una base migrada desde
+  el snapshot de julio (como producción): 56 alias · 31 repetidos · 393 direcciones · 53 pesos · 273
+  faltantes · 4 sobrantes → todo aplicado en ~6 s, 0 diferencias, tablas == replay, deshacer exacto.
+  **En producción NO se aplicó nada**: Fabrizio hace copia de seguridad → "Aplicar lo seguro" (alias +
+  repetidos) → revisa la lista de direcciones (decisión D5) antes de marcarlas.
+- G4 (agente): MCP proveedores/clientes = solo relaciones de FLUJO (socios/inversores en `related`),
+  `relation_class`/`verified`/`confidence` por arista, fecha centinela 2000-01-01 marcada
+  `valid_from_known:false`, confianza por link en matrices (w×conf), NRS estructural (pares de flujo
+  distintos: varios NRS bajan), cifras del catálogo con unidad y sin fecha propia.
+- Snapshot regenerado: 949 → 938 nodos, 2.526 → 2.524 enlaces. Suite completa verde con base local.
+- Pendiente para Fabrizio: AlphaSense ≈ AlphaSenseFin (¿misma empresa?), Envicool margin 20.25
+  (¿0.2025?), revisar "direcciones al revés" en el informe del 🩺.
+
 # SESIÓN 2026-10-04 (h) — MISIÓN DE REPARACIÓN · P0 INVESTIGACIÓN (R1-R6, sw v201)
 
 Fabrizio: "dejar Khipus Finance confiable y a punto, sin gastar dinero; no agregues features; estoy a
