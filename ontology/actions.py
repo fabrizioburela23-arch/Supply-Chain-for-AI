@@ -287,15 +287,14 @@ def proponer_vinculo(session, inp: ProponerVinculoInput, actor):
     _require_object(session, inp.to_id)
     ev = apply_event(session, 'LinkCreated', {
         'rel_type': inp.tipo, 'properties': {**inp.metadata, 'status': 'proposed',
-                                              'proposed_by': actor, 'proposed_source': inp.fuente},
+                                              'proposed_by': actor, 'proposed_source': inp.fuente,
+                                              # G6c: una PROPUESTA es su propio registro: nunca se
+                                              # deduplica contra un vínculo existente (si no, aprobarla o
+                                              # rechazarla actuaría sobre ese otro vínculo)
+                                              'allow_duplicate': True},
     }, valid_from=_utcnow(), source='manual', actor=actor, object_id=inp.from_id, target_id=inp.to_id)
-    # el id del LinkRecord recién creado: lo buscamos por ser el más reciente para este par
-    link = session.scalars(
-        select(LinkRecord).where(
-            LinkRecord.source_id == inp.from_id, LinkRecord.target_id == inp.to_id,
-            LinkRecord.rel_type == inp.tipo, LinkRecord.valid_to.is_(None),
-        ).order_by(LinkRecord.valid_from.desc())
-    ).first()
+    # el id del LinkRecord recién creado: el de ESTE evento (G2: links.event_id)
+    link = session.scalars(select(LinkRecord).where(LinkRecord.event_id == ev.id)).first()
     link_id = str(link.id) if link else None
     _log_action(session, 'ProponerVinculo', inp.from_id, inp.to_id,
                 {'tipo': inp.tipo, 'link_id': link_id, 'fuente': inp.fuente}, actor)

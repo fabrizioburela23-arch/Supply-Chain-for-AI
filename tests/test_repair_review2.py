@@ -141,3 +141,31 @@ def test_g6b_pin_malo_no_gasta_el_cupo_ni_recibe_plan_viejo(monkeypatch):
         assert r.status_code != 429, 'el cupo no debe gastarse con PIN malo'
     finally:
         Base.metadata.drop_all(eng)
+
+
+@needs_db
+def test_g6c_propuesta_no_se_deduplica_contra_un_hecho_existente():
+    """Una propuesta sin peso sobre un par con un hecho vigente sin peso: antes el
+    dedupe la convertía en no-op y devolvía el link_id del HECHO (aprobar/rechazar
+    la propuesta actuaba sobre él)."""
+    from ontology.db import _get_engine, init_schema, session_scope
+    from ontology.models import Base, LinkRecord
+    from ontology.service import apply_event
+    from ontology.actions import execute_action
+    eng = _get_engine(); Base.metadata.drop_all(eng); init_schema(retries=1)
+    try:
+        with session_scope() as s:
+            for i in ('X', 'Y'):
+                apply_event(s, 'ObjectCreated', {'label': i, 'type': 'Company'}, valid_from='2000-01-01',
+                            source='t', actor='t', object_id=i)
+            apply_event(s, 'LinkCreated', {'rel_type': 'supply', 'properties': {'headline': 'hecho 2021'}},
+                        valid_from='2021-01-01', source='migration_v0_temporal', actor='t', object_id='X', target_id='Y')
+        with session_scope() as s:
+            fact_id = str(s.query(LinkRecord).first().id)
+            r = execute_action(s, 'ProponerVinculo', {'from_id': 'X', 'to_id': 'Y', 'tipo': 'supply', 'fuente': 'agente'},
+                               actor='agente')
+            assert r['link_id'] and r['link_id'] != fact_id
+        with session_scope() as s:
+            assert s.query(LinkRecord).filter(LinkRecord.valid_to.is_(None)).count() == 2
+    finally:
+        Base.metadata.drop_all(eng)

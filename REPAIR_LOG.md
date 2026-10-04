@@ -936,6 +936,20 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   `edge_semantics` del MCP declara `ownership`.
 - **Verificar.** `pytest tests/test_repair_review2.py` (8): sin el cambio fallan los 8.
 
+### G6c — Revisión propia antes de desplegar: una PROPUESTA nunca se deduplica
+- **Síntoma.** Con el dedupe de G2, una propuesta de un agente (ProponerVinculo,
+  sin peso) sobre un par que ya tenía un hecho vigente sin peso (p. ej. un hecho
+  temporal migrado) se convertía en no-op, y la acción devolvía el `link_id` del
+  HECHO existente: aprobar o rechazar la propuesta actuaba sobre ese hecho.
+- **Cambio.** `ProponerVinculo` marca su LinkCreated con `allow_duplicate` (una
+  propuesta es su propio registro) y busca su fila por `event_id` (no "la más
+  reciente del par").
+- **Pendiente conocido (anterior a la misión, no cambiado).** RechazarVinculo
+  emite un LinkRemoved NO dirigido: cierra todas las filas de ese par y
+  relación, no solo la rechazada. Cambiarlo a una retracción dirigida afecta a
+  la detección de rechazos humanos de reconcile; se deja para otra ronda.
+- **Verificar.** `pytest tests/test_repair_review2.py -k g6c`: sin el cambio falla.
+
 ## P2 · World Monitor
 
 ### W1 — GDELT respondía 404: pausa honesta de 1 h, capas curadas declaradas como curadas, precalentado
