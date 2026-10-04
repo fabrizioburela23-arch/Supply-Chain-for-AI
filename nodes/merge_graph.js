@@ -20,7 +20,8 @@
      viejos sin estos campos.
    ============================================================================ */
 
-var UNVERIFIED_RX = /no verificad|no revisad|posible(mente)?|sin confirmar/i;
+var UNVERIFIED_RX = /no verificad|no revisad|\bposible(mente)?|sin confirmar/i;
+var UNVERIFIED_QUALIFIER_RX = /(%|porcentaje|cifra|monto|participaci[oó]n)[^.;]{0,30}?no verificad[oa]s?|posibles? duplicad[oa]s?/gi;
 var UNVERIFIED_CONF = 0.3;
 
 // → {conf, verified, explicit}. `meta` = 6.º elemento de la fila (opcional).
@@ -33,7 +34,7 @@ function linkTrust(rel, meta) {
     if (conf == null) conf = ver ? 1 : UNVERIFIED_CONF;
     return { conf: conf, verified: !!ver, explicit: true };
   }
-  var unv = UNVERIFIED_RX.test(rel || '');
+  var unv = UNVERIFIED_RX.test(String(rel || '').replace(UNVERIFIED_QUALIFIER_RX, ' '));
   return { conf: unv ? UNVERIFIED_CONF : 1, verified: !unv, explicit: false };
 }
 
@@ -202,4 +203,4 @@ function buildKhipusGraph(env) {
 }
 
 if (typeof window !== 'undefined') { window.buildKhipusGraph = buildKhipusGraph; window.linkTrust = linkTrust; }
-if (typeof module !== 'undefined' && module.exports) module.exports = { buildKhipusGraph, linkTrust, UNVERIFIED_RX, UNVERIFIED_CONF };
+if (typeof module !== 'undefined' && module.exports) module.exports = { buildKhipusGraph, linkTrust, UNVERIFIED_RX, UNVERIFIED_QUALIFIER_RX, UNVERIFIED_CONF };

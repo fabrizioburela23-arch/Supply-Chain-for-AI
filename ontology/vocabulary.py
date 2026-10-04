@@ -154,13 +154,19 @@ def flow_relation_types():
 # Confianza de un vínculo según su TEXTO curado (G4c). ÚNICA definición en
 # Python: la usan mcp_server/tools._link_trust y matrix/engine.link_confidence.
 # Su gemela JS vive en nodes/merge_graph.js (UNVERIFIED_RX) — cambiar las dos.
-UNVERIFIED_RX = re.compile(r'no verificad|no revisad|posible(mente)?|sin confirmar', re.I)
+UNVERIFIED_RX = re.compile(r'no verificad|no revisad|\bposible(mente)?|sin confirmar', re.I)
+# Revisión G4: frases que matizan una CIFRA o una nota interna, no la relación
+# ("% exacto no verificado" en un accionista documentado por 13F, "posible
+# duplicado" del nodo). Se quitan ANTES de buscar UNVERIFIED_RX. Gemela JS en
+# nodes/merge_graph.js (UNVERIFIED_QUALIFIER_RX) — cambiar las dos.
+UNVERIFIED_QUALIFIER_RX = re.compile(
+    r'(%|porcentaje|cifra|monto|participaci[oó]n)[^.;]{0,30}?no verificad[oa]s?|posibles? duplicad[oa]s?', re.I)
 UNVERIFIED_CONF = 0.3
 
 
 def text_says_unverified(text):
-    """¿El texto curado de la relación dice que no está verificada?"""
-    return bool(UNVERIFIED_RX.search(str(text or '')))
+    """¿El texto curado dice que la RELACIÓN no está verificada? (no una cifra o una nota)"""
+    return bool(UNVERIFIED_RX.search(UNVERIFIED_QUALIFIER_RX.sub(' ', str(text or ''))))
 
 
 def is_flow_relation(rel):

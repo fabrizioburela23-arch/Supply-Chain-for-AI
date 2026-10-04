@@ -999,7 +999,7 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     table = calibration_table(session)
 
     def _load():
-        rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
+        rows = (session.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
                                                     ResearchClaim.status == 'active').all())
         ids = [c.id for c in rows]
         rels = (session.query(ClaimRelation).filter(ClaimRelation.claim_a.in_(ids) &
@@ -2000,3 +2000,11 @@ def refresh_targets(session, max_n=3, stale_days=7, entities=None):
                 break
     return out
 
+
+def _entity_ids_for(eid):
+    """Revisión G1b/G1d: el id canónico + sus ids viejos (alias) — claims guardadas antes de una fusión."""
+    try:
+        from core.entities import entity_ids_for
+        return entity_ids_for(eid) or [eid]
+    except Exception:  # noqa: BLE001
+        return [eid]

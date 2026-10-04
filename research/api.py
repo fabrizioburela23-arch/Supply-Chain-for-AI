@@ -159,7 +159,7 @@ def entity(entity_id):
     except Exception:  # noqa: BLE001 — nunca impide mostrar la investigación
         pass
     with session_scope() as s:
-        claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
+        claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
                                                 ResearchClaim.status == 'active')
                   .order_by(ResearchClaim.created_at.desc()).limit(60).all())
         ids = [c.id for c in claims]
@@ -304,3 +304,12 @@ def events():
         out = dispatch_event(s, body.get('event') or {}, actor=actor,
                              execute=bool(body.get('execute', True)))
     return jsonify(out)
+
+
+def _entity_ids_for(eid):
+    """Revisión G1b/G1d: el id canónico + sus ids viejos (alias) — claims guardadas antes de una fusión."""
+    try:
+        from core.entities import entity_ids_for
+        return entity_ids_for(eid) or [eid]
+    except Exception:  # noqa: BLE001
+        return [eid]

@@ -2637,7 +2637,12 @@ window._buildNrsDegree = _buildNrsDegree;
 function _invalidateNRS() { _nrsCache.clear(); _nrsDegree = null; }
 window._invalidateNRS = _invalidateNRS;
 
+// Revisión G1c (2026-10-04): NODE_BY_ID[alias] lleva al nodo canónico; quien
+// luego busca grado/vínculos por id debe usar el id CANÓNICO (n.id).
+function _canonId(id){ const n = (typeof NODE_BY_ID !== 'undefined' && NODE_BY_ID) ? NODE_BY_ID[id] : null; return (n && n.id) || id; }
+window._canonId = _canonId;
 function computeNRS(nodeId) {
+  nodeId = _canonId(nodeId);   /* revisión G1c: un id viejo (alias) usa el grado del canónico */
   const hit = _nrsCache.get(nodeId);
   if (hit !== undefined) return hit;
 
@@ -2675,6 +2680,7 @@ function computeNRS(nodeId) {
 // Descomposición término a término del NRS — la usa el X-Ray para mostrar
 // "por qué N": misma fórmula que computeNRS, devuelta desglosada.
 function computeNRSBreakdown(nodeId) {
+  nodeId = _canonId(nodeId);
   const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
   if (!n) return null;
   const _en = (typeof LANG !== 'undefined' && LANG === 'en');   /* regla bilingüe: los términos se MUESTRAN */
@@ -3232,6 +3238,7 @@ function _refreshStylesCore(){
 
 function selectNode(id){
   if(!NODE_BY_ID[id]) return;
+  id = _canonId(id);   /* revisión G1c: alias → canónico (si no, el panel salía sin proveedores ni clientes) */
   if(pathActive||pathfinderMode) clearPath(true); /* v7 · M4 */
   selected=id; window._selectedNode=id; /* contexto para el Command Center */
   nodeSel.select('.n-core').attr('r',d=>d.id===id?computeNodeRadius(d.id)+3:computeNodeRadius(d.id));
@@ -3408,6 +3415,7 @@ function getDepth2(id,direction){
 }
 
 function renderDetail(id){
+  id = _canonId(id);
   const d=NODE_BY_ID[id];
   const col=catColor(d.cat);
   const upstream=[], downstream=[];

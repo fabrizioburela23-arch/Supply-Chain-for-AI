@@ -219,7 +219,7 @@ def _portfolio_report(positions):
 
 
 # ── grafo ────────────────────────────────────────────────────────────────────
-_GRAPH = {'deg': None, 'sup': None, 'cli': None, 'sectors9': None}
+_GRAPH = {'deg': None, 'flow_deg': None, 'sup': None, 'cli': None, 'sectors9': None}
 _GRAPH_LOCK = threading.Lock()
 
 
@@ -240,7 +240,12 @@ def _graph():
                 w = l.get('w') or 1
                 sup[t].append((w, s))   # s PROVEE a t
                 cli[s].append((w, t))
-            _GRAPH.update(deg=dict(deg), sup=dict(sup), cli=dict(cli),
+            try:   # G4d: el NRS usa el grado ESTRUCTURAL (pares de flujo distintos), igual que la app y el MCP
+                from ontology.vocabulary import flow_degree
+                fdeg = flow_degree(snap.get('links', []))
+            except Exception:  # noqa: BLE001
+                fdeg = dict(deg)
+            _GRAPH.update(deg=dict(deg), flow_deg=fdeg, sup=dict(sup), cli=dict(cli),
                           sectors9=snap.get('sectors9') or {})
         return _GRAPH
 
@@ -284,7 +289,7 @@ def universe():
             continue
         if ((n.get('listing') or {}).get('status') or '') in _BAD_LISTING:
             continue
-        deg = g['deg'].get(nid, 0)
+        deg = g['flow_deg'].get(nid, 0)
         out.append({'id': nid, 'symbol': sym, 'label': n.get('label') or nid,
                     'sector': n.get('sector') or '?', 'cat': n.get('cat') or '',
                     'country': _country(n.get('country')), 'degree': deg, 'nrs': nrs(n, deg)})
@@ -969,7 +974,7 @@ def _entity_context(ids, caps, claims, lang):
     lines = []
     for nid in ids:
         n = idx_nodes.get(nid) or {}
-        deg = g['deg'].get(nid, 0)
+        deg = g['flow_deg'].get(nid, 0)
         sup = [idx_nodes.get(s, {}).get('label', s) for _, s in sorted(g['sup'].get(nid, []), reverse=True)[:5]]
         cli = [idx_nodes.get(t, {}).get('label', t) for _, t in sorted(g['cli'].get(nid, []), reverse=True)[:5]]
         live = caps.get(nid) or {}
@@ -1173,7 +1178,7 @@ def _deterministic_answer(a, ids, caps, claims, pair, rows, rep, lang):
     g = _graph()
     for nid in ids[:3]:
         n = nodes_.get(nid) or {}
-        deg = g['deg'].get(nid, 0)
+        deg = g['flow_deg'].get(nid, 0)
         live = caps.get(nid) or {}
         s = (f'{n.get("label")}: sector {sector_label(n.get("sector"), lang)}, NRS {nrs(n, deg)}/100, '
              f'{deg} {"supply-chain links" if en else "vínculos en la cadena"}')

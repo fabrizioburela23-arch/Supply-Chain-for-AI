@@ -171,6 +171,34 @@ def get_index(force=False, snapshot_path=None):
         return _index
 
 
+_ALIAS_IDS = {'tbl': None}
+
+
+def entity_ids_for(eid):
+    """[eid] + los ids VIEJOS (alias del catálogo) que hoy apuntan a eid.
+    Revisión G1b/G1d: lo guardado con un id que luego se fusionó (claims de
+    investigación, memos) sigue apareciendo bajo la empresa canónica."""
+    if not eid:
+        return []
+    tbl = _ALIAS_IDS['tbl']
+    if tbl is None:
+        try:
+            with open(_SNAPSHOT, encoding='utf-8') as fh:
+                alias = json.load(fh).get('node_id_alias') or {}
+        except Exception:  # noqa: BLE001
+            alias = {}
+
+        def canon(x, hops=5):
+            while x in alias and hops > 0:
+                x, hops = alias[x], hops - 1
+            return x
+        tbl = {}
+        for a in alias:
+            tbl.setdefault(canon(a), []).append(a)
+        _ALIAS_IDS['tbl'] = tbl
+    return [eid] + [a for a in tbl.get(eid, []) if a != eid]
+
+
 def resolve(texto, umbral=UMBRAL_BUSQUEDA):
     """Resuelve un texto libre a una entidad del grafo.
 

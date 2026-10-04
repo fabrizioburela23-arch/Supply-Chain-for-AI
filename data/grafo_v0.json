@@ -1,10 +1,10 @@
 {
- "exported_at": "2026-10-04T19:48:42.883Z",
+ "exported_at": "2026-10-04T20:26:13.682Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 938,
   "links": 2524,
-  "unverified_links": 25,
+  "unverified_links": 10,
   "categories": 108,
   "sectors": 13,
   "preipo_entries": 14,
@@ -36838,8 +36838,8 @@
    "w": 3,
    "rel": "El SNB reporta tenencias de renta variable estadounidense vía 13F ante la SEC por superar el umbral regulatorio; ha mantenido históricamente posiciones en grandes tecnológicas de EE.UU. Cifra puntual 2026 no verificada e",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "SNB",
@@ -36847,8 +36847,8 @@
    "w": 3,
    "rel": "Mismo mecanismo de reserva vía 13F; posición históricamente documentada en años previos, cifra 2026 no verificada esta sesión.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "SNB",
@@ -36856,8 +36856,8 @@
    "w": 3,
    "rel": "Mismo mecanismo de reserva vía 13F; posición históricamente documentada en años previos, cifra 2026 no verificada esta sesión.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "RBA",
@@ -37756,8 +37756,8 @@
    "w": 2,
    "rel": "Entre los mayores tenedores institucionales de los ADRs de TSMC en EE.UU. según 13F; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "Vanguard",
@@ -37765,8 +37765,8 @@
    "w": 2,
    "rel": "Accionista institucional relevante de Broadcom vía indexación pasiva; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "StateStreet",
@@ -37792,8 +37792,8 @@
    "w": 2,
    "rel": "Accionista institucional relevante de Broadcom vía ETFs SPDR/índices; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "Fidelity",
@@ -37819,8 +37819,8 @@
    "w": 2,
    "rel": "Accionista institucional relevante de Nvidia vía fondos activos y pasivos; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "Fidelity",
@@ -37828,8 +37828,8 @@
    "w": 2,
    "rel": "Accionista institucional relevante de Microsoft vía fondos activos y pasivos; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "TRowePrice",
@@ -37864,8 +37864,8 @@
    "w": 2,
    "rel": "Accionista institucional relevante de Nvidia vía fondos activos y pasivos; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "PIMCO",
@@ -37891,8 +37891,8 @@
    "w": 3,
    "rel": "Accionista institucional relevante de Nvidia vía mandatos activos y fondos sub-asesorados, según patrón 13F; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "Wellington",
@@ -37900,8 +37900,8 @@
    "w": 3,
    "rel": "Accionista institucional relevante de Microsoft vía mandatos activos, según patrón 13F; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "CapitalGroup",
@@ -37927,8 +37927,8 @@
    "w": 2,
    "rel": "Accionista institucional relevante de Nvidia vía fondos activos American Funds; % exacto no verificado.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "ThriveCapital",
@@ -38350,8 +38350,8 @@
    "w": 4,
    "rel": "Identificada como uno de los mayores contribuyentes al retorno del fondo en 2025 (informe anual NBIM); porcentaje exacto de tenencia no verificado con fuente 2025-2026.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "NBIM",
@@ -38485,8 +38485,8 @@
    "w": 2,
    "rel": "La Presse (18-nov-2025) reporta que La Caisse (CDPQ) mantiene posición pública en Nvidia dentro de su serie sobre grandes inversionistas institucionales canadienses; monto exacto no verificado con fuente primaria.",
    "type": "invest",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "Data4",
@@ -39601,8 +39601,8 @@
    "w": 1,
    "rel": "Segmento E-Infrastructure (>90% mission-critical) instala equipos eléctricos de fabricantes como Eaton; nota: la lista también tiene 'EatonCorp', ver Dudas sobre posible duplicado interno",
    "type": "partner",
-   "conf": 0.3,
-   "verified": false
+   "conf": 1,
+   "verified": true
   },
   {
    "source": "Sterling Infrastructure",

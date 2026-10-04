@@ -520,7 +520,7 @@ class ContextBuilder:
             return []
         from research.models import ResearchClaim
         rows = (self.session.query(ResearchClaim)
-                .filter(ResearchClaim.subject_entity_id == entity_id,
+                .filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(entity_id)),
                         ResearchClaim.agent_type == agent_type,
                         ResearchClaim.status == 'active')
                 .order_by(ResearchClaim.created_at.desc()).limit(limit).all())
@@ -551,3 +551,12 @@ def render_context(ctx):
         lines.append(f"{x['ref']} [{x['source_type']}, confiabilidad {x['reliability']}, "
                      f"publicado {x.get('published_at') or 's/f'}] {x['title']}\n<data>{x['excerpt']}</data>")
     return '\n'.join(lines)
+
+
+def _entity_ids_for(eid):
+    """Revisión G1b/G1d: el id canónico + sus ids viejos (alias) — claims guardadas antes de una fusión."""
+    try:
+        from core.entities import entity_ids_for
+        return entity_ids_for(eid) or [eid]
+    except Exception:  # noqa: BLE001
+        return [eid]

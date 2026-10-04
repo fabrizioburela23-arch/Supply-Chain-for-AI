@@ -194,7 +194,10 @@ class SecondBrain {
     const n = NODE_BY_ID[nodeId] || {};
     const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
     const geo = geoMap[n.country] ?? 15;
-    const chain = Math.min(25, LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length * 2.5);
+    // G4d: mismo grado estructural que computeNRS (pares de FLUJO distintos), así el desglose suma el NRS mostrado
+    const _bd = (typeof window.computeNRSBreakdown === 'function') ? window.computeNRSBreakdown(nodeId) : null;
+    const _chainTerm = _bd && _bd.terms && _bd.terms[1];
+    const chain = _chainTerm ? _chainTerm.val : Math.min(25, LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length * 2.5);
     const margin = n.margin != null ? n.margin : 0.15;
     const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
     const fundamental = Math.min(15, (n.preipo ? 10 : 0) + ((n.growth || '').includes('🔴') ? 5 : (n.growth || '').includes('🟡') ? 2 : 0));

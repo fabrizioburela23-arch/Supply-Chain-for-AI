@@ -340,7 +340,8 @@ def x_rank_companies(by='connections', sector=None, country=None, listed_only=Fa
             if client_nrs is None:
                 raise ToolFailure('risk score is not available on this server')
             try:
-                row['nrs'] = client_nrs(n, deg)
+                # G4d: el NRS usa el grado ESTRUCTURAL (pares de flujo), igual que get_company y la app
+                row['nrs'] = client_nrs(n, snap['flow_deg'].get(nid, 0))
             except Exception:  # noqa: BLE001
                 continue
         rows.append(row)
@@ -667,8 +668,50 @@ HERRAMIENTAS:
 Usa ids de empresa de los resultados (o el nombre exacto)."""
 
 
+_CHAT_DROP_KEYS = {'edge_semantics', 'explain', 'figures_note', 'figures_note_es', 'as_of_note', 'provenance_note',
+                   'provenance_note_es', 'valid_from_note_es', 'valid_from_note_en', 'convention'}
+_CHAT_MAX_STR = 160
+_CHAT_MAX_LIST = 10
+_CHAT_MAX_RELATED = 6
+
+
+def _compact_for_chat(v, depth=0):
+    """Revisión G4 (2026-10-04): get_company/get_supply_chain crecieron (clase,
+    confianza y dirección por vecino, `related`, notas). Cortar el JSON a ciegas
+    a MAX_TOOL_RESULT_CHARS dejaba al cerebro sin la mitad de los clientes y sin
+    `related`. Aquí se quita lo que no aporta a la respuesta (notas largas,
+    semántica repetida, verified=True/confidence=1 por defecto) ANTES de cortar."""
+    if isinstance(v, dict):
+        out = {}
+        for k, x in v.items():
+            if k in _CHAT_DROP_KEYS:
+                continue
+            if k == 'verified' and x is True:
+                continue
+            if k == 'confidence' and isinstance(x, (int, float)) and x >= 1:
+                continue
+            if k == 'direction' and depth >= 2:
+                continue
+            out[k] = _compact_for_chat(x, depth + 1)
+        if depth == 0 and isinstance(out.get('related'), list):
+            rel = out.pop('related')                       # lo menos importante, al final y acotado
+            out['related'] = rel[:_CHAT_MAX_RELATED] + ([f'…+{len(rel) - _CHAT_MAX_RELATED}']
+                                                        if len(rel) > _CHAT_MAX_RELATED else [])
+        return out
+    if isinstance(v, list):
+        items = [_compact_for_chat(x, depth + 1) for x in v[:_CHAT_MAX_LIST]]
+        if len(v) > _CHAT_MAX_LIST:
+            items.append(f'…+{len(v) - _CHAT_MAX_LIST}')
+        return items
+    if isinstance(v, str) and len(v) > _CHAT_MAX_STR:
+        return v[:_CHAT_MAX_STR] + '…'
+    return v
+
+
 def _fmt_result(res):
     txt = json.dumps(res, ensure_ascii=False, default=str, separators=(',', ':'))
+    if len(txt) > MAX_TOOL_RESULT_CHARS:
+        txt = json.dumps(_compact_for_chat(res), ensure_ascii=False, default=str, separators=(',', ':'))
     if len(txt) > MAX_TOOL_RESULT_CHARS:
         txt = txt[:MAX_TOOL_RESULT_CHARS] + '…[truncated]'
     return txt

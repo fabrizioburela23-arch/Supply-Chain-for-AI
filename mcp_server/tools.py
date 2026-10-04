@@ -328,6 +328,7 @@ RELATED_TYPES = ('partner', 'invest')
 #   customer  el source DESPLIEGA su producto en el target (el target es su cliente)
 #   invest    capital/propiedad (invest, owns)
 #   ppa       energía contratada (power purchase agreement)
+#   ownership dueño → filial (relación de flujo: aparece entre proveedores/clientes)
 #   partner   alianza sin flujo de suministro
 #   coverage  conocimiento sobre la entidad (noticias, informes, 'about')
 #   competitor
@@ -335,7 +336,7 @@ RELATION_CLASS = {
     'supply': 'supply', 'cloud': 'supply', 'license': 'supply',
     'fab': 'fab',
     'deploy': 'customer',
-    'invest': 'invest', 'owns': 'invest',
+    'invest': 'invest', 'owns': 'ownership',      # owns es FLUJO (matriz→filial): no se mezcla con 'invest' de related
     'ppa': 'ppa',
     'partner': 'partner',
     'reports_on': 'coverage', 'about': 'coverage',
@@ -836,7 +837,7 @@ def t_get_research(ctx, entity, limit=30):
     from ontology.db import session_scope
     from research.models import ClaimRelation, ResearchClaim, ResearchEvidence, ResearchJob
     with session_scope() as s:
-        claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id == eid,
+        claims = (s.query(ResearchClaim).filter(ResearchClaim.subject_entity_id.in_(_entity_ids_for(eid)),
                                                 ResearchClaim.status == 'active')
                   .order_by(ResearchClaim.created_at.desc()).limit(limit).all())
         withheld = [c.id for c in claims if _unsupported_money(s, c)]
@@ -1640,3 +1641,12 @@ def reset_caches():
 
 __all__ = ['REGISTRY', 'Tool', 'ToolError', 'InvalidParams', 'Ctx', 'call', 'visible_tools', 'catalog',
            'validate']
+
+
+def _entity_ids_for(eid):
+    """Revisión G1b/G1d: el id canónico + sus ids viejos (alias) — claims guardadas antes de una fusión."""
+    try:
+        from core.entities import entity_ids_for
+        return entity_ids_for(eid) or [eid]
+    except Exception:  # noqa: BLE001
+        return [eid]

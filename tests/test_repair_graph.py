@@ -108,7 +108,7 @@ def test_g4a_relation_class_es_un_mapa_cerrado():
     assert relation_class('supply') == 'supply' and relation_class('cloud') == 'supply'
     assert relation_class('license') == 'supply'
     assert relation_class('fab') == 'fab' and relation_class('deploy') == 'customer'
-    assert relation_class('invest') == 'invest' and relation_class('owns') == 'invest'
+    assert relation_class('invest') == 'invest' and relation_class('owns') == 'ownership'
     assert relation_class('ppa') == 'ppa' and relation_class('partner') == 'partner'
     assert relation_class('reports_on') == 'coverage' and relation_class('about') == 'coverage'
     assert relation_class('compite') == 'competitor'
@@ -305,7 +305,7 @@ process.stdout.write(JSON.stringify({ counts: s.counts, fx: pick('FedEx', 'TSMC'
     assert out['counts']['nodes'] == snap_actual['counts']['nodes']
     assert out['counts']['links'] == snap_actual['counts']['links']
     assert out['n_conf'] == out['counts']['links']                  # todos los links salen con conf/verified
-    assert out['counts']['unverified_links'] >= 20
+    assert out['counts']['unverified_links'] >= 10       # revisión G4: '% exacto no verificado' ya no cuenta
     assert out['fx']['conf'] == 0.3 and out['fx']['verified'] is False and out['fx']['w'] == 1
     assert out['asml']['conf'] == 1 and out['asml']['verified'] is True
     # el snapshot en disco NO se tocó (lo regenera quien integra)
@@ -355,6 +355,7 @@ def test_g4c_una_sola_regex_en_python():
     assert tools.UNVERIFIED_CONF == engine.UNVERIFIED_CONF == vocabulary.UNVERIFIED_CONF == 0.3
     js = open(os.path.join(ROOT, 'nodes', 'merge_graph.js'), encoding='utf-8').read()
     assert 'var UNVERIFIED_RX = /' + vocabulary.UNVERIFIED_RX.pattern + '/i;' in js          # gemela JS idéntica
+    assert ('var UNVERIFIED_QUALIFIER_RX = /' + vocabulary.UNVERIFIED_QUALIFIER_RX.pattern + '/gi;') in js   # revisión G4
 
 
 @needs_db
@@ -517,3 +518,75 @@ def test_g4e_margen_fuera_de_rango_no_se_adivina(nodb):
     c = tools.t_get_company(None, id_or_ticker='Envicool', include_live=False)['catalog']
     assert c['operating_margin'] == 20.25 and c['operating_margin_pct'] is None
     assert 'unit unknown' in c['operating_margin_note']
+
+
+def test_g4_revision_no_verificado_solo_si_habla_de_la_relacion():
+    """Revisión adversarial de G4: '% exacto no verificado' (accionista documentado
+    por 13F), 'posible duplicado' (nota del nodo) e 'imposible' NO marcan la relación."""
+    from ontology.vocabulary import text_says_unverified as t
+    assert not t('Accionista institucional relevante de TSMC según 13F; % exacto no verificado.')
+    assert not t('instala equipos de Eaton; nota: ver Dudas sobre posible duplicado interno')
+    assert not t('Proceso imposible de replicar')
+    assert t('Posible socio de infraestructura GPU') and t('vínculo referencial (no verificado)')
+
+
+def test_g4_revision_confirmado_por_persona_no_se_descuenta():
+    from matrix.engine import link_confidence
+    assert link_confidence({'rel_label': 'Posible proveedor de gases'}) == 0.3
+    assert link_confidence({'rel_label': 'Posible proveedor de gases', 'status': 'confirmed'}) is None
+    assert link_confidence({'rel_label': 'Posible proveedor', 'confidence': 0.5, 'status': 'confirmed'}) == 0.5
+
+
+def test_g4_revision_chat_ve_todos_los_clientes():
+    import json
+    from core import khipu_chat as K
+    from mcp_server import tools as T
+    from mcp_server.auth import Principal
+    ctx = T.Ctx(principal=Principal(token_id='x', name='t', scopes=frozenset({'read'})))
+    r = T.call('get_company', {'id_or_ticker': 'Nvidia', 'include_live': False}, ctx)
+    r['live_market'] = {'price': 1.0, 'summary': 'x' * 3000}
+    txt = K._fmt_result(r)
+    assert not txt.endswith('[truncated]')
+    d = json.loads(txt)
+    assert len(d['top_customers']) == len(r['top_customers']) and 'counts' in d and d['related']
+
+
+def test_g4_revision_nrs_del_chat_y_de_carteras_es_el_de_la_app():
+    from core import portfolio_ai as P
+    from core.world import client_nrs
+    from mcp_server.tools import _snapshot
+    snap = _snapshot()
+    g = P._graph()
+    for nid in ('SoftBank', 'Codelco', 'Nvidia', 'TSMC'):
+        n = snap['nodes'].get(nid)
+        if not n:
+            continue
+        assert g['flow_deg'].get(nid, 0) == snap['flow_deg'].get(nid, 0)
+        assert P.nrs(n, g['flow_deg'].get(nid, 0)) == client_nrs(n, snap['flow_deg'].get(nid, 0))
+
+
+def test_g1c_revision_nrs_de_un_id_viejo_es_el_del_canonico():
+    """Revisión adversarial: NODE_BY_ID['SouthernCompany'] ya lleva a SouthernCo,
+    pero computeNRS/selectNode usaban el id viejo para el grado (0 vínculos)."""
+    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    i = html.index('let _nrsDegree = null;')
+    j = html.index('window.computeNRSBreakdown = computeNRSBreakdown;', i)
+    src = html[i:j] + 'window.computeNRS = computeNRS;'
+    harness = r'''
+const vm = require('vm');
+const P = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const ctx = { console };
+ctx.window = ctx;
+ctx.lid = x => (x && typeof x === 'object') ? x.id : x;
+ctx.LINKS = P.links; ctx.window.LINKS = P.links;
+const so = { id: 'SouthernCo', country: 'EEUU', margin: 0.2 };
+ctx.NODE_BY_ID = { SouthernCo: so, SouthernCompany: so };
+vm.createContext(ctx);
+vm.runInContext(P.src, ctx);
+process.stdout.write(JSON.stringify({ alias: ctx.computeNRS('SouthernCompany'), canon: ctx.computeNRS('SouthernCo'),
+  canonId: ctx._canonId('SouthernCompany') }));
+'''
+    links = [{'source': 'SouthernCo', 'target': f'C{k}', 'w': 2, 'type': 'ppa'} for k in range(5)]
+    out = _node(harness, {'src': src, 'links': links})
+    assert out['canonId'] == 'SouthernCo'
+    assert out['alias'] == out['canon'] and out['canon'] > 26
