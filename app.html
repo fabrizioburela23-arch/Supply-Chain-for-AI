@@ -4890,7 +4890,7 @@ Object.assign(I18N.es, {
   d_alerts:'Alertas de precio', d_pos:'Mi posición',
   d_history:'Historia · de dónde sale cada dato', hist_empty:'Sin historia registrada todavía.',
   d_research:'🔬 Investigación IA · agentes con evidencia',
-  feed_h:'Lo último en el grafo', feed_ago:'hace', feed_now:'ahora',
+  feed_h:'Lo último en el grafo', feed_ago:'hace', feed_now:'ahora', feed_quiet:'Sin novedades en las últimas 2 semanas.',
   hist_facts:'hechos', hist_src:'con fuente', hist_saved:'noticias nuevas guardadas',
   hist_primary:'fuente primaria', hist_press:'prensa', hist_weak:'fuente débil',
   v8_needkey:'Configura tu API key en ⚙ para activar esta sección.',
@@ -4930,7 +4930,7 @@ Object.assign(I18N.en, {
   d_alerts:'Price alerts', d_pos:'My position',
   d_history:'History · where each fact comes from', hist_empty:'No recorded history yet.',
   d_research:'🔬 AI research · agents with evidence',
-  feed_h:'Latest in the graph', feed_ago:'ago', feed_now:'now',
+  feed_h:'Latest in the graph', feed_ago:'ago', feed_now:'now', feed_quiet:'Nothing new in the last 2 weeks.',
   hist_facts:'facts', hist_src:'with source', hist_saved:'new news items saved',
   hist_primary:'primary source', hist_press:'press', hist_weak:'weak source',
   v8_needkey:'Add your API key in ⚙ to enable this section.',
@@ -6037,9 +6037,15 @@ const V8feed = {
     const lang=(LANG==='en')?'en':'es';
     fetch(`${BASE}/api/ontology/feed?limit=8&lang=${lang}`)
       .then(r=>r.ok?r.json():null).then(d=>{
-        if(!d||!Array.isArray(d.feed)||!d.feed.length){ box.style.display='none'; return; }
+        if(!d||!Array.isArray(d.feed)){ box.style.display='none'; return; }
         box.style.display='block';
         $('feed-h').textContent='📡 '+t('feed_h');
+        if(!d.feed.length){
+          /* nada nuevo en la ventana de frescura: se dice claro, no se reciclan noticias viejas */
+          const la=Date.parse(d.last_at||''); const dd=isNaN(la)?null:Math.round((Date.now()-la)/86400000);
+          el.innerHTML=`<div style="padding:6px 0;font-size:12px;color:var(--ink-3);line-height:1.45">${esc(t('feed_quiet'))}${dd!=null?' '+esc(lang==='en'?`Last entry ${dd} days ago.`:`Lo último entró hace ${dd} días.`):''}</div>`;
+          return;
+        }
         const ico={NewsItem:'📰',LinkCreated:'🔗',LinkRemoved:'✂',ActionExecuted:'✎',ObjectUpdated:'↻',ObjectCreated:'＋'};
         const ago=iso=>{ const x=Date.parse(iso||''); if(isNaN(x)) return '';
           const m=Math.max(0,(Date.now()-x)/60000);

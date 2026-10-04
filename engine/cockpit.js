@@ -157,9 +157,24 @@
 .bcp-embed{height:calc(100vh - 250px);min-height:420px;display:flex;flex-direction:column;
   border:1px solid rgba(122,158,255,.18);border-radius:14px;overflow:hidden;background:#04060B;position:relative}
 /* estado vacío / lienzo */
-#bcp-empty{max-width:820px;margin:4vh auto 0;text-align:center}
-#bcp-empty h2{font-size:26px;font-weight:750;margin:0 0 8px;background:linear-gradient(90deg,#E8EDFB,#9BA6C4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-#bcp-empty p{color:#7C87A3;font-size:14px;margin:0 0 26px}
+#bcp-empty{max-width:760px;margin:5vh auto 0;padding:0 8px;text-align:left}
+.bcp-hello{font-family:'Fraunces',Georgia,serif;font-weight:400;font-size:clamp(28px,4vw,40px);line-height:1.12;letter-spacing:-.012em;color:#F1F4FC;margin:0 0 12px;font-variation-settings:'opsz' 96}
+.bcp-hello span{color:#8E9AB8}
+.bcp-lead{color:#9BA6C4;font-size:15px;line-height:1.55;margin:0 0 22px;max-width:60ch}
+.bcp-live{font-size:13.5px;line-height:1.55;color:#C7D0EA;margin:0 0 8px;max-width:70ch}
+.bcp-live:empty{display:none}
+.bcp-live .new{color:#FFD27A;font-weight:650}.bcp-live .old{color:#8E9AB8}.bcp-live .dim{color:#7C87A3}
+.bcp-live a,.bcp-foot a{color:#00E0FF;text-decoration:none;border-bottom:1px solid rgba(0,224,255,.35);margin-left:6px}
+.bcp-live a:hover,.bcp-foot a:hover{border-bottom-color:#00E0FF}
+.bcp-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px 40px;margin:30px 0 0}
+@media(max-width:620px){.bcp-cols{grid-template-columns:1fr;gap:22px}}
+.bcp-cols h3{font-size:12.5px;font-weight:600;color:#8E9AB8;margin:0 0 10px;letter-spacing:.01em}
+.bcp-cols ul{list-style:none;margin:0;padding:0}
+.bcp-cols li{margin:0 0 9px}
+.bcp-cols a{color:#E8EDFB;font-size:14.5px;line-height:1.4;text-decoration:none;border-bottom:1px solid rgba(122,158,255,.22);padding-bottom:1px;transition:border-color .12s,color .12s}
+.bcp-cols a:hover,.bcp-cols a:focus-visible{color:#00E0FF;border-bottom-color:#00E0FF;outline:none}
+.bcp-foot{margin:28px 0 0;font-size:13px;color:#7C87A3}
+.bcp-foot a{margin-left:0}
 .bcp-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:680px;margin:0 auto}
 .bcp-chip{font-size:13px;padding:10px 16px;border-radius:12px;cursor:pointer;color:#E8EDFB;
   background:rgba(11,18,34,.7);border:1px solid rgba(122,158,255,.18);transition:all .14s}
@@ -775,60 +790,67 @@
   }
 
   function stageEmpty(s) {
+    /* INICIO (rediseño 2026-10-04, pedido: "más estético, menos saturado"): una
+       sola idea por línea. Saludo en serif (Fraunces) según la hora, UNA frase
+       viva (lo nuevo del grafo o lo estructural, con fecha), tu cartera en una
+       línea si hay PIN, y dos columnas de texto plano: "Pregúntame" / "Abre".
+       Sin tarjetas, sin píldoras, sin mayúsculas decorativas. */
     var en = ckLang() === 'en';
-    var chips = en ? [
-      ['', 'What are the main risks for TSMC?', '💬 Ask anything'],
-      ['', 'spot breakouts', '🚀 Breakouts'],
-      ['break down ', 'Nvidia', 'Full X-Ray'],
-      ['simulate that ', 'China bans HBM exports', 'Agent simulation'],
-      ['what if ', 'TSMC falls', 'Shock on the map'],
-      ['compare ', 'Nvidia and AMD', 'Two companies'],
-      ['show me ', 'opportunities', 'Resilient companies'],
-      ['research ', 'Nvidia', 'Deep research'],
-      ['chart: ', 'margins of NVIDIA, TSMC and ASML', 'Data canvas'],
-      ['', 'my account', tb('broker')],
-      ['', 'blank canvas', 'Start from scratch'],
-      ['', 'demo', '▶ Guided tour'],
+    var h = new Date().getHours();
+    var hello = en ? (h < 12 ? 'Good morning.' : h < 19 ? 'Good afternoon.' : 'Good evening.')
+                   : (h < 12 ? 'Buenos días.' : h < 19 ? 'Buenas tardes.' : 'Buenas noches.');
+    var ask = en ? [
+      ['What are the main risks for TSMC?', ''], ['What happened with Nvidia today?', ''],
+      ['simulate that China bans HBM exports', 'Simulate that China bans HBM exports'],
+      ['compare Nvidia and AMD', 'Compare Nvidia and AMD'], ['research Nvidia', 'Research Nvidia in depth'],
+      ['chart: margins of NVIDIA, TSMC and ASML', 'Chart the margins of NVIDIA, TSMC and ASML'],
     ] : [
-      ['', '¿Cuáles son los riesgos de TSMC?', '💬 Pregunta libre'],
-      ['', 'spotea explosivas', '🚀 Explosivas'],
-      ['desármame ', 'Nvidia', 'Radiografía completa'],
-      ['simula que ', 'China prohíbe exportar HBM', 'Sim por agentes'],
-      ['¿qué pasa si cae ', 'TSMC?', 'Shock en el mapa'],
-      ['compara ', 'Nvidia y AMD', 'Dos empresas'],
-      ['muéstrame ', 'oportunidades', 'Empresas resilientes'],
-      ['investiga ', 'Nvidia', 'Investigación profunda'],
-      ['gráfico: ', 'márgenes de NVIDIA, TSMC y ASML', 'Lienzo de datos'],
-      ['', 'mi cuenta', tb('broker')],
-      ['', 'lienzo en blanco', 'Empezar de cero'],
-      ['', 'demo', '▶ Recorrido guiado'],
+      ['¿Cuáles son los riesgos de TSMC?', ''], ['¿Qué pasó hoy con Nvidia?', ''],
+      ['simula que China prohíbe exportar HBM', 'Simula que China prohíbe exportar HBM'],
+      ['compara Nvidia y AMD', 'Compara Nvidia y AMD'], ['investiga Nvidia', 'Investiga Nvidia a fondo'],
+      ['gráfico: márgenes de NVIDIA, TSMC y ASML', 'Grafica los márgenes de NVIDIA, TSMC y ASML'],
     ];
-    var h2 = en ? "I'm Khipu. Ask me anything." : 'Soy Khipu. Pregúntame lo que sea.';
-    var pp = en
-      ? 'Ask me in your own words: I look up real data (prices, suppliers, risk, news) before answering. I can also break down a company, simulate, compare and chart.'
-      : 'Pregúntame con tus palabras: consulto datos reales (precios, proveedores, riesgo, noticias) antes de responder. También desarmo empresas, simulo, comparo y grafico.';
-    s.innerHTML = '<div id="bcp-empty"><div id="bcp-home-hyper" style="margin-bottom:12px"></div><div id="bcp-home-pulse" style="margin-bottom:16px"></div><h2>' + esc(h2) + '</h2>' +
-      '<p>' + esc(pp) + '</p>' +
-      '<div class="bcp-chips">' + chips.map(function (c) {
-        return '<span class="bcp-chip" data-q="' + esc(c[0] + c[1]) + '"><span class="k">' + esc(c[2]) + '</span>' + esc(c[0] + c[1]) + '</span>';
-      }).join('') + '</div></div>';
-    s.querySelectorAll('.bcp-chip').forEach(function (el) {
-      el.addEventListener('click', function () { ask(el.getAttribute('data-q')); });
+    var open_ = en ? [
+      ['graph', 'The live map of 949 companies'], ['xray', 'Take a company apart (X-Ray)'], ['screener', 'Companies breaking out'],
+      ['broker', 'My account and positions'], ['insights', 'What the chain is saying now'], ['terminal', 'Charts side by side'],
+    ] : [
+      ['graph', 'El mapa vivo de 949 empresas'], ['xray', 'Desarmar una empresa (X-Ray)'], ['screener', 'Empresas explosivas'],
+      ['broker', 'Mi cuenta y mis posiciones'], ['insights', 'Qué dice la cadena ahora'], ['terminal', 'Gráficos lado a lado'],
+    ];
+    function li(q, label) { return '<li><a href="#" class="bcp-hq" data-q="' + esc(q) + '">' + esc(label || q) + '</a></li>'; }
+    s.innerHTML = '<div id="bcp-empty">' +
+      '<h2 class="bcp-hello">' + esc(hello) + ' <span>' + esc(en ? 'What are we looking at?' : '¿Qué miramos hoy?') + '</span></h2>' +
+      '<p class="bcp-lead">' + esc(en ? 'Ask me in your own words. I check real data first: prices, suppliers, risk, news.' : 'Pregúntame con tus palabras. Antes de responder consulto datos reales: precios, proveedores, riesgo, noticias.') + '</p>' +
+      '<div id="bcp-home-hyper" class="bcp-live"></div>' +
+      '<div id="bcp-home-pulse" class="bcp-live"></div>' +
+      '<div class="bcp-cols">' +
+        '<div><h3>' + esc(en ? 'Ask me' : 'Pregúntame') + '</h3><ul>' + ask.map(function (x) { return li(x[0], x[1]); }).join('') + '</ul></div>' +
+        '<div><h3>' + esc(en ? 'Open' : 'Abre') + '</h3><ul>' + open_.map(function (x) { return '<li><a href="#" class="bcp-ho" data-k="' + x[0] + '">' + esc(x[1]) + '</a></li>'; }).join('') + '</ul></div>' +
+      '</div>' +
+      '<p class="bcp-foot"><a href="#" class="bcp-hq" data-q="demo">' + esc(en ? 'Watch the one-minute tour' : 'Ver el recorrido de un minuto') + '</a></p>' +
+      '</div>';
+    s.querySelectorAll('.bcp-hq').forEach(function (el) {
+      el.addEventListener('click', function (e) { e.preventDefault(); ask(el.getAttribute('data-q')); });
+    });
+    s.querySelectorAll('.bcp-ho').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.preventDefault();
+        var k = el.getAttribute('data-k');
+        if (k === 'xray') { var sel = (window._liveSelectedNode && window._liveSelectedNode()) || null; if (sel) return stage('xray', sel); var i = document.getElementById('bcp-input'); if (i) { i.value = en ? 'break down ' : 'desármame '; i.focus(); } return; }
+        stage(k);
+      });
     });
     // ESCRITORIO apagado (modo clásico): un solo camino de vuelta a las ventanas
     // (en el escritorio, "una sola pantalla" vive en el menú ⊞ de la barra de tareas)
     if (window.KhipuDesk && !window.KhipuDesk.enabled()) {
-      var sw = document.createElement('div');
-      sw.id = 'bcp-deskmode';
-      sw.style.cssText = 'margin:26px auto 0;font-size:12px;color:#8791AC';
-      sw.innerHTML = '🪟 ' + esc(en ? 'Single-screen mode' : 'Modo una pantalla') +
-        ' · <a href="#" id="bcp-deskmode-sw" style="color:#C7D0EA;text-decoration:underline dotted">' +
-        esc(en ? 'use windows' : 'usar ventanas') + '</a>';
+      var sw = document.createElement('p');
+      sw.id = 'bcp-deskmode'; sw.className = 'bcp-foot';
+      sw.innerHTML = esc(en ? 'Single-screen mode. ' : 'Modo una pantalla. ') + '<a href="#" id="bcp-deskmode-sw">' + esc(en ? 'Use windows' : 'Usar ventanas') + '</a>';
       s.querySelector('#bcp-empty').appendChild(sw);
       sw.querySelector('#bcp-deskmode-sw').addEventListener('click', function (e) { e.preventDefault(); window.KhipuDesk.setEnabled(true); });
     }
-    try { _homeHyper(); } catch (e) {}   // banner proactivo del hipergrafo (siempre)
-    try { _homePulse(); } catch (e) {}   // pulso ligero del portafolio (capa proactiva)
+    try { _homeHyper(); } catch (e) {}   // frase viva del hipergrafo (siempre)
+    try { _homePulse(); } catch (e) {}   // tu cartera en una línea (con PIN)
   }
 
   /* ══ CAPA PROACTIVA en la PANTALLA DE INICIO (pedido de Fabrizio: "primero la
@@ -852,22 +874,19 @@
       function since(f) {
         if (!f.since) return '';
         var dt = new Date(f.since);
-        return isNaN(dt) ? '' : ' · ' + (en ? 'since ' : 'desde ') + dt.toLocaleDateString(en ? 'en' : 'es', { month: 'short', year: 'numeric' });
+        return isNaN(dt) ? '' : (en ? ', since ' : ', desde ') + dt.toLocaleDateString(en ? 'en' : 'es', { month: 'short', year: 'numeric' });
       }
       var facts = (d.factors || []).slice(0, 2).map(function (f) {
         return '<span title="' + esc(f.fresh ? (en ? 'Recent factor' : 'Factor reciente') : (en ? 'Structural factor (not news)' : 'Factor estructural (no es noticia nueva)')) +
           '" style="font-size:10.5px;color:' + (f.fresh ? '#FFD27A' : '#9BA6C4') + ';border:1px solid ' + (f.fresh ? 'rgba(255,179,0,.3)' : 'rgba(155,166,196,.3)') + ';border-radius:999px;padding:1px 8px">' +
           (f.fresh ? '⚡ ' : '◈ ') + esc(f.label) + esc(since(f)) + '</span>';
       }).join(' ');
-      el.innerHTML = '<div style="display:inline-flex;max-width:700px;align-items:center;gap:11px;flex-wrap:wrap;justify-content:center;text-align:left;padding:10px 16px;border:1px solid rgba(0,224,255,.22);border-radius:14px;background:rgba(0,224,255,.05)">' +
-        '<span style="font-size:9px;font-weight:800;letter-spacing:.1em;color:' + (d.fresh ? '#00E0FF' : '#9BA6C4') + ';border:1px solid ' + (d.fresh ? 'rgba(0,224,255,.4)' : 'rgba(155,166,196,.35)') + ';border-radius:999px;padding:2px 8px">' +
-          (d.fresh ? (en ? 'NEW' : 'NUEVO') : (en ? 'STRUCTURAL' : 'ESTRUCTURAL')) + '</span>' +
-        '<span style="font-size:13px;color:#E8EDFB"><b>' + (kico[top.kind] || '🕸') + ' ' + esc(top.title) + '</b></span>' +
-        (facts ? '<span style="display:inline-flex;gap:6px;flex-wrap:wrap">' + facts + '</span>' : '') +
-        '<button id="bcp-home-hyperbtn" style="padding:4px 12px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid rgba(0,224,255,.5);background:rgba(0,224,255,.12);color:#00E0FF">' + (en ? 'See insights' : 'Ver insights') + '</button>' +
-        '</div>';
+      var factsTxt = (d.factors || []).slice(0, 2).map(function (f) { return esc(f.label) + esc(since(f)); }).join(en ? ' and ' : ' y ');
+      el.innerHTML = '<span class="' + (d.fresh ? 'new' : 'old') + '">' + (d.fresh ? (en ? 'New: ' : 'Nuevo: ') : (en ? 'Structural, not news: ' : 'Estructural, no es noticia nueva: ')) + '</span>' +
+        esc(top.title) + (factsTxt ? ' <span class="dim">(' + factsTxt + ')</span>' : '') +
+        ' <a href="#" id="bcp-home-hyperbtn">' + (en ? 'See insights' : 'Ver insights') + '</a>';
       var b = document.getElementById('bcp-home-hyperbtn');
-      if (b) b.addEventListener('click', function () { stage('insights'); });
+      if (b) b.addEventListener('click', function (e) { e.preventDefault(); stage('insights'); });
     } catch (e) {}
   }
 
@@ -1595,11 +1614,9 @@
       var line = (en ? 'Your portfolio' : 'Tu cartera') + ': ' + fmtUsd(m.equity) +
         (m.n ? ' · <span style="color:' + plCol + '">' + sign + m.pnlPct.toFixed(1) + '%</span> · ' + m.n + ' ' + (en ? (m.n === 1 ? 'position' : 'positions') : (m.n === 1 ? 'posición' : 'posiciones'))
              : ' · ' + (en ? 'no positions' : 'sin posiciones'));
-      el.innerHTML = '<div style="display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;padding:9px 16px;border:1px solid rgba(0,224,255,.2);border-radius:14px;background:rgba(0,224,255,.05);font-size:13px">' +
-        '<span>💼</span><span style="color:#C3CBE0">' + line + '</span>' +
-        '<button id="bcp-home-adv" style="padding:5px 14px;border-radius:999px;cursor:pointer;font-size:12.5px;font-weight:700;border:1px solid rgba(0,224,255,.5);background:rgba(0,224,255,.12);color:#00E0FF">🧠 ' + (en ? 'Advice' : 'Consejos') + '</button></div>';
+      el.innerHTML = line + ' <a href="#" id="bcp-home-adv">' + (en ? 'Advice' : 'Consejos') + '</a>';
       var b = document.getElementById('bcp-home-adv');
-      if (b) b.addEventListener('click', function () { stage('broker', { advice: true }); });
+      if (b) b.addEventListener('click', function (e) { e.preventDefault(); stage('broker', { advice: true }); });
     } catch (e) {}
   }
 

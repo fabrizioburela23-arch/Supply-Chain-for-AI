@@ -832,9 +832,27 @@ def global_feed_route():
             since = None
         if since is None:
             return jsonify({'error': 'since inválido (usa ISO 8601)'}), 400
+    # FRESCURA (2026-10-04, "veo noticias viejas como si fueran lo último"): por
+    # defecto solo lo registrado en los últimos `days` (14). Si no hay nada, se
+    # devuelve la fecha de lo último que entró para decirlo claramente.
+    from datetime import datetime, timedelta, timezone
+    try:
+        days = max(1, min(int(request.args.get('days', 14)), 365))
+    except (TypeError, ValueError):
+        days = 14
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    if since is None or since < cutoff:
+        since = cutoff
     with session_scope() as s:
         entradas = global_feed(s, limit=limit, lang=lang, since=since)
-        return jsonify({'count': len(entradas), 'feed': entradas})
+        last_at = None
+        if not entradas:
+            from sqlalchemy import select
+            from ontology.models import Event
+            last = s.scalars(select(Event.recorded_at).where(~Event.source.like('migration%'), Event.event_type != 'PriceObserved')
+                             .order_by(Event.recorded_at.desc()).limit(1)).first()
+            last_at = last.isoformat() if last else None
+        return jsonify({'count': len(entradas), 'feed': entradas, 'days': days, 'last_at': last_at})
 
 
 @ontology_bp.route('/objects/<object_id>/news')

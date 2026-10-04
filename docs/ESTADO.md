@@ -9,6 +9,21 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (e) — INICIO DE LA CABINA REDISEÑADO + FEED SIN NOTICIAS VIEJAS (sw v190)
+
+- Inicio de la Cabina (stageEmpty, cockpit.js) rediseñado con el skill frontend-design: saludo en
+  Fraunces según la hora, UNA frase viva ("Nuevo:" / "Estructural, no es noticia nueva:" + fecha de
+  los factores), tu cartera en una línea (con PIN), dos columnas de texto plano "Pregúntame" / "Abre",
+  recorrido de un minuto al pie. Sin tarjetas, píldoras ni mayúsculas decorativas; alineado a la
+  izquierda, máx. 760 px; móvil en una columna. Las ventanas del escritorio flotan encima.
+- 📡 "Lo último en el grafo" (/api/ontology/feed): por defecto solo lo registrado en los últimos 14
+  días (?days=); si no hay nada, devuelve last_at y el panel dice "Sin novedades en las últimas 2
+  semanas. Lo último entró hace N días" (ES/EN) en vez de reciclar noticias viejas como "lo último"
+  (origen de "crisis de gobernanza en Samsung" que Fabrizio veía siempre).
+- Jev funciona sin clave: si no hay TYPESAFE_API_KEY simplemente no se usa (available() false).
+
+---
+
 # SESIÓN 2026-10-04 (d) — ESCRITORIO: ORDEN AUTOMÁTICO + 📌 FIJAR A LOS COSTADOS (sw v189)
 
 Pedido: "que cuando se abre una pestaña se organicen las cosas, que no se vea saturado, fácil de
