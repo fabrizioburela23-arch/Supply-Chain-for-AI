@@ -367,3 +367,95 @@ process.stdout.write(JSON.stringify({ C: core.incoming[core.idx.C], D: core.inco
     ws = {e['i']: e['w'] for e in out['C']}
     assert ws[0] == pytest.approx(1 / 3) and ws[1] == pytest.approx(2 / 3)   # 1 vs 2 dentro del tipo
     assert out['D'][0]['w'] == pytest.approx(1.0)                           # único proveedor: todo, aunque 0.3
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# G4d — NRS estructural: pares distintos de flujo (cliente, servidor, catálogo)
+# ════════════════════════════════════════════════════════════════════════════
+NRS_HARNESS = r'''
+const vm = require('vm');
+const P = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const ctx = { console };
+ctx.window = ctx;
+ctx.lid = x => (x && typeof x === 'object') ? x.id : x;
+ctx.LINKS = P.links; ctx.window.LINKS = P.links;
+vm.createContext(ctx);
+vm.runInContext(P.src, ctx);
+const m = ctx.window._buildNrsDegree();
+process.stdout.write(JSON.stringify(Object.fromEntries(m)));
+'''
+
+
+def _nrs_degree_block():
+    """El bloque de app.html que define el grado del NRS (desde la lista de
+    tipos de flujo hasta su exposición en window), tal cual se sirve."""
+    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    i = html.index('const NRS_FLOW_TYPES')
+    j = html.index('window._buildNrsDegree = _buildNrsDegree;', i)
+    return html[i:j + len('window._buildNrsDegree = _buildNrsDegree;')]
+
+
+def test_g4d_cliente_grado_solo_flujo_y_pares_distintos():
+    links = [
+        {'source': 'S1', 'target': 'Dup', 'w': 2, 'type': 'supply'},
+        {'source': 'S1', 'target': 'Dup', 'w': 3, 'type': 'supply'},      # duplicado: cuenta una vez
+        {'source': 'S1', 'target': 'Dup', 'w': 3, 'type': 'fab'},         # mismo par, otro tipo: no suma
+        {'source': 'P1', 'target': 'Dup', 'w': 2, 'type': 'partner'},     # socio: no cuenta
+        {'source': 'I1', 'target': 'Dup', 'w': 2, 'type': 'invest'},      # inversor: no cuenta
+        {'source': {'id': 'Dup'}, 'target': {'id': 'C1'}, 'w': 2},         # objetos d3 + tipo ausente = supply
+        {'source': 'Dup', 'target': 'Dup', 'w': 2, 'type': 'supply'},     # bucle: se ignora
+        {'source': 'E1', 'target': 'Dup', 'w': 2, 'type': 'ppa'},
+        {'source': 'Dup', 'target': 'S1', 'w': 1, 'type': 'cloud'},        # par inverso: es otro par
+    ]
+    deg = _node(NRS_HARNESS, {'src': _nrs_degree_block(), 'links': links})
+    assert deg['Dup'] == 4            # S1→Dup, Dup→C1, E1→Dup, Dup→S1
+    assert deg['S1'] == 2 and deg['C1'] == 1 and deg['E1'] == 1
+    assert 'P1' not in deg and 'I1' not in deg
+
+
+@needs_db
+def test_g4d_servidor_grado_distinct_de_flujo(db):
+    """Empresa con 1 supply vigente duplicado ×2 + partner + invest + affects → grado 1."""
+    from ontology.agents import _compute_server_nrs, server_flow_degree
+    from ontology.db import session_scope
+    from ontology.models import LinkRecord
+    from ontology.service import get_object
+    from sqlalchemy import func, select
+    with session_scope() as s:
+        filas = s.scalar(select(func.count(LinkRecord.id)).where(LinkRecord.target_id == 'Dup')) or 0
+        assert filas == 5                                      # 2 supply + partner + invest + affects
+        assert server_flow_degree(s, 'Dup') == 1
+        assert server_flow_degree(s, 'Acme') == 1 and server_flow_degree(s, 'F1') == 0
+        dup = _compute_server_nrs(s, get_object(s, 'Dup'))
+        # misma fórmula con grado 1 (chain 2.5); con las 5 filas sería chain 12.5 (+10)
+        from ontology.agents import GEO_RISK
+        market = max(0, min(20, round((1 - min(1, 0.2 / 0.4)) * 20)))
+        assert dup == round(GEO_RISK.get('EEUU', 15) + 2.5 + market + 4)
+
+
+def test_g4d_catalogo_mcp_y_world_usan_el_grado_estructural(nodb):
+    from core.world import _GRAPH, _graph, client_nrs
+    from mcp_server import tools
+    from ontology.vocabulary import flow_degree
+    snap = tools._snapshot()
+    fd = flow_degree(e for lst in snap['out'].values() for e in lst)
+    assert fd['Equinix'] == snap['flow_deg']['Equinix'] < snap['deg']['Equinix']   # socios ya no cuentan
+    # Colliers: 1 relación de flujo y 3 de socio/inversión → el término "cadena" baja de 10 a 2,5
+    n = snap['nodes']['Colliers']
+    assert fd['Colliers'] == 1 and snap['deg']['Colliers'] > 1
+    r = tools._nrs('Colliers', n)
+    assert r['value'] == client_nrs(n, 1) and 'distinct pairs' in r['method']
+    assert r['value'] < client_nrs(n, snap['deg']['Colliers'])                     # el NRS visible baja
+    _GRAPH['data'] = None
+    try:
+        w = _graph()['by_id']['Colliers']
+        assert w['flow_degree'] == 1 and w['nrs'] == r['value'] and w['degree'] == snap['deg']['Colliers']
+    finally:
+        _GRAPH['data'] = None
+
+
+def test_g4d_explicacion_bilingue_y_documentacion():
+    js = open(os.path.join(ROOT, 'engine', 'explain.js'), encoding='utf-8').read()
+    assert 'socios e inversionistas no cuentan' in js and 'partners and investors do not count' in js
+    md = open(os.path.join(ROOT, 'CLAUDE.md'), encoding='utf-8').read()
+    assert 'El grado es ESTRUCTURAL' in md

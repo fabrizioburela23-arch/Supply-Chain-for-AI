@@ -61,18 +61,37 @@ def _ai_explain(prompt, fallback, tier='fast', max_tokens=200):
 GEO_RISK = {'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18}
 
 
+def server_flow_degree(session, object_id):
+    """Grado ESTRUCTURAL de un objeto (G4d): número de pares DISTINTOS
+    (source_id, target_id) vigentes unidos por una relación de FLUJO
+    (ontology.vocabulary.flow_relation_types: supply/fab/cloud/license/ppa/
+    owns/deploy). Antes se contaban TODAS las filas de `links`: socios
+    (`partner`), inversores (`invest`), factores (`affects`), noticias
+    (`about`) y los pares duplicados de la migración inflaban el término
+    "cadena" del NRS. Misma regla que app.html `_buildNrsDegree` y que
+    `ontology.vocabulary.flow_degree` sobre el catálogo."""
+    from ontology import vocabulary as _vocab
+    flow = list(_vocab.flow_relation_types())
+    pares = session.execute(
+        select(LinkRecord.source_id, LinkRecord.target_id).where(
+            (LinkRecord.source_id == object_id) | (LinkRecord.target_id == object_id),
+            LinkRecord.valid_to.is_(None),
+            LinkRecord.rel_type.in_(flow),
+            LinkRecord.source_id != LinkRecord.target_id,
+        ).distinct()
+    ).all()
+    return len(pares)
+
+
 def _compute_server_nrs(session, company):
     """Réplica server-side de la fórmula NRS del cliente (app.html computeNRS):
-    geo (país) + grado en el grafo (centralidad proxy) + margen + concentración.
-    No pretende ser idéntica al pixel — es la misma heurística de riesgo."""
+    geo (país) + grado ESTRUCTURAL en el grafo (centralidad proxy) + margen +
+    concentración. No pretende ser idéntica al pixel — es la misma heurística
+    de riesgo. El grado solo cuenta relaciones de flujo sobre pares distintos
+    (server_flow_degree), igual que el cliente desde G4d."""
     props = company.properties or {}
     geo = GEO_RISK.get(props.get('country'), 15)
-    degree = session.scalar(
-        select(sqlfunc.count(LinkRecord.id)).where(
-            (LinkRecord.source_id == company.id) | (LinkRecord.target_id == company.id),
-            LinkRecord.valid_to.is_(None),
-        )
-    ) or 0
+    degree = server_flow_degree(session, company.id)
     chain = min(25, degree * 2.5)
     margin = props.get('margin')
     # clamp [0,20]: el cliente (app.html computeNRS) tiene esta misma fórmula

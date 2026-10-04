@@ -696,6 +696,11 @@ def _graph():
             deg[s] = deg.get(s, 0) + 1
             if t != s:
                 deg[t] = deg.get(t, 0) + 1
+        # G4d: el NRS usa el grado ESTRUCTURAL (pares distintos de flujo), la
+        # misma regla que app.html computeNRS; `degree` (todas las filas) se
+        # conserva para ordenar.
+        from ontology import vocabulary as _vocab
+        flow_deg = _vocab.flow_degree(snap.get('links') or [])
         sectors = snap.get('sectors9') or {}
         nodes, by_id, by_country = [], {}, {}
         for n in snap.get('nodes') or []:
@@ -709,7 +714,8 @@ def _graph():
                 'sector_es': sec.get('label'), 'sector_en': sec.get('en'), 'cat': n.get('cat'),
                 'lat': g['lat'], 'lng': g['lng'], 'precision': g['precision'],
                 'place': g.get('label'), 'country_key': g.get('country'),
-                'degree': deg.get(n['id'], 0), 'nrs': client_nrs(n, deg.get(n['id'], 0)),
+                'degree': deg.get(n['id'], 0), 'flow_degree': flow_deg.get(n['id'], 0),
+                'nrs': client_nrs(n, flow_deg.get(n['id'], 0)),
             }
             nodes.append(rec)
             by_id[rec['id']] = rec

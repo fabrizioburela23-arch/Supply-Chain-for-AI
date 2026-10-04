@@ -2604,18 +2604,36 @@ function computeNodeRadius(nodeId) {
 // grado (degree) se sacaba filtrando TODO window.LINKS en cada llamada → O(L)
 // por nodo → O(N·L) por pantalla. Precalculamos el grado una vez y cacheamos el
 // score por nodo. Llama window._invalidateNRS() si LINKS cambia.
-let _nrsDegree = null;                 // Map nodeId -> grado en LINKS
+let _nrsDegree = null;                 // Map nodeId -> grado ESTRUCTURAL en LINKS
 const _nrsCache = new Map();           // nodeId -> score 0-100
+// G4d (misión de reparación 2026-10-04): el grado del NRS es ESTRUCTURAL —
+// cuenta pares distintos source→target unidos por una relación de FLUJO
+// (suministro, fabricación, nube, licencia, energía, propiedad, despliegue).
+// Socios (`partner`) e inversores (`invest`) NO son proveedores ni clientes,
+// y un mismo par con dos tipos (supply+fab) o duplicado cuenta UNA vez.
+// Antes se contaba toda fila de LINKS (753 partner + 192 invest + 48 pares
+// repetidos) y el término "cadena" (hasta 25 pts) salía inflado: los NRS
+// visibles BAJAN para empresas con muchos socios/accionistas. Misma regla que
+// ontology/agents.py server_flow_degree y ontology.vocabulary.flow_degree;
+// la lista refleja vocabulary.json (relation_types.*.flow = true).
+const NRS_FLOW_TYPES = { supply: 1, fab: 1, cloud: 1, license: 1, ppa: 1, owns: 1, deploy: 1 };
 function _buildNrsDegree() {
   const m = new Map();
+  const pairs = new Set();
   const L = window.LINKS || [];
   for (const l of L) {
+    if (!NRS_FLOW_TYPES[l.type || 'supply']) continue;
     const s = lid(l.source), t = lid(l.target);
+    if (s === t) continue;
+    const k = s + '\u2192' + t;
+    if (pairs.has(k)) continue;
+    pairs.add(k);
     m.set(s, (m.get(s) || 0) + 1);
-    if (t !== s) m.set(t, (m.get(t) || 0) + 1);
+    m.set(t, (m.get(t) || 0) + 1);
   }
   return m;
 }
+window._buildNrsDegree = _buildNrsDegree;
 function _invalidateNRS() { _nrsCache.clear(); _nrsDegree = null; }
 window._invalidateNRS = _invalidateNRS;
 

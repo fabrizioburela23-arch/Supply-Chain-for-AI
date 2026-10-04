@@ -58,7 +58,7 @@
            '<br><br>Se calcula sumando 4 ingredientes:' +
            '<ul style="margin:10px 0;padding-left:20px;line-height:1.7">' +
            '<li><b>Geopolítica (hasta 30 pts)</b> — dónde opera: Taiwán o China suman más riesgo que EEUU o Europa.</li>' +
-           '<li><b>Concentración de cadena (hasta 25 pts)</b> — de cuántos proveedores/clientes depende: si todo pasa por una sola empresa, el riesgo sube.</li>' +
+           '<li><b>Concentración de cadena (hasta 25 pts)</b> — cuántos proveedores y clientes <b>de suministro</b> distintos tiene (2,5 pts por cada uno, hasta 10). Solo cuentan relaciones de flujo: suministro, fabricación, nube, licencia, energía, propiedad y despliegue; <b>socios e inversionistas no cuentan</b> y una misma pareja de empresas cuenta una sola vez.</li>' +
            '<li><b>Fundamentales (hasta 25 pts)</b> — la salud del negocio: margen, tamaño, si ya genera ingresos.</li>' +
            '<li><b>Sector (hasta 20 pts)</b> — hay sectores estructuralmente más volátiles (cuántica pre-ingresos) que otros (equipos consolidados).</li>' +
            '</ul>' +
@@ -71,7 +71,7 @@
            '<br><br>It adds up 4 ingredients:' +
            '<ul style="margin:10px 0;padding-left:20px;line-height:1.7">' +
            '<li><b>Geopolitics (up to 30 pts)</b> — where it operates: Taiwan or China add more risk than the US or Europe.</li>' +
-           '<li><b>Supply-chain concentration (up to 25 pts)</b> — how many suppliers/customers it depends on: if everything flows through one company, risk goes up.</li>' +
+           '<li><b>Supply-chain concentration (up to 25 pts)</b> — how many distinct <b>supply</b> suppliers and customers it has (2.5 pts each, up to 10). Only flow relations count: supply, fab, cloud, license, power, ownership and deployment; <b>partners and investors do not count</b> and the same pair of companies counts once.</li>' +
            '<li><b>Fundamentals (up to 25 pts)</b> — business health: margins, size, whether it has real revenue yet.</li>' +
            '<li><b>Sector (up to 20 pts)</b> — some sectors are structurally more volatile (pre-revenue quantum) than others (established equipment makers).</li>' +
            '</ul>' +

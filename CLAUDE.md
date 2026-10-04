@@ -236,7 +236,30 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   llamar `window._invalidateNRS()` si LINKS cambia. OJO: la fórmula cliente no
   acota el término de margen (pre-revenue infla el score); la réplica server
   (`ontology/agents.py:_compute_server_nrs`) SÍ acota [0,20] — divergencia
-  conocida y documentada.
+  conocida y documentada. **El grado es ESTRUCTURAL (G4d, 2026-10-04)**: cuenta
+  pares distintos source→target unidos por una relación de FLUJO
+  (`vocabulary.json` `flow: true`: supply/fab/cloud/license/ppa/owns/deploy);
+  partner/invest/affects/about y los pares duplicados NO cuentan. Misma regla
+  en cliente (`_buildNrsDegree`, lista `NRS_FLOW_TYPES`), servidor
+  (`server_flow_degree`, COUNT DISTINCT en SQL), catálogo
+  (`ontology.vocabulary.flow_degree`: MCP `_nrs` y core/world). Consecuencia:
+  los NRS visibles BAJAN para empresas con muchos socios/accionistas (el término
+  "cadena" ya no se infla con 753 partner + 192 invest + 48 pares repetidos).
+- **Confianza por link (G4c)**: `LINKS[i].conf` (0-1) y `.verified` salen del
+  merge (`linkTrust` en nodes/merge_graph.js: texto "no verificado/no revisado/
+  posible/sin confirmar" → 0.3/false; un 6.º elemento `{conf, verified, since}`
+  en la fila del catálogo manda). El snapshot los exporta; `matrix/engine.py
+  _eff_weight` y `engine/statematrix.js` multiplican el peso por conf; el MCP
+  (`_link_trust`) los deriva del texto si el snapshot aún no los trae.
+- **Proveedor/cliente = solo FLUJO (G4a)**: `get_company.top_suppliers/
+  top_customers` y `get_supply_chain.edges` excluyen partner/invest (van en
+  `related`; `include_partners: true` los devuelve a `edges`). Cada arista lleva
+  `relation_class` (mapa cerrado en mcp_server/tools.py RELATION_CLASS).
+- **Fecha centinela (G4b)**: `valid_from` = 2000-01-01 es `GENESIS_SENTINEL`
+  (ontology/service.py, `is_genesis`): "desde que se rastrea", NO una fecha
+  real. API/timeline/MCP la marcan `valid_from_known: false`; la UI muestra
+  "desde que se rastrea / since tracked". Al serializar un valid_from nuevo,
+  marcarlo igual.
 - `RAW_LINKS`: arrays `[s, t, w, rel, type]`; los `{s,t,type}` de
   links_expand.js se convierten en el merge; `NODE_ID_ALIAS` normaliza ids.
 - `LINKS` (post-merge): objetos `{source, target, w, rel, type}` — usar
