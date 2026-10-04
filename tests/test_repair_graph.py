@@ -534,7 +534,9 @@ def test_g4_revision_confirmado_por_persona_no_se_descuenta():
     from matrix.engine import link_confidence
     assert link_confidence({'rel_label': 'Posible proveedor de gases'}) == 0.3
     assert link_confidence({'rel_label': 'Posible proveedor de gases', 'status': 'confirmed'}) is None
-    assert link_confidence({'rel_label': 'Posible proveedor', 'confidence': 0.5, 'status': 'confirmed'}) == 0.5
+    # G6b: la confirmación de una persona manda también sobre una confianza declarada/heredada
+    assert link_confidence({'rel_label': 'Posible proveedor', 'confidence': 0.5, 'status': 'confirmed'}) is None
+    assert link_confidence({'rel_label': 'Posible proveedor', 'confidence': 0.5}) == 0.5
 
 
 def test_g4_revision_chat_ve_todos_los_clientes():

@@ -222,7 +222,8 @@ def test_g3_api_plan_lectura_y_apply_con_pin(db, monkeypatch):
     monkeypatch.setenv('TRADE_PIN', 'pin-g3-1234')
     server.app.config['TESTING'] = True
     c = server.app.test_client()
-    r = c.get('/api/ontology/reconcile/plan?summary=1&fresh=1')
+    assert c.get('/api/ontology/reconcile/plan?summary=1&fresh=1').status_code == 401   # G6b: fresh exige PIN
+    r = c.get('/api/ontology/reconcile/plan?summary=1&fresh=1', headers={'X-Trade-Pin': 'pin-g3-1234'})
     assert r.status_code == 200, r.get_data(as_text=True)[:300]
     j = r.get_json()
     assert j['db'] and 'summary' in j and j['default_apply'] == ['alias', 'duplicates']
