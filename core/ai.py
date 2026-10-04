@@ -8,8 +8,9 @@ Endurecimiento (auditoría estructural 2026-09-30):
     Anthropic por defecto espera hasta 10 min y reintenta 2 veces → unas pocas
     llamadas colgadas dejaban la app entera sin hilos. Ahora: timeout corto
     (AI_CLAUDE_TIMEOUT_S, 60 s fast / 110 s deep), SIN reintentos del SDK en
-    timeouts (un cuelgue no se repite: la cascada pasa a Gemini/NVIDIA) y UN
-    reintento propio, corto, solo para 429/5xx/529 (sobrecarga pasajera). Un
+    timeouts (un cuelgue no se repite: la cascada pasa a Gemini/NVIDIA) y
+    reintentos propios, cortos, con backoff + jitter, solo para 429/5xx/529
+    (sobrecarga pasajera; R2 de la misión de reparación, también Gemini/NVIDIA). Un
     SEMÁFORO limita las llamadas de IA simultáneas (AI_MAX_CONCURRENCY, 4); si
     no hay cupo en AI_BUSY_WAIT_S (20 s) se lanza AIBusyError ("IA ocupada /
     AI busy") y el caller devuelve su error normal en vez de colgar un hilo más.
@@ -29,6 +30,7 @@ Endurecimiento (auditoría estructural 2026-09-30):
 import json
 import logging
 import os
+import random
 import re
 import threading
 import time
@@ -59,7 +61,6 @@ CLAUDE_TIMEOUT_DEEP_S = _env_num('AI_CLAUDE_TIMEOUT_DEEP_S', 110, 5, 600)
 # cupos que el trabajo de fondo NUNCA puede ocupar (quedan para el usuario)
 AI_INTERACTIVE_RESERVE = _env_num('AI_INTERACTIVE_RESERVE', 1, 0, 16, int)
 AI_PING_MAX_TOKENS = 4      # llamadas de ≤ 4 tokens = ping de diagnóstico → sin cupo
-CLAUDE_RETRY_SLEEP_S = 1.0  # espera antes del único reintento por 429/5xx/529
 _AI_SEM = threading.BoundedSemaphore(AI_MAX_CONCURRENCY)
 _AI_BG_SEM = threading.BoundedSemaphore(max(1, AI_MAX_CONCURRENCY - AI_INTERACTIVE_RESERVE))
 _AI_TLS = threading.local()
@@ -177,6 +178,43 @@ def _mono():
 
 def _sleep(seconds):
     time.sleep(seconds)
+
+
+# R2: errores PASAJEROS (sobrecarga/límite/red caída) → reintento corto con
+# backoff exponencial + jitter. Nunca para 400/401/403/404/410 (definitivos) ni
+# para timeouts de lectura (ya retuvieron el cupo 45-110 s: repetir lo duplica).
+TRANSIENT_HTTP = (408, 409, 429, 500, 502, 503, 504, 529)
+TRANSIENT_BASE_S = _env_num('AI_TRANSIENT_BASE_S', 1.5, 0.1, 30)
+TRANSIENT_CAP_S = _env_num('AI_TRANSIENT_CAP_S', 8.0, 0.1, 120)
+TRANSIENT_JITTER = 0.3
+
+
+def _transient_wait_s(i):
+    base = min(TRANSIENT_CAP_S, TRANSIENT_BASE_S * (2 ** i))
+    return base * (1.0 + random.uniform(-TRANSIENT_JITTER, TRANSIENT_JITTER))
+
+
+def _retry_transient(call, is_transient, label):
+    """call() → respuesta; is_transient(resultado_o_excepción) decide si se
+    reintenta. Hasta AI_TRANSIENT_RETRIES intentos en total."""
+    attempts = max(1, int(AI_TRANSIENT_RETRIES))
+    last = None
+    for i in range(attempts):
+        try:
+            out = call()
+        except Exception as e:  # noqa: BLE001
+            if i + 1 < attempts and is_transient(e):
+                log.info('IA %s: %s → reintento %d/%d', label, type(e).__name__, i + 1, attempts - 1)
+                _sleep(_transient_wait_s(i))
+                continue
+            raise
+        if i + 1 < attempts and is_transient(out):
+            log.info('IA %s: HTTP %s → reintento %d/%d', label, getattr(out, 'status_code', '?'), i + 1, attempts - 1)
+            last = out
+            _sleep(_transient_wait_s(i))
+            continue
+        return out
+    return last
 
 
 class AICircuitOpen(RuntimeError):
@@ -310,7 +348,7 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
     # timeout corto y SIN reintentos del SDK (el default: 10 min y 2 reintentos →
     # un hilo de gunicorn podía quedar atado media hora a una llamada colgada; y
     # el SDK también reintenta los TIMEOUTS, lo que duplicaba el cuelgue). Solo
-    # 429/5xx/529 se reintentan UNA vez, aquí abajo, tras CLAUDE_RETRY_SLEEP_S.
+    # 429/5xx/529 se reintentan, aquí abajo, con _retry_transient (backoff + jitter).
     client = anthropic.Anthropic(api_key=CLAUDE, max_retries=0,
                                  timeout=CLAUDE_TIMEOUT_DEEP_S if tier == 'deep' else CLAUDE_TIMEOUT_FAST_S)
     _net_errors = tuple(c for c in (getattr(anthropic, 'APITimeoutError', None),
@@ -326,13 +364,9 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
 
     def _create(**kw):
         t0 = time.monotonic()
-        try:
-            msg = client.messages.create(**kw)
-        except Exception as e:  # noqa: BLE001
-            if not _transient(e):
-                raise
-            time.sleep(CLAUDE_RETRY_SLEEP_S)
-            msg = client.messages.create(**kw)     # un solo reintento; si falla, sale
+        # R2: 429/5xx/529 se reintentan con backoff + jitter (AI_TRANSIENT_RETRIES
+        # intentos en total); timeouts y 4xx definitivos salen a la primera.
+        msg = _retry_transient(lambda: client.messages.create(**kw), _transient, 'claude')
         try:   # gasto: tokens REALES que reporta Anthropic (incluida la caché)
             u = getattr(msg, 'usage', None)
             tin = (getattr(u, 'input_tokens', 0) or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0) \
@@ -407,16 +441,32 @@ def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False, t
     return _guarded('gemini', max_tokens, _call)
 
 
+class _NetDown(RuntimeError):
+    """Red caída (no timeout): candidata a reintento corto."""
+
+
 def _gemini_post(url, body, timeout):
     """POST a Gemini con la key en la CABECERA x-goog-api-key (nunca en la URL:
-    la URL termina dentro del texto de las excepciones de requests → logs/🩺)."""
+    la URL termina dentro del texto de las excepciones de requests → logs/🩺).
+    R2: HTTP 429/5xx y red caída se reintentan con backoff + jitter."""
+    def _once():
+        try:
+            return requests.post(url, json=body, timeout=timeout,
+                                 headers={'x-goog-api-key': GEMINI_KEY, 'Content-Type': 'application/json'})
+        except requests.exceptions.Timeout:
+            raise RuntimeError('Gemini timeout') from None
+        except requests.exceptions.RequestException as e:
+            raise _NetDown(f'Gemini red ({type(e).__name__})') from None
+
+    def _transient(x):
+        if isinstance(x, _NetDown):
+            return True
+        return getattr(x, 'status_code', None) in TRANSIENT_HTTP
+
     try:
-        return requests.post(url, json=body, timeout=timeout,
-                             headers={'x-goog-api-key': GEMINI_KEY, 'Content-Type': 'application/json'})
-    except requests.exceptions.Timeout:
-        raise RuntimeError('Gemini timeout') from None
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f'Gemini red ({type(e).__name__})') from None
+        return _retry_transient(_once, _transient, 'gemini')
+    except _NetDown as e:
+        raise RuntimeError(str(e)) from None
 
 
 def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
@@ -487,14 +537,21 @@ def _complete_nvidia_inner(system, prompt, max_tokens, tier='fast'):  # noqa: AR
             'temperature': 0.6,
             'messages': [{'role': 'system', 'content': system or ''},
                          {'role': 'user', 'content': prompt or ''}]}
-    try:
-        r = requests.post('https://integrate.api.nvidia.com/v1/chat/completions',
-                          headers={'Authorization': f'Bearer {NVIDIA_KEY}', 'Accept': 'application/json'},
-                          json=body, timeout=45)
-    except requests.exceptions.Timeout:
-        raise RuntimeError('NVIDIA timeout') from None
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f'NVIDIA red ({type(e).__name__})') from None
+    def _once():
+        try:
+            return requests.post('https://integrate.api.nvidia.com/v1/chat/completions',
+                                 headers={'Authorization': f'Bearer {NVIDIA_KEY}', 'Accept': 'application/json'},
+                                 json=body, timeout=45)
+        except requests.exceptions.Timeout:
+            raise RuntimeError('NVIDIA timeout') from None
+        except requests.exceptions.RequestException as e:
+            raise _NetDown(f'NVIDIA red ({type(e).__name__})') from None
+
+    try:   # R2: 429/5xx y red caída → reintento con backoff + jitter
+        r = _retry_transient(_once, lambda x: isinstance(x, _NetDown) or getattr(x, 'status_code', None) in TRANSIENT_HTTP,
+                             'nvidia')
+    except _NetDown as e:
+        raise RuntimeError(str(e)) from None
     if not r.ok:
         raise RuntimeError(f'NVIDIA HTTP {r.status_code}')
     data = r.json()

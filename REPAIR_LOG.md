@@ -35,3 +35,24 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   "EN PAUSA" en Claude mientras no haya saldo; `/api/diagnostics?fresh=1` lo
   reactiva solo cuando vuelve a responder.
 - **Rollback.** Revertir el commit; no toca datos.
+
+### R2 — "IA ocupada" espera y reintenta el mismo proveedor; 429/5xx con backoff + jitter
+
+- **Problema.** Los agentes `news` y `technical` del job de TSMC (`2ac4552d…`)
+  tardaron 70,4 s y 70,5 s y fallaron con "IA ocupada" en claude, gemini y
+  nvidia: cada agente probaba los 3 proveedores esperando 20 s de cupo en cada
+  uno (3 × AI_BUSY_WAIT_S) y perdía el resultado. Un 503 pasajero de Gemini o un
+  429 de NVIDIA tumbaban al agente a la primera (solo Claude tenía 1 reintento).
+- **Causa raíz.** `research/llm.py` trataba `AIBusyError` (escasez GLOBAL de
+  cupos del semáforo) como fallo del proveedor y saltaba al siguiente;
+  `core/ai.py` no reintentaba HTTP pasajeros en Gemini/NVIDIA.
+- **Cambio.** `research/llm.py`: `RoutedProvider._with_busy_retry` espera 3/6/12/24 s
+  ±30 % (`RESEARCH_BUSY_RETRIES`, default 4) y reintenta el MISMO proveedor;
+  agotado → `LLMError('IA ocupada tras N esperas…')` sin probar el siguiente;
+  `meta['busy_retries']`. `core/ai.py`: `_retry_transient` (hasta
+  `AI_TRANSIENT_RETRIES`=3 intentos, base 1,5 s ×2 con tope 8 s, jitter ±30 %) para
+  HTTP 408/409/429/5xx/529 y red caída en Claude, Gemini y NVIDIA; nunca para
+  400/401/403/404/410 ni timeouts de lectura. `CLAUDE_RETRY_SLEEP_S` desaparece.
+- **Verificar.** `pytest tests/test_repair_research.py -k r2` (5 tests; antes:
+  B.calls tenía 1 llamada / 'Gemini HTTP 503' a la primera).
+- **Rollback.** Revertir el commit; no toca datos.

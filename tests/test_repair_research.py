@@ -129,3 +129,84 @@ def test_r1_research_no_usa_un_proveedor_en_pausa(monkeypatch):
     assert p.available() is True
     ai._open_circuit('gemini', 'credit', 'sin saldo', 600)
     assert p.available() is False
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R2 · "IA ocupada" espera y reintenta el MISMO proveedor; 429/5xx con backoff+jitter
+# ════════════════════════════════════════════════════════════════════════════
+
+def _ok_result():
+    from tests.test_research import _claim, _result
+    return _result([_claim()])
+
+
+def test_r2_research_espera_si_la_ia_esta_ocupada_y_reintenta_el_mismo_proveedor(monkeypatch):
+    from core.ai import AIBusyError
+    from research import llm
+    from research.llm import FakeProvider, RoutedProvider
+    from research.schemas import AgentResearchResult
+    waits = []
+    monkeypatch.setattr(llm, '_sleep', lambda s: waits.append(s))
+    a = FakeProvider([AIBusyError(), _ok_result()])
+    b = FakeProvider([_ok_result()])
+    obj, meta = RoutedProvider([a, b]).structured_generate('s', 'p', AgentResearchResult)
+    assert obj.claims and b.calls == []                 # no se cambió de proveedor
+    assert meta['busy_retries'] == 1 and meta['fallbacks'] == []
+    assert len(waits) == 1 and 1.5 <= waits[0] <= 4.5    # 3 s ±30 %
+
+
+def test_r2_ia_ocupada_agotada_no_prueba_el_siguiente_proveedor(monkeypatch):
+    from core.ai import AIBusyError
+    from research import llm
+    from research.llm import FakeProvider, LLMError, RoutedProvider
+    from research.schemas import AgentResearchResult
+    waits = []
+    monkeypatch.setattr(llm, '_sleep', lambda s: waits.append(s))
+    monkeypatch.setenv('RESEARCH_BUSY_RETRIES', '2')
+    a = FakeProvider([AIBusyError() for _ in range(5)])
+    b = FakeProvider([_ok_result()])
+    with pytest.raises(LLMError) as ei:
+        RoutedProvider([a, b]).structured_generate('s', 'p', AgentResearchResult)
+    assert 'ocupada' in str(ei.value) and 'busy' in str(ei.value)
+    assert b.calls == [] and len(waits) == 2 and waits[1] > waits[0]
+
+
+def test_r2_gemini_reintenta_503_con_backoff_y_jitter(monkeypatch):
+    from core import ai
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
+    waits, plan = [], [503, 503, 200]
+    monkeypatch.setattr(ai, '_sleep', lambda s: waits.append(s))
+
+    def post(url, **kw):
+        code = plan.pop(0)
+        return _Resp(code, {'candidates': [{'content': {'parts': [{'text': 'ok'}]}}]} if code == 200
+                     else {'error': {'status': 'UNAVAILABLE'}})
+
+    monkeypatch.setattr(ai.requests, 'post', post)
+    assert ai._complete_gemini('', 'p', 10)[0] == 'ok'
+    assert plan == [] and len(waits) == 2
+    assert 1.0 <= waits[0] <= 2.0 and 2.0 <= waits[1] <= 4.0 and waits[1] > waits[0]
+
+
+def test_r2_gemini_no_reintenta_errores_definitivos(monkeypatch):
+    from core import ai
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-pro-x')       # sin thinkingConfig → sin el reintento del 400
+    monkeypatch.setattr(ai, '_sleep', lambda s: (_ for _ in ()).throw(AssertionError('no debe esperar')))
+    for code in (400, 404):
+        calls = []
+        monkeypatch.setattr(ai.requests, 'post', lambda url, **kw: calls.append(1) or _Resp(code, {'error': {'status': 'X'}}))
+        with pytest.raises(RuntimeError):
+            ai._complete_gemini('', 'p', 10)
+        assert len(calls) == 1, code
+
+
+def test_r2_nvidia_reintenta_429_y_luego_responde(monkeypatch):
+    from core import ai
+    monkeypatch.setattr(ai, 'NVIDIA_KEY', 'nv-123456789')
+    waits, plan = [], [429, 200]
+    monkeypatch.setattr(ai, '_sleep', lambda s: waits.append(s))
+    monkeypatch.setattr(ai.requests, 'post', lambda url, **kw: _Resp(
+        plan.pop(0), {'choices': [{'message': {'content': 'ok'}}], 'usage': {}}) if plan[0] == 200 else _Resp(plan.pop(0), {}))
+    assert ai._complete_nvidia('', 'p', 10)[0] == 'ok'
+    assert len(waits) == 1

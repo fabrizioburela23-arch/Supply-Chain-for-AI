@@ -12,11 +12,41 @@ responde gana; los siguientes son fallback.
 """
 import json
 import os
+import random
 import time
 
 from pydantic import ValidationError
 
-from core.ai import _extract_json
+from core.ai import AIBusyError, _extract_json
+
+# R2 (misión de reparación 2026-10-04): "IA ocupada" (AIBusyError) es escasez
+# GLOBAL de cupos del semáforo, no un fallo del proveedor → cambiar de
+# proveedor no ayuda y triplica la espera (3 × AI_BUSY_WAIT_S = 60 s en prod,
+# exactamente la latencia de los agentes caídos de TSMC). Ahora se espera con
+# backoff + jitter y se reintenta el MISMO proveedor; agotados los reintentos
+# el agente falla con un motivo claro y NO prueba el siguiente proveedor.
+BUSY_BACKOFF_S = (3.0, 6.0, 12.0, 24.0)
+BUSY_JITTER = 0.3
+
+
+def _busy_retries():
+    try:
+        return max(0, min(8, int(os.getenv('RESEARCH_BUSY_RETRIES', '4'))))
+    except (TypeError, ValueError):
+        return 4
+
+
+def _busy_wait_s(i):
+    base = BUSY_BACKOFF_S[min(i, len(BUSY_BACKOFF_S) - 1)]
+    return base * (1.0 + random.uniform(-BUSY_JITTER, BUSY_JITTER))
+
+
+def _sleep(seconds):          # inyectable en tests
+    time.sleep(seconds)
+
+
+class _BusyExhausted(Exception):
+    pass
 
 # precio aproximado USD por 1M tokens (entrada, salida) — SOLO para el
 # control de presupuesto; se rotula "estimado" en la UI.
@@ -170,9 +200,30 @@ class RoutedProvider(LLMProvider):
         self.providers = [p for p in providers if p]
         self.name = '>'.join(p.name for p in self.providers) or 'none'
         self.fallbacks = []
+        self.busy_retries = 0
 
     def available(self):
         return any(p.available() for p in self.providers)
+
+    def _with_busy_retry(self, fn):
+        """Ejecuta fn(); ante AIBusyError espera (backoff + jitter) y reintenta el
+        MISMO proveedor hasta RESEARCH_BUSY_RETRIES veces; agotado → _BusyExhausted."""
+        i = 0
+        while True:
+            try:
+                return fn()
+            except AIBusyError:
+                if i >= _busy_retries():
+                    raise _BusyExhausted(i) from None
+                w = _busy_wait_s(i)
+                i += 1
+                self.busy_retries += 1
+                _sleep(w)
+
+    @staticmethod
+    def _busy_error(n):
+        return LLMError(f'IA ocupada tras {n} esperas (cupos de IA llenos: comité/chat/otras investigaciones); '
+                        f'se reintentará / AI busy after {n} waits (AI slots full); will be retried')
 
     def generate(self, system, prompt, max_tokens=1500):
         errs = []
@@ -180,7 +231,9 @@ class RoutedProvider(LLMProvider):
             if not p.available():
                 continue
             try:
-                return p.generate(system, prompt, max_tokens)
+                return self._with_busy_retry(lambda: p.generate(system, prompt, max_tokens))
+            except _BusyExhausted as e:
+                raise self._busy_error(e.args[0]) from None
             except Exception as e:  # noqa: BLE001
                 errs.append(f'{p.name}: {str(e)[:120]}')
                 self.fallbacks.append(p.name)
@@ -194,12 +247,15 @@ class RoutedProvider(LLMProvider):
             if not p.available():
                 continue
             try:
-                obj, meta = p.structured_generate(system, prompt, schema_model, max_tokens,
-                                                  max_attempts, extra_check)
+                obj, meta = self._with_busy_retry(
+                    lambda: p.structured_generate(system, prompt, schema_model, max_tokens, max_attempts, extra_check))
                 meta['provider'] = p.name
                 meta['fallbacks'] = list(self.fallbacks)
+                meta['busy_retries'] = self.busy_retries
                 meta['seconds'] = round(time.time() - t0, 2)
                 return obj, meta
+            except _BusyExhausted as e:
+                raise self._busy_error(e.args[0]) from None
             except Exception as e:  # noqa: BLE001
                 errs.append(f'{p.name}: {str(e)[:200]}')
                 self.fallbacks.append(p.name)

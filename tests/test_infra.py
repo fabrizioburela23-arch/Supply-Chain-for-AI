@@ -875,7 +875,7 @@ def _fake_anthropic(monkeypatch, plan):
             return _FakeMsg(step)
 
     monkeypatch.setattr(ai, 'CLAUDE', 'sk-test-123456')
-    monkeypatch.setattr(ai, 'CLAUDE_RETRY_SLEEP_S', 0)
+    monkeypatch.setattr(ai, '_sleep', lambda s: None)      # R2: reintentos sin esperar en tests
     monkeypatch.setattr(anthropic, 'Anthropic', FakeClient)
     return calls
 
