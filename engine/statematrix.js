@@ -25,6 +25,13 @@
     deploy: 0.4, partner: 0.3, owns: 0.6, invest: 0.25,
   };
   var clamp01 = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
+  // G4c (= matrix/engine.py _eff_weight): un link cuyo texto curado dice "no
+  // verificado"/"posible" trae conf 0.3 (nodes/merge_graph.js) y pesa eso.
+  var confOf = function (l) {
+    var c = l.conf != null ? +l.conf : NaN;
+    if (isFinite(c)) return c < 1 ? Math.max(0, c) : 1;
+    return l.verified === false ? 0.3 : 1;
+  };
 
   // ── NÚCLEO PURO ────────────────────────────────────────────────────────────
   // opts: { nodes:[{id,...}], links:[{source,target,w,type}], baselineFn(node)->state }
@@ -46,7 +53,7 @@
       var i = idx[s], j = idx[t];
       if (i == null || j == null || i === j) return;
       var type = l.type || 'supply';
-      (byType[type] = byType[type] || []).push({ i: i, j: j, w: l.w || 2, type: type });
+      (byType[type] = byType[type] || []).push({ i: i, j: j, w: (l.w || 2) * confOf(l), type: type });
     });
     // customers[i] = [{j,w}] (i provee a j) → para propagar AUGE hacia arriba:
     // si a mi cliente le explota la demanda, yo (su proveedor) me beneficio,

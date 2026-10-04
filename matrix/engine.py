@@ -84,14 +84,46 @@ def bulk_weight_factor():
     return min(1.0, max(0.0, v))
 
 
-def _eff_weight(raw, source):
+# Confianza de un link sin fuente que la respalde (G4c): el texto curado dice
+# "no verificado"/"posible" → nodes/merge_graph.js exporta conf 0.3 y la
+# migración lo guarda en properties.confidence. Si solo llega verified=false
+# (sin número), se usa este mismo valor.
+UNVERIFIED_CONF = 0.3
+
+
+def link_confidence(props):
+    """properties → confianza 0-1 o None (= sin dato, no se descuenta)."""
+    props = props or {}
+    c = props.get('confidence')
+    if c is None:
+        return UNVERIFIED_CONF if props.get('verified') is False else None
+    try:
+        c = float(c)
+    except (TypeError, ValueError):
+        return None
+    if c != c:          # NaN
+        return None
+    return max(0.0, min(1.0, c))
+
+
+def _eff_weight(raw, source, confidence=None):
     """Peso efectivo de un link: preserva EXACTO el histórico `float(w or 2)`
-    (peso por defecto 2 si es None/0), y aplica el descuento de bulto SOLO a
+    (peso por defecto 2 si es None/0), aplica el descuento de bulto SOLO a
     fuentes importadas — las curadas no se tocan, así el camino denso sigue
-    idéntico y la equivalencia con el sparse se mantiene."""
+    idéntico y la equivalencia con el sparse se mantiene — y (G4c) multiplica
+    por `confidence` (0-1) cuando el link la declara y es < 1: un link "no
+    verificado" (0.3) ya no pesa igual que uno verificado. Sin confianza
+    (None) o con 1.0 el resultado es idéntico al histórico."""
     w = float(raw or 2)
     if source in BULK_SOURCES:
         w *= bulk_weight_factor()
+    if confidence is not None:
+        try:
+            c = float(confidence)
+        except (TypeError, ValueError):
+            c = None
+        if c is not None and c == c and c < 1.0:
+            w *= max(0.0, c)
     return w
 
 
@@ -229,13 +261,14 @@ def build_matrices(session, as_of=None, sparse=None):
         rows = session.scalars(
             select(LinkRecord).where(LinkRecord.valid_to.is_(None))).all()
         triples = ((l.source_id, l.target_id, l.rel_type,
-                    _eff_weight(l.weight, (l.properties or {}).get('source')))
+                    _eff_weight(l.weight, (l.properties or {}).get('source'), link_confidence(l.properties)))
                    for l in rows)
     else:
         as_of_dt = _parse_dt(as_of)
         links = _links_active_at(session, as_of_dt)
         triples = ((l['source'], l['target'], l['rel_type'],
-                    _eff_weight(l.get('weight'), (l.get('properties') or {}).get('source')))
+                    _eff_weight(l.get('weight'), (l.get('properties') or {}).get('source'),
+                                link_confidence(l.get('properties'))))
                    for l in links)
     return build_matrices_from_triples(triples, idx, sparse=sparse)
 

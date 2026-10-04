@@ -7,13 +7,14 @@
    que se desfasaban con cada edición — eliminada.
 
    Uso:  node scripts/export_graph_v0.js
+   Desde tests: require(...).buildSnapshot() arma el objeto SIN escribir el
+   archivo (G4c: así se prueba el merge real sin regenerar data/grafo_v0.json).
    ============================================================================ */
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const ctx = vm.createContext({ window: {}, console });
 
 const DATA_FILES = [
   'nodes/nodes_seed.js',
@@ -26,38 +27,44 @@ const DATA_FILES = [
   'nodes/ontology.js', 'nodes/ontology_facts.js', 'nodes/legal_names.js',
   'nodes/merge_graph.js',
 ];
-for (const f of DATA_FILES) {
-  vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf-8'), ctx, { filename: f });
-}
-const g = n => vm.runInContext(
-  `typeof ${n} !== 'undefined' ? ${n} : (window.${n} !== undefined ? window.${n} : null)`, ctx);
 
-const NODES = g('NODES');
-const NODE_BY_ID = {};
-NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
+function buildSnapshot(opts) {
+  opts = opts || {};
+  const ctx = vm.createContext({ window: {}, console });
+  for (const f of DATA_FILES) {
+    vm.runInContext(fs.readFileSync(path.join(ROOT, f), 'utf-8'), ctx, { filename: f });
+  }
+  const g = n => vm.runInContext(
+    `typeof ${n} !== 'undefined' ? ${n} : (window.${n} !== undefined ? window.${n} : null)`, ctx);
 
-const result = g('buildKhipusGraph')({
-  NODES, NODE_BY_ID,
-  NODE_ID_ALIAS: g('NODE_ID_ALIAS'),
-  RAW_LINKS: g('RAW_LINKS'),
-  LISTING_STATUS: g('LISTING_STATUS'),
-  PRIVATE_VALUATIONS: g('PRIVATE_VALUATIONS'),
-  expansions: ['NODES_EXPAND', 'NODES_EXPAND2', 'NODES_SPACEX', 'NODES_EXPAND3',
-               'NODES_NUCLEAR', 'NODES_EXPAND4', 'NODES_EXPAND5', 'NODES_CHINA', 'NODES_MULTICAPA'].map(g),
-  linkArrays: ['LINKS_EXPAND', 'LINKS_SPACEX', 'LINKS_CONNECT', 'LINKS_NUCLEAR',
-               'LINKS_EXPAND4', 'LINKS_EXPAND5', 'LINKS_CHINA', 'LINKS_MULTICAPA'].map(g),
-  warn: m => console.warn('⚠', m),
-});
+  const NODES = g('NODES');
+  const NODE_BY_ID = {};
+  NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
 
-const CATS = Object.assign({}, g('CATS'), g('CATS_NEW'));
-const CAT_TO_SECTOR = g('CAT_TO_SECTOR');
-const W = g('window');
-const out = {
+  const result = g('buildKhipusGraph')({
+    NODES, NODE_BY_ID,
+    NODE_ID_ALIAS: g('NODE_ID_ALIAS'),
+    RAW_LINKS: g('RAW_LINKS'),
+    LISTING_STATUS: g('LISTING_STATUS'),
+    PRIVATE_VALUATIONS: g('PRIVATE_VALUATIONS'),
+    expansions: ['NODES_EXPAND', 'NODES_EXPAND2', 'NODES_SPACEX', 'NODES_EXPAND3',
+                 'NODES_NUCLEAR', 'NODES_EXPAND4', 'NODES_EXPAND5', 'NODES_CHINA', 'NODES_MULTICAPA'].map(g),
+    linkArrays: ['LINKS_EXPAND', 'LINKS_SPACEX', 'LINKS_CONNECT', 'LINKS_NUCLEAR',
+                 'LINKS_EXPAND4', 'LINKS_EXPAND5', 'LINKS_CHINA', 'LINKS_MULTICAPA'].map(g),
+    warn: opts.quiet ? function () {} : (m => console.warn('⚠', m)),
+  });
+
+  const CATS = Object.assign({}, g('CATS'), g('CATS_NEW'));
+  const CAT_TO_SECTOR = g('CAT_TO_SECTOR');
+  const W = g('window');
+  return {
   exported_at: new Date().toISOString(),
   source: 'nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)',
   counts: {
     nodes: NODES.length,
     links: result.LINKS.length,
+    // G4c: links cuyo texto curado dice "no verificado"/"posible" (conf 0.3)
+    unverified_links: result.LINKS.filter(l => l.verified === false).length,
     categories: Object.keys(CATS).length,
     sectors: Object.keys(g('SECTORS9') || {}).length,
     preipo_entries: Object.keys(g('PREIPO_INTEL') || {}).length,
@@ -65,7 +72,7 @@ const out = {
     ontology_objects: ((W.ONTOLOGY || {}).objects || []).length,
   },
   nodes: NODES.map(n => Object.assign({ sector: CAT_TO_SECTOR[n.cat] || 'cloud_ia' }, n)),
-  links: result.LINKS,
+  links: result.LINKS,   // {source,target,w,rel,type,conf,verified,since?}
   // La tabla de alias entraba al merge como INPUT pero no salía al snapshot, así
   // que moría en la frontera cliente→servidor: la migración nunca la veía y el
   // servidor no podía resolver "NVDA"/"NVIDIA Corporation" → Nvidia. Sin esto,
@@ -80,8 +87,14 @@ const out = {
   preipo_intel: g('PREIPO_INTEL') || {},
   temporal_facts: W.TEMPORAL_SEED_FACTS || [],
   ontology: W.ONTOLOGY || null,
-};
+  };
+}
 
-const outPath = path.join(ROOT, 'data', 'grafo_v0.json');
-fs.writeFileSync(outPath, JSON.stringify(out, null, 1), 'utf-8');
-console.log('✓ data/grafo_v0.json —', JSON.stringify(out.counts));
+if (require.main === module) {
+  const out = buildSnapshot();
+  const outPath = path.join(ROOT, 'data', 'grafo_v0.json');
+  fs.writeFileSync(outPath, JSON.stringify(out, null, 1), 'utf-8');
+  console.log('✓ data/grafo_v0.json —', JSON.stringify(out.counts));
+}
+
+module.exports = { buildSnapshot, DATA_FILES };

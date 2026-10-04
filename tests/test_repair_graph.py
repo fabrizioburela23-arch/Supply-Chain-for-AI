@@ -238,3 +238,132 @@ def test_g4b_timeline_y_time_travel_marcan_el_centinela(db):
         g = as_of_graph(s, '2026-01-01')
         lk = [l for l in g['links'] if l['source'] == 'Prov' and l['target'] == 'Acme'][0]
         assert lk['valid_from_known'] is False
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# G4c — confianza derivada del texto: merge, snapshot, MCP y matrices
+# ════════════════════════════════════════════════════════════════════════════
+MERGE_HARNESS = r'''
+const P = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const { buildKhipusGraph, linkTrust } = require(P.root + '/nodes/merge_graph.js');
+const NODES = [{ id: 'FedEx' }, { id: 'TSMC' }, { id: 'A' }, { id: 'B' }, { id: 'C' }];
+const NODE_BY_ID = {}; NODES.forEach(n => { NODE_BY_ID[n.id] = n; });
+const r = buildKhipusGraph({
+  NODES, NODE_BY_ID, NODE_ID_ALIAS: { 'Fed_Ex': 'FedEx' },
+  RAW_LINKS: [
+    ['Fed_Ex', 'TSMC', 1, 'Transporte express; contrato específico no verificado públicamente', 'supply'],
+    ['A', 'B', 2, 'Suministro confirmado', 'supply'],
+    ['A', 'C', 2, 'Posible socio', 'partner', { conf: 0.9, verified: true, since: '2024-01-01' }],
+    ['B', 'C', 1, 'sin confirmar', 'supply'],
+    ['B', 'C', 3, 'Contrato firmado y auditado', 'supply'],
+  ],
+  linkArrays: [[{ s: 'C', t: 'A', w: 2, rel: 'posiblemente', type: 'cloud', conf: 0.6 }]],
+});
+const by = {}; r.LINKS.forEach(l => { by[l.source + '>' + l.target + ':' + l.type] = l; });
+process.stdout.write(JSON.stringify({ by, trust: [linkTrust('no revisado aún'), linkTrust('ok'), linkTrust('x', { verified: false })] }));
+'''
+
+
+def test_g4c_merge_deriva_confianza_del_texto_y_respeta_el_sexto_elemento():
+    out = _node(MERGE_HARNESS, {'root': ROOT})
+    by = out['by']
+    fx = by['FedEx>TSMC:supply']
+    assert fx['conf'] == 0.3 and fx['verified'] is False and fx['w'] == 1
+    assert by['A>B:supply']['conf'] == 1 and by['A>B:supply']['verified'] is True
+    # 6.º elemento explícito manda sobre el texto ("Posible socio" diría 0.3)
+    ac = by['A>C:partner']
+    assert ac['conf'] == 0.9 and ac['verified'] is True and ac['since'] == '2024-01-01'
+    # objeto {s,t,…,conf}: también explícito
+    assert by['C>A:cloud']['conf'] == 0.6 and by['C>A:cloud']['verified'] is False
+    # dedupe (s,t,type): gana el peso mayor y la descripción más larga; la
+    # confianza se deriva del texto FINAL (el verificado), no del descartado
+    bc = by['B>C:supply']
+    assert bc['w'] == 3 and bc['rel'] == 'Contrato firmado y auditado' and bc['conf'] == 1 and bc['verified'] is True
+    assert out['trust'][0] == {'conf': 0.3, 'verified': False, 'explicit': False}
+    assert out['trust'][1] == {'conf': 1, 'verified': True, 'explicit': False}
+    assert out['trust'][2] == {'conf': 0.3, 'verified': False, 'explicit': True}
+
+
+def test_g4c_merge_real_exporta_conf_sin_cambiar_el_grafo():
+    """El merge REAL (nodes/*.js, el mismo que usa el navegador y el export):
+    FedEx→TSMC sale con conf 0.3 / verified false y el grafo no cambia de
+    tamaño. No se escribe data/grafo_v0.json (buildSnapshot solo arma el objeto)."""
+    script = r'''
+const P = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const { buildSnapshot } = require(P.root + '/scripts/export_graph_v0.js');
+const s = buildSnapshot({ quiet: true });
+const pick = (a, b) => s.links.find(l => l.source === a && l.target === b) || null;
+process.stdout.write(JSON.stringify({ counts: s.counts, fx: pick('FedEx', 'TSMC'), asml: pick('ASML', 'TSMC'),
+  n_conf: s.links.filter(l => typeof l.conf === 'number' && typeof l.verified === 'boolean').length }));
+'''
+    snap_actual = json.load(open(os.path.join(ROOT, 'data', 'grafo_v0.json'), encoding='utf-8'))
+    out = _node(script, {'root': ROOT})
+    assert out['counts']['nodes'] == snap_actual['counts']['nodes']
+    assert out['counts']['links'] == snap_actual['counts']['links']
+    assert out['n_conf'] == out['counts']['links']                  # todos los links salen con conf/verified
+    assert out['counts']['unverified_links'] >= 20
+    assert out['fx']['conf'] == 0.3 and out['fx']['verified'] is False and out['fx']['w'] == 1
+    assert out['asml']['conf'] == 1 and out['asml']['verified'] is True
+    # el snapshot en disco NO se tocó (lo regenera quien integra)
+    assert json.load(open(os.path.join(ROOT, 'data', 'grafo_v0.json'), encoding='utf-8'))['exported_at'] == \
+        snap_actual['exported_at']
+
+
+def test_g4c_link_trust_respeta_los_campos_del_snapshot_y_deriva_sin_ellos():
+    """Funciona con el snapshot ACTUAL (sin conf) y con el futuro (con conf)."""
+    from mcp_server.tools import _link_trust
+    assert _link_trust('contrato específico no verificado públicamente') == (False, 0.3)
+    assert _link_trust('Posible socio de infraestructura') == (False, 0.3)
+    assert _link_trust('relación posiblemente activa') == (False, 0.3)
+    assert _link_trust('no revisado') == (False, 0.3) and _link_trust('sin confirmar') == (False, 0.3)
+    assert _link_trust('Máquinas EUV') == (True, 1.0) and _link_trust(None) == (True, 1.0)
+    # el snapshot nuevo manda sobre el texto
+    assert _link_trust('texto no verificado', {'conf': 1.0, 'verified': True}) == (True, 1.0)
+    assert _link_trust('ok', {'conf': 0.3, 'verified': False}) == (False, 0.3)
+    assert _link_trust('ok', {'verified': False}) == (False, 0.3)
+    assert _link_trust('ok', {'conf': 0.6}) == (False, 0.6)
+    assert _link_trust('ok', {'conf': 'basura', 'verified': True}) == (True, 1.0)
+
+
+def test_g4c_eff_weight_multiplica_por_la_confianza():
+    from matrix.engine import _eff_weight, link_confidence
+    assert _eff_weight(3, None, 0.3) == pytest.approx(0.9)
+    assert _eff_weight(3, None) == 3.0 and _eff_weight(3, None, None) == 3.0        # histórico intacto
+    assert _eff_weight(None, None, 1.0) == 2.0 and _eff_weight(2, None, 1.0) == 2.0
+    assert _eff_weight(2, 'wikidata', 0.5) == pytest.approx(0.5)                    # bulto × confianza
+    assert _eff_weight(2, None, 'x') == 2.0 and _eff_weight(2, None, float('nan')) == 2.0
+    assert link_confidence({'confidence': 0.85}) == 0.85 and link_confidence({'confidence': '0.5'}) == 0.5
+    assert link_confidence({'verified': False}) == 0.3 and link_confidence({}) is None
+    assert link_confidence({'confidence': 'basura'}) is None and link_confidence(None) is None
+    assert link_confidence({'confidence': 7}) == 1.0
+
+
+@needs_db
+def test_g4c_matrices_descuentan_la_confianza_declarada(db):
+    from matrix.engine import build_matrices
+    from ontology.db import session_scope
+    with session_scope() as s:
+        mats, idx, _ = build_matrices(s)
+        as_of, idx2, _ = build_matrices(s, as_of='2026-01-01')
+    assert mats['supply'][idx['Cx'], idx['Cy']] == pytest.approx(1.0)         # 2 × 0.5
+    assert as_of['supply'][idx2['Cx'], idx2['Cy']] == pytest.approx(1.0)      # time-travel: igual
+    assert mats['supply'][idx['Prov'], idx['Acme']] == pytest.approx(2.0)     # sin confianza: histórico
+
+
+def test_g4c_statematrix_cliente_pesa_la_confianza_como_el_servidor():
+    script = r'''
+const P = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const { KhipuStateCore } = require(P.root + '/engine/statematrix.js');
+const core = new KhipuStateCore({
+  nodes: [{ id: 'A' }, { id: 'B' }, { id: 'C' }, { id: 'D' }],
+  links: [{ source: 'A', target: 'C', w: 2, type: 'supply', conf: 0.5 },
+          { source: 'B', target: 'C', w: 2, type: 'supply' },
+          { source: 'A', target: 'D', w: 2, type: 'supply', verified: false }],
+  baselineFn: () => ({ salud: 1 }),
+});
+process.stdout.write(JSON.stringify({ C: core.incoming[core.idx.C], D: core.incoming[core.idx.D] }));
+'''
+    out = _node(script, {'root': ROOT})
+    ws = {e['i']: e['w'] for e in out['C']}
+    assert ws[0] == pytest.approx(1 / 3) and ws[1] == pytest.approx(2 / 3)   # 1 vs 2 dentro del tipo
+    assert out['D'][0]['w'] == pytest.approx(1.0)                           # único proveedor: todo, aunque 0.3

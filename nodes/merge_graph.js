@@ -10,7 +10,32 @@
      redirigen y NODE_BY_ID conserva la clave alias → nodo canónico.
    - Links canónicos: source PROVEE a target. Dedupe por (s,t,type):
      mayor peso + descripción más larga.
+   - Confianza por link (G4c, misión de reparación 2026-10-04): cada link
+     sale con `conf` (0-1) y `verified`. Si la fila del catálogo trae un 6.º
+     elemento objeto {conf, verified, since} se respeta; si no, se deriva del
+     texto `rel`: "no verificado" / "no revisado" / "posible(mente)" /
+     "sin confirmar" → conf 0.3, verified false (22+ links decían eso y
+     pesaban igual que los verificados en NRS y matrices). La MISMA regex
+     vive en mcp_server/tools.py (_link_trust) como respaldo para snapshots
+     viejos sin estos campos.
    ============================================================================ */
+
+var UNVERIFIED_RX = /no verificad|no revisad|posible(mente)?|sin confirmar/i;
+var UNVERIFIED_CONF = 0.3;
+
+// → {conf, verified, explicit}. `meta` = 6.º elemento de la fila (opcional).
+function linkTrust(rel, meta) {
+  if (meta && typeof meta === 'object' && (meta.conf != null || meta.verified != null)) {
+    var conf = meta.conf != null ? +meta.conf : NaN;
+    conf = isFinite(conf) ? Math.max(0, Math.min(1, conf)) : null;
+    var ver = meta.verified;
+    if (ver == null) ver = (conf == null || conf >= 1);
+    if (conf == null) conf = ver ? 1 : UNVERIFIED_CONF;
+    return { conf: conf, verified: !!ver, explicit: true };
+  }
+  var unv = UNVERIFIED_RX.test(rel || '');
+  return { conf: unv ? UNVERIFIED_CONF : 1, verified: !unv, explicit: false };
+}
 
 function buildKhipusGraph(env) {
   const NODES = env.NODES;               // array seed — se MUTA en sitio
@@ -132,36 +157,49 @@ function buildKhipusGraph(env) {
     });
   }
 
-  // links de expansión → RAW (acepta [s,t,w,rel,type] y {s,t,w,rel,type})
+  // links de expansión → RAW (acepta [s,t,w,rel,type,{conf,verified,since}?]
+  // y {s,t,w,rel,type,conf?,verified?,since?})
   (env.linkArrays || []).forEach(function (arr) {
     if (!arr) return;
     arr.forEach(function (l) {
-      if (Array.isArray(l)) RAW.push([l[0], l[1], l[2] || 2, l[3] || '', l[4] || 'supply']);
-      else RAW.push([l.s, l.t, l.w || 2, l.rel || '', l.type || 'supply']);
+      if (Array.isArray(l)) RAW.push([l[0], l[1], l[2] || 2, l[3] || '', l[4] || 'supply', l[5]]);
+      else {
+        var meta = (l.conf != null || l.verified != null || l.since) ? { conf: l.conf, verified: l.verified, since: l.since } : undefined;
+        RAW.push([l.s, l.t, l.w || 2, l.rel || '', l.type || 'supply', meta]);
+      }
     });
   });
 
-  // tubería final: resolver alias → filtrar → dedupe (s,t,type)
+  // tubería final: resolver alias → filtrar → dedupe (s,t,type) → confianza
   const seen = new Map();
+  const explicit = new Set();   // claves cuya confianza vino declarada (no derivada del texto)
   RAW.forEach(function (row) {
     const s = resolveId(row[0]), t = resolveId(row[1]);
     const w = row[2], rel = row[3] || '', type = row[4] || 'supply';
+    const meta = (row[5] && typeof row[5] === 'object') ? row[5] : null;
     if (s === t || !(w > 0)) return;
     if (!NODE_BY_ID[s] || !NODE_BY_ID[t]) { warn('Link descartado por id inexistente: ' + row[0] + ' → ' + row[1]); return; }
     const sid = NODE_BY_ID[s].id, tid = NODE_BY_ID[t].id;
     if (sid === tid) return;
     const key = sid + '→' + tid + '·' + type;
     const prev = seen.get(key);
+    const tr = linkTrust(rel, meta);
     if (prev) {
       if ((w || 2) > prev.w) prev.w = w || 2;
       if (rel.length > (prev.rel || '').length) prev.rel = rel;
+      if (tr.explicit) { prev.conf = tr.conf; prev.verified = tr.verified; explicit.add(key); }
+      else if (!explicit.has(key)) { const t2 = linkTrust(prev.rel); prev.conf = t2.conf; prev.verified = t2.verified; }
+      if (meta && meta.since && !prev.since) prev.since = meta.since;
     } else {
-      seen.set(key, { source: sid, target: tid, w: w || 2, rel: rel, type: type });
+      const o = { source: sid, target: tid, w: w || 2, rel: rel, type: type, conf: tr.conf, verified: tr.verified };
+      if (meta && meta.since) o.since = meta.since;
+      if (tr.explicit) explicit.add(key);
+      seen.set(key, o);
     }
   });
 
   return { LINKS: Array.from(seen.values()), resolveId: resolveId };
 }
 
-if (typeof window !== 'undefined') window.buildKhipusGraph = buildKhipusGraph;
-if (typeof module !== 'undefined' && module.exports) module.exports = { buildKhipusGraph };
+if (typeof window !== 'undefined') { window.buildKhipusGraph = buildKhipusGraph; window.linkTrust = linkTrust; }
+if (typeof module !== 'undefined' && module.exports) module.exports = { buildKhipusGraph, linkTrust, UNVERIFIED_RX, UNVERIFIED_CONF };

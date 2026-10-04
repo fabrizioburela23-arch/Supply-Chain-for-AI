@@ -372,9 +372,18 @@ def _migrate_graph(nodes, links, ontology_objects, temporal_facts, init_schema, 
             if src not in known_ids or tgt not in known_ids or src == tgt:
                 skipped += 1
                 continue
+            props = {'rel_label': l.get('rel') or ''}
+            # G4c: el snapshot (nodes/merge_graph.js) trae conf/verified por link;
+            # el motor de matrices (matrix/engine._eff_weight) multiplica el peso
+            # por properties.confidence. Solo se copian si el snapshot los trae.
+            if l.get('conf') is not None:
+                props['confidence'] = l.get('conf')
+            if l.get('verified') is not None:
+                props['verified'] = bool(l.get('verified'))
+            if l.get('since'):
+                props['since'] = l.get('since')
             apply_event(s, 'LinkCreated',
-                        {'rel_type': l.get('type') or 'supply', 'weight': l.get('w'),
-                         'properties': {'rel_label': l.get('rel') or ''}},
+                        {'rel_type': l.get('type') or 'supply', 'weight': l.get('w'), 'properties': props},
                         valid_from=GENESIS, source='migration_v0_links', actor='script:migrate_v0_to_ontology',
                         object_id=src, target_id=tgt)
         s.flush()
