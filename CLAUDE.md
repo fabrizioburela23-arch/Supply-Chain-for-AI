@@ -123,6 +123,14 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     límites con PIN (/api/ai/usage, /api/ai/usage/limits), UI 🩺 → 💰 Gasto IA
     (engine/aispend.js). Atribuir trabajo de fondo con `ai_context(feature, who)` /
     `bind(fn)` para hilos. No crear llamadas a proveedores fuera de core/ai.py.
+  - **JEV / TypeSafe (2026-10-04)**: `core/decide.py` = ÚNICA puerta al modelo
+    de DECISIÓN Jev (POST api.typesafe.ai/v1/systemone; choice/score/noul con
+    probabilidades calibradas; no genera texto). Registra en 💰 Gasto IA
+    (proveedor 'typesafe'). MODO SOMBRA por defecto (DECIDE_SHADOW=on): decide
+    y se compara con lo que hizo el sistema (tabla decision_shadow,
+    GET /api/decide/shadow con PIN de operador); manda solo si DECIDE_CONTROL
+    lista la función. Primer uso: portero del chat (`chat_gate_*` en
+    khipu_chat.run_chat). Nunca decide dinero. Ver docs/JEV.md.
   - `core/scenario_engine.py`: análisis estructural de escenarios (tema/actor/evento →
     golpeados/ganadores/caminos) para la simulación por agentes.
   - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves
@@ -323,6 +331,7 @@ WORLD_GDELT_QUERY_CONFLICT / _UNREST / _TRADE, WORLD_GDELT_GEO_URL  ← World Mo
 FINNHUB_WS_KEY (clave Finnhub separada para el navegador), GUNICORN_THREADS (12), GUNICORN_MAX_REQUESTS (0 — dejar en 0),
 AI_MAX_CONCURRENCY (4), AI_INTERACTIVE_RESERVE (1), AI_CLAUDE_TIMEOUT_S, DB_POOL_SIZE/DB_MAX_OVERFLOW (10/10),
 DB_STATEMENT_TIMEOUT_MS, MATRIX_HEAVY_CONCURRENCY (1), REMIGRATE_ON_BOOT=<nombre de la base>  ← estructura
+TYPESAFE_API_KEY (Jev), TYPESAFE_MODEL (jev-latest), DECIDE_SHADOW (on), DECIDE_CONTROL (vacío; 'chat_gate,…' o 'all'), DECIDE_TIMEOUT_S (6)  ← decisiones Jev
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)

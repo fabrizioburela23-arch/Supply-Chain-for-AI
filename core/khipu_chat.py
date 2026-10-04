@@ -1036,6 +1036,25 @@ def _call_ai(system, prompt, timeout):
 
 
 def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None):
+    """PORTERO (Jev, core/decide.py) en MODO SOMBRA: decide en paralelo qué
+    necesita la pregunta y al final se compara con lo que el chat hizo. No
+    cambia la respuesta mientras DECIDE_CONTROL no incluya 'chat_gate'."""
+    gate = None
+    try:
+        from core import decide as _decide
+        gate = _decide.chat_gate_start(message, lang)
+    except Exception:  # noqa: BLE001
+        gate = None
+    out = _run_chat(message, history, lang, context, app, budget_s, max_steps)
+    if gate is not None:
+        try:
+            _decide.chat_gate_finish(gate, out, message)
+        except Exception:  # noqa: BLE001
+            pass
+    return out
+
+
+def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None):
     t0 = time.monotonic()
     budget = TIME_BUDGET_S if budget_s is None else float(budget_s)
     steps_max = MAX_STEPS if max_steps is None else int(max_steps)

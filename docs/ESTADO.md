@@ -9,6 +9,25 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (c) — JEV (TYPESAFE) EN MODO SOMBRA: PORTERO DEL CHAT (sw v188)
+
+Fabrizio quiere usar Jev (modelo "System One" de TypeSafe: decisiones tipadas con
+probabilidades calibradas, sin texto) como optimizador de costos, revisor y primera capa
+de decisión. Hecho: `core/decide.py` (única puerta; registra en 💰 Gasto IA como
+proveedor 'typesafe'; respeta límites), `core/decide_api.py` (/api/decide/status,
+/api/decide/shadow con PIN), tabla decision_shadow, y el PRIMER uso: portero del chat
+de Khipu — en paralelo a cada pregunta Jev decide ruta (local_fact / needs_tools /
+needs_deep_reasoning / offtopic), si menciona empresa, si pide una orden, si es sobre la
+cartera y la urgencia; al terminar se compara con lo que el chat hizo (ruta real por
+pasos/herramientas) y se guarda el acuerdo. NO cambia la respuesta hasta que
+DECIDE_CONTROL incluya 'chat_gate'. Tarjeta 🧭 Jev en 🩺 → 💰 Gasto IA. Tests:
+tests/test_decide.py (8). Docs: docs/JEV.md. Precio de Jev no publicado al integrar:
+fijar AI_PRICES_JSON cuando se sepa. Pendiente de Fabrizio: TYPESAFE_API_KEY en Railway.
+Nota de red: docs.typesafe.ai/api.typesafe.ai están bloqueados desde el entorno de desarrollo
+(Fabrizio pegó las páginas quickstart/primitives/confidence/patterns).
+
+---
+
 # SESIÓN 2026-10-04 (b) — ESCRITORIO: REVISIÓN ADVERSARIAL Y CORRECCIONES (sw v187)
 
 Workflow de revisión (5 lentes × 2 refutadores por hallazgo, 61 agentes): 20 hallazgos confirmados,

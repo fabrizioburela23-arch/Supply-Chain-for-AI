@@ -37,6 +37,7 @@ PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida)
     'gemini:gemini-2.5-pro': (1.25, 10.0), 'gemini:gemini-3-pro': (2.0, 12.0), 'gemini:gemini-2.5-flash-lite': (0.1, 0.4),
     'gemini:gemini-2.5-flash': (0.3, 2.5), 'gemini': (0.3, 2.5),
     'nvidia': (0.0, 0.0),        # catálogo de NVIDIA: gratis con créditos de desarrollador
+    'typesafe': (0.0, 0.0),      # Jev (core/decide.py): precio no publicado al integrar → fijar con AI_PRICES_JSON {"typesafe:jev": [in, out]}
 }
 
 FEATURE_BY_PATH = (
@@ -103,7 +104,7 @@ def _prices():
 def price_for(provider, model):
     """(entrada, salida) USD por 1M tokens. Prefijo más largo que calce."""
     m = str(model or provider or '').lower()
-    if provider in ('gemini', 'nvidia') and not m.startswith(provider):
+    if provider in ('gemini', 'nvidia', 'typesafe') and not m.startswith(provider):
         m = f'{provider}:{m}'
     best = None
     for k, v in _prices().items():

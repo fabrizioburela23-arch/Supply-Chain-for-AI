@@ -23,7 +23,7 @@
   }
   function tok(n) { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n); }
   function actor() { var a = null; try { a = localStorage.getItem('khipu_actor'); } catch (e) {} return (a && a.trim()) || 'operador'; }
-  var PROV = { claude: ['Claude (Anthropic)', '#D97757'], gemini: ['Gemini (Google)', '#4C8DF6'], nvidia: ['NVIDIA', '#76B900'] };
+  var PROV = { claude: ['Claude (Anthropic)', '#D97757'], gemini: ['Gemini (Google)', '#4C8DF6'], nvidia: ['NVIDIA', '#76B900'], typesafe: ['Jev (TypeSafe)', '#E551BA'] };
 
   var S = { el: null, days: 30, data: null, editing: false, msg: null };
 
@@ -76,7 +76,7 @@
     var feats = (d.by_feature || []).map(function (f) { return f; });
     var inp = function (id, v, ph) { return '<input id="' + id + '" type="number" min="0" step="0.5" value="' + esc(v == null ? '' : v) + '" placeholder="' + esc(ph || '') + '" style="width:90px;padding:5px 7px;border-radius:7px;border:1px solid var(--line,#24304a);background:var(--surface-2,#111827);color:var(--ink,#E8EDFB);font-size:12.5px">'; };
     var row = function (lab, html) { return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;font-size:12.5px"><span>' + lab + '</span>' + html + '</div>'; };
-    var provs = ['claude', 'gemini', 'nvidia'];
+    var provs = ['claude', 'gemini', 'nvidia', 'typesafe'];
     return '<div style="margin-top:12px;border:1px solid var(--line,#24304a);border-radius:10px;padding:10px 12px">' +
       row(L('Límite diario total (USD)', 'Total daily limit (USD)'), inp('sp-daily', lm.daily_usd)) +
       row(L('Límite mensual total (USD)', 'Total monthly limit (USD)'), inp('sp-month', lm.monthly_usd)) +
@@ -117,6 +117,7 @@
       table(L('En qué parte de la app', 'In which part of the app'), d.by_feature, function (r) { return [esc(r.label || r.key), '#B48CFF']; }) +
       table(L('Quién lo pidió (persona / cliente)', 'Who asked (person / client)'), d.by_who, function (r) { return [esc(r.key), '#5FC6E8']; }) +
       table(L('Por modelo', 'By model'), d.by_model, function (r) { return [esc(r.key), '#FFB300']; }) +
+      jevCard() +
       days(d.by_day) + recent(d.recent) +
       '<div style="margin-top:12px;font-size:11px;color:var(--ink-3,#8791AC);line-height:1.5">' + esc(isEn() ? d.note_en : d.note_es) +
         (d.source === 'memory' ? ' ' + L('Sin base de datos: el historial se pierde al reiniciar el servidor.', 'No database: history is lost when the server restarts.') : '') + '</div>';
@@ -127,11 +128,42 @@
     var sv = document.getElementById('sp-save'); if (sv) sv.onclick = save;
   }
 
+  // 🧭 JEV (core/decide.py): modelo de DECISIÓN en modo sombra — acuerdo con el sistema por función
+  function jevCard() {
+    var j = S.jev;
+    var h = '<div style="margin-top:14px;border:1px solid rgba(229,81,186,.35);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5">' +
+      '<b style="color:#E551BA">🧭 Jev (TypeSafe) — ' + L('decisiones', 'decisions') + '</b> ';
+    if (!j) h += '<span style="color:var(--ink-3,#8791AC)">' + L('cargando…', 'loading…') + '</span>';
+    else if (!j.available) h += '<span style="color:var(--ink-3,#8791AC)">' + L('No conectado. Para activarlo, agrega en Railway la variable TYPESAFE_API_KEY. Arranca en modo sombra: decide, pero no manda.', 'Not connected. To enable it, add the TYPESAFE_API_KEY variable on Railway. It starts in shadow mode: it decides but does not act.') + '</span>';
+    else {
+      h += '<span style="font-size:10.5px;border:1px solid rgba(229,81,186,.5);border-radius:999px;padding:1px 8px;color:#E551BA">' + (j.shadow ? L('MODO SOMBRA', 'SHADOW MODE') : L('ACTIVO', 'ACTIVE')) + '</span>' +
+        '<div style="color:var(--ink-3,#8791AC);margin:4px 0 6px">' + esc(isEn() ? j.note_en : j.note_es) + '</div>';
+      if (j._pin) h += '<div style="color:#FFB300">' + L('Pon tu PIN de operador (🔒 Límites) para ver el acuerdo por función.', 'Enter your operator PIN (🔒 Limits) to see agreement per feature.') + '</div>';
+      else if (!(j.features || []).length) h += '<div style="color:var(--ink-3,#8791AC)">' + L('Aún sin decisiones registradas: pregúntale algo a Khipu y vuelve.', 'No decisions recorded yet: ask Khipu something and come back.') + '</div>';
+      else h += (j.features || []).map(function (f) {
+        var lab = { chat_gate: L('Portero del chat', 'Chat gatekeeper') }[f.feature] || f.feature;
+        return '<div style="display:flex;gap:8px;align-items:center;padding:3px 0"><span style="flex:1">' + esc(lab) + '</span>' +
+          '<span style="font-family:monospace">' + (f.agree_pct == null ? '—' : f.agree_pct + '%') + '</span>' +
+          '<span style="color:var(--ink-3,#8791AC);font-size:11px">' + f.n + ' ' + L('comparaciones', 'comparisons') + '</span>' +
+          '<span style="font-size:10px;border-radius:999px;padding:1px 7px;border:1px solid ' + (f.control ? '#2BE38B' : 'rgba(135,145,172,.5)') + ';color:' + (f.control ? '#2BE38B' : '#8791AC') + '">' + (f.control ? L('manda', 'in control') : L('sombra', 'shadow')) + '</span></div>';
+      }).join('');
+    }
+    return h + '</div>';
+  }
+  function loadJev() {
+    var base = (window.BASE || '');
+    fetch(base + '/api/decide/status').then(function (r) { return r.json(); }).then(function (st) {
+      if (!st.available) { S.jev = st; paint(); return; }
+      var p = typeof window._tradeFetch === 'function' ? window._tradeFetch(base + '/api/decide/shadow?days=' + S.days, {}, false) : fetch(base + '/api/decide/shadow?days=' + S.days);
+      return p.then(function (r) { return r.json().then(function (j) { if (!r.ok) j = { available: true, shadow: st.shadow, _pin: true, note_es: '', note_en: '' }; S.jev = j; paint(); }); });
+    }).catch(function () { S.jev = { available: false }; paint(); });
+  }
+
   function num(id) { var x = document.getElementById(id); if (!x || x.value === '') return null; var v = parseFloat(x.value); return isNaN(v) ? null : v; }
   function save() {
     var d = S.data || {}, pf = {};
     (d.by_feature || []).forEach(function (f) { var v = num('sp-f-' + f.key); if (v != null && v > 0) pf[f.key] = v; });
-    var blocked = ['claude', 'gemini', 'nvidia'].filter(function (p) { var x = document.getElementById('sp-p-' + p); return x && !x.checked; });
+    var blocked = ['claude', 'gemini', 'nvidia', 'typesafe'].filter(function (p) { var x = document.getElementById('sp-p-' + p); return x && !x.checked; });
     var limits = { per_feature_daily_usd: pf, blocked_providers: blocked };
     var dv = num('sp-daily'), mv = num('sp-month'), wv = num('sp-who');
     if (dv != null) limits.daily_usd = dv;
@@ -150,7 +182,7 @@
     S.data = S.data || null; paint();
     fetch((window.BASE || '') + '/api/ai/usage?days=' + S.days + '&lang=' + (isEn() ? 'en' : 'es')).then(function (r) {
       return r.json().then(function (j) { if (!r.ok) j._err = (isEn() ? (j.error_en || j.error) : j.error) || ('HTTP ' + r.status); return j; });
-    }).then(function (j) { S.data = j; paint(); })
+    }).then(function (j) { S.data = j; paint(); loadJev(); })
       .catch(function () { S.data = { _err: L('Sin conexión con el servidor.', 'No connection to the server.') }; paint(); });
   }
 

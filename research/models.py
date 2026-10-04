@@ -289,6 +289,20 @@ class CommitteeMemo(Base):
 # Un registro por llamada a un proveedor de IA (core/ai_usage.py lo escribe en
 # lotes, sin frenar la llamada) + ajustes editables con PIN (límites).
 # ════════════════════════════════════════════════════════════════════════════
+class DecisionShadow(Base):
+    """JEV (core/decide.py) en MODO SOMBRA: lo que decidió vs lo que hizo el
+    sistema, para medir acuerdo antes de darle control por función."""
+    __tablename__ = 'decision_shadow'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    at = Column(DateTime(timezone=True), nullable=False, index=True)
+    feature = Column(String(40), nullable=False, index=True)
+    key = Column(String(200), nullable=True)
+    decision = Column(JSONB, nullable=False, default=dict)
+    actual = Column(JSONB, nullable=False, default=dict)
+    agree = Column(Boolean, nullable=True)
+
+
 class AIUsage(Base):
     __tablename__ = 'ai_usage'
 
