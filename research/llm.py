@@ -94,15 +94,20 @@ class CoreProvider(LLMProvider):
         self.name = provider + (':' + model if model else '')
 
     def available(self):
+        """Clave presente y SIN pausa activa (corta-circuito R1): un proveedor
+        sin saldo / clave inválida / modelo retirado se salta sin tocar la red."""
         from core import ai
-        prov = ai._AI_PROVIDERS.get(self.provider)
-        return bool(prov and prov[0]())
+        return ai.provider_available(self.provider)
 
     def generate(self, system, prompt, max_tokens=1500):
         from core import ai
         prov = ai._AI_PROVIDERS.get(self.provider)
         if not prov or not prov[0]():
             raise LLMError(f'{self.provider} sin clave')
+        paused = ai.circuit_open(self.provider)
+        if paused:
+            raise LLMError(f"{self.provider} en pausa hasta {paused['until_hhmm']} UTC ({paused['reason_es']}) / "
+                           f"paused until {paused['until_hhmm']} UTC ({paused['reason_en']})")
         if self.provider == 'claude':
             tier = 'deep' if self.model in (None, 'deep') else 'fast'
             model = self.model if self.model not in (None, 'deep', 'fast') else None

@@ -984,6 +984,12 @@ def _diag_claude():
             # key, modelo retirado). Se dice una vez, en claro.
             detail += _ai_error_hint(res['fast'] + ' ' + res['deep'],
                                      AI_MODEL_FAST, 'AI_MODEL_FAST/AI_MODEL_DEEP')
+        # R1: el ping del 🩺 abre/cierra la pausa de Claude (los otros dos van por _complete_*)
+        try:
+            from core.ai import observe_diag
+            observe_diag('claude', bool(oks), res['fast'] + ' ' + res['deep'])
+        except Exception:  # noqa: BLE001
+            pass
         return {'configured': True, 'ok': bool(oks), 'latency_ms': int((time.time() - t0) * 1000),
                 'detail': detail}
     except Exception as e:  # noqa: BLE001
@@ -1373,6 +1379,18 @@ def diagnostics():
         'ontologia':  _diag_ontologia(),
         'alpaca':     _diag_alpaca(),
     }
+    # R1: proveedores de IA en pausa por error definitivo (sin saldo, clave, modelo)
+    try:
+        from core.ai import ai_circuit_state
+        for _p, _st in ai_circuit_state().items():
+            if _p in services:
+                services[_p]['circuit'] = _st
+                if _st.get('open'):
+                    services[_p]['detail'] = (f"EN PAUSA hasta {_st['until_iso'][11:16]} UTC: {_st['reason_es']} "
+                                              f"(la cascada lo salta; el ping de arriba lo reactiva si vuelve a responder). "
+                                              + str(services[_p].get('detail') or ''))
+    except Exception:  # noqa: BLE001
+        pass
     # Finnhub en pausa por cuota (HTTP 429) → se dice tal cual en 🩺
     try:
         from core.quotes import finnhub_circuit_state

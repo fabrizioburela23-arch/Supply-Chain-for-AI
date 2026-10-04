@@ -33,6 +33,7 @@ import re
 import threading
 import time
 from contextlib import contextmanager
+from datetime import datetime, timezone
 
 import requests
 
@@ -145,6 +146,143 @@ def _small(max_tokens):
         return False
 
 
+# ── Corta-circuito por proveedor (misión de reparación 2026-10-04, P0·R1) ────
+# Un error DEFINITIVO (sin saldo, clave inválida, modelo retirado) se recordaba
+# en ninguna parte: cada agente de investigación y cada paso del chat volvían a
+# pagar 1-2 llamadas fallidas (y un cupo del semáforo) antes de llegar al
+# siguiente proveedor. Ahora el proveedor queda "en pausa" un tiempo acotado;
+# la cascada y research lo saltan sin tocar la red; los pings del 🩺 (≤ 4
+# tokens) sí lo prueban y, si responde, cierran la pausa. 429/5xx/timeouts
+# NUNCA abren el circuito (son pasajeros: eso lo cubren los reintentos, R2).
+CIRCUIT_S = {'credit': _env_num('AI_CIRCUIT_CREDIT_S', 3600, 60, 86400, int),
+             'auth': _env_num('AI_CIRCUIT_AUTH_S', 1800, 60, 86400, int),
+             'model': _env_num('AI_CIRCUIT_MODEL_S', 1800, 60, 86400, int)}
+AI_TRANSIENT_RETRIES = _env_num('AI_TRANSIENT_RETRIES', 3, 1, 6, int)   # R2: reintentos 429/5xx
+_CIRCUIT = {}
+_CIRCUIT_LOCK = threading.Lock()
+_CIRCUIT_REASON = {
+    'credit': ('sin saldo en el proveedor', 'the provider has no credit'),
+    'auth': ('clave inválida o sin permisos', 'invalid key or no permission'),
+    'model': ('modelo retirado o inexistente', 'model retired or not found'),
+    'manual': ('pausado a mano', 'paused manually'),
+}
+_RX_CREDIT = re.compile(r'credit balance|insufficient[_ ]quota|insufficient[_ ]credit|billing|payment required|\b402\b', re.I)
+_RX_AUTH = re.compile(r'\b401\b|\b403\b|permission[_ ]denied|invalid.{0,12}api.?key|api key not valid|unauthori[sz]ed|api_key_invalid', re.I)
+_RX_MODEL = re.compile(r'\b404\b|\b410\b|not[_ ]found|deprecated|decommission|no longer (available|supported)|retired', re.I)
+
+
+def _mono():
+    return time.monotonic()
+
+
+def _sleep(seconds):
+    time.sleep(seconds)
+
+
+class AICircuitOpen(RuntimeError):
+    """El proveedor está en pausa por un error definitivo reciente."""
+
+    def __init__(self, provider, state):
+        self.provider, self.state = provider, state
+        super().__init__(f"{provider} en pausa hasta {state['until_hhmm']} UTC ({state['reason_es']}) / "
+                         f"{provider} paused until {state['until_hhmm']} UTC ({state['reason_en']})")
+
+
+def _definitive_kind(text):
+    """'credit' | 'auth' | 'model' | None — solo errores que NO se arreglan reintentando."""
+    t = str(text or '')
+    if _RX_CREDIT.search(t):
+        return 'credit'
+    if _RX_AUTH.search(t):
+        return 'auth'
+    if _RX_MODEL.search(t):
+        return 'model'
+    return None
+
+
+def _open_circuit(provider, kind, detail='', seconds=None):
+    secs = int(seconds if seconds is not None else CIRCUIT_S.get(kind, 1800))
+    es, en = _CIRCUIT_REASON.get(kind, (str(detail or kind), str(detail or kind)))
+    with _CIRCUIT_LOCK:
+        prev = _CIRCUIT.get(provider) or {}
+        _CIRCUIT[provider] = {'kind': kind, 'until': _mono() + secs, 'opened_at': time.time(),
+                              'until_wall': time.time() + secs, 'hits': int(prev.get('hits', 0)) + 1,
+                              'reason_es': es, 'reason_en': en, 'detail': _redact(detail, 120) if detail else ''}
+    log.warning('IA: %s en pausa %d s (%s): %s', provider, secs, kind, _redact(detail, 120))
+
+
+def _close_circuit(provider):
+    with _CIRCUIT_LOCK:
+        if _CIRCUIT.pop(provider, None) is not None:
+            log.info('IA: %s vuelve a estar disponible', provider)
+
+
+def circuit_open(provider):
+    """Estado de la pausa del proveedor (dict) o None si está cerrado/vencido."""
+    with _CIRCUIT_LOCK:
+        st = _CIRCUIT.get(provider)
+        if not st:
+            return None
+        left = st['until'] - _mono()
+        if left <= 0:
+            _CIRCUIT.pop(provider, None)
+            return None
+        out = dict(st)
+    out['seconds_left'] = int(left)
+    out['until_iso'] = datetime.fromtimestamp(out['until_wall'], tz=timezone.utc).isoformat(timespec='seconds')
+    out['until_hhmm'] = datetime.fromtimestamp(out['until_wall'], tz=timezone.utc).strftime('%H:%M')
+    out.pop('until', None)
+    return out
+
+
+def ai_circuit_state():
+    """{proveedor: {open, kind, reason_es/en, seconds_left, until_iso, hits}} para 🩺 y salud."""
+    out = {}
+    for name in _AI_PROVIDERS:
+        st = circuit_open(name)
+        out[name] = dict(st, open=True) if st else {'open': False, 'kind': None, 'reason_es': None,
+                                                     'reason_en': None, 'seconds_left': 0, 'until_iso': None,
+                                                     'hits': 0}
+    return out
+
+
+def provider_available(name):
+    """Clave presente Y sin pausa activa — lo que debe mirar quien va a LLAMAR."""
+    prov = _AI_PROVIDERS.get(name)
+    return bool(prov and prov[0]() and circuit_open(name) is None)
+
+
+def _guarded(provider, max_tokens, fn):
+    """Envuelve la llamada real: respeta la pausa (salvo pings), abre el circuito
+    ante un error definitivo y lo cierra ante un éxito."""
+    st = None if _small(max_tokens) else circuit_open(provider)
+    if st:
+        raise AICircuitOpen(provider, st)
+    try:
+        out = fn()
+    except AIBusyError:
+        raise
+    except Exception as e:  # noqa: BLE001
+        if type(e).__name__ == 'AIBudgetError':
+            raise
+        kind = _definitive_kind(str(e))
+        if kind:
+            _open_circuit(provider, kind, str(e))
+        raise
+    _close_circuit(provider)
+    return out
+
+
+def observe_diag(provider, ok, err_text=''):
+    """Lo llama el 🩺 cuando hace un ping propio (fuera de _complete_*)."""
+    if ok:
+        _close_circuit(provider)
+        return
+    kind = _definitive_kind(err_text)
+    if kind:
+        _open_circuit(provider, kind, err_text)
+
+
 def _redact(e, limit=160):
     """Texto de error SIN secretos (valores de env + patrones key=/Bearer/…)."""
     try:
@@ -160,9 +298,11 @@ def _usage():
 
 
 def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
-    _usage().check('claude', max_tokens)          # límite de gasto: no se llama (ni se cobra)
-    with _ai_slot(max_tokens):
-        return _complete_claude_inner(system, prompt, max_tokens, tier, model)
+    def _call():
+        _usage().check('claude', max_tokens)          # límite de gasto: no se llama (ni se cobra)
+        with _ai_slot(max_tokens):
+            return _complete_claude_inner(system, prompt, max_tokens, tier, model)
+    return _guarded('claude', max_tokens, _call)
 
 
 def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
@@ -260,9 +400,11 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
 
 
 def _complete_gemini(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
-    _usage().check('gemini', max_tokens)
-    with _ai_slot(max_tokens):
-        return _complete_gemini_inner(system, prompt, max_tokens, tier, json_mode, timeout_s)
+    def _call():
+        _usage().check('gemini', max_tokens)
+        with _ai_slot(max_tokens):
+            return _complete_gemini_inner(system, prompt, max_tokens, tier, json_mode, timeout_s)
+    return _guarded('gemini', max_tokens, _call)
 
 
 def _gemini_post(url, body, timeout):
@@ -332,9 +474,11 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
 
 
 def _complete_nvidia(system, prompt, max_tokens, tier='fast'):
-    _usage().check('nvidia', max_tokens)
-    with _ai_slot(max_tokens):
-        return _complete_nvidia_inner(system, prompt, max_tokens, tier)
+    def _call():
+        _usage().check('nvidia', max_tokens)
+        with _ai_slot(max_tokens):
+            return _complete_nvidia_inner(system, prompt, max_tokens, tier)
+    return _guarded('nvidia', max_tokens, _call)
 
 
 def _complete_nvidia_inner(system, prompt, max_tokens, tier='fast'):  # noqa: ARG001 — tier no aplica
@@ -430,6 +574,10 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, w
         for name in order:
             prov = _AI_PROVIDERS.get(name)
             if not prov or not prov[0]():
+                continue
+            paused = None if _small(max_tokens) else circuit_open(name)
+            if paused:        # R1: en pausa por error definitivo reciente → sin tocar la red
+                errors.append(f"{name}: en pausa hasta {paused['until_hhmm']} UTC ({paused['reason_es']})")
                 continue
             try:
                 if name == 'claude':
