@@ -475,6 +475,12 @@ def _prepare_run(session, job, agent_type):
 def _agent_work(entity_id, trigger, depth, agent_type, provider, fetchers, prior):
     """SIN base de datos (corre en un hilo): arma el contexto y consulta a la IA.
     Devuelve dict {ctx, result, meta, error, skipped}."""
+    from core.logjson import log_context
+    with log_context(agent=agent_type):
+        return _agent_work_inner(entity_id, trigger, depth, agent_type, provider, fetchers, prior)
+
+
+def _agent_work_inner(entity_id, trigger, depth, agent_type, provider, fetchers, prior):
     agent = AGENTS_BY_TYPE[agent_type]
     t0 = time.time()
     out = {'ctx': None, 'result': None, 'meta': {}, 'error': None, 'skipped': None}
@@ -704,8 +710,16 @@ def synthesize(session, job):
 def execute_job(session, job, provider_factory=None, fetchers=None, on_start=None, on_done=None):
     """on_start(agent_type) / on_done(agent_type, run): avisos opcionales (la sala del comité los narra)."""
     from core.ai_usage import ai_context      # gasto de IA atribuido a "Investigación IA" y a quien la pidió
-    with ai_context('investigacion', job.requested_by or (job.trigger or {}).get('by') or 'sistema'):
-        return _execute_job(session, job, provider_factory, fetchers, on_start, on_done)
+    from core.logjson import event, log_context
+    t0 = time.time()
+    with ai_context('investigacion', job.requested_by or (job.trigger or {}).get('by') or 'sistema'), \
+            log_context(job_id=str(job.id), entity=job.entity_id):
+        event('research_job_start', kind=job.depth)
+        try:
+            return _execute_job(session, job, provider_factory, fetchers, on_start, on_done)
+        finally:
+            event('research_job_end', status=job.status, seconds=round(time.time() - t0, 1),
+                  error=(job.error or None) and str(job.error)[:200])
 
 
 def _heartbeat(job, now=None):

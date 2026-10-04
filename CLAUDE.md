@@ -414,6 +414,9 @@ FINNHUB_WS_KEY (clave Finnhub separada para el navegador), GUNICORN_THREADS (12)
 AI_MAX_CONCURRENCY (4), AI_INTERACTIVE_RESERVE (1), AI_CLAUDE_TIMEOUT_S, DB_POOL_SIZE/DB_MAX_OVERFLOW (10/10),
 DB_STATEMENT_TIMEOUT_MS, MATRIX_HEAVY_CONCURRENCY (1), REMIGRATE_ON_BOOT=<nombre de la base>  ← estructura
 TYPESAFE_API_KEY (Jev), TYPESAFE_MODEL (jev-latest), DECIDE_SHADOW (on), DECIDE_CONTROL (vacío; 'chat_gate,…' o 'all'), DECIDE_TIMEOUT_S (6)  ← decisiones Jev
+WORLD_SOURCE_DOWN_AFTER (3), WORLD_SOURCE_DOWN_TTL (3600)  ← W1: fuente con 404/403 seguidos en pausa 1 h
+LOG_JSON (off)  ← O2: logs JSON con job_id/agente/proveedor/costo/latencia
+KHIPU_MCP_TOKEN (secreto de GitHub Actions, NO de Railway)  ← O1: humo del MCP tras cada push (scope read)
 AI_CIRCUIT_CREDIT_S (3600) / AI_CIRCUIT_AUTH_S (1800) / AI_CIRCUIT_MODEL_S (1800)  ← R1: pausa del proveedor tras error definitivo
 AI_TRANSIENT_RETRIES (3), AI_TRANSIENT_BASE_S (1.5), AI_TRANSIENT_CAP_S (8)  ← R2: reintentos 429/5xx con backoff+jitter
 RESEARCH_BUSY_RETRIES (4)  ← R2: esperas ante "IA ocupada" (3/6/12/24 s) antes de fallar el agente

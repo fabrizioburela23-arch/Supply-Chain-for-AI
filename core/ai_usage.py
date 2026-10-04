@@ -158,10 +158,18 @@ def bind(fn):
     """Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede
     la función/quién del hilo que la creó."""
     ctx = current()
+    try:
+        from core.logjson import current_fields, log_context
+        lctx = current_fields()               # O2: job_id/entity también en los hilos del pool
+    except Exception:  # noqa: BLE001
+        lctx, log_context = {}, None
 
     def wrapper(*a, **k):
         with ai_context(**ctx):
-            return fn(*a, **k)
+            if log_context is None:
+                return fn(*a, **k)
+            with log_context(**lctx):
+                return fn(*a, **k)
     return wrapper
 
 
@@ -326,6 +334,9 @@ def record(provider, model, tin, tout, ok=True, ms=None, estimated=False):
             _RECENT.appendleft(dict(row, at=row['at'].isoformat()))
             _QUEUE.append(row)
         _ensure_writer()
+        from core.logjson import event       # O2: una línea JSON por llamada (solo con LOG_JSON=on)
+        event('ai_call', provider=provider, model=row['model'], feature=ctx['feature'], who=ctx['who'],
+              tokens_in=tin, tokens_out=tout, cost_usd=cost, ms=row['ms'], ok=bool(ok))
     except Exception as e:  # noqa: BLE001 — el registro nunca rompe una llamada
         log.warning('ai_usage.record: %s', type(e).__name__)
 

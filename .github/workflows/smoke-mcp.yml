@@ -1,0 +1,29 @@
+# O1 (misión de reparación 2026-10-04): humo del MCP VIVO tras cada push a main
+# (Railway despliega en ~2 min). SOLO LECTURA: scripts/smoke_mcp.py se niega a
+# correr con un token que pueda dar órdenes.
+# Para activarlo: GitHub → Settings → Secrets and variables → Actions →
+# New repository secret → KHIPU_MCP_TOKEN = un token kmcp_ de scope "read"
+# (Khipus → 🩺 Sistema → 🤖 Conectar IAs). Sin el secreto, el trabajo no hace nada.
+name: smoke-mcp
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests==2.33.1
+      - name: Humo del MCP (solo lectura)
+        env:
+          KHIPU_MCP_TOKEN: ${{ secrets.KHIPU_MCP_TOKEN }}
+          KHIPU_URL: ${{ vars.KHIPU_URL }}
+        run: |
+          if [ -z "$KHIPU_MCP_TOKEN" ]; then echo "Sin el secreto KHIPU_MCP_TOKEN: humo omitido."; exit 0; fi
+          sleep 150
+          python scripts/smoke_mcp.py --retries 4

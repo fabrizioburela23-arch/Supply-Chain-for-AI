@@ -191,6 +191,11 @@ except Exception as _e:  # noqa: BLE001
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s  %(message)s')
 log = logging.getLogger('khipu')
+try:   # O2: LOG_JSON=on → una línea JSON por log (job_id/agente/proveedor/costo/latencia); sin la variable nada cambia
+    from core.logjson import configure as _logjson_configure
+    _logjson_configure()
+except Exception as _e:  # noqa: BLE001
+    log.warning('LOG_JSON no aplicado: %s', type(_e).__name__)
 
 # ── Ontología (Fase 1, opcional) — /api/ontology/* ───────────────────────────
 # Registro defensivo: si sqlalchemy no está instalado aún (deploy en curso) o
@@ -251,6 +256,13 @@ try:
     app.register_blueprint(geo_bp)
 except Exception as _e:  # noqa: BLE001
     log.warning('Sala de Situación no registrada (opcional): %s', _e)
+
+# ── O1 (misión de reparación): chequeo del sistema — /api/ops/* ─────────────
+try:
+    from core.ops_check import ops_bp
+    app.register_blueprint(ops_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Chequeo del sistema no registrado (opcional): %s', _e)
 
 
 # ── Screener de crecimiento explosivo — /api/screener/growth ─────────────────
@@ -481,6 +493,11 @@ try:
         _sched.register('world_prewarm', _world.prewarm, every_s=600, run_at_start=True)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: world_prewarm no registrado (%s)', type(_e).__name__)
+    try:   # O1: humo 5 min tras cada arranque (= tras cada deploy) y luego 1×/día, guardado en ops_checks
+        from core.ops_check import scheduled as _ops_scheduled, FIRST_AFTER_BOOT_S as _OPS_FIRST
+        _sched.register('ops_daily_check', _ops_scheduled, every_s=_OPS_FIRST, run_at_start=False)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: ops_daily_check no registrado (%s)', type(_e).__name__)
     if _sched.enabled():
         _sched.start()
 except Exception as _e:  # noqa: BLE001

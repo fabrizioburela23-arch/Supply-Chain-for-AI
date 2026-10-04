@@ -557,6 +557,7 @@ def test_r5_el_run_fallido_registra_tokens_y_costo(db, monkeypatch):
 
 def test_r5_scheduler_corre_tareas_vencidas_y_sobrevive_a_errores():
     from core import scheduler
+    saved = dict(scheduler._TASKS)          # las tareas reales que registró server.py (otros tests las miran)
     scheduler._reset()
     calls = []
     scheduler.register('ok', lambda: calls.append('ok') or {'n': 1}, every_s=60)
@@ -569,6 +570,7 @@ def test_r5_scheduler_corre_tareas_vencidas_y_sobrevive_a_errores():
     assert st['ok']['runs'] == 2 and st['ok']['last_result'] == {'n': 1} and st['ok']['last_error'] is None
     assert st['boom']['errors'] == 2 and 'RuntimeError' in st['boom']['last_error']
     scheduler._reset()
+    scheduler._TASKS.update(saved)
 
 
 # ════════════════════════════════════════════════════════════════════════════
