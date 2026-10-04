@@ -67,6 +67,16 @@ LAYER_TTL = {'conflict': 900, 'unrest': 900, 'trade': 900, 'quakes': 300,
              'natural': 900, 'chokepoints': 120, 'instability': 120}
 ERROR_TTL = 90
 BUSY_TTL = 20               # GDELT "ocupado" (acelerador): reintento pronto, no es una caída
+# W1 (misión de reparación 2026-10-04): una fuente que responde 404/410 (API
+# retirada o movida) o 401/403 (ahora pide credenciales) N veces SEGUIDAS queda
+# "en pausa" WORLD_SOURCE_DOWN_TTL segundos: no se la vuelve a consultar cada
+# 90 s ni ocupa el acelerador compartido de GDELT, y la UI/MCP dicen la verdad
+# (error_code 'source_unavailable' + retry_at). Decisión D7: si GDELT pide
+# clave, la capa queda apagada — no se contratan servicios nuevos.
+SOURCE_DOWN_AFTER = 3
+SOURCE_DOWN_TTL = 3600
+_DEFINITIVE_HTTP = ('401', '403', '404', '410')
+SOURCE_LABEL = {'gdelt_geo': 'GDELT GEO 2.0', 'gdelt_doc': 'GDELT DOC 2.0'}
 
 LAYER_META = {
     'conflict': dict(provider='GDELT GEO 2.0', es='Conflicto armado', en='Armed conflict',
@@ -154,6 +164,24 @@ def err_info(err):
     elif e == 'busy':
         c, es, en = 'busy', 'GDELT ocupado (acelerador compartido): se reintenta en breve', \
             'GDELT busy (shared rate limiter): retrying shortly'
+    elif head == 'source_down':
+        src, _, why = rest.partition(':')
+        code = why.rpartition(':')[2]
+        name = SOURCE_LABEL.get(src, src)
+        live_es = 'Sismos (USGS), eventos naturales (NASA) y estrechos siguen funcionando.'
+        live_en = 'Earthquakes (USGS), natural events (NASA) and straits keep working.'
+        if code in ('401', '403'):
+            c = 'source_unavailable'
+            es = (f'{name} ahora exige credenciales (HTTP {code}): capa apagada — no se contratan servicios '
+                  f'nuevos. Se reintenta cada hora. {live_es}')
+            en = (f'{name} now requires credentials (HTTP {code}): layer switched off — no new paid services. '
+                  f'Retried every hour. {live_en}')
+        else:
+            c = 'source_unavailable'
+            es = (f'{name} no responde en su dirección (HTTP {code}: la API parece retirada o movida). Capa en '
+                  f'pausa; se reintenta cada hora. {live_es}')
+            en = (f'{name} does not answer at its address (HTTP {code}: the API looks retired or moved). Layer '
+                  f'paused; retried every hour. {live_en}')
     elif e == 'pending':
         c, es, en = 'pending', 'primera consulta en curso', 'first fetch in progress'
     elif e == 'refreshing':
@@ -735,6 +763,67 @@ _GDELT_LOCK = threading.Lock()
 _GDELT_LAST = [0.0]
 
 
+_SRC = {}
+_SRC_LOCK = threading.Lock()
+
+
+def _env_int(name, default):
+    try:
+        return max(1, int(os.environ.get(name) or default))
+    except ValueError:
+        return default
+
+
+def source_down(name, now=None):
+    """'source_down:<fuente>:<error>' si la fuente está en pausa; None si se
+    puede consultar (también cuando la pausa venció: UNA consulta de prueba)."""
+    now = _now() if now is None else now
+    with _SRC_LOCK:
+        st = _SRC.get(name)
+        if st and st.get('until', 0) > now:
+            return f"source_down:{name}:{st['err']}"
+    return None
+
+
+def source_result(name, err, now=None):
+    """Registra el resultado de una consulta. Éxito → reinicia. Solo los
+    errores DEFINITIVOS (404/410/401/403) cuentan; los pasajeros (timeout, 429,
+    5xx, red) ni cuentan ni reinician."""
+    now = _now() if now is None else now
+    with _SRC_LOCK:
+        st = _SRC.setdefault(name, {'fails': 0, 'until': 0.0, 'err': None, 'last_ok': None, 'down_since': None})
+        if err is None:
+            st.update(fails=0, until=0.0, err=None, last_ok=now, down_since=None)
+            return
+        head, _, code = str(err).partition(':')
+        if head != 'http' or code not in _DEFINITIVE_HTTP:
+            return
+        st['fails'] += 1
+        st['err'] = str(err)
+        if st['fails'] >= _env_int('WORLD_SOURCE_DOWN_AFTER', SOURCE_DOWN_AFTER):
+            st['until'] = now + _env_int('WORLD_SOURCE_DOWN_TTL', SOURCE_DOWN_TTL)
+            if st['down_since'] is None:
+                st['down_since'] = now
+                log.warning('world: fuente %s en pausa (%s) — se reintenta cada %ss', name, err,
+                            _env_int('WORLD_SOURCE_DOWN_TTL', SOURCE_DOWN_TTL))
+
+
+def source_retry_at(name):
+    with _SRC_LOCK:
+        st = _SRC.get(name)
+        return st.get('until') if st and st.get('until') else None
+
+
+def sources_state():
+    """Estado de las fuentes con pausa (para /api/world/events, el 🩺 y tests)."""
+    with _SRC_LOCK:
+        return {n: {'fails': st['fails'], 'paused': bool(st.get('until', 0) > _now()), 'error': st['err'],
+                    'retry_at': _iso(st['until']) if st.get('until') else None,
+                    'down_since': _iso(st['down_since']) if st.get('down_since') else None,
+                    'last_ok': _iso(st['last_ok']) if st.get('last_ok') else None}
+                for n, st in _SRC.items()}
+
+
 def gdelt_throttle(max_wait=20.0):
     """Espaciado COMPARTIDO de GDELT (World Monitor + Sala de Situación): cada
     llamador RESERVA un turno (slot = max(ahora, último + GDELT_MIN_GAP)) bajo
@@ -993,14 +1082,18 @@ def gdelt_query(layer):
 
 
 def _fetch_gdelt(layer, window):
+    down = source_down('gdelt_geo')
+    if down:
+        return None, down            # en pausa: ni red ni turno del acelerador compartido
     if not gdelt_throttle():
         return None, 'busy'
     url = os.environ.get('WORLD_GDELT_GEO_URL') or GDELT_GEO_URL
     data, err = _http_get_json(url, params={
         'query': gdelt_query(layer), 'mode': 'PointData', 'format': 'GeoJSON',
         'timespan': window, 'maxpoints': 250}, timeout=12)
+    source_result('gdelt_geo', err)
     if err:
-        return None, err
+        return None, source_down('gdelt_geo') or err
     return parse_gdelt_geo(data, layer, window), None
 
 
@@ -1084,6 +1177,20 @@ _FETCHERS = {
     'instability': _fetch_instability,
 }
 _SYNC_LAYERS = ('chokepoints', 'instability')   # cálculo local: sin hilo
+CURATED_LAYERS = _SYNC_LAYERS
+
+
+def _curated_as_of():
+    try:
+        from core.geosit import CURATED_AS_OF
+        return CURATED_AS_OF
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _news_live():
+    """¿La parte de noticias (GDELT DOC) de las capas curadas está respondiendo?"""
+    return source_down('gdelt_doc') is None
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1100,6 +1207,16 @@ def _reset_cache():
         _CACHE.clear()
         _INFLIGHT.clear()
     _BRIEF_CACHE.clear()
+    with _SRC_LOCK:
+        _SRC.clear()
+
+
+def prewarm(window='24h'):
+    """W1: tarea del reloj del servidor — refresca en segundo plano las capas
+    vencidas para que el primer visitante no vea 'cargando'. No espera (wait=0)
+    ni consulta una fuente en pausa."""
+    res = world_events(window=window, wait=0)
+    return {k: ('ok' if v.get('ok') else v.get('error_code') or 'pending') for k, v in res['sources'].items()}
 
 
 def _fetch_key(layer, window):
@@ -1125,6 +1242,8 @@ def _refresh(layer, key, window):
             _CACHE[key] = {'ts': now, 'ok': False, 'error': err or 'no_data', 'busy': err == 'busy',
                            'items': keep, 'as_of': prev.get('as_of'), 'as_of_ts': prev.get('as_of_ts'),
                            'stale': bool(keep)}
+            if str(err or '').startswith('source_down:'):
+                _CACHE[key]['retry_at_ts'] = source_retry_at(str(err).split(':')[1])
             log.info('world: capa %s falló: %s', layer, err)
         else:
             _CACHE[key] = {'ts': now, 'ok': True, 'error': None, 'busy': False, 'items': items,
@@ -1135,6 +1254,8 @@ def _refresh(layer, key, window):
 def _ttl(layer, e):
     if e and e.get('ok'):
         return LAYER_TTL[layer]
+    if e and e.get('retry_at_ts'):
+        return max(ERROR_TTL, e['retry_at_ts'] - e['ts'])     # W1: fuente en pausa
     return BUSY_TTL if (e and e.get('busy')) else ERROR_TTL
 
 
@@ -1215,8 +1336,11 @@ def world_events(layers=None, window='24h', wait=DEFAULT_WAIT):
         meta = LAYER_META[lyr]
         e = entries[lyr]
         base = {'provider': meta['provider'], 'provider_es': meta.get('provider_es', meta['provider']),
-                'provider_en': meta['provider'], 'es': meta['es'], 'en': meta['en'], 'live': True,
-                'ttl_s': LAYER_TTL[lyr]}
+                'provider_en': meta['provider'], 'es': meta['es'], 'en': meta['en'],
+                'live': lyr not in CURATED_LAYERS, 'ttl_s': LAYER_TTL[lyr]}
+        if lyr in CURATED_LAYERS:
+            # W1: valores CURADOS (juicio humano) + noticias si GDELT responde; no es un feed en vivo
+            base.update(static=True, curated_as_of=_curated_as_of(), news_live=_news_live())
         if e is None:
             sources[lyr] = {**base, 'ok': False, 'pending': True, 'count': 0, 'as_of': None,
                             **err_info('pending')}
@@ -1240,6 +1364,8 @@ def world_events(layers=None, window='24h', wait=DEFAULT_WAIT):
             src['pending'] = True
         if err:
             src.update(err_info(err))
+            if str(err).startswith('source_down:') and e.get('retry_at_ts'):
+                src['retry_at'] = _iso(e['retry_at_ts'])
         sources[lyr] = src
     items.sort(key=lambda i: (-(i.get('severity') or 0), i['id']))
     return {'items': items, 'sources': sources, 'window': window, 'as_of': _iso(now)}

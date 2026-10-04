@@ -31,6 +31,11 @@ log = logging.getLogger('geosit')
 
 geo_bp = Blueprint('geosit', __name__, url_prefix='/api/geo')
 
+# Fecha de la última revisión HUMANA de las severidades base (CHOKEPOINTS /
+# COUNTRIES). W1: se publica como `curated_as_of` para que nadie confunda un
+# juicio curado con un dato en vivo. Actualizarla al revisar las tablas.
+CURATED_AS_OF = '2026-07-22'
+
 # ── Puntos de estrangulamiento (curados; lat/lon reales) ─────────────────────
 # base: severidad ESTRUCTURAL 0-100 (juicio curado, estable). El score final
 # = base + actividad de noticias + factores activos, acotado a 100.
@@ -184,6 +189,13 @@ def _gdelt_activity(query):
             gdelt_throttle = None
         # turno reservado en el acelerador compartido; si cae demasiado lejos
         # (World Monitor consultando), NO se consulta: el calentador reintenta
+        try:
+            from core.world import source_down, source_result
+        except ImportError:
+            source_down = source_result = None
+        # W1: GDELT DOC en pausa (404/403 repetidos) → ni red ni turno del acelerador
+        if source_down is not None and source_down('gdelt_doc'):
+            return None
         if gdelt_throttle is not None and not gdelt_throttle(max_wait=30.0):
             return None
         r = requests.get(
@@ -191,6 +203,8 @@ def _gdelt_activity(query):
             params={'query': query, 'mode': 'artlist', 'maxrecords': 50,
                     'timespan': '7d', 'format': 'json', 'sort': 'datedesc'},
             timeout=5, headers={'User-Agent': 'KhipuFinance/1.0'})
+        if source_result is not None:
+            source_result('gdelt_doc', None if r.ok else f'http:{r.status_code}')
         if not r.ok:
             return None
         arts = (r.json() or {}).get('articles') or []
@@ -229,6 +243,13 @@ def _warmer_loop():
                 time.sleep(30)
                 continue
             key, q = nxt
+            try:
+                from core.world import source_down
+                if source_down('gdelt_doc'):
+                    time.sleep(60)          # W1: GDELT DOC en pausa — no recorrer las 23 claves
+                    continue
+            except ImportError:
+                pass
             res = _gdelt_activity(q)
             now = time.time()
             if res is not None:
@@ -341,6 +362,17 @@ def geo_situation():
     return jsonify(situation_data())
 
 
+def _news_status():
+    try:
+        from core.world import source_down, err_info
+        down = source_down('gdelt_doc')
+    except ImportError:
+        return {}
+    if not down:
+        return {'live': True}
+    return {'live': False, **{k: v for k, v in err_info(down).items() if k != 'error'}}
+
+
 def situation_data():
     """Datos de /api/geo/situation como dict (lo consume también el World
     Monitor, core/world.py, para sus capas de chokepoints e inestabilidad)."""
@@ -392,7 +424,8 @@ def situation_data():
         'topo_name_map': TOPO_NAME_MAP,
         'fabs': fabs,
         'news_sources': {'warm': warm, 'total': len(CHOKEPOINTS) + len(COUNTRIES),
-                         'window': '7d', 'provider': 'GDELT'},
+                         'window': '7d', 'provider': 'GDELT', **_news_status()},
+        'curated_as_of': CURATED_AS_OF,
         'method_es': 'score = severidad estructural curada + actividad de noticias (GDELT 7d) '
                      '+ factores activos del grafo. Sin datos AIS: no se inventan.',
         'method_en': 'score = curated structural severity + news activity (GDELT 7d) '

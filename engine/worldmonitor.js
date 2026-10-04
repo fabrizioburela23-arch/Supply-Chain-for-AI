@@ -323,7 +323,11 @@
     if (s.pending) return '<span class="wm-st pend">' + esc(L('cargando', 'loading')) + '</span>';
     if (s.error_code === 'busy' && !s.stale) return '<span class="wm-st pend" title="' + esc(errText(s)) + '">' + esc(L('en cola', 'queued')) + '</span>';
     if (!s.ok && s.stale) return '<span class="wm-st pend" title="' + esc(errText(s) + ' · ' + L('datos de ', 'data from ') + fmtIso(s.as_of)) + '">' + esc(L('en caché', 'cached')) + '</span>';
+    // W1: fuente en pausa (404/403 repetidos) → "en pausa" con el próximo intento; no es un fallo pasajero
+    if (!s.ok && s.error_code === 'source_unavailable') return '<span class="wm-st err" title="' + esc(errText(s) + (s.retry_at ? ' · ' + L('próximo intento ', 'next try ') + fmtIso(s.retry_at) : '')) + '">' + esc(L('en pausa', 'paused')) + '</span>';
     if (!s.ok) return '<span class="wm-st err" title="' + esc(errText(s)) + '">' + esc(L('caída', 'down')) + '</span>';
+    // W1: capas CURADAS (juicio humano revisado en curated_as_of) — no se presentan como "en vivo"
+    if (s.static) return '<span class="wm-st ref" title="' + esc(provText(s) + ' · ' + L('revisado ', 'reviewed ') + (s.curated_as_of || '?') + (s.news_live === false ? ' · ' + L('noticias GDELT en pausa', 'GDELT news paused') : '')) + '">' + esc(L('curado', 'curated')) + '</span>';
     return '<span class="wm-st ok" title="' + esc(provText(s) + (s.as_of ? ' · ' + s.as_of : '')) + '">' + esc(L('vivo', 'live')) + '</span>';
   }
   function layerCount(id) {

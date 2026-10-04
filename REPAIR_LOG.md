@@ -815,3 +815,32 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   catálogo (seguramente 0.2025).
 
 ---
+
+## P2 · World Monitor
+
+### W1 — GDELT respondía 404: pausa honesta de 1 h, capas curadas declaradas como curadas, precalentado
+- **Síntoma (producción, verificado por MCP `get_world_events` 2026-10-04).** Las
+  capas Conflicto / Protestas / Comercio decían "la fuente respondió HTTP 404" o
+  "primera consulta en curso" para siempre. Cada 90 s se volvía a pedir la API de
+  mapas de GDELT (GEO 2.0), ocupando el acelerador COMPARTIDO de GDELT (que
+  también usa la Sala de Situación para noticias de estrechos). Los estrechos y
+  la inestabilidad (severidades CURADAS a mano) se mostraban como "vivo".
+- **Causa.** No había distinción entre un fallo pasajero (timeout, 429, 5xx) y
+  uno definitivo (404/410 = API retirada o movida; 401/403 = ahora pide clave).
+- **Cambios.** `core/world.py`: `source_down/source_result/sources_state` —
+  3 errores DEFINITIVOS seguidos (`WORLD_SOURCE_DOWN_AFTER`) dejan la fuente en
+  pausa 1 h (`WORLD_SOURCE_DOWN_TTL`): sin red ni turno del acelerador;
+  `error_code: 'source_unavailable'` con mensaje ES/EN (404 → "API retirada o
+  movida"; 401/403 → "pide credenciales: apagada, sin servicios pagos nuevos",
+  decisión D7) y `retry_at`; pasada la hora, UNA consulta de prueba. Los
+  pasajeros nunca pausan. GDELT DOC (noticias de la Sala de Situación,
+  `core/geosit.py`) usa el mismo mecanismo y su calentador no recorre las 23
+  claves mientras está en pausa. Capas curadas: `live:false`, `static:true`,
+  `curated_as_of` (`core/geosit.CURATED_AS_OF`) y `news_live`. Tarea
+  `world_prewarm` (cada 10 min) en el reloj del servidor: el primer visitante ya
+  no ve "cargando". UI (`engine/worldmonitor.js`): chip "en pausa / paused" con
+  el próximo intento y "curado / curated" con la fecha de revisión.
+- **Verificar.** `pytest tests/test_repair_world.py` (11): sin el cambio fallan
+  los 11. Si GDELT movió la API, la dirección se cambia SIN tocar código con
+  `WORLD_GDELT_GEO_URL` en Railway.
+

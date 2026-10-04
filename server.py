@@ -476,6 +476,11 @@ try:
         _sched.register('research_outcomes_daily', _outcomes_daily, every_s=3600)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: outcomes no registrado (%s)', type(_e).__name__)
+    try:   # W1: el World Monitor se precalienta solo (el 1.er visitante ya no ve "cargando")
+        from core import world as _world
+        _sched.register('world_prewarm', _world.prewarm, every_s=600, run_at_start=True)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: world_prewarm no registrado (%s)', type(_e).__name__)
     if _sched.enabled():
         _sched.start()
 except Exception as _e:  # noqa: BLE001
