@@ -41,6 +41,9 @@ def refresh(fetch=None):
             q = quotes.get(sym)
             if q and (q.get('mcap_b') is not None or q.get('price') is not None):
                 caps[nid] = {'mcap_b': q.get('mcap_b'), 'price': q.get('price'),
+                             # price_usd: convertido con tipo de cambio en vivo (el
+                             # cliente SOLO pinta con "$" este, nunca `price` local)
+                             'price_usd': q.get('price_usd'),
                              'currency': q.get('currency'), 'change_pct': q.get('change_pct'),
                              'symbol': sym}
         with _LOCK:

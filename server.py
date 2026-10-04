@@ -1229,6 +1229,57 @@ def _diag_finnhub():
                 'detail': 'No se pudo contactar Finnhub: ' + _diag_redact(e)}
 
 
+def _diag_fmp():
+    """FMP se PRUEBA de verdad (perfil de AAPL): antes la barra de salud decía
+    "listo" solo porque la key existía, aunque el plan devolviera 402."""
+    if not FMP:
+        return {'configured': False, 'ok': False,
+                'detail': 'FMP_KEY no está. Estados financieros y dossier usan Yahoo/AlphaVantage.'}
+    t0 = time.time()
+    try:
+        r = requests.get(f'https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey={FMP}', timeout=8)
+        lat = int((time.time() - t0) * 1000)
+        if r.ok:
+            body = r.json() or []
+            row = body[0] if isinstance(body, list) and body else (body if isinstance(body, dict) else {})
+            name = row.get('companyName') or row.get('symbol')
+            if name:
+                return {'configured': True, 'ok': True, 'latency_ms': lat,
+                        'detail': f'Key válida — perfil de AAPL ({name}) OK.'}
+            return {'configured': True, 'ok': False, 'latency_ms': lat,
+                    'detail': 'Key responde pero sin datos (¿plan sin cobertura?).'}
+        hint = ' — plan sin acceso a este endpoint (402).' if r.status_code == 402 else ' — key inválida o rate-limited.'
+        return {'configured': True, 'ok': False, 'latency_ms': lat,
+                'detail': f'FMP HTTP {r.status_code}{hint}'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'No se pudo contactar FMP: ' + _diag_redact(e)}
+
+
+def _diag_yahoo():
+    """Yahoo (sin key) es el respaldo de precios de TODO el catálogo y la única
+    fuente de las bolsas fuera de EE.UU.: se prueba con el chart de NVDA."""
+    t0 = time.time()
+    try:
+        r = requests.get('https://query1.finance.yahoo.com/v8/finance/chart/NVDA',
+                         params={'interval': '1d', 'range': '5d'},
+                         headers={'User-Agent': 'Mozilla/5.0 (compatible; Khipu/1.0)'}, timeout=8)
+        lat = int((time.time() - t0) * 1000)
+        if r.ok:
+            res = (((r.json() or {}).get('chart') or {}).get('result') or [None])[0] or {}
+            px = (res.get('meta') or {}).get('regularMarketPrice')
+            if isinstance(px, (int, float)) and px > 0:
+                return {'configured': True, 'ok': True, 'latency_ms': lat,
+                        'detail': f'Yahoo responde — cotización NVDA ${px} OK (sin key, cubre todas las bolsas).'}
+            return {'configured': True, 'ok': False, 'latency_ms': lat,
+                    'detail': 'Yahoo responde pero sin precio para NVDA.'}
+        return {'configured': True, 'ok': False, 'latency_ms': lat,
+                'detail': f'Yahoo HTTP {r.status_code} — puede estar bloqueando al servidor (rate limit).'}
+    except Exception as e:  # noqa: BLE001
+        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
+                'detail': 'No se pudo contactar Yahoo: ' + _diag_redact(e)}
+
+
 @app.route('/api/ai/debug')
 @rate_limit(limit=20, window=300)
 def ai_debug():
@@ -1316,17 +1367,30 @@ def diagnostics():
         'nvidia':     _diag_nvidia(),
         'elevenlabs': _diag_elevenlabs(),
         'finnhub':    _diag_finnhub(),
+        'yahoo':      _diag_yahoo(),
+        'fmp':        _diag_fmp(),
         'grafo':      _diag_grafo(),
         'ontologia':  _diag_ontologia(),
         'alpaca':     _diag_alpaca(),
     }
+    # Finnhub en pausa por cuota (HTTP 429) → se dice tal cual en 🩺
+    try:
+        from core.quotes import finnhub_circuit_state
+        _fc = finnhub_circuit_state()
+        if _fc['paused'] and services['finnhub'].get('configured'):
+            services['finnhub']['quota'] = True
+            services['finnhub']['detail'] = (f"Cuota agotada (HTTP 429): Finnhub en pausa {_fc['seconds_left']} s; "
+                                             'los precios vienen de Yahoo mientras tanto. '
+                                             + str(services['finnhub'].get('detail') or ''))
+    except Exception:  # noqa: BLE001
+        pass
     # Secundarias: solo presencia (no gastamos llamadas externas extra)
-    _extra_names = [n for n, v in (('FMP', FMP), ('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]
+    _extra_names = [n for n, v in (('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]
     services['market_extra'] = {
         'configured': bool(_extra_names),
         'ok': bool(_extra_names),
-        'detail': ('Fuentes de respaldo activas: ' + ', '.join(_extra_names) + '.') if _extra_names
-                  else 'Ninguna fuente de respaldo configurada (el mercado depende solo de Finnhub).',
+        'detail': ('Respaldo EOD/histórico activo: ' + ', '.join(_extra_names) + '.') if _extra_names
+                  else 'Sin respaldo EOD (MarketStack/AlphaVantage): los precios dependen de Finnhub y Yahoo.',
     }
 
     n_ok = sum(1 for s in services.values() if s.get('ok'))
@@ -1447,19 +1511,53 @@ def ws_key():
     return resp
 
 
+def _quote_raw_compat(tk, row):
+    """Fila del contrato /api/quotes/live + claves CRUDAS de Finnhub {c, pc, d,
+    dp, t} que el cliente viejo (DataLayer.quote, X-Ray, canvas-data) sigue
+    leyendo. Un solo origen de datos (core.quotes.fetch_quotes_live), dos
+    vocabularios durante la transición."""
+    out = dict(row)
+    px, prev = row.get('live'), row.get('prev')
+    out['symbol'] = tk
+    out['c'] = px
+    out['pc'] = prev
+    out['dp'] = row.get('pct')
+    try:
+        out['d'] = round(float(px) - float(prev), 4) if (px is not None and prev is not None) else None
+    except (TypeError, ValueError):
+        out['d'] = None
+    try:
+        from datetime import datetime as _dt
+        iso = str(row.get('as_of') or '').replace('Z', '+00:00')
+        out['t'] = int(_dt.fromisoformat(iso).timestamp()) if iso else None
+    except (TypeError, ValueError):
+        out['t'] = None
+    out['v'] = row.get('vol')
+    return out
+
+
 @app.route('/api/quote/<ticker>')
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
 def quote(ticker):
-    if not FINNHUB:
-        return jsonify({'error': 'no FINNHUB_KEY'}), 400
+    """Cotización de UN ticker por la MISMA cascada que /api/quotes/live
+    (Finnhub→Yahoo, también EE.UU.; Yahoo no necesita key). Devuelve el
+    contrato {close, prev, pct, live, provider, as_of…} + {c, pc, dp, t} crudos."""
     ticker = _safe_ticker(ticker)
     if not ticker:
         return jsonify({'error': 'invalid ticker'}), 400
-    data, err = _fetch_quote_raw(ticker)
-    if err:
-        return jsonify({'error': err}), 502
-    return jsonify(data)
+    from core.quotes import fetch_quotes_live
+    try:
+        res = fetch_quotes_live([ticker])
+    except Exception as e:  # noqa: BLE001
+        log.warning('quote %s: %s', ticker, type(e).__name__)
+        res = {'quotes': {}, 'finnhub_quota': False}
+    row = (res.get('quotes') or {}).get(ticker)
+    if not row:
+        return jsonify({'error': 'sin cotización disponible / no quote available', 'symbol': ticker,
+                        'finnhub_quota': bool(res.get('finnhub_quota')),
+                        'finnhub_configured': bool(FINNHUB)}), 503
+    return jsonify(_quote_raw_compat(ticker, row))
 
 
 # ── Phase 1 · M3: cotización por la capa de PROVEEDORES ─────────────────────
@@ -1492,10 +1590,15 @@ def market_providers():
     Honestidad de fuentes (spec §13): nada de fingir integraciones activas."""
     from core.providers.market import crypto_registry, market_registry
     from core.providers.news import news_registry
+    from core.quotes import finnhub_circuit_state, finnhub_quota_active
     return jsonify({
         'market': market_registry().statuses(),
         'crypto': crypto_registry().statuses(),
         'news': news_registry().statuses(),
+        # circuito abierto tras HTTP 429: la UI puede decir "cuota de Finnhub
+        # agotada, precios vía Yahoo" en vez de fingir que todo va bien
+        'finnhub_quota': finnhub_quota_active(),
+        'finnhub_circuit': finnhub_circuit_state(),
     })
 
 
@@ -1535,27 +1638,20 @@ def scalp_price(symbol):
 @rate_limit(limit=120, window=60)
 @cache.cached(timeout=15, query_string=True)
 def batch_quotes():
-    from core.quotes import fetch_quote_intl, is_intl
-    tickers = [s for s in (_safe_ticker(t) for t in request.args.get('symbols', '').split(',')) if s]
-    if not FINNHUB and not any(is_intl(t) for t in tickers):
-        return jsonify({'error': 'no FINNHUB_KEY'}), 400
-    results = {}
-    for t in tickers[:60]:  # límite de cortesía por request
-        # Bolsas no-EEUU (688825.SS, 1347.HK, 6239.TW…): Yahoo + conversión a
-        # USD, en la MISMA forma cruda {c, pc, v} que espera el cliente.
-        # No requieren FINNHUB_KEY.
-        if is_intl(t):
-            q = fetch_quote_intl(t)
-            if q:
-                results[t] = {'c': q['live'], 'pc': q['prev'], 'v': q['vol'],
-                              'currency': q['currency'], 'converted': q['converted']}
-            continue
-        if not FINNHUB:
-            continue
-        data, err = _fetch_quote_raw(t, timeout=4)
-        if data:
-            results[t] = data
-    return jsonify(results)
+    """Varios tickers (?symbols=A,B o ?tickers=A,B) por la MISMA cascada que
+    /api/quotes/live. Mapa plano {T: fila + {c, pc, dp, t} crudos} — forma que
+    canvas-data.js ya consume. Sin tickers → 400."""
+    raw = request.args.get('symbols') or request.args.get('tickers') or ''
+    tickers = [s for s in (_safe_ticker(t) for t in raw.split(',')) if s]
+    if not tickers:
+        return jsonify({'error': 'symbols required / faltan símbolos'}), 400
+    from core.quotes import fetch_quotes_live
+    try:
+        res = fetch_quotes_live(tickers)
+    except Exception as e:  # noqa: BLE001
+        log.warning('quotes: %s', type(e).__name__)
+        return jsonify({'error': 'error interno al consultar las fuentes / internal error'}), 503
+    return jsonify({tk: _quote_raw_compat(tk, row) for tk, row in (res.get('quotes') or {}).items()})
 
 
 # ── Series anuales para el DOSSIER financiero (estilo investingvisuals) ─────
@@ -4354,70 +4450,35 @@ def api_portfolio_risk():
     return jsonify(payload), status
 
 
-# ── /api/quotes/live — batch quotes with pct change ──────────────────────────
+# ── /api/quotes/live — lote EN VIVO (Finnhub→Yahoo, paralelo, caché 15 s) ──
 @app.route('/api/quotes/live', methods=['POST'])
 @rate_limit(limit=60, window=60)
 def quotes_live():
-    """Batch live quotes with pct change. Body: {"tickers": ["NVDA","TSM",...]}.
-    Tries Finnhub first, falls back to Yahoo Finance per ticker.
-    Returns {ticker: {close, prev, live, pct, vol}}.
-    """
+    """Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]}
+    (máx 150 por petición; el cliente recorre TODO el catálogo en lotes).
+    Respuesta: {quotes: {T: {close, prev, pct, live:<número>, provider, as_of,
+    age_seconds, currency, converted, vol, market_state}}, n, cached, as_of,
+    providers, finnhub_quota}. Cascada core/providers (Finnhub→Yahoo para TODO
+    ticker), 8 hilos en paralelo, caché 15 s (core.quotes.fetch_quotes_live).
+    Un ticker sin dato no aparece: nunca se inventa un precio."""
     data = request.get_json(silent=True) or {}
     tickers = [s for s in (_safe_ticker(t) for t in (data.get('tickers') or [])) if s]
-    tickers = tickers[:100]
     if not tickers:
-        return jsonify({'error': 'tickers required'}), 400
-
-    from core.quotes import fetch_quote_intl, is_intl
-    results = {}
-    for tk in tickers:
-        q = None
-        # 0) Bolsas no-EEUU (sufijo Yahoo): directo a Yahoo + conversión a USD
-        if is_intl(tk):
-            q = fetch_quote_intl(tk)
-            if q:
-                results[tk] = q
-            continue
-        # 1) Finnhub
-        if FINNHUB:
-            fh, err = _fetch_quote_raw(tk, timeout=4)
-            if fh and fh.get('c') and fh.get('pc'):
-                close = fh['c']
-                prev  = fh['pc']
-                live  = fh.get('c', close)
-                pct   = (live - prev) / prev * 100 if prev else 0
-                q = {'close': close, 'prev': prev, 'live': live, 'pct': round(pct, 3),
-                     'vol': fh.get('v', 0)}
-        # 2) Yahoo Finance fallback
-        if q is None:
-            try:
-                yf_url = (f'https://query1.finance.yahoo.com/v8/finance/chart/{tk}'
-                          f'?interval=1d&range=5d')
-                yf_r = requests.get(yf_url,
-                                    headers={'User-Agent': 'Mozilla/5.0 (compatible; Khipu/1.0)'},
-                                    timeout=6)
-                if yf_r.status_code == 200:
-                    ydata = yf_r.json()
-                    result = ((ydata.get('chart') or {}).get('result') or [None])[0]
-                    if result:
-                        meta   = result.get('meta', {})
-                        closes = (result.get('indicators', {}).get('quote', [{}])[0]
-                                  .get('close', []))
-                        closes = [c for c in closes if c is not None]
-                        if len(closes) >= 2:
-                            close = closes[-1]
-                            prev  = closes[-2]
-                            live  = meta.get('regularMarketPrice', close)
-                            pct   = (live - prev) / prev * 100 if prev else 0
-                            vol   = meta.get('regularMarketVolume', 0)
-                            q = {'close': close, 'prev': prev, 'live': live,
-                                 'pct': round(pct, 3), 'vol': vol}
-            except Exception:  # noqa: BLE001
-                pass
-        if q:
-            results[tk] = q
-
-    return jsonify(results)
+        return jsonify({'error': 'tickers required / faltan tickers'}), 400
+    from core.quotes import LIVE_MAX_TICKERS, fetch_quotes_live
+    truncated = len(tickers) > LIVE_MAX_TICKERS
+    try:
+        res = fetch_quotes_live(tickers[:LIVE_MAX_TICKERS])
+    except Exception as e:  # noqa: BLE001
+        log.warning('quotes_live: %s', type(e).__name__)
+        return jsonify({'error': 'error interno al consultar las fuentes / internal error',
+                        'quotes': {}, 'n': 0}), 503
+    res['requested'] = len(tickers)
+    res['max_per_request'] = LIVE_MAX_TICKERS
+    if truncated:
+        res['truncated'] = True
+    res['finnhub_configured'] = bool(FINNHUB)
+    return jsonify(res)
 
 
 # ── /api/macro/fred — FRED macro indicators ───────────────────────────────────

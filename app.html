@@ -4575,6 +4575,42 @@ const fmtN=(v,dec=2)=> v==null||isNaN(v) ? '—' : Number(v).toLocaleString('en-
 const fmtPct=v=> v==null||isNaN(v) ? '—' : (v>=0?'+':'')+ (v*100).toFixed(2)+'%';
 function savePos(){ localStorage.setItem('eco_pos',JSON.stringify(MKT.pos)); }
 function quoteOf(n){ return n.mkt ? MKT.quotes[n.mkt] : null; }
+/* ── CONTRATO de MKT.quotes[ticker] (2026-10-04) ─────────────────────────────
+   {close, prev, pct?, live?:<precio NUMÉRICO o ausente>, src:'finnhub'|'yahoo'|
+    'marketstack', via?:'live_caps', as_of:<ISO>, currency?, converted?}
+   `live` NUNCA es booleano (antes LivePrices escribía live:true y
+   parseFloat(q.live) daba NaN → "—" en la Terminal y precio 0 al operar).
+   Precio a mostrar: SIEMPRE window.quotePx(q). "En vivo": quoteIsLive(q). */
+window.quotePx = q => { if(!q) return 0; const v = typeof q.live==='number' ? q.live : q.close; return Number(v)||0; };
+window.quoteAge = q => { if(!q||!q.as_of) return null; const t=Date.parse(q.as_of); return isNaN(t)?null:Math.max(0,Math.round((Date.now()-t)/1000)); };
+window.quoteIsLive = q => { if(!q||!(quotePx(q)>0)||!q.src||q.src==='marketstack') return false; const a=quoteAge(q); return a==null || a<15*60; };
+window.quoteSrcName = src => ({finnhub:'Finnhub', yahoo:'Yahoo', marketstack:'Marketstack (EOD)', live:'Finnhub/Yahoo'})[src] || (src||'');
+window.quoteAgoText = sec => { const en=(LANG==='en'); if(sec==null) return '';
+  if(sec<60) return en?`${sec}s ago`:`hace ${sec} s`;
+  if(sec<3600){ const m=Math.round(sec/60); return en?`${m} min ago`:`hace ${m} min`; }
+  if(sec<86400){ const h=Math.round(sec/3600); return en?`${h} h ago`:`hace ${h} h`; }
+  const d=Math.round(sec/86400); return en?`${d} d ago`:`hace ${d} d`; };
+// bolsa a partir del sufijo Yahoo del ticker (ADANIPORTS.NS → NSE, 4401.T → TSE…)
+window.quoteExchange = tk => { const m=String(tk||'').match(/\.([A-Z]+)$/); const sfx=m?m[1]:'';
+  const EX={NS:'NSE',BO:'BSE',T:'TSE',HK:'HKEX',SS:'SSE',SZ:'SZSE',KS:'KRX',KQ:'KOSDAQ',TW:'TWSE',TWO:'TPEx',L:'LSE',DE:'XETRA',F:'FRA',
+    PA:'Euronext',AS:'Euronext',BR:'Euronext',IR:'Euronext',MI:'Borsa Italiana',MC:'BME',SW:'SIX',ST:'OMX',CO:'OMX',HE:'OMX',OL:'Oslo',
+    TO:'TSX',V:'TSXV',AX:'ASX',SA:'B3',MX:'BMV',JO:'JSE',TA:'TASE',SI:'SGX',KL:'Bursa',BK:'SET',JK:'IDX',VI:'Wiener Börse'};
+  return EX[sfx] || sfx || (LANG==='en'?'US':'EE.UU.'); };
+/* Chip de fuente + antigüedad del precio: ● verde <2 min · ámbar <1 h · gris EOD/viejo.
+   Sin precio: punto apagado con "Sin precio en vivo para esta bolsa (NSE)". */
+window.quoteSrcChip = (q, tk) => {
+  if(!(quotePx(q)>0)){
+    if(!tk) return '';
+    const tip = (LANG==='en' ? 'No live price for this exchange' : 'Sin precio en vivo para esta bolsa') + ' (' + quoteExchange(tk) + ')';
+    return `<span class="q-src none" title="${esc(tip)}">●</span>`;
+  }
+  const age = quoteAge(q);
+  const eod = q.src==='marketstack' || (age!=null && age>=3600);
+  const cls = eod ? 'eod' : (age!=null && age<120 ? 'fresh' : 'warm');
+  const when = q.src==='marketstack' ? (LANG==='en'?'close (EOD)':'cierre (EOD)') : quoteAgoText(age);
+  const tip = (quoteSrcName(q.src) || (LANG==='en'?'cached':'caché')) + (when ? ' · ' + when : '');
+  return `<span class="q-src ${cls}" title="${esc(tip)}">●</span>`;
+};
 
 /* ── Panel de empresa privada (pre-IPO) — Fase 4 ──────────────────────────── */
 function renderPreipoPanel(d){
@@ -4637,6 +4673,81 @@ window.togglePortfolio=function(id, pf){
 
 function setStatus(msg){ document.getElementById('mk-status').textContent=msg; }
 
+function _persistQuotes(){
+  try{ localStorage.setItem('eco_quotes',JSON.stringify(MKT.quotes)); localStorage.setItem('eco_quotes_ts',String(MKT.ts||Date.now())); }catch(e){}
+}
+/* ── CARGADOR POR LOTES de precios EN VIVO (2026-10-04) ──────────────────────
+   569 tickers → POST /api/quotes/live en lotes de 100 (2 en paralelo). El
+   server (core/quotes.fetch_quotes_live) va Finnhub→Yahoo para TODO ticker,
+   en paralelo, con caché de 15 s. Antes solo se pedían los primeros 100 y la
+   Terminal mostraba "–" para el resto (ADANIPORTS.NS, 4401.T…). Reemplaza al
+   viejo LivePrices.seed() (~1.090 req/min a /api/quote → 429 silenciosos).
+   Es el ÚNICO camino: fetchQuotes, el Live Data Manager y el poll de
+   LivePrices pasan por aquí. Nunca pisa una cotización MÁS NUEVA. */
+const LIVE_BATCH = 100;
+function _mergeLiveQuote(tk, q){
+  if(!q || typeof q!=='object') return false;
+  const px = (typeof q.live==='number' && q.live>0) ? q.live : (Number(q.close)>0 ? Number(q.close) : 0);
+  if(!(px>0)) return false;
+  const cur = MKT.quotes[tk];
+  // Solo una cotización DIRECTA más nueva (p.ej. un trade del WebSocket de hace
+  // 2 s) bloquea el merge; el relleno de live_caps (via) nunca manda sobre el lote.
+  if(cur && quotePx(cur)>0 && cur.src && cur.src!=='marketstack' && cur.via!=='live_caps' && cur.as_of && q.as_of){
+    const a=Date.parse(cur.as_of), b=Date.parse(q.as_of);
+    if(!isNaN(a) && !isNaN(b) && a>b) return false;
+  }
+  MKT.quotes[tk] = Object.assign({}, cur||{}, {
+    close: px, live: px,
+    prev: (q.prev!=null && isFinite(+q.prev)) ? +q.prev : (cur && cur.prev!=null ? cur.prev : null),
+    pct: (q.pct!=null && isFinite(+q.pct)) ? +q.pct : null,
+    src: q.provider || q.src || 'live', as_of: q.as_of || new Date().toISOString(),
+    currency: q.currency || 'USD', converted: !!q.converted, market_state: q.market_state || null,
+  });
+  delete MKT.quotes[tk].via;
+  return true;
+}
+function _afterQuotesMerged(){
+  _persistQuotes();
+  try{ if(typeof window._termRefreshPrices==='function') window._termRefreshPrices(); }catch(e){}
+  try{ if(typeof activeTab!=='undefined' && activeTab==='market' && typeof renderMarket==='function') renderMarket(); }catch(e){}
+  try{ if(window.KhipuLive && typeof window.KhipuLive.tick==='function') window.KhipuLive.tick(); }catch(e){}
+  try{ const up=window._graph3d_updateLiveColors; if(up) up(MKT.quotes); }catch(e){}
+  try{ if(typeof LivePrices!=='undefined' && LivePrices.updateSummary) LivePrices.updateSummary(); }catch(e){}
+  try{ window.dispatchEvent(new CustomEvent('khipu:quotes', {detail: MKT.liveMeta||null})); }catch(e){}
+}
+window.loadLiveQuotes = function(opts){
+  opts = opts || {};
+  if(window._liveLoading) return window._liveLoading;          // ya en curso: no duplicar
+  const full = !opts.tickers;
+  const all = opts.tickers || [...new Set(NODES.filter(n=>n.mkt).map(n=>n.mkt))];
+  const run = (async()=>{
+    const batches=[]; for(let i=0;i<all.length;i+=LIVE_BATCH) batches.push(all.slice(i,i+LIVE_BATCH));
+    let got=0, failed=0, quota=false; const srcs={};
+    const one = async b => {
+      try{
+        const r = await fetch(BASE+'/api/quotes/live',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tickers:b})});
+        if(!r.ok){ failed++; return; }
+        const j = await r.json(); const map = (j && j.quotes) ? j.quotes : (j||{});
+        if(j && j.finnhub_quota) quota=true;
+        Object.keys(map).forEach(tk=>{ const q=map[tk]; if(_mergeLiveQuote(tk,q)){ got++; const k=q.provider||'live'; srcs[k]=(srcs[k]||0)+1; } });
+      }catch(e){ failed++; }
+    };
+    for(let i=0;i<batches.length;i+=2){
+      await Promise.all(batches.slice(i,i+2).map(one));
+      if(got && i+2<batches.length) _afterQuotesMerged();          // pintar progresivamente
+    }
+    if(got){ MKT.ts=Date.now(); MKT.src='live'; }
+    if(full || !MKT.liveMeta) MKT.liveMeta={got, failed, batches:batches.length, finnhub_quota:quota, sources:srcs, at:Date.now(), done:true};
+    else if(quota) MKT.liveMeta.finnhub_quota=true;
+    _afterQuotesMerged();
+    // ⚠ de tickers sin precio en NINGUNA fuente (espera a que _liveLoading se libere)
+    if(full && got && typeof validateTickers==='function') setTimeout(()=>{ try{ validateTickers(); }catch(e){} }, 50);
+    return {got, failed, batches:batches.length, finnhub_quota:quota};
+  })();
+  window._liveLoading = run.catch(()=>({got:0, failed:1, batches:0})).finally(()=>{ window._liveLoading=null; });
+  return window._liveLoading;
+};
+
 function _processMktData(j){
   if(j.error) throw new Error(j.error.message||j.error.code||'API error');
   const q={};
@@ -4645,8 +4756,10 @@ function _processMktData(j){
     if(!q[s]) q[s]={close:row.close, date:(row.date||'').slice(0,10)};
     else if(q[s].prev==null) q[s].prev=row.close;
   });
-  // Alias: map 'MDB.XNGS' → 'MDB' for our known tickers
-  const _knownMkt = new Set((typeof NODES!=='undefined'?NODES:[]).filter(n=>n.mkt).map(n=>n.mkt));
+  // Alias: 'MDB.XNGS' → 'MDB' (sufijo MIC de Marketstack → ticker del catálogo).
+  // SOLO tickers de EE.UU. (sin punto): Marketstack entrega las otras bolsas en
+  // moneda local y pintarla con "$" sería mentir; esas vienen de Yahoo en USD.
+  const _knownMkt = new Set((typeof NODES!=='undefined'?NODES:[]).filter(n=>n.mkt&&!n.mkt.includes('.')).map(n=>n.mkt));
   Object.keys(q).forEach(sym=>{
     if(sym.includes('.')){
       const base=sym.split('.')[0];
@@ -4654,43 +4767,84 @@ function _processMktData(j){
     }
   });
   if(!Object.keys(q).length) throw new Error('Sin datos / no data');
-  MKT.quotes=q; MKT.ts=Date.now();
-  localStorage.setItem('eco_quotes',JSON.stringify(q));
-  localStorage.setItem('eco_quotes_ts',String(MKT.ts));
-  // Keep Terminal sidebar in sync whenever quotes are refreshed
-  if (typeof window._termRefreshPrices === 'function') window._termRefreshPrices();
+  // MERGE, nunca reemplazo: un cierre EOD jamás pisa una cotización en vivo
+  // más nueva (se compara as_of). Antes `MKT.quotes=q` borraba Finnhub/Yahoo.
+  let n=0;
+  Object.keys(q).forEach(sym=>{
+    if(!_knownMkt.has(sym)) return;
+    const row=q[sym]; const asOf=row.date ? row.date+'T21:00:00Z' : null;
+    const cur=MKT.quotes[sym];
+    if(cur && quotePx(cur)>0 && cur.src && cur.src!=='marketstack'){
+      const curT=Date.parse(cur.as_of||''), newT=Date.parse(asOf||'');
+      if(isNaN(curT) || isNaN(newT) || curT>=newT) return;       // lo vivo manda
+    }
+    const prev=(row.prev!=null)?row.prev:(cur&&cur.prev!=null?cur.prev:null);
+    MKT.quotes[sym]=Object.assign({}, cur||{}, {close:row.close, prev, pct:(prev?(row.close-prev)/prev*100:null),
+      src:'marketstack', as_of:asOf, date:row.date});
+    delete MKT.quotes[sym].live; delete MKT.quotes[sym].via;
+    n++;
+  });
+  if(n){
+    if(!MKT.ts) MKT.ts=Date.now();
+    _persistQuotes();
+    if (typeof window._termRefreshPrices === 'function') window._termRefreshPrices();
+  }
+  return n;
 }
 async function fetchQuotes(){
   if(MKT.loading) return;
   MKT.loading=true;
-  const btn=document.getElementById('mk-refresh'); btn.disabled=true;
+  const btn=document.getElementById('mk-refresh'); if(btn) btn.disabled=true;
   setStatus(t('mk_loading'));
-  const syms=[...new Set(NODES.filter(n=>n.mkt).map(n=>n.mkt))];
-  // Proxy del server (usa MARKETSTACK_KEY del .env en Railway)
+  let ok=false;
   try{
-    const r=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
-    const j=await r.json();
-    if(!j.error){ _processMktData(j); MKT.loading=false; btn.disabled=false; renderMarket(); validateTickers(); return; }
-    // Server responded but no key configured
-    setStatus('⚠ Agrega MARKETSTACK_KEY en Railway → Variables');
+    // 1) EN VIVO primero (Finnhub→Yahoo, todas las bolsas, por lotes)
+    const r = await window.loadLiveQuotes();
+    ok = !!(r && r.got);
+    // 2) Marketstack = respaldo EOD OPCIONAL: solo con clave, solo para los
+    //    tickers de EE.UU. que quedaron sin precio, y nunca pisa lo vivo.
+    const gaps = NODES.some(n=>n.mkt && !n.mkt.includes('.') && !(quotePx(MKT.quotes[n.mkt])>0));
+    if(Keys.has('marketstack') && gaps){
+      try{
+        const syms=[...new Set(NODES.filter(n=>n.mkt&&!n.mkt.includes('.')&&!(quotePx(MKT.quotes[n.mkt])>0)).map(n=>n.mkt))];
+        const rr=await fetch(BASE+'/api/marketstack?symbols='+encodeURIComponent(syms.join(',')));
+        const j=await rr.json();
+        if(!j.error && _processMktData(j)>0) ok=true;
+      }catch(e){ /* respaldo opcional: silencio */ }
+    }
+    if(!ok) setStatus(LANG==='en' ? '⚠ No prices from Finnhub or Yahoo — open 🩺' : '⚠ Sin precios de Finnhub ni de Yahoo — abre 🩺');
   }catch(e){
-    setStatus('⚠ Error al obtener precios: '+String(e.message).slice(0,60));
+    setStatus('⚠ '+(LANG==='en'?'Error fetching prices: ':'Error al obtener precios: ')+String(e.message).slice(0,60));
   }
-  MKT.loading=false; btn.disabled=false; renderMarket(true);
+  MKT.loading=false; if(btn) btn.disabled=false;
+  renderMarket(!ok);
+  validateTickers();
 }
 document.getElementById('mk-refresh').onclick=fetchQuotes;
 
 /* ── Ticker validation: flag nodes with mkt but no quote ── */
 async function validateTickers(){
-  const missing=NODES.filter(n=>n.mkt&&!MKT.quotes[n.mkt]&&!n.preipo);
-  if(!missing.length) return;
+  // Espera al lote en vivo: el ⚠ solo se marca si el ticker falta en
+  // /api/quotes/live Y en live_caps (antes se marcaba apenas Marketstack callaba).
+  try{ if(window._liveLoading) await window._liveLoading; }catch(e){}
+  const anyPrice = Object.keys(MKT.quotes||{}).some(k=>quotePx(MKT.quotes[k])>0);
+  if(!anyPrice) return;                 // fallo GLOBAL de fuentes: no es culpa del ticker
+  const meta = window.NODE_META || {};
+  const hasCapPx = n => { const l=(meta[n.id]||{}).mktcap_live; return !!(l && l.price!=null && isFinite(+l.price) && +l.price>0); };
+  const missing=NODES.filter(n=>n.mkt&&!n.preipo&&!(quotePx(MKT.quotes[n.mkt])>0)&&!hasCapPx(n));
   if(!window._tickerWarnings) window._tickerWarnings=new Set();
+  // ya tienen precio → quitar el ⚠ viejo
+  NODES.forEach(n=>{ if(n.mkt && window._tickerWarnings.has(n.id) && quotePx(MKT.quotes[n.mkt])>0){ window._tickerWarnings.delete(n.id);
+    document.querySelectorAll(`[data-ticker="${CSS.escape(n.mkt)}"] .tk-warn`).forEach(x=>x.remove()); } });
+  if(!missing.length) return;
+  const warnTip = LANG==='en' ? 'No price from Finnhub, Yahoo or the market-cap batch · the ticker may have changed'
+                              : 'Sin precio en Finnhub, Yahoo ni el lote de capitalización · el ticker puede haber cambiado';
   missing.forEach(n=>{
     window._tickerWarnings.add(n.id);
-    document.querySelectorAll(`[data-ticker="${n.mkt}"]`).forEach(row=>{
+    document.querySelectorAll(`[data-ticker="${CSS.escape(n.mkt)}"]`).forEach(row=>{
       if(!row.querySelector('.tk-warn')){
         const td=row.querySelector('td');
-        if(td) td.insertAdjacentHTML('beforeend',' <span class="tk-warn" title="Sin datos de mercado · ticker puede haber cambiado" style="color:#f59e0b;font-size:10px;cursor:help">⚠</span>');
+        if(td) td.insertAdjacentHTML('beforeend',' <span class="tk-warn" title="'+esc(warnTip)+'" style="color:#f59e0b;font-size:10px;cursor:help">⚠</span>');
       }
     });
   });
@@ -4827,9 +4981,9 @@ function renderMarket(keepStatus){
           <button class="pos-btn" onclick="posCancel()">✕</button>
         </div></td><td>${nrs}</td><td></td></tr>`;
     }
-    return `<tr data-ticker="${esc(n.mkt||'')}"${q&&q.live?' data-live="1"':''}>
-      <td onclick="goMap('${n.id}')" style="display:flex;align-items:center;gap:6px">${LOGO_DOMAIN[n.id]?`<img src="https://logo.clearbit.com/${LOGO_DOMAIN[n.id]}?size=32" style="width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#fff" onerror="this.style.display='none'" loading="lazy">`:'<span style="width:20px;flex-shrink:0"></span>'}<span>${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></span></td>
-      <td class="mk-c-price">${q&&q.close!=null?'$'+fmtN(q.close):'<span class="td-dim">—</span>'}</td>
+    return `<tr data-ticker="${esc(n.mkt||'')}"${quoteIsLive(q)?' data-live="1"':''}>
+      <td onclick="goMap('${n.id}')" style="display:flex;align-items:center;gap:6px">${LOGO_DOMAIN[n.id]?`<img src="https://logo.clearbit.com/${LOGO_DOMAIN[n.id]}?size=32" style="width:20px;height:20px;border-radius:4px;object-fit:contain;flex-shrink:0;background:#fff" onerror="this.style.display='none'" loading="lazy">`:'<span style="width:20px;flex-shrink:0"></span>'}<span>${esc(n.label)} <span class="tk">${esc(n.mkt||t('mk_npos'))}</span></span>${(window._tickerWarnings&&window._tickerWarnings.has(n.id)&&!(quotePx(q)>0))?' <span class="tk-warn" title="'+esc(LANG==='en'?'No price from Finnhub, Yahoo or the market-cap batch · the ticker may have changed':'Sin precio en Finnhub, Yahoo ni el lote de capitalización · el ticker puede haber cambiado')+'" style="color:#f59e0b;font-size:10px;cursor:help">⚠</span>':''}</td>
+      <td class="mk-c-price">${q&&q.close!=null?'$'+fmtN(q.close):'<span class="td-dim">—</span>'}${quoteSrcChip(q, n.mkt)}</td>
       <td class="mk-c-chg ${chg==null?'td-dim':chg>=0?'td-up':'td-down'}">${fmtPct(chg)}</td>
       <td>${p?fmtN(p.sh,0):'<span class="td-dim">—</span>'}</td>
       <td>${p?'$'+fmtN(p.bp):'<span class="td-dim">—</span>'}</td>
@@ -4908,8 +5062,9 @@ Object.assign(I18N.es, {
   al_go:'Ver empresa', al_dismiss:'Descartar',
   pos_shares:'Acciones', pos_value:'Valor', pos_pnl:'P&L',
   stress_ai:'✨ Analizar impacto con IA', stress_ai_loading:'Evaluando impacto…',
-  dh_finnhub:'Finnhub', dh_fmp:'FMP', dh_ai:'IA', dh_mkt:'Mercado', dh_offline:'Offline',
+  dh_finnhub:'Finnhub', dh_yahoo:'Yahoo', dh_fmp:'FMP', dh_ai:'IA', dh_mkt:'Marketstack (EOD)', dh_offline:'Offline',
   dh_live:'LIVE', dh_cache:'caché', dh_ready:'listo', dh_off:'sin clave', dh_no:'no', dh_yes:'sí',
+  dh_key:'clave presente', dh_batch:'en lotes', dh_quota:'cuota agotada',
   test:'Probar', test_ok:'✓ válida', test_err:'✗ error', test_ing:'probando…', test_empty:'sin clave',
   clear_quotes:'Borrar caché de precios', clear_ai:'Borrar análisis IA', clear_cache:'Vaciar caché de datos',
   ai_verdict:'Salud del negocio', ai_conf:'confianza', ai_bull:'CASO ALCISTA', ai_bear:'RIESGO PRINCIPAL',
@@ -4948,8 +5103,9 @@ Object.assign(I18N.en, {
   al_go:'View company', al_dismiss:'Dismiss',
   pos_shares:'Shares', pos_value:'Value', pos_pnl:'P&L',
   stress_ai:'✨ Analyze impact with AI', stress_ai_loading:'Assessing impact…',
-  dh_finnhub:'Finnhub', dh_fmp:'FMP', dh_ai:'AI', dh_mkt:'Market', dh_offline:'Offline',
+  dh_finnhub:'Finnhub', dh_yahoo:'Yahoo', dh_fmp:'FMP', dh_ai:'AI', dh_mkt:'Marketstack (EOD)', dh_offline:'Offline',
   dh_live:'LIVE', dh_cache:'cache', dh_ready:'ready', dh_off:'no key', dh_no:'no', dh_yes:'yes',
+  dh_key:'key present', dh_batch:'batched', dh_quota:'quota exhausted',
   test:'Test', test_ok:'✓ valid', test_err:'✗ error', test_ing:'testing…', test_empty:'no key',
   clear_quotes:'Clear price cache', clear_ai:'Clear AI analysis', clear_cache:'Clear data cache',
   ai_verdict:'Business health', ai_conf:'confidence', ai_bull:'BULL CASE', ai_bear:'KEY RISK',
@@ -5105,7 +5261,9 @@ const DIAG_META = {
   gemini:     { icon:'◆',  name:'Google Gemini',        why:'Canal de respaldo de IA (alterna si Claude falla)' },
   nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)' },
   elevenlabs: { icon:'🎙', name:'Khipu / ElevenLabs',  why:'Voz conversacional — preguntar por voz' },
-  finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo del terminal' },
+  finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo (EE.UU.) · WebSocket · primero en la cascada' },
+  yahoo:      { icon:'🌐', name:'Yahoo Finance',       why:'Precios de TODAS las bolsas (sin clave) · respaldo de EE.UU. · capitalización' },
+  fmp:        { icon:'📑', name:'FMP',                 why:'Estados financieros · perfil · precio objetivo (plan con cobertura limitada)' },
   grafo:      { icon:'◈',  name:'Grafo Temporal',       why:'Memoria temporal (nativa · Neo4j opcional)' },
   ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', why:'Fuente única de verdad · eventos bitemporales' },
   market_extra:{icon:'🗂', name:'Fuentes de respaldo', why:'FMP · MarketStack · AlphaVantage' },
@@ -5141,7 +5299,7 @@ window.openDiagnostics = async function(fresh){
     const r = await fetch(`${base}/api/diagnostics${fresh?'?fresh=1':''}`);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
-    const order = ['claude','gemini','nvidia','elevenlabs','finnhub','grafo','ontologia','market_extra'];
+    const order = ['claude','gemini','nvidia','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
@@ -5400,7 +5558,7 @@ $('pref-notif').onchange=e=>{ const p=prefs(); p.notif=e.target.checked; savePre
   if(e.target.checked && 'Notification' in window && Notification.permission==='default') Notification.requestPermission(); };
 $('pref-aicache').onchange=e=>{ const p=prefs(); p.aicache=e.target.checked; savePrefs(p); };
 $('data-clear-quotes').onclick=()=>{ localStorage.removeItem('eco_quotes'); localStorage.removeItem('eco_quotes_ts');
-  MKT.quotes={}; MKT.ts=null; if(activeTab==='market') renderMarket(); toast(LANG==='en'?'Price cache cleared':'Caché de precios borrada'); };
+  MKT.quotes={}; MKT.ts=null; MKT.liveMeta=null; if(activeTab==='market') renderMarket(); toast(LANG==='en'?'Price cache cleared':'Caché de precios borrada'); };
 $('data-clear-ai').onclick=()=>{ Object.keys(localStorage).filter(k=>k.startsWith('ai_analysis')).forEach(k=>localStorage.removeItem(k));
   toast(LANG==='en'?'AI analysis cleared':'Análisis IA borrados'); if(selected) renderDetail(selected); };
 $('data-clear-cache').onclick=()=>{ idb.clear(); toast(LANG==='en'?'Data cache cleared':'Caché de datos vaciada'); };
@@ -5422,51 +5580,49 @@ document.getElementById('kfi-gen-btn').addEventListener('click', async () => {
 
 /* ════════════════ §F · PRECIOS EN VIVO (Feature 1) + portfolio (Feature 7) ════════════════ */
 const LivePrices = {
-  ws:null, connected:false, poll:null, seeded:false, subs:[],
+  ws:null, connected:false, poll:null, subs:[],
   async restart(){ this.stop(); this.start(); },
   stop(){ try{ this.ws&&this.ws.close(); }catch(e){} this.ws=null; if(this.poll) clearInterval(this.poll); this.poll=null;
     this.connected=false; this.setPill(false); },
   async start(){
     if(!prefs().live || !Keys.has('finnhub')){ this.setPill(false); DataHealth.render(); return; }
-    await this.seed();
+    // (2026-10-04) seed() ELIMINADO: lanzaba ~1.090 req/min a /api/quote (límite
+    // 120/min → 429 silenciosos y quemaba la cuota de Finnhub). Los precios de
+    // TODO el catálogo llegan por lotes vía window.loadLiveQuotes().
     try{ await this.connectWS(); }catch(e){ this.startPoll(); }
   },
-  async seed(){
-    const tk=usTickers(); const chunk=20;
-    for(let i=0;i<tk.length;i+=chunk){
-      const part=tk.slice(i,i+chunk);
-      await Promise.all(part.map(async s=>{ try{ const q=await DataLayer.quote(s);
-        if(q && q.c!=null && q.c>0){ MKT.quotes[s]=Object.assign({}, MKT.quotes[s], {close:q.c, prev:(q.pc!=null?q.pc:q.c), live:true}); }
-      }catch(e){} }));
-      if(activeTab==='market'){ renderMarket(true); }
-      this.updateSummary();
-      if(i+chunk<tk.length) await new Promise(r=>setTimeout(r,1100)); // respeta 60 req/min
-    }
-    this.seeded=true; MKT.ts=Date.now();
-  },
+  // Solo tickers de EE.UU. (sin punto: el WebSocket de Finnhub no cubre otras
+  // bolsas) y máximo 45 (plan gratuito ≈ 50 símbolos).
+  wsTickers(){ return usTickers().filter(s=>!s.includes('.')).slice(0,45); },
   async connectWS(){
     const token=await DataLayer.wsToken(); if(!token) throw new Error('no token');
     const ws=new WebSocket('wss://ws.finnhub.io?token='+token); this.ws=ws;
-    this.subs=usTickers().slice(0,45); // free tier ≈ 50 símbolos
+    this.subs=this.wsTickers();
     ws.onopen=()=>{ this.connected=true; this.setPill(true); DataHealth.render();
       this.subs.forEach(s=>ws.send(JSON.stringify({type:'subscribe',symbol:s})));
-      this.startPoll(true); /* resto de tickers por REST */ };
+      if(this.poll){ clearInterval(this.poll); this.poll=null; } /* el resto llega por lotes */ };
     ws.onmessage=e=>{ let d; try{ d=JSON.parse(e.data); }catch(_){ return; }
       if(d.type==='trade' && d.data) d.data.forEach(tr=>this.onTrade(tr.s, tr.p)); };
     ws.onerror=()=>{};
     ws.onclose=()=>{ this.connected=false; this.setPill(false); DataHealth.render(); if(prefs().live && Keys.has('finnhub')) this.startPoll(); };
   },
-  startPoll(restOnly){
+  startPoll(){
+    // Sin WebSocket: UN lote por minuto con los ≤45 tickers de EE.UU. (antes:
+    // 30 llamadas sueltas a /api/quote por minuto). Pasa por el mismo cargador.
     if(this.poll) clearInterval(this.poll);
-    const subset=()=>{ const all=usTickers(); return restOnly?all.filter(s=>!this.subs.includes(s)):all; };
-    this.poll=setInterval(async()=>{
-      const list=subset().slice(0,30);
-      for(const s of list){ try{ const q=await DataLayer.quote(s); if(q&&q.c!=null&&q.c>0) this.onTrade(s,q.c,q.pc); }catch(e){} }
+    this.poll=setInterval(()=>{
+      if(document.hidden) return;
+      const list=this.subs.length?this.subs:this.wsTickers();
+      if(list.length && window.loadLiveQuotes) window.loadLiveQuotes({tickers:list});
     }, 60000);
   },
   onTrade(ticker, price, pc){
+    price=Number(price); if(!(price>0)) return;
     const q=MKT.quotes[ticker]||{}; const prevShown=q.close;
-    q.close=price; q.live=true; if(pc!=null) q.prev=pc; if(q.prev==null) q.prev=price;
+    // contrato: live = precio NUMÉRICO (nunca true/false), src + as_of dicen "en vivo"
+    q.close=price; q.live=price; q.src='finnhub'; q.as_of=new Date().toISOString(); delete q.via;
+    if(pc!=null) q.prev=pc; if(q.prev==null) q.prev=price;
+    q.pct = q.prev ? (price-q.prev)/q.prev*100 : null;
     MKT.quotes[ticker]=q;
     this.updateCell(ticker, prevShown);
     this.updateSummary();
@@ -5482,7 +5638,7 @@ const LivePrices = {
     const pnlP=(p&&q.close!=null&&p.bp)?(q.close-p.bp)/p.bp:null;
     const cP=row.querySelector('.mk-c-price'), cC=row.querySelector('.mk-c-chg'),
           cV=row.querySelector('.mk-c-val'), cN=row.querySelector('.mk-c-pnl');
-    if(cP) cP.innerHTML='$'+fmtN(q.close);
+    if(cP) cP.innerHTML='$'+fmtN(q.close)+quoteSrcChip(q, ticker);
     if(cC){ cC.className='mk-c-chg '+(chg==null?'td-dim':chg>=0?'td-up':'td-down'); cC.innerHTML=fmtPct(chg); }
     if(cV) cV.innerHTML = val!=null?'$'+fmtN(val):'<span class="td-dim">—</span>';
     if(cN){ cN.className='mk-c-pnl '+(pnlP==null?'td-dim':pnlP>=0?'td-up':'td-down'); cN.innerHTML=fmtPct(pnlP); }
@@ -5982,17 +6138,46 @@ window.KhipuLiveCaps = (function(){
   let tries = 0, timer = null, last = null;
   function apply(d){
     const meta = window.NODE_META || {};
-    let n = 0;
+    let n = 0, nq = 0;
     Object.keys(d.caps || {}).forEach(id=>{
-      const c = d.caps[id]; if(!c || c.mcap_b == null || !isFinite(+c.mcap_b)) return;
+      const c = d.caps[id]; if(!c) return;
+      const hasCap = c.mcap_b != null && isFinite(+c.mcap_b);
+      // precio EN USD: `price_usd` (convertido en el server) o `price` solo si ya es USD.
+      // `price` de otra moneda NUNCA se pinta con "$".
+      const pxUsd = (c.price_usd != null && isFinite(+c.price_usd)) ? +c.price_usd
+                  : ((c.price != null && isFinite(+c.price) && (!c.currency || c.currency === 'USD')) ? +c.price : null);
+      if(!hasCap && pxUsd == null) return;              // condición relajada: cap O precio
       const m = meta[id] || (meta[id] = {});
-      if(m.mktcap_catalog === undefined) m.mktcap_catalog = (m.mktcap_b === undefined ? null : m.mktcap_b);
-      const v = +c.mcap_b;
-      m.mktcap_b = v >= 100 ? Math.round(v) : Math.round(v*10)/10;
-      m.mktcap_live = {as_of: d.as_of, source: d.source || 'yahoo', price: c.price, currency: c.currency};
-      n++;
+      if(hasCap){
+        if(m.mktcap_catalog === undefined) m.mktcap_catalog = (m.mktcap_b === undefined ? null : m.mktcap_b);
+        const v = +c.mcap_b;
+        m.mktcap_b = v >= 100 ? Math.round(v) : Math.round(v*10)/10;
+        n++;
+      }
+      m.mktcap_live = Object.assign({}, m.mktcap_live || {}, {as_of: d.as_of, source: d.source || 'yahoo', price: c.price, price_usd: pxUsd, currency: c.currency});
+      // (2026-10-04) también alimenta MKT.quotes cuando NO hay una cotización más
+      // fresca (<15 min): la Terminal/Mercado muestran precio aunque el lote en
+      // vivo no haya cubierto el ticker. Fuente honesta: Yahoo (lote de 15 min).
+      const sym = c.symbol;
+      if(sym && pxUsd != null && pxUsd > 0 && window.MKT && MKT.quotes){
+        const cur = MKT.quotes[sym]; const age = quoteAge(cur);
+        const fresher = !!(cur && quotePx(cur)>0 && cur.src && cur.src!=='marketstack' && cur.via!=='live_caps' && age!=null && age < 15*60);
+        if(!fresher){
+          const pct = (c.change_pct != null && isFinite(+c.change_pct)) ? +c.change_pct : null;
+          const prev = (pct != null && pct > -100) ? pxUsd/(1+pct/100) : (cur && cur.prev != null ? cur.prev : null);
+          MKT.quotes[sym] = Object.assign({}, cur||{}, {close: pxUsd, live: pxUsd, prev, pct, src:'yahoo', via:'live_caps',
+            as_of: d.as_of || new Date().toISOString(), currency: c.currency || 'USD', converted: !!(c.currency && c.currency !== 'USD')});
+          nq++;
+        }
+      }
     });
-    last = {n, as_of: d.as_of};
+    last = {n, nq, as_of: d.as_of};
+    if(nq){
+      if(!MKT.ts) MKT.ts = Date.now();
+      try{ _persistQuotes(); }catch(e){}
+      try{ if(typeof window._termRefreshPrices === 'function') window._termRefreshPrices(); }catch(e){}
+      try{ if(typeof activeTab !== 'undefined' && activeTab === 'market' && typeof renderMarket === 'function') renderMarket(true); }catch(e){}
+    }
     try { window.dispatchEvent(new CustomEvent('khipu:livecaps', {detail: last})); } catch(e){}
     return n;
   }
@@ -6223,11 +6408,18 @@ const DataHealth = {
   render(){
     const el=$('data-health'); if(!el) return;
     const items=[];
-    const fh = !Keys.has('finnhub')?['off',t('dh_off')] : LivePrices.connected?['ok',t('dh_live')] : ['warn',t('dh_cache')];
+    const lm = (typeof MKT!=='undefined' && MKT.liveMeta) || null;
+    const srcN = k => (lm && lm.sources && lm.sources[k]) || 0;
+    // Finnhub: LIVE (WebSocket) · lotes (precios llegaron por /api/quotes/live) · cuota (429) · caché
+    const fh = !Keys.has('finnhub')?['off',t('dh_off')] : LivePrices.connected?['ok',t('dh_live')]
+             : (lm && lm.finnhub_quota)?['warn',t('dh_quota')] : srcN('finnhub')?['ok',t('dh_batch')] : ['warn',t('dh_cache')];
     items.push(['dh_finnhub',fh]);
-    items.push(['dh_fmp', !Keys.has('fmp')?['off',t('dh_off')]:['ok',t('dh_ready')]]);
+    // Yahoo no necesita clave: cubre TODAS las bolsas y es el respaldo de EE.UU.
+    items.push(['dh_yahoo', srcN('yahoo')?['ok',t('dh_batch')] : (lm && lm.done)?['warn',t('dh_cache')] : ['warn',t('dh_ready')]]);
+    // FMP: solo "clave presente" — la prueba REAL vive en 🩺 (/api/diagnostics → fmp)
+    items.push(['dh_fmp', !Keys.has('fmp')?['off',t('dh_off')]:['ok',t('dh_key')]]);
     items.push(['dh_ai', !Keys.has('claude')?['off',t('dh_off')]:['ok',t('dh_ready')]]);
-    items.push(['dh_mkt', !Keys.has('marketstack')?['off',t('dh_off')] : (MKT.ts?['ok',t('dh_cache')]:['warn',t('dh_ready')])]);
+    items.push(['dh_mkt', !Keys.has('marketstack')?['off',t('dh_off')] : ['ok',t('dh_key')]]);
     items.push(['dh_offline', navigator.onLine?['ok',t('dh_no')]:['err',t('dh_yes')]]);
     el.innerHTML=items.map(([k,[cls,txt]])=>`<span class="dh-item"><span class="dh-dot ${cls}"></span>${t(k)}: ${txt}</span>`).join('');
   }
@@ -6626,6 +6818,10 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 .kt-px{font-size:12.5px;font-weight:500;color:var(--kt-ink)}
 .kt-chg{font-size:11.5px;margin-top:2px}
 .kt-up{color:var(--kt-up)} .kt-down{color:var(--kt-down)} .kt-flat{color:var(--kt-ink-3)}
+.kt-nopx{font-size:10px;white-space:nowrap;opacity:.8}
+/* chip de fuente/antigüedad del precio (Terminal + Mercado) */
+.q-src{display:inline-block;font-size:8px;line-height:1;vertical-align:middle;margin-left:4px;cursor:help}
+.q-src.fresh{color:#2BE38B}.q-src.warm{color:#F0A92E}.q-src.eod{color:#8A93A8}.q-src.none{color:#8A93A8;opacity:.45}
 .kt-empty-list{padding:28px 18px;text-align:center;color:var(--kt-ink-3);font-size:12.5px;line-height:1.5}
 /* — espacio de trabajo — */
 .kt-work{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;position:relative}
@@ -8734,8 +8930,10 @@ const _TT = {
     hint: 'Toca o arrastra una empresa de la lista para ver su gráfico',
     cmdPh: 'NVDA · /chart NVDA AMD · /sim taiwan · /geo', cmdAria: 'Línea de comandos', cmdHint: '↵ ejecutar',
     mList: 'Lista', mCharts: 'Gráficos',
-    qLoading: 'Cargando precios…', qNone: 'Sin precios', qNoneTip: 'No llegaron precios: revisa MARKETSTACK_KEY en Railway (🩺).',
-    qOk: '{n} con precio', qOkTip: 'Precio de cierre del último día hábil y su variación frente al cierre anterior.',
+    qLoading: 'Cargando precios…', qNone: 'Sin precios', qNoneTip: 'No llegaron precios de Finnhub ni de Yahoo: abre 🩺',
+    qOk: '{n} con precio', qOkTip: 'Último precio disponible y su variación frente al cierre anterior. Pasa el cursor sobre el punto de cada fila para ver la fuente y la antigüedad.',
+    qOkSrc: '{n} con precio · {src} · {ago}', qQuota: 'cuota de Finnhub agotada: precios vía Yahoo',
+    qNoPx: 'sin precio ({ex})', qNoPxTip: 'Sin precio en vivo para esta bolsa ({ex})',
     noMatch: 'Ninguna empresa coincide con «{q}».',
     emptyT: 'Panel libre', emptyB: 'Toca una empresa de la lista o arrástrala aquí.',
     dossier: 'Dossier financiero: ingresos, márgenes, flujo de caja…', trade: 'Operar', tradeTip: 'Abrir el panel de compra / venta',
@@ -8752,8 +8950,10 @@ const _TT = {
     hint: 'Tap or drag a company from the list to see its chart',
     cmdPh: 'NVDA · /chart NVDA AMD · /sim taiwan · /geo', cmdAria: 'Command line', cmdHint: '↵ run',
     mList: 'List', mCharts: 'Charts',
-    qLoading: 'Loading prices…', qNone: 'No prices', qNoneTip: 'No prices arrived: check MARKETSTACK_KEY in Railway (🩺).',
-    qOk: '{n} priced', qOkTip: 'Close of the last trading day and its change versus the previous close.',
+    qLoading: 'Loading prices…', qNone: 'No prices', qNoneTip: 'No prices arrived from Finnhub or Yahoo: open 🩺',
+    qOk: '{n} priced', qOkTip: 'Latest available price and its change versus the previous close. Hover the dot on each row for the source and age.',
+    qOkSrc: '{n} priced · {src} · {ago}', qQuota: 'Finnhub quota exhausted: prices via Yahoo',
+    qNoPx: 'no price ({ex})', qNoPxTip: 'No live price for this exchange ({ex})',
     noMatch: 'No company matches “{q}”.',
     emptyT: 'Empty panel', emptyB: 'Tap a company in the list or drag it here.',
     dossier: 'Financial dossier: revenue, margins, cash flow…', trade: 'Trade', tradeTip: 'Open the buy / sell panel',
@@ -8990,12 +9190,12 @@ window._termRefreshPrices = function() {
   _term.cells.forEach((c, i) => { if (c && c.nodeId) _termPaintQuote(i, c.ticker); });
 };
 
-// cotización del catálogo (MKT.quotes: cierre EOD + cierre anterior)
+// cotización de MKT.quotes (contrato: live NUMÉRICO o close; src + as_of = fuente y antigüedad)
 function _termQuote(tk) {
-  const q = (window.MKT && MKT.quotes && MKT.quotes[tk]) || {};
-  const px = parseFloat(q.live || q.close || 0) || 0;
-  const prev = parseFloat(q.prev || 0) || 0;
-  return { px, pct: px && prev ? (px - prev) / prev * 100 : null };
+  const q = (window.MKT && MKT.quotes && MKT.quotes[tk]) || null;
+  const px = window.quotePx ? quotePx(q) : 0;
+  const prev = q ? (parseFloat(q.prev || 0) || 0) : 0;
+  return { px, pct: px && prev ? (px - prev) / prev * 100 : null, q };
 }
 function _termFmtPx(v) {
   if (!v || !isFinite(v)) return '—';
@@ -9016,20 +9216,40 @@ function _termRenderList(nodes) {
   // estado de precios (sobre TODO el catálogo con ticker, no solo el filtro)
   const st = document.getElementById('term-qstatus');
   if (st) {
+    // El estado se basa en CUÁNTOS tickers tienen precio y de qué fuente (no en
+    // MKT.ts, que el lote en vivo antes nunca fijaba → "Cargando precios…" eterno).
     const all = (window.NODES || []).filter(n => n.mkt);
-    const withPrice = all.filter(n => _termQuote(n.mkt).px > 0).length;
-    if (!MKT?.ts) { st.className = 'kt-qs'; st.title = ''; st.innerHTML = '<i></i>' + esc(_tt('qLoading')); }
+    let withPrice = 0, newest = null; const srcs = {};
+    all.forEach(n => { const q = _termQuote(n.mkt); if (!(q.px > 0)) return; withPrice++;
+      const s = (q.q && q.q.src) || 'cache'; srcs[s] = (srcs[s] || 0) + 1;
+      const a = window.quoteAge ? quoteAge(q.q) : null; if (a != null && (newest == null || a < newest)) newest = a; });
+    const lm = (window.MKT && MKT.liveMeta) || null;
+    const loading = !!window._liveLoading || (!lm && !withPrice);
+    if (!withPrice && loading) { st.className = 'kt-qs'; st.title = ''; st.innerHTML = '<i></i>' + esc(_tt('qLoading')); }
     else if (!withPrice) { st.className = 'kt-qs warn'; st.title = _tt('qNoneTip'); st.innerHTML = '<i></i>' + esc(_tt('qNone')); }
-    else { st.className = 'kt-qs ok'; st.title = _tt('qOkTip'); st.innerHTML = '<i></i>' + esc(_tt('qOk').replace('{n}', withPrice)); }
+    else {
+      const names = Object.keys(srcs).sort((a, b) => srcs[b] - srcs[a]).map(k => window.quoteSrcName ? quoteSrcName(k) : k).filter(Boolean);
+      const src = names.slice(0, 2).join('/') || '—';
+      const ago = newest != null && window.quoteAgoText ? quoteAgoText(newest) : '';
+      const quota = !!(lm && lm.finnhub_quota);
+      st.className = 'kt-qs ' + (quota ? 'warn' : 'ok');
+      st.title = (quota ? _tt('qQuota') + ' · ' : '') + _tt('qOkTip');
+      st.innerHTML = '<i></i>' + esc(ago ? _tt('qOkSrc').replace('{n}', withPrice).replace('{src}', src).replace('{ago}', ago)
+                                         : _tt('qOk').replace('{n}', withPrice) + ' · ' + src);
+    }
   }
   const open = new Set(_term.cells.filter(c => c && c.nodeId).map(c => c.nodeId));
   const tip = esc(_tt('dragTip'));
   el.innerHTML = nodes.length ? nodes.map(n => {
     const q = _termQuote(n.mkt), f = _termFmtPct(q.pct);
+    const chip = window.quoteSrcChip ? quoteSrcChip(q.q, n.mkt) : '';
+    const ex = window.quoteExchange ? quoteExchange(n.mkt) : '';
+    const chg = q.px > 0 ? `<div class="kt-chg ${f.c}">${f.t}</div>`
+      : `<div class="kt-chg kt-flat kt-nopx" title="${esc(_tt('qNoPxTip').replace('{ex}', ex))}">${esc(_tt('qNoPx').replace('{ex}', ex))}</div>`;
     return `<div class="term-item${open.has(n.id) ? ' on' : ''}" role="listitem" tabindex="0" draggable="true" data-id="${esc(n.id)}" data-mkt="${esc(n.mkt)}" title="${tip}">` +
       `<span class="kt-dot" style="background:${sectorColorFor(n.cat)}"></span>` +
       `<div style="min-width:0"><div class="kt-nm">${esc(n.label)}</div><div class="kt-tk">${esc(n.mkt)}</div></div>` +
-      `<div class="kt-q"><div class="kt-px">${_termFmtPx(q.px)}</div><div class="kt-chg ${f.c}">${f.t}</div></div></div>`;
+      `<div class="kt-q"><div class="kt-px">${_termFmtPx(q.px)}${chip}</div>${chg}</div></div>`;
   }).join('') : `<div class="kt-empty-list">${esc(_tt('noMatch').replace('{q}', _term._lastQuery || ''))}</div>`;
 }
 // marca en la lista las empresas abiertas en algún panel + contador del teléfono
@@ -9412,37 +9632,15 @@ window.nexusCore = {
   const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 min
   let _countdown = REFRESH_INTERVAL / 1000;
 
-  function _allTickers() {
-    if (typeof NODES === 'undefined') return [];
-    return [...new Set(NODES.filter(n => n.mkt).map(n => n.mkt))].slice(0, 100);
-  }
-
+  // (2026-10-04) Antes pedía SOLO los primeros 100 de 569 tickers en una sola
+  // llamada y pisaba MKT.quotes sin avisar a la Terminal. Ahora delega en el
+  // cargador por lotes (window.loadLiveQuotes: TODO el catálogo, merge, repinta
+  // Terminal/Mercado/3D, fija MKT.ts) — un solo camino para los precios.
   async function refreshLiveData() {
-    const tickers = _allTickers();
-    if (!tickers.length) return;
+    if (typeof NODES === 'undefined' || !NODES.length || !window.loadLiveQuotes) return;
     try {
-      const BASE = '';
-      const res = await fetch(`${BASE}/api/quotes/live`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({tickers}),
-      });
-      if (!res.ok) { _setLiveStatus('error'); return; }
-      const quotesMap = await res.json();
-
-      // Update MKT.quotes
-      if (typeof MKT !== 'undefined') {
-        Object.entries(quotesMap).forEach(([tk, q]) => { MKT.quotes[tk] = q; });
-      }
-
-      // Update 3D graph colors
-      const updater = window._graph3d_updateLiveColors;
-      if (updater) updater(quotesMap);
-
-      // Re-render market table if active
-      if (typeof renderMarket === 'function') renderMarket();
-
-      _setLiveStatus('live');
+      const r = await window.loadLiveQuotes();
+      _setLiveStatus(r && r.got ? 'live' : 'error');
     } catch(e) {
       _setLiveStatus('error');
     }
@@ -9587,7 +9785,7 @@ window.loadTradeFlows = loadTradeFlows;
     const ptWrap = document.getElementById('investor-pt-wrap');
     if (ptWrap && n.mkt) {
       const q = (typeof MKT !== 'undefined' && MKT.quotes) ? MKT.quotes[n.mkt] : null;
-      const current = q ? (q.live || q.close) : null;
+      const current = quotePx(q) || null;
       ptWrap.innerHTML = `
         <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:12px">
           <div style="font-size:9px;letter-spacing:0.1em;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:8px">PRICE TARGETS · CONSENSO</div>
@@ -10052,7 +10250,7 @@ window.loadTradeFlows = loadTradeFlows;
     if (_tp.ticker !== ticker) _tp.ambSig = null;   // el aviso de orden ambigua es de otro ticker
     _tp.ticker = ticker; _tp.label = label || ticker;
     const q = MKT.quotes[ticker] || {};
-    _tp.price = parseFloat(q.live || q.close || 0) || 0;
+    _tp.price = quotePx(q);
     _tp.prev  = parseFloat(q.prev || 0) || 0;
     const pct = _tp.prev > 0 ? (_tp.price - _tp.prev) / _tp.prev * 100 : 0;
 
@@ -10168,7 +10366,7 @@ window.loadTradeFlows = loadTradeFlows;
   function _tpLocalSim(ticker, side, qty, setS, ord, tid) {
     const node = (window.NODES || []).find(n => n.mkt === ticker);
     const q = (window.MKT && MKT.quotes && MKT.quotes[ticker]) || {};
-    const px = q.close || q.live || q.prev || 0;
+    const px = quotePx(q) || (parseFloat(q.prev) || 0);
     if (node && px > 0) {
       const cur = (MKT.pos[node.id]) || { sh: 0, bp: px };
       const newSh = side === 'sell' ? Math.max(0, (cur.sh || 0) - qty) : (cur.sh || 0) + qty;

@@ -210,7 +210,19 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   links_expand.js se convierten en el merge; `NODE_ID_ALIAS` normaliza ids.
 - `LINKS` (post-merge): objetos `{source, target, w, rel, type}` — usar
   `lid(l.source)` para el id.
-- `MKT.quotes[ticker] = {close, prev, live}` — NO usar `q.c` ni `q.pc`.
+- `MKT.quotes[ticker] = {close, prev, pct?, live?, src, as_of, currency?, converted?}`
+  (contrato 2026-10-04): `live` es el precio NUMÉRICO o está AUSENTE — NUNCA un
+  booleano (LivePrices escribía `live:true` y `parseFloat(q.live)` daba NaN → "—" en
+  la Terminal y precio 0 al operar). `src` ∈ finnhub|yahoo|marketstack (+ `via:'live_caps'`)
+  y `as_of` (ISO) dicen fuente y antigüedad. Leer el precio SIEMPRE con
+  `window.quotePx(q)`; chip de fuente `quoteSrcChip(q, ticker)`; "en vivo" = `quoteIsLive(q)`.
+  NO usar `q.c` ni `q.pc`. Los precios de TODO el catálogo (569 tickers, todas las
+  bolsas) llegan por `window.loadLiveQuotes()` (lotes de 100 → POST /api/quotes/live →
+  `core/quotes.fetch_quotes_live`: cascada Finnhub→Yahoo en paralelo, caché 15 s,
+  circuito de 60 s tras HTTP 429 de Finnhub → `finnhub_quota:true`). Marketstack es
+  solo respaldo EOD opcional y nunca pisa una cotización más nueva (merge por as_of).
+  `/api/quote/<t>` y `/api/quotes` delegan en la misma función (devuelven además `c/pc/dp/t`
+  crudos por compatibilidad). `LivePrices.seed()` se ELIMINÓ (1.090 req/min → 429): no recrear.
   Portafolio del usuario: `MKT.pos` en localStorage `eco_pos`, SINCRONIZADO con el
   server por engine/sync.js (junto a kh_portfolios / kh_investor_profile; /api/user-state).
 - `window.NODE_BY_ID` SÍ está expuesto (antes era undefined — rompía el Grafo

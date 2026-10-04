@@ -28,6 +28,14 @@ class FinnhubProvider(MarketDataProvider):
         if not FINNHUB:
             return ProviderStatus(self.name, False,
                                   'Falta FINNHUB_KEY en las variables del servidor.')
+        # Sigue CONFIGURADO (la key existe) aunque esté en pausa por cuota:
+        # la cascada lo salta sola (core/quotes._fetch_quote_raw) y cae a Yahoo.
+        from core.quotes import finnhub_circuit_state
+        st = finnhub_circuit_state()
+        if st['paused']:
+            return ProviderStatus(self.name, True,
+                                  f"Cuota agotada (HTTP 429): en pausa {st['seconds_left']} s, "
+                                  'los precios vienen de Yahoo mientras tanto.')
         return ProviderStatus(self.name, True)
 
     def get_quote(self, symbol):
@@ -74,10 +82,22 @@ class YahooProvider(MarketDataProvider):
         q = fetch_quote_intl(symbol)
         if not q or q.get('live') is None:
             return None
-        return make_quote(symbol, q.get('live'), prev_close=q.get('prev'),
-                          provider=self.name, currency=q.get('currency') or 'USD',
-                          converted=bool(q.get('converted')), volume=q.get('vol'),
-                          as_of=_utcnow())
+        # Yahoo sí dice CUÁNDO vale el precio (regularMarketTime): es la
+        # frescura real. Solo si no viene se usa "ahora" (antes era siempre
+        # "ahora", y un cierre de ayer parecía tiempo real).
+        as_of = _utcnow()
+        try:
+            if q.get('ts'):
+                as_of = datetime.fromtimestamp(float(q['ts']), tz=timezone.utc)
+        except (TypeError, ValueError, OSError, OverflowError):
+            as_of = _utcnow()
+        out = make_quote(symbol, q.get('live'), prev_close=q.get('prev'),
+                         provider=self.name, currency=q.get('currency') or 'USD',
+                         converted=bool(q.get('converted')), volume=q.get('vol'),
+                         as_of=as_of)
+        if out is not None and q.get('market_state'):
+            out['market_state'] = q.get('market_state')
+        return out
 
 
 class CoinGeckoProvider(MarketDataProvider):
