@@ -58,6 +58,16 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   de la pestaña tkg; solo hechos con fecha; montaje perezoso, dibujo bajo demanda).
   maptime.js (⏱ TIEMPO EN EL MAPA PRINCIPAL: slider de fecha + capa ⚡ Eventos;
   window.KhipuMapTime, __tkgShow(vista); GRAPH ASOF mueve el mapa).
+  **ESCRITORIO KHIPU (2026-10-04, K1)**: desktop.js (`window.KhipuDesk`): dentro
+  de la Cabina (cockpit.js) cada escena es una VENTANA (– ▢ ✕, arrastre,
+  redimensión, snap a mitades/cuartos, barra de tareas; móvil = hojas). UNA
+  sola puerta: `BixbyCockpit.stage(kind,arg,opts)` → `KhipuDesk.open`;
+  `render(s,kind,arg)` pinta en el cuerpo de la ventana. Adopción de paneles
+  (adoptInto) es POR VENTANA (`_adoptCtx`/`restoreAdopted(winId)`). Nuevas
+  escenas: añadir a KIND_META (ícono/título ES-EN) y, si adoptan un panel, a
+  adoptKinds; solo multi-instancia si pintan con `s.querySelector` (no ids
+  globales). Clases de botones kd-b-* ≠ estados kd-min/kd-max. kh_desk_mode=off
+  = Cabina clásica (no quitar: red de seguridad). Visión: será el ÚNICO interfaz.
   REDISEÑO 2026-07 (piel NEXUS): xray.js (X-Ray de empresa), statematrix.js
   (motor de estados reactivo cliente, MISMA matemática que matrix/engine.py),
   livesim.js (simulación en vivo sobre el mapa), layers.js (capas del mapa),

@@ -9,6 +9,48 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 — ESCRITORIO KHIPU K1: VENTANAS DENTRO DE LA CABINA (sw v186)
+
+Pedido de Fabrizio: "la vista general sea como el interfaz de Khipu; poco a poco será el ÚNICO
+interfaz; todo lo que se genere o abra, como una ventana que se mueve y cambia de tamaño; punto
+medio entre ChatGPT y Windows 11". Primer paso (K1 del plan "VISIÓN PRÓXIMA ETAPA"):
+- `engine/desktop.js` (NUEVO, window.KhipuDesk): el escenario de la Cabina (#bcp-stage) pasa a ser un
+  escritorio: fondo = pantalla de inicio (chips), capa de ventanas, fantasma de snap, barra de tareas
+  (#kd-bar: ⊞ menú mosaico/cascada/minimizar todo/cerrar todo/modo clásico + un botón por ventana).
+  Ventana = barra de título (ícono · título · – ▢ ✕) + cuerpo + 8 manijas. Arrastre y redimensión por
+  pointer events (táctil incluido); arrastrar al borde = mitad/cuarto/maximizar (estilo Windows 11, con
+  previsualización); pasar por ▢ = selector de acomodo; doble clic = maximizar/restaurar; una ventana
+  maximizada/pegada se "despega" al arrastrarla. Geometría recordada por tipo (kh_desk_geom). Móvil
+  (≤760 px) = hojas a pantalla completa, botón "‹ Volver", chips en la barra para cambiar.
+- `engine/cockpit.js`: `stage(kind,arg,opts)` = política (escritorio → KhipuDesk.open; clásico → como
+  antes) y `render(s,kind,arg)` = despacho de escenas (pinta en el cuerpo de la ventana). Adopción de
+  paneles reales POR VENTANA (`_adoptCtx`, `restoreAdopted(winId)`): cerrar la ventana devuelve el
+  panel; cerrar la Cabina devuelve todo y `suspend()`; reabrir → `resume()` re-adopta. Ganchos:
+  configure({render,title,icon,beforeRender,onClose,onFocus,onModeChange,adoptKinds,multiKinds}).
+  Multi-instancia solo 'xray' y 'sim' (render con s.querySelector); el resto singleton por tipo (usan
+  ids globales bcp-*: broker, scalp, deep, compare, research…) — con argumento nuevo se re-pinta.
+  Chat: en el escritorio la respuesta va SIEMPRE al dock de abajo (sin dejar de ser un chatbot); la
+  ventana 💬 ('chat', botón ⤢ Ampliar) adopta el hilo y al cerrarse el hilo vuelve al dock. Demo = una
+  ventana a la vez, maximizada; al terminar cierra todo. Interruptor "🪟 Modo ventanas · usar una sola
+  pantalla" en el inicio (kh_desk_mode=off → Cabina clásica intacta, red de seguridad).
+- `app.html`: `resize()` del mapa ignora 0×0 (ventana minimizada → no re-centrar en cero).
+- Guía: entrada 🪟 Escritorio Khipu (ES/EN). sw v186 (+ engine/desktop.js en SHELL).
+- Verificado con Playwright (/tmp pw/desk.js, 40 comprobaciones): abrir grafo/terminal/2 X-Ray, arrastrar,
+  snap, redimensionar, maximizar, selector de acomodo, minimizar/restaurar desde la barra, cerrar, mosaico
+  sin solapes, chat al dock / ventana 💬, cerrar y reabrir la Cabina (re-adopción), idioma, modo clásico y
+  vuelta, demo, Esc, móvil (hojas, Volver, chips). Medido: dibujar enlaces en canvas NO ayuda (sesión previa).
+- LECCIONES: (1) nunca usar las mismas clases para botones y estados de ventana (kd-min/kd-max eran
+  ambas → en móvil `#bcp-stage.kd-mobile .kd-max{display:none}` ocultaba la hoja maximizada; ahora los
+  botones son kd-b-min/kd-b-max/kd-b-x); (2) listeners del escenario se registran UNA vez (`_kdWired`):
+  el escritorio se desmonta/monta al cambiar de modo; (3) `resize` global solo cuando cambia una ventana
+  que aloja un motor (adoptKinds) — el mapa hace settleGraph en cada resize.
+- SIGUIENTE (K2-K4): botones "abrir en ventana" explícitos en las respuestas de Khipu (hoy las acciones
+  ya abren ventanas), Dossier/Comité/Cartera/Clientes como ventanas (hoy son overlays por encima),
+  espacios guardados (kh_desk_layout sincronizado) + "Khipu, pon el comité al lado de mi cartera" por voz,
+  pausar motores de ventanas minimizadas (WebGL/WebSocket), retirar las pestañas clásicas al final.
+
+---
+
 # SESIÓN 2026-10-03 (g) — SINCRONIZACIÓN ENTRE DISPOSITIVOS (sw v184)
 
 - `engine/sync.js` (NUEVO, window.KhipuSync): sincroniza kh_portfolios, kh_pf_active, kh_investor_profile

@@ -2880,6 +2880,7 @@ function positionRegionLabels(){
 
 function resize(){
   const r = svg.node().getBoundingClientRect();
+  if(!r.width||!r.height) return;   /* oculto (ventana minimizada / pestaña cerrada): no re-centrar en 0×0 */
   W=r.width; H=r.height;
   setForces();
   positionRegionLabels();
@@ -6968,6 +6969,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <script src="engine/crypto.js"></script>
 <script src="engine/portfolios.js"></script>
 <script src="engine/khipu_chat.js"></script>
+<script src="engine/desktop.js"></script>
 <script src="engine/cockpit.js"></script>
 <script src="engine/live.js"></script>
 <script src="engine/command_center.js"></script>

@@ -356,6 +356,7 @@
       cd.querySelector('[data-cd="full"]').textContent = L('⤢ Ampliar', '⤢ Expand');
       cd.querySelector('[data-cd="min"]').textContent = cd.classList.contains('min') ? L('▴ Mostrar', '▴ Show') : L('▾ Ocultar', '▾ Hide');
     }
+    if (deskActive()) desk().relabel();   // títulos de ventanas y barra de tareas en el idioma actual
     var st = ov.querySelector('#bcp-state');
     var tx = st && st.querySelector('.txt');
     // solo el estado de reposo se re-traduce (no pisar "Escuchando"/"Pensando")
@@ -488,17 +489,21 @@
   // escenario de la Cabina (con un placeholder para devolverlos intactos al
   // salir). Así Khipu los muestra EN SU PANTALLA, no te lleva a otra pestaña.
   var _adopted = [];
+  var _adoptCtx = null;   // ESCRITORIO (engine/desktop.js): ventana que está adoptando ahora
 
-  function restoreAdopted() {
-    var hadGraph = false;
+  // sin argumento devuelve TODO; con id de ventana, solo lo que adoptó esa ventana
+  function restoreAdopted(winId) {
+    var hadGraph = false, keep = [];
     while (_adopted.length) {
       var a = _adopted.pop();
+      if (winId && a.win !== winId) { keep.push(a); continue; }
       try {
         if (a.el.tagName === 'MAIN') hadGraph = true;
         a.el.style.display = a.prevDisplay;
         if (a.ph.parentNode) a.ph.parentNode.replaceChild(a.el, a.ph);
       } catch (e) {}
     }
+    while (keep.length) _adopted.push(keep.pop());
     try { window.dispatchEvent(new Event('resize')); } catch (e) {}
     // anti-glitch (feedback real): el grafo volvía clavado/zoomeado en una
     // empresa — al devolverlo, re-encuadramos la vista completa
@@ -512,7 +517,7 @@
   function adoptInto(container, el, displayMode) {
     if (!el || !el.parentNode) return false;
     var ph = document.createComment('bcp-placeholder');
-    _adopted.push({ el: el, ph: ph, prevDisplay: el.style.display });
+    _adopted.push({ el: el, ph: ph, prevDisplay: el.style.display, win: _adoptCtx });
     el.parentNode.replaceChild(ph, el);
     container.appendChild(el);
     el.style.display = displayMode || 'flex';
@@ -528,17 +533,51 @@
 
   // ══ ESCENARIO ══
   var _curKind = null;   // escena actual (para re-pintar el inicio al reabrir)
-  function stage(kind, arg) {
+  var CHIP_KINDS = ['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'];
+
+  // ESCRITORIO KHIPU (engine/desktop.js, 2026-10-04): si está activo, cada
+  // escena se abre como VENTANA (movible, redimensionable, barra de tareas) y
+  // el chat sigue abajo. Si no (kh_desk_mode=off o sin el módulo), la Cabina
+  // clásica de una sola pantalla. Una sola puerta: todo pasa por stage().
+  function desk() {
+    var D = window.KhipuDesk;
+    return (D && D.enabled()) ? D : null;
+  }
+  function deskActive() { var D = desk(); return !!(D && D.active()); }
+  function stage(kind, arg, opts) {
     ensureShell();
     var s = document.getElementById('bcp-stage');
     if (!s) return;
+    var D = desk();
+    if (D) {
+      if (!D.active()) {              // primer uso: el escenario clásico se vacía y pasa a escritorio
+        restoreAdopted(); closeConfirmDialog(); _scalpStop();
+        D.mount(s);
+      }
+      if (!D.wall().children.length) stageEmpty(D.wall());
+      if (kind === 'empty') {
+        if (_demo.on) D.closeAll();   // la demostración arranca con el escritorio limpio
+        _curKind = 'empty'; markActive(null); _placeThread('empty'); stageEmpty(D.wall()); return;
+      }
+      _curKind = kind;
+      _placeThread(kind);
+      opts = opts || {};
+      if (_demo.on) { opts.solo = true; opts.max = true; }   // la demostración: una ventana a la vez, grande
+      D.open(kind, arg, opts);
+      return;
+    }
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
     closeConfirmDialog();   // un diálogo de orden pendiente no sobrevive al cambio de escena
     _scalpStop();       // detener el polling de scalping al cambiar de escena
     _curKind = kind;
     _placeThread(kind);
-    if (kind === 'chat') { markActive(null); return stageChat(s); }
-    markActive(['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'].indexOf(kind) >= 0 ? kind : null);
+    markActive(kind === 'chat' ? null : (CHIP_KINDS.indexOf(kind) >= 0 ? kind : null));
+    return render(s, kind, arg);
+  }
+  // pinta la escena `kind` DENTRO de `s` (el escenario clásico o el cuerpo de una ventana)
+  function render(s, kind, arg) {
+    if (kind === 'chat') return stageChat(s);
+    if (kind === 'empty') return stageEmpty(s);
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'scalp') return stageScalp(s, arg);
     if (kind === 'crypto') return stageCrypto(s, arg);
@@ -556,6 +595,64 @@
     if (kind === 'terminal') return stageTerminal(s, arg);
     return stageEmpty(s);
   }
+
+  // ── ESCRITORIO: título, ícono y limpieza por ventana ──
+  var KIND_META = {
+    graph: ['🕸', 'Grafo en vivo', 'Live graph'], terminal: ['🖥', 'Terminal', 'Terminal'],
+    insights: ['💡', 'Insights', 'Insights'], canvas: ['🎨', 'Lienzo', 'Canvas'], deep: ['🧠', 'Investigación profunda', 'Deep research'],
+    broker: ['💼', 'Mi cuenta', 'My account'], scalp: ['⚡', 'Scalping', 'Scalping'], crypto: ['₿', 'Cripto', 'Crypto'],
+    market: ['📈', 'Mercado', 'Market'], geo: ['🌐', 'Geopolítica', 'Geopolitics'], space: ['🚀', 'Espacio', 'Space'],
+    simulation: ['🧬', 'Escenarios', 'Scenarios'], tkg: ['⏱', 'Grafo Temporal', 'Temporal Graph'], guia: ['❓', 'Guía', 'Guide'],
+    xray: ['🔬', 'Radiografía', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['⚡', 'Simulación', 'Simulation'],
+    agentsim: ['🧪', 'Simulación por agentes', 'Agent simulation'], research: ['🧠', 'Investigación', 'Research'],
+    screener: ['🚀', 'Explosivas', 'Breakouts'], chat: ['💬', 'Conversación', 'Conversation'],
+  };
+  function _argLabel(kind, arg) {
+    try {
+      if (arg == null) return '';
+      if (kind === 'compare' && arg && arg.a) { var a = resolveNode(arg.a), b = resolveNode(arg.b); return (a ? a.label : arg.a) + ' vs ' + (b ? b.label : arg.b); }
+      if (kind === 'agentsim') return String((arg && arg.scenario) || '').slice(0, 40);
+      if (kind === 'deep') return String(arg || '').slice(0, 40);
+      if (kind === 'canvas') return typeof arg === 'string' ? arg.slice(0, 40) : '';
+      if (kind === 'scalp') return (arg && arg.sym) || '';
+      var id = (arg && typeof arg === 'object') ? (arg.id || arg.ticker) : arg;
+      if (!id || typeof id !== 'string') return '';
+      var n = resolveNode(id);
+      return n ? n.label : id;
+    } catch (e) { return ''; }
+  }
+  function winTitle(kind, arg) {
+    var m = KIND_META[kind]; var base = m ? (ckLang() === 'en' ? m[2] : m[1]) : kind;
+    var extra = _argLabel(kind, arg);
+    return extra ? base + ' · ' + extra : base;
+  }
+  function winCleanup(kind, winId) {
+    restoreAdopted(winId);
+    if (kind === 'scalp') _scalpStop();
+    if (kind === 'broker') closeConfirmDialog();
+    if (kind === 'deep' && _deepTimer) { clearInterval(_deepTimer); _deepTimer = null; }
+  }
+  if (window.KhipuDesk) window.KhipuDesk.configure({
+    render: function (body, kind, arg, winId) {
+      _adoptCtx = winId;
+      try { render(body, kind, arg); } finally { _adoptCtx = null; }
+    },
+    title: winTitle,
+    icon: function (kind) { var m = KIND_META[kind]; return m ? m[0] : '▫'; },
+    beforeRender: winCleanup,
+    onClose: function (kind, winId) {
+      winCleanup(kind, winId);
+      if (kind === 'chat') _placeThread(_curKind === 'chat' ? 'empty' : _curKind);   // el hilo vuelve al dock
+    },
+    onFocus: function (kind) {
+      if (!kind) { _curKind = 'empty'; markActive(null); return; }
+      _curKind = kind;
+      markActive(CHIP_KINDS.indexOf(kind) >= 0 ? kind : null);
+    },
+    onModeChange: function () { if (open) stage('empty'); },
+    adoptKinds: ['graph', 'terminal', 'crypto', 'tkg', 'guia', 'market', 'geo', 'space', 'simulation'],
+    multiKinds: ['xray', 'sim'],
+  });
 
   // ── el GRAFO en vivo, dentro de la Cabina ──
   function stageGraph(s, focusId) {
@@ -684,6 +781,18 @@
     s.querySelectorAll('.bcp-chip').forEach(function (el) {
       el.addEventListener('click', function () { ask(el.getAttribute('data-q')); });
     });
+    // ESCRITORIO: interruptor discreto (ventanas ↔ una sola pantalla)
+    if (window.KhipuDesk) {
+      var on = window.KhipuDesk.enabled();
+      var sw = document.createElement('div');
+      sw.id = 'bcp-deskmode';
+      sw.style.cssText = 'margin:26px auto 0;font-size:11.5px;color:#5E6884';
+      sw.innerHTML = '🪟 ' + esc(on ? (en ? 'Windows mode' : 'Modo ventanas') : (en ? 'Single-screen mode' : 'Modo una pantalla')) +
+        ' · <a href="#" id="bcp-deskmode-sw" style="color:#9BA6C4;text-decoration:underline dotted">' +
+        esc(on ? (en ? 'use a single screen' : 'usar una sola pantalla') : (en ? 'use windows' : 'usar ventanas')) + '</a>';
+      s.querySelector('#bcp-empty').appendChild(sw);
+      sw.querySelector('#bcp-deskmode-sw').addEventListener('click', function (e) { e.preventDefault(); window.KhipuDesk.setEnabled(!on); });
+    }
     try { _homeHyper(); } catch (e) {}   // banner proactivo del hipergrafo (siempre)
     try { _homePulse(); } catch (e) {}   // pulso ligero del portafolio (capa proactiva)
   }
@@ -2200,10 +2309,12 @@
     var th = chatThread();
     var dock = document.getElementById('bcp-chatdock');
     if (!dock) return;
-    if (kind === 'chat') { dock.classList.remove('show'); return; }   // stageChat lo adopta
+    var D = deskActive() ? desk() : null;
+    if (kind === 'chat' || (D && D.has('chat'))) { dock.classList.remove('show'); return; }   // stageChat / la ventana 💬 lo adopta
     var bd = dock.querySelector('.bd');
     if (th.parentNode !== bd) bd.appendChild(th);
-    dock.classList.toggle('show', th.children.length > 0 && kind !== 'empty');
+    // en el escritorio la conversación queda SIEMPRE abajo (sin dejar de ser un chatbot)
+    dock.classList.toggle('show', th.children.length > 0 && (!!D || kind !== 'empty'));
     if (th.children.length) setTimeout(function () { bd.scrollTop = bd.scrollHeight; }, 30);
   }
   function stageChat(s) {
@@ -2216,9 +2327,21 @@
     s.querySelector('#bcp-chat-clear').addEventListener('click', function () {
       if (window.KhipuChat) window.KhipuChat.clear();
       th.innerHTML = '';
-      stage('empty');
+      if (deskActive()) desk().closeKind('chat'); else stage('empty');
     });
     setTimeout(function () { s.scrollTop = s.scrollHeight; }, 30);
+  }
+  // dónde se ve la respuesta: en el escritorio, en el dock de abajo (o en la
+  // ventana 💬 si ya está abierta); en la Cabina clásica, en la escena 'chat'
+  function _ensureThread() {
+    if (deskActive()) {
+      // si la ventana 💬 existe pero está minimizada, la respuesta no se vería: se trae al frente
+      var cw = desk().list().filter(function (w) { return w.kind === 'chat'; })[0];
+      if (cw && cw.min) desk().focus(cw.id);
+      _placeThread(_curKind || 'empty');
+      return;
+    }
+    if (_curKind !== 'chat') stage('chat');
   }
   // acción devuelta por el cerebro → escena de la Cabina (la respuesta queda en el dock)
   function runChatAction(a) {
@@ -2235,9 +2358,10 @@
   function chatAsk(text) {
     var K = window.KhipuChat;
     if (!K) { stage('deep', text); return; }
-    if (_curKind !== 'chat') stage('chat');
+    _ensureThread();
     var th = chatThread();
     K.appendUser(th, text);
+    _ensureThread();
     var pend = K.appendPending(th);
     setState('think', L('Pensando', 'Thinking'));
     K.send(text).then(function (d) {
@@ -2254,9 +2378,10 @@
   function commandToThread(text, r) {
     var K = window.KhipuChat;
     if (!K) return;
-    if (_curKind !== 'chat') stage('chat');
+    _ensureThread();
     var th = chatThread();
     K.appendUser(th, text);
+    _ensureThread();
     var el = K.appendPending(th);
     var acts = ((r && r.actions) || []).map(function (a) {
       if (a.type === 'second_brain' || a.type === 'xray') return { type: 'open_xray', arg: a.arg };
@@ -2362,6 +2487,7 @@
     open = true;
     relabelShell(ov);   // idioma al día (la cáscara se construyó una sola vez)
     mountCockpitOrb();
+    if (deskActive()) desk().resume();   // las ventanas vuelven a adoptar grafo/terminal/etc.
     if (initial && initial.kind) stage(initial.kind, initial.arg);
     // pantalla de inicio vacía o ya mostrada → se re-pinta (textos en el idioma actual)
     else if (!document.getElementById('bcp-stage').children.length || _curKind === 'empty') stage('empty');
@@ -2370,6 +2496,7 @@
   function close() {
     closeConfirmDialog();
     restoreAdopted();   // devolver grafo/terminal a su sitio original
+    if (deskActive()) desk().suspend();   // las ventanas recuerdan que deben re-adoptar al volver
     _scalpStop();       // detener el polling de scalping al cerrar la Cabina
     demoStop();         // cortar la demostración (timers + voz) al cerrar
     stopCockpitOrb();
@@ -2570,7 +2697,7 @@
     _demoSilence();
     var el = document.getElementById('bcp-demo');
     if (el) el.remove();
-    if (finished === true) stage('empty');
+    if (finished === true) { if (deskActive()) desk().closeAll(); stage('empty'); }
   }
 
   window.BixbyCockpit = {
@@ -2578,6 +2705,7 @@
     close: close,
     isOpen: function () { return open; },
     stage: stage,
+    render: render,
     ask: ask,
     agentSim: function (scenario) {
       if (!open) openCockpit();

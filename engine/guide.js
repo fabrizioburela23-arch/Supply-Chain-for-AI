@@ -4,6 +4,7 @@
 // 2026-09-28: BILINGÜE (regla del proyecto) y al día — 949 empresas, ⏱ en el
 // mapa, 📡 feed, actualizaciones silenciosas (ya no hay aviso "Nueva versión").
 // 2026-09-28 (tarde): toda empresa tiene 📊 Dossier y qué parte es EN VIVO.
+// 2026-10-04: 🪟 Escritorio Khipu (ventanas dentro de la Cabina).
 // 2026-10-03: Pizarra, Sala del comité, Mi cartera (perfil/diagnóstico/reportes/noticias/pregúntale),
 // simulación estructural, 💰 Gasto IA y avisos de compra/venta.
 // Se reconstruye si cambia el idioma.
@@ -42,6 +43,7 @@
       ],
       wow_h: 'Los superpoderes',
       wow: [
+        ['🪟 Escritorio Khipu', 'Dentro de la Cabina, TODO lo que abres (grafo, terminal, X-Ray, simulación, mi cuenta…) aparece como una <b>ventana</b>: muévela por la barra de título, cámbiale el tamaño por los bordes, pégala a un lado arrastrándola al borde (mitades y cuartos, como en Windows), maximízala con doble clic (– ▢ ✕ arriba a la derecha). Abajo, la <b>barra de tareas</b> muestra lo abierto y el botón ⊞ acomoda todo en mosaico o cascada. El chat de Khipu sigue siempre abajo. En el teléfono cada ventana ocupa la pantalla y cambias entre ellas con los botones de abajo. Si prefieres una sola pantalla: en el inicio de la Cabina, «usar una sola pantalla».'],
         ['🎙 Cabina de Khipu', 'Toca el botón Khipu (o Ctrl+K): pantalla completa con botones para TODO — Grafo, Terminal, X-Ray, Simular, Comparar, Oportunidades, Investigar y Gráficos. Escribe o habla normal.'],
         ['🔬 X-Ray', 'En la ficha de cualquier empresa: la "desarma" por completo — por qué tiene ese riesgo, todos sus hilos (de quién depende y a quién provee), y la onda de impacto si cae (quién sufre y quién GANA).'],
         ['🔬 Investigación IA', 'En el X-Ray o la ficha de una empresa: botón 🔬 Investigar. Varios analistas IA (fundamentales, noticias, técnico, cadena de suministro…) leen SOLO datos reales con fuente y escriben conclusiones cortas: cada una dice si es a favor, en contra o neutral, para qué plazo (hoy, semanas, meses, años), qué tan confiable es (y por qué) y qué la desmentiría. Toca "¿Por qué? →" para ver la evidencia a favor y en contra con su fuente original (incluidos los reportes oficiales a la SEC: 10-K, 10-Q, 8-K). Si dos analistas no están de acuerdo, se muestra el choque — no se esconde. Nunca dice compra/vende.'],
@@ -132,6 +134,7 @@
       ],
       wow_h: 'The superpowers',
       wow: [
+        ['🪟 Khipu desktop', 'Inside the Cockpit, EVERYTHING you open (graph, terminal, X-Ray, simulation, my account…) shows up as a <b>window</b>: move it by its title bar, resize it from the edges, snap it to a side by dragging it to the edge (halves and quarters, like Windows), maximize it with a double click (– ▢ ✕ at the top right). At the bottom, the <b>taskbar</b> lists what is open and the ⊞ button tiles or cascades everything. The Khipu chat always stays at the bottom. On the phone each window fills the screen and you switch between them with the buttons at the bottom. If you prefer a single screen: on the Cockpit home, “use a single screen”.'],
         ['🎙 Khipu Cockpit', 'Tap the Khipu button (or Ctrl+K): a full screen with buttons for EVERYTHING — Graph, Terminal, X-Ray, Simulate, Compare, Opportunities, Research and Charts. Type or talk normally.'],
         ['🔬 X-Ray', 'From any company card: takes it apart completely — why it carries that risk, all its threads (who it depends on and who it supplies), and the impact wave if it fails (who suffers and who WINS).'],
         ['🔬 AI Research', 'In the X-Ray or a company card: the 🔬 Research button. Several AI analysts (fundamentals, news, technical, supply chain…) read ONLY real, sourced data and write short conclusions: each says whether it is positive, negative or neutral, for which horizon (today, weeks, months, years), how reliable it is (and why) and what would prove it wrong. Tap "Why? →" to see the evidence for and against with its original source. When two analysts disagree the clash is shown, not hidden. It never says buy/sell. Evidence includes official SEC filings (10-K, 10-Q, 8-K).'],
