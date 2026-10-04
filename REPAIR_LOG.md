@@ -868,7 +868,7 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   las siguientes no; `created` ya no cuenta duplicados.
 - **Verificar.** Ensayo: base migrada desde el snapshot de julio → aplicar todo
   → 0 diferencias, tablas == replay en cada paso → deshacer ambas corridas → los
-  1.451 vínculos originales EXACTOS. `pytest tests/test_repair_ontology_review.py` (18).
+  1.451 vínculos originales EXACTOS. `pytest tests/test_repair_ontology_review.py` (17).
 
 ### G6 — Revisión adversarial de G4 (lente "contratos"): el mismo NRS en todas partes, el chat ve todo
 - **Hallazgos y cambios.** (media) El chat (`rank_companies`), el asistente de
