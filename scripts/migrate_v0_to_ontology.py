@@ -56,7 +56,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-GENESIS = '2000-01-01'
+# El centinela se define UNA vez en ontology/service.py (G4b): quien serialice
+# un valid_from lo compara con `is_genesis` para marcar `valid_from_known: false`.
+from ontology.service import GENESIS_SENTINEL as GENESIS  # noqa: E402
 
 
 # Tablas que --reset / REMIGRATE_ON_BOOT pueden borrar: SOLO las del grafo

@@ -99,20 +99,30 @@ def _obj_to_dict(o):
             'updated_at': o.updated_at.isoformat() if o.updated_at else None}
 
 
+def _mark_genesis(d, valid_from):
+    """G4b: la fecha centinela 2000-01-01 de la migración NO es una fecha real
+    ("desde que se rastrea"). Se marca para que la UI y las IAs no la lean
+    como inicio real. Solo se añade la clave cuando aplica."""
+    from ontology.service import is_genesis
+    if is_genesis(valid_from):
+        d['valid_from_known'] = False
+    return d
+
+
 def _link_to_dict(l):
-    return {'id': str(l.id), 'source': l.source_id, 'target': l.target_id,
-            'rel_type': l.rel_type, 'weight': l.weight, 'properties': l.properties,
-            'valid_from': l.valid_from.isoformat() if l.valid_from else None,
-            'valid_to': l.valid_to.isoformat() if l.valid_to else None}
+    return _mark_genesis({'id': str(l.id), 'source': l.source_id, 'target': l.target_id,
+                          'rel_type': l.rel_type, 'weight': l.weight, 'properties': l.properties,
+                          'valid_from': l.valid_from.isoformat() if l.valid_from else None,
+                          'valid_to': l.valid_to.isoformat() if l.valid_to else None}, l.valid_from)
 
 
 def _event_to_dict(e):
-    return {'id': str(e.id), 'event_type': e.event_type, 'object_id': e.object_id,
-            'target_id': e.target_id, 'payload': e.payload,
-            'valid_from': e.valid_from.isoformat() if e.valid_from else None,
-            'valid_to': e.valid_to.isoformat() if e.valid_to else None,
-            'recorded_at': e.recorded_at.isoformat() if e.recorded_at else None,
-            'source': e.source, 'actor': e.actor}
+    return _mark_genesis({'id': str(e.id), 'event_type': e.event_type, 'object_id': e.object_id,
+                          'target_id': e.target_id, 'payload': e.payload,
+                          'valid_from': e.valid_from.isoformat() if e.valid_from else None,
+                          'valid_to': e.valid_to.isoformat() if e.valid_to else None,
+                          'recorded_at': e.recorded_at.isoformat() if e.recorded_at else None,
+                          'source': e.source, 'actor': e.actor}, e.valid_from)
 
 
 @ontology_bp.route('/status')
@@ -774,7 +784,7 @@ def event_detail(event_id):
             o = s.get(ObjectRecord, ev.source_id)
             if o is not None:
                 fuente = source_to_dict(o)
-        return jsonify({
+        return jsonify(_mark_genesis({
             'id': str(ev.id), 'event_type': ev.event_type,
             'object_id': ev.object_id, 'target_id': ev.target_id,
             'payload': ev.payload,
@@ -783,7 +793,7 @@ def event_detail(event_id):
             'recorded_at': ev.recorded_at.isoformat() if ev.recorded_at else None,
             'channel': ev.source, 'actor': ev.actor,
             'confidence': ev.confidence, 'source': fuente,
-        })
+        }, ev.valid_from))
 
 
 @ontology_bp.route('/objects/<object_id>/timeline')

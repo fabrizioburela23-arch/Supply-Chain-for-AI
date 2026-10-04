@@ -1020,7 +1020,9 @@
         var cellEl = document.getElementById('fc-hist'), list = document.getElementById('fc-hist-list');
         if (!cellEl || !list) return;
         list.innerHTML = rows.map(function (e) {
-          var at = e.at ? String(e.at).slice(0, 10) : '—';
+          // G4b: 2000-01-01 es el centinela de la migración, no una fecha real
+          var at = e.valid_from_known === false ? (isEn() ? 'since tracked' : 'desde que se rastrea')
+            : (e.at ? String(e.at).slice(0, 10) : '—');
           var u = safeUrl(e.url);
           var title = esc(e.title || e.event_type || '');
           var pub = e.source && (e.source.publisher || e.source.label || e.source.domain);

@@ -26,6 +26,7 @@ from sqlalchemy import or_, select
 
 from ontology.models import Event, LinkRecord, ObjectRecord
 from ontology.provenance import source_to_dict
+from ontology.service import is_genesis
 
 _T = {
     'es': {
@@ -139,7 +140,7 @@ def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
     for ev in eventos:
         titulo, detalle = _titulo(ev, object_id, etiquetas, t)
         fuente = fuentes.get(ev.source_id) if ev.source_id else None
-        entradas.append({
+        fila = {
             'kind': 'event',
             'at': _iso(ev.valid_from),
             'recorded_at': _iso(ev.recorded_at),   # cuándo lo SUPIMOS
@@ -151,7 +152,13 @@ def entity_timeline(session, object_id, limit=60, lang='es', include_news=True):
             'confidence': ev.confidence,
             'source': fuente,
             'url': (fuente or {}).get('url'),
-        })
+        }
+        # G4b: 2000-01-01 es el centinela de la migración ("desde que se
+        # rastrea"), no una fecha real — que la línea de tiempo no lo pinte
+        # como si la relación hubiera empezado ese día.
+        if is_genesis(ev.valid_from):
+            fila['valid_from_known'] = False
+        entradas.append(fila)
 
     if include_news:
         from ontology.ingest_news import news_for_object
@@ -293,7 +300,7 @@ def global_feed(session, limit=30, lang='es', since=None):
         else:
             titulo, detalle = _titulo(ev, ev.object_id, etiquetas, t)
             entidades = [x for x in (ev.object_id, ev.target_id) if x]
-            entradas.append({
+            fila = {
                 'kind': 'event',
                 'at': _iso(ev.valid_from), 'recorded_at': _iso(ev.recorded_at),
                 'event_type': ev.event_type,
@@ -302,7 +309,10 @@ def global_feed(session, limit=30, lang='es', since=None):
                 'title': titulo, 'detail': detalle,
                 'actor': ev.actor, 'channel': ev.source, 'confidence': ev.confidence,
                 'source': fuente, 'url': (fuente or {}).get('url'),
-            })
+            }
+            if is_genesis(ev.valid_from):
+                fila['valid_from_known'] = False
+            entradas.append(fila)
         if len(entradas) >= limit:
             break
     return entradas

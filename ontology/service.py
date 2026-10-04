@@ -9,7 +9,7 @@ reconstruir qué estaba vigente en una fecha de VALIDEZ dada (time-travel),
 igual que ya hace el Grafo Temporal en el cliente (status() vigente/expirado).
 """
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from sqlalchemy import select, or_, and_
 
@@ -21,6 +21,29 @@ class OntologyError(ValueError):
 
 
 VALID_EVENT_TYPES = {e.value for e in EventType}
+
+# ── fecha CENTINELA de la migración (G4b, misión de reparación 2026-10-04) ──
+# scripts/migrate_v0_to_ontology.py puso valid_from = 2000-01-01 a todas las
+# empresas y a los ~2.500 links del catálogo sin fecha propia: significa
+# "desde que rastreamos este universo", NO una fecha real de inicio. En la UI y
+# en el MCP se leía como fecha real (TSMC: todos sus vínculos "desde 2000").
+# Este es el ÚNICO lugar que define el centinela; quien serialice un
+# valid_from debe marcar `valid_from_known: false` cuando `is_genesis(dt)`.
+GENESIS_SENTINEL = '2000-01-01'
+VALID_FROM_NOTE_ES = 'desde que se rastrea; fecha de inicio real desconocida'
+VALID_FROM_NOTE_EN = 'since tracking began; real start date unknown'
+
+
+def is_genesis(dt):
+    """¿`dt` es la fecha centinela (2000-01-01)? Acepta datetime (con o sin zona),
+    date, texto ISO o None. Solo mira el día: el centinela se guardó a medianoche UTC."""
+    if dt is None:
+        return False
+    if isinstance(dt, datetime):
+        return dt.date().isoformat() == GENESIS_SENTINEL
+    if isinstance(dt, date):
+        return dt.isoformat() == GENESIS_SENTINEL
+    return str(dt)[:10] == GENESIS_SENTINEL
 
 
 def _utcnow():
@@ -340,12 +363,15 @@ def _links_active_at(session, as_of_dt):
         if any(rm_rel in (None, rel) and ev.valid_from <= rm_at <= as_of_dt
                for rm_at, rm_rel in rms):
             continue
-        active.append({
+        row = {
             'source': ev.object_id, 'target': ev.target_id, 'rel_type': rel,
             'weight': p.get('weight'), 'properties': p.get('properties', {}),
             'valid_from': ev.valid_from.isoformat() if ev.valid_from else None,
             'event_id': str(ev.id),
-        })
+        }
+        if is_genesis(ev.valid_from):
+            row['valid_from_known'] = False
+        active.append(row)
     return active
 
 

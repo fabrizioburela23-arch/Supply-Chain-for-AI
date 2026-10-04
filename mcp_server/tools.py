@@ -689,10 +689,27 @@ def _iso(d):
     return d.isoformat() if d else None
 
 
+def _with_genesis(d, valid_from):
+    """G4b: 2000-01-01 es el CENTINELA de la migración ("desde que se rastrea"),
+    no una fecha real. Las IAs lo leían como inicio real de cada vínculo."""
+    from ontology.service import VALID_FROM_NOTE_EN, VALID_FROM_NOTE_ES, is_genesis
+    if is_genesis(valid_from):
+        d['valid_from_known'] = False
+        d['valid_from_note_es'] = VALID_FROM_NOTE_ES
+        d['valid_from_note_en'] = VALID_FROM_NOTE_EN
+    return d
+
+
+PROVENANCE_NOTE_EN = 'catalog-only: curated by Khipus, no primary source document recorded'
+PROVENANCE_NOTE_ES = 'solo catálogo: curado por Khipus, sin documento fuente primario registrado'
+
+
 @tool('get_ontology_object', 'Ontology object (bitemporal)', 'read',
       'An object of the Khipus ontology (Postgres, event-sourced): current properties, its most recent events '
       '(what changed, when it was valid, when it was recorded, by whom), active links and the provenance '
-      'sources (documents with trust score) that back it.',
+      'sources (documents with trust score) that back it. valid_from 2000-01-01 is the migration sentinel '
+      '("since tracking began", flagged valid_from_known=false), not a real start date; an empty provenance '
+      'list means catalog-only curation (provenance_note).',
       {'id': {'type': 'string', 'maxLength': 120, 'minLength': 1, 'description': 'Object id, ticker or name.'},
        'events_limit': {'type': 'integer', 'minimum': 1, 'maximum': 50, 'default': 15}},
       required=['id'])
@@ -719,22 +736,33 @@ def t_get_ontology_object(ctx, id, events_limit=15):  # noqa: A002
         except Exception as e:  # noqa: BLE001
             prov = {'error': type(e).__name__}
         props = dict(o.properties or {})
-        return {
+        out = {
             'object': {'id': o.id, 'type': o.type, 'label': o.label, 'properties': props,
                        'created_at': _iso(o.created_at), 'updated_at': _iso(o.updated_at)},
-            'recent_events': [{'id': str(e.id), 'event_type': e.event_type, 'object_id': e.object_id,
-                               'target_id': e.target_id, 'payload': e.payload, 'valid_from': _iso(e.valid_from),
-                               'valid_to': _iso(e.valid_to), 'recorded_at': _iso(e.recorded_at),
-                               'channel': e.source, 'actor': e.actor, 'source_id': e.source_id,
-                               'confidence': e.confidence} for e in evs],
+            'recent_events': [_with_genesis({'id': str(e.id), 'event_type': e.event_type, 'object_id': e.object_id,
+                                             'target_id': e.target_id, 'payload': e.payload,
+                                             'valid_from': _iso(e.valid_from),
+                                             'valid_to': _iso(e.valid_to), 'recorded_at': _iso(e.recorded_at),
+                                             'channel': e.source, 'actor': e.actor, 'source_id': e.source_id,
+                                             'confidence': e.confidence}, e.valid_from) for e in evs],
             'active_links': {
-                'outgoing': [{'target': lk.target_id, 'rel_type': lk.rel_type, 'weight': lk.weight,
-                              'valid_from': _iso(lk.valid_from)} for lk in links if lk.source_id == o.id][:40],
-                'incoming': [{'source': lk.source_id, 'rel_type': lk.rel_type, 'weight': lk.weight,
-                              'valid_from': _iso(lk.valid_from)} for lk in links if lk.target_id == o.id][:40],
+                'outgoing': [_with_genesis({'target': lk.target_id, 'rel_type': lk.rel_type, 'weight': lk.weight,
+                                            'relation_class': relation_class(lk.rel_type),
+                                            'valid_from': _iso(lk.valid_from)}, lk.valid_from)
+                             for lk in links if lk.source_id == o.id][:40],
+                'incoming': [_with_genesis({'source': lk.source_id, 'rel_type': lk.rel_type, 'weight': lk.weight,
+                                            'relation_class': relation_class(lk.rel_type),
+                                            'valid_from': _iso(lk.valid_from)}, lk.valid_from)
+                             for lk in links if lk.target_id == o.id][:40],
                 'total': len(links)},
             'provenance': prov,
             'source': 'Khipus ontology (Postgres, append-only events)', 'as_of': _now_iso()}
+        if prov == []:
+            # G4b: "provenance: []" era mudo. Lo honesto: el dato viene del
+            # catálogo curado por Khipus y no cita un documento primario.
+            out['provenance_note'] = PROVENANCE_NOTE_EN
+            out['provenance_note_es'] = PROVENANCE_NOTE_ES
+        return out
 
 
 def _claim_brief(c, n_sup=0, n_cnt=0):

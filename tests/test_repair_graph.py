@@ -127,3 +127,114 @@ def test_g4a_aristas_no_verificadas_llevan_confianza_baja(nodb):
     d = tools.t_get_supply_chain(None, id='FedEx', direction='down', limit=60)
     fx = [x for x in d['edges'] if x['target'] == 'TSMC']
     assert fx and fx[0]['verified'] is False and fx[0]['confidence'] == 0.3
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# base compartida (G4b/G4c/G4d): esquema propio, semilla mínima
+# ════════════════════════════════════════════════════════════════════════════
+@pytest.fixture(scope='module')
+def db():
+    if not DATABASE_URL:
+        pytest.skip('requiere DATABASE_URL')
+    from ontology.db import _get_engine, init_schema, session_scope
+    from ontology.models import Base
+    from ontology.service import GENESIS_SENTINEL, apply_event
+    import mcp_server.models  # noqa: F401
+    import research.models  # noqa: F401
+    engine = _get_engine()
+    Base.metadata.drop_all(engine)
+    assert init_schema(retries=1)
+    with session_scope() as s:
+        def obj(oid, typ='Company', props=None, when=GENESIS_SENTINEL):
+            apply_event(s, 'ObjectCreated', {'label': oid, 'type': typ, 'properties': props or {}},
+                        valid_from=when, source='migration_v0', actor='script:migrate_v0_to_ontology', object_id=oid)
+
+        def link(src, tgt, rel='supply', w=2, when=GENESIS_SENTINEL, props=None, source='migration_v0_links'):
+            apply_event(s, 'LinkCreated', {'rel_type': rel, 'weight': w, 'properties': props or {}},
+                        valid_from=when, source=source, actor='script:migrate_v0_to_ontology',
+                        object_id=src, target_id=tgt)
+        # G4b: empresa migrada (centinela), un vínculo centinela sin fuente y un hecho con fecha real
+        obj('Acme', props={'country': 'EEUU', 'margin': 0.2})
+        obj('Prov')
+        link('Prov', 'Acme')
+        apply_event(s, 'ObjectUpdated', {'properties': {'margin': 0.25}}, valid_from='2024-05-01',
+                    source='manual', actor='ana', object_id='Acme')
+        # G4d: supply duplicado ×2 (mismo par) + socio + inversor + factor 'affects' → grado de flujo 1
+        obj('Dup', props={'country': 'EEUU', 'margin': 0.2})
+        obj('S1'); obj('P1'); obj('I1'); obj('F1', typ='Factor')
+        link('S1', 'Dup'); link('S1', 'Dup', w=3)
+        link('P1', 'Dup', rel='partner'); link('I1', 'Dup', rel='invest')
+        link('F1', 'Dup', rel='affects', w=0.5)
+        # G4c: vínculo con confianza declarada en properties → peso efectivo = w × conf
+        obj('Cx'); obj('Cy')
+        link('Cx', 'Cy', w=2, props={'confidence': 0.5})
+    yield
+    Base.metadata.drop_all(engine)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# G4b — fechas centinela y procedencia vacía
+# ════════════════════════════════════════════════════════════════════════════
+def test_g4b_is_genesis_acepta_todas_las_formas():
+    from ontology.service import GENESIS_SENTINEL, is_genesis
+    assert GENESIS_SENTINEL == '2000-01-01'
+    assert is_genesis('2000-01-01') and is_genesis('2000-01-01T00:00:00+00:00')
+    assert is_genesis(datetime(2000, 1, 1, tzinfo=timezone.utc)) and is_genesis(datetime(2000, 1, 1))
+    assert is_genesis(date(2000, 1, 1))
+    assert not is_genesis('2000-01-02') and not is_genesis(datetime(2024, 5, 1, tzinfo=timezone.utc))
+    assert not is_genesis(None) and not is_genesis('')
+    # el script de migración usa EL MISMO centinela (no una copia)
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('mig', os.path.join(ROOT, 'scripts', 'migrate_v0_to_ontology.py'))
+    mig = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mig)
+    assert mig.GENESIS == GENESIS_SENTINEL
+
+
+def test_g4b_api_marca_el_centinela_en_links_y_eventos():
+    from ontology.api import _event_to_dict, _link_to_dict
+    gen = datetime(2000, 1, 1, tzinfo=timezone.utc)
+    real = datetime(2021, 6, 1, tzinfo=timezone.utc)
+    lk = SimpleNamespace(id='l1', source_id='Prov', target_id='Acme', rel_type='supply', weight=2, properties={},
+                         valid_from=gen, valid_to=None)
+    d = _link_to_dict(lk)
+    assert d['valid_from'].startswith('2000-01-01') and d['valid_from_known'] is False
+    lk.valid_from = real
+    assert 'valid_from_known' not in _link_to_dict(lk)          # fecha real: no se marca nada
+    ev = SimpleNamespace(id='e1', event_type='LinkCreated', object_id='Prov', target_id='Acme', payload={},
+                         valid_from=gen, valid_to=None, recorded_at=real, source='migration_v0_links', actor='x')
+    assert _event_to_dict(ev)['valid_from_known'] is False
+    ev.valid_from = real
+    assert 'valid_from_known' not in _event_to_dict(ev)
+
+
+@needs_db
+def test_g4b_mcp_ontology_object_explica_centinela_y_procedencia_vacia(db):
+    from mcp_server import tools
+    d = tools.t_get_ontology_object(None, id='Acme')
+    inc = d['active_links']['incoming']
+    assert inc and inc[0]['source'] == 'Prov' and inc[0]['valid_from_known'] is False
+    assert inc[0]['valid_from_note_es'] == 'desde que se rastrea; fecha de inicio real desconocida'
+    assert inc[0]['valid_from_note_en'] and inc[0]['relation_class'] == 'supply'
+    evs = {e['event_type']: e for e in d['recent_events']}
+    assert evs['ObjectCreated']['valid_from_known'] is False and evs['ObjectCreated']['valid_from_note_en']
+    assert 'valid_from_known' not in evs['ObjectUpdated']          # 2024-05-01 es real
+    assert d['provenance'] == []
+    assert d['provenance_note'] == 'catalog-only: curated by Khipus, no primary source document recorded'
+    assert d['provenance_note_es'].startswith('solo catálogo')
+
+
+@needs_db
+def test_g4b_timeline_y_time_travel_marcan_el_centinela(db):
+    from ontology.db import session_scope
+    from ontology.service import as_of_graph
+    from ontology.timeline import entity_timeline
+    with session_scope() as s:
+        tl = entity_timeline(s, 'Acme', include_news=False)
+        por_tipo = {e['event_type']: e for e in tl}
+        assert por_tipo['LinkCreated']['at'].startswith('2000-01-01')
+        assert por_tipo['LinkCreated']['valid_from_known'] is False
+        assert 'valid_from_known' not in por_tipo['ObjectUpdated']
+        g = as_of_graph(s, '2026-01-01')
+        lk = [l for l in g['links'] if l['source'] == 'Prov' and l['target'] == 'Acme'][0]
+        assert lk['valid_from_known'] is False

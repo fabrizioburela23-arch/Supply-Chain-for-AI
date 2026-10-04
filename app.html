@@ -5742,7 +5742,7 @@ const V8detail = {
               return `<div style="padding:5px 0;border-bottom:1px solid var(--line);line-height:1.4">
                 <div style="display:flex;gap:6px;align-items:baseline">
                   <span style="font-size:11.5px;color:var(--ink-2);flex:1">${e.kind==='news'?'📰 ':''}${esc(e.title||'')}</span>
-                  <span style="font-size:10px;color:var(--ink-3);white-space:nowrap">${esc(when(e.at))}</span></div>
+                  <span style="font-size:10px;color:var(--ink-3);white-space:nowrap">${e.valid_from_known===false?esc(lang==='en'?'since tracked':'desde que se rastrea'):esc(when(e.at))}</span></div>
                 ${src?`<a href="${safeUrl(src.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:var(--ink-3);text-decoration:none">${dot(src.trust)}${esc(host)} ↗</a>`:''}
               </div>`;}).join('');
         }
