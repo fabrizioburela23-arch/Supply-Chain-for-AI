@@ -195,3 +195,30 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   sigue acotándolos — se deja documentado. "IA ocupada" en el 2.º intento de un
   structured_generate repite el 1.º (raro; tokens ya contados por R5).
 - **Verificar.** `pytest tests/test_repair_research.py -k r7` (7 tests).
+
+### R8 — Contratos y consumidores (lente "contratos" de la revisión adversarial)
+
+- **Hallazgos aceptados.** (1) La Pizarra del comité sondeaba hasta 20 min cuando un
+  job terminaba `partial`/`deferred`. (2) `only_missing` sobre un job COMPLETO de
+  cualquier antigüedad lo reutilizaba y la UI anunciaba "N conclusiones nuevas".
+  (3) Los pedidos de la Pizarra corrían en un hilo propio (fuera de la cola) y,
+  diferidos, se descartaban como eventos automáticos. (4) Un job `deferred`/`failed`
+  se mostraba como "Cobertura parcial: 0 de 4" con botón "Completar" y el MCP
+  aconsejaba tratarlo como parcial. (5) Con `RESEARCH_DAILY_BUDGET_USD=0` la API
+  web prometía "se reanuda mañana" para siempre. (6) `docs/MCP.md` no reflejaba
+  los estados nuevos. (7) El chat de Khipu no conocía `get_research_health`.
+- **Cambios.** `runner.create_job(only_missing)`: si no falta nadie → reutiliza
+  SOLO si el job completo es reciente y lo marca (`nothing_missing`), si es viejo
+  investiga de nuevo; `defer_job` con tope 0 no promete reanudación. `research/
+  api.py`: 503 `research_off` con tope 0; `coverage` solo para running/done/partial;
+  `nothing_missing`/`created_at` en la respuesta. `research/committee_api.py`
+  (Pizarra): 503 con tope 0, difiere sin presupuesto, encola por la cola FIFO
+  (visible en salud) en vez de un hilo propio. `mcp_server/tools.py`: `hint`/`next`
+  por estado (`_deferred_next`: humano → se reanuda; evento → se descartará),
+  `run_research` honesto con `nothing_missing`/`created_at`/reutilizado.
+  `engine/research.js`: franja de cobertura solo en `partial`, aviso propio para
+  `deferred`, mensajes para "nada que completar"/"ya hay una reciente".
+  `engine/committee.js`: la Pizarra termina el sondeo en partial/deferred y lo
+  explica. `core/khipu_chat.py`: `get_research_health` en el catálogo + receta.
+  `docs/MCP.md` actualizado.
+- **Verificar.** `pytest tests/test_repair_research.py -k r8` (5 tests).

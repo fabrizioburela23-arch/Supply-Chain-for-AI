@@ -97,7 +97,7 @@ class ToolFailure(Exception):
 # Herramientas de SOLO LECTURA del servidor MCP que el cerebro reutiliza.
 # (2026-10-04) fuera del catálogo del chat: get_ontology_object y get_option_greeks (ruido para el modelo;
 # siguen en el MCP). Menos herramientas = decisiones mejores y más rápidas.
-MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_claim_evidence',
+MCP_READ_TOOLS = ('search_companies', 'get_company', 'get_supply_chain', 'get_research', 'get_research_health', 'get_claim_evidence',
                   'get_committee_memo', 'get_conclusions_board', 'get_track_record', 'get_risk_report',
                   'get_world_events')
 
@@ -648,7 +648,9 @@ Hasta {MAX_STEPS} rondas de consulta; lo normal es UNA.
 RECETAS (una ronda): "¿cómo va X?" / "¿qué pasa con X?" → get_company(include_live=true) + get_news juntas. \
 "precio / capitalización de X" → get_company. "proveedores / clientes de X" → get_supply_chain. \
 "qué piensan los analistas / qué dice el comité" → get_conclusions_board o get_research. "@analista / pregúntale \
-al analista" → ask_agent. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
+al analista" → ask_agent. "¿puedo investigar ahora? / ¿por qué falló o quedó a medias la investigación?" → \
+get_research_health (proveedores en pausa, cola, presupuesto); en get_research, last_job.status 'partial' = síntesis \
+incompleta (lee coverage.note_es) y 'deferred' = sin presupuesto, se reanuda mañana. "qué pasa si… / quién pierde si…" → scenario_exposure. "más expuestas / mejores / \
 peores" → rank_companies o market_movers. Preguntas conceptuales (qué es el VaR, cómo funciona HBM) → sin \
 herramientas. get_company ya entiende nombres y tickers: NO gastes una ronda en search_companies salvo \
 ambigüedad real.

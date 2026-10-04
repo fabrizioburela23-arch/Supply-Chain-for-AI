@@ -225,9 +225,13 @@ def defer_job(session, job, now=None):
     now = now or _now()
     ra = next_resume_time(now)
     job.status = 'deferred'
-    job.error = (f'presupuesto diario de IA agotado (≈${daily_budget():.2f}): se reanuda el '
-                 f'{ra.strftime("%Y-%m-%d %H:%M")} UTC / daily AI budget used up: resumes at '
-                 f'{ra.strftime("%Y-%m-%d %H:%M")} UTC')
+    if daily_budget() <= 0:
+        job.error = ('investigación apagada (RESEARCH_DAILY_BUDGET_USD=0): el pedido queda en espera hasta que se '
+                     'suba el tope / research is switched off (RESEARCH_DAILY_BUDGET_USD=0): waits until the cap is raised')
+    else:
+        job.error = (f'presupuesto diario de IA agotado (≈${daily_budget():.2f}): se reanuda el '
+                     f'{ra.strftime("%Y-%m-%d %H:%M")} UTC / daily AI budget used up: resumes at '
+                     f'{ra.strftime("%Y-%m-%d %H:%M")} UTC')
     job.trigger = dict(job.trigger or {}, resume_after=ra.isoformat(), deferred_at=now.isoformat())
     job.completed_at = None
     session.flush()
@@ -391,6 +395,14 @@ def create_job(session, entity_id, depth='STANDARD', agents=None, trigger=None, 
                                                               ResearchJob.created_at >= since)
                             .order_by(ResearchJob.created_at.desc()).first())
                 return (sub_prev or prev), True
+            if only_missing and not missing:
+                # R8: nada que completar. Si el job completo es reciente se reutiliza y se
+                # DICE (nothing_missing); si es viejo, investigación completa nueva (antes
+                # devolvía un job de semanas como "N conclusiones nuevas").
+                if prev.created_at is not None and prev.created_at >= since:
+                    prev._nothing_missing = True
+                    return prev, True
+                prev = None
         if prev and (not force or only_missing):
             return prev, True
     job = ResearchJob(entity_id=entity_id, depth=depth, agents=agents, trigger=trig,

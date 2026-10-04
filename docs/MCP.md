@@ -125,7 +125,8 @@ existe o no se pudo leer, la herramienta **lo dice** (resultado con
 | `get_ontology_object` | Objeto de la ontología: propiedades, eventos recientes (bitemporales), vínculos y fuentes con confianza | Postgres |
 | `get_research` | Claims activas por agente: postura, horizonte, confianza calculada, falsadores, contradicciones y última síntesis (se ocultan las que citan cifras sin respaldo) | Enjambre de investigación |
 | `get_claim_evidence` | El «¿por qué?» de una claim: evidencia a favor/en contra con fuente y fecha | Enjambre de investigación |
-| `get_research_job` | Estado de una investigación lanzada | Enjambre de investigación |
+| `get_research_job` | Estado de una investigación lanzada: `queued` (con `queue_position`) / `running` / `done` / `partial` (algún analista no respondió: `coverage` dice cuáles; la síntesis es incompleta) / `deferred` (sin presupuesto; `resume_after`) / `failed`; `next` dice qué hacer | Enjambre de investigación |
+| `get_research_health` | ¿Puedo investigar ahora? Proveedores de IA con clave y en pausa (sin saldo / clave inválida / modelo retirado), cupos en uso, cola, presupuesto diario, reloj del servidor, últimos errores. Sin gasto de IA | Pipeline de investigación |
 | `get_risk_report` | VaR 95/99 %, volatilidad, beta, correlaciones de una cartera | Precios diarios reales (Yahoo) |
 | `get_option_greeks` | Delta, gamma, vega, theta y escenarios de volatilidad | Black-Scholes + IV en vivo |
 | `get_world_events` | Eventos del World Monitor (conflicto, protestas, comercio, sismos, desastres, estrechos, inestabilidad) | GDELT, USGS, NASA EONET… |
@@ -136,7 +137,7 @@ existe o no se pudo leer, la herramienta **lo dice** (resultado con
 
 | Herramienta | Qué hace |
 |---|---|
-| `run_research` | Lanza (o reutiliza) una investigación QUICK/STANDARD. Respeta `RESEARCH_DAILY_BUDGET_USD` (con `0` la investigación está apagada y la herramienta lo dice). |
+| `run_research` | Lanza (o reutiliza) una investigación QUICK/STANDARD. `only_missing: true` (opcional) corre SOLO los analistas que faltaron en el último job parcial (`nothing_missing: true` si no falta nadie). Presupuesto diario agotado ⇒ `status: deferred` + `resume_after` (se reanuda solo al día siguiente, máx. 3/día, solo pedidos de personas); con `RESEARCH_DAILY_BUDGET_USD=0` la investigación está apagada y la herramienta lo dice (`budget_exhausted`). |
 | `run_committee` | Corre el comité de inversión (en segundo plano) → memo con decisión y tamaño. **Un memo no es una orden.** Si la misma empresa/cliente ya está deliberando (o se decidió hace < 2 min) devuelve ese memo (`reused: true`); como la app, respeta el tope de comités simultáneos (`COMMITTEE_MAX_CONCURRENT`, 2) → `busy`. |
 
 ### trade — operar UN cliente, con aprobación humana

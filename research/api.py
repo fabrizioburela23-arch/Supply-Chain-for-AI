@@ -79,7 +79,11 @@ def create():
         return jsonify({'error': 'entidad no encontrada'}), 404
     if not _ai_configured():
         return jsonify({'error': 'ningún proveedor de IA configurado'}), 503
-    from research.runner import create_job, execute_job_async
+    from research.runner import create_job, daily_budget, execute_job_async
+    if daily_budget() <= 0:           # R8: con tope 0 la investigación está APAGADA (no se promete "mañana")
+        return jsonify({'error': 'la investigación está apagada en este servidor (RESEARCH_DAILY_BUDGET_USD = 0)',
+                        'error_en': 'research is switched off on this server (RESEARCH_DAILY_BUDGET_USD = 0)',
+                        'code': 'research_off'}), 503
     agents_req = body.get('agents') if isinstance(body.get('agents'), list) else None
 
     def _crear():
@@ -93,6 +97,8 @@ def create():
                 defer_job(s, job)          # R5: se reanuda solo mañana (no se pierde el pedido)
             return job.id, reused, {'job_id': job.id, 'entity_id': eid, 'status': job.status,
                                     'reused': reused, 'agents': job.agents, 'depth': job.depth,
+                                    'nothing_missing': bool(getattr(job, '_nothing_missing', False)),
+                                    'created_at': _iso(job.created_at),
                                     'resume_after': (job.trigger or {}).get('resume_after'),
                                     'error': job.error}
     try:
@@ -132,7 +138,7 @@ def job(job_id):
         return jsonify({'job_id': j.id, 'entity_id': j.entity_id, 'status': j.status, 'depth': j.depth,
                         'agents': j.agents, 'trigger': j.trigger, 'created_at': _iso(j.created_at),
                         'completed_at': _iso(j.completed_at), 'error': j.error, 'synthesis': j.synthesis,
-                        'coverage': coverage_of(runs, j.agents or []),
+                        'coverage': coverage_of(runs, j.agents or []) if j.status in ('running', 'done', 'partial') else None,
                         'queue_position': queue_position(j.id) if j.status == 'queued' else None,
                         'queue_length': qs['jobs_queued'], 'jobs_running': qs['jobs_running'],
                         'runs': [_run_dict(r) for r in runs], 'claims': [_claim_dict(c) for c in claims]})
@@ -187,8 +193,11 @@ def entity(entity_id):
 
 
 def _coverage(session, job):
-    """Cobertura guardada (jobs terminados) o calculada en vivo (en curso)."""
+    """Cobertura guardada (jobs terminados) o calculada en vivo (en curso).
+    R8: None para queued/deferred/failed (no corrió nada: no es "parcial")."""
     try:
+        if job.status not in ('running', 'done', 'partial'):
+            return None
         syn = job.synthesis if isinstance(job.synthesis, dict) else None
         if syn and syn.get('coverage'):
             return syn['coverage']

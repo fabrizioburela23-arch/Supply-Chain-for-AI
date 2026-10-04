@@ -264,7 +264,9 @@
       '<div class="rs-sub">' + esc(L('Agentes especializados leen datos reales (estados financieros, mercado, noticias, grafo) y escriben conclusiones con evidencia a favor y en contra. No son recomendaciones de compra o venta. Los agentes pueden discrepar: se muestran ambas posturas.',
         'Specialized agents read real data (financial statements, market, news, graph) and write conclusions with evidence for and against. Not buy or sell recommendations. Agents may disagree: both views are shown.')) + '</div>' +
       (S.msg ? '<div class="rs-cell" style="margin-bottom:10px;border-color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';font-size:13px">' + esc(S.msg.text) + '</div>' : '') +
-      (d.last_job && d.last_job.coverage && !d.last_job.coverage.complete && d.last_job.status !== 'running' && d.last_job.status !== 'queued' ? coverageHtml(d.last_job.coverage, true) : '') +
+      (d.last_job && d.last_job.status === 'partial' && d.last_job.coverage && !d.last_job.coverage.complete ? coverageHtml(d.last_job.coverage, true) : '') +
+      (d.last_job && d.last_job.status === 'deferred' ? '<div class="rs-cell" style="margin-bottom:10px;border-color:#FFB300;color:#FFB300;font-size:13px">⏳ ' +
+        esc(L('Investigación en espera por presupuesto: se reanuda sola el ', 'Research waiting for budget: resumes automatically on ') + String(((d.last_job || {}).resume_after || '')).slice(0, 16).replace('T', ' ') + ' UTC.') + '</div>' : '') +
       '<div class="rs-grid"><div>' +
         '<div class="rs-cell"><div class="rs-t">' + esc(L('Conclusiones por perspectiva', 'Conclusions by perspective')) + '</div>' +
           (types.length ? '<div class="rs-tabs">' + types.map(function (t) {
@@ -352,6 +354,16 @@
         S.msg = { bad: true, text: L('Se acabó el presupuesto diario de IA. Tu pedido quedó guardado y se reanuda solo mañana (00:05 UTC). Las conclusiones que ya existen siguen abajo.',
           'The daily AI budget is used up. Your request is saved and resumes automatically tomorrow (00:05 UTC). Existing conclusions remain below.') };
         render(); return;
+      }
+      if (d.reused && d.nothing_missing) {
+        S.msg = { bad: false, text: L('Nada que completar: la última investigación respondió con todos los analistas (' + clock(d.created_at) + '). Para una nueva, pulsa «Investigar».',
+          'Nothing to complete: the last research answered with every analyst (' + clock(d.created_at) + '). For a fresh one, press “Research”.') };
+        load(S.entity); return;
+      }
+      if (d.reused && (d.status === 'done' || d.status === 'partial')) {
+        S.msg = { bad: d.status === 'partial', text: L('Ya hay una investigación reciente (' + clock(d.created_at) + ')' + (d.status === 'partial' ? ', parcial: mira la cobertura abajo.' : '.'),
+          'There is already a recent research job (' + clock(d.created_at) + ')' + (d.status === 'partial' ? ', partial: see the coverage below.' : '.')) };
+        load(S.entity); return;
       }
       S.job = d.job_id; render();
       if (S.poll) clearInterval(S.poll);

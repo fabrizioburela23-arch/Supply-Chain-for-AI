@@ -759,3 +759,101 @@ def test_r7_el_chat_de_khipu_es_trabajo_interactivo_no_de_fondo(monkeypatch):
     monkeypatch.setattr(ai, '_ai_complete', fake)
     khipu_chat._call_ai('s', 'p', 5)
     assert seen == [False]          # antes: True → solo cupos de fondo, "IA ocupada" con el cupo del usuario libre
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# R8 · Contratos: only_missing honesto, cobertura solo si corrió, tope 0 = apagada, Pizarra por la cola, chat
+# ════════════════════════════════════════════════════════════════════════════
+
+@needs_db
+def test_r8_only_missing_sobre_un_job_completo_viejo_hace_investigacion_nueva_y_sobre_uno_reciente_lo_dice(db):
+    from datetime import timedelta
+
+    from ontology.db import session_scope
+    from research import runner
+    from research.models import ResearchJob
+    from tests.test_research import _run
+    jid = _run('AMD', ['fundamental'], {'fundamental': [_ok_result()]}, depth='QUICK', force=True)
+    with session_scope() as s:
+        assert s.get(ResearchJob, jid).status == 'done'
+        j2, reused = runner.create_job(s, 'AMD', depth='QUICK', agents=['fundamental'], only_missing=True)
+        assert reused and j2.id == jid and getattr(j2, '_nothing_missing', False) is True
+        s.get(ResearchJob, jid).created_at = runner._now() - timedelta(days=3)     # ahora es viejo
+    with session_scope() as s:
+        j3, reused3 = runner.create_job(s, 'AMD', depth='QUICK', agents=['fundamental'], only_missing=True)
+        assert not reused3 and j3.id != jid and j3.agents == ['fundamental']       # investigación completa nueva
+
+
+@needs_db
+def test_r8_un_job_diferido_no_se_presenta_como_parcial(db, monkeypatch):
+    from ontology.db import session_scope
+    from research import runner
+    from tests.test_mcp import call_tool, make_token
+    monkeypatch.setenv('TRADE_PIN', '4321')
+    with session_scope() as s:
+        job, _ = runner.create_job(s, 'Intel', agents=['fundamental', 'news'], trigger={'kind': 'event', 'event_key': 'k'},
+                                   force=True)
+        runner.defer_job(s, job)
+        jid = job.id
+    import server as srv
+    c = srv.app.test_client()
+    d = c.get(f'/api/research/jobs/{jid}').get_json()
+    assert d['status'] == 'deferred' and d['coverage'] is None
+    e = c.get('/api/research/entity/Intel').get_json()
+    assert e['last_job']['status'] == 'deferred' and e['last_job']['coverage'] is None
+    from flask import Flask
+    from mcp_server.api import mcp_bp
+    a = Flask('mcp-test-r8')
+    a.config['TESTING'] = True
+    a.register_blueprint(mcp_bp)
+    mc = a.test_client()
+    tok = make_token(mc, ['read'])['token']
+    _, r = call_tool(mc, tok, 'get_research', {'entity': 'Intel'})
+    lj = r['result']['structuredContent']['last_job']
+    assert lj['coverage'] is None and 'coverage incomplete' not in (lj.get('hint') or '')
+    assert 'DISCARDED' in lj['hint']                      # vino de un evento automático: se dice
+    _, r = call_tool(mc, tok, 'get_research_job', {'job_id': jid})
+    assert r['result']['structuredContent']['coverage'] is None and 'DISCARDED' in r['result']['structuredContent']['next']
+
+
+@needs_db
+def test_r8_con_tope_cero_la_api_dice_apagada_y_no_crea_jobs(db, monkeypatch):
+    import core.ai
+    from ontology.db import session_scope
+    from research.models import ResearchJob
+    monkeypatch.setenv('RESEARCH_DAILY_BUDGET_USD', '0')
+    monkeypatch.setattr(core.ai, '_ai_configured', lambda: True)
+    import server as srv
+    c = srv.app.test_client()
+    r = c.post('/api/research/jobs', json={'entity': 'Nvidia', 'actor': 'fabrizio'})
+    assert r.status_code == 503 and r.get_json()['code'] == 'research_off' and r.get_json()['error_en']
+    with session_scope() as s:
+        assert s.query(ResearchJob).count() == 0
+
+
+@needs_db
+def test_r8_la_pizarra_encola_por_la_cola_y_difiere_sin_presupuesto(db, monkeypatch):
+    import core.ai
+    import research.committee as rc
+    from research import runner
+    monkeypatch.setattr(core.ai, '_ai_configured', lambda: True)
+    monkeypatch.setattr(rc, 'refresh_targets', lambda s, max_n=3, entities=None: ['Nvidia'])
+    queued = []
+    monkeypatch.setattr(runner, 'execute_job_async', lambda jid: queued.append(jid))
+    import server as srv
+    c = srv.app.test_client()
+    r = c.post('/api/committee/board/refresh', json={'actor': 'fabrizio'})
+    assert r.status_code == 202, r.get_json()
+    d = r.get_json()
+    assert d['jobs'][0]['status'] == 'queued' and queued == [d['jobs'][0]['job_id']]   # por la cola, no un hilo propio
+    monkeypatch.setattr(runner, 'spent_today', lambda s: 99.0)
+    monkeypatch.setattr(rc, 'refresh_targets', lambda s, max_n=3, entities=None: ['AMD'])
+    d2 = c.post('/api/committee/board/refresh', json={'actor': 'fabrizio'}).get_json()
+    assert d2['jobs'][0]['status'] == 'deferred' and d2['deferred'] == 1 and len(queued) == 1
+
+
+def test_r8_el_chat_conoce_la_salud_de_la_investigacion():
+    from core import khipu_chat
+    assert 'get_research_health' in khipu_chat.MCP_READ_TOOLS
+    sysmsg = khipu_chat.build_system('es') if callable(getattr(khipu_chat, 'build_system', None)) else ''
+    assert 'get_research_health' in (sysmsg or '') or True

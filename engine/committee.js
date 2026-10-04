@@ -1006,11 +1006,17 @@
       S.refreshPoll = setInterval(function () {
         n++;
         Promise.all(ids.map(function (id) { return getJSON('/api/research/jobs/' + encodeURIComponent(id)).catch(function () { return {}; }); })).then(function (rs) {
-          var done = rs.filter(function (r) { return r.status === 'done' || r.status === 'failed' || r._status === 404; }).length;
+          var done = rs.filter(function (r) { return r.status === 'done' || r.status === 'partial' || r.status === 'deferred' || r.status === 'failed' || r._status === 404; }).length;
           var failed = rs.filter(function (r) { return r.status === 'failed'; }).length;
+          var partial = rs.filter(function (r) { return r.status === 'partial'; }).length;
+          var deferred = rs.filter(function (r) { return r.status === 'deferred'; }).length;
           if (done >= ids.length || n > 60) {
             clearInterval(S.refreshPoll); S.refreshPoll = null; S.refreshing = false;
-            S.refreshMsg = failed ? { bad: true, text: L(failed + ' investigación(es) fallaron: ábrelas con 🔬 para ver el motivo.', failed + ' research job(s) failed: open them with 🔬 to see why.') }
+            var parts = [];
+            if (failed) parts.push(L(failed + ' investigación(es) fallaron: ábrelas con 🔬 para ver el motivo.', failed + ' research job(s) failed: open them with 🔬 to see why.'));
+            if (partial) parts.push(L(partial + ' quedaron PARCIALES (algún analista no respondió): ábrelas con 🔬 y pulsa «Completar lo que falta».', partial + ' are PARTIAL (some analyst did not answer): open them with 🔬 and press “Complete the missing part”.'));
+            if (deferred) parts.push(L(deferred + ' en espera por presupuesto: se reanudan solas mañana.', deferred + ' waiting for budget: they resume automatically tomorrow.'));
+            S.refreshMsg = parts.length ? { bad: !!(failed || partial), text: parts.join(' ') }
               : { bad: false, text: L('Listo: investigación actualizada.', 'Done: research refreshed.') };
           } else {
             S.refreshMsg = { bad: false, text: L('Investigando… ' + done + ' de ' + ids.length + ' listas.', 'Researching… ' + done + ' of ' + ids.length + ' done.') };

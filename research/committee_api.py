@@ -304,7 +304,10 @@ def board_refresh():
     if not _ai_configured():
         return jsonify({'error': 'ningún proveedor de IA configurado', 'error_en': 'no AI provider configured'}), 503
     from research.committee import refresh_targets
-    from research.runner import create_job, execute_job
+    from research.runner import budget_exhausted, create_job, daily_budget, defer_job, execute_job_async
+    if daily_budget() <= 0:
+        return jsonify({'error': 'la investigación está apagada (RESEARCH_DAILY_BUDGET_USD = 0)',
+                        'error_en': 'research is switched off (RESEARCH_DAILY_BUDGET_USD = 0)', 'code': 'research_off'}), 503
     ents = body.get('entities') if isinstance(body.get('entities'), list) else None
     try:
         def _plan():
@@ -314,28 +317,21 @@ def board_refresh():
                 for eid in targets:
                     job, reused = create_job(s, eid, depth='STANDARD', trigger={'kind': 'board', 'by': actor},
                                              requested_by=actor)
-                    jobs.append({'entity_id': eid, 'job_id': job.id, 'reused': reused, 'status': job.status})
+                    # R8: sin presupuesto, el pedido de la persona queda DIFERIDO (no se pierde)
+                    if not reused and job.status == 'queued' and budget_exhausted(s):
+                        defer_job(s, job)
+                    jobs.append({'entity_id': eid, 'job_id': job.id, 'reused': reused, 'status': job.status,
+                                 'resume_after': (job.trigger or {}).get('resume_after')})
                 return jobs
         jobs = _with_schema(_plan)
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': 'no se pudo encargar la investigación', 'error_en': 'could not queue research',
                         'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
-    todo = [j['job_id'] for j in jobs if not j['reused']]
-    if todo:
-        import threading
-
-        def _work():
-            from research.models import ResearchJob
-            for jid in todo:
-                try:
-                    with session_scope() as s:
-                        job = s.get(ResearchJob, jid)
-                        if job and job.status == 'queued':
-                            execute_job(s, job)
-                except Exception as e:  # noqa: BLE001
-                    log.warning('board refresh %s: %s', jid, e)
-        threading.Thread(target=_work, name='board-refresh', daemon=True).start()
-    return jsonify({'jobs': jobs, 'n': len(jobs)}), 202
+    # R8: por la cola FIFO (RESEARCH_JOB_CONCURRENCY), no en un hilo propio: respeta cupos y es visible en salud
+    for j in jobs:
+        if not j['reused'] and j['status'] == 'queued':
+            execute_job_async(j['job_id'])
+    return jsonify({'jobs': jobs, 'n': len(jobs), 'deferred': sum(1 for j in jobs if j['status'] == 'deferred')}), 202
 
 
 @committee_bp.route('/track-record')

@@ -680,10 +680,16 @@ def t_get_research(ctx, entity, limit=30):
             last_job = {'job_id': last.id, 'status': last.status, 'created_at': _iso(last.created_at),
                         'completed_at': _iso(last.completed_at), 'synthesis': last.synthesis,
                         'coverage': cov, 'error': last.error}
-            if cov and not cov.get('complete'):
+            if last.status == 'partial' and cov:
                 last_job['hint'] = (f"coverage incomplete: {cov['n_done']} of {cov['n_effective']} agents answered, "
                                     f"missing {', '.join(cov['missing'])}. Treat the synthesis as partial; "
                                     "run_research(entity, only_missing=true) completes the missing agents.")
+            elif last.status == 'deferred':
+                last_job['hint'] = _deferred_next(last)
+            elif last.status in ('queued', 'running'):
+                last_job['hint'] = 'research in progress — poll get_research_job(job_id)'
+            elif last.status == 'failed':
+                last_job['hint'] = 'last research job failed: ' + str(last.error or '')[:200]
         return {'entity_id': eid, 'label': (r or {}).get('label', eid), 'n_claims': len(claims),
                 'claims_by_agent': by_agent,
                 'contradictions': [{'claim_a': x.claim_a, 'claim_b': x.claim_b, 'type': x.rel_type,
@@ -744,9 +750,22 @@ def t_get_claim_evidence(ctx, claim_id):
         return out
 
 
+def _deferred_next(job):
+    """R8: lo que pasará con un job diferido depende de quién lo pidió."""
+    ra = str((job.trigger or {}).get('resume_after') or '')
+    kind = (job.trigger or {}).get('kind')
+    if kind in ('user', 'mcp', 'committee', 'board'):
+        return f'deferred: daily research budget used up; resumes automatically after {ra} UTC (max 3 per day)'
+    return (f'deferred: daily research budget used up; this job came from an automatic event and will be DISCARDED '
+            f'at the next resume ({ra} UTC) — ask a person to run_research if it matters')
+
+
 def _job_coverage(session, job):
-    """R4: cobertura guardada (terminado) o en vivo (en curso); None si el runner no está."""
+    """R4: cobertura guardada (terminado) o en vivo (en curso); None si el runner no está
+    ni para queued/deferred/failed (R8: si no corrió nada, no es "parcial")."""
     try:
+        if job.status not in ('running', 'done', 'partial'):
+            return None
         syn = job.synthesis if isinstance(job.synthesis, dict) else None
         if syn and syn.get('coverage'):
             return syn['coverage']
@@ -791,8 +810,7 @@ def t_get_research_job(ctx, job_id):
                           '): read get_research(entity) as PARTIAL, or call run_research(entity, only_missing=true) '
                           'to complete the missing agents') if j.status == 'partial' else
                          'still working — poll again in ~20-40 s' if j.status in ('queued', 'running') else
-                         ('deferred: daily budget used up; resumes automatically after ' +
-                          str((j.trigger or {}).get('resume_after')) + ' UTC') if j.status == 'deferred' else None),
+                         _deferred_next(j) if j.status == 'deferred' else None),
                 'source': 'Khipus research swarm', 'as_of': _now_iso()}
 
 
@@ -1052,13 +1070,20 @@ def t_run_research(ctx, entity, depth='STANDARD', only_missing=False):
             if not reused and job.status == 'queued' and spent >= budget:
                 runner.defer_job(s, job)
             return {'job_id': job.id, 'entity_id': r['id'], 'label': r['label'], 'status': job.status,
-                    'reused': reused, 'agents': job.agents, 'depth': job.depth,
+                    'reused': reused, 'agents': job.agents, 'depth': job.depth, 'created_at': _iso(job.created_at),
+                    'nothing_missing': bool(getattr(job, '_nothing_missing', False)),
                     'resume_after': (job.trigger or {}).get('resume_after'),
                     'spent_today_usd_est': round(spent, 4), 'daily_budget_usd': budget}
     out = _auth.with_schema(_crear)
     if not out['reused'] and out['status'] == 'queued':
         runner.execute_job_async(out['job_id'])
-    if out['status'] == 'deferred':
+    if out.get('nothing_missing'):
+        out['next'] = (f"nothing to complete: the last research job ({out['created_at']}) answered with every agent; "
+                       'read get_research(entity). To force a fresh run, call run_research without only_missing.')
+    elif out['reused'] and out['status'] in ('done', 'partial'):
+        out['next'] = (f"reused the recent job {out['job_id']} ({out['status']}, {out['created_at']}): "
+                       'read get_research(entity)' + (' — it is PARTIAL (see coverage)' if out['status'] == 'partial' else ''))
+    elif out['status'] == 'deferred':
         out['next'] = (f"daily research budget used up (~${out['spent_today_usd_est']:.2f} of ${budget:.2f}); "
                        f"the job is DEFERRED and resumes automatically after {out['resume_after']} "
                        '(max 3 per day). Poll get_research_job(job_id) later; existing claims are still readable '

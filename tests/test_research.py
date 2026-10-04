@@ -260,8 +260,10 @@ def test_presupuesto_diario_difiere_el_job(db, monkeypatch):
     """R5 (misión de reparación): sin presupuesto el job se DIFIERE a mañana (antes:
     runs 'skipped' y job 'failed' que nadie reanudaba)."""
     from ontology.db import session_scope
+    from research import runner
     from research.models import AgentRun, ResearchJob
-    monkeypatch.setenv('RESEARCH_DAILY_BUDGET_USD', '0')
+    monkeypatch.setenv('RESEARCH_DAILY_BUDGET_USD', '0.5')          # (con 0 la investigación está APAGADA: R8)
+    monkeypatch.setattr(runner, 'spent_today', lambda s: 0.9)
     jid = _run('Broadcom', ['fundamental'], {'fundamental': [_result([_claim()])]})
     with session_scope() as s:
         j = s.get(ResearchJob, jid)
