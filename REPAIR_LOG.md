@@ -312,3 +312,26 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_repair_committee.py -k c9` (4 tests; antes:
   distinct_sources 2 y ≈0.80 sin tope; tipo 'analysis').
 - **Rollback.** Revertir el commit; las claims nuevas vuelven a conf-v1.
+
+### C10 — Checkpoints en días hábiles de NYSE y evaluación diaria desde el reloj del servidor
+
+- **Problema.** `n_scored = 0`: la evaluación de predicciones solo corría si
+  alguien abría el mapa Y Yahoo devolvía capitalizaciones Y nada fallaba (el día
+  se marcaba ANTES de correr, así que un timeout dejaba el día "hecho" sin
+  calificar). Los checkpoints eran en días calendario (7/30/90…) y medio/largo
+  plazo no tenían señal antes de 30/90 días.
+- **Cambio.** `research/outcomes.py`: calendario de NYSE sin dependencias
+  (`nyse_holidays`, `is_business_day`, `business_days_after`, Pascua incluida) y
+  `CHECKPOINTS` con unidad: INTRADAY 1d · SHORT 5b/20b(final) · MEDIUM 20b/60b/
+  180d(final) · LONG 60b/180d/365d(final) (etiquetas `interim_5b`, `final_20b`…;
+  las fotos de partida ya guardadas conservan su lista: append-only).
+  `core/live_caps._daily_outcomes(now=)`: corre aunque el lote de Yahoo venga
+  vacío, marca el día SOLO tras una evaluación exitosa, guarda última corrida /
+  error en `_OUT_STATE` (visible en `/api/research/health` → `outcomes`) y no se
+  solapa (lock). `server.py` registra `research_outcomes_daily` (cada hora, se
+  deduplica por día) en `core/scheduler` junto a `research_resume_deferred`.
+  `docs/PHASE3.md` actualizado.
+- **Verificar.** `pytest tests/test_repair_committee.py -k c10` (4 tests; antes:
+  `ImportError: business_days_after`, el día quedaba marcado tras un fallo, la
+  evaluación no corría con lote vacío, el reloj no tenía la tarea).
+- **Rollback.** Revertir el commit; las claims nuevas vuelven a 7/30/90 días.

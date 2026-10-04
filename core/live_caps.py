@@ -61,12 +61,13 @@ def refresh(fetch=None):
                 dispatch_earnings()          # 1 vez al día como máximo
             except Exception as e:  # noqa: BLE001
                 log.warning('live_caps → auto_events: %s', type(e).__name__)
-            # Phase 3: calificar predicciones vencidas de los agentes (1×/día;
-            # no depende de RESEARCH_AUTO_EVENTS: no gasta IA, solo precios)
-            try:
-                _daily_outcomes()
-            except Exception as e:  # noqa: BLE001
-                log.warning('live_caps → outcomes: %s', type(e).__name__)
+        # Phase 3: calificar predicciones vencidas de los agentes (1×/día; no gasta
+        # IA, solo precios). C10: corre AUNQUE el lote de Yahoo venga vacío y el
+        # reloj del servidor (core/scheduler) la llama cada hora de todos modos.
+        try:
+            _daily_outcomes()
+        except Exception as e:  # noqa: BLE001
+            log.warning('live_caps → outcomes: %s', type(e).__name__)
     except Exception as e:  # noqa: BLE001
         log.warning('live_caps: %s', e)
         with _LOCK:
@@ -76,25 +77,41 @@ def refresh(fetch=None):
             _STATE['running'] = False
 
 
-_OUT_STATE = {'day': None}
+_OUT_STATE = {'day': None, 'last': None, 'last_at': None, 'error': None, 'error_at': None, 'runs': 0}
+_OUT_LOCK = threading.Lock()
 
 
-def _daily_outcomes():
-    day = datetime.now(timezone.utc).date().isoformat()
+def _daily_outcomes(now=None):
+    """Califica las predicciones vencidas UNA vez por día UTC. C10: el día se marca
+    SOLO si la evaluación terminó bien (antes se marcaba antes de correr: un
+    timeout de la base o de Yahoo dejaba el día 'hecho' sin calificar nada), y
+    el estado (última corrida / error) queda visible en /api/research/health."""
+    now = now or datetime.now(timezone.utc)
+    day = now.date().isoformat()
     if _OUT_STATE['day'] == day:
         return None
+    if not _OUT_LOCK.acquire(blocking=False):      # ya hay una corrida en curso
+        return None
     try:
-        from ontology.db import ontology_available, session_scope
-        from research.outcomes import evaluate_due
-    except Exception:  # noqa: BLE001 — Phase 3 aún no instalada
-        return None
-    if not ontology_available():
-        return None
-    _OUT_STATE['day'] = day
-    with session_scope() as s:
-        res = evaluate_due(s)
-    log.info('outcomes diarios: %s', res)
-    return res
+        try:
+            from ontology.db import ontology_available, session_scope
+            from research.outcomes import evaluate_due
+        except Exception:  # noqa: BLE001 — Phase 3 aún no instalada
+            return None
+        if not ontology_available():
+            return None
+        try:
+            with session_scope() as s:
+                res = evaluate_due(s, now=now)
+        except Exception as e:  # noqa: BLE001 — se reintenta en la próxima pasada (no se marca el día)
+            _OUT_STATE.update(error=f'{type(e).__name__}: {str(e)[:160]}', error_at=now.isoformat())
+            log.warning('outcomes diarios: %s', type(e).__name__)
+            return None
+        _OUT_STATE.update(day=day, last=res, last_at=now.isoformat(), error=None, runs=_OUT_STATE['runs'] + 1)
+        log.info('outcomes diarios: %s', res)
+        return res
+    finally:
+        _OUT_LOCK.release()
 
 
 def get_caps(start=True):

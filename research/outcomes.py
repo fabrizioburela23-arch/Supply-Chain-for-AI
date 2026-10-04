@@ -51,12 +51,15 @@ log = logging.getLogger('khipu')
 METHOD = 'outcome-v1'
 CAL_METHOD = 'cal-v1'
 BENCH = 'SPY'
-# horizonte → [(días, final?)]
+# horizonte → [(n, unidad, final?)] — C10 (misión de reparación 2026-10-04, decisión D3):
+# señales tempranas en DÍAS HÁBILES de NYSE (5/20/60: 'b' en la etiqueta) y los
+# finales largos en días calendario ('d'). Las fotos de partida anteriores
+# conservan su lista (append-only); la idempotencia es por (claim, etiqueta).
 CHECKPOINTS = {
-    'INTRADAY': [(1, True)],
-    'SHORT_TERM': [(7, False), (30, True)],
-    'MEDIUM_TERM': [(30, False), (90, False), (180, True)],
-    'LONG_TERM': [(90, False), (180, False), (365, True)],
+    'INTRADAY': [(1, 'calendar', True)],
+    'SHORT_TERM': [(5, 'business', False), (20, 'business', True)],
+    'MEDIUM_TERM': [(20, 'business', False), (60, 'business', False), (180, 'calendar', True)],
+    'LONG_TERM': [(60, 'business', False), (180, 'calendar', False), (365, 'calendar', True)],
     'STRUCTURAL': [],
 }
 MAX_LAG_DAYS = 10      # el cierre usado no puede estar a más de 10 días de la fecha buscada
@@ -122,11 +125,83 @@ def _ny_datetime(dt):
     return dt.astimezone(timezone(timedelta(hours=off)))
 
 
+# ── calendario de NYSE (sin dependencias: reglas + Pascua) ──────────────────
+def _easter(y):
+    a, b, c = y % 19, y // 100, y % 100
+    d, e, f = b // 4, b % 4, (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i, k = c // 4, c % 4
+    ll = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * ll) // 451
+    month = (h + ll - 7 * m + 114) // 31
+    day = ((h + ll - 7 * m + 114) % 31) + 1
+    return date(y, month, day)
+
+
+def _nth_weekday(y, month, weekday, n):
+    d = date(y, month, 1)
+    d += timedelta(days=(weekday - d.weekday()) % 7)
+    return d + timedelta(days=7 * (n - 1))
+
+
+def _last_weekday(y, month, weekday):
+    d = date(y + (month == 12), (month % 12) + 1, 1) - timedelta(days=1)
+    return d - timedelta(days=(d.weekday() - weekday) % 7)
+
+
+def _observed(d):
+    if d.weekday() == 5:
+        return d - timedelta(days=1)
+    if d.weekday() == 6:
+        return d + timedelta(days=1)
+    return d
+
+
+def nyse_holidays(y):
+    """Feriados de NYSE del año (reglas oficiales; Año Nuevo en sábado no se observa)."""
+    out = set()
+    ny = date(y, 1, 1)
+    if ny.weekday() == 6:
+        out.add(ny + timedelta(days=1))
+    elif ny.weekday() != 5:
+        out.add(ny)
+    out.add(_nth_weekday(y, 1, 0, 3))          # Martin Luther King
+    out.add(_nth_weekday(y, 2, 0, 3))          # Presidents' Day
+    out.add(_easter(y) - timedelta(days=2))    # Good Friday
+    out.add(_last_weekday(y, 5, 0))            # Memorial Day
+    out.add(_observed(date(y, 6, 19)))         # Juneteenth
+    out.add(_observed(date(y, 7, 4)))          # Independence Day
+    out.add(_nth_weekday(y, 9, 0, 1))          # Labor Day
+    out.add(_nth_weekday(y, 11, 3, 4))         # Thanksgiving
+    out.add(_observed(date(y, 12, 25)))        # Christmas
+    return out
+
+
+def is_business_day(d):
+    return d.weekday() < 5 and d not in nyse_holidays(d.year)
+
+
+def business_days_after(d, n):
+    """La fecha n días HÁBILES de NYSE después de d."""
+    out, left = d, int(n)
+    while left > 0:
+        out += timedelta(days=1)
+        if is_business_day(out):
+            left -= 1
+    return out
+
+
+def checkpoint_due(anchor, n, unit):
+    return business_days_after(anchor, n) if unit == 'business' else anchor + timedelta(days=n)
+
+
 def build_checkpoints(horizon, anchor):
     out = []
-    for days, final in CHECKPOINTS.get(horizon, []):
-        out.append({'label': f"{'final' if final else 'interim'}_{days}d", 'days': days,
-                    'due_date': (anchor + timedelta(days=days)).isoformat(), 'final': final})
+    for n, unit, final in CHECKPOINTS.get(horizon, []):
+        suffix = 'b' if unit == 'business' else 'd'
+        out.append({'label': f"{'final' if final else 'interim'}_{n}{suffix}", 'days': n, 'unit': unit,
+                    'due_date': checkpoint_due(anchor, n, unit).isoformat(), 'final': final})
     return out
 
 

@@ -471,6 +471,11 @@ try:
         _sched.register('research_resume_deferred', _resume_deferred, every_s=600)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: research no registrado (%s)', type(_e).__name__)
+    try:   # C10: calificar predicciones vencidas 1×/día SIN depender de que alguien abra el mapa
+        from core.live_caps import _daily_outcomes as _outcomes_daily
+        _sched.register('research_outcomes_daily', _outcomes_daily, every_s=3600)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: outcomes no registrado (%s)', type(_e).__name__)
     if _sched.enabled():
         _sched.start()
 except Exception as _e:  # noqa: BLE001

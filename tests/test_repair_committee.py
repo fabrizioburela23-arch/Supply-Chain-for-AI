@@ -224,7 +224,7 @@ def test_c8_el_job_diario_falsa_la_claim_y_el_memo_lo_avisa(db):
         assert r['falsified'] == 0
         rows = s.query(ClaimOutcome).filter_by(claim_id=cid).all()
         assert sum(1 for o in rows if o.checkpoint == 'falsifier') == 1
-        fin = [o for o in rows if o.checkpoint == 'final_30d']
+        fin = [o for o in rows if o.checkpoint == 'final_20b']
         assert all(o.result == 'n/a' and 'falsada' in (o.reason or '') for o in fin)   # ya no cuenta como acierto/fallo
         tr = track_record(s)
         assert tr['overall']['n_scored'] == 1          # solo el fallo por falsación
@@ -278,3 +278,77 @@ def test_c9_ratios_y_pares_se_etiquetan_computed_y_catalogo_grafo_internal():
     assert cat and cat['source_type'] == 'catalog' and cat['source_kind'] == 'internal'
     g = next((e for k, e in by_ref.items() if str(k).startswith('khipus:graph:')), None)
     assert g is None or g['source_kind'] == 'internal'
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# C10 · Checkpoints en días hábiles de NYSE + evaluación diaria robusta desde el reloj del servidor
+# ════════════════════════════════════════════════════════════════════════════
+
+def test_c10_checkpoints_en_dias_habiles_y_feriados_nyse():
+    from datetime import date
+
+    from research.outcomes import build_checkpoints, business_days_after, is_business_day, nyse_holidays
+    h = nyse_holidays(2026)
+    assert {date(2026, 1, 1), date(2026, 1, 19), date(2026, 2, 16), date(2026, 4, 3), date(2026, 5, 25), date(2026, 6, 19),
+            date(2026, 7, 3), date(2026, 9, 7), date(2026, 11, 26), date(2026, 12, 25)} <= h
+    assert not is_business_day(date(2026, 6, 19)) and not is_business_day(date(2026, 6, 20)) and is_business_day(date(2026, 6, 22))
+    anchor = date(2026, 6, 1)
+    assert business_days_after(anchor, 5) == date(2026, 6, 8)
+    assert business_days_after(anchor, 20) == date(2026, 6, 30)        # Juneteenth no cuenta
+    cps = build_checkpoints('SHORT_TERM', anchor)
+    assert [c['label'] for c in cps] == ['interim_5b', 'final_20b'] and cps[1]['due_date'] == '2026-06-30'
+    assert cps[0]['unit'] == 'business' and cps[1]['final'] is True
+    med = build_checkpoints('MEDIUM_TERM', anchor)
+    assert [c['label'] for c in med] == ['interim_20b', 'interim_60b', 'final_180d'] and med[2]['due_date'] == '2026-11-28'
+    lng = build_checkpoints('LONG_TERM', anchor)
+    assert [c['label'] for c in lng] == ['interim_60b', 'interim_180d', 'final_365d']
+
+
+def test_c10_la_evaluacion_diaria_no_marca_el_dia_si_falla_y_se_reintenta(monkeypatch):
+    from datetime import datetime
+
+    from core import live_caps
+    import ontology.db as odb
+    import research.outcomes as oc
+    monkeypatch.setattr(live_caps, '_OUT_STATE', {'day': None, 'last': None, 'last_at': None, 'error': None,
+                                                  'error_at': None, 'runs': 0})
+    monkeypatch.setattr(odb, 'ontology_available', lambda: True)
+
+    class _S:
+        def __enter__(self):
+            return object()
+
+        def __exit__(self, *a):
+            return False
+    monkeypatch.setattr(odb, 'session_scope', lambda: _S())
+    calls = []
+
+    def flaky(session, now=None, **kw):
+        calls.append(1)
+        if len(calls) == 1:
+            raise RuntimeError('Yahoo caído')
+        return {'evaluated': 2}
+    monkeypatch.setattr(oc, 'evaluate_due', flaky)
+    now = datetime(2026, 10, 5, 8, tzinfo=UTC)
+    assert live_caps._daily_outcomes(now=now) is None and live_caps._OUT_STATE['day'] is None
+    assert 'RuntimeError' in live_caps._OUT_STATE['error']
+    assert live_caps._daily_outcomes(now=now) == {'evaluated': 2}          # segunda pasada SÍ corre
+    assert live_caps._OUT_STATE['day'] == '2026-10-05' and live_caps._OUT_STATE['error'] is None
+    assert live_caps._daily_outcomes(now=now) is None and len(calls) == 2  # ya corrió hoy
+
+
+def test_c10_la_evaluacion_corre_aunque_yahoo_no_de_capitalizaciones(monkeypatch):
+    from core import live_caps
+    seen = []
+    monkeypatch.setattr(live_caps, '_daily_outcomes', lambda now=None: seen.append(1))
+    monkeypatch.setattr(live_caps, '_symbols_by_id', lambda: {'Nvidia': 'NVDA'})
+    live_caps.refresh(fetch=lambda syms: {})
+    assert seen == [1]
+
+
+def test_c10_el_reloj_del_servidor_tiene_las_dos_tareas_registradas():
+    import server  # noqa: F401
+    from core import scheduler
+    st = scheduler.state()
+    assert 'research_outcomes_daily' in st and 'research_resume_deferred' in st
+    assert st['research_outcomes_daily']['every_s'] == 3600

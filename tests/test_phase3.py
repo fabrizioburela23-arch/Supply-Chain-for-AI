@@ -81,10 +81,11 @@ def _chair_json(prompt, extra_risk='', decision=None, agent='fundamental'):
 def test_checkpoints_por_horizonte():
     from research.outcomes import build_checkpoints
     assert [c['days'] for c in build_checkpoints('INTRADAY', ANCHOR)] == [1]
-    assert [(c['days'], c['final']) for c in build_checkpoints('SHORT_TERM', ANCHOR)] == [(7, False), (30, True)]
-    assert [c['days'] for c in build_checkpoints('MEDIUM_TERM', ANCHOR)] == [30, 90, 180]
+    # C10: señales tempranas en días HÁBILES (b), finales largos en calendario (d)
+    assert [(c['days'], c['final']) for c in build_checkpoints('SHORT_TERM', ANCHOR)] == [(5, False), (20, True)]
+    assert [c['days'] for c in build_checkpoints('MEDIUM_TERM', ANCHOR)] == [20, 60, 180]
     lt = build_checkpoints('LONG_TERM', ANCHOR)
-    assert [c['days'] for c in lt] == [90, 180, 365] and lt[-1]['label'] == 'final_365d'
+    assert [c['days'] for c in lt] == [60, 180, 365] and lt[-1]['label'] == 'final_365d'
     assert lt[-1]['due_date'] == '2027-06-01'
     assert build_checkpoints('STRUCTURAL', ANCHOR) == []
 
@@ -117,7 +118,7 @@ def _bl(**over):
 
 def test_score_checkpoint_exceso_vs_spy_y_pendientes():
     from research.outcomes import score_checkpoint
-    cp = {'label': 'final_30d', 'days': 30, 'due_date': (ANCHOR + timedelta(days=30)).isoformat(), 'final': True}
+    cp = {'label': 'final_20b', 'days': 30, 'due_date': (ANCHOR + timedelta(days=30)).isoformat(), 'final': True}
     today = ANCHOR + timedelta(days=45)
     r = score_checkpoint(_bl(), cp, PRICE_FN, today)
     assert r['result'] == 'hit' and abs(r['asset_return'] - 0.12) < 1e-9 and r['bench_return'] == 0.0
@@ -142,7 +143,7 @@ def test_split_no_produce_falso_desplome():
     """Ambos precios salen de la MISMA serie ajustada: un split 10:1 no es −90 %."""
     from research.outcomes import score_checkpoint
     adj = _series(date(2026, 5, 1), date(2026, 8, 1), lambda d: 10.0 * (1 + 0.001 * max(0, (d - ANCHOR).days)))
-    cp = {'label': 'final_30d', 'days': 30, 'due_date': '2026-07-01', 'final': True}
+    cp = {'label': 'final_20b', 'days': 30, 'due_date': '2026-07-01', 'final': True}
     r = score_checkpoint(_bl(stance='negative'), cp, lambda s, since: adj if s == 'NVDA' else SERIES['SPY'],
                          date(2026, 7, 10))
     assert abs(r['asset_return'] - 0.03) < 1e-9 and r['result'] == 'miss'
@@ -311,7 +312,7 @@ def test_foto_de_partida_al_persistir_la_claim(db):
         b = s.query(ClaimBaseline).filter_by(claim_id=c.id).one()
         assert b.symbol == 'NVDA' and b.scoreable and b.baseline_price == 181.2 and b.benchmark_price == 181.2
         assert b.baseline_source.startswith('live:') and b.horizon == 'LONG_TERM'
-        assert [x['days'] for x in b.checkpoints] == [90, 180, 365] and b.confidence == c.confidence
+        assert [x['days'] for x in b.checkpoints] == [60, 180, 365] and b.confidence == c.confidence
         cal = c.confidence_components['calibration']
         assert cal['raw'] == pytest.approx(c.confidence, abs=1e-3) and cal['sufficient'] is False
         assert c.confidence_components['method'] == 'conf-v2'     # C9
@@ -337,17 +338,17 @@ def test_evaluacion_con_precios_reales_idempotente_y_na(db):
         assert s.query(ClaimBaseline).filter_by(claim_id=ids['stc']).one().checkpoints == []
     with session_scope() as s:
         r1 = evaluate_due(s, now=datetime(2026, 7, 15, 12, tzinfo=UTC), price_fn=PRICE_FN)
-        assert r1['evaluated'] == 10                  # 5 claims × (7d + 30d)
+        assert r1['evaluated'] == 10                  # 5 claims × (5b + 20b)
         res = {(o.claim_id, o.checkpoint): o for o in s.query(ClaimOutcome).all()}
-        assert res[(ids['pos'], 'interim_7d')].result == 'hit'          # +2.8 % > banda
-        assert res[(ids['pos'], 'final_30d')].result == 'hit' and res[(ids['pos'], 'final_30d')].final
-        assert res[(ids['neg'], 'final_30d')].result == 'miss'          # superada: igual se califica
-        assert res[(ids['neg'], 'final_30d')].claim_status == 'superseded'
-        assert res[(ids['neu'], 'final_30d')].result == 'hit'           # AMD plano vs SPY plano
-        assert res[(ids['mix'], 'final_30d')].result == 'n/a' and 'mixta' in res[(ids['mix'], 'final_30d')].reason
-        assert res[(ids['unl'], 'final_30d')].result == 'n/a' and 'no cotiza' in res[(ids['unl'], 'final_30d')].reason
-        o = res[(ids['pos'], 'final_30d')]
-        assert o.base_price == 100.0 and o.eval_price == pytest.approx(112.0) and o.excess_return == pytest.approx(0.12)
+        assert res[(ids['pos'], 'interim_5b')].result == 'hit'          # +2.8 % > banda (5 hábiles = 7 días)
+        assert res[(ids['pos'], 'final_20b')].result == 'hit' and res[(ids['pos'], 'final_20b')].final
+        assert res[(ids['neg'], 'final_20b')].result == 'miss'          # superada: igual se califica
+        assert res[(ids['neg'], 'final_20b')].claim_status == 'superseded'
+        assert res[(ids['neu'], 'final_20b')].result == 'hit'           # AMD plano vs SPY plano
+        assert res[(ids['mix'], 'final_20b')].result == 'n/a' and 'mixta' in res[(ids['mix'], 'final_20b')].reason
+        assert res[(ids['unl'], 'final_20b')].result == 'n/a' and 'no cotiza' in res[(ids['unl'], 'final_20b')].reason
+        o = res[(ids['pos'], 'final_20b')]
+        assert o.base_price == 100.0 and o.eval_price == pytest.approx(111.6) and o.excess_return == pytest.approx(0.116)   # 20 hábiles = 29 días (Juneteenth)
         assert outcomes_for_claim(s, ids['pos'])[-1]['result'] == 'hit'
     with session_scope() as s:
         r2 = evaluate_due(s, now=datetime(2026, 7, 16, 12, tzinfo=UTC), price_fn=PRICE_FN)
@@ -618,7 +619,7 @@ def _ranged(series_by_sym):
 def test_serie_que_no_llega_al_inicio_queda_pendiente_no_na():
     """Una ventana corta del proveedor no es un n/a definitivo: se reintenta."""
     from research.outcomes import score_checkpoint
-    cp = {'label': 'final_30d', 'days': 30, 'due_date': '2026-07-01', 'final': True}
+    cp = {'label': 'final_20b', 'days': 30, 'due_date': '2026-07-01', 'final': True}
     short = {k: v for k, v in SERIES['NVDA'].items() if k >= '2026-06-15'}
     fn = lambda s, since: short if s == 'NVDA' else SERIES['SPY']  # noqa: E731
     assert score_checkpoint(_bl(), cp, fn, date(2026, 7, 10)) is None
@@ -628,7 +629,7 @@ def test_serie_que_no_llega_al_inicio_queda_pendiente_no_na():
 
 def test_calificacion_bilingue_y_moneda_local():
     from research.outcomes import is_us_listing, na_reasons, score_checkpoint
-    cp = {'label': 'final_30d', 'days': 30, 'due_date': '2026-07-01', 'final': True}
+    cp = {'label': 'final_20b', 'days': 30, 'due_date': '2026-07-01', 'final': True}
     r = score_checkpoint(_bl(), cp, PRICE_FN, date(2026, 7, 10))
     assert 'excess +12.00%' in r['reason_en'] and '→ hit' in r['reason_en']
     loc = score_checkpoint(_bl(symbol='9984.T'), cp, lambda s, since: SERIES['NVDA'] if s == '9984.T' else SERIES['SPY'],

@@ -26,13 +26,16 @@ en `claim_baselines`: entidad, ticker si cotiza, fecha de mercado (Nueva York),
 precio en vivo y SPY en vivo (solo auditoría), horizonte, confianza calculada y
 calibrada vigente, y las fechas de revisión:
 
-| Horizonte    | Checkpoints (días)        | Final |
-|--------------|---------------------------|-------|
-| INTRADAY     | 1                         | 1     |
-| SHORT_TERM   | 7 (intermedio), 30        | 30    |
-| MEDIUM_TERM  | 30, 90 (intermedios), 180 | 180   |
-| LONG_TERM    | 90, 180 (intermedios), 365| 365   |
-| STRUCTURAL   | — no se califica (n/a)    | —     |
+| Horizonte    | Checkpoints (b = días HÁBILES NYSE, d = calendario) | Final |
+|--------------|-----------------------------------------------------|-------|
+| INTRADAY     | 1d                                                  | 1d    |
+| SHORT_TERM   | 5b (intermedio), 20b                                | 20b   |
+| MEDIUM_TERM  | 20b, 60b (intermedios), 180d                        | 180d  |
+| LONG_TERM    | 60b, 180d (intermedios), 365d                       | 365d  |
+| STRUCTURAL   | — no se califica (n/a)                              | —     |
+
+(C10, misión de reparación 2026-10-04: antes 7/30 · 30/90/180 · 90/180/365 en
+días calendario. Las fotos de partida ya guardadas conservan su lista.)
 
 Las claims anteriores a Phase 3 se completan solas (backfill) en la primera
 evaluación: no tienen precio en vivo guardado, pero sí fecha, y eso basta.
@@ -63,8 +66,12 @@ evaluación: no tienen precio en vivo guardado, pero sí fecha, y eso basta.
   `reason_en`); las acciones fuera de EE.UU. se califican **en moneda local**
   (sin ajuste cambiario) y el motivo lo dice.
 
-Se ejecuta **1 vez al día** desde `core/live_caps` (scheduler del coordinador) y
-bajo pedido con `POST /api/committee/outcomes/evaluate` (PIN).
+Se ejecuta **1 vez al día** desde el reloj del servidor (`core/scheduler`, tarea
+`research_outcomes_daily`, cada hora hasta que corra bien ese día; también la
+dispara el refresco de `core/live_caps`) y bajo pedido con
+`POST /api/committee/outcomes/evaluate` (PIN). El día se marca SOLO si la
+evaluación terminó bien; la última corrida y su error se ven en
+`/api/research/health` (C10).
 
 **Historial y calibración** (`track_record`, `calibrated_confidence`):
 
