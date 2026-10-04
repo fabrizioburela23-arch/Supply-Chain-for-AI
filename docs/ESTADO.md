@@ -9,6 +9,51 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (h) — MISIÓN DE REPARACIÓN · P0 INVESTIGACIÓN (R1-R6, sw v201)
+
+Fabrizio: "dejar Khipus Finance confiable y a punto, sin gastar dinero; no agregues features; estoy a
+días de usarlo para invertir dinero ajeno". Regla 1 cumplida: primero `docs/REPARACION_DIAGNOSTICO.md`
+(mapa del sistema, reproducción por MCP de cada hallazgo: confirmado/distinto/no confirmado, plan de
+21 commits y 7 decisiones) → OK de Fabrizio ("todo como recomiendas, empieza por P0"). Registro por
+arreglo en `REPAIR_LOG.md`; tests en `tests/test_repair_research.py` (26, fallaban antes de cada commit).
+- R1 corta-circuito por proveedor de IA (sin saldo 60 min / clave 30 / modelo retirado 30; el 🩺 lo
+  reactiva con un ping). R2 "IA ocupada" espera 3/6/12/24 s y reintenta el MISMO proveedor;
+  429/5xx/red con backoff+jitter en Claude/Gemini/NVIDIA. R3 cola FIFO de jobs (2 hilos) + pool de
+  agentes compartido (2) + recuperación de huérfanos tras deploy. R4 estado `partial` + `coverage`
+  (síntesis, API, MCP, franja ⚠ y botón "Completar lo que falta"; `only_missing`). R5 presupuesto
+  agotado → `deferred` y reanudación automática al día siguiente (solo pedidos de personas, máx 3;
+  eventos automáticos se descartan), `core/scheduler.py` (reloj del servidor), runs fallidos cuentan
+  tokens, UNA tabla de precios. R6 `/api/research/health` + bloque en `/api/health` + tarjeta 🔬 en
+  🩺 + MCP `get_research_health`.
+- Decisiones tomadas (Fabrizio): validado = 5 calificaciones y tope 50 % mientras no; cobertura
+  fundamental + 3 de 4; checkpoints hábiles 5/20 (corto), 20/60/180 (medio), 60/180/365 (largo);
+  Postgres es la verdad del grafo; lista de direcciones al revés antes de aplicar; GDELT apagado con
+  aviso si pide clave. Pendiente de Fabrizio en Railway: `AI_ORDER=gemini,claude,nvidia` y
+  `RESEARCH_MODEL_DEFAULT=gemini,claude:deep,nvidia` mientras Anthropic no tenga saldo.
+- Revisión adversarial (workflow, 6 lentes) sobre R1-R6 + precios → R7 (cola: reclamo atómico del
+  job, huérfanos al arrancar y cada 10 min, runs cerrados al fallar, diferidos duplicados, Pizarra =
+  pedido humano; IA: circuito de Claude solo por errores definitivos y con código HTTP explícito,
+  API_KEY_INVALID de Gemini, límite de 💰 corta la cascada, el chat es INTERACTIVO) y R8 (contratos:
+  only_missing honesto, cobertura solo si corrió, tope 0 = apagada (503), Pizarra por la cola y
+  diferible, hints por estado en MCP, chat conoce get_research_health, docs/MCP.md).
+- P0 COMITÉ (C6-C10, `tests/test_repair_committee.py`, 19 tests): C6 "no validado" (ningún analista
+  con ≥5 calificaciones) → insignia + tamaño a la MITAD (`compute_sizing(validated=)`,
+  `memo.track_validation`); C7 quórum fundamental + 3 de 4 analistas o `decision_code=
+  INSUFFICIENT_DATA` (HOLD "DATOS INSUFICIENTES", sin debate ni presidente IA; encarga solo a los que
+  faltan; puestos ausentes en la sala); C8 falsadores estructurados `{metric, op, threshold, by}`
+  (`research/falsifiers.py`; columna `research_claims.falsifier_rules`; un falsador no puede
+  confirmar la tesis; el job diario los verifica → claim `falsified` = fallo del analista; el memo
+  avisa `falsified_claims`); C9 conf-v2 (`computed` no es fuente independiente; `khipus:*` = una
+  referencia; cifras de dinero sin fuente externa → tope 0,5); C10 checkpoints en días hábiles de NYSE
+  (5b/20b/60b + 180d/365d) y evaluación diaria robusta desde el reloj (`research_outcomes_daily`).
+  Los tests de Phase 3 que fijaban 5 %/$5.000 pasan a 2,5 %/$2.500 (decisión D1).
+- El commit de precios en vivo (cc1dfed, agente de la sesión (g)) entró en la misma revisión
+  adversarial antes de desplegar. SIGUIENTE: P1 grafo (auditoría, fusión por eventos, lista de
+  direcciones para Fabrizio), P1 riesgo, P2. Los informes de los investigadores de fondo con tests
+  propuestos están en el journal del workflow wf_0017fa17-625.
+
+---
+
 # SESIÓN 2026-10-04 (g) — KHIPU COMO ASISTENTE: ANALISTAS EN EL CHAT, PROMPT, MEMORIA, TIEMPOS (sw v196)
 
 Fabrizio: "no me responde bien, no me entiende, está empeorando; tiene que ser mi asistente; quiero

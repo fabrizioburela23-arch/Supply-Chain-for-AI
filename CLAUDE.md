@@ -154,6 +154,37 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     engine/portfolios.js; crea carteras SIMULADAS, nunca órdenes.
   - engine/riskreport.js: pantalla guiada (mis posiciones / cartera rápida en
     USD / ejemplo) y resultado en lenguaje simple; build_report acepta {symbol, usd}.
+  - **MISIÓN DE REPARACIÓN (2026-10-04, `REPAIR_LOG.md` + `docs/REPARACION_DIAGNOSTICO.md`)**:
+    reparación sin features ni gasto nuevo; cada arreglo = 1 commit + test que
+    fallaba antes (`tests/test_repair_*.py`). P0 investigación (R1-R6):
+    `core/ai.py` corta-circuito por proveedor (`provider_available`,
+    `circuit_open`, `ai_circuit_state`, `last_errors`; el 🩺 lo cierra con un ping)
+    + `_retry_transient` (429/5xx/red); `research/llm.py` espera y reintenta el
+    MISMO proveedor ante `AIBusyError` (nunca salta de proveedor por eso);
+    `research/runner.py` cola FIFO de jobs (`execute_job_async` encola; workers
+    `RESEARCH_JOB_CONCURRENCY`) + pool de agentes COMPARTIDO (`_AGENT_POOL`) +
+    `_recover_orphans` tras reinicio; estados de ResearchJob: queued/running/done/
+    **partial** (faltan analistas; `synthesis.coverage`; el siguiente pedido corre
+    solo lo que falta, `only_missing`)/**deferred** (presupuesto agotado;
+    `trigger.resume_after`; `resume_deferred` solo pedidos de personas, máx 3/día)/
+    failed. Todo consumidor nuevo de jobs DEBE tratar partial y deferred.
+    `core/scheduler.py` = ÚNICO reloj del servidor (registrar tareas en server.py;
+    nunca IA). `research/health.py` → `/api/research/health`, bloque `research`
+    en `/api/health`, tarjeta 🔬 del 🩺 y MCP `get_research_health`. Una sola
+    tabla de precios de IA (`core/ai_usage.PRICES`; `research.llm.estimate_cost`
+    delega). NO reintroducir: hilo por job, pool por job, `CLAUDE_RETRY_SLEEP_S`,
+    `_PRICE` en research, ni "skipped por presupuesto". P0 comité (C6-C10):
+    `validation_status`/`compute_sizing(validated=)` (sin ≥MIN_N calificaciones
+    por analista → tamaño a la MITAD y "no validado"), `quorum_check` (fundamental
+    + 3 de 4 o `decision_code='INSUFFICIENT_DATA'`, sin debate ni presidente IA),
+    `research/falsifiers.py` (reglas `{metric, op, threshold, by}`; estado de claim
+    `falsified`; `direction_errors` en agentes y presidente), conf-v2 en
+    `research/confidence.py` (`computed` y `khipus:*` no son fuentes independientes;
+    cifras de dinero sin fuente externa → tope 0.5), checkpoints en días hábiles NYSE
+    (`business_days_after`, etiquetas `interim_5b`/`final_20b`…) y
+    `core/live_caps._daily_outcomes` (marca el día solo si corrió bien; tarea
+    `research_outcomes_daily`). Columnas nuevas van en
+    `ontology/db._COLUMNAS_TARDIAS` (ALTER … IF NOT EXISTS), nunca a mano.
   - **Khipu chat (2026-10-01)**: `core/khipu_chat.py` (POST /api/khipu/chat):
     cerebro con herramientas (bucle JSON, máx 5 rondas, ~45 s; reutiliza
     mcp_server/tools.py — SOLO lectura, nunca órdenes) + `engine/khipu_chat.js`
@@ -344,6 +375,11 @@ FINNHUB_WS_KEY (clave Finnhub separada para el navegador), GUNICORN_THREADS (12)
 AI_MAX_CONCURRENCY (4), AI_INTERACTIVE_RESERVE (1), AI_CLAUDE_TIMEOUT_S, DB_POOL_SIZE/DB_MAX_OVERFLOW (10/10),
 DB_STATEMENT_TIMEOUT_MS, MATRIX_HEAVY_CONCURRENCY (1), REMIGRATE_ON_BOOT=<nombre de la base>  ← estructura
 TYPESAFE_API_KEY (Jev), TYPESAFE_MODEL (jev-latest), DECIDE_SHADOW (on), DECIDE_CONTROL (vacío; 'chat_gate,…' o 'all'), DECIDE_TIMEOUT_S (6)  ← decisiones Jev
+AI_CIRCUIT_CREDIT_S (3600) / AI_CIRCUIT_AUTH_S (1800) / AI_CIRCUIT_MODEL_S (1800)  ← R1: pausa del proveedor tras error definitivo
+AI_TRANSIENT_RETRIES (3), AI_TRANSIENT_BASE_S (1.5), AI_TRANSIENT_CAP_S (8)  ← R2: reintentos 429/5xx con backoff+jitter
+RESEARCH_BUSY_RETRIES (4)  ← R2: esperas ante "IA ocupada" (3/6/12/24 s) antes de fallar el agente
+RESEARCH_PARALLEL (2; nunca más que los cupos de fondo), RESEARCH_JOB_CONCURRENCY (2), RESEARCH_STALE_MIN (30), RESEARCH_RESUME_MAX (3)  ← R3/R5: cola de investigación
+KHIPU_SCHEDULER (on; off en tests)  ← R5: reloj del servidor (core/scheduler.py) para lo diario
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)
