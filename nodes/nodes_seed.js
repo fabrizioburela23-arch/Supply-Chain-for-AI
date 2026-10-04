@@ -2563,6 +2563,10 @@ const NODE_ID_ALIAS = {
   'StellaChemifa': 'stella-chemifa',
   'Mapletree Industrial Trust': 'MapletreeIndustrialTrust',
   'ESR Group': 'ESR_Group',
+  // G1d: mismo ticker exacto (600111.SS / 4047.T) — sin ambigüedad.
+  // AlphaSense ≈ AlphaSenseFin (solo etiqueta, sin ticker) queda para revisión humana.
+  'china-northern-rare-earth': 'ChinaNorthernRareEarth',
+  'KantoDenka': 'kanto-denka-kogyo',
   // NO fusionados a propósito (colisión de ticker, no duplicado): HashiCorp≠IBM,
   // Qwen≠AlibabaCloud, Aerojet⊂L3Harris, Altium⊂Renesas, Agility≠Amazon.
 };

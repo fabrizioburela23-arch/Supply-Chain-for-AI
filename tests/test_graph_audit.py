@@ -212,3 +212,18 @@ def test_alias_g1b_cubre_los_nueve_pares():
     dups = {tuple(x['ids']) for x in audit_snapshot(snap)['findings']['duplicate_entities']}
     for a, canon in ALIAS_PAIRS_G1B.items():
         assert tuple(sorted((a, canon))) not in dups
+
+
+ALIAS_PAIRS_G1D = {'china-northern-rare-earth': 'ChinaNorthernRareEarth', 'KantoDenka': 'kanto-denka-kogyo'}
+
+
+def test_alias_g1d_mismo_ticker_exacto():
+    """G1d: los dos pares con el MISMO ticker (600111.SS, 4047.T) también son
+    alias; el snapshot regenerado ya no los trae como nodos separados."""
+    from scripts.audit_graph import load_snapshot
+    alias = _alias_from_js()
+    snap = load_snapshot(SNAPSHOT)
+    ids = {n['id'] for n in snap['nodes']}
+    for a, canon in ALIAS_PAIRS_G1D.items():
+        assert alias.get(a) == canon
+        assert canon in ids and a not in ids

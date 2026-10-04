@@ -393,151 +393,6 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 
 ---
 
-## P1 · Grafo y ontología
-
-### G4a — "Proveedores" que no proveen: socios e inversores aparte, clase y confianza por arista
-
-- **Problema.** `get_supply_chain('Equinix')` y `get_company` listaban a
-  Colliers / Fitch / Carlyle / C&W (tipo `partner`) como `top_suppliers`; una IA
-  que lea eso concluye que Equinix "depende" de una consultora inmobiliaria.
-  Tampoco había forma de saber si una arista estaba verificada.
-- **Causa raíz.** `mcp_server/tools.py:_edges` devolvía TODAS las aristas
-  entrantes/salientes sin filtrar por tipo (hallazgo C5 del diagnóstico); el
-  vocabulario no distinguía "relación de flujo" (mueve un bien/servicio) de
-  "relación de conocimiento/capital".
-- **Cambio.** `ontology/vocabulary.json`: flag `flow: true` en supply/fab/cloud/
-  license/ppa/owns/deploy (ÚNICO registro); `vocabulary.py`: `flow_relation_types()`,
-  `is_flow_relation()`, `flow_degree(links)`, `flow_relations` en el snapshot servido.
-  `mcp_server/tools.py`: `_edges(nid, direction, min_w=0.0, kinds=None)`; cada
-  arista del snapshot lleva `relation_class` (mapa cerrado `RELATION_CLASS`:
-  supply|fab|customer|invest|ppa|partner|coverage|competitor, desconocido →
-  `other`), `verified` y `confidence` (`_link_trust`, ver G4c). `get_company`:
-  `top_suppliers`/`top_customers` solo flujo, `related` (misma forma + `direction`),
-  `counts.related`, `edge_semantics`. `get_supply_chain`: `edges` solo flujo,
-  `related` de la raíz (un salto), parámetro opcional `include_partners`
-  (default false) que los devuelve a `edges`, `counts`, `edge_semantics`.
-  Contratos existentes intactos (solo campos/parámetros añadidos). `docs/MCP.md`.
-- **Verificar.** `pytest tests/test_repair_graph.py -k g4a` (5 tests; antes:
-  `_edges` sin `kinds` → TypeError, partners dentro de `top_suppliers`, sin
-  `related`/`relation_class`). Producción: `get_company('Equinix')` → suppliers
-  = Munters/Eaton/Holcim/SiemensEnergy…, `related` = CPP/GIC/Colliers/Fitch…
-- **Rollback.** Revertir el commit; no toca datos.
-
-### G4b — La fecha centinela 2000-01-01 se leía como fecha real; procedencia vacía muda
-
-- **Problema.** `get_ontology_object('TSMC')`: 198 vínculos "desde 2000-01-01" y
-  `provenance: []` sin explicación. La migración (`scripts/migrate_v0_to_ontology.py`
-  `GENESIS`) usa esa fecha como "desde que rastreamos este universo" — honesto en
-  el código, pero UI, API y MCP la mostraban como inicio real (C1, C2).
-- **Causa raíz.** El centinela solo existía en el script; nadie que serializara
-  un `valid_from` sabía reconocerlo.
-- **Cambio.** `ontology/service.py`: `GENESIS_SENTINEL`, `is_genesis(dt)`
-  (datetime/date/str/None), `VALID_FROM_NOTE_ES/EN`; `_links_active_at`
-  (time-travel) marca `valid_from_known: false`. El script importa el centinela
-  compartido. `ontology/api.py`: `_link_to_dict`/`_event_to_dict`/`GET /events/<id>`
-  (`_mark_genesis`). `ontology/timeline.py`: entradas de `entity_timeline` y
-  `global_feed`. MCP `get_ontology_object`: `active_links` y `recent_events` con
-  `valid_from_known: false` + `valid_from_note_es/en` ("desde que se rastrea;
-  fecha de inicio real desconocida"), `relation_class` en vínculos;
-  `provenance == []` → `provenance_note` ('catalog-only: curated by Khipus, no
-  primary source document recorded') + `provenance_note_es`. UI (Dossier v8 en
-  app.html y engine/fincard.js): "desde que se rastrea" / "since tracked" en vez
-  de "01 ene 2000". NO se modificó ningún evento existente. sw v205.
-- **Verificar.** `pytest tests/test_repair_graph.py -k g4b` (4 tests, 2 con
-  base; antes: ImportError `GENESIS_SENTINEL`, KeyError `valid_from_known`).
-- **Rollback.** Revertir el commit; no toca datos.
-
-### G4c — Links "no verificados" pesaban igual que los verificados
-
-- **Problema.** 25 links del catálogo dicen en `rel` "no verificado" / "no
-  revisado" / "posible(mente)" / "sin confirmar" (FedEx→TSMC w1, Cathay_Cargo→TSMC
-  w2, Vanguard→TSMC, SNB→Nvidia…) y entraban al NRS y a las matrices con su peso
-  completo (C6). No existía `verified` ni `confidence` por link.
-- **Causa raíz.** El merge (`nodes/merge_graph.js`) solo conservaba
-  {source, target, w, rel, type}; la migración copiaba `rel` como texto suelto;
-  `matrix/engine._eff_weight` solo descontaba fuentes en bulto.
-- **Cambio.** `nodes/merge_graph.js` (ÚNICA implementación del merge, la usan el
-  navegador y el export): `linkTrust(rel, meta)` → cada link sale con `conf`
-  (0-1) y `verified`; regex `/no verificad|no revisad|posible(mente)?|sin
-  confirmar/i` → 0.3/false; un 6.º elemento `{conf, verified, since}` (arrays) o
-  `conf/verified/since` (forma `{s,t,…}`) manda sobre el texto; en el dedupe la
-  confianza se deriva del texto FINAL salvo que haya venido declarada.
-  `scripts/export_graph_v0.js`: `buildSnapshot()` reutilizable (no escribe al
-  hacer `require`) + `counts.unverified_links`. **NO se regeneró
-  `data/grafo_v0.json`** (lo hace quien integra; traerá `conf`/`verified`).
-  `scripts/migrate_v0_to_ontology.py`: copia `conf/verified/since` a
-  `properties.confidence/verified/since` solo si el snapshot los trae.
-  `matrix/engine.py`: `_eff_weight(raw, source, confidence=None)` multiplica por
-  la confianza cuando es < 1 (sin ella: histórico exacto); `link_confidence(props)`
-  (properties.confidence, o `verified: false` → 0.3); `build_matrices` vigente y
-  as_of lo aplican. `engine/statematrix.js`: misma matemática (w × conf) en el
-  núcleo cliente. `mcp_server/tools._link_trust` (G4a) respeta `conf/verified` del
-  snapshot y, si no vienen (snapshot actual), los deriva con la MISMA regex. sw v206.
-  **Efecto colateral documentado:** los 86 links de hechos temporales ya traían
-  `properties.confidence` 0.8-0.98 en la base de producción y desde ahora pesan
-  w × conf (antes se ignoraba).
-- **Verificar.** `pytest tests/test_repair_graph.py -k g4c` (6 tests; 5 fallaban
-  en HEAD): merge sintético (FedEx→TSMC 0.3/false, 6.º elemento, dedupe), merge
-  REAL vía `buildSnapshot` (949 nodos / 2.526 links iguales, 25 no verificados,
-  el snapshot en disco no cambia), `_link_trust` con y sin campos del snapshot,
-  `_eff_weight(3, None, 0.3) ≈ 0.9`, matrices con base (2 × 0.5 = 1.0 vigente y
-  as_of), statematrix.
-- **Rollback.** Revertir el commit. Si ya se regeneró el snapshot con
-  `conf/verified`, los campos extra son inofensivos para el código viejo.
-
-### G4d — NRS estructural: el grado contaba socios, inversores, factores y duplicados
-
-- **Problema.** El término "cadena" del NRS (hasta 25 pts) usaba el grado bruto:
-  753 `partner` + 192 `invest` + 48 pares repetidos en el catálogo, y en la base
-  además `affects` (factores), `about` (noticias) y los pares duplicados de la
-  migración (TSMC→Nvidia ×3). Una empresa con muchos accionistas pasivos parecía
-  "frágil en la cadena" (C3b, C7).
-- **Causa raíz.** `app.html:_buildNrsDegree` sumaba toda fila de `LINKS`;
-  `ontology/agents.py:_compute_server_nrs` hacía `COUNT(*)` de `links` vigentes;
-  el MCP y World Monitor usaban el mismo grado bruto del snapshot.
-- **Cambio.** Regla única: grado = pares DISTINTOS source→target unidos por una
-  relación de FLUJO (vocabulary `flow: true`). Cliente: `_buildNrsDegree` con
-  `NRS_FLOW_TYPES` (comentario apunta a vocabulary.json), bucles fuera, expuesto
-  en `window` para tests. Servidor: `server_flow_degree(session, id)` = `SELECT
-  DISTINCT (source_id, target_id)` vigentes con `rel_type IN flow_relation_types()`;
-  `_compute_server_nrs` lo usa. Catálogo: `ontology.vocabulary.flow_degree` en
-  `mcp_server/tools._nrs` (`flow_deg` del snapshot) y `core/world._graph`
-  (`flow_degree` por nodo; `degree` total se conserva para ordenar).
-  `engine/explain.js`: el "?" del NRS dice (ES/EN) que solo cuentan relaciones
-  de suministro, que socios e inversionistas no cuentan y que cada pareja cuenta
-  una vez. `CLAUDE.md` (Convenciones de datos críticas): grado estructural + "los
-  NRS visibles BAJAN" + resumen G4a/b/c. sw v207.
-- **Verificar.** `pytest tests/test_repair_graph.py -k g4d` (4 tests, 1 con
-  base; todos fallaban en HEAD): bloque real de `_buildNrsDegree` ejecutado con
-  node+vm (supply ×2 + fab mismo par + partner + invest + bucle → grado 4 y no 9);
-  servidor: supply ×2 + partner + invest + affects → grado 1 (NRS = fórmula con
-  chain 2.5); Colliers (1 flujo, 3 socios): MCP y World Monitor coinciden y el
-  NRS baja; textos bilingües + doc.
-- **Rollback.** Revertir el commit; no toca datos. Los NRS vuelven a subir.
-
-### G4e — Cifras del catálogo sin unidad clara ni fecha propia
-
-- **Problema.** `get_company('Equinix')`: `catalog.operating_margin: 0.17`
-  (fracción) al lado de `live_market.operating_margin: 27.02` (porcentaje), con
-  `catalog.as_of` = fecha de EXPORTACIÓN del snapshot que parecía la fecha de la
-  cifra (C8). 526 nodos con `margin` y 0 con fecha propia.
-- **Causa raíz.** Las cifras se escribieron a mano en `nodes/*.js` sin fecha ni
-  unidad declarada; el MCP las pasaba tal cual.
-- **Cambio.** `get_company.catalog`: `operating_margin` (fracción) se conserva;
-  `operating_margin_pct` (×100, misma unidad que live_market); `_margin_pct`
-  devuelve None fuera de ±5 — Envicool trae 20.25 tecleado ya en % y se marca con
-  `operating_margin_note` ("unit unknown, not converted") en vez de publicar
-  2.025 %; `figures_as_of: null`, `figures_note` ('undated curated figures
-  (catalog); prefer live_market when available') + `figures_note_es`; `as_of_note`
-  aclara que `as_of` es la fecha del snapshot. `docs/MCP.md` (en G4a).
-- **Verificar.** `pytest tests/test_repair_graph.py -k g4e` (2 tests; antes
-  KeyError `operating_margin_pct`).
-- **Rollback.** Revertir el commit; no toca datos.
-- **Dato a corregir a mano (no en esta misión):** `Envicool.margin = 20.25` en el
-  catálogo (seguramente 0.2025).
-
----
-
 ## Precios en vivo (revisión del commit cc1dfed del agente de la sesión (g))
 
 ### R9 — Hallazgos de la lente "precios" de la revisión adversarial
@@ -712,6 +567,16 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
 - **Verificar.** `pytest tests/test_merge_graph_alias.py`: corre el merge REAL
   en Node; antes fallaba (AWS→Amazon y decenas más sin mapear).
 
+### G1d — Dos duplicados más con el MISMO ticker + snapshot regenerado
+- **Cambio.** `china-northern-rare-earth` → `ChinaNorthernRareEarth` (600111.SS)
+  y `KantoDenka` → `kanto-denka-kogyo` (4047.T) en NODE_ID_ALIAS (mismo ticker
+  exacto: sin ambigüedad). `AlphaSense` ≈ `AlphaSenseFin` (solo etiqueta, sin
+  ticker) queda en la lista de revisión de Fabrizio.
+- **Snapshot.** `node scripts/export_graph_v0.js` con todo P1 integrado:
+  949 → 938 nodos, 2.526 → 2.524 enlaces (2 pares colapsados al fusionar), 90+2
+  alias, 25 enlaces "no verificados" con `verified:false`/`conf`; auditoría
+  re-basada (`--write-baseline`): entidades duplicadas 11 → 1, huérfanos 25 → 23.
+
 ### G2 — La ontología se corrige SIN borrar: dedupe de vínculos, retracción dirigida y fusión de entidades por eventos
 - **Síntoma.** El diagnóstico encontró en producción vínculos repetidos (mismo
   par, misma relación, mismo peso: la migración y el bulk import los volvían a
@@ -799,3 +664,146 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   positivos).
 - **Producción.** NO se aplicó nada: se espera la revisión de Fabrizio
   (copia de seguridad → *Aplicar lo seguro* → revisar direcciones).
+
+### G4a — "Proveedores" que no proveen: socios e inversores aparte, clase y confianza por arista
+
+- **Problema.** `get_supply_chain('Equinix')` y `get_company` listaban a
+  Colliers / Fitch / Carlyle / C&W (tipo `partner`) como `top_suppliers`; una IA
+  que lea eso concluye que Equinix "depende" de una consultora inmobiliaria.
+  Tampoco había forma de saber si una arista estaba verificada.
+- **Causa raíz.** `mcp_server/tools.py:_edges` devolvía TODAS las aristas
+  entrantes/salientes sin filtrar por tipo (hallazgo C5 del diagnóstico); el
+  vocabulario no distinguía "relación de flujo" (mueve un bien/servicio) de
+  "relación de conocimiento/capital".
+- **Cambio.** `ontology/vocabulary.json`: flag `flow: true` en supply/fab/cloud/
+  license/ppa/owns/deploy (ÚNICO registro); `vocabulary.py`: `flow_relation_types()`,
+  `is_flow_relation()`, `flow_degree(links)`, `flow_relations` en el snapshot servido.
+  `mcp_server/tools.py`: `_edges(nid, direction, min_w=0.0, kinds=None)`; cada
+  arista del snapshot lleva `relation_class` (mapa cerrado `RELATION_CLASS`:
+  supply|fab|customer|invest|ppa|partner|coverage|competitor, desconocido →
+  `other`), `verified` y `confidence` (`_link_trust`, ver G4c). `get_company`:
+  `top_suppliers`/`top_customers` solo flujo, `related` (misma forma + `direction`),
+  `counts.related`, `edge_semantics`. `get_supply_chain`: `edges` solo flujo,
+  `related` de la raíz (un salto), parámetro opcional `include_partners`
+  (default false) que los devuelve a `edges`, `counts`, `edge_semantics`.
+  Contratos existentes intactos (solo campos/parámetros añadidos). `docs/MCP.md`.
+- **Verificar.** `pytest tests/test_repair_graph.py -k g4a` (5 tests; antes:
+  `_edges` sin `kinds` → TypeError, partners dentro de `top_suppliers`, sin
+  `related`/`relation_class`). Producción: `get_company('Equinix')` → suppliers
+  = Munters/Eaton/Holcim/SiemensEnergy…, `related` = CPP/GIC/Colliers/Fitch…
+- **Rollback.** Revertir el commit; no toca datos.
+
+### G4b — La fecha centinela 2000-01-01 se leía como fecha real; procedencia vacía muda
+
+- **Problema.** `get_ontology_object('TSMC')`: 198 vínculos "desde 2000-01-01" y
+  `provenance: []` sin explicación. La migración (`scripts/migrate_v0_to_ontology.py`
+  `GENESIS`) usa esa fecha como "desde que rastreamos este universo" — honesto en
+  el código, pero UI, API y MCP la mostraban como inicio real (C1, C2).
+- **Causa raíz.** El centinela solo existía en el script; nadie que serializara
+  un `valid_from` sabía reconocerlo.
+- **Cambio.** `ontology/service.py`: `GENESIS_SENTINEL`, `is_genesis(dt)`
+  (datetime/date/str/None), `VALID_FROM_NOTE_ES/EN`; `_links_active_at`
+  (time-travel) marca `valid_from_known: false`. El script importa el centinela
+  compartido. `ontology/api.py`: `_link_to_dict`/`_event_to_dict`/`GET /events/<id>`
+  (`_mark_genesis`). `ontology/timeline.py`: entradas de `entity_timeline` y
+  `global_feed`. MCP `get_ontology_object`: `active_links` y `recent_events` con
+  `valid_from_known: false` + `valid_from_note_es/en` ("desde que se rastrea;
+  fecha de inicio real desconocida"), `relation_class` en vínculos;
+  `provenance == []` → `provenance_note` ('catalog-only: curated by Khipus, no
+  primary source document recorded') + `provenance_note_es`. UI (Dossier v8 en
+  app.html y engine/fincard.js): "desde que se rastrea" / "since tracked" en vez
+  de "01 ene 2000". NO se modificó ningún evento existente. sw v205.
+- **Verificar.** `pytest tests/test_repair_graph.py -k g4b` (4 tests, 2 con
+  base; antes: ImportError `GENESIS_SENTINEL`, KeyError `valid_from_known`).
+- **Rollback.** Revertir el commit; no toca datos.
+
+### G4c — Links "no verificados" pesaban igual que los verificados
+
+- **Problema.** 25 links del catálogo dicen en `rel` "no verificado" / "no
+  revisado" / "posible(mente)" / "sin confirmar" (FedEx→TSMC w1, Cathay_Cargo→TSMC
+  w2, Vanguard→TSMC, SNB→Nvidia…) y entraban al NRS y a las matrices con su peso
+  completo (C6). No existía `verified` ni `confidence` por link.
+- **Causa raíz.** El merge (`nodes/merge_graph.js`) solo conservaba
+  {source, target, w, rel, type}; la migración copiaba `rel` como texto suelto;
+  `matrix/engine._eff_weight` solo descontaba fuentes en bulto.
+- **Cambio.** `nodes/merge_graph.js` (ÚNICA implementación del merge, la usan el
+  navegador y el export): `linkTrust(rel, meta)` → cada link sale con `conf`
+  (0-1) y `verified`; regex `/no verificad|no revisad|posible(mente)?|sin
+  confirmar/i` → 0.3/false; un 6.º elemento `{conf, verified, since}` (arrays) o
+  `conf/verified/since` (forma `{s,t,…}`) manda sobre el texto; en el dedupe la
+  confianza se deriva del texto FINAL salvo que haya venido declarada.
+  `scripts/export_graph_v0.js`: `buildSnapshot()` reutilizable (no escribe al
+  hacer `require`) + `counts.unverified_links`. **NO se regeneró
+  `data/grafo_v0.json`** (lo hace quien integra; traerá `conf`/`verified`).
+  `scripts/migrate_v0_to_ontology.py`: copia `conf/verified/since` a
+  `properties.confidence/verified/since` solo si el snapshot los trae.
+  `matrix/engine.py`: `_eff_weight(raw, source, confidence=None)` multiplica por
+  la confianza cuando es < 1 (sin ella: histórico exacto); `link_confidence(props)`
+  (properties.confidence, o `verified: false` → 0.3); `build_matrices` vigente y
+  as_of lo aplican. `engine/statematrix.js`: misma matemática (w × conf) en el
+  núcleo cliente. `mcp_server/tools._link_trust` (G4a) respeta `conf/verified` del
+  snapshot y, si no vienen (snapshot actual), los deriva con la MISMA regex. sw v206.
+  **Efecto colateral documentado:** los 86 links de hechos temporales ya traían
+  `properties.confidence` 0.8-0.98 en la base de producción y desde ahora pesan
+  w × conf (antes se ignoraba).
+- **Verificar.** `pytest tests/test_repair_graph.py -k g4c` (6 tests; 5 fallaban
+  en HEAD): merge sintético (FedEx→TSMC 0.3/false, 6.º elemento, dedupe), merge
+  REAL vía `buildSnapshot` (949 nodos / 2.526 links iguales, 25 no verificados,
+  el snapshot en disco no cambia), `_link_trust` con y sin campos del snapshot,
+  `_eff_weight(3, None, 0.3) ≈ 0.9`, matrices con base (2 × 0.5 = 1.0 vigente y
+  as_of), statematrix.
+- **Rollback.** Revertir el commit. Si ya se regeneró el snapshot con
+  `conf/verified`, los campos extra son inofensivos para el código viejo.
+
+### G4d — NRS estructural: el grado contaba socios, inversores, factores y duplicados
+
+- **Problema.** El término "cadena" del NRS (hasta 25 pts) usaba el grado bruto:
+  753 `partner` + 192 `invest` + 48 pares repetidos en el catálogo, y en la base
+  además `affects` (factores), `about` (noticias) y los pares duplicados de la
+  migración (TSMC→Nvidia ×3). Una empresa con muchos accionistas pasivos parecía
+  "frágil en la cadena" (C3b, C7).
+- **Causa raíz.** `app.html:_buildNrsDegree` sumaba toda fila de `LINKS`;
+  `ontology/agents.py:_compute_server_nrs` hacía `COUNT(*)` de `links` vigentes;
+  el MCP y World Monitor usaban el mismo grado bruto del snapshot.
+- **Cambio.** Regla única: grado = pares DISTINTOS source→target unidos por una
+  relación de FLUJO (vocabulary `flow: true`). Cliente: `_buildNrsDegree` con
+  `NRS_FLOW_TYPES` (comentario apunta a vocabulary.json), bucles fuera, expuesto
+  en `window` para tests. Servidor: `server_flow_degree(session, id)` = `SELECT
+  DISTINCT (source_id, target_id)` vigentes con `rel_type IN flow_relation_types()`;
+  `_compute_server_nrs` lo usa. Catálogo: `ontology.vocabulary.flow_degree` en
+  `mcp_server/tools._nrs` (`flow_deg` del snapshot) y `core/world._graph`
+  (`flow_degree` por nodo; `degree` total se conserva para ordenar).
+  `engine/explain.js`: el "?" del NRS dice (ES/EN) que solo cuentan relaciones
+  de suministro, que socios e inversionistas no cuentan y que cada pareja cuenta
+  una vez. `CLAUDE.md` (Convenciones de datos críticas): grado estructural + "los
+  NRS visibles BAJAN" + resumen G4a/b/c. sw v207.
+- **Verificar.** `pytest tests/test_repair_graph.py -k g4d` (4 tests, 1 con
+  base; todos fallaban en HEAD): bloque real de `_buildNrsDegree` ejecutado con
+  node+vm (supply ×2 + fab mismo par + partner + invest + bucle → grado 4 y no 9);
+  servidor: supply ×2 + partner + invest + affects → grado 1 (NRS = fórmula con
+  chain 2.5); Colliers (1 flujo, 3 socios): MCP y World Monitor coinciden y el
+  NRS baja; textos bilingües + doc.
+- **Rollback.** Revertir el commit; no toca datos. Los NRS vuelven a subir.
+
+### G4e — Cifras del catálogo sin unidad clara ni fecha propia
+
+- **Problema.** `get_company('Equinix')`: `catalog.operating_margin: 0.17`
+  (fracción) al lado de `live_market.operating_margin: 27.02` (porcentaje), con
+  `catalog.as_of` = fecha de EXPORTACIÓN del snapshot que parecía la fecha de la
+  cifra (C8). 526 nodos con `margin` y 0 con fecha propia.
+- **Causa raíz.** Las cifras se escribieron a mano en `nodes/*.js` sin fecha ni
+  unidad declarada; el MCP las pasaba tal cual.
+- **Cambio.** `get_company.catalog`: `operating_margin` (fracción) se conserva;
+  `operating_margin_pct` (×100, misma unidad que live_market); `_margin_pct`
+  devuelve None fuera de ±5 — Envicool trae 20.25 tecleado ya en % y se marca con
+  `operating_margin_note` ("unit unknown, not converted") en vez de publicar
+  2.025 %; `figures_as_of: null`, `figures_note` ('undated curated figures
+  (catalog); prefer live_market when available') + `figures_note_es`; `as_of_note`
+  aclara que `as_of` es la fecha del snapshot. `docs/MCP.md` (en G4a).
+- **Verificar.** `pytest tests/test_repair_graph.py -k g4e` (2 tests; antes
+  KeyError `operating_margin_pct`).
+- **Rollback.** Revertir el commit; no toca datos.
+- **Dato a corregir a mano (no en esta misión):** `Envicool.margin = 20.25` en el
+  catálogo (seguramente 0.2025).
+
+---
