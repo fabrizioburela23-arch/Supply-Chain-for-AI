@@ -870,6 +870,26 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   → 0 diferencias, tablas == replay en cada paso → deshacer ambas corridas → los
   1.451 vínculos originales EXACTOS. `pytest tests/test_repair_ontology_review.py` (17).
 
+### G5c — Segunda revisión adversarial (sobre G5): 7 hallazgos, 3 ya resueltos por G5b, 4 corregidos
+- **Ya resueltos por G5b (tests añadidos igual).** La orden por defecto cambiaba
+  un duplicado por otro; deshacer no anulaba ascensos y 'extra' no convergía;
+  solo ascendía el primer duplicado (con 2+ fuentes). Con G5b el ascenso solo
+  ocurre al DESHACER, de otro canal y sin copia viva: `test_g5c_orden_por_defecto…`
+  y `test_g5c_extra_y_deshacer…` pasan. Decisión documentada: una CORRECCIÓN
+  (RetractarVinculo) retracta el HECHO; las otras afirmaciones idénticas no
+  ascienden (si una era cierta, se vuelve a crear con su fuente).
+- **Corregidos.** (1) `Event.recorded_at` = `clock_timestamp()` (hora real de la
+  escritura): con `now()` (inicio de la transacción) una remoción y una
+  re-creación en la misma transacción empataban, o una remoción "anterior" a una
+  creación concurrente quedaba al revés, y el replay difería de las tablas.
+  (2) Deshacer una fusión quita SOLO su alias del canónico (antes pisaba la
+  lista y borraba alias de fusiones posteriores). (3) "Cerrado después" también
+  se mira en el par CANÓNICO de una fusión de la corrida (si una persona rechazó
+  el vínculo ya movido, deshacer no lo resucita con el id viejo). (4) `expect`
+  con valores no numéricos → 400 (antes 500).
+- **Verificar.** `pytest tests/test_repair_ontology_review.py -k g5c` (6): sin el
+  cambio fallan 4 (los 2 restantes cubren lo de G5b).
+
 ### G6 — Revisión adversarial de G4 (lente "contratos"): el mismo NRS en todas partes, el chat ve todo
 - **Hallazgos y cambios.** (media) El chat (`rank_companies`), el asistente de
   carteras (`core/portfolio_ai.py`) y Second Brain calculaban el NRS con el

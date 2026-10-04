@@ -11,7 +11,7 @@ igual que ya hace el Grafo Temporal en el cliente (status() vigente/expirado).
 import uuid
 from datetime import date, datetime, timezone
 
-from sqlalchemy import select, or_, and_
+from sqlalchemy import select, or_, and_, func
 
 from ontology.models import Event, ObjectRecord, LinkRecord, EventType
 
@@ -132,6 +132,12 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
         id=uuid.uuid4(), event_type=event_type, object_id=object_id, target_id=target_id,
         payload=payload or {}, valid_from=valid_from, valid_to=valid_to,
         source=source, actor=actor, source_id=source_id, confidence=confidence,
+        # G5c: hora REAL de la escritura (clock_timestamp), no el inicio de la
+        # transacción (now()): el replay ordena creaciones y remociones por
+        # registro, y con now() dos eventos de la misma transacción —o una
+        # remoción cuya transacción empezó antes de una creación concurrente—
+        # quedaban empatados o al revés respecto de las tablas.
+        recorded_at=func.clock_timestamp(),
     )
     session.add(ev)
     session.flush()  # para tener ev.recorded_at si hiciera falta, y detectar errores de constraint ya

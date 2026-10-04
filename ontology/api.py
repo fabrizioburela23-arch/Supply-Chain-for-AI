@@ -1103,6 +1103,8 @@ def reconcile_apply():
         return jsonify({'error': f'include inválido; válidas: {list(R.CATEGORIES)}',
                         'error_en': f'invalid include; valid: {list(R.CATEGORIES)}'}), 400
     expect = b.get('expect') if isinstance(b.get('expect'), dict) else None
+    if expect is not None and not all(isinstance(v, int) and not isinstance(v, bool) and v >= 0 for v in expect.values()):
+        return jsonify({'error': 'expect debe ser {categoría: número}', 'error_en': 'expect must be {category: number}'}), 400
     try:
         res = R.apply_plan(session_scope, R.load_snapshot(), include=include, confirm_db=_str_arg(b, 'confirm_db', 120),
                            actor=actor, expect=expect)

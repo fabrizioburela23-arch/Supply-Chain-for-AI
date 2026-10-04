@@ -362,7 +362,8 @@ def test_g5_faltante_rechazado_no_se_propone(db):
 def test_g5_api_exige_pin_configurado_y_valida_tipos(db, monkeypatch):
     import server
     from core import pin
-    pin._reset_for_tests()
+    from core import http as _h
+    pin._reset_for_tests(); _h._rate_buckets.clear()
     server.app.config['TESTING'] = True
     c = server.app.test_client()
     monkeypatch.delenv('TRADE_PIN', raising=False)
@@ -391,3 +392,112 @@ def test_g5_deshacer_no_asciende_duplicados_de_la_misma_corrida(db):
         assert out['links_retracted'] == 1
     with session_scope() as s:
         assert _state(s) == _replay(s) == before
+
+
+# ════════ G5c — segunda revisión adversarial (sobre G5) ════════
+
+def test_g5c_orden_por_defecto_no_cambia_un_duplicado_por_otro(db):
+    """RR-1: el canónico tiene dos copias heredadas (una con el texto del catálogo)
+    y el alias otra más: tras alias+duplicates queda UNA fila, y deshacer es exacto."""
+    from ontology.db import session_scope
+    from ontology.reconcile import apply_plan, build_plan, rollback_run
+    _objs('C', 'AL', 'X')
+    _link('C', 'X', w=2, props={'rel_label': 'old'})
+    _link('C', 'X', w=2, props={'rel_label': 'cat'})
+    _link('AL', 'X', w=2, props={'rel_label': 'alias'})
+    _legacy()
+    with session_scope() as s:
+        before = _state(s)
+    snap = _snap([{'source': 'C', 'target': 'X', 'w': 2, 'type': 'supply', 'rel': 'cat'}], alias={'AL': 'C'})
+    r = apply_plan(session_scope, snap, include=['alias', 'duplicates'], confirm_db=_dbname())
+    with session_scope() as s:
+        assert build_plan(s, snap)['summary']['duplicates'] == 0
+        assert sum(v for k, v in _state(s).items() if k[:2] == ('C', 'X')) == 1 and _state(s) == _replay(s)
+        rollback_run(s, r['run_id'], confirm_db=_dbname())
+    with session_scope() as s:
+        assert _state(s) == _replay(s) == before
+
+
+def test_g5c_extra_y_deshacer_con_hecho_independiente(db):
+    """RR-2: un hecho de wikidata deduplicado contra una fila que 'extra' retracta
+    (corrección): no asciende; deshacer vuelve EXACTO (1 fila, no 2)."""
+    from ontology.db import session_scope
+    from ontology.reconcile import apply_plan, rollback_run
+    _objs('A', 'B', 'Z')
+    _link('A', 'B', w=2)
+    _legacy()
+    _link('A', 'B', w=2, props={'source': 'wikidata'}, source='wikidata', vf='2024-01-01', dup=False)
+    with session_scope() as s:
+        before = _state(s)
+    snap = _snap([{'source': 'A', 'target': 'Z', 'w': 1, 'type': 'supply', 'rel': ''}], nodes=['B'])
+    r = apply_plan(session_scope, snap, include=['extra'], confirm_db=_dbname())
+    assert r['applied'] == {'extra': 1}
+    with session_scope() as s:
+        assert _state(s) == _replay(s) == Counter()
+        rollback_run(s, r['run_id'], confirm_db=_dbname())
+    with session_scope() as s:
+        assert _state(s) == _replay(s) == before
+
+
+def test_g5c_misma_transaccion_remocion_y_recreacion(db):
+    """RR-4: remoción no dirigida y re-creación en la MISMA transacción: con
+    now() empataban y el replay mataba la re-creación; ahora coinciden."""
+    from ontology.db import session_scope
+    from ontology.service import apply_event
+    _objs('A', 'B')
+    _link('A', 'B', w=2, dup=False)
+    with session_scope() as s:
+        apply_event(s, 'LinkRemoved', {'rel_type': 'supply'}, valid_from='2026-01-01', source='manual', actor='f',
+                    object_id='A', target_id='B')
+        apply_event(s, 'LinkCreated', {'rel_type': 'supply', 'weight': 2, 'properties': {'allow_duplicate': True}},
+                    valid_from=GEN, source='manual', actor='f', object_id='A', target_id='B')
+    with session_scope() as s:
+        assert _state(s) == _replay(s) and sum(_state(s).values()) == 1
+
+
+def test_g5c_deshacer_fusion_conserva_alias_posteriores(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.service import get_object
+    from ontology.reconcile import apply_plan, rollback_run
+    _objs('C', 'AL', 'AL2', 'X')
+    _link('AL', 'X', w=2)
+    snap = _snap([{'source': 'C', 'target': 'X', 'w': 2, 'type': 'supply', 'rel': ''}], alias={'AL': 'C'})
+    r = apply_plan(session_scope, snap, include=['alias'], confirm_db=_dbname())
+    with session_scope() as s:
+        execute_action(s, 'FusionarEntidad', {'alias_id': 'AL2', 'canonical_id': 'C', 'razon': 'a mano'}, actor='f')
+    with session_scope() as s:
+        rollback_run(s, r['run_id'], confirm_db=_dbname())
+    with session_scope() as s:
+        assert get_object(s, 'C').properties.get('aliases') == ['AL2']
+
+
+def test_g5c_deshacer_fusion_no_resucita_lo_rechazado_en_el_canonico(db):
+    from ontology.db import session_scope
+    from ontology.actions import execute_action
+    from ontology.reconcile import apply_plan, rollback_run
+    _objs('C', 'AL', 'X')
+    _link('AL', 'X', w=2)
+    snap = _snap([{'source': 'C', 'target': 'X', 'w': 2, 'type': 'supply', 'rel': ''}], alias={'AL': 'C'})
+    r = apply_plan(session_scope, snap, include=['alias'], confirm_db=_dbname())
+    time.sleep(0.05)
+    with session_scope() as s:
+        execute_action(s, 'RechazarVinculo', {'link_id': str(_rows(s, 'C', 'X')[0].id)}, actor='fabrizio')
+    with session_scope() as s:
+        out = rollback_run(s, r['run_id'], confirm_db=_dbname())
+        assert out['skipped_closed_later'] == 1
+    with session_scope() as s:
+        assert _rows(s, 'AL', 'X') == [] and _state(s) == _replay(s)
+
+
+def test_g5c_expect_no_numerico_es_400(db, monkeypatch):
+    import server
+    from core import pin
+    from core import http as _h
+    pin._reset_for_tests(); _h._rate_buckets.clear()
+    monkeypatch.setenv('TRADE_PIN', 'pin-g5c-1357')
+    c = server.app.test_client()
+    r = c.post('/api/ontology/reconcile/apply', json={'actor': 'f', 'confirm_db': _dbname(), 'include': ['duplicates'],
+                                                       'expect': {'duplicates': {'n': 1}}},
+               headers={'X-Trade-Pin': 'pin-g5c-1357'})
+    assert r.status_code == 400 and r.get_json()['error_en']

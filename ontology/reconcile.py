@@ -682,6 +682,8 @@ def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
                              f'undo the later runs first (newest to oldest): {", ".join(later)}')
     done = {'links_reopened': 0, 'links_retracted': 0, 'merges_undone': 0, 'skipped': 0, 'skipped_closed_later': 0}
     run_end = max((e.recorded_at for e in evs if e.recorded_at), default=None)
+    merged = {(e.payload or {}).get('alias_id'): e.object_id for e in evs           # alias → canónico de esta corrida
+              if e.event_type == 'ActionExecuted' and (e.payload or {}).get('action') == 'FusionarEntidad'}
     closed_later = set()            # G5: pares que alguien cerró DESPUÉS de la corrida → no se resucitan
     if run_end is not None:
         for e in session.scalars(select(Event).where(Event.event_type == EventType.LINK_REMOVED.value,
@@ -703,8 +705,10 @@ def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
                 continue
             op = dict(orig.payload or {})
             orel = op.get('rel_type') or op.get('type') or 'supply'
-            if (orig.object_id, orig.target_id, orel) in closed_later or (orig.object_id, orig.target_id, None) in closed_later:
-                done['skipped_closed_later'] += 1
+            cs, ct = merged.get(orig.object_id, orig.object_id), merged.get(orig.target_id, orig.target_id)
+            if any(k in closed_later for k in ((orig.object_id, orig.target_id, orel), (orig.object_id, orig.target_id, None),
+                                               (cs, ct, orel), (cs, ct, None))):
+                done['skipped_closed_later'] += 1     # G5c: también si se rechazó el vínculo YA movido al canónico
                 continue
             oprops = {k: v for k, v in (op.get('properties') or {}).items() if k not in ('dedup_of', 'dedup_event_id')}
             oprops.update({'allow_duplicate': True, 'rollback_of': str(ev.id), 'rollback_run': run_id,
@@ -738,9 +742,11 @@ def rollback_run(session, run_id, confirm_db=None, actor=ACTOR):
                         valid_from=now, source=rb, actor=actor, object_id=alias_id)
             canon_obj = session.get(ObjectRecord, canonical_id)
             if canon_obj is not None:
-                aliases = p.get('prev_canon_aliases')
-                if not isinstance(aliases, list):
-                    aliases = [a for a in ((canon_obj.properties or {}).get('aliases') or []) if a != alias_id]
+                prev_al = p.get('prev_canon_aliases') if isinstance(p.get('prev_canon_aliases'), list) else []
+                # G5c: se quita SOLO el alias de esta fusión (y solo si ella lo añadió); los que
+                # otras fusiones agregaron después se conservan
+                aliases = [a for a in ((canon_obj.properties or {}).get('aliases') or [])
+                           if a != alias_id or alias_id in prev_al]
                 apply_event(session, 'ObjectUpdated', {'properties': {'aliases': aliases}},
                             valid_from=now, source=rb, actor=actor, object_id=canonical_id)
             done['merges_undone'] += 1

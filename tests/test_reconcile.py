@@ -217,7 +217,8 @@ def test_g3_aplicar_rollback_ida_y_vuelta(db):
 def test_g3_api_plan_lectura_y_apply_con_pin(db, monkeypatch):
     import server
     from core import pin
-    pin._reset_for_tests()
+    from core import http as _h
+    pin._reset_for_tests(); _h._rate_buckets.clear()
     monkeypatch.setenv('TRADE_PIN', 'pin-g3-1234')
     server.app.config['TESTING'] = True
     c = server.app.test_client()
