@@ -14,7 +14,7 @@ _RULES = (
      'La IA (Gemini) gastó su espacio "pensando" y no alcanzó a escribir la respuesta. Vuelve a intentarlo; si se repite, avísame.',
      'The AI (Gemini) used up its space "thinking" and did not get to write the answer. Try again; if it repeats, tell me.'),
     (r'404|NOT_FOUND|410|not found',
-     'El modelo de IA configurado ya no existe en el proveedor (lo retiraron). Cambia GEMINI_MODEL / NVIDIA_MODEL en Railway → Variables.',
+     'El modelo de IA configurado ya no existe en el proveedor (fue retirado). Cambia GEMINI_MODEL / NVIDIA_MODEL en Railway → Variables.',
      'The configured AI model no longer exists at the provider (retired). Change GEMINI_MODEL / NVIDIA_MODEL in Railway → Variables.'),
     (r'429|RESOURCE_EXHAUSTED|rate limit|too many',
      'El proveedor de IA limitó las llamadas por un momento (cuota). Espera un minuto y reintenta.',

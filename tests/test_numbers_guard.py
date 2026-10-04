@@ -8,7 +8,7 @@ from core import ai  # noqa: E402
 
 
 def _fake(responses, calls):
-    def f(system, prompt, max_tokens, tier='fast', model=None):
+    def f(system, prompt, max_tokens, tier='fast', model=None, **kw):     # json_mode/timeout_s (2026-10-04)
         calls.append((system, prompt))
         return responses.pop(0), 'fake'
     return f
