@@ -71,9 +71,11 @@ def _sent(s, n=320):
     return _cut(s, n).rstrip(' .')
 
 
-def build_seats(conv, views, track):
+def build_seats(conv, views, track, absent=()):
     """[{seat, emoji, name_es, name_en, stance, net, n_claims, n_pos, n_neg,
-    reliability, n_scored, hits}] — un puesto por agente con conclusiones."""
+    reliability, n_scored, hits}] — un puesto por agente con conclusiones.
+    absent (C7): analistas del quórum SIN conclusiones → puesto vacío
+    ({absent: True}) para que la sala muestre quién falta."""
     per = {}
     for r in conv.values():
         for c in r['claims']:
@@ -95,12 +97,22 @@ def build_seats(conv, views, track):
                       'net': round(net, 3), 'n_claims': p['n'], 'n_pos': p['pos'], 'n_neg': p['neg'],
                       'reliability': round(float(tr.get('reliability', p['rel'])), 3),
                       'n_scored': int(tr.get('n') or 0), 'hits': int(tr.get('hits') or 0)})
+    for a in absent or ():
+        if a in per:
+            continue
+        e, es, en = seat_name(a)
+        seats.append({'seat': a, 'emoji': e, 'name_es': es, 'name_en': en, 'stance': 'neutral', 'net': 0.0,
+                      'n_claims': 0, 'n_pos': 0, 'n_neg': 0, 'reliability': 0.5, 'n_scored': 0, 'hits': 0,
+                      'absent': True})
     return seats
 
 
 def tally(seats):
-    out = {'for': 0, 'against': 0, 'neutral': 0}
+    out = {'for': 0, 'against': 0, 'neutral': 0, 'absent': 0}
     for s in seats:
+        if s.get('absent'):
+            out['absent'] += 1
+            continue
         out[s['stance']] += 1
     return out
 
@@ -135,8 +147,14 @@ def opening(label, symbol, seats, n_claims, n_rels):
                      f'no hay debate. Recomiendo correr primero 🔬 Investigación IA.',
                      f'Opening the session on {label}. There are no active analyst conclusions: without evidence '
                      f'there is no debate. I recommend running 🔬 AI research first.')]
-    names_es = ', '.join(s['emoji'] + ' ' + s['name_es'] for s in seats)
-    names_en = ', '.join(s['emoji'] + ' ' + s['name_en'] for s in seats)
+    present = [s for s in seats if not s.get('absent')]
+    missing = [s for s in seats if s.get('absent')]
+    names_es = ', '.join(s['emoji'] + ' ' + s['name_es'] for s in present)
+    names_en = ', '.join(s['emoji'] + ' ' + s['name_en'] for s in present)
+    if missing:
+        names_es += ' (sin conclusiones: ' + ', '.join(s['name_es'] for s in missing) + ')'
+        names_en += ' (no conclusions: ' + ', '.join(s['name_en'] for s in missing) + ')'
+    seats = present
     x_es = f' Hay {n_rels} contradicción(es) entre ellos que vamos a discutir.' if n_rels else ''
     x_en = f' There are {n_rels} contradiction(s) between them that we will discuss.' if n_rels else ''
     tk = f' ({symbol})' if symbol else ''

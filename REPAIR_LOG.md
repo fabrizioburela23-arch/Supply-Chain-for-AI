@@ -222,3 +222,48 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   explica. `core/khipu_chat.py`: `get_research_health` en el catálogo + receta.
   `docs/MCP.md` actualizado.
 - **Verificar.** `pytest tests/test_repair_research.py -k r8` (5 tests).
+---
+
+## P0 · Comité
+
+### C6 — "No validado": etiqueta + tamaño a la mitad mientras ningún analista tenga historial suficiente
+
+- **Problema.** Memo Nvidia `2122eac6…`: 9 conclusiones con fiabilidad 0.5 (= sin
+  historial), BUY con 5,30 % del patrimonio y ninguna marca de que nada estaba
+  validado. Con fiabilidad 0.5 el peso es la confianza completa (`w = cal·rel/0.5`).
+- **Causa raíz.** `research/committee.py`: ni `decide` ni `compute_sizing` miraban
+  el historial; MIN_N (5) solo viajaba en la calibración.
+- **Cambio.** `validation_status(agent_types, table)` → validated / partial /
+  unvalidated (+ `agents{n,hits,sufficient}`, `label_es/en`, `effect_es/en`);
+  `compute_sizing(..., validated=True)`: con `validated=False` el presupuesto de
+  riesgo se multiplica por `UNVALIDATED_FACTOR` (0.5) → peso objetivo a la mitad,
+  `capped_by='unvalidated'`, `unvalidated=True`, paso bilingüe. `_run_committee`
+  aplica la validación real a TODOS los tamaños (BUY/ADD/HOLD y rebajas del
+  presidente); `memo.track_validation`, `inputs.track_validation` e
+  `inputs.track_record[a].sufficient`. UI `engine/committee.js`: insignia
+  "⚠ no validado · tamaño ½" / "✓ historial validado" junto a la decisión + nota
+  explicativa. Los tests de Phase 3 que fijaban 5 %/$5.000 pasan a 2,5 %/$2.500
+  (comportamiento pedido: decisión D1).
+- **Verificar.** `pytest tests/test_repair_committee.py -k c6` (3 tests; antes
+  `TypeError: validated` / `ImportError: validation_status`).
+- **Rollback.** Revertir el commit; los memos nuevos vuelven al tamaño completo.
+
+### C7 — Quórum del comité: fundamental + 3 de 4 analistas, si no "DATOS INSUFICIENTES" (sin deliberar)
+
+- **Problema.** `MIN_CLAIMS = 2` era la única puerta: dos conclusiones de UN solo
+  analista bastaban para COMPRAR/EVITAR; con 2 de 4 analistas caídos (TSMC) el
+  comité deliberaba igual y el presidente IA redactaba un memo persuasivo.
+- **Cambio.** `quorum_check(present)` (`REQUIRED_AGENTS=('fundamental',)`,
+  `QUORUM_POOL` = fundamental/news/technical/supply_chain, `MIN_AGENTS=3`) con
+  `to_run` (los que faltan) y motivo bilingüe. `_run_committee`: sin quórum y con
+  IA disponible encarga SOLO a los que faltan (`_auto_research(..., agents=)`);
+  si siguen faltando → `decide(..., quorum=)` devuelve HOLD con motivo "sin quórum…
+  → DATOS INSUFICIENTES", `memo.decision_code='INSUFFICIENT_DATA'`, etiqueta
+  "MANTENER — DATOS INSUFICIENTES", SIN debate y SIN presidente IA (no gasta ni
+  persuade), `memo.quorum` con el detalle. La sala sienta a los analistas que
+  faltan como puestos vacíos (`seats[].absent`, `tally.absent`), que la UI pinta en
+  gris con "ausente" y un aviso de qué hacer. La decisión sigue siendo un valor del
+  vocabulario existente (HOLD) → MCP, corretaje y Pizarra no cambian de contrato.
+- **Verificar.** `pytest tests/test_repair_committee.py -k c7` (2 tests; antes
+  `ImportError: quorum_check` y BUY con un solo analista).
+- **Rollback.** Revertir el commit.

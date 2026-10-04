@@ -357,7 +357,13 @@
     return '' +
       '<div class="cm-cell">' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
-          '<span class="cm-dec" style="color:' + d[0] + ';border-color:' + d[0] + '">' + esc(L(d[1], d[2])) + '</span>' + chip('committee_decision') +
+          (b.decision_code === 'INSUFFICIENT_DATA'
+            ? '<span class="cm-dec" style="color:#FFB300;border-color:#FFB300" title="' + esc(isEn() ? (b.quant_reason_en || '') : (b.quant_reason_es || '')) + '">' + esc(L(b.decision_label_es || d[1], b.decision_label_en || d[2])) + '</span>'
+            : '<span class="cm-dec" style="color:' + d[0] + ';border-color:' + d[0] + '">' + esc(L(d[1], d[2])) + '</span>') + chip('committee_decision') +
+          (b.track_validation && !b.track_validation.validated
+            ? '<span class="cm-pill" style="color:#FFB300;border-color:rgba(255,179,0,.5)" title="' + esc(L(b.track_validation.label_es, b.track_validation.label_en) + (b.track_validation.effect_es ? ' · ' + L(b.track_validation.effect_es, b.track_validation.effect_en) : '')) + '">⚠ ' +
+              esc(L('no validado', 'not validated')) + (b.track_validation.effect_es ? ' · ' + esc(L('tamaño ½', 'size ½')) : '') + '</span>'
+            : (b.track_validation ? '<span class="cm-pill" style="color:#2BE38B;border-color:rgba(43,227,139,.4)">✓ ' + esc(L('historial validado', 'validated record')) + '</span>' : '')) +
           '<span style="font-weight:700;overflow-wrap:anywhere">' + esc(m.label || nodeLabel(m.entity_id)) + (m.symbol ? ' · ' + esc(m.symbol) : '') + '</span>' +
           '<span class="cm-pill">' + esc(L(st[0], st[1])) + '</span>' +
           '<span class="cm-pill">' + esc(m.ai_used ? L('presidente IA', 'AI chair') + (m.model ? ' · ' + m.model : '') : L('sin IA (plantilla determinista)', 'no AI (deterministic template)')) + '</span>' +
@@ -368,7 +374,15 @@
         (b.tally ? '<div class="cm-votes"><span class="cm-pill" style="color:#2BE38B;border-color:rgba(43,227,139,.4)">👍 ' + b.tally['for'] + ' ' + esc(L('a favor', 'for')) + '</span>' +
           '<span class="cm-pill" style="color:#FF4D6A;border-color:rgba(255,77,106,.4)">👎 ' + b.tally.against + ' ' + esc(L('en contra', 'against')) + '</span>' +
           '<span class="cm-pill">✋ ' + b.tally.neutral + ' ' + esc(L('neutral', 'neutral')) + '</span>' +
+          (b.tally.absent ? '<span class="cm-pill" style="color:#FFB300;border-color:rgba(255,179,0,.4)">⬜ ' + b.tally.absent + ' ' + esc(L('ausente(s)', 'absent')) + '</span>' : '') +
           '<span class="cm-pill">🧭 ' + esc(L('convicción ', 'conviction ')) + (m.overall_conviction > 0 ? '+' : '') + Math.round(m.overall_conviction || 0) + '/100</span></div>' : '') +
+        (b.track_validation && !b.track_validation.validated ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FFB300">⚠ ' +
+          esc(L('Los analistas todavía no tienen historial validado (' + b.track_validation.min_n + ' predicciones calificadas cada uno): esta propuesta no está probada contra el mercado. Por eso el tamaño sugerido es la mitad del normal. El historial se llena solo con el tiempo (ver pestaña Historial).',
+                'The analysts have no validated track record yet (' + b.track_validation.min_n + ' scored predictions each): this proposal is not yet proven against the market, so the suggested size is half the normal one. The record fills in over time (see the History tab).')) + '</div>' : '') +
+        (b.decision_code === 'INSUFFICIENT_DATA' && b.quorum ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FFB300">' +
+          esc(L('Sin quórum no hay decisión: ', 'No quorum, no decision: ') + (isEn() ? (b.quorum.reason_en || '') : (b.quorum.reason_es || '')) + ' ' +
+              L('Faltan: ', 'Missing: ') + (b.quorum.to_run || []).map(function (a) { return ag(a); }).join(', ') + '. ' +
+              L('Corre 🔬 Investigación IA para completar a los analistas y vuelve a convocar al comité.', 'Run 🔬 AI research to complete the analysts and reconvene the committee.')) + '</div>' : '') +
         (m.quant_decision && m.quant_decision !== m.decision ? '<div class="cm-note" style="margin-top:6px;color:#FFB300">' + esc(L('El núcleo cuantitativo proponía ', 'The quantitative core proposed ') + decLabel(m.quant_decision) + L('; el presidente rebajó a MANTENER: ', '; the chair downgraded to HOLD: ') + (note || '')) + '</div>' : '') +
         conclusionsHtml(b) + debateNote(b) +
         (b.quant_reason_es ? '<div class="cm-note" style="margin-top:6px;font-size:11px">' + esc(L('Regla aplicada: ', 'Rule applied: ') + (isEn() ? b.quant_reason_en : b.quant_reason_es)) + '</div>' : '') +
@@ -633,6 +647,12 @@
     var spoke = {}, last = msgs.length ? msgs[msgs.length - 1].seat : null;
     msgs.forEach(function (m) { spoke[m.seat] = m.stance || spoke[m.seat] || 'spoke'; });
     var agents = (seats || []).map(function (st) {
+      if (st.absent) {
+        return '<div class="cm-seat" style="opacity:.45" title="' + esc(L('Sin conclusiones sobre esta empresa: este analista no participó (falta para el quórum).', 'No conclusions on this company: this analyst did not take part (needed for quorum).')) + '">' +
+          '<div class="cm-av" style="border-color:#3a4560;border-style:dashed">' + avatarSvg(st.seat, st.emoji) + '</div>' +
+          '<div class="cm-sn">' + esc(personName(st.seat, shortName(L(st.name_es, st.name_en)))) + '</div>' +
+          '<div class="cm-ss" style="color:#FFB300">' + esc(L('ausente', 'absent')) + '</div></div>';
+      }
       var said = spoke[st.seat], col = said && STANCE[st.stance] ? STANCE[st.stance][0] : '#3a4560';
       var rec = st.n_scored > 0 ? st.hits + '/' + st.n_scored + ' ✓' : L('sin historial', 'no record');
       return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === st.seat ? ' talk' : '') + '" title="' + esc(L('Fiabilidad ', 'Reliability ') + pct(st.reliability) + ' · ' + rec) + '">' +

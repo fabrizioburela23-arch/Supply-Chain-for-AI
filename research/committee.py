@@ -64,6 +64,13 @@ BUY_T, TRIM_T, SELL_T = 35.0, -20.0, -50.0
 OVERWEIGHT = 1.25        # posición > 125 % del objetivo → recortar (riesgo)
 UNDERWEIGHT = 0.8        # posición < 80 % del objetivo y convicción alta → aumentar
 MIN_CLAIMS = 2
+# C6/C7 (misión de reparación 2026-10-04): mientras un analista no tenga ≥ MIN_N
+# calificaciones finales, el memo dice "no validado" y el tamaño se reduce a la
+# mitad; sin quórum (fundamental + 3 de 4) el comité NO delibera: DATOS INSUFICIENTES.
+UNVALIDATED_FACTOR = 0.5
+REQUIRED_AGENTS = ('fundamental',)
+QUORUM_POOL = ('fundamental', 'news', 'technical', 'supply_chain')
+MIN_AGENTS = 3
 DEFAULT_MANDATE = {'risk_budget_pct': 2.0, 'max_position_pct': 10.0, 'min_vol_pct': 10.0}
 REVIEW_DAYS = {'INTRADAY': 7, 'SHORT_TERM': 30, 'MEDIUM_TERM': 90, 'LONG_TERM': 120, 'STRUCTURAL': 180}
 ACTIONABLE = {'BUY': 'buy', 'ADD': 'buy', 'TRIM': 'sell', 'SELL': 'sell'}
@@ -71,6 +78,54 @@ SIGN = {'positive': 1, 'negative': -1, 'neutral': 0, 'mixed': 0}
 DECISION_LABEL = {
     'BUY': ('COMPRAR', 'BUY'), 'ADD': ('AUMENTAR', 'ADD'), 'HOLD': ('MANTENER / ESPERAR', 'HOLD / WAIT'),
     'TRIM': ('REDUCIR', 'TRIM'), 'SELL': ('VENDER', 'SELL'), 'AVOID': ('EVITAR', 'AVOID')}
+
+
+def validation_status(agent_types, table):
+    """C6: ¿cada analista presente tiene historial suficiente (≥ MIN_N finales)?
+    {status: validated|partial|unvalidated, validated, min_n, agents{n,hits,sufficient}, label_es/en}."""
+    from research.outcomes import MIN_N
+    agents = {}
+    for a in sorted(set(agent_types or [])):
+        t = (table or {}).get(a) or {}
+        n, h = int(t.get('n') or 0), int(t.get('hits') or 0)
+        agents[a] = {'n': n, 'hits': h, 'sufficient': n >= MIN_N}
+    suff = [a for a, v in agents.items() if v['sufficient']]
+    if agents and len(suff) == len(agents):
+        status = 'validated'
+    elif suff:
+        status = 'partial'
+    else:
+        status = 'unvalidated'
+    validated = status == 'validated'
+    lab = {'validated': ('historial validado', 'validated track record'),
+           'partial': (f'parcialmente validado ({len(suff)} de {len(agents)} analistas con ≥ {MIN_N} calificaciones)',
+                       f'partially validated ({len(suff)} of {len(agents)} analysts with ≥ {MIN_N} scored calls)'),
+           'unvalidated': (f'no validado: ningún analista tiene aún {MIN_N} predicciones calificadas',
+                           f'not validated: no analyst has {MIN_N} scored predictions yet')}[status]
+    return {'status': status, 'validated': validated, 'min_n': MIN_N, 'agents': agents,
+            'label_es': lab[0], 'label_en': lab[1],
+            'effect_es': None if validated else f'tamaño objetivo reducido al {int(UNVALIDATED_FACTOR * 100)} %',
+            'effect_en': None if validated else f'target size reduced to {int(UNVALIDATED_FACTOR * 100)}%'}
+
+
+def quorum_check(present):
+    """C7: fundamental obligatorio + al menos MIN_AGENTS de QUORUM_POOL con conclusiones."""
+    present = set(present or ())
+    missing_required = [a for a in REQUIRED_AGENTS if a not in present]
+    n_present = len(present & set(QUORUM_POOL))
+    ok = not missing_required and n_present >= MIN_AGENTS
+    to_run = [a for a in QUORUM_POOL if a not in present]
+    parts_es, parts_en = [], []
+    if missing_required:
+        parts_es.append('falta el analista fundamental')
+        parts_en.append('the fundamental analyst is missing')
+    if n_present < MIN_AGENTS:
+        parts_es.append(f'solo {n_present} de {len(QUORUM_POOL)} analistas opinaron (mínimo {MIN_AGENTS})')
+        parts_en.append(f'only {n_present} of {len(QUORUM_POOL)} analysts weighed in (minimum {MIN_AGENTS})')
+    return {'ok': ok, 'missing_required': missing_required, 'n_present': n_present, 'min_agents': MIN_AGENTS,
+            'required': list(REQUIRED_AGENTS), 'pool': list(QUORUM_POOL), 'to_run': to_run,
+            'reason_es': ('sin quórum de analistas: ' + '; '.join(parts_es)) if not ok else None,
+            'reason_en': ('no analyst quorum: ' + '; '.join(parts_en)) if not ok else None}
 
 
 def _now():
@@ -205,10 +260,14 @@ def alpaca_symbol(symbol):
 
 
 def decide(overall, investable=True, insufficient=False, has_position=False, current_w=0.0, target_w=None,
-           blocked=False, tradable=True):
+           blocked=False, tradable=True, quorum=None):
     """Decisión por umbrales fijos. Devuelve (decisión, motivo_es, motivo_en).
     tradable=False (cotiza fuera de EE.UU.: Alpaca no la opera) → una decisión
-    accionable se rebaja a HOLD explicando por qué (la convicción se conserva)."""
+    accionable se rebaja a HOLD explicando por qué (la convicción se conserva).
+    quorum (C7): dict de quorum_check; sin quórum → HOLD "datos insuficientes"
+    (salvo bloqueo del mandato o empresa no cotizada, que mandan)."""
+    if quorum is not None and not quorum.get('ok') and investable and not blocked:
+        return 'HOLD', quorum['reason_es'] + ' → DATOS INSUFICIENTES', quorum['reason_en'] + ' → INSUFFICIENT DATA'
     d, es, en = _decide_core(overall, investable, insufficient, has_position, current_w, target_w, blocked)
     if not tradable and d in ACTIONABLE:
         return ('HOLD', f'{es} — pero cotiza fuera de EE.UU. (moneda local): no se puede operar en Alpaca',
@@ -254,12 +313,17 @@ def target_weight(vol_ann_pct, mandate):
 
 
 def compute_sizing(decision, vol_ann_pct, mandate, equity=None, current_value=0.0, current_qty=0.0,
-                   price=None, buying_power=None, trim_reason=None, price_is_usd=True):
+                   price=None, buying_power=None, trim_reason=None, price_is_usd=True, validated=True):
     """Tamaño de la orden (determinista) con la cuenta en texto es/en.
     Topes, en orden: mandato (máx. por posición), poder de compra y los
     límites en US$ del corretaje — máximo por orden y lo que queda del límite
     diario — para que la previsualización no salga bloqueada por tamaño.
-    Vender/reducir por convicción NO necesita volatilidad: se usa la posición."""
+    Vender/reducir por convicción NO necesita volatilidad: se usa la posición.
+    validated=False (C6): sin historial validado el presupuesto de riesgo se
+    reduce a UNVALIDATED_FACTOR → el peso objetivo cae a la mitad."""
+    mandate = dict(mandate)
+    if not validated:
+        mandate['risk_budget'] = float(mandate['risk_budget']) * UNVALIDATED_FACTOR
     tw, raw_w = target_weight(vol_ann_pct, mandate)
     vol_used = None if vol_ann_pct is None else max(float(vol_ann_pct) / 100.0, mandate['min_vol'])
     s = {'method': 'volatility-targeting', 'decision': decision, 'vol_ann_pct': vol_ann_pct,
@@ -272,8 +336,15 @@ def compute_sizing(decision, vol_ann_pct, mandate, equity=None, current_value=0.
          'current_qty': current_qty or 0.0, 'current_weight_pct': None, 'side': ACTIONABLE.get(decision),
          'notional': 0.0, 'qty': None, 'qty_est': None, 'price': price, 'buying_power': buying_power,
          'max_order_usd': mandate.get('max_order_usd'), 'daily_remaining_usd': mandate.get('daily_remaining_usd'),
-         'partial': False, 'per_10k': None, 'steps_es': [], 'steps_en': [], 'reference_only': equity is None}
+         'partial': False, 'per_10k': None, 'steps_es': [], 'steps_en': [], 'reference_only': equity is None,
+         'unvalidated': not validated}
     es, en = s['steps_es'], s['steps_en']
+    if not validated:
+        s['capped_by'] = 'unvalidated'
+        es.append(f'Sin historial validado (ningún analista llega a las calificaciones mínimas): el presupuesto de '
+                  f'riesgo se reduce a la mitad → {s["risk_budget_pct"]:.1f} %.')
+        en.append(f'No validated track record (no analyst reaches the minimum scored calls): the risk budget is '
+                  f'cut in half → {s["risk_budget_pct"]:.1f}%.')
     cur = float(current_value or 0.0)
     exit_only = decision == 'SELL' or (decision == 'TRIM' and trim_reason != 'overweight')
     if tw is None:
@@ -935,15 +1006,19 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
         return rows, rels, conv, overall
 
     rows, rels, conv, overall = _load()
-    # Sin investigación suficiente → el comité la ENCARGA ahora (antes solo decía
-    # "corre primero Investigación IA" y salía un memo vacío en 1 segundo).
+    # Sin investigación suficiente o SIN QUÓRUM (C7: fundamental + 3 de 4) → el
+    # comité ENCARGA ahora a los analistas que faltan (antes solo decía "corre
+    # primero Investigación IA" o deliberaba con 2 conclusiones de un solo analista).
     ai_ok, ai_why = _ai_ready(session, provider, deps)
-    if (len(rows) < MIN_CLAIMS and deps.get('auto_research', True) and ai_ok
+    quorum = quorum_check({c.agent_type for c in rows})
+    if ((len(rows) < MIN_CLAIMS or not quorum['ok']) and deps.get('auto_research', True) and ai_ok
             and (provider is None or 'research_provider_factory' in deps)):
         progress_set(_pid, 'research')
         try:
-            _auto_research(session, eid, label, requested_by, say, deps)
+            _auto_research(session, eid, label, requested_by, say, deps,
+                           agents=(quorum['to_run'] if len(rows) >= MIN_CLAIMS or rows else None))
             rows, rels, conv, overall = _load()
+            quorum = quorum_check({c.agent_type for c in rows})
         except Exception as e:  # noqa: BLE001 — sin investigación nueva, el comité sigue con lo que hay
             log.warning('committee auto research %s: %s', eid, e)
             say(dl8._msg('chair', 'moderate', f'La investigación automática falló ({type(e).__name__}): sigo con lo que hay.',
@@ -954,9 +1029,17 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     agent_types0 = sorted({c.agent_type for c in rows})
     track = {a: {'n': (table.get(a) or {}).get('n', 0), 'hits': (table.get(a) or {}).get('hits', 0),
                  'reliability': agent_reliability(a, table=table)} for a in agent_types0}
-    seats = dl8.build_seats(conv, views, track)
+    track_validation = validation_status(agent_types0, table)       # C6
+    seats = dl8.build_seats(conv, views, track, absent=quorum['to_run'] if rows else ())
     progress_set(_pid, 'claims', seats=seats)
     say(*dl8.opening(label, symbol, seats, len(rows), len(rels)))
+    if rows and not quorum['ok']:
+        say(dl8._msg('chair', 'moderate',
+                     f"No hay quórum para deliberar: {quorum['reason_es']}. Sin el analista fundamental y al menos "
+                     f"{MIN_AGENTS} de {len(QUORUM_POOL)} analistas, el comité no toma decisión: DATOS INSUFICIENTES.",
+                     f"There is no quorum to deliberate: {quorum['reason_en']}. Without the fundamental analyst and at "
+                     f"least {MIN_AGENTS} of {len(QUORUM_POOL)} analysts the committee makes no decision: INSUFFICIENT DATA.",
+                     stage='quorum'))
 
     # ── datos en vivo, riesgo y cliente (acotados en tiempo) ──
     progress_set(_pid, 'live', n_claims=len(rows))
@@ -988,9 +1071,11 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     cur_val = float(pos.get('market_value') or 0.0)
     cur_w = (cur_val / equity) if equity else 0.0
     has_pos = bool(pos and (pos.get('qty') or 0) > 0)
+    validated = track_validation['validated']
     decision, reason_es, reason_en = decide(overall, investable=bool(symbol), insufficient=scored_claims < MIN_CLAIMS,
                                             has_position=has_pos, current_w=cur_w, target_w=tw, blocked=blocked,
-                                            tradable=tradable)
+                                            tradable=tradable, quorum=quorum if rows else None)
+    decision_code = 'INSUFFICIENT_DATA' if (rows and not quorum['ok'] and decision == 'HOLD') else None
     trim_reason = 'overweight' if (decision == 'TRIM' and overall > TRIM_T) else 'conviction'
     price = live.get('price') if live.get('ok') else None
     # ≈ acciones solo si el precio está en dólares (un precio en JPY/KRW/peniques daría una cifra falsa)
@@ -998,12 +1083,12 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     sizing = compute_sizing(decision, vol, mandate, equity=equity, current_value=cur_val,
                             current_qty=float(pos.get('qty') or 0.0), price=price,
                             buying_power=(client or {}).get('buying_power'), trim_reason=trim_reason,
-                            price_is_usd=price_is_usd)
+                            price_is_usd=price_is_usd, validated=validated)
     if ACTIONABLE.get(decision) and equity is not None and sizing['notional'] < 1 and not sizing.get('qty'):
         why_es, why_en = _downgrade_reason(sizing, vol)
         decision, reason_es, reason_en = 'HOLD', f'{reason_es} — pero {why_es}', f'{reason_en} — but {why_en}'
         sizing = compute_sizing('HOLD', vol, mandate, equity=equity, current_value=cur_val, price=price,
-                                price_is_usd=price_is_usd)
+                                price_is_usd=price_is_usd, validated=validated)
 
     say(dl8.quant_msg(overall, conv, decision, reason_es, reason_en, sizing, seats,
                       DECISION_LABEL.get(decision, (decision, decision))))
@@ -1017,11 +1102,15 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
         why = AI_WHY.get(ai_why) if not ai_ok else None
         debate['reason_es'], debate['reason_en'] = why or ('no hay investigación de los analistas sobre esta empresa',
                                                            'there is no analyst research on this company')
-    if seats:
+    elif decision_code == 'INSUFFICIENT_DATA':
+        debate['reason_es'] = 'sin quórum de analistas no hay deliberación (datos insuficientes)'
+        debate['reason_en'] = 'no analyst quorum, so no deliberation (insufficient data)'
+    present_seats = [x for x in seats if not x.get('absent')]      # los puestos vacíos no debaten
+    if present_seats and decision_code != 'INSUFFICIENT_DATA':
         progress_set(_pid, 'debate')
         t_deb = _time_mod.time()
         try:
-            lines, items, debate = _run_debate(session, seats, label, symbol, conv, claims_by_id, cref, rels,
+            lines, items, debate = _run_debate(session, present_seats, label, symbol, conv, claims_by_id, cref, rels,
                                                text, ai_ok, ai_why, provider, deps, say, eid, requested_by, now)
             if lines:
                 text += '\n\nDEBATE DEL COMITÉ (intervenciones S#, ya pasaron el guardián de cifras):\n' + '\n'.join(lines)
@@ -1042,6 +1131,9 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     if not rows:
         ai_err = ('sin conclusiones activas: el presidente IA no se consulta (primero corre Investigación IA)',
                   'no active conclusions: the AI chair is not consulted (run AI research first)')
+    elif decision_code == 'INSUFFICIENT_DATA':      # C7: sin quórum no hay memo persuasivo ni gasto de IA
+        ai_err = ('sin quórum de analistas: el presidente IA no se consulta (datos insuficientes)',
+                  'no analyst quorum: the AI chair is not consulted (insufficient data)')
     else:
         progress_set(_pid, 'chair')
         body, meta, ai_err = _chair(session, provider, eid, requested_by, text, valid_refs, decision, min_d, max_d,
@@ -1056,7 +1148,7 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     final_decision = body['decision']
     if final_decision != decision:           # el presidente rebajó a HOLD (explicado)
         sizing = compute_sizing('HOLD', vol, mandate, equity=equity, current_value=cur_val, price=price,
-                                price_is_usd=price_is_usd)
+                                price_is_usd=price_is_usd, validated=validated)
     progress_set(_pid, 'saving')
     try:
         say(*dl8.chair_close(body, final_decision, decision, DECISION_LABEL.get(final_decision, (final_decision,) * 2),
@@ -1064,10 +1156,16 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     except Exception as e:  # noqa: BLE001
         log.warning('committee chair close %s: %s', eid, e)
     body['transcript'] = transcript[:80]
-    body['seats'] = seats
-    body['tally'] = dl8.tally(seats)
+    body['seats'] = [dict(next((p for p in present_seats if p['seat'] == x['seat']), x)) for x in seats]
+    body['tally'] = dl8.tally(body['seats'])
     body['debate'] = debate
     body['decision_label_es'], body['decision_label_en'] = DECISION_LABEL.get(final_decision, (final_decision,) * 2)
+    if decision_code == 'INSUFFICIENT_DATA':
+        body['decision_label_es'] = 'MANTENER — DATOS INSUFICIENTES'
+        body['decision_label_en'] = 'HOLD — INSUFFICIENT DATA'
+    body['decision_code'] = decision_code                    # C7: por qué no se decidió (o None)
+    body['quorum'] = quorum                                  # C7
+    body['track_validation'] = track_validation              # C6: "no validado" + tamaño a la mitad
     body['quant_reason_es'], body['quant_reason_en'] = reason_es, reason_en
     body['ref_map'] = {v: k for k, v in cref.items()}
 
@@ -1082,7 +1180,10 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
         'label': label, 'package': text[:12000], 'valid_refs': valid_refs,
         'n_claims': len(rows), 'n_contradictions': len(rels), 'agent_views': views,
         'track_record': {a: {'n': (table.get(a) or {}).get('n', 0), 'hits': (table.get(a) or {}).get('hits', 0),
-                             'reliability': agent_reliability(a, table=table)} for a in agent_types},
+                             'reliability': agent_reliability(a, table=table),
+                             'sufficient': track_validation['agents'].get(a, {}).get('sufficient', False)}
+                         for a in agent_types},
+        'track_validation': track_validation, 'quorum': quorum,
         'live': live, 'risk': risk, 'mandate': mandate,
         'client': ({k: client.get(k) for k in ('client_id', 'id', 'name', 'mode', 'paper', 'equity', 'cash',
                                                 'buying_power', 'currency', 'position', 'ok', 'error', 'error_en')}
@@ -1124,12 +1225,13 @@ AI_WHY = {'no_provider': ('no hay ningún proveedor de IA con clave en Railway',
           'test': ('modo de prueba', 'test mode')}
 
 
-def _auto_research(session, eid, label, requested_by, say, deps):
-    """Encarga la investigación (los 4 analistas por defecto) y narra cada uno en la sala."""
+def _auto_research(session, eid, label, requested_by, say, deps, agents=None):
+    """Encarga la investigación (los 4 analistas por defecto, o SOLO los que
+    faltan para el quórum — C7) y narra cada uno en la sala."""
     from research import deliberation as dl8
     from research.runner import create_job, execute_job
     job, _reused = create_job(session, eid, depth='STANDARD', trigger={'kind': 'committee', 'by': requested_by},
-                              requested_by=requested_by, force=True)
+                              requested_by=requested_by, force=True, agents=agents)
     names = ', '.join(dl8.seat_name(a)[0] + ' ' + dl8.seat_name(a)[1] for a in job.agents)
     names_en = ', '.join(dl8.seat_name(a)[0] + ' ' + dl8.seat_name(a)[2] for a in job.agents)
     say(dl8._msg('chair', 'moderate',

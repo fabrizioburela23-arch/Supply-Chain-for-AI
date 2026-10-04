@@ -429,13 +429,15 @@ def test_comite_con_presidente_ia_y_tamano_determinista(db):
         m = run_committee(s, 'Broadcom', 'pytest', client_id='cli-1', provider=prov, deps=dict(DEPS, brokerage=broker))
         assert m['status'] == 'proposed' and m['ai_used'] and m['memo']['generated_by'] == 'ai'
         assert m['decision'] == m['quant_decision'] == 'BUY' and m['overall_conviction'] >= 35
-        assert m['sizing']['target_weight_pct'] == pytest.approx(5.0) and m['sizing']['notional'] == 5000
+        # C6 (misión de reparación): sin historial validado el objetivo es la MITAD (2 % → 1 % ÷ 40 % = 2.5 %)
+        assert m['sizing']['target_weight_pct'] == pytest.approx(2.5) and m['sizing']['notional'] == 2500
+        assert m['sizing']['capped_by'] == 'unvalidated' and m['memo']['track_validation']['status'] == 'unvalidated'
         assert m['inputs']['client']['equity'] == 100000.0 and m['inputs']['mandate']['risk_budget'] == 0.02
         assert 'aprobación humana' in m['disclaimer_es'] and 'human approval' in m['disclaimer_en']
         assert m['conviction']['SHORT_TERM']['contra_share'] == 1.0      # contradicción: penalización
         assert m['conviction']['SHORT_TERM']['penalty'] == 0.5 and m['conviction']['LONG_TERM']['contra_share'] == 0
         assert 'Q1' in m['inputs']['valid_refs'] and 'M1' in m['inputs']['valid_refs']
-        assert 'BUY $5,000' in m['inputs']['package']
+        assert 'BUY $2,500' in m['inputs']['package']
         run = s.query(AgentRun).filter_by(agent_type='committee').order_by(AgentRun.started_at.desc()).first()
         assert run.status == 'done' and run.entity_id == 'Broadcom'
         assert s.get(CommitteeMemo, m['memo_id']).audit[-1]['action'] == 'proposed'
@@ -452,7 +454,7 @@ def test_comite_guardian_de_cifras_repara_y_sin_ia_cae_a_determinista(db):
         m = run_committee(s, 'Micron', 'pytest', provider=prov, deps=DEPS)
         assert m['ai_used'] and m['validation']['repaired'] and 'NO están en la evidencia' in prov.calls[1]
         assert '$7.3T' not in json.dumps(m['memo'])
-        assert m['sizing']['reference_only'] and m['sizing']['per_10k'] == 500
+        assert m['sizing']['reference_only'] and m['sizing']['per_10k'] == 250     # C6: mitad sin historial validado
         # el modelo insiste con la cifra inventada → memo determinista "sin IA"
         bad = FakeProvider([lambda p: _chair_json(p, extra_risk=' vale $7.3T'), lambda p: _chair_json(p, extra_risk=' vale $7.3T')])
         m2 = run_committee(s, 'Micron', 'pytest', provider=bad, deps=DEPS)
@@ -491,12 +493,12 @@ def test_aprobar_crea_preview_en_corretaje_y_rechazar(db):
     with session_scope() as s:
         _fresh_entity_claims(s, 'Broadcom')
         m = run_committee(s, 'Broadcom', 'pytest', client_id='cli-1', provider=Off(), deps=dict(DEPS, brokerage=broker))
-        assert m['decision'] == 'ADD' and m['sizing']['notional'] == 3000        # objetivo 5k − 2k actuales
+        assert m['decision'] == 'ADD' and m['sizing']['notional'] == 500         # C6: objetivo 2.5k − 2k actuales
         out = approve_memo(s, m['memo_id'], 'fabrizio', brokerage=broker)
         assert out['ok'] and out['memo']['status'] == 'approved' and out['memo']['preview_id'] == 'pv-1'
         call = broker.calls[-1]
         assert call['source'] == 'committee' and call['proposal_id'] == m['memo_id'] and call['side'] == 'buy'
-        assert call['notional'] == 3000 and call['symbol'] == 'AVGO' and call['requested_by'] == 'fabrizio'
+        assert call['notional'] == 500 and call['symbol'] == 'AVGO' and call['requested_by'] == 'fabrizio'
         again = approve_memo(s, m['memo_id'], 'fabrizio', brokerage=broker)
         assert not again['ok'] and again['code'] == 'bad_status'
         # sin cliente: aprobación registrada, ninguna orden
@@ -552,14 +554,14 @@ def test_api_del_comite(db, monkeypatch):
                headers=PIN)
     assert r.status_code == 200, r.get_json()
     m = r.get_json()
-    assert m['ai_used'] and m['decision'] == 'BUY' and m['sizing']['notional'] == 5000
+    assert m['ai_used'] and m['decision'] == 'BUY' and m['sizing']['notional'] == 2500      # C6: mitad
     mid = m['memo_id']
     red = c.get(f'/api/committee/memo/{mid}').get_json()                 # sin PIN: montos ocultos
     assert red['redacted'] and red['sizing']['notional'] is None and 'client' not in red['inputs']
     assert 'package' not in red['inputs'] and not any('$' in x for x in red['sizing']['steps_es'])
     assert 'mandate' not in red['inputs'] and red['client_mode'] == {'mode': 'paper', 'paper': True}
     full = c.get(f'/api/committee/memo/{mid}', headers=PIN).get_json()
-    assert not full['redacted'] and full['sizing']['notional'] == 5000
+    assert not full['redacted'] and full['sizing']['notional'] == 2500
     ent = c.get('/api/committee/entity/ASML').get_json()
     assert ent['entity_id'] == 'ASML' and ent['latest']['memo_id'] == mid and ent['history']
     assert c.post(f'/api/committee/memo/{mid}/approve', json={'actor': 'f'}).status_code == 401
@@ -985,8 +987,8 @@ def test_integracion_corretaje_real_topes_aprobacion_y_retiro(db, real_broker):
         cid = _real_client(s, service, 'Cliente Integración')
         _fresh_entity_claims(s, 'Qualcomm')
         m = run_committee(s, 'Qualcomm', 'pytest', client_id=cid, provider=Off(), deps=vol30)
-        # 2 % ÷ 30 % = 6.67 % de $100k = $6,666 → tope del corretaje por orden: $5,000
-        assert m['decision'] == 'BUY' and m['sizing']['notional'] == 5000 and m['sizing']['capped_by'] == 'max_order'
+        # C6: sin historial validado 2 % → 1 %; 1 % ÷ 30 % = 3.33 % de $100k = $3,333 (bajo el tope por orden de $5,000)
+        assert m['decision'] == 'BUY' and m['sizing']['notional'] == 3333 and m['sizing']['capped_by'] == 'unvalidated'
         assert m['inputs']['mandate']['max_order_usd'] == 5000 and m['inputs']['mandate']['daily_remaining_usd'] == 15000
         out = approve_memo(s, m['memo_id'], 'fabrizio', brokerage=service)
         assert out['ok'], out
@@ -1020,7 +1022,7 @@ def test_integracion_corretaje_real_topes_aprobacion_y_retiro(db, real_broker):
         m4 = run_committee(s, 'Micron', 'pytest', client_id=cid2, provider=Off(), deps=vol30)
         ok = approve_memo(s, m4['memo_id'], 'fabrizio', brokerage=service)
         assert ok['ok'] and ok.get('executed') and ok['memo']['status'] == 'executed', ok
-        assert alp.submits and alp.submits[-1]['symbol'] == 'MU' and alp.submits[-1]['notional'] == 5000
+        assert alp.submits and alp.submits[-1]['symbol'] == 'MU' and alp.submits[-1]['notional'] == 3333
         assert any(a['action'] == 'executed' for a in s.get(CommitteeMemo, m4['memo_id']).audit)
 
 
