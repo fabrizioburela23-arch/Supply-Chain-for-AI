@@ -91,6 +91,10 @@ class LinkRecord(Base):
     properties = Column(JSONB, nullable=False, default=dict)    # headline, confidence, source…
     valid_from = Column(DateTime(timezone=True), nullable=False, index=True)
     valid_to = Column(DateTime(timezone=True), nullable=True, index=True)
+    # G2 (misión de reparación 2026-10-04): el evento LinkCreated que creó ESTA fila.
+    # Permite retractar UNA fila concreta (LinkRemoved con retracts_event_id) sin
+    # cerrar todas las del par. Nullable: las filas anteriores se emparejan al vuelo.
+    event_id = Column(UUID(as_uuid=True), nullable=True, index=True)
 
     __table_args__ = (
         Index('ix_links_pair', 'source_id', 'target_id', 'rel_type'),

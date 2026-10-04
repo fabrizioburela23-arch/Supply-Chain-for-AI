@@ -131,6 +131,8 @@ _COLUMNAS_TARDIAS = (
     ('events', 'confidence', 'DOUBLE PRECISION'),
     # C8 (misión de reparación 2026-10-04) — falsadores verificables
     ('research_claims', 'falsifier_rules', 'JSONB'),
+    # G2 — retracción dirigida de UNA fila de links
+    ('links', 'event_id', 'UUID'),
 )
 
 

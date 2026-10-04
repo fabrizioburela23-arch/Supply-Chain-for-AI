@@ -94,6 +94,13 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
         except (TypeError, ValueError):
             confidence = None
 
+    # G2: un LinkCreated idéntico a una fila VIGENTE (mismo par, rel y peso) no
+    # abre una segunda fila: el evento se registra (append-only) marcado como
+    # `dedup_of` y es un no-op en tablas y en el replay. `allow_duplicate: true`
+    # (hechos temporales con otra ventana) lo desactiva.
+    if event_type == EventType.LINK_CREATED.value and object_id and target_id:
+        payload = _dedup_link_payload(session, payload or {}, object_id, target_id)
+
     ev = Event(
         id=uuid.uuid4(), event_type=event_type, object_id=object_id, target_id=target_id,
         payload=payload or {}, valid_from=valid_from, valid_to=valid_to,
@@ -104,6 +111,55 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
 
     _materialize(session, ev)
     return ev
+
+
+def _same_weight(a, b):
+    try:
+        if a is None or b is None:
+            return a is None and b is None
+        return abs(float(a) - float(b)) < 1e-9
+    except (TypeError, ValueError):
+        return False
+
+
+def _dedup_link_payload(session, payload, source_id, target_id):
+    props = dict(payload.get('properties') or {})
+    if props.get('allow_duplicate'):
+        return payload
+    rel = payload.get('rel_type') or payload.get('type') or 'supply'
+    twin = session.scalars(select(LinkRecord).where(
+        LinkRecord.source_id == source_id, LinkRecord.target_id == target_id,
+        LinkRecord.rel_type == rel, LinkRecord.valid_to.is_(None)).order_by(LinkRecord.valid_from)).first()
+    if twin is not None and _same_weight(twin.weight, payload.get('weight')):
+        props['dedup_of'] = str(twin.id)
+        if twin.event_id:
+            props['dedup_event_id'] = str(twin.event_id)
+        return dict(payload, properties=props)
+    return payload
+
+
+def _creation_event_for(session, link):
+    """Evento LinkCreated que creó la fila (event_id o emparejamiento para filas
+    anteriores a G2: mismo par/rel/valid_from/peso, el más antiguo no asignado)."""
+    if link.event_id:
+        return session.get(Event, link.event_id)
+    cands = session.scalars(select(Event).where(
+        Event.event_type == EventType.LINK_CREATED.value, Event.object_id == link.source_id,
+        Event.target_id == link.target_id, Event.valid_from == link.valid_from).order_by(Event.recorded_at)).all()
+    taken = {str(r.event_id) for r in session.scalars(select(LinkRecord).where(
+        LinkRecord.source_id == link.source_id, LinkRecord.target_id == link.target_id,
+        LinkRecord.event_id.isnot(None))).all()}
+    for ev in cands:
+        p = ev.payload or {}
+        rel = p.get('rel_type') or p.get('type') or 'supply'
+        if rel != link.rel_type or not _same_weight(p.get('weight'), link.weight):
+            continue
+        if (p.get('properties') or {}).get('dedup_of'):
+            continue
+        if str(ev.id) in taken:
+            continue
+        return ev
+    return None
 
 
 def _materialize(session, ev):
@@ -133,16 +189,43 @@ def _materialize(session, ev):
             raise OntologyError('LinkCreated requiere object_id (source) y target_id')
         rel_type = p.get('rel_type') or p.get('type') or 'supply'
         _vigilar_vocabulario('rel_type', rel_type)
+        if (p.get('properties') or {}).get('dedup_of'):
+            return                      # G2: duplicado exacto → no abre fila (el evento queda)
         link = LinkRecord(
             id=uuid.uuid4(), source_id=ev.object_id, target_id=ev.target_id,
             rel_type=rel_type, weight=p.get('weight'), properties=p.get('properties', {}) or {},
-            valid_from=ev.valid_from, valid_to=ev.valid_to,
+            valid_from=ev.valid_from, valid_to=ev.valid_to, event_id=ev.id,
         )
         session.add(link)
 
     elif ev.event_type == EventType.LINK_REMOVED.value:
         if not ev.object_id or not ev.target_id:
             raise OntologyError('LinkRemoved requiere object_id (source) y target_id')
+        rid = (p.get('properties') or {}).get('retracts_event_id')
+        if rid:
+            # G2: retracción DIRIGIDA — cierra SOLO la fila creada por ese evento
+            try:
+                rid_u = uuid.UUID(str(rid))
+            except ValueError:
+                raise OntologyError(f'retracts_event_id inválido: {rid}')
+            rows = session.scalars(select(LinkRecord).where(LinkRecord.event_id == rid_u,
+                                                            LinkRecord.valid_to.is_(None))).all()
+            if not rows:
+                cev = session.get(Event, rid_u)
+                if cev is not None and cev.event_type == EventType.LINK_CREATED.value:
+                    cp = cev.payload or {}
+                    crel = cp.get('rel_type') or cp.get('type') or 'supply'
+                    cand = session.scalars(select(LinkRecord).where(
+                        LinkRecord.source_id == cev.object_id, LinkRecord.target_id == cev.target_id,
+                        LinkRecord.rel_type == crel, LinkRecord.valid_from == cev.valid_from,
+                        LinkRecord.valid_to.is_(None), LinkRecord.event_id.is_(None))
+                        .order_by(LinkRecord.valid_from)).all()
+                    rows = [r for r in cand if _same_weight(r.weight, cp.get('weight'))][:1]
+                    for r in rows:
+                        r.event_id = cev.id
+            for r in rows:
+                r.valid_to = ev.valid_from
+            return
         rel_type = p.get('rel_type') or p.get('type')
         q = select(LinkRecord).where(
             LinkRecord.source_id == ev.object_id, LinkRecord.target_id == ev.target_id,
@@ -225,7 +308,12 @@ def _links_active_at(session, as_of_dt):
     # ese par) — antes un LinkRemoved sin rel cerraba en tablas pero no casaba
     # nada aquí, y el replay divergía de la vista materializada.
     removals = {}
+    directed = {}            # G2: retracciones dirigidas → {event_id de la creación: fecha}
     for ev in removed:
+        rid = ((ev.payload or {}).get('properties') or {}).get('retracts_event_id')
+        if rid:
+            directed[str(rid)] = ev.valid_from
+            continue
         rel = (ev.payload or {}).get('rel_type') or (ev.payload or {}).get('type')
         removals.setdefault((ev.object_id, ev.target_id), []).append((ev.valid_from, rel))
 
@@ -233,6 +321,10 @@ def _links_active_at(session, as_of_dt):
     for ev in created:
         p = ev.payload or {}
         rel = p.get('rel_type') or p.get('type') or 'supply'
+        if (p.get('properties') or {}).get('dedup_of'):
+            continue                                   # G2: creación duplicada = no-op
+        if str(ev.id) in directed and directed[str(ev.id)] <= as_of_dt:
+            continue                                   # G2: retractada exactamente esta creación
         # ¿este evento propio ya expiró (valid_to) antes de as_of?
         if ev.valid_to is not None and ev.valid_to <= as_of_dt:
             continue
@@ -246,6 +338,7 @@ def _links_active_at(session, as_of_dt):
             'source': ev.object_id, 'target': ev.target_id, 'rel_type': rel,
             'weight': p.get('weight'), 'properties': p.get('properties', {}),
             'valid_from': ev.valid_from.isoformat() if ev.valid_from else None,
+            'event_id': str(ev.id),
         })
     return active
 

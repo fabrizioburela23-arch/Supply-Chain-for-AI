@@ -469,3 +469,39 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   `tests/test_repair_prices.py -k r11` (1): antes `/api/health` tardaba 5 s con la
   base caída; 3 lotes simultáneos hacían 6 consultas; un job con latido fresco se
   marcaba huérfano; Claude llamaba 3×4 modelos.
+
+## P1 · Grafo y ontología
+
+### G2 — La ontología se corrige SIN borrar: dedupe de vínculos, retracción dirigida y fusión de entidades por eventos
+- **Síntoma.** El diagnóstico encontró en producción vínculos repetidos (mismo
+  par, misma relación, mismo peso: la migración y el bulk import los volvían a
+  crear) y tres empresas duplicadas (`Luminar_Lidar`/`Luminar`,
+  `Mobileye_Auto`/`Mobileye`, `ButterflyNetwork`/…). No había forma de arreglar
+  UNA fila: `LinkRemoved` sin dirección cerraba TODAS las filas del par (y el
+  replay `as_of` divergía), y la única "fusión" posible era un UPDATE/DELETE a
+  mano, prohibido por la regla 5 (append-only).
+- **Causa.** `links` no sabía qué evento creó cada fila; `apply_event` no miraba
+  si el `LinkCreated` ya existía vigente; no existía ninguna Acción de fusión.
+- **Cambios.** `ontology/models.py` + `ontology/db.py`: columna tardía
+  `links.event_id` (nullable: las filas viejas se emparejan al vuelo por
+  par/relación/fecha/peso en `_creation_event_for`). `ontology/service.py`:
+  un `LinkCreated` idéntico a una fila vigente se REGISTRA (append-only) marcado
+  `properties.dedup_of` y es un no-op en tablas y en el replay
+  (`allow_duplicate: true` lo desactiva para hechos temporales con otra
+  ventana); `LinkRemoved` con `properties.retracts_event_id` cierra SOLO la
+  fila de esa creación (también en `_links_active_at`, que ahora expone
+  `event_id`). `ontology/actions.py`: `RetractarVinculo{link_id, razon}` y
+  `FusionarEntidad{alias_id, canonical_id, razon}` (alias → `retired` +
+  `merged_into`, vínculos vigentes retractados y re-creados en el canónico con
+  su `valid_from`/peso/propiedades + `merged_from`; alias↔canónico se descarta
+  como bucle; `aliases` en el canónico; rastro `ActionExecuted`). Ambas pasan
+  por `/api/ontology/actions/<tipo>` con PIN de operador. **Nada se borra**: el
+  grafo `as_of` de 2020 sigue mostrando al alias.
+- **Verificar.** `DATABASE_URL=… pytest tests/test_repair_ontology.py` (8):
+  sin el cambio fallan 6 (segunda fila duplicada, retracción cierra ambas,
+  acciones inexistentes). Suites de ontología completas: 58 verdes.
+- **Rollback.** Son eventos: revertir una fusión = `FusionarEntidad` al revés
+  no existe a propósito (sería otra historia); lo correcto es un
+  `ObjectUpdated{retired:false, merged_into:null}` + re-crear los vínculos
+  con `allow_duplicate`. La columna `event_id` es inocua si se vuelve al código
+  anterior (la ignora).

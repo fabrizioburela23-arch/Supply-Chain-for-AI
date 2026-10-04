@@ -113,6 +113,24 @@ class IncorporarEmpresaInput(BaseModel):
     fuente: str = Field(default='radar', max_length=200)
 
 
+class RetractarVinculoInput(BaseModel):
+    """G2: retracta UNA fila concreta de `links` (por su id) con un LinkRemoved
+    DIRIGIDO (retracts_event_id). A diferencia de RechazarVinculo, no cierra las
+    demás filas del mismo par. Append-only: la fila queda con valid_to."""
+    link_id: str = Field(min_length=8, max_length=60)
+    razon: str = Field(min_length=1, max_length=1000)
+
+
+class FusionarEntidadInput(BaseModel):
+    """G2: fusiona un objeto duplicado (alias) en el canónico: el alias queda
+    retired + merged_into, sus vínculos vigentes se retractan (dirigido) y se
+    re-crean en el canónico conservando valid_from/peso/propiedades
+    (`merged_from`). Nada se borra: as_of sigue mostrando la historia."""
+    alias_id: str = Field(min_length=1, max_length=120)
+    canonical_id: str = Field(min_length=1, max_length=120)
+    razon: str = Field(min_length=1, max_length=1000)
+
+
 class RetirarEmpresaInput(BaseModel):
     """Baja lógica (reversible): marca retired=true; el objeto y su historia
     quedan intactos en la ontología."""
@@ -308,6 +326,77 @@ def _resolver_vinculo(session, inp: ResolverVinculoInput, actor, resolution):
     _log_action(session, 'ConfirmarVinculo' if resolution == 'confirmed' else 'RechazarVinculo',
                 link.source_id, link.target_id, {'link_id': inp.link_id, 'resolution': resolution}, actor)
     return {'link_id': inp.link_id, 'status': resolution}
+
+
+def _link_by_id(session, link_id):
+    try:
+        link_uuid = uuid.UUID(str(link_id))
+    except ValueError:
+        raise ActionError(f'link_id inválido: {link_id}')
+    link = session.get(LinkRecord, link_uuid)
+    if not link:
+        raise ActionError(f'vínculo no encontrado: {link_id}')
+    return link
+
+
+def retractar_vinculo(session, inp: RetractarVinculoInput, actor, source='manual', log=True):
+    """G2: LinkRemoved dirigido a la creación de ESTA fila. Devuelve el evento."""
+    from ontology.service import _creation_event_for
+    link = _link_by_id(session, inp.link_id)
+    if link.valid_to is not None:
+        raise ActionError(f'el vínculo {inp.link_id} ya no está vigente')
+    cev = _creation_event_for(session, link)
+    if cev is None:
+        raise ActionError(f'no se encuentra el evento de creación del vínculo {inp.link_id}')
+    if not link.event_id:
+        link.event_id = cev.id
+    ev = apply_event(session, 'LinkRemoved', {
+        'rel_type': link.rel_type,
+        'properties': {'retracts_event_id': str(cev.id), 'reason': inp.razon, 'link_id': str(link.id),
+                       'retracted_by': actor},
+    }, valid_from=_utcnow(), source=source, actor=actor, object_id=link.source_id, target_id=link.target_id)
+    if log:
+        _log_action(session, 'RetractarVinculo', link.source_id, link.target_id,
+                    {'link_id': str(link.id), 'razon': inp.razon, 'event_id': str(ev.id)}, actor, source=source)
+    return {'link_id': str(link.id), 'retracted_event_id': str(cev.id), 'event_id': str(ev.id)}
+
+
+def fusionar_entidad(session, inp: FusionarEntidadInput, actor, source='manual'):
+    """G2: alias → canónico, todo por eventos. Devuelve cuántos vínculos se movieron."""
+    if inp.alias_id == inp.canonical_id:
+        raise ActionError('alias_id y canonical_id son el mismo objeto')
+    alias = _require_object(session, inp.alias_id)
+    canon = _require_object(session, inp.canonical_id)
+    links = session.scalars(select(LinkRecord).where(
+        (LinkRecord.source_id == inp.alias_id) | (LinkRecord.target_id == inp.alias_id),
+        LinkRecord.valid_to.is_(None))).all()
+    moved, dropped = 0, 0
+    for link in links:
+        src = inp.canonical_id if link.source_id == inp.alias_id else link.source_id
+        tgt = inp.canonical_id if link.target_id == inp.alias_id else link.target_id
+        retractar_vinculo(session, RetractarVinculoInput(link_id=str(link.id), razon=f'fusión en {inp.canonical_id}: {inp.razon}'),
+                          actor, source=source, log=False)
+        if src == tgt:
+            dropped += 1                      # un vínculo alias↔canónico desaparece (sería un bucle)
+            continue
+        props = dict(link.properties or {})
+        props.update({'merged_from': inp.alias_id, 'merge_reason': inp.razon[:300]})
+        apply_event(session, 'LinkCreated', {'rel_type': link.rel_type, 'weight': link.weight, 'properties': props},
+                    valid_from=link.valid_from, source=source, actor=actor, object_id=src, target_id=tgt)
+        moved += 1
+    aliases = list((canon.properties or {}).get('aliases') or [])
+    if inp.alias_id not in aliases:
+        aliases.append(inp.alias_id)
+    apply_event(session, 'ObjectUpdated', {'properties': {'retired': True, 'merged_into': inp.canonical_id,
+                                                          'retired_razon': inp.razon[:300]}},
+                valid_from=_utcnow(), source=source, actor=actor, object_id=inp.alias_id)
+    apply_event(session, 'ObjectUpdated', {'properties': {'aliases': aliases}},
+                valid_from=_utcnow(), source=source, actor=actor, object_id=inp.canonical_id)
+    _log_action(session, 'FusionarEntidad', inp.canonical_id, inp.alias_id,
+                {'alias_id': inp.alias_id, 'razon': inp.razon, 'links_moved': moved, 'links_dropped': dropped},
+                actor, source=source)
+    return {'alias_id': inp.alias_id, 'canonical_id': inp.canonical_id, 'links_moved': moved, 'links_dropped': dropped,
+            'alias_label': alias.label}
 
 
 def confirmar_vinculo(session, inp: ResolverVinculoInput, actor):
@@ -548,6 +637,8 @@ ACTION_CATALOG = {
     'ProponerVinculo':    (ProponerVinculoInput, proponer_vinculo),
     'ConfirmarVinculo':   (ResolverVinculoInput, confirmar_vinculo),
     'RechazarVinculo':    (ResolverVinculoInput, rechazar_vinculo),
+    'RetractarVinculo':   (RetractarVinculoInput, retractar_vinculo),      # G2
+    'FusionarEntidad':    (FusionarEntidadInput, fusionar_entidad),        # G2
     'RegistrarDecision':  (RegistrarDecisionInput, registrar_decision),
     'AjustarPosicion':    (AjustarPosicionInput, ajustar_posicion),
     'CorregirDato':       (CorregirDatoInput, corregir_dato),
