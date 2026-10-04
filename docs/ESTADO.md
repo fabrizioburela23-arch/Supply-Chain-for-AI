@@ -9,6 +9,41 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-04 (g) — KHIPU COMO ASISTENTE: ANALISTAS EN EL CHAT, PROMPT, MEMORIA, TIEMPOS (sw v196)
+
+Fabrizio: "no me responde bien, no me entiende, está empeorando; tiene que ser mi asistente; quiero
+invocar a los agentes dentro de la conversación". Verificado por MCP (la app conectada a esta sesión):
+datos en vivo OK (Yahoo), investigación y comité OK con gemini-3.5-flash → el problema era el CHAT con
+Gemini como único proveedor. Auditoría (workflow) + arreglos:
+- `core/ai`: `want_json` (JSON estricto en Gemini para los pasos del chat), pensamiento APAGADO en
+  flash para nivel rápido y JSON (GEMINI_THINKING=on lo devuelve), nivel profundo con presupuesto de
+  pensamiento 1024 SUMADO a maxOutputTokens (no se come la respuesta), `timeout_s` acotado al
+  presupuesto del chat (antes el hilo seguía 90 s ocupando cupo), json_mode 2500 tokens (8192 solo
+  research), `live_facts=False` por paso (el bloque DATOS EN VIVO se calcula una vez por pregunta).
+- `core/khipu_chat`: build_system en ≤25 líneas (persona + RECETAS de una ronda + formato con fuente y
+  fecha en la misma frase); build_prompt reordenado (contexto → historial → resultados → PREGUNTA al
+  FINAL + empresas detectadas); contexto `open_windows` y `recent_entities` ("ella/su/este");
+  pre-consulta especulativa de get_company en paralelo con la 1.ª llamada; synthesize en nivel rápido
+  (2200 tokens); SYNTH_GRACE 4 s / SYNTH 20 s / TOOL 14 s (45+4+20 < 70 s del cliente); catálogo sin
+  get_ontology_object ni get_option_greeks; motivo humano (`ai_detail_es/en` vía research.errors).
+- `research/ask_agent.py` (NUEVO): `parse_mention` ("@fundamental …", "@todos …", "pregúntale al
+  analista técnico: …"), `ask()` = paquete del puesto (claims activos + evidencia, como seat_package)
+  → respuesta EN PERSONA con guardián de cifras; `ask_all()` en paralelo (máx. 4 puestos). Ruta directa
+  `_mention_route` en run_chat (sin bucle) + herramienta `ask_agent` para el cerebro; sin investigación
+  → ofrece `open_research`. UI: avatar + nombre (KhipuCommittee.avatar expuesto), `.kc-agent`.
+- Cliente (khipu_chat.js/cockpit.js): historial 24 h en localStorage, atajos recordados ("desármame X"
+  + "¿y sus proveedores?"), respuestas sin IA no se memorizan, `noteEntity` al abrir escenas,
+  `open_windows` en el contexto, motivo humano + botón ↻ Reintentar, pie con modelo/consultas/segundos.
+- Escritorio: ventanas movidas a mano se respetan (w.manual) hasta "Ordenar ahora"; chips X-Ray/Simular/
+  Comparar/Investigar sin empresa → ventana "Elegir empresa" con sugerencias. Canvas: "precio de bitcoin
+  de los últimos N años" → línea con historial (CoinGecko, tope 365 d avisado).
+- Tests: test_ask_agent (6), test_ai_gemini_fast (3), test_ai_json (4). Pendiente en paralelo (agente):
+  auditoría de precios en vivo (lotes de 100, q.live numérico, merge Marketstack, Terminal, chips de
+  fuente, live_caps como respaldo, circuito 429) y, del workflow: diseño del renderizador del Canvas,
+  estética profesional y ontología tensorial.
+
+---
+
 # SESIÓN 2026-10-04 (f) — "EXPECTING VALUE" EN INVESTIGAR: JSON ESTRICTO + MENSAJES PARA PERSONAS
 
 Fabrizio tiene saldo en Gemini pero Investigar daba "IA falló · Expecting value: line 1 column 1":
