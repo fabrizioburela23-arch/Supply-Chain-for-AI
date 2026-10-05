@@ -211,8 +211,8 @@
       var g = String(n.growth || '').trim();
       var gCorto = g && g.length <= 14;
       funds = '<div class="xr-sect"><div class="xr-h">' + L('Fundamentales', 'Fundamentals') + '</div><div class="impact-grid">' +
-        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</b><span>' + L('Margen', 'Margin') + '</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB;font-size:14px" class="xr-mono">' + (gCorto ? esc(g) : '—') + '</b><span>' + L('Crecim.', 'Growth') + '</span></div>' +
+        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono" data-live="margin">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</b><span data-live-sub="margin">' + L('Margen · catálogo', 'Margin · catalog') + '</span></div>' +
+        '<div class="icell"><b style="color:#E8EDFB;font-size:14px" class="xr-mono" data-live="growth">' + (gCorto ? esc(g) : '—') + '</b><span data-live-label="growth">' + L('Crecim. · catálogo', 'Growth · catalog') + '</span></div>' +
         '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(n.country || '—') + '</b><span>' + L('País', 'Country') + '</span></div>' +
         '</div>' + (g && !gCorto ? '<div class="xr-note">' + esc(g) + '</div>' : '') + '</div>';
     }

@@ -2711,6 +2711,49 @@ window.computeNRS = computeNRS;
 // (movido a nodes/nodes_seed.js) — const NODE_META
 window.NODE_META = NODE_META;  // el X-Ray lee mktcap/founded/geo_risk
 
+/* ── Valuación VERIFICADA de privadas = la ÚNICA que circula (2026-10-05) ───
+   La auditoría encontró Anthropic con TRES valuaciones en la misma ficha ($965B verificada,
+   "$350B (2025)" del PREIPO_INTEL y "$60B" del catálogo) — y la de $60B entraba en el valor
+   de las carteras. Aquí, una sola vez al cargar: NODE_META.mktcap_b, PREIPO_INTEL.valuation
+   e INVEST_PATH toman la de nodes/private_valuations.js (con fecha y fuente). Las cotizadas
+   las sigue pisando la capitalización EN VIVO (KhipuLiveCaps). */
+function applyVerifiedValuations(){
+  const PV = window.PRIVATE_VALUATIONS;
+  const NB = window.NODE_BY_ID || NODE_BY_ID;
+  if(!PV || !PV.entries) return;
+  Object.keys(PV.entries).forEach(function(k){
+    const e = PV.entries[k], n = NB[k];
+    if(!n || !e || !(+e.valuation_usd_b > 0)) return;
+    if(n.listing && n.listing.status === 'public') return;          // cotizada: manda el precio en vivo
+    const m = NODE_META[n.id] = NODE_META[n.id] || {};
+    if(m.mktcap_b != null && m.mktcap_catalog == null) m.mktcap_catalog = m.mktcap_b;
+    m.mktcap_b = +e.valuation_usd_b;
+    m.mktcap_verified = {as_of: e.as_of, label: e.label, source_url: e.source_url, round: e.round || null};
+    const pi = (window.PREIPO_INTEL || {})[n.id];
+    if(pi){ if(pi.valuation && pi.valuation_catalog == null) pi.valuation_catalog = pi.valuation; pi.valuation = e.label; pi.valuation_verified = true; }
+    const ip = INVEST_PATH[n.id];
+    if(ip && ip.note) ip.note = ip.note.replace(/Valoraci[oó]n\s*~?\$\s?[\d.,]+\s*[BT]?\s*(\(\d{4}\))?/i, function(){ return 'Valuación verificada ' + e.label; });
+  });
+  // empresas que YA cotizan: la nota vieja ("IPO realizada en Nasdaq 2024") se reemplaza por la verificada
+  Object.keys(INVEST_PATH).forEach(function(k){
+    const n = NB[k], ip = INVEST_PATH[k];
+    if(n && n.listing && /^(public|merged|acquired)$/.test(n.listing.status) && ip && (n.listing.note_es || n.listing.note)) ip.note = n.listing.note_es || n.listing.note;
+  });
+  // fusionadas (xAI → SpaceX/SPCX): no circula una valuación propia vieja; se dice dónde está ahora
+  Object.keys(NB).forEach(function(k){
+    const n = NB[k];
+    if(!n || n.id !== k || !n.listing || n.listing.status !== 'merged') return;
+    const m = NODE_META[n.id];
+    if(m && m.mktcap_b != null){ if(m.mktcap_catalog == null) m.mktcap_catalog = m.mktcap_b; m.mktcap_b = null; }
+    const pi = (window.PREIPO_INTEL || {})[n.id];
+    if(pi){ if(pi.valuation_catalog == null) pi.valuation_catalog = pi.valuation; pi.valuation = n.listing.note_es || ('→ ' + (n.listing.parent || '')); }
+  });
+}
+window.applyVerifiedValuations = applyVerifiedValuations;
+applyVerifiedValuations();
+// las expansiones del catálogo se suman después: se vuelve a aplicar cuando TODO el catálogo cargó
+document.addEventListener('DOMContentLoaded', applyVerifiedValuations);
+
 const LINK_TYPE_COLORS = {
   supply:   {light:'#4E8B1E', dark:'#9BCF5E'},
   fab:      {light:'#0F8C5F', dark:'#43C896'},
@@ -3528,21 +3571,24 @@ function renderDetail(id){
     <div class="fin-grid">
       <div class="fin-card">
         <div class="fl">${t('d_margin')}</div>
-        <div class="fv${m.neg?' neg':''}">${m.v}</div>
-        <div class="fs">${m.sub}</div>
+        <div class="fv${m.neg?' neg':''}" data-live="margin">${m.v}</div>
+        <div class="fs" data-live-sub="margin">${m.sub} · ${_en?'catalog':'catálogo'}</div>
       </div>
       <div class="fin-card">
         <div class="fl">${t('d_capex')}</div>
         <div class="fv" style="font-size:14px">${esc(nf(d,'capex_2026'))||'—'}</div>
+        <div class="fs">${_en?'catalog · est.':'catálogo · estimado'}</div>
       </div>
       <div class="fin-card">
         <div class="fl">${t('d_backlog')}</div>
         <div class="fv" style="font-size:12.5px;line-height:1.35">${esc(nf(d,'backlog_status'))||'—'}</div>
+        <div class="fs">${_en?'catalog':'catálogo'}</div>
       </div>
     </div>
     <div class="growth-box">
-      <div class="gl">${t('d_growth')}</div>
-      <div class="gv">${esc(nf(d,'growth'))}</div>
+      <div class="gl" data-live-label="growth">${t('d_growth')}</div>
+      <div class="gv" data-live="growth">${esc(nf(d,'growth'))}</div>
+      <div class="fs" data-live-sub="growth" style="font-size:10px;color:var(--ink-3);margin-top:4px">${_en?'catalog projection (curated)':'proyección del catálogo (curada)'}</div>
     </div>
     ${d.mkt && !isPreipoTicker(d.ticker) ? `
     <div class="d-section" id="stock-chart-section-${id}">
@@ -6147,7 +6193,9 @@ window.fillLiveMeta = function(root, n){
   const emp = root.querySelector('[data-live="employees"]');
   const rev = root.querySelector('[data-live="revenue"]');
   const lab = root.querySelector('[data-live-label="revenue"]');
-  if(!emp && !rev) return;
+  const mg = root.querySelector('[data-live="margin"]'), mgs = root.querySelector('[data-live-sub="margin"]');
+  const gr = root.querySelector('[data-live="growth"]'), grs = root.querySelector('[data-live-sub="growth"]'), grl = root.querySelector('[data-live-label="growth"]');
+  if(!emp && !rev && !mg && !gr) return;
   window.KhipuLive.profile(n.mkt).then(p=>{
     if(!p || !p.available) return;
     const L = window.KhipuLive;
@@ -6159,6 +6207,20 @@ window.fillLiveMeta = function(root, n){
         lab.title = LANG==='en'
           ? 'Sales over the last 12 months (the sum of the latest 4 quarters), live. The catalog figure was for year 2025.'
           : 'Ventas de los últimos 12 meses (suma de los 4 trimestres más recientes), en vivo. El dato del catálogo era del año 2025.';
+      }
+    }
+    // margen y crecimiento REALES (2026-10-05: antes era el número curado del catálogo, sin fecha)
+    const om = p.operating_margin != null ? +p.operating_margin : null;
+    if(mg && om != null && isFinite(om) && _paintLive(mg, (om >= 0 ? '' : '−') + Math.abs(om).toFixed(1) + '%', p)){
+      mg.classList.toggle('neg', om < 0);
+      if(mgs && mgs.isConnected) mgs.textContent = LANG==='en' ? 'operating · last 12 mo · live' : 'operativo · últ. 12 meses · en vivo';
+    }
+    const gq = p.revenue_growth_q != null ? +p.revenue_growth_q : null;
+    if(gr && gq != null && isFinite(gq)){
+      const cat = gr.textContent;
+      if(_paintLive(gr, (gq >= 0 ? '+' : '−') + Math.abs(gq).toFixed(0) + (LANG==='en' ? '% sales (last quarter vs a year ago)' : ' % ventas (últ. trimestre vs hace un año)'), p)){
+        if(grl && grl.isConnected) grl.textContent = LANG==='en' ? 'Real growth · live' : 'Crecimiento real · en vivo';
+        if(grs && grs.isConnected) grs.textContent = (LANG==='en' ? 'Catalog projection: ' : 'Proyección del catálogo: ') + cat;
       }
     }
   }).catch(()=>{});
@@ -6240,6 +6302,12 @@ window.KhipuLiveCaps = (function(){
 /* Punto verde "en vivo" para una capitalización pintada desde NODE_META. */
 window.liveCapDot = function(meta){
   const l = meta && meta.mktcap_live;
+  if(!l && meta && meta.mktcap_verified){
+    // privada: valuación VERIFICADA (última ronda cerrada, con fecha y fuente)
+    const v = meta.mktcap_verified;
+    const tipv = (LANG==='en' ? 'Verified valuation · last closed round ' : 'Valuación verificada · última ronda cerrada ') + (v.as_of||'') + (v.round ? ' · ' + v.round : '');
+    return ' <span style="color:#7ecbff;font-size:9px;font-weight:600;vertical-align:middle" title="'+tipv.replace(/"/g,'&quot;')+'">✓ '+esc(v.as_of||'')+'</span>';
+  }
   if(!l){
     // valor del CATÁLOGO (curado a mano, puede estar desactualizado): rotularlo
     if(!meta || meta.mktcap_b == null || !isFinite(+meta.mktcap_b)) return '';

@@ -9,6 +9,25 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (x) — CIFRAS VIEJAS → VERIFICADAS / EN VIVO (sw v231)
+
+- Auditoría (agente Explore) de cifras fijas en la UI: ~40 hallazgos. Hechos los de mayor riesgo:
+  · app.html `applyVerifiedValuations()` (al cargar y en DOMContentLoaded, idempotente): NODE_META.mktcap_b,
+    PREIPO_INTEL.valuation e INVEST_PATH.note de privadas = nodes/private_valuations.js (mktcap_verified
+    {as_of,label,source_url}; mktcap_catalog/valuation_catalog guardan lo viejo); cotizadas → nota de
+    listing_status; fusionadas (xAI) sin valuación propia. Corrige ficha, panel pre-IPO, carteras
+    (estimatedPrice), comparador, simulación. liveCapDot muestra "✓ fecha" para verificadas.
+  · Ficha del mapa: margen y crecimiento REALES vía fillLiveMeta (operating_margin, revenue_growth_q del
+    perfil en vivo); capex/backlog/proyección rotulados "catálogo". X-Ray (fundamentales) y Terminal (ficha)
+    usan el mismo relleno en vivo.
+- Pendientes de la auditoría: NRS geoMap con claves que no casan (Japan/Korea vs Japon/Corea; "Estados
+  Unidos" 15 vs EEUU 8) — cambiaría los NRS, consultarlo; presets de simulación anclados a cifras viejas
+  (OpenAI $250B, SpaceX $500B); contexto geopolítico fijo en scenario_builder; textos de nodos vencidos
+  (OpenAI "IPO ~sept 2026"); pie "estimaciones (jun. 2026)".
+- Pruebas locales de UI: d3/three bajados con `npm pack` al scratchpad y servidos con page.route (el CDN
+  está bloqueado en el sandbox).
+- Test: tests/test_verified_valuations.py.
+
 # SESIÓN 2026-10-05 (w) — REVISIÓN DEL WORLD MONITOR CON DATOS REALES (sw v229)
 
 - GDELT: relleno en SEGUNDO PLANO (`_backfill_loop`, hilo único, de a un lote, 24 h y luego 7 d;

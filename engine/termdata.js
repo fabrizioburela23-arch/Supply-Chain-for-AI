@@ -231,10 +231,11 @@
         kv(esc(T('sector')), esc(window.sectorName ? window.sectorName(n.cat, true) : n.cat)) +
         kv(esc(T('country')), esc(n.country || '—')) +
         kv(esc(T('founded')), fmt(m.founded)) +
-        kv(esc(T('employees')), m.employees ? Number(m.employees).toLocaleString() : '—') +
-        kv(esc(T('revenue')), esc(m.revenue_2025 || '—')) +
+        kv(esc(T('employees')), '<span data-live="employees">' + (m.employees ? Number(m.employees).toLocaleString() : '—') + '</span>') +
+        kv('<span data-live-label="revenue">' + esc(T('revenue')) + '</span>', '<span data-live="revenue">' + esc(m.revenue_2025 || '—') + '</span>') +
         kv(esc(T('mktcap')), m.mktcap_b ? '$' + esc(String(m.mktcap_b)) + 'B' + (window.liveCapDot ? window.liveCapDot(m) : '') : (n.preipo ? T('preipo') : '—')) +
-        kv(esc(T('margin')), n.margin != null ? Math.round(n.margin * 100) + '%' : '—') +
+        kv(esc(T('margin')), '<span data-live="margin">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</span>' +
+           ' <span data-live-sub="margin" style="font-size:9px;color:#7C87A3">' + esc(L() === 'en' ? 'catalog' : 'catálogo') + '</span>') +
         kv(esc(T('nrsRisk')) + nrsChip,
            '<b style="color:' + nrsCol + '">' + fmt(nrs) + '</b>/100') +
         kv(esc(T('links')), cadena.up.length + ' ' + esc(T('prov')) + ' · ' + cadena.down.length + ' ' + esc(T('clients'))) +
@@ -244,6 +245,8 @@
       '<div class="td-sec" id="td-fund"><div class="td-h">' + esc(T('fundamentals')) + ' <span class="u">' + esc(T('fundSrc')) + '</span></div><div class="td-empty">' + esc(T('loading')) + '</div></div>' +
       '<div class="td-sec"><div class="td-h">' + esc(T('chain')) + ' <span class="u">' + esc(T('weight')) + '</span>' +
         wChip + '</div>' + chainHTML(cadena) + '</div>';
+    // ficha EN VIVO (2026-10-05): empleados, ingresos 12 m y margen real, como la ficha del mapa y el X-Ray
+    if (window.fillLiveMeta && n && n.mkt) { try { window.fillLiveMeta(body, n); } catch (e) {} }
 
     // ── 3. VALUACIÓN & ANALISTAS (API, caché 24h) ──
     fetch((window.BASE || '') + '/api/fundamentals/' + encodeURIComponent(ticker))
