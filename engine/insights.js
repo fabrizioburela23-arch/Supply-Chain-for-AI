@@ -99,6 +99,8 @@
         var nrs = window.computeNRS(n.id);
         var g = (n.growth || '').toLowerCase();
         var growth = g.indexOf('🟢') >= 0 ? 2 : g.indexOf('🟡') >= 0 ? 1 : 0;
+        // crecimiento REAL si ya llegó (KhipuLiveFund): ventas del último trimestre vs hace un año
+        if (n.growth_live && isFinite(n.growth_live.pct)) growth = n.growth_live.pct >= 15 ? 2 : n.growth_live.pct > 0 ? 1 : 0;
         var margin = n.margin != null ? n.margin : 0;
         // score: recompensa margen alto + crecimiento, penaliza riesgo
         var score = growth * 22 + Math.min(30, margin * 60) + (50 - nrs) * 0.5;
@@ -108,7 +110,8 @@
       if (opps.length) {
         out.push({ kind: 'oport', tag: 'estructural', nodes: opps.slice(0, 4).map(function (x) { return x.id; }),
           text: '<b>' + opps.length + '</b> empresas combinan riesgo bajo, crecimiento y margen sano. Destaca <b>' + esc(nm(opps[0].id)) +
-            '</b> (NRS ' + opps[0].nrs + ', margen ' + Math.round(opps[0].margin * 100) + '%).',
+            '</b> (NRS ' + opps[0].nrs + ', margen ' + Math.round(opps[0].margin * 100) + '% ' +
+            ((window.NODE_BY_ID || {})[opps[0].id] && window.NODE_BY_ID[opps[0].id].margin_live ? 'en vivo' : 'del catálogo') + ').',
           action: "window.openXRay&&window.openXRay('" + opps[0].id + "')", actionLabel: 'abrir X-Ray' });
       }
     }

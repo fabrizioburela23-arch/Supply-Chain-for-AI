@@ -379,7 +379,20 @@
   }
 
   // ── bloque Expediente de la vista detalle ──
-  function intelHTML(it) {
+  // cifras EN VIVO para el expediente (2026-10-05: el texto de jul-2026 decía "~20.05M BTC en circulación",
+  // "dominancia 56-58 %"… presentado como actual). Arriba del texto va el dato vivo de CoinGecko.
+  function liveIntelLine(a) {
+    if (!a || a.circulating_supply == null) return '';
+    var en = lang() === 'en', bits = [];
+    bits.push((en ? 'In circulation: ' : 'En circulación: ') + fmtSupply(a.circulating_supply, a.symbol) +
+      (a.max_supply ? (en ? ' of ' : ' de ') + fmtSupply(a.max_supply, a.symbol) + ' (' + (a.circulating_supply / a.max_supply * 100).toFixed(1) + '%)' : (en ? ' · no max supply' : ' · sin máximo')));
+    if (a.market_cap) bits.push((en ? 'Market cap ' : 'Capitalización ') + fmtBig(a.market_cap));
+    if (a.rank) bits.push('#' + a.rank);
+    var tot = 0; ASSETS.forEach(function (x) { tot += +x.market_cap || 0; });
+    if (tot > 0 && a.market_cap) bits.push((en ? 'share of top-100 market: ' : 'peso en el top-100: ') + (a.market_cap / tot * 100).toFixed(1) + '%');
+    return '<div style="font-size:11.5px;color:#2BE38B;margin-bottom:4px">● ' + esc((en ? 'Live (CoinGecko): ' : 'En vivo (CoinGecko): ') + bits.join(' · ')) + '</div>';
+  }
+  function intelHTML(it, live) {
     if (!it) return '';
     var L = lang() === 'en' ? it.en : it.es;
     if (!L) return '';
@@ -395,6 +408,7 @@
       var txt = L[b[0]]; if (!txt) return '';
       return '<div style="border-left:3px solid ' + b[3] + ';padding:8px 12px;margin-bottom:10px;background:rgba(13,19,33,.55);border-radius:0 9px 9px 0">' +
         '<div style="font-size:11px;font-weight:700;color:' + b[3] + ';margin-bottom:3px">' + b[1] + ' ' + b[2] + '</div>' +
+        (b[0] === 'tok' ? liveIntelLine(live) + (live && live.circulating_supply != null ? '<div style="font-size:10.5px;color:#7C87A3;margin-bottom:4px">' + esc(lang() === 'en' ? 'The text below is the Jul 2026 analysis; the live figure above wins.' : 'El texto de abajo es el análisis de jul-2026; manda la cifra en vivo de arriba.') + '</div>' : '') : '') +
         '<div style="font-size:12.5px;line-height:1.6;color:#C9D4EC">' + esc(txt) + '</div></div>';
     }).join('');
     var cat = catInfo(it.cat);
@@ -771,7 +785,7 @@
         insightsHTML(a, it) +
         '<div id="cr-ai" style="margin-top:16px"></div>' +
         '<div id="cr-trade" data-sym="' + esc((a.symbol || '').toUpperCase()) + '"></div>' +
-        intelHTML(it) +
+        intelHTML(it, a) +
         (a.description ? '<p style="margin-top:18px;font-size:13px;line-height:1.65;color:#8b96b5">' + esc(a.description) + '</p>' : '') +
       '</div>' + detailCSS();
     analyzeRender(a.id);   // ✨ botón IA (o tarjeta cacheada si ya se analizó esta moneda)

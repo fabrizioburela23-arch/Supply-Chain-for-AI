@@ -12,6 +12,10 @@
 (function () {
   'use strict';
   let _builtLang = null;
+  // conteos EN VIVO del catálogo cargado (2026-10-05: antes "949 empresas" fijo y el grafo tenía otro número)
+  function _nCos() { var N = window.NODES || [], B = window.NODE_BY_ID || {}, c = 0; N.forEach(function (n) { if (n && (!B[n.id] || B[n.id].id === n.id)) c++; }); return c || 949; }
+  function _nLinks() { var L = window.LINKS || []; return L.length ? String(Math.floor(L.length / 100) * 100).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '+' : '2.500+'; }
+  function _nLinksEn() { var L = window.LINKS || []; return L.length ? (Math.floor(L.length / 100) * 100).toLocaleString('en-US') + '+' : '2,500+'; }
 
   function lang() {
     let l = window.LANG;
@@ -262,6 +266,6 @@
             <div><div style="font-size:13px;font-weight:700;color:var(--ink-1);margin-bottom:3px">${q}</div>
               <div style="font-size:12.5px;color:var(--ink-3);line-height:1.5">${a}</div></div>`).join('')}
           </div>`)}
-      </div>`;
+      </div>`.replace(/\b949\b/g, String(_nCos())).replace(/2\.500\+/g, _nLinks()).replace(/2,500\+/g, _nLinksEn());
   };
 })();
