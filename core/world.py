@@ -1919,7 +1919,7 @@ _GEO_WHY = {'named': ('la nombra un documento oficial', 'named in an official do
 _GEO_NEAR_LAYERS = ('conflict', 'unrest', 'quakes', 'natural', 'disasters')
 
 
-def entity_geo_risks(entity_ids, window='7d', wait=3.0, per_entity=3, min_severity=40):
+def entity_geo_risks(entity_ids, window='24h', wait=3.0, per_entity=3, min_severity=40):
     """{entity_id: [{layer, title_es, title_en, severity, why, why_es, why_en, distance_km?, time, url, source}]}
     Solo capas EN VIVO u oficiales (no las fichas curadas): reglas/sanciones que NOMBRAN la empresa,
     caídas de tráfico en estrechos de los que depende, eventos cerca de su sede conocida y riesgo
