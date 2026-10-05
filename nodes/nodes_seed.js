@@ -2567,6 +2567,9 @@ const NODE_ID_ALIAS = {
   // AlphaSense ≈ AlphaSenseFin (solo etiqueta, sin ticker) queda para revisión humana.
   'china-northern-rare-earth': 'ChinaNorthernRareEarth',
   'KantoDenka': 'kanto-denka-kogyo',
+  // AlphaSense ≈ AlphaSenseFin: misma empresa (misma etiqueta y misma valuación
+  // Pre-IPO ~$7.5B); canónico = el de más enlaces (5 vs 3). Decidido 2026-10-05.
+  'AlphaSenseFin': 'AlphaSense',
   // NO fusionados a propósito (colisión de ticker, no duplicado): HashiCorp≠IBM,
   // Qwen≠AlibabaCloud, Aerojet⊂L3Harris, Altium⊂Renesas, Agility≠Amazon.
 };

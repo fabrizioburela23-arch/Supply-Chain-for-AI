@@ -1,9 +1,9 @@
 {
- "exported_at": "2026-10-04T20:26:13.682Z",
+ "exported_at": "2026-10-05T14:20:14.018Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
-  "nodes": 938,
-  "links": 2524,
+  "nodes": 937,
+  "links": 2522,
   "unverified_links": 10,
   "categories": 108,
   "sectors": 13,
@@ -4511,7 +4511,7 @@
   },
   {
    "sector": "cloud_ia",
-   "id": "AlphaSenseFin",
+   "id": "AlphaSense",
    "label": "AlphaSense (Finance AI)",
    "ticker": "Pre-IPO ~$7.5B",
    "cat": "ai_finance",
@@ -4526,7 +4526,11 @@
    "capex_2026": "~$0.1B",
    "backlog_status": "Expansión",
    "preipo": true,
-   "mkt": null
+   "mkt": null,
+   "founded": 2011,
+   "employees": 1200,
+   "revenue_2025": "~$500M est",
+   "geo_risk": "EE.UU. — bajo"
   },
   {
    "sector": "cloud_ia",
@@ -7977,24 +7981,6 @@
    "employees": 1600,
    "revenue_2025": "~$30M",
    "geo_risk": "EE.UU. — regulación AV NHTSA"
-  },
-  {
-   "sector": "cloud_ia",
-   "id": "AlphaSense",
-   "label": "AlphaSense",
-   "ticker": "Pre-IPO ~$7.5B",
-   "cat": "ai_finance",
-   "preipo": true,
-   "role": "IA para investigación financiera; el Bloomberg para analistas de buy-side.",
-   "moat": "1,600+ clientes enterprise incluyendo Goldman, JP Morgan, BlackRock.",
-   "loc": "EE.UU.",
-   "country": "EEUU",
-   "growth": "⭐ PRE-IPO; +45% ARR anual",
-   "margin": -0.1,
-   "founded": 2011,
-   "employees": 1200,
-   "revenue_2025": "~$500M est",
-   "geo_risk": "EE.UU. — bajo"
   },
   {
    "sector": "cloud_ia",
@@ -26034,9 +26020,9 @@
   },
   {
    "source": "Amazon",
-   "target": "AlphaSenseFin",
+   "target": "AlphaSense",
    "w": 2,
-   "rel": "Infraestructura de búsqueda y almacenamiento documental corre sobre AWS",
+   "rel": "Infraestructura de búsqueda semántica y almacenamiento documental corre sobre AWS",
    "type": "cloud",
    "conf": 1,
    "verified": true
@@ -31794,7 +31780,7 @@
   },
   {
    "source": "OpenAI",
-   "target": "AlphaSenseFin",
+   "target": "AlphaSense",
    "w": 0.8,
    "rel": "AlphaSense Generative Search usa modelos GPT de OpenAI para resúmenes y respuestas basadas en documentos financieros",
    "type": "license",
@@ -31802,7 +31788,7 @@
    "verified": true
   },
   {
-   "source": "AlphaSenseFin",
+   "source": "AlphaSense",
    "target": "Microsoft",
    "w": 0.3,
    "rel": "Integración empresarial con Microsoft 365/Teams para distribución de insights",
@@ -31959,24 +31945,6 @@
    "target": "Snowflake",
    "w": 0.3,
    "rel": "Distribución de contenido de research a través del marketplace de datos de Snowflake",
-   "type": "partner",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Amazon",
-   "target": "AlphaSense",
-   "w": 0.9,
-   "rel": "Infraestructura de búsqueda semántica y almacenamiento documental corre sobre AWS",
-   "type": "cloud",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "AlphaSense",
-   "target": "Microsoft",
-   "w": 0.3,
-   "rel": "Integración con Microsoft 365/Teams para distribución de insights financieros",
    "type": "partner",
    "conf": 1,
    "verified": true
@@ -41929,7 +41897,8 @@
   "Mapletree Industrial Trust": "MapletreeIndustrialTrust",
   "ESR Group": "ESR_Group",
   "china-northern-rare-earth": "ChinaNorthernRareEarth",
-  "KantoDenka": "kanto-denka-kogyo"
+  "KantoDenka": "kanto-denka-kogyo",
+  "AlphaSenseFin": "AlphaSense"
  },
  "legal_names": {
   "Taiwan Semiconductor Manufacturing Company": "TSMC",
