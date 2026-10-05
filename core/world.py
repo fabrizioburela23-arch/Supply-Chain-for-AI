@@ -58,13 +58,18 @@ _UA = 'KhipuFinance/1.0 (+world-monitor)'
 
 WINDOWS = {'24h': 86400, '7d': 7 * 86400}
 GDELT_LAYERS = ('conflict', 'unrest', 'trade')
-LIVE_LAYERS = GDELT_LAYERS + ('quakes', 'natural', 'chokepoints', 'instability')
+# 2026-10-05: fuentes OFICIALES nuevas (core/world_feeds.py) — tráfico marítimo
+# (FMI PortWatch), controles de exportación/sanciones (Federal Register BIS·OFAC)
+# y alertas de desastres (GDACS).
+FEED_LAYERS = ('shipping', 'policy', 'disasters')
+LIVE_LAYERS = GDELT_LAYERS + ('quakes', 'natural') + FEED_LAYERS + ('chokepoints', 'instability')
 REF_LAYERS = ('lanes', 'cables', 'fabs')
 DEFAULT_WAIT = 4.5          # s que un request espera a una capa FRÍA (sin caché)
 
 # TTL por capa (s). Tras un fallo se reintenta antes (ERROR_TTL).
 LAYER_TTL = {'conflict': 900, 'unrest': 900, 'trade': 900, 'quakes': 300,
-             'natural': 900, 'chokepoints': 120, 'instability': 120}
+             'natural': 900, 'chokepoints': 120, 'instability': 120,
+             'shipping': 6 * 3600, 'policy': 3600, 'disasters': 900}
 ERROR_TTL = 90
 BUSY_TTL = 20               # GDELT "ocupado" (acelerador): reintento pronto, no es una caída
 # W1 (misión de reparación 2026-10-04): una fuente que responde 404/410 (API
@@ -76,7 +81,8 @@ BUSY_TTL = 20               # GDELT "ocupado" (acelerador): reintento pronto, no
 SOURCE_DOWN_AFTER = 3
 SOURCE_DOWN_TTL = 3600
 _DEFINITIVE_HTTP = ('401', '403', '404', '410')
-SOURCE_LABEL = {'gdelt_geo': 'GDELT GEO 2.0', 'gdelt_doc': 'GDELT DOC 2.0'}
+SOURCE_LABEL = {'gdelt_geo': 'GDELT GEO 2.0', 'gdelt_doc': 'GDELT DOC 2.0', 'portwatch': 'IMF PortWatch',
+                'fedreg': 'US Federal Register', 'gdacs': 'GDACS'}
 
 LAYER_META = {
     'conflict': dict(provider='GDELT GEO 2.0', es='Conflicto armado', en='Armed conflict',
@@ -95,6 +101,8 @@ LAYER_META = {
     'instability': dict(provider='Khipu (curated) + GDELT + graph', provider_es='Khipu (curado) + GDELT + grafo',
                         es='Inestabilidad por país', en='Country instability', feed='/api/geo/situation'),
 }
+from core.world_feeds import FEED_META as _FEED_META  # noqa: E402
+LAYER_META.update(_FEED_META)
 
 # Consultas GDELT (temas GKG). Sobrescribibles SIN tocar código:
 # WORLD_GDELT_QUERY_CONFLICT / _UNREST / _TRADE (lección sept-2026: los
@@ -168,8 +176,13 @@ def err_info(err):
         src, _, why = rest.partition(':')
         code = why.rpartition(':')[2]
         name = SOURCE_LABEL.get(src, src)
-        live_es = 'Sismos (USGS), eventos naturales (NASA) y estrechos siguen funcionando.'
-        live_en = 'Earthquakes (USGS), natural events (NASA) and straits keep working.'
+        if src.startswith('gdelt'):
+            live_es = ('Sismos (USGS), eventos naturales (NASA), tráfico marítimo (FMI), reglas y sanciones '
+                       '(EE.UU.), alertas GDACS y estrechos siguen funcionando.')
+            live_en = ('Earthquakes (USGS), natural events (NASA), shipping (IMF), rules & sanctions (US), '
+                       'GDACS alerts and straits keep working.')
+        else:
+            live_es, live_en = 'Las demás capas siguen funcionando.', 'The other layers keep working.'
         if code in ('401', '403'):
             c = 'source_unavailable'
             es = (f'{name} ahora exige credenciales (HTTP {code}): capa apagada — no se contratan servicios '
@@ -1175,7 +1188,15 @@ _FETCHERS = {
     'natural': _fetch_natural,
     'chokepoints': _fetch_chokepoints,
     'instability': _fetch_instability,
+    'shipping': lambda w: _feeds().fetch_shipping(w),
+    'policy': lambda w: _feeds().fetch_policy(w),
+    'disasters': lambda w: _feeds().fetch_disasters(w),
 }
+
+
+def _feeds():
+    from core import world_feeds
+    return world_feeds
 _SYNC_LAYERS = ('chokepoints', 'instability')   # cálculo local: sin hilo
 CURATED_LAYERS = _SYNC_LAYERS
 
@@ -1287,7 +1308,7 @@ def _window_filter(layer, items, window, now):
     """Sismos y eventos naturales se filtran por su hora (exacta / última
     actualización de EONET). GDELT ya viene por ventana; los curados son
     valores actuales."""
-    if layer not in ('quakes', 'natural'):
+    if layer not in ('quakes', 'natural', 'disasters'):
         return list(items)
     lim = now - WINDOWS[window]
     return [i for i in items if (i.get('ts') or 0) >= lim]
@@ -1470,7 +1491,7 @@ def reference_layers():
 # 7. Exposición de la cadena + resumen (brief) determinista
 # ═══════════════════════════════════════════════════════════════════════════
 LAYER_RADIUS_KM = {'conflict': 300, 'unrest': 250, 'trade': 300, 'natural': 250,
-                   'chokepoints': 600, 'instability': 0}
+                   'chokepoints': 600, 'instability': 0, 'shipping': 600, 'policy': 0, 'disasters': 400}
 _NAT_RADIUS = {'wildfires': 150, 'severeStorms': 500, 'volcanoes': 200, 'floods': 300}
 
 
@@ -1583,7 +1604,7 @@ def exposure(lat, lon, radius_km=500.0, country=None, limit=25, affected=None):
 
 def item_exposure(item, limit=5):
     return exposure(item['lat'], item['lon'], item_radius_km(item), country=item.get('country_key'),
-                    limit=limit, affected=item.get('affected') if item.get('layer') == 'chokepoints' else None)
+                    limit=limit, affected=item.get('affected') if item.get('layer') in ('chokepoints', 'shipping', 'policy') else None)
 
 
 def relevance(severity, exposure_index):
@@ -1591,7 +1612,7 @@ def relevance(severity, exposure_index):
     return int(round(0.55 * (severity or 0) + 0.45 * (exposure_index or 0)))
 
 
-EVENT_LAYERS = GDELT_LAYERS + ('quakes', 'natural')     # eventos EN VIVO (vs. estructurales)
+EVENT_LAYERS = GDELT_LAYERS + ('quakes', 'natural') + FEED_LAYERS     # eventos EN VIVO (vs. estructurales)
 
 
 def item_relevance(item, ex):
@@ -1632,6 +1653,8 @@ _LAYER_LABEL = {
     'trade': ('Comercio/sanciones', 'Trade/sanctions'), 'quakes': ('Sismo', 'Earthquake'),
     'natural': ('Evento natural', 'Natural event'), 'chokepoints': ('Estrecho', 'Strait'),
     'instability': ('Inestabilidad', 'Instability'),
+    'shipping': ('Tráfico marítimo', 'Shipping traffic'), 'policy': ('Regla/sanción de EE.UU.', 'US rule/sanction'),
+    'disasters': ('Alerta GDACS', 'GDACS alert'),
 }
 
 
@@ -1798,3 +1821,20 @@ def api_world_reference():
     resp = jsonify(reference_layers())
     resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp
+
+
+@world_bp.get('/policy')
+@rate_limit(240, 3600)
+def api_world_policy():
+    """GET /api/world/policy — reglas del BIS (controles de exportación, Entity List)
+    y de la OFAC (sanciones) de los últimos 30 días, del Federal Register (fuente
+    oficial), con empresas del grafo nombradas. Incluye los documentos SIN país
+    identificable (no salen en el mapa)."""
+    try:
+        lim = max(1, min(100, int(request.args.get('limit', 40))))
+    except (TypeError, ValueError):
+        lim = 40
+    out = _feeds().policy_feed(lim)
+    src = (world_events(layers=['policy'], wait=0)['sources'] or {}).get('policy') or {}
+    out['status'] = {k: src.get(k) for k in ('ok', 'as_of', 'error_code', 'error_es', 'error_en', 'retry_at') if k in src}
+    return jsonify(out)

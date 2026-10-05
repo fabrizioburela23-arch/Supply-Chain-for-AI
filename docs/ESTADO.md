@@ -9,6 +9,29 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (n) — GEOPOLÍTICA CON FUENTES OFICIALES (sw v216)
+
+- Pedido: "que dé más info, pero fiable". Diagnóstico: GDELT GEO (conflicto/protestas/
+  comercio) está RETIRADO (HTTP 404) y estrechos/inestabilidad eran fichas curadas de julio.
+- NUEVO `core/world_feeds.py` (capas `shipping`, `policy`, `disasters`, en LIVE_LAYERS y
+  EVENT_LAYERS de core/world.py; misma caché/estado/pausa por fuente `source_down`):
+  · shipping = FMI PortWatch (ArcGIS Daily_Chokepoints_Data): buques/día 7 d vs 90 d previos
+    por estrecho; severidad = caída (−25 % ≈ 40, −50 % ≈ 80); hereda `affected` de
+    core/geosit.CHOKEPOINTS. TTL 6 h. URL: WORLD_PORTWATCH_URL.
+  · policy = Federal Register API (BIS + OFAC, 30 días): país objetivo (country_key = None a
+    propósito: la exposición son las empresas NOMBRADAS, `companies`/`affected`), severidad =
+    ESTIMACIÓN por palabras clave (`severity_kind: keyword_estimate`). Lista completa (también
+    sin país) en GET /api/world/policy. URL: WORLD_FEDREG_URL.
+  · disasters = GDACS (alertas Naranja/Roja, 10 días; 404 de GDACS = "cero alertas").
+    URL: WORLD_GDACS_URL.
+- MCP get_world_events: enum + maxItems 10 + campos nuevos (solo se AGREGAN).
+- UI engine/worldmonitor.js: grupo "Fuentes oficiales", paneles "⛴ Tráfico por los
+  estrechos" y "📜 Reglas de chips y sanciones" (marca 💼 si nombra empresas de tu cartera),
+  fichas de detalle, "?" wm_official/wm_shipping/wm_policy.
+- Ninguna fuente pide clave ni cuesta. NO verificado desde el sandbox (red bloqueada):
+  verificar en producción con MCP get_world_events layers=[shipping,policy,disasters].
+- Tests: tests/test_world_feeds.py (6) + tests/world_feed_fixtures.py.
+
 # SESIÓN 2026-10-05 (m) — EL COMITÉ ANALIZA TODAS LAS POSICIONES (sw v215)
 
 - "No analizó todas mis posiciones, solo algunas": había un tope OCULTO de 30

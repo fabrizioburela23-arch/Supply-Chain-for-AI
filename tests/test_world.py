@@ -141,6 +141,12 @@ def _fake_http(counter=None, fail=()):
             if 'eonet' in fail:
                 return None, 'timeout'
             return EONET_PAYLOAD, None
+        from tests.world_feed_fixtures import route
+        feed = route(url)
+        if feed is not None and 'feeds' in fail:
+            return None, 'http:503'
+        if feed is not None:
+            return feed, None
         return None, 'unknown url'
     return fake
 
@@ -456,7 +462,7 @@ def test_relevance_formula():
 
 
 def test_brief_ranking(monkeypatch):
-    monkeypatch.setattr(W, '_http_get_json', _fake_http())
+    monkeypatch.setattr(W, '_http_get_json', _fake_http(fail=('feeds',)))   # fuentes nuevas: tests propios
     b = W.brief(window='24h', n=5, wait=5)
     assert len(b['items']) == 5 and b['window'] == '24h'
     rel = [i['relevance'] for i in b['items']]
@@ -544,7 +550,7 @@ def test_instability_ranked_by_severity_not_company_count(monkeypatch):
     """Hallazgo 1: el conteo de empresas de TODO un país ya no infla la relevancia
     (antes EE.UU., score 28, quedaba arriba de Ucrania 78, Ormuz 55 e Israel 55)."""
     _real_situation(monkeypatch)
-    monkeypatch.setattr(W, '_http_get_json', _fake_http(fail=('gdelt', 'usgs', 'eonet')))
+    monkeypatch.setattr(W, '_http_get_json', _fake_http(fail=('gdelt', 'usgs', 'eonet', 'feeds')))
     b = W.brief(window='24h', n=25, wait=5)
     ins = [i for i in b['items'] if i['layer'] == 'instability']
     assert len(ins) == 14

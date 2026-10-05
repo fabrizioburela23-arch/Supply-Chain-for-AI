@@ -1048,14 +1048,17 @@ def t_get_option_greeks(ctx, options):
     return rep
 
 
-_WORLD_LAYERS = ['conflict', 'unrest', 'trade', 'quakes', 'natural', 'chokepoints', 'instability']
+_WORLD_LAYERS = ['conflict', 'unrest', 'trade', 'quakes', 'natural', 'chokepoints', 'instability',
+                 'shipping', 'policy', 'disasters']
 
 
 @tool('get_world_events', 'World monitor events', 'read',
       'Live geopolitical and physical-risk events from the Khipus World Monitor (GDELT conflict/unrest/trade, '
-      'USGS earthquakes, NASA EONET natural events, maritime chokepoints, instability), each with coordinates, '
-      'severity, time, source and URL. Per-layer status says what could not be fetched.',
-      {'layers': {'type': 'array', 'maxItems': 7, 'items': {'type': 'string', 'enum': _WORLD_LAYERS}},
+      'USGS earthquakes, NASA EONET natural events, maritime chokepoints, instability; official sources: IMF '
+      'PortWatch daily strait transits (shipping), US Federal Register BIS export controls & OFAC sanctions '
+      '(policy), GDACS orange/red disaster alerts (disasters)), each with coordinates, severity, time, source and '
+      'URL. Per-layer status says what could not be fetched.',
+      {'layers': {'type': 'array', 'maxItems': 10, 'items': {'type': 'string', 'enum': _WORLD_LAYERS}},
        'window': {'type': 'string', 'enum': ['24h', '7d'], 'default': '24h'},
        'limit': {'type': 'integer', 'minimum': 1, 'maximum': 150, 'default': 40}},
       open_world=True)
@@ -1070,7 +1073,8 @@ def t_get_world_events(ctx, layers=None, window='24h', limit=40):
     items = list(res.get('items') or [])
     items.sort(key=lambda x: str(x.get('time') or ''), reverse=True)        # más reciente primero…
     items.sort(key=lambda x: -(x.get('severity') or 0))                      # …dentro de cada severidad
-    keep = ('id', 'layer', 'lat', 'lon', 'title', 'severity', 'time', 'source', 'url', 'country', 'place')
+    keep = ('id', 'layer', 'lat', 'lon', 'title', 'severity', 'time', 'source', 'url', 'country', 'place',
+            'official', 'change_pct', 'agency', 'alert', 'companies', 'severity_kind')
     return {'window': res.get('window') or window, 'count_total': len(items),
             'items': [{k: x.get(k) for k in keep if k in x} for x in items[:limit]],
             'sources': res.get('sources') or {}, 'as_of': res.get('as_of') or _now_iso(),
