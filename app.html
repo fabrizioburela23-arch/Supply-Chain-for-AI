@@ -2578,7 +2578,11 @@ function computeNodeRadius(nodeId) {
     'Cohere': 2.2, 'ShieldAI': 2.7, 'BlueOrigin': 15, 'ICEYE': 0.5,
   };
 
-  let cap_B = MKT_CAP_EST[nodeId] || 0.5;
+  // 2026-10-05: para las de la tabla, la valuación VERIFICADA / capitalización en vivo
+  // (NODE_META.mktcap_b, applyVerifiedValuations/KhipuLiveCaps) manda sobre la cifra fija.
+  // Solo ellas: agrandar las ~570 cotizadas cambiaría la densidad y las etiquetas del mapa.
+  const _m = MKT_CAP_EST[nodeId] ? (window.NODE_META || {})[nodeId] : null;
+  let cap_B = (_m && _m.mktcap_b > 0) ? +_m.mktcap_b : (MKT_CAP_EST[nodeId] || 0.5);
 
   // Si hay precio en vivo y shares conocidos → calcular market cap real
   // window.MKT bypasses TDZ (const MKT declared later at line ~5539)
@@ -3109,7 +3113,12 @@ nodeSel.on('mouseover.tooltip',(event,d)=>{
       <strong>${esc(d.label)}</strong>
       <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3)">${esc((d.ticker||'').split(' · ')[0])}</span>
     </div>
-    ${meta.revenue_2025?`<div style="font-size:11px;color:var(--ink-2)">💰 ${esc(meta.revenue_2025)} &nbsp;·&nbsp; 👥 ${meta.employees?meta.employees.toLocaleString():'—'}</div>`:''}
+    ${(meta.revenue_ttm_usd_b!=null||meta.revenue_2025)?(function(){
+      // 2026-10-05: ingresos de los últimos 12 meses EN VIVO (KhipuLiveFund) antes que la cifra 2025 del catálogo
+      const rv=meta.revenue_ttm_usd_b, liv=rv!=null&&isFinite(+rv);
+      const rt=liv?('$'+(+rv>=1000?(+rv/1000).toFixed(2)+'T':(+rv>=10?Math.round(+rv):(+rv).toFixed(1))+'B')+' <span style="color:#22c55e" title="'+(LANG==='en'?'live · last 12 months':'en vivo · últimos 12 meses')+'">●</span>'):esc(meta.revenue_2025);
+      const em=meta.employees?meta.employees.toLocaleString()+(meta.employees_live?' <span style="color:#22c55e">●</span>':''):'—';
+      return `<div style="font-size:11px;color:var(--ink-2)">💰 ${rt} &nbsp;·&nbsp; 👥 ${em}</div>`;})():''}
     <div style="font-size:11px;color:var(--ink-3);margin-top:4px">↑ ${inp} ${t('tt_sup')} &nbsp;·&nbsp; ↓ ${out} ${t('tt_cli')}</div>
     ${meta.risk&&meta.risk!=='low'?`<div style="font-size:10px;color:${riskColor};margin-top:4px;font-weight:600;text-transform:uppercase">⚠ ${t('tt_risk')}: ${esc(meta.risk)}</div>`:''}
     ${(function(){try{const nrs=computeNRS(d.id);const nc=nrs<30?'#22c55e':nrs<60?'#f59e0b':'#ef4444';return `<div style="font-size:10px;margin-top:4px;display:flex;align-items:center;gap:5px"><span style="color:var(--ink-3)">NRS</span><span style="font-weight:700;color:${nc}">${nrs}</span><span style="color:var(--ink-3)">/100</span></div>`;}catch(e){return '';}})()}
