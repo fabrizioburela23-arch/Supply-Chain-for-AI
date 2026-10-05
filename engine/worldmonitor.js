@@ -578,7 +578,7 @@
     shown.forEach(function (it) {
       var c = it.change_pct, col = c <= -25 ? '#FF4D6A' : c <= -10 ? '#FFB300' : c >= 10 ? '#2BE38B' : '#9BA6C4';
       h += '<div class="wm-row" data-act="sel" data-id="' + esc(it.id) + '"><div class="wm-rel" style="background:' + col + '">' + (c > 0 ? '+' : '') + Math.round(c) + '%</div>' +
-        '<div class="wm-rt"><div class="t">' + esc(L(it.title_es, it.title_en).split(':')[0]) + '</div><div class="m">' +
+        '<div class="wm-rt"><div class="t">' + esc(L(it.title_es, it.title_en).split(':')[0]) + (it.data_caveat ? ' ⚠' : '') + '</div><div class="m">' +
         esc(L('≈ ' + it.transits_7d_avg + ' buques/día (antes ' + it.transits_base_avg + ') · datos al ', '≈ ' + it.transits_7d_avg + ' ships/day (was ' + it.transits_base_avg + ') · data as of ') + String(it.time || '').slice(0, 10)) + '</div></div></div>';
     });
     if (its.length > 5) h += '<button class="wm-mini" data-act="list" data-layer="shipping" style="margin-top:6px">' + esc(open ? L('ver menos', 'show less') : L('ver los ' + its.length, 'show all ' + its.length)) + '</button>';
@@ -775,6 +775,7 @@
       kv.push([L('Noticias 7d', 'News 7d'), it.news && it.news.count != null ? it.news.count + ' art.' + (it.news.tone != null ? ' · ' + L('tono', 'tone') + ' ' + it.news.tone : '') : L('sin datos aún', 'no data yet')]);
     }
     if (kv.length) h += '<div class="wm-kv">' + kv.map(function (x) { return '<div><div class="k">' + esc(x[0]) + '</div><div class="v">' + esc(x[1]) + '</div></div>'; }).join('') + '</div>';
+    if (it.layer === 'shipping' && it.data_caveat) h += '<div class="wm-meta" style="margin-top:8px;color:#FFB300">⚠ ' + esc(L('Cero buques registrados: puede ser un cierre real, buques con el transpondedor (AIS) apagado o un hueco en los datos del FMI. Confírmalo con noticias antes de decidir.', 'Zero ships recorded: it may be a real closure, ships with their (AIS) transponder off, or a gap in the IMF data. Confirm with news before deciding.')) + '</div>';
     if (it.layer === 'policy' && it.abstract) h += '<div class="wm-meta" style="margin-top:8px;color:#C7D0EA">' + esc(it.abstract) + '</div>';
     if (it.layer === 'policy' && (it.companies || []).length) h += '<div class="wm-meta" style="margin-top:6px">🏢 ' + esc(L('Nombra a: ', 'Names: ') + it.companies.map(function (c) { return c.label; }).join(', ')) + '</div>';
     if (it.layer === 'policy') h += '<div class="wm-meta" style="margin-top:6px;color:#7C87A3">' + esc(L('La importancia es una ESTIMACIÓN por palabras clave (Entity List, chips, IA…); lee el documento oficial antes de decidir.', 'Importance is a KEYWORD ESTIMATE (Entity List, chips, AI…); read the official document before deciding.')) + '</div>';

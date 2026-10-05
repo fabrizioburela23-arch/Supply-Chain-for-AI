@@ -92,3 +92,24 @@ def test_gdacs_404_es_cero_alertas_no_caida(monkeypatch):
     monkeypatch.setattr(W, '_http_get_json', lambda url, params=None, timeout=10: (None, 'http:404'))
     items, err = F.fetch_disasters('7d')
     assert items == [] and err is None
+
+
+def test_honestidad_con_datos_reales_de_produccion():
+    """Lo visto en producción (2026-10-05): Kerch con 0 buques no es '−100 % seguro', las licencias
+    generales de la OFAC no pesan como una sanción nueva y las sequías de 29 países no ocupan media pantalla."""
+    from datetime import timedelta
+    last = datetime(2026, 9, 27, tzinfo=timezone.utc)
+    rows = [{'date': (last - timedelta(days=i)).strftime('%Y-%m-%d'), 'portname': 'Kerch Strait',
+             'n_total': 0 if i < 7 else 12} for i in range(100)]
+    k = F.parse_portwatch(rows)[0]
+    assert k['data_caveat'] == 'no_ships_recorded' and k['severity'] == 70 and '0 buques' in k['title_es']
+    now = datetime(2026, 10, 1, tzinfo=timezone.utc).timestamp()
+    gl = {'results': [{'title': 'Publication of Venezuela Sanctions Regulations Web General Licenses 52, 53',
+                       'type': 'Rule', 'document_number': 'x1', 'publication_date': '2026-09-30',
+                       'agencies': [{'slug': 'foreign-assets-control-office'}]}]}
+    assert F.parse_fedreg(gl, now=now)[0]['severity'] < 50
+    big = {'features': [{'geometry': {'coordinates': [13.7, 48.7]}, 'properties': {
+        'eventtype': 'DR', 'eventid': 9, 'alertlevel': 'Orange', 'name': '',
+        'country': 'Austria, Belgium, Belarus, Switzerland, Germany, Spain', 'todate': '2026-10-05T05:57:07'}}]}
+    d = F.parse_gdacs(big)[0]
+    assert len(d['title_es']) < 90 and '6 países' in d['title_es'] and d['place'].endswith('+3')

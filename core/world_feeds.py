@@ -166,11 +166,17 @@ def parse_portwatch(rows, ref_affected=None):
         if avgb <= 0:
             continue
         chg = round((avg7 / avgb - 1) * 100, 1)
+        # 0 buques en la semana con un promedio previo > 0: puede ser cierre real, buques con el
+        # transpondedor AIS apagado o un hueco de datos — se dice así y no se marca como 100 seguro.
+        caveat = avg7 < 0.5 and avgb >= 1
         la = days[last]
         ts = datetime.strptime(last, '%Y-%m-%d').replace(tzinfo=timezone.utc).timestamp()
-        sev = shipping_severity(chg)
+        sev = min(70, shipping_severity(chg)) if caveat else shipping_severity(chg)
         arrow = '▼' if chg < 0 else '▲'
-        if abs(chg) < 1:
+        if caveat:
+            t_es = f"{st['es']}: 0 buques registrados en 7 días (antes ≈{avgb:.0f}/día)"
+            t_en = f"{st['en']}: 0 ships recorded in 7 days (was ≈{avgb:.0f}/day)"
+        elif abs(chg) < 1:
             t_es, t_en = f"{st['es']}: tránsito estable (7 d vs 90 d)", f"{st['en']}: steady traffic (7d vs 90d)"
         else:
             t_es = f"{st['es']}: {arrow} {abs(chg):.0f} % tránsitos (7 d vs 90 d)"
@@ -179,7 +185,7 @@ def parse_portwatch(rows, ref_affected=None):
             'id': 'shipping:' + st['key'].replace(' ', '_'), 'layer': 'shipping', 'ref_id': st['ref'],
             'lat': st['lat'], 'lon': st['lon'], 'place': name,
             'title': t_es, 'title_es': t_es, 'title_en': t_en,
-            'severity': sev, 'change_pct': chg, 'transits_7d_avg': round(avg7, 1), 'transits_base_avg': round(avgb, 1),
+            'severity': sev, 'change_pct': chg, 'data_caveat': 'no_ships_recorded' if caveat else None, 'transits_7d_avg': round(avg7, 1), 'transits_base_avg': round(avgb, 1),
             'last_day': {'date': last, 'total': _num(_ci(la, 'n_total')), 'tanker': _num(_ci(la, 'n_tanker')),
                          'container': _num(_ci(la, 'n_container')), 'dry_bulk': _num(_ci(la, 'n_dry_bulk'))},
             'affected': list((ref_affected or {}).get(st['ref']) or []),
@@ -237,6 +243,8 @@ _KW_CHIPS = re.compile(r'semiconductor|advanced computing|integrated circuit|art
                        r'supercomput|chip|lithograph|high[- ]bandwidth memory|\bHBM\b|data center|model weights', re.I)
 _KW_STRONG = re.compile(r'entity list|additions to the entity list|foreign direct product|'
                         r'export administration regulations|designation|blocking|sanctions regulations', re.I)
+_KW_ROUTINE = re.compile(r'general licen[cs]e|information collection|paperwork reduction|correcting amendment|'
+                         r'technical amendment|agency information|sunshine act|meeting', re.I)
 # países objetivo frecuentes (inglés → clave del catálogo de core/world)
 _TARGETS = [('china', 'China'), ('people s republic of china', 'China'), ('prc', 'China'), ('hong kong', 'China'),
             ('russia', 'Rusia'), ('russian federation', 'Rusia'), ('iran', 'Iran'), ('north korea', None),
@@ -318,6 +326,8 @@ def policy_severity(doc_type, text, n_companies, age_days):
     s = 30
     if _KW_STRONG.search(text or ''):
         s += 25
+    if _KW_ROUTINE.search(text or ''):
+        s -= 20                      # licencias generales, recolección de información, correcciones: rutina
     if _KW_CHIPS.search(text or ''):
         s += 20
     if str(doc_type or '').lower() == 'rule':
@@ -448,6 +458,10 @@ def parse_gdacs(payload):
         sev_txt = ((p.get('severitydata') or {}).get('severitytext') or '').strip()
         country = str(p.get('country') or '').strip()
         name = str(p.get('name') or p.get('eventname') or '').strip() or f'{tt[1]} · {country}'
+        ctys = [c.strip() for c in re.split(r',\s*', country) if c.strip()]
+        if len(ctys) > 3:      # sequías continentales: "Sequía en 29 países (Austria, Bélgica, …)"
+            name = f"{len(ctys)} países / countries ({', '.join(ctys[:3])}…)"
+            country = ', '.join(ctys[:3]) + f' +{len(ctys) - 3}'
         url = (p.get('url') or {}).get('report') if isinstance(p.get('url'), dict) else None
         items.append({
             'id': f"disasters:{et}{p.get('eventid')}", 'layer': 'disasters', 'lat': lat, 'lon': lon,
