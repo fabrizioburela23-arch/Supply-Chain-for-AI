@@ -627,6 +627,15 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
                                      'verified=false / confidence=0.3 when the curated text says the link is '
                                      'unverified or only possible.',
                              'relation_class': 'supply|fab|customer|ownership|invest|ppa|partner|coverage|competitor|other'}
+    # 2026-10-05: geopolítica EN VIVO de la empresa (World Monitor: reglas/sanciones que la nombran,
+    # rutas con caída, eventos cerca de su sede, riesgo país oficial). Solo caché: no bloquea.
+    if include_live:
+        try:
+            world = importlib.import_module('core.world')
+            out['geo_live'] = {'items': (world.entity_geo_risks([nid], wait=0) or {}).get(nid, []),
+                               'source': 'Khipus World Monitor (official + live layers, cached)'}
+        except Exception:  # noqa: BLE001
+            out['geo_live'] = {'items': [], 'source': 'world monitor unavailable'}
     out['as_of'] = _now_iso()
     out['sources'] = ['Khipus graph snapshot', 'nodes/private_valuations.js (verified)',
                       'live profile: ' + str((out.get('live_market') or {}).get('source') or 'n/a')]
