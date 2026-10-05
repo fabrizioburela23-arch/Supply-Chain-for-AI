@@ -9,6 +9,14 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (w) — REVISIÓN DEL WORLD MONITOR CON DATOS REALES (sw v229)
+
+- GDELT: relleno en SEGUNDO PLANO (`_backfill_loop`, hilo único, de a un lote, 24 h y luego 7 d;
+  WORLD_GDELT_BACKFILL=off en tests) — cada despliegue dejaba la capa en "2 h" durante horas.
+- La cinta de titulares ya no muestra los avisos de viaje (riesgo país permanente tapaba las noticias).
+- "Lo más relevante": el estrecho curado lleva el tráfico vivo en el título ("· ▼ 64 % buques") y se quita
+  la fila duplicada de `shipping` de ese estrecho.
+
 # SESIÓN 2026-10-05 (v) — "ABRE MI CUENTA" OFRECE BRÓKER + TUS CARTERAS (sw v228)
 
 - "abre mi cuenta / mi cuenta / mi portafolio" abría SIEMPRE el bróker (Alpaca: un solo ETF) y nunca las

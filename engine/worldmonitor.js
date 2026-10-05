@@ -432,7 +432,8 @@
       live.className = 'wm-live' + (anyOk || anyPend ? '' : ' off');
       live.textContent = anyOk ? L('EN VIVO', 'LIVE') : anyPend ? L('CONECTANDO', 'CONNECTING') : L('SIN FUENTES', 'NO FEEDS');
     }
-    var items = S.events ? S.events.items.filter(function (i) { return LIVE.indexOf(i.layer) >= 0 && S.vis[i.layer]; }) : [];
+    // la cinta es para NOTICIAS: los avisos de viaje (riesgo país permanente) no van aquí — tapaban los eventos
+    var items = S.events ? S.events.items.filter(function (i) { return LIVE.indexOf(i.layer) >= 0 && i.layer !== 'advisories' && S.vis[i.layer]; }) : [];
     items = items.slice().sort(function (a, b) { return (b.severity || 0) - (a.severity || 0); }).slice(0, 22);
     var h;
     if (!items.length) {

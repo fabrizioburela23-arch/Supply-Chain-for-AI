@@ -178,7 +178,60 @@ def refresh(now=None, max_new=MAX_PER_REFRESH):
                 break
         for st in [k for k in _STORE['batches'] if (_ts_of(k) or datetime.now(timezone.utc)).timestamp() < cut]:
             _STORE['batches'].pop(st, None)
-        return err if not _STORE['batches'] else None
+        res = err if not _STORE['batches'] else None
+    _start_backfill()
+    return res
+
+
+# ── relleno en SEGUNDO PLANO (2026-10-05): cada despliegue reinicia la memoria y la capa quedaba con
+# "2 h" de historia durante horas. Un hilo baja, de a uno y sin bloquear, los lotes que faltan:
+# primero las últimas 24 h (~96 lotes, unos minutos) y luego hasta 7 días.
+_BF = {'thread': None}
+BACKFILL_PAUSE = 0.4
+
+
+def _backfill_on():
+    return os.environ.get('WORLD_GDELT_BACKFILL', 'on').lower() not in ('off', '0', 'no')
+
+
+def _start_backfill():
+    if not _backfill_on() or (_BF['thread'] and _BF['thread'].is_alive()):
+        return
+    _BF['thread'] = threading.Thread(target=_backfill_loop, name='gdelt-backfill', daemon=True)
+    _BF['thread'].start()
+
+
+def _next_missing(horizon_s):
+    latest = _ts_of(_STORE['latest'] or '')
+    if not latest:
+        return None
+    t, cut = latest, time.time() - horizon_s
+    while t.timestamp() >= cut:
+        st = t.strftime('%Y%m%d%H%M%S')
+        if st not in _STORE['batches']:
+            return st
+        t -= STEP
+    return None
+
+
+def _backfill_loop():
+    fails = 0
+    for horizon in (86400, KEEP_S):
+        while fails < 10:
+            with _LOCK:
+                st = _next_missing(horizon)
+            if not st:
+                break
+            try:
+                evs = _fetch_batch(st)
+                with _LOCK:
+                    _STORE['batches'][st] = evs
+                fails = 0
+                time.sleep(BACKFILL_PAUSE)
+            except Exception as e:  # noqa: BLE001
+                fails += 1
+                log.info('gdelt_events: relleno %s falló (%s); reintento', st, e)
+                time.sleep(20)
 
 
 def coverage(window_s, now=None):

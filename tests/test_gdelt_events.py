@@ -97,3 +97,17 @@ def test_fuente_caida_dice_por_que(monkeypatch):
     out = W.world_events(layers=['unrest'], window='24h', wait=5)
     s = out['sources']['unrest']
     assert s['ok'] is False and s['error_code'] in ('http_503', 'source_unavailable')
+
+
+def test_relleno_en_segundo_plano_completa_24h(monkeypatch):
+    """Tras cada despliegue la capa quedaba con '2 h' de historia: el relleno baja el resto sin bloquear."""
+    monkeypatch.setenv('WORLD_GDELT_BACKFILL', 'on')
+    monkeypatch.setattr(GE, '_get', _fake_get)
+    monkeypatch.setattr(GE, 'BACKFILL_PAUSE', 0)
+    now = datetime(2026, 10, 5, 16, 5, tzinfo=timezone.utc).timestamp()
+    monkeypatch.setattr(GE.time, 'time', lambda: now)
+    monkeypatch.setattr(GE.time, 'sleep', lambda s: None)
+    assert GE.refresh() is None
+    GE._BF['thread'].join(10)
+    have, want = GE.coverage(86400, now=now)
+    assert have == want == 24.0

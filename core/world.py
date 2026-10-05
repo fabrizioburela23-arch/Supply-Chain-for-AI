@@ -1206,6 +1206,12 @@ def _blend_live_chokepoint(item):
     if not live:
         return item
     item['live_shipping'] = {k: live.get(k) for k in ('change_pct', 'transits_7d_avg', 'transits_base_avg', 'time', 'data_caveat')}
+    chg = live.get('change_pct')
+    if chg is not None and abs(chg) >= 10 and not live.get('data_caveat'):     # el dato vivo en el título
+        arrow = '▼' if chg < 0 else '▲'
+        item['title_es'] = f"{item.get('title_es') or item.get('title')} · {arrow} {abs(chg):.0f} % buques"
+        item['title_en'] = f"{item.get('title_en') or item.get('title')} · {arrow} {abs(chg):.0f}% ships"
+        item['title'] = item['title_es']
     if (live.get('severity') or 0) > (item['severity'] or 0):
         item['severity'] = live['severity']
         item['live_driven'] = True
@@ -1831,7 +1837,10 @@ def brief(window='24h', n=10, wait=DEFAULT_WAIT):
         out['items'] = compose_brief(hit['ranked'], n)
         return out
     ev = world_events(window=window, wait=wait)
-    cands = sorted(ev['items'], key=lambda i: (-(i.get('severity') or 0), i['id']))[:150]
+    # sin duplicados: si el estrecho curado ya lleva el tráfico vivo, la fila de "shipping" de ese estrecho sobra
+    merged = {i.get('ref_id') for i in ev['items'] if i.get('layer') == 'chokepoints' and i.get('live_shipping')}
+    pool = [i for i in ev['items'] if not (i.get('layer') == 'shipping' and i.get('ref_id') in merged)]
+    cands = sorted(pool, key=lambda i: (-(i.get('severity') or 0), i['id']))[:150]
     ranked = []
     for it in cands:
         # VISTA PREVIA (limit 5): el detalle del cliente pide /api/world/exposure completo
