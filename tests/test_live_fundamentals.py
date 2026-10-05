@@ -44,3 +44,16 @@ def test_nrs_del_servidor_usa_el_margen_real(monkeypatch):
     LF._STATE['data']['Nvidia'] = {'operating_margin': 61.2, 'ts': 1.0}
     con = client_nrs(node, 0)
     assert sin == 8 + 0 + 20 + 0 + 4 and con == 8 + 0 + 0 + 0 + 4
+
+
+def test_tras_un_redeploy_la_tanda_se_triplica_hasta_cubrir_todo(monkeypatch):
+    # un redeploy borra la memoria: con tandas de 40 cada 5 min tardaba ~1 h en volver a cubrir 568 empresas
+    uni = {f'N{i}': f'T{i}' for i in range(LF.BATCH * LF.CATCHUP + 10)}
+    monkeypatch.setattr(LF, '_universe', lambda: uni)
+    prof = lambda s: {'available': True, 'operating_margin': 10.0}  # noqa: E731
+    r = LF.refresh(profile_fn=prof, now=1000.0)
+    assert r['batch'] == LF.BATCH * LF.CATCHUP and r['ok'] == LF.BATCH * LF.CATCHUP
+    r = LF.refresh(profile_fn=prof, now=1001.0)                    # quedan 10 nunca pedidas → sigue en modo rápido
+    assert r['ok'] == 10
+    r = LF.refresh(profile_fn=prof, now=1002.0)                    # ya están todas → tanda normal
+    assert r['batch'] == LF.BATCH

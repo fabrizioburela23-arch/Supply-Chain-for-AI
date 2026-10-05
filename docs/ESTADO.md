@@ -11,6 +11,9 @@ está conectado).
 
 # SESIÓN 2026-10-05 (dd) — "RENDIMIENTO DE MI CARTERA" COMO GRÁFICO SIN IA (sw v238)
 
+- core/live_fundamentals: tras un redeploy (memoria vacía) la tanda es 3× (CATCHUP) mientras haya empresas
+  nunca pedidas → las 568 en ~25 min en vez de ~1 h. Producción: 38/40 con dato por tanda.
+
 - engine/localcharts.js: `RE.perf` (rendimiento/ganancia/pérdida/retorno/cómo va/performance) + cartera →
   `P.pfPerf` → intención 'trend' → `buildPortfolioPerfAsync`: Σ acciones × cierre REAL de cada día
   (/api/candles; cada posición arrastra su último cierre si su bolsa no abrió) + efectivo; subtítulo con el %

@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 log = logging.getLogger(__name__)
 
 BATCH = 40                 # empresas por tanda (≈ 1 tanda cada 5 min → todo el grafo en ~1 h)
+CATCHUP = 3                # mientras falten empresas NUNCA pedidas (p. ej. tras un redeploy, que borra la
+                           # memoria) la tanda es 3× → todo el grafo en ~25 min en vez de ~1 h
 MAX_AGE_S = 24 * 3600      # refresco mínimo diario
 FIELDS = ('operating_margin', 'profit_margin', 'gross_margin', 'revenue_ttm_usd_b', 'revenue_growth_q',
           'revenue_growth', 'employees', 'pe_trailing', 'pe_forward')
@@ -42,8 +44,9 @@ def _pick(ids, now, n=BATCH):
     return (missing + old)[:n]
 
 
-def refresh(profile_fn=None, now=None, n=BATCH):
-    """Una tanda (bloqueante; el reloj del servidor la llama). Devuelve un resumen."""
+def refresh(profile_fn=None, now=None, n=None):
+    """Una tanda (bloqueante; el reloj del servidor la llama). Devuelve un resumen.
+    Sin `n`: BATCH, o BATCH×CATCHUP mientras haya empresas nunca pedidas."""
     from core.company_data import get_live_profile
     profile_fn = profile_fn or get_live_profile
     now = now or time.time()
@@ -54,6 +57,10 @@ def refresh(profile_fn=None, now=None, n=BATCH):
     ok = fail = 0
     try:
         ids = _universe()
+        if n is None:
+            with _LOCK:
+                never = any(i not in _STATE['data'] for i in ids)
+            n = BATCH * CATCHUP if never else BATCH
         for nid in _pick(list(ids), now, n):
             sym = ids[nid]
             try:
@@ -75,7 +82,7 @@ def refresh(profile_fn=None, now=None, n=BATCH):
                 _STATE['data'][nid] = rec
         with _LOCK:
             _STATE.update(last_run=datetime.now(timezone.utc).isoformat(), last_error=None, runs=_STATE['runs'] + 1)
-        return {'ok': ok, 'no_data': fail, 'have': len([1 for v in _STATE['data'].values() if not v.get('missing')]),
+        return {'ok': ok, 'no_data': fail, 'batch': n, 'have': len([1 for v in _STATE['data'].values() if not v.get('missing')]),
                 'universe': len(ids)}
     except Exception as e:  # noqa: BLE001
         log.warning('live_fundamentals: %s', e)
