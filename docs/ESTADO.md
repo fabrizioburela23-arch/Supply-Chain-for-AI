@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (z) — SIMULACIÓN CON CONTEXTO EN VIVO + RÓTULOS DE ORIGEN (sw v233)
+
+- sim/scenario_builder.js: `buildGeopoliticalContext()` ahora es async y EN VIVO (/api/world/brief 7d,
+  /api/world/gpr, /api/world/policy) + un "fondo estructural" rotulado como tal; `buildSocialContext` ya no
+  inventa narrativas (solo tono GDELT real, o dice que no hay datos). Presets: OpenAI sin "$250B" (usa la
+  valuación verificada), Starshield sin "$500B" (SPCX + capitalización en vivo) vía `_sbValuation()`.
+- Pies de página: Mercado ya no dice "EOD de Marketstack" (es Finnhub/Yahoo en vivo); disclaimer explica
+  ● en vivo vs «catálogo». Comparador: Mkt cap con origen (● vivo / ✓ verificada / catálogo), margen
+  rotulado "catálogo". OpenAI: rol sin "IPO ~sept 2026" (snapshot regenerado).
+- Test: tests/test_scenario_live.py.
+
 # SESIÓN 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)
 
 - NRS: término de margen acotado a [0,20] también en el CLIENTE (OpenAI daba 100, ahora 67) y países

@@ -73,7 +73,13 @@
   function capTxt(m) {
     var v = m.mktcap;
     if (v == null) return m.listed ? '—' : L('Priv.', 'Priv.');
-    return v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + v + 'B';
+    var t = v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + v + 'B';
+    // de dónde sale el número (2026-10-05): en vivo · valuación verificada · catálogo
+    var me = m.meta || {};
+    var tag = me.mktcap_live ? ' <b style="color:#2BE38B;font-size:9px">● ' + L('vivo', 'live') + '</b>'
+      : me.mktcap_verified ? ' <span style="color:#7ecbff;font-size:9px">✓ ' + esc(me.mktcap_verified.as_of || '') + '</span>'
+      : ' <span style="color:#7C87A3;font-size:9px">' + L('catálogo', 'catalog') + '</span>';
+    return t + tag;
   }
 
   // fila comparativa: lowerBetter=true si menor valor = mejor (ej. riesgo)
@@ -125,7 +131,7 @@
                     pill(B) + (window.sectorName ? window.sectorName(mb.n.cat, true) : ''), null) +
       row(L('País', 'Country'), ma.country, mb.country, null) +
       row(L('Riesgo NRS', 'NRS risk'), ma.nrs, mb.nrs, function (v) { return v + '/100'; }, true) +
-      row(L('Margen', 'Margin'), ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false) +
+      row(L('Margen · catálogo', 'Margin · catalog'), ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false) +
       row('Mkt cap', ma.mktcap, mb.mktcap, null, false, [capTxt(ma), capTxt(mb)]) +
       row(L('Conexiones', 'Links'), ma.deg, mb.deg, null, false) +
       nrsRows +

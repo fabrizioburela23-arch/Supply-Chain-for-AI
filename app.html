@@ -1883,7 +1883,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       </div>
       <div id="mk-events-panel" style="display:none;margin-bottom:12px;background:rgba(8,15,28,.6);border:1px solid rgba(60,100,160,.25);border-radius:8px;padding:12px 16px;font-size:11px;line-height:1.5"></div>
       <div class="mkt-tablewrap"><table class="mkt-table" id="mk-table"></table></div>
-      <p class="mkt-foot" data-i18n="mk_foot">Precios fin-de-día (EOD) de Marketstack v2 en una sola llamada por actualización. Empresas sin listado en EE.UU. (privadas o solo bolsa local) aparecen sin cotización.</p>
+      <p class="mkt-foot" data-i18n="mk_foot">Precios EN VIVO (Finnhub y Yahoo, todas las bolsas; el punto verde dice la fuente y la hora). Marketstack solo como respaldo de cierre. Las empresas privadas no cotizan: muestran su última valuación verificada (✓ fecha).</p>
 
       <!-- GDELT Global News -->
       <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -2026,7 +2026,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 </section>
 
   <footer>
-    <span class="disc">Análisis informativo basado en datos públicos y estimaciones (jun. 2026). No constituye asesoría financiera.</span>
+    <span class="disc">Análisis informativo: precios y fundamentales en vivo donde dice ● / «en vivo»; lo rotulado «catálogo» son estimaciones curadas (revisión jun. 2026). No constituye asesoría financiera.</span>
     <div class="data-health" id="data-health"></div>
     <span class="mono" id="footer-nodecount" style="white-space:nowrap">Khipus Finance AI · … nodos · NRS · Khipu AI</span>
   </footer>
@@ -4223,12 +4223,12 @@ es: {
   em_p2:'El anillo dorado/azul marca la cartera. El anillo <strong>morado punteado</strong> marca empresas <strong>privadas o pre-IPO</strong> que aún no cotizan.',
   em_p3:'<strong>💥 Stress-Test:</strong> Alt+Clic sobre cualquier empresa (o el botón rojo de su ficha) simula su colapso y el efecto dominó aguas abajo.',
   em_start:'Empieza por los nodos centrales',
-  disc:'Análisis informativo basado en datos públicos y estimaciones (jun. 2026). Toda métrica de rentabilidad es margen sobre ventas. No constituye asesoría financiera.',
+  disc:'Análisis informativo: precios y fundamentales en vivo donde dice ● / «en vivo»; lo rotulado «catálogo» son estimaciones curadas (revisión jun. 2026). Toda métrica de rentabilidad es margen sobre ventas. No constituye asesoría financiera.',
   mk_value:'Valor de posiciones', mk_pnl:'P&L total', mk_day:'Variación del día', mk_status:'Datos',
   mk_fpos:'Posiciones', mk_fall:'Todas', mk_refresh:'Actualizar precios', mk_risk:'Reporte de riesgo', mk_key:'API key',
   mk_save:'Guardar', mk_clear:'Borrar',
   mk_keyhint:'Se guarda solo en este navegador (localStorage), nunca en el archivo.',
-  mk_foot:'Precios fin-de-día (EOD) de Marketstack v2 en una sola llamada por actualización. Empresas sin listado en EE.UU. (privadas o solo bolsa local) aparecen sin cotización.',
+  mk_foot:'Precios EN VIVO (Finnhub y Yahoo, todas las bolsas; el punto verde dice la fuente y la hora). Marketstack solo como respaldo de cierre. Las empresas privadas no cotizan: muestran su última valuación verificada (✓ fecha).',
   mk_nokey:'Sin API key', mk_keysaved:'Key guardada', mk_updated:'Actualizado', mk_never:'Sin datos aún',
   mk_loading:'Consultando…', mk_err:'Error', mk_cached:'caché local',
   th_co:'Empresa', th_price:'Precio', th_chg:'Día %', th_sh:'Acciones', th_bp:'P. compra', th_val:'Valor', th_pnl:'P&L %', th_act:'',
@@ -4291,12 +4291,12 @@ en: {
   em_p2:'The gold/blue ring marks the portfolio. The dashed <strong>purple ring</strong> marks <strong>private or pre-IPO</strong> companies.',
   em_p3:'<strong>💥 Stress-Test:</strong> Alt+Click any company (or the red button on its card) to simulate its collapse and the downstream domino effect.',
   em_start:'Start with the central nodes',
-  disc:'Informational analysis based on public data and estimates (Jun 2026). All profitability metrics are margin on sales. Not financial advice.',
+  disc:'Informational analysis: live prices and fundamentals where marked ● / «live»; items labelled «catalog» are curated estimates (Jun 2026 review). All profitability metrics are margin on sales. Not financial advice.',
   mk_value:'Positions value', mk_pnl:'Total P&L', mk_day:'Day change', mk_status:'Data',
   mk_fpos:'Positions', mk_fall:'All', mk_refresh:'Refresh prices', mk_risk:'Risk report', mk_key:'API key',
   mk_save:'Save', mk_clear:'Clear',
   mk_keyhint:'Stored only in this browser (localStorage), never inside the file.',
-  mk_foot:'End-of-day (EOD) prices from Marketstack v2 in a single call per refresh. Companies without a US listing (private or local-exchange only) show no quote.',
+  mk_foot:'LIVE prices (Finnhub and Yahoo, all exchanges; the green dot shows the source and time). Marketstack only as an end-of-day fallback. Private companies do not trade: they show their last verified valuation (✓ date).',
   mk_nokey:'No API key', mk_keysaved:'Key saved', mk_updated:'Updated', mk_never:'No data yet',
   mk_loading:'Fetching…', mk_err:'Error', mk_cached:'local cache',
   th_co:'Company', th_price:'Price', th_chg:'Day %', th_sh:'Shares', th_bp:'Buy price', th_val:'Value', th_pnl:'P&L %', th_act:'',
