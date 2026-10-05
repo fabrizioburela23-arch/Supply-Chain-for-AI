@@ -94,6 +94,10 @@
       srcLinks: 'Fuente: vínculos del grafo de suministro', srcPx: 'Fuente: precios de mercado en vivo',
       srcFund: 'Fuente: estados financieros anuales ({s})', srcCry: 'Fuente: mercado cripto en vivo',
       srcPort: 'Fuente: tu cartera (este navegador) · precios en vivo',
+      pfPerfT: 'Rendimiento de {l}, {p}', pfPerfS: '{a} en el periodo · {d0} → {d1}',
+      pfPerfPL: 'hoy vs lo que pagaste: {v} ({p})', pfPerfNoPx: 'Sin historial de precio (no cotizan o sin datos): {l}',
+      pfPerfCash: 'Incluye efectivo: {v}', pfPerfSrc: 'Fuente: tus posiciones × precios de cierre reales (velas de mercado)',
+      pfPerfNone: 'Ninguna posición de esta cartera tiene historial de precio.',
       noAiT: 'No puedo responder esto con precisión sin IA',
       noAiPartial: 'Lo más cercano que sí puedo mostrar con datos reales:',
       noAiNone: 'No hay una respuesta parcial confiable con los datos locales.',
@@ -144,6 +148,10 @@
       srcLinks: 'Source: supply-graph links', srcPx: 'Source: live market prices',
       srcFund: 'Source: annual financial statements ({s})', srcCry: 'Source: live crypto market',
       srcPort: 'Source: your portfolio (this browser) · live prices',
+      pfPerfT: 'Performance of {l}, {p}', pfPerfS: '{a} over the period · {d0} → {d1}',
+      pfPerfPL: 'today vs what you paid: {v} ({p})', pfPerfNoPx: 'No price history (unlisted or no data): {l}',
+      pfPerfCash: 'Includes cash: {v}', pfPerfSrc: 'Source: your positions × real closing prices (market candles)',
+      pfPerfNone: 'None of this portfolio\'s positions has price history.',
       noAiT: 'I can\'t answer this precisely without AI',
       noAiPartial: 'The closest thing I can show with real data:',
       noAiNone: 'There is no reliable partial answer with local data.',
@@ -305,6 +313,8 @@
     asc: /\bmenor(?:es)?\b|\bmenos\b|lowest|smallest|\bleast\b|mas segur\w*|safest|mas recientes|mas jovenes|newest|\bpeor(?:es)? margen|\bbottom\b/,
     today: /\bhoy\b|\btoday\b|\bahora\b|\bnow\b|\bactual\b|\bcurrent\b|en este momento|right now|cuanto vale|how much is/,
     portfolio: /\bcartera\b|portafolio|portfolio|mis posiciones|my positions|mis acciones|my holdings/,
+    // rendimiento de MI cartera (2026-10-05): antes "rendimiento" era palabra desconocida → IA
+    perf: /rendimiento\w*|\bperformance\b|rentabilidad|\bganancias?\b|\bperdidas?\b|\bgains?\b|\blosses\b|\bpnl\b|\bp ?l\b|\bretornos?\b|\breturns?\b|\bcomo (?:le )?(?:va|fue|ha ido)\b|\bhow (?:is|has) (?:my )?(?:portfolio )?(?:doing|done|performed)\b|\bgano\b|\bperdio\b|\bganado\b|\bperdido\b|\bgained\b|\blost\b/,
     crypto: /\bcriptos?\b|\bcryptos?\b|criptomonedas?|cryptocurrenc\w*|\bbitcoin\b|\bbtc\b|\bethereum\b/,
     bySector: /por sector(?:es)?|by sectors?|per sector|\bsectores\b|\bsectors\b|por categorias?|by categor\w*|\bcategorias\b|categories/,
     byCountry: /por pais(?:es)?|by countr\w*|per country|\bpaises\b|\bcountries\b|por region(?:es)?|by region/,
@@ -422,6 +432,12 @@
 
     P.explain = RE.explain.test(t);
     P.portfolio = RE.portfolio.test(t);
+    // "¿cuánto ganó mi cartera?" / "rendimiento de mi cartera 3 meses" → gráfico de valor en el tiempo
+    P.pfPerf = P.portfolio && (RE.perf.test(t) || RE.trend.test(t));
+    if (P.pfPerf) {
+      if (!/\bpor ?que\b|\bwhy\b|deberia|should|conviene|recomienda\w*|recommend\w*|predic\w*|pronostic\w*|forecast\w*|va a |\bwill\b|escenario|scenario|simula\w*|que pasaria|what if/.test(t)) P.explain = false;
+      eat(RE.perf);
+    }
     P.crypto = RE.crypto.test(t);
     P.today = RE.today.test(t);
     P.asc = RE.asc.test(t);
@@ -520,6 +536,7 @@
   function deriveIntent(P, t) {
     var nE = P.entities.length, ms = P.metrics;
     if (P.explain) return 'explain';
+    if (P.pfPerf && !nE) return 'trend';
     if (P.commodity && !nE) return 'trend';
     if (P.crypto) {
       // una moneda concreta con tiempo o "precio" → su historial; lo demás → ranking
@@ -559,7 +576,7 @@
     if (P.intent === 'trend') {
       var noHist = P.metrics.filter(function (k) { return /^(nrs|mktcap|employees|founded|suppliers|customers)$/.test(k); });
       if (noHist.length) hit(0.25, 'no_history');
-      if (!P.entities.length && !P.crypto && !P.commodity) hit(0.3, 'missing_entities');
+      if (!P.entities.length && !P.crypto && !P.commodity && !P.pfPerf) hit(0.3, 'missing_entities');
       if (P.entities.length > 4) hit(0.5, 'too_many');
     }
     if (P.intent === 'single_metric' || P.intent === 'profile' || P.intent === 'compare') {
@@ -970,9 +987,8 @@
     var rows = keys.map(function (k) {
       var n = byId(k) || nodes().find(function (x) { return x.mkt === k; });
       var tk = (n && n.mkt) || k;
-      var q = ((window.MKT || {}).quotes || {})[tk] || {};
       var qty = typeof pos[k] === 'object' ? (pos[k].sh || pos[k].qty || pos[k].shares || 0) : pos[k];
-      return { label: (n && n.label) || k, tk: tk, qty: Number(qty) || 0, px: q.close != null ? Number(q.close) : null };
+      return { label: (n && n.label) || k, tk: tk, qty: Number(qty) || 0, px: _livePx(tk) };
     });
     var priced = rows.filter(function (r) { return r.px != null && r.qty > 0; });
     if (priced.length >= 2 && priced.length === rows.length) {
@@ -1212,7 +1228,93 @@
         { series_labels: [name], labels: (d.t || []).map(_d), unit: /^\^/.test(c.sym) ? '' : '$' }, TT('srcPx'));
     });
   }
+  // ── rendimiento de MI cartera: Σ acciones × cierre real de cada día (+ efectivo) ──
+  // Fuente de posiciones = la cartera elegida en el chip del chat (kh_chat_pf_src) o, si
+  // no hay, Mercado → Mi cartera / la primera cartera simulada con posiciones. El bróker
+  // (PIN) no se usa aquí: un gráfico no debe pedir el PIN.
+  function pfSourceKey() {
+    var srcs = [];
+    try { srcs = (window.KhipuPortfolioCommittee && window.KhipuPortfolioCommittee._sources()) || []; } catch (e) { srcs = []; }
+    var k = null; try { k = localStorage.getItem('kh_chat_pf_src'); } catch (e) {}
+    var ok = srcs.filter(function (x) { return x.key !== 'broker'; });
+    var hit = ok.filter(function (x) { return x.key === k; })[0] ||
+              ok.filter(function (x) { return !/· (vacía|empty)$/.test(x.label); })[0];
+    return hit || null;
+  }
+  function pfPositions() {
+    var src = pfSourceKey(), C = window.KhipuPortfolioCommittee;
+    if (src && C && C._positionsFor) {
+      return C._positionsFor(src.key).then(function (r) {
+        r = r || {}; r.label = r.label || String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, ''); return r;
+      });
+    }
+    var mp = (window.MKT || {}).pos || {};
+    return Promise.resolve({ positions: Object.keys(mp).map(function (id) {
+      var p = mp[id], n = byId(id), sh = typeof p === 'object' ? (p.sh || p.shares || 0) : p;
+      return { id: id, symbol: n && n.mkt, label: n ? n.label : id, shares: Number(sh) || 0, cost_usd: (Number(sh) || 0) * (p.bp || 0) };
+    }), cash: 0 });
+  }
+  function _livePx(sym) {
+    var q = ((window.MKT || {}).quotes || {})[sym];
+    if (!q) return null;
+    var v = typeof window.quotePx === 'function' ? window.quotePx(q) : q.close;
+    return v > 0 ? Number(v) : null;
+  }
+  function _money(v) { var a = Math.abs(v); return (v < 0 ? '−$' : '$') + (a >= 1e6 ? (a / 1e6).toFixed(2) + 'M' : Math.round(a).toLocaleString(L() === 'en' ? 'en-US' : 'es-ES')); }
+  function buildPortfolioPerfAsync(P) {
+    var days = P.timeframe ? P.timeframe.days : 182, range = _rangeFor(days);
+    return pfPositions().then(function (pf) {
+      var pos = ((pf && pf.positions) || []).filter(function (p) { return p.shares > 0; });
+      if (!pos.length) {
+        return spec('notice', TT('portT'), '', [], { message: TT('portEmpty') + ' ' + TT('portEmptyHint'), tone: 'info' }, TT('srcPort'));
+      }
+      var withSym = pos.filter(function (p) { return p.symbol; });
+      return Promise.all(withSym.map(function (p) { return _getCandles(p.symbol, range); })).then(function (all) {
+        var used = [], missing = pos.filter(function (p) { return !p.symbol; }).map(function (p) { return p.label; });
+        all.forEach(function (c, i) {
+          if (c && c.s === 'ok' && c.c && c.t && c.c.length >= 2) used.push({ p: withSym[i], c: c });
+          else missing.push(withSym[i].label);
+        });
+        if (!used.length) return spec('notice', TT('portT'), '', [], { message: TT('pfPerfNone') + ' ' + TT('pfPerfNoPx', { l: missing.join(', ') }), tone: 'info' }, TT('pfPerfSrc'));
+        // fechas unidas por día; cada posición arrastra su último cierre (bolsas con feriados distintos)
+        var dayKey = function (ts) { return Math.floor(ts / 86400); };
+        var daysSet = {};
+        used.forEach(function (u) { u.c.t.forEach(function (ts) { daysSet[dayKey(ts)] = ts; }); });
+        var keys = Object.keys(daysSet).map(Number).sort(function (a, b) { return a - b; });
+        var maps = used.map(function (u) { var m = {}; u.c.t.forEach(function (ts, j) { if (u.c.c[j] != null) m[dayKey(ts)] = u.c.c[j]; }); return m; });
+        var last = used.map(function () { return null; }), cash = Number(pf.cash) || 0;
+        var labels = [], vals = [];
+        keys.forEach(function (k) {
+          maps.forEach(function (m, i) { if (m[k] != null) last[i] = m[k]; });
+          if (last.some(function (v) { return v == null; })) return;   // empieza cuando TODAS tienen precio
+          var v = cash; used.forEach(function (u, i) { v += u.p.shares * last[i]; });
+          labels.push(_d(daysSet[k])); vals.push(Math.round(v * 100) / 100);
+        });
+        if (vals.length < 2) return null;
+        var up = vals[vals.length - 1] >= vals[0], pct = ((vals[vals.length - 1] / vals[0] - 1) * 100).toFixed(1);
+        var sub = TT('pfPerfS', { a: (up ? '▲ +' : '▼ ') + pct + '%', d0: labels[0], d1: labels[labels.length - 1] });
+        // hoy vs costo: precio EN VIVO si lo hay; si no, el último cierre
+        var nowV = 0, cost = 0, allCost = true;
+        used.forEach(function (u, i) {
+          nowV += u.p.shares * (_livePx(u.p.symbol) || last[i]);
+          if (u.p.cost_usd > 0) cost += u.p.cost_usd; else allCost = false;
+        });
+        if (allCost && cost > 0) {
+          var pl = nowV - cost;
+          sub += ' · ' + TT('pfPerfPL', { v: (pl >= 0 ? '+' : '') + _money(pl), p: (pl >= 0 ? '+' : '') + (pl / cost * 100).toFixed(1) + '%' });
+        }
+        var notes = [];
+        if (missing.length) notes.push(TT('pfPerfNoPx', { l: missing.join(', ') }));
+        if (cash > 0) notes.push(TT('pfPerfCash', { v: _money(cash) }));
+        var name = pf.label || TT('portT');
+        return spec('line', TT('pfPerfT', { l: name, p: periodLabel(days) }), sub,
+          [{ label: name, values: vals, color: up ? GRN : RED }],
+          { series_labels: [name], labels: labels, unit: '$' }, TT('pfPerfSrc'), notes.join(' · ') || undefined);
+      });
+    });
+  }
   function buildAsync(P) {
+    if (P.pfPerf && !P.entities.length) return buildPortfolioPerfAsync(P);
     if (P.commodity && !P.entities.length) return buildCommodityAsync(P);
     // una cripto concreta + tiempo/precio → su historial (antes caía al ranking "Top 10 cripto")
     if (P.crypto && (cryptoCoinIn(P.text) || cryptoCoinIn(P.query)) && (P.intent === 'trend' || P.timeframe || P.metrics.indexOf('price') >= 0 || P.intent === 'single_metric')) {

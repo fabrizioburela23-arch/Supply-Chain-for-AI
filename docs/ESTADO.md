@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (dd) — "RENDIMIENTO DE MI CARTERA" COMO GRÁFICO SIN IA (sw v238)
+
+- engine/localcharts.js: `RE.perf` (rendimiento/ganancia/pérdida/retorno/cómo va/performance) + cartera →
+  `P.pfPerf` → intención 'trend' → `buildPortfolioPerfAsync`: Σ acciones × cierre REAL de cada día
+  (/api/candles; cada posición arrastra su último cierre si su bolsa no abrió) + efectivo; subtítulo con el %
+  del periodo y "hoy vs lo que pagaste" (precio EN VIVO con quotePx, si no el último cierre). Cartera = la del
+  chip del chat (kh_chat_pf_src, vía KhipuPortfolioCommittee._positionsFor) o Mercado → Mi cartera; NUNCA el
+  bróker (pediría PIN). Posiciones sin cotización se nombran en la nota. "¿Por qué perdió…?" sigue a la IA.
+  El reparto de "mi cartera" usa quotePx (antes q.close).
+- Test: tests/test_localcharts_intents.py (+ tests/js/localcharts_pfperf.js).
+
 # SESIÓN 2026-10-05 (cc) — GRÁFICOS: DATOS EN VIVO + MÁS PREGUNTAS SIN IA (sw v237)
 
 - engine/localcharts.js: ingresos = revenue_ttm_usd_b en vivo (KhipuLiveFund) antes que revenue_2025;
