@@ -493,6 +493,11 @@ try:
         _sched.register('world_prewarm', _world.prewarm, every_s=600, run_at_start=True)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: world_prewarm no registrado (%s)', type(_e).__name__)
+    try:   # 2026-10-05: fundamentales EN VIVO de todas las cotizadas, por tandas (margen, crecimiento, ingresos…)
+        from core import live_fundamentals as _lf
+        _sched.register('live_fundamentals', _lf.refresh, every_s=300, run_at_start=True)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: live_fundamentals no registrado (%s)', type(_e).__name__)
     try:   # O1: humo 5 min tras cada arranque (= tras cada deploy) y luego 1×/día, guardado en ops_checks
         from core.ops_check import scheduled as _ops_scheduled, FIRST_AFTER_BOOT_S as _OPS_FIRST
         _sched.register('ops_daily_check', _ops_scheduled, every_s=_OPS_FIRST, run_at_start=False)
@@ -3528,6 +3533,15 @@ def market_live_caps():
     el catálogo estático (NODE_META.mktcap_b). Pedido: "que todo esté en vivo"."""
     from core.live_caps import get_caps
     return jsonify(get_caps())
+
+
+@app.route('/api/market/live_fundamentals')
+@rate_limit(limit=60, window=300)
+def market_live_fundamentals():
+    """Fundamentales EN VIVO (margen, crecimiento, ingresos 12 m, empleados) de todas las cotizadas,
+    refrescados por tandas en segundo plano (core/live_fundamentals). El cliente los aplica a todo el catálogo."""
+    from core.live_fundamentals import get_all
+    return jsonify(get_all())
 
 
 @app.route('/api/company/live/<ticker>')

@@ -235,7 +235,7 @@
         kv('<span data-live-label="revenue">' + esc(T('revenue')) + '</span>', '<span data-live="revenue">' + esc(m.revenue_2025 || '—') + '</span>') +
         kv(esc(T('mktcap')), m.mktcap_b ? '$' + esc(String(m.mktcap_b)) + 'B' + (window.liveCapDot ? window.liveCapDot(m) : '') : (n.preipo ? T('preipo') : '—')) +
         kv(esc(T('margin')), '<span data-live="margin">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</span>' +
-           ' <span data-live-sub="margin" style="font-size:9px;color:#7C87A3">' + esc(L() === 'en' ? 'catalog' : 'catálogo') + '</span>') +
+           ' <span data-live-sub="margin" style="font-size:9px;color:#7C87A3">' + esc(n.margin_live ? (L() === 'en' ? 'live' : 'en vivo') : (L() === 'en' ? 'catalog' : 'catálogo')) + '</span>') +
         kv(esc(T('nrsRisk')) + nrsChip,
            '<b style="color:' + nrsCol + '">' + fmt(nrs) + '</b>/100') +
         kv(esc(T('links')), cadena.up.length + ' ' + esc(T('prov')) + ' · ' + cadena.down.length + ' ' + esc(T('clients'))) +

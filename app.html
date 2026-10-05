@@ -3585,7 +3585,7 @@ function renderDetail(id){
       <div class="fin-card">
         <div class="fl">${t('d_margin')}</div>
         <div class="fv${m.neg?' neg':''}" data-live="margin">${m.v}</div>
-        <div class="fs" data-live-sub="margin">${m.sub} · ${_en?'catalog':'catálogo'}</div>
+        <div class="fs" data-live-sub="margin">${d.margin_live ? (_en?'operating · last 12 mo · live':'operativo · últ. 12 meses · en vivo') : m.sub + ' · ' + (_en?'catalog':'catálogo')}</div>
       </div>
       <div class="fin-card">
         <div class="fl">${t('d_capex')}</div>
@@ -6313,6 +6313,56 @@ window.KhipuLiveCaps = (function(){
   setTimeout(load, 1500);
   setInterval(()=>{ tries = 0; load(); }, 15*60*1000);
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && last && last.as_of && Date.now() - Date.parse(last.as_of) > 15*60*1000){ tries = 0; load(); } });
+  return {load, apply, status: ()=>last};
+})();
+
+/* FUNDAMENTALES EN VIVO DE TODO EL GRAFO (2026-10-05, pedido: "en vivo siempre lo que varía; fijo solo
+   lo que no cambia, como la fundación"). /api/market/live_fundamentals (core/live_fundamentals: tandas en
+   segundo plano, cada empresa ≥ 1×/día) trae margen operativo, crecimiento del último trimestre, ingresos
+   12 m y empleados REALES. Se aplican al catálogo entero → NRS, rankings, comparador, gráficos, Insights y
+   simulación usan el dato real. Lo del catálogo queda en *_catalog; cada dato vivo lleva {source, as_of}. */
+window.KhipuLiveFund = (function(){
+  let last = null, tries = 0, timer = null;
+  function apply(d){
+    const meta = window.NODE_META || {}, NB = window.NODE_BY_ID || {};
+    let n = 0;
+    Object.keys(d.fund || {}).forEach(id=>{
+      const f = d.fund[id], node = NB[id];
+      if(!node || node.id !== id || !f) return;
+      const live = {source: f.source || 'yahoo', as_of: f.as_of};
+      if(f.operating_margin != null && isFinite(+f.operating_margin)){
+        if(node.margin_catalog === undefined) node.margin_catalog = node.margin;
+        node.margin = +f.operating_margin / 100;
+        node.margin_live = live;
+      }
+      if(f.revenue_growth_q != null && isFinite(+f.revenue_growth_q)) node.growth_live = Object.assign({pct: +f.revenue_growth_q}, live);
+      const m = meta[id] = meta[id] || {};
+      if(f.employees){ if(m.employees_catalog === undefined) m.employees_catalog = m.employees; m.employees = +f.employees; m.employees_live = live; }
+      if(f.revenue_ttm_usd_b != null && isFinite(+f.revenue_ttm_usd_b)){
+        if(m.revenue_catalog === undefined) m.revenue_catalog = m.revenue_2025;
+        m.revenue_ttm_usd_b = +f.revenue_ttm_usd_b; m.revenue_live = live;
+      }
+      n++;
+    });
+    last = {n: n, at: d.last_run};
+    if(n){
+      try{ if(window._invalidateNRS) window._invalidateNRS(); }catch(e){}
+      try{ if(typeof refreshStyles === 'function') refreshStyles(); }catch(e){}
+      try{ window.dispatchEvent(new CustomEvent('khipu:livefund', {detail: last})); }catch(e){}
+    }
+    return n;
+  }
+  function load(){
+    if(document.hidden) return;
+    fetch('/api/market/live_fundamentals').then(r=>r.ok ? r.json() : null).then(d=>{
+      if(!d) return;
+      const k = apply(d);
+      // el servidor llena el grafo por tandas tras cada arranque: se vuelve a pedir hasta tenerlo
+      if((!k || (d.n && d.n < 400)) && tries++ < 12){ clearTimeout(timer); timer = setTimeout(load, 5*60*1000); }
+    }).catch(()=>{});
+  }
+  setTimeout(load, 2500);
+  setInterval(()=>{ tries = 0; load(); }, 60*60*1000);
   return {load, apply, status: ()=>last};
 })();
 /* Punto verde "en vivo" para una capitalización pintada desde NODE_META. */

@@ -95,6 +95,12 @@ def _compute_server_nrs(session, company):
     degree = server_flow_degree(session, company.id)
     chain = min(25, degree * 2.5)
     margin = props.get('margin')
+    try:   # margen REAL si ya lo hay (core/live_fundamentals)
+        from core.live_fundamentals import live_margin
+        lm = live_margin(company.id)
+        margin = lm if lm is not None else margin
+    except Exception:  # noqa: BLE001
+        pass
     # clamp [0,20]: el cliente (app.html computeNRS) tiene esta misma fórmula
     # SIN este límite inferior, así que un margen muy negativo (ej. -2.5 en
     # empresas pre-revenue) puede inflar 'market' muy por encima de 20 allá.

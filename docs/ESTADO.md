@@ -9,6 +9,20 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (aa) — FUNDAMENTALES EN VIVO DE TODO EL GRAFO (sw v234)
+
+- Regla de Fabrizio: "en vivo siempre lo que varía; fijo solo lo que no cambia (fundación, productos)".
+- core/live_fundamentals.py: tarea del reloj `live_fundamentals` (cada 5 min, tandas de 40 vía
+  company_data.get_live_profile; faltantes primero, cada empresa ≥ 1×/día; un fallo no borra lo bueno).
+  GET /api/market/live_fundamentals. `live_margin(nid)` lo usan client_nrs, portfolio_ai.nrs y
+  ontology/agents._compute_server_nrs.
+- app.html `window.KhipuLiveFund`: aplica margen operativo (n.margin; catálogo en n.margin_catalog,
+  n.margin_live {source, as_of}), crecimiento trimestral (n.growth_live), empleados e ingresos 12 m a TODO el
+  catálogo → NRS, rankings, comparador, gráficos, Insights y simulación usan lo real; invalida el NRS.
+  Rótulos "en vivo"/"catálogo" en ficha, X-Ray, Terminal y comparador según haya dato vivo.
+- live_facts: "AI" ya no es C3.ai; "Microsoft (Azure)" casa por "Microsoft"; hasta 6 empresas.
+- Tests: tests/test_live_fundamentals.py, tests/test_live_facts_entities.py.
+
 # SESIÓN 2026-10-05 (z) — SIMULACIÓN CON CONTEXTO EN VIVO + RÓTULOS DE ORIGEN (sw v233)
 
 - sim/scenario_builder.js: `buildGeopoliticalContext()` ahora es async y EN VIVO (/api/world/brief 7d,

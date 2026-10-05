@@ -260,6 +260,12 @@ def nrs(node, degree):
     geo = nrs_geo(node.get('country'))
     chain = min(25, degree * 2.5)
     margin = node.get('margin')
+    try:
+        from core.live_fundamentals import live_margin
+        lm = live_margin(node.get('id')) if node.get('id') else None
+        margin = lm if lm is not None else margin
+    except Exception:  # noqa: BLE001
+        pass
     market = max(0, min(20, round((1 - min(1, (margin if margin is not None else 0.15) / 0.4)) * 20)))
     g = str(node.get('growth') or '').lower()
     fundamental = min(15, (10 if node.get('preipo') else 0) + (5 if '🔴' in g else 2 if '🟡' in g else 0))

@@ -737,6 +737,12 @@ def client_nrs(node, degree):
     geo = nrs_geo(node.get('country'))
     chain = min(25, degree * 2.5)
     margin = node.get('margin')
+    try:   # 2026-10-05: el margen REAL (core/live_fundamentals) manda sobre el del catálogo, como en el cliente
+        from core.live_fundamentals import live_margin
+        lm = live_margin(node.get('id')) if node.get('id') else None
+        margin = lm if lm is not None else margin
+    except Exception:  # noqa: BLE001
+        pass
     try:
         margin = 0.15 if margin is None else float(margin)
     except (TypeError, ValueError):

@@ -131,7 +131,8 @@
                     pill(B) + (window.sectorName ? window.sectorName(mb.n.cat, true) : ''), null) +
       row(L('País', 'Country'), ma.country, mb.country, null) +
       row(L('Riesgo NRS', 'NRS risk'), ma.nrs, mb.nrs, function (v) { return v + '/100'; }, true) +
-      row(L('Margen · catálogo', 'Margin · catalog'), ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false) +
+      row(L('Margen', 'Margin'), ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false,
+          [ma, mb].map(function (x) { return (x.margin == null ? '—' : x.margin + '%') + (x.n.margin_live ? ' <b style="color:#2BE38B;font-size:9px">● ' + L('vivo', 'live') + '</b>' : ' <span style="color:#7C87A3;font-size:9px">' + L('catálogo', 'catalog') + '</span>'); })) +
       row('Mkt cap', ma.mktcap, mb.mktcap, null, false, [capTxt(ma), capTxt(mb)]) +
       row(L('Conexiones', 'Links'), ma.deg, mb.deg, null, false) +
       nrsRows +
