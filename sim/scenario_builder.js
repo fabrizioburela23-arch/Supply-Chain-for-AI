@@ -105,6 +105,53 @@ const HISTORICAL_PRECEDENTS = `
 `;
 
 // ── D) Construcción del seed completo ────────────────────────────────────────
+async function buildPlayers(nodes) {
+  let seed = '';
+  // perfil de cada empresa con datos EN VIVO (2026-10-05: el informe decía "no tengo el dato en vivo de
+  // Microsoft/Nvidia" porque aquí iba "Current price: N/A" — se leía q.close, que la cotización viva no trae)
+  const lives = await Promise.all((nodes || []).slice(0, 10).map(n => n.mkt && !n.preipo
+    ? _sbJSON('/api/company/live/' + encodeURIComponent(n.mkt), 6000) : Promise.resolve(null)));
+  (nodes || []).forEach((n, i) => {
+    const meta = (typeof NODE_META !== 'undefined' && NODE_META[n.id]) || {};
+    const q = (typeof MKT !== 'undefined' && MKT.quotes && MKT.quotes[n.mkt]) || null;
+    const lp = (lives[i] && lives[i].available) ? lives[i] : null;
+    const px = lp && lp.price_usd != null ? lp.price_usd : (q && window.quotePx ? window.quotePx(q) : null);
+    const cap = lp && lp.market_cap_usd_b != null ? lp.market_cap_usd_b : (meta.mktcap_live ? meta.mktcap_b : null);
+    const pv = (window.PRIVATE_VALUATIONS && window.PRIVATE_VALUATIONS.entries || {})[n.id];
+    const asof = (lp && lp.as_of) ? String(lp.as_of).slice(0, 16).replace('T', ' ') + ' UTC' : '';
+    seed += `### ${n.label} (${n.mkt || (n.preipo ? 'PRIVATE' : n.ticker || 'PRIVATE')})\n`;
+    seed += `- Role: ${(typeof nf === 'function' ? nf(n, 'role') : n.role) || ''}\n`;
+    if (n.mkt && !n.preipo) {
+      seed += `- LIVE price: ${px != null ? '$' + (+px).toFixed(2) : 'not available right now'}` +
+        (lp && lp.change_pct != null ? ` (${lp.change_pct > 0 ? '+' : ''}${(+lp.change_pct).toFixed(2)}% today)` : '') + (asof ? ` — ${asof}` : '') + `\n`;
+      seed += `- LIVE market cap: ${cap != null ? '$' + (+cap).toFixed(1) + 'B' : 'not available right now'}\n`;
+      const om = lp && lp.operating_margin != null ? lp.operating_margin : (n.margin_live ? n.margin * 100 : null);
+      const gq = lp && lp.revenue_growth_q != null ? lp.revenue_growth_q : (n.growth_live ? n.growth_live.pct : null);
+      const rev = lp && lp.revenue_ttm_usd_b != null ? lp.revenue_ttm_usd_b : meta.revenue_ttm_usd_b;
+      if (om != null) seed += `- LIVE operating margin (last 12 months): ${(+om).toFixed(1)}%\n`;
+      if (gq != null) seed += `- LIVE revenue growth (last quarter vs a year ago): ${(+gq).toFixed(0)}%\n`;
+      if (rev != null) seed += `- LIVE revenue (last 12 months): $${(+rev).toFixed(1)}B\n`;
+      if (lp && lp.pe_forward != null) seed += `- Forward P/E: ${(+lp.pe_forward).toFixed(1)}\n`;
+    } else {
+      seed += `- Private: ${pv ? 'last verified valuation ' + pv.label + (pv.round ? ' (' + pv.round + ')' : '') : 'no verified valuation'}\n`;
+    }
+    seed += `- Geo risk: ${n.geo_risk || meta.geo_risk || 'Minimal'}\n`;
+    seed += `- Competitive moat: ${((typeof nf === 'function' ? nf(n, 'moat') : n.moat) || '').slice(0, 200)}\n\n`;
+  });
+
+  return seed;
+}
+
+// CONTEXTO EN VIVO para el informe de la simulación "IA simple" (2026-10-05): antes la IA recibía SOLO la frase
+// del escenario — ni las empresas, ni sus datos en vivo, ni la geopolítica — y respondía "no tengo el dato en vivo".
+async function buildLiveReportContext(nodeIds) {
+  const nodes = (nodeIds || []).map(id => (typeof NODE_BY_ID !== 'undefined' && NODE_BY_ID[id]) || null).filter(Boolean);
+  let ctx = '';
+  if (nodes.length) ctx += `## Key players — LIVE data (use these figures; do not say a figure is unavailable if it is here)\n\n` + await buildPlayers(nodes);
+  ctx += await buildGeopoliticalContext();
+  return ctx;
+}
+
 async function buildScenarioSeed(scenarioConfig) {
   const {
     title, description, nodes, question,
@@ -115,16 +162,7 @@ async function buildScenarioSeed(scenarioConfig) {
   seed += `## Event Description\n${description}\n\n`;
   seed += `## Key Players (Agent Profiles)\n\n`;
 
-  (nodes || []).forEach(n => {
-    const meta = (typeof NODE_META !== 'undefined' && NODE_META[n.id]) || {};
-    const q = (typeof MKT !== 'undefined' && MKT.quotes[n.mkt]) || {};
-    seed += `### ${n.label} (${n.ticker || 'PRIVATE'})\n`;
-    seed += `- Role: ${(typeof nf === 'function' ? nf(n, 'role') : n.role) || ''}\n`;
-    seed += `- Current price: ${q.close ? '$' + q.close : 'N/A'}\n`;
-    seed += `- Market cap: ${meta.mktcap_b ? '$' + meta.mktcap_b + 'B' : (n.preipo ? n.ticker : 'Private')}\n`;
-    seed += `- Geo risk: ${n.geo_risk || meta.geo_risk || 'Minimal'}\n`;
-    seed += `- Competitive moat: ${((typeof nf === 'function' ? nf(n, 'moat') : n.moat) || '').slice(0, 200)}\n\n`;
-  });
+  seed += await buildPlayers(nodes);
 
   if (includeGeopolitics) seed += await buildGeopoliticalContext();
   if (includeSocial) seed += await buildSocialContext((nodes || []).map(n => n.id));
@@ -221,3 +259,4 @@ const ScenarioBuilder = {
 
 window.ScenarioBuilder = ScenarioBuilder;
 window.buildScenarioSeed = buildScenarioSeed;
+window.buildLiveReportContext = buildLiveReportContext;

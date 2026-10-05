@@ -9,6 +9,15 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (bb) — SIMULACIÓN "IA SIMPLE" CON DATOS EN VIVO (sw v235)
+
+- El informe de "IA simple" (app.html `_runClaudeSim`) mandaba a la IA SOLO la frase del escenario: decía
+  "no tengo el dato en vivo de Microsoft/Nvidia". Ahora agrega `buildLiveReportContext(ids)` (sim/
+  scenario_builder.js): empresas del preset (o las escritas) con precio, capitalización, margen, crecimiento e
+  ingresos EN VIVO (/api/company/live), privadas con su valuación verificada, + geopolítica en vivo. El
+  "seed" (buildScenarioSeed) usa el mismo `buildPlayers`. La parte de arriba del War Room (motor estructural,
+  sin IA) es determinista: mismo escenario → mismo gráfico.
+
 # SESIÓN 2026-10-05 (aa) — FUNDAMENTALES EN VIVO DE TODO EL GRAFO (sw v234)
 
 - Regla de Fabrizio: "en vivo siempre lo que varía; fijo solo lo que no cambia (fundación, productos)".

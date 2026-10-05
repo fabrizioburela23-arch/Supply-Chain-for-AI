@@ -7932,11 +7932,16 @@ async function _runClaudeSim(text, nodeStr, output, status) {
     reportText: 'Generando análisis con Claude…', reportId: null, simId: null, presetId,
   });
   try {
+    // empresas del escenario: las del preset o las que escribió el usuario → sus datos EN VIVO + geopolítica en vivo
+    const _pre = presetId && window.ScenarioBuilder && ScenarioBuilder.PRESETS[presetId];
+    const _ids = (_pre && _pre.nodeIds) || String(nodeStr || '').split(/[,;]\s*/).map(x => x.trim()).filter(x => x && NODE_BY_ID[x]);
+    let _live = '';
+    try { if (window.buildLiveReportContext) _live = await window.buildLiveReportContext(_ids.slice(0, 10)); } catch (e) { _live = ''; }
     const resp = await fetch('/api/ai/analyze', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        system: 'Eres un analista experto en cadenas de valor de semiconductores, IA y espacio. Analiza el escenario HIPOTÉTICO y proporciona: 1) Empresas más afectadas (con % de impacto ESTIMADO, rotulado como estimación), 2) Efectos dominó en la cadena de suministro, 3) Quiénes podrían beneficiarse y por qué, 4) Riesgos a vigilar. NO des recomendaciones de compra, venta ni mantener. Sé específico.',
-        prompt: `ESCENARIO: ${text}\nNodos relevantes: ${nodeStr||'toda la cadena de valor semiconductores/IA/espacio'}`,
+        system: 'Eres un analista experto en cadenas de valor de semiconductores, IA y espacio. Analiza el escenario HIPOTÉTICO y proporciona: 1) Empresas más afectadas (con % de impacto ESTIMADO, rotulado como estimación), 2) Efectos dominó en la cadena de suministro, 3) Quiénes podrían beneficiarse y por qué, 4) Riesgos a vigilar. USA las cifras EN VIVO del contexto (precio, capitalización, margen, crecimiento, eventos de hoy) y cítalas; no digas que un dato no está si aparece en el contexto. NO des recomendaciones de compra, venta ni mantener. Sé específico.',
+        prompt: `ESCENARIO: ${text}\nNodos relevantes: ${_ids.length ? _ids.join(', ') : (nodeStr||'toda la cadena de valor semiconductores/IA/espacio')}\n\nCONTEXTO EN VIVO:\n${_live}`,
         max_tokens: 2500, tier: 'deep'
       })
     });
