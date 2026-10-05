@@ -345,7 +345,12 @@
     if (!s.ok && s.error_code === 'source_unavailable') return '<span class="wm-st err" title="' + esc(errText(s) + (s.retry_at ? ' · ' + L('próximo intento ', 'next try ') + fmtIso(s.retry_at) : '')) + '">' + esc(L('en pausa', 'paused')) + '</span>';
     if (!s.ok) return '<span class="wm-st err" title="' + esc(errText(s)) + '">' + esc(L('caída', 'down')) + '</span>';
     // W1: capas CURADAS (juicio humano revisado en curated_as_of) — no se presentan como "en vivo"
-    if (s.static) return '<span class="wm-st ref" title="' + esc(provText(s) + ' · ' + L('revisado ', 'reviewed ') + (s.curated_as_of || '?') + (s.news_live === false ? ' · ' + L('noticias GDELT en pausa', 'GDELT news paused') : '')) + '">' + esc(L('curado', 'curated')) + '</span>';
+    if (s.static) {
+      var li = (s.live_inputs || []);
+      return '<span class="wm-st ' + (li.length ? 'ok' : 'ref') + '" title="' + esc(provText(s) + ' · ' + L('base revisada ', 'base reviewed ') + (s.curated_as_of || '?') +
+        (li.length ? ' · ' + L('+ en vivo: ', '+ live: ') + li.join(', ') : '') + (s.news_live === false ? ' · ' + L('noticias GDELT en pausa', 'GDELT news paused') : '')) + '">' +
+        esc(li.length ? L('curado + vivo', 'curated + live') : L('curado', 'curated')) + '</span>';
+    }
     // GDELT eventos (15 min): se carga por tandas → dice cuántas horas de la ventana hay
     if (s.coverage_hours != null && s.window_hours && s.coverage_hours < s.window_hours)
       return '<span class="wm-st ok" title="' + esc(provText(s) + ' · ' + L('cargadas ' + s.coverage_hours + ' h de ' + s.window_hours + ' h; se completa solo', 'loaded ' + s.coverage_hours + ' h of ' + s.window_hours + ' h; filling in automatically')) + '">' +
@@ -563,6 +568,9 @@
       '<span class="r">' + esc(L('score 0-100', 'score 0-100')) + '</span></div>';
     shown.forEach(function (it) {
       var sv = it.severity, news = it.news && it.news.count != null ? '📰 ' + it.news.count + ' ' + L('art. 7d', 'art. 7d') : L('noticias: aún sin datos', 'news: no data yet');
+      if (it.live_shipping && it.live_shipping.change_pct != null) news += ' · ⛴ ' + (it.live_shipping.change_pct > 0 ? '+' : '') + Math.round(it.live_shipping.change_pct) + ' % ' + L('buques', 'ships');
+      if (it.advisory_level) news += ' · 🛂 ' + L('nivel ', 'level ') + it.advisory_level;
+      if (it.live_events && it.live_events.count) news += ' · ⚔ ' + it.live_events.count + ' ' + L('eventos 24h', 'events 24h');
       h += '<div class="wm-row" data-act="sel" data-id="' + esc(it.id) + '"><div class="wm-rel" style="background:' + (sv == null ? '#7C87A3' : sevColor(sv)) + '">' + (sv == null ? '—' : sv) + '</div>' +
         '<div class="wm-rt"><div class="t">' + esc(title(it)) + '</div><div class="m">' + esc(sv == null ? L('sin score (servidor no disponible)', 'no score (server unavailable)')
           : L('base', 'base') + ' ' + (it.base != null ? it.base : '—') + ' · ' + news + (it.factors && it.factors.length ? ' · ⚡ ' + it.factors.length : '')) + '</div></div></div>';
@@ -793,6 +801,10 @@
       kv.push([L('Ventana', 'Window'), S.win]);
     } else if (it.layer === 'chokepoints' || it.layer === 'instability') {
       kv.push([L('Base curada', 'Curated base'), it.base != null ? it.base : '—']);
+      if (it.live_shipping) kv.push([L('Buques/día en vivo (FMI)', 'Live ships/day (IMF)'), (it.live_shipping.transits_7d_avg != null ? it.live_shipping.transits_7d_avg : '—') +
+        ' (' + (it.live_shipping.change_pct > 0 ? '+' : '') + it.live_shipping.change_pct + ' % ' + L('vs 90 d', 'vs 90d') + ')']);
+      if (it.advisory_level) kv.push([L('Aviso oficial EE.UU.', 'Official US advisory'), L('nivel ', 'level ') + it.advisory_level + ' / 4']);
+      if (it.live_events && it.live_events.count) kv.push([L('Eventos en vivo (24 h)', 'Live events (24h)'), it.live_events.count + ' · ' + (it.live_events.top || '')]);
       kv.push([L('Noticias 7d', 'News 7d'), it.news && it.news.count != null ? it.news.count + ' art.' + (it.news.tone != null ? ' · ' + L('tono', 'tone') + ' ' + it.news.tone : '') : L('sin datos aún', 'no data yet')]);
     }
     if (kv.length) h += '<div class="wm-kv">' + kv.map(function (x) { return '<div><div class="k">' + esc(x[0]) + '</div><div class="v">' + esc(x[1]) + '</div></div>'; }).join('') + '</div>';

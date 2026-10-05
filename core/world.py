@@ -1192,6 +1192,45 @@ def _curated_source(news):
     return {'source': 'Khipu (curated)', 'source_es': 'Khipu (curado)', 'source_en': 'Khipu (curated)'}
 
 
+def _cached_items(layer, window='*'):
+    """Ítems YA en caché de otra capa (no dispara descargas): para mezclar lo curado con lo vivo."""
+    with _LOCK:
+        e = _CACHE.get((layer, window)) or (_CACHE.get((layer, '24h')) if window == '*' else None)
+    return list((e or {}).get('items') or []) if e and e.get('ok') else []
+
+
+def _blend_live_chokepoint(item):
+    """2026-10-05: el estrecho curado suma el tránsito REAL de buques (FMI PortWatch) si lo hay:
+    severidad = máx(curada, caída medida). Antes Ormuz decía 55 con el tráfico −64 %."""
+    live = next((x for x in _cached_items('shipping') if x.get('ref_id') == item['ref_id']), None)
+    if not live:
+        return item
+    item['live_shipping'] = {k: live.get(k) for k in ('change_pct', 'transits_7d_avg', 'transits_base_avg', 'time', 'data_caveat')}
+    if (live.get('severity') or 0) > (item['severity'] or 0):
+        item['severity'] = live['severity']
+        item['live_driven'] = True
+    return item
+
+
+def _blend_live_country(item):
+    """País curado + riesgo-país OFICIAL (Dpto. de Estado) + eventos de conflicto en vivo (GDELT) en el país."""
+    ck = item.get('country_key')
+    adv = next((x for x in _cached_items('advisories') if ck and x.get('country_key') == ck), None)
+    evs = [x for x in _cached_items('conflict', '24h') + _cached_items('unrest', '24h') if ck and x.get('country_key') == ck]
+    if adv:
+        item['advisory_level'] = adv.get('level')
+        if (adv.get('severity') or 0) > (item['severity'] or 0):
+            item['severity'], item['live_driven'] = adv['severity'], True
+    if evs:
+        item['live_events'] = {'count': len(evs), 'max_severity': max(x.get('severity') or 0 for x in evs),
+                               'top': (evs[0].get('title_es') or evs[0].get('title'))}
+        bump = min(10, 2 * len(evs))
+        if bump:
+            item['severity'] = int(min(100, (item['severity'] or 0) + bump))
+            item['live_driven'] = True
+    return item
+
+
 def _fetch_chokepoints(_window):
     d = _situation()
     g = _graph()
@@ -1210,6 +1249,8 @@ def _fetch_chokepoints(_window):
             'time': None, 'ts': None, 'time_kind': 'current', 'fetched_at': _iso(now),
             **_curated_source(news), 'url': None,
         })
+    items = [_blend_live_chokepoint(i) for i in items]
+    items.sort(key=lambda i: -(i['severity'] or 0))
     return items, None
 
 
@@ -1230,6 +1271,8 @@ def _fetch_instability(_window):
             'time': None, 'ts': None, 'time_kind': 'current', 'fetched_at': _iso(now),
             **_curated_source(news), 'url': None,
         })
+    items = [_blend_live_country(i) for i in items]
+    items.sort(key=lambda i: -(i['severity'] or 0))
     return items, None
 
 
@@ -1419,7 +1462,9 @@ def world_events(layers=None, window='24h', wait=DEFAULT_WAIT):
                 'live': lyr not in CURATED_LAYERS, 'ttl_s': LAYER_TTL[lyr]}
         if lyr in CURATED_LAYERS:
             # W1: valores CURADOS (juicio humano) + noticias si GDELT responde; no es un feed en vivo
-            base.update(static=True, curated_as_of=_curated_as_of(), news_live=_news_live())
+            base.update(static=True, curated_as_of=_curated_as_of(), news_live=_news_live(),
+                        live_inputs=[x for x in (['FMI PortWatch'] if lyr == 'chokepoints' and _cached_items('shipping') else []) +
+                                     (['Dpto. de Estado', 'GDELT'] if lyr == 'instability' and _cached_items('advisories') else [])])
         if e is None:
             sources[lyr] = {**base, 'ok': False, 'pending': True, 'count': 0, 'as_of': None,
                             **err_info('pending')}

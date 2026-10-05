@@ -154,3 +154,22 @@ def test_geopolitica_en_vivo_por_empresa_para_el_comite(monkeypatch):
     _attach_geo(a)
     assert a['geo_risks'][0]['entity_id'] == 'SMIC'
     assert 'Geopolítica EN VIVO para SMIC' in portfolio_notes(a) and portfolio_card(a)['geo'][0]['label'] == 'SMIC'
+
+
+def test_estrechos_y_paises_curados_suman_datos_en_vivo(monkeypatch):
+    """Ormuz decía 55 (curado) con el tráfico real −64 %: ahora la capa curada toma la caída medida."""
+    now = W._now()
+    with W._LOCK:
+        W._CACHE[('shipping', '*')] = {'ok': True, 'ts': now, 'items': [
+            {'ref_id': 'hormuz', 'severity': 100, 'change_pct': -63.7, 'transits_7d_avg': 30, 'transits_base_avg': 83,
+             'time': '2026-09-27T00:00:00Z'}]}
+        W._CACHE[('advisories', '*')] = {'ok': True, 'ts': now, 'items': [
+            {'country_key': 'Ucrania', 'level': 4, 'severity': 85}]}
+        W._CACHE[('conflict', '24h')] = {'ok': True, 'ts': now, 'items': [
+            {'country_key': 'Ucrania', 'severity': 70, 'title_es': 'Combates · Kharkiv'}]}
+    ck = W._blend_live_chokepoint({'ref_id': 'hormuz', 'severity': 55})
+    assert ck['severity'] == 100 and ck['live_driven'] and ck['live_shipping']['change_pct'] == -63.7
+    same = W._blend_live_chokepoint({'ref_id': 'panama', 'severity': 40})
+    assert same['severity'] == 40 and 'live_shipping' not in same                       # sin dato vivo: queda lo curado
+    ua = W._blend_live_country({'country_key': 'Ucrania', 'severity': 78})
+    assert ua['advisory_level'] == 4 and ua['live_events']['count'] == 1 and ua['severity'] == 87   # 85 oficial + 2 por evento
