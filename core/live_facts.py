@@ -16,7 +16,13 @@ from datetime import datetime, timezone
 
 log = logging.getLogger(__name__)
 
-MAX_ENTITIES = 4
+MAX_ENTITIES = 6
+# tickers que también son palabras o siglas comunes: "AI" (C3.ai) hacía que TODO texto sobre IA trajera los
+# datos de C3.ai (visto en la simulación del IPO de OpenAI, 2026-10-05). Solo cuentan por su NOMBRE.
+_AMBIGUOUS_TICKERS = {'AI', 'IT', 'ON', 'ALL', 'NOW', 'ONE', 'ARE', 'CAN', 'GO', 'SO', 'BIG', 'LOW', 'KEY', 'ANY', 'DO',
+                      'SEE', 'RUN', 'EV', 'US', 'UK', 'EU', 'CEO', 'CFO', 'IPO', 'ETF', 'GDP', 'USD', 'HBM', 'GPU', 'CPU',
+                      'TPU', 'PPA', 'LLM', 'API', 'IOT', 'OPEN', 'LIFE', 'REAL', 'PLAY', 'CASH', 'BEST', 'FAST', 'NEXT',
+                      'SAFE', 'TRUE', 'WELL', 'HOLD', 'GOOD', 'PEAK', 'CARE', 'CORE', 'EDGE', 'DATA', 'GRID', 'NET'}
 TIMEOUT_S = 6.0
 _rx_cache = {'rx': None}
 _rx_lock = threading.Lock()
@@ -26,10 +32,19 @@ _POOL = ThreadPoolExecutor(max_workers=4, thread_name_prefix='livefacts')
 def _label_regex(idx):
     with _rx_lock:
         if _rx_cache['rx'] is None:
-            labels = sorted({n.get('label') for n in idx['nodos'].values()
-                             if n.get('label') and len(n.get('label')) >= 4}, key=len, reverse=True)
+            by_label = {}
+            for nid, n in idx['nodos'].items():
+                lab = (n.get('label') or '').strip()
+                if not lab:
+                    continue
+                by_label.setdefault(lab, nid)
+                # "Microsoft (Azure)", "Alphabet (Google Cloud)": también cuenta el nombre sin el paréntesis
+                base = re.split(r'\s*\(', lab)[0].strip()
+                if base and base != lab and len(base) >= 4:
+                    by_label.setdefault(base, nid)
+            labels = sorted((x for x in by_label if len(x) >= 4), key=len, reverse=True)
             _rx_cache['rx'] = re.compile(r'(?<![\w])(' + '|'.join(re.escape(x) for x in labels) + r')(?![\w])')
-            _rx_cache['by_label'] = {n.get('label'): nid for nid, n in idx['nodos'].items() if n.get('label')}
+            _rx_cache['by_label'] = by_label
         return _rx_cache['rx'], _rx_cache['by_label']
 
 
@@ -46,6 +61,8 @@ def detect_entities(text, limit=MAX_ENTITIES):
         if nid:
             hits.append((m.start(), nid))
     for m in re.finditer(r'(?<![\w.$])([A-Z]{2,5}(?:\.[A-Z]{1,2})?)(?![\w])', text):
+        if m.group(1) in _AMBIGUOUS_TICKERS:
+            continue
         nid = idx['por_ticker'].get(m.group(1))
         if nid:
             hits.append((m.start(), nid))
