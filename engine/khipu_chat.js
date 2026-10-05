@@ -81,7 +81,7 @@
       'Commands you can type here:',
       '• /research <company> — the research team (8 analysts) studies the company. Also: "@research NVDA".',
       '• /committee <company> — the investment committee gives its recommendation.',
-      '• /portfolio — the committee analyzes YOUR portfolio (also "/committee portfolio").',
+      '• /portfolio <question> — the portfolio committee measures YOUR portfolio and answers here (pick which portfolio in the chip). Also "@portfolio".',
       '• @fundamental, @technical, @news, @supply, @geo, @macro, @all + your question — ask an analyst directly.',
       '• Terminal commands: NVDA XRAY · NVDA RESEARCH · COMPARE NVDA AMD · PORT VAR · SHOCK TSMC.',
       '• /help — this list.',
@@ -89,7 +89,7 @@
       'Comandos que puedes escribir aquí:',
       '• /investigar <empresa> — el equipo de investigación (8 analistas) estudia la empresa. También: "@investigación NVDA".',
       '• /comite <empresa> — el comité de inversión da su recomendación.',
-      '• /cartera — el comité analiza TU cartera (también "/comite cartera").',
+      '• /cartera <pregunta> — el comité de cartera mide TU cartera y te responde aquí (elige cuál cartera en el chip). También "@cartera".',
       '• @fundamental, @tecnico, @noticias, @cadena, @geopolitico, @macro, @todos + tu pregunta — le preguntas a un analista.',
       '• Comandos de terminal: NVDA XRAY · NVDA RESEARCH · COMPARE NVDA AMD · PORT VAR · SHOCK TSMC.',
       '• /ayuda — esta lista.',
@@ -98,10 +98,10 @@
   function _cmd(answer, fn) {
     return { kind: 'command', pending: Promise.resolve().then(function () { if (fn) { try { fn(); } catch (e) {} } return { answer: answer, actions: [] }; }) };
   }
-  function _pfCommittee(en) {
-    return _cmd(en ? 'Opening the committee on your portfolio: it reviews each position and suggests what to keep, trim or add. It is advice, never an order.'
-                   : 'Abriendo el comité sobre tu cartera: revisa cada posición y sugiere qué mantener, reducir o sumar. Es un consejo, nunca una orden.',
-      function () { if (window.KhipuCommittee) window.KhipuCommittee.openTab('portfolio'); });
+  // 2026-10-05: el comité de cartera RESPONDE dentro del chat ("/cartera dime si debería reducir…"
+  // antes solo abría una pantalla). La pregunta viaja al agente con la cartera elegida en el chip.
+  function _pfCommittee(en, question) {
+    return { kind: 'agentask', agent: 'portfolio', question: String(question || '').trim() };
   }
   function agentCommand(t, deps) {
     var en = _lang();
@@ -117,6 +117,8 @@
     };
     var committee = function (q) {
       if (!q || _CARTERA_RX.test(q.trim())) return _pfCommittee(en);
+      var mc = q.match(/^(?:de\s+|a\s+)?(?:mi|my|la|the)?\s*(?:cartera|portafolio|portfolio)\s*[:,]?\s+([\s\S]+)$/i);
+      if (mc) return _pfCommittee(en, mc[1]);
       var h = R(q);
       if (!(h && h.node && h.score >= 70)) return notFound(q);
       var id = h.node.id, label = h.node.label || id;
@@ -130,9 +132,11 @@
       if (['ayuda', 'help', 'comandos', 'commands', '?'].indexOf(c) >= 0) return _cmd(helpText(en));
       if (['investigar', 'investiga', 'investigacion', 'research', 'investigate'].indexOf(c) >= 0) return research(rest);
       if (['comite', 'committee'].indexOf(c) >= 0) return committee(rest);
-      if (['cartera', 'portafolio', 'portfolio', 'micartera'].indexOf(c) >= 0) return _pfCommittee(en);
+      if (['cartera', 'portafolio', 'portfolio', 'micartera'].indexOf(c) >= 0) return _pfCommittee(en, rest);
       return _cmd((en ? 'I do not know the command /' + m[1] + '.\n\n' : 'No conozco el comando /' + m[1] + '.\n\n') + helpText(en));
     }
+    var mp = t.match(/^@\s*(?:cartera|portafolio|portfolio|micartera|mi\s+cartera|my\s+portfolio)\b\s*[:,]?\s*([\s\S]*)$/i);
+    if (mp) return _pfCommittee(en, mp[1]);
     var f = _fold(t).replace(/[?¿!¡.]+$/g, '').trim();
     // @investigación X · @research X · @investigador X
     if ((m = f.match(/^@\s*(?:investigacion|investigador(?:es)?|research|researcher)\s*[:,]?\s*(?:sobre\s+|de\s+|a\s+|on\s+)?(.*)$/))) return research(m[1]);
@@ -308,6 +312,76 @@
     }).then(function (d) { if (timer) clearTimeout(timer); return d; }, function (e) { if (timer) clearTimeout(timer); throw e; });
   }
 
+  /* ══ 2b) AGENTES CON CHIP: el comité de cartera dentro del chat ══════════
+     La cartera se elige en el chip del campo de texto (engine/pickers.js →
+     localStorage 'kh_chat_pf_src'); por defecto la primera disponible. */
+  var PF_KEY = 'kh_chat_pf_src';
+  function pfSources() {
+    try { return (W.KhipuPortfolioCommittee && W.KhipuPortfolioCommittee._sources) ? W.KhipuPortfolioCommittee._sources() : []; } catch (e) { return []; }
+  }
+  function pfSelected() {
+    var srcs = pfSources(), k = null;
+    try { k = W.localStorage.getItem(PF_KEY); } catch (e) {}
+    var hit = srcs.filter(function (x) { return x.key === k; })[0];
+    if (!hit) hit = srcs.filter(function (x) { return x.key !== 'broker' && !/· (vacía|empty)$/.test(x.label); })[0] || srcs[0] || null;
+    return hit;
+  }
+  function pfSelect(key) { try { W.localStorage.setItem(PF_KEY, key); } catch (e) {} }
+  function _owner() {
+    var k = null; try { k = W.localStorage.getItem('kh_owner_key'); } catch (e) {}
+    return k && k.length >= 16 ? k : '';
+  }
+  function agentInfo(route) {
+    if (route && route.agent === 'portfolio') {
+      var src = pfSelected();
+      return { name: L('Comité de cartera', 'Portfolio committee'), emoji: '💼', seat: 'portfolio',
+        label: src ? String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '') : L('sin cartera', 'no portfolio') };
+    }
+    return null;
+  }
+  function askAgent(route) {
+    var base = (typeof BASE !== 'undefined' && BASE) ? BASE : (W.BASE || '');   // eslint-disable-line no-undef
+    var src = pfSelected();
+    var PC = W.KhipuPortfolioCommittee;
+    if (!src || !PC || !PC._positionsFor) {
+      return Promise.resolve({ agent: agentInfo(route), degraded: true, answer: L(
+        'No tienes posiciones en Mercado ni carteras simuladas todavía. Crea una en Mercado → Carteras (o pídele una al 🤖 Asistente) y vuelve a preguntarme.',
+        'You have no positions in Market nor simulated portfolios yet. Create one in Market → Portfolios (or ask the 🤖 Assistant) and ask me again.') });
+    }
+    var label = String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '');
+    var prof = null; try { prof = W.KhipuProfile && W.KhipuProfile.get ? W.KhipuProfile.get() : null; } catch (e) {}
+    return Promise.resolve(PC._positionsFor(src.key)).then(function (p) {
+      p = p || {};
+      if (!(p.positions || []).length) {
+        return { agent: agentInfo(route), degraded: true, answer: L('La cartera «' + label + '» está vacía: añádele empresas en Mercado → Carteras.',
+          'The portfolio «' + label + '» is empty: add companies in Market → Portfolios.') };
+      }
+      var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var timer = ctl ? setTimeout(function () { try { ctl.abort(); } catch (e) {} }, 110000) : null;
+      var actor = null; try { actor = W.localStorage.getItem('khipu_actor'); } catch (e) {}
+      return fetch(base + '/api/committee/portfolio/ask', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Owner': _owner() },
+        signal: ctl ? ctl.signal : undefined,
+        body: JSON.stringify({ question: route.question || '', positions: p.positions, cash_usd: p.cash || 0, profile: prof || {},
+          lang: lang(), source_label: label, history: history.slice(-MAX_TURNS), actor: actor || 'usuario' }),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          if (timer) clearTimeout(timer);
+          if (!r.ok && !d.answer) throw new Error((lang() === 'en' ? d.error_en : d.error) || d.error || ('HTTP ' + r.status));
+          d.agent = d.agent || agentInfo(route);
+          if (!prof) d.profile_missing = true;
+          remember('user', '/cartera ' + (route.question || ''));
+          if (d.answer && !d.degraded) remember('assistant', d.answer);
+          return d;
+        });
+      }, function (e) {
+        if (timer) clearTimeout(timer);
+        if (e && e.name === 'AbortError') throw new Error(L('El comité tardó demasiado. Reintenta.', 'The committee took too long. Please retry.'));
+        throw e;
+      });
+    });
+  }
+
   /* ══ 3) MARKDOWN LIGERO (escapa HTML ANTES de dar formato) ═══════════════ */
   function inline(s) {
     // s YA viene escapado
@@ -366,6 +440,12 @@
     '.kc-dots span:nth-child(2){animation-delay:.15s}.kc-dots span:nth-child(3){animation-delay:.3s}' +
     '@keyframes kcDot{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}' +
     '.kc-err{color:#FF8FA3}' +
+    '.kc-uchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#9EEBFF;background:rgba(0,224,255,.1);border:1px solid rgba(0,224,255,.35);border-radius:999px;padding:1px 9px 1px 4px;margin:0 6px 4px 0;white-space:nowrap}' +
+    '.kc-uchip i{font-style:normal;display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;background:rgba(0,224,255,.18);font-size:11px}' +
+    '.kc-pf{margin-top:10px;border:1px solid rgba(122,158,255,.2);border-radius:12px;padding:10px 12px;background:rgba(6,10,20,.5)}' +
+    '.kc-pf-top{display:flex;gap:12px;align-items:center}.kc-pf-sc{width:46px;height:46px;flex:0 0 46px;border-radius:50%;border:4px solid;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}' +
+    '.kc-pf-v{font-weight:700;font-size:13px}.kc-pf-m{font-size:11.5px;color:#8E9AB8;margin-top:2px}' +
+    '.kc-pf-a{display:flex;gap:8px;align-items:baseline;font-size:12.5px;margin-top:6px}.kc-pf-a b{white-space:nowrap}' +
     '@media(max-width:600px){.kc-msg{max-width:100%;font-size:13.5px;padding:9px 12px}}' +
     '@media(prefers-reduced-motion:reduce){.kc-dots span{animation:none}}';
 
@@ -382,9 +462,17 @@
     } catch (e) {}
   }
 
-  function appendUser(thread, text) {
+  function appendUser(thread, text, agent) {
     ensureStyles();
-    var d = W.document.createElement('div'); d.className = 'kc-msg kc-user'; d.textContent = text;
+    var d = W.document.createElement('div'); d.className = 'kc-msg kc-user';
+    if (agent && agent.name) {
+      var chip = W.document.createElement('span'); chip.className = 'kc-uchip';
+      chip.innerHTML = '<i>' + esc(agent.emoji || '🤖') + '</i>' + esc(agent.name + (agent.label ? ' · ' + agent.label : ''));
+      d.appendChild(chip);
+      text = String(text || '').replace(/^\s*(?:\/\S+|@\S+)\s*/, '');
+      if (text) { d.appendChild(W.document.createElement('br')); }
+    }
+    d.appendChild(W.document.createTextNode(text));
     thread.appendChild(d); _scroll(d); return d;
   }
 
@@ -424,6 +512,7 @@
     chart: ['✦ Gráfico', '✦ Chart'], compare: ['⇄ Comparar', '⇄ Compare'],
     open_risk_report: ['🛡 Riesgo de mi cartera', '🛡 My portfolio risk'], switch_tab: ['📂 Abrir', '📂 Open'],
     open_world: ['🌐 Monitor mundial', '🌐 World monitor'], broker: ['💼 Abrir el bróker', '💼 Open the broker'],
+    open_pf_committee: ['💼 Ver el análisis completo', '💼 See the full analysis'],
   };
   function actionLabel(a) {
     var x = ACT_LABEL[a.type] || [a.type, a.type];
@@ -454,6 +543,8 @@
         (d.agent.label ? '<span class="kc-agent-ent"> · ' + esc(d.agent.label) + '</span>' : '') + '</span>';
     }
     var h = '<div class="kc-who">' + who + '</div><div class="kc-body">' + md(d.answer || L('(sin respuesta)', '(no answer)')) + '</div>';
+    if (d.portfolio) h += pfCardHTML(d.portfolio);
+    if (d.profile_missing) h += '<div class="kc-note">🧭 ' + esc(L('Usé el perfil «moderado» porque aún no definiste el tuyo (Comité → 💼 Mi cartera → 4 preguntas).', 'I used the "moderate" profile because you have not set yours yet (Committee → 💼 My portfolio → 4 questions).')) + '</div>';
     if (d.degraded) {
       var why = (lang() === 'en' ? d.ai_detail_en : d.ai_detail_es) || d.ai_detail || '';
       h += '<div class="kc-note">⚠ ' + esc(L('Respuesta sin IA (solo datos).', 'Answer without AI (data only).')) +
@@ -512,6 +603,24 @@
     return el;
   }
 
+  function pfCardHTML(c) {
+    var col = c.tone === 'good' ? '#2BE38B' : c.tone === 'warn' ? '#FFB300' : '#FF4D6A';
+    var money = function (v) { v = Number(v); return isFinite(v) ? '$' + Math.round(v).toLocaleString('en-US') : '—'; };
+    var KIND = { sell: ['➖', L('Salir de', 'Exit')], reduce: ['➖', L('Reducir', 'Trim')], add: ['➕', L('Aumentar', 'Add')], buy_new: ['🆕', L('Añadir', 'Add new')] };
+    var cv = c.coverage || {};
+    var h = '<div class="kc-pf"><div class="kc-pf-top"><div class="kc-pf-sc" style="border-color:' + col + ';color:' + col + '">' + esc(c.score) + '</div><div>' +
+      '<div class="kc-pf-v">' + esc(c.verdict || '') + '</div><div class="kc-pf-m">' + esc(L('Salud vs tu perfil ', 'Health vs your profile ') + (c.profile || '') + ' · ' + money(c.value_usd) +
+      (c.vol_ann_pct != null ? ' · ' + L('se mueve ', 'moves ') + Math.round(c.vol_ann_pct) + L(' % al año', '% a year') : '') +
+      (cv.requested ? ' · ' + L('analizadas ', 'analyzed ') + cv.analyzed + '/' + cv.requested : '')) + '</div></div></div>';
+    (c.actions || []).forEach(function (a) {
+      var k = KIND[a.kind] || ['•', a.kind];
+      h += '<div class="kc-pf-a"><b>' + esc(k[0] + ' ' + k[1] + ' ' + (a.label || '')) + '</b><span style="color:#8E9AB8">' +
+        esc(Math.round(a.from_pct) + '% → ' + Math.round(a.to_pct) + '% · ' + (lang() === 'en' ? a.why_en : a.why_es)) + '</span></div>';
+    });
+    if ((c.excluded || []).length) h += '<div class="kc-pf-m" style="color:#FFB300;margin-top:6px">⚠ ' + esc(L('Sin analizar: ', 'Not analyzed: ') + c.excluded.join(', ')) + '</div>';
+    return h + '<div class="kc-pf-m" style="margin-top:6px">🤖 ' + esc(L('Consejo educativo de IA; nada se ejecuta sin tu confirmación.', 'Educational AI advice; nothing runs without your confirmation.')) + '</div></div>';
+  }
+
   function fillError(el, msg) {
     if (el._timer) { clearInterval(el._timer); el._timer = null; }
     el.classList.remove('kc-pending');
@@ -556,6 +665,7 @@
         case 'dossier': { var n = NB[a.arg]; return surf('dossier', (n && n.mkt) || a.arg) || (W.openFinCard && W.openFinCard((n && n.mkt) || a.arg)); }
         case 'open_research': if (W.KhipuResearch) { W.KhipuResearch.open(a.arg); return true; } return false;
         case 'open_committee': if (W.KhipuCommittee) { W.KhipuCommittee.open(a.arg); return true; } return false;
+        case 'open_pf_committee': if (W.KhipuCommittee) { W.KhipuCommittee.openTab('portfolio'); return true; } return false;
         case 'open_risk_report': if (W.KhipuRisk) { W.KhipuRisk.open({}); return true; } return false;
         case 'broker':
           if (!ck) return false;
@@ -572,6 +682,6 @@
     appendUser: appendUser, appendPending: appendPending, fillReply: fillReply, fillError: fillError,
     runAction: runAction, actionLabel: actionLabel, remember: remember, context: context,
     history: function () { return history.slice(); }, clear: clearHistory, ensureStyles: ensureStyles,
-    AUTO: AUTO,
+    AUTO: AUTO, askAgent: askAgent, agentInfo: agentInfo, pfSources: pfSources, pfSelected: pfSelected, pfSelect: pfSelect,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

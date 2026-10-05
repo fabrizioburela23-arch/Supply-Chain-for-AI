@@ -272,6 +272,101 @@ def portfolio_committee():
     return jsonify(out), (200 if out.get('ok') else 422)
 
 
+def portfolio_notes(a, lang='es'):
+    """Análisis del comité de cartera → texto verificado para el cerebro de Khipu (contexto
+    'portfolio_notes'): KPIs, cada posición, acciones sugeridas, lo que quedó fuera."""
+    k, h, P = a.get('kpis') or {}, a.get('health') or {}, a.get('profile') or {}
+    cv = a.get('coverage') or {}
+    lines = [f"Salud de la cartera {h.get('score')}/100 frente al perfil {P.get('label')}: {h.get('verdict')}.",
+             f"Valor {k.get('value_usd')} USD (efectivo {k.get('cash_usd')} USD); volatilidad anual {k.get('vol_ann_pct')} % "
+             f"(objetivo del perfil {P.get('target_vol')} %); peor caída del año {k.get('max_drawdown_pct')} %; "
+             f"VaR 95 % a 1 día {k.get('var95_1d_usd')} USD; beta vs S&P 500 {k.get('beta_spy')}.",
+             f"Tope sugerido por posición {P.get('max_position')} % y por sector {P.get('max_sector')} %.",
+             f"Cobertura: {cv.get('analyzed')} de {cv.get('requested')} posiciones medidas; "
+             f"{cv.get('researched')} con opinión de los analistas."]
+    for r in (a.get('positions') or [])[:40]:
+        conv = 'sin investigar' if r.get('conviction') is None else f"{r['conviction']:+.0f}"
+        lines.append(f"{r.get('label')} ({r.get('symbol')}): peso {r.get('weight_pct')} %, aporta {r.get('risk_contrib_pct')} % "
+                     f"del riesgo, volatilidad {r.get('vol_ann_pct')} %, valor {r.get('value_usd')} USD, sector "
+                     f"{r.get('sector') or '—'}, convicción de los analistas {conv}.")
+    for x in (a.get('actions') or [])[:8]:
+        lines.append(f"Acción sugerida {x['id']} ({x['kind']}, prioridad {x['priority']}): {x.get('label') or ''} de "
+                     f"{x['from_pct']} % a {x['to_pct']} % ({x['delta_usd']} USD) — {x['why_es']}")
+    for s in (a.get('sectors') or [])[:8]:
+        lines.append(f"Sector {s.get('label')}: {s.get('weight_pct')} % ({s.get('n')} posiciones).")
+    for p in (a.get('correlated_pairs') or [])[:3]:
+        lines.append(f"Se mueven juntas: {p['a']} y {p['b']} (correlación {p['corr']}).")
+    for x in (a.get('excluded') or [])[:10]:
+        lines.append(f"No analizada: {x.get('label') or x.get('symbol')} — {x.get('reason')}.")
+    lines.append(f"Datos: {a.get('source')} al {a.get('as_of')}. Es consejo educativo, nunca una orden.")
+    return '\n'.join(str(x) for x in lines)
+
+
+def portfolio_card(a):
+    """Resumen compacto para la tarjeta dentro del chat."""
+    return {'score': (a.get('health') or {}).get('score'), 'tone': (a.get('health') or {}).get('tone'),
+            'verdict': (a.get('health') or {}).get('verdict'), 'value_usd': (a.get('kpis') or {}).get('value_usd'),
+            'vol_ann_pct': (a.get('kpis') or {}).get('vol_ann_pct'), 'coverage': a.get('coverage'),
+            'profile': (a.get('profile') or {}).get('label'),
+            'actions': [{k: x.get(k) for k in ('id', 'kind', 'label', 'from_pct', 'to_pct', 'delta_usd', 'priority', 'why_es', 'why_en')}
+                        for x in (a.get('actions') or [])[:4]],
+            'excluded': [x.get('label') or x.get('symbol') for x in (a.get('excluded') or [])][:8]}
+
+
+@committee_bp.route('/portfolio/ask', methods=['POST'])
+@rate_limit(limit=30, window=3600)
+def portfolio_ask():
+    """El COMITÉ DE CARTERA dentro del chat (pedido 2026-10-05: "/cartera dime si debería
+    reducir…" debía RESPONDER, no abrir una pantalla): mide la cartera (core/portfolio_advisor,
+    precios reales), guarda el análisis en el historial y el cerebro de Khipu contesta la
+    pregunta con ese análisis como contexto verificado. Nunca da órdenes."""
+    from core import khipu_chat as kc
+    from core import portfolio_advisor as pa
+    from core.ai_usage import ai_context
+    body = request.get_json(silent=True) or {}
+    lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    q = str(body.get('question') or '').strip()[:1500] or (
+        'Analyze my portfolio: its health, main risks and what you would change.' if lang == 'en'
+        else 'Analiza mi cartera: su salud, los riesgos principales y qué cambiarías.')
+    positions = body.get('positions') if isinstance(body.get('positions'), list) else []
+    profile = body.get('profile') if isinstance(body.get('profile'), dict) else {}
+    who = str(body.get('actor') or '').strip()[:120] or None
+    label = str(body.get('source_label') or '').strip()[:60]
+    agent = {'name': 'Comité de cartera' if lang == 'es' else 'Portfolio committee', 'emoji': '💼', 'seat': 'portfolio',
+             'label': label or None}
+    with ai_context('comite_cartera_chat', who):
+        try:
+            a = pa.analyze(positions, profile=profile, lang=lang, cash_usd=body.get('cash_usd') or 0)
+        except Exception as e:  # noqa: BLE001
+            log.warning('portfolio ask: %s', e)
+            a = {'ok': False, 'error': f'{type(e).__name__}'}
+        if not a.get('ok'):
+            msg = (a.get('error_en') if lang == 'en' else None) or a.get('error') or 'could not analyze'
+            return jsonify({'ok': False, 'agent': agent, 'degraded': True,
+                            'answer': (f"I could not measure your portfolio: {msg}" if lang == 'en'
+                                       else f"No pude medir tu cartera: {msg}"),
+                            'excluded': a.get('excluded') or []}), 200
+        if body.get('save', True):
+            _register_portfolio_analysis(a, {'source_label': label}, lang)
+        hist = body.get('history') if isinstance(body.get('history'), list) else []
+        try:
+            req = kc.validate_request({'message': q, 'history': hist, 'lang': lang})
+        except Exception:  # noqa: BLE001
+            req = {'message': q[:1500], 'history': [], 'lang': lang}
+        ctx = {'portfolio_notes': portfolio_notes(a, lang)}
+        try:
+            app = current_app._get_current_object()
+        except Exception:  # noqa: BLE001
+            app = None
+        out = kc.run_chat(req['message'], req['history'], lang, context=ctx, app=app)
+    out = dict(out or {})
+    out.update(ok=True, agent=agent, portfolio=portfolio_card(a), saved_id=a.get('saved_id'))
+    acts = [x for x in (out.get('actions') or []) if isinstance(x, dict)]
+    acts.append({'type': 'open_pf_committee', 'arg': None})
+    out['actions'] = acts
+    return jsonify(out)
+
+
 def _register_portfolio_analysis(out, body, lang):
     """Pedido 2026-10-05 ("que se registre"): cada análisis del comité de cartera
     queda guardado por dueño (X-Khipu-Owner) como reporte kind='committee', para

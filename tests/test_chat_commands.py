@@ -53,7 +53,8 @@ def test_agente_de_investigacion_desde_el_chat():
 def test_comite_de_cartera_y_de_empresa_desde_el_chat():
     out = _run(['/cartera', '/comite cartera', '@comité mi cartera', 'que el comité analice mi cartera', '/comite TSMC'])
     for c in ('/cartera', '/comite cartera', '@comité mi cartera', 'que el comité analice mi cartera'):
-        assert out[c]['kind'] == 'command' and out[c]['calls'] == ['tab:portfolio'] and 'nunca una orden' in out[c]['answer']
+        # 2026-10-05: ya no abre una pantalla — el comité de cartera responde DENTRO del chat
+        assert out[c]['kind'] == 'agentask' and out[c]['calls'] == []
     assert out['/comite TSMC']['calls'] == ['open:TSMC']
 
 

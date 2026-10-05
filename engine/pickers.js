@@ -87,7 +87,15 @@
     '.kpk-it b{font-weight:600}.kpk-it span{color:#8E9AB8;font-size:12px;margin-left:auto;white-space:nowrap}' +
     '.kpk-it.on,.kpk-it:hover{background:rgba(0,224,255,.12)}' +
     '.kpk-hd{padding:5px 10px 3px;color:#7f8bab;font-size:11px;letter-spacing:.04em;text-transform:uppercase}' +
-    '.kpk-bad{outline:2px solid #e23b3b !important;outline-offset:1px}';   // la app es siempre oscura
+    '.kpk-bad{outline:2px solid #e23b3b !important;outline-offset:1px}' +
+    // chip del agente en el campo del chat (como un conector): ícono + nombre (+ selector de cartera)
+    '.kpk-chip{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;align-self:center;margin-right:6px;padding:3px 4px 3px 3px;border-radius:999px;' +
+    'border:1px solid rgba(0,224,255,.45);background:rgba(0,224,255,.1);color:#9EEBFF;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:60%}' +
+    '.kpk-chip>i{font-style:normal;display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;background:rgba(0,224,255,.2);font-size:12px}' +
+    '.kpk-chip>b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.kpk-chip select{background:#0d1424;color:#E8EDFB;border:1px solid rgba(122,158,255,.3);border-radius:7px;font:500 11.5px system-ui;max-width:180px;padding:2px 4px}' +
+    '.kpk-chip button{border:none;background:transparent;color:#8E9AB8;cursor:pointer;font-size:13px;padding:0 4px;line-height:1}.kpk-chip button:hover{color:#FF8FA3}' +
+    '@media(max-width:600px){.kpk-chip>b{display:none}.kpk-chip select{max-width:120px}}';   // la app es siempre oscura
   function ensureCss() {
     if (document.getElementById('kpk-css')) return;
     var st = document.createElement('style'); st.id = 'kpk-css'; st.textContent = css; document.head.appendChild(st);
@@ -210,21 +218,26 @@
 
   // ── menú "/" y "@" del chat de Khipu ──
   var COMMANDS = [
-    { c: '/investigar', ce: '/research', es: 'el equipo de investigación estudia una empresa', en: 'the research team studies a company', ent: true },
-    { c: '/comite', ce: '/committee', es: 'el comité de inversión opina sobre una empresa', en: 'the investment committee on a company', ent: true, cartera: true },
-    { c: '/cartera', ce: '/portfolio', es: 'el comité analiza TU cartera', en: 'the committee analyzes YOUR portfolio' },
+    { c: '/cartera', ce: '/portfolio', es: 'el comité mide TU cartera y responde tu pregunta aquí', en: 'the committee measures YOUR portfolio and answers here',
+      i: '💼', n: 'Comité de cartera', ne: 'Portfolio committee', portfolio: true },
+    { c: '/investigar', ce: '/research', es: 'el equipo de investigación estudia una empresa', en: 'the research team studies a company', ent: true,
+      i: '🔬', n: 'Equipo de investigación', ne: 'Research team' },
+    { c: '/comite', ce: '/committee', es: 'el comité de inversión opina sobre una empresa', en: 'the investment committee on a company', ent: true, cartera: true,
+      i: '🏛', n: 'Comité de inversión', ne: 'Investment committee' },
     { c: '/ayuda', ce: '/help', es: 'todos los comandos', en: 'all the commands' },
   ];
   var ANALYSTS = [
-    { c: '@fundamental', es: 'analista fundamental: balances y márgenes', en: 'fundamental analyst: financials and margins' },
-    { c: '@tecnico', ce: '@technical', es: 'analista técnico: precio y tendencias', en: 'technical analyst: price and trends' },
-    { c: '@noticias', ce: '@news', es: 'analista de noticias', en: 'news analyst' },
-    { c: '@cadena', ce: '@supply', es: 'analista de cadena de suministro', en: 'supply-chain analyst' },
-    { c: '@geopolitico', ce: '@geo', es: 'analista geopolítico', en: 'geopolitical analyst' },
-    { c: '@macro', es: 'analista macroeconómico', en: 'macro analyst' },
-    { c: '@todos', ce: '@all', es: 'responden todos los analistas', en: 'all analysts answer' },
-    { c: '@investigacion', ce: '@research', es: 'lanza la investigación de una empresa', en: 'starts research on a company', ent: true },
-    { c: '@comite', ce: '@committee', es: 'el comité (empresa o "mi cartera")', en: 'the committee (company or "my portfolio")', cartera: true },
+    { c: '@cartera', ce: '@portfolio', es: 'el comité de cartera: pregúntale sobre TU cartera', en: 'portfolio committee: ask about YOUR portfolio',
+      i: '💼', n: 'Comité de cartera', ne: 'Portfolio committee', portfolio: true },
+    { c: '@fundamental', es: 'analista fundamental: balances y márgenes', en: 'fundamental analyst: financials and margins', i: '📊', n: 'Analista fundamental', ne: 'Fundamental analyst' },
+    { c: '@tecnico', ce: '@technical', es: 'analista técnico: precio y tendencias', en: 'technical analyst: price and trends', i: '📈', n: 'Analista técnico', ne: 'Technical analyst' },
+    { c: '@noticias', ce: '@news', es: 'analista de noticias', en: 'news analyst', i: '📰', n: 'Analista de noticias', ne: 'News analyst' },
+    { c: '@cadena', ce: '@supply', es: 'analista de cadena de suministro', en: 'supply-chain analyst', i: '🔗', n: 'Analista de cadena', ne: 'Supply-chain analyst' },
+    { c: '@geopolitico', ce: '@geo', es: 'analista geopolítico', en: 'geopolitical analyst', i: '🌐', n: 'Analista geopolítico', ne: 'Geopolitical analyst' },
+    { c: '@macro', es: 'analista macroeconómico', en: 'macro analyst', i: '🏦', n: 'Analista macro', ne: 'Macro analyst' },
+    { c: '@todos', ce: '@all', es: 'responden todos los analistas', en: 'all analysts answer', i: '👥', n: 'Todos los analistas', ne: 'All analysts' },
+    { c: '@investigacion', ce: '@research', es: 'lanza la investigación de una empresa', en: 'starts research on a company', ent: true, i: '🔬', n: 'Equipo de investigación', ne: 'Research team' },
+    { c: '@comite', ce: '@committee', es: 'el comité (empresa o "mi cartera")', en: 'the committee (company or "my portfolio")', cartera: true, i: '🏛', n: 'Comité de inversión', ne: 'Investment committee' },
   ];
   function chatMenu(input, opts) {
     if (!input || input._kpkChat) return input;
@@ -261,7 +274,12 @@
         var defs = st.tok.charAt(0) === '/' ? COMMANDS : ANALYSTS, f = fold(st.tok);
         var items = defs.filter(function (d) { return fold(d.c).indexOf(f) === 0 || fold(d.ce || '').indexOf(f) === 0; })
           .map(function (d) { return { value: en() && d.ce ? d.ce : d.c, label: en() && d.ce ? d.ce : d.c, hint: en() ? d.en : d.es, def: d }; });
-        show(input, items, function (o) { replace(st, o.value + ' '); },
+        show(input, items, function (o) {
+          // agentes SIN empresa (comité de cartera, analistas): el token sale del texto y queda como CHIP
+          // (como un conector); solo se escribe la pregunta. Los que piden empresa siguen en el texto.
+          if (o.def && o.def.i && !o.def.ent && !o.def.cartera) { replace(st, ''); input._agentTok = o.value; chipKey = '\u0000'; chipRefresh(); return; }
+          replace(st, o.value + ' ');
+        },
           st.tok.charAt(0) === '/' ? L('Comandos', 'Commands') : L('Analistas', 'Analysts'));
         return;
       }
@@ -273,6 +291,61 @@
       if (!items2.length) { if (LIST.owner === input) hide(); return; }
       show(input, items2, function (o) { replace(st, (o.icon ? o.value : (o.sym || o.label)) + ' '); }, q ? '' : L('Elige', 'Pick'));
     }
+    // ── chip del agente (conector) ──
+    var chip = null, chipKey = '\u0000';
+    function agentDef() {
+      if (input._agentTok) {
+        var tk = fold(input._agentTok);
+        return COMMANDS.concat(ANALYSTS).filter(function (x) { return fold(x.c) === tk || fold(x.ce || '') === tk; })[0] || null;
+      }
+      var m = input.value.match(/^\s*([\/@][^\s]+)(\s+[\s\S]*)?$/);
+      if (!m) return null;
+      var t = fold(m[1]), d = COMMANDS.concat(ANALYSTS).filter(function (x) { return x.i && (fold(x.c) === t || fold(x.ce || '') === t); })[0];
+      if (!d) return null;
+      var rest = fold(m[2] || '').trim();
+      if (d.cartera && /^(mi |my |la )?(cartera|portafolio|portfolio)\b/.test(rest)) return COMMANDS[0];   // "/comite mi cartera" → comité de cartera
+      return d;
+    }
+    function chipRefresh() {
+      var d = agentDef(), K = window.KhipuChat;
+      var key = d ? d.c + (d.portfolio ? ':' + (K && K.pfSelected && (K.pfSelected() || {}).key) + ':' + ((K && K.pfSources) ? K.pfSources().length : 0) : '') : '';
+      if (key === chipKey) return;
+      chipKey = key;
+      if (!d) { if (chip && chip.parentNode) chip.parentNode.removeChild(chip); chip = null; return; }
+      ensureCss();
+      if (!chip) { chip = document.createElement('span'); chip.className = 'kpk-chip'; }
+      if (!chip.parentNode && input.parentNode) input.parentNode.insertBefore(chip, input);
+      var h = '<i>' + esc(d.i) + '</i><b>' + esc(en() ? d.ne : d.n) + '</b>';
+      if (d.portfolio && K && K.pfSources) {
+        var srcs = K.pfSources(), sel = (K.pfSelected() || {}).key;
+        h += srcs.length ? '<select title="' + esc(L('¿Qué cartera?', 'Which portfolio?')) + '">' + srcs.map(function (x) {
+          return '<option value="' + esc(x.key) + '"' + (x.key === sel ? ' selected' : '') + '>' + esc(x.label) + '</option>';
+        }).join('') + '</select>' : '<span style="color:#FFB300;font-weight:500">' + esc(L('sin carteras', 'no portfolios')) + '</span>';
+      }
+      h += '<button type="button" title="' + esc(L('Quitar', 'Remove')) + '">✕</button>';
+      chip.innerHTML = h;
+      var se = chip.querySelector('select');
+      if (se) se.addEventListener('change', function () { if (K && K.pfSelect) K.pfSelect(se.value); chipKey = '\u0000'; chipRefresh(); input.focus(); });
+      chip.querySelector('button').addEventListener('click', function () {
+        if (input._agentTok) input._agentTok = null;
+        else input.value = input.value.replace(/^\s*[\/@][^\s]+\s*/, '');
+        chipKey = '\u0000'; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus();
+      });
+    }
+    // al ENVIAR (Enter o botón ➤) el chip vuelve al texto ("/cartera …") para el enrutador del chat
+    function flushTok() {
+      if (!input._agentTok) return;
+      input.value = input._agentTok + ' ' + input.value.replace(/^\s+/, '');
+      input._agentTok = null;
+      setTimeout(function () { chipKey = '\u0000'; chipRefresh(); }, 0);
+    }
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !isOpen(input)) flushTok(); }, true);
+    var sendBtn = input.parentNode && input.parentNode.querySelector('#bcp-send, #bcc-send, [data-send]');
+    if (sendBtn) sendBtn.addEventListener('click', flushTok, true);
+    // el chat vacía el campo al enviar sin disparar 'input': el chip lo sigue
+    setInterval(function () { if (chip && !input._agentTok && !agentDef()) { chipKey = '\u0000'; chipRefresh(); } }, 500);
+    input.addEventListener('input', chipRefresh);
+    input.addEventListener('focus', function () { chipKey = '\u0000'; chipRefresh(); });
     input.addEventListener('input', refresh);
     input.addEventListener('click', refresh);
     input.addEventListener('keydown', function (e) {
@@ -286,5 +359,12 @@
     return input;
   }
 
-  window.KhipuPick = { attach: attach, chatMenu: chatMenu, search: search, exact: exact, value: value, hide: hide };
+  // {name, emoji} del agente con el que empieza un texto ("@fundamental …", "/investigar …"), para la burbuja
+  function agentOf(text) {
+    var m = String(text || '').match(/^\s*([\/@][^\s]+)/);
+    if (!m) return null;
+    var t = fold(m[1]), d = COMMANDS.concat(ANALYSTS).filter(function (x) { return x.i && (fold(x.c) === t || fold(x.ce || '') === t); })[0];
+    return d ? { name: en() ? d.ne : d.n, emoji: d.i } : null;
+  }
+  window.KhipuPick = { attach: attach, chatMenu: chatMenu, search: search, exact: exact, value: value, hide: hide, agentOf: agentOf };
 })();

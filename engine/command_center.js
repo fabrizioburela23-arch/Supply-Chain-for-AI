@@ -230,7 +230,7 @@
           await this._chartInline(route.spec, card);
           return;
         }
-        if ((['demo', 'agentsim', 'research', 'dossier', 'terminal'].indexOf(route.kind) >= 0 ||
+        if ((['demo', 'agentsim', 'research', 'dossier', 'terminal', 'agentask'].indexOf(route.kind) >= 0 ||
              (route.kind === 'screen' && route.screen === 'screener')) && window.BixbyCockpit) {
           // escenas que viven en la Cabina: se delega en su enrutador
           ans.textContent = enCC ? 'Opening it in the Khipu cockpit…' : 'Abriéndolo en la Cabina de Khipu…';

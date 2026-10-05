@@ -9,6 +9,23 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (o) — AGENTES CON CHIP EN EL CHAT: EL COMITÉ DE CARTERA RESPONDE AHÍ (sw v218)
+
+- Feedback: "/cartera dime si debería reducir…" solo ABRÍA el comité y no respondía; pidió que
+  llamar a un agente se vea "como un conector de ChatGPT con favicon" y elegir la cartera desde el chat.
+- Servidor: POST /api/committee/portfolio/ask (research/committee_api.py) = portfolio_advisor.analyze
+  (precios reales) → se guarda en el historial (kind='committee') → khipu_chat.run_chat con
+  context.portfolio_notes (`portfolio_notes()`); devuelve agent{💼}, `portfolio` (tarjeta: score,
+  veredicto, cobertura, 4 acciones) y la acción `open_pf_committee`.
+- Cliente: classify → kind 'agentask' para /cartera, /portfolio, @cartera, "/comite mi cartera" y
+  frases ("que el comité analice mi cartera"); KhipuChat.askAgent/agentInfo/pfSources/pfSelected/
+  pfSelect (cartera elegida en localStorage 'kh_chat_pf_src'); fillReply pinta la tarjeta; burbuja
+  del usuario con chip del agente. Cockpit `chatAgent()`; command_center delega 'agentask' en la Cabina.
+- engine/pickers.js: CHIP de agente en el campo (ícono + nombre + selector de cartera + ✕); al elegir
+  un agente sin empresa (comité de cartera, analistas) el token sale del texto y queda como chip; al
+  enviar (Enter/➤) vuelve al texto (`flushTok`). `KhipuPick.agentOf(text)` para la burbuja.
+- Tests: tests/test_chat_portfolio_agent.py (2); test_chat_commands actualizado (ya no abre pantalla).
+
 # SESIÓN 2026-10-05 (n) — GEOPOLÍTICA CON FUENTES OFICIALES (sw v216)
 
 - Pedido: "que dé más info, pero fiable". Diagnóstico: GDELT GEO (conflicto/protestas/

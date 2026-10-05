@@ -399,5 +399,5 @@
     paint();
   }
 
-  window.KhipuPortfolioCommittee = { render: function (el) { S.el = typeof el === 'string' ? document.getElementById(el) : el; S.err = null; paint(); }, _sources: sources };
+  window.KhipuPortfolioCommittee = { render: function (el) { S.el = typeof el === 'string' ? document.getElementById(el) : el; S.err = null; paint(); }, _sources: sources, _positionsFor: positionsFor };
 })();

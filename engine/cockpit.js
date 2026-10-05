@@ -2528,7 +2528,7 @@
     if (!K) { stage('deep', text); return; }
     _ensureThread();
     var th = chatThread();
-    K.appendUser(th, text);
+    K.appendUser(th, text, window.KhipuPick && window.KhipuPick.agentOf ? window.KhipuPick.agentOf(text) : null);
     _ensureThread();
     var pend = K.appendPending(th);
     setState('think', L('Pensando', 'Thinking'));
@@ -2537,6 +2537,25 @@
       // (queda como botón); en escritorio la respuesta sigue visible en el dock
       K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) >= 700, retry: true });
       var rb = pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAsk(text); });
+      setState('', L('Listo', 'Ready'));
+    }).catch(function (e) {
+      K.fillError(pend, (e && e.message) || String(e));
+      setState('', L('Listo', 'Ready'));
+    });
+  }
+  // agente con chip (💼 comité de cartera): responde EN el hilo, sin abrir pantallas
+  function chatAgent(text, route) {
+    var K = window.KhipuChat;
+    if (!K || !K.askAgent) { chatAsk(text); return; }
+    _ensureThread();
+    var th = chatThread();
+    K.appendUser(th, text, K.agentInfo(route));
+    _ensureThread();
+    var pend = K.appendPending(th);
+    setState('think', L('El comité mide tu cartera', 'The committee is measuring your portfolio'));
+    K.askAgent(route).then(function (d) {
+      K.fillReply(pend, d, { onAction: runChatAction, autoRun: false, retry: true });
+      var rb = pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAgent(text, route); });
       setState('', L('Listo', 'Ready'));
     }).catch(function (e) {
       K.fillError(pend, (e && e.message) || String(e));
@@ -2585,7 +2604,7 @@
       parseTrade: window._parseTradeCommand || null,
     }) : { kind: 'brain' };
 
-    if (K && K.remember && route.kind !== 'none' && route.kind !== 'brain' && route.kind !== 'command') {
+    if (K && K.remember && route.kind !== 'none' && route.kind !== 'brain' && route.kind !== 'command' && route.kind !== 'agentask') {
       try {
         K.remember('user', text);
         var what = { xray: L('Abrí la radiografía de ', 'Opened the X-Ray of '), shock: L('Simulé la caída de ', 'Simulated the failure of '),
@@ -2602,6 +2621,7 @@
         if (window._openBrokerConfirm) window._openBrokerConfirm(route.parsed); else stage('broker');
         return;
       case 'account': stage('broker'); return;
+      case 'agentask': chatAgent(text, route); return;
       case 'command':
         Promise.resolve(route.pending).then(function (r) {
           if (r && r.actions && r.actions.length === 1 && dispatchAction(r.actions[0])) return;
