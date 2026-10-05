@@ -617,6 +617,9 @@
       h += '<div class="kc-pf-a"><b>' + esc(k[0] + ' ' + k[1] + ' ' + (a.label || '')) + '</b><span style="color:#8E9AB8">' +
         esc(Math.round(a.from_pct) + '% → ' + Math.round(a.to_pct) + '% · ' + (lang() === 'en' ? a.why_en : a.why_es)) + '</span></div>';
     });
+    (c.geo || []).forEach(function (g) {
+      h += '<div class="kc-pf-a"><b>🌐 ' + esc(g.label || '') + '</b><span style="color:#8E9AB8">' + esc((lang() === 'en' ? g.title_en : g.title_es) + ' — ' + (lang() === 'en' ? g.why_en : g.why_es)) + '</span></div>';
+    });
     if ((c.excluded || []).length) h += '<div class="kc-pf-m" style="color:#FFB300;margin-top:6px">⚠ ' + esc(L('Sin analizar: ', 'Not analyzed: ') + c.excluded.join(', ')) + '</div>';
     return h + '<div class="kc-pf-m" style="margin-top:6px">🤖 ' + esc(L('Consejo educativo de IA; nada se ejecuta sin tu confirmación.', 'Educational AI advice; nothing runs without your confirmation.')) + '</div></div>';
   }

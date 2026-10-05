@@ -193,6 +193,22 @@
     });
   }
 
+  // 🌐 geopolítica EN VIVO de tus posiciones (World Monitor: reglas que las nombran, rutas, eventos cerca, riesgo país)
+  function geoHtml(r) {
+    var g = r.geo_risks || [];
+    if (!g.length) return '';
+    return card('<div class="cm-t">🌐 ' + esc(L('Geopolítica en vivo de tus posiciones', 'Live geopolitics of your holdings')) + '</div>' +
+      g.slice(0, 8).map(function (x) {
+        return x.items.map(function (it) {
+          var u = it.url && /^https?:\/\//i.test(it.url) ? it.url : null;
+          return '<div class="cm-kv"><span><b>' + esc(x.label) + '</b> · ' + esc(isEn() ? it.title_en : it.title_es) + '<br><span class="cm-note">' +
+            esc((isEn() ? it.why_en : it.why_es) + (it.distance_km != null ? ' · ' + it.distance_km + ' km' : '') + ' · ' + (it.source || '') + ' · ' + String(it.time || '').slice(0, 10)) +
+            (u ? ' · <a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" style="color:#7ecbff">' + esc(L('fuente ↗', 'source ↗')) + '</a>' : '') + '</span></span>' +
+            '<span style="color:' + (it.severity >= 70 ? '#FF4D6A' : it.severity >= 50 ? '#FFB300' : '#9BA6C4') + '">' + it.severity + '</span></div>';
+        }).join('');
+      }).join('') + '<div class="cm-note" style="font-size:10.5px;margin-top:4px">' + esc(L('Datos en vivo del World Monitor (pestaña Geopolítica). Severidad 0-100.', 'Live data from the World Monitor (Geopolitics tab). Severity 0-100.')) + '</div>');
+  }
+
   function resultHtml(r) {
     var k = r.kpis, h = r.health, P = r.profile;
     var col = h.tone === 'good' ? '#2BE38B' : h.tone === 'warn' ? '#FFB300' : '#FF4D6A';
@@ -230,6 +246,7 @@
               (S.lastSrc && S.lastSrc.broker && (a.kind === 'sell' || a.kind === 'reduce' || a.kind === 'add' || a.kind === 'buy_new') ? '<button class="cm-btn ghost" data-trade="' + a.id + '" style="padding:4px 10px;font-size:11.5px">🧾 ' + esc(L('Preparar orden', 'Prepare order')) + '</button>' : '') +
             '</span></div><div class="cm-note" style="margin-top:4px">' + esc(isEn() ? a.why_en : a.why_es) + '</div></div>';
         }).join('') : '<div class="cm-note">' + esc(L('No vemos cambios necesarios ahora. 👌', 'No changes needed right now. 👌')) + '</div>')) +
+      geoHtml(r) +
       '<div class="cm-grid"><div style="min-width:0">' +
         card('<div class="cm-t">⚖️ ' + esc(L('Cuánto pesa cada posición', 'How much each position weighs')) + ' <span style="text-transform:none;letter-spacing:0;font-weight:400">· ' + esc(L('línea amarilla = tope de tu perfil', 'yellow line = your profile cap')) + '</span></div>' +
           r.positions.map(function (p) { return hbar(p.label, p.weight_pct, maxW, '#00E0FF', P.max_position); }).join('')) +

@@ -265,11 +265,27 @@ def portfolio_committee():
             log.warning('portfolio committee: %s', e)
             return jsonify({'ok': False, 'error': 'no se pudo analizar la cartera', 'error_en': 'could not analyze the portfolio',
                             'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
+        if out.get('ok'):
+            _attach_geo(out)
         if out.get('ok') and body.get('explain', True):
             out['explanation'] = pa.explain(out, lang)
     if out.get('ok') and body.get('save', True):
         _register_portfolio_analysis(out, body, lang)
     return jsonify(out), (200 if out.get('ok') else 422)
+
+
+def _attach_geo(a):
+    """Cruza cada posición con la geopolítica EN VIVO (core/world.entity_geo_risks). Nunca rompe el análisis."""
+    try:
+        from core.world import entity_geo_risks
+        rows = [r for r in (a.get('positions') or []) if r.get('entity_id')]
+        risks = entity_geo_risks([r['entity_id'] for r in rows])
+        a['geo_risks'] = [{'entity_id': r['entity_id'], 'label': r.get('label'), 'symbol': r.get('symbol'),
+                           'items': risks[r['entity_id']]} for r in rows if r['entity_id'] in risks]
+    except Exception as e:  # noqa: BLE001
+        log.info('committee geo: %s', e)
+        a['geo_risks'] = []
+    return a
 
 
 def portfolio_notes(a, lang='es'):
@@ -298,6 +314,11 @@ def portfolio_notes(a, lang='es'):
         lines.append(f"Se mueven juntas: {p['a']} y {p['b']} (correlación {p['corr']}).")
     for x in (a.get('excluded') or [])[:10]:
         lines.append(f"No analizada: {x.get('label') or x.get('symbol')} — {x.get('reason')}.")
+    for gr in (a.get('geo_risks') or [])[:12]:
+        for it in gr['items']:
+            lines.append(f"Geopolítica EN VIVO para {gr['label']} ({gr['symbol']}): {it['title_es']} — {it['why_es']}"
+                         f"{' a ' + str(it['distance_km']) + ' km' if it.get('distance_km') is not None else ''}; "
+                         f"severidad {it['severity']}; fuente {it['source']} ({str(it.get('time') or '')[:10]}).")
     lines.append(f"Datos: {a.get('source')} al {a.get('as_of')}. Es consejo educativo, nunca una orden.")
     return '\n'.join(str(x) for x in lines)
 
@@ -310,7 +331,10 @@ def portfolio_card(a):
             'profile': (a.get('profile') or {}).get('label'),
             'actions': [{k: x.get(k) for k in ('id', 'kind', 'label', 'from_pct', 'to_pct', 'delta_usd', 'priority', 'why_es', 'why_en')}
                         for x in (a.get('actions') or [])[:4]],
-            'excluded': [x.get('label') or x.get('symbol') for x in (a.get('excluded') or [])][:8]}
+            'excluded': [x.get('label') or x.get('symbol') for x in (a.get('excluded') or [])][:8],
+            'geo': [{'label': g['label'], 'title_es': it['title_es'], 'title_en': it['title_en'], 'why_es': it['why_es'],
+                     'why_en': it['why_en'], 'severity': it['severity'], 'url': it.get('url')}
+                    for g in (a.get('geo_risks') or []) for it in g['items'][:1]][:4]}
 
 
 @committee_bp.route('/portfolio/ask', methods=['POST'])
@@ -346,6 +370,7 @@ def portfolio_ask():
                             'answer': (f"I could not measure your portfolio: {msg}" if lang == 'en'
                                        else f"No pude medir tu cartera: {msg}"),
                             'excluded': a.get('excluded') or []}), 200
+        _attach_geo(a)
         if body.get('save', True):
             _register_portfolio_analysis(a, {'source_label': label}, lang)
         hist = body.get('history') if isinstance(body.get('history'), list) else []

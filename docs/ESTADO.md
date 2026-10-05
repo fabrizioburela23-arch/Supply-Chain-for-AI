@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (q) — COMITÉ DE CARTERA × GEOPOLÍTICA EN VIVO (sw v223)
+
+- `core/world.entity_geo_risks(ids)`: por empresa, solo capas en vivo/oficiales (no curadas):
+  regla/sanción que la NOMBRA (policy), estrecho del que depende con caída (shipping, sev ≥ 40),
+  conflicto/protesta/sismo/natural/desastre cerca de su sede CONOCIDA (hq/city), riesgo país
+  oficial o corte de internet en su país. Usa la caché del World Monitor (wait 3 s).
+- research/committee_api `_attach_geo` en /portfolio y /portfolio/ask → `geo_risks`; entra en
+  portfolio_notes (el cerebro lo usa), en la tarjeta del chat (🌐) y en el comité (engine/pfcommittee.js
+  `geoHtml`, con enlace a la fuente).
+- Test: test_world_feeds::test_geopolitica_en_vivo_por_empresa_para_el_comite.
+
 # SESIÓN 2026-10-05 (p) — GEOPOLÍTICA: CAPAS "EN PAUSA" REVIVIDAS + RIESGO PAÍS + CORTES (sw v219)
 
 - conflict/unrest/trade ya NO usan la API GEO retirada: `core/gdelt_events.py` lee los ARCHIVOS

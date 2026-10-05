@@ -137,3 +137,20 @@ def test_cortes_de_internet_sin_clave_lo_dicen_y_con_clave_se_leen(monkeypatch):
     assert ir['ongoing'] and ir['severity'] == 80 and ir['cause'] == 'government directed' and ir['networks'] == ['TCI']
     pk = next(i for i in out if i['place'] == 'Pakistan')
     assert not pk['ongoing'] and pk['severity'] == 30
+
+
+def test_geopolitica_en_vivo_por_empresa_para_el_comite(monkeypatch):
+    """2026-10-05: el comité de cartera cruza cada posición con el World Monitor en vivo."""
+    monkeypatch.setattr(W, '_http_get_json', _fake())
+    monkeypatch.setattr(F, '_ref_affected', lambda: {'suez': ['Nvidia']})
+    r = W.entity_geo_risks(['SMIC', 'Nvidia', 'TSMC', 'Inexistente'], window='7d', wait=5)
+    assert r['SMIC'][0]['why'] == 'named' and r['SMIC'][0]['layer'] == 'policy'          # la nombra el BIS
+    assert any(h['why'] == 'route' and h['layer'] == 'shipping' for h in r['Nvidia'])    # Suez −50 %
+    near = [h for h in r.get('TSMC', []) if h['why'] == 'near']
+    assert near and near[0]['layer'] == 'disasters' and near[0]['distance_km'] < 400      # tifón rojo cerca de Hsinchu
+    assert 'Inexistente' not in r
+    from research.committee_api import _attach_geo, portfolio_card, portfolio_notes
+    a = {'positions': [{'entity_id': 'SMIC', 'label': 'SMIC', 'symbol': '0981.HK'}], 'health': {}, 'kpis': {}, 'profile': {}}
+    _attach_geo(a)
+    assert a['geo_risks'][0]['entity_id'] == 'SMIC'
+    assert 'Geopolítica EN VIVO para SMIC' in portfolio_notes(a) and portfolio_card(a)['geo'][0]['label'] == 'SMIC'

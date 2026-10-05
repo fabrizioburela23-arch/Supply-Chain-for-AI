@@ -1906,3 +1906,56 @@ def api_world_policy():
     src = (world_events(layers=['policy'], wait=0)['sources'] or {}).get('policy') or {}
     out['status'] = {k: src.get(k) for k in ('ok', 'as_of', 'error_code', 'error_es', 'error_en', 'retry_at') if k in src}
     return jsonify(out)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 9. Geopolítica EN VIVO por empresa (para el comité de cartera, 2026-10-05:
+#    "en todas las etapas la integración con información en vivo es clave")
+# ═══════════════════════════════════════════════════════════════════════════
+_GEO_WHY = {'named': ('la nombra un documento oficial', 'named in an official document'),
+            'route': ('depende de esa ruta marítima', 'depends on that shipping route'),
+            'near': ('cerca de su sede/planta', 'near its HQ/plant'),
+            'country': ('en su país', 'in its country')}
+_GEO_NEAR_LAYERS = ('conflict', 'unrest', 'quakes', 'natural', 'disasters')
+
+
+def entity_geo_risks(entity_ids, window='7d', wait=3.0, per_entity=3, min_severity=40):
+    """{entity_id: [{layer, title_es, title_en, severity, why, why_es, why_en, distance_km?, time, url, source}]}
+    Solo capas EN VIVO u oficiales (no las fichas curadas): reglas/sanciones que NOMBRAN la empresa,
+    caídas de tráfico en estrechos de los que depende, eventos cerca de su sede conocida y riesgo
+    país oficial. Usa la caché del World Monitor (no fuerza descargas)."""
+    try:
+        ev = world_events(window=window, wait=wait)
+    except Exception:  # noqa: BLE001
+        return {}
+    g = _graph()
+    items = [i for i in ev.get('items') or [] if i.get('layer') not in CURATED_LAYERS]
+    out = {}
+    for eid in dict.fromkeys(entity_ids or []):
+        rec = g['by_id'].get(eid)
+        if not rec:
+            continue
+        hits = []
+        for it in items:
+            lyr, sev, why, dist = it.get('layer'), it.get('severity') or 0, None, None
+            if eid in (it.get('affected') or []) and lyr in ('policy', 'shipping'):
+                why = 'named' if lyr == 'policy' else 'route'
+                if lyr == 'shipping' and sev < min_severity:
+                    why = None
+            elif lyr in _GEO_NEAR_LAYERS and rec['precision'] in ('hq', 'city') and sev >= min_severity:
+                d = haversine_km(it['lat'], it['lon'], rec['lat'], rec['lng'])
+                if d <= max(item_radius_km(it), 50):
+                    why, dist = 'near', int(round(d))
+            elif lyr in ('advisories', 'outages') and it.get('country_key') and it['country_key'] == rec['country_key'] \
+                    and rec['country_key'] not in _GENERIC:
+                why = 'country'
+            if not why:
+                continue
+            hits.append({'layer': lyr, 'title_es': it.get('title_es') or it.get('title'), 'title_en': it.get('title_en') or it.get('title'),
+                         'severity': sev, 'why': why, 'why_es': _GEO_WHY[why][0], 'why_en': _GEO_WHY[why][1],
+                         'distance_km': dist, 'time': it.get('time'), 'url': it.get('url'),
+                         'source': it.get('source_es') or it.get('source'), 'official': bool(it.get('official'))})
+        if hits:
+            hits.sort(key=lambda h: (-(h['why'] == 'named'), -h['severity']))
+            out[eid] = hits[:per_entity]
+    return out
