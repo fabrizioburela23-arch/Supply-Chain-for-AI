@@ -280,11 +280,13 @@ def aggregate(layer, window_s, severity_fn, now=None, limit=200):
     return sorted(out, key=lambda g: -g['articles'])[:limit]
 
 
-def severity(articles, sources):
-    """0-100 por COBERTURA (no víctimas): artículos y fuentes que hablan de ese lugar.
-    5 art ≈ 51 · 10 ≈ 63 · 25 ≈ 80 · 60+ ≈ 96 (+ hasta 4 por fuentes distintas)."""
+def severity(articles, sources, days=1.0):
+    """0-100 por COBERTURA (no víctimas): artículos POR DÍA que hablan de ese lugar (+ hasta 3 por fuentes).
+    Calibrado con 24 h reales (2026-10-05): 5 art/día ≈ 41 · 16 ≈ 57 · 70 ≈ 79 · 200 ≈ 94 · 500+ = 100. Antes, con un día
+    completo de noticias, casi todo llegaba a 100 y no se distinguía lo grave."""
     import math
-    return int(min(100, round(15 + 14 * math.log2(1 + max(0, articles)) + min(4, max(0, sources) / 5))))
+    per_day = max(0.0, float(articles or 0)) / max(float(days or 1), 1 / 24)
+    return int(min(100, round(15 + 10 * math.log2(1 + per_day) + min(3, max(0, sources or 0) / 20))))
 
 
 _CODE_LABEL = {

@@ -1122,6 +1122,7 @@ def _fetch_gdelt_events(layer, window):
         return None, source_down('gdelt_events') or err
     source_result('gdelt_events', None)
     win = WINDOWS[window]
+    have_h, _want_h = GE.coverage(win)
     now = _now()
     items = []
     for g in GE.aggregate(layer, win, gdelt_severity):
@@ -1134,7 +1135,8 @@ def _fetch_gdelt_events(layer, window):
             'layer': layer, 'lat': round(g['lat'], 4), 'lon': round(g['lon'], 4),
             'title': f"{les or ''} · {place}".strip(' ·'), 'title_es': f"{les or ''} · {place}".strip(' ·'),
             'title_en': f"{len_ or ''} · {place}".strip(' ·'), 'place': place, 'country_key': place_country(place),
-            'severity': GE.severity(g['articles'], g['sources']), 'count': g['articles'], 'events': g['events'],
+            'severity': GE.severity(g['articles'], g['sources'], days=max(1 / 24, min(win, have_h * 3600 or win) / 86400)),
+            'count': g['articles'], 'events': g['events'],
             'sources_n': g['sources'], 'distinct_articles': g.get('distinct_articles'), 'precision': 'country' if g['geo_type'] == 1 else 'city',
             'goldstein': round(sum(g['gold']) / len(g['gold']), 1) if g['gold'] else None,
             'time': _iso(g['last']), 'ts': g['last'], 'time_kind': 'last_update', 'window': window,

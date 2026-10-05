@@ -68,6 +68,7 @@ def test_parse_filtra_ruido_y_clasifica_por_cameo():
     assert GE.classify('15', '150', 1, {'MIL'}) is None and GE.classify('15', '150', 3, {'MIL'}) == 'conflict'
     assert GE.classify('19', '190', 9, {'COP'}) is None and GE.classify('14', '141', 2) == 'unrest'
     assert GE.severity(5, 3) < GE.severity(25, 10) < 100 and GE.severity(0, 0) == 15
+    assert GE.severity(72, 40) < 85 and GE.severity(500, 100, days=7) < GE.severity(500, 100)   # un día completo NO satura en 100
 
 
 def test_capas_en_vivo_agrupadas_con_fuentes(monkeypatch):
