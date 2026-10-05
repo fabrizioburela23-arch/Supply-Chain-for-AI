@@ -39,14 +39,18 @@ def test_endpoint_mide_la_cartera_y_responde_la_pregunta(monkeypatch):
         return 'Sí: reduce Nvidia, pesa 70 %.', 'test-model'
     monkeypatch.setattr(kc, 'synthesize', fake_synth)
     c = server.app.test_client()
-    d = c.post('/api/committee/portfolio/ask', json={'question': '¿debería reducir alguna posición?', 'source_label': 'Mi tesis',
+    d0 = c.post('/api/committee/portfolio/ask', json={'question': '¿cuánto pesa Nvidia?', 'positions': [{'symbol': 'NVDA', 'shares': 10}],
+                                                      'save': False}).get_json()
+    assert d0['agent']['seat'] == 'khipu' and d0['portfolio'] is None          # sin veredicto si no lo pide
+    assert seen['message'].startswith('[Responde SOLO a la pregunta del usuario') and 'No des un veredicto' in seen['message']
+    d = c.post('/api/committee/portfolio/ask', json={'question': '¿debería reducir alguna posición?', 'source_label': 'Mi tesis', 'seat': 'committee',
                                                      'positions': [{'symbol': 'NVDA', 'shares': 10}], 'save': False}).get_json()
     assert d['ok'] and d['answer'].startswith('Sí')
     assert d['agent']['seat'] == 'portfolio' and d['agent']['label'] == 'Mi tesis'
     assert d['portfolio']['score'] == 58 and d['portfolio']['actions'][0]['id'] == 'A1'
     assert any(a['type'] == 'open_pf_committee' for a in d['actions'])
     notes = seen['ctx']['portfolio_notes']
-    assert seen['message'] == '¿debería reducir alguna posición?'
+    assert seen['message'] == '¿debería reducir alguna posición?'      # el comité: la pregunta tal cual
     assert 'Nvidia (NVDA): peso 70' in notes and 'Acción sugerida A1' in notes and 'No analizada: OpenAI' in notes
     assert 'Geopolítica EN VIVO' in notes                      # siempre dice algo sobre geopolítica (aunque no haya eventos)
     # un analista concreto: responde él, sin la tarjeta del comité y sin guardar como análisis del comité
@@ -55,12 +59,14 @@ def test_endpoint_mide_la_cartera_y_responde_la_pregunta(monkeypatch):
     assert d2['agent']['seat'] == 'geopolitical' and d2['agent']['name'] == 'Analista geopolítico' and d2['portfolio'] is None
     assert seen['message'].startswith('[Responde SOLO como analista geopolítico')
     # sin pregunta → pide el análisis general
-    c.post('/api/committee/portfolio/ask', json={'positions': [{'symbol': 'NVDA', 'shares': 1}], 'save': False})
+    c.post('/api/committee/portfolio/ask', json={'positions': [{'symbol': 'NVDA', 'shares': 1}], 'save': False, 'seat': 'committee'})
     assert 'Analiza mi cartera' in seen['message']
     # si la IA no responde: respuesta SOBRE LA CARTERA (no una lista genérica del mundo)
     monkeypatch.setattr(kc, 'synthesize', lambda *a, **k: (None, None))
-    d3 = c.post('/api/committee/portfolio/ask', json={'positions': [{'symbol': 'NVDA', 'shares': 1}], 'save': False}).get_json()
+    d3 = c.post('/api/committee/portfolio/ask', json={'positions': [{'symbol': 'NVDA', 'shares': 1}], 'save': False, 'seat': 'committee'}).get_json()
     assert d3['degraded'] and d3['answer'].startswith('**58/100**') and 'Geopolítica en vivo' in d3['answer']
+    d4 = c.post('/api/committee/portfolio/ask', json={'question': 'riesgos', 'positions': [{'symbol': 'NVDA', 'shares': 1}], 'save': False}).get_json()
+    assert '58/100' not in d4['answer'] and 'Nvidia: 70' in d4['answer']      # sin IA y sin veredicto: solo datos de la cartera
 
 
 JS = r"""
@@ -89,7 +95,13 @@ def test_chat_enruta_cartera_al_agente_con_la_pregunta():
     o = json.loads(r.stdout)
     seats = o.pop('__seats')
     for t, v in o.items():
-        assert v['kind'] == 'agentask' and v['agent'] == 'portfolio' and not v['seat'], t
+        assert v['kind'] == 'agentask' and v['agent'] == 'portfolio', t
+    # la cartera es CONTEXTO: Khipu responde la pregunta; el comité SOLO cuando se le llama
+    for t in ('/cartera dime si debería reducir mi posición en alguna empresa', '/cartera', '@cartera ¿cuánto riesgo tengo?',
+              '/portfolio should I trim anything?'):
+        assert not o[t]['seat'], t
+    for t in ('que el comité analice mi cartera', '/comite mi cartera'):
+        assert o[t]['seat'] == 'committee', t
     # un analista CONCRETO sobre tu cartera (no todo el comité); sobre una empresa sigue yendo al cerebro
     assert seats['/cartera @geopolitico ¿qué riesgos tiene?'] == {'kind': 'agentask', 'seat': 'geopolitical', 'q': '¿qué riesgos tiene?'}
     assert seats['@geopolitico ¿cuáles son los riesgos de mi cartera?']['seat'] == 'geopolitical'

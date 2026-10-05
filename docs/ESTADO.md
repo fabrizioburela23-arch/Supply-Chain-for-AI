@@ -9,6 +9,18 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (s) — CARTERA = CONTEXTO, AGENTE = QUIÉN RESPONDE (sw v225)
+
+- Feedback: "selecciono mi cartera y todo el comité la analiza; me quitó al @geo; ¿para qué me dice si la
+  cartera está adaptada si no le pregunto? la app no se centra en lo valioso".
+- engine/pickers.js: DOS chips independientes y persistentes (hasta ✕): 💼 contexto (`input._ctxPf`, selector
+  de cartera) y 🤖 agente (`input._agentTok`; sin agente se muestra "💬 Khipu"). Al enviar se traducen:
+  cartera+analista → "/cartera @geo …", cartera sola → "/cartera …", cartera+comité → "/cartera @comite …".
+- Modos en /api/committee/portfolio/ask: sin seat → Khipu responde SOLO la pregunta con los datos (sin
+  veredicto, sin tarjeta, no se guarda); seat analista → ese analista; seat 'committee' → comité con
+  tarjeta (se guarda). classify: "/cartera …" = Khipu; "/comite mi cartera" y "que el comité analice…" =
+  committee. Respaldo sin IA sin veredicto (`portfolio_fallback(verdict=False)`): pesos y riesgo + geopolítica.
+
 # SESIÓN 2026-10-05 (r) — RESPUESTA ENFOCADA EN LA CARTERA + UN ANALISTA CONCRETO SOBRE TU CARTERA (sw v224)
 
 - Bug real (captura de Fabrizio): "/cartera ¿cuáles son los riesgos geopolíticos de mi cartera?" respondió

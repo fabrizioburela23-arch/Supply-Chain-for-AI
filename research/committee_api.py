@@ -371,13 +371,20 @@ def portfolio_notes(a, lang='es'):
     return '\n'.join(str(x) for x in lines)
 
 
-def portfolio_fallback(a, lang='es'):
-    """Respuesta SIN IA, solo con el análisis calculado (nunca una lista genérica del mundo)."""
+def portfolio_fallback(a, lang='es', verdict=True):
+    """Respuesta SIN IA, solo con el análisis calculado (nunca una lista genérica del mundo).
+    verdict=False (Khipu o un analista): sin la nota de salud — solo datos de la cartera."""
     es = lang != 'en'
     h, gx = a.get('health') or {}, a.get('geo_exposure') or {}
-    out = [f"**{h.get('score')}/100** — {h.get('verdict')}"]
-    for x in (a.get('actions') or [])[:3]:
-        out.append(f"- {x.get('label')}: {x['from_pct']:.0f} % → {x['to_pct']:.0f} % — {x['why_es'] if es else x['why_en']}")
+    if verdict:
+        out = [f"**{h.get('score')}/100** — {h.get('verdict')}"]
+        for x in (a.get('actions') or [])[:3]:
+            out.append(f"- {x.get('label')}: {x['from_pct']:.0f} % → {x['to_pct']:.0f} % — {x['why_es'] if es else x['why_en']}")
+    else:
+        out = ['**Tus posiciones (peso y riesgo que aportan):**' if es else '**Your holdings (weight and risk contribution):**']
+        for r in sorted(a.get('positions') or [], key=lambda r: -(r.get('weight_pct') or 0))[:6]:
+            out.append(f"- {r.get('label')}: {r.get('weight_pct')} % " + (f"del dinero, {r.get('risk_contrib_pct')} % del riesgo"
+                       if es else f"of the money, {r.get('risk_contrib_pct')}% of the risk"))
     geo_live = [(g['label'], it) for g in (a.get('geo_risks') or []) for it in g['items']]
     out.append('**Geopolítica en vivo:**' if es else '**Live geopolitics:**')
     if geo_live:
@@ -436,15 +443,25 @@ def portfolio_ask():
     # obligue a analizar con todo el comité"): responde SOLO desde su especialidad, sin la tarjeta del comité.
     from research.ask_agent import ROLE
     from research.deliberation import AGENT_NAMES
-    seat = str(body.get('seat') or '').strip()
-    seat = seat if seat in ROLE else None
+    raw_seat = str(body.get('seat') or '').strip()
+    committee_mode = raw_seat == 'committee'           # veredicto del comité con tarjeta: SOLO si se pide
+    seat = raw_seat if raw_seat in ROLE else None
+    if not seat and not committee_mode:
+        # Khipu responde SOLO la pregunta, con los datos de la cartera como contexto (feedback 2026-10-05:
+        # "si no le pregunto, ¿para qué me dice si la cartera está adaptada a mí?")
+        agent = {'name': 'Khipu', 'emoji': '💬', 'seat': 'khipu', 'label': label or None}
+        q = (f"[Answer ONLY the user's question, using their portfolio data. Do not give an overall verdict, health "
+             f"score or profile fit unless they ask for it. Be specific: name holdings, weights and figures.] {q}"
+             if lang == 'en' else
+             f"[Responde SOLO a la pregunta del usuario usando los datos de su cartera. No des un veredicto general, "
+             f"la salud ni si se ajusta a su perfil salvo que lo pida. Sé concreto: nombra posiciones, pesos y cifras.] {q}")
     if seat:
         em, n_es, n_en = AGENT_NAMES.get(seat, ('🤖', seat, seat))
         agent = {'name': n_en if lang == 'en' else n_es, 'emoji': em, 'seat': seat, 'label': label or None}
         q = (f"[Answer ONLY as the {ROLE[seat][1]} of the committee, from your specialty, about the user's portfolio. "
              f"Do not give the whole committee's verdict.] {q}" if lang == 'en' else
              f"[Responde SOLO como {ROLE[seat][0]} del comité, desde tu especialidad, sobre la cartera del usuario. "
-             f"No des el veredicto de todo el comité.] {q}")
+             f"No des el veredicto de todo el comité ni la salud de la cartera salvo que lo pida.] {q}")
     with ai_context('comite_cartera_chat', who):
         try:
             a = pa.analyze(positions, profile=profile, lang=lang, cash_usd=body.get('cash_usd') or 0)
@@ -458,7 +475,7 @@ def portfolio_ask():
                                        else f"No pude medir tu cartera: {msg}"),
                             'excluded': a.get('excluded') or []}), 200
         _attach_geo(a)
-        if body.get('save', True) and not seat:
+        if body.get('save', True) and committee_mode:
             _register_portfolio_analysis(a, {'source_label': label}, lang)
         hist = body.get('history') if isinstance(body.get('history'), list) else []
         try:
@@ -476,11 +493,11 @@ def portfolio_ask():
         except Exception as e:  # noqa: BLE001
             log.info('portfolio ask synth: %s', e)
         if not out:
-            out = {'answer': portfolio_fallback(a, lang), 'ai': False, 'degraded': True,
+            out = {'answer': portfolio_fallback(a, lang, verdict=committee_mode), 'ai': False, 'degraded': True,
                    'ai_detail_es': 'La IA no respondió a tiempo; te muestro el análisis calculado.',
                    'ai_detail_en': 'The AI did not answer in time; here is the computed analysis.'}
     out = dict(out or {})
-    out.update(ok=True, agent=agent, portfolio=None if seat else portfolio_card(a), saved_id=a.get('saved_id'))
+    out.update(ok=True, agent=agent, portfolio=portfolio_card(a) if committee_mode else None, saved_id=a.get('saved_id'))
     acts = [x for x in (out.get('actions') or []) if isinstance(x, dict)]
     acts.append({'type': 'open_pf_committee', 'arg': None})
     out['actions'] = acts

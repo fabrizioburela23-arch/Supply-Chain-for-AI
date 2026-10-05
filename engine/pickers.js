@@ -218,17 +218,17 @@
 
   // ── menú "/" y "@" del chat de Khipu ──
   var COMMANDS = [
-    { c: '/cartera', ce: '/portfolio', es: 'el comité mide TU cartera y responde tu pregunta aquí', en: 'the committee measures YOUR portfolio and answers here',
-      i: '💼', n: 'Comité de cartera', ne: 'Portfolio committee', portfolio: true },
+    { c: '/cartera', ce: '/portfolio', es: 'pregunta sobre TU cartera (elige cuál; suma un @analista si quieres)', en: 'ask about YOUR portfolio (pick which; add an @analyst if you like)',
+      i: '💼', n: 'Mi cartera', ne: 'My portfolio', portfolio: true },
     { c: '/investigar', ce: '/research', es: 'el equipo de investigación estudia una empresa', en: 'the research team studies a company', ent: true,
       i: '🔬', n: 'Equipo de investigación', ne: 'Research team' },
-    { c: '/comite', ce: '/committee', es: 'el comité de inversión opina sobre una empresa', en: 'the investment committee on a company', ent: true, cartera: true,
+    { c: '/comite', ce: '/committee', es: 'el comité de inversión: veredicto sobre una empresa o tu cartera', en: 'the investment committee: verdict on a company or your portfolio', ent: true, cartera: true,
       i: '🏛', n: 'Comité de inversión', ne: 'Investment committee' },
     { c: '/ayuda', ce: '/help', es: 'todos los comandos', en: 'all the commands' },
   ];
   var ANALYSTS = [
-    { c: '@cartera', ce: '@portfolio', es: 'el comité de cartera: pregúntale sobre TU cartera', en: 'portfolio committee: ask about YOUR portfolio',
-      i: '💼', n: 'Comité de cartera', ne: 'Portfolio committee', portfolio: true },
+    { c: '@cartera', ce: '@portfolio', es: 'usar TU cartera como contexto de la pregunta', en: 'use YOUR portfolio as the context of the question',
+      i: '💼', n: 'Mi cartera', ne: 'My portfolio', portfolio: true },
     { c: '@fundamental', es: 'analista fundamental: balances y márgenes', en: 'fundamental analyst: financials and margins', i: '📊', n: 'Analista fundamental', ne: 'Fundamental analyst' },
     { c: '@tecnico', ce: '@technical', es: 'analista técnico: precio y tendencias', en: 'technical analyst: price and trends', i: '📈', n: 'Analista técnico', ne: 'Technical analyst' },
     { c: '@noticias', ce: '@news', es: 'analista de noticias', en: 'news analyst', i: '📰', n: 'Analista de noticias', ne: 'News analyst' },
@@ -277,7 +277,10 @@
         show(input, items, function (o) {
           // agentes SIN empresa (comité de cartera, analistas): el token sale del texto y queda como CHIP
           // (como un conector); solo se escribe la pregunta. Los que piden empresa siguen en el texto.
-          if (o.def && o.def.i && !o.def.ent && !o.def.cartera) { replace(st, ''); input._agentTok = o.value; chipKey = '\u0000'; chipRefresh(); return; }
+          if (o.def && o.def.portfolio) { replace(st, ''); setCtx(); return; }                 // 💼 cartera = CONTEXTO
+          if (o.def && (isSeat(o.def) || (o.def.cartera && input._ctxPf && /comite|committee/.test(fold(o.def.c))))) {
+            replace(st, ''); input._agentTok = o.value; chipKey = ''; chipRefresh(); return;           // 🤖 quién responde
+          }
           replace(st, o.value + ' ');
         },
           st.tok.charAt(0) === '/' ? L('Comandos', 'Commands') : L('Analistas', 'Analysts'));
@@ -291,83 +294,79 @@
       if (!items2.length) { if (LIST.owner === input) hide(); return; }
       show(input, items2, function (o) { replace(st, (o.icon ? o.value : (o.sym || o.label)) + ' '); }, q ? '' : L('Elige', 'Pick'));
     }
-    // ── chip del agente (conector) ──
-    var chip = null, chipKey = '\u0000';
-    function agentDef() {
-      if (input._agentTok) {
-        var tk = fold(input._agentTok);
-        return COMMANDS.concat(ANALYSTS).filter(function (x) { return fold(x.c) === tk || fold(x.ce || '') === tk; })[0] || null;
-      }
-      var m = input.value.match(/^\s*([\/@][^\s]+)(\s+[\s\S]*)?$/);
-      if (!m) return null;
-      var t = fold(m[1]), d = COMMANDS.concat(ANALYSTS).filter(function (x) { return x.i && (fold(x.c) === t || fold(x.ce || '') === t); })[0];
-      if (!d) return null;
-      var rest = fold(m[2] || '').trim();
-      if (d.cartera && /^(mi |my |la )?(cartera|portafolio|portfolio)\b/.test(rest)) return COMMANDS[0];   // "/comite mi cartera" → comité de cartera
-      return d;
+    // ── CHIPS (como conectores): 💼 CONTEXTO (tu cartera) + 🤖 AGENTE (quién responde) ──
+    // 2026-10-05 (feedback): elegir la cartera NO debe llamar al comité ni quitar al analista elegido.
+    // Ambos chips son independientes y quedan puestos entre preguntas hasta tocar ✕.
+    var bar = null, chipKey = '';
+    function defOf(tok) {
+      var t = fold(tok || '');
+      return COMMANDS.concat(ANALYSTS).filter(function (x) { return fold(x.c) === t || fold(x.ce || '') === t; })[0] || null;
     }
+    function textDef() {      // agente escrito a mano al inicio del texto
+      var m = input.value.match(/^\s*([\/@][^\s]+)/);
+      var d = m ? defOf(m[1]) : null;
+      return d && d.i && !d.portfolio ? d : null;
+    }
+    function isSeat(d) { return d && d.i && !d.portfolio && !d.ent && !d.cartera && !/^@(todos|all)$/.test(d.c); }
+    function agentDef() { return input._agentTok ? defOf(input._agentTok) : textDef(); }
     function chipRefresh() {
-      var d = agentDef(), K = window.KhipuChat;
-      var key = d ? d.c + (d.portfolio ? ':' + (K && K.pfSelected && (K.pfSelected() || {}).key) : '') + ':' + (input._agentPf || '') +
-        ':' + ((K && K.pfSources) ? K.pfSources().length : 0) : '';
+      var K = window.KhipuChat, ctx = input._ctxPf || '', ad = agentDef();
+      var srcs = (K && K.pfSources) ? K.pfSources() : [];
+      var key = ctx + '|' + (ad ? ad.c : '') + '|' + srcs.length;
       if (key === chipKey) return;
       chipKey = key;
-      if (!d) { if (chip && chip.parentNode) chip.parentNode.removeChild(chip); chip = null; return; }
+      if (!ctx && !ad) { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); bar = null; return; }
       ensureCss();
-      if (!chip) { chip = document.createElement('span'); chip.className = 'kpk-chip'; }
-      if (!chip.parentNode && input.parentNode) input.parentNode.insertBefore(chip, input);
-      var h = '<i>' + esc(d.i) + '</i><b>' + esc(en() ? d.ne : d.n) + '</b>';
-      if (d.portfolio && K && K.pfSources) {
-        var srcs = K.pfSources(), sel = (K.pfSelected() || {}).key;
-        h += srcs.length ? '<select title="' + esc(L('¿Qué cartera?', 'Which portfolio?')) + '">' + srcs.map(function (x) {
-          return '<option value="' + esc(x.key) + '"' + (x.key === sel ? ' selected' : '') + '>' + esc(x.label) + '</option>';
-        }).join('') + '</select>' : '<span style="color:#FFB300;font-weight:500">' + esc(L('sin carteras', 'no portfolios')) + '</span>';
+      if (!bar) { bar = document.createElement('span'); bar.style.cssText = 'display:inline-flex;gap:6px;align-items:center;flex:0 1 auto;min-width:0'; }
+      if (!bar.parentNode && input.parentNode) input.parentNode.insertBefore(bar, input);
+      var h = '';
+      if (ctx) {
+        h += '<span class="kpk-chip" data-chip="ctx"><i>💼</i><select title="' + esc(L('¿Sobre qué cartera?', 'Which portfolio?')) + '">' +
+          srcs.map(function (x) { return '<option value="' + esc(x.key) + '"' + (x.key === ctx ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') +
+          '</select><button type="button" title="' + esc(L('Quitar la cartera', 'Remove the portfolio')) + '">✕</button></span>';
       }
-      // analista concreto: "sobre" una empresa/tema (lo que escribas) o sobre TU cartera
-      if (isSeat(d) && K && K.pfSources) {
-        var ps = K.pfSources().filter(function (x) { return x.key !== 'broker'; });
-        h += '<select data-about title="' + esc(L('¿Sobre qué?', 'About what?')) + '"><option value="">' + esc(L('sobre: empresa o tema', 'about: company or topic')) + '</option>' +
-          ps.map(function (x) { return '<option value="' + esc(x.key) + '"' + (x.key === input._agentPf ? ' selected' : '') + '>' + esc(L('sobre: ', 'about: ') + x.label) + '</option>'; }).join('') + '</select>';
+      if (ad) {
+        h += '<span class="kpk-chip" data-chip="agent"><i>' + esc(ad.i) + '</i><b>' + esc(en() ? ad.ne : ad.n) + '</b>' +
+          '<button type="button" title="' + esc(L('Quitar el agente', 'Remove the agent')) + '">✕</button></span>';
+      } else if (ctx) {
+        h += '<span class="kpk-chip" data-chip="agent" style="opacity:.75" title="' + esc(L('Escribe @ para que responda un analista concreto', 'Type @ to have a specific analyst answer')) + '"><i>💬</i><b>Khipu</b></span>';
       }
-      h += '<button type="button" title="' + esc(L('Quitar', 'Remove')) + '">✕</button>';
-      chip.innerHTML = h;
-      var se = chip.querySelector('select:not([data-about])');
-      if (se) se.addEventListener('change', function () { if (K && K.pfSelect) K.pfSelect(se.value); chipKey = '\u0000'; chipRefresh(); input.focus(); });
-      var sa = chip.querySelector('select[data-about]');
-      if (sa) sa.addEventListener('change', function () { input._agentPf = sa.value || null; chipKey = '\u0000'; chipRefresh(); input.focus(); });
-      chip.querySelector('button').addEventListener('click', function () {
-        input._agentPf = null;
-        if (input._agentTok) input._agentTok = null;
-        else input.value = input.value.replace(/^\s*[\/@][^\s]+\s*/, '');
-        chipKey = '\u0000'; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus();
+      bar.innerHTML = h;
+      var cs = bar.querySelector('[data-chip="ctx"] select');
+      if (cs) cs.addEventListener('change', function () { input._ctxPf = cs.value; if (K && K.pfSelect) K.pfSelect(cs.value); chipKey = ''; chipRefresh(); input.focus(); });
+      var cx = bar.querySelector('[data-chip="ctx"] button');
+      if (cx) cx.addEventListener('click', function () { input._ctxPf = null; chipKey = ''; chipRefresh(); input.focus(); });
+      var ax = bar.querySelector('[data-chip="agent"] button');
+      if (ax) ax.addEventListener('click', function () {
+        if (input._agentTok) input._agentTok = null; else input.value = input.value.replace(/^\s*[\/@][^\s]+\s*/, '');
+        chipKey = ''; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus();
       });
     }
-    // al ENVIAR (Enter o botón ➤) el chip vuelve al texto ("/cartera …") para el enrutador del chat
-    function isSeat(d) { return d && d.i && !d.portfolio && !d.ent && !d.cartera && !/^@(todos|all)$/.test(d.c); }
+    function setCtx() {
+      var K = window.KhipuChat, sel = K && K.pfSelected ? K.pfSelected() : null;
+      input._ctxPf = sel ? sel.key : ((K && K.pfSources && K.pfSources()[0]) || {}).key || 'market';
+      chipKey = ''; chipRefresh();
+    }
+    // al ENVIAR: los chips se traducen al texto que entiende el enrutador del chat
+    //   cartera + analista → "/cartera @geo …" · cartera sola → "/cartera …" · cartera + comité → "/cartera @comite …"
     function flushTok() {
-      var d = agentDef();
-      if (input._agentPf && isSeat(d)) {
-        // analista + cartera → "/cartera @analista pregunta" (el enrutador lo manda a ESE analista sobre esa cartera)
-        var K = window.KhipuChat; if (K && K.pfSelect) K.pfSelect(input._agentPf);
-        var body = input._agentTok ? input.value : input.value.replace(/^\s*@[^\s]+\s*/, '');
-        input.value = '/cartera ' + (input._agentTok || d.c) + ' ' + body.replace(/^\s+/, '');
-        input._agentTok = null; input._agentPf = null;
-        setTimeout(function () { chipKey = '\u0000'; chipRefresh(); }, 0);
-        return;
+      var K = window.KhipuChat, tok = input._agentTok, body = input.value.replace(/^\s+/, '');
+      if (!tok) { var m = body.match(/^([\/@][^\s]+)\s*/), d0 = m ? defOf(m[1]) : null; if (d0 && d0.i && !d0.portfolio) { tok = m[1]; body = body.slice(m[0].length); } }
+      if (input._ctxPf) {
+        if (K && K.pfSelect) K.pfSelect(input._ctxPf);
+        var d = tok ? defOf(tok) : null;
+        var who = d && (isSeat(d) || /comite|committee/.test(fold(d.c))) ? (/comite|committee/.test(fold(d.c)) ? '@comite' : d.c) + ' ' : '';
+        input.value = '/cartera ' + who + body;
+      } else if (tok) {
+        input.value = tok + ' ' + body;
       }
-      if (!input._agentTok) return;
-      input.value = input._agentTok + ' ' + input.value.replace(/^\s+/, '');
-      input._agentTok = null;
-      setTimeout(function () { chipKey = '\u0000'; chipRefresh(); }, 0);
     }
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !isOpen(input)) flushTok(); }, true);
-    // (también con el analista escrito a mano en el texto + "sobre: mi cartera" elegido en el chip)
     var sendBtn = input.parentNode && input.parentNode.querySelector('#bcp-send, #bcc-send, [data-send]');
     if (sendBtn) sendBtn.addEventListener('click', flushTok, true);
-    // el chat vacía el campo al enviar sin disparar 'input': el chip lo sigue
-    setInterval(function () { if (chip && !input._agentTok && !agentDef()) { input._agentPf = null; chipKey = '\u0000'; chipRefresh(); } }, 500);
     input.addEventListener('input', chipRefresh);
-    input.addEventListener('focus', function () { chipKey = '\u0000'; chipRefresh(); });
+    input.addEventListener('focus', function () { chipKey = ''; chipRefresh(); });
+    setInterval(function () { if (bar) chipRefresh(); }, 600);
     input.addEventListener('input', refresh);
     input.addEventListener('click', refresh);
     input.addEventListener('keydown', function (e) {

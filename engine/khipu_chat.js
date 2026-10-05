@@ -81,7 +81,8 @@
       'Commands you can type here:',
       '• /research <company> — the research team (8 analysts) studies the company. Also: "@research NVDA".',
       '• /committee <company> — the investment committee gives its recommendation.',
-      '• /portfolio <question> — the portfolio committee measures YOUR portfolio and answers here (pick which portfolio in the chip). Also "@portfolio".',
+      '• /portfolio <question> — ask anything about YOUR portfolio (pick which in the chip). Add an analyst (@geo, @fundamental…) to have them answer.',
+      '• /committee my portfolio — the full committee gives its verdict on your portfolio.',
       '• @fundamental, @technical, @news, @supply, @geo, @macro, @all + your question — ask an analyst directly.',
       '• Terminal commands: NVDA XRAY · NVDA RESEARCH · COMPARE NVDA AMD · PORT VAR · SHOCK TSMC.',
       '• /help — this list.',
@@ -89,7 +90,8 @@
       'Comandos que puedes escribir aquí:',
       '• /investigar <empresa> — el equipo de investigación (8 analistas) estudia la empresa. También: "@investigación NVDA".',
       '• /comite <empresa> — el comité de inversión da su recomendación.',
-      '• /cartera <pregunta> — el comité de cartera mide TU cartera y te responde aquí (elige cuál cartera en el chip). También "@cartera".',
+      '• /cartera <pregunta> — pregúntale lo que quieras sobre TU cartera (elige cuál en el chip). Suma un analista (@geo, @fundamental…) para que responda él.',
+      '• /comite mi cartera — el comité completo da su veredicto sobre tu cartera.',
       '• @fundamental, @tecnico, @noticias, @cadena, @geopolitico, @macro, @todos + tu pregunta — le preguntas a un analista.',
       '• Comandos de terminal: NVDA XRAY · NVDA RESEARCH · COMPARE NVDA AMD · PORT VAR · SHOCK TSMC.',
       '• /ayuda — esta lista.',
@@ -107,9 +109,15 @@
   var SEAT_NAME = { fundamental: ['📊', 'Analista fundamental', 'Fundamental analyst'], technical: ['📈', 'Analista técnico', 'Technical analyst'],
     news: ['📰', 'Analista de noticias', 'News analyst'], supply_chain: ['🔗', 'Analista de cadena de suministro', 'Supply-chain analyst'],
     geopolitical: ['🗺️', 'Analista geopolítico', 'Geopolitical analyst'], macro: ['🌐', 'Analista macro', 'Macro analyst'] };
+  // 2026-10-05 (feedback): la cartera es el CONTEXTO de la pregunta; quién responde es otra cosa.
+  //   seat null        → Khipu responde SOLO tu pregunta con los datos de tu cartera (sin veredicto)
+  //   seat <analista>  → ese analista, desde su especialidad
+  //   seat 'committee' → el comité completo con su tarjeta (solo si lo pides: /comite …)
   function _pfCommittee(en, question, seat) {
     var q = String(question || '').trim(), sm = q.match(/^@\s*([^\s:,]+)\s*[:,]?\s*([\s\S]*)$/);
-    if (!seat && sm && SEAT_OF[_fold(sm[1])]) { seat = SEAT_OF[_fold(sm[1])]; q = sm[2].trim(); }
+    if (!seat && sm && (SEAT_OF[_fold(sm[1])] || /^(comite|committee)$/.test(_fold(sm[1])))) {
+      seat = SEAT_OF[_fold(sm[1])] || 'committee'; q = sm[2].trim();
+    }
     return { kind: 'agentask', agent: 'portfolio', question: q, seat: seat || null };
   }
   function agentCommand(t, deps) {
@@ -125,9 +133,9 @@
       var h = R(q); return (h && h.node && h.score >= 70) ? { kind: 'research', id: h.node.id } : notFound(q);
     };
     var committee = function (q) {
-      if (!q || _CARTERA_RX.test(q.trim())) return _pfCommittee(en);
+      if (!q || _CARTERA_RX.test(q.trim())) return _pfCommittee(en, '', 'committee');
       var mc = q.match(/^(?:de\s+|a\s+)?(?:mi|my|la|the)?\s*(?:cartera|portafolio|portfolio)\s*[:,]?\s+([\s\S]+)$/i);
-      if (mc) return _pfCommittee(en, mc[1]);
+      if (mc) return _pfCommittee(en, mc[1], 'committee');
       var h = R(q);
       if (!(h && h.node && h.score >= 70)) return notFound(q);
       var id = h.node.id, label = h.node.label || id;
@@ -159,7 +167,7 @@
     if (/^@\s*(?:comite|committee)\s*[:,]?\s*(?:analiza\s+|analyze\s+|revisa\s+|review\s+)?(?:mi|my)?\s*(?:cartera|portafolio|portfolio)/.test(f) ||
         /^(?:que\s+)?(?:el\s+)?comite\s+(?:analice|revise|evalue|mire)\s+(?:mi|la)\s+(?:cartera|portafolio)/.test(f) ||
         /^(?:analiza|revisa|evalua)\s+(?:mi|la)\s+(?:cartera|portafolio)\s+con\s+el\s+comite/.test(f) ||
-        /^(?:have\s+)?the\s+committee\s+(?:analy[sz]e|review)\s+my\s+portfolio/.test(f)) return _pfCommittee(en);
+        /^(?:have\s+)?the\s+committee\s+(?:analy[sz]e|review)\s+my\s+portfolio/.test(f)) return _pfCommittee(en, '', 'committee');
     return null;
   }
 
@@ -347,8 +355,9 @@
   function agentInfo(route) {
     if (route && route.agent === 'portfolio') {
       var src = pfSelected(), sn = route.seat && SEAT_NAME[route.seat];
-      if (sn) return { name: L(sn[1], sn[2]), emoji: sn[0], seat: route.seat,
-        label: '💼 ' + (src ? String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '') : L('sin cartera', 'no portfolio')) };
+      var pl = '💼 ' + (src ? String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '') : L('sin cartera', 'no portfolio'));
+      if (sn) return { name: L(sn[1], sn[2]), emoji: sn[0], seat: route.seat, label: pl };
+      if (route.seat !== 'committee') return { name: 'Khipu', emoji: '💬', seat: 'khipu', label: pl };
       return { name: L('Comité de cartera', 'Portfolio committee'), emoji: '💼', seat: 'portfolio',
         label: src ? String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '') : L('sin cartera', 'no portfolio') };
     }
@@ -384,7 +393,7 @@
           if (timer) clearTimeout(timer);
           if (!r.ok && !d.answer) throw new Error((lang() === 'en' ? d.error_en : d.error) || d.error || ('HTTP ' + r.status));
           d.agent = d.agent || agentInfo(route);
-          if (!prof && !route.seat) d.profile_missing = true;
+          if (!prof && route.seat === 'committee') d.profile_missing = true;
           remember('user', '/cartera ' + (route.question || ''));
           if (d.answer && !d.degraded) remember('assistant', d.answer);
           return d;
