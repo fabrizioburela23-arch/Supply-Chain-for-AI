@@ -24,6 +24,10 @@ está conectado).
 - MCP get_world_events: enum + maxItems 12 + campos. Tests: tests/test_gdelt_events.py (3),
   test_world_feeds (+2).
 
+- Afinado con datos reales (mismo día): conflicto exige actor ARMADO (MIL/REB/INS/SEP/UAF), solo
+  IsRootEvent=1, fuera "solo país" con < 5 fuentes, y CORROBORACIÓN por punto (≥ 2 notas distintas o
+  un evento con ≥ 4 fuentes). Severidad `gdelt_events.severity(artículos, fuentes)` (sin extrapolar).
+
 # SESIÓN 2026-10-05 (o) — AGENTES CON CHIP EN EL CHAT: EL COMITÉ DE CARTERA RESPONDE AHÍ (sw v218)
 
 - Feedback: "/cartera dime si debería reducir…" solo ABRÍA el comité y no respondía; pidió que

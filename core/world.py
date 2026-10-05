@@ -1135,7 +1135,7 @@ def _fetch_gdelt_events(layer, window):
             'title': f"{les or ''} · {place}".strip(' ·'), 'title_es': f"{les or ''} · {place}".strip(' ·'),
             'title_en': f"{len_ or ''} · {place}".strip(' ·'), 'place': place, 'country_key': place_country(place),
             'severity': GE.severity(g['articles'], g['sources']), 'count': g['articles'], 'events': g['events'],
-            'sources_n': g['sources'], 'precision': 'country' if g['geo_type'] == 1 else 'city',
+            'sources_n': g['sources'], 'distinct_articles': g.get('distinct_articles'), 'precision': 'country' if g['geo_type'] == 1 else 'city',
             'goldstein': round(sum(g['gold']) / len(g['gold']), 1) if g['gold'] else None,
             'time': _iso(g['last']), 'ts': g['last'], 'time_kind': 'last_update', 'window': window,
             'fetched_at': _iso(now), 'source': 'GDELT 2.0 Events', 'source_es': 'GDELT 2.0 · eventos (15 min)',

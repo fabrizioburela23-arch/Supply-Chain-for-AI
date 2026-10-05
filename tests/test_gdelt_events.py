@@ -24,7 +24,8 @@ def row(code, lat, lon, place, n_src=3, n_art=6, geo_type=4, url='https://news.e
 LAST = '20261005160000'
 ROWS = [row('193', 49.99, 36.23, 'Kharkiv, Kharkivs\'ka Oblast\', Ukraine', url='https://a.com/1'),
         row('190', 49.98, 36.25, 'Kharkiv, Kharkivs\'ka Oblast\', Ukraine', n_art=10, url='https://b.com/2'),
-        row('141', 48.85, 2.35, 'Paris, France', n_src=2, n_art=3),
+        row('141', 48.85, 2.35, 'Paris, France', n_src=2, n_art=3, url='https://p.com/1'),
+        row('141', 48.85, 2.35, 'Paris, France', n_src=2, n_art=3, url='https://p.com/2'),
         row('163', 35.69, 51.39, 'Tehran, Tehran, Iran', n_src=4, n_art=8),
         row('193', 10.0, 10.0, 'Ruido, Nigeria', n_src=1, n_art=1),      # una sola nota: se descarta
         row('042', 40.0, 40.0, 'Visita, Turkey'),                          # no es de ninguna capa
@@ -32,7 +33,8 @@ ROWS = [row('193', 49.99, 36.23, 'Kharkiv, Kharkivs\'ka Oblast\', Ukraine', url=
         row('193', 41.5, -81.7, 'Cleveland, Ohio, United States', actor='COP'),   # crimen común (sin actor armado): fuera
         row('190', 14.6, 120.98, 'Manila, Philippines', actor=''),         # "combatir delitos financieros": fuera
         row('190', 49.9, 36.2, 'Kharkiv', root='0'),                      # evento secundario de la nota: fuera
-        row('190', 40.0, -4.0, 'Spain', geo_type=1, n_src=2)]             # solo país, poca cobertura: fuera
+        row('190', 40.0, -4.0, 'Spain', geo_type=1, n_src=2),             # solo país, poca cobertura: fuera
+        row('190', 46.9, -110.3, 'Montana, United States', n_src=2, n_art=10, url='https://one.com/x')]  # UNA sola nota: fuera
 
 
 class _R:
@@ -62,7 +64,7 @@ def setup_function(_):
 
 def test_parse_filtra_ruido_y_clasifica_por_cameo():
     evs = GE.parse_export('\n'.join(ROWS), 0)
-    assert sorted(e[0] for e in evs) == ['conflict', 'conflict', 'trade', 'unrest']
+    assert sorted(e[0] for e in evs) == ['conflict', 'conflict', 'conflict', 'trade', 'unrest', 'unrest']
     assert GE.classify('15', '150', 1, {'MIL'}) is None and GE.classify('15', '150', 3, {'MIL'}) == 'conflict'
     assert GE.classify('19', '190', 9, {'COP'}) is None and GE.classify('14', '141', 2) == 'unrest'
     assert GE.severity(5, 3) < GE.severity(25, 10) < 100 and GE.severity(0, 0) == 15
@@ -79,7 +81,8 @@ def test_capas_en_vivo_agrupadas_con_fuentes(monkeypatch):
         assert out['sources'][lyr]['ok'] is True, (lyr, out['sources'][lyr])
         assert out['sources'][lyr]['coverage_hours'] == 1.0   # primer arranque: la última hora (4 lotes) and out['sources'][lyr]['press_signal']
     kh = [i for i in out['items'] if i['layer'] == 'conflict']
-    assert len(kh) == 1                                           # dos eventos en Kharkiv → un punto
+    assert len(kh) == 1                                           # dos eventos en Kharkiv → un punto; Montana (1 nota) fuera
+    assert kh[0]['distinct_articles'] == 2
     k = kh[0]
     assert k['count'] == 16 and k['events'] == 2 and k['country_key'] == 'Ucrania'
     assert {a['url'] for a in k['articles']} == {'https://a.com/1', 'https://b.com/2'}

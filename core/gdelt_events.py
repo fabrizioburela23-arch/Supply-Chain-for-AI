@@ -203,17 +203,28 @@ def aggregate(layer, window_s, severity_fn, now=None, limit=200):
             g = groups.get(key)
             if g is None:
                 g = groups[key] = {'lat': e[1], 'lon': e[2], 'place': e[3], 'cc': e[4], 'geo_type': e[5], 'articles': 0,
-                                   'events': 0, 'sources': 0, 'urls': [], 'last': 0, 'codes': {}, 'gold': []}
+                                   'events': 0, 'sources': 0, 'urls': [], 'last': 0, 'codes': {}, 'gold': [],
+                                   'url_set': set(), 'max_src': 0}
             g['articles'] += e[6]
             g['sources'] += e[7]
             g['events'] += 1
+            g['max_src'] = max(g['max_src'], e[7])
+            if e[8] and len(g['url_set']) < 50:
+                g['url_set'].add(e[8])
             g['last'] = max(g['last'], e[9])
             g['codes'][e[10]] = g['codes'].get(e[10], 0) + 1
             if e[11] is not None:
                 g['gold'].append(e[11])
             if e[8] and e[8] not in g['urls'] and len(g['urls']) < 3:
                 g['urls'].append(e[8])
-    return sorted(groups.values(), key=lambda g: -g['articles'])[:limit]
+    # CORROBORACIÓN (2026-10-05, ruido visto en producción): un punto se muestra solo si lo cubren
+    # ≥ 2 notas DISTINTAS o un evento con ≥ 4 fuentes; una sola nota mal codificada no llega al mapa
+    out = []
+    for g in groups.values():
+        g['distinct_articles'] = len(g.pop('url_set'))
+        if g['distinct_articles'] >= 2 or g['max_src'] >= 4:
+            out.append(g)
+    return sorted(out, key=lambda g: -g['articles'])[:limit]
 
 
 def severity(articles, sources):
