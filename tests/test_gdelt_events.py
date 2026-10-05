@@ -12,8 +12,9 @@ from core import gdelt_events as GE  # noqa: E402
 from core import world as W  # noqa: E402
 
 
-def row(code, lat, lon, place, n_src=3, n_art=6, geo_type=4, url='https://news.example.com/a', gold=-10):
+def row(code, lat, lon, place, n_src=3, n_art=6, geo_type=4, url='https://news.example.com/a', gold=-10, actor='MIL', root='1'):
     r = [''] * 61
+    r[12], r[25] = actor, root
     r[26], r[27], r[28] = code, code[:3], code[:2]
     r[30], r[32], r[33] = str(gold), str(n_src), str(n_art)
     r[51], r[52], r[53], r[56], r[57], r[60] = str(geo_type), place, 'UP', str(lat), str(lon), url
@@ -27,7 +28,11 @@ ROWS = [row('193', 49.99, 36.23, 'Kharkiv, Kharkivs\'ka Oblast\', Ukraine', url=
         row('163', 35.69, 51.39, 'Tehran, Tehran, Iran', n_src=4, n_art=8),
         row('193', 10.0, 10.0, 'Ruido, Nigeria', n_src=1, n_art=1),      # una sola nota: se descarta
         row('042', 40.0, 40.0, 'Visita, Turkey'),                          # no es de ninguna capa
-        row('190', 0, 0, 'sin lugar')]                                     # sin coordenadas: fuera
+        row('190', 0, 0, 'sin lugar'),                                     # sin coordenadas: fuera
+        row('193', 41.5, -81.7, 'Cleveland, Ohio, United States', actor='COP'),   # crimen común (sin actor armado): fuera
+        row('190', 14.6, 120.98, 'Manila, Philippines', actor=''),         # "combatir delitos financieros": fuera
+        row('190', 49.9, 36.2, 'Kharkiv', root='0'),                      # evento secundario de la nota: fuera
+        row('190', 40.0, -4.0, 'Spain', geo_type=1, n_src=2)]             # solo país, poca cobertura: fuera
 
 
 class _R:
@@ -58,7 +63,9 @@ def setup_function(_):
 def test_parse_filtra_ruido_y_clasifica_por_cameo():
     evs = GE.parse_export('\n'.join(ROWS), 0)
     assert sorted(e[0] for e in evs) == ['conflict', 'conflict', 'trade', 'unrest']
-    assert GE.classify('15', '150', 1) is None and GE.classify('15', '150', 3) == 'conflict'
+    assert GE.classify('15', '150', 1, {'MIL'}) is None and GE.classify('15', '150', 3, {'MIL'}) == 'conflict'
+    assert GE.classify('19', '190', 9, {'COP'}) is None and GE.classify('14', '141', 2) == 'unrest'
+    assert GE.severity(5, 3) < GE.severity(25, 10) < 100 and GE.severity(0, 0) == 15
 
 
 def test_capas_en_vivo_agrupadas_con_fuentes(monkeypatch):

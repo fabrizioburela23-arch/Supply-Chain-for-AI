@@ -54,11 +54,17 @@ def _base():
     return (os.environ.get('WORLD_GDELT_EVENTS_BASE') or BASE).rstrip('/') + '/'
 
 
-def classify(root, base, n_sources):
-    """Código CAMEO → capa (o None)."""
-    if root in ('18', '19', '20'):
+# actores ARMADOS (códigos de tipo CAMEO): sin uno de ellos, un "asalto/combate" suele ser crimen común
+# o una metáfora mal codificada ("combatir delitos financieros") — visto en producción el 2026-10-05
+ARMED = {'MIL', 'REB', 'INS', 'SEP', 'UAF'}
+
+
+def classify(root, base, n_sources, actor_types=()):
+    """Código CAMEO (+ tipos de actor) → capa (o None)."""
+    armed = bool(ARMED & set(actor_types))
+    if root in ('18', '19', '20') and armed:
         return 'conflict'
-    if root == '15' and n_sources >= 3:
+    if root == '15' and armed and n_sources >= 3:
         return 'conflict'
     if root == '14':
         return 'unrest'
@@ -90,11 +96,16 @@ def parse_export(text, batch_ts):
         n_src, n_art = _i(row[32]), _i(row[33])
         if n_src < 2 and n_art < 5:
             continue
-        layer = classify(row[28], row[27], n_src)
+        if row[25] != '1':          # solo el evento PRINCIPAL de cada nota (los secundarios son mucho ruido)
+            continue
+        types = {row[i][:3] for i in (12, 13, 14, 22, 23, 24) if row[i]}
+        layer = classify(row[28], row[27], n_src, types)
         if not layer:
             continue
         lat, lon = _f(row[56]), _f(row[57])
         if lat is None or lon is None or not (-90 <= lat <= 90 and -180 <= lon <= 180) or (lat == 0 and lon == 0):
+            continue
+        if _i(row[51]) == 1 and n_src < 5:   # solo "el país" (sin ciudad) y poca cobertura: muy impreciso
             continue
         out.append((layer, round(lat, 3), round(lon, 3), row[52][:120], row[53][:2], _i(row[51]),
                     n_art, n_src, row[60][:400], batch_ts, row[26], _f(row[30])))
@@ -203,6 +214,13 @@ def aggregate(layer, window_s, severity_fn, now=None, limit=200):
             if e[8] and e[8] not in g['urls'] and len(g['urls']) < 3:
                 g['urls'].append(e[8])
     return sorted(groups.values(), key=lambda g: -g['articles'])[:limit]
+
+
+def severity(articles, sources):
+    """0-100 por COBERTURA (no víctimas): artículos y fuentes que hablan de ese lugar.
+    5 art ≈ 51 · 10 ≈ 63 · 25 ≈ 80 · 60+ ≈ 96 (+ hasta 4 por fuentes distintas)."""
+    import math
+    return int(min(100, round(15 + 14 * math.log2(1 + max(0, articles)) + min(4, max(0, sources) / 5))))
 
 
 _CODE_LABEL = {
