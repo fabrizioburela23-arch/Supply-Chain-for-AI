@@ -90,7 +90,7 @@
       profT: '{l} — ficha rápida', profS: 'Datos del catálogo · NRS calculado en vivo',
       todayT: '{l} — precio actual', todayS: 'vs cierre anterior',
       fundSrc: 'estados anuales', exclOut: '{n} valor(es) atípico(s) del catálogo excluido(s)',
-      srcCat: 'Fuente: catálogo Khipus (fichas de empresa)', srcNrs: 'NRS calculado en vivo sobre el grafo',
+      srcCat: 'Fuente: datos EN VIVO (Yahoo/Finnhub: capitalización, margen, ingresos, empleados) donde ya llegaron; si no, catálogo Khipus', srcNrs: 'NRS calculado en vivo sobre el grafo',
       srcLinks: 'Fuente: vínculos del grafo de suministro', srcPx: 'Fuente: precios de mercado en vivo',
       srcFund: 'Fuente: estados financieros anuales ({s})', srcCry: 'Fuente: mercado cripto en vivo',
       srcPort: 'Fuente: tu cartera (este navegador) · precios en vivo',
@@ -140,7 +140,7 @@
       profT: '{l} — quick profile', profS: 'Catalog data · NRS computed live',
       todayT: '{l} — current price', todayS: 'vs previous close',
       fundSrc: 'annual statements', exclOut: '{n} catalog outlier(s) excluded',
-      srcCat: 'Source: Khipus catalog (company profiles)', srcNrs: 'NRS computed live on the graph',
+      srcCat: 'Source: LIVE data (Yahoo/Finnhub: market cap, margin, revenue, employees) where available; otherwise the Khipus catalog', srcNrs: 'NRS computed live on the graph',
       srcLinks: 'Source: supply-graph links', srcPx: 'Source: live market prices',
       srcFund: 'Source: annual financial statements ({s})', srcCry: 'Source: live crypto market',
       srcPort: 'Source: your portfolio (this browser) · live prices',
@@ -180,6 +180,9 @@
   function cap(id) { var c = Number(meta(id).mktcap_b); return isFinite(c) && c > 0 ? c : null; }
   // ingresos ($B) de NODE_META.revenue_2025 ("~$21.5B", "$390M"). Solo USD.
   function revB(id) {
+    // 2026-10-05: ingresos REALES de los últimos 12 meses si ya llegaron (KhipuLiveFund); si no, el catálogo
+    var lv = Number(meta(id).revenue_ttm_usd_b);
+    if (isFinite(lv) && lv > 0) return lv;
     var s = String(meta(id).revenue_2025 || '');
     if (!s || /[€¥£]/.test(s)) return null;
     var m = s.match(/\$\s?([\d.,]+)\s?([TBM])/i);
@@ -330,6 +333,22 @@
     ['Canadá', /\bcanada\b|\bcanadienses?\b|\bcanadian\b/], ['Australia', /\baustralia(?:nas?|n)?\b/],
     ['Rusia', /\brusia\b|\brusas?\b|\brussia(?:n)?\b/], ['Países Bajos', /paises bajos|\bholanda\b|\bneerlandesas?\b|netherlands|\bdutch\b/],
   ];
+  // SECTOR como filtro ("top 5 semiconductores por margen", "empresas de defensa") — 2026-10-05
+  var SECTOR_WORDS = [
+    [['fabricacion', 'diseno', 'equipos'], /\bsemiconductor(?:es|s)?\b|\bchips?\b|\bchipmakers?\b|\bsemis\b/],
+    [['espacio'], /\bespacial(?:es)?\b|\bspace\b|\bdel espacio\b/], [['defensa'], /\bdefensa\b|\bdefen[cs]e\b/],
+    [['energia'], /\benergia\b|\benerg(?:y|etic\w*)\b|\bnuclear(?:es)?\b|\butilities\b/],
+    [['robotica'], /\brobotica\b|\brobotics?\b|\brobots?\b/],
+  ];
+  // MATERIAS PRIMAS e ÍNDICES (precio histórico vía /api/candles; futuros de Yahoo) — 2026-10-05
+  var COMMODITIES = [
+    ['GC=F', 'Oro', 'Gold', /\boro\b|\bgold\b/], ['CL=F', 'Petróleo WTI', 'WTI crude oil', /\bpetroleo\b|\bcrudo\b|\bcrude\b|\boil\b|\bwti\b/],
+    ['BZ=F', 'Petróleo Brent', 'Brent crude', /\bbrent\b/], ['HG=F', 'Cobre', 'Copper', /\bcobre\b|\bcopper\b/],
+    ['NG=F', 'Gas natural', 'Natural gas', /gas natural|natural gas/], ['SI=F', 'Plata (metal)', 'Silver', /\bsilver\b|plata metal|precio de la plata/],
+    ['URA', 'Uranio (ETF URA)', 'Uranium (URA ETF)', /\buranio\b|\buranium\b/],
+    ['^GSPC', 'S&P 500', 'S&P 500', /s ?& ?p ?500|\bsp ?500\b|\bs y p 500\b/], ['^IXIC', 'Nasdaq Composite', 'Nasdaq Composite', /\bnasdaq\b/],
+    ['^SOX', 'Índice de semiconductores (SOX)', 'Semiconductor index (SOX)', /\bsox\b|indice de semiconductores|semiconductor index/],
+  ];
   // timeframe ("90 días", "5 años", "último año", "1y")
   var TF_UNITS = [
     [/^(?:d|dia|dias|day|days)$/, 1], [/^(?:w|sem|semana|semanas|week|weeks)$/, 7],
@@ -362,7 +381,9 @@
     'cuantas cuanto vale valen cotizan cotiza valor precio precios evoluciona cambio cambiado changed ' +
     'mis my mi cartera portafolio portfolio posiciones positions holdings tenencias ' +
     'score puntaje puntuacion indice index metrica metric valores values ' +
-    'red network cadena suministro supply chain ia ai').split(/\s+/);
+    'red network cadena suministro supply chain ia ai ' +
+    'promedio promedios media medio average avg mean desglosado desglosada desglosa desglosar componentes components ' +
+    'sector semiconductor semiconductores semiconductors chips chip chipmakers').split(/\s+/);
   var STOPSET = {}; STOP.forEach(function (w) { if (w) STOPSET[w] = 1; });
 
   // resolución EXACTA (score ≥ 82 en KhipuResolve = id/ticker/label/alias exacto)
@@ -424,6 +445,12 @@
     if (RE.byCountry.test(t)) { P.groupBy.push('country'); eat(RE.byCountry); }
     for (var ci = 0; ci < COUNTRY_WORDS.length; ci++) {
       if (COUNTRY_WORDS[ci][1].test(work)) { P.country = COUNTRY_WORDS[ci][0]; eat(COUNTRY_WORDS[ci][1]); break; }
+    }
+    for (var sw = 0; sw < SECTOR_WORDS.length; sw++) {
+      if (SECTOR_WORDS[sw][1].test(work)) { P.sectors = SECTOR_WORDS[sw][0]; eat(SECTOR_WORDS[sw][1]); break; }
+    }
+    for (var cm = 0; cm < COMMODITIES.length; cm++) {
+      if (COMMODITIES[cm][3].test(work)) { P.commodity = { sym: COMMODITIES[cm][0], es: COMMODITIES[cm][1], en: COMMODITIES[cm][2] }; eat(COMMODITIES[cm][3]); break; }
     }
     for (var ch = 0; ch < CHART_WORDS.length; ch++) {
       if (CHART_WORDS[ch][1].test(t)) { P.chart = CHART_WORDS[ch][0]; break; }
@@ -493,6 +520,7 @@
   function deriveIntent(P, t) {
     var nE = P.entities.length, ms = P.metrics;
     if (P.explain) return 'explain';
+    if (P.commodity && !nE) return 'trend';
     if (P.crypto) {
       // una moneda concreta con tiempo o "precio" → su historial; lo demás → ranking
       var coinQ = cryptoCoinIn(P.query) || cryptoCoinIn(t);
@@ -531,7 +559,7 @@
     if (P.intent === 'trend') {
       var noHist = P.metrics.filter(function (k) { return /^(nrs|mktcap|employees|founded|suppliers|customers)$/.test(k); });
       if (noHist.length) hit(0.25, 'no_history');
-      if (!P.entities.length && !P.crypto) hit(0.3, 'missing_entities');
+      if (!P.entities.length && !P.crypto && !P.commodity) hit(0.3, 'missing_entities');
       if (P.entities.length > 4) hit(0.5, 'too_many');
     }
     if (P.intent === 'single_metric' || P.intent === 'profile' || P.intent === 'compare') {
@@ -601,9 +629,13 @@
   function pool(P) {
     var ns = nodes();
     if (P.country) ns = ns.filter(function (n) { return inCountry(n, P.country); });
+    if (P.sectors && P.sectors.length) ns = ns.filter(function (n) { return P.sectors.indexOf(sectorOf(n)) >= 0; });
     return ns;
   }
-  function withCountry(title, P) { return P.country ? title + ' — ' + countryLabel(P.country) : title; }
+  function withCountry(title, P) {
+    if (P.sectors && P.sectors.length) title += ' — ' + P.sectors.map(sectorLabel).join(' / ');
+    return P.country ? title + ' — ' + countryLabel(P.country) : title;
+  }
 
   // ── rank: top N por métrica (o por grupo) ──
   function buildRank(P) {
@@ -1167,7 +1199,21 @@
     });
   }
 
+  function buildCommodityAsync(P) {
+    var c = P.commodity, days = P.timeframe ? P.timeframe.days : 365, range = _rangeFor(days);
+    return _getCandles(c.sym, range).then(function (d) {
+      if (!(d && d.s === 'ok' && d.c && d.c.length >= 5)) return null;
+      var vals = d.c.map(function (v) { return Math.round(v * 100) / 100; });
+      var up = vals[vals.length - 1] >= vals[0], pct = ((vals[vals.length - 1] / vals[0] - 1) * 100).toFixed(1);
+      var name = L() === 'en' ? c.en : c.es;
+      return spec('line', TT('lineT', { l: name + ' (' + c.sym + ')', p: periodLabel(days) }),
+        TT('lineS', { a: (up ? '▲ +' : '▼ ') + pct + '%', d0: _d((d.t || [])[0]), d1: _d((d.t || [])[d.t.length - 1]) }),
+        [{ label: c.sym, values: vals, color: up ? GRN : RED }],
+        { series_labels: [name], labels: (d.t || []).map(_d), unit: /^\^/.test(c.sym) ? '' : '$' }, TT('srcPx'));
+    });
+  }
   function buildAsync(P) {
+    if (P.commodity && !P.entities.length) return buildCommodityAsync(P);
     // una cripto concreta + tiempo/precio → su historial (antes caía al ranking "Top 10 cripto")
     if (P.crypto && (cryptoCoinIn(P.text) || cryptoCoinIn(P.query)) && (P.intent === 'trend' || P.timeframe || P.metrics.indexOf('price') >= 0 || P.intent === 'single_metric')) {
       return buildCryptoHistoryAsync(P).then(function (sp) { return sp || buildCryptoAsync(P); });

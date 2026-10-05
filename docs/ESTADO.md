@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (cc) — GRÁFICOS: DATOS EN VIVO + MÁS PREGUNTAS SIN IA (sw v237)
+
+- engine/localcharts.js: ingresos = revenue_ttm_usd_b en vivo (KhipuLiveFund) antes que revenue_2025;
+  fuente rotulada "datos EN VIVO … donde ya llegaron; si no, catálogo". Parser: STOP + promedio/media/
+  desglosado/semiconductores…; filtro por SECTOR (`SECTOR_WORDS` → P.sectors, aplicado en pool() y en el
+  título); MATERIAS PRIMAS e ÍNDICES (`COMMODITIES`: oro GC=F, WTI, Brent, cobre, gas, plata, uranio URA,
+  S&P 500, Nasdaq, SOX) → `buildCommodityAsync` vía /api/candles. Banco de 25 preguntas probado.
+- También hoy: expediente cripto con cifras vivas (liveIntelLine), Insights con crecimiento real, Guía con
+  conteos del catálogo cargado.
+- Tests: tests/test_localcharts_intents.py (+ tests/js/localcharts_intents.js), tests/test_live_labels_misc.py.
+
 # SESIÓN 2026-10-05 (bb) — SIMULACIÓN "IA SIMPLE" CON DATOS EN VIVO (sw v235)
 
 - El informe de "IA simple" (app.html `_runClaudeSim`) mandaba a la IA SOLO la frase del escenario: decía
