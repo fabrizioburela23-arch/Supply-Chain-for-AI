@@ -9,6 +9,16 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)
+
+- NRS: término de margen acotado a [0,20] también en el CLIENTE (OpenAI daba 100, ahora 67) y países
+  normalizados (`_nrsCountry` en app.html ≡ `core.world.nrs_country/nrs_geo/nrs_concentrated`, que usan
+  client_nrs, portfolio_ai.nrs y ontology/agents._compute_server_nrs): Japón/Corea/Estados Unidos/Taiwán
+  ya cuentan como Japan/Korea/EEUU/Taiwan. Se cierra la divergencia documentada cliente↔servidor.
+- Mapa: pickSugg ahora llama invalidateFilterCache() — al deseleccionar quedaba encendida solo la
+  empresa buscada hasta recargar.
+- Tests: tests/test_map_search_reset.py; test_world (fórmula NRS) actualizado.
+
 # SESIÓN 2026-10-05 (x) — CIFRAS VIEJAS → VERIFICADAS / EN VIVO (sw v231)
 
 - Auditoría (agente Explore) de cifras fijas en la UI: ~40 hallazgos. Hechos los de mayor riesgo:

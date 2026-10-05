@@ -2651,7 +2651,9 @@ function computeNRS(nodeId) {
 
   // Geo risk (0-30): based on country
   const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
-  const geo = geoMap[n.country] ?? 15;
+  // país escrito de cualquier forma ("Japón", "Corea", "Estados Unidos"…) → clave de la tabla (MISMA que core/world.py)
+  const ck = _nrsCountry(n.country);
+  const geo = geoMap[ck] ?? 15;
 
   // Chain risk (0-25): node degree / centrality proxy (grado precalculado 1 vez)
   if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
@@ -2660,7 +2662,8 @@ function computeNRS(nodeId) {
 
   // Market risk (0-20): volatility proxy from margin
   const margin = n.margin != null ? n.margin : 0.15;
-  const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
+  // acotado a [0,20] (2026-10-05): sin esto una empresa sin ganancias (OpenAI) llegaba a NRS 100
+  const market = Math.max(0, Math.min(20, Math.round((1 - Math.min(1, margin / 0.4)) * 20)));
 
   // Fundamental risk (0-15): preipo penalty + growth signal
   const preipo_pen = n.preipo ? 10 : 0;
@@ -2669,7 +2672,7 @@ function computeNRS(nodeId) {
   const fundamental = Math.min(15, preipo_pen + growth_pen);
 
   // Concentration risk (0-10): single-country dependency
-  const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
+  const concentration = (ck === 'Taiwan' || ck === 'China') ? 10 : 4;
 
   const nrs = Math.round(geo + chain + market + fundamental + concentration);
   const val = Math.min(100, Math.max(0, nrs));
@@ -2679,21 +2682,31 @@ function computeNRS(nodeId) {
 
 // Descomposición término a término del NRS — la usa el X-Ray para mostrar
 // "por qué N": misma fórmula que computeNRS, devuelta desglosada.
+var _NRS_GEO_ALIAS = { 'china':'China', 'taiwan':'Taiwan', 'korea':'Korea', 'corea':'Korea', 'corea del sur':'Korea',
+  'south korea':'Korea', 'japan':'Japan', 'japon':'Japan', 'eeuu':'EEUU', 'ee uu':'EEUU', 'estados unidos':'EEUU', 'usa':'EEUU',
+  'united states':'EEUU', 'us':'EEUU', 'europa':'Europa', 'europe':'Europa', 'israel':'Israel' };
+function _nrsCountry(c){
+  const norm = x => String(x == null ? '' : x).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  return _NRS_GEO_ALIAS[norm(c)] || _NRS_GEO_ALIAS[norm(String(c || '').split(/[\/(,;]/)[0])] || null;
+}
 function computeNRSBreakdown(nodeId) {
   nodeId = _canonId(nodeId);
   const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
   if (!n) return null;
   const _en = (typeof LANG !== 'undefined' && LANG === 'en');   /* regla bilingüe: los términos se MUESTRAN */
   const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
-  const geo = geoMap[n.country] ?? 15;
+  // país escrito de cualquier forma ("Japón", "Corea", "Estados Unidos"…) → clave de la tabla (MISMA que core/world.py)
+  const ck = _nrsCountry(n.country);
+  const geo = geoMap[ck] ?? 15;
   if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
   const degree = _nrsDegree ? (_nrsDegree.get(nodeId) || 0) : 0;
   const chain = Math.min(25, degree * 2.5);
   const margin = n.margin != null ? n.margin : 0.15;
-  const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
+  // acotado a [0,20] (2026-10-05): sin esto una empresa sin ganancias (OpenAI) llegaba a NRS 100
+  const market = Math.max(0, Math.min(20, Math.round((1 - Math.min(1, margin / 0.4)) * 20)));
   const growth_str = (n.growth || '').toLowerCase();
   const fundamental = Math.min(15, (n.preipo ? 10 : 0) + (growth_str.includes('🔴') ? 5 : growth_str.includes('🟡') ? 2 : 0));
-  const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
+  const concentration = (ck === 'Taiwan' || ck === 'China') ? 10 : 4;
   return {
     total: Math.min(100, Math.max(0, Math.round(geo + chain + market + fundamental + concentration))),
     terms: [
@@ -3959,6 +3972,9 @@ function renderSugg(q){
 
 function pickSugg(id){
   searchTerm=''; searchInput.value='';
+  /* 2026-10-05: sin esto el filtro guardado seguía con el texto buscado ("nvid") y, al deseleccionar,
+     el mapa dejaba encendida SOLO esa empresa hasta recargar la página. */
+  invalidateFilterCache();
   closeSugg();
   if(typeof closeToolbar==='function') closeToolbar();
   jumpTo(id);

@@ -256,13 +256,14 @@ def _nodes():
 
 
 def nrs(node, degree):
-    geo = _GEO.get(node.get('country'), 15)
+    from core.world import nrs_concentrated, nrs_geo
+    geo = nrs_geo(node.get('country'))
     chain = min(25, degree * 2.5)
     margin = node.get('margin')
     market = max(0, min(20, round((1 - min(1, (margin if margin is not None else 0.15) / 0.4)) * 20)))
     g = str(node.get('growth') or '').lower()
     fundamental = min(15, (10 if node.get('preipo') else 0) + (5 if '🔴' in g else 2 if '🟡' in g else 0))
-    conc = 10 if node.get('country') in ('Taiwan', 'China') else 4
+    conc = 10 if nrs_concentrated(node.get('country')) else 4
     return int(max(0, min(100, round(geo + chain + market + fundamental + conc))))
 
 

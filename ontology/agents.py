@@ -90,7 +90,8 @@ def _compute_server_nrs(session, company):
     de riesgo. El grado solo cuenta relaciones de flujo sobre pares distintos
     (server_flow_degree), igual que el cliente desde G4d."""
     props = company.properties or {}
-    geo = GEO_RISK.get(props.get('country'), 15)
+    from core.world import nrs_concentrated, nrs_geo
+    geo = nrs_geo(props.get('country'))
     degree = server_flow_degree(session, company.id)
     chain = min(25, degree * 2.5)
     margin = props.get('margin')
@@ -100,7 +101,7 @@ def _compute_server_nrs(session, company):
     # Aquí sí lo acotamos para que el score sea comparable entre empresas —
     # nota para el usuario: vale la pena revisar/alinear la fórmula del cliente.
     market = max(0, min(20, round((1 - min(1, (margin if margin is not None else 0.15) / 0.4)) * 20)))
-    concentration = 10 if props.get('country') in ('Taiwan', 'China') else 4
+    concentration = 10 if nrs_concentrated(props.get('country')) else 4
     return max(0, min(100, round(geo + chain + market + concentration)))
 
 

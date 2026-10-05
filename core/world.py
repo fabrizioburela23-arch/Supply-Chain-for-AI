@@ -705,23 +705,47 @@ def _js_round(x):
 
 
 _NRS_GEO = {'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18}
+# 2026-10-05: los países del catálogo se escriben de varias formas ("Japón", "Japon", "Corea", "Estados
+# Unidos", "Taiwán"…) y la tabla solo reconocía "Japan"/"Korea"/"EEUU": Japón y Corea caían al 15 por
+# defecto y las de EE.UU. escritas "Estados Unidos" sumaban 15 en vez de 8. MISMA tabla en app.html.
+_NRS_GEO_ALIAS = {'china': 'China', 'taiwan': 'Taiwan', 'korea': 'Korea', 'corea': 'Korea', 'corea del sur': 'Korea',
+                  'south korea': 'Korea', 'japan': 'Japan', 'japon': 'Japan', 'eeuu': 'EEUU', 'ee uu': 'EEUU',
+                  'estados unidos': 'EEUU', 'usa': 'EEUU', 'united states': 'EEUU', 'us': 'EEUU', 'europa': 'Europa',
+                  'europe': 'Europa', 'israel': 'Israel'}
+
+
+def nrs_country(country):
+    """Clave de la tabla NRS para un país escrito de cualquier forma (o None)."""
+    n = _js_norm(country)
+    if n in _NRS_GEO_ALIAS:
+        return _NRS_GEO_ALIAS[n]
+    first = _js_norm(re.split(r'[/(,;]', str(country or ''))[0])
+    return _NRS_GEO_ALIAS.get(first)
+
+
+def nrs_geo(country):
+    return _NRS_GEO.get(nrs_country(country), 15)
+
+
+def nrs_concentrated(country):
+    return nrs_country(country) in ('Taiwan', 'China')
 
 
 def client_nrs(node, degree):
-    """MISMA fórmula que computeNRS() de app.html (sin el acotado de margen de
-    ontology/agents.py) para que el número coincida con el que ve el usuario."""
-    geo = _NRS_GEO.get(node.get('country'), 15)
+    """MISMA fórmula que computeNRS() de app.html (margen acotado a [0,20] desde 2026-10-05: antes una
+    empresa sin ganancias — OpenAI, margen muy negativo — daba NRS 100)."""
+    geo = nrs_geo(node.get('country'))
     chain = min(25, degree * 2.5)
     margin = node.get('margin')
     try:
         margin = 0.15 if margin is None else float(margin)
     except (TypeError, ValueError):
         margin = 0.15
-    market = _js_round((1 - min(1, margin / 0.4)) * 20)
+    market = max(0, min(20, _js_round((1 - min(1, margin / 0.4)) * 20)))
     growth = str(node.get('growth') or '').lower()
     fundamental = min(15, (10 if node.get('preipo') else 0) +
                       (5 if '🔴' in growth else 2 if '🟡' in growth else 0))
-    conc = 10 if node.get('country') in ('Taiwan', 'China') else 4
+    conc = 10 if nrs_concentrated(node.get('country')) else 4
     return min(100, max(0, _js_round(geo + chain + market + fundamental + conc)))
 
 

@@ -217,7 +217,12 @@ def test_graph_snapshot_nrs_matches_client_formula():
     # misma fórmula que computeNRS (app.html): pre-IPO +10, 🔴 +5, TW/CN +10
     n = {'id': 'x', 'country': 'Taiwan', 'margin': 0.4, 'preipo': True, 'growth': '🔴 cae'}
     assert W.client_nrs(n, 4) == 25 + 10 + 0 + 15 + 10
-    assert W.client_nrs({'id': 'y', 'country': 'EEUU', 'margin': -2.5}, 0) == 100   # sin acotar (como el cliente)
+    # 2026-10-05: margen acotado a [0,20] (como el servidor) — antes un margen −250 % daba NRS 100 (OpenAI)
+    assert W.client_nrs({'id': 'y', 'country': 'EEUU', 'margin': -2.5}, 0) == 8 + 0 + 20 + 0 + 4
+    # el país escrito de cualquier forma cuenta igual (antes "Japón"/"Corea" caían al 15 por defecto)
+    assert W.client_nrs({'country': 'Japón', 'margin': 0.4}, 0) == W.client_nrs({'country': 'Japan', 'margin': 0.4}, 0) == 12 + 4
+    assert W.client_nrs({'country': 'Estados Unidos', 'margin': 0.4}, 0) == 8 + 4
+    assert W.client_nrs({'country': 'Taiwán', 'margin': 0.4}, 0) == 25 + 10
     assert W._js_round(2.5) == 3 and W._js_round(-2.5) == -2
 
 
