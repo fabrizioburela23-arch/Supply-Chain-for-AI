@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (j) — COMANDOS Y AGENTES EN EL CHAT (sw v212)
+
+Pedido de Fabrizio: "que el comité pueda analizar mi cartera y que en el chat de Khipu puedas llamar a
+los agentes y que haya comandos". `engine/khipu_chat.js` `agentCommand()` (antes de todo el ruteo):
+`/ayuda` (lista bilingüe), `/investigar <empresa>` (= @investigación X, "llama al agente de investigación
+para X" → el equipo de 8 analistas), `/comite <empresa>`, `/cartera` (= "/comite cartera", "@comité mi
+cartera", "que el comité analice mi cartera" → Comité → 💼 Mi cartera). Los @analistas (@fundamental,
+@noticias, @todos…) siguen en el cerebro (research/ask_agent). Pista en el campo del chat. Tests:
+tests/test_chat_commands.py. Producción: alias + repetidos aplicados por Fabrizio (corrida
+20261005T032149Z-dce54c, verificada); AlphaSenseFin → AlphaSense en el catálogo.
+
 # SESIÓN 2026-10-04 (i) — MISIÓN DE REPARACIÓN · P1 GRAFO + P2 WORLD MONITOR Y OPERACIÓN (sw v210)
 
 Causa raíz de casi todo P1: DOS verdades del grafo. El mapa y el MCP leen el catálogo (limpio desde

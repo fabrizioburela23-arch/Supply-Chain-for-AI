@@ -373,8 +373,8 @@
       if (labels[k]) b.textContent = labels[k];
     });
     var inp = ov.querySelector('#bcp-input');
-    if (inp) inp.setAttribute('placeholder', L('Pregúntale lo que sea a Khipu…  «¿qué riesgos tiene TSMC?»  ·  «desármame Nvidia»',
-      'Ask Khipu anything…  “what are TSMC’s main risks?”  ·  “break down Nvidia”'));
+    if (inp) inp.setAttribute('placeholder', L('Pregúntale lo que sea a Khipu…  «¿qué riesgos tiene TSMC?»  ·  /investigar NVDA  ·  /cartera  ·  /ayuda',
+      'Ask Khipu anything…  “what are TSMC’s main risks?”  ·  /research NVDA  ·  /portfolio  ·  /help'));
     var setT = function (sel, es, en) {
       var el = ov.querySelector(sel);
       if (el) { el.setAttribute('title', L(es, en)); el.setAttribute('aria-label', L(es, en)); }

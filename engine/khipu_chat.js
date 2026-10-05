@@ -67,12 +67,93 @@
 
   function _clean(s) { return String(s || '').replace(/[?¿!¡.]+$/g, '').replace(/^[¿¡]+/, '').trim(); }
 
+  // ── Comandos y agentes en el chat (pedido de Fabrizio 2026-10-05) ──────────
+  // "/investigar NVDA", "@investigación TSMC", "llama al agente de investigación
+  // para AMD" → el equipo de investigación; "/comite NVDA" → comité de esa empresa;
+  // "/cartera", "/comite cartera", "@comité mi cartera", "que el comité analice mi
+  // cartera" → comité de cartera; "/ayuda" → la lista. Los @analistas
+  // (@fundamental, @noticias, @todos…) siguen yendo al cerebro (research/ask_agent).
+  function _fold(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function _lang() { try { return (window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en'; } catch (e) { return false; } }
+  var _CARTERA_RX = /^(?:de\s+|a\s+)?(?:mi|my|la|the)?\s*(?:cartera|portafolio|portfolio|posiciones|positions)$/i;
+  function helpText(en) {
+    return en ? [
+      'Commands you can type here:',
+      '• /research <company> — the research team (8 analysts) studies the company. Also: "@research NVDA".',
+      '• /committee <company> — the investment committee gives its recommendation.',
+      '• /portfolio — the committee analyzes YOUR portfolio (also "/committee portfolio").',
+      '• @fundamental, @technical, @news, @supply, @geo, @macro, @all + your question — ask an analyst directly.',
+      '• Terminal commands: NVDA XRAY · NVDA RESEARCH · COMPARE NVDA AMD · PORT VAR · SHOCK TSMC.',
+      '• /help — this list.',
+      'Nothing here places orders: buying and selling always asks for your confirmation.'].join('\n') : [
+      'Comandos que puedes escribir aquí:',
+      '• /investigar <empresa> — el equipo de investigación (8 analistas) estudia la empresa. También: "@investigación NVDA".',
+      '• /comite <empresa> — el comité de inversión da su recomendación.',
+      '• /cartera — el comité analiza TU cartera (también "/comite cartera").',
+      '• @fundamental, @tecnico, @noticias, @cadena, @geopolitico, @macro, @todos + tu pregunta — le preguntas a un analista.',
+      '• Comandos de terminal: NVDA XRAY · NVDA RESEARCH · COMPARE NVDA AMD · PORT VAR · SHOCK TSMC.',
+      '• /ayuda — esta lista.',
+      'Nada de esto da órdenes: comprar y vender siempre pide tu confirmación.'].join('\n');
+  }
+  function _cmd(answer, fn) {
+    return { kind: 'command', pending: Promise.resolve().then(function () { if (fn) { try { fn(); } catch (e) {} } return { answer: answer, actions: [] }; }) };
+  }
+  function _pfCommittee(en) {
+    return _cmd(en ? 'Opening the committee on your portfolio: it reviews each position and suggests what to keep, trim or add. It is advice, never an order.'
+                   : 'Abriendo el comité sobre tu cartera: revisa cada posición y sugiere qué mantener, reducir o sumar. Es un consejo, nunca una orden.',
+      function () { if (window.KhipuCommittee) window.KhipuCommittee.openTab('portfolio'); });
+  }
+  function agentCommand(t, deps) {
+    var en = _lang();
+    var R = function (q) { return deps.resolve ? deps.resolve(String(q || '').replace(/[?¿!¡.]+$/g, '').trim()) : null; };
+    var notFound = function (q) {
+      var msg = (window.KhipuResolve && window.KhipuResolve.notFound) ? window.KhipuResolve.notFound(q)
+        : (en ? 'I could not find "' + q + '" in the graph.' : 'No encontré «' + q + '» en el grafo.');
+      return _cmd(msg);
+    };
+    var research = function (q) {
+      if (!q) return _cmd(en ? 'Which company? E.g. /research NVDA' : '¿Qué empresa? Por ejemplo: /investigar NVDA');
+      var h = R(q); return (h && h.node && h.score >= 70) ? { kind: 'research', id: h.node.id } : notFound(q);
+    };
+    var committee = function (q) {
+      if (!q || _CARTERA_RX.test(q.trim())) return _pfCommittee(en);
+      var h = R(q);
+      if (!(h && h.node && h.score >= 70)) return notFound(q);
+      var id = h.node.id, label = h.node.label || id;
+      return _cmd(en ? 'Opening the investment committee for ' + label + '. Nothing executes without your approval.'
+                     : 'Abriendo el comité de inversión para ' + label + '. Nada se ejecuta sin tu aprobación.',
+        function () { if (window.KhipuCommittee) window.KhipuCommittee.open(id); });
+    };
+    var m = t.match(/^\/(\S+)\s*([\s\S]*)$/);
+    if (m) {
+      var c = _fold(m[1]), rest = m[2].trim();
+      if (['ayuda', 'help', 'comandos', 'commands', '?'].indexOf(c) >= 0) return _cmd(helpText(en));
+      if (['investigar', 'investiga', 'investigacion', 'research', 'investigate'].indexOf(c) >= 0) return research(rest);
+      if (['comite', 'committee'].indexOf(c) >= 0) return committee(rest);
+      if (['cartera', 'portafolio', 'portfolio', 'micartera'].indexOf(c) >= 0) return _pfCommittee(en);
+      return _cmd((en ? 'I do not know the command /' + m[1] + '.\n\n' : 'No conozco el comando /' + m[1] + '.\n\n') + helpText(en));
+    }
+    var f = _fold(t).replace(/[?¿!¡.]+$/g, '').trim();
+    // @investigación X · @research X · @investigador X
+    if ((m = f.match(/^@\s*(?:investigacion|investigador(?:es)?|research|researcher)\s*[:,]?\s*(?:sobre\s+|de\s+|a\s+|on\s+)?(.*)$/))) return research(m[1]);
+    // "llama/llamar/invoca al agente (o equipo) de investigación (para|sobre|de) X"
+    if ((m = f.match(/^(?:llama(?:r|le)?|invoca(?:r)?|pide(?:le)?|call|ask)\s+(?:al?|a\s+los|the)?\s*(?:agente|agentes|equipo|team|agent|agents)\s+(?:de\s+)?(?:investigacion|research)\s*(?:para|sobre|de|a|que\s+investigue|on|about|for)?\s*(.*)$/))) return research(m[1]);
+    // @comité (mi) cartera · "que el comité analice mi cartera" · "analiza mi cartera con el comité"
+    if (/^@\s*(?:comite|committee)\s*[:,]?\s*(?:analiza\s+|analyze\s+|revisa\s+|review\s+)?(?:mi|my)?\s*(?:cartera|portafolio|portfolio)/.test(f) ||
+        /^(?:que\s+)?(?:el\s+)?comite\s+(?:analice|revise|evalue|mire)\s+(?:mi|la)\s+(?:cartera|portafolio)/.test(f) ||
+        /^(?:analiza|revisa|evalua)\s+(?:mi|la)\s+(?:cartera|portafolio)\s+con\s+el\s+comite/.test(f) ||
+        /^(?:have\s+)?the\s+committee\s+(?:analy[sz]e|review)\s+my\s+portfolio/.test(f)) return _pfCommittee(en);
+    return null;
+  }
+
   // deps: { resolve(q) → {node, score} | null, tryParse(text), parseTrade(text) }
   function classify(text, deps) {
     deps = deps || {};
     var t = String(text || '').trim();
     if (!t) return { kind: 'none' };
     var low = t.toLowerCase();
+    var ag = agentCommand(t, deps);
+    if (ag) return ag;
 
     // demostración: SOLO pedida de forma exacta
     if (/^(ver\s+)?(la\s+)?(demo|demostraci[óo]n|tour|recorrido(\s+guiado)?|guided\s+(demo|tour))\s*[.!]?$/i.test(t) ||
