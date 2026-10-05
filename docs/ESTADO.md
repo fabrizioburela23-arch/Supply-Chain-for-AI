@@ -9,6 +9,24 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (l) — CARTERAS QUE "DESAPARECÍAN" + COMITÉ DE CARTERA REGISTRADO (sw v214)
+
+- Pedido: "que analice mi cartera, que se registre… puse como 3 carteras y luego no las encuentro".
+- Causas: (1) Comité → 💼 Mi cartera listaba SOLO carteras con posiciones (las vacías no
+  aparecían); (2) engine/sync.js, si ganaba la versión del servidor (409 o pull), pisaba
+  carteras locales recién creadas que aún no subían; (3) `saveAll` fallaba EN SILENCIO si el
+  navegador no dejaba guardar; (4) el análisis del comité de cartera no se guardaba.
+- Arreglos: `sources()` lista todas (vacías = "· vacía", mensaje claro al analizar);
+  `KhipuSync._merge` conserva las carteras locales creadas después de la versión del servidor
+  (las borradas en otro equipo no reviven) y las vuelve a subir; `saveAll` libera cachés
+  desechables y, si igual falla, AVISA; POST /api/committee/portfolio guarda cada análisis
+  como `portfolio_reports.kind='committee'` por dueño (X-Khipu-Owner, `source_label`,
+  `saved_id`); `/api/portfolio-report/list?kind=committee` lo lista (la lista normal lo
+  excluye). UI: tarjeta "🗂 Análisis anteriores del comité" en el Diagnóstico.
+- Test: tests/test_portfolio_persist.py (2, fallaban antes).
+- DESPLIEGUE: Railway quedó atascado en "deploying" con 8541bce (14:44 UTC) y no tomó el
+  commit vacío 95173c1; producción siguió en 68d18e7. Fabrizio debe cancelar/redeploy en Railway.
+
 # SESIÓN 2026-10-05 (k) — OPCIONES FIJAS Y MENÚ "/" "@" EN EL CHAT (sw v213)
 
 Pedido: "cuando ponga / o @ me salgan ya las opciones" + "el comité pueda analizar mi cartera desde

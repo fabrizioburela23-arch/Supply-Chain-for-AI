@@ -22,6 +22,15 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function usd(v) { v = Number(v); if (!isFinite(v)) return '—'; return (v < 0 ? '−$' : '$') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
   function pct(v, d) { v = Number(v); return isFinite(v) ? v.toFixed(d == null ? 1 : d) + '%' : '—'; }
+  function owner() {   // misma llave del navegador que engine/sync.js y engine/pfreports.js
+    var k = null; try { k = localStorage.getItem('kh_owner_key'); } catch (e) {}
+    if (!k || k.length < 16) {
+      var a = new Uint8Array(16); if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(a); else for (var i = 0; i < 16; i++) a[i] = Math.random() * 256;
+      k = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      try { localStorage.setItem('kh_owner_key', k); } catch (e) {}
+    }
+    return k;
+  }
   function actor() { var a = null; try { a = localStorage.getItem('khipu_actor'); } catch (e) {} return (a && a.trim()) || 'usuario'; }
 
   // ── perfil del inversionista ──────────────────────────────────────────────
@@ -42,7 +51,8 @@
   function saveProfile(p) { try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch (e) {} }
   window.KhipuProfile = { get: getProfile, save: saveProfile };
 
-  var S = { el: null, src: null, editingProfile: false, answers: {}, busy: false, res: null, err: null, applied: {}, brokerPos: null, section: 'diag' };
+  var S = { el: null, src: null, editingProfile: false, answers: {}, busy: false, res: null, err: null, applied: {}, brokerPos: null, section: 'diag',
+    past: null, viewingPast: null };
   var SECTIONS = [['diag', '🩺', 'Diagnóstico y consejos', 'Diagnosis & advice'], ['reports', '📄', 'Reportes', 'Reports'],
     ['news', '📰', 'Noticias', 'News'], ['ask', '💬', 'Pregúntale', 'Ask it']];
 
@@ -53,7 +63,8 @@
     if (ids.length) out.push({ key: 'market', label: L('Mis posiciones (Mercado)', 'My positions (Market)') + ' · ' + ids.length });
     var list = [];
     try { list = (window.KhipuPortfolios && window.KhipuPortfolios._list && window.KhipuPortfolios._list()) || []; } catch (e) {}
-    list.forEach(function (p) { if ((p.positions || []).length) out.push({ key: 'pf:' + p.id, label: '🧪 ' + p.name + ' · ' + p.positions.length }); });
+    // TODAS las carteras (2026-10-05): antes se ocultaban las vacías y parecía que no se habían guardado
+    list.forEach(function (p) { var n = (p.positions || []).length; out.push({ key: 'pf:' + p.id, label: '🧪 ' + p.name + ' · ' + (n || L('vacía', 'empty')) }); });
     out.push({ key: 'broker', label: '🔒 ' + L('Mi cuenta del bróker (PIN)', 'My broker account (PIN)') });
     return out;
   }
@@ -194,6 +205,36 @@
       '<div class="cm-note" style="font-size:10.5px">' + esc(L('Datos: ', 'Data: ') + (r.source || '') + ' · ' + (r.as_of || '')) + '</div>';
   }
 
+  // 🗂 Análisis anteriores (cada corrida del comité queda registrada en el servidor, por dueño)
+  function api(url) {
+    return fetch((window.BASE || '') + url, { headers: { 'X-Khipu-Owner': owner() } })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j._status = r.status; return j; }); });
+  }
+  function loadPast() {
+    api('/api/portfolio-report/list?kind=committee').then(function (d) { S.past = d.available === false ? [] : (d.reports || []); paint(); })
+      .catch(function () { S.past = []; });
+  }
+  function openPast(id) {
+    api('/api/portfolio-report/' + encodeURIComponent(id)).then(function (d) {
+      if (!d.health) { S.err = (isEn() ? (d.error_en || d.error) : d.error) || L('No se pudo abrir.', 'Could not open.'); paint(); return; }
+      S.res = d; S.viewingPast = { id: id, title: d.title, at: d.created_at }; S.lastSrc = null; S.applied = {}; S.err = null; paint();
+      try { S.el.scrollIntoView({ block: 'start' }); } catch (e) {}
+    });
+  }
+  function pastHtml() {
+    if (!S.past || !S.past.length) return '';
+    return card('<div class="cm-t">🗂 ' + esc(L('Análisis anteriores del comité', 'Previous committee analyses')) + ' <span class="cm-note">(' + S.past.length + ')</span></div>' +
+      S.past.slice(0, 12).map(function (h) {
+        var d = new Date(h.created_at), when = isNaN(d) ? '' : d.toLocaleString(isEn() ? 'en' : 'es', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        var on = S.viewingPast && S.viewingPast.id === h.id;
+        return '<div data-past="' + esc(h.id) + '" style="cursor:pointer;display:flex;gap:10px;align-items:baseline;padding:6px 8px;border-radius:8px;margin-top:4px;' +
+          (on ? 'background:rgba(0,224,255,.08);' : '') + 'border:1px solid rgba(122,158,255,.12)">' +
+          '<span style="font-size:11px;color:#7C87A3;min-width:96px">' + esc(when) + '</span>' +
+          '<span style="flex:1;font-size:12.5px;color:#E8EDFB">' + esc(h.title) + '</span>' +
+          '<span class="cm-note" style="font-size:11.5px">' + esc(h.summary || '') + '</span></div>';
+      }).join(''));
+  }
+
   function paint() {
     var el = S.el; if (!el) return;
     var srcs = sources();
@@ -207,7 +248,11 @@
       (S.section !== 'diag' && getProfile() && !S.editingProfile ? '<div id="pfx"></div>' : '') +
       (S.err ? card('<div class="cm-note" style="color:#FFB300">' + esc(S.err) + '</div>') : '') +
       (S.section !== 'diag' ? '' : S.busy ? card('<div class="cm-note"><span class="cm-spin">◌</span> ' + esc(L('Midiendo el riesgo con precios reales, cruzando con la investigación y preparando consejos… (10-40 s)', 'Measuring risk with real prices, crossing with research and preparing advice… (10-40 s)')) + '</div>') : '') +
-      (S.section === 'diag' && S.res && !S.busy ? resultHtml(S.res) : '');
+      (S.section === 'diag' && S.res && !S.busy && S.viewingPast ? card('<div class="cm-note" style="color:#FFB300">🗂 ' +
+        esc(L('Estás viendo un análisis guardado: ', 'You are viewing a saved analysis: ') + (S.viewingPast.title || '')) +
+        ' <button class="cm-tab" id="pfc-past-close" style="margin-left:6px">✕ ' + esc(L('Cerrar', 'Close')) + '</button></div>') : '') +
+      (S.section === 'diag' && S.res && !S.busy ? resultHtml(S.res) : '') +
+      (S.section === 'diag' && getProfile() && !S.editingProfile && !S.busy ? pastHtml() : '');
     el.querySelectorAll('[data-q]').forEach(function (b) { b.onclick = function () { S.answers[b.getAttribute('data-q')] = b.getAttribute('data-v'); paint(); }; });
     var sp = document.getElementById('pfc-save-prof');
     if (sp) sp.onclick = function () {
@@ -240,6 +285,9 @@
     el.querySelectorAll('[data-sec]').forEach(function (b) { b.onclick = function () { S.section = b.getAttribute('data-sec'); S.err = null; paint(); }; });
     if (S.section !== 'diag') extras();
     var rb = document.getElementById('pfc-run'); if (rb) rb.onclick = run;
+    el.querySelectorAll('[data-past]').forEach(function (x) { x.onclick = function () { openPast(x.getAttribute('data-past')); }; });
+    var pc = document.getElementById('pfc-past-close'); if (pc) pc.onclick = function () { S.res = null; S.viewingPast = null; paint(); };
+    if (S.past === null && S.section === 'diag') { S.past = []; loadPast(); }
     el.querySelectorAll('[data-apply]').forEach(function (b) { b.onclick = function () { apply(b.getAttribute('data-apply')); }; });
     el.querySelectorAll('[data-trade]').forEach(function (b) { b.onclick = function () { if (window._surface) { if (window.KhipuCommittee) window.KhipuCommittee.close(); window._surface('trade'); } }; });
   }
@@ -262,18 +310,22 @@
 
   function run() {
     var p = getProfile(); if (!p) return;
-    S.busy = true; S.err = null; S.res = null; S.applied = {}; paint();
+    S.busy = true; S.err = null; S.res = null; S.viewingPast = null; S.applied = {}; paint();
     positionsFor(S.src).then(function (src) {
       S.lastSrc = src;
-      if (!src.positions.length) throw new Error(L('Esa cartera está vacía.', 'That portfolio is empty.'));
-      return fetch((window.BASE || '') + '/api/committee/portfolio', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Actor': actor() },
-        body: JSON.stringify({ positions: src.positions, cash_usd: src.cash || 0, profile: p, lang: isEn() ? 'en' : 'es', actor: actor() }) })
+      if (!src.positions.length) throw new Error(L('Esa cartera está vacía: añádele empresas en Mercado → Carteras (🔍 buscar → Comprar) y vuelve.',
+        'That portfolio is empty: add companies in Market → Portfolios (🔍 search → Buy) and come back.'));
+      var label = (sources().filter(function (s) { return s.key === S.src; })[0] || {}).label || '';
+      return fetch((window.BASE || '') + '/api/committee/portfolio', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Actor': actor(), 'X-Khipu-Owner': owner() },
+        body: JSON.stringify({ positions: src.positions, cash_usd: src.cash || 0, profile: p, lang: isEn() ? 'en' : 'es', actor: actor(),
+          source_label: label.replace(/^[^\wÀ-ÿ]+/, '').replace(/\s·\s[^·]*$/, '') }) })
         .then(function (r) { return r.json(); });
     }).then(function (d) {
       S.busy = false;
       if (!d.ok) { S.err = (isEn() ? (d.error_en || d.error) : d.error) || L('No se pudo analizar.', 'Could not analyze.'); }
       else {
-        S.res = d;
+        S.res = d; S.viewingPast = null;
+        if (d.saved_id) loadPast();
         if (window.KhipuPortfolioExtras && S.lastSrc) window.KhipuPortfolioExtras.syncWatch({ source: { key: S.src, label: S.lastSrc.label, positions: S.lastSrc.positions,
           cash: S.lastSrc.cash, start: S.lastSrc.start, startDate: S.lastSrc.startDate }, profile: getProfile() });
       }
@@ -304,5 +356,5 @@
     paint();
   }
 
-  window.KhipuPortfolioCommittee = { render: function (el) { S.el = typeof el === 'string' ? document.getElementById(el) : el; S.err = null; paint(); } };
+  window.KhipuPortfolioCommittee = { render: function (el) { S.el = typeof el === 'string' ? document.getElementById(el) : el; S.err = null; paint(); }, _sources: sources };
 })();

@@ -90,8 +90,21 @@
       });
     } catch (e) { return []; }
   }
+  // Si el navegador no deja guardar (almacenamiento lleno / modo privado) se AVISA:
+  // antes fallaba en silencio y la cartera "desaparecía" al recargar (2026-10-05).
   function saveAll(list) {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(list)); } catch (e) {}
+    try { localStorage.setItem(LS_KEY, JSON.stringify(list)); return true; }
+    catch (e) {
+      try {   // libera cachés desechables y reintenta una vez
+        Object.keys(localStorage).forEach(function (k) { if (/^ai_analysis2_|^kh_chartcache$|^eco_quotes$/.test(k)) localStorage.removeItem(k); });
+        localStorage.setItem(LS_KEY, JSON.stringify(list)); return true;
+      } catch (e2) {
+        var msg = T('⚠ No se pudo guardar la cartera en este navegador (almacenamiento lleno o modo privado).',
+                    '⚠ Could not save the portfolio in this browser (storage full or private mode).');
+        if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'error', title: msg }); else toast(msg);
+        return false;
+      }
+    }
   }
   function activeId() {
     try { return localStorage.getItem(LS_ACTIVE) || ''; } catch (e) { return ''; }

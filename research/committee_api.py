@@ -267,7 +267,38 @@ def portfolio_committee():
                             'detail': f'{type(e).__name__}: {str(e)[:200]}'}), 500
         if out.get('ok') and body.get('explain', True):
             out['explanation'] = pa.explain(out, lang)
+    if out.get('ok') and body.get('save', True):
+        _register_portfolio_analysis(out, body, lang)
     return jsonify(out), (200 if out.get('ok') else 422)
+
+
+def _register_portfolio_analysis(out, body, lang):
+    """Pedido 2026-10-05 ("que se registre"): cada análisis del comité de cartera
+    queda guardado por dueño (X-Khipu-Owner) como reporte kind='committee', para
+    volver a verlo en Comité → 💼 Mi cartera → Análisis anteriores. Sin llave o
+    sin base, el análisis igual se devuelve (solo no se guarda)."""
+    try:
+        from core.portfolio_reports_api import _db, _owner
+        owner = _owner()
+        if not owner or not _db():
+            return
+        import json
+        from datetime import datetime, timezone
+
+        from research.models import PortfolioReport
+        name = str(body.get('source_label') or '').strip()[:60]
+        today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        h = out.get('health') or {}
+        title = f"{'Committee' if lang == 'en' else 'Comité'}{' · ' + name if name else ''} · {today}"[:200]
+        with session_scope() as s:
+            r = PortfolioReport(owner_hash=owner, kind='committee', title=title, period_from=today, period_to=today,
+                                summary=f"{h.get('score', '')}/100 · {h.get('verdict') or ''}"[:500],
+                                data=json.loads(json.dumps({**out, 'source_label': name or None}, default=str)), read=True)
+            s.add(r)
+            s.flush()
+            out['saved_id'] = r.id
+    except Exception as e:  # noqa: BLE001 — guardar nunca rompe el análisis
+        log.warning('portfolio committee store: %s', e)
 
 
 @committee_bp.route('/board')

@@ -42,7 +42,7 @@
     if (!available) return;
     var m = meta(), ts = m[key] || new Date().toISOString();
     api('PUT', { key: key, value: parse(ls(key)), updated_at: ts }).then(function (d) {
-      if (d._status === 409 && d.updated_at) apply(key, d.value, d.updated_at);   // otro dispositivo escribió después
+      if (d._status === 409 && d.updated_at) { apply(key, d.value, d.updated_at); refreshUI([key]); }   // otro dispositivo escribió después
     }).catch(function () {});
   }
   // cada escritura local de una clave sincronizada → se sube (con 1.5 s de espera)
@@ -57,14 +57,31 @@
     } catch (e) {}
   };
 
+  // Carteras (2026-10-05, "puse 3 carteras y luego no las encuentro"): cuando gana la
+  // versión del servidor, se CONSERVAN las carteras locales que no están allá y se
+  // crearon DESPUÉS de esa versión (todavía no subieron). Una cartera borrada en otro
+  // dispositivo es más vieja que esa versión, así que no revive.
+  function mergePortfolios(srvVal, ts) {
+    var local = parse(ls('kh_portfolios'));
+    if (!Array.isArray(local) || !Array.isArray(srvVal)) return { value: srvVal, kept: 0 };
+    var ids = {}, cut = Date.parse(ts) || 0, kept = 0, out = srvVal.slice();
+    srvVal.forEach(function (p) { if (p && p.id) ids[p.id] = 1; });
+    local.forEach(function (p) {
+      if (p && p.id && !ids[p.id] && (Number(p.createdAt) || 0) > cut) { out.push(p); kept++; }
+    });
+    return { value: out, kept: kept };
+  }
   function apply(key, value, ts) {
+    var kept = 0;
+    if (key === 'kh_portfolios') { var mg = mergePortfolios(value, ts); value = mg.value; kept = mg.kept; }
     applying = true;
     try {
       if (value === null || value === undefined) localStorage.removeItem(key);
       else localStorage.setItem(key, typeof value === 'string' && key === 'kh_pf_active' ? value : JSON.stringify(value));
     } catch (e) {}
     applying = false;
-    var m = meta(); m[key] = ts; setMeta(m);
+    var m = meta(); m[key] = kept ? new Date().toISOString() : ts; setMeta(m);
+    if (kept) { clearTimeout(timers[key]); timers[key] = setTimeout(function () { push(key); }, 300); }
   }
   function refreshUI(keys) {
     try {
@@ -101,7 +118,7 @@
     return pull(true).then(function (n) { return { ok: true, changed: n }; });
   }
 
-  window.KhipuSync = { code: code, link: link, pull: pull, keys: KEYS };
+  window.KhipuSync = { code: code, link: link, pull: pull, keys: KEYS, _merge: mergePortfolios };
   setTimeout(function () { owner(); pull(false); }, 2500);
   setInterval(function () { if (!document.hidden) pull(false); }, 120000);
   document.addEventListener('visibilitychange', function () { if (!document.hidden) pull(false); });

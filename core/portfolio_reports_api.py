@@ -139,8 +139,11 @@ def list_reports():
     from ontology.db import session_scope
     from research.models import PortfolioReport
     with session_scope() as s:
-        rows = (s.query(PortfolioReport).filter(PortfolioReport.owner_hash == owner)
-                .order_by(PortfolioReport.created_at.desc()).limit(60).all())
+        q = s.query(PortfolioReport).filter(PortfolioReport.owner_hash == owner)
+        # los análisis del comité (kind='committee') tienen su propia lista: ?kind=committee
+        q = q.filter(PortfolioReport.kind == 'committee') if request.args.get('kind') == 'committee' \
+            else q.filter(PortfolioReport.kind != 'committee')
+        rows = (q.order_by(PortfolioReport.created_at.desc()).limit(60).all())
         out = []
         for r in rows:
             p = (r.data or {}).get('performance') or {}

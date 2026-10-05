@@ -1012,3 +1012,12 @@ antes del commit y pasa después (`tests/test_repair_*.py`).
   cambia: mismos mensajes de texto, sin eventos extra.
 - **Verificar.** `pytest tests/test_repair_logs.py` (4).
 
+### U1 — Carteras que "desaparecían" y comité de cartera sin registro (2026-10-05)
+- **Síntoma.** "Puse como 3 carteras y luego no las encuentro"; el análisis del comité de
+  cartera no quedaba guardado.
+- **Causa.** El selector del comité ocultaba carteras vacías; la sincronización podía pisar
+  carteras nuevas no subidas; `saveAll` tragaba errores; el endpoint no persistía nada.
+- **Cambios.** engine/pfcommittee.js (todas las carteras + historial), engine/sync.js
+  (`_merge`), engine/portfolios.js (`saveAll` avisa), research/committee_api.py
+  (`_register_portfolio_analysis`), core/portfolio_reports_api.py (`?kind=committee`).
+- **Verificar.** `pytest tests/test_portfolio_persist.py` (2).
