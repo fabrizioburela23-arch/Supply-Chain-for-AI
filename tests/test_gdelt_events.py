@@ -79,7 +79,7 @@ def test_capas_en_vivo_agrupadas_con_fuentes(monkeypatch):
     out = W.world_events(layers=['conflict', 'unrest', 'trade'], window='24h', wait=5)
     for lyr in ('conflict', 'unrest', 'trade'):
         assert out['sources'][lyr]['ok'] is True, (lyr, out['sources'][lyr])
-        assert out['sources'][lyr]['coverage_hours'] == 1.0   # primer arranque: la última hora (4 lotes) and out['sources'][lyr]['press_signal']
+        assert out['sources'][lyr]['coverage_hours'] == 2.0   # primer arranque: las últimas 2 h (8 lotes) and out['sources'][lyr]['press_signal']
     kh = [i for i in out['items'] if i['layer'] == 'conflict']
     assert len(kh) == 1                                           # dos eventos en Kharkiv → un punto; Montana (1 nota) fuera
     assert kh[0]['distinct_articles'] == 2

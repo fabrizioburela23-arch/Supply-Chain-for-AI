@@ -42,7 +42,7 @@ log = logging.getLogger('world')
 BASE = 'http://data.gdeltproject.org/gdeltv2/'
 LASTUPDATE = BASE + 'lastupdate.txt'
 KEEP_S = 7 * 86400
-MAX_PER_REFRESH = 16
+MAX_PER_REFRESH = 24
 STEP = timedelta(minutes=15)
 LAYERS = ('conflict', 'unrest', 'trade')
 
@@ -162,7 +162,7 @@ def refresh(now=None, max_new=MAX_PER_REFRESH):
         cut = now - KEEP_S
         todo = []
         if not _STORE['batches']:
-            max_new = min(max_new, 4)      # primer arranque: responde rápido con la última hora; el resto, después
+            max_new = min(max_new, 8)      # primer arranque: responde rápido con las últimas 2 h; el resto, después
         while t and t.timestamp() >= cut and len(todo) < max_new:
             st = t.strftime('%Y%m%d%H%M%S')
             if st not in _STORE['batches']:
