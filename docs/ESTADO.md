@@ -9,6 +9,14 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (u) — ÍNDICE GPR (Caldara-Iacoviello) EN VIVO (sw v227)
+
+- core/gpr.py: diario (data_gpr_daily_recent.xls → valor, medias 7/30/365, percentil 1 año, 120 días) y
+  mensual por país (data_gpr_export.xls → GPRC_<ISO3> vs su último año). Requiere `xlrd` (añadido a
+  requirements + constraints). Caché 12 h, lo último bueno si cae (stale), prewarm lo refresca.
+- GET /api/world/gpr; MCP get_world_events `gpr_index`; World Monitor: tarjeta 🌍 con valor, tendencia,
+  mini-gráfico y "suben en la prensa"; países con GPR ≥ 1,5× su año suben +5 en inestabilidad.
+
 # SESIÓN 2026-10-05 (t) — ESTRECHOS Y PAÍSES: CURADO + EN VIVO (sw v226)
 
 - `_blend_live_chokepoint` / `_blend_live_country` (core/world.py): las capas curadas leen la caché de las

@@ -154,6 +154,9 @@
     R('wm_official', {
       es: { t: 'Fuentes oficiales', b: 'Datos publicados por organismos oficiales, no por la prensa:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>FMI PortWatch</b>: cuántos buques cruzan cada día cada estrecho o canal, medido por satélite (AIS). Llega con unos días de retraso.</li><li><b>Diario oficial de EE.UU. (Federal Register)</b>: las reglas del <b>BIS</b> (exportación de chips, «Entity List») y de la <b>OFAC</b> (sanciones), tal como se publican.</li><li><b>GDACS</b> (ONU + Comisión Europea): alertas de desastre NARANJA y ROJA.</li><li><b>Departamento de Estado de EE.UU.</b>: países con aviso de viaje nivel 3 («reconsiderar») y 4 («no viajar»).</li><li><b>Cloudflare Radar</b>: cortes de internet por país (necesita una clave gratuita).</li></ul>Cada dato trae fecha y enlace al original. Si una fuente cae, la capa lo dice; nunca rellenamos con datos inventados.' },
       en: { t: 'Official sources', b: 'Data published by official bodies, not by the press:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>IMF PortWatch</b>: how many ships cross each strait or canal every day, measured by satellite (AIS). It arrives a few days late.</li><li><b>US Federal Register</b>: <b>BIS</b> rules (chip exports, the "Entity List") and <b>OFAC</b> rules (sanctions), as published.</li><li><b>GDACS</b> (UN + European Commission): ORANGE and RED disaster alerts.</li><li><b>US State Department</b>: countries with a level 3 ("reconsider") or 4 ("do not travel") travel advisory.</li><li><b>Cloudflare Radar</b>: internet outages by country (needs a free key).</li></ul>Every item carries its date and a link to the original. If a source is down, the layer says so; we never fill in made-up data.' } });
+    R('wm_gpr', {
+      es: { t: 'Índice de riesgo geopolítico (GPR)', b: 'Índice académico de Caldara e Iacoviello (economistas de la Reserva Federal), muy usado por bancos centrales. Cuenta cada día qué parte de las noticias de 10 grandes diarios habla de guerras, amenazas militares, terrorismo o tensiones nucleares. <b>100 = el promedio 1985-2019</b>; por encima de 150-200 hay mucha tensión percibida. Mide el riesgo que <b>percibe la prensa</b>, no víctimas ni probabilidades. «Suben en la prensa» = países cuyo índice mensual está muy por encima de su último año.' },
+      en: { t: 'Geopolitical risk index (GPR)', b: 'Academic index by Caldara and Iacoviello (Federal Reserve economists), widely used by central banks. Every day it counts what share of the news in 10 major newspapers is about wars, military threats, terrorism or nuclear tensions. <b>100 = the 1985-2019 average</b>; above 150-200 means high perceived tension. It measures risk <b>perceived by the press</b>, not casualties or probabilities. "Rising in the press" = countries whose monthly index is well above their last year.' } });
     R('wm_shipping', {
       es: { t: 'Tráfico por los estrechos', b: 'Comparamos los buques por día de la <b>última semana</b> con el promedio de los <b>90 días anteriores</b>. Una caída fuerte (por ejemplo −40 %) suele significar desvíos, bloqueos o un conflicto: encarece fletes y retrasa entregas de las empresas que dependen de esa ruta. La severidad sale de la caída (−25 % ≈ 40, −50 % ≈ 80); las subidas no suman alarma.' },
       en: { t: 'Traffic through the straits', b: 'We compare ships per day over the <b>last week</b> with the average of the <b>previous 90 days</b>. A sharp drop (e.g. −40%) usually means diversions, blockades or conflict: freight gets pricier and deliveries slower for companies that depend on that route. Severity comes from the drop (−25% ≈ 40, −50% ≈ 80); increases add no alarm.' } });
@@ -473,6 +476,31 @@
     return '<div class="wm-gauge"><div class="n" style="color:' + lvl[1] + '">' + dr.toFixed(2) + '</div><div class="d"><b style="color:' + lvl[1] + '">' + lvl[0] + '</b> · ' +
       esc(L('nivel sistémico de la red', 'network systemic level')) + chip('wm_systemic') + (nf ? '<br>⚡ ' + nf + ' ' + esc(L('factor(es) activo(s)', 'active factor(s)')) : '') + '</div></div>';
   }
+  // 🌍 índice de riesgo geopolítico global (Caldara-Iacoviello, Fed): valor diario, tendencia y países que suben
+  function gprHTML() {
+    if (!S.gpr && !S.gprLoading) {
+      S.gprLoading = true;
+      getJSON('/api/world/gpr').then(function (d) { S.gpr = d; }).catch(function () { S.gpr = { ok: false }; })
+        .then(function () { S.gprLoading = false; if (!S.sel) renderSituation(); });
+    }
+    var g = S.gpr;
+    if (!g) return '';
+    if (!g.ok || !g.daily) return '<div class="wm-meta" style="margin-top:8px;color:#7C87A3">🌍 ' + esc(L('Índice de riesgo geopolítico: ', 'Geopolitical risk index: ') + ((en() ? g.error_en : g.error_es) || L('no disponible', 'unavailable'))) + '</div>';
+    var d = g.daily, v = d.value, up = d.avg30 && v > d.avg30 * 1.1, down = d.avg30 && v < d.avg30 * 0.9;
+    var col = v >= 200 ? '#FF4D6A' : v >= 140 ? '#FFB300' : '#2BE38B';
+    var hist = (d.history || []).slice(-90), path = '';
+    if (hist.length > 1) {
+      var vals = hist.map(function (h) { return h.value; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals) || 1;
+      path = hist.map(function (h, i) { return (i ? 'L' : 'M') + (i * 160 / (hist.length - 1)).toFixed(1) + ',' + (30 - (h.value - lo) / Math.max(1, hi - lo) * 28).toFixed(1); }).join('');
+    }
+    var cs = ((g.monthly || {}).countries || []).filter(function (c) { return (c.vs_12m || 0) >= 1.3; }).slice(0, 3);
+    return '<div class="wm-gauge" style="margin-top:8px"><div class="n" style="color:' + col + '">' + Math.round(v) + '</div><div class="d"><b style="color:' + col + '">' +
+      esc(L('Riesgo geopolítico global', 'Global geopolitical risk')) + '</b>' + chip('wm_gpr') + '<br>' +
+      esc((up ? '▲ ' : down ? '▼ ' : '≈ ') + L('vs promedio 30 d (', 'vs 30-day avg (') + Math.round(d.avg30) + ')' + (d.percentile_1y != null ? ' · ' + L('más alto que el ', 'higher than ') + d.percentile_1y + L(' % del último año', '% of the last year') : '') + ' · ' + d.date) +
+      (path ? '<br><svg viewBox="0 0 160 32" width="160" height="32" style="margin-top:4px"><path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="1.5"/></svg>' : '') +
+      (cs.length ? '<br>' + esc(L('Suben en la prensa: ', 'Rising in the press: ') + cs.map(function (c) { return c.name_es + ' ×' + c.vs_12m; }).join(' · ')) : '') +
+      '</div></div>';
+  }
   function kpisHTML() {
     var h = '<div class="wm-kpis">';
     LIVE.concat(['chokepoints']).forEach(function (id) {
@@ -664,7 +692,7 @@
     el.innerHTML = '<div class="wm-ph"><span class="grab"></span>🌐 ' + esc(L('Situación global', 'Global situation')) +
       '<span style="margin-left:auto;font-weight:600;letter-spacing:0;text-transform:none;color:#5E6884;font-size:9.5px">' + esc(asOf) + '</span>' +
       '<span class="x" data-act="reload" title="' + esc(L('Actualizar', 'Refresh')) + '" style="margin-left:4px">⟳</span><span class="x" data-act="collapse" data-side="right" title="' + esc(L('Ocultar', 'Hide')) + '" style="margin-left:0">—</span></div>' +
-      '<div class="wm-pb">' + systemicHTML() + '<div style="height:8px"></div>' + kpisHTML() + briefHTML() + portfolioHTML() +
+      '<div class="wm-pb">' + systemicHTML() + gprHTML() + '<div style="height:8px"></div>' + kpisHTML() + briefHTML() + portfolioHTML() +
       shippingHTML() + policyHTML() + rankedHTML('chokepoints') + rankedHTML('instability') + commoditiesHTML() + regionsHTML() + scenariosHTML() +
       '<div class="wm-note">' + esc(L('Análisis informativo con datos públicos. No es asesoría financiera.', 'Informational analysis from public data. Not financial advice.')) + '</div></div>';
   }

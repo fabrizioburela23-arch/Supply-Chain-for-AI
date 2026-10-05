@@ -140,5 +140,5 @@ def test_w1_noticias_gdelt_doc_en_pausa_no_tocan_la_red(monkeypatch):
 def test_w1_prewarm_no_espera_y_resume_estados(monkeypatch):
     monkeypatch.setattr(W, '_http_get_json', _http([None], []))
     res = W.prewarm()
-    assert set(res) == set(W.LIVE_LAYERS)
+    assert set(res) - {'gpr'} == set(W.LIVE_LAYERS)          # + el índice GPR (caché 12 h)
     assert res['chokepoints'] == 'ok'

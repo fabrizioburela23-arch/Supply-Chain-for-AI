@@ -1221,6 +1221,17 @@ def _blend_live_country(item):
         item['advisory_level'] = adv.get('level')
         if (adv.get('severity') or 0) > (item['severity'] or 0):
             item['severity'], item['live_driven'] = adv['severity'], True
+    try:
+        from core.gpr import gpr_cached
+        g = gpr_cached()
+        gc = next((c for c in ((g or {}).get('monthly') or {}).get('countries') or [] if ck and c.get('country_key') == ck), None)
+    except Exception:  # noqa: BLE001
+        gc = None
+    if gc:
+        item['gpr_country'] = {k: gc.get(k) for k in ('value', 'avg12m', 'vs_12m')} | {'month': ((g or {}).get('monthly') or {}).get('month')}
+        if (gc.get('vs_12m') or 0) >= 1.5:          # la prensa habla de riesgo en ese país 50 %+ más que en el último año
+            item['severity'] = int(min(100, (item['severity'] or 0) + 5))
+            item['live_driven'] = True
     if evs:
         item['live_events'] = {'count': len(evs), 'max_severity': max(x.get('severity') or 0 for x in evs),
                                'top': (evs[0].get('title_es') or evs[0].get('title'))}
@@ -1335,7 +1346,13 @@ def prewarm(window='24h'):
     vencidas para que el primer visitante no vea 'cargando'. No espera (wait=0)
     ni consulta una fuente en pausa."""
     res = world_events(window=window, wait=0)
-    return {k: ('ok' if v.get('ok') else v.get('error_code') or 'pending') for k, v in res['sources'].items()}
+    out = {k: ('ok' if v.get('ok') else v.get('error_code') or 'pending') for k, v in res['sources'].items()}
+    try:
+        from core.gpr import gpr
+        out['gpr'] = 'ok' if gpr().get('ok') else 'error'      # caché 12 h: casi siempre sin red
+    except Exception:  # noqa: BLE001
+        out['gpr'] = 'error'
+    return out
 
 
 def _fetch_key(layer, window):
@@ -2004,3 +2021,11 @@ def entity_geo_risks(entity_ids, window='24h', wait=3.0, per_entity=3, min_sever
             hits.sort(key=lambda h: (-(h['why'] == 'named'), -h['severity']))
             out[eid] = hits[:per_entity]
     return out
+
+
+@world_bp.get('/gpr')
+@rate_limit(240, 3600)
+def api_world_gpr():
+    """GET /api/world/gpr — índice de riesgo geopolítico (Caldara-Iacoviello): diario global + por país (mensual)."""
+    from core.gpr import gpr
+    return jsonify(gpr())

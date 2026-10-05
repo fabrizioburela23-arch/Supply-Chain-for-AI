@@ -37,3 +37,6 @@ pydantic>=2.6.0
 # Alpaca de cada cliente con Fernet (clave BROKERAGE_ENC_KEY). Sin este paquete
 # el resto de la app funciona; solo no se pueden guardar credenciales.
 cryptography>=41.0.0
+# Índice de riesgo geopolítico (GPR, Caldara-Iacoviello): se publica SOLO en .xls (core/gpr.py, 2026-10-05).
+# Sin este paquete la capa dice "no disponible"; el resto funciona.
+xlrd>=2.0.1

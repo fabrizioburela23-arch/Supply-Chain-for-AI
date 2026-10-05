@@ -1086,7 +1086,13 @@ def t_get_world_events(ctx, layers=None, window='24h', limit=40):
     keep = ('id', 'layer', 'lat', 'lon', 'title', 'severity', 'time', 'source', 'url', 'country', 'place',
             'official', 'change_pct', 'agency', 'alert', 'companies', 'severity_kind', 'level', 'ongoing',
             'press_signal', 'count')
-    return {'window': res.get('window') or window, 'count_total': len(items),
+    try:
+        g = importlib.import_module('core.gpr').gpr_cached()
+        gpr = {'date': g['daily']['date'], 'value': g['daily']['value'], 'avg30': g['daily']['avg30'],
+               'percentile_1y': g['daily']['percentile_1y'], 'scale': g.get('scale_en'), 'source': g.get('source')} if g else None
+    except Exception:  # noqa: BLE001
+        gpr = None
+    return {'window': res.get('window') or window, 'count_total': len(items), 'gpr_index': gpr,
             'items': [{k: x.get(k) for k in keep if k in x} for x in items[:limit]],
             'sources': res.get('sources') or {}, 'as_of': res.get('as_of') or _now_iso(),
             'source': 'Khipus World Monitor (core.world)'}
