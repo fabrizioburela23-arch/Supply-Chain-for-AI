@@ -293,6 +293,9 @@ def test_world_events_all_layers_and_contract(monkeypatch):
     out = W.world_events(window='24h', wait=5)
     assert out['window'] == '24h' and set(out['sources']) == set(W.LIVE_LAYERS)
     for lyr, s in out['sources'].items():
+        if lyr == 'outages':        # necesita CLOUDFLARE_RADAR_TOKEN (gratis): sin él lo dice, no inventa
+            assert s['ok'] is False and s['error_code'] == 'needs_key' and 'Railway' in s['error_es']
+            continue
         assert s['ok'] is True, lyr
         assert {'ok', 'count', 'as_of', 'provider'} <= set(s)
     for it in out['items']:

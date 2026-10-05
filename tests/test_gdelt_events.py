@@ -1,0 +1,89 @@
+"""core/gdelt_events.py — conflicto/protestas/sanciones desde los archivos crudos de eventos de GDELT 2.0
+(la API GEO fue retirada → las tres capas estaban "en pausa"). Sin red: lotes simulados."""
+import io
+import os
+import sys
+import zipfile
+from datetime import datetime, timezone
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from core import gdelt_events as GE  # noqa: E402
+from core import world as W  # noqa: E402
+
+
+def row(code, lat, lon, place, n_src=3, n_art=6, geo_type=4, url='https://news.example.com/a', gold=-10):
+    r = [''] * 61
+    r[26], r[27], r[28] = code, code[:3], code[:2]
+    r[30], r[32], r[33] = str(gold), str(n_src), str(n_art)
+    r[51], r[52], r[53], r[56], r[57], r[60] = str(geo_type), place, 'UP', str(lat), str(lon), url
+    return '\t'.join(r)
+
+
+LAST = '20261005160000'
+ROWS = [row('193', 49.99, 36.23, 'Kharkiv, Kharkivs\'ka Oblast\', Ukraine', url='https://a.com/1'),
+        row('190', 49.98, 36.25, 'Kharkiv, Kharkivs\'ka Oblast\', Ukraine', n_art=10, url='https://b.com/2'),
+        row('141', 48.85, 2.35, 'Paris, France', n_src=2, n_art=3),
+        row('163', 35.69, 51.39, 'Tehran, Tehran, Iran', n_src=4, n_art=8),
+        row('193', 10.0, 10.0, 'Ruido, Nigeria', n_src=1, n_art=1),      # una sola nota: se descarta
+        row('042', 40.0, 40.0, 'Visita, Turkey'),                          # no es de ninguna capa
+        row('190', 0, 0, 'sin lugar')]                                     # sin coordenadas: fuera
+
+
+class _R:
+    def __init__(self, status, text='', content=b''):
+        self.status_code, self.text, self.content = status, text, content
+
+
+def _zip(lines):
+    b = io.BytesIO()
+    with zipfile.ZipFile(b, 'w') as z:
+        z.writestr('x.export.CSV', '\n'.join(lines))
+    return b.getvalue()
+
+
+def _fake_get(url, timeout=20):
+    if url.endswith('lastupdate.txt'):
+        return _R(200, f'1 a http://data.gdeltproject.org/gdeltv2/{LAST}.export.CSV.zip\n2 b http://x/{LAST}.mentions.CSV.zip')
+    if LAST in url:
+        return _R(200, content=_zip(ROWS))
+    return _R(404)
+
+
+def setup_function(_):
+    GE._STORE.update(batches={}, latest=None, checked=0.0, errors=0)
+    W._reset_cache()
+
+
+def test_parse_filtra_ruido_y_clasifica_por_cameo():
+    evs = GE.parse_export('\n'.join(ROWS), 0)
+    assert sorted(e[0] for e in evs) == ['conflict', 'conflict', 'trade', 'unrest']
+    assert GE.classify('15', '150', 1) is None and GE.classify('15', '150', 3) == 'conflict'
+
+
+def test_capas_en_vivo_agrupadas_con_fuentes(monkeypatch):
+    monkeypatch.setenv('WORLD_GDELT_EVENTS', 'on')
+    monkeypatch.setattr(GE, '_get', _fake_get)
+    now = datetime(2026, 10, 5, 16, 5, tzinfo=timezone.utc).timestamp()
+    monkeypatch.setattr(W, '_now', lambda: now)
+    monkeypatch.setattr(GE.time, 'time', lambda: now)
+    out = W.world_events(layers=['conflict', 'unrest', 'trade'], window='24h', wait=5)
+    for lyr in ('conflict', 'unrest', 'trade'):
+        assert out['sources'][lyr]['ok'] is True, (lyr, out['sources'][lyr])
+        assert out['sources'][lyr]['coverage_hours'] == 1.0   # primer arranque: la última hora (4 lotes) and out['sources'][lyr]['press_signal']
+    kh = [i for i in out['items'] if i['layer'] == 'conflict']
+    assert len(kh) == 1                                           # dos eventos en Kharkiv → un punto
+    k = kh[0]
+    assert k['count'] == 16 and k['events'] == 2 and k['country_key'] == 'Ucrania'
+    assert {a['url'] for a in k['articles']} == {'https://a.com/1', 'https://b.com/2'}
+    assert k['title_es'].startswith('Combate') and 'Kharkiv' in k['title_es'] and k['time'].startswith('2026-10-05T16:00')
+    assert any(i['layer'] == 'trade' and 'Embargo' in i['title_es'] for i in out['items'])
+    assert out['sources']['conflict']['provider'].startswith('GDELT 2.0 Events')
+
+
+def test_fuente_caida_dice_por_que(monkeypatch):
+    monkeypatch.setenv('WORLD_GDELT_EVENTS', 'on')
+    monkeypatch.setattr(GE, '_get', lambda url, timeout=20: _R(503))
+    out = W.world_events(layers=['unrest'], window='24h', wait=5)
+    s = out['sources']['unrest']
+    assert s['ok'] is False and s['error_code'] in ('http_503', 'source_unavailable')

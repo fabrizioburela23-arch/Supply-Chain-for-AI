@@ -27,7 +27,7 @@
     refErr: null, systemic: null, items: {}, sel: null, expCache: {}, timers: [], pendingPolls: 0,
     loading: false, narrow: false, sheet: null, collapsed: { left: false, right: false },
     vis: { conflict: true, unrest: true, trade: true, quakes: true, natural: true, chokepoints: true,
-      shipping: true, policy: true, disasters: true,
+      shipping: true, policy: true, disasters: true, advisories: true, outages: true,
       instability: true, companies: true, arcs: true, portfolio: true, lanes: true, cables: false, fabs: true },
     sim: null, lastLoad: 0, quotes: null, quotesErr: null, quotesTs: 0, lists: {},
   };
@@ -37,6 +37,8 @@
     { id: 'shipping', g: 'official', c: '#5B8CFF', i: '⛴', es: 'Tráfico por estrechos (FMI)', en: 'Strait traffic (IMF)', ses: 'Buques', sen: 'Ships' },
     { id: 'policy', g: 'official', c: '#A3E635', i: '📜', es: 'Reglas de chips y sanciones (EE.UU.)', en: 'Chip rules & sanctions (US)', ses: 'Reglas', sen: 'Rules' },
     { id: 'disasters', g: 'official', c: '#E879F9', i: '🚨', es: 'Alertas de desastres (ONU/UE)', en: 'Disaster alerts (UN/EU)', ses: 'Alertas', sen: 'Alerts' },
+    { id: 'advisories', g: 'official', c: '#F97316', i: '🛂', es: 'Riesgo país oficial (EE.UU.)', en: 'Official country risk (US)', ses: 'Riesgo país', sen: 'Country risk' },
+    { id: 'outages', g: 'official', c: '#22D3EE', i: '🛜', es: 'Cortes de internet', en: 'Internet outages', ses: 'Internet', sen: 'Internet' },
     { id: 'conflict', g: 'live', c: '#FF3B5C', i: '⚔', es: 'Conflicto armado', en: 'Armed conflict', ses: 'Conflicto', sen: 'Conflict' },
     { id: 'unrest', g: 'live', c: '#FF8A3D', i: '📢', es: 'Protestas', en: 'Protests / unrest', ses: 'Protestas', sen: 'Unrest' },
     { id: 'trade', g: 'live', c: '#FFD23F', i: '⚖', es: 'Comercio / sanciones', en: 'Trade / sanctions', ses: 'Comercio', sen: 'Trade' },
@@ -52,7 +54,7 @@
     { id: 'fabs', g: 'ref', c: '#00E0FF', i: '🏭', es: 'Fabs críticas', en: 'Critical fabs' },
   ];
   var LBY = {}; LAYERS.forEach(function (l) { LBY[l.id] = l; });
-  var OFFICIAL = ['shipping', 'policy', 'disasters'];
+  var OFFICIAL = ['shipping', 'policy', 'disasters', 'advisories', 'outages'];
   var LIVE = ['conflict', 'unrest', 'trade', 'quakes', 'natural'].concat(OFFICIAL);
   var SERVER_LAYERS = LIVE.concat(['chokepoints', 'instability']);
   var NAT_ICON = { wildfires: '🔥', severeStorms: '🌀', volcanoes: '🌋', floods: '🌊', earthquakes: '◎',
@@ -135,7 +137,7 @@
   function itemRadius(it) {   // misma regla que core/world.py:item_radius_km
     if (it.layer === 'quakes') { var m = +it.mag || 4.5; return Math.min(800, Math.round(60 * Math.pow(2, m - 4.5))); }
     if (it.layer === 'natural') return { wildfires: 150, severeStorms: 500, volcanoes: 200, floods: 300 }[it.category] || 250;
-    var r = { conflict: 300, unrest: 250, trade: 300, chokepoints: 600, instability: 0, shipping: 600, policy: 0, disasters: 400 }[it.layer];
+    var r = { conflict: 300, unrest: 250, trade: 300, chokepoints: 600, instability: 0, shipping: 600, policy: 0, disasters: 400, advisories: 0, outages: 0 }[it.layer];
     return r != null ? r : 300;
   }
   function held() {
@@ -150,8 +152,8 @@
     _xpl = true;
     var R = window.explainRegister;
     R('wm_official', {
-      es: { t: 'Fuentes oficiales', b: 'Datos publicados por organismos oficiales, no por la prensa:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>FMI PortWatch</b>: cuántos buques cruzan cada día cada estrecho o canal, medido por satélite (AIS). Llega con unos días de retraso.</li><li><b>Diario oficial de EE.UU. (Federal Register)</b>: las reglas del <b>BIS</b> (exportación de chips, «Entity List») y de la <b>OFAC</b> (sanciones), tal como se publican.</li><li><b>GDACS</b> (ONU + Comisión Europea): alertas de desastre NARANJA y ROJA.</li></ul>Cada dato trae fecha y enlace al original. Si una fuente cae, la capa lo dice; nunca rellenamos con datos inventados.' },
-      en: { t: 'Official sources', b: 'Data published by official bodies, not by the press:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>IMF PortWatch</b>: how many ships cross each strait or canal every day, measured by satellite (AIS). It arrives a few days late.</li><li><b>US Federal Register</b>: <b>BIS</b> rules (chip exports, the "Entity List") and <b>OFAC</b> rules (sanctions), as published.</li><li><b>GDACS</b> (UN + European Commission): ORANGE and RED disaster alerts.</li></ul>Every item carries its date and a link to the original. If a source is down, the layer says so; we never fill in made-up data.' } });
+      es: { t: 'Fuentes oficiales', b: 'Datos publicados por organismos oficiales, no por la prensa:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>FMI PortWatch</b>: cuántos buques cruzan cada día cada estrecho o canal, medido por satélite (AIS). Llega con unos días de retraso.</li><li><b>Diario oficial de EE.UU. (Federal Register)</b>: las reglas del <b>BIS</b> (exportación de chips, «Entity List») y de la <b>OFAC</b> (sanciones), tal como se publican.</li><li><b>GDACS</b> (ONU + Comisión Europea): alertas de desastre NARANJA y ROJA.</li><li><b>Departamento de Estado de EE.UU.</b>: países con aviso de viaje nivel 3 («reconsiderar») y 4 («no viajar»).</li><li><b>Cloudflare Radar</b>: cortes de internet por país (necesita una clave gratuita).</li></ul>Cada dato trae fecha y enlace al original. Si una fuente cae, la capa lo dice; nunca rellenamos con datos inventados.' },
+      en: { t: 'Official sources', b: 'Data published by official bodies, not by the press:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>IMF PortWatch</b>: how many ships cross each strait or canal every day, measured by satellite (AIS). It arrives a few days late.</li><li><b>US Federal Register</b>: <b>BIS</b> rules (chip exports, the "Entity List") and <b>OFAC</b> rules (sanctions), as published.</li><li><b>GDACS</b> (UN + European Commission): ORANGE and RED disaster alerts.</li><li><b>US State Department</b>: countries with a level 3 ("reconsider") or 4 ("do not travel") travel advisory.</li><li><b>Cloudflare Radar</b>: internet outages by country (needs a free key).</li></ul>Every item carries its date and a link to the original. If a source is down, the layer says so; we never fill in made-up data.' } });
     R('wm_shipping', {
       es: { t: 'Tráfico por los estrechos', b: 'Comparamos los buques por día de la <b>última semana</b> con el promedio de los <b>90 días anteriores</b>. Una caída fuerte (por ejemplo −40 %) suele significar desvíos, bloqueos o un conflicto: encarece fletes y retrasa entregas de las empresas que dependen de esa ruta. La severidad sale de la caída (−25 % ≈ 40, −50 % ≈ 80); las subidas no suman alarma.' },
       en: { t: 'Traffic through the straits', b: 'We compare ships per day over the <b>last week</b> with the average of the <b>previous 90 days</b>. A sharp drop (e.g. −40%) usually means diversions, blockades or conflict: freight gets pricier and deliveries slower for companies that depend on that route. Severity comes from the drop (−25% ≈ 40, −50% ≈ 80); increases add no alarm.' } });
@@ -159,8 +161,8 @@
       es: { t: 'Reglas de chips y sanciones', b: 'Documentos oficiales de los últimos 30 días del <b>BIS</b> (controles de exportación: chips avanzados, IA, «Entity List») y de la <b>OFAC</b> (sanciones). Marcamos las empresas de tu grafo que el documento <b>nombra</b> y el país objetivo. El número es una <b>estimación por palabras clave</b> (Entity List, chips, IA, si es una regla y no un aviso…), no una opinión: abre el documento antes de decidir.' },
       en: { t: 'Chip rules & sanctions', b: 'Official documents from the last 30 days by <b>BIS</b> (export controls: advanced chips, AI, the "Entity List") and <b>OFAC</b> (sanctions). We flag the graph companies the document <b>names</b> and the target country. The number is a <b>keyword estimate</b> (Entity List, chips, AI, a rule rather than a notice…), not an opinion: open the document before deciding.' } });
     R('wm_severity', {
-      es: { t: '¿Qué es la severidad de un evento?', b: 'Un número de <b>0 a 100</b> que ordena los eventos por gravedad. Cada fuente se mide distinto y lo decimos tal cual:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>Sismos (USGS)</b>: según la magnitud (M4.5≈13, M6.5≈63, M7.5≈88) + la alerta oficial PAGER de USGS y avisos de tsunami.</li><li><b>Noticias GDELT</b> (conflicto, protestas, comercio): según cuántos artículos por día hablan de ese lugar — mide <b>atención mediática</b>, no víctimas.</li><li><b>Eventos naturales (NASA EONET)</b>: <b>estimada</b> por tipo (volcán 55, tormenta 45, incendio 30…) + viento o área cuando EONET la publica. Se muestran los que NASA actualizó dentro de la ventana (24h / 7d).</li><li><b>Tráfico marítimo (FMI)</b>: según la caída de buques/día (7 d vs 90 d).</li><li><b>Reglas y sanciones (EE.UU.)</b>: <b>estimada</b> por palabras clave (Entity List, chips, IA) y empresas nombradas.</li><li><b>Alertas GDACS</b>: roja 85, naranja 60 (nivel oficial).</li><li><b>Estrechos y países</b>: el score de la Sala de Situación (base curada + noticias + factores activos).</li></ul>El tamaño del punto en el globo es la severidad; los ≥ 60 laten.' },
-      en: { t: 'What is an event\'s severity?', b: 'A number from <b>0 to 100</b> that ranks events by seriousness. Each source is measured differently and we say so:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>Earthquakes (USGS)</b>: by magnitude (M4.5≈13, M6.5≈63, M7.5≈88) + USGS\'s official PAGER alert and tsunami flags.</li><li><b>GDELT news</b> (conflict, protests, trade): by how many articles per day cover that place — it measures <b>media attention</b>, not casualties.</li><li><b>Natural events (NASA EONET)</b>: <b>estimated</b> by type (volcano 55, storm 45, wildfire 30…) + wind or area when EONET publishes it. Shown if NASA updated them within the window (24h / 7d).</li><li><b>Shipping traffic (IMF)</b>: by the drop in ships/day (7d vs 90d).</li><li><b>Rules & sanctions (US)</b>: <b>estimated</b> from keywords (Entity List, chips, AI) and named companies.</li><li><b>GDACS alerts</b>: red 85, orange 60 (official level).</li><li><b>Straits and countries</b>: the Situation Room score (curated base + news + active factors).</li></ul>Dot size on the globe is severity; ≥ 60 pulses.' } });
+      es: { t: '¿Qué es la severidad de un evento?', b: 'Un número de <b>0 a 100</b> que ordena los eventos por gravedad. Cada fuente se mide distinto y lo decimos tal cual:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>Sismos (USGS)</b>: según la magnitud (M4.5≈13, M6.5≈63, M7.5≈88) + la alerta oficial PAGER de USGS y avisos de tsunami.</li><li><b>Noticias GDELT</b> (conflicto, protestas, comercio): según cuántos artículos por día hablan de ese lugar — mide <b>atención mediática</b>, no víctimas.</li><li><b>Eventos naturales (NASA EONET)</b>: <b>estimada</b> por tipo (volcán 55, tormenta 45, incendio 30…) + viento o área cuando EONET la publica. Se muestran los que NASA actualizó dentro de la ventana (24h / 7d).</li><li><b>Tráfico marítimo (FMI)</b>: según la caída de buques/día (7 d vs 90 d).</li><li><b>Reglas y sanciones (EE.UU.)</b>: <b>estimada</b> por palabras clave (Entity List, chips, IA) y empresas nombradas.</li><li><b>Alertas GDACS</b>: roja 85, naranja 60 (nivel oficial).</li><li><b>Riesgo país (EE.UU.)</b>: nivel 4 «no viajar» = 85, nivel 3 = 65 (Departamento de Estado).</li><li><b>Cortes de internet</b>: nacional en curso 80, regional 55; terminados, menos.</li><li><b>Estrechos y países</b>: el score de la Sala de Situación (base curada + noticias + factores activos).</li></ul>El tamaño del punto en el globo es la severidad; los ≥ 60 laten.' },
+      en: { t: 'What is an event\'s severity?', b: 'A number from <b>0 to 100</b> that ranks events by seriousness. Each source is measured differently and we say so:<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>Earthquakes (USGS)</b>: by magnitude (M4.5≈13, M6.5≈63, M7.5≈88) + USGS\'s official PAGER alert and tsunami flags.</li><li><b>GDELT news</b> (conflict, protests, trade): by how many articles per day cover that place — it measures <b>media attention</b>, not casualties.</li><li><b>Natural events (NASA EONET)</b>: <b>estimated</b> by type (volcano 55, storm 45, wildfire 30…) + wind or area when EONET publishes it. Shown if NASA updated them within the window (24h / 7d).</li><li><b>Shipping traffic (IMF)</b>: by the drop in ships/day (7d vs 90d).</li><li><b>Rules & sanctions (US)</b>: <b>estimated</b> from keywords (Entity List, chips, AI) and named companies.</li><li><b>GDACS alerts</b>: red 85, orange 60 (official level).</li><li><b>Country risk (US)</b>: level 4 "do not travel" = 85, level 3 = 65 (State Department).</li><li><b>Internet outages</b>: nationwide ongoing 80, regional 55; ended ones, less.</li><li><b>Straits and countries</b>: the Situation Room score (curated base + news + active factors).</li></ul>Dot size on the globe is severity; ≥ 60 pulses.' } });
     R('wm_relevance', {
       es: { t: '¿Qué es la relevancia?', b: 'Cuánto te debería importar un evento <b>como inversionista de esta cadena</b>: <b>55% severidad</b> del evento + <b>45% exposición</b> de tu grafo (empresas y fabs cerca, país). Un sismo fuerte en medio del océano importa menos que uno moderado junto a las fábricas de TSMC.<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li>La <b>inestabilidad por país</b> es un índice de todo un país, no un evento: cuenta con exposición 0 en el orden (si no, EE.UU. o Japón, con muchas empresas, saldrían siempre arriba aunque estén estables).</li><li>Al menos <b>la mitad de la lista</b> se reserva a eventos en vivo (si los hay), para que los estrechos y países — que cambian poco — no tapen lo nuevo.</li></ul>Es un cálculo fijo, sin IA.' },
       en: { t: 'What is relevance?', b: 'How much an event should matter to you <b>as an investor in this chain</b>: <b>55% event severity</b> + <b>45% exposure</b> of your graph (companies and fabs nearby, country). A strong quake in the middle of the ocean matters less than a moderate one next to TSMC\'s fabs.<ul style="margin:8px 0;padding-left:18px;line-height:1.7"><li><b>Country instability</b> is an index for a whole country, not an event: it ranks with exposure 0 (otherwise the US or Japan, with many companies, would always be on top even when stable).</li><li>At least <b>half of the list</b> is reserved for live events (when there are any), so straits and countries — which change slowly — do not hide what is new.</li></ul>A fixed formula, no AI.' } });
@@ -339,10 +341,15 @@
     if (s.error_code === 'busy' && !s.stale) return '<span class="wm-st pend" title="' + esc(errText(s)) + '">' + esc(L('en cola', 'queued')) + '</span>';
     if (!s.ok && s.stale) return '<span class="wm-st pend" title="' + esc(errText(s) + ' · ' + L('datos de ', 'data from ') + fmtIso(s.as_of)) + '">' + esc(L('en caché', 'cached')) + '</span>';
     // W1: fuente en pausa (404/403 repetidos) → "en pausa" con el próximo intento; no es un fallo pasajero
+    if (!s.ok && s.error_code === 'needs_key') return '<span class="wm-st pend" title="' + esc(errText(s)) + '">🔑 ' + esc(L('falta clave', 'needs key')) + '</span>';
     if (!s.ok && s.error_code === 'source_unavailable') return '<span class="wm-st err" title="' + esc(errText(s) + (s.retry_at ? ' · ' + L('próximo intento ', 'next try ') + fmtIso(s.retry_at) : '')) + '">' + esc(L('en pausa', 'paused')) + '</span>';
     if (!s.ok) return '<span class="wm-st err" title="' + esc(errText(s)) + '">' + esc(L('caída', 'down')) + '</span>';
     // W1: capas CURADAS (juicio humano revisado en curated_as_of) — no se presentan como "en vivo"
     if (s.static) return '<span class="wm-st ref" title="' + esc(provText(s) + ' · ' + L('revisado ', 'reviewed ') + (s.curated_as_of || '?') + (s.news_live === false ? ' · ' + L('noticias GDELT en pausa', 'GDELT news paused') : '')) + '">' + esc(L('curado', 'curated')) + '</span>';
+    // GDELT eventos (15 min): se carga por tandas → dice cuántas horas de la ventana hay
+    if (s.coverage_hours != null && s.window_hours && s.coverage_hours < s.window_hours)
+      return '<span class="wm-st ok" title="' + esc(provText(s) + ' · ' + L('cargadas ' + s.coverage_hours + ' h de ' + s.window_hours + ' h; se completa solo', 'loaded ' + s.coverage_hours + ' h of ' + s.window_hours + ' h; filling in automatically')) + '">' +
+        esc(L('vivo · ' + s.coverage_hours + ' h', 'live · ' + s.coverage_hours + ' h')) + '</span>';
     return '<span class="wm-st ok" title="' + esc(provText(s) + (s.as_of ? ' · ' + s.as_of : '')) + '">' + esc(L('vivo', 'live')) + '</span>';
   }
   function layerCount(id) {
@@ -370,8 +377,8 @@
           '<span class="ct">' + layerCount(l.id) + '</span>' + statusPill(l.id) + '</div>';
       });
     });
-    h += '<div class="wm-note">' + esc(L('Fuentes: FMI PortWatch (tránsito diario de buques por satélite), diario oficial de EE.UU. (reglas del BIS y la OFAC, últimos 30 días), GDACS (alertas naranja/roja de la ONU y la UE), GDELT (noticias geolocalizadas), USGS (sismos), NASA EONET (eventos naturales), Sala de Situación Khipu. El filtro 24h/7d aplica a sismos, eventos naturales y alertas GDACS; el tráfico marítimo es diario (con unos días de retraso) y las reglas cubren 30 días. Las capas de referencia no son en vivo.',
-      'Sources: IMF PortWatch (daily satellite ship transits), US Federal Register (BIS and OFAC rules, last 30 days), GDACS (UN/EU orange/red alerts), GDELT (geolocated news), USGS (earthquakes), NASA EONET (natural events), Khipu Situation Room. The 24h/7d filter applies to earthquakes, natural events and GDACS alerts; shipping traffic is daily (a few days behind) and rules cover 30 days. Reference layers are not live.')) + '</div>';
+    h += '<div class="wm-note">' + esc(L('Fuentes: FMI PortWatch (tránsito diario de buques por satélite), diario oficial de EE.UU. (reglas del BIS y la OFAC, últimos 30 días), GDACS (alertas naranja/roja de la ONU y la UE), Departamento de Estado (riesgo país nivel 3-4), Cloudflare Radar (cortes de internet, con clave), GDELT 2.0 (eventos de conflicto, protestas y sanciones codificados de la prensa cada 15 min: señal de prensa), USGS (sismos), NASA EONET (eventos naturales), Sala de Situación Khipu. El filtro 24h/7d aplica a sismos, eventos naturales y alertas GDACS; el tráfico marítimo es diario (con unos días de retraso) y las reglas cubren 30 días. Las capas de referencia no son en vivo.',
+      'Sources: IMF PortWatch (daily satellite ship transits), US Federal Register (BIS and OFAC rules, last 30 days), GDACS (UN/EU orange/red alerts), State Department (level 3-4 country risk), Cloudflare Radar (internet outages, needs a key), GDELT 2.0 (conflict, protest and sanctions events coded from the press every 15 min: press signal), USGS (earthquakes), NASA EONET (natural events), Khipu Situation Room. The 24h/7d filter applies to earthquakes, natural events and GDACS alerts; shipping traffic is daily (a few days behind) and rules cover 30 days. Reference layers are not live.')) + '</div>';
     var errs = SERVER_LAYERS.filter(function (id) { var s = S.events && S.events.sources && S.events.sources[id]; return s && !s.ok && !s.pending && s.error_code !== 'busy'; });
     if (errs.length) {
       h += '<div class="wm-note" style="color:#FF8FA3">⚠ ' + esc(L('Fuentes caídas ahora: ', 'Sources down right now: ')) +
@@ -763,10 +770,24 @@
       kv.push([L('Tipo', 'Type'), it.doc_type || '—']);
       kv.push([L('Publicado', 'Published'), String(it.time || '').slice(0, 10)]);
       kv.push([L('Empresas del grafo nombradas', 'Graph companies named'), (it.companies || []).length]);
+    } else if (it.layer === 'advisories') {
+      kv.push([L('Nivel oficial', 'Official level'), it.level + ' / 4']);
+      kv.push([L('Qué significa', 'What it means'), it.level >= 4 ? L('No viajar', 'Do not travel') : L('Reconsiderar el viaje', 'Reconsider travel')]);
+      kv.push([L('Actualizado', 'Updated'), String(it.time || '').slice(0, 10) || '—']);
+    } else if (it.layer === 'outages') {
+      kv.push([L('Estado', 'Status'), it.ongoing ? L('en curso', 'ongoing') : L('terminado', 'ended')]);
+      kv.push([L('Alcance', 'Scope'), it.scope || '—']);
+      kv.push([L('Causa', 'Cause'), it.cause || '—']);
+      if ((it.networks || []).length) kv.push([L('Redes', 'Networks'), it.networks.join(', ')]);
     } else if (it.layer === 'disasters') {
       kv.push([L('Alerta oficial', 'Official alert'), String(it.alert || '').toUpperCase()]);
       kv.push([L('Tipo', 'Type'), it.event_type || '—']);
       if (it.severity_text) kv.push([L('Medida', 'Measure'), it.severity_text]);
+    } else if (it.press_signal) {
+      kv.push([L('Artículos', 'Articles'), it.count != null ? it.count : '—']);
+      kv.push([L('Eventos codificados', 'Coded events'), it.events != null ? it.events : '—']);
+      kv.push([L('Fuentes (suma)', 'Sources (sum)'), it.sources_n != null ? it.sources_n : '—']);
+      kv.push([L('Precisión', 'Precision'), it.precision === 'country' ? L('país (aprox.)', 'country (approx.)') : L('ciudad', 'city')]);
     } else if (LIVE.indexOf(it.layer) >= 0) {
       kv.push([L('Artículos', 'Articles'), it.count != null ? it.count : '—']);
       kv.push([L('Ventana', 'Window'), S.win]);
@@ -775,6 +796,7 @@
       kv.push([L('Noticias 7d', 'News 7d'), it.news && it.news.count != null ? it.news.count + ' art.' + (it.news.tone != null ? ' · ' + L('tono', 'tone') + ' ' + it.news.tone : '') : L('sin datos aún', 'no data yet')]);
     }
     if (kv.length) h += '<div class="wm-kv">' + kv.map(function (x) { return '<div><div class="k">' + esc(x[0]) + '</div><div class="v">' + esc(x[1]) + '</div></div>'; }).join('') + '</div>';
+    if (it.press_signal) h += '<div class="wm-meta" style="margin-top:8px;color:#9BA6C4">📰 ' + esc(L('Señal de prensa: GDELT codifica automáticamente miles de noticias cada 15 min. Solo mostramos eventos con ≥ 2 fuentes o ≥ 5 artículos; abre las notas para confirmar.', 'Press signal: GDELT automatically codes thousands of news stories every 15 min. We only show events with ≥ 2 sources or ≥ 5 articles; open the stories to confirm.')) + '</div>';
     if (it.layer === 'shipping' && it.data_caveat) h += '<div class="wm-meta" style="margin-top:8px;color:#FFB300">⚠ ' + esc(L('Cero buques registrados: puede ser un cierre real, buques con el transpondedor (AIS) apagado o un hueco en los datos del FMI. Confírmalo con noticias antes de decidir.', 'Zero ships recorded: it may be a real closure, ships with their (AIS) transponder off, or a gap in the IMF data. Confirm with news before deciding.')) + '</div>';
     if (it.layer === 'policy' && it.abstract) h += '<div class="wm-meta" style="margin-top:8px;color:#C7D0EA">' + esc(it.abstract) + '</div>';
     if (it.layer === 'policy' && (it.companies || []).length) h += '<div class="wm-meta" style="margin-top:6px">🏢 ' + esc(L('Nombra a: ', 'Names: ') + it.companies.map(function (c) { return c.label; }).join(', ')) + '</div>';

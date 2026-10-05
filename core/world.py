@@ -61,15 +61,16 @@ GDELT_LAYERS = ('conflict', 'unrest', 'trade')
 # 2026-10-05: fuentes OFICIALES nuevas (core/world_feeds.py) — tráfico marítimo
 # (FMI PortWatch), controles de exportación/sanciones (Federal Register BIS·OFAC)
 # y alertas de desastres (GDACS).
-FEED_LAYERS = ('shipping', 'policy', 'disasters')
-LIVE_LAYERS = GDELT_LAYERS + ('quakes', 'natural') + FEED_LAYERS + ('chokepoints', 'instability')
+FEED_LAYERS = ('shipping', 'policy', 'disasters', 'outages')
+OFFICIAL_COUNTRY_LAYERS = ('advisories',)      # riesgo país oficial (no es un evento puntual)
+LIVE_LAYERS = GDELT_LAYERS + ('quakes', 'natural') + FEED_LAYERS + OFFICIAL_COUNTRY_LAYERS + ('chokepoints', 'instability')
 REF_LAYERS = ('lanes', 'cables', 'fabs')
 DEFAULT_WAIT = 4.5          # s que un request espera a una capa FRÍA (sin caché)
 
 # TTL por capa (s). Tras un fallo se reintenta antes (ERROR_TTL).
 LAYER_TTL = {'conflict': 900, 'unrest': 900, 'trade': 900, 'quakes': 300,
              'natural': 900, 'chokepoints': 120, 'instability': 120,
-             'shipping': 6 * 3600, 'policy': 3600, 'disasters': 900}
+             'shipping': 6 * 3600, 'policy': 3600, 'disasters': 900, 'advisories': 6 * 3600, 'outages': 900}
 ERROR_TTL = 90
 BUSY_TTL = 20               # GDELT "ocupado" (acelerador): reintento pronto, no es una caída
 # W1 (misión de reparación 2026-10-04): una fuente que responde 404/410 (API
@@ -81,7 +82,7 @@ BUSY_TTL = 20               # GDELT "ocupado" (acelerador): reintento pronto, no
 SOURCE_DOWN_AFTER = 3
 SOURCE_DOWN_TTL = 3600
 _DEFINITIVE_HTTP = ('401', '403', '404', '410')
-SOURCE_LABEL = {'gdelt_geo': 'GDELT GEO 2.0', 'gdelt_doc': 'GDELT DOC 2.0', 'portwatch': 'IMF PortWatch',
+SOURCE_LABEL = {'gdelt_geo': 'GDELT GEO 2.0', 'gdelt_doc': 'GDELT DOC 2.0', 'gdelt_events': 'GDELT 2.0 Events', 'portwatch': 'IMF PortWatch',
                 'fedreg': 'US Federal Register', 'gdacs': 'GDACS'}
 
 LAYER_META = {
@@ -103,6 +104,7 @@ LAYER_META = {
 }
 from core.world_feeds import FEED_META as _FEED_META  # noqa: E402
 LAYER_META.update(_FEED_META)
+
 
 # Consultas GDELT (temas GKG). Sobrescribibles SIN tocar código:
 # WORLD_GDELT_QUERY_CONFLICT / _UNREST / _TRADE (lección sept-2026: los
@@ -195,6 +197,15 @@ def err_info(err):
                   f'pausa; se reintenta cada hora. {live_es}')
             en = (f'{name} does not answer at its address (HTTP {code}: the API looks retired or moved). Layer '
                   f'paused; retried every hour. {live_en}')
+    elif head == 'needs_key':
+        var, _, inv = rest.partition(':')
+        c = 'needs_key'
+        if inv:
+            es, en = (f'La clave {var} no es válida o venció: créala de nuevo (gratis) y pégala en Railway → Variables.',
+                      f'The key {var} is invalid or expired: create it again (free) and paste it in Railway → Variables.')
+        else:
+            es, en = (f'Falta una clave GRATUITA: crea {var} y pégala en Railway → Variables. Las demás capas siguen funcionando.',
+                      f'A FREE key is missing: create {var} and paste it in Railway → Variables. The other layers keep working.')
     elif e == 'pending':
         c, es, en = 'pending', 'primera consulta en curso', 'first fetch in progress'
     elif e == 'refreshing':
@@ -1094,7 +1105,51 @@ def gdelt_query(layer):
     return os.environ.get('WORLD_GDELT_QUERY_' + layer.upper()) or _GDELT_Q[layer]
 
 
+def _gdelt_events_on():
+    return os.environ.get('WORLD_GDELT_EVENTS', 'on').lower() not in ('off', '0', 'no')
+
+
+def _fetch_gdelt_events(layer, window):
+    """2026-10-05: conflicto/protestas/sanciones desde los ARCHIVOS CRUDOS de eventos de
+    GDELT 2.0 (cada 15 min, core/gdelt_events.py) — la API GEO fue retirada."""
+    from core import gdelt_events as GE
+    down = source_down('gdelt_events')
+    if down:
+        return None, down
+    err = GE.refresh()
+    if err and not GE._STORE['batches']:
+        source_result('gdelt_events', err)
+        return None, source_down('gdelt_events') or err
+    source_result('gdelt_events', None)
+    win = WINDOWS[window]
+    have, want = GE.coverage(win)
+    scale = (want / have) if have else 1.0          # cobertura parcial: se normaliza a la ventana completa
+    now = _now()
+    items = []
+    for g in GE.aggregate(layer, win, gdelt_severity):
+        code = max(g['codes'], key=g['codes'].get) if g['codes'] else ''
+        les, len_ = GE.label_of(code, True), GE.label_of(code, False)
+        place = g['place'] or f"{g['lat']:.1f}, {g['lon']:.1f}"
+        arts = [{'url': u, 'title': re.sub(r'^https?://(www\.)?', '', u).split('/')[0]} for u in g['urls'] if _safe_url(u)]
+        items.append({
+            'id': f"{layer}:{_stable_id(round(g['lat'], 1), round(g['lon'], 1))}",
+            'layer': layer, 'lat': round(g['lat'], 4), 'lon': round(g['lon'], 4),
+            'title': f"{les or ''} · {place}".strip(' ·'), 'title_es': f"{les or ''} · {place}".strip(' ·'),
+            'title_en': f"{len_ or ''} · {place}".strip(' ·'), 'place': place, 'country_key': place_country(place),
+            'severity': gdelt_severity(g['articles'] * scale, window), 'count': g['articles'], 'events': g['events'],
+            'sources_n': g['sources'], 'precision': 'country' if g['geo_type'] == 1 else 'city',
+            'goldstein': round(sum(g['gold']) / len(g['gold']), 1) if g['gold'] else None,
+            'time': _iso(g['last']), 'ts': g['last'], 'time_kind': 'last_update', 'window': window,
+            'fetched_at': _iso(now), 'source': 'GDELT 2.0 Events', 'source_es': 'GDELT 2.0 · eventos (15 min)',
+            'source_en': 'GDELT 2.0 · events (15 min)', 'url': arts[0]['url'] if arts else None, 'articles': arts,
+            'press_signal': True,
+        })
+    return items, None
+
+
 def _fetch_gdelt(layer, window):
+    if _gdelt_events_on():
+        return _fetch_gdelt_events(layer, window)
     down = source_down('gdelt_geo')
     if down:
         return None, down            # en pausa: ni red ni turno del acelerador compartido
@@ -1191,6 +1246,8 @@ _FETCHERS = {
     'shipping': lambda w: _feeds().fetch_shipping(w),
     'policy': lambda w: _feeds().fetch_policy(w),
     'disasters': lambda w: _feeds().fetch_disasters(w),
+    'advisories': lambda w: _feeds().fetch_advisories(w),
+    'outages': lambda w: _feeds().fetch_outages(w),
 }
 
 
@@ -1308,7 +1365,7 @@ def _window_filter(layer, items, window, now):
     """Sismos y eventos naturales se filtran por su hora (exacta / última
     actualización de EONET). GDELT ya viene por ventana; los curados son
     valores actuales."""
-    if layer not in ('quakes', 'natural', 'disasters'):
+    if layer not in ('quakes', 'natural', 'disasters', 'outages'):
         return list(items)
     lim = now - WINDOWS[window]
     return [i for i in items if (i.get('ts') or 0) >= lim]
@@ -1355,6 +1412,9 @@ def world_events(layers=None, window='24h', wait=DEFAULT_WAIT):
     items, sources = [], {}
     for lyr in req:
         meta = LAYER_META[lyr]
+        if lyr in GDELT_LAYERS and _gdelt_events_on():
+            meta = dict(meta, provider='GDELT 2.0 Events (15 min)', provider_es='GDELT 2.0 · eventos (15 min)',
+                        feed='http://data.gdeltproject.org/gdeltv2/lastupdate.txt')
         e = entries[lyr]
         base = {'provider': meta['provider'], 'provider_es': meta.get('provider_es', meta['provider']),
                 'provider_en': meta['provider'], 'es': meta['es'], 'en': meta['en'],
@@ -1379,6 +1439,14 @@ def world_events(layers=None, window='24h', wait=DEFAULT_WAIT):
                'stale': stale}
         if dropped:
             src['expired_dropped'] = dropped
+        if lyr in GDELT_LAYERS and _gdelt_events_on():
+            try:
+                from core import gdelt_events as _GE
+                have, want = _GE.coverage(WINDOWS[window])
+                src['coverage_hours'], src['window_hours'] = have, want
+                src['press_signal'] = True
+            except Exception:  # noqa: BLE001
+                pass
         err = e.get('error')
         if expired and e['ok']:
             err = 'refreshing'          # datos viejos y el refresco no terminó a tiempo
@@ -1491,7 +1559,8 @@ def reference_layers():
 # 7. Exposición de la cadena + resumen (brief) determinista
 # ═══════════════════════════════════════════════════════════════════════════
 LAYER_RADIUS_KM = {'conflict': 300, 'unrest': 250, 'trade': 300, 'natural': 250,
-                   'chokepoints': 600, 'instability': 0, 'shipping': 600, 'policy': 0, 'disasters': 400}
+                   'chokepoints': 600, 'instability': 0, 'shipping': 600, 'policy': 0, 'disasters': 400,
+                   'advisories': 0, 'outages': 0}
 _NAT_RADIUS = {'wildfires': 150, 'severeStorms': 500, 'volcanoes': 200, 'floods': 300}
 
 
@@ -1620,7 +1689,7 @@ def item_relevance(item, ex):
     TODO el país (no un evento puntual): cuenta con exposición 0 en el ranking,
     para que los países con muchas empresas (EE.UU., Japón…) no aparezcan
     siempre arriba aunque estén estables. Su exposición se muestra igual."""
-    if item.get('layer') == 'instability':
+    if item.get('layer') in ('instability', 'advisories'):
         return relevance(item.get('severity'), 0)
     return relevance(item.get('severity'), ex.get('index'))
 
@@ -1654,7 +1723,8 @@ _LAYER_LABEL = {
     'natural': ('Evento natural', 'Natural event'), 'chokepoints': ('Estrecho', 'Strait'),
     'instability': ('Inestabilidad', 'Instability'),
     'shipping': ('Tráfico marítimo', 'Shipping traffic'), 'policy': ('Regla/sanción de EE.UU.', 'US rule/sanction'),
-    'disasters': ('Alerta GDACS', 'GDACS alert'),
+    'disasters': ('Alerta GDACS', 'GDACS alert'), 'advisories': ('Riesgo país (EE.UU.)', 'Country risk (US)'),
+    'outages': ('Corte de internet', 'Internet outage'),
 }
 
 

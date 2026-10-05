@@ -9,7 +9,8 @@ import sys
 
 import pytest
 
-os.environ.setdefault('KHIPU_SCHEDULER', 'off')   # R5: el hilo periódico no arranca al importar server en tests
+os.environ.setdefault('KHIPU_SCHEDULER', 'off')
+os.environ.setdefault('WORLD_GDELT_EVENTS', 'off')   # tests del World Monitor usan la API GEO simulada; los eventos crudos tienen sus tests   # R5: el hilo periódico no arranca al importar server en tests
 
 
 @pytest.fixture(autouse=True)

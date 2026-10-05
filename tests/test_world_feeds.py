@@ -113,3 +113,27 @@ def test_honestidad_con_datos_reales_de_produccion():
         'country': 'Austria, Belgium, Belarus, Switzerland, Germany, Spain', 'todate': '2026-10-05T05:57:07'}}]}
     d = F.parse_gdacs(big)[0]
     assert len(d['title_es']) < 90 and '6 países' in d['title_es'] and d['place'].endswith('+3')
+
+
+def test_avisos_de_viaje_oficiales_nivel_3_y_4():
+    from tests.world_feed_fixtures import ADVISORIES_PAYLOAD
+    items = F.parse_advisories(ADVISORIES_PAYLOAD)
+    by = {i['place']: i for i in items}
+    assert set(by) == {'Venezuela', 'Colombia', 'Burma'}              # nivel 1 fuera; país desconocido fuera
+    assert by['Venezuela']['level'] == 4 and by['Venezuela']['severity'] == 85 and by['Venezuela']['official']
+    assert by['Colombia']['title_es'].startswith('Colombia: nivel 3') and by['Burma']['title_es'].startswith('Birmania')
+    assert W.item_relevance(by['Venezuela'], {'index': 90}) == W.relevance(85, 0)   # país entero: como inestabilidad
+
+
+def test_cortes_de_internet_sin_clave_lo_dicen_y_con_clave_se_leen(monkeypatch):
+    from tests.world_feed_fixtures import OUTAGES_PAYLOAD
+    monkeypatch.delenv('CLOUDFLARE_RADAR_TOKEN', raising=False)
+    items, err = F.fetch_outages('7d')
+    assert items is None and err == 'needs_key:CLOUDFLARE_RADAR_TOKEN'
+    info = W.err_info(err)
+    assert info['error_code'] == 'needs_key' and 'GRATUITA' in info['error_es'] and 'FREE' in info['error_en']
+    out = F.parse_outages(OUTAGES_PAYLOAD)
+    ir = next(i for i in out if i['place'] == 'Iran')
+    assert ir['ongoing'] and ir['severity'] == 80 and ir['cause'] == 'government directed' and ir['networks'] == ['TCI']
+    pk = next(i for i in out if i['place'] == 'Pakistan')
+    assert not pk['ongoing'] and pk['severity'] == 30

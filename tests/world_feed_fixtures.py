@@ -45,7 +45,25 @@ GDACS_PAYLOAD = {'type': 'FeatureCollection', 'features': [
 ]}
 
 
+ADVISORIES_PAYLOAD = [
+    {'Title': 'Venezuela - Level 4: Do Not Travel', 'Link': 'https://travel.state.gov/x/venezuela.html', 'Updated': '2026-09-20T00:00:00'},
+    {'Title': 'Colombia - Level 3: Reconsider Travel', 'Link': 'https://travel.state.gov/x/colombia.html', 'Updated': '2026-08-01T00:00:00'},
+    {'Title': 'Burma (Myanmar) - Level 4: Do Not Travel', 'Updated': '2026-07-01T00:00:00'},
+    {'Title': 'Japan - Level 1: Exercise Normal Precautions', 'Updated': '2026-05-01T00:00:00'},
+    {'Title': 'Atlantis - Level 4: Do Not Travel'},
+]
+
+OUTAGES_PAYLOAD = {'success': True, 'result': {'annotations': [
+    {'id': 'o1', 'startDate': '2026-10-04T10:00:00Z', 'endDate': None, 'locations': ['IR'],
+     'locationsDetails': [{'code': 'IR', 'name': 'Iran'}], 'outage': {'outageCause': 'GOVERNMENT_DIRECTED', 'outageType': 'NATIONWIDE'},
+     'asnsDetails': [{'asn': '58224', 'name': 'TCI'}], 'linkedUrl': 'https://x.com/status/1', 'description': 'Shutdown'},
+    {'id': 'o2', 'startDate': '2026-10-03T10:00:00Z', 'endDate': '2026-10-03T14:00:00Z',
+     'locationsDetails': [{'code': 'PK', 'name': 'Pakistan'}], 'outage': {'outageCause': 'POWER_OUTAGE', 'outageType': 'REGIONAL'}}]}}
+
+
 def route(url):
+    if 'cadataapi.state.gov' in url:
+        return ADVISORIES_PAYLOAD
     if 'arcgis' in url:
         return PORTWATCH_PAYLOAD
     if 'federalregister' in url:

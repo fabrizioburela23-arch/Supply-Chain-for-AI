@@ -9,6 +9,21 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (p) — GEOPOLÍTICA: CAPAS "EN PAUSA" REVIVIDAS + RIESGO PAÍS + CORTES (sw v219)
+
+- conflict/unrest/trade ya NO usan la API GEO retirada: `core/gdelt_events.py` lee los ARCHIVOS
+  CRUDOS de eventos GDELT 2.0 (data.gdeltproject.org/gdeltv2, cada 15 min, sin clave). CAMEO:
+  18/19/20 (+15 con ≥3 fuentes) = conflicto, 14 = protestas, 163 = sanciones; filtro ≥2 fuentes o
+  ≥5 artículos; agrupado a ~0,1°; severidad = cobertura normalizada a la ventana; descarga
+  incremental (4 lotes al arrancar, luego 16/refresco, guarda 7 días); estado `coverage_hours`.
+  `press_signal: true` (la UI lo dice). WORLD_GDELT_EVENTS=off vuelve a la API GEO (tests).
+- `advisories` = avisos de viaje del Dpto. de Estado (nivel 3-4; país → capital vía
+  core/country_geo.py), relevancia como inestabilidad (país entero).
+- `outages` = Cloudflare Radar (cortes de internet) — NECESITA `CLOUDFLARE_RADAR_TOKEN` (gratis);
+  sin él la capa dice "🔑 falta clave" (err_info `needs_key:<VAR>`).
+- MCP get_world_events: enum + maxItems 12 + campos. Tests: tests/test_gdelt_events.py (3),
+  test_world_feeds (+2).
+
 # SESIÓN 2026-10-05 (o) — AGENTES CON CHIP EN EL CHAT: EL COMITÉ DE CARTERA RESPONDE AHÍ (sw v218)
 
 - Feedback: "/cartera dime si debería reducir…" solo ABRÍA el comité y no respondía; pidió que

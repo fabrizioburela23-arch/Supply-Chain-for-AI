@@ -497,4 +497,136 @@ def fetch_disasters(_window):
     return parse_gdacs(data), None
 
 
-FETCHERS = {'shipping': fetch_shipping, 'policy': fetch_policy, 'disasters': fetch_disasters}
+# ═══════════════════════════════════════════════════════════════════════════
+# advisories — Departamento de Estado de EE.UU.: avisos de viaje (nivel 1-4) EN VIVO
+# ═══════════════════════════════════════════════════════════════════════════
+ADVISORIES_URL = 'https://cadataapi.state.gov/api/TravelAdvisories'
+ADV_SEV = {4: 85, 3: 65}
+_ADV_TXT = {4: ('No viajar', 'Do not travel'), 3: ('Reconsiderar el viaje', 'Reconsider travel')}
+
+
+def parse_advisories(payload):
+    """[{Title: "Venezuela - Level 4: Do Not Travel", Updated, Published, Link, Summary…}] → ítems
+    de nivel 3-4 (los 1-2 no son alarma). Coordenadas = capital (precisión 'country')."""
+    from core.country_geo import lookup
+    w = _w()
+    items, unmapped = [], []
+    rows = payload if isinstance(payload, list) else (payload or {}).get('data') or []
+    for d in rows:
+        if not isinstance(d, dict):
+            continue
+        title = str(d.get('Title') or d.get('title') or '')
+        m = re.match(r'^\s*(.+?)\s*[-–]\s*Level\s*(\d)', title, re.I)
+        if not m:
+            continue
+        name, lvl = m.group(1).strip(), int(m.group(2))
+        if lvl < 3:
+            continue
+        g = lookup(name)
+        if not g:
+            unmapped.append(name)
+            continue
+        ts = _gdacs_ts(d.get('Updated') or d.get('Published'))
+        txt = _ADV_TXT[lvl]
+        items.append({
+            'id': 'advisories:' + w._stable_id(name), 'layer': 'advisories', 'lat': g['lat'], 'lon': g['lon'],
+            'title': f"{g['es']}: nivel {lvl} — {txt[0]}", 'title_es': f"{g['es']}: nivel {lvl} — {txt[0]}",
+            'title_en': f"{g['en']}: level {lvl} — {txt[1]}", 'place': g['en'], 'level': lvl,
+            'country_key': w.place_country(g['en']), 'precision': 'country',
+            'severity': ADV_SEV[lvl], 'time': w._iso(ts) if ts else None, 'ts': ts, 'time_kind': 'last_update',
+            'url': w._safe_url(d.get('Link') or d.get('link')) or 'https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html',
+            'source': 'US State Department', 'source_es': 'Departamento de Estado de EE.UU.', 'source_en': 'US State Department',
+            'official': True,
+        })
+    items.sort(key=lambda i: (-i['severity'], i['id']))
+    if unmapped:
+        log.info('advisories: países sin coordenadas: %s', ', '.join(unmapped[:20]))
+    return items
+
+
+def fetch_advisories(_window):
+    w = _w()
+    down = w.source_down('stateadv')
+    if down:
+        return None, down
+    data, err = w._http_get_json(os.environ.get('WORLD_ADVISORIES_URL') or ADVISORIES_URL, timeout=15)
+    w.source_result('stateadv', err)
+    if err:
+        return None, w.source_down('stateadv') or err
+    items = parse_advisories(data)
+    if not items and data:
+        return None, 'bad_payload:state_advisories'
+    return items, None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# outages — Cloudflare Radar: cortes de internet (necesita un token GRATIS)
+# ═══════════════════════════════════════════════════════════════════════════
+CF_URL = 'https://api.cloudflare.com/client/v4/radar/annotations/outages'
+
+
+def parse_outages(payload, now=None):
+    from core.country_geo import lookup
+    w = _w()
+    now = now or w._now()
+    items = []
+    for a in ((payload or {}).get('result') or {}).get('annotations') or []:
+        locs = a.get('locationsDetails') or [{'code': c, 'name': c} for c in (a.get('locations') or [])]
+        start, end = _gdacs_ts(a.get('startDate')), _gdacs_ts(a.get('endDate'))
+        ongoing = end is None
+        o = a.get('outage') or {}
+        cause, kind = str(o.get('outageCause') or '').replace('_', ' ').lower(), str(o.get('outageType') or '').lower()
+        for loc in locs[:3]:
+            g = lookup(loc.get('name') or '')
+            if not g:
+                continue
+            sev = (80 if kind == 'nationwide' else 55) if ongoing else (45 if kind == 'nationwide' else 30)
+            ts = end or start
+            items.append({
+                'id': f"outages:{a.get('id') or w._stable_id(loc.get('name'), start)}:{loc.get('code')}", 'layer': 'outages',
+                'lat': g['lat'], 'lon': g['lon'], 'place': g['en'], 'country_key': w.place_country(g['en']), 'precision': 'country',
+                'title_es': f"🛜 Corte de internet en {g['es']}" + (' (en curso)' if ongoing else ''),
+                'title_en': f"🛜 Internet outage in {g['en']}" + (' (ongoing)' if ongoing else ''),
+                'title': f"🛜 Corte de internet en {g['es']}", 'severity': sev, 'ongoing': ongoing,
+                'cause': cause or None, 'scope': kind or None, 'description': str(a.get('description') or '')[:300],
+                'networks': [x.get('name') for x in (a.get('asnsDetails') or [])[:4] if x.get('name')],
+                'time': w._iso(ts) if ts else None, 'ts': ts, 'time_kind': 'last_update',
+                'url': w._safe_url(a.get('linkedUrl')) or 'https://radar.cloudflare.com/outage-center', 'official': False,
+                'source': 'Cloudflare Radar', 'source_es': 'Cloudflare Radar', 'source_en': 'Cloudflare Radar',
+            })
+    items.sort(key=lambda i: (-i['severity'], i['id']))
+    return items
+
+
+def fetch_outages(_window):
+    tok = (os.environ.get('CLOUDFLARE_RADAR_TOKEN') or '').strip()
+    if not tok:
+        return None, 'needs_key:CLOUDFLARE_RADAR_TOKEN'
+    w = _w()
+    import requests
+    try:
+        r = requests.get(CF_URL, params={'dateRange': '7d', 'limit': 100, 'format': 'json'}, timeout=15,
+                         headers={'Authorization': f'Bearer {tok}', 'User-Agent': 'KhipuFinance/1.0 (+world-monitor)'})
+    except Exception as e:  # noqa: BLE001
+        return None, f'conn:api.cloudflare.com' if 'onnect' in str(e) else 'timeout'
+    if r.status_code in (401, 403):
+        return None, 'needs_key:CLOUDFLARE_RADAR_TOKEN:invalid'
+    if r.status_code != 200:
+        return None, f'http:{r.status_code}'
+    try:
+        data = r.json()
+    except ValueError:
+        return None, 'nonjson:cloudflare'
+    return parse_outages(data), None
+
+
+FEED_META.update({
+    'advisories': dict(provider='US State Department travel advisories', provider_es='Avisos de viaje del Dpto. de Estado de EE.UU.',
+                       es='Riesgo país oficial (EE.UU.)', en='Official country risk (US)', feed=ADVISORIES_URL),
+    'outages': dict(provider='Cloudflare Radar', provider_es='Cloudflare Radar', es='Cortes de internet', en='Internet outages', feed=CF_URL),
+})
+FEED_TTL.update({'advisories': 6 * 3600, 'outages': 900})
+FEED_RADIUS_KM.update({'advisories': 0, 'outages': 0})
+
+FETCHERS = {'shipping': fetch_shipping, 'policy': fetch_policy, 'disasters': fetch_disasters,
+            'advisories': fetch_advisories, 'outages': fetch_outages}
