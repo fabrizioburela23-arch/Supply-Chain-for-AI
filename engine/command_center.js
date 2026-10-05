@@ -69,6 +69,7 @@
       this._relabel();
 
       const input = document.getElementById('bcc-input');
+      if (window.KhipuPick) window.KhipuPick.chatMenu(input);   // menú de "/" y "@"
       input.addEventListener('keydown', e => { if (e.key === 'Enter') this.submit(input.value); });
       document.getElementById('bcc-send').addEventListener('click', () => this.submit(input.value));
       document.getElementById('bcc-mic').addEventListener('click', () => this._toggleVoice());

@@ -9,6 +9,18 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (k) — OPCIONES FIJAS Y MENÚ "/" "@" EN EL CHAT (sw v213)
+
+Pedido: "cuando ponga / o @ me salgan ya las opciones" + "el comité pueda analizar mi cartera desde
+el apartado de comité" + "donde se escriban cosas fijas (tickers…) no quiero que te deje escribir sino
+que te vaya recomendando y sean fixed options". `engine/pickers.js` (`window.KhipuPick`):
+`chatMenu(input)` (menú de comandos/analistas y luego empresas; Enter/Tab completa; en la Cabina y en
+command_center) y `attach(input,{kind:'entity'|'symbol', multi, extras, onPick})` (sugiere y SOLO
+acepta opciones de la lista; texto libre → borde rojo). Aplicado a: Comité (empresa + opción fija
+"💼 Mi cartera" + botón "Analizar mi cartera"), selector de la Cabina (estricto), Clientes (símbolo de
+orden y listas permitidos/prohibidos). Riesgo ya era solo-lista. Campos de texto libre a propósito: el
+chat, "Excluir" de Carteras (acepta países/sectores), búsquedas de navegación. Tests: tests/test_pickers.py.
+
 # SESIÓN 2026-10-05 (j) — COMANDOS Y AGENTES EN EL CHAT (sw v212)
 
 Pedido de Fabrizio: "que el comité pueda analizar mi cartera y que en el chat de Khipu puedas llamar a

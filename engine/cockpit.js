@@ -462,6 +462,7 @@
     });
 
     var input = ov.querySelector('#bcp-input');
+    if (window.KhipuPick) window.KhipuPick.chatMenu(input);   // menú de "/" y "@" (antes del Enter que envía)
     ov.querySelector('#bcp-send').addEventListener('click', function () { submit(); });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
     ov.querySelector('#bcp-mic').addEventListener('click', toggleMic);
@@ -962,8 +963,10 @@
       });
     }
     function go() {
-      var a = chosen.a || (resolveNode(s.querySelector('#bcp-pick-a').value || '') || {}).id;
-      var b = two ? (chosen.b || (resolveNode(s.querySelector('#bcp-pick-b').value || '') || {}).id) : null;
+      // opciones FIJAS (2026-10-05): solo lo elegido de la lista o una coincidencia EXACTA (ticker/nombre)
+      var exactId = function (v) { var h = window.KhipuPick ? window.KhipuPick.exact(v || '', 'entity') : null; return h ? h.value : null; };
+      var a = chosen.a || exactId(s.querySelector('#bcp-pick-a').value);
+      var b = two ? (chosen.b || exactId(s.querySelector('#bcp-pick-b').value)) : null;
       if (!a || (two && !b)) { var okb = s.querySelector('#bcp-pick-ok'); if (okb) { okb.textContent = en ? 'Pick a company from the list' : 'Elige una empresa de la lista'; } return; }
       if (kind === 'xray') return stage('xray', a);
       if (kind === 'sim') return stage('sim', { id: a, kind: 'collapse' });

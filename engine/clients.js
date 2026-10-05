@@ -487,7 +487,12 @@
     var box = document.getElementById('kc'); if (!box) return;
     var body = S.tab === 'detail' ? viewDetail() : S.tab === 'approvals' ? viewApprovals() : S.tab === 'orders' ? viewOrders() : S.tab === 'new' ? viewNew() : viewClients();
     box.innerHTML = header() + body;
+    if (window.KhipuPick) {   // símbolos: opciones FIJAS (tickers del grafo + cripto X/USD), pedido 2026-10-05
+      var os = document.getElementById('kc-o-sym'); if (os) window.KhipuPick.attach(os, { kind: 'symbol' });
+      ['kc-m-rs', 'kc-m-as'].forEach(function (id) { var el = document.getElementById(id); if (el) window.KhipuPick.attach(el, { kind: 'symbol', multi: true }); });
+    }
   }
+  function symList(id) { return val(id).split(',').map(function (x) { return x.trim(); }).filter(Boolean).join(', '); }
 
   /* ── carga de datos ──────────────────────────────────────────────────── */
   function loadStatus() {
@@ -688,7 +693,7 @@
       var cur = clientById(S.sel) || {};
       var margin = checked('kc-m-mg');
       if (margin && !(cur.mandate && cur.mandate.allow_margin) && !window.confirm(L('¿Permitir que este cliente compre con dinero PRESTADO (margen)? Puede perder más de lo que tiene.', 'Allow this client to buy with BORROWED money (margin)? They can lose more than they have.'))) return;
-      patchClient({ risk_profile: val('kc-l-prof'), limits: limits, mandate: { allowed_asset_classes: classes, restricted_symbols: val('kc-m-rs'), allowed_symbols: val('kc-m-as'), allow_margin: margin, notes: (cur.mandate && cur.mandate.notes) || '' } }, L('Límites y mandato guardados.', 'Limits and mandate saved.'));
+      patchClient({ risk_profile: val('kc-l-prof'), limits: limits, mandate: { allowed_asset_classes: classes, restricted_symbols: symList('kc-m-rs'), allowed_symbols: symList('kc-m-as'), allow_margin: margin, notes: (cur.mandate && cur.mandate.notes) || '' } }, L('Límites y mandato guardados.', 'Limits and mandate saved.'));
       return;
     }
     if (act === 'live-on') {
@@ -722,7 +727,8 @@
     }
     if (act === 'preview') {
       var sym = val('kc-o-sym').toUpperCase(), amt = val('kc-o-amt'), unit = val('kc-o-unit'), otype = val('kc-o-type');
-      if (!sym || !(+amt > 0)) { flash('err', L('Escribe el símbolo y un monto mayor que 0.', 'Enter the symbol and an amount above 0.')); return; }
+      if (!sym || !(+amt > 0)) { flash('err', L('Elige el símbolo y escribe un monto mayor que 0.', 'Pick the symbol and enter an amount above 0.')); return; }
+      if (window.KhipuPick && !window.KhipuPick.exact(sym, 'symbol')) { flash('err', L('«' + sym + '» no está en la lista: escribe y elige un símbolo de las sugerencias.', '“' + sym + '” is not in the list: type and pick a symbol from the suggestions.')); return; }
       var body = { client_id: S.sel, symbol: sym, side: val('kc-o-side'), order_type: otype, rationale: val('kc-o-why'), actor: actor() };
       if (otype === 'limit') { body.qty = +amt; body.limit_price = +val('kc-o-lp'); if (unit === 'usd') { flash('err', L('Las órdenes límite se expresan en cantidad.', 'Limit orders are expressed as quantity.')); return; } }
       else if (unit === 'usd') body.notional = +amt; else body.qty = +amt;

@@ -283,10 +283,11 @@
     var m = S.memo;
     body.innerHTML =
       '<div class="cm-form">' +
-        '<input id="cm-ent" placeholder="' + esc(L('Empresa o ticker (ej. NVDA)', 'Company or ticker (e.g. NVDA)')) + '" value="' + esc(S.entity ? nodeLabel(S.entity) : '') + '">' +
+        '<input id="cm-ent" placeholder="' + esc(L('Busca una empresa y elígela de la lista (ej. NVDA)', 'Search a company and pick it from the list (e.g. NVDA)')) + '" value="' + esc(S.entity ? nodeLabel(S.entity) : '') + '"' + (S.entity ? ' data-pick-value="' + esc(S.entity) + '" data-pick-label="' + esc(nodeLabel(S.entity)) + '"' : '') + '>' +
         '<select id="cm-cli">' + clientOptions() + '</select>' +
         (S.clients === null ? '<button class="cm-btn ghost" id="cm-lc">🔒 ' + esc(L('Cargar clientes (PIN)', 'Load clients (PIN)')) + '</button>' : '') +
         '<button class="cm-btn" id="cm-run"' + (S.busy ? ' disabled' : '') + '>' + esc(S.busy ? L('El comité delibera…', 'Committee deliberating…') : L('Correr comité', 'Run committee')) + '</button>' +
+        '<button class="cm-btn ghost" id="cm-pf">💼 ' + esc(L('Analizar mi cartera', 'Analyze my portfolio')) + '</button>' +
       '</div>' +
       (S.clientsErr ? '<div class="cm-note" style="margin:-4px 0 10px">' + esc(S.clientsErr) + '</div>' : '') +
       (S.busy ? '<div id="cm-live">' + liveHtml() + '</div>' : '') +
@@ -300,6 +301,13 @@
             (h.overall_conviction != null ? ' · ' + (h.overall_conviction > 0 ? '+' : '') + Math.round(h.overall_conviction) : '') + (h.ai_used ? '' : ' · ' + esc(L('sin IA', 'no AI'))) + (h.has_client ? ' · 👤' : '') + '</div>';
         }).join('') + '</div>' : '');
     var run = document.getElementById('cm-run'); if (run) run.onclick = runCommittee;
+    var pfb = document.getElementById('cm-pf'); if (pfb) pfb.onclick = function () { S.tab = 'portfolio'; S.msg = null; render(); };
+    var ent = document.getElementById('cm-ent');
+    if (ent && window.KhipuPick) {   // opciones FIJAS: empresas del grafo + "Mi cartera" (pedido 2026-10-05)
+      window.KhipuPick.attach(ent, { kind: 'entity',
+        extras: [{ value: '__portfolio__', icon: '💼', label: L('Mi cartera', 'My portfolio'), hint: L('el comité analiza tu cartera completa', 'the committee analyzes your whole portfolio') }],
+        onPick: function (o) { if (o.value === '__portfolio__') { S.tab = 'portfolio'; S.msg = null; render(); } } });
+    }
     var cli = document.getElementById('cm-cli'); if (cli) cli.onchange = function () { S.clientId = cli.value; };
     var lc = document.getElementById('cm-lc'); if (lc) lc.onclick = function () { loadClients(true); };
     body.querySelectorAll('.cm-hist').forEach(function (x) { x.onclick = function () { loadMemo(x.getAttribute('data-id')); }; });
@@ -828,9 +836,13 @@
   function runCommittee() {
     var inp = document.getElementById('cm-ent');
     var q = (inp && inp.value || '').trim();
-    if (!q) { S.msg = { bad: true, text: L('Escribe una empresa.', 'Type a company.') }; render(); return; }
+    if (!q) { S.msg = { bad: true, text: L('Elige una empresa de la lista.', 'Pick a company from the list.') }; render(); return; }
+    var picked = window.KhipuPick ? window.KhipuPick.value(inp) : q;   // solo opciones de la lista
+    if (picked === '__portfolio__') { S.tab = 'portfolio'; S.msg = null; render(); return; }
+    if (!picked) { S.msg = { bad: true, text: L('«' + q + '» no está en la lista: escribe y elige una empresa de las sugerencias.', '“' + q + '” is not in the list: type and pick a company from the suggestions.') }; render(); return; }
+    q = picked;
     var sel = document.getElementById('cm-cli'); S.clientId = sel ? sel.value : '';
-    var ent = (S.entity && q === nodeLabel(S.entity)) ? S.entity : q;
+    var ent = q;   // id del grafo elegido de la lista
     var body = { entity: ent, actor: actor() };
     if (S.clientId) body.client_id = S.clientId;
     stopReveal(); S.shown = 0; S.animIdx = -1;
