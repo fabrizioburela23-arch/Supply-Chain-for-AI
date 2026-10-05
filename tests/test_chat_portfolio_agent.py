@@ -108,3 +108,32 @@ def test_chat_enruta_cartera_al_agente_con_la_pregunta():
     assert seats['@fundamental ¿qué opinas de TSMC?']['kind'] == 'brain'
     assert o['/cartera dime si debería reducir mi posición en alguna empresa']['q'] == 'dime si debería reducir mi posición en alguna empresa'
     assert o['/cartera']['q'] == '' and o['@cartera ¿cuánto riesgo tengo?']['q'] == '¿cuánto riesgo tengo?'
+
+
+JS_ACC = r"""
+global.window = { LANG: 'es', localStorage: { getItem: () => null, setItem: () => {} },
+  KhipuPortfolioCommittee: { _sources: () => [{ key: 'pf:a1', label: '🧪 Prueba 1 · 2' }, { key: 'pf:a2', label: '🧪 Tecnología · 5' },
+                                                { key: 'broker', label: '🔒 Mi cuenta del bróker (PIN)' }] } };
+global.localStorage = window.localStorage;
+require(process.argv[1] + '/engine/khipu_chat.js');
+const K = window.KhipuChat, deps = { resolve: () => null };
+(async () => {
+  const out = {};
+  for (const t of ['abre mi cuenta', 'mi cuenta', 'mi bróker']) {
+    const r = K.classify(t, deps);
+    out[t] = { kind: r.kind, acts: r.pending ? (await r.pending).actions.map(a => a.type + ':' + (a.label || '')) : null };
+  }
+  process.stdout.write(JSON.stringify(out));
+})();
+"""
+
+
+@pytest.mark.skipif(not NODE, reason='requiere node')
+def test_abre_mi_cuenta_ofrece_broker_y_tus_carteras():
+    """'Abre mi cuenta' abría SIEMPRE el bróker (un solo ETF) y nunca tus carteras simuladas (2026-10-05)."""
+    r = subprocess.run([NODE, '-e', JS_ACC, ROOT], capture_output=True, text=True, timeout=30)
+    assert r.returncode == 0, r.stderr
+    o = json.loads(r.stdout)
+    for t in ('abre mi cuenta', 'mi cuenta'):
+        assert o[t]['kind'] == 'command' and o[t]['acts'] == ['broker:', 'open_portfolio:Prueba 1 · 2', 'open_portfolio:Tecnología · 5'], t
+    assert o['mi bróker']['kind'] == 'account'                         # el bróker pedido explícitamente: directo

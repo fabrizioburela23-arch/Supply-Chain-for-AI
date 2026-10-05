@@ -97,6 +97,9 @@
       '• /ayuda — esta lista.',
       'Nada de esto da órdenes: comprar y vender siempre pide tu confirmación.'].join('\n');
   }
+  function _cmdActs(answer, actions) {
+    return { kind: 'command', pending: Promise.resolve({ answer: answer, actions: actions }) };
+  }
   function _cmd(answer, fn) {
     return { kind: 'command', pending: Promise.resolve().then(function () { if (fn) { try { fn(); } catch (e) {} } return { answer: answer, actions: [] }; }) };
   }
@@ -189,9 +192,21 @@
     var tc = deps.parseTrade ? deps.parseTrade(t) : null;
     if (tc) return { kind: 'trade', parsed: tc };
     // cuenta del bróker (frase exacta)
-    if (/^(mi\s+|la\s+|my\s+)?(cuenta|br[oó]ker|broker|account)\s*$/.test(low) ||
-        /^(mi\s+|my\s+)?(portafolio|portfolio|posiciones|positions)(\s+del?\s+(br[oó]ker|broker|alpaca))?\s*$/.test(low)) {
-      return { kind: 'account' };
+    // "abre mi cuenta" (2026-10-05): antes abría SIEMPRE el bróker (Alpaca, con un solo ETF) y nunca ofrecía
+    // tus carteras simuladas. Ahora, si tienes carteras, Khipu pregunta cuál abrir; "mi bróker" va directo.
+    var accRx = /^(?:abre(?:me)?\s+|abrir\s+|ver\s+|mu[eé]strame\s+|open\s+|show(?:\s+me)?\s+)?(mi\s+|mis\s+|la\s+|my\s+)?(cuenta|cuentas|br[oó]ker|broker|account|accounts|portafolio|portfolio|posiciones|positions)(\s+del?\s+(br[oó]ker|broker|alpaca))?\s*[?.!]*$/;
+    var am = low.match(accRx);
+    if (am) {
+      var brokerOnly = /br[oó]ker|broker|alpaca/.test(low);
+      var pfs = brokerOnly ? [] : pfSources().filter(function (x) { return x.key.indexOf('pf:') === 0 || x.key === 'market'; });
+      if (!pfs.length) return { kind: 'account' };
+      var en2 = _lang();
+      var acts = [{ type: 'broker' }].concat(pfs.map(function (x) {
+        return x.key === 'market' ? { type: 'switch_tab', arg: 'market', label: en2 ? 'My Market positions' : 'Mis posiciones de Mercado' }
+          : { type: 'open_portfolio', arg: x.key.slice(3), label: String(x.label).replace(/^[^\wÀ-ÿ]+\s*/, '') };
+      }));
+      return _cmdActs(en2 ? 'Which one do you want to open? You have your broker account (Alpaca — real or paper money, the one with your actual orders) and ' + pfs.length + ' simulated portfolio(s):'
+                          : '¿Cuál quieres abrir? Tienes tu cuenta del bróker (Alpaca — la de tus órdenes reales o de papel) y ' + pfs.length + ' cartera(s) simulada(s):', acts);
     }
     // gramática KHIPU (NVDA XRAY, COMPARE A B, PORT VAR…) — ejecuta y devuelve {answer, actions}
     if (deps.tryParse) {
@@ -535,8 +550,9 @@
     simulate: ['🔮 Escenario', '🔮 Scenario'], agent_sim: ['🧬 Simular con agentes', '🧬 Agent simulation'],
     chart: ['✦ Gráfico', '✦ Chart'], compare: ['⇄ Comparar', '⇄ Compare'],
     open_risk_report: ['🛡 Riesgo de mi cartera', '🛡 My portfolio risk'], switch_tab: ['📂 Abrir', '📂 Open'],
-    open_world: ['🌐 Monitor mundial', '🌐 World monitor'], broker: ['💼 Abrir el bróker', '💼 Open the broker'],
+    open_world: ['🌐 Monitor mundial', '🌐 World monitor'], broker: ['🔒 Cuenta del bróker (Alpaca)', '🔒 Broker account (Alpaca)'],
     open_pf_committee: ['💼 Ver el análisis completo', '💼 See the full analysis'],
+    open_portfolio: ['🧪 Cartera', '🧪 Portfolio'],
   };
   function actionLabel(a) {
     var x = ACT_LABEL[a.type] || [a.type, a.type];
@@ -692,6 +708,11 @@
         case 'dossier': { var n = NB[a.arg]; return surf('dossier', (n && n.mkt) || a.arg) || (W.openFinCard && W.openFinCard((n && n.mkt) || a.arg)); }
         case 'open_research': if (W.KhipuResearch) { W.KhipuResearch.open(a.arg); return true; } return false;
         case 'open_committee': if (W.KhipuCommittee) { W.KhipuCommittee.open(a.arg); return true; } return false;
+        case 'open_portfolio':
+          try { W.localStorage.setItem('kh_pf_active', String(a.arg)); } catch (e) {}
+          surf('tab', 'portfolios') || (W.switchTab && W.switchTab('portfolios'));
+          setTimeout(function () { try { if (W.KhipuPortfolios && W.KhipuPortfolios.refresh) W.KhipuPortfolios.refresh(); } catch (e) {} }, 300);
+          return true;
         case 'open_pf_committee': if (W.KhipuCommittee) { W.KhipuCommittee.openTab('portfolio'); return true; } return false;
         case 'open_risk_report': if (W.KhipuRisk) { W.KhipuRisk.open({}); return true; } return false;
         case 'broker':
