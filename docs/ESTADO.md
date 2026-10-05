@@ -9,6 +9,20 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (r) — RESPUESTA ENFOCADA EN LA CARTERA + UN ANALISTA CONCRETO SOBRE TU CARTERA (sw v224)
+
+- Bug real (captura de Fabrizio): "/cartera ¿cuáles son los riesgos geopolíticos de mi cartera?" respondió
+  "se me acabó el tiempo" + conflictos genéricos del mundo. Causa: run_chat (bucle de herramientas) se iba a
+  get_world_events y se quedaba sin tiempo. Ahora /api/committee/portfolio/ask usa `khipu_chat.synthesize`
+  (una sola redacción con el análisis) y, si la IA falla, `portfolio_fallback()` (sobre LA CARTERA).
+- `_geo_exposure()`: exposición estructural (peso por país + riesgo-país curado; estrechos de los que
+  dependen las posiciones) → notes/fallback; las notes SIEMPRE dicen si hay o no geopolítica en vivo.
+- Pedido: "preguntarle a un agente específico sobre mi cartera… sin todo el comité". `seat` en
+  /portfolio/ask (fundamental/technical/news/supply_chain/geopolitical/macro): responde ese analista, sin
+  tarjeta del comité, no se guarda como análisis. Cliente: "/cartera @geopolitico …", "@geopolitico … mi
+  cartera…", y en el chip del analista un selector "sobre: empresa o tema | sobre: <cartera>".
+- Tests: tests/test_chat_portfolio_agent.py ampliado.
+
 # SESIÓN 2026-10-05 (q) — COMITÉ DE CARTERA × GEOPOLÍTICA EN VIVO (sw v223)
 
 - `core/world.entity_geo_risks(ids)`: por empresa, solo capas en vivo/oficiales (no curadas):

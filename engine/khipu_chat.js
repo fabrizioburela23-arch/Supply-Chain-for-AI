@@ -100,8 +100,17 @@
   }
   // 2026-10-05: el comité de cartera RESPONDE dentro del chat ("/cartera dime si debería reducir…"
   // antes solo abría una pantalla). La pregunta viaja al agente con la cartera elegida en el chip.
-  function _pfCommittee(en, question) {
-    return { kind: 'agentask', agent: 'portfolio', question: String(question || '').trim() };
+  // analistas del comité: token → puesto (research/ask_agent.SEAT_WORDS) + nombre/ícono (research/deliberation.AGENT_NAMES)
+  var SEAT_OF = { fundamental: 'fundamental', fundamentales: 'fundamental', tecnico: 'technical', technical: 'technical',
+    noticias: 'news', news: 'news', cadena: 'supply_chain', supply: 'supply_chain', geopolitico: 'geopolitical', geo: 'geopolitical',
+    geopolitical: 'geopolitical', macro: 'macro' };
+  var SEAT_NAME = { fundamental: ['📊', 'Analista fundamental', 'Fundamental analyst'], technical: ['📈', 'Analista técnico', 'Technical analyst'],
+    news: ['📰', 'Analista de noticias', 'News analyst'], supply_chain: ['🔗', 'Analista de cadena de suministro', 'Supply-chain analyst'],
+    geopolitical: ['🗺️', 'Analista geopolítico', 'Geopolitical analyst'], macro: ['🌐', 'Analista macro', 'Macro analyst'] };
+  function _pfCommittee(en, question, seat) {
+    var q = String(question || '').trim(), sm = q.match(/^@\s*([^\s:,]+)\s*[:,]?\s*([\s\S]*)$/);
+    if (!seat && sm && SEAT_OF[_fold(sm[1])]) { seat = SEAT_OF[_fold(sm[1])]; q = sm[2].trim(); }
+    return { kind: 'agentask', agent: 'portfolio', question: q, seat: seat || null };
   }
   function agentCommand(t, deps) {
     var en = _lang();
@@ -137,6 +146,10 @@
     }
     var mp = t.match(/^@\s*(?:cartera|portafolio|portfolio|micartera|mi\s+cartera|my\s+portfolio)\b\s*[:,]?\s*([\s\S]*)$/i);
     if (mp) return _pfCommittee(en, mp[1]);
+    // "@geopolitico ¿qué riesgos tiene mi cartera?" → ese analista, sobre TU cartera (no todo el comité)
+    var ma = t.match(/^@\s*([^\s:,]+)\s*[:,]?\s*([\s\S]*)$/);
+    if (ma && SEAT_OF[_fold(ma[1])] && /\b(mi|mis|my)\s+(cartera|portafolio|portfolio|posiciones|positions|inversiones|holdings)\b/i.test(ma[2]))
+      return _pfCommittee(en, ma[2], SEAT_OF[_fold(ma[1])]);
     var f = _fold(t).replace(/[?¿!¡.]+$/g, '').trim();
     // @investigación X · @research X · @investigador X
     if ((m = f.match(/^@\s*(?:investigacion|investigador(?:es)?|research|researcher)\s*[:,]?\s*(?:sobre\s+|de\s+|a\s+|on\s+)?(.*)$/))) return research(m[1]);
@@ -333,7 +346,9 @@
   }
   function agentInfo(route) {
     if (route && route.agent === 'portfolio') {
-      var src = pfSelected();
+      var src = pfSelected(), sn = route.seat && SEAT_NAME[route.seat];
+      if (sn) return { name: L(sn[1], sn[2]), emoji: sn[0], seat: route.seat,
+        label: '💼 ' + (src ? String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '') : L('sin cartera', 'no portfolio')) };
       return { name: L('Comité de cartera', 'Portfolio committee'), emoji: '💼', seat: 'portfolio',
         label: src ? String(src.label).replace(/^[^\wÀ-ÿ]+\s*/, '').replace(/\s·\s[^·]*$/, '') : L('sin cartera', 'no portfolio') };
     }
@@ -362,14 +377,14 @@
       return fetch(base + '/api/committee/portfolio/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Owner': _owner() },
         signal: ctl ? ctl.signal : undefined,
-        body: JSON.stringify({ question: route.question || '', positions: p.positions, cash_usd: p.cash || 0, profile: prof || {},
+        body: JSON.stringify({ question: route.question || '', seat: route.seat || null, positions: p.positions, cash_usd: p.cash || 0, profile: prof || {},
           lang: lang(), source_label: label, history: history.slice(-MAX_TURNS), actor: actor || 'usuario' }),
       }).then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (d) {
           if (timer) clearTimeout(timer);
           if (!r.ok && !d.answer) throw new Error((lang() === 'en' ? d.error_en : d.error) || d.error || ('HTTP ' + r.status));
           d.agent = d.agent || agentInfo(route);
-          if (!prof) d.profile_missing = true;
+          if (!prof && !route.seat) d.profile_missing = true;
           remember('user', '/cartera ' + (route.question || ''));
           if (d.answer && !d.degraded) remember('assistant', d.answer);
           return d;
@@ -469,7 +484,7 @@
       var chip = W.document.createElement('span'); chip.className = 'kc-uchip';
       chip.innerHTML = '<i>' + esc(agent.emoji || '🤖') + '</i>' + esc(agent.name + (agent.label ? ' · ' + agent.label : ''));
       d.appendChild(chip);
-      text = String(text || '').replace(/^\s*(?:\/\S+|@\S+)\s*/, '');
+      text = String(text || '').replace(/^\s*(?:(?:\/\S+|@\S+)\s*){1,2}/, '');
       if (text) { d.appendChild(W.document.createElement('br')); }
     }
     d.appendChild(W.document.createTextNode(text));

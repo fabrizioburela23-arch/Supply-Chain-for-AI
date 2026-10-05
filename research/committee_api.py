@@ -285,7 +285,45 @@ def _attach_geo(a):
     except Exception as e:  # noqa: BLE001
         log.info('committee geo: %s', e)
         a['geo_risks'] = []
+    a['geo_exposure'] = _geo_exposure(a)
     return a
+
+
+def _geo_exposure(a):
+    """Exposición geopolítica ESTRUCTURAL de la cartera (2026-10-05: la pregunta "¿cuáles son los riesgos
+    geopolíticos de mi cartera?" necesita esto aunque hoy no haya eventos en vivo): peso por país (con el
+    riesgo-país curado de la Sala de Situación) y estrechos de los que dependen las posiciones."""
+    try:
+        from core.geosit import CHOKEPOINTS, COUNTRIES
+        from core.world import _graph
+        g = _graph()
+        inst = {c['ck']: c for c in COUNTRIES}
+        by_c, chk = {}, []
+        rows = [r for r in (a.get('positions') or []) if r.get('entity_id')]
+        for r in rows:
+            ck = (g['by_id'].get(r['entity_id']) or {}).get('country_key') or '—'
+            d = by_c.setdefault(ck, {'country': ck, 'weight_pct': 0.0, 'labels': []})
+            d['weight_pct'] += float(r.get('weight_pct') or 0)
+            d['labels'].append(r.get('label'))
+        countries = []
+        for ck, d in by_c.items():
+            c = inst.get(ck) or {}
+            countries.append({**d, 'weight_pct': round(d['weight_pct'], 1), 'country_es': c.get('es') or ck,
+                              'country_en': c.get('en') or ck, 'risk_base': c.get('base')})
+        countries.sort(key=lambda x: -x['weight_pct'])
+        for c in CHOKEPOINTS:
+            hit = [r for r in rows if r['entity_id'] in (c.get('affected') or [])]
+            if hit:
+                chk.append({'es': c['es'], 'en': c['en'], 'risk_base': c.get('base'), 'why_es': c.get('why_es'),
+                            'why_en': c.get('why_en'), 'labels': [r.get('label') for r in hit],
+                            'weight_pct': round(sum(float(r.get('weight_pct') or 0) for r in hit), 1)})
+        chk.sort(key=lambda x: -x['weight_pct'])
+        return {'countries': countries[:8], 'chokepoints': chk[:6], 'note_es': 'riesgo-país y estrechos: base curada '
+                '(Sala de Situación), no un evento de hoy', 'note_en': 'country risk and straits: curated base '
+                '(Situation Room), not an event from today'}
+    except Exception as e:  # noqa: BLE001
+        log.info('committee geo exposure: %s', e)
+        return {'countries': [], 'chokepoints': []}
 
 
 def portfolio_notes(a, lang='es'):
@@ -314,6 +352,16 @@ def portfolio_notes(a, lang='es'):
         lines.append(f"Se mueven juntas: {p['a']} y {p['b']} (correlación {p['corr']}).")
     for x in (a.get('excluded') or [])[:10]:
         lines.append(f"No analizada: {x.get('label') or x.get('symbol')} — {x.get('reason')}.")
+    gx = a.get('geo_exposure') or {}
+    for c in gx.get('countries') or []:
+        lines.append(f"Exposición por país: {c['country_es']} {c['weight_pct']} % de la cartera ({', '.join(c['labels'][:6])})"
+                     f"{'; riesgo-país estructural ' + str(c['risk_base']) + '/100' if c.get('risk_base') is not None else ''}.")
+    for c in gx.get('chokepoints') or []:
+        lines.append(f"Dependen del {c['es']} (riesgo estructural {c['risk_base']}/100): {', '.join(c['labels'])} "
+                     f"= {c['weight_pct']} % de la cartera. {c.get('why_es') or ''}")
+    if not (a.get('geo_risks') or []):
+        lines.append('Geopolítica EN VIVO: hoy no hay reglas/sanciones que nombren a estas empresas, ni caídas de tráfico '
+                     'en sus estrechos, ni eventos cerca de sus sedes conocidas.')
     for gr in (a.get('geo_risks') or [])[:12]:
         for it in gr['items']:
             lines.append(f"Geopolítica EN VIVO para {gr['label']} ({gr['symbol']}): {it['title_es']} — {it['why_es']}"
@@ -321,6 +369,32 @@ def portfolio_notes(a, lang='es'):
                          f"severidad {it['severity']}; fuente {it['source']} ({str(it.get('time') or '')[:10]}).")
     lines.append(f"Datos: {a.get('source')} al {a.get('as_of')}. Es consejo educativo, nunca una orden.")
     return '\n'.join(str(x) for x in lines)
+
+
+def portfolio_fallback(a, lang='es'):
+    """Respuesta SIN IA, solo con el análisis calculado (nunca una lista genérica del mundo)."""
+    es = lang != 'en'
+    h, gx = a.get('health') or {}, a.get('geo_exposure') or {}
+    out = [f"**{h.get('score')}/100** — {h.get('verdict')}"]
+    for x in (a.get('actions') or [])[:3]:
+        out.append(f"- {x.get('label')}: {x['from_pct']:.0f} % → {x['to_pct']:.0f} % — {x['why_es'] if es else x['why_en']}")
+    geo_live = [(g['label'], it) for g in (a.get('geo_risks') or []) for it in g['items']]
+    out.append('**Geopolítica en vivo:**' if es else '**Live geopolitics:**')
+    if geo_live:
+        for lab, it in geo_live[:5]:
+            out.append(f"- {lab}: {it['title_es'] if es else it['title_en']} — {it['why_es'] if es else it['why_en']}")
+    else:
+        out.append('- Hoy no hay eventos, reglas ni sanciones en vivo que toquen directamente tus posiciones.' if es else
+                   '- No live events, rules or sanctions touch your holdings directly today.')
+    if gx.get('countries') or gx.get('chokepoints'):
+        out.append('**Exposición estructural:**' if es else '**Structural exposure:**')
+        for c in (gx.get('countries') or [])[:3]:
+            out.append(f"- {c['country_es'] if es else c['country_en']}: {c['weight_pct']} %"
+                       + (f" (riesgo-país {c['risk_base']}/100)" if es and c.get('risk_base') is not None else
+                          f" (country risk {c['risk_base']}/100)" if c.get('risk_base') is not None else ''))
+        for c in (gx.get('chokepoints') or [])[:3]:
+            out.append(f"- {c['es'] if es else c['en']}: {', '.join(c['labels'])} ({c['weight_pct']} %)")
+    return '\n'.join(out)
 
 
 def portfolio_card(a):
@@ -358,6 +432,19 @@ def portfolio_ask():
     label = str(body.get('source_label') or '').strip()[:60]
     agent = {'name': 'Comité de cartera' if lang == 'es' else 'Portfolio committee', 'emoji': '💼', 'seat': 'portfolio',
              'label': label or None}
+    # UN analista concreto sobre la cartera (2026-10-05: "quisiera preguntarle a un agente específico… no que me
+    # obligue a analizar con todo el comité"): responde SOLO desde su especialidad, sin la tarjeta del comité.
+    from research.ask_agent import ROLE
+    from research.deliberation import AGENT_NAMES
+    seat = str(body.get('seat') or '').strip()
+    seat = seat if seat in ROLE else None
+    if seat:
+        em, n_es, n_en = AGENT_NAMES.get(seat, ('🤖', seat, seat))
+        agent = {'name': n_en if lang == 'en' else n_es, 'emoji': em, 'seat': seat, 'label': label or None}
+        q = (f"[Answer ONLY as the {ROLE[seat][1]} of the committee, from your specialty, about the user's portfolio. "
+             f"Do not give the whole committee's verdict.] {q}" if lang == 'en' else
+             f"[Responde SOLO como {ROLE[seat][0]} del comité, desde tu especialidad, sobre la cartera del usuario. "
+             f"No des el veredicto de todo el comité.] {q}")
     with ai_context('comite_cartera_chat', who):
         try:
             a = pa.analyze(positions, profile=profile, lang=lang, cash_usd=body.get('cash_usd') or 0)
@@ -371,7 +458,7 @@ def portfolio_ask():
                                        else f"No pude medir tu cartera: {msg}"),
                             'excluded': a.get('excluded') or []}), 200
         _attach_geo(a)
-        if body.get('save', True):
+        if body.get('save', True) and not seat:
             _register_portfolio_analysis(a, {'source_label': label}, lang)
         hist = body.get('history') if isinstance(body.get('history'), list) else []
         try:
@@ -379,13 +466,21 @@ def portfolio_ask():
         except Exception:  # noqa: BLE001
             req = {'message': q[:1500], 'history': [], 'lang': lang}
         ctx = {'portfolio_notes': portfolio_notes(a, lang)}
+        # Respuesta ENFOCADA en la cartera: una sola redacción con el análisis ya calculado (sin el bucle de
+        # herramientas, que se iba a "conflictos del mundo" y se quedaba sin tiempo — feedback 2026-10-05).
+        out = {}
         try:
-            app = current_app._get_current_object()
-        except Exception:  # noqa: BLE001
-            app = None
-        out = kc.run_chat(req['message'], req['history'], lang, context=ctx, app=app)
+            text, model = kc.synthesize(req['message'], req['history'], lang, ctx, [], 40)
+            if text:
+                out = {'answer': text, 'ai': True, 'model': model}
+        except Exception as e:  # noqa: BLE001
+            log.info('portfolio ask synth: %s', e)
+        if not out:
+            out = {'answer': portfolio_fallback(a, lang), 'ai': False, 'degraded': True,
+                   'ai_detail_es': 'La IA no respondió a tiempo; te muestro el análisis calculado.',
+                   'ai_detail_en': 'The AI did not answer in time; here is the computed analysis.'}
     out = dict(out or {})
-    out.update(ok=True, agent=agent, portfolio=portfolio_card(a), saved_id=a.get('saved_id'))
+    out.update(ok=True, agent=agent, portfolio=None if seat else portfolio_card(a), saved_id=a.get('saved_id'))
     acts = [x for x in (out.get('actions') or []) if isinstance(x, dict)]
     acts.append({'type': 'open_pf_committee', 'arg': None})
     out['actions'] = acts

@@ -308,7 +308,8 @@
     }
     function chipRefresh() {
       var d = agentDef(), K = window.KhipuChat;
-      var key = d ? d.c + (d.portfolio ? ':' + (K && K.pfSelected && (K.pfSelected() || {}).key) + ':' + ((K && K.pfSources) ? K.pfSources().length : 0) : '') : '';
+      var key = d ? d.c + (d.portfolio ? ':' + (K && K.pfSelected && (K.pfSelected() || {}).key) : '') + ':' + (input._agentPf || '') +
+        ':' + ((K && K.pfSources) ? K.pfSources().length : 0) : '';
       if (key === chipKey) return;
       chipKey = key;
       if (!d) { if (chip && chip.parentNode) chip.parentNode.removeChild(chip); chip = null; return; }
@@ -322,28 +323,49 @@
           return '<option value="' + esc(x.key) + '"' + (x.key === sel ? ' selected' : '') + '>' + esc(x.label) + '</option>';
         }).join('') + '</select>' : '<span style="color:#FFB300;font-weight:500">' + esc(L('sin carteras', 'no portfolios')) + '</span>';
       }
+      // analista concreto: "sobre" una empresa/tema (lo que escribas) o sobre TU cartera
+      if (isSeat(d) && K && K.pfSources) {
+        var ps = K.pfSources().filter(function (x) { return x.key !== 'broker'; });
+        h += '<select data-about title="' + esc(L('¿Sobre qué?', 'About what?')) + '"><option value="">' + esc(L('sobre: empresa o tema', 'about: company or topic')) + '</option>' +
+          ps.map(function (x) { return '<option value="' + esc(x.key) + '"' + (x.key === input._agentPf ? ' selected' : '') + '>' + esc(L('sobre: ', 'about: ') + x.label) + '</option>'; }).join('') + '</select>';
+      }
       h += '<button type="button" title="' + esc(L('Quitar', 'Remove')) + '">✕</button>';
       chip.innerHTML = h;
-      var se = chip.querySelector('select');
+      var se = chip.querySelector('select:not([data-about])');
       if (se) se.addEventListener('change', function () { if (K && K.pfSelect) K.pfSelect(se.value); chipKey = '\u0000'; chipRefresh(); input.focus(); });
+      var sa = chip.querySelector('select[data-about]');
+      if (sa) sa.addEventListener('change', function () { input._agentPf = sa.value || null; chipKey = '\u0000'; chipRefresh(); input.focus(); });
       chip.querySelector('button').addEventListener('click', function () {
+        input._agentPf = null;
         if (input._agentTok) input._agentTok = null;
         else input.value = input.value.replace(/^\s*[\/@][^\s]+\s*/, '');
         chipKey = '\u0000'; input.dispatchEvent(new Event('input', { bubbles: true })); input.focus();
       });
     }
     // al ENVIAR (Enter o botón ➤) el chip vuelve al texto ("/cartera …") para el enrutador del chat
+    function isSeat(d) { return d && d.i && !d.portfolio && !d.ent && !d.cartera && !/^@(todos|all)$/.test(d.c); }
     function flushTok() {
+      var d = agentDef();
+      if (input._agentPf && isSeat(d)) {
+        // analista + cartera → "/cartera @analista pregunta" (el enrutador lo manda a ESE analista sobre esa cartera)
+        var K = window.KhipuChat; if (K && K.pfSelect) K.pfSelect(input._agentPf);
+        var body = input._agentTok ? input.value : input.value.replace(/^\s*@[^\s]+\s*/, '');
+        input.value = '/cartera ' + (input._agentTok || d.c) + ' ' + body.replace(/^\s+/, '');
+        input._agentTok = null; input._agentPf = null;
+        setTimeout(function () { chipKey = '\u0000'; chipRefresh(); }, 0);
+        return;
+      }
       if (!input._agentTok) return;
       input.value = input._agentTok + ' ' + input.value.replace(/^\s+/, '');
       input._agentTok = null;
       setTimeout(function () { chipKey = '\u0000'; chipRefresh(); }, 0);
     }
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !isOpen(input)) flushTok(); }, true);
+    // (también con el analista escrito a mano en el texto + "sobre: mi cartera" elegido en el chip)
     var sendBtn = input.parentNode && input.parentNode.querySelector('#bcp-send, #bcc-send, [data-send]');
     if (sendBtn) sendBtn.addEventListener('click', flushTok, true);
     // el chat vacía el campo al enviar sin disparar 'input': el chip lo sigue
-    setInterval(function () { if (chip && !input._agentTok && !agentDef()) { chipKey = '\u0000'; chipRefresh(); } }, 500);
+    setInterval(function () { if (chip && !input._agentTok && !agentDef()) { input._agentPf = null; chipKey = '\u0000'; chipRefresh(); } }, 500);
     input.addEventListener('input', chipRefresh);
     input.addEventListener('focus', function () { chipKey = '\u0000'; chipRefresh(); });
     input.addEventListener('input', refresh);
