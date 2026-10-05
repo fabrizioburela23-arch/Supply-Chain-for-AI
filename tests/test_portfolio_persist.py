@@ -76,3 +76,26 @@ def test_analisis_del_comite_de_cartera_queda_registrado(monkeypatch):
     # sin llave del navegador: el análisis sale igual, solo no se guarda
     d2 = c.post('/api/committee/portfolio', json=body).get_json()
     assert d2['ok'] and not d2.get('saved_id')
+
+
+def _risk_all(positions, horizon=10, max_positions=30):
+    ps = positions[:max_positions]
+    return {'ok': True, 'portfolio_value_usd': 100.0 * len(ps), 'vol_ann_pct': 20.0, 'max_drawdown_pct': -10.0,
+            'var95': {'hist_1d_pct': 1.0, 'hist_1d_usd': 1.0}, 'as_of': '2026-10-01', 'source': 'test',
+            'positions': [{'symbol': p['symbol'], 'shares': 1, 'price': 100, 'value_usd': 100.0, 'weight_pct': 100 / len(ps),
+                           'vol_ann_pct': 20.0, 'risk_contrib_pct': 100 / len(ps)} for p in ps],
+            'correlation': {}, 'excluded': []}
+
+
+def test_comite_analiza_todas_las_posiciones_y_dice_cuales_no():
+    """'No analizó todas mis posiciones': antes había un tope oculto de 30 y lo demás se descartaba sin aviso."""
+    from core import portfolio_advisor as pa
+    pos = [{'symbol': f'T{i:02d}', 'label': f'Empresa {i}', 'shares': 1} for i in range(40)] + \
+          [{'id': 'OpenAI', 'label': 'OpenAI', 'shares': 1}]          # privada: sin ticker
+    a = pa.analyze(pos, risk_fn=_risk_all, board_fn=lambda: ({}, []))
+    assert a['ok'] and a['kpis']['n_positions'] == 40
+    assert a['coverage']['requested'] == 41 and a['coverage']['analyzed'] == 40 and a['coverage']['researched'] == 0
+    assert any(x['symbol'] == 'OpenAI' and 'privada' in x['reason'] for x in a['excluded'])
+    big = [{'symbol': f'T{i:02d}', 'shares': 1} for i in range(pa.MAX_POSITIONS + 5)]
+    b = pa.analyze(big, risk_fn=_risk_all, board_fn=lambda: ({}, []))
+    assert any(x['symbol'] == '+5' for x in b['excluded'])                # lo que pasa del tope se AVISA

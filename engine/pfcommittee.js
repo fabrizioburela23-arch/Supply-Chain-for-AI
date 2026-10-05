@@ -151,6 +151,48 @@
     add: ['➕', '#2BE38B', 'Aumentar', 'Add'], buy_new: ['🆕', '#5FC6E8', 'Añadir nueva', 'Add new'] };
   var PRIO = { 1: ['Prioritaria', 'Priority', '#FF4D6A'], 2: ['Recomendada', 'Recommended', '#FFB300'], 3: ['Opcional', 'Optional', '#9BA6C4'] };
 
+  // Cobertura (2026-10-05, "no analizó todas mis posiciones"): cuántas se midieron, cuáles
+  // no y por qué, y cuántas tienen opinión de los analistas — con botón para investigar las que faltan.
+  function coverageHtml(r) {
+    var cv = r.coverage; if (!cv) return '';
+    var miss = (cv.not_researched || []), ex = r.excluded || [];
+    var full = cv.analyzed >= cv.requested && !ex.length;
+    var col = full ? '#2BE38B' : '#FFB300';
+    var rs = S.researching || {};
+    return card('<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' +
+        '<span class="cm-pill" style="color:' + col + '">📊 ' + esc(L('Analizadas ', 'Analyzed ')) + cv.analyzed + esc(L(' de ', ' of ')) + cv.requested + esc(L(' posiciones', ' positions')) + '</span>' +
+        '<span class="cm-pill" style="color:' + (miss.length ? '#FFB300' : '#2BE38B') + '">🔬 ' + cv.researched + esc(L(' con opinión de los analistas', ' with analyst opinion')) + '</span>' +
+        (miss.length && !S.viewingPast ? '<button class="cm-btn ghost" id="pfc-research" style="padding:4px 10px;font-size:11.5px"' + (rs.busy ? ' disabled' : '') + '>🔬 ' +
+          esc(rs.busy ? L('Encargando…', 'Requesting…') : L('Investigar las que faltan (' + Math.min(3, miss.length) + ')', 'Research the missing ones (' + Math.min(3, miss.length) + ')')) + '</button>' : '') +
+      '</div>' +
+      (ex.length ? '<div class="cm-note" style="margin-top:8px;color:#FFB300">⚠ ' + esc(L('Sin analizar: ', 'Not analyzed: ')) +
+        ex.map(function (x) { return esc((x.label || x.symbol) + ' (' + (isEn() ? (x.reason_en || x.reason) : x.reason) + ')'); }).join(' · ') + '</div>' : '') +
+      (miss.length ? '<div class="cm-note" style="margin-top:6px">' + esc(L('Sin investigar todavía: ', 'Not researched yet: ')) + esc(miss.map(function (m) { return m.label; }).join(', ')) +
+        esc(L('. Su peso y riesgo SÍ están medidos; falta la opinión de los analistas (usa la IA, máx. 3 por vez, dentro del presupuesto diario).',
+              '. Their weight and risk ARE measured; the analysts\' opinion is missing (uses AI, max 3 at a time, within the daily budget).')) + '</div>' : '') +
+      (rs.msg ? '<div class="cm-note" style="margin-top:6px;color:' + (rs.bad ? '#FF4D6A' : '#2BE38B') + '">' + esc(rs.msg) + '</div>' : ''));
+  }
+  // encarga investigación (POST /api/research/jobs) para hasta 3 posiciones sin investigar, una tras otra
+  function researchMissing() {
+    var miss = ((S.res && S.res.coverage && S.res.coverage.not_researched) || []).slice(0, 3);
+    if (!miss.length) return;
+    S.researching = { busy: true }; paint();
+    var ok = [], bad = [];
+    miss.reduce(function (pr, m) {
+      return pr.then(function () {
+        return fetch((window.BASE || '') + '/api/research/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Actor': actor() },
+          body: JSON.stringify({ entity: m.entity_id, actor: actor(), only_missing: true }) })
+          .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (r.ok) ok.push(m.label); else bad.push(m.label + ': ' + ((isEn() ? (j.error_en || j.error) : j.error) || r.status)); }); })
+          .catch(function () { bad.push(m.label); });
+      });
+    }, Promise.resolve()).then(function () {
+      S.researching = { busy: false, bad: !ok.length,
+        msg: (ok.length ? L('Encargado: ', 'Requested: ') + ok.join(', ') + L('. Tarda unos minutos; luego vuelve a pulsar «Analizar mi cartera».', '. It takes a few minutes; then press «Analyze my portfolio» again.') : '') +
+             (bad.length ? (ok.length ? ' · ' : '') + L('No se pudo: ', 'Could not: ') + bad.join(' · ') : '') };
+      paint();
+    });
+  }
+
   function resultHtml(r) {
     var k = r.kpis, h = r.health, P = r.profile;
     var col = h.tone === 'good' ? '#2BE38B' : h.tone === 'warn' ? '#FFB300' : '#FF4D6A';
@@ -170,7 +212,7 @@
           (perf ? '<span class="cm-pill" style="color:' + (perf.pnl_usd >= 0 ? '#2BE38B' : '#FF4D6A') + '">' + esc(L('vs lo que pagaste: ', 'vs what you paid: ')) + (perf.pnl_usd >= 0 ? '+' : '') + usd(perf.pnl_usd) + ' (' + (perf.pnl_pct >= 0 ? '+' : '') + pct(perf.pnl_pct) + ')</span>' : '') +
           (startPerf ? '<span class="cm-pill">' + esc(L('desde el inicio: ', 'since start: ')) + usd(startPerf.start) + ' → ' + usd(startPerf.now) + '</span>' : '') +
         '</div>') +
-      '<div class="cm-disc">🤖 ' + esc(r.disclaimer) + '</div>' +
+      '<div class="cm-disc">🤖 ' + esc(r.disclaimer) + '</div>' + coverageHtml(r) +
       (r.explanation ? card('<div class="cm-t">💬 ' + esc(L('Lo que dice el comité', 'What the committee says')) + (r.explanation.ai ? ' <span class="cm-pill" style="color:#B48CFF;margin-left:6px">🧠 IA</span>' : '') + '</div>' +
         '<div class="cm-note" style="font-size:13px;color:#E8EDFB;line-height:1.6">' + esc(r.explanation.text).replace(/\n/g, '<br>') + '</div>') : '') +
       card('<div class="cm-t">✅ ' + esc(L('Acciones sugeridas', 'Suggested actions')) + '</div>' +
@@ -200,7 +242,7 @@
             var c = p.conviction;
             return '<div class="cm-kv"><span>' + esc(p.label) + '</span><span style="color:' + (c == null ? '#7C87A3' : c >= 15 ? '#2BE38B' : c <= -15 ? '#FF4D6A' : '#9BA6C4') + '">' + (c == null ? esc(L('sin investigar', 'not researched')) : (c > 0 ? '+' : '') + Math.round(c)) + '</span></div>';
           }).join('') + '<div class="cm-note" style="font-size:10.5px;margin-top:4px">' + esc(L('Convicción −100 a +100. "Sin investigar": pulsa 🔬 Actualizar en la Pizarra.', 'Conviction −100 to +100. "Not researched": press 🔬 Refresh on the Board.')) + '</div>') +
-        (r.excluded && r.excluded.length ? card('<div class="cm-t">⚠ ' + esc(L('No se pudieron analizar', 'Could not be analyzed')) + '</div>' + r.excluded.map(function (x) { return '<div class="cm-note">' + esc((x.label || x.symbol) + ': ' + x.reason) + '</div>'; }).join('')) : '') +
+        (r.excluded && r.excluded.length && !r.coverage ? card('<div class="cm-t">⚠ ' + esc(L('No se pudieron analizar', 'Could not be analyzed')) + '</div>' + r.excluded.map(function (x) { return '<div class="cm-note">' + esc((x.label || x.symbol) + ': ' + x.reason) + '</div>'; }).join('')) : '') +
       '</div></div>' +
       '<div class="cm-note" style="font-size:10.5px">' + esc(L('Datos: ', 'Data: ') + (r.source || '') + ' · ' + (r.as_of || '')) + '</div>';
   }
@@ -285,6 +327,7 @@
     el.querySelectorAll('[data-sec]').forEach(function (b) { b.onclick = function () { S.section = b.getAttribute('data-sec'); S.err = null; paint(); }; });
     if (S.section !== 'diag') extras();
     var rb = document.getElementById('pfc-run'); if (rb) rb.onclick = run;
+    var rr = document.getElementById('pfc-research'); if (rr) rr.onclick = researchMissing;
     el.querySelectorAll('[data-past]').forEach(function (x) { x.onclick = function () { openPast(x.getAttribute('data-past')); }; });
     var pc = document.getElementById('pfc-past-close'); if (pc) pc.onclick = function () { S.res = null; S.viewingPast = null; paint(); };
     if (S.past === null && S.section === 'diag') { S.past = []; loadPast(); }
@@ -310,7 +353,7 @@
 
   function run() {
     var p = getProfile(); if (!p) return;
-    S.busy = true; S.err = null; S.res = null; S.viewingPast = null; S.applied = {}; paint();
+    S.busy = true; S.err = null; S.res = null; S.viewingPast = null; S.applied = {}; S.researching = null; paint();
     positionsFor(S.src).then(function (src) {
       S.lastSrc = src;
       if (!src.positions.length) throw new Error(L('Esa cartera está vacía: añádele empresas en Mercado → Carteras (🔍 buscar → Comprar) y vuelve.',

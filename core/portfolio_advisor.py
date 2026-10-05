@@ -51,13 +51,19 @@ def _f(v, d=None):
         return d
 
 
+# Tope de posiciones del comité de cartera (2026-10-05: antes 30 y las demás se
+# descartaban SIN aviso → "no analizó todas mis posiciones"). Lo que pase del tope
+# se informa en `excluded`.
+MAX_POSITIONS = 60
+
+
 def _resolve_positions(positions):
     """[{symbol|id, shares|usd, label?, cost_usd?}] → [{entity_id, symbol, label, sector, country, shares, usd}]"""
     from core.entities import resolve
     from core.semantic import _load_snapshot
     snap = _load_snapshot()
     out = []
-    for p in (positions or [])[:30]:
+    for p in (positions or [])[:MAX_POSITIONS]:
         if not isinstance(p, dict):
             continue
         key = str(p.get('id') or p.get('nodeId') or p.get('symbol') or '').strip()
@@ -110,7 +116,7 @@ def analyze(positions, profile=None, lang='es', risk_fn=None, board_fn=None, cas
     if risk_fn is None:
         from core.risk_report import build_report as risk_fn
     rep = risk_fn([{'symbol': p['symbol'], 'shares': p['shares'], 'usd': p['usd'], 'label': p['label']}
-                   for p in listed], horizon=10) if listed else {'ok': False, 'error_code': 'no_positions'}
+                   for p in listed], horizon=10, max_positions=MAX_POSITIONS) if listed else {'ok': False, 'error_code': 'no_positions'}
     if not rep.get('ok'):
         return {'ok': False, 'error_code': rep.get('error_code') or 'data_unavailable',
                 'error': rep.get('error') or ('No pude medir el riesgo con precios reales.' if es else
@@ -283,6 +289,14 @@ def analyze(positions, profile=None, lang='es', risk_fn=None, board_fn=None, cas
         val = sum(r['value_usd'] for r in rows)
         perf = {'cost_usd': round(cost, 2), 'value_usd': round(val, 2), 'pnl_usd': round(val - cost, 2),
                 'pnl_pct': round((val / cost - 1) * 100, 2)}
+    n_req = sum(1 for p in (positions or []) if isinstance(p, dict))
+    excluded = list(rep.get('excluded', [])) + [
+        {'symbol': p['label'], 'reason': 'sin ticker cotizado (empresa privada o sin bolsa)' if not p['symbol'] else 'sin cantidad',
+         'reason_en': 'no listed ticker (private company or not on an exchange)' if not p['symbol'] else 'no quantity'}
+        for p in pos if p not in listed]
+    if n_req > MAX_POSITIONS:
+        excluded.append({'symbol': f'+{n_req - MAX_POSITIONS}', 'reason': f'pasan el tope de {MAX_POSITIONS} posiciones por análisis',
+                         'reason_en': f'over the {MAX_POSITIONS}-position limit per analysis'})
     return {
         'ok': True, 'generated_at': datetime.now(timezone.utc).isoformat(), 'lang': 'es' if es else 'en',
         'profile': {'key': prof_key, 'label': P['es'] if es else P['en'], **{k: v for k, v in P.items() if k not in ('es', 'en')}},
@@ -294,8 +308,10 @@ def analyze(positions, profile=None, lang='es', risk_fn=None, board_fn=None, cas
                  'diversification_ratio': rep.get('diversification_ratio')},
         'performance': perf, 'positions': rows, 'sectors': sectors, 'actions': actions[:8],
         'diversifiers': diversifiers, 'correlated_pairs': [{'a': a, 'b': b, 'corr': v} for v, a, b in pairs[:5]],
-        'excluded': rep.get('excluded', []) + [{'symbol': p['label'], 'reason': 'sin ticker cotizado o sin cantidad'}
-                                                for p in pos if p not in listed],
+        'excluded': excluded,
+        'coverage': {'requested': n_req, 'analyzed': len(rows), 'researched': sum(1 for r in rows if r['conviction'] is not None),
+                     'not_researched': [{'entity_id': r['entity_id'], 'label': r['label'], 'symbol': r['symbol']}
+                                        for r in rows if r['conviction'] is None and r['entity_id']]},
         'as_of': rep.get('as_of'), 'source': rep.get('source'),
         'disclaimer': DISCLAIMER_ES if es else DISCLAIMER_EN,
     }

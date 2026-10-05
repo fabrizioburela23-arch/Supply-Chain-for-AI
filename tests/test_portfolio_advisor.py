@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from core import portfolio_advisor as pa  # noqa: E402
 
 
-def _risk(positions, horizon=10):
+def _risk(positions, horizon=10, **_k):
     syms = [p['symbol'] for p in positions]
     vals = {'NVDA': 6000.0, 'AMD': 2500.0, 'INTC': 1000.0, 'TSM': 500.0}
     rc = {'NVDA': 70.0, 'AMD': 20.0, 'INTC': 6.0, 'TSM': 4.0}

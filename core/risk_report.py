@@ -284,7 +284,7 @@ def _histogram(x, bins):
 
 
 # ── orquestación (red) ───────────────────────────────────────────────────────
-def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
+def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_positions=30):
     """positions: [{symbol, shares, label?}] o [{symbol, usd, label?}] → reporte
     + lo excluido.
 
@@ -300,7 +300,7 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None):
     if fx_fn is None:
         from core.quotes import _fx_to_usd as fx_fn
     clean, usd_amt, labels = {}, {}, {}
-    for p in positions[:30]:
+    for p in positions[:max_positions]:
         if not isinstance(p, dict):
             continue
         sym = _safe_ticker(p.get('symbol')) or ''     # va en la URL: validar

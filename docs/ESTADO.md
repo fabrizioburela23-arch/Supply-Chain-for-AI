@@ -9,6 +9,18 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-05 (m) — EL COMITÉ ANALIZA TODAS LAS POSICIONES (sw v215)
+
+- "No analizó todas mis posiciones, solo algunas": había un tope OCULTO de 30
+  (core/portfolio_advisor `_resolve_positions` y core/risk_report `build_report`); lo demás
+  se descartaba sin aviso. Ahora `MAX_POSITIONS = 60` (build_report acepta `max_positions`;
+  el MCP sigue en 30), lo que pase del tope y las privadas sin ticker van a `excluded` con
+  motivo ES/EN, y la respuesta trae `coverage {requested, analyzed, researched, not_researched}`.
+- UI (engine/pfcommittee.js `coverageHtml`): "Analizadas X de Y · Z con opinión de los
+  analistas", qué quedó fuera y por qué, y botón "🔬 Investigar las que faltan" (máx. 3,
+  POST /api/research/jobs con only_missing; respeta el presupuesto diario).
+- Test: tests/test_portfolio_persist.py::test_comite_analiza_todas_las_posiciones_y_dice_cuales_no.
+
 # SESIÓN 2026-10-05 (l) — CARTERAS QUE "DESAPARECÍAN" + COMITÉ DE CARTERA REGISTRADO (sw v214)
 
 - Pedido: "que analice mi cartera, que se registre… puse como 3 carteras y luego no las encuentro".
