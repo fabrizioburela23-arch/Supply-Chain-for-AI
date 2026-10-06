@@ -35,10 +35,23 @@
    · Clases de botones (kd-b-*) ≠ estados de ventana (kd-min/kd-max/kd-hide).
    · pointercancel NO es "soltar": revierte.
 
+   KHIPUS OS (2026-10-06) — CHAT AL CENTRO: en escritorio ≥ 1100 px (y si
+   localStorage kh_desk_flank ≠ 'off') el escritorio RESERVA una columna
+   central #kd-center para el chat de Khipu (38 % del ancho, 440–680 px) y las
+   ventanas se ordenan solas en dos FLANCOS (izquierdo y derecho): la primera va
+   a la derecha, la siguiente a la izquierda (equilibrio por cantidad), hasta 3
+   por flanco; las más viejas pasan a la barra (minimizadas). Snap, geometría
+   por defecto y "Ordenar" usan los flancos → nada tapa el chat (maximizar sí,
+   es decisión del usuario). La Cabina recibe hooks.onLayout(true|false,
+   centerEl) SOLO cuando cambia el modo (idempotente) y mueve ahí el hilo y la
+   barra de entrada. < 1100 px o ≤ 760 px: el comportamiento de siempre.
+   Colores: TODO con las variables --os-* que define la Cabina sobre #bcp-ov
+   (tema claro/oscuro sin re-inyectar estilos).
+
    window.KhipuDesk = { configure, enabled, setEnabled, active, mount, unmount,
-     wall, open, close, closeKind, closeAll, focus, focused, has, get, list,
-     minimize, maximize, restore, snap, tile, cascade, suspend, resume,
-     isMobile, relabel }
+     wall, center, isCentered, setFlank, flankOn, open, close, closeKind,
+     closeAll, focus, focused, has, get, list, minimize, maximize, restore,
+     snap, tile, cascade, suspend, resume, isMobile, relabel }
    ============================================================================ */
 (function () {
   'use strict';
@@ -48,8 +61,16 @@
   var SNAP_PX = 14;            // distancia al borde del escritorio que activa el snap
   var FALLBACK = { W: 1000, H: 600 };   // solo para dibujar cuando aún no hay medida; NUNCA para recortar
   var LS_GEOM = 'kh_desk_geom', LS_MODE = 'kh_desk_mode', LS_TIP = 'kh_desk_tip', LS_AUTO = 'kh_desk_auto', LS_PINS = 'kh_desk_pins';
-  var MAX_CENTER = 3;          // ventanas sueltas visibles a la vez en el centro; el resto espera en la barra
+  var MAX_CENTER = 3;          // modo sin chat al centro: ventanas sueltas visibles a la vez; el resto espera en la barra
   var SIDE_FRAC = 0.32;        // ancho de una columna lateral (ventanas fijadas)
+  // ── Khipus OS: chat al centro + flancos (no usar kh_desk_layout: reservado para K4) ──
+  var LS_FLANK = 'kh_desk_flank';
+  var CENTER_VW = 1100;        // ancho mínimo de la ventana del navegador para el modo flancos
+  var CENTER_FRAC = 0.38, CENTER_MIN = 440, CENTER_MAX = 680;
+  var FLANK_MAX = 3;           // ventanas visibles por flanco; las más viejas → barra
+  var FLANK_MIN_W = 300;       // ancho mínimo de una ventana en un flanco
+  var GAP = 14, PAD = 14;      // aire entre ventanas y contra los bordes (estilo Apple)
+  var BAR_CENTERED = 36;       // barra de tareas discreta en modo flancos
 
   function lang() {
     var l = window.LANG;
@@ -62,7 +83,8 @@
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function num(v, d) { v = +v; return isFinite(v) ? v : d; }
   function coarse() { try { return !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches); } catch (e) { return false; } }
-  function barH() { return coarse() ? 48 : 40; }
+  function barH() { return centered ? BAR_CENTERED : (coarse() ? 48 : 40); }
+  function minW() { return centered ? FLANK_MIN_W : MIN_W; }
 
   // ── textos de la interfaz (regla bilingüe) ──
   var T = {
@@ -81,9 +103,14 @@
     unpin: ['Soltar del costado', 'Unpin from the side'],
     auto: ['✓ Ordenar automáticamente', '✓ Arrange automatically'], autoOff: ['○ Ordenar automáticamente', '○ Arrange automatically'],
     arrange: ['▦ Ordenar ahora', '▦ Arrange now'],
+    center: ['✓ Chat al centro, ventanas a los costados', '✓ Chat in the center, windows on the sides'],
+    centerOff: ['○ Chat al centro, ventanas a los costados', '○ Chat in the center, windows on the sides'],
+    flankHint: ['Pregúntale algo a Khipu y aquí aparecerán las ventanas', 'Ask Khipu something and the windows will appear here'],
     tipTitle: ['Tu primera ventana', 'Your first window'],
     tip: ['Arrástrala por la barra de título. Llévala a un borde para pegarla a media pantalla, doble clic para agrandarla, y ▢ para elegir dónde acomodarla.',
           'Drag it by its title bar. Move it to an edge to snap it to half the screen, double-click to enlarge it, and ▢ to choose where to place it.'],
+    tipCentered: ['Las ventanas se ordenan solas a los costados del chat. Puedes moverlas por la barra de título; doble clic la agranda y «⊞ → Ordenar ahora» las devuelve a su lugar.',
+                  'Windows arrange themselves on both sides of the chat. You can drag them by the title bar; double-click enlarges one and “⊞ → Arrange now” puts them back.'],
     zones: { left: ['Mitad izquierda', 'Left half'], right: ['Mitad derecha', 'Right half'],
              tl: ['Cuarto superior izquierdo', 'Top-left quarter'], tr: ['Cuarto superior derecho', 'Top-right quarter'],
              bl: ['Cuarto inferior izquierdo', 'Bottom-left quarter'], br: ['Cuarto inferior derecho', 'Bottom-right quarter'],
@@ -92,9 +119,11 @@
   function t(k) { var v = T[k]; return v ? (lang() === 'en' ? v[1] : v[0]) : k; }
 
   // ── estado ──
-  var hooks = { render: null, title: null, icon: null, onClose: null, beforeRender: null, onFocus: null, onModeChange: null,
-                resume: null, adoptKinds: [], resumeKinds: [], multiKinds: [] };
+  var hooks = { render: null, title: null, icon: null, iconHTML: null, onClose: null, beforeRender: null, onFocus: null, onModeChange: null,
+                onLayout: null, resume: null, adoptKinds: [], resumeKinds: [], multiKinds: [] };
   var stageEl = null, wallEl = null, winsEl = null, barEl = null, ghostEl = null, menuEl = null, layoutsEl = null;
+  var centerEl = null, flanksEl = null;   // Khipus OS: columna del chat + marcadores de los flancos
+  var centered = false;                   // ¿modo flancos activo AHORA? (cambia solo con el escenario visible)
   var wins = [];            // [{id, kind, arg, key, el, body, x,y,w,h, max, min, snap, prev, needsRender}]
   var zTop = 10, seq = 0, focused = null;
   var resizeT = null, fireT = null, layT = null, ro = null, wasMobile = null, lastSz = null;
@@ -107,79 +136,104 @@
   // ── estilos ──
   function ensureStyles() {
     if (document.getElementById('kd-styles')) return;
+    // Colores: SOLO variables --os-* (definidas por la Cabina sobre #bcp-ov, claro y oscuro);
+    // cambiar de tema NO re-inyecta nada. Sombras suaves, radios grandes (Khipus OS).
     var css = '' +
 '#bcp-stage.kd-desk{padding:0!important;overflow:hidden!important;position:relative;--kd-bar:40px}' +
 '#bcp-stage.kd-desk>*{animation:none}' +
 '#kd-wall{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);overflow-y:auto;padding:22px;scrollbar-width:thin}' +
+'#bcp-stage.kd-centered #kd-wall{display:none}' +
+// con ventanas a la vista el inicio del muro no debe asomarse por el aire entre ventanas
+'#bcp-stage.kd-has-wins:not(.kd-mobile) #kd-wall{visibility:hidden}' +
+// Khipus OS: marcadores punteados de los flancos (como el video: "aquí aparecerán las ventanas")
+'#kd-flanks{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);pointer-events:none;display:none}' +
+'#bcp-stage.kd-centered #kd-flanks{display:block}' +
+'.kd-fph.filled{visibility:hidden}' +
+'.kd-fph{position:absolute;border:1.5px dashed var(--os-mute);border-radius:var(--os-r);display:flex;align-items:center;justify-content:center;' +
+  'text-align:center;padding:24px;color:var(--os-ink-3);font-size:13px;line-height:1.5;opacity:.9}' +
+'#kd-center{position:absolute;top:' + PAD + 'px;bottom:var(--kd-bar);display:none;flex-direction:column;min-width:0;z-index:1}' +
+'#bcp-stage.kd-centered #kd-center{display:flex}' +
 '#kd-wins{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);pointer-events:none;overflow:hidden}' +
 '.kd-win{position:absolute;pointer-events:auto;display:flex;flex-direction:column;min-width:' + MIN_W + 'px;min-height:' + MIN_H + 'px;' +
-  'border:1px solid rgba(122,158,255,.22);border-radius:14px;background:#070B14;' +
-  'box-shadow:0 18px 50px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.4);overflow:hidden;animation:kdIn .16s ease;' +
-  'transition:box-shadow .15s,border-color .15s}' +
-'@keyframes kdIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}' +
+  'border:1px solid var(--os-line);border-radius:var(--os-r);background:var(--os-surface);color:var(--os-ink);' +
+  'box-shadow:var(--os-shadow);overflow:hidden;animation:kdIn .2s cubic-bezier(.2,.8,.2,1);' +
+  'transition:box-shadow .18s ease,border-color .18s ease}' +
+'#bcp-stage.kd-centered .kd-win{min-width:' + FLANK_MIN_W + 'px}' +
+'@keyframes kdIn{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}' +
 '@media(prefers-reduced-motion:reduce){.kd-win{animation:none}}' +
-'.kd-win.kd-focus{border-color:rgba(0,224,255,.55);box-shadow:0 22px 60px rgba(0,0,0,.65),0 0 0 1px rgba(0,224,255,.18)}' +
+'.kd-win.kd-focus{box-shadow:var(--kos-shadow-lg)}' +
 '.kd-win.kd-min,.kd-win.kd-hide{display:none}' +
 '.kd-win.kd-max{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border-left:0;border-right:0;border-top:0}' +
-'.kd-win.kd-drag{transition:none;opacity:.92}' +
-'.kd-ttl{display:flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 12px;flex-shrink:0;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;' +
-  'background:linear-gradient(180deg,rgba(14,21,38,.95),rgba(9,14,26,.95));border-bottom:1px solid rgba(122,158,255,.14);font-size:12.5px;color:#C7D0EA}' +
-'.kd-win.kd-focus .kd-ttl{color:#E8EDFB}' +
+'#bcp-stage.kd-centered .kd-win.kd-max{border-radius:var(--os-r);border:1px solid var(--os-line)}' +
+'.kd-win.kd-drag{transition:none;opacity:.94}' +
+'.kd-ttl{display:flex;align-items:center;gap:10px;height:48px;padding:0 8px 0 16px;flex-shrink:0;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;' +
+  'background:transparent;font-size:15px;color:var(--os-ink-2)}' +
+'.kd-win.kd-focus .kd-ttl{color:var(--os-ink)}' +
 '.kd-ttl:active{cursor:grabbing}' +
-'.kd-ico{font-size:14px;flex:none}' +
-'.kd-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;letter-spacing:.01em}' +
-'.kd-b{width:30px;height:26px;border-radius:7px;border:0;background:transparent;color:#9BA6C4;cursor:pointer;font-size:12px;' +
-  'display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex:none;touch-action:manipulation}' +
-'.kd-b:hover{background:rgba(122,158,255,.14);color:#E8EDFB}' +
-'.kd-b.kd-b-x:hover{background:rgba(255,77,106,.22);color:#FF8FA3}' +
-'.kd-b.kd-b-pin{font-size:13px}.kd-win.kd-pinned .kd-b-pin{color:#00E0FF;background:rgba(0,224,255,.12)}' +
-'.kd-win.kd-pinned{border-color:rgba(0,224,255,.3)}.kd-win.kd-pinned .kd-ttl{cursor:default}' +
-'#bcp-stage.kd-mobile .kd-b-pin{display:none}' +
-'.kd-body{flex:1;min-height:0;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:rgba(122,158,255,.35) transparent}' +
+'.kd-ico{font-size:15px;flex:none;min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;line-height:1}' +
+'.kd-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;letter-spacing:-.01em}' +
+'.kd-b{width:28px;height:28px;border-radius:8px;border:0;background:transparent;color:var(--os-ink-3);cursor:pointer;font-size:12px;opacity:.55;' +
+  'display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex:none;touch-action:manipulation;transition:opacity .15s,background .15s,color .15s}' +
+'.kd-win:hover .kd-b,.kd-win.kd-focus .kd-b,.kd-b:focus-visible{opacity:1}' +
+'.kd-b:hover{background:var(--os-surface-2);color:var(--os-ink)}' +
+'.kd-b.kd-b-x:hover{background:var(--os-surface-3);color:var(--os-bad)}' +
+'.kd-b.kd-b-pin{font-size:12px}.kd-win.kd-pinned .kd-b-pin{color:var(--os-accent);background:var(--kos-accent-soft);opacity:1}' +
+'.kd-win.kd-pinned{border-color:var(--os-accent)}.kd-win.kd-pinned .kd-ttl{cursor:default}' +
+'#bcp-stage.kd-mobile .kd-b-pin,#bcp-stage.kd-centered .kd-b-pin{display:none}' +
+'.kd-body{flex:1;min-height:0;overflow:auto;padding:2px 18px 16px;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:var(--os-surface-3) transparent}' +
 '.kd-body>*{flex-shrink:0}' +
 '.kd-body>.bcp-stagehd{display:none}' +            // en una ventana el "← Inicio" sobra: hay ✕
 '.kd-body .xray-scope .xr-close{display:none}' +    // el ✕ propio del X-Ray (cierra su overlay) sobra dentro de una ventana
 '.kd-body>.bcp-embed{flex:1 1 auto;height:auto!important;min-height:0!important}' +
 '.kd-body>.bcp-inner{width:100%}' +
-'.kd-body.kd-embedbody{padding:0}' +
+'.kd-body.kd-embedbody{padding:0;border-top:1px solid var(--os-line)}' +
 '.kd-body.kd-embedbody>.bcp-embed{border:0;border-radius:0}' +
+// escenas antiguas con colores oscuros fijos: en tema claro son una "isla" oscura legible dentro de la ventana
+'.kd-body.kd-legacy-dark{background:#0B0F19;color:#E8EDFB;padding-top:14px;scrollbar-color:rgba(122,158,255,.35) transparent;' +
+  // paneles adoptados diseñados en oscuro (p. ej. carteras: fondo var(--bg)): la isla les da las variables oscuras de la app
+  '--bg:#0B0F19;--surface:#141A28;--surface-2:#1C2333;--ink:#E8EDFB;--ink-2:#B4BDD6;--ink-3:#7C87A3;--line:rgba(122,158,255,.16);--line-2:rgba(122,158,255,.26);--up:#34E6A4;--down:#FF5B6B}' +
+'.kd-body.kd-legacy-dark.kd-embedbody{padding-top:0}' +
+'body:not(.dark) .kd-body.kd-legacy-dark{margin:0 8px 8px;border-radius:12px}' +
 '.kd-rs{position:absolute;z-index:3;touch-action:none}' +
 '.kd-rs.n{left:8px;right:8px;top:-3px;height:7px;cursor:ns-resize}.kd-rs.s{left:8px;right:8px;bottom:-3px;height:7px;cursor:ns-resize}' +
 '.kd-rs.e{top:8px;bottom:8px;right:-3px;width:7px;cursor:ew-resize}.kd-rs.w{top:8px;bottom:8px;left:-3px;width:7px;cursor:ew-resize}' +
 '.kd-rs.ne{right:-4px;top:-4px;width:14px;height:14px;cursor:nesw-resize}.kd-rs.sw{left:-4px;bottom:-4px;width:14px;height:14px;cursor:nesw-resize}' +
 '.kd-rs.nw{left:-4px;top:-4px;width:14px;height:14px;cursor:nwse-resize}.kd-rs.se{right:-4px;bottom:-4px;width:14px;height:14px;cursor:nwse-resize}' +
 '.kd-win.kd-max .kd-rs{display:none}' +
-'#kd-ghost{position:absolute;display:none;pointer-events:none;border:1.5px solid rgba(0,224,255,.55);border-radius:14px;' +
-  'background:rgba(0,224,255,.08);backdrop-filter:blur(2px);z-index:9000;transition:left .08s,top .08s,width .08s,height .08s}' +
-'#kd-bar{position:absolute;left:0;right:0;bottom:0;height:var(--kd-bar);display:flex;align-items:center;gap:6px;padding:0 10px;' +
-  'background:rgba(6,10,19,.92);border-top:1px solid rgba(122,158,255,.16);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);z-index:9100;overflow:hidden}' +
+'#kd-ghost{position:absolute;display:none;pointer-events:none;border:1.5px solid var(--os-accent);border-radius:var(--os-r);' +
+  'background:var(--kos-accent-soft);z-index:9000;transition:left .08s,top .08s,width .08s,height .08s}' +
+'#kd-bar{position:absolute;left:0;right:0;bottom:0;height:var(--kd-bar);display:flex;align-items:center;gap:6px;padding:0 12px;' +
+  'background:var(--os-surface);border-top:1px solid var(--os-line);z-index:9100;overflow:hidden}' +
+'#bcp-stage.kd-centered #kd-bar{background:transparent;border-top:0;padding:0 ' + PAD + 'px}' +
 '#kd-bar .kd-tasks{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:center;height:100%}' +
 '#kd-bar .kd-tasks::-webkit-scrollbar{display:none}' +
-'.kd-task{flex:none;max-width:200px;height:28px;padding:0 11px;border-radius:9px;border:1px solid rgba(122,158,255,.18);background:rgba(11,18,34,.7);' +
-  'color:#9BA6C4;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .13s}' +
-'.kd-task:hover{color:#E8EDFB;border-color:rgba(0,224,255,.45)}' +
-'.kd-task.on{color:#00E0FF;border-color:rgba(0,224,255,.55);background:rgba(0,224,255,.09)}' +
-'.kd-task.dim{opacity:.55}' +
+'.kd-task{flex:none;max-width:220px;height:28px;padding:0 12px;border-radius:999px;border:1px solid var(--os-line);background:var(--os-surface);' +
+  'color:var(--os-ink-2);font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .13s,color .13s,box-shadow .13s}' +
+'#bcp-stage.kd-centered .kd-task{height:26px;border-color:transparent;box-shadow:var(--os-shadow)}' +
+'.kd-task:hover{color:var(--os-ink);background:var(--os-surface-2)}' +
+'.kd-task.on{color:var(--os-ink);font-weight:600;box-shadow:inset 0 0 0 1.5px var(--os-accent)}' +
+'.kd-task.dim{opacity:.62}' +
 '.kd-task .tx{overflow:hidden;text-overflow:ellipsis}' +
-'.kd-hint{flex:1;min-width:0;font-size:11.5px;color:#8791AC;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px}' +
-'#kd-menu-btn{flex:none;width:32px;height:28px;border-radius:9px;border:1px solid rgba(122,158,255,.22);background:rgba(11,18,34,.7);color:#9BA6C4;cursor:pointer;font-size:15px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center}' +
-'#kd-menu-btn:hover,#kd-menu-btn.on{color:#00E0FF;border-color:rgba(0,224,255,.5)}' +
-'#kd-menu{position:absolute;left:10px;bottom:calc(var(--kd-bar) + 6px);display:none;flex-direction:column;gap:2px;padding:6px;min-width:230px;z-index:9200;' +
-  'border:1px solid rgba(122,158,255,.25);border-radius:12px;background:rgba(8,12,22,.97);box-shadow:0 14px 40px rgba(0,0,0,.6)}' +
+'.kd-hint{flex:1;min-width:0;font-size:12px;color:var(--os-ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:4px}' +
+'#kd-menu-btn{flex:none;width:32px;height:28px;border-radius:999px;border:1px solid var(--os-line);background:var(--os-surface);color:var(--os-ink-2);cursor:pointer;font-size:14px;font-family:inherit;display:inline-flex;align-items:center;justify-content:center}' +
+'#bcp-stage.kd-centered #kd-menu-btn{height:26px;border-color:transparent;box-shadow:var(--os-shadow)}' +
+'#kd-menu-btn:hover,#kd-menu-btn.on{color:var(--os-ink);background:var(--os-surface-2)}' +
+'#kd-menu{position:absolute;left:10px;bottom:calc(var(--kd-bar) + 6px);display:none;flex-direction:column;gap:2px;padding:6px;min-width:250px;z-index:9200;' +
+  'border:1px solid var(--os-line);border-radius:14px;background:var(--os-surface);box-shadow:var(--kos-shadow-lg)}' +
 '#kd-menu.show{display:flex}' +
-'#kd-menu button{text-align:left;border:0;background:transparent;color:#C7D0EA;font-size:12.5px;padding:8px 10px;border-radius:8px;cursor:pointer;font-family:inherit}' +
-'#kd-menu button:hover{background:rgba(122,158,255,.14);color:#fff}' +
-'#kd-menu .sep{height:1px;background:rgba(122,158,255,.14);margin:4px 2px}' +
+'#kd-menu button{text-align:left;border:0;background:transparent;color:var(--os-ink);font-size:13px;padding:9px 11px;border-radius:9px;cursor:pointer;font-family:inherit}' +
+'#kd-menu button:hover{background:var(--os-surface-2)}' +
+'#kd-menu .sep{height:1px;background:var(--os-line);margin:4px 2px}' +
 '#kd-layouts{position:absolute;display:none;z-index:9300;padding:8px;gap:6px;grid-template-columns:repeat(3,56px);' +
-  'border:1px solid rgba(122,158,255,.25);border-radius:12px;background:rgba(8,12,22,.97);box-shadow:0 14px 40px rgba(0,0,0,.6)}' +
+  'border:1px solid var(--os-line);border-radius:14px;background:var(--os-surface);box-shadow:var(--kos-shadow-lg)}' +
 '#kd-layouts.show{display:grid}' +
-'.kd-lay{width:56px;height:38px;border-radius:7px;border:1px solid rgba(122,158,255,.25);background:rgba(11,18,34,.8);cursor:pointer;position:relative;padding:0}' +
-'.kd-lay:hover{border-color:rgba(0,224,255,.6)}' +
-'.kd-lay i{position:absolute;background:rgba(0,224,255,.35);border-radius:3px}' +
-'.kd-lay:hover i{background:rgba(0,224,255,.7)}' +
+'.kd-lay{width:56px;height:38px;border-radius:8px;border:1px solid var(--os-line);background:var(--os-surface-2);cursor:pointer;position:relative;padding:0}' +
+'.kd-lay:hover{border-color:var(--os-accent)}' +
+'.kd-lay i{position:absolute;background:var(--os-mute);border-radius:3px}' +
+'.kd-lay:hover i{background:var(--os-accent)}' +
 // tablet / pantalla táctil con ventanas (≥761 px): controles para el dedo
 '@media(pointer:coarse){' +
-  '.kd-ttl{height:44px}.kd-b{width:40px;height:36px;font-size:14px}' +
+  '.kd-ttl{height:48px}.kd-b{width:40px;height:36px;font-size:14px;opacity:1}' +
   '.kd-rs.n,.kd-rs.s{height:16px}.kd-rs.e,.kd-rs.w{width:16px}' +
   '.kd-rs.n{top:-6px}.kd-rs.s{bottom:-6px}.kd-rs.e{right:-6px}.kd-rs.w{left:-6px}' +
   '.kd-rs.ne,.kd-rs.nw,.kd-rs.se,.kd-rs.sw{width:26px;height:26px}' +
@@ -189,12 +243,13 @@
 '}' +
 // móvil: hojas a pantalla completa, sin arrastre ni redimensión
 '#bcp-stage.kd-mobile #kd-wall{padding:14px 12px}' +
-'#bcp-stage.kd-mobile .kd-win{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border:0;animation:kdSheet .18s ease}' +
+'#bcp-stage.kd-mobile .kd-win{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border:0;box-shadow:none;animation:kdSheet .18s ease}' +
 '@keyframes kdSheet{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}' +
 '#bcp-stage.kd-mobile .kd-rs,#bcp-stage.kd-mobile .kd-b-min,#bcp-stage.kd-mobile .kd-b-max{display:none}' +
-'#bcp-stage.kd-mobile .kd-ttl{cursor:default}' +
-'#bcp-stage.kd-mobile .kd-body{padding:12px}' +
-'#bcp-stage.kd-mobile .kd-b.kd-b-x{width:auto;padding:0 10px;font-size:12px}' +
+'#bcp-stage.kd-mobile .kd-ttl{cursor:default;height:46px}' +
+'#bcp-stage.kd-mobile .kd-b{opacity:1}' +
+'#bcp-stage.kd-mobile .kd-body{padding:4px 12px 12px}' +
+'#bcp-stage.kd-mobile .kd-b.kd-b-x{width:auto;padding:0 10px;font-size:13px;color:var(--os-accent)}' +
 '#bcp-stage.kd-mobile #kd-menu{min-width:200px}' +
 '';
     var st = document.createElement('style'); st.id = 'kd-styles'; st.textContent = css;
@@ -207,16 +262,24 @@
     stageEl = stage;
     if (active()) { applyMode(); return; }
     stage.innerHTML = '';
+    centered = false;
     stage.classList.add('kd-desk');
+    stage.classList.remove('kd-centered');
     stage.style.setProperty('--kd-bar', barH() + 'px');
     wallEl = document.createElement('div'); wallEl.id = 'kd-wall';
+    // Khipus OS: marcadores de los flancos + columna del chat (DEBAJO de #kd-wins en el
+    // orden del DOM; #kd-wins es pointer-events:none → el chat recibe los clics)
+    flanksEl = document.createElement('div'); flanksEl.id = 'kd-flanks'; flanksEl.setAttribute('aria-hidden', 'true');
+    flanksEl.innerHTML = '<div class="kd-fph" data-side="left"><span></span></div><div class="kd-fph" data-side="right"><span></span></div>';
+    centerEl = document.createElement('div'); centerEl.id = 'kd-center';
     winsEl = document.createElement('div'); winsEl.id = 'kd-wins';
     ghostEl = document.createElement('div'); ghostEl.id = 'kd-ghost';
     barEl = document.createElement('div'); barEl.id = 'kd-bar';
     barEl.innerHTML = '<button type="button" id="kd-menu-btn">⊞</button><div class="kd-tasks"></div>';
     menuEl = document.createElement('div'); menuEl.id = 'kd-menu';
     layoutsEl = document.createElement('div'); layoutsEl.id = 'kd-layouts';
-    stage.appendChild(wallEl); stage.appendChild(winsEl); stage.appendChild(ghostEl);
+    stage.appendChild(wallEl); stage.appendChild(flanksEl); stage.appendChild(centerEl);
+    stage.appendChild(winsEl); stage.appendChild(ghostEl);
     stage.appendChild(barEl); stage.appendChild(menuEl); stage.appendChild(layoutsEl);
     barEl.querySelector('#kd-menu-btn').addEventListener('click', function (e) { e.stopPropagation(); toggleMenu(); });
     // clic fuera cierra menú y selector de acomodo (se registra UNA vez por escenario:
@@ -247,15 +310,25 @@
 
   function unmount() {
     if (!stageEl) return;
-    closeAll();
+    _unmounting = true;
+    try {
+      closeAll();
+      // ANTES de vaciar el escenario: la Cabina saca de #kd-center el hilo y la barra de
+      // entrada (con sus escuchadores); si no, stageEl.innerHTML='' los destruiría
+      if (centered) {
+        centered = false;
+        stageEl.classList.remove('kd-centered');
+        try { if (hooks.onLayout) hooks.onLayout(false, null); } catch (e) {}
+      }
+    } finally { _unmounting = false; }
     toggleMenu(false); hideLayouts();
     clearTimeout(resizeT); clearTimeout(fireT); clearTimeout(layT);
     window.removeEventListener('resize', onResize);
     if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; }
-    stageEl.classList.remove('kd-desk', 'kd-mobile');
+    stageEl.classList.remove('kd-desk', 'kd-mobile', 'kd-centered', 'kd-has-wins');
     stageEl.style.removeProperty('--kd-bar');
     stageEl.innerHTML = '';
-    wallEl = winsEl = barEl = ghostEl = menuEl = layoutsEl = null;
+    wallEl = winsEl = barEl = ghostEl = menuEl = layoutsEl = centerEl = flanksEl = null;
     lastSz = null; barSig = null;
   }
 
@@ -265,9 +338,10 @@
     stageEl.classList.toggle('kd-mobile', m);
     stageEl.style.setProperty('--kd-bar', barH() + 'px');
     if (!visible()) return;               // Cabina cerrada: no hay medida válida, no se toca nada
+    syncCenter();                         // Khipus OS: ¿chat al centro? (solo cambia con medida real)
     if (m) { showOnly(focused); return; }
     showOnly(null);
-    if (autoOn() && wins.some(function (w) { return !w.min; })) { arrange(); return; }
+    if ((autoOn() || centered) && wins.some(function (w) { return !w.min; })) { arrange(); return; }
     wins.forEach(function (w) {
       if (w.max) return;
       if (w.snap && w.snap !== 'grid') { var r = zoneRect(w.snap); if (r) { w.x = r.x; w.y = r.y; w.w = r.w; w.h = r.h; } }
@@ -307,18 +381,124 @@
   }
   function drawSize() { return deskSize() || FALLBACK; }
 
+  // ══ KHIPUS OS: CHAT AL CENTRO + FLANCOS ══════════════════════════════════
+  var _unmounting = false;
+  function flankOn() { return ls(LS_FLANK) !== 'off'; }
+  function centerFits(d) {
+    if (!flankOn() || isMobile() || (window.innerWidth || 0) < CENTER_VW || !d) return false;
+    return d.W >= CENTER_MIN + 2 * FLANK_MIN_W + 2 * GAP + 2 * PAD;
+  }
+  // geometría: columna central del chat + rectángulos de los dos flancos (px dentro de #kd-wins)
+  function geomCenter(d) {
+    d = d || drawSize();
+    var hi = Math.max(CENTER_MIN, Math.min(CENTER_MAX, d.W - 2 * FLANK_MIN_W - 2 * GAP - 2 * PAD));
+    var cw = clamp(Math.round(d.W * CENTER_FRAC), CENTER_MIN, hi);
+    var cx = Math.round((d.W - cw) / 2);
+    var top = PAD, H = Math.max(MIN_H, d.H - PAD);
+    var L = { x: PAD, y: top, w: Math.max(FLANK_MIN_W, cx - GAP - PAD), h: H };
+    var rx = cx + cw + GAP;
+    var R = { x: rx, y: top, w: Math.max(FLANK_MIN_W, d.W - PAD - rx), h: H };
+    return { cx: cx, cw: cw, top: top, H: H, L: L, R: R, W: d.W };
+  }
+  function positionCenter(g) {
+    if (!centerEl || !g) return;
+    centerEl.style.left = g.cx + 'px'; centerEl.style.width = g.cw + 'px';
+    if (flanksEl) {
+      [['left', g.L], ['right', g.R]].forEach(function (p) {
+        var el = flanksEl.querySelector('.kd-fph[data-side="' + p[0] + '"]'); if (!el) return;
+        el.style.left = p[1].x + 'px'; el.style.top = p[1].y + 'px'; el.style.width = p[1].w + 'px'; el.style.height = p[1].h + 'px';
+      });
+    }
+  }
+  // decide (solo con el escenario VISIBLE y medible: invariante 2) si el chat va al centro;
+  // avisa a la Cabina SOLO cuando cambia (onLayout es idempotente del otro lado)
+  function syncCenter() {
+    if (!stageEl || !centerEl || _unmounting || !visible()) return;
+    var d = deskSize(); if (!d) return;
+    var on = centerFits(d);
+    if (on) positionCenter(geomCenter(d));
+    if (on === centered) return;
+    centered = on;
+    stageEl.classList.toggle('kd-centered', on);
+    stageEl.style.setProperty('--kd-bar', barH() + 'px');
+    // las posiciones del modo anterior no sirven en el nuevo: todas vuelven al orden automático;
+    // una ventana fijada (📌) pasa a ser la preferencia de flanco
+    wins.forEach(function (w) {
+      w.manual = false;
+      if (on && w.pinned) { w.side = w.pinned; w.pinned = null; w.el.classList.remove('kd-pinned'); }
+      if (!on) w.side = null;
+      if (w.max && on) { w.max = false; w.el.classList.remove('kd-max'); }
+    });
+    barSig = null;
+    relabelFlanks();
+    try { if (hooks.onLayout) hooks.onLayout(on, on ? centerEl : null); } catch (e) {}
+    if (on) { var d2 = deskSize(); if (d2) positionCenter(geomCenter(d2)); }
+  }
+  function relabelFlanks() {
+    if (!flanksEl) return;
+    flanksEl.querySelectorAll('.kd-fph span').forEach(function (s) { s.textContent = t('flankHint'); });
+  }
+  function setFlank(on) {
+    lsSet(LS_FLANK, on ? 'on' : 'off');
+    syncCenter();
+    arrange(true);
+  }
+  // orden en flancos: la 1.ª ventana a la DERECHA, la siguiente a la IZQUIERDA (equilibrio
+  // por cantidad); cada ventana conserva su flanco (no salta de lado al cerrar otra);
+  // hasta FLANK_MAX por flanco → las menos usadas (menor z) pasan a la barra
+  function arrangeFlanks(force, d) {
+    var g = geomCenter(d);
+    positionCenter(g);
+    if (force) wins.forEach(function (w) { w.manual = false; });
+    var byZ = function (a, b) { return (+a.el.style.zIndex || 0) - (+b.el.style.zIndex || 0); };
+    var free = wins.filter(function (w) { return !w.min && !w.manual && !w.max; }).sort(byZ);
+    var maxN = Math.max(1, Math.min(FLANK_MAX, Math.floor((g.H + GAP) / (MIN_H + GAP))));
+    var side = { left: [], right: [] };
+    free.forEach(function (w) { if (w.side === 'left' || w.side === 'right') side[w.side].push(w); });
+    free.forEach(function (w) {
+      if (w.side === 'left' || w.side === 'right') return;
+      var s = side.right.length <= side.left.length ? 'right' : 'left';
+      w.side = s; side[s].push(w);
+    });
+    side.left.sort(byZ); side.right.sort(byZ);
+    // demasiadas en un flanco: si el otro tiene lugar, la más reciente se pasa allá;
+    // si no, la menos usada (menor z) espera en la barra de tareas
+    ['left', 'right'].forEach(function (k) {
+      var other = k === 'left' ? 'right' : 'left', list = side[k];
+      while (list.length > maxN) {
+        if (side[other].length < maxN) { var mv = list.pop(); mv.side = other; side[other].push(mv); }
+        else { var old = list.shift(); old.min = true; old.side = null; old.el.classList.add('kd-min'); }
+      }
+    });
+    // el marcador punteado de un flanco ocupado no debe asomarse por el aire entre ventanas
+    if (flanksEl) ['left', 'right'].forEach(function (k) {
+      var ph = flanksEl.querySelector('.kd-fph[data-side="' + k + '"]');
+      if (ph) ph.classList.toggle('filled', side[k].length > 0);
+    });
+    ['left', 'right'].forEach(function (k) {
+      var list = side[k].slice().sort(function (a, b) { return (a.seq || 0) - (b.seq || 0); });   // orden estable: la más antigua arriba
+      var r = k === 'left' ? g.L : g.R, n = list.length; if (!n) return;
+      var h = Math.floor((r.h - (n - 1) * GAP) / n);
+      list.forEach(function (w, i) {
+        setRect(w, { x: r.x, y: r.y + i * (h + GAP), w: r.w, h: i === n - 1 ? r.h - i * (h + GAP) : h });
+      });
+    });
+  }
+
   // ── geometría recordada por tipo ──
   function geomStore() {
     try { var g = JSON.parse(ls(LS_GEOM) || '{}'); return (g && typeof g === 'object' && !Array.isArray(g)) ? g : {}; } catch (e) { return {}; }
   }
   function saveGeom(w) {
-    if (isMobile() || !deskSize()) return;
+    if (isMobile() || centered || !deskSize()) return;   // con el chat al centro el orden es automático: no se guarda
     var g = geomStore();
     g[w.kind] = { x: w.x, y: w.y, w: w.w, h: w.h, max: !!w.max, snap: w.snap || null };
     lsSet(LS_GEOM, JSON.stringify(g));
   }
   function defaultGeom(kind, n) {
     var d = drawSize();
+    // Khipus OS: con el chat al centro, una ventana nueva nace en el flanco derecho (nunca encima del chat)
+    if (centered) { var gc = geomCenter(d); return { x: gc.R.x, y: gc.R.y, w: gc.R.w, h: gc.R.h, max: false, snap: null }; }
     var saved = geomStore()[kind];
     var w, h, x, y;
     if (saved && typeof saved === 'object' && num(saved.w, 0) >= MIN_W && num(saved.h, 0) >= MIN_H) {
@@ -338,7 +518,8 @@
     if (!w.el) return;
     var d = deskSize();
     if (d) {   // nunca se recorta contra un escenario oculto; siempre quedan ≥ 80 px de barra de título a la vista
-      w.w = clamp(num(w.w, MIN_W), MIN_W, Math.max(MIN_W, d.W)); w.h = clamp(num(w.h, MIN_H), MIN_H, Math.max(MIN_H, d.H));
+      var mw = minW();
+      w.w = clamp(num(w.w, mw), mw, Math.max(mw, d.W)); w.h = clamp(num(w.h, MIN_H), MIN_H, Math.max(MIN_H, d.H));
       w.x = clamp(num(w.x, 0), -(w.w - 80), Math.max(0, d.W - 80));
       w.y = clamp(num(w.y, 0), 0, Math.max(0, d.H - 36));
     }
@@ -362,7 +543,12 @@
   }
   function get(id) { for (var i = 0; i < wins.length; i++) if (wins[i].id === id || wins[i].key === id) return wins[i]; return null; }
   function has(kind) { return wins.some(function (w) { return w.kind === kind; }); }
-  function list() { return wins.map(function (w) { return { id: w.id, kind: w.kind, key: w.key, min: !!w.min, max: !!w.max, focused: focused === w.id }; }); }
+  function list() {
+    return wins.map(function (w) {
+      return { id: w.id, kind: w.kind, key: w.key, min: !!w.min, max: !!w.max, focused: focused === w.id,
+               pinned: w.pinned || null, side: w.side || null, manual: !!w.manual, x: w.x, y: w.y, w: w.w, h: w.h };
+    });
+  }
 
   function titleFor(w) {
     var s = '';
@@ -382,16 +568,19 @@
     if (w) {
       // ya existe: con argumento nuevo se re-pinta; si no, solo al frente
       if (arg != null) rerender(w, arg);
-      if (w.min) { w.min = false; w.el.classList.remove('kd-min'); }
+      var wasMin = w.min;
+      if (w.min) { w.min = false; w.side = null; w.el.classList.remove('kd-min'); }
       if (opts.max && !isMobile()) maximize(w.id, true);
       focus(w.id);
-      renderBar();
+      if (wasMin && (autoOn() || centered) && !w.max) arrange(); else renderBar();
       return w.id;
     }
     var g = defaultGeom(kind, wins.length);
-    w = { id: 'kd' + (++seq), kind: kind, arg: arg, key: key, x: g.x, y: g.y, w: g.w, h: g.h,
+    var pinSide = (pinStore()[kind] === 'left' || pinStore()[kind] === 'right') ? pinStore()[kind] : null;
+    w = { id: 'kd' + (++seq), seq: seq, kind: kind, arg: arg, key: key, x: g.x, y: g.y, w: g.w, h: g.h,
           max: !!(g.max || opts.max), min: false, snap: g.snap, prev: null, needsRender: false,
-          pinned: (pinStore()[kind] === 'left' || pinStore()[kind] === 'right') ? pinStore()[kind] : null };
+          // con el chat al centro, el 📌 guardado es solo la preferencia de flanco
+          pinned: centered ? null : pinSide, side: centered ? pinSide : null };
     var el = document.createElement('div');
     el.className = 'kd-win'; el.setAttribute('data-id', w.id); el.setAttribute('data-kind', kind);
     el.setAttribute('role', 'dialog');
@@ -412,7 +601,7 @@
     place(w);
     render(w);
     focus(w.id);
-    if (autoOn() && !opts.max) arrange(); else renderBar();
+    if ((autoOn() || centered) && !opts.max) arrange(); else renderBar();
     firstTip();
     return w.id;
   }
@@ -428,6 +617,12 @@
   function pinStore() { try { var g = JSON.parse(ls(LS_PINS) || '{}'); return (g && typeof g === 'object') ? g : {}; } catch (e) { return {}; } }
   function pin(id, side) {
     var w = get(id); if (!w) return;
+    if (centered) {   // con el chat al centro "fijar" = elegir el flanco
+      w.side = side === undefined ? (w.side === 'left' ? 'right' : 'left') : (side || null);
+      w.manual = false; w.max = false; w.min = false; w.el.classList.remove('kd-min', 'kd-max');
+      arrange(); focus(w.id);
+      return;
+    }
     if (side === undefined) side = w.pinned ? null : (wins.some(function (o) { return o !== w && o.pinned === 'right'; }) && !wins.some(function (o) { return o !== w && o.pinned === 'left'; }) ? 'left' : 'right');
     w.pinned = side || null; w.max = false; w.snap = null; w.min = false; w.manual = false; w.el.classList.remove('kd-min');
     var ps = pinStore(); if (side) ps[w.kind] = side; else delete ps[w.kind]; lsSet(LS_PINS, JSON.stringify(ps));
@@ -437,13 +632,24 @@
   }
   function setRect(w, r) {
     w.max = false; w.snap = null;
-    w.x = r.x; w.y = r.y; w.w = Math.max(MIN_W, r.w); w.h = Math.max(MIN_H, r.h);
+    w.x = r.x; w.y = r.y; w.w = Math.max(minW(), r.w); w.h = Math.max(MIN_H, r.h);
     place(w);
   }
   function arrange(force) {
     if (isMobile() || !visible()) { renderBar(); return; }
+    syncCenter();
+    if (centered) {   // Khipus OS: el chat al centro manda el orden (aunque "ordenar automáticamente" esté apagado)
+      var dc = deskSize(); if (!dc) return;
+      arrangeFlanks(force, dc);
+      if (wins.some(function (w) { return !w.min && hooks.adoptKinds.indexOf(w.kind) >= 0; })) fireResize();
+      renderBar();
+      return;
+    }
     if (!force && !autoOn()) { renderBar(); return; }
     var d = deskSize(); if (!d) return;
+    // aire de 7 px alrededor de cada ventana (mismo lenguaje que el modo flancos), sin bajar del mínimo
+    var G2 = 7;
+    function put(w, r) { setRect(w, { x: r.x + G2, y: r.y + G2, w: Math.max(MIN_W, r.w - 2 * G2), h: Math.max(MIN_H, r.h - 2 * G2) }); }
     if (force) wins.forEach(function (w) { w.manual = false; });   // "Ordenar ahora" / fijar: vuelve a mandar el orden
     var L = wins.filter(function (w) { return w.pinned === 'left'; }), R = wins.filter(function (w) { return w.pinned === 'right'; });
     // una ventana que el usuario movió o redimensionó a mano se respeta (w.manual) hasta "Ordenar ahora"
@@ -456,23 +662,23 @@
     var x0 = L.length ? colW : 0, x1 = R.length ? d.W - colW : d.W;
     function column(list, x) {
       var h = Math.floor(d.H / list.length);
-      list.forEach(function (w, i) { setRect(w, { x: x, y: i * h, w: colW, h: i === list.length - 1 ? d.H - i * h : h }); });
+      list.forEach(function (w, i) { put(w, { x: x, y: i * h, w: colW, h: i === list.length - 1 ? d.H - i * h : h }); });
     }
     if (L.length) column(L, 0);
     if (R.length) column(R, x1);
     var cw = x1 - x0, hw = Math.round(cw / 2), hh = Math.round(d.H / 2);
     var n = C.length;
-    if (n === 1) setRect(C[0], { x: x0, y: 0, w: cw, h: d.H });
+    if (n === 1) put(C[0], { x: x0, y: 0, w: cw, h: d.H });
     else if (n === 2) {
-      if (cw >= 2 * MIN_W) { setRect(C[0], { x: x0, y: 0, w: hw, h: d.H }); setRect(C[1], { x: x0 + hw, y: 0, w: cw - hw, h: d.H }); }
-      else { setRect(C[0], { x: x0, y: 0, w: cw, h: hh }); setRect(C[1], { x: x0, y: hh, w: cw, h: d.H - hh }); }
+      if (cw >= 2 * MIN_W) { put(C[0], { x: x0, y: 0, w: hw, h: d.H }); put(C[1], { x: x0 + hw, y: 0, w: cw - hw, h: d.H }); }
+      else { put(C[0], { x: x0, y: 0, w: cw, h: hh }); put(C[1], { x: x0, y: hh, w: cw, h: d.H - hh }); }
     } else if (n >= 3) {
       if (cw >= 2 * MIN_W) {
-        setRect(C[n - 1], { x: x0, y: 0, w: hw, h: d.H });   // la más reciente, grande a la izquierda
-        setRect(C[n - 3], { x: x0 + hw, y: 0, w: cw - hw, h: hh }); setRect(C[n - 2], { x: x0 + hw, y: hh, w: cw - hw, h: d.H - hh });
+        put(C[n - 1], { x: x0, y: 0, w: hw, h: d.H });   // la más reciente, grande a la izquierda
+        put(C[n - 3], { x: x0 + hw, y: 0, w: cw - hw, h: hh }); put(C[n - 2], { x: x0 + hw, y: hh, w: cw - hw, h: d.H - hh });
       } else {
         var th = Math.floor(d.H / n);
-        C.forEach(function (w, i) { setRect(w, { x: x0, y: i * th, w: cw, h: i === n - 1 ? d.H - i * th : th }); });
+        C.forEach(function (w, i) { put(w, { x: x0, y: i * th, w: cw, h: i === n - 1 ? d.H - i * th : th }); });
       }
     }
     if (wins.some(function (w) { return !w.min && hooks.adoptKinds.indexOf(w.kind) >= 0; })) fireResize();
@@ -484,12 +690,15 @@
     if (isMobile() || ls(LS_TIP) || wins.length !== 1) return;
     lsSet(LS_TIP, '1');
     try {
-      if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'info', title: '🪟 ' + t('tipTitle'), body: t('tip') });
+      if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'info', title: '🪟 ' + t('tipTitle'), body: t(centered ? 'tipCentered' : 'tip') });
     } catch (e) {}
   }
 
   function relabelWin(w) {
-    w.el.querySelector('.kd-ico').textContent = iconFor(w);
+    // ícono: HTML de confianza que arma la Cabina (p. ej. la mascota del agente) o, si no, texto/emoji
+    var ih = null; try { ih = hooks.iconHTML ? hooks.iconHTML(w.kind, w.arg) : null; } catch (e) { ih = null; }
+    var ico = w.el.querySelector('.kd-ico');
+    if (ih) ico.innerHTML = ih; else ico.textContent = iconFor(w);
     var ttl = titleFor(w);
     w.el.querySelector('.kd-name').textContent = ttl;
     w.el.setAttribute('aria-label', ttl);
@@ -502,6 +711,7 @@
   }
   function relabel() {
     wins.forEach(relabelWin);
+    relabelFlanks();
     barSig = null;
     renderBar();
   }
@@ -532,7 +742,8 @@
 
   function focus(id) {
     var w = get(id); if (!w) return;
-    if (w.min) { w.min = false; w.el.classList.remove('kd-min'); }
+    var restored = false;
+    if (w.min) { w.min = false; w.side = null; w.el.classList.remove('kd-min'); restored = true; }
     var changed = focused !== w.id;
     if (changed) {
       if (zTop > 4000) {   // renormalizar (los z de fantasma/barra/menús empiezan en 9000)
@@ -547,6 +758,8 @@
     }
     if (isMobile()) { showOnly(w.id); if (changed) fireResize(w); }   // la hoja pudo girar mientras estaba oculta
     try { if (hooks.onFocus) hooks.onFocus(w.kind, w.id); } catch (e) {}
+    // vuelve de la barra con el chat al centro: entra a un flanco (desplaza a la menos usada)
+    if (restored && centered && !w.max && visible()) { arrange(); return; }
     renderBar();
   }
   function topVisible() {
@@ -568,7 +781,7 @@
     if (w.el && w.el.parentNode) w.el.parentNode.removeChild(w.el);
     if (layoutsFor === w.id) hideLayouts();
     if (focused === w.id) refocusAfter();
-    if (autoOn()) arrange(); else renderBar();
+    if (autoOn() || centered) arrange(); else renderBar();
     return true;
   }
   function closeKind(kind) { wins.slice().forEach(function (w) { if (w.kind === kind) close(w.id); }); }
@@ -579,7 +792,7 @@
     w.min = true; w.el.classList.add('kd-min');
     if (layoutsFor === w.id) hideLayouts();
     if (focused === w.id) refocusAfter();
-    if (autoOn()) arrange(); else renderBar();
+    if (autoOn() || centered) arrange(); else renderBar();
   }
   function maximize(id, on) {
     var w = get(id); if (!w) return;
@@ -588,13 +801,28 @@
     if (on && !w.max) { w.prev = { x: w.x, y: w.y, w: w.w, h: w.h }; }
     if (!on && w.prev) { w.x = w.prev.x; w.y = w.prev.y; w.w = w.prev.w; w.h = w.prev.h; }
     w.max = on; w.snap = null;
-    place(w); saveGeom(w); fireResize(w);
+    place(w);
+    if (centered) { if (!on) { w.manual = false; arrange(); } fireResize(w); return; }   // en flancos no se guarda geometría
+    saveGeom(w); fireResize(w);
   }
   function restore(id) { var w = get(id); if (!w) return; if (w.max) maximize(id, false); focus(id); }
 
   // zonas de snap (estilo Windows 11)
   function zoneRect(zone) {
     var d = drawSize(), hw = Math.round(d.W / 2), hh = Math.round(d.H / 2);
+    if (centered) {   // Khipus OS: las mitades/cuartos son los FLANCOS (nada tapa el chat); 'max' = todo
+      var g = geomCenter(d), fh = Math.round((g.H - GAP) / 2);
+      switch (zone) {
+        case 'left': return { x: g.L.x, y: g.top, w: g.L.w, h: g.H };
+        case 'right': return { x: g.R.x, y: g.top, w: g.R.w, h: g.H };
+        case 'tl': return { x: g.L.x, y: g.top, w: g.L.w, h: fh };
+        case 'bl': return { x: g.L.x, y: g.top + fh + GAP, w: g.L.w, h: g.H - fh - GAP };
+        case 'tr': return { x: g.R.x, y: g.top, w: g.R.w, h: fh };
+        case 'br': return { x: g.R.x, y: g.top + fh + GAP, w: g.R.w, h: g.H - fh - GAP };
+        case 'max': return { x: 0, y: 0, w: d.W, h: d.H };
+      }
+      return null;
+    }
     switch (zone) {
       case 'left': return { x: 0, y: 0, w: hw, h: d.H };
       case 'right': return { x: hw, y: 0, w: d.W - hw, h: d.H };
@@ -609,6 +837,12 @@
   function snapTo(id, zone) {
     var w = get(id); if (!w) return;
     if (zone === 'max') { maximize(id, true); return; }
+    if (centered) {   // soltarla en un borde = sumarla a ese flanco (se acomoda con las demás)
+      w.side = (zone === 'left' || zone === 'tl' || zone === 'bl') ? 'left' : 'right';
+      w.manual = false; w.max = false; w.snap = null; w.el.classList.remove('kd-max');
+      arrange(); fireResize(w);
+      return;
+    }
     var r = zoneRect(zone); if (!r) return;
     if (!w.snap && !w.max) w.prev = { x: w.x, y: w.y, w: w.w, h: w.h };
     w.max = false; w.snap = zone;
@@ -741,13 +975,14 @@
           var nx = o.x, ny = o.y, nw = o.w, nh = o.h;
           if (d.indexOf('e') >= 0) nw = o.w + dx;
           if (d.indexOf('s') >= 0) nh = o.h + dy;
-          if (d.indexOf('w') >= 0) { nw = o.w - dx; nx = o.x + dx; if (nw < MIN_W) { nx -= (MIN_W - nw); nw = MIN_W; } }
+          var mw = minW();
+          if (d.indexOf('w') >= 0) { nw = o.w - dx; nx = o.x + dx; if (nw < mw) { nx -= (mw - nw); nw = mw; } }
           if (d.indexOf('n') >= 0) {
             var dyc = Math.max(dy, -o.y);          // el borde superior no pasa del escritorio (y el inferior no se mueve)
             nh = o.h - dyc; ny = o.y + dyc;
             if (nh < MIN_H) { ny -= (MIN_H - nh); nh = MIN_H; }
           }
-          w.x = nx; w.y = ny; w.w = Math.max(MIN_W, nw); w.h = Math.max(MIN_H, nh); w.snap = null;
+          w.x = nx; w.y = ny; w.w = Math.max(mw, nw); w.h = Math.max(MIN_H, nh); w.snap = null;
           place(w);
         }
         function done() {
@@ -775,13 +1010,15 @@
   var barSig = null;
   function renderBar() {
     if (!barEl) return;
+    if (stageEl) stageEl.classList.toggle('kd-has-wins', wins.some(function (w) { return !w.min; }));
     var tasks = barEl.querySelector('.kd-tasks');
     var mb = barEl.querySelector('#kd-menu-btn');
     mb.title = t('menuTip'); mb.setAttribute('aria-label', t('menuTip'));
-    var sig = lang() + '|' + (isMobile() ? 'm' : 'd') + '|' + wins.map(function (w) { return w.id + ':' + titleFor(w) + ':' + (w.min ? 1 : 0) + ':' + (focused === w.id ? 1 : 0); }).join(';');
+    var sig = lang() + '|' + (isMobile() ? 'm' : 'd') + (centered ? 'c' : '') + '|' + wins.map(function (w) { return w.id + ':' + titleFor(w) + ':' + (w.min ? 1 : 0) + ':' + (focused === w.id ? 1 : 0); }).join(';');
     if (sig === barSig) return;   // no reconstruir botones si nada cambió (los clics no se pierden)
     barSig = sig;
-    if (!wins.length) { tasks.innerHTML = '<span class="kd-hint">' + esc(isMobile() ? t('hintMobile') : t('hint')) + '</span>'; return; }
+    // con el chat al centro, el aviso vive en los flancos punteados: la barra queda limpia
+    if (!wins.length) { tasks.innerHTML = centered ? '' : '<span class="kd-hint">' + esc(isMobile() ? t('hintMobile') : t('hint')) + '</span>'; return; }
     tasks.innerHTML = wins.map(function (w) {
       return '<button type="button" class="kd-task' + (focused === w.id && !w.min ? ' on' : '') + (w.min ? ' dim' : '') + '" data-id="' + w.id + '" title="' + esc(titleFor(w)) + '">' +
         '<span>' + esc(iconFor(w)) + '</span><span class="tx">' + esc(titleFor(w)) + '</span></button>';
@@ -798,8 +1035,13 @@
     if (!menuEl) return;
     if (on == null) on = !menuEl.classList.contains('show');
     if (on) {
+      var minAll = ['minAll', function () { wins.slice().forEach(function (w) { minimize(w.id); }); }];
+      var flankItem = [flankOn() ? 'center' : 'centerOff', function () { setFlank(!flankOn()); }];
+      var wide = (window.innerWidth || 0) >= CENTER_VW;
       var items = isMobile() ? [['closeAll', closeAll], ['classic', toClassic]]
-        : [[autoOn() ? 'auto' : 'autoOff', function () { setAuto(!autoOn()); }], ['arrange', function () { arrange(true); }], ['tile', tile], ['cascade', cascade], ['minAll', function () { wins.slice().forEach(function (w) { minimize(w.id); }); }], ['closeAll', closeAll], ['sep'], ['classic', toClassic]];
+        : centered ? [flankItem, ['arrange', function () { arrange(true); }], minAll, ['closeAll', closeAll], ['sep'], ['classic', toClassic]]
+        : [[autoOn() ? 'auto' : 'autoOff', function () { setAuto(!autoOn()); }], ['arrange', function () { arrange(true); }], ['tile', tile], ['cascade', cascade], minAll, ['closeAll', closeAll], ['sep']]
+            .concat(wide ? [flankItem] : []).concat([['classic', toClassic]]);
       menuEl.innerHTML = items.map(function (it) { return it[0] === 'sep' ? '<div class="sep"></div>' : '<button type="button" data-k="' + it[0] + '">' + esc(t(it[0])) + '</button>'; }).join('');
       menuEl.querySelectorAll('button').forEach(function (b) {
         var it = items.filter(function (x) { return x[0] === b.getAttribute('data-k'); })[0];
@@ -814,6 +1056,7 @@
   function visibleWins() { return wins.filter(function (w) { return !w.min; }); }
   function tile() {
     if (isMobile()) return;
+    if (centered) { arrange(true); return; }
     var vs = visibleWins(); if (!vs.length) return;
     var n = vs.length;
     if (n === 1) { maximize(vs[0].id, true); return; }
@@ -830,6 +1073,7 @@
   }
   function cascade() {
     if (isMobile()) return;
+    if (centered) { arrange(true); return; }
     var vs = visibleWins(), d = drawSize();
     vs.forEach(function (w, i) {
       w.max = false; w.snap = null;
@@ -863,7 +1107,7 @@
       else { w.body.innerHTML = ''; render(w); }
     });
     relabel();
-    if (autoOn()) arrange();
+    if (autoOn() || centered) arrange();
   }
 
   function setEnabled(on) {
@@ -882,6 +1126,11 @@
   window.KhipuDesk = {
     configure: configure, enabled: enabled, setEnabled: setEnabled, active: active,
     mount: mount, unmount: unmount, wall: function () { return wallEl; },
+    center: function () { return centerEl; }, isCentered: function () { return !!(centered && active()); },
+    setFlank: setFlank, flankOn: flankOn,
+    // geometría pura de los flancos (pruebas): ancho mínimo del escritorio para el chat al centro y rectángulos
+    _geom: function (W, H) { return geomCenter({ W: W, H: H }); },
+    _centerMinW: CENTER_MIN + 2 * FLANK_MIN_W + 2 * GAP + 2 * PAD,
     open: open, close: close, closeKind: closeKind, closeAll: closeAll, focus: focus, has: has, get: get, list: list,
     minimize: minimize, maximize: maximize, restore: restore, snap: snapTo, tile: tile, cascade: cascade,
     arrange: arrange, pin: pin, autoOn: autoOn, setAuto: setAuto,
