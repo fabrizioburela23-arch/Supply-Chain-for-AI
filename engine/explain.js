@@ -15,6 +15,29 @@
   }
 
   var EXPLAIN = {
+    tensor_struct: {
+      es: { t: '¿Qué es la "Estructura" de una empresa?',
+        b: 'Khipus convierte toda la cadena de suministro en una tabla matemática (un <b>tensor</b>): quién le vende a quién, ' +
+           'por qué tipo de relación y con qué peso. Con eso calcula, para cada empresa:' +
+           '<ul style="margin:10px 0;padding-left:20px;line-height:1.7">' +
+           '<li><b>Concentración de proveedores</b> — si depende de muchos proveedores o de uno solo. Alta = si ese proveedor falla, ella sufre mucho.</li>' +
+           '<li><b>Países de sus proveedores</b> — de dónde viene lo que compra (riesgo geopolítico real, no solo su sede).</li>' +
+           '<li><b>Valor arrastrado si cae</b> — cuánta capitalización de mercado de sus clientes (y clientes de sus clientes) quedaría expuesta. Es su importancia para el sistema, en dólares.</li>' +
+           '<li><b>De dónde le llega el riesgo</b> — las empresas cuyo problema más la golpearía, aunque no sean proveedoras directas.</li>' +
+           '<li><b>Comparables</b> — empresas con proveedores y clientes parecidos (más útil que "mismo sector").</li></ul>' +
+           'Solo cuentan relaciones de suministro reales (no socios ni accionistas). Las capitalizaciones son en vivo o valuaciones verificadas. ' +
+           '<b>No es una recomendación</b> de compra ni de venta.' },
+      en: { t: 'What is a company\'s "Structure"?',
+        b: 'Khipus turns the whole supply chain into a mathematical table (a <b>tensor</b>): who sells to whom, through which kind of ' +
+           'relationship and with what weight. From it, for every company it computes:' +
+           '<ul style="margin:10px 0;padding-left:20px;line-height:1.7">' +
+           '<li><b>Supplier concentration</b> — whether it relies on many suppliers or a single one. High = if that supplier fails, it suffers a lot.</li>' +
+           '<li><b>Supplier countries</b> — where what it buys comes from (real geopolitical risk, not just its HQ).</li>' +
+           '<li><b>Value dragged down if it fails</b> — how much market cap of its customers (and their customers) would be exposed. Its importance to the system, in dollars.</li>' +
+           '<li><b>Where its risk comes from</b> — the companies whose trouble would hit it hardest, even if they are not direct suppliers.</li>' +
+           '<li><b>Peers</b> — companies with similar suppliers and customers (more useful than "same sector").</li></ul>' +
+           'Only real supply relationships count (not partners or shareholders). Market caps are live or verified valuations. ' +
+           '<b>Not a buy or sell recommendation.</b>' } },
     claim_conf: {
       es: { t: '¿Qué es la confianza de una conclusión?',
         b: 'Es qué tan bien <b>respaldada</b> está una conclusión de un agente de IA, de 0 a 100%. <b>No</b> es lo que "dice" la IA: ' +

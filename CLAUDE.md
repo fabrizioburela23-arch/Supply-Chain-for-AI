@@ -40,6 +40,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   `api.py` (blueprint /api/matrix/*: status, /<rel_type>, POST /impact,
   /metrics, POST /insights, GET /insights/history, POST /factor/fire).
   Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503.
+  `tensor.py` + `tensor_api.py` (ONTOLOGÍA NIVEL 2, 2026-10-06, sin BD): tensor de flujo R×N×N,
+  influencia Ψ (misma semántica que propagate), métricas por empresa (concentración, países de
+  proveedores, cap. aguas abajo en riesgo, fuentes de riesgo, comparables) y `suggest_links` para
+  empresas nuevas (IncorporarEmpresa las PROPONE con confidence 0 → revisión). /api/tensor/*.
 - `ontology/` (paquete Python): ontología Palantir-style —
   `models.py` (events bitemporal + objects/links materializados +
   ProposedAction + Alert + InsightSnapshot), `provenance.py` (Phase 1 M1:

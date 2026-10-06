@@ -250,6 +250,13 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Motor de matrices no registrado (opcional): %s', _e)
 
+# ── Ontología nivel 2 (tensores; sin BD) — /api/tensor/* ─────────────────────
+try:
+    from matrix.tensor_api import tensor_bp
+    app.register_blueprint(tensor_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Motor de tensores no registrado (opcional): %s', _e)
+
 # ── Sala de Situación geopolítica (opcional) — /api/geo/* ────────────────────
 try:
     from core.geosit import geo_bp

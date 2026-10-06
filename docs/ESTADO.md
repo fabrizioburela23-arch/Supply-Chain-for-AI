@@ -9,6 +9,23 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2: TENSORES + AUTO-CONEXIÓN (sw v241)
+
+- `matrix/tensor.py` (sin BD, lee data/grafo_v0.json): A ∈ ℝ^{R×N×N} (solo relaciones de FLUJO, peso×conf),
+  D = transmisión del kernel (engine._dependency_matrix), Ψ = influencia de TODAS las fuentes a la vez
+  (misma semántica que engine.propagate — test de paridad), c = caps en vivo → valuación verificada,
+  X = rasgos z-normalizados + perfil estructural. Construye en ~0,4 s; caché por (mtime snapshot, caps as_of).
+- Métricas (`structure(id)`): concentración de proveedores (HHI), países de proveedores (core.world.country_key),
+  capitalización aguas abajo en riesgo + ranking sistémico, fuentes de riesgo aguas arriba (directas e
+  indirectas), comparables. `ranking(by=cap_at_risk|concentration|exposure)`.
+- Auto-conexión (`suggest_links`): parecido estructural (15 pares) 0.7 + densidad del bloque cat×cat×rel 0.3.
+  `evaluate()`: Hit@10 con vínculos reales ocultos = ~0,40-0,44 vs 0,20 de la línea base de popularidad
+  (3 semillas). `IncorporarEmpresa` ahora PROPONE hasta 3 proveedores + 3 clientes (score ≥ 0.2) como
+  vínculos 'proposed' con confidence 0 (no pesan en el riesgo hasta que Fabrizio confirma); `auto_proponer`.
+- API /api/tensor/{status,node/<id>,rank,suggest (POST),eval} (matrix/tensor_api.py). MCP get_company gana (resumen COMPACTO: el chat corta a 7.000 caracteres)
+  `structure`. X-Ray: sección 🧮 Estructura (+ explicador `tensor_struct` ES/EN).
+- Tests: tests/test_tensor.py (6), tests/test_tensor_autolink.py (2, con Postgres).
+
 # SESIÓN 2026-10-06 (ee) — MAPA POR CAPITALIZACIÓN EN VIVO + HOME CON CADA CARTERA (sw v240)
 
 - Fabrizio aprobó: nodos del tamaño de su capitalización EN VIVO. computeNodeRadius usa NODE_META.mktcap_b

@@ -111,6 +111,10 @@ class IncorporarEmpresaInput(BaseModel):
     link_rel: str = Field(default='', max_length=300)
     razon: str = Field(min_length=1, max_length=1000)
     fuente: str = Field(default='radar', max_length=200)
+    # Ontología nivel 2 (matrix/tensor.py): al entrar, se PROPONEN sus proveedores/clientes probables
+    # por parecido estructural. Quedan 'proposed' con confianza 0 (no pesan en el riesgo) hasta que una
+    # persona los confirme en 🩺 → Propuestas.
+    auto_proponer: bool = True
 
 
 class RetractarVinculoInput(BaseModel):
@@ -514,7 +518,41 @@ def incorporar_empresa(session, inp: IncorporarEmpresaInput, actor):
     _log_action(session, 'IncorporarEmpresa', inp.company_id, inp.link_to, {
         'label': inp.label, 'cat': inp.cat, 'razon': inp.razon, 'fuente': inp.fuente,
     }, actor, source=inp.fuente)
-    return {'company_id': inp.company_id, 'label': inp.label, 'link': link}
+    propuestas = _proponer_por_tensor(session, inp, actor) if inp.auto_proponer else []
+    return {'company_id': inp.company_id, 'label': inp.label, 'link': link, 'propuestas': propuestas}
+
+
+TENSOR_MIN_SCORE = 0.2      # por debajo, la propuesta es ruido (medido con matrix.tensor.evaluate)
+TENSOR_MAX_PER_SIDE = 3
+
+
+def _proponer_por_tensor(session, inp, actor):
+    """Empresa nueva → hasta 3 proveedores + 3 clientes PROBABLES como vínculos 'proposed' (confianza 0).
+    Nunca rompe el alta: si el motor de tensores falla, no propone nada."""
+    try:
+        from matrix import tensor
+        sug = tensor.suggest_links(new={'label': inp.label, 'cat': inp.cat, 'country': inp.country,
+                                        'role': inp.role}, n=10) or {}
+    except Exception:  # noqa: BLE001
+        return []
+    out = []
+    for side in ('suppliers', 'customers'):
+        k = 0
+        for c in sug.get(side) or []:
+            if k >= TENSOR_MAX_PER_SIDE or c['score'] < TENSOR_MIN_SCORE:
+                break
+            other = c['id']
+            if other == inp.link_to or not session.get(ObjectRecord, other):
+                continue
+            src, dst = (other, inp.company_id) if side == 'suppliers' else (inp.company_id, other)
+            via = ', '.join(v['label'] for v in c.get('via') or [])
+            r = proponer_vinculo(session, ProponerVinculoInput(
+                from_id=src, to_id=dst, tipo=c['rel'], fuente='tensor_v2',
+                metadata={'confidence': 0.0, 'tensor_score': c['score'], 'peers_with_link': c['peers_with_link'],
+                          'rel_label': f'Propuesto por parecido estructural (como {via}) — revisar'}), actor)
+            out.append({'from': src, 'to': dst, 'rel_type': c['rel'], 'score': c['score'], 'link_id': r['link_id']})
+            k += 1
+    return out
 
 
 def retirar_empresa(session, inp: RetirarEmpresaInput, actor):

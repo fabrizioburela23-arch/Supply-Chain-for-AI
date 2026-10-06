@@ -260,7 +260,13 @@
         (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
       '</div>';
 
-    var body = nrsSection + mm + funds + threadsHTML + impactSection + btns;
+    // ONTOLOGÍA NIVEL 2 (matrix/tensor.py vía /api/tensor/node): concentración, países, valor arrastrado
+    var structSection =
+      '<div class="xr-sect"><div class="xr-h"><span>🧮 ' + L('Estructura', 'Structure') + '</span>' +
+        (window.explainChip ? window.explainChip('tensor_struct') : '') + '</div>' +
+        '<div id="xr-struct"><div class="xr-loading">' + L('Calculando…', 'Computing…') + '</div></div></div>';
+
+    var body = nrsSection + mm + funds + threadsHTML + structSection + impactSection + btns;
     if (full) return header + '<div class="xr-cols">' + body + '</div>';
     return header + body;
   }
@@ -462,6 +468,44 @@
     } catch (e) { return null; }
   }
 
+  function _usdB(v) { return v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + Math.round(v) + 'B'; }
+  var CONC = { alta: ['alta', 'high', '#FF4D6A'], media: ['media', 'medium', '#FFB300'], baja: ['baja', 'low', '#2BE38B'] };
+  function loadStructure(root, id) {
+    var el = root.querySelector('#xr-struct');
+    if (!el) return;
+    fetch('/api/tensor/node/' + encodeURIComponent(id)).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d) { el.innerHTML = '<div class="xr-loading">' + L('Sin datos estructurales para esta empresa.', 'No structural data for this company.') + '</div>'; return; }
+      var sc = d.supplier_concentration || {}, dn = d.downstream || {}, c0 = (d.supplier_countries || [])[0];
+      var cc = CONC[sc.level] || null, top = (sc.top || [])[0];
+      var tiles =
+        '<div class="impact-grid" style="margin-bottom:10px">' +
+        '<div class="icell"><b style="color:' + (cc ? cc[2] : '#E8EDFB') + '">' + (cc ? L(cc[0], cc[1]) : '—') + '</b><span>' +
+          L('Concentración de proveedores', 'Supplier concentration') + (sc.n_suppliers ? ' · ' + sc.n_suppliers : '') + '</span></div>' +
+        '<div class="icell"><b style="color:#E8EDFB">' + (c0 ? esc(c0.country) + ' ' + Math.round(c0.share_pct) + '%' : '—') + '</b><span>' +
+          L('País principal de sus proveedores', 'Main supplier country') + '</span></div>' +
+        '<div class="icell"><b style="color:#E8EDFB">' + (dn.cap_at_risk_usd_b > 0 ? _usdB(dn.cap_at_risk_usd_b) : '—') + '</b><span>' +
+          L('Valor arrastrado si cae', 'Value dragged if it fails') + (dn.systemic_rank ? ' · #' + dn.systemic_rank : '') + '</span></div>' +
+        '</div>';
+      var lines = [];
+      if (top) lines.push(L('Mayor dependencia: ', 'Biggest dependency: ') + '<b style="color:#E8EDFB">' + esc(top.label) + '</b> (' + top.share_pct + '% ' + L('del peso de sus vínculos con proveedores', 'of the weight of its supplier links') + ')');
+      var ups = (d.upstream_risk_sources || []).slice(0, 3);
+      if (ups.length) lines.push(L('Su riesgo viene de: ', 'Its risk comes from: ') + ups.map(function (u) {
+        return '<a href="#" class="xr-tj" data-id="' + esc(u.id) + '" style="color:#E8EDFB">' + esc(u.label) + '</a> ' + u.exposure_pct + '%' + (u.direct ? '' : L(' (indirecto)', ' (indirect)'));
+      }).join(' · '));
+      var ps = (d.peers || []).slice(0, 4);
+      if (ps.length) lines.push(L('Comparables: ', 'Peers: ') + ps.map(function (p) {
+        return '<a href="#" class="xr-tj" data-id="' + esc(p.id) + '" style="color:#E8EDFB">' + esc(p.label) + '</a>';
+      }).join(' · '));
+      var note = dn.cap_coverage_pct != null && dn.cap_coverage_pct < 60
+        ? '<div class="xr-lin" style="margin-top:6px">' + L('ⓘ capitalización conocida de ', 'ⓘ known market cap for ') + dn.cap_coverage_pct + '% ' +
+          L('de las empresas arrastradas: el valor real es mayor.', 'of the companies dragged: the real value is higher.') + '</div>' : '';
+      el.innerHTML = tiles + lines.map(function (x) { return '<div class="xr-lin" style="margin-top:4px">' + x + '</div>'; }).join('') + note;
+      el.querySelectorAll('.xr-tj').forEach(function (a) {
+        a.addEventListener('click', function (e) { e.preventDefault(); if (window._xrayJump) window._xrayJump(a.getAttribute('data-id')); });
+      });
+    }).catch(function () { el.innerHTML = '<div class="xr-loading">' + L('Sin datos estructurales ahora.', 'No structural data right now.') + '</div>'; });
+  }
+
   function loadImpact(root, id, n) {
     // 1) INSTANTÁNEO: motor de estados en el navegador (adiós "tarda mucho")
     var instant = impactViaState(id);
@@ -508,6 +552,7 @@
     loadPrice(root, n);
     startPriceTimer(root, n);   // precio del encabezado: cada 60 s mientras esté abierto
     loadImpact(root, id, n);
+    loadStructure(root, id);
     // Empleados / Mkt Cap / Ingresos EN VIVO (KhipuLive) con title "en vivo · fuente · hora"
     if (window.fillLiveMeta) window.fillLiveMeta(root, n);
     else if (window.fillLiveMcap) window.fillLiveMcap(root.querySelector('.xr-mcap'), n);

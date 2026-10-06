@@ -545,7 +545,10 @@ def t_search_companies(ctx, query, limit=10):
       'Full profile of one company: curated role/moat/supply description, verified listing status, verified '
       'private valuation (for private companies: last CLOSED round with source URL — not a live price), LIVE '
       'market profile for listed companies (price, market cap… from Yahoo/Finnhub, with as_of), Network Risk '
-      'Score, and its top suppliers and customers in the graph. Fields are labeled with their source.',
+      'Score, and its top suppliers and customers in the graph. `structure` (tensor model of the flow graph): '
+      'supplier concentration (HHI + main suppliers with share), supplier countries, downstream market cap at '
+      'risk if it fails (USD B, systemic rank), upstream risk sources (incl. indirect) and structural peers. '
+      'Fields are labeled with their source.',
       {'id_or_ticker': {'type': 'string', 'description': 'Graph id, ticker or name (e.g. "Nvidia", "TSM").',
                         'maxLength': 120, 'minLength': 1},
        'include_live': {'type': 'boolean', 'default': True,
@@ -636,6 +639,25 @@ def t_get_company(ctx, id_or_ticker, include_live=True):
                                'source': 'Khipus World Monitor (official + live layers, cached)'}
         except Exception:  # noqa: BLE001
             out['geo_live'] = {'items': [], 'source': 'world monitor unavailable'}
+    # 2026-10-06: ONTOLOGÍA NIVEL 2 (matrix/tensor.py) — concentración de proveedores, países de
+    # origen, capitalización aguas abajo en riesgo, fuentes de riesgo aguas arriba y comparables.
+    try:
+        st = importlib.import_module('matrix.tensor').structure(nid, top=3)
+        if st:   # resumen compacto (el chat tiene ~7.000 caracteres por herramienta); detalle: /api/tensor/node
+            sc, dn = st['supplier_concentration'], st['downstream']
+            out['structure'] = {
+                'supplier_concentration': sc['level'], 'supplier_hhi': sc['hhi'], 'n_suppliers': sc['n_suppliers'],
+                'top_supplier': (sc['top'] or [None])[0],
+                'top_supplier_country': (st['supplier_countries'] or [None])[0],
+                'downstream_cap_at_risk_usd_b': dn['cap_at_risk_usd_b'], 'systemic_rank': dn['systemic_rank'],
+                'cap_coverage_pct': dn['cap_coverage_pct'],
+                'risk_sources': [f"{x['label']} {x['exposure_pct']}%" + ('' if x['direct'] else ' (indirect)')
+                                 for x in st['upstream_risk_sources']],
+                'peers': [x['label'] for x in st['peers'][:3]],
+                'note': 'supplier shares = weight of supplier links, not spend; cap at risk counts only companies '
+                        'with a known (live or verified) market cap'}
+    except Exception as e:  # noqa: BLE001
+        log.warning('mcp: structure no disponible: %s', type(e).__name__)
     out['as_of'] = _now_iso()
     out['sources'] = ['Khipus graph snapshot', 'nodes/private_valuations.js (verified)',
                       'live profile: ' + str((out.get('live_market') or {}).get('source') or 'n/a')]
