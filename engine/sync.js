@@ -4,7 +4,8 @@
    Pedido implícito (2026-10-03): lo que armas en la PC (carteras simuladas, tu
    perfil de inversionista, tus posiciones de Mercado) también en el teléfono, y
    que los reportes automáticos usen tu cartera de HOY.
-   · Claves: kh_portfolios, kh_pf_active, kh_investor_profile, eco_pos.
+   · Claves: kh_portfolios, kh_pf_active, kh_investor_profile, eco_pos, kh_agent_prefs
+     (Khipus OS: tus agentes — modo Simple/Pro, quién participa y qué ventana abre solo).
    · Servidor: GET/PUT /api/user-state (core/portfolio_reports_api.py), por dueño
      = llave aleatoria del navegador (localStorage kh_owner_key → X-Khipu-Owner).
    · Último que escribe gana (marca de tiempo por clave en kh_sync_meta).
@@ -13,7 +14,7 @@
    ============================================================================ */
 (function () {
   'use strict';
-  var KEYS = ['kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos'];
+  var KEYS = ['kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos', 'kh_agent_prefs'];
   var META = 'kh_sync_meta';
   var applying = false, timers = {}, available = true;
 
@@ -88,6 +89,8 @@
       if (keys.indexOf('eco_pos') >= 0 && window.MKT) { window.MKT.pos = JSON.parse(ls('eco_pos') || '{}'); if (typeof window.renderMarket === 'function') window.renderMarket(); }
     } catch (e) {}
     try { if ((keys.indexOf('kh_portfolios') >= 0 || keys.indexOf('kh_pf_active') >= 0) && window.KhipuPortfolios && window.KhipuPortfolios.refresh) window.KhipuPortfolios.refresh(); } catch (e) {}
+    // preferencias de agentes llegadas de otro dispositivo → la ventana "Tus agentes" y el chat se enteran
+    try { if (keys.indexOf('kh_agent_prefs') >= 0 && window.KhipuAgentPrefs) window.dispatchEvent(new CustomEvent('khipu:agentprefs', { detail: window.KhipuAgentPrefs.get() })); } catch (e) {}
   }
 
   function pull(serverWins) {

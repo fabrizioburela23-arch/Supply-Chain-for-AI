@@ -81,24 +81,46 @@
   }
 
   // ── lista desplegable (una sola, flotante) ──
-  var css = '.kpk-list{position:fixed;z-index:2147483000;background:#0d1424;border:1px solid rgba(122,158,255,.35);border-radius:10px;' +
-    'box-shadow:0 12px 30px rgba(0,0,0,.45);max-height:300px;overflow:auto;padding:4px;min-width:220px;font:13px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}' +
-    '.kpk-it{display:flex;gap:8px;align-items:baseline;padding:7px 10px;border-radius:7px;cursor:pointer;color:#E8EDFB}' +
-    '.kpk-it b{font-weight:600}.kpk-it span{color:#8E9AB8;font-size:12px;margin-left:auto;white-space:nowrap}' +
-    '.kpk-it.on,.kpk-it:hover{background:rgba(0,224,255,.12)}' +
-    '.kpk-hd{padding:5px 10px 3px;color:#7f8bab;font-size:11px;letter-spacing:.04em;text-transform:uppercase}' +
+  // Khipus OS (2026-10-06): colores = tokens --os-* (claro/oscuro). La lista cuelga de <body> (fuera de
+  // #bcp-ov, donde viven los tokens): al abrirse COPIA los tokens del campo que la abrió (syncTokens).
+  // Sin tokens (paneles viejos, Command Center) quedan los respaldos oscuros de siempre.
+  var FONT = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+  var css = '.kpk-list{position:fixed;z-index:2147483000;background:var(--os-surface,#0d1424);color:var(--os-ink,#E8EDFB);border:1px solid var(--os-line,rgba(122,158,255,.35));border-radius:14px;' +
+    'box-shadow:var(--os-shadow,0 12px 30px rgba(0,0,0,.45)),0 14px 34px rgba(0,0,0,.12);max-height:300px;overflow:auto;padding:5px;min-width:220px;box-sizing:border-box;' +
+    'font:13.5px/1.35 var(--os-font,' + FONT + ');scrollbar-width:thin}' +
+    '.kpk-it{display:flex;gap:9px;align-items:center;padding:7px 10px;border-radius:10px;cursor:pointer;color:var(--os-ink,#E8EDFB);min-width:0}' +
+    '.kpk-it b{font-weight:600;flex-shrink:0}.kpk-it .kpk-h{color:var(--os-ink-3,#8E9AB8);font-size:12px;margin-left:auto;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}' +
+    '.kpk-it .km{flex-shrink:0}' +
+    '.kpk-it.on,.kpk-it:hover{background:var(--os-surface-2,rgba(0,224,255,.12))}' +
+    '.kpk-hd{padding:6px 10px 4px;color:var(--os-ink-3,#7f8bab);font-size:11.5px;font-weight:600;letter-spacing:.01em}' +
     '.kpk-bad{outline:2px solid #e23b3b !important;outline-offset:1px}' +
-    // chip del agente en el campo del chat (como un conector): ícono + nombre (+ selector de cartera)
-    '.kpk-chip{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;align-self:center;margin-right:6px;padding:3px 4px 3px 3px;border-radius:999px;' +
-    'border:1px solid rgba(0,224,255,.45);background:rgba(0,224,255,.1);color:#9EEBFF;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:60%}' +
-    '.kpk-chip>i{font-style:normal;display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;background:rgba(0,224,255,.2);font-size:12px}' +
-    '.kpk-chip>b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '.kpk-chip select{background:#0d1424;color:#E8EDFB;border:1px solid rgba(122,158,255,.3);border-radius:7px;font:500 11.5px system-ui;max-width:180px;padding:2px 4px}' +
-    '.kpk-chip button{border:none;background:transparent;color:#8E9AB8;cursor:pointer;font-size:13px;padding:0 4px;line-height:1}.kpk-chip button:hover{color:#FF8FA3}' +
-    '@media(max-width:600px){.kpk-chip>b{display:none}.kpk-chip select{max-width:120px}}';   // la app es siempre oscura
+    // chip del agente en el campo del chat (como un conector): mascota + nombre (+ selector de cartera)
+    // la barra de chips NO se encoge (antes el chip quedaba en "A." y dejaba un hueco): cede el campo de texto
+    '.kpk-bar{display:inline-flex;gap:6px;align-items:center;flex:0 0 auto;max-width:58%;min-width:0}' +
+    '.kpk-chip{display:inline-flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;align-self:center;margin-right:6px;padding:3px 4px 3px 3px;border-radius:999px;' +
+    'border:1px solid var(--os-line,rgba(0,224,255,.45));background:var(--os-surface,rgba(0,224,255,.1));color:var(--os-ink,#9EEBFF);font:600 12.5px/1.2 var(--os-font,' + FONT + ');max-width:100%}' +
+    '.kpk-chip>i{font-style:normal;display:inline-flex;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;background:var(--os-surface-2,rgba(0,224,255,.2));font-size:12px;line-height:0;flex-shrink:0}' +
+    '.kpk-chip>i.m{background:transparent}' +
+    '.kpk-chip>b{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.kpk-chip select{background:var(--os-surface-2,#0d1424);color:var(--os-ink,#E8EDFB);border:1px solid var(--os-line,rgba(122,158,255,.3));border-radius:8px;font:500 12px var(--os-font,' + FONT + ');max-width:180px;padding:2px 4px}' +
+    '.kpk-chip button{border:none;background:transparent;color:var(--os-ink-3,#8E9AB8);cursor:pointer;font-size:13px;padding:0 5px;line-height:1}.kpk-chip button:hover{color:var(--os-bad,#FF8FA3)}' +
+    '@media(max-width:600px){.kpk-chip>b{display:none}.kpk-chip select{max-width:120px}}';
   function ensureCss() {
     if (document.getElementById('kpk-css')) return;
     var st = document.createElement('style'); st.id = 'kpk-css'; st.textContent = css; document.head.appendChild(st);
+  }
+  var TOKENS = ['--os-surface', '--os-surface-2', '--os-surface-3', '--os-ink', '--os-ink-2', '--os-ink-3', '--os-line', '--os-shadow', '--os-accent', '--os-bad', '--os-font', '--km-ring'];
+  function syncTokens(input) {
+    var el = LIST.el; if (!el || !input || !window.getComputedStyle) return;
+    try {
+      var cs = window.getComputedStyle(input);
+      TOKENS.forEach(function (k) { var v = (cs.getPropertyValue(k) || '').trim(); if (v) el.style.setProperty(k, v); else el.style.removeProperty(k); });
+    } catch (e) { /* sin tokens: respaldos oscuros */ }
+  }
+  // mascota del agente (engine/mascot.js); sin el módulo, el emoji de siempre
+  function face(m, icon, size) {
+    try { if (m && window.KhipuMascot && window.KhipuMascot.svg) return window.KhipuMascot.svg(m, size || 18); } catch (e) {}
+    return icon ? esc(icon) : '';
   }
   var LIST = { el: null, items: [], idx: 0, owner: null, onPick: null };
   function listEl() {
@@ -116,9 +138,11 @@
     var el = listEl();
     LIST.items = items; LIST.idx = 0; LIST.owner = input; LIST.onPick = onPick;
     if (!items.length) { hide(); return; }
+    syncTokens(input);
     el.innerHTML = (header ? '<div class="kpk-hd">' + esc(header) + '</div>' : '') + items.map(function (o, i) {
-      return '<div class="kpk-it' + (i === 0 ? ' on' : '') + '" role="option" data-i="' + i + '">' + (o.icon ? esc(o.icon) + ' ' : '') +
-        '<b>' + esc(o.label) + '</b>' + (o.hint ? '<span>' + esc(o.hint) + '</span>' : '') + '</div>';
+      var f = face(o.mascot, o.icon, 18);
+      return '<div class="kpk-it' + (i === 0 ? ' on' : '') + '" role="option" data-i="' + i + '">' + (f ? f + ' ' : '') +
+        '<b>' + esc(o.label) + '</b>' + (o.hint ? '<span class="kpk-h">' + esc(o.hint) + '</span>' : '') + '</div>';
     }).join('');
     el.querySelectorAll('.kpk-it').forEach(function (it) {
       it.addEventListener('click', function () { var o = LIST.items[+it.getAttribute('data-i')], cb = LIST.onPick; hide(); if (cb) cb(o); });
@@ -226,18 +250,23 @@
       i: '🏛', n: 'Comité de inversión', ne: 'Investment committee' },
     { c: '/ayuda', ce: '/help', es: 'todos los comandos', en: 'all the commands' },
   ];
+  // Khipus OS (2026-10-06): cada analista lleva su MASCOTA (m) y su nombre de agente (Analista, Radar,
+  // Cadena, Técnico, Comité). @analista y @radar son alias: al enviar se escriben como el puesto que
+  // entiende el servidor (to → research/ask_agent.SEAT_WORDS). Los de siempre (@fundamental…) siguen igual.
   var ANALYSTS = [
     { c: '@cartera', ce: '@portfolio', es: 'usar TU cartera como contexto de la pregunta', en: 'use YOUR portfolio as the context of the question',
       i: '💼', n: 'Mi cartera', ne: 'My portfolio', portfolio: true },
-    { c: '@fundamental', es: 'analista fundamental: balances y márgenes', en: 'fundamental analyst: financials and margins', i: '📊', n: 'Analista fundamental', ne: 'Fundamental analyst' },
-    { c: '@tecnico', ce: '@technical', es: 'analista técnico: precio y tendencias', en: 'technical analyst: price and trends', i: '📈', n: 'Analista técnico', ne: 'Technical analyst' },
-    { c: '@noticias', ce: '@news', es: 'analista de noticias', en: 'news analyst', i: '📰', n: 'Analista de noticias', ne: 'News analyst' },
-    { c: '@cadena', ce: '@supply', es: 'analista de cadena de suministro', en: 'supply-chain analyst', i: '🔗', n: 'Analista de cadena', ne: 'Supply-chain analyst' },
-    { c: '@geopolitico', ce: '@geo', es: 'analista geopolítico', en: 'geopolitical analyst', i: '🌐', n: 'Analista geopolítico', ne: 'Geopolitical analyst' },
-    { c: '@macro', es: 'analista macroeconómico', en: 'macro analyst', i: '🏦', n: 'Analista macro', ne: 'Macro analyst' },
-    { c: '@todos', ce: '@all', es: 'responden todos los analistas', en: 'all analysts answer', i: '👥', n: 'Todos los analistas', ne: 'All analysts' },
-    { c: '@investigacion', ce: '@research', es: 'lanza la investigación de una empresa', en: 'starts research on a company', ent: true, i: '🔬', n: 'Equipo de investigación', ne: 'Research team' },
-    { c: '@comite', ce: '@committee', es: 'el comité (empresa o "mi cartera")', en: 'the committee (company or "my portfolio")', cartera: true, i: '🏛', n: 'Comité de inversión', ne: 'Investment committee' },
+    { c: '@analista', ce: '@analyst', to: '@fundamental', m: 'analista', es: 'fundamentales: balances y márgenes', en: 'fundamentals: financials and margins', i: '📊', n: 'Analista', ne: 'Analyst' },
+    { c: '@radar', to: '@noticias', m: 'radar', es: 'noticias y eventos', en: 'news and events', i: '📰', n: 'Radar', ne: 'Radar' },
+    { c: '@cadena', ce: '@supply', m: 'cadena', es: 'cadena de suministro: proveedores y clientes', en: 'supply chain: suppliers and customers', i: '🔗', n: 'Cadena', ne: 'Chain' },
+    { c: '@tecnico', ce: '@technical', m: 'tecnico', es: 'precio y tendencias', en: 'price and trends', i: '📈', n: 'Técnico', ne: 'Technical' },
+    { c: '@comite', ce: '@committee', m: 'comite', es: 'el comité (empresa o "mi cartera")', en: 'the committee (company or "my portfolio")', cartera: true, i: '🏛', n: 'Comité', ne: 'Committee' },
+    { c: '@fundamental', m: 'analista', es: 'Analista · balances y márgenes', en: 'Analyst · financials and margins', i: '📊', n: 'Analista', ne: 'Analyst' },
+    { c: '@noticias', ce: '@news', m: 'radar', es: 'Radar · analista de noticias', en: 'Radar · news analyst', i: '📰', n: 'Radar', ne: 'Radar' },
+    { c: '@geopolitico', ce: '@geo', m: 'radar', es: 'Radar · analista geopolítico', en: 'Radar · geopolitical analyst', i: '🌐', n: 'Radar geopolítico', ne: 'Geopolitical radar' },
+    { c: '@macro', m: 'analista', es: 'Analista · macroeconomía', en: 'Analyst · macroeconomics', i: '🏦', n: 'Analista macro', ne: 'Macro analyst' },
+    { c: '@todos', ce: '@all', m: 'comite', es: 'responden todos los analistas', en: 'all analysts answer', i: '👥', n: 'Todos los analistas', ne: 'All analysts' },
+    { c: '@investigacion', ce: '@research', m: 'analista', es: 'lanza la investigación de una empresa', en: 'starts research on a company', ent: true, i: '🔬', n: 'Equipo de investigación', ne: 'Research team' },
   ];
   function chatMenu(input, opts) {
     if (!input || input._kpkChat) return input;
@@ -273,7 +302,8 @@
       if (st.mode === 'cmd') {
         var defs = st.tok.charAt(0) === '/' ? COMMANDS : ANALYSTS, f = fold(st.tok);
         var items = defs.filter(function (d) { return fold(d.c).indexOf(f) === 0 || fold(d.ce || '').indexOf(f) === 0; })
-          .map(function (d) { return { value: en() && d.ce ? d.ce : d.c, label: en() && d.ce ? d.ce : d.c, hint: en() ? d.en : d.es, def: d }; });
+          .map(function (d) { return { value: en() && d.ce ? d.ce : d.c, label: en() && d.ce ? d.ce : d.c, hint: en() ? d.en : d.es, def: d, mascot: d.m || null,
+            icon: !d.m && defs === ANALYSTS ? d.i : null }; });   // 💼 cartera: emoji para alinear con las mascotas
         show(input, items, function (o) {
           // agentes SIN empresa (comité de cartera, analistas): el token sale del texto y queda como CHIP
           // (como un conector); solo se escribe la pregunta. Los que piden empresa siguen en el texto.
@@ -317,7 +347,7 @@
       chipKey = key;
       if (!ctx && !ad) { if (bar && bar.parentNode) bar.parentNode.removeChild(bar); bar = null; return; }
       ensureCss();
-      if (!bar) { bar = document.createElement('span'); bar.style.cssText = 'display:inline-flex;gap:6px;align-items:center;flex:0 1 auto;min-width:0'; }
+      if (!bar) { bar = document.createElement('span'); bar.className = 'kpk-bar'; }
       if (!bar.parentNode && input.parentNode) input.parentNode.insertBefore(bar, input);
       var h = '';
       if (ctx) {
@@ -326,10 +356,13 @@
           '</select><button type="button" title="' + esc(L('Quitar la cartera', 'Remove the portfolio')) + '">✕</button></span>';
       }
       if (ad) {
-        h += '<span class="kpk-chip" data-chip="agent"><i>' + esc(ad.i) + '</i><b>' + esc(en() ? ad.ne : ad.n) + '</b>' +
+        var fm = face(ad.m, null, 22);
+        h += '<span class="kpk-chip" data-chip="agent">' + (fm ? '<i class="m">' + fm + '</i>' : '<i>' + esc(ad.i) + '</i>') + '<b>' + esc(en() ? ad.ne : ad.n) + '</b>' +
           '<button type="button" title="' + esc(L('Quitar el agente', 'Remove the agent')) + '">✕</button></span>';
       } else if (ctx) {
-        h += '<span class="kpk-chip" data-chip="agent" style="opacity:.75" title="' + esc(L('Escribe @ para que responda un analista concreto', 'Type @ to have a specific analyst answer')) + '"><i>💬</i><b>Khipu</b></span>';
+        var fk = face('khipu', null, 22);
+        h += '<span class="kpk-chip" data-chip="agent" style="opacity:.75" title="' + esc(L('Escribe @ para que responda un analista concreto', 'Type @ to have a specific analyst answer')) + '">' +
+          (fk ? '<i class="m">' + fk + '</i>' : '<i>💬</i>') + '<b>Khipu</b></span>';
       }
       bar.innerHTML = h;
       var cs = bar.querySelector('[data-chip="ctx"] select');
@@ -355,10 +388,11 @@
       if (input._ctxPf) {
         if (K && K.pfSelect) K.pfSelect(input._ctxPf);
         var d = tok ? defOf(tok) : null;
-        var who = d && (isSeat(d) || /comite|committee/.test(fold(d.c))) ? (/comite|committee/.test(fold(d.c)) ? '@comite' : d.c) + ' ' : '';
+        var who = d && (isSeat(d) || /comite|committee/.test(fold(d.c))) ? (/comite|committee/.test(fold(d.c)) ? '@comite' : (d.to || d.c)) + ' ' : '';
         input.value = '/cartera ' + who + body;
       } else if (tok) {
-        input.value = tok + ' ' + body;
+        var dt = defOf(tok);
+        input.value = ((dt && dt.to) || tok) + ' ' + body;    // @analista → @fundamental, @radar → @noticias (lo que entiende el servidor)
       }
     }
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !isOpen(input)) flushTok(); }, true);
@@ -380,12 +414,18 @@
     return input;
   }
 
-  // {name, emoji} del agente con el que empieza un texto ("@fundamental …", "/investigar …"), para la burbuja
+  // {name, emoji, mascot} del agente con el que empieza un texto ("@fundamental …", "/investigar …"), para la burbuja
   function agentOf(text) {
     var m = String(text || '').match(/^\s*([\/@][^\s]+)/);
     if (!m) return null;
     var t = fold(m[1]), d = COMMANDS.concat(ANALYSTS).filter(function (x) { return x.i && (fold(x.c) === t || fold(x.ce || '') === t); })[0];
-    return d ? { name: en() ? d.ne : d.n, emoji: d.i } : null;
+    return d ? { name: en() ? d.ne : d.n, emoji: d.i, mascot: d.m || null } : null;
   }
-  window.KhipuPick = { attach: attach, chatMenu: chatMenu, search: search, exact: exact, value: value, hide: hide, agentOf: agentOf };
+  // token que entiende el servidor para un @agente ("@analista" → "@fundamental"); los demás, igual
+  function canonical(tok) {
+    var t = fold(tok || ''), d = ANALYSTS.filter(function (x) { return fold(x.c) === t || fold(x.ce || '') === t; })[0];
+    return d && d.to ? d.to : tok;
+  }
+  window.KhipuPick = { attach: attach, chatMenu: chatMenu, search: search, exact: exact, value: value, hide: hide, agentOf: agentOf,
+    canonical: canonical, ANALYSTS: ANALYSTS };
 })();
