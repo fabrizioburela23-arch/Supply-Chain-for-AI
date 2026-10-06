@@ -40,8 +40,10 @@ AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5'
 # ni desplegar.
 GEMINI_KEY   = os.getenv('GEMINI_KEY') or os.getenv('GOOGLE_API_KEY', '')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')   # 2026-10-06: mejor calidad/precio (Fabrizio)
-# si Google satura (503/429/5xx) o retira (404) el principal, el MISMO pedido va a este ('off' = sin respaldo)
-GEMINI_FALLBACK_MODEL = os.getenv('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash')
+# si Google satura (503/429/5xx) o retira (404) el principal, el MISMO pedido va a estos, en orden (lista con comas;
+# 'off' = sin respaldo). Cada modelo tiene su propia capacidad en Google: en la saturación del 5-6 oct-2026 3.8 y
+# 3.5 Flash daban 503 a la vez. 3.1 Pro: mejor calidad (2/12 USD por millón), solo como respaldo.
+GEMINI_FALLBACK_MODEL = os.getenv('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash,gemini-3.1-pro,gemini-2.5-flash')
 NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
 NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.3-70b-instruct')
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]

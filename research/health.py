@@ -28,6 +28,11 @@ def _providers():
         st = circ.get(name) or {'open': False}
         out[name] = {'configured': bool(has_key()), 'available': ai.provider_available(name),
                      'circuit': st}
+    try:   # qué modelos de Gemini se usan y cuáles tiene Google saturados ahora (503)
+        if 'gemini' in out:
+            out['gemini']['models'] = ai.gemini_state()
+    except Exception:  # noqa: BLE001
+        pass
     return out
 
 

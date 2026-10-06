@@ -185,6 +185,8 @@ def test_r2_ia_ocupada_agotada_no_prueba_el_siguiente_proveedor(monkeypatch):
 def test_r2_gemini_reintenta_503_con_backoff_y_jitter(monkeypatch):
     from core import ai
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
+    monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'off')   # reintentos del MISMO modelo (con respaldos: otro test)
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
     waits, plan = [], [503, 503, 200]
     monkeypatch.setattr(ai, '_sleep', lambda s: waits.append(s))
 

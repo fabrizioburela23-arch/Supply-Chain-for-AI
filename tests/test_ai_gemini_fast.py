@@ -20,6 +20,7 @@ def _gem_ok(text):
 def test_want_json_llega_a_gemini_como_json_mode(monkeypatch):
     monkeypatch.setattr(ai, 'CLAUDE', '')
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
     monkeypatch.setattr(ai, 'NVIDIA_KEY', '')
     seen = {}
 
@@ -34,10 +35,11 @@ def test_want_json_llega_a_gemini_como_json_mode(monkeypatch):
 def test_flash_nivel_rapido_sin_pensamiento(monkeypatch):
     monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-2.5-flash')
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
     monkeypatch.delenv('GEMINI_THINKING', raising=False)
     bodies = []
 
-    def post(url, body, timeout):
+    def post(url, body, timeout, retry=True):
         bodies.append(body)
         return _gem_ok('hola')
     monkeypatch.setattr(ai, '_gemini_post', post)
@@ -67,10 +69,11 @@ def test_gemini_3_usa_niveles_de_pensamiento(monkeypatch):
     """Gemini 3.8 Flash rechaza thinkingBudget (y 'minimal'): rápido = low, profundo = medium, con margen."""
     monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.8-flash')
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
     monkeypatch.delenv('GEMINI_THINKING', raising=False)
     bodies = []
 
-    def post(url, body, timeout):
+    def post(url, body, timeout, retry=True):
         bodies.append((url, json.loads(json.dumps(body))))
         return _gem_ok('hola')
     monkeypatch.setattr(ai, '_gemini_post', post)
@@ -109,23 +112,48 @@ def test_gemini_saturado_usa_el_modelo_de_respaldo(monkeypatch):
     monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.8-flash')
     monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash')
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
     urls = []
 
-    def post(url, body, timeout):
+    def post(url, body, timeout, retry=True):
         urls.append(url)
         return _Err(503, 'UNAVAILABLE') if 'gemini-3.8-flash' in url else _gem_ok('hola')
     monkeypatch.setattr(ai, '_gemini_post', post)
     text, used = ai._complete_gemini_inner('s', 'p', 200, 'fast')
     assert text == 'hola' and used == 'gemini:gemini-3.5-flash' and len(urls) == 2
     # un error de clave NO salta al respaldo (no lo arreglaría)
-    monkeypatch.setattr(ai, '_gemini_post', lambda u, b, t: _Err(403, 'PERMISSION_DENIED'))
+    monkeypatch.setattr(ai, '_gemini_post', lambda u, b, t, **k: _Err(403, 'PERMISSION_DENIED'))
     import pytest
     with pytest.raises(RuntimeError, match='Gemini HTTP 403 PERMISSION_DENIED'):
         ai._complete_gemini_inner('s', 'p', 200, 'fast')
     # los dos saturados → el error del último, como antes (y entonces la cascada pasa a NVIDIA)
-    monkeypatch.setattr(ai, '_gemini_post', lambda u, b, t: _Err(503, 'UNAVAILABLE'))
+    monkeypatch.setattr(ai, '_gemini_post', lambda u, b, t, **k: _Err(503, 'UNAVAILABLE'))
     with pytest.raises(RuntimeError, match='Gemini HTTP 503 UNAVAILABLE'):
         ai._complete_gemini_inner('s', 'p', 200, 'fast')
     # sin respaldo
     monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'off')
     assert ai._gemini_models() == ['gemini-3.8-flash']
+
+
+def test_respaldos_en_cadena_y_saturados_al_final(monkeypatch):
+    """Saturación general de Google (5-6 oct-2026): 3.8 y 3.5 Flash con 503 a la vez → prueba 3.1 Pro,
+    sin esperar reintentos entre modelos; los saturados quedan al final unos minutos."""
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.8-flash')
+    monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash, gemini-3.1-pro,gemini-2.5-flash')
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
+    monkeypatch.setattr(ai, '_sleep', lambda s: (_ for _ in ()).throw(AssertionError('no debe esperar entre modelos')))
+    urls = []
+
+    def post(url, body, timeout, retry=True):
+        urls.append(url.split('/models/')[1].split(':')[0])
+        return _gem_ok('ok') if 'gemini-3.1-pro' in url else _Err(503, 'UNAVAILABLE')
+    monkeypatch.setattr(ai, '_gemini_post', post)
+    text, used = ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    assert used == 'gemini:gemini-3.1-pro' and urls == ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.1-pro']
+    st = ai.gemini_state()
+    assert st['models'] == ['gemini-3.1-pro', 'gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash']
+    assert set(st['saturated']) == {'gemini-3.8-flash', 'gemini-3.5-flash'}
+    urls.clear()
+    ai._complete_gemini_inner('s', 'p', 200, 'fast')               # la siguiente va directo al que funciona
+    assert urls == ['gemini-3.1-pro']

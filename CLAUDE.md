@@ -450,7 +450,7 @@ WORLD_GDELT_QUERY_CONFLICT / _UNREST / _TRADE, WORLD_GDELT_GEO_URL  ← World Mo
 FINNHUB_WS_KEY (clave Finnhub separada para el navegador), GUNICORN_THREADS (12), GUNICORN_MAX_REQUESTS (0 — dejar en 0),
 AI_MAX_CONCURRENCY (4), AI_INTERACTIVE_RESERVE (1), AI_CLAUDE_TIMEOUT_S, DB_POOL_SIZE/DB_MAX_OVERFLOW (10/10),
 DB_STATEMENT_TIMEOUT_MS, MATRIX_HEAVY_CONCURRENCY (1), REMIGRATE_ON_BOOT=<nombre de la base>  ← estructura
-GEMINI_MODEL (gemini-3.8-flash), GEMINI_FALLBACK_MODEL (gemini-3.5-flash)  ← Gemini
+GEMINI_MODEL (gemini-3.8-flash), GEMINI_FALLBACK_MODEL (gemini-3.5-flash,gemini-3.1-pro,gemini-2.5-flash)  ← Gemini
 TYPESAFE_API_KEY (Jev), TYPESAFE_MODEL (jev-latest), DECIDE_SHADOW (on), DECIDE_CONTROL (vacío; 'chat_gate,…' o 'all'), DECIDE_TIMEOUT_S (6)  ← decisiones Jev
 WORLD_SOURCE_DOWN_AFTER (3), WORLD_SOURCE_DOWN_TTL (3600)  ← W1: fuente con 404/403 seguidos en pausa 1 h
 LOG_JSON (off)  ← O2: logs JSON con job_id/agente/proveedor/costo/latencia
@@ -478,7 +478,8 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 `_complete_gemini_inner` manda `thinkingLevel` low (chat/rápido) o medium (profundo, también investigación JSON) con margen de tokens.
 Precio en `core/ai_usage.PRICES` (0,75/3,75 hasta 31-dic-2026; luego 1,5/7,5 → actualizar).
 Si Google satura (503/429/5xx) o retira (404) el principal, el mismo pedido va a `GEMINI_FALLBACK_MODEL`
-(default gemini-3.5-flash; 'off' lo apaga) antes de saltar a NVIDIA.
+(lista con comas; default gemini-3.5-flash,gemini-3.1-pro,gemini-2.5-flash; 'off' lo apaga) antes de saltar a NVIDIA;
+entre modelos no se reintenta (salta al instante) y los saturados van al final 3 min (`gemini_state()`, salud).
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 **GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito "todo en vivo, los datos
 falsos perjudican al inversionista")**: `_ai_complete` añade NUMBERS_RULE al

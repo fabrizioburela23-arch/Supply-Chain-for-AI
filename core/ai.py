@@ -481,7 +481,7 @@ class _NetDown(RuntimeError):
     """Red caída (no timeout): candidata a reintento corto."""
 
 
-def _gemini_post(url, body, timeout):
+def _gemini_post(url, body, timeout, retry=True):
     """POST a Gemini con la key en la CABECERA x-goog-api-key (nunca en la URL:
     la URL termina dentro del texto de las excepciones de requests → logs/🩺).
     R2: HTTP 429/5xx y red caída se reintentan con backoff + jitter."""
@@ -500,7 +500,7 @@ def _gemini_post(url, body, timeout):
         return getattr(x, 'status_code', None) in TRANSIENT_HTTP
 
     try:
-        return _retry_transient(_once, _transient, 'gemini')
+        return _retry_transient(_once, _transient, 'gemini') if retry else _once()
     except _NetDown as e:
         raise RuntimeError(str(e)) from None
 
@@ -523,29 +523,63 @@ class _GeminiHTTP(RuntimeError):
 _GEMINI_FALLBACK_HTTP = (404, 429, 500, 502, 503, 504)
 
 
+_GEMINI_HOT = {}                 # modelo → hasta cuándo (monotonic) Google lo tuvo saturado: se salta
+_GEMINI_HOT_S = float(os.getenv('GEMINI_HOT_S') or 180)
+_GEMINI_LOCK = threading.Lock()
+
+
 def _gemini_models():
+    """Principal + respaldos (GEMINI_FALLBACK_MODEL admite una lista separada por comas). Los que Google tuvo
+    saturados hace poco van al final: así una pregunta no paga la espera de un 503 que ya conocemos."""
     out = [GEMINI_MODEL]
-    fb = (GEMINI_FALLBACK_MODEL or '').strip()
-    if fb and fb.lower() not in ('off', 'none', '0') and fb != GEMINI_MODEL:
-        out.append(fb)
-    return out
+    for fb in str(GEMINI_FALLBACK_MODEL or '').split(','):
+        fb = fb.strip()
+        if fb and fb.lower() not in ('off', 'none', '0') and fb not in out:
+            out.append(fb)
+    now = time.monotonic()
+    with _GEMINI_LOCK:
+        hot = {m for m, t in _GEMINI_HOT.items() if t > now}
+    return [m for m in out if m not in hot] + [m for m in out if m in hot]
+
+
+def _gemini_mark(model, hot):
+    with _GEMINI_LOCK:
+        if hot:
+            _GEMINI_HOT[model] = time.monotonic() + _GEMINI_HOT_S
+        else:
+            _GEMINI_HOT.pop(model, None)
+
+
+def gemini_state():
+    """Para el 🩺 / salud: orden actual de modelos y cuáles están saturados ahora."""
+    now = time.monotonic()
+    with _GEMINI_LOCK:
+        hot = {m: int(t - now) for m, t in _GEMINI_HOT.items() if t > now}
+    return {'models': _gemini_models(), 'primary': GEMINI_MODEL, 'saturated': hot}
 
 
 def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
-    """Modelo principal y, si Google lo tiene saturado o retirado, el de respaldo. → (texto, 'gemini:<modelo>')."""
+    """Modelo principal y, si Google lo tiene saturado o retirado, los de respaldo (cada modelo tiene su propia
+    capacidad en Google). Entre modelos NO se reintenta el mismo: se pasa al siguiente al instante; solo el último
+    usa los reintentos con espera. → (texto, 'gemini:<modelo>')."""
     models = _gemini_models()
     for i, m in enumerate(models):
+        last = i + 1 >= len(models)
         try:
-            return _gemini_once(m, system, prompt, max_tokens, tier, json_mode, timeout_s)
+            out = _gemini_once(m, system, prompt, max_tokens, tier, json_mode, timeout_s, retry=last)
+            _gemini_mark(m, False)
+            return out
         except _GeminiHTTP as e:
-            if i + 1 < len(models) and e.status in _GEMINI_FALLBACK_HTTP:
-                log.warning('IA gemini: %s con %s → respaldo %s', e.status, m, models[i + 1])
-                continue
+            if e.status in _GEMINI_FALLBACK_HTTP:
+                _gemini_mark(m, True)
+                if not last:
+                    log.warning('IA gemini: %s con %s → respaldo %s', e.status, m, models[i + 1])
+                    continue
             raise RuntimeError(str(e)) from None
     raise RuntimeError('Gemini sin modelos')
 
 
-def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
+def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None, retry=True):
     """json_mode (lo usa research/): pide JSON estricto (responseMimeType), da
     más presupuesto y apaga el "pensamiento" en modelos flash — en 2.5 el
     pensamiento consume maxOutputTokens y cortaba el JSON a la mitad
@@ -577,10 +611,10 @@ def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
             'generationConfig': gen}
     url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
-    r = _gemini_post(url, body, min(float(timeout_s), 90.0) if timeout_s else (90 if json_mode else 45))
+    r = _gemini_post(url, body, min(float(timeout_s), 90.0) if timeout_s else (90 if json_mode else 45), retry=retry)
     if r.status_code == 400 and 'thinkingConfig' in gen:
         gen.pop('thinkingConfig')            # modelo que no acepta apagar el pensamiento
-        r = _gemini_post(url, body, 90)
+        r = _gemini_post(url, body, 90, retry=retry)
     if not r.ok:
         # solo el código + el estado simbólico de Google (NOT_FOUND, PERMISSION_DENIED…):
         # nada del cuerpo libre, que podría repetir datos de la petición.
