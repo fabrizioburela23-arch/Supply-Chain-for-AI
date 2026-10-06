@@ -32,6 +32,9 @@ Fabrizio aprobó ("sí a las dos"):
   "comprador de…", PetroChina→Gazprom, Chevron/Cheniere→KinderMorgan) borradas de nodes_multicapa.js
   (la gemela correcta ya existía). Direcciones sospechosas del catálogo 55→39 (las que quedan son pares
   mutuos reales o consultoras inmobiliarias). Plan: aplicar primero "Empresas duplicadas" + "Direcciones".
+  APLICADO por Fabrizio: corrida `20261006T040725Z-377823` (actor "fato") = duplicadas + direcciones.
+  Verificado por MCP (Wayve: Nvidia→Wayve, Microsoft→Wayve, SoftBank→Wayve). Pendiente: pesos (53),
+  faltantes (657), sobrantes (2).
 
 # SESIÓN 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2: TENSORES + AUTO-CONEXIÓN (sw v241)
 
