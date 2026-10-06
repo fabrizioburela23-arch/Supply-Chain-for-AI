@@ -94,3 +94,38 @@ def test_gemini_3_usa_niveles_de_pensamiento(monkeypatch):
 def test_precio_gemini_38():
     from core import ai_usage
     assert ai_usage.price_for('gemini', 'gemini-3.8-flash') == (0.75, 3.75)
+
+
+class _Err:
+    def __init__(self, code, status):
+        self.status_code, self.ok, self._s = code, False, status
+
+    def json(self):
+        return {'error': {'status': self._s}}
+
+
+def test_gemini_saturado_usa_el_modelo_de_respaldo(monkeypatch):
+    """Producción 2026-10-06: gemini-3.8-flash → 503 UNAVAILABLE. El mismo pedido va a gemini-3.5-flash."""
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.8-flash')
+    monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash')
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    urls = []
+
+    def post(url, body, timeout):
+        urls.append(url)
+        return _Err(503, 'UNAVAILABLE') if 'gemini-3.8-flash' in url else _gem_ok('hola')
+    monkeypatch.setattr(ai, '_gemini_post', post)
+    text, used = ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    assert text == 'hola' and used == 'gemini:gemini-3.5-flash' and len(urls) == 2
+    # un error de clave NO salta al respaldo (no lo arreglaría)
+    monkeypatch.setattr(ai, '_gemini_post', lambda u, b, t: _Err(403, 'PERMISSION_DENIED'))
+    import pytest
+    with pytest.raises(RuntimeError, match='Gemini HTTP 403 PERMISSION_DENIED'):
+        ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    # los dos saturados → el error del último, como antes (y entonces la cascada pasa a NVIDIA)
+    monkeypatch.setattr(ai, '_gemini_post', lambda u, b, t: _Err(503, 'UNAVAILABLE'))
+    with pytest.raises(RuntimeError, match='Gemini HTTP 503 UNAVAILABLE'):
+        ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    # sin respaldo
+    monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'off')
+    assert ai._gemini_models() == ['gemini-3.8-flash']

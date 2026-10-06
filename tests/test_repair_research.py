@@ -203,6 +203,7 @@ def test_r2_gemini_no_reintenta_errores_definitivos(monkeypatch):
     from core import ai
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'k-123456789')
     monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-pro-x')       # sin thinkingConfig → sin el reintento del 400
+    monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'off')        # (un 404 sí prueba el modelo de respaldo: otro test)
     monkeypatch.setattr(ai, '_sleep', lambda s: (_ for _ in ()).throw(AssertionError('no debe esperar')))
     for code in (400, 404):
         calls = []

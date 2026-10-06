@@ -40,7 +40,7 @@ from datetime import datetime, timezone
 import requests
 
 from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, CLAUDE,
-                         GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY, NVIDIA_MODEL)
+                         GEMINI_FALLBACK_MODEL, GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY, NVIDIA_MODEL)
 
 log = logging.getLogger(__name__)
 
@@ -511,7 +511,41 @@ def _gemini_major(model):
     return int(m.group(1)) if m else 0
 
 
+class _GeminiHTTP(RuntimeError):
+    def __init__(self, status, msg):
+        super().__init__(msg)
+        self.status = status
+
+
+# Google SATURA los modelos recién lanzados (2026-10-06: gemini-3.8-flash → 503 UNAVAILABLE en producción) o
+# los retira (404). Ante eso, el MISMO pedido va al modelo de respaldo (GEMINI_FALLBACK_MODEL) antes de
+# saltar a otro proveedor: misma clave, misma calidad aproximada, sin intervención.
+_GEMINI_FALLBACK_HTTP = (404, 429, 500, 502, 503, 504)
+
+
+def _gemini_models():
+    out = [GEMINI_MODEL]
+    fb = (GEMINI_FALLBACK_MODEL or '').strip()
+    if fb and fb.lower() not in ('off', 'none', '0') and fb != GEMINI_MODEL:
+        out.append(fb)
+    return out
+
+
 def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
+    """Modelo principal y, si Google lo tiene saturado o retirado, el de respaldo. → (texto, 'gemini:<modelo>')."""
+    models = _gemini_models()
+    for i, m in enumerate(models):
+        try:
+            return _gemini_once(m, system, prompt, max_tokens, tier, json_mode, timeout_s)
+        except _GeminiHTTP as e:
+            if i + 1 < len(models) and e.status in _GEMINI_FALLBACK_HTTP:
+                log.warning('IA gemini: %s con %s → respaldo %s', e.status, m, models[i + 1])
+                continue
+            raise RuntimeError(str(e)) from None
+    raise RuntimeError('Gemini sin modelos')
+
+
+def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
     """json_mode (lo usa research/): pide JSON estricto (responseMimeType), da
     más presupuesto y apaga el "pensamiento" en modelos flash — en 2.5 el
     pensamiento consume maxOutputTokens y cortaba el JSON a la mitad
@@ -525,7 +559,7 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
     # flash el "pensamiento" consume maxOutputTokens y segundos; en el nivel RÁPIDO
     # (chat, comandos, radar) y en JSON estricto se apaga. GEMINI_THINKING=on lo devuelve.
     fast_level = (json_mode or tier != 'deep') and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on'
-    if _gemini_major(GEMINI_MODEL) >= 3:
+    if _gemini_major(model) >= 3:
         # calidad primero: el trabajo PROFUNDO (investigación, comité, tesis) piensa en "medium" aunque pida JSON
         # — en Gemini 3 hay margen de tokens, ya no corta el JSON como en 2.5. Solo lo rápido (chat) va en "low".
         fast_level = tier != 'deep' and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on'
@@ -534,15 +568,15 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
         # profundo = medium. El pensamiento también gasta maxOutputTokens → margen para que no corte la respuesta.
         gen['thinkingConfig'] = {'thinkingLevel': 'low' if fast_level else 'medium'}
         gen['maxOutputTokens'] = int(gen['maxOutputTokens']) + (1024 if fast_level else 2048)
-    elif 'flash' in GEMINI_MODEL and fast_level:
+    elif 'flash' in model and fast_level:
         gen['thinkingConfig'] = {'thinkingBudget': 0}
-    elif 'flash' in GEMINI_MODEL:
+    elif 'flash' in model:
         # nivel profundo: piensa, pero con presupuesto acotado y SIN comerse la respuesta
         gen['thinkingConfig'] = {'thinkingBudget': 1024}
         gen['maxOutputTokens'] = int(gen['maxOutputTokens']) + 1024
     body = {'contents': [{'parts': [{'text': (system + '\n\n' + prompt) if system else prompt}]}],
             'generationConfig': gen}
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent'
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
     r = _gemini_post(url, body, min(float(timeout_s), 90.0) if timeout_s else (90 if json_mode else 45))
     if r.status_code == 400 and 'thinkingConfig' in gen:
         gen.pop('thinkingConfig')            # modelo que no acepta apagar el pensamiento
@@ -563,11 +597,11 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
         except Exception:  # noqa: BLE001
             st = ''
         st = st if re.fullmatch(r'[A-Z_]{3,40}', st or '') else ''
-        raise RuntimeError(f'Gemini HTTP {r.status_code}' + (f' {st}' if st else '') + (f' {reason}' if reason else ''))
+        raise _GeminiHTTP(r.status_code, f'Gemini HTTP {r.status_code}' + (f' {st}' if st else '') + (f' {reason}' if reason else ''))
     data = r.json() or {}
     try:   # gasto: usageMetadata de Google (el "pensamiento" se cobra como salida)
         um = data.get('usageMetadata') or {}
-        _usage().record('gemini', GEMINI_MODEL, um.get('promptTokenCount') or _usage().estimate_tokens(body['contents'][0]['parts'][0]['text']),
+        _usage().record('gemini', model, um.get('promptTokenCount') or _usage().estimate_tokens(body['contents'][0]['parts'][0]['text']),
                         (um.get('candidatesTokenCount') or 0) + (um.get('thoughtsTokenCount') or 0),
                         estimated=not um)
     except Exception:  # noqa: BLE001
@@ -579,7 +613,7 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
     text = ''.join(p.get('text', '') for p in parts if not p.get('thought'))
     if json_mode and cands[0].get('finishReason') == 'MAX_TOKENS':
         raise RuntimeError('Gemini cortó la respuesta (MAX_TOKENS)')
-    return text, 'gemini:' + GEMINI_MODEL
+    return text, 'gemini:' + model
 
 
 def _complete_nvidia(system, prompt, max_tokens, tier='fast'):
