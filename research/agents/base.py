@@ -25,7 +25,7 @@ WRITE_PERMISSIONS = {
 HORIZON_GUIDE = ('INTRADAY = horas; SHORT_TERM = días a ~3 meses; MEDIUM_TERM = 3-12 meses; '
                  'LONG_TERM = 1-5 años; STRUCTURAL = rasgos que duran más de 5 años.')
 
-SYSTEM_TEMPLATE = """Eres {name}, un agente de investigación de {domain} dentro de Khipus Finance AI.
+SYSTEM_TEMPLATE = """Eres {name}, un agente de investigación de {domain} dentro de Khipus Finance Intelligence.
 Tu trabajo es INVESTIGAR, no recomendar: nunca digas comprar, vender ni mantener, ni des precios objetivo propios.
 
 REGLAS INNEGOCIABLES

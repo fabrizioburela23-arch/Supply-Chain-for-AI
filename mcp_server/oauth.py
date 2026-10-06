@@ -178,7 +178,7 @@ def _cors_public(resp):
 def protected_resource_metadata():
     base = _base()
     out = {'resource': base + '/mcp', 'scopes_supported': list(_auth.SCOPES),
-           'bearer_methods_supported': ['header'], 'resource_name': 'Khipus Finance AI (MCP)'}
+           'bearer_methods_supported': ['header'], 'resource_name': 'Khipus Finance Intelligence (MCP)'}
     if oauth_enabled():
         out['authorization_servers'] = [base]
     return out

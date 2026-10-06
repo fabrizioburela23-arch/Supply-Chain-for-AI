@@ -864,7 +864,7 @@ def _ai_rationales(pfs, p, lang):
                      'caida_maxima_pct': m['max_drawdown_pct'], 'ratio_diversificacion': m['diversification_ratio'],
                      'correlacion_media': m['avg_correlation'], 'beta_sp500': m['beta_spy'],
                      'riesgos': pf['risks']})
-    system = ('Eres el asistente educativo de carteras de Khipus Finance AI. Explicas a inversionistas NO expertos, '
+    system = ('Eres el asistente educativo de carteras de Khipus Finance Intelligence. Explicas a inversionistas NO expertos, '
               'en lenguaje simple y sin jerga, por qué una cartera ya construida tiene esas empresas y pesos. '
               'Usa SOLO los datos dados (no inventes cifras, precios ni rendimientos). Nunca prometas ganancias ni '
               'digas "compra"/"vende": es una propuesta educativa. Responde en ' +
@@ -1158,7 +1158,7 @@ def ask(a, history_fn=None, caps=None, claims=None):
     answer, model = None, None
     from core import ai as _ai
     if _ai._ai_configured():
-        system = ('Eres el asistente de carteras de Khipus Finance AI para inversionistas NO expertos. '
+        system = ('Eres el asistente de carteras de Khipus Finance Intelligence para inversionistas NO expertos. '
                   'Responde en ' + ('inglés' if lang == 'en' else 'español') + ', claro y breve (máx. 180 palabras), '
                   'tono educativo, sin jerga (si usas un término, explícalo en una frase). Usa SOLO los datos del '
                   'CONTEXTO para cifras sobre empresas o carteras; si un dato no está, dilo. Nunca prometas '

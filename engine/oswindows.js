@@ -697,6 +697,12 @@
   function openCommittee(id) { if (window.KhipuCommittee && typeof window.KhipuCommittee.open === 'function') window.KhipuCommittee.open(id); }
   function openResearch(id) { if (window.KhipuResearch && typeof window.KhipuResearch.open === 'function') window.KhipuResearch.open(id); }
   function askAgent(aid) {
+    // INVOCAR (Khipus OS): el agente entra a la conversación con su mascota en la barra
+    var cc = ck();
+    if (cc && typeof cc.invoke === 'function') {
+      try { if (!(cc.isOpen && cc.isOpen()) && typeof cc.open === 'function') cc.open(); } catch (e) {}
+      try { cc.invoke(aid); return; } catch (e) {}
+    }
     var m = MENTION[aid], txt = m ? (lang() === 'en' ? m[1] : m[0]) : '';
     function put() {
       var inp = document.getElementById('bcp-input');
@@ -1364,7 +1370,7 @@
         ? '<div class="osw-ag-k">' + esc(L('Detalle técnico', 'Technical detail')) + '</div><div class="osw-chips">' +
           (a.research_types || []).map(function (t) { return '<span class="osw-chip mono">' + esc(t) + '</span>'; }).join('') +
           (a.tools || []).slice(0, 8).map(function (t) { return '<span class="osw-chip mono">' + esc(t) + '</span>'; }).join('') + '</div>' : '';
-      var ask = a.id === 'khipu' ? L('Escríbele a Khipu', 'Message Khipu') : L('Pregúntale a ' + a.es, 'Ask ' + a.en);
+      var ask = a.id === 'khipu' ? L('Escríbele a Khipu', 'Message Khipu') : L('Invocar a ' + a.es, 'Invoke ' + a.en);
       return '<article class="osw-ag' + (on ? '' : ' off') + '" data-agent="' + esc(a.id) + '">' +
         '<div class="osw-ag-top">' + mascot(a.id, 48) + '<div class="osw-ag-id"><div class="osw-ag-n">' + esc(L(a.es, a.en)) + '</div><div class="osw-ag-r">' + esc(pick(a, 'role')) + '</div></div></div>' +
         '<p class="osw-ag-does">' + esc(pick(a, 'does')) + '</p>' +

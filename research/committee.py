@@ -516,7 +516,7 @@ def _schema_hint():
             'chair_note_es': 'str|null (obligatoria si rebajas a HOLD)', 'chair_note_en': 'str|null'}
 
 
-CHAIR_SYSTEM = """Eres el PRESIDENTE del comité de inversión automatizado de Khipus Finance AI.
+CHAIR_SYSTEM = """Eres el PRESIDENTE del comité de inversión automatizado de Khipus Finance Intelligence.
 Recibes el trabajo de agentes de investigación (conclusiones C#), sus contradicciones (X#), datos en vivo (D#),
 riesgo medido de la acción (R#), el NÚCLEO CUANTITATIVO (Q#) y, si existe, el mandato del cliente (M#).
 Redactas el memo del comité para un inversionista NO experto, en español y en inglés.

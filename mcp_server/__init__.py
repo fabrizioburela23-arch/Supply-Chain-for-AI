@@ -17,5 +17,5 @@ Todo OPCIONAL: sin DATABASE_URL no hay tokens (solo MCP_STATIC_TOKEN, de
 lectura) y la app arranca igual. Ver docs/MCP.md.
 """
 SERVER_NAME = 'khipus-finance'
-SERVER_TITLE = 'Khipus Finance AI'
+SERVER_TITLE = 'Khipus Finance Intelligence'
 SERVER_VERSION = '1.0.0'

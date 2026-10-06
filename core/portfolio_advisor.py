@@ -330,7 +330,7 @@ def explain(analysis, lang='es'):
                      f"aporta {r['risk_contrib_pct']} % del riesgo, convicción {r['conviction'] if r['conviction'] is not None else 'sin investigación'}.")
     for a in acts:
         facts.append(f"{a['id']}: {a['kind']} {a['label']} de {a['from_pct']} % a {a['to_pct']} % ({a['delta_usd']} USD) — {a['why_es']}")
-    sys_ = ('Eres el comité de cartera de Khipus Finance AI y le hablas a un inversionista SIN experiencia. '
+    sys_ = ('Eres el comité de cartera de Khipus Finance Intelligence y le hablas a un inversionista SIN experiencia. '
             'Explica en 4-7 frases simples, sin jerga (o explicándola), qué tal está su cartera frente a su perfil y '
             'por qué las acciones propuestas (cítalas por su id A1, A2…) reducen riesgo o mejoran la cartera. '
             'No inventes acciones nuevas ni cifras: usa SOLO los datos dados. Cierra recordando que es un consejo '

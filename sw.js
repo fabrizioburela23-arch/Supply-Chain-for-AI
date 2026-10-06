@@ -3,7 +3,7 @@
    CACHE va en la línea 6 (regla de despliegue #1: bump vN → vN+1 en cada
    cambio de JS/HTML). server.py (_sw_version) lee SOLO los primeros 2048
    caracteres para inyectar ?v=N en los <script src> — no la bajes. */
-const CACHE = 'khipu-finance-v248';
+const CACHE = 'khipu-finance-v249';
 /* Reglas (auditoría estructural 2026-09-30, hallazgo #3 — incidente real: un
    502 HTML de Railway quedó guardado y se servía offline → "Unexpected token
    '<'", y /api/health cacheado devolvía {server:true} ocultando el aviso):
@@ -154,7 +154,7 @@ function staleShell() {
 
 function offlinePage() {
   const html = '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
-    '<title>Khipus Finance AI</title><body style="font:15px/1.5 system-ui,sans-serif;background:#0a0d14;color:#e5e7eb;padding:32px">' +
+    '<title>Khipus Finance Intelligence</title><body style="font:15px/1.5 system-ui,sans-serif;background:#0a0d14;color:#e5e7eb;padding:32px">' +
     '<h2>⚠ Servidor no disponible · Server unavailable</h2>' +
     '<p>El servidor de Khipus no responde. Reintenta en unos minutos.</p>' +
     '<p>The Khipus server is not responding. Please try again in a few minutes.</p>' +

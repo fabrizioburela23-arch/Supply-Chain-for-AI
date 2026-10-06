@@ -813,7 +813,7 @@
     var w = window.open('', '_blank'); if (!w) return;
     w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc(L('Reporte de riesgo — Khipus', 'Risk report — Khipus')) + '</title>' +
       '<style>body{font-family:Inter,system-ui,sans-serif;color:#111;padding:20px}button,select,input,.ktabs,.actions{display:none!important}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:right}th:first-child,td:first-child{text-align:left}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{border:1px solid #ccc;border-radius:8px;padding:8px}.card .l{font-size:10px;color:#555;text-transform:uppercase}.card .v{font-size:17px;font-weight:700}.note{font-size:11px;color:#444}.warn{font-size:11px;color:#8a5a00;border:1px dashed #c90;padding:6px;margin:6px 0}.bar{height:6px;background:#eee;position:relative}.bar i{position:absolute;left:0;top:0;bottom:0;background:#0aa}.light{display:flex;gap:12px;align-items:center;border:1px solid #ccc;border-radius:10px;padding:10px}.light .dot{width:36px;height:36px;border-radius:50%}.light .lv{font-size:20px;font-weight:800}.say li{margin:4px 0}.ai{border:1px solid #ccc;padding:8px;white-space:pre-wrap}</style>' +
-      '<body>' + html + '<p class="note">Khipus Finance AI · ' + new Date().toLocaleString() + '</p></body>');
+      '<body>' + html + '<p class="note">Khipus Finance Intelligence · ' + new Date().toLocaleString() + '</p></body>');
     w.document.close(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400);
   }
 

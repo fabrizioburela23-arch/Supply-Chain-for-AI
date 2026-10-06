@@ -59,7 +59,7 @@ def test_tokens_claro_y_oscuro_exactos_de_la_especificacion():
         assert dark.get(k) == v, (k, dark.get(k), v)
     shared = _block(s, '#bcp-ov{--os-r:18px')
     assert shared['--os-r'] == '18px' and shared['--os-r-sm'] == '12px'
-    assert shared['--os-font'].startswith("'Geist'")
+    assert shared['--os-font'].startswith("'Nunito', 'Geist'")   # 2026-10-06: letra ligeramente redondeada (Fabrizio)
     # la fuente 'Inter' no se carga en app.html: ya no se usa en la cáscara
     assert "'Inter'" not in s
 
@@ -241,3 +241,21 @@ def test_una_sola_peticion_de_insights_al_arrancar():
     assert 'function _matrixInsights(en)' in s
     assert "_paintHome(Date.now() - _homeTs > 30000)" in s
     assert 'if (!D.wall().children.length) stageEmpty(D.wall());' not in s
+
+
+def test_marca_tools_e_invocar():
+    """2026-10-06 (Fabrizio): nombre Khipus Finance Intelligence, letra redondeada (Nunito), botón principal
+    Tools/Herramientas y tocar un agente lo INVOCA a la conversación."""
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    s = open(os.path.join(root, 'engine', 'cockpit.js'), encoding='utf-8').read()
+    app = open(os.path.join(root, 'app.html'), encoding='utf-8').read()
+    assert 'Khipus<span class="sub">Finance Intelligence</span>' in s and '<title>Khipus Finance Intelligence · 2026</title>' in app
+    assert 'Khipus Finance AI' not in app and 'family=Nunito:wght@' in app
+    assert "L('Herramientas', 'Tools')" in s and 'SVG.tools' in s and "L('Más', 'More')" not in s
+    # invocar: la mascota en la barra, el token del agente se antepone al enviar, ✕ lo despide
+    assert '<span id="kos-inv" hidden></span>' in s and "invokeAgent(id);" in s
+    assert "v = (ckLang() === 'en' ? AGENT_TOK[_inv][1] : AGENT_TOK[_inv][0]) + ' ' + v;" in s
+    assert "L('Invocar', 'Invoke')" in s and "L('Despedir a ', 'Dismiss ')" in s
+    w = open(os.path.join(root, 'engine', 'oswindows.js'), encoding='utf-8').read()
+    assert "L('Invocar a ' + a.es, 'Invoke ' + a.en)" in w and 'cc.invoke(aid)' in w

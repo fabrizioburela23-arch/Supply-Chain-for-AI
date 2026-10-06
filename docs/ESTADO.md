@@ -9,6 +9,21 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (v) — MARCA, TOOLS E «INVOCAR» (sw v249) + GEMINI 3.8 CON RESPALDOS
+
+- Nombre visible: **Khipus Finance Intelligence** (antes "Khipus Finance AI"; ids internos sin cambio).
+  Letra del OS: Nunito (ligeramente redondeada) con Geist de respaldo (`--os-font`).
+- "Más ▾" → botón principal **Herramientas / Tools** (píldora con degradado de la marca + ícono).
+- **INVOCAR** (la firma de la app): tocar un agente (inicio, ventana Agentes, paleta ⌘K) lo invoca —
+  aparece con su mascota en la barra del chat y responde todo lo que escribas (se antepone su @token)
+  hasta despedirlo con ✕. `BixbyCockpit.invoke(id)` / `.invoked()`.
+- Gemini: modelo por defecto gemini-3.8-flash (thinkingLevel low/medium), respaldos en cadena
+  (`GEMINI_FALLBACK_MODEL`, default 3.5-flash,3.1-pro) sin esperas entre modelos; saturados al final
+  3 min; un 404 de respaldo se salta 6 h y nunca pausa todo Gemini. El 5-6 oct Google tuvo saturación
+  general (503) → el chat caía a NVIDIA.
+
+---
+
 # SESIÓN 2026-10-06 (iv) — JEV AL MANDO DEL CHAT (sw v248)
 
 Pedido de Fabrizio: "que Jev decida cuándo usar IA o responder desde la base local, y qué opción es mejor,

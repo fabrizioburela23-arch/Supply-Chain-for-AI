@@ -792,7 +792,7 @@ def service_worker():
 
 _MANIFEST = (
     '{'
-    '"name":"Khipus Finance AI","short_name":"Khipu","display":"standalone",'
+    '"name":"Khipus Finance Intelligence","short_name":"Khipu","display":"standalone",'
     '"start_url":"/","scope":"/","background_color":"#F4F1EA","theme_color":"#1A1813",'
     '"description":"Inteligencia financiera sobre la cadena de valor global de IA, semiconductores y espacio",'
     '"icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]'
@@ -972,7 +972,7 @@ def health():
     # hasta 2s de timeout sondeando MiroFish, ya retirado.)
     return jsonify({
         'server': True,
-        'app': 'Khipus Finance AI',
+        'app': 'Khipus Finance Intelligence',
         'assistant': 'Khipu',
         'finnhub': bool(FINNHUB),
         'fmp': bool(FMP),
@@ -2625,7 +2625,7 @@ def crypto_analyze():
 
     _tongue = 'inglés' if lang == 'en' else 'español'
     sys = (
-        'Eres un analista de criptomercados CAUTO de Khipus Finance AI. '
+        'Eres un analista de criptomercados CAUTO de Khipus Finance Intelligence. '
         'NUNCA das un "compra"/"vende" tajante: das una POSTURA SUAVE con factores y un '
         'nivel de confianza, y recuerdas siempre que es análisis, no asesoría financiera. '
         'Usa los datos de mercado en vivo del contexto; no inventes cifras. '
@@ -2704,7 +2704,7 @@ def research_deep():
 
     _tongue = 'inglés' if lang == 'en' else 'español'
     sys = (
-        'Eres el analista jefe de Khipus Finance AI, experto en la cadena de '
+        'Eres el analista jefe de Khipus Finance Intelligence, experto en la cadena de '
         'suministro de semiconductores, IA, espacio, energía y nuclear. Escribe una '
         'investigación PROFUNDA que va MÁS ALLÁ de la empresa foco: panorama del sector, '
         'competidores directos, exposición geopolítica, cuellos de botella (chokepoints) de '
@@ -2971,7 +2971,7 @@ def ai_analyze():
 
 # ── Khipu Canvas — AI-generated chart specs (Fase 1) ────────────────────────
 _CANVAS_SYSTEM = """\
-You are Khipus Finance AI's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
+You are Khipus Finance Intelligence's Canvas AI — an expert at semiconductor / AI / space supply chain analytics.
 Given a user query and a JSON context with node data and market quotes, produce a single-screen
 data visualization spec. Respond ONLY with valid JSON — no markdown fences, no explanation.
 
@@ -3128,7 +3128,7 @@ def canvas_generate():
 
 # ── Khipu Command Center — interpreta comando libre → respuesta + acciones ────
 _COMMAND_SYSTEM = """\
-Eres Khipu, el copiloto de IA del terminal financiero Khipus Finance AI (semiconductores, IA y espacio).
+Eres Khipu, el copiloto de IA del terminal financiero Khipus Finance Intelligence (semiconductores, IA y espacio).
 El usuario te habla o escribe en lenguaje natural y tú controlas la app y respondes como analista.
 Responde SOLO con JSON válido (sin markdown, sin explicación fuera del JSON):
 
@@ -3847,7 +3847,7 @@ def _neo4j_add_fact(fact):
 
 
 # ── Khipu voice — system prompt for ElevenLabs agent configuration ──────────
-BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finance AI — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
+BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
 
 ## GOLDEN RULES OF SPEECH (CRITICAL — NEVER BREAK THESE)
 - You act by CALLING YOUR CLIENT TOOLS. Tools are silent and instant.
@@ -4175,7 +4175,7 @@ def _deep_run(question, company_ids):
         # Síntesis final = lo que importa → tier 'deep' (Sonnet 5) con más presupuesto.
         # (El PLAN del paso 1 queda 'fast': es barato y no necesita profundidad.)
         final, model = _ai_complete(
-            'Eres el analista jefe de Khipus Finance AI. Escribe en español, '
+            'Eres el analista jefe de Khipus Finance Intelligence. Escribe en español, '
             'para un inversor exigente: 1) TESIS en 2-3 frases; 2) EVIDENCIA con los números '
             'del contexto/simulación (cita empresas y porcentajes REALES del JSON, jamás '
             'inventes); 3) RIESGOS (2-3 bullets); 4) QUÉ VIGILAR (2-3 señales concretas). '

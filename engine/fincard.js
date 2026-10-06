@@ -610,7 +610,7 @@
       '</div></div>';
   }
   function footer(srcHtml) {
-    return '<div class="fc-foot"><span>Khipus Finance AI · ' + esc(L('análisis, no asesoría financiera', 'analysis, not financial advice')) + '</span>' +
+    return '<div class="fc-foot"><span>Khipus Finance Intelligence · ' + esc(L('análisis, no asesoría financiera', 'analysis, not financial advice')) + '</span>' +
       '<span id="fc-foot-src">' + srcHtml + '</span></div>';
   }
 

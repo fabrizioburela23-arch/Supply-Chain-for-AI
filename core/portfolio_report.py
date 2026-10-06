@@ -185,7 +185,7 @@ def summarize(rep):
         facts.append(f"Acción sugerida {a['id']}: {a['kind']} {a['label']} — {a['why_es']}")
     for n in rep.get('news', [])[:5]:
         facts.append(f"Noticia ({n['published_at'][:10]}, {', '.join(n['holdings'])}): {n['title']}")
-    sys_ = ('Eres el analista de Khipus Finance AI y escribes el resumen de un reporte de cartera para un '
+    sys_ = ('Eres el analista de Khipus Finance Intelligence y escribes el resumen de un reporte de cartera para un '
             'inversionista SIN experiencia. 5-8 frases claras: cómo le fue en el periodo y desde el inicio, frente '
             'al S&P 500, qué posiciones explican el resultado, qué noticias importan (con su fecha) y qué conviene '
             'revisar (las acciones sugeridas, por su id). Usa SOLO los datos dados; no inventes cifras. Cierra '

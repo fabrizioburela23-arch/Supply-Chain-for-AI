@@ -53,7 +53,7 @@ def test_1_solo_chat_destapa_la_conversacion_en_cada_camino():
     assert 'isCentered()' in rv and 'D.minimize(w.id)' in rv   # solo en "solo chat"; a la barra, no cerradas
     assert "if (chatCentered()) { _revealChat();" in _fn(s, '_ensureThread')
     assert "if (kind === 'chat' && chatCentered()) { _revealChat(); _focusChat(); return; }" in _fn(s, 'stage')
-    assert '_revealChat();' in _fn(s, '_askAgentPrefill')
+    assert '_revealChat();' in _fn(s, 'invokeAgent')   # invocar a un agente (antes _askAgentPrefill) destapa el chat
     # escribir en la barra o que otro módulo la llene (oswindows.js "Pregúntale a Radar") la destapa
     assert "input.addEventListener('input', function () { _revealChat(); });" in s
     assert 'revealChat: _revealChat' in s

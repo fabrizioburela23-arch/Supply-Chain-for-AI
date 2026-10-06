@@ -124,7 +124,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   --kos-shadow-lg:0 2px 8px rgba(0,0,0,.45), 0 22px 56px rgba(0,0,0,.55);
   --kos-scrim:rgba(0,0,0,.5);--kos-accent-soft:rgba(76,141,246,.16);
   color-scheme:dark}
-#bcp-ov{--os-r:18px;--os-r-sm:12px;--os-font:'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+#bcp-ov{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   position:fixed;inset:0;z-index:7000;display:none;flex-direction:column;
   background:var(--os-bg);color:var(--os-ink);font-family:var(--os-font);
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;--km-ring:var(--os-surface);animation:bcpFade .22s ease}
@@ -141,7 +141,9 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 #bcp-orb-wrap canvas{width:30px!important;height:30px!important;border-radius:50%}
 .kos-orbf{display:block;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#ffd0e0 0,rgba(255,208,224,0) 38%),linear-gradient(135deg,#f07fa0,#7a4ce8 55%,#ff8746)}
 #bcp-idwrap{display:flex;align-items:center;gap:8px;min-width:0}
-#bcp-word{font-size:17px;font-weight:650;letter-spacing:-.015em;color:var(--os-ink);white-space:nowrap}
+#bcp-word{font-size:17px;font-weight:800;letter-spacing:-.01em;color:var(--os-ink);white-space:nowrap}
+#bcp-word .sub{font-weight:600;color:var(--os-ink-2);margin-left:5px;letter-spacing:0}
+@media(max-width:1280px){#bcp-word .sub{display:none}}
 #bcp-state{display:none;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--os-ink-2);
   background:var(--os-surface-2);border-radius:999px;padding:3px 9px 3px 8px;white-space:nowrap}
 #bcp-state.live,#bcp-state.think{display:inline-flex}
@@ -162,6 +164,10 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 .kos-btn:hover,.kos-btn.on{background:var(--os-surface-2);color:var(--os-ink)}
 .kos-btn:focus-visible,.kos-bal:focus-visible,.kos-av:focus-visible{outline:none;box-shadow:0 0 0 3px var(--kos-accent-soft)}
 .kos-more-btn svg,#kos-theme svg{width:14px;height:14px;flex-shrink:0}
+/* Tools: el botón principal de la barra (todas las pantallas) */
+.kos-btn.kos-more-btn{margin-left:6px;padding:0 16px 0 13px;font-weight:700;color:#fff;letter-spacing:.01em;background:linear-gradient(135deg,#7a4ce8,#f07fa0);box-shadow:0 6px 18px -8px rgba(122,76,232,.7)}
+.kos-btn.kos-more-btn:hover,.kos-btn.kos-more-btn.on{color:#fff;background:linear-gradient(135deg,#6a3be0,#ec6d92);transform:translateY(-1px)}
+.kos-more-btn .ti{width:15px;height:15px;flex-shrink:0}
 #kos-theme svg{width:17px;height:17px}
 .kos-round{width:40px;padding:0;font-size:13px;font-weight:600;letter-spacing:.02em}
 .kos-right{display:flex;align-items:center;gap:2px;flex-shrink:0}
@@ -258,7 +264,8 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 /* estado vacío del chat (sin mensajes): Khipu grande, una frase, sugerencias, lo vivo de hoy */
 #kos-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:5vh 6px 10px;max-width:520px;margin:0 auto}
 .kos-hero{margin:0 0 14px;line-height:0;filter:drop-shadow(0 10px 22px rgba(194,58,140,.22))}
-.kos-empty-h{font-size:34px;font-weight:700;letter-spacing:-.03em;margin:0;color:var(--os-ink);line-height:1.1}
+.kos-empty-h{font-size:34px;font-weight:800;letter-spacing:-.02em;margin:0;color:var(--os-ink);line-height:1.1}
+.kos-empty-h .sub{display:block;font-size:17px;font-weight:600;letter-spacing:.01em;color:var(--os-ink-2);margin-top:6px}
 .kos-empty-p{font-size:15px;color:var(--os-ink-2);margin:8px 0 22px;line-height:1.5}
 .kos-sugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 20px}
 .kos-chip{border:0;background:var(--os-surface-2);color:var(--os-ink);font-size:13.5px;line-height:1.3;padding:9px 14px;border-radius:999px;
@@ -278,6 +285,18 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 #bcp-bar:focus-within{background:var(--os-surface);border-color:var(--os-line);box-shadow:0 0 0 4px var(--kos-accent-soft)}
 #bcp-input{flex:1;min-width:0;background:transparent;border:0;color:var(--os-ink);font-size:15px;padding:10px 4px;outline:none;font-family:inherit}
 #bcp-input::placeholder{color:var(--os-ink-3)}
+/* INVOCAR: el agente invocado entra a la conversación (la firma de Khipus) */
+#kos-inv{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:34px;padding:0 6px 0 4px;margin-left:-12px;border-radius:999px;background:var(--os-surface);box-shadow:0 0 0 1px var(--os-line);font-size:13px;font-weight:700;color:var(--os-ink);white-space:nowrap}
+#kos-inv[hidden]{display:none}
+#kos-inv .x{border:0;background:transparent;color:var(--os-ink-3);cursor:pointer;font-size:13px;width:22px;height:22px;border-radius:50%;padding:0}
+#kos-inv .x:hover{background:var(--os-surface-2);color:var(--os-ink)}
+#kos-inv.pop{animation:kosInv .55s cubic-bezier(.2,1.4,.4,1)}
+@keyframes kosInv{0%{transform:scale(.4) translateY(6px);opacity:0}60%{transform:scale(1.08)}100%{transform:none;opacity:1}}
+.kos-ag.inv{background:var(--os-surface-2);color:var(--os-ink);box-shadow:0 0 0 2px var(--kos-accent-soft)}
+.kos-ag .iv{font-size:10px;font-weight:800;color:var(--os-accent,#7a4ce8);text-transform:uppercase;letter-spacing:.07em;opacity:0;transition:opacity .15s;height:12px}
+.kos-ag:hover .iv,.kos-ag:focus-visible .iv,.kos-ag.inv .iv{opacity:1}
+@media(hover:none){.kos-ag .iv{display:none}}
+@media(prefers-reduced-motion:reduce){#kos-inv.pop{animation:none}}
 .bcp-iconbtn{width:40px;height:40px;flex-shrink:0;border-radius:50%;border:0;background:transparent;color:var(--os-ink-2);cursor:pointer;
   font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .14s,color .14s,transform .14s}
 .bcp-iconbtn:hover{background:var(--os-surface-3);color:var(--os-ink)}
@@ -532,6 +551,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 
   /* ══ KHIPUS OS (2026-10-06): utilidades de la cáscara ══ */
   var SVG = {
+    tools: '<svg class="ti" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.8"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.8"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.8"/><rect x="9" y="9" width="5.5" height="5.5" rx="2.75"/></svg>',
     chev: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>',
     mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
@@ -664,6 +684,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     var inp = ov.querySelector('#bcp-input');
     if (inp) {
       inp.setAttribute('placeholder', L('Pregúntale a Khipu…', 'Ask Khipu…'));
+      if (_inv) _paintInvoke(false);   // el agente invocado sigue en la barra (otro idioma)
       inp.setAttribute('title', L('Escribe tu pregunta. «/» abre los comandos y «@» le habla a un agente.', 'Type your question. “/” opens the commands and “@” talks to an agent.'));
       inp.setAttribute('aria-label', L('Pregúntale a Khipu', 'Ask Khipu'));
     }
@@ -688,7 +709,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       sk.setAttribute('aria-label', L('Buscar empresas, pantallas y acciones', 'Search companies, screens and actions'));
     }
     var mb = ov.querySelector('#kos-more');
-    if (mb) { mb.querySelector('.tx').textContent = L('Más', 'More'); mb.setAttribute('title', L('Todas las pantallas', 'All screens')); mb.setAttribute('aria-label', L('Más pantallas', 'More screens')); }
+    if (mb) { mb.querySelector('.tx').textContent = L('Herramientas', 'Tools'); mb.setAttribute('title', L('Todas las herramientas y pantallas', 'All tools and screens')); mb.setAttribute('aria-label', L('Herramientas: todas las pantallas', 'Tools: all screens')); }
     var lb = ov.querySelector('#kos-lang');
     if (lb) { lb.textContent = ckLang() === 'en' ? 'EN' : 'ES'; lb.setAttribute('title', L('Idioma: español — cambiar a English', 'Language: English — switch to español')); lb.setAttribute('aria-label', lb.getAttribute('title')); }
     _paintThemeBtn(); _paintAgentsBtn(); _paintMe();
@@ -917,12 +938,12 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       '<div id="bcp-top">' +
         '<div class="kos-brand">' +
           '<div id="bcp-orb-wrap"><canvas id="bcp-orb-canvas" width="64" height="64"></canvas></div>' +
-          '<div id="bcp-idwrap"><div id="bcp-word">Khipus</div>' +
+          '<div id="bcp-idwrap"><div id="bcp-word" title="Khipus Finance Intelligence">Khipus<span class="sub">Finance Intelligence</span></div>' +
             '<div id="bcp-state"><span class="dot"></span><span class="txt"></span></div></div>' +
         '</div>' +
         '<div class="kos-mid">' +
           '<button type="button" class="kos-search" id="kos-search"><span class="kos-kbd"></span><span class="tx"></span></button>' +
-          '<button type="button" class="kos-btn kos-more-btn" id="kos-more" aria-haspopup="menu" aria-expanded="false"><span class="tx"></span>' + SVG.chev + '</button>' +
+          '<button type="button" class="kos-btn kos-more-btn" id="kos-more" aria-haspopup="menu" aria-expanded="false">' + SVG.tools + '<span class="tx"></span>' + SVG.chev + '</button>' +
         '</div>' +
         '<div class="kos-right">' +
           '<button type="button" class="kos-btn kos-agbtn" id="kos-agents"></button>' +
@@ -945,6 +966,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
         '<div class="bd"></div></div>' +
       // barra de entrada: en Khipus OS (≥ 1100 px) se muda a la columna central del chat
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
+        '<span id="kos-inv" hidden></span>' +
         '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false">' +
         '<button type="button" class="bcp-iconbtn" id="bcp-mic">' + SVG.mic + '</button>' +
         '<button type="button" class="bcp-iconbtn" id="bcp-send">' + SVG.send + '</button>' +
@@ -999,7 +1021,12 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
         d.classList.toggle('min'); relabelShell();
       });
     });
-    function submit() { var v = (input.value || '').trim(); if (!v) return; input.value = ''; ask(v); }
+    function submit() {
+      var v = (input.value || '').trim(); if (!v) return; input.value = '';
+      // agente INVOCADO: sigue en la conversación hasta que lo despidas (✕); un @ escrito a mano manda
+      if (_inv && AGENT_TOK[_inv] && v.charAt(0) !== '@' && v.charAt(0) !== '/') v = (ckLang() === 'en' ? AGENT_TOK[_inv][1] : AGENT_TOK[_inv][0]) + ' ' + v;
+      ask(v);
+    }
 
     // barra superior
     ov.querySelector('#kos-search').addEventListener('click', function () { palOpen(''); });
@@ -1510,7 +1537,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
                      'Compara Nvidia y AMD', '¿Qué opinan mis agentes de ASML?', 'Simula que China prohíbe exportar HBM'];
     var e = document.createElement('div'); e.id = 'kos-empty';
     e.innerHTML = '<div class="kos-hero">' + _mascot('khipu', 84) + '</div>' +
-      '<h2 class="kos-empty-h">Khipus</h2>' +
+      '<h2 class="kos-empty-h">Khipus <span class="sub">Finance Intelligence</span></h2>' +
       '<p class="kos-empty-p">' + esc(L('Pregúntale lo que quieras, como a un analista.', 'Ask anything, the way you would ask an analyst.')) + '</p>' +
       '<div class="kos-sugg">' + sugg.map(function (q) { return '<button type="button" class="kos-chip" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + '</div>' +
       '<div id="bcp-home-hyper" class="bcp-live"></div>' +
@@ -1523,7 +1550,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       var a = ev.target.closest && ev.target.closest('.kos-ag');
       if (a) {
         var id = a.getAttribute('data-ag');
-        if (_custom.agents) stage('agents', { id: id }); else _askAgentPrefill(id);
+        invokeAgent(id);
       }
     });
     _paintAgentRow();
@@ -1536,18 +1563,43 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     var on = _agentsOn();
     row.innerHTML = AGENT_IDS.map(function (id) {
       var tt = _agentName(id) + (_agentRole(id) ? ' — ' + _agentRole(id) : '') + (on.indexOf(id) < 0 ? ' (' + L('apagado', 'off') + ')' : '');
-      return '<button type="button" class="kos-ag' + (on.indexOf(id) < 0 ? ' off' : '') + '" data-ag="' + id + '" title="' + esc(tt) + '" aria-label="' + esc(tt) + '">' +
-        _mascot(id, 34) + '<span>' + esc(_agentName(id)) + '</span></button>';
+      var inv = L('Invocar a ', 'Invoke ') + _agentName(id);
+      return '<button type="button" class="kos-ag' + (on.indexOf(id) < 0 ? ' off' : '') + (_inv === id ? ' inv' : '') + '" data-ag="' + id + '" title="' + esc(inv + ' — ' + tt) + '" aria-label="' + esc(inv) + '">' +
+        _mascot(id, 34) + '<span>' + esc(_agentName(id)) + '</span><span class="iv">' + esc(L('Invocar', 'Invoke')) + '</span></button>';
     }).join('');
   }
-  function _askAgentPrefill(id) {
-    var t = AGENT_TOK[id], inp = document.getElementById('bcp-input');
-    if (!t || !inp) return;
-    inp.value = (ckLang() === 'en' ? t[1] : t[0]) + ' ';
-    _revealChat();   // "solo chat": la barra no puede quedar tapada por una ventana mientras se escribe
-    try { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {}
-    try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  /* INVOCAR (2026-10-06, pedido de Fabrizio: "que se llame invocar dentro de la app, nuestro toque"): tocar un
+     agente lo llama a la conversación — aparece en la barra con su mascota y responde TODO lo que escribas
+     (con sus habilidades, research/agent_skills) hasta que lo despidas con ✕. Un @agente escrito a mano manda. */
+  var _inv = null;
+  function _paintInvoke(pop) {
+    var pill = document.getElementById('kos-inv'), inp = document.getElementById('bcp-input');
+    if (!pill) return;
+    if (!_inv) {
+      pill.hidden = true; pill.innerHTML = '';
+      if (inp) inp.setAttribute('placeholder', L('Pregúntale a Khipu…', 'Ask Khipu…'));
+    } else {
+      var nm = _agentName(_inv);
+      pill.innerHTML = _mascot(_inv, 26) + '<span>' + esc(nm) + '</span>' +
+        '<button type="button" class="x" aria-label="' + esc(L('Despedir a ', 'Dismiss ') + nm) + '" title="' + esc(L('Despedir a ', 'Dismiss ') + nm) + '">✕</button>';
+      pill.hidden = false;
+      pill.setAttribute('title', L('Invocaste a ' + nm + ': responde desde su especialidad', 'You invoked ' + nm + ': answers from its specialty'));
+      if (pop) { pill.classList.remove('pop'); void pill.offsetWidth; pill.classList.add('pop'); }
+      if (inp) inp.setAttribute('placeholder', L('Invocaste a ' + nm + ' — escríbele…', 'You invoked ' + nm + ' — write to it…'));
+      var x = pill.querySelector('.x');
+      if (x) x.addEventListener('click', function (e) { e.stopPropagation(); invokeAgent(null); });
+    }
+    _paintAgentRow();
   }
+  function invokeAgent(id) {
+    _inv = (id && AGENT_TOK[id]) ? id : null;        // Khipu no se invoca: ya está siempre
+    var inp = document.getElementById('bcp-input');
+    if (inp && _inv && /^\s*@\S+\s*$/.test(inp.value || '')) inp.value = '';   // quita el viejo "@agente " suelto
+    _paintInvoke(!!_inv);
+    _revealChat();   // "solo chat": la barra no puede quedar tapada por una ventana mientras se escribe
+    if (inp) try { inp.focus(); } catch (e) {}
+  }
+  function _askAgentPrefill(id) { invokeAgent(id); }
 
   /* ══ KHIPUS OS — PALETA ⌘K: empresas · pantallas · preguntar a un agente · acciones ══ */
   var _pal = { items: [], idx: 0 };
@@ -1687,9 +1739,8 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       return { ic: esc(x.s.ic), label: en ? x.s.en : x.s.es, go: L('Abrir', 'Open'), run: function () { palClose(true); _runScreen(x.s.id); } };
     }));
     var ags = AGENT_IDS.filter(function (id) { return _matchScore(_agentName(id) + ' ' + _agentRole(id) + ' agente agent ' + id, fq) > 0; });
-    sec(L('Preguntar a', 'Ask'), ags.map(function (id) {
-      var t = AGENT_TOK[id];
-      return { ic: _mascot(id, 22), label: _agentName(id), sub: _agentRole(id), go: en ? t[1] : t[0], run: function () { palClose(); _askAgentPrefill(id); } };
+    sec(L('Invocar', 'Invoke'), ags.map(function (id) {
+      return { ic: _mascot(id, 22), label: _agentName(id), sub: _agentRole(id), go: L('Invocar', 'Invoke'), run: function () { palClose(); invokeAgent(id); } };
     }));
     var acts = _palActions().filter(function (a) { return _matchScore(a.label + ' ' + a.k, fq) > 0; }).slice(0, fq ? 4 : 8);
     sec(L('Acciones', 'Actions'), acts.map(function (a) {
@@ -4011,6 +4062,8 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   }
 
   window.BixbyCockpit = {
+    invoke: function (id) { invokeAgent(id); return _inv; },
+    invoked: function () { return _inv; },
     open: openCockpit,
     close: close,
     isOpen: function () { return open; },

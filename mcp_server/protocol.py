@@ -53,7 +53,7 @@ def result(id_, res):
 def instructions(principal):
     sc = ', '.join(sorted(principal.scopes))
     lines = [
-        'Khipus Finance AI — financial terminal and ontology of the AI supply chain (949 curated companies, '
+        'Khipus Finance Intelligence — financial terminal and ontology of the AI supply chain (949 curated companies, '
         '2,500+ supplier→customer links, macro layers), live market data, a research-agent swarm with '
         'evidence-backed claims, an investment committee and multi-client brokerage (Alpaca).',
         f'This connection has scopes: {sc}.',

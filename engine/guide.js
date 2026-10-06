@@ -32,7 +32,7 @@
   const T = {
     es: {
       kicker: 'Guía rápida',
-      title: '¿Qué es Khipus Finance AI?',
+      title: '¿Qué es Khipus Finance Intelligence?',
       intro: `Un terminal financiero para invertir en la cadena de suministro de la IA — <b>949 empresas</b> en
         13 sectores: semiconductores, IA, espacio, nuclear, robótica, defensa, energía, materiales,
         macro/crédito, inmobiliario y logística, conectadas por sus <b>2.500+ relaciones reales</b>
@@ -124,7 +124,7 @@
     },
     en: {
       kicker: 'Quick guide',
-      title: 'What is Khipus Finance AI?',
+      title: 'What is Khipus Finance Intelligence?',
       intro: `A financial terminal for investing in the AI supply chain — <b>949 companies</b> across
         13 sectors: semiconductors, AI, space, nuclear, robotics, defense, energy, materials,
         macro/credit, real estate and logistics, connected by <b>2,500+ real relationships</b>

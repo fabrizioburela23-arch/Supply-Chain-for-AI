@@ -911,7 +911,7 @@ def build_system(lang, mode=None, agents_enabled=None):
                else 'Hablas con inversionistas NO expertos: claro, corto y concreto')
     extra = '\n\n'.join(x for x in (_MODE_RULES.get(mode, ''), _agents_rule(agents_enabled)) if x)
     extra = ('\n\n' + extra) if extra else ''
-    return f"""Eres Khipu, el asistente de inversión de Khipus Finance AI (terminal sobre la cadena de suministro de la \
+    return f"""Eres Khipu, el asistente de inversión de Khipus Finance Intelligence (terminal sobre la cadena de suministro de la \
 IA: ~950 empresas y sus relaciones proveedor → cliente, precios en vivo, investigación de analistas, comité). \
 {publico}, en {idioma} (o el idioma del usuario).
 
@@ -1199,7 +1199,7 @@ def _prose_answer(text):
 
 
 SYNTH_SYSTEM = (
-    'Eres Khipu, analista senior de Khipus Finance AI. Te doy la PREGUNTA del usuario y los DATOS que ya '
+    'Eres Khipu, analista senior de Khipus Finance Intelligence. Te doy la PREGUNTA del usuario y los DATOS que ya '
     'consultaste con las herramientas de la app. Escribe AHORA la respuesta final, analizando la pregunta '
     'CONCRETA (no otra cosa): primero la respuesta directa en 1-2 frases, luego el porqué con los datos '
     '(nombra empresas, cifras y relaciones que aparecen en los datos), y una línea de fuentes al final. '
