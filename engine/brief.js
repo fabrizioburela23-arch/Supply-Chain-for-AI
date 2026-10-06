@@ -5,6 +5,11 @@
    y una oportunidad. Reutiliza el motor de matrices (o topología cliente) y,
    opcional, una línea narrada por IA (gasto moderado). No molesta: 1×/día,
    fácil de cerrar, y un botón ❓ para reabrirlo.
+   KHIPUS OS (2026-10-06): NO se abre solo encima de Khipus OS (la app arranca en el
+   OS salvo "Vista clásica"); queda a pedido (window._briefOpen, paleta ⌘K). Así el
+   arranque no gasta CPU (cadena de caída de 949 empresas) ni una llamada de IA que
+   compite con la primera pregunta del usuario. Al abrirse: primero el motor de
+   matrices; el cálculo local solo si el servidor no lo tiene, y en porciones.
    ============================================================================ */
 (function () {
   'use strict';
@@ -31,7 +36,7 @@
   function ensureStyles() {
     if (document.getElementById('brief-styles')) return;
     var css = ''
-      + '#brief-ov{position:fixed;inset:0;z-index:6200;display:none;align-items:center;justify-content:center;'
+      + '#brief-ov{position:fixed;inset:0;z-index:7600;display:none;align-items:center;justify-content:center;'
       + 'background:rgba(3,6,12,.72);backdrop-filter:blur(4px);font-family:Inter,system-ui,sans-serif}'
       + '#brief-ov.show{display:flex;animation:brFade .2s ease}'
       + '@keyframes brFade{from{opacity:0}to{opacity:1}}'
@@ -51,6 +56,7 @@
       + '.brc .tag{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}'
       + '.brc .tx{font-size:12.5px;line-height:1.45;color:#E8EDFB;margin-top:3px}'
       + '.brc .tx b{color:#fff}'
+      + '#brief .src{font-size:10.5px;color:#7C87A3;margin-top:8px;line-height:1.4}'
       + '#brief .foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}'
       + '#brief .dismiss{font-size:11px;color:#7C87A3;display:flex;align-items:center;gap:6px;cursor:pointer}'
       + '#brief .ok{padding:9px 20px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:600;'
@@ -65,9 +71,9 @@
 
   var KIND = {
     shock:  { ic: '⚡', bg: 'rgba(255,77,106,.15)', col: '#FF4D6A', tag: 'CHOKEPOINT' },
-    risk:   { ic: '△', bg: 'rgba(255,179,0,.15)',  col: '#FFB300', tag: 'RIESGO' },
-    factor: { ic: '◈', bg: 'rgba(157,107,255,.15)', col: '#9D6BFF', tag: 'FACTOR ACTIVO' },
-    oport:  { ic: '↑', bg: 'rgba(43,227,139,.15)', col: '#2BE38B', tag: 'OPORTUNIDAD' },
+    risk:   { ic: '△', bg: 'rgba(255,179,0,.15)',  col: '#FFB300', tag: 'RIESGO', tag_en: 'RISK' },
+    factor: { ic: '◈', bg: 'rgba(157,107,255,.15)', col: '#9D6BFF', tag: 'FACTOR ACTIVO', tag_en: 'ACTIVE FACTOR' },
+    oport:  { ic: '↑', bg: 'rgba(43,227,139,.15)', col: '#2BE38B', tag: 'OPORTUNIDAD', tag_en: 'OPPORTUNITY' },
     concl:  { ic: '🏛', bg: 'rgba(0,224,255,.12)', col: '#00E0FF', tag: 'CONCLUSIONES', tag_en: 'CONCLUSIONS' },
   };
 
@@ -115,48 +121,86 @@
     setTimeout(function () { if (window.jumpTo) window.jumpTo(id); }, 100);
   };
 
-  // ── construir las tarjetas del brief (cliente + matriz si hay) ──
-  function build() {
-    return Promise.resolve().then(function () {
-      var cards = [];
+  // ── el mayor punto único de fallo, calculado EN TU NAVEGADOR (respaldo sin servidor) ──
+  // computeDownstream recorre todos los vínculos por cada empresa (~949 × 2.500): va en porciones
+  // de ~12 ms para no congelar la pantalla (antes era UNA tarea larga de ~0,3 s; >1 s en un móvil).
+  function clientChokepoint() {
+    return new Promise(function (resolve) {
       var NODES = window.NODES || [];
-      // chokepoint principal (cliente)
-      if (typeof window.computeDownstream === 'function' && NODES.length) {
-        var best = null;
-        NODES.forEach(function (n) {
-          var a = 0; try { var r = window.computeDownstream(n.id); a = (r instanceof Set ? r.size : (r || []).length); } catch (e) {}
-          if (!best || a > best.a) best = { id: n.id, a: a };
-        });
-        if (best && best.a > 0) cards.push({ kind: 'shock', node: best.id,
-          text: 'El mayor punto único de fallo hoy es <b>' + esc(nm(best.id)) + '</b>: su caída arrastraría a <b>' + best.a + ' empresas</b>.' });
-      }
-      // riesgo alto (cartera o universo)
-      if (typeof window.computeNRS === 'function') {
-        var pos = (window.MKT && window.MKT.pos) || {};
-        var pool = Object.keys(pos).length ? Object.keys(pos) : NODES.map(function (n) { return n.id; });
-        var risky = pool.map(function (id) { return { id: id, nrs: window.computeNRS(id) }; })
-          .sort(function (a, b) { return b.nrs - a.nrs; })[0];
-        if (risky && risky.nrs >= 60) cards.push({ kind: 'risk', node: risky.id,
-          text: (Object.keys(pos).length ? 'En tu cartera, ' : '') + '<b>' + esc(nm(risky.id)) + '</b> es la de mayor riesgo (NRS <b>' + risky.nrs + '/100</b>). Vigílala.' });
-      }
-      // enriquecer con matriz (chokepoint ponderado + factores)
-      return fetch('/api/matrix/metrics').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-        .then(function (m) {
-          if (m && m.chokepoints_top25 && m.chokepoints_top25.length) {
-            cards[0] = { kind: 'shock', node: m.chokepoints_top25[0].id,
-              text: 'Chokepoint de la red (motor de matrices): <b>' + esc(nm(m.chokepoints_top25[0].id)) +
-                '</b> concentra el riesgo estructural — arrastra a <b>' + m.chokepoints_top25[0].cascade_size + '</b> empresas.' };
-          }
-          if (m && m.factors_active && m.factors_active.length) {
-            cards.push({ kind: 'factor',
-              text: '<b>' + m.factors_active.length + '</b> factor(es) externo(s) modulando la red: ' + esc(m.factors_active.slice(0, 2).join(', ')) + '.' });
-          }
-          return conclusionsCard().then(function (cc) {
-            cards = cards.slice(0, 4);
-            if (cc) cards.splice(1, 0, cc);
-            return cards.slice(0, 5);
+      if (typeof window.computeDownstream !== 'function' || !NODES.length) { resolve(null); return; }
+      var best = null, i = 0;
+      (function step() {
+        var t0 = Date.now();
+        for (; i < NODES.length && Date.now() - t0 < 12; i++) {
+          var a = 0;
+          try { var r = window.computeDownstream(NODES[i].id); a = (r instanceof Set ? r.size : (r || []).length); } catch (e) {}
+          if (!best || a > best.a) best = { id: NODES[i].id, a: a };
+        }
+        if (i < NODES.length) setTimeout(step, 0);
+        else resolve(best && best.a > 0 ? best : null);
+      })();
+    });
+  }
+
+  // riesgo alto (cartera o universo) — NRS memoizado, barato
+  function riskCard() {
+    if (typeof window.computeNRS !== 'function') return null;
+    var NODES = window.NODES || [];
+    var pos = (window.MKT && window.MKT.pos) || {};
+    var mine = Object.keys(pos).length > 0;
+    var pool = mine ? Object.keys(pos) : NODES.map(function (n) { return n.id; });
+    var risky = pool.map(function (id) { return { id: id, nrs: window.computeNRS(id) }; })
+      .sort(function (a, b) { return b.nrs - a.nrs; })[0];
+    if (!risky || !(risky.nrs >= 60)) return null;
+    return { kind: 'risk', node: risky.id,
+      text: (mine ? L('En tu cartera, ', 'In your portfolio, ') : '') + '<b>' + esc(nm(risky.id)) + '</b> ' +
+        L('es la de mayor riesgo', 'carries the highest risk') + ' (NRS <b>' + risky.nrs + '/100</b>). ' +
+        L('Vigílala.', 'Keep an eye on it.') };
+  }
+
+  function hhmm() {
+    try { return new Date().toLocaleTimeString(isEn() ? 'en' : 'es', { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
+  }
+
+  // ── construir las tarjetas: motor de matrices primero (servidor); si no está, el cálculo
+  //    local (en porciones). La pizarra del comité va EN PARALELO. → {cards, src} ──
+  function build() {
+    var metricsP = fetch('/api/matrix/metrics').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    var boardP = conclusionsCard().catch(function () { return null; });
+    var risk = null;
+    try { risk = riskCard(); } catch (e) { risk = null; }
+    return metricsP.then(function (m) {
+      var top = m && m.chokepoints_top25 && m.chokepoints_top25[0];
+      var shockP = top
+        ? Promise.resolve({ kind: 'shock', node: top.id,
+            text: L('Chokepoint de la red (motor de matrices): <b>', 'Network chokepoint (matrix engine): <b>') + esc(nm(top.id)) +
+              L('</b> concentra el riesgo estructural — arrastra a <b>', '</b> concentrates the structural risk — it drags down <b>') +
+              esc(top.cascade_size) + L('</b> empresas.', '</b> companies.') })
+        : clientChokepoint().then(function (best) {
+            return best ? { kind: 'shock', node: best.id,
+              text: L('El mayor punto único de fallo hoy es <b>', "Today's biggest single point of failure is <b>") + esc(nm(best.id)) +
+                L('</b>: su caída arrastraría a <b>', '</b>: its fall would drag down <b>') + best.a + L(' empresas</b>.', ' companies</b>.') } : null;
           });
+      return shockP.then(function (shock) {
+        var cards = [];
+        if (shock) cards.push(shock);
+        if (risk) cards.push(risk);
+        if (m && m.factors_active && m.factors_active.length) {
+          cards.push({ kind: 'factor',
+            text: '<b>' + m.factors_active.length + '</b> ' + L('factor(es) externo(s) modulando la red: ', 'external factor(s) shaping the network: ') +
+              esc(m.factors_active.slice(0, 2).join(', ')) + '.' });
+        }
+        // Fuente y hora SIEMPRE a la vista (ninguna cifra sin procedencia)
+        var src = top
+          ? L('Fuente: motor de matrices de Khipus (ontología)', 'Source: Khipus matrix engine (ontology)') +
+            (m.stale ? L(' · última lectura guardada', ' · last saved reading') : ' · ' + hhmm())
+          : L('Fuente: grafo de Khipus, calculado en tu navegador', 'Source: Khipus graph, computed in your browser') + ' · ' + hhmm();
+        return boardP.then(function (cc) {
+          cards = cards.slice(0, 4);
+          if (cc) cards.splice(1, 0, cc);
+          return { cards: cards.slice(0, 5), src: src };
         });
+      });
     });
   }
 
@@ -176,15 +220,21 @@
       '<div class="sub">' + L('Tu resumen de inteligencia de la cadena de IA', 'Your AI supply-chain intelligence summary') + '</div>' +
       '<div class="lead" id="brief-lead">' + L('Leyendo la red…', 'Reading the network…') + '</div>' +
       '<div class="cards" id="brief-cards"></div>' +
+      '<div class="src" id="brief-src"></div>' +
       '<div class="foot"><label class="dismiss"><input type="checkbox" id="brief-mute" ' + (seen === 'muted' ? 'checked' : '') + '> ' + L('no mostrar automáticamente', 'do not show automatically') + '</label>' +
       '<button class="ok" onclick="window._briefClose()">' + L('Entendido', 'Got it') + '</button></div>';
     document.getElementById('brief-mute').onchange = function (e) {
       localStorage.setItem('khipu_brief_day', e.target.checked ? 'muted' : todayKey());
     };
     ov.classList.add('show');
-    build().then(function (cards) {
+    build().then(function (res) {
+      var cards = (res && res.cards) || [];
       var el = document.getElementById('brief-cards'); if (el) el.innerHTML = cards.map(card).join('');
+      var se = document.getElementById('brief-src'); if (se) se.textContent = (res && res.src) || '';
       narrate(cards);
+    }).catch(function () {
+      var lead = document.getElementById('brief-lead');
+      if (lead) lead.textContent = L('No se pudo leer la red ahora. Reintenta en un momento.', 'Could not read the network right now. Try again in a moment.');
     });
     var fab = document.getElementById('brief-fab'); if (fab) fab.classList.add('show');
   }
@@ -212,19 +262,33 @@
   window._briefClose = close;
   window._briefOpen = function () { open(true); };
 
+  // Khipus OS manda la pantalla: está abierto, o se abrirá al arrancar (siempre, salvo que el
+  // usuario eligió "Vista clásica" en esta sesión: sessionStorage kh_os_classic='1').
+  function osOwnsScreen() {
+    var ck = window.BixbyCockpit;
+    if (!ck) return false;
+    if (typeof ck.isOpen === 'function' && ck.isOpen()) return true;
+    var classic = false;
+    try { classic = sessionStorage.getItem('kh_os_classic') === '1'; } catch (e) {}
+    return !classic;
+  }
+  window._briefAutoAllowed = function () { return !osOwnsScreen(); };
+
   function maybeAutoOpen() {
     if (!document.querySelector('.graph-wrap')) { setTimeout(maybeAutoOpen, 800); return; }
     ensureStyles();
-    // botón flotante ❓ para reabrir siempre
+    // botón flotante ❓ para reabrir siempre (vista clásica; Khipus OS lo ofrece en su paleta)
     if (!document.getElementById('brief-fab')) {
       var fab = document.createElement('div'); fab.id = 'brief-fab'; fab.innerHTML = '❓';
-      fab.title = 'Brief matinal'; fab.className = 'show';
+      fab.title = L('Brief matinal', 'Morning brief'); fab.className = 'show';
       fab.onclick = function () { open(true); };
       document.body.appendChild(fab);
     }
-    var seen = localStorage.getItem('khipu_brief_day');
+    var seen = null;
+    try { seen = localStorage.getItem('khipu_brief_day'); } catch (e) {}
     if (seen === 'muted' || seen === todayKey()) return;   // ya visto hoy o silenciado
-    setTimeout(function () { open(false); }, 1400);         // deja cargar el grafo primero
+    if (osOwnsScreen()) return;                             // Khipus OS: a pedido, nunca encima
+    setTimeout(function () { if (!osOwnsScreen()) open(false); }, 1400);   // deja cargar el grafo primero
   }
   if (document.readyState === 'complete') maybeAutoOpen();
   else window.addEventListener('load', maybeAutoOpen);
