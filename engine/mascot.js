@@ -27,15 +27,15 @@
     { id: 'khipu', es: 'Khipu', en: 'Khipu', role_es: 'Te responde', role_en: 'Answers you',
       c: ['#f07fa0', '#7a4ce8', '#ff8746', '#c23a8c'], seats: ['khipu', 'brain'] },
     { id: 'analista', es: 'Analista', en: 'Analyst', role_es: 'Fundamentales', role_en: 'Fundamentals',
-      c: ['#7d8be6', '#5b81e4', '#4054cf', '#6b9ff4'], seats: ['fundamental', 'fundamentals', 'macro', 'valuation', 'quant'] },
+      c: ['#7d8be6', '#5b81e4', '#4054cf', '#6b9ff4'], seats: ['fundamental', 'fundamentals', 'macro', 'valuation'] },
     { id: 'radar', es: 'Radar', en: 'Radar', role_es: 'Noticias y eventos', role_en: 'News & events',
-      c: ['#f78189', '#f26570', '#e63e52', '#f6808a'], seats: ['news', 'sentiment', 'geopolitical', 'geo', 'events'] },
+      c: ['#f78189', '#f26570', '#e63e52', '#f6808a'], seats: ['news', 'sentiment', 'geopolitical', 'geo', 'events', 'crypto'] },
     { id: 'cadena', es: 'Cadena', en: 'Chain', role_es: 'Cadena de suministro', role_en: 'Supply chain',
       c: ['#4cb1ab', '#56b87c', '#1b9386', '#83cd70'], seats: ['supply_chain', 'chain', 'supply'] },
     { id: 'tecnico', es: 'Técnico', en: 'Technical', role_es: 'Precio y momento', role_en: 'Price & momentum',
-      c: ['#f7cc63', '#f2bc3a', '#e6a117', '#f5c54a'], seats: ['technical', 'momentum', 'risk'] },
+      c: ['#f7cc63', '#f2bc3a', '#e6a117', '#f5c54a'], seats: ['technical', 'momentum', 'risk', 'risk_observation', 'risk_officer', 'market'] },
     { id: 'comite', es: 'Comité', en: 'Committee', role_es: 'Decisiones', role_en: 'Decisions',
-      c: ['#bc78e5', '#9f60e5', '#7a3fe0', '#d88ae6'], seats: ['committee', 'chair', 'portfolio', 'president'] },
+      c: ['#bc78e5', '#9f60e5', '#7a3fe0', '#d88ae6'], seats: ['committee', 'chair', 'portfolio', 'president', 'quant', 'mandate', 'all'] },
   ];
   var BY = {}; AGENTS.forEach(function (a) { BY[a.id] = a; a.seats.forEach(function (s) { BY[s] = a; }); });
 
@@ -99,6 +99,39 @@
   }
   function name(id) { var a = of(id); return a ? (lang() === 'en' ? a.en : a.es) : String(id || ''); }
   function color(id) { var a = of(id); return a ? a.c[2] : '#8a8577'; }
+
+  /* ── PREFERENCIAS DE AGENTES (Khipus OS): solo de PRESENTACIÓN — nunca alimentan decisiones del comité
+     ni el tamaño de una orden. localStorage 'kh_agent_prefs' (sincronizado por engine/sync.js):
+       { mode: 'simple'|'pro', agents: { <id>: { on: bool, auto: bool } } }
+     on   = el agente participa en tus respuestas (se le pide al cerebro priorizar sus herramientas)
+     auto = abre su ventana sola cuando aporta (Analista → "en una mirada", Cadena → cadena, Comité → convicción) */
+  var PREF_KEY = 'kh_agent_prefs';
+  var DEF = { mode: 'simple', agents: { khipu: { on: true, auto: true }, analista: { on: true, auto: true }, radar: { on: true, auto: false },
+    cadena: { on: true, auto: true }, tecnico: { on: true, auto: false }, comite: { on: true, auto: true } } };
+  function prefsGet() {
+    var p = null; try { p = JSON.parse(localStorage.getItem(PREF_KEY) || 'null'); } catch (e) { p = null; }
+    var out = { mode: (p && (p.mode === 'pro' || p.mode === 'simple')) ? p.mode : DEF.mode, agents: {} };
+    Object.keys(DEF.agents).forEach(function (k) {
+      var a = (p && p.agents && p.agents[k]) || {};
+      out.agents[k] = { on: k === 'khipu' ? true : (a.on !== false), auto: a.auto != null ? !!a.auto : DEF.agents[k].auto };
+    });
+    return out;
+  }
+  function prefsSet(patch) {
+    var cur = prefsGet();
+    if (patch && patch.mode) cur.mode = patch.mode === 'pro' ? 'pro' : 'simple';
+    if (patch && patch.agents) Object.keys(patch.agents).forEach(function (k) { if (cur.agents[k]) cur.agents[k] = Object.assign(cur.agents[k], patch.agents[k]); });
+    cur.agents.khipu.on = true;
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(cur)); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('khipu:agentprefs', { detail: cur })); } catch (e) {}
+    return cur;
+  }
+  window.KhipuAgentPrefs = {
+    key: PREF_KEY, get: prefsGet, set: prefsSet,
+    mode: function () { return prefsGet().mode; },
+    enabled: function () { var p = prefsGet(); return Object.keys(p.agents).filter(function (k) { return p.agents[k].on; }); },
+    auto: function (id) { var p = prefsGet(); var a = p.agents[id]; return !!(a && a.on && a.auto); }
+  };
 
   ensureCss();
   window.KhipuMascot = { svg: svg, stack: stack, agents: agents, of: function (x) { var a = of(x); return a ? a.id : null; }, name: name, color: color };
