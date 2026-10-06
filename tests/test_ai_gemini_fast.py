@@ -32,7 +32,7 @@ def test_want_json_llega_a_gemini_como_json_mode(monkeypatch):
 
 
 def test_flash_nivel_rapido_sin_pensamiento(monkeypatch):
-    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.5-flash')
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-2.5-flash')
     monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
     monkeypatch.delenv('GEMINI_THINKING', raising=False)
     bodies = []
@@ -61,3 +61,36 @@ def test_chat_pide_json_estricto(monkeypatch):
     monkeypatch.setattr(kc._ai, '_ai_complete', fake)
     kc._call_ai('s', 'p', 5)
     assert seen.get('want_json') is True and seen['tier'] == 'fast'
+
+
+def test_gemini_3_usa_niveles_de_pensamiento(monkeypatch):
+    """Gemini 3.8 Flash rechaza thinkingBudget (y 'minimal'): rápido = low, profundo = medium, con margen."""
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.8-flash')
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.delenv('GEMINI_THINKING', raising=False)
+    bodies = []
+
+    def post(url, body, timeout):
+        bodies.append((url, json.loads(json.dumps(body))))
+        return _gem_ok('hola')
+    monkeypatch.setattr(ai, '_gemini_post', post)
+    text, used = ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    url, b = bodies[-1]
+    assert 'models/gemini-3.8-flash:generateContent' in url and used == 'gemini:gemini-3.8-flash'
+    assert b['generationConfig']['thinkingConfig'] == {'thinkingLevel': 'low'}
+    assert b['generationConfig']['maxOutputTokens'] == 200 + 1024 and len(bodies) == 1   # sin el 400 de antes
+    ai._complete_gemini_inner('s', 'p', 200, 'deep')
+    assert bodies[-1][1]['generationConfig']['thinkingConfig'] == {'thinkingLevel': 'medium'}
+    ai._complete_gemini_inner('s', 'p', 3000, 'deep', json_mode=True)
+    g = bodies[-1][1]['generationConfig']
+    # investigación (JSON + profundo): calidad primero → medium
+    assert g['thinkingConfig'] == {'thinkingLevel': 'medium'} and g['maxOutputTokens'] == 8192 + 2048
+    ai._complete_gemini_inner('s', 'p', 1600, 'fast', json_mode=True)                  # paso del chat → low
+    assert bodies[-1][1]['generationConfig']['thinkingConfig'] == {'thinkingLevel': 'low'}
+    assert ai._gemini_major('models/gemini-3.8-flash') == 3 and ai._gemini_major('gemini-2.5-flash') == 2
+    assert ai._gemini_major('otro') == 0
+
+
+def test_precio_gemini_38():
+    from core import ai_usage
+    assert ai_usage.price_for('gemini', 'gemini-3.8-flash') == (0.75, 3.75)

@@ -473,6 +473,9 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 (el tier forma parte de la cache key). Cliente:
 `DataLayer.aiComplete(system, prompt, maxTokens, tier)`.
 `_extract_json()` tolera JSON envuelto en prosa/fences (Gemini/NVIDIA).
+**Gemini 3+ (2026-10-06, default `gemini-3.8-flash`)**: NO acepta `thinkingBudget` (ni 0 ni "minimal" → 400);
+`_complete_gemini_inner` manda `thinkingLevel` low (chat/rápido) o medium (profundo, también investigación JSON) con margen de tokens.
+Precio en `core/ai_usage.PRICES` (0,75/3,75 hasta 31-dic-2026; luego 1,5/7,5 → actualizar).
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 **GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito "todo en vivo, los datos
 falsos perjudican al inversionista")**: `_ai_complete` añade NUMBERS_RULE al

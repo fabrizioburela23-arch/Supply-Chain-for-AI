@@ -505,6 +505,12 @@ def _gemini_post(url, body, timeout):
         raise RuntimeError(str(e)) from None
 
 
+def _gemini_major(model):
+    """'gemini-3.8-flash' → 3 · 'gemini-2.5-flash' → 2 · desconocido → 0."""
+    m = re.match(r'(?:models/)?gemini-(\d+)', str(model or '').strip().lower())
+    return int(m.group(1)) if m else 0
+
+
 def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
     """json_mode (lo usa research/): pide JSON estricto (responseMimeType), da
     más presupuesto y apaga el "pensamiento" en modelos flash — en 2.5 el
@@ -518,7 +524,17 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
     # 2026-10-04 (chat caía a "sin IA" con Gemini como único proveedor): en modelos
     # flash el "pensamiento" consume maxOutputTokens y segundos; en el nivel RÁPIDO
     # (chat, comandos, radar) y en JSON estricto se apaga. GEMINI_THINKING=on lo devuelve.
-    if 'flash' in GEMINI_MODEL and (json_mode or tier != 'deep') and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on':
+    fast_level = (json_mode or tier != 'deep') and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on'
+    if _gemini_major(GEMINI_MODEL) >= 3:
+        # calidad primero: el trabajo PROFUNDO (investigación, comité, tesis) piensa en "medium" aunque pida JSON
+        # — en Gemini 3 hay margen de tokens, ya no corta el JSON como en 2.5. Solo lo rápido (chat) va en "low".
+        fast_level = tier != 'deep' and (os.getenv('GEMINI_THINKING') or 'off').lower() != 'on'
+        # Gemini 3+ (2026-10-06, gemini-3.8-flash): ya NO acepta thinkingBudget (ni 0 ni "minimal" → HTTP 400 y
+        # se caía al pensamiento por defecto "medium"). Niveles válidos: low/medium/high. Rápido = low;
+        # profundo = medium. El pensamiento también gasta maxOutputTokens → margen para que no corte la respuesta.
+        gen['thinkingConfig'] = {'thinkingLevel': 'low' if fast_level else 'medium'}
+        gen['maxOutputTokens'] = int(gen['maxOutputTokens']) + (1024 if fast_level else 2048)
+    elif 'flash' in GEMINI_MODEL and fast_level:
         gen['thinkingConfig'] = {'thinkingBudget': 0}
     elif 'flash' in GEMINI_MODEL:
         # nivel profundo: piensa, pero con presupuesto acotado y SIN comerse la respuesta
