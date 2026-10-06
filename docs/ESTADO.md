@@ -26,6 +26,12 @@ Fabrizio aprobó ("sí a las dos"):
   NVIDIA ← TSMC 61 %/ARM 12 %. Sigue flojo: ASML pesa 2,4 % para TSMC (navieras con peso 5 la diluyen —
   dato de pesos del catálogo, no del kernel).
 - Auto-conexión tras los cambios: Hit@10 0,42 vs 0,23 de popularidad (promedio 3 semillas).
+- RECONCILIAR con Fabrizio (2026-10-06): la base de producción tenía 421 "direcciones al revés", 53 pesos,
+  657 faltantes, 2 sobrantes y 1 empresa duplicada (la base se cargó ANTES de la canonización de julio).
+  Antes de aplicar se limpió el catálogo: 8 filas duplicadas al revés de energía (Vitol/Glencore
+  "comprador de…", PetroChina→Gazprom, Chevron/Cheniere→KinderMorgan) borradas de nodes_multicapa.js
+  (la gemela correcta ya existía). Direcciones sospechosas del catálogo 55→39 (las que quedan son pares
+  mutuos reales o consultoras inmobiliarias). Plan: aplicar primero "Empresas duplicadas" + "Direcciones".
 
 # SESIÓN 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2: TENSORES + AUTO-CONEXIÓN (sw v241)
 

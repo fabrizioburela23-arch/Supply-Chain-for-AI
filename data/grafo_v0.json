@@ -1,9 +1,9 @@
 {
- "exported_at": "2026-10-06T02:45:41.336Z",
+ "exported_at": "2026-10-06T03:25:29.196Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 937,
-  "links": 2518,
+  "links": 2510,
   "unverified_links": 10,
   "categories": 108,
   "sectors": 13,
@@ -34552,15 +34552,6 @@
   },
   {
    "source": "Chevron",
-   "target": "KinderMorgan",
-   "w": 2,
-   "rel": "Usa ductos de Kinder Morgan para evacuar producción de Permian hacia costa del Golfo",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Chevron",
    "target": "Vitol",
    "w": 2,
    "rel": "Comercializa crudo con traders independientes incl. Vitol",
@@ -34744,15 +34735,6 @@
    "target": "Glencore",
    "w": 1,
    "rel": "Contraparte de trading físico de exportación de crudo pre-sal",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "PetroChina",
-   "target": "Gazprom",
-   "w": 3,
-   "rel": "Comprador principal de gas ruso vía Power of Siberia; exportaciones de Gazprom a China +25% en 2025 mientras caen a Europa",
    "type": "supply",
    "conf": 1,
    "verified": true
@@ -34966,15 +34948,6 @@
   },
   {
    "source": "CheniereEnergy",
-   "target": "KinderMorgan",
-   "w": 2,
-   "rel": "Recibe gas de gasoductos interestatales incl. red de Kinder Morgan hacia Sabine Pass",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "CheniereEnergy",
    "target": "Vitol",
    "w": 1,
    "rel": "Vende volumen spot/de cartera propia a traders como Vitol",
@@ -35146,33 +35119,6 @@
   },
   {
    "source": "Vitol",
-   "target": "SaudiAramco",
-   "w": 2,
-   "rel": "Comprador término/spot de crudo saudí para redistribución global",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Vitol",
-   "target": "QatarEnergy",
-   "w": 2,
-   "rel": "Comprador de cargas de GNL qatarí spot y de cartera",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Vitol",
-   "target": "VentureGlobalLNG",
-   "w": 2,
-   "rel": "Comprador de cargas spot de GNL durante fase de arranque comercial de proyectos de Venture Global",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Vitol",
    "target": "Lukoil",
    "w": 2,
    "rel": "Reportado como comprador/gestor potencial de activos internacionales de Lukoil en proceso de desinversión forzada por sanciones (2025-2026)",
@@ -35186,24 +35132,6 @@
    "w": 1,
    "rel": "Contraparte habitual en trading físico de crudo y productos",
    "type": "partner",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Glencore",
-   "target": "ADNOC",
-   "w": 1,
-   "rel": "Comprador de crudo bajo contratos término/spot",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Glencore",
-   "target": "Petrobras",
-   "w": 1,
-   "rel": "Comprador de crudo pre-sal para redistribución global, principalmente hacia Asia",
-   "type": "supply",
    "conf": 1,
    "verified": true
   },
