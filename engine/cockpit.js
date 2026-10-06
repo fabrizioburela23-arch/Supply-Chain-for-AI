@@ -253,17 +253,6 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 .kos-chatbody{flex:1;min-height:0;overflow-y:auto;padding:2px 18px 10px;scrollbar-width:thin;scrollbar-color:var(--os-surface-3) transparent;overscroll-behavior:contain}
 .kos-chatbody .kc-thread{max-width:none}
 .kos-has-msgs #kos-empty{display:none}
-/* red de seguridad de LEGIBILIDAD del hilo en tema claro: engine/khipu_chat.js trae colores oscuros fijos
-   (tinta clara). Solo colores, nunca medidas; si el chat ya usa los tokens --os-*, esto no cambia nada visible. */
-body:not(.dark) #bcp-ov .kc-user{background:var(--os-surface-2);border-color:transparent;color:var(--os-ink)}
-body:not(.dark) #bcp-ov .kc-bot{background:transparent;border-color:transparent;color:var(--os-ink)}
-body:not(.dark) #bcp-ov .kc-h{color:var(--os-ink)}
-body:not(.dark) #bcp-ov .kc-who{color:var(--os-ink-3)}
-body:not(.dark) #bcp-ov .kc-bot a{color:var(--os-accent)}
-body:not(.dark) #bcp-ov .kc-act{color:var(--os-accent);border-color:var(--os-line);background:var(--os-surface-2)}
-body:not(.dark) #bcp-ov .kc-tools,body:not(.dark) #bcp-ov .kc-src,body:not(.dark) #bcp-ov .kc-meta,body:not(.dark) #bcp-ov .kc-think{color:var(--os-ink-3)}
-body:not(.dark) #bcp-ov .kc-note{color:#8a5a00}
-body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-line)}
 #kd-center #bcp-barwrap{padding:8px 14px 14px;background:transparent;border:0}
 #kd-center #bcp-bar{max-width:none}
 /* estado vacío del chat (sin mensajes): Khipu grande, una frase, sugerencias, lo vivo de hoy */
@@ -1138,6 +1127,8 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
   }
   function deskActive() { var D = desk(); return !!(D && D.active()); }
   function isCentered() { var D = desk(); return !!(D && D.active() && D.isCentered && D.isCentered()); }
+  // ¿el hilo y la barra viven en #kd-center? (flancos ≥ 1100 px o "solo chat" en tablet/celular)
+  function chatCentered() { var D = desk(); return !!(D && D.active() && (D.chatInCenter ? D.chatInCenter() : (D.isCentered && D.isCentered()))); }
   function _knownKind(kind) {
     return kind === 'chat' || kind === 'empty' || !!_custom[kind] || !!ADOPT_TABS[kind] || BUILTIN_KINDS.indexOf(kind) >= 0;
   }
@@ -1158,7 +1149,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
         D.mount(s);
       }
       // con el chat al centro, "la conversación" ya está siempre a la vista: no hay ventana 💬
-      if (kind === 'chat' && isCentered()) { _focusChat(); return; }
+      if (kind === 'chat' && chatCentered()) { _focusChat(); return; }
       if (kind === 'empty') {
         if (_demo.on) D.closeAll();   // la demostración arranca con el escritorio limpio
         _curKind = 'empty'; markActive(null); _placeThread('empty');
@@ -1416,7 +1407,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
       _centerBox = null;
       _placeThread(_curKind || 'empty');
       // pantalla mediana: el inicio vuelve al muro (después: el escritorio puede estar desmontándose)
-      setTimeout(function () { if (open && deskActive() && !isCentered()) _paintHome(false); }, 0);
+      setTimeout(function () { if (open && deskActive() && !chatCentered()) _paintHome(false); }, 0);
     }
     if (hadFocus && inp) { try { inp.focus({ preventScroll: true }); } catch (e) {} }
   }
@@ -1424,7 +1415,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
   function _paintHome(force) {
     var D = desk(); if (!D || !D.active()) return;
     var lang = ckLang(), wall = D.wall();
-    if (isCentered()) {
+    if (chatCentered()) {
       if (wall && wall.children.length) wall.innerHTML = '';
       var body = _centerBox && _centerBox.querySelector('.kos-chatbody'); if (!body) return;
       if (!force && body.querySelector('#kos-empty') && _homeLang === lang) return;
@@ -1600,7 +1591,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
   function palClose(keepFocus) {
     var p = _palEl(); if (!p || !p.classList.contains('show')) return;
     p.classList.remove('show');
-    if (!keepFocus && isCentered()) { var i = document.getElementById('bcp-input'); if (i) try { i.focus({ preventScroll: true }); } catch (e) {} }
+    if (!keepFocus && chatCentered()) { var i = document.getElementById('bcp-input'); if (i) try { i.focus({ preventScroll: true }); } catch (e) {} }
   }
   function palRender() {
     var p = _palEl(); if (!p) return;
@@ -3441,7 +3432,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
     var dock = document.getElementById('bcp-chatdock');
     if (!dock) return;
     // Khipus OS: con el chat al centro el hilo vive SIEMPRE en la columna central (el dock no se usa)
-    if (_centerBox && isCentered()) {
+    if (_centerBox && chatCentered()) {
       var cb = _centerBox.querySelector('.kos-chatbody');
       if (cb && th.parentNode !== cb) cb.appendChild(th);
       dock.classList.remove('show');
@@ -3478,7 +3469,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
     return desk().list().filter(function (w) { return w.kind === 'chat'; })[0] || null;
   }
   function _ensureThread() {
-    if (isCentered()) { _placeThread(_curKind || 'empty'); return; }
+    if (chatCentered()) { _placeThread(_curKind || 'empty'); return; }
     if (deskActive()) {
       // si la ventana 💬 existe (minimizada o detrás de otra hoja), la respuesta no se vería: al frente
       var cw = _chatWin();
@@ -3491,7 +3482,7 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
   // la respuesta abrió una ventana (X-Ray, gráfico…) encima de la ventana 💬 → en pantallas
   // anchas van lado a lado (resultado a la izquierda, conversación a la derecha); si no, 💬 al frente
   function _chatBeside() {
-    if (isCentered()) return;   // Khipus OS: la ventana ya cayó en un flanco; el chat no se tapa
+    if (chatCentered()) return;   // Khipus OS: la ventana ya cayó en un flanco; el chat no se tapa
     var cw = _chatWin(); if (!cw) return;
     var D = desk(), other = D.focused();
     if (!other || other === cw.id) return;
@@ -3525,7 +3516,8 @@ body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-li
     K.send(text).then(function (d) {
       // en el celular (≤ 760 px, ventanas = hojas) NO se auto-ejecuta: la vista nueva taparía la
       // respuesta (queda como botón); en escritorio la respuesta sigue visible (centro o dock)
-      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) > 760, retry: true });
+      // "solo chat" (tablet): una ventana automática taparía la respuesta recién llegada → solo botones
+      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) > 760 && !(chatCentered() && !isCentered()), retry: true });
       var rb = pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAsk(text); });
       setState('', L('Listo', 'Ready'));
     }).catch(function (e) {

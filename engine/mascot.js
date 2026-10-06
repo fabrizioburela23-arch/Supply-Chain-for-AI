@@ -54,7 +54,7 @@
     '@keyframes km-bob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6%) scale(1.03,.97)}}' +
     '@keyframes km-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}' +
     '@keyframes km-look{0%,100%{transform:translateX(0)}50%{transform:translateX(12%)}}' +
-    '.km-stack{display:inline-flex;align-items:center}.km-stack .km{margin-left:-28%;border-radius:50%;box-shadow:0 0 0 2px var(--km-ring,#fff)}' +
+    '.km-stack{display:inline-flex;align-items:center}.km-stack .km{border-radius:50%;box-shadow:0 0 0 2px var(--km-ring,var(--os-surface,#fff))}' +
     '.km-stack .km:first-child{margin-left:0}' +
     '@media (prefers-reduced-motion:reduce){.km .km-eye,.km.km-think .km-body,.km.km-talk .km-body,.km.km-think .km-eye{animation:none}}';
   function ensureCss() {
@@ -91,7 +91,12 @@
   }
 
   function stack(ids, size) {
-    return '<span class="km-stack">' + (ids || AGENTS.slice(1).map(function (a) { return a.id; })).map(function (id) { return svg(id, size || 22); }).join('') + '</span>';
+    // solape FIJO en px (≈30 % del tamaño): un margen en % se calcula contra el ancho del contenedor y quedaba disparejo
+    var sz = size || 22, ov = Math.round(sz * 0.3);
+    return '<span class="km-stack">' + (ids || AGENTS.slice(1).map(function (a) { return a.id; })).map(function (id, i) {
+      var h = svg(id, sz);
+      return i ? h.replace('<span class="km', '<span style="margin-left:-' + ov + 'px" class="km') : h;
+    }).join('') + '</span>';
   }
 
   function agents() {

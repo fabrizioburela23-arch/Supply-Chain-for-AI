@@ -412,6 +412,12 @@
     '.osw.osw-solo{width:100%;max-width:780px;margin:0 auto;padding:22px 20px}' +
     '.osw button{font-family:inherit}' +
     '.osw-hd{display:flex;align-items:center;gap:10px;min-width:0}' +
+    /* dentro de una ventana del escritorio la barra de la ventana YA muestra mascota + título (como la tarjeta del
+       video): se oculta el título repetido de adentro y queda solo lo extra (p. ej. "X-Ray ›"), alineado a la derecha */
+    '.kd-body.kos-native .osw-hd>h3,.kd-body.kos-native .osw-hd>.km,.kd-body.kos-native .osw-hd>.km-stack,.kd-body.kos-native .osw-hd>.osw-mstack,.kd-body.kos-native .osw-hd>.osw-dot,.kd-body.kos-native .osw-hd>.osw-mdot{display:none!important}' +
+    '.kd-body.kos-native .osw-hd{justify-content:flex-end;min-height:0}' +
+    '.kd-body.kos-native .osw-hd:not(:has(>:not(h3):not(.km):not(.km-stack):not(.osw-mstack):not(.osw-dot):not(.osw-mdot))){display:none!important}' +
+    '.kd-win:has(>.kd-body.kos-native) .kd-name{font-size:16px;color:var(--os-ink);font-weight:600}' +
     '.osw-hd h3{margin:0;flex:1;min-width:0;font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--os-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
     '.osw[data-w=xs] .osw-hd h3{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25}' +
     '.osw-hd .km-stack,.osw-hd .osw-mstack{flex:none}' +
@@ -1324,18 +1330,18 @@
 
   /* ── registro en la Cabina + API pública ────────────────────────────────── */
   var KINDS = {
-    glance: { icon: '◉', es: 'En una mirada', en: 'At a glance', multi: true, render: renderGlance,
+    glance: { mascot: 'analista', icon: '◉', es: 'En una mirada', en: 'At a glance', multi: true, render: renderGlance,
       title: function (arg) { var id = argId(arg), n = nodeOf(id); return id ? glanceTitle(labelOf(n, id)) : L('En una mirada', 'At a glance'); } },
-    conviction: { icon: '±', es: 'Convicción de tus agentes', en: 'Your agents\' conviction', multi: false, render: renderConviction,
+    conviction: { mascot: 'comite', icon: '±', es: 'Convicción de tus agentes', en: 'Your agents\' conviction', multi: false, render: renderConviction,
       title: function () { return L('Convicción de tus agentes', 'Your agents\' conviction'); } },
-    supplychain: { icon: '⛓', es: 'Cadena de suministro', en: 'Supply chain', multi: true, render: renderSupply,
+    supplychain: { mascot: 'cadena', icon: '⛓', es: 'Cadena de suministro', en: 'Supply chain', multi: true, render: renderSupply,
       title: function (arg) { var id = argId(arg), n = nodeOf(id); return id ? scTitle(labelOf(n, id)) : L('Cadena de suministro', 'Supply chain'); } },
-    agents: { icon: '✦', es: 'Tus agentes', en: 'Your agents', multi: false, render: renderAgents,
+    agents: { mascot: 'khipu', icon: '✦', es: 'Tus agentes', en: 'Your agents', multi: false, render: renderAgents,
       title: function () { return L('Tus agentes', 'Your agents'); } }
   };
   function spec(kind) {
     var k = KINDS[kind];
-    return { icon: k.icon, es: k.es, en: k.en, multi: k.multi, title: k.title,
+    return { icon: k.icon, es: k.es, en: k.en, multi: k.multi, title: k.title, mascot: k.mascot,
       render: function (body, arg) { return render(kind, body, arg); } };
   }
   var _regTarget = null;

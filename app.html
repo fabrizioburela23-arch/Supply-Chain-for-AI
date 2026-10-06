@@ -6671,9 +6671,11 @@ const V8feed = {
   _t:0,
   load(force){
     const box=$('feed-box'), el=$('feed-list'); if(!box||!el) return;
-    if(!force && Date.now()-this._t<60000) return;
-    this._t=Date.now();
     const lang=(LANG==='en')?'en':'es';
+    if(!force && Date.now()-this._t<60000) return;
+    // 2026-10-06: al arrancar llegaban DOS cargas forzadas casi juntas (1,5 s + applyLang) → una sola
+    if(force && this._lang===lang && Date.now()-this._t<5000) return;
+    this._t=Date.now(); this._lang=lang;
     fetch(`${BASE}/api/ontology/feed?limit=8&lang=${lang}`)
       .then(r=>r.ok?r.json():null).then(d=>{
         if(!d||!Array.isArray(d.feed)){ box.style.display='none'; return; }
@@ -7047,7 +7049,9 @@ const $=id=>document.getElementById(id);
         if (tries < 90) setTimeout(tryLand, 100);   // poll rápido, hasta ~9s
         else fadeBoot();   // fallback: mostrar el mapa si la Cabina nunca cargó
       };
-      setTimeout(tryLand, 850);   // deja ver el splash un momento, luego abre ASAP
+      // 2026-10-06: con el mapa ya liberado (no se calcula tapado), la espera fija de 850 ms era lo que más
+      // demoraba la entrada al OS; el poll de 100 ms entra apenas cockpit.js y los nodos están listos
+      setTimeout(tryLand, 60);
     }
   } catch (e) { setTimeout(fadeBoot, 1350); }
 })();
@@ -7511,6 +7515,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <!-- Khipu Finance Engine -->
 <script src="engine/loading.js"></script>
 <script src="engine/toast.js"></script>
+<script src="engine/mascot.js"></script>
 <script src="engine/graph3d.js"></script>
 <script src="engine/universe2d.js"></script>
 <script src="engine/hypergraph.js"></script>
@@ -7630,6 +7635,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <script src="nodes/crypto_intel2.js"></script>
 <script src="engine/crypto.js"></script>
 <script src="engine/portfolios.js"></script>
+<script src="engine/oswindows.js"></script>
 <script src="engine/khipu_chat.js"></script>
 <script src="engine/desktop.js"></script>
 <script src="engine/cockpit.js"></script>

@@ -9,6 +9,34 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)
+
+Pedido de Fabrizio (video "Khipus OS" + "chat al medio, gráficos a los costados, pestañas discretas, velocidad,
+estética Apple, agentes con sentido, para el pro y el novato"). Spec y contratos: docs/KHIPUS_OS.md.
+Construido por 5 constructores en paralelo (worktrees) + integración:
+- SHELL (cockpit.js/desktop.js): tokens --os-*, barra superior mínima, paleta ⌘K, "Más ▾", menú de iniciales
+  (Simple/Pro, Tus agentes, 🩺, Vista clásica), saldo de práctica sin PIN, chat al centro + flancos ≥1100 px,
+  "solo chat" en tablet/celular (integración), Esc no cierra, arranque siempre en el OS (espera 850→60 ms),
+  carteras como ventana, kd-legacy-dark para escenas viejas, registerKind/isCentered.
+- VENTANAS (engine/oswindows.js): glance (convicción del comité animada o precio en vivo + pros/contras con
+  fuente), conviction (barras −100..+100 del tablero), supplychain (proveedores ← empresa → clientes, riesgo
+  del tensor), agents (6 agentes, datos que usan, historial honesto, Simple/Pro, participa/auto, Pregúntale).
+- SERVIDOR: progreso real del chat, agents_used con notas DETERMINISTAS (cifras de herramientas), entities,
+  cards, sources.as_of, mode/agents_enabled en el prompt, prefetch en paralelo (antes serial ~6 s), bug de
+  idioma de ask_agent, /api/agents/profiles (sin BD: estático; con BD: historial y costo 30 d), board()
+  cacheado 60 s, kh_agent_prefs sincronizado.
+- CHAT (khipu_chat.js/pickers.js/sync.js): mascotas "están investigando…" (predicción → progreso real →
+  agents_used), tarjeta de aportes por agente, fuentes con hora, ventanas automáticas (planWindows) solo en
+  flancos, @analista/@radar/@cadena/@tecnico con mascota, tokens.
+- VELOCIDAD (app.html mapa, brief.js, matrix/api.py): el mapa no se calcula tapado (_ensureMapSettled,
+  layout recordado kh_map_pos_v1), brief no se abre solo sobre el OS, /insights deduplicado; feed 1 vez.
+  OS abierto en ~1,2-1,4 s en local (antes 2,1-3,2 s).
+- Integración: título doble en ventanas nativas, superposición de mascotas en el origen, reglas de color
+  duplicadas del chat, portfolios en resolve.js. Tests: test_khipus_os_{shell,windows,server,chat,perf,integration}.py.
+PENDIENTE / ideas: agentes que "investigan" de verdad desde el chat (hoy usan herramientas; investigación
+profunda por agente = botón), enriquecer el grafo (pedido de Fabrizio), restyle de escenas viejas (hoy
+islas oscuras en tema claro), voz con mascotas.
+
 # SESIÓN 2026-10-06 (hh) — CANVAS NIVEL POWER BI: COLOR VALIDADO + INTERACCIÓN (sw v244)
 
 - app.html (renderizador único: Canvas, Cabina y chat de Khipu): paleta categórica VALIDADA con

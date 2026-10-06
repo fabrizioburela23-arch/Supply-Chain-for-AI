@@ -389,7 +389,8 @@
     if (t === 'canvas') { ck.stage('canvas'); return true; }
     if (t === 'crypto') { ck.stage('crypto'); return true; }   // cripto vive DENTRO de la Cabina (no la cierra → no calla a Khipu)
     // integración total: estas pestañas se abren DENTRO de la Cabina (no la cierran)
-    if (['tkg', 'guia', 'market', 'geo', 'space', 'simulation'].indexOf(t) >= 0) { ck.stage(t); return true; }
+    // Khipus OS (2026-10-06): las carteras también son una ventana (antes cerraban el OS)
+    if (['tkg', 'guia', 'market', 'geo', 'space', 'simulation', 'portfolios'].indexOf(t) >= 0) { ck.stage(t); return true; }
     ck.close();
     tab(t);
     return true;

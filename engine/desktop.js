@@ -124,6 +124,10 @@
   var stageEl = null, wallEl = null, winsEl = null, barEl = null, ghostEl = null, menuEl = null, layoutsEl = null;
   var centerEl = null, flanksEl = null;   // Khipus OS: columna del chat + marcadores de los flancos
   var centered = false;                   // ¿modo flancos activo AHORA? (cambia solo con el escenario visible)
+  // SOLO CHAT (2026-10-06, integración): en pantallas donde no caben los flancos (tablet y celular) el chat
+  // ocupa TODO el escenario como capa base y las ventanas se abren ENCIMA (hojas en el celular, con
+  // "‹ Volver"); al cerrarlas vuelve el chat. Antes ahí quedaba la Cabina vieja con el hilo en una franja.
+  var solo = false;
   var wins = [];            // [{id, kind, arg, key, el, body, x,y,w,h, max, min, snap, prev, needsRender}]
   var zTop = 10, seq = 0, focused = null;
   var resizeT = null, fireT = null, layT = null, ro = null, wasMobile = null, lastSz = null;
@@ -153,6 +157,9 @@
   'text-align:center;padding:24px;color:var(--os-ink-3);font-size:13px;line-height:1.5;opacity:.9}' +
 '#kd-center{position:absolute;top:' + PAD + 'px;bottom:var(--kd-bar);display:none;flex-direction:column;min-width:0;z-index:1}' +
 '#bcp-stage.kd-centered #kd-center{display:flex}' +
+'#bcp-stage.kd-solo #kd-center{display:flex;left:0;right:0;top:0;width:auto}' +
+'#bcp-stage.kd-solo:not(.kd-mobile) #kd-center{left:50%;right:auto;width:min(760px,calc(100% - 24px));transform:translateX(-50%);top:' + PAD + 'px}' +
+'#bcp-stage.kd-solo #kd-wall,#bcp-stage.kd-solo #kd-flanks{display:none}' +
 '#kd-wins{position:absolute;left:0;right:0;top:0;bottom:var(--kd-bar);pointer-events:none;overflow:hidden}' +
 '.kd-win{position:absolute;pointer-events:auto;display:flex;flex-direction:column;min-width:' + MIN_W + 'px;min-height:' + MIN_H + 'px;' +
   'border:1px solid var(--os-line);border-radius:var(--os-r);background:var(--os-surface);color:var(--os-ink);' +
@@ -262,9 +269,9 @@
     stageEl = stage;
     if (active()) { applyMode(); return; }
     stage.innerHTML = '';
-    centered = false;
+    centered = false; solo = false;
     stage.classList.add('kd-desk');
-    stage.classList.remove('kd-centered');
+    stage.classList.remove('kd-centered', 'kd-solo');
     stage.style.setProperty('--kd-bar', barH() + 'px');
     wallEl = document.createElement('div'); wallEl.id = 'kd-wall';
     // Khipus OS: marcadores de los flancos + columna del chat (DEBAJO de #kd-wins en el
@@ -315,9 +322,9 @@
       closeAll();
       // ANTES de vaciar el escenario: la Cabina saca de #kd-center el hilo y la barra de
       // entrada (con sus escuchadores); si no, stageEl.innerHTML='' los destruiría
-      if (centered) {
-        centered = false;
-        stageEl.classList.remove('kd-centered');
+      if (centered || solo) {
+        centered = false; solo = false;
+        stageEl.classList.remove('kd-centered', 'kd-solo');
         try { if (hooks.onLayout) hooks.onLayout(false, null); } catch (e) {}
       }
     } finally { _unmounting = false; }
@@ -325,7 +332,7 @@
     clearTimeout(resizeT); clearTimeout(fireT); clearTimeout(layT);
     window.removeEventListener('resize', onResize);
     if (ro) { try { ro.disconnect(); } catch (e) {} ro = null; }
-    stageEl.classList.remove('kd-desk', 'kd-mobile', 'kd-centered', 'kd-has-wins');
+    stageEl.classList.remove('kd-desk', 'kd-mobile', 'kd-centered', 'kd-solo', 'kd-has-wins');
     stageEl.style.removeProperty('--kd-bar');
     stageEl.innerHTML = '';
     wallEl = winsEl = barEl = ghostEl = menuEl = layoutsEl = centerEl = flanksEl = null;
@@ -417,7 +424,18 @@
     var d = deskSize(); if (!d) return;
     var on = centerFits(d);
     if (on) positionCenter(geomCenter(d));
-    if (on === centered) return;
+    var sOn = !on && flankOn();                       // sin lugar para flancos → solo chat (si el OS está activo)
+    var wasChat = centered || solo;
+    if (sOn !== solo) {
+      solo = sOn;
+      stageEl.classList.toggle('kd-solo', sOn);
+      if (sOn && centerEl) { centerEl.style.left = ''; centerEl.style.width = ''; }
+      barSig = null;
+    }
+    if (on === centered) {
+      if (wasChat !== (centered || solo)) { try { if (hooks.onLayout) hooks.onLayout(centered || solo, (centered || solo) ? centerEl : null); } catch (e) {} }
+      return;
+    }
     centered = on;
     stageEl.classList.toggle('kd-centered', on);
     stageEl.style.setProperty('--kd-bar', barH() + 'px');
@@ -431,7 +449,8 @@
     });
     barSig = null;
     relabelFlanks();
-    try { if (hooks.onLayout) hooks.onLayout(on, on ? centerEl : null); } catch (e) {}
+    // la Cabina mueve el hilo/la barra solo cuando cambia "el chat está en la columna" (flancos o solo chat)
+    if (wasChat !== (centered || solo)) { try { if (hooks.onLayout) hooks.onLayout(centered || solo, (centered || solo) ? centerEl : null); } catch (e) {} }
     if (on) { var d2 = deskSize(); if (d2) positionCenter(geomCenter(d2)); }
   }
   function relabelFlanks() {
@@ -1127,6 +1146,8 @@
     configure: configure, enabled: enabled, setEnabled: setEnabled, active: active,
     mount: mount, unmount: unmount, wall: function () { return wallEl; },
     center: function () { return centerEl; }, isCentered: function () { return !!(centered && active()); },
+    // ¿el chat vive en la columna #kd-center? (flancos en pantallas anchas o "solo chat" en tablet/celular)
+    isSolo: function () { return !!(solo && active()); }, chatInCenter: function () { return !!((centered || solo) && active()); },
     setFlank: setFlank, flankOn: flankOn,
     // geometría pura de los flancos (pruebas): ancho mínimo del escritorio para el chat al centro y rectángulos
     _geom: function (W, H) { return geomCenter({ W: W, H: H }); },

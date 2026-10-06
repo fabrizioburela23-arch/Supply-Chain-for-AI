@@ -64,6 +64,19 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   de la pestaña tkg; solo hechos con fecha; montaje perezoso, dibujo bajo demanda).
   maptime.js (⏱ TIEMPO EN EL MAPA PRINCIPAL: slider de fecha + capa ⚡ Eventos;
   window.KhipuMapTime, __tkgShow(vista); GRAPH ASOF mueve el mapa).
+  **KHIPUS OS v1 (2026-10-06) — LA interfaz** (spec y contratos: `docs/KHIPUS_OS.md`): la Cabina
+  evolucionada. Arranca SIEMPRE al cargar (salvo `sessionStorage kh_os_classic='1'` = "Vista clásica").
+  Tokens `--os-*` en `#bcp-ov` (claro = look del video, `body:not(.dark)`; oscuro = predeterminado).
+  Barra superior mínima (mascota+Khipus, paleta ⌘K, "Más ▾" con TODAS las pantallas, mascotas de
+  agentes, saldo de práctica 🧪/🔴 sin pedir PIN, ES/EN, ☾/☀, iniciales). ≥1100 px: chat en la columna
+  central (`#kd-center`) y ventanas en FLANCOS (desktop.js `kh_desk_flank`, `isCentered()`); <1100 px:
+  "solo chat" (`kd-solo`, `chatInCenter()`), ventanas encima. Esc NO cierra el OS. Ventanas nativas
+  (`engine/oswindows.js`, `BixbyCockpit.registerKind`): glance ("en una mirada"), conviction,
+  supplychain, agents. Mascotas y preferencias: `engine/mascot.js` (`KhipuMascot`, `KhipuAgentPrefs`,
+  `kh_agent_prefs` sincronizado; SOLO presentación, nunca decide dinero). Chat: progreso real
+  `GET /api/khipu/chat/progress/<req_id>`, respuesta con `agents_used`/`entities`/`cards`/`sources[].as_of`,
+  `context.mode` simple|pro; perfiles `GET /api/agents/profiles` (core/agents_api.py). Mapa: no se
+  calcula tapado (`window._ensureMapSettled()`). Escenas viejas con colores fijos llevan `kd-legacy-dark`.
   **ESCRITORIO KHIPU (2026-10-04, K1)**: desktop.js (`window.KhipuDesk`): dentro
   de la Cabina (cockpit.js) cada escena es una VENTANA (– ▢ ✕, arrastre,
   redimensión, snap a mitades/cuartos, barra de tareas; móvil = hojas). UNA
