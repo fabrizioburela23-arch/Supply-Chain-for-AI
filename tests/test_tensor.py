@@ -91,3 +91,16 @@ def test_mcp_get_company_trae_la_estructura_compacta():
     ctx = M.Ctx(principal=Principal(token_id='x', name='t', scopes=frozenset({'read'})))
     st = M.call('get_company', {'id_or_ticker': 'Nvidia', 'include_live': False}, ctx)['structure']
     assert st['systemic_rank'] >= 1 and st['risk_sources'][0].startswith('TSMC') and len(st['peers']) == 3
+
+
+def test_las_caps_en_vivo_se_piden_aunque_nadie_haya_abierto_la_app(monkeypatch):
+    # tras un reinicio, sin pedir el refresco el modelo usaba solo valuaciones de privadas (~20 % de cobertura)
+    from core import live_caps
+    seen = {}
+
+    def fake(start=True):
+        seen['start'] = start
+        return {'caps': {'Nvidia': {'mcap_b': 4500}}, 'as_of': 'x'}
+    monkeypatch.setattr(live_caps, 'get_caps', fake)
+    caps, as_of = T._caps_live()
+    assert seen['start'] is True and caps == {'Nvidia': 4500.0} and as_of == 'x'

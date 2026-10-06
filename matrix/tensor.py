@@ -78,10 +78,11 @@ def _load_snapshot(path=SNAPSHOT):
 
 
 def _caps_live():
-    """{id: mcap_b} en vivo (sin disparar refresco desde aquí) + versión para la caché."""
+    """{id: mcap_b} en vivo + versión para la caché. Si están vencidas (p. ej. recién reiniciado el
+    servidor) lanza el refresco EN SEGUNDO PLANO (no bloquea): la siguiente lectura ya las usa."""
     try:
         from core import live_caps
-        st = live_caps.get_caps(start=False)
+        st = live_caps.get_caps(start=True)
         caps = {k: float(v['mcap_b']) for k, v in (st.get('caps') or {}).items()
                 if isinstance(v, dict) and v.get('mcap_b') is not None and float(v['mcap_b']) > 0}
         return caps, st.get('as_of')
