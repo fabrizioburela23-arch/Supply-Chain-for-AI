@@ -157,3 +157,35 @@ def test_respaldos_en_cadena_y_saturados_al_final(monkeypatch):
     urls.clear()
     ai._complete_gemini_inner('s', 'p', 200, 'fast')               # la siguiente va directo al que funciona
     assert urls == ['gemini-3.1-pro']
+
+
+def test_respaldo_retirado_no_pausa_todo_gemini(monkeypatch):
+    """Producción 17:21: 3.8/3.5/3.1-pro saturados (503) y 2.5-flash retirado (404) → el 404 abría la pausa de
+    TODO Gemini 30 min. Ahora sube el 503 (pasajero), el retirado no se vuelve a probar y no hay pausa."""
+    monkeypatch.setattr(ai, 'GEMINI_MODEL', 'gemini-3.8-flash')
+    monkeypatch.setattr(ai, 'GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash,gemini-2.5-flash')
+    monkeypatch.setattr(ai, 'GEMINI_KEY', 'g')
+    monkeypatch.setattr(ai, '_GEMINI_HOT', {})
+    monkeypatch.setattr(ai, '_GEMINI_DEAD', {})
+
+    class _E503(_Err):
+        def json(self):
+            return {'error': {'status': 'UNAVAILABLE', 'message': 'This model is currently experiencing high demand.'}}
+    seen = []
+
+    def post(url, body, timeout, retry=True):
+        m = url.split('/models/')[1].split(':')[0]
+        seen.append(m)
+        return _Err(404, 'NOT_FOUND') if m == 'gemini-2.5-flash' else _E503(503, 'UNAVAILABLE')
+    monkeypatch.setattr(ai, '_gemini_post', post)
+    import pytest
+    with pytest.raises(RuntimeError) as ei:
+        ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    msg = str(ei.value)
+    assert msg.startswith('Gemini HTTP 503 UNAVAILABLE') and 'high demand' in msg and 'NOT_FOUND' not in msg
+    assert ai._definitive_kind(msg) is None                    # → no abre la pausa del proveedor
+    assert ai.gemini_state()['retired'] == ['gemini-2.5-flash']
+    seen.clear()
+    with pytest.raises(RuntimeError):
+        ai._complete_gemini_inner('s', 'p', 200, 'fast')
+    assert 'gemini-2.5-flash' not in seen                       # el retirado ya no se prueba

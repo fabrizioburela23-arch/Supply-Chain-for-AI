@@ -555,14 +555,18 @@ def gemini_state():
     now = time.monotonic()
     with _GEMINI_LOCK:
         hot = {m: int(t - now) for m, t in _GEMINI_HOT.items() if t > now}
-    return {'models': _gemini_models(), 'primary': GEMINI_MODEL, 'saturated': hot}
+        dead = sorted(m for m, t in _GEMINI_DEAD.items() if t > now)
+    return {'models': _gemini_models(), 'primary': GEMINI_MODEL, 'saturated': hot, 'retired': dead}
 
 
 def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None):
     """Modelo principal y, si Google lo tiene saturado o retirado, los de respaldo (cada modelo tiene su propia
     capacidad en Google). Entre modelos NO se reintenta el mismo: se pasa al siguiente al instante; solo el último
-    usa los reintentos con espera. → (texto, 'gemini:<modelo>')."""
-    models = _gemini_models()
+    usa los reintentos con espera. → (texto, 'gemini:<modelo>').
+    Si TODOS fallan, el error que sube es el PASAJERO (503/429) si hubo alguno: un respaldo retirado (404) no debe
+    pausar todo Gemini 30 min cuando el problema real es la saturación (visto en producción 2026-10-06)."""
+    models = [m for m in _gemini_models() if not _gemini_dead(m)] or [GEMINI_MODEL]
+    errs = []
     for i, m in enumerate(models):
         last = i + 1 >= len(models)
         try:
@@ -570,13 +574,36 @@ def _complete_gemini_inner(system, prompt, max_tokens, tier='fast', json_mode=Fa
             _gemini_mark(m, False)
             return out
         except _GeminiHTTP as e:
-            if e.status in _GEMINI_FALLBACK_HTTP:
+            errs.append(e)
+            if e.status == 404 and m != GEMINI_MODEL:
+                _gemini_mark_dead(m)               # respaldo retirado: no se vuelve a probar en 6 h
+            elif e.status in _GEMINI_FALLBACK_HTTP:
                 _gemini_mark(m, True)
-                if not last:
-                    log.warning('IA gemini: %s con %s → respaldo %s', e.status, m, models[i + 1])
-                    continue
-            raise RuntimeError(str(e)) from None
-    raise RuntimeError('Gemini sin modelos')
+            if e.status in _GEMINI_FALLBACK_HTTP and not last:
+                log.warning('IA gemini: %s con %s → respaldo %s', e.status, m, models[i + 1])
+                continue
+            break
+    transient = [e for e in errs if e.status != 404 and e.status in _GEMINI_FALLBACK_HTTP]
+    pick = transient[0] if transient else (errs[0] if errs else None)
+    if pick is None:
+        raise RuntimeError('Gemini sin modelos')
+    if len(errs) > 1:
+        log.warning('IA gemini: fallaron %s', ', '.join(f'{m}={e.status}' for m, e in zip(models, errs)))
+    raise RuntimeError(str(pick)) from None
+
+
+_GEMINI_DEAD = {}
+_GEMINI_DEAD_S = 6 * 3600
+
+
+def _gemini_dead(model):
+    with _GEMINI_LOCK:
+        return _GEMINI_DEAD.get(model, 0) > time.monotonic()
+
+
+def _gemini_mark_dead(model):
+    with _GEMINI_LOCK:
+        _GEMINI_DEAD[model] = time.monotonic() + _GEMINI_DEAD_S
 
 
 def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False, timeout_s=None, retry=True):
@@ -631,6 +658,12 @@ def _gemini_once(model, system, prompt, max_tokens, tier='fast', json_mode=False
         except Exception:  # noqa: BLE001
             st = ''
         st = st if re.fullmatch(r'[A-Z_]{3,40}', st or '') else ''
+        if r.status_code == 503:
+            try:   # "high demand" u otra causa (solo 503: el texto del 429 menciona "billing" y abriría la pausa): es texto fijo de Google, no repite la petición
+                gm = re.sub(r'[^\w .,:;()%/-]', '', str(((r.json() or {}).get('error') or {}).get('message') or ''))[:90]
+                reason = (reason + ' ' if reason else '') + (f'— {gm}' if gm else '')
+            except Exception:  # noqa: BLE001
+                pass
         raise _GeminiHTTP(r.status_code, f'Gemini HTTP {r.status_code}' + (f' {st}' if st else '') + (f' {reason}' if reason else ''))
     data = r.json() or {}
     try:   # gasto: usageMetadata de Google (el "pensamiento" se cobra como salida)
