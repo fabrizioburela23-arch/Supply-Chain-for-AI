@@ -2256,6 +2256,16 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     .cv-bar-line .cv-bar-val{flex:0 0 auto;min-width:46px;font-size:11.5px;color:var(--ink);font-weight:600}
     .cv-bar-row.compact{display:grid;grid-template-columns:minmax(70px,30%) 1fr;gap:8px;align-items:center;margin-bottom:4px}
     .cv-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--ink-2);margin:4px 0 8px;justify-content:center}
+    .cv-tools{display:flex;align-items:center;gap:2px;flex-shrink:0}
+    .cv-tool{background:none;border:1px solid transparent;border-radius:6px;color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1;padding:4px 6px;opacity:.75}
+    .cv-tool:hover,.cv-tool:focus-visible{opacity:1;border-color:var(--line-2);color:var(--ink)}
+    .cv-tip{position:fixed;z-index:99999;display:none;pointer-events:none;background:#14110c;color:#f1ead9;border:1px solid rgba(255,255,255,.14);
+      border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.45;box-shadow:0 6px 22px rgba(0,0,0,.35);max-width:280px;font-variant-numeric:tabular-nums}
+    .cv-tip-h{font-weight:700;margin-bottom:3px;color:#fff}
+    .cv-tip-r{display:flex;align-items:center;gap:7px}.cv-tip-r i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+    .cv-tip-r span{flex:1;color:#cfc6b2}.cv-tip-r b{font-weight:700;margin-left:10px}
+    .cv-body [data-tip]{cursor:default}
+    .cv-body .cv-bar-row:hover .cv-bar-fill,.cv-body .cv-hcol:hover .cv-hbar{filter:brightness(1.18)}
     .cv-legend.col{flex-direction:column;justify-content:flex-start}
     .cv-legend span{display:inline-flex;align-items:center;gap:6px}
     .cv-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;flex-shrink:0}
@@ -11127,9 +11137,21 @@ document.addEventListener('DOMContentLoaded', () => {
 'use strict';
 
 /* ── palette & helpers ── */
-const CV_PAL = ['#60a5fa','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#4ade80',
-                '#e879f9','#22d3ee','#fbbf24','#86efac'];
-function cvCol(i){ return CV_PAL[i % CV_PAL.length]; }
+/* 2026-10-06 (Canvas nivel Power BI): paleta categórica VALIDADA (validate_palette.js: banda de luminosidad,
+   croma, separación para daltonismo ΔE≥8 entre vecinos, ΔE≥15 con vista normal, contraste ≥3:1) — la anterior
+   fallaba 3 de 5 en el tema claro. Orden FIJO, nunca cíclico: la serie 9+ va en gris neutro ("otros"). */
+const CV_PAL_D = ['#3987e5','#d95926','#199e70','#c98500','#d55181','#008300','#9085e9','#e66767'];
+const CV_PAL_L = ['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#4a3aa7','#e34948'];
+const CV_OTHER = '#8a8577';
+// las tarjetas usan var(--surface-2) del tema del <body> (.dark = predeterminado) → misma regla para los colores
+function cvDark(){ return !document.body || document.body.classList.contains('dark'); }
+function cvCol(i){ const p=cvDark()?CV_PAL_D:CV_PAL_L; return i<p.length?p[i]:CV_OTHER; }
+window.cvCol = cvCol;
+// rampa secuencial de UN tono (claro→oscuro) para mapas de calor; rojo si "más alto = peor"
+const CV_SEQ = { blue:['#cfe1f7','#86b6ef','#5598e7','#256abf','#104281'], red:['#f7d0cf','#ee9b9a','#e34948','#b8302f','#7e1d1d'] };
+function cvSeq(t,hue){ const r=CV_SEQ[hue]||CV_SEQ.blue, k=r.length-1, x=Math.max(0,Math.min(1,t))*k, i=Math.min(Math.floor(x),k-1), f=x-i;
+  const a=r[i], b=r[i+1], h=c=>[1,3,5].map(j=>parseInt(c.slice(j,j+2),16)), A=h(a), B=h(b);
+  return 'rgb('+A.map((v,j)=>Math.round(v+(B[j]-v)*f)).join(',')+')'; }
 function cvEsc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function cvFmt(v){
   if(v==null) return '—';
@@ -11297,11 +11319,13 @@ const CV_T = {
   es:{bar:'Barras',line:'Línea',bubble:'Burbujas',treemap:'Treemap',heatmap:'Mapa de calor',radar:'Radar',scatter:'Dispersión',
       table:'Tabla',grouped:'Barras agrupadas',kpi:'Dato clave',donut:'Composición',histogram:'Distribución',notice:'Aviso',
       noData:'Sin datos', local:'⚡ local · sin IA', ai:'✦ IA', aiSrc:'calculado por IA con datos del catálogo y precios en vivo — verifica las cifras clave',
-      cached:'caché', total:'Total', renderErr:'No se pudo dibujar', other:'Otros'},
+      cached:'caché', total:'Total', renderErr:'No se pudo dibujar', other:'Otros',
+      asTable:'Ver como tabla', asChart:'Ver gráfico', csv:'Descargar CSV', period:'Periodo', series:'Serie', metric:'Métrica', value:'Valor', name:'Nombre'},
   en:{bar:'Bars',line:'Line',bubble:'Bubbles',treemap:'Treemap',heatmap:'Heatmap',radar:'Radar',scatter:'Scatter',
       table:'Table',grouped:'Grouped bars',kpi:'Key figure',donut:'Composition',histogram:'Distribution',notice:'Notice',
       noData:'No data', local:'⚡ local · no AI', ai:'✦ AI', aiSrc:'computed by AI from catalog data and live prices — double-check key figures',
-      cached:'cache', total:'Total', renderErr:'Could not draw', other:'Others'}
+      cached:'cache', total:'Total', renderErr:'Could not draw', other:'Others',
+      asTable:'View as table', asChart:'View chart', csv:'Download CSV', period:'Period', series:'Series', metric:'Metric', value:'Value', name:'Name'}
 };
 function cvT(k){ const l=(String(window.LANG||'es').slice(0,2)==='en')?'en':'es'; return (CV_T[l][k]!=null?CV_T[l][k]:CV_T.es[k]); }
 function cvEmpty(el){ el.innerHTML=`<div class="cv-empty">${cvT('noData')}</div>`; }
@@ -11344,6 +11368,14 @@ function cvBody(el,spec){
             bubble:_cvBubble,table:_cvTable,grouped:_cvGrouped,kpi:_cvKpi,donut:_cvDonut,pie:_cvDonut,
             histogram:_cvHistogram}[spec.type] || _cvBar;   // tipo desconocido → barras, nunca JSON crudo
   fn(el,spec);
+  // Los gráficos SVG/canvas se dibujan con el ancho medido; si la tarjeta aún no tenía su tamaño final
+  // (recién insertada, ventana que cambia) el texto quedaba diminuto. Se redibuja al cambiar el ancho real.
+  if(/^(line|scatter|bubble|radar|treemap)$/.test(spec.type) && window.ResizeObserver && !el._cvRO){
+    let lastW=el.clientWidth, t=null;
+    el._cvRO=new ResizeObserver(()=>{ const w=el.clientWidth; if(!w||Math.abs(w-lastW)<24) return; lastW=w;
+      clearTimeout(t); t=setTimeout(()=>{ if(el.isConnected && !el.querySelector('.cv-tbl')) try{ fn(el,spec); }catch(e){} },120); });
+    el._cvRO.observe(el);
+  }
 }
 
 function _cvRenderCard(cardId,query,spec,model){
@@ -11358,7 +11390,8 @@ function _cvRenderCard(cardId,query,spec,model){
         <div class="cv-card-title cv-ttl">${cvEsc(spec.title||query)}</div>
         ${spec.subtitle?`<div class="cv-card-sub">${cvEsc(spec.subtitle)}</div>`:''}
       </div>
-      <button class="cv-card-close" aria-label="close" onclick="document.getElementById('${cardId}').remove()">✕</button>
+      <div class="cv-tools">${isNotice||spec.type==='table'?'':`<button class="cv-tool" data-cvact="table" title="${cvEsc(cvT('asTable'))}" aria-label="${cvEsc(cvT('asTable'))}">▦</button>`}${isNotice?'':`<button class="cv-tool" data-cvact="csv" title="${cvEsc(cvT('csv'))}" aria-label="${cvEsc(cvT('csv'))}">⤓</button>`}
+      <button class="cv-card-close" aria-label="close" onclick="document.getElementById('${cardId}').remove()">✕</button></div>
     </div>
     <div id="${cardId}-body" class="cv-body"></div>
     ${spec.note?`<div class="cv-note">${cvEsc(spec.note)}</div>`:''}
@@ -11368,7 +11401,74 @@ function _cvRenderCard(cardId,query,spec,model){
     if(isNotice) _cvNotice(body,spec,cardId);
     else cvBody(body,spec);
   } catch(e){ body.innerHTML=`<div class="cv-empty" style="color:#f87171">${cvT('renderErr')}: ${cvEsc(e.message)}</div>`; }
+  let asTable=false;
+  card.querySelectorAll('[data-cvact]').forEach(b=>b.addEventListener('click',()=>{
+    const act=b.getAttribute('data-cvact');
+    if(act==='csv') return cvDownloadCSV(spec);
+    asTable=!asTable;
+    b.textContent=asTable?'◔':'▦';
+    b.title=b.ariaLabel=cvT(asTable?'asChart':'asTable');
+    try{ if(asTable) _cvTable(body,cvAsTable(spec)); else cvBody(body,spec); }catch(e){}
+  }));
 }
+
+/* ── datos del gráfico como filas (vista de tabla + CSV): mismo origen, sin recalcular ── */
+function cvRows(spec){
+  const cfg=spec.config||{}, d=(spec.data||[]).filter(Boolean), unit=cfg.unit||'';
+  const raw=[];   // filas con números crudos (CSV) — cols[i] ↔ fila[i]
+  let cols;
+  if(spec.type==='table'){ cols=cfg.columns||Object.keys(d[0]||{}); d.forEach(r=>raw.push(cols.map(c=>r[c]))); }
+  else if(spec.type==='heatmap'){
+    const rows=cfg.rows||[...new Set(d.map(x=>x.row))], cs=cfg.cols||[...new Set(d.map(x=>x.col))];
+    const m=Object.fromEntries(d.map(x=>[x.row+'||'+x.col,x.value]));
+    cols=[''].concat(cs); rows.forEach(r=>raw.push([r].concat(cs.map(c=>m[r+'||'+c]??null))));
+  } else if(spec.type==='scatter'||spec.type==='bubble'){
+    cols=['', cfg.x_label||'X', cfg.y_label||'Y'].concat(spec.type==='bubble'?[cfg.r_label||'r']:[]);
+    d.forEach(x=>raw.push([x.label, +x.x, +x.y].concat(spec.type==='bubble'?[+x.r]:[])));
+  } else if(spec.type==='radar'){
+    cols=[cvT('series')].concat(cfg.axes||[]); d.forEach(x=>raw.push([x.label].concat(x.values||[])));
+  } else if(spec.type==='grouped'){
+    cols=[cvT('metric')].concat(cfg.series_labels||[]); d.forEach(g=>raw.push([g.label].concat(g.values||[])));
+  } else if(d[0]&&Array.isArray(d[0].values)){
+    const sl=cfg.series_labels||d.map(x=>x.label), n=Math.max(...d.map(x=>(x.values||[]).length));
+    cols=[cvT('period')].concat(sl);
+    for(let i=0;i<n;i++) raw.push([(cfg.labels||[])[i]??String(i+1)].concat(d.map(x=>(x.values||[])[i]??null)));
+  } else {
+    cols=['', cvT('value')+(unit?' ('+unit+')':'')].concat(d.some(x=>x.sub)?['']:[]);
+    d.forEach(x=>raw.push([x.label, x.value!=null&&isFinite(+x.value)?+x.value:x.value].concat(d.some(y=>y.sub)?[x.sub||'']:[])));
+  }
+  return {cols, raw, unit};
+}
+function cvAsTable(spec){
+  const {cols,raw,unit}=cvRows(spec), uniq=cols.map((c,i)=>c||(i===0?cvT('name'):'·'+i));
+  return {type:'table', config:{columns:uniq, unit}, data:raw.map(r=>Object.fromEntries(uniq.map((c,i)=>{
+    const v=r[i]; return [c, typeof v==='number'&&i>0&&spec.type!=='table'?cvFmtU(v,(spec.data||[])[0]&&(spec.data||[])[0].unit!=null?spec.data[0].unit:unit):v];
+  })))};
+}
+function cvDownloadCSV(spec){
+  const {cols,raw}=cvRows(spec);
+  const q=v=>{ if(v==null) return ''; const t=String(v); return /[",\n;]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t; };
+  const csv='\ufeff'+[cols].concat(raw).map(r=>r.map(q).join(',')).join('\n');
+  const name=(String(spec.title||'khipus-grafico').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'khipus')+'.csv';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
+}
+window._cvRows = cvRows;
+
+/* ── TOOLTIP compartido: todo elemento con data-tip dentro de un gráfico muestra su valor al pasar el mouse ── */
+const cvTip=(function(){
+  let el=null;
+  function node(){ if(!el){ el=document.createElement('div'); el.className='cv-tip'; el.setAttribute('role','tooltip'); document.body.appendChild(el); } return el; }
+  function show(html,x,y){ const t=node(); t.innerHTML=html; t.style.display='block';
+    const w=t.offsetWidth, h=t.offsetHeight, vw=window.innerWidth, vh=window.innerHeight;
+    t.style.left=Math.max(6,Math.min(vw-w-6,x+14))+'px'; t.style.top=Math.max(6,(y+h+18>vh?y-h-12:y+14))+'px'; }
+  function hide(){ if(el) el.style.display='none'; }
+  document.addEventListener('mouseover',e=>{ const m=e.target.closest&&e.target.closest('.cv-body [data-tip]'); if(m) show(cvEsc(m.getAttribute('data-tip')).replace(/\n/g,'<br>'),e.clientX,e.clientY); });
+  document.addEventListener('mousemove',e=>{ if(el&&el.style.display==='block'&&e.target.closest&&e.target.closest('.cv-body [data-tip]')) show(el.innerHTML,e.clientX,e.clientY); });
+  document.addEventListener('mouseout',e=>{ if(e.target.closest&&e.target.closest('.cv-body [data-tip]')) hide(); });
+  document.addEventListener('scroll',hide,true);
+  return {show,hide};
+})();
 
 /* ── NOTICE: "no puedo con precisión sin IA" + la parcial correcta más cercana ── */
 function _cvNotice(el,spec,cardId){
@@ -11398,10 +11498,10 @@ function _cvBar(el,spec){
   const zero=maxNeg/span*100;
   const longLbl=Math.max(...labels.map(l=>l.length))>26;
   el.innerHTML=`<div class="cv-bars ${longLbl?'stack':''}">`+data.map((d,i)=>{
-    const col=d.color||cvCol(i), v=d.value, own=d.max?(Math.abs(v)/d.max*100):null;
+    const col=d.color||cvCol(0), v=d.value, own=d.max?(Math.abs(v)/d.max*100):null;
     const w=own!=null?Math.min(100,own):Math.abs(v)/span*100;
     const left=own!=null?0:(v<0?zero-w:zero);
-    return `<div class="cv-bar-row" title="${cvEsc(d.label)}: ${cvEsc(cvFmtU(v,unit))}">
+    return `<div class="cv-bar-row" data-tip="${cvEsc(d.label)}: ${cvEsc(cvFmtU(v,unit))}${d.sub?' · '+cvEsc(d.sub):''}">
       <div class="cv-bar-label">${cvEsc(d.label)}</div>
       <div class="cv-bar-line"><div class="cv-bar-track">${maxNeg&&own==null?`<div class="cv-bar-zero" style="left:${zero.toFixed(2)}%"></div>`:''}<div class="cv-bar-fill" style="left:${left.toFixed(2)}%;width:${Math.max(.6,w).toFixed(2)}%;background:${v<0&&!d.color?'#f87171':col}"></div></div>
       <div class="cv-bar-val">${cvEsc(cvFmtU(v,unit))}${d.max?`<span class="cv-dim">/${d.max}</span>`:''}</div></div>
@@ -11424,7 +11524,7 @@ function _cvGrouped(el,spec){
       const scale=unit==='NRS'?Math.max(100,mx):mx;
       return `<div class="cv-group"><div class="cv-group-h">${cvEsc(g.label)}</div>${series.map((s,i)=>{
         const v=vals[i];
-        return `<div class="cv-bar-row compact" title="${cvEsc(s)} · ${cvEsc(g.label)}: ${cvEsc(cvFmtU(v,unit))}"><div class="cv-bar-label">${cvEsc(s)}</div>
+        return `<div class="cv-bar-row compact" data-tip="${cvEsc(s)} · ${cvEsc(g.label)}: ${cvEsc(cvFmtU(v,unit))}"><div class="cv-bar-label">${cvEsc(s)}</div>
           <div class="cv-bar-line"><div class="cv-bar-track">${v==null?'':`<div class="cv-bar-fill" style="left:0;width:${Math.max(.6,Math.abs(v)/scale*100).toFixed(2)}%;background:${v<0?'#f87171':colors[i]}"></div>`}</div>
           <div class="cv-bar-val">${v==null?'<span class="cv-dim">—</span>':cvEsc(cvFmtU(v,unit))}</div></div></div>`;
       }).join('')}</div>`;
@@ -11454,7 +11554,8 @@ function _cvDonut(el,spec){
   const tot=data.reduce((s,d)=>s+d.value,0)||1;
   const R=62, C=2*Math.PI*R; let off=0;
   const arcs=data.map((d,i)=>{ const f=d.value/tot, len=f*C;
-    const a=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${d.color||cvCol(i)}" stroke-width="26" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"><title>${cvEsc(d.label)}: ${cvEsc(cvFmtU(d.value,unit))} (${(f*100).toFixed(1)}%)</title></circle>`;
+    const gap=data.length>1?Math.min(1.5,len/3):0;
+    const a=`<circle r="${R}" cx="80" cy="80" fill="none" stroke="${d.color||cvCol(i)}" stroke-width="26" stroke-dasharray="${(len-gap).toFixed(2)} ${(C-len+gap).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)" data-tip="${cvEsc(d.label)}: ${cvEsc(cvFmtU(d.value,unit))} (${(f*100).toFixed(1)}%)" style="cursor:default"></circle>`;
     off+=len; return a; }).join('');
   el.innerHTML=`<div class="cv-donut">
     <svg viewBox="0 0 160 160" class="cv-donut-svg">${arcs}
@@ -11470,7 +11571,7 @@ function _cvHistogram(el,spec){
   if(!data.length) return cvEmpty(el);
   const mx=Math.max(...data.map(d=>+d.value))||1;
   const cfg=spec.config||{};
-  el.innerHTML=`<div class="cv-hist">${data.map((d,i)=>`<div class="cv-hcol" title="${cvEsc(d.label)}: ${cvEsc(d.value)} ${cvEsc(cfg.unit||'')}">
+  el.innerHTML=`<div class="cv-hist">${data.map((d,i)=>`<div class="cv-hcol" data-tip="${cvEsc(d.label)}: ${cvEsc(d.value)} ${cvEsc(cfg.unit||'')}">
       <div class="cv-hval">${cvEsc(cvFmtU(+d.value,''))}</div>
       <div class="cv-hbar-wrap"><div class="cv-hbar" style="height:${Math.max(1.5,(+d.value)/mx*100).toFixed(1)}%;background:${d.color||cvCol(0)}"></div></div>
       <div class="cv-hlbl">${cvEsc(d.label)}</div></div>`).join('')}</div>
@@ -11505,7 +11606,7 @@ function _cvLine(el,spec){
     const col=d.color||cvCol(si); let p='', on=false;
     (d.values||[]).forEach((v,i)=>{ if(v==null||!isFinite(v)){ on=false; return; } p+=(on?' L':' M')+xS(i).toFixed(1)+','+yS(v).toFixed(1); on=true; });
     const area= data.length===1 && p ? `<path d="${p} L${xS((d.values||[]).length-1).toFixed(1)},${(PAD.t+ch).toFixed(1)} L${PAD.l},${(PAD.t+ch).toFixed(1)} Z" fill="${col}" opacity=".08"/>` : '';
-    return area+`<path d="${p}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+    return area+`<path d="${p}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   });
   const ends=data.map((d,si)=>{ const vs=d.values||[]; let li=vs.length-1; while(li>=0&&(vs[li]==null||!isFinite(vs[li]))) li--; if(li<0) return '';
     const col=d.color||cvCol(si);
@@ -11516,8 +11617,27 @@ function _cvLine(el,spec){
     ${ticks}
     ${labels.map((lb,i)=> (i%step===0||i===labels.length-1)&&(i===labels.length-1||labels.length-1-i>=step/2) ? `<text x="${xS(i).toFixed(1)}" y="${H-8}" text-anchor="middle" style="fill:var(--ink-3);font-size:10px">${cvEsc(lb)}</text>` : '').join('')}
     ${paths.join('')}${ends}
+    <g class="cv-xh" style="display:none;pointer-events:none"><line y1="${PAD.t}" y2="${PAD.t+ch}" stroke="currentColor" stroke-opacity=".45" stroke-dasharray="3 3"/>
+      ${data.map((d,si)=>`<circle r="4.5" fill="${d.color||cvCol(si)}" stroke="var(--surface-2)" stroke-width="2"/>`).join('')}</g>
+    <rect class="cv-hit" x="${PAD.l}" y="${PAD.t}" width="${cw}" height="${ch}" fill="transparent" style="cursor:crosshair"/>
   </svg>
-  ${data.length>1||seriesLabels[0]?`<div class="cv-legend">${data.map((d,si)=>`<span><i style="background:${d.color||cvCol(si)}"></i>${cvEsc(seriesLabels[si]||d.label||'')}</span>`).join('')}</div>`:''}`;
+  ${data.length>1?`<div class="cv-legend">${data.map((d,si)=>`<span><i style="background:${d.color||cvCol(si)}"></i>${cvEsc(seriesLabels[si]||d.label||'')}</span>`).join('')}</div>`:''}`;
+  // CRUZ + TOOLTIP: el periodo bajo el mouse y el valor de cada serie (como Power BI)
+  const svg=el.querySelector('svg'), hit=svg&&svg.querySelector('.cv-hit'), xh=svg&&svg.querySelector('.cv-xh');
+  if(!hit||!xh) return;
+  const ln=xh.querySelector('line'), dots=xh.querySelectorAll('circle');
+  function at(e){
+    const r=svg.getBoundingClientRect(), x=(e.clientX-r.left)*W/(r.width||W);
+    const i=Math.max(0,Math.min(n-1,Math.round((x-PAD.l)/(cw||1)*(n-1)))), X=xS(i).toFixed(1);
+    ln.setAttribute('x1',X); ln.setAttribute('x2',X); xh.style.display='';
+    const rows=[];
+    data.forEach((d,si)=>{ const v=(d.values||[])[i], ok=v!=null&&isFinite(v);
+      dots[si].style.display=ok?'':'none'; if(ok){ dots[si].setAttribute('cx',X); dots[si].setAttribute('cy',yS(v).toFixed(1)); }
+      rows.push(`<div class="cv-tip-r"><i style="background:${d.color||cvCol(si)}"></i><span>${cvEsc(seriesLabels[si]||d.label||'')}</span><b>${ok?cvEsc(cvFmtU(v,unit)):'—'}</b></div>`); });
+    cvTip.show(`<div class="cv-tip-h">${cvEsc(labels[i]||'')}</div>`+rows.join(''),e.clientX,e.clientY);
+  }
+  hit.addEventListener('mousemove',at);
+  hit.addEventListener('mouseleave',()=>{ xh.style.display='none'; cvTip.hide(); });
 }
 
 /* ── TREEMAP (squarified; tamaño = peso en el total) ── */
@@ -11561,14 +11681,13 @@ function _cvHeatmap(el,spec){
   const CELL=46, LPAD=96, THEAD=78;
   const W=LPAD+cols.length*CELL, H=THEAD+rows.length*CELL;
   const heat=Object.fromEntries(data.map(d=>[`${d.row}||${d.col}`,+d.value]));
-  const stops=cfg.higher_is_worse?[[52,211,153],[245,158,11],[248,113,113]]:[[96,165,250],[52,211,153],[245,158,11],[248,113,113]];
-  function lerp(t){ const k=stops.length-1, si=Math.min(Math.floor(t*k),k-1), f=t*k-si, a=stops[si], b=stops[si+1];
-    return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`; }
+  const hue=cfg.higher_is_worse?'red':'blue';
+  function lerp(t){ return cvSeq(t,hue); }
   const cells=rows.flatMap((r,ri)=>cols.map((c,ci)=>{
     const v=heat[`${r}||${c}`];
     const has=v!=null&&isFinite(v), t=has?(v-minV)/(maxV-minV||1):0;
-    return `<rect x="${LPAD+ci*CELL}" y="${THEAD+ri*CELL}" width="${CELL-3}" height="${CELL-3}" rx="4" fill="${has?lerp(t):'rgba(120,130,150,.08)'}"><title>${cvEsc(r)} × ${cvEsc(c)}: ${has?cvEsc(cvFmtU(v,unit)):'—'}</title></rect>
-      ${has?`<text x="${LPAD+ci*CELL+CELL/2-1.5}" y="${THEAD+ri*CELL+CELL/2+3}" text-anchor="middle" style="fill:#0b1220;font-size:11px;font-weight:700">${cvEsc(cvFmtU(v,unit))}</text>`:''}`;
+    return `<rect x="${LPAD+ci*CELL}" y="${THEAD+ri*CELL}" width="${CELL-3}" height="${CELL-3}" rx="4" fill="${has?lerp(t):'rgba(120,130,150,.08)'}" data-tip="${cvEsc(r)} × ${cvEsc(c)}: ${has?cvEsc(cvFmtU(v,unit)):'—'}"></rect>
+      ${has?`<text x="${LPAD+ci*CELL+CELL/2-1.5}" y="${THEAD+ri*CELL+CELL/2+3}" text-anchor="middle" style="fill:${t>0.55?'#ffffff':'#14110c'};font-size:11px;font-weight:700;pointer-events:none">${cvEsc(cvFmtU(v,unit))}</text>`:''}`;
   }));
   el.innerHTML=`<div class="cv-scroll"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,560)}px;display:block">
     ${cols.map((c,ci)=>`<text x="${LPAD+ci*CELL+CELL/2-1}" y="${THEAD-8}" text-anchor="start" transform="rotate(-38 ${LPAD+ci*CELL+CELL/2-1} ${THEAD-8})" style="fill:var(--ink-3);font-size:10px">${cvEsc(String(c).length>16?String(c).slice(0,15)+'…':String(c))}<title>${cvEsc(c)}</title></text>`).join('')}
@@ -11652,9 +11771,10 @@ function _cvScatterBase(el,spec,isBubble){
     const cxm=(minX+maxX)/2, cym=(minY+maxY)/2;
     const clampX=v=>Math.max(minX,Math.min(maxX,v)), clampY=v=>Math.max(minY,Math.min(maxY,v));
     const order=data.map((d,i)=>[i,isOut(d)?9:Math.hypot((clampX(+d.x)-cxm)/(maxX-minX||1),(clampY(+d.y)-cym)/(maxY-minY||1))]).sort((a,b)=>b[1]-a[1]).map(a=>a[0]);
-    const boxes=[];
+    const boxes=[], pts=[];
     data.forEach((d,i)=>{
-      const out=isOut(d), x=sx(clampX(+d.x)), y=sy(clampY(+d.y)), r=isBubble?Math.max(4,Math.min(26,((+d.r||1)/maxR)*26)):4.5, col=d.color||cvCol(i);
+      const out=isOut(d), x=sx(clampX(+d.x)), y=sy(clampY(+d.y)), r=isBubble?Math.max(4,Math.min(26,((+d.r||1)/maxR)*26)):4.5, col=d.color||cvCol(0);
+      pts.push([x,y,Math.max(r,7),d]);
       ctx.beginPath(); ctx.arc(x,y,r,0,2*Math.PI);
       if(!out){ ctx.globalAlpha=.55; ctx.fillStyle=col; ctx.fill(); ctx.globalAlpha=1; }
       ctx.strokeStyle=col; ctx.lineWidth=out?2:1.3; ctx.stroke();
@@ -11671,6 +11791,17 @@ function _cvScatterBase(el,spec,isBubble){
       boxes.push(box); nlab++;
       ctx.fillStyle=ink; ctx.textAlign='left'; ctx.fillText(txt,lx,y);
     }
+    // tooltip del punto más cercano (radio de captura ≥ 7 px, más grande que la marca)
+    cv.addEventListener('mousemove',e=>{
+      const rc=cv.getBoundingClientRect(), mx=e.clientX-rc.left, my=e.clientY-rc.top;
+      let best=null, bd=1e9; pts.forEach(p=>{ const dd=Math.hypot(p[0]-mx,p[1]-my); if(dd<=p[2]+4&&dd<bd){ bd=dd; best=p[3]; } });
+      if(!best){ cvTip.hide(); cv.style.cursor=''; return; }
+      cv.style.cursor='pointer';
+      cvTip.show(`<div class="cv-tip-h">${cvEsc(best.label||'')}</div><div class="cv-tip-r"><span>${cvEsc(xl)}</span><b>${cvEsc(cvFmtU(+best.x,cfg.x_unit||''))}</b></div>`+
+        `<div class="cv-tip-r"><span>${cvEsc(yl)}</span><b>${cvEsc(cvFmtU(+best.y,cfg.y_unit||''))}</b></div>`+
+        (isBubble?`<div class="cv-tip-r"><span>${cvEsc(cfg.r_label||'r')}</span><b>${cvEsc(cvFmtU(+best.r,cfg.r_unit||''))}</b></div>`:''),e.clientX,e.clientY);
+    });
+    cv.addEventListener('mouseleave',()=>cvTip.hide());
   });
 }
 

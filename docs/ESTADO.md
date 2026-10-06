@@ -9,6 +9,19 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (hh) — CANVAS NIVEL POWER BI: COLOR VALIDADO + INTERACCIÓN (sw v244)
+
+- app.html (renderizador único: Canvas, Cabina y chat de Khipu): paleta categórica VALIDADA con
+  dataviz/validate_palette.js (CV_PAL_D sobre #2B241A / CV_PAL_L sobre #E9E2D4; la anterior fallaba 3 de 5 en
+  claro), orden fijo sin ciclos (serie 9+ = gris CV_OTHER); `cvCol` expuesto y usado por localcharts (`pal(i)`);
+  colores de estado de la paleta de referencia (GRN/AMB/RED). Barras de una serie en UN color; mapa de calor con
+  rampa de UN tono (`cvSeq`: azul, o rojo si higher_is_worse) y texto que se adapta al fondo; donut con 2 px de
+  separación. Interacción: tooltip compartido (`cvTip`, cualquier `[data-tip]` dentro de `.cv-body`), CRUZ en
+  líneas (periodo + valor de cada serie), punto más cercano en dispersión. Tarjeta: ▦ Ver como tabla (`cvRows`
+  → `_cvTable`) y ⤓ Descargar CSV (`cvDownloadCSV`, BOM UTF-8). SVG/canvas se redibujan con el ancho real
+  (ResizeObserver): antes el texto de los ejes quedaba diminuto.
+- Test: tests/test_canvas_charts.py.
+
 # SESIÓN 2026-10-06 (gg) — DIRECCIONES AL REVÉS + PESO DE LICENCIAS + PISO DEL KERNEL (sw v242)
 
 Fabrizio aprobó ("sí a las dos"):

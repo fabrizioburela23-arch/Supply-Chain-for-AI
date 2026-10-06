@@ -54,8 +54,11 @@
 (function () {
   'use strict';
 
-  var PAL = ['#60a5fa', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#38bdf8', '#fb923c', '#4ade80'];
-  var RED = '#f87171', AMB = '#f59e0b', GRN = '#34d399', BLU = '#60a5fa';
+  // 2026-10-06: misma paleta VALIDADA que el renderizador (app.html cvCol, orden fijo, sin ciclos) y colores de
+  // ESTADO fijos (sube/baja/riesgo) de la paleta de referencia; respaldo si cvCol aún no existe (tests en node)
+  var PAL = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+  function pal(i) { return (typeof window !== 'undefined' && window.cvCol) ? window.cvCol(i) : (i < PAL.length ? PAL[i] : '#8a8577'); }
+  var RED = '#d03b3b', AMB = '#fab219', GRN = '#0ca30c', BLU = '#3987e5';
   var ACCEPT = 0.75;   // umbral de confianza para responder sin IA
 
   /* ── i18n local (regla bilingüe ES/EN — window.LANG / localStorage eco_lang) ── */
@@ -725,7 +728,7 @@
       if (items.length < 2 || !/^(mktcap|revenue|employees)$/.test(k)) return null;
       return spec(items.length <= 6 ? 'donut' : 'treemap', metLabel(k) + ': ' + items.map(function (r) { return r[0].label; }).join(' · '),
         L() === 'en' ? 'Share of the combined total' : 'Participación en el total combinado',
-        items.map(function (r, i) { return { label: r[0].label, value: r1(r[1]), color: PAL[i % PAL.length] }; }), { unit: unitOf(k) }, srcOf(k));
+        items.map(function (r, i) { return { label: r[0].label, value: r1(r[1]), color: pal(i) }; }), { unit: unitOf(k) }, srcOf(k));
     }
     var dim = P.groupBy[0] || 'sector';
     var kk = k && /^(mktcap|revenue|employees)$/.test(k) ? k : (k ? null : 'count');
@@ -737,9 +740,9 @@
     if (rows.length > 12) { other = rows.slice(11).reduce(function (s, r) { return s + r.v; }, 0); rows = rows.slice(0, 11); }
     var data = rows.map(function (r, i) {
       return { label: dim === 'sector' ? sectorLabel(r.g) : countryLabel(r.g), value: Math.round(r.v * 10) / 10,
-               color: dim === 'sector' ? sectorColor(r.g) : PAL[i % PAL.length] };
+               color: dim === 'sector' ? sectorColor(r.g) : pal(i) };
     });
-    if (other > 0) data.push({ label: L() === 'en' ? 'Others' : 'Otros', value: Math.round(other * 10) / 10, color: '#64748b' });
+    if (other > 0) data.push({ label: L() === 'en' ? 'Others' : 'Otros', value: Math.round(other * 10) / 10, color: '#8a8577' });
     var title = dim === 'country' ? TT('ctryCompT') : TT({ mktcap: 'tmCapT', revenue: 'tmRevT', employees: 'tmEmpT', count: 'tmCntT' }[kk]);
     var nHave = G.rows.reduce(function (s, r) { return s + (kk === 'count' ? r.n : r.have); }, 0);
     return spec(data.length <= 6 && P.chart !== 'treemap' ? 'donut' : 'treemap', withCountry(title, P),
@@ -772,7 +775,7 @@
     if (comps.length > 6 || P.chart === 'table') return compareTable(comps);
     if (mets.length === 1) {
       var k = mets[0];
-      var rows = comps.map(function (n, i) { return { n: n, v: getM(k, n), c: PAL[i % PAL.length] }; });
+      var rows = comps.map(function (n, i) { return { n: n, v: getM(k, n), c: pal(i) }; });
       var have = rows.filter(function (r) { return r.v != null; });
       if (have.length < 2) return null;
       var miss = rows.filter(function (r) { return r.v == null; }).map(function (r) { return r.n.label; });
@@ -792,7 +795,7 @@
     if (!groups.length) return null;
     if (groups.length === 1 && use.length > 1 && !mets.length) return compareTable(comps);
     return spec('grouped', names.join(' vs '), TT('cmpSn'), groups,
-      { series_labels: names, colors: comps.map(function (_, i) { return PAL[i % PAL.length]; }) },
+      { series_labels: names, colors: comps.map(function (_, i) { return pal(i); }) },
       TT('srcCat') + (use.indexOf('nrs') >= 0 ? ' · ' + TT('srcNrs') : ''));
   }
   function compareTable(comps) {
@@ -993,7 +996,7 @@
     var priced = rows.filter(function (r) { return r.px != null && r.qty > 0; });
     if (priced.length >= 2 && priced.length === rows.length) {
       priced.sort(function (a, b) { return b.px * b.qty - a.px * a.qty; });
-      var data = priced.map(function (r, i) { return { label: r.label + ' (' + r.tk + ')', value: Math.round(r.px * r.qty), color: PAL[i % PAL.length] }; });
+      var data = priced.map(function (r, i) { return { label: r.label + ' (' + r.tk + ')', value: Math.round(r.px * r.qty), color: pal(i) }; });
       return spec(data.length <= 6 ? 'donut' : 'treemap', TT('portT'), rows.length + ' ' + TT('portS'), data, { unit: '$' }, TT('srcPort'));
     }
     var pC = TT('colCompany'), pT = TT('colTicker'), pQ = TT('colQty'), pP = TT('colPrice'), pV = TT('colValue');
@@ -1114,7 +1117,7 @@
       var len = Math.min.apply(null, all.map(function (c) { return c.c.length; }));
       var series = all.map(function (c, i) {
         var arr = c.c.slice(c.c.length - len), b0 = arr[0];
-        return { label: ents[i].mkt, values: arr.map(function (v) { return Math.round(v / b0 * 1000) / 10; }), color: PAL[i % PAL.length] };
+        return { label: ents[i].mkt, values: arr.map(function (v) { return Math.round(v / b0 * 1000) / 10; }), color: pal(i) };
       });
       var t0 = all[0].t ? all[0].t.slice(all[0].t.length - len) : [];
       return spec('line', TT('relT', { p: plab }), TT('relS'), series,
@@ -1141,7 +1144,7 @@
       if (ys.length < 2) return null;
       var conv = function (v) { return v == null ? null : (m.bn ? Math.round(v / 1e9 * 10) / 10 : Math.round(v * 10) / 10); };
       var series = all.map(function (d, i) {
-        return { label: ents[i].mkt, color: PAL[i % PAL.length], values: ys.map(function (y) { var ix = d.years.map(String).indexOf(String(y)); return ix >= 0 ? conv((d[m.key] || [])[ix]) : null; }) };
+        return { label: ents[i].mkt, color: pal(i), values: ys.map(function (y) { var ix = d.years.map(String).indexOf(String(y)); return ix >= 0 ? conv((d[m.key] || [])[ix]) : null; }) };
       });
       var note = (k === 'gross_margin' && P.metrics[0] === 'margin') ? (L() === 'en' ? 'Gross margin from annual statements (the catalog margin has no history)' : 'Margen bruto de los estados anuales (el margen del catálogo no tiene historial)') : '';
       if (ents.length === 1) {
