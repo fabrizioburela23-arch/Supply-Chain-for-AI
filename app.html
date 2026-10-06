@@ -3004,17 +3004,20 @@ function _mapCkOpen(){
   return !!(ck && typeof ck.isOpen === 'function' && ck.isOpen());
 }
 // Mientras el arranque aún no decidió (el OS va a abrirse pero todavía no lo hizo) el mapa cuenta
-// como tapado. Se rinde si la Cabina cargó y no se abrió, o a los 12 s (como el respaldo del arranque).
+// como tapado. Se rinde: (a) si el arranque se rindió (window.__khOsGaveUp: la Cabina nunca cargó);
+// (b) si el splash #boot ya no está (lo quitó el arranque o el respaldo fijo de 3 s) y pasó un respiro
+// de 600 ms — con o SIN Cabina cargada: sin splash, el mapa es lo que se ve (antes, si cockpit.js no
+// cargaba, el mapa quedaba en blanco de ~3 s a 12 s); (c) a los 12 s, como último tope.
+// Si la Cabina llega tarde y se abre, el asentado por porciones se pausa solo (_mapCovered()).
 function _mapBootWaiting(){
   if (!_mapOsExpected || _mapCkOpened) return false;
   if (_mapCkOpen()) { _mapCkOpened = true; return false; }
   const now = performance.now();
-  if (now > 12000) { _mapOsExpected = false; return false; }
-  const ck = window.BixbyCockpit;
-  if (ck && typeof ck.open === 'function') {
+  if (now > 12000 || window.__khOsGaveUp) { _mapOsExpected = false; return false; }
+  const b = document.getElementById('boot');
+  if (!b || b.classList.contains('gone')) {
     if (!_mapCkSeen) _mapCkSeen = now;
-    const b = document.getElementById('boot');
-    if ((!b || b.classList.contains('gone')) && now - _mapCkSeen > 600) { _mapOsExpected = false; return false; }
+    if (now - _mapCkSeen > 600) { _mapOsExpected = false; return false; }
   }
   return true;
 }
@@ -7047,13 +7050,15 @@ const $=id=>document.getElementById(id);
           return;
         }
         if (tries < 90) setTimeout(tryLand, 100);   // poll rápido, hasta ~9s
-        else fadeBoot();   // fallback: mostrar el mapa si la Cabina nunca cargó
+        // fallback: mostrar el mapa si la Cabina nunca cargó — y avisarle al mapa que deje de
+        // esperarla (_mapBootWaiting) para que se ordene enseguida en vez de quedar en blanco
+        else { window.__khOsGaveUp = true; fadeBoot(); }
       };
       // 2026-10-06: con el mapa ya liberado (no se calcula tapado), la espera fija de 850 ms era lo que más
       // demoraba la entrada al OS; el poll de 100 ms entra apenas cockpit.js y los nodos están listos
       setTimeout(tryLand, 60);
     }
-  } catch (e) { setTimeout(fadeBoot, 1350); }
+  } catch (e) { window.__khOsGaveUp = true; setTimeout(fadeBoot, 1350); }
 })();
 
 /* ---- Contadores animados ---- */

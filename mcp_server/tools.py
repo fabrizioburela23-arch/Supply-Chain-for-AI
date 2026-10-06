@@ -1215,7 +1215,10 @@ def t_get_conclusions_board(ctx, limit=20, side='all'):
                     'best_against': (x['best_against'] or {}).get('text_en') if x.get('best_against') else None,
                     'committee': ({'decision': x['memo']['decision'], 'status': x['memo']['status'],
                                    'date': x['memo']['created_at'], 'ai_debate': x['memo']['ai'],
-                                   'conclusion': x['memo'].get('conclusion_en')} if x.get('memo') else None)})
+                                   'conclusion': x['memo'].get('conclusion_en'),
+                                   # revisión #8: un memo vencido o sin datos suficientes no es un veredicto vigente
+                                   'decision_code': x['memo'].get('decision_code'),
+                                   'expired': x['memo'].get('expired')} if x.get('memo') else None)})
     return {'items': out, 'n': len(out), 'source': 'Khipus research claims + committee memos',
             'note': res.get('note_en'), 'as_of': _now_iso()}
 

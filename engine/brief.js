@@ -115,8 +115,14 @@
       });
   }
 
+  // Ir a la empresa de una tarjeta. SIEMPRE por _surface (regla de CLAUDE.md): con Khipus OS abierto
+  // abre/enfoca la ventana "Grafo" en esa empresa; antes movía el mapa clásico OCULTO detrás del OS
+  // (el clic no hacía nada visible). Con el OS cerrado _surface lleva a la pestaña Mapa y salta.
   window._briefJump = function (id) {
     close();
+    if (typeof window._surface === 'function') {
+      try { if (window._surface('graph', id)) return; } catch (e) {}
+    }
     if (window.switchTab) window.switchTab('map');
     setTimeout(function () { if (window.jumpTo) window.jumpTo(id); }, 100);
   };

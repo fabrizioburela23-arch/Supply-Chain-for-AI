@@ -294,6 +294,21 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
 @media(prefers-reduced-motion:reduce){#bcp-stage>*{animation:none}}
 .bcp-embed{height:calc(100vh - 250px);min-height:420px;display:flex;flex-direction:column;
   border:1px solid var(--os-line);border-radius:14px;overflow:hidden;background:var(--os-surface);position:relative}
+/* GRAFO en una ventana ANGOSTA (flancos del OS: 300-760 px). La ficha de app.html (.panel) mide 380 px FIJOS y
+   no encoge: el mapa se quedaba con 0-36 px (vacío, sin asentar). Ahí la ficha sale de la fila: el mapa usa
+   todo el ancho y la ficha aparece como hoja inferior SOLO con una empresa elegida (#detail visible); ✕ o un
+   clic en el fondo del mapa la cierran (deselect). Fuera de ventanas o con ventana ancha, nada cambia; el
+   celular (≤ 820 px) conserva su hoja propia de app.html. */
+@media(min-width:821px){#bcp-stage.kd-desk:not(.kd-mobile) .kd-body>#bcp-embed-graph{container:kosmap/inline-size}}
+@container kosmap (max-width:760px){
+  #bcp-embed-graph>main>.panel{position:absolute;left:0;right:0;bottom:0;top:auto;width:auto;min-width:0;height:45%;max-height:none;
+    transform:none;z-index:30;border-left:0;border-top:1px solid var(--os-line);border-radius:14px 14px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.28)}
+  #bcp-embed-graph>main>.panel:has(>#detail[style*="none"]){display:none}
+  #bcp-embed-graph>main>.panel>.detail{padding-top:34px}
+  #bcp-embed-graph>main>.panel>.sheet-close{display:flex;position:absolute;top:6px;right:8px;width:28px;height:28px;z-index:3;border-radius:50%;font-size:13px}
+  /* como en el celular: la leyenda y la ayuda tapaban un tercio del mapa (la franja de sectores de arriba queda) */
+  #bcp-embed-graph>main>.graph-wrap>.legend,#bcp-embed-graph>main>.graph-wrap>.graph-hint{display:none}
+}
 /* inicio en el "muro" (pantallas medianas sin chat al centro) */
 #bcp-empty{max-width:760px;margin:5vh auto 0;padding:0 8px;text-align:left}
 .bcp-hello{font-family:var(--os-font);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.12;letter-spacing:-.025em;color:var(--os-ink);margin:0 0 12px}
@@ -779,7 +794,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     }
     // en el teléfono la barra no tiene sitio: idioma, tema y saldo viven aquí
     html += '<div class="kos-mob"><div class="kos-sep"></div>' +
-      '<button type="button" class="kos-mi" data-k="bal"><span class="ic">🧪</span><span class="tx" id="kos-me-bal">' + esc(_balText()) + '</span></button>' +
+      '<button type="button" class="kos-mi" data-k="bal"><span class="ic" id="kos-me-bal-ic">' + esc(_bal.ic || '🧪') + '</span><span class="tx" id="kos-me-bal">' + esc(_balText()) + '</span></button>' +
       '<button type="button" class="kos-mi" data-k="lang"><span class="ic">🌐</span><span class="tx">' + esc(ckLang() === 'en' ? 'Cambiar a español' : 'Switch to English') + '</span></button>' +
       '<button type="button" class="kos-mi" data-k="theme"><span class="ic">' + (document.body.classList.contains('dark') ? '☀️' : '🌙') + '</span><span class="tx">' + esc(document.body.classList.contains('dark') ? L('Tema claro', 'Light theme') : L('Tema oscuro', 'Dark theme')) + '</span></button></div>';
     html += '<div class="kos-sep"></div>' +
@@ -818,7 +833,9 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   }
 
   // ── saldo de práctica en la barra (NUNCA pide el PIN; insignia 🧪/🔴 obligatoria) ──
-  var _bal = { t: null, seq: 0, text: '' };
+  // ic = insignia de la fila del menú (teléfono/tablet): 🧪 práctica/papel · 🔴 DINERO REAL — va APARTE del
+  // texto (antes la columna del ícono era un 🧪 fijo: un saldo de dinero real salía con insignia de práctica)
+  var _bal = { t: null, seq: 0, text: '', ic: '🧪' };
   function _simBalance() {
     var P = window.KhipuPortfolios; if (!P || !P._list || !P._stats) return null;
     var list = []; try { list = P._list() || []; } catch (e) { list = []; }
@@ -832,14 +849,19 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   function _balText() { return _bal.text || L('Cuenta de práctica', 'Practice account'); }
   function _balPaint(o) {
     var el = document.getElementById('kos-bal'); if (!el) return;
-    if (!o) { el.style.display = 'none'; _bal.text = ''; return; }
+    if (!o) { el.style.display = 'none'; _bal.text = ''; _bal.ic = '🧪'; _balPaintMenu(); return; }
     el.style.display = '';
     el.querySelector('.l').innerHTML = o.label;
     var v = el.querySelector('.v'); v.textContent = o.value; v.classList.toggle('sm', !!o.small);
     el.setAttribute('title', o.title); el.setAttribute('aria-label', o.title);
     el.setAttribute('data-go', o.go);
-    _bal.text = o.plain;
-    var mb = document.getElementById('kos-me-bal'); if (mb) mb.textContent = o.plain;
+    _bal.text = o.plain; _bal.ic = o.ic || '🧪';
+    _balPaintMenu();
+  }
+  // la fila del saldo del menú (si está abierto): texto e insignia SIEMPRE juntos
+  function _balPaintMenu() {
+    var mb = document.getElementById('kos-me-bal'); if (mb) mb.textContent = _balText();
+    var mi = document.getElementById('kos-me-bal-ic'); if (mi) mi.textContent = _bal.ic || '🧪';
   }
   function _balRefresh() {
     var el = document.getElementById('kos-bal'); if (!el) return;
@@ -868,10 +890,10 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       _balPaint(r.paper
         ? { label: '<span class="kos-badge paper">🧪 ' + esc(L('PAPEL', 'PAPER')) + '</span><span class="lt">' + esc(L('Bróker', 'Broker')) + '</span>', value: _money(r.a.equity), go: 'broker',
             title: L('Cuenta del bróker en modo papel (SIMULADO) · actualizado ' + hh, 'Broker account in paper mode (SIMULATED) · updated ' + hh),
-            plain: '🧪 ' + L('Bróker (papel): ', 'Broker (paper): ') + _money(r.a.equity) }
+            ic: '🧪', plain: L('Bróker (papel): ', 'Broker (paper): ') + _money(r.a.equity) }
         : { label: '<span class="kos-badge real">🔴 ' + esc(L('DINERO REAL', 'REAL MONEY')) + '</span>', value: _money(r.a.equity), go: 'broker',
             title: L('Cuenta del bróker con DINERO REAL · actualizado ' + hh, 'Broker account with REAL MONEY · updated ' + hh),
-            plain: '🔴 ' + L('Bróker (dinero real): ', 'Broker (real money): ') + _money(r.a.equity) });
+            ic: '🔴', plain: L('Bróker (dinero real): ', 'Broker (real money): ') + _money(r.a.equity) });
     }).catch(function () {});
   }
   function _balGo() {
@@ -965,6 +987,9 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     if (window.KhipuPick) window.KhipuPick.chatMenu(input);   // menú de "/" y "@" (antes del Enter que envía)
     ov.querySelector('#bcp-send').addEventListener('click', function () { submit(); });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); submit(); } });
+    // "solo chat" (tablet/celular): escribir en la barra —o que otro módulo la llene y dispare 'input', como
+    // "Pregúntale a Radar" de oswindows.js— destapa la conversación (antes se escribía a ciegas bajo una ventana)
+    input.addEventListener('input', function () { _revealChat(); });
     ov.querySelector('#bcp-mic').addEventListener('click', toggleMic);
     ov.querySelector('#bcp-close').addEventListener('click', close);
     ov.querySelectorAll('#bcp-chatdock [data-cd]').forEach(function (b) {
@@ -1000,6 +1025,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       if (!e || !e.key) return;
       if (e.key === 'kh_portfolios' || e.key === 'kh_pf_active') _balRefresh();
       if (e.key === 'khipu_actor') _paintMe();
+      if (e.key === 'kh_desk_mode') _deskModeFromStorage();   // ⊞ → "una sola pantalla" en otra pestaña
     });
 
     mountCockpitOrb();
@@ -1129,6 +1155,52 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   function isCentered() { var D = desk(); return !!(D && D.active() && D.isCentered && D.isCentered()); }
   // ¿el hilo y la barra viven en #kd-center? (flancos ≥ 1100 px o "solo chat" en tablet/celular)
   function chatCentered() { var D = desk(); return !!(D && D.active() && (D.chatInCenter ? D.chatInCenter() : (D.isCentered && D.isCentered()))); }
+  // "SOLO CHAT" (tablet/celular, < 1100 px): la conversación es la capa de abajo y las ventanas se abren
+  // ENCIMA. Todo camino que lleva al chat (preguntar, 💬, "Pregúntale a…", escribir en la barra) la destapa:
+  // las ventanas que la cubren pasan a la barra de tareas (un toque en su chip las devuelve; nada se pierde).
+  // En el celular toda hoja la cubre; en la tablet, las que se cruzan con la tarjeta del chat.
+  function _revealChat() {
+    if (!open || !chatCentered() || isCentered()) return 0;
+    var D = desk(); if (!D || !D.list || !D.minimize) return 0;
+    var mob = !!(D.isMobile && D.isMobile()), cr = null;
+    if (!mob && _centerBox) { try { cr = _centerBox.getBoundingClientRect(); } catch (e) { cr = null; } }
+    var foc = D.focused ? D.focused() : null;
+    var hit = D.list().filter(function (w) {
+      if (w.min) return false;
+      if (mob || !cr || !cr.width) return true;
+      var o = D.get ? D.get(w.id) : null, r = null;
+      try { r = o && o.el ? o.el.getBoundingClientRect() : null; } catch (e) { r = null; }
+      if (!r || !r.width) return true;
+      return r.left < cr.right && r.right > cr.left && r.top < cr.bottom && r.bottom > cr.top;
+    });
+    // la enfocada al final: refocusAfter() corre una sola vez (sin mostrar hojas de paso)
+    hit.sort(function (a, b) { return (a.id === foc ? 1 : 0) - (b.id === foc ? 1 : 0); });
+    hit.forEach(function (w) { try { D.minimize(w.id); } catch (e) {} });
+    return hit.length;
+  }
+  // kh_desk_mode cambió en OTRA pestaña (desk() lee localStorage en cada llamada) y aquí el escritorio
+  // sigue montado: desmontarlo con onLayout(false) saca la barra y el hilo de #kd-center ANTES de vaciarlo
+  function _deskTeardownStale() {
+    var K = window.KhipuDesk;
+    if (!K || !K.active || !K.active() || (K.enabled && K.enabled())) return false;
+    try { K.unmount(); } catch (e) {}
+    var ov = document.getElementById('bcp-ov'); if (ov) ov.classList.remove('desk', 'kos-centered');
+    return true;
+  }
+  // modo ventanas ⇄ Cabina clásica (aquí o, vía 'storage', en otra pestaña)
+  function _onDeskMode(on) {
+    var ov = document.getElementById('bcp-ov');
+    if (ov) { ov.classList.toggle('desk', !!on); if (!on) ov.classList.remove('kos-centered'); }
+    _syncClassicClass(ov);
+    if (open) stage('empty');
+  }
+  function _deskModeFromStorage() {
+    var K = window.KhipuDesk; if (!K || !K.enabled || !K.active) return;
+    var on = !!K.enabled();
+    if (on === !!K.active()) return;   // nada que cambiar aquí
+    if (!on) _deskTeardownStale();
+    _onDeskMode(on);
+  }
   function _knownKind(kind) {
     return kind === 'chat' || kind === 'empty' || !!_custom[kind] || !!ADOPT_TABS[kind] || BUILTIN_KINDS.indexOf(kind) >= 0;
   }
@@ -1141,6 +1213,10 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     var D = desk();
+    // kh_desk_mode='off' puesto en OTRA pestaña: aquí el escritorio sigue montado con la barra de entrada
+    // dentro de #kd-center → se desmonta ANTES de que el camino clásico vacíe #bcp-stage (si no, la barra
+    // y sus escuchadores se destruían y la pestaña quedaba sin dónde escribir hasta recargar)
+    if (!D) _deskTeardownStale();
     _syncClassicClass();
     if (D) {
       if (!D.active()) {              // primer uso: el escenario clásico se vacía y pasa a escritorio
@@ -1149,7 +1225,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
         D.mount(s);
       }
       // con el chat al centro, "la conversación" ya está siempre a la vista: no hay ventana 💬
-      if (kind === 'chat' && chatCentered()) { _focusChat(); return; }
+      if (kind === 'chat' && chatCentered()) { _revealChat(); _focusChat(); return; }
       if (kind === 'empty') {
         if (_demo.on) D.closeAll();   // la demostración arranca con el escritorio limpio
         _curKind = 'empty'; markActive(null); _placeThread('empty');
@@ -1286,6 +1362,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     if (!mine.length) return false;
     _adoptCtx = winId;
     try { mine.forEach(function (p) { adoptInto(p.box, p.el, p.mode); }); } finally { _adoptCtx = null; }
+    if (mine.some(function (p) { return p.el.tagName === 'MAIN'; })) _mapSettleSoon();   // el mapa vuelve a su ventana
     return true;
   }
   function winCleanup(kind, winId) {
@@ -1318,12 +1395,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       _curKind = kind;
       markActive(CHIP_KINDS.indexOf(kind) >= 0 ? kind : null);
     },
-    onModeChange: function (on) {
-      var ov = document.getElementById('bcp-ov');
-      if (ov) { ov.classList.toggle('desk', !!on); if (!on) ov.classList.remove('kos-centered'); }
-      _syncClassicClass(ov);
-      if (open) stage('empty');
-    },
+    onModeChange: _onDeskMode,
     // Khipus OS: el escritorio avisa cuando el chat pasa a la columna central (≥ 1100 px) o vuelve abajo
     onLayout: function (on, centerEl) { _onLayout(on, centerEl); },
     resume: readopt,
@@ -1472,6 +1544,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     var t = AGENT_TOK[id], inp = document.getElementById('bcp-input');
     if (!t || !inp) return;
     inp.value = (ckLang() === 'en' ? t[1] : t[0]) + ' ';
+    _revealChat();   // "solo chat": la barra no puede quedar tapada por una ventana mientras se escribe
     try { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {}
     try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
   }
@@ -1654,6 +1727,13 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     try { it.run(); } catch (e) { try { console.warn('[Khipus OS] paleta', e); } catch (x) {} }
   }
   // ── el GRAFO en vivo, dentro de la Cabina ──
+  // el mapa (app.html) se mide a sí mismo: tras mudarlo a una ventana se le pide que se asiente con su
+  // tamaño real (idempotente y gratis si nada cambió; tras el orden automático del escritorio, por eso el
+  // setTimeout, y una segunda vez cuando la ventana ya terminó de acomodarse)
+  function _mapSettleSoon() {
+    var f = function () { try { if (typeof window._ensureMapSettled === 'function') window._ensureMapSettled(false); } catch (e) {} };
+    setTimeout(f, 0); setTimeout(f, 260);
+  }
   function stageGraph(s, focusId) {
     s.innerHTML = backBar(L('Grafo en vivo', 'Live graph')) + '<div class="bcp-embed" id="bcp-embed-graph"></div>';
     var main = document.querySelector('main');
@@ -1661,6 +1741,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
       s.innerHTML += '<div class="bcp-loading">' + L('No se pudo montar el grafo', 'Could not mount the graph') + '</div>';
       return;
     }
+    _mapSettleSoon();   // medir y asentar el mapa YA con el tamaño de la ventana (no esperar a un 'resize')
     // re-encuadrar al tamaño del escenario (si no, entra con el zoom que traía)
     setTimeout(function () {
       try { if (typeof fitToView === 'function' && !focusId) fitToView(); } catch (e) {}
@@ -3469,7 +3550,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     return desk().list().filter(function (w) { return w.kind === 'chat'; })[0] || null;
   }
   function _ensureThread() {
-    if (chatCentered()) { _placeThread(_curKind || 'empty'); return; }
+    if (chatCentered()) { _revealChat(); _placeThread(_curKind || 'empty'); return; }
     if (deskActive()) {
       // si la ventana 💬 existe (minimizada o detrás de otra hoja), la respuesta no se vería: al frente
       var cw = _chatWin();
@@ -3956,6 +4037,7 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     openScreen: _runScreen,
     classicView: toClassicView,
     refreshBalance: _balRefresh,
+    revealChat: _revealChat,                          // "solo chat": las ventanas que tapan la conversación → barra de tareas
   };
   // módulos que cargaron ANTES que la Cabina pueden dejar sus ventanas en una cola:
   // window.__kosKindQueue = [[kind, spec], …]

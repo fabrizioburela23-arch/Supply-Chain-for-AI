@@ -76,6 +76,16 @@ def _ai_interactive(fn, *a, **kw):
     with _ai.ai_background(False):
         return fn(*a, **kw)
 
+
+def _submit_ai(fn, *a, **kw):
+    """Llamada de IA del chat en el pool, ATRIBUIDA a quien la pidió: ai_usage.bind captura
+    la función/quién en ESTE hilo (la petición → 'khipu_chat'; el informe de cartera →
+    'riesgo_cartera') y la reaplica en el hilo del pool. Sin esto el gasto quedaba como
+    'fondo' y la tarjeta de Khipu (core/agents_api) mostraba 'sin actividad'."""
+    from core import ai_usage
+    return _POOL.submit(ai_usage.bind(_ai_interactive), fn, *a, **kw)
+
+
 TABS = ('map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'portfolios', 'guia')
 PRESETS = ('taiwan_conflict', 'china_chip_ban_total', 'hbm_shortage_2027', 'openai_ipo_impact', 'starshield_reveal')
 
@@ -441,7 +451,9 @@ def x_market_movers(direction='up', limit=10, sector=None):
                 continue
         rows.append({'id': nid, 'label': n.get('label') or nid, 'symbol': c.get('symbol'),
                      'change_pct': c.get('change_pct'), 'price': c.get('price'), 'currency': c.get('currency'),
-                     'market_cap_usd_b': c.get('mcap_b'), 'sector': n.get('sector')})
+                     'market_cap_usd_b': c.get('mcap_b'), 'sector': n.get('sector'),
+                     # R9: estado del mercado y hora REAL del precio (no la del lote)
+                     'market_state': c.get('market_state'), 'market_time': _iso_time(c.get('price_ts'))})
     rows.sort(key=lambda r: r['change_pct'], reverse=(str(direction).lower() != 'down'))
     return {'direction': 'down' if str(direction).lower() == 'down' else 'up', 'sector_filter': sector or None,
             'universe': len(caps), 'items': rows[:limit], 'source': 'Yahoo Finance (live quotes, Khipus cache)',
@@ -555,6 +567,39 @@ def tool_names():
     return [t[0] for t in tool_catalog()]
 
 
+def _board_memo_flags(res):
+    """get_conclusions_board (MCP) da decisión/estado/fecha del memo pero no `decision_code` ni
+    `expired`: sin ellos un HOLD SIN QUÓRUM (INSUFFICIENT_DATA) se leía «comité: mantener» y un memo
+    vencido como vigente. Se completan desde research.committee.board — la MISMA pizarra (y su
+    caché de 60 s) que la herramienta acaba de leer — solo si el memo es el mismo (misma fecha).
+    Nunca rompe la herramienta: si no se puede, el resultado sigue igual."""
+    if not isinstance(res, dict):
+        return res
+    need = [x for x in res.get('items') or [] if isinstance(x, dict) and isinstance(x.get('committee'), dict)
+            and ('decision_code' not in x['committee'] or 'expired' not in x['committee'])]
+    if not need:
+        return res
+    try:
+        from ontology.db import session_scope
+        from research import committee as rc
+        with session_scope() as s:
+            b = rc.board(s, limit=60)
+    except Exception as e:  # noqa: BLE001
+        log.info('khipu_chat board flags: %s', type(e).__name__)
+        return res
+    memos = {x.get('entity_id'): x.get('memo') for x in (b or {}).get('items') or []
+             if isinstance(x, dict) and isinstance(x.get('memo'), dict)}
+    for x in need:
+        m, cm = memos.get(x.get('entity_id')), x['committee']
+        if m and str(m.get('created_at')) == str(cm.get('date')):
+            cm.setdefault('decision_code', m.get('decision_code'))
+            if m.get('expired') is not None:
+                cm.setdefault('expired', bool(m.get('expired')))
+            if m.get('expires_at'):
+                cm.setdefault('expires_at', m.get('expires_at'))
+    return res
+
+
 def execute_tool(name, args, app=None, lang=None):
     """→ (ok, result_dict). Nunca lanza. `lang` = idioma de la petición: se pasa a las
     herramientas que redactan en un idioma (ask_agent), por encima de lo que diga el modelo."""
@@ -577,7 +622,10 @@ def execute_tool(name, args, app=None, lang=None):
             return res
         if name in MCP_READ_TOOLS:
             mt = _mcp()
-            return mt.call(name, args, mt.Ctx(principal=_principal()))
+            res = mt.call(name, args, mt.Ctx(principal=_principal()))
+            if name == 'get_conclusions_board':
+                res = _board_memo_flags(res)
+            return res
         raise KeyError(name)
 
     def _in_ctx():
@@ -1148,16 +1196,16 @@ def synthesize(message, history, lang, context, scratch, timeout):
         parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
     parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
     t0 = time.monotonic()
-    fut = _POOL.submit(_ai_interactive, _ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, 'fast',
-                       timeout_s=max(5.0, min(float(timeout), 30.0)))
+    fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, 'fast',
+                     timeout_s=max(5.0, min(float(timeout), 30.0)))
     text, model = fut.result(timeout=max(1.0, timeout))
     t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
     left = timeout - (time.monotonic() - t0)
     if (leaked(t) or truncated(t)) and left > 8:          # un reintento con el aviso concreto
         fb = ('\n\nTU RESPUESTA ANTERIOR ' + ('QUEDÓ CORTADA' if truncated(t) else 'TENÍA JSON O BORRADORES') +
               '. Escríbela COMPLETA, más corta (máx. 180 palabras), en prosa limpia.')
-        fut = _POOL.submit(_ai_interactive, _ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, 'fast',
-                           timeout_s=max(5.0, min(float(left), 30.0)))
+        fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, 'fast',
+                         timeout_s=max(5.0, min(float(left), 30.0)))
         text2, model2 = fut.result(timeout=max(1.0, left))
         t2 = re.sub(r'^```\w*\s*|\s*```$', '', str(text2 or '').strip()).strip()
         if t2 and not leaked(t2) and not truncated(t2):
@@ -1213,7 +1261,7 @@ def company_summary(c, lang):
         if lm.get('price') is not None:
             chg = lm.get('change_pct')
             bits.append((('Price' if en else 'Precio') + f': {_num(lm["price"])} {lm.get("currency") or ""}').strip()
-                        + (f' ({"+" if (chg or 0) >= 0 else ""}{_num(chg)} % {"today" if en else "hoy"})'
+                        + (_chg_label(f'{"+" if (chg or 0) >= 0 else ""}{_num(chg)} %', lm, not en)
                            if chg is not None else ''))
         if lm.get('market_cap_usd_b') is not None:
             bits.append(('Market cap' if en else 'Capitalización') + f': {_num(lm["market_cap_usd_b"], 1)} ' +
@@ -1342,7 +1390,7 @@ def _collect_sources(tool_name, res, into, lang='es'):
                 published=it.get('date') or it.get('published'))
     lm = res.get('live_market')
     if isinstance(lm, dict) and lm.get('available') and lm.get('source'):
-        add(f'{lm["source"]} (live)', as_of=lm.get('as_of') or res_as_of)
+        add(f'{lm["source"]} (live)', as_of=_price_time(lm, res_as_of))
     pv = res.get('private_valuation')
     if isinstance(pv, dict) and pv.get('source_url'):
         add('verified funding round', pv['source_url'], as_of=res_as_of, published=pv.get('as_of'))
@@ -1441,6 +1489,59 @@ def _risk_sources(structure):
     return out
 
 
+SESSION_FRESH_S = 1800          # sin estado del mercado: precio de hace ≤ 30 min = sesión en curso
+
+
+def _iso_time(v):
+    """market_time (ISO, unix o {raw}) → ISO UTC 'YYYY-MM-DDTHH:MM:SSZ', o None."""
+    if isinstance(v, dict):
+        v = v.get('raw')
+    if isinstance(v, bool) or v is None or v == '':
+        return None
+    if isinstance(v, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(v), timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+        except (OverflowError, OSError, ValueError):
+            return None
+    return str(v)[:40]
+
+
+def _session_live(state, market_time, now=None):
+    """¿La variación es de la sesión EN CURSO? True / False, o None si la fuente no lo dice.
+    market_state de Yahoo: solo REGULAR es la sesión abierta (PRE/POST/CLOSED → la variación es
+    la de la ÚLTIMA sesión vs. su cierre anterior). Sin estado se mira la hora real del precio."""
+    st = str(state or '').strip().upper()
+    if st:
+        return st == 'REGULAR'
+    mt = _iso_time(market_time)
+    if not mt:
+        return None
+    try:
+        t = datetime.fromisoformat(mt.replace('Z', '+00:00'))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    return ((now or datetime.now(timezone.utc)) - t).total_seconds() <= SESSION_FRESH_S
+
+
+def _chg_label(chg, lm, es):
+    """' (+1,23 % hoy)' solo con la sesión abierta; si no, ' (+1,23 % vs. cierre anterior, sesión del
+    2026-10-02)' — antes el cierre del viernes se mostraba el domingo como «hoy»."""
+    live = _session_live(lm.get('market_state'), lm.get('market_time'))
+    if live:
+        return f' ({chg} {"hoy" if es else "today"})'
+    d = (_iso_time(lm.get('market_time')) or '')[:10]
+    if es:
+        return f' ({chg} vs. cierre anterior' + (f', sesión del {d}' if d else '') + ')'
+    return f' ({chg} vs. prior close' + (f', session of {d}' if d else '') + ')'
+
+
+def _price_time(lm, fallback=None):
+    """Hora REAL del precio (market_time); as_of del perfil = cuándo el servidor lo consultó."""
+    return _iso_time(lm.get('market_time')) or lm.get('as_of') or fallback
+
+
 def _note_company(res, _args, ctx):
     lbl = res.get('label') or res.get('id')
     lm = res.get('live_market') if isinstance(res.get('live_market'), dict) else {}
@@ -1454,7 +1555,7 @@ def _note_company(res, _args, ctx):
             s = f'{lbl}: {_price(lm["price"], lang)} {lm.get("currency") or ""}'.rstrip()
             chg = _pct(lm.get('change_pct'), lang, 2, True)
             if chg:
-                s += f' ({chg} {"hoy" if es else "today"})'
+                s += _chg_label(chg, lm, es)
             bits.append(s)
             cap = _usd_b(lm.get('market_cap_usd_b'), lang)
             if cap:
@@ -1474,7 +1575,7 @@ def _note_company(res, _args, ctx):
             bits.append(('riesgo de red NRS ' if es else 'network risk NRS ') + f'{nrs}/100')
         return ' · '.join(bits)
     if live:
-        return build('es'), build('en'), _src_name(lm.get('source')) or 'live', lm.get('as_of') or res.get('as_of')
+        return build('es'), build('en'), _src_name(lm.get('source')) or 'live', _price_time(lm, res.get('as_of'))
     return build('es'), build('en'), 'Khipus graph', res.get('as_of')
 
 
@@ -1597,11 +1698,18 @@ def _note_movers(res, args, ctx):
     if not items:
         return None
     down = res.get('direction') == 'down'
+    # «hoy» solo si ninguna fila dice que su mercado está fuera de sesión (fin de semana, antes de
+    # la apertura, después del cierre): entonces la variación es la de la ÚLTIMA sesión
+    last = any(_session_live(x.get('market_state'), x.get('market_time')) is False for x in items)
 
     def build(lang):
         es = lang == 'es'
-        head = ('Más caen hoy: ' if down else 'Más suben hoy: ') if es else ('Top losers today: ' if down else
-                                                                              'Top gainers today: ')
+        if last:
+            head = ('Más caen (última sesión): ' if down else 'Más suben (última sesión): ') if es else \
+                ('Top losers (last session): ' if down else 'Top gainers (last session): ')
+        else:
+            head = ('Más caen hoy: ' if down else 'Más suben hoy: ') if es else ('Top losers today: ' if down else
+                                                                                  'Top gainers today: ')
         return head + ', '.join(f'{x.get("label")} ({_pct(x["change_pct"], lang, 1, True)})' for x in items)
     return build('es'), build('en'), res.get('source'), res.get('as_of')
 
@@ -1680,13 +1788,75 @@ def _note_memo(res, args, ctx):
     return build('es'), build('en'), res.get('source'), res.get('created_at') or res.get('as_of')
 
 
+def _memo_expired(cm):
+    """¿El memo de la pizarra ya venció? Usa `expired` si viene; si no, fecha + TTL del comité."""
+    if 'expired' in cm and cm.get('expired') is not None:
+        return bool(cm.get('expired'))
+    d = cm.get('date') or cm.get('created_at')
+    if not d:
+        return False
+    try:
+        from research.committee import _ttl_hours
+        ttl = float(_ttl_hours())
+    except Exception:  # noqa: BLE001
+        ttl = 72.0
+    try:
+        t = datetime.fromisoformat(str(d).replace('Z', '+00:00'))
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return False
+    return (datetime.now(timezone.utc) - t).total_seconds() > ttl * 3600
+
+
+def _board_committee(cm, es):
+    """' · comité: …' de una fila de la pizarra. Sin quórum NO hay veredicto (HOLD +
+    INSUFFICIENT_DATA), una propuesta rechazada no es la postura vigente y un memo vencido se
+    marca con su fecha — la misma regla que _note_memo y la ventana «En una mirada»."""
+    if cm.get('decision_code') == 'INSUFFICIENT_DATA':
+        s = ' · comité: sin veredicto (datos insuficientes)' if es else ' · committee: no verdict (insufficient data)'
+    else:
+        les, len_ = _decision_labels(cm['decision'])
+        w = str(les if es else len_).lower()
+        if cm.get('status') == 'rejected':
+            s = f' · comité: propuesta de {w} rechazada' if es else f' · committee: proposal to {w} rejected'
+        else:
+            s = f' · comité: {w}' if es else f' · committee: {w}'
+    if _memo_expired(cm):
+        d = str(cm.get('date') or cm.get('created_at') or '')[:10]
+        s += (' · memo vencido' if es else ' · expired memo') + (f' ({d})' if d else '')
+    return s
+
+
+def _board_num(x):
+    v = x.get('conviction')
+    return v if isinstance(v, (int, float)) and not isinstance(v, bool) and v == v else None
+
+
 def _note_board(res, args, ctx):
     items = [x for x in res.get('items') or [] if isinstance(x, dict)]
+    side = str((args or {}).get('side') or 'all').strip().lower()
+    if side not in ('favorable', 'unfavorable'):
+        side = 'all'
     if not items:
+        if side == 'unfavorable':       # filtrada: vacía NO quiere decir que no haya investigación
+            return ('Ninguna empresa de la pizarra tiene convicción en contra',
+                    'No company on the board has negative conviction', res.get('source'), res.get('as_of'))
+        if side == 'favorable':
+            return ('Ninguna empresa de la pizarra tiene convicción a favor',
+                    'No company on the board has positive conviction', res.get('source'), res.get('as_of'))
         return ('La pizarra está vacía: todavía no hay investigación', 'The board is empty: no research yet',
                 res.get('source'), res.get('as_of'))
     prim = ctx.get('primary')
     it = next((x for x in items if x.get('entity_id') == prim), None)
+    scored = [x for x in items if _board_num(x) is not None]
+    # `items` es lo que DEVOLVIÓ la herramienta (cortado por `limit` y filtrado por `side`): son las
+    # empresas MOSTRADAS, no el tamaño de la pizarra. Con side=unfavorable la elegida es la MÁS en
+    # contra (antes max() llamaba «la más favorable» a la menos negativa).
+    if side == 'unfavorable':
+        pick = min(scored, key=_board_num) if scored else None
+    else:
+        pick = max(scored, key=_board_num) if scored else None
 
     def build(lang):
         es = lang == 'es'
@@ -1696,13 +1866,26 @@ def _note_board(res, args, ctx):
                  else f'Agents\' conviction on {it.get("label")}: {c}')
             cm = it.get('committee') if isinstance(it.get('committee'), dict) else None
             if cm and cm.get('decision'):
-                les, len_ = _decision_labels(cm['decision'])
-                s += (f' · comité: {str(les).lower()}' if es else f' · committee: {str(len_).lower()}')
+                s += _board_committee(cm, es)
             return s
-        best = max(items, key=lambda x: x.get('conviction') if isinstance(x.get('conviction'), (int, float)) else -999)
-        c = _fmt_num(best.get('conviction'), 1, lang, True)
-        return (f'{len(items)} empresas en la pizarra; la más favorable: {best.get("label")} ({c})' if es
-                else f'{len(items)} companies on the board; most favorable: {best.get("label")} ({c})')
+        n = len(items)
+        if side == 'unfavorable':
+            head = (f'{n} empresas en contra mostradas' if es else f'{n} unfavorable companies shown')
+        elif side == 'favorable':
+            head = (f'{n} empresas a favor mostradas' if es else f'{n} favorable companies shown')
+        else:
+            head = (f'{n} empresas de la pizarra mostradas' if es else f'{n} board companies shown')
+        if pick is None:
+            return head
+        v = _board_num(pick)
+        c = _fmt_num(v, 1, lang, True)
+        if side == 'unfavorable':
+            tag = ('la más en contra' if es else 'most unfavorable') if v < 0 else \
+                ('la de menor convicción' if es else 'lowest conviction')
+        else:
+            tag = ('la más favorable' if es else 'most favorable') if v > 0 else \
+                ('la de mayor convicción' if es else 'highest conviction')
+        return f'{head}; {tag}: {pick.get("label")} ({c})'
     return build('es'), build('en'), res.get('source'), res.get('as_of')
 
 
@@ -1838,7 +2021,9 @@ def _company_card(c):
             'market_cap_usd_b': lm.get('market_cap_usd_b') if live else None,
             'source': lm.get('source') if live else None,
             'source_label': _src_name(lm.get('source')) if live else None,
-            'as_of': lm.get('as_of') if live else None,
+            'as_of': _price_time(lm) if live else None,
+            'market_state': lm.get('market_state') if live else None,
+            'session_live': _session_live(lm.get('market_state'), lm.get('market_time')) if live else None,
             'nrs': (c.get('network_risk_score') or {}).get('value') if isinstance(c.get('network_risk_score'), dict) else None,
             'top_suppliers': nb(c.get('top_suppliers')), 'top_customers': nb(c.get('top_customers')),
             'counts': c.get('counts') if isinstance(c.get('counts'), dict) else None,
@@ -1987,8 +2172,8 @@ def _call_ai(system, prompt, timeout):
     # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento.
     # timeout_s: el proveedor corta a la vez que el chat (antes el hilo seguía 90 s ocupando cupo).
     # live_facts=False: el bloque "DATOS EN VIVO" se calcula UNA vez por pregunta en _run_chat.
-    fut = _POOL.submit(_ai_interactive, _ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True,
-                       timeout_s=max(5.0, min(float(timeout), 30.0)), live_facts=False)
+    fut = _submit_ai(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True,
+                     timeout_s=max(5.0, min(float(timeout), 30.0)), live_facts=False)
     return fut.result(timeout=max(1.0, timeout))
 
 

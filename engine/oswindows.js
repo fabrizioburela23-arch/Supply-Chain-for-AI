@@ -299,6 +299,7 @@
     return entry.p;
   }
   function apiEntity(id) { return getJSON('/api/committee/entity/' + encodeURIComponent(id), 30000); }
+  function apiMemo(mid) { return getJSON('/api/committee/memo/' + encodeURIComponent(mid), 30000); }
   function apiBoard() { return getJSON('/api/committee/board?limit=80', 60000); }       // el servidor topa en 80
   function apiTensor(id) { return getJSON('/api/tensor/node/' + encodeURIComponent(id), 600000); }
   function apiProfiles() { return getJSON('/api/agents/profiles?lang=' + lang(), 60000); }
@@ -753,6 +754,18 @@
     _askedQuote[tk] = 1;
     try { window.loadLiveQuotes({ tickers: [tk] }); } catch (e) {}
   }
+  // Moneda del MONTO de una cotización (contrato de MKT.quotes, igual que xray.js): core/quotes convierte
+  // las bolsas no estadounidenses a USD y deja en «currency» la moneda ORIGINAL con converted:true. Un monto
+  // convertido se pinta en USD — antes «CN¥14,00» para un precio de ~$14 (≈ CN¥100).
+  var MINOR_CUR = { GBp: 'GBP', GBX: 'GBP', ZAc: 'ZAR', ZAC: 'ZAR', ILA: 'ILS' };   // Yahoo: peniques/centavos/agorot
+  function quoteCur(q0) { return (q0 && q0.converted) ? 'USD' : String((q0 && q0.currency) || 'USD'); }
+  function quoteOrigCur(q0) {   // moneda de la bolsa si el monto se convirtió a USD; '' si no hubo conversión
+    if (!q0 || !q0.converted || !q0.currency) return '';
+    var c = String(q0.currency);
+    c = MINOR_CUR[c] || c.toUpperCase();
+    return c === 'USD' ? '' : c;
+  }
+  function quoteMoney(qq) { return fmtMoney(qq && qq.px, quoteCur(qq && qq.q)); }
   function srcText(qq) {
     var q0 = qq.q;
     if (!q0) return '';
@@ -761,12 +774,29 @@
     if (typeof window.quoteAge === 'function') { try { sec = window.quoteAge(q0); } catch (e) { sec = null; } }
     else if (q0.as_of) { var t = Date.parse(q0.as_of); if (!isNaN(t)) sec = Math.max(0, Math.round((Date.now() - t) / 1000)); }
     var when = q0.src === 'marketstack' ? L('cierre (EOD)', 'close (EOD)') : agoText(sec);
-    return [name, when].filter(Boolean).join(' · ');
+    var oc = quoteOrigCur(q0), conv = oc ? L('convertido de ' + oc, 'converted from ' + oc) : '';
+    return [name, when, conv].filter(Boolean).join(' · ');
   }
   function chgHTML(pct) {
     if (pct == null || !isFinite(pct)) return '';
     var r = Math.round(pct * 100) / 100, cls = r > 0 ? 'osw-up' : r < 0 ? 'osw-dn' : 'osw-flat', ar = r > 0 ? '▲' : r < 0 ? '▼' : '=';
     return '<span class="' + cls + '">' + ar + ' ' + esc(fmtPct(pct, null, 2)) + '</span>';
+  }
+  // El veredicto de «en una mirada» es el GENERAL de la empresa (client_id nulo: la misma regla que la
+  // Pizarra). Un memo corrido para un cliente del corretaje (HOLD por no operable en Alpaca, TRIM por
+  // sobrepeso, AVOID por su mandato) es de ESE cliente y nunca se muestra como el veredicto de todos.
+  var MEMO_DONE = { proposed: 1, approved: 1, rejected: 1, executed: 1 };   // = latest_memo del servidor
+  function isGeneralMemo(m) { return !!(m && typeof m === 'object' && !m.client_id); }
+  function generalMemoOf(d) {   // → { memo } o { memo: null, fetchId } (hay que pedir ese memo general)
+    if (!d) return { memo: null };
+    if (d.latest_general !== undefined) return { memo: isGeneralMemo(d.latest_general) ? d.latest_general : null };
+    if (!d.latest || isGeneralMemo(d.latest)) return { memo: d.latest || null };
+    var h = d.history || [];
+    for (var i = 0; i < h.length; i++) {
+      var x = h[i];
+      if (x && x.memo_id && x.has_client === false && MEMO_DONE[x.status]) return { memo: null, fetchId: String(x.memo_id) };
+    }
+    return { memo: null };
   }
   function glanceTitle(label) { return L(label + ' en una mirada', label + ' at a glance'); }
 
@@ -792,11 +822,12 @@
     paintGlance(inst);
     apiEntity(id).then(function (r) {
       if (!alive(inst)) return;
-      st.ent = r;
-      var m = r.ok && r.data ? r.data.latest : null;
-      if (m && !m.expired && m.overall_conviction != null && isFinite(+m.overall_conviction)) st.memo = m;
-      else st.oldMemo = m || null;
-      paintGlance(inst);
+      var g = generalMemoOf(r.ok && r.data ? r.data : null);
+      if (!g.fetchId) { setGlanceMemo(inst, r, g.memo); return; }
+      apiMemo(g.fetchId).then(function (r2) {   // el último es de un cliente: se trae el último GENERAL
+        if (!alive(inst)) return;
+        setGlanceMemo(inst, r, r2.ok && isGeneralMemo(r2.data) ? r2.data : null);
+      });
     });
     apiBoard().then(function (r) {
       if (!alive(inst)) return;
@@ -809,6 +840,13 @@
       st.tensor = r;
       paintGlance(inst);
     });
+  }
+  function setGlanceMemo(inst, r, m) {
+    var st = inst.st;
+    st.ent = r;
+    if (m && !m.expired && m.overall_conviction != null && isFinite(+m.overall_conviction)) st.memo = m;
+    else st.oldMemo = m || null;
+    paintGlance(inst);
   }
   function paintGlance(inst) {
     if (!alive(inst)) return;
@@ -826,7 +864,7 @@
       return;
     }
     var chip = typeof window.quoteSrcChip === 'function' ? window.quoteSrcChip(qq.q, qq.tk) : '';
-    el.innerHTML = '<span class="tk">' + esc(qq.tk) + '</span><span class="px">' + esc(fmtMoney(qq.px, qq.q && qq.q.currency)) + '</span>' +
+    el.innerHTML = '<span class="tk">' + esc(qq.tk) + '</span><span class="px">' + esc(quoteMoney(qq)) + '</span>' +
       chgHTML(qq.pct) + '<span class="osw-mut">' + chip + ' ' + esc(srcText(qq)) + '</span>';
   }
   function decInfo(m) {
@@ -873,7 +911,7 @@
     if (qq.px > 0) {
       var chip = typeof window.quoteSrcChip === 'function' ? window.quoteSrcChip(qq.q, qq.tk) : '';
       html = '<div class="osw-gl-l"><div class="osw-kick">' + esc(L('Precio', 'Price')) + ' · ' + esc(qq.tk) + ' ' + chip + '</div>' +
-        '<div class="osw-big ink">' + esc(fmtMoney(qq.px, qq.q && qq.q.currency)) + '</div>' +
+        '<div class="osw-big ink">' + esc(quoteMoney(qq)) + '</div>' +
         (qq.pct != null ? '<div class="osw-gl-chg">' + chgHTML(qq.pct) + ' <span class="osw-mut">' + esc(L('vs. cierre anterior', 'vs. previous close')) + '</span></div>' : '') +
         '</div><div class="osw-gl-r">' + pill + '<div class="osw-gl-cap">' + esc(srcText(qq)) + '</div></div>';
     } else {
@@ -1074,6 +1112,16 @@
       '<span class="osw-cv-track"><span class="osw-cv-bar ' + g.side + ' t-' + tone + '" style="--w:' + g.pct + '%"></span></span>' +
       '<span class="osw-cv-val">' + esc(fmtConv(v)) + '</span></button>';
   }
+  // revisión #8 (2026-10-06): un memo vencido, rechazado o sin datos suficientes NO es un veredicto vigente
+  function memoLine(memo, DEC) {
+    var when = fmtWhen(memo.created_at, false);
+    if (memo.decision_code === 'INSUFFICIENT_DATA') return L('Comité: datos insuficientes · ', 'Committee: insufficient data · ') + when;
+    var dec = DEC[memo.decision] ? L(DEC[memo.decision][0], DEC[memo.decision][1]) : memo.decision;
+    if (memo.expired) return L('Comité (vencido): ', 'Committee (expired): ') + dec + ' · ' + when;
+    if (memo.status === 'rejected') return L('Comité: ', 'Committee: ') + dec + L(' — rechazado por ti · ', ' — rejected by you · ') + when;
+    return L('Comité: ', 'Committee: ') + dec + ' · ' + when;
+  }
+  window.KhipuOSWin_memoLine = memoLine;   // pruebas
   function tipHTML(it) {
     var v = +it.overall_conviction, by = it.by_horizon || {}, rows = '';
     ['SHORT_TERM', 'MEDIUM_TERM', 'LONG_TERM', 'STRUCTURAL', 'INTRADAY'].forEach(function (h) {
@@ -1089,7 +1137,7 @@
       (rows || '<div>' + esc(L('Sin desglose por plazo', 'No breakdown by horizon')) + '</div>') +
       '<div class="ag">' + (mids.length ? stackOf(mids, 16) : '') + '<span>' + esc((it.n_claims || 0) + L(' conclusiones', ' conclusions') + (names.length ? ' · ' + names.join(', ') : '')) + '</span></div>' +
       (it.n_contradictions ? '<div>' + esc(it.n_contradictions + L(' contradicción(es) entre agentes', ' contradiction(s) between agents')) + '</div>' : '') +
-      (memo && memo.decision ? '<div>' + esc(L('Comité: ', 'Committee: ') + (DEC[memo.decision] ? L(DEC[memo.decision][0], DEC[memo.decision][1]) : memo.decision) + ' · ' + fmtWhen(memo.created_at, false)) + '</div>' : '') +
+      (memo && memo.decision ? '<div>' + esc(memoLine(memo, DEC)) + '</div>' : '') +
       (it.last_research ? '<div class="osw-mut">' + esc(L('Investigado ', 'Researched ') + fmtWhen(it.last_research)) + '</div>' : '');
   }
   function wireTips(inst, rowsEl, items) {
@@ -1246,6 +1294,7 @@
     return '<button type="button" class="osw-sw" role="switch" aria-checked="' + (on ? 'true' : 'false') + '" data-act="pref" data-agent="' + esc(aid) + '" data-pref="' + key + '"' + (disabled ? ' disabled' : '') + '>' +
       '<span class="osw-sw-t" aria-hidden="true"></span><span class="osw-sw-l">' + esc(label) + (small ? '<small>' + esc(small) + '</small>' : '') + '</span></button>';
   }
+  function isPooledTrack(a) { return !!(a && (a.id === 'comite' || (a.track && a.track.scope === 'overall'))); }
   function trackHTML(a, res) {
     var t = a.track;
     if (a.id === 'khipu') return esc(L('Khipu no hace predicciones: arma las respuestas con lo que traen los demás.', 'Khipu makes no predictions: it builds answers from what the others bring.'));
@@ -1258,8 +1307,12 @@
     var n = +t.n_scored || 0, hr = t.hit_rate;
     if (hr != null && isFinite(+hr)) hr = +hr <= 1 ? +hr * 100 : +hr;
     if (t.sufficient && hr != null && isFinite(hr)) {
-      var s = '<b>' + esc(fmtPct(hr, null, 0, false)) + '</b> ' + esc(L('de aciertos', 'hit rate')) + ' · ' + esc(n + L(' predicciones calificadas', ' scored predictions'));
-      if (pro) {
+      // el comité NO se califica solo: su «historial» es el COMBINADO de los analistas (scope 'overall');
+      // se rotula así y no se le atribuye Brier ni fiabilidad propios
+      var pooled = isPooledTrack(a);
+      var s = (pooled ? esc(L('Historial combinado de los analistas (el comité no se califica solo): ', 'Combined record of the analysts (the committee is not scored on its own): ')) : '') +
+        '<b>' + esc(fmtPct(hr, null, 0, false)) + '</b> ' + esc(L('de aciertos', 'hit rate')) + ' · ' + esc(n + L(' predicciones calificadas', ' scored predictions'));
+      if (pro && !pooled) {
         if (t.brier != null && isFinite(+t.brier)) s += ' · Brier ' + esc(fmtNum(+t.brier, 3));
         if (t.reliability != null && isFinite(+t.reliability)) s += ' · ' + esc(L('fiabilidad ', 'reliability ') + fmtPct(+t.reliability <= 1 ? +t.reliability * 100 : +t.reliability, null, 0, false));
       }
@@ -1431,6 +1484,7 @@
     register: ensureRegistered,
     // funciones puras (pruebas: tests/test_khipus_os_windows.py)
     _h: { fmtNum: fmtNum, fmtConv: fmtConv, fmtPct: fmtPct, fmtMoney: fmtMoney, barTone: barTone, barGeom: barGeom,
-      visibleRows: visibleRows, chainOf: chainOf, boardItem: boardItem, structPC: structPC, clean: clean, argId: argId }
+      visibleRows: visibleRows, chainOf: chainOf, boardItem: boardItem, structPC: structPC, clean: clean, argId: argId,
+      quoteCur: quoteCur, quoteOrigCur: quoteOrigCur, generalMemoOf: generalMemoOf, isPooledTrack: isPooledTrack }
   };
 })();

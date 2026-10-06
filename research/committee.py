@@ -1926,7 +1926,10 @@ def invalidate_board_cache():
 
 
 def _board_fingerprint(session):
-    """Huella barata del estado que la pizarra lee (None si no se puede calcular → sin caché)."""
+    """Huella barata del estado que la pizarra lee (None si no se puede calcular → sin caché).
+    Corre dentro de un SAVEPOINT: si falla (statement_timeout, DataError…) solo se deshace el
+    savepoint y la MISMA sesión sigue sirviendo para armar la pizarra sin caché (antes la
+    transacción de Postgres quedaba abortada → InFailedSqlTransaction → 500)."""
     try:
         from sqlalchemy import func
         q = session.query(
@@ -1936,7 +1939,9 @@ def _board_fingerprint(session):
             session.query(func.max(CommitteeMemo.created_at)).scalar_subquery(),
             session.query(func.max(CommitteeMemo.updated_at)).scalar_subquery(),
             session.query(func.count(ClaimRelation.id)).scalar_subquery())
-        return tuple(str(x) for x in q.one())
+        with session.begin_nested():
+            row = q.one()
+        return tuple(str(x) for x in row)
     except Exception as e:  # noqa: BLE001
         msg = type(e).__name__ + str(e)
         if 'does not exist' in msg or 'UndefinedTable' in msg or 'UndefinedColumn' in msg:
@@ -2037,6 +2042,12 @@ def _board_uncached(session, limit=40):
             'best_for': best(1), 'best_against': best(-1),
             'memo': ({'memo_id': m.id, 'decision': m.decision, 'status': m.status,
                       'created_at': m.created_at.isoformat() if m.created_at else None,
+                      # sin quórum el memo se guarda como HOLD + INSUFFICIENT_DATA (no es un veredicto)
+                      # y pasado el TTL ya no es vigente: quien lo muestre debe poder decirlo
+                      'decision_code': mb.get('decision_code'),
+                      'expires_at': ((m.created_at + timedelta(hours=_ttl_hours())).isoformat()
+                                     if m.created_at else None),
+                      'expired': bool(m.created_at and _now() > m.created_at + timedelta(hours=_ttl_hours())),
                       'ai': bool((mb.get('debate') or {}).get('ai')),
                       'conclusion_es': ((mb.get('key_conclusions') or [{}])[0] or {}).get('text_es'),
                       'conclusion_en': ((mb.get('key_conclusions') or [{}])[0] or {}).get('text_en')}

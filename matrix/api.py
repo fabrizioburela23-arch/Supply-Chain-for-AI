@@ -544,11 +544,13 @@ def matrix_insights():
         if hit is not None:
             return jsonify({**hit, 'cached': True, **tier_note})
         return jsonify({**_insights_build(scope, epoch, ck, as_of, lang, tier, None), **tier_note})
-    payload = None
+    payload, meta = None, {}
     try:
-        payload = _insights_build(scope, epoch, ck, as_of, lang, tier, None)
+        payload = _insights_build(scope, epoch, ck, as_of, lang, tier, None, meta=meta)
     finally:
-        _flight_done(ck, flight, payload)
+        # Solo se COMPARTE lo que vale para todos (lo que quedó en caché). La plantilla sin IA
+        # de una IP sin presupuesto no: los que esperan calculan con SU propio presupuesto.
+        _flight_done(ck, flight, payload if meta.get('shareable') else None)
     return jsonify({**payload, **tier_note})
 
 
@@ -585,9 +587,13 @@ def _flight_done(key, flight, payload):
     flight.event.set()
 
 
-def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock):
+def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock, meta=None):
     """Construye las matrices, corre la simulación y la narra. Devuelve el payload (sin
-    tier_note). Cachea y guarda historial solo lecturas reales con narración permitida."""
+    tier_note). Cachea y guarda historial solo lecturas reales con narración permitida.
+    `meta` (dict opcional) recibe shareable=True solo si el payload vale para CUALQUIER
+    pedido con la misma clave (cacheado, o la plantilla de un grafo vacío)."""
+    meta = meta if isinstance(meta, dict) else {}
+    meta['shareable'] = False
     import numpy as np
     from sqlalchemy import select
 
@@ -604,6 +610,7 @@ def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock):
         return lbl.get(i, i)
 
     if not ids:
+        meta['shareable'] = not manual_shock        # grafo vacío: la misma plantilla para todos
         return {'available': True, 'as_of': as_of, 'situation': {}, 'insights':
                 _fallback_insights({}, lang), 'factors': [], 'chokepoints': [],
                 'cascade': [], 'trigger': None, 'affected': 0, 'model': 'plantilla'}
@@ -668,6 +675,7 @@ def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock):
                'chokepoints': situation['chokepoints'], 'cascade': cascade_top,
                'trigger': trigger, 'affected': affected, 'model': model}
     if not manual_shock and ai_ok:
+        meta['shareable'] = True
         _ttl_set(ck, payload)
         # historial = lecturas del estado REAL: ni shocks manuales ni viajes en
         # el tiempo (as_of) — cada as_of distinto dejaba una fila nueva.
