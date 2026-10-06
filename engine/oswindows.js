@@ -231,6 +231,8 @@
       data_es: ['Estados financieros anuales (FMP / Yahoo / Alpha Vantage)', 'Perfil en vivo (Yahoo / Finnhub)', 'Ratios calculados', 'Comparables', 'Presentaciones a la SEC', 'Noticias'],
       data_en: ['Annual financial statements (FMP / Yahoo / Alpha Vantage)', 'Live profile (Yahoo / Finnhub)', 'Computed ratios', 'Peers', 'SEC filings', 'News'],
       outputs_es: ['Conclusiones con evidencia', 'En una mirada'], outputs_en: ['Evidence-backed conclusions', 'At a glance'],
+      skills_es: ['Lee sus estados financieros y ratios calculados al momento', 'La compara con sus pares en vivo', 'Márgenes y crecimiento reales de los últimos 12 meses', 'Abre «En una mirada» y el Dossier'],
+      skills_en: ['Reads its financial statements and computed ratios on the spot', 'Compares it with live peers', 'Real margins and growth over the last 12 months', 'Opens "At a glance" and the Dossier'],
       research_types: ['fundamental', 'macro'], tools: [], windows: ['glance'] },
     { id: 'radar', es: 'Radar', en: 'Radar', role_es: 'Noticias y eventos', role_en: 'News & events',
       does_es: 'Vigila noticias, presentaciones a la SEC y eventos geopolíticos, y separa lo que de verdad mueve a la empresa del ruido.',
@@ -238,6 +240,8 @@
       data_es: ['Noticias (GDELT / Finnhub)', 'Presentaciones a la SEC', 'Catálogo y cadena de suministro'],
       data_en: ['News (GDELT / Finnhub)', 'SEC filings', 'Catalog and supply chain'],
       outputs_es: ['Conclusiones de corto plazo', 'Eventos que la afectan'], outputs_en: ['Short-term conclusions', 'Events that affect it'],
+      skills_es: ['Noticias de la empresa con fecha y fuente', 'Eventos en vivo que la nombran o la tocan', 'Exposición geopolítica: su país y los de sus proveedores', 'Índice de riesgo geopolítico global (GPR)'],
+      skills_en: ['Company news with date and source', 'Live events that name or touch it', 'Geopolitical exposure: its country and its suppliers’ countries', 'Global geopolitical risk index (GPR)'],
       research_types: ['news', 'geopolitical', 'crypto'], tools: [], windows: [] },
     { id: 'cadena', es: 'Cadena', en: 'Chain', role_es: 'Cadena de suministro', role_en: 'Supply chain',
       does_es: 'Recorre la cadena de suministro: de quién depende la empresa, a quién le vende y por dónde le puede llegar un golpe.',
@@ -245,6 +249,8 @@
       data_es: ['Grafo de la cadena de suministro', 'Catálogo de empresas', 'Noticias', 'Perfil en vivo'],
       data_en: ['Supply-chain graph', 'Company catalog', 'News', 'Live profile'],
       outputs_es: ['Cadena de suministro', 'Riesgos de dependencia'], outputs_en: ['Supply chain', 'Dependency risks'],
+      skills_es: ['Mide cuánto depende de cada proveedor (tensor de la cadena)', 'En qué países están sus proveedores', 'De dónde le llega el riesgo si un proveedor falla', 'A quién arrastra si falla ella y cuánto valor expone', 'Eventos en vivo que tocan a sus proveedores', 'Abre la ventana «Cadena de suministro»'],
+      skills_en: ['Measures how much it depends on each supplier (chain tensor)', 'Which countries its suppliers are in', 'Where risk comes from if a supplier fails', 'Who it drags down if it fails and how much value is exposed', 'Live events touching its suppliers', 'Opens the "Supply chain" window'],
       research_types: ['supply_chain'], tools: [], windows: ['supplychain'] },
     { id: 'tecnico', es: 'Técnico', en: 'Technical', role_es: 'Precio y momento', role_en: 'Price & momentum',
       does_es: 'Mira el precio: tendencia (medias de 50 y 200 días), RSI, máximos y mínimos de 52 semanas, caídas máximas y fuerza frente al S&P 500.',
@@ -252,6 +258,8 @@
       data_es: ['Precios diarios de 1 año (Yahoo)', 'Indicadores calculados', 'Perfil en vivo', 'Noticias'],
       data_en: ['1-year daily prices (Yahoo)', 'Computed indicators', 'Live profile', 'News'],
       outputs_es: ['Tendencia y momento', 'Riesgo de precio'], outputs_en: ['Trend and momentum', 'Price risk'],
+      skills_es: ['Calcula medias de 50/200 días, RSI y retornos con precios de 1 año', 'Distancia al máximo y mínimo de 52 semanas', 'Caída máxima y fuerza frente al S&P 500', 'Dibuja el gráfico de precio'],
+      skills_en: ['Computes 50/200-day averages, RSI and returns from 1-year prices', 'Distance to the 52-week high and low', 'Max drawdown and strength versus the S&P 500', 'Draws the price chart'],
       research_types: ['technical', 'risk_observation'], tools: [], windows: [] },
     { id: 'comite', es: 'Comité', en: 'Committee', role_es: 'Decisiones', role_en: 'Decisions',
       does_es: 'Reúne las conclusiones de todos, las pesa por confianza e historial real y propone una decisión con un tamaño según la volatilidad. Solo propone: tú apruebas.',
@@ -1342,6 +1350,7 @@
       var pa = P && P.agents ? P.agents[a.id] : null, on = pa ? pa.on !== false : true, auto = pa ? !!pa.auto : false;
       var data = lg === 'en' ? (a.data_en || a.data_es || []) : (a.data_es || a.data_en || []);
       var outs = lg === 'en' ? (a.outputs_en || a.outputs_es || []) : (a.outputs_es || a.outputs_en || []);
+      var skills = lg === 'en' ? (a.skills_en || a.skills_es || []) : (a.skills_es || a.skills_en || []);
       var wins = (a.windows || []).filter(function (k) { return WIN_NAME[k]; });
       var winTxt = wins.map(function (k) { return L(WIN_NAME[k][0], WIN_NAME[k][1]); }).join(', ');
       var sws = '';
@@ -1360,6 +1369,7 @@
         '<div class="osw-ag-top">' + mascot(a.id, 48) + '<div class="osw-ag-id"><div class="osw-ag-n">' + esc(L(a.es, a.en)) + '</div><div class="osw-ag-r">' + esc(pick(a, 'role')) + '</div></div></div>' +
         '<p class="osw-ag-does">' + esc(pick(a, 'does')) + '</p>' +
         '<div class="osw-ag-k">' + esc(L('Datos que usa', 'Data it uses')) + '</div><div class="osw-chips">' + data.map(function (d) { return '<span class="osw-chip">' + esc(d) + '</span>'; }).join('') + '</div>' +
+        (skills.length ? '<div class="osw-ag-k">' + esc(L('Habilidades cuando le hablas', 'Skills when you talk to it')) + '</div><div class="osw-chips">' + skills.map(function (d) { return '<span class="osw-chip sk">' + esc(d) + '</span>'; }).join('') + '</div>' : '') +
         '<div class="osw-ag-k">' + esc(L('Qué te muestra', 'What it shows you')) + '</div><div class="osw-chips">' + outs.map(function (d) { return '<span class="osw-chip out">' + esc(d) + '</span>'; }).join('') + '</div>' +
         pro2 +
         '<div class="osw-ag-k">' + esc(L('Historial', 'Track record')) + (a.id === 'khipu' ? '' : qChip('os_track')) + '</div><div class="osw-ag-track">' + trackHTML(a, res) + '</div>' +

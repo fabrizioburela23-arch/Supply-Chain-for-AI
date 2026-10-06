@@ -439,3 +439,30 @@ def test_estilos_con_tokens_y_sync_de_preferencias():
     pcss = pk.split('var css = ')[1].split('function ensureCss')[0]
     assert 'var(--os-surface,' in pcss and 'la app es siempre oscura' not in pk
     assert "'kh_agent_prefs'" in sy.split('var KEYS = ')[1].split(';')[0]
+
+
+def test_respuesta_de_un_agente_abre_solo_la_ventana_de_su_rol():
+    """@cadena → la ventana «Cadena de suministro» (acción open_window), no la mirada general del Analista."""
+    o = _run(r"""
+ctx.LANG = 'es';
+const staged = [], opened = [];
+ctx.KhipuAgentPrefs = { mode: () => 'simple', enabled: () => ['khipu', 'analista', 'radar', 'cadena', 'comite'], auto: () => true, get: () => ({}) };
+ctx.KhipuOSWin = { kinds: { glance: {}, supplychain: {}, conviction: {}, agents: {} }, open: (k, a) => { opened.push([k, a.id]); return true; } };
+ctx.BixbyCockpit = { isOpen: () => true, isCentered: () => true, stage: (k, a) => staged.push([k, a]) };
+const reply = { answer: 'Depende de Microsoft [S1].', answer_source: 'agent', agent: { seat: 'supply_chain' },
+  entities: [{ id: 'OpenAI', label: 'OpenAI' }], agents_used: [{ agent: 'cadena', tools: ['ask_agent'], ok: true, note_es: 'x' }],
+  actions: [{ type: 'open_window', arg: { kind: 'supplychain', id: 'OpenAI' }, label: 'OpenAI' }, { type: 'open_research', arg: 'OpenAI', label: 'OpenAI' }],
+  tools_used: [], sources: [] };
+out.plan = K.planWindows ? K.planWindows(reply, 'analiza open ai', null, true) : 'n/a';
+out.label = [K.actionLabel(reply.actions[0]), (ctx.LANG = 'en', K.actionLabel(reply.actions[0]))];
+ctx.LANG = 'es';
+const thread = new El('div'); const pend = K.appendPending(thread);
+K.fillReply(pend, reply, { autoRun: true });
+setTimeout(() => { out.staged = staged; out.opened = opened; out.direct = K.runAction({ type: 'open_window', arg: { kind: 'glance', id: 'Nvidia' } });
+  console.log(JSON.stringify(out)); }, 1200);
+""")
+    if o['plan'] != 'n/a':
+        assert o['plan'] == []
+    assert o['label'] == ['⛓ Cadena de suministro: OpenAI', '⛓ Supply chain: OpenAI']
+    assert o['staged'] == [] and o['opened'][0] == ['supplychain', 'OpenAI']
+    assert o['direct'] is True and o['opened'][-1] == ['glance', 'Nvidia']

@@ -8,14 +8,15 @@ analista de datos".
 Cómo funciona
 · `parse_mention(texto)` reconoce "@fundamental …", "@noticias …", "@todos …",
   "pregúntale al analista técnico …", "@comité …" → (puesto, pregunta).
-· `ask(session, puesto, pregunta, entidad, lang)` arma el paquete del puesto
-  (SUS conclusiones activas sobre la empresa, con evidencia citada, igual que
-  en la sala del comité — research/debate.seat_package) y le pide a la IA que
-  responda EN PERSONA (3-7 frases, citando [C#]/[E#]), con el guardián de
-  cifras de core/ai. Sin conclusiones → lo dice y ofrece investigar (acción
-  run_research), nunca inventa.
-· `ask_all(...)`: una ronda corta con cada puesto que tenga conclusiones
-  (máx. 4, en paralelo) → respuesta de todos, uno por párrafo.
+· `ask(session, puesto, pregunta, entidad, lang)` arma el paquete del puesto:
+  SUS HABILIDADES en vivo (research/agent_skills: cada rol busca lo suyo — la
+  Cadena el tensor de proveedores/países/riesgo, el Técnico los indicadores de
+  precio, el Fundamental estados/ratios/pares…) + sus conclusiones previas si
+  existen, y le pide a la IA que responda EN PERSONA desde su rol (citando
+  [S#]/[E#]/[C#]), con el guardián de cifras de core/ai. Ya NO exige una
+  investigación previa (2026-10-06); sin IA, devuelve sus datos tal cual.
+· `ask_all(...)`: una ronda corta con hasta 4 puestos (primero los que tienen
+  conclusiones) en paralelo → respuesta de todos, uno por párrafo.
 Todo es LECTURA: nunca propone órdenes.
 """
 import logging
@@ -28,6 +29,7 @@ log = logging.getLogger('khipu')
 
 MAX_CLAIMS = 8
 MAX_SEATS_ALL = 4
+ALL_DEFAULT = ('fundamental', 'supply_chain', 'technical', 'news')   # @todos sin conclusiones previas
 ASK_TOKENS = 700
 
 # palabra (sin acentos, minúsculas) → puesto
@@ -130,19 +132,21 @@ def _package(label, symbol, claims, ev):
         if c.falsifiers:
             lines.append(f"   me haría cambiar de idea: <data>{'; '.join(list(c.falsifiers)[:2])}</data>")
         for j, e in enumerate((ev.get(c.id) or [])[:2], 1):
-            lines.append(f"   evidencia E{i}.{j} ({e.get('type') or 'fuente'}{', ' + e['date'] if e.get('date') else ''}): "
+            lines.append(f"   evidencia C{i}.{j} ({e.get('type') or 'fuente'}{', ' + e['date'] if e.get('date') else ''}): "
                          f"<data>{(e.get('title') or '')[:120]} — {(e.get('excerpt') or '')[:360]}</data>")
-    head = [f'EMPRESA: {label} ({symbol or "no cotiza"})', '', 'TUS CONCLUSIONES ACTIVAS Y SU EVIDENCIA:']
+    head = ['TUS CONCLUSIONES PREVIAS (investigación profunda) Y SU EVIDENCIA:']
     return '\n'.join(head + lines), refs
 
 
-ASK_SYSTEM = """Eres {name} ({role}) del comité de inversión de Khipus Finance AI. Un inversionista NO experto te hace
-una pregunta en una conversación. Responde EN PERSONA, en {lang}, en 3 a 7 frases claras y concretas, como un
-analista senior que explica a un cliente: qué sabes, por qué importa para el valor de la empresa, en qué plazo y
-qué tan sólida es tu evidencia. Cita tus conclusiones y evidencia entre corchetes ([C1], [E1.2]).
-REGLAS: usa SOLO las conclusiones y datos del mensaje; si la pregunta va más allá de lo que investigaste, dilo con
-claridad ("no lo investigué") y di qué harías para averiguarlo. Nunca inventes cifras ni fechas. Sin relleno, sin
-frases genéricas, sin "como IA". Termina, si aplica, con UNA cosa concreta que vigilarías."""
+ASK_SYSTEM = """Eres {name} ({role}) del comité de inversión de Khipus Finance AI. Un inversionista te habla A TI,
+no a Khipu en general: responde EN PERSONA, en {lang}, desde TU especialidad y nada más.
+TU ENFOQUE: {focus}
+Escribe 4 a 8 frases claras y concretas, como un analista senior que explica a un cliente: qué muestran TUS datos,
+por qué importa para el valor de la empresa y qué tan sólida es la evidencia. Cita los ids entre corchetes:
+[S#] (datos en vivo de tu rol), [E#] (paquete de evidencia) y [C#] (tus conclusiones previas, si las hay).
+REGLAS: usa SOLO los datos del mensaje; si algo no está, dilo ("no tengo ese dato") y di qué mirarías.
+Nunca inventes cifras ni fechas. No hagas un análisis general de la empresa: quédate en tu rol.
+Sin relleno, sin frases genéricas, sin "como IA". Termina con UNA cosa concreta que vigilarías."""
 
 ROLE = {'fundamental': ('analista fundamental: estados financieros, márgenes, deuda, valuación', 'fundamental analyst'),
         'technical': ('analista técnico: precio, tendencia, niveles, momentum', 'technical analyst'),
@@ -159,9 +163,32 @@ def _resolve(entity):
     return eid, (node or {}).get('label') or eid, (node or {}).get('mkt')
 
 
-def ask(session, seat, question, entity, lang='es', ai=None):
-    """Respuesta de UN puesto. → dict {ok, seat, emoji, name, entity, label, answer, refs, n_claims,
-    needs_research, model}. ai: inyectable para tests (callable(system, prompt, max_tokens, tier))."""
+def _strip_data(line):
+    return re.sub(r'</?data>', '', str(line or '')).strip()
+
+
+def _fallback_text(seat, label, packet, claims, lang):
+    """Sin IA (ocupada / sin saldo): lo que muestran SUS datos, sin redactar nada nuevo."""
+    en = lang == 'en'
+    rows = [_strip_data(l)[3:] if re.match(r'^S\d+ ', l) else '' for l in (packet.get('text') or '').split('\n')]
+    rows = [r for r in rows if r][:4]
+    if not rows and claims:
+        rows = [c.statement_es for c in claims[:3]]
+    if not rows:
+        return None
+    head = (f"I couldn't write the full answer right now (the AI is busy), but this is what my data on {label} shows:"
+            if en else f'No pude redactar la respuesta completa ahora (la IA está ocupada), pero esto muestran mis datos de {label}:')
+    return head + '\n' + '\n'.join('· ' + r for r in rows)
+
+
+def ask(session, seat, question, entity, lang='es', ai=None, skills=True, _pre=None):
+    """Respuesta de UN puesto, CON SUS HABILIDADES (research/agent_skills): cada rol trae al instante SU
+    paquete de datos en vivo (Cadena → tensor de la cadena, países, riesgo aguas arriba/abajo; Técnico →
+    indicadores de precio; Fundamental → estados, ratios y pares; …) y, si existen, sus conclusiones previas.
+    Ya no hace falta una investigación previa para responder.
+    → dict {ok, seat, emoji, name, entity, label, answer, refs, n_claims, needs_research, model, skill}.
+    ai: inyectable para tests (callable(system, prompt, max_tokens, tier)). session puede ser None (sin base)."""
+    from research import agent_skills as sk
     meta = seat_meta(seat)
     en = lang == 'en'
     name = meta['name_en'] if en else meta['name_es']
@@ -172,26 +199,59 @@ def ask(session, seat, question, entity, lang='es', ai=None):
                 'answer': (f"I couldn't find “{entity}” in the Khipus graph. Which company do you mean?" if en
                            else f'No encontré «{entity}» en el grafo de Khipus. ¿A qué empresa te refieres?'),
                 'refs': {}, 'n_claims': 0, 'needs_research': False}
-    claims = _load_claims(session, eid, seat)
-    if not claims:
-        return {'ok': True, 'seat': seat, 'emoji': meta['emoji'], 'name': name, 'entity': eid, 'label': label,
-                'answer': (f"I haven't researched {label} yet, so I have no conclusions to stand on. Want me to run the research now?"
-                           if en else f'Todavía no investigué {label}, así que no tengo conclusiones propias. ¿Quieres que la investigue ahora?'),
-                'refs': {}, 'n_claims': 0, 'needs_research': True}
-    ev = _evidence(session, [c.id for c in claims[:MAX_CLAIMS]])
-    pkg, refs = _package(label, symbol, claims, ev)
+    claims, ev = (_pre or ([], None))
+    if _pre is None:
+        try:                # sin base (session None) no hay conclusiones previas: solo sus habilidades
+            claims = _load_claims(session, eid, seat)
+        except Exception as e:  # noqa: BLE001
+            log.info('ask: claims %s', type(e).__name__)
+    packet = {'text': '', 'facts': {}, 'sources': [], 'n_evidence': 0, 'ok': False, 'listed': bool(symbol)}
+    if skills:
+        try:
+            packet = sk.skill_packet(seat, eid)
+        except Exception as e:  # noqa: BLE001
+            log.info('ask: skills %s', type(e).__name__)
+    skill = {'facts': packet.get('facts') or {}, 'sources': packet.get('sources') or [],
+             'n_evidence': packet.get('n_evidence') or 0,
+             'actions': sk.role_actions(seat, eid, label, packet.get('listed', bool(symbol))),
+             'note_es': sk.note_for(seat, label, packet.get('facts') or {}, 'es'),
+             'note_en': sk.note_for(seat, label, packet.get('facts') or {}, 'en')}
+    base = {'ok': True, 'seat': seat, 'emoji': meta['emoji'], 'name': name, 'entity': eid, 'label': label,
+            'n_claims': len(claims), 'needs_research': not claims, 'skill': skill}
+    if not claims and not packet.get('ok'):
+        return dict(base, refs={}, answer=(
+            f"I have no data of my own on {label} right now. Want me to run the research?" if en
+            else f'Ahora mismo no tengo datos propios de {label}. ¿Quieres que la investigue?'))
+    parts = [f'EMPRESA: {label} ({symbol or "no cotiza"})', '']
+    if packet.get('text'):
+        parts.append(packet['text'])
+    refs = {}
+    if claims:
+        if ev is None:
+            ev = _evidence(session, [c.id for c in claims[:MAX_CLAIMS]])
+        pkg, refs = _package(label, symbol, claims, ev)
+        parts += ['', pkg]
     role = ROLE.get(seat, (seat, seat))[1 if en else 0]
-    system = ASK_SYSTEM.format(name=name, role=role, lang='English' if en else 'español')
-    prompt = pkg + f'\n\nPREGUNTA DEL INVERSIONISTA: {question or ("¿Qué opinas de " + label + "?")}'
+    focus = (sk.FOCUS.get(seat) or ('', ''))[1 if en else 0]
+    system = ASK_SYSTEM.format(name=name, role=role, focus=focus, lang='English' if en else 'español')
+    prompt = '\n'.join(parts) + f'\n\nPREGUNTA DEL INVERSIONISTA: {question or ("¿Qué opinas de " + label + "?")}'
     call = ai
     if call is None:
         from core.ai import _ai_complete
         call = _ai_complete
-    text, model = call(system, prompt, ASK_TOKENS, 'deep')
+    text, model = '', None
+    try:
+        text, model = call(system, prompt, ASK_TOKENS, 'deep')
+    except Exception as e:  # noqa: BLE001
+        log.info('ask: ai %s', type(e).__name__)
     text = (text or '').strip()
+    if not text:
+        text = _fallback_text(seat, label, packet, claims, lang)
+        if not text:
+            raise RuntimeError('ai_unavailable')
+        model = None
     used = {r: refs[r] for r in refs if f'[{r}]' in text}
-    return {'ok': True, 'seat': seat, 'emoji': meta['emoji'], 'name': name, 'entity': eid, 'label': label,
-            'answer': text, 'refs': used, 'n_claims': len(claims), 'needs_research': False, 'model': model}
+    return dict(base, answer=text, refs=used, model=model)
 
 
 def ask_all(session, question, entity, lang='es', ai=None, max_seats=MAX_SEATS_ALL):
@@ -201,20 +261,35 @@ def ask_all(session, question, entity, lang='es', ai=None, max_seats=MAX_SEATS_A
         eid, label, _sym = _resolve(entity)
     except Exception:  # noqa: BLE001
         return {'ok': False, 'answers': [], 'answer': (f"I couldn't find “{entity}”." if en else f'No encontré «{entity}».')}
-    seats = seats_with_claims(session, eid)[:max_seats]
-    if not seats:
-        return {'ok': True, 'entity': eid, 'label': label, 'answers': [], 'needs_research': True,
-                'answer': (f'Nobody has researched {label} yet. Want me to run the research?' if en
-                           else f'Nadie ha investigado {label} todavía. ¿Quieres que la investigue?')}
+    # con conclusiones primero; el resto lo cubren sus habilidades en vivo (ya no hace falta investigar antes)
+    try:
+        with_claims = seats_with_claims(session, eid)
+    except Exception as e:  # noqa: BLE001 — sin base (session None): ninguno tiene conclusiones
+        log.info('ask_all: %s', type(e).__name__)
+        with_claims = []
+    seats = (with_claims + [s for s in ALL_DEFAULT if s not in with_claims])[:max_seats]
+    # la sesión de base NO es segura entre hilos: conclusiones y evidencia se leen aquí, antes del paralelo
+    pre = {}
+    for st in seats:
+        try:
+            cl = _load_claims(session, eid, st) if st in with_claims else []
+            pre[st] = (cl, _evidence(session, [c.id for c in cl[:MAX_CLAIMS]]) if cl else {})
+        except Exception as e:  # noqa: BLE001
+            log.info('ask_all pre %s: %s', st, type(e).__name__)
+            pre[st] = ([], {})
     from core.ai_usage import bind
-    with ThreadPoolExecutor(max_workers=min(3, len(seats))) as ex:
-        futs = [ex.submit(bind(ask), session, s, question, eid, lang, ai) for s in seats]
+    with ThreadPoolExecutor(max_workers=max(1, min(4, len(seats)))) as ex:
+        futs = [ex.submit(bind(ask), None, s, question, eid, lang, ai, True, pre[s]) for s in seats]
         answers = []
         for f in futs:
             try:
                 answers.append(f.result(timeout=90))
             except Exception as e:  # noqa: BLE001
                 log.warning('ask_all: %s', type(e).__name__)
+    # quien no tiene NADA propio (ni conclusiones ni datos de su rol) no ocupa un párrafo
+    has = [a for a in answers if a.get('n_claims') or ((a.get('skill') or {}).get('n_evidence'))]
+    answers = has or answers
     parts = [f"**{a['emoji']} {a['name']}** — {a['answer']}" for a in answers if a.get('answer')]
-    return {'ok': True, 'entity': eid, 'label': label, 'answers': answers, 'needs_research': False,
-            'answer': '\n\n'.join(parts)}
+    return {'ok': bool(parts), 'entity': eid, 'label': label, 'answers': answers,
+            'model': next((a.get('model') for a in answers if a.get('model')), None),
+            'needs_research': not with_claims, 'answer': '\n\n'.join(parts)}

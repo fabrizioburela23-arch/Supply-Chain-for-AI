@@ -377,19 +377,18 @@ def x_get_news(company, limit=8):
 
 @_extra('ask_agent', 'seat:fundamental|technical|news|supply_chain|geopolitical|macro|crypto|all, question:string, company:string',
         'Ask ONE of the Khipus research analysts (the committee seats) — or all of them — a question about a company, '
-        'IN THEIR OWN VOICE, grounded ONLY in their active research conclusions and evidence. Use it when the user '
-        'wants a specific analyst\'s view ("what does the technical analyst think", "pregúntale al de noticias", '
-        '"@fundamental"). If the analyst has no research on that company, the answer says so and offers to research.')
+        'IN THEIR OWN VOICE and FROM THEIR ROLE: each seat brings its own live skills (supply_chain → supplier '
+        'concentration, supplier countries, upstream/downstream risk; technical → price indicators; fundamental → '
+        'statements, ratios, peers; news/geopolitical/macro → live events and indices) plus its research conclusions '
+        'if any. Use it when the user wants a specific analyst\'s view ("what does the technical analyst think", '
+        '"pregúntale al de noticias", "@fundamental"). No prior research is needed.')
 def x_ask_agent(seat, question, company, lang='es'):
     # `lang` NO lo elige el modelo: execute_tool lo inyecta con el idioma de la PETICIÓN (antes se leía de
     # _PRINCIPAL, que nunca lo tuvo → el analista respondía siempre en español aunque la app estuviera en inglés)
-    from ontology.db import ontology_available as db_ok, session_scope
     from research import ask_agent as aa
-    if not db_ok():
-        return {'available': False, 'error': 'the research database is not available right now'}
     lang = 'en' if str(lang or '').lower().startswith('en') else 'es'
     seat = aa.seat_from_words(str(seat or '')) or str(seat or '').strip().lower()
-    with session_scope() as s:
+    with _research_session() as s:      # sin base: responde igual con sus habilidades en vivo
         if seat == 'all':
             r = aa.ask_all(s, str(question or ''), str(company or ''), lang)
         else:
@@ -397,8 +396,23 @@ def x_ask_agent(seat, question, company, lang='es'):
     out = {k: v for k, v in (r or {}).items() if k in ('ok', 'seat', 'emoji', 'name', 'entity', 'label', 'answer', 'n_claims', 'needs_research')}
     if r and r.get('answers'):
         out['answers'] = [{k: a.get(k) for k in ('seat', 'emoji', 'name', 'answer', 'n_claims', 'needs_research')} for a in r['answers']]
-    out['source'] = 'Khipus research claims + evidence (Postgres); answer written by the analyst persona (AI)'
+    sk = (r or {}).get('skill') or {}
+    if sk.get('facts'):
+        out['role_data'] = sk['facts']
+    out['source'] = 'Khipus analyst skills (live data of its role) + research claims; answer written by the analyst persona (AI)'
     return out
+
+
+def _research_session():
+    """Sesión de la base de investigación, o un contexto vacío (None) si no hay base."""
+    import contextlib
+    try:
+        from ontology.db import ontology_available as db_ok, session_scope
+        if db_ok():
+            return session_scope()
+    except Exception:  # noqa: BLE001
+        pass
+    return contextlib.nullcontext(None)
 
 
 @_extra('scenario_exposure', 'scenario:string (the what-if in plain words)',
@@ -658,7 +672,10 @@ ACTION_SPECS = {
     'open_xray': 'node', 'navigate': 'node', 'stress': 'node', 'dossier': 'node', 'open_research': 'node',
     'open_committee': 'node', 'simulate': 'preset', 'agent_sim': 'text', 'chart': 'text', 'compare': 'pair',
     'open_risk_report': 'none', 'switch_tab': 'tab', 'open_world': 'latlon', 'broker': 'none',
+    'open_window': 'window',
 }
+# ventanas nativas de Khipus OS que una respuesta puede abrir (engine/oswindows.js) — todas sobre UNA empresa
+WINDOW_KINDS = ('glance', 'supplychain')
 _ACTION_ALIASES = {'xray': 'open_xray', 'second_brain': 'open_xray', 'research': 'open_research',
                    'committee': 'open_committee', 'risk_report': 'open_risk_report', 'world': 'open_world',
                    'tab': 'switch_tab', 'agentsim': 'agent_sim', 'sim': 'stress', 'trade': 'broker'}
@@ -727,6 +744,13 @@ def validate_actions(raw):
             if t not in TABS:
                 continue
             item = {'type': typ, 'arg': t}
+        elif kind == 'window':
+            if not isinstance(arg, dict) or arg.get('kind') not in WINDOW_KINDS:
+                continue
+            nid = resolve_node(arg.get('id'))
+            if not nid:
+                continue
+            item = {'type': typ, 'arg': {'kind': arg['kind'], 'id': nid}, 'label': _node_label(nid)}
         elif kind == 'latlon':
             item = {'type': typ, 'arg': None}
             if isinstance(arg, dict):
@@ -1925,6 +1949,12 @@ def _note_ask(res, args, ctx):
     if answers:
         return (f'{len(answers)} analistas respondieron sobre {lbl}', f'{len(answers)} analysts answered on {lbl}',
                 'Khipus research claims', None)
+    sk = res.get('skill') if isinstance(res.get('skill'), dict) else {}
+    if sk.get('note_es'):
+        return (sk['note_es'], sk.get('note_en') or sk['note_es'], 'Khipus — datos en vivo del rol', None)
+    if res.get('needs_research') and sk.get('n_evidence'):
+        return (f'Respondió con los datos en vivo de su rol sobre {lbl}', f'Answered from the live data of its role on {lbl}',
+                'Khipus — datos en vivo del rol', None)
     if res.get('needs_research'):
         return (f'Todavía no investigó {lbl}: puede investigarlo', f'Has not researched {lbl} yet: it can research it',
                 'Khipus research claims', None)
@@ -2262,16 +2292,10 @@ def _mention_route(message, history, lang, context, req_id=None):
         base['answer'] = ('Which company should I ask about?' if lang == 'en' else '¿Sobre qué empresa quieres que responda?')
         base['ai'] = False
         return finish(False, note=('Falta saber de qué empresa', 'Needs to know which company'))
-    from ontology.db import ontology_available as db_ok, session_scope
-    if not db_ok():
-        base['answer'] = ('The research database is not available right now.' if lang == 'en'
-                          else 'La base de investigación no está disponible ahora mismo.')
-        base['ai'] = False
-        return finish(False, note=('La base de investigación no está disponible', 'The research database is not available'))
     h = progress_add(req_id, 'ask_agent', {'seat': seat})
     progress_phase(req_id, 'agent')
     try:
-        with session_scope() as s:
+        with _research_session() as s:      # sin base de investigación: responde con sus habilidades en vivo
             r = aa.ask_all(s, question, ents[0], lang) if seat == 'all' else aa.ask(s, seat, question, ents[0], lang)
     except Exception as e:  # noqa: BLE001
         progress_set(req_id, h, 'error')
@@ -2289,8 +2313,17 @@ def _mention_route(message, history, lang, context, req_id=None):
         base['agent']['label'] = r.get('label')
     if (r or {}).get('answers'):
         base['agent']['answers'] = [{k: a.get(k) for k in ('seat', 'emoji', 'name', 'answer')} for a in r['answers']]
+    # la ventana / el gráfico DE SU ROL (Cadena → cadena de suministro; Técnico → gráfico de precio…) y,
+    # si nunca la investigó a fondo, la investigación profunda como opción (no como respuesta)
+    sk = (r or {}).get('skill') or {}
+    acts = list(sk.get('actions') or [])
     if (r or {}).get('needs_research') and (r or {}).get('entity'):
-        base['actions'] = validate_actions([{'type': 'open_research', 'arg': r['entity']}])
+        acts.append({'type': 'open_research', 'arg': r['entity']})
+    base['actions'] = validate_actions(acts)
+    base['sources'] = [{'label': str(x.get('label') or '')[:160], 'as_of': x.get('as_of')}
+                       for x in (sk.get('sources') or []) if isinstance(x, dict) and x.get('label')][:8]
+    if not (r or {}).get('model'):
+        base['ai'] = False
     base['elapsed_ms'] = int((time.monotonic() - t0) * 1000)
     return finish(bool((r or {}).get('ok', True)), r)
 

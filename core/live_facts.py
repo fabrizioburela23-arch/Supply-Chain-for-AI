@@ -10,6 +10,7 @@ nunca rompe la llamada de IA (ante cualquier fallo devuelve '').
 """
 import logging
 import re
+import unicodedata
 import threading
 from concurrent.futures import ThreadPoolExecutor, wait
 from datetime import datetime, timezone
@@ -48,6 +49,64 @@ def _label_regex(idx):
         return _rx_cache['rx'], _rx_cache['by_label']
 
 
+# 2026-10-06 (Fabrizio escribe en el celular "analiza open ai", "que tal nvidia", "sk hynix"): el detector solo
+# reconocía el nombre con sus mayúsculas exactas. Ahora también sin mayúsculas, sin tildes y sin espacios
+# ("open ai" → OpenAI). Para no confundir palabras comunes con empresas, la versión tolerante exige ≥ 5 letras
+# y excluye nombres que son palabras de uso diario; esos siguen detectándose con su mayúscula (pasada exacta).
+_COMMON_WORDS = {'switch', 'shell', 'disco', 'canon', 'cohere', 'glean', 'formic', 'imbue', 'oneline', 'dayone',
+                 'terna', 'sessa', 'apple', 'oracle', 'amazon', 'block', 'unity', 'square', 'target', 'visa', 'ring'}
+# nombres de 4 letras que son palabras comunes (es/en/pt) → solo con su mayúscula exacta
+_COMMON_SHORT = {'meta', 'vale', 'toto', 'wing', 'ring', 'visa', 'nuro', 'rumo', 'sify', 'hoya', 'adia', 'cohu',
+                 'enel', 'isda', 'kbra', 'lseg', 'msci', 'mufg', 'nbim', 'pboc', 'smbc', 'smee', 'snap', 'data'}
+# siglas de 3 letras inequívocas que la gente escribe en minúscula
+_SHORT_OK = {'amd'}
+_fold_cache = {'map': None}
+
+
+def _collapse(s):
+    s = unicodedata.normalize('NFD', str(s or '').lower())
+    return re.sub(r'[^a-z0-9]', '', ''.join(c for c in s if unicodedata.category(c) != 'Mn'))
+
+
+def _collapsed_map(idx):
+    with _rx_lock:
+        if _fold_cache['map'] is None:
+            m = {}
+            def add(key, nid):
+                k = _collapse(key)
+                if k in _COMMON_WORDS:
+                    return
+                if len(k) >= 5 or (len(k) == 4 and k not in _COMMON_SHORT) or k in _SHORT_OK:
+                    m.setdefault(k, nid)
+            for nid, n in idx['nodos'].items():
+                lab = (n.get('label') or '').strip()
+                add(nid, nid)
+                if lab:
+                    add(lab, nid)
+                    add(re.split(r'\s*\(', lab)[0], nid)
+            for al, nid in (idx.get('por_alias') or {}).items():
+                if isinstance(nid, str):
+                    add(al, nid)
+            _fold_cache['map'] = m
+        return _fold_cache['map']
+
+
+def _fuzzy_hits(text, idx):
+    """(pos, id) por n-gramas de 1-3 palabras comparados sin mayúsculas/tildes/espacios."""
+    cmap = _collapsed_map(idx)
+    words = [(m.start(), m.group(0)) for m in re.finditer(r'[\w&.\-]+', text)]
+    out, used = [], set()
+    for n in (3, 2, 1):
+        for i in range(len(words) - n + 1):
+            if any(j in used for j in range(i, i + n)):
+                continue
+            nid = cmap.get(_collapse(''.join(w for _p, w in words[i:i + n])))
+            if nid:
+                out.append((words[i][0], nid))
+                used.update(range(i, i + n))
+    return out
+
+
 def detect_entities(text, limit=MAX_ENTITIES):
     """Ids del grafo mencionados en `text`, en orden de aparición."""
     from core.entities import get_index
@@ -55,6 +114,10 @@ def detect_entities(text, limit=MAX_ENTITIES):
         return []
     idx = get_index()
     hits = []   # (pos, id)
+    try:
+        hits.extend(_fuzzy_hits(text, idx))
+    except Exception:  # noqa: BLE001
+        pass
     rx, by_label = _label_regex(idx)
     for m in rx.finditer(text):
         nid = by_label.get(m.group(1))

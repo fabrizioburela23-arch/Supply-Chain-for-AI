@@ -239,6 +239,12 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     NO reintroducir el router de regex sueltos ni el "fallback = gráfico".
     Nunca mostrar texto crudo del modelo: si el paso JSON falla o trae restos
     (`leaked()`), `synthesize()` hace que el agente redacte la respuesta en prosa.
+  - **Habilidades por agente (2026-10-06)**: `research/agent_skills.py` — al hablarle a un agente (@cadena,
+    @tecnico…) responde DESDE SU ROL con su paquete en vivo (`skill_packet`: evidencia E# + extras S#: Cadena =
+    tensor/países/riesgo/eventos; Técnico = indicadores; Fundamental = estados/ratios/pares…) sin exigir
+    investigación previa ni base de datos; abre la ventana de su rol (acción `open_window` {kind, id}). Nunca
+    volver a "sin conclusiones → investigación general". `FOCUS`/`SKILLS` bilingües; SKILLS se repite en
+    oswindows.js (un test lo compara).
   - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
     por IP (último salto XFF) y global compartido — `require_pin` (trading) /
     `require_operator` (escrituras de ontología). Nunca reimplementar.

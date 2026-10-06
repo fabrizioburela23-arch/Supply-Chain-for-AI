@@ -449,6 +449,8 @@
   function planWindows(reply, question, prefs, centered) {
     reply = reply || {};
     if (!centered) return [];
+    // le hablaste a UN agente (@cadena…): solo se abre la ventana DE SU ROL (llega como acción open_window/chart)
+    if (reply.answer_source === 'agent' && reply.agent && reply.agent.seat && reply.agent.seat !== 'all') return [];
     var e0 = Array.isArray(reply.entities) ? reply.entities[0] : null;
     var id = e0 && (typeof e0 === 'string' ? e0 : e0.id);
     if (!id) return [];
@@ -967,8 +969,10 @@
     open_pf_committee: ['💼 Ver el análisis completo', '💼 See the full analysis'],
     open_portfolio: ['🧪 Cartera', '🧪 Portfolio'],
   };
+  // open_window: la ventana nativa de Khipus OS que muestra el ROL del agente (engine/oswindows.js)
+  var WIN_LABEL = { supplychain: ['⛓ Cadena de suministro', '⛓ Supply chain'], glance: ['◉ En una mirada', '◉ At a glance'] };
   function actionLabel(a) {
-    var x = ACT_LABEL[a.type] || [a.type, a.type];
+    var x = (a.type === 'open_window' && a.arg && WIN_LABEL[a.arg.kind]) || ACT_LABEL[a.type] || [a.type, a.type];
     var base = x[lang() === 'en' ? 1 : 0];
     if (a.label && a.type !== 'compare') return base + ': ' + a.label;
     if (a.type === 'compare' && a.label) return '⇄ ' + a.label;
@@ -980,7 +984,7 @@
   // acciones que cambian el ESCENARIO (se pueden auto-ejecutar sin tapar el chat
   // en la Cabina); las de overlay (investigación, comité, riesgo, dossier, bróker)
   // quedan como botón para que la respuesta siga visible.
-  var AUTO = { open_xray: 1, navigate: 1, stress: 1, compare: 1, chart: 1, simulate: 1, agent_sim: 1, switch_tab: 1, open_world: 1 };
+  var AUTO = { open_xray: 1, navigate: 1, stress: 1, compare: 1, chart: 1, simulate: 1, agent_sim: 1, switch_tab: 1, open_world: 1, open_window: 1 };
 
   function _mode() { try { return W.KhipuAgentPrefs && W.KhipuAgentPrefs.mode && W.KhipuAgentPrefs.mode() === 'pro' ? 'pro' : 'simple'; } catch (e) { return 'simple'; } }
   // la hora de un dato con su atributo para refrescar "hace N min" mientras el hilo sigue abierto
@@ -1155,6 +1159,7 @@
     if (opts.autoRun !== false) {
       var first = acts.filter(function (a) { return AUTO[a.type] && (!opts.autoFilter || opts.autoFilter(a)); })[0];
       if (first && plan.length && first.type === 'open_xray') first = null;
+      if (first && first.type === 'open_window' && plan.some(function (w) { return first.arg && w.kind === first.arg.kind; })) first = null;
       if (first) setTimeout(function () { try { (opts.onAction || runAction)(first); } catch (e) {} }, delay + plan.length * 260);
     }
     return el;
@@ -1225,6 +1230,11 @@
           return true;
         case 'dossier': { var n = NB[a.arg]; return surf('dossier', (n && n.mkt) || a.arg) || (W.openFinCard && W.openFinCard((n && n.mkt) || a.arg)); }
         case 'open_research': if (W.KhipuResearch) { W.KhipuResearch.open(a.arg); return true; } return false;
+        case 'open_window':
+          if (!a.arg || !a.arg.kind || !a.arg.id) return false;
+          if (W.KhipuOSWin && W.KhipuOSWin.open(a.arg.kind, { id: a.arg.id })) return true;
+          // sin Khipus OS (vista clásica): lo más parecido de siempre
+          return a.arg.kind === 'supplychain' ? (surf('graph', a.arg.id) || false) : (surf('xray', a.arg.id) || (W.openXRay && W.openXRay(a.arg.id)) || false);
         case 'open_committee': if (W.KhipuCommittee) { W.KhipuCommittee.open(a.arg); return true; } return false;
         case 'open_portfolio':
           try { W.localStorage.setItem('kh_pf_active', String(a.arg)); } catch (e) {}

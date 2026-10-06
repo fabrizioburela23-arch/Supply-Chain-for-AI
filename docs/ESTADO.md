@@ -9,6 +9,39 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (iii) — HABILIDADES PROPIAS DE CADA AGENTE (sw v247)
+
+Pedido de Fabrizio (captura del chat con el chip "Cadena"): "le pedí que analice OpenAI, le costó y respondió
+con la investigación general; le hablé al agente de supply: debería investigar y mostrar lo de SU rol. Que cada
+uno tenga incorporadas skills de su área".
+Causas: (1) "open ai" en minúsculas/separado no se detectaba como empresa (core/live_facts.detect_entities solo
+reconocía nombres exactos) → ahora hay detección difusa (n-gramas de 1-3 palabras colapsados, listas de
+palabras comunes que NO son empresas: meta, vale, disco, apple como palabra suelta…); (2) @agente solo podía
+responder con conclusiones de una investigación previa (sin ellas: "¿quieres que la investigue?" → investigación
+GENERAL) y además exigía la base de datos.
+- `research/agent_skills.py` (NUEVO): FOCUS (enfoque por rol, ES/EN), SKILLS (lo que cada mascota sabe hacer, se
+  muestra en su ficha), `skill_packet(seat, eid)` = evidencia del rol (research/context en modo rápido; el
+  fundamental en STANDARD por los pares) + extras S# en paralelo con plazos (9 s / 5 s / World Monitor 3 s):
+  Cadena → tensor (concentración, países de proveedores, riesgo aguas arriba, arrastre aguas abajo, comparables)
+  + eventos en vivo en sus proveedores; Geopolítico → países + eventos; Noticias → eventos que la nombran;
+  Fundamental → fundamentales en vivo; Macro → GPR. `role_actions` = la ventana/gráfico del rol (Cadena →
+  open_window supplychain; Fundamental → glance + Dossier; Técnico → gráfico de 1 año; Geo → World Monitor).
+  `note_for` = nota DETERMINISTA para "lo que aportó cada agente".
+- `research/ask_agent.ask()`: SIEMPRE arma el paquete del rol; conclusiones previas solo se suman (C#, su
+  evidencia ahora es C#.j para no chocar con E#). Sin IA → devuelve sus datos S# tal cual. `ask_all`: hasta 4
+  puestos (primero los con conclusiones, luego ALL_DEFAULT), conclusiones leídas ANTES del paralelo (la sesión
+  de BD no es segura entre hilos); quien no tiene nada propio no ocupa párrafo.
+- `core/khipu_chat`: la ruta @ y la herramienta ask_agent funcionan SIN base (`_research_session` →
+  nullcontext); acciones = ventana del rol + open_research si nunca la investigó; fuentes con hora del paquete.
+  Acción nueva `open_window` {kind: glance|supplychain, id} (ACTION_SPECS 'window', WINDOW_KINDS).
+- Cliente: `runAction('open_window')` → KhipuOSWin.open (vista clásica: mapa/X-Ray); en AUTO; si la respuesta es
+  de UN agente, planWindows no abre las ventanas generales (solo la de su rol). Ficha de agentes: sección
+  "Habilidades cuando le hablas" (/api/agents/profiles `skills`, respaldo estático igual en oswindows.js).
+- Tests: tests/test_ask_agent.py (+10), test_khipus_os_chat.py (+1), test_khipu_chat ajustado (las fichas
+  pre-consultadas ahora también salen con nombres en minúsculas).
+
+---
+
 # SESIÓN 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)
 
 Pedido de Fabrizio (video "Khipus OS" + "chat al medio, gráficos a los costados, pestañas discretas, velocidad,

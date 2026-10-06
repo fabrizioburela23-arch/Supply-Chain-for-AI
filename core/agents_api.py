@@ -376,7 +376,13 @@ def build_profiles(lang='es'):
             data_es, data_en = list(p['data_es']), list(p['data_en'])
         data_es = data_es + list(p.get('chat_es') or [])
         data_en = data_en + list(p.get('chat_en') or [])
+        try:
+            from research.agent_skills import SKILLS
+            sk_es, sk_en = SKILLS.get(p['id'], ([], []))
+        except Exception:  # noqa: BLE001
+            sk_es, sk_en = [], []
         a = {'id': p['id'], 'es': p['es'], 'en': p['en'], 'role_es': p['role_es'], 'role_en': p['role_en'],
+             'skills_es': list(sk_es), 'skills_en': list(sk_en),
              'does_es': p['does_es'], 'does_en': p['does_en'], 'data_es': data_es, 'data_en': data_en,
              'data_keys': keys, 'outputs_es': list(p['outputs_es']), 'outputs_en': list(p['outputs_en']),
              'research_types': list(p['research_types']), 'tools': _tools_for(p['id']),
@@ -398,7 +404,7 @@ def build_profiles(lang='es'):
                                           unit_en='committee sessions (seats and chair)')
         # comodidad para el cliente: los textos en el idioma pedido
         a.update(name=a[lang], role=a['role_' + lang], does=a['does_' + lang], data=a['data_' + lang],
-                 outputs=a['outputs_' + lang])
+                 outputs=a['outputs_' + lang], skills=a['skills_' + lang])
         agents.append(a)
     out = {'agents': agents, 'db': bool(db and tr is not None), 'lang': lang, 'as_of': _now().isoformat(),
            'help': HELP,

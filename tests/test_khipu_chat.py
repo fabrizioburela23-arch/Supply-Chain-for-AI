@@ -94,8 +94,10 @@ def test_parallel_calls_and_cache(fake_ai):
     ])
     out = kc.run_chat('compara nvidia y amd', [], 'es', {})
     assert out['answer'] == 'Listo'
-    assert [t['name'] for t in out['tools_used']] == ['search_companies'] * 3
-    assert out['tools_used'][2]['ms'] == 0            # servido desde la caché por petición
+    # (las fichas pre-consultadas de las empresas detectadas — ahora también en minúsculas — van antes)
+    sc = [t for t in out['tools_used'] if t['name'] == 'search_companies']
+    assert len(sc) == 3 and {t['name'] for t in out['tools_used']} <= {'search_companies', 'get_company'}
+    assert sc[2]['ms'] == 0                           # servido desde la caché por petición
     assert len(f.prompts) == 3
 
 
