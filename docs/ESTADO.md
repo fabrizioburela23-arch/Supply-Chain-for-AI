@@ -32,6 +32,11 @@ está conectado).
   auditoría no marcaba ("PMIC fabricados en TSMC" con source=MPWR): MPWR, Navitas, Qorvo, Richtek, Skyworks,
   Broadcom → TSMC. scripts/audit_graph.py ahora detecta la voz pasiva (FAB_PASSIVE_RE) → direcciones
   sospechosas 59→65 (línea base reescrita: más detección, no peores datos). NO se invirtieron: decide Fabrizio.
+- Producción verificada (MCP get_company): con caps en vivo la cobertura sube de ~20 % a 71 % (ASML: Zeiss
+  30 % de sus vínculos de proveedor, Alemania 60 %, $1,39T aguas abajo). DECISIÓN PENDIENTE de Fabrizio: el
+  kernel normaliza POR TIPO, así que un licenciante casi único pesa mucho (Microsoft: "Palantir 24 %", "Figure
+  19 %" por vínculos `license`). Opciones: bajar el peso de license/deploy en vocabulary.json (cambia TODOS los
+  números de riesgo de la app) o reclasificar esos vínculos como partner. También al revés: TataSemiconductor→ASML.
 
 # SESIÓN 2026-10-06 (ee) — MAPA POR CAPITALIZACIÓN EN VIVO + HOME CON CADA CARTERA (sw v240)
 
