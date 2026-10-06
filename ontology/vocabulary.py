@@ -154,7 +154,7 @@ def flow_relation_types():
 # Confianza de un vínculo según su TEXTO curado (G4c). ÚNICA definición en
 # Python: la usan mcp_server/tools._link_trust y matrix/engine.link_confidence.
 # Su gemela JS vive en nodes/merge_graph.js (UNVERIFIED_RX) — cambiar las dos.
-UNVERIFIED_RX = re.compile(r'no verificad|no revisad|\bposible(mente)?|sin confirmar', re.I)
+UNVERIFIED_RX = re.compile(r'no verificad|no revisad|\bposible(mente)?|sin confirmar|no confirmad|v[ií]nculo referencial', re.I)
 # Revisión G4: frases que matizan una CIFRA o una nota interna, no la relación
 # ("% exacto no verificado" en un accionista documentado por 13F, "posible
 # duplicado" del nodo). Se quitan ANTES de buscar UNVERIFIED_RX. Gemela JS en

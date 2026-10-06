@@ -464,16 +464,17 @@ def test_g4d_catalogo_mcp_y_world_usan_el_grado_estructural(nodb):
     snap = tools._snapshot()
     fd = flow_degree(e for lst in snap['out'].values() for e in lst)
     assert fd['Equinix'] == snap['flow_deg']['Equinix'] < snap['deg']['Equinix']   # socios ya no cuentan
-    # Colliers: 1 relación de flujo y 3 de socio/inversión → el término "cadena" baja de 10 a 2,5
-    n = snap['nodes']['Colliers']
-    assert fd['Colliers'] == 1 and snap['deg']['Colliers'] > 1
-    r = tools._nrs('Colliers', n)
+    # Morningstar: 1 relación de flujo y varias de socio/inversión → el término "cadena" baja
+    # (antes Colliers; 2026-10-06 su único 'supply' era asesoría y pasó a partner)
+    n = snap['nodes']['Morningstar']
+    assert fd['Morningstar'] == 1 and snap['deg']['Morningstar'] > 1
+    r = tools._nrs('Morningstar', n)
     assert r['value'] == client_nrs(n, 1) and 'distinct pairs' in r['method']
-    assert r['value'] < client_nrs(n, snap['deg']['Colliers'])                     # el NRS visible baja
+    assert r['value'] < client_nrs(n, snap['deg']['Morningstar'])                     # el NRS visible baja
     _GRAPH['data'] = None
     try:
-        w = _graph()['by_id']['Colliers']
-        assert w['flow_degree'] == 1 and w['nrs'] == r['value'] and w['degree'] == snap['deg']['Colliers']
+        w = _graph()['by_id']['Morningstar']
+        assert w['flow_degree'] == 1 and w['nrs'] == r['value'] and w['degree'] == snap['deg']['Morningstar']
     finally:
         _GRAPH['data'] = None
 
@@ -594,3 +595,15 @@ process.stdout.write(JSON.stringify({ alias: ctx.computeNRS('SouthernCompany'), 
     out = _node(harness, {'src': src, 'links': links})
     assert out['canonId'] == 'SouthernCo'
     assert out['alias'] == out['canon'] and out['canon'] > 26
+
+
+def test_vinculo_referencial_y_no_confirmado_son_dudosos_en_cliente_y_servidor():
+    # 2026-10-06: "cliente no confirmado — vínculo referencial" (REITs/datacenters) pesaba como verificado
+    import re as _re
+    from ontology import vocabulary as V
+    for txt in ('Cliente hyperscale final no confirmado — vínculo referencial', 'Vinculo referencial de mercado'):
+        assert V.text_says_unverified(txt), txt
+    js = open(os.path.join(ROOT, 'nodes', 'merge_graph.js'), encoding='utf-8').read()
+    m = _re.search(r'var UNVERIFIED_RX = /(.+?)/i;', js).group(1)
+    assert m == V.UNVERIFIED_RX.pattern                         # misma regla en el navegador
+    assert not V.text_says_unverified('Contrato confirmado de USD 6.000M')

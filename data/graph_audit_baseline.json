@@ -1,13 +1,13 @@
 {
   "_doc": "Línea base de scripts/audit_graph.py (G1). Las categorías de `metrics` NO pueden empeorar (tests/test_graph_audit.py); `info` es solo informativo. Regenerar con `python scripts/audit_graph.py --write-baseline` tras una mejora consciente.",
-  "generated_at": "2026-10-06T03:25:39+00:00",
-  "snapshot_exported_at": "2026-10-06T03:25:29.196Z",
+  "generated_at": "2026-10-06T04:19:28+00:00",
+  "snapshot_exported_at": "2026-10-06T04:19:20.593Z",
   "nodes": 937,
   "links": 2510,
   "metrics": {
     "duplicate_links": 0,
     "duplicate_entities": 0,
-    "suspicious_directions": 39,
+    "suspicious_directions": 32,
     "no_source_text": 300,
     "unverified_weighted": 28,
     "orphans": 23,

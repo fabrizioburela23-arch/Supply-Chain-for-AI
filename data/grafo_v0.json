@@ -1,10 +1,10 @@
 {
- "exported_at": "2026-10-06T03:25:29.196Z",
+ "exported_at": "2026-10-06T04:19:20.593Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 937,
   "links": 2510,
-  "unverified_links": 10,
+  "unverified_links": 37,
   "categories": 108,
   "sectors": 13,
   "preipo_entries": 14,
@@ -28580,8 +28580,8 @@
    "w": 1,
    "rel": "En conversaciones exploratorias con utilities/proveedores de datacenters de EEUU (no confirmado por nombre) para offtake de uranio ligado a demanda de IA (feb 2026)",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "DenisonMines",
@@ -28742,8 +28742,8 @@
    "w": 0.3,
    "rel": "colaboración anunciada jun-2026 (alcance no confirmado)",
    "type": "partner",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "UcoreRareMetals",
@@ -28886,8 +28886,8 @@
    "w": 0.6,
    "rel": "cintas de dicing y films de back-grinding (relación típica del sector, no confirmada por nombre)",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "nitto-denko",
@@ -28922,8 +28922,8 @@
    "w": 0.5,
    "rel": "peróxido de hidrógeno electrónico (planta Taiwán con retrasos de certificación, cliente no confirmado por nombre)",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "mitsubishi-gas-chemical",
@@ -29003,8 +29003,8 @@
    "w": 0.4,
    "rel": "sustratos cerámicos para empaquetado de chips de IA (relación típica del sector, no confirmada por nombre)",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "kyocera-corporation",
@@ -29030,8 +29030,8 @@
    "w": 0.3,
    "rel": "colaboración de industria en desarrollo de fusión (contexto sectorial, no confirmado como acuerdo formal)",
    "type": "partner",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "CommonwealthFusion",
@@ -29048,8 +29048,8 @@
    "w": 0.3,
    "rel": "ecosistema de infraestructura energética en el despliegue de la planta piloto TVA (contexto, no confirmado como acuerdo directo)",
    "type": "partner",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "pacific-fusion",
@@ -29075,8 +29075,8 @@
    "w": 0.6,
    "rel": "recubrimientos BARC/ARC para litografía EUV (relación típica del sector, no confirmada por nombre)",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "nissan-chemical",
@@ -37985,8 +37985,8 @@
    "w": 2,
    "rel": "Reportado (The Information, jun-2026) en conversaciones para ronda de capital a valuación de USD 50.000M+; no confirmado como cerrado.",
    "type": "invest",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "KKR",
@@ -38003,8 +38003,8 @@
    "w": 2,
    "rel": "Reportado (The Information, jun-2026) como potencial inversionista en ronda a valuación de USD 50.000M+; no confirmado como cerrado.",
    "type": "invest",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Carlyle",
@@ -38048,8 +38048,8 @@
    "w": 2,
    "rel": "Intentó sindicar ~USD 4.000M en deuda para proyecto de datacenter de CoreWeave; enfrentó resistencia de prestamistas, reportado feb-2026, cierre final no confirmado.",
    "type": "invest",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "GIP",
@@ -38165,8 +38165,8 @@
    "w": 1,
    "rel": "Posición accionaria histórica desde el spin-off de GlobalFoundries (2007-2009), reducida en ventas de 2016 y 2019; tamaño actual no confirmado públicamente.",
    "type": "invest",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Temasek",
@@ -38939,8 +38939,8 @@
    "w": 3,
    "rel": "Prologis desarrolla powered shells para hyperscalers (5,6GW comprometidos Q1 2026); cliente específico no confirmado — vínculo referencial de patrón de mercado",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Segro",
@@ -38957,8 +38957,8 @@
    "w": 3,
    "rel": "Pipeline +2,5GW apunta a hyperscalers; cliente del pre-let de Slough no revelado — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Goodman Group",
@@ -38966,8 +38966,8 @@
    "w": 4,
    "rel": "Power bank de 6GW en 16 mercados; hyperscaler específico no confirmado — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Goodman Group",
@@ -38975,8 +38975,8 @@
    "w": 3,
    "rel": "Vínculo referencial de patrón de mercado; no confirmado como cliente específico",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "LondonMetric Property",
@@ -38984,8 +38984,8 @@
    "w": 3,
    "rel": "Exposición a tenants de e-commerce/last-mile en UK; relación no confirmada deal-por-deal",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Rexford Industrial Realty",
@@ -38993,8 +38993,8 @@
    "w": 4,
    "rel": "Uno de los mayores ocupantes de espacio industrial infill en SoCal (Inland Empire, LA); relación específica no confirmada nombre-por-nombre",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "ESR_Group",
@@ -39002,8 +39002,8 @@
    "w": 4,
    "rel": "Pipeline +3GW en APAC (abr-2026); hyperscaler no confirmado — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "ESR_Group",
@@ -39011,8 +39011,8 @@
    "w": 3,
    "rel": "Vínculo referencial de patrón de mercado en expansión de datacenters APAC",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "GLP",
@@ -39020,8 +39020,8 @@
    "w": 3,
    "rel": "Ada Infrastructure desarrolla capacidad para hyperscalers en Japón/UK/Brasil/EE.UU.; cliente no confirmado — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "MapletreeIndustrialTrust",
@@ -39029,8 +39029,8 @@
    "w": 3,
    "rel": "Segmento 'Data Centres' explícito; tenants no revelados — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Mindspace Business Parks REIT",
@@ -39047,15 +39047,15 @@
    "w": 2,
    "rel": "Cliente hyperscale final del campus Airoli West no confirmado — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "CBRE Group",
    "target": "CoreWeave",
    "w": 3,
    "rel": "Informe CBRE H2 2025 identifica >USD 8.000M en financiamiento build-to-suit ligado a arrendamientos ancla de CoreWeave",
-   "type": "supply",
+   "type": "about",
    "conf": 1,
    "verified": true
   },
@@ -39064,7 +39064,7 @@
    "target": "Meta",
    "w": 2,
    "rel": "Informe CBRE analiza la JV Meta-Blue Owl Capital de USD 27.000M para el campus Hyperion",
-   "type": "supply",
+   "type": "about",
    "conf": 1,
    "verified": true
   },
@@ -39100,7 +39100,7 @@
    "target": "CoreWeave",
    "w": 2,
    "rel": "JLL identifica a CoreWeave entre las 'pure-play AI companies' que contribuyeron a los ~10GW anunciados en 2025",
-   "type": "supply",
+   "type": "about",
    "conf": 1,
    "verified": true
   },
@@ -39109,7 +39109,7 @@
    "target": "Meta",
    "w": 2,
    "rel": "Reporte de fin de año 2025 cita la JV Blue Owl-Meta de USD 30.000M",
-   "type": "supply",
+   "type": "about",
    "conf": 1,
    "verified": true
   },
@@ -39118,7 +39118,7 @@
    "target": "Microsoft",
    "w": 1,
    "rel": "Los cinco mayores hyperscalers (capex combinado USD 710.000M para 2026) son el principal driver que JLL asesora en site selection",
-   "type": "supply",
+   "type": "partner",
    "conf": 1,
    "verified": true
   },
@@ -39154,7 +39154,7 @@
    "target": "Amazon",
    "w": 1,
    "rel": "Servicios de asesoría de site selection a hyperscalers como AWS",
-   "type": "supply",
+   "type": "partner",
    "conf": 1,
    "verified": true
   },
@@ -39217,7 +39217,7 @@
    "target": "Alphabet",
    "w": 1,
    "rel": "Servicios de site selection y asesoría de capital markets a hyperscalers",
-   "type": "supply",
+   "type": "partner",
    "conf": 1,
    "verified": true
   },
@@ -39506,8 +39506,8 @@
    "w": 1,
    "rel": "Hyperscalers como principal driver de la demanda de servicios de ingeniería de datacenters de Jacobs; cliente específico no confirmado — vínculo referencial",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "nVent Electric",
@@ -39641,8 +39641,8 @@
    "w": 2,
    "rel": "LiquidStack describe genéricamente servir a 'los mayores proveedores de cloud, semiconductores, manufactura y hardware de TI del mundo' sin nombrar clientes; vínculo referencial de patrón de mercado",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Asetek",
@@ -39704,8 +39704,8 @@
    "w": 1,
    "rel": "N/D — no se encontró mención explícita de Huawei como cliente en las fuentes consultadas (FY2025), pese a ser un supuesto habitual del ecosistema chino de IA. Marcado como no confirmado.",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Quanta Services",
@@ -41621,8 +41621,8 @@
    "w": 2,
    "rel": "Capacidad de transporte urgente de transformadores/equipos de red vía An-124; patrón ilustrado por el caso Hitachi Energy (transformadores 80t, Polonia→Chicago, jun-2026), operador comercial específico no confirmado en p",
    "type": "supply",
-   "conf": 1,
-   "verified": true
+   "conf": 0.3,
+   "verified": false
   },
   {
    "source": "Antonov_Airlines",

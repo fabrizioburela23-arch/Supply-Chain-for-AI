@@ -969,25 +969,25 @@ var LINKS_MULTICAPA = [
   ["Mapletree Industrial Trust", "DigitalRealty", 2, "Vínculo referencial: operadores wholesale/colo como contraparte típica de REITs asiáticos con activos DC", "partner"],
   ["Mindspace Business Parks REIT", "princeton-digital-group", 5, "JV de desarrollo/operación del campus de datacenters Mindspace Airoli West, Navi Mumbai", "partner"],
   ["Mindspace Business Parks REIT", "Microsoft", 2, "Cliente hyperscale final del campus Airoli West no confirmado — vínculo referencial", "supply"],
-  ["CBRE Group", "CoreWeave", 3, "Informe CBRE H2 2025 identifica >USD 8.000M en financiamiento build-to-suit ligado a arrendamientos ancla de CoreWeave", "supply"],
-  ["CBRE Group", "Meta", 2, "Informe CBRE analiza la JV Meta-Blue Owl Capital de USD 27.000M para el campus Hyperion", "supply"],
+  ["CBRE Group", "CoreWeave", 3, "Informe CBRE H2 2025 identifica >USD 8.000M en financiamiento build-to-suit ligado a arrendamientos ancla de CoreWeave", "about"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
+  ["CBRE Group", "Meta", 2, "Informe CBRE analiza la JV Meta-Blue Owl Capital de USD 27.000M para el campus Hyperion", "about"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
   ["CBRE Group", "Blackstone", 2, "CBRE Investment Management opera como asesor/coinversor recurrente junto a grandes gestores alternativos de esta escala", "partner"],
   ["CBRE Group", "DigitalRealty", 2, "CBRE Data Center Capital Markets se define líder en adquisición/disposición/recapitalización de activos operativos de este tipo", "partner"],
   ["CBRE Group", "Turner Construction", 1, "CBRE Data Center Project Services coordina habitualmente con general contractors especializados en datacenters", "partner"],
-  ["JLL", "CoreWeave", 2, "JLL identifica a CoreWeave entre las 'pure-play AI companies' que contribuyeron a los ~10GW anunciados en 2025", "supply"],
-  ["JLL", "Meta", 2, "Reporte de fin de año 2025 cita la JV Blue Owl-Meta de USD 30.000M", "supply"],
-  ["JLL", "Microsoft", 1, "Los cinco mayores hyperscalers (capex combinado USD 710.000M para 2026) son el principal driver que JLL asesora en site selection", "supply"],
+  ["JLL", "CoreWeave", 2, "JLL identifica a CoreWeave entre las 'pure-play AI companies' que contribuyeron a los ~10GW anunciados en 2025", "about"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
+  ["JLL", "Meta", 2, "Reporte de fin de año 2025 cita la JV Blue Owl-Meta de USD 30.000M", "about"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
+  ["JLL", "Microsoft", 1, "Los cinco mayores hyperscalers (capex combinado USD 710.000M para 2026) son el principal driver que JLL asesora en site selection", "partner"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
   ["JLL", "DigitalRealty", 1, "JLL Data Center Group ofrece servicios desde site selection hasta divestment a operadores de esta escala", "partner"],
   ["Cushman & Wakefield", "DigitalRealty", 2, "Asesoría de capital markets/leasing a operadores REIT de esta escala", "partner"],
   ["Cushman & Wakefield", "Equinix", 2, "Cobertura recurrente de operadores de colocation globales en sus reportes de mercado", "partner"],
-  ["Cushman & Wakefield", "Amazon", 1, "Servicios de asesoría de site selection a hyperscalers como AWS", "supply"],
+  ["Cushman & Wakefield", "Amazon", 1, "Servicios de asesoría de site selection a hyperscalers como AWS", "partner"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
   ["Newmark Group", "OpenAI", 3, "Arregló el préstamo de USD 7.100M (22-may-2025, liderado por J.P. Morgan) para el primer proyecto Stargate en Abilene, TX", "partner"],
   ["Newmark Group", "Oracle", 2, "El proyecto Stargate Abilene forma parte de la iniciativa OpenAI-Oracle-SoftBank; Newmark fue asesor estratégico en fase 1", "partner"],
   ["Newmark Group", "DigitalRealty", 1, "Asesoría recurrente de deuda/equity a REITs y operadores de gran escala", "partner"],
   ["Colliers", "Equinix", 3, "Q&A de capital markets de datacenters con Equinix, Q4 2025", "partner"],
   ["Colliers", "AECOM", 2, "Integración de Ayesa Engineering la posiciona para competir/coordinar con firmas de ingeniería técnica de datacenters", "partner"],
   ["Colliers", "Blackstone", 1, "Investment Management asesora de forma recurrente a inversores institucionales alternativos de esta escala", "partner"],
-  ["Colliers", "Alphabet", 1, "Servicios de site selection y asesoría de capital markets a hyperscalers", "supply"],
+  ["Colliers", "Alphabet", 1, "Servicios de site selection y asesoría de capital markets a hyperscalers", "partner"],   // 2026-10-06: era supply (cita/asesoría, no suministro)
   ["Turner Construction", "Meta", 5, "Dos campus de USD 10.000M c/u: Richland Parish, Louisiana (4-dic-2024, con DPR y Mortenson) y Lebanon, Indiana (con Mortenson), 2025", "supply"],
   ["Turner Construction", "CoreWeave", 5, "Contrato de USD 6.000M+ para instalación de 100MW en Lancaster, Pensilvania, DCD nov-2025", "supply"],
   ["Turner Construction", "vantage-dc", 5, "Expansión de USD 2.000M, 192MW, New Albany, Ohio, 8-nov-2024", "supply"],

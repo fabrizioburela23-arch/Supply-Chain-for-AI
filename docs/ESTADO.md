@@ -35,6 +35,10 @@ Fabrizio aprobó ("sí a las dos"):
   APLICADO por Fabrizio: corrida `20261006T040725Z-377823` (actor "fato") = duplicadas + direcciones.
   Verificado por MCP (Wayve: Nvidia→Wayve, Microsoft→Wayve, SoftBank→Wayve). Pendiente: pesos (53),
   faltantes (657), sobrantes (2).
+  Luego Fabrizio aplicó pesos (53) + sobrantes (2). Antes de los 657 faltantes se limpió el catálogo:
+  7 filas de consultoras inmobiliarias (CBRE/JLL "informe cita…" → `about`; asesoría de JLL/Cushman/Colliers
+  → `partner`) y la regla de vínculo dudoso (merge_graph UNVERIFIED_RX = vocabulary.UNVERIFIED_RX) suma
+  "no confirmad…" y "vínculo referencial": dudosos 10→37 (conf 0.3). Sospechosas 39→32. sw v243.
 
 # SESIÓN 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2: TENSORES + AUTO-CONEXIÓN (sw v241)
 

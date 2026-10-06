@@ -20,7 +20,8 @@
      viejos sin estos campos.
    ============================================================================ */
 
-var UNVERIFIED_RX = /no verificad|no revisad|\bposible(mente)?|sin confirmar/i;
+// 2026-10-06: + "no confirmad…" y "vínculo referencial" (28 vínculos de REITs/datacenters así marcados pesaban completo)
+var UNVERIFIED_RX = /no verificad|no revisad|\bposible(mente)?|sin confirmar|no confirmad|v[ií]nculo referencial/i;
 var UNVERIFIED_QUALIFIER_RX = /(%|porcentaje|cifra|monto|participaci[oó]n)[^.;]{0,30}?no verificad[oa]s?|posibles? duplicad[oa]s?/gi;
 var UNVERIFIED_CONF = 0.3;
 
