@@ -1,9 +1,9 @@
 {
- "exported_at": "2026-10-05T22:47:24.548Z",
+ "exported_at": "2026-10-06T02:45:41.336Z",
  "source": "nodes/*.js vía nodes/merge_graph.js (misma implementación que el navegador)",
  "counts": {
   "nodes": 937,
-  "links": 2522,
+  "links": 2518,
   "unverified_links": 10,
   "categories": 108,
   "sectors": 13,
@@ -20036,8 +20036,8 @@
   {
    "source": "TSMC",
    "target": "Broadcom",
-   "w": 4,
-   "rel": "Fabrica TPUs y ASICs custom",
+   "w": 5,
+   "rel": "ASIC de IA fabricados en TSMC",
    "type": "fab",
    "conf": 1,
    "verified": true
@@ -22531,7 +22531,7 @@
    "target": "Microsoft",
    "w": 2,
    "rel": "Partnership estratégico y acceso a Azure OpenAI para Figure 02",
-   "type": "license",
+   "type": "partner",
    "conf": 1,
    "verified": true
   },
@@ -22639,7 +22639,7 @@
    "target": "Microsoft",
    "w": 3,
    "rel": "AIP disponible en Azure; contrato MSFT US Gov (JEDI/JWCC)",
-   "type": "license",
+   "type": "partner",
    "conf": 1,
    "verified": true
   },
@@ -24141,7 +24141,7 @@
    "source": "Nvidia",
    "target": "Tempus",
    "w": 2,
-   "rel": "",
+   "rel": "GPU para modelos clínicos",
    "type": "supply",
    "conf": 1,
    "verified": true
@@ -25022,8 +25022,8 @@
   {
    "source": "CMC_Materials",
    "target": "TSMC",
-   "w": 2,
-   "rel": "",
+   "w": 3,
+   "rel": "Slurry de CMP para pulido",
    "type": "supply",
    "conf": 1,
    "verified": true
@@ -26427,7 +26427,7 @@
    "source": "Nvidia",
    "target": "Kratos_Defense",
    "w": 2,
-   "rel": "",
+   "rel": "Cómputo para sistemas autónomos",
    "type": "supply",
    "conf": 1,
    "verified": true
@@ -26883,8 +26883,8 @@
    "verified": true
   },
   {
-   "source": "Microsoft",
-   "target": "Achronix",
+   "source": "Achronix",
+   "target": "Microsoft",
    "w": 2,
    "rel": "FPGAs para aceleración en data center",
    "type": "supply",
@@ -26937,8 +26937,8 @@
    "verified": true
   },
   {
-   "source": "Boeing",
-   "target": "FlexLogix",
+   "source": "FlexLogix",
+   "target": "Boeing",
    "w": 2,
    "rel": "FPGA reconfigurable para aeroespacial",
    "type": "supply",
@@ -26973,8 +26973,8 @@
    "verified": true
   },
   {
-   "source": "BMW",
-   "target": "Indie",
+   "source": "Indie",
+   "target": "BMW",
    "w": 2,
    "rel": "Semiconductores para ADAS",
    "type": "supply",
@@ -26982,8 +26982,8 @@
    "verified": true
   },
   {
-   "source": "Stellantis",
-   "target": "Indie",
+   "source": "Indie",
+   "target": "Stellantis",
    "w": 2,
    "rel": "Chips para sistemas del vehículo",
    "type": "supply",
@@ -27009,8 +27009,8 @@
    "verified": true
   },
   {
-   "source": "Microsoft",
-   "target": "Lattice",
+   "source": "Lattice",
+   "target": "Microsoft",
    "w": 2,
    "rel": "FPGA para seguridad de servidores",
    "type": "supply",
@@ -27054,8 +27054,8 @@
    "verified": true
   },
   {
-   "source": "BMW",
-   "target": "NXP",
+   "source": "NXP",
+   "target": "BMW",
    "w": 3,
    "rel": "Chips para powertrain y ADAS",
    "type": "supply",
@@ -27117,8 +27117,8 @@
    "verified": true
   },
   {
-   "source": "Hyundai",
-   "target": "Renesas",
+   "source": "Renesas",
+   "target": "Hyundai",
    "w": 2,
    "rel": "Chips para el vehículo",
    "type": "supply",
@@ -27135,8 +27135,8 @@
    "verified": true
   },
   {
-   "source": "Apple",
-   "target": "STMicroelectronics",
+   "source": "STMicroelectronics",
+   "target": "Apple",
    "w": 2,
    "rel": "Sensores y chips de potencia",
    "type": "supply",
@@ -27144,8 +27144,8 @@
    "verified": true
   },
   {
-   "source": "Tesla",
-   "target": "STMicroelectronics",
+   "source": "STMicroelectronics",
+   "target": "Tesla",
    "w": 3,
    "rel": "SiC para inversores de potencia",
    "type": "supply",
@@ -27153,8 +27153,8 @@
    "verified": true
   },
   {
-   "source": "Tesla",
-   "target": "Sensata",
+   "source": "Sensata",
+   "target": "Tesla",
    "w": 2,
    "rel": "Sensores para el vehículo eléctrico",
    "type": "supply",
@@ -27162,8 +27162,8 @@
    "verified": true
   },
   {
-   "source": "BMW",
-   "target": "Sensata",
+   "source": "Sensata",
+   "target": "BMW",
    "w": 2,
    "rel": "Sensores de presión y temperatura",
    "type": "supply",
@@ -27180,8 +27180,8 @@
    "verified": true
   },
   {
-   "source": "Amazon",
-   "target": "SiliconLabs",
+   "source": "SiliconLabs",
+   "target": "Amazon",
    "w": 2,
    "rel": "SoC inalámbricos para dispositivos IoT",
    "type": "supply",
@@ -27189,8 +27189,8 @@
    "verified": true
   },
   {
-   "source": "TataSemiconductor",
-   "target": "ASML",
+   "source": "ASML",
+   "target": "TataSemiconductor",
    "w": 3,
    "rel": "Litografía para su nueva fab en India",
    "type": "supply",
@@ -27198,8 +27198,8 @@
    "verified": true
   },
   {
-   "source": "TataSemiconductor",
-   "target": "AMAT",
+   "source": "AMAT",
+   "target": "TataSemiconductor",
    "w": 2,
    "rel": "Equipos de deposición y grabado",
    "type": "supply",
@@ -27207,8 +27207,8 @@
    "verified": true
   },
   {
-   "source": "TowerSemiconductor",
-   "target": "AMAT",
+   "source": "AMAT",
+   "target": "TowerSemiconductor",
    "w": 2,
    "rel": "Equipos para nodos analógicos",
    "type": "supply",
@@ -27216,8 +27216,8 @@
    "verified": true
   },
   {
-   "source": "Broadcom",
-   "target": "TowerSemiconductor",
+   "source": "TowerSemiconductor",
+   "target": "Broadcom",
    "w": 2,
    "rel": "Foundry para chips analógicos/RF",
    "type": "fab",
@@ -27225,8 +27225,8 @@
    "verified": true
   },
   {
-   "source": "Vedanta_Semi",
-   "target": "ASML",
+   "source": "ASML",
+   "target": "Vedanta_Semi",
    "w": 2,
    "rel": "Litografía para fab India (Foxconn JV)",
    "type": "supply",
@@ -27234,8 +27234,8 @@
    "verified": true
   },
   {
-   "source": "X_Fab",
-   "target": "AMAT",
+   "source": "AMAT",
+   "target": "X_Fab",
    "w": 2,
    "rel": "Equipos para foundry de SiC",
    "type": "supply",
@@ -27252,8 +27252,8 @@
    "verified": true
   },
   {
-   "source": "Samsung",
-   "target": "ACM_Research",
+   "source": "ACM_Research",
+   "target": "Samsung",
    "w": 2,
    "rel": "Equipos de limpieza de obleas",
    "type": "supply",
@@ -27288,8 +27288,8 @@
    "verified": true
   },
   {
-   "source": "Samsung",
-   "target": "Cohu",
+   "source": "Cohu",
+   "target": "Samsung",
    "w": 2,
    "rel": "Equipos de handling y test",
    "type": "supply",
@@ -27306,8 +27306,8 @@
    "verified": true
   },
   {
-   "source": "Lam",
-   "target": "Ultra_Clean",
+   "source": "Ultra_Clean",
+   "target": "Lam",
    "w": 3,
    "rel": "Componentes para equipos de grabado",
    "type": "supply",
@@ -27324,8 +27324,8 @@
    "verified": true
   },
   {
-   "source": "Tesla",
-   "target": "Allegro",
+   "source": "Allegro",
+   "target": "Tesla",
    "w": 2,
    "rel": "Sensores Hall para motores",
    "type": "supply",
@@ -27333,8 +27333,8 @@
    "verified": true
   },
   {
-   "source": "MPWR",
-   "target": "TSMC",
+   "source": "TSMC",
+   "target": "MPWR",
    "w": 3,
    "rel": "PMIC fabricados en TSMC",
    "type": "fab",
@@ -27342,8 +27342,8 @@
    "verified": true
   },
   {
-   "source": "Navitas",
-   "target": "TSMC",
+   "source": "TSMC",
+   "target": "Navitas",
    "w": 2,
    "rel": "GaN/SiC fabricado en TSMC",
    "type": "fab",
@@ -27360,8 +27360,8 @@
    "verified": true
   },
   {
-   "source": "Qorvo",
-   "target": "TSMC",
+   "source": "TSMC",
+   "target": "Qorvo",
    "w": 3,
    "rel": "Front-end RF fabricado en TSMC",
    "type": "fab",
@@ -27378,8 +27378,8 @@
    "verified": true
   },
   {
-   "source": "Samsung",
-   "target": "Qorvo",
+   "source": "Qorvo",
+   "target": "Samsung",
    "w": 2,
    "rel": "RF para Galaxy",
    "type": "supply",
@@ -27387,8 +27387,8 @@
    "verified": true
   },
   {
-   "source": "Richtek",
-   "target": "TSMC",
+   "source": "TSMC",
+   "target": "Richtek",
    "w": 2,
    "rel": "PMIC fabricados en TSMC",
    "type": "fab",
@@ -27423,8 +27423,8 @@
    "verified": true
   },
   {
-   "source": "Skyworks",
-   "target": "TSMC",
+   "source": "TSMC",
+   "target": "Skyworks",
    "w": 3,
    "rel": "Front-end RF fabricado en TSMC",
    "type": "fab",
@@ -27441,8 +27441,8 @@
    "verified": true
   },
   {
-   "source": "Nanya",
-   "target": "AMAT",
+   "source": "AMAT",
+   "target": "Nanya",
    "w": 2,
    "rel": "Equipos para DRAM",
    "type": "supply",
@@ -27450,8 +27450,8 @@
    "verified": true
   },
   {
-   "source": "Foxconn",
-   "target": "Nanya",
+   "source": "Nanya",
+   "target": "Foxconn",
    "w": 2,
    "rel": "DRAM para ensamblaje",
    "type": "supply",
@@ -27468,8 +27468,8 @@
    "verified": true
   },
   {
-   "source": "Winbond",
-   "target": "TSMC",
+   "source": "TSMC",
+   "target": "Winbond",
    "w": 2,
    "rel": "Capacidad de foundry adicional",
    "type": "fab",
@@ -27518,15 +27518,6 @@
    "w": 2,
    "rel": "Inversión en hardware neuromórfico",
    "type": "invest",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Broadcom",
-   "target": "TSMC",
-   "w": 5,
-   "rel": "ASIC de IA fabricados en TSMC",
-   "type": "fab",
    "conf": 1,
    "verified": true
   },
@@ -27594,8 +27585,8 @@
    "verified": true
   },
   {
-   "source": "Nvidia",
-   "target": "Coherus_Bio",
+   "source": "Coherus_Bio",
+   "target": "Nvidia",
    "w": 2,
    "rel": "Óptica co-empaquetada para switches",
    "type": "supply",
@@ -27612,8 +27603,8 @@
    "verified": true
   },
   {
-   "source": "Amazon",
-   "target": "InfiniteraNet",
+   "source": "InfiniteraNet",
+   "target": "Amazon",
    "w": 2,
    "rel": "Transporte óptico para data centers",
    "type": "supply",
@@ -27657,8 +27648,8 @@
    "verified": true
   },
   {
-   "source": "TSMC",
-   "target": "Photronics",
+   "source": "Photronics",
+   "target": "TSMC",
    "w": 3,
    "rel": "Fotomáscaras para litografía",
    "type": "supply",
@@ -27666,8 +27657,8 @@
    "verified": true
   },
   {
-   "source": "Samsung",
-   "target": "Photronics",
+   "source": "Photronics",
+   "target": "Samsung",
    "w": 2,
    "rel": "Máscaras para procesos avanzados",
    "type": "supply",
@@ -27675,8 +27666,8 @@
    "verified": true
   },
   {
-   "source": "Intel",
-   "target": "Shinko_Electric",
+   "source": "Shinko_Electric",
+   "target": "Intel",
    "w": 3,
    "rel": "Sustratos de packaging avanzado",
    "type": "supply",
@@ -27684,19 +27675,10 @@
    "verified": true
   },
   {
-   "source": "TSMC",
-   "target": "Shinko_Electric",
+   "source": "Shinko_Electric",
+   "target": "TSMC",
    "w": 2,
    "rel": "Sustratos para CoWoS",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "TSMC",
-   "target": "CMC_Materials",
-   "w": 3,
-   "rel": "Slurry de CMP para pulido",
    "type": "supply",
    "conf": 1,
    "verified": true
@@ -27729,8 +27711,8 @@
    "verified": true
   },
   {
-   "source": "Together_AI",
-   "target": "Nvidia",
+   "source": "Nvidia",
+   "target": "Together_AI",
    "w": 3,
    "rel": "Cloud de GPU para entrenamiento",
    "type": "supply",
@@ -27846,8 +27828,8 @@
    "verified": true
   },
   {
-   "source": "Tesla",
-   "target": "Fanuc",
+   "source": "Fanuc",
+   "target": "Tesla",
    "w": 3,
    "rel": "Robots para Gigafactory",
    "type": "supply",
@@ -27855,8 +27837,8 @@
    "verified": true
   },
   {
-   "source": "Foxconn",
-   "target": "Fanuc",
+   "source": "Fanuc",
+   "target": "Foxconn",
    "w": 3,
    "rel": "Robots de ensamblaje",
    "type": "supply",
@@ -27882,8 +27864,8 @@
    "verified": true
   },
   {
-   "source": "Joby_Aviation",
-   "target": "Nvidia",
+   "source": "Nvidia",
+   "target": "Joby_Aviation",
    "w": 2,
    "rel": "Cómputo para autonomía eVTOL",
    "type": "supply",
@@ -27900,8 +27882,8 @@
    "verified": true
   },
   {
-   "source": "Wayve",
-   "target": "Nvidia",
+   "source": "Nvidia",
+   "target": "Wayve",
    "w": 3,
    "rel": "GPU para conducción autónoma E2E",
    "type": "supply",
@@ -27927,8 +27909,8 @@
    "verified": true
   },
   {
-   "source": "AeroVironment",
-   "target": "Nvidia",
+   "source": "Nvidia",
+   "target": "AeroVironment",
    "w": 2,
    "rel": "Cómputo de IA para drones",
    "type": "supply",
@@ -27955,15 +27937,6 @@
   },
   {
    "source": "Kratos_Defense",
-   "target": "Nvidia",
-   "w": 2,
-   "rel": "Cómputo para sistemas autónomos",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Kratos_Defense",
    "target": "Boeing",
    "w": 2,
    "rel": "Drones colaborativos de combate",
@@ -27981,17 +27954,8 @@
    "verified": true
   },
   {
-   "source": "Tempus",
-   "target": "Nvidia",
-   "w": 2,
-   "rel": "GPU para modelos clínicos",
-   "type": "supply",
-   "conf": 1,
-   "verified": true
-  },
-  {
-   "source": "Cohere",
-   "target": "Nvidia",
+   "source": "Nvidia",
+   "target": "Cohere",
    "w": 3,
    "rel": "GPU para entrenar LLM empresariales",
    "type": "supply",
@@ -28008,8 +27972,8 @@
    "verified": true
   },
   {
-   "source": "HuggingFace",
-   "target": "Nvidia",
+   "source": "Nvidia",
+   "target": "HuggingFace",
    "w": 3,
    "rel": "GPU para el hub de modelos",
    "type": "supply",

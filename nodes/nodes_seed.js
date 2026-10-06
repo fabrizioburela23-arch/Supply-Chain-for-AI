@@ -619,7 +619,7 @@ const RAW_LINKS = [
   ['onsemi','Tesla',5,'Mayor cliente de onsemi en SiC para inversores del tren eléctrico','supply'],
   ['Broadcom','Tesla',2,'Chipsets de red y conectividad para los vehículos Tesla','supply'],
   ['Figure','Nvidia',3,'OpenRobotics: procesador IA Jetson Thor para cerebro del robot 02','supply'],
-  ['Figure','Microsoft',2,'Partnership estratégico y acceso a Azure OpenAI para Figure 02','license'],
+  ['Figure','Microsoft',2,'Partnership estratégico y acceso a Azure OpenAI para Figure 02','partner'],   // 2026-10-06: era 'license' (al revés y es alianza)
   ['Figure','OpenAI',3,'Integración de GPT-4o para razonamiento del robot Figure 02','supply'],
   ['BostonDynamics','Nvidia',3,'Spot y Atlas usan módulos Jetson para percepción IA en campo','supply'],
   ['BostonDynamics','Amazon',1,'Piloto de Stretch en centros logísticos de Amazon','cloud'],
@@ -632,7 +632,7 @@ const RAW_LINKS = [
   ['Apptronik','Amazon',1,'Piloto de robots Apollo en centros de fulfillment de Amazon','cloud'],
   ['Apptronik','Alphabet',1,'Google como inversor estratégico y cliente piloto de Apollo','cloud'],
   ['Palantir','Amazon',5,'AIP corre sobre AWS — mayor proveedor de infra de Palantir','license'],
-  ['Palantir','Microsoft',3,'AIP disponible en Azure; contrato MSFT US Gov (JEDI/JWCC)','license'],
+  ['Palantir','Microsoft',3,'AIP disponible en Azure; contrato MSFT US Gov (JEDI/JWCC)','partner'],   // 2026-10-06: era 'license'; es alianza
   ['Palantir','Oracle',2,'Implementaciones AIP sobre OCI para clientes gubernamentales','license'],
   ['Dell','Palantir',2,'Dispositivos edge (MetaConstellation) con hardware Dell PowerEdge','supply'],
   ['Amazon','CrowdStrike',3,'Falcon corre en AWS — infraestructura primaria de CrowdStrike','cloud'],
