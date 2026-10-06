@@ -101,79 +101,246 @@
   function ensureStyles() {
     if (document.getElementById('bcp-styles')) return;
     var css = `
-#bcp-ov{position:fixed;inset:0;z-index:7000;display:none;flex-direction:column;
-  background:radial-gradient(1200px 700px at 50% -10%,#0B1424 0%,#05070E 55%,#04060B 100%);
-  color:#E8EDFB;font-family:'Inter',system-ui,sans-serif;animation:bcpFade .22s ease}
+/* ══ KHIPUS OS (2026-10-06) — tokens de diseño, definidos UNA vez sobre #bcp-ov.
+   Claro = el look del video (body sin .dark); oscuro = predeterminado de la app (body.dark).
+   La Cabina clásica (kh_desk_mode=off, red de seguridad) usa SIEMPRE los oscuros: sus escenas
+   viejas tienen colores fijos oscuros. Ventanas, barra y paleta leen solo estas variables →
+   cambiar de tema es CSS puro (sin re-inyectar nada). ══ */
+body:not(.dark) #bcp-ov{
+  --os-bg:#EDEDF5;--os-surface:#FFFFFF;--os-surface-2:#F2F2F7;--os-surface-3:#E7E7EF;
+  --os-ink:#111216;--os-ink-2:#5B5E6B;--os-ink-3:#8D90A0;--os-line:rgba(17,18,22,.08);
+  --os-shadow:0 1px 2px rgba(17,18,40,.04), 0 8px 28px rgba(17,18,40,.06);
+  --os-accent:#2F6BEA;--os-pos:#2F6BEA;--os-neg:#E8623A;--os-mute:#C9CAD6;--os-good:#0ca30c;--os-bad:#d03b3b;
+  --os-btn:#111216;--os-btn-ink:#FFFFFF;
+  --kos-shadow-lg:0 2px 6px rgba(17,18,40,.06), 0 18px 48px rgba(17,18,40,.14);
+  --kos-scrim:rgba(24,26,44,.22);--kos-accent-soft:rgba(47,107,234,.12);
+  color-scheme:light}
+body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
+  --os-bg:#0E0F14;--os-surface:#17181F;--os-surface-2:#1F2029;--os-surface-3:#2A2B36;
+  --os-ink:#F2F2F5;--os-ink-2:#A6A8B5;--os-ink-3:#6E7080;--os-line:rgba(255,255,255,.07);
+  --os-shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+  --os-accent:#4C8DF6;--os-pos:#4C8DF6;--os-neg:#F07A52;--os-mute:#3A3C4A;--os-good:#2fbf5b;--os-bad:#f06565;
+  --os-btn:#F2F2F5;--os-btn-ink:#111216;
+  --kos-shadow-lg:0 2px 8px rgba(0,0,0,.45), 0 22px 56px rgba(0,0,0,.55);
+  --kos-scrim:rgba(0,0,0,.5);--kos-accent-soft:rgba(76,141,246,.16);
+  color-scheme:dark}
+#bcp-ov{--os-r:18px;--os-r-sm:12px;--os-font:'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  position:fixed;inset:0;z-index:7000;display:none;flex-direction:column;
+  background:var(--os-bg);color:var(--os-ink);font-family:var(--os-font);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;--km-ring:var(--os-surface);animation:bcpFade .22s ease}
 #bcp-ov.show{display:flex}
+#bcp-ov button{font-family:inherit}
 @keyframes bcpFade{from{opacity:0}to{opacity:1}}
-#bcp-top{display:flex;align-items:center;gap:16px;padding:16px 22px 12px;border-bottom:1px solid rgba(122,158,255,.16);flex-shrink:0;
-  background:rgba(8,12,22,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-/* botón primario de invertir: verde, para que "invertir" salte a la vista (feedback Fabrizio) */
-.bcp-act[data-act="broker"]{border-color:rgba(52,211,153,.5);color:#34d399;background:rgba(52,211,153,.10)}
-.bcp-act[data-act="broker"]:hover{border-color:#34d399;color:#5ff0b8}
-/* scrollbar fino y elegante en el escenario */
-#bcp-stage{scrollbar-width:thin;scrollbar-color:rgba(122,158,255,.35) transparent}
-#bcp-stage::-webkit-scrollbar{width:9px}
-#bcp-stage::-webkit-scrollbar-thumb{background:rgba(122,158,255,.28);border-radius:6px;border:2px solid transparent;background-clip:content-box}
-#bcp-stage::-webkit-scrollbar-thumb:hover{background:rgba(122,158,255,.5);background-clip:content-box}
-#bcp-orb-wrap{position:relative;width:64px;height:64px;flex-shrink:0;filter:drop-shadow(0 0 22px rgba(80,60,255,.35))}
-#bcp-orb-canvas{display:block;border-radius:50%}
-#bcp-idwrap{display:flex;flex-direction:column;gap:3px;min-width:0}
-#bcp-word{font-size:16px;font-weight:800;letter-spacing:.16em;background:linear-gradient(90deg,#00E0FF,#8e5aff);
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-#bcp-state{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#7C87A3;display:flex;align-items:center;gap:6px}
-#bcp-state .dot{width:7px;height:7px;border-radius:50%;background:#7C87A3;box-shadow:0 0 8px currentColor}
-#bcp-state.live .dot{background:#00E0FF;color:#00E0FF;animation:bcpPulse 1.2s ease-in-out infinite}
-#bcp-state.think .dot{background:#FFB300;color:#FFB300;animation:bcpPulse .7s ease-in-out infinite}
+@keyframes kosPop{from{opacity:0;transform:translateY(-4px) scale(.985)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#bcp-ov,.kos-pop,.kos-pal-box{animation:none!important}}
+/* ── BARRA SUPERIOR (mínima, como el video) ── */
+#bcp-top{display:flex;align-items:center;gap:8px;margin:14px 16px 0;padding:0 10px 0 14px;height:60px;flex-shrink:0;
+  background:var(--os-surface);border-radius:var(--os-r);box-shadow:var(--os-shadow);position:relative;z-index:30}
+.kos-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:0;padding-right:4px}
+#bcp-orb-wrap{position:relative;width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#bcp-orb-wrap canvas{width:30px!important;height:30px!important;border-radius:50%}
+.kos-orbf{display:block;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 32% 28%,#ffd0e0 0,rgba(255,208,224,0) 38%),linear-gradient(135deg,#f07fa0,#7a4ce8 55%,#ff8746)}
+#bcp-idwrap{display:flex;align-items:center;gap:8px;min-width:0}
+#bcp-word{font-size:17px;font-weight:650;letter-spacing:-.015em;color:var(--os-ink);white-space:nowrap}
+#bcp-state{display:none;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--os-ink-2);
+  background:var(--os-surface-2);border-radius:999px;padding:3px 9px 3px 8px;white-space:nowrap}
+#bcp-state.live,#bcp-state.think{display:inline-flex}
+#bcp-state .dot{width:7px;height:7px;border-radius:50%;background:var(--os-ink-3)}
+#bcp-state.live .dot{background:var(--os-bad);animation:bcpPulse 1.2s ease-in-out infinite}
+#bcp-state.think .dot{background:var(--os-accent);animation:bcpPulse .8s ease-in-out infinite}
 @keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.3}}
-/* barra de chat de Khipu: AHORA ABAJO (pedido de Fabrizio: "ponla abajo") */
-#bcp-barwrap{flex-shrink:0;padding:12px 22px 16px;border-top:1px solid rgba(122,158,255,.16);
-  display:flex;justify-content:center;background:linear-gradient(0deg,rgba(5,7,14,.7),rgba(5,7,14,.2));
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-#bcp-bar{display:flex;align-items:center;gap:9px;width:100%;max-width:900px}
-#bcp-input{flex:1;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.22);border-radius:12px;
-  color:#E8EDFB;font-size:14px;padding:12px 15px;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s}
-#bcp-input:focus{border-color:rgba(0,224,255,.55);box-shadow:0 0 0 3px rgba(0,224,255,.1)}
-#bcp-input::placeholder{color:#5b6580}
-.bcp-iconbtn{width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px solid rgba(122,158,255,.22);
-  background:rgba(11,18,34,.8);color:#E8EDFB;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;
-  transition:all .14s}
-.bcp-iconbtn:hover{border-color:rgba(0,224,255,.5);color:#00E0FF}
-#bcp-mic.on{background:rgba(214,59,59,.85);border-color:#d63b3b;color:#fff;box-shadow:0 0 18px rgba(214,59,59,.45);animation:bcpPulse 1.1s ease-in-out infinite}
-#bcp-close{margin-left:auto}
-#bcp-actions{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:10px 22px 2px;
-  flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
-  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent)}
-#bcp-actions::-webkit-scrollbar{display:none}
-.bcp-act{font-size:11.5px;padding:6px 13px;border-radius:10px;cursor:pointer;color:#9BA6C4;white-space:nowrap;flex-shrink:0;
-  background:rgba(11,18,34,.6);border:1px solid rgba(122,158,255,.16);transition:all .13s;
-  font-family:inherit;display:inline-flex;align-items:center;gap:6px}
-.bcp-act:hover{color:#E8EDFB;border-color:rgba(0,224,255,.45);transform:translateY(-1px)}
-.bcp-act.on{color:#00E0FF;border-color:rgba(0,224,255,.5);background:rgba(0,224,255,.08)}
-#bcp-stage{flex:1;overflow-y:auto;padding:22px;position:relative}
+.kos-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;min-width:0}
+.kos-search{flex:0 1 460px;min-width:0;height:40px;display:flex;align-items:center;gap:10px;padding:0 16px 0 7px;border-radius:999px;
+  background:var(--os-surface-2);border:0;color:var(--os-ink-3);font-size:14px;cursor:text;text-align:left;transition:background .15s,box-shadow .15s}
+.kos-search:hover{background:var(--os-surface-3)}
+.kos-search:focus-visible{outline:none;box-shadow:0 0 0 3px var(--kos-accent-soft)}
+.kos-search .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kos-kbd{flex-shrink:0;font-size:11.5px;font-weight:600;color:var(--os-ink-2);background:var(--os-surface);border-radius:999px;
+  padding:4px 9px;box-shadow:0 0 0 1px var(--os-line);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.kos-btn{height:40px;padding:0 14px;border-radius:999px;border:0;background:transparent;color:var(--os-ink-2);font-size:14px;font-weight:500;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex-shrink:0;transition:background .15s,color .15s}
+.kos-btn:hover,.kos-btn.on{background:var(--os-surface-2);color:var(--os-ink)}
+.kos-btn:focus-visible,.kos-bal:focus-visible,.kos-av:focus-visible{outline:none;box-shadow:0 0 0 3px var(--kos-accent-soft)}
+.kos-more-btn svg,#kos-theme svg{width:14px;height:14px;flex-shrink:0}
+#kos-theme svg{width:17px;height:17px}
+.kos-round{width:40px;padding:0;font-size:13px;font-weight:600;letter-spacing:.02em}
+.kos-right{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.kos-agbtn{padding:0 8px}
+.kos-bal{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:1px;line-height:1.15;height:46px;padding:0 12px;
+  border:0;background:transparent;border-radius:14px;cursor:pointer;color:var(--os-ink);flex-shrink:0;transition:background .15s}
+.kos-bal:hover{background:var(--os-surface-2)}
+.kos-bal .l{font-size:11.5px;color:var(--os-ink-2);font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.kos-bal .v{font-size:15px;font-weight:650;color:var(--os-ink);font-variant-numeric:tabular-nums;letter-spacing:-.01em;white-space:nowrap}
+.kos-bal .v.sm{font-size:13px;font-weight:600;color:var(--os-accent)}
+.kos-badge{font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:1px 7px}
+.kos-badge.paper{background:var(--os-surface-2);color:var(--os-ink-2)}
+.kos-badge.real{background:#d03b3b;color:#fff}
+.kos-av{width:40px;height:40px;border-radius:50%;border:0;background:var(--os-surface-2);color:var(--os-ink);font-weight:650;font-size:13.5px;
+  letter-spacing:.03em;cursor:pointer;flex-shrink:0;margin-left:4px;transition:background .15s}
+.kos-av:hover,.kos-av.on{background:var(--os-surface-3)}
+#bcp-close{display:none}
+/* pila de mascotas: solapamiento fijo (el % de margen de mascot.js depende del ancho del contenedor) */
+#bcp-ov .km-stack{display:inline-flex;align-items:center}
+#bcp-ov .km-stack .km{margin-left:-7px}
+#bcp-ov .km-stack .km:first-child{margin-left:0}
+/* la fila de chips de la Cabina vieja ya no existe a la vista: todo se abre desde el chat, ⌘K o "Más" */
+#bcp-actions{display:none!important}
+/* ── menús (Más ▾ y el de tus iniciales) ── */
+.kos-pop{position:absolute;z-index:9400;background:var(--os-surface);color:var(--os-ink);border-radius:16px;border:1px solid var(--os-line);
+  box-shadow:var(--kos-shadow-lg);padding:8px;animation:kosPop .14s ease;max-height:calc(100vh - 100px);overflow-y:auto}
+.kos-more{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 6px;width:min(900px,calc(100vw - 32px))}
+.kos-more .grp{display:flex;flex-direction:column;gap:1px;min-width:0}
+.kos-ph{font-size:11.5px;font-weight:600;color:var(--os-ink-3);padding:8px 10px 4px;letter-spacing:.01em}
+.kos-mi{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;color:var(--os-ink);
+  font-size:13.5px;padding:8px 10px;border-radius:10px;cursor:pointer;min-width:0}
+.kos-mi:hover,.kos-mi:focus-visible{background:var(--os-surface-2);outline:none}
+.kos-mi .ic{width:20px;text-align:center;flex-shrink:0;font-size:14px}
+.kos-mi .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kos-mi .hint{margin-left:auto;color:var(--os-ink-3);font-size:12px;white-space:nowrap}
+.kos-sep{height:1px;background:var(--os-line);margin:6px 4px}
+.kos-me{width:260px}
+.kos-mehd{display:flex;align-items:center;gap:10px;padding:8px 10px 10px}
+.kos-mehd .nm{font-weight:650;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kos-mehd .sb{font-size:12px;color:var(--os-ink-3)}
+.kos-mehd input{width:100%;box-sizing:border-box;border:1px solid var(--os-line);background:var(--os-surface-2);color:var(--os-ink);
+  border-radius:10px;padding:7px 10px;font:inherit;font-size:13.5px;outline:none}
+.kos-seg{display:flex;background:var(--os-surface-2);border-radius:11px;padding:3px;gap:2px;margin:2px 6px 6px}
+.kos-seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:7px 10px;font-size:13px;color:var(--os-ink-2);cursor:pointer}
+.kos-seg button.on{background:var(--os-surface);color:var(--os-ink);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.kos-segl{font-size:11.5px;color:var(--os-ink-3);padding:6px 12px 0}
+.kos-mob{display:none}
+/* ── PALETA ⌘K ── */
+#kos-pal{position:absolute;inset:0;z-index:9600;display:none;align-items:flex-start;justify-content:center;padding-top:11vh;
+  background:var(--kos-scrim);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#kos-pal.show{display:flex;animation:bcpFade .12s ease}
+.kos-pal-box{width:min(640px,calc(100vw - 24px));max-height:min(580px,78vh);display:flex;flex-direction:column;background:var(--os-surface);
+  color:var(--os-ink);border-radius:20px;box-shadow:var(--kos-shadow-lg);border:1px solid var(--os-line);overflow:hidden;animation:kosPop .16s ease}
+.kos-pal-in{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--os-line)}
+.kos-pal-in svg{width:18px;height:18px;color:var(--os-ink-3);flex-shrink:0}
+.kos-pal-in input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--os-ink);font:inherit;font-size:17px}
+.kos-pal-in input::placeholder{color:var(--os-ink-3)}
+.kos-pal-list{overflow-y:auto;padding:6px 8px 8px;scrollbar-width:thin}
+.kos-pal-sec{font-size:11.5px;font-weight:600;color:var(--os-ink-3);padding:10px 10px 4px}
+.kos-pi{display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:12px;cursor:pointer;color:var(--os-ink);font-size:14px;min-width:0}
+.kos-pi.on{background:var(--os-surface-2)}
+.kos-pi .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--os-surface-2);
+  font-size:14px;flex-shrink:0;color:var(--os-ink-2);font-weight:650}
+.kos-pi.on .ic{background:var(--os-surface)}
+.kos-pi .ic i{width:10px;height:10px;border-radius:50%;display:block}
+.kos-pi .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kos-pi .sub{color:var(--os-ink-3);font-size:12.5px;margin-left:6px}
+.kos-pi .go{color:var(--os-ink-3);font-size:12px;white-space:nowrap;opacity:0}
+.kos-pi.on .go{opacity:1}
+.kos-pal-empty{padding:22px 14px;color:var(--os-ink-3);font-size:13.5px;text-align:center}
+.kos-pal-foot{display:flex;gap:16px;padding:9px 16px;border-top:1px solid var(--os-line);font-size:12px;color:var(--os-ink-3);flex-wrap:wrap}
+.kos-pal-foot b{font-weight:600;color:var(--os-ink-2)}
+/* ── COLUMNA CENTRAL DEL CHAT (desktop.js #kd-center, ≥ 1100 px) ── */
+.kos-chat{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--os-surface);border-radius:var(--os-r);
+  box-shadow:var(--os-shadow);overflow:hidden;color:var(--os-ink);container-type:inline-size}
+/* columna angosta (≈ 1100 px de ventana): la pila de mascotas ya está en la barra superior */
+@container (max-width:500px){.kos-stackbtn{display:none}}
+.kos-chathd{display:flex;align-items:center;gap:12px;padding:16px 16px 10px 18px;flex-shrink:0}
+.kos-chathd .who{min-width:0}
+.kos-chathd .nm{font-size:16px;font-weight:650;letter-spacing:-.01em;line-height:1.2}
+.kos-chathd .sb{font-size:12.5px;color:var(--os-ink-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kos-chathd .sp{flex:1}
+.kos-ib{width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--os-ink-3);cursor:pointer;display:inline-flex;
+  align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+.kos-ib:hover{background:var(--os-surface-2);color:var(--os-ink)}
+.kos-ib svg{width:17px;height:17px}
+.kos-stackbtn{border:0;background:transparent;padding:5px 6px;border-radius:999px;cursor:pointer;display:inline-flex;flex-shrink:0}
+.kos-stackbtn:hover{background:var(--os-surface-2)}
+.kos-chatbody{flex:1;min-height:0;overflow-y:auto;padding:2px 18px 10px;scrollbar-width:thin;scrollbar-color:var(--os-surface-3) transparent;overscroll-behavior:contain}
+.kos-chatbody .kc-thread{max-width:none}
+.kos-has-msgs #kos-empty{display:none}
+/* red de seguridad de LEGIBILIDAD del hilo en tema claro: engine/khipu_chat.js trae colores oscuros fijos
+   (tinta clara). Solo colores, nunca medidas; si el chat ya usa los tokens --os-*, esto no cambia nada visible. */
+body:not(.dark) #bcp-ov .kc-user{background:var(--os-surface-2);border-color:transparent;color:var(--os-ink)}
+body:not(.dark) #bcp-ov .kc-bot{background:transparent;border-color:transparent;color:var(--os-ink)}
+body:not(.dark) #bcp-ov .kc-h{color:var(--os-ink)}
+body:not(.dark) #bcp-ov .kc-who{color:var(--os-ink-3)}
+body:not(.dark) #bcp-ov .kc-bot a{color:var(--os-accent)}
+body:not(.dark) #bcp-ov .kc-act{color:var(--os-accent);border-color:var(--os-line);background:var(--os-surface-2)}
+body:not(.dark) #bcp-ov .kc-tools,body:not(.dark) #bcp-ov .kc-src,body:not(.dark) #bcp-ov .kc-meta,body:not(.dark) #bcp-ov .kc-think{color:var(--os-ink-3)}
+body:not(.dark) #bcp-ov .kc-note{color:#8a5a00}
+body:not(.dark) #bcp-ov .kc-retry{color:var(--os-ink-2);border-color:var(--os-line)}
+#kd-center #bcp-barwrap{padding:8px 14px 14px;background:transparent;border:0}
+#kd-center #bcp-bar{max-width:none}
+/* estado vacío del chat (sin mensajes): Khipu grande, una frase, sugerencias, lo vivo de hoy */
+#kos-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:5vh 6px 10px;max-width:520px;margin:0 auto}
+.kos-hero{margin:0 0 14px;line-height:0;filter:drop-shadow(0 10px 22px rgba(194,58,140,.22))}
+.kos-empty-h{font-size:34px;font-weight:700;letter-spacing:-.03em;margin:0;color:var(--os-ink);line-height:1.1}
+.kos-empty-p{font-size:15px;color:var(--os-ink-2);margin:8px 0 22px;line-height:1.5}
+.kos-sugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 20px}
+.kos-chip{border:0;background:var(--os-surface-2);color:var(--os-ink);font-size:13.5px;line-height:1.3;padding:9px 14px;border-radius:999px;
+  cursor:pointer;text-align:left;transition:background .14s,transform .14s}
+.kos-chip:hover{background:var(--os-surface-3);transform:translateY(-1px)}
+.kos-chip:focus-visible{outline:none;box-shadow:0 0 0 3px var(--kos-accent-soft)}
+#kos-empty .bcp-live{font-size:13px;line-height:1.55;color:var(--os-ink-2);margin:0 0 6px;max-width:56ch}
+.kos-agrow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:16px 0 0}
+.kos-ag{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:transparent;cursor:pointer;color:var(--os-ink-2);
+  font-size:12px;padding:8px 8px 6px;border-radius:14px;min-width:64px;transition:background .14s,color .14s}
+.kos-ag:hover{background:var(--os-surface-2);color:var(--os-ink)}
+.kos-ag.off{opacity:.45}
+/* ── barra de entrada del chat (en la columna central o, < 1100 px, abajo) ── */
+#bcp-barwrap{flex-shrink:0;padding:10px 16px 14px;display:flex;justify-content:center;background:var(--os-bg);position:relative;z-index:60}
+#bcp-bar{display:flex;align-items:center;gap:4px;width:100%;max-width:900px;background:var(--os-surface-2);border-radius:999px;
+  padding:5px 5px 5px 18px;border:1px solid transparent;transition:border-color .15s,box-shadow .15s,background .15s}
+#bcp-bar:focus-within{background:var(--os-surface);border-color:var(--os-line);box-shadow:0 0 0 4px var(--kos-accent-soft)}
+#bcp-input{flex:1;min-width:0;background:transparent;border:0;color:var(--os-ink);font-size:15px;padding:10px 4px;outline:none;font-family:inherit}
+#bcp-input::placeholder{color:var(--os-ink-3)}
+.bcp-iconbtn{width:40px;height:40px;flex-shrink:0;border-radius:50%;border:0;background:transparent;color:var(--os-ink-2);cursor:pointer;
+  font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .14s,color .14s,transform .14s}
+.bcp-iconbtn:hover{background:var(--os-surface-3);color:var(--os-ink)}
+.bcp-iconbtn svg{width:18px;height:18px}
+#bcp-send{width:42px;height:42px;color:#fff;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.45) 0,rgba(255,255,255,0) 40%),
+  linear-gradient(135deg,#f07fa0 0%,#c23a8c 40%,#7a4ce8 70%,#ff8746 100%);box-shadow:0 4px 14px rgba(194,58,140,.32)}
+#bcp-send:hover{transform:scale(1.04);color:#fff;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 40%),
+  linear-gradient(135deg,#f07fa0 0%,#c23a8c 40%,#7a4ce8 70%,#ff8746 100%)}
+#bcp-mic.on{background:var(--os-bad);color:#fff;animation:bcpPulse 1.1s ease-in-out infinite}
+/* escenario */
+#bcp-stage{flex:1;overflow-y:auto;padding:22px;position:relative;scrollbar-width:thin}
 @keyframes bcpStageIn{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
 #bcp-stage>*{animation:bcpStageIn .16s ease}
 @media(prefers-reduced-motion:reduce){#bcp-stage>*{animation:none}}
 .bcp-embed{height:calc(100vh - 250px);min-height:420px;display:flex;flex-direction:column;
-  border:1px solid rgba(122,158,255,.18);border-radius:14px;overflow:hidden;background:#04060B;position:relative}
-/* estado vacío / lienzo */
+  border:1px solid var(--os-line);border-radius:14px;overflow:hidden;background:var(--os-surface);position:relative}
+/* inicio en el "muro" (pantallas medianas sin chat al centro) */
 #bcp-empty{max-width:760px;margin:5vh auto 0;padding:0 8px;text-align:left}
-.bcp-hello{font-family:'Fraunces',Georgia,serif;font-weight:400;font-size:clamp(28px,4vw,40px);line-height:1.12;letter-spacing:-.012em;color:#F1F4FC;margin:0 0 12px;font-variation-settings:'opsz' 96}
-.bcp-hello span{color:#8E9AB8}
-.bcp-lead{color:#9BA6C4;font-size:15px;line-height:1.55;margin:0 0 22px;max-width:60ch}
-.bcp-live{font-size:13.5px;line-height:1.55;color:#C7D0EA;margin:0 0 8px;max-width:70ch}
+.bcp-hello{font-family:var(--os-font);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.12;letter-spacing:-.025em;color:var(--os-ink);margin:0 0 12px}
+.bcp-hello span{color:var(--os-ink-3)}
+.bcp-lead{color:var(--os-ink-2);font-size:15px;line-height:1.55;margin:0 0 22px;max-width:60ch}
+.bcp-live{font-size:13.5px;line-height:1.55;color:var(--os-ink-2);margin:0 0 8px;max-width:70ch}
 .bcp-live:empty{display:none}
-.bcp-live .new{color:#FFD27A;font-weight:650}.bcp-live .old{color:#8E9AB8}.bcp-live .dim{color:#7C87A3}
-.bcp-live a,.bcp-foot a{color:#00E0FF;text-decoration:none;border-bottom:1px solid rgba(0,224,255,.35);margin-left:6px}
-.bcp-live a:hover,.bcp-foot a:hover{border-bottom-color:#00E0FF}
+.bcp-live .new{color:var(--os-accent);font-weight:650}.bcp-live .old{color:var(--os-ink-3)}.bcp-live .dim{color:var(--os-ink-3)}
+.bcp-live a,.bcp-foot a{color:var(--os-accent);text-decoration:none;margin-left:6px;font-weight:550}
+.bcp-live a:hover,.bcp-foot a:hover{text-decoration:underline}
 .bcp-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px 40px;margin:30px 0 0}
 @media(max-width:620px){.bcp-cols{grid-template-columns:1fr;gap:22px}}
-.bcp-cols h3{font-size:12.5px;font-weight:600;color:#8E9AB8;margin:0 0 10px;letter-spacing:.01em}
+.bcp-cols h3{font-size:12.5px;font-weight:600;color:var(--os-ink-3);margin:0 0 10px;letter-spacing:.01em}
 .bcp-cols ul{list-style:none;margin:0;padding:0}
 .bcp-cols li{margin:0 0 9px}
-.bcp-cols a{color:#E8EDFB;font-size:14.5px;line-height:1.4;text-decoration:none;border-bottom:1px solid rgba(122,158,255,.22);padding-bottom:1px;transition:border-color .12s,color .12s}
-.bcp-cols a:hover,.bcp-cols a:focus-visible{color:#00E0FF;border-bottom-color:#00E0FF;outline:none}
-.bcp-foot{margin:28px 0 0;font-size:13px;color:#7C87A3}
+.bcp-cols a{color:var(--os-ink);font-size:14.5px;line-height:1.4;text-decoration:none;border-bottom:1px solid var(--os-line);padding-bottom:1px;transition:border-color .12s,color .12s}
+.bcp-cols a:hover,.bcp-cols a:focus-visible{color:var(--os-accent);border-bottom-color:var(--os-accent);outline:none}
+.bcp-foot{margin:28px 0 0;font-size:13px;color:var(--os-ink-3)}
+/* ── teléfono / pantallas medianas ── */
+@media(max-width:1099px){.kos-search{flex-basis:340px}.kos-bal .lt{display:none}.kos-bal{flex-direction:row;align-items:center;gap:6px}}
+@media(max-width:900px){.kos-agbtn,#kos-lang{display:none}.kos-btn.kos-more-btn .tx{display:none}.kos-btn.kos-more-btn{width:40px;padding:0}.kos-mob{display:block}}
+@media(max-width:760px){
+  #bcp-top{margin:8px 8px 0;height:54px;padding:0 6px 0 10px;gap:6px;border-radius:16px}
+  #bcp-word{font-size:16px}
+  .kos-mid{justify-content:flex-start}
+  .kos-search{height:38px;flex:1 1 auto;padding:0 12px}
+  .kos-search .kos-kbd{display:none}
+  .kos-bal,#kos-theme{display:none}
+  .kos-av{width:38px;height:38px;margin-left:0}
+  .kos-more{grid-template-columns:1fr 1fr;width:calc(100vw - 16px)}
+  #bcp-barwrap{padding:8px 8px 10px}
+  #bcp-bar{padding-left:14px}
+  #kos-pal{padding-top:8px}
+  .kos-pal-box{max-height:calc(100vh - 16px)}
+}
+@media(max-width:420px){#bcp-word{display:none}.kos-more{grid-template-columns:1fr}}
 .bcp-pick-h{font-size:18px;font-weight:650;margin:6px 0 4px;color:#E8EDFB}
 .bcp-pick-p{color:#8E9AB8;font-size:13px;margin:0 0 16px}
 .bcp-pick-f{position:relative;margin:0 0 12px}
@@ -306,40 +473,39 @@
 .bcp-rs-list li{margin-bottom:4px}
 /* CHAT de Khipu (2026-09-30): el hilo vive a pantalla completa en la escena
    'chat'; cuando una acción cambia la escena (X-Ray, mapa, gráfico…) el hilo
-   baja a este DOCK sobre la barra → la respuesta NUNCA desaparece. */
+   baja a este DOCK sobre la barra → la respuesta NUNCA desaparece.
+   Khipus OS (≥ 1100 px): el hilo y la barra viven en la columna central (#kd-center)
+   y este dock queda oculto; < 1100 px sigue siendo el dock de abajo. */
 /* z-index: por encima de la hoja inferior del mapa en el celular (.panel, z 50) */
-#bcp-chatdock,#bcp-barwrap{position:relative;z-index:60}
+#bcp-chatdock{position:relative;z-index:60}
+#bcp-ov.kos-centered #bcp-chatdock{display:none!important}
 /* ESCRITORIO (engine/desktop.js): chrome compacto para que las ventanas tengan alto;
    el dock del chat cede espacio pero sigue SIEMPRE presente (cabecera + barra de entrada) */
-#bcp-ov.desk #bcp-top{padding:8px 22px 8px}
-#bcp-ov.desk #bcp-orb-wrap{width:44px;height:44px}
-#bcp-ov.desk #bcp-orb-canvas{width:44px;height:44px}
-#bcp-ov.desk #bcp-chatdock{max-height:22vh}
-@media(max-height:820px){#bcp-ov.desk #bcp-chatdock{max-height:18vh}#bcp-ov.desk #bcp-barwrap{padding:8px 22px 10px}}
-#bcp-chatdock{flex-shrink:0;display:none;flex-direction:column;border-top:1px solid rgba(122,158,255,.16);
-  background:rgba(6,10,20,.92);max-height:34vh;min-height:0}
+#bcp-ov.desk #bcp-chatdock{max-height:24vh}
+@media(max-height:820px){#bcp-ov.desk #bcp-chatdock{max-height:20vh}#bcp-ov.desk:not(.kos-centered) #bcp-barwrap{padding:6px 16px 10px}}
+#bcp-chatdock{flex-shrink:0;display:none;flex-direction:column;margin:8px 16px 0;border-radius:var(--os-r);
+  background:var(--os-surface);box-shadow:var(--os-shadow);max-height:34vh;min-height:0;overflow:hidden}
 #bcp-chatdock.show{display:flex}
 #bcp-chatdock.min .bd{display:none}
-#bcp-chatdock .hd{display:flex;align-items:center;gap:8px;padding:6px 22px;font-size:11px;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;color:#8e9dff;flex-shrink:0}
+#bcp-chatdock .hd{display:flex;align-items:center;gap:8px;padding:8px 14px 6px 18px;font-size:12.5px;font-weight:600;color:var(--os-ink-2);flex-shrink:0}
 #bcp-chatdock .hd .sp{flex:1}
 #bcp-chatdock .hd .ttl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#bcp-chatdock .hd button{background:none;border:1px solid rgba(122,158,255,.25);color:#9BA6C4;border-radius:8px;
-  padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
-#bcp-chatdock .hd button:hover{color:#00E0FF;border-color:rgba(0,224,255,.5)}
-#bcp-chatdock .bd{overflow-y:auto;padding:4px 22px 10px;min-height:0;scrollbar-width:thin}
+#bcp-chatdock .hd button{background:transparent;border:0;color:var(--os-ink-2);border-radius:999px;
+  padding:5px 11px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0}
+#bcp-chatdock .hd button:hover{background:var(--os-surface-2);color:var(--os-ink)}
+#bcp-chatdock .bd{overflow-y:auto;padding:2px 18px 12px;min-height:0;scrollbar-width:thin}
 .bcp-chatwrap{max-width:900px;margin:0 auto}
 .bcp-chattools{display:flex;justify-content:flex-end;gap:8px;max-width:860px;margin:0 auto 10px}
-.bcp-chattools button{background:none;border:1px solid rgba(122,158,255,.25);color:#9BA6C4;border-radius:8px;
-  padding:4px 10px;font-size:11.5px;cursor:pointer;font-family:inherit}
-@media(max-width:700px){#bcp-chatdock{max-height:40vh}#bcp-chatdock .hd,#bcp-chatdock .bd{padding-left:12px;padding-right:12px}}
+.bcp-chattools button{background:transparent;border:1px solid var(--os-line);color:var(--os-ink-2);border-radius:999px;
+  padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit}
+@media(max-width:700px){#bcp-chatdock{max-height:40vh;margin:6px 8px 0}#bcp-chatdock .hd,#bcp-chatdock .bd{padding-left:12px;padding-right:12px}}
 `;
     var st = document.createElement('style'); st.id = 'bcp-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
 
-  // Botones de la barra superior: [data-act, icono, es, en]. Función (no
-  // constante) para que las etiquetas se evalúen al pintar (regla bilingüe).
+  // Botones de la fila de chips de la Cabina vieja: [data-act, icono, es, en]. La fila ya
+  // no se ve en Khipus OS (#bcp-actions oculta, se conserva el nodo); queda como registro.
   function actChips() {
     return [
       ['broker',     '💼', 'Invertir',      'Invest'],
@@ -360,9 +526,128 @@
     ];
   }
 
-  // Re-etiqueta la cáscara (chips, placeholder, tooltips, estado) en el idioma
-  // ACTUAL. La cáscara se construye una sola vez; esto corre en cada apertura
-  // para que el cambio de idioma se refleje la próxima vez que se abra.
+  /* ══ KHIPUS OS (2026-10-06): utilidades de la cáscara ══ */
+  var SVG = {
+    chev: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    compose: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h8"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+    sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  };
+  function _fold(s) { return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); }
+  function _isMac() { try { return /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || ''); } catch (e) { return false; } }
+  var AGENT_IDS = ['analista', 'radar', 'cadena', 'tecnico', 'comite'];
+  // "Preguntar a": el token que el chat YA entiende (engine/pickers.js ANALYSTS / khipu_chat SEAT_OF)
+  var AGENT_TOK = { analista: ['@fundamental', '@fundamental'], radar: ['@noticias', '@news'], cadena: ['@cadena', '@supply'],
+    tecnico: ['@tecnico', '@technical'], comite: ['@comite', '@committee'] };
+  var AGENT_FALLBACK = { khipu: ['#f07fa0', '#7a4ce8', 'Khipu', 'Khipu'], analista: ['#7d8be6', '#4054cf', 'Analista', 'Analyst'],
+    radar: ['#f78189', '#e63e52', 'Radar', 'Radar'], cadena: ['#4cb1ab', '#83cd70', 'Cadena', 'Chain'],
+    tecnico: ['#f7cc63', '#e6a117', 'Técnico', 'Technical'], comite: ['#bc78e5', '#7a3fe0', 'Comité', 'Committee'] };
+  // mascota burbuja (engine/mascot.js); si el módulo no cargó, un círculo con su degradado
+  function _mascot(id, size, opts) {
+    try { if (window.KhipuMascot && window.KhipuMascot.svg) return window.KhipuMascot.svg(id, size, opts); } catch (e) {}
+    var c = AGENT_FALLBACK[id] || ['#8D90A0', '#5B5E6B'];
+    return '<span class="km" style="display:inline-block;width:' + size + 'px;height:' + size + 'px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,' + c[0] + ',' + c[1] + ')"></span>';
+  }
+  function _stackHTML(ids, size) {
+    try { if (window.KhipuMascot && window.KhipuMascot.stack) return window.KhipuMascot.stack(ids, size); } catch (e) {}
+    return '<span class="km-stack" style="display:inline-flex">' + ids.map(function (id, i) { return '<span style="margin-left:' + (i ? -6 : 0) + 'px;display:inline-flex">' + _mascot(id, size) + '</span>'; }).join('') + '</span>';
+  }
+  function _agentName(id) {
+    try { if (window.KhipuMascot && window.KhipuMascot.name) return window.KhipuMascot.name(id); } catch (e) {}
+    var c = AGENT_FALLBACK[id]; return c ? L(c[2], c[3]) : String(id || '');
+  }
+  function _agentRole(id) {
+    try {
+      var a = (window.KhipuMascot && window.KhipuMascot.agents ? window.KhipuMascot.agents() : []).filter(function (x) { return x.id === id; })[0];
+      if (a) return L(a.role_es, a.role_en);
+    } catch (e) {}
+    return '';
+  }
+  function _agentsOn() {
+    try { if (window.KhipuAgentPrefs) return window.KhipuAgentPrefs.enabled().filter(function (a) { return a !== 'khipu' && AGENT_IDS.indexOf(a) >= 0; }); } catch (e) {}
+    return AGENT_IDS.slice();
+  }
+  function _mode() { try { return window.KhipuAgentPrefs ? window.KhipuAgentPrefs.mode() : null; } catch (e) { return null; } }
+  function _setMode(m) {
+    try { if (window.KhipuAgentPrefs) window.KhipuAgentPrefs.set({ mode: m === 'pro' ? 'pro' : 'simple' }); } catch (e) {}
+    try {
+      if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'info',
+        title: m === 'pro' ? L('Modo Pro', 'Pro mode') : L('Modo Simple', 'Simple mode'),
+        body: m === 'pro' ? L('Respuestas densas: cifras, rangos y horizonte.', 'Dense answers: figures, ranges and horizon.')
+                          : L('Lenguaje llano: cada término explicado y una conclusión clara.', 'Plain language: every term explained and a clear conclusion.') });
+    } catch (e) {}
+  }
+  // dinero con el formato del idioma ($50.218,49 / $50,218.49); nunca inventa: sin número → —
+  function _money(v) {
+    var n = Number(v); if (!isFinite(n)) return '—';
+    return '$' + n.toLocaleString(ckLang() === 'en' ? 'en-US' : 'es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function _selNode() { try { return (window._liveSelectedNode && window._liveSelectedNode()) || null; } catch (e) { return null; } }
+  // overlays de otros módulos que viven DEBAJO de la Cabina (z 7000): se suben mientras están abiertos
+  function _raise(id, z) {
+    var el = document.getElementById(id); if (!el) return;
+    el.style.zIndex = String(z);
+    if (el._kosRaise || !window.MutationObserver) return;
+    el._kosRaise = true;
+    var mo = new MutationObserver(function () {
+      if (el.classList.contains('show')) return;
+      el.style.zIndex = ''; el._kosRaise = false; mo.disconnect();
+    });
+    mo.observe(el, { attributes: true, attributeFilter: ['class'] });
+  }
+  function _openSistemaOS(tab) {
+    if (typeof window.openSistema !== 'function') return;
+    window.openSistema(tab);
+    _raise('sistema-overlay', 7900); _raise('sistema-panel', 7901);
+  }
+
+  /* ══ REGISTRO ÚNICO DE PANTALLAS (menú "Más ▾" y paleta ⌘K) — sale de los chips, de
+     KIND_META y de los overlays de otros módulos. Cada entrada sabe abrirse. ══ */
+  var GROUPS = [['explore', 'Explorar', 'Explore'], ['invest', 'Invertir', 'Invest'], ['discover', 'Descubrir', 'Discover'], ['help', 'Ayuda y sistema', 'Help & system']];
+  function screens() {
+    var W = window, sel = _selNode();
+    var all = [
+      { g: 'explore', id: 'graph', ic: '🗺️', es: 'Mapa de la cadena', en: 'Supply-chain map', k: 'mapa grafo red cadena map graph network', run: function () { stage('graph'); } },
+      { g: 'explore', id: 'market', ic: '📈', es: 'Mercado', en: 'Market', k: 'mercado precios cotizaciones market prices quotes', run: function () { stage('market'); } },
+      { g: 'explore', id: 'terminal', ic: '🖥️', es: 'Terminal', en: 'Terminal', k: 'terminal graficos charts bloomberg velas', run: function () { stage('terminal'); } },
+      { g: 'explore', id: 'geo', ic: '🌐', es: 'Geopolítica', en: 'Geopolitics', k: 'geopolitica world monitor mundo conflictos estrechos geo', run: function () { stage('geo'); } },
+      { g: 'explore', id: 'space', ic: '🚀', es: 'Espacio', en: 'Space', k: 'espacio space lanzamientos launches satelites', run: function () { stage('space'); } },
+      { g: 'explore', id: 'simulation', ic: '🔮', es: 'Simulación', en: 'Simulation', k: 'simulacion escenarios scenarios what if guerra war room', run: function () { stage('simulation'); } },
+      { g: 'explore', id: 'crypto', ic: '💠', es: 'Cripto', en: 'Crypto', k: 'cripto crypto bitcoin ethereum', run: function () { stage('crypto'); } },
+      { g: 'explore', id: 'tkg', ic: '⏱', es: 'Grafo temporal', en: 'Temporal graph', k: 'grafo temporal historia tiempo timeline', run: function () { stage('tkg'); } },
+      { g: 'invest', id: 'portfolios', ic: '💼', es: 'Carteras de práctica', en: 'Practice portfolios', k: 'carteras portafolio simuladas practica portfolios paper', run: function () { stage('portfolios'); }, ok: function () { return !!W.KhipuPortfolios; } },
+      { g: 'invest', id: 'broker', ic: '💳', es: 'Mi cuenta (bróker)', en: 'My account (broker)', k: 'cuenta broker bróker invertir comprar vender alpaca account invest buy sell posiciones', run: function () { stage('broker'); } },
+      { g: 'invest', id: 'committee', ic: '🏛', es: 'Comité de inversión', en: 'Investment committee', k: 'comite committee veredicto memo pizarra board', run: function () { W.KhipuCommittee.open(); }, ok: function () { return !!(W.KhipuCommittee && W.KhipuCommittee.open); } },
+      { g: 'invest', id: 'risk', ic: '🛡', es: 'Riesgo de cartera', en: 'Portfolio risk', k: 'riesgo var risk cartera griegas vega', run: function () { W.KhipuRisk.open({ tab: 'var' }); }, ok: function () { return !!(W.KhipuRisk && W.KhipuRisk.open); } },
+      { g: 'invest', id: 'clients', ic: '👥', es: 'Clientes', en: 'Clients', k: 'clientes clients aprobaciones approvals', run: function () { W.KhipuClients.open(); }, ok: function () { return !!(W.KhipuClients && W.KhipuClients.open); } },
+      { g: 'invest', id: 'scalp', ic: '⚡', es: 'Scalping', en: 'Scalping', k: 'scalping rapido trading corto', run: function () { stage('scalp'); } },
+      { g: 'discover', id: 'insights', ic: '💡', es: 'Oportunidades', en: 'Opportunities', k: 'oportunidades insights riesgos hipergrafo', run: function () { stage('insights'); } },
+      { g: 'discover', id: 'screener', ic: '🔥', es: 'Explosivas', en: 'Breakouts', k: 'explosivas breakouts momentum screener', run: function () { stage('screener'); } },
+      { g: 'discover', id: 'xray', ic: '🔬', es: 'X-Ray de una empresa', en: 'Company X-Ray', k: 'xray x-ray radiografia desarmar', run: function () { if (sel) stage('xray', sel); else stage('pick', { for: 'xray' }); } },
+      { g: 'discover', id: 'compare', ic: '⇄', es: 'Comparar empresas', en: 'Compare companies', k: 'comparar compare vs versus', run: function () { stage('pick', { for: 'compare', a: sel }); } },
+      { g: 'discover', id: 'research', ic: '🧠', es: 'Investigar a fondo', en: 'Deep research', k: 'investigar research investigacion analistas', run: function () { stage('pick', { for: 'research' }); } },
+      { g: 'discover', id: 'sim', ic: '◉', es: 'Simular una caída', en: 'Simulate a failure', k: 'simular shock caida colapso', run: function () { if (sel) stage('sim', { id: sel, kind: 'collapse' }); else stage('pick', { for: 'sim' }); } },
+      { g: 'discover', id: 'canvas', ic: '✦', es: 'Gráfico a pedido', en: 'Chart on demand', k: 'grafico canvas lienzo chart dibujar', run: function () { stage('canvas'); } },
+      { g: 'help', id: 'agents', ic: '◍', es: 'Tus agentes', en: 'Your agents', k: 'agentes agents mascotas analista radar cadena tecnico comite', run: function () { stage('agents'); }, ok: function () { return !!_custom.agents; } },
+      { g: 'help', id: 'brief', ic: '☀️', es: 'Brief de hoy', en: 'Today’s brief', k: 'brief matinal resumen hoy today morning', run: function () { W._briefOpen(); _raise('brief-ov', 7600); }, ok: function () { return typeof W._briefOpen === 'function'; } },
+      { g: 'help', id: 'guia', ic: '❓', es: 'Guía', en: 'Guide', k: 'guia ayuda help guide como usar', run: function () { stage('guia'); } },
+      { g: 'help', id: 'sistema', ic: '🩺', es: 'Sistema', en: 'System', k: 'sistema diagnostico salud health gasto ia registro', run: function () { _openSistemaOS(); }, ok: function () { return typeof W.openSistema === 'function'; } },
+      { g: 'help', id: 'mcp', ic: '🤖', es: 'Conectar IAs', en: 'Connect AIs', k: 'mcp conectar ias claude chatgpt connect', run: function () { W.KhipuMCP.open('connect'); }, ok: function () { return !!(W.KhipuMCP && W.KhipuMCP.open); } },
+      { g: 'help', id: 'universe', ic: '🪐', es: 'Universo 3D', en: '3D universe', k: 'universo 3d universe', run: function () { W._go3D(); }, ok: function () { return typeof W._go3D === 'function'; } },
+    ];
+    return all.filter(function (s) { try { return !s.ok || s.ok(); } catch (e) { return false; } });
+  }
+  function _runScreen(id) {
+    var s = screens().filter(function (x) { return x.id === id; })[0];
+    if (!s) return false;
+    try { s.run(); } catch (e) { try { console.warn('[Khipus OS]', id, e); } catch (x) {} }
+    return true;
+  }
+
+  // Re-etiqueta la cáscara en el idioma ACTUAL (al abrir y al cambiar de idioma desde la barra)
   function relabelShell(ov) {
     ov = ov || document.getElementById('bcp-ov');
     if (!ov) return;
@@ -373,13 +658,16 @@
       if (labels[k]) b.textContent = labels[k];
     });
     var inp = ov.querySelector('#bcp-input');
-    if (inp) inp.setAttribute('placeholder', L('Pregúntale lo que sea a Khipu…  «¿qué riesgos tiene TSMC?»  ·  /investigar NVDA  ·  /cartera  ·  /ayuda',
-      'Ask Khipu anything…  “what are TSMC’s main risks?”  ·  /research NVDA  ·  /portfolio  ·  /help'));
+    if (inp) {
+      inp.setAttribute('placeholder', L('Pregúntale a Khipu…', 'Ask Khipu…'));
+      inp.setAttribute('title', L('Escribe tu pregunta. «/» abre los comandos y «@» le habla a un agente.', 'Type your question. “/” opens the commands and “@” talks to an agent.'));
+      inp.setAttribute('aria-label', L('Pregúntale a Khipu', 'Ask Khipu'));
+    }
     var setT = function (sel, es, en) {
       var el = ov.querySelector(sel);
       if (el) { el.setAttribute('title', L(es, en)); el.setAttribute('aria-label', L(es, en)); }
     };
-    setT('#bcp-close', 'Cerrar (Esc)', 'Close (Esc)');
+    setT('#bcp-close', 'Cerrar', 'Close');
     setT('#bcp-send', 'Enviar', 'Send');
     setT('#bcp-mic', 'Hablar con Khipu', 'Talk to Khipu');
     var cd = ov.querySelector('#bcp-chatdock');
@@ -388,12 +676,222 @@
       cd.querySelector('[data-cd="full"]').textContent = L('⤢ Ampliar', '⤢ Expand');
       cd.querySelector('[data-cd="min"]').textContent = cd.classList.contains('min') ? L('▴ Mostrar', '▴ Show') : L('▾ Ocultar', '▾ Hide');
     }
+    // ── barra superior ──
+    var sk = ov.querySelector('#kos-search');
+    if (sk) {
+      sk.querySelector('.kos-kbd').textContent = _isMac() ? '⌘K' : 'Ctrl K';
+      sk.querySelector('.tx').textContent = L('Busca una empresa o abre una pantalla…', 'Search a company or open a screen…');
+      sk.setAttribute('aria-label', L('Buscar empresas, pantallas y acciones', 'Search companies, screens and actions'));
+    }
+    var mb = ov.querySelector('#kos-more');
+    if (mb) { mb.querySelector('.tx').textContent = L('Más', 'More'); mb.setAttribute('title', L('Todas las pantallas', 'All screens')); mb.setAttribute('aria-label', L('Más pantallas', 'More screens')); }
+    var lb = ov.querySelector('#kos-lang');
+    if (lb) { lb.textContent = ckLang() === 'en' ? 'EN' : 'ES'; lb.setAttribute('title', L('Idioma: español — cambiar a English', 'Language: English — switch to español')); lb.setAttribute('aria-label', lb.getAttribute('title')); }
+    _paintThemeBtn(); _paintAgentsBtn(); _paintMe();
     if (deskActive()) desk().relabel();   // títulos de ventanas y barra de tareas en el idioma actual
     var st = ov.querySelector('#bcp-state');
     var tx = st && st.querySelector('.txt');
     // solo el estado de reposo se re-traduce (no pisar "Escuchando"/"Pensando")
     if (tx && (!st.className || !tx.textContent)) tx.textContent = L('Listo', 'Ready');
+    _paintChatHeader();
+    _balRefresh();
   }
+  function _paintThemeBtn() {
+    var b = document.getElementById('kos-theme'); if (!b) return;
+    var dark = document.body.classList.contains('dark');
+    b.innerHTML = dark ? SVG.sun : SVG.moon;
+    b.setAttribute('title', dark ? L('Cambiar a tema claro', 'Switch to light theme') : L('Cambiar a tema oscuro', 'Switch to dark theme'));
+    b.setAttribute('aria-label', b.getAttribute('title'));
+  }
+  function _paintAgentsBtn() {
+    var b = document.getElementById('kos-agents'); if (!b) return;
+    var ag = _agentsOn();
+    b.innerHTML = ag.length ? _stackHTML(ag, 24) : _mascot('khipu', 24);
+    b.setAttribute('title', L('Tus agentes: qué hace cada uno y cómo participan', 'Your agents: what each one does and how they take part'));
+    b.setAttribute('aria-label', L('Tus agentes', 'Your agents'));
+  }
+  function _actorName() { try { return (localStorage.getItem('khipu_actor') || '').trim(); } catch (e) { return ''; } }
+  function _initials() {
+    var p = _actorName().split(/\s+/).filter(Boolean);
+    if (!p.length) return '?';
+    return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase();
+  }
+  function _paintMe() {
+    var b = document.getElementById('kos-me'); if (!b) return;
+    b.textContent = _initials();
+    b.setAttribute('title', (_actorName() || L('Invitado', 'Guest')) + ' — ' + L('menú', 'menu'));
+    b.setAttribute('aria-label', b.getAttribute('title'));
+  }
+  function _toggleTheme() {
+    var b = document.getElementById('theme-toggle');   // el de la app: guarda eco_theme y re-colorea el mapa
+    if (b) b.click(); else document.body.classList.toggle('dark');
+    _paintThemeBtn();
+  }
+  function _toggleLang() {
+    var b = document.getElementById('lang-toggle');    // el de la app: LANG + eco_lang + applyLang
+    if (b) b.click();
+    else { try { localStorage.setItem('eco_lang', ckLang() === 'en' ? 'es' : 'en'); } catch (e) {} }
+    relabelShell();
+    _paintHome(true);
+    if (_popFor) _popClose();
+    if (palIsOpen()) palRender();
+  }
+
+  // ── menús desplegables (Más ▾ y el de tus iniciales) ──
+  var _popEl = null, _popFor = null;
+  function _popIsOpen() { return !!_popEl; }
+  function _popClose() {
+    if (_popEl && _popEl.parentNode) _popEl.parentNode.removeChild(_popEl);
+    _popEl = null;
+    if (_popFor) { _popFor.classList.remove('on'); _popFor.setAttribute('aria-expanded', 'false'); _popFor = null; }
+  }
+  function _popOpen(btn, cls, html, align) {
+    var ov = ensureShell();
+    var again = _popFor === btn;
+    _popClose();
+    if (again) return null;   // segundo clic en el mismo botón = cerrar
+    var el = document.createElement('div');
+    el.className = 'kos-pop ' + cls; el.setAttribute('role', 'menu'); el.innerHTML = html;
+    ov.appendChild(el);
+    var r = btn.getBoundingClientRect(), ow = el.offsetWidth, vw = window.innerWidth || 1024;
+    var left = align === 'right' ? r.right - ow : r.left + r.width / 2 - ow / 2;
+    el.style.left = Math.round(Math.max(8, Math.min(vw - ow - 8, left))) + 'px';
+    el.style.top = Math.round(r.bottom + 8) + 'px';
+    btn.classList.add('on'); btn.setAttribute('aria-expanded', 'true');
+    _popEl = el; _popFor = btn;
+    return el;
+  }
+  function _openMore(btn) {
+    var en = ckLang() === 'en', by = {};
+    screens().forEach(function (s) { (by[s.g] = by[s.g] || []).push(s); });
+    var html = GROUPS.filter(function (g) { return by[g[0]]; }).map(function (g) {
+      return '<div class="grp"><div class="kos-ph">' + esc(en ? g[2] : g[1]) + '</div>' + by[g[0]].map(function (s) {
+        return '<button type="button" class="kos-mi" role="menuitem" data-s="' + esc(s.id) + '"><span class="ic">' + esc(s.ic) + '</span><span class="tx">' + esc(en ? s.en : s.es) + '</span></button>';
+      }).join('') + '</div>';
+    }).join('');
+    var el = _popOpen(btn, 'kos-more', html, 'center');
+    if (!el) return;
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-s]'); if (!b) return;
+      _popClose(); _runScreen(b.getAttribute('data-s'));
+    });
+    var first = el.querySelector('.kos-mi'); if (first) try { first.focus({ preventScroll: true }); } catch (x) {}
+  }
+  function _openMe(btn) {
+    var name = _actorName(), mode = _mode();
+    var html = '<div class="kos-mehd"><button type="button" class="kos-av" tabindex="-1" aria-hidden="true">' + esc(_initials()) + '</button>' +
+      '<div style="min-width:0;flex:1"><div class="nm">' + esc(name || L('Invitado', 'Guest')) + '</div>' +
+      '<div class="sb"><a href="#" data-k="name" style="color:var(--os-accent);text-decoration:none">' + esc(name ? L('Cambiar nombre', 'Change name') : L('Ponte un nombre', 'Add your name')) + '</a></div></div></div>';
+    if (mode) {
+      html += '<div class="kos-segl">' + esc(L('Cómo te explica Khipu', 'How Khipu explains things')) + '</div>' +
+        '<div class="kos-seg" role="group"><button type="button" data-mode="simple" class="' + (mode === 'simple' ? 'on' : '') + '">' + esc(L('Simple', 'Simple')) + '</button>' +
+        '<button type="button" data-mode="pro" class="' + (mode === 'pro' ? 'on' : '') + '">Pro</button></div>' +
+        '<div class="kos-segl" style="padding-top:0;margin-bottom:4px">' + esc(mode === 'pro' ? L('Cifras, rangos y horizonte.', 'Figures, ranges and horizon.') : L('Lenguaje llano y una conclusión clara.', 'Plain language and a clear conclusion.')) + '</div>';
+    }
+    // en el teléfono la barra no tiene sitio: idioma, tema y saldo viven aquí
+    html += '<div class="kos-mob"><div class="kos-sep"></div>' +
+      '<button type="button" class="kos-mi" data-k="bal"><span class="ic">🧪</span><span class="tx" id="kos-me-bal">' + esc(_balText()) + '</span></button>' +
+      '<button type="button" class="kos-mi" data-k="lang"><span class="ic">🌐</span><span class="tx">' + esc(ckLang() === 'en' ? 'Cambiar a español' : 'Switch to English') + '</span></button>' +
+      '<button type="button" class="kos-mi" data-k="theme"><span class="ic">' + (document.body.classList.contains('dark') ? '☀️' : '🌙') + '</span><span class="tx">' + esc(document.body.classList.contains('dark') ? L('Tema claro', 'Light theme') : L('Tema oscuro', 'Dark theme')) + '</span></button></div>';
+    html += '<div class="kos-sep"></div>' +
+      (_custom.agents ? '<button type="button" class="kos-mi" data-k="agents"><span class="ic">◍</span><span class="tx">' + esc(L('Tus agentes', 'Your agents')) + '</span></button>' : '') +
+      (typeof window.openSistema === 'function' ? '<button type="button" class="kos-mi" data-k="sistema"><span class="ic">🩺</span><span class="tx">' + esc(L('Sistema', 'System')) + '</span></button>' : '') +
+      '<div class="kos-sep"></div>' +
+      '<button type="button" class="kos-mi" data-k="classic"><span class="ic">▭</span><span class="tx">' + esc(L('Vista clásica', 'Classic view')) + '</span><span class="hint">' + esc(L('pestañas', 'tabs')) + '</span></button>';
+    var el = _popOpen(btn, 'kos-me', html, 'right');
+    if (!el) return;
+    el.addEventListener('click', function (e) {
+      var m = e.target.closest && e.target.closest('[data-mode]');
+      if (m) { _setMode(m.getAttribute('data-mode')); _popClose(); _paintChatHeader(); return; }
+      var b = e.target.closest && e.target.closest('[data-k]'); if (!b) return;
+      var k = b.getAttribute('data-k');
+      if (k === 'name') { e.preventDefault(); _editName(el); return; }
+      _popClose();
+      if (k === 'agents') stage('agents');
+      else if (k === 'sistema') _openSistemaOS();
+      else if (k === 'classic') toClassicView();
+      else if (k === 'lang') _toggleLang();
+      else if (k === 'theme') _toggleTheme();
+      else if (k === 'bal') _balGo();
+    });
+  }
+  function _editName(el) {
+    var sb = el.querySelector('.kos-mehd .sb'); if (!sb) return;
+    sb.innerHTML = '<input type="text" maxlength="40" autocomplete="name" placeholder="' + esc(L('Tu nombre', 'Your name')) + '" value="' + esc(_actorName()) + '">';
+    var i = sb.querySelector('input'); i.focus(); i.select();
+    i.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      var v = (i.value || '').trim().slice(0, 40);
+      try { if (v) localStorage.setItem('khipu_actor', v); } catch (x) {}
+      _popClose(); _paintMe();
+    });
+  }
+
+  // ── saldo de práctica en la barra (NUNCA pide el PIN; insignia 🧪/🔴 obligatoria) ──
+  var _bal = { t: null, seq: 0, text: '' };
+  function _simBalance() {
+    var P = window.KhipuPortfolios; if (!P || !P._list || !P._stats) return null;
+    var list = []; try { list = P._list() || []; } catch (e) { list = []; }
+    if (!list.length) return { none: true };
+    var act = null; try { act = localStorage.getItem('kh_pf_active'); } catch (e) {}
+    var pf = list.filter(function (x) { return x && x.id === act; })[0] || list[0];
+    var st = null; try { st = P._stats(pf); } catch (e) { st = null; }
+    if (!st || !isFinite(+st.total)) return null;
+    return { name: pf.name, total: +st.total, plPct: +st.plPct || 0, n: (pf.positions || []).length, count: list.length };
+  }
+  function _balText() { return _bal.text || L('Cuenta de práctica', 'Practice account'); }
+  function _balPaint(o) {
+    var el = document.getElementById('kos-bal'); if (!el) return;
+    if (!o) { el.style.display = 'none'; _bal.text = ''; return; }
+    el.style.display = '';
+    el.querySelector('.l').innerHTML = o.label;
+    var v = el.querySelector('.v'); v.textContent = o.value; v.classList.toggle('sm', !!o.small);
+    el.setAttribute('title', o.title); el.setAttribute('aria-label', o.title);
+    el.setAttribute('data-go', o.go);
+    _bal.text = o.plain;
+    var mb = document.getElementById('kos-me-bal'); if (mb) mb.textContent = o.plain;
+  }
+  function _balRefresh() {
+    var el = document.getElementById('kos-bal'); if (!el) return;
+    var my = ++_bal.seq;
+    var sim = _simBalance();
+    if (!sim) _balPaint(null);
+    else if (sim.none) _balPaint({ label: '🧪 <span class="lt">' + esc(L('Práctica', 'Practice')) + '</span>', value: L('Crear cartera', 'Create a portfolio'), small: true, go: 'portfolios',
+      title: L('Aún no tienes carteras de práctica. Crea una con dinero simulado (no es dinero real).', 'You have no practice portfolios yet. Create one with simulated money (not real money).'),
+      plain: L('Práctica: crear cartera', 'Practice: create a portfolio') });
+    else _balPaint({ label: '🧪 <span class="lt">' + esc(L('Cuenta de práctica', 'Practice account')) + '</span>', value: _money(sim.total), go: 'portfolios',
+      title: L('Cartera simulada «' + sim.name + '» · ' + sim.n + ' posiciones · valor con precios en vivo (si falta un precio se usa el de compra). No es dinero real.',
+               'Simulated portfolio “' + sim.name + '” · ' + sim.n + ' positions · valued at live prices (if a price is missing, the purchase price is used). Not real money.'),
+      plain: L('Práctica: ', 'Practice: ') + _money(sim.total) });
+    var hasPin = false; try { hasPin = !!(window._tradePinStored && window._tradePinStored()); } catch (e) {}
+    if (!hasPin || !window._tradeAccountInfo) return;
+    // con PIN guardado: la cuenta del bróker, SIN diálogo (interactive=false)
+    Promise.resolve(window._tradeAccountInfo(false, false)).then(function (a) {
+      if (my !== _bal.seq || !a || a.error || !isFinite(+a.equity)) return null;
+      if (typeof a.paper === 'boolean') return { a: a, paper: a.paper };
+      return (window._tradeStatusInfo ? window._tradeStatusInfo() : Promise.resolve(null)).then(function (s) {
+        return (s && typeof s.paper === 'boolean') ? { a: a, paper: s.paper } : null;   // sin saber papel/real NO se muestra
+      });
+    }).then(function (r) {
+      if (!r || my !== _bal.seq) return;
+      var hh = new Date().toLocaleTimeString(ckLang() === 'en' ? 'en-US' : 'es-AR', { hour: '2-digit', minute: '2-digit' });
+      _balPaint(r.paper
+        ? { label: '<span class="kos-badge paper">🧪 ' + esc(L('PAPEL', 'PAPER')) + '</span><span class="lt">' + esc(L('Bróker', 'Broker')) + '</span>', value: _money(r.a.equity), go: 'broker',
+            title: L('Cuenta del bróker en modo papel (SIMULADO) · actualizado ' + hh, 'Broker account in paper mode (SIMULATED) · updated ' + hh),
+            plain: '🧪 ' + L('Bróker (papel): ', 'Broker (paper): ') + _money(r.a.equity) }
+        : { label: '<span class="kos-badge real">🔴 ' + esc(L('DINERO REAL', 'REAL MONEY')) + '</span>', value: _money(r.a.equity), go: 'broker',
+            title: L('Cuenta del bróker con DINERO REAL · actualizado ' + hh, 'Broker account with REAL MONEY · updated ' + hh),
+            plain: '🔴 ' + L('Bróker (dinero real): ', 'Broker (real money): ') + _money(r.a.equity) });
+    }).catch(function () {});
+  }
+  function _balGo() {
+    var el = document.getElementById('kos-bal');
+    var go = (el && el.getAttribute('data-go')) || 'portfolios';
+    if (go === 'broker') stage('broker'); else stage('portfolios');
+  }
+  function _balStart() { _balStop(); _balRefresh(); _bal.t = setInterval(function () { if (open && !document.hidden) _balRefresh(); }, 45000); }
+  function _balStop() { if (_bal.t) { clearInterval(_bal.t); _bal.t = null; } }
 
   // ── shell (una vez) ──
   function ensureShell() {
@@ -404,16 +902,27 @@
     ov = document.createElement('div');
     ov.id = 'bcp-ov';
     ov.innerHTML =
+      // BARRA SUPERIOR mínima (Khipus OS): Khipu · ⌘K buscar · Más ▾ · agentes · saldo · ES/EN · tema · iniciales
       '<div id="bcp-top">' +
-        '<div id="bcp-orb-wrap"><canvas id="bcp-orb-canvas" width="64" height="64"></canvas></div>' +
-        '<div id="bcp-idwrap"><div id="bcp-word">KHIPU</div>' +
-          '<div id="bcp-state"><span class="dot"></span><span class="txt"></span></div></div>' +
-        '<button class="bcp-iconbtn" id="bcp-close">✕</button>' +
+        '<div class="kos-brand">' +
+          '<div id="bcp-orb-wrap"><canvas id="bcp-orb-canvas" width="64" height="64"></canvas></div>' +
+          '<div id="bcp-idwrap"><div id="bcp-word">Khipus</div>' +
+            '<div id="bcp-state"><span class="dot"></span><span class="txt"></span></div></div>' +
+        '</div>' +
+        '<div class="kos-mid">' +
+          '<button type="button" class="kos-search" id="kos-search"><span class="kos-kbd"></span><span class="tx"></span></button>' +
+          '<button type="button" class="kos-btn kos-more-btn" id="kos-more" aria-haspopup="menu" aria-expanded="false"><span class="tx"></span>' + SVG.chev + '</button>' +
+        '</div>' +
+        '<div class="kos-right">' +
+          '<button type="button" class="kos-btn kos-agbtn" id="kos-agents"></button>' +
+          '<button type="button" class="kos-bal" id="kos-bal"><span class="l"></span><span class="v"></span></button>' +
+          '<button type="button" class="kos-btn kos-round" id="kos-lang"></button>' +
+          '<button type="button" class="kos-btn kos-round" id="kos-theme"></button>' +
+          '<button type="button" class="kos-av" id="kos-me" aria-haspopup="menu" aria-expanded="false"></button>' +
+          '<button type="button" class="bcp-iconbtn" id="bcp-close">✕</button>' +
+        '</div>' +
       '</div>' +
-      // Barra de BOTONES (pedido de Fabrizio): todo lo que Khipu puede
-      // mostrar, a un clic — el grafo y la terminal viven DENTRO del escenario.
-      // Trading/dinero PRIMERO (siempre visibles aunque la barra se deslice en tablet).
-      // Las etiquetas se ponen en relabelShell() (se re-evalúan al abrir → idioma al día).
+      // fila de chips de la Cabina vieja: OCULTA (se conserva el nodo y sus escuchadores)
       '<div id="bcp-actions">' +
         actChips().map(function (c) {
           return '<button class="bcp-act" data-act="' + c[0] + '"></button>';
@@ -423,13 +932,15 @@
       '<div id="bcp-chatdock"><div class="hd"><span class="ttl"></span><span class="sp"></span>' +
         '<button type="button" data-cd="full"></button><button type="button" data-cd="min"></button></div>' +
         '<div class="bd"></div></div>' +
-      // Barra de chat ABAJO (Fabrizio: "pon la barra de chat de Khipu abajo").
+      // barra de entrada: en Khipus OS (≥ 1100 px) se muda a la columna central del chat
       '<div id="bcp-barwrap"><div id="bcp-bar">' +
         '<input id="bcp-input" type="text" autocomplete="off" spellcheck="false">' +
-        '<button class="bcp-iconbtn" id="bcp-send">➤</button>' +
-        '<button class="bcp-iconbtn" id="bcp-mic">🎙</button>' +
-      '</div></div>';
+        '<button type="button" class="bcp-iconbtn" id="bcp-mic">' + SVG.mic + '</button>' +
+        '<button type="button" class="bcp-iconbtn" id="bcp-send">' + SVG.send + '</button>' +
+      '</div></div>' +
+      '<div id="kos-pal" role="dialog" aria-modal="true"></div>';
     document.body.appendChild(ov);
+    _syncClassicClass(ov);
     relabelShell(ov);
 
     ov.querySelectorAll('.bcp-act').forEach(function (b) {
@@ -464,7 +975,7 @@
     var input = ov.querySelector('#bcp-input');
     if (window.KhipuPick) window.KhipuPick.chatMenu(input);   // menú de "/" y "@" (antes del Enter que envía)
     ov.querySelector('#bcp-send').addEventListener('click', function () { submit(); });
-    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(); } });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); submit(); } });
     ov.querySelector('#bcp-mic').addEventListener('click', toggleMic);
     ov.querySelector('#bcp-close').addEventListener('click', close);
     ov.querySelectorAll('#bcp-chatdock [data-cd]').forEach(function (b) {
@@ -476,17 +987,54 @@
     });
     function submit() { var v = (input.value || '').trim(); if (!v) return; input.value = ''; ask(v); }
 
+    // barra superior
+    ov.querySelector('#kos-search').addEventListener('click', function () { palOpen(''); });
+    ov.querySelector('#kos-more').addEventListener('click', function (e) { e.stopPropagation(); _openMore(this); });
+    ov.querySelector('#kos-me').addEventListener('click', function (e) { e.stopPropagation(); _openMe(this); });
+    ov.querySelector('#kos-agents').addEventListener('click', function () { _popClose(); stage('agents'); });
+    ov.querySelector('#kos-bal').addEventListener('click', function () { _popClose(); _balGo(); });
+    ov.querySelector('#kos-lang').addEventListener('click', function () { _toggleLang(); });
+    ov.querySelector('#kos-theme').addEventListener('click', function () { _toggleTheme(); });
+    // clic fuera de un menú lo cierra
+    ov.addEventListener('pointerdown', function (e) {
+      if (!_popEl) return;
+      if (_popEl.contains(e.target) || (_popFor && _popFor.contains(e.target))) return;
+      _popClose();
+    }, true);
+    window.addEventListener('resize', function () { if (_popEl) _popClose(); });
+    // el tema puede cambiar desde otro lado (app clásica): el ícono ☾/☀ lo sigue
+    try { new MutationObserver(function () { _paintThemeBtn(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
+    // agentes encendidos/apagados (ventana "Tus agentes") → pila de mascotas y encabezado del chat
+    window.addEventListener('khipu:agentprefs', function () { _paintAgentsBtn(); _paintChatHeader(); _paintAgentRow(); });
+    // carteras o nombre cambiados en otra pestaña
+    window.addEventListener('storage', function (e) {
+      if (!e || !e.key) return;
+      if (e.key === 'kh_portfolios' || e.key === 'kh_pf_active') _balRefresh();
+      if (e.key === 'khipu_actor') _paintMe();
+    });
+
     mountCockpitOrb();
     return ov;
   }
+  // la Cabina clásica (kh_desk_mode=off) siempre en oscuro: sus escenas tienen colores fijos oscuros
+  function _syncClassicClass(ov) {
+    ov = ov || document.getElementById('bcp-ov'); if (!ov) return;
+    ov.classList.toggle('kos-classic', !desk());
+  }
 
-  // ── Orbe de voz de Khipu (engine/orb.js) dentro de la Cabina ──
-  // Reemplaza el orbe estático del header: respira en reposo y reacciona a la
-  // voz (cian = usuario, violeta = Khipu). voice.js lo alimenta con setUserLevel
-  // / setBixbyLevel. Si orb.js no cargó, cae al orbe pequeño (registerBixbyOrb).
+  // ── Mascota de Khipu en la barra (Khipus OS). Sin engine/mascot.js cae al orbe de voz
+  // (engine/orb.js) o al orbe pequeño. La mascota no tiene bucle de animación → más liviano.
   function mountCockpitOrb() {
     var wrap = document.getElementById('bcp-orb-wrap');
     if (!wrap) return;
+    if (window.KhipuMascot && window.KhipuMascot.svg) {
+      if (!wrap.querySelector('.km')) {
+        stopCockpitOrb();
+        Array.prototype.forEach.call(wrap.children, function (c) { c.style.display = 'none'; });
+        var sp = document.createElement('span'); sp.innerHTML = _mascot('khipu', 30); wrap.appendChild(sp.firstChild);
+      }
+      return;
+    }
     if (window.BixbyOrb && window.BixbyOrb.mount) {
       try {
         var old = document.getElementById('bcp-orb-canvas');
@@ -496,7 +1044,8 @@
         return;
       } catch (e) { /* cae al fallback */ }
     }
-    if (window.registerBixbyOrb) window.registerBixbyOrb('bcp-orb-canvas', 64);
+    if (window.registerBixbyOrb) window.registerBixbyOrb('bcp-orb-canvas', 30);
+    else { var c2 = document.getElementById('bcp-orb-canvas'); if (c2) { c2.style.display = 'none'; if (!wrap.querySelector('.kos-orbf')) wrap.insertAdjacentHTML('beforeend', '<span class="kos-orbf"></span>'); } }
   }
   function stopCockpitOrb() {
     if (window.BixbyOrb && window.BixbyOrb.stop) { try { window.BixbyOrb.stop(); } catch (e) {} }
@@ -509,8 +1058,11 @@
     el.className = mode === 'live' ? 'live' : mode === 'think' ? 'think' : '';
     var t = el.querySelector('.txt'); if (t && text) t.textContent = text;
     if (window.setBixbyThinking) window.setBixbyThinking(mode === 'think');
+    // la mascota de Khipu "piensa" (barra y encabezado del chat)
+    try {
+      document.querySelectorAll('#bcp-ov .kos-brand .km, #bcp-ov .kos-chathd-m .km').forEach(function (m) { m.classList.toggle('km-think', mode === 'think'); });
+    } catch (e) {}
   }
-
   // ── micrófono / voz ──
   function toggleMic() {
     var btn = document.getElementById('bcp-mic');
@@ -569,39 +1121,57 @@
   // ══ ESCENARIO ══
   var _curKind = null;   // escena actual (para re-pintar el inicio al reabrir)
   var CHIP_KINDS = ['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'];
+  // escenas que pinta la propia Cabina (además de ADOPT_TABS y de las registradas con registerKind)
+  var BUILTIN_KINDS = ['broker', 'scalp', 'crypto', 'pick', 'xray', 'compare', 'agentsim', 'research', 'sim', 'screener', 'insights', 'canvas', 'deep', 'graph', 'terminal'];
+  // escenas viejas con colores oscuros FIJOS: su ventana lleva .kd-legacy-dark (isla oscura legible en tema claro)
+  var LEGACY_DARK = ['broker', 'scalp', 'insights', 'screener', 'deep', 'research', 'agentsim', 'compare', 'sim', 'pick', 'xray',
+    'portfolios'];   // carteras: panel adoptado diseñado en oscuro (engine/portfolios.js usa tinta clara fija)
 
   // ESCRITORIO KHIPU (engine/desktop.js, 2026-10-04): si está activo, cada
-  // escena se abre como VENTANA (movible, redimensionable, barra de tareas) y
-  // el chat sigue abajo. Si no (kh_desk_mode=off o sin el módulo), la Cabina
-  // clásica de una sola pantalla. Una sola puerta: todo pasa por stage().
+  // escena se abre como VENTANA (movible, redimensionable, barra de tareas).
+  // Khipus OS (≥ 1100 px): el chat vive en la columna central y las ventanas en los
+  // flancos. Si no (kh_desk_mode=off o sin el módulo), la Cabina clásica de una sola
+  // pantalla. Una sola puerta: todo pasa por stage().
   function desk() {
     var D = window.KhipuDesk;
     return (D && D.enabled()) ? D : null;
   }
   function deskActive() { var D = desk(); return !!(D && D.active()); }
+  function isCentered() { var D = desk(); return !!(D && D.active() && D.isCentered && D.isCentered()); }
+  function _knownKind(kind) {
+    return kind === 'chat' || kind === 'empty' || !!_custom[kind] || !!ADOPT_TABS[kind] || BUILTIN_KINDS.indexOf(kind) >= 0;
+  }
   function stage(kind, arg, opts) {
     ensureShell();
+    kind = kind || 'empty';
+    // una escena que nadie registró (p. ej. 'agents' antes de que cargue su módulo) no hace nada:
+    // antes caía al inicio dentro de una ventana con un título raro
+    if (!_knownKind(kind)) { try { console.warn('[Khipus OS] escena no registrada:', kind); } catch (e) {} return null; }
     var s = document.getElementById('bcp-stage');
     if (!s) return;
     var D = desk();
+    _syncClassicClass();
     if (D) {
       if (!D.active()) {              // primer uso: el escenario clásico se vacía y pasa a escritorio
         restoreAdopted(); closeConfirmDialog(); _scalpStop();
-        D.mount(s);
         var ovd = document.getElementById('bcp-ov'); if (ovd) ovd.classList.add('desk');
+        D.mount(s);
       }
-      if (!D.wall().children.length) stageEmpty(D.wall());
+      // con el chat al centro, "la conversación" ya está siempre a la vista: no hay ventana 💬
+      if (kind === 'chat' && isCentered()) { _focusChat(); return; }
       if (kind === 'empty') {
         if (_demo.on) D.closeAll();   // la demostración arranca con el escritorio limpio
-        _curKind = 'empty'; markActive(null); _placeThread('empty'); stageEmpty(D.wall()); return;
+        _curKind = 'empty'; markActive(null); _placeThread('empty');
+        _paintHome(Date.now() - _homeTs > 30000);   // fresco si pasó un rato; nunca dos veces seguidas
+        return;
       }
+      _paintHome(false);
       _curKind = kind;
       _placeThread(kind);
       opts = opts || {};
       if (_demo.on) { opts.solo = true; opts.max = true; }   // la demostración: una ventana a la vez, grande
       _noteEntity(kind, arg);
-      D.open(kind, arg, opts);
-      return;
+      return D.open(kind, arg, opts);
     }
     restoreAdopted();   // devolver cualquier panel adoptado antes de cambiar de escena
     closeConfirmDialog();   // un diálogo de orden pendiente no sobrevive al cambio de escena
@@ -618,7 +1188,7 @@
       var id = null;
       if (kind === 'compare' && arg && arg.a) { window.KhipuChat.noteEntity(arg.b); id = arg.a; }
       else if (arg && typeof arg === 'object') id = arg.id || (arg.ticker && (resolveNode(arg.ticker) || {}).id);
-      else if (typeof arg === 'string' && ['xray', 'sim', 'research', 'graph', 'terminal'].indexOf(kind) >= 0) id = (resolveNode(arg) || {}).id;
+      else if (typeof arg === 'string' && (['xray', 'sim', 'research', 'graph', 'terminal'].indexOf(kind) >= 0 || (_custom[kind] && _custom[kind].multi))) id = (resolveNode(arg) || {}).id;
       if (id) window.KhipuChat.noteEntity(id);
     } catch (e) {}
   }
@@ -626,6 +1196,7 @@
   function render(s, kind, arg) {
     if (kind === 'chat') return stageChat(s);
     if (kind === 'empty') return stageEmpty(s);
+    if (_custom[kind]) return _renderCustom(s, kind, arg);
     if (kind === 'broker') return stageBroker(s, arg);
     if (kind === 'scalp') return stageScalp(s, arg);
     if (kind === 'crypto') return stageCrypto(s, arg);
@@ -650,14 +1221,43 @@
   var KIND_META = {
     graph: ['🗺️', 'Grafo', 'Graph'], terminal: ['🖥️', 'Terminal', 'Terminal'],
     insights: ['💡', 'Oportunidades', 'Opportunities'], canvas: ['✦', 'Gráfico', 'Chart'], deep: ['🧠', 'Investigación', 'Research'],
-    broker: ['💼', 'Mi cuenta', 'My account'], scalp: ['⚡', 'Scalping', 'Scalping'], crypto: ['💠', 'Cripto', 'Crypto'],
+    broker: ['💳', 'Mi cuenta', 'My account'], scalp: ['⚡', 'Scalping', 'Scalping'], crypto: ['💠', 'Cripto', 'Crypto'],
     market: ['📈', 'Mercado', 'Market'], geo: ['🌐', 'Geopolítica', 'Geopolitics'], space: ['🚀', 'Espacio', 'Space'],
-    simulation: ['🔮', 'Escenarios', 'Scenarios'], tkg: ['⏱', 'Grafo Temporal', 'Temporal Graph'], guia: ['❓', 'Guía', 'Guide'],
-    xray: ['🔬', 'X-Ray', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['◉', 'Simulación', 'Simulation'],
+    simulation: ['🔮', 'Simulación', 'Simulation'], tkg: ['⏱', 'Grafo Temporal', 'Temporal Graph'], guia: ['❓', 'Guía', 'Guide'],
+    xray: ['🔬', 'X-Ray', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['◉', 'Caída simulada', 'Simulated failure'],
     agentsim: ['🧪', 'Simulación por agentes', 'Agent simulation'], research: ['🧠', 'Investigación', 'Research'],
-    screener: ['🚀', 'Explosivas', 'Breakouts'], chat: ['💬', 'Conversación', 'Conversation'],
-    pick: ['🔎', 'Elegir empresa', 'Choose a company'],
+    screener: ['🔥', 'Explosivas', 'Breakouts'], chat: ['💬', 'Conversación', 'Conversation'],
+    pick: ['🔎', 'Elegir empresa', 'Choose a company'], portfolios: ['💼', 'Carteras de práctica', 'Practice portfolios'],
   };
+
+  /* ══ KHIPUS OS — REGISTRO DE VENTANAS NATIVAS (contrato §3.1 de docs/KHIPUS_OS.md) ══
+     BixbyCockpit.registerKind(kind, {icon, es, en, multi, title(arg), render(body, arg), mascot?})
+     - render pinta SOLO con body.querySelector (sin ids globales) y puede re-llamarse con otro arg.
+     - multi:true → una ventana por empresa (arg.id): el kind se suma a multiKinds del escritorio.
+     - mascot (opcional): id de mascota ('analista', 'cadena'…) para el ícono de la barra de título. */
+  var _custom = {};
+  var MULTI_KINDS = ['xray', 'sim'];
+  function registerKind(kind, spec) {
+    if (!kind || typeof kind !== 'string' || !spec || typeof spec.render !== 'function') return false;
+    if (kind === 'chat' || kind === 'empty') return false;
+    _custom[kind] = spec;
+    KIND_META[kind] = [String(spec.icon || '▫'), String(spec.es || spec.en || kind), String(spec.en || spec.es || kind)];
+    var i = MULTI_KINDS.indexOf(kind);
+    if (spec.multi && i < 0) MULTI_KINDS.push(kind);
+    else if (!spec.multi && i >= 0 && kind !== 'xray' && kind !== 'sim') MULTI_KINDS.splice(i, 1);
+    if (window.KhipuDesk) window.KhipuDesk.configure({ multiKinds: MULTI_KINDS });
+    return true;
+  }
+  function _renderCustom(s, kind, arg) {
+    var spec = _custom[kind], host = s;
+    // Cabina clásica (sin ventanas): un "← Inicio" arriba y la ventana nativa debajo
+    if (!(s.classList && s.classList.contains('kd-body'))) {
+      s.innerHTML = backBar(winTitle(kind, arg)) + '<div class="bcp-inner kos-native"></div>';
+      host = s.querySelector('.kos-native');
+    }
+    try { spec.render(host, arg); }
+    catch (e) { host.innerHTML = '<div class="bcp-loading" style="color:var(--os-bad)">⚠ ' + esc((e && e.message) || e) + '</div>'; }
+  }
   function _argLabel(kind, arg) {
     try {
       if (arg == null) return '';
@@ -673,6 +1273,8 @@
     } catch (e) { return ''; }
   }
   function winTitle(kind, arg) {
+    var sp = _custom[kind];
+    if (sp && typeof sp.title === 'function') { try { var tt = sp.title(arg); if (tt) return String(tt); } catch (e) {} }
     var m = KIND_META[kind]; var base = m ? (ckLang() === 'en' ? m[2] : m[1]) : kind;
     var extra = _argLabel(kind, arg);
     return extra ? base + ' · ' + extra : base;
@@ -706,9 +1308,15 @@
     render: function (body, kind, arg, winId) {
       _adoptCtx = winId;
       try { render(body, kind, arg); } finally { _adoptCtx = null; }
+      try {
+        body.classList.toggle('kd-legacy-dark', LEGACY_DARK.indexOf(kind) >= 0);
+        body.classList.toggle('kos-native', !!_custom[kind]);
+      } catch (e) {}
     },
     title: winTitle,
     icon: function (kind) { var m = KIND_META[kind]; return m ? m[0] : '▫'; },
+    // ventanas nativas con mascota (contrato registerKind: mascot) → burbuja del agente en la barra de título
+    iconHTML: function (kind) { var sp = _custom[kind]; return (sp && sp.mascot) ? _mascot(sp.mascot, 22) : null; },
     beforeRender: winCleanup,
     onClose: function (kind, winId) {
       winCleanup(kind, winId);
@@ -721,15 +1329,339 @@
     },
     onModeChange: function (on) {
       var ov = document.getElementById('bcp-ov');
-      if (ov) ov.classList.toggle('desk', !!on);
+      if (ov) { ov.classList.toggle('desk', !!on); if (!on) ov.classList.remove('kos-centered'); }
+      _syncClassicClass(ov);
       if (open) stage('empty');
     },
+    // Khipus OS: el escritorio avisa cuando el chat pasa a la columna central (≥ 1100 px) o vuelve abajo
+    onLayout: function (on, centerEl) { _onLayout(on, centerEl); },
     resume: readopt,
-    adoptKinds: ['graph', 'terminal', 'crypto', 'tkg', 'guia', 'market', 'geo', 'space', 'simulation'],
+    adoptKinds: ['graph', 'terminal', 'crypto', 'tkg', 'guia', 'market', 'geo', 'space', 'simulation', 'portfolios'],
     resumeKinds: ['scalp'],          // sin panel adoptado pero con polling: se re-pinta al reabrir
-    multiKinds: ['xray', 'sim'],
+    multiKinds: MULTI_KINDS,
   });
 
+  /* ══ KHIPUS OS — CHAT AL CENTRO ══════════════════════════════════════════
+     El escritorio reserva #kd-center; aquí vive la tarjeta del chat: encabezado (Khipu ·
+     "N agentes trabajando contigo" · pila de mascotas · 🧹), el hilo (#bcp-thread, el MISMO
+     nodo de siempre) y la barra de entrada (#bcp-barwrap, mudada con sus escuchadores).
+     Mientras el hilo está vacío se ve el estado vacío (Khipu grande, sugerencias, lo vivo). */
+  var _centerBox = null, _homeTs = 0, _homeLang = null, _threadMO = null;
+  function _buildCenter(centerEl) {
+    var box = centerEl.querySelector('.kos-chat');
+    if (!box) {
+      box = document.createElement('div'); box.className = 'kos-chat';
+      box.innerHTML = '<div class="kos-chathd"></div><div class="kos-chatbody"></div>';
+      centerEl.appendChild(box);
+      box.querySelector('.kos-chathd').addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-k]'); if (!b) return;
+        if (b.getAttribute('data-k') === 'agents') stage('agents');
+        else if (b.getAttribute('data-k') === 'new') _newConversation();
+      });
+    }
+    _centerBox = box;
+    _paintChatHeader();
+    return box;
+  }
+  function _paintChatHeader() {
+    var box = _centerBox; if (!box) return;
+    var hd = box.querySelector('.kos-chathd'); if (!hd) return;
+    var ag = _agentsOn(), n = ag.length;
+    var sub = !n ? L('Solo Khipu, sin agentes extra', 'Just Khipu, no extra agents')
+      : n === 1 ? L('1 agente trabajando contigo', '1 agent working with you')
+      : L(n + ' agentes trabajando contigo', n + ' agents working with you');
+    var mode = _mode();
+    if (mode) sub += ' · ' + (mode === 'pro' ? 'Pro' : L('Simple', 'Simple'));
+    var think = !!document.querySelector('#bcp-state.think');
+    hd.innerHTML = '<span class="kos-chathd-m">' + _mascot('khipu', 40, think ? { state: 'think' } : null) + '</span>' +
+      '<div class="who"><div class="nm">Khipu</div><div class="sb">' + esc(sub) + '</div></div><span class="sp"></span>' +
+      (n ? '<button type="button" class="kos-stackbtn" data-k="agents" title="' + esc(L('Tus agentes', 'Your agents')) + '" aria-label="' + esc(L('Tus agentes', 'Your agents')) + '">' + _stackHTML(ag, 22) + '</button>' : '') +
+      '<button type="button" class="kos-ib" data-k="new" title="' + esc(L('Nueva conversación', 'New conversation')) + '" aria-label="' + esc(L('Nueva conversación', 'New conversation')) + '">' + SVG.compose + '</button>';
+  }
+  function _syncHasMsgs() {
+    if (!_centerBox) return;
+    _centerBox.classList.toggle('kos-has-msgs', chatThread().children.length > 0);
+  }
+  function _watchThread() {
+    if (_threadMO || !window.MutationObserver) return;
+    try { _threadMO = new MutationObserver(_syncHasMsgs); _threadMO.observe(chatThread(), { childList: true }); } catch (e) { _threadMO = null; }
+  }
+  function _newConversation() {
+    try { if (window.KhipuChat && window.KhipuChat.clear) window.KhipuChat.clear(); } catch (e) {}
+    chatThread().innerHTML = '';
+    _syncHasMsgs();
+    _paintHome(true);
+    _focusChat();
+  }
+  function _focusChat() {
+    var i = document.getElementById('bcp-input');
+    if (i) try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); }
+    var body = _centerBox && _centerBox.querySelector('.kos-chatbody');
+    if (body) body.scrollTop = body.scrollHeight;
+  }
+  function _onLayout(on, centerEl) {
+    var ov = document.getElementById('bcp-ov'); if (!ov) return;
+    ov.classList.toggle('kos-centered', !!on);
+    var bw = document.getElementById('bcp-barwrap'), inp = document.getElementById('bcp-input');
+    var hadFocus = !!(inp && document.activeElement === inp);
+    if (on && centerEl) {
+      var box = _buildCenter(centerEl);
+      if (bw && bw.parentNode !== box) box.appendChild(bw);   // misma barra, mismos escuchadores
+      var D = desk(); if (D && D.has('chat')) D.closeKind('chat');   // la ventana 💬 ya no hace falta
+      _placeThread(_curKind || 'empty');
+      _paintHome(false);
+    } else {
+      var dock = document.getElementById('bcp-chatdock');
+      if (bw && dock && bw.parentNode !== ov) ov.insertBefore(bw, dock.nextSibling);
+      _centerBox = null;
+      _placeThread(_curKind || 'empty');
+      // pantalla mediana: el inicio vuelve al muro (después: el escritorio puede estar desmontándose)
+      setTimeout(function () { if (open && deskActive() && !isCentered()) _paintHome(false); }, 0);
+    }
+    if (hadFocus && inp) { try { inp.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  // pinta el inicio UNA vez (en el centro o en el muro); ids #bcp-home-* siempre únicos
+  function _paintHome(force) {
+    var D = desk(); if (!D || !D.active()) return;
+    var lang = ckLang(), wall = D.wall();
+    if (isCentered()) {
+      if (wall && wall.children.length) wall.innerHTML = '';
+      var body = _centerBox && _centerBox.querySelector('.kos-chatbody'); if (!body) return;
+      if (!force && body.querySelector('#kos-empty') && _homeLang === lang) return;
+      _homeLang = lang; _homeTs = Date.now();
+      _renderCenterHome(body);
+      return;
+    }
+    var ce = document.getElementById('kos-empty'); if (ce && ce.parentNode) ce.parentNode.removeChild(ce);
+    if (!wall) return;
+    if (!force && wall.children.length && _homeLang === lang) return;
+    _homeLang = lang; _homeTs = Date.now();
+    stageEmpty(wall);
+  }
+  function _renderCenterHome(body) {
+    var en = ckLang() === 'en';
+    var old = body.querySelector('#kos-empty'); if (old) old.parentNode.removeChild(old);
+    var sugg = en ? ['How is Nvidia doing and what is its biggest risk?', 'Which companies depend on TSMC?', 'What happened today in the chip chain?',
+                     'Compare Nvidia and AMD', 'What do my agents think about ASML?', 'Simulate that China bans HBM exports']
+                  : ['¿Cómo está Nvidia y cuál es su mayor riesgo?', '¿Qué empresas dependen de TSMC?', '¿Qué pasó hoy en la cadena de chips?',
+                     'Compara Nvidia y AMD', '¿Qué opinan mis agentes de ASML?', 'Simula que China prohíbe exportar HBM'];
+    var e = document.createElement('div'); e.id = 'kos-empty';
+    e.innerHTML = '<div class="kos-hero">' + _mascot('khipu', 84) + '</div>' +
+      '<h2 class="kos-empty-h">Khipus</h2>' +
+      '<p class="kos-empty-p">' + esc(L('Pregúntale lo que quieras, como a un analista.', 'Ask anything, the way you would ask an analyst.')) + '</p>' +
+      '<div class="kos-sugg">' + sugg.map(function (q) { return '<button type="button" class="kos-chip" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + '</div>' +
+      '<div id="bcp-home-hyper" class="bcp-live"></div>' +
+      '<div id="bcp-home-pulse" class="bcp-live"></div>' +
+      '<div class="kos-agrow"></div>';
+    body.insertBefore(e, body.firstChild);
+    e.addEventListener('click', function (ev) {
+      var c = ev.target.closest && ev.target.closest('.kos-chip');
+      if (c) { ask(c.getAttribute('data-q')); return; }
+      var a = ev.target.closest && ev.target.closest('.kos-ag');
+      if (a) {
+        var id = a.getAttribute('data-ag');
+        if (_custom.agents) stage('agents', { id: id }); else _askAgentPrefill(id);
+      }
+    });
+    _paintAgentRow();
+    _syncHasMsgs();
+    try { _homeHyper(); } catch (x) {}   // frase viva del hipergrafo (una sola petición, con caché)
+    try { _homePulse(); } catch (x) {}   // tus carteras en una línea
+  }
+  function _paintAgentRow() {
+    var row = document.querySelector('#kos-empty .kos-agrow'); if (!row) return;
+    var on = _agentsOn();
+    row.innerHTML = AGENT_IDS.map(function (id) {
+      var tt = _agentName(id) + (_agentRole(id) ? ' — ' + _agentRole(id) : '') + (on.indexOf(id) < 0 ? ' (' + L('apagado', 'off') + ')' : '');
+      return '<button type="button" class="kos-ag' + (on.indexOf(id) < 0 ? ' off' : '') + '" data-ag="' + id + '" title="' + esc(tt) + '" aria-label="' + esc(tt) + '">' +
+        _mascot(id, 34) + '<span>' + esc(_agentName(id)) + '</span></button>';
+    }).join('');
+  }
+  function _askAgentPrefill(id) {
+    var t = AGENT_TOK[id], inp = document.getElementById('bcp-input');
+    if (!t || !inp) return;
+    inp.value = (ckLang() === 'en' ? t[1] : t[0]) + ' ';
+    try { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (e) {}
+    try { inp.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  }
+
+  /* ══ KHIPUS OS — PALETA ⌘K: empresas · pantallas · preguntar a un agente · acciones ══ */
+  var _pal = { items: [], idx: 0 };
+  var _nodeIdx = null;
+  function _palEl() { return document.getElementById('kos-pal'); }
+  function palIsOpen() { var p = _palEl(); return !!(p && p.classList.contains('show')); }
+  function _wordScore(hay, w) {
+    if (!w) return 1;
+    if (hay === w) return 100;
+    if (hay.indexOf(w) === 0) return 82;
+    if (hay.indexOf(' ' + w) >= 0) return 66;
+    if (w.length >= 3 && hay.indexOf(w) >= 0) return 48;
+    if (w.length >= 4) {   // letras en orden ("cmte" → comité)
+      var j = 0; for (var k = 0; k < hay.length && j < w.length; k++) if (hay.charAt(k) === w.charAt(j)) j++;
+      if (j === w.length) return 18;
+    }
+    return 0;
+  }
+  function _matchScore(text, fq) {
+    if (!fq) return 1;
+    var hay = _fold(text), words = fq.split(/\s+/).filter(Boolean), min = 100;
+    for (var i = 0; i < words.length; i++) { var s = _wordScore(hay, words[i]); if (!s) return 0; if (s < min) min = s; }
+    return min;
+  }
+  function _nodeIndex() {
+    var N = window.NODES || [];
+    if (_nodeIdx && _nodeIdx.n === N.length) return _nodeIdx.list;
+    var list = N.map(function (n) { return { n: n, f: _fold(n.label), t: _fold(n.mkt || ''), i: _fold(n.id) }; });
+    _nodeIdx = { n: N.length, list: list };
+    return list;
+  }
+  function _palCompanies(fq, raw) {
+    var out = [], seen = {};
+    function add(n) { if (n && n.id && !seen[n.id] && out.length < 6) { seen[n.id] = 1; out.push(n); } }
+    if (!fq) {   // sin texto: lo que miraste hace poco (o la seleccionada), y si no hay nada, las más consultadas
+      var ids = [];
+      try { var cx = window.KhipuChat && window.KhipuChat.context ? window.KhipuChat.context() : null; ids = (cx && cx.recent_entities) || []; } catch (e) {}
+      var sel = _selNode(); if (sel) ids = [sel].concat(ids);
+      var recent = ids.length > 0;
+      ids.forEach(function (id) { add(resolveNode(id)); });
+      if (!recent) ['Nvidia', 'TSMC', 'ASML', 'SK Hynix'].forEach(function (q) { add(resolveNode(q)); });
+      return { recent: recent, nodes: out.slice(0, 4) };
+    }
+    var scored = [];
+    _nodeIndex().forEach(function (x) {
+      var s = 0;
+      if (x.t && x.t === fq) s = 100;
+      else if (x.f === fq || x.i === fq) s = 98;
+      else if (x.f.indexOf(fq) === 0) s = 84;
+      else if (x.t && fq.length >= 2 && x.t.indexOf(fq) === 0) s = 72;
+      else if (x.f.indexOf(' ' + fq) >= 0) s = 64;
+      else if (fq.length >= 3 && x.f.indexOf(fq) >= 0) s = 50;
+      if (s) scored.push({ n: x.n, s: s + (x.n.mkt ? 2 : 0) - Math.min(6, x.f.length / 12) });
+    });
+    // el resolutor robusto (alias de voz, sin acentos, aproximado) manda arriba si está seguro
+    try { var r = window.KhipuResolve && window.KhipuResolve.find(raw); if (r && r.node && (r.score || 0) >= 70) scored.push({ n: r.node, s: 101 }); } catch (e) {}
+    scored.sort(function (a, b) { return b.s - a.s; });
+    scored.forEach(function (x) { add(x.n); });
+    return { recent: false, nodes: out };
+  }
+  function _openCompany(id) {
+    if (_custom.glance) stage('glance', { id: id }); else stage('xray', id);
+  }
+  function _palActions() {
+    var dark = document.body.classList.contains('dark'), mode = _mode();
+    var A = [
+      { ic: dark ? '☀️' : '🌙', label: dark ? L('Tema claro', 'Light theme') : L('Tema oscuro', 'Dark theme'), k: 'tema theme claro oscuro light dark apariencia', run: _toggleTheme, keep: true },
+      { ic: '🌐', label: ckLang() === 'en' ? 'Cambiar a español' : 'Switch to English', k: 'idioma language english espanol ingles spanish', run: _toggleLang, keep: true },
+    ];
+    if (mode) A.push({ ic: '◐', label: mode === 'pro' ? L('Modo Simple (lenguaje llano)', 'Simple mode (plain language)') : L('Modo Pro (cifras y rangos)', 'Pro mode (figures and ranges)'),
+      k: 'modo simple pro mode explicacion', run: function () { _setMode(mode === 'pro' ? 'simple' : 'pro'); _paintChatHeader(); } });
+    A.push({ ic: '🧹', label: L('Nueva conversación', 'New conversation'), k: 'nueva conversacion limpiar borrar new conversation clear', run: _newConversation });
+    if (deskActive()) A.push({ ic: '▦', label: L('Ordenar ventanas', 'Arrange windows'), k: 'ordenar ventanas acomodar arrange windows tile', run: function () { desk().arrange(true); } });
+    A.push({ ic: '▭', label: L('Vista clásica (pestañas de antes)', 'Classic view (the old tabs)'), k: 'vista clasica classic view pestanas tabs salir exit', run: toClassicView });
+    return A;
+  }
+  function palOpen(q) {
+    if (!open) openCockpit();
+    ensureShell();
+    _popClose();
+    var p = _palEl(); if (!p) return;
+    if (!p.firstChild) {
+      p.innerHTML = '<div class="kos-pal-box">' +
+        '<div class="kos-pal-in">' + SVG.search + '<input type="text" id="kos-pal-input" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-autocomplete="list" aria-controls="kos-pal-list"></div>' +
+        '<div class="kos-pal-list" id="kos-pal-list" role="listbox"></div>' +
+        '<div class="kos-pal-foot"></div></div>';
+      var inp = p.querySelector('input'), list = p.querySelector('.kos-pal-list');
+      inp.addEventListener('input', function () { _pal.idx = 0; palRender(); });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); _palMove(e.key === 'ArrowDown' ? 1 : -1); }
+        else if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); _palRun(_pal.idx); }
+        else if (e.key === 'Escape') { e.preventDefault(); palClose(); }
+      });
+      list.addEventListener('mousemove', function (e) {
+        var it = e.target.closest && e.target.closest('.kos-pi'); if (!it) return;
+        var i = +it.getAttribute('data-i'); if (i !== _pal.idx) { _pal.idx = i; _palMark(false); }
+      });
+      list.addEventListener('click', function (e) {
+        var it = e.target.closest && e.target.closest('.kos-pi'); if (it) _palRun(+it.getAttribute('data-i'));
+      });
+      p.addEventListener('pointerdown', function (e) { if (e.target === p) palClose(); });   // clic en el fondo
+    }
+    var input = p.querySelector('input');
+    input.value = q || '';
+    input.setAttribute('placeholder', L('Busca una empresa, una pantalla o una acción…', 'Search a company, a screen or an action…'));
+    input.setAttribute('aria-label', input.getAttribute('placeholder'));
+    p.querySelector('.kos-pal-foot').innerHTML = '<span><b>↑↓</b> ' + esc(L('moverte', 'move')) + '</span><span><b>↵</b> ' + esc(L('abrir', 'open')) + '</span>' +
+      '<span><b>esc</b> ' + esc(L('cerrar', 'close')) + '</span><span style="margin-left:auto">' + esc(L('¿Una pregunta? Escríbela y Khipu responde.', 'A question? Type it and Khipu answers.')) + '</span>';
+    p.classList.add('show');
+    _pal.idx = 0;
+    palRender();
+    setTimeout(function () { try { input.focus(); input.select(); } catch (e) {} }, 0);
+  }
+  function palClose(keepFocus) {
+    var p = _palEl(); if (!p || !p.classList.contains('show')) return;
+    p.classList.remove('show');
+    if (!keepFocus && isCentered()) { var i = document.getElementById('bcp-input'); if (i) try { i.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  function palRender() {
+    var p = _palEl(); if (!p) return;
+    var inp = p.querySelector('input'), list = p.querySelector('.kos-pal-list');
+    var raw = (inp.value || '').trim(), fq = _fold(raw), en = ckLang() === 'en';
+    var items = [];
+    function sec(title, arr) { arr.forEach(function (it, i) { it.sec = i === 0 ? title : null; items.push(it); }); }
+    // ¿parece una pregunta? → primero "Preguntar a Khipu"
+    var askIt = raw ? [{ ic: _mascot('khipu', 22), label: L('Preguntar a Khipu: «', 'Ask Khipu: “') + raw + L('»', '”'), go: '↵', run: function () { palClose(); ask(raw); } }] : [];
+    var question = /[?¿]/.test(raw) || raw.split(/\s+/).length >= 3;
+    if (question) sec(L('Preguntar', 'Ask'), askIt);
+    var comp = _palCompanies(fq, raw);
+    var goLabel = _custom.glance ? L('En una mirada', 'At a glance') : 'X-Ray';
+    sec(comp.recent ? L('Recientes', 'Recent') : L('Empresas', 'Companies'), comp.nodes.map(function (n) {
+      return { ic: '<i style="background:' + esc(sectorColor(n.cat)) + '"></i>', label: n.label, sub: n.mkt || '', go: goLabel, run: function () { palClose(true); _openCompany(n.id); } };
+    }));
+    var scr = screens().map(function (s) { return { s: s, sc: _matchScore([s.es, s.en, s.k].join(' '), fq) }; })
+      .filter(function (x) { return x.sc > 0; }).sort(function (a, b) { return b.sc - a.sc; }).slice(0, fq ? 6 : 8);
+    sec(L('Abrir', 'Open'), scr.map(function (x) {
+      return { ic: esc(x.s.ic), label: en ? x.s.en : x.s.es, go: L('Abrir', 'Open'), run: function () { palClose(true); _runScreen(x.s.id); } };
+    }));
+    var ags = AGENT_IDS.filter(function (id) { return _matchScore(_agentName(id) + ' ' + _agentRole(id) + ' agente agent ' + id, fq) > 0; });
+    sec(L('Preguntar a', 'Ask'), ags.map(function (id) {
+      var t = AGENT_TOK[id];
+      return { ic: _mascot(id, 22), label: _agentName(id), sub: _agentRole(id), go: en ? t[1] : t[0], run: function () { palClose(); _askAgentPrefill(id); } };
+    }));
+    var acts = _palActions().filter(function (a) { return _matchScore(a.label + ' ' + a.k, fq) > 0; }).slice(0, fq ? 4 : 8);
+    sec(L('Acciones', 'Actions'), acts.map(function (a) {
+      return { ic: esc(a.ic), label: a.label, go: '↵', run: function () { if (a.keep) { a.run(); palRender(); return; } palClose(); a.run(); } };
+    }));
+    if (!question && askIt.length) sec(L('Preguntar', 'Ask'), askIt);
+    _pal.items = items;
+    if (_pal.idx >= items.length) _pal.idx = Math.max(0, items.length - 1);
+    if (!items.length) { list.innerHTML = '<div class="kos-pal-empty">' + esc(L('Nada coincide. Prueba con el ticker (NVDA) o escribe tu pregunta.', 'Nothing matches. Try the ticker (NVDA) or type your question.')) + '</div>'; return; }
+    list.innerHTML = items.map(function (it, i) {
+      return (it.sec ? '<div class="kos-pal-sec">' + esc(it.sec) + '</div>' : '') +
+        '<div class="kos-pi" role="option" id="kos-pi-' + i + '" data-i="' + i + '" aria-selected="false">' +
+          '<span class="ic">' + it.ic + '</span>' +
+          '<span class="tx">' + esc(it.label) + (it.sub ? '<span class="sub">' + esc(it.sub) + '</span>' : '') + '</span>' +
+          '<span class="go">' + esc(it.go || '') + '</span></div>';
+    }).join('');
+    _palMark(true);
+  }
+  function _palMark(scroll) {
+    var p = _palEl(); if (!p) return;
+    p.querySelectorAll('.kos-pi').forEach(function (el) {
+      var on = +el.getAttribute('data-i') === _pal.idx;
+      el.classList.toggle('on', on); el.setAttribute('aria-selected', on ? 'true' : 'false');
+      if (on && scroll && el.scrollIntoView) { try { el.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+    });
+    var inp = p.querySelector('input'); if (inp) inp.setAttribute('aria-activedescendant', 'kos-pi-' + _pal.idx);
+  }
+  function _palMove(d) {
+    var n = _pal.items.length; if (!n) return;
+    _pal.idx = (_pal.idx + d + n) % n;
+    _palMark(true);
+  }
+  function _palRun(i) {
+    var it = _pal.items[i]; if (!it) return;
+    try { it.run(); } catch (e) { try { console.warn('[Khipus OS] paleta', e); } catch (x) {} }
+  }
   // ── el GRAFO en vivo, dentro de la Cabina ──
   function stageGraph(s, focusId) {
     s.innerHTML = backBar(L('Grafo en vivo', 'Live graph')) + '<div class="bcp-embed" id="bcp-embed-graph"></div>';
@@ -775,6 +1707,8 @@
     geo:        { panel: 'geo-panel',         es: 'Geopolítica', en: 'Geopolitics', init: function () { if (typeof window.renderGeoPanel === 'function') window.renderGeoPanel(); } },
     space:      { panel: 'space-panel',       es: 'Espacio',     en: 'Space',       init: function () { if (typeof window.initSpaceTab === 'function') window.initSpaceTab(); } },
     simulation: { panel: 'simulation-panel',  es: 'Escenarios',  en: 'Scenarios',   init: function () { if (typeof window.initSimTab === 'function') window.initSimTab(); } },
+    // Khipus OS: las carteras de práctica también viven DENTRO (antes abrirlas cerraba la Cabina)
+    portfolios: { panel: 'portfolios-panel', es: 'Carteras de práctica', en: 'Practice portfolios', init: function () { if (window.KhipuPortfolios && window.KhipuPortfolios.mount) window.KhipuPortfolios.mount('portfolios-panel'); } },
   };
   function stageAdoptTab(s, tabId) {
     var cfg = ADOPT_TABS[tabId]; if (!cfg) return stageEmpty(s);
@@ -886,14 +1820,27 @@
      principal + los factores activos, y un clic al panel completo. Reusa
      /api/matrix/insights (cacheado 180s en el server → barato). Si la ontología
      está caída, no aparece nada (silencioso). ══ */
+  // caché compartida (inicio + pantalla de Oportunidades): una petición por idioma cada 2 min;
+  // si falla, la próxima vez se reintenta (no se guarda el error)
+  var _mxIns = { key: '', ts: 0, p: null };
+  function _matrixInsights(en) {
+    var key = en ? 'en' : 'es', now = Date.now();
+    if (_mxIns.p && _mxIns.key === key && now - _mxIns.ts < 120000) return _mxIns.p;
+    var p = fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang: key, tier: 'fast' }) })
+      .then(function (r) { return r.json(); })
+      .catch(function () { return null; });
+    _mxIns = { key: key, ts: now, p: p };
+    p.then(function (d) { if ((!d || d.error) && _mxIns.p === p) _mxIns.ts = 0; });
+    return p;
+  }
   async function _homeHyper() {
     var el = document.getElementById('bcp-home-hyper'); if (!el) return;
     var en = ckLang() === 'en';
     try {
-      var r = await fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lang: en ? 'en' : 'es', tier: 'fast' }) });
-      var d = await r.json();
-      if (!document.getElementById('bcp-home-hyper')) return;   // el usuario ya navegó
+      var d = await _matrixInsights(en);
+      el = document.getElementById('bcp-home-hyper');
+      if (!el) return;   // el usuario ya navegó
       if (!d || d.available === false || !(d.insights && d.insights.length)) return;
       var top = d.insights[0];
       var kico = { riesgo: '⚠️', oportunidad: '📈', estructura: '🕸' };
@@ -1280,9 +2227,7 @@
      (503) el bloque se oculta y la vista NRS de abajo sigue intacta. ══ */
   function _fetchHyperInsights(en) {
     var host = document.getElementById('bcp-hyper'); if (!host) return;
-    fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lang: en ? 'en' : 'es', tier: 'fast' }) })
-      .then(function (r) { return r.json(); })
+    _matrixInsights(en)
       .then(function (d) {
         var h = document.getElementById('bcp-hyper'); if (!h) return;   // el usuario cambió de escena
         if (!d || d.available === false || d.error) { h.style.display = 'none'; return; }
@@ -1694,8 +2639,8 @@
   // del bróker como "Tu cartera" (1 ETF) y no las carteras simuladas. Ahora: cada cartera
   // simulada (engine/portfolios.js, precios en vivo) + la cuenta del bróker si hay PIN.
   function _pfLine(name, value, pct, n, en) {
-    var col = pct >= 0 ? UP : DOWN, sign = pct >= 0 ? '+' : '';
-    return esc(name) + ': ' + fmtUsd(value) +
+    var col = pct >= 0 ? 'var(--os-good,' + UP + ')' : 'var(--os-bad,' + DOWN + ')', sign = pct >= 0 ? '+' : '';
+    return esc(name) + ': ' + _money(value) +   // mismo formato que el saldo de la barra superior
       (n ? ' · <span style="color:' + col + '">' + sign + pct.toFixed(1) + '%</span> · ' + n + ' ' + (en ? (n === 1 ? 'position' : 'positions') : (n === 1 ? 'posición' : 'posiciones'))
          : ' · ' + (en ? 'no positions' : 'sin posiciones'));
   }
@@ -1722,8 +2667,9 @@
         a.addEventListener('click', function (e) {
           e.preventDefault();
           try { localStorage.setItem('kh_pf_active', a.getAttribute('data-pf')); } catch (x) {}
-          if (window._surface) window._surface('tab', 'portfolios'); else if (window.switchTab) window.switchTab('portfolios');
-          setTimeout(function () { try { window.KhipuPortfolios.refresh(); } catch (x) {} }, 300);
+          if (open) stage('portfolios');
+          else if (window._surface) window._surface('tab', 'portfolios'); else if (window.switchTab) window.switchTab('portfolios');
+          setTimeout(function () { try { window.KhipuPortfolios.refresh(); } catch (x) {} _balRefresh(); }, 300);
         });
       });
       var b = document.getElementById('bcp-home-adv');
@@ -2131,8 +3077,8 @@
       '<div class="bcp-inner bcp-canvaswrap">' +
         '<div class="bcp-canvasbar">' +
           '<input id="bcp-cv-q" class="" type="text" autocomplete="off" placeholder="' + esc(L('Describe el gráfico o la tabla…  «top 10 por riesgo NRS»', 'Describe the chart or table…  “top 10 by NRS risk”')) + '" ' +
-            'style="flex:1;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.22);border-radius:12px;color:#E8EDFB;font-size:14px;padding:12px 15px;outline:none">' +
-          '<button class="bcp-iconbtn" id="bcp-cv-go" style="width:auto;padding:0 16px">✦ ' + L('Generar', 'Generate') + '</button>' +
+            'style="flex:1;min-width:0;background:var(--os-surface-2);border:1px solid var(--os-line);border-radius:999px;color:var(--os-ink);font-size:14px;padding:11px 16px;outline:none;font-family:inherit">' +
+          '<button class="bcp-iconbtn" id="bcp-cv-go" style="width:auto;padding:0 18px;border-radius:999px;background:var(--os-btn);color:var(--os-btn-ink);font-size:13.5px;font-weight:600">✦ ' + L('Generar', 'Generate') + '</button>' +
         '</div>' +
         '<div id="bcp-cv-cards"></div>' +
       '</div>';
@@ -2491,8 +3437,18 @@
   // el hilo va a la escena 'chat' (pantalla completa) o al dock (sobre la barra)
   function _placeThread(kind) {
     var th = chatThread();
+    _watchThread();
     var dock = document.getElementById('bcp-chatdock');
     if (!dock) return;
+    // Khipus OS: con el chat al centro el hilo vive SIEMPRE en la columna central (el dock no se usa)
+    if (_centerBox && isCentered()) {
+      var cb = _centerBox.querySelector('.kos-chatbody');
+      if (cb && th.parentNode !== cb) cb.appendChild(th);
+      dock.classList.remove('show');
+      _syncHasMsgs();
+      if (cb && th.children.length) setTimeout(function () { cb.scrollTop = cb.scrollHeight; }, 30);
+      return;
+    }
     var D = deskActive() ? desk() : null;
     if (kind === 'chat' || (D && D.has('chat'))) { dock.classList.remove('show'); return; }   // stageChat / la ventana 💬 lo adopta
     var bd = dock.querySelector('.bd');
@@ -2522,6 +3478,7 @@
     return desk().list().filter(function (w) { return w.kind === 'chat'; })[0] || null;
   }
   function _ensureThread() {
+    if (isCentered()) { _placeThread(_curKind || 'empty'); return; }
     if (deskActive()) {
       // si la ventana 💬 existe (minimizada o detrás de otra hoja), la respuesta no se vería: al frente
       var cw = _chatWin();
@@ -2534,6 +3491,7 @@
   // la respuesta abrió una ventana (X-Ray, gráfico…) encima de la ventana 💬 → en pantallas
   // anchas van lado a lado (resultado a la izquierda, conversación a la derecha); si no, 💬 al frente
   function _chatBeside() {
+    if (isCentered()) return;   // Khipus OS: la ventana ya cayó en un flanco; el chat no se tapa
     var cw = _chatWin(); if (!cw) return;
     var D = desk(), other = D.focused();
     if (!other || other === cw.id) return;
@@ -2565,9 +3523,9 @@
     var pend = K.appendPending(th);
     setState('think', L('Pensando', 'Thinking'));
     K.send(text).then(function (d) {
-      // en el celular NO se auto-ejecuta: la vista nueva taparía la respuesta
-      // (queda como botón); en escritorio la respuesta sigue visible en el dock
-      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) >= 700, retry: true });
+      // en el celular (≤ 760 px, ventanas = hojas) NO se auto-ejecuta: la vista nueva taparía la
+      // respuesta (queda como botón); en escritorio la respuesta sigue visible (centro o dock)
+      K.fillReply(pend, d, { onAction: runChatAction, autoRun: (window.innerWidth || 1024) > 760, retry: true });
       var rb = pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAsk(text); });
       setState('', L('Listo', 'Ready'));
     }).catch(function (e) {
@@ -2662,8 +3620,9 @@
         return;
       case 'chart': stage('canvas', route.spec); return;
       case 'screen':
-        if (route.screen === 'universe') { close(); if (window._go3D) window._go3D(); return; }
-        if (route.screen === 'portfolios') { if (window.KhipuChat) window.KhipuChat.runAction({ type: 'switch_tab', arg: 'portfolios' }); return; }
+        // el Universo es un overlay que ya queda ENCIMA de Khipus OS: no hace falta cerrarlo
+        if (route.screen === 'universe') { if (window._go3D) window._go3D(); return; }
+        if (route.screen === 'portfolios') { stage('portfolios'); return; }
         stage(route.screen); return;
       case 'shock': stage('sim', { id: route.id, kind: 'collapse' }); return;
       case 'xray': stage('xray', route.id); return;
@@ -2712,20 +3671,29 @@
 
   // ══ abrir / cerrar ══
   function openCockpit(initial) {
+    // abrir Khipus OS = salir de la "Vista clásica" (si se había elegido en esta sesión)
+    try { sessionStorage.removeItem('kh_os_classic'); } catch (e) {}
+    var was = open;
     ensureShell();
     var ov = document.getElementById('bcp-ov');
     ov.classList.add('show');
     open = true;
-    relabelShell(ov);   // idioma al día (la cáscara se construyó una sola vez)
-    mountCockpitOrb();
-    if (deskActive()) desk().resume();   // las ventanas vuelven a adoptar grafo/terminal/etc.
+    _syncClassicClass(ov);
+    if (!was) {
+      relabelShell(ov);   // idioma al día (la cáscara se construyó una sola vez)
+      mountCockpitOrb();
+      if (deskActive()) desk().resume();   // las ventanas vuelven a adoptar grafo/terminal/etc.
+      _balStart();
+    }
     if (initial && initial.kind) stage(initial.kind, initial.arg);
-    // pantalla de inicio vacía o ya mostrada → se re-pinta (textos en el idioma actual)
-    else if (!document.getElementById('bcp-stage').children.length || _curKind === 'empty') stage('empty');
-    setTimeout(function () { var i = document.getElementById('bcp-input'); if (i) i.focus(); }, 60);
+    // pantalla de inicio vacía o ya mostrada → se re-pinta (textos en el idioma actual);
+    // si YA estaba abierta no se re-pinta nada (⌘K / el botón de Khipu solo enfocan)
+    else if (!was && (!document.getElementById('bcp-stage').children.length || _curKind === 'empty')) stage('empty');
+    setTimeout(function () { var i = document.getElementById('bcp-input'); if (i && !palIsOpen()) i.focus(); }, 60);
   }
   function close() {
     closeConfirmDialog();
+    palClose(true); _popClose(); _balStop();
     if (deskActive()) { parkAdopted(); desk().suspend(); }   // paneles a su pestaña; las ventanas recuerdan re-adoptarlos
     else restoreAdopted();   // devolver grafo/terminal a su sitio original
     _scalpStop();       // detener el polling de scalping al cerrar la Cabina
@@ -2737,14 +3705,52 @@
     var btn = document.getElementById('bcp-mic');
     if (btn && btn.classList.contains('on') && window.BixbyVoice && window.BixbyVoice.stop) { window.BixbyVoice.stop(); btn.classList.remove('on'); }
   }
-
-  // Esc: si la demostración corre, la corta a ella primero (no toda la Cabina)
-  document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Escape' || !open) return;
-    if (_demo.on) { demoStop(); return; }
+  // "Vista clásica" (menú de tus iniciales / paleta): cierra Khipus OS y la app vieja de pestañas
+  // queda hasta que el usuario lo vuelva a abrir (botón de Khipu o ⌘K) — recordado en esta sesión
+  function toClassicView() {
+    try { sessionStorage.setItem('kh_os_classic', '1'); } catch (e) {}
     close();
-  });
-
+    try {
+      if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ kind: 'info', title: L('Vista clásica', 'Classic view'),
+        body: L('Para volver a Khipus OS toca el botón de Khipu (arriba a la derecha) o pulsa ' + (_isMac() ? '⌘K' : 'Ctrl+K') + '.',
+                'To go back to Khipus OS tap the Khipu button (top right) or press ' + (_isMac() ? '⌘K' : 'Ctrl+K') + '.') });
+    } catch (e) {}
+  }
+  // ¿Khipus OS está al frente? (otro overlay —comité, investigación, órdenes, confirmaciones— maneja su Esc)
+  function _osOnTop() {
+    try {
+      var el = document.elementFromPoint(Math.round((window.innerWidth || 0) / 2), Math.round((window.innerHeight || 0) / 2));
+      var ov = document.getElementById('bcp-ov');
+      return !!(el && ov && ov.contains(el));
+    } catch (e) { return true; }
+  }
+  // Teclado (fase de captura: antes que el ⌘K de command_center.js, que abre la Cabina):
+  //  · ⌘K / Ctrl+K con Khipus OS al frente → paleta (abrir/cerrar)
+  //  · Esc NUNCA cierra Khipus OS: cierra la paleta, un menú, la demostración o la ventana enfocada
+  //    (el ⊞ del escritorio y su selector de acomodo ya se cerraron en desktop.js, que va antes)
+  document.addEventListener('keydown', function (e) {
+    if (!open) return;
+    var k = e.key;
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && (k === 'k' || k === 'K')) {
+      if (!palIsOpen() && !_osOnTop()) return;
+      e.preventDefault(); e.stopPropagation();
+      if (palIsOpen()) palClose(); else palOpen('');
+      return;
+    }
+    if (k !== 'Escape') return;
+    if (palIsOpen()) { e.preventDefault(); e.stopPropagation(); palClose(); return; }
+    if (_popIsOpen()) { e.preventDefault(); e.stopPropagation(); _popClose(); return; }
+    if (_demo.on) { e.stopPropagation(); demoStop(); return; }
+    if (!_osOnTop()) return;
+    var t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;   // no borrar lo que escribes
+    if (deskActive()) {
+      var f = desk().focused();
+      if (f) { e.preventDefault(); desk().close(f); }
+      return;
+    }
+    if (_curKind && _curKind !== 'empty') stage('empty');   // Cabina clásica: Esc vuelve al inicio
+  }, true);
   /* ══ MODO DEMOSTRACIÓN ═══════════════════════════════════════════════════
      Khipu maneja la app SOLO y va narrando lo que hace, paso a paso — para
      enseñar el producto (inversionistas) sin depender de ElevenLabs:
@@ -2948,5 +3954,21 @@
     demo: demoStart,
     demoStop: demoStop,
     isDemo: function () { return !!_demo.on; },
+    // ── Khipus OS (contrato §3.1 de docs/KHIPUS_OS.md) ──
+    registerKind: registerKind,                       // ventanas nativas de otros módulos
+    isCentered: isCentered,                           // ¿chat al centro con ventanas en los flancos?
+    palette: function (q) { palOpen(q || ''); },      // paleta ⌘K (empresas, pantallas, agentes, acciones)
+    screens: function () {                            // registro único de pantallas (solo lectura)
+      return screens().map(function (s) { return { id: s.id, group: s.g, icon: s.ic, es: s.es, en: s.en }; });
+    },
+    openScreen: _runScreen,
+    classicView: toClassicView,
+    refreshBalance: _balRefresh,
   };
+  // módulos que cargaron ANTES que la Cabina pueden dejar sus ventanas en una cola:
+  // window.__kosKindQueue = [[kind, spec], …]
+  try {
+    (Array.isArray(window.__kosKindQueue) ? window.__kosKindQueue : []).forEach(function (x) { if (x) registerKind(x[0], x[1]); });
+    window.__kosKindQueue = { push: function (x) { if (x) registerKind(x[0], x[1]); return 0; } };
+  } catch (e) {}
 })();

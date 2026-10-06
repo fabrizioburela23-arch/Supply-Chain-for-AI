@@ -7021,19 +7021,23 @@ const $=id=>document.getElementById(id);
     }
   };
 
-  // Khipus Finance AI: la Cabina de Khipu es la PANTALLA INICIAL (pedido 2026-07-13).
-  // Se abre sola tras el arranque, SOLO una vez por sesión. Si el usuario ya
-  // aterrizó (o algo falla) se muestra el mapa con el fade normal.
+  // KHIPUS OS (2026-10-06): la app SIEMPRE arranca en Khipus OS (la Cabina evolucionada),
+  // en cada carga — antes era una sola vez por sesión y al recargar se veía el mapa viejo.
+  // Única excepción: el usuario eligió "Vista clásica" en esta sesión (sessionStorage
+  // kh_os_classic='1', lo borra el propio OS al volver a abrirse). Si algo falla, el mapa
+  // aparece con el fade normal (fallback de ~9 s).
   try {
-    if (sessionStorage.getItem('kh_bixby_landed')) {
-      setTimeout(fadeBoot, 1350);   // ya aterrizó esta sesión → mapa normal
+    let classic = false;
+    try { classic = sessionStorage.getItem('kh_os_classic') === '1'; } catch (e) {}
+    if (classic) {
+      setTimeout(fadeBoot, 1350);   // eligió la vista clásica en esta sesión → mapa normal
     } else {
       let tries = 0;
       const tryLand = () => {
         tries++;
         if (window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function'
             && typeof NODES !== 'undefined' && NODES.length) {
-          sessionStorage.setItem('kh_bixby_landed', '1');
+          try { sessionStorage.setItem('kh_bixby_landed', '1'); } catch (e) {}   // compat: ya no decide nada
           try { window.BixbyCockpit.open(); } catch (e) {}
           // la Cabina (z-index 7000) ya tapa el mapa → RECIÉN AHÍ quitamos el
           // splash. Sin flash del mapa. Un respiro para su transición de entrada.
