@@ -99,6 +99,9 @@ CONSUME_START_RE = re.compile(
 # target debe ir justo tras "en" (si no, "Fabrica A18 en N3E — Apple es el 1º
 # cliente" se marcaría al revés).
 FAB_START_RE = re.compile(r'^\s*fabrica(?:n|do|dos|da|das)?\b', re.I)
+# 2026-10-06 (ontología nivel 2): la voz PASIVA en cualquier parte — "PMIC fabricados en TSMC" con
+# source=MPWR, target=TSMC está al revés (quien fabrica es TSMC). La invertía el riesgo de TSMC.
+FAB_PASSIVE_RE = re.compile(r'\bfabricad[oa]s?\b', re.I)
 FAB_EN_PREFIX = r'\ben\s+(?:(?:la|el|los|las|su|sus|de|del|planta|plantas|f[áa]brica|f[áa]bricas|fabs?|proceso|procesos|nodos?)\s+){0,3}(?:'
 
 UNVERIFIED_RE = re.compile(r'no verificad|\bposible|no revisad|no confirmad|sin confirmar', re.I)
@@ -273,7 +276,7 @@ def audit_snapshot(snap, vocab=None):
 
     def fab_en_target(text, nid):
         """'Fabrica … en <target>' (el target es quien fabrica)."""
-        if not FAB_START_RE.search(text):
+        if not (FAB_START_RE.search(text) or FAB_PASSIVE_RE.search(text)):
             return False
         if nid not in _fab_cache:
             pat = name_pattern(nid)

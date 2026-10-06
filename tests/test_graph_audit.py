@@ -227,3 +227,15 @@ def test_alias_g1d_mismo_ticker_exacto():
     for a, canon in ALIAS_PAIRS_G1D.items():
         assert alias.get(a) == canon
         assert canon in ids and a not in ids
+
+
+def test_voz_pasiva_fabricado_en_target_es_direccion_al_reves():
+    # 2026-10-06: "PMIC fabricados en TSMC" con source=MPWR → TSMC estaba al revés y nadie lo marcaba
+    from scripts.audit_graph import audit_snapshot
+    snap = {'nodes': [{'id': 'TSMC', 'label': 'TSMC', 'cat': 'foundry'}, {'id': 'MPWR', 'label': 'MPWR', 'cat': 'power'},
+                      {'id': 'Achronix', 'label': 'Achronix', 'cat': 'fpga'}],
+            'links': [{'source': 'MPWR', 'target': 'TSMC', 'w': 3, 'rel': 'PMIC fabricados en TSMC', 'type': 'fab'},
+                      {'source': 'TSMC', 'target': 'Achronix', 'w': 3, 'rel': 'Chips fabricados en TSMC', 'type': 'fab'}],
+            'node_id_alias': {}}
+    f = audit_snapshot(snap)['findings']['suspicious_directions']
+    assert {(x['source'], x['target']) for x in f if x['reason'] == 'consume_verb_target'} == {('MPWR', 'TSMC')}

@@ -25,6 +25,13 @@ está conectado).
 - API /api/tensor/{status,node/<id>,rank,suggest (POST),eval} (matrix/tensor_api.py). MCP get_company gana (resumen COMPACTO: el chat corta a 7.000 caracteres)
   `structure`. X-Ray: sección 🧮 Estructura (+ explicador `tensor_struct` ES/EN).
 - Tests: tests/test_tensor.py (6), tests/test_tensor_autolink.py (2, con Postgres).
+- Producción (MCP): funciona. Arreglo: `_caps_live` pide el refresco de caps en vivo (get_caps(start=True),
+  en segundo plano) — tras un reinicio la cobertura de capitalización era ~20 % (solo privadas).
+- Hallazgo de datos: "PDF Solutions 48 %" como riesgo de TSMC = efecto de la normalización POR TIPO del
+  kernel (único licenciante de TSMC → transmite mucho); y 6 vínculos `fab` AL REVÉS hacia TSMC que la
+  auditoría no marcaba ("PMIC fabricados en TSMC" con source=MPWR): MPWR, Navitas, Qorvo, Richtek, Skyworks,
+  Broadcom → TSMC. scripts/audit_graph.py ahora detecta la voz pasiva (FAB_PASSIVE_RE) → direcciones
+  sospechosas 59→65 (línea base reescrita: más detección, no peores datos). NO se invirtieron: decide Fabrizio.
 
 # SESIÓN 2026-10-06 (ee) — MAPA POR CAPITALIZACIÓN EN VIVO + HOME CON CADA CARTERA (sw v240)
 
