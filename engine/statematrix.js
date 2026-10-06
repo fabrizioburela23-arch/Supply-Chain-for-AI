@@ -21,9 +21,13 @@
   // Criticidad de cada tipo de relación en la transmisión de daño (idéntico a
   // matrix/engine.py DEFAULT_REL_WEIGHTS — el cliente y el server coinciden).
   var REL_W = {
-    supply: 1.0, fab: 1.0, cloud: 0.9, license: 0.8, ppa: 0.7,
+    supply: 1.0, fab: 1.0, cloud: 0.9, license: 0.5, ppa: 0.7,   // license 0.8→0.5 (2026-10-06, aprobado por Fabrizio)
     deploy: 0.4, partner: 0.3, owns: 0.6, invest: 0.25,
   };
+  // 2026-10-06: un proveedor ÚNICO en su tipo ya no transmite el 100 % por ser único — transmite
+  // según su propio peso (6 = crítico). Antes PDF Solutions (licencia, peso 2) salía como el
+  // mayor riesgo de TSMC. Idéntico a matrix/engine.py SOLE_LINK_FLOOR.
+  var SOLE_LINK_FLOOR = 6;
   var clamp01 = function (v) { return v < 0 ? 0 : v > 1 ? 1 : v; };
   // G4c (= matrix/engine.py _eff_weight): un link cuyo texto curado dice "no
   // verificado"/"posible" trae conf 0.3 (nodes/merge_graph.js) y pesa eso.
@@ -66,7 +70,8 @@
       edges.forEach(function (e) { colSum[e.j] += e.w; rowSum[e.i] += e.w; });
       var crit = REL_W[type] != null ? REL_W[type] : 0.5;
       edges.forEach(function (e) {
-        incoming[e.j].push({ i: e.i, w: e.w / (colSum[e.j] || 1) * crit });
+        // PISO = peso "crítico" (6): un proveedor único transmite según SU peso (= matrix/engine.py SOLE_LINK_FLOOR)
+        incoming[e.j].push({ i: e.i, w: e.w / Math.max(colSum[e.j] || 0, SOLE_LINK_FLOOR) * crit });
         customers[e.i].push({ i: e.j, w: e.w / (rowSum[e.i] || 1) * crit });
       });
     });

@@ -9,6 +9,24 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (gg) — DIRECCIONES AL REVÉS + PESO DE LICENCIAS + PISO DEL KERNEL (sw v242)
+
+Fabrizio aprobó ("sí a las dos"):
+- nodes/links_connect.js: 49 filas seguían escritas [cliente, proveedor] pese al encabezado "canonizado"
+  (Wayve→Nvidia "GPU…", TSMC→Photronics "fotomáscaras", Tesla→Fanuc "robots", Skyworks/Qorvo/MPWR/Navitas/
+  Richtek/BroadcomASIC/Winbond→TSMC "fabricado en TSMC", Tata/Vedanta→ASML, Hyundai→Renesas…). Volteadas;
+  el merge deduplica 8 que ya existían al derecho (2.526→2.518 vínculos). Direcciones sospechosas 65→55.
+  nodes_seed.js: Palantir→Microsoft y Figure→Microsoft pasan de `license` a `partner` (eran alianzas).
+  LA BASE DE PRODUCCIÓN conserva lo viejo hasta aplicar 🩺 → Reconciliar (categoría 'direction', con PIN).
+- vocabulary.json `license` 0.8→0.5 (+ statematrix REL_W, test_vocabulary).
+- KERNEL: `matrix/engine.SOLE_LINK_FLOOR = 6` — la columna de cada tipo se normaliza por max(suma, 6): un
+  proveedor único transmite según SU peso (6 = todo) en vez del 100 % por ser único. Mismo piso en
+  engine/statematrix.js. Efecto: la confianza (conf) por fin cuenta también para proveedores únicos.
+  Riesgos de origen ahora sensatos: OpenAI ← Azure/OCI/TSMC/CoreWeave; Apple ← TSMC/ARM/Qorvo/Skyworks;
+  NVIDIA ← TSMC 61 %/ARM 12 %. Sigue flojo: ASML pesa 2,4 % para TSMC (navieras con peso 5 la diluyen —
+  dato de pesos del catálogo, no del kernel).
+- Auto-conexión tras los cambios: Hit@10 0,42 vs 0,23 de popularidad (promedio 3 semillas).
+
 # SESIÓN 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2: TENSORES + AUTO-CONEXIÓN (sw v241)
 
 - `matrix/tensor.py` (sin BD, lee data/grafo_v0.json): A ∈ ℝ^{R×N×N} (solo relaciones de FLUJO, peso×conf),

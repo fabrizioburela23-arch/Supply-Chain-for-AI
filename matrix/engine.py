@@ -391,6 +391,14 @@ def modulate(mats, idx, factors):
     return {r: _scale_cols(m, f) for r, m in mats.items()}
 
 
+# Peso "crítico" del catálogo (escala 1-6). La columna de cada tipo se normaliza por
+# max(suma, SOLE_LINK_FLOOR): un proveedor ÚNICO en su tipo transmite según SU peso (6 = todo,
+# 2 = un tercio) en vez del 100 % por el solo hecho de ser único. 2026-10-06, aprobado por
+# Fabrizio: PDF Solutions (licencia, peso 2) salía como el mayor riesgo de TSMC y Palantir/ARM
+# como el de Microsoft. Mismo piso en engine/statematrix.js.
+SOLE_LINK_FLOOR = 6.0
+
+
 def _dependency_matrix(mats, rel_weights=None):
     """Matriz de transmisión de daño T[i,j] = cuánto del shock de i llega a j.
 
@@ -408,8 +416,7 @@ def _dependency_matrix(mats, rel_weights=None):
         w.update(rel_weights)
     T = None
     for r, m in mats.items():
-        col = _colsum(m)
-        col[col == 0] = 1.0
+        col = np.maximum(_colsum(m), SOLE_LINK_FLOOR)
         Dr = _scale_cols(m, w.get(r, 0.5) / col)   # columna normalizada × criticidad
         T = Dr if T is None else T + Dr
     return T

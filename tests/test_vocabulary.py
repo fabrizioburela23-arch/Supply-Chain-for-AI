@@ -15,7 +15,9 @@ from ontology import vocabulary as V  # noqa: E402
 # Valores EXACTOS del motor antes del registro (matrix/engine.py:21-31).
 HIST_REL_TYPES = ['supply', 'cloud', 'fab', 'license', 'partner', 'invest',
                   'deploy', 'owns', 'ppa']
-HIST_WEIGHTS = {'supply': 1.0, 'fab': 1.0, 'cloud': 0.9, 'license': 0.8,
+# license 0.8 → 0.5 (2026-10-06, aprobado por Fabrizio): un licenciante casi único (PDF Solutions → TSMC,
+# Palantir → Microsoft) pesaba como una fábrica y aparecía como el mayor riesgo de empresas enormes.
+HIST_WEIGHTS = {'supply': 1.0, 'fab': 1.0, 'cloud': 0.9, 'license': 0.5,
                 'ppa': 0.7, 'deploy': 0.4, 'partner': 0.3, 'owns': 0.6,
                 'invest': 0.25}
 HIST_SYMMETRIC = {'partner'}

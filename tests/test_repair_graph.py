@@ -387,8 +387,10 @@ process.stdout.write(JSON.stringify({ C: core.incoming[core.idx.C], D: core.inco
 '''
     out = _node(script, {'root': ROOT})
     ws = {e['i']: e['w'] for e in out['C']}
-    assert ws[0] == pytest.approx(1 / 3) and ws[1] == pytest.approx(2 / 3)   # 1 vs 2 dentro del tipo
-    assert out['D'][0]['w'] == pytest.approx(1.0)                           # único proveedor: todo, aunque 0.3
+    # 2026-10-06 (SOLE_LINK_FLOOR = 6): la columna se normaliza por max(suma, 6) → la confianza cuenta
+    # también para un proveedor único (antes "único = todo", aunque el vínculo fuera dudoso)
+    assert ws[0] == pytest.approx(1 / 6) and ws[1] == pytest.approx(2 / 6)   # 1 vs 2, sobre el piso 6
+    assert out['D'][0]['w'] == pytest.approx(0.6 / 6)                       # único y dudoso (2×0.3): poco
 
 
 # ════════════════════════════════════════════════════════════════════════════

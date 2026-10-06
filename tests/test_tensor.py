@@ -55,9 +55,11 @@ def test_empresa_nueva_recibe_proveedores_y_clientes_probables():
 
 
 def test_calidad_medida_con_vinculos_reales_ocultos_supera_la_linea_base():
-    r = T.evaluate(seed=7)
-    assert r['cases'] >= 50
-    assert r['hit_rate'] >= 1.5 * r['baseline_popularity'], r
+    rs = [T.evaluate(seed=s) for s in (7, 11, 23)]          # promedio de 3 semillas (una sola es ruidosa)
+    assert all(r['cases'] >= 50 for r in rs)
+    hit = sum(r['hit_rate'] for r in rs) / 3
+    base = sum(r['baseline_popularity'] for r in rs) / 3
+    assert hit >= 1.5 * base, rs
 
 
 def test_ficha_real_de_nvidia():

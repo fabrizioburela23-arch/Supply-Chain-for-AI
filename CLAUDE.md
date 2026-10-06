@@ -39,7 +39,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   fragility, propagate=EL kernel de shocks, compute_metrics/chokepoints),
   `api.py` (blueprint /api/matrix/*: status, /<rel_type>, POST /impact,
   /metrics, POST /insights, GET /insights/history, POST /factor/fire).
-  Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503.
+  Convención A[i,j]=i PROVEE a j. Sin DATABASE_URL → 503. `SOLE_LINK_FLOOR=6` (2026-10-06): la
+  columna de cada tipo se normaliza por max(suma, 6) — un proveedor único transmite según su peso;
+  el MISMO piso vive en engine/statematrix.js (cambiar los dos juntos).
   `tensor.py` + `tensor_api.py` (ONTOLOGÍA NIVEL 2, 2026-10-06, sin BD): tensor de flujo R×N×N,
   influencia Ψ (misma semántica que propagate), métricas por empresa (concentración, países de
   proveedores, cap. aguas abajo en riesgo, fuentes de riesgo, comparables) y `suggest_links` para
