@@ -39,6 +39,10 @@ Fabrizio aprobó ("sí a las dos"):
   7 filas de consultoras inmobiliarias (CBRE/JLL "informe cita…" → `about`; asesoría de JLL/Cushman/Colliers
   → `partner`) y la regla de vínculo dudoso (merge_graph UNVERIFIED_RX = vocabulary.UNVERIFIED_RX) suma
   "no confirmad…" y "vínculo referencial": dudosos 10→37 (conf 0.3). Sospechosas 39→32. sw v243.
+  APLICADO faltantes + sobrantes: corrida `20261006T042833Z-6f563d`. Verificado por MCP: Palantir→Microsoft
+  ya es `partner` (la `license` se retiró) y entraron los vínculos nuevos (Lockheed/GD/Raytheon/ShieldAI→
+  Palantir…). Base ≈ catálogo. Códigos para deshacer (de la más nueva a la más vieja): 20261006T042833Z-6f563d,
+  la de pesos/sobrantes (ver panel), 20261006T040725Z-377823.
 
 # SESIÓN 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2: TENSORES + AUTO-CONEXIÓN (sw v241)
 
