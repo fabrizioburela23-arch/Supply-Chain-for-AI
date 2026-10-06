@@ -876,6 +876,7 @@ def _audit(memo, actor, action, detail=None):
     memo.audit = list(memo.audit or []) + [{'at': _now().isoformat(), 'actor': actor, 'action': action,
                                             'detail': detail}]
     memo.updated_at = _now()
+    invalidate_board_cache()      # la pizarra muestra la última decisión: que no espere los 60 s de caché
 
 
 def _resolve_entity(entity_id):
@@ -1905,8 +1906,83 @@ def recent_memo(session, entity_id, client_id=None, now=None):
 # PIZARRA (2026-10-02): "quiero que ya salgan conclusiones" — todas las empresas
 # investigadas, ordenadas por convicción, con su mejor argumento a favor y en
 # contra y la última decisión del comité. Sin IA (lectura de lo ya calculado).
+#
+# Khipus OS (2026-10-06): CACHÉ de 60 s por argumentos. La pizarra lee hasta 3.000
+# conclusiones + la tabla de calibración y la piden varias ventanas a la vez
+# (convicción, en una mirada, el chat, el asesor de cartera). La caché se invalida
+# sola cuando cambia la base: la "huella" (conteo y fechas de conclusiones activas,
+# memos y contradicciones; UNA consulta liviana) forma parte de la clave, y además
+# _audit (memo guardado / aprobado / rechazado) la vacía al instante.
 # ════════════════════════════════════════════════════════════════════════════
+BOARD_TTL_S = 60.0
+_BOARD_CACHE = {}            # limit → (monotonic, huella, resultado)
+_BOARD_LOCK = threading.Lock()
+_BOARD_KEY_LOCKS = {}        # limit → Lock (una sola construcción a la vez por clave)
+
+
+def invalidate_board_cache():
+    with _BOARD_LOCK:
+        _BOARD_CACHE.clear()
+
+
+def _board_fingerprint(session):
+    """Huella barata del estado que la pizarra lee (None si no se puede calcular → sin caché)."""
+    try:
+        from sqlalchemy import func
+        q = session.query(
+            session.query(func.count(ResearchClaim.id)).filter(ResearchClaim.status == 'active').scalar_subquery(),
+            session.query(func.max(ResearchClaim.created_at)).scalar_subquery(),
+            session.query(func.count(CommitteeMemo.id)).scalar_subquery(),
+            session.query(func.max(CommitteeMemo.created_at)).scalar_subquery(),
+            session.query(func.max(CommitteeMemo.updated_at)).scalar_subquery(),
+            session.query(func.count(ClaimRelation.id)).scalar_subquery())
+        return tuple(str(x) for x in q.one())
+    except Exception as e:  # noqa: BLE001
+        msg = type(e).__name__ + str(e)
+        if 'does not exist' in msg or 'UndefinedTable' in msg or 'UndefinedColumn' in msg:
+            raise        # base nueva sin tablas: que _with_schema las cree y reintente (como antes de la caché)
+        log.info('board fingerprint: %s', type(e).__name__)
+        return None
+
+
 def board(session, limit=40):
+    import copy
+    import time as _time
+    try:
+        key = int(limit)
+    except (TypeError, ValueError):
+        key = 40
+    fp = _board_fingerprint(session)
+    if fp is None:
+        return _board_uncached(session, limit)
+
+    def hit():
+        with _BOARD_LOCK:
+            h = _BOARD_CACHE.get(key)
+        if h and _time.monotonic() - h[0] < BOARD_TTL_S and h[1] == fp:
+            return copy.deepcopy(h[2])
+        return None
+    got = hit()
+    if got is not None:
+        return got
+    with _BOARD_LOCK:
+        klock = _BOARD_KEY_LOCKS.setdefault(key, threading.Lock())
+    # una sola construcción a la vez: quien llega mientras otro la arma espera (máx. 20 s) y reutiliza
+    acquired = klock.acquire(timeout=20)
+    try:
+        got = hit() if acquired else None
+        if got is not None:
+            return got
+        res = _board_uncached(session, limit)
+        with _BOARD_LOCK:
+            _BOARD_CACHE[key] = (_time.monotonic(), fp, copy.deepcopy(res))
+        return res
+    finally:
+        if acquired:
+            klock.release()
+
+
+def _board_uncached(session, limit=40):
     from research.outcomes import agent_reliability, calibrated_confidence, calibration_table
     rows = (session.query(ResearchClaim).filter(ResearchClaim.status == 'active')
             .order_by(ResearchClaim.created_at.desc()).limit(3000).all())
