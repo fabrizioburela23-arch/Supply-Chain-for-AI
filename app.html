@@ -2896,6 +2896,14 @@ const sim = d3.forceSimulation(NODES)
   .force('charge', d3.forceManyBody().strength(_chargeStr).distanceMax(400))
   .force('collide', d3.forceCollide(d=>computeNodeRadius(d.id)+10))
   .alphaDecay(_alphaDecay).velocityDecay(.38);
+/* VELOCIDAD (Khipus OS, 2026-10-06): d3 arranca su reloj interno al crear la simulación y
+   calculaba ticks (~11 ms c/u con 949 nodos) mientras se cargaban los scripts, aunque Khipus OS
+   tapara el mapa. Con el OS (lo normal) se detiene YA y la física se adelanta solo cuando el mapa
+   se ve (_ensureMapSettled, más abajo). En "Vista clásica" el mapa ES la pantalla de arranque:
+   se conserva el calentamiento de d3 detrás del splash, igual que antes (medido: es lo más rápido
+   para ver el mapa listo en un móvil lento). El arrastre la reactiva en vivo como siempre. */
+const _mapClassicBoot = (function(){ try { return sessionStorage.getItem('kh_os_classic') === '1'; } catch(e){ return false; } })();
+if(!_mapClassicBoot) sim.stop();
 
 function setForces(){
   if(viewMode==='geo'){
@@ -2975,17 +2983,194 @@ function positionRegionLabels(){
     .attr('y',k=>COUNTRIES[k].y*H-62);
 }
 
-function resize(){
-  const r = svg.node().getBoundingClientRect();
-  if(!r.width||!r.height) return;   /* oculto (ventana minimizada / pestaña cerrada): no re-centrar en 0×0 */
-  W=r.width; H=r.height;
-  setForces();
-  positionRegionLabels();
-  // Reasentado LIGERO: resize se dispara al girar el móvil y al ocultarse la
-  // barra del navegador. Un re-layout completo en cada uno sería peor que el
-  // problema que arregla.
-  settleGraph(.15, 60);
+/* ── VELOCIDAD (Khipus OS, 2026-10-06): el mapa NO se calcula mientras está tapado ──────────
+   Antes, el arranque y CADA evento 'resize' (las ventanas del escritorio lo disparan al abrirse,
+   moverse o adoptar un panel) asentaban la física aunque Khipus OS tapara el mapa: ~1,4 s de CPU
+   antes de que el chat apareciera (más de 7 s en un móvil lento) y ~0,7 s más por cada ventana.
+   Ahora resize() solo PIDE; _ensureMapSettled() asienta cuando el mapa se ve de verdad (pestaña
+   Mapa, ventana "Grafo", al cerrar el OS) o cuando alguien necesita posiciones (jumpTo/fitToView),
+   y no hace nada si el tamaño no cambió. Mientras nunca se asentó, la capa del grafo queda oculta
+   (vacío honesto en vez de 949 nodos amontonados en una esquina).                              */
+let _mapLaidOnce = false;   // hubo un asentado con tamaño real (las posiciones ya significan algo)
+let _mapReheat = false;     // cambió algo que pide re-separar nodos (radios por capitalización en vivo)
+let _mapFitPending = false; // alguien pidió encuadrar antes del primer asentado
+let _mapFlyPending = null;  // {id, yFrac}: jumpTo antes del primer asentado → se vuela al mostrarse
+root.style('visibility','hidden');
+// ¿Khipus OS se abrirá al arrancar? Siempre, salvo "Vista clásica" en esta sesión (kh_os_classic).
+let _mapOsExpected = !_mapClassicBoot;
+let _mapCkSeen = 0, _mapCkOpened = false;
+function _mapCkOpen(){
+  const ck = window.BixbyCockpit;
+  return !!(ck && typeof ck.isOpen === 'function' && ck.isOpen());
 }
+// Mientras el arranque aún no decidió (el OS va a abrirse pero todavía no lo hizo) el mapa cuenta
+// como tapado. Se rinde si la Cabina cargó y no se abrió, o a los 12 s (como el respaldo del arranque).
+function _mapBootWaiting(){
+  if (!_mapOsExpected || _mapCkOpened) return false;
+  if (_mapCkOpen()) { _mapCkOpened = true; return false; }
+  const now = performance.now();
+  if (now > 12000) { _mapOsExpected = false; return false; }
+  const ck = window.BixbyCockpit;
+  if (ck && typeof ck.open === 'function') {
+    if (!_mapCkSeen) _mapCkSeen = now;
+    const b = document.getElementById('boot');
+    if ((!b || b.classList.contains('gone')) && now - _mapCkSeen > 600) { _mapOsExpected = false; return false; }
+  }
+  return true;
+}
+// Tapado = pestaña del navegador oculta, arranque hacia el OS, o Khipus OS abierto SIN el mapa
+// dentro de una de sus ventanas (adoptado en #bcp-ov).
+function _mapCovered(){
+  if (document.hidden) return true;
+  if (_mapBootWaiting()) return true;
+  if (_mapCkOpen()) {
+    const ov = document.getElementById('bcp-ov');
+    if (!(ov && ov.contains(svg.node()))) return true;
+  }
+  return false;
+}
+// Aviso mientras se ordena por primera vez (bilingüe; texto SVG fuera de la capa oculta).
+let _mapHintEl = null, _mapHintKey = '';
+function _mapHint(on){
+  try{
+    if(!on){ if(_mapHintEl){ _mapHintEl.remove(); _mapHintEl = null; _mapHintKey = ''; } return; }
+    const en = (window.LANG || 'es') === 'en';
+    const key = (en ? 'en' : 'es') + W + 'x' + H;
+    if(_mapHintEl && key === _mapHintKey) return;          /* sin cambios: no tocar el SVG (evita re-maquetarlo) */
+    _mapHintKey = key;
+    if(!_mapHintEl) _mapHintEl = svg.append('text').attr('class','kh-map-hint').attr('text-anchor','middle')
+      .style('fill','var(--ink-3)').style('font-size','12.5px').style('letter-spacing','.02em').style('pointer-events','none');
+    _mapHintEl.attr('x', W/2).attr('y', H/2)
+      .text(en ? `Arranging the map of ${NODES.length} companies…` : `Ordenando el mapa de ${NODES.length} empresas…`);
+  }catch(e){}
+}
+// Primera vez que las posiciones valen (lo llama settleGraph): mostrar la capa y hacer la cámara pendiente.
+function _mapLaidNow(){
+  _mapReheat = false;
+  if(_mapLaidOnce) return;
+  _mapLaidOnce = true; _mapSettleJob = 0; _mapSettlePaused = false;
+  root.style('visibility', null);
+  _mapHint(false);
+  const fly = _mapFlyPending; _mapFlyPending = null;
+  const fit = _mapFitPending; _mapFitPending = false;
+  if(fly && fly.id===selected && NODE_BY_ID[fly.id]) flyToNode(NODE_BY_ID[fly.id], fly.yFrac, 450);
+  else if(fit) fitToView(450);
+  setTimeout(_mapPosSave, 0);   /* recordar ya (aunque cierre enseguida); los asentados siguientes la refrescan */
+}
+/* MEMORIA DEL MAPA (por dispositivo): el primer orden desde cero cuesta ~80 ticks (~0,9 s; ~4 s en un
+   móvil lento). Se guarda la disposición ya asentada (x relativo al ancho, y relativo al centro) y la
+   próxima vez se parte de ella con un asentado corto. Se invalida sola si cambia el conjunto de
+   empresas (firma de ids) o el ancho cambia demasiado. Solo vista "Flujo de Valor". Bonus: cada
+   empresa aparece donde el usuario la vio la última vez. Son posiciones de dibujo, no datos. */
+const MAP_POS_KEY = 'kh_map_pos_v1';
+let _mapSeeded = false;
+function _mapSig(){
+  let h = 0;
+  for(const n of NODES){ const s = String(n.id); for(let i=0;i<s.length;i++) h = (h*31 + s.charCodeAt(i)) | 0; }
+  return NODES.length + ':' + h;
+}
+function _mapPosSave(){
+  if(viewMode !== 'flow' || !(W>0) || !(H>0)) return;
+  try {
+    const p = {};
+    for(const n of NODES){
+      if(!isFinite(n.x) || !isFinite(n.y)) return;
+      p[n.id] = [Math.round(n.x / W * 1e4) / 1e4, Math.round((n.y - H/2) * 10) / 10];
+    }
+    localStorage.setItem(MAP_POS_KEY, JSON.stringify({ v:1, sig:_mapSig(), W:Math.round(W), at:Date.now(), p:p }));
+  } catch(e){}
+}
+let _mapPosSaveT = null;
+function _mapPosSaveSoon(){ clearTimeout(_mapPosSaveT); _mapPosSaveT = setTimeout(_mapPosSave, 1200); }   /* tras cada asentado, ya quieto */
+function _mapPosSeed(){
+  if(viewMode !== 'flow' || !(W>0) || !(H>0)) return false;
+  try {
+    const c = JSON.parse(localStorage.getItem(MAP_POS_KEY) || 'null');
+    if(!c || c.v !== 1 || c.sig !== _mapSig() || !c.p || !(c.W > 0)) return false;
+    const ratio = W / c.W;
+    if(ratio < .6 || ratio > 1.7) return false;   /* otro tamaño de pantalla: mejor ordenar de cero */
+    for(const n of NODES){ const q = c.p[n.id]; if(!q || !isFinite(q[0]) || !isFinite(q[1])) return false; }
+    for(const n of NODES){ const q = c.p[n.id]; n.x = q[0] * W; n.y = q[1] + H/2; n.vx = 0; n.vy = 0; }
+    return true;
+  } catch(e){ return false; }
+}
+// PRIMER asentado POR PORCIONES (≤ ~80 ms cada una; nunca una tarea larga): la ventana del mapa se abre
+// fluida y se puede seguir usando la app (en un móvil eran ~4 s de pantalla congelada). Sin pintar
+// hasta el final (regla "Mapa principal"); se pausa si el mapa vuelve a taparse y sigue al mostrarse.
+let _mapSettleJob = 0, _mapSettleSeq = 0, _mapSettlePaused = false, _mapSettleStep = null;
+/* Receta del PRIMER asentado (desde la posición inicial de d3). Medido con 937 nodos: solapes 3 y
+   separación media 30 px (el arranque de antes: 4-13 solapes, 29-30 px) con 80 ticks (~0,9 s de CPU).
+   Desde la memoria del mapa basta un asentado corto (solo acomoda radios/tamaño nuevos). */
+const MAP_FIRST_ALPHA = .25, MAP_FIRST_TICKS = 80, MAP_SEED_ALPHA = .08, MAP_SEED_TICKS = 30;
+function _mapFirstRecipe(){
+  _mapSeeded = _mapPosSeed();
+  return _mapSeeded ? [MAP_SEED_ALPHA, MAP_SEED_TICKS] : [MAP_FIRST_ALPHA, MAP_FIRST_TICKS];
+}
+/* Siguiente porción. Medido: setTimeout(0) es lo mejor; scheduler.postTask('user-blocking') encadenaba
+   porciones sin dejar pintar (tareas de hasta 3,7 s en un móvil lento) — no usarlo aquí. */
+function _mapPost(fn){ setTimeout(fn, 0); }
+function _mapFirstSettleAsync(){
+  const job = _mapSettleJob = ++_mapSettleSeq;
+  _mapSettlePaused = false;
+  const [alpha0, MAX_TICKS] = _mapFirstRecipe();
+  try { sim.stop(); sim.alpha(alpha0); } catch(e){}
+  _mapHint(true);
+  let ticks = 0;
+  const step = () => {
+    if(job !== _mapSettleJob || _mapLaidOnce) return;      /* otro asentado (síncrono) ya lo resolvió */
+    if(_mapCovered()){ _mapSettlePaused = true; return; }   /* tapado otra vez: seguir cuando se vea */
+    _mapHint(true);                                         /* idioma/tamaño al día (un solo texto) */
+    const t0 = performance.now();
+    let minA = .001;
+    try {
+      minA = sim.alphaMin();
+      while(ticks < MAX_TICKS && sim.alpha() > minA && performance.now() - t0 < 80){ sim.tick(); ticks++; }
+    } catch(e){ ticks = MAX_TICKS; }
+    if(ticks < MAX_TICKS && sim.alpha() > minA){ _mapPost(step); return; }
+    try { sim.stop(); } catch(e){}
+    _mapSettleJob = 0;
+    _paintGraph();
+    if(W>0 && H>0){ _mapLaidNow(); _mapPosSaveSoon(); }
+  };
+  _mapSettleStep = step;
+  _mapPost(step);
+}
+function _ensureMapSettled(force){
+  let r;
+  try { r = svg.node().getBoundingClientRect(); } catch(e){ return false; }
+  if(!r.width||!r.height) return false;   /* oculto (ventana minimizada / pestaña cerrada): no re-centrar en 0×0 */
+  if(!force && _mapCovered()) return false;
+  if(_liveTick) return _mapLaidOnce;       /* arrastrando: la física ya corre en vivo */
+  const sized = (r.width!==W || r.height!==H);
+  if(_mapLaidOnce && !sized && !_mapReheat) return true;   /* nada cambió: cero trabajo */
+  if(sized){ W=r.width; H=r.height; setForces(); positionRegionLabels(); }
+  if(!_mapLaidOnce){
+    /* De una vez (síncrono) si quien llama necesita posiciones YA, o si el mapa es la pantalla de
+       arranque (vista clásica) y el splash todavía lo tapa: así aparece listo al desvanecerse. */
+    const bootEl = document.getElementById('boot');
+    if(force || (bootEl && !bootEl.classList.contains('gone'))){
+      _mapSettleJob = 0;
+      if(_mapClassicBoot && !force) settleGraph(.15, 60);   /* ya calentado por d3 (vista clásica): lo de siempre */
+      else { const rc = _mapFirstRecipe(); settleGraph(rc[0], rc[1]); }
+      return _mapLaidOnce;
+    }
+    if(_mapSettleJob){
+      if(sized) _mapHint(true);
+      if(_mapSettlePaused && _mapSettleStep){ _mapSettlePaused = false; _mapPost(_mapSettleStep); }
+    } else _mapFirstSettleAsync();
+    return false;
+  }
+  if(sized) settleGraph(.15, 60);  /* Reasentado LIGERO: girar el móvil, barra del navegador, ventana nueva */
+  else settleGraph(.12, 60);       /* radios nuevos (capitalización en vivo): solo separar solapes */
+  return true;
+}
+window._ensureMapSettled = _ensureMapSettled;
+window._mapState = function(){
+  return { laid:_mapLaidOnce, reheat:_mapReheat, covered:_mapCovered(), bootWaiting:_mapBootWaiting(),
+           osExpected:_mapOsExpected, settling:!!_mapSettleJob, paused:_mapSettlePaused, seeded:_mapSeeded,
+           W:W, H:H, hidden: root.style('visibility')==='hidden' };
+};
+function resize(){ _ensureMapSettled(false); }
 
 const linkSel = linkLayer.selectAll('line').data(LINKS).join('line')
   .attr('stroke-width',d=>Math.max(.6,d.w*.45))
@@ -3087,7 +3272,11 @@ function _resizeNodesByCap(){
   nodeSel.select('.risk-ring').attr('r',d=>computeNodeRadius(d.id)+8);
   nodeSel.select('.risk-mark').attr('dy',d=>-(computeNodeRadius(d.id)+8));
   nodeSel.select('.node-label').attr('dy',d=>computeNodeRadius(d.id)+13).classed('lbl-off', d=>!_lblOn(d) && d.id!==selected && d.id!==hovered);
-  try{ sim.force('collide').radius(d=>computeNodeRadius(d.id)+10); if(!_liveTick) settleGraph(.12, 60); }catch(e){}
+  try{ sim.force('collide').radius(d=>computeNodeRadius(d.id)+10); }catch(e){}
+  if(_liveTick) return;
+  // Khipus OS: si el mapa está tapado, la separación de solapes espera a que se vea (no 60 ticks a ciegas).
+  _mapReheat = true;
+  _ensureMapSettled(false);
 }
 window._resizeNodesByCap = _resizeNodesByCap;
 window.addEventListener('khipu:livecaps', ()=>{ clearTimeout(_capResizeT); _capResizeT = setTimeout(_resizeNodesByCap, 400); });
@@ -3128,6 +3317,7 @@ function settleGraph(alpha=.4, maxTicks=200){
     sim.stop();
   }catch(e){ /* si algo falla, al menos pintamos lo que haya */ }
   _paintGraph();
+  if(W>0 && H>0){ _mapLaidNow(); _mapPosSaveSoon(); }   /* posiciones reales → mostrar la capa y recordarlas */
 }
 window.settleGraph = settleGraph;
 
@@ -3465,7 +3655,11 @@ window.addEventListener('keydown',e=>{
 });
 
 /* ===================== Cámara ===================== */
+/* Khipus OS: la cámara necesita posiciones reales. Si el mapa nunca se asentó (estuvo tapado),
+   se asienta ahora si se ve; si sigue tapado, el encuadre/vuelo queda pendiente y se hace al mostrarse. */
 function fitToView(dur=500){
+  _ensureMapSettled(false);
+  if(!_mapLaidOnce){ _mapFitPending = true; return; }
   if(!W||!H) return;
   const xs=NODES.map(n=>n.x).filter(v=>v!=null), ys=NODES.map(n=>n.y).filter(v=>v!=null);
   if(!xs.length) return;
@@ -3477,7 +3671,10 @@ function fitToView(dur=500){
 }
 
 function flyToNode(d,yFrac=0.5,dur=650){
-  if(!d||d.x==null) return;
+  if(!d) return;
+  _ensureMapSettled(false);
+  if(!_mapLaidOnce){ _mapFlyPending = { id:d.id, yFrac:yFrac }; return; }
+  if(d.x==null) return;
   const t=d3.zoomTransform(svg.node());
   const k=Math.max(Math.min(t.k,1.6),1.05);
   const tx=W/2-k*d.x, ty=H*yFrac-k*d.y;
@@ -4222,6 +4419,36 @@ window.addEventListener('resize', () => {
   _resizeT = setTimeout(resize, 150);
 });
 setTimeout(resize,60);
+/* Khipus OS (2026-10-06): señales de "el mapa se volvió visible" además del 'resize' de la ventana.
+   - ResizeObserver del <svg>: al adoptarlo una ventana del escritorio, al devolverlo a su pestaña,
+     al restaurar una ventana minimizada o al cambiar de pestaña (0×0 → tamaño real).
+   - visibilitychange: la pestaña del navegador estaba en segundo plano al arrancar.
+   - pointerenter: red de seguridad si algo lo mostró sin avisar (nunca dejarlo vacío).
+   - Vigía del arranque: si se esperaba Khipus OS y no se abrió (falló o vista clásica), asentar.
+   Todos llaman a _ensureMapSettled(): idempotente y gratis si nada cambió. */
+(function(){
+  const el = svg.node();
+  if (window.ResizeObserver) {
+    let roT = null;
+    try {
+      new ResizeObserver(() => {
+        /* Solo hasta el PRIMER asentado. Después, cada forma real de mostrar el mapa ya avisa
+           (switchTab, 'resize' del escritorio/Cabina, visibilitychange) y los corrimientos de
+           maquetación del arranque (el svg pasa por 29 px → 0 → 349 px) NO deben re-asentar:
+           medido, era un asentado extra de ~0,85 s justo al desvanecerse el splash. */
+        if (!_mapLaidOnce) { clearTimeout(roT); roT = setTimeout(resize, 0); }
+      }).observe(el);
+    } catch(e){}
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(resize, 0); });
+  el.addEventListener('pointerenter', () => { if (!_mapLaidOnce) resize(); });
+  let n = 0;
+  const iv = setInterval(() => {
+    n++;
+    if (_mapLaidOnce || _mapCkOpened || n > 70) { clearInterval(iv); return; }
+    if (!_mapBootWaiting()) { clearInterval(iv); resize(); }
+  }, 200);
+})();
 
 
 /* ===================== i18n ===================== */

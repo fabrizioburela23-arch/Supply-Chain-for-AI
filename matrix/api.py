@@ -508,12 +508,7 @@ def matrix_insights():
     scope = _db()
     if scope is None:
         return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
-    import numpy as np
-    from sqlalchemy import select
-
-    from matrix.engine import (_graph_epoch, active_factors, build_matrices,
-                               fragility, propagate)
-    from ontology.models import ObjectRecord
+    from matrix.engine import _graph_epoch
     body = request.get_json(silent=True) or {}
     if not isinstance(body, dict):
         body = {}
@@ -531,11 +526,75 @@ def matrix_insights():
         # Clave cacheada por ÉPOCA del grafo → un alta/baja/cambio de peso o de
         # Factor invalida los insights (antes solo TTL 180s → datos rancios).
         epoch = _graph_epoch(s)
-        ck = f'insights:{epoch}:{as_of or "now"}:{lang}:{tier}'
-        if not manual_shock:
-            hit = _ttl_get(ck, ttl=180)
-            if hit is not None:
-                return jsonify({**hit, 'cached': True, **tier_note})
+    ck = f'insights:{epoch}:{as_of or "now"}:{lang}:{tier}'
+    if manual_shock:
+        return jsonify({**_insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock), **tier_note})
+    hit = _ttl_get(ck, ttl=180)
+    if hit is not None:
+        return jsonify({**hit, 'cached': True, **tier_note})
+    # EN VUELO (Khipus OS, 2026-10-06): dos pedidos iguales a la vez (p. ej. la pantalla de
+    # inicio que se pinta dos veces al arrancar) ya no construyen las matrices ni NARRAN con IA
+    # dos veces: el segundo espera al primero (fuera de la sesión de BD) y recibe lo mismo.
+    flight, leader = _flight_join(ck)
+    if not leader:
+        if flight.event.wait(INSIGHTS_INFLIGHT_WAIT_S) and flight.payload is not None:
+            return jsonify({**flight.payload, 'cached': True, 'shared': True, **tier_note})
+        # el primero falló o tardó demasiado: se calcula por cuenta propia (como antes)
+        hit = _ttl_get(ck, ttl=180)
+        if hit is not None:
+            return jsonify({**hit, 'cached': True, **tier_note})
+        return jsonify({**_insights_build(scope, epoch, ck, as_of, lang, tier, None), **tier_note})
+    payload = None
+    try:
+        payload = _insights_build(scope, epoch, ck, as_of, lang, tier, None)
+    finally:
+        _flight_done(ck, flight, payload)
+    return jsonify({**payload, **tier_note})
+
+
+# ── En vuelo: un cálculo por clave (ver matrix_insights) ─────────────────────
+INSIGHTS_INFLIGHT_WAIT_S = _env_num('INSIGHTS_INFLIGHT_WAIT_S', 45, 1, 120)
+_INFLIGHT = {}
+_INFLIGHT_LOCK = threading.Lock()
+
+
+class _Flight:
+    __slots__ = ('event', 'payload')
+
+    def __init__(self):
+        self.event = threading.Event()
+        self.payload = None
+
+
+def _flight_join(key):
+    """→ (vuelo, ¿soy el primero?). El primero calcula; los demás esperan su resultado."""
+    with _INFLIGHT_LOCK:
+        f = _INFLIGHT.get(key)
+        if f is not None:
+            return f, False
+        f = _INFLIGHT[key] = _Flight()
+        return f, True
+
+
+def _flight_done(key, flight, payload):
+    """Publica el resultado (None = falló) y despierta a los que esperan. Siempre en finally."""
+    flight.payload = payload
+    with _INFLIGHT_LOCK:
+        if _INFLIGHT.get(key) is flight:
+            del _INFLIGHT[key]
+    flight.event.set()
+
+
+def _insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock):
+    """Construye las matrices, corre la simulación y la narra. Devuelve el payload (sin
+    tier_note). Cachea y guarda historial solo lecturas reales con narración permitida."""
+    import numpy as np
+    from sqlalchemy import select
+
+    from matrix.engine import active_factors, build_matrices, fragility, propagate
+    from ontology.models import ObjectRecord
+
+    with scope() as s:
         mats, idx, ids = build_matrices(s, as_of=as_of)
         factors = active_factors(s, as_of=as_of)
         lbl = {r[0]: r[1] for r in s.execute(
@@ -545,10 +604,9 @@ def matrix_insights():
         return lbl.get(i, i)
 
     if not ids:
-        empty = {'available': True, 'as_of': as_of, 'situation': {}, 'insights':
-                 _fallback_insights({}, lang), 'factors': [], 'chokepoints': [],
-                 'cascade': [], 'trigger': None, 'affected': 0, 'model': 'plantilla'}
-        return jsonify(empty)
+        return {'available': True, 'as_of': as_of, 'situation': {}, 'insights':
+                _fallback_insights({}, lang), 'factors': [], 'chokepoints': [],
+                'cascade': [], 'trigger': None, 'affected': 0, 'model': 'plantilla'}
 
     # Chokepoints rápidos: in-degree ponderado combinado (sin correr metrics pesado).
     agg = None
@@ -615,7 +673,7 @@ def matrix_insights():
         # el tiempo (as_of) — cada as_of distinto dejaba una fila nueva.
         if as_of is None:
             _persist_insight(scope, epoch, as_of, lang, payload)
-    return jsonify({**payload, **tier_note})
+    return payload
 
 
 def _insights_tier(requested):
