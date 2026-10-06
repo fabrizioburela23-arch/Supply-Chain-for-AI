@@ -33,6 +33,18 @@ Construido por 5 constructores en paralelo (worktrees) + integración:
   OS abierto en ~1,2-1,4 s en local (antes 2,1-3,2 s).
 - Integración: título doble en ventanas nativas, superposición de mascotas en el origen, reglas de color
   duplicadas del chat, portfolios en resolve.js. Tests: test_khipus_os_{shell,windows,server,chat,perf,integration}.py.
+- REVISIÓN ADVERSARIA (6 dimensiones, verificador independiente por hallazgo): 17 confirmados, 0 refutados, todos
+  arreglados con test que fallaba antes (tests/test_khipus_os_fixes_{shell,windows,server,perf}.py): insignia 🔴/🧪
+  del saldo en el menú del celular, precios convertidos a USD con símbolo local, memos vencidos/INSUFFICIENT_DATA/
+  rechazados o de un cliente mostrados como veredicto vigente (glance, tooltip de convicción, notas del chat, MCP
+  get_conclusions_board ahora trae decision_code/expired), historial del Comité = suma de analistas (rotulado),
+  mapa en blanco en una ventana lateral (contenedor @container: la ficha pasa a hoja inferior), en solo-chat la
+  respuesta quedaba bajo una ventana (_revealChat minimiza las que tapan), modo clásico en otra pestaña destruía la
+  barra, dedup de /insights compartía la plantilla sin IA, board() sobre transacción abortada, notas del tablero mal
+  rotuladas, "hoy" en precios del último cierre, costo 30 d de Khipu bajo la etiqueta equivocada, brief desde el OS
+  movía el mapa oculto, mapa vacío 3 s si cockpit.js no carga. Suite: 1.229 pruebas. sw v246. Desplegado y verificado
+  en producción (MCP get_research_health: servidor nuevo, live_fundamentals en tandas de 120 tras el reinicio).
+- AVISO: Claude (Anthropic) sin saldo desde 2026-10-06 04:42 ("credit balance is too low"); la app usa Gemini → NVIDIA.
 PENDIENTE / ideas: agentes que "investigan" de verdad desde el chat (hoy usan herramientas; investigación
 profunda por agente = botón), enriquecer el grafo (pedido de Fabrizio), restyle de escenas viejas (hoy
 islas oscuras en tema claro), voz con mascotas.
