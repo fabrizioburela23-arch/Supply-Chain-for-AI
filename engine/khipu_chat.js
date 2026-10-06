@@ -21,6 +21,17 @@
    4) appendUser / appendPending / fillReply — burbujas del hilo.
    5) runAction(acción) — ejecuta las acciones validadas por el servidor.
 
+   KHIPUS OS (2026-10-06, docs/KHIPUS_OS.md §3.2/§3.5):
+   · Burbujas con los tokens --os-* (claro/oscuro); Khipu habla con su mascota.
+   · Pensando: fila de mascotas + "Analista, Cadena y Comité están investigando…" —
+     primero predictAgents(texto), luego el progreso REAL (req_id en el pedido +
+     GET /api/khipu/chat/progress/<req_id> cada 0,7 s; servidor viejo → se calla).
+   · Respuesta: tarjeta con lo que aportó cada agente (agents_used; sin él, tools_used
+     con TOOL_AGENT, el mismo mapa del servidor) y fuentes con su hora (as_of).
+   · Ventanas automáticas: planWindows() → glance / supplychain / conviction en los
+     flancos (solo si BixbyCockpit.isCentered() y la ventana está registrada).
+   · El contexto lleva mode (Simple/Pro) y agents_enabled (KhipuAgentPrefs).
+
    API: window.KhipuChat. Bilingüe (window.LANG / localStorage.eco_lang).
    ============================================================================ */
 (function (root) {
@@ -106,9 +117,10 @@
   // 2026-10-05: el comité de cartera RESPONDE dentro del chat ("/cartera dime si debería reducir…"
   // antes solo abría una pantalla). La pregunta viaja al agente con la cartera elegida en el chip.
   // analistas del comité: token → puesto (research/ask_agent.SEAT_WORDS) + nombre/ícono (research/deliberation.AGENT_NAMES)
+  // Khipus OS (2026-10-06): las mascotas también son menciones — @analista = fundamental, @radar = noticias
   var SEAT_OF = { fundamental: 'fundamental', fundamentales: 'fundamental', tecnico: 'technical', technical: 'technical',
     noticias: 'news', news: 'news', cadena: 'supply_chain', supply: 'supply_chain', geopolitico: 'geopolitical', geo: 'geopolitical',
-    geopolitical: 'geopolitical', macro: 'macro' };
+    geopolitical: 'geopolitical', macro: 'macro', analista: 'fundamental', analyst: 'fundamental', radar: 'news' };
   var SEAT_NAME = { fundamental: ['📊', 'Analista fundamental', 'Fundamental analyst'], technical: ['📈', 'Analista técnico', 'Technical analyst'],
     news: ['📰', 'Analista de noticias', 'News analyst'], supply_chain: ['🔗', 'Analista de cadena de suministro', 'Supply-chain analyst'],
     geopolitical: ['🗺️', 'Analista geopolítico', 'Geopolitical analyst'], macro: ['🌐', 'Analista macro', 'Macro analyst'] };
@@ -265,6 +277,235 @@
     return { kind: 'brain' };
   }
 
+  /* ══ 1b) AGENTES (Khipus OS, 2026-10-06 — docs/KHIPUS_OS.md §3.2/§3.5) ══════
+     Seis mascotas: khipu (te responde), analista, radar, cadena, tecnico, comite.
+     · TOOL_AGENT: herramienta del cerebro → mascota. EL MISMO mapa vive en el servidor
+       (core/khipu_chat.py TOOL_AGENT/SEAT_AGENT) y el de puesto → mascota en engine/mascot.js:
+       cambiar los tres juntos.
+     · predictAgents(texto): quién VA a investigar (predicción por intención, se reemplaza
+       en vivo por el progreso real del servidor y, al final, por agents_used).
+     · planWindows(respuesta, pregunta, prefs, centrado): qué ventanas nativas abrir solas. */
+  var AGENT_ORDER = ['khipu', 'analista', 'radar', 'cadena', 'tecnico', 'comite'];
+  var AGENT_NAME = { khipu: ['Khipu', 'Khipu'], analista: ['Analista', 'Analyst'], radar: ['Radar', 'Radar'],
+    cadena: ['Cadena', 'Chain'], tecnico: ['Técnico', 'Technical'], comite: ['Comité', 'Committee'] };
+  // respaldo visual si engine/mascot.js no cargó (mismos tonos que las mascotas)
+  var AGENT_TINT = { khipu: ['#f07fa0', '#7a4ce8', '#ff8746'], analista: ['#7d8be6', '#4054cf', '#6b9ff4'], radar: ['#f78189', '#e63e52', '#f6808a'],
+    cadena: ['#4cb1ab', '#1b9386', '#83cd70'], tecnico: ['#f7cc63', '#e6a117', '#f5c54a'], comite: ['#bc78e5', '#7a3fe0', '#d88ae6'] };
+  var TOOL_AGENT = {
+    get_company: 'analista', search_companies: 'analista', get_research: 'analista', get_claim_evidence: 'analista',
+    get_supply_chain: 'cadena', rank_companies: 'cadena',
+    get_news: 'radar', get_world_events: 'radar', web_search: 'radar', scenario_exposure: 'radar',
+    market_movers: 'tecnico', get_option_greeks: 'tecnico', get_risk_report: 'tecnico',
+    get_committee_memo: 'comite', get_conclusions_board: 'comite', get_track_record: 'comite',
+  };
+  var SEAT_AGENT = {};
+  [['khipu', ['khipu', 'brain']],
+   ['analista', ['fundamental', 'fundamentals', 'macro', 'valuation']],
+   ['radar', ['news', 'sentiment', 'geopolitical', 'geo', 'events', 'crypto']],
+   ['cadena', ['supply_chain', 'chain', 'supply']],
+   ['tecnico', ['technical', 'momentum', 'risk', 'risk_observation', 'risk_officer', 'market']],
+   ['comite', ['committee', 'chair', 'portfolio', 'president', 'quant', 'mandate', 'all']]].forEach(function (p) {
+    p[1].forEach(function (s) { SEAT_AGENT[s] = p[0]; });
+  });
+  // palabras (sin acentos) de una mención → mascota ("@noticias", "@geo", "@todos"…)
+  var MENTION_AGENT = { fundamental: 'analista', fundamentales: 'analista', analista: 'analista', analyst: 'analista', macro: 'analista',
+    financiero: 'analista', investigacion: 'analista', research: 'analista',
+    noticias: 'radar', news: 'radar', radar: 'radar', geo: 'radar', geopolitico: 'radar', geopolitical: 'radar', cripto: 'radar', crypto: 'radar',
+    cadena: 'cadena', supply: 'cadena', supply_chain: 'cadena', suministro: 'cadena', proveedores: 'cadena', chain: 'cadena',
+    tecnico: 'tecnico', technical: 'tecnico', grafico: 'tecnico',
+    comite: 'comite', committee: 'comite', todos: 'comite', all: 'comite', analistas: 'comite' };
+
+  function agentName(id) {
+    try { if (W.KhipuMascot && W.KhipuMascot.name && AGENT_NAME[id]) return W.KhipuMascot.name(id); } catch (e) {}
+    var n = AGENT_NAME[id]; return n ? n[lang() === 'en' ? 1 : 0] : String(id || '');
+  }
+  // herramienta (+ args o args_summary) → mascota. ask_agent → según el puesto (por defecto, Analista)
+  function toolAgent(name, args) {
+    if (name === 'ask_agent') {
+      var seat = '';
+      if (args && typeof args === 'object') seat = args.seat || '';
+      else seat = String(args || '').split(/[,\s]+/)[0];
+      seat = _fold(seat).trim();
+      return SEAT_AGENT[seat] || MENTION_AGENT[seat] || 'analista';
+    }
+    return TOOL_AGENT[name] || 'khipu';
+  }
+  // ids de los agentes que aportaron a una respuesta (agents_used del servidor o, si falta, tools_used)
+  function agentsOf(d) {
+    d = d || {};
+    var out = [];
+    if (Array.isArray(d.agents_used) && d.agents_used.length) {
+      d.agents_used.forEach(function (a) { var id = a && (a.agent || a.id); if (id && AGENT_NAME[id] && out.indexOf(id) < 0) out.push(id); });
+      return out;
+    }
+    (Array.isArray(d.tools_used) ? d.tools_used : []).forEach(function (t) {
+      var id = toolAgent(t && t.name, t && t.args_summary);
+      if (out.indexOf(id) < 0) out.push(id);
+    });
+    return AGENT_ORDER.filter(function (id) { return out.indexOf(id) >= 0; });
+  }
+
+  // ── ¿el texto nombra una empresa del grafo? (índice exacto, sin fuzzy: barato y sin falsos positivos)
+  // Palabras comunes que también son nombres de empresas: solo cuentan si vienen con Mayúscula inicial.
+  var NAME_STOP = { meta: 1, vale: 1, disco: 1, canon: 1, shell: 1, ice: 1, glean: 1, cohere: 1, bis: 1, ups: 1, mol: 1, toto: 1, hoya: 1,
+    terna: 1, rumo: 1, data: 1, apple: 1, tesla: 1, micron: 1, target: 1, block: 1, snap: 1, global: 1, general: 1, first: 1, nuro: 1, sify: 1 };
+  // siglas que NO son empresas aunque coincidan con un ticker (HBM = Hudbay, LNG = Cheniere…)
+  var TICKER_STOP = { AI: 1, IA: 1, ON: 1, IT: 1, HBM: 1, GPU: 1, CPU: 1, TPU: 1, ETF: 1, IPO: 1, CEO: 1, CFO: 1, USA: 1, EEUU: 1, EE: 1, UU: 1,
+    PIB: 1, GDP: 1, FED: 1, VAR: 1, API: 1, EV: 1, US: 1, UK: 1, EU: 1, UE: 1, OK: 1, TV: 1, PC: 1, SO: 1, BE: 1, LNG: 1, NET: 1, FIX: 1,
+    GEN: 1, MOD: 1, FLY: 1, ET: 1, DE: 1, LA: 1, EL: 1, AL: 1, NO: 1, SI: 1, YA: 1, MI: 1, TU: 1, ES: 1, Y: 1, O: 1, A: 1, S: 1, Q: 1, C: 1, D: 1, J: 1 };
+  var _cIdx = null, _cIdxN = -1;
+  function _companyIndex() {
+    var NB = W.NODE_BY_ID; if (!NB) return null;
+    var keys = Object.keys(NB);
+    if (_cIdx && _cIdxN === keys.length) return _cIdx;
+    var names = {}, tickers = {};
+    var addName = function (s, id) { var k = _fold(s).replace(/[^a-z0-9&.\- ]+/g, ' ').replace(/\s+/g, ' ').trim(); if (k.length >= 3 && !names[k]) names[k] = id; };
+    keys.forEach(function (k) {
+      var n = NB[k]; if (!n || n.id !== k) return;               // solo canónicos (NODE_BY_ID[alias] → canónico)
+      var lab = String(n.label || '');
+      addName(lab, n.id);
+      var p = lab.indexOf('('); if (p > 0) addName(lab.slice(0, p), n.id);
+      if (n.mkt) { var t = String(n.mkt).split(/[\s·(]/)[0].toUpperCase(); if (t.length >= 1 && !tickers[t]) tickers[t] = n.id; }
+    });
+    var LN = W.LEGAL_NAMES || {};
+    Object.keys(LN).forEach(function (k) { if (NB[LN[k]] && k.length >= 4) addName(k, NB[LN[k]].id); });
+    _cIdx = { names: names, tickers: tickers }; _cIdxN = keys.length;
+    return _cIdx;
+  }
+  function detectCompany(text) {
+    var idx = _companyIndex(); if (!idx) return null;
+    var raw = String(text || '').replace(/[¿?¡!,;:()"«»“”]+/g, ' ').split(/\s+/).filter(Boolean);
+    var i;
+    for (i = 0; i < raw.length; i++) {                           // tickers: SOLO en MAYÚSCULAS (NVDA, TSM)
+      var tk = raw[i].replace(/[.'’]+$/, '').replace(/^\$/, '');
+      if (/^[A-Z][A-Z0-9.]{0,5}$/.test(tk) && !TICKER_STOP[tk] && idx.tickers[tk] && (tk.length >= 2 || raw[i].charAt(0) === '$')) return idx.tickers[tk];
+    }
+    var fw = raw.map(function (w) { return _fold(w).replace(/[.'’]+$/, ''); });
+    for (var len = 4; len >= 1; len--) {
+      for (i = 0; i + len <= fw.length; i++) {
+        var key = fw.slice(i, i + len).join(' ');
+        var id = idx.names[key]; if (!id) continue;
+        if (len === 1) {
+          var orig = raw[i];
+          if (key.length <= 3 && key !== 'amd' && orig !== orig.toUpperCase()) continue;   // "arm", "kla" en minúscula: ambiguo
+          // "meta", "vale" → palabras: solo cuentan con Mayúscula y NO al inicio de la frase ("¿Vale la pena…?")
+          if (NAME_STOP[key] && (i === 0 || orig.charAt(0) !== orig.charAt(0).toUpperCase())) continue;
+        }
+        return id;
+      }
+    }
+    return null;
+  }
+
+  var RX_RADAR = /\b(riesgos?|noticias?|guerras?|sanci[oó]n(es)?|sancionad[oa]s?|conflictos?|aranceles?|geopol[ií]tic[oa]s?|invasi[oó]n|eventos?|elecciones|qu[eé]\s+pasa(r[ií]a)?\s+si|news|wars?|sanctions?|tariffs?|risks?|what\s+if|conflict|geopolitic\w*)\b/i;
+  var RX_CADENA = /\b(proveedor(es|a|as)?|clientes?|cadena|suministro|depende(n|ncia)?|dependiente|abastec\w*|suppliers?|customers?|clients?|chain|supply|depends?|dependen(ce|cy))\b/i;
+  var RX_TECNICO = /\b(precios?|gr[aá]fic[oa]s?|tendencias?|sube|suben|subi[oó]|baja|bajan|baj[oó]|cotiza\w*|momentum|volatilidad|price|prices|chart|trend|trending|rall(y|ies)|drops?|volatility)\b/i;
+  var RX_COMITE = /\b(comit[eé]|convicci[oó]n|comprar?|vender?|compro|vendo|opinan|veredicto|recomiendas?|conviene|invertir|committee|conviction|buy|sell|verdict|invest|should\s+i)\b/i;
+  var RX_RISKQ = /riesgo|proveedor|cadena|suministro|depend|risk|supplier|supply|chain/i;
+
+  function _enabledList(opts) {
+    if (opts && Array.isArray(opts.enabled)) return opts.enabled;
+    try { if (W.KhipuAgentPrefs && W.KhipuAgentPrefs.enabled) return W.KhipuAgentPrefs.enabled(); } catch (e) {}
+    return AGENT_ORDER.slice();
+  }
+  /* predictAgents(texto, {enabled?, hasCompany?}) → ['analista','radar',…] (orden de las mascotas).
+     Pura salvo por leer NODE_BY_ID / KhipuAgentPrefs cuando no se pasan. */
+  function predictAgents(text, opts) {
+    opts = opts || {};
+    var t = String(text || ''), f = _fold(t).trim();
+    var enabled = _enabledList(opts);
+    var on = function (id) { return id === 'khipu' || enabled.indexOf(id) >= 0; };
+    // menciones explícitas ("@fundamental …", "/cartera @geo …") → ese agente y nadie más
+    var mm = f.match(/^(?:\/(?:cartera|portafolio|portfolio|micartera)\s+)?@\s*([a-z_]+)/);
+    if (mm && MENTION_AGENT[mm[1]]) return [MENTION_AGENT[mm[1]]];
+    if (/^\/(?:cartera|portafolio|portfolio|micartera)\b/.test(f) || /^@\s*(?:cartera|portafolio|portfolio)\b/.test(f)) return ['khipu'];
+    if (/^\/(?:comite|committee)\b/.test(f)) return ['comite'];
+    if (/^\/(?:investigar|investiga|investigacion|research|investigate)\b/.test(f))
+      return ['analista', 'radar', 'cadena', 'tecnico'].filter(on);
+    var company = opts.hasCompany != null ? !!(typeof opts.hasCompany === 'function' ? opts.hasCompany(t) : opts.hasCompany) : !!detectCompany(t);
+    var want = {};
+    if (company) want.analista = 1;
+    if (RX_RADAR.test(f)) want.radar = 1;
+    if (RX_CADENA.test(f)) want.cadena = 1;
+    if (RX_TECNICO.test(f)) want.tecnico = 1;
+    if (RX_COMITE.test(f)) want.comite = 1;
+    var out = AGENT_ORDER.filter(function (id) { return id !== 'khipu' && want[id] && on(id); });
+    if (!out.length && company && on('analista')) out = ['analista'];
+    return out.length ? out : ['khipu'];
+  }
+
+  function _autoFn(prefs) {
+    if (prefs && typeof prefs.auto === 'function') return function (id) { return !!prefs.auto(id); };
+    if (prefs && prefs.agents) return function (id) { var a = prefs.agents[id]; return !!(a && a.on !== false && a.auto); };
+    try { if (W.KhipuAgentPrefs && W.KhipuAgentPrefs.auto) return function (id) { return W.KhipuAgentPrefs.auto(id); }; } catch (e) {}
+    var DEF = { analista: 1, cadena: 1, comite: 1 };
+    return function (id) { return !!DEF[id]; };
+  }
+  /* planWindows(respuesta, pregunta, prefs, centrado) → [{kind, arg:{id}, agent}] — PURA.
+     Solo con la Cabina en modo flancos y una empresa en la respuesta (entities[0]):
+       glance       ← auto Analista
+       supplychain  ← auto Cadena  y (Cadena aportó o la pregunta habla de riesgo/proveedores)
+       conviction   ← auto Comité  y (hay tarjeta del comité o el Comité aportó) */
+  function planWindows(reply, question, prefs, centered) {
+    reply = reply || {};
+    if (!centered) return [];
+    var e0 = Array.isArray(reply.entities) ? reply.entities[0] : null;
+    var id = e0 && (typeof e0 === 'string' ? e0 : e0.id);
+    if (!id) return [];
+    var auto = _autoFn(prefs), used = agentsOf(reply), out = [];
+    var arg = function () { return { id: String(id) }; };
+    if (auto('analista')) out.push({ kind: 'glance', arg: arg(), agent: 'analista' });
+    if (auto('cadena') && (used.indexOf('cadena') >= 0 || RX_RISKQ.test(String(question || ''))))
+      out.push({ kind: 'supplychain', arg: arg(), agent: 'cadena' });
+    if (auto('comite') && ((reply.cards && reply.cards.committee) || used.indexOf('comite') >= 0))
+      out.push({ kind: 'conviction', arg: arg(), agent: 'comite' });
+    return out;
+  }
+  function _kindRegistered(kind) {
+    try {
+      if (W.KhipuOSWin && W.KhipuOSWin.kinds && W.KhipuOSWin.kinds[kind]) return true;
+      var ck = W.BixbyCockpit;
+      if (ck && typeof ck.hasKind === 'function') return !!ck.hasKind(kind);
+    } catch (e) {}
+    return false;
+  }
+  function _centered() {
+    try {
+      var ck = W.BixbyCockpit;
+      return !!(ck && typeof ck.stage === 'function' && ck.isCentered && ck.isCentered() && (!ck.isOpen || ck.isOpen()));
+    } catch (e) { return false; }
+  }
+
+  function newReqId() {
+    var a = new Array(16), i;
+    try {
+      var c = W.crypto || (typeof crypto !== 'undefined' ? crypto : null);   // eslint-disable-line no-undef
+      if (c && c.getRandomValues) { var u = new Uint8Array(16); c.getRandomValues(u); for (i = 0; i < 16; i++) a[i] = u[i]; }
+      else throw new Error('no crypto');
+    } catch (e) { for (i = 0; i < 16; i++) a[i] = Math.floor(Math.random() * 256); }
+    return 'kc' + a.map(function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+
+  // "hace 3 min" / "14:32" / "29 sept" — la hora de un dato (as_of), nunca inventada
+  function relTime(iso, now) {
+    if (!iso) return '';
+    var s = String(iso), dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(s);
+    var t = Date.parse(dateOnly ? s + 'T12:00:00' : s);
+    if (!isFinite(t)) return '';
+    now = now || Date.now();
+    var en = lang() === 'en', d = new Date(t), n = new Date(now);
+    var MES = en ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                 : ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic'];
+    var day = function () { return en ? MES[d.getMonth()] + ' ' + d.getDate() : d.getDate() + ' ' + MES[d.getMonth()]; };
+    if (dateOnly) return day() + (d.getFullYear() !== n.getFullYear() ? ' ' + d.getFullYear() : '');
+    var sec = Math.round((now - t) / 1000);
+    if (sec >= -90 && sec < 60) return en ? 'just now' : 'ahora';
+    if (sec >= 60 && sec < 3600) { var m = Math.round(sec / 60); return en ? m + ' min ago' : 'hace ' + m + ' min'; }
+    var hm = ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+    if (d.toDateString() === n.toDateString()) return hm;
+    return day() + (d.getFullYear() !== n.getFullYear() ? ' ' + d.getFullYear() : '') + ' ' + hm;
+  }
+
   /* ══ 2) MEMORIA + LLAMADA AL CEREBRO ═══════════════════════════════════ */
   // historial en localStorage con caducidad de 24 h (antes sessionStorage: se perdía al cerrar la pestaña)
   var history = [];
@@ -318,13 +559,33 @@
       });
       if (out.length) ctx.portfolio = { positions: out };
     } catch (e) {}
+    // Khipus OS: cómo quieres que te hable (Simple/Pro) y qué agentes participan (solo PRESENTACIÓN:
+    // nunca cambia decisiones del comité ni tamaños de órdenes)
+    try {
+      var P = W.KhipuAgentPrefs;
+      if (P && P.mode && P.enabled) { ctx.mode = P.mode() === 'pro' ? 'pro' : 'simple'; ctx.agents_enabled = P.enabled().slice(0, 6); }
+    } catch (e) {}
     return ctx;
   }
 
+  function _base() { return (typeof BASE !== 'undefined' && BASE) ? BASE : (W.BASE || ''); }   // eslint-disable-line no-undef
+
   function send(text, opts) {
     opts = opts || {};
-    var base = (typeof BASE !== 'undefined' && BASE) ? BASE : (W.BASE || '');   // eslint-disable-line no-undef
+    var base = _base();
     var body = { message: String(text || '').slice(0, 2000), history: history.slice(-MAX_TURNS), lang: lang(), context: context() };
+    // req_id (contrato §3.2): el servidor publica qué agentes trabajan → la burbuja "pensando" lo muestra en vivo.
+    // La Cabina y el Command Center llaman appendPending() y en el MISMO instante send(): se enlazan solos.
+    var pend = opts.pending || null;
+    if (!pend && _lastPending && !_lastPending._kcBound && _lastPending.classList && _lastPending.classList.contains('kc-pending') &&
+        Date.now() - (_lastPending._kcT0 || 0) < 2500) pend = _lastPending;
+    var rid = (typeof opts.req_id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(opts.req_id)) ? opts.req_id : (pend && pend._kcReq) || newReqId();
+    body.req_id = rid;
+    if (pend) {
+      pend._kcBound = true; pend._kcReq = rid;
+      if (!pend._kcQ) { pend._kcQ = String(text || ''); _paintThinking(pend, predictAgents(pend._kcQ).map(function (id) { return { id: id, state: 'working' }; })); }
+      _pollProgress(pend, rid);
+    }
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer = ctl ? setTimeout(function () { try { ctl.abort(); } catch (e) {} }, opts.timeout || 70000) : null;
     return fetch(base + '/api/khipu/chat', {
@@ -379,8 +640,10 @@
     return null;
   }
   function askAgent(route) {
-    var base = (typeof BASE !== 'undefined' && BASE) ? BASE : (W.BASE || '');   // eslint-disable-line no-undef
+    var base = _base();
     var src = pfSelected();
+    // la burbuja "pensando" recién creada es de ESTA pregunta (no va por /api/khipu/chat): que otro send() no la tome
+    if (_lastPending && !_lastPending._kcBound && Date.now() - (_lastPending._kcT0 || 0) < 2500) _lastPending._kcBound = true;
     var PC = W.KhipuPortfolioCommittee;
     if (!src || !PC || !PC._positionsFor) {
       return Promise.resolve({ agent: agentInfo(route), degraded: true, answer: L(
@@ -450,48 +713,88 @@
     return out.join('');
   }
 
-  /* ══ 4) HILO (burbujas) ═════════════════════════════════════════════════ */
+  /* ══ 4) HILO (burbujas) ═════════════════════════════════════════════════
+     Khipus OS (2026-10-06, video): tu pregunta a la DERECHA en gris suave; Khipu a la
+     izquierda con su mascota y el texto directo sobre la superficie; debajo, una tarjeta
+     con lo que aportó cada agente. Colores = tokens --os-* de la Cabina (claro/oscuro);
+     fuera de ella (Command Center viejo) los respaldos son los oscuros de siempre. */
   var CSS = '' +
-    '.kc-thread{display:flex;flex-direction:column;gap:12px;width:100%;max-width:860px;margin:0 auto;padding:4px 2px 8px;box-sizing:border-box}' +
-    '.kc-msg{max-width:92%;border-radius:14px;padding:10px 14px;font-size:14px;line-height:1.55;overflow-wrap:anywhere;word-break:break-word}' +
-    '.kc-user{align-self:flex-end;background:rgba(0,224,255,.12);border:1px solid rgba(0,224,255,.32);color:#E8EDFB;white-space:pre-wrap}' +
-    '.kc-bot{align-self:flex-start;background:rgba(11,18,34,.78);border:1px solid rgba(122,158,255,.2);color:#E8EDFB}' +
-    '.kc-bot p{margin:0 0 8px}.kc-bot p:last-child{margin-bottom:0}.kc-bot ul,.kc-bot ol{margin:4px 0 8px;padding-left:20px}.kc-bot li{margin:2px 0}' +
-    '.kc-bot code{font-family:"JetBrains Mono",monospace;font-size:12.5px;background:rgba(122,158,255,.12);padding:1px 5px;border-radius:5px}' +
-    '.kc-bot a{color:#7ecbff}.kc-h{font-weight:750;margin:6px 0 4px;color:#fff}' +
-    '.kc-who{font-size:10px;font-weight:800;letter-spacing:.12em;color:#8e9dff;margin-bottom:4px;text-transform:uppercase}' +
-    '.kc-agent{display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px;color:#C7D0EA}' +
-    '.kc-meta{font-size:10.5px;color:#5E6884;margin-top:6px}' +
-    '.kc-chart{margin-top:10px;max-width:760px}.kc-chart .cv-card{margin:0}.kc-chart .cv-card-close{display:none}' +
-    '.kc-chart-open{margin-top:8px}' +
-    '.kc-retry{margin-left:8px;border:1px solid rgba(122,158,255,.3);background:transparent;color:#C7D0EA;border-radius:7px;padding:2px 9px;cursor:pointer;font-size:11.5px;font-family:inherit}' +
-    '.kc-retry:hover{border-color:#00E0FF;color:#00E0FF}' +
-    '.kc-agent-av{display:inline-flex;width:22px;height:22px;border-radius:50%;overflow:hidden;border:1px solid rgba(122,158,255,.35)}' +
-    '.kc-agent-av svg{width:100%;height:100%}.kc-agent-ent{color:#8E9AB8;font-weight:500}' +
-    '.kc-tools{margin-top:8px;font-size:11.5px;color:#8FA0C4}.kc-tools .bad{color:#f6a0b5}' +
-    '.kc-src{margin-top:6px;font-size:11px;color:#6F7C99}.kc-src a{color:#8fb7ff}' +
-    '.kc-note{margin-top:8px;font-size:11.5px;color:#FFD27A}' +
-    '.kc-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}' +
-    '.kc-act{font-size:12px;padding:5px 11px;border-radius:999px;cursor:pointer;border:1px solid rgba(0,224,255,.45);background:rgba(0,224,255,.08);color:#9EEBFF;font-family:inherit}' +
-    '.kc-act:hover{background:rgba(0,224,255,.2)}' +
-    '.kc-think{display:flex;align-items:center;gap:8px;color:#9BA6C4;font-size:13px}' +
-    '.kc-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#8e5aff;margin-right:3px;animation:kcDot 1s infinite ease-in-out}' +
-    '.kc-dots span:nth-child(2){animation-delay:.15s}.kc-dots span:nth-child(3){animation-delay:.3s}' +
-    '@keyframes kcDot{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}' +
-    '.kc-err{color:#FF8FA3}' +
-    '.kc-uchip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:#9EEBFF;background:rgba(0,224,255,.1);border:1px solid rgba(0,224,255,.35);border-radius:999px;padding:1px 9px 1px 4px;margin:0 6px 4px 0;white-space:nowrap}' +
-    '.kc-uchip i{font-style:normal;display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;background:rgba(0,224,255,.18);font-size:11px}' +
-    '.kc-pf{margin-top:10px;border:1px solid rgba(122,158,255,.2);border-radius:12px;padding:10px 12px;background:rgba(6,10,20,.5)}' +
-    '.kc-pf-top{display:flex;gap:12px;align-items:center}.kc-pf-sc{width:46px;height:46px;flex:0 0 46px;border-radius:50%;border:4px solid;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}' +
-    '.kc-pf-v{font-weight:700;font-size:13px}.kc-pf-m{font-size:11.5px;color:#8E9AB8;margin-top:2px}' +
-    '.kc-pf-a{display:flex;gap:8px;align-items:baseline;font-size:12.5px;margin-top:6px}.kc-pf-a b{white-space:nowrap}' +
-    '@media(max-width:600px){.kc-msg{max-width:100%;font-size:13.5px;padding:9px 12px}}' +
-    '@media(prefers-reduced-motion:reduce){.kc-dots span{animation:none}}';
+    '.kc-thread{display:flex;flex-direction:column;gap:16px;width:100%;max-width:860px;margin:0 auto;padding:6px 2px 10px;box-sizing:border-box;color:var(--os-ink,#E8EDFB);--kc-warn:#F2C46D}' +
+    'body:not(.dark) #bcp-ov:not(.kos-classic) .kc-thread{--kc-warn:#8F5B00}' +
+    '.kc-msg{font-size:14.5px;line-height:1.55;overflow-wrap:anywhere;word-break:break-word;letter-spacing:-.003em}' +
+    '.kc-user{align-self:flex-end;max-width:86%;box-sizing:border-box;background:var(--os-surface-2,rgba(255,255,255,.07));color:var(--os-ink,#E8EDFB);' +
+      'border-radius:18px;padding:11px 16px;white-space:pre-wrap;animation:kcIn .2s ease both}' +
+    '.kc-bot{align-self:stretch;display:flex;align-items:flex-start;gap:12px;min-width:0;color:var(--os-ink,#E8EDFB)}' +
+    '.kc-av{flex:0 0 26px;width:26px;height:26px;line-height:0}' +
+    '.kc-main{flex:1;min-width:0;padding-top:2px}' +
+    '.kc-bot:not(.kc-pending) .kc-main{animation:kcIn .26s cubic-bezier(.2,.7,.2,1) both}' +
+    '.kc-body p{margin:0 0 9px}.kc-body p:last-child{margin-bottom:0}.kc-body ul,.kc-body ol{margin:4px 0 9px;padding-left:20px}.kc-body li{margin:3px 0}' +
+    '.kc-bot code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;background:var(--os-surface-2,rgba(255,255,255,.07));padding:1px 5px;border-radius:6px}' +
+    '.kc-bot a{color:var(--os-accent,#7EB6FF);text-decoration:none}.kc-bot a:hover{text-decoration:underline}' +
+    '.kc-h{font-weight:650;margin:10px 0 4px;color:var(--os-ink,#FFFFFF);letter-spacing:-.01em}' +
+    '.kc-who{font-size:12.5px;font-weight:600;color:var(--os-ink-2,#A6A8B5);margin:2px 0 6px}' +
+    '.kc-agent{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}' +
+    '.kc-agent-av{display:inline-flex;width:20px;height:20px;border-radius:50%;overflow:hidden}.kc-agent-av svg{width:100%;height:100%}' +
+    '.kc-agent-ent{color:var(--os-ink-3,#7C8096);font-weight:500}' +
+    // lo que aportó cada agente (tarjeta suave, como el video)
+    '.kc-contrib{margin-top:12px;background:var(--os-surface-2,rgba(255,255,255,.05));border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}' +
+    '.kc-ag{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;color:var(--os-ink-2,#A6A8B5)}' +
+    '.kc-ag>.km,.kc-ag>.kc-mf{margin-top:1px}' +
+    '.kc-agn{min-width:0}.kc-agn b{color:var(--os-ink,#F2F2F5);font-weight:650;margin-right:4px}' +
+    '.kc-agt{color:var(--os-ink-3,#7C8096);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}' +
+    '.kc-ag.off .kc-agn{color:var(--os-ink-3,#7C8096)}' +
+    '.kc-bad{color:var(--os-bad,#F06565);font-weight:500}' +
+    '.kc-foot{margin-top:10px}' +
+    '.kc-src{font-size:12px;line-height:1.5;color:var(--os-ink-3,#7C8096)}' +
+    '.kc-src a{color:var(--os-ink-2,#A6A8B5);text-decoration:underline;text-decoration-color:var(--os-line,rgba(255,255,255,.18));text-underline-offset:2px}' +
+    '.kc-t{font-variant-numeric:tabular-nums;white-space:nowrap}' +
+    '.kc-meta{font-size:11.5px;color:var(--os-ink-3,#7C8096);margin-top:4px;font-variant-numeric:tabular-nums}' +
+    '.kc-note{margin-top:10px;font-size:12.5px;line-height:1.45;color:var(--kc-warn,#F2C46D)}' +
+    '.kc-chart{margin-top:12px;max-width:760px}.kc-chart .cv-card{margin:0}.kc-chart .cv-card-close{display:none}.kc-chart-open{margin-top:8px}' +
+    '.kc-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}' +
+    '.kc-act{font-size:13px;font-weight:500;line-height:1.2;padding:8px 13px;border-radius:999px;cursor:pointer;border:0;font-family:inherit;' +
+      'background:var(--os-surface-2,rgba(255,255,255,.08));color:var(--os-ink,#E8EDFB);transition:background .14s,transform .14s}' +
+    '.kc-act:hover{background:var(--os-surface-3,rgba(255,255,255,.14))}.kc-act:active{transform:scale(.98)}' +
+    '.kc-act:focus-visible,.kc-retry:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(76,141,246,.35)}' +
+    '.kc-retry{margin-left:8px;border:0;background:var(--os-surface-2,rgba(255,255,255,.08));color:var(--os-ink,#E8EDFB);border-radius:999px;padding:3px 10px;cursor:pointer;font-size:12px;font-family:inherit}' +
+    '.kc-retry:hover{background:var(--os-surface-3,rgba(255,255,255,.14))}' +
+    // pensando: fila de mascotas + "Analista, Cadena y Comité están investigando…"
+    '.kc-pending{animation:kcIn .2s ease both}' +
+    '.kc-think{display:flex;align-items:center;gap:10px;color:var(--os-ink-3,#8D90A0);font-size:13px;line-height:1.35;min-height:22px}' +
+    '.kc-tm{display:inline-flex;align-items:center;gap:5px;flex-shrink:0}' +
+    '.kc-tmi{display:inline-flex;line-height:0;transition:opacity .3s}.kc-tmi.kc-done{opacity:.42}.kc-tmi.kc-fail{opacity:.22}' +
+    '.kc-tt{min-width:0}.kc-el{font-variant-numeric:tabular-nums;white-space:nowrap;opacity:.8}' +
+    '.kc-err{color:var(--os-bad,#FF8FA3);padding-top:2px}' +
+    '.kc-mf{display:inline-block;flex-shrink:0;border-radius:50%;vertical-align:middle}' +
+    // chip del agente en TU burbuja (@analista, 💼 cartera…)
+    '.kc-uchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--os-ink-2,#A6A8B5);background:var(--os-surface,rgba(255,255,255,.08));' +
+      'border-radius:999px;padding:2px 10px 2px 3px;margin:0 6px 5px 0;white-space:nowrap;vertical-align:middle}' +
+    '.kc-uchip i{font-style:normal;display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;font-size:11px;line-height:0}' +
+    // tarjeta del comité de cartera
+    '.kc-pf{margin-top:12px;border-radius:14px;padding:12px 14px;background:var(--os-surface-2,rgba(255,255,255,.05))}' +
+    '.kc-pf-top{display:flex;gap:12px;align-items:center}.kc-pf-sc{width:46px;height:46px;flex:0 0 46px;border-radius:50%;border:4px solid;display:flex;align-items:center;justify-content:center;font-weight:750;font-size:15px;font-variant-numeric:tabular-nums}' +
+    '.kc-pf-v{font-weight:650;font-size:13.5px}.kc-pf-m{font-size:12px;color:var(--os-ink-2,#A6A8B5);margin-top:2px;font-variant-numeric:tabular-nums}' +
+    '.kc-pf-a{display:flex;gap:8px;align-items:baseline;font-size:12.5px;margin-top:6px}.kc-pf-a b{white-space:nowrap}.kc-pf-a span{color:var(--os-ink-2,#A6A8B5)}' +
+    '.kc-pf-x{color:var(--kc-warn,#F2C46D);margin-top:6px}' +
+    '@keyframes kcIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}' +
+    // Command Center viejo: su tarjeta ya rotula la respuesta (sin avatar ni encabezado)
+    '.bcc-card .kc-av{display:none}.bcc-card .kc-bot{display:block}' +
+    '@media(max-width:600px){.kc-msg{font-size:14px}.kc-user{max-width:92%;padding:10px 14px}.kc-bot{gap:10px}.kc-av{flex-basis:24px;width:24px;height:24px}.kc-contrib{padding:11px 12px}}' +
+    '@media(prefers-reduced-motion:reduce){.kc-user,.kc-pending,.kc-bot .kc-main{animation:none!important}}';
 
   function ensureStyles() {
-    if (!W.document || W.document.getElementById('kc-styles')) return;
+    if (!W.document || !W.document.head || W.document.getElementById('kc-styles')) return;
     var st = W.document.createElement('style'); st.id = 'kc-styles'; st.textContent = CSS;
     W.document.head.appendChild(st);
+  }
+
+  // mascota (engine/mascot.js); sin el módulo, una burbuja con los mismos tonos (nunca un hueco)
+  function mascot(id, size, state) {
+    id = AGENT_NAME[id] ? id : 'khipu';
+    try { if (W.KhipuMascot && W.KhipuMascot.svg) return W.KhipuMascot.svg(id, size, state ? { state: state } : undefined); } catch (e) {}
+    var c = AGENT_TINT[id];
+    return '<span class="kc-mf" role="img" aria-label="' + esc(agentName(id)) + '" style="width:' + size + 'px;height:' + size + 'px;' +
+      'background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.5) 0,rgba(255,255,255,0) 42%),linear-gradient(135deg,' + c[0] + ',' + c[1] + ' 62%,' + c[2] + ')"></span>';
   }
 
   function _scroll(el) {
@@ -503,10 +806,13 @@
 
   function appendUser(thread, text, agent) {
     ensureStyles();
+    try { thread._kcLastQ = String(text || ''); } catch (e) {}   // appendPending lo usa para predecir quién investiga
     var d = W.document.createElement('div'); d.className = 'kc-msg kc-user';
     if (agent && agent.name) {
       var chip = W.document.createElement('span'); chip.className = 'kc-uchip';
-      chip.innerHTML = '<i>' + esc(agent.emoji || '🤖') + '</i>' + esc(agent.name + (agent.label ? ' · ' + agent.label : ''));
+      var mid = agent.mascot || null;
+      if (!mid && agent.seat) { try { mid = (W.KhipuMascot && W.KhipuMascot.of) ? W.KhipuMascot.of(agent.seat) : SEAT_AGENT[agent.seat]; } catch (e) { mid = null; } }
+      chip.innerHTML = '<i>' + (mid && W.KhipuMascot ? mascot(mid, 18) : esc(agent.emoji || '🤖')) + '</i>' + esc(agent.name + (agent.label ? ' · ' + agent.label : ''));
       d.appendChild(chip);
       text = String(text || '').replace(/^\s*(?:(?:\/\S+|@\S+)\s*){1,2}/, '');
       if (text) { d.appendChild(W.document.createElement('br')); }
@@ -515,20 +821,125 @@
     thread.appendChild(d); _scroll(d); return d;
   }
 
-  var THINK = {
-    es: ['Pensando', 'Buscando datos reales', 'Consultando fuentes en vivo', 'Armando la respuesta'],
-    en: ['Thinking', 'Looking up real data', 'Checking live sources', 'Putting the answer together'],
-  };
-  function appendPending(thread) {
+  /* ── "pensando": quién investiga (predicción → progreso REAL del servidor) ── */
+  function _joinNames(names) {
+    var en = lang() === 'en';
+    if (names.length <= 1) return names[0] || '';
+    return names.slice(0, -1).join(', ') + (en ? ' and ' : ' y ') + names[names.length - 1];
+  }
+  // list = [{id, state:'working'|'done'|'error'}]
+  function thinkingText(list) {
+    var en = lang() === 'en';
+    var real = (list || []).filter(function (a) { return a.id !== 'khipu'; });
+    var working = real.filter(function (a) { return a.state === 'working'; });
+    if (!real.length) return en ? 'Khipu is thinking…' : 'Khipu está pensando…';
+    if (!working.length) return en ? 'Khipu is writing the answer…' : 'Khipu está redactando la respuesta…';
+    var names = working.map(function (a) { return agentName(a.id); });
+    return _joinNames(names) + (names.length === 1 ? (en ? ' is researching…' : ' está investigando…') : (en ? ' are researching…' : ' están investigando…'));
+  }
+  function _paintThinking(el, list) {
+    if (!el || !el.querySelector) return;
+    var tm = el.querySelector('.kc-tm'), tt = el.querySelector('.kc-tt');
+    if (!tm || !tt) return;
+    list = (list || []).filter(function (a) { return a && AGENT_NAME[a.id]; });
+    var sig = list.map(function (a) { return a.id + ':' + a.state; }).join(',') + '|' + lang();
+    if (el._kcSig === sig) return;
+    el._kcSig = sig; el._kcList = list;
+    var shown = list.filter(function (a) { return a.id !== 'khipu'; });
+    if (!shown.length) shown = [{ id: 'khipu', state: 'working' }];
+    // actualización por mascota: las que siguen igual no reinician su animación
+    var have = {};
+    Array.prototype.slice.call(tm.children).forEach(function (c) { have[c.getAttribute('data-ag')] = c; });
+    shown.forEach(function (a, i) {
+      var c = have[a.id];
+      if (!c) { c = W.document.createElement('span'); c.className = 'kc-tmi'; c.setAttribute('data-ag', a.id); }
+      if (c.getAttribute('data-st') !== a.state) {
+        c.innerHTML = mascot(a.id, 18, a.state === 'working' ? 'think' : null);
+        c.setAttribute('data-st', a.state);
+        c.classList.toggle('kc-done', a.state === 'done');
+        c.classList.toggle('kc-fail', a.state === 'error');
+        c.title = agentName(a.id) + (a.state === 'done' ? ' ✓' : a.state === 'error' ? ' — ' + L('sin datos', 'no data') : '');
+      }
+      if (tm.children[i] !== c) tm.insertBefore(c, tm.children[i] || null);
+      delete have[a.id];
+    });
+    Object.keys(have).forEach(function (k) { if (have[k].parentNode === tm) tm.removeChild(have[k]); });
+    tt.textContent = thinkingText(list);
+  }
+  var _lastPending = null;
+  function appendPending(thread, opts) {
+    opts = opts || {};
     ensureStyles();
     var d = W.document.createElement('div'); d.className = 'kc-msg kc-bot kc-pending';
-    d.innerHTML = '<div class="kc-who">Khipu</div><div class="kc-think"><span class="kc-dots"><span></span><span></span><span></span></span><span class="kc-tt"></span></div>';
+    d.innerHTML = '<div class="kc-think" role="status" aria-live="polite"><span class="kc-tm"></span><span class="kc-tt"></span><span class="kc-el"></span></div>';
+    d._kcQ = opts.text != null ? String(opts.text) : ((thread && thread._kcLastQ) || '');
+    try { if (thread) thread._kcLastQ = ''; } catch (e) {}
+    d._kcT0 = Date.now(); d._kcBound = false;
+    d._kcReq = (typeof opts.req_id === 'string' && opts.req_id) ? opts.req_id : newReqId();
     thread.appendChild(d);
-    var i = 0, tt = d.querySelector('.kc-tt');
-    var tick = function () { var arr = THINK[lang()]; tt.textContent = '🔎 ' + arr[Math.min(i, arr.length - 1)] + '…'; i++; };
-    tick();
-    d._timer = setInterval(tick, 2600);
+    _paintThinking(d, (d._kcQ ? predictAgents(d._kcQ) : ['khipu']).map(function (id) { return { id: id, state: 'working' }; }));
+    // segundos transcurridos (a partir de 4 s): la espera se ve honesta, no colgada
+    var elx = d.querySelector('.kc-el');
+    d._timer = setInterval(function () {
+      var s = Math.round((Date.now() - d._kcT0) / 1000);
+      if (elx) elx.textContent = s >= 4 ? s + ' s' : '';
+      if (d._kcSig && d._kcSig.split('|')[1] !== lang() && d._kcList) { d._kcSig = ''; _paintThinking(d, d._kcList); }   // cambió el idioma
+    }, 1000);
+    _lastPending = d;
     _scroll(d); return d;
+  }
+  // progreso por agente: [{agent, tool, state}] (una fila por herramienta) → una mascota por agente
+  function progressAgents(p) {
+    var by = {};
+    ((p && p.agents) || []).forEach(function (a) {
+      var id = a && a.agent; if (!AGENT_NAME[id]) return;
+      var g = by[id] || (by[id] = { w: 0, d: 0, e: 0 });
+      if (a.state === 'working') g.w++; else if (a.state === 'error') g.e++; else g.d++;
+    });
+    return AGENT_ORDER.filter(function (id) { return by[id]; }).map(function (id) {
+      var g = by[id]; return { id: id, state: g.w ? 'working' : (g.d ? 'done' : 'error') };
+    });
+  }
+  function _stopPending(el) {
+    if (!el) return;
+    if (el._timer) { clearInterval(el._timer); el._timer = null; }
+    if (el._kcPollStop) { try { el._kcPollStop(); } catch (e) {} }
+    if (_lastPending === el) _lastPending = null;
+  }
+  // GET /api/khipu/chat/progress/<req_id> cada ~0,7 s mientras se espera. Servidor viejo (404 seguidos),
+  // límite de tasa o red caída → se detiene en silencio y queda la predicción.
+  function _pollProgress(el, rid) {
+    if (!el || typeof fetch !== 'function') return;
+    if (el._kcPollStop) el._kcPollStop();
+    var stopped = false, seen = false, misses = 0, fails = 0, t0 = Date.now(), tm = null;
+    var stop = function () { stopped = true; if (tm) { clearTimeout(tm); tm = null; } el._kcPollStop = null; };
+    el._kcPollStop = stop;
+    var next = function (ms) { if (!stopped) tm = setTimeout(tick, ms); };
+    function tick() {
+      tm = null;
+      if (stopped) return;
+      if (!el.classList.contains('kc-pending') || el.isConnected === false || Date.now() - t0 > 90000) { stop(); return; }
+      fetch(_base() + '/api/khipu/chat/progress/' + encodeURIComponent(rid), { cache: 'no-store', headers: { Accept: 'application/json' } })
+        .then(function (r) {
+          if (r.status === 404) { misses++; return null; }
+          if (r.status === 429) { fails += 3; return null; }
+          var ct = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
+          if (!r.ok || ct.indexOf('application/json') < 0) { fails++; return null; }
+          return r.json();
+        })
+        .then(function (p) {
+          if (stopped) return;
+          if (p && Array.isArray(p.agents)) {
+            seen = true; misses = 0;
+            var list = progressAgents(p);
+            if (list.length) { el._kcLive = true; _paintThinking(el, list); }
+            if (p.done) { stop(); return; }
+          }
+          if ((!seen && misses >= 8) || fails >= 6) { stop(); return; }
+          next(fails ? 1400 : 700);
+        }, function () { if (stopped) return; fails++; if (fails >= 6) { stop(); return; } next(1400); });
+    }
+    next(350);
   }
 
   var TOOL_LABEL = {
@@ -540,6 +951,8 @@
     get_world_events: ['Monitor mundial', 'World monitor'], get_news: ['Noticias', 'News'],
     market_movers: ['Movimientos del día', "Today's movers"], rank_companies: ['Ranking del grafo', 'Graph ranking'],
     get_space_summary: ['Espacio', 'Space'], web_search: ['Búsqueda web', 'Web search'],
+    ask_agent: ['Pregunta a un analista', 'Asked an analyst'], scenario_exposure: ['Exposición a un escenario', 'Scenario exposure'],
+    get_conclusions_board: ['Pizarra del comité', 'Committee board'], get_research_health: ['Salud de la investigación', 'Research health'],
   };
   function toolLabel(n) { var x = TOOL_LABEL[n]; return x ? x[lang() === 'en' ? 1 : 0] : n; }
 
@@ -569,54 +982,145 @@
   // quedan como botón para que la respuesta siga visible.
   var AUTO = { open_xray: 1, navigate: 1, stress: 1, compare: 1, chart: 1, simulate: 1, agent_sim: 1, switch_tab: 1, open_world: 1 };
 
-  function fillReply(el, d, opts) {
-    opts = opts || {};
-    if (el._timer) { clearInterval(el._timer); el._timer = null; }
-    el.classList.remove('kc-pending');
+  function _mode() { try { return W.KhipuAgentPrefs && W.KhipuAgentPrefs.mode && W.KhipuAgentPrefs.mode() === 'pro' ? 'pro' : 'simple'; } catch (e) { return 'simple'; } }
+  // la hora de un dato con su atributo para refrescar "hace N min" mientras el hilo sigue abierto
+  function _timeTag(iso, prefix) {
+    var r = relTime(iso); if (!r) return '';
+    return '<span class="kc-t" data-asof="' + esc(iso) + '" data-pre="' + esc(prefix || '') + '" title="' + esc(String(iso)) + '">' + esc((prefix || '') + r) + '</span>';
+  }
+  var _timesTimer = null;
+  function _armTimes() {
+    if (_timesTimer || !W.document || typeof setInterval !== 'function') return;
+    _timesTimer = setInterval(function () {
+      try {
+        var els = W.document.querySelectorAll('.kc-t[data-asof]');
+        for (var i = 0; i < els.length; i++) { var r = relTime(els[i].getAttribute('data-asof')); if (r) els[i].textContent = (els[i].getAttribute('data-pre') || '') + r; }
+      } catch (e) {}
+    }, 30000);
+  }
+  function _toolsText(tools) {
+    return (tools || []).map(function (t) {
+      if (typeof t === 'string') return esc(toolLabel(t));
+      return esc(toolLabel(t.name) + (t.args_summary ? ' (' + String(t.args_summary).slice(0, 40) + ')' : '')) +
+        (t.ok === false ? ' <span class="kc-bad" title="' + esc(t.error || '') + '">✕</span>' : '');
+    }).join(' · ');
+  }
+  /* Lo que aportó cada agente. Con agents_used (servidor): mascota + nombre en negrita + nota
+     DETERMINISTA (hecha con datos de las herramientas, nunca texto del modelo). Sin él (servidor
+     viejo): se deriva de tools_used con el mismo mapa TOOL_AGENT y se listan las consultas. */
+  function contribRows(d) {
     d = d || {};
-    // un ANALISTA respondió en persona (@fundamental, @noticias, @todos…): su avatar y su nombre
-    var who = 'Khipu';
-    if (d.agent && d.agent.name) {
-      var av = '';
-      try { av = (W.KhipuCommittee && W.KhipuCommittee.avatar && d.agent.seat !== 'all') ? W.KhipuCommittee.avatar(d.agent.seat, d.agent.emoji, true) : ''; } catch (e) { av = ''; }
-      who = '<span class="kc-agent">' + (av ? '<span class="kc-agent-av">' + av + '</span>' : esc(d.agent.emoji || '🤖') + ' ') + esc(d.agent.name) +
-        (d.agent.label ? '<span class="kc-agent-ent"> · ' + esc(d.agent.label) + '</span>' : '') + '</span>';
+    var en = lang() === 'en', rows = [];
+    if (Array.isArray(d.agents_used) && d.agents_used.length) {
+      var list = d.agents_used.filter(function (a) { return a && AGENT_NAME[a.agent]; });
+      var nonK = list.filter(function (a) { return a.agent !== 'khipu'; });
+      if (nonK.length) list = nonK;
+      list.forEach(function (a) {
+        var tools = Array.isArray(a.tools) ? a.tools : [];
+        var note = en ? (a.note_en || a.note_es) : (a.note_es || a.note_en);
+        // la nota genérica del servidor ("Consultó get_company, get_news") → nombres legibles
+        var generic = note && tools.length && (note === 'Consultó ' + tools.join(', ') || note === 'Checked ' + tools.join(', '));
+        rows.push({ id: a.agent, ok: a.ok !== false, note: generic ? null : (note || null), tools: tools, source: a.source || null, as_of: a.as_of || null });
+      });
+      return rows;
     }
-    var h = '<div class="kc-who">' + who + '</div><div class="kc-body">' + md(d.answer || L('(sin respuesta)', '(no answer)')) + '</div>';
+    if (d.agent && d.agent.name) return rows;   // respondió un analista en persona: ya lo dice su encabezado
+    var by = {}, order = [];
+    (Array.isArray(d.tools_used) ? d.tools_used : []).forEach(function (t) {
+      if (!t || !t.name) return;
+      var id = toolAgent(t.name, t.args_summary);
+      if (!by[id]) { by[id] = { id: id, ok: false, note: null, tools: [], source: null, as_of: null }; order.push(id); }
+      by[id].tools.push(t); if (t.ok) by[id].ok = true;
+    });
+    var ids = AGENT_ORDER.filter(function (id) { return by[id]; });
+    var nk = ids.filter(function (id) { return id !== 'khipu'; });
+    (nk.length ? nk : ids).forEach(function (id) { rows.push(by[id]); });
+    return rows;
+  }
+  function contribHTML(d) {
+    var rows = contribRows(d);
+    if (!rows.length) return '';
+    var pro = _mode() === 'pro';
+    return '<div class="kc-contrib" role="list" aria-label="' + esc(L('Lo que aportó cada agente', 'What each agent contributed')) + '">' + rows.map(function (r) {
+      var toolNames = (r.tools || []).map(function (t) { return toolLabel(typeof t === 'string' ? t : t.name); }).join(', ');
+      var tip = toolNames + (r.source ? ' · ' + r.source : '') + (r.as_of ? ' · ' + r.as_of : '');
+      var body;
+      if (r.note) body = esc(r.note);
+      else if (r.tools && r.tools.length && typeof r.tools[0] === 'object') body = _toolsText(r.tools);
+      else if (r.tools && r.tools.length) body = esc(toolNames);
+      else body = '';
+      if (!r.ok && !r.note) body += (body ? ' · ' : '') + '<span class="kc-bad">' + esc(L('no pudo obtener los datos ahora', 'could not get the data right now')) + '</span>';
+      var when = r.as_of ? _timeTag(r.as_of, pro && r.source ? r.source + ', ' : '') : '';
+      return '<div class="kc-ag' + (r.ok ? '' : ' off') + '" role="listitem"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + mascot(r.id, 18) +
+        '<div class="kc-agn"><b>' + esc(agentName(r.id)) + '</b>' + body + (pro && when ? ' <span class="kc-agt">· ' + when + '</span>' : '') + '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  /* replyHTML(d) — el HTML de una respuesta (sin botones ni gráfico, que se cablean en fillReply).
+     PURA respecto del DOM: se puede probar en node. */
+  function replyHTML(d, opts) {
+    opts = opts || {};
+    d = d || {};
+    var avId = 'khipu', who = '';
+    // un ANALISTA respondió en persona (@fundamental, @noticias, @todos…): su mascota y su nombre
+    if (d.agent && d.agent.name) {
+      var mid = null;
+      try { mid = (W.KhipuMascot && W.KhipuMascot.of) ? W.KhipuMascot.of(d.agent.seat) : null; } catch (e) { mid = null; }
+      if (!mid) mid = SEAT_AGENT[String(d.agent.seat || '')] || null;
+      if (mid) avId = mid;
+      var old = '';
+      if (!W.KhipuMascot) {
+        try { old = (W.KhipuCommittee && W.KhipuCommittee.avatar && d.agent.seat !== 'all') ? W.KhipuCommittee.avatar(d.agent.seat, d.agent.emoji, true) : ''; } catch (e) { old = ''; }
+      }
+      who = '<div class="kc-who"><span class="kc-agent">' + (old ? '<span class="kc-agent-av">' + old + '</span>' : (W.KhipuMascot ? '' : esc(d.agent.emoji || '🤖') + ' ')) +
+        esc(d.agent.name) + (d.agent.label ? '<span class="kc-agent-ent"> · ' + esc(d.agent.label) + '</span>' : '') + '</span></div>';
+    }
+    var h = '<div class="kc-av">' + mascot(avId, 26) + '</div><div class="kc-main">' + who +
+      '<div class="kc-body">' + md(d.answer || L('(sin respuesta)', '(no answer)')) + '</div>';
     if (d.portfolio) h += pfCardHTML(d.portfolio);
     if (d.profile_missing) h += '<div class="kc-note">🧭 ' + esc(L('Usé el perfil «moderado» porque aún no definiste el tuyo (Comité → 💼 Mi cartera → 4 preguntas).', 'I used the "moderate" profile because you have not set yours yet (Committee → 💼 My portfolio → 4 questions).')) + '</div>';
+    h += contribHTML(d);
     if (d.degraded) {
       var why = (lang() === 'en' ? d.ai_detail_en : d.ai_detail_es) || d.ai_detail || '';
       h += '<div class="kc-note">⚠ ' + esc(L('Respuesta sin IA (solo datos).', 'Answer without AI (data only).')) +
         (why ? ' <span style="opacity:.85">' + esc(why) + '</span>' : '') +
         (opts.retry ? ' <button type="button" class="kc-retry">↻ ' + esc(L('Reintentar', 'Retry')) + '</button>' : '') + '</div>';
-    } else if (d.ai && (d.model || d.elapsed_ms)) {
-      var mdl = String(d.model || '').replace(/^gemini:/, 'Gemini ').replace(/^claude-/, 'Claude ').replace(/^nvidia:/, 'NVIDIA ');
-      h += '<div class="kc-meta">' + esc(mdl) + (d.steps ? ' · ' + d.steps + ' ' + esc(d.steps === 1 ? L('consulta', 'query') : L('consultas', 'queries')) : '') +
-        (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(0) + ' s' : '') + '</div>';
     }
-    var tu = Array.isArray(d.tools_used) ? d.tools_used : [];
-    if (tu.length) {
-      h += '<div class="kc-tools">🔎 ' + esc(L('Consultó', 'Checked')) + ': ' + tu.slice(0, 8).map(function (t) {
-        return '<span class="' + (t.ok ? '' : 'bad') + '" title="' + esc(t.name + (t.error ? ' — ' + t.error : '')) + '">' +
-          esc(toolLabel(t.name) + (t.args_summary ? ' (' + t.args_summary + ')' : '')) + (t.ok ? '' : ' ✕') + '</span>';
-      }).join(' · ') + '</div>';
-    }
+    var foot = '';
     var src = Array.isArray(d.sources) ? d.sources : [];
     if (src.length) {
-      h += '<div class="kc-src">' + esc(L('Fuentes', 'Sources')) + ': ' + src.slice(0, 6).map(function (s) {
+      foot += '<div class="kc-src">' + esc(L('Fuentes', 'Sources')) + ': ' + src.slice(0, 6).map(function (s) {
         var u = s.url && /^https?:\/\//i.test(s.url) ? (W.safeUrl ? W.safeUrl(s.url) : esc(s.url)) : null;
-        return u && u !== '#' ? '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + esc(s.label) + '</a>' : esc(s.label);
+        var lab = u && u !== '#' ? '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + esc(s.label) + '</a>' : esc(s.label);
+        return lab + (s.as_of ? _timeTag(s.as_of, ', ') : '');
       }).join(' · ') + '</div>';
     }
-    el.innerHTML = h;
+    if (!d.degraded && d.ai && (d.model || d.elapsed_ms)) {
+      var mdl = String(d.model || '').replace(/^gemini:/, 'Gemini ').replace(/^claude-/, 'Claude ').replace(/^nvidia:/, 'NVIDIA ');
+      foot += '<div class="kc-meta">' + esc(mdl) + (d.steps ? ' · ' + d.steps + ' ' + esc(d.steps === 1 ? L('consulta', 'query') : L('consultas', 'queries')) : '') +
+        (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(0) + ' s' : '') + '</div>';
+    }
+    if (foot) h += '<div class="kc-foot">' + foot + '</div>';
+    return h + '</div>';
+  }
+
+  function fillReply(el, d, opts) {
+    opts = opts || {};
+    _stopPending(el);
+    el.classList.remove('kc-pending');
+    d = d || {};
+    var question = opts.question != null ? String(opts.question) : (el._kcQ || '');
+    el.innerHTML = replyHTML(d, opts);
+    _armTimes();
+    var main = el.querySelector('.kc-main') || el, foot = main.querySelector('.kc-foot');
+    var put = function (node) { if (foot && foot.parentNode === main) main.insertBefore(node, foot); else main.appendChild(node); };
     var acts = Array.isArray(d.actions) ? d.actions : [];
     // FUSIÓN Khipu + Canvas: un gráfico pedido se dibuja AQUÍ, dentro de la respuesta
     // (y se puede abrir en ventana); así no hay que saltar a otra pantalla
     var inlineChart = acts.filter(function (a) { return a.type === 'chart' && typeof a.arg === 'string'; })[0];
     if (inlineChart && opts.inlineChart !== false && W.BixbyCockpit && W.BixbyCockpit.canvasInto) {
       var host = W.document.createElement('div'); host.className = 'kc-chart';
-      el.appendChild(host);
+      put(host);
       try { W.BixbyCockpit.canvasInto(host, inlineChart.arg); } catch (e) {}
       var ow = W.document.createElement('button'); ow.type = 'button'; ow.className = 'kc-act kc-chart-open';
       ow.textContent = '🪟 ' + L('Abrir en ventana', 'Open in a window');
@@ -632,19 +1136,32 @@
         b.addEventListener('click', function () { (opts.onAction || runAction)(a); });
         box.appendChild(b);
       });
-      el.appendChild(box);
+      put(box);
     }
     _scroll(el);
+    // VENTANAS AUTOMÁTICAS (contrato §3.5): con la Cabina en modo flancos y una empresa en la respuesta,
+    // las ventanas nativas de los agentes (en una mirada / cadena / convicción) se abren solas a los costados.
+    var plan = [];
+    if (opts.autoRun !== false && opts.windows !== false && Array.isArray(d.entities) && d.entities.length) {
+      try { plan = planWindows(d, question, null, _centered()).filter(function (w) { return _kindRegistered(w.kind); }); } catch (e) { plan = []; }
+    }
+    el._kcPlan = plan;
+    var delay = opts.autoDelay || 450;
+    plan.forEach(function (w, i) {
+      setTimeout(function () { try { W.BixbyCockpit.stage(w.kind, w.arg); } catch (e) {} }, delay + i * 260);
+    });
     // auto-ejecutar la PRIMERA acción de escenario, DESPUÉS de mostrar el texto
+    // (si ya se abrieron las ventanas de los agentes, el X-Ray queda como botón: no se tapa nada)
     if (opts.autoRun !== false) {
       var first = acts.filter(function (a) { return AUTO[a.type] && (!opts.autoFilter || opts.autoFilter(a)); })[0];
-      if (first) setTimeout(function () { try { (opts.onAction || runAction)(first); } catch (e) {} }, opts.autoDelay || 450);
+      if (first && plan.length && first.type === 'open_xray') first = null;
+      if (first) setTimeout(function () { try { (opts.onAction || runAction)(first); } catch (e) {} }, delay + plan.length * 260);
     }
     return el;
   }
 
   function pfCardHTML(c) {
-    var col = c.tone === 'good' ? '#2BE38B' : c.tone === 'warn' ? '#FFB300' : '#FF4D6A';
+    var col = c.tone === 'good' ? 'var(--os-good,#2BE38B)' : c.tone === 'warn' ? 'var(--kc-warn,#F2C46D)' : 'var(--os-bad,#FF4D6A)';
     var money = function (v) { v = Number(v); return isFinite(v) ? '$' + Math.round(v).toLocaleString('en-US') : '—'; };
     var KIND = { sell: ['➖', L('Salir de', 'Exit')], reduce: ['➖', L('Reducir', 'Trim')], add: ['➕', L('Aumentar', 'Add')], buy_new: ['🆕', L('Añadir', 'Add new')] };
     var cv = c.coverage || {};
@@ -654,20 +1171,21 @@
       (cv.requested ? ' · ' + L('analizadas ', 'analyzed ') + cv.analyzed + '/' + cv.requested : '')) + '</div></div></div>';
     (c.actions || []).forEach(function (a) {
       var k = KIND[a.kind] || ['•', a.kind];
-      h += '<div class="kc-pf-a"><b>' + esc(k[0] + ' ' + k[1] + ' ' + (a.label || '')) + '</b><span style="color:#8E9AB8">' +
+      h += '<div class="kc-pf-a"><b>' + esc(k[0] + ' ' + k[1] + ' ' + (a.label || '')) + '</b><span>' +
         esc(Math.round(a.from_pct) + '% → ' + Math.round(a.to_pct) + '% · ' + (lang() === 'en' ? a.why_en : a.why_es)) + '</span></div>';
     });
     (c.geo || []).forEach(function (g) {
-      h += '<div class="kc-pf-a"><b>🌐 ' + esc(g.label || '') + '</b><span style="color:#8E9AB8">' + esc((lang() === 'en' ? g.title_en : g.title_es) + ' — ' + (lang() === 'en' ? g.why_en : g.why_es)) + '</span></div>';
+      h += '<div class="kc-pf-a"><b>🌐 ' + esc(g.label || '') + '</b><span>' + esc((lang() === 'en' ? g.title_en : g.title_es) + ' — ' + (lang() === 'en' ? g.why_en : g.why_es)) + '</span></div>';
     });
-    if ((c.excluded || []).length) h += '<div class="kc-pf-m" style="color:#FFB300;margin-top:6px">⚠ ' + esc(L('Sin analizar: ', 'Not analyzed: ') + c.excluded.join(', ')) + '</div>';
+    if ((c.excluded || []).length) h += '<div class="kc-pf-m kc-pf-x">⚠ ' + esc(L('Sin analizar: ', 'Not analyzed: ') + c.excluded.join(', ')) + '</div>';
     return h + '<div class="kc-pf-m" style="margin-top:6px">🤖 ' + esc(L('Consejo educativo de IA; nada se ejecuta sin tu confirmación.', 'Educational AI advice; nothing runs without your confirmation.')) + '</div></div>';
   }
 
   function fillError(el, msg) {
-    if (el._timer) { clearInterval(el._timer); el._timer = null; }
+    _stopPending(el);
     el.classList.remove('kc-pending');
-    el.innerHTML = '<div class="kc-who">Khipu</div><div class="kc-err">⚠ ' + esc(msg || L('No pude procesar eso.', 'I could not process that.')) + '</div>';
+    el.innerHTML = '<div class="kc-av">' + mascot('khipu', 26) + '</div><div class="kc-main"><div class="kc-err" role="alert">⚠ ' +
+      esc(msg || L('No pude procesar eso.', 'I could not process that.')) + '</div></div>';
     _scroll(el);
   }
 
@@ -731,5 +1249,10 @@
     runAction: runAction, actionLabel: actionLabel, remember: remember, context: context,
     history: function () { return history.slice(); }, clear: clearHistory, ensureStyles: ensureStyles,
     AUTO: AUTO, askAgent: askAgent, agentInfo: agentInfo, pfSources: pfSources, pfSelected: pfSelected, pfSelect: pfSelect,
+    // Khipus OS (2026-10-06): agentes en el chat
+    AGENT_ORDER: AGENT_ORDER, TOOL_AGENT: TOOL_AGENT, SEAT_AGENT: SEAT_AGENT, toolAgent: toolAgent, agentsOf: agentsOf, agentName: agentName,
+    predictAgents: predictAgents, detectCompany: detectCompany, planWindows: planWindows, progressAgents: progressAgents,
+    thinkingText: thinkingText, contribRows: contribRows, replyHTML: replyHTML, relTime: relTime, newReqId: newReqId,
+    toolLabel: toolLabel, mascot: mascot,
   };
 })(typeof window !== 'undefined' ? window : globalThis);
