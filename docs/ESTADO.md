@@ -9,6 +9,17 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (ee) — MAPA POR CAPITALIZACIÓN EN VIVO + HOME CON CADA CARTERA (sw v240)
+
+- Fabrizio aprobó: nodos del tamaño de su capitalización EN VIVO. computeNodeRadius usa NODE_META.mktcap_b
+  (KhipuLiveCaps / valuación verificada / catálogo) para TODAS; MKT_CAP_EST queda de último recurso.
+  Etiquetas: ya no "radio ≥ 13" sino las LBL_MAX=90 más grandes + big (`_lblOn`, `_recalcLblMin`), para no
+  llenar el mapa de texto. Al llegar 'khipu:livecaps' → `_resizeNodesByCap()` (radios, anillos, marcas,
+  etiquetas, collide + settle corto). Probado: 937 nodos, 100 etiquetas, sin errores.
+- Home de la Cabina (`_homePulse`): "Tu cartera: $50.222 · 1 posición" era la CUENTA DEL BRÓKER (1 ETF) y
+  no decía de cuál hablaba. Ahora una línea por cartera simulada con su nombre (KhipuPortfolios._stats, sin
+  PIN) + "Abrir", y la del bróker rotulada "Cuenta del bróker (papel / dinero REAL)" con "Consejos".
+
 # SESIÓN 2026-10-05 (dd) — "RENDIMIENTO DE MI CARTERA" COMO GRÁFICO SIN IA (sw v238-v239)
 
 - Mapa (sw v239): tooltip con ingresos 12 m EN VIVO (●) y empleados en vivo; tamaño de las privadas de la

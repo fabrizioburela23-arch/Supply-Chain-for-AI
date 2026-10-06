@@ -1689,27 +1689,59 @@
     });
   }
 
-  // Pulso LIGERO en el home (sin IA, cheap): valor + rendimiento + botón "Consejos"
-  // que abre el bróker y dispara el análisis con Opus. Silencioso si no hay PIN.
+  // Pulso LIGERO en el home (sin IA): UNA línea por cartera, cada una con su NOMBRE.
+  // 2026-10-06 (Fabrizio: "¿de qué cartera habla? tengo 2"): antes solo mostraba la cuenta
+  // del bróker como "Tu cartera" (1 ETF) y no las carteras simuladas. Ahora: cada cartera
+  // simulada (engine/portfolios.js, precios en vivo) + la cuenta del bróker si hay PIN.
+  function _pfLine(name, value, pct, n, en) {
+    var col = pct >= 0 ? UP : DOWN, sign = pct >= 0 ? '+' : '';
+    return esc(name) + ': ' + fmtUsd(value) +
+      (n ? ' · <span style="color:' + col + '">' + sign + pct.toFixed(1) + '%</span> · ' + n + ' ' + (en ? (n === 1 ? 'position' : 'positions') : (n === 1 ? 'posición' : 'posiciones'))
+         : ' · ' + (en ? 'no positions' : 'sin posiciones'));
+  }
+  function _homePfLines(en) {
+    var P = window.KhipuPortfolios, out = [];
+    if (!P || !P._list || !P._stats) return out;
+    var list = []; try { list = P._list() || []; } catch (e) { list = []; }
+    list.forEach(function (pf) {
+      var st = null; try { st = P._stats(pf); } catch (e) {}
+      if (!st) return;
+      out.push('🧪 ' + _pfLine(pf.name, st.total, st.plPct, (pf.positions || []).length, en) +
+        ' <a href="#" class="bcp-home-pf" data-pf="' + esc(pf.id) + '">' + (en ? 'Open' : 'Abrir') + '</a>');
+    });
+    return out;
+  }
   async function _homePulse() {
     var el = document.getElementById('bcp-home-pulse');
     if (!el) return;
+    var en = ckLang() === 'en';
+    var lines = _homePfLines(en);
+    function paint() {
+      el.innerHTML = lines.map(function (l) { return '<div>' + l + '</div>'; }).join('');
+      el.querySelectorAll('.bcp-home-pf').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          try { localStorage.setItem('kh_pf_active', a.getAttribute('data-pf')); } catch (x) {}
+          if (window._surface) window._surface('tab', 'portfolios'); else if (window.switchTab) window.switchTab('portfolios');
+          setTimeout(function () { try { window.KhipuPortfolios.refresh(); } catch (x) {} }, 300);
+        });
+      });
+      var b = document.getElementById('bcp-home-adv');
+      if (b) b.addEventListener('click', function (e) { e.preventDefault(); stage('broker', { advice: true }); });
+    }
+    paint();
     var hasPin = !!(window._tradePinStored && window._tradePinStored());
     if (!hasPin || !window._tradeAccountInfo || !window._tradeFetch) return;
-    var en = ckLang() === 'en';
     try {
       var acct = await window._tradeAccountInfo(false, false);   // NO interactivo
       if (!acct || acct.error) return;
       var positions = [];
       try { var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false); var dp = await rp.json(); if (Array.isArray(dp)) positions = dp; } catch (e) {}
       var m = _computePortfolio(acct, positions);
-      var plCol = m.pnl >= 0 ? UP : DOWN, sign = m.pnl >= 0 ? '+' : '';
-      var line = (en ? 'Your portfolio' : 'Tu cartera') + ': ' + fmtUsd(m.equity) +
-        (m.n ? ' · <span style="color:' + plCol + '">' + sign + m.pnlPct.toFixed(1) + '%</span> · ' + m.n + ' ' + (en ? (m.n === 1 ? 'position' : 'positions') : (m.n === 1 ? 'posición' : 'posiciones'))
-             : ' · ' + (en ? 'no positions' : 'sin posiciones'));
-      el.innerHTML = line + ' <a href="#" id="bcp-home-adv">' + (en ? 'Advice' : 'Consejos') + '</a>';
-      var b = document.getElementById('bcp-home-adv');
-      if (b) b.addEventListener('click', function (e) { e.preventDefault(); stage('broker', { advice: true }); });
+      var bname = (en ? 'Broker account' : 'Cuenta del bróker') +
+        (m.paper === false ? (en ? ' (REAL money)' : ' (dinero REAL)') : m.paper === true ? (en ? ' (paper)' : ' (papel)') : '');
+      lines.push('🔒 ' + _pfLine(bname, m.equity, m.pnlPct, m.n, en) + ' <a href="#" id="bcp-home-adv">' + (en ? 'Advice' : 'Consejos') + '</a>');
+      paint();
     } catch (e) {}
   }
 

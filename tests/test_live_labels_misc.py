@@ -39,6 +39,21 @@ def test_mapa_tamano_de_privadas_usa_valuacion_verificada_y_tooltip_ingresos_en_
         r = subprocess.run([node, '-e', js], capture_output=True, text=True, timeout=20)
         oa, syn = json.loads(r.stdout)
         assert oa == 20          # 852 B verificado (antes 300 B fijo → 19)
-        assert syn == 9          # fuera de la tabla: sin cambio (no se agranda el mapa entero)
+        assert syn == 16         # 2026-10-06: TODAS por su capitalización en vivo (antes 9 = "vale 0,5 B")
     # el tooltip del mapa muestra ingresos de 12 meses EN VIVO antes que la cifra 2025 del catálogo
     assert 'const rv=meta.revenue_ttm_usd_b, liv=rv!=null&&isFinite(+rv);' in s
+
+
+def test_mapa_etiquetas_solo_las_mas_grandes_y_se_redimensiona_con_caps_en_vivo():
+    s = _r('app.html')
+    assert 'const LBL_MAX = 90;' in s and "function _lblOn(d){ return !!d.big || computeNodeRadius(d.id) >= _lblMinR; }" in s
+    assert "window.addEventListener('khipu:livecaps'" in s and 'function _resizeNodesByCap(){' in s
+    assert 'computeNodeRadius(d.id) < 13' not in s     # la regla vieja llenaría el mapa de nombres
+
+
+def test_home_muestra_cada_cartera_con_su_nombre():
+    # "¿de qué cartera habla? tengo 2": antes solo la cuenta del bróker, rotulada "Tu cartera"
+    s = _r('engine/cockpit.js')
+    assert 'function _homePfLines(en)' in s and "P._stats(pf)" in s and 'class="bcp-home-pf"' in s
+    assert "(en ? 'Broker account' : 'Cuenta del bróker')" in s
+    assert "(en ? 'Your portfolio' : 'Tu cartera') + ': '" not in s

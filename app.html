@@ -2578,10 +2578,11 @@ function computeNodeRadius(nodeId) {
     'Cohere': 2.2, 'ShieldAI': 2.7, 'BlueOrigin': 15, 'ICEYE': 0.5,
   };
 
-  // 2026-10-05: para las de la tabla, la valuación VERIFICADA / capitalización en vivo
-  // (NODE_META.mktcap_b, applyVerifiedValuations/KhipuLiveCaps) manda sobre la cifra fija.
-  // Solo ellas: agrandar las ~570 cotizadas cambiaría la densidad y las etiquetas del mapa.
-  const _m = MKT_CAP_EST[nodeId] ? (window.NODE_META || {})[nodeId] : null;
+  // 2026-10-06 (pedido de Fabrizio: "los nodos del tamaño correcto de su market cap en vivo"):
+  // NODE_META.mktcap_b = capitalización EN VIVO (KhipuLiveCaps, cada 15 min, las ~570 cotizadas),
+  // valuación VERIFICADA (privadas, applyVerifiedValuations) o, mientras llega, la del catálogo.
+  // La tabla fija queda como último recurso. Las etiquetas visibles NO dependen de esto: ver _lblOn.
+  const _m = (window.NODE_META || {})[nodeId];
   let cap_B = (_m && _m.mktcap_b > 0) ? +_m.mktcap_b : (MKT_CAP_EST[nodeId] || 0.5);
 
   // Si hay precio en vivo y shares conocidos → calcular market cap real
@@ -2991,11 +2992,24 @@ const nodeSel = nodeLayer.selectAll('g').data(NODES).join('g')
   .on('mouseenter',(e,d)=>{ hovered=d.id; if(!selected&&!stressId){growCore(d,true);refreshStyles();} })
   .on('mouseleave',(e,d)=>{ hovered=null; if(!selected&&!stressId){growCore(d,false);refreshStyles();} });
 
+// ETIQUETAS: solo las ~LBL_MAX empresas más grandes (+ las "big") muestran su nombre. Antes era
+// "radio ≥ 13", pero con la capitalización en vivo cientos de nodos pasan ese radio y el mapa se
+// llenaría de texto (y de trabajo de pintado). El umbral se recalcula al llegar las caps.
+const LBL_MAX = 90;
+let _lblMinR = 13;
+function _recalcLblMin(){
+  try{
+    const rs = NODES.map(n=>computeNodeRadius(n.id)).sort((a,b)=>b-a);
+    _lblMinR = Math.max(13, rs[Math.min(rs.length-1, LBL_MAX-1)] || 13);
+  }catch(e){ _lblMinR = 13; }
+}
+function _lblOn(d){ return !!d.big || computeNodeRadius(d.id) >= _lblMinR; }
+window._lblOn = _lblOn;
 function growCore(d,on){
   nodeSel.filter(n=>n.id===d.id).select('.n-core')
     .attr('r',on?computeNodeRadius(d.id)+3:computeNodeRadius(d.id));
   nodeSel.filter(n=>n.id===d.id).select('.node-label')
-    .classed('lbl-off', !on && computeNodeRadius(d.id) < 13);
+    .classed('lbl-off', !on && !_lblOn(d));
 }
 
 function ringStroke(d){
@@ -3051,7 +3065,24 @@ nodeSel.append('text')
   /* VELOCIDAD (2026-10-03, medido): las etiquetas de nodos chicos ANTES quedaban
      con opacity:0 — invisibles pero el navegador igual las maquetaba y pintaba
      (~800 textos con halo en cada zoom/pan). display:none las saca del render. */
-  .classed('lbl-off', d => computeNodeRadius(d.id) < 13);
+  .classed('lbl-off', d => !_lblOn(d));
+
+// Capitalización EN VIVO → re-dimensiona los nodos (sin re-maquetar todo el mapa): radios,
+// anillos, marcas y etiquetas; la física solo separa los que ahora se solapan (settle corto).
+let _capResizeT = null;
+function _resizeNodesByCap(){
+  _recalcLblMin();
+  nodeSel.select('.n-core').attr('r',d=>computeNodeRadius(d.id)+(d.id===selected?3:0));
+  nodeSel.select('.n-ring').attr('r',d=>computeNodeRadius(d.id)+4);
+  nodeSel.select('.risk-ring').attr('r',d=>computeNodeRadius(d.id)+8);
+  nodeSel.select('.risk-mark').attr('dy',d=>-(computeNodeRadius(d.id)+8));
+  nodeSel.select('.node-label').attr('dy',d=>computeNodeRadius(d.id)+13).classed('lbl-off', d=>!_lblOn(d) && d.id!==selected && d.id!==hovered);
+  try{ sim.force('collide').radius(d=>computeNodeRadius(d.id)+10); if(!_liveTick) settleGraph(.12, 60); }catch(e){}
+}
+window._resizeNodesByCap = _resizeNodesByCap;
+window.addEventListener('khipu:livecaps', ()=>{ clearTimeout(_capResizeT); _capResizeT = setTimeout(_resizeNodesByCap, 400); });
+_recalcLblMin();
+nodeSel.select('.node-label').classed('lbl-off', d => !_lblOn(d));
 
 nodeSel.call(d3.drag()
   .on('start',(e,d)=>{if(!e.active){_liveTick=true;sim.alphaTarget(.2).restart();}d.fx=d.x;d.fy=d.y;})
