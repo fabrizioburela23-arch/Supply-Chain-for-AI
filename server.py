@@ -271,6 +271,13 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Chequeo del sistema no registrado (opcional): %s', _e)
 
+# ── Khipus OS: perfiles de los agentes (funciona sin BD) — /api/agents/* ─────
+try:
+    from core.agents_api import agents_bp
+    app.register_blueprint(agents_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Perfiles de agentes no registrados (opcional): %s', _e)
+
 
 # ── Screener de crecimiento explosivo — /api/screener/growth ─────────────────
 @app.route('/api/screener/growth')

@@ -304,7 +304,9 @@ def _report_notes(rep):
 
 
 # ── sincronización entre dispositivos ───────────────────────────────────────
-SYNC_KEYS = ('kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos')
+# kh_agent_prefs (Khipus OS): preferencias de PRESENTACIÓN de los agentes (modo simple/pro, quién participa,
+# qué ventanas se abren solas). Nunca alimentan decisiones del comité ni el tamaño de una orden.
+SYNC_KEYS = ('kh_portfolios', 'kh_pf_active', 'kh_investor_profile', 'eco_pos', 'kh_agent_prefs')
 SYNC_MAX_BYTES = 300_000
 
 
