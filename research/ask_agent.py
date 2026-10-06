@@ -167,8 +167,8 @@ def _strip_data(line):
     return re.sub(r'</?data>', '', str(line or '')).strip()
 
 
-def _fallback_text(seat, label, packet, claims, lang):
-    """Sin IA (ocupada / sin saldo): lo que muestran SUS datos, sin redactar nada nuevo."""
+def _fallback_text(seat, label, packet, claims, lang, local=False):
+    """Sin IA (ocupada / sin saldo, o Jev eligió 'local'): lo que muestran SUS datos, sin redactar nada nuevo."""
     en = lang == 'en'
     rows = [_strip_data(l)[3:] if re.match(r'^S\d+ ', l) else '' for l in (packet.get('text') or '').split('\n')]
     rows = [r for r in rows if r][:4]
@@ -176,18 +176,23 @@ def _fallback_text(seat, label, packet, claims, lang):
         rows = [c.statement_es for c in claims[:3]]
     if not rows:
         return None
-    head = (f"I couldn't write the full answer right now (the AI is busy), but this is what my data on {label} shows:"
-            if en else f'No pude redactar la respuesta completa ahora (la IA está ocupada), pero esto muestran mis datos de {label}:')
+    if local:
+        head = (f'What my data on {label} shows:' if en else f'Esto muestran mis datos de {label}:')
+    else:
+        head = (f"I couldn't write the full answer right now (the AI is busy), but this is what my data on {label} shows:"
+                if en else f'No pude redactar la respuesta completa ahora (la IA está ocupada), pero esto muestran mis datos de {label}:')
     return head + '\n' + '\n'.join('· ' + r for r in rows)
 
 
-def ask(session, seat, question, entity, lang='es', ai=None, skills=True, _pre=None):
+def ask(session, seat, question, entity, lang='es', ai=None, skills=True, _pre=None, mode='deep'):
     """Respuesta de UN puesto, CON SUS HABILIDADES (research/agent_skills): cada rol trae al instante SU
     paquete de datos en vivo (Cadena → tensor de la cadena, países, riesgo aguas arriba/abajo; Técnico →
     indicadores de precio; Fundamental → estados, ratios y pares; …) y, si existen, sus conclusiones previas.
     Ya no hace falta una investigación previa para responder.
     → dict {ok, seat, emoji, name, entity, label, answer, refs, n_claims, needs_research, model, skill}.
-    ai: inyectable para tests (callable(system, prompt, max_tokens, tier)). session puede ser None (sin base)."""
+    ai: inyectable para tests (callable(system, prompt, max_tokens, tier)). session puede ser None (sin base).
+    mode (lo elige Jev, core/decide.chat_plan): 'deep' (modelo profundo, el de siempre) · 'fast' (modelo rápido)
+    · 'local' (SIN IA: sus datos tal cual; si no tiene datos propios, cae a 'fast')."""
     from research import agent_skills as sk
     meta = seat_meta(seat)
     en = lang == 'en'
@@ -235,13 +240,18 @@ def ask(session, seat, question, entity, lang='es', ai=None, skills=True, _pre=N
     focus = (sk.FOCUS.get(seat) or ('', ''))[1 if en else 0]
     system = ASK_SYSTEM.format(name=name, role=role, focus=focus, lang='English' if en else 'español')
     prompt = '\n'.join(parts) + f'\n\nPREGUNTA DEL INVERSIONISTA: {question or ("¿Qué opinas de " + label + "?")}'
+    if mode == 'local':
+        loc = _fallback_text(seat, label, packet, claims, lang, local=True)
+        if loc:
+            return dict(base, answer=loc, refs={}, model=None, mode='local')
+        mode = 'fast'
     call = ai
     if call is None:
         from core.ai import _ai_complete
         call = _ai_complete
     text, model = '', None
     try:
-        text, model = call(system, prompt, ASK_TOKENS, 'deep')
+        text, model = call(system, prompt, ASK_TOKENS, 'fast' if mode == 'fast' else 'deep')
     except Exception as e:  # noqa: BLE001
         log.info('ask: ai %s', type(e).__name__)
     text = (text or '').strip()
@@ -251,10 +261,10 @@ def ask(session, seat, question, entity, lang='es', ai=None, skills=True, _pre=N
             raise RuntimeError('ai_unavailable')
         model = None
     used = {r: refs[r] for r in refs if f'[{r}]' in text}
-    return dict(base, answer=text, refs=used, model=model)
+    return dict(base, answer=text, refs=used, model=model, mode=mode)
 
 
-def ask_all(session, question, entity, lang='es', ai=None, max_seats=MAX_SEATS_ALL):
+def ask_all(session, question, entity, lang='es', ai=None, max_seats=MAX_SEATS_ALL, mode='deep'):
     """Todos los puestos con conclusiones (máx. max_seats) responden en paralelo."""
     en = lang == 'en'
     try:
@@ -279,7 +289,7 @@ def ask_all(session, question, entity, lang='es', ai=None, max_seats=MAX_SEATS_A
             pre[st] = ([], {})
     from core.ai_usage import bind
     with ThreadPoolExecutor(max_workers=max(1, min(4, len(seats)))) as ex:
-        futs = [ex.submit(bind(ask), None, s, question, eid, lang, ai, True, pre[s]) for s in seats]
+        futs = [ex.submit(bind(ask), None, s, question, eid, lang, ai, True, pre[s], mode) for s in seats]
         answers = []
         for f in futs:
             try:

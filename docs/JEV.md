@@ -18,6 +18,16 @@ código pueda necesitar y se combinan en código (speculative fan-out).
 3. **Nunca dinero**: ninguna orden ni aprobación pasa por Jev.
 4. Sin clave / sin red / error → `None` y todo sigue como hoy.
 
+## Jev AL MANDO del chat (2026-10-06) — `DECIDE_CONTROL=chat_gate`
+Jev piensa en paralelo con la pre-consulta (no frena) y `chat_plan()` devuelve la ruta que el chat OBEDECE
+(si llega en `DECIDE_WAIT_S`=1,5 s extra y con confianza ≥ `DECIDE_MIN_CONF`=0,6; si no, camino de siempre):
+- `local_fact` → ficha de la empresa con datos en vivo **sin IA** (0 tokens); sin ficha → 1 sola consulta.
+- `needs_tools` → máx. 2 rondas de herramientas. `offtopic` → 1 llamada. `needs_deep_reasoning` → igual que hoy.
+- @agente: `local` (sus datos S# tal cual, sin IA) · `fast` (modelo rápido) · `deep` (modelo profundo).
+- Nunca la ruta barata si parece una orden (asks_trade ≥ 0,5) o una pregunta de cartera.
+- `out.router = {by:'jev'|'default', route, confidence, …}`; el pie del chat dice "⚡ Jev: sin IA / consulta corta…".
+- Se sigue guardando la sombra (decision_shadow) para medir acuerdo y ahorro.
+
 ## Usos previstos (en orden)
 1. Portero del chat (hecho, sombra): ruta local_fact / needs_tools / needs_deep_reasoning / offtopic + empresa, orden, cartera, urgencia.
 2. Selector de nivel de modelo por pedido (investigación, comité, canvas).
@@ -29,4 +39,5 @@ código pueda necesitar y se combinan en código (speculative fan-out).
 
 ## Variables
 `TYPESAFE_API_KEY` · `TYPESAFE_MODEL` (jev-latest) · `TYPESAFE_API_URL` · `DECIDE_ENABLED` (on) ·
-`DECIDE_SHADOW` (on) · `DECIDE_CONTROL` (vacío) · `DECIDE_TIMEOUT_S` (6).
+`DECIDE_SHADOW` (on) · `DECIDE_CONTROL` (vacío; `chat_gate` = Jev manda en el chat) · `DECIDE_TIMEOUT_S` (6) ·
+`DECIDE_WAIT_S` (1.5) · `DECIDE_MIN_CONF` (0.6).

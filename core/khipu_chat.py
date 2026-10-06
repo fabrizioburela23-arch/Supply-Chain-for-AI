@@ -2208,9 +2208,10 @@ def _call_ai(system, prompt, timeout):
 
 
 def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None, req_id=None):
-    """PORTERO (Jev, core/decide.py) en MODO SOMBRA: decide en paralelo qué
-    necesita la pregunta y al final se compara con lo que el chat hizo. No
-    cambia la respuesta mientras DECIDE_CONTROL no incluya 'chat_gate'.
+    """PORTERO (Jev, core/decide.py): decide en paralelo qué necesita la pregunta. En SOMBRA solo se
+    compara con lo que el chat hizo; con DECIDE_CONTROL=chat_gate MANDA (router_plan): responder con
+    datos locales SIN IA, pocas consultas, el análisis completo, o el nivel de modelo de un @agente.
+    `out.router` dice quién decidió ({by: 'jev'|'default', route, confidence}).
 
     Khipus OS: con `req_id` (lo manda el cliente) el progreso queda consultable en
     GET /api/khipu/chat/progress/<req_id> mientras la respuesta se arma."""
@@ -2223,9 +2224,10 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
             gate = _decide.chat_gate_start(message, lang)
         except Exception:  # noqa: BLE001
             gate = None
-        direct = _mention_route(message, history, lang, context, req_id=rid)
+        direct = _mention_route(message, history, lang, context, req_id=rid, gate=gate)
         out = direct if direct is not None else _run_chat(message, history, lang, context, app, budget_s, max_steps,
-                                                          req_id=rid)
+                                                          req_id=rid, gate=gate)
+        out.setdefault('router', {'by': 'default'})
         if gate is not None:
             try:
                 _decide.chat_gate_finish(gate, out, message)
@@ -2241,7 +2243,7 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
     return out
 
 
-def _mention_route(message, history, lang, context, req_id=None):
+def _mention_route(message, history, lang, context, req_id=None, gate=None):
     """'@fundamental ¿qué opinas de TSMC?' / 'pregúntale al analista técnico: …' → el puesto responde
     en persona (research/ask_agent). Devuelve None si no es una mención."""
     try:
@@ -2294,9 +2296,21 @@ def _mention_route(message, history, lang, context, req_id=None):
         return finish(False, note=('Falta saber de qué empresa', 'Needs to know which company'))
     h = progress_add(req_id, 'ask_agent', {'seat': seat})
     progress_phase(req_id, 'agent')
+    # JEV AL MANDO: el nivel del analista. Pregunta puntual → solo sus datos (sin IA); de consulta → modelo
+    # rápido; análisis → modelo profundo (el de siempre).
+    mode, plan = 'deep', None
+    try:
+        from core import decide as _decide
+        plan = _decide.chat_plan(gate)
+    except Exception:  # noqa: BLE001
+        plan = None
+    if plan:
+        mode = {'local_fact': 'local', 'needs_tools': 'fast', 'offtopic': 'fast'}.get(plan['route'], 'deep')
+        base['router'] = _router(plan, mode=mode)
+    kw = {} if mode == 'deep' else {'mode': mode}
     try:
         with _research_session() as s:      # sin base de investigación: responde con sus habilidades en vivo
-            r = aa.ask_all(s, question, ents[0], lang) if seat == 'all' else aa.ask(s, seat, question, ents[0], lang)
+            r = aa.ask_all(s, question, ents[0], lang, **kw) if seat == 'all' else aa.ask(s, seat, question, ents[0], lang, **kw)
     except Exception as e:  # noqa: BLE001
         progress_set(req_id, h, 'error')
         log.warning('ask_agent: %s', _clip(e, 160))
@@ -2328,7 +2342,23 @@ def _mention_route(message, history, lang, context, req_id=None):
     return finish(bool((r or {}).get('ok', True)), r)
 
 
-def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None, req_id=None):
+def _router(plan, **extra):
+    return dict({'by': 'jev', 'route': plan['route'], 'confidence': plan.get('confidence')}, **extra)
+
+
+def _local_answer(message, lang, results):
+    """Ruta LOCAL (Jev: 'local_fact'): la ficha de la empresa con datos en vivo, SIN IA. None si no hay ficha."""
+    companies = [r for (name, ok, r) in results if ok and name == 'get_company']
+    if not companies:
+        return None
+    en = lang == 'en'
+    body = '\n\n'.join(company_summary(c, lang) for c in companies[:2])
+    tail = ('Source: Khipus graph · live market profile.' if en else 'Fuente: grafo Khipus · perfil de mercado en vivo.')
+    return f'{body}\n\n{tail}', [{'type': 'open_xray', 'arg': companies[0].get('id')}]
+
+
+def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None, req_id=None,
+              gate=None):
     t0 = time.monotonic()
     budget = TIME_BUDGET_S if budget_s is None else float(budget_s)
     steps_max = MAX_STEPS if max_steps is None else int(max_steps)
@@ -2353,7 +2383,10 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                'answer_source': answer_source, 'ai': answer_source == 'ai', 'lang': lang,
                'steps': ai_calls, 'elapsed_ms': int((time.monotonic() - t0) * 1000), 'as_of': _now_iso()}
         out.update(enrich_answer(message, calls, context, req_id))
+        out['router'] = router
         return out
+
+    router = {'by': 'default'}
 
     def fallback(why):
         progress_phase(req_id, 'fallback')
@@ -2425,6 +2458,28 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
                 _collect_sources('get_company', res, sources, lang)
             scratch.append(f'get_company({json.dumps({"id_or_ticker": nid}, ensure_ascii=False)}) → '
                            + ('' if ok else 'ERROR: ') + _fmt_result(res))
+    # JEV AL MANDO (DECIDE_CONTROL=chat_gate): ya pensó en paralelo con la pre-consulta → elige el camino más
+    # barato que alcanza. Sin Jev / sin confianza → camino de siempre.
+    plan = None
+    try:
+        from core import decide as _decide
+        plan = _decide.chat_plan(gate)
+    except Exception:  # noqa: BLE001
+        plan = None
+    router = {'by': 'default'}
+    if plan:
+        route = plan['route']
+        if route == 'local_fact' and (plan.get('about_portfolio') or 0) < 0.5:
+            loc = _local_answer(message, lang, results)
+            if loc:
+                out = done(loc[0], loc[1], answer_source='local')
+                out['router'] = _router(plan, ai_calls=0)
+                return out
+        if route == 'needs_tools':
+            steps_max = min(steps_max, 2)
+        elif route in ('offtopic', 'local_fact'):
+            steps_max = min(steps_max, 1)
+        router = _router(plan, max_steps=steps_max)
     while True:
         remaining = deadline - time.monotonic()
         if remaining < MIN_STEP_S:

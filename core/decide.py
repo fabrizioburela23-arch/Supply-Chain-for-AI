@@ -52,6 +52,10 @@ API_URL = os.getenv('TYPESAFE_API_URL') or 'https://api.typesafe.ai/v1/systemone
 MODEL = os.getenv('TYPESAFE_MODEL') or 'jev-latest'
 PROVIDER = 'typesafe'
 TIMEOUT_S = float(os.getenv('DECIDE_TIMEOUT_S') or 6.0)
+# Jev AL MANDO del chat (DECIDE_CONTROL incluye 'chat_gate'): cuánto más se le espera después de la
+# pre-consulta (ya corre en paralelo desde que llega la pregunta) y la confianza mínima para obedecerle.
+CONTROL_WAIT_S = float(os.getenv('DECIDE_WAIT_S') or 1.5)
+MIN_CONF = float(os.getenv('DECIDE_MIN_CONF') or 0.6)
 MAX_STATE_CHARS = 12000
 
 _POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix='decide')
@@ -218,7 +222,7 @@ CHAT_QUESTIONS = {
 
 def chat_gate_start(message, lang='es'):
     """Lanza la decisión de Jev en paralelo (no frena el chat). None si no aplica."""
-    if not available() or not shadow_mode() or not message:
+    if not available() or not (shadow_mode() or control('chat_gate')) or not message:
         return None
     state = {'message': str(message)[:2000], 'language': lang}
     return _POOL.submit(ask, state, CHAT_QUESTIONS, 'khipu_chat')
@@ -228,7 +232,7 @@ def _actual_route(out):
     steps = int((out or {}).get('steps') or 0)
     tools = [t.get('name') for t in (out or {}).get('tools_used') or [] if isinstance(t, dict)]
     src = (out or {}).get('answer_source')
-    if steps == 0 and not tools:
+    if src == 'local' or (steps == 0 and not tools):
         return 'local_fact'
     if steps <= 2 and len(tools) <= 2 and src != 'fallback':
         return 'needs_tools'
@@ -260,14 +264,52 @@ def _finish_bg(fut, out, message):
         pass
 
 
+def _num(v):
+    try:
+        f = float(v)
+        return f if f == f else None
+    except (TypeError, ValueError):
+        return None
+
+
+def decision_of(ans):
+    """Respuesta cruda de Jev → decisión plana. La confianza de la ruta: `confidence` o, si no viene,
+    la probabilidad de la opción elegida."""
+    ans = ans if isinstance(ans, dict) else {}
+    route = ans.get('route') or {}
+    choice = route.get('choice')
+    conf = _num(route.get('confidence'))
+    if conf is None and isinstance(route.get('probabilities'), dict):
+        conf = _num(route['probabilities'].get(choice))
+    return {'route': choice if choice in CHAT_QUESTIONS['route']['criteria'] else None, 'confidence': conf,
+            'mentions_company': _num((ans.get('mentions_company') or {}).get('noul')),
+            'asks_trade': _num((ans.get('asks_trade') or {}).get('noul')),
+            'about_portfolio': _num((ans.get('about_portfolio') or {}).get('noul')),
+            'urgency': (ans.get('urgency') or {}).get('score')}
+
+
+def chat_plan(fut, wait_s=None):
+    """Jev AL MANDO del chat: → decisión {route, confidence, …} que el chat OBEDECE, o None (sin control,
+    sin respuesta a tiempo o confianza < DECIDE_MIN_CONF) → el chat sigue como siempre. Nunca decide dinero:
+    si la pregunta parece una orden, la ruta barata no se toma."""
+    if fut is None or not control('chat_gate'):
+        return None
+    try:
+        ans = fut.result(timeout=CONTROL_WAIT_S if wait_s is None else max(0.0, float(wait_s)))
+    except Exception:  # noqa: BLE001 — no llegó a tiempo: manda el camino de siempre
+        return None
+    d = decision_of(ans)
+    if not d['route'] or (d['confidence'] or 0) < MIN_CONF:
+        return None
+    if (d['asks_trade'] or 0) >= 0.5 and d['route'] in ('local_fact', 'offtopic'):
+        return None
+    return d
+
+
 def _compare(ans, out, message):
-    route = (ans.get('route') or {})
-    decision = {'route': route.get('choice'), 'confidence': route.get('confidence'),
-                'mentions_company': (ans.get('mentions_company') or {}).get('noul'),
-                'asks_trade': (ans.get('asks_trade') or {}).get('noul'),
-                'about_portfolio': (ans.get('about_portfolio') or {}).get('noul'),
-                'urgency': (ans.get('urgency') or {}).get('score')}
+    decision = decision_of(ans)
     actual = {'route': _actual_route(out), 'steps': (out or {}).get('steps'),
+              'router': ((out or {}).get('router') or {}).get('by'),
               'tools': [t.get('name') for t in (out or {}).get('tools_used') or [] if isinstance(t, dict)],
               'source': (out or {}).get('answer_source'), 'elapsed_ms': (out or {}).get('elapsed_ms')}
     agree = (decision['route'] == actual['route']) if decision['route'] else None

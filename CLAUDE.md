@@ -149,7 +149,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     y se compara con lo que hizo el sistema (tabla decision_shadow,
     GET /api/decide/shadow con PIN de operador); manda solo si DECIDE_CONTROL
     lista la función. Primer uso: portero del chat (`chat_gate_*` en
-    khipu_chat.run_chat). Nunca decide dinero. Ver docs/JEV.md.
+    khipu_chat.run_chat). Nunca decide dinero. Ver docs/JEV.md. AL MANDO (2026-10-06, `DECIDE_CONTROL=chat_gate`):
+    `decide.chat_plan` → local_fact = ficha SIN IA, needs_tools = ≤2 rondas, @agente local/fast/deep;
+    `out.router` dice quién decidió.
   - `core/scenario_engine.py`: análisis estructural de escenarios (tema/actor/evento →
     golpeados/ganadores/caminos) para la simulación por agentes.
   - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves

@@ -466,3 +466,21 @@ setTimeout(() => { out.staged = staged; out.opened = opened; out.direct = K.runA
     assert o['label'] == ['⛓ Cadena de suministro: OpenAI', '⛓ Supply chain: OpenAI']
     assert o['staged'] == [] and o['opened'][0] == ['supplychain', 'OpenAI']
     assert o['direct'] is True and o['opened'][-1] == ['glance', 'Nvidia']
+
+
+def test_pie_dice_cuando_jev_respondio_sin_ia():
+    o = _run(r"""
+ctx.LANG = 'es';
+out.local = K.replyHTML({ answer: '**Nvidia** — x', answer_source: 'local', ai: false, elapsed_ms: 420,
+  router: { by: 'jev', route: 'local_fact', confidence: 0.9 }, tools_used: [], sources: [] }, {});
+out.fast = K.replyHTML({ answer: 'ok', ai: true, model: 'gemini:gemini-3.8-flash', steps: 2, elapsed_ms: 3000,
+  router: { by: 'jev', route: 'needs_tools', confidence: 0.8 }, tools_used: [], sources: [] }, {});
+ctx.LANG = 'en';
+out.en = K.replyHTML({ answer: 'x', answer_source: 'local', ai: false, router: { by: 'jev', route: 'local_fact' }, tools_used: [], sources: [] }, {});
+out.plain = K.replyHTML({ answer: 'ok', ai: true, model: 'fake', steps: 1, router: { by: 'default' }, tools_used: [], sources: [] }, {});
+console.log(JSON.stringify(out));
+""")
+    assert 'Respondido con datos locales, sin IA · ⚡ Jev: sin IA' in o['local'] and '0.4 s' in o['local']
+    assert '⚡ Jev: consulta corta' in o['fast'] and 'Gemini gemini-3.8-flash' in o['fast']
+    assert 'Answered from local data, no AI · ⚡ Jev: no AI' in o['en']
+    assert 'Jev' not in o['plain']

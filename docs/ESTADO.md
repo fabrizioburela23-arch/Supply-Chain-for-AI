@@ -9,6 +9,18 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-06 (iv) — JEV AL MANDO DEL CHAT (sw v248)
+
+Pedido de Fabrizio: "que Jev decida cuándo usar IA o responder desde la base local, y qué opción es mejor,
+para gastar lo mínimo en tokens". Antes Jev solo miraba (sombra). Ahora, con `DECIDE_CONTROL=chat_gate`
+(Railway), `core/decide.chat_plan` manda: dato puntual → ficha con datos en vivo SIN IA; consulta → ≤2
+rondas; análisis → lo de siempre; @agente → local (sin IA) / rápido / profundo (`ask(mode=)`). Seguro:
+sin respuesta a tiempo (1,5 s), confianza < 0,6, posible orden o cartera → camino de siempre. Pie del chat:
+"⚡ Jev: …". Tests: tests/test_jev_router.py (+7), test_khipus_os_chat (+1). Pendiente: medir ahorro real en
+la sombra (🩺 → Gasto IA) y fijar precio de Jev (`AI_PRICES_JSON`).
+
+---
+
 # SESIÓN 2026-10-06 (iii) — HABILIDADES PROPIAS DE CADA AGENTE (sw v247)
 
 Pedido de Fabrizio (captura del chat con el chip "Cadena"): "le pedí que analice OpenAI, le costó y respondió

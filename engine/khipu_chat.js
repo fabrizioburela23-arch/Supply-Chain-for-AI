@@ -969,6 +969,8 @@
     open_pf_committee: ['💼 Ver el análisis completo', '💼 See the full analysis'],
     open_portfolio: ['🧪 Cartera', '🧪 Portfolio'],
   };
+  var JEV_ROUTE = { local_fact: ['sin IA', 'no AI'], needs_tools: ['consulta corta', 'short lookup'],
+    needs_deep_reasoning: ['análisis completo', 'full analysis'], offtopic: ['respuesta breve', 'brief reply'] };
   // open_window: la ventana nativa de Khipus OS que muestra el ROL del agente (engine/oswindows.js)
   var WIN_LABEL = { supplychain: ['⛓ Cadena de suministro', '⛓ Supply chain'], glance: ['◉ En una mirada', '◉ At a glance'] };
   function actionLabel(a) {
@@ -1099,10 +1101,16 @@
         return lab + (s.as_of ? _timeTag(s.as_of, ', ') : '');
       }).join(' · ') + '</div>';
     }
-    if (!d.degraded && d.ai && (d.model || d.elapsed_ms)) {
+    // ⚡ Jev decidió el camino (core/decide.chat_plan): sin IA / consulta corta / análisis completo
+    var rt = d.router && d.router.by === 'jev' ? d.router : null;
+    var jev = rt ? ' · ⚡ Jev: ' + (JEV_ROUTE[rt.mode === 'local' ? 'local_fact' : rt.route] || [rt.route, rt.route])[lang() === 'en' ? 1 : 0] : '';
+    if (!d.degraded && (d.answer_source === 'local' || (rt && rt.mode === 'local')) && !d.ai) {
+      foot += '<div class="kc-meta">' + esc(L('Respondido con datos locales, sin IA', 'Answered from local data, no AI') + jev) +
+        (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(1) + ' s' : '') + '</div>';
+    } else if (!d.degraded && d.ai && (d.model || d.elapsed_ms)) {
       var mdl = String(d.model || '').replace(/^gemini:/, 'Gemini ').replace(/^claude-/, 'Claude ').replace(/^nvidia:/, 'NVIDIA ');
       foot += '<div class="kc-meta">' + esc(mdl) + (d.steps ? ' · ' + d.steps + ' ' + esc(d.steps === 1 ? L('consulta', 'query') : L('consultas', 'queries')) : '') +
-        (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(0) + ' s' : '') + '</div>';
+        (d.elapsed_ms ? ' · ' + (d.elapsed_ms / 1000).toFixed(0) + ' s' : '') + esc(jev) + '</div>';
     }
     if (foot) h += '<div class="kc-foot">' + foot + '</div>';
     return h + '</div>';
