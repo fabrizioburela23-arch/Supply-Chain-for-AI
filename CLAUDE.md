@@ -122,6 +122,9 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     horizonte, tamaño por volatilidad objetivo, memo IA con guardián de cifras o
     determinista; SIEMPRE aprobación humana) · UI `engine/committee.js`
     (`KhipuCommittee.open(id)`, Mercado → 🏛 Comité, X-Ray, `NVDA COMITE`).
+    KHIPUS OS (2026-10-09): el overlay #cm-ov usa los tokens --os-* (mismos valores que cockpit.js, test) y
+    MASCOTAS por puesto (no hay personajes humanos: no reintroducir Valeria/Kenji/…); la sala nombra a los puestos por
+    mascota (`research/committee._mascot_voice`, `agent_skills.SEAT_MASCOT/WORKING`).
     SALA DEL COMITÉ (2026-10-02): `research/deliberation.py` arma puestos + debate
     con PLANTILLAS sobre claims/evidencia/X#/D1/R1/Q1 reales (sin IA extra);
     en vivo vía progress.messages, guardado en memo.memo.transcript.

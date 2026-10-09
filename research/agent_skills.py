@@ -108,6 +108,92 @@ SKILLS = {
                'Geopolitical exposure: its country and its suppliers’ countries', 'Global geopolitical risk index (GPR)']),
 }
 
+# ── puesto → MASCOTA (2026-10-09, sala del comité con la voz de Khipus OS) ─────────────────────
+# MISMO mapeo que engine/mascot.js (seats) y core/khipu_chat.SEAT_AGENT — cambiar los tres juntos
+# (tests/test_committee_os_narr.py los compara). Aquí sin dependencias (lo importa el comité).
+SEAT_MASCOT = {
+    'fundamental': 'analista', 'macro': 'analista',
+    'news': 'radar', 'geopolitical': 'radar', 'crypto': 'radar',
+    'supply_chain': 'cadena',
+    'technical': 'tecnico', 'risk_observation': 'tecnico', 'risk_officer': 'tecnico', 'market': 'tecnico',
+    'chair': 'comite', 'quant': 'comite', 'mandate': 'comite', 'committee': 'comite',
+}
+MASCOT_NAME = {'khipu': ('Khipu', 'Khipu'), 'analista': ('Analista', 'Analyst'), 'radar': ('Radar', 'Radar'),
+               'cadena': ('Cadena', 'Chain'), 'tecnico': ('Técnico', 'Technical'), 'comite': ('Comité', 'Committee')}
+# el rol entre paréntesis cuando el nombre de la mascota no lo dice solo (Técnico y Cadena ya lo dicen)
+SEAT_ROLE = {'fundamental': ('fundamental', 'fundamentals'), 'macro': ('macro', 'macro'),
+             'news': ('noticias', 'news'), 'geopolitical': ('geopolítica', 'geopolitics'),
+             'crypto': ('cripto', 'crypto'), 'risk_observation': ('riesgos', 'risks')}
+
+
+def seat_mascot(seat):
+    """Id de la mascota de un puesto ('fundamental' → 'analista'); None si no tiene."""
+    return SEAT_MASCOT.get(str(seat or '').strip().lower())
+
+
+def seat_call_name(seat, lang='es'):
+    """Cómo se nombra a un analista en la sala: 'Analista (fundamental)', 'Radar (noticias)', 'Técnico', 'Cadena'."""
+    en = lang == 'en'
+    m = seat_mascot(seat)
+    if not m:
+        return str(seat or '')
+    name = MASCOT_NAME[m][1 if en else 0]
+    role = SEAT_ROLE.get(seat)
+    return f'{name} ({role[1 if en else 0]})' if role else name
+
+
+def join_names(names, lang='es'):
+    """['A', 'B', 'C'] → 'A, B y C' (en: 'A, B and C')."""
+    names = [n for n in names if n]
+    if len(names) <= 1:
+        return ''.join(names)
+    return ', '.join(names[:-1]) + (' and ' if lang == 'en' else ' y ') + names[-1]
+
+
+# ── qué hace cada analista MIENTRAS investiga (lo narra la sala del comité; el chat puede reutilizarlo) ──
+# Una frase en primera persona y lenguaje SIMPLE (la lee un inversionista no experto en la sala, sin "?" que
+# explique): nada de siglas como RSI o GPR — esas quedan en SKILLS/FOCUS. Coherente con FOCUS y con las fuentes
+# reales de cada agente (research/agents/registry.py + research/context.py AGENT_NEEDS). Inglés estadounidense.
+WORKING = {
+    'fundamental': (
+        'Reviso sus estados financieros: ingresos, márgenes, caja y deuda, y la comparo con sus pares.',
+        'Reviewing its financial statements: revenue, margins, cash and debt, and comparing it with its peers.'),
+    'news': (
+        'Leo sus noticias recientes con fecha y fuente, y separo los hechos confirmados de los rumores.',
+        'Reading its recent news with date and source, and separating confirmed facts from rumors.'),
+    'technical': (
+        'Miro cómo se movió su precio el último año: su tendencia, qué tan lejos está de su máximo y de su mínimo, '
+        'y si le gana o pierde al mercado (S&P 500).',
+        'Looking at how its price moved over the last year: its trend, how far it is from its high and its low, '
+        'and whether it beats or trails the market (S&P 500).'),
+    'supply_chain': (
+        'Sigo su cadena: de quién depende, en qué países están sus proveedores y qué riesgo le llega desde arriba '
+        'o arrastra hacia abajo.',
+        'Tracing its chain: who it depends on, which countries its suppliers are in and what risk reaches it from '
+        'upstream or it drags downstream.'),
+    'geopolitical': (
+        'Reviso su exposición a países, sanciones y estrechos: desde su sede y desde los países de sus proveedores.',
+        "Checking its exposure to countries, sanctions and straits: from its headquarters and from its suppliers' "
+        'countries.'),
+    'macro': (
+        'Mido cómo le afectan las tasas de interés, el ciclo económico, el valor de las monedas y el riesgo de '
+        'conflictos en el mundo.',
+        'Measuring how interest rates, the economic cycle, currency swings and the risk of conflicts around the '
+        'world affect it.'),
+    'crypto': (
+        'Reviso su exposición a cripto: hechos recientes y riesgos regulatorios y de mercado.',
+        'Checking its crypto exposure: recent facts plus regulatory and market risks.'),
+    'risk_observation': (
+        'Busco riesgos observables: concentración en un cliente o proveedor, deuda, volatilidad y litigios.',
+        'Looking for observable risks: reliance on one customer or supplier, debt, volatility and lawsuits.'),
+}
+WORKING_DEFAULT = ('Investigo con datos en vivo…', 'Researching with live data…')
+
+
+def working_line(seat):
+    """(es, en): lo que hace este analista mientras investiga."""
+    return WORKING.get(seat, WORKING_DEFAULT)
+
 
 # la ventana / el gráfico que muestra cada rol (Khipus OS: engine/oswindows.js; gráficos: chat inline)
 def role_actions(seat, eid, label, listed):

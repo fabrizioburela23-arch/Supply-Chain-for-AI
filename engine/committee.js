@@ -35,16 +35,62 @@
     geopolitical: ['🗺️', 'Geopolítica', 'Geopolitics'], macro: ['🌐', 'Macro', 'Macro'],
     crypto: ['₿', 'Cripto', 'Crypto'], risk_observation: ['⚠️', 'Riesgos', 'Risks'], committee: ['🏛', 'Comité', 'Committee'],
   };
-  function ag(t) { var a = AG[t] || ['🤖', t, t]; return a[0] + ' ' + L(a[1], a[2]); }
+  // Colores SEMÁNTICOS: solo tokens de Khipus OS (definidos sobre #cm-ov en ensureStyles; claro/oscuro
+  // los pone body.dark). Valen dentro de style="" pero NO en atributos de presentación SVG.
+  // C.* son colores de TEXTO: --cm-good/--cm-bad/--cm-warn/--cm-ai llegan a 4.5:1 (WCAG AA) también sobre su
+  // píldora teñida en el tema claro; los vivos (--os-good, --os-bad, --cm-warn-fill) quedan para rellenos,
+  // barras y anillos (fill()).
+  var C = { good: 'var(--cm-good)', bad: 'var(--cm-bad)', neu: 'var(--os-ink-2)', mute: 'var(--os-ink-3)', warn: 'var(--cm-warn)',
+    accent: 'var(--os-accent)', ai: 'var(--cm-ai)', ink: 'var(--os-ink)' };
+  var FILL = { 'var(--cm-good)': 'var(--os-good)', 'var(--cm-bad)': 'var(--os-bad)', 'var(--cm-warn)': 'var(--cm-warn-fill)' };
+  function fill(col) { return FILL[col] || col; }
+  // texto en color + fondo teñido suave (la "píldora" de Khipus OS); sin color-mix queda el fondo neutro
+  function tint(col, p) { return 'color:' + col + ';background:var(--os-surface-2);background:color-mix(in srgb,' + fill(col) + ' ' + (p || 12) + '%,transparent)'; }
+
+  // ── AGENTES = MASCOTAS de Khipus OS (engine/mascot.js). Cada puesto del comité pertenece a una
+  // mascota (Analista, Radar, Cadena, Técnico, Comité) y lleva una insignia con su rol. ──
+  var SEAT_MASCOT = { fundamental: 'analista', macro: 'analista', news: 'radar', geopolitical: 'radar', crypto: 'radar',
+    supply_chain: 'cadena', technical: 'tecnico', risk_observation: 'tecnico', risk_officer: 'tecnico', market: 'tecnico',
+    chair: 'comite', quant: 'comite', mandate: 'comite', committee: 'comite' };
+  var MNAME = { analista: ['Analista', 'Analyst'], radar: ['Radar', 'Radar'], cadena: ['Cadena', 'Chain'], tecnico: ['Técnico', 'Technical'],
+    comite: ['Comité', 'Committee'], khipu: ['Khipu', 'Khipu'] };
+  var MCOLOR = { analista: '#4054cf', radar: '#e63e52', cadena: '#1b9386', tecnico: '#e6a117', comite: '#7a3fe0', khipu: '#c23a8c' };
+  var ROLE = { fundamental: ['Fundamental', 'Fundamental'], macro: ['Macro', 'Macro'], news: ['Noticias', 'News'], geopolitical: ['Geopolítica', 'Geopolitics'],
+    crypto: ['Cripto', 'Crypto'], supply_chain: ['Suministro', 'Supply'], technical: ['Precio', 'Price'], risk_observation: ['Riesgos', 'Risks'],
+    market: ['Mesa de mercado', 'Market desk'], risk_officer: ['Oficial de riesgo', 'Risk officer'], quant: ['Cuantitativo', 'Quant'],
+    chair: ['Presidencia', 'Chair'], mandate: ['Mandato', 'Mandate'] };
+  var EMO = { market: '📡', risk_officer: '🛡️', quant: '🧮', chair: '🏛', mandate: '👤' };
+  function mascotOf(seat) {
+    var id = null;
+    try { id = (window.KhipuMascot && window.KhipuMascot.of) ? window.KhipuMascot.of(seat) : null; } catch (e) { id = null; }
+    return id || SEAT_MASCOT[seat] || 'comite';
+  }
+  function mascotName(id) {
+    try { if (window.KhipuMascot && window.KhipuMascot.name && MNAME[id]) return window.KhipuMascot.name(id); } catch (e) {}
+    var x = MNAME[id]; return x ? L(x[0], x[1]) : String(id || '');
+  }
+  function mascotColor(id) {
+    var c = null;
+    try { c = (window.KhipuMascot && window.KhipuMascot.color) ? window.KhipuMascot.color(id) : null; } catch (e) { c = null; }
+    return /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : (MCOLOR[id] || '#8D90A0');
+  }
+  function roleOf(seat, fallback) { var r = ROLE[seat]; return r ? L(r[0], r[1]) : (fallback || ''); }
+  // "Analista · Fundamental" / "Técnico · Oficial de riesgo"; un puesto nuevo del servidor usa su propio nombre como rol
+  function seatLabel(seat, fallback) {
+    var role = roleOf(seat, fallback ? shortName(fallback) : '');
+    var n = mascotName(mascotOf(seat));
+    return role && role !== n ? n + ' · ' + role : n;
+  }
+  function ag(t) { return seatLabel(t, AG[t] ? L(AG[t][1], AG[t][2]) : t); }
   var HZ = { INTRADAY: ['Intradía', 'Intraday'], SHORT_TERM: ['Corto plazo', 'Short term'], MEDIUM_TERM: ['Mediano plazo', 'Medium term'],
     LONG_TERM: ['Largo plazo', 'Long term'], STRUCTURAL: ['Estructural', 'Structural'] };
   function hz(h) { var x = HZ[h] || [h, h]; return L(x[0], x[1]); }
   var HZ_ORDER = ['SHORT_TERM', 'MEDIUM_TERM', 'LONG_TERM', 'STRUCTURAL', 'INTRADAY'];
-  var DEC = { BUY: ['#2BE38B', 'COMPRAR', 'BUY'], ADD: ['#2BE38B', 'AUMENTAR', 'ADD'], HOLD: ['#9BA6C4', 'MANTENER / ESPERAR', 'HOLD / WAIT'],
-    TRIM: ['#FFB300', 'REDUCIR', 'TRIM'], SELL: ['#FF4D6A', 'VENDER', 'SELL'], AVOID: ['#FF4D6A', 'EVITAR', 'AVOID'] };
+  var DEC = { BUY: [C.good, 'COMPRAR', 'BUY'], ADD: [C.good, 'AUMENTAR', 'ADD'], HOLD: [C.neu, 'MANTENER / ESPERAR', 'HOLD / WAIT'],
+    TRIM: [C.warn, 'REDUCIR', 'TRIM'], SELL: [C.bad, 'VENDER', 'SELL'], AVOID: [C.bad, 'EVITAR', 'AVOID'] };
   var STATUS = { running: ['deliberando…', 'deliberating…'], failed: ['falló', 'failed'], proposed: ['propuesta (pendiente de aprobación)', 'proposal (awaiting approval)'],
     approved: ['aprobada por un humano', 'approved by a human'], rejected: ['rechazada', 'rejected'], executed: ['ejecutada', 'executed'] };
-  var RES = { hit: ['#2BE38B', 'acierto', 'hit'], miss: ['#FF4D6A', 'fallo', 'miss'], 'n/a': ['#9BA6C4', 'n/a', 'n/a'] };
+  var RES = { hit: [C.good, 'acierto', 'hit'], miss: [C.bad, 'fallo', 'miss'], 'n/a': [C.mute, 'n/a', 'n/a'] };
 
   // ── "?" de cada métrica (registradas en engine/explain.js) ────────────────
   function registerExplain() {
@@ -66,7 +112,7 @@
       es: { t: 'Tamaño de la posición (por volatilidad)', b: 'El tamaño NO lo decide la IA: es una cuenta fija. Se elige cuánto riesgo anual aceptar por posición (por defecto 2 % del patrimonio) y se divide entre la volatilidad anual de la acción: una acción el doble de movida recibe la mitad del dinero. Luego se aplican topes: máximo por posición del mandato (por defecto 10 %), lo que ya tienes y tu poder de compra. Ejemplo: 2 % ÷ 40 % de volatilidad = 5 % del patrimonio.' },
       en: { t: 'Position size (volatility targeting)', b: 'The size is NOT decided by the AI: it is a fixed calculation. You choose how much annual risk to accept per position (2% of equity by default) and divide it by the stock\'s annual volatility: a stock twice as volatile gets half the money. Then caps apply: the mandate\'s max per position (10% by default), what you already hold and your buying power. Example: 2% ÷ 40% volatility = 5% of equity.' } });
     R('committee_decision', {
-      es: { t: 'Decisión del comité', b: '<b>COMPRAR</b> (abrir) si la convicción global es ≥ +35 · <b>AUMENTAR</b> si ya tienes y estás bajo tu tamaño objetivo · <b>MANTENER / ESPERAR</b> si no alcanza · <b>REDUCIR</b> si baja de −20 o tu posición pasó el 125 % del objetivo · <b>VENDER</b> si baja de −50 · <b>EVITAR</b> si no la tienes y es negativa (o no cotiza). El presidente IA puede rebajar a MANTENER explicando por qué, nunca subir. Es una PROPUESTA: nada se ejecuta sin tu aprobación, y no es asesoría personalizada.' },
+      es: { t: 'Decisión del comité', b: '<b>COMPRAR</b> (abrir) si la convicción global es ≥ +35 · <b>AUMENTAR</b> si ya tienes y estás bajo tu tamaño objetivo · <b>MANTENER / ESPERAR</b> si no alcanza · <b>REDUCIR</b> si baja de −20 o tu posición pasó el 125 % del objetivo · <b>VENDER</b> si baja de −50 · <b>EVITAR</b> si no la tienes y es negativa (o no cotiza). La presidencia IA del Comité puede rebajar a MANTENER explicando por qué, nunca subir. Es una PROPUESTA: nada se ejecuta sin tu aprobación, y no es asesoría personalizada.' },
       en: { t: 'Committee decision', b: '<b>BUY</b> (open) if overall conviction is ≥ +35 · <b>ADD</b> if you already hold it and are below your target size · <b>HOLD / WAIT</b> if it does not reach that · <b>TRIM</b> if it falls below −20 or your position exceeds 125% of target · <b>SELL</b> below −50 · <b>AVOID</b> if you do not hold it and it is negative (or unlisted). The AI chair may downgrade to HOLD explaining why, never upgrade. It is a PROPOSAL: nothing executes without your approval, and it is not personalized advice.' } });
     R('reliability', {
       es: { t: 'Fiabilidad del agente', b: 'Qué tanto confiar en un agente según su historial REAL: sus aciertos más 10 "aciertos a medias" imaginarios, divididos entre sus predicciones calificadas más 10. Sin historial vale 50 % (neutral); con muchos aciertos sube hacia 100 %, con muchos fallos baja hacia 0 %. En el comité multiplica el peso de sus conclusiones: 50 % = ×1, 75 % = ×1.5.' },
@@ -75,10 +121,10 @@
       es: { t: 'Señal temprana', b: 'Tasa de acierto en las revisiones INTERMEDIAS (por ejemplo a los 7 días de una conclusión de 30 días, o a los 90 y 180 días de una de largo plazo). Sirve para ver cómo va un agente antes de que venzan sus predicciones, pero NO cuenta para su fiabilidad ni para la calibración: solo cuentan las revisiones finales.' },
       en: { t: 'Early signal', b: 'Hit rate on INTERMEDIATE checks (e.g. at 7 days for a 30-day conclusion, or at 90 and 180 days for a long-term one). It shows how an agent is doing before its predictions come due, but it does NOT count toward its reliability or calibration: only final checks count.' } });
     R('committee_room', {
-      es: { t: 'La sala del comité', b: 'Cada <b>puesto</b> es un analista de IA que ya investigó la empresa (📊 fundamental, 📰 noticias, 🔗 cadena…), más la 📡 mesa de mercado (precio en vivo), el 🛡️ oficial de riesgo (volatilidad real), el 🧮 núcleo cuantitativo (la cuenta) y el 🏛 presidente. <b>Lo que dice cada uno NO es inventado</b>: es su conclusión real con su fuente, su historial de aciertos y las contradicciones detectadas. Verde = a favor, rojo = en contra, gris = neutral. Solo el presidente usa IA al final, y sus cifras pasan por el guardián.' },
-      en: { t: 'The committee room', b: 'Each <b>seat</b> is an AI analyst that already researched the company (📊 fundamental, 📰 news, 🔗 supply chain…), plus the 📡 market desk (live price), the 🛡️ risk officer (real volatility), the 🧮 quant core (the math) and the 🏛 chair. <b>What each one says is NOT made up</b>: it is its real conclusion with its source, its hit record and the detected contradictions. Green = for, red = against, grey = neutral. Only the chair uses AI at the end, and its figures go through the guardian.' } });
+      es: { t: 'La sala del comité', b: 'En la mesa se sientan los agentes de Khipus, cada uno con su burbuja y una insignia que dice su rol: el <b>Analista</b> (fundamentales y macro), el <b>Radar</b> (noticias, geopolítica y cripto), la <b>Cadena</b> (cadena de suministro) y el <b>Técnico</b> (precio y riesgos; también lleva la mesa de mercado con el precio en vivo y el oficial de riesgo con la volatilidad real). El <b>Comité</b> pone la cuenta (núcleo cuantitativo) y la presidencia. <b>Lo que dice cada agente NO es inventado</b>: es su conclusión real con su fuente, su historial de aciertos y las contradicciones detectadas. Verde = a favor, rojo = en contra, gris = neutral. Si hay IA disponible, cada agente razona sobre SU evidencia y la presidencia redacta el veredicto; todas las cifras pasan por el guardián.' },
+      en: { t: 'The committee room', b: 'The Khipus agents sit at the table, each with its bubble and a badge that shows its role: the <b>Analyst</b> (fundamentals and macro), the <b>Radar</b> (news, geopolitics and crypto), the <b>Chain</b> (supply chain) and the <b>Technical</b> agent (price and risks; it also runs the market desk with the live price and the risk officer with real volatility). The <b>Committee</b> brings the math (quant core) and the chair. <b>What each agent says is NOT made up</b>: it is its real conclusion with its source, its hit record and the detected contradictions. Green = for, red = against, grey = neutral. When AI is available, each agent reasons over ITS evidence and the chair writes the verdict; every figure goes through the guardian.' } });
     R('committee_confidence', {
-      es: { t: 'Confianza del comité', b: 'Qué tan seguro está el comité de SU decisión (0–100 %). Con presidente IA es su estimación honesta considerando el disenso y la calidad de la evidencia; sin IA se calcula: qué parte del peso de las conclusiones apoya la dirección elegida × su confianza calibrada promedio. No es la probabilidad de ganar dinero.' },
+      es: { t: 'Confianza del comité', b: 'Qué tan seguro está el comité de SU decisión (0–100 %). Con presidencia IA es su estimación honesta considerando el disenso y la calidad de la evidencia; sin IA se calcula: qué parte del peso de las conclusiones apoya la dirección elegida × su confianza calibrada promedio. No es la probabilidad de ganar dinero.' },
       en: { t: 'Committee confidence', b: 'How sure the committee is of ITS decision (0–100%). With the AI chair it is its honest estimate given dissent and evidence quality; without AI it is computed: the share of conclusion weight that supports the chosen direction × their average calibrated confidence. It is not the probability of making money.' } });
     return true;
   }
@@ -91,96 +137,201 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureExplain);
   setTimeout(ensureExplain, 0);
 
+  // ── TEMA KHIPUS OS (2026-10-09, "el comité todavía no está actualizado") ──────
+  // Tokens --os-* = COPIA EXACTA de engine/cockpit.js (#bcp-ov). El comité es un overlay propio
+  // (z-index 7650, fuera de #bcp-ov), por eso los redefine sobre #cm-ov; claro = body sin .dark,
+  // oscuro = body.dark. tests/test_committee_os_ui.py compara ambos: si cambian allá, cambiar aquí.
+  // Propios del comité: --cm-warn-fill (ámbar de aviso para rellenos/anillos), --cm-warn / --cm-good / --cm-bad /
+  // --cm-ai (TEXTO en ámbar/verde/rojo/violeta: en claro, versiones oscuras que pasan 4.5:1 sobre su píldora
+  // teñida; los vivos #0ca30c/#B7791F daban 2.6–3.3:1), --cm-on-sem (texto sobre un botón de color semántico).
+  var OS_LIGHT = '--os-bg:#EDEDF5;--os-surface:#FFFFFF;--os-surface-2:#F2F2F7;--os-surface-3:#E7E7EF;' +
+    '--os-ink:#111216;--os-ink-2:#5B5E6B;--os-ink-3:#8D90A0;--os-line:rgba(17,18,22,.08);' +
+    '--os-shadow:0 1px 2px rgba(17,18,40,.04), 0 8px 28px rgba(17,18,40,.06);' +
+    '--os-accent:#2F6BEA;--os-pos:#2F6BEA;--os-neg:#E8623A;--os-mute:#C9CAD6;--os-good:#0ca30c;--os-bad:#d03b3b;' +
+    '--os-btn:#111216;--os-btn-ink:#FFFFFF;' +
+    '--kos-shadow-lg:0 2px 6px rgba(17,18,40,.06), 0 18px 48px rgba(17,18,40,.14);' +
+    '--kos-scrim:rgba(24,26,44,.22);--kos-accent-soft:rgba(47,107,234,.12);' +
+    '--cm-warn-fill:#B7791F;--cm-warn:#7F5200;--cm-good:#066B06;--cm-bad:#A82424;--cm-ai:#6236C9;--cm-on-sem:#FFFFFF;color-scheme:light';
+  var OS_DARK = '--os-bg:#0E0F14;--os-surface:#17181F;--os-surface-2:#1F2029;--os-surface-3:#2A2B36;' +
+    '--os-ink:#F2F2F5;--os-ink-2:#A6A8B5;--os-ink-3:#6E7080;--os-line:rgba(255,255,255,.07);' +
+    '--os-shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);' +
+    '--os-accent:#4C8DF6;--os-pos:#4C8DF6;--os-neg:#F07A52;--os-mute:#3A3C4A;--os-good:#2fbf5b;--os-bad:#f06565;' +
+    '--os-btn:#F2F2F5;--os-btn-ink:#111216;' +
+    '--kos-shadow-lg:0 2px 8px rgba(0,0,0,.45), 0 22px 56px rgba(0,0,0,.55);' +
+    '--kos-scrim:rgba(0,0,0,.5);--kos-accent-soft:rgba(76,141,246,.16);' +
+    '--cm-warn-fill:#F2C46D;--cm-warn:#F2C46D;--cm-good:#2fbf5b;--cm-bad:#F47C7C;--cm-ai:#B48CFF;--cm-on-sem:#0E0F14;color-scheme:dark';
+  var OS_SHARED = '--os-r:18px;--os-r-sm:12px;--os-font:\'Nunito\', \'Geist\', system-ui, -apple-system, \'Segoe UI\', sans-serif;--km-ring:var(--os-surface)';
+  // Módulos que pintan DENTRO del comité con colores fijos del tema oscuro viejo (engine/pfcommittee.js,
+  // pestaña 💼): sin este puente, en el tema claro su texto blanco quedaba invisible. Solo actúa sobre
+  // style="" ajenos; este archivo ya no escribe ninguno de esos colores.
+  var LEGACY = [['#E8EDFB', 'var(--os-ink)'], ['#C9D2EA', 'var(--os-ink)'], ['#9BA6C4', 'var(--os-ink-2)'], ['#7C87A3', 'var(--os-ink-3)'],
+    ['#FFB300', 'var(--cm-warn)'], ['#2BE38B', 'var(--cm-good)'], ['#FF4D6A', 'var(--cm-bad)'], ['#00E0FF', 'var(--os-accent)'],
+    ['#5FC6E8', 'var(--os-accent)'], ['#7ecbff', 'var(--os-accent)'], ['#B48CFF', 'var(--cm-ai)']];
+
   function ensureStyles() {
     if (document.getElementById('cm-styles')) return;
     var css = '' +
-      '#cm-ov{position:fixed;inset:0;z-index:7650;display:none;align-items:center;justify-content:center;background:rgba(3,6,12,.72);backdrop-filter:blur(4px);font-family:Inter,system-ui,sans-serif}' +
+      'body:not(.dark) #cm-ov{' + OS_LIGHT + '}' +
+      'body.dark #cm-ov{' + OS_DARK + '}' +
+      '#cm-ov{' + OS_SHARED + ';position:fixed;inset:0;z-index:7650;display:none;align-items:center;justify-content:center;' +
+        'background:var(--kos-scrim);-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);font-family:var(--os-font)}' +
       '#cm-ov.show{display:flex}' +
-      '#cm{width:min(1120px,96vw);max-height:92vh;overflow-y:auto;overflow-x:hidden;border-radius:18px;color:#E8EDFB;background:radial-gradient(1000px 500px at 50% -10%,#0B1222 0%,#06090F 60%);border:1px solid rgba(122,158,255,.2);box-shadow:0 30px 80px rgba(0,0,0,.6);padding:20px 22px;box-sizing:border-box}' +
+      '#cm{width:min(1120px,96vw);max-height:92vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-radius:24px;' +
+        'background:var(--os-bg);color:var(--os-ink);box-shadow:var(--kos-shadow-lg);padding:22px 26px 26px;box-sizing:border-box;' +
+        'font-family:var(--os-font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;animation:cmPop .22s ease}' +
+      '@keyframes cmPop{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}' +
       '#cm *{box-sizing:border-box}' +
-      '#cm .cm-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}' +
-      '#cm .cm-name{font-size:21px;font-weight:750;min-width:0;overflow-wrap:anywhere}' +
-      '#cm .cm-x{margin-left:auto;width:32px;height:32px;border-radius:9px;cursor:pointer;border:1px solid rgba(122,158,255,.2);background:rgba(21,28,45,.7);color:#7C87A3;font-size:16px;flex:0 0 auto}' +
-      '#cm .cm-sub{font-size:11.5px;color:#7C87A3;margin-bottom:12px;line-height:1.5}' +
-      '#cm .cm-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}' +
-      '#cm .cm-tab{font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid rgba(122,158,255,.2);background:none;color:#9BA6C4;cursor:pointer}' +
-      '#cm .cm-tab.on{border-color:#00E0FF;color:#00E0FF;background:rgba(0,224,255,.08)}' +
-      '#cm .cm-btn{border:1px solid #00E0FF;background:rgba(0,224,255,.12);color:#00E0FF;font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:9px;cursor:pointer}' +
-      '#cm .cm-btn[disabled]{opacity:.5;cursor:default}' +
-      '#cm .cm-btn.ok{border-color:#2BE38B;color:#2BE38B;background:rgba(43,227,139,.1)}' +
-      '#cm .cm-btn.no{border-color:#FF4D6A;color:#FF4D6A;background:rgba(255,77,106,.08)}' +
-      '#cm .cm-btn.ghost{border-color:rgba(122,158,255,.3);color:#9BA6C4;background:none;font-weight:600}' +
-      '#cm input,#cm select{background:#0B1222;color:#E8EDFB;border:1px solid rgba(122,158,255,.25);border-radius:8px;padding:7px 9px;font-size:12.5px;min-width:0;max-width:100%}' +
-      '#cm .cm-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}' +
-      '#cm .cm-form input{flex:1 1 180px}#cm .cm-form select{flex:1 1 180px}' +
+      '#cm button,#cm input,#cm select{font-family:inherit}' +
+      // encabezado: mascota del Comité + título + cerrar redondo (como la barra de Khipus OS)
+      '#cm .cm-hd{display:flex;align-items:center;gap:12px;margin-bottom:6px}' +
+      '#cm .cm-name{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;letter-spacing:-.015em;min-width:0;overflow-wrap:anywhere}' +
+      '#cm .cm-name .cm-ent{color:var(--os-ink-2);font-weight:700}' +
+      '#cm .cm-x{margin-left:auto;width:40px;height:40px;padding:0;border:0;border-radius:999px;cursor:pointer;background:transparent;color:var(--os-ink-2);' +
+        'font-size:15px;font-weight:600;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s,color .15s}' +
+      '#cm .cm-x:hover{background:var(--os-surface-2);color:var(--os-ink)}' +
+      '#cm .cm-sub{font-size:13px;color:var(--os-ink-2);margin:0 0 16px;line-height:1.55;max-width:820px}' +
+      // pestañas = control segmentado (como .osw-seg); un .cm-tab suelto es una opción tipo píldora
+      '#cm .cm-tabs{display:flex;flex-wrap:wrap;gap:2px;width:fit-content;max-width:100%;padding:3px;border-radius:20px;background:var(--os-surface-2);margin-bottom:16px}' +
+      '#cm>.cm-tabs{background:var(--os-surface-3)}' +
+      '#cm .cm-tab{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;height:32px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;' +
+        'white-space:nowrap;background:var(--os-surface-2);color:var(--os-ink-2);transition:background-color .15s,color .15s,box-shadow .15s}' +
+      '#cm .cm-tab:hover{background:var(--os-surface-3);color:var(--os-ink)}' +
+      '#cm .cm-tab.on{background:var(--os-btn);color:var(--os-btn-ink)}' +
+      '#cm .cm-tabs .cm-tab{background:none}' +
+      '#cm .cm-tabs .cm-tab:hover{background:none;color:var(--os-ink)}' +
+      '#cm .cm-tabs .cm-tab.on{background:var(--os-surface);color:var(--os-ink);box-shadow:var(--os-shadow)}' +
+      // botones = píldoras: principal oscuro/claro según el tema, secundario suave
+      '#cm .cm-btn{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;' +
+        'height:40px;padding:0 18px;border-radius:999px;font-size:13.5px;font-weight:700;letter-spacing:-.005em;white-space:nowrap;' +
+        'background:var(--os-btn);color:var(--os-btn-ink);transition:opacity .15s,background-color .15s,transform .1s}' +
+      '#cm .cm-btn:hover{opacity:.88}#cm .cm-btn:active{transform:scale(.98)}' +
+      '#cm .cm-btn[disabled]{opacity:.45;cursor:default;transform:none}' +
+      '#cm .cm-btn.ghost{background:var(--os-surface);color:var(--os-ink);font-weight:600;box-shadow:var(--os-shadow)}' +
+      '#cm .cm-cell .cm-btn.ghost,#cm .cm-room .cm-btn.ghost{background:var(--os-surface-2);box-shadow:none}' +
+      '#cm .cm-btn.ghost:hover{background:var(--os-surface-3);opacity:1}' +
+      '#cm .cm-btn.ok{background:var(--cm-good);color:var(--cm-on-sem)}' +
+      '#cm .cm-btn.no{color:var(--cm-bad);background:var(--os-surface-2);background:color-mix(in srgb,var(--os-bad) 12%,transparent)}' +
+      '#cm .cm-btn.no:hover{opacity:1;background:color-mix(in srgb,var(--os-bad) 18%,transparent)}' +
+      // foco de teclado VISIBLE (WCAG 2.4.7): contorno de acento de 2 px; el anillo suave queda solo como extra
+      '#cm .cm-tab:focus-visible,#cm .cm-btn:focus-visible,#cm .cm-x:focus-visible,#cm .cm-ref:focus-visible,#cm .cm-hist:focus-visible{outline:2px solid var(--os-accent);outline-offset:2px}' +
+      // campos: sin borde, fondo suave, anillo de foco
+      '#cm input,#cm select{height:40px;border:0;border-radius:var(--os-r-sm);padding:0 14px;font-size:13.5px;color:var(--os-ink);background:var(--os-surface);' +
+        'box-shadow:var(--os-shadow);outline:none;min-width:0;max-width:100%;transition:box-shadow .15s,background-color .15s}' +
+      '#cm select{padding-right:10px;cursor:pointer}' +
+      '#cm input::placeholder{color:var(--os-ink-3)}' +
+      '#cm .cm-cell input,#cm .cm-cell select{background:var(--os-surface-2);box-shadow:none}' +
+      '#cm input:focus,#cm select:focus{box-shadow:0 0 0 3px var(--kos-accent-soft)}' +
+      '#cm input:focus-visible,#cm select:focus-visible{outline:2px solid var(--os-accent);outline-offset:2px}' +
+      '#cm .cm-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}' +
+      '#cm .cm-form input{flex:1 1 220px}#cm .cm-form select{flex:1 1 200px}' +
       '#cm .cm-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px}' +
-      '#cm .cm-cell{border:1px solid rgba(122,158,255,.14);border-radius:13px;background:rgba(11,18,34,.55);padding:12px 14px;margin-bottom:12px;min-width:0}' +
-      '#cm .cm-t{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7C87A3;margin-bottom:8px;display:flex;align-items:center;gap:2px}' +
-      '#cm .cm-note{font-size:12px;color:#9BA6C4;line-height:1.55;overflow-wrap:anywhere}' +
-      '#cm .cm-dec{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:800;letter-spacing:.04em;padding:6px 14px;border-radius:10px;border:1.5px solid}' +
-      '#cm .cm-pill{font-size:10.5px;padding:2px 9px;border-radius:999px;border:1px solid rgba(122,158,255,.25);color:#9BA6C4;white-space:nowrap}' +
-      '#cm .cm-g{display:grid;grid-template-columns:110px minmax(0,1fr) 46px;align-items:center;gap:8px;font-size:12px;margin:5px 0}' +
-      '#cm .cm-gt{position:relative;height:10px;border-radius:5px;background:rgba(122,158,255,.1);overflow:hidden}' +
-      '#cm .cm-gt i{position:absolute;top:0;bottom:0;border-radius:4px}' +
-      '#cm .cm-gt b{position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(155,166,196,.6)}' +
+      // tarjetas de Khipus OS: superficie, radio 18, sombra suave, sin bordes
+      '#cm .cm-cell{background:var(--os-surface);border-radius:var(--os-r);box-shadow:var(--os-shadow);padding:16px 18px;margin-bottom:14px;min-width:0}' +
+      '#cm .cm-t{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;letter-spacing:-.005em;color:var(--os-ink);margin-bottom:10px}' +
+      '#cm .cm-sec{color:var(--os-ink-2);margin:6px 2px 10px}' +
+      '#cm .cm-note{font-size:13px;color:var(--os-ink-2);line-height:1.55;overflow-wrap:anywhere}' +
+      '#cm .cm-lead{font-size:14px;color:var(--os-ink);line-height:1.6}' +
+      '#cm .cm-dec{display:inline-flex;align-items:center;gap:6px;font-size:14.5px;font-weight:800;letter-spacing:.03em;padding:7px 16px;border-radius:999px}' +
+      '#cm .cm-pill{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;' +
+        'background:var(--os-surface-2);color:var(--os-ink-2);white-space:nowrap}' +
+      '#cm .cm-callout{margin-top:10px;font-size:12.5px;line-height:1.55;border-radius:var(--os-r-sm);padding:9px 12px;overflow-wrap:anywhere}' +
+      '#cm .cm-g{display:grid;grid-template-columns:120px minmax(0,1fr) 46px;align-items:center;gap:10px;font-size:13px;margin:7px 0}' +
+      '#cm .cm-gt{position:relative;height:8px;border-radius:999px;background:var(--os-surface-3);overflow:hidden}' +
+      '#cm .cm-gt i{position:absolute;top:0;bottom:0;border-radius:999px}' +
+      '#cm .cm-gt b{position:absolute;left:50%;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--os-ink-3);opacity:.55}' +
       '#cm .cm-gv{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}' +
-      '#cm .cm-list{margin:4px 0 0 18px;padding:0;font-size:12.5px;line-height:1.55;color:#C9D2EA}' +
-      '#cm .cm-list li{margin-bottom:5px;overflow-wrap:anywhere}' +
-      '#cm .cm-ref{font-size:10.5px;color:#5FC6E8;cursor:pointer;margin-left:4px;white-space:nowrap}' +
-      '#cm .cm-kv{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(122,158,255,.06)}' +
-      '#cm .cm-kv span:last-child{text-align:right;font-variant-numeric:tabular-nums}' +
-      '#cm .cm-disc{font-size:11.5px;color:#FFB300;border:1px solid rgba(255,179,0,.35);background:rgba(255,179,0,.06);border-radius:10px;padding:9px 12px;line-height:1.5;margin-bottom:12px}' +
-      '#cm .cm-msg{border-radius:10px;padding:9px 12px;font-size:12.5px;margin-bottom:10px;line-height:1.5}' +
+      '#cm .cm-list{margin:4px 0 0 18px;padding:0;font-size:13px;line-height:1.6;color:var(--os-ink)}' +
+      '#cm .cm-list li{margin-bottom:6px;overflow-wrap:anywhere}' +
+      '#cm .cm-ref{font-size:11px;font-weight:600;color:var(--os-accent);cursor:pointer;margin-left:4px;white-space:nowrap;border-radius:6px}' +
+      '#cm .cm-ref:hover{text-decoration:underline}' +
+      '#cm .cm-kv{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--os-line)}' +
+      '#cm .cm-kv:last-child{border-bottom:0}' +
+      '#cm .cm-kv span:first-child{color:var(--os-ink-2)}' +
+      '#cm .cm-kv span:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--os-ink)}' +
+      '#cm .cm-disc{font-size:12.5px;line-height:1.55;color:var(--cm-warn);background:var(--os-surface-2);background:color-mix(in srgb,var(--cm-warn-fill) 12%,transparent);' +
+        'border-radius:var(--os-r-sm);padding:11px 14px;margin-bottom:14px}' +
+      '#cm .cm-msg{border-radius:var(--os-r-sm);padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;line-height:1.5}' +
       '#cm .cm-tw{overflow-x:auto;max-width:100%}' +
-      '#cm table{width:100%;border-collapse:collapse;font-size:12px}' +
-      '#cm th{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#7C87A3;text-align:left;padding:6px 8px;border-bottom:1px solid rgba(122,158,255,.15);white-space:nowrap}' +
-      '#cm td{padding:6px 8px;border-bottom:1px solid rgba(122,158,255,.06);white-space:nowrap;font-variant-numeric:tabular-nums}' +
-      '#cm .cm-steps{margin:6px 0 0 16px;padding:0;font-size:12px;color:#C9D2EA;line-height:1.55}' +
-      '#cm .cm-hist{font-size:11.5px;padding:5px 0;border-bottom:1px solid rgba(122,158,255,.07);cursor:pointer}' +
-      '#cm .cm-hist:hover{color:#00E0FF}' +
-      '#cm a{color:#5FC6E8;text-decoration:none}' +
-      '#cm .cm-learn p{font-size:13px;line-height:1.65;color:#C9D2EA;margin:0 0 10px}' +
-      '#cm .cm-learn h4{font-size:13.5px;margin:14px 0 6px;color:#E8EDFB}' +
-      '@media(max-width:760px){#cm .cm-grid{grid-template-columns:minmax(0,1fr)}#cm{padding:16px 12px;width:100vw;max-height:100vh;border-radius:0}#cm .cm-g{grid-template-columns:86px minmax(0,1fr) 40px}}';
-    css += '@keyframes cmspin{to{transform:rotate(360deg)}}.cm-spin{display:inline-block;animation:cmspin 1s linear infinite;color:#00E0FF}';
-    // ── sala del comité (puestos + conversación) ──
-    css += '#cm .cm-room{border:1px solid rgba(122,158,255,.18);border-radius:14px;background:radial-gradient(600px 220px at 50% 0%,rgba(0,224,255,.07),rgba(11,18,34,.6));padding:12px 12px 10px;margin-bottom:12px;min-width:0}' +
-      '#cm .cm-table{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 8px;padding:10px 6px 12px;border-radius:999px/60px;background:rgba(122,158,255,.05);border:1px dashed rgba(122,158,255,.18);margin-bottom:10px}' +
-      '#cm .cm-seat{width:84px;text-align:center;font-size:10.5px;line-height:1.25;color:#9BA6C4;transition:transform .3s,opacity .3s;opacity:.55}' +
-      '#cm .cm-seat.spoke{opacity:1}#cm .cm-seat.talk{transform:scale(1.08);opacity:1}' +
-      '#cm .cm-av{width:58px;height:58px;margin:0 auto 4px;border-radius:50%;overflow:hidden;background:#0B1222;border:2.5px solid #3a4560;position:relative;transition:border-color .4s,filter .4s}' +
-      '#cm .cm-av svg,#cm .cm-bav svg,#cm .cm-tav svg{display:block}' +
-      '#cm .cm-seat:not(.spoke):not(.talk) .cm-av{filter:saturate(.5)}' +
-      '#cm .cm-seat.talk .cm-av{box-shadow:0 0 0 4px rgba(0,224,255,.18),0 0 18px rgba(0,224,255,.45);animation:cmglow 1.6s ease-in-out infinite}' +
-      '#cm .cm-seat.talk .cm-fig{animation:cmbob .9s ease-in-out infinite}' +
-      '#cm .cm-mouth{transform-box:fill-box;transform-origin:50% 0}' +
-      '#cm .cm-seat.talk .cm-mouth{animation:cmtalk .32s ease-in-out infinite alternate}' +
-      '@keyframes cmbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.6px)}}' +
-      '@keyframes cmtalk{from{transform:scaleY(.35)}to{transform:scaleY(1.25)}}' +
-      '@keyframes cmglow{0%,100%{box-shadow:0 0 0 3px rgba(0,224,255,.14),0 0 12px rgba(0,224,255,.3)}50%{box-shadow:0 0 0 5px rgba(0,224,255,.22),0 0 22px rgba(0,224,255,.55)}}' +
-      '@media(prefers-reduced-motion:reduce){#cm .cm-seat.talk .cm-av,#cm .cm-seat.talk .cm-fig,#cm .cm-seat.talk .cm-mouth{animation:none}}' +
-      '#cm .cm-seat .cm-sr{font-size:9px;color:#7C87A3;margin-top:1px;overflow-wrap:anywhere}' +
-      '#cm .cm-seat .cm-sn{color:#E8EDFB;font-weight:650;overflow-wrap:anywhere}' +
-      '#cm .cm-seat .cm-ss{font-size:9.5px;font-weight:700;letter-spacing:.04em}' +
-      '#cm .cm-feed{max-height:560px;overflow-y:auto;padding-right:4px}' +
-      '#cm .cm-bub{display:flex;gap:9px;margin:0 0 9px;align-items:flex-start}' +
+      '#cm table{width:100%;border-collapse:collapse;font-size:13px}' +
+      '#cm th{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--os-ink-3);text-align:left;padding:8px 10px;border-bottom:1px solid var(--os-line);white-space:nowrap}' +
+      '#cm td{padding:8px 10px;border-bottom:1px solid var(--os-line);white-space:nowrap;font-variant-numeric:tabular-nums}' +
+      '#cm tbody tr:last-child td{border-bottom:0}' +
+      '#cm td .cm-mav{margin-right:8px}' +
+      '#cm .cm-steps{margin:8px 0 0 18px;padding:0;font-size:12.5px;color:var(--os-ink-2);line-height:1.6}' +
+      '#cm .cm-hist{font-size:13px;padding:9px 0;border-bottom:1px solid var(--os-line);cursor:pointer;transition:color .15s}' +
+      '#cm .cm-hist:last-child{border-bottom:0}' +
+      '#cm .cm-hist:hover{color:var(--os-accent)}' +
+      '#cm .cm-hist.static{cursor:default}#cm .cm-hist.static:hover{color:inherit}' +
+      '#cm a{color:var(--os-accent);text-decoration:none}#cm a:hover{text-decoration:underline}' +
+      '#cm .cm-learn p{font-size:14px;line-height:1.65;color:var(--os-ink-2);margin:0 0 12px}' +
+      '#cm .cm-learn h4{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:15px;font-weight:700;margin:20px 0 6px;color:var(--os-ink)}' +
+      '#cm .cm-agents{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:4px 0 6px}' +
+      '#cm .cm-agent{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--os-r-sm);background:var(--os-surface-2);min-width:0}' +
+      '#cm .cm-agent b{display:block;font-size:13.5px;color:var(--os-ink)}#cm .cm-agent span.r{display:block;font-size:11.5px;color:var(--os-ink-2);line-height:1.35}' +
+      '#cm .cm-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}' +
+      '#cm .cm-bar .cm-tabs{margin-bottom:0}' +
+      '#cm .cm-score{font-size:22px;font-weight:800;min-width:52px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}' +
+      '#cm .cm-spin{display:inline-block;animation:cmspin 1s linear infinite;color:var(--os-accent)}' +
+      '@keyframes cmspin{to{transform:rotate(360deg)}}';
+    // ── sala del comité: las MASCOTAS sentadas a la mesa + la conversación ──
+    css += '#cm .cm-room{background:var(--os-surface);border-radius:var(--os-r);box-shadow:var(--os-shadow);padding:16px 16px 14px;margin-bottom:14px;min-width:0}' +
+      '#cm .cm-room>.cm-t{flex-wrap:wrap}' +
+      '#cm .cm-onair{display:inline-flex;align-items:center;gap:5px;margin-left:4px;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--cm-bad)}' +
+      '#cm .cm-onair i{width:7px;height:7px;border-radius:50%;background:var(--os-bad);animation:cmdot 1.4s infinite}' +
+      '#cm .cm-count{margin-left:auto;display:inline-flex;gap:12px;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}' +
+      '#cm .cm-table{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 6px;padding:18px 8px 14px;border-radius:var(--os-r);background:var(--os-surface-2);margin-bottom:12px}' +
+      '#cm .cm-brk{flex-basis:100%;height:0}' +
+      // quien todavía no habló se nota en la MASCOTA (desaturada y tenue), nunca en el texto: el rol escrito
+      // es lo único que distingue a los puestos que comparten mascota y debe leerse siempre (≥4.5:1)
+      '#cm .cm-seat{width:96px;text-align:center;font-size:11.5px;line-height:1.3;color:var(--os-ink-2);transition:transform .3s}' +
+      '#cm .cm-seat.talk{transform:translateY(-3px)}' +
+      '#cm .cm-av{position:relative;width:52px;height:52px;margin:0 auto 8px;border-radius:50%;transition:box-shadow .35s,filter .35s,opacity .35s}' +
+      '#cm .cm-seat:not(.spoke):not(.talk) .cm-av{filter:saturate(.35);opacity:.6}' +
+      '#cm .cm-seat.spoke .cm-av{box-shadow:0 0 0 3px var(--os-surface-2),0 0 0 5px var(--cm-ring,transparent)}' +
+      '#cm .cm-seat.talk .cm-av{box-shadow:0 0 0 3px var(--os-surface-2),0 0 0 7px var(--kos-accent-soft);animation:cmglow 1.6s ease-in-out infinite}' +
+      '#cm .cm-seat.absent:not(.spoke):not(.talk) .cm-av{filter:grayscale(1) opacity(.7);outline:1.5px dashed var(--os-ink-3);outline-offset:4px}' +
+      '@keyframes cmglow{0%,100%{box-shadow:0 0 0 3px var(--os-surface-2),0 0 0 6px var(--kos-accent-soft)}50%{box-shadow:0 0 0 3px var(--os-surface-2),0 0 0 10px var(--kos-accent-soft)}}' +
+      '#cm .cm-seat .cm-sn{color:var(--os-ink);font-weight:700;font-size:12px;overflow-wrap:anywhere}' +
+      '#cm .cm-seat .cm-sr{font-size:11px;color:var(--os-ink-2);margin-top:1px;overflow-wrap:anywhere}' +
+      '#cm .cm-seat .cm-ss{font-size:10.5px;font-weight:800;letter-spacing:.05em;margin-top:4px;color:var(--os-ink-2)}' +
+      '#cm .cm-seat .cm-rec{font-size:11px;color:var(--os-ink-2);font-variant-numeric:tabular-nums}' +
+      '#cm .cm-feed{max-height:560px;overflow-y:auto;overscroll-behavior:contain;padding:2px 4px 2px 0}' +
+      '#cm .cm-bub{display:flex;gap:10px;margin:0 0 10px;align-items:flex-start}' +
       '#cm .cm-bub.new{animation:cmin .45s ease-out}' +
       '@keyframes cmin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}' +
-      '#cm .cm-bav{flex:0 0 34px;width:34px;height:34px;border-radius:50%;overflow:hidden;background:#0B1222;border:2px solid #3a4560}' +
-      '#cm .cm-tav{display:inline-block;width:22px;height:22px;border-radius:50%;overflow:hidden;vertical-align:middle;margin-right:6px;background:#0B1222;border:1.5px solid #00E0FF}' +
-      '#cm .cm-btx{flex:1 1 auto;min-width:0;border-radius:4px 12px 12px 12px;padding:7px 11px;background:rgba(21,28,45,.75);border-left:3px solid #3a4560;font-size:12.5px;line-height:1.5;color:#D5DCF0;overflow-wrap:anywhere}' +
-      '#cm .cm-bh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;margin-bottom:2px}' +
-      '#cm .cm-bh b{color:#E8EDFB}#cm .cm-tag{font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:1px 7px;border-radius:999px;border:1px solid currentColor}' +
-      '#cm .cm-src{display:block;font-size:10.5px;color:#7C87A3;margin-top:3px}' +
-      '#cm .cm-typing{font-size:12px;color:#9BA6C4;padding:4px 2px 2px 6px}' +
-      '#cm .cm-typing i{display:inline-block;width:5px;height:5px;margin:0 1px;border-radius:50%;background:#00E0FF;animation:cmdot 1.2s infinite}' +
+      '#cm .cm-bav{flex:0 0 32px;width:32px;height:32px;line-height:0}' +
+      '#cm .cm-btx{flex:1 1 auto;min-width:0;border-radius:6px 18px 18px 18px;padding:9px 14px;background:var(--os-surface-2);box-shadow:inset 3px 0 0 var(--cm-sc,transparent);' +
+        'font-size:13px;line-height:1.55;color:var(--os-ink);overflow-wrap:anywhere}' +
+      '#cm .cm-btx .cm-hl{color:var(--os-ink);font-weight:700}' +
+      '#cm .cm-bh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--os-ink-3);margin-bottom:3px}' +
+      '#cm .cm-bh b{color:var(--os-ink);font-weight:700}#cm .cm-bh .cm-role{color:var(--os-ink-2);font-weight:600}' +
+      '#cm .cm-tag{font-size:10px;font-weight:800;letter-spacing:.05em;padding:2px 8px;border-radius:999px;background:var(--os-surface-3)}' +
+      '#cm .cm-src{display:block;font-size:11.5px;color:var(--os-ink-3);margin-top:4px}' +
+      '#cm .cm-typing{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--os-ink-2);padding:4px 2px 2px}' +
+      '#cm .cm-typing .cm-dots{display:inline-flex;gap:3px}' +
+      '#cm .cm-typing i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--os-accent);animation:cmdot 1.2s infinite}' +
       '#cm .cm-typing i:nth-child(2){animation-delay:.2s}#cm .cm-typing i:nth-child(3){animation-delay:.4s}' +
       '@keyframes cmdot{0%,80%,100%{opacity:.2}40%{opacity:1}}' +
-      '#cm .cm-strip{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}' +
-      '#cm .cm-strip span{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid rgba(122,158,255,.2);color:#5f6b8a}' +
-      '#cm .cm-strip span.d{color:#2BE38B;border-color:rgba(43,227,139,.4)}#cm .cm-strip span.c{color:#E8EDFB;border-color:#00E0FF}' +
-      '#cm .cm-votes{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}' +
-      '@media(max-width:760px){#cm .cm-seat{width:76px;font-size:9.5px}#cm .cm-av{width:50px;height:50px}#cm .cm-feed{max-height:360px}}';
+      '#cm .cm-strip{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}' +
+      '#cm .cm-strip span{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--os-surface);color:var(--os-ink-3);box-shadow:var(--os-shadow)}' +
+      '#cm .cm-strip span.d{color:var(--cm-good)}' +
+      '#cm .cm-strip span.c{color:var(--os-accent);box-shadow:0 0 0 2px var(--kos-accent-soft)}' +
+      '#cm .cm-strip span.cm-clock{margin-left:auto;background:none;box-shadow:none;color:var(--os-ink-2);font-variant-numeric:tabular-nums}' +
+      '#cm .cm-votes{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}' +
+      '@media(prefers-reduced-motion:reduce){#cm,#cm .cm-seat.talk .cm-av,#cm .cm-bub.new,#cm .cm-typing i,#cm .cm-onair i,#cm .cm-spin{animation:none}#cm .cm-seat,#cm .cm-av{transition:none}}' +
+      // móvil: hoja a pantalla completa, una sola columna
+      '@media(max-width:760px){#cm-ov{align-items:stretch}' +
+        '#cm{width:100vw;max-width:100vw;height:100%;max-height:none;border-radius:0;padding:16px 14px calc(22px + env(safe-area-inset-bottom,0px))}' +
+        '#cm .cm-grid{grid-template-columns:minmax(0,1fr);gap:0}' +
+        '#cm .cm-form>*{flex:1 1 100%}' +
+        '#cm .cm-g{grid-template-columns:86px minmax(0,1fr) 40px}' +
+        '#cm .cm-cell,#cm .cm-room{padding:14px}' +
+        '#cm .cm-seat{width:80px;font-size:10.5px}#cm .cm-av,#cm .cm-av .cm-mav,#cm .cm-av .km,#cm .cm-av .km svg{width:44px!important;height:44px!important}' +
+        '#cm .cm-feed{max-height:380px}}';
+    css += LEGACY.map(function (p) { return '#cm-body [style*="color:' + p[0] + '" i]{color:' + p[1] + '!important}'; }).join('') +
+      LEGACY.slice(4).map(function (p) { return '#cm-body [style*="background:' + p[0] + '" i]{background:' + fill(p[1]) + '!important}'; }).join('') +
+      '#cm-body [style*="rgba(122,158,255"]{border-color:var(--os-line)!important}' +
+      '#cm-body [style*="background:rgba(122,158,255"]{background:var(--os-surface-3)!important}';
     var st = document.createElement('style'); st.id = 'cm-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
@@ -253,12 +404,13 @@
     if (S.chart) { try { S.chart.destroy(); } catch (e) {} S.chart = null; }
     var tabs = [['board', '📋 ' + L('Pizarra', 'Board')], ['committee', '🏛 ' + L('Comité', 'Committee')], ['portfolio', '💼 ' + L('Mi cartera', 'My portfolio')], ['history', '🎯 ' + L('Historial', 'Track record')], ['learn', '🧠 ' + L('Cómo aprende', 'How it learns')]];
     el.innerHTML =
-      '<div class="cm-hd"><span class="cm-name">🏛 ' + esc(L('Comité de inversión', 'Investment committee')) + (S.entity ? ' · ' + esc(nodeLabel(S.entity)) : '') + '</span>' +
-        '<button class="cm-x" onclick="window.KhipuCommittee.close()" title="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
-      '<div class="cm-sub">' + esc(L('Un comité automatizado reúne la investigación de todos los agentes, su historial real de aciertos, el riesgo medido y datos en vivo, y propone una decisión con su tamaño. Nada se ejecuta sin tu aprobación.',
-        'An automated committee gathers the research of every agent, their real track record, measured risk and live data, and proposes a decision with its size. Nothing executes without your approval.')) + '</div>' +
-      '<div class="cm-tabs">' + tabs.map(function (t) { return '<button class="cm-tab' + (S.tab === t[0] ? ' on' : '') + '" data-t="' + t[0] + '">' + esc(t[1]) + '</button>'; }).join('') + '</div>' +
-      (S.msg ? '<div class="cm-msg" style="border:1px solid ' + (S.msg.bad ? '#FFB300' : '#2BE38B') + ';color:' + (S.msg.bad ? '#FFB300' : '#2BE38B') + '">' + esc(S.msg.text) + '</div>' : '') +
+      '<div class="cm-hd"><span class="cm-name">' + mascotHtml('comite', 30, 'idle', '🏛') + '<span>' + esc(L('Comité de inversión', 'Investment committee')) +
+          (S.entity ? '<span class="cm-ent"> · ' + esc(nodeLabel(S.entity)) + '</span>' : '') + '</span></span>' +
+        '<button class="cm-x" onclick="window.KhipuCommittee.close()" title="' + esc(L('Cerrar', 'Close')) + '" aria-label="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
+      '<div class="cm-sub">' + esc(L('Los agentes (Analista, Radar, Cadena y Técnico) traen su investigación, su historial real de aciertos, el riesgo medido y datos en vivo; el Comité propone una decisión con su tamaño. Nada se ejecuta sin tu aprobación.',
+        'The agents (Analyst, Radar, Chain and Technical) bring their research, their real track record, measured risk and live data; the Committee proposes a decision with its size. Nothing executes without your approval.')) + '</div>' +
+      '<div class="cm-tabs" role="tablist">' + tabs.map(function (t) { return '<button class="cm-tab' + (S.tab === t[0] ? ' on' : '') + '" data-t="' + t[0] + '" role="tab" aria-selected="' + (S.tab === t[0]) + '">' + esc(t[1]) + '</button>'; }).join('') + '</div>' +
+      (S.msg ? '<div class="cm-msg" role="status" style="' + tint(S.msg.bad ? C.warn : C.good) + '">' + esc(S.msg.text) + '</div>' : '') +
       '<div id="cm-body"></div>';
     el.querySelectorAll('.cm-tab').forEach(function (b) { b.onclick = function () { S.tab = b.getAttribute('data-t'); S.msg = null; render(); }; });
     var body = document.getElementById('cm-body');
@@ -291,11 +443,11 @@
       '</div>' +
       (S.clientsErr ? '<div class="cm-note" style="margin:-4px 0 10px">' + esc(S.clientsErr) + '</div>' : '') +
       (S.busy ? '<div id="cm-live">' + liveHtml() + '</div>' : '') +
-      (m && !S.busy ? memoHtml(m) : (!S.busy ? '<div class="cm-cell"><div class="cm-note">' + esc(S.entity ? L('Todavía no hay memo del comité para esta empresa. Pulsa «Correr comité». Consejo: primero corre 🔬 Investigación IA para que el comité tenga conclusiones.', 'No committee memo for this company yet. Press “Run committee”. Tip: run 🔬 AI research first so the committee has conclusions.') : L('Escribe una empresa y pulsa «Correr comité».', 'Type a company and press “Run committee”.')) + '</div>' +
+      (m && !S.busy ? memoHtml(m) : (!S.busy ? '<div class="cm-cell"><div class="cm-note" style="display:flex;gap:12px;align-items:center">' + mascotHtml('comite', 36, 'idle', '🏛') + esc(S.entity ? L('Todavía no hay memo del comité para esta empresa. Pulsa «Correr comité». Consejo: primero corre 🔬 Investigación IA para que el comité tenga conclusiones.', 'No committee memo for this company yet. Press “Run committee”. Tip: run 🔬 AI research first so the committee has conclusions.') : L('Escribe una empresa y pulsa «Correr comité».', 'Type a company and press “Run committee”.')) + '</div>' +
         (S.entity && window.KhipuResearch ? '<div style="margin-top:8px"><button class="cm-btn ghost" onclick="window.KhipuResearch.open(\'' + esc(S.entity) + '\')">🔬 ' + esc(L('Investigación IA', 'AI research')) + '</button></div>' : '') + '</div>' : '')) +
       (S.history && S.history.length > 1 ? '<div class="cm-cell"><div class="cm-t">🗂 ' + esc(L('Memos anteriores', 'Previous memos')) + '</div>' +
         S.history.map(function (h) {
-          var d = DEC[h.decision] || ['#9BA6C4', h.decision || '—', h.decision || '—'];
+          var d = DEC[h.decision] || [C.neu, h.decision || '—', h.decision || '—'];
           var st = STATUS[h.status] || [h.status, h.status];
           return '<div class="cm-hist" data-id="' + esc(h.memo_id) + '"><b style="color:' + d[0] + '">' + esc(L(d[1], d[2])) + '</b> · ' + esc(clock(h.created_at)) + ' · ' + esc(L(st[0], st[1])) +
             (h.overall_conviction != null ? ' · ' + (h.overall_conviction > 0 ? '+' : '') + Math.round(h.overall_conviction) : '') + (h.ai_used ? '' : ' · ' + esc(L('sin IA', 'no AI'))) + (h.has_client ? ' · 👤' : '') + '</div>';
@@ -319,13 +471,13 @@
 
   function gauge(label, score, sub) {
     var v = Math.max(-100, Math.min(100, Number(score) || 0));
-    var col = v > 0 ? '#2BE38B' : v < 0 ? '#FF4D6A' : '#9BA6C4';
+    var col = v > 0 ? C.good : v < 0 ? C.bad : C.mute;
     var w = Math.abs(v) / 2;
     var left = v >= 0 ? 50 : 50 - w;
     return '<div class="cm-g"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(label) + '">' + esc(label) + '</span>' +
-      '<span class="cm-gt" title="' + esc(sub || '') + '"><b></b><i style="left:' + left + '%;width:' + w + '%;background:' + col + '"></i></span>' +
+      '<span class="cm-gt" title="' + esc(sub || '') + '"><b></b><i style="left:' + left + '%;width:' + w + '%;background:' + fill(col) + '"></i></span>' +
       '<span class="cm-gv">' + (v > 0 ? '+' : '') + Math.round(v) + '</span></div>' +
-      (sub ? '<div class="cm-note" style="font-size:10.5px;margin:-3px 0 4px 0">' + esc(sub) + '</div>' : '');
+      (sub ? '<div class="cm-note" style="font-size:11.5px;color:var(--os-ink-3);margin:-3px 0 6px 0">' + esc(sub) + '</div>' : '');
   }
 
   function refs(arr) {
@@ -339,9 +491,9 @@
 
   function memoHtml(m) {
     if (m.status === 'running') return '';
-    if (m.status === 'failed') return '<div class="cm-cell"><div class="cm-note" style="color:#FFB300">' + esc(L('El comité falló: ', 'The committee failed: ') + (T(m, 'error') || '')) + '</div></div>';
+    if (m.status === 'failed') return '<div class="cm-cell"><div class="cm-note" style="color:var(--cm-warn)">' + esc(L('El comité falló: ', 'The committee failed: ') + (T(m, 'error') || '')) + '</div></div>';
     var b = m.memo || {};
-    var d = DEC[m.decision] || ['#9BA6C4', m.decision, m.decision];
+    var d = DEC[m.decision] || [C.neu, m.decision, m.decision];
     var st = STATUS[m.status] || [m.status, m.status];
     var sz = m.sizing || {};
     var conv = m.conviction || {};
@@ -364,43 +516,43 @@
     var actionable = { BUY: 1, ADD: 1, TRIM: 1, SELL: 1 }[m.decision];
     return '' +
       '<div class="cm-cell">' +
-        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
           (b.decision_code === 'INSUFFICIENT_DATA'
-            ? '<span class="cm-dec" style="color:#FFB300;border-color:#FFB300" title="' + esc(isEn() ? (b.quant_reason_en || '') : (b.quant_reason_es || '')) + '">' + esc(L(b.decision_label_es || d[1], b.decision_label_en || d[2])) + '</span>'
-            : '<span class="cm-dec" style="color:' + d[0] + ';border-color:' + d[0] + '">' + esc(L(d[1], d[2])) + '</span>') + chip('committee_decision') +
+            ? '<span class="cm-dec" style="' + tint(C.warn, 14) + '" title="' + esc(isEn() ? (b.quant_reason_en || '') : (b.quant_reason_es || '')) + '">' + esc(L(b.decision_label_es || d[1], b.decision_label_en || d[2])) + '</span>'
+            : '<span class="cm-dec" style="' + tint(d[0], 14) + '">' + esc(L(d[1], d[2])) + '</span>') + chip('committee_decision') +
           (b.track_validation && !b.track_validation.validated
-            ? '<span class="cm-pill" style="color:#FFB300;border-color:rgba(255,179,0,.5)" title="' + esc(L(b.track_validation.label_es, b.track_validation.label_en) + (b.track_validation.effect_es ? ' · ' + L(b.track_validation.effect_es, b.track_validation.effect_en) : '')) + '">⚠ ' +
+            ? '<span class="cm-pill" style="' + tint(C.warn) + '" title="' + esc(L(b.track_validation.label_es, b.track_validation.label_en) + (b.track_validation.effect_es ? ' · ' + L(b.track_validation.effect_es, b.track_validation.effect_en) : '')) + '">⚠ ' +
               esc(L('no validado', 'not validated')) + (b.track_validation.effect_es ? ' · ' + esc(L('tamaño ½', 'size ½')) : '') + '</span>'
-            : (b.track_validation ? '<span class="cm-pill" style="color:#2BE38B;border-color:rgba(43,227,139,.4)">✓ ' + esc(L('historial validado', 'validated record')) + '</span>' : '')) +
-          '<span style="font-weight:700;overflow-wrap:anywhere">' + esc(m.label || nodeLabel(m.entity_id)) + (m.symbol ? ' · ' + esc(m.symbol) : '') + '</span>' +
+            : (b.track_validation ? '<span class="cm-pill" style="' + tint(C.good) + '">✓ ' + esc(L('historial validado', 'validated record')) + '</span>' : '')) +
+          '<span style="font-weight:800;font-size:15px;color:var(--os-ink);overflow-wrap:anywhere">' + esc(m.label || nodeLabel(m.entity_id)) + (m.symbol ? ' · ' + esc(m.symbol) : '') + '</span>' +
           '<span class="cm-pill">' + esc(L(st[0], st[1])) + '</span>' +
-          '<span class="cm-pill">' + esc(m.ai_used ? L('presidente IA', 'AI chair') + (m.model ? ' · ' + m.model : '') : L('sin IA (plantilla determinista)', 'no AI (deterministic template)')) + '</span>' +
+          '<span class="cm-pill">' + esc(m.ai_used ? L('presidencia con IA', 'AI chair') + (m.model ? ' · ' + m.model : '') : L('sin IA (plantilla determinista)', 'no AI (deterministic template)')) + '</span>' +
           (m.client_id ? '<span class="cm-pill">👤 ' + esc(cl ? (cl.name || m.client_id) : L('cliente (montos ocultos sin PIN)', 'client (amounts hidden without PIN)')) +
             ((m.client_mode || cl) ? ' · ' + esc(badge(m.client_mode || cl)) : '') + '</span>' : '') +
         '</div>' +
-        '<div class="cm-note" style="font-size:13px;color:#E8EDFB">' + esc(summary || '') + '</div>' +
-        (b.tally ? '<div class="cm-votes"><span class="cm-pill" style="color:#2BE38B;border-color:rgba(43,227,139,.4)">👍 ' + b.tally['for'] + ' ' + esc(L('a favor', 'for')) + '</span>' +
-          '<span class="cm-pill" style="color:#FF4D6A;border-color:rgba(255,77,106,.4)">👎 ' + b.tally.against + ' ' + esc(L('en contra', 'against')) + '</span>' +
+        '<div class="cm-lead">' + esc(summary || '') + '</div>' +
+        (b.tally ? '<div class="cm-votes"><span class="cm-pill" style="' + tint(C.good) + '">👍 ' + b.tally['for'] + ' ' + esc(L('a favor', 'for')) + '</span>' +
+          '<span class="cm-pill" style="' + tint(C.bad) + '">👎 ' + b.tally.against + ' ' + esc(L('en contra', 'against')) + '</span>' +
           '<span class="cm-pill">✋ ' + b.tally.neutral + ' ' + esc(L('neutral', 'neutral')) + '</span>' +
-          (b.tally.absent ? '<span class="cm-pill" style="color:#FFB300;border-color:rgba(255,179,0,.4)">⬜ ' + b.tally.absent + ' ' + esc(L('ausente(s)', 'absent')) + '</span>' : '') +
+          (b.tally.absent ? '<span class="cm-pill" style="' + tint(C.warn) + '">⬜ ' + b.tally.absent + ' ' + esc(L('ausente(s)', 'absent')) + '</span>' : '') +
           '<span class="cm-pill">🧭 ' + esc(L('convicción ', 'conviction ')) + (m.overall_conviction > 0 ? '+' : '') + Math.round(m.overall_conviction || 0) + '/100</span></div>' : '') +
-        (b.track_validation && !b.track_validation.validated ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FFB300">⚠ ' +
+        (b.track_validation && !b.track_validation.validated ? '<div class="cm-callout" style="' + tint(C.warn, 10) + '">⚠ ' +
           esc(L('Los analistas todavía no tienen historial validado (' + b.track_validation.min_n + ' predicciones calificadas cada uno): esta propuesta no está probada contra el mercado. Por eso el tamaño sugerido es la mitad del normal. El historial se llena solo con el tiempo (ver pestaña Historial).',
                 'The analysts have no validated track record yet (' + b.track_validation.min_n + ' scored predictions each): this proposal is not yet proven against the market, so the suggested size is half the normal one. The record fills in over time (see the History tab).')) + '</div>' : '') +
-        (m.falsified_claims && m.falsified_claims.length ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FF4D6A">⛔ ' +
+        (m.falsified_claims && m.falsified_claims.length ? '<div class="cm-callout" style="' + tint(C.bad, 10) + '">⛔ ' +
           esc(L('El mercado ya FALSÓ ' + m.falsified_claims.length + ' conclusión(es) de este memo: ', 'The market has already FALSIFIED ' + m.falsified_claims.length + ' conclusion(s) of this memo: ') +
               m.falsified_claims.map(function (f) { return ag(f.agent_type) + ' — ' + (isEn() ? (f.statement_en || f.statement_es) : f.statement_es); }).join(' · ') + ' ' +
               L('Vuelve a convocar al comité antes de actuar.', 'Reconvene the committee before acting.')) + '</div>' : '') +
-        (b.decision_code === 'INSUFFICIENT_DATA' && b.quorum ? '<div class="cm-note" style="margin-top:6px;font-size:11.5px;color:#FFB300">' +
+        (b.decision_code === 'INSUFFICIENT_DATA' && b.quorum ? '<div class="cm-callout" style="' + tint(C.warn, 10) + '">' +
           esc(L('Sin quórum no hay decisión: ', 'No quorum, no decision: ') + (isEn() ? (b.quorum.reason_en || '') : (b.quorum.reason_es || '')) + ' ' +
               L('Faltan: ', 'Missing: ') + (b.quorum.to_run || []).map(function (a) { return ag(a); }).join(', ') + '. ' +
               L('Corre 🔬 Investigación IA para completar a los analistas y vuelve a convocar al comité.', 'Run 🔬 AI research to complete the analysts and reconvene the committee.')) + '</div>' : '') +
-        (m.quant_decision && m.quant_decision !== m.decision ? '<div class="cm-note" style="margin-top:6px;color:#FFB300">' + esc(L('El núcleo cuantitativo proponía ', 'The quantitative core proposed ') + decLabel(m.quant_decision) + L('; el presidente rebajó a MANTENER: ', '; the chair downgraded to HOLD: ') + (note || '')) + '</div>' : '') +
+        (m.quant_decision && m.quant_decision !== m.decision ? '<div class="cm-callout" style="' + tint(C.warn, 10) + '">' + esc(L('El núcleo cuantitativo proponía ', 'The quantitative core proposed ') + decLabel(m.quant_decision) + L('; la presidencia rebajó a MANTENER: ', '; the chair downgraded to HOLD: ') + (note || '')) + '</div>' : '') +
         conclusionsHtml(b) + debateNote(b) +
-        (b.quant_reason_es ? '<div class="cm-note" style="margin-top:6px;font-size:11px">' + esc(L('Regla aplicada: ', 'Rule applied: ') + (isEn() ? b.quant_reason_en : b.quant_reason_es)) + '</div>' : '') +
-        (m.symbol && (m.inputs || {}).us_listing === false ? '<div class="cm-note" style="margin-top:4px;font-size:11px;color:#FFB300">' + esc(L('Cotiza fuera de EE.UU. (' + m.symbol + ', en moneda local): Alpaca no la opera, así que el comité no propone órdenes para clientes; su historial se califica en moneda local.', 'Trades outside the US (' + m.symbol + ', in local currency): Alpaca does not trade it, so the committee does not propose client orders; its track record is scored in local currency.')) + '</div>' : '') +
-        (b.ai_error ? '<div class="cm-note" style="margin-top:4px;font-size:11px;color:#7C87A3">' + esc(L('Nota: ', 'Note: ') + T(b, 'ai_error')) + '</div>' : '') +
-        '<div class="cm-note" style="margin-top:6px;font-size:11px;color:#7C87A3">' + esc(clock(m.created_at) + ' · ' + L('pedido por ', 'requested by ') + (m.requested_by || '—') + (m.expires_at ? ' · ' + L('vence ', 'expires ') + clock(m.expires_at) : '') + (m.expired ? ' · ' + L('VENCIDO: vuelve a correrlo', 'EXPIRED: run it again') : '')) + '</div>' +
+        (b.quant_reason_es ? '<div class="cm-note" style="margin-top:8px;font-size:12px">' + esc(L('Regla aplicada: ', 'Rule applied: ') + (isEn() ? b.quant_reason_en : b.quant_reason_es)) + '</div>' : '') +
+        (m.symbol && (m.inputs || {}).us_listing === false ? '<div class="cm-note" style="margin-top:6px;font-size:12px;color:var(--cm-warn)">' + esc(L('Cotiza fuera de EE.UU. (' + m.symbol + ', en moneda local): Alpaca no la opera, así que el comité no propone órdenes para clientes; su historial se califica en moneda local.', 'Trades outside the US (' + m.symbol + ', in local currency): Alpaca does not trade it, so the committee does not propose client orders; its track record is scored in local currency.')) + '</div>' : '') +
+        (b.ai_error ? '<div class="cm-note" style="margin-top:6px;font-size:12px;color:var(--os-ink-3)">' + esc(L('Nota: ', 'Note: ') + T(b, 'ai_error')) + '</div>' : '') +
+        '<div class="cm-note" style="margin-top:8px;font-size:12px;color:var(--os-ink-3)">' + esc(clock(m.created_at) + ' · ' + L('pedido por ', 'requested by ') + (m.requested_by || '—') + (m.expires_at ? ' · ' + L('vence ', 'expires ') + clock(m.expires_at) : '') + (m.expired ? ' · ' + L('VENCIDO: vuelve a correrlo', 'EXPIRED: run it again') : '')) + '</div>' +
       '</div>' +
       '<div id="cm-live">' + memoRoomHtml(m) + '</div>' +
         (pv ? previewHtml(pv, m) : '') +
@@ -410,7 +562,7 @@
           '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (m.status === 'proposed' ? '<button class="cm-btn ok" id="cm-approve"' + (S.deciding ? ' disabled' : '') + '>' + esc(S.deciding ? L('Procesando…', 'Working…') : '✅ ' + L('Aprobar', 'Approve')) + '</button>' : '') +
           '<button class="cm-btn no" id="cm-reject"' + (S.deciding ? ' disabled' : '') + '>✖ ' + esc(L('Rechazar', 'Reject')) + '</button></div></div>' : '') +
         (m.decided_by ? '<div class="cm-cell"><div class="cm-note">' + esc(L('Decidido por ', 'Decided by ') + m.decided_by + ' · ' + clock(m.decided_at) + (m.decision_note ? ' · «' + m.decision_note + '»' : '')) + '</div></div>' : '') +
-      '<div class="cm-t" style="margin:4px 0 8px">🔍 ' + esc(L('El detalle (para quien quiera ver la cuenta)', 'The detail (for those who want to see the math)')) + '</div>' +
+      '<div class="cm-t cm-sec">🔍 ' + esc(L('El detalle (para quien quiera ver la cuenta)', 'The detail (for those who want to see the math)')) + '</div>' +
       '<div class="cm-grid"><div style="min-width:0">' +
         '<div class="cm-cell"><div class="cm-t">🧭 ' + esc(L('Convicción por horizonte', 'Conviction by horizon')) + chip('conviction') + '</div>' +
           gauge(L('GLOBAL', 'OVERALL'), m.overall_conviction, null) + (hzRows || '<div class="cm-note">' + esc(L('Sin conclusiones activas.', 'No active conclusions.')) + '</div>') + '</div>' +
@@ -426,14 +578,14 @@
               (sz.qty_est ? '<div class="cm-kv"><span>' + esc(L('≈ acciones al precio en vivo', '≈ shares at live price')) + '</span><span>' + esc(sz.qty_est) + '</span></div>' : '') +
               (sz.current_weight_pct != null ? '<div class="cm-kv"><span>' + esc(L('Peso actual', 'Current weight')) + '</span><span>' + sz.current_weight_pct.toFixed(2) + '%</span></div>' : '')) +
           (steps.length ? '<ol class="cm-steps">' + steps.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ol>' : '') +
-          '<div class="cm-note" style="font-size:10.5px;margin-top:6px">' + esc(L('El tamaño lo calcula una fórmula fija, nunca la IA.', 'The size comes from a fixed formula, never from the AI.')) + '</div></div>' +
+          '<div class="cm-note" style="font-size:12px;color:var(--os-ink-3);margin-top:8px">' + esc(L('El tamaño lo calcula una fórmula fija, nunca la IA.', 'The size comes from a fixed formula, never from the AI.')) + '</div></div>' +
         riskHtml(m) +
         '<div class="cm-cell"><div class="cm-t">🗓 ' + esc(L('Revisión y confianza', 'Review and confidence')) + '</div>' +
           '<div class="cm-kv"><span>' + esc(L('Revisar el', 'Review on')) + '</span><span>' + esc(day(b.review_date)) + '</span></div>' +
           '<div class="cm-kv"><span>' + esc(L('Confianza del comité', 'Committee confidence')) + chip('committee_confidence') + '</span><span>' + pct(b.confidence) + '</span></div>' +
           '<div class="cm-kv"><span>' + esc(L('Conclusiones usadas', 'Conclusions used')) + '</span><span>' + esc(((m.inputs || {}).n_claims) || 0) + '</span></div>' +
           '<div class="cm-kv"><span>' + esc(L('Contradicciones', 'Contradictions')) + '</span><span>' + esc(((m.inputs || {}).n_contradictions) || 0) + '</span></div>' +
-          (window.KhipuResearch ? '<div style="margin-top:8px"><button class="cm-btn ghost" onclick="window.KhipuResearch.open(\'' + esc(m.entity_id) + '\')">🔬 ' + esc(L('Ver la investigación', 'See the research')) + '</button></div>' : '') +
+          (window.KhipuResearch ? '<div style="margin-top:12px"><button class="cm-btn ghost" onclick="window.KhipuResearch.open(\'' + esc(m.entity_id) + '\')">🔬 ' + esc(L('Ver la investigación', 'See the research')) + '</button></div>' : '') +
         '</div>' +
       '</div></div>' +
       '<div class="cm-disc">⚖️ ' + esc(isEn() ? (m.disclaimer_en || '') : (m.disclaimer_es || '')) + '</div>';
@@ -442,21 +594,21 @@
   function conclusionsHtml(b) {
     var k = b.key_conclusions || [];
     if (!k.length) return '';
-    return '<div style="margin-top:10px;border:1px solid rgba(43,227,139,.3);background:rgba(43,227,139,.05);border-radius:11px;padding:9px 12px">' +
-      '<div class="cm-t" style="color:#2BE38B;margin-bottom:4px">✅ ' + esc(L('Conclusiones del comité', 'Committee conclusions')) + '</div>' +
+    return '<div class="cm-callout" style="margin-top:12px;padding:12px 14px;background:var(--os-surface-2);background:color-mix(in srgb,var(--os-good) 8%,transparent)">' +
+      '<div class="cm-t" style="color:var(--cm-good);margin-bottom:4px">✅ ' + esc(L('Conclusiones del comité', 'Committee conclusions')) + '</div>' +
       '<ol class="cm-list" style="margin-left:16px">' + k.map(function (c) {
         return '<li>' + esc(isEn() ? (c.text_en || c.text_es) : c.text_es) + refs(c.refs) + '</li>'; }).join('') + '</ol></div>';
   }
   function debateNote(b) {
     var d = b.debate;
     if (!d) return '';
-    if (d.no_research) return '<div class="cm-note" style="margin-top:8px;font-size:12px;color:#FFB300;border:1px solid rgba(255,179,0,.35);border-radius:9px;padding:7px 10px">⚠ ' +
+    if (d.no_research) return '<div class="cm-callout" style="' + tint(C.warn, 10) + '">⚠ ' +
       esc(L('No hubo análisis: ' + (d.reason_es || 'no hay investigación') + '. Sin investigación los analistas no tienen nada que debatir. Revisa 🩺 Sistema → IA y vuelve a correr el comité (los analistas investigarán primero).',
         'No analysis happened: ' + (d.reason_en || 'no research') + '. Without research the analysts have nothing to debate. Check 🩺 System → AI and run the committee again (the analysts will research first).')) + '</div>';
-    if (d.ai) return '<div class="cm-note" style="margin-top:8px;font-size:11.5px;color:#B48CFF">🧠 ' +
+    if (d.ai) return '<div class="cm-note" style="margin-top:10px;font-size:12px;color:var(--cm-ai)">🧠 ' +
       esc(L(d.n_ai + ' analistas razonaron con IA y hubo ' + d.n_rebuttals + ' réplica(s)' + (d.seconds ? ' · ' + Math.round(d.seconds) + ' s de debate' : '') + '. Sus cifras pasaron el guardián.',
         d.n_ai + ' analysts reasoned with AI with ' + d.n_rebuttals + ' rebuttal(s)' + (d.seconds ? ' · ' + Math.round(d.seconds) + ' s of debate' : '') + '. Their figures passed the guardian.')) + '</div>';
-    return '<div class="cm-note" style="margin-top:8px;font-size:12px;color:#FFB300;border:1px solid rgba(255,179,0,.35);border-radius:9px;padding:7px 10px">⚠ ' +
+    return '<div class="cm-callout" style="' + tint(C.warn, 10) + '">⚠ ' +
       esc(L('Este comité corrió SIN razonamiento de IA' + (d.reason_es ? ' (' + d.reason_es + ')' : '') + ': los analistas solo leyeron sus conclusiones guardadas. Revisa 🩺 Sistema → IA y vuelve a correrlo.',
         'This committee ran WITHOUT AI reasoning' + (d.reason_en ? ' (' + d.reason_en + ')' : '') + ': the analysts only read their saved conclusions. Check 🩺 System → AI and run it again.')) + '</div>';
   }
@@ -471,7 +623,7 @@
       (r.ok ? '<div class="cm-kv"><span>' + esc(L('Volatilidad anual', 'Annual volatility')) + '</span><span>' + esc(r.vol_ann_pct != null ? r.vol_ann_pct + '%' : '—') + '</span></div>' +
         '<div class="cm-kv"><span>' + esc(L('Máxima caída (1 año)', 'Max drawdown (1y)')) + '</span><span>' + esc(r.max_drawdown_pct != null ? r.max_drawdown_pct + '%' : '—') + '</span></div>' +
         '<div class="cm-kv"><span>' + esc(L('Beta vs S&P 500', 'Beta vs S&P 500')) + '</span><span>' + esc(r.beta_spy != null ? r.beta_spy : '—') + '</span></div>' +
-        '<div class="cm-note" style="font-size:10.5px;margin-top:4px">' + esc((r.source || '') + (r.as_of ? ' · ' + r.as_of : '')) + '</div>'
+        '<div class="cm-note" style="font-size:11.5px;color:var(--os-ink-3);margin-top:6px">' + esc((r.source || '') + (r.as_of ? ' · ' + r.as_of : '')) + '</div>'
         : '<div class="cm-note">' + esc(L('Sin riesgo medido: ', 'No measured risk: ') + (T(r, 'error') || '')) + '</div>') + '</div>';
   }
 
@@ -491,15 +643,15 @@
   function previewHtml(pv, m) {
     var bad = pvFailed(pv);
     var summary = isEn() ? (pv.summary_en || pv.summary_es || '') : (pv.summary_es || '');
-    var goClients = window.KhipuClients && window.KhipuClients.open ? '<div style="margin-top:8px"><button class="cm-btn ghost" onclick="window.KhipuCommittee.close();window.KhipuClients.open()">👥 ' + esc(L('Ir a Clientes', 'Go to Clients')) + '</button></div>' : '';
-    var head = '<div class="cm-cell" style="border-color:' + (bad ? 'rgba(255,179,0,.45)' : 'rgba(43,227,139,.4)') + '"><div class="cm-t">🧾 ' +
+    var goClients = window.KhipuClients && window.KhipuClients.open ? '<div style="margin-top:12px"><button class="cm-btn ghost" onclick="window.KhipuCommittee.close();window.KhipuClients.open()">👥 ' + esc(L('Ir a Clientes', 'Go to Clients')) + '</button></div>' : '';
+    var head = '<div class="cm-cell" style="box-shadow:var(--os-shadow),inset 0 0 0 1.5px ' + (bad ? 'color-mix(in srgb,var(--cm-warn-fill) 45%,transparent)' : 'color-mix(in srgb,var(--os-good) 40%,transparent)') + '"><div class="cm-t">🧾 ' +
       esc(bad ? L('Orden NO preparada', 'Order NOT prepared') : L('Orden preparada', 'Prepared order')) + (pv.mode || (m && m.client_mode) ? ' · ' + esc(badge(pv.mode ? { mode: pv.mode } : m.client_mode)) : '') + '</div>';
     if (pv.redacted) {
       return head + '<div class="cm-kv"><span>' + esc(L('Estado', 'Status')) + '</span><span>' + esc(pvStatus(pv.status)) + '</span></div>' +
         '<div class="cm-note">' + esc(L('Detalle y montos visibles con tu PIN.', 'Details and amounts visible with your PIN.')) + '</div></div>';
     }
     if (bad) {
-      return head + '<div class="cm-note" style="color:#FFB300">' + esc(T(pv, 'error') || summary || L('No se pudo preparar la orden.', 'Could not prepare the order.')) + '</div>' + pvChecks(pv) +
+      return head + '<div class="cm-note" style="color:var(--cm-warn)">' + esc(T(pv, 'error') || summary || L('No se pudo preparar la orden.', 'Could not prepare the order.')) + '</div>' + pvChecks(pv) +
         (m && m.status === 'proposed' ? '<div class="cm-note" style="margin-top:6px">' + esc(L('El memo sigue propuesto: corrige el límite o el problema y vuelve a aprobar, o recházalo.', 'The memo is still proposed: fix the limit or the problem and approve again, or reject it.')) + '</div>' : '') + '</div>';
     }
     var note = pv.status === 'pending_approval' ? L('Falta tu aprobación final en 👥 Clientes → Aprobaciones para ejecutarla.', 'Your final approval in 👥 Clients → Approvals is still needed to execute it.')
@@ -508,7 +660,7 @@
     return head + '<div class="cm-note">' + esc(summary) + '</div>' +
       '<div class="cm-kv"><span>' + esc(L('Estado', 'Status')) + '</span><span>' + esc(pvStatus(pv.status)) + '</span></div>' +
       (pv.checks || []).map(function (c) { return '<div class="cm-kv"><span>' + (c.ok ? (c.warn ? '⚠️ ' : '✅ ') : '⛔ ') + esc(c.name) + '</span><span style="white-space:normal">' + esc(isEn() ? (c.detail_en || c.detail || '') : (c.detail || '')) + '</span></div>'; }).join('') +
-      (note ? '<div class="cm-note" style="margin-top:6px;color:' + (pv.status === 'pending_approval' || pv.status === 'previewed' ? '#FFB300' : '#2BE38B') + '">' + esc(note) + '</div>' : '') +
+      (note ? '<div class="cm-note" style="margin-top:8px;color:' + (pv.status === 'pending_approval' || pv.status === 'previewed' ? C.warn : C.good) + '">' + esc(note) + '</div>' : '') +
       (pv.status === 'pending_approval' || pv.status === 'previewed' ? goClients : '') + '</div>';
   }
 
@@ -540,71 +692,22 @@
   // ── SALA DEL COMITÉ: puestos + conversación (research/deliberation.py) ──
   // Los mensajes llegan del servidor a medida que ocurre cada etapa; aquí se
   // revelan de a uno (≈1 s) para que se pueda leer el debate "en vivo".
-  var STANCE = { 'for': ['#2BE38B', 'A FAVOR', 'FOR'], against: ['#FF4D6A', 'EN CONTRA', 'AGAINST'], neutral: ['#9BA6C4', 'NEUTRAL', 'NEUTRAL'] };
+  var STANCE = { 'for': [C.good, 'A FAVOR', 'FOR'], against: [C.bad, 'EN CONTRA', 'AGAINST'], neutral: [C.neu, 'NEUTRAL', 'NEUTRAL'] };
   var KIND = { open: ['Apertura', 'Opening'], position: ['Postura', 'Position'], rebuttal: ['Réplica', 'Rebuttal'], moderate: ['Moderación', 'Moderation'],
     data: ['Dato', 'Data'], verdict: ['Veredicto', 'Verdict'], reply: ['Respuesta', 'Reply'] };
   var DESK = [['market', '📡', 'Mesa de mercado', 'Market desk'], ['risk_officer', '🛡️', 'Oficial de riesgo', 'Risk officer'],
-    ['mandate', '👤', 'Mandato', 'Mandate'], ['quant', '🧮', 'Núcleo cuantitativo', 'Quant core'], ['chair', '🏛', 'Presidente', 'Chair']];
-  // ── PERSONAJES DEL COMITÉ: cada puesto es una persona con cara (SVG inline,
-  // sin imágenes externas). Se mapea por `seat`; un puesto desconocido usa un
-  // personaje genérico con su emoji. viewBox 64×64: cabeza en (32,30).
-  // n=nombre · r=rol corto [es,en] · rl=rol largo [es,en] · s=piel · h=pelo ·
-  // hs=peinado · c=color propio · a=accesorios · p=objeto del rol
-  var CAST = {
-    fundamental: { n: 'Valeria', r: ['Fundamental', 'Fundamental'], rl: ['Analista fundamental', 'Fundamental analyst'], s: '#E8B48A', h: '#3B2418', hs: 'bob', c: '#2BB3A3', a: ['glasses'], p: 'coin' },
-    technical: { n: 'Kenji', r: ['Técnico', 'Technical'], rl: ['Analista técnico', 'Technical analyst'], s: '#F1C9A5', h: '#1A1C24', hs: 'spiky', c: '#00B8D9', a: ['phones'], p: 'chart' },
-    news: { n: 'Amara', r: ['Noticias', 'News'], rl: ['Analista de noticias', 'News analyst'], s: '#8D5A3B', h: '#1E140F', hs: 'puff', c: '#F5A524', a: ['hoops'], p: 'paper' },
-    supply_chain: { n: 'Diego', r: ['Suministro', 'Supply chain'], rl: ['Analista de cadena de suministro', 'Supply-chain analyst'], s: '#C98B5E', h: '#2A1B12', hs: 'short', c: '#FF8A3D', a: ['hardhat', 'beard'], p: 'link' },
-    geopolitical: { n: 'Leila', r: ['Geopolítica', 'Geopolitics'], rl: ['Analista geopolítica', 'Geopolitical analyst'], s: '#D9A47C', h: '#4A2A1A', hs: 'long', c: '#7C8CFF', a: ['scarf'], p: 'globe' },
-    macro: { n: 'Henrik', r: ['Macro', 'Macro'], rl: ['Analista macro', 'Macro analyst'], s: '#F5D3B8', h: '#C9CED8', hs: 'side', c: '#9B7BFF', a: ['bowtie', 'stache'], p: 'pct' },
-    crypto: { n: 'Noa', r: ['Cripto', 'Crypto'], rl: ['Analista cripto', 'Crypto analyst'], s: '#E6B892', h: '#2B2238', hs: 'hood', c: '#F7931A', a: [], p: 'btc' },
-    risk_observation: { n: 'Ingrid', r: ['Riesgos', 'Risks'], rl: ['Analista de riesgos', 'Risk analyst'], s: '#F7D9C4', h: '#E3BC62', hs: 'bun', c: '#FF4D6A', a: [], p: 'warn' },
-    market: { n: 'Priya', r: ['Mesa de mercado', 'Market desk'], rl: ['Mesa de mercado', 'Market desk'], s: '#B57A50', h: '#1A1210', hs: 'pony', c: '#00E0FF', a: ['mic'], p: 'signal' },
-    risk_officer: { n: 'Kwame', r: ['Oficial de riesgo', 'Risk officer'], rl: ['Oficial de riesgo', 'Risk officer'], s: '#6B4226', h: '#120D0A', hs: 'buzz', c: '#3FA7FF', a: ['cap'], p: 'shield' },
-    quant: { n: 'Mei', r: ['Cuantitativo', 'Quant'], rl: ['Núcleo cuantitativo', 'Quant core'], s: '#F3D1B0', h: '#111318', hs: 'bangs', c: '#B48CFF', a: ['visor'], p: 'calc' },
-    chair: { n: 'Isabel', r: ['Presidenta', 'Chair'], rl: ['Presidenta del comité', 'Committee chair'], s: '#E9BC94', h: '#D8DCE6', hs: 'updo', c: '#FFB300', a: ['laurel', 'pearls'], p: 'gavel' },
-    mandate: { n: 'Alex', r: ['Mandato', 'Mandate'], rl: ['Mandato del cliente', 'Client mandate'], s: '#DDAA82', h: '#5A3A22', hs: 'short', c: '#5FC6E8', a: ['tie'], p: 'case' },
-  };
-  var INK = '#1B1F2B';
-  // peinados: [detrás de la cabeza, delante]
-  var HAIR = {
-    bob: ['<path d="M18 30Q17 14 32 14Q47 14 46 30L46 41Q46 43 43 43L21 43Q18 43 18 41Z"/>', '<path d="M20 27Q21 15 32 15Q43 15 44 27Q38 20 29 22Q24 23 20 27Z"/>'],
-    spiky: ['', '<path d="M20 27L20 18L24 20L26 13L30 18L33 12L36 18L40 14L41 20L44 19L44 27Q40 21 32 21Q24 21 20 27Z"/>'],
-    puff: ['<circle cx="32" cy="18" r="13"/><circle cx="21" cy="24" r="7"/><circle cx="43" cy="24" r="7"/>', '<path d="M20 26Q22 18 32 18Q42 18 44 26Q38 22 32 22Q26 22 20 26Z"/>'],
-    short: ['', '<path d="M20 28Q19 15 32 15Q45 15 44 28Q43 21 32 20Q24 20 20 28Z"/>'],
-    long: ['<path d="M17 30Q17 13 32 13Q47 13 47 30L48 52L16 52Z"/>', '<path d="M20 28Q21 15 33 15Q44 15 44 27Q38 18 30 21Q24 23 20 28Z"/>'],
-    side: ['', '<path d="M20 29Q19 16 31 16Q44 15 44 28Q42 20 36 20Q30 21 24 20Q21 22 20 29Z"/>'],
-    hood: ['<path d="M13 54Q11 13 32 11Q53 13 51 54Z"/>', '<path d="M22 24Q25 18 32 18Q39 18 42 24Q37 21 31 22Q26 22 22 24Z"/>'],
-    bun: ['<circle cx="32" cy="12" r="6"/>', '<path d="M20 28Q20 15 32 15Q44 15 44 28Q41 19 32 19Q23 19 20 28Z"/>'],
-    pony: ['<path d="M42 22Q52 26 49 44Q47 36 43 31Z"/>', '<path d="M20 28Q20 15 32 15Q44 15 44 28Q40 20 30 20Q24 21 20 28Z"/>'],
-    buzz: ['', '<path d="M20.5 26Q21 16 32 16Q43 16 43.5 26Q40 21 32 21Q24 21 20.5 26Z"/>'],
-    bangs: ['<path d="M18 30Q17 14 32 14Q47 14 46 30L46 40L18 40Z"/>', '<path d="M19.5 26Q20 15 32 15Q44 15 44.5 26Z"/>'],
-    updo: ['<ellipse cx="32" cy="13" rx="9" ry="5"/>', '<path d="M20 27Q20 15 32 15Q44 15 44 27Q42 20 34 19Q26 19 20 27Z"/>'],
-  };
-  // accesorios sobre la cara (c = color propio)
-  function accSvg(k, c) {
-    switch (k) {
-      case 'glasses': return '<g fill="none" stroke="' + INK + '" stroke-width="1.6"><circle cx="27" cy="31" r="4.2"/><circle cx="37" cy="31" r="4.2"/><path d="M31.2 31h1.6"/></g>';
-      case 'phones': return '<path d="M18.5 31C18.5 8.5 45.5 8.5 45.5 31" fill="none" stroke="' + c + '" stroke-width="2.6"/><rect x="15.5" y="27" width="5" height="9" rx="2.5" fill="' + c + '"/><rect x="43.5" y="27" width="5" height="9" rx="2.5" fill="' + c + '"/>';
-      case 'mic': return '<rect x="16" y="27" width="5" height="8" rx="2.5" fill="' + c + '"/><path d="M19 34Q20 40 27 39.5" fill="none" stroke="' + c + '" stroke-width="1.6"/><circle cx="27.5" cy="39.5" r="1.6" fill="' + c + '"/>';
-      case 'hoops': return '<circle cx="19.5" cy="36" r="2.2" fill="none" stroke="' + c + '" stroke-width="1.3"/><circle cx="44.5" cy="36" r="2.2" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
-      case 'hardhat': return '<path d="M19 24Q19 11 32 11Q45 11 45 24Z" fill="' + c + '"/><rect x="16" y="22.5" width="32" height="3.6" rx="1.8" fill="' + c + '"/><path d="M32 11v9" stroke="rgba(0,0,0,.18)" stroke-width="2"/>';
-      case 'beard': return '<path d="M21 34Q22 44 32 44.5Q42 44 43 34Q40 39 32 39.5Q24 39 21 34Z" fill="#2A1B12"/>';
-      case 'scarf': return '<path d="M20 45Q32 51 44 45L45 49Q32 55 19 49Z" fill="' + c + '"/>';
-      case 'bowtie': return '<path d="M32 47L25 43.5V50.5ZM32 47L39 43.5V50.5Z" fill="' + c + '"/><circle cx="32" cy="47" r="1.6" fill="' + c + '"/>';
-      case 'stache': return '<path d="M26.5 36Q29.5 33.8 32 35.2Q34.5 33.8 37.5 36Q34.5 36.8 32 36.2Q29.5 36.8 26.5 36Z" fill="#B8BEC9"/>';
-      case 'cap': return '<path d="M19.5 24Q20 13 32 13Q44 13 44.5 24Z" fill="' + c + '"/><path d="M18 23.5h28l-2 3H20Z" fill="' + INK + '"/><path d="M32 15.5l2.2 1v2.3q0 1.6-2.2 2.4-2.2-.8-2.2-2.4v-2.3Z" fill="#FFD25A"/>';
-      case 'visor': return '<rect x="19.5" y="27" width="25" height="7.5" rx="3.7" fill="' + c + '"/><rect x="22" y="28.6" width="8" height="2" rx="1" fill="rgba(255,255,255,.55)"/>';
-      case 'laurel': return '<g fill="#7FBF5A"><ellipse cx="21" cy="19" rx="1.6" ry="3.2" transform="rotate(-40 21 19)"/><ellipse cx="24.5" cy="15.5" rx="1.6" ry="3.2" transform="rotate(-62 24.5 15.5)"/><ellipse cx="43" cy="19" rx="1.6" ry="3.2" transform="rotate(40 43 19)"/><ellipse cx="39.5" cy="15.5" rx="1.6" ry="3.2" transform="rotate(62 39.5 15.5)"/></g>';
-      case 'pearls': return '<g fill="#F4F1EA"><circle cx="26" cy="46" r="1.3"/><circle cx="29" cy="47.3" r="1.3"/><circle cx="32" cy="47.7" r="1.3"/><circle cx="35" cy="47.3" r="1.3"/><circle cx="38" cy="46" r="1.3"/></g>';
-      case 'tie': return '<path d="M30 45h4l-1 2.5 2 7h-6l2-7Z" fill="' + c + '"/>';
-    }
-    return '';
-  }
-  // objeto del rol, en una insignia abajo a la derecha (centro 51,51)
-  function propSvg(k, c) {
-    var w = 'fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
-    var t = function (s, fs) { return '<text x="51" y="' + (51 + fs * 0.36) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" font-family="system-ui,sans-serif" fill="#fff">' + s + '</text>'; };
+    ['mandate', '👤', 'Mandato', 'Mandate'], ['quant', '🧮', 'Núcleo cuantitativo', 'Quant core'], ['chair', '🏛', 'Presidencia', 'Chair']];
+
+  // ── LOS AGENTES SON MASCOTAS (2026-10-09): cada puesto se dibuja con la burbuja de su agente
+  // (engine/mascot.js) y una insignia chica abajo a la derecha con el objeto de su rol. Varios puestos
+  // comparten mascota (p. ej. el Técnico lleva precio, riesgos, mesa de mercado y oficial de riesgo):
+  // la insignia y el rol escrito los distinguen. Sin mascot.js → círculo con el emoji del puesto.
+  var GLYPH = { fundamental: 'coin', macro: 'pct', crypto: 'btc', technical: 'chart', news: 'paper', supply_chain: 'link',
+    geopolitical: 'globe', risk_observation: 'warn', market: 'signal', risk_officer: 'shield', quant: 'calc', chair: 'gavel', mandate: 'case' };
+  // insignia: círculo de superficie (centro 51,51 en un viewBox 22×22) + el objeto del rol en el color de la mascota
+  function glyphSvg(k, col) {
+    var w = 'fill="none" stroke="' + col + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"';
+    var t = function (s, fs) { return '<text x="51" y="' + (51 + fs * 0.36) + '" text-anchor="middle" font-size="' + fs + '" font-weight="800" font-family="system-ui,sans-serif" fill="' + col + '">' + s + '</text>'; };
     var g = '';
     switch (k) {
       case 'coin': g = t('$', 11); break;
@@ -615,40 +718,31 @@
       case 'link': g = '<rect x="44.5" y="48.5" width="7" height="5" rx="2.5" ' + w + '/><rect x="50.5" y="48.5" width="7" height="5" rx="2.5" ' + w + '/>'; break;
       case 'globe': g = '<circle cx="51" cy="51" r="5.5" ' + w + '/><path d="M45.5 51h11M51 45.5q-3 5.5 0 11q3-5.5 0-11" ' + w + '/>'; break;
       case 'warn': g = '<path d="M51 45.5l5.5 10h-11Z" ' + w + '/><path d="M51 49v3" ' + w + '/>'; break;
-      case 'signal': g = '<circle cx="51" cy="53" r="1.3" fill="#fff"/><path d="M47.5 50.5q3.5-3.5 7 0M45.5 48q5.5-5.5 11 0" ' + w + '/>'; break;
+      case 'signal': g = '<circle cx="51" cy="53" r="1.3" fill="' + col + '"/><path d="M47.5 50.5q3.5-3.5 7 0M45.5 48q5.5-5.5 11 0" ' + w + '/>'; break;
       case 'shield': g = '<path d="M51 45l5 2v3.5q0 4-5 6q-5-2-5-6V47Z" ' + w + '/>'; break;
       case 'calc': g = '<rect x="46.5" y="45.5" width="9" height="11" rx="1.5" ' + w + '/><path d="M48.8 48.5h4.4M49 52h.1M53 52h.1M49 54.5h.1M53 54.5h.1" ' + w + '/>'; break;
       case 'gavel': g = '<path d="M46 56.5h6M48.5 52.5l6-6M47 48l4.5-4.5M52 53l4.5-4.5M47 48l5 5" ' + w + '/>'; break;
       case 'case': g = '<rect x="45" y="48" width="12" height="8" rx="1.5" ' + w + '/><path d="M49 48v-2h4v2" ' + w + '/>'; break;
-      default: g = t(esc(k), 10);
     }
-    return '<circle cx="51" cy="51" r="10" fill="' + c + '" stroke="#0B1222" stroke-width="2"/>' + g;
+    return '<svg viewBox="40 40 22 22" width="100%" height="100%" aria-hidden="true" focusable="false">' +
+      '<circle cx="51" cy="51" r="10.5" style="fill:var(--os-surface,#FFFFFF)"/>' + g + '</svg>';
   }
-  function castOf(seat) { return CAST[seat] || null; }
-  function personName(seat, fallback) { var p = castOf(seat); return p ? p.n : (fallback || ''); }
-  function roleLong(seat, fallback) { var p = castOf(seat); return p ? L(p.rl[0], p.rl[1]) : (fallback || ''); }
-  // SVG del personaje. mini=true omite la insignia del objeto (≤32 px)
-  function avatarSvg(seat, emoji, mini) {
-    var p = castOf(seat) || { s: '#C9A88A', h: '#4B5468', hs: 'short', c: '#5FC6E8', a: [], p: emoji || '🤖' };
-    var hair = HAIR[p.hs] || ['', ''];
-    var c = p.c;
-    return '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">' +
-      '<circle cx="32" cy="32" r="32" fill="' + c + '" fill-opacity=".22"/>' +
-      '<g class="cm-fig">' +
-        '<g fill="' + (p.hs === 'hood' ? c : p.h) + '">' + hair[0] + '</g>' +
-        (p.hs === 'hood' ? '<path d="M17 50Q16 17 32 15.5Q48 17 47 50Z" fill="rgba(0,0,0,.28)"/>' : '') +
-        '<path d="M9 66Q10 47 32 45Q54 47 55 66Z" fill="' + c + '"/>' +
-        '<path d="M28 40h8v6q-4 3-8 0Z" fill="' + p.s + '"/>' +
-        '<ellipse cx="19.5" cy="32" rx="2.2" ry="3" fill="' + p.s + '"/><ellipse cx="44.5" cy="32" rx="2.2" ry="3" fill="' + p.s + '"/>' +
-        '<ellipse cx="32" cy="30" rx="12.5" ry="13.5" fill="' + p.s + '"/>' +
-        '<g fill="' + p.h + '">' + hair[1] + '</g>' +
-        (p.hs === 'hood' ? '<path d="M28 47v6M36 47v6" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".8"/>' : '') +
-        '<circle cx="24.5" cy="35.5" r="2.2" fill="#FF7A8A" opacity=".28"/><circle cx="39.5" cy="35.5" r="2.2" fill="#FF7A8A" opacity=".28"/>' +
-        '<ellipse cx="27.5" cy="31" rx="1.5" ry="1.9" fill="' + INK + '"/><ellipse cx="36.5" cy="31" rx="1.5" ry="1.9" fill="' + INK + '"/>' +
-        '<path class="cm-mouth" d="M28.6 36.6Q32 40.6 35.4 36.6Z" fill="' + INK + '"/>' +
-        p.a.map(function (k) { return accSvg(k, c); }).join('') +
-      '</g>' +
-      (mini ? '' : propSvg(p.p, c)) + '</svg>';
+  // la burbuja de una mascota (por id de mascota: analista, radar, cadena, tecnico, comite)
+  function mascotHtml(id, size, state, emo) {
+    var M = window.KhipuMascot, h = '';
+    if (M && M.svg) { try { h = M.svg(id, size, { state: state || 'idle' }); } catch (e) { h = ''; } }
+    return h || '<span class="cm-mfb" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;flex:none;width:' + size + 'px;height:' + size +
+      'px;border-radius:50%;background:var(--os-surface-2,#F2F2F7);color:var(--os-ink,#111216);font-size:' + Math.round(size * 0.5) + 'px;line-height:1">' + esc(emo || '🤖') + '</span>';
+  }
+  // el avatar de un PUESTO: su mascota + insignia del rol (sin insignia por debajo de 28 px: no se distingue)
+  function avatarHtml(seat, size, state, emoji) {
+    size = Math.max(12, Math.round(Number(size) || 32));
+    var mid = mascotOf(seat), g = size >= 28 ? GLYPH[seat] : null, b = Math.round(size * 0.38), off = -Math.round(b * 0.12);
+    var emo = emoji || (AG[seat] && AG[seat][0]) || EMO[seat] || '🤖';
+    return '<span class="cm-mav" data-mascot="' + esc(mid) + '" style="position:relative;display:inline-block;flex:none;line-height:0;vertical-align:middle;width:' + size + 'px;height:' + size + 'px">' +
+      mascotHtml(mid, size, state, emo) +
+      (g ? '<span class="cm-badge" title="' + esc(roleOf(seat)) + '" style="position:absolute;right:' + off + 'px;bottom:' + off + 'px;width:' + b + 'px;height:' + b +
+        'px;line-height:0;border-radius:50%;box-shadow:0 1px 3px rgba(17,18,40,.22)">' + glyphSvg(GLYPH[seat], mascotColor(mid)) + '</span>' : '') + '</span>';
   }
 
   function tx(m) { return isEn() ? (m.text_en || m.text_es) : m.text_es; }
@@ -658,46 +752,48 @@
   function seatsHtml(seats, msgs, withClient) {
     var spoke = {}, last = msgs.length ? msgs[msgs.length - 1].seat : null;
     msgs.forEach(function (m) { spoke[m.seat] = m.stance || spoke[m.seat] || 'spoke'; });
+    function who(seat, fallback) {
+      var n = mascotName(mascotOf(seat)), r = roleOf(seat, fallback ? shortName(fallback) : '');
+      return '<div class="cm-sn">' + esc(n) + '</div>' + (r && r !== n ? '<div class="cm-sr">' + esc(r) + '</div>' : '');
+    }
     var agents = (seats || []).map(function (st) {
+      var full = L(st.name_es, st.name_en);
       if (st.absent) {
-        return '<div class="cm-seat" style="opacity:.45" title="' + esc(L('Sin conclusiones sobre esta empresa: este analista no participó (falta para el quórum).', 'No conclusions on this company: this analyst did not take part (needed for quorum).')) + '">' +
-          '<div class="cm-av" style="border-color:#3a4560;border-style:dashed">' + avatarSvg(st.seat, st.emoji) + '</div>' +
-          '<div class="cm-sn">' + esc(personName(st.seat, shortName(L(st.name_es, st.name_en)))) + '</div>' +
-          '<div class="cm-ss" style="color:#FFB300">' + esc(L('ausente', 'absent')) + '</div></div>';
+        return '<div class="cm-seat absent" title="' + esc(seatLabel(st.seat, full) + ' · ' + L('Sin conclusiones sobre esta empresa: este agente no participó (falta para el quórum).', 'No conclusions on this company: this agent did not take part (needed for quorum).')) + '">' +
+          '<div class="cm-av">' + avatarHtml(st.seat, 52, 'idle', st.emoji) + '</div>' + who(st.seat, full) +
+          '<div class="cm-ss" style="color:var(--cm-warn)">' + esc(L('ausente', 'absent')) + '</div></div>';
       }
-      var said = spoke[st.seat], col = said && STANCE[st.stance] ? STANCE[st.stance][0] : '#3a4560';
+      var said = spoke[st.seat], sc = STANCE[st.stance] || STANCE.neutral, talk = last === st.seat;
       var rec = st.n_scored > 0 ? st.hits + '/' + st.n_scored + ' ✓' : L('sin historial', 'no record');
-      return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === st.seat ? ' talk' : '') + '" title="' + esc(L('Fiabilidad ', 'Reliability ') + pct(st.reliability) + ' · ' + rec) + '">' +
-        '<div class="cm-av" style="border-color:' + col + '">' + avatarSvg(st.seat, st.emoji) + '</div>' +
-        '<div class="cm-sn">' + esc(personName(st.seat, shortName(L(st.name_es, st.name_en)))) + '</div>' +
-        (castOf(st.seat) ? '<div class="cm-sr">' + esc(L(castOf(st.seat).r[0], castOf(st.seat).r[1])) + '</div>' : '') +
-        '<div class="cm-ss" style="color:' + (said ? col : '#5f6b8a') + '">' + esc(said ? L(STANCE[st.stance][1], STANCE[st.stance][2]) : L('por hablar', 'to speak')) + '</div>' +
-        '<div style="font-size:9.5px;color:#5f6b8a">' + esc(rec) + '</div></div>';
+      return '<div class="cm-seat' + (said ? ' spoke' : '') + (talk ? ' talk' : '') + '" style="--cm-ring:' + fill(sc[0]) + '" title="' +
+          esc(seatLabel(st.seat, full) + ' · ' + L('Fiabilidad ', 'Reliability ') + pct(st.reliability) + ' · ' + rec) + '">' +
+        '<div class="cm-av">' + avatarHtml(st.seat, 52, talk ? 'talk' : 'idle', st.emoji) + '</div>' + who(st.seat, full) +
+        '<div class="cm-ss"' + (said ? ' style="color:' + sc[0] + '"' : '') + '>' + esc(said ? L(sc[1], sc[2]) : L('por hablar', 'to speak')) + '</div>' +
+        '<div class="cm-rec">' + esc(rec) + '</div></div>';
     }).join('');
     var desk = DESK.filter(function (d) { return d[0] !== 'mandate' || withClient; }).map(function (d) {
-      var said = spoke[d[0]], p = castOf(d[0]);
-      return '<div class="cm-seat' + (said ? ' spoke' : '') + (last === d[0] ? ' talk' : '') + '" title="' + esc(L(d[2], d[3])) + '">' +
-        '<div class="cm-av" style="border-color:' + (said ? '#5FC6E8' : '#3a4560') + '">' + avatarSvg(d[0], d[1]) + '</div>' +
-        '<div class="cm-sn">' + esc(p ? p.n : L(d[2], d[3])) + '</div>' +
-        (p ? '<div class="cm-sr">' + esc(L(p.r[0], p.r[1])) + '</div>' : '') + '</div>';
+      var said = spoke[d[0]], talk = last === d[0];
+      return '<div class="cm-seat' + (said ? ' spoke' : '') + (talk ? ' talk' : '') + '" style="--cm-ring:' + C.accent + '" title="' + esc(seatLabel(d[0], L(d[2], d[3]))) + '">' +
+        '<div class="cm-av">' + avatarHtml(d[0], 52, talk ? 'talk' : 'idle', d[1]) + '</div>' + who(d[0], L(d[2], d[3])) + '</div>';
     }).join('');
-    return '<div class="cm-table">' + (agents || '<div class="cm-note" style="align-self:center">' + esc(L('Sentando a los analistas…', 'Seating the analysts…')) + '</div>') +
-      '<div style="flex-basis:100%;height:0"></div>' + desk + '</div>';
+    return '<div class="cm-table">' + (agents || '<div class="cm-note" style="align-self:center">' + esc(L('Sentando a los agentes…', 'Seating the agents…')) + '</div>') +
+      '<div class="cm-brk"></div>' + desk + '</div>';
   }
 
   function bubbleHtml(m, isNew) {
     var st = m.stance && STANCE[m.stance];
-    var col = st ? st[0] : (m.seat === 'chair' ? '#FFB300' : '#5FC6E8');
+    var col = st ? st[0] : (m.seat === 'chair' ? C.ai : C.accent);
     var k = KIND[m.kind] || [m.kind || '', m.kind || ''];
     var src = m.source && (m.source.title || m.source.url)
       ? '<span class="cm-src">📎 ' + (m.source.url ? '<a href="' + esc(window.safeUrl ? window.safeUrl(m.source.url) : m.source.url) + '" target="_blank" rel="noopener">' + esc(m.source.title || m.source.url) + '</a>' : esc(m.source.title)) +
         (m.source.date ? ' · ' + esc(day(m.source.date)) : '') + '</span>' : '';
-    return '<div class="cm-bub' + (isNew ? ' new' : '') + '"><div class="cm-bav" style="border-color:' + col + '">' + avatarSvg(m.seat, m.emoji || '🤖', true) + '</div>' +
-      '<div class="cm-btx" style="border-left-color:' + col + '"><div class="cm-bh"><b>' + esc(castOf(m.seat) ? personName(m.seat) : nm(m)) + '</b>' +
-      (castOf(m.seat) ? '<span style="color:#9BA6C4">(' + esc(roleLong(m.seat)) + ')</span>' : '') +
-      (st ? '<span class="cm-tag" style="color:' + col + '">' + esc(L(st[1], st[2])) + '</span>' : '') +
-      '<span style="color:#5f6b8a">' + esc(L(k[0], k[1])) + '</span>' +
-      (m.ai ? '<span class="cm-tag" style="color:#B48CFF" title="' + esc(L('Razonado por IA a partir de su evidencia; cifras verificadas por el guardián', 'Reasoned by AI from its evidence; figures checked by the guardian')) + '">🧠 IA' + (m.secs ? ' · ' + Math.round(m.secs) + ' s' : '') + '</span>' : '') +
+    var mn = mascotName(mascotOf(m.seat)), role = roleOf(m.seat, shortName(nm(m)));
+    return '<div class="cm-bub' + (isNew ? ' new' : '') + '"><div class="cm-bav">' + avatarHtml(m.seat, 32, 'idle', m.emoji || '🤖') + '</div>' +
+      '<div class="cm-btx" style="--cm-sc:' + fill(col) + '"><div class="cm-bh"><b>' + esc(mn) + '</b>' +
+      (role && role !== mn ? '<span class="cm-role">· ' + esc(role) + '</span>' : '') +
+      (st ? '<span class="cm-tag" style="' + tint(col, 14) + '">' + esc(L(st[1], st[2])) + '</span>' : '') +
+      '<span>' + esc(L(k[0], k[1])) + '</span>' +
+      (m.ai ? '<span class="cm-tag" style="' + tint(C.ai, 14) + '" title="' + esc(L('Razonado por IA a partir de su evidencia; cifras verificadas por el guardián', 'Reasoned by AI from its evidence; figures checked by the guardian')) + '">🧠 ' + esc(L('IA', 'AI')) + (m.secs ? ' · ' + Math.round(m.secs) + ' s' : '') + '</span>' : '') +
       '</div>' + bodyText(m) + refs(m.refs) + src + '</div></div>';
   }
 
@@ -705,22 +801,27 @@
     var t = esc(tx(m));
     if (m.ai && m.kind === 'position') {           // 1ª línea = titular
       var i = t.indexOf('\n');
-      if (i > 0) t = '<b style="color:#E8EDFB">' + t.slice(0, i) + '</b>' + t.slice(i);
+      if (i > 0) t = '<b class="cm-hl">' + t.slice(0, i) + '</b>' + t.slice(i);
     }
     return t.replace(/\n/g, '<br>');
   }
 
+  // quién "está pensando" en cada etapa sin mensaje propio
+  var STAGE_SEAT = { live: 'market', risk: 'risk_officer', scoring: 'quant', chair: 'chair', saving: 'committee', client: 'mandate' };
   function typingHtml(msgs, total, stage) {
     var next = total > msgs.length ? S._allMsgs[msgs.length] : null;
-    var whoSeat = next ? next.seat : stage === 'chair' ? 'chair' : null;
-    var who = next ? (castOf(next.seat) ? personName(next.seat) : next.emoji + ' ' + nm(next)) : stage === 'chair' ? personName('chair') + ' (' + roleLong('chair') + ')' : stage === 'saving' ? '💾' : '';
+    var whoSeat = next ? next.seat : STAGE_SEAT[stage] || null;
+    var who = next ? seatLabel(next.seat, nm(next)) : stage === 'chair' ? seatLabel('chair') : '';
     var what = next ? L('está hablando', 'is speaking') : stage === 'chair' ? L('está redactando el veredicto (suele tardar 20–90 s)', 'is writing the verdict (usually 20–90 s)')
       : stage === 'live' ? L('📡 consultando el precio en vivo', '📡 fetching the live price') : stage === 'risk' ? L('🛡️ midiendo el riesgo con precios reales', '🛡️ measuring risk with real prices')
       : stage === 'scoring' ? L('🧮 haciendo la cuenta', '🧮 running the numbers')
       : stage === 'research' ? L('🔬 los analistas están investigando (puede tardar unos minutos)', '🔬 the analysts are researching (may take a few minutes)')
-      : stage === 'debate' ? L('🧠 los analistas están razonando con IA', '🧠 the analysts are reasoning with AI') : L('el comité se está reuniendo', 'the committee is gathering');
-    return '<div class="cm-typing">' + (whoSeat ? '<span class="cm-tav">' + avatarSvg(whoSeat, next && next.emoji, true) + '</span>' : '') +
-      esc(who) + ' ' + esc(what) + ' <i></i><i></i><i></i></div>';
+      : stage === 'debate' ? L('🧠 los analistas están razonando con IA', '🧠 the analysts are reasoning with AI')
+      : stage === 'saving' ? L('💾 guardando la propuesta', '💾 saving the proposal') : L('el comité se está reuniendo', 'the committee is gathering');
+    var face = whoSeat ? avatarHtml(whoSeat, 26, 'think', next && next.emoji)
+      : (stage === 'research' || stage === 'debate') && window.KhipuMascot && window.KhipuMascot.stack ? window.KhipuMascot.stack(['analista', 'radar', 'cadena', 'tecnico'], 22)
+      : mascotHtml('comite', 26, 'think', '🏛');
+    return '<div class="cm-typing">' + face + '<span>' + esc(who ? who + ' ' + what : what) + '</span><span class="cm-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>';
   }
 
   // msgs visibles · seats · ¿en vivo? · etapa
@@ -729,14 +830,14 @@
     var msgs = all.slice(0, shown);
     var t = { 'for': 0, against: 0, neutral: 0 };
     (seats || []).forEach(function (st) { if (msgs.some(function (m) { return m.seat === st.seat && m.kind === 'position'; })) t[st.stance]++; });
-    return '<div class="cm-room"><div class="cm-t">🏛 ' + esc(L('Sala del comité', 'Committee room')) + chip('committee_room') +
-      (live ? ' <span style="margin-left:6px;color:#FF4D6A;letter-spacing:.05em">● ' + esc(L('EN VIVO', 'LIVE')) + '</span>' : '') +
-      '<span style="margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600">' +
-        '<span style="color:#2BE38B">👍 ' + t['for'] + '</span> · <span style="color:#FF4D6A">👎 ' + t.against + '</span> · <span style="color:#9BA6C4">✋ ' + t.neutral + '</span></span></div>' +
+    return '<div class="cm-room"><div class="cm-t">' + mascotHtml('comite', 22, live ? 'talk' : 'idle', '🏛') + ' ' + esc(L('Sala del comité', 'Committee room')) + chip('committee_room') +
+      (live ? '<span class="cm-onair"><i></i>' + esc(L('EN VIVO', 'LIVE')) + '</span>' : '') +
+      '<span class="cm-count"><span style="color:var(--cm-good)">👍 ' + t['for'] + '</span><span style="color:var(--cm-bad)">👎 ' + t.against + '</span>' +
+        '<span style="color:var(--os-ink-2)">✋ ' + t.neutral + '</span></span></div>' +
       seatsHtml(seats, msgs, withClient) +
       '<div class="cm-feed" id="cm-feed">' + msgs.map(function (m, i) { return bubbleHtml(m, i === S.animIdx); }).join('') +
       (live || shown < all.length ? typingHtml(msgs, all.length, stage) : '') + '</div>' +
-      (!live && shown >= all.length && all.length ? '<div style="text-align:right;margin-top:6px"><button class="cm-btn ghost" id="cm-replay">▶ ' + esc(L('Repetir la sesión', 'Replay the session')) + '</button></div>' : '') +
+      (!live && shown >= all.length && all.length ? '<div style="text-align:right;margin-top:8px"><button class="cm-btn ghost" id="cm-replay">▶ ' + esc(L('Repetir la sesión', 'Replay the session')) + '</button></div>' : '') +
       '</div>';
   }
 
@@ -758,7 +859,7 @@
     var strip = '<div class="cm-strip">' + list.map(function (st) {
       var cls = done.indexOf(st[0]) >= 0 ? 'd' : st[0] === cur ? 'c' : '';
       return '<span class="' + cls + '">' + (cls === 'd' ? '✓ ' : '') + st[1] + ' ' + esc(L(st[4], st[5])) + '</span>'; }).join('') +
-      '<span style="margin-left:auto;border:none;color:#9BA6C4;font-variant-numeric:tabular-nums">⏱ ' + fmtT(el) + '</span></div>';
+      '<span class="cm-clock">⏱ ' + fmtT(el) + '</span></div>';
     return strip + roomHtml(p.messages || [], S.shown, p.seats || [], true, cur, !!S.clientId) +
       '<div class="cm-note" style="margin:-4px 0 12px">' + esc(el > 420
         ? L('Está tardando más de lo normal (la IA puede estar lenta). Puedes cerrar esta ventana: el comité sigue trabajando y el resultado aparecerá aquí al volver.', 'Taking longer than usual (the AI may be slow). You can close this window: the committee keeps working and the result will appear here when you come back.')
@@ -793,7 +894,7 @@
     ['client', '👤', 'Revisando la cuenta y el mandato del cliente', 'Checking the client account and mandate', 'Cliente', 'Client'],
     ['scoring', '🧮', 'Calculando convicción y tamaño de la posición', 'Computing conviction and position size', 'Cuenta', 'Math'],
     ['debate', '🗣', 'Debate: cada analista razona con IA', 'Debate: each analyst reasons with AI', 'Debate', 'Debate'],
-    ['chair', '🏛', 'El presidente IA redacta el memo (suele tardar 20–90 s)', 'The AI chair writes the memo (usually 20–90 s)', 'Presidente', 'Chair'],
+    ['chair', '🏛', 'La presidencia del Comité redacta el memo con IA (suele tardar 20–90 s)', 'The Committee chair writes the memo with AI (usually 20–90 s)', 'Presidencia', 'Chair'],
     ['saving', '💾', 'Guardando la propuesta', 'Saving the proposal', 'Guardar', 'Save'],
   ];
   function fmtT(s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
@@ -923,8 +1024,8 @@
     var minN = tr.min_n || 5;
     var rows = agents.map(function (a) {
       var enough = a.n_scored >= minN;
-      return '<tr><td>' + esc(ag(a.agent_type)) + '</td><td>' + a.n_scored + '</td><td>' + a.hits + '</td>' +
-        '<td>' + (enough ? pct(a.hit_rate) : '<span style="color:#7C87A3">' + (a.n_scored ? pct(a.hit_rate) + ' · ' : '') + esc(L('poca historia', 'little history')) + '</span>') + '</td>' +
+      return '<tr><td>' + avatarHtml(a.agent_type, 22, 'idle') + esc(ag(a.agent_type)) + '</td><td>' + a.n_scored + '</td><td>' + a.hits + '</td>' +
+        '<td>' + (enough ? pct(a.hit_rate) : '<span style="color:var(--os-ink-3)">' + (a.n_scored ? pct(a.hit_rate) + ' · ' : '') + esc(L('poca historia', 'little history')) + '</span>') + '</td>' +
         '<td>' + (a.brier == null ? '—' : a.brier.toFixed(3)) + '</td><td>' + pct(a.reliability) + '</td>' +
         '<td>' + (a.interim && a.interim.n_scored ? pct(a.interim.hit_rate) + ' (n=' + a.interim.n_scored + ')' : '—') + '</td><td>' + (a.n_na || 0) + '</td></tr>';
     }).join('');
@@ -932,8 +1033,8 @@
       agents.map(function (a) { return '<option value="' + esc(a.agent_type) + '"' + (S.agentSel === a.agent_type ? ' selected' : '') + '>' + esc(ag(a.agent_type)) + '</option>'; }).join('') + '</select>';
     var recent = ((S.recent || {}).outcomes || []).map(function (o) {
       var r = RES[o.result] || RES['n/a'];
-      return '<div class="cm-hist" style="cursor:default"><b style="color:' + r[0] + '">' + esc(L(r[1], r[2])) + '</b> · ' + esc(nodeLabel(o.entity_id)) + ' · ' + esc(ag(o.agent_type)) + ' · ' + esc(hz(o.horizon)) + ' · ' + esc(o.checkpoint) +
-        '<div style="color:#7C87A3;white-space:normal;overflow-wrap:anywhere">' + esc(T(o, 'reason') || '') + '</div></div>';
+      return '<div class="cm-hist static"><b style="color:' + r[0] + '">' + esc(L(r[1], r[2])) + '</b> · ' + esc(nodeLabel(o.entity_id)) + ' · ' + esc(ag(o.agent_type)) + ' · ' + esc(hz(o.horizon)) + ' · ' + esc(o.checkpoint) +
+        '<div style="color:var(--os-ink-3);font-size:12px;margin-top:2px;white-space:normal;overflow-wrap:anywhere">' + esc(T(o, 'reason') || '') + '</div></div>';
     }).join('');
     body.innerHTML =
       '<div class="cm-cell"><div class="cm-t">🎯 ' + esc(L('Historial real de los agentes', 'Agents\' real track record')) + chip('hit_rate') + chip('brier') + '</div>' +
@@ -965,18 +1066,24 @@
     if (!window.Chart) { wrap.style.height = 'auto'; wrap.innerHTML = '<div class="cm-tw">' + tbl + '</div>'; return; }
     wrap.style.height = '230px';
     wrap.innerHTML = '<canvas id="cm-cal" aria-label="' + esc(L('Curva de calibración', 'Calibration curve')) + '"></canvas>';
-    var grid = 'rgba(122,158,255,.08)', ink = '#7C87A3';
+    // colores del gráfico = tokens de Khipus OS del tema actual (Chart.js pinta en canvas: no entiende var())
+    var cs = null; try { cs = window.getComputedStyle(document.getElementById('cm-ov')); } catch (e) { cs = null; }
+    var tok = function (k, dflt) { var v = cs ? String(cs.getPropertyValue(k) || '').trim() : ''; return v || dflt; };
+    var dark = document.body && document.body.classList && document.body.classList.contains('dark');
+    var accent = tok('--os-accent', dark ? '#4C8DF6' : '#2F6BEA'), surf = tok('--os-surface', dark ? '#17181F' : '#FFFFFF');
+    var grid = tok('--os-line', dark ? 'rgba(255,255,255,.07)' : 'rgba(17,18,22,.08)'), ink = tok('--os-ink-3', dark ? '#6E7080' : '#8D90A0'), ink2 = tok('--os-ink-2', dark ? '#A6A8B5' : '#5B5E6B');
+    var font = tok('--os-font', 'system-ui, sans-serif');
     try {
       S.chart = new window.Chart(document.getElementById('cm-cal').getContext('2d'), {
         type: 'scatter',
         data: { datasets: [
           { label: L('Acierto real por tramo', 'Actual hit rate by bucket'), data: buckets.map(function (b) { return { x: Math.round(b.mean_conf * 1000) / 10, y: Math.round(b.hit_rate * 1000) / 10, n: b.n }; }),
-            showLine: true, borderColor: '#00E0FF', backgroundColor: '#00E0FF', borderWidth: 2, pointRadius: 5, pointHoverRadius: 7, pointBorderColor: '#06090F', pointBorderWidth: 2 },
-          { label: L('Calibración perfecta', 'Perfect calibration'), data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], showLine: true, borderColor: 'rgba(155,166,196,.55)', borderWidth: 1, pointRadius: 0, pointHoverRadius: 0 }] },
+            showLine: true, borderColor: accent, backgroundColor: accent, borderWidth: 2, pointRadius: 5, pointHoverRadius: 7, pointBorderColor: surf, pointBorderWidth: 2 },
+          { label: L('Calibración perfecta', 'Perfect calibration'), data: [{ x: 0, y: 0 }, { x: 100, y: 100 }], showLine: true, borderColor: ink, borderDash: [4, 4], borderWidth: 1, pointRadius: 0, pointHoverRadius: 0 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false,
-          scales: { x: { min: 0, max: 100, title: { display: true, text: L('Confianza declarada (%)', 'Stated confidence (%)'), color: ink }, grid: { color: grid }, ticks: { color: ink } },
-            y: { min: 0, max: 100, title: { display: true, text: L('Acierto real (%)', 'Actual hit rate (%)'), color: ink }, grid: { color: grid }, ticks: { color: ink } } },
-          plugins: { legend: { labels: { color: '#9BA6C4', boxWidth: 10, font: { size: 11 } } },
+          scales: { x: { min: 0, max: 100, title: { display: true, text: L('Confianza declarada (%)', 'Stated confidence (%)'), color: ink2, font: { family: font, size: 12 } }, grid: { color: grid }, ticks: { color: ink2, font: { family: font, size: 11 } } },
+            y: { min: 0, max: 100, title: { display: true, text: L('Acierto real (%)', 'Actual hit rate (%)'), color: ink2, font: { family: font, size: 12 } }, grid: { color: grid }, ticks: { color: ink2, font: { family: font, size: 11 } } } },
+          plugins: { legend: { labels: { color: ink2, boxWidth: 10, font: { size: 12, family: font } } },
             tooltip: { filter: function (it) { return it.datasetIndex === 0; }, callbacks: { label: function (c) { var p = c.raw || {}; return L('confianza ', 'confidence ') + p.x + '% → ' + L('acierto ', 'hit rate ') + p.y + '% (n=' + p.n + ')'; } } } } } });
     } catch (e) { wrap.style.height = 'auto'; wrap.innerHTML = '<div class="cm-tw">' + tbl + '</div>'; }
   }
@@ -996,7 +1103,7 @@
     else paintBoard(body);
     getJSON('/api/committee/board?limit=60').then(function (d) {
       if (S.tab !== 'board') return;
-      if (d._status !== 200) { body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="color:#FFB300">' + esc(errText(d)) + '</div></div>'; return; }
+      if (d._status !== 200) { body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="color:var(--cm-warn)">' + esc(errText(d)) + '</div></div>'; return; }
       S.board = d.items || [];
       paintBoard(body);
     }).catch(function () { body.innerHTML = '<div class="cm-cell"><div class="cm-note">' + esc(L('Sin conexión con el servidor.', 'No connection to the server.')) + '</div></div>'; });
@@ -1012,13 +1119,13 @@
     var items = S.board || [], f = S.boardFilter || 'all';
     var shown = items.filter(function (x) { return f === 'all' || (f === 'for' ? x.overall_conviction >= 15 : f === 'against' ? x.overall_conviction <= -15 : Math.abs(x.overall_conviction) < 15); });
     var flt = [['all', L('Todas', 'All')], ['for', '👍 ' + L('A favor', 'Favorable')], ['against', '👎 ' + L('En contra', 'Unfavorable')], ['mixed', '✋ ' + L('Sin consenso', 'No consensus')]];
-    body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="margin-bottom:8px">' +
+    body.innerHTML = '<div class="cm-cell"><div class="cm-note" style="margin-bottom:12px">' +
       esc(L('Todas las empresas que los analistas ya investigaron, ordenadas por convicción (de más favorable a menos). Cada fila resume el argumento más fuerte a favor y en contra, y la última decisión del comité. Pulsa 🏛 para que el comité debata esa empresa.',
         'Every company the analysts already researched, ranked by conviction (most to least favorable). Each row summarizes the strongest argument for and against, and the latest committee decision. Press 🏛 to have the committee debate that company.')) + chip('conviction') + '</div>' +
-      '<div class="cm-tabs" style="margin-bottom:0;align-items:center">' + flt.map(function (x) { return '<button class="cm-tab' + (f === x[0] ? ' on' : '') + '" data-f="' + x[0] + '">' + esc(x[1]) + '</button>'; }).join('') +
+      '<div class="cm-bar"><div class="cm-tabs" role="radiogroup" aria-label="' + esc(L('Filtrar', 'Filter')) + '">' + flt.map(function (x) { return '<button class="cm-tab' + (f === x[0] ? ' on' : '') + '" data-f="' + x[0] + '" role="radio" aria-checked="' + (f === x[0]) + '">' + esc(x[1]) + '</button>'; }).join('') + '</div>' +
         '<button class="cm-btn ghost" id="cm-refresh" style="margin-left:auto"' + (S.refreshing ? ' disabled' : '') + ' title="' + esc(L('Pone a investigar hasta 3 empresas: las de investigación más vieja (más de 7 días) o, si la pizarra está vacía, empresas clave de la cadena de IA. Gasta presupuesto de IA.', 'Puts up to 3 companies under research: those with the oldest research (over 7 days) or, if the board is empty, key AI supply-chain companies. Uses AI budget.')) + '">' +
         (S.refreshing ? '<span class="cm-spin">◌</span> ' + esc(L('Investigando…', 'Researching…')) : '🔬 ' + esc(L('Actualizar investigación', 'Refresh research'))) + '</button></div>' +
-      (S.refreshMsg ? '<div class="cm-note" style="margin-top:8px;color:' + (S.refreshMsg.bad ? '#FFB300' : '#2BE38B') + '">' + esc(S.refreshMsg.text) + '</div>' : '') + '</div>' +
+      (S.refreshMsg ? '<div class="cm-msg" role="status" style="margin:12px 0 0;' + tint(S.refreshMsg.bad ? C.warn : C.good) + '">' + esc(S.refreshMsg.text) + '</div>' : '') + '</div>' +
       (shown.length ? shown.map(boardRow).join('') : '<div class="cm-cell"><div class="cm-note">' + esc(items.length ? L('Nada en este filtro.', 'Nothing in this filter.') :
         L('Todavía no hay empresas investigadas. Escribe una en la pestaña 🏛 Comité y pulsa «Correr comité»: los analistas la investigarán primero.', 'No researched companies yet. Type one in the 🏛 Committee tab and press “Run committee”: the analysts will research it first.')) + '</div></div>');
     body.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { S.boardFilter = b.getAttribute('data-f'); paintBoard(body); }; });
@@ -1064,30 +1171,39 @@
   }
 
   function boardRow(x) {
-    var v = Math.round(x.overall_conviction || 0), col = v >= 15 ? '#2BE38B' : v <= -15 ? '#FF4D6A' : '#9BA6C4';
+    var v = Math.round(x.overall_conviction || 0), col = v >= 15 ? C.good : v <= -15 ? C.bad : C.neu;
     var arg = function (a, icon) {
       if (!a) return '';
-      return '<div class="cm-note" style="margin-top:4px;font-size:12px">' + icon + ' <b>' + esc(ag(a.agent_type)) + '</b> · ' + esc(hz(a.horizon)) + ': ' + esc(isEn() ? a.text_en : a.text_es) + '</div>';
+      return '<div class="cm-note" style="margin-top:8px;font-size:12.5px;display:flex;gap:8px;align-items:flex-start"><span style="flex:none">' + icon + '</span>' + avatarHtml(a.agent_type, 20, 'idle') +
+        '<span style="min-width:0"><b style="color:var(--os-ink)">' + esc(ag(a.agent_type)) + '</b> · ' + esc(hz(a.horizon)) + ': ' + esc(isEn() ? a.text_en : a.text_es) + '</span></div>';
     };
-    var m = x.memo, d = m ? (DEC[m.decision] || ['#9BA6C4', m.decision, m.decision]) : null;
-    return '<div class="cm-cell" style="padding:10px 12px">' +
+    var m = x.memo, d = m ? (DEC[m.decision] || [C.neu, m.decision, m.decision]) : null;
+    return '<div class="cm-cell">' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-        '<span style="font-size:20px;font-weight:800;color:' + col + ';min-width:48px;font-variant-numeric:tabular-nums">' + (v > 0 ? '+' : '') + v + '</span>' +
-        '<b style="font-size:14px;overflow-wrap:anywhere">' + esc(x.label) + '</b>' +
-        (d ? '<span class="cm-pill" style="color:' + d[0] + ';border-color:' + d[0] + '">🏛 ' + esc(L(d[1], d[2])) + ' · ' + esc(ageTxt(m.created_at)) + (m.ai ? '' : ' · ' + esc(L('sin IA', 'no AI'))) + '</span>' : '') +
+        '<span class="cm-score" style="color:' + col + '">' + (v > 0 ? '+' : '') + v + '</span>' +
+        '<b style="font-size:15px;overflow-wrap:anywhere">' + esc(x.label) + '</b>' +
+        (d ? '<span class="cm-pill" style="' + tint(d[0]) + '">🏛 ' + esc(L(d[1], d[2])) + ' · ' + esc(ageTxt(m.created_at)) + (m.ai ? '' : ' · ' + esc(L('sin IA', 'no AI'))) + '</span>' : '') +
         '<span class="cm-pill">' + x.n_claims + ' ' + esc(L('concl.', 'concl.')) + ' · ' + x.agents.length + ' ' + esc(L('analistas', 'analysts')) + (x.n_contradictions ? ' · ⚡' + x.n_contradictions : '') + ' · ' + esc(ageTxt(x.last_research)) + '</span>' +
-        '<span style="margin-left:auto;display:flex;gap:6px"><button class="cm-btn" data-go="' + esc(x.entity_id) + '">🏛 ' + esc(L('Comité', 'Committee')) + '</button>' +
-        (window.KhipuResearch ? '<button class="cm-btn ghost" data-rs="' + esc(x.entity_id) + '">🔬</button>' : '') + '</span></div>' +
-      (m && (isEn() ? m.conclusion_en : m.conclusion_es) ? '<div class="cm-note" style="margin-top:6px;font-size:12.5px;color:#E8EDFB">✅ ' + esc(isEn() ? (m.conclusion_en || m.conclusion_es) : m.conclusion_es) + '</div>' : '') +
+        '<span style="margin-left:auto;display:flex;gap:8px"><button class="cm-btn" data-go="' + esc(x.entity_id) + '">🏛 ' + esc(L('Comité', 'Committee')) + '</button>' +
+        (window.KhipuResearch ? '<button class="cm-btn ghost" data-rs="' + esc(x.entity_id) + '" title="' + esc(L('Investigación IA', 'AI research')) + '" aria-label="' + esc(L('Investigación IA', 'AI research')) + '">🔬</button>' : '') + '</span></div>' +
+      (m && (isEn() ? m.conclusion_en : m.conclusion_es) ? '<div class="cm-note" style="margin-top:8px;font-size:13px;color:var(--os-ink)">✅ ' + esc(isEn() ? (m.conclusion_en || m.conclusion_es) : m.conclusion_es) + '</div>' : '') +
       arg(x.best_for, '👍') + arg(x.best_against, '👎') + '</div>';
   }
 
   function renderLearn(body) {
     var P = function (es, en) { return '<p>' + L(es, en) + '</p>'; };
+    // quién es quién: las 5 mascotas y los puestos que ocupa cada una en la mesa
+    var CREW = [['analista', 'fundamental', 'Fundamentales y macro', 'Fundamentals and macro'], ['radar', 'news', 'Noticias, geopolítica y cripto', 'News, geopolitics and crypto'],
+      ['cadena', 'supply_chain', 'Cadena de suministro', 'Supply chain'], ['tecnico', 'technical', 'Precio, riesgos, mesa de mercado y oficial de riesgo', 'Price, risks, market desk and risk officer'],
+      ['comite', 'chair', 'La cuenta (núcleo cuantitativo), el mandato y la presidencia', 'The math (quant core), the mandate and the chair']];
     body.innerHTML = '<div class="cm-cell cm-learn">' +
+      '<div class="cm-t">' + esc(L('Quién se sienta en la mesa', 'Who sits at the table')) + chip('committee_room') + '</div>' +
+      '<div class="cm-agents">' + CREW.map(function (c) {
+        return '<div class="cm-agent">' + mascotHtml(c[0], 34, 'idle', AG[c[1]] ? AG[c[1]][0] : (EMO[c[1]] || '🤖')) + '<span style="min-width:0"><b>' + esc(mascotName(c[0])) + '</b><span class="r">' + esc(L(c[2], c[3])) + '</span></span></div>';
+      }).join('') + '</div>' +
       '<h4>1 · ' + esc(L('Los agentes investigan (Fase 2)', 'Agents research (Phase 2)')) + '</h4>' +
-      P('Cada agente (fundamental, noticias, técnico, cadena de suministro…) escribe conclusiones con evidencia, un plazo y una confianza calculada. Nunca dicen "compra" o "vende".',
-        'Each agent (fundamental, news, technical, supply chain…) writes conclusions with evidence, a horizon and a computed confidence. They never say "buy" or "sell".') +
+      P('Cada agente —el Analista (fundamentales y macro), el Radar (noticias, geopolítica y cripto), la Cadena (cadena de suministro) y el Técnico (precio y riesgos)— escribe conclusiones con evidencia, un plazo y una confianza calculada. Nunca dicen "compra" o "vende".',
+        'Each agent —the Analyst (fundamentals and macro), the Radar (news, geopolitics and crypto), the Chain (supply chain) and the Technical agent (price and risks)— writes conclusions with evidence, a horizon and a computed confidence. They never say "buy" or "sell".') +
       '<h4>2 · ' + esc(L('Se guarda una foto del momento', 'A snapshot of the moment is saved')) + '</h4>' +
       P('Al escribir cada conclusión se anota el precio de la acción y del S&P 500 (SPY) y las fechas en que se va a revisar: a 7 y 30 días si es de corto plazo, a 30, 90 y 180 días si es de mediano, a 90, 180 y 365 días si es de largo. Las "estructurales" (más de 5 años) no se califican.',
         'When each conclusion is written, the stock and S&P 500 (SPY) prices are recorded along with the dates it will be checked: 7 and 30 days for short term, 30, 90 and 180 days for medium term, 90, 180 and 365 days for long term. "Structural" ones (over 5 years) are not scored.') +
@@ -1097,10 +1213,10 @@
       '<h4>4 · ' + esc(L('La confianza se corrige (calibración)', 'Confidence gets corrected (calibration)')) + chip('calibration') + chip('brier') + '</h4>' +
       P('Si un agente dice 80 % de confianza pero acierta solo la mitad de las veces, sus próximas conclusiones de ~80 % valen menos. Con pocos casos casi no se corrige: hace falta historia para aprender.',
         'If an agent says 80% confidence but is right only half the time, its next ~80% conclusions count for less. With few cases it barely corrects: learning needs history.') +
-      '<h4>5 · ' + esc(L('El comité decide… y tú apruebas', 'The committee decides… and you approve')) + chip('conviction') + chip('position_sizing') + chip('committee_decision') + '</h4>' +
-      P('El comité suma las conclusiones pesadas por su confianza calibrada y por el historial de cada agente, descuenta las contradicciones, mide el riesgo real de la acción y calcula un tamaño con una fórmula fija. Un presidente IA escribe el memo (tesis, riesgos, quién disiente, qué nos demostraría equivocados), pero no puede cambiar el tamaño ni inventar cifras. Nada se ejecuta sin tu aprobación, y para dinero de clientes hay una segunda aprobación en Clientes.',
-        'The committee adds up conclusions weighted by calibrated confidence and each agent\'s track record, discounts contradictions, measures the stock\'s real risk and computes a size with a fixed formula. An AI chair writes the memo (thesis, risks, who dissents, what would prove us wrong), but it cannot change the size or invent figures. Nothing executes without your approval, and client money needs a second approval in Clients.') +
-      '<div class="cm-disc" style="margin-top:12px">⚖️ ' + esc(L('Es una herramienta de apoyo: puede equivocarse y no es asesoría financiera personalizada.', 'It is a support tool: it can be wrong and it is not personalized financial advice.')) + '</div></div>';
+      '<h4>5 · ' + esc(L('El Comité decide… y tú apruebas', 'The Committee decides… and you approve')) + chip('conviction') + chip('position_sizing') + chip('committee_decision') + '</h4>' +
+      P('El Comité suma las conclusiones pesadas por su confianza calibrada y por el historial de cada agente, descuenta las contradicciones, mide el riesgo real de la acción y calcula un tamaño con una fórmula fija. Su presidencia (IA) escribe el memo (tesis, riesgos, quién disiente, qué nos demostraría equivocados), pero no puede cambiar el tamaño ni inventar cifras. Nada se ejecuta sin tu aprobación, y para dinero de clientes hay una segunda aprobación en Clientes.',
+        'The Committee adds up conclusions weighted by calibrated confidence and each agent\'s track record, discounts contradictions, measures the stock\'s real risk and computes a size with a fixed formula. Its chair (AI) writes the memo (thesis, risks, who dissents, what would prove us wrong), but it cannot change the size or invent figures. Nothing executes without your approval, and client money needs a second approval in Clients.') +
+      '<div class="cm-disc" style="margin:16px 0 0">⚖️ ' + esc(L('Es una herramienta de apoyo: puede equivocarse y no es asesoría financiera personalizada.', 'It is a support tool: it can be wrong and it is not personalized financial advice.')) + '</div></div>';
   }
 
   // ── API pública ───────────────────────────────────────────────────────────
@@ -1126,7 +1242,10 @@
   }
 
   window.KhipuCommittee = {
-    avatar: function (seat, emoji, mini) { try { return avatarSvg(seat, emoji, mini); } catch (e) { return ''; } }, open: open, close: close,
+    // avatar(puesto, emoji?, mini?) → la MASCOTA del agente + insignia del rol (mini = 20 px sin insignia;
+    // un número = tamaño en px). Lo usa engine/khipu_chat.js cuando mascot.js no cargó.
+    avatar: function (seat, emoji, mini) { try { return avatarHtml(seat, typeof mini === 'number' ? mini : (mini ? 20 : 40), 'idle', emoji); } catch (e) { return ''; } },
+    open: open, close: close,
     // abre directo en una pestaña: 'board' | 'committee' | 'portfolio' | 'history' | 'learn'
     openTab: function (tab) { open(); S.tab = tab || 'board'; render(); } };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var ov = document.getElementById('cm-ov'); if (ov && ov.classList.contains('show')) close(); } });

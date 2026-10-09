@@ -9,6 +9,29 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)
+
+Pedido de Fabrizio (captura del comité): "el comité todavía no está actualizado". Seguía con personajes humanos
+(Valeria, Kenji, Priya, Isabel…), colores oscuros fijos, letra Inter y narración genérica. Workflow de 7 agentes
+(3 constructores en paralelo + 3 revisores con capturas claro/oscuro/celular + 1 corrector; 15 hallazgos, 14 arreglados
+y verificados, el restante era el bump de sw.js):
+- engine/committee.js: tokens de Khipus OS en #cm-ov (claro/oscuro IGUALES a cockpit.js; un test los compara) + tokens
+  propios --cm-warn/--cm-warn-fill/--cm-good/--cm-bad/--cm-ai (texto con contraste AA en claro), Nunito, hoja con radio 24,
+  pestañas en píldora segmentada, tarjetas OS, botones píldora, foco visible. PERSONAS → MASCOTAS: KhipuMascot por puesto
+  + insignia del rol (seat → mascota = engine/mascot.js); nombres "Analista · Fundamental", "Técnico · Mesa de mercado",
+  "Comité · Presidencia"…; quien habla = estado 'talk'. KhipuCommittee.avatar() devuelve la mascota.
+- engine/pfcommittee.js + pfreports.js (pestaña Mi cartera y reportes): tokens, gráficos con colores del tema, arreglado
+  un ReferenceError viejo en «Aplicar en simulación», negritas de la IA sin asteriscos.
+- research/committee.py: la sala habla con la voz de las mascotas (_mascot_voice en say(); research/deliberation y debate
+  NO se tocaron porque ask_agent usa sus nombres), cada analista narra lo que hace según su rol
+  (research/agent_skills.WORKING, lenguaje simple), el Técnico dice "No cotiza por separado en bolsa" (con la nota
+  verificada de listing_status si existe) cuando la entidad no tiene `mkt`. SEAT_MASCOT vive en 3 lugares (mascot.js,
+  khipu_chat.SEAT_AGENT, agent_skills.SEAT_MASCOT): un test los compara.
+- engine/guide.js: el comité ya no habla de personajes; explica las mascotas e «invocar».
+- Tests: tests/test_committee_os_{ui,narr,pf_tokens,pf_apply}.py. Suite: 1295 en verde.
+
+---
+
 # SESIÓN 2026-10-06 (v) — MARCA, TOOLS E «INVOCAR» (sw v249) + GEMINI 3.8 CON RESPALDOS
 
 - Nombre visible: **Khipus Finance Intelligence** (antes "Khipus Finance AI"; ids internos sin cambio).

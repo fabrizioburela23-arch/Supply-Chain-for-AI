@@ -990,7 +990,7 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     progress_set(_pid, 'claims')
 
     def say(*msgs):                       # sala del comité: en vivo + guardado en el memo
-        msgs = [m for m in msgs if m]
+        msgs = [_mascot_voice(m) for m in msgs if m]
         t0 = (progress_get(_pid) or {}).get('elapsed_s')
         for m in msgs:
             transcript.append(dict(m, t=t0) if t0 is not None else dict(m))
@@ -1137,10 +1137,10 @@ def _run_committee(session, entity_id, requested_by, client_id=None, provider=No
     # ── presidente IA (o memo determinista) ──
     body, meta, ai_err = None, {}, (None, None)
     if not rows:
-        ai_err = ('sin conclusiones activas: el presidente IA no se consulta (primero corre Investigación IA)',
+        ai_err = ('sin conclusiones activas: la presidencia (IA) no se consulta (primero corre Investigación IA)',
                   'no active conclusions: the AI chair is not consulted (run AI research first)')
     elif decision_code == 'INSUFFICIENT_DATA':      # C7: sin quórum no hay memo persuasivo ni gasto de IA
-        ai_err = ('sin quórum de analistas: el presidente IA no se consulta (datos insuficientes)',
+        ai_err = ('sin quórum de analistas: la presidencia (IA) no se consulta (datos insuficientes)',
                   'no analyst quorum: the AI chair is not consulted (insufficient data)')
     else:
         progress_set(_pid, 'chair')
@@ -1233,29 +1233,139 @@ AI_WHY = {'no_provider': ('no hay ningún proveedor de IA con clave en Railway',
           'test': ('modo de prueba', 'test mode')}
 
 
+# Técnico sin precio (2026-10-09): la empresa no tiene ticker en el catálogo → lo dice en su voz, sin el error técnico.
+# Neutral a propósito: sin `mkt` hay privadas (OpenAI), divisiones (IBMQuantum), fusionadas/compradas (xAI, Hailo) e
+# instituciones (FederalReserve) — no todas son "empresas privadas". Si el catálogo sabe por qué (nodes/listing_status.js:
+# note_es/note_en, p. ej. "su exposición bursátil es la acción de IBM"), se intercala esa nota con su fuente verificada.
+UNLISTED_TECH = ('No cotiza por separado en bolsa: no hay precio propio que analizar. El resto del comité sigue.',
+                 'Not listed on its own: there is no price of its own to analyze. The rest of the committee carries on.')
+# lo que dice el Técnico al EMPEZAR cuando ya se sabe que no cotiza (no "analizo su precio…" para luego desdecirse)
+UNLISTED_TECH_START = ('Busco si cotiza en bolsa para revisar su precio…',
+                       'Checking whether it is listed so I can review its price…')
+
+
+def _entity_node(eid):
+    """Nodo del snapshot del grafo (core.entities) o None si no se puede saber."""
+    try:
+        from core.entities import get_index
+        return get_index()['nodos'].get(eid) or None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _entity_listed(eid):
+    """¿La entidad tiene ticker de mercado (`mkt`) en el snapshot del grafo? — la MISMA fuente con la que el
+    analista técnico busca sus velas (research/context.py). True/False; None si no se puede saber (entidad fuera
+    del snapshot o índice caído): entonces no se afirma nada."""
+    node = _entity_node(eid)
+    if not node:
+        return None
+    return bool(str(node.get('mkt') or '').strip())
+
+
+def _unlisted_tech_lines(eid):
+    """(es, en) del Técnico cuando la entidad no cotiza: UNLISTED_TECH + la nota verificada del catálogo si existe
+    (fusionada, comprada, división de otra que sí cotiza…)."""
+    lst = (_entity_node(eid) or {}).get('listing') or {}
+    n_es, n_en = str(lst.get('note_es') or '').strip(), str(lst.get('note_en') or '').strip()
+    if not (n_es or n_en):
+        return UNLISTED_TECH
+    head_es, tail_es = UNLISTED_TECH[0].split(' El resto', 1)
+    head_en, tail_en = UNLISTED_TECH[1].split(' The rest', 1)
+    n_es, n_en = n_es or n_en, n_en or n_es
+    end = lambda t: t if t.endswith(('.', '!', '?')) else t + '.'  # noqa: E731
+    return (f'{head_es} {end(n_es)} El resto{tail_es}', f'{head_en} {end(n_en)} The rest{tail_en}')
+
+
+# Sala del comité con la voz de Khipus OS: research/deliberation.py y research/debate.py (que también usa
+# research/ask_agent con los nombres de siempre) escriben "📊 Analista fundamental", "Analista de noticias"…
+# dentro del TEXTO de cada mensaje; la sala nombra a esos mismos puestos por su mascota ("Analista (fundamental)",
+# "Radar (noticias)", "Técnico"). Se traduce aquí, en say(), el único punto por donde sale cada mensaje de la sala.
+_ROOM_NAMES = None
+
+
+def _room_names():
+    global _ROOM_NAMES
+    if _ROOM_NAMES is None:
+        from research.agent_skills import seat_call_name
+        from research.deliberation import AGENT_NAMES
+        subs = {'es': [], 'en': []}
+        for seat, (emoji, n_es, n_en) in AGENT_NAMES.items():
+            for lang, old in (('es', n_es), ('en', n_en)):
+                pat = re.compile('(?:' + re.escape(emoji) + r'\s)?' + re.escape(old) + r'\b')
+                subs[lang].append((pat, seat_call_name(seat, lang)))
+        _ROOM_NAMES = subs
+    return _ROOM_NAMES
+
+
+def _mascot_voice(m):
+    """Copia del mensaje de la sala con los nombres viejos de los analistas cambiados por los de su mascota
+    (text_es / text_en; el resto del esquema intacto)."""
+    if not isinstance(m, dict):
+        return m
+    try:
+        subs = _room_names()
+    except Exception:  # noqa: BLE001 — nunca romper la sala por el nombre
+        return m
+    out = dict(m)
+    for key, lang in (('text_es', 'es'), ('text_en', 'en')):
+        t = out.get(key)
+        if isinstance(t, str) and t:
+            for pat, new in subs[lang]:
+                t = pat.sub(new, t)
+            out[key] = t
+    return out
+
+
+def _research_request_lines(label, agent_types):
+    """(es, en) del presidente al encargar la investigación, nombrando a cada analista por su mascota
+    ('Analista (fundamental), Radar (noticias), Técnico y Cadena')."""
+    from research.agent_skills import join_names, seat_call_name
+    agent_types = list(agent_types or [])
+    es_names = join_names([seat_call_name(a, 'es') for a in agent_types], 'es') or 'los analistas'
+    en_names = join_names([seat_call_name(a, 'en') for a in agent_types], 'en') or 'the analysts'
+    if len(agent_types) == 1:
+        return (f'No hay investigación reciente suficiente sobre {label}. Antes de debatir, pido a {es_names} que '
+                f'investigue ahora con datos en vivo (tarda ~20-60 s).',
+                f'There is not enough recent research on {label}. Before debating, I ask {en_names} to research '
+                f'now with live data (it takes ~20-60 s).')
+    return (f'No hay investigación reciente suficiente sobre {label}. Antes de debatir, pido a {es_names} que '
+            f'investiguen ahora con datos en vivo (cada uno tarda ~20-60 s).',
+            f'There is not enough recent research on {label}. Before debating, I ask {en_names} to research '
+            f'now with live data (each takes ~20-60 s).')
+
+
 def _auto_research(session, eid, label, requested_by, say, deps, agents=None):
     """Encarga la investigación (los 4 analistas por defecto, o SOLO los que
-    faltan para el quórum — C7) y narra cada uno en la sala."""
+    faltan para el quórum — C7) y narra cada uno en la sala, con la voz de su
+    mascota (research/agent_skills: SEAT_MASCOT + WORKING)."""
     from research import deliberation as dl8
+    from research.agent_skills import working_line
     from research.runner import create_job, execute_job
     job, _reused = create_job(session, eid, depth='STANDARD', trigger={'kind': 'committee', 'by': requested_by},
                               requested_by=requested_by, force=True, agents=agents)
-    names = ', '.join(dl8.seat_name(a)[0] + ' ' + dl8.seat_name(a)[1] for a in job.agents)
-    names_en = ', '.join(dl8.seat_name(a)[0] + ' ' + dl8.seat_name(a)[2] for a in job.agents)
-    say(dl8._msg('chair', 'moderate',
-                 f'No hay investigación reciente suficiente sobre {label}. Antes de debatir, pido a {names} que '
-                 f'investiguen ahora con datos en vivo (cada uno tarda ~20-60 s).',
-                 f'There is not enough recent research on {label}. Before debating, I ask {names_en} to research '
-                 f'now with live data (each takes ~20-60 s).', stage='research'))
+    es, en = _research_request_lines(label, job.agents)
+    say(dl8._msg('chair', 'moderate', es, en, stage='research'))
+    listed = []                                  # se consulta una sola vez y solo si hace falta
+
+    def _listed():
+        if not listed:
+            listed.append(_entity_listed(eid))
+        return listed[0]
 
     def started(agent_type):
-        say(dl8._msg(agent_type, 'data', 'Investigando: leyendo estados financieros, noticias y datos en vivo…',
-                     'Researching: reading financials, news and live data…', stage='research'))
+        if agent_type == 'technical' and _listed() is False:
+            wes, wen = UNLISTED_TECH_START
+        else:
+            wes, wen = working_line(agent_type)
+        say(dl8._msg(agent_type, 'data', wes, wen, stage='research'))
 
     def finished(agent_type, run):
         n = getattr(run, 'claims_generated', 0) or 0
         if getattr(run, 'status', '') == 'done' and n:
             es, en = f'Listo: {n} conclusión(es) con evidencia citada.', f'Done: {n} conclusion(s) with cited evidence.'
+        elif agent_type == 'technical' and _listed() is False:
+            es, en = _unlisted_tech_lines(eid)
         else:
             from research.errors import friendly
             err = str((getattr(run, 'errors', None) or [''])[0])[:200]
@@ -1464,7 +1574,7 @@ def _chair(session, provider, eid, requested_by, text, valid_refs, decision, min
         return body, meta, None
     except LLMError as e:
         run.status, run.errors = 'failed', [f'modelo: {str(e)[:400]}']
-        return None, {}, (f'el presidente IA no produjo un memo válido ({str(e)[:200]}) → memo determinista',
+        return None, {}, (f'la presidencia (IA) no produjo un memo válido ({str(e)[:200]}) → memo determinista',
                           f'the AI chair did not produce a valid memo ({str(e)[:200]}) → deterministic memo')
     except Exception as e:  # noqa: BLE001
         run.status, run.errors = 'failed', [f'{type(e).__name__}: {str(e)[:300]}']
