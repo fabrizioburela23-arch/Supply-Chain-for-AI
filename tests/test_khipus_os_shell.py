@@ -51,8 +51,8 @@ def _block(css, selector_start):
 
 def test_tokens_claro_y_oscuro_exactos_de_la_especificacion():
     s = _r('engine/cockpit.js')
-    light = _block(s, 'body:not(.dark) #bcp-ov{')
-    dark = _block(s, 'body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{')
+    light = _block(s, 'body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{')   # .kos-themed: overlays fuera del OS
+    dark = _block(s, 'body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{')
     for k, v in LIGHT.items():
         assert light.get(k) == v, (k, light.get(k), v)
     for k, v in DARK.items():

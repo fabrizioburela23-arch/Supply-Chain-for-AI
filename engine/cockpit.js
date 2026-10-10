@@ -106,7 +106,7 @@
    La Cabina clásica (kh_desk_mode=off, red de seguridad) usa SIEMPRE los oscuros: sus escenas
    viejas tienen colores fijos oscuros. Ventanas, barra y paleta leen solo estas variables →
    cambiar de tema es CSS puro (sin re-inyectar nada). ══ */
-body:not(.dark) #bcp-ov{
+body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{
   --os-bg:#EDEDF5;--os-surface:#FFFFFF;--os-surface-2:#F2F2F7;--os-surface-3:#E7E7EF;
   --os-ink:#111216;--os-ink-2:#5B5E6B;--os-ink-3:#8D90A0;--os-line:rgba(17,18,22,.08);
   --os-shadow:0 1px 2px rgba(17,18,40,.04), 0 8px 28px rgba(17,18,40,.06);
@@ -115,7 +115,7 @@ body:not(.dark) #bcp-ov{
   --kos-shadow-lg:0 2px 6px rgba(17,18,40,.06), 0 18px 48px rgba(17,18,40,.14);
   --kos-scrim:rgba(24,26,44,.22);--kos-accent-soft:rgba(47,107,234,.12);
   color-scheme:light}
-body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
+body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   --os-bg:#0E0F14;--os-surface:#17181F;--os-surface-2:#1F2029;--os-surface-3:#2A2B36;
   --os-ink:#F2F2F5;--os-ink-2:#A6A8B5;--os-ink-3:#6E7080;--os-line:rgba(255,255,255,.07);
   --os-shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
@@ -124,6 +124,12 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
   --kos-shadow-lg:0 2px 8px rgba(0,0,0,.45), 0 22px 56px rgba(0,0,0,.55);
   --kos-scrim:rgba(0,0,0,.5);--kos-accent-soft:rgba(76,141,246,.16);
   color-scheme:dark}
+/* colores SEMÁNTICOS de TEXTO con contraste AA (los --os-good/--os-bad vivos quedan para rellenos, barras y anillos):
+   mismos valores que el comité (engine/committee.js --cm-good/--cm-bad/--cm-warn/--cm-ai) */
+body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{--os-good-ink:#066B06;--os-bad-ink:#A82424;--os-warn:#B7791F;--os-warn-ink:#7F5200;--os-ai:#6236C9}
+body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{--os-good-ink:#2fbf5b;--os-bad-ink:#F47C7C;--os-warn:#F2C46D;--os-warn-ink:#F2C46D;--os-ai:#B48CFF}
+/* .kos-themed: cualquier overlay FUERA de #bcp-ov (Dossier, Investigación, Clientes…) toma los mismos tokens */
+.kos-themed{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;--km-ring:var(--os-surface)}
 #bcp-ov{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   position:fixed;inset:0;z-index:7000;display:none;flex-direction:column;
   background:var(--os-bg);color:var(--os-ink);font-family:var(--os-font);
@@ -4098,4 +4104,6 @@ body.dark #bcp-ov,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
     (Array.isArray(window.__kosKindQueue) ? window.__kosKindQueue : []).forEach(function (x) { if (x) registerKind(x[0], x[1]); });
     window.__kosKindQueue = { push: function (x) { if (x) registerKind(x[0], x[1]); return 0; } };
   } catch (e) {}
+  // tokens del tema (también .kos-themed) disponibles desde el arranque, aunque la Cabina aún no se abra
+  try { if (document.head) ensureStyles(); else document.addEventListener('DOMContentLoaded', ensureStyles); } catch (e) {}
 })();

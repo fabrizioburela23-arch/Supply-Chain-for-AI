@@ -127,7 +127,7 @@ def _decls(block):
 
 
 def _cockpit_tokens():
-    light = re.search(r'body:not\(\.dark\) #bcp-ov\{(.*?)\}', COCKPIT, re.S)
+    light = re.search(r'body:not\(\.dark\) #bcp-ov[^{]*\{(.*?)\}', COCKPIT, re.S)
     dark = re.search(r'body\.dark #bcp-ov[^{]*\{(.*?)\}', COCKPIT, re.S)
     shared = re.search(r'\n#bcp-ov\{(.*?)\}', COCKPIT, re.S)
     assert light and dark and shared, 'no encontré los tokens de Khipus OS en engine/cockpit.js'
