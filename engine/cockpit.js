@@ -175,10 +175,13 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
 @media(max-width:1280px){#bcp-word .sub{display:none}}
 #bcp-state{display:none;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--os-ink-2);
   background:var(--os-surface-2);border-radius:999px;padding:3px 9px 3px 8px;white-space:nowrap}
-#bcp-state.live,#bcp-state.think{display:inline-flex}
+#bcp-state.live,#bcp-state.think,#bcp-state.conn,#bcp-state.err{display:inline-flex}
 #bcp-state .dot{width:7px;height:7px;border-radius:50%;background:var(--os-ink-3)}
 #bcp-state.live .dot{background:var(--os-bad);animation:bcpPulse 1.2s ease-in-out infinite}
 #bcp-state.think .dot{background:var(--os-accent);animation:bcpPulse .8s ease-in-out infinite}
+#bcp-state.conn .dot{background:var(--os-accent,#4C8DF6);animation:bcpPulse .6s ease-in-out infinite}
+#bcp-state.err{color:var(--os-bad-ink,#F47C7C)}
+#bcp-state.err .dot{background:var(--os-bad,#f06565)}
 @keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.3}}
 .kos-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;min-width:0}
 .kos-search{flex:0 1 460px;min-width:0;height:40px;display:flex;align-items:center;gap:10px;padding:0 16px 0 7px;border-radius:999px;
@@ -335,6 +338,10 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
 #bcp-send:hover{transform:scale(1.04);color:#fff;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 40%),
   linear-gradient(135deg,#f07fa0 0%,#c23a8c 40%,#7a4ce8 70%,#ff8746 100%)}
 #bcp-mic.on{background:var(--os-bad);color:#fff;animation:bcpPulse 1.1s ease-in-out infinite}
+/* voz conectando (toca para cancelar) / falló (toca para reintentar): el botón refleja el estado REAL de la voz */
+#bcp-mic.conn{background:var(--kos-accent-soft,rgba(76,141,246,.16));color:var(--os-accent,#4C8DF6);box-shadow:inset 0 0 0 2px var(--os-accent,#4C8DF6);animation:bcpPulse 1.1s ease-in-out infinite}
+#bcp-mic.err{color:var(--os-bad-ink,#F47C7C);box-shadow:inset 0 0 0 2px var(--os-bad,#f06565)}
+@media(prefers-reduced-motion:reduce){#bcp-mic.on,#bcp-mic.conn{animation:none}}
 /* escenario */
 #bcp-stage{flex:1;overflow-y:auto;padding:22px;position:relative;scrollbar-width:thin}
 @keyframes bcpStageIn{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -819,7 +826,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     };
     setT('#bcp-close', 'Cerrar', 'Close');
     setT('#bcp-send', 'Enviar', 'Send');
-    setT('#bcp-mic', 'Hablar con Khipu', 'Talk to Khipu');
+    _paintMic();   // título/aria del micrófono según el estado REAL de la voz, en el idioma actual
     var cd = ov.querySelector('#bcp-chatdock');
     if (cd) {
       cd.querySelector('.ttl').textContent = '💬 ' + L('Conversación con Khipu', 'Conversation with Khipu');
@@ -841,8 +848,9 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     if (deskActive()) desk().relabel();   // títulos de ventanas y barra de tareas en el idioma actual
     var st = ov.querySelector('#bcp-state');
     var tx = st && st.querySelector('.txt');
-    // solo el estado de reposo se re-traduce (no pisar "Escuchando"/"Pensando")
+    // el reposo y los estados de la VOZ se re-traducen (el "Pensando" del chat se respeta)
     if (tx && (!st.className || !tx.textContent)) tx.textContent = L('Listo', 'Ready');
+    else if (st && (/^(live|conn|err)$/.test(st.className) || (st.className === 'think' && _voiceSnap().state === 'thinking'))) _paintVoicePill(_voiceSnap());
     _paintChatHeader();
     _balRefresh();
   }
@@ -1172,6 +1180,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     try { new MutationObserver(function () { _paintThemeBtn(); }).observe(document.body, { attributes: true, attributeFilter: ['class'] }); } catch (e) {}
     // agentes encendidos/apagados (ventana "Tus agentes") → pila de mascotas y encabezado del chat
     window.addEventListener('khipu:agentprefs', function () { _paintAgentsBtn(); _paintChatHeader(); _paintAgentRow(); });
+    // la voz cambió de estado (conectando / escuchando / hablando / apagada / error) → micrófono y píldora
+    window.addEventListener('khipu:voice', _onVoiceEvent);
     // carteras o nombre cambiados en otra pestaña
     window.addEventListener('storage', function (e) {
       if (!e || !e.key) return;
@@ -1222,7 +1232,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   function setState(mode, text) {
     var el = document.getElementById('bcp-state');
     if (!el) return;
-    el.className = mode === 'live' ? 'live' : mode === 'think' ? 'think' : '';
+    // reposo con la voz VIVA (el chat terminó de pensar mientras Khipu escucha): la píldora vuelve a decir
+    // lo que hace la voz en vez de esconderse
+    if (!mode) { var vs = _voiceSnap(); if (_voiceLive(vs.state)) { _paintVoicePill(vs); return; } }
+    el.className = mode === 'live' ? 'live' : mode === 'think' ? 'think' : mode === 'conn' ? 'conn' : mode === 'err' ? 'err' : '';
+    if (mode !== 'err') el.removeAttribute('title');   // el título lleva el detalle de un error de voz
     var t = el.querySelector('.txt'); if (t && text) t.textContent = text;
     if (window.setBixbyThinking) window.setBixbyThinking(mode === 'think');
     // la mascota de Khipu "piensa" (barra y encabezado del chat)
@@ -1231,12 +1245,113 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     } catch (e) {}
   }
   // ── micrófono / voz ──
+  // El botón pinta el estado REAL de la voz (BixbyVoice.getState() + evento 'khipu:voice' de voice.js):
+  // conectando / escuchando / hablando / pensando / apagado / error. Antes se ponía "Escuchando" por su
+  // cuenta al tocar y, si la conexión se cancelaba (2.º toque) o fallaba, el botón quedaba encendido.
+  var VOICE_LBL = {
+    off: ['Hablar con Khipu', 'Talk to Khipu'],
+    connecting: ['Conectando…', 'Connecting…'],
+    listening: ['Escuchando', 'Listening'],
+    speaking: ['Hablando', 'Speaking'],
+    thinking: ['Pensando', 'Thinking'],
+    error: ['Error de voz', 'Voice error'],
+    unavailable: ['Voz no disponible', 'Voice unavailable'],
+  };
+  var VOICE_HINT = {
+    connecting: ['toca para cancelar', 'tap to cancel'],
+    live: ['toca para colgar', 'tap to hang up'],
+    error: ['toca para reintentar', 'tap to retry'],
+  };
+  var _micMissing = false;   // se tocó el micrófono sin voice.js cargada → "Voz no disponible" (error del botón)
+  var _micOwned = false;   // la voz la encendió ESTE micrófono → cerrar la Cabina la cuelga (como antes)
+  function _voiceLive(st) { return st === 'listening' || st === 'speaking' || st === 'thinking'; }
+  function _voiceSnap() {
+    var V = window.BixbyVoice;
+    if (!V) return { state: _micMissing ? 'error' : 'off', error: _micMissing ? L(VOICE_LBL.unavailable[0], VOICE_LBL.unavailable[1]) : '', connected: false, connecting: false };
+    var s = null;
+    if (typeof V.getState === 'function') { try { s = V.getState(); } catch (e) { s = null; } }
+    if (!s || !VOICE_LBL[s.state]) {   // voice.js sin getState (caché vieja): se deduce de las banderas
+      s = { state: V.isConnected ? 'listening' : V._connecting ? 'connecting' : 'off', error: '' };
+    }
+    return { state: s.state, error: s.error || '', connected: !!V.isConnected,
+             connecting: typeof V.isConnecting === 'function' ? !!V.isConnecting() : !!V._connecting };
+  }
+  // ¿la voz está viva, conectándose o reintentando? (tocar = colgar/cancelar; la demo no le habla encima)
+  function _voiceBusy() {
+    var s = _voiceSnap();
+    return s.connected || s.connecting || s.state === 'connecting' || _voiceLive(s.state);
+  }
+  function _paintMic(snap) {
+    var btn = document.getElementById('bcp-mic'); if (!btn) return;
+    snap = snap || _voiceSnap();
+    var st = VOICE_LBL[snap.state] ? snap.state : 'off';
+    var live = _voiceLive(st);
+    btn.classList.toggle('on', live);
+    btn.classList.toggle('conn', st === 'connecting');
+    btn.classList.toggle('err', st === 'error');
+    btn.setAttribute('data-voice', st);
+    btn.setAttribute('aria-pressed', (live || st === 'connecting') ? 'true' : 'false');
+    var lab = st === 'error' && !window.BixbyVoice ? VOICE_LBL.unavailable : VOICE_LBL[st];
+    var t = L(lab[0], lab[1]);
+    if (st === 'error' && snap.error && window.BixbyVoice) t += ': ' + snap.error;
+    var h = st === 'connecting' ? VOICE_HINT.connecting : live ? VOICE_HINT.live : (st === 'error' && window.BixbyVoice) ? VOICE_HINT.error : null;
+    if (h) t += ' — ' + L(h[0], h[1]);
+    btn.setAttribute('title', t);
+    btn.setAttribute('aria-label', t);
+  }
+  // el estado de la voz en la píldora de la barra superior (junto a "Khipus")
+  function _paintVoicePill(snap) {
+    var el = document.getElementById('bcp-state'); if (!el) return;
+    var st = snap.state, lab = VOICE_LBL[st];
+    if (st === 'connecting') setState('conn', L(lab[0], lab[1]));
+    else if (st === 'listening' || st === 'speaking') setState('live', L(lab[0], lab[1]));
+    else if (st === 'thinking') setState('think', L(lab[0], lab[1]));
+    else if (st === 'error') {
+      var u = !window.BixbyVoice ? VOICE_LBL.unavailable : lab;
+      setState('err', L(u[0], u[1]));
+      if (snap.error) el.setAttribute('title', snap.error); else el.removeAttribute('title');
+    } else if (/^(live|conn|err)$/.test(el.className)) setState('', L('Listo', 'Ready'));   // el "Pensando" del chat se respeta
+  }
+  function _onVoiceEvent(e) {
+    var d = (e && e.detail) || {};
+    if (!VOICE_LBL[d.state]) return;
+    _micMissing = false;
+    if (d.state === 'off' || d.state === 'error') _micOwned = false;
+    var snap = _voiceSnap();
+    snap.state = d.state;                         // el evento manda (llega en el mismo instante del cambio)
+    snap.error = d.state === 'error' ? (d.error || d.text || '') : '';
+    _paintMic(snap);
+    _paintVoicePill(snap);
+    _voiceErrToast(snap);
+  }
+  // el aviso de error de voice.js (toast() de app.html) queda DEBAJO de Khipus OS: con la Cabina abierta el
+  // motivo se muestra en una notificación de KhipuToast (una sola: los errores repetidos la actualizan)
+  function _voiceErrToast(snap) {
+    var T = window.KhipuToast; if (!T || !T.show) return;
+    try {
+      if (snap.state === 'error') {
+        if (open && snap.error) T.show({ id: 'kh-voice-err', kind: 'error', title: L('Error de voz', 'Voice error'), body: snap.error, timeout: 12000 });
+      } else if (snap.state === 'connecting' && T.dismiss) T.dismiss('kh-voice-err');   // nuevo intento: el aviso viejo sobra
+    } catch (e) {}
+  }
   function toggleMic() {
-    var btn = document.getElementById('bcp-mic');
-    if (!window.BixbyVoice) { setState('', L('Voz no disponible', 'Voice unavailable')); return; }
-    var on = window.BixbyVoice.isConnected;
-    if (on) { window.BixbyVoice.stop && window.BixbyVoice.stop(); if (btn) btn.classList.remove('on'); setState('', L('Listo', 'Ready')); }
-    else { window.BixbyVoice.toggle && window.BixbyVoice.toggle(); if (btn) btn.classList.add('on'); setState('live', L('Escuchando', 'Listening')); }
+    var V = window.BixbyVoice;
+    if (!V) {
+      _micMissing = true;
+      var s0 = _voiceSnap(); _paintMic(s0); _paintVoicePill(s0); _voiceErrToast(s0);
+      return;
+    }
+    _micMissing = false;
+    try {
+      // encendido, conectando o reintentando → colgar/cancelar; apagado o con error → conectar
+      var busy = _voiceBusy();
+      _micOwned = !busy;
+      var p = busy ? (V.stop ? V.stop() : V.toggle()) : (V.connect ? V.connect() : V.toggle());
+      if (p && typeof p.catch === 'function') p.catch(function () { _paintMic(); });
+    } catch (e) {}
+    // voice.js ya avisó por 'khipu:voice'; esto cubre una voice.js sin evento (pinta lo que dicen sus banderas)
+    var s = _voiceSnap(); _paintMic(s);
+    if (!(window.BixbyVoice && typeof window.BixbyVoice.getState === 'function')) _paintVoicePill(s);
   }
 
   // ── ADOPCIÓN de paneles reales: el grafo y la terminal se MUEVEN al
@@ -3991,8 +4106,10 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var ov = document.getElementById('bcp-ov');
     if (ov) ov.classList.remove('show');
     open = false;
-    var btn = document.getElementById('bcp-mic');
-    if (btn && btn.classList.contains('on') && window.BixbyVoice && window.BixbyVoice.stop) { window.BixbyVoice.stop(); btn.classList.remove('on'); }
+    // la voz que encendió este micrófono (encendida O conectándose) se cuelga al cerrar
+    if (_micOwned && window.BixbyVoice && window.BixbyVoice.stop && _voiceBusy()) window.BixbyVoice.stop();
+    _micOwned = false;
+    _paintMic();
   }
   // "Vista clásica" (menú de tus iniciales / paleta): cierra Khipus OS y la app vieja de pestañas
   // queda hasta que el usuario lo vuelva a abrir (botón de Khipu o ⌘K) — recordado en esta sesión
@@ -4109,9 +4226,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
 
   function _demoSpeak(text) {
     if (_demo.muted) return;
-    try {   // si la voz premium está conversando, NO la pisamos
-      var mic = document.getElementById('bcp-mic');
-      if (mic && mic.classList.contains('on')) return;
+    try {   // si la voz premium está conversando (o conectándose), NO la pisamos
+      if (_voiceBusy()) return;
     } catch (e) {}
     try {
       if (!window.speechSynthesis) return;

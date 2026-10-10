@@ -37,6 +37,10 @@ Fabrizio pagó Claude/Gemini/ElevenLabs (y Jev pronto). Workflow de 9 agentes (6
   conclusiones, 51 s). Pendientes chicos: pop-up de confirmación de orden (engine/toast.js) sigue oscuro en tema claro;
   engine/loading.js con texto oscuro fijo fuera de la Cabina; etiqueta 'cat.' tenue en xray.js; textos del 🩺 en inglés
   solo para la voz (server.py manda `detail` en español en el resto).
+- 3.ª tanda (sw v253): pop-ups y confirmación de órdenes (engine/toast.js) y cargadores (engine/loading.js) siguen el tema
+  (🔴 píldora roja sólida, botones Comprar/Vender sólidos AA); 🩺 bilingüe en TODAS las tarjetas (detail_en, fix_es/en;
+  la sugerencia va al final como " — QUÉ HACER: …") + orden de IAs en la tarjeta de Claude; botón del micrófono con el
+  estado REAL de la voz (BixbyVoice.getState(), evento 'khipu:voice'; cancelar mientras conecta lo apaga). Suite: 1550.
 - Tests: tests/test_overnight_*.py. Suite: 1460 en verde.
 - PENDIENTE Fabrizio (Railway): borrar AI_ORDER (o fijar AI_ORDER_FAST/DEEP), revisar AI_MODEL_DEEP, TYPESAFE_API_KEY;
   ElevenLabs: overrides del agente y ELEVENLABS_ALLOW_OVERRIDE si quiere que el sync repare el agente.

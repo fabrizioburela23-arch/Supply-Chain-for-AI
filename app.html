@@ -7770,7 +7770,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
     if(label) label.style.display = on?'block':'none';
     if(viz)   viz.style.opacity   = on?'0':'1';
     const badge = document.getElementById('bixby-state-badge');
-    if(badge && on) { badge.textContent='PENSANDO'; badge.style.color='#00ccff'; badge.style.borderColor='rgba(0,204,255,.4)'; }
+    if(badge && on) { badge.textContent=(window.LANG==='en'?'THINKING':'PENSANDO'); badge.style.color='#00ccff'; badge.style.borderColor='rgba(0,204,255,.4)'; }
   };
 
   if(document.readyState==='loading')

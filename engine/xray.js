@@ -172,6 +172,11 @@
    app.html liveCapDot ✓) — dentro del X-Ray se leen con los tokens */
 .xray-scope span[onclick*="explainMetric"]{color:var(--xr-link)!important;border-color:var(--os-line,rgba(255,255,255,.07))!important;background:var(--xr-cell)}
 .xray-scope span[style*="#7ecbff" i]{color:var(--xr-link)!important}
+/* rótulo «cat.» (capitalización del CATÁLOGO, sin dato en vivo): liveCapDot lo pinta con var(--ink-3) de la piel
+   vieja (tinta al 40 % ≈ 2.5:1 en claro) → tinta secundaria del OS (≥ 4.5:1 en ambos temas); el punto «●
+   en vivo» con el verde de RELLENO del tema (el neón fijo casi no se veía en claro) */
+.xray-scope span[style*="var(--ink-3)"]{color:var(--os-ink-2,#A6A8B5)!important;font-size:10px!important;font-weight:600!important}
+.xray-scope .xr-mcap>b{color:var(--os-good,#2fbf5b)!important}
 /* ── modo escenario (ventana de Khipus OS / Cabina) ── */
 .xray-scope.xr-full{padding:0 2px 20px}
 .xray-scope.xr-full .xr-hd{padding:4px 4px 16px}

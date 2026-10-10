@@ -1035,11 +1035,101 @@ def _diag_redact(text, limit=200):
                           limit=limit)
 
 
+def _diag_card(es, en, fix=None, **fields):
+    """Resultado de una tarjeta del 🩺 en los DOS idiomas (regla bilingüe): `detail` (ES, como siempre) +
+    `detail_en`. Si hay un arreglo, va en `fix_es`/`fix_en` Y al final del detalle como « — QUÉ HACER: … » /
+    « — WHAT TO DO: … » (el mismo formato que la voz): quien lea solo `detail` lo sigue viendo entero, y la
+    tarjeta (app.html _diagTexts) lo quita del detalle al pintarlo aparte en «Qué hacer», sin repetirlo.
+    `fix` = (es, en) o None. El resto de las claves (configured, ok, latency_ms, mode…) pasan tal cual."""
+    out = dict(fields)
+    if fix and fix[0] and fix[1]:
+        out['detail'] = f'{es} — QUÉ HACER: {fix[0]}'
+        out['detail_en'] = f'{en} — WHAT TO DO: {fix[1]}'
+        out['fix_es'], out['fix_en'] = fix[0], fix[1]
+    else:
+        out['detail'], out['detail_en'] = es, en
+    return out
+
+
+def _diag_model_name(mid):
+    """Nombre legible de un modelo de Claude: 'claude-sonnet-5-5' → 'Claude Sonnet 5.5' ·
+    'claude-haiku-4-5-20251001' → 'Claude Haiku 4.5' · 'claude-3-5-sonnet-20241022' → 'Claude Sonnet 3.5'.
+    Lo que no reconoce queda tal cual (nunca inventa)."""
+    raw = re.sub(r'\[[^\]]*\]$', '', str(mid or '').strip())
+    parts = [p for p in re.split(r'[-_]', raw.lower()) if p]
+    if not parts or parts[0] != 'claude':
+        return raw or 'Claude'
+    fam = next((p for p in parts[1:] if p.isalpha()), '')
+    if not fam:
+        return raw
+    nums = [p for p in parts[1:] if p.isdigit() and len(p) < 8]       # fuera la fecha (20251001)
+    return 'Claude ' + fam.capitalize() + (' ' + '.'.join(nums) if nums else '')
+
+
+def _diag_ai_route():
+    """(es, en): el orden EFECTIVO de las IAs por nivel (core.ai.ai_route_state) en palabras simples, p. ej.
+    «Profundo: Claude Sonnet 5.5 → Gemini → NVIDIA · Rápido: Gemini → Claude Haiku 4.5 → NVIDIA». Marca las
+    que hoy se saltan (sin clave / en pausa) y si el orden lo fija una variable de Railway. Va ENTRE PARÉNTESIS a
+    propósito: la tarjeta separa la pista « → …» del servidor en la primera flecha FUERA de paréntesis
+    (app.html _diagHintAt) y las flechas del orden no son una pista. Solo nombres de modelo: nunca claves.
+    Nunca lanza (sin estado → ('', ''))."""
+    try:
+        from core.ai import ai_route_state, circuit_open
+        st = ai_route_state() or {}
+    except Exception:  # noqa: BLE001 — el 🩺 jamás se rompe por esto
+        return '', ''
+    models = st.get('models') or {}
+
+    def chain(tier, en):
+        avail = set(st.get(tier + '_available') or [])
+        names = []
+        for p in st.get(tier) or []:
+            name = (_diag_model_name(models.get(tier)) if p == 'claude'
+                    else {'gemini': 'Gemini', 'nvidia': 'NVIDIA'}.get(p, str(p)))
+            if p not in avail:
+                try:
+                    paused = circuit_open(p) is not None
+                except Exception:  # noqa: BLE001
+                    paused = False
+                name += (' (paused)' if en else ' (en pausa)') if paused else (' (no key)' if en else ' (sin clave)')
+            names.append(name)
+        return ' → '.join(names) or '—'
+
+    def label(tier, en):
+        base = {('deep', False): 'Profundo', ('deep', True): 'Deep',
+                ('fast', False): 'Rápido', ('fast', True): 'Fast'}[(tier, en)]
+        src = st.get(tier + '_source')
+        if src and src != 'default':
+            base += f' (set by {src})' if en else f' (lo fija {src})'
+        return base
+
+    es = (f"(Orden de las IAs — {label('deep', False)}: {chain('deep', False)} · "
+          f"{label('fast', False)}: {chain('fast', False)})")
+    en = (f"(AI order — {label('deep', True)}: {chain('deep', True)} · "
+          f"{label('fast', True)}: {chain('fast', True)})")
+    return _diag_redact(es, limit=600), _diag_redact(en, limit=600)
+
+
 def _diag_claude():
+    from core.config import AI_MODEL_FAST, AI_MODEL_DEEP
+
+    def _with_route(txt, route):
+        if not route:
+            return txt
+        return f'{txt} {route}' if txt.endswith('.') else f'{txt} · {route}'
+
     if not CLAUDE:
-        return {'configured': False, 'ok': False,
-                'detail': 'ANTHROPIC_KEY no está en las variables del servidor (Railway). '
-                          'Sin ella: Canvas IA, análisis de Khipu y el fallback del War-Room fallan.'}
+        r_es, r_en = _diag_ai_route()
+        return _diag_card(
+            _with_route('ANTHROPIC_KEY no está en las variables del servidor (Railway). '
+                        'Sin ella: Canvas IA, análisis de Khipu y el fallback del War-Room fallan.', r_es),
+            _with_route('ANTHROPIC_KEY is not in the server variables (Railway). '
+                        'Without it: AI Canvas, Khipu analysis and the War-Room fallback fail.', r_en),
+            ('En Railway → tu servicio → Variables → añade ANTHROPIC_KEY con tu clave de console.anthropic.com. '
+             'No hace falta tocar código.',
+             'In Railway → your service → Variables → add ANTHROPIC_KEY with your key from console.anthropic.com. '
+             'No code changes needed.'),
+            configured=False, ok=False)
     t0 = time.time()
     try:
         import anthropic
@@ -1059,7 +1149,6 @@ def _diag_claude():
 
         # Prueba explícita del modelo FAST y del DEEP (sonnet-5) por separado,
         # para diagnosticar exactamente cuál acepta la key.
-        from core.config import AI_MODEL_FAST, AI_MODEL_DEEP
         res, oks = {}, []
         for label, mid in (('fast', AI_MODEL_FAST), ('deep', AI_MODEL_DEEP)):
             try:
@@ -1068,77 +1157,106 @@ def _diag_claude():
             except Exception as e:  # noqa: BLE001
                 res[label] = f'{mid} ✗ ({_diag_redact(e)})'
         detail = 'FAST: ' + res['fast'] + ' · DEEP: ' + res['deep']
-        if not oks:
-            # Los dos niveles fallaron: la causa suele ser una sola (saldo,
-            # key, modelo retirado). Se dice una vez, en claro.
-            detail += _ai_error_hint(res['fast'] + ' ' + res['deep'],
-                                     AI_MODEL_FAST, 'AI_MODEL_FAST/AI_MODEL_DEEP')
+        # Los dos niveles fallaron: la causa suele ser una sola (saldo, key, modelo retirado). Se dice una vez,
+        # en claro, en los dos idiomas (fix_es/fix_en).
+        fix = None if oks else _ai_error_fix(res['fast'] + ' ' + res['deep'],
+                                             AI_MODEL_FAST, 'AI_MODEL_FAST/AI_MODEL_DEEP')
         # R1: el ping del 🩺 abre/cierra la pausa de Claude (los otros dos van por _complete_*)
         try:
             from core.ai import observe_diag
             observe_diag('claude', bool(oks), res['fast'] + ' ' + res['deep'])
         except Exception:  # noqa: BLE001
             pass
-        return {'configured': True, 'ok': bool(oks), 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': detail}
+        r_es, r_en = _diag_ai_route()          # DESPUÉS del ping: refleja la pausa que acaba de abrir/cerrar
+        return _diag_card(_with_route(detail, r_es), _with_route(detail, r_en), fix,
+                          configured=True, ok=bool(oks), latency_ms=int((time.time() - t0) * 1000))
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'Key presente pero la API rechazó la llamada: ' + _diag_redact(e)}
+        red = _diag_redact(e)
+        r_es, r_en = _diag_ai_route()
+        return _diag_card(_with_route('Key presente pero la API rechazó la llamada: ' + red, r_es),
+                          _with_route('Key present but the API rejected the call: ' + red, r_en),
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
 
 
-def _ai_error_hint(err_text, modelo, env_var):
-    """Traduce el error crudo de un proveedor de IA a algo accionable.
+def _ai_error_fix(err_text, modelo, env_var):
+    """(es, en) del arreglo para el error crudo de un proveedor de IA, o None si no hay pista reconocible
+    (sin pista NO se inventa una explicación).
 
     Un '404'/'410' pelado no le dice a nadie qué hacer. Los proveedores RETIRAN
     modelos: pasó en sept-2026 con gemini-2.0-flash (404) y
     meta/llama-3.1-70b-instruct (410) a la vez, dejando la app sin respaldo.
     El arreglo nunca es tocar código — es cambiar la variable de entorno."""
     s = str(err_text)
-    if '404' in s or '410' in s or 'not found' in s.lower() or 'not_found' in s.lower():
-        return (f' → El modelo «{modelo}» ya no existe en el proveedor (retirado). '
+    low = s.lower()
+    if '404' in s or '410' in s or 'not found' in low or 'not_found' in low:
+        return (f'El modelo «{modelo}» ya no existe en el proveedor (retirado). '
                 f'Arreglo: pon {env_var} en Railway con un modelo vigente de su catálogo. '
-                f'No hace falta desplegar.')
-    if '401' in s or '403' in s or 'api key' in s.lower() or 'unauthorized' in s.lower():
-        return ' → La key parece inválida o sin permisos para ese modelo.'
-    if '429' in s or 'quota' in s.lower() or 'rate' in s.lower():
-        return ' → Límite de uso alcanzado (cuota o rate-limit). Espera o sube el plan.'
-    if 'credit' in s.lower() or 'balance' in s.lower() or 'billing' in s.lower():
-        return ' → Saldo agotado: recarga en la consola del proveedor.'
-    return ''
+                f'No hace falta desplegar.',
+                f'The model “{modelo}” no longer exists at the provider (retired). '
+                f'Fix: set {env_var} in Railway to a current model from its catalog. '
+                f'No redeploy needed.')
+    if '401' in s or '403' in s or 'api key' in low or 'unauthorized' in low:
+        return ('La key parece inválida o sin permisos para ese modelo.',
+                'The key looks invalid or has no permission for that model.')
+    if '429' in s or 'quota' in low or 'rate' in low:
+        return ('Límite de uso alcanzado (cuota o rate-limit). Espera o sube el plan.',
+                'Usage limit reached (quota or rate limit). Wait or upgrade the plan.')
+    if 'credit' in low or 'balance' in low or 'billing' in low:
+        return ('Saldo agotado: recarga en la consola del proveedor.',
+                'Out of credit: top up in the provider console.')
+    return None
+
+
+def _ai_error_hint(err_text, modelo, env_var):
+    """Pista en español con el formato viejo (' → …'); '' si no hay pista. Ver `_ai_error_fix` (ES + EN)."""
+    fx = _ai_error_fix(err_text, modelo, env_var)
+    return (' → ' + fx[0]) if fx else ''
 
 
 def _diag_gemini():
     if not GEMINI_KEY:
-        return {'configured': False, 'ok': False,
-                'detail': 'GEMINI_KEY no está. (Opcional) Canal de respaldo de IA — Google Gemini.'}
+        return _diag_card(
+            'GEMINI_KEY no está. (Opcional) Canal de respaldo de IA — Google Gemini.',
+            'GEMINI_KEY is not set. (Optional) Backup AI channel — Google Gemini.',
+            ('Opcional: crea una clave en aistudio.google.com y ponla en Railway → tu servicio → Variables → '
+             'GEMINI_KEY.',
+             'Optional: create a key at aistudio.google.com and put it in Railway → your service → Variables → '
+             'GEMINI_KEY.'),
+            configured=False, ok=False)
     t0 = time.time()
     try:
         txt, model = _complete_gemini('', 'ping', 1)
-        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': f'Key válida — {model} respondió.'}
+        return _diag_card(f'Key válida — {model} respondió.', f'Valid key — {model} answered.',
+                          configured=True, ok=True, latency_ms=int((time.time() - t0) * 1000))
     except Exception as e:  # noqa: BLE001
         from core.config import GEMINI_MODEL
         red = _diag_redact(e)
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'Gemini rechazó la llamada: ' + red
-                          + _ai_error_hint(red, GEMINI_MODEL, 'GEMINI_MODEL')}
+        return _diag_card('Gemini rechazó la llamada: ' + red, 'Gemini rejected the call: ' + red,
+                          _ai_error_fix(red, GEMINI_MODEL, 'GEMINI_MODEL'),
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
 
 
 def _diag_nvidia():
     if not NVIDIA_KEY:
-        return {'configured': False, 'ok': False,
-                'detail': 'NVIDIA_KEY no está. (Opcional) Canal de respaldo de IA — NVIDIA NIM (gratis para MVP).'}
+        return _diag_card(
+            'NVIDIA_KEY no está. (Opcional) Canal de respaldo de IA — NVIDIA NIM (gratis para MVP).',
+            'NVIDIA_KEY is not set. (Optional) Backup AI channel — NVIDIA NIM (free for the MVP).',
+            ('Opcional: crea una clave en build.nvidia.com y ponla en Railway → tu servicio → Variables → '
+             'NVIDIA_KEY.',
+             'Optional: create a key at build.nvidia.com and put it in Railway → your service → Variables → '
+             'NVIDIA_KEY.'),
+            configured=False, ok=False)
     t0 = time.time()
     try:
         txt, model = _complete_nvidia('', 'ping', 1)
-        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': f'Key válida — {model} respondió.'}
+        return _diag_card(f'Key válida — {model} respondió.', f'Valid key — {model} answered.',
+                          configured=True, ok=True, latency_ms=int((time.time() - t0) * 1000))
     except Exception as e:  # noqa: BLE001
         from core.config import NVIDIA_MODEL
         red = _diag_redact(e)
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'NVIDIA rechazó la llamada: ' + red
-                          + _ai_error_hint(red, NVIDIA_MODEL, 'NVIDIA_MODEL')}
+        return _diag_card('NVIDIA rechazó la llamada: ' + red, 'NVIDIA rejected the call: ' + red,
+                          _ai_error_fix(red, NVIDIA_MODEL, 'NVIDIA_MODEL'),
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
 
 
 def _diag_elevenlabs():
@@ -1153,7 +1271,7 @@ def _diag_elevenlabs():
                          expected_tools=[t['name'] for t in _bixby_client_tools()],
                          prompt=BIXBY_SYSTEM_PROMPT, full=False)
         d['detail'] = _diag_redact(d.get('detail') or '', limit=2400)       # lleva "QUÉ HACER" numerado
-        d['detail_en'] = _diag_redact(d.get('detail_en') or '', limit=2400)
+        d['detail_en'] = _diag_redact(d.get('detail_en') or d.get('detail') or '', limit=2400)
         return d
     except Exception as e:  # noqa: BLE001 — el 🩺 jamás se rompe por la voz
         return {'configured': bool(ELEVENLABS_KEY), 'ok': False,
@@ -1163,10 +1281,10 @@ def _diag_elevenlabs():
                 'detail_en': 'Could not check ElevenLabs: ' + _diag_redact(e)}
 
 
-def _db_error_hint(err_text):
-    """Traduce un error de conexión a base de datos a algo accionable.
+def _db_error_fix(err_text):
+    """(es, en) del arreglo para un error de conexión a base de datos, o None.
 
-    Mismo criterio que `_ai_error_hint`: un traceback de psycopg2 no le dice a
+    Mismo criterio que `_ai_error_fix`: un traceback de psycopg2 no le dice a
     nadie qué hacer. El caso real (sept-2026): DATABASE_URL apuntaba a
     'postgres.railway.internal' — el host de la red privada de Railway — pero
     el servicio Postgres ya no existía con ese nombre, así que el DNS interno
@@ -1175,23 +1293,40 @@ def _db_error_hint(err_text):
     obsoleta."""
     s = str(err_text).lower()
     if 'railway.internal' in s and ('translate host name' in s or 'name or service not known' in s):
-        return (' → El servicio de base de datos no existe con ese nombre en el proyecto. '
+        return ('El servicio de base de datos no existe con ese nombre en el proyecto. '
                 'En Railway: crea el Postgres (+ New → Database) y pon la variable como '
                 'REFERENCIA, no como texto: DATABASE_URL = ${{Postgres.DATABASE_URL}} '
                 '(usa el nombre EXACTO que aparece en la tarjeta del servicio). '
-                'Así Railway la resuelve sola y no vuelve a quedarse obsoleta.')
+                'Así Railway la resuelve sola y no vuelve a quedarse obsoleta.',
+                'The database service does not exist with that name in the project. '
+                'In Railway: create the Postgres (+ New → Database) and set the variable as a '
+                'REFERENCE, not as text: DATABASE_URL = ${{Postgres.DATABASE_URL}} '
+                '(use the EXACT name shown on the service card). '
+                'That way Railway resolves it by itself and it never goes stale again.')
     if 'translate host name' in s or 'name or service not known' in s or 'nodename nor servname' in s:
-        return (' → El host de la base de datos no resuelve: el servidor no existe, cambió de '
-                'nombre, o la instancia gratuita se borró por inactividad.')
+        return ('El host de la base de datos no resuelve: el servidor no existe, cambió de '
+                'nombre, o la instancia gratuita se borró por inactividad.',
+                'The database host does not resolve: the server does not exist, was renamed, '
+                'or the free instance was deleted for inactivity.')
     if 'password authentication failed' in s or 'authentication' in s:
-        return ' → El host responde pero las credenciales no son válidas: revisa usuario/contraseña.'
+        return ('El host responde pero las credenciales no son válidas: revisa usuario/contraseña.',
+                'The host answers but the credentials are not valid: check user/password.')
     if 'does not exist' in s and 'database' in s:
-        return ' → El servidor responde pero esa base de datos no existe.'
+        return ('El servidor responde pero esa base de datos no existe.',
+                'The server answers but that database does not exist.')
     if 'connection refused' in s:
-        return ' → El host resuelve pero nadie escucha en ese puerto: ¿el servicio está apagado?'
+        return ('El host resuelve pero nadie escucha en ese puerto: ¿el servicio está apagado?',
+                'The host resolves but nobody listens on that port: is the service turned off?')
     if 'timeout' in s or 'timed out' in s:
-        return ' → Tiempo de espera agotado: red o firewall entre la app y la base.'
-    return ''
+        return ('Tiempo de espera agotado: red o firewall entre la app y la base.',
+                'Timed out: network or firewall between the app and the database.')
+    return None
+
+
+def _db_error_hint(err_text):
+    """Pista en español con el formato viejo (' → …'); '' si no hay pista. Ver `_db_error_fix` (ES + EN)."""
+    fx = _db_error_fix(err_text)
+    return (' → ' + fx[0]) if fx else ''
 
 
 def _diag_ontologia():
@@ -1201,9 +1336,12 @@ def _diag_ontologia():
     try:
         from ontology.db import ontology_available
         if not ontology_available():
-            return {'configured': False, 'ok': True,
-                    'detail': 'Ontología no configurada (opcional). Añade el plugin de Postgres en '
-                              'Railway y DATABASE_URL para activar /api/ontology/*.'}
+            return _diag_card(
+                'Ontología no configurada (opcional). Añade el plugin de Postgres en '
+                'Railway y DATABASE_URL para activar /api/ontology/*.',
+                'Ontology not set up (optional). Add the Postgres plugin in '
+                'Railway and DATABASE_URL to turn on /api/ontology/*.',
+                configured=False, ok=True)
         # AUTO-REPARACIÓN: si la base arrancó DESPUÉS que la app (Railway lanza
         # los contenedores en paralelo), init_schema pudo fallar en el boot y el
         # esquema se quedó viejo — la app respondía 'column events.source_id
@@ -1214,10 +1352,15 @@ def _diag_ontologia():
         if faltantes:
             reparado = init_schema()
             if not reparado or schema_outdated():
-                return {'configured': True, 'ok': False,
-                        'detail': f'Esquema desactualizado: faltan {", ".join(faltantes)}. '
-                                  'Se intentó reparar automáticamente y no se pudo — '
-                                  'reinicia el servicio en Railway (Deployments → Restart).'}
+                cols = ', '.join(faltantes)
+                return _diag_card(
+                    f'Esquema desactualizado: faltan {cols}. '
+                    'Se intentó reparar automáticamente y no se pudo.',
+                    f'Outdated schema: missing {cols}. '
+                    'An automatic repair was attempted and failed.',
+                    ('Reinicia el servicio en Railway (Deployments → Restart) y luego pulsa ↻ Re-probar.',
+                     'Restart the service in Railway (Deployments → Restart), then press ↻ Re-test.'),
+                    configured=True, ok=False)
             log.warning('Esquema de la ontología reparado en caliente: %s', faltantes)
 
         from ontology.db import session_scope
@@ -1227,42 +1370,56 @@ def _diag_ontologia():
             n_link = s.query(LinkRecord).count()
             n_ev = s.query(Event).count()
             last_ev = s.query(Event).order_by(Event.recorded_at.desc()).first()
-        lineage = f' · último evento: {last_ev.recorded_at.strftime("%Y-%m-%d %H:%M UTC")} ({last_ev.source})' if last_ev else ''
-        return {'configured': True, 'ok': True,
-                'detail': f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.{lineage}'}
+        lineage = lineage_en = ''
+        if last_ev:
+            _when = last_ev.recorded_at.strftime("%Y-%m-%d %H:%M UTC")
+            lineage = f' · último evento: {_when} ({last_ev.source})'
+            lineage_en = f' · last event: {_when} ({last_ev.source})'
+        return _diag_card(f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.{lineage}',
+                          f'Ontology active — {n_obj} objects, {n_link} links, {n_ev} events.{lineage_en}',
+                          configured=True, ok=True)
     except Exception as e:  # noqa: BLE001
         red = _diag_redact(e)
-        return {'configured': True, 'ok': False,
-                'detail': 'Ontología configurada pero no conecta: ' + red + _db_error_hint(red)}
+        return _diag_card('Ontología configurada pero no conecta: ' + red,
+                          'Ontology is set up but does not connect: ' + red,
+                          _db_error_fix(red), configured=True, ok=False)
 
 
 def _diag_grafo():
     mode = _temporal_mode()
     if mode == 'native':
-        return {'configured': True, 'ok': True,
-                'detail': 'Grafo de Conocimiento Temporal en modo NATIVO (client-side + memoria). '
-                          'Añade NEO4J_URI/USER/PASSWORD para memoria persistente en Neo4j.'}
+        return _diag_card(
+            'Grafo de Conocimiento Temporal en modo NATIVO (client-side + memoria). '
+            'Añade NEO4J_URI/USER/PASSWORD para memoria persistente en Neo4j.',
+            'Temporal Knowledge Graph in NATIVE mode (client-side + memory). '
+            'Add NEO4J_URI/USER/PASSWORD for persistent memory in Neo4j.',
+            configured=True, ok=True)
     # neo4j mode → probar conexión. Mostramos usuario + host (seguros) para
-    # depurar el Unauthorized sin exponer la contraseña.
+    # depurar el Unauthorized sin exponer la contraseña (solo su LARGO).
     host = ''
     try:
         host = NEO4J_URI.split('://', 1)[-1].split('@')[-1].split('/')[0]
     except Exception:  # noqa: BLE001
-        host = '(uri inválida)'
-    ctx = f' [usuario={NEO4J_USER} · host={host} · pw={len(NEO4J_PASSWORD)} car.]'
-    warn = ''
+        host = ''
+    ctx = f' [usuario={NEO4J_USER} · host={host or "(uri inválida)"} · pw={len(NEO4J_PASSWORD)} car.]'
+    ctx_en = f' [user={NEO4J_USER} · host={host or "(invalid uri)"} · pw={len(NEO4J_PASSWORD)} chars]'
+    warn = warn_en = ''
     if _NEO4J_PASSWORD_RAW != _NEO4J_PASSWORD_RAW.strip():
         warn += ' ⚠ la contraseña tenía espacios (ya la limpié, pero revísala).'
+        warn_en += ' ⚠ the password had spaces (already trimmed, but check it).'
     t0 = time.time()
     try:
         drv = _get_neo4j_driver()
         drv.verify_connectivity()
-        return {'configured': True, 'ok': True, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'Neo4j conectado — memoria temporal persistente activa.' + ctx}
+        return _diag_card('Neo4j conectado — memoria temporal persistente activa.' + ctx,
+                          'Neo4j connected — persistent temporal memory active.' + ctx_en,
+                          configured=True, ok=True, latency_ms=int((time.time() - t0) * 1000))
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'NEO4J configurado pero no conecta: ' + _diag_redact(e)
-                          + _db_error_hint(_diag_redact(e)) + ctx + warn}
+        red = _diag_redact(e)
+        return _diag_card('NEO4J configurado pero no conecta: ' + red + ctx + warn,
+                          'NEO4J is set up but does not connect: ' + red + ctx_en + warn_en,
+                          _db_error_fix(red),
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
 
 
 def _diag_alpaca():
@@ -1271,24 +1428,46 @@ def _diag_alpaca():
     el gap de seguridad/UX más grande (no había forma de verlo dentro de la app)."""
     mode = 'paper' if 'paper-api' in ALPACA_BASE else 'live'
     if not ALPACA_KEY:
-        return {'configured': False, 'ok': False, 'mode': mode,
-                'detail': 'ALPACA_KEY sin configurar — el bróker simulado está apagado.'}
+        return _diag_card(
+            'ALPACA_KEY sin configurar — el bróker simulado está apagado.',
+            'ALPACA_KEY not set — the simulated broker is off.',
+            ('Opcional: crea una cuenta de papel (simulada, gratis) en alpaca.markets y pon ALPACA_KEY y '
+             'ALPACA_SECRET en Railway → tu servicio → Variables.',
+             'Optional: create a paper (simulated, free) account at alpaca.markets and put ALPACA_KEY and '
+             'ALPACA_SECRET in Railway → your service → Variables.'),
+            configured=False, ok=False, mode=mode)
     try:
         r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=8)
         ok = r.status_code == 200
-        detail = ('Cuenta PAPEL (simulada) conectada — sin dinero real.' if ok and mode == 'paper'
-                  else '⚠ Cuenta REAL conectada — las órdenes mueven dinero de verdad.' if ok
-                  else f'Alpaca respondió HTTP {r.status_code}.')
-        return {'configured': True, 'ok': ok, 'mode': mode, 'detail': detail}
+        if ok and mode == 'paper':
+            es, en = ('Cuenta PAPEL (simulada) conectada — sin dinero real.',
+                      'PAPER (simulated) account connected — no real money.')
+        elif ok:
+            es, en = ('⚠ Cuenta REAL conectada — las órdenes mueven dinero de verdad.',
+                      '⚠ REAL account connected — orders move real money.')
+        else:
+            es, en = f'Alpaca respondió HTTP {r.status_code}.', f'Alpaca answered HTTP {r.status_code}.'
+        fix = None
+        if r.status_code in (401, 403):
+            fix = ('Revisa ALPACA_KEY y ALPACA_SECRET en Railway → tu servicio → Variables (las claves de papel '
+                   'solo sirven con la dirección de papel y las reales con la real).',
+                   'Check ALPACA_KEY and ALPACA_SECRET in Railway → your service → Variables (paper keys only '
+                   'work with the paper address, live keys with the live one).')
+        return _diag_card(es, en, fix, configured=True, ok=ok, mode=mode)
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'mode': mode,
-                'detail': f'Alpaca inalcanzable: {str(e)[:100]}'}
+        red = _diag_redact(e, limit=100)       # antes str(e) crudo: podía arrastrar una cabecera o URL con clave
+        return _diag_card(f'Alpaca inalcanzable: {red}', f'Alpaca unreachable: {red}',
+                          configured=True, ok=False, mode=mode)
 
 
 def _diag_finnhub():
     if not FINNHUB:
-        return {'configured': False, 'ok': False,
-                'detail': 'FINNHUB_KEY no está. Los precios en vivo del terminal no cargarán.'}
+        return _diag_card(
+            'FINNHUB_KEY no está. Los precios en vivo del terminal no cargarán.',
+            'FINNHUB_KEY is not set. Live prices in the terminal will not load.',
+            ('Crea una clave gratis en finnhub.io y ponla en Railway → tu servicio → Variables → FINNHUB_KEY.',
+             'Create a free key at finnhub.io and put it in Railway → your service → Variables → FINNHUB_KEY.'),
+            configured=False, ok=False)
     t0 = time.time()
     try:
         r = requests.get(f'https://finnhub.io/api/v1/quote?symbol=AAPL&token={FINNHUB}', timeout=6)
@@ -1296,23 +1475,45 @@ def _diag_finnhub():
         if r.ok:
             c = (r.json() or {}).get('c')
             if isinstance(c, (int, float)) and c > 0:
-                return {'configured': True, 'ok': True, 'latency_ms': lat,
-                        'detail': f'Key válida — cotización AAPL ${c} OK.'}
-            return {'configured': True, 'ok': False, 'latency_ms': lat,
-                    'detail': 'Key responde pero sin datos (¿límite de plan agotado?).'}
-        return {'configured': True, 'ok': False, 'latency_ms': lat,
-                'detail': f'Finnhub HTTP {r.status_code} — key inválida o rate-limited.'}
+                return _diag_card(f'Key válida — cotización AAPL ${c} OK.', f'Valid key — AAPL quote ${c} OK.',
+                                  configured=True, ok=True, latency_ms=lat)
+            return _diag_card(
+                'Key responde pero sin datos (¿límite de plan agotado?).',
+                'The key answers but with no data (plan limit used up?).',
+                ('Espera unos minutos y pulsa ↻ Re-probar; si sigue igual, revisa tu plan en finnhub.io. '
+                 'Mientras tanto los precios vienen de Yahoo.',
+                 'Wait a few minutes and press ↻ Re-test; if nothing changes, check your plan at finnhub.io. '
+                 'Meanwhile prices come from Yahoo.'),
+                configured=True, ok=False, latency_ms=lat)
+        fix = None
+        if r.status_code in (401, 403):
+            fix = ('Revisa FINNHUB_KEY en Railway → tu servicio → Variables (cópiala de nuevo desde finnhub.io).',
+                   'Check FINNHUB_KEY in Railway → your service → Variables (copy it again from finnhub.io).')
+        elif r.status_code == 429:
+            fix = ('Límite de uso alcanzado: espera un minuto y pulsa ↻ Re-probar. '
+                   'Mientras tanto los precios vienen de Yahoo.',
+                   'Usage limit reached: wait a minute and press ↻ Re-test. Meanwhile prices come from Yahoo.')
+        return _diag_card(f'Finnhub HTTP {r.status_code} — key inválida o rate-limited.',
+                          f'Finnhub HTTP {r.status_code} — invalid key or rate-limited.',
+                          fix, configured=True, ok=False, latency_ms=lat)
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'No se pudo contactar Finnhub: ' + _diag_redact(e)}
+        red = _diag_redact(e)
+        return _diag_card('No se pudo contactar Finnhub: ' + red, 'Could not reach Finnhub: ' + red,
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
 
 
 def _diag_fmp():
     """FMP se PRUEBA de verdad (perfil de AAPL): antes la barra de salud decía
     "listo" solo porque la key existía, aunque el plan devolviera 402."""
     if not FMP:
-        return {'configured': False, 'ok': False,
-                'detail': 'FMP_KEY no está. Estados financieros y dossier usan Yahoo/AlphaVantage.'}
+        return _diag_card(
+            'FMP_KEY no está. Estados financieros y dossier usan Yahoo/AlphaVantage.',
+            'FMP_KEY is not set. Financial statements and the dossier use Yahoo/AlphaVantage.',
+            ('Opcional: crea una clave en financialmodelingprep.com y ponla en Railway → tu servicio → '
+             'Variables → FMP_KEY.',
+             'Optional: create a key at financialmodelingprep.com and put it in Railway → your service → '
+             'Variables → FMP_KEY.'),
+            configured=False, ok=False)
     t0 = time.time()
     try:
         r = requests.get(f'https://financialmodelingprep.com/stable/profile?symbol=AAPL&apikey={FMP}', timeout=8)
@@ -1322,16 +1523,29 @@ def _diag_fmp():
             row = body[0] if isinstance(body, list) and body else (body if isinstance(body, dict) else {})
             name = row.get('companyName') or row.get('symbol')
             if name:
-                return {'configured': True, 'ok': True, 'latency_ms': lat,
-                        'detail': f'Key válida — perfil de AAPL ({name}) OK.'}
-            return {'configured': True, 'ok': False, 'latency_ms': lat,
-                    'detail': 'Key responde pero sin datos (¿plan sin cobertura?).'}
-        hint = ' — plan sin acceso a este endpoint (402).' if r.status_code == 402 else ' — key inválida o rate-limited.'
-        return {'configured': True, 'ok': False, 'latency_ms': lat,
-                'detail': f'FMP HTTP {r.status_code}{hint}'}
+                return _diag_card(f'Key válida — perfil de AAPL ({name}) OK.', f'Valid key — AAPL profile ({name}) OK.',
+                                  configured=True, ok=True, latency_ms=lat)
+            return _diag_card('Key responde pero sin datos (¿plan sin cobertura?).',
+                              'The key answers but with no data (plan without coverage?).',
+                              configured=True, ok=False, latency_ms=lat)
+        if r.status_code == 402:
+            hint, hint_en = ' — plan sin acceso a este endpoint (402).', ' — the plan has no access to this endpoint (402).'
+            fix = ('Es normal en el plan gratuito: los estados financieros salen de Yahoo/AlphaVantage. '
+                   'Para usar FMP aquí, sube de plan en financialmodelingprep.com.',
+                   'Normal on the free plan: financial statements come from Yahoo/AlphaVantage. '
+                   'To use FMP here, upgrade the plan at financialmodelingprep.com.')
+        else:
+            hint, hint_en = ' — key inválida o rate-limited.', ' — invalid key or rate-limited.'
+            fix = (('Revisa FMP_KEY en Railway → tu servicio → Variables (cópiala de nuevo desde '
+                    'financialmodelingprep.com).',
+                    'Check FMP_KEY in Railway → your service → Variables (copy it again from '
+                    'financialmodelingprep.com).') if r.status_code in (401, 403) else None)
+        return _diag_card(f'FMP HTTP {r.status_code}{hint}', f'FMP HTTP {r.status_code}{hint_en}', fix,
+                          configured=True, ok=False, latency_ms=lat)
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'No se pudo contactar FMP: ' + _diag_redact(e)}
+        red = _diag_redact(e)
+        return _diag_card('No se pudo contactar FMP: ' + red, 'Could not reach FMP: ' + red,
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
 
 
 def _diag_yahoo():
@@ -1347,15 +1561,44 @@ def _diag_yahoo():
             res = (((r.json() or {}).get('chart') or {}).get('result') or [None])[0] or {}
             px = (res.get('meta') or {}).get('regularMarketPrice')
             if isinstance(px, (int, float)) and px > 0:
-                return {'configured': True, 'ok': True, 'latency_ms': lat,
-                        'detail': f'Yahoo responde — cotización NVDA ${px} OK (sin key, cubre todas las bolsas).'}
-            return {'configured': True, 'ok': False, 'latency_ms': lat,
-                    'detail': 'Yahoo responde pero sin precio para NVDA.'}
-        return {'configured': True, 'ok': False, 'latency_ms': lat,
-                'detail': f'Yahoo HTTP {r.status_code} — puede estar bloqueando al servidor (rate limit).'}
+                return _diag_card(
+                    f'Yahoo responde — cotización NVDA ${px} OK (sin key, cubre todas las bolsas).',
+                    f'Yahoo answers — NVDA quote ${px} OK (no key needed, covers every exchange).',
+                    configured=True, ok=True, latency_ms=lat)
+            return _diag_card('Yahoo responde pero sin precio para NVDA.', 'Yahoo answers but has no price for NVDA.',
+                              configured=True, ok=False, latency_ms=lat)
+        fix = None
+        if r.status_code in (403, 429):
+            fix = ('Espera unos minutos y pulsa ↻ Re-probar: Yahoo suele levantar el bloqueo solo (no usa clave).',
+                   'Wait a few minutes and press ↻ Re-test: Yahoo usually lifts the block by itself (it uses no key).')
+        return _diag_card(f'Yahoo HTTP {r.status_code} — puede estar bloqueando al servidor (rate limit).',
+                          f'Yahoo HTTP {r.status_code} — it may be blocking the server (rate limit).',
+                          fix, configured=True, ok=False, latency_ms=lat)
     except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'No se pudo contactar Yahoo: ' + _diag_redact(e)}
+        red = _diag_redact(e)
+        return _diag_card('No se pudo contactar Yahoo: ' + red, 'Could not reach Yahoo: ' + red,
+                          configured=True, ok=False, latency_ms=int((time.time() - t0) * 1000))
+
+
+def _diag_research_fix(rh):
+    """(es, en) de «Qué hacer» para la tarjeta 🔬 cuando la investigación NO puede correr, o None."""
+    provs = rh.get('providers') or {}
+    budget = ((rh.get('budget') or {}).get('research') or {})
+    if provs and not any((v or {}).get('configured') for v in provs.values()):
+        return ('Añade al menos una clave de IA en Railway → tu servicio → Variables: ANTHROPIC_KEY, GEMINI_KEY '
+                'o NVIDIA_KEY.',
+                'Add at least one AI key in Railway → your service → Variables: ANTHROPIC_KEY, GEMINI_KEY '
+                'or NVIDIA_KEY.')
+    if provs and not any((v or {}).get('available') for v in provs.values()):
+        return ('Mira las tarjetas de IA de arriba: cada una dice por qué está en pausa y cómo arreglarlo. '
+                'Luego pulsa ↻ Re-probar.',
+                'Look at the AI cards above: each one says why it is paused and how to fix it. '
+                'Then press ↻ Re-test.')
+    if budget.get('exhausted'):
+        return ('Espera a mañana (00:05 UTC) o sube RESEARCH_DAILY_BUDGET_USD en Railway → tu servicio → Variables.',
+                'Wait until tomorrow (00:05 UTC) or raise RESEARCH_DAILY_BUDGET_USD in Railway → your service → '
+                'Variables.')
+    return None
 
 
 @app.route('/api/ai/debug')
@@ -1461,9 +1704,14 @@ def diagnostics():
             if _p in services:
                 services[_p]['circuit'] = _st
                 if _st.get('open'):
-                    services[_p]['detail'] = (f"EN PAUSA hasta {_st['until_iso'][11:16]} UTC: {_st['reason_es']} "
+                    _hhmm = str(_st.get('until_iso') or '')[11:16]
+                    _en = str(services[_p].get('detail_en') or services[_p].get('detail') or '')
+                    services[_p]['detail'] = (f"EN PAUSA hasta {_hhmm} UTC: {_st['reason_es']} "
                                               f"(la cascada lo salta; el ping de arriba lo reactiva si vuelve a responder). "
                                               + str(services[_p].get('detail') or ''))
+                    services[_p]['detail_en'] = (f"PAUSED until {_hhmm} UTC: {_st.get('reason_en') or _st['reason_es']} "
+                                                 f"(the cascade skips it; the ping above turns it back on if it answers "
+                                                 f"again). " + _en)
     except Exception:  # noqa: BLE001
         pass
     # Finnhub en pausa por cuota (HTTP 429) → se dice tal cual en 🩺
@@ -1472,31 +1720,49 @@ def diagnostics():
         _fc = finnhub_circuit_state()
         if _fc['paused'] and services['finnhub'].get('configured'):
             services['finnhub']['quota'] = True
+            _en = str(services['finnhub'].get('detail_en') or services['finnhub'].get('detail') or '')
             services['finnhub']['detail'] = (f"Cuota agotada (HTTP 429): Finnhub en pausa {_fc['seconds_left']} s; "
                                              'los precios vienen de Yahoo mientras tanto. '
                                              + str(services['finnhub'].get('detail') or ''))
+            services['finnhub']['detail_en'] = (f"Quota used up (HTTP 429): Finnhub paused for {_fc['seconds_left']} s; "
+                                                'prices come from Yahoo meanwhile. ' + _en)
     except Exception:  # noqa: BLE001
         pass
     # Secundarias: solo presencia (no gastamos llamadas externas extra)
     _extra_names = [n for n, v in (('MarketStack', MSTACK), ('AlphaVantage', AV_KEY)) if v]
-    services['market_extra'] = {
-        'configured': bool(_extra_names),
-        'ok': bool(_extra_names),
-        'detail': ('Respaldo EOD/histórico activo: ' + ', '.join(_extra_names) + '.') if _extra_names
-                  else 'Sin respaldo EOD (MarketStack/AlphaVantage): los precios dependen de Finnhub y Yahoo.',
-    }
+    if _extra_names:
+        services['market_extra'] = _diag_card('Respaldo EOD/histórico activo: ' + ', '.join(_extra_names) + '.',
+                                              'EOD/historical backup active: ' + ', '.join(_extra_names) + '.',
+                                              configured=True, ok=True)
+    else:
+        services['market_extra'] = _diag_card(
+            'Sin respaldo EOD (MarketStack/AlphaVantage): los precios dependen de Finnhub y Yahoo.',
+            'No EOD backup (MarketStack/AlphaVantage): prices depend on Finnhub and Yahoo.',
+            ('Opcional: crea una clave gratis en marketstack.com o alphavantage.co y ponla en Railway → tu servicio → '
+             'Variables como MARKETSTACK_KEY o AV_KEY.',
+             'Optional: create a free key at marketstack.com or alphavantage.co and put it in Railway → your service → '
+             'Variables as MARKETSTACK_KEY or AV_KEY.'),
+            configured=False, ok=False)
 
     # R6: salud de la investigación (cola, presupuesto, reloj) junto a los pings
     try:
         from research.health import research_health
         _rh = research_health()
-        services['investigacion'] = {'configured': True, 'ok': bool(_rh['ok']),
-                                     'detail': _rh['hint_es'] + ' · reloj del servidor: '
-                                     + ('activo' if (_rh.get('scheduler') or {}).get('running') else 'APAGADO'),
-                                     'health': {k: _rh[k] for k in ('queue', 'budget', 'scheduler', 'outcomes', 'last_errors')}}
+        _clock = bool((_rh.get('scheduler') or {}).get('running'))
+        services['investigacion'] = _diag_card(
+            _rh['hint_es'] + ' · reloj del servidor: ' + ('activo' if _clock else 'APAGADO'),
+            (_rh.get('hint_en') or _rh['hint_es']) + ' · server clock: ' + ('running' if _clock else 'OFF'),
+            None if _rh['ok'] else _diag_research_fix(_rh),
+            configured=True, ok=bool(_rh['ok']),
+            health={k: _rh[k] for k in ('queue', 'budget', 'scheduler', 'outcomes', 'last_errors')})
     except Exception as _e:  # noqa: BLE001
-        services['investigacion'] = {'configured': True, 'ok': False,
-                                     'detail': f'sin salud de investigación: {type(_e).__name__}'}
+        services['investigacion'] = _diag_card(f'sin salud de investigación: {type(_e).__name__}',
+                                               f'no research health: {type(_e).__name__}',
+                                               configured=True, ok=False)
+    # Regla bilingüe: TODA tarjeta lleva detail_en (si alguna se olvida, al menos no queda vacía en inglés)
+    for _s in services.values():
+        if isinstance(_s, dict) and _s.get('detail') and not _s.get('detail_en'):
+            _s['detail_en'] = _s['detail']
 
     n_ok = sum(1 for s in services.values() if s.get('ok'))
     out = {

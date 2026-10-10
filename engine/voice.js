@@ -156,6 +156,41 @@ const BixbyVoice = {
   _outFmt: null,
   _lastInterruptId: 0,
   _metaReceived: false,
+  // ── Estado PÚBLICO de la voz: off | connecting | listening | speaking | thinking | error ──
+  // La Cabina pinta su micrófono con esto (getState() o el evento 'khipu:voice' en window) — antes
+  // ponía "Escuchando" por su cuenta y quedaba encendido tras cancelar o fallar la conexión.
+  state: 'off',
+  stateText: '',
+  lastError: '',
+
+  getState() {
+    return { state: this.state, text: this.stateText, error: this.state === 'error' ? this.lastError : '',
+             connected: !!this.isConnected, connecting: this.isConnecting() };
+  },
+
+  // ¿hay un intento de conexión VIVO? (uno ya cancelado no cuenta; un reintento agendado sí; y también
+  // el saludo del WebSocket: connect() ya terminó pero el socket aún no abrió — antes toggle() abría
+  // un SEGUNDO socket ahí y dejaba el primero huérfano)
+  isConnecting() {
+    return (this._connSess === this._sess && (!!this._connecting || this._handshaking())) || !!this._retryTimer;
+  },
+  _handshaking() {
+    return !!this.ws && !this.isConnected && this.ws.readyState === 0;   // 0 = WebSocket.CONNECTING
+  },
+
+  _emitVoice(state, text) {
+    const prev = this.state;
+    this.state = state;
+    this.stateText = String(text || '');
+    if (state === 'error') this.lastError = this.stateText;
+    else if (state === 'connecting') this.lastError = '';
+    try {
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('khipu:voice', { detail: {
+          state, prev, text: this.stateText, error: state === 'error' ? this.stateText : '' } }));
+      }
+    } catch (e) {}
+  },
 
   async init() {
     if (this.audioCtx) return;
@@ -165,24 +200,41 @@ const BixbyVoice = {
   },
 
   async toggle() {
-    (this.isConnected || this._connecting) ? this.disconnect() : await this.connect();
+    (this.isConnected || this.isConnecting()) ? this.disconnect() : await this.connect();
   },
 
   stop() { this.disconnect(); },
 
   async connect(opts) {
     opts = opts || {};
-    if (this._connecting) return;
+    // ya hay un intento vivo, o su socket está saludando (uno cancelado no bloquea)
+    if (this._connSess === this._sess && (this._connecting || this._handshaking())) return;
+    clearTimeout(this._retryTimer); this._retryTimer = 0;
+    const att = this._attempt = (this._attempt || 0) + 1;
     this._connecting = true;
     try { await this._connect(opts); }
-    catch (e) { this._fail(_voiceL('Khipu: error inesperado al conectar — ', 'Khipu: unexpected error while connecting — ') + ((e && e.message) || e)); }
-    finally { this._connecting = false; }
+    catch (e) {
+      // un intento cancelado (o reemplazado por otro) no pinta errores encima del estado actual
+      if (att === this._attempt && this._connSess === this._sess) {
+        this._fail(_voiceL('Khipu: error inesperado al conectar — ', 'Khipu: unexpected error while connecting — ') + ((e && e.message) || e));
+      }
+    }
+    finally { if (att === this._attempt) this._connecting = false; }
   },
 
   async _connect(opts) {
     const sess = ++this._sess;
+    this._connSess = sess;
     this._closingByUser = false;
     this._lastErrorEvent = null;
+    // un socket de un intento anterior (p. ej. quedó abierto tras fallar el micrófono) ya no recibe
+    // eventos (sess cambió): se cierra en vez de dejarlo huérfano
+    if (this.ws) {
+      const old = this.ws;
+      this.ws = null; this.isConnected = false; this._metaReceived = false;
+      this._stopMic();
+      try { old.close(1000, 'replaced'); } catch (e) {}
+    }
 
     // ── Paso 1: AudioContext DENTRO del gesto del usuario (iOS Safari solo deja
     // sonar un contexto creado/reanudado en el gesto; antes se hacía tras await).
@@ -203,6 +255,7 @@ const BixbyVoice = {
         video: false,
       });
     } catch (e) {
+      if (sess !== this._sess) return;   // el usuario ya canceló: sin error encima de "apagado"
       this._fail(this._micErrorText(e));
       return;
     }
@@ -212,6 +265,12 @@ const BixbyVoice = {
     // iOS: abrir el micrófono puede dejar el contexto 'suspended' o 'interrupted'
     if (this.audioCtx && this.audioCtx.state !== 'running' && this.audioCtx.state !== 'closed') {
       try { await this.audioCtx.resume(); } catch (e) {}
+      // cancelado MIENTRAS se reanudaba el audio: sin esto el intento viejo volvía a pintar
+      // "conectando…" encima de "apagado" y el micrófono de la Cabina quedaba trabado
+      if (sess !== this._sess) {
+        if (this._preStream === stream) this._releasePre(); else this._stopTracks(stream);
+        return;
+      }
     }
 
     // ── Paso 3: credenciales del server (la clave NUNCA llega al navegador) ──
@@ -227,7 +286,10 @@ const BixbyVoice = {
       }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }))
         .catch(e => ({ status: 0, data: { error: _voiceL('Sin conexión con el servidor de Khipu.', 'No connection to the Khipu server.') } })),
     ]);
-    if (sess !== this._sess) { this._releasePre(); return; }
+    if (sess !== this._sess) {   // cancelado: suelta SOLO su micrófono (puede haber ya otro intento con el suyo)
+      if (this._preStream === stream) this._releasePre(); else this._stopTracks(stream);
+      return;
+    }
     const sd = (sres && sres.data) || {};
     const signedUrl = sd.signed_url || sd.signedUrl;
     if (!signedUrl) {
@@ -337,7 +399,7 @@ const BixbyVoice = {
       try { sessionStorage.setItem('kh_voice_no_override', '1'); } catch (e) {}
       this._releasePre();
       this._showOverlay(_voiceL('Khipu — reintentando sin ajustes de idioma…', 'Khipu — retrying without language overrides…'), 'connect');
-      setTimeout(() => this.connect({ noOverride: true, auto: true }), 50);
+      this._retryLater(() => this.connect({ noOverride: true, auto: true }), 50);
       return;
     }
     // caída de red a mitad de conversación → 1 reconexión automática por minuto
@@ -345,11 +407,17 @@ const BixbyVoice = {
     if (hadMeta && transient && !errEv.error_type && this._canAutoReconnect()) {
       this._releasePre();
       this._showOverlay(_voiceL('Khipu — se cortó la conexión, reconectando…', 'Khipu — connection dropped, reconnecting…'), 'connect');
-      setTimeout(() => this.connect({ auto: true, noOverride: !override }), 600);
+      this._retryLater(() => this.connect({ auto: true, noOverride: !override }), 600);
       return;
     }
     this._releasePre();
     this._fail(this._closeText(ev, hadMeta, errEv));
+  },
+
+  // reintento agendado: cuenta como "conectando" y colgar (disconnect) lo cancela
+  _retryLater(fn, ms) {
+    clearTimeout(this._retryTimer);
+    this._retryTimer = setTimeout(() => { this._retryTimer = 0; fn(); }, ms);
   },
 
   _canAutoReconnect() {
@@ -402,6 +470,7 @@ const BixbyVoice = {
     this._closingByUser = true;
     clearTimeout(this._initTimer);
     clearTimeout(this._endTimer);
+    clearTimeout(this._retryTimer); this._retryTimer = 0;   // un reintento agendado tampoco revive la voz
     this.isConnected = false;
     this._metaReceived = false;
     this._orbOff();
@@ -652,7 +721,9 @@ const BixbyVoice = {
         if (ev.event_id != null && +ev.event_id < this._lastInterruptId) break;
         const chunk = ev.audio_base_64;
         if (chunk) {
-          if (window.setBixbyThinking) window.setBixbyThinking(false);
+          // suena la voz del agente → "Hablando" (una vez por respuesta; al terminar vuelve a "Escuchando")
+          if (this.state !== 'speaking') this._setState('speak');
+          else if (window.setBixbyThinking) window.setBixbyThinking(false);
           this._enqueueAudio(chunk);
         }
         break;
@@ -676,10 +747,7 @@ const BixbyVoice = {
       }
       case 'user_transcript': {
         const t = msg.user_transcription_event?.user_transcript || '';
-        if (t) {
-          this._showOverlay(_voiceL('Tú: ', 'You: ') + t.slice(0, 80), 'think');
-          if (window.setBixbyThinking) window.setBixbyThinking(true);
-        }
+        if (t) this._showOverlay(_voiceL('Tú: ', 'You: ') + t.slice(0, 80), 'think');   // 'think' ya enciende setBixbyThinking
         break;
       }
       case 'client_tool_call':
@@ -1689,16 +1757,21 @@ const BixbyVoice = {
     if (lo.includes('tú:') || lo.includes('you:') || lo.includes('pensando') || lo.includes('thinking')) return 'think';
     return null;
   },
-  _setState(state) {
+  // estado interno → estado PÚBLICO (getState / evento 'khipu:voice')
+  _PUBLIC_STATE: { connect: 'connecting', listen: 'listening', speak: 'speaking', think: 'thinking', error: 'error' },
+  _setState(state, text) {
     const lab = this._STATE_LABELS[state];
     if (!lab) return;
     const en = _voiceLang() === 'en';
-    this._setBadge(en ? lab[1] : lab[0], state !== 'connect' && state !== 'error');
+    // setBixbyThinking (app.html) escribe "PENSANDO" fijo en la insignia: va ANTES para que la
+    // etiqueta bilingüe de abajo sea la que quede (en inglés se veía "PENSANDO")
     if (window.setBixbyThinking) { try { window.setBixbyThinking(state === 'think'); } catch (e) {} }
+    this._setBadge(en ? lab[1] : lab[0], state !== 'connect' && state !== 'error');
     if (window.BixbyCockpit && window.BixbyCockpit.setState) {
       const mode = state === 'think' ? 'think' : (state === 'listen' || state === 'speak') ? 'live' : '';
       try { window.BixbyCockpit.setState(mode, en ? lab[3] : lab[2]); } catch (e) {}
     }
+    this._emitVoice(this._PUBLIC_STATE[state], text);
   },
 
   _showOverlay(text, state) {
@@ -1718,6 +1791,7 @@ const BixbyVoice = {
     if (window.BixbyCockpit && window.BixbyCockpit.setState) {
       try { window.BixbyCockpit.setState('', _voiceL('Listo', 'Ready')); } catch (e) {}
     }
+    this._emitVoice('off');
   },
   _setBadge(label, active) {
     const b = document.getElementById('bixby-state-badge');
@@ -1737,7 +1811,7 @@ const BixbyVoice = {
     const t = document.getElementById('bixby-text');
     if (t) t.textContent = text;
     const st = state || this._guessState(text, isError);
-    if (st) this._setState(st);
+    if (st) this._setState(st, text);
     if (isError) {
       const el = document.getElementById('bixby-status');
       if (el) el.style.display = 'block';
@@ -1761,10 +1835,11 @@ const BixbyVoice = {
     if (btn) btn.classList.remove('bixby-active');
     clearTimeout(this._hideTimer);
     this._hideTimer = setTimeout(() => {
-      if (!this.isConnected && !this._connecting) {
+      if (!this.isConnected && !this.isConnecting()) {
         const el = document.getElementById('bixby-status');
         if (el) el.style.display = 'none';
         this._setBadge('OFF', false);
+        if (this.state === 'error') this._emitVoice('off');   // el aviso de error se apaga solo (12 s)
       }
     }, 12000);
   },

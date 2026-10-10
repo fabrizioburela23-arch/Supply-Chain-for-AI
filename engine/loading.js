@@ -15,11 +15,30 @@
      skeleton({lines,chart,height})   → string HTML
      staged(mountElOrId, {title,steps,accent,cycle}) → {stop()}
    Bilingüe: los textos los pasa quien llama; este módulo no fija idioma.
+
+   KHIPUS OS (2026-10-10): sin tintas oscuras fijas — los cargadores se leen bien EN CUALQUIER
+   lugar. Cada color es var(--os-* , var(--<token de app.html>, respaldo-oscuro)):
+     · dentro de Khipus OS (#bcp-ov) o de un overlay .kos-themed → tokens --os-* (claro = body sin
+       .dark, oscuro = body.dark), los mismos que engine/cockpit.js;
+     · en la vista clásica (fuera de ambos) → los tokens del tema de app.html (--ink-2, --line-2,
+       --accent…), que también cambian con claro/oscuro;
+     · sin ninguno (página suelta) → el respaldo oscuro de siempre.
+   El orbe es decorativo: su brillo usa `accent` si quien llama lo pasa (hex), si no el acento.
    ============================================================================ */
 (function () {
   'use strict';
 
-  var NEON = '#00E0FF', VIO = '#8e5aff', TEAL = '#3DE0C8';
+  // tokens (var() anidados: Khipus OS → tema de app.html → respaldo oscuro)
+  var T = {
+    ink:   'var(--os-ink,var(--ink,#F2F2F5))',
+    ink2:  'var(--os-ink-2,var(--ink-2,#A6A8B5))',
+    track: 'var(--os-surface-3,var(--line-2,#2A2B36))',
+    line:  'var(--os-line,var(--line,rgba(255,255,255,.07)))',
+    acc:   'var(--os-accent,var(--accent,#4C8DF6))',
+    ai:    'var(--os-ai,var(--accent,#B48CFF))',
+    good:  'var(--os-good-ink,currentColor)',
+    font:  "var(--os-font,'Nunito','Geist',system-ui,-apple-system,'Segoe UI',sans-serif)",
+  };
 
   function ensureCSS() {
     if (document.getElementById('khl-css')) return;
@@ -32,24 +51,29 @@
       '@keyframes khl-pulse{0%,100%{transform:scale(.85);opacity:.7}50%{transform:scale(1.12);opacity:1}}',
       '@keyframes khl-dots{0%,20%{opacity:0}50%{opacity:1}100%{opacity:0}}',
       '@keyframes khl-rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}',
-      '.khl-spin{display:inline-block;border-radius:50%;border:2.5px solid rgba(122,158,255,.18);' +
-        'border-top-color:' + NEON + ';animation:khl-spin .7s linear infinite;vertical-align:middle}',
+      '.khl-spin{display:inline-block;border-radius:50%;border:2.5px solid ' + T.track + ';' +
+        'border-top-color:' + T.acc + ';animation:khl-spin .7s linear infinite;vertical-align:middle}',
+      '.khl-inl{display:inline-flex;align-items:center;gap:9px;color:' + T.ink2 + ';font-size:13px}',
+      '.khl-dots{color:' + T.ink2 + ';font-size:13px}',
       '.khl-dot{animation:khl-dots 1.2s infinite}.khl-dot:nth-child(2){animation-delay:.2s}.khl-dot:nth-child(3){animation-delay:.4s}',
-      '.khl-sk{background:linear-gradient(90deg,rgba(122,158,255,.06) 25%,rgba(122,158,255,.15) 37%,rgba(122,158,255,.06) 63%);' +
+      // esqueleto: la línea del tema de base + una franja de la superficie más marcada (se ve en claro y en oscuro)
+      '.khl-sk{background:linear-gradient(90deg,' + T.line + ' 25%,' + T.track + ' 37%,' + T.line + ' 63%);' +
         'background-size:840px 100%;animation:khl-shimmer 1.4s ease infinite;border-radius:8px}',
-      '.khl-staged{max-width:440px;margin:8px auto;padding:26px 22px;text-align:left;font-family:Inter,system-ui,sans-serif}',
+      '.khl-staged{max-width:440px;margin:8px auto;padding:26px 22px;text-align:left;font-family:' + T.font + '}',
       '.khl-orb{width:54px;height:54px;margin:0 auto 16px;border-radius:50%;' +
-        'background:radial-gradient(circle at 35% 30%,' + TEAL + ',' + VIO + ' 70%);' +
-        'box-shadow:0 0 26px ' + NEON + '66;animation:khl-pulse 1.5s ease-in-out infinite}',
-      '.khl-bar{position:relative;height:3px;border-radius:3px;background:rgba(122,158,255,.12);overflow:hidden;margin:0 0 18px}',
+        'background:radial-gradient(circle at 35% 30%,' + T.acc + ',' + T.ai + ' 70%);' +
+        'box-shadow:0 0 26px var(--kos-accent-soft,rgba(76,141,246,.16));animation:khl-pulse 1.5s ease-in-out infinite}',
+      '.khl-bar{position:relative;height:3px;border-radius:3px;background:' + T.track + ';overflow:hidden;margin:0 0 18px}',
       '.khl-bar i{position:absolute;top:0;height:100%;border-radius:3px;' +
-        'background:linear-gradient(90deg,' + VIO + ',' + NEON + ');animation:khl-indet 1.6s ease-in-out infinite}',
-      '.khl-step{display:flex;align-items:center;gap:11px;padding:7px 0;font-size:13px;color:#7C87A3;transition:color .3s}',
+        'background:linear-gradient(90deg,' + T.ai + ',' + T.acc + ');animation:khl-indet 1.6s ease-in-out infinite}',
+      // pasos: pendientes y hechos en tinta secundaria (≥ 4.5:1); el actual en la tinta principal
+      '.khl-step{display:flex;align-items:center;gap:11px;padding:7px 0;font-size:13px;color:' + T.ink2 + ';transition:color .3s}',
       '.khl-step .ic{width:18px;height:18px;flex:0 0 18px;display:flex;align-items:center;justify-content:center;font-size:12px}',
-      '.khl-step.done{color:#AEB8D6}.khl-step.done .ic{color:' + TEAL + '}',
-      '.khl-step.now{color:#E8EDFB;font-weight:600;animation:khl-rise .3s ease}',
-      '.khl-title{text-align:center;font-size:14px;font-weight:700;color:#E8EDFB;margin-bottom:2px}',
-      '.khl-sub{text-align:center;font-size:11.5px;color:#7C87A3;margin-bottom:18px;min-height:15px}',
+      '.khl-step.done{color:' + T.ink2 + '}.khl-step.done .ic{color:' + T.good + '}',
+      '.khl-step.now{color:' + T.ink + ';font-weight:600;animation:khl-rise .3s ease}',
+      '.khl-title{text-align:center;font-size:14px;font-weight:700;color:' + T.ink + ';margin-bottom:2px}',
+      '.khl-sub{text-align:center;font-size:11.5px;color:' + T.ink2 + ';margin-bottom:18px;min-height:15px}',
+      '@media(prefers-reduced-motion:reduce){.khl-sk,.khl-orb,.khl-step.now{animation:none}.khl-spin{animation-duration:2s}.khl-bar i{animation-duration:3.2s}}',
     ].join('\n');
     document.head.appendChild(st);
   }
@@ -61,13 +85,13 @@
     o = o || {};
     var sz = o.size || 18;
     ensureCSS();
-    return '<span style="display:inline-flex;align-items:center;gap:9px;color:#7C87A3;font-size:13px">' +
+    return '<span class="khl-inl">' +
       '<span class="khl-spin" style="width:' + sz + 'px;height:' + sz + 'px"></span>' +
       (o.label ? '<span>' + esc(o.label) + '</span>' : '') + '</span>';
   }
   function dots(text) {
     ensureCSS();
-    return '<span style="color:#7C87A3;font-size:13px">' + esc(text || '') +
+    return '<span class="khl-dots">' + esc(text || '') +
       '<span class="khl-dot">.</span><span class="khl-dot">.</span><span class="khl-dot">.</span></span>';
   }
 
@@ -97,10 +121,11 @@
     if (!el) return { stop: function () {} };
     var steps = (o.steps && o.steps.length) ? o.steps.slice() : ['Procesando…'];
     var cycle = o.cycle || 2600;
-    var accent = o.accent || NEON;
+    // brillo del orbe (decorativo): hex de quien llama (+66 = 40 % de opacidad); sin él, el del CSS
+    var glow = /^#[0-9a-f]{6}$/i.test(String(o.accent || '')) ? ' style="box-shadow:0 0 26px ' + o.accent + '66"' : '';
     el.innerHTML =
       '<div class="khl-staged">' +
-        '<div class="khl-orb" style="box-shadow:0 0 26px ' + accent + '66"></div>' +
+        '<div class="khl-orb"' + glow + '></div>' +
         (o.title ? '<div class="khl-title">' + esc(o.title) + '</div>' : '') +
         '<div class="khl-sub" id="khl-sub"></div>' +
         '<div class="khl-bar"><i></i></div>' +
