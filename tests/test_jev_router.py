@@ -61,9 +61,12 @@ def test_decision_y_plan(monkeypatch):
     assert d['route'] == 'needs_tools' and d['confidence'] == 0.82
     assert decide.decision_of({'route': {'choice': 'inventada'}})['route'] is None
     monkeypatch.setenv('TYPESAFE_API_KEY', 'ts-test')
-    # sin DECIDE_CONTROL: Jev no manda
-    monkeypatch.delenv('DECIDE_CONTROL', raising=False)
+    # DECIDE_CONTROL=off: Jev no manda (solo sombra)
+    monkeypatch.setenv('DECIDE_CONTROL', 'off')
     assert decide.chat_plan(_done(_jev('local_fact'))) is None
+    # 2026-10-10: con clave y SIN DECIDE_CONTROL, Jev manda en el chat por defecto
+    monkeypatch.delenv('DECIDE_CONTROL', raising=False)
+    assert decide.chat_plan(_done(_jev('local_fact')))['route'] == 'local_fact'
     monkeypatch.setenv('DECIDE_CONTROL', 'chat_gate')
     assert decide.chat_plan(_done(_jev('local_fact')))['route'] == 'local_fact'
     assert decide.chat_plan(_done(_jev('local_fact', conf=0.4))) is None          # poca confianza

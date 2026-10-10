@@ -220,7 +220,8 @@
     var tip = lang() === 'en' ? 'What is this?' : '¿Qué es esto?';
     return '<span onclick="event.stopPropagation();window.explainMetric(\'' + key + '\')" title="' + tip + '" ' +
       'style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;' +
-      'border:1px solid rgba(0,224,255,.45);color:#00E0FF;font-size:10px;font-weight:700;cursor:pointer;' +
+      // tokens de Khipus OS (claro/oscuro); fuera del OS, el cian de siempre
+      'border:1px solid color-mix(in srgb,var(--os-accent,#00E0FF) 45%,transparent);color:var(--os-accent,#00E0FF);font-size:10px;font-weight:700;cursor:pointer;' +
       'margin-left:5px;vertical-align:middle;user-select:none">?</span>';
   };
 })();

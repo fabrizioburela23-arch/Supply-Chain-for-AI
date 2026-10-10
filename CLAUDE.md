@@ -154,7 +154,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     lista la función. Primer uso: portero del chat (`chat_gate_*` en
     khipu_chat.run_chat). Nunca decide dinero. Ver docs/JEV.md. AL MANDO (2026-10-06, `DECIDE_CONTROL=chat_gate`):
     `decide.chat_plan` → local_fact = ficha SIN IA, needs_tools = ≤2 rondas, @agente local/fast/deep;
-    `out.router` dice quién decidió.
+    `out.router` dice quién decidió. Desde 2026-10-10: con clave y DECIDE_CONTROL vacío, chat_gate manda por defecto (off/none/0 lo apaga).
   - `core/scenario_engine.py`: análisis estructural de escenarios (tema/actor/evento →
     golpeados/ganadores/caminos) para la simulación por agentes.
   - `brokerage/` (/api/brokerage/*): clientes con SU cuenta Alpaca (env / llaves
@@ -434,7 +434,7 @@ nuevas en command_center: xray, compare, insights, livesim.
 ## Variables de entorno
 
 ```
-SECRET_KEY, FINNHUB_KEY, ANTHROPIC_KEY, GEMINI_KEY, NVIDIA_KEY, AI_ORDER,
+SECRET_KEY, FINNHUB_KEY, ANTHROPIC_KEY, GEMINI_KEY, NVIDIA_KEY, AI_ORDER (solo nivel rápido), AI_ORDER_FAST, AI_ORDER_DEEP,
 ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_ALLOW_OVERRIDE,
 AV_KEY, FMP_KEY, MARKETSTACK_KEY, ALPACA_KEY/SECRET/BASE,
 TRADE_PIN            ← SIN esto el trading queda deshabilitado (X-Trade-Pin)
@@ -477,6 +477,10 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 (el tier forma parte de la cache key). Cliente:
 `DataLayer.aiComplete(system, prompt, maxTokens, tier)`.
 `_extract_json()` tolera JSON envuelto en prosa/fences (Gemini/NVIDIA).
+**Orden por nivel (2026-10-10)**: `AI_ORDER_DEEP` (defecto claude,gemini,nvidia; ignora AI_ORDER) y `AI_ORDER_FAST` >
+`AI_ORDER` > gemini,claude,nvidia (`provider_order`, `ai_route_state`). Claude por modelo con `claude_attempts`: Sonnet 5.5
+NUNCA thinking disabled ni temperature; Opus 5.5/Fable nunca disabled; un 400 de parámetros reintenta el MISMO modelo.
+AI_MODEL_DEEP por defecto claude-sonnet-5-5. Voz: `core/voice_agent.py` es el único cliente REST de ElevenLabs.
 **Gemini 3+ (2026-10-06, default `gemini-3.8-flash`)**: NO acepta `thinkingBudget` (ni 0 ni "minimal" → 400);
 `_complete_gemini_inner` manda `thinkingLevel` low (chat/rápido) o medium (profundo, también investigación JSON) con margen de tokens.
 Precio en `core/ai_usage.PRICES` (0,75/3,75 hasta 31-dic-2026; luego 1,5/7,5 → actualizar).

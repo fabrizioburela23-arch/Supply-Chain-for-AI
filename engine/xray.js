@@ -12,7 +12,11 @@
    - escenario grande (.xr-full, multi-columna) — la Cabina de Khipu lo usa a
      pantalla completa para "destripar la empresa por completo".
 
-   Estilos scoped a .xray-scope — no tocan el resto de la app. Piel NEXUS.
+   Estilos scoped a .xray-scope — no tocan el resto de la app.
+   KHIPUS OS (2026-10-10): tema claro/oscuro con los tokens --os-* de engine/cockpit.js
+   (ventana = dentro de #bcp-ov; cajón = #xray-ov.kos-themed). Nada de colores oscuros
+   fijos: semánticos = --os-good/bad (rellenos) y --os-good-ink/bad-ink/warn-ink (texto AA).
+   Los agentes (Comité, Investigación, Análisis IA) son las MASCOTAS de engine/mascot.js.
    ============================================================================ */
 (function () {
   'use strict';
@@ -20,7 +24,8 @@
   var SECTORS9 = (typeof window.SECTORS9 !== 'undefined') ? window.SECTORS9 : {};
   var CAT_TO_SECTOR = (typeof window.CAT_TO_SECTOR !== 'undefined') ? window.CAT_TO_SECTOR : {};
   function sectorOf(cat) { return CAT_TO_SECTOR[cat] || 'cloud_ia'; }
-  function sectorColor(cat) { var s = SECTORS9[sectorOf(cat)]; return s ? s.color : '#00E0FF'; }
+  // color de DATOS del sector (solo para puntos de relleno, nunca para texto)
+  function sectorColor(cat) { var s = SECTORS9[sectorOf(cat)]; return s ? s.color : '#4C8DF6'; }
   function sectorLabel(cat) {
     if (window.sectorName) return window.sectorName(sectorOf(cat));
     var s = SECTORS9[sectorOf(cat)]; return s ? s.label : 'Cloud & IA';
@@ -36,84 +41,147 @@
   }
   function L(es, en) { return isEn() ? en : es; }
 
+  // Colores SEMÁNTICOS de Khipus OS (siempre con respaldo oscuro). *_INK = texto (contraste AA);
+  // los vivos (--os-good / --os-bad) quedan para barras y rellenos.
+  var C_GOOD = 'var(--os-good-ink,#2fbf5b)', C_BAD = 'var(--os-bad-ink,#F47C7C)', C_WARN = 'var(--os-warn-ink,#F2C46D)';
+  // mascota del agente (engine/mascot.js); sin el módulo, el emoji de antes
+  function mascot(id, size, emo) {
+    var M = window.KhipuMascot;
+    if (M && M.svg) { try { return M.svg(id, size || 16); } catch (e) {} }
+    return '<span class="xr-ic" aria-hidden="true">' + (emo || '🤖') + '</span>';
+  }
+  function mascotStack(ids, size, emo) {
+    var M = window.KhipuMascot;
+    if (M && M.stack) { try { return M.stack(ids, size || 16); } catch (e) {} }
+    return '<span class="xr-ic" aria-hidden="true">' + (emo || '🤖') + '</span>';
+  }
+
   // ── estilos (inyectados una vez) ──
   function ensureStyles() {
     if (document.getElementById('xray-styles')) return;
     var css = `
+/* KHIPUS OS (2026-10-10): sin colores oscuros fijos — solo tokens --os-* (claro = body sin .dark,
+   oscuro = body.dark). Valen en las ventanas (#bcp-ov) y en el cajón (#xray-ov lleva .kos-themed).
+   Siempre var(--token, respaldo-oscuro): sin cockpit.js el X-Ray se ve como antes (oscuro). */
 #xray-ov{position:fixed;inset:0;z-index:6000;display:none;align-items:stretch;justify-content:flex-end;
-  background:rgba(3,6,12,.62);backdrop-filter:blur(3px);font-family:'Inter',system-ui,sans-serif}
+  background:var(--kos-scrim,rgba(0,0,0,.5));-webkit-backdrop-filter:blur(6px) saturate(1.1);backdrop-filter:blur(6px) saturate(1.1);
+  font-family:var(--os-font,'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif)}
 #xray-ov.show{display:flex;animation:xrFade .18s ease}
 @keyframes xrFade{from{opacity:0}to{opacity:1}}
-#xray{width:min(560px,100%);height:100%;overflow-y:auto;color:#E8EDFB;
-  background:radial-gradient(900px 500px at 70% -5%,#0B1222 0%,#06090F 60%);
-  border-left:1px solid rgba(122,158,255,.18);box-shadow:-24px 0 60px rgba(0,0,0,.5);
-  transform:translateX(24px);animation:xrSlide .22s ease forwards}
+#xray{width:min(560px,100%);height:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;box-sizing:border-box;
+  color:var(--os-ink,#F2F2F5);background:var(--os-bg,#0E0F14);padding-bottom:18px;
+  border-radius:var(--os-r,18px) 0 0 var(--os-r,18px);box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55));
+  transform:translateX(24px);animation:xrSlide .22s ease forwards;scrollbar-width:thin;scrollbar-color:var(--os-surface-3,#2A2B36) transparent}
 @keyframes xrSlide{to{transform:translateX(0)}}
+@media(max-width:760px){#xray{width:100%;border-radius:0}}
 @media(prefers-reduced-motion:reduce){#xray{animation:none;transform:none}#xray-ov.show{animation:none}}
-.xray-scope{color:#E8EDFB;font-family:'Inter',system-ui,sans-serif}
-.xray-scope .xr-mono{font-family:'JetBrains Mono','Cascadia Mono',monospace;font-variant-numeric:tabular-nums}
-.xray-scope .xr-hd{position:sticky;top:0;z-index:2;padding:16px 20px 13px;
-  background:linear-gradient(#0a1120ee,#0a1120cc);border-bottom:1px solid rgba(122,158,255,.14);backdrop-filter:blur(6px)}
-.xray-scope .xr-close{position:absolute;top:13px;right:16px;width:30px;height:30px;border-radius:8px;cursor:pointer;
-  border:1px solid rgba(122,158,255,.2);background:rgba(21,28,45,.7);color:#7C87A3;font-size:16px;line-height:1}
-.xray-scope .xr-close:hover{color:#E8EDFB;border-color:rgba(122,158,255,.4)}
-.xray-scope .xr-name{font-size:20px;font-weight:650;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-right:34px}
-.xray-scope .xr-tk{font-size:12px;color:#7C87A3;font-weight:400}
-.xray-scope .xr-sec{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:#9BA6C4;margin-top:6px}
-.xray-scope .xr-dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 7px currentColor}
-.xray-scope .xr-px{margin-top:11px;display:flex;align-items:baseline;gap:9px}
-.xray-scope .xr-px .p{font-size:23px;font-weight:600}
-.xray-scope .xr-px .chg{font-size:13px}
-.xray-scope .xr-lin{font-size:10px;color:#5b6580;margin-top:3px}
-.xray-scope .xr-sect{padding:15px 20px;border-bottom:1px solid rgba(122,158,255,.08)}
-.xray-scope .xr-h{font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:#7C87A3;font-weight:600;
-  margin:0 0 11px;display:flex;justify-content:space-between;align-items:center}
-.xray-scope .xr-h .v{letter-spacing:0}
-.xray-scope .nrsrow{display:grid;grid-template-columns:104px 1fr 62px;gap:9px;align-items:center;font-size:11.5px;color:#9BA6C4;margin:5px 0}
-.xray-scope .nrsbar{height:6px;border-radius:5px;background:rgba(21,28,45,.9);overflow:hidden;border:1px solid rgba(122,158,255,.1)}
-.xray-scope .nrsbar i{display:block;height:100%;background:#00E0FF;border-radius:5px}
-.xray-scope .nrsrow.hot i{background:#FF4D6A}
-.xray-scope .nrsrow .nv{text-align:right;color:#E8EDFB}
-.xray-scope .nrsrow .nd{font-size:9.5px;color:#5b6580}
-.xray-scope .thread{display:flex;align-items:center;gap:9px;font-size:12px;padding:6px 9px;margin:3px 0;cursor:pointer;
-  border:1px solid rgba(122,158,255,.1);border-radius:8px;background:rgba(21,28,45,.55);transition:border-color .12s,transform .12s}
-.xray-scope .thread:hover{border-color:rgba(122,158,255,.42);transform:translateX(-3px)}
-.xray-scope .thread .tdir{font-family:'JetBrains Mono',monospace;flex:none;width:14px;text-align:center}
-.xray-scope .thread .tnm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.xray-scope .thread .trel{font-size:9px;color:#5b6580;flex:none;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.xray-scope .thread .tw{font-family:'JetBrains Mono',monospace;font-size:10px;color:#7C87A3;flex:none}
-.xray-scope .tcap{font-size:10px;color:#7C87A3;margin:9px 0 5px;text-transform:uppercase;letter-spacing:.08em}
-.xray-scope .relchips{display:flex;flex-wrap:wrap;gap:5px}
-.xray-scope .relchip{font-size:10px;color:#9BA6C4;padding:3px 9px;border-radius:999px;
-  background:rgba(21,28,45,.7);border:1px solid rgba(122,158,255,.14)}
-.xray-scope .relchip b{color:#E8EDFB;font-family:'JetBrains Mono',monospace}
-.xray-scope .impact-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;text-align:center}
-.xray-scope .icell{border:1px solid rgba(122,158,255,.12);border-radius:9px;padding:10px 5px;background:rgba(21,28,45,.6)}
-.xray-scope .icell b{display:block;font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:#FF4D6A}
-.xray-scope .icell span{font-size:9px;color:#7C87A3;text-transform:uppercase;letter-spacing:.06em;margin-top:2px;display:block}
-.xray-scope .xr-btns{display:flex;gap:7px;flex-wrap:wrap;padding:14px 20px}
-.xray-scope .xrb{border:1px solid rgba(122,158,255,.2);background:rgba(21,28,45,.7);color:#E8EDFB;
-  font-family:'Inter',sans-serif;font-size:11.5px;padding:7px 13px;border-radius:8px;cursor:pointer;transition:all .12s}
-.xray-scope .xrb:hover{border-color:rgba(122,158,255,.5)}
-.xray-scope .xrb.pri{background:#00E0FF;color:#03141C;border-color:#00E0FF;font-weight:600;box-shadow:0 0 14px rgba(0,224,255,.4)}
-.xray-scope .xr-victim{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:4px 0;cursor:pointer}
-.xray-scope .xr-victim:hover .vn{color:#00E0FF}
-.xray-scope .xr-victim .vn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.xray-scope .xr-victim .vbar{flex:1;height:4px;border-radius:3px;background:rgba(255,77,106,.15);overflow:hidden}
-.xray-scope .xr-victim .vbar i{display:block;height:100%;background:#FF4D6A}
-.xray-scope .xr-victim .vp{font-family:'JetBrains Mono',monospace;font-size:10px;color:#FF4D6A;width:40px;text-align:right;flex:none}
-.xray-scope .xr-loading{color:#7C87A3;font-size:11px;font-style:italic}
-.xray-scope .xr-note{font-size:11.5px;line-height:1.55;color:#AEB7CF;margin-top:11px}
+/* --xr-card = fondo de cada sección · --xr-cell = celdas/filas dentro de ella. En una ventana (fondo
+   --os-surface) las secciones son --os-surface-2; en el cajón (fondo --os-bg) son tarjetas --os-surface. */
+/* --xr-link: el acento como TEXTO (enlaces): mezclado con la tinta para llegar a ≥5:1 sobre cualquier superficie
+   (el --os-accent puro da 4.3:1 sobre --os-surface-2 en el tema claro) */
+.xray-scope{--xr-card:var(--os-surface-2,#1F2029);--xr-cell:var(--os-surface,#17181F);--xr-sh:none;
+  --xr-link:var(--os-accent,#4C8DF6);--xr-link:color-mix(in srgb,var(--os-accent,#4C8DF6) 82%,var(--os-ink,#F2F2F5));
+  color:var(--os-ink,#F2F2F5);font-family:var(--os-font,'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif);
+  font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+#xray.xray-scope{--xr-card:var(--os-surface,#17181F);--xr-cell:var(--os-surface-2,#1F2029);
+  --xr-sh:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}
+.xray-scope *{box-sizing:border-box}
+.xray-scope button{font-family:inherit}
+.xray-scope .xr-mono{font-variant-numeric:tabular-nums;letter-spacing:-.005em}
+.xray-scope .xr-hd{position:relative;padding:18px 20px 14px}
+#xray .xr-hd{position:sticky;top:0;z-index:2;background:var(--os-bg,#0E0F14)}
+.xray-scope .xr-close{appearance:none;-webkit-appearance:none;position:absolute;top:14px;right:14px;width:40px;height:40px;padding:0;border:0;
+  border-radius:999px;cursor:pointer;background:transparent;color:var(--os-ink-2,#A6A8B5);font-size:15px;font-weight:600;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s,color .15s}
+.xray-scope .xr-close:hover{background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5)}
+.xray-scope .xr-name{font-size:22px;font-weight:800;letter-spacing:-.015em;line-height:1.2;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  padding-right:44px;overflow-wrap:anywhere}
+.xray-scope .xr-tk{font-size:13px;color:var(--os-ink-2,#A6A8B5);font-weight:700}
+.xray-scope .xr-sec{display:flex;align-items:center;flex-wrap:wrap;gap:7px;font-size:12.5px;color:var(--os-ink-2,#A6A8B5);margin-top:6px}
+.xray-scope .xr-dot{display:inline-block;flex:none;width:9px;height:9px;border-radius:50%}
+.xray-scope .xr-px{margin-top:12px;display:flex;align-items:baseline;flex-wrap:wrap;gap:10px}
+.xray-scope .xr-px .p{font-size:26px;font-weight:800;letter-spacing:-.02em;color:var(--os-ink,#F2F2F5)}
+.xray-scope .xr-px .p.xr-pending{font-size:15px;font-weight:600;color:var(--os-ink-2,#A6A8B5);letter-spacing:0}
+.xray-scope .xr-px .chg{font-size:14px;font-weight:700}
+.xray-scope .xr-px .chg small{font-size:11px;font-weight:600;color:var(--os-ink-2,#A6A8B5);margin-left:5px}
+.xray-scope .xr-lin{font-size:11.5px;line-height:1.5;color:var(--os-ink-2,#A6A8B5);margin-top:4px}
+.xray-scope .xr-strong{color:var(--os-ink,#F2F2F5);font-weight:700}
+.xray-scope .xr-sect{background:var(--xr-card);border-radius:var(--os-r,18px);box-shadow:var(--xr-sh);padding:14px 16px;margin:0 12px 12px;min-width:0}
+#xray .xr-sect{margin:0 14px 12px}
+.xray-scope .xr-h{font-size:13px;font-weight:700;letter-spacing:-.005em;color:var(--os-ink,#F2F2F5);
+  margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.xray-scope .xr-h .v{font-size:15px;font-weight:800}
+.xray-scope .xr-h.bad{color:var(--os-bad-ink,#F47C7C)}
+.xray-scope .xr-h.win{color:var(--os-good-ink,#2fbf5b)}
+.xray-scope .nrsrow{display:grid;grid-template-columns:112px minmax(0,1fr) 58px;gap:10px;align-items:center;font-size:12.5px;color:var(--os-ink-2,#A6A8B5);margin:7px 0}
+.xray-scope .nrsrow>span:first-child{min-width:0;overflow-wrap:break-word;hyphens:auto;color:var(--os-ink,#F2F2F5);font-weight:600}
+.xray-scope .nrsbar{height:8px;border-radius:999px;background:var(--os-surface-3,#2A2B36);overflow:hidden}
+.xray-scope .nrsbar i{display:block;height:100%;background:var(--os-accent,#4C8DF6);border-radius:999px}
+.xray-scope .nrsrow.hot i{background:var(--os-bad,#f06565)}
+.xray-scope .nrsrow .nv{text-align:right;color:var(--os-ink,#F2F2F5);font-weight:700}
+.xray-scope .nrsrow .nd{font-size:11px;font-weight:400;line-height:1.35;color:var(--os-ink-2,#A6A8B5)}
+.xray-scope .thread{display:flex;align-items:center;gap:9px;font-size:13px;padding:8px 11px;margin:4px 0;cursor:pointer;
+  border-radius:var(--os-r-sm,12px);background:var(--xr-cell);transition:background-color .15s,transform .15s}
+.xray-scope .thread:hover{background:var(--os-surface-3,#2A2B36);transform:translateX(-2px)}
+.xray-scope .thread .tdir{flex:none;width:14px;text-align:center;color:var(--os-ink-2,#A6A8B5);font-weight:700}
+.xray-scope .thread .xr-dot{width:8px;height:8px}
+.xray-scope .thread .tnm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--os-ink,#F2F2F5);font-weight:600}
+.xray-scope .thread .trel{font-size:11px;color:var(--os-ink-2,#A6A8B5);flex:none;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xray-scope .thread .tw{font-size:11.5px;color:var(--os-ink-2,#A6A8B5);flex:none;font-variant-numeric:tabular-nums}
+.xray-scope .tcap{font-size:12px;font-weight:700;color:var(--os-ink-2,#A6A8B5);margin:12px 0 4px}
+.xray-scope .relchips{display:flex;flex-wrap:wrap;gap:6px}
+.xray-scope .relchip{font-size:11.5px;font-weight:600;color:var(--os-ink-2,#A6A8B5);padding:4px 10px;border-radius:999px;background:var(--xr-cell)}
+.xray-scope .relchip b{color:var(--os-ink,#F2F2F5);font-variant-numeric:tabular-nums}
+.xray-scope .impact-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.xray-scope .icell{border-radius:var(--os-r-sm,12px);padding:11px 6px;background:var(--xr-cell);min-width:0}
+.xray-scope .icell b{display:block;font-size:18px;font-weight:800;letter-spacing:-.015em;color:var(--os-ink,#F2F2F5);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.xray-scope .icell.hot b{color:var(--os-bad-ink,#F47C7C)}
+.xray-scope .icell b.neg{color:var(--os-bad-ink,#F47C7C)}
+.xray-scope .icell span{font-size:11px;line-height:1.3;color:var(--os-ink-2,#A6A8B5);margin-top:3px;display:block}
+.xray-scope .xr-btns{display:flex;gap:8px;flex-wrap:wrap;padding:6px 12px 12px}
+#xray .xr-btns{padding:4px 14px}
+.xray-scope .xrb{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  height:38px;padding:0 15px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap;
+  background:var(--xr-card);color:var(--os-ink,#F2F2F5);box-shadow:var(--xr-sh);transition:background-color .15s,opacity .15s,transform .1s}
+.xray-scope .xrb:hover{background:var(--os-surface-3,#2A2B36)}
+.xray-scope .xrb:active{transform:scale(.98)}
+.xray-scope .xrb.pri{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216);font-weight:700}
+.xray-scope .xrb.pri:hover{opacity:.88}
+.xray-scope .xrb .xr-ic{font-size:14px;line-height:1}
+.xray-scope .xrb .km-stack{--km-ring:var(--xr-card)}
+.xray-scope .xr-victim{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:6px 4px;margin:0 -4px;border-radius:8px;cursor:pointer}
+.xray-scope .xr-victim:hover .vn{color:var(--xr-link)}
+.xray-scope .xr-victim .xr-dot{width:7px;height:7px}
+.xray-scope .xr-victim .vn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--os-ink,#F2F2F5);font-weight:600;transition:color .15s}
+.xray-scope .xr-victim .vbar{flex:1;height:6px;border-radius:999px;overflow:hidden;
+  background:var(--os-surface-3,#2A2B36);background:color-mix(in srgb,var(--os-bad,#f06565) 16%,transparent)}
+.xray-scope .xr-victim .vbar i{display:block;height:100%;border-radius:999px;background:var(--os-bad,#f06565)}
+.xray-scope .xr-victim .vp{font-size:12px;font-weight:700;color:var(--os-bad-ink,#F47C7C);width:44px;text-align:right;flex:none;font-variant-numeric:tabular-nums}
+.xray-scope .xr-victim.win .vbar{background:var(--os-surface-3,#2A2B36);background:color-mix(in srgb,var(--os-good,#2fbf5b) 16%,transparent)}
+.xray-scope .xr-victim.win .vbar i{background:var(--os-good,#2fbf5b)}
+.xray-scope .xr-victim.win .vp{color:var(--os-good-ink,#2fbf5b)}
+.xray-scope .xr-loading{color:var(--os-ink-2,#A6A8B5);font-size:12.5px;font-style:italic;line-height:1.5}
+.xray-scope .xr-note{font-size:12.5px;line-height:1.55;color:var(--os-ink-2,#A6A8B5);margin-top:11px;overflow-wrap:anywhere}
+.xray-scope a,.xray-scope .xr-tj{color:var(--xr-link);font-weight:600;text-decoration:none}
+.xray-scope a:hover{text-decoration:underline}
 .xray-scope .thread-scroll{max-height:none}
-/* ── modo escenario (pantalla completa, Cabina de Khipu) ── */
-.xray-scope.xr-full{padding:0 4px 24px}
-.xray-scope.xr-full .xr-hd{position:relative;background:transparent;border-bottom:1px solid rgba(122,158,255,.14);padding:6px 8px 16px}
+/* foco de teclado VISIBLE (WCAG 2.4.7) */
+.xray-scope .xrb:focus-visible,.xray-scope .xr-close:focus-visible,.xray-scope .thread:focus-visible,.xray-scope .xr-victim:focus-visible,.xray-scope a:focus-visible{
+  outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}
+/* puentes: piezas de OTROS módulos que llegan con colores fijos de la piel vieja (explain.js "?",
+   app.html liveCapDot ✓) — dentro del X-Ray se leen con los tokens */
+.xray-scope span[onclick*="explainMetric"]{color:var(--xr-link)!important;border-color:var(--os-line,rgba(255,255,255,.07))!important;background:var(--xr-cell)}
+.xray-scope span[style*="#7ecbff" i]{color:var(--xr-link)!important}
+/* ── modo escenario (ventana de Khipus OS / Cabina) ── */
+.xray-scope.xr-full{padding:0 2px 20px}
+.xray-scope.xr-full .xr-hd{padding:4px 4px 16px}
 .xray-scope.xr-full .xr-name{font-size:26px}
-.xray-scope.xr-full .xr-cols{column-width:340px;column-gap:18px;padding:16px 8px 0}
-.xray-scope.xr-full .xr-cols .xr-sect{break-inside:avoid;border:1px solid rgba(122,158,255,.12);border-radius:14px;
-  margin:0 0 16px;background:rgba(11,18,34,.5)}
-.xray-scope.xr-full .thread-scroll{max-height:280px;overflow-y:auto}
-.xray-scope.xr-full .xr-btns{padding:8px}
+.xray-scope.xr-full .xr-cols{column-width:330px;column-gap:14px;padding:0}
+.xray-scope.xr-full .xr-cols .xr-sect{break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 14px}
+.xray-scope.xr-full .thread-scroll{max-height:300px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--os-surface-3,#2A2B36) transparent}
+.xray-scope.xr-full .xr-btns{padding:2px 0}
+@media(max-width:420px){.xray-scope .nrsrow{grid-template-columns:112px minmax(0,1fr) 52px;gap:8px}.xray-scope .xr-px .p{font-size:23px}}
+@media(prefers-reduced-motion:reduce){.xray-scope .thread,.xray-scope .xrb,.xray-scope .xr-victim .vn{transition:none}.xray-scope .thread:hover{transform:none}.xray-scope .xrb:active{transform:none}}
 #xray-fab{position:fixed;left:0;top:0;z-index:5999}
 `;
     var st = document.createElement('style');
@@ -137,8 +205,9 @@
 
   function threadRow(t, dir) {
     var arrow = dir === 'up' ? '←' : '→';
-    return '<div class="thread" onclick="window._xrayJump(\'' + esc(t.n.id) + '\')" title="' + esc(t.rel || '') + '">' +
-      '<span class="tdir" style="color:' + sectorColor(t.n.cat) + '">' + arrow + '</span>' +
+    return '<div class="thread" role="button" tabindex="0" onclick="window._xrayJump(\'' + esc(t.n.id) + '\')" title="' + esc(t.rel || '') + '">' +
+      '<span class="tdir" aria-hidden="true">' + arrow + '</span>' +
+      '<span class="xr-dot" style="background:' + sectorColor(t.n.cat) + '"></span>' +
       '<span class="tnm">' + esc(t.n.label) + '</span>' +
       (t.rel ? '<span class="trel">' + esc(t.rel) + '</span>' : '') +
       '<span class="tw">w' + t.w + '</span></div>';
@@ -167,9 +236,9 @@
     if (!e || e.status === 'private' || e.status === 'unknown') return '';
     var txt = L(e.note_es || '', e.note_en || e.note_es || '');
     if (!txt) return '';
-    var src = (e.source_url && /^https?:\/\//i.test(e.source_url)) ? ' · <a href="' + esc(e.source_url) + '" target="_blank" rel="noopener noreferrer" style="color:#7C87A3">' + L('fuente', 'source') + ' ↗</a>' : '';
+    var src = (e.source_url && /^https?:\/\//i.test(e.source_url)) ? ' · <a href="' + esc(e.source_url) + '" target="_blank" rel="noopener noreferrer">' + L('fuente', 'source') + ' ↗</a>' : '';
     return '<div class="xr-note" style="margin-top:6px">✓ ' + esc(txt) +
-      '<span style="color:#7C87A3;font-size:10.5px"> · ' + L('verificado', 'verified') + ' ' + esc(e.as_of || '') + src + '</span></div>';
+      '<span style="font-size:11.5px"> · ' + L('verificado', 'verified') + ' ' + esc(e.as_of || '') + src + '</span></div>';
   }
 
   // ── construye el HTML interno del X-Ray (lo usan el cajón y el escenario) ──
@@ -196,10 +265,10 @@
     // VIVO (window.fillLiveMeta, en wire) cuando hay perfil; si no, catálogo.
     var mm = (meta.founded || n.mkt) ? '<div class="xr-sect"><div class="xr-h">' + L('Anatomía', 'Anatomy') + '</div>' +
       '<div class="impact-grid" style="grid-template-columns:1fr 1fr">' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-emp" data-live="employees" data-live-fmt="k">' + (meta.employees ? esc(meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB" class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? (isFinite(+meta.mktcap_b) ? '$' + esc(meta.mktcap_b) + 'B' + (window.liveCapDot ? window.liveCapDot(meta) : '') : esc(meta.mktcap_b)) : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
-      '<div class="icell"><b style="color:#E8EDFB;font-size:15px;overflow-wrap:anywhere" class="xr-mono xr-rev" data-live="revenue">' + esc(meta.revenue_2025 || '—') + '</b><span class="xr-rev-l" data-live-label="revenue">' + L('Ingresos 2025', 'Revenue 2025') + '</span></div>' +
+      '<div class="icell"><b class="xr-mono">' + esc(meta.founded || '—') + '</b><span>' + L('Fundada', 'Founded') + '</span></div>' +
+      '<div class="icell"><b class="xr-mono xr-emp" data-live="employees" data-live-fmt="k">' + (meta.employees ? esc(meta.employees >= 1000 ? Math.round(meta.employees / 1000) + 'K' : meta.employees) : '—') + '</b><span>' + L('Empleados', 'Employees') + '</span></div>' +
+      '<div class="icell"><b class="xr-mono xr-mcap" data-live="mcap">' + (meta.mktcap_b ? (isFinite(+meta.mktcap_b) ? '$' + esc(meta.mktcap_b) + 'B' + (window.liveCapDot ? window.liveCapDot(meta) : '') : esc(meta.mktcap_b)) : (n.mkt ? '—' : L('Priv.', 'Priv.'))) + '</b><span>Mkt Cap</span></div>' +
+      '<div class="icell"><b style="font-size:15px" class="xr-mono xr-rev" data-live="revenue">' + esc(meta.revenue_2025 || '—') + '</b><span class="xr-rev-l" data-live-label="revenue">' + L('Ingresos 2025', 'Revenue 2025') + '</span></div>' +
       '</div>' + (meta.geo_risk ? '<div class="xr-note">🌐 ' + esc(meta.geo_risk) + '</div>' : '') + '</div>' : '';
 
     // fundamentales extra (margen / crecimiento / puerto) si existen
@@ -211,9 +280,9 @@
       var g = String(n.growth || '').trim();
       var gCorto = g && g.length <= 14;
       funds = '<div class="xr-sect"><div class="xr-h">' + L('Fundamentales', 'Fundamentals') + '</div><div class="impact-grid">' +
-        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono" data-live="margin">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</b><span data-live-sub="margin">' + (n.margin_live ? L('Margen · en vivo', 'Margin · live') : L('Margen · catálogo', 'Margin · catalog')) + '</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB;font-size:14px" class="xr-mono" data-live="growth">' + (gCorto ? esc(g) : '—') + '</b><span data-live-label="growth">' + L('Crecim. · catálogo', 'Growth · catalog') + '</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB" class="xr-mono">' + esc(n.country || '—') + '</b><span>' + L('País', 'Country') + '</span></div>' +
+        '<div class="icell"><b class="xr-mono" data-live="margin">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</b><span data-live-sub="margin">' + (n.margin_live ? L('Margen · en vivo', 'Margin · live') : L('Margen · catálogo', 'Margin · catalog')) + '</span></div>' +
+        '<div class="icell"><b style="font-size:14px" class="xr-mono" data-live="growth">' + (gCorto ? esc(g) : '—') + '</b><span data-live-label="growth">' + L('Crecim. · catálogo', 'Growth · catalog') + '</span></div>' +
+        '<div class="icell"><b class="xr-mono">' + esc(n.country || '—') + '</b><span>' + L('País', 'Country') + '</span></div>' +
         '</div>' + (g && !gCorto ? '<div class="xr-note">' + esc(g) + '</div>' : '') + '</div>';
     }
 
@@ -229,35 +298,36 @@
 
     var header =
       '<div class="xr-hd">' +
-        '<button class="xr-close" onclick="window._xrayClose()">✕</button>' +
+        '<button type="button" class="xr-close" onclick="window._xrayClose()" title="' + L('Cerrar', 'Close') + '" aria-label="' + L('Cerrar', 'Close') + '">✕</button>' +
         '<div class="xr-name">' + esc(n.label) + ' <span class="xr-tk xr-mono">' + esc(tk) + '</span></div>' +
-        '<div class="xr-sec"><span class="xr-dot" style="background:' + col + ';color:' + col + '"></span>' +
+        '<div class="xr-sec"><span class="xr-dot" style="background:' + col + '"></span>' +
           sectorLabel(n.cat) + ' · ' + esc(n.country || '—') + ' · ' + (th.up.length + th.down.length) + ' ' + L('vínculos', 'links') + '</div>' +
-        '<div class="xr-px xr-mono" id="xr-px"><span class="p" style="color:#7C87A3">' + (n.mkt ? '— · —' : L('no cotiza en bolsa', 'not publicly traded')) + '</span></div>' +
+        '<div class="xr-px xr-mono" id="xr-px"><span class="p xr-pending">' + (n.mkt ? '— · —' : L('no cotiza en bolsa', 'not publicly traded')) + '</span></div>' +
         '<div class="xr-lin" id="xr-lin"></div>' + listingLine(n) +
       '</div>';
 
     var nrsSection =
       '<div class="xr-sect"><div class="xr-h"><span>' + L('Riesgo NRS — por qué ', 'NRS risk — why ') + (bd ? bd.total : '?') +
         (window.explainChip ? window.explainChip('nrs') : '') + '</span>' +
-        '<span class="v xr-mono" style="color:' + (bd && bd.total >= 60 ? '#FF4D6A' : bd && bd.total >= 35 ? '#FFB300' : '#2BE38B') + '">' +
+        '<span class="v xr-mono" style="color:' + (bd && bd.total >= 60 ? C_BAD : bd && bd.total >= 35 ? C_WARN : C_GOOD) + '">' +
         (bd ? bd.total : '?') + '/100</span></div>' + nrsHTML +
-        (rank ? '<div class="xr-lin" style="margin-top:8px">' + L('Ranking de riesgo: ', 'Risk ranking: ') + '<b style="color:#E8EDFB">#' + rank.rank + '</b> ' + L('de', 'of') + ' ' + rank.of + ' ' + L('empresas', 'companies') + '</div>' : '') +
+        (rank ? '<div class="xr-lin" style="margin-top:8px">' + L('Ranking de riesgo: ', 'Risk ranking: ') + '<b class="xr-strong">#' + rank.rank + '</b> ' + L('de', 'of') + ' ' + rank.of + ' ' + L('empresas', 'companies') + '</div>' : '') +
         '<div class="xr-lin" style="margin-top:4px">' + L('ⓘ fórmula NRS · el motor de matrices puede fijarlo con datos vivos', 'ⓘ NRS formula · the matrix engine can refine it with live data') + '</div></div>';
 
     var impactSection =
       '<div class="xr-sect"><div class="xr-h">' + L('Si ', 'If ') + esc(n.label) + L(' cae — onda de impacto', ' fails — impact wave') + '</div>' +
         '<div id="xr-impact"><div class="xr-loading">' + L('Calculando propagación…', 'Computing propagation…') + '</div></div></div>';
 
+    // botones de verdad (<button>: se alcanzan con el teclado); los AGENTES llevan su mascota
     var btns =
       '<div class="xr-btns">' +
-        '<span class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')">⚡ ' + L('Ver onda en el mapa', 'See wave on the map') + '</span>' +
-        (window.openFinCard ? '<span class="xrb" onclick="window._surface ? window._surface(\'dossier\', \'' + esc(id) + '\') : window.openFinCard(\'' + esc(id) + '\')">📊 Dossier</span>' : '') +
-        (window.openCompare ? '<span class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')">⇄ ' + L('Comparar', 'Compare') + '</span>' : '') +
-        (window.__tkgOpenObj ? '<span class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')">◈ ' + L('En el tiempo', 'Over time') + '</span>' : '') +
-        (window.KhipuResearch ? '<span class="xrb" onclick="window.KhipuResearch.open(\'' + esc(id) + '\')">🔬 ' + L('Investigación IA', 'AI research') + '</span>' : '') +
-        (window.KhipuCommittee ? '<span class="xrb" onclick="window.KhipuCommittee.open(\'' + esc(id) + '\')">🏛 ' + L('Comité', 'Committee') + '</span>' : '') +
-        (window._openSecondBrain ? '<span class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">🧠 ' + L('Análisis IA', 'AI analysis') + '</span>' : '') +
+        '<button type="button" class="xrb pri" onclick="window._xrayShock(\'' + esc(id) + '\')"><span class="xr-ic" aria-hidden="true">⚡</span>' + L('Ver onda en el mapa', 'See wave on the map') + '</button>' +
+        (window.openFinCard ? '<button type="button" class="xrb" onclick="window._surface ? window._surface(\'dossier\', \'' + esc(id) + '\') : window.openFinCard(\'' + esc(id) + '\')"><span class="xr-ic" aria-hidden="true">📊</span>Dossier</button>' : '') +
+        (window.openCompare ? '<button type="button" class="xrb" onclick="window._xrayCompare(\'' + esc(id) + '\')"><span class="xr-ic" aria-hidden="true">⇄</span>' + L('Comparar', 'Compare') + '</button>' : '') +
+        (window.__tkgOpenObj ? '<button type="button" class="xrb" onclick="window._xrayTKG(\'' + esc(id) + '\')"><span class="xr-ic" aria-hidden="true">◈</span>' + L('En el tiempo', 'Over time') + '</button>' : '') +
+        (window.KhipuResearch ? '<button type="button" class="xrb" onclick="window.KhipuResearch.open(\'' + esc(id) + '\')">' + mascotStack(['analista', 'radar', 'cadena'], 18, '🔬') + L('Investigación IA', 'AI research') + '</button>' : '') +
+        (window.KhipuCommittee ? '<button type="button" class="xrb" onclick="window.KhipuCommittee.open(\'' + esc(id) + '\')">' + mascot('comite', 18, '🏛') + L('Comité', 'Committee') + '</button>' : '') +
+        (window._openSecondBrain ? '<button type="button" class="xrb" onclick="window._openSecondBrain(\'' + esc(id) + '\')">' + mascot('khipu', 18, '🧠') + L('Análisis IA', 'AI analysis') + '</button>' : '') +
       '</div>';
 
     // ONTOLOGÍA NIVEL 2 (matrix/tensor.py vía /api/tensor/node): concentración, países, valor arrastrado
@@ -328,8 +398,8 @@
     // la variación dice de CUÁNDO es: "hoy" solo con sesión en curso
     var chgWhen = qi.live === true ? '' : qi.live === false ? ' ' + L('última sesión', 'last session') : '';
     el.innerHTML = '<span class="p">' + p + '</span>' +
-      (pct != null && isFinite(pct) ? '<span class="chg" style="color:' + (pct >= 0 ? '#2BE38B' : '#FF4D6A') + '">' + fmtPct(pct) +
-        (chgWhen ? '<small style="color:#7C87A3;font-size:10px">' + esc(chgWhen) + '</small>' : '') + '</span>' : '');
+      (pct != null && isFinite(pct) ? '<span class="chg" style="color:' + (pct >= 0 ? C_GOOD : C_BAD) + '">' + fmtPct(pct) +
+        (chgWhen ? '<small>' + esc(chgWhen) + '</small>' : '') + '</span>' : '');
     var lin = els.lin;
     if (!lin || !lin.isConnected) return;
     var parts = ['ⓘ ' + src];
@@ -409,31 +479,31 @@
     var topN = isFull ? 12 : 6;
     var top = arr.slice(0, topN).map(function (x) {
       var node = window.NODE_BY_ID[x.id]; if (!node) return '';
-      return '<div class="xr-victim" onclick="window._xrayJump(\'' + esc(x.id) + '\')">' +
-        '<span class="xr-dot" style="width:7px;height:7px;background:' + sectorColor(node.cat) + '"></span>' +
+      return '<div class="xr-victim" role="button" tabindex="0" onclick="window._xrayJump(\'' + esc(x.id) + '\')">' +
+        '<span class="xr-dot" style="background:' + sectorColor(node.cat) + '"></span>' +
         '<span class="vn">' + esc(node.label) + '</span>' +
         '<span class="vbar"><i style="width:' + Math.round(x.v) + '%"></i></span>' +
         '<span class="vp xr-mono">' + Math.round(x.v) + '%</span></div>';
     }).join('');
     var winners = computeWinners(id, impacts);
-    var winHTML = winners.length ? '<div class="xr-h" style="margin:13px 0 6px;color:#2BE38B">' + L('Quién gana ↑', 'Who wins ↑') + '</div>' +
+    var winHTML = winners.length ? '<div class="xr-h win" style="margin:14px 0 6px">' + L('Quién gana ↑', 'Who wins ↑') + '</div>' +
       winners.map(function (w) {
         var node = window.NODE_BY_ID[w.id];
-        return '<div class="xr-victim" onclick="window._xrayJump(\'' + esc(w.id) + '\')">' +
-          '<span class="xr-dot" style="width:7px;height:7px;background:' + sectorColor(node.cat) + '"></span>' +
+        return '<div class="xr-victim win" role="button" tabindex="0" onclick="window._xrayJump(\'' + esc(w.id) + '\')">' +
+          '<span class="xr-dot" style="background:' + sectorColor(node.cat) + '"></span>' +
           '<span class="vn">' + esc(node.label) + '</span>' +
-          '<span class="vbar" style="background:rgba(43,227,139,.15)"><i style="width:' + w.up * 2 + '%;background:#2BE38B"></i></span>' +
-          '<span class="vp xr-mono" style="color:#2BE38B">+' + w.up + '%</span></div>';
+          '<span class="vbar"><i style="width:' + w.up * 2 + '%"></i></span>' +
+          '<span class="vp xr-mono">+' + w.up + '%</span></div>';
       }).join('') : '';
     var el = root.querySelector('#xr-impact');
     if (!el) return;
     el.innerHTML =
       '<div class="impact-grid" style="margin-bottom:11px">' +
-        '<div class="icell"><b>' + arr.length + '</b><span>' + L('empresas', 'companies') + '</span></div>' +
-        '<div class="icell"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>' + L('cap expuesta', 'exposed cap') + '</span></div>' +
-        '<div class="icell"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>' +
+        '<div class="icell hot"><b>' + arr.length + '</b><span>' + L('empresas', 'companies') + '</span></div>' +
+        '<div class="icell hot"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>' + L('cap expuesta', 'exposed cap') + '</span></div>' +
+        '<div class="icell hot"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>' +
       '</div>' +
-      '<div class="xr-h" style="margin:2px 0 6px">' + L('Quién sufre ↓', 'Who suffers ↓') + '</div>' + top + winHTML +
+      '<div class="xr-h bad" style="margin:2px 0 6px">' + L('Quién sufre ↓', 'Who suffers ↓') + '</div>' + top + winHTML +
       (note ? '<div class="xr-lin" style="margin-top:8px">' + note + '</div>' : '');
   }
 
@@ -469,7 +539,7 @@
   }
 
   function _usdB(v) { return v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + Math.round(v) + 'B'; }
-  var CONC = { alta: ['alta', 'high', '#FF4D6A'], media: ['media', 'medium', '#FFB300'], baja: ['baja', 'low', '#2BE38B'] };
+  var CONC = { alta: ['alta', 'high', C_BAD], media: ['media', 'medium', C_WARN], baja: ['baja', 'low', C_GOOD] };
   function loadStructure(root, id) {
     var el = root.querySelector('#xr-struct');
     if (!el) return;
@@ -479,22 +549,22 @@
       var cc = CONC[sc.level] || null, top = (sc.top || [])[0];
       var tiles =
         '<div class="impact-grid" style="margin-bottom:10px">' +
-        '<div class="icell"><b style="color:' + (cc ? cc[2] : '#E8EDFB') + '">' + (cc ? L(cc[0], cc[1]) : '—') + '</b><span>' +
+        '<div class="icell"><b' + (cc ? ' style="color:' + cc[2] + '"' : '') + '>' + (cc ? L(cc[0], cc[1]) : '—') + '</b><span>' +
           L('Concentración de proveedores', 'Supplier concentration') + (sc.n_suppliers ? ' · ' + sc.n_suppliers : '') + '</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB">' + (c0 ? esc(c0.country) + ' ' + Math.round(c0.share_pct) + '%' : '—') + '</b><span>' +
+        '<div class="icell"><b>' + (c0 ? esc(c0.country) + ' ' + Math.round(c0.share_pct) + '%' : '—') + '</b><span>' +
           L('País principal de sus proveedores', 'Main supplier country') + '</span></div>' +
-        '<div class="icell"><b style="color:#E8EDFB">' + (dn.cap_at_risk_usd_b > 0 ? _usdB(dn.cap_at_risk_usd_b) : '—') + '</b><span>' +
+        '<div class="icell"><b>' + (dn.cap_at_risk_usd_b > 0 ? _usdB(dn.cap_at_risk_usd_b) : '—') + '</b><span>' +
           L('Valor arrastrado si cae', 'Value dragged if it fails') + (dn.systemic_rank ? ' · #' + dn.systemic_rank : '') + '</span></div>' +
         '</div>';
       var lines = [];
-      if (top) lines.push(L('Mayor dependencia: ', 'Biggest dependency: ') + '<b style="color:#E8EDFB">' + esc(top.label) + '</b> (' + top.share_pct + '% ' + L('del peso de sus vínculos con proveedores', 'of the weight of its supplier links') + ')');
+      if (top) lines.push(L('Mayor dependencia: ', 'Biggest dependency: ') + '<b class="xr-strong">' + esc(top.label) + '</b> (' + top.share_pct + '% ' + L('del peso de sus vínculos con proveedores', 'of the weight of its supplier links') + ')');
       var ups = (d.upstream_risk_sources || []).slice(0, 3);
       if (ups.length) lines.push(L('Su riesgo viene de: ', 'Its risk comes from: ') + ups.map(function (u) {
-        return '<a href="#" class="xr-tj" data-id="' + esc(u.id) + '" style="color:#E8EDFB">' + esc(u.label) + '</a> ' + u.exposure_pct + '%' + (u.direct ? '' : L(' (indirecto)', ' (indirect)'));
+        return '<a href="#" class="xr-tj" data-id="' + esc(u.id) + '">' + esc(u.label) + '</a> ' + u.exposure_pct + '%' + (u.direct ? '' : L(' (indirecto)', ' (indirect)'));
       }).join(' · '));
       var ps = (d.peers || []).slice(0, 4);
       if (ps.length) lines.push(L('Comparables: ', 'Peers: ') + ps.map(function (p) {
-        return '<a href="#" class="xr-tj" data-id="' + esc(p.id) + '" style="color:#E8EDFB">' + esc(p.label) + '</a>';
+        return '<a href="#" class="xr-tj" data-id="' + esc(p.id) + '">' + esc(p.label) + '</a>';
       }).join(' · '));
       var note = dn.cap_coverage_pct != null && dn.cap_coverage_pct < 60
         ? '<div class="xr-lin" style="margin-top:6px">' + L('ⓘ capitalización conocida de ', 'ⓘ known market cap for ') + dn.cap_coverage_pct + '% ' +
@@ -545,10 +615,24 @@
     }).catch(finish);
   }
 
+  // filas clicables (hilos, quién sufre/gana) con role="button": Enter/Espacio = clic (teclado).
+  // Delegado UNA vez por root (el cajón #xray se re-pinta con otra empresa sin re-crearse).
+  function wireKeys(root) {
+    if (!root || root._xrKeys || !root.addEventListener) return;
+    root._xrKeys = true;
+    root.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var t = e.target;
+      if (!t || !t.getAttribute || t.getAttribute('role') !== 'button' || typeof t.click !== 'function') return;
+      e.preventDefault(); t.click();
+    });
+  }
+
   // conecta precio + impacto a un root ya renderizado con buildXRayHTML
   function wire(root, id) {
     var n = window.NODE_BY_ID ? window.NODE_BY_ID[id] : null;
     if (!n) return;
+    wireKeys(root);
     loadPrice(root, n);
     startPriceTimer(root, n);   // precio del encabezado: cada 60 s mientras esté abierto
     loadImpact(root, id, n);
@@ -572,7 +656,8 @@
     if (!ov) {
       ov = document.createElement('div');
       ov.id = 'xray-ov';
-      ov.innerHTML = '<div id="xray" class="xray-scope"></div>';
+      ov.className = 'kos-themed';   // tokens --os-* de Khipus OS (claro/oscuro) fuera de #bcp-ov
+      ov.innerHTML = '<div id="xray" class="xray-scope" role="dialog" aria-modal="true" aria-label="X-Ray"></div>';
       ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
       document.body.appendChild(ov);
     }

@@ -9,6 +9,33 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-10 — NOCHE: IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)
+
+Fabrizio pagó Claude/Gemini/ElevenLabs (y Jev pronto). Workflow de 9 agentes (6 constructores + 2 revisores + corrector;
+14 hallazgos: 11 arreglados por el corrector, 3 por mí).
+- IA (core/ai.py): orden POR NIVEL — `AI_ORDER_DEEP` (defecto claude,gemini,nvidia; IGNORA el AI_ORDER viejo) y
+  `AI_ORDER_FAST` > `AI_ORDER` > defecto gemini,claude,nvidia (`provider_order`, `ai_route_state` → salud `routing`).
+  Claude por modelo (`claude_attempts`/`claude_thinking_mode`/`claude_ping_kwargs`): Sonnet 5.5 nunca recibe thinking
+  disabled ni temperature (between_tools rápido; adaptativo + effort medium profundo); Opus 5.5/Fable sin disabled;
+  Haiku 4.5 igual que antes; un 400 de parámetros reintenta el MISMO modelo (antes bajaba en silencio a Haiku).
+  AI_MODEL_DEEP por defecto claude-sonnet-5-5. Chat: ruta Jev needs_deep_reasoning → respuesta final con nivel
+  profundo (`_deep_final`, tope 66 s). Gasto: medidor por hilo cuenta el pensamiento (research/llm).
+- Jev: con TYPESAFE_API_KEY y DECIDE_CONTROL vacío → manda en chat_gate (off/none/0 lo apaga).
+- Voz: core/voice_agent.py (ÚNICO cliente REST de ElevenLabs: errores clasificados, diagnóstico accionable, sync con
+  herramientas como recursos `tool_ids`, repara TTS/LLM viejos sin pisar la voz ni herramientas del dueño);
+  engine/voice.js alineado al protocolo vigente (ping/pong, client_tool_call, interrupciones, audio, cierre limpio);
+  /api/voice/agent-diag con límite de uso. No probado con cuenta real (sin clave en el sandbox).
+- UI a tokens de Khipus OS (claro/oscuro, mascotas): xray.js, research.js (overlay), portfolios.js, riskreport.js,
+  fincard.js (Dossier), clients.js, aispend.js, mcpconnect.js, brief.js, insights.js, reconcile.js; explain.js "?" con
+  --os-accent. `.kos-themed` = tokens para overlays fuera de #bcp-ov; tokens de texto AA --os-good-ink/--os-bad-ink/
+  --os-warn/--os-warn-ink/--os-ai. LEGACY_DARK queda: broker, scalp, screener, deep, research (ventana de la Cabina),
+  agentsim, compare, sim, pick — pendiente migrarlos (viven en cockpit.js/app.html).
+- Tests: tests/test_overnight_*.py. Suite: 1460 en verde.
+- PENDIENTE Fabrizio (Railway): borrar AI_ORDER (o fijar AI_ORDER_FAST/DEEP), revisar AI_MODEL_DEEP, TYPESAFE_API_KEY;
+  ElevenLabs: overrides del agente y ELEVENLABS_ALLOW_OVERRIDE si quiere que el sync repare el agente.
+
+---
+
 # SESIÓN 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)
 
 Pedido de Fabrizio (captura del comité): "el comité todavía no está actualizado". Seguía con personajes humanos

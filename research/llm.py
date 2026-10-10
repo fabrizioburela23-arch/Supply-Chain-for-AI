@@ -52,6 +52,16 @@ def estimate_tokens(text):
     return max(1, len(text or '') // 4)
 
 
+def _meter():
+    """Medidor de tokens REALES del hilo (core.ai_usage.meter); sin él, un contexto vacío."""
+    try:
+        from core.ai_usage import meter
+        return meter()
+    except Exception:  # noqa: BLE001
+        from contextlib import nullcontext
+        return nullcontext({})
+
+
 def estimate_cost(model_label, tokens_in, tokens_out):
     """USD estimados. R5: UNA sola tabla de precios para todo (core.ai_usage.PRICES
     + AI_PRICES_JSON): antes research tenía la suya (claude-sonnet 3/15 vs 2/10)
@@ -95,10 +105,17 @@ class LLMProvider:
             meta['attempts'] = attempt
             p = prompt + (feedback and ('\n\nTU RESPUESTA ANTERIOR NO ES VÁLIDA:\n' + feedback +
                                         '\nDevuelve SOLO el JSON corregido.'))
-            text, model = self.generate(system, p, max_tokens)
+            with _meter() as real:
+                text, model = self.generate(system, p, max_tokens)
             meta['model'] = model
-            meta['tokens_in'] += estimate_tokens(system) + estimate_tokens(p)
-            meta['tokens_out'] += estimate_tokens(text)
+            if real.get('calls'):
+                # tokens que COBRÓ el proveedor (core/ai_usage.record): incluyen el pensamiento
+                # (Sonnet 5.5 profundo, Gemini 3) → el tope diario cuenta lo mismo que 💰 Gasto IA
+                meta['tokens_in'] += int(real['tokens_in'])
+                meta['tokens_out'] += int(real['tokens_out'])
+            else:
+                meta['tokens_in'] += estimate_tokens(system) + estimate_tokens(p)
+                meta['tokens_out'] += estimate_tokens(text)
             try:
                 data = _extract_json(text)
                 obj = schema_model.model_validate(data)

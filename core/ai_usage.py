@@ -31,15 +31,21 @@ from datetime import datetime, timedelta, timezone
 log = logging.getLogger('khipu')
 
 PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida)
-    'claude-fable-5': (10.0, 50.0), 'claude-opus-5-5': (4.0, 20.0), 'claude-opus-5': (5.0, 25.0),
+    # Claude (tabla oficial de la API, oct-2026). Haiku 5.5: tarifa para prompts ≤ 100K tokens (más largos: 0,5/2,5).
+    'claude-fable-5': (10.0, 50.0), 'claude-mythos-5': (10.0, 50.0),
+    'claude-opus-5-5': (4.0, 20.0), 'claude-opus-5': (5.0, 25.0),
     'claude-opus-4': (5.0, 25.0), 'claude-sonnet-5-5': (2.0, 10.0), 'claude-sonnet-5': (2.0, 10.0),
-    'claude-sonnet-4': (3.0, 15.0), 'claude-haiku-4': (1.0, 5.0), 'claude': (3.0, 15.0),
+    'claude-sonnet-4': (3.0, 15.0), 'claude-haiku-5-5': (0.1, 0.5), 'claude-haiku-4': (1.0, 5.0),
+    'claude': (3.0, 15.0),
     'gemini:gemini-2.5-pro': (1.25, 10.0), 'gemini:gemini-3-pro': (2.0, 12.0), 'gemini:gemini-2.5-flash-lite': (0.1, 0.4),
     'gemini:gemini-2.5-flash': (0.3, 2.5), 'gemini': (0.3, 2.5),
     # precio de lanzamiento hasta el 31-dic-2026; desde el 1-ene-2027 sube a (1.5, 7.5) → actualizar aquí
     'gemini:gemini-3.8-flash': (0.75, 3.75), 'gemini:gemini-3.5-flash-lite': (0.3, 2.5), 'gemini:gemini-3.1-pro': (2.0, 12.0),
     'nvidia': (0.0, 0.0),        # catálogo de NVIDIA: gratis con créditos de desarrollador
-    'typesafe': (0.0, 0.0),      # Jev (core/decide.py): precio no publicado al integrar → fijar con AI_PRICES_JSON {"typesafe:jev": [in, out]}
+    # Jev (core/decide.py): ~0,04 USD por 1M tokens de entrada y salida gratis según fuentes de terceros
+    # (sept-oct 2026; TypeSafe no lo publicó en una página que pudiéramos leer) → ESTIMADO; ajustar con
+    # AI_PRICES_JSON {"typesafe:jev": [in, out]} cuando llegue la primera factura.
+    'typesafe': (0.04, 0.0),
 }
 
 FEATURE_BY_PATH = (
@@ -136,6 +142,34 @@ def ai_context(feature=None, who=None):
         yield
     finally:
         _TLS.feature, _TLS.who = prev
+
+
+@contextmanager
+def meter():
+    """Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque
+    (incluido el "pensamiento" que el proveedor cobra como salida y los intentos que
+    se descartan). research/llm lo usa para que su presupuesto diario cuente lo mismo
+    que 💰 Gasto IA: el largo del texto visible subestima a los modelos que piensan
+    (Sonnet 5.5 en el nivel profundo, Gemini 3 con thinkingLevel)."""
+    acc = {'tokens_in': 0, 'tokens_out': 0, 'calls': 0}
+    stack = getattr(_TLS, 'meters', None)
+    if stack is None:
+        stack = _TLS.meters = []
+    stack.append(acc)
+    try:
+        yield acc
+    finally:
+        try:
+            stack.remove(acc)
+        except ValueError:
+            pass
+
+
+def _meter_add(tin, tout):
+    for acc in getattr(_TLS, 'meters', None) or ():
+        acc['tokens_in'] += tin
+        acc['tokens_out'] += tout
+        acc['calls'] += 1
 
 
 def current():
@@ -328,6 +362,7 @@ def record(provider, model, tin, tout, ok=True, ms=None, estimated=False):
     se cobraron igual)."""
     try:
         tin, tout = int(tin or 0), int(tout or 0)
+        _meter_add(tin, tout)
         ctx = current()
         cost = cost_of(provider, model, tin, tout)
         row = {'at': _now(), 'provider': provider, 'model': str(model or '')[:80], 'feature': ctx['feature'],

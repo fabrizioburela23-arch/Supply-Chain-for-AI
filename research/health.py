@@ -111,6 +111,16 @@ def _outcomes():
         return None
 
 
+def _routing():
+    """Orden de proveedores por nivel (rápido/profundo), de dónde sale y qué modelo/parámetros usa Claude
+    (2026-10-10, core/ai.ai_route_state) — en memoria, sin red."""
+    try:
+        from core import ai
+        return ai.ai_route_state()
+    except Exception as e:  # noqa: BLE001
+        return {'error': type(e).__name__}
+
+
 def _last_errors():
     try:
         from core import ai
@@ -158,7 +168,7 @@ def research_health(fresh=False, light=False):
         ok, (hint_es, hint_en) = _hint(providers, budget, queue)
         return {'ok': ok, 'hint_es': hint_es, 'hint_en': hint_en, 'providers': providers, 'queue': queue,
                 'budget': {'research': budget}, 'scheduler': _scheduler(), 'outcomes': _outcomes(),
-                'as_of': _now_iso(), 'light': True}
+                'routing': _routing(), 'as_of': _now_iso(), 'light': True}
     if not fresh and _CACHE['data'] is not None and now - _CACHE['ts'] < CACHE_S:
         return dict(_CACHE['data'], cached=True)
     providers = _providers()
@@ -166,11 +176,12 @@ def research_health(fresh=False, light=False):
     ok, (hint_es, hint_en) = _hint(providers, budget, queue)
     data = {'ok': ok, 'hint_es': hint_es, 'hint_en': hint_en, 'providers': providers, 'slots': _slots(),
             'queue': queue, 'budget': {'research': budget, 'ai_usage_limits': _ai_usage_limits()},
-            'scheduler': _scheduler(), 'outcomes': _outcomes(), 'last_errors': _last_errors(),
+            'scheduler': _scheduler(), 'outcomes': _outcomes(), 'last_errors': _last_errors(), 'routing': _routing(),
             'env': {'RESEARCH_PARALLEL': os.getenv('RESEARCH_PARALLEL'),
                     'RESEARCH_JOB_CONCURRENCY': os.getenv('RESEARCH_JOB_CONCURRENCY'),
                     'RESEARCH_MODEL_DEFAULT': os.getenv('RESEARCH_MODEL_DEFAULT'),
-                    'AI_ORDER': os.getenv('AI_ORDER')},
+                    'AI_ORDER': os.getenv('AI_ORDER'), 'AI_ORDER_FAST': os.getenv('AI_ORDER_FAST'),
+                    'AI_ORDER_DEEP': os.getenv('AI_ORDER_DEEP')},
             'as_of': _now_iso(), 'cached': False}
     _CACHE.update(ts=now, data=data)
     return data
@@ -185,6 +196,7 @@ def health_brief():
                 'providers_paused': [p for p, v in h['providers'].items() if v['circuit'].get('open')],
                 'jobs_queued': h['queue'].get('jobs_queued'), 'jobs_running': h['queue'].get('jobs_running'),
                 'scheduler_running': (h.get('scheduler') or {}).get('running'),
+                'routing': {k: (h.get('routing') or {}).get(k) for k in ('fast', 'deep', 'fast_source', 'deep_source')},
                 'detail': '/api/research/health'}
     except Exception as e:  # noqa: BLE001
         return {'ok': None, 'error': type(e).__name__}

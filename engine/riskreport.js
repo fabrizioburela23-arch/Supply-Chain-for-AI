@@ -27,6 +27,8 @@
 (function () {
   'use strict';
   var LS_OPT = 'kh_options', LS_QUICK = 'kh_risk_quick';
+  // respaldo (tema oscuro de Khipus OS) para los tokens que Chart.js lee en JS: el canvas no entiende var()
+  var DARK = { bad: '#f06565', accent: '#4C8DF6', ink2: '#A6A8B5', line: 'rgba(255,255,255,.07)' };   // token-fallback
   var S = {
     tab: 'var', source: 'market', manual: '', view: 'start', notice: null,
     spec: null, rep: null, vrep: null, busy: false, chart: null, detail: false, vdetail: false,
@@ -39,6 +41,11 @@
   function L(es, e) { return en() ? e : es; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function chip(k) { return window.explainChip ? window.explainChip(k) : ''; }
+  // la explicación con IA la da un AGENTE → su mascota de Khipus OS (riesgo = Técnico, KhipuMascot.of('risk'))
+  function mascot(size, state) {
+    try { var M = window.KhipuMascot; if (M && M.svg) return M.svg((M.of && M.of('risk')) || 'tecnico', size || 20, state ? { state: state } : {}); } catch (e) {}
+    return '';
+  }
   // números con separadores del idioma (es: 1.234,5 · en: 1,234.5)
   function num(v, d) {
     if (v == null || !isFinite(v)) return '—';
@@ -160,48 +167,159 @@
   function saveQuick(a) { lsSet(LS_QUICK, a); }
 
   /* ── estructura ──────────────────────────────────────────────────────── */
+  // Khipus OS (2026-10-10): el overlay lleva .kos-themed → mismos tokens --os-* que las ventanas
+  // (claro/oscuro según body.dark). Solo tokens; el valor tras la coma = respaldo oscuro.
+  // Superficies: fondo --os-bg, tarjetas --os-surface con sombra, controles --os-surface-2.
+  var CSS_KRR = '' +
+    '#krr-ov{position:fixed;inset:0;z-index:7800;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;overscroll-behavior:contain;' +
+      'background:var(--kos-scrim,rgba(0,0,0,.5));-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);' +
+      'font-family:var(--os-font,\'Nunito\',\'Geist\',system-ui,-apple-system,\'Segoe UI\',sans-serif)}' +
+    '#krr-ov.show{display:flex}' +
+    '#krr{width:min(1100px,96vw);margin:3vh 0;border-radius:24px;background:var(--os-bg,#0E0F14);color:var(--os-ink,#F2F2F5);' +
+      'box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55));padding:22px 24px 24px;box-sizing:border-box;' +
+      'font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;animation:krrPop .22s ease}' +
+    '@keyframes krrPop{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}' +
+    '#krr *{box-sizing:border-box}' +
+    '#krr button,#krr input,#krr select,#krr textarea{font-family:inherit}' +
+    // foco de teclado VISIBLE (WCAG 2.4.7)
+    '#krr button:focus-visible,#krr select:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}' +
+    '#krr .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}' +
+    '#krr .hd h2{margin:0;font-size:20px;font-weight:800;letter-spacing:-.015em;flex:1;min-width:180px;color:var(--os-ink,#F2F2F5)}' +
+    '#krr .x{appearance:none;-webkit-appearance:none;width:40px;height:40px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--os-ink-2,#A6A8B5);' +
+      'cursor:pointer;font-size:15px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s,color .15s}' +
+    '#krr .x:hover{background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5)}' +
+    // pestañas = control segmentado
+    '#krr .ktabs{display:flex;flex-wrap:wrap;gap:2px;width:fit-content;max-width:100%;padding:3px;border-radius:20px;background:var(--os-surface-3,#2A2B36);margin-bottom:16px}' +
+    '#krr .ktab{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;min-height:34px;padding:0 16px;border-radius:999px;background:none;color:var(--os-ink-2,#A6A8B5);' +
+      'font-size:13px;font-weight:700;white-space:nowrap;transition:background-color .15s,color .15s,box-shadow .15s}' +
+    '#krr .ktab:hover{color:var(--os-ink,#F2F2F5)}' +
+    '#krr .ktab.on{background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
+    '#krr .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}' +
+    // campos: sin borde, fondo suave, anillo de foco
+    '#krr select,#krr input,#krr textarea{height:40px;border:0;border-radius:var(--os-r-sm,12px);padding:0 12px;font-size:14px;color:var(--os-ink,#F2F2F5);' +
+      'background:var(--os-surface,#17181F);box-shadow:inset 0 0 0 1px var(--os-line,rgba(255,255,255,.07));outline:none;max-width:100%;min-width:0;transition:box-shadow .15s}' +
+    '#krr textarea{height:auto;padding:10px 12px}' +
+    '#krr input::placeholder{color:var(--os-ink-2,#A6A8B5);opacity:.85}' +
+    '#krr input:focus,#krr select:focus,#krr textarea:focus{box-shadow:inset 0 0 0 1.5px var(--os-accent,#4C8DF6),0 0 0 3px var(--kos-accent-soft,rgba(76,141,246,.16))}' +
+    '#krr .opt input,#krr .step input{background:var(--os-surface-2,#1F2029)}' +
+    // botones = píldoras: principal oscuro/claro según el tema, secundario suave
+    '#krr .btn{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 18px;' +
+      'border-radius:999px;background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216);font-size:13.5px;font-weight:700;letter-spacing:-.005em;white-space:nowrap;' +
+      'transition:opacity .15s,background-color .15s,transform .1s}' +
+    '#krr .btn:hover:not(:disabled){opacity:.88}#krr .btn:active{transform:scale(.98)}' +
+    '#krr .btn:disabled{opacity:.45;cursor:default;transform:none}' +
+    '#krr .btn.gh{background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);font-weight:600;box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
+    '#krr .opt .btn.gh,#krr .step .btn.gh{background:var(--os-surface-2,#1F2029);box-shadow:none}' +
+    '#krr .btn.gh:hover:not(:disabled){background:var(--os-surface-3,#2A2B36);opacity:1}' +
+    '#krr .btn.big{height:46px;font-size:15px;padding:0 22px}' +
+    '#krr .btn .km{margin:-4px 0}' +
+    // «?» de explainChip: trae un cian fijo en línea (1,4:1 sobre fondo claro) → acento del tema
+    '#krr span[onclick*="explainMetric"]{color:var(--os-accent,#4C8DF6)!important;border-color:color-mix(in srgb,var(--os-accent,#4C8DF6) 45%,transparent)!important}' +
+    // textos y avisos
+    '#krr .note{font-size:12.5px;color:var(--os-ink-2,#A6A8B5);line-height:1.55}' +
+    '#krr .ink{color:var(--os-ink,#F2F2F5)}#krr .mut{color:var(--os-ink-2,#A6A8B5)}' +
+    '#krr .good{color:var(--os-good-ink,#2fbf5b)}#krr .bad{color:var(--os-bad-ink,#F47C7C)}#krr .wtx{color:var(--os-warn-ink,#F2C46D)}' +
+    '#krr .warn{padding:10px 14px;border-radius:var(--os-r-sm,12px);color:var(--os-warn-ink,#F2C46D);font-size:13px;line-height:1.55;margin:8px 0;' +
+      'background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,var(--os-warn,#F2C46D) 14%,transparent)}' +
+    '#krr .info{padding:10px 14px;border-radius:var(--os-r-sm,12px);color:var(--os-ink,#F2F2F5);font-size:13px;line-height:1.55;margin:8px 0;' +
+      'background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,var(--os-accent,#4C8DF6) 10%,transparent)}' +
+    '#krr .lead{font-size:15px;color:var(--os-ink,#F2F2F5);line-height:1.55;margin:0 0 14px}' +
+    // inicio guiado: 3 tarjetas
+    '#krr .start{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}' +
+    '#krr .opt{border-radius:var(--os-r,18px);background:var(--os-surface,#17181F);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));' +
+      'padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}' +
+    '#krr .opt h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.01em;color:var(--os-ink,#F2F2F5)}#krr .opt .k{font-size:22px}' +
+    '#krr .cur{color:var(--os-ink-2,#A6A8B5);font-weight:700}' +
+    '#krr .pick{appearance:none;-webkit-appearance:none;border:0;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:11px 14px;' +
+      'border-radius:var(--os-r-sm,12px);background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);cursor:pointer;font-size:13.5px;font-weight:700;line-height:1.35;transition:background-color .15s}' +
+    '#krr .pick:hover:not(:disabled){background:var(--os-surface-3,#2A2B36)}#krr .pick:disabled{opacity:.6;cursor:default}' +
+    '#krr .pick small{color:var(--os-ink-2,#A6A8B5);font-size:12px;font-weight:500}' +
+    '#krr .pick>span:last-child{color:var(--os-ink-2,#A6A8B5);font-size:18px;flex:0 0 auto}' +
+    '#krr .tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 9px;border-radius:999px;color:var(--os-warn-ink,#F2C46D);' +
+      'background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,var(--os-warn,#F2C46D) 18%,transparent)}' +
+    // autocompletar
+    '#krr .qwrap{position:relative}' +
+    '#krr .sugg{position:absolute;left:0;right:0;top:100%;z-index:3;margin-top:6px;padding:4px;max-height:260px;overflow-y:auto;border-radius:var(--os-r-sm,12px);' +
+      'background:var(--os-surface,#17181F);box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55))}' +
+    '#krr .sugg button{appearance:none;-webkit-appearance:none;display:flex;justify-content:space-between;gap:8px;width:100%;padding:9px 11px;background:none;border:0;border-radius:10px;' +
+      'color:var(--os-ink,#F2F2F5);cursor:pointer;font-size:13px;text-align:left}' +
+    '#krr .sugg button:hover,#krr .sugg button.hi{background:var(--os-surface-2,#1F2029)}' +
+    '#krr .sugg .sy{color:var(--os-ink-2,#A6A8B5);font-weight:800;margin-left:8px;font-variant-numeric:tabular-nums}' +
+    '#krr .chips{display:flex;flex-wrap:wrap;gap:6px}' +
+    '#krr .chipx{display:inline-flex;align-items:center;gap:6px;padding:4px 5px 4px 12px;border-radius:999px;background:var(--os-surface-2,#1F2029);font-size:12.5px;color:var(--os-ink,#F2F2F5)}' +
+    '#krr .chipx b{font-weight:800}' +
+    '#krr .chipx button{appearance:none;-webkit-appearance:none;border:0;background:var(--os-surface-3,#2A2B36);color:var(--os-ink-2,#A6A8B5);border-radius:50%;width:24px;height:24px;' +
+      'cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center;transition:background-color .15s,color .15s}' +
+    '#krr .chipx button:hover{color:var(--os-bad-ink,#F47C7C);background:color-mix(in srgb,var(--os-bad,#f06565) 16%,transparent)}' +
+    // semáforo de riesgo (relleno vivo + texto AA)
+    '#krr .light{display:flex;gap:16px;align-items:center;border-radius:var(--os-r,18px);padding:16px 18px;margin:6px 0 14px;--krr-fill:var(--os-accent,#4C8DF6);--krr-ink:var(--os-ink,#F2F2F5);' +
+      'background:var(--os-surface,#17181F);background:color-mix(in srgb,var(--krr-fill) 10%,var(--os-surface,#17181F));box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
+    '#krr .light.low{--krr-fill:var(--os-good,#2fbf5b);--krr-ink:var(--os-good-ink,#2fbf5b)}' +
+    '#krr .light.mid{--krr-fill:var(--os-warn,#F2C46D);--krr-ink:var(--os-warn-ink,#F2C46D)}' +
+    '#krr .light.high{--krr-fill:var(--os-bad,#f06565);--krr-ink:var(--os-bad-ink,#F47C7C)}' +
+    '#krr .light .dot{width:56px;height:56px;border-radius:50%;flex:0 0 56px;background:var(--krr-fill);box-shadow:0 0 0 7px color-mix(in srgb,var(--krr-fill) 20%,transparent)}' +
+    '#krr .light .lv{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:24px;font-weight:800;letter-spacing:-.02em;color:var(--krr-ink)}' +
+    '#krr .light .rule{font-size:13px;color:var(--os-ink-2,#A6A8B5);line-height:1.5;margin-top:3px}' +
+    '#krr .say{margin:0;padding-left:0;list-style:none}' +
+    '#krr .say li{font-size:15px;line-height:1.6;margin:0 0 8px;padding-left:22px;position:relative;color:var(--os-ink,#F2F2F5)}' +
+    '#krr .say li:before{content:"•";position:absolute;left:6px;color:var(--os-accent,#4C8DF6);font-weight:800}' +
+    '#krr .tips li{font-size:14px}#krr .tips li:before{content:"→"}' +
+    '#krr .actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}' +
+    // explicación de la IA: burbuja con la mascota del agente
+    '#krr .ai{display:flex;gap:12px;align-items:flex-start;border-radius:var(--os-r,18px);padding:14px 16px;font-size:14px;line-height:1.6;color:var(--os-ink,#F2F2F5);' +
+      'background:var(--os-surface,#17181F);background:color-mix(in srgb,var(--os-ai,#B48CFF) 9%,var(--os-surface,#17181F));box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
+    '#krr .ai .txt{white-space:pre-wrap;min-width:0;flex:1;overflow-wrap:anywhere}' +
+    // tarjetas de métricas, secciones y tablas
+    '#krr .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:12px 0}' +
+    '#krr .card{border-radius:var(--os-r,18px);background:var(--os-surface,#17181F);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));padding:12px 14px;min-width:0}' +
+    '#krr .card .l{font-size:12px;font-weight:700;color:var(--os-ink-2,#A6A8B5);display:flex;align-items:center;gap:4px;flex-wrap:wrap}' +
+    '#krr .card .v{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-top:4px;color:var(--os-ink,#F2F2F5);font-variant-numeric:tabular-nums}' +
+    '#krr .card .s{font-size:12px;color:var(--os-ink-2,#A6A8B5);margin-top:2px}' +
+    '#krr .sec{margin-top:16px;min-width:0}' +
+    '#krr .sec h3{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;font-weight:800;margin:0 0 10px;color:var(--os-ink,#F2F2F5)}' +
+    '#krr .detail{border-top:1px solid var(--os-line,rgba(255,255,255,.07));margin-top:16px;padding-top:8px}' +
+    '#krr .tcard{background:var(--os-surface,#17181F);border-radius:var(--os-r,18px);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));padding:4px 8px;overflow-x:auto}' +
+    '#krr table{width:100%;border-collapse:collapse;font-size:13px}' +
+    '#krr th,#krr td{padding:8px 10px;border-bottom:1px solid var(--os-line,rgba(255,255,255,.07));text-align:right;color:var(--os-ink,#F2F2F5);font-variant-numeric:tabular-nums}' +
+    '#krr th:first-child,#krr td:first-child{text-align:left}' +
+    '#krr th{color:var(--os-ink-2,#A6A8B5);font-weight:700;font-size:11.5px;white-space:nowrap}' +
+    '#krr tr:last-child td{border-bottom:0}' +
+    '#krr td.good{color:var(--os-good-ink,#2fbf5b)}#krr td.bad{color:var(--os-bad-ink,#F47C7C)}#krr td.wtx{color:var(--os-warn-ink,#F2C46D)}' +
+    '#krr .bar{height:8px;border-radius:999px;background:var(--os-surface-3,#2A2B36);position:relative;min-width:60px}' +
+    '#krr .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--os-accent,#4C8DF6)}#krr .bar i.hot{background:var(--os-warn,#F2C46D)}' +
+    '#krr .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}' +
+    '#krr .chartbox{height:236px;padding:10px 10px 6px;border-radius:var(--os-r,18px);background:var(--os-surface,#17181F);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
+    // Vega: pasos guiados
+    '#krr .steps{display:flex;flex-direction:column;gap:12px}' +
+    '#krr .step{border-radius:var(--os-r,18px);padding:16px;background:var(--os-surface,#17181F);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}' +
+    '#krr .step h4{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 10px;font-size:14px;font-weight:800;color:var(--os-ink,#F2F2F5)}' +
+    '#krr .pills{display:flex;flex-wrap:wrap;gap:6px}' +
+    '#krr .pill{appearance:none;-webkit-appearance:none;border:0;padding:8px 12px;border-radius:var(--os-r-sm,12px);background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);' +
+      'cursor:pointer;font-size:12.5px;font-weight:600;line-height:1.25;font-variant-numeric:tabular-nums;transition:background-color .15s}' +
+    '#krr .pill:hover{background:var(--os-surface-3,#2A2B36)}' +
+    '#krr .pill.on{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216);font-weight:800}' +
+    '#krr .pill small{display:block;font-size:11px;color:var(--os-ink-2,#A6A8B5);font-weight:500}#krr .pill.on small{color:inherit;opacity:.8}' +
+    '#krr .spot{display:inline-flex;align-items:center;padding:7px 10px;border-radius:var(--os-r-sm,12px);border:1.5px dashed var(--os-good,#2fbf5b);color:var(--os-good-ink,#2fbf5b);font-size:12px;font-weight:800}' +
+    // mapa de correlaciones: tinte proporcional, texto con tinta normal (legible en ambos temas)
+    '#krr .hm td{text-align:center;font-size:12px;font-weight:700;color:var(--os-ink,#F2F2F5);border-bottom:2px solid var(--os-surface,#17181F)}' +
+    '#krr .hm th{text-align:center}#krr .hm th:first-child{text-align:left}' +
+    '#krr .scroll{overflow-x:auto}' +
+    '@media(max-width:860px){#krr .start{grid-template-columns:minmax(0,1fr)}}' +
+    // móvil: hoja a pantalla completa, una sola columna
+    '@media(max-width:760px){' +
+      '#krr{width:100vw;max-width:100vw;margin:0;border-radius:0;min-height:100%;padding:16px 14px calc(22px + env(safe-area-inset-bottom,0px))}' +
+      '#krr .grid2{grid-template-columns:minmax(0,1fr)}#krr .card .v{font-size:17px}' +
+      '#krr .hd h2{font-size:18px;min-width:0}#krr .ktabs{width:100%;flex-wrap:nowrap}' +
+      '#krr .ktab{flex:1 1 0;min-width:0;padding:6px 10px;white-space:normal;line-height:1.2}' +
+      // botones largos (p. ej. «▸ Avanzado: escribir tickers…») ENVUELVEN: sin esto la hoja se corría de lado
+      '#krr .btn{white-space:normal;height:auto;min-height:40px;max-width:100%;padding-top:8px;padding-bottom:8px;line-height:1.25}' +
+      '#krr .btn.big{height:auto;min-height:46px}#krr .btn[data-act=adv]{justify-content:flex-start;text-align:left}' +
+      '#krr .light{padding:14px}#krr .light .dot{width:44px;height:44px;flex-basis:44px}#krr .light .lv{font-size:20px}#krr .say li{font-size:14px}}' +
+    '@media (prefers-reduced-motion:reduce){#krr{animation:none}#krr .btn,#krr .pick,#krr .ktab,#krr .pill,#krr .x,#krr input,#krr select{transition:none}#krr .btn:active{transform:none}}';
   function css() {
     if (document.getElementById('krr-css')) return;
     var st = document.createElement('style'); st.id = 'krr-css';
-    st.textContent =
-      '#krr-ov{position:fixed;inset:0;z-index:7800;display:none;align-items:flex-start;justify-content:center;background:rgba(3,6,12,.74);backdrop-filter:blur(4px);overflow-y:auto;font-family:Inter,system-ui,sans-serif}' +
-      '#krr-ov.show{display:flex}' +
-      '#krr{width:min(1100px,96vw);margin:3vh 0;border-radius:16px;background:radial-gradient(900px 500px at 50% -10%,#0B1222 0%,#06090F 60%);border:1px solid rgba(122,158,255,.22);box-shadow:0 24px 70px rgba(0,0,0,.6);padding:18px 20px;color:#E8EDFB;box-sizing:border-box}' +
-      '#krr *{box-sizing:border-box}' +
-      '#krr .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}#krr .hd h2{margin:0;font-size:19px;flex:1;min-width:180px}' +
-      '#krr .x{width:34px;height:34px;border-radius:8px;border:1px solid rgba(122,158,255,.25);background:rgba(21,28,45,.7);color:#9BA6C4;cursor:pointer}' +
-      '#krr .ktabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}#krr .ktab{padding:8px 14px;border-radius:9px;border:1px solid rgba(122,158,255,.22);background:rgba(21,28,45,.6);color:#9BA6C4;cursor:pointer;font-size:13px}#krr .ktab.on{background:rgba(0,224,255,.12);border-color:#00E0FF;color:#00E0FF}' +
-      '#krr .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}#krr select,#krr input,#krr textarea{background:#0B1222;border:1px solid rgba(122,158,255,.25);color:#E8EDFB;border-radius:8px;padding:9px 10px;font-size:14px;font-family:inherit;max-width:100%}' +
-      '#krr .btn{padding:9px 14px;border-radius:9px;border:1px solid #00E0FF;background:rgba(0,224,255,.12);color:#00E0FF;cursor:pointer;font-weight:650;font-size:13px}#krr .btn:disabled{opacity:.45;cursor:default}#krr .btn.gh{border-color:rgba(122,158,255,.3);background:transparent;color:#9BA6C4}#krr .btn.big{font-size:15px;padding:12px 18px}' +
-      '#krr .note{font-size:12px;color:#9BA6C4;line-height:1.55}#krr .warn{padding:10px 12px;border:1px dashed #f59e0b;border-radius:9px;background:rgba(245,158,11,.08);color:#fbbf24;font-size:13px;line-height:1.55;margin:8px 0}' +
-      '#krr .info{padding:10px 12px;border:1px solid rgba(0,224,255,.28);border-radius:10px;background:rgba(0,224,255,.06);color:#C9D4EC;font-size:13px;line-height:1.55;margin:8px 0}' +
-      '#krr .lead{font-size:14.5px;color:#C9D4EC;line-height:1.55;margin:0 0 12px}' +
-      '#krr .start{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}' +
-      '#krr .opt{border:1px solid rgba(122,158,255,.2);border-radius:14px;background:rgba(11,18,34,.65);padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}' +
-      '#krr .opt h3{margin:0;font-size:15px;color:#E8EDFB}#krr .opt .k{font-size:22px}' +
-      '#krr .pick{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid rgba(122,158,255,.25);background:rgba(21,28,45,.6);color:#E8EDFB;cursor:pointer;font-size:13.5px}' +
-      '#krr .pick:hover:not(:disabled){border-color:#00E0FF}#krr .pick:disabled{opacity:.55;cursor:default}#krr .pick small{color:#7C87A3;font-size:11.5px}' +
-      '#krr .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px;background:rgba(245,158,11,.14);color:#fbbf24;border:1px solid rgba(245,158,11,.35)}' +
-      '#krr .qwrap{position:relative}#krr .sugg{position:absolute;left:0;right:0;top:100%;z-index:3;background:#0B1222;border:1px solid rgba(122,158,255,.35);border-radius:10px;margin-top:4px;max-height:260px;overflow-y:auto;box-shadow:0 12px 30px rgba(0,0,0,.5)}' +
-      '#krr .sugg button{display:flex;justify-content:space-between;width:100%;padding:9px 11px;background:none;border:0;border-bottom:1px solid rgba(122,158,255,.08);color:#E8EDFB;cursor:pointer;font-size:13px;text-align:left}#krr .sugg button:hover,#krr .sugg button.hi{background:rgba(0,224,255,.1)}#krr .sugg .sy{color:#00E0FF;font-weight:700;margin-left:8px}' +
-      '#krr .chips{display:flex;flex-wrap:wrap;gap:6px}#krr .chipx{display:inline-flex;align-items:center;gap:6px;padding:6px 8px 6px 10px;border-radius:20px;border:1px solid rgba(0,224,255,.35);background:rgba(0,224,255,.07);font-size:12.5px}#krr .chipx b{color:#00E0FF}#krr .chipx button{border:0;background:rgba(255,77,106,.15);color:#FF8FA3;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px}' +
-      '#krr .light{display:flex;gap:16px;align-items:center;border-radius:14px;padding:16px;border:1px solid;margin:6px 0 12px}#krr .light .dot{width:64px;height:64px;border-radius:50%;flex:0 0 64px;box-shadow:0 0 28px currentColor}#krr .light .lv{font-size:24px;font-weight:800}#krr .light .rule{font-size:12.5px;color:#9BA6C4;line-height:1.5;margin-top:3px}' +
-      '#krr .say{margin:0;padding-left:0;list-style:none}#krr .say li{font-size:15px;line-height:1.6;margin:0 0 8px;padding-left:22px;position:relative}#krr .say li:before{content:"•";position:absolute;left:6px;color:#00E0FF}' +
-      '#krr .tips li{font-size:13.5px}#krr .tips li:before{content:"→"}' +
-      '#krr .actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}' +
-      '#krr .ai{border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.07);border-radius:12px;padding:12px;font-size:14px;line-height:1.6;white-space:pre-wrap}' +
-      '#krr .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}#krr .card{border:1px solid rgba(122,158,255,.16);border-radius:11px;background:rgba(11,18,34,.6);padding:10px 12px}#krr .card .l{font-size:10.5px;color:#7C87A3;text-transform:uppercase;letter-spacing:.05em}#krr .card .v{font-size:19px;font-weight:750;margin-top:3px}#krr .card .s{font-size:11px;color:#9BA6C4;margin-top:2px}' +
-      '#krr .sec{margin-top:14px}#krr .sec h3{font-size:13px;margin:0 0 8px;color:#C9D4EC;text-transform:uppercase;letter-spacing:.05em}' +
-      '#krr .detail{border-top:1px solid rgba(122,158,255,.18);margin-top:14px;padding-top:6px}' +
-      '#krr table{width:100%;border-collapse:collapse;font-size:12.5px}#krr th,#krr td{padding:6px 8px;border-bottom:1px solid rgba(122,158,255,.1);text-align:right}#krr th:first-child,#krr td:first-child{text-align:left}#krr th{color:#7C87A3;font-weight:600;font-size:11px}' +
-      '#krr .bar{height:7px;border-radius:4px;background:rgba(122,158,255,.12);position:relative;min-width:60px}#krr .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}' +
-      '#krr .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}' +
-      '#krr .steps{display:flex;flex-direction:column;gap:12px}#krr .step{border:1px solid rgba(122,158,255,.18);border-radius:12px;padding:12px;background:rgba(11,18,34,.55)}#krr .step h4{margin:0 0 8px;font-size:13.5px;color:#C9D4EC}' +
-      '#krr .pills{display:flex;flex-wrap:wrap;gap:6px}#krr .pill{padding:8px 11px;border-radius:9px;border:1px solid rgba(122,158,255,.25);background:rgba(21,28,45,.6);color:#C9D4EC;cursor:pointer;font-size:12.5px}#krr .pill.on{border-color:#00E0FF;background:rgba(0,224,255,.14);color:#00E0FF;font-weight:700}#krr .pill small{display:block;font-size:10.5px;color:#7C87A3;font-weight:400}' +
-      '#krr .spot{padding:8px 10px;border-radius:9px;border:1px dashed #2BE38B;color:#2BE38B;font-size:12px;font-weight:700}' +
-      '#krr .hm td{text-align:center;font-size:11px;color:#06090F;font-weight:650}#krr .scroll{overflow-x:auto}' +
-      '@media(max-width:860px){#krr .start{grid-template-columns:1fr}}' +
-      '@media(max-width:760px){#krr .grid2{grid-template-columns:1fr}#krr{padding:14px 12px;width:100vw;margin:0;border-radius:0;min-height:100%}#krr .card .v{font-size:16px}#krr .light .dot{width:46px;height:46px;flex-basis:46px}#krr .light .lv{font-size:20px}#krr .say li{font-size:14px}}';
+    st.textContent = CSS_KRR;
     document.head.appendChild(st);
   }
   function shell() {
@@ -209,10 +327,21 @@
     var ov = document.getElementById('krr-ov');
     if (!ov) {
       ov = document.createElement('div'); ov.id = 'krr-ov';
-      ov.innerHTML = '<div id="krr"></div>';
+      ov.className = 'kos-themed';          // tokens de Khipus OS (claro/oscuro) fuera de #bcp-ov
+      ov.innerHTML = '<div id="krr" role="dialog" aria-modal="true"></div>';
       ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
       document.body.appendChild(ov);
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov.classList.contains('show')) close(); });
+      // el canvas del histograma no entiende var(): si cambia el tema con el reporte abierto, se repinta
+      try {
+        var dark = document.body.classList.contains('dark');
+        new MutationObserver(function () {
+          var d = document.body.classList.contains('dark');
+          if (d === dark) return;
+          dark = d;
+          if (isOpen() && S.chart) drawHist();
+        }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      } catch (e) {}
     }
     return ov;
   }
@@ -222,15 +351,16 @@
   function header() {
     return '<div class="hd"><h2>📉 ' + esc(L('Riesgo de mi cartera', 'My portfolio risk')) + '</h2>' +
       '<button class="btn gh" data-act="lang" title="' + esc(L('Cambiar idioma', 'Switch language')) + '">' + (en() ? 'ES' : 'EN') + '</button>' +
-      '<button class="x" data-act="close" title="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
-      '<div class="ktabs"><button class="ktab' + (S.tab === 'var' ? ' on' : '') + '" data-tab="var">📉 ' + esc(L('¿Cuánto podría perder?', 'How much could I lose?')) + '</button>' +
-      '<button class="ktab' + (S.tab === 'vega' ? ' on' : '') + '" data-tab="vega">🌪 ' + esc(L('Opciones (Vega)', 'Options (Vega)')) + '</button></div>';
+      '<button class="x" data-act="close" title="' + esc(L('Cerrar', 'Close')) + '" aria-label="' + esc(L('Cerrar', 'Close')) + '">✕</button></div>' +
+      '<div class="ktabs" role="group"><button class="ktab' + (S.tab === 'var' ? ' on' : '') + '" data-tab="var" aria-pressed="' + (S.tab === 'var') + '">📉 ' + esc(L('¿Cuánto podría perder?', 'How much could I lose?')) + '</button>' +
+      '<button class="ktab' + (S.tab === 'vega' ? ' on' : '') + '" data-tab="vega" aria-pressed="' + (S.tab === 'vega') + '">🌪 ' + esc(L('Opciones (Vega)', 'Options (Vega)')) + '</button></div>';
   }
 
   function render() {
     var box = document.getElementById('krr'); if (!box) return;
     registerExplain();
     var sc = document.getElementById('krr-ov'); var top = sc ? sc.scrollTop : 0;
+    box.setAttribute('aria-label', L('Riesgo de mi cartera', 'My portfolio risk'));
     box.innerHTML = header() + (S.tab === 'var' ? viewVar() : viewVega());
     wire(box);
     if (S.tab === 'var' && S.view === 'result' && S.rep && S.rep.ok && S.detail) drawHist();
@@ -268,12 +398,12 @@
     var qk = loadQuick(), tot = qk.reduce(function (a, x) { return a + x.usd; }, 0);
     h += '<div class="opt" style="order:1"><div class="k">🧺</div><h3>' + esc(L('Armar una cartera rápida', 'Build a quick portfolio')) + '</h3>' +
       '<div class="note">' + esc(L('1) Pon cuántos dólares. 2) Busca la empresa y tócala.', '1) Enter how many dollars. 2) Search the company and tap it.')) + '</div>' +
-      '<div class="row" style="margin:0"><span style="color:#9BA6C4">$</span><input id="krr-amt" type="number" min="1" step="100" inputmode="decimal" value="' + esc(S.amt) + '" style="width:110px" aria-label="' + esc(L('Monto en dólares', 'Amount in dollars')) + '"></div>' +
+      '<div class="row" style="margin:0"><span class="cur">$</span><input id="krr-amt" type="number" min="1" step="100" inputmode="decimal" value="' + esc(S.amt) + '" style="width:110px" aria-label="' + esc(L('Monto en dólares', 'Amount in dollars')) + '"></div>' +
       '<div class="qwrap"><input id="krr-q" autocomplete="off" style="width:100%" placeholder="' + esc(L('Buscar empresa: Nvidia, TSMC, AMD…', 'Search company: Nvidia, TSMC, AMD…')) + '" value="' + esc(S.q) + '"><div class="sugg" id="krr-sugg" style="display:none"></div></div>' +
       '<div class="chips">' + qk.map(function (x, i) {
         return '<span class="chipx"><b>' + esc(x.sym) + '</b> ' + esc(x.label) + ' · ' + money(x.usd) + ' <button data-qdel="' + i + '" title="' + esc(L('Quitar', 'Remove')) + '">✕</button></span>';
       }).join('') + '</div>' +
-      (qk.length ? '<div class="note">' + esc(L('Total: ', 'Total: ')) + '<b style="color:#E8EDFB">' + money(tot) + '</b> · ' + esc(L('se convierte a acciones con el último precio de cierre real.', 'converted to shares at the latest real closing price.')) + '</div>' : '') +
+      (qk.length ? '<div class="note">' + esc(L('Total: ', 'Total: ')) + '<b class="ink">' + money(tot) + '</b> · ' + esc(L('se convierte a acciones con el último precio de cierre real.', 'converted to shares at the latest real closing price.')) + '</div>' : '') +
       '<button class="btn" data-act="runquick"' + (qk.length ? '' : ' disabled') + '>' + esc(L('Calcular el riesgo', 'Compute the risk')) + '</button>' +
       (qk.length ? '<button class="btn gh" data-act="qclear">' + esc(L('Vaciar', 'Clear')) + '</button>' : '') + '</div>';
     // (c) ejemplos
@@ -301,9 +431,10 @@
   /* ── resultado en lenguaje simple ────────────────────────────────────── */
   function level(r) {
     var v = r.vol_ann_pct;
-    if (v < 15) return { k: 'low', c: '#2BE38B', t: L('Riesgo BAJO', 'LOW risk') };
-    if (v <= 30) return { k: 'mid', c: '#FFC400', t: L('Riesgo MEDIO', 'MEDIUM risk') };
-    return { k: 'high', c: '#FF4D6A', t: L('Riesgo ALTO', 'HIGH risk') };
+    // el color sale de la clase (.light.low/.mid/.high → tokens --os-good/--os-warn/--os-bad)
+    if (v < 15) return { k: 'low', t: L('Riesgo BAJO', 'LOW risk') };
+    if (v <= 30) return { k: 'mid', t: L('Riesgo MEDIO', 'MEDIUM risk') };
+    return { k: 'high', t: L('Riesgo ALTO', 'HIGH risk') };
   }
   function avgCorr(r) {
     var c = r.correlation; if (!c || c.symbols.length < 2) return null;
@@ -355,12 +486,12 @@
   function viewResult() {
     var r = S.rep, spec = S.spec || {};
     var h = '<div class="row"><button class="btn gh" data-act="back">← ' + esc(L('Cambiar cartera', 'Change portfolio')) + '</button>' +
-      '<div style="flex:1;min-width:160px;font-size:13.5px;color:#C9D4EC"><b>' + esc(spec.label || '') + '</b>' +
+      '<div class="ink" style="flex:1;min-width:160px;font-size:13.5px"><b>' + esc(spec.label || '') + '</b>' +
       (spec.hypo ? ' <span class="tag">' + esc(L('EJEMPLO HIPOTÉTICO', 'HYPOTHETICAL EXAMPLE')) + '</span>' : '') + '</div></div>';
     if (!r.ok) return h + errorBox(r) + excluded(r);
     var lv = level(r);
-    h += '<div class="light" style="border-color:' + lv.c + '55;background:' + lv.c + '12"><div class="dot" style="background:' + lv.c + ';color:' + lv.c + '"></div><div style="min-width:0">' +
-      '<div class="lv" style="color:' + lv.c + '">' + esc(lv.t) + chip('risk_level') + '</div>' +
+    h += '<div class="light ' + lv.k + '"><div class="dot" aria-hidden="true"></div><div style="min-width:0">' +
+      '<div class="lv">' + esc(lv.t) + chip('risk_level') + '</div>' +
       '<div class="rule">' + esc(L('Se mueve ~' + num(r.vol_ann_pct, 0) + '% al año.', 'It swings ~' + num(r.vol_ann_pct, 0) + '% a year.')) + ' ' +
       esc(L('Regla: bajo < 15% · medio 15–30% · alto > 30%.', 'Rule: low < 15% · medium 15–30% · high > 30%.')) + '</div></div></div>';
     h += '<ul class="say">' + sentences(r).map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
@@ -370,10 +501,10 @@
     h += '<div class="sec"><h3>💡 ' + esc(L('Qué podrías hacer', 'What you could do')) + '</h3><ul class="say tips">' +
       tips(r, lv).map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ul>' +
       '<div class="note">' + esc(L('Ideas educativas y generales — no son recomendaciones de compra o venta.', 'Educational, general ideas — not buy or sell recommendations.')) + '</div></div>';
-    h += '<div class="actions"><button class="btn" data-act="ai"' + (S.aiBusy ? ' disabled' : '') + '>🤖 ' + esc(S.aiBusy ? L('Pensando…', 'Thinking…') : L('Explícame con IA', 'Explain it with AI')) + '</button>' +
+    h += '<div class="actions"><button class="btn" data-act="ai"' + (S.aiBusy ? ' disabled' : '') + '>' + (mascot(22, S.aiBusy ? 'think' : null) || '🤖') + ' ' + esc(S.aiBusy ? L('Pensando…', 'Thinking…') : L('Explícame con IA', 'Explain it with AI')) + '</button>' +
       '<button class="btn gh" data-act="detail">' + (S.detail ? '▾ ' : '▸ ') + '🔬 ' + esc(L('Ver detalle técnico', 'Show technical detail')) + '</button>' +
       '<button class="btn gh" data-act="print">🖨 ' + esc(L('Imprimir / PDF', 'Print / PDF')) + '</button></div>';
-    if (S.ai) h += '<div class="ai">' + (S.ai.err ? '<span style="color:#fbbf24">' + esc(S.ai.err) + '</span>' : esc(S.ai.text)) + '</div>';
+    if (S.ai) h += '<div class="ai">' + mascot(30) + '<div class="txt">' + (S.ai.err ? '<span class="wtx">' + esc(S.ai.err) + '</span>' : esc(S.ai.text)) + '</div></div>';
     if (S.detail) h += '<div class="detail">' + techVar(r) + '</div>';
     return h;
   }
@@ -426,8 +557,8 @@
       h += '<div class="note">' + chip('backtest') + ' ' + esc(L(
         'Backtest fuera de muestra: en los últimos ' + bt.days + ' días la pérdida real superó el VaR 95% (calculado cada día con los ' + bt.window + ' días previos) ' + bt.breaches + ' veces; lo esperado es ~' + num(bt.expected, 1) + ' (prueba de Kupiec p = ' + num(bt.kupiec_p, 3) + ').',
         'Out-of-sample backtest: over the last ' + bt.days + ' days the real loss exceeded the 95% VaR (computed each day from the previous ' + bt.window + ' days) ' + bt.breaches + ' times; about ' + num(bt.expected, 1) + ' expected (Kupiec test p = ' + num(bt.kupiec_p, 3) + ').')) +
-        (bt.verdict === 'subestima' ? ' <b style="color:#FFB300">' + esc(L('El VaR está subestimando el riesgo.', 'VaR is underestimating risk.')) + '</b>' : '') +
-        (bt.verdict === 'sobreestima' ? ' <b style="color:#5FC6E8">' + esc(L('El VaR fue más prudente de lo necesario en este período.', 'VaR was more cautious than needed in this period.')) + '</b>' : '') +
+        (bt.verdict === 'subestima' ? ' <b class="wtx">' + esc(L('El VaR está subestimando el riesgo.', 'VaR is underestimating risk.')) + '</b>' : '') +
+        (bt.verdict === 'sobreestima' ? ' <b class="good">' + esc(L('El VaR fue más prudente de lo necesario en este período.', 'VaR was more cautious than needed in this period.')) + '</b>' : '') +
         (bt.low_power ? ' ' + esc(L('(Pocos días para concluir con fuerza.)', '(Few days to conclude strongly.)')) : '') + '</div>';
     } else if (bt) {
       h += '<div class="note">' + chip('backtest') + ' ' + esc(L(
@@ -438,18 +569,18 @@
       h += '<div class="warn">' + esc(L('Cierres SIN ajustar por dividendos/splits en: ' + r.unadjusted_symbols.join(', ') + ' (el proveedor no entregó la serie ajustada).', 'Closes NOT adjusted for dividends/splits in: ' + r.unadjusted_symbols.join(', ') + ' (the provider did not return the adjusted series).')) + '</div>';
     }
     h += '<div class="grid2"><div class="sec"><h3>' + esc(L('Distribución de retornos diarios', 'Daily return distribution')) + '</h3>' +
-      '<div style="height:220px"><canvas id="krr-hist"></canvas></div><div class="note">' + esc(L('En rojo: días peores que el VaR 95%.', 'In red: days worse than the 95% VaR.')) + '</div></div>' +
-      '<div class="sec"><h3>' + esc(L('Peores días reales', 'Worst real days')) + '</h3><table><tr><th>' + esc(L('Fecha', 'Date')) + '</th><th>%</th><th>USD</th></tr>' +
-      (r.worst_days || []).map(function (d) { return '<tr><td>' + esc(d.date) + '</td><td style="color:#FF4D6A">' + pct(d.pct) + '</td><td>' + usd(d.usd) + '</td></tr>'; }).join('') + '</table></div></div>';
+      '<div class="chartbox"><canvas id="krr-hist"></canvas></div><div class="note">' + esc(L('En rojo: días peores que el VaR 95%.', 'In red: days worse than the 95% VaR.')) + '</div></div>' +
+      '<div class="sec"><h3>' + esc(L('Peores días reales', 'Worst real days')) + '</h3><div class="tcard"><table><tr><th>' + esc(L('Fecha', 'Date')) + '</th><th>%</th><th>USD</th></tr>' +
+      (r.worst_days || []).map(function (d) { return '<tr><td>' + esc(d.date) + '</td><td class="bad">' + pct(d.pct) + '</td><td>' + usd(d.usd) + '</td></tr>'; }).join('') + '</table></div></div></div>';
     var lab = r.labels || {};
-    h += '<div class="sec"><h3>' + esc(L('¿Quién pone el riesgo?', 'Who brings the risk?')) + chip('risk_contrib') + '</h3><div class="scroll"><table><tr><th>' + esc(L('Posición', 'Position')) + '</th><th>' + esc(L('Valor', 'Value')) + '</th><th>' + esc(L('Peso', 'Weight')) + '</th><th>' + esc(L('Aporte al riesgo', 'Risk share')) + '</th><th></th><th>' + esc(L('Vol. anual', 'Ann. vol')) + '</th></tr>' +
+    h += '<div class="sec"><h3>' + esc(L('¿Quién pone el riesgo?', 'Who brings the risk?')) + chip('risk_contrib') + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Posición', 'Position')) + '</th><th>' + esc(L('Valor', 'Value')) + '</th><th>' + esc(L('Peso', 'Weight')) + '</th><th>' + esc(L('Aporte al riesgo', 'Risk share')) + '</th><th></th><th>' + esc(L('Vol. anual', 'Ann. vol')) + '</th></tr>' +
       r.positions.map(function (p) {
         var hot = p.risk_contrib_pct > p.weight_pct * 1.3;
-        return '<tr><td>' + esc(lab[p.symbol] || p.symbol) + ' <span style="color:#7C87A3">' + esc(p.symbol) + '</span></td><td>' + usd(p.value_usd) + '</td><td>' + pct(p.weight_pct, 1) + '</td><td style="color:' + (hot ? '#FFB300' : '#E8EDFB') + '">' + pct(p.risk_contrib_pct, 1) + '</td>' +
-          '<td style="width:22%"><div class="bar"><i style="width:' + Math.max(0, Math.min(100, p.risk_contrib_pct)) + '%;background:' + (hot ? '#FFB300' : '#00E0FF') + '"></i></div></td><td>' + pct(p.vol_ann_pct, 1) + '</td></tr>';
+        return '<tr><td>' + esc(lab[p.symbol] || p.symbol) + ' <span class="mut">' + esc(p.symbol) + '</span></td><td>' + usd(p.value_usd) + '</td><td>' + pct(p.weight_pct, 1) + '</td><td' + (hot ? ' class="wtx"' : '') + '>' + pct(p.risk_contrib_pct, 1) + '</td>' +
+          '<td style="width:22%"><div class="bar"><i' + (hot ? ' class="hot"' : '') + ' style="width:' + Math.max(0, Math.min(100, p.risk_contrib_pct)) + '%"></i></div></td><td>' + pct(p.vol_ann_pct, 1) + '</td></tr>';
       }).join('') + '</table></div><div class="note">' + esc(L('En ámbar: aporta mucho más riesgo que su peso en dinero.', 'Amber: brings far more risk than its money weight.')) + '</div></div>';
     if (r.converted && r.converted.length) {
-      h += '<div class="sec"><h3>' + esc(L('Dólares → acciones', 'Dollars → shares')) + '</h3><div class="scroll"><table><tr><th>' + esc(L('Empresa', 'Company')) + '</th><th>USD</th><th>' + esc(L('Precio de cierre', 'Closing price')) + '</th><th>' + esc(L('Acciones', 'Shares')) + '</th><th>' + esc(L('Fecha', 'Date')) + '</th></tr>' +
+      h += '<div class="sec"><h3>' + esc(L('Dólares → acciones', 'Dollars → shares')) + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Empresa', 'Company')) + '</th><th>USD</th><th>' + esc(L('Precio de cierre', 'Closing price')) + '</th><th>' + esc(L('Acciones', 'Shares')) + '</th><th>' + esc(L('Fecha', 'Date')) + '</th></tr>' +
         r.converted.map(function (c) { return '<tr><td>' + esc(c.symbol) + '</td><td>' + usd(c.usd) + '</td><td>' + usd(c.price_usd) + '</td><td>' + num(c.shares, 3) + '</td><td>' + esc(c.date) + '</td></tr>'; }).join('') +
         '</table></div></div>';
     }
@@ -462,15 +593,17 @@
   function card(l, v, s) { return '<div class="card"><div class="l">' + l + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; }
   function heatmap(r) {
     var c = r.correlation; if (!c || c.symbols.length < 2) return '';
+    // tinte proporcional a |correlación| con los tokens (rojo = se mueven juntas, verde = cubren). El tinte
+    // nunca pasa de ~58 %, así el número va con la tinta normal y se lee en claro y en oscuro.
     var col = function (v) {
-      if (v == null) return '#333';
-      var t = Math.max(-1, Math.min(1, v));
-      return t >= 0 ? 'rgba(255,77,106,' + (0.15 + 0.85 * t) + ')' : 'rgba(43,227,139,' + (0.15 + 0.85 * -t) + ')';
+      if (v == null) return 'background:var(--os-surface-2,#1F2029)';
+      var t = Math.max(-1, Math.min(1, v)), p = Math.round(8 + 50 * Math.abs(t));
+      return 'background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,' + (t >= 0 ? 'var(--os-bad,#f06565)' : 'var(--os-good,#2fbf5b)') + ' ' + p + '%,var(--os-surface,#17181F))';
     };
-    return '<div class="sec"><h3>' + esc(L('Correlaciones', 'Correlations')) + chip('correlation') + '</h3><div class="scroll"><table class="hm"><tr><th></th>' +
+    return '<div class="sec"><h3>' + esc(L('Correlaciones', 'Correlations')) + chip('correlation') + '</h3><div class="scroll tcard"><table class="hm"><tr><th></th>' +
       c.symbols.map(function (s) { return '<th>' + esc(s) + '</th>'; }).join('') + '</tr>' +
       c.matrix.map(function (row, i) {
-        return '<tr><th style="text-align:left">' + esc(c.symbols[i]) + '</th>' + row.map(function (v) { return '<td style="background:' + col(v) + '">' + (v == null ? '—' : num(v, 2)) + '</td>'; }).join('') + '</tr>';
+        return '<tr><th>' + esc(c.symbols[i]) + '</th>' + row.map(function (v) { return '<td style="' + col(v) + '">' + (v == null ? '—' : num(v, 2)) + '</td>'; }).join('') + '</tr>';
       }).join('') + '</table></div><div class="note">' + esc(L('Rojo = se mueven juntas (no diversifican); verde = en sentido contrario (cubren).', 'Red = move together (no diversification); green = opposite (hedge).')) + '</div></div>';
   }
   function drawHist() {
@@ -479,12 +612,16 @@
     if (S.chart) { try { S.chart.destroy(); } catch (e) {} }
     var ed = r.histogram.edges_pct, cnt = r.histogram.counts, cut = -r.var95.hist_1d_pct;
     var labels = cnt.map(function (_, i) { return num((ed[i] + ed[i + 1]) / 2, 1) + '%'; });
-    var colors = cnt.map(function (_, i) { return ed[i + 1] <= cut ? '#FF4D6A' : '#00E0FF'; });
+    // colores = tokens del tema vigente (claro/oscuro), leídos del overlay
+    var cs = null; try { cs = window.getComputedStyle(document.getElementById('krr') || document.body); } catch (e) {}
+    var tok = function (n, d) { var v = cs ? String(cs.getPropertyValue(n) || '').trim() : ''; return v || d; };
+    var cBad = tok('--os-bad', DARK.bad), cAcc = tok('--os-accent', DARK.accent), cTick = tok('--os-ink-2', DARK.ink2), cGrid = tok('--os-line', DARK.line);
+    var colors = cnt.map(function (_, i) { return ed[i + 1] <= cut ? cBad : cAcc; });
     S.chart = new window.Chart(cv.getContext('2d'), {
-      type: 'bar', data: { labels: labels, datasets: [{ data: cnt, backgroundColor: colors, borderWidth: 0 }] },
+      type: 'bar', data: { labels: labels, datasets: [{ data: cnt, backgroundColor: colors, borderWidth: 0, borderRadius: 3 }] },
       options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } },
-        scales: { x: { ticks: { color: '#7C87A3', maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
-                  y: { ticks: { color: '#7C87A3', font: { size: 10 } }, grid: { color: 'rgba(122,158,255,.08)' } } } },
+        scales: { x: { ticks: { color: cTick, maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+                  y: { ticks: { color: cTick, font: { size: 10 } }, grid: { color: cGrid } } } },
     });
   }
 
@@ -597,7 +734,7 @@
     var ch = S.chain;
     if (ch && ch.available && S.vsym) {
       var exps = (ch.expirations || []).slice(0, 10), ks = nearStrikes(ch), sp = +ch.spot, spotShown = false;
-      h += '<div class="step"><h4>2 · ' + esc(L('Elige el contrato de ', 'Pick the contract on ')) + esc(S.vlabel || S.vsym) + (sp ? ' <span style="color:#2BE38B">· ' + esc(L('precio actual ', 'current price ')) + '$' + num(sp, 2) + '</span>' : '') + '</h4>' +
+      h += '<div class="step"><h4>2 · ' + esc(L('Elige el contrato de ', 'Pick the contract on ')) + esc(S.vlabel || S.vsym) + (sp ? ' <span class="good">· ' + esc(L('precio actual ', 'current price ')) + '$' + num(sp, 2) + '</span>' : '') + '</h4>' +
         '<div class="note">' + esc(L('Tipo', 'Type')) + chip('options_basics') + '</div><div class="pills" style="margin:4px 0 10px">' +
         '<button class="pill' + (S.vkind === 'call' ? ' on' : '') + '" data-vkind="call">Call<small>' + esc(L('gana si la acción sube', 'gains if the stock rises')) + '</small></button>' +
         '<button class="pill' + (S.vkind === 'put' ? ' on' : '') + '" data-vkind="put">Put<small>' + esc(L('gana si la acción baja', 'gains if the stock falls')) + '</small></button></div>' +
@@ -646,10 +783,10 @@
       card('Theta' + chip('theta'), usd(t.theta_usd_day), L('por día que pasa', 'per day that passes')) +
       card('Gamma' + chip('gamma'), num(t.gamma, 2), L('cambio de Delta por $1', 'Delta change per $1')) +
       '</div>';
-    h += '<div class="sec"><h3>' + esc(L('Si la volatilidad cambia…', 'If volatility changes…')) + '</h3><table><tr><th>' + esc(L('Cambio de volatilidad', 'Volatility change')) + '</th><th>' + esc(L('Ganancia / pérdida', 'Gain / loss')) + '</th></tr>' +
-      r.vol_scenarios.map(function (s) { return '<tr><td>' + (s.shock_pts > 0 ? '+' : '') + s.shock_pts + ' ' + esc(L('puntos', 'points')) + '</td><td style="color:' + (s.pnl_usd >= 0 ? '#2BE38B' : '#FF4D6A') + '">' + usd(s.pnl_usd) + '</td></tr>'; }).join('') +
-      '</table><div class="note">' + esc(L('Revaluación completa con el modelo (no solo Vega × cambio). Todo lo demás constante.', 'Full model revaluation (not just Vega × change). Everything else held constant.')) + '</div></div>';
-    h += '<div class="sec"><h3>' + esc(L('Detalle por opción', 'Detail per option')) + '</h3><div class="scroll"><table><tr><th>' + esc(L('Contrato', 'Contract')) + '</th><th>' + esc(L('Días', 'Days')) + '</th><th>' + esc(L('Precio acción', 'Stock price')) + '</th><th>IV' + chip('iv') + '</th><th>' + esc(L('Modelo', 'Model')) + '</th><th>' + esc(L('Mercado (medio)', 'Market (mid)')) + '</th><th>Vega' + chip('vega') + '</th><th>Delta' + chip('delta') + '</th><th>Gamma' + chip('gamma') + '</th><th>Theta' + chip('theta') + '/' + esc(L('día', 'day')) + '</th></tr>' +
+    h += '<div class="sec"><h3>' + esc(L('Si la volatilidad cambia…', 'If volatility changes…')) + '</h3><div class="tcard"><table><tr><th>' + esc(L('Cambio de volatilidad', 'Volatility change')) + '</th><th>' + esc(L('Ganancia / pérdida', 'Gain / loss')) + '</th></tr>' +
+      r.vol_scenarios.map(function (s) { return '<tr><td>' + (s.shock_pts > 0 ? '+' : '') + s.shock_pts + ' ' + esc(L('puntos', 'points')) + '</td><td class="' + (s.pnl_usd >= 0 ? 'good' : 'bad') + '">' + usd(s.pnl_usd) + '</td></tr>'; }).join('') +
+      '</table></div><div class="note">' + esc(L('Revaluación completa con el modelo (no solo Vega × cambio). Todo lo demás constante.', 'Full model revaluation (not just Vega × change). Everything else held constant.')) + '</div></div>';
+    h += '<div class="sec"><h3>' + esc(L('Detalle por opción', 'Detail per option')) + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Contrato', 'Contract')) + '</th><th>' + esc(L('Días', 'Days')) + '</th><th>' + esc(L('Precio acción', 'Stock price')) + '</th><th>IV' + chip('iv') + '</th><th>' + esc(L('Modelo', 'Model')) + '</th><th>' + esc(L('Mercado (medio)', 'Market (mid)')) + '</th><th>Vega' + chip('vega') + '</th><th>Delta' + chip('delta') + '</th><th>Gamma' + chip('gamma') + '</th><th>Theta' + chip('theta') + '/' + esc(L('día', 'day')) + '</th></tr>' +
       r.positions.map(function (p) {
         return '<tr><td>' + esc(p.symbol + ' ' + p.kind.toUpperCase() + ' ' + p.strike + ' · ' + p.expiry + ' ×' + p.contracts) + '</td><td>' + p.days + '</td><td>' + usd(p.spot) + '</td><td title="' + esc(p.iv_source) + '">' + pct(p.iv_pct, 1) + (String(p.iv_source).indexOf('hist') === 0 ? '*' : '') + '</td><td>' + usd(p.model_price) + '</td><td>' + (p.market_mid == null ? '—' : usd(p.market_mid)) + '</td><td>' + usd(p.vega_usd) + '</td><td>' + num(p.delta_shares, 0) + '</td><td>' + num(p.gamma, 2) + '</td><td>' + usd(p.theta_usd_day) + '</td></tr>';
       }).join('') + '</table></div><div class="note">* ' + esc(L('volatilidad histórica de 1 año (el contrato no publica implícita).', '1-year historical volatility (the contract publishes no implied).')) +
@@ -686,7 +823,7 @@
       x.d += p.delta_shares; x.gm += p.gamma; x.v += p.vega_usd; x.t += p.theta_usd_day;
     });
     var syms = Object.keys(g); if (!syms.length) return '';
-    return '<div class="sec"><h3>' + esc(L('Griegas por empresa (acciones + opciones)', 'Greeks by company (stocks + options)')) + '</h3><div class="scroll"><table><tr><th>' + esc(L('Empresa', 'Company')) +
+    return '<div class="sec"><h3>' + esc(L('Griegas por empresa (acciones + opciones)', 'Greeks by company (stocks + options)')) + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Empresa', 'Company')) +
       '</th><th>' + esc(L('Acciones', 'Shares')) + '</th><th>Delta' + chip('delta') + '</th><th>Gamma' + chip('gamma') + '</th><th>Theta' + chip('theta') + '</th><th>Vega' + chip('vega') + '</th></tr>' +
       syms.map(function (k) {
         var x = g[k], s0 = sh[k] || 0;
@@ -802,17 +939,33 @@
     wireSuggest('kv-q', 'kv-sugg', function (c) { pickVSym(c.sym, c.label); }, function (v) { S.vq = v; });
   }
   function readN() { var n = document.getElementById('kv-n'); if (n) { var v = Math.round(parseFloat(n.value)); if (v > 0) S.vn = Math.min(999, v); } }
+  // hoja de impresión: el papel es BLANCO siempre → paleta CLARA fija de Khipus OS; el HTML copiado usa
+  // var(--os-*) y clases (.good/.bad/.light.high…), que aquí se resuelven con estos valores.
+  var PRINT_CSS = 'body{--os-ink:#111216;--os-ink-2:#5B5E6B;--os-surface:#FFFFFF;--os-surface-2:#F2F2F7;--os-surface-3:#E7E7EF;--os-line:rgba(17,18,22,.14);' +   // print-palette
+    '--os-accent:#2F6BEA;--os-good:#0ca30c;--os-bad:#d03b3b;--os-warn:#B7791F;--os-good-ink:#066B06;--os-bad-ink:#A82424;--os-warn-ink:#7F5200;--os-ai:#6236C9;' +   // print-palette
+    'font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--os-ink);background:var(--os-surface);padding:20px}' +
+    'button,select,input,.ktabs,.actions{display:none!important}' +
+    'table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid var(--os-line);padding:4px 6px;text-align:right}th:first-child,td:first-child{text-align:left}' +
+    '.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{border:1px solid var(--os-line);border-radius:8px;padding:8px}' +
+    '.card .l{font-size:10px;color:var(--os-ink-2);text-transform:uppercase}.card .v{font-size:17px;font-weight:700}.note{font-size:11px;color:var(--os-ink-2)}' +
+    '.warn{font-size:11px;color:var(--os-warn-ink);border:1px dashed var(--os-warn);padding:6px;margin:6px 0}.info{font-size:11px;border:1px solid var(--os-line);padding:6px;margin:6px 0}' +
+    '.bar{height:6px;background:var(--os-surface-3);position:relative}.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--os-accent)}.bar i.hot{background:var(--os-warn)}' +
+    '.light{display:flex;gap:12px;align-items:center;border:1px solid var(--os-line);border-radius:10px;padding:10px}' +
+    '.light .dot{width:36px;height:36px;border-radius:50%;background:var(--krr-fill)}.light .lv{font-size:20px;font-weight:800;color:var(--krr-ink)}' +
+    '.light.low{--krr-fill:var(--os-good);--krr-ink:var(--os-good-ink)}.light.mid{--krr-fill:var(--os-warn);--krr-ink:var(--os-warn-ink)}.light.high{--krr-fill:var(--os-bad);--krr-ink:var(--os-bad-ink)}' +
+    '.good{color:var(--os-good-ink)}.bad{color:var(--os-bad-ink)}.wtx{color:var(--os-warn-ink)}.mut{color:var(--os-ink-2)}.say li{margin:4px 0}' +
+    '.ai{display:flex;gap:8px;border:1px solid var(--os-line);padding:8px}.ai .txt{white-space:pre-wrap}.tag{font-size:10px;font-weight:700;color:var(--os-warn-ink)}';
   function printReport() {
     var box = document.getElementById('krr'); if (!box) return;
     var wasDetail = S.detail;
     if (S.tab === 'var' && S.rep && S.rep.ok && !S.detail) { S.detail = true; render(); }
     var img = '';
     try { var cv = document.getElementById('krr-hist'); if (cv) img = cv.toDataURL('image/png'); } catch (e) {}
-    var html = box.innerHTML.replace(/<canvas id="krr-hist"><\/canvas>/, img ? '<img src="' + img + '" style="max-width:100%">' : '');
+    var html = box.innerHTML.replace(/<canvas id="krr-hist"[^>]*><\/canvas>/, img ? '<img src="' + img + '" style="max-width:100%">' : '');
     if (!wasDetail && S.detail) { S.detail = false; render(); }
     var w = window.open('', '_blank'); if (!w) return;
     w.document.write('<!doctype html><meta charset="utf-8"><title>' + esc(L('Reporte de riesgo — Khipus', 'Risk report — Khipus')) + '</title>' +
-      '<style>body{font-family:Inter,system-ui,sans-serif;color:#111;padding:20px}button,select,input,.ktabs,.actions{display:none!important}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #ddd;padding:4px 6px;text-align:right}th:first-child,td:first-child{text-align:left}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{border:1px solid #ccc;border-radius:8px;padding:8px}.card .l{font-size:10px;color:#555;text-transform:uppercase}.card .v{font-size:17px;font-weight:700}.note{font-size:11px;color:#444}.warn{font-size:11px;color:#8a5a00;border:1px dashed #c90;padding:6px;margin:6px 0}.bar{height:6px;background:#eee;position:relative}.bar i{position:absolute;left:0;top:0;bottom:0;background:#0aa}.light{display:flex;gap:12px;align-items:center;border:1px solid #ccc;border-radius:10px;padding:10px}.light .dot{width:36px;height:36px;border-radius:50%}.light .lv{font-size:20px;font-weight:800}.say li{margin:4px 0}.ai{border:1px solid #ccc;padding:8px;white-space:pre-wrap}</style>' +
+      '<style>' + PRINT_CSS + '</style>' +
       '<body>' + html + '<p class="note">Khipus Finance Intelligence · ' + new Date().toLocaleString() + '</p></body>');
     w.document.close(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400);
   }

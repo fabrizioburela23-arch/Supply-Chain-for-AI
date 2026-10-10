@@ -1,9 +1,149 @@
 // engine/voice.js — Khipu, el asistente de voz de Khipu Finance
-// Cliente WebSocket de ElevenLabs Conversational AI. Khipu es el "Jarvis de las
+// Cliente WebSocket de ElevenLabs Agents (Conversational AI). Khipu es el "Jarvis de las
 // finanzas": escucha por micrófono, responde por voz, y puede controlar la terminal.
 //
 // Depende de app.html: Keys, BASE, NODES, NODE_BY_ID, MKT, selected, stressId,
 //   stressAffected, activateStress, jumpTo, computeNRS, catLabel, toast, LANG, activeTab
+//
+// PROTOCOLO (verificado oct-2026 contra los SDK oficiales @elevenlabs/client 1.27 y
+// @elevenlabs/types 0.24 — se mantiene el WebSocket crudo con URL firmada: es lo
+// más pequeño y robusto aquí; WebRTC exigiría cargar LiveKit + worklets):
+//   → conversation_initiation_client_data {conversation_config_override?}  (al abrir)
+//   ← conversation_initiation_metadata {conversation_id, agent_output_audio_format,
+//       user_input_audio_format}  ← AQUÍ se sabe el formato (pcm_8000…pcm_48000 | ulaw_8000).
+//       Antes se asumía 16 kHz SIEMPRE: con un agente en pcm_22050/24000/44100 la voz
+//       salía lenta y grave ("no estaba dando bien").
+//   → {user_audio_chunk: base64}  PCM16 LE mono (o µ-law) a la tasa de user_input_audio_format
+//   ← audio {audio_event:{audio_base_64, event_id}}
+//   ← interruption {interruption_event:{event_id}} → cortar Y descartar audio viejo (event_id menor)
+//   ← ping {ping_event:{event_id}} → pong {event_id}
+//   ← client_tool_call {client_tool_call:{tool_name, tool_call_id, parameters}}
+//       → client_tool_result {tool_call_id, result: STRING, is_error}
+//   ← error {error_event:{error_type, message, code}} (override_error, llm_error, max_duration…)
+//   ← agent_response / agent_response_correction / user_transcript / agent_tool_response (end_call)
+//   → contextual_update {text}
+// Overrides: SOLO los que el agente permite (los dice /api/voice/session); si aun así
+// ElevenLabs cierra por override_error, se reconecta UNA vez sin overrides.
+
+function _voiceL(es, en) {
+  let l = 'es';
+  try { l = (typeof window !== 'undefined' && window.LANG) || localStorage.getItem('eco_lang') || 'es'; } catch (e) {}
+  return l === 'en' ? en : es;
+}
+function _voiceLang() {
+  try { return ((typeof window !== 'undefined' && window.LANG) || localStorage.getItem('eco_lang') || 'es') === 'en' ? 'en' : 'es'; }
+  catch (e) { return 'es'; }
+}
+
+// Tope (s) que el agente espera cada herramienta — ESPEJO de _VOICE_TOOL_TIMEOUTS en
+// server.py (un test los compara). Respondemos SIEMPRE ~1.5 s antes para que
+// ElevenLabs nunca vea un timeout (el agente quedaba mudo o decía "falló").
+const VOICE_TOOL_TIMEOUT_S = { ask_khipu_brain: 60, run_agent_simulation: 90, deep_research: 90,
+  get_news: 20, show_insights: 15, place_paper_trade: 45, get_portfolio_status: 45, get_space_summary: 20 };
+const VOICE_TOOL_TIMEOUT_DEFAULT_S = 10;
+
+// Precio de una cotización por el contrato único (window.quotePx: live numérico o close).
+function _voicePx(q) {
+  if (!q) return null;
+  try { if (window.quotePx) { const v = window.quotePx(q); return (v && isFinite(v)) ? v : null; } } catch (e) {}
+  return (q.close && isFinite(q.close)) ? q.close : null;
+}
+
+const VoiceAudio = {
+  parseFormat(f) {
+    const m = /^(pcm|ulaw)_(\d{4,6})$/.exec(String(f || ''));
+    return m ? { format: m[1], sampleRate: +m[2] } : { format: 'pcm', sampleRate: 16000 };
+  },
+  // µ-law (G.711) — mismo algoritmo que los worklets del SDK oficial
+  ulawDecode(u) {
+    u = ~u & 0xff;
+    const sign = u & 0x80, exp = (u >> 4) & 0x07, man = u & 0x0f;
+    let s = [0, 132, 396, 924, 1980, 4092, 8316, 16764][exp] + (man << (exp + 3));
+    return sign ? -s : s;
+  },
+  ulawEncode(sample) {
+    const BIAS = 0x84, CLIP = 32635;
+    let sign = (sample >> 8) & 0x80;
+    if (sign) sample = -sample;
+    sample = Math.min(CLIP, sample + BIAS);
+    let exp = 7;
+    for (let mask = 0x4000; (sample & mask) === 0 && exp > 0; exp--, mask >>= 1) {}
+    const man = (sample >> (exp + 3)) & 0x0f;
+    return (~(sign | (exp << 4) | man)) & 0xff;
+  },
+  // base64 → Float32 [-1,1] según formato (PCM16 little-endian o µ-law)
+  decode(b64, fmt) {
+    const bin = atob(b64);
+    if (fmt && fmt.format === 'ulaw') {
+      const out = new Float32Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = this.ulawDecode(bin.charCodeAt(i)) / 32768;
+      return out;
+    }
+    const n = bin.length >> 1, out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8);
+      if (v >= 0x8000) v -= 0x10000;
+      out[i] = v / 32768;
+    }
+    return out;
+  },
+  // Float32 → bytes (PCM16 LE o µ-law) → base64
+  encode(f32, fmt) {
+    const ulaw = fmt && fmt.format === 'ulaw';
+    const bytes = new Uint8Array(ulaw ? f32.length : f32.length * 2);
+    for (let i = 0; i < f32.length; i++) {
+      const s = Math.max(-1, Math.min(1, f32[i]));
+      const v = Math.round(s < 0 ? s * 32768 : s * 32767);
+      if (ulaw) bytes[i] = this.ulawEncode(v);
+      else { bytes[2 * i] = v & 0xff; bytes[2 * i + 1] = (v >> 8) & 0xff; }
+    }
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x2000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x2000));
+    return btoa(bin);
+  },
+  // Re-muestreo de UN bloque suelto (largo exacto n·dst/src; lineal, borde sostenido).
+  resampleOnce(f32, srcRate, dstRate) {
+    if (!srcRate || !dstRate || srcRate === dstRate) return f32;
+    const n = Math.max(1, Math.round(f32.length * dstRate / srcRate)), out = new Float32Array(n);
+    const step = srcRate / dstRate, last = f32.length - 1;
+    for (let i = 0; i < n; i++) {
+      const p = i * step, a = Math.min(last, Math.floor(p)), b = Math.min(last, a + 1), fr = p - Math.floor(p);
+      out[i] = f32[a] * (1 - fr) + f32[b] * fr;
+    }
+    return out;
+  },
+  // Re-muestreo CON ESTADO entre bloques (antes cada bloque se truncaba: 2048 muestras
+  // a 48 kHz → 682,67 → se perdía un trocito por bloque = clics y deriva). Bajando de
+  // tasa se promedia la ventana (filtro de caja = anti-aliasing simple); subiendo, lineal.
+  makeResampler(srcRate, dstRate) {
+    if (!srcRate || !dstRate || srcRate === dstRate) return f => f;
+    const ratio = srcRate / dstRate;
+    let tail = new Float32Array(0), pos = 0;
+    return (input) => {
+      const buf = new Float32Array(tail.length + input.length);
+      buf.set(tail); buf.set(input, tail.length);
+      const out = [];
+      if (ratio > 1) {
+        while (pos + ratio <= buf.length) {
+          const a = Math.floor(pos), b = Math.max(a + 1, Math.floor(pos + ratio));
+          let s = 0;
+          for (let i = a; i < b; i++) s += buf[i];
+          out.push(s / (b - a));
+          pos += ratio;
+        }
+      } else {
+        while (pos + 1 < buf.length) {
+          const a = Math.floor(pos), fr = pos - a;
+          out.push(buf[a] * (1 - fr) + buf[a + 1] * fr);
+          pos += ratio;
+        }
+      }
+      const used = Math.min(Math.floor(pos), buf.length);
+      tail = buf.slice(used); pos -= used;
+      return Float32Array.from(out);
+    };
+  },
+};
 
 const BixbyVoice = {
   ws: null,
@@ -11,6 +151,11 @@ const BixbyVoice = {
   audioCtx: null,
   audioQueue: [],
   isPlaying: false,
+  _sess: 0,                 // id de intento: eventos de sockets viejos se ignoran
+  _inFmt: null,
+  _outFmt: null,
+  _lastInterruptId: 0,
+  _metaReceived: false,
 
   async init() {
     if (this.audioCtx) return;
@@ -20,123 +165,248 @@ const BixbyVoice = {
   },
 
   async toggle() {
-    this.isConnected ? this.disconnect() : await this.connect();
+    (this.isConnected || this._connecting) ? this.disconnect() : await this.connect();
   },
 
   stop() { this.disconnect(); },
 
-  async connect() {
-    // La key de ElevenLabs vive en el server (.env); agent_id opcional es solo
-    // una preferencia local que el server puede aceptar como override.
-    const agentId = localStorage.getItem('elevenlabs_agent_id');
+  async connect(opts) {
+    opts = opts || {};
+    if (this._connecting) return;
+    this._connecting = true;
+    try { await this._connect(opts); }
+    catch (e) { this._fail(_voiceL('Khipu: error inesperado al conectar — ', 'Khipu: unexpected error while connecting — ') + ((e && e.message) || e)); }
+    finally { this._connecting = false; }
+  },
 
-    // ── Step 1: request microphone NOW while the user gesture is still active ──
-    // Mobile browsers (Chrome Android, Safari iOS) revoke the gesture context
-    // after the first await. Asking here ensures the permission dialog appears
-    // immediately and the stream is ready when the WebSocket opens.
-    this._showOverlay('Khipu — pidiendo micrófono…');
-    let preStream = null;
-    if (navigator.mediaDevices?.getUserMedia) {
-      try {
-        preStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1, sampleRate: { ideal: 16000 } },
-          video: false,
-        });
-        this._showOverlay('Khipu — conectando…');
-      } catch (e) {
-        const msg = (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')
-          ? 'Permiso de micrófono denegado — actívalo en el navegador'
-          : 'Micrófono no disponible: ' + (e?.message || e);
-        this._setStatus(msg, true);
-        return; // Can't proceed without mic
-      }
-    } else {
-      this._setStatus('getUserMedia no disponible (¿HTTPS?)', true);
+  async _connect(opts) {
+    const sess = ++this._sess;
+    this._closingByUser = false;
+    this._lastErrorEvent = null;
+
+    // ── Paso 1: AudioContext DENTRO del gesto del usuario (iOS Safari solo deja
+    // sonar un contexto creado/reanudado en el gesto; antes se hacía tras await).
+    this.init();
+    try { if (this.audioCtx && this.audioCtx.state !== 'running' && this.audioCtx.state !== 'closed') this.audioCtx.resume(); } catch (e) {}
+
+    // ── Paso 2: micrófono (también en el gesto: Chrome Android / Safari iOS) ──
+    this._showOverlay(_voiceL('Khipu — pidiendo micrófono…', 'Khipu — requesting microphone…'), 'connect');
+    let stream = null;
+    if (!(typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+      this._fail(_voiceL('Este navegador no da acceso al micrófono aquí (¿la página no es HTTPS?).',
+        'This browser gives no microphone access here (is the page not HTTPS?).'));
       return;
     }
-
-    // ── Step 2: init AudioContext (user gesture still active) ──────────────────
-    await this.init();
-    if (this.audioCtx?.state === 'suspended') await this.audioCtx.resume();
-
-    // ── Step 3: fetch credentials from server ──────────────────────────────────
-    const base = (typeof BASE !== 'undefined') ? BASE : '';
     try {
-      const pr = await fetch(`${base}/api/voice/bixby-prompt`);
-      if (pr.ok) {
-        const pd = await pr.json();
-        this._systemPrompt = pd.system_prompt || null;
-        // Server sets allow_override: true only when the ElevenLabs agent has
-        // "Allow overrides" enabled in its dashboard settings.
-        this._allowPromptOverride = !!pd.allow_override;
-      }
-    } catch { this._systemPrompt = null; this._allowPromptOverride = false; }
-
-    let signedUrl;
-    try {
-      const r = await fetch(`${base}/api/voice/session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_id: agentId }),
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
+        video: false,
       });
-      const data = await r.json();
-      if (data.error) throw new Error(data.error);
-      signedUrl = data.signed_url || data.signedUrl;
-      if (!signedUrl) throw new Error('No signed_url devuelto por el servidor');
     } catch (e) {
-      this._setStatus('Khipu: ' + e.message, true);
-      preStream.getTracks().forEach(t => t.stop()); // release mic if no WS
+      this._fail(this._micErrorText(e));
+      return;
+    }
+    if (sess !== this._sess) { this._stopTracks(stream); return; }   // el usuario canceló
+    this._releasePre();
+    this._preStream = stream;
+    // iOS: abrir el micrófono puede dejar el contexto 'suspended' o 'interrupted'
+    if (this.audioCtx && this.audioCtx.state !== 'running' && this.audioCtx.state !== 'closed') {
+      try { await this.audioCtx.resume(); } catch (e) {}
+    }
+
+    // ── Paso 3: credenciales del server (la clave NUNCA llega al navegador) ──
+    this._showOverlay(_voiceL('Khipu — conectando…', 'Khipu — connecting…'), 'connect');
+    const base = (typeof BASE !== 'undefined') ? BASE : '';
+    let agentPref = null;
+    try { agentPref = localStorage.getItem('elevenlabs_agent_id'); } catch (e) {}
+    const [pd, sres] = await Promise.all([
+      fetch(`${base}/api/voice/bixby-prompt`).then(r => (r.ok ? r.json() : null)).catch(() => null),
+      fetch(`${base}/api/voice/session`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(agentPref ? { agent_id: agentPref } : {}),
+      }).then(async r => ({ status: r.status, data: await r.json().catch(() => ({})) }))
+        .catch(e => ({ status: 0, data: { error: _voiceL('Sin conexión con el servidor de Khipu.', 'No connection to the Khipu server.') } })),
+    ]);
+    if (sess !== this._sess) { this._releasePre(); return; }
+    const sd = (sres && sres.data) || {};
+    const signedUrl = sd.signed_url || sd.signedUrl;
+    if (!signedUrl) {
+      const en = _voiceLang() === 'en';
+      let msg = (en ? (sd.error_en || sd.error) : (sd.error || sd.error_en))
+        || _voiceL('El servidor no entregó la sesión de voz.', 'The server did not return a voice session.');
+      const fix = en ? sd.fix_en : sd.fix_es;
+      if (fix) msg += ' — ' + fix;
+      this._releasePre();
+      this._fail('Khipu: ' + msg);
+      return;
+    }
+    this._systemPrompt = (pd && pd.system_prompt) || null;
+    const override = opts.noOverride ? null : this._buildOverride(pd, sd);
+
+    // ── Paso 4: WebSocket ──────────────────────────────────────────────────────
+    this._openSocket(signedUrl, override, sess);
+  },
+
+  // Qué overrides mandar: solo los que el AGENTE permite (sd.overrides, leído del
+  // agente por el server) y solo si cambian algo. Sin esa info → regla vieja
+  // (ELEVENLABS_ALLOW_OVERRIDE). Si en esta pestaña ya falló por override → nada.
+  _buildOverride(pd, sd) {
+    try { if (sessionStorage.getItem('kh_voice_no_override') === '1') return null; } catch (e) {}
+    const lang = _voiceLang();
+    const known = sd && sd.overrides && typeof sd.overrides === 'object';
+    const ov = known ? sd.overrides : null;
+    const envOn = !!((pd && pd.allow_override) || (sd && sd.override_env));
+    const agentLang = (sd && sd.language) || 'es';
+    const agent = {};
+    if (known ? ov.language : envOn) { if (!known || agentLang !== lang) agent.language = lang; }
+    if (envOn && (known ? ov.prompt : true) && this._systemPrompt) agent.prompt = { prompt: this._systemPrompt };
+    if (known && ov.first_message && lang === 'en' && agentLang !== 'en' && sd.has_first_message) {
+      agent.first_message = "Hi, I'm Khipu. What would you like to analyze?";
+    }
+    return Object.keys(agent).length ? { agent } : null;
+  },
+
+  _openSocket(url, override, sess) {
+    let ws;
+    try { ws = new WebSocket(url); }
+    catch (e) { this._releasePre(); this._fail(_voiceL('No se pudo abrir la conexión de voz: ', 'Could not open the voice connection: ') + ((e && e.message) || e)); return; }
+    this.ws = ws;
+    this._metaReceived = false;
+    this._lastInterruptId = 0;
+    this._overrideSent = override;
+    this._inFmt = null; this._outFmt = null;
+
+    ws.onopen = () => {
+      if (sess !== this._sess) return;
+      this.isConnected = true;
+      this._showOverlay(_voiceL('Khipu — iniciando sesión…', 'Khipu — starting session…'), 'connect');
+      this._sendInitContext(override);
+      // El micrófono arranca con conversation_initiation_metadata (antes NO se puede mandar audio)
+      clearTimeout(this._initTimer);
+      this._initTimer = setTimeout(() => {
+        if (sess === this._sess && !this._metaReceived && this.ws === ws) {
+          this._lastErrorEvent = { error_type: 'init_timeout' };
+          try { ws.close(4000, 'init timeout'); } catch (e) {}
+        }
+      }, 15000);
+    };
+    ws.onmessage = (e) => {
+      if (sess !== this._sess) return;
+      let msg;
+      try { msg = JSON.parse(e.data); } catch { return; }
+      try { this._handleMessage(msg); } catch (err) { try { console.warn('[Khipu voz]', err); } catch (_) {} }
+    };
+    // onerror llega antes que onclose y sin detalle: el diagnóstico lo hace onclose
+    ws.onerror = () => { if (sess === this._sess) this._wsErrored = true; };
+    ws.onclose = (ev) => this._onSocketClose(ev || {}, sess);
+  },
+
+  _onSocketClose(ev, sess) {
+    if (sess !== this._sess) return;           // socket viejo (ya hubo reintento o disconnect)
+    clearTimeout(this._initTimer);
+    const hadMeta = this._metaReceived;
+    const errEv = this._lastErrorEvent || {};
+    const reason = String(ev.reason || '');
+    const override = this._overrideSent;
+    // fin normal (el agente colgó con end_call o se cerró limpio): ElevenLabs cierra en cuanto ENVÍA el último
+    // audio, que suena por delante del reloj → se deja terminar la despedida antes de limpiar (máx 8 s)
+    const cleanEnd = hadMeta && ev.code === 1000 && !errEv.error_type && !this._closingByUser;
+    this.ws = null;
+    this.isConnected = false;
+    this._metaReceived = false;
+    this._stopMic();
+    if (!cleanEnd) this._stopScheduled();
+    this._orbOff();
+    if (this._closingByUser) { this._releasePre(); this._hideOverlay(); return; }
+    if (cleanEnd) {
+      this._releasePre();
+      const ctx = this.audioCtx;
+      const left = (ctx && this._playCursor) ? Math.max(0, this._playCursor - ctx.currentTime) : 0;
+      clearTimeout(this._endTimer);
+      this._endTimer = setTimeout(() => {
+        if (sess !== this._sess || this.isConnected) return;   // ya empezó otra sesión: no tocar su audio
+        this._stopScheduled();
+        this._hideOverlay();
+      }, Math.min(8000, left * 1000 + 300));
       return;
     }
 
-    // ── Step 4: open WebSocket and wire up audio ───────────────────────────────
-    this._preStream = preStream;
-    this.ws = new WebSocket(signedUrl);
+    // overrides rechazados → reintentar UNA vez sin overrides (no rompe la sesión)
+    const overrideErr = errEv.error_type === 'override_error' || /override/i.test(reason);
+    if (!hadMeta && override && overrideErr) {
+      try { sessionStorage.setItem('kh_voice_no_override', '1'); } catch (e) {}
+      this._releasePre();
+      this._showOverlay(_voiceL('Khipu — reintentando sin ajustes de idioma…', 'Khipu — retrying without language overrides…'), 'connect');
+      setTimeout(() => this.connect({ noOverride: true, auto: true }), 50);
+      return;
+    }
+    // caída de red a mitad de conversación → 1 reconexión automática por minuto
+    const transient = [1001, 1006, 1012, 1013].indexOf(ev.code) >= 0;
+    if (hadMeta && transient && !errEv.error_type && this._canAutoReconnect()) {
+      this._releasePre();
+      this._showOverlay(_voiceL('Khipu — se cortó la conexión, reconectando…', 'Khipu — connection dropped, reconnecting…'), 'connect');
+      setTimeout(() => this.connect({ auto: true, noOverride: !override }), 600);
+      return;
+    }
+    this._releasePre();
+    this._fail(this._closeText(ev, hadMeta, errEv));
+  },
 
-    this.ws.onopen = () => {
-      this.isConnected = true;
-      this._showOverlay('Khipu — iniciando sesión…');
-      this._sendInitContext();
-      // Mic starts on conversation_initiation_metadata (not here)
-      // ElevenLabs requires that exchange before audio can be sent
-    };
+  _canAutoReconnect() {
+    const now = Date.now();
+    if (typeof document !== 'undefined' && document.hidden) return false;
+    if (this._lastAutoReconnect && now - this._lastAutoReconnect < 60000) return false;
+    this._lastAutoReconnect = now;
+    return true;
+  },
 
-    this.ws.onmessage = e => {
-      try { this._handleMessage(JSON.parse(e.data)); } catch {}
-    };
-    this.ws.onerror = (ev) => {
-      // onerror fires before onclose — don't call disconnect() here because
-      // that triggers ws.close() → onclose fires again and double-hides.
-      this._setStatus('Error de red con Khipu — reintenta', true);
-    };
-    this.ws.onclose = (ev) => {
-      // Skip if disconnect() already cleaned up (isConnected already false)
-      if (!this.isConnected && !this._micStream) return;
-      this.isConnected = false;
-      this._stopMic();
-      this.ws = null;
-      this._stopScheduled();
-      this._orbOff();   // apaga el orbe de voz (vuelve a respirar / se destruye si era flotante)
-      if (ev.code === 1000 || ev.code === 1001) {
-        this._hideOverlay();
-      } else {
-        // Unexpected close — show reason so user can diagnose
-        const reason = ev.reason
-          ? ev.reason.slice(0, 120)
-          : `Khipu desconectado (código ${ev.code})`;
-        this._setStatus(reason, true);
-      }
-    };
+  // Texto bilingüe y CONCRETO del cierre (antes: "Khipu desconectado (código 1008)").
+  _closeText(ev, hadMeta, errEv) {
+    const t = (errEv && errEv.error_type) || '';
+    const reason = String((ev && ev.reason) || (errEv && (errEv.message || errEv.reason)) || '').slice(0, 160);
+    const low = reason.toLowerCase();
+    if (t === 'init_timeout') return _voiceL('ElevenLabs no respondió al iniciar la sesión. Reintenta en unos segundos.', 'ElevenLabs did not answer the session start. Retry in a few seconds.');
+    if (t === 'max_duration_exceeded') return _voiceL('Se alcanzó la duración máxima de la conversación. Toca el micrófono para seguir.', 'Maximum conversation length reached. Tap the mic to continue.');
+    if (t === 'override_error' || /override/.test(low)) return _voiceL('El agente no permite cambiar idioma/instrucciones por sesión. Toca el micrófono de nuevo (ya no se enviarán).', 'The agent does not allow per-session language/instructions. Tap the mic again (they will no longer be sent).');
+    if (/^(llm_error|custom_llm_error|cascade_brain_error|llm_timeout)$/.test(t)) return _voiceL('El modelo de IA del agente falló. Revisa 🩺 → Khipu / ElevenLabs (puede ser un LLM retirado).', "The agent's AI model failed. Check 🩺 → Khipu / ElevenLabs (it may be a retired LLM).");
+    if (t === 'tts_cascade_error') return _voiceL('Falló la voz del agente (modelo de voz). Revisa 🩺 → Khipu / ElevenLabs.', "The agent's voice (TTS model) failed. Check 🩺 → Khipu / ElevenLabs.");
+    if (/^missing_dynamic_variable/.test(t)) return _voiceL('Las instrucciones del agente piden una variable que la app no envía. Reinicia el servidor para re-sincronizar a Khipu.', 'The agent instructions require a variable the app does not send. Restart the server to re-sync Khipu.');
+    if (/quota|credit|limit/.test(low)) return _voiceL('Se acabaron los créditos de ElevenLabs. Revisa tu plan en elevenlabs.io → Subscription.', 'ElevenLabs credits are used up. Check your plan at elevenlabs.io → Subscription.');
+    if (/concurren|busy|too many/.test(low)) return _voiceL('ElevenLabs está ocupado (límite de conversaciones a la vez). Reintenta en unos segundos.', 'ElevenLabs is busy (concurrent conversation limit). Retry in a few seconds.');
+    if (/auth|signature|expired|unauthori/.test(low)) return _voiceL('La sesión de voz venció o no es válida. Toca el micrófono de nuevo.', 'The voice session expired or is invalid. Tap the mic again.');
+    if (!hadMeta && (ev.code === 1006 || !ev.code)) return _voiceL('No se pudo abrir la conexión de voz con ElevenLabs (red, firewall o bloqueador). Reintenta.', 'Could not open the voice connection to ElevenLabs (network, firewall or blocker). Retry.');
+    const code = (ev && ev.code) || '?';
+    return reason
+      ? _voiceL(`Khipu se desconectó: ${reason}`, `Khipu disconnected: ${reason}`)
+      : _voiceL(`Khipu se desconectó (código ${code}). Reintenta.`, `Khipu disconnected (code ${code}). Retry.`);
+  },
+
+  _micErrorText(e) {
+    const n = (e && e.name) || '';
+    if (n === 'NotAllowedError' || n === 'PermissionDeniedError' || n === 'SecurityError') {
+      return _voiceL('Permiso de micrófono denegado: tócalo en el candado de la barra de direcciones → Micrófono → Permitir, y reintenta.',
+        'Microphone permission denied: click the lock in the address bar → Microphone → Allow, then retry.');
+    }
+    if (n === 'NotFoundError' || n === 'DevicesNotFoundError' || n === 'OverconstrainedError') {
+      return _voiceL('No se encontró ningún micrófono en este equipo.', 'No microphone was found on this device.');
+    }
+    if (n === 'NotReadableError' || n === 'TrackStartError' || n === 'AbortError') {
+      return _voiceL('El micrófono está ocupado por otra app (Zoom, Meet…). Ciérrala y reintenta.',
+        'The microphone is busy in another app (Zoom, Meet…). Close it and retry.');
+    }
+    return _voiceL('Micrófono no disponible: ', 'Microphone unavailable: ') + ((e && e.message) || e);
   },
 
   disconnect() {
+    this._sess++;                       // invalida eventos pendientes del socket actual
+    this._closingByUser = true;
+    clearTimeout(this._initTimer);
+    clearTimeout(this._endTimer);
     this.isConnected = false;
+    this._metaReceived = false;
     this._orbOff();
     this._stopMic();
-    if (this._preStream) {
-      try { this._preStream.getTracks().forEach(t => t.stop()); } catch {}
-      this._preStream = null;
-    }
+    this._releasePre();
     this._stopScheduled();
     if (this.ws) {
       try { this.ws.close(1000, 'user disconnected'); } catch {}
@@ -145,9 +415,16 @@ const BixbyVoice = {
     this._hideOverlay();
   },
 
+  _stopTracks(stream) {
+    try { if (stream) stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  },
+  _releasePre() {
+    if (this._preStream) { this._stopTracks(this._preStream); this._preStream = null; }
+  },
+
   _stopMic() {
     try { this._micSource?.disconnect(); } catch {}
-    try { this._micProcessor?.disconnect(); } catch {}
+    try { if (this._micProcessor) this._micProcessor.onaudioprocess = null; this._micProcessor?.disconnect(); } catch {}
     try { this._micMute?.disconnect(); } catch {}
     try { this._micStream?.getTracks().forEach(t => t.stop()); } catch {}
     this._micSource = null;
@@ -158,75 +435,44 @@ const BixbyVoice = {
 
   _startMicWithStream(stream) {
     if (this._micStream) return; // already running
-    const TARGET_RATE = 16000;
+    const fmt = this._inFmt || VoiceAudio.parseFormat('pcm_16000');
     try {
-      const actualRate = this.audioCtx.sampleRate; // 44100 or 48000 typically
+      const ctx = this.audioCtx;
+      const resample = VoiceAudio.makeResampler(ctx.sampleRate, fmt.sampleRate);
+      const srcNode = ctx.createMediaStreamSource(stream);
 
-      const srcNode = this.audioCtx.createMediaStreamSource(stream);
-
-      // ScriptProcessor: deprecated but universally supported (AudioWorklet needs
-      // a module worker which complicates deployment). Buffer size 2048 is smaller
-      // so latency is lower; still large enough to avoid glitches.
-      const bufSize = 2048;
-      const processor = this.audioCtx.createScriptProcessor(bufSize, 1, 1);
-
+      // ScriptProcessor: deprecado pero universal (AudioWorklet exige servir un módulo
+      // aparte). 2048 muestras ≈ 43 ms a 48 kHz: latencia baja sin cortes.
+      const processor = ctx.createScriptProcessor(2048, 1, 1);
       processor.onaudioprocess = (ev) => {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this._metaReceived) return;
         const f32 = ev.inputBuffer.getChannelData(0);
 
-        // Jarvis visualizer: drive bars from live mic RMS
+        // Visualizador: nivel RMS del micrófono
         let sum = 0;
         for (let i = 0; i < f32.length; i++) sum += f32[i] * f32[i];
-        this._setMicLevel(Math.sqrt(sum / f32.length));
+        this._setMicLevel(Math.sqrt(sum / (f32.length || 1)));
 
-        // Downsample to 16 kHz and convert to Int16 PCM
-        let i16;
-        if (actualRate !== TARGET_RATE) {
-          const ratio = actualRate / TARGET_RATE;
-          const outLen = Math.floor(f32.length / ratio);
-          i16 = new Int16Array(outLen);
-          for (let i = 0; i < outLen; i++) {
-            // Linear interpolation for better quality than nearest-neighbor
-            const srcIdx = i * ratio;
-            const lo = Math.floor(srcIdx), hi = Math.min(lo + 1, f32.length - 1);
-            const frac = srcIdx - lo;
-            const s = Math.max(-1, Math.min(1, f32[lo] * (1 - frac) + f32[hi] * frac));
-            i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-          }
-        } else {
-          i16 = new Int16Array(f32.length);
-          for (let i = 0; i < f32.length; i++) {
-            const s = Math.max(-1, Math.min(1, f32[i]));
-            i16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-          }
-        }
-
-        // Send as base64-encoded raw PCM
-        const bytes = new Uint8Array(i16.buffer);
-        let bin = '';
-        // Process in chunks to avoid stack overflow on large buffers
-        for (let i = 0; i < bytes.length; i += 512) {
-          bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 512));
-        }
-        this.ws.send(JSON.stringify({ user_audio_chunk: btoa(bin) }));
+        const out = resample(f32);
+        if (!out.length) return;
+        try { this.ws.send(JSON.stringify({ user_audio_chunk: VoiceAudio.encode(out, fmt) })); } catch (e) {}
       };
 
-      // Must connect processor to destination for onaudioprocess to fire.
-      // Route through a muted gain node to avoid echo feedback.
-      const mute = this.audioCtx.createGain();
+      // onaudioprocess solo dispara si el nodo llega al destino: por una ganancia en 0 (sin eco)
+      const mute = ctx.createGain();
       mute.gain.value = 0;
       srcNode.connect(processor);
       processor.connect(mute);
-      mute.connect(this.audioCtx.destination);
+      mute.connect(ctx.destination);
 
       this._micSource = srcNode;
       this._micProcessor = processor;
       this._micMute = mute;
       this._micStream = stream;
 
-      this._showOverlay('🎙️ Khipu te escucha — habla');
+      this._showOverlay(_voiceL('🎙️ Khipu te escucha — habla', '🎙️ Khipu is listening — speak'), 'listen');
     } catch (e) {
-      this._setStatus('Error al iniciar micrófono: ' + (e?.message || e), true);
+      this._fail(_voiceL('Error al iniciar el micrófono: ', 'Could not start the microphone: ') + ((e && e.message) || e));
     }
   },
 
@@ -278,6 +524,7 @@ const BixbyVoice = {
   },
   _startOrbDrive() {
     if (this._orbRAF) return;
+    if (typeof requestAnimationFrame !== 'function') return;
     const tick = () => {
       if (!this.isConnected) { this._orbRAF = 0; return; }
       const orb = (typeof window !== 'undefined') ? window.BixbyOrb : null;
@@ -296,22 +543,14 @@ const BixbyVoice = {
     this._orbRAF = requestAnimationFrame(tick);
   },
   _stopOrbDrive() {
-    if (this._orbRAF) { cancelAnimationFrame(this._orbRAF); this._orbRAF = 0; }
+    if (this._orbRAF) { try { cancelAnimationFrame(this._orbRAF); } catch (e) {} this._orbRAF = 0; }
   },
 
-  _sendInitContext() {
+  _sendInitContext(override) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-    // Minimal init — dynamic_variables require agent config in ElevenLabs dashboard
-    // and cause a close if the placeholders don't exist in the agent's system prompt
+    // dynamic_variables NO: el agente cierra si su prompt no tiene esos {{placeholders}}.
     const msg = { type: 'conversation_initiation_client_data' };
-    if (this._systemPrompt && this._allowPromptOverride) {
-      msg.conversation_config_override = {
-        agent: {
-          prompt: { prompt: this._systemPrompt },
-          language: (typeof LANG !== 'undefined') ? LANG : 'es',
-        },
-      };
-    }
+    if (override) msg.conversation_config_override = override;
     this.ws.send(JSON.stringify(msg));
   },
 
@@ -346,7 +585,7 @@ const BixbyVoice = {
       return {
         id, label: n?.label || id, ticker: n?.mkt || null,
         shares: p.sh, buy_price: p.bp,
-        current_price: q?.close || null,
+        current_price: _voicePx(q),
         nrs: typeof computeNRS === 'function' ? computeNRS(id) : null,
       };
     });
@@ -358,17 +597,18 @@ const BixbyVoice = {
     return {
       app: 'Khipu Finance', assistant: 'Khipu',
       active_tab: (typeof activeTab !== 'undefined') ? activeTab : null,
-      language: (typeof LANG !== 'undefined') ? LANG : 'es',
+      language: _voiceLang(),
       total_nodes: (typeof NODES !== 'undefined') ? NODES.length : 0,
       total_links: (typeof LINKS !== 'undefined') ? LINKS.length : 0,
       categories: cats,
       selected_company: sel ? (function () {
         const m = (window.NODE_META || {})[sel.id] || {};
+        const sq = (sel.mkt && typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt] : null;
         return {
           id: sel.id, label: sel.label, ticker: sel.mkt || null,
           category: typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat,
           nrs: typeof computeNRS === 'function' ? computeNRS(sel.id) : null,
-          price: sel.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt]?.close || null : null) : null,
+          price: _voicePx(sq),
           role: sel.role || null,
           // la ficha completa: Khipu debe saber lo que la pantalla muestra
           employees: m.employees || null, founded: m.founded || null,
@@ -388,18 +628,29 @@ const BixbyVoice = {
   },
 
   _handleMessage(msg) {
+    if (!msg || typeof msg !== 'object') return;
     switch (msg.type) {
-      case 'conversation_initiation_metadata':
-        // Session confirmed — NOW safe to start sending audio
-        this._showOverlay('🎙️ Khipu te escucha — habla');
+      case 'conversation_initiation_metadata': {
+        // Sesión confirmada — AHORA sí se puede mandar audio, y sabemos los formatos
+        const m = msg.conversation_initiation_metadata_event || {};
+        this._metaReceived = true;
+        clearTimeout(this._initTimer);
+        this._conversationId = m.conversation_id || null;
+        this._outFmt = VoiceAudio.parseFormat(m.agent_output_audio_format || 'pcm_16000');
+        this._inFmt = VoiceAudio.parseFormat(m.user_input_audio_format || 'pcm_16000');
+        this._showOverlay(_voiceL('🎙️ Khipu te escucha — habla', '🎙️ Khipu is listening — speak'), 'listen');
         if (this._preStream) {
           this._startMicWithStream(this._preStream);
           this._preStream = null;
         }
         this._orbOn();   // arranca/alimenta el orbe de voz de la Cabina
         break;
+      }
       case 'audio': {
-        const chunk = msg.audio_event?.audio_base_64;
+        const ev = msg.audio_event || {};
+        // audio de una respuesta YA interrumpida: se descarta (si no, seguía sonando)
+        if (ev.event_id != null && +ev.event_id < this._lastInterruptId) break;
+        const chunk = ev.audio_base_64;
         if (chunk) {
           if (window.setBixbyThinking) window.setBixbyThinking(false);
           this._enqueueAudio(chunk);
@@ -411,15 +662,22 @@ const BixbyVoice = {
         if (text) {
           // El usuario NUNCA debe ver los tokens internos ([XRAY:...], [NAV:...])
           const clean = this._cleanSpeech(text);
-          if (clean) this._showOverlay('Khipu: ' + clean.slice(0, 80));
+          if (clean) this._showOverlay('Khipu: ' + clean.slice(0, 80), 'speak');
           this._onAgentResponse(text);
         }
+        break;
+      }
+      case 'agent_response_correction': {
+        // la respuesta se cortó (interrupción): mostrar lo que REALMENTE dijo
+        const c = msg.agent_response_correction_event || {};
+        const clean = this._cleanSpeech(c.corrected_agent_response || '');
+        if (clean) this._showOverlay('Khipu: ' + clean.slice(0, 80), 'speak');
         break;
       }
       case 'user_transcript': {
         const t = msg.user_transcription_event?.user_transcript || '';
         if (t) {
-          this._showOverlay('Tú: ' + t.slice(0, 80));
+          this._showOverlay(_voiceL('Tú: ', 'You: ') + t.slice(0, 80), 'think');
           if (window.setBixbyThinking) window.setBixbyThinking(true);
         }
         break;
@@ -427,15 +685,44 @@ const BixbyVoice = {
       case 'client_tool_call':
         this._handleToolCall(msg.client_tool_call);
         break;
-      case 'interruption':
+      case 'interruption': {
+        const id = +((msg.interruption_event || {}).event_id || 0);
+        if (id > this._lastInterruptId) this._lastInterruptId = id;
         this._stopScheduled();
+        this._setState('listen');
         break;
-      case 'ping':
-        if (msg.ping_event?.event_id != null && this.ws?.readyState === WebSocket.OPEN) {
-          this.ws.send(JSON.stringify({ type: 'pong', event_id: msg.ping_event.event_id }));
+      }
+      case 'ping': {
+        const id = msg.ping_event ? msg.ping_event.event_id : null;
+        if (id != null && this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(JSON.stringify({ type: 'pong', event_id: id }));
         }
         break;
+      }
+      case 'agent_tool_response': {
+        // herramienta de sistema end_call: el agente cuelga → dejar terminar la frase y cerrar
+        const tr = msg.agent_tool_response || {};
+        if (tr.tool_name === 'end_call') this._endAfterSpeech();
+        break;
+      }
+      case 'error': {
+        const ev = msg.error_event || {};
+        this._lastErrorEvent = ev;
+        try { console.warn('[Khipu voz] ElevenLabs error:', ev.error_type, ev.message || ev.reason || ''); } catch (e) {}
+        if (ev.error_type === 'max_duration_exceeded') this._setStatus(this._closeText({}, true, ev), true, 'error');
+        break;
+      }
+      default:
+        break;   // vad_score, context_usage, internal_*… no se usan
     }
+  },
+
+  // end_call: cerrar cuando termine de sonar lo agendado (máx 8 s)
+  _endAfterSpeech() {
+    const ctx = this.audioCtx;
+    const left = (ctx && this._playCursor) ? Math.max(0, this._playCursor - ctx.currentTime) : 0;
+    clearTimeout(this._endTimer);
+    this._endTimer = setTimeout(() => { if (this.isConnected) this.disconnect(); }, Math.min(8000, left * 1000 + 400));
   },
 
   // Reproducción SIN CORTES: cada chunk se agenda contiguo al anterior usando un
@@ -451,18 +738,26 @@ const BixbyVoice = {
   _scheduleChunk(b64chunk) {
     const ctx = this.audioCtx;
     if (!ctx) return;
-    if (ctx.state === 'suspended') { try { ctx.resume(); } catch {} }
+    if (ctx.state !== 'running' && ctx.state !== 'closed') { try { ctx.resume(); } catch {} }   // 'interrupted' en iOS
+    const fmt = this._outFmt || VoiceAudio.parseFormat('pcm_16000');
     let buffer;
     try {
-      const bytes = Uint8Array.from(atob(b64chunk), c => c.charCodeAt(0));
-      const pcm = new Int16Array(bytes.buffer);
-      const f32 = new Float32Array(pcm.length);
+      const f32 = VoiceAudio.decode(b64chunk, fmt);
+      if (!f32.length) return;
       let _sum = 0;
-      for (let i = 0; i < pcm.length; i++) { const v = pcm[i] / 32768; f32[i] = v; _sum += v * v; }
-      // energía de la voz de BIXBY (violeta) para el orbe — la lee _startOrbDrive
+      for (let i = 0; i < f32.length; i++) _sum += f32[i] * f32[i];
+      // energía de la voz de Khipu (violeta) para el orbe — la lee _startOrbDrive
       this._speakLevel = Math.max(0.35, Math.min(1, Math.sqrt(_sum / (f32.length || 1)) * 5));
-      buffer = ctx.createBuffer(1, f32.length, 16000);
-      buffer.getChannelData(0).set(f32);
+      try {
+        // la tasa REAL del agente (agent_output_audio_format); el navegador re-muestrea
+        buffer = ctx.createBuffer(1, f32.length, fmt.sampleRate);
+        buffer.getChannelData(0).set(f32);
+      } catch (e) {
+        // Safari viejo no crea buffers < 22,05 kHz: subimos la tasa nosotros
+        const up = VoiceAudio.resampleOnce(f32, fmt.sampleRate, ctx.sampleRate);
+        buffer = ctx.createBuffer(1, up.length, ctx.sampleRate);
+        buffer.getChannelData(0).set(up);
+      }
     } catch { return; }
     const src = ctx.createBufferSource();
     src.buffer = buffer;
@@ -477,13 +772,16 @@ const BixbyVoice = {
     src.onended = () => {
       const i = this._activeSources.indexOf(src);
       if (i >= 0) this._activeSources.splice(i, 1);
-      if (!this._activeSources.length) { this.isPlaying = false; this._playCursor = 0; }
+      if (!this._activeSources.length) {
+        this.isPlaying = false; this._playCursor = 0;
+        if (this.isConnected) this._setState('listen');
+      }
     };
   },
 
   // Corta TODO el audio agendado (para interrupciones y desconexión).
   _stopScheduled() {
-    (this._activeSources || []).forEach(s => { try { s.stop(); } catch {} });
+    (this._activeSources || []).forEach(s => { try { s.onended = null; s.stop(); } catch {} });
     this._activeSources = [];
     this._playCursor = 0;
     this.isPlaying = false;
@@ -642,18 +940,47 @@ const BixbyVoice = {
 
   _handleToolCall(event) {
     const { tool_name, parameters, tool_call_id } = event || {};
-    const params = typeof parameters === 'string' ? JSON.parse(parameters || '{}') : (parameters || {});
+    let params = {};
+    try { params = typeof parameters === 'string' ? JSON.parse(parameters || '{}') : (parameters || {}); }
+    catch (e) { params = {}; }
+    // UNA sola respuesta por llamada, SIEMPRE antes del tope del agente: si la
+    // acción tarda más, se responde "sigue en pantalla" (antes ElevenLabs veía
+    // un timeout y Khipu se quedaba mudo o decía que había fallado).
+    let answered = false;
+    let guard = null;
     const respond = (result) => {
+      if (answered) return;
+      answered = true;
+      clearTimeout(guard);
       if (this.ws?.readyState === WebSocket.OPEN) {
+        let txt;
+        try { txt = typeof result === 'string' ? result : JSON.stringify(result == null ? { success: true } : result); }
+        catch (e) { txt = '{"success":false}'; }
         this.ws.send(JSON.stringify({
           type: 'client_tool_result',
           tool_call_id,
-          result: JSON.stringify(result),
-          is_error: false,
+          result: txt,          // el API exige STRING
+          is_error: false,      // los errores van en el texto: con is_error el agente no los ve
         }));
       }
     };
+    const limitS = VOICE_TOOL_TIMEOUT_S[tool_name] || VOICE_TOOL_TIMEOUT_DEFAULT_S;
+    guard = setTimeout(() => respond(tool_name === 'place_paper_trade'
+      ? { success: false, pending: true, error: _voiceL(
+        'La orden sigue en proceso: mírala en pantalla antes de repetirla (repetirla no la duplica).',
+        'The order is still in progress: check the screen before repeating it (repeating will not duplicate it).') }
+      : { success: true, pending: true, note: _voiceL(
+        'Sigue procesándose; el resultado aparecerá en pantalla en unos segundos.',
+        'Still processing; the result will appear on screen in a few seconds.') }),
+    Math.max(2500, limitS * 1000 - 1500));
+    try {
+      this._dispatchTool(tool_name, params, respond);
+    } catch (e) {
+      respond({ success: false, error: _voiceL('No pude completar esa acción: ', "I couldn't complete that action: ") + ((e && e.message) || e) });
+    }
+  },
 
+  _dispatchTool(tool_name, params, respond) {
     switch (tool_name) {
       case 'navigate_to_company': {
         const n = this._resolveAny(params);
@@ -732,8 +1059,8 @@ const BixbyVoice = {
             id: n.id, label: n.label, ticker: n.mkt || null,
             category: (typeof catLabel === 'function') ? catLabel(n.cat) : n.cat,
             country: n.country || n.loc || null,
-            price: q?.close || null,
-            change_pct: (q?.close && q?.prev) ? ((q.close - q.prev) / q.prev * 100).toFixed(2) : null,
+            price: _voicePx(q),
+            change_pct: (_voicePx(q) && q?.prev) ? ((_voicePx(q) - q.prev) / q.prev * 100).toFixed(2) : null,
             nrs_risk: (typeof computeNRS === 'function') ? computeNRS(n.id) : null,
             role: n.role || null,
             supplies: n.supplies || null,
@@ -839,11 +1166,11 @@ const BixbyVoice = {
       }
       case 'get_market_summary': {
         const quotes = Object.entries((typeof MKT !== 'undefined' ? MKT.quotes : {}) || {})
-          .filter(([, q]) => q.close)
+          .filter(([, q]) => _voicePx(q))
           .map(([t, q]) => ({
             ticker: t,
-            price: q.close,
-            change_pct: (q.close && q.prev) ? ((q.close - q.prev) / q.prev * 100).toFixed(2) : null,
+            price: _voicePx(q),
+            change_pct: (_voicePx(q) && q.prev) ? ((_voicePx(q) - q.prev) / q.prev * 100).toFixed(2) : null,
           }));
         respond({ total_tickers: quotes.length, quotes });
         break;
@@ -1343,18 +1670,54 @@ const BixbyVoice = {
     this._ctxTimer = setTimeout(() => { this._ctxTimer = null; this.updateContext(); }, 400);
   },
 
-  _showOverlay(text) {
+  // ── Estado visible (overlay, badge, Cabina) — bilingüe y con estado EXPLÍCITO ──
+  // state ∈ connect | listen | speak | think | error. Antes se adivinaba por
+  // palabras del texto en español ("escucha", "conectando"…) y en inglés no andaba.
+  _STATE_LABELS: {
+    connect: ['CONECTANDO', 'CONNECTING', 'Conectando', 'Connecting'],
+    listen: ['ESCUCHANDO', 'LISTENING', 'Escuchando', 'Listening'],
+    speak: ['HABLANDO', 'SPEAKING', 'Hablando', 'Speaking'],
+    think: ['PENSANDO', 'THINKING', 'Pensando', 'Thinking'],
+    error: ['ERROR', 'ERROR', 'Error', 'Error'],
+  },
+  _guessState(text, isError) {
+    if (isError) return 'error';
+    const lo = String(text || '').toLowerCase();
+    if (lo.includes('escucha') || lo.includes('listening') || lo.includes('habla')) return 'listen';
+    if (lo.includes('conectando') || lo.includes('connecting') || lo.includes('iniciando') || lo.includes('starting')) return 'connect';
+    if (lo.includes('khipu:') || lo.includes('bixby:')) return 'speak';
+    if (lo.includes('tú:') || lo.includes('you:') || lo.includes('pensando') || lo.includes('thinking')) return 'think';
+    return null;
+  },
+  _setState(state) {
+    const lab = this._STATE_LABELS[state];
+    if (!lab) return;
+    const en = _voiceLang() === 'en';
+    this._setBadge(en ? lab[1] : lab[0], state !== 'connect' && state !== 'error');
+    if (window.setBixbyThinking) { try { window.setBixbyThinking(state === 'think'); } catch (e) {} }
+    if (window.BixbyCockpit && window.BixbyCockpit.setState) {
+      const mode = state === 'think' ? 'think' : (state === 'listen' || state === 'speak') ? 'live' : '';
+      try { window.BixbyCockpit.setState(mode, en ? lab[3] : lab[2]); } catch (e) {}
+    }
+  },
+
+  _showOverlay(text, state) {
     const el = document.getElementById('bixby-status');
-    if (el) { el.style.display = 'block'; this._setStatus(text); }
+    if (el) el.style.display = 'block';
+    this._setStatus(text, false, state);
     const btn = document.getElementById('bixby-btn');
     if (btn) btn.classList.add('bixby-active');
   },
   _hideOverlay() {
+    clearTimeout(this._hideTimer);
     const el = document.getElementById('bixby-status');
     if (el) el.style.display = 'none';
     const btn = document.getElementById('bixby-btn');
     if (btn) btn.classList.remove('bixby-active');
     this._setBadge('OFF', false);
+    if (window.BixbyCockpit && window.BixbyCockpit.setState) {
+      try { window.BixbyCockpit.setState('', _voiceL('Listo', 'Ready')); } catch (e) {}
+    }
   },
   _setBadge(label, active) {
     const b = document.getElementById('bixby-state-badge');
@@ -1370,48 +1733,55 @@ const BixbyVoice = {
       b.style.borderColor = 'rgba(138,90,255,.3)';
     }
   },
-  _setStatus(text, isError) {
+  _setStatus(text, isError, state) {
     const t = document.getElementById('bixby-text');
     if (t) t.textContent = text;
-    // update badge + thinking widget based on text content
-    const badge = document.getElementById('bixby-state-badge');
-    if (badge && text) {
-      const lower = text.toLowerCase();
-      if (lower.includes('escucha') || lower.includes('habla')) {
-        this._setBadge('ESCUCHANDO', true);
-        if (window.setBixbyThinking) window.setBixbyThinking(false);
-      } else if (lower.includes('conectando') || lower.includes('iniciando') || lower.includes('sesión')) {
-        this._setBadge('CONECTANDO', false);
-        if (window.setBixbyThinking) window.setBixbyThinking(false);
-      } else if (lower.includes('khipu:') || lower.includes('bixby:') || lower.includes('speaking')) {
-        this._setBadge('HABLANDO', true);
-        if (window.setBixbyThinking) window.setBixbyThinking(false);
-      } else if (lower.includes('procesando') || lower.includes('pensando') || lower.includes('tú:')) {
-        this._setBadge('PENSANDO', true);
-        if (window.setBixbyThinking) window.setBixbyThinking(true);
-      } else if (isError) {
-        this._setBadge('ERROR', false);
-        if (window.setBixbyThinking) window.setBixbyThinking(false);
-      }
-    }
-    // reflejar el estado en la Cabina de Khipu (si está abierta)
-    if (window.BixbyCockpit && window.BixbyCockpit.setState && text) {
-      const lo = text.toLowerCase();
-      const mode = (lo.includes('procesando') || lo.includes('pensando') || lo.includes('tú:')) ? 'think'
-        : (lo.includes('escucha') || lo.includes('habla') || lo.includes('khipu:') || lo.includes('bixby:')) ? 'live' : '';
-      const label = (lo.includes('khipu:') || lo.includes('bixby:')) ? 'Hablando' : lo.includes('escucha') ? 'Escuchando'
-        : mode === 'think' ? 'Pensando' : lo.includes('conectando') || lo.includes('iniciando') ? 'Conectando' : 'Listo';
-      window.BixbyCockpit.setState(mode, label);
-    }
+    const st = state || this._guessState(text, isError);
+    if (st) this._setState(st);
     if (isError) {
       const el = document.getElementById('bixby-status');
       if (el) el.style.display = 'block';
-      if (typeof toast === 'function') toast(text);
+      if (typeof toast === 'function') { try { toast(text); } catch (e) {} }
     }
+  },
+
+  // Falla visible y LIMPIA: suelta el micrófono, apaga el orbe y deja el mensaje
+  // (antes un fallo antes de abrir el socket dejaba el micrófono encendido y
+  // "Khipu — conectando…" para siempre).
+  _fail(text) {
+    clearTimeout(this._initTimer);
+    this.isConnected = false;
+    this._metaReceived = false;
+    this._releasePre();
+    this._stopMic();
+    this._stopScheduled();
+    this._orbOff();
+    this._setStatus(text, true, 'error');
+    const btn = document.getElementById('bixby-btn');
+    if (btn) btn.classList.remove('bixby-active');
+    clearTimeout(this._hideTimer);
+    this._hideTimer = setTimeout(() => {
+      if (!this.isConnected && !this._connecting) {
+        const el = document.getElementById('bixby-status');
+        if (el) el.style.display = 'none';
+        this._setBadge('OFF', false);
+      }
+    }, 12000);
   },
 };
 
 window.BixbyVoice = BixbyVoice;
+window.KhipuVoiceAudio = VoiceAudio;   // expuesto para pruebas/diagnóstico (sin estado)
+
+// Safari/Chrome móvil suspenden el audio al ocultar la pestaña: al volver, reanudar.
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('visibilitychange', () => {
+    try {
+      const ctx = BixbyVoice.audioCtx;
+      if (!document.hidden && BixbyVoice.isConnected && ctx && ctx.state !== 'running') ctx.resume();
+    } catch (e) {}
+  });
+}
 
 /* ============================================================================
    TRADING COMPARTIDO (Etapa M) — helpers usados por voice.js (tools de Khipu),

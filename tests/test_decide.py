@@ -80,6 +80,9 @@ def test_presupuesto_bloquea(jev, monkeypatch):
 
 
 def test_control_por_funcion(monkeypatch, jev):
+    # 2026-10-10: con clave y DECIDE_CONTROL sin poner, Jev manda en el chat (y en nada más)
+    assert decide.control('chat_gate') and not decide.control('news')
+    monkeypatch.setenv('DECIDE_CONTROL', 'off')
     assert not decide.control('chat_gate')
     monkeypatch.setenv('DECIDE_CONTROL', 'chat_gate')
     assert decide.control('chat_gate') and not decide.control('news')
@@ -94,7 +97,7 @@ def test_portero_en_sombra_compara(jev):
     assert dec['route'] == 'needs_tools' and dec['mentions_company'] == 0.97
     rep = decide.shadow_report(days=1)
     f = [x for x in rep['features'] if x['feature'] == 'chat_gate'][0]
-    assert f['n'] >= 1 and f['agree'] >= 1 and f['control'] is False
+    assert f['n'] >= 1 and f['agree'] >= 1 and f['control'] is True      # 2026-10-10: manda por defecto con clave
     assert rep['recent'][0]['actual']['route'] == 'needs_tools' and rep['recent'][0]['agree'] is True
 
 

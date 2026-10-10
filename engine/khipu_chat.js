@@ -583,6 +583,8 @@
         Date.now() - (_lastPending._kcT0 || 0) < 2500) pend = _lastPending;
     var rid = (typeof opts.req_id === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(opts.req_id)) ? opts.req_id : (pend && pend._kcReq) || newReqId();
     body.req_id = rid;
+    // plazo PROPIO (la voz espera 55 s, no 70): el servidor recorta su techo para responder antes de que cortemos
+    if (opts.timeout > 0) body.deadline_s = Math.round(opts.timeout / 1000);
     if (pend) {
       pend._kcBound = true; pend._kcReq = rid;
       if (!pend._kcQ) { pend._kcQ = String(text || ''); _paintThinking(pend, predictAgents(pend._kcQ).map(function (id) { return { id: id, state: 'working' }; })); }

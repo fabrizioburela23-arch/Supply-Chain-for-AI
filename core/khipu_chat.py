@@ -63,6 +63,16 @@ MAX_ACTIONS = 3
 MAX_ANSWER = 6000
 SYNTH_TIMEOUT_S = 20.0         # redacción final en prosa (cuando el protocolo falla)
 SYNTH_GRACE_S = 4.0            # margen extra sobre el presupuesto para esa redacción (45+4+20 < 70 s del cliente)
+# Pregunta de análisis (Jev: needs_deep_reasoning, 2026-10-10): la respuesta FINAL la escribe el modelo profundo.
+# Mismo techo que la redacción en prosa (presupuesto + gracia + 20 s < 70 s del cliente); con menos de
+# DEEP_FINAL_MIN_S libres no se intenta (queda la respuesta del modelo rápido, nunca peor que antes).
+DEEP_FINAL_TIMEOUT_S = 30.0
+DEEP_FINAL_MIN_S = 10.0
+DEEP_FAST_RESERVE_S = 8.0      # sin respuesta rápida en mano: tiempo que se guarda para redactar con el rápido
+# Plazo PROPIO del cliente (`deadline_s`): la voz (ask_khipu_brain) corta a los 55 s, no a los 70 del chat → el
+# techo de la petición baja a t0 + deadline_s − CLIENT_NET_MARGIN_S (la respuesta profunda no la deja sin nada).
+CLIENT_DEADLINE_MIN_S, CLIENT_DEADLINE_MAX_S = 15.0, 120.0
+CLIENT_NET_MARGIN_S = 4.0
 STEP_MAX_TOKENS = 1600
 TOOL_TIMEOUT_S = 14.0
 
@@ -857,7 +867,8 @@ def validate_request(body):
     else:
         ctx['agents_enabled'] = list(AGENT_IDS)
     return {'message': msg, 'history': history, 'lang': lang, 'context': ctx,
-            'req_id': valid_req_id(body.get('req_id'))}
+            'req_id': valid_req_id(body.get('req_id')),
+            'deadline_s': client_deadline(body.get('deadline_s', ctx_raw.get('deadline_s')))}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -1207,9 +1218,11 @@ SYNTH_SYSTEM = (
     'llaves, pensar en voz alta, mencionar herramientas o el protocolo. No des órdenes de compra/venta.')
 
 
-def synthesize(message, history, lang, context, scratch, timeout):
+def synthesize(message, history, lang, context, scratch, timeout, tier='fast'):
     """El AGENTE redacta la respuesta final en prosa a partir de lo consultado
-    (cuando el paso con protocolo JSON falló o se acabó el tiempo de rondas)."""
+    (cuando el paso con protocolo JSON falló o se acabó el tiempo de rondas).
+    tier='deep' (2026-10-10): la pregunta pide análisis (Jev: needs_deep_reasoning) → modelo profundo."""
+    tier = 'deep' if tier == 'deep' else 'fast'
     parts = [f'PREGUNTA: {message}']
     if history:
         parts.append('CONVERSACIÓN PREVIA:\n' + '\n'.join(
@@ -1220,7 +1233,7 @@ def synthesize(message, history, lang, context, scratch, timeout):
         parts.append('DATOS CONSULTADOS:\n' + '\n'.join(scratch)[-MAX_SCRATCH_CHARS:])
     parts.append(f'Responde en {"inglés" if lang == "en" else "español"}.')
     t0 = time.monotonic()
-    fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, 'fast',
+    fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts), 2200, tier,
                      timeout_s=max(5.0, min(float(timeout), 30.0)))
     text, model = fut.result(timeout=max(1.0, timeout))
     t = re.sub(r'^```\w*\s*|\s*```$', '', str(text or '').strip()).strip()
@@ -1228,7 +1241,7 @@ def synthesize(message, history, lang, context, scratch, timeout):
     if (leaked(t) or truncated(t)) and left > 8:          # un reintento con el aviso concreto
         fb = ('\n\nTU RESPUESTA ANTERIOR ' + ('QUEDÓ CORTADA' if truncated(t) else 'TENÍA JSON O BORRADORES') +
               '. Escríbela COMPLETA, más corta (máx. 180 palabras), en prosa limpia.')
-        fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, 'fast',
+        fut = _submit_ai(_ai._ai_complete, SYNTH_SYSTEM, '\n\n'.join(parts) + fb, 2200, tier,
                          timeout_s=max(5.0, min(float(left), 30.0)))
         text2, model2 = fut.result(timeout=max(1.0, left))
         t2 = re.sub(r'^```\w*\s*|\s*```$', '', str(text2 or '').strip()).strip()
@@ -2198,16 +2211,63 @@ def enrich_answer(message, calls, context=None, req_id=None):
     return out
 
 
-def _call_ai(system, prompt, timeout):
+def _call_ai(system, prompt, timeout, tier='fast'):
     # want_json: cada paso es un objeto JSON (parse_step) → con Gemini, JSON estricto y sin pensamiento.
     # timeout_s: el proveedor corta a la vez que el chat (antes el hilo seguía 90 s ocupando cupo).
     # live_facts=False: el bloque "DATOS EN VIVO" se calcula UNA vez por pregunta en _run_chat.
-    fut = _submit_ai(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, 'fast', want_json=True,
-                     timeout_s=max(5.0, min(float(timeout), 30.0)), live_facts=False)
+    # tier='deep' SOLO para la respuesta final de una pregunta de análisis (Jev: needs_deep_reasoning).
+    tier = 'deep' if tier == 'deep' else 'fast'
+    cap = DEEP_FINAL_TIMEOUT_S if tier == 'deep' else 30.0
+    fut = _submit_ai(_ai._ai_complete, system, prompt, STEP_MAX_TOKENS, tier, want_json=True,
+                     timeout_s=max(5.0, min(float(timeout), cap)), live_facts=False)
     return fut.result(timeout=max(1.0, timeout))
 
 
-def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None, req_id=None):
+def _deep_final(system, message, history, lang, context, scratch, live, t0, budget, req_id, cap=None):
+    """Pregunta de ANÁLISIS (Jev: needs_deep_reasoning): la respuesta final la escribe el modelo PROFUNDO con
+    todo lo ya consultado (los pasos de elegir herramientas siguen en el modelo rápido). → {called, answer,
+    actions, model}; answer None si no hubo tiempo o el profundo no entregó una respuesta limpia (queda la del
+    modelo rápido)."""
+    out = {'called': False, 'answer': None, 'actions': None, 'model': None}
+    left = min(DEEP_FINAL_TIMEOUT_S, _hard_end(t0, budget, cap) - time.monotonic())
+    if left < DEEP_FINAL_MIN_S:
+        return out
+    progress_phase(req_id, 'writing')
+    prompt = build_prompt(message, history, lang, context, scratch, 0, True, None, live=live)
+    out['called'] = True
+    try:
+        text, model = _call_ai(system, prompt, left, tier='deep')
+        kind, payload = parse_step(text)
+    except Exception as e:  # noqa: BLE001 — sin respuesta profunda: queda la del modelo rápido
+        log.info('khipu_chat: respuesta profunda no disponible (%s)', _clip(e, 120))
+        return out
+    ans = payload.get('answer') if kind == 'final' else None
+    if ans and not leaked(ans) and not truncated(ans):
+        out.update(answer=ans, actions=payload.get('actions'), model=model)
+    return out
+
+
+def _hard_end(t0, budget, cap=None):
+    """Techo de la petición del chat (monotonic): presupuesto + gracia + redacción − 3 s de margen para la red
+    (= t0 + 66 s con los valores por defecto; el cliente corta a los 70 s). `cap` (monotonic) = plazo propio
+    del cliente menos el margen de red (la voz espera 55 s): el techo nunca lo pasa."""
+    end = t0 + float(budget) + SYNTH_GRACE_S + SYNTH_TIMEOUT_S - 3.0
+    return min(end, cap) if cap else end
+
+
+def client_deadline(v):
+    """`deadline_s` del cuerpo → segundos acotados [15, 120] o None (sin plazo propio = el de siempre)."""
+    try:
+        d = float(v)
+    except (TypeError, ValueError):
+        return None
+    if d != d or d <= 0:
+        return None
+    return max(CLIENT_DEADLINE_MIN_S, min(CLIENT_DEADLINE_MAX_S, d))
+
+
+def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None, req_id=None,
+             deadline_s=None):
     """PORTERO (Jev, core/decide.py): decide en paralelo qué necesita la pregunta. En SOMBRA solo se
     compara con lo que el chat hizo; con DECIDE_CONTROL=chat_gate MANDA (router_plan): responder con
     datos locales SIN IA, pocas consultas, el análisis completo, o el nivel de modelo de un @agente.
@@ -2226,7 +2286,7 @@ def run_chat(message, history=None, lang='es', context=None, app=None, budget_s=
             gate = None
         direct = _mention_route(message, history, lang, context, req_id=rid, gate=gate)
         out = direct if direct is not None else _run_chat(message, history, lang, context, app, budget_s, max_steps,
-                                                          req_id=rid, gate=gate)
+                                                          req_id=rid, gate=gate, deadline_s=deadline_s)
         out.setdefault('router', {'by': 'default'})
         if gate is not None:
             try:
@@ -2358,9 +2418,13 @@ def _local_answer(message, lang, results):
 
 
 def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s=None, max_steps=None, req_id=None,
-              gate=None):
+              gate=None, deadline_s=None):
     t0 = time.monotonic()
     budget = TIME_BUDGET_S if budget_s is None else float(budget_s)
+    dl = client_deadline(deadline_s)
+    client_end = (t0 + dl - CLIENT_NET_MARGIN_S) if dl else None      # plazo del cliente (voz: 55 s) − red
+    if dl:
+        budget = min(budget, max(MIN_STEP_S * 2, dl - CLIENT_NET_MARGIN_S - SYNTH_GRACE_S))
     steps_max = MAX_STEPS if max_steps is None else int(max_steps)
     deadline = t0 + budget
     history = list(history or [])[-MAX_HISTORY:]
@@ -2467,6 +2531,9 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     except Exception:  # noqa: BLE001
         plan = None
     router = {'by': 'default'}
+    # análisis (Jev: needs_deep_reasoning) → la RESPUESTA FINAL va al modelo profundo; elegir herramientas sigue
+    # en el rápido. Las demás rutas y el camino sin Jev no cambian (ni en tiempo ni en modelo).
+    deep_final = bool(plan and plan.get('route') == 'needs_deep_reasoning')
     if plan:
         route = plan['route']
         if route == 'local_fact' and (plan.get('about_portfolio') or 0) < 0.5:
@@ -2480,6 +2547,8 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
         elif route in ('offtopic', 'local_fact'):
             steps_max = min(steps_max, 1)
         router = _router(plan, max_steps=steps_max)
+        if deep_final:
+            router['final_tier'] = 'deep'
     while True:
         remaining = deadline - time.monotonic()
         if remaining < MIN_STEP_S:
@@ -2522,6 +2591,15 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
             if leaked(ans) or truncated(ans):   # restos o cortada → el agente la reescribe completa
                 reason = 'bad_output'
                 break
+            if deep_final:
+                # análisis: el modelo rápido ya juntó los datos y tiene SU respuesta (queda de respaldo); la
+                # respuesta final la escribe el modelo profundo con todo lo consultado. Nunca peor que antes.
+                deep = _deep_final(system, message, history, lang, context, scratch, live, t0, budget, req_id, client_end)
+                if deep['called']:
+                    ai_calls += 1
+                if deep['answer']:
+                    model = deep['model'] or model
+                    return done(deep['answer'], deep['actions'] or payload.get('actions'))
             return done(ans, payload.get('actions'))
         if force_final:
             reason = 'budget'
@@ -2565,11 +2643,30 @@ def _run_chat(message, history=None, lang='es', context=None, app=None, budget_s
     # tiempo de rondas, redacta la respuesta en prosa con lo ya consultado. La
     # plantilla sin IA queda solo para cuando la IA no responde de verdad.
     left = min(SYNTH_TIMEOUT_S, deadline + SYNTH_GRACE_S - time.monotonic())
+    if client_end:
+        left = min(left, client_end - time.monotonic())
     if reason in ('budget', 'bad_output') and not ai_slow and left >= 6.0:
         progress_phase(req_id, 'writing')
         try:
-            ai_calls += 1
-            ans, m = synthesize(message, history, lang, context, scratch, left)
+            ans, m, tried_deep = None, None, False
+            if deep_final:
+                # análisis: redacta el modelo PROFUNDO con su propia ventana (hasta el techo de la petición, dejando
+                # DEEP_FAST_RESERVE_S para la redacción rápida de siempre si el profundo no llega)
+                deep_left = min(DEEP_FINAL_TIMEOUT_S, _hard_end(t0, budget, client_end) - time.monotonic() - DEEP_FAST_RESERVE_S)
+                if deep_left >= DEEP_FINAL_MIN_S:
+                    tried_deep = True
+                    ai_calls += 1
+                    try:
+                        ans, m = synthesize(message, history, lang, context, scratch, deep_left, tier='deep')
+                    except Exception as e:  # noqa: BLE001
+                        log.info('khipu_chat: redacción profunda no disponible (%s)', _clip(e, 120))
+                        ans, m = None, None
+            if not (ans and len(ans) > 20):
+                if tried_deep:
+                    left = min(SYNTH_TIMEOUT_S, _hard_end(t0, budget, client_end) - time.monotonic())
+                if left >= 6.0:
+                    ai_calls += 1
+                    ans, m = synthesize(message, history, lang, context, scratch, left)
             if ans and len(ans) > 20:
                 model = m or model
                 return done(ans, [])
@@ -2594,7 +2691,8 @@ def chat_endpoint():
     except Exception:  # noqa: BLE001
         app = None
     try:
-        out = run_chat(req['message'], req['history'], req['lang'], req['context'], app=app, req_id=req.get('req_id'))
+        out = run_chat(req['message'], req['history'], req['lang'], req['context'], app=app, req_id=req.get('req_id'),
+                       deadline_s=req.get('deadline_s'))
     except Exception as e:  # noqa: BLE001 — nunca un 500 mudo en el chat
         log.exception('khipu_chat: fallo inesperado')
         return jsonify({'error': 'Khipu tuvo un problema procesando eso; reintenta.',

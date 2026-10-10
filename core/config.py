@@ -24,8 +24,11 @@ AI_MODEL = os.getenv('AI_MODEL', 'claude-sonnet-5')
 # 'fast' pasa a Haiku 4.5 (3-5x más rápido para clasificación+JSON trivial); el
 # 'deep' se queda en Sonnet 5 para que la calidad de la sim/investigación/cripto
 # NO cambie. Sobreescribibles por entorno. La MISMA ANTHROPIC_KEY sirve para ambos.
+# 2026-10-10 (Fabrizio pagó la API de Claude): el nivel PROFUNDO pasa a Claude Sonnet 5.5 (claude-sonnet-5-5,
+# mismo precio que Sonnet 5: 2/10 USD por millón; mejor en análisis y herramientas). OJO: Sonnet 5.5 rechaza
+# thinking 'disabled' (HTTP 400) — core/ai.claude_attempts arma los parámetros correctos por modelo.
 AI_MODEL_FAST = os.getenv('AI_MODEL_FAST') or 'claude-haiku-4-5'
-AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5'
+AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5-5'
 
 # ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──
 # Si un canal falla (o no tiene key), pasa al siguiente automáticamente.
@@ -47,6 +50,17 @@ GEMINI_FALLBACK_MODEL = os.getenv('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash,gem
 NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
 NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.3-70b-instruct')
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
+# ── Orden de proveedores POR NIVEL (2026-10-10) ─────────────────────────────
+# · profundo (investigación, comité, tesis, respuesta final de análisis del chat):
+#     AI_ORDER_DEEP > 'claude,gemini,nvidia'. La AI_ORDER vieja se IGNORA a propósito en este nivel: en Railway
+#     quedó 'gemini,nvidia,claude' como parche de emergencia cuando Claude no tenía saldo.
+# · rápido (pasos del chat, comandos, noticias, alertas):
+#     AI_ORDER_FAST > AI_ORDER (si está puesta) > 'gemini,claude,nvidia'.
+# Un proveedor sin clave o en pausa (sin saldo, clave inválida…) se salta solo (corta-circuito de core/ai.py);
+# los que no figuren en la lista van al final como red de seguridad. core/ai.provider_order(tier) lo resuelve.
+AI_ORDER_EXPLICIT = bool((os.getenv('AI_ORDER') or '').strip())
+AI_ORDER_FAST_DEFAULT = ('gemini', 'claude', 'nvidia')
+AI_ORDER_DEEP_DEFAULT = ('claude', 'gemini', 'nvidia')
 
 HTTP_TIMEOUT = 8
 

@@ -79,7 +79,8 @@ def test_escenas_viejas_marcadas_kd_legacy_dark():
     s = _r('engine/cockpit.js')
     m = re.search(r"var LEGACY_DARK = \[([^\]]*)\]", s)
     kinds = set(re.findall(r"'(\w+)'", m.group(1)))
-    assert {'broker', 'scalp', 'insights', 'screener', 'deep', 'research', 'agentsim', 'compare', 'sim', 'pick', 'xray'} <= kinds
+    # xray / insights / portfolios ya pintan con tokens --os-* (overnight 2026-10-10): pueden salir de la lista
+    assert {'broker', 'scalp', 'screener', 'deep', 'research', 'agentsim', 'compare', 'sim', 'pick'} <= kinds
     assert "body.classList.toggle('kd-legacy-dark', LEGACY_DARK.indexOf(kind) >= 0)" in s
 
 

@@ -14,17 +14,22 @@ necesitar y se combinan en código (patrón "speculative fan-out").
 API: POST https://api.typesafe.ai/v1/systemone · Authorization: Bearer
 TYPESAFE_API_KEY · body {state, model:'jev-latest', questions:{id:{type,
 instructions,criteria?}}} → {model, answers:{id:{...}}, usage:{input_tokens,
-output_tokens}}.
+output_tokens}}. Revisado 2026-10-10 contra lo publicado (guías de Apidog/LiteLLM/
+Netlify AI Gateway; docs.typesafe.ai/api no se pudo abrir desde aquí): mismo
+endpoint, mismos 3 campos (state/model/questions), respuestas answers.<id>.choice /
+.score / .noul con probabilities + confidence (+ legend en score); jev-latest ≈
+jev-1.13.0; estado + preguntas ≈ 32K tokens máx.; 70-500 ms.
 
 REGLAS DE LA CASA
 · ÚNICA puerta a TypeSafe (como core/ai.py lo es para Claude/Gemini/NVIDIA).
 · Cada llamada se registra en 💰 Gasto IA (core/ai_usage: proveedor 'typesafe')
   y respeta sus límites. Precio: desconocido al integrar → 0 hasta fijar
   AI_PRICES_JSON='{"typesafe:jev": [x, y]}' (se rotula "estimado").
-· MODO SOMBRA (DECIDE_SHADOW=on por defecto): Jev decide pero NO manda. Cada
-  decisión se guarda junto a lo que el sistema hizo de verdad (tabla
-  decision_shadow + memoria) para medir acuerdo antes de darle control
-  (DECIDE_CONTROL=off; se activa punto por punto cuando el acuerdo lo merezca).
+· MODO SOMBRA (DECIDE_SHADOW=on por defecto): cada decisión se guarda junto a
+  lo que el sistema hizo de verdad (tabla decision_shadow + memoria) para medir
+  acuerdo. CONTROL (2026-10-10, Fabrizio pagó TypeSafe): con clave y
+  DECIDE_CONTROL sin poner, Jev MANDA en el chat ('chat_gate'); DECIDE_CONTROL=off
+  lo deja solo en sombra; una lista explícita ('chat_gate,news', 'all') sigue valiendo.
 · Nunca rompe nada: sin clave, sin red o con error → None y el sistema sigue
   igual que hoy. NUNCA decide dinero.
 
@@ -76,10 +81,27 @@ def shadow_mode():
     return (os.getenv('DECIDE_SHADOW') or 'on').lower() not in ('off', '0', 'false')
 
 
+CONTROL_DEFAULT = ('chat_gate',)        # con clave y DECIDE_CONTROL sin poner: Jev manda en el chat
+_CONTROL_OFF = ('off', 'none', '0', 'false', 'no')
+
+
+def control_features():
+    """Funciones donde Jev MANDA (2026-10-10, Fabrizio pagó TypeSafe):
+    · DECIDE_CONTROL sin poner (o vacía) → ('chat_gate',): Jev decide la ruta del chat por defecto;
+    · 'off' / 'none' / '0' / 'false' → ninguna (solo sombra);
+    · lista explícita ('chat_gate,news' o 'all') → esa lista.
+    Las reglas de seguridad no cambian: confianza mínima, nunca dinero, sin respuesta a tiempo → camino normal."""
+    raw = (os.getenv('DECIDE_CONTROL') or '').strip()
+    if not raw:
+        return list(CONTROL_DEFAULT)
+    if raw.lower() in _CONTROL_OFF:
+        return []
+    return [x.strip() for x in raw.split(',') if x.strip() and x.strip().lower() not in _CONTROL_OFF]
+
+
 def control(feature):
-    """¿Jev MANDA en esta función? Solo si DECIDE_CONTROL lista la función
-    (p. ej. 'chat_gate,news') — por defecto apagado: primero se mide en sombra."""
-    allowed = [x.strip() for x in (os.getenv('DECIDE_CONTROL') or '').split(',') if x.strip()]
+    """¿Jev MANDA en esta función? Hace falta clave (available) y que la función esté en control_features()."""
+    allowed = control_features()
     return available() and (feature in allowed or 'all' in allowed)
 
 
@@ -193,9 +215,19 @@ def shadow_report(days=30, limit=50):
                     'control': control(k)})
     with _LOCK:
         recent = [dict(r, at=r['at'].isoformat()) for r in list(_RECENT)[:limit]]
+    ctl = control_features() if available() else []
+    if ctl:
+        note_es = ('Jev MANDA en: ' + ', '.join(ctl) + ' (DECIDE_CONTROL; sin poner = chat_gate). Igual se compara '
+                   'en sombra con lo que hizo el sistema. DECIDE_CONTROL=off lo deja solo en sombra.')
+        note_en = ('Jev is IN CONTROL of: ' + ', '.join(ctl) + ' (DECIDE_CONTROL; unset = chat_gate). It is still '
+                   'compared in shadow mode against what the system did. DECIDE_CONTROL=off keeps it shadow-only.')
+    else:
+        note_es = ('Jev decide en sombra: se compara con lo que hizo el sistema. Se le da control por función '
+                   '(DECIDE_CONTROL) cuando el acuerdo lo merezca.')
+        note_en = ('Jev decides in shadow mode: compared against what the system actually did. It gets control per '
+                   'feature (DECIDE_CONTROL) once agreement earns it.')
     return {'available': available(), 'shadow': shadow_mode(), 'model': MODEL, 'features': out, 'recent': recent,
-            'note_es': 'Jev decide en sombra: se compara con lo que hizo el sistema. Se le da control por función (DECIDE_CONTROL) cuando el acuerdo lo merezca.',
-            'note_en': 'Jev decides in shadow mode: compared against what the system actually did. It gets control per feature (DECIDE_CONTROL) once agreement earns it.'}
+            'control_features': ctl, 'note_es': note_es, 'note_en': note_en}
 
 
 # ── PORTERO DEL CHAT DE KHIPU (primer uso, en sombra) ───────────────────────

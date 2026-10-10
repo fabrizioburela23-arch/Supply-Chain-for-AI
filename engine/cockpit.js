@@ -1172,8 +1172,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   // escenas que pinta la propia Cabina (además de ADOPT_TABS y de las registradas con registerKind)
   var BUILTIN_KINDS = ['broker', 'scalp', 'crypto', 'pick', 'xray', 'compare', 'agentsim', 'research', 'sim', 'screener', 'insights', 'canvas', 'deep', 'graph', 'terminal'];
   // escenas viejas con colores oscuros FIJOS: su ventana lleva .kd-legacy-dark (isla oscura legible en tema claro)
-  var LEGACY_DARK = ['broker', 'scalp', 'insights', 'screener', 'deep', 'research', 'agentsim', 'compare', 'sim', 'pick', 'xray',
-    'portfolios'];   // carteras: panel adoptado diseñado en oscuro (engine/portfolios.js usa tinta clara fija)
+  // 2026-10-10: xray, insights y portfolios ya pintan con tokens --os-* (siguen el tema claro/oscuro)
+  var LEGACY_DARK = ['broker', 'scalp', 'screener', 'deep', 'research', 'agentsim', 'compare', 'sim', 'pick'];
 
   // ESCRITORIO KHIPU (engine/desktop.js, 2026-10-04): si está activo, cada
   // escena se abre como VENTANA (movible, redimensionable, barra de tareas).

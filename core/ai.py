@@ -3,6 +3,13 @@
 Compartida por las rutas del server, los agentes de la ontología y (próximo)
 el motor de matrices. Un solo lugar para proveedores, orden y parsing.
 
+2026-10-10 (Fabrizio pagó Claude/Gemini/TypeSafe): orden POR NIVEL (provider_order:
+profundo = AI_ORDER_DEEP > claude,gemini,nvidia — la AI_ORDER vieja no cuenta ahí;
+rápido = AI_ORDER_FAST > AI_ORDER > gemini,claude,nvidia), ai_route_state() para el
+🩺/salud/MCP, y parámetros de Claude por modelo (claude_attempts: Sonnet 5.5 /
+Opus 5.5 / Fable rechazan thinking 'disabled'; un 400 de parámetros reintenta el
+MISMO modelo con parámetros más seguros en vez de degradar a Haiku en silencio).
+
 Endurecimiento (auditoría estructural 2026-09-30):
   · #2 hambre de hilos: gunicorn corre 1 worker con pocos hilos; el cliente de
     Anthropic por defecto espera hasta 10 min y reintenta 2 veces → unas pocas
@@ -39,8 +46,9 @@ from datetime import datetime, timezone
 
 import requests
 
-from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, CLAUDE,
-                         GEMINI_FALLBACK_MODEL, GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY, NVIDIA_MODEL)
+from core.config import (AI_MODEL_DEEP, AI_MODEL_FAST, AI_ORDER, AI_ORDER_DEEP_DEFAULT, AI_ORDER_EXPLICIT,
+                         AI_ORDER_FAST_DEFAULT, CLAUDE, GEMINI_FALLBACK_MODEL, GEMINI_KEY, GEMINI_MODEL, NVIDIA_KEY,
+                         NVIDIA_MODEL)
 
 log = logging.getLogger(__name__)
 
@@ -356,22 +364,119 @@ def _usage():
     return ai_usage
 
 
-def _complete_claude(system, prompt, max_tokens, tier='fast', model=None):
+# ── Parámetros de Claude POR MODELO (2026-10-10) ────────────────────────────
+# Antes se mandaba SIEMPRE thinking={'type':'disabled'} y, ante CUALQUIER error no pasajero, se saltaba al
+# siguiente modelo Claude. Con los modelos actuales eso degradaba EN SILENCIO: Sonnet 5.5 rechaza 'disabled'
+# con HTTP 400 → la cascada contestaba con Haiku y nadie se enteraba. Reglas (referencia oficial de la API, oct-2026):
+#  · Sonnet 5.5: 'disabled' → 400. Sin pensar = thinking {'type':'between_tools'} (sin otros campos; solo con
+#    effort high o menor). Omitir thinking = pensamiento ADAPTATIVO. temperature/top_p/top_k ≠ default → 400.
+#    Esfuerzo en output_config {'effort': low|medium|high|xhigh|max} (default high).
+#  · Opus 5.5 / Fable / Mythos: el pensamiento NO se puede apagar ('disabled' → 400 con cualquier esfuerzo);
+#    la profundidad se regula con output_config.effort (Opus 5.5: default medium). Muestreo → 400.
+#  · Haiku 5.5: piensa por defecto; 'disabled' se acepta con effort ≤ high (default medium).
+#  · Haiku 4.5, Sonnet 5, Opus 5, 4.x: 'disabled' aceptado (comportamiento de siempre).
+# El pensamiento GASTA max_tokens (aunque no devuelva texto): con pensamiento se da margen. Solo se leen los
+# bloques type=='text' (los de pensamiento vienen vacíos). Nunca se manda temperature ni "prefill".
+_CLAUDE_ID_RX = re.compile(r'claude-(opus|sonnet|haiku|fable|mythos)-(\d+)(?:-(\d{1,2}))?(?!\d)', re.I)
+CLAUDE_MAX_HEADROOM = 16000          # tope del margen (llamadas sin streaming: más que esto se arriesga el timeout)
+CLAUDE_EFFORT = {'fast': 'low', 'deep': 'medium'}
+
+
+def _claude_version(model):
+    """'claude-sonnet-5-5' → ('sonnet', (5, 5)) · 'claude-haiku-4-5-20251001' → ('haiku', (4, 5)) · otro → (None, None)."""
+    m = _CLAUDE_ID_RX.search(str(model or ''))
+    if not m:
+        return None, None
+    return m.group(1).lower(), (int(m.group(2)), int(m.group(3) or 0))
+
+
+def claude_thinking_mode(model):
+    """Cómo se controla el pensamiento en este modelo:
+    'between_tools' (Sonnet 5.5) · 'always' (Opus ≥ 5.5, Fable, Mythos, Sonnet > 5.5: no se puede apagar) ·
+    'haiku55' (Haiku ≥ 5.5) · 'legacy' (Haiku 4.5, Sonnet/Opus 5 y 4.x, desconocidos: 'disabled' aceptado)."""
+    fam, ver = _claude_version(model)
+    if fam in ('fable', 'mythos'):
+        return 'always'
+    if fam == 'opus' and ver >= (5, 5):
+        return 'always'
+    if fam == 'sonnet' and ver == (5, 5):
+        return 'between_tools'
+    if fam == 'sonnet' and ver > (5, 5):
+        return 'always'          # modelo futuro: omitir thinking + effort es válido en toda la familia nueva
+    if fam == 'haiku' and ver >= (5, 5):
+        return 'haiku55'
+    return 'legacy'
+
+
+def claude_attempts(model, tier='fast', max_tokens=1000):
+    """[(kwargs_extra, max_tokens), …] para UN modelo Claude, en orden: el primero es el preferido; los
+    siguientes son más SEGUROS (se usan si la API rechaza el anterior con un 400 de thinking/effort o si el
+    pensamiento se comió el presupuesto). El último siempre es 'sin nada' (válido en todos los modelos)."""
+    mt = int(max_tokens)
+    deep = tier == 'deep'
+    small = _small(mt)                         # ping del 🩺: sin margen (solo prueba la clave)
+    cap = max(CLAUDE_MAX_HEADROOM, mt)
+    roomy = mt if small else min(max(mt * 3, 4000), cap)
+    big = mt if small else min(max(mt * 4, 6000), cap)
+    mode = claude_thinking_mode(model)
+    effort = {'effort': CLAUDE_EFFORT['deep' if deep else 'fast']}
+    if mode == 'between_tools':                # Sonnet 5.5
+        if deep:
+            return [({'output_config': effort}, roomy), ({}, big)]
+        return [({'thinking': {'type': 'between_tools'}}, mt), ({'output_config': effort}, roomy), ({}, big)]
+    if mode == 'always':                       # Opus 5.5 / Fable / Mythos: nunca 'disabled'
+        return [({'output_config': effort}, roomy), ({}, big)]
+    if mode == 'haiku55':
+        if deep:
+            return [({'output_config': effort}, roomy), ({}, big)]
+        return [({'thinking': {'type': 'disabled'}}, mt), ({}, big)]
+    # legacy — EXACTAMENTE lo de siempre: pensamiento apagado; si el texto sale vacío, sin el kwarg y con margen
+    return [({'thinking': {'type': 'disabled'}}, mt), ({}, max(mt * 4, 6000))]
+
+
+_RX_PARAM_400 = re.compile(r'thinking|effort|output_config|temperature|top_p|top_k|sampling|budget_tokens|'
+                           r'between_tools|adaptive', re.I)
+
+
+def _status_of(e):
+    return getattr(e, 'status_code', None) or getattr(getattr(e, 'response', None), 'status_code', None)
+
+
+def _param_rejected(e):
+    """¿HTTP 400 por los PARÁMETROS de pensamiento/esfuerzo/muestreo? → mismo modelo, parámetros más seguros
+    (nunca saltar a otro modelo por eso: era la degradación silenciosa a Haiku)."""
+    return _status_of(e) == 400 and bool(_RX_PARAM_400.search(str(e) or ''))
+
+
+def claude_ping_kwargs(model):
+    """kwargs de pensamiento para un ping de 1 token (🩺) que el modelo ACEPTA: Haiku 4.5 y viejos → disabled;
+    Sonnet 5.5 → between_tools; Opus 5.5/Fable → nada (no se puede apagar)."""
+    first = claude_attempts(model, 'fast', 1)[0][0]
+    return {k: v for k, v in first.items() if k == 'thinking'}
+
+
+def _complete_claude(system, prompt, max_tokens, tier='fast', model=None, timeout_s=None):
     def _call():
         _usage().check('claude', max_tokens)          # límite de gasto: no se llama (ni se cobra)
         with _ai_slot(max_tokens):
-            return _complete_claude_inner(system, prompt, max_tokens, tier, model)
+            return _complete_claude_inner(system, prompt, max_tokens, tier, model, timeout_s=timeout_s)
     return _guarded('claude', max_tokens, _call)
 
 
-def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
+def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None, timeout_s=None):
     import anthropic
     # timeout corto y SIN reintentos del SDK (el default: 10 min y 2 reintentos →
     # un hilo de gunicorn podía quedar atado media hora a una llamada colgada; y
     # el SDK también reintenta los TIMEOUTS, lo que duplicaba el cuelgue). Solo
     # 429/5xx/529 se reintentan, aquí abajo, con _retry_transient (backoff + jitter).
-    client = anthropic.Anthropic(api_key=CLAUDE, max_retries=0,
-                                 timeout=CLAUDE_TIMEOUT_DEEP_S if tier == 'deep' else CLAUDE_TIMEOUT_FAST_S)
+    # timeout_s (el chat): el proveedor corta a la vez que quien espera (no retiene el cupo de más).
+    limit = CLAUDE_TIMEOUT_DEEP_S if tier == 'deep' else CLAUDE_TIMEOUT_FAST_S
+    if timeout_s:
+        try:
+            limit = max(5.0, min(float(limit), float(timeout_s)))
+        except (TypeError, ValueError):
+            pass
+    client = anthropic.Anthropic(api_key=CLAUDE, max_retries=0, timeout=limit)
     _net_errors = tuple(c for c in (getattr(anthropic, 'APITimeoutError', None),
                                     getattr(anthropic, 'APIConnectionError', None)) if c)
     _status_error = getattr(anthropic, 'APIStatusError', None)
@@ -383,11 +488,22 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
         code = getattr(e, 'status_code', None) or getattr(getattr(e, 'response', None), 'status_code', 0) or 0
         return code in (408, 409, 429) or code >= 500
 
+    def _send(kw):
+        try:
+            return client.messages.create(**kw)
+        except TypeError:
+            # SDK viejo que no conoce `thinking`/`output_config` como kwargs → van en el cuerpo (extra_body)
+            extra = {k: kw[k] for k in ('thinking', 'output_config') if k in kw}
+            if not extra:
+                raise
+            rest = {k: v for k, v in kw.items() if k not in extra}
+            return client.messages.create(extra_body=extra, **rest)
+
     def _create(**kw):
         t0 = time.monotonic()
         # R2: 429/5xx/529 se reintentan con backoff + jitter (AI_TRANSIENT_RETRIES
         # intentos en total); timeouts y 4xx definitivos salen a la primera.
-        msg = _retry_transient(lambda: client.messages.create(**kw), _transient, 'claude')
+        msg = _retry_transient(lambda: _send(kw), _transient, 'claude')
         try:   # gasto: tokens REALES que reporta Anthropic (incluida la caché)
             u = getattr(msg, 'usage', None)
             tin = (getattr(u, 'input_tokens', 0) or 0) + (getattr(u, 'cache_creation_input_tokens', 0) or 0) \
@@ -421,25 +537,24 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
 
     # CAUSA RAÍZ (2026-07-14): Sonnet 5 piensa por defecto; con presupuesto chico
     # el pensamiento consume TODO el max_tokens y el bloque de texto sale VACÍO →
-    # la cascada lo tomaba como "sin respuesta" y usaba NVIDIA. Por modelo:
-    #  intento 1 → desactivar el pensamiento (budget normal, respuesta directa);
-    #  intento 2 → sin ese kwarg (por si el SDK es viejo) pero con MUCHO más
-    #              presupuesto, para que quepan pensamiento + respuesta.
+    # la cascada lo tomaba como "sin respuesta" y usaba NVIDIA. Por modelo,
+    # claude_attempts() da los intentos en orden (2026-10-10: parámetros correctos
+    # para Sonnet 5.5 / Opus 5.5 / Fable, que rechazan thinking 'disabled'):
+    #  · 400 por thinking/effort/temperature → MISMO modelo con el intento siguiente
+    #    (más seguro); antes saltaba a Haiku en silencio;
+    #  · texto vacío (el pensamiento se comió el presupuesto) → intento siguiente;
+    #  · rechazo de seguridad (stop_reason 'refusal') → otro modelo Claude.
     last_err, transient_seen = None, None
     for m in candidates:
         if transient_seen is not None:
             break
-        attempts = [
-            ({'thinking': {'type': 'disabled'}}, max_tokens),
-            ({}, max(int(max_tokens) * 4, 6000)),
-        ]
-        for extra, mt in attempts:
+        for extra, mt in claude_attempts(m, tier, max_tokens):
             try:
                 msg = _create(
                     model=m, max_tokens=mt, system=base['system'],
                     messages=base['messages'], **extra)
             except TypeError:
-                continue           # SDK no conoce `thinking` → intento sin él
+                continue           # SDK no acepta ni kwargs ni extra_body → intento siguiente
             except Exception as e:  # noqa: BLE001 — error de API con este modelo
                 if _net_errors and isinstance(e, _net_errors):
                     # timeout / red caída: probar OTRO modelo Claude no ayuda y
@@ -451,7 +566,14 @@ def _complete_claude_inner(system, prompt, max_tokens, tier='fast', model=None):
                     transient_seen = e
                     break
                 last_err = e
+                if _param_rejected(e):
+                    log.warning('IA claude: %s rechazó %s → mismo modelo, parámetros más seguros',
+                                m, sorted(extra) or 'sin extras')
+                    continue       # mismo modelo, intento siguiente (NUNCA degradar en silencio)
                 break              # prueba el siguiente modelo Claude
+            if getattr(msg, 'stop_reason', None) == 'refusal':
+                log.info('IA claude: %s declinó (refusal) → siguiente modelo', m)
+                break
             text = _text_of(msg)
             if text.strip():
                 return text, msg.model
@@ -735,6 +857,78 @@ def _ai_configured():
     return any(cfg() for cfg, _ in _AI_PROVIDERS.values())
 
 
+# ── Orden de proveedores POR NIVEL (2026-10-10) ─────────────────────────────
+_KNOWN_PROVIDERS = ('claude', 'gemini', 'nvidia')
+_AI_ORDER_FROM_CONFIG = AI_ORDER          # mismo objeto: si alguien (tests/código) lo reemplaza, cuenta como puesto
+
+
+def _parse_order(raw):
+    out = []
+    for p in str(raw or '').split(','):
+        p = p.strip().lower()
+        if p in _KNOWN_PROVIDERS and p not in out:
+            out.append(p)
+    return out
+
+
+def _legacy_order():
+    """La AI_ORDER de siempre, solo si se puso a propósito (Railway, o reemplazada por código/tests)."""
+    if AI_ORDER_EXPLICIT or AI_ORDER is not _AI_ORDER_FROM_CONFIG:
+        return [p for p in (str(x).strip().lower() for x in AI_ORDER) if p]
+    return []
+
+
+def _order_source(tier):
+    """(lista, origen) del nivel. Las variables por nivel se leen EN CADA llamada (cambiables sin código)."""
+    if tier == 'deep':
+        own = _parse_order(os.getenv('AI_ORDER_DEEP'))
+        return (own, 'AI_ORDER_DEEP') if own else (list(AI_ORDER_DEEP_DEFAULT), 'default')
+    own = _parse_order(os.getenv('AI_ORDER_FAST'))
+    if own:
+        return own, 'AI_ORDER_FAST'
+    legacy = _legacy_order()
+    if legacy:
+        return legacy, 'AI_ORDER'
+    return list(AI_ORDER_FAST_DEFAULT), 'default'
+
+
+def provider_order(tier='fast'):
+    """Orden de la cascada para el nivel ('fast'|'deep'). Profundo: AI_ORDER_DEEP > claude,gemini,nvidia (la
+    AI_ORDER vieja se IGNORA a propósito: en Railway quedó 'gemini,nvidia,claude' como parche cuando Claude no
+    tenía saldo). Rápido: AI_ORDER_FAST > AI_ORDER > gemini,claude,nvidia. Los proveedores conocidos que falten
+    van AL FINAL (red de seguridad: en sept-2026 hubo un día sin ninguna IA); sin clave o en pausa se saltan."""
+    order, _src = _order_source('deep' if tier == 'deep' else 'fast')
+    return list(order) + [p for p in _KNOWN_PROVIDERS if p not in order]
+
+
+def ai_route_state():
+    """Para 🩺 / salud / MCP: el orden EFECTIVO por nivel, de dónde sale y qué modelo usa cada uno."""
+    out = {}
+    for tier in ('fast', 'deep'):
+        order, src = _order_source(tier)
+        full = provider_order(tier)
+        model = AI_MODEL_DEEP if tier == 'deep' else AI_MODEL_FAST
+        first = claude_attempts(model, tier, 1000)[0][0]
+        out[tier] = full
+        out[tier + '_source'] = src
+        out[tier + '_available'] = [p for p in full if provider_available(p)]
+        out[tier + '_claude'] = {'model': model, 'thinking_mode': claude_thinking_mode(model),
+                                 'params': {k: v for k, v in first.items()}}
+    legacy = _legacy_order()
+    out['models'] = {'fast': AI_MODEL_FAST, 'deep': AI_MODEL_DEEP, 'gemini': GEMINI_MODEL, 'nvidia': NVIDIA_MODEL}
+    out['legacy_ai_order'] = legacy or None
+    out['legacy_ignored_for_deep'] = bool(legacy)
+    if legacy and out['fast_source'] == 'AI_ORDER':
+        out['hint_es'] = ('La variable vieja AI_ORDER solo ordena el nivel rápido; el profundo usa Claude primero. '
+                          'Para elegir los dos, borra AI_ORDER y usa AI_ORDER_FAST / AI_ORDER_DEEP.')
+        out['hint_en'] = ('The old AI_ORDER variable only orders the fast tier; the deep tier uses Claude first. '
+                          'To choose both, delete AI_ORDER and use AI_ORDER_FAST / AI_ORDER_DEEP.')
+    else:
+        out['hint_es'] = (f"Rápido: {', '.join(out['fast'])} · Profundo: {', '.join(out['deep'])}.")
+        out['hint_en'] = (f"Fast: {', '.join(out['fast'])} · Deep: {', '.join(out['deep'])}.")
+    return out
+
+
 def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verify_numbers=True, want_json=False,
                  timeout_s=None, live_facts=True):
     """Llamada de IA con GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito:
@@ -772,16 +966,18 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, w
     """Intenta cada proveedor configurado en orden (AI_ORDER); si uno falla,
     pasa al siguiente. Devuelve (texto, etiqueta_modelo).
 
-    tier: 'fast' (AI_MODEL_FAST/Haiku) o 'deep' (AI_MODEL_DEEP/Sonnet 5).
+    tier: 'fast' (AI_MODEL_FAST/Haiku) o 'deep' (AI_MODEL_DEEP/Sonnet 5.5).
     model: sobrescribe el modelo de Claude para elegir el mejor POR TAREA
-    (p.ej. 'claude-opus-4-8'); solo aplica al proveedor Claude."""
+    (p.ej. 'claude-opus-4-8'); solo aplica al proveedor Claude y lo pone PRIMERO
+    (quien pide un modelo Claude concreto quiere Claude).
+
+    Orden POR NIVEL (2026-10-10, provider_order): profundo = AI_ORDER_DEEP o
+    claude,gemini,nvidia (la AI_ORDER vieja NO cuenta aquí); rápido = AI_ORDER_FAST,
+    AI_ORDER o gemini,claude,nvidia. Reemplaza la regla de 2026-07-14 "Claude
+    SIEMPRE primero", que mandaba también lo rápido a Claude."""
     tier = 'deep' if tier == 'deep' else 'fast'
-    # "Sonnet 5 para TODO" (pedido del usuario): Claude SIEMPRE primero cuando la
-    # key existe; Gemini/NVIDIA quedan solo de respaldo si Claude cae. Esto
-    # neutraliza una variable AI_ORDER vieja en Railway (gemini,nvidia,claude)
-    # que hacía que la sim usara NVIDIA aunque Sonnet 5 funcionaba. (2026-07-14)
-    order = list(AI_ORDER)
-    if CLAUDE:
+    order = provider_order(tier)
+    if model and str(model).lower().startswith('claude') and 'claude' in order:
         order = ['claude'] + [n for n in order if n != 'claude']
     errors = []
     # UN cupo del semáforo para toda la cascada (los proveedores son reentrantes):
@@ -798,7 +994,10 @@ def _ai_complete_raw(system, prompt, max_tokens=1000, tier='fast', model=None, w
                 continue
             try:
                 if name == 'claude':
-                    text, used = prov[1](system, prompt, max_tokens, tier, model=model)
+                    if timeout_s:   # el chat: Claude corta a la vez que quien espera
+                        text, used = prov[1](system, prompt, max_tokens, tier, model=model, timeout_s=timeout_s)
+                    else:
+                        text, used = prov[1](system, prompt, max_tokens, tier, model=model)
                 elif name == 'gemini':
                     # want_json (pasos del chat, specs): JSON estricto, sin "pensamiento" → no se corta
                     text, used = prov[1](system, prompt, max_tokens, tier, json_mode=want_json, timeout_s=timeout_s)

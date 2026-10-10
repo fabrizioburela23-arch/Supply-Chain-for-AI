@@ -18,12 +18,6 @@
   function isEn() { var l = window.LANG; if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } } return l === 'en'; }
   function L(es, en) { return isEn() ? en : es; }
   function nm(id) { var n = window.NODE_BY_ID && window.NODE_BY_ID[id]; return n ? n.label : id; }
-  function secColor(id) {
-    var n = window.NODE_BY_ID && window.NODE_BY_ID[id];
-    if (!n || !window.SECTORS9) return '#00E0FF';
-    var s = window.SECTORS9[(window.CAT_TO_SECTOR || {})[n.cat] || 'cloud_ia'];
-    return s ? s.color : '#00E0FF';
-  }
   function todayKey() {
     var d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
@@ -33,56 +27,84 @@
     catch (e) { return ''; }
   }
 
+  // ── estilos: Khipus OS (2026-10-10). #brief-ov y #brief-fab viven FUERA de #bcp-ov y llevan .kos-themed →
+  // mismos tokens --os-* que las ventanas (claro = body sin .dark, oscuro = body.dark; los define
+  // engine/cockpit.js). Solo tokens: el valor tras la coma es el respaldo OSCURO. Tarjetas sin bordes,
+  // botón píldora, colores semánticos de TEXTO con contraste AA (*-ink), móvil = hoja a pantalla completa.
+  var FONT = "'Nunito','Geist',system-ui,-apple-system,'Segoe UI',sans-serif";
+  var SH = 'var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))';
   function ensureStyles() {
     if (document.getElementById('brief-styles')) return;
     var css = ''
       + '#brief-ov{position:fixed;inset:0;z-index:7600;display:none;align-items:center;justify-content:center;'
-      + 'background:rgba(3,6,12,.72);backdrop-filter:blur(4px);font-family:Inter,system-ui,sans-serif}'
+      + 'background:var(--kos-scrim,rgba(0,0,0,.5));-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);'
+      + 'font-family:var(--os-font,' + FONT + ')}'
       + '#brief-ov.show{display:flex;animation:brFade .2s ease}'
       + '@keyframes brFade{from{opacity:0}to{opacity:1}}'
-      + '#brief{width:min(560px,94vw);max-height:88vh;overflow-y:auto;color:#E8EDFB;border-radius:18px;'
-      + 'background:radial-gradient(680px 380px at 65% -8%,#0e1626,#06090F);border:1px solid rgba(122,158,255,.22);'
-      + 'box-shadow:0 30px 80px rgba(0,0,0,.6);padding:24px 26px 20px}'
-      + '#brief .eb{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#00E0FF}'
-      + '#brief h2{margin:6px 0 3px;font-size:22px;font-weight:650;text-transform:capitalize}'
-      + '#brief .sub{color:#8791AC;font-size:12.5px;margin:0 0 6px}'
-      + '#brief .lead{color:#c8d0e0;font-size:13px;line-height:1.55;margin:12px 0 4px;min-height:18px}'
-      + '#brief .cards{display:flex;flex-direction:column;gap:9px;margin:16px 0 6px}'
-      + '.brc{border:1px solid rgba(122,158,255,.14);border-radius:12px;padding:12px 14px;background:rgba(21,28,45,.5);'
-      + 'display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:border-color .12s}'
-      + '.brc:hover{border-color:rgba(0,224,255,.4)}'
-      + '.brc .ic{width:30px;height:30px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px}'
-      + '.brc .bd{flex:1;min-width:0}'
-      + '.brc .tag{font-family:"JetBrains Mono",monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}'
-      + '.brc .tx{font-size:12.5px;line-height:1.45;color:#E8EDFB;margin-top:3px}'
-      + '.brc .tx b{color:#fff}'
-      + '#brief .src{font-size:10.5px;color:#7C87A3;margin-top:8px;line-height:1.4}'
-      + '#brief .foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}'
-      + '#brief .dismiss{font-size:11px;color:#7C87A3;display:flex;align-items:center;gap:6px;cursor:pointer}'
-      + '#brief .ok{padding:9px 20px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:600;'
-      + 'background:#00E0FF;color:#03141C;border:1px solid #00E0FF;box-shadow:0 0 16px rgba(0,224,255,.4)}'
-      + '#brief-fab{position:fixed;right:16px;bottom:70px;z-index:40;width:38px;height:38px;border-radius:50%;cursor:pointer;'
-      + 'display:none;align-items:center;justify-content:center;font-size:16px;background:rgba(15,21,34,.9);'
-      + 'border:1px solid rgba(0,224,255,.35);color:#00E0FF;backdrop-filter:blur(6px)}'
-      + '#brief-fab.show{display:flex}#brief-fab:hover{border-color:#00E0FF}';
+      + '#brief{box-sizing:border-box;width:min(560px,94vw);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;color:var(--os-ink,#F2F2F5);border-radius:24px;'
+      + 'background:var(--os-bg,#0E0F14);box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55));padding:24px 26px 20px;'
+      + 'font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}'
+      + '#brief *{box-sizing:border-box}#brief button,#brief input{font-family:inherit}'
+      + '#brief .eb{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--os-ink-2,#A6A8B5)}'
+      + '#brief .eb .km{flex:none}'
+      + '#brief h2{margin:8px 0 3px;font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.2;color:var(--os-ink,#F2F2F5)}'
+      + '#brief h2::first-letter{text-transform:uppercase}'
+      + '#brief .sub{color:var(--os-ink-2,#A6A8B5);font-size:13px;margin:0 0 6px}'
+      + '#brief .lead{color:var(--os-ink-2,#A6A8B5);font-size:13.5px;line-height:1.55;margin:12px 0 4px;min-height:18px}'
+      + '#brief .cards{display:flex;flex-direction:column;gap:10px;margin:16px 0 6px}'
+      + '#brief .brc{border-radius:16px;padding:12px 14px;background:var(--os-surface,#17181F);box-shadow:' + SH + ';'
+      + 'display:flex;gap:12px;align-items:flex-start;transition:box-shadow .15s,transform .1s}'
+      + '#brief .brc[role=button]{cursor:pointer}'
+      + '#brief .brc[role=button]:hover{box-shadow:0 0 0 2px var(--kos-accent-soft,rgba(76,141,246,.16)),' + SH + '}'
+      + '#brief .brc[role=button]:active{transform:scale(.995)}'
+      + '#brief .brc:focus-visible,#brief .ok:focus-visible,#brief input:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}'
+      + '#brief .brc .ic{width:32px;height:32px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}'
+      + '#brief .brc .bd{flex:1;min-width:0}'
+      + '#brief .brc .tag{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}'
+      + '#brief .brc .tx{font-size:13px;line-height:1.5;color:var(--os-ink,#F2F2F5);margin-top:2px;overflow-wrap:anywhere}'
+      + '#brief .brc .tx b{color:var(--os-ink,#F2F2F5);font-weight:800}'
+      + '#brief .brc .lnk{color:var(--os-accent,#4C8DF6);font-weight:700;white-space:nowrap}'
+      + '#brief .src{font-size:11.5px;color:var(--os-ink-2,#A6A8B5);margin-top:8px;line-height:1.45}'
+      + '#brief .foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:16px;gap:10px}'
+      + '#brief .dismiss{font-size:12px;color:var(--os-ink-2,#A6A8B5);display:flex;align-items:center;gap:7px;cursor:pointer}'
+      + '#brief .dismiss input{width:16px;height:16px;margin:0;accent-color:var(--os-accent,#4C8DF6)}'
+      + '#brief .ok{appearance:none;-webkit-appearance:none;border:0;height:40px;padding:0 22px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:700;'
+      + 'background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216);transition:opacity .15s,transform .1s;margin-left:auto}'
+      + '#brief .ok:hover{opacity:.88}#brief .ok:active{transform:scale(.98)}'
+      + '#brief-fab{position:fixed;right:16px;bottom:70px;z-index:40;width:40px;height:40px;border-radius:50%;cursor:pointer;'
+      + 'display:none;align-items:center;justify-content:center;font-size:16px;background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);'
+      + 'box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55));transition:transform .15s}'
+      + '#brief-fab.show{display:flex}#brief-fab:hover{transform:scale(1.06)}'
+      + '#brief-fab:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}'
+      + '@media(prefers-reduced-motion:reduce){#brief-ov.show{animation:none}#brief .brc,#brief .ok,#brief-fab{transition:none}}'
+      // móvil: hoja a pantalla completa
+      + '@media(max-width:760px){#brief-ov{align-items:stretch}'
+      + '#brief{width:100vw;max-width:100vw;height:100%;max-height:none;border-radius:0;padding:20px 16px calc(22px + env(safe-area-inset-bottom,0px))}'
+      + '#brief h2{font-size:21px}}';
     var st = document.createElement('style'); st.id = 'brief-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
 
+  // Colores SEMÁNTICOS de Khipus OS: col = TEXTO (contraste AA en claro y oscuro), fill = relleno vivo del ícono.
   var KIND = {
-    shock:  { ic: '⚡', bg: 'rgba(255,77,106,.15)', col: '#FF4D6A', tag: 'CHOKEPOINT' },
-    risk:   { ic: '△', bg: 'rgba(255,179,0,.15)',  col: '#FFB300', tag: 'RIESGO', tag_en: 'RISK' },
-    factor: { ic: '◈', bg: 'rgba(157,107,255,.15)', col: '#9D6BFF', tag: 'FACTOR ACTIVO', tag_en: 'ACTIVE FACTOR' },
-    oport:  { ic: '↑', bg: 'rgba(43,227,139,.15)', col: '#2BE38B', tag: 'OPORTUNIDAD', tag_en: 'OPPORTUNITY' },
-    concl:  { ic: '🏛', bg: 'rgba(0,224,255,.12)', col: '#00E0FF', tag: 'CONCLUSIONES', tag_en: 'CONCLUSIONS' },
+    shock:  { ic: '⚡', col: 'var(--os-bad-ink,#F47C7C)', fill: 'var(--os-bad,#f06565)', tag: 'CHOKEPOINT' },
+    risk:   { ic: '△', col: 'var(--os-warn-ink,#F2C46D)', fill: 'var(--os-warn,#F2C46D)', tag: 'RIESGO', tag_en: 'RISK' },
+    factor: { ic: '◈', col: 'var(--os-ai,#B48CFF)', fill: 'var(--os-ai,#B48CFF)', tag: 'FACTOR ACTIVO', tag_en: 'ACTIVE FACTOR' },
+    oport:  { ic: '↑', col: 'var(--os-good-ink,#2fbf5b)', fill: 'var(--os-good,#2fbf5b)', tag: 'OPORTUNIDAD', tag_en: 'OPPORTUNITY' },
+    // lo que concluyeron los analistas = el agente Comité → su mascota (engine/mascot.js); 🏛 si no cargó
+    concl:  { ic: '🏛', col: 'var(--os-accent,#4C8DF6)', fill: 'var(--os-accent,#4C8DF6)', tag: 'CONCLUSIONES', tag_en: 'CONCLUSIONS', mascot: 'comite' },
   };
 
   function card(c) {
     var k = KIND[c.kind] || KIND.shock;
     var click = c.committee ? 'onclick="window._briefCommittee(\'' + esc(c.committee) + '\')"'
       : c.node ? 'onclick="window._briefJump(\'' + esc(c.node) + '\')"' : '';
-    return '<div class="brc" ' + click + '>' +
-      '<div class="ic" style="background:' + k.bg + ';color:' + k.col + '">' + k.ic + '</div>' +
+    // tarjeta con acción = botón accesible (Tab + Enter/Espacio)
+    if (click) click += ' role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}"';
+    var mascot = k.mascot && window.KhipuMascot && typeof window.KhipuMascot.svg === 'function' ? window.KhipuMascot.svg(k.mascot, 32) : '';
+    var icon = mascot ? '<div class="ic">' + mascot + '</div>'
+      : '<div class="ic" style="color:' + k.col + ';background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,' + k.fill + ' 15%,transparent)">' + k.ic + '</div>';
+    return '<div class="brc" ' + click + '>' + icon +
       '<div class="bd"><div class="tag" style="color:' + k.col + '">' + (isEn() && k.tag_en ? k.tag_en : k.tag) + '</div>' +
       '<div class="tx">' + c.text + '</div></div></div>';
   }
@@ -103,14 +125,14 @@
         if (best.overall_conviction >= 20) {
           var bf = best.best_for ? (isEn() ? best.best_for.text_en : best.best_for.text_es) : '';
           parts.push(L('Los analistas ven más favorable a ', 'The analysts see the most favorable case for ') + '<b>' + esc(best.label) + '</b> (' +
-            L('convicción', 'conviction') + ' <b>+' + Math.round(best.overall_conviction) + '</b>)' + (bf ? ': ' + esc(String(bf).slice(0, 180)) : '.'));
+            L('convicción', 'conviction') + ' <b>+' + Math.round(best.overall_conviction) + '</b>)' + (bf ? ': ' + esc(String(bf).slice(0, 180)).replace(/[.\s]*$/, '.') : '.'));
         }
         if (worst !== best && worst.overall_conviction <= -20) {
           parts.push(L('La más desfavorable: ', 'The most unfavorable: ') + '<b>' + esc(worst.label) + '</b> (<b>' + Math.round(worst.overall_conviction) + '</b>).');
         }
         if (!parts.length) parts.push(L('Los analistas investigaron ', 'The analysts researched ') + '<b>' + it.length + '</b> ' +
           L('empresa(s), sin una convicción fuerte en ninguna dirección.', 'company(ies), with no strong conviction either way.'));
-        parts.push('<span style="color:#00E0FF">' + L('Ver la pizarra →', 'See the board →') + '</span>');
+        parts.push('<span class="lnk">' + L('Ver la pizarra →', 'See the board →') + '</span>');
         return { kind: 'concl', committee: '__board', text: parts.join(' ') };
       });
   }
@@ -215,20 +237,22 @@
     var ov = document.getElementById('brief-ov');
     if (!ov) {
       ov = document.createElement('div'); ov.id = 'brief-ov';
-      ov.innerHTML = '<div id="brief"></div>';
+      ov.className = 'kos-themed';   // tokens --os-* de Khipus OS (claro/oscuro) fuera de #bcp-ov
+      ov.innerHTML = '<div id="brief" role="dialog" aria-modal="true" aria-labelledby="brief-h"></div>';
       ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
       document.body.appendChild(ov);
     }
     var seen = localStorage.getItem('khipu_brief_day');
     document.getElementById('brief').innerHTML =
-      '<div class="eb">' + L('Brief matinal', 'Morning brief') + '</div>' +
-      '<h2>' + esc(fechaLarga()) + '</h2>' +
+      '<div class="eb">' + (window.KhipuMascot && typeof window.KhipuMascot.svg === 'function' ? window.KhipuMascot.svg('khipu', 22) : '') +
+        L('Brief matinal', 'Morning brief') + '</div>' +
+      '<h2 id="brief-h">' + esc(fechaLarga()) + '</h2>' +
       '<div class="sub">' + L('Tu resumen de inteligencia de la cadena de IA', 'Your AI supply-chain intelligence summary') + '</div>' +
       '<div class="lead" id="brief-lead">' + L('Leyendo la red…', 'Reading the network…') + '</div>' +
       '<div class="cards" id="brief-cards"></div>' +
       '<div class="src" id="brief-src"></div>' +
       '<div class="foot"><label class="dismiss"><input type="checkbox" id="brief-mute" ' + (seen === 'muted' ? 'checked' : '') + '> ' + L('no mostrar automáticamente', 'do not show automatically') + '</label>' +
-      '<button class="ok" onclick="window._briefClose()">' + L('Entendido', 'Got it') + '</button></div>';
+      '<button type="button" class="ok" onclick="window._briefClose()">' + L('Entendido', 'Got it') + '</button></div>';
     document.getElementById('brief-mute').onchange = function (e) {
       localStorage.setItem('khipu_brief_day', e.target.checked ? 'muted' : todayKey());
     };
@@ -286,7 +310,9 @@
     // botón flotante ❓ para reabrir siempre (vista clásica; Khipus OS lo ofrece en su paleta)
     if (!document.getElementById('brief-fab')) {
       var fab = document.createElement('div'); fab.id = 'brief-fab'; fab.innerHTML = '❓';
-      fab.title = L('Brief matinal', 'Morning brief'); fab.className = 'show';
+      fab.title = L('Brief matinal', 'Morning brief'); fab.className = 'kos-themed show';
+      try { fab.setAttribute('role', 'button'); fab.setAttribute('tabindex', '0'); fab.setAttribute('aria-label', fab.title); } catch (e) {}
+      fab.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(true); } };
       fab.onclick = function () { open(true); };
       document.body.appendChild(fab);
     }

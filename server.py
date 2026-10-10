@@ -296,39 +296,35 @@ def screener_growth():
 
 
 # ── Voz de Khipu: diagnóstico y ajuste FINO del agente ElevenLabs ────────────
+# La lógica vive en core/voice_agent.py (contrato ElevenLabs oct-2026: herramientas
+# como recursos con tool_ids, get-signed-url, modelos TTS vigentes, overrides).
+from core.http import rate_limit as _rate_limit_voice  # noqa: E402 — `rate_limit` se importa más abajo
+
+
 @app.route('/api/voice/agent-diag')
+@_rate_limit_voice(limit=10, window=300)  # pública: 4-6 llamadas a ElevenLabs por pedido → sin bucles que gasten la cuota
 def voice_agent_diag():
-    """QUÉ voz/modelo/idioma tiene el agente de ElevenLabs AHORA — para
-    diagnosticar 'la voz rara' con datos, no a ciegas. Solo lectura."""
-    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
-        return jsonify({'ok': False, 'reason': 'ELEVENLABS_KEY/AGENT_ID no configurados'})
+    """Diagnóstico ACCIONABLE de la voz: clave, saldo/plan, agente, LLM, voz,
+    modelo TTS, eventos, herramientas, prompt y overrides — con la lista de
+    arreglos en español e inglés. Solo lectura. Conserva los campos planos de
+    antes (voice_id, voice_name, tts_model, language, llm, first_message)."""
+    from core import voice_agent as _va
     try:
-        r = requests.get(f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
-                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
-        if not r.ok:
-            return jsonify({'ok': False, 'status': r.status_code, 'body': r.text[:180]})
-        cfg = r.json() or {}
-        conv = cfg.get('conversation_config') or {}
-        tts = conv.get('tts') or {}
-        agent = conv.get('agent') or {}
-        voice_id = tts.get('voice_id')
-        voice_name = None
-        if voice_id:
-            try:
-                vr = requests.get(f'https://api.elevenlabs.io/v1/voices/{voice_id}',
-                                  headers={'xi-api-key': ELEVENLABS_KEY}, timeout=8)
-                if vr.ok:
-                    voice_name = (vr.json() or {}).get('name')
-            except Exception:  # noqa: BLE001
-                pass
-        return jsonify({'ok': True, 'name': cfg.get('name'),
-                        'voice_id': voice_id, 'voice_name': voice_name,
-                        'tts_model': tts.get('model_id'),
-                        'language': agent.get('language'),
-                        'llm': ((agent.get('prompt') or {}).get('llm')),
-                        'first_message': (agent.get('first_message') or '')[:120]})
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'ok': False, 'error': str(e)[:160]})
+        d = _va.diagnose(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, http=requests,
+                         expected_tools=[t['name'] for t in _bixby_client_tools()],
+                         prompt=BIXBY_SYSTEM_PROMPT, full=True)
+    except Exception as e:  # noqa: BLE001 — el diagnóstico jamás rompe
+        return jsonify({'ok': False, 'error': _diag_redact(e)[:160]})
+    # sin PIN: nada de datos de facturación (plan, caracteres usados/límite, renovación) — el 🩺 los ve por
+    # /api/diagnostics; aquí quedan solo los chequeos accionables
+    d.pop('subscription', None)
+    ag = d.get('agent') or {}
+    d.update({'name': ag.get('name'), 'voice_id': ag.get('voice_id'), 'voice_name': ag.get('voice_name'),
+              'tts_model': ag.get('tts_model'), 'language': ag.get('language'), 'llm': ag.get('llm'),
+              'first_message': ag.get('first_message')})
+    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
+        d['reason'] = 'ELEVENLABS_KEY/AGENT_ID no configurados'
+    return jsonify(d)
 
 
 @app.route('/api/voice/voices')
@@ -394,7 +390,8 @@ def voice_adopt():
     """Adopta una voz de la biblioteca compartida a la cuenta (paso previo a
     asignarla al agente). Mismo candado que agent-tune + PIN de operador. Body:
     {public_owner_id, voice_id, name}."""
-    if os.getenv('ELEVENLABS_ALLOW_OVERRIDE', '').strip() not in ('1', 'true', 'yes'):
+    from core.voice_agent import override_env_on
+    if not override_env_on():
         return _voice_override_off()
     if not ELEVENLABS_KEY:
         return jsonify({'error': 'ELEVENLABS_KEY no configurada', 'error_en': 'ELEVENLABS_KEY is not set'}), 400
@@ -427,9 +424,11 @@ def voice_adopt():
 @_require_operator
 def voice_agent_tune():
     """Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere
-    ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que el sync del prompt) + PIN de
-    operador. Solo toca los campos enviados; devuelve antes/después."""
-    if os.getenv('ELEVENLABS_ALLOW_OVERRIDE', '').strip() not in ('1', 'true', 'yes'):
+    ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que adopt) + PIN de operador.
+    Solo toca los campos enviados; valida el modelo contra la lista VIGENTE de
+    ElevenLabs (oct-2026: turbo_v2/_v2_5 deprecados; v3_conversational y v4)."""
+    from core import voice_agent as _va
+    if not _va.override_env_on():
         return _voice_override_off()
     if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
         return jsonify({'error': 'ELEVENLABS_KEY/AGENT_ID no configurados',
@@ -438,12 +437,23 @@ def voice_agent_tune():
     body = body if isinstance(body, dict) else {}
     tts = {}
     if body.get('tts_model'):
-        tts['model_id'] = str(body['tts_model'])[:60]
+        m = str(body['tts_model']).strip()[:60]
+        if m not in _va.TTS_TUNABLE:
+            return jsonify({'error': f'modelo de voz no válido para agentes: {m}',
+                            'error_en': f'invalid TTS model for agents: {m}',
+                            'valid': list(_va.TTS_TUNABLE)}), 400
+        tts['model_id'] = m
     if body.get('voice_id'):
-        tts['voice_id'] = str(body['voice_id'])[:60]
+        vid = str(body['voice_id']).strip()[:60]
+        if not _SAFE_PATH_SEG.match(vid):
+            return jsonify({'error': 'voice_id inválido', 'error_en': 'invalid voice_id'}), 400
+        tts['voice_id'] = vid
     agent = {}
     if body.get('language'):
-        agent['language'] = str(body['language'])[:8]
+        lang = str(body['language']).strip().lower()[:8]
+        if not re.match(r'^[a-z]{2}(-[a-z]{2})?$', lang):
+            return jsonify({'error': 'idioma inválido', 'error_en': 'invalid language'}), 400
+        agent['language'] = lang
     if not tts and not agent:
         return jsonify({'error': 'nada que ajustar (tts_model / voice_id / language)',
                         'error_en': 'nothing to tune (tts_model / voice_id / language)'}), 400
@@ -453,13 +463,16 @@ def voice_agent_tune():
     if agent:
         patch['conversation_config']['agent'] = agent
     try:
-        r = requests.patch(f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
+        r = requests.patch(f'{_va.EL_API}/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
                            headers={'xi-api-key': ELEVENLABS_KEY,
                                     'Content-Type': 'application/json'},
                            json=patch, timeout=12)
         if not r.ok:
-            return jsonify({'error': f'ElevenLabs respondió HTTP {r.status_code}',
-                            'error_en': f'ElevenLabs returned HTTP {r.status_code}', 'body': r.text[:200]}), 502
+            e = _va.classify_error(r.status_code, r.text)
+            e.update(_va.describe(e, 'agent'))
+            return jsonify({'error': e['es'], 'error_en': e['en'], 'code': e['code'],
+                            'fix_es': e.get('fix_es'), 'fix_en': e.get('fix_en'), 'body': r.text[:200]}), 502
+        _va.forget_agent(ELEVENLABS_AGENT_ID)
         return jsonify({'ok': True, 'applied': patch})
     except Exception as e:  # noqa: BLE001
         return jsonify({'error': 'No se pudo contactar con ElevenLabs', 'error_en': 'Could not reach ElevenLabs',
@@ -1009,7 +1022,7 @@ _DIAG_CACHE = {'ts': 0.0, 'data': None}
 _DIAG_TTL = 60  # segundos
 
 
-def _diag_redact(text):
+def _diag_redact(text, limit=200):
     """Quita cualquier valor de key que pudiera aparecer en un mensaje de error:
     TODAS las env secretas (core.http.SECRET_ENV_NAMES: Gemini, NVIDIA, Alpaca,
     TRADE_PIN, KHIPU_ADMIN_SECRET, Tavily…) + los valores ya cargados aquí +
@@ -1019,7 +1032,7 @@ def _diag_redact(text):
     return redact_secrets(text, extra=(CLAUDE, ELEVENLABS_KEY, FINNHUB, FMP, MSTACK, AV_KEY, SECRET_KEY,
                                        NEO4J_PASSWORD, NEO4J_URI, GEMINI_KEY, NVIDIA_KEY, ALPACA_KEY,
                                        ALPACA_SECRET, TRADE_PIN, KHIPU_ADMIN_SECRET),
-                          limit=200)
+                          limit=limit)
 
 
 def _diag_claude():
@@ -1032,10 +1045,14 @@ def _diag_claude():
         import anthropic
         client = anthropic.Anthropic(api_key=CLAUDE, timeout=20, max_retries=0)
 
+        from core.ai import claude_ping_kwargs
+
         def _ping_model(mid):
+            # pensamiento que ESE modelo acepta: Haiku 4.5 → disabled; Sonnet 5.5 → between_tools (disabled = 400);
+            # Opus 5.5 / Fable → nada (no se puede apagar)
             _p = dict(model=mid, max_tokens=1, messages=[{'role': 'user', 'content': 'ping'}])
             try:
-                m = client.messages.create(thinking={'type': 'disabled'}, **_p)
+                m = client.messages.create(**claude_ping_kwargs(mid), **_p)
             except TypeError:
                 m = client.messages.create(**_p)
             return m.model
@@ -1125,42 +1142,25 @@ def _diag_nvidia():
 
 
 def _diag_elevenlabs():
-    if not ELEVENLABS_KEY:
-        return {'configured': False, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
-                'detail': 'ELEVENLABS_KEY no está en el servidor. Khipu (voz) no podrá conectar.'}
+    """Tarjeta 🎙 del 🩺: diagnóstico ACCIONABLE (core/voice_agent.diagnose) —
+    clave, plan/saldo, agente, LLM, modelo de voz, eventos, herramientas,
+    prompt y overrides. `detail` (lo que pinta la tarjeta) trae los problemas
+    y "QUÉ HACER" numerado; `detail_en`/`checks`/`fixes` para la UI bilingüe."""
+    from core import voice_agent as _va
     t0 = time.time()
     try:
-        r = requests.get('https://api.elevenlabs.io/v1/user',
-                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=8)
-        lat = int((time.time() - t0) * 1000)
-        if not r.ok:
-            return {'configured': True, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
-                    'latency_ms': lat,
-                    'detail': f'Key inválida o sin permisos (HTTP {r.status_code}).'}
-        agent_ok = None
-        if ELEVENLABS_AGENT_ID:
-            try:
-                ra = requests.get(
-                    f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
-                    headers={'xi-api-key': ELEVENLABS_KEY}, timeout=8)
-                agent_ok = ra.ok
-            except Exception:  # noqa: BLE001
-                agent_ok = False
-        if not ELEVENLABS_AGENT_ID:
-            detail = 'Key válida, pero falta ELEVENLABS_AGENT_ID — Khipu no sabe a qué agente conectar.'
-            ok = False
-        elif agent_ok:
-            detail = 'Key válida y agente encontrado. Khipu debería conectar.'
-            ok = True
-        else:
-            detail = 'Key válida, pero el ELEVENLABS_AGENT_ID no existe o no es accesible con esta key.'
-            ok = False
-        return {'configured': True, 'ok': ok, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
-                'agent_ok': agent_ok, 'latency_ms': lat, 'detail': detail}
-    except Exception as e:  # noqa: BLE001
-        return {'configured': True, 'ok': False, 'agent_configured': bool(ELEVENLABS_AGENT_ID),
+        d = _va.diagnose(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, http=requests,
+                         expected_tools=[t['name'] for t in _bixby_client_tools()],
+                         prompt=BIXBY_SYSTEM_PROMPT, full=False)
+        d['detail'] = _diag_redact(d.get('detail') or '', limit=2400)       # lleva "QUÉ HACER" numerado
+        d['detail_en'] = _diag_redact(d.get('detail_en') or '', limit=2400)
+        return d
+    except Exception as e:  # noqa: BLE001 — el 🩺 jamás se rompe por la voz
+        return {'configured': bool(ELEVENLABS_KEY), 'ok': False,
+                'agent_configured': bool(ELEVENLABS_AGENT_ID),
                 'latency_ms': int((time.time() - t0) * 1000),
-                'detail': 'No se pudo contactar ElevenLabs: ' + _diag_redact(e)}
+                'detail': 'No se pudo revisar ElevenLabs: ' + _diag_redact(e),
+                'detail_en': 'Could not check ElevenLabs: ' + _diag_redact(e)}
 
 
 def _db_error_hint(err_text):
@@ -1367,7 +1367,10 @@ def ai_debug():
     from core import ai as _ai
     from core.config import AI_ORDER as _ORDER, AI_MODEL_FAST as _F, AI_MODEL_DEEP as _D
     tier = 'deep' if request.args.get('tier') == 'deep' else 'fast'
-    out = {'ai_order': _ORDER, 'model_fast': _F, 'model_deep': _D, 'tier': tier}
+    # el orden que la cascada USA de verdad en este nivel (AI_ORDER_FAST/_DEEP > AI_ORDER…; el profundo ignora
+    # AI_ORDER) — antes se mostraba la variable vieja tal cual y engañaba justo en este diagnóstico
+    out = {'ai_order': _ai.provider_order(tier), 'ai_order_env': _ORDER, 'routing': _ai.ai_route_state(),
+           'model_fast': _F, 'model_deep': _D, 'tier': tier}
     # 1) el motor completo (con cascada)
     try:
         txt, model = _ai._ai_complete('Eres un analista. Responde SOLO JSON.',
@@ -2574,6 +2577,13 @@ def crypto_history(coin_id):
 
 
 # ── Cripto IA — análisis CAUTO bilingüe (Sonnet 5, tier deep) ───────────────
+def _no_ai_error(lang='es'):
+    """Sin ninguna clave de IA: el mensaje en el idioma de quien pregunta (+ los dos, como en el comité)."""
+    es = 'Ningún proveedor de IA configurado. Revisa 🩺 Sistema.'
+    en = 'No AI provider configured. Check 🩺 System.'
+    return {'ok': False, 'error': en if lang == 'en' else es, 'error_es': es, 'error_en': en, 'code': 'no_ai'}
+
+
 def _ai_friendly_error(e):
     """Texto para personas cuando una función de IA falla (nunca la excepción cruda)."""
     try:
@@ -2681,11 +2691,11 @@ def crypto_analyze():
 def research_deep():
     """{id, lang} → informe estructurado que va MÁS ALLÁ de la empresa: sector,
     competidores, geopolítica, chokepoints de su cadena y una tesis. Cache 15 min."""
-    if not _ai_configured():
-        return jsonify({'ok': False, 'error': 'no AI provider configured'}), 400
     from core.semantic import build_context, resolve_ids
     body = request.get_json(force=True, silent=True) or {}
     lang = 'en' if str(body.get('lang', 'es')).lower().startswith('en') else 'es'
+    if not _ai_configured():
+        return jsonify(_no_ai_error(lang)), 400
     raw_id = str(body.get('id') or '').strip()
     if not raw_id:
         return jsonify({'ok': False, 'error': 'id requerido · id required'}), 400
@@ -3860,6 +3870,7 @@ BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finan
 ## TURN-TAKING / PATIENCE (IMPORTANT)
 - When an action, analysis or lookup takes a few seconds, briefly say "dame un momento, lo estoy preparando" and then WAIT calmly for it.
 - NEVER threaten to disconnect, and NEVER pressure the user about their silence. The user staying quiet while waiting for a result is completely normal — do NOT say things like "si no me respondes me desconecto". Just keep the conversation open patiently.
+- If a tool result comes back with pending:true, the work is still running and will appear on screen: say so briefly ("sigue cargando, en unos segundos lo verás en pantalla") — never say it failed, and never call the same tool again right away.
 - Keep spoken replies short and to the point.
 
 ## APP STRUCTURE — 4 PRIMARY TABS (2026-07 redesign, NEXUS skin)
@@ -3961,11 +3972,22 @@ War-Room scenarios (5 presets; HYPOTHETICAL — outcomes come from running the s
 # ── Khipu — client tools registradas en el agente de ElevenLabs vía API ──────
 # Cada entrada espeja un `case` de _handleToolCall en engine/voice.js.
 # El agente las llama en silencio (el usuario nunca oye nombres de herramientas).
+# Desde 2025-26 ElevenLabs las guarda como RECURSOS (/v1/convai/tools) y el agente
+# las referencia con tool_ids — core/voice_agent.ensure_tools las crea/actualiza.
+# response_timeout_secs (1-120): cuánto espera el agente la respuesta del navegador.
+# Las lentas (cerebro, sim por agentes, investigación) necesitan más que el default;
+# engine/voice.js responde SIEMPRE antes de ese tope (TOOL_TIMEOUT_S de allá).
+_VOICE_TOOL_TIMEOUTS = {'ask_khipu_brain': 60, 'run_agent_simulation': 90, 'deep_research': 90,
+                        'get_news': 20, 'show_insights': 15, 'place_paper_trade': 45,
+                        'get_portfolio_status': 45, 'get_space_summary': 20}
+
+
 def _bixby_client_tools():
     def T(name, desc, props=None, required=None):
         return {
             'type': 'client', 'name': name, 'description': desc,
             'expects_response': True,
+            'response_timeout_secs': _VOICE_TOOL_TIMEOUTS.get(name, 10),
             'parameters': {'type': 'object',
                            'properties': props or {},
                            'required': required or []},
@@ -4020,61 +4042,22 @@ def _bixby_client_tools():
 
 def _sync_bixby_agent():
     """Empuja el cerebro de Khipu (system prompt + client tools + idioma) al
-    agente de ElevenLabs vía PATCH — así Fabrizio no configura nada a mano.
-    Idempotente; si el esquema de tools no es aceptado, reintenta solo-prompt.
+    agente de ElevenLabs — así Fabrizio no configura nada a mano. Idempotente.
 
-    OJO (bug real 2026-07): ElevenLabs exige que los agentes NO-ingleses usen
-    un modelo TTS turbo/flash v2.5 — si el agente quedó en otro modelo, el
-    PATCH con language='es' devuelve 400. Por eso: leemos la config actual,
-    PRESERVAMOS la voz elegida y solo corregimos el model_id si hace falta."""
-    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
-        return {'ok': False, 'error': 'ELEVENLABS_KEY / ELEVENLABS_AGENT_ID no configurados'}
-    url = f'https://api.elevenlabs.io/v1/convai/agents/{ELEVENLABS_AGENT_ID}'
-    hdrs = {'xi-api-key': ELEVENLABS_KEY, 'Content-Type': 'application/json'}
-
-    # 1) leer config actual para preservar voz y decidir el modelo TTS
-    tts_patch = None
+    2026-10 (contrato ElevenLabs vigente, core/voice_agent.sync_agent): las
+    herramientas son RECURSOS (/v1/convai/tools) referenciados con tool_ids —
+    el viejo `prompt.tools` en línea está deprecado y el PATCH caía en silencio
+    a "solo prompt" (Khipu hablaba pero no podía abrir nada). Además repara:
+    TTS deprecado/solo-inglés (conservando la voz; ya NO baja eleven_v4 a
+    flash), LLM retirado, client_events sin client_tool_call y, con
+    ELEVENLABS_ALLOW_OVERRIDE, habilita los overrides de idioma/primer mensaje."""
+    from core import voice_agent as _va
     try:
-        cur = requests.get(url, headers={'xi-api-key': ELEVENLABS_KEY}, timeout=15).json()
-        cur_tts = ((cur.get('conversation_config') or {}).get('tts') or {})
-        model = str(cur_tts.get('model_id') or '')
-        if 'v2_5' not in model and 'v3' not in model:
-            # modelo incompatible con agentes en español → flash v2.5 (baja latencia)
-            tts_patch = {'model_id': 'eleven_flash_v2_5'}
-            if cur_tts.get('voice_id'):
-                tts_patch['voice_id'] = cur_tts['voice_id']   # conservar SU voz
-    except Exception:  # noqa: BLE001
-        tts_patch = {'model_id': 'eleven_flash_v2_5'}
-
-    def _payload(with_tools):
-        agent_cfg = {'prompt': {'prompt': BIXBY_SYSTEM_PROMPT}, 'language': 'es'}
-        if with_tools:
-            agent_cfg['prompt']['tools'] = _bixby_client_tools()
-        cc = {'agent': agent_cfg}
-        if tts_patch:
-            cc['tts'] = tts_patch
-        return {'conversation_config': cc}
-
-    try:
-        r = requests.patch(url, json=_payload(True), headers=hdrs, timeout=25)
-        if r.status_code < 400:
-            # verificación: ¿cuántas tools quedaron registradas?
-            n_tools = None
-            try:
-                chk = requests.get(url, headers={'xi-api-key': ELEVENLABS_KEY}, timeout=15).json()
-                n_tools = len((((chk.get('conversation_config') or {}).get('agent') or {})
-                               .get('prompt') or {}).get('tools') or [])
-            except Exception:  # noqa: BLE001
-                pass
-            return {'ok': True, 'mode': 'full', 'status': r.status_code, 'tools_registered': n_tools,
-                    'tts_fixed': bool(tts_patch)}
-        # fallback: algunos planes/versiones del API rechazan tools inline
-        detail = (r.text or '')[:400]
-        r2 = requests.patch(url, json=_payload(False), headers=hdrs, timeout=25)
-        return {'ok': r2.status_code < 400, 'mode': 'prompt_only', 'status': r2.status_code,
-                'tools_error': detail, 'prompt_error': None if r2.status_code < 400 else (r2.text or '')[:400]}
+        return _va.sync_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, BIXBY_SYSTEM_PROMPT,
+                              _bixby_client_tools(), http=requests, language='es',
+                              allow_overrides=_va.override_env_on())
     except Exception as e:  # noqa: BLE001
-        return {'ok': False, 'error': str(e)[:300]}
+        return {'ok': False, 'error': _diag_redact(e)[:300]}
 
 
 @app.route('/api/voice/sync-agent', methods=['GET', 'POST'])
@@ -4088,16 +4071,25 @@ def voice_sync_agent():
     return jsonify(res), (200 if res.get('ok') else 502)
 
 
+def _voice_autosync_log(res):
+    if res.get('ok'):
+        log.info('Khipu sincronizado con ElevenLabs (%s, tools=%s/%s, creadas=%d, tts=%s, llm=%s)',
+                 res.get('mode'), res.get('tools_registered'), res.get('tools_expected'),
+                 len(res.get('tools_created') or []), res.get('tts_change'), res.get('llm_fixed'))
+        if res.get('mode') != 'tool_ids':
+            log.warning('Khipu autosync: modo %s — las herramientas pueden no estar registradas (%s)',
+                        res.get('mode'), (res.get('tool_errors') or [])[:2])
+    else:
+        log.warning('Khipu autosync falló (la app sigue): %s', {k: res.get(k) for k in
+                    ('stage', 'code', 'error', 'status', 'detail')})
+
+
 # Auto-sync al arrancar (BIXBY_AUTOSYNC=0 para desactivar). En background para
 # no retrasar el boot; idempotente aunque los 2 workers de gunicorn lo llamen.
 if os.getenv('BIXBY_AUTOSYNC', '1').strip().lower() not in ('0', 'false', 'no'):
     def _bixby_autosync():
         time.sleep(4)
-        res = _sync_bixby_agent()
-        if res.get('ok'):
-            log.info('Khipu sincronizado con ElevenLabs (%s, tools=%s)', res.get('mode'), res.get('tools_registered'))
-        else:
-            log.warning('Khipu autosync falló (la app sigue): %s', res)
+        _voice_autosync_log(_sync_bixby_agent())
     try:
         if ELEVENLABS_KEY and ELEVENLABS_AGENT_ID:
             threading.Thread(target=_bixby_autosync, daemon=True).start()
@@ -4288,11 +4280,13 @@ def deep_status():
 @app.route('/api/voice/bixby-prompt', methods=['GET'])
 def bixby_system_prompt():
     """Returns Khipu's system prompt for ElevenLabs agent configuration."""
-    # allow_override: set ELEVENLABS_ALLOW_OVERRIDE=true in Railway env vars ONLY
-    # if your ElevenLabs agent dashboard has "Allow overrides" turned ON.
-    # Sending a prompt override when overrides are OFF causes ElevenLabs to close
-    # the WebSocket immediately.
-    allow_override = os.getenv('ELEVENLABS_ALLOW_OVERRIDE', 'false').lower() == 'true'
+    # allow_override: ELEVENLABS_ALLOW_OVERRIDE=true/1/yes (MISMO criterio que
+    # adopt/agent-tune; antes aquí solo valía "true" y con "1" el sync se
+    # activaba pero el navegador no). Desde 2026-10 /api/voice/session dice
+    # además QUÉ overrides permite el agente de verdad, y voice.js reintenta
+    # sin overrides si ElevenLabs cierra por override_error.
+    from core.voice_agent import override_env_on
+    allow_override = override_env_on()
     return jsonify({
         'system_prompt': BIXBY_SYSTEM_PROMPT,
         'agent_name': 'Khipu',
@@ -4303,21 +4297,48 @@ def bixby_system_prompt():
 
 # ── Khipu voice — sesión firmada de ElevenLabs ───────────────────────────────
 @app.route('/api/voice/session', methods=['POST'])
+@rate_limit(limit=40, window=600)
 def voice_session():
+    """URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides
+    permite el agente, para que el navegador no mande uno prohibido (ElevenLabs
+    cierra el socket con override_error). Errores en ES/EN con el arreglo.
+    Rate limit: cada sesión gasta minutos pagados de ElevenLabs."""
+    from core import voice_agent as _va
     if not ELEVENLABS_KEY:
-        return jsonify({'error': 'ELEVENLABS_KEY not configured'}), 400
-    data = request.get_json(silent=True) or {}
-    agent_id = data.get('agent_id') or ELEVENLABS_AGENT_ID
+        return jsonify({'error': 'La voz no está configurada en el servidor (falta ELEVENLABS_KEY).',
+                        'error_en': 'Voice is not configured on the server (ELEVENLABS_KEY missing).',
+                        'code': 'not_configured'}), 400
+    data = request.get_json(silent=True)
+    data = data if isinstance(data, dict) else {}
+    # el agente es el del server; el del navegador (preferencia vieja en
+    # localStorage) solo se acepta si el server no tiene uno.
+    agent_id = ELEVENLABS_AGENT_ID
     if not agent_id:
-        return jsonify({'error': 'agent_id required'}), 400
+        cand = str(data.get('agent_id') or '').strip()
+        agent_id = cand if _SAFE_PATH_SEG.match(cand) else ''
+    if not agent_id:
+        return jsonify({'error': 'Falta ELEVENLABS_AGENT_ID en el servidor.',
+                        'error_en': 'ELEVENLABS_AGENT_ID is missing on the server.',
+                        'code': 'agent_missing'}), 400
+    res = _va.get_signed_url(ELEVENLABS_KEY, agent_id, requests)
+    if not res.get('ok'):
+        e = res.get('error') or {}
+        code = e.get('code') or 'unknown'
+        status = {'invalid_api_key': 502, 'missing_permissions': 502, 'quota_exceeded': 402,
+                  'payment_required': 402, 'unusual_activity': 402, 'not_found': 404,
+                  'rate_limited': 429}.get(code, 502)
+        return jsonify({'error': _diag_redact(e.get('es') or 'ElevenLabs no respondió'),
+                        'error_en': _diag_redact(e.get('en') or 'ElevenLabs did not respond'),
+                        'code': code, 'fix_es': e.get('fix_es'), 'fix_en': e.get('fix_en')}), status
+    out = {'signed_url': res['signed_url'], 'agent_id': agent_id,
+           'override_env': _va.override_env_on()}
     try:
-        r = requests.get(
-            'https://api.elevenlabs.io/v1/convai/conversation/get_signed_url',
-            params={'agent_id': agent_id},
-            headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
-        return jsonify(r.json()), r.status_code
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': str(e)[:200]}), 502
+        cfg, _err = _va.get_agent(ELEVENLABS_KEY, agent_id, requests, cached=True, timeout=4)
+        if cfg:
+            out.update(_va.session_hints(cfg))
+    except Exception:  # noqa: BLE001 — sin pistas, voice.js decide con override_env + reintento
+        pass
+    return jsonify(out)
 
 
 def _portfolio_risk_impl(positions, no_data_msg):
@@ -5496,7 +5517,7 @@ def portfolio_advice():
         # Sonnet 5 (elección de Fabrizio por costo/velocidad): 90% del juicio de
         # Opus, 2-3x más rápido y ~mitad de costo. Se puede subir a claude-opus-4-8
         # por tarea si alguna lo amerita (cambiar solo este string).
-        text, model = _ai_complete(system, prompt, max_tokens=900, model='claude-sonnet-5')
+        text, model = _ai_complete(system, prompt, max_tokens=900, model='claude-sonnet-5-5')
         data = _extract_json(text)
         if not isinstance(data, dict):
             return jsonify(fallback)

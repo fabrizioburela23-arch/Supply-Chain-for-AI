@@ -43,46 +43,91 @@
 
   var _plan = null, _box = null, _busy = false;
 
+  // ── Khipus OS (2026-10-10): la caja vive en 🩺 Sistema (fuera de #bcp-ov) y lleva .kos-themed → tokens --os-*
+  // de engine/cockpit.js (claro = body sin .dark, oscuro = body.dark). Solo tokens; el valor tras la coma es el
+  // respaldo oscuro. Tarjeta sin bordes, botones píldora, aviso «revisar antes» con texto AA (--os-warn-ink).
+  function ensureStyles() {
+    if (document.getElementById('krc-styles')) return;
+    var st = document.createElement('style'); st.id = 'krc-styles';
+    st.textContent =
+      '.krc-root{color:var(--os-ink,#F2F2F5);font-family:var(--os-font,\'Nunito\',\'Geist\',system-ui,-apple-system,\'Segoe UI\',sans-serif);' +
+        '-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}' +
+      '.krc-root *{box-sizing:border-box}.krc-root button{font-family:inherit}' +
+      '.krc-root .krc-card{border-radius:var(--os-r,18px);padding:14px 16px;margin:6px 0 12px;background:var(--os-surface,#17181F);' +
+        'box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));min-width:0}' +
+      '.krc-root .krc-hd{display:flex;align-items:center;gap:8px;margin-bottom:4px}' +
+      '.krc-root .krc-hd b{font-size:14px;font-weight:800;letter-spacing:-.005em;flex:1;min-width:0}' +
+      '.krc-root .krc-ic{width:28px;height:28px;flex:none;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;' +
+        'background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,var(--os-accent,#4C8DF6) 13%,transparent)}' +
+      '.krc-root .krc-in{padding-left:36px}' +
+      '.krc-root .krc-mut{font-size:12px;color:var(--os-ink-2,#A6A8B5);line-height:1.5;margin-bottom:6px;overflow-wrap:anywhere}' +
+      '.krc-root code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;padding:1px 6px;border-radius:6px;background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5)}' +
+      '.krc-root .krc-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--os-line,rgba(255,255,255,.07))}' +
+      '.krc-root .krc-row:last-child{border-bottom:0}' +
+      '.krc-root .krc-row.off{color:var(--os-ink-2,#A6A8B5);cursor:default}' +
+      '.krc-root .krc-row input{width:16px;height:16px;margin:0;accent-color:var(--os-accent,#4C8DF6);flex:none}' +
+      '.krc-root .krc-row .krc-n{font-variant-numeric:tabular-nums;font-weight:800;min-width:28px;text-align:right}' +
+      '.krc-root .krc-chk{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:4px;white-space:nowrap;' +
+        'color:var(--os-warn-ink,#F2C46D);background:var(--os-surface-2,#1F2029);background:color-mix(in srgb,var(--os-warn,#F2C46D) 16%,transparent)}' +
+      '.krc-root .krc-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}' +
+      '.krc-root .krc-btn{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;' +
+        'padding:0 14px;border-radius:999px;background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);font-size:12.5px;font-weight:700;white-space:nowrap;' +
+        'text-decoration:none;transition:opacity .15s,background-color .15s,transform .1s}' +
+      '.krc-root .krc-btn:hover:not([disabled]){background:var(--os-surface-3,#2A2B36)}.krc-root .krc-btn:active{transform:scale(.98)}' +
+      '.krc-root .krc-btn.pri{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216)}.krc-root .krc-btn.pri:hover:not([disabled]){opacity:.88;background:var(--os-btn,#F2F2F5)}' +
+      '.krc-root .krc-btn[disabled]{opacity:.45;cursor:default;transform:none}' +
+      '.krc-root .krc-btn.krc-icon{width:34px;padding:0;font-size:14px}' +
+      '.krc-root .krc-btn:focus-visible,.krc-root input:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}' +
+      '.krc-root .krc-msg{font-size:12.5px;margin-top:10px;line-height:1.5;overflow-wrap:anywhere}' +
+      // el «?» de explain.js trae cian fijo: aquí toma el acento del tema (legible en claro)
+      '.krc-root span[onclick*="explainMetric"]{color:var(--os-accent,#4C8DF6)!important;border-color:color-mix(in srgb,var(--os-accent,#4C8DF6) 45%,transparent)!important}' +
+      '@media(prefers-reduced-motion:reduce){.krc-root .krc-btn{transition:none}}' +
+      '@media(max-width:480px){.krc-root .krc-in{padding-left:0}}';
+    document.head.appendChild(st);
+  }
+
   function card(inner) {
-    return '<div style="border:1px solid var(--line);border-left:3px solid #00a3ff;border-radius:8px;padding:12px 14px;' +
-      'margin:4px 0 10px;background:var(--surface-2,rgba(255,255,255,.02))">' + inner + '</div>';
+    return '<div class="krc-card">' + inner + '</div>';
   }
 
   function head() {
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:14px">🧹</span>' +
-      '<b style="font-size:13.5px;flex:1">' + L('Grafo: base vs catálogo', 'Graph: database vs catalog') + '</b>' +
+    return '<div class="krc-hd"><span class="krc-ic" aria-hidden="true">🧹</span>' +
+      '<b>' + L('Grafo: base vs catálogo', 'Graph: database vs catalog') + '</b>' +
       (window.explainChip ? window.explainChip('reconcile') : '') + '</div>';
   }
 
   function render(msg) {
     if (!_box) return;
+    ensureStyles();
+    // tokens --os-* de Khipus OS (claro/oscuro) aunque 🩺 Sistema viva fuera de #bcp-ov
+    if (_box.classList) { _box.classList.add('kos-themed'); _box.classList.add('krc-root'); }
     if (!_plan) {
-      _box.innerHTML = card(head() + '<div style="font-size:12px;color:var(--ink-3);padding-left:22px">' + (msg || L('Cargando…', 'Loading…')) + '</div>');
+      _box.innerHTML = card(head() + '<div class="krc-mut krc-in">' + (msg || L('Cargando…', 'Loading…')) + '</div>');
       return;
     }
     var s = _plan.summary || {}, total = 0;
     var rows = CATS.map(function (c) {
       var n = s[c[0]] || 0; total += n;
-      return '<label style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12.5px' + (n ? '' : ';opacity:.55') + '">' +
+      return '<label class="krc-row' + (n ? '' : ' off') + '">' +
         '<input type="checkbox" data-cat="' + c[0] + '"' + (c[3] && n ? ' checked' : '') + (n ? '' : ' disabled') + '>' +
-        '<span style="flex:1">' + esc(en() ? c[2] : c[1]) + (c[3] ? '' : ' <span style="color:#e6a23c;font-size:10.5px">' +
-        L('· revisar antes', '· check first') + '</span>') + '</span><b style="font-family:\'JetBrains Mono\',monospace">' + n + '</b></label>';
+        '<span style="flex:1;min-width:0">' + esc(en() ? c[2] : c[1]) + (c[3] ? '' : ' <span class="krc-chk">' +
+        L('revisar antes', 'check first') + '</span>') + '</span><span class="krc-n">' + n + '</span></label>';
     }).join('');
     var runs = (_plan.runs || []).filter(function (r) { return !r.rollback; });
     var undone = {}; (_plan.runs || []).forEach(function (r) { if (r.rollback) undone[r.run_id] = 1; });
     var last = runs.filter(function (r) { return !undone[r.run_id]; })[0];
     var lang = en() ? 'en' : 'es';
     _box.innerHTML = card(head() +
-      '<div style="font-size:11.5px;color:var(--ink-3);padding-left:22px;margin-bottom:6px">' +
+      '<div class="krc-mut krc-in">' +
       (total ? L('Diferencias encontradas: ', 'Differences found: ') + '<b>' + total + '</b> · ' : L('Sin diferencias. ✅ ', 'No differences. ✅ ')) +
       L('base', 'database') + ' <code>' + esc(_plan.db || '?') + '</code> · ' + esc((_plan.as_of || '').slice(0, 16).replace('T', ' ')) + ' UTC</div>' +
-      '<div style="padding-left:22px">' + rows + '</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-left:22px">' +
-      '<a class="key-btn" style="text-decoration:none" target="_blank" rel="noopener" href="' + BASE + '/api/ontology/reconcile/plan?format=html&lang=' + lang + '">📄 ' + L('Ver lista completa', 'See full list') + '</a>' +
-      '<button class="key-btn" data-act="apply"' + (total ? '' : ' disabled') + '>✓ ' + L('Aplicar lo marcado', 'Apply ticked') + '</button>' +
-      '<button class="key-btn" data-act="refresh">↻</button>' +
-      (last ? '<button class="key-btn" data-act="undo" data-run="' + esc(last.run_id) + '">↶ ' + L('Deshacer ', 'Undo ') + esc(last.run_id) + '</button>' : '') +
-      '</div>' + (msg ? '<div style="font-size:12px;margin-top:8px;padding-left:22px">' + msg + '</div>' : ''));
+      '<div class="krc-in">' + rows + '</div>' +
+      '<div class="krc-acts krc-in">' +
+      '<a class="krc-btn" target="_blank" rel="noopener" href="' + BASE + '/api/ontology/reconcile/plan?format=html&lang=' + lang + '">📄 ' + L('Ver lista completa', 'See full list') + '</a>' +
+      '<button type="button" class="krc-btn pri" data-act="apply"' + (total ? '' : ' disabled') + '>✓ ' + L('Aplicar lo marcado', 'Apply ticked') + '</button>' +
+      '<button type="button" class="krc-btn krc-icon" data-act="refresh" title="' + esc(L('Recalcular', 'Recompute')) + '" aria-label="' + esc(L('Recalcular', 'Recompute')) + '">↻</button>' +
+      (last ? '<button type="button" class="krc-btn" data-act="undo" data-run="' + esc(last.run_id) + '">↶ ' + L('Deshacer ', 'Undo ') + esc(last.run_id) + '</button>' : '') +
+      '</div>' + (msg ? '<div class="krc-msg krc-in" role="status">' + msg + '</div>' : ''));
     _box.querySelectorAll('[data-act]').forEach(function (b) {
       b.onclick = function () {
         var a = b.getAttribute('data-act');
