@@ -752,6 +752,141 @@ footer .disc{line-height:1.4}
 .danger-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .danger-btns .key-btn{flex:1;text-align:center}
 
+/* ----- 🩺 Sistema — Khipus OS (2026-10-10) -----
+   #sistema-panel y #sistema-overlay llevan .kos-themed → tokens --os-* de engine/cockpit.js
+   (claro = body sin .dark, oscuro = body.dark). Solo tokens; el valor tras la coma = respaldo oscuro.
+   TODO va acotado a #sistema-panel/#sistema-overlay: ⚙ Configuración (#settings-panel) sigue clásico.
+   Tarjetas sin bordes, pestañas = control segmentado de píldoras, botones píldora, estados con texto AA
+   (ok = --os-good-ink · aviso = --os-warn-ink · falla = --os-bad-ink), ≤760 px = pantalla completa. */
+#sistema-overlay{background:var(--kos-scrim,rgba(0,0,0,.5))}
+#sistema-panel{width:560px;max-width:92vw;padding:20px 22px 40px;border-left:0;
+  border-radius:var(--os-r,18px) 0 0 var(--os-r,18px);background:var(--os-bg,#0E0F14);color:var(--os-ink,#F2F2F5);
+  box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55));
+  -webkit-backdrop-filter:none;backdrop-filter:none;overscroll-behavior:contain;
+  font-family:var(--os-font,'Nunito','Geist',system-ui,-apple-system,'Segoe UI',sans-serif);font-size:13px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+#sistema-panel *{box-sizing:border-box}
+#sistema-panel button,#sistema-panel input,#sistema-panel textarea{font-family:inherit}
+#sistema-panel button:focus-visible,#sistema-panel input:focus-visible,#sistema-panel textarea:focus-visible,
+#sistema-panel a:focus-visible,#sistema-panel summary:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}
+#sistema-panel .settings-head{gap:10px;margin-bottom:14px}
+#sistema-panel .ksys-title{margin:0;min-width:0;font-family:var(--os-font,'Nunito','Geist',system-ui,-apple-system,'Segoe UI',sans-serif);
+  font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.25;color:var(--os-ink,#F2F2F5);overflow-wrap:anywhere}
+#sistema-panel #sistema-close{appearance:none;-webkit-appearance:none;width:36px;height:36px;flex:none;border:0;border-radius:999px;
+  background:var(--os-surface-2,#1F2029);color:var(--os-ink-2,#A6A8B5);font-size:14px;box-shadow:none;cursor:pointer;
+  transition:background-color .15s,color .15s}
+#sistema-panel #sistema-close:hover{background:var(--os-surface-3,#2A2B36);color:var(--os-ink,#F2F2F5);border-color:transparent;box-shadow:none}
+/* pestañas: control segmentado (mismo patrón que .sp-seg de 💰 Gasto IA) */
+#sistema-panel #sistema-tabseg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0 0 14px;padding:3px;
+  border:0;border-radius:999px;background:var(--os-surface-3,#2A2B36);overflow:visible}
+#sistema-panel #sistema-tabseg button{appearance:none;-webkit-appearance:none;min-width:0;min-height:34px;padding:0 10px;border:0;
+  border-radius:999px;background:none;color:var(--os-ink-2,#A6A8B5);font-size:12.5px;font-weight:700;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;box-shadow:none;cursor:pointer;transition:background-color .15s,color .15s,box-shadow .15s}
+#sistema-panel #sistema-tabseg button:hover{background:none;color:var(--os-ink,#F2F2F5)}
+#sistema-panel #sistema-tabseg button.active{background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);
+  box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}
+/* entrada 🤖 Conectar IAs (la crea engine/mcpconnect.js con estilo en línea: aquí se lleva a tarjeta OS) */
+#sistema-panel #kmcp-entry{height:auto;margin:0 0 14px!important;padding:11px 14px!important;border:0;border-radius:var(--os-r-sm,12px);
+  background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);font-size:12.5px!important;font-weight:400;
+  box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));transition:background-color .15s,transform .1s}
+#sistema-panel #kmcp-entry:hover{background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);border-color:transparent;
+  box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}
+#sistema-panel #kmcp-entry:active{transform:scale(.99)}
+#sistema-panel #kmcp-entry b{font-weight:800}
+#sistema-panel #kmcp-entry span{color:var(--os-ink-2,#A6A8B5);opacity:1!important}
+/* textos, barras y botones píldora */
+#sistema-panel .settings-sub{font-size:12.5px;color:var(--os-ink-2,#A6A8B5);line-height:1.55;margin:0 0 12px}
+#sistema-panel .settings-sub b{color:var(--os-ink,#F2F2F5);font-weight:700}
+#sistema-panel .ksys-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+#sistema-panel .ksys-mut{font-size:12px;color:var(--os-ink-2,#A6A8B5);min-width:0;overflow-wrap:anywhere}
+#sistema-panel .ksys-mut code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11px;padding:1px 6px;border-radius:6px;
+  background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5)}
+/* sobre el fondo del panel: píldora de superficie con sombra; dentro de una tarjeta: píldora --os-surface-2 */
+#sistema-panel .key-btn{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;
+  height:34px;padding:0 15px;border:0;border-radius:999px;background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);
+  font-size:12.5px;font-weight:700;white-space:nowrap;box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));
+  cursor:pointer;transition:background-color .15s,opacity .15s,transform .1s}
+#sistema-panel .key-btn:hover{background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);border-color:transparent;
+  box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}
+#sistema-panel .ksys-card .key-btn{background:var(--os-surface-2,#1F2029);box-shadow:none}
+#sistema-panel .ksys-card .key-btn:hover{background:var(--os-surface-3,#2A2B36);box-shadow:none}
+#sistema-panel .key-btn:active{transform:scale(.98)}
+#sistema-panel .key-btn.ksys-pri{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216)}
+#sistema-panel .key-btn.ksys-pri:hover{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216);opacity:.88}
+#sistema-panel .ksys-in{flex:1 1 180px;min-width:0;height:36px;padding:0 12px;border:0;border-radius:10px;outline:none;
+  background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);font-size:12.5px;
+  box-shadow:inset 0 0 0 1px var(--os-line,rgba(255,255,255,.07));transition:box-shadow .15s}
+#sistema-panel .ksys-in::placeholder,#sistema-panel .ksys-field::placeholder{color:var(--os-ink-2,#A6A8B5);opacity:1}
+#sistema-panel .ksys-in:focus,#sistema-panel .ksys-field:focus{box-shadow:inset 0 0 0 1.5px var(--os-accent,#4C8DF6),0 0 0 3px var(--kos-accent-soft,rgba(76,141,246,.16))}
+#sistema-panel .ksys-empty{padding:28px 16px;text-align:center;color:var(--os-ink-2,#A6A8B5);font-size:13px;line-height:1.55;
+  border-radius:var(--os-r,18px);background:var(--os-surface,#17181F)}
+/* tarjetas OS: diagnóstico, registro y propuestas */
+#sistema-panel .ksys-card{--ksys-ind:37px;position:relative;min-width:0;margin:0 0 10px;padding:14px 16px;border-radius:var(--os-r,18px);
+  background:var(--os-surface,#17181F);box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35));transition:opacity .2s}
+#sistema-panel .ksys-ch{display:flex;align-items:center;gap:9px;min-width:0}
+#sistema-panel .ksys-ic{position:relative;width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;
+  font-size:14px;line-height:1;background:var(--os-surface-2,#1F2029)}
+/* punto de estado: relleno vivo (--os-good/--os-warn/--os-bad) en la esquina del ícono, con anillo del color de la tarjeta */
+#sistema-panel .ksys-dot{position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;
+  background:var(--ksys-fill,#6E7080);box-shadow:0 0 0 2.5px var(--os-surface,#17181F)}
+#sistema-panel .ksys-name{flex:1;min-width:0;font-size:14px;font-weight:800;letter-spacing:-.005em;line-height:1.3;overflow-wrap:anywhere}
+#sistema-panel .ksys-st{flex:none;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  white-space:nowrap;color:var(--ksys-ink,#A6A8B5);background:var(--os-surface-2,#1F2029)}
+/* tintes con color-mix() SOLO si el navegador lo sabe ("background:X;background:color-mix(…var()…)" no es un respaldo:
+   sin soporte la 2.ª declaración queda en «unset»); sin soporte, la superficie --os-surface-2 de arriba */
+@supports (color:color-mix(in srgb,currentColor 50%,transparent)){
+  #sistema-panel .ksys-ic.acc{background:color-mix(in srgb,var(--os-accent,#4C8DF6) 13%,transparent)}
+  #sistema-panel .ksys-ic.ai{background:color-mix(in srgb,var(--os-ai,#B48CFF) 15%,transparent)}
+  #sistema-panel .ksys-st{background:color-mix(in srgb,var(--ksys-fill,#6E7080) 15%,transparent)}
+}
+#sistema-panel .ksys-lat,#sistema-panel .ksys-when{flex:none;font-size:11px;color:var(--os-ink-2,#A6A8B5);font-variant-numeric:tabular-nums;white-space:nowrap}
+#sistema-panel .ksys-why{margin:3px 0 0;padding-left:var(--ksys-ind);font-size:11.5px;color:var(--os-ink-2,#A6A8B5);line-height:1.45}
+#sistema-panel .ksys-why b{color:var(--os-ink,#F2F2F5);font-weight:700}
+#sistema-panel .ksys-detail{margin-top:6px;padding-left:var(--ksys-ind);font-size:12.5px;color:var(--os-ink,#F2F2F5);line-height:1.5;overflow-wrap:anywhere}
+#sistema-panel .ksys-detail ul,#sistema-panel .ksys-fix ol{margin:4px 0 0;padding-left:18px}
+#sistema-panel .ksys-detail li,#sistema-panel .ksys-fix li{margin:2px 0}
+#sistema-panel .ksys-fix{margin:8px 0 0 var(--ksys-ind);padding:9px 12px;border-radius:var(--os-r-sm,12px);background:var(--os-surface-2,#1F2029);
+  font-size:12.5px;color:var(--os-ink,#F2F2F5);line-height:1.5;overflow-wrap:anywhere}
+#sistema-panel .ksys-fix-h{display:block;margin-bottom:2px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ksys-ink,#F2C46D)}
+#sistema-panel .ksys-sumb{color:var(--ksys-ink,#A6A8B5);font-weight:800}
+.ksys-lv-ok{--ksys-fill:var(--os-good,#2fbf5b);--ksys-ink:var(--os-good-ink,#2fbf5b)}
+.ksys-lv-warn{--ksys-fill:var(--os-warn,#F2C46D);--ksys-ink:var(--os-warn-ink,#F2C46D)}
+.ksys-lv-bad{--ksys-fill:var(--os-bad,#f06565);--ksys-ink:var(--os-bad-ink,#F47C7C)}
+.ksys-lv-off{--ksys-fill:var(--os-ink-3,#6E7080);--ksys-ink:var(--os-ink-2,#A6A8B5)}
+#sistema-panel .ksys-ok-ink{color:var(--os-good-ink,#2fbf5b)}
+#sistema-panel .ksys-warn-ink{color:var(--os-warn-ink,#F2C46D)}
+#sistema-panel .ksys-bad-ink{color:var(--os-bad-ink,#F47C7C)}
+/* propuestas: campos editables, fuentes y acciones */
+#sistema-panel .ksys-src{margin:8px 0 0 var(--ksys-ind)}
+#sistema-panel .ksys-src a{display:block;margin:2px 0;font-size:12px;color:var(--os-accent,#4C8DF6);text-decoration:none;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:4px}
+#sistema-panel .ksys-src a:hover{text-decoration:underline}
+#sistema-panel .ksys-flab{display:block;margin:0 0 3px;font-size:11px;font-weight:700;color:var(--os-ink-2,#A6A8B5)}
+#sistema-panel .ksys-fields{margin:8px 0 0 var(--ksys-ind)}
+#sistema-panel .ksys-fl{display:block;margin-bottom:8px}
+#sistema-panel .ksys-unv{margin-top:6px}
+#sistema-panel .ksys-field{width:100%;min-height:34px;padding:7px 10px;border:0;border-radius:10px;outline:none;resize:vertical;
+  background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);font-size:12.5px;line-height:1.45;transition:box-shadow .15s}
+#sistema-panel .ksys-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 0 var(--ksys-ind)}
+#sistema-panel .ksys-acts .prop-status{font-size:12px;color:var(--os-ink-2,#A6A8B5)}
+/* insignia 👥 Clientes (pendientes de aprobación) — .kos-themed en la propia insignia */
+#tab-clients-badge{margin-left:5px;min-width:18px;height:18px;padding:0 6px;border-radius:999px;background:var(--os-warn,#F2C46D);color:#111216;
+  font-family:var(--os-font,'Nunito','Geist',system-ui,-apple-system,'Segoe UI',sans-serif);font-size:10.5px;font-weight:800;line-height:18px;
+  text-align:center;font-variant-numeric:tabular-nums;vertical-align:1px}
+@media(max-width:760px){
+  #sistema-panel{width:100%;max-width:100%;border-radius:0;padding:16px 16px calc(32px + env(safe-area-inset-bottom,0px))}
+  #sistema-panel #sistema-tabseg{grid-template-columns:repeat(2,minmax(0,1fr));border-radius:16px}
+  #sistema-panel #sistema-tabseg button{border-radius:13px}
+  #sistema-panel .ksys-bar .ksys-in{flex-basis:100%}
+}
+@media(max-width:480px){
+  #sistema-panel .ksys-card{--ksys-ind:0px;padding:12px 14px}
+  #sistema-panel .ksys-ch{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){
+  #sistema-panel,#sistema-panel .key-btn,#sistema-panel #sistema-tabseg button,#sistema-panel .ksys-card{transition:none}
+}
+
 /* ----- Panel detalle: secciones v8 ----- */
 .v8-sec{margin:16px 0}
 /* [UPGRADE] Panel de detalle: secciones colapsables (reduce densidad) */
@@ -1738,7 +1873,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       <button class="tab" data-tab="crypto" data-group="mercado" id="tab-crypto">₿ <span>Cripto</span></button>
       <button class="tab" data-tab="portfolios" data-group="mercado" id="tab-portfolios">💼 <span data-i18n="tab_portfolios">Carteras</span></button>
       <button class="tab" data-group="mercado" id="tab-committee" onclick="window.KhipuCommittee&&window.KhipuCommittee.open()" title="Comité de inversión — propuestas con aprobación humana · Investment committee">🏛 <span data-i18n="tab_committee">Comité</span></button>
-      <button class="tab" data-group="mercado" id="tab-clients" onclick="window.KhipuClients&&window.KhipuClients.open()" title="Clientes, órdenes y aprobaciones · Clients, orders and approvals">👥 <span data-i18n="tab_clients">Clientes</span><b id="tab-clients-badge" style="display:none;margin-left:5px;background:#FFB300;color:#1a1200;border-radius:9px;padding:0 6px;font-size:10px"></b></button>
+      <button class="tab" data-group="mercado" id="tab-clients" onclick="window.KhipuClients&&window.KhipuClients.open()" title="Clientes, órdenes y aprobaciones · Clients, orders and approvals">👥 <span data-i18n="tab_clients">Clientes</span><b id="tab-clients-badge" class="kos-themed" style="display:none"></b></button>
       <button class="tab" data-tab="analysis" data-group="insights" id="tab-analysis">🔬 <span data-i18n="tab_analysis">Análisis de Red</span></button>
       <button class="tab" data-tab="canvas" data-group="insights" id="tab-canvas">✦ <span>Canvas IA</span></button>
       <button class="tab" data-tab="terminal" data-group="insights" id="tab-terminal">⬛ <span>Terminal</span></button>
@@ -2349,57 +2484,60 @@ body:not(.dark) .toolbar{animation-delay:.06s}
 <!-- ===== v8: Panel de Configuración ===== -->
 
 <!-- ── ⚙ Sistema: Diagnóstico + Registro + Propuestas, unificado ──────────── -->
-<div class="settings-overlay" id="sistema-overlay" onclick="window.closeSistema&&window.closeSistema()"></div>
-<aside class="settings-panel" id="sistema-panel" aria-label="Sistema" style="width:520px">
+<div class="settings-overlay kos-themed" id="sistema-overlay" onclick="window.closeSistema&&window.closeSistema()"></div>
+<!-- Khipus OS (2026-10-10): .kos-themed → tokens --os-* (claro/oscuro) aunque viva fuera de #bcp-ov.
+     Textos ES/EN: data-ksys-t (texto) · data-ksys-h (HTML fijo) · data-ksys-ph (placeholder) · data-ksys-tt (title)
+     · data-ksys-al (aria-label) → los aplica _sistemaApplyLang() cada vez que se abre o cambia de pestaña. -->
+<aside class="settings-panel kos-themed ksys" id="sistema-panel" aria-label="Sistema" data-ksys-al="panel_al">
   <div class="settings-head">
-    <h2 id="sistema-title">🩺 Estado del Sistema</h2>
-    <button class="icon-btn" id="sistema-close" aria-label="Cerrar" onclick="window.closeSistema&&window.closeSistema()">✕</button>
+    <h2 id="sistema-title" class="ksys-title">🩺 Estado del Sistema</h2>
+    <button class="icon-btn" id="sistema-close" aria-label="Cerrar" data-ksys-al="close" onclick="window.closeSistema&&window.closeSistema()">✕</button>
   </div>
-  <div class="seg" id="sistema-tabseg" style="margin-bottom:14px">
-    <button data-t="diag" class="active">🩺 Diagnóstico</button>
-    <button data-t="registro">📋 Registro</button>
-    <button data-t="propuestas">🔔 Propuestas</button>
-    <button data-t="gasto" title="Gasto de IA / AI spend">💰 Gasto IA</button>
+  <div class="seg" id="sistema-tabseg" role="tablist">
+    <button type="button" role="tab" aria-selected="true" aria-controls="sistema-diag" data-t="diag" class="active" data-ksys-t="tab_diag">🩺 Diagnóstico</button>
+    <button type="button" role="tab" aria-selected="false" aria-controls="sistema-registro" data-t="registro" data-ksys-t="tab_registro">📋 Registro</button>
+    <button type="button" role="tab" aria-selected="false" aria-controls="sistema-propuestas" data-t="propuestas" data-ksys-t="tab_propuestas">🔔 Propuestas</button>
+    <button type="button" role="tab" aria-selected="false" aria-controls="sistema-gasto" data-t="gasto" title="Gasto de IA / AI spend" data-ksys-t="tab_gasto">💰 Gasto IA</button>
   </div>
 
-  <div id="sistema-diag">
-    <p class="settings-sub">Prueba <b>en vivo</b> cada API key y servicio del servidor — no solo si existen, sino si <b>de verdad responden</b>. Las keys nunca se muestran.</p>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
-      <button class="key-btn" id="diag-refresh" onclick="window.openDiagnostics&&window.openDiagnostics(true)" style="flex:0 0 auto">↻ Re-probar</button>
-      <span id="diag-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+  <div id="sistema-diag" role="tabpanel">
+    <p class="settings-sub" data-ksys-h="diag_sub">Prueba <b>en vivo</b> cada API key y servicio del servidor — no solo si existen, sino si <b>de verdad responden</b>. Las keys nunca se muestran.</p>
+    <div class="ksys-bar">
+      <button class="key-btn" id="diag-refresh" onclick="window.openDiagnostics&&window.openDiagnostics(true)" data-ksys-t="retest">↻ Re-probar</button>
+      <span id="diag-summary" class="ksys-mut" aria-live="polite"></span>
     </div>
-    <div id="diag-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando diagnóstico…</div></div>
+    <div id="diag-body"><div class="ksys-empty" data-ksys-t="diag_loading">Cargando diagnóstico…</div></div>
     <!-- G3 (misión de reparación): grafo base vs catálogo — engine/reconcile.js -->
     <div id="recon-box"></div>
   </div>
 
-  <div id="sistema-registro" style="display:none">
-    <p class="settings-sub">Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.</p>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-      <input id="registro-filter-actor" placeholder="Filtrar por autor…" style="flex:1;min-width:140px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:12.5px">
-      <button class="key-btn" id="registro-refresh" onclick="window.openRegistro&&window.openRegistro(true)" style="flex:0 0 auto">↻ Actualizar</button>
+  <div id="sistema-registro" role="tabpanel" style="display:none">
+    <p class="settings-sub" data-ksys-h="reg_sub">Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.</p>
+    <div class="ksys-bar">
+      <input id="registro-filter-actor" class="ksys-in" placeholder="Filtrar por autor…" data-ksys-ph="reg_filter" aria-label="Filtrar por autor" data-ksys-al="reg_filter">
+      <button class="key-btn" id="registro-refresh" onclick="window.openRegistro&&window.openRegistro(true)" data-ksys-t="refresh">↻ Actualizar</button>
     </div>
-    <div id="registro-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando registro…</div></div>
+    <div id="registro-body"><div class="ksys-empty" data-ksys-t="reg_loading">Cargando registro…</div></div>
   </div>
 
-  <div id="sistema-propuestas" style="display:none">
-    <p class="settings-sub">7 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo, radar de empresas, hiperaristas e investigación web) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-      <button class="key-btn" id="propuestas-run" onclick="window.runAgentes&&window.runAgentes()" style="flex:0 0 auto">🔍 Revisar ahora</button>
-      <button class="key-btn" id="propuestas-refresh" onclick="window.openPropuestas&&window.openPropuestas(true)" style="flex:0 0 auto">↻ Actualizar</button>
-      <span id="propuestas-summary" style="font-size:11.5px;color:var(--ink-3)"></span>
+  <div id="sistema-propuestas" role="tabpanel" style="display:none">
+    <p class="settings-sub" data-ksys-h="prop_sub">7 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo, radar de empresas, hiperaristas e investigación web) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.</p>
+    <div class="ksys-bar" style="margin-bottom:8px">
+      <button class="key-btn ksys-pri" id="propuestas-run" onclick="window.runAgentes&&window.runAgentes()" data-ksys-t="prop_run">🔍 Revisar ahora</button>
+      <button class="key-btn" id="propuestas-refresh" onclick="window.openPropuestas&&window.openPropuestas(true)" data-ksys-t="refresh">↻ Actualizar</button>
+      <span id="propuestas-summary" class="ksys-mut" aria-live="polite"></span>
     </div>
     <!-- Track C: investigación web bajo demanda (Investigador Autónomo) -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-      <input id="investigar-q" placeholder="Investiga en la web… (ej. «¿CXMT amenaza a Micron?»)" style="flex:1;min-width:180px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:12.5px">
-      <button class="key-btn" id="investigar-go" onclick="window.lanzarInvestigacion&&window.lanzarInvestigacion()" style="flex:0 0 auto">🌐 Investigar</button>
-      <span id="investigar-status" style="font-size:11px;color:var(--ink-3)"></span>
+    <div class="ksys-bar">
+      <input id="investigar-q" class="ksys-in" placeholder="Investiga en la web… (ej. «¿CXMT amenaza a Micron?»)" data-ksys-ph="inv_ph" aria-label="Investiga en la web" data-ksys-al="inv_al">
+      <button class="key-btn" id="investigar-go" onclick="window.lanzarInvestigacion&&window.lanzarInvestigacion()" data-ksys-t="inv_go">🌐 Investigar</button>
+      <span id="investigar-status" class="ksys-mut" aria-live="polite"></span>
     </div>
-    <div id="propuestas-body"><div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Cargando propuestas…</div></div>
+    <div id="propuestas-body"><div class="ksys-empty" data-ksys-t="prop_loading">Cargando propuestas…</div></div>
   </div>
 
   <!-- 💰 Gasto de IA (engine/aispend.js · /api/ai/usage) -->
-  <div id="sistema-gasto" style="display:none"></div>
+  <div id="sistema-gasto" role="tabpanel" style="display:none"></div>
 </aside>
 
 <div class="settings-overlay" id="settings-overlay"></div>
@@ -5632,44 +5770,122 @@ $('settings-close').onclick=()=>Settings.close();
 $('settings-overlay').onclick=()=>Settings.close();
 
 /* ── Estado del Sistema — diagnóstico en vivo ──────────────────────────── */
+// KHIPUS OS (2026-10-10): cada servicio es una tarjeta OS = punto de estado + título + detalle + «Qué hacer»,
+// con texto AA por nivel (ok = --os-good-ink · aviso = --os-warn-ink · falla = --os-bad-ink; CSS .ksys-*).
+// Bilingüe: si el servidor manda detail_en / fixes[{es,en}] / fix_en (la voz ya lo hace) se usan en inglés;
+// si no, se muestra el texto del servidor tal cual. Las pistas « → …» que el servidor pega al final del
+// detalle (_ai_error_hint / _db_error_hint) pasan al bloque «Qué hacer».
+const _sysEN = () => (window.LANG||'')==='en';
+const _sysL = (es, en) => _sysEN() ? en : es;
 const DIAG_META = {
-  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'IA principal · Canvas · Khipu · análisis' },
-  gemini:     { icon:'◆',  name:'Google Gemini',        why:'Canal de respaldo de IA (alterna si Claude falla)' },
-  nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)' },
-  elevenlabs: { icon:'🎙', name:'Khipu / ElevenLabs',  why:'Voz conversacional — preguntar por voz' },
-  finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo (EE.UU.) · WebSocket · primero en la cascada' },
-  yahoo:      { icon:'🌐', name:'Yahoo Finance',       why:'Precios de TODAS las bolsas (sin clave) · respaldo de EE.UU. · capitalización' },
-  fmp:        { icon:'📑', name:'FMP',                 why:'Estados financieros · perfil · precio objetivo (plan con cobertura limitada)' },
-  grafo:      { icon:'◈',  name:'Grafo Temporal',       why:'Memoria temporal (nativa · Neo4j opcional)' },
-  ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', why:'Fuente única de verdad · eventos bitemporales' },
-  market_extra:{icon:'🗂', name:'Fuentes de respaldo', why:'FMP · MarketStack · AlphaVantage' },
-  investigacion:{icon:'🔬', name:'Investigación IA', why:'Proveedores en pausa · cola · presupuesto diario · reloj del servidor (R6)' },
+  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'IA principal · Canvas · Khipu · análisis', why_en:'Main AI · Canvas · Khipu · analysis' },
+  gemini:     { icon:'◆',  name:'Google Gemini',        why:'Canal de respaldo de IA (alterna si Claude falla)', why_en:'Backup AI channel (takes over if Claude fails)' },
+  nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)', why_en:'Backup AI channel (free for the MVP)' },
+  elevenlabs: { icon:'🎙', name:'Khipu / ElevenLabs',  why:'Voz conversacional — preguntar por voz', why_en:'Conversational voice — ask by voice' },
+  finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo (EE.UU.) · WebSocket · primero en la cascada', why_en:'Live prices (US) · WebSocket · first in the cascade' },
+  yahoo:      { icon:'🌐', name:'Yahoo Finance',       why:'Precios de TODAS las bolsas (sin clave) · respaldo de EE.UU. · capitalización', why_en:'Prices for ALL exchanges (no key) · US backup · market cap' },
+  fmp:        { icon:'📑', name:'FMP',                 why:'Estados financieros · perfil · precio objetivo (plan con cobertura limitada)', why_en:'Financial statements · profile · price target (limited-coverage plan)' },
+  grafo:      { icon:'◈',  name:'Grafo Temporal', name_en:'Temporal Graph', why:'Memoria temporal (nativa · Neo4j opcional)', why_en:'Temporal memory (native · optional Neo4j)' },
+  ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', name_en:'Ontology (Postgres)', why:'Fuente única de verdad · eventos bitemporales', why_en:'Single source of truth · bitemporal events' },
+  market_extra:{icon:'🗂', name:'Fuentes de respaldo', name_en:'Backup sources', why:'FMP · MarketStack · AlphaVantage' },
+  investigacion:{icon:'🔬', name:'Investigación IA', name_en:'AI research', why:'Proveedores en pausa · cola · presupuesto diario · reloj del servidor (R6)', why_en:'Paused providers · queue · daily budget · server clock (R6)' },
 };
-function _diagDot(s){
-  const ok = s.ok, conf = s.configured;
-  if(ok)        return {c:'#1db954', t:'OPERATIVO'};
-  if(!conf)     return {c:'#888',    t:'NO CONFIGURADO'};
-  return {c:'#e23b3b', t:'FALLA'};
+const DIAG_LEVEL_TXT = {
+  ok:   {es:'OPERATIVO',      en:'OPERATIONAL'},
+  warn: {es:'CON AVISOS',     en:'WARNINGS'},
+  bad:  {es:'FALLA',          en:'FAILING'},
+  off:  {es:'NO CONFIGURADO', en:'NOT SET UP'},
+};
+// nivel: ok · warn (responde, pero con avisos: chequeos «warn» de la voz, cuota de Finnhub, IA en pausa) · bad · off
+function _diagLevel(s){
+  s = s || {};
+  if(s.ok){
+    const warn = (Array.isArray(s.checks) && s.checks.some(c=>c && c.level==='warn'))
+      || !!s.quota || !!(s.circuit && s.circuit.open);
+    return warn ? 'warn' : 'ok';
+  }
+  return s.configured ? 'bad' : 'off';
+}
+// textos de la tarjeta en el idioma de la app → {detail, fixes[]}
+function _diagTexts(s, level){
+  s = s || {};
+  const en = _sysEN();
+  let detail = String((en && s.detail_en) ? s.detail_en : (s.detail || s.detail_en || ''));
+  let fixes = [];
+  if(Array.isArray(s.fixes)) fixes = s.fixes.map(f=>{
+    if(!f) return '';
+    if(typeof f === 'string') return f;
+    return String((en ? (f.en || f.es) : (f.es || f.en)) || '');
+  }).filter(Boolean);
+  if(!fixes.length){
+    const flat = en ? (s.fix_en || s.fix_es || s.fix) : (s.fix_es || s.fix || s.fix_en);
+    if(flat) fixes = [String(flat)];
+  }
+  if(fixes.length){
+    // el detalle de la voz ya trae «— QUÉ HACER: 1) …» / «— WHAT TO DO: 1) …»: se quita para no repetirlo
+    detail = detail.replace(/\s*—\s*(QUÉ HACER|WHAT TO DO)\s*:[\s\S]*$/i, '').trim();
+  } else if(level !== 'ok'){
+    const i = _diagHintAt(detail);
+    if(i > 0 && detail.slice(i + 3).trim()){ fixes = [detail.slice(i + 3).trim()]; detail = detail.slice(0, i).trim(); }
+  }
+  return {detail, fixes};
+}
+// dónde empieza la pista « → …» que el servidor PEGA al final del detalle (_ai_error_hint/_db_error_hint): la
+// primera flecha FUERA de paréntesis/corchetes. Una ruta de menú como «(Deployments → Restart)» o «(+ New → Database)»
+// no es la pista; un detalle con viñetas «•» (la voz) ya trae sus arreglos aparte → -1 (no se parte).
+function _diagHintAt(detail){
+  const s = String(detail || '');
+  if(s.indexOf('•') >= 0) return -1;
+  let depth = 0;
+  for(let i = 0; i < s.length; i++){
+    const c = s[i];
+    if(c === '(' || c === '[') depth++;
+    else if((c === ')' || c === ']') && depth > 0) depth--;
+    else if(depth === 0 && c === ' ' && s.startsWith(' → ', i)) return i;
+  }
+  return -1;
+}
+// «Khipu (voz) tiene problemas: • A • B» → encabezado + lista
+function _diagDetailHTML(detail){
+  const parts = String(detail||'').split(/\s*•\s+/).map(x=>x.trim());
+  const head = parts.shift() || '';
+  const items = parts.filter(Boolean);
+  return esc(head) + (items.length ? '<ul>' + items.map(x=>'<li>' + esc(x) + '</li>').join('') + '</ul>' : '');
 }
 function _diagCard(key, s){
+  s = s || {};
   const m = DIAG_META[key] || {icon:'•', name:key, why:''};
-  const d = _diagDot(s);
-  const lat = (s.latency_ms!=null) ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3)">${s.latency_ms}ms</span>` : '';
-  return `<div style="border:1px solid var(--line);border-left:3px solid ${d.c};border-radius:8px;padding:12px 14px;margin-bottom:10px;background:var(--surface-2,rgba(255,255,255,.02))">
-    <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px">
-      <span style="width:9px;height:9px;border-radius:50%;background:${d.c};box-shadow:0 0 8px ${d.c};flex-shrink:0"></span>
-      <span style="font-size:14px">${m.icon}</span>
-      <b style="font-size:13.5px;flex:1">${m.name}</b>
-      <span style="font-size:9px;font-weight:800;letter-spacing:.06em;color:${d.c}">${d.t}</span>
+  const en = _sysEN();
+  const lv = _diagLevel(s);
+  const tx = _diagTexts(s, lv);
+  const name = (en && m.name_en) || m.name;
+  const why = (en && m.why_en) || m.why || '';
+  const lat = (s.latency_ms!=null) ? `<span class="ksys-lat">${esc(s.latency_ms)} ms</span>` : '';
+  const fix = tx.fixes.length ? `<div class="ksys-fix"><span class="ksys-fix-h">${esc(_sysL('Qué hacer', 'What to do'))}</span>${
+    tx.fixes.length > 1 ? '<ol>' + tx.fixes.map(f=>'<li>' + esc(f) + '</li>').join('') + '</ol>' : esc(tx.fixes[0])}</div>` : '';
+  return `<div class="ksys-card ksys-lv-${lv}" data-diag="${esc(key)}" data-level="${lv}">
+    <div class="ksys-ch">
+      <span class="ksys-ic" aria-hidden="true">${esc(m.icon)}<span class="ksys-dot"></span></span>
+      <b class="ksys-name">${esc(name)}</b>
+      <span class="ksys-st">${esc(DIAG_LEVEL_TXT[lv][en ? 'en' : 'es'])}</span>
       ${lat}
     </div>
-    <div style="font-size:11px;color:var(--ink-3);margin:2px 0 6px;padding-left:18px">${m.why}</div>
-    <div style="font-size:12px;color:var(--ink-2,var(--ink));padding-left:18px;line-height:1.45">${(s.detail||'').replace(/</g,'&lt;')}</div>
+    ${why ? `<div class="ksys-why">${esc(why)}</div>` : ''}
+    ${tx.detail ? `<div class="ksys-detail">${_diagDetailHTML(tx.detail)}</div>` : ''}
+    ${fix}
+  </div>`;
+}
+function _sysEmpty(es, en){ return `<div class="ksys-empty">${esc(_sysL(es, en))}</div>`; }
+function _sysErrCard(title, msg, hint){
+  return `<div class="ksys-card ksys-lv-bad" role="alert">
+    <div class="ksys-ch"><span class="ksys-ic" aria-hidden="true">⚠<span class="ksys-dot"></span></span><b class="ksys-name ksys-bad-ink">${esc(title)}</b></div>
+    ${msg ? `<div class="ksys-detail">${esc(msg)}</div>` : ''}
+    ${hint ? `<div class="ksys-fix"><span class="ksys-fix-h">${esc(_sysL('Qué hacer', 'What to do'))}</span>${esc(hint)}</div>` : ''}
   </div>`;
 }
 window.openDiagnostics = async function(fresh){
   const body = $('diag-body'), sum = $('diag-summary');
-  if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Re-probando servicios en vivo…</div>';
+  if(fresh) body.innerHTML = _sysEmpty('Re-probando servicios en vivo…', 'Re-testing services live…');
   sum.textContent = '';
   try{
     const base = (typeof BASE!=='undefined') ? BASE : '';
@@ -5679,13 +5895,13 @@ window.openDiagnostics = async function(fresh){
     const order = ['claude','gemini','nvidia','investigacion','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','market_extra'];
     body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
-    const c = ok===tot ? '#1db954' : (ok===0 ? '#e23b3b' : '#e6a23c');
-    sum.innerHTML = `<b style="color:${c}">${ok}/${tot} operativos</b> · modelo IA: <code style="font-size:10px">${d.ai_model||'?'}</code>${d.cached?' · <span style="opacity:.6">caché</span>':''}`;
+    const lv = ok===tot ? 'ok' : (ok===0 ? 'bad' : 'warn');
+    sum.innerHTML = `<b class="ksys-sumb ksys-lv-${lv}">${esc(ok)}/${esc(tot)} ${esc(_sysL('operativos', 'operational'))}</b> · ${esc(_sysL('modelo IA', 'AI model'))}: <code>${esc(d.ai_model||'?')}</code>${d.cached ? ' · ' + esc(_sysL('caché', 'cached')) : ''}`;
     if(window.KhipuReconcile && d.services && d.services.ontologia && d.services.ontologia.configured) window.KhipuReconcile.mount('recon-box');
   }catch(e){
-    body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">
-      No se pudo obtener el diagnóstico: ${String(e.message||e)}.<br><br>
-      <span style="color:var(--ink-3)">Probablemente el servidor no está corriendo en modo servidor, o estás abriendo el archivo directamente (modo standalone). El diagnóstico en vivo requiere el backend Flask.</span></div>`;
+    body.innerHTML = _sysErrCard(_sysL('No se pudo obtener el diagnóstico', 'Could not load the diagnostics'), String(e.message||e),
+      _sysL('El diagnóstico en vivo necesita el servidor de Khipus (backend Flask). Si acabas de desplegar, espera un minuto y pulsa ↻ Re-probar.',
+            'The live diagnostics need the Khipus server (Flask backend). If you just deployed, wait a minute and press ↻ Re-test.'));
   }
 };
 window.closeDiagnostics = function(){ window.closeSistema && window.closeSistema(); };
@@ -5693,13 +5909,15 @@ window.closeDiagnostics = function(){ window.closeSistema && window.closeSistema
 /* ── Registro de Acciones (Fase 2 — ontología) ──────────────────────────── */
 function _registroActionMeta(a){
   const M = {
-    CrearTesis:{icon:'📋',label:'Tesis'}, MarcarRiesgo:{icon:'⚠',label:'Riesgo marcado'},
-    RegistrarDecision:{icon:'🗳',label:'Decisión'}, AnotarObjeto:{icon:'✎',label:'Anotación'},
-    ProponerVinculo:{icon:'🔗',label:'Vínculo propuesto'}, ConfirmarVinculo:{icon:'✓',label:'Vínculo confirmado'},
-    RechazarVinculo:{icon:'✗',label:'Vínculo rechazado'}, AjustarPosicion:{icon:'📊',label:'Posición ajustada'},
-    CorregirDato:{icon:'✒',label:'Dato corregido'},
+    CrearTesis:{icon:'📋',label:'Tesis',en:'Thesis'}, MarcarRiesgo:{icon:'⚠',label:'Riesgo marcado',en:'Risk flagged'},
+    RegistrarDecision:{icon:'🗳',label:'Decisión',en:'Decision'}, AnotarObjeto:{icon:'✎',label:'Anotación',en:'Note'},
+    ProponerVinculo:{icon:'🔗',label:'Vínculo propuesto',en:'Link proposed'}, ConfirmarVinculo:{icon:'✓',label:'Vínculo confirmado',en:'Link confirmed'},
+    RechazarVinculo:{icon:'✗',label:'Vínculo rechazado',en:'Link rejected'}, AjustarPosicion:{icon:'📊',label:'Posición ajustada',en:'Position adjusted'},
+    CorregirDato:{icon:'✒',label:'Dato corregido',en:'Data corrected'},
   };
-  return M[a] || {icon:'•', label:a||'Acción'};
+  const m = M[a];
+  if(!m) return {icon:'•', label:a||_sysL('Acción', 'Action')};
+  return {icon:m.icon, label:_sysEN() ? m.en : m.label};
 }
 function _registroCard(a){
   const m = _registroActionMeta(a.action);
@@ -5707,37 +5925,39 @@ function _registroCard(a){
   const detail = p.rationale || p.razon || p.decision || p.texto || (p.campo ? `${p.campo}: ${p.valor_anterior} → ${p.valor_nuevo}` : '') || '';
   const objId = a.object_id || a.target_id || '';
   const objLabel = (window.NODE_BY_ID && window.NODE_BY_ID[objId] && window.NODE_BY_ID[objId].label) || objId;
-  const when = a.recorded_at ? new Date(a.recorded_at).toLocaleString('es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-  return `<div style="border:1px solid var(--line);border-left:3px solid #43C896;border-radius:8px;padding:11px 14px;margin-bottom:9px;background:var(--surface-2,rgba(255,255,255,.02))">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-      <span style="font-size:13px">${m.icon}</span>
-      <b style="font-size:13px;flex:1">${m.label}${objLabel?' · '+esc(objLabel):''}</b>
-      <span style="font-size:10px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">${when}</span>
+  const when = a.recorded_at ? new Date(a.recorded_at).toLocaleString(_sysEN()?'en':'es',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  return `<div class="ksys-card">
+    <div class="ksys-ch">
+      <span class="ksys-ic acc" aria-hidden="true">${esc(m.icon)}</span>
+      <b class="ksys-name">${esc(m.label)}${objLabel?' · '+esc(objLabel):''}</b>
+      <span class="ksys-when">${esc(when)}</span>
     </div>
-    <div style="font-size:11px;color:var(--ink-3);padding-left:21px">por <b style="color:var(--ink-2)">${esc(a.actor||'')}</b></div>
-    ${detail?`<div style="font-size:12px;color:var(--ink-2);padding-left:21px;margin-top:4px;line-height:1.4">${esc(String(detail).slice(0,240))}</div>`:''}
+    <div class="ksys-why">${esc(_sysL('por', 'by'))} <b>${esc(a.actor||'')}</b></div>
+    ${detail?`<div class="ksys-detail">${esc(String(detail).slice(0,240))}</div>`:''}
   </div>`;
 }
 window.openRegistro = async function(fresh){
   const body = $('registro-body');
-  if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
+  if(fresh) body.innerHTML = _sysEmpty('Actualizando…', 'Refreshing…');
   try{
     const base = (typeof BASE!=='undefined') ? BASE : '';
     const actor = ($('registro-filter-actor').value||'').trim();
     const qs = actor ? `?actor=${encodeURIComponent(actor)}&limit=100` : '?limit=100';
     const r = await fetch(`${base}/api/ontology/actions${qs}`);
     if(!r.ok){
-      if(r.status===503){ body.innerHTML = '<div style="padding:20px;color:var(--ink-3);font-size:13px">La ontología no está configurada en este servidor (falta Postgres). El Registro se activa solo cuando existe.</div>'; return; }
+      if(r.status===503){ body.innerHTML = _sysEmpty('La ontología no está configurada en este servidor (falta Postgres). El Registro se activa solo cuando existe.',
+        'The ontology is not set up on this server (Postgres is missing). The Log turns on only when it exists.'); return; }
       throw new Error('HTTP '+r.status);
     }
     const d = await r.json();
     if(!d.actions || !d.actions.length){
-      body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Sin acciones registradas todavía. Abre una empresa en ◈ Grafo Temporal → ＋ Acción para crear la primera tesis o anotación.</div>';
+      body.innerHTML = _sysEmpty('Sin acciones registradas todavía. Abre una empresa en ◈ Grafo Temporal → ＋ Acción para crear la primera tesis o anotación.',
+        'No actions recorded yet. Open a company in ◈ Temporal Graph → ＋ Action to create the first thesis or note.');
       return;
     }
     body.innerHTML = d.actions.map(_registroCard).join('');
   }catch(e){
-    body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">No se pudo cargar el registro: ${String(e.message||e)}</div>`;
+    body.innerHTML = _sysErrCard(_sysL('No se pudo cargar el registro', 'Could not load the log'), String(e.message||e), '');
   }
 };
 window.closeRegistro = function(){ window.closeSistema && window.closeSistema(); };
@@ -5745,12 +5965,18 @@ window.closeRegistro = function(){ window.closeSistema && window.closeSistema();
 
 /* ── Propuestas de Agentes (Fase 3 — ontología) ─────────────────────────── */
 const AGENT_META = {
-  centinela_nrs:{icon:'🛰',label:'Centinela NRS'}, lector_gdelt:{icon:'📰',label:'Lector GDELT'},
-  guardian_cartera:{icon:'💼',label:'Guardián de Cartera'}, cartografo:{icon:'🗺',label:'Cartógrafo'},
+  centinela_nrs:{icon:'🛰',label:'Centinela NRS',en:'NRS Sentinel'}, lector_gdelt:{icon:'📰',label:'Lector GDELT',en:'GDELT Reader'},
+  guardian_cartera:{icon:'💼',label:'Guardián de Cartera',en:'Portfolio Guardian'}, cartografo:{icon:'🗺',label:'Cartógrafo',en:'Cartographer'},
+  radar_empresas:{icon:'📡',label:'Radar de Empresas',en:'Company Radar'}, tejedor_hiperaristas:{icon:'🕸',label:'Tejedor de Hiperaristas',en:'Hyperedge Weaver'},
+  investigador_autonomo:{icon:'🌐',label:'Investigador Autónomo',en:'Autonomous Researcher'},
 };
 const PROPOSAL_FIELD_LABELS = {
   nivel:'Nivel NRS', razon:'Razón', stance:'Postura', confidence:'Confianza', rationale:'Razonamiento',
   decision:'Decisión', texto:'Nota', ticker:'Ticker', delta:'Delta (unidades)', tipo:'Tipo de vínculo',
+};
+const PROPOSAL_FIELD_LABELS_EN = {
+  nivel:'NRS level', razon:'Reason', stance:'Stance', confidence:'Confidence', rationale:'Rationale',
+  decision:'Decision', texto:'Note', ticker:'Ticker', delta:'Delta (units)', tipo:'Link type',
 };
 function _getActorGlobal(){
   try{
@@ -5760,42 +5986,42 @@ function _getActorGlobal(){
   }catch(e){ return 'anónimo'; }
 }
 function _propuestaCard(p){
-  const m = AGENT_META[p.agent] || {icon:'🤖', label:p.agent};
+  const en = _sysEN();
+  const m0 = AGENT_META[p.agent];
+  const m = m0 ? {icon:m0.icon, label:(en && m0.en) || m0.label} : {icon:'🤖', label:p.agent||''};
   const objLabel = (window.NODE_BY_ID && window.NODE_BY_ID[p.object_id] && window.NODE_BY_ID[p.object_id].label) || p.object_id || '';
   const conf = p.confidence!=null ? Math.round(p.confidence*100)+'%' : '—';
   // Track C: 'fuentes' y 'datos_no_verificados' del Investigador se muestran
   // bonitos (links + lista), no como JSON editable; 'autor_tipo' se omite.
   const fields = Object.keys(p.payload||{}).filter(k=>(!['company_id','object_id','ticker','fuentes','datos_no_verificados','autor_tipo'].includes(k)) || k==='ticker');
   const fuentes = Array.isArray(p.payload&&p.payload.fuentes) ? p.payload.fuentes : [];
-  const fuentesHtml = fuentes.length ? `<div style="margin:6px 0 8px">
-      <label style="font-size:10px;color:var(--ink-3);display:block;margin-bottom:3px">📎 Fuentes citadas (${fuentes.length})</label>
-      ${fuentes.slice(0,8).map(f=>`<a href="${safeUrl(f.url)}" target="_blank" rel="noopener noreferrer" style="display:block;font-size:11px;color:#7aa2ff;text-decoration:none;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">↗ ${esc(f.titulo||f.publicador||f.url||'')}</a>`).join('')}
+  const fuentesHtml = fuentes.length ? `<div class="ksys-src">
+      <span class="ksys-flab">📎 ${esc(_sysL('Fuentes citadas', 'Cited sources'))} (${fuentes.length})</span>
+      ${fuentes.slice(0,8).map(f=>`<a href="${safeUrl(f.url)}" target="_blank" rel="noopener noreferrer">↗ ${esc(f.titulo||f.publicador||f.url||'')}</a>`).join('')}
     </div>` : '';
   const noVerif = Array.isArray(p.payload&&p.payload.datos_no_verificados) ? p.payload.datos_no_verificados : [];
-  const noVerifHtml = noVerif.length ? `<div style="margin:0 0 8px;font-size:10.5px;color:#d9a441">⚠ Sin verificar: ${esc(noVerif.slice(0,4).join(' · '))}</div>` : '';
+  const noVerifHtml = noVerif.length ? `<div class="ksys-why ksys-warn-ink ksys-unv">⚠ ${esc(_sysL('Sin verificar', 'Unverified'))}: ${esc(noVerif.slice(0,4).join(' · '))}</div>` : '';
   const fieldsHtml = fields.map(k=>{
     const v = p.payload[k];
-    const label = PROPOSAL_FIELD_LABELS[k] || k;
+    const label = (en ? PROPOSAL_FIELD_LABELS_EN[k] : PROPOSAL_FIELD_LABELS[k]) || k;
     const isLong = typeof v === 'string' && v.length > 40;
-    return `<div style="margin-bottom:6px">
-      <label style="font-size:10px;color:var(--ink-3);display:block;margin-bottom:2px">${esc(label)}</label>
-      ${isLong
-        ? `<textarea data-k="${esc(k)}" class="prop-field" rows="2" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-1);font-size:12px">${esc(String(v))}</textarea>`
-        : `<input data-k="${esc(k)}" class="prop-field" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink-1);font-size:12px" value="${esc(String(v))}">`}
-    </div>`;
+    return `<label class="ksys-fl"><span class="ksys-flab">${esc(label)}</span>${isLong
+        ? `<textarea data-k="${esc(k)}" class="prop-field ksys-field" rows="2">${esc(String(v))}</textarea>`
+        : `<input data-k="${esc(k)}" class="prop-field ksys-field" value="${esc(String(v))}">`}</label>`;
   }).join('');
-  return `<div class="prop-card" data-id="${p.id}" data-action-type="${esc(p.action_type)}" style="border:1px solid var(--line);border-left:3px solid #8a5aff;border-radius:8px;padding:12px 14px;margin-bottom:11px;background:var(--surface-2,rgba(255,255,255,.02))">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <span style="font-size:14px">${m.icon}</span>
-      <b style="font-size:13px;flex:1">${m.label}${objLabel?' · '+esc(objLabel):''}</b>
-      <span style="font-size:10px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">conf. ${conf}</span>
+  return `<div class="prop-card ksys-card" data-id="${esc(p.id)}" data-action-type="${esc(p.action_type)}">
+    <div class="ksys-ch">
+      <span class="ksys-ic ai" aria-hidden="true">${esc(m.icon)}</span>
+      <b class="ksys-name">${esc(m.label)}${objLabel?' · '+esc(objLabel):''}</b>
+      <span class="ksys-when">conf. ${esc(conf)}</span>
     </div>
-    <div style="font-size:12px;color:var(--ink-2);margin:4px 0 8px;line-height:1.4">${esc(p.explanation||'')}</div>
-    ${fuentesHtml}${noVerifHtml}${fieldsHtml}
-    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-      <button class="prop-approve" style="font-size:12px;padding:6px 12px;border-radius:7px;border:none;background:#43C896;color:#04241a;font-weight:700;cursor:pointer">✓ Aprobar</button>
-      <button class="prop-reject" style="font-size:12px;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:none;color:var(--ink-2);cursor:pointer">✗ Rechazar</button>
-      <span class="prop-status" style="font-size:11px;color:var(--ink-3)"></span>
+    ${p.explanation?`<div class="ksys-detail">${esc(p.explanation)}</div>`:''}
+    ${fuentesHtml}${noVerifHtml}
+    ${fieldsHtml?`<div class="ksys-fields">${fieldsHtml}</div>`:''}
+    <div class="ksys-acts">
+      <button type="button" class="prop-approve key-btn ksys-pri">✓ ${esc(_sysL('Aprobar', 'Approve'))}</button>
+      <button type="button" class="prop-reject key-btn">✗ ${esc(_sysL('Rechazar', 'Reject'))}</button>
+      <span class="prop-status" aria-live="polite"></span>
     </div>
   </div>`;
 }
@@ -5805,7 +6031,7 @@ function _propuestaCard(p){
 window.lanzarInvestigacion = async function(){
   const q = ($('investigar-q')&&$('investigar-q').value||'').trim();
   const st = $('investigar-status');
-  if(!q){ if(st) st.textContent = 'Escribe qué investigar.'; return; }
+  if(!q){ if(st) st.textContent = _sysL('Escribe qué investigar.', 'Type what to research.'); return; }
   const base = (typeof BASE!=='undefined') ? BASE : '';
   let actor = 'anónimo'; try{ actor = localStorage.getItem('khipu_actor')||'anónimo'; }catch(e){}
   // Escritura de la ontología → PIN de operador (X-Trade-Pin) vía _tradeFetch.
@@ -5818,7 +6044,7 @@ window.lanzarInvestigacion = async function(){
       return {ok:r.ok, code:r.status, data:await r.json().catch(()=>null)};
     }catch(e){ return {ok:false, code:0, data:{error:'Error de red', error_en:'Network error'}}; }
   };
-  if(st) st.textContent = '🌐 Investigando en la web… (20-60s)';
+  if(st) st.textContent = _sysL('🌐 Investigando en la web… (20-60s)', '🌐 Researching the web… (20-60s)');
   let res = await post(true);
   if(!res.ok){
     if(st) st.textContent = window._tradeErrText(res.data, res.code);
@@ -5832,8 +6058,9 @@ window.lanzarInvestigacion = async function(){
     if(d.running && tries < 24){ setTimeout(poll, 5000); return; }
     const last = d.last||{};
     if(st) st.textContent = last.status==='ok'
-      ? `✓ Propuesta creada (${last.action_type}) — revísala abajo y apruébala o recházala.`
-      : (last.status==='sin_resultado' ? (last.hint||'Sin resultados.') : (last.error||'Terminó.'));
+      ? (_sysEN() ? `✓ Proposal created (${last.action_type}) — review it below and approve or reject it.`
+                  : `✓ Propuesta creada (${last.action_type}) — revísala abajo y apruébala o recházala.`)
+      : (last.status==='sin_resultado' ? (last.hint||_sysL('Sin resultados.', 'No results.')) : (last.error||_sysL('Terminó.', 'Finished.')));
     if(last.status==='ok') window.openPropuestas(true);
   };
   setTimeout(poll, 6000);
@@ -5841,18 +6068,20 @@ window.lanzarInvestigacion = async function(){
 
 window.openPropuestas = async function(fresh){
   const body = $('propuestas-body');
-  if(fresh) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Actualizando…</div>';
+  if(fresh) body.innerHTML = _sysEmpty('Actualizando…', 'Refreshing…');
   try{
     const base = (typeof BASE!=='undefined') ? BASE : '';
     const r = await fetch(`${base}/api/ontology/agents/proposals?status=pending`);
     if(!r.ok){
-      if(r.status===503){ body.innerHTML = '<div style="padding:20px;color:var(--ink-3);font-size:13px">La ontología no está configurada en este servidor (falta Postgres).</div>'; return; }
+      if(r.status===503){ body.innerHTML = _sysEmpty('La ontología no está configurada en este servidor (falta Postgres).',
+        'The ontology is not set up on this server (Postgres is missing).'); return; }
       throw new Error('HTTP '+r.status);
     }
     const d = await r.json();
-    $('propuestas-summary').textContent = `${d.count} pendiente${d.count===1?'':'s'}`;
+    $('propuestas-summary').textContent = _sysEN() ? `${d.count} pending` : `${d.count} pendiente${d.count===1?'':'s'}`;
     if(!d.proposals || !d.proposals.length){
-      body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);font-size:13px">Sin propuestas pendientes. Dale a "🔍 Revisar ahora" para que los agentes analicen la ontología.</div>';
+      body.innerHTML = _sysEmpty('Sin propuestas pendientes. Dale a «🔍 Revisar ahora» para que los agentes analicen la ontología.',
+        'No pending proposals. Press «🔍 Review now» so the agents analyze the ontology.');
       return;
     }
     body.innerHTML = d.proposals.map(_propuestaCard).join('');
@@ -5862,12 +6091,12 @@ window.openPropuestas = async function(fresh){
       card.querySelector('.prop-reject').onclick = () => _resolveProposal(card, id, 'reject');
     });
   }catch(e){
-    body.innerHTML = `<div style="padding:20px;border:1px solid var(--line);border-radius:8px;color:#e23b3b;font-size:13px">No se pudo cargar: ${String(e.message||e)}</div>`;
+    body.innerHTML = _sysErrCard(_sysL('No se pudo cargar', 'Could not load'), String(e.message||e), '');
   }
 };
 function _resolveProposal(card, id, verb){
   const status = card.querySelector('.prop-status');
-  status.textContent = verb==='approve' ? 'aprobando…' : 'rechazando…'; status.style.color='var(--ink-3)';
+  status.textContent = verb==='approve' ? _sysL('aprobando…', 'approving…') : _sysL('rechazando…', 'rejecting…'); status.style.color='var(--os-ink-2,#A6A8B5)';
   const base = (typeof BASE!=='undefined') ? BASE : '';
   const body = { actor: _getActorGlobal() };
   if(verb==='approve'){
@@ -5883,21 +6112,21 @@ function _resolveProposal(card, id, verb){
   window._tradeFetch(`${base}/api/ontology/agents/proposals/${encodeURIComponent(id)}/${verb}`, {
     method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body),
   }, true).then(r=>r.json().catch(()=>null).then(d=>({ok:r.ok,d,code:r.status}))).then(({ok,d,code})=>{
-    if(ok){ status.textContent = verb==='approve' ? '✓ aprobado' : '✗ rechazado'; status.style.color = verb==='approve' ? '#43C896' : 'var(--ink-3)';
+    if(ok){ status.textContent = verb==='approve' ? '✓ ' + _sysL('aprobado', 'approved') : '✗ ' + _sysL('rechazado', 'rejected'); status.style.color = verb==='approve' ? 'var(--os-good-ink,#2fbf5b)' : 'var(--os-ink-2,#A6A8B5)';
       setTimeout(()=>{ card.style.opacity='0.4'; card.style.pointerEvents='none'; }, 300);
-    } else { status.textContent = '⚠ '+window._tradeErrText(d, code); status.style.color='#f87171'; }
-  }).catch(()=>{ status.textContent='⚠ '+((window.LANG==='en')?'network error':'error de red'); status.style.color='#f87171'; });
+    } else { status.textContent = '⚠ '+window._tradeErrText(d, code); status.style.color='var(--os-bad-ink,#F47C7C)'; }
+  }).catch(()=>{ status.textContent='⚠ '+((window.LANG==='en')?'network error':'error de red'); status.style.color='var(--os-bad-ink,#F47C7C)'; });
 }
 window.runAgentes = function(){
   const summary = $('propuestas-summary');
-  summary.textContent = 'revisando…';
+  summary.textContent = _sysL('revisando…', 'reviewing…');
   const base = (typeof BASE!=='undefined') ? BASE : '';
   // Correr agentes = escritura de la ontología → PIN de operador.
   window._tradeFetch(`${base}/api/ontology/agents/run`, { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' }, true)
     .then(r=>r.json().catch(()=>null).then(d=>({d, code:r.status}))).then(({d, code})=>{
       if(d && d.status==='ok'){
         const total = Object.values(d.summary||{}).reduce((s,a)=>s+(a.proposals||0),0);
-        summary.textContent = `${total} propuesta${total===1?'':'s'} nueva${total===1?'':'s'}`;
+        summary.textContent = _sysEN() ? `${total} new proposal${total===1?'':'s'}` : `${total} propuesta${total===1?'':'s'} nueva${total===1?'':'s'}`;
         window.openPropuestas(true);
       } else { summary.textContent = '⚠ ' + window._tradeErrText(d, code); }
     }).catch(()=>{ summary.textContent = '⚠ ' + ((window.LANG==='en')?'network error':'error de red'); });
@@ -5906,16 +6135,59 @@ window.closePropuestas = function(){ window.closeSistema && window.closeSistema(
 
 /* ── ⚙ Sistema: overlay unificado (Diagnóstico / Registro / Propuestas) ──── */
 let _sistemaTab = 'diag';
+// Textos ES/EN del armazón (Khipus OS 2026-10-10): los elementos llevan data-ksys-t (texto) · data-ksys-h (HTML
+// FIJO de esta tabla, nunca datos) · data-ksys-ph (placeholder) · data-ksys-al (aria-label). Se aplican al abrir
+// y al cambiar de pestaña, así el botón de idioma se respeta sin re-pintar nada más.
+const SYS_I18N = {
+  es:{ panel_al:'Sistema', close:'Cerrar',
+       tab_diag:'🩺 Diagnóstico', tab_registro:'📋 Registro', tab_propuestas:'🔔 Propuestas', tab_gasto:'💰 Gasto IA',
+       t_diag:'🩺 Estado del Sistema', t_registro:'📋 Registro de Acciones', t_propuestas:'🔔 Propuestas de Agentes', t_gasto:'💰 Gasto de IA',
+       diag_sub:'Prueba <b>en vivo</b> cada API key y servicio del servidor — no solo si existen, sino si <b>de verdad responden</b>. Las keys nunca se muestran.',
+       retest:'↻ Re-probar', diag_loading:'Cargando diagnóstico…',
+       reg_sub:'Tesis, decisiones, anotaciones y correcciones — quién hizo qué, cuándo y por qué. Se registran desde la ficha de cada empresa en <b>◈ Grafo Temporal</b>.',
+       reg_filter:'Filtrar por autor…', refresh:'↻ Actualizar', reg_loading:'Cargando registro…',
+       prop_sub:'7 agentes vigilan la ontología (riesgo NRS, noticias, tu cartera, consistencia del grafo, radar de empresas, hiperaristas e investigación web) y <b>proponen</b> — nada se ejecuta sin que tú apruebes.',
+       prop_run:'🔍 Revisar ahora', inv_ph:'Investiga en la web… (ej. «¿CXMT amenaza a Micron?»)', inv_al:'Investiga en la web',
+       inv_go:'🌐 Investigar', prop_loading:'Cargando propuestas…' },
+  en:{ panel_al:'System', close:'Close',
+       tab_diag:'🩺 Diagnostics', tab_registro:'📋 Log', tab_propuestas:'🔔 Proposals', tab_gasto:'💰 AI spend',
+       t_diag:'🩺 System status', t_registro:'📋 Action log', t_propuestas:'🔔 Agent proposals', t_gasto:'💰 AI spend',
+       diag_sub:'Tests every API key and server service <b>live</b> — not just whether they exist, but whether they <b>really respond</b>. Keys are never shown.',
+       retest:'↻ Re-test', diag_loading:'Loading diagnostics…',
+       reg_sub:'Theses, decisions, notes and corrections — who did what, when and why. They are recorded from each company\'s card in <b>◈ Temporal Graph</b>.',
+       reg_filter:'Filter by author…', refresh:'↻ Refresh', reg_loading:'Loading log…',
+       prop_sub:'7 agents watch the ontology (NRS risk, news, your portfolio, graph consistency, company radar, hyperedges and web research) and <b>propose</b> — nothing runs until you approve it.',
+       prop_run:'🔍 Review now', inv_ph:'Research the web… (e.g. “Is CXMT a threat to Micron?”)', inv_al:'Research the web',
+       inv_go:'🌐 Research', prop_loading:'Loading proposals…' },
+};
+function _sistemaApplyLang(){
+  const D = SYS_I18N[_sysEN() ? 'en' : 'es'];
+  const root = $('sistema-panel'); if(!root) return D;
+  const each = (attr, fn) => {
+    if(root.hasAttribute(attr)) fn(root, root.getAttribute(attr));
+    root.querySelectorAll('['+attr+']').forEach(el=>fn(el, el.getAttribute(attr)));
+  };
+  each('data-ksys-t',  (el,k)=>{ if(D[k]!=null) el.textContent = D[k]; });
+  each('data-ksys-h',  (el,k)=>{ if(D[k]!=null) el.innerHTML = D[k]; });       // solo cadenas fijas de SYS_I18N
+  each('data-ksys-ph', (el,k)=>{ if(D[k]!=null) el.placeholder = D[k]; });
+  each('data-ksys-al', (el,k)=>{ if(D[k]!=null) el.setAttribute('aria-label', D[k]); });
+  // la entrada 🤖 Conectar IAs (engine/mcpconnect.js) se re-rotula en el idioma actual (idempotente)
+  try{ if(window.KhipuMCP && window.KhipuMCP.installEntry) window.KhipuMCP.installEntry(); }catch(e){}
+  return D;
+}
 function _switchSistemaTab(t){
   _sistemaTab = t;
-  document.querySelectorAll('#sistema-tabseg button').forEach(b=>b.classList.toggle('active', b.dataset.t===t));
+  document.querySelectorAll('#sistema-tabseg button').forEach(b=>{
+    const on = b.dataset.t===t;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
   $('sistema-diag').style.display = t==='diag' ? 'block' : 'none';
   $('sistema-registro').style.display = t==='registro' ? 'block' : 'none';
   $('sistema-propuestas').style.display = t==='propuestas' ? 'block' : 'none';
   $('sistema-gasto').style.display = t==='gasto' ? 'block' : 'none';
-  const _en = (window.LANG||'')==='en';
-  const titles = {diag:'🩺 Estado del Sistema', registro:'📋 Registro de Acciones', propuestas:'🔔 Propuestas de Agentes', gasto: _en ? '💰 AI spend' : '💰 Gasto de IA'};
-  $('sistema-title').textContent = titles[t];
+  const D = _sistemaApplyLang();
+  if(D['t_'+t]) $('sistema-title').textContent = D['t_'+t];
   if(t==='gasto') { if(window.KhipuSpend) window.KhipuSpend.render('sistema-gasto'); }
   else if(t==='diag') window.openDiagnostics();
   else if(t==='registro') window.openRegistro();
@@ -6969,8 +7241,14 @@ function applyLangV8(){
   if($('settings-panel').classList.contains('show')) Settings.render();
   DataHealth.render();
 }
+/* 🩺 Sistema abierto al cambiar ES/EN: se re-rotula y re-pinta la pestaña actual en el idioma nuevo (antes quedaba
+   en el viejo hasta cerrarlo). Va aparte de applyLangV8 para que un fallo allí no lo salte. */
+function _sistemaRelabel(){
+  const sp=$('sistema-panel');
+  if(sp && sp.classList.contains('show')) _switchSistemaTab(_sistemaTab);
+}
 const _applyLang = applyLang;
-applyLang = function(){ _applyLang(); try{ applyLangV8(); }catch(e){} };
+applyLang = function(){ _applyLang(); try{ applyLangV8(); }catch(e){} try{ _sistemaRelabel(); }catch(e){} };
 
 /* ════════════════ INIT v8 ════════════════ */
 /* Hooks públicos (depuración / power-users): V8.Alerts, V8.LivePrices, V8.Settings… */

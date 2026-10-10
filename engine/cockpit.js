@@ -18,7 +18,30 @@
 (function () {
   'use strict';
 
-  var NEON = '#00E0FF', VIOLET = '#8e5aff', UP = '#2BE38B', DOWN = '#FF4D6A';
+  // UP/DOWN: solo los usa stageInsights (engine/insights.js re-tematiza esos style="" dentro de su ventana) y
+  // el respaldo de var() del pulso de carteras del inicio. NEON/VIOLET (cian/violeta neón) ya no se usan.
+  var UP = '#2BE38B', DOWN = '#FF4D6A';
+  // KHIPUS OS (2026-10-10): las ESCENAS de la Cabina (bróker, scalping, explosivas, investigación, comparar,
+  // simulaciones, selector…) pintan SOLO con tokens --os-* (siguen el tema claro/oscuro; ya no son "islas
+  // oscuras"). El valor tras la coma es el respaldo oscuro.
+  // *Ink = colores de TEXTO con contraste AA; good/bad/warn/accent vivos = rellenos, barras y anillos.
+  var OS = {
+    ink: 'var(--os-ink,#F2F2F5)', ink2: 'var(--os-ink-2,#A6A8B5)',
+    s1: 'var(--os-surface,#17181F)', s2: 'var(--os-surface-2,#1F2029)', s3: 'var(--os-surface-3,#2A2B36)',
+    line: 'var(--os-line,rgba(255,255,255,.07))', acc: 'var(--os-accent,#4C8DF6)', ai: 'var(--os-ai,#B48CFF)',
+    good: 'var(--os-good,#2fbf5b)', bad: 'var(--os-bad,#f06565)', warn: 'var(--os-warn,#F2C46D)',
+    goodInk: 'var(--os-good-ink,#2fbf5b)', badInk: 'var(--os-bad-ink,#F47C7C)', warnInk: 'var(--os-warn-ink,#F2C46D)',
+  };
+  // ¿el navegador sabe color-mix()? Se pregunta UNA vez: "background:X;background:color-mix(…var()…)" NO sirve
+  // de respaldo (con var() la 2.ª declaración se acepta al leerla y, si color-mix no existe, queda en «unset»).
+  var CMIX = (function () {
+    try { return !!(window.CSS && CSS.supports && CSS.supports('color', 'color-mix(in srgb, red 50%, blue)')); } catch (e) { return false; }
+  })();
+  // el acento como TEXTO: mezclado con la tinta para pasar 4.5:1 sobre cualquier superficie (como xray.js --xr-link)
+  var LINK_INK = CMIX ? 'color-mix(in srgb,var(--os-accent,#4C8DF6) 80%,var(--os-ink,#F2F2F5))' : OS.acc;
+  var LINK_CSS = 'color:' + LINK_INK;
+  // fondo TEÑIDO de un color semántico; sin color-mix → superficie neutra
+  function _tint(c, pct) { return 'background:' + (CMIX ? 'color-mix(in srgb,' + c + ' ' + (pct || 14) + '%,transparent)' : OS.s2); }
   var open = false;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -370,136 +393,232 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   .kos-pal-box{max-height:calc(100vh - 16px)}
 }
 @media(max-width:420px){#bcp-word{display:none}.kos-more{grid-template-columns:1fr}}
-.bcp-pick-h{font-size:18px;font-weight:650;margin:6px 0 4px;color:#E8EDFB}
-.bcp-pick-p{color:#8E9AB8;font-size:13px;margin:0 0 16px}
+/* ══ ESCENAS de la Cabina (2026-10-10): selector de empresa, comparar, caída simulada, explosivas, bróker,
+   scalping, investigación profunda, simulación por agentes… pintan SOLO con tokens --os-* → siguen el tema
+   claro/oscuro (ya no son "islas oscuras" .kd-legacy-dark). Tarjetas sin bordes duros, botones píldora,
+   foco visible 2px --os-accent, texto ≥ 4.5:1 (los --os-*-ink para texto; good/bad/warn vivos para rellenos).
+   El valor tras la coma es el respaldo oscuro. ══ */
+.bcp-pick-h{font-size:19px;font-weight:800;letter-spacing:-.015em;margin:6px 0 4px;color:var(--os-ink,#F2F2F5)}
+.bcp-pick-p{color:var(--os-ink-2,#A6A8B5);font-size:13.5px;margin:0 0 16px}
 .bcp-pick-f{position:relative;margin:0 0 12px}
-.bcp-pick-f input{width:100%;box-sizing:border-box;background:rgba(11,18,34,.8);border:1px solid rgba(122,158,255,.25);border-radius:10px;color:#E8EDFB;font-size:15px;padding:11px 14px;outline:none;font-family:inherit}
-.bcp-pick-f input:focus{border-color:rgba(0,224,255,.55)}
-.bcp-pick-sug{display:flex;flex-direction:column;gap:4px;margin-top:6px}
-.bcp-pick-it{text-align:left;border:1px solid rgba(122,158,255,.16);background:rgba(11,18,34,.6);color:#E8EDFB;border-radius:9px;padding:9px 12px;cursor:pointer;font-size:13.5px;font-family:inherit}
-.bcp-pick-it span{color:#8E9AB8;font-size:12px;margin-left:6px}
-.bcp-pick-it:hover{border-color:rgba(0,224,255,.5)}
-.bcp-pick-go{margin-top:6px}
+.bcp-pick-f input{width:100%;box-sizing:border-box;background:var(--os-surface-2,#1F2029);border:1px solid transparent;border-radius:999px;
+  color:var(--os-ink,#F2F2F5);font-size:15px;padding:11px 18px;outline:none;font-family:inherit;transition:background .15s,border-color .15s,box-shadow .15s}
+.bcp-pick-f input::placeholder{color:var(--os-ink-2,#A6A8B5)}
+.bcp-pick-f input:focus{background:var(--os-surface,#17181F);border-color:var(--os-line,rgba(255,255,255,.07));box-shadow:0 0 0 3px var(--kos-accent-soft,rgba(76,141,246,.16))}
+.bcp-pick-sug{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.bcp-pick-it{text-align:left;border:0;background:transparent;color:var(--os-ink,#F2F2F5);border-radius:12px;padding:9px 14px;cursor:pointer;
+  font-size:14px;font-family:inherit;transition:background .15s}
+.bcp-pick-it b{font-weight:700}
+.bcp-pick-it span{color:var(--os-ink-2,#A6A8B5);font-size:12.5px;margin-left:6px}
+.bcp-pick-it:hover{background:var(--os-surface-2,#1F2029)}
+.bcp-pick-go{margin-top:8px}
 .bcp-foot a{margin-left:0}
-.bcp-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:680px;margin:0 auto}
-.bcp-chip{font-size:13px;padding:10px 16px;border-radius:12px;cursor:pointer;color:#E8EDFB;
-  background:rgba(11,18,34,.7);border:1px solid rgba(122,158,255,.18);transition:all .14s}
-.bcp-chip:hover{border-color:rgba(0,224,255,.5);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.35)}
-.bcp-chip .k{color:#00E0FF;font-weight:700;margin-right:7px}
+.bcp-nf h2{font-size:22px;font-weight:800;letter-spacing:-.015em;color:var(--os-ink,#F2F2F5);margin:0 0 6px}
+.bcp-nf p{color:var(--os-ink-2,#A6A8B5);font-size:14px;margin:0 0 18px}
+.bcp-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:680px;margin:0 auto}
+.bcp-nf .bcp-chips{justify-content:flex-start;margin:0}
+.bcp-chip{appearance:none;-webkit-appearance:none;border:0;font:inherit;font-size:13.5px;line-height:1.3;padding:9px 15px;border-radius:999px;cursor:pointer;
+  color:var(--os-ink,#F2F2F5);background:var(--os-surface-2,#1F2029);text-align:left;transition:background .15s,transform .15s}
+.bcp-chip:hover{background:var(--os-surface-3,#2A2B36);transform:translateY(-1px)}
+.bcp-chip .k{color:var(--os-accent,#4C8DF6);font-weight:800;margin-right:7px}
 .bcp-stagehd{display:flex;align-items:center;gap:10px;margin:0 auto 14px;max-width:1200px}
-.bcp-back{font-size:12px;color:#9BA6C4;cursor:pointer;border:1px solid rgba(122,158,255,.2);
-  border-radius:9px;padding:6px 12px;background:rgba(11,18,34,.6);transition:all .14s}
-.bcp-back:hover{border-color:rgba(0,224,255,.45);color:#E8EDFB}
+.bcp-stagehd .lbl{color:var(--os-ink-2,#A6A8B5);font-size:12.5px}
+/* botón píldora de las escenas (← Inicio, Continuar, Actualizar, Confirmar…) */
+.bcp-back{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:12.5px;
+  font-weight:600;line-height:1.2;color:var(--os-ink,#F2F2F5);cursor:pointer;border:0;border-radius:999px;padding:8px 15px;
+  background:var(--os-surface-2,#1F2029);white-space:nowrap;transition:background .15s,opacity .15s,transform .1s}
+.bcp-back:hover{background:var(--os-surface-3,#2A2B36)}
+.bcp-back:active{transform:scale(.98)}
+.bcp-back:disabled{opacity:.55;cursor:default}
+.bcp-back.pri{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216)}
+.bcp-back.pri:hover{opacity:.88}
+.bcp-back:focus-visible,.bcp-chip:focus-visible,.bcp-pick-it:focus-visible,.bcp-pill:focus-visible,.bcp-seg button:focus-visible,
+.bcp-trade:focus-visible,.bcp-demobtn:focus-visible,.bcp-pick-f input:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}
+/* control segmentado (pestañas Perfil / Fundamentales de Comparar) */
+.bcp-seg{display:inline-flex;flex-wrap:wrap;padding:3px;gap:2px;border-radius:999px;background:var(--os-surface-2,#1F2029);margin-bottom:14px}
+.bcp-seg .cmp-tab{background:transparent;color:var(--os-ink-2,#A6A8B5);padding:7px 15px}
+.bcp-seg .cmp-tab:hover{background:transparent;color:var(--os-ink,#F2F2F5)}
+.bcp-seg .cmp-tab[aria-selected="true"]{background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);
+  box-shadow:var(--os-shadow,0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35))}
+/* píldoras de elección (símbolo y monto del scalping; monto de la confirmación en línea) */
+.bcp-pills{display:flex;gap:8px;flex-wrap:wrap}
+.bcp-pill{appearance:none;-webkit-appearance:none;border:0;font:inherit;font-size:13px;font-weight:700;padding:7px 15px;border-radius:999px;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);transition:background .15s,color .15s}
+.bcp-pill:hover{background:var(--os-surface-3,#2A2B36)}
+.bcp-pill.on,.bcp-pill.on:hover{background:var(--os-btn,#F2F2F5);color:var(--os-btn-ink,#111216)}
+.bcp-card .bcp-pill:not(.on),.bcp-card .bcp-back:not(.pri){background:var(--os-surface,#17181F)}
+.bcp-card .bcp-pill:not(.on):hover,.bcp-card .bcp-back:not(.pri):hover{background:var(--os-surface-3,#2A2B36)}
+/* COMPRAR / VENDER grandes (scalping) */
+.bcp-trade{appearance:none;-webkit-appearance:none;flex:1;min-width:0;border:0;padding:16px;border-radius:var(--os-r,18px);cursor:pointer;font:inherit;
+  font-size:17px;font-weight:800;letter-spacing:.02em;transition:background .15s,transform .1s}
+.bcp-trade:active{transform:scale(.98)}
+.bcp-trade.buy{color:var(--os-good-ink,#2fbf5b);background:var(--os-surface-2,#1F2029)}
+.bcp-trade.sell{color:var(--os-bad-ink,#F47C7C);background:var(--os-surface-2,#1F2029)}
+.bcp-trade.buy:hover,.bcp-trade.sell:hover{background:var(--os-surface-3,#2A2B36)}
 .bcp-inner{max-width:1200px;margin:0 auto}
-.bcp-cmp{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
-.bcp-cmp > div{flex:1;min-width:320px;border:1px solid rgba(122,158,255,.14);border-radius:16px;
-  background:rgba(11,18,34,.5);overflow:hidden}
+.bcp-cmp{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+/* cada X-Ray de la comparación: una columna --os-surface-2 con sus secciones en --os-surface (como el cajón del X-Ray) */
+.bcp-cmp > div{flex:1;min-width:min(320px,100%);border-radius:var(--os-r,18px);background:var(--os-surface-2,#1F2029);overflow:hidden;
+  --xr-card:var(--os-surface,#17181F);--xr-cell:var(--os-surface-2,#1F2029)}
+/* tarjeta genérica de escena + notas al pie */
+.bcp-card{border-radius:var(--os-r-sm,12px);background:var(--os-surface-2,#1F2029);padding:14px 16px;margin-bottom:14px;color:var(--os-ink,#F2F2F5);min-width:0}
+.bcp-note{font-size:11.5px;line-height:1.5;color:var(--os-ink-2,#A6A8B5)}
+.bcp-cap{font-size:12px;color:var(--os-ink-2,#A6A8B5)}
+.bcp-mono{font-variant-numeric:tabular-nums;letter-spacing:-.005em}
 /* dossier de simulación */
-.bcp-simhd{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.bcp-simhd .big{font-size:22px;font-weight:700}
-.bcp-simhd .kind{font-size:11px;text-transform:uppercase;letter-spacing:.1em;padding:4px 11px;border-radius:999px}
-.bcp-grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.bcp-stat{border:1px solid rgba(122,158,255,.14);border-radius:12px;padding:14px;background:rgba(11,18,34,.5)}
-.bcp-stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700}
-.bcp-stat span{font-size:10px;color:#7C87A3;text-transform:uppercase;letter-spacing:.06em}
-.bcp-two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:760px){.bcp-two{grid-template-columns:1fr}}
-.bcp-lh{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#7C87A3;font-weight:600;margin:0 0 10px}
-.bcp-row{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:5px 0;cursor:pointer}
-.bcp-row:hover .nm{color:#00E0FF}
-.bcp-row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bcp-row .bar{width:90px;height:5px;border-radius:3px;overflow:hidden;flex:none}
-.bcp-row .bar i{display:block;height:100%}
-.bcp-row .pv{font-family:'JetBrains Mono',monospace;font-size:11px;width:42px;text-align:right;flex:none}
-.bcp-dot{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:0 0 6px currentColor}
+.bcp-simhd{display:flex;align-items:center;gap:8px 12px;margin-bottom:16px;flex-wrap:wrap}
+.bcp-simhd .big{font-size:22px;font-weight:800;letter-spacing:-.015em;color:var(--os-ink,#F2F2F5);display:inline-flex;align-items:center;gap:10px;min-width:0;overflow-wrap:anywhere}
+.bcp-simhd .kind{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;padding:4px 11px;border-radius:999px}
+.bcp-simhd .sub{color:var(--os-ink-2,#A6A8B5);font-size:12.5px}
+.bcp-grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;container-type:inline-size}
+.bcp-stat{border-radius:var(--os-r-sm,12px);padding:14px 16px;background:var(--os-surface-2,#1F2029);min-width:0}
+/* la cifra se achica con el ancho de la VENTANA (no del navegador): "$101,234.56" cabe en una línea. DINERO NUNCA
+   se recorta con «…»: si aun así no cabe, baja de línea tras una coma de miles (<wbr>, ver _moneyHTML) */
+.bcp-stat b{display:block;font-size:24px;font-size:clamp(16px,4.9cqi,24px);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  line-height:1.2;color:var(--os-ink,#F2F2F5);overflow-wrap:anywhere}
+.bcp-stat span{font-size:12px;color:var(--os-ink-2,#A6A8B5)}
+/* dos columnas solo si caben (≥ 2 × 280 px en la ventana); en flancos angostos y en el celular, una */
+.bcp-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:20px}
+.bcp-lh{font-size:12.5px;letter-spacing:.01em;color:var(--os-ink-2,#A6A8B5);font-weight:800;margin:0 0 10px}
+.bcp-row{display:flex;align-items:center;gap:9px;font-size:13px;padding:6px 8px;margin:0 -8px;border-radius:10px;cursor:pointer;min-width:0;transition:background .15s}
+.bcp-row:hover{background:var(--os-surface-2,#1F2029)}
+.bcp-row.static{cursor:default}
+.bcp-row.static:hover{background:transparent}
+.bcp-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--os-ink,#F2F2F5)}
+.bcp-row .bar{width:90px;height:6px;border-radius:999px;overflow:hidden;flex:none;background:var(--os-surface-3,#2A2B36)}
+.bcp-row .bar i{display:block;height:100%;border-radius:999px}
+.bcp-row .pv{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;width:44px;text-align:right;flex:none;white-space:nowrap;color:var(--os-ink,#F2F2F5)}
+.bcp-dot{width:8px;height:8px;border-radius:50%;flex:none}
 .bcp-canvaswrap{max-width:900px;margin:0 auto}
 .bcp-canvasbar{display:flex;gap:9px;margin-bottom:16px}
-.bcp-loading{color:#7C87A3;font-size:13px;font-style:italic;text-align:center;padding:40px}
+.bcp-loading{color:var(--os-ink-2,#A6A8B5);font-size:13px;text-align:center;padding:40px}
 /* icono de carga animado en TODOS los estados de carga (pedido de Fabrizio: toda
-   carga debe tener icono con animación). ::before → spinner centrado sobre el texto. */
+   carga debe tener icono con animación). ::before → spinner centrado sobre el texto.
+   .still = mensaje fijo ("sin posiciones", "—") y .err = error: sin spinner (no es una carga). */
 .bcp-loading::before{content:"";display:block;width:26px;height:26px;margin:0 auto 12px;border-radius:50%;
-  border:2.5px solid rgba(122,158,255,.18);border-top-color:#00E0FF;animation:bcpSpin .7s linear infinite}
+  border:2.5px solid var(--os-surface-3,#2A2B36);border-top-color:var(--os-accent,#4C8DF6);animation:bcpSpin .7s linear infinite}
+.bcp-loading.err{color:var(--os-bad-ink,#F47C7C)}
+.bcp-loading.err::before,.bcp-loading.still::before{display:none}
 @keyframes bcpSpin{to{transform:rotate(360deg)}}
 /* ── Insights del HIPERGRAFO (simulación en vivo narrada) ── */
 .bcp-hyper{margin:0 0 22px}
 .bcp-hyper-hd{display:flex;align-items:center;gap:9px;margin:0 0 12px}
-.bcp-hyper-hd .t{font-size:13px;font-weight:750;color:#E8EDFB;letter-spacing:.01em}
-.bcp-hyper-hd .live{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:#00E0FF;
-  border:1px solid rgba(0,224,255,.4);border-radius:999px;padding:2px 8px;display:inline-flex;align-items:center;gap:5px}
-.bcp-hyper-hd .live::before{content:"";width:6px;height:6px;border-radius:50%;background:#00E0FF;
-  box-shadow:0 0 8px #00E0FF;animation:bcpPulse 1.6s ease-in-out infinite}
+.bcp-hyper-hd .t{font-size:13.5px;font-weight:800;color:var(--os-ink,#F2F2F5);letter-spacing:.01em}
+.bcp-hyper-hd .live{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--os-ink,#F2F2F5);border-radius:999px;padding:3px 9px;
+  display:inline-flex;align-items:center;gap:5px;background:var(--os-surface-2,#1F2029)}
+.bcp-hyper-hd .live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--os-accent,#4C8DF6);animation:bcpPulse 1.6s ease-in-out infinite}
 @keyframes bcpPulse{0%,100%{opacity:1}50%{opacity:.25}}
 .bcp-facts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
-.bcp-fact{font-size:11px;padding:5px 11px;border-radius:999px;color:#FFD27A;cursor:default;
-  background:rgba(255,179,0,.09);border:1px solid rgba(255,179,0,.32);display:inline-flex;align-items:center;gap:6px}
-.bcp-fact b{color:#FFE7B0;font-weight:700}
-.bcp-icards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
-@media(max-width:760px){.bcp-icards{grid-template-columns:1fr}}
-.bcp-icard{border:1px solid rgba(122,158,255,.16);border-left-width:3px;border-radius:12px;
-  padding:12px 14px;background:rgba(11,18,34,.5)}
+.bcp-fact{font-size:11.5px;padding:5px 11px;border-radius:999px;color:var(--os-warn-ink,#F2C46D);cursor:default;display:inline-flex;align-items:center;gap:6px;
+  background:var(--os-surface-2,#1F2029)}
+.bcp-fact b{color:inherit;font-weight:800}
+.bcp-icards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:0 0 14px}
+@media(max-width:760px){.bcp-icards{grid-template-columns:minmax(0,1fr)}}
+.bcp-icard{border-radius:var(--os-r-sm,12px);padding:12px 14px;background:var(--os-surface-2,#1F2029);box-shadow:inset 3px 0 0 var(--os-accent,#4C8DF6)}
 .bcp-icard .ih{display:flex;align-items:center;gap:8px;margin:0 0 5px}
 .bcp-icard .ic{font-size:14px}
-.bcp-icard .it{font-size:12.5px;font-weight:700;color:#E8EDFB}
-.bcp-icard .id{font-size:12px;color:#AEB8D4;line-height:1.5}
-.bcp-icard.k-riesgo{border-left-color:#FF4D6A}
-.bcp-icard.k-oportunidad{border-left-color:#2BE38B}
-.bcp-icard.k-estructura{border-left-color:#00E0FF}
-.bcp-casc{border:1px solid rgba(122,158,255,.12);border-radius:12px;padding:11px 14px;background:rgba(4,6,11,.4)}
-.bcp-casc .ch{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:#7C87A3;font-weight:600;margin:0 0 9px}
-.bcp-cascrow{display:flex;align-items:center;gap:9px;font-size:12px;padding:3px 0;cursor:pointer}
-.bcp-cascrow:hover .nm{color:#00E0FF}
-.bcp-cascrow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#C7D0EA}
-.bcp-cascrow .bar{width:120px;height:5px;border-radius:3px;background:rgba(122,158,255,.1);overflow:hidden;flex:none}
-.bcp-cascrow .bar i{display:block;height:100%;background:linear-gradient(90deg,#FF4D6A,#FFB300)}
-.bcp-cascrow .pv{font-family:'JetBrains Mono',monospace;font-size:11px;width:44px;text-align:right;flex:none;color:#FF8FA3}
-.bcp-hyper-foot{font-size:10.5px;color:#5E6884;margin:9px 2px 0}
-/* ── MODO DEMOSTRACIÓN — Khipu maneja la app y va narrando ── */
+.bcp-icard .it{font-size:13px;font-weight:700;color:var(--os-ink,#F2F2F5)}
+.bcp-icard .id{font-size:12.5px;color:var(--os-ink-2,#A6A8B5);line-height:1.5}
+.bcp-icard.k-riesgo{box-shadow:inset 3px 0 0 var(--os-bad,#f06565)}
+.bcp-icard.k-oportunidad{box-shadow:inset 3px 0 0 var(--os-good,#2fbf5b)}
+.bcp-icard.k-estructura{box-shadow:inset 3px 0 0 var(--os-accent,#4C8DF6)}
+.bcp-casc{border-radius:var(--os-r-sm,12px);padding:11px 14px;background:var(--os-surface-2,#1F2029)}
+.bcp-casc .ch{font-size:12px;letter-spacing:.01em;color:var(--os-ink-2,#A6A8B5);font-weight:800;margin:0 0 9px}
+.bcp-cascrow{display:flex;align-items:center;gap:9px;font-size:12.5px;padding:3px 0;cursor:pointer}
+.bcp-cascrow:hover .nm{color:var(--os-accent,#4C8DF6)}
+.bcp-cascrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--os-ink,#F2F2F5)}
+.bcp-cascrow .bar{width:120px;height:6px;border-radius:999px;background:var(--os-surface-3,#2A2B36);overflow:hidden;flex:none}
+.bcp-cascrow .bar i{display:block;height:100%;border-radius:999px;background:var(--os-bad,#f06565)}
+.bcp-cascrow .pv{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;width:44px;text-align:right;flex:none;color:var(--os-bad-ink,#F47C7C)}
+.bcp-hyper-foot{font-size:11px;color:var(--os-ink-2,#A6A8B5);margin:9px 2px 0}
+/* ── MODO DEMOSTRACIÓN — Khipu (su mascota) maneja la app y va narrando ── */
 #bcp-demo{position:absolute;left:0;right:0;bottom:74px;z-index:12;padding:0 22px;
   pointer-events:none;animation:bcpDemoIn .3s ease}
 @keyframes bcpDemoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .bcp-demobox{pointer-events:auto;max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;
-  padding:13px 18px;border-radius:16px;border:1px solid rgba(0,224,255,.32);
-  background:rgba(6,11,22,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  box-shadow:0 10px 40px rgba(0,0,0,.55),0 0 0 1px rgba(0,224,255,.06)}
-.bcp-demoav{width:34px;height:34px;border-radius:50%;flex:none;position:relative;
-  background:radial-gradient(circle at 35% 32%,#7ef0ff,#00E0FF 45%,#0b6fa8);
-  box-shadow:0 0 16px rgba(0,224,255,.65)}
-.bcp-demoav::after{content:"";position:absolute;inset:-5px;border-radius:50%;
-  border:1.5px solid rgba(0,224,255,.35);animation:bcpDemoPing 1.8s ease-out infinite}
+  padding:12px 14px 12px 16px;border-radius:var(--os-r,18px);background:var(--os-surface,#17181F);color:var(--os-ink,#F2F2F5);
+  box-shadow:var(--kos-shadow-lg,0 2px 8px rgba(0,0,0,.45),0 22px 56px rgba(0,0,0,.55))}
+.bcp-demoav{width:34px;height:34px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;line-height:0}
+.bcp-demoav::after{content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1.5px solid var(--os-accent,#4C8DF6);animation:bcpDemoPing 1.8s ease-out infinite}
 @keyframes bcpDemoPing{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.25);opacity:0}}
 .bcp-demotxtwrap{flex:1;min-width:0}
-.bcp-demolabel{font-size:9.5px;font-weight:800;letter-spacing:.12em;color:#00E0FF;margin:0 0 3px}
-.bcp-demotxt{font-size:13.5px;line-height:1.45;color:#E8EDFB}
-.bcp-demotxt .cur{display:inline-block;width:7px;color:#00E0FF;animation:bcpBlink .8s steps(1) infinite}
+.bcp-demolabel{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--os-ink-2,#A6A8B5);margin:0 0 3px}
+.bcp-demotxt{font-size:13.5px;line-height:1.45;color:var(--os-ink,#F2F2F5)}
+.bcp-demotxt .cur{display:inline-block;width:7px;color:var(--os-accent,#4C8DF6);animation:bcpBlink .8s steps(1) infinite}
 @keyframes bcpBlink{50%{opacity:0}}
-.bcp-democtl{display:flex;align-items:center;gap:7px;flex:none}
-.bcp-demobtn{width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:13px;
-  display:inline-flex;align-items:center;justify-content:center;color:#9BA6C4;
-  background:rgba(11,18,34,.7);border:1px solid rgba(122,158,255,.2);transition:all .13s;font-family:inherit}
-.bcp-demobtn:hover{color:#E8EDFB;border-color:rgba(0,224,255,.5)}
+.bcp-democtl{display:flex;align-items:center;gap:6px;flex:none}
+.bcp-demobtn{width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:13px;border:0;
+  display:inline-flex;align-items:center;justify-content:center;color:var(--os-ink-2,#A6A8B5);
+  background:var(--os-surface-2,#1F2029);transition:background .15s,color .15s;font-family:inherit}
+.bcp-demobtn:hover{color:var(--os-ink,#F2F2F5);background:var(--os-surface-3,#2A2B36)}
 .bcp-demodots{display:flex;gap:4px;align-items:center;margin-right:4px}
-.bcp-demodot{width:6px;height:6px;border-radius:50%;background:rgba(122,158,255,.25);transition:all .2s}
-.bcp-demodot.on{background:#00E0FF;box-shadow:0 0 7px #00E0FF}
-.bcp-demodot.done{background:rgba(0,224,255,.45)}
+.bcp-demodot{width:6px;height:6px;border-radius:50%;background:var(--os-surface-3,#2A2B36);transition:all .2s}
+.bcp-demodot.on{background:var(--os-accent,#4C8DF6)}
+.bcp-demodot.done{background:var(--os-accent,#4C8DF6);opacity:.45}
 @media(max-width:700px){.bcp-demodots{display:none}.bcp-demotxt{font-size:12.5px}#bcp-demo{padding:0 12px}}
+@media(prefers-reduced-motion:reduce){.bcp-demoav::after,.bcp-demotxt .cur{animation:none}}
 /* simulación por agentes (motor interno) — impactos por empresa con motivo */
-.bcp-agrow{border-bottom:1px solid rgba(122,158,255,.08);padding:9px 0;cursor:pointer}
-.bcp-agrow:hover .nm{color:#00E0FF}
+.bcp-agrow{padding:10px;margin:0 -10px;border-radius:12px;cursor:pointer;transition:background .15s}
+.bcp-agrow+.bcp-agrow{box-shadow:inset 0 1px 0 var(--os-line,rgba(255,255,255,.07))}
+.bcp-agrow:hover,.bcp-agrow:hover+.bcp-agrow{box-shadow:none}
+.bcp-agrow:hover{background:var(--os-surface-2,#1F2029)}
 .bcp-agrow-top{display:flex;align-items:center;gap:9px}
-.bcp-agrow .nm{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bcp-agrow .bar{width:120px;height:6px;border-radius:3px;overflow:hidden;flex:none}
-.bcp-agrow .bar i{display:block;height:100%}
-.bcp-agrow .pv{font-family:'JetBrains Mono',monospace;font-size:12px;width:52px;text-align:right;flex:none}
-.bcp-agwhy{font-size:11.5px;color:#8b95b0;margin-top:4px;line-height:1.45}
-.bcp-agent{border:1px solid rgba(122,158,255,.18);border-radius:12px;padding:8px 12px;min-width:0;max-width:260px}
-.bcp-agent .an{font-size:12.5px;font-weight:700;color:#E8EDFB;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bcp-agent .at{font-size:10px;text-transform:uppercase;letter-spacing:.08em}
-.bcp-agent .as{font-size:11.5px;color:#9BA6C4;margin-top:3px;line-height:1.4}
-/* investigación profunda estructurada (sector · competidores · geopolítica · tesis) */
-.bcp-rs-sec{margin-bottom:16px}
-.bcp-rs-txt{font-size:13.5px;line-height:1.6;color:#D5DCF0}
-.bcp-rs-list{margin:6px 0 0;padding-left:18px;font-size:13px;line-height:1.6;color:#C6CEE6}
+.bcp-agrow .nm{flex:1;min-width:0;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--os-ink,#F2F2F5)}
+.bcp-agrow .bar{width:120px;height:6px;border-radius:999px;overflow:hidden;flex:none;background:var(--os-surface-3,#2A2B36)}
+.bcp-agrow .bar i{display:block;height:100%;border-radius:999px}
+.bcp-agrow .pv{font-variant-numeric:tabular-nums;font-size:12.5px;font-weight:800;width:52px;text-align:right;flex:none}
+.bcp-agwhy{font-size:12px;color:var(--os-ink-2,#A6A8B5);margin-top:4px;line-height:1.45;padding-left:17px}
+.bcp-agent{border-radius:var(--os-r-sm,12px);padding:9px 12px;min-width:0;max-width:260px;background:var(--os-surface-2,#1F2029)}
+.bcp-agent .an{font-size:13px;font-weight:700;color:var(--os-ink,#F2F2F5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bcp-agent .at{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.bcp-agent .as{font-size:12px;color:var(--os-ink-2,#A6A8B5);margin-top:3px;line-height:1.4}
+.bcp-quote{padding:8px 12px;margin:0 0 8px;border-radius:0 var(--os-r-sm,12px) var(--os-r-sm,12px) 0;font-size:13px;line-height:1.5;
+  color:var(--os-ink,#F2F2F5);background:var(--os-surface-2,#1F2029);box-shadow:inset 3px 0 0 var(--os-accent,#4C8DF6)}
+/* investigación profunda estructurada (sector · competidores · geopolítica · tesis): una tarjeta por
+   sección, firmada por la MASCOTA del agente que mira ese ángulo (Analista, Radar, Cadena, Técnico, Comité) */
+.bcp-rs-sec{margin-bottom:12px;padding:14px 16px;border-radius:var(--os-r-sm,12px);background:var(--os-surface-2,#1F2029);min-width:0}
+/* tintes con color-mix() SOLO si el navegador lo sabe: "background:X;background:color-mix(…var()…)" no es un respaldo
+   (la 2.ª declaración se acepta al leerla y, sin color-mix, queda en «unset»); sin soporte quedan las superficies de arriba */
+@supports (color:color-mix(in srgb,currentColor 50%,transparent)){
+.bcp-chip .k{color:color-mix(in srgb,var(--os-accent,#4C8DF6) 80%,var(--os-ink,#F2F2F5))}
+.bcp-trade.buy{background:color-mix(in srgb,var(--os-good,#2fbf5b) 16%,transparent)}
+.bcp-trade.buy:hover{background:color-mix(in srgb,var(--os-good,#2fbf5b) 24%,transparent)}
+.bcp-trade.sell{background:color-mix(in srgb,var(--os-bad,#f06565) 16%,transparent)}
+.bcp-trade.sell:hover{background:color-mix(in srgb,var(--os-bad,#f06565) 24%,transparent)}
+.bcp-hyper-hd .live{background:color-mix(in srgb,var(--os-accent,#4C8DF6) 13%,transparent)}
+.bcp-fact{background:color-mix(in srgb,var(--os-warn,#F2C46D) 14%,transparent)}
+.bcp-rs-sec.thesis{background:color-mix(in srgb,var(--os-ai,#B48CFF) 11%,var(--os-surface-2,#1F2029))}
+}
+.bcp-rs-hd{display:flex;align-items:center;gap:8px;margin:0 0 8px;min-width:0}
+.bcp-rs-hd .bcp-lh{margin:0;flex:1;min-width:0}
+.bcp-rs-who{font-size:11.5px;font-weight:600;color:var(--os-ink-2,#A6A8B5);white-space:nowrap}
+.bcp-rs-txt{font-size:14px;line-height:1.6;color:var(--os-ink,#F2F2F5)}
+.bcp-rs-list{margin:6px 0 0;padding-left:18px;font-size:13.5px;line-height:1.6;color:var(--os-ink,#F2F2F5)}
 .bcp-rs-list li{margin-bottom:4px}
+.bcp-rs-list li::marker{color:var(--os-ink-2,#A6A8B5)}
+.bcp-rs-sec .bcp-chips{justify-content:flex-start;margin:0}
+.bcp-rs-sec .bcp-chip{background:var(--os-surface,#17181F)}
+.bcp-rs-sec .bcp-chip:hover{background:var(--os-surface-3,#2A2B36)}
+/* explosivas en una ventana angosta (flancos del OS / celular): el detalle 5d·20d·60d y ↗MA20 NO se esconden —
+   bajan a una 2.ª línea bajo el nombre (explican la puntuación); solo la barra (repite la cifra) cede su lugar */
+.bcp-scr{container-type:inline-size}
+@container (max-width:600px){
+  .bcp-scr .bcp-row{flex-wrap:wrap;row-gap:0!important}
+  /* salto de línea forzado (ítem de ancho 100 % y alto 0): rango·nombre·PageRank·barra·cifra arriba; detalle abajo */
+  .bcp-scr .bcp-row::after{content:"";order:2;flex:0 0 100%;height:0}
+  .bcp-scr .mono{order:3;flex:1 1 0%!important;min-width:0;padding-left:30px;text-align:left!important;white-space:normal!important}
+  .bcp-scr .ma{order:4}
+}
+@container (max-width:380px){.bcp-scr .bar{display:none}}
+/* progreso por pasos de engine/loading.js (KhipuLoading.staged) DENTRO de la Cabina: mismos tokens */
+#bcp-ov .khl-staged{font-family:var(--os-font,'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif)}
+#bcp-ov .khl-title{color:var(--os-ink,#F2F2F5);font-weight:800}
+#bcp-ov .khl-sub,#bcp-ov .khl-step,#bcp-ov .khl-step.done{color:var(--os-ink-2,#A6A8B5)}
+#bcp-ov .khl-step.done .ic{color:var(--os-good-ink,#2fbf5b)}
+#bcp-ov .khl-step.now{color:var(--os-ink,#F2F2F5)}
+#bcp-ov .khl-bar{background:var(--os-surface-3,#2A2B36)}
+#bcp-ov .khl-spin{border-color:var(--os-surface-3,#2A2B36);border-top-color:var(--os-accent,#4C8DF6)}
 /* CHAT de Khipu (2026-09-30): el hilo vive a pantalla completa en la escena
    'chat'; cuando una acción cambia la escena (X-Ray, mapa, gráfico…) el hilo
    baja a este DOCK sobre la barra → la respuesta NUNCA desaparece.
@@ -1171,9 +1290,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   var CHIP_KINDS = ['graph', 'terminal', 'insights', 'canvas', 'deep', 'broker', 'crypto', 'market', 'geo', 'space', 'simulation', 'tkg', 'guia', 'scalp'];
   // escenas que pinta la propia Cabina (además de ADOPT_TABS y de las registradas con registerKind)
   var BUILTIN_KINDS = ['broker', 'scalp', 'crypto', 'pick', 'xray', 'compare', 'agentsim', 'research', 'sim', 'screener', 'insights', 'canvas', 'deep', 'graph', 'terminal'];
-  // escenas viejas con colores oscuros FIJOS: su ventana lleva .kd-legacy-dark (isla oscura legible en tema claro)
-  // 2026-10-10: xray, insights y portfolios ya pintan con tokens --os-* (siguen el tema claro/oscuro)
-  var LEGACY_DARK = ['broker', 'scalp', 'screener', 'deep', 'research', 'agentsim', 'compare', 'sim', 'pick'];
+  // escenas viejas con colores oscuros FIJOS: su ventana lleva .kd-legacy-dark (isla oscura legible en tema claro).
+  // 2026-10-10: xray, insights y portfolios ya pintan con tokens --os-*; y (overnight 2) TODAS las escenas que pinta
+  // la propia Cabina también (bróker, scalping, explosivas, investigación, simulaciones, comparar, selector): la lista
+  // queda VACÍA. Se conserva el mecanismo como red de seguridad para una escena futura que aún no use tokens.
+  var LEGACY_DARK = [];
 
   // ESCRITORIO KHIPU (engine/desktop.js, 2026-10-04): si está activo, cada
   // escena se abre como VENTANA (movible, redimensionable, barra de tareas).
@@ -1875,8 +1996,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   }
 
   function backBar(label) {
-    return '<div class="bcp-stagehd"><span class="bcp-back" onclick="window.BixbyCockpit.stage(\'empty\')">← ' + (ckLang() === 'en' ? 'Home' : 'Inicio') + '</span>' +
-      (label ? '<span style="color:#7C87A3;font-size:12px">' + esc(label) + '</span>' : '') + '</div>';
+    return '<div class="bcp-stagehd"><button type="button" class="bcp-back" onclick="window.BixbyCockpit.stage(\'empty\')">← ' + (ckLang() === 'en' ? 'Home' : 'Inicio') + '</button>' +
+      (label ? '<span class="lbl">' + esc(label) + '</span>' : '') + '</div>';
   }
 
   function stageEmpty(s) {
@@ -1981,7 +2102,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       }
       var facts = (d.factors || []).slice(0, 2).map(function (f) {
         return '<span title="' + esc(f.fresh ? (en ? 'Recent factor' : 'Factor reciente') : (en ? 'Structural factor (not news)' : 'Factor estructural (no es noticia nueva)')) +
-          '" style="font-size:10.5px;color:' + (f.fresh ? '#FFD27A' : '#9BA6C4') + ';border:1px solid ' + (f.fresh ? 'rgba(255,179,0,.3)' : 'rgba(155,166,196,.3)') + ';border-radius:999px;padding:1px 8px">' +
+          '" style="font-size:11px;font-weight:700;color:' + (f.fresh ? OS.warnInk : OS.ink2) + ';' + (f.fresh ? _tint(OS.warn, 14) : 'background:' + OS.s2) + ';border-radius:999px;padding:2px 9px">' +
           (f.fresh ? '⚡ ' : '◈ ') + esc(f.label) + esc(since(f)) + '</span>';
       }).join(' ');
       var factsTxt = (d.factors || []).slice(0, 2).map(function (f) { return esc(f.label) + esc(since(f)); }).join(en ? ' and ' : ' y ');
@@ -2014,7 +2135,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         '<p class="bcp-pick-p">' + esc(en ? 'Type a name or ticker and pick from the list.' : 'Escribe un nombre o ticker y elige de la lista.') + '</p>' +
         field('bcp-pick-a', en ? 'e.g. Nvidia, TSM, SK Hynix' : 'p. ej. Nvidia, TSM, SK Hynix', aNode ? aNode.label : '') +
         (two ? field('bcp-pick-b', en ? 'Second company' : 'Segunda empresa', '') : '') +
-        '<div class="bcp-pick-go"><button type="button" class="bcp-back" id="bcp-pick-ok">' + esc(en ? 'Continue' : 'Continuar') + '</button></div>' +
+        '<div class="bcp-pick-go"><button type="button" class="bcp-back pri" id="bcp-pick-ok">' + esc(en ? 'Continue' : 'Continuar') + '</button></div>' +
       '</div>';
     var chosen = { a: aNode ? aNode.id : null, b: null };
     function suggest(inp, box, key) {
@@ -2066,11 +2187,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var title = en ? ('I couldn\'t find "' + query + '"') : ('No encontré «' + query + '»');
     var sugg = (nf && nf.suggestions) || [];
     s.innerHTML = backBar(en ? 'Not found' : 'No encontrada') +
-      '<div id="bcp-empty"><h2>' + esc(title) + '</h2>' +
+      '<div id="bcp-empty" class="bcp-nf"><h2>' + esc(title) + '</h2>' +
       '<p>' + (sugg.length ? (en ? 'Did you mean one of these?' : '¿Quisiste decir alguna de estas?')
         : (en ? 'Try the ticker (e.g. NVDA) or the full name.' : 'Prueba con el ticker (ej. NVDA) o el nombre completo.')) + '</p>' +
       (sugg.length ? '<div class="bcp-chips">' + sugg.map(function (n) {
-        return '<span class="bcp-chip" data-id="' + esc(n.id) + '"><span class="k">' + esc(n.mkt || n.id) + '</span>' + esc(n.label) + '</span>';
+        return '<button type="button" class="bcp-chip" data-id="' + esc(n.id) + '"><span class="k">' + esc(n.mkt || n.id) + '</span>' + esc(n.label) + '</button>';
       }).join('') + '</div>' : '') + '</div>';
     s.querySelectorAll('.bcp-chip').forEach(function (el) {
       el.addEventListener('click', function () { stage('xray', el.getAttribute('data-id')); });
@@ -2113,19 +2234,24 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var rows = FUND_ROWS.map(function (r) {
       var va = _latest(da[r.key]), vb = _latest(db[r.key]), win = 0;
       if (va != null && vb != null && va !== vb) win = (r.better === 'high') ? (va > vb ? 1 : 2) : (va < vb ? 1 : 2);
+      // gana la fila: texto verde AA sobre un tinte verde suave (antes UP + '14' fijo, ilegible en el tema claro)
       var cell = function (v, isWin) {
-        return '<td style="padding:8px 12px;text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:13px;' +
-          (isWin ? 'color:' + UP + ';font-weight:750;background:' + UP + '14' : 'color:#C3CBE0') + '">' + _fundVal(r.kind, v) + '</td>';
+        return '<td class="bcp-mono" style="padding:9px 10px;text-align:right;font-size:13.5px;white-space:nowrap;' +
+          (isWin ? 'color:' + OS.goodInk + ';font-weight:800;' + _tint(OS.good, 13) : 'color:' + OS.ink) + '">' + _fundVal(r.kind, v) + '</td>';
       };
-      return '<tr style="border-top:1px solid rgba(255,255,255,.06)">' +
-        '<td style="padding:8px 12px;font-size:12.5px;color:#8791AC">' + (en ? r.en : r.es) + '</td>' +
+      return '<tr style="box-shadow:inset 0 1px 0 ' + OS.line + '">' +
+        '<td style="padding:9px 10px 9px 12px;font-size:12.5px;line-height:1.3;color:' + OS.ink2 + '">' + (en ? r.en : r.es) + '</td>' +
         cell(va, win === 1) + cell(vb, win === 2) + '</tr>';
     }).join('');
-    return '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:420px">' +
+    // columnas A / B: punto de color (acento / IA) + nombre en tinta (el color va en el punto, no en el texto)
+    var colHd = function (label, c) {
+      return '<th style="text-align:right;padding:8px 10px;font-size:13px;font-weight:800;color:' + OS.ink + ';white-space:nowrap">' +
+        '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px;background:' + c + '"></span>' + esc(label) + '</th>';
+    };
+    return '<div class="bcp-card" style="overflow-x:auto;padding:6px 4px"><table style="width:100%;border-collapse:collapse;min-width:300px">' +
       '<thead><tr>' +
-        '<th style="text-align:left;padding:8px 12px;font-size:11px;color:#5b6580;text-transform:uppercase;letter-spacing:.06em">' + (en ? 'Metric' : 'Métrica') + '</th>' +
-        '<th style="text-align:right;padding:8px 12px;font-size:13px;color:#00E0FF">' + esc(aLabel) + '</th>' +
-        '<th style="text-align:right;padding:8px 12px;font-size:13px;color:#8E5AFF">' + esc(bLabel) + '</th>' +
+        '<th style="text-align:left;padding:8px 12px;font-size:12px;font-weight:700;color:' + OS.ink2 + '">' + (en ? 'Metric' : 'Métrica') + '</th>' +
+        colHd(aLabel, OS.acc) + colHd(bLabel, OS.ai) +
       '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
   function stageCompareFund(aNode, bNode) {
@@ -2133,7 +2259,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var box = document.getElementById('bcp-cmp-fund');
     if (!box) return;
     var ta = aNode.mkt, tb2 = bNode.mkt;
-    if (!ta || !tb2) { box.innerHTML = '<div style="color:#FFB300;padding:14px;font-size:13px">' + (en ? 'One of these is private (no public fundamentals).' : 'Una de estas es privada (sin fundamentales públicos).') + '</div>'; return; }
+    if (!ta || !tb2) { box.innerHTML = '<div class="bcp-card" style="color:' + OS.warnInk + ';font-size:13px">' + (en ? 'One of these is private (no public fundamentals).' : 'Una de estas es privada (sin fundamentales públicos).') + '</div>'; return; }
     box.innerHTML = '<div class="bcp-loading">' + (en ? 'Loading fundamentals…' : 'Cargando fundamentales…') + '</div>';
     Promise.all([
       fetch((window.BASE || '') + '/api/findossier/' + encodeURIComponent(ta)).then(function (r) { return r.json(); }).catch(function () { return { available: false }; }),
@@ -2141,9 +2267,9 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     ]).then(function (res) {
       box = document.getElementById('bcp-cmp-fund'); if (!box) return;
       var da = res[0] || {}, db = res[1] || {};
-      if (!da.available && !db.available) { box.innerHTML = '<div style="color:#FFB300;padding:14px;font-size:13px">' + (en ? 'No fundamentals available for these two.' : 'Sin fundamentales disponibles para estas dos.') + '</div>'; return; }
+      if (!da.available && !db.available) { box.innerHTML = '<div class="bcp-card" style="color:' + OS.warnInk + ';font-size:13px">' + (en ? 'No fundamentals available for these two.' : 'Sin fundamentales disponibles para estas dos.') + '</div>'; return; }
       box.innerHTML = buildFundTable(da.available ? da : {}, db.available ? db : {}, aNode.label, bNode.label, en) +
-        '<div style="margin-top:10px;font-size:10.5px;color:#5b6580">' + (function () { var SM = { fmp: 'FMP', yahoo: 'Yahoo Finance', alphavantage: 'Alpha Vantage' }; var srcs = [da.source, db.source].filter(Boolean).map(function (x) { return SM[x] || x; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' + ') || '—'; return en ? 'Latest available fiscal year · source ' + srcs + ' · green = better in that row · not financial advice.' : 'Último año fiscal disponible · fuente ' + srcs + ' · verde = mejor en esa fila · no es asesoría financiera.'; })() + '</div>';
+        '<div class="bcp-note" style="margin-top:4px">' + (function () { var SM = { fmp: 'FMP', yahoo: 'Yahoo Finance', alphavantage: 'Alpha Vantage' }; var srcs = [da.source, db.source].filter(Boolean).map(function (x) { return SM[x] || x; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(' + ') || '—'; return en ? 'Latest available fiscal year · source ' + srcs + ' · green = better in that row · not financial advice.' : 'Último año fiscal disponible · fuente ' + srcs + ' · verde = mejor en esa fila · no es asesoría financiera.'; })() + '</div>';
     });
   }
 
@@ -2156,12 +2282,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     if (!b) b = pickRival(a);   // si solo dieron una, comparamos vs su rival natural
     if (!b) { stageXRay(s, a.id); return; }
     var tabBtn = function (mode, on, label) {
-      return '<button class="bcp-back cmp-tab" data-cmp="' + mode + '" style="' +
-        (on ? 'border-color:#00E0FF;color:#00E0FF' : '') + '">' + label + '</button>';
+      return '<button type="button" role="tab" class="bcp-back cmp-tab" data-cmp="' + mode + '" aria-selected="' + (on ? 'true' : 'false') + '">' + label + '</button>';
     };
     s.innerHTML = backBar(L('Comparar', 'Compare')) +
       '<div class="bcp-inner">' +
-        '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+        '<div class="bcp-seg" role="tablist" aria-label="' + esc(en ? 'Compare by' : 'Comparar por') + '">' +
           tabBtn('profile', true, '🔬 ' + (en ? 'Profile' : 'Perfil')) +
           tabBtn('fund', false, '📊 ' + (en ? 'Fundamentals' : 'Fundamentales')) +
         '</div>' +
@@ -2175,8 +2300,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var loadedFund = false;
     s.querySelectorAll('.cmp-tab').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        s.querySelectorAll('.cmp-tab').forEach(function (x) { x.style.borderColor = ''; x.style.color = ''; });
-        btn.style.borderColor = '#00E0FF'; btn.style.color = '#00E0FF';
+        s.querySelectorAll('.cmp-tab').forEach(function (x) { x.setAttribute('aria-selected', x === btn ? 'true' : 'false'); });
         var mode = btn.getAttribute('data-cmp');
         var pf = document.getElementById('bcp-cmp-profile'), fd = document.getElementById('bcp-cmp-fund');
         if (mode === 'fund') { if (pf) pf.style.display = 'none'; if (fd) fd.style.display = 'block'; if (!loadedFund) { loadedFund = true; stageCompareFund(a, b); } }
@@ -2197,7 +2321,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     return best;
   }
 
-  function sectorColor(cat) { var S = window.SECTORS9 || {}, M = window.CAT_TO_SECTOR || {}; var s = S[M[cat] || 'cloud_ia']; return s ? s.color : NEON; }
+  function sectorColor(cat) { var S = window.SECTORS9 || {}, M = window.CAT_TO_SECTOR || {}; var s = S[M[cat] || 'cloud_ia']; return s ? s.color : OS.acc; }
 
   function stageSim(s, arg) {
     arg = arg || {};
@@ -2205,7 +2329,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(arg.kind) >= 0 ? arg.kind : 'collapse';
     var dir = kind === 'demand' ? 'up' : 'down';
     var kindLabel = { collapse: L('Corte / caída', 'Outage / collapse'), demand: L('Auge de demanda', 'Demand boom'), price: L('Shock de precio', 'Price shock'), sanction: L('Sanción', 'Sanction') }[kind];
-    var tint = dir === 'up' ? UP : DOWN;
+    // tinte de la escena: relleno vivo (barras, puntos) + tinta AA (cifras y títulos)
+    var tint = dir === 'up' ? OS.good : OS.bad, tintInk = dir === 'up' ? OS.goodInk : OS.badInk;
     if (!window.KhipuState || !window.KhipuState.simulate) { s.innerHTML = backBar() + '<div class="bcp-loading">' + L('Motor de simulación no disponible', 'Simulation engine unavailable') + '</div>'; return; }
     var shock = {}; shock[n.id] = (kind === 'demand') ? { salud: 100 } : { salud: 0 };
     var r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
@@ -2227,41 +2352,41 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       return '<div class="bcp-row" onclick="window.BixbyCockpit.stage(\'xray\',\'' + esc(x.id) + '\')">' +
         '<span class="bcp-dot" style="background:' + sectorColor(nd.cat) + ';color:' + sectorColor(nd.cat) + '"></span>' +
         '<span class="nm">' + esc(nd.label) + '</span>' +
-        '<span class="bar" style="background:rgba(255,77,106,.15)"><i style="width:' + Math.round(x.v) + '%;background:' + tint + '"></i></span>' +
-        '<span class="pv" style="color:' + tint + '">' + Math.round(x.v) + '%</span></div>';
-    }).join('') || '<div class="bcp-loading" style="padding:16px">' + L('Sin propagación significativa', 'No significant spillover') + '</div>';
+        '<span class="bar"><i style="width:' + Math.round(x.v) + '%;background:' + tint + '"></i></span>' +
+        '<span class="pv" style="color:' + tintInk + '">' + Math.round(x.v) + '%</span></div>';
+    }).join('') || '<div class="bcp-loading still" style="padding:16px">' + L('Sin propagación significativa', 'No significant spillover') + '</div>';
 
     var winRows = winners.length ? winners.map(function (w) {
       var nd = window.NODE_BY_ID[w.id]; if (!nd) return '';
       return '<div class="bcp-row" onclick="window.BixbyCockpit.stage(\'xray\',\'' + esc(w.id) + '\')">' +
-        '<span class="bcp-dot" style="background:' + UP + ';color:' + UP + '"></span>' +
+        '<span class="bcp-dot" style="background:' + OS.good + '"></span>' +
         '<span class="nm">' + esc(nd.label) + '</span>' +
-        '<span class="bar" style="background:rgba(43,227,139,.15)"><i style="width:' + (w.up * 2) + '%;background:' + UP + '"></i></span>' +
-        '<span class="pv" style="color:' + UP + '">+' + w.up + '%</span></div>';
-    }).join('') : '<div class="bcp-loading" style="padding:10px">—</div>';
+        '<span class="bar"><i style="width:' + (w.up * 2) + '%;background:' + OS.good + '"></i></span>' +
+        '<span class="pv" style="color:' + OS.goodInk + '">+' + w.up + '%</span></div>';
+    }).join('') : '<div class="bcp-loading still" style="padding:10px">—</div>';
 
     var secRowsHTML = secRows.map(function (x) {
-      var lab = (SLAB[x.k] || {}).label || x.k, cc = (SLAB[x.k] || {}).color || NEON;
+      var lab = (SLAB[x.k] || {}).label || x.k, cc = (SLAB[x.k] || {}).color || OS.acc;
       return '<div class="bcp-row"><span class="bcp-dot" style="background:' + cc + ';color:' + cc + '"></span>' +
-        '<span class="nm">' + esc(lab) + ' <span style="color:#5b6580">(' + x.n + ')</span></span>' +
-        '<span class="bar" style="background:rgba(122,158,255,.12)"><i style="width:' + Math.round(x.avg) + '%;background:' + cc + '"></i></span>' +
+        '<span class="nm">' + esc(lab) + ' <span style="color:' + OS.ink2 + '">(' + x.n + ')</span></span>' +
+        '<span class="bar"><i style="width:' + Math.round(x.avg) + '%;background:' + cc + '"></i></span>' +
         '<span class="pv">' + Math.round(x.avg) + '%</span></div>';
     }).join('');
 
     s.innerHTML = backBar(L('Simulación', 'Simulation')) +
       '<div class="bcp-inner">' +
         '<div class="bcp-simhd"><span class="big">' + esc(n.label) + '</span>' +
-          '<span class="kind" style="background:' + tint + '22;color:' + tint + '">' + esc(kindLabel) + '</span>' +
-          '<span style="color:#7C87A3;font-size:12px">' + arr.length + ' ' + L('empresas movidas', 'companies moved') + '</span>' +
-          '<button class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\')">⚡ ' + L('Ver en el mapa', 'See on the map') + '</button></div>' +
+          '<span class="kind" style="color:' + tintInk + ';' + _tint(tint, 14) + '">' + esc(kindLabel) + '</span>' +
+          '<span class="sub">' + arr.length + ' ' + L('empresas movidas', 'companies moved') + '</span>' +
+          '<button type="button" class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\')">⚡ ' + L('Ver en el mapa', 'See on the map') + '</button></div>' +
         '<div class="bcp-grid3">' +
-          '<div class="bcp-stat"><b style="color:' + tint + '">' + arr.length + '</b><span>' + L('empresas afectadas', 'companies affected') + '</span></div>' +
-          '<div class="bcp-stat"><b style="color:' + tint + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>' + L('golpe máximo', 'max hit') + '</span></div>' +
-          '<div class="bcp-stat"><b style="color:' + UP + '">' + winners.length + '</b><span>' + L('ganadores', 'winners') + '</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + tintInk + '">' + arr.length + '</b><span>' + L('empresas afectadas', 'companies affected') + '</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + tintInk + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>' + L('golpe máximo', 'max hit') + '</span></div>' +
+          '<div class="bcp-stat"><b style="color:' + OS.goodInk + '">' + winners.length + '</b><span>' + L('ganadores', 'winners') + '</span></div>' +
         '</div>' +
         '<div class="bcp-two">' +
-          '<div><div class="bcp-lh" style="color:' + tint + '">' + (dir === 'up' ? L('Quién se beneficia ↑', 'Who benefits ↑') : L('Quién sufre ↓', 'Who suffers ↓')) + '</div>' + victimRows + '</div>' +
-          '<div><div class="bcp-lh" style="color:' + UP + '">' + L('Quién gana ↑ (rivales)', 'Who gains ↑ (rivals)') + '</div>' + winRows +
+          '<div><div class="bcp-lh" style="color:' + tintInk + '">' + (dir === 'up' ? L('Quién se beneficia ↑', 'Who benefits ↑') : L('Quién sufre ↓', 'Who suffers ↓')) + '</div>' + victimRows + '</div>' +
+          '<div><div class="bcp-lh" style="color:' + OS.goodInk + '">' + L('Quién gana ↑ (rivales)', 'Who gains ↑ (rivals)') + '</div>' + winRows +
             '<div class="bcp-lh" style="margin-top:18px">' + L('Por sector', 'By sector') + '</div>' + secRowsHTML + '</div>' +
         '</div>' +
       '</div>';
@@ -2274,39 +2399,39 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   function stageScreener(s) {
     var en = ckLang() === 'en';
     s.innerHTML = backBar(en ? '🚀 Breakouts' : '🚀 Explosivas') +
-      '<div class="bcp-inner" style="max-width:980px"><div id="bcp-scr">' +
+      '<div class="bcp-inner" style="max-width:980px"><div id="bcp-scr" class="bcp-scr">' +
       '<div class="bcp-loading">' + (en ? 'Scanning all markets…' : 'Barriendo todas las bolsas…') + '</div></div></div>';
     fetch((typeof BASE !== 'undefined' ? BASE : '') + '/api/screener/growth?top=30')
       .then(function (r) { return r.json(); })
       .then(function (d) {
         var host = document.getElementById('bcp-scr');
         if (!host) return;
-        if (!d || !d.ranked) { host.innerHTML = '<div class="bcp-loading">' + (en ? 'Screener unavailable' : 'Screener no disponible') + '</div>'; return; }
+        if (!d || !d.ranked) { host.innerHTML = '<div class="bcp-loading still">' + (en ? 'Screener unavailable' : 'Screener no disponible') + '</div>'; return; }
         var cov = d.coverage || {};
         var covLine = !cov.complete
-          ? '<div style="font-size:11px;color:#FFB300;margin:0 0 10px">⏳ ' +
+          ? '<div style="font-size:12px;color:' + OS.warnInk + ';margin:0 0 10px">⏳ ' +
             (en ? 'Warming up: ' : 'Calentando: ') + (cov.warm || 0) + '/' + (cov.total || '?') +
             (en ? ' symbols scanned — ranking improves in minutes' : ' símbolos barridos — el ranking mejora en minutos') + '</div>'
-          : '<div style="font-size:11px;color:#7C87A3;margin:0 0 10px">✓ ' + (cov.warm || 0) + '/' + (cov.total || '?') + (en ? ' symbols scanned (all markets)' : ' símbolos barridos (todas las bolsas)') + '</div>';
+          : '<div class="bcp-cap" style="margin:0 0 10px">✓ ' + (cov.warm || 0) + '/' + (cov.total || '?') + (en ? ' symbols scanned (all markets)' : ' símbolos barridos (todas las bolsas)') + '</div>';
         var maxs = Math.max.apply(null, d.ranked.map(function (x) { return Math.abs(x.score) || 1; }));
         var rows = d.ranked.map(function (x, i) {
-          var col = x.score >= 0 ? UP : DOWN;
-          var pr = x.pagerank_rank ? '<span title="' + (en ? 'PageRank of the graph: the system depends on it' : 'PageRank del grafo: el sistema depende de ella') + '" style="font-size:9.5px;color:#00E0FF;border:1px solid rgba(0,224,255,.35);border-radius:999px;padding:1px 6px">🕸 #' + x.pagerank_rank + '</span>' : '';
-          var ma = x.above_ma20 ? '<span style="font-size:9.5px;color:#2BE38B">↗MA20</span>' : '';
+          var col = x.score >= 0 ? OS.good : OS.bad, colInk = x.score >= 0 ? OS.goodInk : OS.badInk;
+          var pr = x.pagerank_rank ? '<span class="pr" title="' + (en ? 'PageRank of the graph: the system depends on it' : 'PageRank del grafo: el sistema depende de ella') + '" style="flex:none;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;' + LINK_CSS + ';' + _tint(OS.acc, 12) + '">🕸 #' + x.pagerank_rank + '</span>' : '';
+          var ma = x.above_ma20 ? '<span class="ma" style="flex:none;font-size:11px;font-weight:700;color:' + OS.goodInk + '">↗MA20</span>' : '';
           var fx = function (v) { return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(1) + '%'; };
           return '<div class="bcp-row" style="gap:10px" onclick="window.BixbyCockpit.stage(\'xray\',\'' + esc(x.id) + '\')">' +
-            '<span style="width:20px;text-align:right;color:#5E6884;font-size:11px">' + (i + 1) + '</span>' +
-            '<span class="nm" style="font-weight:650">' + esc(x.label) + '</span>' + pr + ma +
-            '<span class="mono" style="font-size:10.5px;color:#9BA6C4;width:150px;text-align:right">5d ' + fx(x.r5) + ' · 20d ' + fx(x.r20) + ' · 60d ' + fx(x.r60) + '</span>' +
-            '<span class="bar" style="width:70px;background:rgba(122,158,255,.1)"><i style="width:' + Math.min(100, Math.abs(x.score) / maxs * 100) + '%;background:' + col + '"></i></span>' +
-            '<span class="pv" style="color:' + col + ';width:48px">' + x.score.toFixed(1) + '</span></div>';
+            '<span class="bcp-mono" style="width:20px;flex:none;text-align:right;color:' + OS.ink2 + ';font-size:11.5px">' + (i + 1) + '</span>' +
+            '<span class="nm" style="font-weight:700">' + esc(x.label) + '</span>' + pr + ma +
+            '<span class="mono bcp-mono" style="flex:none;font-size:11.5px;color:' + OS.ink2 + ';white-space:nowrap;text-align:right">5d ' + fx(x.r5) + ' · 20d ' + fx(x.r20) + ' · 60d ' + fx(x.r60) + '</span>' +
+            '<span class="bar" style="width:70px"><i style="width:' + Math.min(100, Math.abs(x.score) / maxs * 100) + '%;background:' + col + '"></i></span>' +
+            '<span class="pv" style="color:' + colInk + ';width:48px">' + x.score.toFixed(1) + '</span></div>';
         }).join('');
         host.innerHTML = covLine + rows +
-          '<div style="font-size:10px;color:#5E6884;margin-top:12px;line-height:1.5">' + esc(en ? 'Signals, not predictions: 5/20/60-day momentum (multi-exchange, currency-neutral) + graph PageRank centrality (what the system depends on) + trend vs. MA20. Analysis, not financial advice.' : (d.method_es || '')) + '</div>';
+          '<div class="bcp-note" style="margin-top:12px">' + esc(en ? 'Signals, not predictions: 5/20/60-day momentum (multi-exchange, currency-neutral) + graph PageRank centrality (what the system depends on) + trend vs. MA20. Analysis, not financial advice.' : (d.method_es || '')) + '</div>';
       })
       .catch(function () {
         var host = document.getElementById('bcp-scr');
-        if (host) host.innerHTML = '<div class="bcp-loading">' + (en ? 'Could not reach the screener' : 'No se pudo consultar el screener') + '</div>';
+        if (host) host.innerHTML = '<div class="bcp-loading err">' + (en ? 'Could not reach the screener' : 'No se pudo consultar el screener') + '</div>';
       });
   }
 
@@ -2412,9 +2537,12 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   var _bkAcct = null;         // última cuenta cargada (para el badge)
   var _pendingOrder = null;   // orden esperando el clic en Confirmar
 
+  // 🧪 SIMULADO = píldora ámbar (tinta --os-warn-ink sobre tinte ámbar, ≥ 4.5:1 en ambos temas);
+  // 🔴 DINERO REAL = píldora ROJA SÓLIDA con texto blanco (5.4:1) en ambos temas: la señal más fuerte de la escena
   function badgeHTML(paper) {
-    if (paper === true) return '<span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;background:rgba(255,179,0,.14);color:#FFB300;border:1px solid rgba(255,179,0,.4)">' + tb('paperBadge') + '</span>';
-    if (paper === false) return '<span style="font-size:10px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;background:rgba(255,45,70,.16);color:#FF2D46;border:1px solid rgba(255,45,70,.55)">' + tb('realBadge') + '</span>';
+    var base = 'display:inline-flex;align-items:center;white-space:nowrap;font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 10px;border-radius:999px;';
+    if (paper === true) return '<span class="bcp-badge paper" style="' + base + 'color:' + OS.warnInk + ';' + _tint(OS.warn, 20) + ';box-shadow:inset 0 0 0 1px ' + OS.warn + '">' + tb('paperBadge') + '</span>';
+    if (paper === false) return '<span class="bcp-badge real" style="' + base + 'color:#fff;background:#c42b2b;box-shadow:0 0 0 2px ' + OS.s1 + ',0 0 0 3.5px #c42b2b">' + tb('realBadge') + '</span>';
     return '';
   }
   function paintConfirmBadge() {
@@ -2430,6 +2558,13 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     }).catch(function () {});
   }
   function fmtUsd(v) { return '$' + (Number(v) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+  // cifra de dinero para una tarjeta .bcp-stat: completa SIEMPRE (title = valor entero) y, si no cabe, baja de línea
+  // tras una coma de miles ("$12,345,<wbr>678.91") — nunca «…»
+  function _moneyHTML(v, style) {
+    // saldos de cuenta: SIEMPRE con 2 decimales ("$40,210.10", no "$40,210.1")
+    var t = esc('$' + (Number(v) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    return '<b title="' + t + '"' + (style ? ' style="' + style + '"' : '') + '>' + t.replace(/,/g, ',<wbr>') + '</b>';
+  }
 
   /* ══ INFORME DE PORTAFOLIO (pedido de Fabrizio: que Khipu "mande" informes de
      cómo va el portafolio). Rendimiento + mejor/peor + concentración por sector
@@ -2476,45 +2611,51 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   }
   window._computePortfolioSummary = _computePortfolio;   // reuso desde voice.js (informe hablado)
 
-  var SEC_COLORS = ['#00E0FF', '#8E5AFF', '#FFB300', '#22D3A6', '#FF6B9D', '#5B8DEF', '#7C87A3'];
+  // colores de SECTOR (rellenos de barra, legibles sobre claro y oscuro): acento, IA, ámbar, verde y los de las mascotas
+  var SEC_COLORS = [OS.acc, OS.ai, OS.warn, OS.good, '#e0628a', '#4cb1ab', 'var(--os-ink-3,#6E7080)'];
+  // "Khipu dice…" lleva la MASCOTA de Khipu (no un emoji): el agente que habla se reconoce igual en toda la app
+  function _khipuSays(html, thinking) {
+    return '<div style="display:flex;gap:10px;align-items:flex-start">' + _mascot('khipu', 22, thinking ? { state: 'think' } : null) +
+      '<div style="flex:1;min-width:0;padding-top:2px">' + html + '</div></div>';
+  }
   function renderPortfolioReport(acct, positions) {
     var box = document.getElementById('bcp-bk-report');
     if (!box) return;
     var en = ckLang() === 'en';
     var m = _computePortfolio(acct, positions);
     if (!m.n) { box.innerHTML = ''; return; }   // sin posiciones → sin informe
-    var plCol = m.pnl >= 0 ? UP : DOWN, plSign = m.pnl >= 0 ? '+' : '';
+    var plCol = m.pnl >= 0 ? OS.goodInk : OS.badInk, plSign = m.pnl >= 0 ? '+' : '';
     var bars = m.sectors.slice(0, 5).map(function (s, i) {
       var c = SEC_COLORS[i % SEC_COLORS.length];
-      return '<div style="margin-bottom:7px">' +
-        '<div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px">' +
-          '<span style="color:#C3CBE0">' + esc(s.sector) + '</span>' +
-          '<span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace">' + s.pct.toFixed(0) + '%</span></div>' +
-        '<div style="height:7px;border-radius:5px;background:rgba(255,255,255,.06);overflow:hidden">' +
-          '<div style="height:100%;width:' + Math.max(2, s.pct).toFixed(1) + '%;background:' + c + ';border-radius:5px"></div></div></div>';
+      return '<div style="margin-bottom:8px">' +
+        '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:4px">' +
+          '<span style="color:' + OS.ink + ';min-width:0;overflow-wrap:anywhere">' + esc(s.sector) + '</span>' +
+          '<span class="bcp-mono" style="color:' + OS.ink2 + ';font-weight:700">' + s.pct.toFixed(0) + '%</span></div>' +
+        '<div style="height:7px;border-radius:999px;background:' + OS.s3 + ';overflow:hidden">' +
+          '<div style="height:100%;width:' + Math.max(2, s.pct).toFixed(1) + '%;background:' + c + ';border-radius:999px"></div></div></div>';
     }).join('');
-    var chip = function (p, label, col) {
+    var chip = function (p, label, fill, ink) {
       if (!p) return '';
       var pct = +p.unrealized_pct || 0;
-      return '<div style="flex:1;min-width:120px;padding:9px 12px;border:1px solid ' + col + '33;border-radius:10px;background:' + col + '0c">' +
-        '<div style="font-size:10.5px;color:#7C87A3;text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">' + label + '</div>' +
-        '<div style="font-size:14px;font-weight:750;font-family:\'JetBrains Mono\',monospace">' + esc(p.symbol || '—') +
-          ' <span style="color:' + col + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span></div></div>';
+      return '<div style="flex:1;min-width:120px;padding:10px 12px;border-radius:var(--os-r-sm,12px);' + _tint(fill, 12) + '">' +
+        '<div style="font-size:11.5px;font-weight:700;color:' + OS.ink2 + ';margin-bottom:2px">' + label + '</div>' +
+        '<div class="bcp-mono" style="font-size:14.5px;font-weight:800;color:' + OS.ink + '">' + esc(p.symbol || '—') +
+          ' <span style="color:' + ink + '">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span></div></div>';
     };
     box.innerHTML =
-      '<div style="margin-top:16px;padding:16px 18px;border:1px solid rgba(122,158,255,.18);border-radius:14px;background:rgba(12,18,32,.5)">' +
-        '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:14px">' +
-          '<span style="font-size:14px;font-weight:750">📊 ' + (en ? 'Portfolio report' : 'Informe de portafolio') + '</span>' +
-          '<span style="margin-left:auto;font-size:12px;color:#7C87A3">' + (en ? 'Total return' : 'Rendimiento total') + '</span>' +
-          '<span style="font-size:20px;font-weight:800;color:' + plCol + ';font-family:\'JetBrains Mono\',monospace">' +
+      '<div class="bcp-card" style="margin-top:16px;padding:16px 18px;border-radius:var(--os-r,18px)">' +
+        '<div style="display:flex;align-items:baseline;gap:6px 10px;flex-wrap:wrap;margin-bottom:14px">' +
+          '<span style="font-size:14.5px;font-weight:800">📊 ' + (en ? 'Portfolio report' : 'Informe de portafolio') + '</span>' +
+          '<span class="bcp-cap" style="margin-left:auto">' + (en ? 'Total return' : 'Rendimiento total') + '</span>' +
+          '<span class="bcp-mono" style="font-size:20px;font-weight:800;color:' + plCol + '">' +
             plSign + m.pnlPct.toFixed(2) + '%</span>' +
-          '<span style="font-size:13px;color:' + plCol + '">(' + plSign + fmtUsd(Math.abs(m.pnl)) + ')</span></div>' +
+          '<span class="bcp-mono" style="font-size:13px;font-weight:700;color:' + plCol + '">(' + plSign + fmtUsd(Math.abs(m.pnl)) + ')</span></div>' +
         (m.best || m.worst ? '<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">' +
-          chip(m.best, en ? 'Best' : 'Mejor', UP) + (m.best !== m.worst ? chip(m.worst, en ? 'Worst' : 'Peor', DOWN) : '') + '</div>' : '') +
-        '<div style="font-size:11px;color:#7C87A3;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">' +
+          chip(m.best, en ? 'Best' : 'Mejor', OS.good, OS.goodInk) + (m.best !== m.worst ? chip(m.worst, en ? 'Worst' : 'Peor', OS.bad, OS.badInk) : '') + '</div>' : '') +
+        '<div class="bcp-lh" style="margin-bottom:8px">' +
           (en ? 'Concentration by sector' : 'Concentración por sector') + '</div>' + bars +
-        '<div id="bcp-bk-aicomment" style="margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:12.5px;line-height:1.5;color:#C3CBE0">' +
-          '<span style="color:#7C87A3">💬 ' + (en ? 'Khipu is looking at your portfolio…' : 'Khipu está mirando tu portafolio…') + '</span></div></div>';
+        '<div id="bcp-bk-aicomment" style="margin-top:14px;padding:12px 14px;border-radius:var(--os-r-sm,12px);background:' + OS.s1 + ';font-size:13px;line-height:1.5;color:' + OS.ink + '">' +
+          _khipuSays('<span style="color:' + OS.ink2 + '">' + (en ? 'Khipu is looking at your portfolio…' : 'Khipu está mirando tu portafolio…') + '</span>', true) + '</div></div>';
     _fetchPortfolioComment(m);
   }
 
@@ -2537,11 +2678,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       el = document.getElementById('bcp-bk-aicomment');
       if (!el) return;
       el.innerHTML = (d && d.comment)
-        ? '<span style="color:#00E0FF;font-weight:700">💬 Khipu:</span> ' + esc(d.comment)
-        : '<span style="color:#7C87A3">💬 ' + (en ? 'No comment available.' : 'Sin comentario disponible.') + '</span>';
+        ? _khipuSays('<b style="font-weight:800">Khipu:</b> ' + esc(d.comment))
+        : _khipuSays('<span style="color:' + OS.ink2 + '">' + (en ? 'No comment available.' : 'Sin comentario disponible.') + '</span>');
     } catch (e) {
       el = document.getElementById('bcp-bk-aicomment');
-      if (el) el.innerHTML = '<span style="color:#7C87A3">💬 ' + (en ? "Could not load Khipu's comment." : 'No pude cargar el comentario de Khipu.') + '</span>';
+      if (el) el.innerHTML = _khipuSays('<span style="color:' + OS.ink2 + '">' + (en ? "Could not load Khipu's comment." : 'No pude cargar el comentario de Khipu.') + '</span>');
     }
   }
 
@@ -2569,7 +2710,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var W = 320, H = 60, min = Math.min.apply(null, _scalpHist), max = Math.max.apply(null, _scalpHist), rng = (max - min) || 1;
     var pts = _scalpHist.map(function (v, i) { return (i / (_scalpHist.length - 1) * W).toFixed(1) + ',' + (H - (v - min) / rng * (H - 8) - 4).toFixed(1); });
     var up = _scalpHist[_scalpHist.length - 1] >= _scalpHist[0];
-    svg.innerHTML = '<path d="M ' + pts.join(' L ') + '" fill="none" stroke="' + (up ? '#34d399' : '#f87171') + '" stroke-width="2" stroke-linejoin="round"/>';
+    svg.innerHTML = '<path d="M ' + pts.join(' L ') + '" fill="none" style="stroke:' + (up ? OS.good : OS.bad) + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
   }
   function _scalpPoll() {
     var sym = _scalpSym;
@@ -2580,20 +2721,20 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var prev = _scalpHist.length ? _scalpHist[_scalpHist.length - 1] : p;
       _scalpHist.push(p); if (_scalpHist.length > 50) _scalpHist.shift();
       var el = document.getElementById('bcp-scalp-price');
-      if (el) { el.textContent = _scalpFmtPrice(p); el.style.color = p > prev ? '#34d399' : p < prev ? '#f87171' : '#E8EDFB'; }
+      if (el) { el.textContent = _scalpFmtPrice(p); el.style.color = p > prev ? OS.goodInk : p < prev ? OS.badInk : OS.ink; }
       var chg = document.getElementById('bcp-scalp-chg');
-      if (chg && _scalpSessOpen) { var pct = (p / _scalpSessOpen - 1) * 100; chg.innerHTML = (pct >= 0 ? '<span style="color:#34d399">▲ +' : '<span style="color:#f87171">▼ ') + pct.toFixed(2) + '%</span>'; }
+      if (chg && _scalpSessOpen) { var pct = (p / _scalpSessOpen - 1) * 100; chg.innerHTML = (pct >= 0 ? '<span style="color:' + OS.goodInk + '">▲ +' : '<span style="color:' + OS.badInk + '">▼ ') + pct.toFixed(2) + '%</span>'; }
       _scalpDrawSpark();
     }).catch(function () {});
   }
   async function _scalpOrder(side) {
     var st = document.getElementById('bcp-scalp-status'), en = ckLang() === 'en';
-    if (!window._executeTradeOrder || !window._resolveTradeSymbol) { if (st) st.innerHTML = '<span style="color:#f87171">' + (en ? 'Trading not loaded.' : 'Trading no cargado.') + '</span>'; return; }
-    var col = side === 'buy' ? '#34d399' : '#f87171';
+    if (!window._executeTradeOrder || !window._resolveTradeSymbol) { if (st) st.innerHTML = '<span style="color:' + OS.badInk + '">' + (en ? 'Trading not loaded.' : 'Trading no cargado.') + '</span>'; return; }
+    var col = side === 'buy' ? OS.goodInk : OS.badInk;
     if (st) { st.style.color = col; st.textContent = en ? 'Sending…' : 'Enviando…'; }
     try {
       var res = await window._resolveTradeSymbol(_scalpSym);
-      if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">' + esc(res.error || L('símbolo', 'symbol')) + '</span>'; return; }
+      if (!res.ok) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:' + OS.badInk + '">' + esc(res.error || L('símbolo', 'symbol')) + '</span>'; return; }
       // 1 clic SOLO en papel (elección de Fabrizio: la velocidad es el punto y es
       // dinero simulado). Con DINERO REAL — o si no se sabe el modo — pide la
       // confirmación pop-up como cualquier otra orden.
@@ -2601,14 +2742,14 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var mode = KT ? await KT.order.resolveMode({}) : null;
       if (KT && mode !== 'paper') {
         var yes = await KT.confirmOrder({ side: side, symbol: res.symbol, label: res.label, kind: res.kind, notional: _scalpAmt, mode: mode });
-        if (!yes) { st = document.getElementById('bcp-scalp-status'); if (st) { st.style.color = '#7C87A3'; st.textContent = tb('canceled'); } return; }
+        if (!yes) { st = document.getElementById('bcp-scalp-status'); if (st) { st.style.color = OS.ink2; st.textContent = tb('canceled'); } return; }
       }
       var r = await window._executeTradeOrder({ symbol: res.symbol, side: side, label: res.label, kind: res.kind, notional: _scalpAmt });
       st = document.getElementById('bcp-scalp-status');
-      if (r && r.ok && r.dedup) { if (st) st.innerHTML = '<span style="color:#FFB300">' + (r.broker_dup ? esc(tb('brokerDup')) : (en ? 'That same order was already sent a moment ago — it was not sent twice.' : 'Esa misma orden ya se envió hace un momento — no se envió dos veces.')) + '</span>'; setTimeout(_scalpLoadPos, 900); }
+      if (r && r.ok && r.dedup) { if (st) st.innerHTML = '<span style="color:' + OS.warnInk + '">' + (r.broker_dup ? esc(tb('brokerDup')) : (en ? 'That same order was already sent a moment ago — it was not sent twice.' : 'Esa misma orden ya se envió hace un momento — no se envió dos veces.')) + '</span>'; setTimeout(_scalpLoadPos, 900); }
       else if (r && r.ok) { if (st) st.innerHTML = '<span style="color:' + col + '">✓ ' + (side === 'buy' ? (en ? 'Bought' : 'Compraste') : (en ? 'Sold' : 'Vendiste')) + ' $' + _scalpAmt + ' ' + esc(res.label) + '</span>'; setTimeout(_scalpLoadPos, 900); }
-      else if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((r && r.error) || 'error') + '</span>';
-    } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
+      else if (st) st.innerHTML = '<span style="color:' + OS.badInk + '">⚠ ' + esc((r && r.error) || 'error') + '</span>';
+    } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:' + OS.badInk + '">⚠ ' + esc((e && e.message) || e) + '</span>'; }
   }
   async function _scalpLoadPos() {
     var mount = document.getElementById('bcp-scalp-pos'), en = ckLang() === 'en';
@@ -2620,12 +2761,12 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       if (!mount || !Array.isArray(dp)) return;
       var symNorm = _scalpSym.replace('/', '').toUpperCase();
       var pos = dp.filter(Boolean).find(function (p) { return String(p.symbol || '').replace('/', '').toUpperCase() === symNorm; });
-      if (!pos) { mount.innerHTML = '<div style="text-align:center;color:#7C87A3;font-size:12.5px">' + (en ? 'No open position in ' : 'Sin posición abierta en ') + esc(_scalpSym) + '</div>'; return; }
-      var pl = +pos.unrealized_pct || 0, plUsd = +pos.unrealized || 0, col = pl >= 0 ? '#34d399' : '#f87171';
-      mount.innerHTML = '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;padding:12px 16px;border:1px solid ' + col + '33;border-radius:14px;background:' + col + '0d">' +
-        '<div><div style="font-size:11px;color:#7C87A3">' + (en ? 'Position' : 'Posición') + '</div><div style="font-weight:750;font-family:\'JetBrains Mono\',monospace">' + fmtUsd(pos.market_val) + '</div></div>' +
-        '<div><div style="font-size:11px;color:#7C87A3">P&L</div><div style="font-weight:750;color:' + col + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '% (' + (plUsd >= 0 ? '+' : '') + fmtUsd(plUsd) + ')</div></div>' +
-        '<button id="bcp-scalp-close" style="margin-left:auto;padding:8px 18px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;border:1px solid rgba(248,113,113,.5);background:rgba(248,113,113,.14);color:#f87171">' + (en ? 'Close' : 'Cerrar') + '</button></div>';
+      if (!pos) { mount.innerHTML = '<div class="bcp-cap" style="text-align:center;font-size:12.5px">' + (en ? 'No open position in ' : 'Sin posición abierta en ') + esc(_scalpSym) + '</div>'; return; }
+      var pl = +pos.unrealized_pct || 0, plUsd = +pos.unrealized || 0, col = pl >= 0 ? OS.goodInk : OS.badInk, fill = pl >= 0 ? OS.good : OS.bad;
+      mount.innerHTML = '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center;padding:12px 16px;border-radius:var(--os-r,18px);' + _tint(fill, 10) + '">' +
+        '<div><div class="bcp-cap">' + (en ? 'Position' : 'Posición') + '</div><div class="bcp-mono" style="font-weight:800;color:' + OS.ink + '">' + fmtUsd(pos.market_val) + '</div></div>' +
+        '<div><div class="bcp-cap">P&L</div><div class="bcp-mono" style="font-weight:800;color:' + col + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '% (' + (plUsd >= 0 ? '+' : '') + fmtUsd(plUsd) + ')</div></div>' +
+        '<button type="button" id="bcp-scalp-close" class="bcp-back" style="margin-left:auto;font-size:13px;font-weight:800;color:' + OS.badInk + ';' + _tint(OS.bad, 16) + '">' + (en ? 'Close' : 'Cerrar') + '</button></div>';
       var cb = document.getElementById('bcp-scalp-close');
       if (cb) cb.addEventListener('click', _scalpClose);
     } catch (e) {}
@@ -2633,13 +2774,13 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   async function _scalpClose() {
     var st = document.getElementById('bcp-scalp-status'), en = ckLang() === 'en';
     if (!window._tradeFetch) return;
-    if (st) { st.style.color = '#7C87A3'; st.textContent = en ? 'Closing…' : 'Cerrando…'; }
+    if (st) { st.style.color = OS.ink2; st.textContent = en ? 'Closing…' : 'Cerrando…'; }
     try {
       var r = await window._tradeFetch('/api/trade/close', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ symbol: _scalpSym }) }, false);
       st = document.getElementById('bcp-scalp-status');
-      if (r && r.status < 400) { if (st) st.innerHTML = '<span style="color:#34d399">✓ ' + (en ? 'Position closed' : 'Posición cerrada') + '</span>'; setTimeout(_scalpLoadPos, 900); }
-      else { var d = {}; try { d = await r.json(); } catch (e2) {} if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc(window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && (d.message || d.error)) || 'error')) + '</span>'; }
-    } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:#f87171">⚠ ' + esc((e && e.message) || e) + '</span>'; }
+      if (r && r.status < 400) { if (st) st.innerHTML = '<span style="color:' + OS.goodInk + '">✓ ' + (en ? 'Position closed' : 'Posición cerrada') + '</span>'; setTimeout(_scalpLoadPos, 900); }
+      else { var d = {}; try { d = await r.json(); } catch (e2) {} if (st) st.innerHTML = '<span style="color:' + OS.badInk + '">⚠ ' + esc(window._tradeErrText ? window._tradeErrText(d, r.status) : ((d && (d.message || d.error)) || 'error')) + '</span>'; }
+    } catch (e) { st = document.getElementById('bcp-scalp-status'); if (st) st.innerHTML = '<span style="color:' + OS.badInk + '">⚠ ' + esc((e && e.message) || e) + '</span>'; }
   }
   // modo ya conocido (cuenta cargada) para pintar la insignia sin esperar; null = aún no
   function _scalpPaperGuess() { return (_bkAcct && typeof _bkAcct.paper === 'boolean') ? _bkAcct.paper : null; }
@@ -2650,27 +2791,25 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     _scalpHist = []; _scalpSessOpen = null;
     var symChips = SCALP_PRESETS.map(function (p) {
       var on = p.sym === _scalpSym;
-      return '<button class="bcp-scalp-sym" data-sym="' + esc(p.sym) + '" style="padding:6px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;white-space:nowrap;flex-shrink:0;' +
-        'border:1px solid ' + (on ? '#00E0FF' : 'rgba(122,158,255,.25)') + ';background:' + (on ? 'rgba(0,224,255,.14)' : 'transparent') + ';color:' + (on ? '#00E0FF' : '#9BA6C4') + '">' + esc(p.label) + '</button>';
+      return '<button type="button" class="bcp-pill bcp-scalp-sym' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-sym="' + esc(p.sym) + '">' + esc(p.label) + '</button>';
     }).join('');
     var amtChips = [100, 500, 1000].map(function (v) {
       var on = v === _scalpAmt;
-      return '<button class="bcp-scalp-amt" data-amt="' + v + '" style="padding:6px 15px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;' +
-        'border:1px solid ' + (on ? '#00E0FF' : 'rgba(122,158,255,.25)') + ';background:' + (on ? 'rgba(0,224,255,.14)' : 'transparent') + ';color:' + (on ? '#00E0FF' : '#9BA6C4') + '">$' + v.toLocaleString('en-US') + '</button>';
+      return '<button type="button" class="bcp-pill bcp-scalp-amt' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-amt="' + v + '">$' + v.toLocaleString('en-US') + '</button>';
     }).join('');
     s.innerHTML = backBar('⚡ Scalping') +
       '<div class="bcp-inner" style="max-width:720px">' +
-        '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px">' + symChips + '</div>' +
-        '<div style="text-align:center;padding:18px;border:1px solid rgba(122,158,255,.18);border-radius:16px;background:rgba(12,18,32,.5);margin-bottom:16px">' +
-          '<div style="font-size:13px;color:#7C87A3;margin-bottom:4px">' + esc(_scalpSym) + ' <span id="bcp-scalp-mode" style="margin-left:6px">' + badgeHTML(_scalpPaperGuess()) + '</span></div>' +
-          '<div id="bcp-scalp-price" style="font-size:38px;font-weight:800;font-family:\'JetBrains Mono\',monospace;color:#E8EDFB">—</div>' +
-          '<div id="bcp-scalp-chg" style="font-size:13px;color:#7C87A3;margin-top:2px">&nbsp;</div>' +
+        '<div style="display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;margin-bottom:14px;scrollbar-width:thin">' + symChips + '</div>' +
+        '<div class="bcp-card" style="text-align:center;padding:18px;border-radius:var(--os-r,18px);margin-bottom:16px">' +
+          '<div style="font-size:13px;font-weight:700;color:' + OS.ink2 + ';margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">' + esc(_scalpSym) + ' <span id="bcp-scalp-mode">' + badgeHTML(_scalpPaperGuess()) + '</span></div>' +
+          '<div id="bcp-scalp-price" class="bcp-mono" style="font-size:38px;font-weight:800;letter-spacing:-.02em;color:' + OS.ink + '">—</div>' +
+          '<div id="bcp-scalp-chg" style="font-size:13px;font-weight:700;color:' + OS.ink2 + ';margin-top:2px">&nbsp;</div>' +
           '<svg id="bcp-scalp-spark" viewBox="0 0 320 60" preserveAspectRatio="none" style="width:100%;max-width:320px;height:60px;margin-top:10px"></svg>' +
         '</div>' +
-        '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px">' + amtChips + '</div>' +
+        '<div class="bcp-pills" style="justify-content:center;margin-bottom:14px">' + amtChips + '</div>' +
         '<div style="display:flex;gap:12px;margin-bottom:16px">' +
-          '<button id="bcp-scalp-buy" style="flex:1;padding:16px;border-radius:14px;cursor:pointer;font-size:17px;font-weight:800;font-family:inherit;border:1px solid #34d39988;background:rgba(52,211,153,.16);color:#34d399">▲ ' + (en ? 'BUY' : 'COMPRAR') + '</button>' +
-          '<button id="bcp-scalp-sell" style="flex:1;padding:16px;border-radius:14px;cursor:pointer;font-size:17px;font-weight:800;font-family:inherit;border:1px solid #f8717188;background:rgba(248,113,113,.16);color:#f87171">▼ ' + (en ? 'SELL' : 'VENDER') + '</button>' +
+          '<button type="button" id="bcp-scalp-buy" class="bcp-trade buy">▲ ' + (en ? 'BUY' : 'COMPRAR') + '</button>' +
+          '<button type="button" id="bcp-scalp-sell" class="bcp-trade sell">▼ ' + (en ? 'SELL' : 'VENDER') + '</button>' +
         '</div>' +
         '<div id="bcp-scalp-status" style="text-align:center;font-size:13px;min-height:18px;margin-bottom:14px"></div>' +
         '<div id="bcp-scalp-pos"></div>' +
@@ -2706,10 +2845,10 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     if (!mount) return;
     var en = ckLang() === 'en';
     mount.innerHTML = '<div class="bcp-loading">' + (en ? 'Khipu is studying your portfolio…' : 'Khipu está estudiando tu cartera…') + '</div>';
-    if (!window._tradeAccountInfo || !window._tradeFetch) { mount.innerHTML = '<div style="color:#FFB300;padding:12px;font-size:13px">' + (en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.') + '</div>'; return; }
+    if (!window._tradeAccountInfo || !window._tradeFetch) { mount.innerHTML = '<div class="bcp-card" style="color:' + OS.warnInk + ';font-size:13px">' + (en ? 'Trading module not loaded.' : 'El módulo de trading no está cargado.') + '</div>'; return; }
     var acct = null, positions = [];
     try { acct = await window._tradeAccountInfo(true, false); } catch (e) {}
-    if (!acct || acct.error) { mount.innerHTML = '<div style="color:#FFB300;padding:12px;font-size:13px">' + esc((acct && acct.error) || (en ? 'Connect the broker first.' : 'Conecta el bróker primero.')) + '</div>'; return; }
+    if (!acct || acct.error) { mount.innerHTML = '<div class="bcp-card" style="color:' + OS.warnInk + ';font-size:13px">' + esc((acct && acct.error) || (en ? 'Connect the broker first.' : 'Conecta el bróker primero.')) + '</div>'; return; }
     try { var rp = await window._tradeFetch('/api/trade/positions/detail', {}, false); var dp = await rp.json(); if (Array.isArray(dp)) positions = dp; } catch (e) {}
     var m = _computePortfolio(acct, positions);
     var payload = {
@@ -2723,7 +2862,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var d = await r.json();
       mount.innerHTML = _renderAdvice(d, en);
       _wireAdvice(mount);
-    } catch (e) { mount.innerHTML = '<div style="color:#f87171;padding:12px;font-size:13px">⚠ ' + (en ? 'Could not get advice.' : 'No pude obtener consejos.') + '</div>'; }
+    } catch (e) { mount.innerHTML = '<div class="bcp-card" style="color:' + OS.badInk + ';font-size:13px">⚠ ' + (en ? 'Could not get advice.' : 'No pude obtener consejos.') + '</div>'; }
   }
 
   function _renderAdvice(d, en) {
@@ -2733,24 +2872,26 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var mLbl = /opus/i.test(mdl) ? 'Claude Opus 4.8' : /sonnet/i.test(mdl) ? 'Claude Sonnet 5' : /haiku/i.test(mdl) ? 'Claude Haiku' : 'Claude';
     var ico = { add: '➕', reduce: '➖', watch: '👁' };
     var alab = en ? { add: 'Add', reduce: 'Reduce', watch: 'Watch' } : { add: 'Incluir', reduce: 'Reducir', watch: 'Vigilar' };
-    var sevCol = { alta: '#f87171', media: '#FFB300', baja: '#34d399', high: '#f87171', medium: '#FFB300', low: '#34d399' };
+    // severidad → [relleno vivo (franja y tinte), tinta AA (texto)]
+    var SEV = { alta: [OS.bad, OS.badInk], media: [OS.warn, OS.warnInk], baja: [OS.good, OS.goodInk] };
+    SEV.high = SEV.alta; SEV.medium = SEV.media; SEV.low = SEV.baja;
     var cards = sug.map(function (s) {
-      var col = sevCol[String(s.severity || '').toLowerCase()] || '#00E0FF';
+      var sv = SEV[String(s.severity || '').toLowerCase()] || [OS.acc, OS.ink];
       var canApply = (s.action === 'add' || s.action === 'reduce') && s.ticker;
-      return '<div style="border:1px solid ' + col + '40;border-radius:12px;background:' + col + '0d;padding:12px 14px;margin-bottom:10px">' +
+      return '<div class="bcp-card" style="margin-bottom:10px;box-shadow:inset 3px 0 0 ' + sv[0] + '">' +
         '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">' +
           '<span>' + (ico[s.action] || '•') + '</span>' +
-          '<span style="font-weight:750;font-size:13.5px">' + esc(alab[s.action] || s.action) + ': ' + esc(s.target || s.ticker || '') + '</span>' +
-          (s.ticker ? '<span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace;font-size:12px">' + esc(s.ticker) + '</span>' : '') + '</div>' +
-        '<div style="font-size:12.5px;color:#C3CBE0;line-height:1.5;margin-bottom:' + (canApply ? '10px' : '0') + '">' + esc(s.rationale || '') + '</div>' +
-        (canApply ? '<button class="bcp-adv-apply" data-side="' + (s.action === 'reduce' ? 'sell' : 'buy') + '" data-ticker="' + esc(s.ticker) + '" data-label="' + esc(s.target || s.ticker) + '" ' +
-          'style="padding:5px 14px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:700;border:1px solid ' + col + '66;background:' + col + '1a;color:' + col + '">' + (en ? 'Apply →' : 'Aplicar →') + '</button>' : '') +
+          '<span style="font-weight:800;font-size:13.5px;color:' + OS.ink + '">' + esc(alab[s.action] || s.action) + ': ' + esc(s.target || s.ticker || '') + '</span>' +
+          (s.ticker ? '<span class="bcp-mono" style="color:' + OS.ink2 + ';font-size:12px;font-weight:700">' + esc(s.ticker) + '</span>' : '') + '</div>' +
+        '<div style="font-size:13px;color:' + OS.ink + ';line-height:1.5;margin-bottom:' + (canApply ? '10px' : '0') + '">' + esc(s.rationale || '') + '</div>' +
+        (canApply ? '<button type="button" class="bcp-adv-apply bcp-back" data-side="' + (s.action === 'reduce' ? 'sell' : 'buy') + '" data-ticker="' + esc(s.ticker) + '" data-label="' + esc(s.target || s.ticker) + '" ' +
+          'style="font-weight:800;color:' + sv[1] + ';' + _tint(sv[0], 16) + '">' + (en ? 'Apply →' : 'Aplicar →') + '</button>' : '') +
       '</div>';
     }).join('');
-    return '<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(0,224,255,.05);border:1px solid rgba(0,224,255,.16);font-size:13px;line-height:1.55;color:#C3CBE0">' +
-      '<span style="color:#00E0FF;font-weight:700">🧠 Khipu:</span> ' + esc(pulse) + '</div>' +
-      (sug.length ? cards : '<div style="color:#7C87A3;font-size:12.5px;padding:6px">' + (en ? 'No changes suggested right now.' : 'Sin cambios sugeridos por ahora.') + '</div>') +
-      '<div style="margin-top:6px;font-size:10.5px;color:#5b6580">' + (en ? 'Suggestions by ' + mLbl + ' · you approve every action · not financial advice.' : 'Sugerencias por ' + mLbl + ' · tú apruebas cada acción · no es asesoría financiera.') + '</div>';
+    return '<div class="bcp-card" style="font-size:13px;line-height:1.55">' +
+      _khipuSays('<b style="font-weight:800">Khipu:</b> ' + esc(pulse)) + '</div>' +
+      (sug.length ? cards : '<div class="bcp-cap" style="font-size:12.5px;padding:6px">' + (en ? 'No changes suggested right now.' : 'Sin cambios sugeridos por ahora.') + '</div>') +
+      '<div class="bcp-note" style="margin-top:6px">' + (en ? 'Suggestions by ' + mLbl + ' · you approve every action · not financial advice.' : 'Sugerencias por ' + mLbl + ' · tú apruebas cada acción · no es asesoría financiera.') + '</div>';
   }
 
   function _wireAdvice(mount) {
@@ -2830,12 +2971,12 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         '<div id="bcp-bk-report"></div>' +
         // CAPA PROACTIVA: consejos de Khipu (Opus 4.8), "sugiere y tú decides".
         '<div style="margin-top:18px">' +
-          '<button id="bcp-bk-advbtn" class="bcp-back" style="border-color:rgba(0,224,255,.4);color:#00E0FF;font-weight:700">🧠 ' + (en ? 'Khipu advice' : 'Consejos de Khipu') + '</button>' +
+          '<button type="button" id="bcp-bk-advbtn" class="bcp-back pri" style="padding:6px 16px 6px 7px;font-size:13px;font-weight:700">' + _mascot('khipu', 22) + ' ' + (en ? 'Khipu advice' : 'Consejos de Khipu') + '</button>' +
           '<div id="bcp-bk-advice" style="margin-top:12px"></div>' +
         '</div>' +
         '<div class="bcp-two" style="margin-top:18px">' +
-          '<div><div class="bcp-lh">' + tb('positions') + '</div><div id="bcp-bk-pos"><div class="bcp-loading">…</div></div></div>' +
-          '<div><div class="bcp-lh">' + tb('orders') + '</div><div id="bcp-bk-ord"><div class="bcp-loading">…</div></div></div>' +
+          '<div style="min-width:0"><div class="bcp-lh">' + tb('positions') + '</div><div id="bcp-bk-pos"><div class="bcp-loading">…</div></div></div>' +
+          '<div style="min-width:0"><div class="bcp-lh">' + tb('orders') + '</div><div id="bcp-bk-ord"><div class="bcp-loading">…</div></div></div>' +
         '</div>' +
       '</div>';
     var advBtn = s.querySelector('#bcp-bk-advbtn');
@@ -2850,7 +2991,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
           ? 'How much? E.g. "buy $100 of ' + (arg.needAmount.label || 'Bitcoin') + '".'
           : '¿Por cuánto? Ej.: «compra 100 dólares de ' + (arg.needAmount.label || 'Bitcoin') + '».')
         : String(arg.error || '');
-      box.innerHTML = '<div style="color:#FFB300;font-size:13px;padding:6px 0 16px">' + esc(msg) + '</div>';
+      box.innerHTML = '<div class="bcp-card" style="color:' + OS.warnInk + ';font-size:13px;font-weight:600">' + esc(msg) + '</div>';
     }
     // no-interactivo: si falta el PIN, loadBroker pinta el formulario inline
     // (jamás el prompt() del navegador al solo ABRIR el escenario)
@@ -2874,7 +3015,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var KT = window.KhipuToast;
     if (KT && KT.confirmOrder) {
       closeConfirmDialog();
-      box.innerHTML = '<div id="bcp-bk-cstatus" style="font-size:12.5px;color:#7C87A3;padding:2px 0 14px">' +
+      box.innerHTML = '<div id="bcp-bk-cstatus" style="font-size:12.5px;color:' + OS.ink2 + ';padding:2px 0 14px">' +
         esc(L('Esperando tu confirmación en la ventana emergente…', 'Waiting for your confirmation in the pop-up…')) + '</div>';
       var acctMode = (_bkAcct && typeof _bkAcct.paper === 'boolean') ? (_bkAcct.paper ? 'paper' : 'live') : undefined;
       var ord = { side: o.side, symbol: o.symbol, label: o.label, kind: o.kind, notional: o.notional, qty: o.qty, mode: acctMode };
@@ -2897,35 +3038,34 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         _pendingOrder = null;
         var b = document.getElementById('bcp-bk-confirm');
         if (!b) return;
-        b.innerHTML = why === 'dismissed' ? '' : '<div style="color:#7C87A3;font-size:12.5px;padding:6px 0 16px">' + tb('canceled') + '</div>';
+        b.innerHTML = why === 'dismissed' ? '' : '<div style="color:' + OS.ink2 + ';font-size:12.5px;padding:6px 0 16px">' + tb('canceled') + '</div>';
         setTimeout(function () { var b2 = document.getElementById('bcp-bk-confirm'); if (b2 && !_pendingOrder) b2.innerHTML = ''; }, 3000);
       });
       return;
     }
     var side = o.side === 'sell' ? 'sell' : 'buy';
-    var col = side === 'buy' ? UP : DOWN;
+    var col = side === 'buy' ? OS.goodInk : OS.badInk, fill = side === 'buy' ? OS.good : OS.bad;
     var amount = o.notional != null ? fmtUsd(o.notional) : ((+o.qty || 0) + ' ' + tb('units'));
     box.innerHTML =
-      '<div style="border:1px solid ' + col + '55;border-radius:14px;background:' + col + '0d;padding:16px 18px;margin-bottom:16px">' +
+      '<div class="bcp-card" style="padding:16px 18px;margin-bottom:16px;border-radius:var(--os-r,18px);box-shadow:inset 0 0 0 1.5px ' + fill + ';' + _tint(fill, 8) + '">' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
-          '<span style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#7C87A3;font-weight:700">' + tb('confirmTitle') + '</span>' +
+          '<span style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:' + OS.ink2 + ';font-weight:800">' + tb('confirmTitle') + '</span>' +
           '<span id="bcp-bk-cbadge"></span></div>' +
-        '<div style="font-size:19px;font-weight:750;margin-bottom:4px"><span style="color:' + col + '">' + tb(side) + '</span> ' +
+        '<div style="font-size:19px;font-weight:800;margin-bottom:4px;color:' + OS.ink + ';overflow-wrap:anywhere"><span style="color:' + col + '">' + tb(side) + '</span> ' +
           esc(amount) + ' · ' + esc(o.label || o.symbol) +
-          ' <span style="color:#7C87A3;font-family:\'JetBrains Mono\',monospace;font-size:13px">(' + esc(o.symbol) + ')</span></div>' +
-        '<div style="font-size:11.5px;color:#7C87A3;margin-bottom:12px">' + tb('marketOrder') + '</div>' +
+          ' <span class="bcp-mono" style="color:' + OS.ink2 + ';font-size:13px;font-weight:700">(' + esc(o.symbol) + ')</span></div>' +
+        '<div class="bcp-cap" style="margin-bottom:12px">' + tb('marketOrder') + '</div>' +
         // chips de monto rápido (feedback Fabrizio: "más fácil invertir") — 1 toque
         // cambia el monto, el 2º confirma. Solo para órdenes en dólares (notional).
-        (o.notional != null ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">' +
+        (o.notional != null ? '<div class="bcp-pills" style="margin-bottom:14px">' +
           [100, 500, 1000, 5000].map(function (v) {
             var on = Math.round(+o.notional) === v;
-            return '<button class="bcp-amt" data-amt="' + v + '" style="padding:6px 15px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;' +
-              'border:1px solid ' + (on ? col : 'rgba(122,158,255,.25)') + ';background:' + (on ? col + '1f' : 'transparent') + ';color:' + (on ? col : '#9BA6C4') + '">$' + v.toLocaleString('en-US') + '</button>';
+            return '<button type="button" class="bcp-pill bcp-amt' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-amt="' + v + '">$' + v.toLocaleString('en-US') + '</button>';
           }).join('') + '</div>' : '') +
-        '<div style="display:flex;gap:10px">' +
-          '<button id="bcp-bk-ok" class="bcp-back" style="border-color:' + col + '66;color:' + col + ';font-weight:700">' + tb('confirm') + '</button>' +
-          '<button id="bcp-bk-no" class="bcp-back">' + tb('cancel') + '</button>' +
-        '</div><div id="bcp-bk-cstatus" style="margin-top:10px;font-size:12.5px"></div></div>';
+        '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+          '<button type="button" id="bcp-bk-ok" class="bcp-back" style="font-size:13.5px;font-weight:800;padding:9px 18px;color:' + col + ';' + _tint(fill, 18) + '">' + tb('confirm') + '</button>' +
+          '<button type="button" id="bcp-bk-no" class="bcp-back" style="font-size:13.5px;padding:9px 18px">' + tb('cancel') + '</button>' +
+        '</div><div id="bcp-bk-cstatus" style="margin-top:10px;font-size:12.5px;font-weight:600"></div></div>';
     paintConfirmBadge();   // pinta 🧪/🔴 en cuanto la cuenta esté cargada
     box.querySelectorAll('.bcp-amt').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -2937,7 +3077,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     box.querySelector('#bcp-bk-ok').addEventListener('click', confirmPendingOrder);
     box.querySelector('#bcp-bk-no').addEventListener('click', function () {
       _pendingOrder = null;
-      box.innerHTML = '<div style="color:#7C87A3;font-size:12.5px;padding:6px 0 16px">' + tb('canceled') + '</div>';
+      box.innerHTML = '<div style="color:' + OS.ink2 + ';font-size:12.5px;padding:6px 0 16px">' + tb('canceled') + '</div>';
       setTimeout(function () { var b = document.getElementById('bcp-bk-confirm'); if (b && !_pendingOrder) b.innerHTML = ''; }, 3000);
     });
   }
@@ -2955,7 +3095,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     // ENVIADA ✓ al instante y ejecutamos en segundo plano; si el bróker la
     // rechaza, avisamos claramente. Se siente inmediato.
     _pendingOrder = null;
-    if (stEl) { stEl.style.color = UP; stEl.textContent = '✓ ' + tb('sent') + (en ? ' (confirming…)' : ' (confirmando…)'); }
+    if (stEl) { stEl.style.color = OS.goodInk; stEl.textContent = '✓ ' + tb('sent') + (en ? ' (confirming…)' : ' (confirmando…)'); }
     setTimeout(function () { loadBroker(false, true); }, 900);   // refresca posiciones pronto
     var exec = window._executeTradeOrder ? window._executeTradeOrder(o)
       : Promise.resolve({ ok: false, error: L('trading no disponible', 'trading unavailable') });
@@ -2963,19 +3103,19 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var st = document.getElementById('bcp-bk-cstatus');   // pudo cambiar de escena
       if (r && r.ok && r.broker_dup) {
         // el server devolvió la orden que YA existía (duplicate:true): no hay orden nueva
-        if (st) { st.style.color = '#FFB300'; st.textContent = tb('brokerDup'); }
+        if (st) { st.style.color = OS.warnInk; st.textContent = tb('brokerDup'); }
         setTimeout(function () { loadBroker(false, true); }, 1000);
       } else if (r && r.ok) {
-        if (st) { st.style.color = UP; st.textContent = '✓ ' + tb('sent') + ' — ' + ((r.data && r.data.status) || 'accepted') + (r.dedup ? ' ' + tb('dedup') : ''); }
+        if (st) { st.style.color = OS.goodInk; st.textContent = '✓ ' + tb('sent') + ' — ' + ((r.data && r.data.status) || 'accepted') + (r.dedup ? ' ' + tb('dedup') : ''); }
         setTimeout(function () { loadBroker(false, true); }, 1000);
       } else if (st) {
-        st.style.color = DOWN;
+        st.style.color = OS.badInk;
         // ambigua (red/timeout/5xx) = NO es un rechazo: pudo haber entrado
         st.textContent = '⚠ ' + ((r && r.ambiguous) ? '' : (en ? 'The broker rejected it: ' : 'El bróker la rechazó: ')) + ((r && r.error) || 'error');
       }
     }).catch(function (e) {
       var st = document.getElementById('bcp-bk-cstatus');
-      if (st) { st.style.color = DOWN; st.textContent = '⚠ ' + (en ? 'Order error: ' : 'Error en la orden: ') + ((e && e.message) || e); }
+      if (st) { st.style.color = OS.badInk; st.textContent = '⚠ ' + (en ? 'Order error: ' : 'Error en la orden: ') + ((e && e.message) || e); }
     });
   }
 
@@ -2983,7 +3123,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var acctEl = document.getElementById('bcp-bk-acct');
     if (!acctEl) return;
     if (!window._tradeFetch || !window._tradeAccountInfo) {
-      acctEl.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + tb('connectErr') + '</div>';
+      acctEl.innerHTML = '<div class="bcp-loading err">⚠ ' + tb('connectErr') + '</div>';
       return;
     }
     var acct = await window._tradeAccountInfo(interactive !== false, !!force);
@@ -2995,15 +3135,15 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         // falta el PIN (o es incorrecto): formulario inline — nunca prompt()
         // del navegador (bloqueado en móvil/PWA y feo en escritorio).
         acctEl.innerHTML =
-          '<div style="padding:16px;border:1px solid rgba(0,224,255,.25);border-radius:12px;background:rgba(0,224,255,.05)">' +
-            '<div style="font-size:13.5px;font-weight:700;margin-bottom:6px">🔒 ' + (en2 ? 'Trading PIN' : 'PIN de trading') + '</div>' +
-            '<div style="font-size:12px;color:#7C87A3;margin-bottom:10px">' +
+          '<div class="bcp-card" style="padding:16px 18px;border-radius:var(--os-r,18px)">' +
+            '<div style="font-size:14px;font-weight:800;margin-bottom:6px">🔒 ' + (en2 ? 'Trading PIN' : 'PIN de trading') + '</div>' +
+            '<div class="bcp-cap" style="margin-bottom:12px;line-height:1.5">' +
               (en2 ? 'Enter the PIN you set as TRADE_PIN in Railway. It is remembered on this device for 12 hours.'
                    : 'Ingresa el PIN que configuraste como TRADE_PIN en Railway. Se recuerda 12 horas en este dispositivo.') + '</div>' +
-            '<div style="display:flex;gap:8px"><input id="bcp-bk-pin" type="password" inputmode="numeric" autocomplete="off" ' +
-              'style="flex:1;max-width:200px;padding:8px 12px;border-radius:8px;border:1px solid rgba(122,158,255,.3);background:rgba(8,14,26,.8);color:#E8EDFB;font-size:14px" ' +
-              'placeholder="' + (en2 ? 'PIN' : 'PIN') + '">' +
-            '<button id="bcp-bk-pin-ok" class="bcp-back" style="border-color:rgba(0,224,255,.45);color:#00E0FF;font-weight:700">' +
+            '<div class="bcp-pick-f" style="display:flex;gap:8px;margin:0;flex-wrap:wrap"><input id="bcp-bk-pin" type="password" inputmode="numeric" autocomplete="off" ' +
+              'style="flex:1;min-width:0;max-width:220px;padding:9px 16px;font-size:14px;background:' + OS.s1 + '" ' +
+              'aria-label="' + (en2 ? 'Trading PIN' : 'PIN de trading') + '" placeholder="' + (en2 ? 'PIN' : 'PIN') + '">' +
+            '<button type="button" id="bcp-bk-pin-ok" class="bcp-back pri" style="font-size:13px;font-weight:700;padding:9px 18px">' +
               (en2 ? 'Unlock' : 'Entrar') + '</button></div></div>';
         var pinBtn = acctEl.querySelector('#bcp-bk-pin-ok');
         var pinInp = acctEl.querySelector('#bcp-bk-pin');
@@ -3018,11 +3158,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         pinInp.focus();
       } else {
         // 403 sin TRADE_PIN → mostrar el mensaje del server TAL CUAL (ya en español)
-        acctEl.innerHTML = '<div style="color:#FF4D6A;font-size:13px;padding:14px;border:1px solid rgba(255,77,106,.3);border-radius:12px;background:rgba(255,77,106,.06)">⚠ ' +
+        acctEl.innerHTML = '<div class="bcp-card" style="color:' + OS.badInk + ';font-size:13px;font-weight:600;' + _tint(OS.bad, 10) + '">⚠ ' +
           esc((acct && acct.error) || tb('connectErr')) + '</div>';
       }
-      var pe0 = document.getElementById('bcp-bk-pos'); if (pe0) pe0.innerHTML = '<div class="bcp-loading">—</div>';
-      var oe0 = document.getElementById('bcp-bk-ord'); if (oe0) oe0.innerHTML = '<div class="bcp-loading">—</div>';
+      var pe0 = document.getElementById('bcp-bk-pos'); if (pe0) pe0.innerHTML = '<div class="bcp-loading still">—</div>';
+      var oe0 = document.getElementById('bcp-bk-ord'); if (oe0) oe0.innerHTML = '<div class="bcp-loading still">—</div>';
       return;
     }
     _bkAcct = acct;
@@ -3030,12 +3170,12 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var paper = (typeof acct.paper === 'boolean') ? acct.paper : null;
     acctEl.innerHTML =
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">' +
-        '<span style="font-size:15px;font-weight:750">💼 ' + tb('account') + '</span>' + badgeHTML(paper) +
-        '<button class="bcp-back" style="margin-left:auto" id="bcp-bk-refresh">' + tb('refresh') + '</button></div>' +
+        '<span style="font-size:15px;font-weight:800">💼 ' + tb('account') + '</span>' + badgeHTML(paper) +
+        '<button type="button" class="bcp-back" style="margin-left:auto" id="bcp-bk-refresh">' + tb('refresh') + '</button></div>' +
       '<div class="bcp-grid3">' +
-        '<div class="bcp-stat"><b style="color:' + NEON + '">' + fmtUsd(acct.equity) + '</b><span>' + tb('equity') + '</span></div>' +
-        '<div class="bcp-stat"><b>' + fmtUsd(acct.cash) + '</b><span>' + tb('cash') + '</span></div>' +
-        '<div class="bcp-stat"><b>' + fmtUsd(acct.buying_power) + '</b><span>' + tb('buyingPower') + '</span></div>' +
+        '<div class="bcp-stat">' + _moneyHTML(acct.equity, LINK_CSS) + '<span>' + tb('equity') + '</span></div>' +
+        '<div class="bcp-stat">' + _moneyHTML(acct.cash) + '<span>' + tb('cash') + '</span></div>' +
+        '<div class="bcp-stat">' + _moneyHTML(acct.buying_power) + '<span>' + tb('buyingPower') + '</span></div>' +
       '</div>';
     acctEl.querySelector('#bcp-bk-refresh').addEventListener('click', function () { loadBroker(true, true); });
 
@@ -3046,21 +3186,21 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var posEl = document.getElementById('bcp-bk-pos');
       if (posEl) {
         if (!Array.isArray(dp) || !dp.length) {
-          posEl.innerHTML = '<div class="bcp-loading" style="padding:12px">' + tb('noPositions') + '</div>';
+          posEl.innerHTML = '<div class="bcp-loading still" style="padding:12px">' + tb('noPositions') + '</div>';
         } else {
           posEl.innerHTML = dp.map(function (p) {
             var pl = +p.unrealized_pct || 0;
-            var col = pl >= 0 ? UP : DOWN;
-            return '<div class="bcp-row" style="cursor:default">' +
-              '<span class="nm" style="font-family:\'JetBrains Mono\',monospace;font-weight:700">' + esc(p.symbol || '') + '</span>' +
-              '<span class="pv" style="width:auto;color:#9BA6C4">' + (+p.qty || 0).toLocaleString('en-US', { maximumFractionDigits: 4 }) + '</span>' +
+            var col = pl >= 0 ? OS.goodInk : OS.badInk;
+            return '<div class="bcp-row static">' +
+              '<span class="nm bcp-mono" style="font-weight:800">' + esc(p.symbol || '') + '</span>' +
+              '<span class="pv" style="width:auto;color:' + OS.ink2 + '">' + (+p.qty || 0).toLocaleString('en-US', { maximumFractionDigits: 4 }) + '</span>' +
               '<span class="pv" style="width:84px">' + fmtUsd(p.market_val) + '</span>' +
-              '<span class="pv" style="color:' + col + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '%</span></div>';
+              '<span class="pv" style="width:64px;color:' + col + '">' + (pl >= 0 ? '+' : '') + pl.toFixed(2) + '%</span></div>';
           }).join('');
         }
       }
       try { renderPortfolioReport(acct, dp); } catch (eR) {}   // informe (rendimiento + concentración + comentario)
-    } catch (e) { var pe = document.getElementById('bcp-bk-pos'); if (pe) pe.innerHTML = '<div class="bcp-loading">—</div>'; }
+    } catch (e) { var pe = document.getElementById('bcp-bk-pos'); if (pe) pe.innerHTML = '<div class="bcp-loading still">—</div>'; }
 
     // últimas órdenes (si /api/trade/history responde)
     try {
@@ -3069,23 +3209,23 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var ordEl = document.getElementById('bcp-bk-ord');
       if (ordEl) {
         if (!Array.isArray(od) || !od.length) {
-          ordEl.innerHTML = '<div class="bcp-loading" style="padding:12px">' + tb('noOrders') + '</div>';
+          ordEl.innerHTML = '<div class="bcp-loading still" style="padding:12px">' + tb('noOrders') + '</div>';
         } else {
           ordEl.innerHTML = od.slice(0, 10).map(function (o) {
-            var col = o.side === 'buy' ? UP : DOWN;
+            var col = o.side === 'buy' ? OS.goodInk : OS.badInk;
             var when = '';
             try { when = new Date(o.created_at).toLocaleString(ckLang() === 'en' ? 'en' : 'es', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e2) {}
             var amt = o.notional ? fmtUsd(o.notional) : (((+o.qty || +o.filled_qty || 0) || '') + '×');
-            return '<div class="bcp-row" style="cursor:default">' +
-              '<span class="pv" style="width:auto;color:#5b6580">' + esc(when) + '</span>' +
-              '<span style="color:' + col + ';font-weight:700;font-size:11px;min-width:44px">' + esc((o.side || '').toUpperCase()) + '</span>' +
-              '<span class="nm" style="font-family:\'JetBrains Mono\',monospace">' + esc(o.symbol || '') + '</span>' +
+            return '<div class="bcp-row static">' +
+              '<span class="pv" style="width:auto;font-weight:600;color:' + OS.ink2 + '">' + esc(when) + '</span>' +
+              '<span style="color:' + col + ';font-weight:800;font-size:11.5px;min-width:44px">' + esc((o.side || '').toUpperCase()) + '</span>' +
+              '<span class="nm bcp-mono" style="font-weight:700">' + esc(o.symbol || '') + '</span>' +
               '<span class="pv" style="width:auto">' + esc(String(amt)) + '</span>' +
-              '<span class="pv" style="width:auto;color:#9BA6C4">' + esc(o.status || '') + '</span></div>';
+              '<span class="pv" style="width:auto;font-weight:600;color:' + OS.ink2 + '">' + esc(o.status || '') + '</span></div>';
           }).join('');
         }
       }
-    } catch (e) { var oe = document.getElementById('bcp-bk-ord'); if (oe) oe.innerHTML = '<div class="bcp-loading">—</div>'; }
+    } catch (e) { var oe = document.getElementById('bcp-bk-ord'); if (oe) oe.innerHTML = '<div class="bcp-loading still">—</div>'; }
   }
 
   // ── comandos de compra/venta en TEXTO (compartido con command_center.js) ──
@@ -3147,7 +3287,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     question = (question || '').trim();
     s.innerHTML = backBar(L('Investigación profunda', 'Deep research')) +
       '<div class="bcp-inner" style="max-width:820px">' +
-        '<div class="bcp-simhd"><span class="big">🧠 ' + esc(question || L('Análisis profundo', 'Deep analysis')) + '</span></div>' +
+        // quien investiga es Khipu: su mascota (pensando) en lugar del emoji 🧠
+        '<div class="bcp-simhd"><span class="big">' + _mascot('khipu', 30, question ? { state: 'think' } : null) + '<span>' + esc(question || L('Análisis profundo', 'Deep analysis')) + '</span></span></div>' +
         '<div id="bcp-deep-steps" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px"></div>' +
         '<div id="bcp-deep-result"></div>' +
       '</div>';
@@ -3165,9 +3306,13 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
 
     function renderDeepError(msg) {
       var el = document.getElementById('bcp-deep-result');
-      if (el) el.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc(msg) + '</div>';
+      if (el) el.innerHTML = '<div class="bcp-loading err">⚠ ' + esc(msg) + '</div>';
+      _deepMascotIdle();
       setState('', L('Listo', 'Ready'));
     }
+
+    // la mascota deja de "pensar" cuando hay respuesta o error
+    function _deepMascotIdle() { try { s.querySelectorAll('.bcp-simhd .km-think').forEach(function (m) { m.classList.remove('km-think'); }); } catch (e) {} }
 
     function pollDeep() {
       fetch((window.BASE || '') + '/api/deep/status').then(function (r) { return r.json(); }).then(function (d) {
@@ -3175,25 +3320,25 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         if (!stepsEl) { clearInterval(_deepTimer); _deepTimer = null; return; }  // salieron de la escena
         stepsEl.innerHTML = (d.steps || []).map(function (st, i) {
           var last = i === d.steps.length - 1 && d.running;
-          return '<div style="display:flex;gap:9px;align-items:baseline;font-size:12.5px;color:#9BA6C4">' +
-            '<span style="color:' + (last ? '#FFB300' : '#2BE38B') + '">' + (last ? '◌' : '✓') + '</span>' +
-            '<span><b style="color:#E8EDFB">' + esc(st.paso) + '</b> — ' + esc(st.detalle || '') + '</span></div>';
+          return '<div style="display:flex;gap:9px;align-items:baseline;font-size:13px;color:' + OS.ink2 + '">' +
+            '<span style="font-weight:800;color:' + (last ? OS.warnInk : OS.goodInk) + '">' + (last ? '◌' : '✓') + '</span>' +
+            '<span><b style="color:' + OS.ink + '">' + esc(st.paso) + '</b> — ' + esc(st.detalle || '') + '</span></div>';
         }).join('');
         if (!d.running && d.result) {
           clearInterval(_deepTimer); _deepTimer = null;
+          _deepMascotIdle();
           setState('', L('Listo', 'Ready'));
           var el = document.getElementById('bcp-deep-result');
           if (!el) return;
           if (d.result.error) { renderDeepError(d.result.error); return; }
           var simHTML = d.result.sim ?
             '<div class="bcp-grid3" style="margin:14px 0">' +
-              '<div class="bcp-stat"><b style="color:#FF4D6A">' + d.result.sim.afectadas + '</b><span>' + L('afectadas si cae ', 'affected if it falls: ') + esc(d.result.sim.shock) + '</span></div>' +
-              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:14px">' + esc((d.result.focos || []).join(', ').slice(0, 40) || '—') + '</b><span>' + L('foco', 'focus') + '</span></div>' +
-              '<div class="bcp-stat"><b style="color:#E8EDFB;font-size:13px">' + esc(d.result.model || '') + '</b><span>' + L('modelo', 'model') + '</span></div>' +
+              '<div class="bcp-stat"><b style="color:' + OS.badInk + '">' + d.result.sim.afectadas + '</b><span>' + L('afectadas si cae ', 'affected if it falls: ') + esc(d.result.sim.shock) + '</span></div>' +
+              '<div class="bcp-stat"><b style="font-size:14px;white-space:normal;overflow-wrap:anywhere">' + esc((d.result.focos || []).join(', ').slice(0, 40) || '—') + '</b><span>' + L('foco', 'focus') + '</span></div>' +
+              '<div class="bcp-stat"><b style="font-size:13px;white-space:normal;overflow-wrap:anywhere">' + esc(d.result.model || '') + '</b><span>' + L('modelo', 'model') + '</span></div>' +
             '</div>' : '';
           el.innerHTML = simHTML +
-            '<div style="border:1px solid rgba(122,158,255,.16);border-radius:14px;background:rgba(11,18,34,.55);' +
-              'padding:18px 20px;font-size:14px;line-height:1.65;color:#E8EDFB;white-space:pre-wrap">' +
+            '<div class="bcp-card" style="border-radius:var(--os-r,18px);padding:18px 20px;font-size:14px;line-height:1.65;white-space:pre-wrap">' +
               esc(d.result.answer || '') + '</div>';
         }
       }).catch(function () {});
@@ -3278,7 +3423,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       } catch (e2) {}
       var card = document.getElementById(cardId);
       if (card) card.innerHTML = '<div class="cv-card-hdr"><div class="cv-card-title">' + esc(query) + '</div></div>' +
-        '<div style="padding:20px;text-align:center;color:#f87171;font-size:13px">⚠ ' + esc(e.message) + '</div>';
+        '<div style="padding:20px;text-align:center;color:' + OS.badInk + ';font-size:13px">⚠ ' + esc(e.message) + '</div>';
     }
     return cardId;
   }
@@ -3299,29 +3444,32 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     } catch (e) { return Promise.resolve({ ok: false, error: String((e && e.message) || e) }); }
   }
 
+  // tipo de ACTOR simulado (no son agentes de Khipu: empresas, gobiernos, geopolítica) → [relleno vivo, tinta AA]
   function agentTypeColor(type) {
     var t = String(type || '').toLowerCase();
-    if (/gob|gover|state|estad|regul|polic|central bank|banco central/.test(t)) return VIOLET;
-    if (/geo|pol[ií]t|macro|milit|defens|nation/.test(t)) return '#FFB300';
-    return NEON; // empresa / mercado / industria
+    if (/gob|gover|state|estad|regul|polic|central bank|banco central/.test(t)) return [OS.ai, OS.ai];
+    if (/geo|pol[ií]t|macro|milit|defens|nation/.test(t)) return [OS.warn, OS.warnInk];
+    return [OS.acc, LINK_INK]; // empresa / mercado / industria
   }
 
-  var CHAN = { direct: ['#FF4D6A', 'Golpe directo', 'Direct hit'], substitute: ['#2BE38B', 'Podría ganar cuota', 'Could gain share'],
-    customer: ['#FFB300', 'Cliente: pierde suministro', 'Customer: loses supply'], second_order: ['#9BA6C4', 'Efecto de segundo orden', 'Second-order effect'],
-    supplier: ['#7AA2FF', 'Proveedor: cambian sus pedidos', 'Supplier: its orders change'] };
-  function simBox(inner, col) {
-    return '<div style="border:1px solid ' + (col || 'rgba(122,158,255,.16)') + ';border-radius:14px;background:rgba(11,18,34,.55);padding:14px 16px;margin-bottom:14px">' + inner + '</div>';
+  // canal por el que le llega el golpe: color de TEXTO (AA en claro y oscuro) + etiqueta es/en
+  var CHAN = { direct: [OS.badInk, 'Golpe directo', 'Direct hit'], substitute: [OS.goodInk, 'Podría ganar cuota', 'Could gain share'],
+    customer: [OS.warnInk, 'Cliente: pierde suministro', 'Customer: loses supply'], second_order: [OS.ink2, 'Efecto de segundo orden', 'Second-order effect'],
+    supplier: [OS.ai, 'Proveedor: cambian sus pedidos', 'Supplier: its orders change'] };
+  function simBox(inner) {
+    return '<div class="bcp-card">' + inner + '</div>';
   }
   function essentialsHTML(d, en) {
     var sm = d.summary || {}, bits = [];
-    if (d.theme) bits.push('<div style="font-size:13.5px;color:#E8EDFB"><b>' + (en ? 'At stake: ' : 'En juego: ') + '</b>' + esc(d.theme) + '</div>');
-    if (d.actor) bits.push('<div style="font-size:12.5px;color:#9BA6C4">' + (en ? 'Who acts: ' : 'Quién actúa: ') + esc(d.actor) + '</div>');
-    if (d.mechanism) bits.push('<div style="font-size:13px;line-height:1.55;color:#C9D2EA;margin-top:6px">💡 ' + esc(d.mechanism) + '</div>');
+    if (d.theme) bits.push('<div style="font-size:14px;color:' + OS.ink + '"><b>' + (en ? 'At stake: ' : 'En juego: ') + '</b>' + esc(d.theme) + '</div>');
+    if (d.actor) bits.push('<div style="font-size:13px;color:' + OS.ink2 + ';margin-top:2px">' + (en ? 'Who acts: ' : 'Quién actúa: ') + esc(d.actor) + '</div>');
+    if (d.mechanism) bits.push('<div style="font-size:13.5px;line-height:1.55;color:' + OS.ink + ';margin-top:8px">💡 ' + esc(d.mechanism) + '</div>');
     if (sm.n_hit != null) {
+      var pill = 'padding:4px 11px;border-radius:999px;font-size:12px;font-weight:800;';
       bits.push('<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-        '<span style="padding:4px 10px;border-radius:999px;border:1px solid ' + DOWN + '66;color:' + DOWN + ';font-size:12px;font-weight:700">▼ ' + sm.n_hit + (en ? ' hit' : ' perjudicadas') + '</span>' +
-        '<span style="padding:4px 10px;border-radius:999px;border:1px solid ' + UP + '66;color:' + UP + ';font-size:12px;font-weight:700">▲ ' + sm.n_benefit + (en ? ' could benefit' : ' podrían ganar') + '</span>' +
-        (sm.sectors && sm.sectors.length ? '<span style="padding:4px 10px;border-radius:999px;border:1px solid rgba(122,158,255,.3);color:#9BA6C4;font-size:12px">' + sm.sectors.length + (en ? ' sectors' : ' sectores') + '</span>' : '') + '</div>');
+        '<span style="' + pill + 'color:' + OS.badInk + ';' + _tint(OS.bad, 14) + '">▼ ' + sm.n_hit + (en ? ' hit' : ' perjudicadas') + '</span>' +
+        '<span style="' + pill + 'color:' + OS.goodInk + ';' + _tint(OS.good, 14) + '">▲ ' + sm.n_benefit + (en ? ' could benefit' : ' podrían ganar') + '</span>' +
+        (sm.sectors && sm.sectors.length ? '<span style="' + pill + 'font-weight:700;color:' + OS.ink2 + ';background:' + OS.s3 + '">' + sm.sectors.length + (en ? ' sectors' : ' sectores') + '</span>' : '') + '</div>');
     }
     return bits.length ? simBox('<div class="bcp-lh" style="margin-top:0">' + (en ? 'The essentials' : 'Lo esencial') + '</div>' + bits.join('')) : '';
   }
@@ -3330,29 +3478,29 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     if (!lose.length && !win.length) return '';
     function col(title, arr, c) {
       return '<div style="flex:1 1 240px;min-width:0"><div class="bcp-lh" style="color:' + c + ';margin-top:0">' + title + '</div>' +
-        (arr.length ? arr.map(function (x) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:3px 0"><span style="overflow-wrap:anywhere">' + esc(x.label) + '</span><b style="color:' + c + '">' + (x.pct > 0 ? '+' : '') + x.pct + '%</b></div>'; }).join('')
-          : '<div style="font-size:12px;color:#7C87A3">' + (en ? 'None clear' : 'Ninguna clara') + '</div>') + '</div>';
+        (arr.length ? arr.map(function (x) { return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:3px 0"><span style="overflow-wrap:anywhere;color:' + OS.ink + '">' + esc(x.label) + '</span><b class="bcp-mono" style="color:' + c + '">' + (x.pct > 0 ? '+' : '') + x.pct + '%</b></div>'; }).join('')
+          : '<div class="bcp-cap">' + (en ? 'None clear' : 'Ninguna clara') + '</div>') + '</div>';
     }
-    return simBox('<div style="display:flex;gap:18px;flex-wrap:wrap">' + col(en ? '▼ Most hit' : '▼ Más perjudicadas', lose, DOWN) + col(en ? '▲ Possible winners' : '▲ Posibles ganadoras', win, UP) + '</div>');
+    return simBox('<div style="display:flex;gap:18px;flex-wrap:wrap">' + col(en ? '▼ Most hit' : '▼ Más perjudicadas', lose, OS.badInk) + col(en ? '▲ Possible winners' : '▲ Posibles ganadoras', win, OS.goodInk) + '</div>');
   }
   function quotesHTML(d, en) {
     var q = Array.isArray(d.quotes) ? d.quotes : [];
     if (!q.length) return '';
     return '<div class="bcp-lh">' + (en ? 'What the agents say' : 'Lo que dicen los agentes') + '</div>' +
-      q.map(function (x) { return '<div style="border-left:3px solid ' + NEON + ';padding:6px 12px;margin:0 0 8px;background:rgba(0,224,255,.04);border-radius:0 10px 10px 0;font-size:13px;color:#D5DCF0"><b>' + esc(x.agent) + ':</b> «' + esc(x.quote) + '»</div>'; }).join('');
+      q.map(function (x) { return '<div class="bcp-quote"><b>' + esc(x.agent) + ':</b> «' + esc(x.quote) + '»</div>'; }).join('');
   }
   function timelineHTML(d, en) {
     var r = Array.isArray(d.rounds) ? d.rounds : [];
     if (!r.length) return '';
     return '<div class="bcp-lh">' + (en ? 'How it unfolds' : 'Cómo se desarrolla') + '</div>' + simBox(r.map(function (x) {
-      return '<div style="display:flex;gap:10px;align-items:flex-start;margin:4px 0"><span style="flex:0 0 22px;height:22px;border-radius:50%;background:' + NEON + '22;color:' + NEON + ';font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">' + esc(x.round) + '</span>' +
-        '<div style="font-size:13px;line-height:1.5;color:#C9D2EA">' + (x.events || []).map(esc).join('<br>') + '</div></div>';
+      return '<div style="display:flex;gap:10px;align-items:flex-start;margin:4px 0"><span style="flex:0 0 22px;height:22px;border-radius:50%;background:' + OS.s1 + ';color:' + OS.ink + ';font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">' + esc(x.round) + '</span>' +
+        '<div style="font-size:13px;line-height:1.5;color:' + OS.ink + ';min-width:0">' + (x.events || []).map(esc).join('<br>') + '</div></div>';
     }).join(''));
   }
   function watchHTML(d, en) {
     var w = Array.isArray(d.watch) ? d.watch : [];
     if (!w.length) return '';
-    return '<div class="bcp-lh">👁 ' + (en ? 'What to watch' : 'Qué vigilar') + '</div>' + simBox('<ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.6;color:#C9D2EA">' +
+    return '<div class="bcp-lh">👁 ' + (en ? 'What to watch' : 'Qué vigilar') + '</div>' + simBox('<ul class="bcp-rs-list" style="margin:0">' +
       w.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>');
   }
 
@@ -3364,35 +3512,34 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">' +
         agents.map(function (a) {
           var col = agentTypeColor(a.type);
-          return '<div class="bcp-agent" style="border-color:' + col + '55;background:' + col + '0d">' +
+          return '<div class="bcp-agent" style="box-shadow:inset 3px 0 0 ' + col[0] + '">' +
             '<div class="an">' + esc(a.name || '') + '</div>' +
-            (a.type ? '<div class="at" style="color:' + col + '">' + esc(a.type) + '</div>' : '') +
+            (a.type ? '<div class="at" style="color:' + col[1] + '">' + esc(a.type) + '</div>' : '') +
             (a.stance ? '<div class="as">' + esc(a.stance) + '</div>' : '') +
           '</div>';
         }).join('') + '</div>'
       : '';
     var narrHTML = d.narrative
-      ? '<div style="border:1px solid rgba(122,158,255,.16);border-radius:14px;background:rgba(11,18,34,.55);' +
-        'padding:16px 18px;font-size:14px;line-height:1.6;color:#E8EDFB;white-space:pre-wrap;margin-bottom:18px">' +
+      ? '<div class="bcp-card" style="border-radius:var(--os-r,18px);padding:16px 18px;font-size:14px;line-height:1.6;white-space:pre-wrap;margin-bottom:18px">' +
         esc(d.narrative) + '</div>'
       : '';
     var impactsHTML = impacts.length ? impacts.map(function (x) {
       var pct = (typeof x.pct === 'number') ? x.pct : (parseFloat(x.pct) || 0);
-      var col = pct >= 0 ? UP : DOWN;
+      var col = pct >= 0 ? OS.good : OS.bad, colInk = pct >= 0 ? OS.goodInk : OS.badInk;
       var w = Math.min(100, Math.abs(pct));
       var id = x.id || '';
       return '<div class="bcp-agrow"' + (id ? ' data-id="' + esc(id) + '"' : ' style="cursor:default"') + '>' +
         '<div class="bcp-agrow-top">' +
-          '<span class="bcp-dot" style="background:' + col + ';color:' + col + '"></span>' +
+          '<span class="bcp-dot" style="background:' + col + '"></span>' +
           '<span class="nm">' + esc(x.label || id) + '</span>' +
-          '<span class="bar" style="background:' + col + '22"><i style="width:' + w + '%;background:' + col + '"></i></span>' +
-          '<span class="pv" style="color:' + col + '">' + (pct >= 0 ? '+' : '') + Math.round(pct) + '%</span>' +
+          '<span class="bar"><i style="width:' + w + '%;background:' + col + '"></i></span>' +
+          '<span class="pv" style="color:' + colInk + '">' + (pct >= 0 ? '+' : '') + Math.round(pct) + '%</span>' +
         '</div>' +
         (x.channel && CHAN[x.channel] ? '<div class="bcp-agwhy"><span style="color:' + CHAN[x.channel][0] + ';font-weight:700">' + esc(en ? CHAN[x.channel][2] : CHAN[x.channel][1]) + '</span>' +
           (x.path && x.path.indexOf('→') >= 0 ? ' · ' + esc(x.path) : '') + '</div>'
           : (x.rationale ? '<div class="bcp-agwhy">' + esc(x.rationale) + '</div>' : '')) +
       '</div>';
-    }).join('') : '<div class="bcp-loading">' + (en ? 'No quantified impacts.' : 'Sin impactos cuantificados.') + '</div>';
+    }).join('') : '<div class="bcp-loading still">' + (en ? 'No quantified impacts.' : 'Sin impactos cuantificados.') + '</div>';
     // sello del modelo que razonó (transparencia: Sonnet 5 vs respaldo sin IA)
     var mdl = d.model ? String(d.model) : '';
     var mLabel = /sonnet-5/i.test(mdl) ? 'Claude Sonnet 5'
@@ -3401,11 +3548,12 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       : /gemini/i.test(mdl) ? 'Google Gemini'
       : /nvidia|llama/i.test(mdl) ? 'NVIDIA' : '';
     var modelHTML = mLabel
-      ? '<div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:3px 10px;border-radius:999px;' +
-        'border:1px solid ' + NEON + '44;background:' + NEON + '11;font-size:10.5px;color:' + NEON + '">✦ ' +
+      ? '<div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;padding:4px 11px;border-radius:999px;' +
+        _tint(OS.acc, 12) + ';font-size:11.5px;font-weight:700;' + LINK_CSS + '">✦ ' +
         (en ? 'Reasoned by ' : 'Razonado por ') + esc(mLabel) + '</div>'
       : (d.model === '' && mdl === '' ? '' : '');
-    var simNote = '<div style="margin-bottom:12px;padding:8px 12px;border:1px dashed #f59e0b;border-radius:10px;background:rgba(245,158,11,.08);font-size:11.5px;color:#fbbf24;line-height:1.5">🧪 ' +
+    // "es una SIMULACIÓN": borde punteado ámbar (hipotético) + tinta ámbar AA
+    var simNote = '<div style="margin-bottom:12px;padding:9px 13px;border:1px dashed ' + OS.warn + ';border-radius:var(--os-r-sm,12px);' + _tint(OS.warn, 9) + ';font-size:12px;color:' + OS.warnInk + ';line-height:1.5">🧪 ' +
       (en ? 'SIMULATION of a hypothetical scenario: the % are model estimates, not real prices nor recommendations.'
           : 'SIMULACIÓN de un escenario hipotético: los % son estimaciones del modelo, no precios reales ni recomendaciones.') +
       (d.fallback ? ' <b>' + (d.structural
@@ -3426,14 +3574,14 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     s.innerHTML = backBar(title) +
       '<div class="bcp-inner" style="max-width:1040px">' +
         '<div class="bcp-simhd"><span class="big">🧪 ' + esc(scen || title) + '</span>' +
-          '<span class="kind" style="background:' + NEON + '22;color:' + NEON + '">' + (en ? 'Agents' : 'Agentes') + '</span>' +
-          '<span style="color:#7C87A3;font-size:12px">' + (en ? 'analysts debating…' : 'analistas debatiendo…') + '</span></div>' +
+          '<span class="kind" style="' + LINK_CSS + ';' + _tint(OS.acc, 13) + '">' + (en ? 'Agents' : 'Agentes') + '</span>' +
+          '<span class="sub">' + (en ? 'analysts debating…' : 'analistas debatiendo…') + '</span></div>' +
         '<div id="bcp-ag-body"></div>' +
       '</div>';
     // espera LARGA (Sonnet 5, ~10-30s): progreso por pasos, no un vacío
     var _ld = window.KhipuLoading && window.KhipuLoading.staged('bcp-ag-body', {
       title: en ? 'Multi-agent simulation' : 'Simulación por agentes',
-      accent: NEON,
+      accent: '#4C8DF6',   // solo el brillo del orbe de carga (decorativo); los textos los tematiza el CSS de la Cabina
       steps: en
         ? ['Assembling the agents (companies + government + geopolitics)', 'Round 1: the analysts debate the scenario', 'Round 2: the shock propagates through the chain', 'Estimating realistic impacts per company', 'Writing the consensus']
         : ['Reuniendo a los agentes (empresas + gobierno + geopolítica)', 'Ronda 1: los analistas debaten el escenario', 'Ronda 2: el golpe se propaga por la cadena', 'Estimando impactos realistas por empresa', 'Redactando el consenso'],
@@ -3444,7 +3592,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var body = document.getElementById('bcp-ag-body');
       if (!body) return;   // salieron de la escena
       if (!d || d.ok === false) {
-        body.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc((d && d.error) || (en ? 'Simulation failed' : 'La simulación falló')) + '</div>';
+        body.innerHTML = '<div class="bcp-loading err">⚠ ' + esc((d && d.error) || (en ? 'Simulation failed' : 'La simulación falló')) + '</div>';
         return;
       }
       body.innerHTML = renderAgentSim(d, en);
@@ -3476,35 +3624,45 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     } catch (e) { return Promise.resolve({ ok: false, error: String((e && e.message) || e) }); }
   }
 
+  // cada sección la "firma" la MASCOTA del agente de Khipu que mira ese ángulo (mismo reparto que el comité:
+  // Analista = fundamentales/sector/competidores · Radar = geopolítica y lo que hay que vigilar · Cadena = cuellos
+  // de botella · Técnico = riesgos · Comité = la tesis). Solo presentación: el contenido viene igual del server.
+  var RS_AGENT = { thesis: 'comite', sector: 'analista', competitors: 'analista', geopolitics: 'radar', chokepoints: 'cadena', risks: 'tecnico', watch: 'radar' };
   function renderResearch(d, en) {
-    function block(title, txt) {
-      if (!txt) return '';
-      return '<div class="bcp-rs-sec"><div class="bcp-lh">' + esc(title) + '</div><div class="bcp-rs-txt">' + esc(txt) + '</div></div>';
+    function head(key, title, color) {
+      var ag = RS_AGENT[key];
+      return '<div class="bcp-rs-hd">' + _mascot(ag, 22) +
+        '<div class="bcp-lh"' + (color ? ' style="color:' + color + '"' : '') + '>' + esc(title) + '</div>' +
+        '<span class="bcp-rs-who">' + esc(_agentName(ag)) + '</span></div>';
     }
-    function listBlock(title, arr, color) {
+    function block(key, title, txt) {
+      if (!txt) return '';
+      return '<div class="bcp-rs-sec" data-agent="' + RS_AGENT[key] + '">' + head(key, title) + '<div class="bcp-rs-txt">' + esc(txt) + '</div></div>';
+    }
+    function listBlock(key, title, arr, color) {
       if (!Array.isArray(arr) || !arr.length) return '';
-      return '<div class="bcp-rs-sec"><div class="bcp-lh"' + (color ? ' style="color:' + color + '"' : '') + '>' + esc(title) + '</div><ul class="bcp-rs-list">' +
+      return '<div class="bcp-rs-sec" data-agent="' + RS_AGENT[key] + '">' + head(key, title, color) + '<ul class="bcp-rs-list">' +
         arr.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>';
     }
     var comp = Array.isArray(d.competitors) ? d.competitors : [];
     var compHTML = comp.length
-      ? '<div class="bcp-rs-sec"><div class="bcp-lh">' + (en ? 'Direct competitors' : 'Competidores directos') + '</div>' +
-        '<div class="bcp-chips" style="justify-content:flex-start">' +
-        comp.map(function (c) { return '<span class="bcp-chip" data-q="' + esc(c) + '">' + esc(c) + '</span>'; }).join('') + '</div></div>'
+      ? '<div class="bcp-rs-sec" data-agent="' + RS_AGENT.competitors + '">' + head('competitors', en ? 'Direct competitors' : 'Competidores directos') +
+        '<div class="bcp-chips">' +
+        comp.map(function (c) { return '<button type="button" class="bcp-chip" data-q="' + esc(c) + '">' + esc(c) + '</button>'; }).join('') + '</div></div>'
       : '';
     var thesisHTML = d.thesis
-      ? '<div style="border:1px solid rgba(0,224,255,.25);border-radius:14px;background:rgba(0,224,255,.05);padding:16px 18px;margin-bottom:16px">' +
-        '<div class="bcp-lh" style="color:' + NEON + '">' + (en ? 'Investment thesis' : 'Tesis de inversión') + '</div>' +
+      ? '<div class="bcp-rs-sec thesis" data-agent="' + RS_AGENT.thesis + '" style="padding:16px 18px;margin-bottom:14px">' +
+        head('thesis', en ? 'Investment thesis' : 'Tesis de inversión', OS.ai) +
         '<div class="bcp-rs-txt" style="font-size:14.5px">' + esc(d.thesis) + '</div></div>'
       : '';
     return thesisHTML +
-      block(en ? 'Sector' : 'Sector', d.sector) +
+      block('sector', en ? 'Sector' : 'Sector', d.sector) +
       compHTML +
-      block(en ? 'Geopolitics' : 'Geopolítica', d.geopolitics) +
-      listBlock(en ? 'Supply-chain chokepoints' : 'Cuellos de botella de la cadena', d.chokepoints, DOWN) +
-      listBlock(en ? 'Risks' : 'Riesgos', d.risks, DOWN) +
-      listBlock(en ? 'What to watch' : 'Qué vigilar', d.watch, NEON) +
-      (d.disclaimer ? '<div style="margin-top:14px;font-size:11px;color:#5b6580;font-style:italic">' + esc(d.disclaimer) + '</div>' : '');
+      block('geopolitics', en ? 'Geopolitics' : 'Geopolítica', d.geopolitics) +
+      listBlock('chokepoints', en ? 'Supply-chain chokepoints' : 'Cuellos de botella de la cadena', d.chokepoints, OS.badInk) +
+      listBlock('risks', en ? 'Risks' : 'Riesgos', d.risks, OS.badInk) +
+      listBlock('watch', en ? 'What to watch' : 'Qué vigilar', d.watch) +
+      (d.disclaimer ? '<div class="bcp-note" style="margin-top:14px;font-style:italic">' + esc(d.disclaimer) + '</div>' : '');
   }
 
   function stageResearch(s, arg) {
@@ -3514,13 +3672,14 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var label = (n && n.label) || arg.label || arg.id || '';
     s.innerHTML = backBar(en ? 'Deep research' : 'Investigación profunda') +
       '<div class="bcp-inner" style="max-width:900px">' +
-        '<div class="bcp-simhd"><span class="big">🧠 ' + esc(label) + '</span>' +
-          '<span style="color:#7C87A3;font-size:12px">' + (en ? 'sector · competitors · geopolitics · thesis' : 'sector · competidores · geopolítica · tesis') + '</span></div>' +
+        // los agentes que investigan (sus mascotas) en lugar del emoji 🧠
+        '<div class="bcp-simhd"><span class="big">' + _stackHTML(['analista', 'radar', 'cadena', 'comite'], 26) + '<span>' + esc(label) + '</span></span>' +
+          '<span class="sub">' + (en ? 'sector · competitors · geopolitics · thesis' : 'sector · competidores · geopolítica · tesis') + '</span></div>' +
         '<div id="bcp-rs-body"></div>' +
       '</div>';
     var _ld = window.KhipuLoading && window.KhipuLoading.staged('bcp-rs-body', {
       title: en ? 'Deep research' : 'Investigación profunda',
-      accent: '#8e5aff',
+      accent: '#9f60e5',   // brillo del orbe de carga (decorativo, el violeta del Comité)
       steps: en
         ? ['Mapping the sector landscape', 'Identifying direct competitors', 'Assessing geopolitical exposure', 'Finding supply-chain chokepoints', 'Writing the investment thesis']
         : ['Mapeando el panorama del sector', 'Identificando competidores directos', 'Evaluando la exposición geopolítica', 'Buscando cuellos de botella de la cadena', 'Redactando la tesis de inversión'],
@@ -3531,7 +3690,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       var body = document.getElementById('bcp-rs-body');
       if (!body) return;
       if (!d || d.ok === false) {
-        body.innerHTML = '<div class="bcp-loading" style="color:#FF4D6A">⚠ ' + esc((d && d.error) || (en ? 'Research failed' : 'La investigación falló')) + '</div>';
+        body.innerHTML = '<div class="bcp-loading err">⚠ ' + esc((d && d.error) || (en ? 'Research failed' : 'La investigación falló')) + '</div>';
         return;
       }
       body.innerHTML = renderResearch(d, en);
@@ -3995,7 +4154,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     wrap.id = 'bcp-demo';
     wrap.innerHTML =
       '<div class="bcp-demobox">' +
-        '<div class="bcp-demoav"></div>' +
+        '<div class="bcp-demoav">' + _mascot('khipu', 34, { state: 'talk' }) + '</div>' +   // Khipu narra: su mascota, no un orbe
         '<div class="bcp-demotxtwrap">' +
           '<div class="bcp-demolabel">' + (en ? 'GUIDED DEMO' : 'DEMOSTRACIÓN GUIADA') + '</div>' +
           '<div class="bcp-demotxt" id="bcp-demotxt"></div>' +

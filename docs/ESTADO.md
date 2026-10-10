@@ -30,6 +30,13 @@ Fabrizio pagó Claude/Gemini/ElevenLabs (y Jev pronto). Workflow de 9 agentes (6
   --os-accent. `.kos-themed` = tokens para overlays fuera de #bcp-ov; tokens de texto AA --os-good-ink/--os-bad-ink/
   --os-warn/--os-warn-ink/--os-ai. LEGACY_DARK queda: broker, scalp, screener, deep, research (ventana de la Cabina),
   agentsim, compare, sim, pick — pendiente migrarlos (viven en cockpit.js/app.html).
+- 2.ª tanda (sw v252): TODAS esas escenas de la Cabina migradas a tokens (LEGACY_DARK = [] — el mecanismo queda por si
+  vuelve una escena vieja), mascotas firmando cada sección de Investigación, 🔴 DINERO REAL en píldora roja sólida, saldos
+  nunca cortados con «…» y con 2 decimales; 🩺 Sistema (app.html #sistema-panel) con piel de Khipus OS y re-rotulado al
+  cambiar idioma. Prueba real en producción: investigación de ASML con claude-sonnet-5-5 (4/4 analistas, 10
+  conclusiones, 51 s). Pendientes chicos: pop-up de confirmación de orden (engine/toast.js) sigue oscuro en tema claro;
+  engine/loading.js con texto oscuro fijo fuera de la Cabina; etiqueta 'cat.' tenue en xray.js; textos del 🩺 en inglés
+  solo para la voz (server.py manda `detail` en español en el resto).
 - Tests: tests/test_overnight_*.py. Suite: 1460 en verde.
 - PENDIENTE Fabrizio (Railway): borrar AI_ORDER (o fijar AI_ORDER_FAST/DEEP), revisar AI_MODEL_DEEP, TYPESAFE_API_KEY;
   ElevenLabs: overrides del agente y ELEVENLABS_ALLOW_OVERRIDE si quiere que el sync repare el agente.
