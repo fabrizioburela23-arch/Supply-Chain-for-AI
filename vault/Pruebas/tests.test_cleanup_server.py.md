@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cleanup_server.py"
 lenguaje: "python"
-lineas: 229
+lineas: 231
 aliases: ["tests/test_cleanup_server.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cleanup_server.py
 
-> Prueba · capa [[Capa Pruebas]] · 229 líneas · `tests/test_cleanup_server.py`
+> Prueba · capa [[Capa Pruebas]] · 231 líneas · `tests/test_cleanup_server.py`
 
 ## Qué prueba
 

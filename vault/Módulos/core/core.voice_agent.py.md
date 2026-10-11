@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "core/voice_agent.py"
 lenguaje: "python"
-lineas: 945
+lineas: 959
 aliases: ["core/voice_agent.py"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # core/voice_agent.py
 
-> Módulo · capa [[Capa Voz]] · 945 líneas · `core/voice_agent.py`
+> Módulo · capa [[Capa Voz]] · 959 líneas · `core/voice_agent.py`
 
 ## Para qué sirve
 
@@ -34,10 +34,10 @@ Khipu (voz) ↔ ElevenLabs Agents Platform (oct-2026).
 - `adopt_shared_voice(key, public_owner_id, voice_id, name, http, timeout=…)` — Copia una voz de la biblioteca compartida a la cuenta (paso previo a asignarla al agente). Los ids van EN la URL: quien llama ya los validó … _(línea 431)_
 - `list_tools(key, http, max_pages=…, timeout=…)` — → ({tool_id: tool_config}, err|None). Todas las del workspace (paginado). _(línea 445)_
 - `tool_payload(spec)` — Spec interna (la de server._bixby_client_tools) → tool_config de la API. _(línea 483)_
-- `ensure_tools(key, http, specs, current_ids, timeout=…)` — Crea/actualiza las herramientas cliente de Khipu y devuelve sus ids. Reusa (por nombre) las que el agente ya referencia — incluidas las que … _(línea 497)_
-- `build_agent_patch(cur_summary, prompt, tool_ids, language=…, allow_overrides=…, legacy_tools=…)` — → (payload PATCH, cambios{tts_fixed, llm_fixed, client_events_fixed, overrides_enabled}). _(línea 559)_
-- `sync_agent(key, agent_id, prompt, tool_specs, http, language=…, allow_overrides=…)` — Empuja el cerebro de Khipu al agente: prompt + herramientas (recursos con tool_ids) + idioma, y REPARA lo viejo: TTS deprecado o … _(línea 595)_
-- `diagnose(key, agent_id, http, expected_tools=…, prompt=…, full=…)` — Revisa clave, saldo, agente, LLM, voz, modelo TTS, overrides, herramientas, eventos y prompt. → {configured, ok, checks[], fixes[], detail … _(línea 685)_
+- `ensure_tools(key, http, specs, current_ids, timeout=…, retired_names=…)` — Crea/actualiza las herramientas cliente de Khipu y devuelve sus ids. Reusa (por nombre) las que el agente ya referencia — incluidas las que … _(línea 497)_
+- `build_agent_patch(cur_summary, prompt, tool_ids, language=…, allow_overrides=…, legacy_tools=…)` — → (payload PATCH, cambios{tts_fixed, llm_fixed, client_events_fixed, overrides_enabled}). _(línea 565)_
+- `sync_agent(key, agent_id, prompt, tool_specs, http, language=…, allow_overrides=…, retired_names=…)` — Empuja el cerebro de Khipu al agente: prompt + herramientas (recursos con tool_ids) + idioma, y REPARA lo viejo: TTS deprecado o … _(línea 601)_
+- `diagnose(key, agent_id, http, expected_tools=…, prompt=…, full=…, retired_tools=…)` — Revisa clave, saldo, agente, LLM, voz, modelo TTS, overrides, herramientas, eventos y prompt. → {configured, ok, checks[], fixes[], detail … _(línea 693)_
 
 **Internas** (empiezan con `_`): `_hdr`, `_json`, `_http_err`, `_exc_err`, `_sleep`, `_cc`, `_subset_equal`, `_check`, `_finish`
 

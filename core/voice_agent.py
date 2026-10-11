@@ -494,11 +494,13 @@ def tool_payload(spec: dict) -> dict:
     return cfg
 
 
-def ensure_tools(key, http, specs, current_ids, timeout=15) -> dict:
+def ensure_tools(key, http, specs, current_ids, timeout=15, retired_names=()) -> dict:
     """Crea/actualiza las herramientas cliente de Khipu y devuelve sus ids.
     Reusa (por nombre) las que el agente ya referencia — incluidas las que
     ElevenLabs migró solas desde el viejo `prompt.tools` — y las actualiza
-    solo si cambiaron. → {ok, ids_by_name, keep_ids, created, updated, errors}"""
+    solo si cambiaron. `retired_names` = herramientas cliente de Khipu que ya NO existen (voz para Khipus OS,
+    2026-10-11): sus ids se SUELTAN del agente (el recurso queda en el workspace; nunca se borra nada).
+    → {ok, ids_by_name, keep_ids, created, updated, errors, detached}"""
     listing, err = list_tools(key, http)
     names = {s['name'] for s in specs}
     current_ids = list(current_ids or [])
@@ -506,7 +508,7 @@ def ensure_tools(key, http, specs, current_ids, timeout=15) -> dict:
         # no se pudo listar y el agente no referencia ninguna: crear a ciegas DUPLICARÍA las que ya existen en
         # el workspace → nada de POST; sync_agent cae al formato en línea (o solo prompt) y reintenta luego
         return {'ok': False, 'ids_by_name': {}, 'keep_ids': [], 'created': [], 'updated': [],
-                'errors': [], 'list_error': err}
+                'errors': [], 'detached': [], 'list_error': err}
     if err and current_ids:
         # sin permiso de listar: leer una por una las que ya tiene el agente
         for tid in current_ids[:60]:
@@ -548,11 +550,15 @@ def ensure_tools(key, http, specs, current_ids, timeout=15) -> dict:
                     created.append(spec['name'])
         except Exception as e:  # noqa: BLE001
             errors.append({'tool': spec['name'], **_exc_err(e, 'agent')})
-    # ids que el agente ya tenía y NO son de Khipu (webhooks/MCP del dueño): se conservan
+    # ids que el agente ya tenía y NO son de Khipu (webhooks/MCP del dueño): se conservan; las herramientas
+    # cliente RETIRADAS de Khipu se sueltan (si no, el agente seguiría llamando a nombres que ya no existen)
     managed = {tid for lst in by_name.values() for tid in lst}
-    keep = [tid for tid in current_ids if tid not in managed and tid not in ids_by_name.values()]
+    retired = set(retired_names or ()) - names
+    gone = {tid: (listing.get(tid) or {}).get('name') for tid in current_ids
+            if (listing.get(tid) or {}).get('name') in retired and (listing.get(tid) or {}).get('type', 'client') == 'client'}
+    keep = [tid for tid in current_ids if tid not in managed and tid not in ids_by_name.values() and tid not in gone]
     return {'ok': bool(ids_by_name), 'ids_by_name': ids_by_name, 'keep_ids': keep, 'created': created, 'updated': updated,
-            'errors': errors[:10], 'list_error': err}
+            'errors': errors[:10], 'detached': sorted(set(gone.values())), 'list_error': err}
 
 
 # ── Sync (reparación) ────────────────────────────────────────────────────────
@@ -592,7 +598,8 @@ def build_agent_patch(cur_summary: dict, prompt: str, tool_ids, *, language='es'
     return payload, changes
 
 
-def sync_agent(key, agent_id, prompt, tool_specs, *, http, language='es', allow_overrides=False) -> dict:
+def sync_agent(key, agent_id, prompt, tool_specs, *, http, language='es', allow_overrides=False,
+               retired_names=()) -> dict:
     """Empuja el cerebro de Khipu al agente: prompt + herramientas (recursos
     con tool_ids) + idioma, y REPARA lo viejo: TTS deprecado o solo-inglés,
     LLM retirado, client_events sin client_tool_call y (si
@@ -619,9 +626,10 @@ def sync_agent(key, agent_id, prompt, tool_specs, *, http, language='es', allow_
                 'error_en': err.get('en') or 'could not read the agent', 'code': err.get('code') or 'unknown',
                 'fix_es': err.get('fix_es'), 'fix_en': err.get('fix_en'), 'detail': err.get('message')}
     cur = agent_summary(cfg)
-    tools = ensure_tools(key, http, tool_specs, cur['tool_ids'])
+    tools = ensure_tools(key, http, tool_specs, cur['tool_ids'], retired_names=retired_names)
     res = {'tools_expected': len(tool_specs), 'tools_created': tools['created'],
-           'tools_updated': tools['updated'], 'tool_errors': tools['errors']}
+           'tools_updated': tools['updated'], 'tools_detached': tools.get('detached') or [],
+           'tool_errors': tools['errors']}
     attempts = []
     if tools['ids_by_name']:
         ids = [tools['ids_by_name'][s['name']] for s in tool_specs if s['name'] in tools['ids_by_name']]
@@ -682,7 +690,7 @@ _SYNC_FIX_EN = ('Fixed automatically on server restart (Railway → your service
                 'boot syncs Khipu with ElevenLabs.')
 
 
-def diagnose(key, agent_id, *, http, expected_tools=(), prompt=None, full=False) -> dict:
+def diagnose(key, agent_id, *, http, expected_tools=(), prompt=None, full=False, retired_tools=()) -> dict:
     """Revisa clave, saldo, agente, LLM, voz, modelo TTS, overrides,
     herramientas, eventos y prompt. → {configured, ok, checks[], fixes[],
     detail (ES), detail_en, subscription, agent, latency_ms}."""
@@ -862,8 +870,14 @@ def diagnose(key, agent_id, *, http, expected_tools=(), prompt=None, full=False)
             if lerr and not have_names:
                 have_names = None
         missing = None if have_names is None else [n for n in want if n not in have_names]
+        stale = [] if have_names is None else sorted(n for n in (retired_tools or ()) if n in have_names)
         out['tools'] = {'expected': len(want), 'tool_ids': len(s['tool_ids']),
-                        'missing': (missing or [])[:30] if missing is not None else None}
+                        'missing': (missing or [])[:30] if missing is not None else None, 'retired_attached': stale[:30]}
+        if stale:
+            # herramientas de la voz vieja (antes de Khipus OS) todavía conectadas: el agente podría llamarlas
+            checks.append(_check('tools_retired', 'warn', f'El agente aún tiene {len(stale)} herramientas viejas de Khipu '
+                                                          f'({", ".join(stale[:3])}…).',
+                                 f'The agent still has {len(stale)} retired Khipu tools.', _SYNC_FIX_ES, _SYNC_FIX_EN))
         if missing is None:
             checks.append(_check('tools', 'warn', f'El agente tiene {len(s["tool_ids"])} herramientas (no pude '
                                                   'leer sus nombres).',

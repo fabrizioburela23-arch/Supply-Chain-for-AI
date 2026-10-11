@@ -37,7 +37,7 @@ _Nada interno._
 - [[research.runner.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -45,6 +45,7 @@ _Además lo importan 4 pruebas (lista abajo)._
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_khipus_os_server.py]]
+- [[tests.test_voice_os_server.py]]
 
 ## Mencionado en sesiones de trabajo
 

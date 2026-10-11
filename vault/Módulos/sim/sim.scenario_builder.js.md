@@ -47,6 +47,7 @@ Se carga en [[app.html]] en la posición **86 de 91** (línea 7936), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_scenario_live.py]]
+- [[tests.test_voice_os_server.py]]
 
 ## Mencionado en sesiones de trabajo
 

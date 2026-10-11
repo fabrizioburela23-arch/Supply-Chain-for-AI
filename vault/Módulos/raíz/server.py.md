@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "server.py"
 lenguaje: "python"
-lineas: 5757
+lineas: 5890
 aliases: ["server.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # server.py
 
-> Módulo · capa [[Capa Infraestructura]] · 5.757 líneas · `server.py`
+> Módulo · capa [[Capa Infraestructura]] · 5.890 líneas · `server.py`
 
 ## Para qué sirve
 
@@ -78,37 +78,37 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - `company_research(ticker)` — Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza. _(línea 3832)_
 - `grafo_estado()` _(línea 3896)_
 - `grafo_seed()` — Carga masiva de hechos (el cliente empuja su catálogo derivado una vez cuando detecta Neo4j). Idempotente: MERGE por id, no duplica. _(línea 3945)_
-- `voice_sync_agent()` — Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH del agente). PIN de operador: antes cualquiera podía dispararlo en … _(línea 4256)_
-- `deep_analyze()` — Arranca una investigación profunda (Capa 4). Una a la vez por worker. _(línea 4379)_
-- `client_diag()` _(línea 4428)_
-- `client_diag_recent()` _(línea 4447)_
-- `deep_status()` _(línea 4468)_
-- `bixby_system_prompt()` — Returns Khipu's system prompt for ElevenLabs agent configuration. _(línea 4474)_
-- `voice_session()` — URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides permite el agente, para que el navegador no mande uno prohibido … _(línea 4494)_
-- `portfolio_risk_report()` — REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución) con precios diarios REALES de 1 año. Body: {positions:[{symbol, … _(línea 4596)_
-- `portfolio_vega_report()` — REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad implícita EN VIVO del contrato. Body: {options:[{symbol, kind, … _(línea 4618)_
-- `options_chain(symbol)` — Vencimientos y strikes disponibles del subyacente (selectores de la UI). _(línea 4636)_
-- `api_portfolio_risk_internal()` — VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser). _(línea 4648)_
-- `generate_khipu_key(user_id, tier=…)` _(línea 4668)_
-- `validate_khipu_key(key)` _(línea 4673)_
-- `khipu_auth(min_tier=…)` _(línea 4682)_
-- `api_issue_key()` — Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise. _(línea 4704)_
-- `api_docs()` _(línea 4724)_
-- `api_nodes()` _(línea 4746)_
-- `api_node_live(node_id)` _(línea 4752)_
-- `api_portfolio_risk()` — VaR + CVaR del portfolio del cliente (Alpha Vantage históricos). Contrato público INTOCABLE — mismo cálculo compartido en … _(línea 4765)_
-- `quotes_live()` — Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]} (máx 150 por petición; el cliente recorre TODO el catálogo en … _(línea 4781)_
-- `macro_fred()` — Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS Returns last 30 data points per series. _(línea 4813)_
-- `investors_13f(ticker)` — Top institutional holders from SEC EDGAR 13F filings. Cached 24h. _(línea 4848)_
-- `trade_flows()` — UN Comtrade public preview API — bilateral semiconductor trade. ?reporter=USA&partner=CHN&product=8542 (optional filters) HS codes: 8541 … _(línea 4901)_
-- `agent_start()` _(línea 5459)_
-- `agent_stop()` _(línea 5494)_
-- `agent_status()` _(línea 5504)_
-- `agent_config()` _(línea 5532)_
-- `trade_history()` _(línea 5552)_
-- `portfolio_comment()` — Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen AGREGADO y anónimo desde el cliente (sin datos personales: solo … _(línea 5565)_
-- `portfolio_advice()` — CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un resumen ANÓNIMO de la cartera (papel) + candidatos del universo, … _(línea 5649)_
-- `trade_positions_detail()` _(línea 5728)_
+- `voice_sync_agent()` — Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH del agente). PIN de operador: antes cualquiera podía dispararlo en … _(línea 4389)_
+- `deep_analyze()` — Arranca una investigación profunda (Capa 4). Una a la vez por worker. _(línea 4512)_
+- `client_diag()` _(línea 4561)_
+- `client_diag_recent()` _(línea 4580)_
+- `deep_status()` _(línea 4601)_
+- `bixby_system_prompt()` — Returns Khipu's system prompt for ElevenLabs agent configuration. _(línea 4607)_
+- `voice_session()` — URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides permite el agente, para que el navegador no mande uno prohibido … _(línea 4627)_
+- `portfolio_risk_report()` — REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución) con precios diarios REALES de 1 año. Body: {positions:[{symbol, … _(línea 4729)_
+- `portfolio_vega_report()` — REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad implícita EN VIVO del contrato. Body: {options:[{symbol, kind, … _(línea 4751)_
+- `options_chain(symbol)` — Vencimientos y strikes disponibles del subyacente (selectores de la UI). _(línea 4769)_
+- `api_portfolio_risk_internal()` — VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser). _(línea 4781)_
+- `generate_khipu_key(user_id, tier=…)` _(línea 4801)_
+- `validate_khipu_key(key)` _(línea 4806)_
+- `khipu_auth(min_tier=…)` _(línea 4815)_
+- `api_issue_key()` — Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise. _(línea 4837)_
+- `api_docs()` _(línea 4857)_
+- `api_nodes()` _(línea 4879)_
+- `api_node_live(node_id)` _(línea 4885)_
+- `api_portfolio_risk()` — VaR + CVaR del portfolio del cliente (Alpha Vantage históricos). Contrato público INTOCABLE — mismo cálculo compartido en … _(línea 4898)_
+- `quotes_live()` — Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]} (máx 150 por petición; el cliente recorre TODO el catálogo en … _(línea 4914)_
+- `macro_fred()` — Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS Returns last 30 data points per series. _(línea 4946)_
+- `investors_13f(ticker)` — Top institutional holders from SEC EDGAR 13F filings. Cached 24h. _(línea 4981)_
+- `trade_flows()` — UN Comtrade public preview API — bilateral semiconductor trade. ?reporter=USA&partner=CHN&product=8542 (optional filters) HS codes: 8541 … _(línea 5034)_
+- `agent_start()` _(línea 5592)_
+- `agent_stop()` _(línea 5627)_
+- `agent_status()` _(línea 5637)_
+- `agent_config()` _(línea 5665)_
+- `trade_history()` _(línea 5685)_
+- `portfolio_comment()` — Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen AGREGADO y anónimo desde el cliente (sin datos personales: solo … _(línea 5698)_
+- `portfolio_advice()` — CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un resumen ANÓNIMO de la cartera (papel) + candidatos del universo, … _(línea 5782)_
+- `trade_positions_detail()` _(línea 5861)_
 
 **Internas** (empiezan con `_`): `_response_status`, `_degraded`, `_cacheable_response`, `_neg_cache_key`, `_with_negative_cache`, `_cache_cached_ok_only`, `_voice_override_off`, `_ai_route_now`, `_ai_models_now`, `_clean_env`, `_neo4j_available`, `_temporal_mode`, `_norm_alpaca_base`, `_add_security_headers`, `_add_cors_for_public_api`, `_log_request`, `_redact_secrets_in_json`, `_secret_values_for_scan`, `_sw_version`, `_versioned_app_html`, `_js_cache_headers`, `_json_error`, `_research_brief`, `_diag_redact`, `_diag_card`, `_diag_model_name`, `_diag_ai_route`, `_diag_claude`, `_ai_error_fix`, `_ai_error_hint`, `_diag_gemini`, `_diag_nvidia`, `_diag_elevenlabs`, `_db_error_fix`, `_db_error_hint`, `_diag_ontologia`, `_diag_grafo`, `_diag_alpaca`, `_diag_finnhub`, `_diag_fmp`, `_diag_yahoo`, `_diag_research_fix`, `_security_warnings`, `_same_origin_request`, `_ws_forbidden`, `_ws_sig`, `_quote_raw_compat`, `_alpaca_hdrs`, `_trade_symbol`, `_paper`, `_account_is_live`, `_house_trading_enabled`, `_trading_halted_response`, `_broker_missing_response`, `_trade_actor`, `_trade_audit`, `_alpaca_json`, `_house_price`, `_finite_pos`, `_num_str` y 39 más
 
@@ -171,7 +171,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[security_audit.py]] — lo importa
 - [[security_audit.py]] — lo nombra por su ruta
 
-_Además lo importan 35 pruebas (lista abajo)._
+_Además lo importan 36 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -346,6 +346,7 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_risk_options.py]]
 - [[tests.test_security.py]]
 - [[tests.test_server_smoke.py]]
+- [[tests.test_voice_os_server.py]]
 
 ## Mencionado en sesiones de trabajo
 

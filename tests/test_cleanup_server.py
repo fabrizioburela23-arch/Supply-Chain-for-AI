@@ -160,15 +160,17 @@ def test_restos_alias_y_precios():
 
 # ── §14 instrucciones de la voz ──────────────────────────────────────────────
 def test_prompt_de_voz_describe_khipus_os_y_sus_agentes():
+    """Desde la voz para Khipus OS (2026-10-11) la voz abre PANTALLAS del menú Herramientas (open_screen), no
+    pestañas: la lista sale de server.VOICE_SCREENS, que tests/test_voice_os_server.py compara con cockpit.js."""
     import server
     from core.agents_registry import AGENTS
-    from core.khipu_chat import TABS
     p = server.BIXBY_SYSTEM_PROMPT
     assert 'KHIPUS OS' in p and '4 PRIMARY TABS' not in p and 'NEXUS' not in p and '{agents}' not in p
+    assert '{screens}' not in p and 'switch_tab' not in p
     for a in AGENTS:
         assert a['es'] in p, a['id']
-    m = re.search(r'switch_tab\(tab: ([a-z|]+)\)', p)
-    assert m and set(m.group(1).split('|')) == set(TABS)
+    for es, en in server.VOICE_SCREENS.values():
+        assert f'"{es}" / "{en}"' in p, es
     assert 'ALWAYS waits for human approval' in p
 
 

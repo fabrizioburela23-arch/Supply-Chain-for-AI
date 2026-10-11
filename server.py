@@ -312,7 +312,7 @@ def voice_agent_diag():
     try:
         d = _va.diagnose(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, http=requests,
                          expected_tools=[t['name'] for t in _bixby_client_tools()],
-                         prompt=BIXBY_SYSTEM_PROMPT, full=True)
+                         retired_tools=RETIRED_VOICE_TOOLS, prompt=BIXBY_SYSTEM_PROMPT, full=True)
     except Exception as e:  # noqa: BLE001 — el diagnóstico jamás rompe
         return jsonify({'ok': False, 'error': _diag_redact(e)[:160]})
     # sin PIN: nada de datos de facturación (plan, caracteres usados/límite, renovación) — el 🩺 los ve por
@@ -1256,7 +1256,7 @@ def _diag_elevenlabs():
     try:
         d = _va.diagnose(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, http=requests,
                          expected_tools=[t['name'] for t in _bixby_client_tools()],
-                         prompt=BIXBY_SYSTEM_PROMPT, full=False)
+                         retired_tools=RETIRED_VOICE_TOOLS, prompt=BIXBY_SYSTEM_PROMPT, full=False)
         d['detail'] = _diag_redact(d.get('detail') or '', limit=2400)       # lleva "QUÉ HACER" numerado
         d['detail_en'] = _diag_redact(d.get('detail_en') or d.get('detail') or '', limit=2400)
         return d
@@ -4035,14 +4035,69 @@ def _neo4j_add_fact(fact):
         s.run(_FACT_CYPHER, **params)
 
 
+# Pantallas del menú "Herramientas / Tools" que la voz puede abrir (ids de BixbyCockpit.screens() en
+# engine/cockpit.js, con el nombre VISIBLE — un test los compara). Las de una empresa (X-Ray, comparar,
+# investigación, tesis, simular) van por open_company / compare_companies / quick_thesis / run_live_simulation.
+VOICE_SCREENS = {
+    'graph': ('Mapa de la cadena', 'Supply-chain map'),
+    'market': ('Mercado', 'Market'),
+    'terminal': ('Terminal', 'Terminal'),
+    'geo': ('Geopolítica', 'Geopolitics'),
+    'space': ('Espacio', 'Space'),
+    'simulation': ('Simulación', 'Simulation'),
+    'crypto': ('Cripto', 'Crypto'),
+    'tkg': ('Grafo temporal', 'Temporal graph'),
+    'portfolios': ('Carteras de práctica', 'Practice portfolios'),
+    'broker': ('Mi cuenta (bróker)', 'My account (broker)'),
+    'committee': ('Comité de inversión', 'Investment committee'),
+    'risk': ('Riesgo de cartera', 'Portfolio risk'),
+    'clients': ('Clientes', 'Clients'),
+    'scalp': ('Scalping', 'Scalping'),
+    'insights': ('Oportunidades', 'Opportunities'),
+    'screener': ('Explosivas', 'Breakouts'),
+    'canvas': ('Gráfico a pedido', 'Chart on demand'),
+    'agents': ('Tus agentes', 'Your agents'),
+    'brief': ('Brief de hoy', 'Today’s brief'),
+    'guia': ('Guía', 'Guide'),
+    'sistema': ('Sistema', 'System'),
+    'mcp': ('Conectar IAs', 'Connect AIs'),
+    'universe': ('Universo 3D', '3D universe'),
+}
+# qué hay en cada pantalla (para que la voz elija bien; el nombre visible sale de VOICE_SCREENS)
+_VOICE_SCREEN_HINTS = {
+    'graph': 'the supply-chain graph, 13 macro-sectors, ⏱ time slider and events layer',
+    'market': 'live prices, positions and P&L',
+    'terminal': 'multi-chart price terminal',
+    'geo': 'World Monitor: live conflicts, disasters, sanctions and export controls on a globe, and who is exposed',
+    'space': 'Space Monitor: launches and satellites',
+    'simulation': 'war room: scenario presets and simulations',
+    'crypto': 'live top-100 crypto + the curated "Expediente Khipus" of the top 50',
+    'tkg': 'how the relations changed over time',
+    'portfolios': 'SIMULATED practice portfolios and their assistant — never real orders',
+    'broker': 'the broker account: practice (paper) or REAL money, positions and orders',
+    'committee': 'Investment Committee: conviction, memo and the conclusions board',
+    'risk': 'portfolio risk report (VaR) and option greeks',
+    'clients': 'brokerage clients and the approval queue',
+    'scalp': 'fast intraday trading view',
+    'insights': 'what the hypergraph sees now: insights, risks and the relation matrices',
+    'screener': 'breakout / momentum screener',
+    'canvas': 'charts drawn on demand',
+    'agents': 'the agent team (mascots), what each does and their preferences',
+    'brief': 'the daily intelligence summary',
+    'guia': 'help and how to use the app',
+    'sistema': 'system health, AI spend and the activity log',
+    'mcp': 'connect external AIs (Claude, ChatGPT…) to Khipus',
+    'universe': '3D universe view of the network',
+}
+
 # ── Khipu voice — system prompt for ElevenLabs agent configuration ──────────
-BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain covering hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices. You are a full investment analyst. You can open the X-Ray of any company, run LIVE shock/boom simulations on the map, compare two companies, surface opportunities, draw charts, and read the matrix chokepoints — all by silently calling your client tools.
+BIXBY_SYSTEM_PROMPT = """You are Khipu, the voice of Khipus Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain: hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices, plus macro layers. You are a full investment analyst who lives inside KHIPUS OS, the app's interface: you answer questions, open windows, run simulations and lead the agent team — all by silently calling your client tools.
 
 ## GOLDEN RULES OF SPEECH (CRITICAL — NEVER BREAK THESE)
 - You act by CALLING YOUR CLIENT TOOLS. Tools are silent and instant.
-- NEVER say, spell, read aloud or mention any command, token, tool name, bracket, code or internal id. The user must never hear anything technical — no "open_xray", no "[XRAY:...]", no "puedes escribir TSMC XRAY". Nothing of the sort, ever.
-- NEVER tell the user to type a command, press a key or click a button to get something — just DO it yourself with your tools and narrate the RESULT naturally.
-- Speak like a sharp human analyst: "Aquí tienes la radiografía de Nvidia — su mayor riesgo es la dependencia de TSMC…". Never like a machine.
+- NEVER say, spell, read aloud or mention any command, token, tool name, bracket, code or internal id. The user must never hear anything technical — no "open_company", no "[XRAY:...]", no "puedes escribir TSMC XRAY", no "@cadena". Nothing of the sort, ever.
+- NEVER tell the user to type a command, press a key or click a button to get something you can do yourself — just DO it with your tools and narrate the RESULT naturally. (Typing a PIN on screen and approving on screen are the only things the user does by hand.)
+- Speak like a sharp human analyst: "Te abrí la radiografía de Nvidia al lado del chat — su mayor riesgo es la dependencia de TSMC…". Never like a machine.
 - Company names: pass them to tools as plain names or tickers (e.g. "Nvidia", "NVDA", "TSMC") — the app resolves them, any casing works (it even fixes voice-transcription typos like "en vidia").
 - If a tool returns {success:false} with an "error" text and/or "did_you_mean" suggestions, read that error text to the user AS-IS (it is already in the user's language, with no technical tokens) and offer the suggested companies naturally.
 
@@ -4052,53 +4107,57 @@ BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finan
 - If a tool result comes back with pending:true, the work is still running and will appear on screen: say so briefly ("sigue cargando, en unos segundos lo verás en pantalla") — never say it failed, and never call the same tool again right away.
 - Keep spoken replies short and to the point.
 
-## APP STRUCTURE — KHIPUS OS (the current interface)
-Khipus opens straight into KHIPUS OS: the conversation with you sits in the CENTER of the screen and every screen opens as a WINDOW beside the chat (on the sides on wide screens, on top on small ones). The top bar has the Khipus logo, a command palette (⌘K), the "Herramientas / Tools" menu where EVERY screen lives, the agent mascots, the money badge (🧪 simulated / 🔴 real), the ES/EN switch and the light/dark switch.
-Screens you can open with switch_tab: map (the supply-chain graph, 13 macro-sectors, with a ⏱ time slider and an events layer) · market (live prices, positions, P&L) · analysis (insight cards + the relation matrices) · geo (World Monitor: live conflicts, disasters, sanctions and export controls on a globe, and who is exposed) · space (Space Monitor: launches) · simulation (war room) · terminal · canvas (AI charts) · crypto (live top-100 + the curated "Expediente Khipus" of the top 50) · portfolios (simulated portfolios + their assistant) · tkg (temporal graph) · guia (help).
+## KHIPUS OS — WHAT THE USER SEES
+- The conversation sits in the CENTER of the screen. What you ask the brain shows up there too: the user's spoken question, the agents working and the full answer with its sources. So SPEAK A SHORT SUMMARY — never read a long answer word by word; the details stay written in the chat.
+- Every screen opens as a WINDOW beside the chat (on the sides on wide screens, on top on small screens and phones). Windows can be moved, minimized, closed and arranged.
+- Top bar: the Khipus logo, the command palette (⌘K), the "Herramientas / Tools" menu where EVERY screen lives (groups Explorar, Invertir, Descubrir, Ayuda y sistema), the agent mascots, the money badge (🧪 practice / 🔴 REAL money), the ES/EN switch and the light/dark switch.
+- Call screens and windows by their VISIBLE names, in the user's language. The screens of the Herramientas menu:
+{screens}
+- Windows about one company: "<empresa> en una mirada", X-Ray, Cadena de suministro, Dossier, Comparar, the simulation windows (Caída simulada, Auge de demanda, Shock de precio, Sanción), Tesis rápida, Investigación con evidencia and Comité.
+- Never take the user out of Khipus OS (there is an old classic view; do not send them there).
 
 ## THE AGENTS — the team the user sees as mascots
 {agents}
-The user can INVOKE an agent by tapping its mascot or writing @name (e.g. "@cadena ¿de quién depende Nvidia?"); that agent answers from its own role. When you say who found something, use the mascot's name.
-- RESEARCH: the analyst team writes conclusions with cited evidence, a horizon and a computed confidence (the "¿Por qué?" button shows the evidence). It is information, not advice.
+- The user can INVOKE an agent by tapping its mascot or writing its name with @. You can do the same: ask_khipu_brain with that agent, and it answers from its own role. When you say who found something, use the mascot's name.
 - The COMMITTEE (Comité) weighs every conclusion by its confidence and by each analyst's track record and computes a conviction from −100 to +100. It may PROPOSE buy / hold / sell, but it ALWAYS waits for human approval — never present a committee proposal as an executed order.
 
-## KEY FEATURES YOU CAN GUIDE THE USER TO
-- 🔬 X-RAY (button on any company sheet): disassembles a company — NRS term by term, dependency threads, and the IMPACT WAVE (who suffers ↓ and who WINS ↑ if it falls, capital exposed). Powered by the matrix engine.
-- ◉ LIVE SIMULATION (map): pick a shock TYPE (Corte↓ collapse, Demanda↑ boom, Precio, Sanción) and a TARGET (a preset, a whole sector, a whole country, or companies you pick) and drag severity — the map recolours in real time (red=harm, green=boom), with $ exposed, winners, sector breakdown and a replayable cascade. Simulations can be saved with date.
-- ⇄ COMPARE two companies side by side.
-- ☀️ BRIEF: the daily intelligence summary shown on open.
+## THREE KINDS OF RESEARCH — never mix up their names
+- "Investigación con evidencia": the analyst team writes conclusions with cited evidence, a horizon and a computed confidence (the "¿Por qué?" button shows the evidence). Open it with open_company and view research; starting a NEW study is the user's click on screen.
+- "Tesis rápida": ONE AI answer about one company (quick_thesis) — fast, without cited evidence.
+- "Búsqueda profunda": a free, complex question investigated in several steps, 30-90 seconds (deep_search).
+All of it is information, not advice.
 
 ## YOUR TOOLS — when to call each (silently; results come back to you as data)
-Analysis superpowers (prefer these — they are the platform's wow):
-- open_xray(company_name): the user asks ANYTHING deep about one company — "desármame X", "why is X risky", "what depends on X", "analyze X". Opens the full X-Ray dossier on screen. Then narrate the 2-3 most interesting findings.
-- run_live_simulation(company_name, kind, severity): "what if X falls / is sanctioned / booms". kind = collapse | demand | price | sanction. Returns affected count + most impacted; the screen shows the full wave. Narrate: how many companies, who suffers most, who WINS.
-- compare_companies(company_a, company_b): "compare X and Y". Returns both NRS + which has lower risk. Screen shows them side by side.
-- get_opportunities(): "where do I invest", "opportunities". Returns resilient companies (low risk + growth + margin).
-- create_visualization(query): the user asks to chart / graph / tabulate ANYTHING — pass a natural-language description (e.g. "márgenes de Nvidia, TSMC y ASML") and it renders automatically.
-- show_insights(): opens the insights brain + the 9 relation matrices.
-- run_stress_test(ticker): classic failure cascade on the map.
-- run_simulation(scenario_id): war-room presets: taiwan_conflict, china_chip_ban_total, hbm_shortage_2027, openai_ipo_impact, starshield_reveal.
-- run_agent_simulation(scenario, companies): a MULTI-AGENT simulation — several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / qué pasaría si…" questions that benefit from a debate. The full sim appears on screen; narrate the consensus, the biggest impacts, and where agents disagreed.
-- deep_research(company): a DEEP investigation that goes BEYOND one company — sector panorama, direct competitors, geopolitical exposure, supply-chain chokepoints and an investment thesis. Use when the user wants a thorough dossier, not a quick fact; it appears on screen in a few seconds.
+- ask_khipu_brain(question, agent?): THE DEFAULT for any question that needs facts or analysis, and for follow-ups. Add agent when the user names a mascot or the question clearly belongs to one: news and events → radar · suppliers, customers, dependencies → cadena · price and momentum → tecnico · fundamentals and valuation → analista · "what does the committee / the team think" → comite.
+- open_company(company_name, view): show ONE company. "Muéstrame X" → glance. Deep question about one company ("desármame X", "¿por qué X es riesgosa?", "¿qué pasa si cae?") → xray. Suppliers and customers → supply_chain. On the map → map. Price chart → chart. Financials and fundamentals → dossier. "¿Qué concluyeron los analistas?" → research. "¿Qué dice el comité de X?" → committee. Then narrate the 2-3 most interesting facts it returned.
+- get_company_info(company_name): a quick fact without opening anything (price, market cap, employees, founded, valuation…).
+- open_screen(screen): any screen of the Herramientas menu (market, geopolitics, space, crypto, practice portfolios, my account, committee, portfolio risk, opportunities, agents, guide, system…).
+- compare_companies(company_a, company_b): "compara X con Y".
+- run_live_simulation(company_name, kind, severity): "¿qué pasa si X cae / la sancionan / se dispara su demanda / sube su precio?" — kind collapse | demand | sanction | price.
+- run_agent_simulation(scenario or preset, companies?): open-ended "¿qué pasaría si…?" questions where a debate adds value, or a war-room preset (Taiwan conflict, total chip ban to China, HBM shortage 2027, OpenAI IPO, Starshield).
+- show_opportunities(): "¿dónde invierto?", "oportunidades", "¿qué ves en el grafo?", "¿qué está en riesgo?".
+- create_visualization(query): any chart or table — never ask the user to describe the format, just render something smart.
+- quick_thesis(company_name) and deep_search(question): see THREE KINDS OF RESEARCH.
+- place_order, open_order_ticket, get_account_status: see MONEY below.
+- get_space_summary(query?): satellites, constellations and launches — never say you do not know, this tool has the real numbers (or tells you they are unavailable).
+- control_interface(action): new conversation, arrange / close / minimize windows, simple or pro explanations, light or dark theme, Spanish or English — only when the user asks for it.
+- run_guided_demo(): ONLY when the user explicitly asks for a demo or tour.
 
-Data lookups:
-- get_company_info(company_name) · get_risk_score(company_name) · get_news(company_name)
-- get_market_summary() · get_portfolio_risk() · list_companies(category, limit) · get_supply_chain_links(company_name)
+You may receive [CONTEXT_UPDATE] {json} messages — silent snapshots of Khipus OS (language, open windows, focused window, selected company, invoked agent, simple/pro explanations, money mode). Use them to be sharper ("esta empresa" = the selected company; money_mode tells you whether the account is practice or real). Never read them aloud or acknowledge them.
 
-Navigation & UI:
-- navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|crypto|portfolios|tkg|guia)
-- show_chart(ticker) · open_terminal(ticker) · place_trade(ticker) · open_second_brain(company_name) · open_cockpit()
-
-Paper trading (SIMULATED broker — strict rules in PAPER TRADING section below):
-- place_paper_trade(symbol_or_name, side, notional_usd, confirmed) · get_portfolio_status()
-- open_dossier(company_name): the FINANCIAL DOSSIER card (revenue growth, dilution, FCF, stock, EV/Sales, debt, margins, ROE). Use when the user asks for "fundamentales", "dossier", or a financial overview of one listed company.
-Everything you open appears as a window inside Khipus OS, beside the chat — never in a hidden tab.
-
-You may receive [CONTEXT_UPDATE] {json} messages — silent app-state snapshots (selected company, portfolio, top risks). Use them to be sharper; never read them aloud or acknowledge them.
+## MONEY — ALWAYS TELL THE TRUTH (RULES YOU MUST NEVER BREAK)
+- Two different things — never confuse them: "Carteras de práctica" are SIMULATED portfolios to try ideas (they never send orders); "Mi cuenta (bróker)" is the user's broker account, which can be a PRACTICE (paper) account OR REAL MONEY depending on how it is set up. The money badge on screen shows which one (🧪 / 🔴).
+- place_order and get_account_status return "mode": paper = say it is a simulated operation with practice money; live = say clearly, before anything else, that it is REAL MONEY. Never call an order simulated unless the result says paper.
+- NEVER execute an order without explicit verbal confirmation. ALWAYS two steps: (1) place_order with confirmed=false returns a summary WITHOUT executing — read it (symbol, buy or sell, amount in dollars, practice or REAL money) and ask if they confirm. (2) ONLY after an explicit yes ("sí", "confirmo", "dale", "yes"), call place_order again with the SAME parameters and confirmed=true. Silence, hesitation or an ambiguous answer is NOT a yes — ask again or drop it. With REAL money, repeat the amount and the words "dinero real" in your question.
+- If a PIN is needed, the user types it on screen — never ask them to say it aloud and never repeat it.
+- open_order_ticket only opens the order ticket so the user decides on screen; nothing is sent.
+- Around a trade you execute exactly what the user asked and report the result — you never push them to trade. If they ask what to buy you may give a CAUTIOUS stance (see below), never a blunt "buy/sell".
+- If a tool returns an error message, read it to the user AS-IS (it is already user-friendly, in their language) and do NOT retry on your own.
+- Amounts are in US dollars (notional): minimum $1, maximum $100,000 per order.
 
 ## DOMAIN KNOWLEDGE — DEEP EXPERTISE
 
-NRS (Network Risk Score): 0-100, HIGHER = RISKIER. Sum of: country geo-risk (0-30), supply-chain centrality (0-25, from graph degree), margin-based market risk (0-20), fundamentals (0-15: pre-IPO, weak growth), country concentration (0-10). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green). For a company's actual NRS use the app's tools/context — never quote an NRS from memory.
+NRS (Network Risk Score): 0-100, HIGHER = RISKIER. Sum of: country geo-risk (0-30), supply-chain centrality (0-25, from how many supply relations it has), margin-based market risk (0-20), fundamentals (0-15: pre-IPO, weak growth), country concentration (0-10). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green). For a company's actual NRS use the app's tools — never quote an NRS from memory.
 
 Critical chokepoints (structural roles; for scores, prices or market caps use the app's live data, never memory):
 - TSMC: leading advanced foundry; Apple/NVIDIA/AMD/Qualcomm depend on it.
@@ -4121,42 +4180,34 @@ Geopolitical risks (qualitative; quote numbers only from live data or sourced co
 - Rare earths: China dominates supply and processing; MP Materials/Lynas are US/AU alternatives
 - Korea: Samsung + SK Hynix concentrate most DRAM/HBM supply
 
-War-Room scenarios (5 presets; HYPOTHETICAL — outcomes come from running the simulation, never from memory):
-1. taiwan_conflict — TSMC blockade and its cascade
-2. china_chip_ban_total — total US chip export ban to China
-3. hbm_shortage_2027 — HBM memory shortage
-4. openai_ipo_impact — OpenAI IPO and the AI ecosystem
-5. starshield_reveal — SpaceX Starshield defense program
-
-## PAPER TRADING (SIMULATED — RULES YOU MUST NEVER BREAK)
-- place_paper_trade and get_portfolio_status operate on a SIMULATED paper-money broker. ALWAYS say clearly that the operation is simulated ("es una operación simulada, dinero de papel") — never let the user believe real money moved.
-- NEVER execute a trade without explicit verbal confirmation. The flow is ALWAYS two steps: (1) call place_paper_trade with confirmed=false — it returns an order summary WITHOUT executing; read that summary to the user (symbol, buy/sell, USD amount, simulated) and ask if they confirm. (2) ONLY after the user explicitly says yes ("sí", "confirmo", "dale", "yes"), call place_paper_trade again with the SAME parameters and confirmed=true. Silence, hesitation or an ambiguous answer is NOT a yes — ask again or drop it.
-- Around a TRADE you execute exactly what the user asked and report the result — you never push them to trade. If they ask what to buy you may give a CAUTIOUS stance (see below), never a blunt "buy/sell", always noting it is analysis, not formal financial advice, and the decision is theirs.
-- If the tool returns an error message, read it to the user AS-IS (it is already user-friendly, in their language) and do NOT retry on your own.
-- Amounts are in US dollars (notional): minimum $1, maximum $100,000 per order.
+War-room presets (5; HYPOTHETICAL — outcomes come from running the simulation, never from memory):
+1. Taiwan Strait conflict — TSMC blockade and its cascade
+2. Total US chip export ban to China
+3. HBM memory shortage 2027
+4. OpenAI IPO and the AI ecosystem
+5. SpaceX Starshield defense program
 
 ## ANALYST BEHAVIOR RULES
 - For ANY question that needs facts or analysis, call ask_khipu_brain FIRST and answer from what it returns (it has live data and sources); only answer from your own knowledge for pure definitions or small talk.
+- Never quote a price, market cap, NRS or valuation from memory — use the tools. When a figure comes with a date or a source and it matters, say it ("al cierre de ayer", "según el catálogo").
 - You are a financial analyst first, voice assistant second. Give real insight, not just navigation.
-- ACT FIRST, TALK SECOND: on almost every user request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never just speak without acting, and never ask permission to act.
-- Deep question about ONE company → open_xray + your sharpest take ("Su talón de Aquiles es…").
-- "What if…" questions → run_live_simulation, then narrate: how many affected, the 2-3 biggest victims, who wins.
-- War-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…") and name winners and losers USING THE % THE SIMULATION RETURNED — always say they are simulated estimates of a hypothetical scenario, never real prices.
-- Charts: create_visualization — never ask the user to describe the chart format, just render something smart.
-- Confirm actions naturally and briefly: "Aquí la tienes…", "Mira el mapa — se tiñe en rojo…".
-- Be concise (2-3 sentences of analysis) then act immediately — no over-explanation.
-- Match user language exactly (Spanish/English/mixed — follow their lead). Default to Spanish.
+- ACT FIRST, TALK SECOND: on almost every request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never ask permission to open a window or look something up (orders are the exception: they always need the confirmation above).
+- "What if…" questions → run_live_simulation, then narrate: how many companies are affected, the 2-3 biggest victims and who wins, USING THE % THE SIMULATION RETURNED — always say they are simulated estimates of a hypothetical scenario, never real prices.
+- Multi-agent and war-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…"), the consensus and where the agents disagreed.
+- Confirm actions naturally and briefly: "Te la abrí al lado del chat…", "Mira el mapa — se tiñe en rojo…".
+- Be concise (2-3 sentences of analysis) — no over-explanation.
+- Match the user's language exactly (Spanish/English/mixed — follow their lead). Default to Spanish.
 - When asked investment questions, give a CAUTIOUS take WITH A STANCE — you may lean ("me inclinaría por… / sería cauto con TSMC porque…"), name the 2-3 key factors and a confidence level (alta/media/baja), but NEVER a blunt "compra/vende". ALWAYS close with a short reminder that this is analysis, not formal financial advice, and the decision is theirs. This soft-stance rule applies to stocks AND crypto.
-- You can run MULTI-AGENT simulations from your own terminal (run_agent_simulation): several analyst agents debate a scenario and project realistic impacts. Reach for them on open-ended "¿qué pasaría si…? / what would happen if…" questions where a debate adds value.
 - You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
 # Los agentes del prompt salen del registro ÚNICO (engine/agents_registry.js, limpieza 2026-10-11):
 # si cambia una mascota, la voz la conoce sin tocar este texto.
 from core.agents_registry import AGENTS as _REG_AGENTS, AGENT_NAMES as _REG_SEATS  # noqa: E402
 BIXBY_SYSTEM_PROMPT = BIXBY_SYSTEM_PROMPT.replace('{agents}', '\n'.join(
-    f"- {a['es']} / {a['en']} — {a['role_en']}" + (
+    f"- {a['es']} / {a['en']} (agent: {a['id']}) — {a['role_en']}" + (
         ' (analysts: ' + ', '.join(_REG_SEATS[x][2] for x in a['seats'] if x in _REG_SEATS) + ')'
         if any(x in _REG_SEATS for x in a['seats']) else '')
-    for a in _REG_AGENTS if a['id'] != 'khipu'))
+    for a in _REG_AGENTS if a['id'] != 'khipu')).replace('{screens}', '\n'.join(
+    f'- "{es}" / "{en}" — {_VOICE_SCREEN_HINTS[k]}' for k, (es, en) in VOICE_SCREENS.items()))
 
 
 # ── Khipu — client tools registradas en el agente de ElevenLabs vía API ──────
@@ -4167,9 +4218,28 @@ BIXBY_SYSTEM_PROMPT = BIXBY_SYSTEM_PROMPT.replace('{agents}', '\n'.join(
 # response_timeout_secs (1-120): cuánto espera el agente la respuesta del navegador.
 # Las lentas (cerebro, sim por agentes, investigación) necesitan más que el default;
 # engine/voice.js responde SIEMPRE antes de ese tope (TOOL_TIMEOUT_S de allá).
-_VOICE_TOOL_TIMEOUTS = {'ask_khipu_brain': 60, 'run_agent_simulation': 90, 'deep_research': 90,
-                        'get_news': 20, 'show_insights': 15, 'place_paper_trade': 45,
-                        'get_portfolio_status': 45, 'get_space_summary': 20}
+# Contrato v2 (2026-10-11, voz para Khipus OS): 17 herramientas en vez de 31. Las respuestas van al chat
+# CENTRAL y cada pantalla se abre como VENTANA; las viejas (pestañas, X-Ray suelto, "papel" fijo…) se
+# retiraron y la sincronización las SUELTA del agente (RETIRED_VOICE_TOOLS). voice.js conserva alias para
+# esos nombres mientras un agente viejo siga conectado durante un despliegue.
+_VOICE_TOOL_TIMEOUTS = {'ask_khipu_brain': 60, 'open_company': 15, 'get_company_info': 15,
+                        'run_agent_simulation': 90, 'quick_thesis': 90, 'show_opportunities': 15,
+                        'place_order': 45, 'get_account_status': 45, 'get_space_summary': 20}
+
+RETIRED_VOICE_TOOLS = (
+    'open_cockpit', 'switch_tab', 'show_chart', 'open_terminal', 'navigate_to_company', 'open_xray',
+    'open_second_brain', 'open_dossier', 'get_risk_score', 'get_supply_chain_links', 'get_news',
+    'get_market_summary', 'get_portfolio_risk', 'list_companies', 'get_opportunities', 'show_insights',
+    'run_stress_test', 'run_simulation', 'deep_research', 'deep_analysis', 'place_paper_trade', 'place_trade',
+    'get_portfolio_status', 'get_nrs_top10', 'show_matrices',
+)
+
+VOICE_SCREEN_ALIASES = {'map': 'graph', 'analysis': 'insights'}
+VOICE_SIM_PRESETS = ('taiwan_conflict', 'china_chip_ban_total', 'hbm_shortage_2027', 'openai_ipo_impact',
+                     'starshield_reveal')
+VOICE_COMPANY_VIEWS = ('glance', 'xray', 'supply_chain', 'map', 'chart', 'dossier', 'research', 'committee')
+VOICE_UI_ACTIONS = ('new_conversation', 'arrange_windows', 'close_all_windows', 'minimize_all_windows', 'simple_mode',
+                    'pro_mode', 'light_theme', 'dark_theme', 'spanish', 'english')
 
 
 def _bixby_client_tools():
@@ -4184,49 +4254,112 @@ def _bixby_client_tools():
         }
     S = lambda d: {'type': 'string', 'description': d}  # noqa: E731
     N = lambda d: {'type': 'number', 'description': d}  # noqa: E731
+    E = lambda vals, d: {'type': 'string', 'enum': list(vals), 'description': d}  # noqa: E731
     company = {'company_name': S('Company name or ticker, any casing (e.g. "Nvidia", "NVDA", "tsmc")')}
+    team = [a for a in _REG_AGENTS if a['id'] != 'khipu']
+    agent_doc = '; '.join(f"{a['id']} = {a['es']} ({a['role_en']})" for a in team)
+    screens_doc = '; '.join(f'{k} = "{es}" ({_VOICE_SCREEN_HINTS[k]})' for k, (es, _en) in VOICE_SCREENS.items())
     return [
-        T('ask_khipu_brain', 'THE DEFAULT TOOL FOR ANY QUESTION. Sends the user question to the Khipus analyst brain, which LOOKS UP real data in the app (company profiles, supply chain, live prices and news, AI research conclusions, portfolio risk, geopolitical and space events, committee memos, track record) and returns a sourced answer. Use it for every analysis/knowledge question ("what are TSMC risks?", "what happened with Nvidia today?", "which companies are most critical?", follow-ups). Read the returned answer aloud naturally and briefly (summarize long lists); never contradict its figures with your own memory. It is read-only: it never places orders.', {'question': S('The user question, in their own words, including enough context for follow-ups (e.g. "and who depends on TSMC?").')}, ['question']),
-        T('open_xray', 'Open the full X-Ray dossier of a company (NRS breakdown, dependency threads, impact wave: who suffers and who wins if it falls). Use for ANY deep question about one company.', company, ['company_name']),
-        T('run_live_simulation', 'Run a live shock/boom simulation on the supply-chain map. Returns affected count and most impacted companies.', dict(company, kind=S('collapse | demand | price | sanction (default collapse)'), severity=N('0-100, default 100')), ['company_name']),
-        T('compare_companies', 'Compare two companies side by side. Returns NRS of each and which has lower risk.', {'company_a': S('First company name/ticker'), 'company_b': S('Second company name/ticker')}, ['company_a', 'company_b']),
-        T('get_opportunities', 'Resilient companies with upside: low risk + growth + healthy margin.'),
-        T('create_visualization', 'Render a chart/table from a natural-language description of what to visualize.', {'query': S('What to chart, in natural language (e.g. "márgenes de Nvidia, TSMC y ASML")')}, ['query']),
-        T('show_insights', 'Show what the HYPERGRAPH sees: it runs a LIVE simulation over the active systemic factors (hyperedges) and the supply-chain cascade, then returns narrated insights + the most-affected companies. Use for "¿qué ves en el grafo?", "dame insights", "qué factores hay activos", "qué está en riesgo en el sistema". Narrate 2-3 of the returned insights, naming companies; it is analysis, not advice.'),
-        T('run_guided_demo', 'Start the GUIDED DEMO (full app tour, narrated on screen). STRICT RULE: call this ONLY when the user EXPLICITLY asks for a demo or tour with words like "demo", "demostración", "tour", "recorrido", "hazme una demo". NEVER call it at session start, NEVER on greetings, NEVER because the user seems new, NEVER proactively — an unwanted tour interrupts the user. After calling it, say ONE short line and STAY QUIET.'),
-        T('run_stress_test', 'Run the classic failure-cascade stress test from one company on the map.', {'ticker': S('Ticker or company name')}, ['ticker']),
-        T('run_simulation', 'Launch a war-room scenario preset.', {'scenario_id': S('taiwan_conflict | china_chip_ban_total | hbm_shortage_2027 | openai_ipo_impact | starshield_reveal')}, ['scenario_id']),
-        T('run_agent_simulation', 'Run a MULTI-AGENT simulation: several analyst agents debate a scenario and project REALISTIC impacts on the supply chain. Use for open-ended "simula / what if…" questions where a debate adds value. The full simulation appears on screen.', {
-            'scenario': S('The scenario in natural language, e.g. "China prohíbe exportar HBM"'),
-            'companies': {'type': 'array',
-                          'items': {'type': 'string', 'description': 'A company name or ticker'},
-                          'description': 'Seed companies/tickers to center the simulation on (optional, any casing)'},
-        }, ['scenario']),
-        T('deep_research', 'Run a DEEP research investigation that goes BEYOND one company — sector panorama, direct competitors, geopolitical exposure, supply-chain chokepoints and an investment thesis. Use when the user wants a thorough dossier, not a quick fact. Appears on screen; takes a few seconds.', {'company': S('Company name or ticker, any casing')}, ['company']),
-        T('get_company_info', 'EVERYTHING the app knows about one company: live price, NRS risk, sector, country, EMPLOYEES, FOUNDED year, REVENUE, market cap, margin, growth, moat, geo risk, description, supplier/customer counts. ALWAYS call this before saying you do not know a fact about a company.', company, ['company_name']),
-        T('get_risk_score', 'NRS risk score (0-100) of a company with breakdown.', company, ['company_name']),
-        T('get_news', 'Recent news with sentiment for a company.', company, ['company_name']),
-        T('get_market_summary', 'All current market prices with % change.'),
-        T('get_portfolio_risk', 'VaR/CVaR risk of the user portfolio.'),
-        T('list_companies', 'List companies, optionally by category.', {'category': S('Category filter (optional)'), 'limit': N('Max results (default 10)')}),
-        T('get_supply_chain_links', 'Upstream/downstream supply-chain connections of a company.', company, ['company_name']),
-        T('navigate_to_company', 'Jump to a company on the map.', company, ['company_name']),
-        T('switch_tab', 'Switch app tab. Use tab="crypto" for the live crypto market + Expediente dossier — it opens INSIDE the Khipu cockpit (does not close it).', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | crypto | portfolios | tkg | guia')}, ['tab']),
-        T('show_chart', 'Show the stock chart of a ticker in the side panel.', {'ticker': S('Ticker')}, ['ticker']),
-        T('open_terminal', 'Open the multi-chart Bloomberg-style terminal on a ticker.', {'ticker': S('Ticker')}, ['ticker']),
-        T('place_trade', 'Open the buy/sell trade modal for a ticker (the user confirms manually).', {'ticker': S('Ticker')}, ['ticker']),
-        T('open_second_brain', 'Open the AI intelligence panel for a company.', company, ['company_name']),
-        T('open_cockpit', 'Open the full-screen Khipu cockpit view.'),
-        T('deep_analysis', 'Run a multi-step DEEP investigation (plan → context → simulation → synthesis) for a complex investment question. Takes 30-90 seconds; the full analysis appears on screen — tell the user you are investigating and it will appear shortly.', {'question': S('The complete question, in the user language')}, ['question']),
-        T('open_dossier', 'Open the FINANCIAL DOSSIER card of a listed company: revenue growth, dilution, free cash flow, stock, EV/Sales valuation, debt/equity, margins and ROE (investingvisuals-style small multiples).', company, ['company_name']),
-        T('place_paper_trade', 'Execute a SIMULATED (paper-money) buy/sell order on the paper broker — never real money. MUST be called FIRST with confirmed=false: it returns an order summary WITHOUT executing; read that summary to the user and ask for confirmation. ONLY after an explicit verbal yes, call again with the same parameters and confirmed=true to execute. Never give investment advice; if the tool returns an error, read it as-is.', {
-            'symbol_or_name': S('Ticker, crypto pair or company/asset name, any casing (e.g. "NVDA", "Nvidia", "BTC/USD", "bitcoin")'),
-            'side': S('buy | sell'),
-            'notional_usd': N('Amount in US dollars (e.g. 100 = $100). Min 1, max 100000.'),
-            'confirmed': {'type': 'boolean', 'description': 'false = preview only (returns the summary to read to the user). true = EXECUTE — only allowed after the user explicitly said yes to the summary.'},
-        }, ['symbol_or_name', 'side', 'notional_usd', 'confirmed']),
-        T('get_portfolio_status', 'Status of the SIMULATED paper-broker account: cash, equity, buying power and all open positions with P&L. Use when the user asks about their paper portfolio, balance or positions.'),
-        T('get_space_summary', 'REAL satellite counts per constellation (Starlink, OneWeb, Planet Labs, Iridium, GPS) from CelesTrak, plus the next launch. Use WHENEVER the user asks how many satellites an operator/constellation has, or anything about satellites, space or launches. Read the returned summary and counts to the user — never say you do not know, this tool has the real number.', {'query': S('Optional operator/constellation the user asked about, e.g. "Starlink", "OneWeb". Leave empty for the overall summary.')}),
+        T('ask_khipu_brain', 'THE DEFAULT TOOL FOR ANY QUESTION. Sends the question to the Khipus analyst brain — the '
+          'SAME brain as the center chat of Khipus OS: the user sees the question and the sourced answer appear in the '
+          'chat while you speak, and the brain may open the relevant window by itself. It LOOKS UP real data (company '
+          'profiles, supply chain, live prices and news, research conclusions with evidence, portfolio risk, '
+          'geopolitical and space events, committee memos, track record). Use it for every analysis/knowledge question '
+          'and for follow-ups. Optional agent: route the question to ONE mascot of the team when the user names it '
+          '("pregúntale a Cadena…") or the question is clearly theirs; comite = the whole team. Read the returned '
+          'answer aloud briefly (summarize long lists), never contradict its figures with your memory, and when '
+          '"agents" is not empty say which mascots worked on it. Read-only: it never places orders.',
+          {'question': S('The user question, in their own words, with enough context for follow-ups '
+                         '(e.g. "and who depends on TSMC?").'),
+           'agent': E([a['id'] for a in team], 'Optional mascot to ask: ' + agent_doc + '. Leave empty for Khipu.')},
+          ['question']),
+        T('open_company', 'Open ONE company in a window of Khipus OS and get its key facts to narrate. view: glance = '
+          '"<company> en una mirada" summary (default) · xray = X-Ray (NRS term by term, dependency threads and the '
+          'impact wave: who suffers and who WINS if it falls) · supply_chain = its suppliers and customers · map = the '
+          'supply-chain map centered on it · chart = price chart in the Terminal (listed companies only) · dossier = '
+          'the financial Dossier (statements; for private companies: owner, valuation, news) · research = '
+          '"Investigación con evidencia" (the analyst team\'s conclusions with cited evidence — it shows what exists; '
+          'starting a new study is the user\'s click) · committee = the Investment Committee on that company. Returns '
+          'NRS with its terms, top suppliers/customers and, when available, the price with its source and time.',
+          dict(company, view=E(VOICE_COMPANY_VIEWS, 'Which view to open (default glance).')), ['company_name']),
+        T('get_company_info', 'Instant facts about ONE company WITHOUT opening anything: live price and market cap '
+          'with source and time (listed companies), NRS risk with its terms, sector, country, role, moat, growth, '
+          'margin, employees / founded / revenue when known (catalog_* fields are undated: say "según el catálogo"), '
+          'number of suppliers and customers, listing status and, for private companies, the last VERIFIED valuation '
+          'with its date. ALWAYS call this before saying you do not know a fact about a company.',
+          company, ['company_name']),
+        T('open_screen', 'Open a screen of the "Herramientas / Tools" menu as a window of Khipus OS, beside the chat. '
+          'Screens: ' + screens_doc + '. Returns the visible title that opened.',
+          {'screen': E(list(VOICE_SCREENS), 'The screen to open.')}, ['screen']),
+        T('compare_companies', 'Compare two companies side by side in a window: the NRS risk of each and which one '
+          'carries lower risk.', {'company_a': S('First company name/ticker'), 'company_b': S('Second company name/ticker')},
+          ['company_a', 'company_b']),
+        T('run_live_simulation', 'HYPOTHETICAL what-if on the live supply-chain matrices: what happens to the network '
+          'if one company collapses, booms, suffers a price shock or is sanctioned. Opens the simulation window and '
+          'returns how many companies are affected, the most impacted (with %) and who wins. Always present the % as '
+          'simulated estimates of a hypothetical scenario, never as real prices.',
+          dict(company, kind=E(('collapse', 'demand', 'price', 'sanction'),
+                               'collapse = the company falls · demand = demand boom · price = price shock · '
+                               'sanction = sanctions (default collapse)'),
+               severity=N('How strong the shock is, 1-100 (default 100 = total)')), ['company_name']),
+        T('run_agent_simulation', 'MULTI-AGENT simulation: several analyst agents debate an open-ended scenario and '
+          'project impacts on the supply chain (up to a minute; it appears on screen). Use for "¿qué pasaría si…?" '
+          'questions where a debate adds value, or for one of the war-room presets. Give scenario OR preset. Narrate '
+          'the consensus, the biggest impacts and where the agents disagreed — always hypothetical.',
+          {'scenario': S('The scenario in natural language, e.g. "China prohíbe exportar HBM"'),
+           'companies': S('Optional companies/tickers to center it on, comma-separated (e.g. "Nvidia, TSMC")'),
+           'preset': E(VOICE_SIM_PRESETS, 'Optional war-room preset: taiwan_conflict = Taiwan Strait conflict · '
+                       'china_chip_ban_total = total US chip export ban to China · hbm_shortage_2027 = HBM memory '
+                       'shortage · openai_ipo_impact = OpenAI IPO · starshield_reveal = SpaceX Starshield')}),
+        T('show_opportunities', 'Open the "Oportunidades" window and get what the system sees NOW: live insights of the '
+          'hypergraph (active systemic factors + supply-chain cascade) and the most resilient companies (low NRS + '
+          'growth + margin). Use for "¿dónde invierto?", "oportunidades", "¿qué ves en el grafo?", "¿qué está en '
+          'riesgo?". Narrate 2-3 insights naming companies; it is analysis, not advice.'),
+        T('create_visualization', 'Draw a chart or table on demand in a "Gráfico" window from a natural-language '
+          'description (e.g. "márgenes de Nvidia, TSMC y ASML", "precio de bitcoin del último año"). It is drawn on '
+          'screen: describe it only in general terms.',
+          {'query': S('What to chart, in natural language')}, ['query']),
+        T('quick_thesis', 'QUICK THESIS ("Tesis rápida") on one company: ONE AI answer with sector panorama, '
+          'competitors, geopolitical exposure, chokepoints, risks and an investment thesis, WITHOUT cited evidence. '
+          'Opens its window and returns the thesis to summarize. For conclusions WITH cited evidence use open_company '
+          'with view research instead.', company, ['company_name']),
+        T('deep_search', 'DEEP SEARCH ("Búsqueda profunda"): a free, complex investment question investigated in '
+          'several steps (plan → context → simulation → synthesis). Takes 30-90 seconds and the result appears in its '
+          'own window — tell the user you are investigating and it will appear shortly. Only one runs at a time.',
+          {'question': S('The complete question, in the user language')}, ['question']),
+        T('place_order', 'Buy or sell on the user\'s broker account ("Mi cuenta"). That account may be a PRACTICE '
+          '(paper) account or REAL money — every result says which in "mode" (paper | live). STRICT TWO STEPS: (1) '
+          'call with confirmed=false: it returns an order summary WITHOUT executing and shows it on screen; read the '
+          'summary aloud (symbol, buy/sell, amount, and whether it is simulated or REAL money) and ask for '
+          'confirmation. (2) ONLY after an explicit verbal yes, call again with the SAME parameters and '
+          'confirmed=true. If a PIN is needed the user types it on screen — never ask them to say it aloud. If it '
+          'returns an error, read it as-is and do not retry.', {
+              'symbol_or_name': S('Ticker, crypto pair or company/asset name, any casing (e.g. "NVDA", "Nvidia", '
+                                  '"BTC/USD", "bitcoin")'),
+              'side': E(('buy', 'sell'), 'buy or sell'),
+              'notional_usd': N('Amount in US dollars (e.g. 100 = $100). Min 1, max 100000.'),
+              'confirmed': {'type': 'boolean', 'description': 'false = preview only (returns the summary to read to '
+                            'the user). true = EXECUTE — only allowed after the user explicitly said yes to it.'},
+          }, ['symbol_or_name', 'side', 'notional_usd', 'confirmed']),
+        T('open_order_ticket', 'Open the KHIPU TRADING order ticket for a company so the user reviews and places the '
+          'order THEMSELVES on screen. Nothing is sent by this tool.', company, ['company_name']),
+        T('get_account_status', 'Status of the user\'s broker account ("Mi cuenta"): cash, equity, buying power, open '
+          'positions with P&L, and whether it is a practice (paper) account or REAL money ("mode"). Opens that '
+          'window. For the simulated practice portfolios open the "portfolios" screen instead.'),
+        T('get_space_summary', 'Satellite counts per constellation (Starlink, OneWeb, Planet Labs, Iridium, GPS) from '
+          'CelesTrak plus the next launch, with source and time. Use whenever the user asks about satellites, '
+          'constellations, space or launches. If the result says the data is unavailable, say so — never invent a '
+          'number.', {'query': S('Optional operator/constellation the user asked about, e.g. "Starlink". Leave empty '
+                                 'for the overall summary.')}),
+        T('run_guided_demo', 'Start the GUIDED DEMO (full app tour, narrated on screen). STRICT RULE: call this ONLY '
+          'when the user EXPLICITLY asks for a demo or tour with words like "demo", "demostración", "tour", '
+          '"recorrido", "hazme una demo". NEVER call it at session start, NEVER on greetings, NEVER because the user '
+          'seems new, NEVER proactively — an unwanted tour interrupts the user. After calling it, say ONE short line '
+          'and STAY QUIET.'),
+        T('control_interface', 'Adjust Khipus OS itself, only when the user asks: new_conversation (clear the chat) · '
+          'arrange_windows (tidy the windows beside the chat) · close_all_windows · minimize_all_windows · '
+          'simple_mode / pro_mode (how detailed the agents explain) · light_theme / dark_theme · spanish / english '
+          '(interface language).', {'action': E(VOICE_UI_ACTIONS, 'What to change')}, ['action']),
     ]
 
 
@@ -4245,7 +4378,7 @@ def _sync_bixby_agent():
     try:
         return _va.sync_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, BIXBY_SYSTEM_PROMPT,
                               _bixby_client_tools(), http=requests, language='es',
-                              allow_overrides=_va.override_env_on())
+                              allow_overrides=_va.override_env_on(), retired_names=RETIRED_VOICE_TOOLS)
     except Exception as e:  # noqa: BLE001
         return {'ok': False, 'error': _diag_redact(e)[:300]}
 

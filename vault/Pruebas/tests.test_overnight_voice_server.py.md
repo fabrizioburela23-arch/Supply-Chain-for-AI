@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_voice_server.py"
 lenguaje: "python"
-lineas: 531
+lineas: 581
 aliases: ["tests/test_overnight_voice_server.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_voice_server.py
 
-> Prueba · capa [[Capa Pruebas]] · 531 líneas · `tests/test_overnight_voice_server.py`
+> Prueba · capa [[Capa Pruebas]] · 581 líneas · `tests/test_overnight_voice_server.py`
 
 ## Qué prueba
 
 Khipu (voz) ↔ ElevenLabs Agents, contrato oct-2026.
 
-**26** funciones `test_…`.
+**29** funciones `test_…`.
 
 ## Cubre
 

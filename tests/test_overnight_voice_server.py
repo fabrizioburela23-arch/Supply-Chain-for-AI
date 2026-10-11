@@ -436,6 +436,56 @@ def test_sync_keeps_owner_tools_and_migrated_tools():
     assert specs[0]['name'] not in res['tools_created']
 
 
+def test_sync_detaches_retired_khipu_tools_but_keeps_owner_tools():
+    """Voz para Khipus OS (2026-10-11): las herramientas cliente RETIRADAS se sueltan del agente (si no, el
+    agente seguiría llamando a switch_tab/open_xray…); un webhook del dueño con el mismo nombre se conserva y
+    el recurso retirado NO se borra del workspace."""
+    specs = SPECS()
+    old = {'old_tab': {'type': 'client', 'name': 'switch_tab', 'description': 'x'},
+           'old_xray': {'type': 'client', 'name': 'open_xray', 'description': 'x'},
+           'own_webhook': {'type': 'webhook', 'name': 'get_news'},
+           'mig_1': va.tool_payload(specs[0])}
+    fake = FakeEL(tools=old, agent=agent_cfg(conversation_config__agent__prompt={
+        'prompt': 'x', 'tool_ids': ['old_tab', 'old_xray', 'own_webhook', 'mig_1']}))
+    res = va.sync_agent(KEY, AGENT, server.BIXBY_SYSTEM_PROMPT, specs, http=fake,
+                        retired_names=server.RETIRED_VOICE_TOOLS)
+    ids = fake.agent['conversation_config']['agent']['prompt']['tool_ids']
+    assert res['ok'] and res['mode'] == 'tool_ids', res
+    assert res['tools_detached'] == ['open_xray', 'switch_tab']
+    assert 'old_tab' not in ids and 'old_xray' not in ids
+    assert 'own_webhook' in ids and 'mig_1' in ids and len(ids) == len(specs) + 1
+    assert 'old_tab' in fake.tools and not [c for c in fake.calls if c['method'] == 'DELETE']
+    # sin retired_names (llamada vieja) nada se suelta: compatibilidad
+    fake2 = FakeEL(tools=old, agent=agent_cfg(conversation_config__agent__prompt={
+        'prompt': 'x', 'tool_ids': ['old_tab', 'own_webhook']}))
+    res2 = va.sync_agent(KEY, AGENT, 'p', specs, http=fake2)
+    assert res2['tools_detached'] == [] and 'old_tab' in fake2.agent['conversation_config']['agent']['prompt']['tool_ids']
+
+
+def test_server_sync_passes_the_retired_list(client, el, monkeypatch):
+    el.tools['old_tab'] = {'type': 'client', 'name': 'switch_tab', 'description': 'x'}
+    el.agent['conversation_config']['agent']['prompt']['tool_ids'] = ['old_tab']
+    res = server._sync_bixby_agent()
+    assert res['ok'] and res['tools_detached'] == ['switch_tab']
+    assert 'old_tab' not in el.agent['conversation_config']['agent']['prompt']['tool_ids']
+
+
+def test_diag_warns_when_retired_tools_are_still_attached():
+    fake = FakeEL()
+    va.sync_agent(KEY, AGENT, server.BIXBY_SYSTEM_PROMPT, SPECS(), http=fake)
+    fake.tools['old_tab'] = {'type': 'client', 'name': 'switch_tab', 'description': 'x'}
+    fake.agent['conversation_config']['agent']['prompt']['tool_ids'].append('old_tab')
+    va.forget_agent()
+    d = _diag(fake, retired_tools=server.RETIRED_VOICE_TOOLS)
+    assert _lvl(d, 'tools') == 'ok' and _lvl(d, 'tools_retired') == 'warn'
+    assert d['tools']['retired_attached'] == ['switch_tab']
+    va.forget_agent()
+    va.sync_agent(KEY, AGENT, server.BIXBY_SYSTEM_PROMPT, SPECS(), http=fake, retired_names=server.RETIRED_VOICE_TOOLS)
+    va.forget_agent()
+    d = _diag(fake, retired_tools=server.RETIRED_VOICE_TOOLS)
+    assert _lvl(d, 'tools_retired') is None and d['tools']['retired_attached'] == []
+
+
 def test_sync_does_not_downgrade_modern_tts_and_enables_overrides_with_env(monkeypatch):
     monkeypatch.setenv('ELEVENLABS_ALLOW_OVERRIDE', '1')
     fake = FakeEL(agent=agent_cfg(conversation_config__tts={'model_id': 'eleven_v4', 'voice_id': 'v9'}))
