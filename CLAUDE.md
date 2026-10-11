@@ -260,6 +260,16 @@ un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupues
     NO reintroducir el router de regex sueltos ni el "fallback = gráfico".
     Nunca mostrar texto crudo del modelo: si el paso JSON falla o trae restos
     (`leaked()`), `synthesize()` hace que el agente redacte la respuesta en prosa.
+  - **VOZ PARA KHIPUS OS (2026-10-11)** — contrato v2 de 17 herramientas (antes 31): server.py `_bixby_client_tools`
+    (+ `_VOICE_TOOL_TIMEOUTS` = `VOICE_TOOL_TIMEOUT_S` de engine/voice.js, test), `VOICE_SCREENS` = ids de
+    `BixbyCockpit.screens()` con su nombre VISIBLE (test), `RETIRED_VOICE_TOOLS` (25) que cada sync SUELTA del agente
+    (`voice_agent.ensure_tools(retired_names)`, sin borrar recursos ni webhooks del dueño; el 🩺 avisa si siguen) y
+    voice.js conserva ALIAS para ellas. La pregunta hablada va al chat CENTRAL (`BixbyCockpit.chatVoice`); cada pantalla
+    se abre como ventana; `@cadena: …` invoca a una mascota. RECORRIDO DE UN MINUTO: guion ÚNICO `engine/tour_script.js`
+    (`window.KHIPU_TOUR`, JSON estricto; `core/tour.py`) — con la voz conectada lo NARRA el agente
+    (`run_guided_demo` start/next/stop, `BixbyCockpit.tour`), sin conversación suena con la MISMA voz del agente
+    (`GET /api/voice/tour/<lang>/<paso>`: solo frases del guion, caché) y sin voz queda escrito. Nunca reintroducir el
+    texto del recorrido dentro de cockpit.js ni "cuenta simulada" fija (puede ser dinero real).
   - **Habilidades por agente (2026-10-06)**: `research/agent_skills.py` — al hablarle a un agente (@cadena,
     @tecnico…) responde DESDE SU ROL con su paquete en vivo (`skill_packet`: evidencia E# + extras S#: Cadena =
     tensor/países/riesgo/eventos; Técnico = indicadores; Fundamental = estados/ratios/pares…) sin exigir
@@ -427,8 +437,8 @@ un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupues
   — nunca reimplementar el PIN. Cripto = símbolos 'BTC/USD' + notional USD;
   el server fuerza tif='gtc'. Badge obligatorio 🧪 SIMULADO / 🔴 DINERO REAL
   según `account.paper`. NINGUNA orden sin confirmación explícita (clic o
-  sí verbal). Khipu: place_paper_trade (flujo confirmed=false→resumen→sí→
-  confirmed=true) y get_portfolio_status; broker en Cabina:
+  sí verbal). Khipu (voz): place_order (flujo confirmed=false→resumen→sí→
+  confirmed=true; `mode` paper|live sale de la cuenta REAL, nunca se asume papel) y get_account_status; broker en Cabina:
   `window._openBrokerStage()` / `_surface('trade')` sin arg.
 
 ## Lenguaje KHIPU (engine/khipu_lang.js)
