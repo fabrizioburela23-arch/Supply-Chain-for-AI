@@ -4,7 +4,7 @@ UI:   riesgo en celular sin desborde lateral (botones largos envuelven) · «?»
       en el reporte de riesgo y en Carteras.
 IA:   🩺 hace ping a Claude con el pensamiento que CADA modelo acepta (Sonnet 5.5 rechaza 'disabled') ·
       el presupuesto de research cuenta los tokens REALES (incluido el pensamiento) · /api/ai/debug muestra el
-      orden efectivo · /api/research/deep sin IA responde en el idioma de quien pregunta.
+      orden efectivo · /api/thesis/quick sin IA responde en el idioma de quien pregunta.
 Chat: plazo PROPIO del cliente (la voz espera 55 s) → la respuesta profunda nunca llega después del corte.
 Voz:  el sync no parchea con un agente que no pudo leer · respeta modelos TTS desconocidos (más nuevos) ·
       no duplica herramientas si no puede listarlas · pide agent_tool_response · al colgar deja terminar la
@@ -177,7 +177,7 @@ def test_medidor_es_por_hilo_y_anidable():
 
 
 # ════════════════════════════════════════════════════════════════════════════
-# /api/ai/debug y /api/research/deep
+# /api/ai/debug y /api/thesis/quick
 # ════════════════════════════════════════════════════════════════════════════
 def test_ai_debug_muestra_el_orden_efectivo(client, monkeypatch):
     monkeypatch.setattr(ai, '_ai_complete', lambda *a, **k: ('{"ok":true}', 'fake'))
@@ -190,8 +190,8 @@ def test_ai_debug_muestra_el_orden_efectivo(client, monkeypatch):
 
 def test_research_deep_sin_ia_en_el_idioma_de_quien_pregunta(client, monkeypatch):
     monkeypatch.setattr(server, '_ai_configured', lambda: False)
-    en = client.post('/api/research/deep', json={'id': 'nvidia', 'lang': 'en'})
-    es = client.post('/api/research/deep', json={'id': 'nvidia', 'lang': 'es'})
+    en = client.post('/api/thesis/quick', json={'id': 'nvidia', 'lang': 'en'})
+    es = client.post('/api/thesis/quick', json={'id': 'nvidia', 'lang': 'es'})
     assert en.status_code == es.status_code == 400
     de, ds = en.get_json(), es.get_json()
     assert de['error'] == de['error_en'] and 'AI provider' in de['error']

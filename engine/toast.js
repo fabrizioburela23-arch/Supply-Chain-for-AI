@@ -12,6 +12,15 @@
        timeout: ms (0 = fija hasta cerrarla). Devuelve un id.
      .update(id, opts) · .dismiss(id) · .clear()
    · KhipuToast.confirm(opts) → Promise<boolean>: ventana modal genérica.
+       opts.danger=true → botón Confirmar ROJO sólido (acciones de dinero/irreversibles).
+   · KhipuToast.prompt(opts) → Promise<string|null>: pedir un dato (reemplaza
+       window.prompt). opts {title, body, label, placeholder, value, password,
+       okText, cancelText, kind, mode, maxLength}. password:true → type=password
+       + autocomplete=off (PIN). Enter = Aceptar · Esc/✕/Cancelar/fondo = null.
+   · window.khipuActor(opts): EL nombre para el registro de auditoría.
+       khipuActor() → string (localStorage.khipu_actor o 'usuario');
+       khipuActor({ask:true}) → Promise<string> (lo pregunta UNA vez si falta);
+       khipuActor.stored() → '' si no hay nombre guardado.
    · KhipuToast.confirmOrder(order, opts) → Promise<boolean>: resumen de la
        orden (lado, activo, cantidad/monto, tipo, vigencia, monto estimado,
        cuenta 🧪/🔴). NADA se envía aquí: el que llama envía SOLO si resuelve
@@ -149,9 +158,18 @@
     '.khm-cancel:hover{background:var(--os-surface-3,#2A2B36)}',
     '.khm-ok{border:0;color:var(--os-btn-ink,#111216);background:var(--os-btn,#F2F2F5)}',
     '.khm-ok.buy{color:#fff;background:#15803D}.khm-ok.sell{color:#fff;background:#c42b2b}',
+    '.khm-ok.danger{color:#fff;background:#c42b2b}',
     '.khm-ok:hover{filter:brightness(1.08)}',
     '.khm-ok:disabled{opacity:.45;cursor:not-allowed;filter:none}',
     '.khm button:focus-visible,.khm-chips button:focus-visible,.kht button:focus-visible{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:2px}',
+    /* KhipuToast.prompt: campo de texto (mismas superficies/tintas que el diálogo) */
+    '.khm-lbl{display:block;margin:2px 0 6px;font-size:12.5px;font-weight:650;color:var(--os-ink-2,#A6A8B5)}',
+    '.khm-in{display:block;width:100%;box-sizing:border-box;margin:0;padding:11px 13px;border-radius:var(--os-r-sm,12px);',
+    '  font:inherit;font-size:14.5px;line-height:1.3;background:var(--os-surface-2,#1F2029);color:var(--os-ink,#F2F2F5);',
+    '  border:1px solid var(--os-line,rgba(255,255,255,.07))}',
+    '.khm-in::placeholder{color:var(--os-ink-2,#A6A8B5);opacity:.85}',
+    '.khm-in:focus{outline:2px solid var(--os-accent,#4C8DF6);outline-offset:1px}',
+    '.khm-in[type="password"]{letter-spacing:.16em}',
     /* tintes con color-mix() solo donde el navegador lo sabe (si no, quedan las superficies de arriba) */
     '@supports (color:color-mix(in srgb,red 50%,blue)){',
     '  #kht-stack,#khm-ov{--kht-acc-ink:color-mix(in srgb,var(--os-accent,#4C8DF6) 82%,var(--os-ink,#F2F2F5))}',
@@ -316,7 +334,8 @@
   function confirmDlg(opts) {
     opts = opts || {};
     if (_dlg) _dlg.close(false, 'dismissed');   // nunca dos diálogos de dinero a la vez
-    if (!document.body) return Promise.resolve(window.confirm(String(opts.title || '')));
+    // sin <body> no hay dónde preguntar: NUNCA se da por confirmado (ni se cae al diálogo nativo)
+    if (!document.body) return Promise.resolve(false);
     ensureCss();
     var prevFocus = document.activeElement;
     var ov = document.createElement('div'); ov.id = 'khm-ov';
@@ -362,7 +381,7 @@
         (opts.requireCheck ? '<label class="khm-ck"><input type="checkbox" id="khm-ck"> <span>' + esc(opts.requireCheck) + '</span></label>' : '') +
         '<div class="khm-btns">' +
           '<button type="button" class="khm-cancel">' + esc(opts.cancelLabel || L('Cancelar', 'Cancel')) + '</button>' +
-          '<button type="button" class="khm-ok ' + (tone === 'info' ? '' : tone) + '"' + (opts.requireCheck ? ' disabled' : '') + '>' +
+          '<button type="button" class="khm-ok ' + (opts.danger ? 'danger' : tone === 'info' ? '' : tone) + '"' + (opts.requireCheck ? ' disabled' : '') + '>' +
             esc(opts.confirmLabel || L('Confirmar', 'Confirm')) + '</button></div>';
       if (opts.subtitle) box.setAttribute('aria-describedby', 'khm-d'); else box.removeAttribute('aria-describedby');
       box.querySelector('.khm-x').onclick = function () { close(false); };
@@ -401,6 +420,113 @@
     p.close = function (reason) { close(false, reason || 'dismissed'); };
     return p;
   }
+
+  /* ── diálogo para ESCRIBIR un dato (reemplaza window.prompt) ───────────
+     Mismo aspecto, tokens --os-* y reglas que confirm: un solo diálogo a la vez,
+     foco atrapado, el foco vuelve a quien lo abrió. Resuelve el texto TAL CUAL
+     (quien llama recorta/valida) o null si se cancela. Enter en el campo =
+     Aceptar (aquí nunca se envía dinero: solo se devuelve el texto). */
+  var PROMPT_TONE = { danger: 'danger', error: 'danger', sell: 'sell', buy: 'buy', success: 'buy' };
+  function promptDlg(opts) {
+    opts = opts || {};
+    if (_dlg) _dlg.close(false, 'dismissed');   // nunca dos diálogos a la vez
+    if (!document.body) return Promise.resolve(null);
+    ensureCss();
+    var prevFocus = document.activeElement;
+    var ov = document.createElement('div'); ov.id = 'khm-ov';
+    ov.className = 'kos-themed';   // tokens --os-* de Khipus OS (claro/oscuro) fuera de #bcp-ov
+    var settled = false, resolveFn;
+    var p = new Promise(function (res) { resolveFn = res; });
+    // reason: 'ok' | 'cancel' (el usuario) | 'dismissed' (otro diálogo o quien lo abrió lo cerró)
+    function close(v, reason) {
+      if (settled) return; settled = true;
+      var out = typeof v === 'string' ? v : null;
+      p.reason = reason || (out != null ? 'ok' : 'cancel');
+      document.removeEventListener('keydown', onKey, true);
+      if (ov.parentNode) ov.parentNode.removeChild(ov);
+      if (_dlg && _dlg.ov === ov) _dlg = null;
+      try { if (prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus(); } catch (e) {}
+      resolveFn(out);
+    }
+    var pw = opts.password === true;
+    var okTone = PROMPT_TONE[String(opts.kind || '').toLowerCase()] || '';
+    var ml = +opts.maxLength > 0 ? Math.floor(+opts.maxLength) : 0;
+    ov.innerHTML =
+      '<div class="khm" role="dialog" aria-modal="true" aria-labelledby="khm-t"' + (opts.body ? ' aria-describedby="khm-d"' : '') + ' tabindex="-1">' +
+        '<div class="khm-hd">' + modeBadge(opts.mode) +
+          '<button type="button" class="khm-x" aria-label="' + esc(L('Cancelar', 'Cancel')) + '">×</button></div>' +
+        '<h2 class="khm-title" id="khm-t">' + esc(opts.title || '') + '</h2>' +
+        (opts.body ? '<div class="khm-sub" id="khm-d">' + esc(opts.body) + '</div>' : '') +
+        (opts.label ? '<label class="khm-lbl" id="khm-lbl" for="khm-in">' + esc(opts.label) + '</label>' : '') +
+        '<input class="khm-in" id="khm-in" type="' + (pw ? 'password' : 'text') + '" autocomplete="off"' +
+          (pw ? ' autocapitalize="off" autocorrect="off" spellcheck="false"' : '') +
+          (opts.label ? '' : ' aria-labelledby="khm-t"') +
+          (opts.body ? ' aria-describedby="khm-d"' : '') +
+          (ml ? ' maxlength="' + ml + '"' : '') +
+          (opts.placeholder ? ' placeholder="' + esc(opts.placeholder) + '"' : '') +
+          ' value="' + esc(opts.value == null ? '' : opts.value) + '">' +
+        '<div class="khm-btns">' +
+          '<button type="button" class="khm-cancel">' + esc(opts.cancelText || L('Cancelar', 'Cancel')) + '</button>' +
+          '<button type="button" class="khm-ok' + (okTone ? ' ' + okTone : '') + '">' + esc(opts.okText || L('Aceptar', 'OK')) + '</button></div>' +
+      '</div>';
+    var inp = ov.querySelector('#khm-in');
+    function ok() { close(String(inp.value == null ? '' : inp.value), 'ok'); }
+    ov.querySelector('.khm-x').onclick = function () { close(null); };
+    ov.querySelector('.khm-cancel').onclick = function () { close(null); };
+    ov.querySelector('.khm-ok').onclick = ok;
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(null); return; }
+      if (e.key === 'Enter' && e.target === inp && !e.isComposing) { e.preventDefault(); e.stopPropagation(); ok(); return; }
+      if (e.key !== 'Tab') return;
+      var f = Array.prototype.filter.call(ov.querySelectorAll('button,input'), function (x) { return !x.disabled; });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === ov.querySelector('.khm'))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(null); });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(ov);
+    // foco en el CAMPO (con el valor inicial seleccionado, como el prompt del navegador)
+    try { inp.focus(); if (inp.value) inp.select(); } catch (e) {}
+    _dlg = { ov: ov, key: null, close: close };
+    p.close = function (reason) { close(null, reason || 'dismissed'); };
+    return p;
+  }
+
+  /* ── QUIÉN: el nombre para el registro de auditoría (ontología, corretaje…) ──
+     Antes cada módulo tenía su actor() con OTRO valor por defecto (ui,
+     operador, anónimo, «ui (PIN)»…) y 5 pedían el nombre con el prompt nativo.
+     Ahora: UN solo ayudante y UN solo valor por defecto. */
+  var ACTOR_DEFAULT = 'usuario';
+  var _askingActor = null;
+  function storedActor() {
+    try { return String(localStorage.getItem('khipu_actor') || '').trim(); } catch (e) { return ''; }
+  }
+  function khipuActor(opts) {
+    var a = storedActor();
+    if (!(opts && opts.ask)) return a || ACTOR_DEFAULT;
+    if (a) return Promise.resolve(a);
+    if (_askingActor) return _askingActor;   // dos acciones a la vez → una sola pregunta
+    _askingActor = promptDlg({
+      title: L('¿Tu nombre?', 'Your name?'),
+      body: L('Queda en el registro de auditoría (quién hizo cada cambio). Se recuerda en este dispositivo.',
+              'It goes into the audit log (who made each change). It is remembered on this device.'),
+      label: L('Nombre', 'Name'), placeholder: L('p. ej. Fabrizio', 'e.g. Fabrizio'),
+      okText: L('Guardar', 'Save'), cancelText: L('Ahora no', 'Not now'), maxLength: 40,   // = el editor de la Cabina
+    }).then(function (v) {
+      var n = String(v == null ? '' : v).trim().slice(0, 40);
+      if (n) {
+        try { localStorage.setItem('khipu_actor', n); } catch (e) {}
+        // misma pestaña: la Cabina repinta «tú» con el evento que ya escucha (storage, clave khipu_actor)
+        try { window.dispatchEvent(new StorageEvent('storage', { key: 'khipu_actor', newValue: n })); } catch (e) {}
+      }
+      return n || ACTOR_DEFAULT;
+    }, function () { return ACTOR_DEFAULT; }).then(function (n) { _askingActor = null; return n; });
+    return _askingActor;
+  }
+  khipuActor.stored = storedActor;
+  khipuActor.DEFAULT = ACTOR_DEFAULT;
 
   /* ── confirmación de ORDEN ──────────────────────────────────────────── */
   function orderKey(o) {
@@ -633,8 +759,9 @@
   window.KhipuToast = {
     __v: 1,
     show: show, update: update, dismiss: dismiss, clear: clear,
-    confirm: confirmDlg, confirmOrder: confirmOrder,
+    confirm: confirmDlg, confirmOrder: confirmOrder, prompt: promptDlg,
     modeLabel: modeLabel, modeBadge: modeBadge,
     order: { confirm: confirmOrder, sending: sending, result: result, watch: watch, filled: filled, key: orderKey, resolveMode: resolveMode },
   };
+  window.khipuActor = khipuActor;
 })();

@@ -51,7 +51,7 @@ _Nada interno._
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -63,6 +63,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_overnight_ui_dossier_clients.py]]
 - [[tests.test_reconcile.py]]

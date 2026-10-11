@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_matrix.py"
 lenguaje: "python"
-lineas: 296
+lineas: 297
 aliases: ["tests/test_matrix.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_matrix.py
 
-> Prueba · capa [[Capa Pruebas]] · 296 líneas · `tests/test_matrix.py`
+> Prueba · capa [[Capa Pruebas]] · 297 líneas · `tests/test_matrix.py`
 
 ## Qué prueba
 

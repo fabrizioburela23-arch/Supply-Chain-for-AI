@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-86 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+87 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]] — 18 archivos
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]] — 13 archivos
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]] — 21 archivos
 - [[Sesión 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)]] — 10 archivos
@@ -75,7 +76,7 @@ tags: ["capa/documentacion", "tipo/indice"]
 - [[Sesión 2026-09-22 al 24 — PHASE 1 Live Investment Graph COMPLETA + velocidad + 3D temporal]] — 15 archivos
 - [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]] — 9 archivos
 - [[Sesión 2026-08-02 — Expansión multicapa COMPLETA (olas 1-6) - 949 nodos, 13 sectores, 70]] — 4 archivos
-- [[Sesión 2026-08-01 — Prompt frontend+IA (Cowork) - Tracks C y D implementados]] — 5 archivos
+- [[Sesión 2026-08-01 — Prompt frontend+IA (Cowork) - Tracks C y D implementados]] — 4 archivos
 - [[Sesión 2026-07-19 — Motor de matrices DISPERSAS + centralidad]] — 5 archivos
 - [[Sesión 2026-07-14 — (madrugada, autónoma) — víspera de la demo app en v95]] — 1 archivos
 - [[Sesión 2026-07 — REDISEÑO MAYOR — mapa único con capas + motor de matrices]] — 1 archivos

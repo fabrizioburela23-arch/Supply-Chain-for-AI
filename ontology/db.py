@@ -133,6 +133,8 @@ _COLUMNAS_TARDIAS = (
     ('research_claims', 'falsifier_rules', 'JSONB'),
     # G2 — retracción dirigida de UNA fila de links
     ('links', 'event_id', 'UUID'),
+    # limpieza 2026-10-11 — preguntas abiertas del analista fuera de `errors`
+    ('agent_runs', 'open_questions', 'JSONB'),
 )
 
 

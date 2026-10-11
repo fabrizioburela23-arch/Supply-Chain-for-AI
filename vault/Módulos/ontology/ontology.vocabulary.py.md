@@ -47,6 +47,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 ## Lo usan
 
 - [[core.portfolio_ai.py]] — lo importa
+- [[core.semantic.py]] — lo importa
 - [[core.world.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
@@ -55,6 +56,7 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - [[ontology.api.py]] — lo importa
 - [[ontology.provenance.py]] — lo importa
 - [[ontology.service.py]] — lo importa
+- [[research.context.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
@@ -62,9 +64,11 @@ REGISTRO ÚNICO del vocabulario del grafo.
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_nrs_parity.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_vocabulary.py]]

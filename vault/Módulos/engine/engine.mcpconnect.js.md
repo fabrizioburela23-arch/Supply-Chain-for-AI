@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "engine/mcpconnect.js"
 lenguaje: "javascript"
-lineas: 496
+lineas: 500
 aliases: ["engine/mcpconnect.js"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # engine/mcpconnect.js
 
-> Módulo · capa [[Capa MCP y API]] · 496 líneas · `engine/mcpconnect.js`
+> Módulo · capa [[Capa MCP y API]] · 500 líneas · `engine/mcpconnect.js`
 
 ## Para qué sirve
 
@@ -25,12 +25,13 @@ tags: ["capa/mcp-api", "tipo/modulo"]
 - [[app.html]] — usa `LANG`, `_tradeFetch`, `closeSistema`
 - [[engine.clients.js]] — usa `KhipuClients`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **63 de 93** (línea 7887), después de [[engine.clients.js]] y antes de [[engine.insights.js]].
+Se carga en [[app.html]] en la posición **61 de 91** (línea 7896), después de [[engine.clients.js]] y antes de [[engine.insights.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 63)
+- [[app.html]] — lo carga con `<script>` (posición 61)
 - [[app.html]] — usa `KhipuMCP`
 - [[engine.cockpit.js]] — usa `KhipuMCP`
 - [[engine.khipu_lang.js]] — usa `KhipuMCP`
@@ -52,6 +53,7 @@ Se carga en [[app.html]] en la posición **63 de 93** (línea 7887), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_overnight_ui_small_panels.py]]
 

@@ -47,10 +47,11 @@ ONTOLOGÍA NIVEL 2: el grafo como TENSORES, con números útiles para invertir.
 - [[research.agent_skills.py]] — lo importa
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 
-_Además lo importan 2 pruebas (lista abajo)._
+_Además lo importan 3 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_tensor.py]]
 - [[tests.test_tensor_autolink.py]]
 

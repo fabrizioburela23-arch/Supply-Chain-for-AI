@@ -27,11 +27,8 @@
     if (!iso) return '—';
     try { return new Date(iso).toLocaleString(en() ? 'en-US' : 'es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; }
   }
-  function actor() {
-    var a = '';
-    try { a = localStorage.getItem('khipu_actor') || ''; } catch (e) {}
-    return a || 'ui (PIN)';
-  }
+  // quién (registro de auditoría): EL ayudante único de engine/toast.js (nombre guardado o 'usuario')
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }
 
   /* ── explicaciones "?" ─────────────────────────────────────────────── */
   function registerExplain() {
@@ -401,11 +398,18 @@
   }
   function revoke(id) {
     var t = S.tokens.filter(function (x) { return x.id === id; })[0];
-    if (!window.confirm(L('¿Revocar «' + (t ? t.name : id) + '»? La IA perderá el acceso al instante.', 'Revoke “' + (t ? t.name : id) + '”? The AI loses access immediately.'))) return;
-    pinCall('POST', '/api/mcp/tokens/' + encodeURIComponent(id) + '/revoke', { actor: actor() }).then(function (d) {
-      S.msg = d._status === 200 ? { err: false, t: L('Conexión revocada.', 'Connection revoked.') } : { err: true, t: errText(d) };
-      return loadTokens();
-    }).then(render);
+    var K = window.KhipuToast;
+    if (!K || !K.confirm) { S.msg = { err: true, t: L('No se pudo abrir la confirmación (engine/toast.js): recarga la página.', 'The confirmation (engine/toast.js) could not open: reload the page.') }; render(); return; }
+    K.confirm({ title: L('¿Revocar «' + (t ? t.name : id) + '»?', 'Revoke “' + (t ? t.name : id) + '”?'),
+      subtitle: L('La IA perderá el acceso al instante. No se puede deshacer: para volver a conectarla, crea una conexión nueva.',
+        'The AI loses access immediately. It cannot be undone: to reconnect it, create a new connection.'),
+      danger: true, confirmLabel: L('Revocar', 'Revoke') }).then(function (go) {
+      if (!go) return;
+      pinCall('POST', '/api/mcp/tokens/' + encodeURIComponent(id) + '/revoke', { actor: actor() }).then(function (d) {
+        S.msg = d._status === 200 ? { err: false, t: L('Conexión revocada.', 'Connection revoked.') } : { err: true, t: errText(d) };
+        return loadTokens();
+      }).then(render, function (e) { S.msg = { err: true, t: String(e && e.message || e) }; render(); });
+    });
   }
   function setTab(tab) {
     S.tab = tab; S.msg = null; render();

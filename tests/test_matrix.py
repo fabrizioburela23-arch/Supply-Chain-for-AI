@@ -46,6 +46,7 @@ def test_build_matrices_ground_truths(db):
     assert mats['invest'][idx['Microsoft'], idx['OpenAI']] > 0
     # partner es simétrico
     p = mats['partner']
+    p = p.toarray() if hasattr(p, 'toarray') else p     # disperso por defecto desde 2026-10-11
     assert (p == p.T).all()
 
 

@@ -25,24 +25,9 @@ SEAT_ORDER = ('fundamental', 'technical', 'news', 'supply_chain', 'geopolitical'
               'risk_observation')
 FOR_T = 0.15                 # postura neta > +0.15 → "a favor"; < −0.15 → "en contra"
 
-# puestos fijos (no son agentes de investigación)
-DESK = {
-    'chair': ('🏛', 'Presidente', 'Chair'),
-    'market': ('📡', 'Mesa de mercado', 'Market desk'),
-    'risk_officer': ('🛡️', 'Oficial de riesgo', 'Risk officer'),
-    'quant': ('🧮', 'Núcleo cuantitativo', 'Quant core'),
-    'mandate': ('👤', 'Mandato del cliente', 'Client mandate'),
-}
-AGENT_NAMES = {
-    'fundamental': ('📊', 'Analista fundamental', 'Fundamental analyst'),
-    'technical': ('📈', 'Analista técnico', 'Technical analyst'),
-    'news': ('📰', 'Analista de noticias', 'News analyst'),
-    'supply_chain': ('🔗', 'Analista de cadena de suministro', 'Supply-chain analyst'),
-    'geopolitical': ('🗺️', 'Analista geopolítico', 'Geopolitical analyst'),
-    'macro': ('🌐', 'Analista macro', 'Macro analyst'),
-    'crypto': ('₿', 'Analista cripto', 'Crypto analyst'),
-    'risk_observation': ('⚠️', 'Analista de riesgos', 'Risk analyst'),
-}
+# puestos fijos (DESK) y analistas (AGENT_NAMES): ícono + nombre es/en, del registro ÚNICO
+# engine/agents_registry.js (core/agents_registry.py, limpieza 2026-10-11)
+from core.agents_registry import AGENT_NAMES, DESK  # noqa: E402,F401
 HZ_TXT = {'INTRADAY': ('intradía', 'intraday'), 'SHORT_TERM': ('corto plazo', 'short term'),
           'MEDIUM_TERM': ('mediano plazo', 'medium term'), 'LONG_TERM': ('largo plazo', 'long term'),
           'STRUCTURAL': ('estructural', 'structural')}

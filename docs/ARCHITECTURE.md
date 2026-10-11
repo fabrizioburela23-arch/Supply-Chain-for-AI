@@ -1,4 +1,4 @@
-# ARCHITECTURE — Khipus Finance AI → Live Investment Graph
+# ARCHITECTURE — Khipus Finance Intelligence → Live Investment Graph
 
 Documento de decisión para **Phase 1 — Live Investment Graph V1**.
 Escrito tras auditar el repositorio existente (~53.000 líneas) contra la
@@ -42,7 +42,7 @@ por git (mismo commit, árbol limpio) y por el diagnóstico anterior.
 No es una app de supply chain con vistas bonitas. Es, ya hoy, **un grafo
 económico temporal con un motor de propagación encima**:
 
-- **949 nodos / 2.526 relaciones** en 13 macro-sectores (semiconductores, IA,
+- **937 nodos / 2.510 relaciones** en 13 macro-sectores (semiconductores, IA,
   espacio, nuclear, defensa, energía, materiales, macro/crédito, inmobiliario,
   logística…). Dirección canónica única: `source` PROVEE a `target`.
 - **Ontología bitemporal en Postgres** (`ontology/`): tabla `events`
@@ -78,7 +78,7 @@ económico temporal con un motor de propagación encima**:
 | 13 | Estado "LIVE" honesto | 🟢 mayormente | 🩺 diagnóstico en vivo + linaje ⓘ de precio con antigüedad |
 | 14 | Calidad de dato | 🟡 parcial | `confidence` se almacena; solo se usa como umbral de auto-aprobación |
 | 15 | Compatibilidad con agentes futuros | 🟢 **fortaleza** | el catálogo de Acciones ES la API de escritura para agentes; `ProposedAction` ES el human-in-the-loop |
-| 16 | Escala | 🟡 límite conocido | 949 nodos hoy; `docs/ESTADO.md` marca rework del cliente antes de ~2.500 |
+| 16 | Escala | 🟡 límite conocido | 937 nodos hoy; `docs/ESTADO.md` marca rework del cliente antes de ~2.500 |
 | 17 | Seguridad | 🟢 mayormente | keys solo en el server, `rate_limit` en `core/http.py`, JWT en `/v1/*`, PIN de trading, auditoría vía `ActionExecuted` |
 | 18 | Estructura de repo | ⚠️ ver §5 | recomendación: **no reorganizar** |
 | 19 | Documentación | 🟡 este documento la inicia | — |
@@ -161,7 +161,7 @@ Razones, en orden de peso:
    de shocks se hace con **álgebra matricial en NumPy** sobre matrices dispersas
    por tipo de relación, no con traversals. Para eso Postgres es un almacén
    perfectamente adecuado, y las matrices se cachean por época del grafo.
-3. **Escala.** 949 nodos / ~3.000 aristas. Postgres con los índices actuales
+3. **Escala.** 937 nodos / ~2.500 aristas. Postgres con los índices actuales
    sirve esto holgadamente, y llega a 10⁵-10⁶ aristas sin cambiar de motor.
    La spec dice explícitamente: *"No optimizar prematuramente para 10M nodos"*.
 4. **Coste y operación.** La instancia gratuita de Neo4j Aura **se borró sola
@@ -259,7 +259,7 @@ pip install -r requirements.txt
 service postgresql start
 createdb khipus_test
 
-# 3. Poblar la ontología desde el repo (949 empresas + 69 factores + 28 asientos)
+# 3. Poblar la ontología desde el repo (937 empresas + 69 factores + 28 asientos)
 DATABASE_URL=postgresql://postgres:devpass@localhost:5432/khipus_test \
   python3 scripts/migrate_v0_to_ontology.py --reset
 

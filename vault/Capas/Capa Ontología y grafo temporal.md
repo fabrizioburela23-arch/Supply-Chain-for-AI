@@ -9,13 +9,13 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 > La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.
 
-**24 archivos · 10.426 líneas.** Volver al [[00 Mapa de Khipus]].
+**24 archivos · 10.410 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[engine.temporal-graph.js]] — 1.468 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
+- [[engine.temporal-graph.js]] — 1.466 líneas · Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada hecho tiene ventana de validez (valid_from → valid_until). Un timeline …
 - [[ontology.api.py]] — 1.158 líneas · API REST de la ontología: /api/ontology/\*
-- [[ontology.agents.py]] — 943 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
+- [[ontology.agents.py]] — 924 líneas · Fase 3: agentes que observan la ontología y PROPONEN Acciones. Nada se ejecuta sin aprobación humana (salvo lo que el usuario marque como …
 - [[ontology.reconcile.py]] — 790 líneas · G3 (misión de reparación 2026-10-04): RECONCILIACIÓN append-only entre el catálogo (data/grafo_v0.json, la verdad del MAPA/MCP) y Postgres (la verdad …
 - [[ontology.actions.py]] — 742 líneas · Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usuario deja de solo mirar: registra tesis, anotaciones, correcciones y …
 - [[scripts.audit_graph.py]] — 614 líneas · Auditoría automática del grafo (misión de reparación, G1).
@@ -27,11 +27,11 @@ tags: ["capa/ontologia", "tipo/capa"]
 - [[core.entities.py]] — 273 líneas · Phase 1 · M2: identidad de entidad en el servidor.
 - [[engine.hypergraph.js]] — 273 líneas · Hipergrafos temporales agénticos para Khipu Finance Una hiper-arista conecta MÚLTIPLES nodos a la vez (un evento que afecta a N empresas) y tiene …
 - [[ontology.vocabulary.json]] — 256 líneas · REGISTRO ÚNICO del vocabulario del grafo. Añadir un tipo de objeto, un tipo de relación o un sector se hace AQUÍ (dato), no editando código en 29 …
+- [[engine.reconcile.js]] — 254 líneas · G3 (misión de reparación 2026-10-04) 🩺 Diagnóstico → "Grafo: base vs catálogo". Muestra el dry-run de ontology/reconcile.py (GET …
 - [[engine.timeline3d.js]] — 254 líneas · El Grafo Temporal en 3D, donde la PROFUNDIDAD ES EL TIEMPO.
-- [[engine.reconcile.js]] — 253 líneas · G3 (misión de reparación 2026-10-04) 🩺 Diagnóstico → "Grafo: base vs catálogo". Muestra el dry-run de ontology/reconcile.py (GET …
 - [[ontology.vocabulary.py]] — 251 líneas · REGISTRO ÚNICO del vocabulario del grafo.
-- [[engine.secondbrain.js]] — 231 líneas · Second Brain de 5 capas para Khipu Finance Al seleccionar una empresa, abre un panel con 5 capas de conocimiento: 1. Mercado (precio + sparkline + …
-- [[ontology.db.py]] — 220 líneas · conexión a Postgres (fuente única de verdad de la ontología).
+- [[engine.secondbrain.js]] — 233 líneas · Second Brain de 5 capas para Khipu Finance Al seleccionar una empresa, abre un panel con 5 capas de conocimiento: 1. Mercado (precio + sparkline + …
+- [[ontology.db.py]] — 222 líneas · conexión a Postgres (fuente única de verdad de la ontología).
 - [[ontology.ingest_news.py]] — 205 líneas · Phase 1 · M4: las noticias entran al grafo.
 - [[ontology.bulk_import.py]] — 173 líneas · ingesta masiva idempotente y validada (Wikidata/GLEIF).
 - [[ontology.models.py]] — 172 líneas · esquema SQLAlchemy de la ontología.
@@ -43,19 +43,19 @@ tags: ["capa/ontologia", "tipo/capa"]
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Datos del catálogo]] | 21 |
-| la usa | [[Capa Investigación]] | 14 |
+| la usa | [[Capa Investigación]] | 15 |
 | la usa | [[Capa MCP y API]] | 11 |
-| la usa | [[Capa Chat y agentes]] | 9 |
+| la usa | [[Capa Chat y agentes]] | 10 |
 | la usa | [[Capa Infraestructura]] | 9 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 9 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 9 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |
 | usa a | [[Capa Infraestructura]] | 8 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 8 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |
 | la usa | [[Capa Comité]] | 6 |
 | usa a | [[Capa Investigación]] | 4 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 2 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | usa a | [[Capa MCP y API]] | 1 |

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/worldmonitor.js"
 lenguaje: "javascript"
-lineas: 1283
+lineas: 1326
 aliases: ["engine/worldmonitor.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/worldmonitor.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.283 líneas · `engine/worldmonitor.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.326 líneas · `engine/worldmonitor.js`
 
 ## Para qué sirve
 
@@ -30,13 +30,12 @@ WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **54 de 93** (línea 7878), después de [[engine.riskreport.js]] y antes de [[engine.spacemonitor.js]].
+Se carga en [[app.html]] en la posición **52 de 91** (línea 7887), después de [[engine.riskreport.js]] y antes de [[engine.spacemonitor.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 54)
+- [[app.html]] — lo carga con `<script>` (posición 52)
 - [[app.html]] — usa `KhipuWorld`
-- [[engine.geosituation.js]] — usa `KhipuWorld`
 - [[engine.khipu_chat.js]] — usa `KhipuWorld`
 
 ## Endpoints que llama

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-02"
-ruta: "docs/ESTADO.md#L974"
+ruta: "docs/ESTADO.md#L1023"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-02 (b) — COMITÉ CON ANÁLISIS REAL DE IA + INVESTIGACIÓN QUE NO SE CAE (sw v176)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 974 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1023 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

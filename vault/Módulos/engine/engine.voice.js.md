@@ -37,11 +37,11 @@ De nivel superior (globales del script): `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_
 - [[nodes.nodes_seed.js]] — usa `CATS`, `NODES`, `NODE_META`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **34 de 93** (línea 7807), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **33 de 91** (línea 7817), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 34)
+- [[app.html]] — lo carga con `<script>` (posición 33)
 - [[app.html]] — usa `BixbyVoice`
 - [[engine.cockpit.js]] — usa `BixbyVoice`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 - [[engine.command_center.js]] — usa `BixbyVoice`

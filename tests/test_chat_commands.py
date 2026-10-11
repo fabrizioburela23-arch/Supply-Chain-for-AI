@@ -16,6 +16,7 @@ const calls = [];
 global.window = { LANG: process.argv[2], KhipuCommittee: { openTab: t => calls.push('tab:' + t), open: id => calls.push('open:' + id) } };
 global.localStorage = { getItem: () => null };
 global.document = { createElement: () => ({}), getElementById: () => null };
+require(process.argv[1] + '/engine/agents_registry.js');
 require(process.argv[1] + '/engine/khipu_chat.js');
 const db = { nvidia: 'Nvidia', nvda: 'Nvidia', tsmc: 'TSMC', amd: 'AMD' };
 const deps = { resolve: q => { const id = db[String(q).toLowerCase().trim()]; return id ? { node: { id, label: id }, score: 95 } : null; } };

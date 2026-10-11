@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_chat_commands.py"
 lenguaje: "python"
-lineas: 68
+lineas: 69
 aliases: ["tests/test_chat_commands.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_chat_commands.py
 
-> Prueba · capa [[Capa Pruebas]] · 68 líneas · `tests/test_chat_commands.py`
+> Prueba · capa [[Capa Pruebas]] · 69 líneas · `tests/test_chat_commands.py`
 
 ## Qué prueba
 
@@ -20,6 +20,7 @@ comandos y agentes en el chat de Khipu (pedido 2026-10-05): /ayuda, /investigar,
 
 ## Cubre
 
+- [[engine.agents_registry.js]]
 - [[engine.khipu_chat.js]]
 
 ## Mencionado en sesiones de trabajo

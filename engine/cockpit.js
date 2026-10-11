@@ -126,8 +126,9 @@
     var css = `
 /* ══ KHIPUS OS (2026-10-06) — tokens de diseño, definidos UNA vez sobre #bcp-ov.
    Claro = el look del video (body sin .dark); oscuro = predeterminado de la app (body.dark).
-   La Cabina clásica (kh_desk_mode=off, red de seguridad) usa SIEMPRE los oscuros: sus escenas
-   viejas tienen colores fijos oscuros. Ventanas, barra y paleta leen solo estas variables →
+   La Cabina clásica (kh_desk_mode=off, red de seguridad) sigue el tema como todo lo demás (limpieza
+   2026-10-11: antes iba siempre en oscuro porque sus escenas tenían colores fijos; ya no quedan).
+   Ventanas, barra y paleta leen solo estas variables →
    cambiar de tema es CSS puro (sin re-inyectar nada). ══ */
 body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{
   --os-bg:#EDEDF5;--os-surface:#FFFFFF;--os-surface-2:#F2F2F7;--os-surface-3:#E7E7EF;
@@ -138,7 +139,7 @@ body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{
   --kos-shadow-lg:0 2px 6px rgba(17,18,40,.06), 0 18px 48px rgba(17,18,40,.14);
   --kos-scrim:rgba(24,26,44,.22);--kos-accent-soft:rgba(47,107,234,.12);
   color-scheme:light}
-body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{
+body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{
   --os-bg:#0E0F14;--os-surface:#17181F;--os-surface-2:#1F2029;--os-surface-3:#2A2B36;
   --os-ink:#F2F2F5;--os-ink-2:#A6A8B5;--os-ink-3:#6E7080;--os-line:rgba(255,255,255,.07);
   --os-shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
@@ -150,7 +151,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
 /* colores SEMÁNTICOS de TEXTO con contraste AA (los --os-good/--os-bad vivos quedan para rellenos, barras y anillos):
    mismos valores que el comité (engine/committee.js --cm-good/--cm-bad/--cm-warn/--cm-ai) */
 body:not(.dark) #bcp-ov,body:not(.dark) .kos-themed{--os-good-ink:#066B06;--os-bad-ink:#A82424;--os-warn:#B7791F;--os-warn-ink:#7F5200;--os-ai:#6236C9}
-body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{--os-good-ink:#2fbf5b;--os-bad-ink:#F47C7C;--os-warn:#F2C46D;--os-warn-ink:#F2C46D;--os-ai:#B48CFF}
+body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2fbf5b;--os-bad-ink:#F47C7C;--os-warn:#F2C46D;--os-warn-ink:#F2C46D;--os-ai:#B48CFF}
 /* .kos-themed: cualquier overlay FUERA de #bcp-ov (Dossier, Investigación, Clientes…) toma los mismos tokens */
 .kos-themed{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;--km-ring:var(--os-surface)}
 #bcp-ov{--os-r:18px;--os-r-sm:12px;--os-font:'Nunito', 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -618,14 +619,9 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   .bcp-scr .ma{order:4}
 }
 @container (max-width:380px){.bcp-scr .bar{display:none}}
-/* progreso por pasos de engine/loading.js (KhipuLoading.staged) DENTRO de la Cabina: mismos tokens */
-#bcp-ov .khl-staged{font-family:var(--os-font,'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif)}
-#bcp-ov .khl-title{color:var(--os-ink,#F2F2F5);font-weight:800}
-#bcp-ov .khl-sub,#bcp-ov .khl-step,#bcp-ov .khl-step.done{color:var(--os-ink-2,#A6A8B5)}
-#bcp-ov .khl-step.done .ic{color:var(--os-good-ink,#2fbf5b)}
-#bcp-ov .khl-step.now{color:var(--os-ink,#F2F2F5)}
-#bcp-ov .khl-bar{background:var(--os-surface-3,#2A2B36)}
-#bcp-ov .khl-spin{border-color:var(--os-surface-3,#2A2B36);border-top-color:var(--os-accent,#4C8DF6)}
+/* progreso por pasos de engine/loading.js DENTRO de la Cabina: loading.js ya lee los tokens --os-*
+   (limpieza 2026-10-11: aquí se repetían sus colores); solo el título va más marcado */
+#bcp-ov .khl-title{font-weight:800}
 /* CHAT de Khipu (2026-09-30): el hilo vive a pantalla completa en la escena
    'chat'; cuando una acción cambia la escena (X-Ray, mapa, gráfico…) el hilo
    baja a este DOCK sobre la barra → la respuesta NUNCA desaparece.
@@ -673,7 +669,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       ['sim',        '◉',  'Simular',       'Simulate'],
       ['compare',    '⇄',  'Comparar',      'Compare'],
       ['insights',   '💡', 'Oportunidades', 'Opportunities'],
-      ['deep',       '🧠', 'Investigar',    'Research'],
+      ['deep',       '💡', 'Tesis rápida',  'Quick thesis'],
       ['canvas',     '✦',  'Gráfico',       'Chart'],
       ['simulation', '🔮', 'Escenarios',    'Scenarios'],
       ['geo',        '🌐', 'Geo',           'Geo'],
@@ -784,7 +780,11 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       { g: 'discover', id: 'screener', ic: '🔥', es: 'Explosivas', en: 'Breakouts', k: 'explosivas breakouts momentum screener', run: function () { stage('screener'); } },
       { g: 'discover', id: 'xray', ic: '🔬', es: 'X-Ray de una empresa', en: 'Company X-Ray', k: 'xray x-ray radiografia desarmar', run: function () { if (sel) stage('xray', sel); else stage('pick', { for: 'xray' }); } },
       { g: 'discover', id: 'compare', ic: '⇄', es: 'Comparar empresas', en: 'Compare companies', k: 'comparar compare vs versus', run: function () { stage('pick', { for: 'compare', a: sel }); } },
-      { g: 'discover', id: 'research', ic: '🧠', es: 'Investigar a fondo', en: 'Deep research', k: 'investigar research investigacion analistas', run: function () { stage('pick', { for: 'research' }); } },
+      // tres productos, tres nombres (limpieza 2026-10-11 — antes dos se llamaban "Investigación"):
+      // Investigación con evidencia = el equipo de analistas (conclusiones citadas, auditables) · Tesis rápida =
+      // una sola respuesta de IA sobre una empresa · Búsqueda profunda = pregunta libre con búsqueda web
+      { g: 'discover', id: 'swarm', ic: '🧠', es: 'Investigación con evidencia', en: 'Evidence-based research', k: 'investigar investigacion research analistas evidencia claims conclusiones', run: function () { if (sel && W.KhipuResearch) W.KhipuResearch.open(sel); else stage('pick', { for: 'swarm' }); }, ok: function () { return !!(W.KhipuResearch && W.KhipuResearch.open); } },
+      { g: 'discover', id: 'research', ic: '💡', es: 'Tesis rápida de una empresa', en: 'Quick thesis on a company', k: 'tesis thesis rapida quick sector competidores', run: function () { stage('pick', { for: 'research' }); } },
       { g: 'discover', id: 'sim', ic: '◉', es: 'Simular una caída', en: 'Simulate a failure', k: 'simular shock caida colapso', run: function () { if (sel) stage('sim', { id: sel, kind: 'collapse' }); else stage('pick', { for: 'sim' }); } },
       { g: 'discover', id: 'canvas', ic: '✦', es: 'Gráfico a pedido', en: 'Chart on demand', k: 'grafico canvas lienzo chart dibujar', run: function () { stage('canvas'); } },
       { g: 'help', id: 'agents', ic: '◍', es: 'Tus agentes', en: 'Your agents', k: 'agentes agents mascotas analista radar cadena tecnico comite', run: function () { stage('agents'); }, ok: function () { return !!_custom.agents; } },
@@ -848,9 +848,10 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     if (deskActive()) desk().relabel();   // títulos de ventanas y barra de tareas en el idioma actual
     var st = ov.querySelector('#bcp-state');
     var tx = st && st.querySelector('.txt');
-    // el reposo y los estados de la VOZ se re-traducen (el "Pensando" del chat se respeta)
+    // el reposo, los estados de la VOZ y el "Pensando/Investigando" del chat se re-traducen
     if (tx && (!st.className || !tx.textContent)) tx.textContent = L('Listo', 'Ready');
     else if (st && (/^(live|conn|err)$/.test(st.className) || (st.className === 'think' && _voiceSnap().state === 'thinking'))) _paintVoicePill(_voiceSnap());
+    else if (tx && st._lbl) tx.textContent = L(st._lbl[0], st._lbl[1]);   // "Pensando/Investigando" del chat
     _paintChatHeader();
     _balRefresh();
   }
@@ -1193,7 +1194,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     mountCockpitOrb();
     return ov;
   }
-  // la Cabina clásica (kh_desk_mode=off) siempre en oscuro: sus escenas tienen colores fijos oscuros
+  // marca la Cabina clásica (kh_desk_mode=off); ya NO fuerza el tema oscuro (todas las escenas usan tokens)
   function _syncClassicClass(ov) {
     ov = ov || document.getElementById('bcp-ov'); if (!ov) return;
     ov.classList.toggle('kos-classic', !desk());
@@ -1238,11 +1239,18 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     el.className = mode === 'live' ? 'live' : mode === 'think' ? 'think' : mode === 'conn' ? 'conn' : mode === 'err' ? 'err' : '';
     if (mode !== 'err') el.removeAttribute('title');   // el título lleva el detalle de un error de voz
     var t = el.querySelector('.txt'); if (t && text) t.textContent = text;
+    el._lbl = null;                       // texto fijo; setStateL guarda el par es/en para re-traducirlo
     if (window.setBixbyThinking) window.setBixbyThinking(mode === 'think');
     // la mascota de Khipu "piensa" (barra y encabezado del chat)
     try {
       document.querySelectorAll('#bcp-ov .kos-brand .km, #bcp-ov .kos-chathd-m .km').forEach(function (m) { m.classList.toggle('km-think', mode === 'think'); });
     } catch (e) {}
+  }
+  // estado del CHAT con su texto en los dos idiomas: relabelShell lo re-traduce si cambias de idioma a mitad
+  // de una respuesta (limpieza 2026-10-11: antes quedaba "Pensando" en inglés y viceversa)
+  function setStateL(mode, es, en) {
+    setState(mode, L(es, en));
+    var el = document.getElementById('bcp-state'); if (el) el._lbl = [es, en];
   }
   // ── micrófono / voz ──
   // El botón pinta el estado REAL de la voz (BixbyVoice.getState() + evento 'khipu:voice' de voice.js):
@@ -1556,12 +1564,12 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
   // mismo ícono y nombre que el chip de la barra (actChips) para que el usuario los reconozca
   var KIND_META = {
     graph: ['🗺️', 'Grafo', 'Graph'], terminal: ['🖥️', 'Terminal', 'Terminal'],
-    insights: ['💡', 'Oportunidades', 'Opportunities'], canvas: ['✦', 'Gráfico', 'Chart'], deep: ['🧠', 'Investigación', 'Research'],
+    insights: ['💡', 'Oportunidades', 'Opportunities'], canvas: ['✦', 'Gráfico', 'Chart'], deep: ['🌐', 'Búsqueda profunda', 'Deep search'],
     broker: ['💳', 'Mi cuenta', 'My account'], scalp: ['⚡', 'Scalping', 'Scalping'], crypto: ['💠', 'Cripto', 'Crypto'],
     market: ['📈', 'Mercado', 'Market'], geo: ['🌐', 'Geopolítica', 'Geopolitics'], space: ['🚀', 'Espacio', 'Space'],
     simulation: ['🔮', 'Simulación', 'Simulation'], tkg: ['⏱', 'Grafo Temporal', 'Temporal Graph'], guia: ['❓', 'Guía', 'Guide'],
     xray: ['🔬', 'X-Ray', 'X-Ray'], compare: ['⇄', 'Comparar', 'Compare'], sim: ['◉', 'Caída simulada', 'Simulated failure'],
-    agentsim: ['🧪', 'Simulación por agentes', 'Agent simulation'], research: ['🧠', 'Investigación', 'Research'],
+    agentsim: ['🧪', 'Simulación por agentes', 'Agent simulation'], research: ['💡', 'Tesis rápida', 'Quick thesis'],
     screener: ['🔥', 'Explosivas', 'Breakouts'], chat: ['💬', 'Conversación', 'Conversation'],
     pick: ['🔎', 'Elegir empresa', 'Choose a company'], portfolios: ['💼', 'Carteras de práctica', 'Practice portfolios'],
   };
@@ -2234,7 +2242,8 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     xray: ['¿Qué empresa desarmo?', 'Which company should I take apart?'],
     sim: ['¿Qué empresa simulo que cae?', 'Which company should I simulate failing?'],
     compare: ['¿Qué dos empresas comparo?', 'Which two companies should I compare?'],
-    research: ['¿Qué empresa investigo a fondo?', 'Which company should I research in depth?'],
+    research: ['¿De qué empresa quieres una tesis rápida?', 'Which company do you want a quick thesis on?'],
+    swarm: ['¿Qué empresa investigan los analistas?', 'Which company should the analysts research?'],
   };
   function stagePick(s, arg) {
     arg = arg || {};
@@ -2284,6 +2293,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
       if (kind === 'sim') return stage('sim', { id: a, kind: 'collapse' });
       if (kind === 'compare') return stage('compare', { a: a, b: b });
       if (kind === 'research') return stage('research', { id: a });
+      if (kind === 'swarm' && W.KhipuResearch) return W.KhipuResearch.open(a);
     }
     ['a', 'b'].forEach(function (key) {
       var inp = s.querySelector('#bcp-pick-' + key); if (!inp) return;
@@ -3394,13 +3404,13 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     return true;
   };
 
-  // ── Investigación profunda (Capa 4): planear→reunir→simular→sintetizar ──
+  // ── Búsqueda profunda (Capa 4, pregunta libre): planear→reunir→simular→sintetizar ──
   var _deepTimer = null;
 
   function stageDeep(s, question) {
     if (_deepTimer) { clearInterval(_deepTimer); _deepTimer = null; }
     question = (question || '').trim();
-    s.innerHTML = backBar(L('Investigación profunda', 'Deep research')) +
+    s.innerHTML = backBar(L('Búsqueda profunda', 'Deep search')) +
       '<div class="bcp-inner" style="max-width:820px">' +
         // quien investiga es Khipu: su mascota (pensando) en lugar del emoji 🧠
         '<div class="bcp-simhd"><span class="big">' + _mascot('khipu', 30, question ? { state: 'think' } : null) + '<span>' + esc(question || L('Análisis profundo', 'Deep analysis')) + '</span></span></div>' +
@@ -3408,7 +3418,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
         '<div id="bcp-deep-result"></div>' +
       '</div>';
     if (!question) return;
-    setState('think', L('Investigando', 'Researching'));
+    setStateL('think', 'Investigando', 'Researching');
 
     fetch((window.BASE || '') + '/api/deep/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3726,20 +3736,21 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     return p || Promise.resolve({ ok: false, error: 'no fetch' });
   };
 
-  /* ══ INVESTIGACIÓN PROFUNDA (más allá del nodo) ══
-     Server: POST /api/research/deep {id, lang} → {thesis, sector, competitors,
+  /* ══ TESIS RÁPIDA (una respuesta de IA sobre una empresa; ≠ la investigación con evidencia) ══
+     Server: POST /api/thesis/quick {id, lang} → {thesis, sector, competitors,
      geopolitics, chokepoints, risks, watch, disclaimer}. ══ */
   function fetchResearch(id, lang) {
     var body = { id: id, lang: lang || ckLang() };
     try {
-      return fetch((window.BASE || '') + '/api/research/deep', {
+      return fetch((window.BASE || '') + '/api/thesis/quick', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       }).then(function (r) { return r.json().catch(function () { return { ok: false, error: L('Respuesta inválida del servidor', 'Invalid server response') }; }); })
         .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
     } catch (e) { return Promise.resolve({ ok: false, error: String((e && e.message) || e) }); }
   }
 
-  // cada sección la "firma" la MASCOTA del agente de Khipu que mira ese ángulo (mismo reparto que el comité:
+  // cada sección lleva la MASCOTA del agente que mira ese ÁNGULO (mismo reparto que el comité — es una marca de
+  // tema: el texto entero lo redacta UNA respuesta de IA, ver la cabecera de stageResearch):
   // Analista = fundamentales/sector/competidores · Radar = geopolítica y lo que hay que vigilar · Cadena = cuellos
   // de botella · Técnico = riesgos · Comité = la tesis). Solo presentación: el contenido viene igual del server.
   var RS_AGENT = { thesis: 'comite', sector: 'analista', competitors: 'analista', geopolitics: 'radar', chokepoints: 'cadena', risks: 'tecnico', watch: 'radar' };
@@ -3785,15 +3796,16 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     var en = ckLang() === 'en';
     var n = arg.id ? resolveNode(arg.id) : null;
     var label = (n && n.label) || arg.label || arg.id || '';
-    s.innerHTML = backBar(en ? 'Deep research' : 'Investigación profunda') +
+    s.innerHTML = backBar(en ? 'Quick thesis' : 'Tesis rápida') +
       '<div class="bcp-inner" style="max-width:900px">' +
-        // los agentes que investigan (sus mascotas) en lugar del emoji 🧠
-        '<div class="bcp-simhd"><span class="big">' + _stackHTML(['analista', 'radar', 'cadena', 'comite'], 26) + '<span>' + esc(label) + '</span></span>' +
-          '<span class="sub">' + (en ? 'sector · competitors · geopolitics · thesis' : 'sector · competidores · geopolítica · tesis') + '</span></div>' +
+        // una sola respuesta de IA redactada por Khipu (NO es el equipo de analistas: eso es «Investigación con evidencia»)
+        '<div class="bcp-simhd"><span class="big">' + _mascot('khipu', 30) + '<span>' + esc(label) + '</span></span>' +
+          '<span class="sub">' + (en ? 'sector · competitors · geopolitics · thesis — one AI answer, no cited evidence (for that: Evidence-based research)'
+                                      : 'sector · competidores · geopolítica · tesis — una respuesta de IA, sin evidencia citada (para eso: Investigación con evidencia)') + '</span></div>' +
         '<div id="bcp-rs-body"></div>' +
       '</div>';
     var _ld = window.KhipuLoading && window.KhipuLoading.staged('bcp-rs-body', {
-      title: en ? 'Deep research' : 'Investigación profunda',
+      title: en ? 'Quick thesis' : 'Tesis rápida',
       accent: '#9f60e5',   // brillo del orbe de carga (decorativo, el violeta del Comité)
       steps: en
         ? ['Mapping the sector landscape', 'Identifying direct competitors', 'Assessing geopolitical exposure', 'Finding supply-chain chokepoints', 'Writing the investment thesis']
@@ -3924,7 +3936,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     K.appendUser(th, text, window.KhipuPick && window.KhipuPick.agentOf ? window.KhipuPick.agentOf(text) : null);
     _ensureThread();
     var pend = K.appendPending(th);
-    setState('think', L('Pensando', 'Thinking'));
+    setStateL('think', 'Pensando', 'Thinking');
     K.send(text).then(function (d) {
       // en el celular (≤ 760 px, ventanas = hojas) NO se auto-ejecuta: la vista nueva taparía la
       // respuesta (queda como botón); en escritorio la respuesta sigue visible (centro o dock)
@@ -3946,7 +3958,7 @@ body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-leg
     K.appendUser(th, text, K.agentInfo(route));
     _ensureThread();
     var pend = K.appendPending(th);
-    setState('think', L('El comité mide tu cartera', 'The committee is measuring your portfolio'));
+    setStateL('think', 'El comité mide tu cartera', 'The committee is measuring your portfolio');
     K.askAgent(route).then(function (d) {
       K.fillReply(pend, d, { onAction: runChatAction, autoRun: false, retry: true });
       var rb = pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAgent(text, route); });

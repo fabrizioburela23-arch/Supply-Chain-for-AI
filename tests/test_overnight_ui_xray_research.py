@@ -170,6 +170,7 @@ ctx.fetch = (url) => Promise.resolve({ ok: true, status: 200,
   json: () => Promise.resolve(replies[url.replace(/\?.*$/, '')] || null),
   text: () => Promise.resolve(JSON.stringify(replies[url.replace(/\?.*$/, '')] || {})) });
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(ROOT + '/engine/agents_registry.js', 'utf8'), ctx);   // registro único (lo lee mascot.js)
 if (WITH_MASCOT) vm.runInContext(fs.readFileSync(ROOT + '/engine/mascot.js', 'utf8'), ctx);
 function css(id) { const s = ctx.document.head.children.find(c => c.id === id); return s ? s.textContent : ''; }
 const out = {};

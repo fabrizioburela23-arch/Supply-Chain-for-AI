@@ -36,7 +36,7 @@ _Nada interno._
 
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_cleanup_server.py]]
 
 ## Mencionado en sesiones de trabajo
 

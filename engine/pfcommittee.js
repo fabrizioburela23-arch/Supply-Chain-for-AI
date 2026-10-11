@@ -150,7 +150,7 @@
     }
     return k;
   }
-  function actor() { var a = null; try { a = localStorage.getItem('khipu_actor'); } catch (e) {} return (a && a.trim()) || 'usuario'; }
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }   // EL ayudante único (engine/toast.js)
 
   // ── perfil del inversionista ──────────────────────────────────────────────
   var PKEY = 'kh_investor_profile';
@@ -529,7 +529,7 @@
     var msg = (a.label || '') + ': ' + pct(a.from_pct) + ' → ' + pct(a.to_pct) + ' (' + usd(a.delta_usd) + ')';
     var T = window.KhipuToast;
     var ask = T && T.confirm ? T.confirm({ title: L('¿Aplicar en tu cartera SIMULADA?', 'Apply to your SIMULATED portfolio?'), subtitle: msg, mode: 'sim',
-      confirmLabel: L('Aplicar', 'Apply') }) : Promise.resolve(window.confirm(L('¿Aplicar en tu cartera SIMULADA?\n\n', 'Apply to your SIMULATED portfolio?\n\n') + msg));
+      confirmLabel: L('Aplicar', 'Apply') }) : Promise.resolve(false);   // sin engine/toast.js no hay confirmación → no se toca la cartera
     ask.then(function (ok) { if (ok) doApply(a, src); });
   }
   function doApply(a, src) {

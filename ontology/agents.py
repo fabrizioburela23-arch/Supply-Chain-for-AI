@@ -58,9 +58,6 @@ def _ai_explain(prompt, fallback, tier='fast', max_tokens=200):
 # Vigila: recálculo topológico + geo tras cada corrida. Propone: MarcarRiesgo
 # cuando el score cruza un umbral y no hay ya un nrs_override reciente.
 
-GEO_RISK = {'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18}
-
-
 def server_flow_degree(session, object_id):
     """Grado ESTRUCTURAL de un objeto (G4d): número de pares DISTINTOS
     (source_id, target_id) vigentes unidos por una relación de FLUJO
@@ -84,31 +81,15 @@ def server_flow_degree(session, object_id):
 
 
 def _compute_server_nrs(session, company):
-    """Réplica server-side de la fórmula NRS del cliente (app.html computeNRS):
-    geo (país) + grado ESTRUCTURAL en el grafo (centralidad proxy) + margen +
-    concentración. No pretende ser idéntica al pixel — es la misma heurística
-    de riesgo. El grado solo cuenta relaciones de flujo sobre pares distintos
-    (server_flow_degree), igual que el cliente desde G4d."""
-    props = company.properties or {}
-    from core.world import nrs_concentrated, nrs_geo
-    geo = nrs_geo(props.get('country'))
-    degree = server_flow_degree(session, company.id)
-    chain = min(25, degree * 2.5)
-    margin = props.get('margin')
-    try:   # margen REAL si ya lo hay (core/live_fundamentals)
-        from core.live_fundamentals import live_margin
-        lm = live_margin(company.id)
-        margin = lm if lm is not None else margin
-    except Exception:  # noqa: BLE001
-        pass
-    # clamp [0,20]: el cliente (app.html computeNRS) tiene esta misma fórmula
-    # SIN este límite inferior, así que un margen muy negativo (ej. -2.5 en
-    # empresas pre-revenue) puede inflar 'market' muy por encima de 20 allá.
-    # Aquí sí lo acotamos para que el score sea comparable entre empresas —
-    # nota para el usuario: vale la pena revisar/alinear la fórmula del cliente.
-    market = max(0, min(20, round((1 - min(1, (margin if margin is not None else 0.15) / 0.4)) * 20)))
-    concentration = 10 if nrs_concentrated(props.get('country')) else 4
-    return max(0, min(100, round(geo + chain + market + concentration)))
+    """NRS del servidor = LA MISMA fórmula que la app (core.world.client_nrs ↔ app.html computeNRS),
+    con el grado ESTRUCTURAL leído de la ontología (server_flow_degree) en vez del catálogo.
+    Limpieza 2026-10-11: antes era una réplica re-escrita que omitía el término fundamental
+    (pre-IPO / crecimiento, hasta 15 pts) y redondeaba distinto (round de Python = al par):
+    370 de 937 empresas salían hasta 15 puntos MÁS BAJAS que en la app y el MCP las mostraba así."""
+    from core.world import client_nrs
+    node = dict(company.properties or {})
+    node['id'] = company.id
+    return client_nrs(node, server_flow_degree(session, company.id))
 
 
 class CentinelaNRS:

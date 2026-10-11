@@ -166,12 +166,13 @@
     return d;
   }
 
-  function actor() {
-    try {
-      var a = localStorage.getItem('khipu_actor');
-      if (!a) { a = (window.prompt(L('¿Cómo te identificamos?', 'Who are you?')) || '').trim(); if (a) localStorage.setItem('khipu_actor', a); }
-      return a || '';
-    } catch (e) { return ''; }
+  // Corregir la base exige un nombre REAL (no el genérico 'usuario'): EL ayudante único de
+  // engine/toast.js lo pregunta UNA vez (diálogo de la app); sin nombre → '' y no se aplica nada.
+  async function actor() {
+    var K = window.khipuActor;
+    if (!K) return '';
+    await K({ ask: true });
+    return K.stored ? K.stored() : '';
   }
 
   async function post(url, body) {
@@ -206,9 +207,9 @@
       requireCheck: L('Hice una copia de seguridad de la base (Railway → Postgres → Backups).',
                       'I made a database backup (Railway → Postgres → Backups).'),
       confirmLabel: L('Aplicar', 'Apply'),
-    }) : window.confirm(names);
+    }) : false;   // sin engine/toast.js no hay confirmación posible → no se aplica
     if (!ok) return;
-    var who = actor(); if (!who) return;
+    var who = await actor(); if (!who) { render('⚠ ' + esc(L('Hace falta tu nombre para el registro: no se aplicó nada.', 'Your name is needed for the log: nothing was applied.'))); return; }
     _busy = true; render('⏳ ' + L('Aplicando…', 'Applying…'));
     try {
       var expect = {}; cats.forEach(function (c) { expect[c] = (_plan.summary || {})[c] || 0; });
@@ -230,9 +231,9 @@
       title: L('¿Deshacer la corrida ', 'Undo run ') + runId + '?',
       note: L('Se revierte con eventos nuevos; la historia queda.', 'It is reverted with new events; the history stays.'),
       confirmLabel: L('Deshacer', 'Undo'),
-    }) : window.confirm(runId);
+    }) : false;   // sin engine/toast.js no hay confirmación posible → no se deshace
     if (!ok) return;
-    var who = actor(); if (!who) return;
+    var who = await actor(); if (!who) { render('⚠ ' + esc(L('Hace falta tu nombre para el registro: no se deshizo nada.', 'Your name is needed for the log: nothing was undone.'))); return; }
     _busy = true; render('⏳ ' + L('Deshaciendo…', 'Undoing…'));
     try {
       var res = await post('/api/ontology/reconcile/rollback', { actor: who, confirm_db: _plan.db, run_id: runId });

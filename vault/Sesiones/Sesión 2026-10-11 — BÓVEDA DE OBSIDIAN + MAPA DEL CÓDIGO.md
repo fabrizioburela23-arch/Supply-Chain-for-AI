@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-11"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L61"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO (sin cambios en la app; sw.js sin tocar)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (38 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 61 (38 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -34,4 +34,4 @@ Pedido de Fabrizio: "conectar este proyecto a un Obsidian o Graphify para que se
 
 [[ENV GUNICORN_MAX_REQUESTS_JITTER]], [[ENV OPENAI_KEY]]
 
-← más antigua: [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
+← más antigua: [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]] · más nueva: [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]] →

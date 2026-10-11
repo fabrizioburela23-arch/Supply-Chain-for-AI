@@ -13,8 +13,8 @@ El motor soporta DOS representaciones de las matrices NxN con UN SOLO kernel:
 - Densa (numpy)  — viable con cientos/miles de nodos; comportamiento histórico.
 - Dispersa (scipy.sparse CSR) — para escalar a decenas de miles de nodos, donde
   una NxN densa (50k×50k = 20 GB) es inviable.
-La representación se elige por `MATRIX_ENGINE` (env: 'dense' por defecto,
-'sparse' para activar el motor disperso) o por el parámetro `sparse=` explícito.
+La representación se elige por `MATRIX_ENGINE` (env: 'sparse' por defecto desde 2026-10-11;
+'dense' fuerza el histórico) o por el parámetro `sparse=` explícito. Sin scipy → denso.
 El camino DENSO es idéntico bit a bit al histórico (los tests con DB son el
 árbitro); el DISPERSO se valida contra el denso por un test de equivalencia
 (numpy.allclose) — ver tests/test_matrix_sparse.py. Regla de oro del port a
@@ -67,10 +67,12 @@ def _utcnow():
 
 # ── configuración por entorno ──────────────────────────────────────────────
 def _use_sparse():
-    """¿Usar matrices dispersas? Flag de corte (spec §"Plan de despliegue
-    seguro"): default DENSO en producción hasta validar el motor disperso en
-    paralelo; se activa con MATRIX_ENGINE=sparse sin quitar el motor denso."""
-    return sp is not None and os.getenv('MATRIX_ENGINE', 'dense').strip().lower() == 'sparse'
+    """¿Usar matrices dispersas? CORTE HECHO (limpieza 2026-10-11): la paridad sobre el catálogo completo
+    — 937 choques de un nodo, denso vs disperso — dio diferencia máxima 0.0, mismos nodos alcanzados y el
+    mismo radio espectral (0.892761), con la propagación 10× más rápida (45,7 s → 4,6 s en total). El
+    disperso es el predeterminado; el denso queda como respaldo (sin scipy, o MATRIX_ENGINE=dense) y
+    /api/matrix/parity sigue para comparar ambos sobre la base de producción."""
+    return sp is not None and os.getenv('MATRIX_ENGINE', 'sparse').strip().lower() != 'dense'
 
 
 def bulk_weight_factor():
@@ -424,7 +426,7 @@ def _dependency_matrix(mats, rel_weights=None):
 
 def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
               max_hops=6, threshold=0.01, rel_weights=None, frag=None,
-              nonlinear=False, eps=None):
+              nonlinear=False, eps=None, dt=None):
     """EL kernel de propagación: shock en `shock_ids` → impacto 0..1 por nodo.
 
     impacto(hop k) = damping · Tᵀ·x_{k-1} · fragilidad; el impacto total por
@@ -438,10 +440,11 @@ def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
     - nonlinear: kernel no-lineal estilo Bardoscia 2015 (el daño transmitido
       satura con el distress del origen: x' = 1-exp(-x)); escenario estrés severo.
     - eps: criterio de convergencia explícito — corta cuando ‖Δ‖∞ < eps (con
-      damping·ρ(T)<1 la convergencia geométrica está garantizada)."""
+      damping·ρ(T)<1 la convergencia geométrica está garantizada).
+    - dt: Tᵀ ya calculada (dependency_transpose) para quien propaga MUCHOS choques sobre las mismas
+      matrices (compute_metrics): antes se reconstruía por cada nodo — O(N·R·N²), ~30 s."""
     n = len(ids)
-    D = _dependency_matrix(mats, rel_weights)
-    DT = _transpose_csr(D)
+    DT = dt if dt is not None else _transpose_csr(_dependency_matrix(mats, rel_weights))
     fvec = frag if frag is not None else np.ones(n)
     x = np.zeros(n)
     for sid in shock_ids:
@@ -472,6 +475,11 @@ def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
     impacts = {ids[i]: round(float(min(1.0, total[i])) * 100, 2)
                for i in range(n) if total[i] > 0}
     return impacts, order
+
+
+def dependency_transpose(mats, rel_weights=None):
+    """Tᵀ lista para `propagate(..., dt=…)`: se calcula UNA vez y se reutiliza en todos los choques."""
+    return _transpose_csr(_dependency_matrix(mats, rel_weights))
 
 
 def propagate_bands(mats, idx, ids, shock_ids, n_samples=200, seed=0,
@@ -634,11 +642,12 @@ def compute_metrics(session, as_of=None):
     out_w = _rowsum(agg)
     in_w = _colsum(agg)
     pr = pagerank(agg)
+    dt = dependency_transpose(mats)          # UNA vez para los N choques (limpieza 2026-10-11)
     metrics = {}
     for oid, i in idx.items():
         if out_w[i] == 0 and in_w[i] == 0:
             continue
-        impacts, _ = propagate(mats, idx, ids, [oid], frag=frag)
+        impacts, _ = propagate(mats, idx, ids, [oid], frag=frag, dt=dt)
         cascade = sum(1 for v in impacts.values() if v >= 1.0) - 1
         metrics[oid] = {
             'out_weight': round(float(out_w[i]), 2),

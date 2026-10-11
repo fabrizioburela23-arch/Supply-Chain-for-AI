@@ -53,6 +53,9 @@ _Nada interno._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_nrs_parity.py]]
+- [[tests.test_cleanup_server.py]]
+- [[tests.test_docs_facts.py]]
 - [[tests.test_entities.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_khipu_chat.py]]

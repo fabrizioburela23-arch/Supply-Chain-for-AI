@@ -25,15 +25,14 @@ Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos 
 - [[app.html]] — usa `LINKS`, `NODE_BY_ID`, `_diag`, `_tickerWarnings`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `getLinkColorHex`, `jumpTo`, `khipuGraph3D` y 2 más
 - [[nodes.nodes_seed.js]] — usa `CATS`
 
-Se carga en [[app.html]] en la posición **29 de 93** (línea 7802), después de [[engine.mascot.js]] y antes de [[engine.universe2d.js]].
-
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 29)
 - [[app.html]] — usa `KhipuGraph3D`, `_graph3d_updateLiveColors`
+- [[app.html]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_client.py]]
 - [[tests.test_server_smoke.py]]
 
 ## Mencionado en sesiones de trabajo

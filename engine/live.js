@@ -8,9 +8,18 @@
       propuestas seguras se aplican solas (auditadas, reversibles).
       Sin DATABASE_URL el endpoint responde 503 y esto calla — patrón opcional.
    3) Indicador ● EN VIVO en el pie + toast cuando el radar aplica cambios.
+   KHIPUS OS (2026-10-11): el indicador lleva .kos-themed → tokens --os-* de
+   engine/cockpit.js (claro/oscuro); textos ES/EN que se re-etiquetan solos.
    ============================================================================ */
 (function () {
   'use strict';
+
+  // bilingüe (regla del proyecto): idioma activo = window.LANG (getter de app.html) → eco_lang
+  function L(es, en) {
+    var l = window.LANG;
+    if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } }
+    return l === 'en' ? en : es;
+  }
 
   var TICK_MS = 90 * 1000;        // latido de insights (barato, 100% cliente)
   var CYCLE_MS = 10 * 60 * 1000;  // ciclo de agentes del servidor
@@ -82,13 +91,13 @@
       if (applied > 0) {
         if (typeof toast === 'function') {
           var first = last.auto_applied[0];
-          toast('📡 Radar: ' + applied + ' cambio(s) al grafo — ' + (first.explanation || first.action));
+          toast('📡 Radar: ' + applied + L(' cambio(s) al grafo — ', ' change(s) to the graph — ') + (first.explanation || first.action));
         }
         var b = document.getElementById('live-badge');
         if (b) { b.textContent = '📡 +' + applied; b.style.display = 'inline'; }
       }
       (last.alerts_fired || []).forEach(function (a) {
-        if (typeof toast === 'function') toast('🔔 Alerta: ' + (a.detail || JSON.stringify(a.rule)));
+        if (typeof toast === 'function') toast(L('🔔 Alerta: ', '🔔 Alert: ') + (a.detail || JSON.stringify(a.rule)));
       });
       pulse();
     }).catch(function () {});
@@ -99,14 +108,26 @@
     var foot = document.getElementById('footer-nodecount');
     if (!foot || !foot.parentNode) return;
     var wrap = document.createElement('span');
+    wrap.className = 'kos-themed';   // tokens --os-* de Khipus OS (claro/oscuro) en el pie
     wrap.style.cssText = 'display:inline-flex;align-items:center;gap:5px;margin-left:10px;white-space:nowrap';
     wrap.innerHTML =
-      '<span id="live-dot" title="Modo en vivo: insights y radar automáticos" ' +
-        'style="width:7px;height:7px;border-radius:50%;background:#2BE38B;box-shadow:0 0 6px #2BE38B;opacity:.35;transition:opacity .3s"></span>' +
-      '<span style="font-size:9px;letter-spacing:.08em;color:#7C87A3">EN VIVO</span>' +
-      '<span id="live-badge" style="display:none;font-size:9px;color:#2BE38B"></span>';
+      '<span id="live-dot" ' +
+        'style="width:7px;height:7px;border-radius:50%;background:var(--os-good,#2BE38B);box-shadow:0 0 6px var(--os-good,#2BE38B);opacity:.35;transition:opacity .3s"></span>' +
+      '<span id="live-lbl" style="font-size:9px;letter-spacing:.08em;color:var(--os-ink-2,#7C87A3)"></span>' +
+      '<span id="live-badge" style="display:none;font-size:9px;color:var(--os-good-ink,#2BE38B)"></span>';
     foot.parentNode.insertBefore(wrap, foot.nextSibling);
+    relabel();
   }
+  // textos del indicador ES/EN (se re-aplican al cambiar de idioma)
+  function relabel() {
+    var d = document.getElementById('live-dot'), t = document.getElementById('live-lbl');
+    if (d) d.title = L('Modo en vivo: insights y radar automáticos', 'Live mode: automatic insights and radar');
+    if (t) t.textContent = L('EN VIVO', 'LIVE');
+  }
+  // idioma: applyLang() (app.html) fija <html lang>; también 'khipu:lang' y cambios de otra pestaña
+  try { new MutationObserver(relabel).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
+  window.addEventListener('khipu:lang', relabel);
+  window.addEventListener('storage', function (e) { if (e && e.key === 'eco_lang') relabel(); });
 
   setInterval(tick, TICK_MS);
   setInterval(cycle, CYCLE_MS);

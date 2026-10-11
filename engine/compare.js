@@ -4,6 +4,10 @@
    término), sector, país, margen, precio en vivo, grado de conexión, señal
    de compra/venta y dependencias. El ganador de cada fila se resalta.
    Se abre con window.openCompare(idA, idB) o el botón "⇄ Comparar" del X-Ray.
+   KHIPUS OS (2026-10-11): #cmp-ov vive FUERA de #bcp-ov y lleva .kos-themed →
+   tokens --os-* de engine/cockpit.js (claro = body sin .dark, oscuro =
+   body.dark); el valor tras la coma de cada var() es el respaldo (piel NEXUS
+   vieja). Con el comparador abierto, un cambio de idioma lo re-pinta.
    ============================================================================ */
 (function () {
   'use strict';
@@ -22,33 +26,37 @@
     if (document.getElementById('cmp-styles')) return;
     var css = ''
       + '#cmp-ov{position:fixed;inset:0;z-index:6100;display:none;align-items:center;justify-content:center;'
-      + 'background:rgba(3,6,12,.72);backdrop-filter:blur(4px);font-family:Inter,system-ui,sans-serif}'
+      + 'background:var(--kos-scrim,rgba(3,6,12,.72));backdrop-filter:blur(4px);font-family:var(--os-font,Inter,system-ui,sans-serif)}'
       + '#cmp-ov.show{display:flex;animation:cmpF .18s ease}@keyframes cmpF{from{opacity:0}to{opacity:1}}'
-      + '#cmp{width:min(620px,95vw);max-height:90vh;overflow-y:auto;border-radius:16px;color:#E8EDFB;'
-      + 'background:radial-gradient(700px 400px at 60% -8%,#0e1626,#06090F);border:1px solid rgba(122,158,255,.22);'
-      + 'box-shadow:0 30px 80px rgba(0,0,0,.6);padding:18px 20px 16px}'
+      + '#cmp{width:min(620px,95vw);max-height:90vh;overflow-y:auto;border-radius:16px;color:var(--os-ink,#E8EDFB);'
+      + 'background:var(--os-surface,radial-gradient(700px 400px at 60% -8%,#0e1626,#06090F));border:1px solid var(--os-line,rgba(122,158,255,.22));'
+      + 'box-shadow:var(--kos-shadow-lg,0 30px 80px rgba(0,0,0,.6));padding:18px 20px 16px}'
       + '#cmp .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}'
-      + '#cmp .eb{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:#00E0FF}'
-      + '#cmp .x{cursor:pointer;color:#7C87A3;font-size:17px}'
+      + '#cmp .eb{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--os-accent,#00E0FF)}'
+      + '#cmp .x{cursor:pointer;color:var(--os-ink-2,#7C87A3);font-size:17px}'
       + '#cmp .heads{display:grid;grid-template-columns:1fr 34px 1fr;gap:8px;align-items:end;margin-bottom:10px}'
-      + '#cmp select{width:100%;background:rgba(21,28,45,.85);color:#E8EDFB;border:1px solid rgba(122,158,255,.25);border-radius:8px;padding:8px;font-family:inherit;font-size:12.5px}'
-      + '#cmp .vs{text-align:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:#5c657f}'
+      + '#cmp select{width:100%;background:var(--os-surface-2,rgba(21,28,45,.85));color:var(--os-ink,#E8EDFB);border:1px solid var(--os-line,rgba(122,158,255,.25));border-radius:8px;padding:8px;font-family:inherit;font-size:12.5px}'
+      + '#cmp .vs{text-align:center;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--os-ink-3,#5c657f)}'
       + '#cmp .cdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}'
-      + '.cmp-row{display:grid;grid-template-columns:1fr 96px 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(122,158,255,.08)}'
-      + '.cmp-row .lab{text-align:center;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#7C87A3}'
+      + '.cmp-row{display:grid;grid-template-columns:1fr 96px 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--os-line,rgba(122,158,255,.08))}'
+      + '.cmp-row .lab{text-align:center;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--os-ink-2,#7C87A3)}'
       + '.cmp-row .va{font-family:"JetBrains Mono",monospace;font-size:14px;text-align:right;font-weight:600}'
       + '.cmp-row .vb{font-family:"JetBrains Mono",monospace;font-size:14px;text-align:left;font-weight:600}'
-      + '.cmp-row .win{color:#2BE38B}.cmp-row .lose{color:#8791AC}'
-      + '.cmp-nrs{margin-top:12px}.cmp-nrs .t{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7C87A3;margin-bottom:8px}'
-      + '.cmp-nb{display:grid;grid-template-columns:1fr 84px 1fr;gap:8px;align-items:center;font-size:10.5px;color:#9BA6C4;margin:4px 0}'
-      + '.cmp-bar{height:6px;border-radius:4px;background:rgba(21,28,45,.9);overflow:hidden;position:relative}'
+      + '.cmp-row .win{color:var(--os-good-ink,#2BE38B)}.cmp-row .lose{color:var(--os-ink-2,#8791AC)}'
+      + '.cmp-nrs{margin-top:12px}.cmp-nrs .t{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--os-ink-2,#7C87A3);margin-bottom:8px}'
+      + '.cmp-nb{display:grid;grid-template-columns:1fr 84px 1fr;gap:8px;align-items:center;font-size:10.5px;color:var(--os-ink-2,#9BA6C4);margin:4px 0}'
+      + '.cmp-nb .k{font-size:8.5px;text-align:center;color:var(--os-ink-3,#5c657f);margin-bottom:2px}'
+      + '.cmp-bar{height:6px;border-radius:4px;background:var(--os-surface-3,rgba(21,28,45,.9));overflow:hidden;position:relative}'
       + '.cmp-bar i{position:absolute;top:0;height:100%}'
-      + '#cmp .foot{font-size:10.5px;color:#5c657f;margin-top:12px;text-align:center}';
+      + '.cmp-src{font-size:9px}.cmp-src.live{color:var(--os-good-ink,#2BE38B);font-weight:700}.cmp-src.ver{color:var(--os-accent,#7ecbff)}.cmp-src.cat{color:var(--os-ink-2,#7C87A3)}'
+      + '#cmp .foot{font-size:10.5px;color:var(--os-ink-2,#5c657f);margin-top:12px;text-align:center}';
     var st = document.createElement('style'); st.id = 'cmp-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
 
   var A = 'TSMC', B = 'Nvidia';
+  // barras NRS (término a término): rojo = término "caliente", azul = normal — rellenos semánticos del tema
+  var HOT = 'var(--os-bad,#FF4D6A)', COOL = 'var(--os-accent,#4D7CFE)';
   // REGLA BILINGÜE
   function L(es, en) {
     var l = window.LANG;
@@ -76,9 +84,9 @@
     var t = v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'T' : '$' + v + 'B';
     // de dónde sale el número (2026-10-05): en vivo · valuación verificada · catálogo
     var me = m.meta || {};
-    var tag = me.mktcap_live ? ' <b style="color:#2BE38B;font-size:9px">● ' + L('vivo', 'live') + '</b>'
-      : me.mktcap_verified ? ' <span style="color:#7ecbff;font-size:9px">✓ ' + esc(me.mktcap_verified.as_of || '') + '</span>'
-      : ' <span style="color:#7C87A3;font-size:9px">' + L('catálogo', 'catalog') + '</span>';
+    var tag = me.mktcap_live ? ' <b class="cmp-src live">● ' + L('vivo', 'live') + '</b>'
+      : me.mktcap_verified ? ' <span class="cmp-src ver">✓ ' + esc(me.mktcap_verified.as_of || '') + '</span>'
+      : ' <span class="cmp-src cat">' + L('catálogo', 'catalog') + '</span>';
     return t + tag;
   }
 
@@ -102,6 +110,7 @@
     var ov = document.getElementById('cmp-ov');
     if (!ov) {
       ov = document.createElement('div'); ov.id = 'cmp-ov'; ov.innerHTML = '<div id="cmp"></div>';
+      ov.className = 'kos-themed';   // tokens --os-* de Khipus OS (claro/oscuro) fuera de #bcp-ov
       ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
       document.body.appendChild(ov);
     }
@@ -117,9 +126,9 @@
           var tb = mb.bd.terms[k];
           var pa = Math.round(ta.val / ta.max * 100), pb = Math.round(tb.val / tb.max * 100);
           return '<div class="cmp-nb"><span style="text-align:right">' + ta.val + '</span>' +
-            '<div><div style="font-size:8.5px;text-align:center;color:#5c657f;margin-bottom:2px">' + ta.key + '</div>' +
-            '<div class="cmp-bar"><i style="right:50%;width:' + (pa / 2) + '%;background:' + (ta.hot ? '#FF4D6A' : '#4D7CFE') + '"></i>' +
-            '<i style="left:50%;width:' + (pb / 2) + '%;background:' + (tb.hot ? '#FF4D6A' : '#4D7CFE') + '"></i></div></div>' +
+            '<div><div class="k">' + ta.key + '</div>' +
+            '<div class="cmp-bar"><i style="right:50%;width:' + (pa / 2) + '%;background:' + (ta.hot ? HOT : COOL) + '"></i>' +
+            '<i style="left:50%;width:' + (pb / 2) + '%;background:' + (tb.hot ? HOT : COOL) + '"></i></div></div>' +
             '<span>' + tb.val + '</span></div>';
         }).join('') + '</div>';
     }
@@ -132,7 +141,7 @@
       row(L('País', 'Country'), ma.country, mb.country, null) +
       row(L('Riesgo NRS', 'NRS risk'), ma.nrs, mb.nrs, function (v) { return v + '/100'; }, true) +
       row(L('Margen', 'Margin'), ma.margin, mb.margin, function (v) { return v == null ? '—' : v + '%'; }, false,
-          [ma, mb].map(function (x) { return (x.margin == null ? '—' : x.margin + '%') + (x.n.margin_live ? ' <b style="color:#2BE38B;font-size:9px">● ' + L('vivo', 'live') + '</b>' : ' <span style="color:#7C87A3;font-size:9px">' + L('catálogo', 'catalog') + '</span>'); })) +
+          [ma, mb].map(function (x) { return (x.margin == null ? '—' : x.margin + '%') + (x.n.margin_live ? ' <b class="cmp-src live">● ' + L('vivo', 'live') + '</b>' : ' <span class="cmp-src cat">' + L('catálogo', 'catalog') + '</span>'); })) +
       row('Mkt cap', ma.mktcap, mb.mktcap, null, false, [capTxt(ma), capTxt(mb)]) +
       row(L('Conexiones', 'Links'), ma.deg, mb.deg, null, false) +
       nrsRows +
@@ -152,4 +161,8 @@
     render();
   };
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  // idioma: applyLang() (app.html) fija <html lang> → con el comparador abierto se re-pinta (regla bilingüe)
+  function onLang() { var ov = document.getElementById('cmp-ov'); if (ov && ov.classList.contains('show')) render(); }
+  try { new MutationObserver(onLang).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
+  window.addEventListener('khipu:lang', onLang);
 })();

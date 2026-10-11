@@ -38,7 +38,7 @@ Overnight 2026-10-10 — arreglos de la revisión (fixer). Cada test fallaba ant
 
 ## Rutas HTTP que llama
 
-3 rutas, de los grupos: [[API ai]], [[API research]], [[API voice]]
+3 rutas, de los grupos: [[API ai]], [[API thesis]], [[API voice]]
 
 ## Variables de entorno que fija o nombra
 

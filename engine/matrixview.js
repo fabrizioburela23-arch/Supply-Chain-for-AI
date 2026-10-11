@@ -3,10 +3,24 @@
    Calcula en el navegador las 9 matrices de relación desde window.LINKS y las
    dibuja: small-multiples (patrón de dispersión de cada tipo) + un mapa de
    calor grande de las empresas más conectadas, con tooltip al pasar el cursor.
-   Piel NEXUS. Se rellena #an-matrix cuando se abre Análisis (renderAnalysis).
+   Se rellena #an-matrix cuando se abre Análisis (renderAnalysis).
+   KHIPUS OS (2026-10-11): #an-matrix y la burbuja #mxv-tip llevan .kos-themed →
+   tokens --os-* de engine/cockpit.js (claro = body sin .dark, oscuro = body.dark;
+   el valor tras la coma de cada var() es el respaldo, la piel NEXUS vieja). Los
+   canvas no entienden var(): leen los tokens al dibujar y se re-dibujan al
+   cambiar el tema. Los colores de SECTOR son datos (SECTORS9) y se conservan;
+   en el tema claro el rótulo de sector se oscurece para que se lea.
+   Textos ES/EN; al cambiar de idioma se re-pinta sin perder la matriz elegida.
    ============================================================================ */
 (function () {
   'use strict';
+
+  // bilingüe (regla del proyecto): idioma activo = window.LANG (getter de app.html) → eco_lang
+  function L(es, en) {
+    var l = window.LANG;
+    if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) { l = null; } }
+    return l === 'en' ? en : es;
+  }
 
   var REL = ['supply', 'cloud', 'fab', 'license', 'partner', 'invest', 'deploy', 'owns', 'ppa'];
   var SECTOR_ORDER = ['equipos', 'fabricacion', 'diseno', 'cloud_ia', 'infra', 'energia', 'espacio', 'defensa', 'robotica'];
@@ -47,30 +61,53 @@
   function ensureStyles() {
     if (document.getElementById('mxv-styles')) return;
     var css = ''
-      + '#an-matrix .mxv-h{font-size:15px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:8px}'
-      + '#an-matrix .mxv-s{font-size:12.5px;color:var(--ink-3,#8791AC);margin:0 0 14px}'
+      + '#an-matrix .mxv-h{font-size:15px;font-weight:600;margin:0 0 3px;display:flex;align-items:center;gap:8px;color:var(--os-ink,inherit)}'
+      + '#an-matrix .mxv-s{font-size:12.5px;color:var(--os-ink-2,#8791AC);margin:0 0 14px}'
       + '#an-matrix .mxv-g9{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:18px}'
-      + '#an-matrix .mxv-mm{border:1px solid rgba(122,158,255,.14);border-radius:10px;padding:9px;background:rgba(15,21,34,.4);cursor:pointer;transition:border-color .12s,transform .1s}'
-      + '#an-matrix .mxv-mm:hover{border-color:#00E0FF;transform:translateY(-2px)}#an-matrix .mxv-mm.on{border-color:#00E0FF;box-shadow:0 0 0 1px #00E0FF inset}'
-      + '#an-matrix .mxv-mm canvas{width:100%;height:auto;display:block;border-radius:5px;background:#070b13;margin-top:6px}'
+      + '#an-matrix .mxv-mm{border:1px solid var(--os-line,rgba(122,158,255,.14));border-radius:10px;padding:9px;background:var(--os-surface,rgba(15,21,34,.4));color:var(--os-ink,inherit);cursor:pointer;transition:border-color .12s,transform .1s}'
+      + '#an-matrix .mxv-mm:hover{border-color:var(--os-accent,#00E0FF);transform:translateY(-2px)}#an-matrix .mxv-mm.on{border-color:var(--os-accent,#00E0FF);box-shadow:0 0 0 1px var(--os-accent,#00E0FF) inset}'
+      + '#an-matrix .mxv-mm canvas{width:100%;height:auto;display:block;border-radius:5px;background:var(--os-surface-2,#070b13);margin-top:6px}'
       + '#an-matrix .mxv-mm .t{display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;text-transform:capitalize}'
-      + '#an-matrix .mxv-mm .c{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:#00E0FF}'
-      + '#an-matrix .mxv-big{border:1px solid rgba(122,158,255,.16);border-radius:12px;background:rgba(15,21,34,.4);padding:14px 14px 8px}'
-      + '#an-matrix .mxv-bh{font-size:13px;font-weight:600;margin-bottom:10px}#an-matrix .mxv-bh .rt{color:#00E0FF;text-transform:capitalize}'
+      + '#an-matrix .mxv-mm .c{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:var(--os-accent,#00E0FF)}'
+      + '#an-matrix .mxv-big{border:1px solid var(--os-line,rgba(122,158,255,.16));border-radius:12px;background:var(--os-surface,rgba(15,21,34,.4));color:var(--os-ink,inherit);padding:14px 14px 8px}'
+      + '#an-matrix .mxv-bh{font-size:13px;font-weight:600;margin-bottom:10px}#an-matrix .mxv-bh .rt{color:var(--os-accent,#00E0FF);text-transform:capitalize}'
+      + '#an-matrix .mxv-bh .n{font-family:JetBrains Mono,monospace;color:var(--os-ink-2,#8791AC)}'
       + '#an-matrix .mxv-scroll{overflow-x:auto}#an-matrix #mxv-hm{display:block;cursor:crosshair}'
       + '#an-matrix .mxv-leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}'
-      + '#an-matrix .mxv-leg span{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-3,#8791AC)}'
+      + '#an-matrix .mxv-leg span{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--os-ink-2,#8791AC)}'
       + '#an-matrix .mxv-leg i{width:9px;height:9px;border-radius:2px}'
-      + '#mxv-tip{position:fixed;pointer-events:none;z-index:50;background:#0b1220;border:1px solid #00E0FF;border-radius:8px;padding:7px 10px;font-size:11px;max-width:230px;color:#E8EDFB;display:none;line-height:1.4}'
-      + '#mxv-tip .a{color:#00E0FF;font-weight:600}#mxv-tip .b{color:#2BE38B;font-weight:600}#mxv-tip .r{color:#8791AC;font-size:10px;margin-top:2px}';
+      + '#mxv-tip{position:fixed;pointer-events:none;z-index:50;background:var(--os-surface,#0b1220);border:1px solid var(--os-line,#00E0FF);box-shadow:var(--os-shadow,none);border-radius:8px;padding:7px 10px;font-size:11px;max-width:230px;color:var(--os-ink,#E8EDFB);display:none;line-height:1.4}'
+      + '#mxv-tip .a{color:var(--os-accent,#00E0FF);font-weight:600}#mxv-tip .b{color:var(--os-good-ink,#2BE38B);font-weight:600}#mxv-tip .r{color:var(--os-ink-2,#8791AC);font-size:10px;margin-top:2px}';
     var st = document.createElement('style'); st.id = 'mxv-styles'; st.textContent = css;
     document.head.appendChild(st);
+  }
+
+  // colores del tema vigente para los canvas (no entienden var()): se leen de #an-matrix al dibujar
+  function pal() {
+    var cs = null;
+    try { cs = window.getComputedStyle(document.getElementById('an-matrix') || document.body); } catch (e) { cs = null; }
+    function g(name, dflt) { var v = cs ? String(cs.getPropertyValue(name) || '').trim() : ''; return v || dflt; }
+    return { line: g('--os-line', 'rgba(122,158,255,.06)'), ink: g('--os-ink', '#F2F2F5'),
+      light: !!(document.body && !document.body.classList.contains('dark')) };
+  }
+  // rótulo de sector legible: en el tema claro el color del sector (dato) se mezcla 50 % con la tinta
+  function hexRGB(c) {
+    var m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c || '').trim());
+    if (!m) return null;
+    var h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1];
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+  function labelInk(c, P) {
+    if (!P.light) return c;
+    var a = hexRGB(c), b = hexRGB(P.ink);
+    if (!a || !b) return c;
+    return 'rgb(' + Math.round((a[0] + b[0]) / 2) + ',' + Math.round((a[1] + b[1]) / 2) + ',' + Math.round((a[2] + b[2]) / 2) + ')';
   }
 
   function drawSparse(cv, d, rt) {
     var px = 240; cv.width = px; cv.height = px; var ctx = cv.getContext('2d');
     var n = d.N, cell = px / n;
-    var acc = 0; ctx.strokeStyle = 'rgba(122,158,255,.05)';
+    var acc = 0; ctx.strokeStyle = pal().line;
     SECTOR_ORDER.forEach(function (s) { var cnt = d.fullSec.filter(function (x) { return x === s; }).length; acc += cnt; var p = acc * cell; ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, px); ctx.moveTo(0, p); ctx.lineTo(px, p); ctx.stroke(); });
     (d.sparsity[rt] || []).forEach(function (e) { ctx.fillStyle = secColor(d.fullSec[e[0]]); ctx.globalAlpha = .9; ctx.fillRect(e[1] * cell, e[0] * cell, Math.max(1.3, cell), Math.max(1.3, cell)); });
     ctx.globalAlpha = 1;
@@ -86,9 +123,10 @@
     document.querySelector('#mxv-brt') && (document.getElementById('mxv-brt').textContent = rt);
     document.querySelector('#mxv-bn') && (document.getElementById('mxv-bn').textContent = (d.curMat[rt] || []).length);
     document.querySelectorAll('#an-matrix .mxv-mm').forEach(function (m) { m.classList.toggle('on', m.dataset.rt === rt); });
-    ctx.strokeStyle = 'rgba(122,158,255,.06)';
+    var P = pal();
+    ctx.strokeStyle = P.line;
     for (var k = 0; k <= CN; k++) { var p = M + k * CELL; ctx.beginPath(); ctx.moveTo(p, M); ctx.lineTo(p, M + CN * CELL); ctx.moveTo(M, p); ctx.lineTo(M + CN * CELL, p); ctx.stroke(); }
-    ctx.strokeStyle = 'rgba(122,158,255,.12)'; ctx.beginPath(); ctx.moveTo(M, M); ctx.lineTo(M + CN * CELL, M + CN * CELL); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(M, M); ctx.lineTo(M + CN * CELL, M + CN * CELL); ctx.stroke(); ctx.stroke();   // diagonal: doble trazo = más marcada
     bigCells = {};
     (d.curMat[rt] || []).forEach(function (e) {
       var i = e[0], j = e[1], w = e[2]; var t = Math.min(1, (w - 1) / 5);
@@ -100,7 +138,7 @@
     SECTOR_ORDER.forEach(function (s) {
       var cnt = d.curSec.filter(function (x) { return x === s; }).length; if (!cnt) return;
       var mid = M + (acc + cnt / 2) * CELL; ctx.save(); ctx.translate(M - 5, mid); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = secColor(s); ctx.fillText(secLabel(s).slice(0, 9), 0, 0); ctx.restore(); acc += cnt;
+      ctx.fillStyle = labelInk(secColor(s), P); ctx.fillText(secLabel(s).slice(0, 9), 0, 0); ctx.restore(); acc += cnt;
     });
   }
 
@@ -108,11 +146,13 @@
     var host = document.getElementById('an-matrix'); if (!host) return;
     built = build(); if (!built) { host.innerHTML = ''; return; }
     ensureStyles();
+    host.classList.add('kos-themed');   // tokens --os-* de Khipus OS (claro/oscuro) también fuera de #bcp-ov
     host.innerHTML =
-      '<div class="mxv-h">◱ Las 9 matrices de relación</div>' +
-      '<p class="mxv-s">Cada tipo de vínculo es una matriz N×N: fila <b>provee</b> a columna, ordenadas por sector. Haz clic en una para verla en detalle.</p>' +
+      '<div class="mxv-h">◱ ' + L('Las 9 matrices de relación', 'The 9 relationship matrices') + '</div>' +
+      '<p class="mxv-s">' + L('Cada tipo de vínculo es una matriz N×N: fila <b>provee</b> a columna, ordenadas por sector. Haz clic en una para verla en detalle.',
+        'Each link type is an N×N matrix: row <b>supplies</b> column, sorted by sector. Click one to see it in detail.') + '</p>' +
       '<div class="mxv-g9" id="mxv-g9"></div>' +
-      '<div class="mxv-big"><div class="mxv-bh">Matriz <span class="rt" id="mxv-brt"></span> · <span id="mxv-bn" style="font-family:JetBrains Mono,monospace;color:#8791AC"></span> vínculos · pasa el cursor</div>' +
+      '<div class="mxv-big"><div class="mxv-bh">' + L('Matriz', 'Matrix') + ' <span class="rt" id="mxv-brt"></span> · <span id="mxv-bn" class="n"></span> ' + L('vínculos · pasa el cursor', 'links · hover to inspect') + '</div>' +
       '<div class="mxv-scroll"><canvas id="mxv-hm"></canvas></div>' +
       '<div class="mxv-leg" id="mxv-leg"></div></div>';
     var g9 = document.getElementById('mxv-g9');
@@ -127,17 +167,41 @@
       .map(function (s) { return '<span><i style="background:' + secColor(s) + '"></i>' + secLabel(s) + '</span>'; }).join('');
     // tooltip
     var hm = document.getElementById('mxv-hm'), tip = document.getElementById('mxv-tip');
-    if (!tip) { tip = document.createElement('div'); tip.id = 'mxv-tip'; document.body.appendChild(tip); }
+    if (!tip) { tip = document.createElement('div'); tip.id = 'mxv-tip'; tip.className = 'kos-themed'; document.body.appendChild(tip); }
     hm.onmousemove = function (e) {
       var r = hm.getBoundingClientRect(), x = (e.clientX - r.left) * (DIM / r.width), y = (e.clientY - r.top) * (DIM / r.height);
       var j = Math.floor((x - M) / CELL), i = Math.floor((y - M) / CELL), hit = bigCells[i + '_' + j];
       if (hit && i >= 0 && j >= 0) {
         tip.style.display = 'block'; tip.style.left = Math.min(e.clientX + 14, innerWidth - 240) + 'px'; tip.style.top = (e.clientY + 14) + 'px';
         tip.innerHTML = '<div><span class="a">' + esc(nm(built.CUR[hit.i])) + '</span> → <span class="b">' + esc(nm(built.CUR[hit.j])) + '</span></div>' +
-          '<div class="r">' + curRT + ' · peso ' + hit.w + (hit.rel ? ' · ' + esc(hit.rel) : '') + '</div>';
+          '<div class="r">' + curRT + ' · ' + L('peso', 'weight') + ' ' + hit.w + (hit.rel ? ' · ' + esc(hit.rel) : '') + '</div>';
       } else tip.style.display = 'none';
     };
     hm.onmouseleave = function () { tip.style.display = 'none'; };
     drawBig(built, 'supply');
   };
+
+  // cambio claro ↔ oscuro con la vista pintada: re-dibuja los canvas (el CSS ya cambia solo)
+  function redraw() {
+    if (!built || !document.querySelector('#an-matrix .mxv-big')) return;
+    document.querySelectorAll('#an-matrix .mxv-mm').forEach(function (m) { var cv = m.querySelector('canvas'); if (cv) drawSparse(cv, built, m.dataset.rt); });
+    drawBig(built, curRT);
+  }
+  // cambio de idioma: re-pinta los textos (y los rótulos de sector del canvas) sin perder la matriz elegida
+  function relabel() {
+    if (!document.querySelector('#an-matrix .mxv-big')) return;
+    var rt = curRT;
+    window.renderMatrixView();
+    if (built && rt !== 'supply') drawBig(built, rt);
+  }
+  try {
+    var dark0 = !!(document.body && document.body.classList.contains('dark'));
+    new MutationObserver(function () {
+      var d = document.body.classList.contains('dark');
+      if (d === dark0) return;
+      dark0 = d; redraw();
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+  try { new MutationObserver(relabel).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
+  window.addEventListener('khipu:lang', relabel);
 })();

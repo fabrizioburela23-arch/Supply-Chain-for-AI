@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "engine/secondbrain.js"
 lenguaje: "javascript"
-lineas: 231
+lineas: 233
 aliases: ["engine/secondbrain.js"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # engine/secondbrain.js
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 231 líneas · `engine/secondbrain.js`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 233 líneas · `engine/secondbrain.js`
 
 ## Para qué sirve
 
@@ -20,16 +20,18 @@ Second Brain de 5 capas para Khipu Finance Al seleccionar una empresa, abre un p
 
 `window.SecondBrain`
 
+De nivel superior (globales del script): `_sbEn`, `_sbFlow`, `_sbL`
+
 ## Depende de
 
-- [[app.html]] — usa `DataLayer`, `LINKS`, `NODE_BY_ID`, `V8detail`, `_secondBrain`, `activateStress`, `catColor`, `computeDownstream`, `computeNRS`, `computeNRSBreakdown` y 8 más
+- [[app.html]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `_secondBrain`, `activateStress`, `catColor`, `computeDownstream` y 11 más
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **35 de 93** (línea 7808), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
+Se carga en [[app.html]] en la posición **34 de 91** (línea 7818), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 35)
+- [[app.html]] — lo carga con `<script>` (posición 34)
 - [[app.html]] — usa `SecondBrain`
 
 ## Endpoints que llama
@@ -38,6 +40,7 @@ Se carga en [[app.html]] en la posición **35 de 93** (línea 7808), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_client.py]]
 - [[tests.test_server_smoke.py]]
 
 ## Mencionado en sesiones de trabajo

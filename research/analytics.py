@@ -175,8 +175,9 @@ def technical_indicators(series, bench=None):
     hi, lo = max(xs[-250:]), min(xs[-250:])
     out['pct_from_52w_high'] = round((last / hi - 1) * 100, 1)
     out['pct_above_52w_low'] = round((last / lo - 1) * 100, 1) if lo else None
-    peak, mdd = xs[0], 0.0
-    for c in xs[-250:]:
+    win = xs[-250:]                   # máxima caída de UN año: el pico arranca dentro de la ventana
+    peak, mdd = win[0], 0.0           # (antes xs[0]: un máximo de hace más de un año inflaba la caída)
+    for c in win:
         peak = max(peak, c)
         mdd = min(mdd, c / peak - 1)
     out['max_drawdown_1y_pct'] = round(mdd * 100, 1)

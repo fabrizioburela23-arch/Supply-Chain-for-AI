@@ -72,6 +72,7 @@ def test_endpoint_mide_la_cartera_y_responde_la_pregunta(monkeypatch):
 JS = r"""
 global.window = { LANG: 'es', localStorage: { getItem: () => null, setItem: () => {} } };
 global.localStorage = window.localStorage;
+require(process.argv[1] + '/engine/agents_registry.js');
 require(process.argv[1] + '/engine/khipu_chat.js');
 const K = window.KhipuChat, deps = { resolve: () => null };
 const out = {};
@@ -115,6 +116,7 @@ global.window = { LANG: 'es', localStorage: { getItem: () => null, setItem: () =
   KhipuPortfolioCommittee: { _sources: () => [{ key: 'pf:a1', label: '🧪 Prueba 1 · 2' }, { key: 'pf:a2', label: '🧪 Tecnología · 5' },
                                                 { key: 'broker', label: '🔒 Mi cuenta del bróker (PIN)' }] } };
 global.localStorage = window.localStorage;
+require(process.argv[1] + '/engine/agents_registry.js');
 require(process.argv[1] + '/engine/khipu_chat.js');
 const K = window.KhipuChat, deps = { resolve: () => null };
 (async () => {

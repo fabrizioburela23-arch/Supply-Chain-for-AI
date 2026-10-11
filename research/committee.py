@@ -1368,7 +1368,8 @@ def _auto_research(session, eid, label, requested_by, say, deps, agents=None):
             es, en = _unlisted_tech_lines(eid)
         else:
             from research.errors import friendly
-            err = str((getattr(run, 'errors', None) or [''])[0])[:200]
+            from research.models import errors_of
+            err = str((errors_of(run) or [''])[0])[:200]
             hes, hen = friendly(err)
             es = f'No pude concluir nada sólido: {hes or err or getattr(run, "status", "?")}'
             en = f'I could not reach a solid conclusion: {hen or err or getattr(run, "status", "?")}'

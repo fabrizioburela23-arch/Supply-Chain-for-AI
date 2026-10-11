@@ -117,12 +117,7 @@ def queue_position(job_id):
 
 
 # ── R4: cobertura honesta de un job (qué analistas respondieron y cuáles no) ──
-AGENT_LABELS = {
-    'fundamental': ('Fundamental', 'Fundamental'), 'news': ('Noticias', 'News'),
-    'technical': ('Técnico', 'Technical'), 'supply_chain': ('Cadena de suministro', 'Supply chain'),
-    'geopolitical': ('Geopolítico', 'Geopolitical'), 'macro': ('Macro', 'Macro'),
-    'crypto': ('Cripto', 'Crypto'), 'risk_observation': ('Riesgos', 'Risk'),
-}
+from core.agents_registry import SHORT_LABEL as AGENT_LABELS  # noqa: E402 — registro único de agentes
 _NA_SKIP = re.compile(r'sin evidencia', re.I)
 
 
@@ -462,23 +457,17 @@ def _completeness(ctx):
 
 
 def _prepare_run(session, job, agent_type):
-    """Hilo principal: registra el AgentRun y revisa el presupuesto.
-    Devuelve (run, prior_claims, listo?)."""
+    """Hilo principal: registra el AgentRun. Devuelve (run, prior_claims).
+    El presupuesto se revisa UNA vez por job en _execute_job (sin presupuesto → el job entero se
+    difiere). Limpieza 2026-10-11: aquí quedaba un "skipped por presupuesto" por analista que
+    convertía el job en 'partial' en vez de diferirlo — justo lo que R5 prohibió."""
     agent = AGENTS_BY_TYPE[agent_type]
     run = AgentRun(job_id=job.id, agent_id=agent.agent_id, agent_type=agent_type,
                    entity_id=job.entity_id, trigger=job.trigger or {}, depth=job.depth,
                    status='running', started_at=_now())
     session.add(run)
     session.flush()
-    budget = _cfg('RESEARCH_DAILY_BUDGET_USD', 2.0)
-    if spent_today(session) >= budget:
-        run.status = 'skipped'
-        run.errors = [f'presupuesto diario agotado (≈${budget:.2f} estimados)']
-        run.completed_at = _now()
-        session.flush()
-        return run, [], False
-    prior = ContextBuilder(session=session)._prior_claims(job.entity_id, agent_type)
-    return run, prior, True
+    return run, ContextBuilder(session=session)._prior_claims(job.entity_id, agent_type)
 
 
 def _agent_work(entity_id, trigger, depth, agent_type, provider, fetchers, prior):
@@ -544,8 +533,8 @@ def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None)
             n = persist_result(session, job, run, agent, ctx, result, quotes=quotes)
             run.claims_generated = n
             run.status = 'done'
-            run.errors = ([{'unresolved_questions': result.unresolved_questions}]
-                          if result.unresolved_questions else [])
+            run.errors = []
+            run.open_questions = list(result.unresolved_questions or []) or None
     except Exception as e:  # noqa: BLE001
         run.status = 'failed'
         run.errors = [f'{type(e).__name__}: {str(e)[:300]}']
@@ -555,16 +544,6 @@ def _finish_run(session, job, run, agent_type, work, fetchers=None, quotes=None)
         run.latency_ms = int((work.get('seconds') or 0) * 1000)
         session.flush()
     return run
-
-
-def run_agent(session, job, agent_type, provider=None, fetchers=None, quotes=None):
-    """Ejecuta UN agente para el job (secuencial). Devuelve el AgentRun (siempre registrado).
-    quotes: precios en vivo {símbolo: {...}} para la foto de partida (Phase 3)."""
-    run, prior, ready = _prepare_run(session, job, agent_type)
-    if not ready:
-        return run
-    work = _agent_work(job.entity_id, job.trigger, job.depth, agent_type, provider, fetchers, prior)
-    return _finish_run(session, job, run, agent_type, work, fetchers=fetchers, quotes=quotes)
 
 
 def persist_result(session, job, run, agent, ctx, result, quotes=None):
@@ -701,11 +680,10 @@ def synthesize(session, job):
                 'confidence': c.confidence}
         (h['positive'] if c.stance == 'positive' else h['risks'] if c.stance == 'negative' else h['neutral']).append(item)
     runs = session.query(AgentRun).filter(AgentRun.job_id == job.id).all()
+    from research.models import open_questions_of
     open_q = []
     for r in runs:
-        for e in (r.errors or []):
-            if isinstance(e, dict):
-                open_q += e.get('unresolved_questions', [])
+        open_q += open_questions_of(r)
     seen, uq = set(), []
     for q in open_q:
         k = str(q).strip().lower()
@@ -779,12 +757,7 @@ def _execute_job(session, job, provider_factory=None, fetchers=None, on_start=No
     # todos los jobs (RESEARCH_PARALLEL, default 2): FIFO global hacia la IA.
     pending = []
     for agent_type in job.agents or []:
-        run, prior, ready = _prepare_run(session, job, agent_type)
-        if not ready:
-            session.commit()
-            if on_done:
-                on_done(agent_type, run)
-            continue
+        run, prior = _prepare_run(session, job, agent_type)
         pending.append((agent_type, run, prior))
     session.commit()
     if pending:

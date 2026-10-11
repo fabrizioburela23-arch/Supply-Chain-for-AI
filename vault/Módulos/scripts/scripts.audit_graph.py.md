@@ -43,7 +43,7 @@ Auditoría automática del grafo (misión de reparación, G1).
 
 _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -51,6 +51,7 @@ _Además lo importan 1 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_graph_audit.py]]
 
 ## Mencionado en sesiones de trabajo

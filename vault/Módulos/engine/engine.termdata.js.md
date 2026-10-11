@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/termdata.js"
 lenguaje: "javascript"
-lineas: 357
+lineas: 359
 aliases: ["engine/termdata.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/termdata.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 357 líneas · `engine/termdata.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 359 líneas · `engine/termdata.js`
 
 ## Para qué sirve
 
@@ -28,11 +28,11 @@ PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal t
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **75 de 93** (línea 7914), después de [[engine.fincard.js]] y antes de [[engine.explain.js]].
+Se carga en [[app.html]] en la posición **73 de 91** (línea 7923), después de [[engine.fincard.js]] y antes de [[engine.explain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 75)
+- [[app.html]] — lo carga con `<script>` (posición 73)
 - [[app.html]] — usa `TermData`
 
 ## Endpoints que llama

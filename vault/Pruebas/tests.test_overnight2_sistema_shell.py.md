@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight2_sistema_shell.py"
 lenguaje: "python"
-lineas: 294
+lineas: 295
 aliases: ["tests/test_overnight2_sistema_shell.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight2_sistema_shell.py
 
-> Prueba · capa [[Capa Pruebas]] · 294 líneas · `tests/test_overnight2_sistema_shell.py`
+> Prueba · capa [[Capa Pruebas]] · 295 líneas · `tests/test_overnight2_sistema_shell.py`
 
 ## Qué prueba
 

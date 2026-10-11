@@ -392,6 +392,55 @@ def get_signed_url(key, agent_id, http, timeout=10) -> dict:
     return {'ok': False, 'error': last}
 
 
+# ── Voces (lista de la cuenta + biblioteca en español; adoptar una compartida) ──
+# Limpieza 2026-10-11: estas dos llamadas vivían sueltas en server.py (/api/voice/voices y
+# /api/voice/adopt) — este módulo vuelve a ser el ÚNICO cliente REST de ElevenLabs.
+def list_voices(key, http, timeout=10) -> dict:
+    """Voces de la cuenta (máx 60) + las mejor valoradas EN ESPAÑOL de la biblioteca compartida (12).
+    Nunca lanza: los fallos quedan en out['upstream'] con el error ya traducido."""
+    out = {'mine': [], 'shared_es': [], 'upstream': {}}
+    try:
+        r = http.get(f'{EL_API}/v1/voices', headers=_hdr(key), timeout=timeout)
+        if getattr(r, 'status_code', 0) >= 400:
+            out['upstream']['mine'] = _http_err(r)
+        else:
+            out['upstream']['mine'] = 200
+            for v in (_json(r).get('voices') or [])[:60]:
+                out['mine'].append({'voice_id': v.get('voice_id'), 'name': v.get('name'),
+                                    'category': v.get('category'), 'labels': v.get('labels') or {}})
+    except Exception as e:  # noqa: BLE001
+        out['upstream']['mine'] = _exc_err(e)
+    try:
+        r = http.get(f'{EL_API}/v1/shared-voices', params={'language': 'es', 'page_size': 12},
+                     headers=_hdr(key), timeout=timeout)
+        if getattr(r, 'status_code', 0) >= 400:
+            out['upstream']['shared'] = _http_err(r)
+        else:
+            out['upstream']['shared'] = 200
+            for v in (_json(r).get('voices') or [])[:12]:
+                out['shared_es'].append({'voice_id': v.get('voice_id'), 'public_owner_id': v.get('public_owner_id'),
+                                         'name': v.get('name'), 'gender': v.get('gender'),
+                                         'accent': v.get('accent'), 'age': v.get('age'),
+                                         'use_case': v.get('use_case'),
+                                         'usage_7d': v.get('usage_character_count_7d')})
+    except Exception as e:  # noqa: BLE001
+        out['upstream']['shared'] = _exc_err(e)
+    return out
+
+
+def adopt_shared_voice(key, public_owner_id, voice_id, name, http, timeout=12) -> dict:
+    """Copia una voz de la biblioteca compartida a la cuenta (paso previo a asignarla al agente).
+    Los ids van EN la URL: quien llama ya los validó contra un patrón seguro."""
+    try:
+        r = http.post(f'{EL_API}/v1/voices/add/{public_owner_id}/{voice_id}', headers=_hdr(key, json_body=True),
+                      json={'new_name': str(name or 'Khipu ES')[:60]}, timeout=timeout)
+    except Exception as e:  # noqa: BLE001
+        return {'ok': False, 'error': _exc_err(e)}
+    if getattr(r, 'status_code', 0) >= 400:
+        return {'ok': False, 'error': _http_err(r)}
+    return {'ok': True, **_json(r)}
+
+
 # ── Herramientas (recursos /v1/convai/tools) ────────────────────────────────
 def list_tools(key, http, max_pages=5, timeout=12):
     """→ ({tool_id: tool_config}, err|None). Todas las del workspace (paginado)."""

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 4384
+lineas: 4396
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.384 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.396 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -40,6 +40,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.orb.js]] — usa `BixbyOrb`
 - [[engine.pickers.js]] — usa `KhipuPick`
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
+- [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
 - [[engine.statematrix.js]] — usa `KhipuState`
@@ -49,11 +50,11 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayComputeWinners`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **85 de 93** (línea 7924), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **83 de 91** (línea 7933), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 85)
+- [[app.html]] — lo carga con `<script>` (posición 83)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
 - [[engine.command_center.js]] — usa `BixbyCockpit`, `_openBrokerConfirm`, `_parseTradeCommand`
@@ -80,12 +81,15 @@ Se carga en [[app.html]] en la posición **85 de 93** (línea 7924), después de
 - `POST /api/matrix/insights` → [[matrix.api.py]] ([[API matrix]])
 - `POST /api/portfolio/advice` → [[server.py]] ([[API portfolio]])
 - `POST /api/portfolio/comment` → [[server.py]] ([[API portfolio]])
-- `POST /api/research/deep` → [[server.py]] ([[API research]])
 - `POST /api/sim/agents` → [[server.py]] ([[API sim]])
+- `POST /api/thesis/quick` → [[server.py]] ([[API thesis]])
 - `POST /api/trade/close` → [[server.py]] ([[API trade]])
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_client.py]]
+- [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_cleanup_modules_theme_i18n.py]]
 - [[tests.test_committee_os_ui.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_fixes_shell.py]]

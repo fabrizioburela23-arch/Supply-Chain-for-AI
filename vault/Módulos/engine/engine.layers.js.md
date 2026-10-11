@@ -3,18 +3,18 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/layers.js"
 lenguaje: "javascript"
-lineas: 101
+lineas: 133
 aliases: ["engine/layers.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/layers.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 101 líneas · `engine/layers.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 133 líneas · `engine/layers.js`
 
 ## Para qué sirve
 
-SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "todo o nada": enciendes/apagas información como capas. Cada capa = un grupo de elementos SVG que ya existen (conexiones, etiquetas, anillos de riesgo, marcas, países). Alternar = una regla CSS (instantáneo, sin re-render). Piel NEXUS. Botón "◱ Capas" arriba a la izquierda del mapa. La preferencia se recuerda en localStorage.
+SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "todo o nada": enciendes/apagas información como capas. Cada capa = un grupo de elementos SVG que ya existen (conexiones, etiquetas, anillos de riesgo, marcas, países). Alternar = una regla CSS (instantáneo, sin re-render). Botón "◱ Capas" arriba a la izquierda del mapa. La preferencia se recuerda en localStorage. KHIPUS OS (2026-10-11): botón y panel llevan .kos-themed → tokens --os-\* de engine/cockpit.js (claro = body sin .dark, oscuro = body.dark); el valor tras la coma de cada var() es el respaldo (la piel NEXUS vieja). Textos ES/EN y re-etiquetado al cambiar de idioma (regla bilingüe).
 
 ## API pública (globales que define)
 
@@ -22,13 +22,13 @@ SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "to
 
 ## Depende de
 
-_Nada interno._
+- [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **68 de 93** (línea 7907), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
+Se carga en [[app.html]] en la posición **66 de 91** (línea 7916), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 68)
+- [[app.html]] — lo carga con `<script>` (posición 66)
 
 ## Pruebas que lo cubren
 

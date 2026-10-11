@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/spacemonitor.js"
 lenguaje: "javascript"
-lineas: 1290
+lineas: 1324
 aliases: ["engine/spacemonitor.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/spacemonitor.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.290 líneas · `engine/spacemonitor.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 1.324 líneas · `engine/spacemonitor.js`
 
 ## Para qué sirve
 
@@ -30,11 +30,11 @@ SPACE MONITOR (pestaña 🚀 Espacio).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`, `sectorOf`
 
-Se carga en [[app.html]] en la posición **55 de 93** (línea 7879), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
+Se carga en [[app.html]] en la posición **53 de 91** (línea 7888), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 55)
+- [[app.html]] — lo carga con `<script>` (posición 53)
 - [[app.html]] — usa `KhipuSpace`
 
 ## Endpoints que llama

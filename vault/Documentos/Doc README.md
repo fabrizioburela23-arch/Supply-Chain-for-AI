@@ -14,7 +14,7 @@ tags: ["capa/documentacion", "tipo/documento"]
 
 ## De qué trata
 
-Khipus Finance AI 🌐 — \*\*Terminal financiera inteligente para la cadena de suministro de la IA\*\* — estilo Bloomberg sobre un grafo de conocimiento vivo estilo Palantir, con un analista de IA (Khipu) que habla, simula, opera (simulado) y propone.
+Khipus Finance Intelligence 🌐 — \*\*Terminal financiera inteligente para la cadena de suministro de la IA\*\* — estilo Bloomberg sobre un grafo de conocimiento vivo estilo Palantir, con un analista de IA (Khipu) que habla, simula, opera (simulado) y propone.
 
 ## Menciona
 

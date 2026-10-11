@@ -129,9 +129,10 @@ def test_public_api_and_ids_kept():
 def test_money_flow_untouched():
     # PIN: SIEMPRE por window._tradeFetch (core/pin.py del lado del server); nunca un camino propio
     assert 'if (window._tradeFetch) return window._tradeFetch(url, opts || {}, interactive !== false);' in KC
-    assert "o.headers = Object.assign({}, o.headers, { 'X-Trade-Pin': pin });" in KC
+    # 2026-10-11: el respaldo que ponía el header a mano se quitó — sin _tradeFetch no se envía nada (error claro)
+    assert "'X-Trade-Pin'" not in KC and "code: 'no_trade_fetch'" in KC
     raw = re.findall(r'(?<![\w.])fetch\(', KC)
-    assert len(raw) == 2, 'solo /status (público) y el respaldo de tfetch usan fetch() directo'
+    assert len(raw) == 1, 'solo /status (público) usa fetch() directo'
     # badges sin prompt de PIN
     assert "if (!pin) return Promise.resolve(null);" in KC and "call('GET', '/approvals', null, false)" in KC
     # preview → «confirmo» → confirm; dinero real = además el pop-up con resumen
@@ -187,6 +188,9 @@ const ctx = { console, Date, Math, JSON, Promise, encodeURIComponent, isNaN, isF
 ctx.window = ctx; ctx.globalThis = ctx; ctx.LANG = LANG;
 // el PIN vigente lo lee app.html (_tradePinStored); aquí, el mismo contrato mínimo
 ctx._tradePinStored = () => store.khipu_trade_pin || '';
+// window._tradeFetch (app.html) es EL único que pone X-Trade-Pin; aquí, el mismo contrato mínimo
+ctx._tradeFetch = (url, opts) => { const o = Object.assign({}, opts || {});
+  o.headers = Object.assign({}, o.headers, { 'X-Trade-Pin': ctx._tradePinStored() }); return ctx.fetch(url, o); };
 const body = new El('body'); body._cls = 'dark';
 ctx.document = { readyState: 'complete', body, head: new El('head'), documentElement: new El('html'), hidden: false,
   createElement: t => new El(t), addEventListener: () => {}, querySelector: () => null, querySelectorAll: () => [],
@@ -216,6 +220,7 @@ ctx.fetch = (url, opts) => { calls.push({ url, pin: opts && opts.headers && opts
   const body = R[String(url).replace(/\?.*$/, '')] || {};
   return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(JSON.parse(JSON.stringify(body))) }); };
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(ROOT + '/engine/agents_registry.js', 'utf8'), ctx);   // registro único (lo lee mascot.js)
 if (WITH_MASCOT) vm.runInContext(fs.readFileSync(ROOT + '/engine/mascot.js', 'utf8'), ctx);
 const out = {};
 function css(id) { const s = ctx.document.head.children.find(c => c.id === id); return s ? s.textContent : ''; }

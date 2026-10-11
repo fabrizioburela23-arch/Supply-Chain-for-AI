@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "engine/research.js"
 lenguaje: "javascript"
-lineas: 583
+lineas: 591
 aliases: ["engine/research.js"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # engine/research.js
 
-> Módulo · capa [[Capa Investigación]] · 583 líneas · `engine/research.js`
+> Módulo · capa [[Capa Investigación]] · 591 líneas · `engine/research.js`
 
 ## Para qué sirve
 
@@ -26,13 +26,15 @@ PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.mascot.js]] — usa `KhipuMascot`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **51 de 93** (línea 7824), después de [[engine.xray.js]] y antes de [[engine.riskreport.js]].
+Se carga en [[app.html]] en la posición **49 de 91** (línea 7833), después de [[engine.xray.js]] y antes de [[engine.riskreport.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 51)
+- [[app.html]] — lo carga con `<script>` (posición 49)
 - [[app.html]] — usa `KhipuResearch`
+- [[engine.cockpit.js]] — usa `KhipuResearch`
 - [[engine.committee.js]] — usa `KhipuResearch`
 - [[engine.khipu_chat.js]] — usa `KhipuResearch`
 - [[engine.khipu_lang.js]] — usa `KhipuResearch`
@@ -51,6 +53,7 @@ Se carga en [[app.html]] en la posición **51 de 93** (línea 7824), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
 
 ## Mencionado en sesiones de trabajo

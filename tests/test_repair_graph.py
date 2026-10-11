@@ -451,10 +451,10 @@ def test_g4d_servidor_grado_distinct_de_flujo(db):
         assert server_flow_degree(s, 'Dup') == 1
         assert server_flow_degree(s, 'Acme') == 1 and server_flow_degree(s, 'F1') == 0
         dup = _compute_server_nrs(s, get_object(s, 'Dup'))
-        # misma fórmula con grado 1 (chain 2.5); con las 5 filas sería chain 12.5 (+10)
-        from ontology.agents import GEO_RISK
-        market = max(0, min(20, round((1 - min(1, 0.2 / 0.4)) * 20)))
-        assert dup == round(GEO_RISK.get('EEUU', 15) + 2.5 + market + 4)
+        # misma fórmula que la app (client_nrs) con grado 1 (chain 2.5); con las 5 filas sería chain 12.5 (+10)
+        from core.world import client_nrs
+        props = dict(get_object(s, 'Dup').properties or {}, id='Dup')
+        assert dup == client_nrs(props, 1) < client_nrs(props, 5)
 
 
 def test_g4d_catalogo_mcp_y_world_usan_el_grado_estructural(nodb):

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "research/models.py"
 lenguaje: "python"
-lineas: 382
+lineas: 401
 aliases: ["research/models.py"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # research/models.py
 
-> Módulo · capa [[Capa Investigación]] · 382 líneas · `research/models.py`
+> Módulo · capa [[Capa Investigación]] · 401 líneas · `research/models.py`
 
 ## Para qué sirve
 
@@ -22,17 +22,19 @@ tablas de la capa DERIVED CLAIMS (Phase 2).
 - clase `ResearchEvidence` — Evidencia de una claim — a favor (supporting) o en contra (counter). Apunta a una Source de la ontología (source_id) cuando hay URL, o a … _(línea 68)_
 - clase `ClaimRelation` — Relación entre claims. Phase 2 solo crea POTENTIALLY_CONTRADICTS: se DETECTA la tensión, no se decide quién tiene razón (eso es Phase 3). _(línea 90)_
 - clase `AgentRun` — Observabilidad: UNA ejecución de UN agente. Permite responder "¿por qué el sistema llegó a esta conclusión?" — con qué modelo, por qué se … _(línea 104)_
-- clase `ResearchJob` — Un pedido de investigación (del usuario o de un evento) sobre una entidad. _(línea 134)_
-- clase `ClaimBaseline` — Foto de partida de una claim (una por claim): con qué precio y en qué fecha se hizo la predicción, contra qué referencia (SPY) y cuándo se … _(línea 164)_
-- clase `ClaimOutcome` — UNA evaluación de UN checkpoint de una claim (append-only, idempotente por (claim_id, checkpoint)). Guarda los precios usados y la cuenta. _(línea 194)_
-- clase `CalibrationSnapshot` — Foto periódica del historial (track record) por agente — para ver cómo evoluciona la calibración en el tiempo. agent_type NULL = global. _(línea 233)_
-- clase `CommitteeMemo` — Memo del COMITÉ DE INVERSIÓN automatizado: decisión propuesta + tamaño (determinista) + tesis/riesgos/disenso (presidente IA o plantilla … _(línea 250)_
-- clase `DecisionShadow` — JEV (core/decide.py) en MODO SOMBRA: lo que decidió vs lo que hizo el sistema, para medir acuerdo antes de darle control por función. _(línea 293)_
-- clase `AIUsage` _(línea 307)_
-- clase `AISetting` _(línea 324)_
-- clase `PortfolioWatch` _(línea 339)_
-- clase `PortfolioReport` _(línea 358)_
-- clase `UserState` — Sincronización entre dispositivos (2026-10-03): carteras, perfil y posiciones del usuario, por dueño (hash de la llave del navegador). … _(línea 374)_
+- `open_questions_of(run)` — Preguntas abiertas de un AgentRun: la columna nueva + las que las filas viejas guardaban como dict dentro de `errors`. _(línea 138)_
+- `errors_of(run)` — Solo los errores de verdad (textos) de un AgentRun — sin las preguntas abiertas viejas. _(línea 148)_
+- clase `ResearchJob` — Un pedido de investigación (del usuario o de un evento) sobre una entidad. _(línea 153)_
+- clase `ClaimBaseline` — Foto de partida de una claim (una por claim): con qué precio y en qué fecha se hizo la predicción, contra qué referencia (SPY) y cuándo se … _(línea 183)_
+- clase `ClaimOutcome` — UNA evaluación de UN checkpoint de una claim (append-only, idempotente por (claim_id, checkpoint)). Guarda los precios usados y la cuenta. _(línea 213)_
+- clase `CalibrationSnapshot` — Foto periódica del historial (track record) por agente — para ver cómo evoluciona la calibración en el tiempo. agent_type NULL = global. _(línea 252)_
+- clase `CommitteeMemo` — Memo del COMITÉ DE INVERSIÓN automatizado: decisión propuesta + tamaño (determinista) + tesis/riesgos/disenso (presidente IA o plantilla … _(línea 269)_
+- clase `DecisionShadow` — JEV (core/decide.py) en MODO SOMBRA: lo que decidió vs lo que hizo el sistema, para medir acuerdo antes de darle control por función. _(línea 312)_
+- clase `AIUsage` _(línea 326)_
+- clase `AISetting` _(línea 343)_
+- clase `PortfolioWatch` _(línea 358)_
+- clase `PortfolioReport` _(línea 377)_
+- clase `UserState` — Sincronización entre dispositivos (2026-10-03): carteras, perfil y posiciones del usuario, por dueño (hash de la llave del navegador). … _(línea 393)_
 
 **Internas** (empiezan con `_`): `_uuid`
 
@@ -65,11 +67,12 @@ tablas de la capa DERIVED CLAIMS (Phase 2).
 - herramienta MCP `get_research` → [[API herramientas MCP]]
 - herramienta MCP `get_research_job` → [[API herramientas MCP]]
 
-_Además lo importan 12 pruebas (lista abajo)._
+_Además lo importan 13 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_brokerage.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_khipus_os_fixes_server.py]]

@@ -18,6 +18,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## Pruebas que la fijan o nombran
 
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_voice_server.py]]

@@ -100,9 +100,7 @@ THEMES = OrderedDict([
 ])
 _BAD_LISTING = {'acquired', 'defunct', 'merged', 'subsidiary', 'delisted', 'bankrupt', 'private'}
 
-# NRS: MISMA heurística que computeNRS (app.html) con el término de margen
-# acotado a [0,20] como la réplica server (ontology/agents.py). Documentado.
-_GEO = {'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18}
+# Países escritos de varias formas → una clave (para agrupar la cartera por país; el NRS usa core/world).
 _COUNTRY_NORM = {'estados unidos': 'EEUU', 'eeuu': 'EEUU', 'usa': 'EEUU', 'us': 'EEUU',
                  'japon': 'Japon', 'japón': 'Japon', 'japan': 'Japon',
                  'taiwan': 'Taiwan', 'taiwán': 'Taiwan', 'corea': 'Corea', 'korea': 'Corea',
@@ -256,21 +254,9 @@ def _nodes():
 
 
 def nrs(node, degree):
-    from core.world import nrs_concentrated, nrs_geo
-    geo = nrs_geo(node.get('country'))
-    chain = min(25, degree * 2.5)
-    margin = node.get('margin')
-    try:
-        from core.live_fundamentals import live_margin
-        lm = live_margin(node.get('id')) if node.get('id') else None
-        margin = lm if lm is not None else margin
-    except Exception:  # noqa: BLE001
-        pass
-    market = max(0, min(20, round((1 - min(1, (margin if margin is not None else 0.15) / 0.4)) * 20)))
-    g = str(node.get('growth') or '').lower()
-    fundamental = min(15, (10 if node.get('preipo') else 0) + (5 if '🔴' in g else 2 if '🟡' in g else 0))
-    conc = 10 if nrs_concentrated(node.get('country')) else 4
-    return int(max(0, min(100, round(geo + chain + market + fundamental + conc))))
+    """NRS de la app (core.world.client_nrs): una sola fórmula para app, servidor, MCP y carteras."""
+    from core.world import client_nrs
+    return client_nrs(node, degree)
 
 
 def sector_label(sec, lang='es'):

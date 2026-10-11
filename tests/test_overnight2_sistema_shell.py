@@ -282,7 +282,8 @@ def test_fallbacks_and_flat_fix_fields(rendered):
     # sin detail_en: en inglés se muestra el texto del servidor tal cual (nunca vacío) con etiquetas en inglés
     en = rendered['en']['plain_es_only']
     assert en['texts']['detail'] == 'Key válida — gemini respondió.' and 'OPERATIONAL' in en['card']
-    assert 'Backup AI channel' in en['card'] and 'Canal de respaldo' in rendered['es']['plain_es_only']['card']
+    # (limpieza 2026-10-11) el papel de cada IA sale de la ruta real del servidor; la tarjeta base dice qué IA es
+    assert 'Google AI' in en['card'] and 'IA de Google' in rendered['es']['plain_es_only']['card']
     # fix_es / fix_en planos
     assert rendered['en']['flat_fix']['texts'] == {'detail': 'Fails <b>x</b>', 'fixes': ['Change the plan.']}
     assert rendered['es']['flat_fix']['texts'] == {'detail': 'Falla <b>x</b>', 'fixes': ['Cambia el plan.']}

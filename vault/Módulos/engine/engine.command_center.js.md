@@ -14,7 +14,7 @@ tags: ["capa/chat-agentes", "tipo/modulo"]
 
 ## Para qué sirve
 
-Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del header lo abre. NO hay orbe flotante. El panel (input + feed de resultados) aparece como dropdown arriba-derecha, en su espacio dedicado, sin tapar el contenido de abajo. Escribe O habla; Khipu ejecuta y muestra la respuesta inline. Reutiliza: switchTab, jumpTo, activateStress, nexusCore.runPreset, _openSecondBrain, canvasGenerate (_cvRenderCard) y BixbyVoice (voz). Endpoint: /api/khipu/chat (cerebro con herramientas, engine/khipu_chat.js); /api/ai/command queda solo por compatibilidad. Expone window.BixbyCC.
+Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del header lo abre. NO hay orbe flotante. El panel (input + feed de resultados) aparece como dropdown arriba-derecha, en su espacio dedicado, sin tapar el contenido de abajo. Escribe O habla; Khipu ejecuta y muestra la respuesta inline. Reutiliza: switchTab, jumpTo, activateStress, nexusCore.runPreset, _openSecondBrain, canvasGenerate (_cvRenderCard) y BixbyVoice (voz). Endpoint: /api/khipu/chat (cerebro con herramientas, engine/khipu_chat.js). Expone window.BixbyCC.
 
 ## API pública (globales que define)
 
@@ -36,11 +36,11 @@ Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del heade
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **87 de 93** (línea 7926), después de [[engine.live.js]] y antes de [[sim.scenario_builder.js]].
+Se carga en [[app.html]] en la posición **85 de 91** (línea 7935), después de [[engine.live.js]] y antes de [[sim.scenario_builder.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 87)
+- [[app.html]] — lo carga con `<script>` (posición 85)
 - [[app.html]] — usa `BixbyCC`
 
 ## Endpoints que llama

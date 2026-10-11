@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_map_search_reset.py"
 lenguaje: "python"
-lineas: 21
+lineas: 23
 aliases: ["tests/test_map_search_reset.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_map_search_reset.py
 
-> Prueba · capa [[Capa Pruebas]] · 21 líneas · `tests/test_map_search_reset.py`
+> Prueba · capa [[Capa Pruebas]] · 23 líneas · `tests/test_map_search_reset.py`
 
 ## Qué prueba
 

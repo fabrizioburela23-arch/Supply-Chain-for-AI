@@ -109,21 +109,10 @@ SKILLS = {
 }
 
 # ── puesto → MASCOTA (2026-10-09, sala del comité con la voz de Khipus OS) ─────────────────────
-# MISMO mapeo que engine/mascot.js (seats) y core/khipu_chat.SEAT_AGENT — cambiar los tres juntos
-# (tests/test_committee_os_narr.py los compara). Aquí sin dependencias (lo importa el comité).
-SEAT_MASCOT = {
-    'fundamental': 'analista', 'macro': 'analista',
-    'news': 'radar', 'geopolitical': 'radar', 'crypto': 'radar',
-    'supply_chain': 'cadena',
-    'technical': 'tecnico', 'risk_observation': 'tecnico', 'risk_officer': 'tecnico', 'market': 'tecnico',
-    'chair': 'comite', 'quant': 'comite', 'mandate': 'comite', 'committee': 'comite',
-}
-MASCOT_NAME = {'khipu': ('Khipu', 'Khipu'), 'analista': ('Analista', 'Analyst'), 'radar': ('Radar', 'Radar'),
-               'cadena': ('Cadena', 'Chain'), 'tecnico': ('Técnico', 'Technical'), 'comite': ('Comité', 'Committee')}
-# el rol entre paréntesis cuando el nombre de la mascota no lo dice solo (Técnico y Cadena ya lo dicen)
-SEAT_ROLE = {'fundamental': ('fundamental', 'fundamentals'), 'macro': ('macro', 'macro'),
-             'news': ('noticias', 'news'), 'geopolitical': ('geopolítica', 'geopolitics'),
-             'crypto': ('cripto', 'crypto'), 'risk_observation': ('riesgos', 'risks')}
+# Del registro ÚNICO engine/agents_registry.js (core/agents_registry.py, limpieza 2026-10-11).
+from core.agents_registry import AGENT_LABEL as MASCOT_NAME  # noqa: E402
+from core.agents_registry import CALL_ROLE as SEAT_ROLE  # noqa: E402
+from core.agents_registry import SEAT_AGENT as SEAT_MASCOT  # noqa: E402
 
 
 def seat_mascot(seat):

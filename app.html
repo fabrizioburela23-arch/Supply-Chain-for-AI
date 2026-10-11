@@ -1602,12 +1602,20 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     return window._tradeStatusInfo().then(function (x) { return x ? x.pin_set : null; });
   };
 
-  function askPin() {
-    var msg = en()
-      ? 'Trading PIN (the TRADE_PIN value set in Railway). It is remembered on this device for 12 hours:'
-      : 'PIN de trading (el valor de TRADE_PIN configurado en Railway). Se recuerda 12 horas en este dispositivo:';
+  // PIN oculto (campo de contraseña) en el diálogo de Khipus. Limpieza 2026-10-11: antes era window.prompt,
+  // que muestra el PIN EN CLARO mientras se escribe. Sin KhipuToast no se pide nada (nunca un prompt nativo).
+  async function askPin() {
+    var KT = window.KhipuToast;
+    if (!KT || typeof KT.prompt !== 'function') return '';
     var p = '';
-    try { p = String(window.prompt(msg) || '').trim(); } catch (e) {}
+    try {
+      p = String(await KT.prompt({
+        title: en() ? 'Trading PIN' : 'PIN de trading',
+        body: en() ? 'The TRADE_PIN value set in Railway. It is remembered on this device for 12 hours.'
+                   : 'El valor de TRADE_PIN configurado en Railway. Se recuerda 12 horas en este dispositivo.',
+        label: 'PIN', password: true, okText: en() ? 'Continue' : 'Continuar',
+      }) || '').trim();
+    } catch (e) { p = ''; }
     return p ? window._tradePinSave(p) : '';
   }
   function jsonResp(status, body) {
@@ -1631,7 +1639,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
     if (!pin) {
       var required = await window._tradePinRequired();
       if (required !== false) {
-        if (interactive) pin = askPin();
+        if (interactive) pin = await askPin();
         if (!pin) return jsonResp(401, { error: 'Falta el PIN de trading', error_en: 'Trading PIN required', code: 'pin_required' });
       }
     }
@@ -1642,7 +1650,7 @@ body:not(.dark) .toolbar{animation-delay:.06s}
       if (d && (d.code === 'invalid_pin' || d.code === 'pin_required')) {
         _pinReq.v = true; _pinReq.ts = Date.now();   // el server SÍ exige PIN (p. ej. recién configurado)
         if (pin) window._tradePinClear();
-        if (interactive) { var p2 = askPin(); if (p2) r = await send(url, o, p2, timeout); }
+        if (interactive) { var p2 = await askPin(); if (p2) r = await send(url, o, p2, timeout); }
       }
     }
     return r;
@@ -1940,11 +1948,11 @@ body:not(.dark) .toolbar{animation-delay:.06s}
         <div style="font-size:12px;color:var(--ink-3);font-family:'JetBrains Mono',monospace" id="graph3d-loader-text">Inicializando grafo 3D…</div>
       </div>
       <div id="hypergraph-timeline" style="display:none;position:absolute;bottom:60px;left:50%;transform:translateX(-50%);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 16px;align-items:center;gap:10px;box-shadow:var(--shadow)">
-        <span style="font-size:11px;font-weight:700;color:var(--ink-2)">Hipergrafos Temporales</span>
+        <span style="font-size:11px;font-weight:700;color:var(--ink-2)" data-i18n="hg_title">Hipergrafos Temporales</span>
         <input type="range" id="hg-year" min="2015" max="2030" value="2026" step="1" style="width:140px;cursor:pointer">
         <span id="hg-year-label" style="font-size:12px;font-weight:600;color:var(--ink);min-width:32px">2026</span>
-        <button id="hg-add" style="font-size:11px;padding:4px 10px;border:1px solid var(--violet);border-radius:4px;background:var(--surface);color:var(--violet);cursor:pointer;font-weight:600">+ Evento</button>
-        <button id="hg-toggle" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:pointer">Ocultar</button>
+        <button id="hg-add" style="font-size:11px;padding:4px 10px;border:1px solid var(--violet);border-radius:4px;background:var(--surface);color:var(--violet);cursor:pointer;font-weight:600" data-i18n="hg_add">+ Evento</button>
+        <button id="hg-toggle" style="font-size:11px;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--surface);cursor:pointer" data-i18n="hg_hide">Ocultar</button>
       </div>
       <div class="stress-banner" id="stress-banner">
         <span class="sb-dot"></span>
@@ -2770,6 +2778,7 @@ const _nrsCache = new Map();           // nodeId -> score 0-100
 // ontology/agents.py server_flow_degree y ontology.vocabulary.flow_degree;
 // la lista refleja vocabulary.json (relation_types.*.flow = true).
 const NRS_FLOW_TYPES = { supply: 1, fab: 1, cloud: 1, license: 1, ppa: 1, owns: 1, deploy: 1 };
+window.NRS_FLOW_TYPES = NRS_FLOW_TYPES;   // proveedores/clientes de cualquier módulo = solo FLUJO (G4a)
 function _buildNrsDegree() {
   const m = new Map();
   const pairs = new Set();
@@ -2794,41 +2803,38 @@ window._invalidateNRS = _invalidateNRS;
 // luego busca grado/vínculos por id debe usar el id CANÓNICO (n.id).
 function _canonId(id){ const n = (typeof NODE_BY_ID !== 'undefined' && NODE_BY_ID) ? NODE_BY_ID[id] : null; return (n && n.id) || id; }
 window._canonId = _canonId;
+// Los 5 términos del NRS, calculados en UN solo sitio (limpieza 2026-10-11: antes computeNRS y
+// computeNRSBreakdown re-escribían la fórmula cada una). MISMA fórmula que core/world.py client_nrs
+// — servidor (ontology/agents.py), MCP y carteras delegan ahí; tests/test_cleanup_nrs_parity.py
+// compara las dos implementaciones sobre TODO el catálogo.
+const _NRS_GEO = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
+function _nrsTerms(nodeId, n) {
+  // Geo risk (0-30): país escrito de cualquier forma ("Japón", "Corea", "Estados Unidos"…) → clave de la tabla
+  const ck = _nrsCountry(n.country);
+  const geo = _NRS_GEO[ck] ?? 15;
+  // Chain risk (0-25): grado ESTRUCTURAL (precalculado 1 vez)
+  if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
+  const degree = _nrsDegree ? (_nrsDegree.get(nodeId) || 0) : 0;
+  const chain = Math.min(25, degree * 2.5);
+  // Market risk (0-20): volatility proxy from margin
+  // acotado a [0,20] (2026-10-05): sin esto una empresa sin ganancias (OpenAI) llegaba a NRS 100
+  const margin = n.margin != null ? n.margin : 0.15;
+  const market = Math.max(0, Math.min(20, Math.round((1 - Math.min(1, margin / 0.4)) * 20)));
+  // Fundamental risk (0-15): preipo penalty + growth signal
+  const growth_str = (n.growth || '').toLowerCase();
+  const fundamental = Math.min(15, (n.preipo ? 10 : 0) + (growth_str.includes('🔴') ? 5 : (growth_str.includes('🟡') ? 2 : 0)));
+  // Concentration risk (0-10): single-country dependency
+  const concentration = (ck === 'Taiwan' || ck === 'China') ? 10 : 4;
+  const total = Math.min(100, Math.max(0, Math.round(geo + chain + market + fundamental + concentration)));
+  return { geo, degree, chain, market, fundamental, concentration, total };
+}
 function computeNRS(nodeId) {
   nodeId = _canonId(nodeId);   /* revisión G1c: un id viejo (alias) usa el grado del canónico */
   const hit = _nrsCache.get(nodeId);
   if (hit !== undefined) return hit;
-
   const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
   if (!n) return 50;
-
-  // Geo risk (0-30): based on country
-  const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
-  // país escrito de cualquier forma ("Japón", "Corea", "Estados Unidos"…) → clave de la tabla (MISMA que core/world.py)
-  const ck = _nrsCountry(n.country);
-  const geo = geoMap[ck] ?? 15;
-
-  // Chain risk (0-25): node degree / centrality proxy (grado precalculado 1 vez)
-  if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
-  const degree = _nrsDegree ? (_nrsDegree.get(nodeId) || 0) : 0;
-  const chain = Math.min(25, degree * 2.5);
-
-  // Market risk (0-20): volatility proxy from margin
-  const margin = n.margin != null ? n.margin : 0.15;
-  // acotado a [0,20] (2026-10-05): sin esto una empresa sin ganancias (OpenAI) llegaba a NRS 100
-  const market = Math.max(0, Math.min(20, Math.round((1 - Math.min(1, margin / 0.4)) * 20)));
-
-  // Fundamental risk (0-15): preipo penalty + growth signal
-  const preipo_pen = n.preipo ? 10 : 0;
-  const growth_str = (n.growth || '').toLowerCase();
-  const growth_pen = growth_str.includes('🔴') ? 5 : (growth_str.includes('🟡') ? 2 : 0);
-  const fundamental = Math.min(15, preipo_pen + growth_pen);
-
-  // Concentration risk (0-10): single-country dependency
-  const concentration = (ck === 'Taiwan' || ck === 'China') ? 10 : 4;
-
-  const nrs = Math.round(geo + chain + market + fundamental + concentration);
-  const val = Math.min(100, Math.max(0, nrs));
+  const val = _nrsTerms(nodeId, n).total;
   if (window.LINKS) _nrsCache.set(nodeId, val);  // cachear solo cuando el grafo ya cargó
   return val;
 }
@@ -2847,27 +2853,15 @@ function computeNRSBreakdown(nodeId) {
   const n = NODE_BY_ID ? NODE_BY_ID[nodeId] : null;
   if (!n) return null;
   const _en = (typeof LANG !== 'undefined' && LANG === 'en');   /* regla bilingüe: los términos se MUESTRAN */
-  const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
-  // país escrito de cualquier forma ("Japón", "Corea", "Estados Unidos"…) → clave de la tabla (MISMA que core/world.py)
-  const ck = _nrsCountry(n.country);
-  const geo = geoMap[ck] ?? 15;
-  if (_nrsDegree === null && window.LINKS) _nrsDegree = _buildNrsDegree();
-  const degree = _nrsDegree ? (_nrsDegree.get(nodeId) || 0) : 0;
-  const chain = Math.min(25, degree * 2.5);
-  const margin = n.margin != null ? n.margin : 0.15;
-  // acotado a [0,20] (2026-10-05): sin esto una empresa sin ganancias (OpenAI) llegaba a NRS 100
-  const market = Math.max(0, Math.min(20, Math.round((1 - Math.min(1, margin / 0.4)) * 20)));
-  const growth_str = (n.growth || '').toLowerCase();
-  const fundamental = Math.min(15, (n.preipo ? 10 : 0) + (growth_str.includes('🔴') ? 5 : growth_str.includes('🟡') ? 2 : 0));
-  const concentration = (ck === 'Taiwan' || ck === 'China') ? 10 : 4;
+  const T = _nrsTerms(nodeId, n);
   return {
-    total: Math.min(100, Math.max(0, Math.round(geo + chain + market + fundamental + concentration))),
+    total: T.total,
     terms: [
-      { key: _en ? 'Geopolitics' : 'Geopolítica', val: geo, max: 30, hot: geo >= 20, detail: n.country || '—' },
-      { key: _en ? 'Supply chain' : 'Cadena', val: Math.round(chain), max: 25, hot: chain >= 20, detail: (_en ? 'degree ' : 'grado ') + degree },
-      { key: _en ? 'Margin' : 'Margen', val: market, max: 20, hot: market >= 14, detail: n.margin != null ? Math.round(n.margin * 100) + '%' : (_en ? 'n/a' : 's/d') },
-      { key: 'Fundamental', val: fundamental, max: 15, hot: fundamental >= 10, detail: n.preipo ? 'pre-IPO' : (_en ? 'public' : 'pública') },
-      { key: _en ? 'Concentration' : 'Concentración', val: concentration, max: 10, hot: concentration >= 10, detail: n.country || '—' },
+      { key: _en ? 'Geopolitics' : 'Geopolítica', val: T.geo, max: 30, hot: T.geo >= 20, detail: n.country || '—' },
+      { key: _en ? 'Supply chain' : 'Cadena', val: Math.round(T.chain), max: 25, hot: T.chain >= 20, detail: (_en ? 'degree ' : 'grado ') + T.degree },
+      { key: _en ? 'Margin' : 'Margen', val: T.market, max: 20, hot: T.market >= 14, detail: n.margin != null ? Math.round(n.margin * 100) + '%' : (_en ? 'n/a' : 's/d') },
+      { key: 'Fundamental', val: T.fundamental, max: 15, hot: T.fundamental >= 10, detail: n.preipo ? 'pre-IPO' : (_en ? 'public' : 'pública') },
+      { key: _en ? 'Concentration' : 'Concentración', val: T.concentration, max: 10, hot: T.concentration >= 10, detail: n.country || '—' },
     ],
   };
 }
@@ -4596,6 +4590,7 @@ setTimeout(resize,60);
 const I18N = {
 es: {
   sub:'Cadena de valor global 2026 · 450+ empresas · 900+ conexiones · 35 categorías',
+  hg_title:'Hipergrafos Temporales', hg_add:'+ Evento', hg_hide:'Ocultar',
   tab_map:'Mapa de la Cadena', tab_market:'Mercado en Vivo', tab_portfolios:'Carteras', tab_committee:'Comité', tab_clients:'Clientes',
   tab_analysis:'Análisis de Red', tab_geo:'Geopolítica',
   tab_sim:'Simulación', tab_space:'Espacio',
@@ -4664,6 +4659,7 @@ es: {
 },
 en: {
   sub:'Global value chain 2026 · 450+ companies · 900+ links · 35 categories',
+  hg_title:'Temporal hypergraphs', hg_add:'+ Event', hg_hide:'Hide',
   tab_map:'Chain Map', tab_market:'Live Market', tab_portfolios:'Portfolios', tab_committee:'Committee', tab_clients:'Clients',
   tab_analysis:'Network Analysis', tab_geo:'Geopolitics',
   tab_sim:'Simulation', tab_space:'Space Economy',
@@ -5778,16 +5774,19 @@ $('settings-overlay').onclick=()=>Settings.close();
 const _sysEN = () => (window.LANG||'')==='en';
 const _sysL = (es, en) => _sysEN() ? en : es;
 const DIAG_META = {
-  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'IA principal · Canvas · Khipu · análisis', why_en:'Main AI · Canvas · Khipu · analysis' },
-  gemini:     { icon:'◆',  name:'Google Gemini',        why:'Canal de respaldo de IA (alterna si Claude falla)', why_en:'Backup AI channel (takes over if Claude fails)' },
-  nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'Canal de respaldo de IA (gratis para MVP)', why_en:'Backup AI channel (free for the MVP)' },
+  // IA: el PAPEL de cada proveedor (1.º / respaldo, en el nivel rápido y en el profundo) se calcula con la
+  // ruta REAL del servidor (d.routing, core/ai.ai_route_state) en _diagAiRole — limpieza 2026-10-11: antes
+  // decía fijo "Claude = IA principal" aunque el chat rápido empiece por Gemini
+  claude:     { icon:'✦',  name:'Claude (Anthropic)',  why:'IA de Anthropic', why_en:'Anthropic AI', ai:true },
+  gemini:     { icon:'◆',  name:'Google Gemini',        why:'IA de Google', why_en:'Google AI', ai:true },
+  nvidia:     { icon:'▲',  name:'NVIDIA NIM',           why:'IA del catálogo de NVIDIA (créditos de desarrollador)', why_en:'NVIDIA catalog AI (developer credits)', ai:true },
   elevenlabs: { icon:'🎙', name:'Khipu / ElevenLabs',  why:'Voz conversacional — preguntar por voz', why_en:'Conversational voice — ask by voice' },
   finnhub:    { icon:'📈', name:'Finnhub',             why:'Precios en vivo (EE.UU.) · WebSocket · primero en la cascada', why_en:'Live prices (US) · WebSocket · first in the cascade' },
   yahoo:      { icon:'🌐', name:'Yahoo Finance',       why:'Precios de TODAS las bolsas (sin clave) · respaldo de EE.UU. · capitalización', why_en:'Prices for ALL exchanges (no key) · US backup · market cap' },
   fmp:        { icon:'📑', name:'FMP',                 why:'Estados financieros · perfil · precio objetivo (plan con cobertura limitada)', why_en:'Financial statements · profile · price target (limited-coverage plan)' },
   grafo:      { icon:'◈',  name:'Grafo Temporal', name_en:'Temporal Graph', why:'Memoria temporal (nativa · Neo4j opcional)', why_en:'Temporal memory (native · optional Neo4j)' },
   ontologia:  { icon:'🗄️', name:'Ontología (Postgres)', name_en:'Ontology (Postgres)', why:'Fuente única de verdad · eventos bitemporales', why_en:'Single source of truth · bitemporal events' },
-  market_extra:{icon:'🗂', name:'Fuentes de respaldo', name_en:'Backup sources', why:'FMP · MarketStack · AlphaVantage' },
+  market_extra:{icon:'🗂', name:'Fuentes de respaldo', name_en:'Backup sources', why:'FMP · MarketStack · AlphaVantage', why_en:'FMP · MarketStack · AlphaVantage' },
   investigacion:{icon:'🔬', name:'Investigación IA', name_en:'AI research', why:'Proveedores en pausa · cola · presupuesto diario · reloj del servidor (R6)', why_en:'Paused providers · queue · daily budget · server clock (R6)' },
 };
 const DIAG_LEVEL_TXT = {
@@ -5852,14 +5851,27 @@ function _diagDetailHTML(detail){
   const items = parts.filter(Boolean);
   return esc(head) + (items.length ? '<ul>' + items.map(x=>'<li>' + esc(x) + '</li>').join('') + '</ul>' : '');
 }
-function _diagCard(key, s){
+// papel REAL de un proveedor de IA según la ruta del servidor: "Rápido: 1.º · Profundo: respaldo 2"
+function _diagAiRole(key, routing){
+  if(!routing) return '';
+  const en = _sysEN();
+  const pos = (lst) => { const i = (lst || []).indexOf(key); return i < 0 ? null : i; };
+  const txt = (i) => i === 0 ? (en ? '1st' : '1.º') : (en ? 'backup ' + i : 'respaldo ' + i);
+  const f = pos(routing.fast), d = pos(routing.deep), out = [];
+  if(f != null) out.push((en ? 'Fast (chat): ' : 'Rápido (chat): ') + txt(f));
+  if(d != null) out.push((en ? 'Deep (research): ' : 'Profundo (investigación): ') + txt(d));
+  const md = (routing.models || {})[key] || (key === 'claude' ? [(routing.models || {}).fast, (routing.models || {}).deep].filter(Boolean).join(' / ') : '');
+  return out.join(' · ') + (md ? ' · ' + md : '');
+}
+function _diagCard(key, s, routing){
   s = s || {};
   const m = DIAG_META[key] || {icon:'•', name:key, why:''};
   const en = _sysEN();
   const lv = _diagLevel(s);
   const tx = _diagTexts(s, lv);
   const name = (en && m.name_en) || m.name;
-  const why = (en && m.why_en) || m.why || '';
+  const role = m.ai ? _diagAiRole(key, routing) : '';
+  const why = ((en && m.why_en) || m.why || '') + (role ? ' — ' + role : '');
   const lat = (s.latency_ms!=null) ? `<span class="ksys-lat">${esc(s.latency_ms)} ms</span>` : '';
   const fix = tx.fixes.length ? `<div class="ksys-fix"><span class="ksys-fix-h">${esc(_sysL('Qué hacer', 'What to do'))}</span>${
     tx.fixes.length > 1 ? '<ol>' + tx.fixes.map(f=>'<li>' + esc(f) + '</li>').join('') + '</ol>' : esc(tx.fixes[0])}</div>` : '';
@@ -5893,10 +5905,10 @@ window.openDiagnostics = async function(fresh){
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
     const order = ['claude','gemini','nvidia','investigacion','elevenlabs','finnhub','yahoo','fmp','grafo','ontologia','market_extra'];
-    body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k])).join('');
+    body.innerHTML = order.filter(k=>d.services&&d.services[k]).map(k=>_diagCard(k, d.services[k], d.routing)).join('');
     const ok = d.summary?.ok ?? 0, tot = d.summary?.total ?? 0;
     const lv = ok===tot ? 'ok' : (ok===0 ? 'bad' : 'warn');
-    sum.innerHTML = `<b class="ksys-sumb ksys-lv-${lv}">${esc(ok)}/${esc(tot)} ${esc(_sysL('operativos', 'operational'))}</b> · ${esc(_sysL('modelo IA', 'AI model'))}: <code>${esc(d.ai_model||'?')}</code>${d.cached ? ' · ' + esc(_sysL('caché', 'cached')) : ''}`;
+    sum.innerHTML = `<b class="ksys-sumb ksys-lv-${lv}">${esc(ok)}/${esc(tot)} ${esc(_sysL('operativos', 'operational'))}</b> · ${esc(_sysL('ruta de la IA', 'AI route'))}: <code>${esc((d.routing && (_sysEN() ? d.routing.hint_en : d.routing.hint_es)) || '?')}</code>${d.cached ? ' · ' + esc(_sysL('caché', 'cached')) : ''}`;
     if(window.KhipuReconcile && d.services && d.services.ontologia && d.services.ontologia.configured) window.KhipuReconcile.mount('recon-box');
   }catch(e){
     body.innerHTML = _sysErrCard(_sysL('No se pudo obtener el diagnóstico', 'Could not load the diagnostics'), String(e.message||e),
@@ -5978,12 +5990,10 @@ const PROPOSAL_FIELD_LABELS_EN = {
   nivel:'NRS level', razon:'Reason', stance:'Stance', confidence:'Confidence', rationale:'Rationale',
   decision:'Decision', texto:'Note', ticker:'Ticker', delta:'Delta (units)', tipo:'Link type',
 };
+// quién firma una acción de la ontología: EL helper único (engine/toast.js khipuActor; pide el nombre una vez,
+// bilingüe). Devuelve una promesa.
 function _getActorGlobal(){
-  try{
-    let a = localStorage.getItem('khipu_actor');
-    if(!a){ a = (window.prompt('¿Cómo te identificamos?') || '').trim(); if(a) localStorage.setItem('khipu_actor', a); }
-    return a || 'anónimo';
-  }catch(e){ return 'anónimo'; }
+  return window.khipuActor ? window.khipuActor({ask:true}) : Promise.resolve('usuario');
 }
 function _propuestaCard(p){
   const en = _sysEN();
@@ -6033,7 +6043,7 @@ window.lanzarInvestigacion = async function(){
   const st = $('investigar-status');
   if(!q){ if(st) st.textContent = _sysL('Escribe qué investigar.', 'Type what to research.'); return; }
   const base = (typeof BASE!=='undefined') ? BASE : '';
-  let actor = 'anónimo'; try{ actor = localStorage.getItem('khipu_actor')||'anónimo'; }catch(e){}
+  const actor = window.khipuActor ? window.khipuActor() : 'usuario';
   // Escritura de la ontología → PIN de operador (X-Trade-Pin) vía _tradeFetch.
   // El primer envío puede pedir el PIN; los sondeos NUNCA (interactive=false).
   const post = async(interactive)=>{
@@ -6094,11 +6104,12 @@ window.openPropuestas = async function(fresh){
     body.innerHTML = _sysErrCard(_sysL('No se pudo cargar', 'Could not load'), String(e.message||e), '');
   }
 };
-function _resolveProposal(card, id, verb){
+async function _resolveProposal(card, id, verb){
   const status = card.querySelector('.prop-status');
+  const actor = await _getActorGlobal();
   status.textContent = verb==='approve' ? _sysL('aprobando…', 'approving…') : _sysL('rechazando…', 'rejecting…'); status.style.color='var(--os-ink-2,#A6A8B5)';
   const base = (typeof BASE!=='undefined') ? BASE : '';
-  const body = { actor: _getActorGlobal() };
+  const body = { actor };
   if(verb==='approve'){
     const edits = {};
     card.querySelectorAll('.prop-field').forEach(el=>{
@@ -7798,17 +7809,15 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <!-- Khipu Finance Engine -->
 <script src="engine/loading.js"></script>
 <script src="engine/toast.js"></script>
+<script src="engine/agents_registry.js"></script>
 <script src="engine/mascot.js"></script>
-<script src="engine/graph3d.js"></script>
 <script src="engine/universe2d.js"></script>
-<script src="engine/hypergraph.js"></script>
 <script src="engine/resolve.js"></script>
 <script src="engine/orb.js"></script>
 <script src="engine/voice.js"></script>
 <script src="engine/secondbrain.js"></script>
 <script src="engine/geo_coords.js"></script>
 <script src="engine/globe.js"></script>
-<script src="engine/geosituation.js"></script>
 <script src="engine/canvas-data.js"></script>
 <script src="nodes/temporal_seed_facts.js"></script>
 <script src="nodes/temporal_seed_facts2.js"></script>
@@ -7988,14 +7997,32 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
     return hud;
   }
 
+  // Motor WebGL viejo (engine/graph3d.js + engine/hypergraph.js, ~1.500 líneas): solo lo usa el camino
+  // ?webgl3d=1, así que se descarga AL PEDIRLO (limpieza 2026-10-11: antes se cargaba en cada arranque).
+  let _legacy3D = null;
+  function _loadLegacy3D() {
+    if (window.KhipuGraph3D && window.TemporalHypergraph) return Promise.resolve();
+    if (_legacy3D) return _legacy3D;
+    const one = (src) => new Promise((ok, ko) => {
+      const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => ko(new Error(src));
+      document.head.appendChild(el);
+    });
+    _legacy3D = one('engine/graph3d.js').then(() => one('engine/hypergraph.js')).catch((e) => { _legacy3D = null; throw e; });
+    return _legacy3D;
+  }
   window._toggle3D = function() {
+    _loadLegacy3D().then(_toggle3DSafe, (e) => {
+      if (typeof toast === 'function') toast((typeof LANG !== 'undefined' && LANG === 'en' ? '⚠ Could not load the 3D: ' : '⚠ No se pudo cargar el 3D: ') + (e.message || e));
+    });
+  };
+  function _toggle3DSafe() {
     try {
       _toggle3DInner();
     } catch (e) {
       // si el 3D falla en ESTE dispositivo, el usuario debe saberlo — no
       // quedarse mirando una pantalla que "directamente no da" (feedback real)
       _is3D = false;
-      if (typeof toast === 'function') toast('⚠ El 3D no pudo iniciar: ' + (e.message || e));
+      if (typeof toast === 'function') toast((typeof LANG !== 'undefined' && LANG === 'en' ? '⚠ The 3D could not start: ' : '⚠ El 3D no pudo iniciar: ') + (e.message || e));
       console.error('[3D]', e);
     }
   };
@@ -8216,11 +8243,13 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
     }
     const hgAdd = document.getElementById('hg-add');
     if (hgAdd) {
-      hgAdd.addEventListener('click', function() {
+      hgAdd.addEventListener('click', async function() {
         const year = +(document.getElementById('hg-year')?.value || 2026);
-        const name = prompt('Nombre del evento hipervínculo:');
+        const KT = window.KhipuToast; if (!KT || !KT.prompt) return;
+        const en = (typeof LANG !== 'undefined' && LANG === 'en');
+        const name = await KT.prompt({ title: en ? 'New hyperedge event' : 'Nuevo evento hipervínculo', label: en ? 'Event name' : 'Nombre del evento' });
         if (!name) return;
-        const nodeIds = prompt('IDs de nodos afectados (separados por coma):');
+        const nodeIds = await KT.prompt({ title: name, label: en ? 'Affected node ids (comma-separated)' : 'IDs de nodos afectados (separados por coma)' });
         if (!nodeIds) return;
         if (_hypergraph) {
           _hypergraph.addEvent({ id: 'evt_' + Date.now(), name, year, nodes: nodeIds.split(',').map(s => s.trim()), type: 'custom' });
@@ -11180,9 +11209,8 @@ window.loadTradeFlows = loadTradeFlows;
     _tp.sending = true;                                        // también mientras el diálogo está abierto
     let go = false;
     try {
-      go = (KT && KT.confirmOrder) ? await KT.confirmOrder(ord)
-        : window.confirm(_tpL('¿Confirmas la orden? ', 'Confirm the order? ') + `${side.toUpperCase()} ${qty}× ${ticker} (${otype})` +
-            (_tp.paper === false ? _tpL(' — 🔴 DINERO REAL', ' — 🔴 REAL MONEY') : ''));
+      // dinero: SOLO el diálogo de Khipus; si no cargó, NO se envía (nunca window.confirm)
+      go = (KT && KT.confirmOrder) ? await KT.confirmOrder(ord) : false;
     } catch (e) { go = false; }
     if (!go) {
       _tp.sending = false; if (btn) btn.disabled = false;
@@ -11293,13 +11321,17 @@ window.loadTradeFlows = loadTradeFlows;
     if (_tp.chart) { _tp.chart.destroy(); _tp.chart = null; }
     document.getElementById('tp-chart-label').textContent = _tpt('chartIntra', { t: ticker });
     try {
-      // Use Yahoo Finance intraday via existing chart endpoint
-      const r = await fetch(`/api/chart/${ticker}?range=1d&interval=5m`);
+      // intradía de 5 min por /api/candles (Yahoo, forma Finnhub {s,c,t}). Limpieza 2026-10-11: llamaba a
+      // /api/chart/<t>, una ruta que no existe → el gráfico del panel de operaciones salía SIEMPRE vacío
+      const r = await fetch(`/api/candles/${encodeURIComponent(ticker)}?range=1d&interval=5m`);
       if (!r.ok) return;
       const data = await r.json();
-      const labels = (data.labels||data.timestamps||[]).map(t=>{ const d=new Date(t*1000); return d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(); });
-      const prices = data.closes || data.prices || [];
-      if (!prices.length) return;
+      const labels = (data.t||[]).map(t=>{ const d=new Date(t*1000); return d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes(); });
+      const prices = data.c || [];
+      if (data.s !== 'ok' || !prices.length) return;
+      const cs = getComputedStyle(document.body);
+      const tick = (cs.getPropertyValue('--ink-3') || cs.getPropertyValue('--ink-2') || '').trim() || 'rgba(229,226,225,0.4)';
+      const grid = (cs.getPropertyValue('--line') || '').trim() || 'rgba(255,255,255,0.04)';
       const color = prices[prices.length-1] >= prices[0] ? '#4ade80' : '#f87171';
       const ctx = canvas.getContext('2d');
       _tp.chart = new Chart(ctx, {
@@ -11311,8 +11343,8 @@ window.loadTradeFlows = loadTradeFlows;
             return g;
           }}] },
         options: { animation:false, responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-          scales:{ x:{ticks:{font:{size:9},maxRotation:0,color:'rgba(229,226,225,0.4)'},grid:{color:'rgba(255,255,255,0.04)'}},
-                   y:{ticks:{font:{size:9},color:'rgba(229,226,225,0.4)'},grid:{color:'rgba(255,255,255,0.04)'}} } }
+          scales:{ x:{ticks:{font:{size:9},maxRotation:0,color:tick},grid:{color:grid}},
+                   y:{ticks:{font:{size:9},color:tick},grid:{color:grid}} } }
       });
     } catch(e) {}
   }

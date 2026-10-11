@@ -23,12 +23,13 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 ## Depende de
 
 - [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`
+- [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **58 de 93** (línea 7882), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
+Se carga en [[app.html]] en la posición **56 de 91** (línea 7891), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 58)
+- [[app.html]] — lo carga con `<script>` (posición 56)
 - [[app.html]] — usa `KhipuSpend`
 
 ## Endpoints que llama
@@ -40,6 +41,7 @@ Se carga en [[app.html]] en la posición **58 de 93** (línea 7882), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_overnight_ui_small_panels.py]]
 
 ## Mencionado en sesiones de trabajo

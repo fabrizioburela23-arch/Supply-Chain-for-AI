@@ -1,4 +1,4 @@
-# Khipus Finance AI 🌐
+# Khipus Finance Intelligence 🌐
 
 **Terminal financiera inteligente para la cadena de suministro de la IA** — estilo Bloomberg sobre un grafo de conocimiento vivo estilo Palantir, con un analista de IA (Khipu) que habla, simula, opera (simulado) y propone.
 
@@ -82,9 +82,9 @@ VITE_API_TARGET=http://localhost:5050 npm run dev   # contra tu Flask local
 | `DATABASE_URL` | ontología bitemporal (Postgres) | opcional; Railway la inyecta |
 | `NEO4J_URI/USER/PASSWORD` | espejo del Grafo Temporal | opcional |
 | `ALPACA_KEY/SECRET/BASE` | bróker simulado (paper) | opcional |
-| `GEMINI_KEY`, `NVIDIA_KEY`, `AI_ORDER` | cascada multi-IA | opcional |
+| `GEMINI_KEY`, `NVIDIA_KEY`, `AI_ORDER_FAST`, `AI_ORDER_DEEP` | cascada multi-IA por nivel (rápido / profundo) | opcional |
 | `AV_KEY`, `FMP_KEY`, `MARKETSTACK_KEY` | datos financieros extra | opcional |
-| `MATRIX_ENGINE` | `dense` (default) / `sparse` | corte seguro vía `/api/matrix/parity` |
+| `MATRIX_ENGINE` | `sparse` (default desde 2026-10-11) / `dense` | `/api/matrix/parity` compara ambos sobre la base real |
 | `IMPORT_BULK_WEIGHT_FACTOR` | peso de datos importados en bulto | default 0.5 |
 
 Las keys viven **solo en el servidor** (SERVER_MODE): el navegador nunca las ve.
@@ -92,7 +92,7 @@ Las keys viven **solo en el servidor** (SERVER_MODE): el navegador nunca las ve.
 ## Tests
 
 ```bash
-pytest tests/ -q            # backend (~100 tests; los de ontología requieren DATABASE_URL)
+pytest tests/ -q            # backend (~1.700 tests; los de ontología requieren DATABASE_URL)
 cd frontend && npm test     # frontend React (185 tests, Vitest)
 ```
 

@@ -25,7 +25,7 @@ Universo 2D: respaldo TOTAL del mapa 3D sin WebGL.
 - [[app.html]] — usa `LANG`, `_diag`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `jumpTo`
 - [[nodes.nodes_seed.js]] — usa `CATS`, `CAT_TO_SECTOR`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **30 de 93** (línea 7803), después de [[engine.graph3d.js]] y antes de [[engine.hypergraph.js]].
+Se carga en [[app.html]] en la posición **30 de 91** (línea 7814), después de [[engine.mascot.js]] y antes de [[engine.resolve.js]].
 
 ## Lo usan
 

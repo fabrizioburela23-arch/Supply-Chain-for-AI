@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_chat_portfolio_agent.py"
 lenguaje: "python"
-lineas: 139
+lineas: 141
 aliases: ["tests/test_chat_portfolio_agent.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_chat_portfolio_agent.py
 
-> Prueba · capa [[Capa Pruebas]] · 139 líneas · `tests/test_chat_portfolio_agent.py`
+> Prueba · capa [[Capa Pruebas]] · 141 líneas · `tests/test_chat_portfolio_agent.py`
 
 ## Qué prueba
 
@@ -22,6 +22,7 @@ El comité de cartera DENTRO del chat (2026-10-05: "/cartera dime si debería re
 
 - [[core.khipu_chat.py]]
 - [[core.portfolio_advisor.py]]
+- [[engine.agents_registry.js]]
 - [[engine.khipu_chat.js]]
 - [[research.committee_api.py]]
 - [[server.py]]

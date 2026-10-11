@@ -126,7 +126,7 @@ def test_legacy_dark_vacia_y_mecanismo_conservado():
     assert m and m.group(1).strip() == ''
     assert "body.classList.toggle('kd-legacy-dark', LEGACY_DARK.indexOf(kind) >= 0)" in SRC
     # el bloque de tokens oscuros para .kd-legacy-dark sigue existiendo (desktop.js lo usa como isla de respaldo)
-    assert 'body.dark #bcp-ov,body.dark .kos-themed,body #bcp-ov.kos-classic,#bcp-ov .kd-legacy-dark{' in SRC
+    assert 'body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{' in SRC
 
 
 def test_css_de_escenas_sin_oscuros_fijos():
@@ -230,7 +230,8 @@ def test_mascotas_donde_habla_un_agente():
     agents = dict(re.findall(r"(\w+): '(\w+)'", m.group(1)))
     assert agents == {'thesis': 'comite', 'sector': 'analista', 'competitors': 'analista', 'geopolitics': 'radar',
                       'chokepoints': 'cadena', 'risks': 'tecnico', 'watch': 'radar'}
-    assert "_stackHTML(['analista', 'radar', 'cadena', 'comite'], 26)" in _func(SRC, 'stageResearch')
+    # limpieza 2026-10-11: la Tesis rápida es UNA respuesta de IA → la cabecera es Khipu, no el equipo de analistas
+    assert "_mascot('khipu', 30)" in _func(SRC, 'stageResearch') and 'sin evidencia citada' in _func(SRC, 'stageResearch')
     assert "_mascot('khipu', 22" in _func(SRC, '_khipuSays')
     assert '_khipuSays(' in _func(SRC, '_fetchPortfolioComment') and '_khipuSays(' in _func(SRC, '_renderAdvice')
     assert "_mascot('khipu', 22)" in _func(SRC, 'stageBroker')            # botón «Consejos de Khipu»
@@ -295,7 +296,7 @@ API = {
     '/api/deep/analyze': {'ok': True},
     '/api/deep/status': {'running': False, 'steps': [{'paso': 'Planear', 'detalle': 'qué mirar'}],
                          'result': {'answer': 'Respuesta.', 'sim': {'afectadas': 3, 'shock': 'TSMC'}, 'focos': ['TSMC'], 'model': 'x'}},
-    '/api/research/deep': {'thesis': 'Tesis.', 'sector': 'Sector.', 'competitors': ['AMD'], 'geopolitics': 'Geo.',
+    '/api/thesis/quick': {'thesis': 'Tesis.', 'sector': 'Sector.', 'competitors': ['AMD'], 'geopolitics': 'Geo.',
                            'chokepoints': ['CoWoS'], 'risks': ['China'], 'watch': ['HBM'], 'disclaimer': 'No es asesoría.'},
     '/api/sim/agents': {'ok': True, 'narrative': 'Narrativa.', 'theme': 'HBM', 'summary': {'n_hit': 2, 'n_benefit': 1, 'sectors': ['a']},
                         'impacts': [{'id': 'AMD', 'label': 'AMD', 'pct': -9, 'channel': 'direct'}, {'id': 'TSMC', 'label': 'TSMC', 'pct': 4}],

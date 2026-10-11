@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Investigación"
 ruta: "research/context.py"
 lenguaje: "python"
-lineas: 562
+lineas: 572
 aliases: ["research/context.py"]
 tags: ["capa/investigacion", "tipo/modulo"]
 ---
 
 # research/context.py
 
-> Módulo · capa [[Capa Investigación]] · 562 líneas · `research/context.py`
+> Módulo · capa [[Capa Investigación]] · 572 líneas · `research/context.py`
 
 ## Para qué sirve
 
@@ -18,9 +18,9 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 
 ## API pública
 
-- `price_indicators(series)` — Indicadores deterministas (sin IA) para el TechnicalAgent. _(línea 126)_
-- clase `ContextBuilder` _(línea 188)_
-- `render_context(ctx)` — Texto para el prompt. El contenido externo va dentro de &lt;data>…&lt;/data>. _(línea 532)_
+- `price_indicators(series)` — Indicadores deterministas (sin IA) para el TechnicalAgent. _(línea 129)_
+- clase `ContextBuilder` _(línea 191)_
+- `render_context(ctx)` — Texto para el prompt. El contenido externo va dentro de &lt;data>…&lt;/data>. _(línea 542)_
 
 **Internas** (empiezan con `_`): `_now`, `_clean`, `_fetch_profile`, `_fetch_financials`, `_fetch_news`, `_fetch_company_news`, `_fetch_candles`, `_fetch_web`, `_fetch_sec_filings`, `_fetch_sec_sections`, `_fetch_mcap`, `_reliability_for_url`, `_fmt_series`, `_entity_ids_for`
 
@@ -34,6 +34,7 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 - [[core.sec.py]] — importa `filing_sections`, `latest_filings`
 - [[core.websearch.py]] — importa `web_search`
 - [[ontology.provenance.py]] — importa `guess_kind`, `source_trust`
+- [[ontology.vocabulary.py]] — importa `flow_relation_types`
 - [[research.analytics.py]] — importa `fundamental_ratios`, `peer_table`, `technical_indicators`
 - [[research.models.py]] — importa `ResearchClaim`
 
@@ -42,10 +43,11 @@ ContextBuilder: NO se manda el grafo entero al LLM.
 - [[core.agents_api.py]] — lo importa
 - [[research.agent_skills.py]] — lo importa
 - [[research.agents.base.py]] — lo importa
+- [[research.agents.registry.py]] — lo importa
 - [[research.outcomes.py]] — lo importa
 - [[research.runner.py]] — lo importa
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -55,6 +57,7 @@ _Además lo importan 4 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_ask_agent.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_khipus_os_server.py]]
 - [[tests.test_repair_committee.py]]
 - [[tests.test_research.py]]

@@ -32,7 +32,7 @@ _LOCK = threading.Lock()
 _CACHE = {'data': None, 'mtime': None}
 _UNKNOWN = {'object_type': {}, 'relation_type': {}}
 
-# Valores históricos EXACTOS (matrix/engine.py antes del registro). Solo se usan
+# Copia de vocabulary.json (tests/test_cleanup_server.py exige que coincidan). Solo se usa
 # si vocabulary.json no se puede leer — así el motor nunca queda sin vocabulario.
 _FALLBACK = {
     'object_types': {
@@ -46,7 +46,7 @@ _FALLBACK = {
         'supply': {'weight': 1.0, 'symmetric': False, 'structural': True, 'flow': True},
         'fab': {'weight': 1.0, 'symmetric': False, 'structural': True, 'flow': True},
         'cloud': {'weight': 0.9, 'symmetric': False, 'structural': True, 'flow': True},
-        'license': {'weight': 0.8, 'symmetric': False, 'structural': True, 'flow': True},
+        'license': {'weight': 0.5, 'symmetric': False, 'structural': True, 'flow': True},   # = json desde 2026-10-06
         'ppa': {'weight': 0.7, 'symmetric': False, 'structural': True, 'flow': True},
         'owns': {'weight': 0.6, 'symmetric': False, 'structural': True, 'flow': True},
         'deploy': {'weight': 0.4, 'symmetric': False, 'structural': True, 'flow': True},

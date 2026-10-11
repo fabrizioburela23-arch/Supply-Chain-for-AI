@@ -222,6 +222,7 @@ global.fetch = (url) => {
   else if (url.includes('/api/options/chain/')) b = CHAIN;
   return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(b) });
 };
+require(ROOT + '/engine/agents_registry.js');
 require(ROOT + '/engine/mascot.js');
 require(ROOT + '/engine/portfolios.js');
 require(ROOT + '/engine/riskreport.js');

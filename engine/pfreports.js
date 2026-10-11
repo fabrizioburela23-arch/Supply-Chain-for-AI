@@ -119,7 +119,7 @@
       (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
   }
   function day(iso) { var d = new Date(iso); return isNaN(d) ? (iso || '') : d.toLocaleDateString(isEn() ? 'en' : 'es', { day: '2-digit', month: 'short', year: 'numeric' }); }
-  function actor() { var a = null; try { a = localStorage.getItem('khipu_actor'); } catch (e) {} return (a && a.trim()) || 'usuario'; }
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }   // EL ayudante único (engine/toast.js)
   function owner() {
     var k = null;
     try { k = localStorage.getItem('kh_owner_key'); } catch (e) {}

@@ -13,7 +13,7 @@ pyjwt>=2.8.0
 numpy>=1.26.0
 # Motor de matrices DISPERSAS (escala a decenas de miles de nodos) + centralidad
 # PageRank/radio espectral (scipy.sparse / scipy.sparse.linalg). Sin scipy el
-# motor sigue en modo denso (MATRIX_ENGINE=dense, default) — scipy solo se
+# motor cae al modo denso (el disperso es el default desde 2026-10-11) — scipy solo se
 # necesita para el modo disperso; pero se fija como dependencia porque el módulo
 # lo importa. Ver spec_matrices_dispersas_centralidad.
 scipy>=1.11.0

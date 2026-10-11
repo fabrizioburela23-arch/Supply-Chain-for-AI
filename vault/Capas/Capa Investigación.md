@@ -9,17 +9,17 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 4.979 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 4.994 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[research.runner.py]] — 1.021 líneas · ejecución de un ResearchJob (vertical slice → general).
-- [[engine.research.js]] — 583 líneas · PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
-- [[research.context.py]] — 562 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
-- [[research.models.py]] — 382 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
-- [[research.api.py]] — 322 líneas · blueprint /api/research/\* (Phase 2).
+- [[research.runner.py]] — 994 líneas · ejecución de un ResearchJob (vertical slice → general).
+- [[engine.research.js]] — 591 líneas · PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
+- [[research.context.py]] — 572 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
+- [[research.models.py]] — 401 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
+- [[research.api.py]] — 324 líneas · blueprint /api/research/\* (Phase 2).
 - [[research.llm.py]] — 301 líneas · abstracción de proveedor de modelos (no acoplada a nadie).
-- [[research.analytics.py]] — 265 líneas · ANÁLISIS CUANTITATIVO determinista para los agentes.
+- [[research.analytics.py]] — 266 líneas · ANÁLISIS CUANTITATIVO determinista para los agentes.
 - [[research.health.py]] — 202 líneas · "¿puedo investigar ahora?" en UNA foto (R6, misión de reparación).
 - [[research.falsifiers.py]] — 184 líneas · falsadores ESTRUCTURADOS y verificables (C8, misión de reparación 2026-10-04).
 - [[core.sec.py]] — 143 líneas · SEC EDGAR como EVIDENCIA PRIMARIA (Phase 2).
@@ -29,7 +29,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 - [[research.router.py]] — 133 líneas · evento → relevancia → agentes (Phase 2 event-driven).
 - [[research.auto_events.py]] — 129 líneas · eventos AUTOMÁTICOS del mercado real (Phase 2).
 - [[research.confidence.py]] — 111 líneas · confianza de una claim (metodología conf-v2).
-- [[research.agents.registry.py]] — 75 líneas · los 8 agentes de Phase 2.
+- [[research.agents.registry.py]] — 77 líneas · los 8 agentes de Phase 2.
 - [[research.errors.py]] — 75 líneas · traduce errores técnicos de la IA a lenguaje simple.
 - [[core.websearch.py]] — 37 líneas · búsqueda web real para investigación autónoma.
 - [[research.__init__.py]] — 25 líneas · PHASE 2 · AGENT RESEARCH SWARM.
@@ -39,16 +39,16 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 19 |
+| usa a | [[Capa Infraestructura]] | 20 |
 | la usa | [[Capa Comité]] | 15 |
-| usa a | [[Capa Ontología y grafo temporal]] | 14 |
+| usa a | [[Capa Ontología y grafo temporal]] | 15 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | la usa | [[Capa Infraestructura]] | 6 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 4 |
 | la usa | [[Capa Ontología y grafo temporal]] | 4 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 3 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
 | la usa | [[Capa MCP y API]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 3 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |

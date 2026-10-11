@@ -186,7 +186,7 @@ def test_endpoint_fixes_pie_with_many_slices(client, monkeypatch):
         data = [{'label': f'Sector {i}', 'value': 10 + i} for i in range(9)]
         return json.dumps({'type': 'pie', 'title': 'Cap por sector', 'data': data, 'config': {'unit': '$B'}}), 'fake-model'
 
-    monkeypatch.setattr(client, '_claude_complete', fake)
+    monkeypatch.setattr(client, '_ai_complete', fake)
     body = {'query': 'capitalización por sector (test pie)', 'hints': {'intent': 'composition', 'metrics': ['mktcap'], 'group_by': ['sector']},
             'context': {'nodes': [{'id': 'Nvidia', 'label': 'Nvidia', 'mktcap_b': 3200, 'nrs': 37}]}}
     r = client.app.test_client().post('/api/canvas/generate', json=body)
@@ -201,7 +201,7 @@ def test_endpoint_fixes_pie_with_many_slices(client, monkeypatch):
 
 
 def test_endpoint_rejects_undrawable_spec(client, monkeypatch):
-    monkeypatch.setattr(client, '_claude_complete',
+    monkeypatch.setattr(client, '_ai_complete',
                         lambda *a, **k: (json.dumps({'type': 'bar', 'data': [{'label': 'x', 'value': 'n/a'}]}), 'fake'))
     r = client.app.test_client().post('/api/canvas/generate', json={'query': 'algo indibujable (test)', 'context': {}})
     assert r.status_code == 502
@@ -215,7 +215,7 @@ def test_endpoint_includes_hinted_entities_in_context(client, monkeypatch):
         seen['prompt'] = prompt
         return json.dumps({'type': 'kpi', 'data': [{'label': 'Margen', 'value': 62, 'unit': '%'}]}), 'fake'
 
-    monkeypatch.setattr(client, '_claude_complete', fake)
+    monkeypatch.setattr(client, '_ai_complete', fake)
     nodes = [{'id': f'N{i}', 'label': f'Empresa {i}', 'nrs': i} for i in range(200)]
     nodes.append({'id': 'ZZTarget', 'label': 'Zeta Objetivo', 'margin': 0.62})
     body = {'query': 'margen de la zeta (test)', 'hints': {'intent': 'single_metric', 'metrics': ['margin'],

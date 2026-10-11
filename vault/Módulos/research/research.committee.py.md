@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "research/committee.py"
 lenguaje: "python"
-lineas: 2214
+lineas: 2215
 aliases: ["research/committee.py"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # research/committee.py
 
-> Módulo · capa [[Capa Comité]] · 2.214 líneas · `research/committee.py`
+> Módulo · capa [[Capa Comité]] · 2.215 líneas · `research/committee.py`
 
 ## Para qué sirve
 
@@ -41,23 +41,23 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - `progress_get(memo_id)` _(línea 946)_
 - `progress_clear(memo_id)` _(línea 959)_
 - `run_committee(session, entity_id, requested_by, client_id=…, provider=…, deps=…, memo_id=…)` — Corre el comité completo y persiste el memo. Devuelve el memo (dict). _(línea 964)_
-- `memo_dict(m, redact_client=…)` _(línea 1635)_
-- `falsified_in_memo(session, m)` — C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable). _(línea 1678)_
-- `get_memo(session, memo_id, redact_client=…)` _(línea 1692)_
-- `latest_memo(session, entity_id, redact_client=…)` _(línea 1700)_
-- `list_memos(session, entity_id=…, limit=…)` _(línea 1708)_
-- `approve_memo(session, memo_id, actor, note=…, brokerage=…)` — Aprobación HUMANA (la ruta exige PIN). Con cliente y decisión accionable crea una PREVISUALIZACIÓN de orden en brokerage … _(línea 1751)_
-- `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — Rechazo humano. Si el memo ya tenía una orden esperando aprobación en Clientes, se RETIRA (brokerage.reject_preview) — si no, un humano … _(línea 1856)_
-- `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 1904)_
-- `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 1918)_
-- `fail_memo(session, memo_id, error, error_en=…)` _(línea 1939)_
-- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 1948)_
-- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 1977)_
-- `release_run_slot()` _(línea 1982)_
-- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 1989)_
-- `invalidate_board_cache()` _(línea 2033)_
-- `board(session, limit=…)` _(línea 2063)_
-- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2174)_
+- `memo_dict(m, redact_client=…)` _(línea 1636)_
+- `falsified_in_memo(session, m)` — C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable). _(línea 1679)_
+- `get_memo(session, memo_id, redact_client=…)` _(línea 1693)_
+- `latest_memo(session, entity_id, redact_client=…)` _(línea 1701)_
+- `list_memos(session, entity_id=…, limit=…)` _(línea 1709)_
+- `approve_memo(session, memo_id, actor, note=…, brokerage=…)` — Aprobación HUMANA (la ruta exige PIN). Con cliente y decisión accionable crea una PREVISUALIZACIÓN de orden en brokerage … _(línea 1752)_
+- `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — Rechazo humano. Si el memo ya tenía una orden esperando aprobación en Clientes, se RETIRA (brokerage.reject_preview) — si no, un humano … _(línea 1857)_
+- `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 1905)_
+- `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 1919)_
+- `fail_memo(session, memo_id, error, error_en=…)` _(línea 1940)_
+- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 1949)_
+- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 1978)_
+- `release_run_slot()` _(línea 1983)_
+- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 1990)_
+- `invalidate_board_cache()` _(línea 2034)_
+- `board(session, limit=…)` _(línea 2064)_
+- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2175)_
 
 **Internas** (empiezan con `_`): `_now`, `_ttl_hours`, `_frac`, `_usd_or_none`, `_decide_core`, `_downgrade_reason`, `_schema_hint`, `_money_check`, `_default_risk`, `_default_live`, `_bounded`, `_daily_used`, `_same_symbol`, `_client_context`, `_fmt_pct`, `_audit`, `_resolve_entity`, `_dominant_horizon`, `_run_committee`, `_ai_ready`, `_entity_node`, `_entity_listed`, `_unlisted_tech_lines`, `_room_names`, `_mascot_voice`, `_research_request_lines`, `_auto_research`, `_seat_run`, `_run_debate`, `_src_dict`, `_evidence_rows`, `_top_evidence`, `_chair`, `_scrub`, `_redact_audit`, `_client_mode`, `_lock_memo`, `_err`, `_preview_error`, `_max_concurrent`, `_board_fingerprint`, `_board_uncached`, `_prefer_canonical`, `_entity_ids_for`
 
@@ -76,7 +76,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - [[research.errors.py]] — importa `friendly`
 - [[research.falsifiers.py]] — importa `FalsifierRule`, `direction_errors`
 - [[research.llm.py]] — importa `LLMError`, `RoutedProvider`, `estimate_cost`, `route_for`
-- [[research.models.py]] — importa `AgentRun`, `ClaimRelation`, `CommitteeMemo`, `DECISIONS`, `HORIZONS`, `ResearchClaim`, `ResearchEvidence`
+- [[research.models.py]] — importa `AgentRun`, `ClaimRelation`, `CommitteeMemo`, `DECISIONS`, `HORIZONS`, `ResearchClaim`, `ResearchEvidence`, `errors_of`
 - [[research.outcomes.py]] — importa `MIN_N`, `agent_reliability`, `calibrated_confidence`, `calibration_table`, `is_us_listing`, `symbol_for`
 - [[research.runner.py]] — importa `_cfg`, `create_job`, `execute_job`, `spent_today`
 
@@ -92,7 +92,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - herramienta MCP `get_conclusions_board` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 9 pruebas (lista abajo)._
+_Además lo importan 10 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -102,6 +102,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_brokerage.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]

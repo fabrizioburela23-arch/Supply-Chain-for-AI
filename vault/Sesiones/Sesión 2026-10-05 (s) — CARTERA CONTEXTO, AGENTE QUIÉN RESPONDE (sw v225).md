@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L422"
+ruta: "docs/ESTADO.md#L471"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (s) — CARTERA = CONTEXTO, AGENTE = QUIÉN RESPONDE (sw v225)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 422 (12 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 471 (12 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

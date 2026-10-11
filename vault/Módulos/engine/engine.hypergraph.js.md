@@ -24,15 +24,14 @@ Hipergrafos temporales agénticos para Khipu Finance Una hiper-arista conecta M�
 
 - [[app.html]] — usa `DataLayer`, `NODE_BY_ID`, `getCatColorHex`
 
-Se carga en [[app.html]] en la posición **31 de 93** (línea 7804), después de [[engine.universe2d.js]] y antes de [[engine.resolve.js]].
-
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 31)
 - [[app.html]] — usa `TemporalHypergraph`
+- [[app.html]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_client.py]]
 - [[tests.test_server_smoke.py]]
 
 ## Mencionado en sesiones de trabajo

@@ -491,7 +491,8 @@ def _nrs(nid, node):
             with session_scope() as s:
                 obj = s.get(ObjectRecord, nid)
                 if obj is not None:
-                    return {'value': _compute_server_nrs(s, obj), 'method': 'server (ontology links, margin clamped)',
+                    return {'value': _compute_server_nrs(s, obj),
+                            'method': 'server (same formula as the app computeNRS; structural degree from ontology links)',
                             'explain': expl}
         except Exception as e:  # noqa: BLE001
             log.info('mcp nrs server: %s', type(e).__name__)
@@ -999,7 +1000,7 @@ def _job_coverage(session, job):
 def t_get_research_job(ctx, job_id):
     _need_db('get_research_job')
     from ontology.db import session_scope
-    from research.models import AgentRun, ResearchClaim, ResearchJob
+    from research.models import AgentRun, ResearchClaim, ResearchJob, errors_of, open_questions_of
     with session_scope() as s:
         j = s.get(ResearchJob, str(job_id)[:40])
         if not j:
@@ -1018,7 +1019,8 @@ def t_get_research_job(ctx, job_id):
                 'coverage': cov,
                 'synthesis': j.synthesis, 'claims_produced': n_claims,
                 'runs': [{'agent_type': x.agent_type, 'status': x.status, 'model': x.model,
-                          'claims_generated': x.claims_generated, 'errors': x.errors,
+                          'claims_generated': x.claims_generated, 'errors': errors_of(x),
+                          'open_questions': open_questions_of(x),
                           'latency_ms': x.latency_ms} for x in runs],
                 'next': ('call get_research(entity) to read the claims' if j.status == 'done' else
                          ('coverage incomplete (missing ' + ', '.join((cov or {}).get('missing') or []) +

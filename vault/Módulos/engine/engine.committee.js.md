@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "engine/committee.js"
 lenguaje: "javascript"
-lineas: 1252
+lineas: 1239
 aliases: ["engine/committee.js"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # engine/committee.js
 
-> Módulo · capa [[Capa Comité]] · 1.252 líneas · `engine/committee.js`
+> Módulo · capa [[Capa Comité]] · 1.239 líneas · `engine/committee.js`
 
 ## Para qué sirve
 
@@ -29,13 +29,13 @@ PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolioCommittee`
 - [[engine.pickers.js]] — usa `KhipuPick`
 - [[engine.research.js]] — usa `KhipuResearch`
-- [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **57 de 93** (línea 7881), después de [[engine.pickers.js]] y antes de [[engine.aispend.js]].
+Se carga en [[app.html]] en la posición **55 de 91** (línea 7890), después de [[engine.pickers.js]] y antes de [[engine.aispend.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 57)
+- [[app.html]] — lo carga con `<script>` (posición 55)
 - [[app.html]] — usa `KhipuCommittee`
 - [[engine.brief.js]] — usa `KhipuCommittee`
 - [[engine.cockpit.js]] — usa `KhipuCommittee`
@@ -65,10 +65,13 @@ Se carga en [[app.html]] en la posición **57 de 93** (línea 7881), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_agents_registry.py]]
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_committee_os_ui.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)]]
 - [[Sesión 2026-10-03 (f) — PANEL DE TRADING BILINGÜE Y MÓVIL + APROBACIÓN DEL COMITÉ CON]]
 - [[Sesión 2026-10-03 — GASTO DE IA, SIM. ESTRUCTURAL, AVATARES, CANVAS, COMITÉ DE CARTERA]]

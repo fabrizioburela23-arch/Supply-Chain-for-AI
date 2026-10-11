@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/mascot.js"
 lenguaje: "javascript"
-lineas: 143
+lineas: 136
 aliases: ["engine/mascot.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/mascot.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 143 líneas · `engine/mascot.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 136 líneas · `engine/mascot.js`
 
 ## Para qué sirve
 
@@ -24,11 +24,11 @@ MASCOTAS BURBUJA de Khipus OS (2026-10-06)
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **28 de 93** (línea 7801), después de [[engine.toast.js]] y antes de [[engine.graph3d.js]].
+Se carga en [[app.html]] en la posición **29 de 91** (línea 7813), después de [[engine.agents_registry.js]] y antes de [[engine.universe2d.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 28)
+- [[app.html]] — lo carga con `<script>` (posición 29)
 - [[engine.brief.js]] — usa `KhipuMascot`
 - [[engine.clients.js]] — usa `KhipuMascot`
 - [[engine.cockpit.js]] — usa `KhipuAgentPrefs`, `KhipuMascot`
@@ -46,7 +46,8 @@ Se carga en [[app.html]] en la posición **28 de 93** (línea 7801), después de
 
 ## Pruebas que lo cubren
 
-- [[tests.test_committee_os_narr.py]]
+- [[tests.test_agents_registry.py]]
+- [[tests.test_cleanup_modules_theme_i18n.py]]
 - [[tests.test_committee_os_ui.py]]
 - [[tests.test_khipus_os_chat.py]]
 - [[tests.test_khipus_os_integration.py]]
@@ -62,4 +63,5 @@ Se carga en [[app.html]] en la posición **28 de 93** (línea 7801), después de
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)]]

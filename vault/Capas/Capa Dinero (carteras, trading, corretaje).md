@@ -9,14 +9,14 @@ tags: ["capa/dinero", "tipo/capa"]
 
 > Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana.
 
-**13 archivos · 7.697 líneas.** Volver al [[00 Mapa de Khipus]].
+**13 archivos · 7.754 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[brokerage.service.py]] — 1.504 líneas · lógica del corretaje multi-cliente (CONTRATO COMPARTIDO).
-- [[engine.portfolios.js]] — 1.360 líneas · 🧪 CARTERAS SIMULADAS (paper trading local)
-- [[core.portfolio_ai.py]] — 1.277 líneas · ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
-- [[engine.clients.js]] — 998 líneas · 👥 CLIENTES E INVERSIÓN (corretaje multi-cliente vía Alpaca).
+- [[engine.portfolios.js]] — 1.369 líneas · 🧪 CARTERAS SIMULADAS (paper trading local)
+- [[core.portfolio_ai.py]] — 1.263 líneas · ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
+- [[engine.clients.js]] — 1.060 líneas · 👥 CLIENTES E INVERSIÓN (corretaje multi-cliente vía Alpaca).
 - [[core.portfolio_reports_api.py]] — 468 líneas · /api/portfolio-report/\* y /api/news/portfolio.
 - [[brokerage.risk.py]] — 439 líneas · controles de riesgo PRE-orden por cliente.
 - [[engine.pfreports.js]] — 414 líneas · 📄 REPORTES · 📰 NOTICIAS · 💬 PREGÚNTALE A TU CARTERA (secciones de Comité → 💼 Mi cartera; las monta engine/pfcommittee.js)
@@ -33,7 +33,7 @@ tags: ["capa/dinero", "tipo/capa"]
 |---|---|---|
 | usa a | [[Capa Infraestructura]] | 11 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 11 |
-| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
+| usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 8 |
 | la usa | [[Capa Comité]] | 7 |
 | la usa | [[Capa Infraestructura]] | 7 |
 | usa a | [[Capa Ontología y grafo temporal]] | 7 |

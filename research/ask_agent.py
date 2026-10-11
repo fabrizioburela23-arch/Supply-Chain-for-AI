@@ -32,18 +32,9 @@ MAX_SEATS_ALL = 4
 ALL_DEFAULT = ('fundamental', 'supply_chain', 'technical', 'news')   # @todos sin conclusiones previas
 ASK_TOKENS = 700
 
-# palabra (sin acentos, minúsculas) → puesto
-SEAT_WORDS = {
-    'fundamental': 'fundamental', 'fundamentales': 'fundamental', 'financiero': 'fundamental', 'financiera': 'fundamental',
-    'balance': 'fundamental', 'contable': 'fundamental',
-    'tecnico': 'technical', 'tecnica': 'technical', 'technical': 'technical', 'grafico': 'technical', 'chartista': 'technical',
-    'noticias': 'news', 'news': 'news', 'prensa': 'news', 'periodista': 'news',
-    'cadena': 'supply_chain', 'suministro': 'supply_chain', 'supply': 'supply_chain', 'supply_chain': 'supply_chain', 'proveedores': 'supply_chain',
-    'geopolitico': 'geopolitical', 'geopolitica': 'geopolitical', 'geopolitical': 'geopolitical', 'geo': 'geopolitical',
-    'macro': 'macro', 'macroeconomico': 'macro', 'economista': 'macro',
-    'cripto': 'crypto', 'crypto': 'crypto',
-    'todos': 'all', 'todas': 'all', 'all': 'all', 'comite': 'all', 'committee': 'all', 'analistas': 'all', 'everyone': 'all',
-}
+# palabra (sin acentos, minúsculas) → puesto: registro ÚNICO engine/agents_registry.js (limpieza
+# 2026-10-11; ahora también entiende las mascotas @analista/@radar/@chain, antes solo el navegador)
+from core.agents_registry import GENERIC_WORDS, SEAT_WORDS  # noqa: E402
 _MENTION_RX = re.compile(r'^\s*@\s*([a-záéíóúñ_]+(?:\s+(?:de|del)\s+[a-záéíóúñ_]+)?)\s*[:,]?\s*(.*)$', re.I | re.S)
 _ASK_RX = re.compile(r'^\s*(?:pregunta(?:le)?|preguntale|pregúntale|consulta(?:le)?|ask)\s+(?:al?|a la|the|to the)?\s*'
                      r'(?:analista|agente|analyst|agent|puesto|seat)?\s*(?:de\s+|del\s+|of\s+)?([a-záéíóúñ_ ]{3,30}?)\s*[:,]\s*(.+)$',
@@ -57,10 +48,15 @@ def _fold(s):
 
 
 def seat_from_words(txt):
+    """Primera palabra que nombra un puesto; "analista"/"analyst" solo si no hay otra
+    ("@analista de cadena" → supply_chain; "@analista" solo → fundamental)."""
+    generic = None
     for w in _fold(txt).replace('_', ' ').split():
         if w in SEAT_WORDS:
-            return SEAT_WORDS[w]
-    return None
+            if w not in GENERIC_WORDS:
+                return SEAT_WORDS[w]
+            generic = generic or SEAT_WORDS[w]
+    return generic
 
 
 def parse_mention(message):

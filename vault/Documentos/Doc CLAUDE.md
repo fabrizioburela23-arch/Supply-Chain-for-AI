@@ -3,18 +3,18 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 596
+lineas: 622
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 596 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 622 líneas · `CLAUDE.md`
 
 ## De qué trata
 
-Khipus AI Finance Inteligence — CLAUDE.md — Terminal financiero (estilo Bloomberg + ontología estilo Palantir) para la cadena de suministro de IA + capas macro. 949 nodos cliente / 1.037 objetos económicos en la ontología, 2.500+ relaciones (dirección ÚNICA: source PROVEE a target; 9 tipos de relación; 13 macro-sectores en SECTORS9 — expansión multicapa 2026-08-02: energía, materiales, macro_credito, inmobiliario, logistica). ~70 Factores sistémicos LATENTES (severity 1.0) con `severity_crisis` en props — se disparan como what-if vía …
+Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomberg + ontología estilo Palantir) para la cadena de suministro de IA + capas macro. 937 nodos en el catálogo (la base de producción tiene 1.294 objetos), 2.510 relaciones (dirección ÚNICA: source PROVEE a target; 9 tipos de relación; 13 macro-sectores en SECTORS9 — expansión multicapa 2026-08-02: energía, materiales, macro_credito, inmobiliario, logistica). ~70 Factores sistémicos LATENTES (severity 1.0) con `severity_crisis` en props — se disparan como what-if …
 
 ## Menciona
 
@@ -23,6 +23,7 @@ Khipus AI Finance Inteligence — CLAUDE.md — Terminal financiero (estilo Bloo
 - [[brokerage.risk.py]]
 - [[brokerage.service.py]]
 - [[core.agents_api.py]]
+- [[core.agents_registry.py]]
 - [[core.ai.py]]
 - [[core.ai_usage.py]]
 - [[core.company_data.py]]
@@ -61,6 +62,7 @@ Khipus AI Finance Inteligence — CLAUDE.md — Terminal financiero (estilo Bloo
 - [[Doc MCP]]
 - [[Doc PHASE3]]
 - [[Doc REPARACION_DIAGNOSTICO]]
+- [[engine.agents_registry.js]]
 - [[engine.aispend.js]]
 - [[engine.brief.js]]
 - [[engine.canvas-data.js]]
@@ -72,7 +74,6 @@ Khipus AI Finance Inteligence — CLAUDE.md — Terminal financiero (estilo Bloo
 - [[engine.desktop.js]]
 - [[engine.explain.js]]
 - [[engine.geo_coords.js]]
-- [[engine.geosituation.js]]
 - [[engine.globe.js]]
 - [[engine.graph3d.js]]
 - [[engine.guide.js]]
@@ -134,6 +135,7 @@ Khipus AI Finance Inteligence — CLAUDE.md — Terminal financiero (estilo Bloo
 - [[research.falsifiers.py]]
 - [[research.health.py]]
 - [[research.llm.py]]
+- [[research.models.py]]
 - [[research.outcomes.py]]
 - [[research.runner.py]]
 - [[scripts.audit_graph.py]]
@@ -146,11 +148,17 @@ Khipus AI Finance Inteligence — CLAUDE.md — Terminal financiero (estilo Bloo
 - [[server.py]]
 - [[sim.scenario_builder.js]]
 - [[sw.js]]
+- [[tests.test_agents_registry.py]]
+- [[tests.test_cleanup_client.py]]
+- [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_cleanup_nrs_parity.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_vault.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]
 - [[Sesión 2026-10-03 (g) — SINCRONIZACIÓN ENTRE DISPOSITIVOS (sw v184)]]
 - [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]]

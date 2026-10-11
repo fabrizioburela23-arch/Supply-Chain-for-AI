@@ -10,13 +10,13 @@ que solo tú puedes hacer (acceso a Railway / ElevenLabs). Aquí está todo.
 ### Ya configuradas ✅
 `ANTHROPIC_KEY`, `ELEVENLABS_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_ALLOW_OVERRIDE`,
 `FINNHUB_KEY`, `FMP_KEY`, `MARKETSTACK_KEY`, `AV_KEY`, `ALPACA_KEY`, `ALPACA_SECRET`,
-`ALPACA_BASE`, `AI_MODEL`, `GEMINI_KEY`.
+`ALPACA_BASE`, `GEMINI_KEY` (`AI_MODEL` ya no se usa: borrarla).
 
 ### Recomendadas
 | Variable | Valor | Por qué |
 |---|---|---|
 | `SECRET_KEY` | (aleatorio fuerte) | El server avisa que está en default — necesario para JWT/seguridad. |
-| `AI_ORDER` | `claude,gemini,nvidia` | Orden de fallback de IA. Claude primero (mejor calidad). |
+| `AI_ORDER_FAST` / `AI_ORDER_DEEP` | (vacías) | Orden de proveedores por nivel. Sin ellas: rápido = gemini,claude,nvidia; profundo = claude,gemini,nvidia. `AI_ORDER` (vieja) solo afecta al rápido: mejor borrarla. |
 | `RAG_URL` | (URL del servicio RAG, ver §2) | Enciende el Second Brain (búsqueda semántica). |
 
 ### Opcionales

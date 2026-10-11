@@ -4,9 +4,15 @@
 //   3. Tesis (catalizadores + riesgos + IA)  4. Simulación (presets de escenario)
 //   5. Red (betweenness + cascada + desglose NRS)
 //
-// Depende de app.html: NODE_BY_ID, NODE_META, MKT, Keys, DataLayer, computeNRS,
+// Depende de app.html: NODE_BY_ID, NODE_META, MKT, quotePx, DataLayer, computeNRS, NRS_FLOW_TYPES,
 //   getBetweenness, computeDownstream, LINKS, NODES, lid, esc, fmtN, fmtPct,
 //   relTime, sentiment, nf, today, catColor/getCatColorHex, BASE
+
+// Bilingüe (limpieza 2026-10-11: era solo español): textos con L(es, en) según window.LANG / eco_lang.
+function _sbEn() { try { return (window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en'; } catch (e) { return false; } }
+function _sbL(es, en) { return _sbEn() ? en : es; }
+// proveedores / clientes = SOLO relaciones de FLUJO (regla G4a; misma lista que el NRS: window.NRS_FLOW_TYPES)
+function _sbFlow(l) { var F = window.NRS_FLOW_TYPES; return !F || !!F[l.type || 'supply']; }
 
 class SecondBrain {
   constructor(graph3d) {
@@ -34,7 +40,7 @@ class SecondBrain {
         <span style="font-size:11px;color:var(--ink-3);font-family:'JetBrains Mono',monospace">${esc((n.ticker || '').split(' · ')[0] || '')}</span>
       </div>
       <div style="display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap">
-        ${[['📊', 'Mercado', 1], ['📰', 'Noticias', 2], ['💡', 'Tesis', 3], ['🔮', 'Simulación', 4], ['🕸️', 'Red', 5]]
+        ${[['📊', _sbL('Mercado', 'Market'), 1], ['📰', _sbL('Noticias', 'News'), 2], ['💡', _sbL('Tesis', 'Thesis'), 3], ['🔮', _sbL('Simulación', 'Simulation'), 4], ['🕸️', _sbL('Red', 'Network'), 5]]
           .map(([icon, label, layer]) =>
             `<button class="sb-chip${this.activeLayer === layer ? ' active' : ''}"
               onclick="window._secondBrain&&window._secondBrain.setNodeLayer('${nodeId}',${layer})"
@@ -72,34 +78,37 @@ class SecondBrain {
     const v = (typeof computeNRS === 'function') ? computeNRS(nodeId) : 50;
     const total = typeof v === 'object' ? (v.total || 50) : v;
     const color = total >= 70 ? '#ef4444' : total >= 40 ? '#f59e0b' : '#22c55e';
-    const label = total >= 70 ? 'ALTO' : total >= 40 ? 'MEDIO' : 'BAJO';
+    const label = total >= 70 ? _sbL('ALTO', 'HIGH') : total >= 40 ? _sbL('MEDIO', 'MEDIUM') : _sbL('BAJO', 'LOW');
     return { total, color, label };
   }
 
   async _renderMarket(nodeId, el) {
     const n = NODE_BY_ID[nodeId];
     const meta = NODE_META[nodeId] || {};
-    const q = n.mkt ? (MKT.quotes[n.mkt] || {}) : {};
-    const chg = (q.close != null && q.prev) ? (q.close - q.prev) / q.prev : null;
+    const q = n.mkt ? (MKT.quotes[n.mkt] || null) : null;
+    // precio SIEMPRE con window.quotePx (contrato de MKT.quotes: `live` numérico o ausente)
+    const px = q ? (window.quotePx ? window.quotePx(q) : +q.close || 0) : 0;
+    const chg = (px && q && q.prev) ? (px - q.prev) / q.prev : null;
     const nrs = this._nrsInfo(nodeId);
 
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="sb-card"><div class="sb-l">Precio Live</div>
-          <div class="sb-v" style="color:${chg > 0 ? 'var(--up,#3DE0C8)' : chg < 0 ? 'var(--down,#FF6577)' : 'var(--ink)'}">${q.close != null ? '$' + fmtN(q.close) : n.preipo ? 'PRIVADA' : '—'}</div>
+        <div class="sb-card"><div class="sb-l">${_sbL('Precio', 'Price')}</div>
+          <div class="sb-v" style="color:${chg > 0 ? 'var(--up,#3DE0C8)' : chg < 0 ? 'var(--down,#FF6577)' : 'var(--ink)'}">${px ? '$' + fmtN(px) : n.preipo ? _sbL('PRIVADA', 'PRIVATE') : '—'}</div>
           <div class="sb-s">${chg != null ? (chg >= 0 ? '▲ ' : '▼ ') + fmtPct(Math.abs(chg)) : ''}</div></div>
-        <div class="sb-card"><div class="sb-l">Market Cap</div>
+        <div class="sb-card"><div class="sb-l">${_sbL('Capitalización', 'Market cap')}</div>
           <div class="sb-v" style="font-size:15px">${meta.mktcap_b ? '$' + meta.mktcap_b + 'B' + (window.liveCapDot ? window.liveCapDot(meta) : '') : (n.preipo ? n.ticker : '—')}</div></div>
-        <div class="sb-card"><div class="sb-l">Revenue 2025</div>
+        <div class="sb-card"><div class="sb-l">${_sbL('Ingresos 2025', 'Revenue 2025')}</div>
           <div class="sb-v" style="font-size:13px">${esc(n.revenue_2025 || meta.revenue_2025 || '—')}</div></div>
-        <div class="sb-card"><div class="sb-l">NRS Risk</div>
+        <div class="sb-card"><div class="sb-l">${_sbL('Riesgo NRS', 'NRS risk')}</div>
           <div class="sb-v" style="font-size:15px;color:${nrs.color}">${nrs.total}/100</div>
           <div class="sb-s" style="color:${nrs.color}">${nrs.label}</div></div>
       </div>
       <canvas id="sparkline-${nodeId}" height="80" style="width:100%;margin-top:12px"></canvas>
-      ${n.mkt && typeof Keys !== 'undefined' && Keys.has('finnhub') ? '' : '<div style="font-size:11px;color:var(--ink-3);margin-top:8px">Configura Finnhub en ⚙ para ver el gráfico</div>'}
+      ${n.mkt ? '' : '<div style="font-size:11px;color:var(--ink-3);margin-top:8px">' + _sbL('No cotiza en bolsa: sin gráfico de precio.', 'Not listed: no price chart.') + '</div>'}
     `;
-    if (n.mkt && typeof Keys !== 'undefined' && Keys.has('finnhub') && typeof Chart !== 'undefined') {
+    // velas por el servidor (/api/candles: Yahoo primero, Finnhub de respaldo) — antes se exigía Finnhub
+    if (n.mkt && typeof Chart !== 'undefined') {
       this._drawSparkline(nodeId, n.mkt);
     }
   }
@@ -132,12 +141,13 @@ class SecondBrain {
 
   async _renderNews(nodeId, el) {
     const n = NODE_BY_ID[nodeId];
-    el.innerHTML = '<div style="color:var(--ink-3);font-size:12px;padding:8px">Cargando noticias…</div>';
+    el.innerHTML = '<div style="color:var(--ink-3);font-size:12px;padding:8px">' + _sbL('Cargando noticias…', 'Loading news…') + '</div>';
     try {
-      let news = n.mkt && typeof Keys !== 'undefined' && Keys.has('finnhub') ? await DataLayer.news(n.mkt) : [];
+      let news = n.mkt ? await DataLayer.news(n.mkt) : [];
+      if (!Array.isArray(news)) news = [];
 
       el.innerHTML = `
-        ${news.length === 0 ? '<div style="color:var(--ink-3);font-size:12px">Sin noticias disponibles</div>' :
+        ${news.length === 0 ? '<div style="color:var(--ink-3);font-size:12px">' + _sbL('Sin noticias disponibles', 'No news available') + '</div>' :
           news.slice(0, 8).map(item => {
             const s = (typeof sentiment === 'function') ? sentiment(item.headline) : { cls: '', icon: '' };
             return `<a href="${window.safeUrl ? window.safeUrl(item.url) : esc(/^https?:\/\//i.test(item.url || '') ? item.url : '#')}" target="_blank" rel="noopener" style="display:block;padding:8px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit">
@@ -156,16 +166,16 @@ class SecondBrain {
     const n = NODE_BY_ID[nodeId];
     el.innerHTML = `
       <div style="background:var(--surface-2);border-radius:8px;padding:12px;margin-bottom:10px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">Tesis de Inversión</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:4px">${_sbL('Tesis de inversión', 'Investment thesis')}</div>
         <div style="font-size:13px;line-height:1.5">${esc(n.thesis || (typeof nf === 'function' ? nf(n, 'moat') : n.moat) || '—')}</div>
       </div>
       ${(n.catalysts_2026 || []).length ? `
-        <div style="margin-bottom:10px"><h4 style="font-size:12px;margin:0 0 4px">Catalizadores 2026</h4>
+        <div style="margin-bottom:10px"><h4 style="font-size:12px;margin:0 0 4px">${_sbL('Catalizadores 2026', '2026 catalysts')}</h4>
         ${n.catalysts_2026.map(c => `<div style="padding:2px 0;font-size:12.5px;color:var(--ink-2)">▸ ${esc(c)}</div>`).join('')}</div>` : ''}
       ${(n.risk_factors || []).length ? `
-        <div style="margin-bottom:10px"><h4 style="font-size:12px;margin:0 0 4px">Factores de Riesgo</h4>
+        <div style="margin-bottom:10px"><h4 style="font-size:12px;margin:0 0 4px">${_sbL('Factores de riesgo', 'Risk factors')}</h4>
         ${n.risk_factors.map(r => `<div style="padding:2px 0;font-size:12.5px;color:var(--down,#FF6577)">⚠ ${esc(r)}</div>`).join('')}</div>` : ''}
-      <button onclick="window.V8detail?.enrich?.('${nodeId}')" style="padding:7px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink-2);cursor:pointer;font-size:12px">✨ Analizar con IA</button>
+      <button onclick="window.V8detail?.enrich?.('${nodeId}')" style="padding:7px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink-2);cursor:pointer;font-size:12px">✨ ${_sbL('Analizar con IA', 'Analyze with AI')}</button>
     `;
   }
 
@@ -173,11 +183,11 @@ class SecondBrain {
     const n = NODE_BY_ID[nodeId];
     el.innerHTML = `
       <div style="text-align:center;padding:12px 0">
-        <p style="color:var(--ink-3);font-size:13px;margin-bottom:14px">Simula un escenario con <b>${esc(n.label)}</b> como protagonista</p>
+        <p style="color:var(--ink-3);font-size:13px;margin-bottom:14px">${_sbL('Simula un escenario con', 'Simulate a scenario with')} <b>${esc(n.label)}</b> ${_sbL('como protagonista', 'at the center')}</p>
         <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch">
-          <button onclick="window.nexusCore?.runPresetForNode('${nodeId}','collapse')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)">💥 Simular colapso de ${esc(n.label)}</button>
-          <button onclick="window.nexusCore?.runPresetForNode('${nodeId}','boom')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)">🚀 Simular éxito masivo de ${esc(n.label)}</button>
-          <button onclick="window.switchTab&&window.switchTab('simulation')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink-2)">🔬 Ver todas las simulaciones</button>
+          <button onclick="window.nexusCore?.runPresetForNode('${nodeId}','collapse')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)">💥 ${_sbL('Simular colapso de', 'Simulate the collapse of')} ${esc(n.label)}</button>
+          <button onclick="window.nexusCore?.runPresetForNode('${nodeId}','boom')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink)">🚀 ${_sbL('Simular éxito masivo de', 'Simulate a massive success of')} ${esc(n.label)}</button>
+          <button onclick="window.switchTab&&window.switchTab('simulation')" style="padding:9px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;font-size:12.5px;color:var(--ink-2)">🔬 ${_sbL('Ver todas las simulaciones', 'See all simulations')}</button>
         </div>
       </div>
       <div id="sim-mini-result-${nodeId}"></div>
@@ -186,32 +196,24 @@ class SecondBrain {
 
   async _renderNetwork(nodeId, el) {
     const bc = (typeof getBetweenness === 'function') ? getBetweenness() : {};
-    const inDeg = LINKS.filter(l => lid(l.target) === nodeId).length;
-    const outDeg = LINKS.filter(l => lid(l.source) === nodeId).length;
+    const inDeg = new Set(LINKS.filter(l => lid(l.target) === nodeId && _sbFlow(l)).map(l => lid(l.source))).size;
+    const outDeg = new Set(LINKS.filter(l => lid(l.source) === nodeId && _sbFlow(l)).map(l => lid(l.target))).size;
     const cascade = (typeof computeDownstream === 'function') ? computeDownstream(nodeId) : new Set();
     const nrs = this._nrsInfo(nodeId);
-    // NRS breakdown derived from factors
-    const n = NODE_BY_ID[nodeId] || {};
-    const geoMap = { 'China': 28, 'Taiwan': 25, 'Korea': 15, 'Japan': 12, 'EEUU': 8, 'Europa': 10, 'Israel': 18 };
-    const geo = geoMap[n.country] ?? 15;
-    // G4d: mismo grado estructural que computeNRS (pares de FLUJO distintos), así el desglose suma el NRS mostrado
+    // Desglose NRS = el MISMO de computeNRSBreakdown (app.html _nrsTerms; limpieza 2026-10-11: aquí había
+    // una 6.ª copia de la fórmula con el margen sin acotar y el país sin normalizar → no sumaba el NRS mostrado)
     const _bd = (typeof window.computeNRSBreakdown === 'function') ? window.computeNRSBreakdown(nodeId) : null;
-    const _chainTerm = _bd && _bd.terms && _bd.terms[1];
-    const chain = _chainTerm ? _chainTerm.val : Math.min(25, LINKS.filter(l => lid(l.source) === nodeId || lid(l.target) === nodeId).length * 2.5);
-    const margin = n.margin != null ? n.margin : 0.15;
-    const market = Math.round((1 - Math.min(1, margin / 0.4)) * 20);
-    const fundamental = Math.min(15, (n.preipo ? 10 : 0) + ((n.growth || '').includes('🔴') ? 5 : (n.growth || '').includes('🟡') ? 2 : 0));
-    const concentration = (n.country === 'Taiwan' || n.country === 'China') ? 10 : 4;
-    const breakdown = { 'Geo': Math.round(geo), 'Cadena': Math.round(chain), 'Mercado': market, 'Fundamental': fundamental, 'Concentración': concentration };
+    const breakdown = {};
+    ((_bd && _bd.terms) || []).forEach(t => { breakdown[t.key] = t.val; });
 
     el.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
         <div class="sb-card"><div class="sb-l">NRS Score</div><div class="sb-v" style="color:${nrs.color}">${nrs.total}/100</div></div>
         <div class="sb-card"><div class="sb-l">Betweenness</div><div class="sb-v">${(bc[nodeId] || 0).toFixed(3)}</div></div>
-        <div class="sb-card"><div class="sb-l">Proveedores</div><div class="sb-v">${inDeg}</div></div>
-        <div class="sb-card"><div class="sb-l">Clientes</div><div class="sb-v">${outDeg}</div></div>
+        <div class="sb-card"><div class="sb-l">${_sbL('Proveedores', 'Suppliers')}</div><div class="sb-v">${inDeg}</div></div>
+        <div class="sb-card"><div class="sb-l">${_sbL('Clientes', 'Customers')}</div><div class="sb-v">${outDeg}</div></div>
       </div>
-      <div style="margin-bottom:12px"><h4 style="font-size:12px;margin:0 0 6px">Desglose NRS Risk Score</h4>
+      <div style="margin-bottom:12px"><h4 style="font-size:12px;margin:0 0 6px">${_sbL('Desglose del riesgo NRS', 'NRS risk breakdown')}</h4>
         ${Object.entries(breakdown).map(([k, v]) =>
           `<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px">
             <span style="color:var(--ink-2)">${k}</span>
@@ -220,9 +222,9 @@ class SecondBrain {
               <span style="font-family:'JetBrains Mono',monospace;font-size:11px">${v}</span>
             </div></div>`).join('')}
       </div>
-      <div><h4 style="font-size:12px;margin:0 0 4px">Si colapsa…</h4>
-        <p style="font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${cascade.size} empresas afectadas (${Math.round(cascade.size / NODES.length * 100)}% de la cadena)</p>
-        <button onclick="window.activateStress&&window.activateStress('${nodeId}')" style="padding:8px 12px;border:1px solid var(--down,#FF6577);border-radius:8px;background:var(--surface);color:var(--down,#FF6577);cursor:pointer;font-size:12px">💥 Ver cascada en el grafo</button>
+      <div><h4 style="font-size:12px;margin:0 0 4px">${_sbL('Si colapsa…', 'If it collapses…')}</h4>
+        <p style="font-size:12.5px;color:var(--ink-2);margin-bottom:8px">${cascade.size} ${_sbL('empresas afectadas', 'companies affected')} (${Math.round(cascade.size / NODES.length * 100)}% ${_sbL('de la cadena', 'of the chain')})</p>
+        <button onclick="window.activateStress&&window.activateStress('${nodeId}')" style="padding:8px 12px;border:1px solid var(--down,#FF6577);border-radius:8px;background:var(--surface);color:var(--down,#FF6577);cursor:pointer;font-size:12px">💥 ${_sbL('Ver cascada en el grafo', 'See the cascade on the graph')}</button>
       </div>
     `;
   }

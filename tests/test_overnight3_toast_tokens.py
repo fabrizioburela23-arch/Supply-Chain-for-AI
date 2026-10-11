@@ -144,8 +144,9 @@ def test_toast_api_publica_igual():
     m = re.search(r'window\.KhipuToast = \{(.*?)\n  \};', TOAST, re.S)
     assert m
     body = re.sub(r'\s+', ' ', m.group(1)).strip()
+    # 2026-10-11: + prompt (KhipuToast.prompt reemplaza window.prompt; ver tests/test_cleanup_dialogs.py)
     assert body == ('__v: 1, show: show, update: update, dismiss: dismiss, clear: clear, confirm: confirmDlg, '
-                    'confirmOrder: confirmOrder, modeLabel: modeLabel, modeBadge: modeBadge, order: { confirm: confirmOrder, '
+                    'confirmOrder: confirmOrder, prompt: promptDlg, modeLabel: modeLabel, modeBadge: modeBadge, order: { confirm: confirmOrder, '
                     'sending: sending, result: result, watch: watch, filled: filled, key: orderKey, resolveMode: resolveMode },')
     # foco y temporizadores tal cual
     for s in ("try { ov.querySelector('.khm').focus(); } catch (e) {}", "if (prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus();",
@@ -274,7 +275,7 @@ def _page(browser, w=1440, h=900, dark=False, with_os=True, extra=()):
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('http://khipu.test/')
     pg.evaluate("(d) => document.body.classList.toggle('dark', d)", dark)
-    files = (['engine/mascot.js', 'engine/desktop.js', 'engine/cockpit.js'] if with_os else []) + \
+    files = (['engine/agents_registry.js', 'engine/mascot.js', 'engine/desktop.js', 'engine/cockpit.js'] if with_os else []) + \
         ['engine/loading.js', 'engine/toast.js'] + list(extra)
     for f in files:
         pg.add_script_tag(content=_r(*f.split('/')))

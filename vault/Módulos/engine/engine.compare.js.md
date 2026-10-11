@@ -3,18 +3,18 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/compare.js"
 lenguaje: "javascript"
-lineas: 155
+lineas: 168
 aliases: ["engine/compare.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/compare.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 155 líneas · `engine/compare.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 168 líneas · `engine/compare.js`
 
 ## Para qué sirve
 
-COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos empresas y ve enfrentadas su NRS (término a término), sector, país, margen, precio en vivo, grado de conexión, señal de compra/venta y dependencias. El ganador de cada fila se resalta. Se abre con window.openCompare(idA, idB) o el botón "⇄ Comparar" del X-Ray.
+COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos empresas y ve enfrentadas su NRS (término a término), sector, país, margen, precio en vivo, grado de conexión, señal de compra/venta y dependencias. El ganador de cada fila se resalta. Se abre con window.openCompare(idA, idB) o el botón "⇄ Comparar" del X-Ray. KHIPUS OS (2026-10-11): \#cmp-ov vive FUERA de \#bcp-ov y lleva .kos-themed → tokens --os-\* de engine/cockpit.js (claro = body sin .dark, oscuro = body.dark); el valor tras la coma de cada var() es el respaldo (piel NEXUS vieja). Con el comparador abierto, un cambio de idioma lo re-pinta.
 
 ## API pública (globales que define)
 
@@ -26,11 +26,11 @@ COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos emp
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **70 de 93** (línea 7909), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
+Se carga en [[app.html]] en la posición **68 de 91** (línea 7918), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 70)
+- [[app.html]] — lo carga con `<script>` (posición 68)
 - [[engine.command_center.js]] — usa `openCompare`
 - [[engine.resolve.js]] — usa `openCompare`
 - [[engine.voice.js]] — usa `openCompare`

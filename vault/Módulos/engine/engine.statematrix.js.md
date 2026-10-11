@@ -25,11 +25,11 @@ MOTOR DE ESTADOS REACTIVO (client-side, 60 fps) El "sistema nervioso" de Khipus:
 - [[app.html]] — usa `LINKS`, `MKT`, `computeNRS`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **66 de 93** (línea 7905), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **64 de 91** (línea 7914), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 66)
+- [[app.html]] — lo carga con `<script>` (posición 64)
 - [[app.html]] — usa `KhipuState`
 - [[engine.cockpit.js]] — usa `KhipuState`
 - [[engine.compare.js]] — usa `KhipuState`

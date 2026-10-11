@@ -96,16 +96,13 @@ def test_mapa_herramienta_agente_es_el_del_contrato():
         assert kc.tool_agent('ask_agent', {'seat': seat}) == ag, seat
 
 
-def test_mapa_de_puestos_igual_que_mascot_js():
-    path = os.path.join(ROOT, 'engine', 'mascot.js')
-    if not os.path.exists(path):
-        pytest.skip('engine/mascot.js todavía no está en esta rama (lo integra otro constructor)')
-    src = open(path, encoding='utf-8').read()
-    js = {}
-    for ag, seats in re.findall(r"\{\s*id:\s*'(\w+)'.*?seats:\s*\[([^\]]*)\]", src, re.S):
-        for s in re.findall(r"'([^']+)'", seats):
-            js[s] = ag
-    assert js and js == kc.SEAT_AGENT
+def test_mapa_de_puestos_sale_del_registro_unico():
+    """Limpieza 2026-10-11: mascot.js y el servidor leen el MISMO engine/agents_registry.js."""
+    from core.agents_registry import REGISTRY
+    want = {s: a['id'] for a in REGISTRY['agents'] for s in a['seats']}
+    assert want and want == kc.SEAT_AGENT
+    src = open(os.path.join(ROOT, 'engine', 'mascot.js'), encoding='utf-8').read()
+    assert 'KHIPU_AGENTS' in src and "seats: ['fundamental'" not in src      # sin copia a mano
 
 
 # ════════════════════════════════════════════════════════════════════════════

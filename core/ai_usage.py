@@ -41,6 +41,9 @@ PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida)
     'gemini:gemini-2.5-flash': (0.3, 2.5), 'gemini': (0.3, 2.5),
     # precio de lanzamiento hasta el 31-dic-2026; desde el 1-ene-2027 sube a (1.5, 7.5) → actualizar aquí
     'gemini:gemini-3.8-flash': (0.75, 3.75), 'gemini:gemini-3.5-flash-lite': (0.3, 2.5), 'gemini:gemini-3.1-pro': (2.0, 12.0),
+    # primer respaldo (GEMINI_FALLBACK_MODEL): sin esta fila se cobraba al genérico 0,3/2,5 — 5× menos de lo real
+    # (agregadores, sept-2026, citando la página de precios de Google: 1,50 / 9,00)
+    'gemini:gemini-3.5-flash': (1.5, 9.0),
     'nvidia': (0.0, 0.0),        # catálogo de NVIDIA: gratis con créditos de desarrollador
     # Jev (core/decide.py): ~0,04 USD por 1M tokens de entrada y salida gratis según fuentes de terceros
     # (sept-oct 2026; TypeSafe no lo publicó en una página que pudiéramos leer) → ESTIMADO; ajustar con
@@ -49,11 +52,11 @@ PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida)
 }
 
 FEATURE_BY_PATH = (
-    ('/api/khipu/chat', 'khipu_chat'), ('/api/bixby', 'voz'), ('/api/voice', 'voz'),
+    ('/api/khipu/chat', 'khipu_chat'), ('/api/voice', 'voz'),
     ('/api/canvas', 'canvas'), ('/api/sim/agents', 'simulacion_agentes'), ('/api/committee', 'comite'),
-    ('/api/research/deep', 'investigacion_profunda'), ('/api/research', 'investigacion'),
+    ('/api/thesis/quick', 'tesis_rapida'), ('/api/research', 'investigacion'),
     ('/api/portfolio-ai', 'asistente_carteras'), ('/api/portfolio', 'riesgo_cartera'),
-    ('/api/world', 'world_monitor'), ('/api/space', 'espacio'), ('/api/ai/command', 'comandos'),
+    ('/api/world', 'world_monitor'), ('/api/space', 'espacio'),
     ('/api/ai/analyze', 'analisis_ia'), ('/api/ai', 'analisis_ia'), ('/api/ontology/agents', 'agentes_ontologia'),
     ('/api/ontology', 'ontologia'), ('/api/matrix', 'insights_matriz'), ('/api/news', 'noticias'),
     ('/api/diagnostics', 'diagnostico'), ('/api/health', 'diagnostico'), ('/mcp', 'mcp'), ('/v1/', 'api_v1'),
@@ -63,10 +66,11 @@ FEATURE_LABELS = {
     'khipu_chat': ('Chat de Khipu', 'Khipu chat'), 'voz': ('Voz de Khipu', 'Khipu voice'),
     'canvas': ('Canvas IA', 'AI Canvas'), 'simulacion_agentes': ('Simulación por agentes', 'Agent simulation'),
     'comite': ('Comité de inversión', 'Investment committee'), 'investigacion': ('Investigación IA', 'AI research'),
-    'investigacion_profunda': ('Investigación profunda', 'Deep research'),
+    'tesis_rapida': ('Tesis rápida', 'Quick thesis'),
+    'investigacion_profunda': ('Tesis rápida (histórico)', 'Quick thesis (history)'),
     'asistente_carteras': ('Asistente de carteras', 'Portfolio assistant'), 'riesgo_cartera': ('Riesgo de cartera', 'Portfolio risk'),
     'world_monitor': ('World Monitor', 'World Monitor'), 'espacio': ('Space Monitor', 'Space Monitor'),
-    'comandos': ('Comandos', 'Commands'), 'analisis_ia': ('Análisis IA (varios)', 'AI analysis (misc)'),
+    'comandos': ('Comandos (histórico)', 'Commands (history)'), 'analisis_ia': ('Análisis IA (varios)', 'AI analysis (misc)'),
     'agentes_ontologia': ('Agentes de la ontología', 'Ontology agents'), 'ontologia': ('Ontología', 'Ontology'),
     'insights_matriz': ('Insights', 'Insights'), 'noticias': ('Noticias', 'News'), 'diagnostico': ('Diagnóstico 🩺', 'Diagnostics 🩺'),
     'mcp': ('IAs externas (MCP)', 'External AIs (MCP)'), 'api_v1': ('API pública /v1', 'Public API /v1'),

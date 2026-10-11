@@ -108,34 +108,12 @@ def _size_class(n):
 
 
 def _approx_nrs(snap, nid):
-    """NRS aproximado 0-100 (más alto = más frágil). Réplica ligera de la idea
-    del NRS del cliente usando solo campos del snapshot; es CONTEXTO para la IA,
-    no la fórmula canónica (esa vive en el cliente / ontology.agents)."""
+    """NRS 0-100 (más alto = más frágil) = LA fórmula de la app (core.world.client_nrs) con el grado
+    estructural del snapshot. Limpieza 2026-10-11: antes era una 7.ª heurística propia (base 45 ± margen,
+    país, grado crudo) que le daba a la IA de la simulación números distintos a los de la pantalla."""
+    from core.world import client_nrs
     n = snap['by_id'].get(nid) or {}
-    score = 45.0
-    m = n.get('margin')
-    if isinstance(m, (int, float)):
-        if m <= 0:
-            score += 22
-        elif m < 0.10:
-            score += 8
-        elif m > 0.30:
-            score -= 12
-    else:
-        score += 6
-    country = (n.get('country') or '').strip().lower()
-    if country in ('china', 'taiwan', 'taiwán'):
-        score += 14
-    elif country in ('rusia', 'russia'):
-        score += 10
-    deg = snap['deg'].get(nid, 0)
-    if deg <= 1:
-        score += 10
-    elif deg >= 12:
-        score += 6
-    if n.get('preipo'):
-        score += 8
-    return int(max(5, min(95, round(score))))
+    return client_nrs(n, snap['flow_deg'].get(nid, 0))
 
 
 def _neighbors(snap, nid, k):

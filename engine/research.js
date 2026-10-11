@@ -292,12 +292,9 @@
   }
 
   // Sin ventana de "¿cómo te identificamos?": bloqueaba la investigación (y en
-  // el teléfono a veces ni aparece). Se usa el nombre guardado si existe.
-  function actor() {
-    var a = null;
-    try { a = localStorage.getItem('khipu_actor'); } catch (e) {}
-    return (a && a.trim()) || 'usuario';
-  }
+  // el teléfono a veces ni aparece). Se usa el nombre guardado si existe
+  // (EL ayudante único de engine/toast.js; sin nombre → 'usuario').
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }
 
   // Mensaje visible y claro dentro del panel (no un aviso que se pierde).
   function friendlyError(d) {
@@ -454,7 +451,18 @@
   function run(entityId, depth, onlyMissing) {
     var who = actor();
     S.entity = entityId; S.msg = null;
-    if (depth === 'DEEP' && !window.confirm(L('La investigación profunda usa más IA (y más costo). ¿Continuar?', 'Deep research uses more AI (and cost). Continue?'))) return;
+    if (depth === 'DEEP') {
+      // investigación profunda = más IA y más gasto: se confirma en el diálogo de la app (engine/toast.js)
+      var K = window.KhipuToast;
+      if (!K || !K.confirm) { S.msg = { bad: true, text: L('No se pudo abrir la confirmación (engine/toast.js): recarga la página.', 'The confirmation (engine/toast.js) could not open: reload the page.') }; render(); return; }
+      K.confirm({ title: L('¿Investigación profunda?', 'Deep research?'),
+        subtitle: L('Usa más IA (y más costo) que la estándar y descuenta del presupuesto diario de IA.', 'It uses more AI (and cost) than standard and counts against the daily AI budget.'),
+        confirmLabel: L('Continuar', 'Continue') }).then(function (go) { if (go) startJob(entityId, depth, onlyMissing, who); });
+      return;
+    }
+    startJob(entityId, depth, onlyMissing, who);
+  }
+  function startJob(entityId, depth, onlyMissing, who) {
     getJSON('/api/research/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ entity: entityId, depth: depth || 'STANDARD', actor: who, only_missing: !!onlyMissing }) }).then(function (d) {
       if (!d.job_id) { S.msg = { bad: true, text: friendlyError(d) }; render(); return; }

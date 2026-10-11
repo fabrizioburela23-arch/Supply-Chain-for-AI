@@ -1,8 +1,8 @@
-# Khipus AI Finance Inteligence — CLAUDE.md
+# Khipus Finance Intelligence — CLAUDE.md
 
 Terminal financiero (estilo Bloomberg + ontología estilo Palantir) para la
-cadena de suministro de IA + capas macro. 949 nodos cliente / 1.037 objetos
-económicos en la ontología, 2.500+ relaciones (dirección ÚNICA: source PROVEE
+cadena de suministro de IA + capas macro. 937 nodos en el catálogo (la base de
+producción tiene 1.294 objetos), 2.510 relaciones (dirección ÚNICA: source PROVEE
 a target; 9 tipos de relación; 13 macro-sectores en SECTORS9 — expansión
 multicapa 2026-08-02: energía, materiales, macro_credito, inmobiliario,
 logistica). ~70 Factores sistémicos LATENTES (severity 1.0) con
@@ -28,11 +28,12 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   `vault/` → NO resolver a mano: quedarse con cualquiera de los dos lados y regenerar. No editar notas generadas;
   lo personal va en `vault/Mis notas/` (el generador no la toca); `.obsidian/app.json`/`graph.json` se crean si
   faltan y después son de Fabrizio (solo se refrescan los colores de capa). `vault` está en .dockerignore.
-- `app.html` (~12,300 líneas): TODA la UI en un archivo, 8 bloques `<script>`
+- `app.html` (~12,650 líneas): TODA la UI en un archivo, 10 bloques `<script>`
   inline. Tabs: map, market, analysis, geo, simulation, space, terminal,
-  canvas, tkg (◈ Grafo Temporal — ya SIN botón de pestaña: se abre como vista
-  desde ⏱ del mapa, engine/maptime.js), guia (❓ Guía).
-- `server.py` (~2,500 líneas): Flask sync + gunicorn **1 worker + GUNICORN_THREADS (12)**, `exec` + `--graceful-timeout 25`
+  canvas, crypto, portfolios, tkg (◈ Grafo Temporal — ya SIN botón de pestaña: se abre como vista
+  desde ⏱ del mapa, engine/maptime.js), guia (❓ Guía). La MISMA lista vive en core/khipu_chat.TABS
+  (lo que el chat puede abrir; tests/test_cleanup_server.py las compara).
+- `server.py` (~5,800 líneas): Flask sync + gunicorn **1 worker + GUNICORN_THREADS (12)**, `exec` + `--graceful-timeout 25`
   (NO subir workers: el estado en memoria — caché, rate limits, agente de
   trading — divergiría entre workers). Proxy de todas las APIs externas.
 - `core/` (paquete Python): helpers compartidos server/ontology/matrix —
@@ -62,12 +63,12 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   ProposedAction + Alert + InsightSnapshot), `provenance.py` (Phase 1 M1:
   Source como ENTIDAD, id derivado de la URL, trust del vocabulario),
   `service.py` (apply_event con source_id/confidence, as_of_graph, diff_graph),
-  `actions.py` (catálogo de 13 Acciones auditadas, Pydantic — incluye
-  Activar/DesactivarFactor), `agents.py`
-  (4 agentes + brief matinal + evaluador de alertas), `api.py` (blueprint).
+  `actions.py` (catálogo de 17 Acciones auditadas, Pydantic — incluye
+  Activar/DesactivarFactor, RetractarVinculo, FusionarEntidad), `agents.py`
+  (7 agentes + brief matinal + evaluador de alertas), `api.py` (blueprint).
 - `engine/`: temporal-graph.js (~1,050 líneas, Grafo Temporal), khipu_lang.js
   (parser de comandos), guide.js (Guía), voice.js (Khipu voz/ElevenLabs),
-  command_center.js (Khipu texto), graph3d.js (WebGL, ?webgl3d=1), globe.js
+  command_center.js (Khipu texto), graph3d.js (WebGL, ?webgl3d=1, carga perezosa), globe.js
   (motor de globo unificado; reemplazó a geoglobe.js+planetarium.js, borrados
   en Track A Fase 2), universe2d.js (camino sin WebGL, el default),
   secondbrain.js, canvas-data.js, hypergraph.js, geo_coords.js, timeline3d.js
@@ -78,7 +79,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   **KHIPUS OS v1 (2026-10-06) — LA interfaz** (spec y contratos: `docs/KHIPUS_OS.md`): la Cabina
   evolucionada. Arranca SIEMPRE al cargar (salvo `sessionStorage kh_os_classic='1'` = "Vista clásica").
   Tokens `--os-*` en `#bcp-ov` (claro = look del video, `body:not(.dark)`; oscuro = predeterminado).
-  Barra superior mínima (mascota+Khipus, paleta ⌘K, "Más ▾" con TODAS las pantallas, mascotas de
+  Barra superior mínima (mascota+Khipus, paleta ⌘K, "Herramientas / Tools" con TODAS las pantallas, mascotas de
   agentes, saldo de práctica 🧪/🔴 sin pedir PIN, ES/EN, ☾/☀, iniciales). ≥1100 px: chat en la columna
   central (`#kd-center`) y ventanas en FLANCOS (desktop.js `kh_desk_flank`, `isCentered()`); <1100 px:
   "solo chat" (`kd-solo`, `chatInCenter()`), ventanas encima. Esc NO cierra el OS. Ventanas nativas
@@ -112,7 +113,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   compras, quiebras — que pisa al catálogo en merge_graph.js; regenerar con
   scripts/build_listing_status.py + export; nunca editar a mano).
 - `scripts/`: export_graph_v0.js (snapshot) · migrate_v0_to_ontology.py.
-- `data/grafo_v0.json`: snapshot canónico (949 nodos / 2.526 links + la tabla
+- `data/grafo_v0.json`: snapshot canónico (937 nodos / 2.510 links + la tabla
   `node_id_alias`, que antes NO se exportaba y por eso el servidor no podía
   resolver alias) — se regenera con `node scripts/export_graph_v0.js` (usa nodes/merge_graph.js,
   la MISMA implementación de merge que el navegador; nunca duplicar).
@@ -180,7 +181,7 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
   - `core/world.py` (/api/world/*: events GDELT/USGS/EONET + estrechos +
     inestabilidad, exposure, brief, reference) + `engine/worldmonitor.js`
     (`KhipuWorld`): la pestaña Geopolítica ES el World Monitor (un solo globo;
-    geosituation.js quedó como alias).
+    el alias geosituation.js se borró en la limpieza 2026-10-11).
   - `core/space.py` (/api/space2/*: Launch Library 2 normalizado, caché con
     presupuesto de 12 req/h, stale honesto) + `engine/spacemonitor.js`
     (`KhipuSpace`): la pestaña Espacio ES el Space Monitor (globo + lanzamientos).
@@ -261,6 +262,25 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
     investigación previa ni base de datos; abre la ventana de su rol (acción `open_window` {kind, id}). Nunca
     volver a "sin conclusiones → investigación general". `FOCUS`/`SKILLS` bilingües; SKILLS se repite en
     oswindows.js (un test lo compara).
+  - **LIMPIEZA "sin cosas sueltas" (2026-10-11)** — no reintroducir copias:
+    - **Registro ÚNICO de agentes**: `engine/agents_registry.js` (`window.KHIPU_AGENTS`; JSON estricto entre
+      `KHIPU_AGENTS = ` y el `;`) = mascotas (nombre, rol, colores, `ink`, puestos), puestos (ícono, nombres,
+      `short_*`, `badge_*`, `call_*`, `desk`), palabras de mención (`@radar`, `@analista`, `@chain`… también en el
+      servidor) y herramienta → mascota. Python lo lee con `core/agents_registry.py`; mascot.js, khipu_chat.js,
+      committee.js, core/khipu_chat.py, research/agent_skills|deliberation|ask_agent|runner y core/agents_api
+      derivan de ahí. Se carga ANTES de mascot.js (app.html + SHELL); los arneses de node de los tests lo cargan
+      primero. Nueva mascota/puesto → SOLO ese archivo (tests/test_agents_registry.py).
+    - Diálogos: `KhipuToast.prompt({password})` y `window.khipuActor({ask})` (engine/toast.js) — ningún
+      `window.confirm/prompt/alert` en engine/ ni app.html (el PIN se pide OCULTO; tests/test_cleanup_dialogs.py,
+      tests/test_cleanup_client.py). Actor por defecto: 'usuario'.
+    - Investigación: `agent_runs.open_questions` (las preguntas abiertas ya NO van en `errors`; leer con
+      `research.models.open_questions_of/errors_of`); `permitted_tools` se DERIVA de `context.AGENT_NEEDS`; el
+      agente de noticias recibe el perfil en vivo; sin "skipped por presupuesto" por analista (el job se difiere).
+    - Tres productos, tres nombres: **Investigación con evidencia** (equipo de analistas, engine/research.js),
+      **Tesis rápida** (UNA respuesta de IA, `POST /api/thesis/quick`, antes /api/research/deep) y **Búsqueda
+      profunda** (pregunta libre, `/api/deep/analyze`).
+    - Borrados: `/api/ai/command` (sin llamadores), `engine/geosituation.js`, `run_agent`, `GEO_RISK`; graph3d.js e
+      hypergraph.js se descargan solo con `?webgl3d=1`. `/api/voice/voices` y `/api/diag/recent` piden PIN de operador.
   - `core/pin.py`: EL verificador del PIN de operador (X-Trade-Pin) con bloqueo
     por IP (último salto XFF) y global compartido — `require_pin` (trading) /
     `require_operator` (escrituras de ontología). Nunca reimplementar.
@@ -300,10 +320,12 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 ## Convenciones de datos críticas
 
 - `computeNRS(nodeId)` → NUMBER 0-100, NO objeto. Memoizado (`_nrsCache`);
-  llamar `window._invalidateNRS()` si LINKS cambia. OJO: la fórmula cliente no
-  acota el término de margen (pre-revenue infla el score); la réplica server
-  (`ontology/agents.py:_compute_server_nrs`) SÍ acota [0,20] — divergencia
-  conocida y documentada. **El grado es ESTRUCTURAL (G4d, 2026-10-04)**: cuenta
+  llamar `window._invalidateNRS()` si LINKS cambia. **UNA fórmula (limpieza 2026-10-11)**: cliente =
+  `_nrsTerms` (app.html; computeNRS y computeNRSBreakdown la usan; secondbrain.js lee el desglose);
+  Python = `core/world.client_nrs` (servidor `_compute_server_nrs`, MCP y `portfolio_ai.nrs` delegan ahí,
+  con el grado de la ontología o del catálogo). Margen acotado [0,20] en las dos; redondeo como JS.
+  tests/test_cleanup_nrs_parity.py corre la del navegador sobre TODO el catálogo y exige el mismo número
+  que Python. Nunca re-escribir la fórmula en otro archivo. **El grado es ESTRUCTURAL (G4d, 2026-10-04)**: cuenta
   pares distintos source→target unidos por una relación de FLUJO
   (`vocabulary.json` `flow: true`: supply/fab/cloud/license/ppa/owns/deploy);
   partner/invest/affects/about y los pares duplicados NO cuentan. Misma regla
@@ -435,7 +457,7 @@ nuevas en command_center: xray, compare, insights, livesim.
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
    `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (822 tests; los de ontología se
+   `new vm.Script()`; `pytest tests/ -q` (~1.800 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -445,7 +467,8 @@ nuevas en command_center: xray, compare, insights, livesim.
 ## Variables de entorno
 
 ```
-SECRET_KEY, FINNHUB_KEY, ANTHROPIC_KEY, GEMINI_KEY, NVIDIA_KEY, AI_ORDER (solo nivel rápido), AI_ORDER_FAST, AI_ORDER_DEEP,
+SECRET_KEY, FINNHUB_KEY, ANTHROPIC_KEY, GEMINI_KEY, NVIDIA_KEY, AI_ORDER (solo nivel rápido; mejor borrarla), AI_ORDER_FAST, AI_ORDER_DEEP,
+AI_MODEL_FAST, AI_MODEL_DEEP (AI_MODEL ya no existe),
 ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, ELEVENLABS_ALLOW_OVERRIDE,
 AV_KEY, FMP_KEY, MARKETSTACK_KEY, ALPACA_KEY/SECRET/BASE,
 TRADE_PIN            ← SIN esto el trading queda deshabilitado (X-Trade-Pin)
@@ -479,11 +502,11 @@ KHIPU_SCHEDULER (on; off en tests)  ← R5: reloj del servidor (core/scheduler.p
 ## Multi-IA — HÍBRIDA (2026-07-12)
 
 `core.ai._ai_complete(system, prompt, max_tokens, tier='fast')` intenta
-AI_ORDER (claude,gemini,nvidia) en cascada; `_claude_complete` es alias
-compat. Dos niveles (el tier SOLO cambia el modelo Claude; Gemini/NVIDIA lo
-ignoran): `AI_MODEL_FAST` (env, default AI_MODEL → claude-haiku-4-5) para
+los proveedores en cascada según el orden DEL NIVEL (ver abajo; el alias `_claude_complete` y la
+variable `AI_MODEL` se borraron en la limpieza 2026-10-11). Dos niveles (el tier cambia el orden de
+proveedores y el modelo Claude): `AI_MODEL_FAST` (env, default claude-haiku-4-5) para
 comandos/noticias/alertas/radar; `AI_MODEL_DEEP` (env, default
-claude-sonnet-5) para síntesis de deep research, tesis/veredicto IA, Canvas,
+claude-sonnet-5-5) para síntesis de deep research, tesis/veredicto IA, Canvas,
 War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 (el tier forma parte de la cache key). Cliente:
 `DataLayer.aiComplete(system, prompt, maxTokens, tier)`.
@@ -491,7 +514,10 @@ War Room y brief matinal. `/api/ai/analyze` acepta `tier:'deep'` en el body
 **Orden por nivel (2026-10-10)**: `AI_ORDER_DEEP` (defecto claude,gemini,nvidia; ignora AI_ORDER) y `AI_ORDER_FAST` >
 `AI_ORDER` > gemini,claude,nvidia (`provider_order`, `ai_route_state`). Claude por modelo con `claude_attempts`: Sonnet 5.5
 NUNCA thinking disabled ni temperature; Opus 5.5/Fable nunca disabled; un 400 de parámetros reintenta el MISMO modelo.
-AI_MODEL_DEEP por defecto claude-sonnet-5-5. Voz: `core/voice_agent.py` es el único cliente REST de ElevenLabs.
+El 🩺 muestra la ruta REAL por nivel (`/api/diagnostics` → `routing`). Voz: `core/voice_agent.py` es el ÚNICO
+cliente REST de ElevenLabs (desde 2026-10-11 también `list_voices`/`adopt_shared_voice`; server.py ya no llama a
+api.elevenlabs.io — un test lo vigila). Las instrucciones de la voz (`BIXBY_SYSTEM_PROMPT`) describen Khipus OS
+y toman los agentes del registro único.
 **Gemini 3+ (2026-10-06, default `gemini-3.8-flash`)**: NO acepta `thinkingBudget` (ni 0 ni "minimal" → 400);
 `_complete_gemini_inner` manda `thinkingLevel` low (chat/rápido) o medium (profundo, también investigación JSON) con margen de tokens.
 Precio en `core/ai_usage.PRICES` (0,75/3,75 hasta 31-dic-2026; luego 1,5/7,5 → actualizar).
@@ -569,7 +595,7 @@ bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:
 
 ## Nombres y usuario
 
-- App: **Khipus Finance AI** (renombrada 2026-08-03 — "Bixby" es marca de
+- App: **Khipus Finance Intelligence** (2026-10-10; antes "Khipus Finance AI", renombrada 2026-08-03 — "Bixby" es marca de
   Samsung y Fabrizio no puede usarla; antes fue "Bixby Finance" y
   originalmente "Khipus AI Finance Inteligence"). Asistente/voz: **Khipu**
   (nombre PROVISIONAL — Fabrizio buscará el definitivo; cuando llegue,

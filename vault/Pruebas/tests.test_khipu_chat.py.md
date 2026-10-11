@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_khipu_chat.py"
 lenguaje: "python"
-lineas: 464
+lineas: 465
 aliases: ["tests/test_khipu_chat.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_khipu_chat.py
 
-> Prueba · capa [[Capa Pruebas]] · 464 líneas · `tests/test_khipu_chat.py`
+> Prueba · capa [[Capa Pruebas]] · 465 líneas · `tests/test_khipu_chat.py`
 
 ## Qué prueba
 
@@ -23,6 +23,7 @@ Cerebro conversacional de Khipu (core/khipu_chat.py) + enrutador del cliente (en
 - [[core.ai.py]]
 - [[core.khipu_chat.py]]
 - [[data.grafo_v0.json]]
+- [[engine.agents_registry.js]]
 - [[engine.cockpit.js]]
 - [[engine.khipu_chat.js]]
 - [[engine.khipu_lang.js]]

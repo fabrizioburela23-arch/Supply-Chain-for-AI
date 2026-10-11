@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L548"
+ruta: "docs/ESTADO.md#L597"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (k) — OPCIONES FIJAS Y MENÚ "/" "@" EN EL CHAT (sw v213)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 548 (12 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 597 (12 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

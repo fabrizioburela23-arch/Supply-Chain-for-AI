@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/portfolios.js"
 lenguaje: "javascript"
-lineas: 1360
+lineas: 1369
 aliases: ["engine/portfolios.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/portfolios.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.360 líneas · `engine/portfolios.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.369 líneas · `engine/portfolios.js`
 
 ## Para qué sirve
 
@@ -31,11 +31,11 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **81 de 93** (línea 7920), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
+Se carga en [[app.html]] en la posición **79 de 91** (línea 7929), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 81)
+- [[app.html]] — lo carga con `<script>` (posición 79)
 - [[app.html]] — usa `KhipuPortfolios`
 - [[engine.cockpit.js]] — usa `KhipuPortfolios`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolios`
@@ -51,6 +51,7 @@ Se carga en [[app.html]] en la posición **81 de 93** (línea 7920), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_ui_portfolios_risk.py]]
 

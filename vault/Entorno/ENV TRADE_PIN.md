@@ -23,6 +23,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[tests.test_ai_usage.py]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_overnight_voice_server.py]]

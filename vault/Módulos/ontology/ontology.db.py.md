@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Ontología y grafo temporal"
 ruta: "ontology/db.py"
 lenguaje: "python"
-lineas: 220
+lineas: 222
 aliases: ["ontology/db.py"]
 tags: ["capa/ontologia", "tipo/modulo"]
 ---
 
 # ontology/db.py
 
-> Módulo · capa [[Capa Ontología y grafo temporal]] · 220 líneas · `ontology/db.py`
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 222 líneas · `ontology/db.py`
 
 ## Para qué sirve
 
@@ -21,8 +21,8 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - `ontology_available()` _(línea 20)_
 - `get_session_factory()` _(línea 104)_
 - `session_scope()` — Sesión con commit/rollback automático. Uso: with session_scope() as s: ... _(línea 110)_
-- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 139)_
-- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 158)_
+- `schema_outdated(engine=…)` — ¿Falta alguna de las columnas tardías? Permite detectar una base con el esquema viejo SIN tener que provocar el error en una consulta real. _(línea 141)_
+- `init_schema(retries=…, delay=…)` — Crea/actualiza el esquema (idempotente). Se llama al arrancar el server y desde el script de migración. _(línea 160)_
 
 **Internas** (empiezan con `_`): `_normalize_url`, `_env_int`, `_engine_kwargs`, `_get_engine`
 
@@ -82,7 +82,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 29 pruebas (lista abajo)._
+_Además lo importan 30 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -99,6 +99,7 @@ _Además lo importan 29 pruebas (lista abajo)._
 - [[tests.test_ai_usage.py]]
 - [[tests.test_ask_agent.py]]
 - [[tests.test_brokerage.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_graph_api.py]]
 - [[tests.test_infra.py]]

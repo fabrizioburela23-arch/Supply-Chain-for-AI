@@ -6,7 +6,7 @@
 - **Citas cerradas.** El modelo solo puede citar ids E# del paquete; cualquier otra ref invalida la salida.
 - **Permisos de escritura** (`research/agents/base.WRITE_PERMISSIONS`): solo tablas `research_*` + registrar Source.
   Los hechos originales nunca se sobrescriben.
-- **Herramientas por agente**: `permitted_tools` + `context.AGENT_NEEDS` definen qué datos recibe cada uno.
+- **Herramientas por agente**: `research/context.AGENT_NEEDS` es la ÚNICA lista de qué datos recibe cada uno (el armador de contexto no trae nada más); `permitted_tools` del registro se deriva de ella (2026-10-11).
 - **Política de modelos**: rutas por agente vía env; claves solo en el servidor.
 - **Rate limits**: `POST /api/research/jobs` 12/h por IP; `POST /events` 30/h; presupuesto diario.
 - **Auditoría**: cada ejecución en `agent_runs` (disparador, modelo, contexto usado, tokens, costo, errores);

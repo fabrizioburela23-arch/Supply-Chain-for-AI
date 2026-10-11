@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-111 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+118 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -15,6 +15,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.js.localcharts_intents.js]] | 0 | 1 |
 | [[tests.js.localcharts_pfperf.js]] | 0 | 1 |
 | [[tests.test_agent_dudosos.py]] | 2 | 5 |
+| [[tests.test_agents_registry.py]] | 7 | 14 |
 | [[tests.test_ai_gemini_fast.py]] | 8 | 3 |
 | [[tests.test_ai_json.py]] | 4 | 2 |
 | [[tests.test_ai_usage.py]] | 6 | 7 |
@@ -24,15 +25,21 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_bulk_import.py]] | 6 | 1 |
 | [[tests.test_canvas.py]] | 23 | 2 |
 | [[tests.test_canvas_charts.py]] | 4 | 2 |
-| [[tests.test_chat_commands.py]] | 3 | 1 |
-| [[tests.test_chat_portfolio_agent.py]] | 3 | 5 |
+| [[tests.test_chat_commands.py]] | 3 | 2 |
+| [[tests.test_chat_portfolio_agent.py]] | 3 | 6 |
+| [[tests.test_cleanup_client.py]] | 9 | 8 |
+| [[tests.test_cleanup_dialogs.py]] | 10 | 16 |
+| [[tests.test_cleanup_modules_theme_i18n.py]] | 18 | 6 |
+| [[tests.test_cleanup_nrs_parity.py]] | 3 | 7 |
+| [[tests.test_cleanup_server.py]] | 14 | 26 |
 | [[tests.test_client_hardening.py]] | 18 | 5 |
-| [[tests.test_committee_os_narr.py]] | 19 | 15 |
+| [[tests.test_committee_os_narr.py]] | 19 | 16 |
 | [[tests.test_committee_os_pf_apply.py]] | 2 | 1 |
 | [[tests.test_committee_os_pf_tokens.py]] | 9 | 2 |
-| [[tests.test_committee_os_ui.py]] | 11 | 4 |
+| [[tests.test_committee_os_ui.py]] | 11 | 7 |
 | [[tests.test_company_data.py]] | 28 | 3 |
 | [[tests.test_decide.py]] | 8 | 3 |
+| [[tests.test_docs_facts.py]] | 4 | 5 |
 | [[tests.test_entities.py]] | 13 | 4 |
 | [[tests.test_gdelt_events.py]] | 4 | 2 |
 | [[tests.test_gpr.py]] | 3 | 2 |
@@ -42,15 +49,15 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_ingest_news.py]] | 12 | 7 |
 | [[tests.test_investigador.py]] | 7 | 4 |
 | [[tests.test_jev_router.py]] | 7 | 8 |
-| [[tests.test_khipu_chat.py]] | 30 | 7 |
-| [[tests.test_khipus_os_chat.py]] | 15 | 6 |
+| [[tests.test_khipu_chat.py]] | 30 | 8 |
+| [[tests.test_khipus_os_chat.py]] | 15 | 7 |
 | [[tests.test_khipus_os_fixes_perf.py]] | 8 | 1 |
 | [[tests.test_khipus_os_fixes_server.py]] | 20 | 13 |
 | [[tests.test_khipus_os_fixes_shell.py]] | 11 | 3 |
 | [[tests.test_khipus_os_fixes_windows.py]] | 10 | 4 |
 | [[tests.test_khipus_os_integration.py]] | 5 | 7 |
 | [[tests.test_khipus_os_perf.py]] | 16 | 6 |
-| [[tests.test_khipus_os_server.py]] | 24 | 12 |
+| [[tests.test_khipus_os_server.py]] | 24 | 14 |
 | [[tests.test_khipus_os_shell.py]] | 13 | 4 |
 | [[tests.test_khipus_os_windows.py]] | 19 | 4 |
 | [[tests.test_live_caps.py]] | 5 | 3 |
@@ -74,13 +81,13 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_overnight3_diag_bilingual.py]] | 10 | 8 |
 | [[tests.test_overnight3_fixer_voice_race.py]] | 5 | 1 |
 | [[tests.test_overnight3_mic_voice_state.py]] | 15 | 6 |
-| [[tests.test_overnight3_toast_tokens.py]] | 14 | 7 |
+| [[tests.test_overnight3_toast_tokens.py]] | 14 | 8 |
 | [[tests.test_overnight_ai_routing.py]] | 31 | 9 |
 | [[tests.test_overnight_fixes_review.py]] | 20 | 15 |
-| [[tests.test_overnight_ui_dossier_clients.py]] | 12 | 5 |
-| [[tests.test_overnight_ui_portfolios_risk.py]] | 9 | 3 |
+| [[tests.test_overnight_ui_dossier_clients.py]] | 12 | 6 |
+| [[tests.test_overnight_ui_portfolios_risk.py]] | 9 | 4 |
 | [[tests.test_overnight_ui_small_panels.py]] | 13 | 7 |
-| [[tests.test_overnight_ui_xray_research.py]] | 10 | 8 |
+| [[tests.test_overnight_ui_xray_research.py]] | 10 | 9 |
 | [[tests.test_overnight_voice_client.py]] | 13 | 1 |
 | [[tests.test_overnight_voice_server.py]] | 26 | 4 |
 | [[tests.test_phase3.py]] | 41 | 15 |

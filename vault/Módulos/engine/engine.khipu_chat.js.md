@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_chat.js"
 lenguaje: "javascript"
-lineas: 1278
+lineas: 1261
 aliases: ["engine/khipu_chat.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_chat.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 1.278 líneas · `engine/khipu_chat.js`
+> Módulo · capa [[Capa Chat y agentes]] · 1.261 líneas · `engine/khipu_chat.js`
 
 ## Para qué sirve
 
@@ -34,15 +34,16 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
+- [[engine.toast.js]] — usa `khipuActor`
 - [[engine.worldmonitor.js]] — usa `KhipuWorld`
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **83 de 93** (línea 7922), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **81 de 91** (línea 7931), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 83)
+- [[app.html]] — lo carga con `<script>` (posición 81)
 - [[engine.cockpit.js]] — usa `KhipuChat`
 - [[engine.command_center.js]] — usa `KhipuChat`
 - [[engine.pickers.js]] — usa `KhipuChat`
@@ -56,8 +57,11 @@ Se carga en [[app.html]] en la posición **83 de 93** (línea 7922), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_agents_registry.py]]
 - [[tests.test_chat_commands.py]]
 - [[tests.test_chat_portfolio_agent.py]]
+- [[tests.test_cleanup_client.py]]
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_committee_os_ui.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
@@ -65,6 +69,7 @@ Se carga en [[app.html]] en la posición **83 de 93** (línea 7922), después de
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)]]
 - [[Sesión 2026-10-05 (j) — COMANDOS Y AGENTES EN EL CHAT (sw v212)]]
 - [[Sesión 2026-10-04 (g) — KHIPU COMO ASISTENTE - ANALISTAS EN EL CHAT, PROMPT, MEMORIA]]

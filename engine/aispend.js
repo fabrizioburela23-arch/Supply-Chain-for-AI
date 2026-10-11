@@ -22,7 +22,7 @@
     return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
   function tok(n) { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(n); }
-  function actor() { var a = null; try { a = localStorage.getItem('khipu_actor'); } catch (e) {} return (a && a.trim()) || 'operador'; }
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }   // EL ayudante único (engine/toast.js)
   // Colores de MARCA de cada proveedor: solo para puntos y barras (rellenos), nunca para texto
   // (el verde de NVIDIA o el rosa de Jev no llegan a 4.5:1 sobre blanco): el nombre va en --os-ink.
   var PROV = { claude: ['Claude (Anthropic)', '#D97757'], gemini: ['Gemini (Google)', '#4C8DF6'], nvidia: ['NVIDIA', '#76B900'], typesafe: ['Jev (TypeSafe)', '#E551BA'] };

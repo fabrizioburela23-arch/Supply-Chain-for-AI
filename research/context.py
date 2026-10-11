@@ -19,12 +19,15 @@ from datetime import datetime, timezone
 
 from core.entities import get_index
 
-# qué datos pide cada tipo de agente (capabilities → fuentes)
+# qué datos pide cada tipo de agente — ÚNICA fuente: el armador de contexto trae SOLO esto, el registro
+# (research/agents/registry.py permitted_tools) y la UI de perfiles (core/agents_api.py) se derivan de aquí
 AGENT_NEEDS = {
     'fundamental': ('financials', 'profile', 'ratios', 'peers', 'sec', 'news', 'catalog', 'graph'),
     'technical': ('profile', 'candles', 'news'),
     'macro': ('catalog', 'graph', 'news'),
-    'news': ('news', 'sec', 'catalog'),
+    # 'profile' (2026-10-11): la regla 8 del prompt dice que la capitalización SOLO sale del perfil en vivo;
+    # sin él, el agente de noticias no podía hablar de reacción de mercado y lo dejaba como pregunta abierta
+    'news': ('news', 'sec', 'catalog', 'profile'),
     'geopolitical': ('catalog', 'graph', 'news'),
     'supply_chain': ('graph', 'catalog', 'news', 'profile'),
     'crypto': ('news', 'catalog'),
@@ -213,14 +216,16 @@ class ContextBuilder:
                 if (l.get('w') or 0) < min_weight:
                     continue
                 cand.append(l)
-            cand.sort(key=lambda l: -(l.get('w') or 0))
+            # peso × confianza (G4c): un vínculo "no verificado" (conf 0.3) no le gana a uno confirmado
+            cand.sort(key=lambda l: -((l.get('w') or 0) * (l.get('conf') if l.get('conf') is not None else 1)))
             nxt = set()
             for l in cand:
                 if len(seen) >= max_nodes + 1:
                     break
                 other = l['target'] if l['source'] in frontier else l['source']
                 edges.append({'source': l['source'], 'target': l['target'], 'type': l.get('type'),
-                              'w': l.get('w'), 'rel': (l.get('rel') or '')[:140]})
+                              'w': l.get('w'), 'rel': (l.get('rel') or '')[:140],
+                              'verified': l.get('verified', True) is not False})
                 if other not in seen:
                     seen.add(other)
                     nxt.add(other)
@@ -459,15 +464,20 @@ class ContextBuilder:
         sub = {'nodes': [], 'edges': []}
         if 'graph' in needs:
             tools.append('graph')
-            sub = self.subgraph(entity_id, max_nodes=lim['max_nodes'], max_depth=lim['max_depth'])
+            # SOLO relaciones de FLUJO (regla G4a, limpieza 2026-10-11): antes socios e inversores entraban como
+            # "Relaciones de suministro" y el analista los trataba como proveedores
+            from ontology.vocabulary import flow_relation_types
+            sub = self.subgraph(entity_id, max_nodes=lim['max_nodes'], max_depth=lim['max_depth'],
+                                rel_types=set(flow_relation_types()))
             if sub['edges']:
                 lines = []
                 lbl = {n['id']: n['label'] for n in sub['nodes']}
                 lbl[entity_id] = node.get('label') or entity_id
                 for e in sub['edges'][:15]:
                     lines.append(f"{lbl.get(e['source'], e['source'])} → {lbl.get(e['target'], e['target'])} "
-                                 f"({e['type']}, peso {e['w']}){': ' + e['rel'] if e['rel'] else ''}")
-                add('graph', f'Relaciones de suministro de {node.get("label")} en el grafo Khipus',
+                                 f"({e['type']}, peso {e['w']}{', NO VERIFICADO' if not e['verified'] else ''})"
+                                 f"{': ' + e['rel'] if e['rel'] else ''}")
+                add('graph', f'Relaciones de suministro (proveedor → cliente) de {node.get("label")} en el grafo Khipus',
                     ' | '.join(lines), reference=f'khipus:graph:{entity_id}', reliability=0.6,
                     source_kind='internal')
 

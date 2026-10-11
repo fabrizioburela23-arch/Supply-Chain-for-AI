@@ -31,16 +31,15 @@ FUNDAMENTALES EN VIVO de TODAS las cotizadas del grafo.
 
 ## Lo usan
 
-- [[core.portfolio_ai.py]] — lo importa
 - [[core.world.py]] — lo importa
-- [[ontology.agents.py]] — lo importa
 - [[research.agent_skills.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_live_fundamentals.py]]
 
 ## Mencionado en sesiones de trabajo

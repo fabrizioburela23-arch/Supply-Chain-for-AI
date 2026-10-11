@@ -177,20 +177,15 @@ def test_nombres_de_puesto():
 
 
 def test_mapeo_puesto_mascota_igual_que_el_cliente_y_el_chat():
-    """SEAT_MASCOT (servidor, sin dependencias) = engine/mascot.js seats = core/khipu_chat.SEAT_AGENT."""
-    from research.agent_skills import MASCOT_NAME, SEAT_MASCOT
-    js = _read('engine/mascot.js')
-    js_map = {}
-    for mid, seats in re.findall(r"\{\s*id:\s*'(\w+)'.*?seats:\s*\[([^\]]*)\]", js, re.S):
-        for s in re.findall(r"'(\w+)'", seats):
-            js_map[s] = mid
-    assert js_map, 'no se pudo leer engine/mascot.js'
-    for seat, mid in SEAT_MASCOT.items():
-        assert js_map.get(seat) == mid, seat
+    """La sala del comité, el chat y el cliente usan el registro ÚNICO (engine/agents_registry.js)."""
+    from core.agents_registry import AGENT_LABEL as REG_LABEL, SEAT_AGENT as REG_SEATS
     from core.khipu_chat import AGENT_LABEL, SEAT_AGENT
-    for seat, mid in SEAT_MASCOT.items():
-        assert SEAT_AGENT.get(seat) == mid, seat
-    assert MASCOT_NAME == AGENT_LABEL
+    from research.agent_skills import MASCOT_NAME, SEAT_MASCOT
+    assert SEAT_MASCOT is REG_SEATS and SEAT_AGENT is REG_SEATS
+    assert MASCOT_NAME == AGENT_LABEL == REG_LABEL
+    for seat, mid in (('fundamental', 'analista'), ('geopolitical', 'radar'), ('supply_chain', 'cadena'),
+                      ('risk_officer', 'tecnico'), ('chair', 'comite')):
+        assert SEAT_MASCOT[seat] == mid, seat
 
 
 # ════════════════════════════════════════════════════════════════════════════

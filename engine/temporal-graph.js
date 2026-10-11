@@ -1106,12 +1106,10 @@
   // ── Acciones (Fase 2): escritura humana auditada — CrearTesis, Anotar,
   // MarcarRiesgo, RegistrarDecision. Cada una pide actor (se recuerda en este
   // navegador) y queda en el Registro con quién/cuándo/por qué.
+  // EL ayudante único de engine/toast.js: promesa con el nombre guardado o lo pregunta UNA vez
+  // (diálogo bilingüe de la app, nunca window.prompt); sin nombre → 'usuario'.
   function _getActor() {
-    try {
-      let a = localStorage.getItem('khipu_actor');
-      if (!a) { a = (window.prompt('¿Cómo te identificamos en el Registro de Acciones? (tu nombre)') || '').trim(); if (a) localStorage.setItem('khipu_actor', a); }
-      return a || 'anónimo';
-    } catch (e) { return 'anónimo'; }
+    return Promise.resolve(window.khipuActor ? window.khipuActor({ ask: true }) : 'usuario');
   }
 
   const ACTION_FIELDS = {
@@ -1163,10 +1161,10 @@
     form.querySelector('#tkg-act-submit').onclick = () => _submitAction(id, sel.value, form);
   }
 
-  function _submitAction(id, actionType, form) {
+  async function _submitAction(id, actionType, form) {
     const status = form.querySelector('#tkg-act-status');
     const fields = ACTION_FIELDS[actionType] || [];
-    const body = { actor: _getActor() };
+    const body = { actor: await _getActor() };
     if (actionType === 'CrearTesis') body.company_id = id;
     if (actionType === 'MarcarRiesgo') body.company_id = id;
     if (actionType === 'RegistrarDecision') body.company_id = id;

@@ -140,7 +140,7 @@ REGLAS_CAPA = [
     ('core/world*.py', 'vivo'), ('core/gdelt_events.py', 'vivo'), ('core/gpr.py', 'vivo'),
     ('core/geosit.py', 'vivo'), ('core/country_geo.py', 'vivo'), ('core/space.py', 'vivo'),
     ('core/news_feed.py', 'vivo'), ('core/providers/*', 'vivo'),
-    ('engine/worldmonitor.js', 'vivo'), ('engine/spacemonitor.js', 'vivo'), ('engine/geosituation.js', 'vivo'),
+    ('engine/worldmonitor.js', 'vivo'), ('engine/spacemonitor.js', 'vivo'),
     ('engine/globe.js', 'vivo'), ('engine/geo_coords.js', 'vivo'), ('engine/live.js', 'vivo'),
     ('engine/termdata.js', 'vivo'), ('engine/fincard.js', 'vivo'), ('engine/crypto.js', 'vivo'),
     ('engine/brief.js', 'vivo'),

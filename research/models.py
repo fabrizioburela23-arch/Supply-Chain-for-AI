@@ -124,11 +124,30 @@ class AgentRun(Base):
     est_cost_usd = Column(Float, nullable=True)
     claims_generated = Column(Integer, nullable=False, default=0)
     validation = Column(JSONB, nullable=False, default=dict)       # attempts / repaired / rejected
-    errors = Column(JSONB, nullable=False, default=list)
+    errors = Column(JSONB, nullable=False, default=list)           # SOLO textos de error (list[str])
+    # preguntas que el analista dejó abiertas (limpieza 2026-10-11: antes iban DENTRO de `errors` como
+    # {'unresolved_questions': [...]} y un run exitoso parecía tener errores — MCP y la sala del comité
+    # los mostraban crudos). Leer con open_questions_of(run): también entiende las filas viejas.
+    open_questions = Column(JSONB, nullable=True)
     summary = Column(Text, nullable=True)
     started_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     latency_ms = Column(Integer, nullable=True)
+
+
+def open_questions_of(run):
+    """Preguntas abiertas de un AgentRun: la columna nueva + las que las filas viejas guardaban
+    como dict dentro de `errors`."""
+    out = list(getattr(run, 'open_questions', None) or [])
+    for e in (getattr(run, 'errors', None) or []):
+        if isinstance(e, dict):
+            out += list(e.get('unresolved_questions') or [])
+    return out
+
+
+def errors_of(run):
+    """Solo los errores de verdad (textos) de un AgentRun — sin las preguntas abiertas viejas."""
+    return [e for e in (getattr(run, 'errors', None) or []) if isinstance(e, str)]
 
 
 class ResearchJob(Base):

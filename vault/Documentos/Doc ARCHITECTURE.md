@@ -14,7 +14,7 @@ tags: ["capa/documentacion", "tipo/documento"]
 
 ## De qué trata
 
-ARCHITECTURE — Khipus Finance AI → Live Investment Graph — Documento de decisión para \*\*Phase 1 — Live Investment Graph V1\*\*. Escrito tras auditar el repositorio existente (~53.000 líneas) contra la especificación. Fecha: 2026-09-21.
+ARCHITECTURE — Khipus Finance Intelligence → Live Investment Graph — Documento de decisión para \*\*Phase 1 — Live Investment Graph V1\*\*. Escrito tras auditar el repositorio existente (~53.000 líneas) contra la especificación. Fecha: 2026-09-21.
 
 ## Menciona
 

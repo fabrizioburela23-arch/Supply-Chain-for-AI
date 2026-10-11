@@ -71,12 +71,10 @@
     return _handleEntityFunc(entity, fn, parts.slice(2));
   }
 
+  // quién (registro de auditoría / dueño de alertas): EL ayudante único de engine/toast.js.
+  // Promesa: el nombre guardado o lo pregunta UNA vez (diálogo bilingüe de la app); sin nombre → 'usuario'.
   function _getActorKhipu() {
-    try {
-      let a = localStorage.getItem('khipu_actor');
-      if (!a) { a = (window.prompt('¿Cómo te identificamos?') || '').trim(); if (a) localStorage.setItem('khipu_actor', a); }
-      return a || 'anónimo';
-    } catch (e) { return 'anónimo'; }
+    return Promise.resolve(window.khipuActor ? window.khipuActor({ ask: true }) : 'usuario');
   }
 
   async function _handleEntityFunc(entity, fn, args) {
@@ -135,7 +133,7 @@
   }
 
   async function _createThesis(id, label, texto) {
-    const actor = _getActorKhipu();
+    const actor = await _getActorKhipu();
     try {
       // escritura de la ontología → PIN de operador vía window._tradeFetch
       const url = `${_base()}/api/ontology/actions/CrearTesis`;
@@ -338,7 +336,7 @@
 
   async function _handleAlert(args) {
     const sub = (args[0] || '').toUpperCase();
-    const actor = _getActorKhipu();
+    const actor = await _getActorKhipu();
     if (sub === 'LIST') {
       try {
         const r = await fetch(`${_base()}/api/ontology/alerts?owner=${encodeURIComponent(actor)}`);

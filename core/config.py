@@ -12,10 +12,8 @@ load_dotenv()
 
 FINNHUB  = os.getenv('FINNHUB_KEY', '')
 CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
-# Modelo de Claude para los análisis. Decisión del usuario (2026-07): SONNET 5
-# EN TODO — es el mejor equilibrio calidad/velocidad de la familia Sonnet y
-# rinde a nivel Opus en muchas tareas. Cambiable sin tocar código con AI_MODEL.
-AI_MODEL = os.getenv('AI_MODEL', 'claude-sonnet-5')
+# (AI_MODEL — un único modelo para todo — se borró en la limpieza 2026-10-11: ya no decidía nada; los
+#  modelos son AI_MODEL_FAST y AI_MODEL_DEEP de abajo y el orden de proveedores, provider_order().)
 
 # ── IA híbrida: dos niveles de modelo ───────────────────────────────────────
 # 'fast'  → comandos, ruteo, resúmenes de noticias, alertas, agente de trading.

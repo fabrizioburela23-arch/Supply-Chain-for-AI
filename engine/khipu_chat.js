@@ -85,7 +85,6 @@
   // cartera" → comité de cartera; "/ayuda" → la lista. Los @analistas
   // (@fundamental, @noticias, @todos…) siguen yendo al cerebro (research/ask_agent).
   function _fold(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
-  function _lang() { try { return (window.LANG || localStorage.getItem('eco_lang') || 'es') === 'en'; } catch (e) { return false; } }
   var _CARTERA_RX = /^(?:de\s+|a\s+)?(?:mi|my|la|the)?\s*(?:cartera|portafolio|portfolio|posiciones|positions)$/i;
   function helpText(en) {
     return en ? [
@@ -116,14 +115,14 @@
   }
   // 2026-10-05: el comité de cartera RESPONDE dentro del chat ("/cartera dime si debería reducir…"
   // antes solo abría una pantalla). La pregunta viaja al agente con la cartera elegida en el chip.
-  // analistas del comité: token → puesto (research/ask_agent.SEAT_WORDS) + nombre/ícono (research/deliberation.AGENT_NAMES)
-  // Khipus OS (2026-10-06): las mascotas también son menciones — @analista = fundamental, @radar = noticias
-  var SEAT_OF = { fundamental: 'fundamental', fundamentales: 'fundamental', tecnico: 'technical', technical: 'technical',
-    noticias: 'news', news: 'news', cadena: 'supply_chain', supply: 'supply_chain', geopolitico: 'geopolitical', geo: 'geopolitical',
-    geopolitical: 'geopolitical', macro: 'macro', analista: 'fundamental', analyst: 'fundamental', radar: 'news' };
-  var SEAT_NAME = { fundamental: ['📊', 'Analista fundamental', 'Fundamental analyst'], technical: ['📈', 'Analista técnico', 'Technical analyst'],
-    news: ['📰', 'Analista de noticias', 'News analyst'], supply_chain: ['🔗', 'Analista de cadena de suministro', 'Supply-chain analyst'],
-    geopolitical: ['🗺️', 'Analista geopolítico', 'Geopolitical analyst'], macro: ['🌐', 'Analista macro', 'Macro analyst'] };
+  // analistas que responden sobre TU cartera: palabra de la mención → puesto + nombre/ícono. Salen del
+  // registro ÚNICO engine/agents_registry.js (window.KHIPU_AGENTS; limpieza 2026-10-11 — antes eran
+  // copias a mano de research/ask_agent.SEAT_WORDS y research/deliberation.AGENT_NAMES).
+  var REG = W.KHIPU_AGENTS || { agents: [], seats: {}, mention_words: {}, tool_agent: {} };
+  var PF_SEATS = ['fundamental', 'technical', 'news', 'supply_chain', 'geopolitical', 'macro'];
+  var SEAT_OF = {}, SEAT_NAME = {};
+  Object.keys(REG.mention_words).forEach(function (w) { var s = REG.mention_words[w]; if (PF_SEATS.indexOf(s) >= 0) SEAT_OF[w] = s; });
+  PF_SEATS.forEach(function (s) { var m = REG.seats[s]; if (m) SEAT_NAME[s] = [m.icon, m.es, m.en]; });
   // 2026-10-05 (feedback): la cartera es el CONTEXTO de la pregunta; quién responde es otra cosa.
   //   seat null        → Khipu responde SOLO tu pregunta con los datos de tu cartera (sin veredicto)
   //   seat <analista>  → ese analista, desde su especialidad
@@ -136,7 +135,7 @@
     return { kind: 'agentask', agent: 'portfolio', question: q, seat: seat || null };
   }
   function agentCommand(t, deps) {
-    var en = _lang();
+    var en = lang() === 'en';
     var R = function (q) { return deps.resolve ? deps.resolve(String(q || '').replace(/[?¿!¡.]+$/g, '').trim()) : null; };
     var notFound = function (q) {
       var msg = (window.KhipuResolve && window.KhipuResolve.notFound) ? window.KhipuResolve.notFound(q)
@@ -212,7 +211,7 @@
       var brokerOnly = /br[oó]ker|broker|alpaca/.test(low);
       var pfs = brokerOnly ? [] : pfSources().filter(function (x) { return x.key.indexOf('pf:') === 0 || x.key === 'market'; });
       if (!pfs.length) return { kind: 'account' };
-      var en2 = _lang();
+      var en2 = lang() === 'en';
       var acts = [{ type: 'broker' }].concat(pfs.map(function (x) {
         return x.key === 'market' ? { type: 'switch_tab', arg: 'market', label: en2 ? 'My Market positions' : 'Mis posiciones de Mercado' }
           : { type: 'open_portfolio', arg: x.key.slice(3), label: String(x.label).replace(/^[^\wÀ-ÿ]+\s*/, '') };
@@ -279,41 +278,24 @@
 
   /* ══ 1b) AGENTES (Khipus OS, 2026-10-06 — docs/KHIPUS_OS.md §3.2/§3.5) ══════
      Seis mascotas: khipu (te responde), analista, radar, cadena, tecnico, comite.
-     · TOOL_AGENT: herramienta del cerebro → mascota. EL MISMO mapa vive en el servidor
-       (core/khipu_chat.py TOOL_AGENT/SEAT_AGENT) y el de puesto → mascota en engine/mascot.js:
-       cambiar los tres juntos.
+     · TOOL_AGENT: herramienta del cerebro → mascota; SEAT_AGENT: puesto → mascota. Del registro
+       único engine/agents_registry.js (el servidor lee el mismo archivo).
      · predictAgents(texto): quién VA a investigar (predicción por intención, se reemplaza
        en vivo por el progreso real del servidor y, al final, por agents_used).
      · planWindows(respuesta, pregunta, prefs, centrado): qué ventanas nativas abrir solas. */
-  var AGENT_ORDER = ['khipu', 'analista', 'radar', 'cadena', 'tecnico', 'comite'];
-  var AGENT_NAME = { khipu: ['Khipu', 'Khipu'], analista: ['Analista', 'Analyst'], radar: ['Radar', 'Radar'],
-    cadena: ['Cadena', 'Chain'], tecnico: ['Técnico', 'Technical'], comite: ['Comité', 'Committee'] };
-  // respaldo visual si engine/mascot.js no cargó (mismos tonos que las mascotas)
-  var AGENT_TINT = { khipu: ['#f07fa0', '#7a4ce8', '#ff8746'], analista: ['#7d8be6', '#4054cf', '#6b9ff4'], radar: ['#f78189', '#e63e52', '#f6808a'],
-    cadena: ['#4cb1ab', '#1b9386', '#83cd70'], tecnico: ['#f7cc63', '#e6a117', '#f5c54a'], comite: ['#bc78e5', '#7a3fe0', '#d88ae6'] };
-  var TOOL_AGENT = {
-    get_company: 'analista', search_companies: 'analista', get_research: 'analista', get_claim_evidence: 'analista',
-    get_supply_chain: 'cadena', rank_companies: 'cadena',
-    get_news: 'radar', get_world_events: 'radar', web_search: 'radar', scenario_exposure: 'radar',
-    market_movers: 'tecnico', get_option_greeks: 'tecnico', get_risk_report: 'tecnico',
-    get_committee_memo: 'comite', get_conclusions_board: 'comite', get_track_record: 'comite',
-  };
-  var SEAT_AGENT = {};
-  [['khipu', ['khipu', 'brain']],
-   ['analista', ['fundamental', 'fundamentals', 'macro', 'valuation']],
-   ['radar', ['news', 'sentiment', 'geopolitical', 'geo', 'events', 'crypto']],
-   ['cadena', ['supply_chain', 'chain', 'supply']],
-   ['tecnico', ['technical', 'momentum', 'risk', 'risk_observation', 'risk_officer', 'market']],
-   ['comite', ['committee', 'chair', 'portfolio', 'president', 'quant', 'mandate', 'all']]].forEach(function (p) {
-    p[1].forEach(function (s) { SEAT_AGENT[s] = p[0]; });
+  // mascotas, colores de respaldo, herramienta → mascota, puesto → mascota y palabra → mascota: TODO del
+  // registro único (el servidor lee el mismo archivo: core/agents_registry.py)
+  var AGENT_ORDER = [], AGENT_NAME = {}, AGENT_TINT = {}, SEAT_AGENT = {}, MENTION_AGENT = {};
+  REG.agents.forEach(function (a) {
+    AGENT_ORDER.push(a.id);
+    AGENT_NAME[a.id] = [a.es, a.en];
+    AGENT_TINT[a.id] = [a.colors[0], a.colors[2], a.colors[3]];   // respaldo visual si engine/mascot.js no cargó
+    a.seats.forEach(function (s) { SEAT_AGENT[s] = a.id; });
+    MENTION_AGENT[a.id] = a.id;                                      // "@cadena", "@radar"…
   });
-  // palabras (sin acentos) de una mención → mascota ("@noticias", "@geo", "@todos"…)
-  var MENTION_AGENT = { fundamental: 'analista', fundamentales: 'analista', analista: 'analista', analyst: 'analista', macro: 'analista',
-    financiero: 'analista', investigacion: 'analista', research: 'analista',
-    noticias: 'radar', news: 'radar', radar: 'radar', geo: 'radar', geopolitico: 'radar', geopolitical: 'radar', cripto: 'radar', crypto: 'radar',
-    cadena: 'cadena', supply: 'cadena', supply_chain: 'cadena', suministro: 'cadena', proveedores: 'cadena', chain: 'cadena',
-    tecnico: 'tecnico', technical: 'tecnico', grafico: 'tecnico',
-    comite: 'comite', committee: 'comite', todos: 'comite', all: 'comite', analistas: 'comite' };
+  var TOOL_AGENT = REG.tool_agent;
+  Object.keys(REG.mention_words).forEach(function (w) { var id = SEAT_AGENT[REG.mention_words[w]]; if (id) MENTION_AGENT[w] = id; });
+  MENTION_AGENT.investigacion = MENTION_AGENT.research = 'analista';   // @investigacion lanza la investigación (pickers.js)
 
   function agentName(id) {
     try { if (W.KhipuMascot && W.KhipuMascot.name && AGENT_NAME[id]) return W.KhipuMascot.name(id); } catch (e) {}
@@ -664,7 +646,8 @@
       }
       var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
       var timer = ctl ? setTimeout(function () { try { ctl.abort(); } catch (e) {} }, 110000) : null;
-      var actor = null; try { actor = W.localStorage.getItem('khipu_actor'); } catch (e) {}
+      var actor = null;   // EL ayudante único (engine/toast.js); sin él, el nombre guardado tal cual
+      if (W.khipuActor) actor = W.khipuActor(); else { try { actor = (W.localStorage.getItem('khipu_actor') || '').trim(); } catch (e) {} }
       return fetch(base + '/api/committee/portfolio/ask', {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Khipu-Owner': _owner() },
         signal: ctl ? ctl.signal : undefined,
@@ -724,7 +707,7 @@
      fuera de ella (Command Center viejo) los respaldos son los oscuros de siempre. */
   var CSS = '' +
     '.kc-thread{display:flex;flex-direction:column;gap:16px;width:100%;max-width:860px;margin:0 auto;padding:6px 2px 10px;box-sizing:border-box;color:var(--os-ink,#E8EDFB);--kc-warn:#F2C46D}' +
-    'body:not(.dark) #bcp-ov:not(.kos-classic) .kc-thread{--kc-warn:#8F5B00}' +
+    'body:not(.dark) #bcp-ov .kc-thread{--kc-warn:#8F5B00}' +
     '.kc-msg{font-size:14.5px;line-height:1.55;overflow-wrap:anywhere;word-break:break-word;letter-spacing:-.003em}' +
     '.kc-user{align-self:flex-end;max-width:86%;box-sizing:border-box;background:var(--os-surface-2,rgba(255,255,255,.07));color:var(--os-ink,#E8EDFB);' +
       'border-radius:18px;padding:11px 16px;white-space:pre-wrap;animation:kcIn .2s ease both}' +

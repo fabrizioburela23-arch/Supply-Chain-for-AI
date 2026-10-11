@@ -30,13 +30,13 @@ tags: ["capa/comite", "tipo/modulo"]
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 - [[engine.resolve.js]] — usa `_surface`
 - [[engine.sync.js]] — usa `KhipuSync`
-- [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **59 de 93** (línea 7883), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
+Se carga en [[app.html]] en la posición **57 de 91** (línea 7892), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 59)
+- [[app.html]] — lo carga con `<script>` (posición 57)
 - [[engine.committee.js]] — usa `KhipuPortfolioCommittee`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolioCommittee`, `KhipuProfile`
 - [[engine.localcharts.js]] — usa `KhipuPortfolioCommittee`
@@ -55,8 +55,10 @@ Se carga en [[app.html]] en la posición **59 de 93** (línea 7883), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_committee_os_pf_apply.py]]
 - [[tests.test_committee_os_pf_tokens.py]]
+- [[tests.test_committee_os_ui.py]]
 - [[tests.test_portfolio_persist.py]]
 
 ## Mencionado en sesiones de trabajo

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/tools.py"
 lenguaje: "python"
-lineas: 1706
+lineas: 1708
 aliases: ["mcp_server/tools.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/tools.py
 
-> Módulo · capa [[Capa MCP y API]] · 1.706 líneas · `mcp_server/tools.py`
+> Módulo · capa [[Capa MCP y API]] · 1.708 líneas · `mcp_server/tools.py`
 
 ## Para qué sirve
 
@@ -29,31 +29,31 @@ catálogo de herramientas MCP de Khipus.
 - `call(name, args, ctx)` — → dict (éxito). Lanza ToolError (isError) o InvalidParams (-32602). _(línea 212)_
 - `relation_class(rel_type)` _(línea 347)_
 - `flow_types()` — Tipos de FLUJO (= proveedor/cliente), leídos del vocabulario. _(línea 351)_
-- `t_search_companies(ctx, query, limit=…)` _(línea 538)_
-- `t_get_company(ctx, id_or_ticker, include_live=…)` _(línea 557)_
-- `t_get_supply_chain(ctx, id, direction=…, depth=…, min_weight=…, limit=…, include_partners=…)` _(línea 683)_
-- `t_get_ontology_object(ctx, id, events_limit=…)` _(línea 777)_
-- `t_get_research(ctx, entity, limit=…)` _(línea 863)_
-- `t_get_claim_evidence(ctx, claim_id)` _(línea 925)_
-- `t_get_research_job(ctx, job_id)` _(línea 999)_
-- `t_get_risk_report(ctx, positions, horizon_days=…)` _(línea 1046)_
-- `t_get_option_greeks(ctx, options)` _(línea 1071)_
-- `t_get_world_events(ctx, layers=…, window=…, limit=…)` _(línea 1097)_
-- `t_get_committee_memo(ctx, entity=…, memo_id=…)` _(línea 1159)_
-- `t_get_conclusions_board(ctx, limit=…, side=…)` _(línea 1195)_
-- `t_get_research_health(ctx, fresh=…)` _(línea 1232)_
-- `t_get_track_record(ctx, agent_type=…)` _(línea 1243)_
-- `t_run_research(ctx, entity, depth=…, only_missing=…)` _(línea 1270)_
-- `t_run_committee(ctx, entity, client_id=…)` _(línea 1368)_
-- `t_get_account(ctx)` _(línea 1500)_
-- `t_get_positions(ctx)` _(línea 1516)_
-- `t_preview_order(ctx, symbol, side, rationale, notional=…, qty=…, order_type=…, limit_price=…)` _(línea 1550)_
-- `t_submit_order(ctx, preview_id)` _(línea 1585)_
-- `t_list_orders(ctx, status=…, limit=…)` _(línea 1621)_
-- `t_cancel_order(ctx, order_id)` _(línea 1636)_
-- `t_get_order_status(ctx, order_id)` _(línea 1659)_
-- `catalog()` — Para la UI / docs: todas las herramientas con su alcance. _(línea 1679)_
-- `reset_caches()` _(línea 1684)_
+- `t_search_companies(ctx, query, limit=…)` _(línea 539)_
+- `t_get_company(ctx, id_or_ticker, include_live=…)` _(línea 558)_
+- `t_get_supply_chain(ctx, id, direction=…, depth=…, min_weight=…, limit=…, include_partners=…)` _(línea 684)_
+- `t_get_ontology_object(ctx, id, events_limit=…)` _(línea 778)_
+- `t_get_research(ctx, entity, limit=…)` _(línea 864)_
+- `t_get_claim_evidence(ctx, claim_id)` _(línea 926)_
+- `t_get_research_job(ctx, job_id)` _(línea 1000)_
+- `t_get_risk_report(ctx, positions, horizon_days=…)` _(línea 1048)_
+- `t_get_option_greeks(ctx, options)` _(línea 1073)_
+- `t_get_world_events(ctx, layers=…, window=…, limit=…)` _(línea 1099)_
+- `t_get_committee_memo(ctx, entity=…, memo_id=…)` _(línea 1161)_
+- `t_get_conclusions_board(ctx, limit=…, side=…)` _(línea 1197)_
+- `t_get_research_health(ctx, fresh=…)` _(línea 1234)_
+- `t_get_track_record(ctx, agent_type=…)` _(línea 1245)_
+- `t_run_research(ctx, entity, depth=…, only_missing=…)` _(línea 1272)_
+- `t_run_committee(ctx, entity, client_id=…)` _(línea 1370)_
+- `t_get_account(ctx)` _(línea 1502)_
+- `t_get_positions(ctx)` _(línea 1518)_
+- `t_preview_order(ctx, symbol, side, rationale, notional=…, qty=…, order_type=…, limit_price=…)` _(línea 1552)_
+- `t_submit_order(ctx, preview_id)` _(línea 1587)_
+- `t_list_orders(ctx, status=…, limit=…)` _(línea 1623)_
+- `t_cancel_order(ctx, order_id)` _(línea 1638)_
+- `t_get_order_status(ctx, order_id)` _(línea 1661)_
+- `catalog()` — Para la UI / docs: todas las herramientas con su alcance. _(línea 1681)_
+- `reset_caches()` _(línea 1686)_
 
 **Internas** (empiezan con `_`): `_now_iso`, `_coerce`, `_bounded`, `_snapshot`, `_private_valuations`, `_link_trust`, `_resolve`, `_resolve_or_fail`, `_listed`, `_brief`, `_search`, `_edges`, `_neighbor`, `_nrs`, `_live_profile`, `_margin_pct`, `_need_db`, `_iso`, `_with_genesis`, `_claim_brief`, `_unsupported_money`, `_deferred_next`, `_job_coverage`, `_module`, `_trim_memo`, `_run_committee_async`, `_brokerage`, `_trade_ctx`, `_session`, `_mode_badge`, `_client_public`, `_order_public`, `_own_order`, `_prefer_canonical`, `_entity_ids_for`
 
@@ -80,7 +80,7 @@ Define **23 herramientas MCP** → [[API herramientas MCP]]
 - [[ontology.vocabulary.py]] — importa `UNVERIFIED_CONF`, `UNVERIFIED_RX`, `vocabulary`
 - [[research.committee.py]] — importa `(dinámico: research.committee)`, `fail_memo`, `progress_clear`, `run_committee`
 - [[research.health.py]] — importa `(dinámico: research.health)`
-- [[research.models.py]] — importa `AgentRun`, `ClaimRelation`, `ResearchClaim`, `ResearchEvidence`, `ResearchJob`
+- [[research.models.py]] — importa `AgentRun`, `ClaimRelation`, `ResearchClaim`, `ResearchEvidence`, `ResearchJob`, `errors_of`, `open_questions_of`
 - [[research.outcomes.py]] — importa `(dinámico: research.outcomes)`
 - [[research.runner.py]] — importa `(dinámico: research.runner)`, `job_coverage`, `queue_position`, `research_queue_state`
 - [[data.grafo_v0.json]] — lo nombra por su ruta
@@ -94,7 +94,7 @@ Define **23 herramientas MCP** → [[API herramientas MCP]]
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.protocol.py]] — lo importa
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 11 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -103,6 +103,7 @@ _Además lo importan 10 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_fixes_server.py]]

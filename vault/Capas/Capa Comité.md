@@ -9,25 +9,25 @@ tags: ["capa/comite", "tipo/capa"]
 
 > El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera.
 
-**8 archivos · 6.529 líneas.** Volver al [[00 Mapa de Khipus]].
+**8 archivos · 6.502 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[research.committee.py]] — 2.214 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
-- [[engine.committee.js]] — 1.252 líneas · PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
+- [[research.committee.py]] — 2.215 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
+- [[engine.committee.js]] — 1.239 líneas · PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
 - [[research.outcomes.py]] — 716 líneas · PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - [[research.committee_api.py]] — 688 líneas · blueprint /api/committee/\* (PHASE 3).
 - [[engine.pfcommittee.js]] — 550 líneas · 💼 COMITÉ DE CARTERA (pestaña "Mi cartera" del Comité)
 - [[research.debate.py]] — 385 líneas · DEBATE CON IA del comité (cada puesto razona de verdad).
 - [[core.portfolio_advisor.py]] — 363 líneas · COMITÉ DE CARTERA: analiza una cartera completa y da ACCIONES CONCRETAS como consejo (reducir, vender, añadir, diversificar).
-- [[research.deliberation.py]] — 361 líneas · la SALA DEL COMITÉ: puestos y conversación visible.
+- [[research.deliberation.py]] — 346 líneas · la SALA DEL COMITÉ: puestos y conversación visible.
 
 ## Conexiones con otras capas
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
 | usa a | [[Capa Investigación]] | 15 |
-| usa a | [[Capa Infraestructura]] | 13 |
+| usa a | [[Capa Infraestructura]] | 14 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 8 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |

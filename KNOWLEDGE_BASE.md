@@ -49,8 +49,8 @@ pasa al siguiente. Todas las features de IA (Canvas, Khipu, análisis, research 
 ## Variables de entorno (Railway, servicio principal)
 Configuradas: ANTHROPIC_KEY, GEMINI_KEY, ELEVENLABS_KEY, ELEVENLABS_AGENT_ID,
 ELEVENLABS_ALLOW_OVERRIDE, FINNHUB_KEY, FMP_KEY, MARKETSTACK_KEY, AV_KEY, ALPACA_KEY,
-ALPACA_SECRET, ALPACA_BASE, AI_MODEL.
-Recomendadas: SECRET_KEY (fuerte), AI_ORDER, RAG_URL (tras desplegar el RAG).
+ALPACA_SECRET, ALPACA_BASE (AI_MODEL ya no se usa desde 2026-10-11: borrarla; los modelos son AI_MODEL_FAST/AI_MODEL_DEEP).
+Recomendadas: SECRET_KEY (fuerte). (AI_ORDER: mejor borrarla; RAG_URL: el RAG se eliminó.)
 Opcionales: NVIDIA_KEY, SEC_USER_AGENT.
 
 ## Endpoints clave (server.py)

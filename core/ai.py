@@ -1037,11 +1037,6 @@ def _ai_json(system, prompt, max_tokens=1000, tier='fast', model=None):
     raise ValueError('la IA respondió pero no en el formato esperado (JSON)')
 
 
-# Compat: las features existentes llaman _claude_complete → ahora multi-proveedor.
-def _claude_complete(system, prompt, max_tokens, tier='fast'):
-    return _ai_complete(system, prompt, max_tokens, tier)
-
-
 _THINK_RX = re.compile(r'<(think|thinking|reasoning)>.*?</\1>', re.S | re.I)
 
 

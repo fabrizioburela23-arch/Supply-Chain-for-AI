@@ -71,10 +71,11 @@ Fase 2 del roadmap: Acciones, el ADN de "escritura auditada" de Palantir. El usu
 - [[ontology.api.py]] — lo importa
 - [[ontology.reconcile.py]] — lo importa
 
-_Además lo importan 11 pruebas (lista abajo)._
+_Además lo importan 12 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_docs_facts.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_investigador.py]]
 - [[tests.test_matrix.py]]

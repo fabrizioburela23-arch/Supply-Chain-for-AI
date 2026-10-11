@@ -64,9 +64,10 @@ NEED_ORDER = ('profile', 'financials', 'ratios', 'peers', 'candles', 'sec', 'new
 DEEP_WEB = ('En la investigación profunda, también búsqueda web (Tavily, si está configurada)',
             'In deep research, also web search (Tavily, when configured)')
 
-# ── las 6 mascotas (mismos ids y nombres que engine/mascot.js) ───────────────
+# ── las 6 mascotas: aquí solo el TEXTO del perfil; nombre, rol y tipos de analista salen del registro
+# ÚNICO engine/agents_registry.js (core/agents_registry.py, limpieza 2026-10-11) ───────────────────
 PROFILES = (
-    {'id': 'khipu', 'es': 'Khipu', 'en': 'Khipu', 'role_es': 'Te responde', 'role_en': 'Answers you',
+    {'id': 'khipu',
      'does_es': ('Entiende tu pregunta, decide a qué agentes consultar, junta sus datos y te responde en lenguaje '
                  'claro, con la fuente y la hora de cada cifra. No compra ni vende: te informa y te muestra las '
                  'ventanas que ayudan a entender.'),
@@ -85,8 +86,8 @@ PROFILES = (
                     'Las ventanas que abren solas a los costados del chat'],
      'outputs_en': ['The answer in the chat, with sources and time', 'What each agent contributed',
                     'The windows that open by themselves beside the chat'],
-     'research_types': [], 'run_types': [], 'windows': []},
-    {'id': 'analista', 'es': 'Analista', 'en': 'Analyst', 'role_es': 'Fundamentales', 'role_en': 'Fundamentals',
+     'run_types': [], 'windows': []},
+    {'id': 'analista',
      'does_es': ('Mira si el negocio es sano: ventas y su crecimiento, márgenes, caja y deuda, y si el precio ya '
                  'refleja todo eso frente a empresas parecidas. También cómo le afectan las tasas de interés y el '
                  'ciclo económico.'),
@@ -103,8 +104,8 @@ PROFILES = (
      'outputs_en': ['Price, market cap and network risk of the company',
                     'Conclusions with cited evidence, horizon and computed confidence',
                     'The "At a glance" window'],
-     'research_types': ['fundamental', 'macro'], 'run_types': ['fundamental', 'macro'], 'windows': ['glance']},
-    {'id': 'radar', 'es': 'Radar', 'en': 'Radar', 'role_es': 'Noticias y eventos', 'role_en': 'News & events',
+     'run_types': ['fundamental', 'macro'], 'windows': ['glance']},
+    {'id': 'radar',
      'does_es': ('Vigila lo que pasa en el mundo: noticias de la empresa, conflictos, sanciones, controles de '
                  'exportación, desastres y cripto. Separa lo confirmado de los rumores y te dice qué puede mover '
                  'el precio pronto.'),
@@ -118,9 +119,9 @@ PROFILES = (
                     'Conclusiones de corto y mediano plazo'],
      'outputs_en': ['Recent headlines with outlet and link', 'World events that may touch your companies',
                     'Short- and medium-term conclusions'],
-     'research_types': ['news', 'geopolitical', 'crypto'], 'run_types': ['news', 'geopolitical', 'crypto'],
+     'run_types': ['news', 'geopolitical', 'crypto'],
      'windows': []},
-    {'id': 'cadena', 'es': 'Cadena', 'en': 'Chain', 'role_es': 'Cadena de suministro', 'role_en': 'Supply chain',
+    {'id': 'cadena',
      'does_es': ('Sigue de quién depende cada empresa y a quién abastece: proveedores críticos o únicos, '
                  'concentración por país y cuellos de botella. Si un proveedor falla, te dice quién sufre y cuánto.'),
      'does_en': ('Tracks whom each company depends on and whom it supplies: critical or single suppliers, country '
@@ -133,8 +134,8 @@ PROFILES = (
                     'La ventana «Cadena de suministro»'],
      'outputs_en': ['Key suppliers and customers with their weight', 'Where its risk comes from (also indirect)',
                     'The "Supply chain" window'],
-     'research_types': ['supply_chain'], 'run_types': ['supply_chain'], 'windows': ['supplychain']},
-    {'id': 'tecnico', 'es': 'Técnico', 'en': 'Technical', 'role_es': 'Precio y momento', 'role_en': 'Price & momentum',
+     'run_types': ['supply_chain'], 'windows': ['supplychain']},
+    {'id': 'tecnico',
      'does_es': ('Lee el precio: tendencia, impulso, volatilidad y cuánto cayó desde su máximo, comparado con el '
                  'S&P 500. También observa riesgos medibles como deuda, concentración y volatilidad. Solo plazos '
                  'cortos: no adivina precios a largo plazo.'),
@@ -147,9 +148,9 @@ PROFILES = (
                  'of real daily prices (volatility, VaR, max drawdown)'],
      'outputs_es': ['Qué sube y qué baja hoy', 'Riesgo de tu cartera en números', 'Conclusiones de corto plazo'],
      'outputs_en': ['What is up and down today', 'Your portfolio risk in numbers', 'Short-term conclusions'],
-     'research_types': ['technical', 'risk_observation'], 'run_types': ['technical', 'risk_observation'],
+     'run_types': ['technical', 'risk_observation'],
      'windows': []},
-    {'id': 'comite', 'es': 'Comité', 'en': 'Committee', 'role_es': 'Decisiones', 'role_en': 'Decisions',
+    {'id': 'comite',
      'does_es': ('Reúne las conclusiones de todos los analistas, pesa cada una por su confianza y por el historial '
                  'de aciertos de quien la dijo, y calcula una convicción de −100 (en contra) a +100 (a favor). Si hay '
                  'datos suficientes propone comprar, mantener o vender, y SIEMPRE espera tu aprobación.'),
@@ -170,8 +171,13 @@ PROFILES = (
                     'La ventana «Convicción de tus agentes»'],
      'outputs_en': ['Conviction from −100 to +100, by horizon', 'A proposal that needs your approval',
                     'The "Your agents\' conviction" window'],
-     'research_types': [], 'run_types': ['committee'], 'windows': ['conviction']},
+     'run_types': ['committee'], 'windows': ['conviction']},
 )
+from core.agents_registry import AGENT_BY_ID as _AGENT_BY_ID, research_types_of as _research_types_of  # noqa: E402
+for _p in PROFILES:
+    _a = _AGENT_BY_ID[_p['id']]
+    _p.update(es=_a['es'], en=_a['en'], role_es=_a['role_es'], role_en=_a['role_en'],
+              research_types=_research_types_of(_p['id']))
 AGENT_IDS = tuple(p['id'] for p in PROFILES)
 
 HELP = {

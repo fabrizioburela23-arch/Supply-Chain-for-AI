@@ -18,7 +18,13 @@
    API: window.KhipuWorld = { mount(container), open(), focus(lat, lon), unmount() }
    Datos: /api/world/events · /api/world/brief · /api/world/reference ·
           /api/world/exposure · /api/matrix/status · POST /api/matrix/impact.
-   Todo bilingüe (window.LANG). Cada métrica con su "?" (engine/explain.js). */
+   Todo bilingüe (window.LANG; re-etiqueta solo al cambiar de idioma). Cada métrica con su "?" (engine/explain.js).
+   KHIPUS OS (2026-10-11): .wm lleva .kos-themed → el HUD (barra, paneles, botones, leyenda, burbuja) usa los
+   tokens --os-* de engine/cockpit.js (claro = body sin .dark, oscuro = body.dark; el valor tras la coma de cada
+   var() es el respaldo, la piel NEXUS vieja). El ESCENARIO del globo (STAGE) sigue oscuro a propósito: el look
+   'monitor' de engine/globe.js dibuja halo aditivo y estrellas pensados para el espacio. Los colores de DATOS
+   (capas, severidad, NRS, globo) viven en LAYERS / PAL / GLOBE / sevColor / nrsColor; como texto van en .wm-c y en
+   el tema claro se oscurecen para leerse. */
 (function () {
   'use strict';
 
@@ -54,6 +60,14 @@
     { id: 'fabs', g: 'ref', c: '#00E0FF', i: '🏭', es: 'Fabs críticas', en: 'Critical fabs' },
   ];
   var LBY = {}; LAYERS.forEach(function (l) { LBY[l.id] = l; });
+  // escenario del globo (no es piel: el globo 'monitor' necesita fondo de espacio) + tinta sobre colores de datos
+  var STAGE = { bg: 'radial-gradient(120% 90% at 50% 45%,#0a1628 0%,#050a14 55%,#02040a 100%)', ink: '#9bd1ff', onData: '#04060B' };
+  // escalas de DATOS como texto/fondo (nivel sistémico, GPR, tráfico marítimo, sin score)
+  var PAL = { hi: '#FF4D6A', crit: '#FF7A45', mid: '#FFB300', ok: '#2BE38B', flat: '#9BA6C4', none: '#7C87A3' };
+  // colores dibujados EN el globo (escenario oscuro): sin score, rótulos, selección, fabs por tipo
+  var GLOBE = { none: '#7C87A3', label: '#9BA6C4', sel: '#00E0FF', fab: { euv: '#8E5AFF', hbm: '#FFB300', nand: '#7AE2FF', packaging: '#5EEAD4' } };
+  // texto en color de DATO: .wm-c (en el tema claro se mezcla con la tinta para leerse)
+  function cTxt(c) { return 'class="wm-c" style="--wm-c:' + c + '"'; }
   var OFFICIAL = ['shipping', 'policy', 'disasters', 'advisories', 'outages'];
   var LIVE = ['conflict', 'unrest', 'trade', 'quakes', 'natural'].concat(OFFICIAL);
   var SERVER_LAYERS = LIVE.concat(['chokepoints', 'instability']);
@@ -194,106 +208,121 @@
     if (document.getElementById('wm-css')) return;
     var st = document.createElement('style'); st.id = 'wm-css';
     st.textContent = [
-      '.wm{position:relative;width:100%;height:100%;min-height:520px;overflow:hidden;color:#E8EDFB;font-family:Inter,system-ui,sans-serif;background:radial-gradient(120% 90% at 50% 45%,#0a1628 0%,#050a14 55%,#02040a 100%)}',
+      // escenario del globo (oscuro a propósito: halo aditivo + estrellas) · HUD = tokens --os-* (.wm lleva .kos-themed)
+      '.wm{position:relative;width:100%;height:100%;min-height:520px;overflow:hidden;color:var(--os-ink,#E8EDFB);font-family:var(--os-font,Inter,system-ui,sans-serif);background:' + STAGE.bg + ';' +
+        '--wm-glass:var(--os-surface,rgba(5,10,20,.86))}',
+      '@supports (color:color-mix(in srgb,red 50%,blue)){.wm{--wm-glass:color-mix(in srgb,var(--os-surface,#17181F) 90%,transparent)}}',
+      // color de DATO (capa, severidad, NRS) como texto: igual en oscuro; en claro se mezcla 50 % con la tinta (AA sobre blanco).
+      // !important = la precedencia del style="color:…" que reemplaza
+      '.wm .wm-c{color:var(--wm-c)!important}',
+      '@supports (color:color-mix(in srgb,red 50%,blue)){body:not(.dark) .wm .wm-c{color:color-mix(in srgb,var(--wm-c) 50%,var(--os-ink,#111216))!important}}',
       '.wm *{box-sizing:border-box}',
       '.wm-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;outline:none}',
       '.wm-canvas:active{cursor:grabbing}',
-      '.wm-top{position:absolute;left:0;right:0;top:0;height:38px;z-index:6;display:flex;align-items:center;gap:10px;padding:0 12px;background:linear-gradient(180deg,rgba(3,7,15,.95),rgba(3,7,15,.72));border-bottom:1px solid rgba(0,224,255,.14);backdrop-filter:blur(6px)}',
+      '.wm-top{position:absolute;left:0;right:0;top:0;height:38px;z-index:6;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--wm-glass);border-bottom:1px solid var(--os-line,rgba(0,224,255,.14));backdrop-filter:blur(6px)}',
       '.wm-brand{display:flex;align-items:center;gap:8px;flex:0 0 auto;font-size:11.5px;font-weight:800;letter-spacing:.12em;white-space:nowrap}',
-      '.wm-live{font-size:9px;font-weight:800;letter-spacing:.12em;color:#2BE38B;border:1px solid rgba(43,227,139,.45);border-radius:999px;padding:2px 8px;display:inline-flex;align-items:center;gap:5px}',
-      '.wm-live.off{color:#FF8FA3;border-color:rgba(255,77,106,.45)}',
+      '.wm-live{font-size:9px;font-weight:800;letter-spacing:.12em;color:var(--os-good-ink,#2BE38B);border:1px solid rgba(43,227,139,.45);border-radius:999px;padding:2px 8px;display:inline-flex;align-items:center;gap:5px}',
+      '.wm-live.off{color:var(--os-bad-ink,#FF8FA3);border-color:rgba(255,77,106,.45)}',
       '.wm-live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor;animation:wmBlink 1.6s ease-in-out infinite}',
       '@keyframes wmBlink{0%,100%{opacity:1}50%{opacity:.25}}',
-      '.wm-ticker{flex:1;min-width:0;overflow:hidden;position:relative;height:100%;display:flex;align-items:center;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}',
+      '.wm-ticker{flex:1;min-width:0;overflow:hidden;position:relative;height:100%;display:flex;align-items:center;-webkit-mask-image:linear-gradient(90deg,transparent,black 4%,black 96%,transparent);mask-image:linear-gradient(90deg,transparent,black 4%,black 96%,transparent)}',
       '.wm-track{display:inline-flex;gap:28px;white-space:nowrap;animation:wmScroll 90s linear infinite;padding-right:28px}',
       '.wm-ticker:hover .wm-track{animation-play-state:paused}',
       '@keyframes wmScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}',
-      '.wm-tk{font-size:11.5px;color:#C7D0EA;cursor:pointer;display:inline-flex;align-items:center;gap:6px}',
-      '.wm-tk:hover{color:#fff}',
+      '.wm-tk{font-size:11.5px;color:var(--os-ink-2,#C7D0EA);cursor:pointer;display:inline-flex;align-items:center;gap:6px}',
+      '.wm-tk:hover{color:var(--os-ink,#fff)}',
       '.wm-tk i{width:7px;height:7px;border-radius:50%;display:inline-block;flex:0 0 7px}',
       '.wm-tk b{font-size:9.5px;letter-spacing:.08em;font-weight:800}',
-      '.wm-tk .ta{color:#6F7B98;font-size:10.5px}',
-      '.wm-clock{flex:0 0 auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:#7C87A3}',
-      '.wm-panel{position:absolute;z-index:5;background:rgba(5,10,20,.86);border:1px solid rgba(122,158,255,.18);border-radius:13px;backdrop-filter:blur(10px);box-shadow:0 10px 40px rgba(0,0,0,.45);overflow:hidden;display:flex;flex-direction:column}',
+      '.wm-tk .ta{color:var(--os-ink-2,#6F7B98);font-size:10.5px}',
+      '.wm-clock{flex:0 0 auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:var(--os-ink-2,#7C87A3)}',
+      '.wm-panel{position:absolute;z-index:5;background:var(--wm-glass);border:1px solid var(--os-line,rgba(122,158,255,.18));border-radius:13px;backdrop-filter:blur(10px);box-shadow:var(--kos-shadow-lg,0 10px 40px rgba(0,0,0,.45));overflow:hidden;display:flex;flex-direction:column}',
       '.wm-left{left:10px;top:48px;width:252px;max-height:calc(100% - 104px)}',
       '.wm-right{right:10px;top:48px;width:352px;max-height:calc(100% - 104px)}',
       '.wm-panel.hid{display:none}',
-      '.wm-ph{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid rgba(122,158,255,.12);font-size:10px;font-weight:800;letter-spacing:.12em;color:#9BA6C4;text-transform:uppercase;flex:0 0 auto}',
-      '.wm-ph .x{margin-left:auto;cursor:pointer;color:#7C87A3;font-size:14px;line-height:1;padding:2px 6px;border-radius:6px}',
-      '.wm-ph .x:hover{background:rgba(122,158,255,.12);color:#fff}',
+      '.wm-ph{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--os-line,rgba(122,158,255,.12));font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--os-ink-2,#9BA6C4);text-transform:uppercase;flex:0 0 auto}',
+      '.wm-ph .x{margin-left:auto;cursor:pointer;color:var(--os-ink-2,#7C87A3);font-size:14px;line-height:1;padding:2px 6px;border-radius:6px}',
+      '.wm-ph .x:hover{background:var(--os-surface-2,rgba(122,158,255,.12));color:var(--os-ink,#fff)}',
       '.wm-pb{overflow-y:auto;overflow-x:hidden;padding:8px 12px 12px;flex:1 1 auto;min-height:0}',
-      '.wm-pb::-webkit-scrollbar{width:6px}.wm-pb::-webkit-scrollbar-thumb{background:rgba(122,158,255,.2);border-radius:3px}',
-      '.wm-g{font-size:9px;font-weight:800;letter-spacing:.14em;color:#5E6884;margin:10px 0 4px;text-transform:uppercase;display:flex;align-items:center;gap:4px}',
+      '.wm-pb::-webkit-scrollbar{width:6px}.wm-pb::-webkit-scrollbar-thumb{background:var(--os-surface-3,rgba(122,158,255,.2));border-radius:3px}',
+      '.wm-g{font-size:9px;font-weight:800;letter-spacing:.14em;color:var(--os-ink-2,#5E6884);margin:10px 0 4px;text-transform:uppercase;display:flex;align-items:center;gap:4px}',
       '.wm-g:first-child{margin-top:2px}',
-      '.wm-lay{display:flex;align-items:center;gap:7px;padding:4px 2px;font-size:12px;color:#C7D0EA;cursor:pointer;user-select:none;border-radius:7px}',
-      '.wm-lay:hover{background:rgba(122,158,255,.07)}',
+      '.wm-lay{display:flex;align-items:center;gap:7px;padding:4px 2px;font-size:12px;color:var(--os-ink,#C7D0EA);cursor:pointer;user-select:none;border-radius:7px}',
+      '.wm-lay:hover{background:var(--os-surface-2,rgba(122,158,255,.07))}',
       '.wm-lay.off{opacity:.45}',
       '.wm-lay .dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;box-shadow:0 0 6px currentColor}',
       '.wm-lay .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.wm-lay .ct{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:#9BA6C4}',
+      '.wm-lay .ct{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:var(--os-ink-2,#9BA6C4)}',
       '.wm-st{font-size:9px;font-weight:700;border-radius:999px;padding:1px 6px;white-space:nowrap}',
-      '.wm-st.ok{color:#2BE38B;background:rgba(43,227,139,.1)}.wm-st.err{color:#FF8FA3;background:rgba(255,77,106,.12)}',
-      '.wm-st.pend{color:#FFD27A;background:rgba(255,179,0,.1)}.wm-st.ref{color:#9BA6C4;background:rgba(122,158,255,.1)}',
-      '.wm-note{font-size:10px;color:#6F7B98;line-height:1.45;margin-top:8px}',
+      '.wm-st.ok{color:var(--os-good-ink,#2BE38B);background:rgba(43,227,139,.1)}.wm-st.err{color:var(--os-bad-ink,#FF8FA3);background:rgba(255,77,106,.12)}',
+      '.wm-st.pend{color:var(--os-warn-ink,#FFD27A);background:rgba(255,179,0,.1)}.wm-st.ref{color:var(--os-ink-2,#9BA6C4);background:var(--os-surface-2,rgba(122,158,255,.1))}',
+      '.wm-note{font-size:10px;color:var(--os-ink-2,#6F7B98);line-height:1.45;margin-top:8px}',
+      '.wm-note.bad{color:var(--os-bad-ink,#FF8FA3)}',
       '.wm-bottom{position:absolute;z-index:5;left:50%;transform:translateX(-50%);bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 650px);min-width:300px}',
-      '.wm-seg{display:inline-flex;background:rgba(5,10,20,.88);border:1px solid rgba(122,158,255,.22);border-radius:999px;padding:2px}',
-      '.wm-seg button{background:none;border:0;color:#9BA6C4;font:700 11px Inter,system-ui,sans-serif;padding:5px 12px;border-radius:999px;cursor:pointer}',
-      '.wm-seg button.on{background:rgba(0,224,255,.16);color:#00E0FF}',
-      '.wm-btn{background:rgba(5,10,20,.88);border:1px solid rgba(122,158,255,.22);color:#C7D0EA;border-radius:999px;font:600 11px Inter,system-ui,sans-serif;padding:5px 11px;cursor:pointer;white-space:nowrap}',
-      '.wm-btn:hover{border-color:rgba(0,224,255,.5);color:#fff}',
-      '.wm-legend{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:rgba(5,10,20,.8);border:1px solid rgba(122,158,255,.16);border-radius:10px;padding:5px 10px;font-size:10px;color:#9BA6C4}',
+      '.wm-seg{display:inline-flex;background:var(--wm-glass);border:1px solid var(--os-line,rgba(122,158,255,.22));border-radius:999px;padding:2px}',
+      '.wm-seg button{background:none;border:0;color:var(--os-ink-2,#9BA6C4);font:700 11px var(--os-font,Inter,system-ui,sans-serif);padding:5px 12px;border-radius:999px;cursor:pointer}',
+      '.wm-seg button.on{background:var(--kos-accent-soft,rgba(0,224,255,.16));color:var(--os-ink,#00E0FF)}',
+      '.wm-btn{background:var(--wm-glass);border:1px solid var(--os-line,rgba(122,158,255,.22));color:var(--os-ink,#C7D0EA);border-radius:999px;font:600 11px var(--os-font,Inter,system-ui,sans-serif);padding:5px 11px;cursor:pointer;white-space:nowrap}',
+      '.wm-btn:hover{border-color:var(--os-accent,rgba(0,224,255,.5));color:var(--os-ink,#fff)}',
+      '.wm-legend{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:var(--wm-glass);border:1px solid var(--os-line,rgba(122,158,255,.16));border-radius:10px;padding:5px 10px;font-size:10px;color:var(--os-ink-2,#9BA6C4)}',
       '.wm-legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:-1px}',
-      '.wm-reopen{position:absolute;z-index:5;top:48px;background:rgba(5,10,20,.88);border:1px solid rgba(122,158,255,.25);color:#C7D0EA;border-radius:10px;padding:6px 10px;font:700 11px Inter,system-ui,sans-serif;cursor:pointer}',
-      '.wm-tip{position:absolute;z-index:8;pointer-events:none;background:rgba(4,8,16,.96);border:1px solid rgba(0,224,255,.35);border-radius:9px;padding:7px 10px;font-size:11.5px;color:#E8EDFB;max-width:260px;display:none;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.5)}',
-      '.wm-tip .m{color:#8B96B5;font-size:10.5px}',
+      '.wm-reopen{position:absolute;z-index:5;top:48px;background:var(--wm-glass);border:1px solid var(--os-line,rgba(122,158,255,.25));color:var(--os-ink,#C7D0EA);border-radius:10px;padding:6px 10px;font:700 11px var(--os-font,Inter,system-ui,sans-serif);cursor:pointer}',
+      '.wm-tip{position:absolute;z-index:8;pointer-events:none;background:var(--os-surface,rgba(4,8,16,.96));border:1px solid var(--os-line,rgba(0,224,255,.35));border-radius:9px;padding:7px 10px;font-size:11.5px;color:var(--os-ink,#E8EDFB);max-width:260px;display:none;line-height:1.4;box-shadow:var(--kos-shadow-lg,0 8px 24px rgba(0,0,0,.5))}',
+      '.wm-tip .m{color:var(--os-ink-2,#8B96B5);font-size:10.5px}',
       '.wm-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 10px}',
-      '.wm-kpi{border:1px solid rgba(122,158,255,.12);border-radius:9px;padding:6px 7px;background:rgba(10,18,34,.55);cursor:pointer;min-width:0}',
-      '.wm-kpi:hover{border-color:rgba(0,224,255,.35)}',
-      '.wm-kpi .k{font-size:9px;color:#7C87A3;font-weight:700;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '.wm-kpi{border:1px solid var(--os-line,rgba(122,158,255,.12));border-radius:9px;padding:6px 7px;background:var(--os-surface-2,rgba(10,18,34,.55));cursor:pointer;min-width:0}',
+      '.wm-kpi:hover{border-color:var(--os-accent,rgba(0,224,255,.35))}',
+      '.wm-kpi .k{font-size:9px;color:var(--os-ink-2,#7C87A3);font-weight:700;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
       '.wm-kpi .v{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:16px;font-weight:800;margin-top:1px}',
+      '.wm-kpi .px{font-size:13px;color:var(--os-ink,#E8EDFB)}',
+      '.wm-kpi .pc{font-family:JetBrains Mono,monospace;font-size:10.5px;font-weight:700}',
       '.wm-sec{margin-top:12px}',
-      '.wm-sh{font-size:10px;font-weight:800;letter-spacing:.1em;color:#7C87A3;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px}',
-      '.wm-sh .r{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600;color:#5E6884;font-size:9.5px}',
-      '.wm-row{display:flex;gap:8px;align-items:flex-start;padding:7px 4px;border-bottom:1px solid rgba(122,158,255,.07);cursor:pointer;border-radius:6px}',
-      '.wm-row:hover{background:rgba(122,158,255,.06)}',
+      '.wm-sh{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--os-ink-2,#7C87A3);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px}',
+      '.wm-sh .r{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:600;color:var(--os-ink-2,#5E6884);font-size:9.5px}',
+      '.wm-asof{margin-left:auto;font-weight:600;letter-spacing:0;text-transform:none;color:var(--os-ink-2,#5E6884);font-size:9.5px}',
+      '.wm-row{display:flex;gap:8px;align-items:flex-start;padding:7px 4px;border-bottom:1px solid var(--os-line,rgba(122,158,255,.07));cursor:pointer;border-radius:6px}',
+      '.wm-row:hover{background:var(--os-surface-2,rgba(122,158,255,.06))}',
       '.wm-row:last-child{border-bottom:0}',
-      '.wm-rel{flex:0 0 30px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:800;color:#04060B}',
+      '.wm-rel{flex:0 0 30px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:800;color:' + STAGE.onData + '}',
       '.wm-rt{flex:1;min-width:0}',
-      '.wm-rt .t{font-size:12px;color:#E8EDFB;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
-      '.wm-rt .m{font-size:10px;color:#7C87A3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-      '.wm-gauge{display:flex;align-items:center;gap:12px;border:1px solid rgba(122,158,255,.14);border-radius:10px;padding:8px 10px;background:rgba(10,18,34,.5)}',
+      '.wm-rt .t{font-size:12px;color:var(--os-ink,#E8EDFB);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
+      '.wm-rt .m{font-size:10px;color:var(--os-ink-2,#7C87A3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '.wm-gauge{display:flex;align-items:center;gap:12px;border:1px solid var(--os-line,rgba(122,158,255,.14));border-radius:10px;padding:8px 10px;background:var(--os-surface-2,rgba(10,18,34,.5))}',
       '.wm-gauge .n{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:22px;font-weight:800}',
-      '.wm-gauge .d{font-size:10.5px;color:#9BA6C4;line-height:1.4}',
+      '.wm-gauge .d{font-size:10.5px;color:var(--os-ink-2,#9BA6C4);line-height:1.4}',
       '.wm-tag{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;letter-spacing:.08em;padding:2px 8px;border-radius:999px;border:1px solid}',
-      '.wm-h1{font-size:15px;font-weight:750;line-height:1.3;margin:8px 0 4px;color:#fff;word-wrap:break-word}',
-      '.wm-meta{font-size:11px;color:#8B96B5;line-height:1.5}',
-      '.wm-bar{height:6px;border-radius:4px;background:rgba(122,158,255,.12);overflow:hidden;flex:1}',
+      '.wm-h1{font-size:15px;font-weight:750;line-height:1.3;margin:8px 0 4px;color:var(--os-ink,#fff);word-wrap:break-word}',
+      '.wm-meta{font-size:11px;color:var(--os-ink-2,#8B96B5);line-height:1.5}',
+      '.wm-meta.bad{color:var(--os-bad-ink,#FF8FA3)}.wm-meta.warn{color:var(--os-warn-ink,#FFD27A)}.wm-meta.ink{color:var(--os-ink,#C7D0EA)}',
+      '.wm-warn{color:var(--os-warn-ink,#FFB300)!important}',   // reemplaza style="color:…" (le gana a .wm-tk .ta)
+      '.wm-bar{height:6px;border-radius:4px;background:var(--os-surface-3,rgba(122,158,255,.12));overflow:hidden;flex:1}',
       '.wm-bar i{display:block;height:100%}',
       '.wm-kv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}',
-      '.wm-kv>div{border:1px solid rgba(122,158,255,.1);border-radius:8px;padding:5px 8px;background:rgba(10,18,34,.45);min-width:0}',
-      '.wm-kv .k{font-size:9px;color:#7C87A3;text-transform:uppercase;letter-spacing:.06em}',
-      '.wm-kv .v{font-size:12.5px;color:#E8EDFB;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
-      '.wm-co{display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:1px solid rgba(122,158,255,.06);font-size:11.5px}',
-      '.wm-co .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#E8EDFB}',
-      '.wm-co .ds{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;color:#7C87A3}',
+      '.wm-kv>div{border:1px solid var(--os-line,rgba(122,158,255,.1));border-radius:8px;padding:5px 8px;background:var(--os-surface-2,rgba(10,18,34,.45));min-width:0}',
+      '.wm-kv .k{font-size:9px;color:var(--os-ink-2,#7C87A3);text-transform:uppercase;letter-spacing:.06em}',
+      '.wm-kv .v{font-size:12.5px;color:var(--os-ink,#E8EDFB);font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '.wm-co{display:flex;align-items:center;gap:7px;padding:5px 2px;border-bottom:1px solid var(--os-line,rgba(122,158,255,.06));font-size:11.5px}',
+      '.wm-co .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--os-ink,#E8EDFB)}',
+      '.wm-co .ds{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;color:var(--os-ink-2,#7C87A3)}',
       '.wm-co .nr{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:800;width:24px;text-align:right}',
-      '.wm-mini{font:700 10px Inter,system-ui,sans-serif;padding:3px 8px;border-radius:999px;cursor:pointer;color:#00E0FF;background:rgba(0,224,255,.08);border:1px solid rgba(0,224,255,.35);white-space:nowrap}',
-      '.wm-mini:hover{background:rgba(0,224,255,.18)}',
-      '.wm-act{display:block;width:100%;margin-top:10px;padding:8px;border-radius:9px;cursor:pointer;font:700 12px Inter,system-ui,sans-serif;color:#04060B;background:linear-gradient(90deg,#00E0FF,#7A9EFF);border:0}',
-      '.wm-act.ghost{background:rgba(0,224,255,.08);color:#00E0FF;border:1px solid rgba(0,224,255,.4)}',
+      '.wm-co .mine{color:var(--os-ink,#fff)}',
+      '.wm-mini{font:700 10px var(--os-font,Inter,system-ui,sans-serif);padding:3px 8px;border-radius:999px;cursor:pointer;color:var(--os-ink,#00E0FF);background:var(--kos-accent-soft,rgba(0,224,255,.08));border:1px solid var(--os-line,rgba(0,224,255,.35));white-space:nowrap}',
+      '.wm-mini:hover{background:var(--os-surface-3,rgba(0,224,255,.18))}',
+      '.wm-act{display:block;width:100%;margin-top:10px;padding:8px;border-radius:9px;cursor:pointer;font:700 12px var(--os-font,Inter,system-ui,sans-serif);color:var(--os-btn-ink,' + STAGE.onData + ');background:var(--os-btn,linear-gradient(90deg,#00E0FF,#7A9EFF));border:0}',
+      '.wm-act.ghost{background:var(--kos-accent-soft,rgba(0,224,255,.08));color:var(--os-ink,#00E0FF);border:1px solid var(--os-accent,rgba(0,224,255,.4))}',
       '.wm-simres{margin-top:8px;border:1px solid rgba(255,77,106,.3);border-radius:9px;padding:8px 10px;background:rgba(255,77,106,.06)}',
-      '.wm-vrow{display:flex;align-items:center;gap:7px;font-size:11px;color:#C7D0EA;padding:2px 0}',
+      '.wm-vrow{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--os-ink,#C7D0EA);padding:2px 0}',
       '.wm-vrow .n{flex:0 0 112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-      '.wm-vrow .vb{flex:1;height:4px;border-radius:3px;background:rgba(122,158,255,.1);overflow:hidden}',
-      '.wm-vrow .vb i{display:block;height:100%;background:linear-gradient(90deg,#FF4D6A,#FFB300)}',
-      '.wm-vrow .p{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;width:36px;text-align:right;color:#FF8FA3}',
-      '.wm-link{color:#7AB8FF;text-decoration:none;font-size:11.5px;line-height:1.4;display:block;padding:3px 0}',
+      '.wm-vrow .vb{flex:1;height:4px;border-radius:3px;background:var(--os-surface-3,rgba(122,158,255,.1));overflow:hidden}',
+      '.wm-vrow .vb i{display:block;height:100%;background:linear-gradient(90deg,var(--os-bad,#FF4D6A),var(--os-warn,#FFB300))}',
+      '.wm-vrow .p{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;width:36px;text-align:right;color:var(--os-bad-ink,#FF8FA3)}',
+      '.wm-link{color:var(--os-accent,#7AB8FF);text-decoration:none;font-size:11.5px;line-height:1.4;display:block;padding:3px 0}',
       '.wm-link:hover{text-decoration:underline}',
-      '.wm-back{cursor:pointer;color:#00E0FF;font-size:11px;font-weight:700;letter-spacing:0;text-transform:none}',
-      '.wm-load{color:#7C87A3;font-size:12px;font-style:italic;padding:14px 4px;text-align:center}',
+      '.wm-back{cursor:pointer;color:var(--os-accent,#00E0FF);font-size:11px;font-weight:700;letter-spacing:0;text-transform:none}',
+      '.wm-load{color:var(--os-ink-2,#7C87A3);font-size:12px;font-style:italic;padding:14px 4px;text-align:center}',
       '.wm-chips{display:flex;flex-wrap:wrap;gap:6px}',
       '.wm-mbar{display:none}',
-      '.wm-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9bd1ff;font-size:13px;text-align:center;padding:24px}',
+      // aviso SOBRE el escenario oscuro del globo (no sobre un panel): tinta del escenario
+      '.wm-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:' + STAGE.ink + ';font-size:13px;text-align:center;padding:24px}',
       /* ── modo angosto (móvil / Cabina estrecha): hojas inferiores ── */
       '.wm.nr .wm-panel{left:0;right:0;top:auto;bottom:0;width:auto;max-height:64%;border-radius:16px 16px 0 0;transform:translateY(105%);transition:transform .25s ease;display:flex}',
       '.wm.nr .wm-panel.open{transform:translateY(0)}',
@@ -303,7 +332,7 @@
       '.wm.nr .wm-mbar .wm-btn{flex:1;text-align:center;padding:8px 6px;font-size:11.5px}',
       '.wm.nr .wm-clock{display:none}',
       '.wm.nr .wm-brand .wm-bt{display:none}',
-      '.wm.nr .wm-ph .grab{display:block;position:absolute;left:50%;top:4px;width:38px;height:4px;border-radius:3px;background:rgba(122,158,255,.3);transform:translateX(-50%)}',
+      '.wm.nr .wm-ph .grab{display:block;position:absolute;left:50%;top:4px;width:38px;height:4px;border-radius:3px;background:var(--os-surface-3,rgba(122,158,255,.3));transform:translateX(-50%)}',
       '.wm-ph .grab{display:none}',
       '.wm-ph{position:relative}',
     ].join('\n');
@@ -312,7 +341,7 @@
 
   /* ── armazón DOM ────────────────────────────────────────────────────── */
   function shell() {
-    return '<div class="wm" id="wm">' +
+    return '<div class="wm kos-themed" id="wm">' +
       '<canvas class="wm-canvas" id="wm-canvas" tabindex="0" aria-label="' + esc(L('Globo del World Monitor', 'World Monitor globe')) + '"></canvas>' +
       '<div class="wm-top"><div class="wm-brand"><span class="wm-live" id="wm-live">' + esc(L('EN VIVO', 'LIVE')) + '</span><span class="wm-bt">WORLD MONITOR</span></div>' +
       '<div class="wm-ticker" id="wm-ticker"><div class="wm-track" id="wm-track"></div></div><span class="wm-clock" id="wm-clock"></span></div>' +
@@ -389,7 +418,7 @@
       'Sources: IMF PortWatch (daily satellite ship transits), US Federal Register (BIS and OFAC rules, last 30 days), GDACS (UN/EU orange/red alerts), State Department (level 3-4 country risk), Cloudflare Radar (internet outages, needs a key), GDELT 2.0 (conflict, protest and sanctions events coded from the press every 15 min: press signal), USGS (earthquakes), NASA EONET (natural events), Khipu Situation Room. The 24h/7d filter applies to earthquakes, natural events and GDACS alerts; shipping traffic is daily (a few days behind) and rules cover 30 days. Reference layers are not live.')) + '</div>';
     var errs = SERVER_LAYERS.filter(function (id) { var s = S.events && S.events.sources && S.events.sources[id]; return s && !s.ok && !s.pending && s.error_code !== 'busy'; });
     if (errs.length) {
-      h += '<div class="wm-note" style="color:#FF8FA3">⚠ ' + esc(L('Fuentes caídas ahora: ', 'Sources down right now: ')) +
+      h += '<div class="wm-note bad">⚠ ' + esc(L('Fuentes caídas ahora: ', 'Sources down right now: ')) +
         errs.map(function (id) {
           var s = S.events.sources[id];
           var extra = s.stale ? ' · ' + L('se muestran datos de ', 'showing data from ') + fmtIso(s.as_of) + ' (⚠)' : s.expired_dropped ? ' · ' + L('datos demasiado viejos descartados', 'too-old data discarded') : '';
@@ -408,10 +437,9 @@
     var b = $('wm-bottom');
     if (b) {
       b.innerHTML = seg +
-        '<div class="wm-legend"><span><i style="background:#FF3B5C"></i>' + esc(L('conflicto', 'conflict')) + '</span><span><i style="background:#FF8A3D"></i>' + esc(L('protestas', 'unrest')) +
-        '</span><span><i style="background:#FFD23F"></i>' + esc(L('comercio', 'trade')) + '</span><span><i style="background:#B983FF"></i>' + esc(L('sismos', 'quakes')) +
-        '</span><span><i style="background:#2BD9C7"></i>' + esc(L('naturales', 'natural')) + '</span><span><i style="background:#5B8CFF"></i>' + esc(L('buques', 'ships')) +
-        '</span><span><i style="background:#A3E635"></i>' + esc(L('reglas', 'rules')) + '</span><span><i style="background:#E879F9"></i>' + esc(L('alertas', 'alerts')) + '</span><span style="opacity:.8">' + esc(L('tamaño = severidad', 'size = severity')) + chip('wm_severity') + '</span></div>' +
+        '<div class="wm-legend">' + ['conflict', 'unrest', 'trade', 'quakes', 'natural', 'shipping', 'policy', 'disasters'].map(function (id) {
+          var l = LBY[id]; return '<span><i style="background:' + l.c + '"></i>' + esc(L(l.ses, l.sen).toLowerCase()) + '</span>';
+        }).join('') + '<span style="opacity:.8">' + esc(L('tamaño = severidad', 'size = severity')) + chip('wm_severity') + '</span></div>' +
         '<button class="wm-btn" data-act="zoom" data-f="0.8" title="Zoom +">＋</button><button class="wm-btn" data-act="zoom" data-f="1.25" title="Zoom −">－</button>' +
         '<button class="wm-btn" data-act="reset">⟲ ' + esc(L('Vista', 'View')) + '</button>';
     }
@@ -448,9 +476,9 @@
     } else {
       h = items.map(function (it) {
         var l = LBY[it.layer];
-        return '<span class="wm-tk" data-act="sel" data-id="' + esc(it.id) + '"><i style="background:' + l.c + ';box-shadow:0 0 6px ' + l.c + '"></i><b style="color:' + l.c + '">' +
+        return '<span class="wm-tk" data-act="sel" data-id="' + esc(it.id) + '"><i style="background:' + l.c + ';box-shadow:0 0 6px ' + l.c + '"></i><b ' + cTxt(l.c) + '>' +
           esc(L(l.ses, l.sen).toUpperCase()) + '</b>' + esc(String(title(it)).slice(0, 110)) +
-          (it.place && it.place !== title(it) ? ' · ' + esc(String(it.place).slice(0, 40)) : '') + '<span class="ta"' + (it.stale ? ' style="color:#FFB300"' : '') + '>' + esc(it.stale ? staleTag(it) : it.time_kind === 'window' ? S.win : ago(it.ts)) + '</span></span>';
+          (it.place && it.place !== title(it) ? ' · ' + esc(String(it.place).slice(0, 40)) : '') + '<span class="ta' + (it.stale ? ' wm-warn' : '') + '">' + esc(it.stale ? staleTag(it) : it.time_kind === 'window' ? S.win : ago(it.ts)) + '</span></span>';
       }).join('');
       h = h + h;                       // duplicado → bucle sin salto
       tr.style.animation = ''; tr.style.paddingLeft = '';
@@ -471,10 +499,10 @@
         esc(L('No disponible ahora (el motor de matrices necesita la base de datos).', 'Not available right now (the matrix engine needs the database).')) + '</div></div>';
     }
     var dr = sy.damping_rho != null ? sy.damping_rho : 0.6 * sy.spectral_radius;
-    var lvl = dr >= 1 ? [L('SUPERCRÍTICO', 'SUPERCRITICAL'), '#FF4D6A'] : dr >= 0.9 ? [L('CRÍTICO', 'CRITICAL'), '#FF7A45']
-      : dr >= 0.75 ? [L('TENSO', 'STRAINED'), '#FFB300'] : [L('ESTABLE', 'STABLE'), '#2BE38B'];
+    var lvl = dr >= 1 ? [L('SUPERCRÍTICO', 'SUPERCRITICAL'), PAL.hi] : dr >= 0.9 ? [L('CRÍTICO', 'CRITICAL'), PAL.crit]
+      : dr >= 0.75 ? [L('TENSO', 'STRAINED'), PAL.mid] : [L('ESTABLE', 'STABLE'), PAL.ok];
     var nf = (sy.active_factors || []).length;
-    return '<div class="wm-gauge"><div class="n" style="color:' + lvl[1] + '">' + dr.toFixed(2) + '</div><div class="d"><b style="color:' + lvl[1] + '">' + lvl[0] + '</b> · ' +
+    return '<div class="wm-gauge"><div class="n wm-c" style="--wm-c:' + lvl[1] + '">' + dr.toFixed(2) + '</div><div class="d"><b ' + cTxt(lvl[1]) + '>' + lvl[0] + '</b> · ' +
       esc(L('nivel sistémico de la red', 'network systemic level')) + chip('wm_systemic') + (nf ? '<br>⚡ ' + nf + ' ' + esc(L('factor(es) activo(s)', 'active factor(s)')) : '') + '</div></div>';
   }
   // 🌍 índice de riesgo geopolítico global (Caldara-Iacoviello, Fed): valor diario, tendencia y países que suben
@@ -486,19 +514,19 @@
     }
     var g = S.gpr;
     if (!g) return '';
-    if (!g.ok || !g.daily) return '<div class="wm-meta" style="margin-top:8px;color:#7C87A3">🌍 ' + esc(L('Índice de riesgo geopolítico: ', 'Geopolitical risk index: ') + ((en() ? g.error_en : g.error_es) || L('no disponible', 'unavailable'))) + '</div>';
+    if (!g.ok || !g.daily) return '<div class="wm-meta" style="margin-top:8px">🌍 ' + esc(L('Índice de riesgo geopolítico: ', 'Geopolitical risk index: ') + ((en() ? g.error_en : g.error_es) || L('no disponible', 'unavailable'))) + '</div>';
     var d = g.daily, v = d.value, up = d.avg30 && v > d.avg30 * 1.1, down = d.avg30 && v < d.avg30 * 0.9;
-    var col = v >= 200 ? '#FF4D6A' : v >= 140 ? '#FFB300' : '#2BE38B';
+    var col = v >= 200 ? PAL.hi : v >= 140 ? PAL.mid : PAL.ok;
     var hist = (d.history || []).slice(-90), path = '';
     if (hist.length > 1) {
       var vals = hist.map(function (h) { return h.value; }), lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals) || 1;
       path = hist.map(function (h, i) { return (i ? 'L' : 'M') + (i * 160 / (hist.length - 1)).toFixed(1) + ',' + (30 - (h.value - lo) / Math.max(1, hi - lo) * 28).toFixed(1); }).join('');
     }
     var cs = ((g.monthly || {}).countries || []).filter(function (c) { return (c.vs_12m || 0) >= 1.3; }).slice(0, 3);
-    return '<div class="wm-gauge" style="margin-top:8px"><div class="n" style="color:' + col + '">' + Math.round(v) + '</div><div class="d"><b style="color:' + col + '">' +
+    return '<div class="wm-gauge" style="margin-top:8px"><div class="n wm-c" style="--wm-c:' + col + '">' + Math.round(v) + '</div><div class="d"><b ' + cTxt(col) + '>' +
       esc(L('Riesgo geopolítico global', 'Global geopolitical risk')) + '</b>' + chip('wm_gpr') + '<br>' +
       esc((up ? '▲ ' : down ? '▼ ' : '≈ ') + L('vs promedio 30 d (', 'vs 30-day avg (') + Math.round(d.avg30) + ')' + (d.percentile_1y != null ? ' · ' + L('más alto que el ', 'higher than ') + d.percentile_1y + L(' % del último año', '% of the last year') : '') + ' · ' + d.date) +
-      (path ? '<br><svg viewBox="0 0 160 32" width="160" height="32" style="margin-top:4px"><path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="1.5"/></svg>' : '') +
+      (path ? '<br><svg class="wm-c" viewBox="0 0 160 32" width="160" height="32" style="margin-top:4px;--wm-c:' + col + '"><path d="' + path + '" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>' : '') +
       (cs.length ? '<br>' + esc(L('Suben en la prensa: ', 'Rising in the press: ') + cs.map(function (c) { return c.name_es + ' ×' + c.vs_12m; }).join(' · ')) : '') +
       '</div></div>';
   }
@@ -507,7 +535,7 @@
     LIVE.concat(['chokepoints']).forEach(function (id) {
       var l = LBY[id], s = S.events && S.events.sources && S.events.sources[id];
       var v = s ? (s.pending ? '…' : s.count) : (S.eventsErr ? '—' : '…');
-      h += '<div class="wm-kpi" data-act="top" data-layer="' + id + '" title="' + esc(L(l.es, l.en) + ' · ' + L('ir al más severo', 'go to the most severe')) + '"><div class="k">' + esc(l.i + ' ' + L(l.ses, l.sen)) + '</div><div class="v" style="color:' + l.c + '">' + v + '</div></div>';
+      h += '<div class="wm-kpi" data-act="top" data-layer="' + id + '" title="' + esc(L(l.es, l.en) + ' · ' + L('ir al más severo', 'go to the most severe')) + '"><div class="k">' + esc(l.i + ' ' + L(l.ses, l.sen)) + '</div><div class="v wm-c" style="--wm-c:' + l.c + '">' + v + '</div></div>';
     });
     return h + '</div>';
   }
@@ -523,9 +551,9 @@
       var ic = it.layer === 'natural' ? (NAT_ICON[it.category] || l.i) : l.i;
       h += '<div class="wm-row" data-act="sel" data-id="' + esc(it.id) + '"><div class="wm-rel" style="background:' + sevColor(it.relevance) + '" title="' + esc(L('relevancia', 'relevance')) + '">' + it.relevance + '</div>' +
         '<div class="wm-rt"><div class="t">' + esc(ic + ' ' + title(it)) + '</div><div class="m">' +
-        '<span style="color:' + l.c + '">' + esc(L(l.es, l.en)) + '</span> · ' + esc(L('sev.', 'sev.')) + ' ' + (it.severity || 0) +
+        '<span ' + cTxt(l.c) + '>' + esc(L(l.es, l.en)) + '</span> · ' + esc(L('sev.', 'sev.')) + ' ' + (it.severity || 0) +
         (ex.count ? ' · 🏢 ' + ex.count : '') + (ex.fabs && ex.fabs.length ? ' · 🏭 ' + ex.fabs.length : '') +
-        (it.stale ? ' · <span style="color:#FFB300">⚠ ' + esc(L('datos de ' + fmtIso(it.as_of) + ' (fuente caída)', 'data from ' + fmtIso(it.as_of) + ' (source down)')) + '</span>'
+        (it.stale ? ' · <span class="wm-warn">⚠ ' + esc(L('datos de ' + fmtIso(it.as_of) + ' (fuente caída)', 'data from ' + fmtIso(it.as_of) + ' (source down)')) + '</span>'
           : it.time_kind === 'window' || it.time_kind === 'current' ? '' : ' · ' + esc(ago(it.ts))) + '</div></div></div>';
     });
     return h + '</div>';
@@ -553,7 +581,7 @@
     h += '<div class="wm-meta" style="margin-bottom:4px">' + esc(L(hits.length + ' de ' + ids.length + ' posiciones con eventos cerca:', hits.length + ' of ' + ids.length + ' positions with events nearby:')) + '</div>';
     hits.slice(0, 4).forEach(function (x) {
       var n = NB[x.id], l = LBY[x.it.layer];
-      h += '<div class="wm-row" data-act="sel" data-id="' + esc(x.it.id) + '"><div class="wm-rt"><div class="t">💼 ' + esc(n.label) + ' ← <span style="color:' + l.c + '">' + esc(title(x.it)).slice(0, 80) + '</span></div>' +
+      h += '<div class="wm-row" data-act="sel" data-id="' + esc(x.it.id) + '"><div class="wm-rt"><div class="t">💼 ' + esc(n.label) + ' ← <span ' + cTxt(l.c) + '>' + esc(title(x.it)).slice(0, 80) + '</span></div>' +
         '<div class="m">' + esc(L(l.es, l.en)) + ' · ' + esc(L('sev.', 'sev.')) + ' ' + (x.it.severity || 0) + '</div></div></div>';
     });
     return h + '</div>';
@@ -578,8 +606,8 @@
     REGIONS.map(function (r) { return { r: r, a: agg[r.id] }; }).filter(function (x) { return x.a.n; })
       .sort(function (x, y) { return y.a.n - x.a.n; }).forEach(function (x) {
         var avg = Math.round(x.a.s / x.a.n);
-        h += '<div class="wm-co" style="cursor:pointer" data-act="focus" data-lat="' + x.r.lat + '" data-lon="' + x.r.lon + '"><span class="nm">' + esc(L(x.r.es, x.r.en)) + (x.a.p ? ' <span style="color:#fff" title="' + esc(L('posiciones en tu cartera', 'positions in your portfolio')) + '">💼' + x.a.p + '</span>' : '') +
-          '</span><span class="ds">' + x.a.n + '</span><span class="nr" style="color:' + nrsColor(avg) + '">' + avg + '</span></div>';
+        h += '<div class="wm-co" style="cursor:pointer" data-act="focus" data-lat="' + x.r.lat + '" data-lon="' + x.r.lon + '"><span class="nm">' + esc(L(x.r.es, x.r.en)) + (x.a.p ? ' <span class="mine" title="' + esc(L('posiciones en tu cartera', 'positions in your portfolio')) + '">💼' + x.a.p + '</span>' : '') +
+          '</span><span class="ds">' + x.a.n + '</span><span class="nr wm-c" style="--wm-c:' + nrsColor(avg) + '">' + avg + '</span></div>';
       });
     return h + '</div>';
   }
@@ -600,7 +628,7 @@
       if (it.live_shipping && it.live_shipping.change_pct != null) news += ' · ⛴ ' + (it.live_shipping.change_pct > 0 ? '+' : '') + Math.round(it.live_shipping.change_pct) + ' % ' + L('buques', 'ships');
       if (it.advisory_level) news += ' · 🛂 ' + L('nivel ', 'level ') + it.advisory_level;
       if (it.live_events && it.live_events.count) news += ' · ⚔ ' + it.live_events.count + ' ' + L('eventos 24h', 'events 24h');
-      h += '<div class="wm-row" data-act="sel" data-id="' + esc(it.id) + '"><div class="wm-rel" style="background:' + (sv == null ? '#7C87A3' : sevColor(sv)) + '">' + (sv == null ? '—' : sv) + '</div>' +
+      h += '<div class="wm-row" data-act="sel" data-id="' + esc(it.id) + '"><div class="wm-rel" style="background:' + (sv == null ? PAL.none : sevColor(sv)) + '">' + (sv == null ? '—' : sv) + '</div>' +
         '<div class="wm-rt"><div class="t">' + esc(title(it)) + '</div><div class="m">' + esc(sv == null ? L('sin score (servidor no disponible)', 'no score (server unavailable)')
           : L('base', 'base') + ' ' + (it.base != null ? it.base : '—') + ' · ' + news + (it.factors && it.factors.length ? ' · ⚡ ' + it.factors.length : '')) + '</div></div></div>';
     });
@@ -613,14 +641,14 @@
   // ⛴ tránsito diario por estrechos (FMI PortWatch): caída/subida 7 d vs 90 d previos
   function shippingHTML() {
     var its = layerItems('shipping'), s = S.events && S.events.sources && S.events.sources.shipping;
-    if (!its.length) return s && !s.ok && !s.pending ? '<div class="wm-sec"><div class="wm-sh">⛴ ' + esc(L('Tráfico por los estrechos', 'Traffic through the straits')) + '</div><div class="wm-meta" style="color:#FF8FA3">⚠ ' + esc(errText(s)) + '</div></div>' : '';
+    if (!its.length) return s && !s.ok && !s.pending ? '<div class="wm-sec"><div class="wm-sh">⛴ ' + esc(L('Tráfico por los estrechos', 'Traffic through the straits')) + '</div><div class="wm-meta bad">⚠ ' + esc(errText(s)) + '</div></div>' : '';
     var open = !!S.lists.shipping;
     var sorted = its.slice().sort(function (a, b) { return (a.change_pct || 0) - (b.change_pct || 0); });
     var shown = open ? sorted : sorted.slice(0, 5);
     var h = '<div class="wm-sec"><div class="wm-sh">⛴ ' + esc(L('Tráfico por los estrechos', 'Traffic through the straits')) + chip('wm_shipping') +
       '<span class="r">' + esc(L('7 d vs 90 d · FMI', '7d vs 90d · IMF')) + '</span></div>';
     shown.forEach(function (it) {
-      var c = it.change_pct, col = c <= -25 ? '#FF4D6A' : c <= -10 ? '#FFB300' : c >= 10 ? '#2BE38B' : '#9BA6C4';
+      var c = it.change_pct, col = c <= -25 ? PAL.hi : c <= -10 ? PAL.mid : c >= 10 ? PAL.ok : PAL.flat;
       h += '<div class="wm-row" data-act="sel" data-id="' + esc(it.id) + '"><div class="wm-rel" style="background:' + col + '">' + (c > 0 ? '+' : '') + Math.round(c) + '%</div>' +
         '<div class="wm-rt"><div class="t">' + esc(L(it.title_es, it.title_en).split(':')[0]) + (it.data_caveat ? ' ⚠' : '') + '</div><div class="m">' +
         esc(L('≈ ' + it.transits_7d_avg + ' buques/día (antes ' + it.transits_base_avg + ') · datos al ', '≈ ' + it.transits_7d_avg + ' ships/day (was ' + it.transits_base_avg + ') · data as of ') + String(it.time || '').slice(0, 10)) + '</div></div></div>';
@@ -635,7 +663,7 @@
     var h = '<div class="wm-sec"><div class="wm-sh">📜 ' + esc(L('Reglas de chips y sanciones de EE.UU.', 'US chip rules & sanctions')) + chip('wm_policy') + '<span class="r">' + esc(L('30 días · oficial', '30 days · official')) + '</span></div>';
     if (!S.policy) return h + '<div class="wm-load">' + esc(L('Cargando el diario oficial…', 'Loading the official register…')) + '</div></div>';
     var st = S.policy.status || {};
-    if (S.policy.error || (st.ok === false && !(S.policy.items || []).length)) return h + '<div class="wm-meta" style="color:#FF8FA3">⚠ ' + esc(st.error_es ? errText(st) : L('El diario oficial no respondió.', 'The official register did not respond.')) + '</div></div>';
+    if (S.policy.error || (st.ok === false && !(S.policy.items || []).length)) return h + '<div class="wm-meta bad">⚠ ' + esc(st.error_es ? errText(st) : L('El diario oficial no respondió.', 'The official register did not respond.')) + '</div></div>';
     var its = (S.policy.items || []).slice().sort(function (a, b) { return (b.severity || 0) - (a.severity || 0) || (b.ts || 0) - (a.ts || 0); });
     if (!its.length) return h + '<div class="wm-meta">' + esc(L('Sin reglas nuevas del BIS ni de la OFAC en 30 días.', 'No new BIS or OFAC rules in 30 days.')) + '</div></div>';
     var open = !!S.lists.policy, shown = open ? its : its.slice(0, 4), mine = held();
@@ -646,7 +674,7 @@
         '<div class="wm-rt"><div class="t">' + esc(it.agency + ' · ' + it.title) + '</div><div class="m">' + esc(String(it.time || '').slice(0, 10) + ' · ' + L(it.kind_es, it.kind_en)) +
         ((it.countries || []).length ? ' · 🌐 ' + esc(it.countries.slice(0, 3).join(', ')) : '') +
         ((it.companies || []).length ? ' · 🏢 ' + esc(it.companies.slice(0, 4).map(function (c) { return c.label; }).join(', ')) : '') +
-        (hit.length ? ' · <b style="color:#FFB300">💼 ' + esc(L('en tu cartera', 'in your portfolio')) + '</b>' : '') +
+        (hit.length ? ' · <b class="wm-warn">💼 ' + esc(L('en tu cartera', 'in your portfolio')) + '</b>' : '') +
         (u ? ' · <a class="wm-link" style="display:inline" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(L('documento ↗', 'document ↗')) + '</a>' : '') + '</div></div></div>';
     });
     if (its.length > 4) h += '<button class="wm-mini" data-act="list" data-layer="policy" style="margin-top:6px">' + esc(open ? L('ver menos', 'show less') : L('ver los ' + its.length, 'show all ' + its.length)) + '</button>';
@@ -660,10 +688,10 @@
       if (!d || (d.live == null && d.close == null)) return '';
       var px = d.live != null ? d.live : d.close;
       var pct = d.pct != null ? d.pct : (d.prev ? (px - d.prev) / d.prev * 100 : null);
-      var col = pct == null ? '#9BA6C4' : pct >= 0 ? '#2BE38B' : '#FF4D6A';
+      var col = pct == null ? 'var(--os-ink-2,#9BA6C4)' : pct >= 0 ? 'var(--os-good-ink,#2BE38B)' : 'var(--os-bad-ink,#FF4D6A)';
       return '<div class="wm-kpi" style="cursor:default" title="' + esc(c[0] + ' · ' + L('precio del ETF, no spot', 'ETF price, not spot')) + '"><div class="k">' + esc(L(c[1], c[2])) + ' · ' + c[0] + '</div>' +
-        '<div class="v" style="font-size:13px;color:#E8EDFB">$' + Number(px).toFixed(2) + '</div>' +
-        '<div style="font-family:JetBrains Mono,monospace;font-size:10.5px;font-weight:700;color:' + col + '">' + (pct == null ? '—' : (pct >= 0 ? '+' : '') + Number(pct).toFixed(1) + '%') + '</div></div>';
+        '<div class="v px">$' + Number(px).toFixed(2) + '</div>' +
+        '<div class="pc" style="color:' + col + '">' + (pct == null ? '—' : (pct >= 0 ? '+' : '') + Number(pct).toFixed(1) + '%') + '</div></div>';
     }).join('');
     if (!boxes) {
       return h + '<div class="wm-meta">' + esc(!S.quotesTs || (!S.quotes && !S.quotesErr) ? L('Cargando cotizaciones…', 'Loading quotes…')
@@ -691,7 +719,7 @@
     var el = $('wm-right'); if (!el) return;
     var asOf = S.events && S.events.as_of ? S.events.as_of.replace('T', ' ').slice(0, 16) + ' UTC' : '';
     el.innerHTML = '<div class="wm-ph"><span class="grab"></span>🌐 ' + esc(L('Situación global', 'Global situation')) +
-      '<span style="margin-left:auto;font-weight:600;letter-spacing:0;text-transform:none;color:#5E6884;font-size:9.5px">' + esc(asOf) + '</span>' +
+      '<span class="wm-asof">' + esc(asOf) + '</span>' +
       '<span class="x" data-act="reload" title="' + esc(L('Actualizar', 'Refresh')) + '" style="margin-left:4px">⟳</span><span class="x" data-act="collapse" data-side="right" title="' + esc(L('Ocultar', 'Hide')) + '" style="margin-left:0">—</span></div>' +
       '<div class="wm-pb">' + systemicHTML() + gprHTML() + '<div style="height:8px"></div>' + kpisHTML() + briefHTML() + portfolioHTML() +
       shippingHTML() + policyHTML() + rankedHTML('chokepoints') + rankedHTML('instability') + commoditiesHTML() + regionsHTML() + scenariosHTML() +
@@ -702,16 +730,16 @@
   function detailHead(tag, color) {
     return '<div class="wm-ph"><span class="grab"></span><span class="wm-back" data-act="back">← ' + esc(L('Situación global', 'Global situation')) + '</span>' +
       '<span class="x" data-act="collapse" data-side="right" title="' + esc(L('Ocultar', 'Hide')) + '">—</span></div><div class="wm-pb">' +
-      '<span class="wm-tag" style="color:' + color + ';border-color:' + color + '66;background:' + color + '14">' + esc(tag) + '</span>';
+      '<span class="wm-tag wm-c" style="--wm-c:' + color + ';border-color:' + color + '66;background:' + color + '14">' + esc(tag) + '</span>';
   }
   function sevRow(sev, key) {
     if (sev == null) {
-      return '<div class="wm-meta" style="margin-top:10px;color:#FFD27A">' + esc(L('Score no disponible: el servidor no respondió. Se muestra solo la ubicación (referencia).',
+      return '<div class="wm-meta warn" style="margin-top:10px">' + esc(L('Score no disponible: el servidor no respondió. Se muestra solo la ubicación (referencia).',
         'Score not available: the server did not respond. Only the location is shown (reference).')) + '</div>';
     }
     return '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span class="wm-meta" style="flex:0 0 auto">' + esc(L('Severidad', 'Severity')) + chip(key || 'wm_severity') + '</span>' +
       '<div class="wm-bar"><i style="width:' + Math.max(3, Math.min(100, sev || 0)) + '%;background:' + sevColor(sev || 0) + '"></i></div>' +
-      '<b style="font-family:JetBrains Mono,monospace;color:' + sevColor(sev || 0) + '">' + (sev || 0) + '</b></div>';
+      '<b class="wm-c" style="font-family:JetBrains Mono,monospace;--wm-c:' + sevColor(sev || 0) + '">' + (sev || 0) + '</b></div>';
   }
   function coRow(c, extra) {
     var nrs = nrsOf(c.id); if (nrs == null) nrs = c.nrs;
@@ -719,15 +747,15 @@
     var approx = c.precision === 'hq' || c.precision === 'city' ? '' : ' ≈';
     return '<div class="wm-co"><span class="nm" title="' + esc(c.label + (c.place ? ' · ' + c.place : '')) + '">' + esc(c.label) + mine + '</span>' +
       (c.distance_km != null ? '<span class="ds">' + c.distance_km + ' km' + approx + '</span>' : (extra ? '<span class="ds">' + esc(extra) + '</span>' : '')) +
-      '<span class="nr" style="color:' + nrsColor(nrs == null ? 50 : nrs) + '" title="NRS">' + (nrs == null ? '—' : nrs) + '</span>' +
+      '<span class="nr wm-c" style="--wm-c:' + nrsColor(nrs == null ? 50 : nrs) + '" title="NRS">' + (nrs == null ? '—' : nrs) + '</span>' +
       '<button class="wm-mini" data-act="xray" data-id="' + esc(c.id) + '" title="X-Ray">🔬</button></div>';
   }
   function exposureHTML(it, ex) {
     var h = '<div class="wm-sec"><div class="wm-sh">🏢 ' + esc(L('Exposición de tu cadena', 'Your supply-chain exposure')) + chip('wm_exposure') + '</div>';
     if (!ex) return h + '<div class="wm-load">' + esc(L('Buscando empresas cercanas…', 'Looking for nearby companies…')) + '</div></div>';
-    if (ex.error) return h + '<div class="wm-meta" style="color:#FF8FA3">' + esc(L('No se pudo calcular: ', 'Could not compute: ') + ex.error) + '</div></div>';
+    if (ex.error) return h + '<div class="wm-meta bad">' + esc(L('No se pudo calcular: ', 'Could not compute: ') + ex.error) + '</div></div>';
     var share = ex.index_kind === 'share';
-    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="wm-meta">' + esc(share ? L('% de tu grafo en el país', '% of your graph in the country') : L('Índice', 'Index')) + '</span><div class="wm-bar"><i style="width:' + Math.max(2, ex.index) + '%;background:' + sevColor(ex.index) + '"></i></div><b style="font-family:JetBrains Mono,monospace;color:' + sevColor(ex.index) + '">' + (share ? ex.share_pct + '%' : ex.index) + '</b></div>';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="wm-meta">' + esc(share ? L('% de tu grafo en el país', '% of your graph in the country') : L('Índice', 'Index')) + '</span><div class="wm-bar"><i style="width:' + Math.max(2, ex.index) + '%;background:' + sevColor(ex.index) + '"></i></div><b class="wm-c" style="font-family:JetBrains Mono,monospace;--wm-c:' + sevColor(ex.index) + '">' + (share ? ex.share_pct + '%' : ex.index) + '</b></div>';
     var affIds = {};
     var aff = (it.layer === 'chokepoints' ? (it.affected || []) : []).map(function (id) {
       var n = (window.NODE_BY_ID || {})[id]; if (n) affIds[id] = 1; return n ? { id: id, label: n.label, precision: 'hq' } : null;
@@ -785,7 +813,7 @@
         : it.time_kind === 'last_update' ? L('Última actualización: ', 'Last update: ') + ago(it.ts) + ' · ' + utc(it.ts) : ago(it.ts) + ' · ' + utc(it.ts);
     var place = (it.layer === 'chokepoints' || it.layer === 'instability') ? (it.lat.toFixed(1) + '°, ' + it.lon.toFixed(1) + '°')
       : (it.place && it.place !== title(it) ? it.place : (it.lat.toFixed(2) + ', ' + it.lon.toFixed(2)));
-    h += '<div class="wm-meta">📍 ' + esc(place) + '<br>' + (it.stale ? '<span style="color:#FFB300">' + esc(when) + '</span>' : '🕒 ' + esc(when)) + '</div>';
+    h += '<div class="wm-meta">📍 ' + esc(place) + '<br>' + (it.stale ? '<span class="wm-warn">' + esc(when) + '</span>' : '🕒 ' + esc(when)) + '</div>';
     h += sevRow(it.severity, it.layer === 'chokepoints' ? 'wm_choke_score' : it.layer === 'instability' ? 'wm_instability' : 'wm_severity');
     var kv = [];
     if (it.layer === 'quakes') {
@@ -837,14 +865,14 @@
       kv.push([L('Noticias 7d', 'News 7d'), it.news && it.news.count != null ? it.news.count + ' art.' + (it.news.tone != null ? ' · ' + L('tono', 'tone') + ' ' + it.news.tone : '') : L('sin datos aún', 'no data yet')]);
     }
     if (kv.length) h += '<div class="wm-kv">' + kv.map(function (x) { return '<div><div class="k">' + esc(x[0]) + '</div><div class="v">' + esc(x[1]) + '</div></div>'; }).join('') + '</div>';
-    if (it.press_signal) h += '<div class="wm-meta" style="margin-top:8px;color:#9BA6C4">📰 ' + esc(L('Señal de prensa: GDELT codifica automáticamente miles de noticias cada 15 min. Solo mostramos eventos con ≥ 2 fuentes o ≥ 5 artículos; abre las notas para confirmar.', 'Press signal: GDELT automatically codes thousands of news stories every 15 min. We only show events with ≥ 2 sources or ≥ 5 articles; open the stories to confirm.')) + '</div>';
-    if (it.layer === 'shipping' && it.data_caveat) h += '<div class="wm-meta" style="margin-top:8px;color:#FFB300">⚠ ' + esc(L('Cero buques registrados: puede ser un cierre real, buques con el transpondedor (AIS) apagado o un hueco en los datos del FMI. Confírmalo con noticias antes de decidir.', 'Zero ships recorded: it may be a real closure, ships with their (AIS) transponder off, or a gap in the IMF data. Confirm with news before deciding.')) + '</div>';
-    if (it.layer === 'policy' && it.abstract) h += '<div class="wm-meta" style="margin-top:8px;color:#C7D0EA">' + esc(it.abstract) + '</div>';
+    if (it.press_signal) h += '<div class="wm-meta" style="margin-top:8px">📰 ' + esc(L('Señal de prensa: GDELT codifica automáticamente miles de noticias cada 15 min. Solo mostramos eventos con ≥ 2 fuentes o ≥ 5 artículos; abre las notas para confirmar.', 'Press signal: GDELT automatically codes thousands of news stories every 15 min. We only show events with ≥ 2 sources or ≥ 5 articles; open the stories to confirm.')) + '</div>';
+    if (it.layer === 'shipping' && it.data_caveat) h += '<div class="wm-meta wm-warn" style="margin-top:8px">⚠ ' + esc(L('Cero buques registrados: puede ser un cierre real, buques con el transpondedor (AIS) apagado o un hueco en los datos del FMI. Confírmalo con noticias antes de decidir.', 'Zero ships recorded: it may be a real closure, ships with their (AIS) transponder off, or a gap in the IMF data. Confirm with news before deciding.')) + '</div>';
+    if (it.layer === 'policy' && it.abstract) h += '<div class="wm-meta ink" style="margin-top:8px">' + esc(it.abstract) + '</div>';
     if (it.layer === 'policy' && (it.companies || []).length) h += '<div class="wm-meta" style="margin-top:6px">🏢 ' + esc(L('Nombra a: ', 'Names: ') + it.companies.map(function (c) { return c.label; }).join(', ')) + '</div>';
-    if (it.layer === 'policy') h += '<div class="wm-meta" style="margin-top:6px;color:#7C87A3">' + esc(L('La importancia es una ESTIMACIÓN por palabras clave (Entity List, chips, IA…); lee el documento oficial antes de decidir.', 'Importance is a KEYWORD ESTIMATE (Entity List, chips, AI…); read the official document before deciding.')) + '</div>';
-    if (it.factors && it.factors.length) h += '<div class="wm-meta" style="margin-top:8px;color:#FFD27A">⚡ ' + esc(L('Factores activos del grafo: ', 'Active graph factors: ') + it.factors.join(' · ')) + '</div>';
+    if (it.layer === 'policy') h += '<div class="wm-meta" style="margin-top:6px">' + esc(L('La importancia es una ESTIMACIÓN por palabras clave (Entity List, chips, IA…); lee el documento oficial antes de decidir.', 'Importance is a KEYWORD ESTIMATE (Entity List, chips, AI…); read the official document before deciding.')) + '</div>';
+    if (it.factors && it.factors.length) h += '<div class="wm-meta warn" style="margin-top:8px">⚡ ' + esc(L('Factores activos del grafo: ', 'Active graph factors: ') + it.factors.join(' · ')) + '</div>';
     var why = en() ? it.why_en : it.why_es;
-    if (why) h += '<div class="wm-meta" style="margin-top:8px;color:#C7D0EA">' + esc(why) + '</div>';
+    if (why) h += '<div class="wm-meta ink" style="margin-top:8px">' + esc(why) + '</div>';
     if (it.articles && it.articles.length) {
       h += '<div class="wm-sec"><div class="wm-sh">📰 ' + esc(L('Artículos', 'Articles')) + '</div>' + it.articles.map(function (a) {
         var u = safeUrl(a.url);
@@ -862,10 +890,10 @@
     var nrs = nrsOf(n.id);
     var prec = { hq: L('sede / sitio principal (curado)', 'HQ / main site (curated)'), city: L('ciudad de la sede', 'HQ city'), hub: L('aprox. (hub regional)', 'approx. (regional hub)'),
       country: L('aprox. (centro del país)', 'approx. (country center)'), unknown: L('desconocida', 'unknown') }[g.precision] || '—';
-    var h = detailHead('🏢 ' + L('EMPRESA DEL GRAFO', 'GRAPH COMPANY'), '#34d399');
+    var h = detailHead('🏢 ' + L('EMPRESA DEL GRAFO', 'GRAPH COMPANY'), LBY.companies.c);
     h += '<div class="wm-h1">' + esc(n.label) + (((window.MKT && window.MKT.pos) || {})[n.id] ? ' 💼' : '') + '</div>';
     h += '<div class="wm-meta">' + esc((n.mkt || n.ticker || '') + (n.cat ? ' · ' + n.cat : '')) + '<br>📍 ' + esc((g.label || '') + ' — ' + prec) + '</div>';
-    h += '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span class="wm-meta">NRS' + chip('nrs') + '</span><div class="wm-bar"><i style="width:' + Math.max(3, nrs || 0) + '%;background:' + nrsColor(nrs || 0) + '"></i></div><b style="font-family:JetBrains Mono,monospace;color:' + nrsColor(nrs || 0) + '">' + (nrs == null ? '—' : nrs) + '</b></div>';
+    h += '<div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span class="wm-meta">NRS' + chip('nrs') + '</span><div class="wm-bar"><i style="width:' + Math.max(3, nrs || 0) + '%;background:' + nrsColor(nrs || 0) + '"></i></div><b class="wm-c" style="font-family:JetBrains Mono,monospace;--wm-c:' + nrsColor(nrs || 0) + '">' + (nrs == null ? '—' : nrs) + '</b></div>';
     h += '<div style="display:flex;gap:6px;margin-top:10px"><button class="wm-act" style="margin:0" data-act="xray" data-id="' + esc(n.id) + '">🔬 X-Ray</button>' +
       '<button class="wm-act ghost" style="margin:0" data-act="map" data-id="' + esc(n.id) + '">🗺 ' + esc(L('Ver en el mapa', 'View on map')) + '</button></div>';
     h += nearbyEventsHTML(g, 800);
@@ -882,13 +910,13 @@
     if (!ev.length) return h + '<div class="wm-meta">' + esc(L('Nada activo cerca en esta ventana.', 'Nothing active nearby in this window.')) + '</div></div>';
     ev.forEach(function (x) {
       var l = LBY[x.it.layer];
-      h += '<div class="wm-row" data-act="sel" data-id="' + esc(x.it.id) + '"><div class="wm-rel" style="background:' + sevColor(x.it.severity || 0) + '">' + (x.it.severity || 0) + '</div><div class="wm-rt"><div class="t">' + esc(title(x.it)) + '</div><div class="m"><span style="color:' + l.c + '">' + esc(L(l.es, l.en)) + '</span> · ' + Math.round(x.d) + ' km</div></div></div>';
+      h += '<div class="wm-row" data-act="sel" data-id="' + esc(x.it.id) + '"><div class="wm-rel" style="background:' + sevColor(x.it.severity || 0) + '">' + (x.it.severity || 0) + '</div><div class="wm-rt"><div class="t">' + esc(title(x.it)) + '</div><div class="m"><span ' + cTxt(l.c) + '>' + esc(L(l.es, l.en)) + '</span> · ' + Math.round(x.d) + ' km</div></div></div>';
     });
     return h + '</div>';
   }
   function fabDetailHTML(f) {
     var kind = { fab: L('Fab (fundición/lógica)', 'Fab (foundry/logic)'), hbm: L('Memoria HBM', 'HBM memory'), nand: 'NAND', euv: L('Litografía EUV', 'EUV lithography'), packaging: L('Empaquetado avanzado', 'Advanced packaging') }[f.kind] || f.kind;
-    var h = detailHead('🏭 ' + L('FAB CRÍTICA · REFERENCIA', 'CRITICAL FAB · REFERENCE'), '#00E0FF');
+    var h = detailHead('🏭 ' + L('FAB CRÍTICA · REFERENCIA', 'CRITICAL FAB · REFERENCE'), LBY.fabs.c);
     h += '<div class="wm-h1">' + esc(f.site) + '</div><div class="wm-meta">' + esc(kind + (f.c && !en() ? ' · ' + f.c : '')) + '<br>' + esc(L('Sitio curado a nivel ciudad (no en vivo).', 'Curated city-level site (not live).')) + chip('wm_reference') + '</div>';
     if (f.company_known) h += '<button class="wm-act" data-act="xray" data-id="' + esc(f.company) + '">🔬 X-Ray · ' + esc(((window.NODE_BY_ID || {})[f.company] || {}).label || f.company) + '</button>';
     h += nearbyEventsHTML({ lat: f.lat, lng: f.lon, precision: 'site' }, 800);
@@ -911,7 +939,7 @@
     var lat = kind === 'company' ? window.GeoCoords.geoCoord(data).lat : data.lat;
     var lon = kind === 'company' ? window.GeoCoords.geoCoord(data).lng : data.lon;
     if (S.globe) {
-      S.globe.setPoints('sel', [{ lat: lat, lon: lon, color: '#00E0FF', size: 20, pulse: true }], { shape: 3, pickable: false, renderOrder: 9 });
+      S.globe.setPoints('sel', [{ lat: lat, lon: lon, color: GLOBE.sel, size: 20, pulse: true }], { shape: 3, pickable: false, renderOrder: 9 });
       if (opts.focus !== false) S.globe.focusOn(lat, lon, { dist: opts.zoom ? Math.round((S.globe._fitDist || 290) * (S.narrow ? 0.8 : 0.72)) : undefined });
     }
     // siempre la exposición COMPLETA (limit 25 + dependientes curados): la del
@@ -962,13 +990,13 @@
   function renderSim() {
     var out = $('wm-simout'); if (!out || !S.sim) return;
     if (S.sim.loading) { out.innerHTML = '<div class="wm-load">' + esc(L('Propagando el shock por la cadena…', 'Propagating the shock through the chain…')) + '</div>'; return; }
-    if (S.sim.err) { out.innerHTML = '<div class="wm-meta" style="color:#FF8FA3;margin-top:6px">' + esc(S.sim.err) + '</div>'; return; }
+    if (S.sim.err) { out.innerHTML = '<div class="wm-meta bad" style="margin-top:6px">' + esc(S.sim.err) + '</div>'; return; }
     var res = S.sim.res || {}, shocked = {};
     S.sim.shock.forEach(function (id) { shocked[id] = 1; });
     var NB = window.NODE_BY_ID || {};
     var victims = Object.keys(res.impacts || {}).filter(function (id) { return !shocked[id]; })
       .map(function (id) { return [id, res.impacts[id]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8);
-    out.innerHTML = '<div class="wm-simres"><div class="wm-meta" style="color:#FF8FA3;font-weight:700;margin-bottom:5px">◉ ' + esc(L('Simulación', 'Simulation')) + ' · ' +
+    out.innerHTML = '<div class="wm-simres"><div class="wm-meta bad" style="font-weight:700;margin-bottom:5px">◉ ' + esc(L('Simulación', 'Simulation')) + ' · ' +
       (res.affected != null ? res.affected : victims.length) + ' ' + esc(L('empresas alcanzadas', 'companies reached')) + '</div>' +
       victims.map(function (v) {
         return '<div class="wm-vrow" style="cursor:pointer" data-act="xray" data-id="' + esc(v[0]) + '"><span class="n">' + esc((NB[v[0]] || {}).label || v[0]) + '</span><span class="vb"><i style="width:' + Math.min(100, v[1]) + '%"></i></span><span class="p">' + Math.round(v[1]) + '%</span></div>';
@@ -1009,11 +1037,11 @@
     var ck = items.filter(function (it) { return it.layer === 'chokepoints'; });
     if (!ck.length) ck = fallbackChokes().map(function (it) { return S.items[it.id] || it; });
     G.setRings('chokepoints', ck.map(function (it) {
-      return { lat: it.lat, lon: it.lon, color: it.severity == null ? '#7C87A3' : sevColor(it.severity), scale: 0.8 + (it.severity || 30) / 100 * 0.7 };
+      return { lat: it.lat, lon: it.lon, color: it.severity == null ? GLOBE.none : sevColor(it.severity), scale: 0.8 + (it.severity || 30) / 100 * 0.7 };
     }));
     G.gl.chokepoints.items = ck;
     G.setLabels('choke_labels', ck.slice().sort(function (a, b) { return (b.severity || 0) - (a.severity || 0); }).slice(0, 5).map(function (it) {
-      return { lat: it.lat + 2.2, lon: it.lon, text: title(it), color: it.severity == null ? '#9BA6C4' : sevColor(it.severity) };
+      return { lat: it.lat + 2.2, lon: it.lon, text: title(it), color: it.severity == null ? GLOBE.label : sevColor(it.severity) };
     }), { px: 26, w: 22 });
     G.setLayerVisible('chokepoints', S.vis.chokepoints); G.setLayerVisible('choke_labels', S.vis.chokepoints);
     var ins = items.filter(function (it) { return it.layer === 'instability'; });
@@ -1028,9 +1056,9 @@
     var G = S.globe; if (!G || !S.ref) return;
     G.setPaths('lanes', S.ref.lanes.map(function (x) { return x.path; }), { color: 0x38BDF8, opacity: 0.34, speed: 0.4, dash: 1 / 30, alt: 0.0035 });
     G.setPaths('cables', S.ref.cables.map(function (x) { return x.path; }), { color: 0xA78BFA, opacity: 0.4, speed: 0.12, dash: 1 / 45, alt: 0.002, step: 1.5 });
-    G.setPoints('landings', S.ref.landings.map(function (x) { return { lat: x.lat, lon: x.lon, color: '#A78BFA', size: 4.5 }; }), { shape: 3, pickable: false, opacity: 0.8 });
-    var fabCol = { euv: '#8E5AFF', hbm: '#FFB300', nand: '#7AE2FF', packaging: '#5EEAD4' };
-    G.setPoints('fabs', S.ref.fabs.map(function (f) { return { lat: f.lat, lon: f.lon, color: fabCol[f.kind] || '#00E0FF', size: 6.5, alt: 0.006 }; }),
+    G.setPoints('landings', S.ref.landings.map(function (x) { return { lat: x.lat, lon: x.lon, color: LBY.cables.c, size: 4.5 }; }), { shape: 3, pickable: false, opacity: 0.8 });
+    var fabCol = GLOBE.fab;
+    G.setPoints('fabs', S.ref.fabs.map(function (f) { return { lat: f.lat, lon: f.lon, color: fabCol[f.kind] || LBY.fabs.c, size: 6.5, alt: 0.006 }; }),
       { shape: 1, hitPx: 9, additive: false, renderOrder: 7 });
     G.gl.fabs.items = S.ref.fabs;
     G.setLayerVisible('lanes', S.vis.lanes); G.setLayerVisible('cables', S.vis.cables); G.setLayerVisible('landings', S.vis.cables); G.setLayerVisible('fabs', S.vis.fabs);
@@ -1039,7 +1067,7 @@
     var G = S.globe; if (!G || !window.GeoCoords) return;
     var NB = window.NODE_BY_ID || {};
     G.setPoints('portfolio', held().map(function (id) {
-      var g = window.GeoCoords.geoCoord(NB[id]); return { lat: g.lat, lon: g.lng, color: '#FFFFFF', size: 8.5 };
+      var g = window.GeoCoords.geoCoord(NB[id]); return { lat: g.lat, lon: g.lng, color: LBY.portfolio.c, size: 8.5 };
     }), { shape: 3, pickable: false, opacity: 0.9, renderOrder: 8 });
     G.setLayerVisible('portfolio', S.vis.portfolio);
   }
@@ -1181,13 +1209,13 @@
     var d = hit.data, h;
     if (hit.layer === 'companies') {
       var nrs = nrsOf(d.id);
-      h = '<b>🏢 ' + esc(d.label) + '</b><div class="m">NRS <b style="color:' + nrsColor(nrs || 0) + '">' + (nrs == null ? '—' : nrs) + '</b> · ' + esc(L('clic = detalle', 'click = details')) + '</div>';
+      h = '<b>🏢 ' + esc(d.label) + '</b><div class="m">NRS <b ' + cTxt(nrsColor(nrs || 0)) + '>' + (nrs == null ? '—' : nrs) + '</b> · ' + esc(L('clic = detalle', 'click = details')) + '</div>';
     } else if (hit.layer === 'fabs') {
       h = '<b>🏭 ' + esc(d.site) + '</b><div class="m">' + esc((d.c && !en() ? d.c + ' · ' : '') + L('referencia', 'reference')) + '</div>';
     } else {
       var l = LBY[d.layer] || LBY.conflict;
-      h = '<b>' + esc((d.layer === 'natural' ? (NAT_ICON[d.category] || l.i) : l.i) + ' ' + String(title(d)).slice(0, 90)) + '</b><div class="m"><span style="color:' + l.c + '">' + esc(L(l.es, l.en)) + '</span>' +
-        (d.severity != null ? ' · ' + esc(L('sev.', 'sev.')) + ' ' + d.severity : '') + (d.stale ? ' · <span style="color:#FFB300">' + esc(staleTag(d)) + '</span>' : d.time_kind === 'exact' || d.time_kind === 'last_update' ? ' · ' + esc(ago(d.ts)) : '') + '</div>';
+      h = '<b>' + esc((d.layer === 'natural' ? (NAT_ICON[d.category] || l.i) : l.i) + ' ' + String(title(d)).slice(0, 90)) + '</b><div class="m"><span ' + cTxt(l.c) + '>' + esc(L(l.es, l.en)) + '</span>' +
+        (d.severity != null ? ' · ' + esc(L('sev.', 'sev.')) + ' ' + d.severity : '') + (d.stale ? ' · <span class="wm-warn">' + esc(staleTag(d)) + '</span>' : d.time_kind === 'exact' || d.time_kind === 'last_update' ? ' · ' + esc(ago(d.ts)) : '') + '</div>';
     }
     var r = S.root.getBoundingClientRect();
     tip.innerHTML = h; tip.style.display = 'block';
@@ -1216,6 +1244,15 @@
     } catch (e) { console.warn('[WorldMonitor] globo:', e); }
   }
 
+  // cambio de idioma con el monitor montado: textos fijos del armazón + paneles + rótulos del globo
+  function relabel() {
+    if (!S.root || !$('wm')) return;
+    var cv = $('wm-canvas'); if (cv) cv.setAttribute('aria-label', L('Globo del World Monitor', 'World Monitor globe'));
+    var rl = $('wm-reopen-l'); if (rl) rl.textContent = '☰ ' + L('Capas', 'Layers');
+    renderLayers(); renderBottom(); renderTicker(); renderRight();
+    if (S.globe) drawServerLayers();
+  }
+
   function mount(container) {
     container = container || $('wm-root');
     if (!container) return;
@@ -1242,6 +1279,11 @@
     container.addEventListener('click', onClick);
     S._onClick = onClick;
     if (window.ResizeObserver) { S._ro = new ResizeObserver(checkNarrow); S._ro.observe(container); }
+    // cambio de idioma: app.html fija <html lang> → re-etiquetar (regla bilingüe)
+    if (window.MutationObserver) {
+      S._mo = new MutationObserver(relabel);
+      S._mo.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    }
     checkNarrow();
     initGlobe();
     loadStatic();
@@ -1257,6 +1299,7 @@
     S.timers.forEach(function (t) { clearTimeout(t); clearInterval(t); });
     S.timers = [];
     try { if (S._ro) S._ro.disconnect(); } catch (e) {}
+    try { if (S._mo) S._mo.disconnect(); } catch (e) {}
     if (S.root && S._onClick) S.root.removeEventListener('click', S._onClick);
     if (S.globe) { try { S.globe.dispose(); } catch (e) {} }
     S.globe = null; window._wmGlobe = null;

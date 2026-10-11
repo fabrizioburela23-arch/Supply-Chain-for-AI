@@ -6,13 +6,13 @@ tags: ["capa/mcp-api", "tipo/indice"]
 
 # Índice de la API
 
-228 rutas HTTP en 56 grupos + 23 herramientas MCP.
+227 rutas HTTP en 57 grupos + 23 herramientas MCP.
 
 | Grupo | Rutas | Definidas en |
 |---|---|---|
 | [[API MCP transporte y OAuth]] | 13 | [[mcp_server.api.py]], [[mcp_server.oauth.py]] |
 | [[API agents]] | 1 | [[core.agents_api.py]] |
-| [[API ai]] | 5 | [[server.py]] |
+| [[API ai]] | 4 | [[server.py]] |
 | [[API brokerage]] | 20 | [[brokerage.api.py]] |
 | [[API candles]] | 1 | [[server.py]] |
 | [[API canvas]] | 1 | [[server.py]] |
@@ -50,7 +50,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API páginas y archivos estáticos]] | 8 | [[server.py]] |
 | [[API quote]] | 1 | [[server.py]] |
 | [[API quotes]] | 2 | [[server.py]] |
-| [[API research]] | 10 | [[research.api.py]], [[server.py]] |
+| [[API research]] | 9 | [[research.api.py]] |
 | [[API scalp]] | 1 | [[server.py]] |
 | [[API screener]] | 1 | [[server.py]] |
 | [[API sim]] | 1 | [[server.py]] |
@@ -58,6 +58,7 @@ tags: ["capa/mcp-api", "tipo/indice"]
 | [[API space2]] | 2 | [[core.space.py]] |
 | [[API supply-chain]] | 1 | [[server.py]] |
 | [[API tensor]] | 5 | [[matrix.tensor_api.py]] |
+| [[API thesis]] | 1 | [[server.py]] |
 | [[API trade]] | 12 | [[server.py]] |
 | [[API user-state]] | 1 | [[core.portfolio_reports_api.py]] |
 | [[API v1 (pública)]] | 5 | [[server.py]] |

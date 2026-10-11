@@ -346,6 +346,7 @@ const ctx = { console, setTimeout, clearTimeout, setInterval, clearInterval,
 ctx.window = ctx; ctx.globalThis = ctx;
 ctx.NODE_BY_ID = {}; snap.nodes.forEach(n => { ctx.NODE_BY_ID[n.id] = n; });
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(ROOT + '/engine/agents_registry.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(ROOT + '/engine/khipu_chat.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(ROOT + '/engine/khipu_lang.js', 'utf8'), ctx);
 // el parser de órdenes REAL de la Cabina

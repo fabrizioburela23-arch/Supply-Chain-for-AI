@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/config.py"
 lenguaje: "python"
-lineas: 82
+lineas: 80
 aliases: ["core/config.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/config.py
 
-> Módulo · capa [[Capa Infraestructura]] · 82 líneas · `core/config.py`
+> Módulo · capa [[Capa Infraestructura]] · 80 líneas · `core/config.py`
 
 ## Para qué sirve
 
@@ -44,7 +44,6 @@ _Además lo importan 5 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
-- [[ENV AI_MODEL]]
 - [[ENV AI_MODEL_DEEP]]
 - [[ENV AI_MODEL_FAST]]
 - [[ENV AI_ORDER]]

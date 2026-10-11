@@ -9,7 +9,14 @@
      ☰ Lista — top 100 con filtros por tesis del expediente (badges 📋/⚠).
      Detalle — gráfico 90d + caja 💼 Operar (broker Alpaca, /api/trade/*) +
        Expediente Khipus de 6 bloques + banner ⚠.
-   Bilingüe ES/EN (regla del proyecto).
+   Bilingüe ES/EN (regla del proyecto): al cambiar de idioma se re-pinta la vista.
+   KHIPUS OS (2026-10-11): cada vista se pinta dentro de .kos-themed.cr-root →
+   tokens --os-* de engine/cockpit.js (claro = body sin .dark, oscuro = body.dark;
+   el valor tras la coma de cada var() es el respaldo, la piel NEXUS vieja). Los
+   colores de DATOS (24h%, bloques del expediente, casos alcista/bajista) viven en
+   CR_PAL / pctCol; como texto van en .cr-c y en el tema claro se oscurecen para
+   leerse. Burbujas y gráfico 90d (canvas) leen los tokens al dibujar y se
+   re-pintan al cambiar el tema. Insignias 🧪 SIMULADO / 🔴 DINERO REAL intactas.
    ============================================================================ */
 (function () {
   'use strict';
@@ -27,6 +34,24 @@
   var ANALYSIS = {};      // cache EN MEMORIA del análisis IA por id: {loading}|{data}|{error}
 
   var CAT_ORDER = ['store', 'l1', 'stable', 'payments', 'defi', 'perps', 'exchange', 'rwa', 'ai', 'privacy', 'meme'];
+  var SHOWING = null;     // 'main' | 'detail' — qué vista está pintada (para re-pintar al cambiar idioma)
+
+  // paleta de DATOS (no es piel): bloques del expediente, casos de la IA, anillo ⚠ y 24h% plano
+  var CR_PAL = { what: '#52B1FF', mech: '#8e5aff', tok: '#3DE0C8', cats: '#2BE38B', risks: '#FF4D6A', pos: '#FFB300',
+    bull: '#2BE38B', bear: '#FF4D6A', drivers: '#52B1FF', insights: '#3DE0C8', warnRing: '#FF4D6A', flat: '#5C6784' };
+  // color de DATO como texto: igual en oscuro; en claro se mezcla 50 % con la tinta (contraste AA sobre blanco)
+  function cTxt(c) { return 'class="cr-c" style="--cr-c:' + c + '"'; }
+  function ensureCss() {
+    if (document.getElementById('cr-css')) return;
+    var st = document.createElement('style'); st.id = 'cr-css';
+    // !important = la precedencia del style="color:…" que reemplaza
+    st.textContent = '.cr-root{color:var(--os-ink,inherit)}' +
+      '.cr-root .cr-c{color:var(--cr-c)!important}' +
+      '@supports (color:color-mix(in srgb,red 50%,blue)){body:not(.dark) .cr-root .cr-c{color:color-mix(in srgb,var(--cr-c) 50%,var(--os-ink,#111216))!important}}';
+    (document.head || document.documentElement).appendChild(st);
+  }
+  // raíz de cada vista: tokens de Khipus OS (claro/oscuro) también fuera de #bcp-ov
+  function rootOpen(style) { ensureCss(); return '<div class="kos-themed cr-root" style="' + style + '">'; }
 
   function T(k, fb) {
     try { if (typeof window.t === 'function') { var v = window.t(k); if (v && v !== k) return v; } } catch (e) {}
@@ -73,8 +98,8 @@
     return '$' + Math.round(v).toLocaleString();
   }
   function fmtPct(v) {
-    if (v == null) return '<span style="color:#7C87A3">—</span>';
-    var c = v >= 0 ? '#2BE38B' : '#FF4D6A';
+    if (v == null) return '<span style="color:var(--os-ink-2,#7C87A3)">—</span>';
+    var c = v >= 0 ? 'var(--os-good-ink,#2BE38B)' : 'var(--os-bad-ink,#FF4D6A)';
     return '<span style="color:' + c + ';font-weight:600">' + (v >= 0 ? '+' : '') + v.toFixed(2) + '%</span>';
   }
   function fmtSupply(v, sym) {
@@ -83,7 +108,7 @@
     return n + (sym ? ' ' + sym : '');
   }
   function pctCol(p) {
-    if (p == null || Math.abs(p) < 0.05) return '#5C6784';
+    if (p == null || Math.abs(p) < 0.05) return CR_PAL.flat;
     var t = Math.min(Math.abs(p) / 6, 1);
     return p > 0
       ? 'rgb(' + Math.round(43 - 20 * t) + ',227,' + Math.round(139 - 60 * t) + ')'
@@ -148,14 +173,14 @@
     var v = view();
     var seg = function (id, txt, on) {
       return '<button onclick="window.KhipuCrypto.setView(\'' + id + '\')" style="padding:5px 13px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;' +
-        'border:1px solid ' + (on ? 'rgba(0,224,255,.45)' : 'transparent') + ';background:' + (on ? 'rgba(0,224,255,.12)' : 'none') + ';color:' + (on ? '#00E0FF' : '#7C87A3') + '">' + txt + '</button>';
+        'border:1px solid ' + (on ? 'var(--os-accent,rgba(0,224,255,.45))' : 'transparent') + ';background:' + (on ? 'var(--kos-accent-soft,rgba(0,224,255,.12))' : 'none') + ';color:' + (on ? 'var(--os-ink,#00E0FF)' : 'var(--os-ink-2,#7C87A3)') + '">' + txt + '</button>';
     };
     return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">' +
       '<h2 style="margin:0;font-size:19px">' + T('cr_title', '₿ Cripto') + '</h2>' +
-      '<div style="display:flex;gap:2px;background:rgba(21,28,45,.6);border-radius:9px;padding:2px">' +
+      '<div style="display:flex;gap:2px;background:var(--os-surface-2,rgba(21,28,45,.6));border-radius:9px;padding:2px">' +
         seg('bubbles', '🫧 ' + T('cr_view_bub', 'Burbujas'), v === 'bubbles') + seg('list', '☰ ' + T('cr_view_list', 'Lista'), v === 'list') + '</div>' +
-      '<button onclick="window.KhipuCrypto.refresh()" title="Refresh" style="margin-left:auto;padding:5px 12px;border-radius:7px;border:1px solid rgba(0,224,255,.3);background:rgba(0,224,255,.08);color:#00E0FF;cursor:pointer;font-size:12px">⟳</button></div>' +
-      '<div style="color:#7C87A3;font-size:12px;margin-bottom:10px">' + T('cr_sub', 'Datos en vivo de CoinGecko · clic en una moneda para ver su detalle') + '</div>';
+      '<button onclick="window.KhipuCrypto.refresh()" title="' + esc(T2('cr_refresh', 'Actualizar', 'Refresh')) + '" style="margin-left:auto;padding:5px 12px;border-radius:7px;border:1px solid var(--os-accent,rgba(0,224,255,.3));background:var(--kos-accent-soft,rgba(0,224,255,.08));color:var(--os-accent,#00E0FF);cursor:pointer;font-size:12px">⟳</button></div>' +
+      '<div style="color:var(--os-ink-2,#7C87A3);font-size:12px;margin-bottom:10px">' + T('cr_sub', 'Datos en vivo de CoinGecko · clic en una moneda para ver su detalle') + '</div>';
   }
 
   // chips de categoría (filtran ambas vistas) + blurb educativo al filtrar
@@ -163,7 +188,7 @@
     if (!window.CRYPTO_CATS) return '';
     var mk = function (key, txt, on) {
       return '<button onclick="window.KhipuCrypto.setFilter(' + (key ? '\'' + key + '\'' : 'null') + ')" style="padding:4px 11px;border-radius:999px;cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;' +
-        'border:1px solid ' + (on ? 'rgba(0,224,255,.5)' : 'rgba(122,158,255,.18)') + ';background:' + (on ? 'rgba(0,224,255,.12)' : 'rgba(21,28,45,.5)') + ';color:' + (on ? '#00E0FF' : '#9AA6C4') + '">' + txt + '</button>';
+        'border:1px solid ' + (on ? 'var(--os-accent,rgba(0,224,255,.5))' : 'var(--os-line,rgba(122,158,255,.18))') + ';background:' + (on ? 'var(--kos-accent-soft,rgba(0,224,255,.12))' : 'var(--os-surface-2,rgba(21,28,45,.5))') + ';color:' + (on ? 'var(--os-ink,#00E0FF)' : 'var(--os-ink-2,#9AA6C4)') + '">' + txt + '</button>';
     };
     var h = mk(null, T('cr_all', 'Todas'), !FILTER);
     CAT_ORDER.forEach(function (k) {
@@ -173,7 +198,7 @@
     var blurb = '';
     if (FILTER) {
       var ci = catInfo(FILTER);
-      if (ci) blurb = '<div style="margin:8px 0 0;padding:8px 13px;border-radius:9px;background:rgba(0,224,255,.06);border:1px solid rgba(0,224,255,.18);color:#9AB8D8;font-size:12px;line-height:1.5">' +
+      if (ci) blurb = '<div style="margin:8px 0 0;padding:8px 13px;border-radius:9px;background:var(--kos-accent-soft,rgba(0,224,255,.06));border:1px solid var(--os-line,rgba(0,224,255,.18));color:var(--os-ink,#9AB8D8);font-size:12px;line-height:1.5">' +
         ci.icon + ' ' + esc(lang() === 'en' ? (ci.ben || '') : (ci.bes || '')) + '</div>';
     }
     return '<div style="display:flex;gap:6px;flex-wrap:wrap">' + h + '</div>' + blurb;
@@ -187,8 +212,8 @@
   }
 
   function baseCSS() {
-    return '<style>#crypto-panel td{padding:8px 6px;border-bottom:1px solid rgba(122,158,255,.08)}' +
-      '#crypto-panel tbody tr:hover{background:rgba(0,224,255,.05)}' +
+    return '<style>#crypto-panel td{padding:8px 6px;border-bottom:1px solid var(--os-line,rgba(122,158,255,.08))}' +
+      '#crypto-panel tbody tr:hover{background:var(--os-surface-2,rgba(0,224,255,.05))}' +
       '@media(max-width:760px){#crypto-panel .cr-hide-m{display:none}}</style>';
   }
 
@@ -199,20 +224,21 @@
     var list = filtered();
     var rows = list.map(function (a) {
       return '<tr onclick="window.KhipuCrypto.openDetail(\'' + esc(a.id) + '\')" style="cursor:pointer">' +
-        '<td style="color:#7C87A3;text-align:right;padding-right:10px">' + (a.rank || '—') + '</td>' +
+        '<td style="color:var(--os-ink-2,#7C87A3);text-align:right;padding-right:10px">' + (a.rank || '—') + '</td>' +
         '<td><div style="display:flex;align-items:center;gap:8px">' +
           (a.image ? '<img src="' + esc(a.image) + '" width="20" height="20" style="border-radius:50%" loading="lazy">' : '') +
-          '<b>' + esc(a.name) + '</b><span style="color:#7C87A3;font-size:11px">' + esc(a.symbol) + '</span>' + badges(a) + '</div></td>' +
+          '<b>' + esc(a.name) + '</b><span style="color:var(--os-ink-2,#7C87A3);font-size:11px">' + esc(a.symbol) + '</span>' + badges(a) + '</div></td>' +
         '<td style="text-align:right;font-variant-numeric:tabular-nums">' + fmtPrice(a.price) + '</td>' +
         '<td style="text-align:right">' + fmtPct(a.change_24h_pct) + '</td>' +
         '<td style="text-align:right" class="cr-hide-m">' + fmtPct(a.change_7d_pct) + '</td>' +
         '<td style="text-align:right" class="cr-hide-m">' + fmtBig(a.market_cap) + '</td>' +
         '<td style="text-align:right" class="cr-hide-m">' + fmtBig(a.volume_24h) + '</td></tr>';
     }).join('');
+    SHOWING = 'main';
     p.innerHTML =
-      '<div style="max-width:1100px;margin:0 auto;padding:20px 16px 60px">' + headerHTML() + chipsHTML() +
+      rootOpen('max-width:1100px;margin:0 auto;padding:20px 16px 60px') + headerHTML() + chipsHTML() +
         '<div style="overflow-x:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:12.5px">' +
-          '<thead><tr style="color:#7C87A3;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">' +
+          '<thead><tr style="color:var(--os-ink-2,#7C87A3);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">' +
             '<th style="text-align:right;padding:6px 10px 6px 0">#</th>' +
             '<th style="text-align:left;padding:6px 0">' + T('cr_th_coin', 'Moneda') + '</th>' +
             '<th style="text-align:right">' + T('cr_th_price', 'Precio') + '</th>' +
@@ -221,7 +247,7 @@
             '<th style="text-align:right" class="cr-hide-m">' + T('cr_th_mcap', 'Market cap') + '</th>' +
             '<th style="text-align:right" class="cr-hide-m">' + T('cr_th_vol', 'Volumen 24h') + '</th></tr></thead>' +
           '<tbody>' + rows + '</tbody></table>' +
-          (list.length ? '' : '<div style="padding:40px;text-align:center;color:#7C87A3;font-size:13px">' + T('cr_empty', 'Ninguna moneda del top 100 en esta categoría.') + '</div>') +
+          (list.length ? '' : '<div style="padding:40px;text-align:center;color:var(--os-ink-2,#7C87A3);font-size:13px">' + T('cr_empty', 'Ninguna moneda del top 100 en esta categoría.') + '</div>') +
         '</div></div>' + baseCSS();
   }
 
@@ -233,20 +259,45 @@
   function renderBubbles() {
     stopBubbles();
     var p = panel(); if (!p) return;
+    SHOWING = 'main';
     p.innerHTML =
-      '<div style="max-width:1100px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;height:calc(100% - 10px);box-sizing:border-box">' +
+      rootOpen('max-width:1100px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;height:calc(100% - 10px);box-sizing:border-box') +
         headerHTML() + chipsHTML() +
-        '<div id="cr-bub-stage" style="position:relative;flex:1;min-height:340px;margin-top:12px;border:1px solid rgba(122,158,255,.14);' +
-          'border-radius:14px;background:radial-gradient(700px 380px at 50% -80px,#0B1428 0%,#05070E 60%);overflow:hidden">' +
+        '<div id="cr-bub-stage" style="position:relative;flex:1;min-height:340px;margin-top:12px;border:1px solid var(--os-line,rgba(122,158,255,.14));' +
+          'border-radius:14px;background:var(--os-surface-2,radial-gradient(700px 380px at 50% -80px,#0B1428 0%,#05070E 60%));overflow:hidden">' +
           '<canvas id="cr-bub" style="display:block;width:100%;height:100%;cursor:pointer;touch-action:none"></canvas>' +
-          '<div id="cr-bub-tip" style="position:absolute;display:none;z-index:5;background:rgba(8,14,26,.97);border:1px solid rgba(0,224,255,.35);' +
-            'border-radius:10px;padding:10px 13px;font-size:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:230px"></div>' +
-          '<div style="position:absolute;left:12px;bottom:9px;font-size:10px;color:#5C6784;pointer-events:none">' +
+          '<div id="cr-bub-tip" style="position:absolute;display:none;z-index:5;background:var(--os-surface,rgba(8,14,26,.97));border:1px solid var(--os-line,rgba(0,224,255,.35));' +
+            'border-radius:10px;padding:10px 13px;font-size:12px;box-shadow:var(--kos-shadow-lg,0 8px 30px rgba(0,0,0,.5));max-width:230px"></div>' +
+          '<div style="position:absolute;left:12px;bottom:9px;font-size:10px;color:var(--os-ink-2,#5C6784);pointer-events:none">' +
             T('cr_bub_hint', 'tamaño = capitalización · color = 24h · toca una burbuja') + '</div>' +
         '</div>' +
-        '<div style="margin-top:10px;color:#5C6784;font-size:10.5px">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div>' +
+        '<div style="margin-top:10px;color:var(--os-ink-2,#5C6784);font-size:10.5px">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div>' +
       '</div>';
     initBubbles();
+  }
+
+  // colores del tema vigente para el canvas de burbujas (canvas no entiende var()): se leen del escenario
+  function bubPal(el) {
+    var cs = null;
+    try { cs = window.getComputedStyle(el || document.body); } catch (e) { cs = null; }
+    function g(name, dflt) { var v = cs ? String(cs.getPropertyValue(name) || '').trim() : ''; return v || dflt; }
+    var light = !!(document.body && !document.body.classList.contains('dark'));
+    // relleno de la burbuja: centro más claro → borde (oscuro: superficie 3 → 1; claro: superficie 1 → 2)
+    return { light: light, ink: g('--os-ink', '#E8EDFB'),
+      hi: light ? g('--os-surface', 'rgba(20,30,52,.95)') : g('--os-surface-3', 'rgba(20,30,52,.95)'),
+      lo: light ? g('--os-surface-2', 'rgba(8,12,24,.92)') : g('--os-surface', 'rgba(8,12,24,.92)') };
+  }
+  // dato como texto sobre fondo claro: 50 % color + 50 % tinta ('#rrggbb' o 'rgb(r,g,b)'; otro formato → igual)
+  function mixInk(c, ink) {
+    function rgb(x) {
+      var m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(x || '').trim());
+      if (m) { var h = m[1].length === 3 ? m[1].replace(/./g, '$&$&') : m[1]; return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
+      m = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(String(x || '').trim());
+      return m ? [+m[1], +m[2], +m[3]] : null;
+    }
+    var a = rgb(c), b = rgb(ink);
+    if (!a || !b) return c;
+    return 'rgb(' + Math.round((a[0] + b[0]) / 2) + ',' + Math.round((a[1] + b[1]) / 2) + ',' + Math.round((a[2] + b[2]) / 2) + ')';
   }
 
   function initBubbles() {
@@ -297,24 +348,25 @@
     }
     function draw() {
       var w = W(), h = H(); ctx.clearRect(0, 0, w, h);
+      var P = BUB.pal || (BUB.pal = bubPal(stage));
       for (var i = 0; i < items.length; i++) {
         var b = items[i], a = b.a, col = pctCol(a.change_24h_pct);
         ctx.save();
         ctx.shadowColor = col; ctx.shadowBlur = Math.min(24, Math.abs(a.change_24h_pct || 0) * 4 + 5);
         var g = ctx.createRadialGradient(b.x - b.r * .3, b.y - b.r * .35, b.r * .1, b.x, b.y, b.r);
-        g.addColorStop(0, 'rgba(20,30,52,.95)'); g.addColorStop(1, 'rgba(8,12,24,.92)');
+        g.addColorStop(0, P.hi); g.addColorStop(1, P.lo);
         ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fillStyle = g; ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = col; ctx.stroke();
         ctx.restore();
         if (b.it && b.it.warn) {   // anillo rojo punteado del expediente
-          ctx.save(); ctx.strokeStyle = '#FF4D6A'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+          ctx.save(); ctx.strokeStyle = CR_PAL.warnRing; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
           ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 3.5, 0, 7); ctx.stroke(); ctx.restore();
         }
-        ctx.fillStyle = '#E8EDFB'; ctx.textAlign = 'center';
+        ctx.fillStyle = P.ink; ctx.textAlign = 'center';
         ctx.font = '700 ' + Math.max(8, b.r * .38) + 'px ui-monospace,Consolas,monospace';
         ctx.fillText(a.symbol || '', b.x, b.y + 1);
         if (b.r > 22) {
-          ctx.fillStyle = col; ctx.font = '600 ' + Math.max(8, b.r * .25) + 'px ui-monospace,monospace';
+          ctx.fillStyle = P.light ? mixInk(col, P.ink) : col; ctx.font = '600 ' + Math.max(8, b.r * .25) + 'px ui-monospace,monospace';
           var pc = a.change_24h_pct;
           ctx.fillText(pc != null ? (pc > 0 ? '+' : '') + pc.toFixed(1) + '%' : '', b.x, b.y + b.r * .44);
         }
@@ -328,7 +380,7 @@
       }
       BUB.raf = requestAnimationFrame(loop);
     }
-    BUB = { cv: cv, raf: 0 };
+    BUB = { cv: cv, raf: 0, pal: null };   // pal: colores del tema (se borra al cambiar claro ↔ oscuro)
     loop();
     var onResize = function () { fit(); };
     window.addEventListener('resize', onResize);
@@ -342,13 +394,13 @@
     }
     function showTip(b, x, y) {
       var a = b.a, col = pctCol(a.change_24h_pct);
-      tip.innerHTML = '<b style="font-size:13px">' + esc(a.name) + '</b> <span style="color:#7C87A3">' + esc(a.symbol) + '</span><br>' +
-        '<span style="font-weight:700">' + fmtPrice(a.price) + '</span> · <span style="color:' + col + ';font-weight:600">' +
-        (a.change_24h_pct != null ? (a.change_24h_pct > 0 ? '+' : '') + a.change_24h_pct.toFixed(2) + '%' : '—') + '</span>' +
-        '<span style="color:#7C87A3"> · ' + fmtBig(a.market_cap) + '</span>' +
-        (b.it && b.it.warn ? '<div style="color:#FF8FA3;font-size:11px;margin-top:3px">' + esc(lang() === 'en' ? b.it.warn.en : b.it.warn.es) + '</div>' : '') +
+      tip.innerHTML = '<b style="font-size:13px">' + esc(a.name) + '</b> <span style="color:var(--os-ink-2,#7C87A3)">' + esc(a.symbol) + '</span><br>' +
+        '<span style="font-weight:700">' + fmtPrice(a.price) + '</span> · <span ' + cTxt(col) + '><b style="font-weight:600">' +
+        (a.change_24h_pct != null ? (a.change_24h_pct > 0 ? '+' : '') + a.change_24h_pct.toFixed(2) + '%' : '—') + '</b></span>' +
+        '<span style="color:var(--os-ink-2,#7C87A3)"> · ' + fmtBig(a.market_cap) + '</span>' +
+        (b.it && b.it.warn ? '<div style="color:var(--os-bad-ink,#FF8FA3);font-size:11px;margin-top:3px">' + esc(lang() === 'en' ? b.it.warn.en : b.it.warn.es) + '</div>' : '') +
         '<button onclick="window.KhipuCrypto.openDetail(\'' + esc(a.id) + '\')" style="margin-top:7px;width:100%;padding:5px 0;border-radius:7px;' +
-          'border:1px solid rgba(0,224,255,.4);background:rgba(0,224,255,.1);color:#00E0FF;cursor:pointer;font-size:11.5px;font-weight:600">📋 ' +
+          'border:1px solid var(--os-accent,rgba(0,224,255,.4));background:var(--kos-accent-soft,rgba(0,224,255,.1));color:var(--os-ink,#00E0FF);cursor:pointer;font-size:11.5px;font-weight:600">📋 ' +
           T('cr_open_card', 'Ver ficha completa') + '</button>';
       tip.style.display = 'block';
       var r = stage.getBoundingClientRect();
@@ -375,7 +427,8 @@
   function renderMsg(html) {
     stopBubbles();
     var p = panel(); if (!p) return;
-    p.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#7C87A3;font-size:13px">' + html + '</div>';
+    SHOWING = 'main';
+    p.innerHTML = rootOpen('padding:60px 20px;text-align:center;color:var(--os-ink-2,#7C87A3);font-size:13px') + html + '</div>';
   }
 
   // ── bloque Expediente de la vista detalle ──
@@ -390,36 +443,36 @@
     if (a.rank) bits.push('#' + a.rank);
     var tot = 0; ASSETS.forEach(function (x) { tot += +x.market_cap || 0; });
     if (tot > 0 && a.market_cap) bits.push((en ? 'share of top-100 market: ' : 'peso en el top-100: ') + (a.market_cap / tot * 100).toFixed(1) + '%');
-    return '<div style="font-size:11.5px;color:#2BE38B;margin-bottom:4px">● ' + esc((en ? 'Live (CoinGecko): ' : 'En vivo (CoinGecko): ') + bits.join(' · ')) + '</div>';
+    return '<div style="font-size:11.5px;color:var(--os-good-ink,#2BE38B);margin-bottom:4px">● ' + esc((en ? 'Live (CoinGecko): ' : 'En vivo (CoinGecko): ') + bits.join(' · ')) + '</div>';
   }
   function intelHTML(it, live) {
     if (!it) return '';
     var L = lang() === 'en' ? it.en : it.es;
     if (!L) return '';
     var BLOCKS = [
-      ['what', '💡', T('cr_b_what', '¿Qué es?'), '#52B1FF'],
-      ['mech', '⚙️', T('cr_b_mech', 'Cómo funciona'), '#8e5aff'],
-      ['tok', '🪙', T('cr_b_tok', 'Tokenomics'), '#3DE0C8'],
-      ['cats', '🚀', T('cr_b_cats', 'Catalizadores'), '#2BE38B'],
-      ['risks', '⚠️', T('cr_b_risks', 'Riesgos'), '#FF4D6A'],
-      ['pos', '🎯', T('cr_b_pos', 'Posicionamiento'), '#FFB300'],
+      ['what', '💡', T('cr_b_what', '¿Qué es?'), CR_PAL.what],
+      ['mech', '⚙️', T('cr_b_mech', 'Cómo funciona'), CR_PAL.mech],
+      ['tok', '🪙', T('cr_b_tok', 'Tokenomics'), CR_PAL.tok],
+      ['cats', '🚀', T('cr_b_cats', 'Catalizadores'), CR_PAL.cats],
+      ['risks', '⚠️', T('cr_b_risks', 'Riesgos'), CR_PAL.risks],
+      ['pos', '🎯', T('cr_b_pos', 'Posicionamiento'), CR_PAL.pos],
     ];
     var blocks = BLOCKS.map(function (b) {
       var txt = L[b[0]]; if (!txt) return '';
-      return '<div style="border-left:3px solid ' + b[3] + ';padding:8px 12px;margin-bottom:10px;background:rgba(13,19,33,.55);border-radius:0 9px 9px 0">' +
-        '<div style="font-size:11px;font-weight:700;color:' + b[3] + ';margin-bottom:3px">' + b[1] + ' ' + b[2] + '</div>' +
-        (b[0] === 'tok' ? liveIntelLine(live) + (live && live.circulating_supply != null ? '<div style="font-size:10.5px;color:#7C87A3;margin-bottom:4px">' + esc(lang() === 'en' ? 'The text below is the Jul 2026 analysis; the live figure above wins.' : 'El texto de abajo es el análisis de jul-2026; manda la cifra en vivo de arriba.') + '</div>' : '') : '') +
-        '<div style="font-size:12.5px;line-height:1.6;color:#C9D4EC">' + esc(txt) + '</div></div>';
+      return '<div style="border-left:3px solid ' + b[3] + ';padding:8px 12px;margin-bottom:10px;background:var(--os-surface-2,rgba(13,19,33,.55));border-radius:0 9px 9px 0">' +
+        '<div ' + cTxt(b[3]) + '><div style="font-size:11px;font-weight:700;margin-bottom:3px">' + b[1] + ' ' + b[2] + '</div></div>' +
+        (b[0] === 'tok' ? liveIntelLine(live) + (live && live.circulating_supply != null ? '<div style="font-size:10.5px;color:var(--os-ink-2,#7C87A3);margin-bottom:4px">' + esc(lang() === 'en' ? 'The text below is the Jul 2026 analysis; the live figure above wins.' : 'El texto de abajo es el análisis de jul-2026; manda la cifra en vivo de arriba.') + '</div>' : '') : '') +
+        '<div style="font-size:12.5px;line-height:1.6;color:var(--os-ink,#C9D4EC)">' + esc(txt) + '</div></div>';
     }).join('');
     var cat = catInfo(it.cat);
-    var warn = it.warn ? '<div style="margin:10px 0;padding:9px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.09);color:#FF8FA3;font-size:12px;font-weight:600">' +
+    var warn = it.warn ? '<div style="margin:10px 0;padding:9px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.09);color:var(--os-bad-ink,#FF8FA3);font-size:12px;font-weight:600">' +
       esc(lang() === 'en' ? it.warn.en : it.warn.es) + '</div>' : '';
     return '<div style="margin-top:22px">' +
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">' +
         '<h3 style="margin:0;font-size:15px">📋 ' + T('cr_dossier_t', 'Expediente Khipus') + '</h3>' +
-        (cat ? '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(0,224,255,.3);background:rgba(0,224,255,.07);color:#00E0FF;font-size:10.5px;font-weight:600">' + cat.icon + ' ' + esc(catLabel(it.cat)) + '</span>' : '') +
+        (cat ? '<span style="padding:3px 10px;border-radius:999px;border:1px solid var(--os-line,rgba(0,224,255,.3));background:var(--kos-accent-soft,rgba(0,224,255,.07));color:var(--os-ink,#00E0FF);font-size:10.5px;font-weight:600">' + cat.icon + ' ' + esc(catLabel(it.cat)) + '</span>' : '') +
       '</div>' + warn + blocks +
-      '<div style="color:#5C6784;font-size:10.5px;line-height:1.5">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div></div>';
+      '<div style="color:var(--os-ink-2,#5C6784);font-size:10.5px;line-height:1.5">' + T('cr_disclaimer', 'Contexto informativo, no es asesoría de inversión. Capa de análisis: jul 2026 · precios en vivo de CoinGecko.') + '</div></div>';
   }
 
   /* ── caja 💼 Operar (broker Alpaca vía /api/trade/*) ──────────────────────
@@ -454,14 +507,14 @@
 
   function tradeBadge(paper) {
     return paper
-      ? '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(255,179,0,.45);background:rgba(255,179,0,.1);color:#FFB300;font-size:10.5px;font-weight:700">' +
+      ? '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(255,179,0,.45);background:rgba(255,179,0,.1);color:var(--os-warn-ink,#FFB300);font-size:10.5px;font-weight:700">' +
           T2('cr_trade_paper', '🧪 SIMULADO (papel)', '🧪 SIMULATED (paper)') + '</span>'
-      : '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(255,77,106,.6);background:rgba(255,77,106,.14);color:#FF4D6A;font-size:10.5px;font-weight:800">' +
+      : '<span style="padding:3px 10px;border-radius:999px;border:1px solid rgba(255,77,106,.6);background:rgba(255,77,106,.14);color:var(--os-bad-ink,#FF4D6A);font-size:10.5px;font-weight:800">' +
           T2('cr_trade_real', '🔴 DINERO REAL', '🔴 REAL MONEY') + '</span>';
   }
 
   function tradeBoxHTML(headExtra, body) {
-    return '<div style="margin-top:22px;padding:14px 16px;border-radius:12px;border:1px solid rgba(122,158,255,.18);background:rgba(13,19,33,.55)">' +
+    return '<div style="margin-top:22px;padding:14px 16px;border-radius:12px;border:1px solid var(--os-line,rgba(122,158,255,.18));background:var(--os-surface-2,rgba(13,19,33,.55))">' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">' +
         '<h3 style="margin:0;font-size:15px">💼 ' + T2('cr_trade_t', 'Operar', 'Trade') + '</h3>' + (headExtra || '') + '</div>' +
       (body || '') + '</div>';
@@ -476,7 +529,7 @@
       var el = document.getElementById('cr-trade');
       // el usuario pudo navegar a OTRA ficha mientras cargaba el catálogo
       if (!el || el.getAttribute('data-sym') !== sym || !st) return;
-      var gray = function (txt) { return '<div style="color:#7C87A3;font-size:11.5px;line-height:1.5">' + txt + '</div>'; };
+      var gray = function (txt) { return '<div style="color:var(--os-ink-2,#7C87A3);font-size:11.5px;line-height:1.5">' + txt + '</div>'; };
       if (st.status === 401) {   // sin PIN en este navegador → solo informativo
         el.innerHTML = tradeBoxHTML('', gray(T2('cr_trade_pin_hint',
           'Operable en el broker de papel con PIN configurado',
@@ -484,7 +537,7 @@
         return;
       }
       if (st.status === 403) {   // trading deshabilitado → mensaje del server tal cual
-        el.innerHTML = tradeBoxHTML('', gray(esc(st.error || 'Trading deshabilitado — configura TRADE_PIN en Railway')));
+        el.innerHTML = tradeBoxHTML('', gray(esc(st.error || T2('cr_trade_off', 'Trading deshabilitado — configura TRADE_PIN en Railway', 'Trading disabled — set TRADE_PIN in Railway'))));
         return;
       }
       if (st.status !== 200 || !st.assets) return;   // otros errores: sin caja
@@ -497,13 +550,13 @@
       TRD = null;
       el.innerHTML = tradeBoxHTML(tradeBadge(st.paper),
         '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-          '<label for="cr-trade-amt" style="color:#7C87A3;font-size:11.5px">' + T2('cr_trade_amt', 'Monto (USD)', 'Amount (USD)') + '</label>' +
+          '<label for="cr-trade-amt" style="color:var(--os-ink-2,#7C87A3);font-size:11.5px">' + T2('cr_trade_amt', 'Monto (USD)', 'Amount (USD)') + '</label>' +
           '<input id="cr-trade-amt" type="number" min="1" max="100000" step="1" value="100" inputmode="decimal" ' +
-            'style="width:110px;padding:6px 9px;border-radius:8px;border:1px solid rgba(122,158,255,.3);background:rgba(8,12,24,.8);color:#E8EDFB;font-size:13px">' +
+            'style="width:110px;padding:6px 9px;border-radius:8px;border:1px solid var(--os-line,rgba(122,158,255,.3));background:var(--os-surface,rgba(8,12,24,.8));color:var(--os-ink,#E8EDFB);font-size:13px">' +
           '<button onclick="window.KhipuCrypto.trade(\'buy\')" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:700;' +
-            'border:1px solid rgba(43,227,139,.5);background:rgba(43,227,139,.12);color:#2BE38B">' + T2('cr_trade_buy', 'Comprar', 'Buy') + '</button>' +
+            'border:1px solid rgba(43,227,139,.5);background:rgba(43,227,139,.12);color:var(--os-good-ink,#2BE38B)">' + T2('cr_trade_buy', 'Comprar', 'Buy') + '</button>' +
           '<button onclick="window.KhipuCrypto.trade(\'sell\')" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:700;' +
-            'border:1px solid rgba(255,77,106,.5);background:rgba(255,77,106,.1);color:#FF4D6A">' + T2('cr_trade_sell', 'Vender', 'Sell') + '</button>' +
+            'border:1px solid rgba(255,77,106,.5);background:rgba(255,77,106,.1);color:var(--os-bad-ink,#FF4D6A)">' + T2('cr_trade_sell', 'Vender', 'Sell') + '</button>' +
         '</div>' +
         '<div id="cr-trade-msg" style="margin-top:10px"></div>');
     });
@@ -517,7 +570,7 @@
     var inp = document.getElementById('cr-trade-amt');
     var amt = parseFloat(inp && inp.value);
     if (!isFinite(amt) || amt < 1 || amt > 100000) {
-      msg.innerHTML = '<div style="color:#FF8FA3;font-size:12px">' + T2('cr_trade_amt_err',
+      msg.innerHTML = '<div style="color:var(--os-bad-ink,#FF8FA3);font-size:12px">' + T2('cr_trade_amt_err',
         'Monto inválido: mínimo $1, máximo $100,000 por orden.',
         'Invalid amount: minimum $1, maximum $100,000 per order.') + '</div>';
       return;
@@ -534,15 +587,15 @@
       .replace('{n}', function () { return nameS; })
       .replace('{p}', function () { return pairS; });
     var note = TRD.paper
-      ? '<span style="color:#FFB300;font-weight:600"> — ' + T2('cr_trade_sim_note', 'orden simulada (papel)', 'simulated (paper) order') + '</span>'
-      : '<span style="color:#FF4D6A;font-weight:800"> — ' + T2('cr_trade_real', '🔴 DINERO REAL', '🔴 REAL MONEY') + '</span>';
-    msg.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,179,0,.35);background:rgba(255,179,0,.06);font-size:12.5px;line-height:1.6;color:#E8EDFB">' +
+      ? '<span style="color:var(--os-warn-ink,#FFB300);font-weight:600"> — ' + T2('cr_trade_sim_note', 'orden simulada (papel)', 'simulated (paper) order') + '</span>'
+      : '<span style="color:var(--os-bad-ink,#FF4D6A);font-weight:800"> — ' + T2('cr_trade_real', '🔴 DINERO REAL', '🔴 REAL MONEY') + '</span>';
+    msg.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,179,0,.35);background:rgba(255,179,0,.06);font-size:12.5px;line-height:1.6;color:var(--os-ink,#E8EDFB)">' +
       q + note +
       '<div style="display:flex;gap:8px;margin-top:8px">' +
         '<button onclick="window.KhipuCrypto.tradeConfirm()" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;' +
-          'border:1px solid rgba(43,227,139,.55);background:rgba(43,227,139,.15);color:#2BE38B">' + T2('cr_trade_confirm', 'Confirmar', 'Confirm') + '</button>' +
+          'border:1px solid rgba(43,227,139,.55);background:rgba(43,227,139,.15);color:var(--os-good-ink,#2BE38B)">' + T2('cr_trade_confirm', 'Confirmar', 'Confirm') + '</button>' +
         '<button onclick="window.KhipuCrypto.tradeCancel()" style="padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;' +
-          'border:1px solid rgba(122,158,255,.3);background:none;color:#8791AC">' + T2('cr_trade_cancel', 'Cancelar', 'Cancel') + '</button>' +
+          'border:1px solid var(--os-line,rgba(122,158,255,.3));background:none;color:var(--os-ink-2,#8791AC)">' + T2('cr_trade_cancel', 'Cancelar', 'Cancel') + '</button>' +
       '</div></div>';
   }
 
@@ -550,7 +603,7 @@
     var o = TRD; TRD = null;                        // evita doble envío
     var msg = document.getElementById('cr-trade-msg');
     if (!msg || !o || typeof window._tradeFetch !== 'function') return;
-    msg.innerHTML = '<div style="color:#7C87A3;font-size:12px">' + T2('cr_trade_sending', 'Enviando orden…', 'Sending order…') + '</div>';
+    msg.innerHTML = '<div style="color:var(--os-ink-2,#7C87A3);font-size:12px">' + T2('cr_trade_sending', 'Enviando orden…', 'Sending order…') + '</div>';
     // client_order_id estable por orden (app.html): un reintento de la MISMA
     // orden tras un error ambiguo no la duplica (Alpaca rechaza el id repetido).
     var sig = 'crypto|' + o.pair + '|' + o.side + '|' + o.amt;
@@ -558,7 +611,7 @@
     var settle = function (amb) { if (window._tradeOrderSettle) window._tradeOrderSettle(sig, amb); };
     var errBox = function (html) {
       var m3 = document.getElementById('cr-trade-msg'); if (!m3) return;
-      m3.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.07);color:#FF8FA3;font-size:12.5px;line-height:1.6">' + html + '</div>';
+      m3.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.07);color:var(--os-bad-ink,#FF8FA3);font-size:12.5px;line-height:1.6">' + html + '</div>';
     };
     var ambMsg = function () {
       return T2('cr_trade_amb',
@@ -592,7 +645,7 @@
         // duplicado = el server devolvió (HTTP 200, duplicate:true) la orden que
         // YA existía con este client_order_id: NO es una orden nueva.
         if (dup) {
-          m2.innerHTML = '<div style="color:#FFB300;font-size:12.5px;line-height:1.6">' + T2('cr_trade_dup',
+          m2.innerHTML = '<div style="color:var(--os-warn-ink,#FFB300);font-size:12.5px;line-height:1.6">' + T2('cr_trade_dup',
             'Esta orden ya había llegado al bróker — no se envió dos veces. Si quieres OTRA orden igual, vuelve a enviarla.',
             'This order had already reached the broker — it was not sent twice. If you want ANOTHER identical order, send it again.') +
             (d && d.status ? ' (' + esc(String(d.status)) + ')' : '') + '</div>';
@@ -604,10 +657,10 @@
         }
         if (x.r.ok && d && (d.id || d.status === 'accepted' || d.status === 'pending_new')) {
           var broker = (window.BixbyCockpit && typeof window.BixbyCockpit.open === 'function' && typeof window._surface === 'function')
-            ? ' <a onclick="window.KhipuCrypto.openBroker()" style="color:#00E0FF;font-weight:600;text-decoration:underline;cursor:pointer">' +
+            ? ' <a onclick="window.KhipuCrypto.openBroker()" style="color:var(--os-accent,#00E0FF);font-weight:600;text-decoration:underline;cursor:pointer">' +
                 T2('cr_trade_broker', 'Ver mi broker', 'View my broker') + '</a>'
             : '';
-          m2.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(43,227,139,.4);background:rgba(43,227,139,.07);color:#2BE38B;font-size:12.5px;line-height:1.6">' +
+          m2.innerHTML = '<div style="padding:10px 13px;border-radius:9px;border:1px solid rgba(43,227,139,.4);background:rgba(43,227,139,.07);color:var(--os-good-ink,#2BE38B);font-size:12.5px;line-height:1.6">' +
             '✓ ' + T2('cr_trade_ok', 'Orden aceptada', 'Order accepted') + ' — ' +
             (o.side === 'buy' ? T2('cr_trade_buy', 'Comprar', 'Buy') : T2('cr_trade_sell', 'Vender', 'Sell')) +
             ' ' + fmtAmt(o.amt) + ' · ' + esc(o.pair) +
@@ -670,12 +723,12 @@
     var arr = computeInsights(a, it);
     if (!arr.length) return '';
     var rows = arr.map(function (b) {
-      return '<div style="display:flex;gap:9px;align-items:flex-start;padding:5px 0;font-size:12.5px;line-height:1.5;color:#C9D4EC">' +
+      return '<div style="display:flex;gap:9px;align-items:flex-start;padding:5px 0;font-size:12.5px;line-height:1.5;color:var(--os-ink,#C9D4EC)">' +
         '<span style="font-size:14px;flex:0 0 auto;line-height:1.4">' + b.i + '</span><span>' + esc(b.t) + '</span></div>';
     }).join('');
-    return '<div style="margin-top:22px;padding:14px 16px;border-radius:12px;border:1px solid rgba(122,158,255,.18);background:rgba(13,19,33,.4)">' +
+    return '<div style="margin-top:22px;padding:14px 16px;border-radius:12px;border:1px solid var(--os-line,rgba(122,158,255,.18));background:var(--os-surface-2,rgba(13,19,33,.4))">' +
       '<h3 style="margin:0;font-size:15px">💡 ' + T2('cr_ins_t', 'Insights rápidos', 'Quick insights') + '</h3>' +
-      '<div style="color:#7C87A3;font-size:11px;margin:2px 0 6px">' + T2('cr_ins_sub', 'Señales calculadas de los datos en vivo — contexto, no asesoría.', 'Signals computed from live data — context, not advice.') + '</div>' +
+      '<div style="color:var(--os-ink-2,#7C87A3);font-size:11px;margin:2px 0 6px">' + T2('cr_ins_sub', 'Señales calculadas de los datos en vivo — contexto, no asesoría.', 'Signals computed from live data — context, not advice.') + '</div>' +
       rows + '</div>';
   }
 
@@ -686,62 +739,62 @@
   function detailCSS() {
     return '<style>@keyframes crShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}' +
       '@keyframes crSpin{to{transform:rotate(360deg)}}' +
-      '#crypto-panel .cr-spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(201,184,255,.3);border-top-color:#C9B8FF;border-radius:50%;animation:crSpin .7s linear infinite;vertical-align:middle}' +
-      '#crypto-panel .cr-shim{border-radius:6px;background:linear-gradient(90deg,rgba(122,158,255,.08),rgba(122,158,255,.2),rgba(122,158,255,.08));background-size:200% 100%;animation:crShimmer 1.2s linear infinite}</style>';
+      '#crypto-panel .cr-spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(201,184,255,.3);border-top-color:var(--os-ai,#C9B8FF);border-radius:50%;animation:crSpin .7s linear infinite;vertical-align:middle}' +
+      '#crypto-panel .cr-shim{border-radius:6px;background:linear-gradient(90deg,var(--os-surface-2,rgba(122,158,255,.08)),var(--os-surface-3,rgba(122,158,255,.2)),var(--os-surface-2,rgba(122,158,255,.08)));background-size:200% 100%;animation:crShimmer 1.2s linear infinite}</style>';
   }
   function aiButtonHTML(id) {
     return '<button onclick="window.KhipuCrypto.analyze(\'' + esc(id) + '\')" style="width:100%;padding:11px 16px;border-radius:12px;cursor:pointer;font-size:13.5px;font-weight:700;' +
-      'border:1px solid rgba(142,90,255,.5);background:linear-gradient(135deg,rgba(142,90,255,.18),rgba(0,224,255,.1));color:#D3C4FF">' +
+      'border:1px solid rgba(142,90,255,.5);background:linear-gradient(135deg,rgba(142,90,255,.18),rgba(0,224,255,.1));color:var(--os-ai,#D3C4FF)">' +
       '✨ ' + T2('cr_ai_btn', 'Analizar con IA', 'Analyze with AI') + '</button>' +
-      '<div style="color:#5C6784;font-size:10.5px;margin-top:6px;text-align:center">' +
+      '<div style="color:var(--os-ink-2,#5C6784);font-size:10.5px;margin-top:6px;text-align:center">' +
       T2('cr_ai_hint', 'Análisis cauto con IA usando datos en vivo + expediente Khipus', 'Cautious AI analysis using live data + Khipus dossier') + '</div>';
   }
   function aiSkeletonHTML() {
     var bar = function (w) { return '<div class="cr-shim" style="height:11px;width:' + w + '"></div>'; };
-    return '<div style="padding:16px;border-radius:12px;border:1px solid rgba(142,90,255,.28);background:rgba(20,16,34,.5)">' +
-      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:13px;color:#D3C4FF;font-size:13px;font-weight:700">' +
+    return '<div style="padding:16px;border-radius:12px;border:1px solid rgba(142,90,255,.28);background:var(--os-surface-2,rgba(20,16,34,.5))">' +
+      '<div style="display:flex;align-items:center;gap:9px;margin-bottom:13px;color:var(--os-ai,#D3C4FF);font-size:13px;font-weight:700">' +
         '✨ ' + T2('cr_ai_loading', 'Analizando con IA…', 'Analyzing with AI…') + ' <span class="cr-spin"></span></div>' +
       bar('92%') + '<div style="height:9px"></div>' + bar('78%') + '<div style="height:9px"></div>' + bar('86%') + '<div style="height:9px"></div>' + bar('64%') + '</div>';
   }
   function aiErrorHTML(id, msg) {
     return '<div style="padding:14px 16px;border-radius:12px;border:1px solid rgba(255,77,106,.35);background:rgba(255,77,106,.06)">' +
-      '<div style="color:#FF8FA3;font-size:12.5px;line-height:1.5;margin-bottom:9px">⚠️ ' + esc(msg || T2('cr_ai_err', 'No se pudo generar el análisis.', 'Could not generate the analysis.')) + '</div>' +
+      '<div style="color:var(--os-bad-ink,#FF8FA3);font-size:12.5px;line-height:1.5;margin-bottom:9px">⚠️ ' + esc(msg || T2('cr_ai_err', 'No se pudo generar el análisis.', 'Could not generate the analysis.')) + '</div>' +
       '<button onclick="window.KhipuCrypto.analyze(\'' + esc(id) + '\',true)" style="padding:6px 15px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;' +
-        'border:1px solid rgba(142,90,255,.45);background:rgba(142,90,255,.1);color:#D3C4FF">' + T2('cr_ai_retry', 'Reintentar', 'Retry') + '</button></div>';
+        'border:1px solid rgba(142,90,255,.45);background:rgba(142,90,255,.1);color:var(--os-ai,#D3C4FF)">' + T2('cr_ai_retry', 'Reintentar', 'Retry') + '</button></div>';
   }
   function aiCardHTML(d) {
     var conf = Math.max(1, Math.min(5, d.confidence | 0));
     var stars = '';
-    for (var i = 1; i <= 5; i++) stars += '<span style="color:' + (i <= conf ? '#FFB300' : '#39415C') + ';font-size:15px">★</span>';
+    for (var i = 1; i <= 5; i++) stars += '<span style="color:' + (i <= conf ? 'var(--os-warn,#FFB300)' : 'var(--os-mute,#39415C)') + ';font-size:15px">★</span>';
     var caseBlock = function (icon, title, col, txt) {
       if (!txt) return '';
-      return '<div style="flex:1;min-width:220px;border-left:3px solid ' + col + ';padding:8px 12px;background:rgba(13,19,33,.5);border-radius:0 9px 9px 0">' +
-        '<div style="font-size:11px;font-weight:700;color:' + col + ';margin-bottom:3px">' + icon + ' ' + title + '</div>' +
-        '<div style="font-size:12.5px;line-height:1.55;color:#C9D4EC">' + esc(txt) + '</div></div>';
+      return '<div style="flex:1;min-width:220px;border-left:3px solid ' + col + ';padding:8px 12px;background:var(--os-surface,rgba(13,19,33,.5));border-radius:0 9px 9px 0">' +
+        '<div ' + cTxt(col) + '><div style="font-size:11px;font-weight:700;margin-bottom:3px">' + icon + ' ' + title + '</div></div>' +
+        '<div style="font-size:12.5px;line-height:1.55;color:var(--os-ink,#C9D4EC)">' + esc(txt) + '</div></div>';
     };
     var listBlock = function (icon, title, col, arr) {
       if (!arr || !arr.length) return '';
       var items = arr.map(function (x) { return '<li style="margin:3px 0;line-height:1.5">' + esc(x) + '</li>'; }).join('');
-      return '<div style="margin-top:12px"><div style="font-size:11px;font-weight:700;color:' + col + ';margin-bottom:4px">' + icon + ' ' + title + '</div>' +
-        '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:#C9D4EC">' + items + '</ul></div>';
+      return '<div style="margin-top:12px"><div ' + cTxt(col) + '><div style="font-size:11px;font-weight:700;margin-bottom:4px">' + icon + ' ' + title + '</div></div>' +
+        '<ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--os-ink,#C9D4EC)">' + items + '</ul></div>';
     };
-    return '<div style="padding:16px;border-radius:12px;border:1px solid rgba(142,90,255,.35);background:linear-gradient(160deg,rgba(24,18,40,.6),rgba(13,19,33,.5))">' +
+    return '<div style="padding:16px;border-radius:12px;border:1px solid rgba(142,90,255,.35);background:var(--os-surface-2,linear-gradient(160deg,rgba(24,18,40,.6),rgba(13,19,33,.5)))">' +
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">' +
-        '<h3 style="margin:0;font-size:15px;color:#D3C4FF">✨ ' + T2('cr_ai_t', 'Análisis IA', 'AI analysis') + '</h3>' +
-        (d.cached ? '<span style="font-size:10px;color:#7C87A3">' + T2('cr_ai_cached', '· en caché', '· cached') + '</span>' : '') +
+        '<h3 style="margin:0;font-size:15px;color:var(--os-ai,#D3C4FF)">✨ ' + T2('cr_ai_t', 'Análisis IA', 'AI analysis') + '</h3>' +
+        (d.cached ? '<span style="font-size:10px;color:var(--os-ink-2,#7C87A3)">' + T2('cr_ai_cached', '· en caché', '· cached') + '</span>' : '') +
         '<button onclick="window.KhipuCrypto.reanalyze()" title="' + T2('cr_ai_re', 'Volver a analizar', 'Re-analyze') + '" style="margin-left:auto;padding:4px 10px;border-radius:7px;cursor:pointer;font-size:12px;' +
-          'border:1px solid rgba(142,90,255,.4);background:rgba(142,90,255,.08);color:#D3C4FF">⟳</button>' +
+          'border:1px solid rgba(142,90,255,.4);background:rgba(142,90,255,.08);color:var(--os-ai,#D3C4FF)">⟳</button>' +
       '</div>' +
-      '<div style="font-size:13.5px;line-height:1.55;color:#E8EDFB;font-weight:600;margin-bottom:9px">' + esc(d.verdict) + '</div>' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:13px"><span style="font-size:11px;color:#7C87A3">' + T2('cr_ai_conf', 'Confianza', 'Confidence') + '</span>' + stars +
-        '<span style="font-size:11px;color:#7C87A3">' + conf + '/5</span></div>' +
+      '<div style="font-size:13.5px;line-height:1.55;color:var(--os-ink,#E8EDFB);font-weight:600;margin-bottom:9px">' + esc(d.verdict) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:13px"><span style="font-size:11px;color:var(--os-ink-2,#7C87A3)">' + T2('cr_ai_conf', 'Confianza', 'Confidence') + '</span>' + stars +
+        '<span style="font-size:11px;color:var(--os-ink-2,#7C87A3)">' + conf + '/5</span></div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-        caseBlock('📈', T2('cr_ai_bull', 'Caso alcista', 'Bull case'), '#2BE38B', d.bull) +
-        caseBlock('📉', T2('cr_ai_bear', 'Caso bajista', 'Bear case'), '#FF4D6A', d.bear) +
+        caseBlock('📈', T2('cr_ai_bull', 'Caso alcista', 'Bull case'), CR_PAL.bull, d.bull) +
+        caseBlock('📉', T2('cr_ai_bear', 'Caso bajista', 'Bear case'), CR_PAL.bear, d.bear) +
       '</div>' +
-      listBlock('🚀', T2('cr_ai_drivers', 'Drivers / catalizadores', 'Drivers / catalysts'), '#52B1FF', d.drivers) +
-      listBlock('💡', T2('cr_ai_insights', 'Insights', 'Insights'), '#3DE0C8', d.insights) +
-      '<div style="margin-top:13px;color:#5C6784;font-size:10.5px;line-height:1.5">' + esc(d.disclaimer || '') + '</div>' +
+      listBlock('🚀', T2('cr_ai_drivers', 'Drivers / catalizadores', 'Drivers / catalysts'), CR_PAL.drivers, d.drivers) +
+      listBlock('💡', T2('cr_ai_insights', 'Insights', 'Insights'), CR_PAL.insights, d.insights) +
+      '<div style="margin-top:13px;color:var(--os-ink-2,#5C6784);font-size:10.5px;line-height:1.5">' + esc(d.disclaimer || '') + '</div>' +
     '</div>';
   }
   function analyzeRender(id) {
@@ -761,16 +814,17 @@
     var it = intelOf(a);
     DETAIL = a;   // ficha actual (para ✨ Analizar con IA / reanalizar)
     var kv = function (k, v) {
-      return '<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(122,158,255,.08);font-size:12.5px">' +
-        '<span style="color:#7C87A3">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
+      return '<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--os-line,rgba(122,158,255,.08));font-size:12.5px">' +
+        '<span style="color:var(--os-ink-2,#7C87A3)">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
     };
     var athDate = a.ath_date ? new Date(a.ath_date).toLocaleDateString(lang() === 'en' ? 'en-US' : 'es-PE') : '';
+    SHOWING = 'detail';
     p.innerHTML =
-      '<div style="max-width:900px;margin:0 auto;padding:20px 16px 60px">' +
-        '<button onclick="window.KhipuCrypto.back()" style="margin-bottom:14px;padding:5px 12px;border-radius:7px;border:1px solid rgba(122,158,255,.25);background:none;color:#8791AC;cursor:pointer;font-size:12px">' + T('cr_back', '← Volver') + '</button>' +
+      rootOpen('max-width:900px;margin:0 auto;padding:20px 16px 60px') +
+        '<button onclick="window.KhipuCrypto.back()" style="margin-bottom:14px;padding:5px 12px;border-radius:7px;border:1px solid var(--os-line,rgba(122,158,255,.25));background:none;color:var(--os-ink-2,#8791AC);cursor:pointer;font-size:12px">' + T('cr_back', '← Volver') + '</button>' +
         '<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;flex-wrap:wrap">' +
           (a.image ? '<img src="' + esc(a.image) + '" width="34" height="34" style="border-radius:50%">' : '') +
-          '<h2 style="margin:0;font-size:21px">' + esc(a.name) + ' <span style="color:#7C87A3;font-size:14px">' + esc(a.symbol) + '</span></h2>' +
+          '<h2 style="margin:0;font-size:21px">' + esc(a.name) + ' <span style="color:var(--os-ink-2,#7C87A3);font-size:14px">' + esc(a.symbol) + '</span></h2>' +
           '<span style="margin-left:auto;font-size:22px;font-weight:800">' + fmtPrice(a.price) + '</span>' + fmtPct(a.change_24h_pct) + '</div>' +
         '<div style="height:280px;margin:16px 0"><canvas id="cr-chart"></canvas></div>' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 32px">' +
@@ -779,14 +833,14 @@
           kv(T('cr_th_vol', 'Volumen 24h'), fmtBig(a.volume_24h)) +
           kv(T('cr_supply', 'En circulación'), fmtSupply(a.circulating_supply, a.symbol)) +
           kv(T('cr_maxsupply', 'Suministro máximo'), a.max_supply ? fmtSupply(a.max_supply, a.symbol) : '∞') +
-          kv(T('cr_ath', 'Máximo histórico'), fmtPrice(a.ath) + (athDate ? ' <span style="color:#7C87A3;font-weight:400">(' + athDate + ')</span>' : '')) +
+          kv(T('cr_ath', 'Máximo histórico'), fmtPrice(a.ath) + (athDate ? ' <span style="color:var(--os-ink-2,#7C87A3);font-weight:400">(' + athDate + ')</span>' : '')) +
           kv(T('cr_atl', 'Mínimo histórico'), fmtPrice(a.atl)) +
         '</div>' +
         insightsHTML(a, it) +
         '<div id="cr-ai" style="margin-top:16px"></div>' +
         '<div id="cr-trade" data-sym="' + esc((a.symbol || '').toUpperCase()) + '"></div>' +
         intelHTML(it, a) +
-        (a.description ? '<p style="margin-top:18px;font-size:13px;line-height:1.65;color:#8b96b5">' + esc(a.description) + '</p>' : '') +
+        (a.description ? '<p style="margin-top:18px;font-size:13px;line-height:1.65;color:var(--os-ink-2,#8b96b5)">' + esc(a.description) + '</p>' : '') +
       '</div>' + detailCSS();
     analyzeRender(a.id);   // ✨ botón IA (o tarjeta cacheada si ya se analizó esta moneda)
     mountTrade(a);   // caja 💼 Operar (async; solo si el activo es tradeable)
@@ -798,19 +852,61 @@
         var el = document.getElementById('cr-chart'); if (!el) return;
         if (CHART) { try { CHART.destroy(); } catch (e) {} }
         var up = prices[prices.length - 1][1] >= prices[0][1];
-        var col = up ? '#2BE38B' : '#FF4D6A';
+        var P = chartPal(up);
         CHART = new Chart(el.getContext('2d'), {
           type: 'line',
           data: { labels: prices.map(function (x) { return new Date(x[0]).toLocaleDateString(lang() === 'en' ? 'en-US' : 'es-PE', { month: 'short', day: 'numeric' }); }),
-            datasets: [{ data: prices.map(function (x) { return x[1]; }), borderColor: col, borderWidth: 2, pointRadius: 0, fill: true,
-              backgroundColor: (up ? 'rgba(43,227,139,.08)' : 'rgba(255,77,106,.08)'), tension: 0.25 }] },
+            datasets: [{ data: prices.map(function (x) { return x[1]; }), borderColor: P.line, borderWidth: 2, pointRadius: 0, fill: true,
+              backgroundColor: P.fill, tension: 0.25 }] },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
             interaction: { intersect: false, mode: 'index' },
-            scales: { x: { ticks: { color: '#7C87A3', maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
-              y: { ticks: { color: '#7C87A3', font: { size: 10 } }, grid: { color: 'rgba(122,158,255,.07)' } } } }
+            scales: { x: { ticks: { color: P.tick, maxTicksLimit: 8, font: { size: 10 } }, grid: { display: false } },
+              y: { ticks: { color: P.tick, font: { size: 10 } }, grid: { color: P.grid } } } }
         });
+        CHART._crUp = up;
       }).catch(function () {});
   }
+
+  // colores del gráfico 90d = tokens del tema vigente (Chart.js pinta en canvas: no entiende var())
+  function chartPal(up) {
+    var cs = null;
+    try { cs = window.getComputedStyle(document.querySelector('#crypto-panel .cr-root') || document.body); } catch (e) { cs = null; }
+    function g(name, dflt) { var v = cs ? String(cs.getPropertyValue(name) || '').trim() : ''; return v || dflt; }
+    var line = up ? g('--os-good', '#2BE38B') : g('--os-bad', '#FF4D6A');
+    var m = /^#([0-9a-f]{6})$/i.exec(line);
+    var fill = m ? 'rgba(' + parseInt(m[1].slice(0, 2), 16) + ',' + parseInt(m[1].slice(2, 4), 16) + ',' + parseInt(m[1].slice(4, 6), 16) + ',.08)'
+      : (up ? 'rgba(43,227,139,.08)' : 'rgba(255,77,106,.08)');
+    return { line: line, fill: fill, tick: g('--os-ink-2', '#7C87A3'), grid: g('--os-line', 'rgba(122,158,255,.07)') };
+  }
+  function onScreen() { var p = panel(); return !!(p && p.offsetParent !== null && p.querySelector('.cr-root')); }
+  // cambio claro ↔ oscuro: burbujas y gráfico toman los colores nuevos (el HTML ya cambia solo con var())
+  function onTheme() {
+    if (BUB) BUB.pal = null;
+    if (CHART && CHART._crUp != null && onScreen()) {
+      try {
+        var P = chartPal(CHART._crUp), ds = CHART.data.datasets[0], sc = CHART.options.scales;
+        ds.borderColor = P.line; ds.backgroundColor = P.fill;
+        sc.x.ticks.color = P.tick; sc.y.ticks.color = P.tick; sc.y.grid.color = P.grid;
+        CHART.update('none');
+      } catch (e) {}
+    }
+  }
+  // cambio de idioma: re-pinta la vista visible (no si hay una orden esperando confirmación: no se toca el dinero)
+  function onLang() {
+    if (!onScreen() || TRD) return;
+    if (SHOWING === 'detail' && DETAIL) renderDetail(DETAIL);
+    else if (SHOWING === 'main' && ASSETS.length) renderCurrent();
+  }
+  try {
+    var _dark = !!(document.body && document.body.classList.contains('dark'));
+    new MutationObserver(function () {
+      var d = document.body.classList.contains('dark');
+      if (d === _dark) return;
+      _dark = d; onTheme();
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  } catch (e) {}
+  try { new MutationObserver(onLang).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
+  window.addEventListener('khipu:lang', onLang);
 
   // ── API pública ──
   window.KhipuCrypto = {

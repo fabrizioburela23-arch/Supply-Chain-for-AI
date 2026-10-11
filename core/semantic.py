@@ -11,7 +11,7 @@ build_context(company_ids, question) → dict compacto con:
   - chokepoints globales del grafo (para que el LLM sitúe el riesgo).
 
 Fuentes (en orden): ontología viva (Postgres, incluye lo que el Radar
-incorporó) → snapshot data/grafo_v0.json (555 curadas, siempre disponible).
+incorporó) → snapshot data/grafo_v0.json (el catálogo curado, siempre disponible).
 El snapshot se carga UNA vez por proceso (caché de módulo).
 """
 import json
@@ -44,8 +44,11 @@ def _load_snapshot():
         for l in g['links']:
             deg[l.get('source')] = deg.get(l.get('source'), 0) + 1
             deg[l.get('target')] = deg.get(l.get('target'), 0) + 1
+        # grado ESTRUCTURAL (G4d: pares distintos de FLUJO) — el que usan el NRS y los chokepoints
+        from ontology.vocabulary import flow_degree, flow_relation_types
         _SNAP['data'] = {'by_id': by_id, 'by_label': by_label, 'by_ticker': by_ticker,
-                         'out': out_links, 'in': in_links, 'deg': deg}
+                         'out': out_links, 'in': in_links, 'deg': deg,
+                         'flow_deg': flow_degree(g['links']), 'flow_types': frozenset(flow_relation_types())}
     return _SNAP['data']
 
 
@@ -110,18 +113,26 @@ def build_context(company_ids=None, question=None, neighbors_per_side=8):
 
     focus = []
     for nid in ids:
-        ins = sorted(snap['in'].get(nid, []), key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
-        outs = sorted(snap['out'].get(nid, []), key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
+        # proveedores / clientes = SOLO flujo (G4a); socios e inversores van aparte en 'relacionados'
+        flow = snap['flow_types']
+        ins = sorted([l for l in snap['in'].get(nid, []) if (l.get('type') or 'supply') in flow],
+                     key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
+        outs = sorted([l for l in snap['out'].get(nid, []) if (l.get('type') or 'supply') in flow],
+                      key=lambda l: -(l.get('w') or 0))[:neighbors_per_side]
+        rel = sorted([l for l in snap['in'].get(nid, []) + snap['out'].get(nid, [])
+                      if (l.get('type') or 'supply') not in flow], key=lambda l: -(l.get('w') or 0))[:4]
         focus.append({
             'empresa': _node_brief(snap, nid),
             'depende_de': [{'de': l['source'], 'tipo': l.get('type'), 'w': l.get('w'),
                             'rel': (l.get('rel') or '')[:90]} for l in ins],
             'provee_a': [{'a': l['target'], 'tipo': l.get('type'), 'w': l.get('w'),
                           'rel': (l.get('rel') or '')[:90]} for l in outs],
-            'grado': snap['deg'].get(nid, 0),
+            'relacionados': [{'id': l['target'] if l['source'] == nid else l['source'], 'tipo': l.get('type')}
+                             for l in rel],
+            'grado': snap['flow_deg'].get(nid, 0),
         })
 
-    top_deg = sorted(snap['deg'].items(), key=lambda kv: -kv[1])[:10]
+    top_deg = sorted(snap['flow_deg'].items(), key=lambda kv: -kv[1])[:10]
     return {
         'foco': focus,
         'chokepoints_por_grado': [{'id': k, 'links': v} for k, v in top_deg],

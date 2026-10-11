@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/khipu_lang.js"
 lenguaje: "javascript"
-lineas: 378
+lineas: 376
 aliases: ["engine/khipu_lang.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/khipu_lang.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 378 líneas · `engine/khipu_lang.js`
+> Módulo · capa [[Capa Chat y agentes]] · 376 líneas · `engine/khipu_lang.js`
 
 ## Para qué sirve
 
@@ -31,12 +31,13 @@ Fase 4 del roadmap de ontología: lenguaje de comandos KHIPU, corto y componible
 - [[engine.resolve.js]] — usa `KhipuResolve`
 - [[engine.riskreport.js]] — usa `KhipuRisk`
 - [[engine.temporal-graph.js]] — usa `__tkgSetDate`
+- [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **48 de 93** (línea 7821), después de [[engine.maptime.js]] y antes de [[engine.guide.js]].
+Se carga en [[app.html]] en la posición **46 de 91** (línea 7830), después de [[engine.maptime.js]] y antes de [[engine.guide.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 48)
+- [[app.html]] — lo carga con `<script>` (posición 46)
 - [[engine.cockpit.js]] — usa `KHIPU`
 - [[engine.command_center.js]] — usa `KHIPU`
 
@@ -54,4 +55,5 @@ Se carga en [[app.html]] en la posición **48 de 93** (línea 7821), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_khipu_chat.py]]

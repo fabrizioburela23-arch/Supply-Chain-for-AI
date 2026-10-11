@@ -3,14 +3,14 @@ tipo: "pagina"
 capa: "Interfaz (Khipus OS)"
 ruta: "app.html"
 lenguaje: "html"
-lineas: 12630
+lineas: 12662
 aliases: ["app.html"]
 tags: ["capa/interfaz", "tipo/pagina"]
 ---
 
 # app.html
 
-> Página · capa [[Capa Interfaz (Khipus OS)]] · 12.630 líneas · `app.html`
+> Página · capa [[Capa Interfaz (Khipus OS)]] · 12.662 líneas · `app.html`
 
 ## Para qué sirve
 
@@ -59,98 +59,96 @@ Khipus Finance Intelligence · 2026: TODA la interfaz en un solo archivo HTML. A
 20. `vendor/three.min.js` — externo/vendor (línea 1455)
 21. `vendor/chart.umd.min.js` — externo/vendor (línea 1456)
 22. `vendor/satellite.min.js` — externo/vendor (línea 1457)
-23. bloque `<script>` inline #1 (línea 1483, 318 líneas)
-24. bloque `<script>` inline #2 (línea 2582, 4.812 líneas)
-25. bloque `<script>` inline #3 (línea 7678, 119 líneas)
-26. [[engine.loading.js]] (línea 7799)
-27. [[engine.toast.js]] (línea 7800)
-28. [[engine.mascot.js]] (línea 7801)
-29. [[engine.graph3d.js]] (línea 7802)
-30. [[engine.universe2d.js]] (línea 7803)
-31. [[engine.hypergraph.js]] (línea 7804)
-32. [[engine.resolve.js]] (línea 7805)
-33. [[engine.orb.js]] (línea 7806)
-34. [[engine.voice.js]] (línea 7807)
-35. [[engine.secondbrain.js]] (línea 7808)
-36. [[engine.geo_coords.js]] (línea 7809)
-37. [[engine.globe.js]] (línea 7810)
-38. [[engine.geosituation.js]] (línea 7811)
-39. [[engine.canvas-data.js]] (línea 7812)
-40. [[nodes.temporal_seed_facts.js]] (línea 7813)
-41. [[nodes.temporal_seed_facts2.js]] (línea 7814)
-42. [[nodes.ontology.js]] (línea 7815)
-43. [[nodes.ontology_facts.js]] (línea 7816)
-44. [[nodes.legal_names.js]] (línea 7817)
-45. [[engine.temporal-graph.js]] (línea 7818)
-46. [[engine.timeline3d.js]] (línea 7819)
-47. [[engine.maptime.js]] (línea 7820)
-48. [[engine.khipu_lang.js]] (línea 7821)
-49. [[engine.guide.js]] (línea 7822)
-50. [[engine.xray.js]] (línea 7823)
-51. [[engine.research.js]] (línea 7824)
-52. bloque `<script>` inline #4 (línea 7825, 52 líneas)
-53. [[engine.riskreport.js]] (línea 7877)
-54. [[engine.worldmonitor.js]] (línea 7878)
-55. [[engine.spacemonitor.js]] (línea 7879)
-56. [[engine.pickers.js]] (línea 7880)
-57. [[engine.committee.js]] (línea 7881)
-58. [[engine.aispend.js]] (línea 7882)
-59. [[engine.pfcommittee.js]] (línea 7883)
-60. [[engine.pfreports.js]] (línea 7884)
-61. [[engine.sync.js]] (línea 7885)
-62. [[engine.clients.js]] (línea 7886)
-63. [[engine.mcpconnect.js]] (línea 7887)
-64. bloque `<script>` inline #5 (línea 7888, 16 líneas)
-65. [[engine.insights.js]] (línea 7904)
-66. [[engine.statematrix.js]] (línea 7905)
-67. [[engine.livesim.js]] (línea 7906)
-68. [[engine.layers.js]] (línea 7907)
-69. [[engine.brief.js]] (línea 7908)
-70. [[engine.compare.js]] (línea 7909)
-71. [[engine.matrixview.js]] (línea 7910)
-72. [[engine.nav4.js]] (línea 7911)
-73. [[engine.localcharts.js]] (línea 7912)
-74. [[engine.fincard.js]] (línea 7913)
-75. [[engine.termdata.js]] (línea 7914)
-76. [[engine.explain.js]] (línea 7915)
-77. [[engine.reconcile.js]] (línea 7916)
-78. [[nodes.crypto_intel.js]] (línea 7917)
-79. [[nodes.crypto_intel2.js]] (línea 7918)
-80. [[engine.crypto.js]] (línea 7919)
-81. [[engine.portfolios.js]] (línea 7920)
-82. [[engine.oswindows.js]] (línea 7921)
-83. [[engine.khipu_chat.js]] (línea 7922)
-84. [[engine.desktop.js]] (línea 7923)
-85. [[engine.cockpit.js]] (línea 7924)
-86. [[engine.live.js]] (línea 7925)
-87. [[engine.command_center.js]] (línea 7926)
-88. [[sim.scenario_builder.js]] (línea 7927)
-89. bloque `<script>` inline #6 (línea 7929, 2.674 líneas)
-90. bloque `<script>` inline #7 (línea 10903, 605 líneas)
-91. bloque `<script>` inline #8 (línea 11510, 143 líneas)
-92. bloque `<script>` inline #9 (línea 11655, 690 líneas)
-93. bloque `<script>` inline #10 (línea 12346, 282 líneas)
+23. bloque `<script>` inline #1 (línea 1483, 326 líneas)
+24. bloque `<script>` inline #2 (línea 2590, 4.815 líneas)
+25. bloque `<script>` inline #3 (línea 7689, 119 líneas)
+26. [[engine.loading.js]] (línea 7810)
+27. [[engine.toast.js]] (línea 7811)
+28. [[engine.agents_registry.js]] (línea 7812)
+29. [[engine.mascot.js]] (línea 7813)
+30. [[engine.universe2d.js]] (línea 7814)
+31. [[engine.resolve.js]] (línea 7815)
+32. [[engine.orb.js]] (línea 7816)
+33. [[engine.voice.js]] (línea 7817)
+34. [[engine.secondbrain.js]] (línea 7818)
+35. [[engine.geo_coords.js]] (línea 7819)
+36. [[engine.globe.js]] (línea 7820)
+37. [[engine.canvas-data.js]] (línea 7821)
+38. [[nodes.temporal_seed_facts.js]] (línea 7822)
+39. [[nodes.temporal_seed_facts2.js]] (línea 7823)
+40. [[nodes.ontology.js]] (línea 7824)
+41. [[nodes.ontology_facts.js]] (línea 7825)
+42. [[nodes.legal_names.js]] (línea 7826)
+43. [[engine.temporal-graph.js]] (línea 7827)
+44. [[engine.timeline3d.js]] (línea 7828)
+45. [[engine.maptime.js]] (línea 7829)
+46. [[engine.khipu_lang.js]] (línea 7830)
+47. [[engine.guide.js]] (línea 7831)
+48. [[engine.xray.js]] (línea 7832)
+49. [[engine.research.js]] (línea 7833)
+50. bloque `<script>` inline #4 (línea 7834, 52 líneas)
+51. [[engine.riskreport.js]] (línea 7886)
+52. [[engine.worldmonitor.js]] (línea 7887)
+53. [[engine.spacemonitor.js]] (línea 7888)
+54. [[engine.pickers.js]] (línea 7889)
+55. [[engine.committee.js]] (línea 7890)
+56. [[engine.aispend.js]] (línea 7891)
+57. [[engine.pfcommittee.js]] (línea 7892)
+58. [[engine.pfreports.js]] (línea 7893)
+59. [[engine.sync.js]] (línea 7894)
+60. [[engine.clients.js]] (línea 7895)
+61. [[engine.mcpconnect.js]] (línea 7896)
+62. bloque `<script>` inline #5 (línea 7897, 16 líneas)
+63. [[engine.insights.js]] (línea 7913)
+64. [[engine.statematrix.js]] (línea 7914)
+65. [[engine.livesim.js]] (línea 7915)
+66. [[engine.layers.js]] (línea 7916)
+67. [[engine.brief.js]] (línea 7917)
+68. [[engine.compare.js]] (línea 7918)
+69. [[engine.matrixview.js]] (línea 7919)
+70. [[engine.nav4.js]] (línea 7920)
+71. [[engine.localcharts.js]] (línea 7921)
+72. [[engine.fincard.js]] (línea 7922)
+73. [[engine.termdata.js]] (línea 7923)
+74. [[engine.explain.js]] (línea 7924)
+75. [[engine.reconcile.js]] (línea 7925)
+76. [[nodes.crypto_intel.js]] (línea 7926)
+77. [[nodes.crypto_intel2.js]] (línea 7927)
+78. [[engine.crypto.js]] (línea 7928)
+79. [[engine.portfolios.js]] (línea 7929)
+80. [[engine.oswindows.js]] (línea 7930)
+81. [[engine.khipu_chat.js]] (línea 7931)
+82. [[engine.desktop.js]] (línea 7932)
+83. [[engine.cockpit.js]] (línea 7933)
+84. [[engine.live.js]] (línea 7934)
+85. [[engine.command_center.js]] (línea 7935)
+86. [[sim.scenario_builder.js]] (línea 7936)
+87. bloque `<script>` inline #6 (línea 7938, 2.694 líneas)
+88. bloque `<script>` inline #7 (línea 10932, 608 líneas)
+89. bloque `<script>` inline #8 (línea 11542, 143 líneas)
+90. bloque `<script>` inline #9 (línea 11687, 690 líneas)
+91. bloque `<script>` inline #10 (línea 12378, 282 líneas)
 
 ## Bloques `<script>` inline
 
 | # | Línea | Líneas | Funciones | Cabecera |
 |---|---|---|---|---|
-| 1 | 1483 | 318 | 11 | Hard fallback: always dismiss \#boot after 3s even if main JS crashes |
-| 2 | 2582 | 4.812 | 145 | Global error reporter — shows uncaught JS errors on screen (no devtools needed) |
-| 3 | 7678 | 119 | 4 | Lissajous spirograph — same math renders at any size |
-| 4 | 7825 | 52 | 3 | AVISO "SERVIDOR NO DISPONIBLE" (incidente 2026-09-29: Railway dejó de responder y la app mostraba EN SILENCIO la última versión guardada por el service worker … |
-| 5 | 7888 | 16 | 1 | Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). |
-| 6 | 7929 | 2.674 | 71 | Khipu Core Coordinator |
-| 7 | 10903 | 605 | 11 | Professional Trade Panel |
-| 8 | 11510 | 143 | 4 | Preflight debounce wiring |
-| 9 | 11655 | 690 | 37 | palette & helpers |
-| 10 | 12346 | 282 | 16 | KHIPU FINANCE — Scatter 3D Semántico con Medidores Botón 📊: posiciona empresas en ejes semánticos + panel de medidores interactivo |
+| 1 | 1483 | 326 | 11 | Hard fallback: always dismiss \#boot after 3s even if main JS crashes |
+| 2 | 2590 | 4.815 | 147 | Global error reporter — shows uncaught JS errors on screen (no devtools needed) |
+| 3 | 7689 | 119 | 4 | Lissajous spirograph — same math renders at any size |
+| 4 | 7834 | 52 | 3 | AVISO "SERVIDOR NO DISPONIBLE" (incidente 2026-09-29: Railway dejó de responder y la app mostraba EN SILENCIO la última versión guardada por el service worker … |
+| 5 | 7897 | 16 | 1 | Insignia en 👥 Clientes: propuestas (de agentes MCP o del comité) esperando aprobación humana. Nunca pide el PIN (pendingCount devuelve null sin PIN). |
+| 6 | 7938 | 2.694 | 73 | Khipu Core Coordinator |
+| 7 | 10932 | 608 | 11 | Professional Trade Panel |
+| 8 | 11542 | 143 | 4 | Preflight debounce wiring |
+| 9 | 11687 | 690 | 37 | palette & helpers |
+| 10 | 12378 | 282 | 16 | KHIPU FINANCE — Scatter 3D Semántico con Medidores Botón 📊: posiciona empresas en ejes semánticos + panel de medidores interactivo |
 
 ## API pública (globales window.* que define)
 
-`window.APP_NAME`, `window.ASSISTANT_NAME`, `window.BixbyVoice`, `window.CATS`, `window.CAT_TO_SECTOR`, `window.DataLayer`, `window.KhipuLive`, `window.KhipuLiveCaps`, `window.KhipuLiveFund`, `window.LANG`, `window.LINKS`, `window.NODES`, `window.NODE_BY_ID`, `window.NODE_META`, `window.OntologyAlerts`, `window.SECTORS9`, `window.V8detail`, `window.V8feed`, `window.__khOsGaveUp`, `window.__khStaleReloaded`, `window.__tradeAcctCache`, `window._appVersion`, `window._buildNrsDegree`, `window._canonId`, `window._cvRenderCard`, `window._cvRows`, `window._diag`, `window._dossierRedrawIfNeeded`, `window._dossierRelabel`, `window._ensureMapSettled`, `window._go3D`, `window._hypergraph`, `window._initGeoGlobe`, `window._injectGraphContext`, `window._invalidateNRS`, `window._khSrvBanner`, `window._khipuLoaderDismiss`, `window._khipuLoaderFallback`, `window._khipuScatter`, `window._khipuServerCheck`, `window._lblOn`, `window._liveLoading`, `window._liveRecolorByImpact`, `window._liveResetColors`, `window._liveSelectedNode`, `window._liveTintLinks`, `window._mapLayers`, `window._mapState`, `window._newClientOrderId`, `window._openDossier`, `window._openResearch`, `window._openSecondBrain`, `window._pfPendingAdd`, `window._refreshLiveData`, `window._resizeNodesByCap`, `window._secondBrain`, `window._selectedNode`, `window._showUpdatePill`, `window._simGroundFactor`, `window._termCat`, `window._termChangeTf`, `window._termClearAll`, `window._termClearCell`, `window._termDragStart`, `window._termFilter`, `window._termLoadToFirstEmpty`, `window._termOpenTicker`, `window._termRefreshPrices`, `window._termRelabel`, `window._termSetLayout`, `window._termView`, `window._tickerWarnings`, `window._toggle3D`, `window._toggleColorMode`, `window._tpRefreshAgentStatus`, `window._tpRefreshBlotter`, `window._tpRefreshPositions`, `window._tpRelabel`, `window._tradeErrText`, `window._tradeFetch`, `window._tradeOrderAmbiguous`, `window._tradeOrderId`, `window._tradeOrderIsDup`, `window._tradeOrderResolve`, `window._tradeOrderSettle`, `window._tradePinClear`, `window._tradePinRequired`, `window._tradePinSave`, `window._tradePinStored`, `window._tradeStatusInfo`, `window._updPending`, `window._wrChatSend`, `window.addToPortfolio`, `window.applyVerifiedValuations`, `window.canvasGenerate`, `window.catLabel`, `window.clearStressBtn`, `window.closeDiagnostics`, `window.closePropuestas`, `window.closeRegistro`, `window.closeSistema`, `window.closeTradePanelFn`, `window.computeNRS`, `window.computeNRSBreakdown`, `window.cvCol`, `window.esc`, `window.fetchQuotes`, `window.fillLiveMcap`, `window.fillLiveMeta`, `window.goMap`, `window.initCanvasTab`, `window.initGdelt`, `window.initSimTab`, `window.jumpTo`, `window.khJSON`, `window.khipuGraph3D`, `window.lanzarInvestigacion`, `window.liveCapDot`, `window.loadFredMacro`, `window.loadInvestor13F`, `window.loadLiveQuotes`, `window.loadStockChart`, `window.loadTradeFlows`, `window.nexusCore`, `window.openDiagnostics`, `window.openPropuestas`, `window.openRegistro`, `window.openSistema`, `window.openTradeModal`, `window.openTradePanelFn`, `window.posCancel`, `window.posDel`, `window.posEdit`, `window.posSave`, `window.quoteAge`, `window.quoteAgoText`, `window.quoteExchange`, `window.quoteIsLive`, `window.quotePx`, `window.quoteSrcChip`, `window.quoteSrcName`, `window.refreshStyles`, `window.registerBixbyOrb`, `window.renderDetail`, `window.renderNrsTop10`, `window.runAgentes`, `window.safeUrl`, `window.sectorName`, `window.setBixbyThinking`, `window.setChartMode`, `window.setTradePanelQtyPct`, `window.setTradePanelSide`, `window.settleGraph`, `window.stressBtn`, `window.submitTradePanelOrder`, `window.switchTab`, `window.togglePortfolio`, `window.toggleTradingAgent`, `window.updateTradePanelRisk`
+`window.APP_NAME`, `window.ASSISTANT_NAME`, `window.BixbyVoice`, `window.CATS`, `window.CAT_TO_SECTOR`, `window.DataLayer`, `window.KhipuLive`, `window.KhipuLiveCaps`, `window.KhipuLiveFund`, `window.LANG`, `window.LINKS`, `window.NODES`, `window.NODE_BY_ID`, `window.NODE_META`, `window.NRS_FLOW_TYPES`, `window.OntologyAlerts`, `window.SECTORS9`, `window.V8detail`, `window.V8feed`, `window.__khOsGaveUp`, `window.__khStaleReloaded`, `window.__tradeAcctCache`, `window._appVersion`, `window._buildNrsDegree`, `window._canonId`, `window._cvRenderCard`, `window._cvRows`, `window._diag`, `window._dossierRedrawIfNeeded`, `window._dossierRelabel`, `window._ensureMapSettled`, `window._go3D`, `window._hypergraph`, `window._initGeoGlobe`, `window._injectGraphContext`, `window._invalidateNRS`, `window._khSrvBanner`, `window._khipuLoaderDismiss`, `window._khipuLoaderFallback`, `window._khipuScatter`, `window._khipuServerCheck`, `window._lblOn`, `window._liveLoading`, `window._liveRecolorByImpact`, `window._liveResetColors`, `window._liveSelectedNode`, `window._liveTintLinks`, `window._mapLayers`, `window._mapState`, `window._newClientOrderId`, `window._openDossier`, `window._openResearch`, `window._openSecondBrain`, `window._pfPendingAdd`, `window._refreshLiveData`, `window._resizeNodesByCap`, `window._secondBrain`, `window._selectedNode`, `window._showUpdatePill`, `window._simGroundFactor`, `window._termCat`, `window._termChangeTf`, `window._termClearAll`, `window._termClearCell`, `window._termDragStart`, `window._termFilter`, `window._termLoadToFirstEmpty`, `window._termOpenTicker`, `window._termRefreshPrices`, `window._termRelabel`, `window._termSetLayout`, `window._termView`, `window._tickerWarnings`, `window._toggle3D`, `window._toggleColorMode`, `window._tpRefreshAgentStatus`, `window._tpRefreshBlotter`, `window._tpRefreshPositions`, `window._tpRelabel`, `window._tradeErrText`, `window._tradeFetch`, `window._tradeOrderAmbiguous`, `window._tradeOrderId`, `window._tradeOrderIsDup`, `window._tradeOrderResolve`, `window._tradeOrderSettle`, `window._tradePinClear`, `window._tradePinRequired`, `window._tradePinSave`, `window._tradePinStored`, `window._tradeStatusInfo`, `window._updPending`, `window._wrChatSend`, `window.addToPortfolio`, `window.applyVerifiedValuations`, `window.canvasGenerate`, `window.catLabel`, `window.clearStressBtn`, `window.closeDiagnostics`, `window.closePropuestas`, `window.closeRegistro`, `window.closeSistema`, `window.closeTradePanelFn`, `window.computeNRS`, `window.computeNRSBreakdown`, `window.cvCol`, `window.esc`, `window.fetchQuotes`, `window.fillLiveMcap`, `window.fillLiveMeta`, `window.goMap`, `window.initCanvasTab`, `window.initGdelt`, `window.initSimTab`, `window.jumpTo`, `window.khJSON`, `window.khipuGraph3D`, `window.lanzarInvestigacion`, `window.liveCapDot`, `window.loadFredMacro`, `window.loadInvestor13F`, `window.loadLiveQuotes`, `window.loadStockChart`, `window.loadTradeFlows`, `window.nexusCore`, `window.openDiagnostics`, `window.openPropuestas`, `window.openRegistro`, `window.openSistema`, `window.openTradeModal`, `window.openTradePanelFn`, `window.posCancel`, `window.posDel`, `window.posEdit`, `window.posSave`, `window.quoteAge`, `window.quoteAgoText`, `window.quoteExchange`, `window.quoteIsLive`, `window.quotePx`, `window.quoteSrcChip`, `window.quoteSrcName`, `window.refreshStyles`, `window.registerBixbyOrb`, `window.renderDetail`, `window.renderNrsTop10`, `window.runAgentes`, `window.safeUrl`, `window.sectorName`, `window.setBixbyThinking`, `window.setChartMode`, `window.setTradePanelQtyPct`, `window.setTradePanelSide`, `window.settleGraph`, `window.stressBtn`, `window.submitTradePanelOrder`, `window.switchTab`, `window.togglePortfolio`, `window.toggleTradingAgent`, `window.updateTradePanelRisk`
 
-Además declara **249** funciones/constantes de nivel superior en sus bloques inline (globales del navegador): `BASE`, `COLLAPSE_THRESHOLD`, `CRITICAL_WEIGHT`, `DEP_TYPES`, `GEO_REGIONS`, `GEO_REGION_OF`, `I18N`, `LBL_MAX`, `LINK_TYPE_COLORS`, `LIVE_BATCH`, `LT_ORDER`, `MAP_FIRST_ALPHA`, `MAP_POS_KEY`, `MKT`, `NRS_FLOW_TYPES`, `SERVER_MODE`, `USER_PORTFOLIOS`, `V8`, `W`, `_DS_SRC`, `_NRS_GEO_ALIAS`, `_TERM_ICON`, `_TERM_SEED`, `_TT`, `_afterQuotesMerged`, `_alphaDecay`, `_bcCache`, `_capResizeT`, `_chargeStr`, `_chartModes`, `_deselect`, `_dossier`, `_dossierAddCompare`, `_dossierAutocomplete`, `_dossierLoad`, `_dossierLoadCompany`, `_dossierPickAC`, `_dossierRemove`, `_dossierRenderBadges`, `_dossierRenderPanels`, `_dossierRetry`, `_dossierToWarRoom`, `_dsAlign`, `_dsDrawBalance`, `_dsDrawBars`, `_dsDrawLines`, `_dsEmptyCard`, `_dsFmtB`, `_dsL`, `_dsLast`, `_dsNoData`, `_dsNoSeries`, `_dsSetup`, `_dsTransientCard`, `_dsYears`, `_execTermCmd`, `_filterCache`, `_gdeltInited`, `_initTermCmdBar`, `_lblMinR`, `_ldrSet`, `_liveTick`, `_loaderBar`, `_loaderText`, `_mapBootWaiting`, `_mapCkOpen`, `_mapCkSeen`, `_mapClassicBoot`, `_mapCovered`, `_mapFirstRecipe`, `_mapFirstSettleAsync`, `_mapFitPending`, `_mapFlyPending`, `_mapHint`, `_mapHintEl`, `_mapLaidNow`, `_mapLaidOnce`, `_mapOsExpected`, `_mapPosSave`, `_mapPosSaveSoon`, `_mapPosSaveT`, `_mapPosSeed`, `_mapPost`, `_mapReheat`, `_mapSeeded`, `_mapSettleJob`, `_mapSig`, `_mergeLiveQuote`, `_mergeResult`, `_mixHex`, `_nodeCount`, `_nrsCache`, `_nrsCountry`, `_nrsDegree`, `_paintGraph`, `_persistQuotes`, `_processMktData`, `_recalcLblMin`, `_refreshStylesCore`, `_renderWarRoom`, `_resizeT`, `_resolveId`, `_runAgentSimTab`, `_runClaudeSim`, `_selectNode`, `_showEventsAlert`, `_simInited`, `_simSetStatus`, `_stockCache`, `_term`, `_termAlpha`, `_termApplyGrid`, `_termBuildSidebar`, `_termFlash`, `_termFmtPct`, `_termFmtPx`, `_termGridClick`, `_termIsPhone`, `_termLoadCell`, `_termMakeCell` y 129 más
+Además declara **250** funciones/constantes de nivel superior en sus bloques inline (globales del navegador): `BASE`, `COLLAPSE_THRESHOLD`, `CRITICAL_WEIGHT`, `DEP_TYPES`, `GEO_REGIONS`, `GEO_REGION_OF`, `I18N`, `LBL_MAX`, `LINK_TYPE_COLORS`, `LIVE_BATCH`, `LT_ORDER`, `MAP_FIRST_ALPHA`, `MAP_POS_KEY`, `MKT`, `SERVER_MODE`, `USER_PORTFOLIOS`, `V8`, `W`, `_DS_SRC`, `_NRS_GEO`, `_NRS_GEO_ALIAS`, `_TERM_ICON`, `_TERM_SEED`, `_TT`, `_afterQuotesMerged`, `_alphaDecay`, `_bcCache`, `_capResizeT`, `_chargeStr`, `_chartModes`, `_deselect`, `_dossier`, `_dossierAddCompare`, `_dossierAutocomplete`, `_dossierLoad`, `_dossierLoadCompany`, `_dossierPickAC`, `_dossierRemove`, `_dossierRenderBadges`, `_dossierRenderPanels`, `_dossierRetry`, `_dossierToWarRoom`, `_dsAlign`, `_dsDrawBalance`, `_dsDrawBars`, `_dsDrawLines`, `_dsEmptyCard`, `_dsFmtB`, `_dsL`, `_dsLast`, `_dsNoData`, `_dsNoSeries`, `_dsSetup`, `_dsTransientCard`, `_dsYears`, `_execTermCmd`, `_filterCache`, `_gdeltInited`, `_initTermCmdBar`, `_lblMinR`, `_ldrSet`, `_liveTick`, `_loaderBar`, `_loaderText`, `_mapBootWaiting`, `_mapCkOpen`, `_mapCkSeen`, `_mapClassicBoot`, `_mapCovered`, `_mapFirstRecipe`, `_mapFirstSettleAsync`, `_mapFitPending`, `_mapFlyPending`, `_mapHint`, `_mapHintEl`, `_mapLaidNow`, `_mapLaidOnce`, `_mapOsExpected`, `_mapPosSave`, `_mapPosSaveSoon`, `_mapPosSaveT`, `_mapPosSeed`, `_mapPost`, `_mapReheat`, `_mapSeeded`, `_mapSettleJob`, `_mapSig`, `_mergeLiveQuote`, `_mergeResult`, `_mixHex`, `_nodeCount`, `_nrsCache`, `_nrsCountry`, `_nrsDegree`, `_nrsTerms`, `_paintGraph`, `_persistQuotes`, `_processMktData`, `_recalcLblMin`, `_refreshStylesCore`, `_renderWarRoom`, `_resizeT`, `_resolveId`, `_runAgentSimTab`, `_runClaudeSim`, `_selectNode`, `_showEventsAlert`, `_simInited`, `_simSetStatus`, `_stockCache`, `_term`, `_termAlpha`, `_termApplyGrid`, `_termBuildSidebar`, `_termFlash`, `_termFmtPct`, `_termFmtPx`, `_termGridClick`, `_termIsPhone`, `_termLoadCell` y 130 más
 
 ## Depende de
 
@@ -181,7 +179,7 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.temporal-graph.js]] — usa `initTKGTab`
 - [[engine.termdata.js]] — usa `TermData`
-- [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.universe2d.js]] — usa `KhipuUniverse2D`
 - [[engine.voice.js]] — usa `BixbyVoice`
 - [[engine.worldmonitor.js]] — usa `KhipuWorld`
@@ -204,6 +202,8 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`, `buildLiveReportContext`
+- [[engine.graph3d.js]] — lo nombra por su ruta
+- [[engine.hypergraph.js]] — lo nombra por su ruta
 - [[sw.js]] — lo nombra por su ruta
 
 ## Lo usan
@@ -227,12 +227,13 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 - [[engine.insights.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeDownstream`, `computeNRS` y 3 más
 - [[engine.khipu_chat.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_liveSelectedNode`, `_selectedNode`, `activeTab`, `jumpTo` y 3 más
 - [[engine.khipu_lang.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_tradeErrText`, `_tradeFetch`, `switchTab`
-- [[engine.live.js]] — usa `BASE`, `MKT`, `_appVersion`, `_invalidateNRS`, `_showUpdatePill`, `_tradeFetch`
+- [[engine.layers.js]] — usa `LANG`
+- [[engine.live.js]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_invalidateNRS`, `_showUpdatePill`, `_tradeFetch`
 - [[engine.livesim.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_liveRecolorByImpact`, `_liveResetColors`, `_liveSelectedNode`, `_liveTintLinks` y 3 más
 - [[engine.localcharts.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_selectedNode`, `computeNRS`, `computeNRSBreakdown` y 3 más
 - [[engine.maptime.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`, `_mapLayers`, `computeNodeRadius`, `getLinkColorHex`, `jumpTo`, `refreshStyles` y 2 más
 - [[engine.mascot.js]] — usa `LANG`
-- [[engine.matrixview.js]] — usa `LINKS`, `NODE_BY_ID`, `sectorName`
+- [[engine.matrixview.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`, `sectorName`
 - [[engine.mcpconnect.js]] — usa `LANG`, `_tradeFetch`, `closeSistema`
 - [[engine.nav4.js]] — usa `activeTab`, `switchTab`
 - [[engine.orb.js]] — usa `LANG`
@@ -245,7 +246,7 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 - [[engine.research.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`, `jumpTo`
 - [[engine.resolve.js]] — usa `LANG`, `NODE_BY_ID`, `_openSecondBrain`, `_termOpenTicker`, `activateStress`, `canvasGenerate`, `closeSistema`, `jumpTo` y 3 más
 - [[engine.riskreport.js]] — usa `BASE`, `DataLayer`, `LANG`, `MKT`, `NODE_BY_ID`
-- [[engine.secondbrain.js]] — usa `DataLayer`, `LINKS`, `NODE_BY_ID`, `V8detail`, `_secondBrain`, `activateStress`, `catColor`, `computeDownstream` y 10 más
+- [[engine.secondbrain.js]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `_secondBrain`, `activateStress` y 13 más
 - [[engine.spacemonitor.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `quotePx` y 1 más
 - [[engine.statematrix.js]] — usa `LINKS`, `MKT`, `computeNRS`
 - [[engine.sync.js]] — usa `BASE`, `MKT`, `renderMarket`
@@ -312,12 +313,17 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 - `POST /api/ws-key` → [[server.py]] ([[API ws-key]])
 - `POST /v1/auth/key` → [[server.py]] ([[API v1 (pública)]])
 
-**Rutas que nombra y no existen en el servidor** (¿restos viejos?): `/api/chart/◊`
-
 ## Pruebas que lo cubren
 
+- [[tests.test_agents_registry.py]]
 - [[tests.test_canvas_charts.py]]
+- [[tests.test_cleanup_client.py]]
+- [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_cleanup_modules_theme_i18n.py]]
+- [[tests.test_cleanup_nrs_parity.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_client_hardening.py]]
+- [[tests.test_docs_facts.py]]
 - [[tests.test_khipus_os_fixes_shell.py]]
 - [[tests.test_khipus_os_integration.py]]
 - [[tests.test_khipus_os_perf.py]]
@@ -333,6 +339,7 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
 - [[Sesión 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)]]
@@ -344,6 +351,5 @@ Además declara **249** funciones/constantes de nivel superior en sus bloques in
 - [[Sesión 2026-10-04 — ESCRITORIO KHIPU K1 - VENTANAS DENTRO DE LA CABINA (sw v186)]]
 - [[Sesión 2026-10-03 (f) — PANEL DE TRADING BILINGÜE Y MÓVIL + APROBACIÓN DEL COMITÉ CON]]
 - [[Sesión 2026-10-03 (c) — TERMINAL REDISEÑADA + POP-UPS DE COMPRA-VENTA (sw v182)]]
-- [[Sesión 2026-10-03 — GASTO DE IA, SIM. ESTRUCTURAL, AVATARES, CANVAS, COMITÉ DE CARTERA]]
 
-_…y 12 sesiones más antiguas._
+_…y 13 sesiones más antiguas._

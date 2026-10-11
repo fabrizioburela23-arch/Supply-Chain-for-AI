@@ -27,7 +27,7 @@
   function day(iso) { var d = new Date(iso); return isNaN(d) ? (iso || '') : d.toLocaleDateString(isEn() ? 'en' : 'es', { day: '2-digit', month: 'short', year: 'numeric' }); }
   function pct(v, nd) { return v == null ? '—' : (v * 100).toFixed(nd == null ? 0 : nd) + '%'; }
   function money(v) { return v == null ? '—' : '$' + Number(v).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
-  function actor() { var a = null; try { a = localStorage.getItem('khipu_actor'); } catch (e) {} return (a && a.trim()) || 'usuario'; }
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }   // EL ayudante único (engine/toast.js)
 
   var AG = {
     fundamental: ['📊', 'Fundamental', 'Fundamental'], technical: ['📈', 'Técnico', 'Technical'],
@@ -47,19 +47,20 @@
   // texto en color + fondo teñido suave (la "píldora" de Khipus OS); sin color-mix queda el fondo neutro
   function tint(col, p) { return 'color:' + col + ';background:var(--os-surface-2);background:color-mix(in srgb,' + fill(col) + ' ' + (p || 12) + '%,transparent)'; }
 
-  // ── AGENTES = MASCOTAS de Khipus OS (engine/mascot.js). Cada puesto del comité pertenece a una
-  // mascota (Analista, Radar, Cadena, Técnico, Comité) y lleva una insignia con su rol. ──
-  var SEAT_MASCOT = { fundamental: 'analista', macro: 'analista', news: 'radar', geopolitical: 'radar', crypto: 'radar',
-    supply_chain: 'cadena', technical: 'tecnico', risk_observation: 'tecnico', risk_officer: 'tecnico', market: 'tecnico',
-    chair: 'comite', quant: 'comite', mandate: 'comite', committee: 'comite' };
-  var MNAME = { analista: ['Analista', 'Analyst'], radar: ['Radar', 'Radar'], cadena: ['Cadena', 'Chain'], tecnico: ['Técnico', 'Technical'],
-    comite: ['Comité', 'Committee'], khipu: ['Khipu', 'Khipu'] };
-  var MCOLOR = { analista: '#4054cf', radar: '#e63e52', cadena: '#1b9386', tecnico: '#e6a117', comite: '#7a3fe0', khipu: '#c23a8c' };
-  var ROLE = { fundamental: ['Fundamental', 'Fundamental'], macro: ['Macro', 'Macro'], news: ['Noticias', 'News'], geopolitical: ['Geopolítica', 'Geopolitics'],
-    crypto: ['Cripto', 'Crypto'], supply_chain: ['Suministro', 'Supply'], technical: ['Precio', 'Price'], risk_observation: ['Riesgos', 'Risks'],
-    market: ['Mesa de mercado', 'Market desk'], risk_officer: ['Oficial de riesgo', 'Risk officer'], quant: ['Cuantitativo', 'Quant'],
-    chair: ['Presidencia', 'Chair'], mandate: ['Mandato', 'Mandate'] };
-  var EMO = { market: '📡', risk_officer: '🛡️', quant: '🧮', chair: '🏛', mandate: '👤' };
+  // ── AGENTES = MASCOTAS de Khipus OS. Cada puesto del comité pertenece a una mascota (Analista, Radar, Cadena,
+  // Técnico, Comité) y lleva una insignia con su rol. Puesto → mascota, nombres, colores, roles e íconos salen del
+  // registro ÚNICO engine/agents_registry.js (window.KHIPU_AGENTS; limpieza 2026-10-11 — antes, copia a mano). ──
+  var REG = window.KHIPU_AGENTS || { agents: [], seats: {} };
+  var SEAT_MASCOT = {}, MNAME = {}, MCOLOR = {}, ROLE = {}, EMO = {};
+  REG.agents.forEach(function (a) {
+    MNAME[a.id] = [a.es, a.en]; MCOLOR[a.id] = a.ink;
+    a.seats.forEach(function (x) { SEAT_MASCOT[x] = a.id; });
+  });
+  Object.keys(REG.seats).forEach(function (k) {
+    var m = REG.seats[k];
+    if (m.badge_es) ROLE[k] = [m.badge_es, m.badge_en];
+    if (m.desk) EMO[k] = m.icon;
+  });
   function mascotOf(seat) {
     var id = null;
     try { id = (window.KhipuMascot && window.KhipuMascot.of) ? window.KhipuMascot.of(seat) : null; } catch (e) { id = null; }
@@ -138,42 +139,21 @@
   setTimeout(ensureExplain, 0);
 
   // ── TEMA KHIPUS OS (2026-10-09, "el comité todavía no está actualizado") ──────
-  // Tokens --os-* = COPIA EXACTA de engine/cockpit.js (#bcp-ov). El comité es un overlay propio
-  // (z-index 7650, fuera de #bcp-ov), por eso los redefine sobre #cm-ov; claro = body sin .dark,
-  // oscuro = body.dark. tests/test_committee_os_ui.py compara ambos: si cambian allá, cambiar aquí.
-  // Propios del comité: --cm-warn-fill (ámbar de aviso para rellenos/anillos), --cm-warn / --cm-good / --cm-bad /
-  // --cm-ai (TEXTO en ámbar/verde/rojo/violeta: en claro, versiones oscuras que pasan 4.5:1 sobre su píldora
-  // teñida; los vivos #0ca30c/#B7791F daban 2.6–3.3:1), --cm-on-sem (texto sobre un botón de color semántico).
-  var OS_LIGHT = '--os-bg:#EDEDF5;--os-surface:#FFFFFF;--os-surface-2:#F2F2F7;--os-surface-3:#E7E7EF;' +
-    '--os-ink:#111216;--os-ink-2:#5B5E6B;--os-ink-3:#8D90A0;--os-line:rgba(17,18,22,.08);' +
-    '--os-shadow:0 1px 2px rgba(17,18,40,.04), 0 8px 28px rgba(17,18,40,.06);' +
-    '--os-accent:#2F6BEA;--os-pos:#2F6BEA;--os-neg:#E8623A;--os-mute:#C9CAD6;--os-good:#0ca30c;--os-bad:#d03b3b;' +
-    '--os-btn:#111216;--os-btn-ink:#FFFFFF;' +
-    '--kos-shadow-lg:0 2px 6px rgba(17,18,40,.06), 0 18px 48px rgba(17,18,40,.14);' +
-    '--kos-scrim:rgba(24,26,44,.22);--kos-accent-soft:rgba(47,107,234,.12);' +
-    '--cm-warn-fill:#B7791F;--cm-warn:#7F5200;--cm-good:#066B06;--cm-bad:#A82424;--cm-ai:#6236C9;--cm-on-sem:#FFFFFF;color-scheme:light';
-  var OS_DARK = '--os-bg:#0E0F14;--os-surface:#17181F;--os-surface-2:#1F2029;--os-surface-3:#2A2B36;' +
-    '--os-ink:#F2F2F5;--os-ink-2:#A6A8B5;--os-ink-3:#6E7080;--os-line:rgba(255,255,255,.07);' +
-    '--os-shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);' +
-    '--os-accent:#4C8DF6;--os-pos:#4C8DF6;--os-neg:#F07A52;--os-mute:#3A3C4A;--os-good:#2fbf5b;--os-bad:#f06565;' +
-    '--os-btn:#F2F2F5;--os-btn-ink:#111216;' +
-    '--kos-shadow-lg:0 2px 8px rgba(0,0,0,.45), 0 22px 56px rgba(0,0,0,.55);' +
-    '--kos-scrim:rgba(0,0,0,.5);--kos-accent-soft:rgba(76,141,246,.16);' +
-    '--cm-warn-fill:#F2C46D;--cm-warn:#F2C46D;--cm-good:#2fbf5b;--cm-bad:#F47C7C;--cm-ai:#B48CFF;--cm-on-sem:#0E0F14;color-scheme:dark';
-  var OS_SHARED = '--os-r:18px;--os-r-sm:12px;--os-font:\'Nunito\', \'Geist\', system-ui, -apple-system, \'Segoe UI\', sans-serif;--km-ring:var(--os-surface)';
-  // Módulos que pintan DENTRO del comité con colores fijos del tema oscuro viejo (engine/pfcommittee.js,
-  // pestaña 💼): sin este puente, en el tema claro su texto blanco quedaba invisible. Solo actúa sobre
-  // style="" ajenos; este archivo ya no escribe ninguno de esos colores.
-  var LEGACY = [['#E8EDFB', 'var(--os-ink)'], ['#C9D2EA', 'var(--os-ink)'], ['#9BA6C4', 'var(--os-ink-2)'], ['#7C87A3', 'var(--os-ink-3)'],
-    ['#FFB300', 'var(--cm-warn)'], ['#2BE38B', 'var(--cm-good)'], ['#FF4D6A', 'var(--cm-bad)'], ['#00E0FF', 'var(--os-accent)'],
-    ['#5FC6E8', 'var(--os-accent)'], ['#7ecbff', 'var(--os-accent)'], ['#B48CFF', 'var(--cm-ai)']];
+  // #cm-ov es un overlay propio (z-index 7650, fuera de #bcp-ov) y lleva la clase .kos-themed: los tokens --os-*
+  // (claro/oscuro) los define UNA vez engine/cockpit.js (limpieza 2026-10-11: aquí había una copia exacta y un
+  // "puente" que repintaba colores del tema viejo de pfcommittee.js, que ya no quedan). Solo los propios del comité:
+  // --cm-warn-fill (ámbar de aviso para rellenos/anillos), --cm-warn / --cm-good / --cm-bad / --cm-ai (TEXTO en
+  // ámbar/verde/rojo/violeta: en claro, versiones oscuras que pasan 4.5:1 sobre su píldora teñida; los vivos
+  // #0ca30c/#B7791F daban 2.6–3.3:1), --cm-on-sem (texto sobre un botón de color semántico).
+  var CM_LIGHT = '--cm-warn-fill:#B7791F;--cm-warn:#7F5200;--cm-good:#066B06;--cm-bad:#A82424;--cm-ai:#6236C9;--cm-on-sem:#FFFFFF';
+  var CM_DARK = '--cm-warn-fill:#F2C46D;--cm-warn:#F2C46D;--cm-good:#2fbf5b;--cm-bad:#F47C7C;--cm-ai:#B48CFF;--cm-on-sem:#0E0F14';
 
   function ensureStyles() {
     if (document.getElementById('cm-styles')) return;
     var css = '' +
-      'body:not(.dark) #cm-ov{' + OS_LIGHT + '}' +
-      'body.dark #cm-ov{' + OS_DARK + '}' +
-      '#cm-ov{' + OS_SHARED + ';position:fixed;inset:0;z-index:7650;display:none;align-items:center;justify-content:center;' +
+      'body:not(.dark) #cm-ov{' + CM_LIGHT + '}' +
+      'body.dark #cm-ov{' + CM_DARK + '}' +
+      '#cm-ov{position:fixed;inset:0;z-index:7650;display:none;align-items:center;justify-content:center;' +
         'background:var(--kos-scrim);-webkit-backdrop-filter:blur(10px) saturate(1.1);backdrop-filter:blur(10px) saturate(1.1);font-family:var(--os-font)}' +
       '#cm-ov.show{display:flex}' +
       '#cm{width:min(1120px,96vw);max-height:92vh;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;border-radius:24px;' +
@@ -328,10 +308,6 @@
         '#cm .cm-cell,#cm .cm-room{padding:14px}' +
         '#cm .cm-seat{width:80px;font-size:10.5px}#cm .cm-av,#cm .cm-av .cm-mav,#cm .cm-av .km,#cm .cm-av .km svg{width:44px!important;height:44px!important}' +
         '#cm .cm-feed{max-height:380px}}';
-    css += LEGACY.map(function (p) { return '#cm-body [style*="color:' + p[0] + '" i]{color:' + p[1] + '!important}'; }).join('') +
-      LEGACY.slice(4).map(function (p) { return '#cm-body [style*="background:' + p[0] + '" i]{background:' + fill(p[1]) + '!important}'; }).join('') +
-      '#cm-body [style*="rgba(122,158,255"]{border-color:var(--os-line)!important}' +
-      '#cm-body [style*="background:rgba(122,158,255"]{background:var(--os-surface-3)!important}';
     var st = document.createElement('style'); st.id = 'cm-styles'; st.textContent = css;
     document.head.appendChild(st);
   }
@@ -381,7 +357,7 @@
     ensureStyles();
     var ov = document.getElementById('cm-ov');
     if (!ov) {
-      ov = document.createElement('div'); ov.id = 'cm-ov';
+      ov = document.createElement('div'); ov.id = 'cm-ov'; ov.className = 'kos-themed';
       ov.innerHTML = '<div id="cm" role="dialog" aria-modal="true"></div>';
       ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
       document.body.appendChild(ov);
@@ -965,7 +941,6 @@
     if (kind === 'approve') {
       var what = decLabel(m.decision) + ' ' + (m.symbol || '') +
         (sz.side && !sz.reference_only && (sz.notional || sz.qty) ? ' · ' + (sz.qty ? sz.qty + ' ' + L('acciones', 'shares') : money(sz.notional)) : '');
-      var mode = m.client_id ? '\n' + (m.client_mode ? badge(m.client_mode) : L('Modo de la cuenta: se muestra en Clientes', 'Account mode: shown in Clients')) : '';
       var note = m.client_id ? L('Se preparará una orden que TAMBIÉN tendrás que aprobar en Clientes antes de ejecutarse (salvo que el servidor tenga activada la auto-aprobación de cuentas SIMULADAS).', 'An order will be prepared that you will ALSO have to approve in Clients before it executes (unless the server has auto-approval of PAPER accounts turned on).') : L('Sin cliente: solo se registra tu aprobación.', 'No client: only your approval is recorded.');
       var T = window.KhipuToast, live = m.client_mode && (m.client_mode.paper === false || m.client_mode.mode === 'live');
       var side = { BUY: 'buy', ADD: 'buy', TRIM: 'sell', SELL: 'sell' }[m.decision];
@@ -975,15 +950,27 @@
           rows: [[L('Empresa', 'Company'), (m.label || '') + (m.symbol ? ' · ' + m.symbol : '')], [L('Decisión', 'Decision'), what]],
           note: note, requireCheck: live ? L('Entiendo que esta orden usa DINERO REAL.', 'I understand this order uses REAL MONEY.') : null,
           confirmLabel: L('Aprobar', 'Approve') })
-        : Promise.resolve(window.confirm(L('¿Aprobar la propuesta del comité?\n\n', 'Approve the committee proposal?\n\n') + what + mode + '\n\n' + note));
+        : noDialog();   // sin engine/toast.js no hay confirmación posible → no se aprueba
       ask.then(function (ok) { if (ok) sendDecision(kind, body); });
       return;
-    } else {
-      var why = window.prompt(L('¿Por qué la rechazas? (opcional)', 'Why do you reject it? (optional)'), '');
+    }
+    var TP = window.KhipuToast;
+    if (!TP || !TP.prompt) { noDialog(); return; }
+    TP.prompt({ title: L('¿Rechazar la propuesta del comité?', 'Reject the committee proposal?'),
+      body: (m.label || '') + (m.symbol ? ' · ' + m.symbol : '') + (m.decision ? ' · ' + decLabel(m.decision) : ''),
+      label: L('¿Por qué la rechazas? (opcional)', 'Why do you reject it? (optional)'),
+      okText: L('Rechazar', 'Reject'), maxLength: 500 }).then(function (why) {
       if (why === null) return;
       body.reason = why;
-    }
-    sendDecision(kind, body);
+      sendDecision(kind, body);
+    });
+  }
+  // sin engine/toast.js no se aprueba ni se rechaza nada (nunca el diálogo nativo del navegador)
+  function noDialog() {
+    S.msg = { bad: true, text: L('No se pudo abrir la confirmación (engine/toast.js): recarga la página. No se hizo nada.',
+      'The confirmation (engine/toast.js) could not open: reload the page. Nothing was done.') };
+    render();
+    return Promise.resolve(false);
   }
   function sendDecision(kind, body) {
     var m = S.memo; if (!m) return;

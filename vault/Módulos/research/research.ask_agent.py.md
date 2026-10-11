@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "research/ask_agent.py"
 lenguaje: "python"
-lineas: 305
+lineas: 301
 aliases: ["research/ask_agent.py"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # research/ask_agent.py
 
-> Módulo · capa [[Capa Chat y agentes]] · 305 líneas · `research/ask_agent.py`
+> Módulo · capa [[Capa Chat y agentes]] · 301 líneas · `research/ask_agent.py`
 
 ## Para qué sirve
 
@@ -18,17 +18,18 @@ PREGUNTARLE A UN ANALISTA dentro de la conversación.
 
 ## API pública
 
-- `seat_from_words(txt)` _(línea 59)_
-- `parse_mention(message)` — → (seat | 'all' | None, pregunta). seat None = no es una mención. _(línea 66)_
-- `seat_meta(seat)` _(línea 83)_
-- `seats_with_claims(session, entity_id)` _(línea 114)_
-- `ask(session, seat, question, entity, lang=…, ai=…, skills=…, _pre=…, mode=…)` — Respuesta de UN puesto, CON SUS HABILIDADES (research/agent_skills): cada rol trae al instante SU paquete de datos en vivo (Cadena → tensor … _(línea 187)_
-- `ask_all(session, question, entity, lang=…, ai=…, max_seats=…, mode=…)` — Todos los puestos con conclusiones (máx. max_seats) responden en paralelo. _(línea 267)_
+- `seat_from_words(txt)` — Primera palabra que nombra un puesto; "analista"/"analyst" solo si no hay otra ("@analista de cadena" → supply_chain; "@analista" solo → … _(línea 50)_
+- `parse_mention(message)` — → (seat | 'all' | None, pregunta). seat None = no es una mención. _(línea 62)_
+- `seat_meta(seat)` _(línea 79)_
+- `seats_with_claims(session, entity_id)` _(línea 110)_
+- `ask(session, seat, question, entity, lang=…, ai=…, skills=…, _pre=…, mode=…)` — Respuesta de UN puesto, CON SUS HABILIDADES (research/agent_skills): cada rol trae al instante SU paquete de datos en vivo (Cadena → tensor … _(línea 183)_
+- `ask_all(session, question, entity, lang=…, ai=…, max_seats=…, mode=…)` — Todos los puestos con conclusiones (máx. max_seats) responden en paralelo. _(línea 263)_
 
 **Internas** (empiezan con `_`): `_fold`, `_load_claims`, `_evidence`, `_package`, `_resolve`, `_strip_data`, `_fallback_text`
 
 ## Depende de
 
+- [[core.agents_registry.py]] — importa `GENERIC_WORDS`, `SEAT_WORDS`
 - [[core.ai.py]] — importa `_ai_complete`
 - [[core.ai_usage.py]] — importa `bind`
 - [[research.agent_skills.py]] — importa `agent_skills`
@@ -41,10 +42,11 @@ PREGUNTARLE A UN ANALISTA dentro de la conversación.
 - [[core.khipu_chat.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_agents_registry.py]]
 - [[tests.test_ask_agent.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipus_os_server.py]]

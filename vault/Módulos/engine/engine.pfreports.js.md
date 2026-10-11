@@ -25,13 +25,13 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[app.html]] — usa `BASE`, `LANG`, `safeUrl`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.mascot.js]] — usa `KhipuMascot`
-- [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **60 de 93** (línea 7884), después de [[engine.pfcommittee.js]] y antes de [[engine.sync.js]].
+Se carga en [[app.html]] en la posición **58 de 91** (línea 7893), después de [[engine.pfcommittee.js]] y antes de [[engine.sync.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 60)
+- [[app.html]] — lo carga con `<script>` (posición 58)
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolioExtras`
 
 ## Endpoints que llama
@@ -47,7 +47,9 @@ Se carga en [[app.html]] en la posición **60 de 93** (línea 7884), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_committee_os_pf_tokens.py]]
+- [[tests.test_committee_os_ui.py]]
 
 ## Mencionado en sesiones de trabajo
 

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_ui_portfolios_risk.py"
 lenguaje: "python"
-lineas: 343
+lineas: 344
 aliases: ["tests/test_overnight_ui_portfolios_risk.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_ui_portfolios_risk.py
 
-> Prueba · capa [[Capa Pruebas]] · 343 líneas · `tests/test_overnight_ui_portfolios_risk.py`
+> Prueba · capa [[Capa Pruebas]] · 344 líneas · `tests/test_overnight_ui_portfolios_risk.py`
 
 ## Qué prueba
 
@@ -20,6 +20,7 @@ Carteras de práctica (engine/portfolios.js) y Reporte de riesgo (engine/riskrep
 
 ## Cubre
 
+- [[engine.agents_registry.js]]
 - [[engine.mascot.js]]
 - [[engine.portfolios.js]]
 - [[engine.riskreport.js]]

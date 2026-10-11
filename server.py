@@ -38,7 +38,7 @@ except Exception:  # noqa: BLE001
 
 # --- Config ---
 from dotenv import load_dotenv
-load_dotenv()  # Lee .env: FINNHUB_KEY, FMP_KEY, CLAUDE_KEY, MARKETSTACK_KEY, AI_MODEL
+load_dotenv()  # Lee .env: FINNHUB_KEY, FMP_KEY, CLAUDE_KEY, MARKETSTACK_KEY, AI_MODEL_FAST/_DEEP…
 
 app = Flask(__name__)
 # Caché: interno (SimpleCache, por worker) por defecto; si existe REDIS_URL
@@ -327,53 +327,31 @@ def voice_agent_diag():
     return jsonify(d)
 
 
+# Rutas de administración de la voz: PIN de operador (core.pin.require_operator, mismo contador
+# anti-adivinanza que el trading). Sin TRADE_PIN configurado se permiten (modo desarrollo) con aviso en el log.
+from core.http import rate_limit as _rate_limit_early  # noqa: E402 — se importa de nuevo abajo
+from core.pin import require_operator as _require_operator  # noqa: E402
+
+
 @app.route('/api/voice/voices')
+@_rate_limit_early(limit=20, window=3600)
+@_require_operator
 def voice_voices():
     """Voces disponibles: las de la cuenta + las mejor valoradas EN ESPAÑOL de
     la biblioteca compartida de ElevenLabs (para arreglar la 'voz rara': el
-    agente tenía una voz en inglés hablando español). Solo lectura."""
+    agente tenía una voz en inglés hablando español). Solo lectura, pero gasta
+    la clave del servidor y lista la cuenta → PIN de operador + límite
+    (limpieza 2026-10-11: antes era pública y sin límite)."""
     if not ELEVENLABS_KEY:
-        return jsonify({'error': 'ELEVENLABS_KEY no configurada'}), 400
-    out = {'mine': [], 'shared_es': [], 'upstream': {}}
-    try:
-        r = requests.get('https://api.elevenlabs.io/v1/voices',
-                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
-        out['upstream']['mine'] = r.status_code if not r.ok else 200
-        if not r.ok:
-            out['upstream']['mine_body'] = r.text[:160]
-        if r.ok:
-            for v in (r.json() or {}).get('voices', [])[:60]:
-                out['mine'].append({'voice_id': v.get('voice_id'), 'name': v.get('name'),
-                                    'category': v.get('category'),
-                                    'labels': v.get('labels') or {}})
-    except Exception as e:  # noqa: BLE001
-        out['upstream']['mine_err'] = str(e)[:120]
-    try:
-        r = requests.get('https://api.elevenlabs.io/v1/shared-voices',
-                         params={'language': 'es', 'page_size': 12},
-                         headers={'xi-api-key': ELEVENLABS_KEY}, timeout=10)
-        out['upstream']['shared'] = r.status_code if not r.ok else 200
-        if not r.ok:
-            out['upstream']['shared_body'] = r.text[:160]
-        if r.ok:
-            for v in (r.json() or {}).get('voices', [])[:12]:
-                out['shared_es'].append({'voice_id': v.get('voice_id'),
-                                         'public_owner_id': v.get('public_owner_id'),
-                                         'name': v.get('name'),
-                                         'gender': v.get('gender'), 'accent': v.get('accent'),
-                                         'age': v.get('age'), 'use_case': v.get('use_case'),
-                                         'usage_7d': v.get('usage_character_count_7d')})
-    except Exception as e:  # noqa: BLE001
-        out['upstream']['shared_err'] = str(e)[:120]
-    return jsonify(out)
+        return jsonify({'error': 'ELEVENLABS_KEY no configurada', 'error_en': 'ELEVENLABS_KEY is not set'}), 400
+    from core.voice_agent import list_voices
+    return jsonify(list_voices(ELEVENLABS_KEY, requests))
 
 
 # Rutas que REESCRIBEN el agente de ElevenLabs (voz, modelo, idioma, prompt):
 # además del candado ELEVENLABS_ALLOW_OVERRIDE exigen el PIN de operador
 # (core.pin.require_operator, mismo contador anti-adivinanza que el trading).
 # Sin TRADE_PIN configurado se permiten (modo desarrollo) con aviso en el log.
-from core.http import rate_limit as _rate_limit_early  # noqa: E402 — se importa de nuevo abajo
-from core.pin import require_operator as _require_operator  # noqa: E402
 
 _SAFE_PATH_SEG = re.compile(r'^[A-Za-z0-9_\-]{1,80}$')
 
@@ -405,18 +383,14 @@ def voice_adopt():
     if not (_SAFE_PATH_SEG.match(po) and _SAFE_PATH_SEG.match(vid)):    # van en la URL de ElevenLabs
         return jsonify({'error': 'public_owner_id / voice_id inválidos',
                         'error_en': 'invalid public_owner_id / voice_id'}), 400
-    try:
-        r = requests.post(f'https://api.elevenlabs.io/v1/voices/add/{po}/{vid}',
-                          headers={'xi-api-key': ELEVENLABS_KEY,
-                                   'Content-Type': 'application/json'},
-                          json={'new_name': str(name)[:60]}, timeout=12)
-        if not r.ok:
-            return jsonify({'error': f'ElevenLabs respondió HTTP {r.status_code}',
-                            'error_en': f'ElevenLabs returned HTTP {r.status_code}', 'body': r.text[:200]}), 502
-        return jsonify({'ok': True, **(r.json() or {})})
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': 'No se pudo contactar con ElevenLabs', 'error_en': 'Could not reach ElevenLabs',
-                        'detail': _diag_redact(e)[:160]}), 502
+    from core.voice_agent import adopt_shared_voice
+    res = adopt_shared_voice(ELEVENLABS_KEY, po, vid, name, requests)
+    if not res.get('ok'):
+        err = res.get('error') or {}
+        return jsonify({'error': err.get('es') or err.get('message') or 'ElevenLabs falló',
+                        'error_en': err.get('en') or err.get('message') or 'ElevenLabs failed',
+                        'code': err.get('code'), 'http': err.get('http')}), 502
+    return jsonify(res)
 
 
 @app.route('/api/voice/agent-tune', methods=['POST'])
@@ -537,16 +511,29 @@ except Exception as _e:  # noqa: BLE001
 
 # Config compartida server/ontology (keys de IA, Finnhub, timeout) → core/config.py
 # Helpers compartidos: cascada de IA, quote crudo y GET saneado → core/*.py
-from core.config import (AI_MODEL, AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,
+from core.config import (AI_ORDER, CLAUDE, FINNHUB, GEMINI_KEY,
                          GEMINI_MODEL, HTTP_TIMEOUT, NVIDIA_KEY, NVIDIA_MODEL)
 from core.http import _rate_buckets, _rate_limit, _safe_get, _safe_ticker, rate_limit, redact_secrets
 # PIN de operador ÚNICO (auditoría #7): mismo contador por IP/global para
 # /api/trade/*, /api/brokerage/* y /api/mcp/* — ver core/pin.py.
 from core.pin import (client_ip as _client_ip, insecure_production_secret as _insecure_prod_secret,
                       require_pin as _require_pin, secret_key_default as _secret_key_default)
-from core.ai import (_ai_complete, _ai_configured, _claude_complete,
+from core.ai import (_ai_complete, _ai_configured,
                      _complete_gemini, _complete_nvidia, _extract_json)
 from core.quotes import _fetch_quote_raw
+
+
+def _ai_route_now():
+    """Ruta REAL de la IA por nivel (rápido/profundo) para el 🩺; nunca rompe el diagnóstico."""
+    try:
+        from core import ai as _ai_mod
+        return _ai_mod.ai_route_state()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _ai_models_now():
+    return (_ai_route_now() or {}).get('models')
 
 FMP      = os.getenv('FMP_KEY', '')
 MSTACK   = os.getenv('MARKETSTACK_KEY', '')
@@ -886,7 +873,7 @@ _VENDOR_MAP = {
     'earth-topology.png':   'https://unpkg.com/three-globe/example/img/earth-topology.png',
     'earth-dark.jpg':       'https://unpkg.com/three-globe/example/img/earth-dark.jpg',
     # Mapa mundial vectorial (TopoJSON, Natural Earth 110m — dominio público)
-    # para la Sala de Situación geopolítica (engine/geosituation.js)
+    # para el World Monitor y el Space Monitor (engine/worldmonitor.js, engine/spacemonitor.js)
     'world-110m.json':      'https://unpkg.com/world-atlas@2.0.2/countries-110m.json',
 }
 
@@ -996,7 +983,7 @@ def health():
         'elevenlabs': bool(ELEVENLABS_KEY),
         'alpha_vantage': bool(AV_KEY),
         'jwt_api': _HAS_JWT,
-        'ai_model': AI_MODEL,
+        'ai_models': _ai_models_now(),   # {fast, deep, gemini, nvidia} — antes 'ai_model' (uno que ya no mandaba)
         # Auditoría #15: SECRET_KEY por defecto = firmas falsificables. Solo el
         # booleano (nunca el valor); la UI/🩺 lo muestran como alerta.
         'secret_key_default': _secret_key_default(),
@@ -1766,7 +1753,7 @@ def diagnostics():
 
     n_ok = sum(1 for s in services.values() if s.get('ok'))
     out = {
-        'ts': int(now), 'cached': False, 'ai_model': AI_MODEL,
+        'ts': int(now), 'cached': False, 'routing': _ai_route_now(),
         'jwt_api': _HAS_JWT, 'services': services,
         'summary': {'ok': n_ok, 'total': len(services)},
         'secret_key_default': _secret_key_default(),
@@ -2951,10 +2938,13 @@ def crypto_analyze():
     return jsonify(out)
 
 
-# ── Investigación profunda estructurada (más allá del nodo) — Sonnet 5 deep ──
-@app.route('/api/research/deep', methods=['POST'])
+# ── TESIS RÁPIDA (más allá del nodo, UNA respuesta de IA de nivel profundo) ──
+# Limpieza 2026-10-11: antes vivía en /api/research/deep — dentro del espacio /api/research/* del equipo de
+# analistas (research_bp, con evidencia y auditoría) sin ser parte de él, y la UI la llamaba "Investigación"
+# igual que al equipo. Ahora tiene su propio camino y nombre.
+@app.route('/api/thesis/quick', methods=['POST'])
 @rate_limit(limit=20, window=3600)
-def research_deep():
+def thesis_quick():
     """{id, lang} → informe estructurado que va MÁS ALLÁ de la empresa: sector,
     competidores, geopolítica, chokepoints de su cadena y una tesis. Cache 15 min."""
     from core.semantic import build_context, resolve_ids
@@ -3233,7 +3223,7 @@ def ai_analyze():
     if _hit:
         return jsonify({'result': _hit['result'], 'model': _hit['model'], 'cached': True})
     try:
-        text, model = _claude_complete(
+        text, model = _ai_complete(
             data.get('system', ''),
             data.get('prompt', ''),
             max_tok,
@@ -3384,7 +3374,7 @@ def canvas_generate():
     prompt = f'USER QUERY: {query}\n\n' + (_hp + '\n\n' if _hp else '') + f'CONTEXT:\n{ctx_str}'
     try:
         # Canvas IA = análisis que importa → tier 'deep' (Sonnet 5)
-        text, model = _claude_complete(_CANVAS_SYSTEM, prompt, max_tokens=1600, tier='fast')
+        text, model = _ai_complete(_CANVAS_SYSTEM, prompt, max_tokens=1600, tier='fast')
         # extrae el JSON aunque venga con fences o texto alrededor
         spec = _extract_json(text)
         # CRITERIO DE GRÁFICO + limpieza (alias de tipos, pie de 40 porciones →
@@ -3402,85 +3392,8 @@ def canvas_generate():
         return jsonify({'error': str(e)[:200]}), 500
 
 
-# ── Khipu Command Center — interpreta comando libre → respuesta + acciones ────
-_COMMAND_SYSTEM = """\
-Eres Khipu, el copiloto de IA del terminal financiero Khipus Finance Intelligence (semiconductores, IA y espacio).
-El usuario te habla o escribe en lenguaje natural y tú controlas la app y respondes como analista.
-Responde SOLO con JSON válido (sin markdown, sin explicación fuera del JSON):
-
-{"answer":"<respuesta breve y útil en español, 1-3 frases, tono de analista senior>",
- "actions":[{"type":"<tipo>","arg":"<valor>"}]}
-
-Tipos de acción válidos:
-• switch_tab   arg ∈ {map, market, analysis, geo, simulation, space, terminal, canvas}
-• navigate     arg = node_id exacto (centra esa empresa en el grafo)
-• stress       arg = node_id exacto (lanza cascada de fallo de esa empresa)
-• simulate     arg = preset_id ∈ {taiwan_conflict, china_chip_ban_total, hbm_shortage_2027, openai_ipo_impact, starshield_reveal}
-• chart        arg = una instrucción en lenguaje natural para generar un gráfico/tabla con los datos (ej "compara márgenes de NVIDIA, TSMC y ASML")
-• second_brain arg = node_id (abre el panel de inteligencia de esa empresa)
-
-Reglas:
-- Usa SIEMPRE node_id exactos de la lista del contexto (no inventes ids).
-- Si el pedido menciona canvas, gráfico, graficar, dashboard, tabla, comparar, "muéstrame los datos",
-  "top N", ranking, márgenes, riesgo de varias empresas → SIEMPRE devuelve una acción "chart" con
-  el arg en lenguaje natural describiendo qué graficar. NO te limites a responder en texto.
-- Si pide "analiza X", "navega a X", "qué pasa si cae X" → navigate / stress sobre ese id.
-- Si pide una simulación o escenario geopolítico → simulate con el preset más cercano.
-- Si es solo una pregunta de conocimiento, responde en "answer" y deja actions vacío (o un switch_tab útil).
-- answer SIEMPRE en español, concreto, sin relleno. Máximo 3 frases.
-- NUNCA difieras ("ahorita lo hago", "un momento", "lo preparo"): si el pedido implica una
-  acción, DEVUÉLVELA YA en "actions" en esta misma respuesta. El answer describe lo que YA hiciste,
-  no lo que harás. Si piden graficar/comparar/ver datos, incluye SIEMPRE una acción "chart".
-"""
-
-
-@app.route('/api/ai/command', methods=['POST'])
-@rate_limit(limit=80, window=3600)
-def ai_command():
-    if not _ai_configured():
-        return jsonify({'error': 'no AI provider configured',
-                        'answer': 'No tengo ninguna IA configurada en el servidor '
-                                  '(Claude, Gemini o NVIDIA). Añade al menos una key.', 'actions': []}), 400
-    body = request.get_json(force=True, silent=True) or {}
-    query = str(body.get('query', ''))[:400].strip()
-    if not query:
-        return jsonify({'error': 'query is required'}), 400
-    nodes_raw = body.get('nodes') or []
-    # contexto compacto: id, label, ticker — suficiente para mapear nombres a ids
-    nodes_compact = [{'id': n.get('id'), 'label': n.get('label'),
-                      'ticker': (n.get('ticker') or n.get('mkt') or '')}
-                     for n in nodes_raw[:800]]
-    ctx_str = json.dumps({'nodes': nodes_compact, 'selected': body.get('selected')},
-                         ensure_ascii=False)
-    # Datos de ESPACIO: si preguntan por satélites/constelaciones/lanzamientos, se
-    # inyectan los conteos REALES (CelesTrak, cacheado) para que Khipu responda con
-    # números en vez de "no sé cuántos satélites tiene Starlink".
-    space_ctx = ''
-    if re.search(r'sat[eé]lit|constelaci|starlink|oneweb|iridium|[oó]rbit|orbit|lanzamient|launch|espacio|\bspace\b', query, re.I):
-        try:
-            space_ctx = ('\n\nDATOS DE ESPACIO — conteos REALES y ACTUALES (CelesTrak). '
-                         'Úsalos TEXTUALMENTE; NO los contradigas ni los sustituyas por tu '
-                         'conocimiento previo, y NO digas que no sabes:\n' + _space_facts_str())
-        except Exception:  # noqa: BLE001
-            pass
-    prompt = f'PEDIDO DEL USUARIO: {query}\n\nCONTEXTO (empresas disponibles):\n{ctx_str}{space_ctx}'
-    try:
-        text, model = _claude_complete(_COMMAND_SYSTEM, prompt, max_tokens=700)
-        data = _extract_json(text)
-        if not isinstance(data, dict):
-            raise ValueError('not an object')
-        actions = data.get('actions') or []
-        # saneo: solo tipos conocidos
-        valid = {'switch_tab', 'navigate', 'stress', 'simulate', 'chart', 'second_brain'}
-        actions = [a for a in actions if isinstance(a, dict) and a.get('type') in valid]
-        return jsonify({'answer': str(data.get('answer', ''))[:600],
-                        'actions': actions[:4], 'model': model})
-    except json.JSONDecodeError:
-        # Si Claude no devolvió JSON, al menos devolvemos su texto como respuesta.
-        return jsonify({'answer': (text or 'No pude interpretar eso.')[:600], 'actions': []})
-    except Exception as e:   # noqa: BLE001
-        return jsonify({'error': str(e)[:200],
-                        'answer': 'Tuve un problema procesando ese pedido.', 'actions': []}), 500
+# (/api/ai/command — el "Command Center" viejo — se borró en la limpieza 2026-10-11: ningún
+#  cliente lo llamaba; todo pedido libre va a /api/khipu/chat, core/khipu_chat.py)
 
 
 # ----------------------------------------------------------------------------
@@ -3960,7 +3873,7 @@ def company_research(ticker):
             '"riesgos":[{"riesgo":"...","severidad":"Alta|Media|Baja"}],'
             '"tendencias":["bullets de MD&A: ingresos, márgenes, guidance"],'
             '"confianza":{"score":0-10,"justificacion":"1 frase"}}')
-        out, model = _claude_complete(system, prompt, max_tokens=1400)
+        out, model = _ai_complete(system, prompt, max_tokens=1400)
         cleaned = re.sub(r'^```(?:json)?\s*|\s*```$', '', (out or '').strip())
         try:
             analysis = json.loads(cleaned)
@@ -4139,12 +4052,15 @@ BIXBY_SYSTEM_PROMPT = """You are Khipu, the AI analyst co-pilot for Khipus Finan
 - If a tool result comes back with pending:true, the work is still running and will appear on screen: say so briefly ("sigue cargando, en unos segundos lo verás en pantalla") — never say it failed, and never call the same tool again right away.
 - Keep spoken replies short and to the point.
 
-## APP STRUCTURE — 4 PRIMARY TABS (2026-07 redesign, NEXUS skin)
-The 10 old panels are now grouped under 4 primary tabs. Underneath, switch_tab still targets the old tab ids (map, market, analysis, geo, simulation, space, terminal, canvas, tkg, guia, crypto).
-1. 🗺️ MAPA — the unified graph. Nodes coloured by 9 MACRO-SECTORS (toggle to 40 categories in the legend). Sub-modes: Cadena (map) · Geopolítica (geo) · Espacio (space) · Grafo Temporal (tkg) · Simulación (simulation). Map controls: "◱ Capas" (toggle layers: links, labels, risk rings, marks, countries) and "◉ En vivo" (LIVE simulation panel — see below).
-2. 📈 MERCADO — live prices, portfolio, P&L. Sub-mode ₿ Cripto (switch_tab 'crypto'): top-100 crypto market live (CoinGecko) + the curated "Expediente Khipus" dossier of the top 50 (what it is, mechanism, tokenomics, catalysts, risks, positioning, warning badges on politically-exposed or concentrated assets).
-3. 💡 INSIGHTS — the "brain": auto-insight cards (chokepoints, risk, OPPORTUNITIES, sector panorama), the 9 relation MATRICES (heatmaps), topology metrics. Sub-modes: Análisis · Canvas IA · Terminal.
-4. ❓ GUÍA — help.
+## APP STRUCTURE — KHIPUS OS (the current interface)
+Khipus opens straight into KHIPUS OS: the conversation with you sits in the CENTER of the screen and every screen opens as a WINDOW beside the chat (on the sides on wide screens, on top on small ones). The top bar has the Khipus logo, a command palette (⌘K), the "Herramientas / Tools" menu where EVERY screen lives, the agent mascots, the money badge (🧪 simulated / 🔴 real), the ES/EN switch and the light/dark switch.
+Screens you can open with switch_tab: map (the supply-chain graph, 13 macro-sectors, with a ⏱ time slider and an events layer) · market (live prices, positions, P&L) · analysis (insight cards + the relation matrices) · geo (World Monitor: live conflicts, disasters, sanctions and export controls on a globe, and who is exposed) · space (Space Monitor: launches) · simulation (war room) · terminal · canvas (AI charts) · crypto (live top-100 + the curated "Expediente Khipus" of the top 50) · portfolios (simulated portfolios + their assistant) · tkg (temporal graph) · guia (help).
+
+## THE AGENTS — the team the user sees as mascots
+{agents}
+The user can INVOKE an agent by tapping its mascot or writing @name (e.g. "@cadena ¿de quién depende Nvidia?"); that agent answers from its own role. When you say who found something, use the mascot's name.
+- RESEARCH: the analyst team writes conclusions with cited evidence, a horizon and a computed confidence (the "¿Por qué?" button shows the evidence). It is information, not advice.
+- The COMMITTEE (Comité) weighs every conclusion by its confidence and by each analyst's track record and computes a conviction from −100 to +100. It may PROPOSE buy / hold / sell, but it ALWAYS waits for human approval — never present a committee proposal as an executed order.
 
 ## KEY FEATURES YOU CAN GUIDE THE USER TO
 - 🔬 X-RAY (button on any company sheet): disassembles a company — NRS term by term, dependency threads, and the IMPACT WAVE (who suffers ↓ and who WINS ↑ if it falls, capital exposed). Powered by the matrix engine.
@@ -4170,19 +4086,19 @@ Data lookups:
 - get_market_summary() · get_portfolio_risk() · list_companies(category, limit) · get_supply_chain_links(company_name)
 
 Navigation & UI:
-- navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|tkg|guia|crypto)
+- navigate_to_company(company_name) · switch_tab(tab: map|market|analysis|geo|simulation|space|terminal|canvas|crypto|portfolios|tkg|guia)
 - show_chart(ticker) · open_terminal(ticker) · place_trade(ticker) · open_second_brain(company_name) · open_cockpit()
 
 Paper trading (SIMULATED broker — strict rules in PAPER TRADING section below):
 - place_paper_trade(symbol_or_name, side, notional_usd, confirmed) · get_portfolio_status()
 - open_dossier(company_name): the FINANCIAL DOSSIER card (revenue growth, dilution, FCF, stock, EV/Sales, debt, margins, ROE). Use when the user asks for "fundamentales", "dossier", or a financial overview of one listed company.
-When the full-screen cockpit is open, the graph and the terminal render INSIDE it automatically — navigate_to_company and open_terminal show them on the cockpit stage, never in a hidden tab.
+Everything you open appears as a window inside Khipus OS, beside the chat — never in a hidden tab.
 
 You may receive [CONTEXT_UPDATE] {json} messages — silent app-state snapshots (selected company, portfolio, top risks). Use them to be sharper; never read them aloud or acknowledge them.
 
 ## DOMAIN KNOWLEDGE — DEEP EXPERTISE
 
-NRS (NEXUS Risk Score): 0-100, HIGHER = RISKIER. Sum of: country geo-risk (0-30), supply-chain centrality (0-25, from graph degree), margin-based market risk (0-20), fundamentals (0-15: pre-IPO, weak growth), country concentration (0-10). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green). For a company's actual NRS use the app's tools/context — never quote an NRS from memory.
+NRS (Network Risk Score): 0-100, HIGHER = RISKIER. Sum of: country geo-risk (0-30), supply-chain centrality (0-25, from graph degree), margin-based market risk (0-20), fundamentals (0-15: pre-IPO, weak growth), country concentration (0-10). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green). For a company's actual NRS use the app's tools/context — never quote an NRS from memory.
 
 Critical chokepoints (structural roles; for scores, prices or market caps use the app's live data, never memory):
 - TSMC: leading advanced foundry; Apple/NVIDIA/AMD/Qualcomm depend on it.
@@ -4233,6 +4149,14 @@ War-Room scenarios (5 presets; HYPOTHETICAL — outcomes come from running the s
 - When asked investment questions, give a CAUTIOUS take WITH A STANCE — you may lean ("me inclinaría por… / sería cauto con TSMC porque…"), name the 2-3 key factors and a confidence level (alta/media/baja), but NEVER a blunt "compra/vende". ALWAYS close with a short reminder that this is analysis, not formal financial advice, and the decision is theirs. This soft-stance rule applies to stocks AND crypto.
 - You can run MULTI-AGENT simulations from your own terminal (run_agent_simulation): several analyst agents debate a scenario and project realistic impacts. Reach for them on open-ended "¿qué pasaría si…? / what would happen if…" questions where a debate adds value.
 - You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
+# Los agentes del prompt salen del registro ÚNICO (engine/agents_registry.js, limpieza 2026-10-11):
+# si cambia una mascota, la voz la conoce sin tocar este texto.
+from core.agents_registry import AGENTS as _REG_AGENTS, AGENT_NAMES as _REG_SEATS  # noqa: E402
+BIXBY_SYSTEM_PROMPT = BIXBY_SYSTEM_PROMPT.replace('{agents}', '\n'.join(
+    f"- {a['es']} / {a['en']} — {a['role_en']}" + (
+        ' (analysts: ' + ', '.join(_REG_SEATS[x][2] for x in a['seats'] if x in _REG_SEATS) + ')'
+        if any(x in _REG_SEATS for x in a['seats']) else '')
+    for a in _REG_AGENTS if a['id'] != 'khipu'))
 
 
 # ── Khipu — client tools registradas en el agente de ElevenLabs vía API ──────
@@ -4287,7 +4211,7 @@ def _bixby_client_tools():
         T('list_companies', 'List companies, optionally by category.', {'category': S('Category filter (optional)'), 'limit': N('Max results (default 10)')}),
         T('get_supply_chain_links', 'Upstream/downstream supply-chain connections of a company.', company, ['company_name']),
         T('navigate_to_company', 'Jump to a company on the map.', company, ['company_name']),
-        T('switch_tab', 'Switch app tab. Use tab="crypto" for the live crypto market + Expediente dossier — it opens INSIDE the Khipu cockpit (does not close it).', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | tkg | guia | crypto')}, ['tab']),
+        T('switch_tab', 'Switch app tab. Use tab="crypto" for the live crypto market + Expediente dossier — it opens INSIDE the Khipu cockpit (does not close it).', {'tab': S('map | market | analysis | geo | simulation | space | terminal | canvas | crypto | portfolios | tkg | guia')}, ['tab']),
         T('show_chart', 'Show the stock chart of a ticker in the side panel.', {'ticker': S('Ticker')}, ['ticker']),
         T('open_terminal', 'Open the multi-chart Bloomberg-style terminal on a ticker.', {'ticker': S('Ticker')}, ['ticker']),
         T('place_trade', 'Open the buy/sell trade modal for a ticker (the user confirms manually).', {'ticker': S('Ticker')}, ['ticker']),
@@ -4518,7 +4442,10 @@ def client_diag():
 
 
 @app.route('/api/diag/recent')
+@rate_limit(limit=30, window=3600)
+@_require_operator
 def client_diag_recent():
+    # navegador + versión de quienes usan la app: solo para el operador (limpieza 2026-10-11: era pública)
     rows = []
     try:
         from ontology.db import ontology_available, _get_engine

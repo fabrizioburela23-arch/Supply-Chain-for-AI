@@ -5,8 +5,8 @@
 // Escribe O habla; Khipu ejecuta y muestra la respuesta inline.
 // Reutiliza: switchTab, jumpTo, activateStress, nexusCore.runPreset,
 // _openSecondBrain, canvasGenerate (_cvRenderCard) y BixbyVoice (voz).
-// Endpoint: /api/khipu/chat (cerebro con herramientas, engine/khipu_chat.js);
-// /api/ai/command queda solo por compatibilidad. Expone window.BixbyCC.
+// Endpoint: /api/khipu/chat (cerebro con herramientas, engine/khipu_chat.js).
+// Expone window.BixbyCC.
 
 (function () {
   'use strict';

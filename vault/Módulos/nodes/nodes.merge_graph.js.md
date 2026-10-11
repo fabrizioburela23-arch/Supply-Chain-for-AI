@@ -26,7 +26,7 @@ De nivel superior (globales del script): `UNVERIFIED_CONF`, `UNVERIFIED_QUALIFIE
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **19 de 93** (línea 1454), después de [[nodes.links_connect.js]] y antes de [[engine.loading.js]].
+Se carga en [[app.html]] en la posición **19 de 91** (línea 1454), después de [[nodes.links_connect.js]] y antes de [[engine.loading.js]].
 
 ## Lo usan
 

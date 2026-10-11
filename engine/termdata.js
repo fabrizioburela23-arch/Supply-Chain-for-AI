@@ -83,6 +83,8 @@
     if (document.getElementById('td-styles')) return;
     // Tokens --kt-* de la Terminal (app.html, bloque «TERMINAL rediseño
     // 2026-10-02») → mismo aspecto en tema oscuro/claro y dentro de la Cabina.
+    // 2026-10-11: sin colores fijos fuera de var(); los respaldos son los valores
+    // oscuros de --kt-* (ya no los de la paleta NEXUS vieja).
     var css = `
 #term-data{width:320px;flex:0 0 320px;min-height:0;border-left:1px solid var(--kt-line,rgba(255,255,255,.07));
   background:var(--kt-panel,#10131A);color:var(--kt-ink,#E7E9EF);display:flex;flex-direction:column;overflow:hidden;
@@ -206,7 +208,7 @@
     var m = (window.NODE_META || {})[n.id] || {};
     var nrs = null;
     try { if (typeof computeNRS === 'function') nrs = computeNRS(n.id); } catch (e) {}
-    var nrsCol = nrs == null ? 'var(--kt-ink-3,#7C87A3)' : nrs >= 60 ? 'var(--kt-down,#FF4D6A)' : nrs >= 35 ? 'var(--kt-warn,#FFB300)' : 'var(--kt-up,#2BE38B)';
+    var nrsCol = nrs == null ? 'var(--kt-ink-3,#6E7586)' : nrs >= 60 ? 'var(--kt-down,#F6465D)' : nrs >= 35 ? 'var(--kt-warn,#F0A92E)' : 'var(--kt-up,#2EBD85)';
 
     document.getElementById('td-title').innerHTML = '<small>' + esc(T('title')) + ' · ' + esc(ticker) + '</small>' + esc(n.label);
     var body = document.getElementById('td-body');
@@ -235,7 +237,7 @@
         kv('<span data-live-label="revenue">' + esc(T('revenue')) + '</span>', '<span data-live="revenue">' + esc(m.revenue_2025 || '—') + '</span>') +
         kv(esc(T('mktcap')), m.mktcap_b ? '$' + esc(String(m.mktcap_b)) + 'B' + (window.liveCapDot ? window.liveCapDot(m) : '') : (n.preipo ? T('preipo') : '—')) +
         kv(esc(T('margin')), '<span data-live="margin">' + (n.margin != null ? Math.round(n.margin * 100) + '%' : '—') + '</span>' +
-           ' <span data-live-sub="margin" style="font-size:9px;color:#7C87A3">' + esc(n.margin_live ? (L() === 'en' ? 'live' : 'en vivo') : (L() === 'en' ? 'catalog' : 'catálogo')) + '</span>') +
+           ' <span data-live-sub="margin" style="font-size:9px;color:var(--kt-ink-3,#6E7586)">' + esc(n.margin_live ? (L() === 'en' ? 'live' : 'en vivo') : (L() === 'en' ? 'catalog' : 'catálogo')) + '</span>') +
         kv(esc(T('nrsRisk')) + nrsChip,
            '<b style="color:' + nrsCol + '">' + fmt(nrs) + '</b>/100') +
         kv(esc(T('links')), cadena.up.length + ' ' + esc(T('prov')) + ' · ' + cadena.down.length + ' ' + esc(T('clients'))) +
@@ -270,13 +272,13 @@
           kv(esc(T('pe')), fmt(met.peRatio), T('peTip')) +
           kv(esc(T('evebitda')), fmt(met.enterpriseValueOverEBITDA), T('evTip')) +
           kv(esc(T('target')), target ? '$' + Number(target).toFixed(2) : '—') +
-          kv(esc(T('upside')), upside != null ? '<b style="color:' + (upside >= 0 ? 'var(--kt-up,#2BE38B)' : 'var(--kt-down,#FF4D6A)') + '">' + (upside >= 0 ? '+' : '') + upside + '%</b>' : '—');
+          kv(esc(T('upside')), upside != null ? '<b style="color:' + (upside >= 0 ? 'var(--kt-up,#2EBD85)' : 'var(--kt-down,#F6465D)') + '">' + (upside >= 0 ? '+' : '') + upside + '%</b>' : '—');
         if (tot > 0) {
           html += kv(esc(T('analysts')), b + ' ' + esc(T('buy')) + ' · ' + h + ' ' + esc(T('hold')) + ' · ' + s + ' ' + esc(T('sell'))) +
             '<div class="td-rating">' +
-              '<span style="width:' + (b / tot * 100) + '%;background:var(--kt-up,#2BE38B)"></span>' +
-              '<span style="width:' + (h / tot * 100) + '%;background:var(--kt-warn,#FFB300)"></span>' +
-              '<span style="width:' + (s / tot * 100) + '%;background:var(--kt-down,#FF4D6A)"></span>' +
+              '<span style="width:' + (b / tot * 100) + '%;background:var(--kt-up,#2EBD85)"></span>' +
+              '<span style="width:' + (h / tot * 100) + '%;background:var(--kt-warn,#F0A92E)"></span>' +
+              '<span style="width:' + (s / tot * 100) + '%;background:var(--kt-down,#F6465D)"></span>' +
             '</div>';
         }
         // Fallback 402/plan sin cobertura: en vez de dejar la celda vacía o

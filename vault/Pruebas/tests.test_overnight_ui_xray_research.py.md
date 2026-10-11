@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_ui_xray_research.py"
 lenguaje: "python"
-lineas: 315
+lineas: 316
 aliases: ["tests/test_overnight_ui_xray_research.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_ui_xray_research.py
 
-> Prueba · capa [[Capa Pruebas]] · 315 líneas · `tests/test_overnight_ui_xray_research.py`
+> Prueba · capa [[Capa Pruebas]] · 316 líneas · `tests/test_overnight_ui_xray_research.py`
 
 ## Qué prueba
 
@@ -20,6 +20,7 @@ X-Ray (engine/xray.js) e Investigación IA (engine/research.js) entran a Khipus 
 
 ## Cubre
 
+- [[engine.agents_registry.js]]
 - [[engine.cockpit.js]]
 - [[engine.desktop.js]]
 - [[engine.mascot.js]]

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/clients.js"
 lenguaje: "javascript"
-lineas: 998
+lineas: 1060
 aliases: ["engine/clients.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/clients.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 998 líneas · `engine/clients.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.060 líneas · `engine/clients.js`
 
 ## Para qué sirve
 
@@ -26,13 +26,13 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.pickers.js]] — usa `KhipuPick`
-- [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **62 de 93** (línea 7886), después de [[engine.sync.js]] y antes de [[engine.mcpconnect.js]].
+Se carga en [[app.html]] en la posición **60 de 91** (línea 7895), después de [[engine.sync.js]] y antes de [[engine.mcpconnect.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 62)
+- [[app.html]] — lo carga con `<script>` (posición 60)
 - [[app.html]] — usa `KhipuClients`
 - [[engine.cockpit.js]] — usa `KhipuClients`
 - [[engine.committee.js]] — usa `KhipuClients`
@@ -62,6 +62,7 @@ Se carga en [[app.html]] en la posición **62 de 93** (línea 7886), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_overnight_ui_dossier_clients.py]]
 
 ## Mencionado en sesiones de trabajo

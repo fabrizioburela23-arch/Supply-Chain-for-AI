@@ -1280,16 +1280,25 @@
     if ((el = $('#kpf-risk'))) el.onclick = function () {
       var a = activeId(); if (window.KhipuRisk) window.KhipuRisk.open({ tab: 'var', source: a ? 'pf:' + a : 'market', autorun: true });
     };
+    // renombrar / borrar: diálogos de la app (engine/toast.js), nunca los nativos del navegador
     if ((el = $('#kpf-rename')) && pf) el.onclick = function () {
-      var nn = window.prompt(T('Nuevo nombre de la cartera:', 'New portfolio name:'), pf.name);
-      if (nn != null) { renamePortfolio(pf.id, nn); render(); }
+      var KT = window.KhipuToast;
+      if (!KT || !KT.prompt) { toast(T('No se pudo abrir el diálogo: recarga la página.', 'The dialog could not open: reload the page.')); return; }
+      KT.prompt({ title: T('Renombrar cartera', 'Rename portfolio'), label: T('Nuevo nombre de la cartera', 'New portfolio name'),
+        value: pf.name, okText: T('Guardar', 'Save'), maxLength: 80 }).then(function (nn) {
+        if (nn != null) { renamePortfolio(pf.id, nn); render(); }
+      });
     };
     if ((el = $('#kpf-delete')) && pf) el.onclick = function () {
-      if (window.confirm(T('¿Borrar la cartera «' + pf.name + '»? Esto no se puede deshacer.',
-                           'Delete portfolio «' + pf.name + '»? This cannot be undone.'))) {
+      var KT = window.KhipuToast;
+      if (!KT || !KT.confirm) { toast(T('No se pudo abrir el diálogo: recarga la página.', 'The dialog could not open: reload the page.')); return; }
+      KT.confirm({ title: T('¿Borrar la cartera «' + pf.name + '»?', 'Delete portfolio «' + pf.name + '»?'), mode: 'sim',
+        subtitle: T('Esto no se puede deshacer.', 'This cannot be undone.'),
+        danger: true, confirmLabel: T('Borrar cartera', 'Delete portfolio') }).then(function (go) {
+        if (!go) return;
         deletePortfolio(pf.id); _buyFor = null; _search = ''; render();
         toast(T('Cartera borrada', 'Portfolio deleted'));
-      }
+      });
     };
 
     // buscador

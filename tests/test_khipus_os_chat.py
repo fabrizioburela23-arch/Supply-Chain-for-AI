@@ -76,6 +76,7 @@ ctx.document = { createElement: t => new El(t), createTextNode: t => { const e =
 const snap = JSON.parse(fs.readFileSync(ROOT + '/data/grafo_v0.json', 'utf8'));
 ctx.NODE_BY_ID = {}; snap.nodes.forEach(n => { ctx.NODE_BY_ID[n.id] = n; });
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(ROOT + '/engine/agents_registry.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(ROOT + '/engine/khipu_chat.js', 'utf8'), ctx);
 const K = ctx.KhipuChat;
 const out = {};

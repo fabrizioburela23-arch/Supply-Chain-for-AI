@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_khipus_os_server.py"
 lenguaje: "python"
-lineas: 589
+lineas: 586
 aliases: ["tests/test_khipus_os_server.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_khipus_os_server.py
 
-> Prueba · capa [[Capa Pruebas]] · 589 líneas · `tests/test_khipus_os_server.py`
+> Prueba · capa [[Capa Pruebas]] · 586 líneas · `tests/test_khipus_os_server.py`
 
 ## Qué prueba
 
@@ -21,10 +21,12 @@ Khipus OS, lado servidor (docs/KHIPUS_OS.md §3.2 y §3.3).
 ## Cubre
 
 - [[core.agents_api.py]]
+- [[core.agents_registry.py]]
 - [[core.ai.py]]
 - [[core.khipu_chat.py]]
 - [[core.live_facts.py]]
 - [[core.portfolio_reports_api.py]]
+- [[engine.agents_registry.js]]
 - [[engine.mascot.js]]
 - [[mcp_server.tools.py]]
 - [[ontology.db.py]]

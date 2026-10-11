@@ -2,7 +2,8 @@
 
 Fabrizio: "el comité todavía no está actualizado". engine/committee.js seguía con el tema oscuro viejo
 (fondos #06090F/#0B1222, letra Inter) y personas humanas dibujadas (Valeria, Kenji…). Ahora:
-  · los tokens --os-* del overlay son COPIA EXACTA de los de engine/cockpit.js (claro y oscuro)
+  · el overlay lleva .kos-themed: los tokens --os-* los define UNA vez engine/cockpit.js (limpieza
+    2026-10-11: antes había aquí una copia exacta); el comité solo agrega sus --cm-*
   · los agentes son las MASCOTAS de engine/mascot.js (Analista, Radar, Cadena, Técnico, Comité)
     con una insignia de rol; KhipuCommittee.avatar() sigue existiendo (lo usa engine/khipu_chat.js)
   · no quedan nombres de personas ni fondos oscuros fijos
@@ -66,6 +67,7 @@ ctx.document = { readyState: 'complete', body, head: new El('head'), documentEle
 const replies = {};
 ctx.fetch = (url) => Promise.resolve({ status: 200, text: () => Promise.resolve(JSON.stringify(replies[url.replace(/\?.*$/, '')] || {})) });
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(ROOT + '/engine/agents_registry.js', 'utf8'), ctx);   // el registro único se carga siempre
 if (WITH_MASCOT) vm.runInContext(fs.readFileSync(ROOT + '/engine/mascot.js', 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(ROOT + '/engine/committee.js', 'utf8'), ctx);
 const KC = ctx.KhipuCommittee;
@@ -135,24 +137,27 @@ def _cockpit_tokens():
     return _decls(light.group(1)), _decls(dark.group(1)), sh
 
 
-# ── (a) mismos tokens que la Cabina, en claro y oscuro ──
+# ── (a) los tokens son los de la Cabina (.kos-themed), sin copia; el comité solo suma los suyos ──
+def _theme(cssx, theme):
+    """Tokens efectivos de #cm-ov en un tema = los de engine/cockpit.js + los --cm-* del comité."""
+    kl, kd, _ = _cockpit_tokens()
+    rx = r'body:not\(\.dark\) #cm-ov\{(.*?)\}' if theme == 'claro' else r'body\.dark #cm-ov\{(.*?)\}'
+    return dict(kl if theme == 'claro' else kd, **_decls(re.search(rx, cssx).group(1)))
+
+
 @needs_node
 def test_tokens_iguales_a_khipus_os():
-    o = _run("KC.open(); out.css = css(); console.log(JSON.stringify(out));")
+    o = _run("KC.open(); out.css = css(); out.cls = ctx.document.getElementById('cm-ov').className; console.log(JSON.stringify(out));")
     cssx = o['css']
+    assert 'kos-themed' in o['cls'].split()
     light = re.search(r'body:not\(\.dark\) #cm-ov\{(.*?)\}', cssx)
     dark = re.search(r'body\.dark #cm-ov\{(.*?)\}', cssx)
     shared = re.search(r'\}#cm-ov\{(.*?)\}', cssx)
     assert light and dark and shared, cssx[:400]
-    cl, cd, csh = _decls(light.group(1)), _decls(dark.group(1)), _decls(shared.group(1))
-    kl, kd, ksh = _cockpit_tokens()
+    cl, cd = _decls(light.group(1)), _decls(dark.group(1))
+    assert not [k for k in list(cl) + list(cd) if k.startswith('--os-')], 'copia de tokens --os-* en el comité'
+    kl, kd, _ = _cockpit_tokens()
     assert len(kl) >= 20 and len(kd) >= 20
-    for k, v in kl.items():
-        assert cl.get(k) == v, ('claro', k, cl.get(k), v)
-    for k, v in kd.items():
-        assert cd.get(k) == v, ('oscuro', k, cd.get(k), v)
-    for k, v in ksh.items():
-        assert csh.get(k) == v, ('compartido', k, csh.get(k), v)
     # ámbar de aviso propio del comité, uno por tema: el vivo para rellenos/anillos y uno de TEXTO legible
     assert cl['--cm-warn-fill'] == '#B7791F' and cd['--cm-warn-fill'] == '#F2C46D'
     assert cl['--cm-warn'] == '#7F5200' and cd['--cm-warn'] == '#F2C46D'
@@ -180,10 +185,13 @@ def test_sin_fondos_oscuros_fijos():
     for bad in ('#06090f', '#0b1222', 'rgba(11,18,34', 'rgba(21,28,45', 'rgba(3,6,12', '#3a4560', '#5f6b8a'):
         assert bad not in low, bad
     assert not re.search(r'font-family:\s*Inter', SRC)
-    # los neones del tema viejo solo sobreviven en el PUENTE para módulos ajenos (pfcommittee.js)
+    # ni siquiera el viejo PUENTE para pfcommittee.js (limpieza 2026-10-11: ese módulo ya no usa esos colores)
     for neon in ('#00E0FF', '#2BE38B', '#FF4D6A', '#E8EDFB', '#FFB300'):
-        assert SRC.count(neon) == 1, neon
-        assert re.search(r"var LEGACY = \[[^;]*'" + re.escape(neon) + "'", SRC), neon
+        assert neon.lower() not in low, neon
+    assert 'var LEGACY' not in SRC
+    for mod in ('pfcommittee.js', 'pfreports.js'):
+        m = open(os.path.join(ROOT, 'engine', mod), encoding='utf-8').read().lower()
+        assert not [c for c in ('#e8edfb', '#c9d2ea', '#9ba6c4', '#7c87a3', '#ffb300', '#2be38b', '#ff4d6a', '#00e0ff') if c in m], mod
 
 
 # ── (d) avatar = mascota + insignia ──
@@ -302,8 +310,8 @@ def test_texto_semantico_pasa_wcag_aa_en_ambos_temas():
     2.6–3.3:1 en claro."""
     o = _run("KC.open(); out.css = css(); console.log(JSON.stringify(out));")
     cssx = o['css']
-    for theme, rx in (('claro', r'body:not\(\.dark\) #cm-ov\{(.*?)\}'), ('oscuro', r'body\.dark #cm-ov\{(.*?)\}')):
-        t = _decls(re.search(rx, cssx).group(1))
+    for theme in ('claro', 'oscuro'):
+        t = _theme(cssx, theme)
         pairs = [('--cm-good', '--os-good'), ('--cm-bad', '--os-bad'), ('--cm-warn', '--cm-warn-fill'), ('--cm-ai', '--cm-ai')]
         for txt, fil in pairs:
             for base in ('--os-surface', '--os-surface-2', '--os-bg'):

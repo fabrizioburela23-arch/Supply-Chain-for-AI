@@ -9,6 +9,55 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-11 (b) — LIMPIEZA "QUE NO QUEDEN COSAS SUELTAS" (sw v254)
+
+Pedido de Fabrizio (antes de la nueva arquitectura): "incorporar este sistema en Khipus después de limpiar lo
+pendiente… tampoco quiero que queden cosas sueltas". Inventario de 21 grupos (61 cosas sueltas) verificado leyendo el
+código + el reporte de la bóveda. Hecho, cada arreglo con su prueba:
+- **NRS = UNA fórmula** (había 6 copias con diferencias reales: el servidor omitía el término fundamental —hasta 15
+  pts en 370/937 empresas, y el MCP mostraba ese valor— y Python redondeaba al par en 457/937). Cliente `_nrsTerms`
+  (app.html), Python `core/world.client_nrs`; servidor, MCP, carteras y el Segundo cerebro delegan.
+  tests/test_cleanup_nrs_parity.py corre la del navegador sobre las 937 empresas = mismo número que Python.
+- **Registro ÚNICO de agentes** `engine/agents_registry.js` (+ `core/agents_registry.py`): mascotas, puestos, palabras
+  de mención y herramienta → mascota; ~12 copias a mano borradas (mascot.js, khipu_chat.js, committee.js,
+  core/khipu_chat.py, research/agent_skills|deliberation|ask_agent|runner, core/agents_api). @radar/@analista/@chain
+  ahora también los entiende el servidor ("@analista de cadena" = Cadena). tests/test_agents_registry.py.
+- **Diálogos**: `KhipuToast.prompt({password})` + `window.khipuActor()` (engine/toast.js); el PIN de trading se pide
+  OCULTO (antes window.prompt lo mostraba en claro); ningún confirm/prompt/alert nativo en engine/ ni app.html
+  (habilitar dinero real, margen y llaves en vivo con confirmación roja); actor único 'usuario' (había 14 helpers con
+  'operador', 'ui', 'anónimo'…). tests/test_cleanup_dialogs.py.
+- **Servidor**: preguntas abiertas de los analistas en `agent_runs.open_questions` (antes dentro de `errors`; la sala
+  del comité las mostraba crudas como "No pude concluir: {'unresolved_questions'…}"); `permitted_tools` derivado de
+  AGENT_NEEDS y el agente de noticias recibe el perfil en vivo; sin "skipped por presupuesto" por analista (el job
+  entero se difiere); vocabulario de respaldo = json (license 0.8 → 0.5); el chat puede abrir Cripto y el Grafo
+  Temporal; `/api/voice/voices` y `/api/diag/recent` con PIN de operador; voice_agent es el ÚNICO cliente de
+  ElevenLabs; borrados `/api/ai/command`, `_claude_complete`, `AI_MODEL`, `run_agent`, `GEO_RISK`; precio de
+  gemini-3.5-flash (1,5/9 — se cobraba al genérico 0,3/2,5). tests/test_cleanup_server.py.
+- **Voz**: las instrucciones de ElevenLabs describían la interfaz de julio ("4 pestañas, piel NEXUS"); ahora Khipus
+  OS + los agentes del registro + "el comité siempre espera aprobación". Se sincroniza solo al arrancar.
+- **Cliente**: 🩺 muestra la ruta REAL de la IA por nivel (antes "Claude = IA principal" aunque el chat rápido empiece
+  por Gemini); Cabina clásica sigue el tema; "Pensando/Investigando" se re-traduce; tres productos con tres nombres
+  (Investigación con evidencia / Tesis rápida `POST /api/thesis/quick` / Búsqueda profunda) y la investigación con
+  evidencia en el menú ⌘K; gráfico intradía del panel de operaciones arreglado (llamaba a /api/chart, inexistente);
+  comité sin copia de tokens ni puente de colores viejos; Segundo cerebro bilingüe, precio con quotePx y
+  proveedores = solo flujo; graph3d/hypergraph se descargan solo con ?webgl3d=1; geosituation.js borrado.
+  tests/test_cleanup_client.py.
+- **Motor de matrices**: paridad denso↔disperso sobre las 937 empresas (937 choques): diferencia 0,0, mismo radio
+  espectral 0,892761, propagación 10× más rápida → el DISPERSO es el predeterminado (`MATRIX_ENGINE=dense` o sin scipy
+  = respaldo denso; /api/matrix/parity sigue para comparar sobre la base real). Además `compute_metrics` calcula la
+  matriz de dependencia UNA vez (`dependency_transpose` + `propagate(..., dt=)`) en vez de una por empresa: los 937
+  choques pasan de 47 s (denso, por choque) a 0,3 s (disperso, una vez), con resultados idénticos.
+- **Docs**: CLAUDE.md con cifras reales (937 nodos / 2.510 links, 17 Acciones, 7 agentes, 10 bloques, pestañas) +
+  tests/test_docs_facts.py que las compara con el código; README/SETUP/ARCHITECTURE/MCP/KHIPUS_OS al día.
+- Worktrees viejos del contenedor (128 MB, todo ya integrado en main) borrados. Ramas REMOTAS sin fusionar
+  (feature/react-vite-frontend, claude/map-location-visibility-0rjwsn, claude/wholesale-b2b-features-l73aof,
+  worktree-agent-*) NO se tocaron: decide Fabrizio.
+
+Qué hacer en Railway (Fabrizio): borrar `AI_MODEL` y `AI_ORDER` si existen (ya no deciden nada / solo afectan al nivel
+rápido). Nada más cambia de configuración.
+
+---
+
 # SESIÓN 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO (sin cambios en la app; sw.js sin tocar)
 
 Pedido de Fabrizio: "conectar este proyecto a un Obsidian o Graphify para que sea más fácil analizar y trabajar en

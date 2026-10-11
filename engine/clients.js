@@ -40,26 +40,26 @@
     if (!iso) return '—';
     try { var d = new Date(iso); return d.toLocaleString(en() ? 'en-US' : 'es-PE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso; }
   }
-  function actor() {
-    var a = '';
-    try { a = localStorage.getItem('khipu_actor') || ''; } catch (e) {}
-    if (!a) {
-      a = (window.prompt(L('¿Tu nombre? (queda en el registro de auditoría)', 'Your name? (goes into the audit log)')) || '').trim();
-      if (a) { try { localStorage.setItem('khipu_actor', a); } catch (e) {} }
-    }
-    return a || 'ui';
+  // quién (registro de auditoría): EL ayudante único de engine/toast.js. Síncrono, nunca pregunta;
+  // el nombre se pide UNA vez al pulsar una acción que escribe (ver ensureActor en onClick).
+  function actor() { return window.khipuActor ? window.khipuActor() : 'usuario'; }
+  function ensureActor() {
+    var K = window.khipuActor;
+    return (K && K.stored && !K.stored()) ? Promise.resolve(K({ ask: true })) : null;
   }
 
   /* ── red (siempre con PIN vía _tradeFetch) ───────────────────────────── */
-  // interactive=false → nunca muestra el prompt del PIN (refrescos en segundo plano, badges)
+  // interactive=false → nunca muestra el prompt del PIN (refrescos en segundo plano, badges).
+  // Sin window._tradeFetch (app.html) NO se envía nada: el PIN solo lo pone _tradeFetch.
+  var NO_TF = { es: 'Falta el módulo del PIN de trading (window._tradeFetch): recarga la página. No se envió nada.',
+    en: 'The trading PIN helper (window._tradeFetch) is missing: reload the page. Nothing was sent.' };
   function tfetch(url, opts, interactive) {
     if (window._tradeFetch) return window._tradeFetch(url, opts || {}, interactive !== false);
-    var o = Object.assign({}, opts || {});
-    var pin = (window._tradePinStored && window._tradePinStored()) || '';   // PIN vigente (12 h, app.html)
-    o.headers = Object.assign({}, o.headers, { 'X-Trade-Pin': pin });
-    return fetch(url, o);
+    return Promise.reject(new Error(L(NO_TF.es, NO_TF.en)));
   }
   function call(method, path, body, interactive) {
+    // error claro (no «sin conexión») y sin tocar la red
+    if (!window._tradeFetch) return Promise.resolve({ ok: false, error: NO_TF.es, error_en: NO_TF.en, code: 'no_trade_fetch' });
     var opts = { method: method, headers: {} };
     if (body !== undefined && body !== null) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     return tfetch(API + path, opts, interactive).then(function (r) {
@@ -699,13 +699,23 @@
       orderType: x.order_type, limitPrice: x.limit_price, tif: x.time_in_force, price: x.est_price, estUsd: x.est_usd,
       mode: x.mode === 'live' ? 'live' : 'paper', client: x.client_name || x.client_id };
   }
-  // pop-up con el resumen de la orden; sin engine/toast.js → window.confirm de siempre
-  function askOrder(x, opts, fallbackText) {
+  // sin engine/toast.js no hay dónde confirmar: NUNCA se da por confirmado (regla de oro del dinero)
+  function noDialog() {
+    flash('err', L('No se pudo abrir la ventana de confirmación (engine/toast.js): recarga la página. No se hizo nada.',
+      'The confirmation window (engine/toast.js) could not open: reload the page. Nothing was done.'));
+    return Promise.resolve(false);
+  }
+  // pop-up con el resumen de la orden (KhipuToast.confirmOrder, con 🧪/🔴 y casilla de DINERO REAL)
+  function askOrder(x, opts) {
     var k = KT();
     if (k && k.confirmOrder) return k.confirmOrder(ordInfo(x), opts);
-    if (!window.confirm(fallbackText)) return Promise.resolve(false);
-    if (x && x.mode === 'live' && !window.confirm(L('🔴 Es DINERO REAL. ¿Seguro?', '🔴 This is REAL MONEY. Sure?'))) return Promise.resolve(false);
-    return Promise.resolve(true);
+    return noDialog();
+  }
+  // confirmación genérica (KhipuToast.confirm); danger:true → botón rojo sólido
+  function ask(opts) {
+    var k = KT();
+    if (k && k.confirm) return k.confirm(opts);
+    return noDialog();
   }
   function what(x) {
     var amt = x.notional != null ? usd(x.notional) + ' ' + L('de', 'of') : (x.qty != null ? num(x.qty) + ' ×' : '');
@@ -798,6 +808,15 @@
     if (act === 'goto-new') { S.preview = null; S.result = null; setTab('new'); return; }
     if (act === 'goto-orders') { S.ofilter = S.sel; setTab('orders'); return; }
     if (act === 'snap') { loadSnap(); return; }
+    // las acciones que escriben en el registro de auditoría piden el nombre UNA vez (KhipuToast.prompt)
+    var need = WRITE_ACTS[act] ? ensureActor() : null;
+    if (need) { need.then(function () { doAct(act, id); }); return; }
+    doAct(act, id);
+  }
+  var WRITE_ACTS = { create: 1, pause: 1, 'reset-hwm': 1, 'save-limits': 1, 'live-on': 1, 'live-off': 1, creds: 1, oauth: 1,
+    preview: 1, confirm: 1, approve: 1, reject: 1, cancel: 1, sync: 1 };
+
+  function doAct(act, id) {
     if (act === 'create') {
       var name = val('kc-n-name');
       if (!name) { flash('err', L('Escribe el nombre del cliente.', 'Enter the client name.')); return; }
@@ -807,7 +826,15 @@
       return;
     }
     if (act === 'pause') { var c = clientById(S.sel); patchClient({ status: c && c.status === 'paused' ? 'active' : 'paused' }, L('Estado actualizado.', 'Status updated.')); return; }
-    if (act === 'reset-hwm') { if (window.confirm(L('¿Reiniciar el máximo histórico? (úsalo tras un retiro de dinero)', 'Reset the peak? (use it after a withdrawal)'))) patchClient({ reset_hwm: true }, L('Máximo reiniciado.', 'Peak reset.')); return; }
+    if (act === 'reset-hwm') {
+      var hc = clientById(S.sel);
+      ask({ title: L('¿Reiniciar el máximo histórico?', 'Reset the high-water mark?'), subtitle: hc ? hc.name : '',
+        note: L('Úsalo tras un RETIRO de dinero: el máximo se borra y la caída (y su stop) se vuelven a medir desde el próximo patrimonio que se lea.',
+          'Use it after a money WITHDRAWAL: the peak is cleared and the drawdown (and its stop) is measured again from the next equity reading.'),
+        danger: true, confirmLabel: L('Reiniciar máximo', 'Reset peak') })
+        .then(function (go) { if (go) patchClient({ reset_hwm: true }, L('Máximo reiniciado.', 'Peak reset.')); });
+      return;
+    }
     if (act === 'save-limits') {
       var limits = {};
       ['max_position_pct', 'max_order_usd', 'max_daily_usd', 'max_drawdown_stop_pct'].forEach(function (k) { var v = val('kc-l-' + k); if (v !== '') limits[k] = +v; });
@@ -815,27 +842,55 @@
       if (!classes.length) { flash('err', L('Permite al menos un tipo de activo.', 'Allow at least one asset type.')); return; }
       var cur = clientById(S.sel) || {};
       var margin = checked('kc-m-mg');
-      if (margin && !(cur.mandate && cur.mandate.allow_margin) && !window.confirm(L('¿Permitir que este cliente compre con dinero PRESTADO (margen)? Puede perder más de lo que tiene.', 'Allow this client to buy with BORROWED money (margin)? They can lose more than they have.'))) return;
-      patchClient({ risk_profile: val('kc-l-prof'), limits: limits, mandate: { allowed_asset_classes: classes, restricted_symbols: symList('kc-m-rs'), allowed_symbols: symList('kc-m-as'), allow_margin: margin, notes: (cur.mandate && cur.mandate.notes) || '' } }, L('Límites y mandato guardados.', 'Limits and mandate saved.'));
+      // todo se lee ANTES del diálogo: lo que se guarda es lo que la persona vio al pulsar
+      var lpatch = { risk_profile: val('kc-l-prof'), limits: limits, mandate: { allowed_asset_classes: classes, restricted_symbols: symList('kc-m-rs'), allowed_symbols: symList('kc-m-as'), allow_margin: margin, notes: (cur.mandate && cur.mandate.notes) || '' } };
+      var saveLimits = function () { patchClient(lpatch, L('Límites y mandato guardados.', 'Limits and mandate saved.')); };
+      if (margin && !(cur.mandate && cur.mandate.allow_margin)) {
+        ask({ title: L('¿Permitir MARGEN (dinero prestado)?', 'Allow MARGIN (borrowed money)?'), subtitle: cur.name || '',
+          warnHtml: '<b>' + esc(L('Dinero PRESTADO.', 'BORROWED money.')) + '</b> ' + esc(L('Este cliente podrá comprar con el poder de compra completo de Alpaca (incluye préstamo): puede perder MÁS de lo que tiene.',
+            'This client will be able to buy with Alpaca\'s full buying power (includes a loan): they can lose MORE than they have.')),
+          requireCheck: L('Entiendo que el cliente puede perder más de lo que tiene.', 'I understand the client can lose more than they have.'),
+          danger: true, confirmLabel: L('Permitir margen y guardar', 'Allow margin and save') })
+          .then(function (go) { if (go) saveLimits(); });
+        return;
+      }
+      saveLimits();
       return;
     }
     if (act === 'live-on') {
       if (!checked('kc-live-ck')) { flash('err', L('Marca la casilla de confirmación primero.', 'Tick the confirmation box first.')); return; }
-      if (!window.confirm(L('⚠ DINERO REAL: ¿habilitar operaciones con dinero real para este cliente?', '⚠ REAL MONEY: enable real-money trading for this client?'))) return;
-      patchClient({ live_enabled: true, confirm_live: true }, L('Dinero real habilitado para este cliente (el servidor también debe permitirlo).', 'Real money enabled for this client (the server must allow it too).'));
+      var lc = clientById(S.sel);
+      ask({ title: L('🔴 ¿Habilitar DINERO REAL para este cliente?', '🔴 Enable REAL MONEY for this client?'), subtitle: lc ? lc.name : '', mode: 'live',
+        warnHtml: '<b>' + esc(L('DINERO REAL.', 'REAL MONEY.')) + '</b> ' + esc(L('Desde ahora las órdenes que apruebes para este cliente pueden mover dinero de verdad de su cuenta de Alpaca, y una orden ejecutada no se puede deshacer. El servidor también debe permitirlo (BROKERAGE_LIVE_ENABLED=on).',
+          'From now on, orders you approve for this client can move real money in their Alpaca account, and a filled order cannot be undone. The server must allow it too (BROKERAGE_LIVE_ENABLED=on).')),
+        requireCheck: L('Entiendo que esto habilita operaciones con DINERO REAL.', 'I understand this enables REAL-MONEY trading.'),
+        danger: true, confirmLabel: L('Sí, habilitar dinero real', 'Yes, enable real money') })
+        .then(function (go) {
+          if (!go) return;
+          patchClient({ live_enabled: true, confirm_live: true }, L('Dinero real habilitado para este cliente (el servidor también debe permitirlo).', 'Real money enabled for this client (the server must allow it too).'));
+        });
       return;
     }
     if (act === 'live-off') { patchClient({ live_enabled: false }, L('Dinero real deshabilitado.', 'Real money disabled.')); return; }
     if (act === 'creds') {
       var key = val('kc-c-key'), sec = val('kc-c-sec'), envv = val('kc-c-env') || 'paper';
       if (!key || !sec) { flash('err', L('Pega la API Key ID y la Secret Key.', 'Paste the API Key ID and Secret Key.')); return; }
-      if (envv === 'live' && !window.confirm(L('Son claves de DINERO REAL. ¿Continuar?', 'These are REAL MONEY keys. Continue?'))) return;
-      S.busy = true; render();
-      call('POST', '/clients/' + encodeURIComponent(S.sel) + '/credentials', { api_key: key, api_secret: sec, env: envv, actor: actor() }).then(function (d) {
-        var k = document.getElementById('kc-c-sec'); if (k) k.value = '';
-        if (after(d, d.verified === false ? L('Claves guardadas, pero no se pudieron verificar ahora: ', 'Keys saved but could not be verified now: ') + (d.detail || '') : L('Cuenta conectada y verificada ✓', 'Account connected and verified ✓'),
-          function (x) { for (var i = 0; i < S.clients.length; i++) if (S.clients[i].id === x.client.id) S.clients[i] = x.client; })) loadSnap();
-      });
+      var cid = S.sel;
+      var sendCreds = function () {
+        S.busy = true; render();
+        call('POST', '/clients/' + encodeURIComponent(cid) + '/credentials', { api_key: key, api_secret: sec, env: envv, actor: actor() }).then(function (d) {
+          var k = document.getElementById('kc-c-sec'); if (k) k.value = '';
+          if (after(d, d.verified === false ? L('Claves guardadas, pero no se pudieron verificar ahora: ', 'Keys saved but could not be verified now: ') + (d.detail || '') : L('Cuenta conectada y verificada ✓', 'Account connected and verified ✓'),
+            function (x) { for (var i = 0; i < S.clients.length; i++) if (S.clients[i].id === x.client.id) S.clients[i] = x.client; })) loadSnap();
+        });
+      };
+      if (envv !== 'live') { sendCreds(); return; }
+      var kcl = clientById(cid);
+      ask({ title: L('🔴 ¿Conectar claves de DINERO REAL?', '🔴 Connect REAL-MONEY keys?'), subtitle: kcl ? kcl.name : '', mode: 'live',
+        warnHtml: '<b>' + esc(L('DINERO REAL.', 'REAL MONEY.')) + '</b> ' + esc(L('Estas claves dan acceso a una cuenta de Alpaca con fondos reales. Se guardan cifradas en el servidor.',
+          'These keys give access to an Alpaca account with real funds. They are stored encrypted on the server.')),
+        danger: true, confirmLabel: L('Conectar claves reales', 'Connect real keys') })
+        .then(function (go) { if (go) sendCreds(); });
       return;
     }
     if (act === 'oauth') {
@@ -866,8 +921,7 @@
       // DINERO REAL: además del «confirmo», el pop-up con el resumen y su casilla
       (p.mode === 'live'
         ? askOrder(p, { title: L('🔴 DINERO REAL — ¿enviar la orden ahora?', '🔴 REAL MONEY — send the order now?'),
-            subtitle: en() ? (p.summary_en || p.summary_es) : p.summary_es, confirmLabel: L('Enviar orden', 'Send order') },
-            L('🔴 DINERO REAL — ¿enviar la orden ahora?', '🔴 REAL MONEY — send the order now?'))
+            subtitle: en() ? (p.summary_en || p.summary_es) : p.summary_es, confirmLabel: L('Enviar orden', 'Send order') })
         : Promise.resolve(true)
       ).then(function (go) {
         if (!go || S.preview !== p) return;
@@ -886,9 +940,11 @@
       var txt = a ? (en() ? (a.summary_en || a.summary_es) : a.summary_es) : '';
       // pop-up: resumen + cuenta 🧪/🔴 (con DINERO REAL exige marcar la casilla)
       (a ? askOrder(a, { title: L('¿Aprobar y ENVIAR esta orden?', 'Approve and SEND this order?'), subtitle: txt,
-          confirmLabel: L('Aprobar y enviar', 'Approve & send') },
-        L('¿Aprobar y ENVIAR esta orden?\n\n', 'Approve and SEND this order?\n\n') + txt)
-        : Promise.resolve(window.confirm(L('¿Aprobar y ENVIAR esta orden?', 'Approve and SEND this order?')))
+          confirmLabel: L('Aprobar y enviar', 'Approve & send') })
+        // sin el resumen en memoria no se sabe si es 🧪 o 🔴: botón rojo y nada se da por hecho
+        : ask({ title: L('¿Aprobar y ENVIAR esta orden?', 'Approve and SEND this order?'),
+            note: L('No se pudo cargar el resumen de esta propuesta; revísala en la lista antes de aprobar.', 'The summary of this proposal could not be loaded; check it in the list before approving.'),
+            danger: true, confirmLabel: L('Aprobar y enviar', 'Approve & send') })
       ).then(function (go) {
         if (!go) return;
         S.busy = true; render();
@@ -902,22 +958,28 @@
       return;
     }
     if (act === 'reject') {
-      var reason = window.prompt(L('Motivo del rechazo (opcional):', 'Reason for rejection (optional):'), '');
-      if (reason === null) return;
-      S.busy = true; render();
-      call('POST', '/approvals/' + encodeURIComponent(id) + '/reject', { actor: actor(), reason: reason }).then(function (d) {
-        after(d, L('Propuesta rechazada.', 'Proposal rejected.'));
-        if (KT() && !isErr(d)) KT().show({ kind: 'info', title: L('Propuesta rechazada', 'Proposal rejected'),
-          body: L('No se envió ninguna orden.', 'No order was sent.') });
-        loadApprovals().then(render);
+      var ra = null; S.approvals.forEach(function (x) { if (x.preview_id === id) ra = x; });
+      var k0 = KT();
+      if (!k0 || !k0.prompt) { noDialog(); return; }
+      k0.prompt({ title: L('¿Rechazar esta propuesta?', 'Reject this proposal?'),
+        body: ra ? (en() ? (ra.summary_en || ra.summary_es) : ra.summary_es) : L('No se enviará ninguna orden.', 'No order will be sent.'),
+        label: L('Motivo del rechazo (opcional)', 'Reason for rejection (optional)'), placeholder: L('p. ej. fuera del mandato', 'e.g. outside the mandate'),
+        okText: L('Rechazar', 'Reject'), maxLength: 500 }).then(function (reason) {
+        if (reason === null) return;
+        S.busy = true; render();
+        call('POST', '/approvals/' + encodeURIComponent(id) + '/reject', { actor: actor(), reason: reason }).then(function (d) {
+          after(d, L('Propuesta rechazada.', 'Proposal rejected.'));
+          if (KT() && !isErr(d)) KT().show({ kind: 'info', title: L('Propuesta rechazada', 'Proposal rejected'),
+            body: L('No se envió ninguna orden.', 'No order was sent.') });
+          loadApprovals().then(render);
+        });
       });
       return;
     }
     if (act === 'cancel') {
       var co = null; S.orders.forEach(function (x) { if (x.id === id) co = x; });
-      (KT() ? KT().confirm({ title: L('¿Cancelar esta orden?', 'Cancel this order?'), subtitle: co ? what(co) : '',
-          mode: co ? (co.mode === 'live' ? 'live' : 'paper') : undefined, confirmLabel: L('Sí, cancelarla', 'Yes, cancel it'), cancelLabel: L('No', 'No') })
-        : Promise.resolve(window.confirm(L('¿Cancelar esta orden?', 'Cancel this order?')))
+      ask({ title: L('¿Cancelar esta orden?', 'Cancel this order?'), subtitle: co ? what(co) : '',
+          mode: co ? (co.mode === 'live' ? 'live' : 'paper') : undefined, confirmLabel: L('Sí, cancelarla', 'Yes, cancel it'), cancelLabel: L('No', 'No') }
       ).then(function (go) {
         if (!go) return;
         S.busy = true; render();

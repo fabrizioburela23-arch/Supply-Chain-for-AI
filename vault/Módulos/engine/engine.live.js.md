@@ -3,18 +3,18 @@ tipo: "modulo"
 capa: "Datos en vivo (cotizaciones, mundo, espacio, fundamentales)"
 ruta: "engine/live.js"
 lenguaje: "javascript"
-lineas: 119
+lineas: 140
 aliases: ["engine/live.js"]
 tags: ["capa/datos-vivo", "tipo/modulo"]
 ---
 
 # engine/live.js
 
-> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 119 líneas · `engine/live.js`
+> Módulo · capa [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] · 140 líneas · `engine/live.js`
 
 ## Para qué sirve
 
-MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de insights: cuando llegan precios nuevos, invalida el NRS y re-dibuja los insights si la pestaña Análisis está visible. 2) Ciclo de agentes: cada 10 min dispara POST /api/ontology/agents/cycle — los 5 agentes del servidor (incl. 📡 RadarEmpresas) corren y las propuestas seguras se aplican solas (auditadas, reversibles). Sin DATABASE_URL el endpoint responde 503 y esto calla — patrón opcional. 3) Indicador ● EN VIVO en el pie + toast cuando el radar aplica cambios.
+MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de insights: cuando llegan precios nuevos, invalida el NRS y re-dibuja los insights si la pestaña Análisis está visible. 2) Ciclo de agentes: cada 10 min dispara POST /api/ontology/agents/cycle — los 5 agentes del servidor (incl. 📡 RadarEmpresas) corren y las propuestas seguras se aplican solas (auditadas, reversibles). Sin DATABASE_URL el endpoint responde 503 y esto calla — patrón opcional. 3) Indicador ● EN VIVO en el pie + toast cuando el radar aplica cambios. KHIPUS OS (2026-10-11): el indicador lleva .kos-themed → tokens --os-\* de engine/cockpit.js (claro/oscuro); textos ES/EN que se …
 
 ## API pública (globales que define)
 
@@ -22,15 +22,15 @@ MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `MKT`, `_appVersion`, `_invalidateNRS`, `_showUpdatePill`, `_tradeFetch`
+- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_invalidateNRS`, `_showUpdatePill`, `_tradeFetch`
 - [[engine.insights.js]] — usa `renderKhipuInsights`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **86 de 93** (línea 7925), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
+Se carga en [[app.html]] en la posición **84 de 91** (línea 7934), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 86)
+- [[app.html]] — lo carga con `<script>` (posición 84)
 - [[engine.xray.js]] — usa `KhipuLive`
 
 ## Endpoints que llama

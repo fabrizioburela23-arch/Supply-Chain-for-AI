@@ -96,34 +96,19 @@ def _submit_ai(fn, *a, **kw):
     return _POOL.submit(ai_usage.bind(_ai_interactive), fn, *a, **kw)
 
 
-TABS = ('map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'portfolios', 'guia')
+# = los data-tab de app.html + 'tkg' (vista sin botón, se abre desde ⏱ del mapa). tests/test_cleanup_server.py
+# lo compara con app.html: antes faltaban crypto y tkg y el chat descartaba en silencio "abre Cripto".
+TABS = ('map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'portfolios', 'guia',
+        'crypto', 'tkg')
 PRESETS = ('taiwan_conflict', 'china_chip_ban_total', 'hbm_shortage_2027', 'openai_ipo_impact', 'starshield_reveal')
 
 # ════════════════════════════════════════════════════════════════════════════
 # KHIPUS OS (2026-10-06, docs/KHIPUS_OS.md §3.2): qué AGENTE (mascota) hace cada
-# herramienta. EL MISMO mapa vive en el cliente (engine/khipu_chat.js) y el de
-# puesto → mascota es el de engine/mascot.js: cambiar los tres juntos.
+# herramienta y a qué mascota pertenece cada puesto. Desde la limpieza 2026-10-11
+# salen del registro ÚNICO engine/agents_registry.js (core/agents_registry.py), el
+# mismo que lee el navegador — antes eran tres copias a mano.
 # ════════════════════════════════════════════════════════════════════════════
-AGENT_IDS = ('khipu', 'analista', 'radar', 'cadena', 'tecnico', 'comite')
-TOOL_AGENT = {
-    'get_company': 'analista', 'search_companies': 'analista', 'get_research': 'analista',
-    'get_claim_evidence': 'analista',
-    'get_supply_chain': 'cadena', 'rank_companies': 'cadena',
-    'get_news': 'radar', 'get_world_events': 'radar', 'web_search': 'radar', 'scenario_exposure': 'radar',
-    'market_movers': 'tecnico', 'get_option_greeks': 'tecnico', 'get_risk_report': 'tecnico',
-    'get_committee_memo': 'comite', 'get_conclusions_board': 'comite', 'get_track_record': 'comite',
-}
-SEAT_AGENT = {}
-for _ag, _seats in (('khipu', ('khipu', 'brain')),
-                    ('analista', ('fundamental', 'fundamentals', 'macro', 'valuation')),
-                    ('radar', ('news', 'sentiment', 'geopolitical', 'geo', 'events', 'crypto')),
-                    ('cadena', ('supply_chain', 'chain', 'supply')),
-                    ('tecnico', ('technical', 'momentum', 'risk', 'risk_observation', 'risk_officer', 'market')),
-                    ('comite', ('committee', 'chair', 'portfolio', 'president', 'quant', 'mandate', 'all'))):
-    for _s in _seats:
-        SEAT_AGENT[_s] = _ag
-AGENT_LABEL = {'khipu': ('Khipu', 'Khipu'), 'analista': ('Analista', 'Analyst'), 'radar': ('Radar', 'Radar'),
-               'cadena': ('Cadena', 'Chain'), 'tecnico': ('Técnico', 'Technical'), 'comite': ('Comité', 'Committee')}
+from core.agents_registry import AGENT_IDS, AGENT_LABEL, SEAT_AGENT, TOOL_AGENT  # noqa: E402
 
 
 def tool_agent(name, args=None):

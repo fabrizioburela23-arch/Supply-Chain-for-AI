@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ai_usage.py"
 lenguaje: "python"
-lineas: 549
+lineas: 553
 aliases: ["core/ai_usage.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ai_usage.py
 
-> Módulo · capa [[Capa Infraestructura]] · 549 líneas · `core/ai_usage.py`
+> Módulo · capa [[Capa Infraestructura]] · 553 líneas · `core/ai_usage.py`
 
 ## Para qué sirve
 
@@ -18,22 +18,22 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 
 ## API pública
 
-- clase `AIBudgetError` — Se alcanzó un límite de gasto: la llamada NO se hace (no cobra). _(línea 85)_
-- `price_for(provider, model)` — (entrada, salida) USD por 1M tokens. Prefijo más largo que calce. _(línea 112)_
-- `cost_of(provider, model, tin, tout)` _(línea 128)_
-- `ai_context(feature=…, who=…)` _(línea 135)_
-- `meter()` — Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque (incluido el "pensamiento" que el proveedor cobra como … _(línea 148)_
-- `current()` _(línea 175)_
-- `bind(fn)` — Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede la función/quién del hilo que la creó. _(línea 195)_
-- `default_settings()` _(línea 222)_
-- `settings()` _(línea 229)_
-- `save_settings(values, actor)` _(línea 247)_
-- `check(provider, max_tokens=…)` — Antes de cada llamada: ¿se pasó algún límite? → AIBudgetError (no se llama). _(línea 324)_
-- `record(provider, model, tin, tout, ok=…, ms=…, estimated=…)` — Después de cada respuesta del proveedor (también las que se descartan: se cobraron igual). _(línea 360)_
-- `estimate_tokens(text)` _(línea 383)_
-- `flush()` _(línea 388)_
-- `report(days=…, lang=…)` _(línea 438)_
-- `anthropic_cost_report()` — Costo REAL facturado por Anthropic este mes (Usage & Cost Admin API). Requiere ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones). … _(línea 502)_
+- clase `AIBudgetError` — Se alcanzó un límite de gasto: la llamada NO se hace (no cobra). _(línea 89)_
+- `price_for(provider, model)` — (entrada, salida) USD por 1M tokens. Prefijo más largo que calce. _(línea 116)_
+- `cost_of(provider, model, tin, tout)` _(línea 132)_
+- `ai_context(feature=…, who=…)` _(línea 139)_
+- `meter()` — Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque (incluido el "pensamiento" que el proveedor cobra como … _(línea 152)_
+- `current()` _(línea 179)_
+- `bind(fn)` — Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede la función/quién del hilo que la creó. _(línea 199)_
+- `default_settings()` _(línea 226)_
+- `settings()` _(línea 233)_
+- `save_settings(values, actor)` _(línea 251)_
+- `check(provider, max_tokens=…)` — Antes de cada llamada: ¿se pasó algún límite? → AIBudgetError (no se llama). _(línea 328)_
+- `record(provider, model, tin, tout, ok=…, ms=…, estimated=…)` — Después de cada respuesta del proveedor (también las que se descartan: se cobraron igual). _(línea 364)_
+- `estimate_tokens(text)` _(línea 387)_
+- `flush()` _(línea 392)_
+- `report(days=…, lang=…)` _(línea 442)_
+- `anthropic_cost_report()` — Costo REAL facturado por Anthropic este mes (Usage & Cost Admin API). Requiere ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones). … _(línea 506)_
 
 **Internas** (empiezan con `_`): `_now`, `_today`, `_prices`, `_meter_add`, `_env_float`, `_add`, `_load_from_db`, `_spent`, `_ensure_writer`, `_agg_db`, `_reset_for_tests`
 
@@ -60,7 +60,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[research.runner.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 8 pruebas (lista abajo)._
+_Además lo importan 9 pruebas (lista abajo)._
 
 ## Endpoints que llama
 
@@ -70,13 +70,10 @@ _Además lo importan 8 pruebas (lista abajo)._
 - `GET /mcp` → [[mcp_server.api.py]] ([[API MCP transporte y OAuth]])
 - `OPTIONS /mcp` → [[mcp_server.api.py]] ([[API MCP transporte y OAuth]])
 - `POST /api/ai/analyze` → [[server.py]] ([[API ai]])
-- `POST /api/ai/command` → [[server.py]] ([[API ai]])
 - `POST /api/khipu/chat` → [[core.khipu_chat.py]] ([[API khipu]])
-- `POST /api/research/deep` → [[server.py]] ([[API research]])
 - `POST /api/sim/agents` → [[server.py]] ([[API sim]])
+- `POST /api/thesis/quick` → [[server.py]] ([[API thesis]])
 - `POST /mcp` → [[mcp_server.api.py]] ([[API MCP transporte y OAuth]])
-
-**Rutas que nombra y no existen en el servidor** (¿restos viejos?): `/api/bixby`
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -90,6 +87,7 @@ _Además lo importan 8 pruebas (lista abajo)._
 
 - [[tests.test_ai_gemini_fast.py]]
 - [[tests.test_ai_usage.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_overnight_ai_routing.py]]

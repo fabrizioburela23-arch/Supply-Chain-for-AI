@@ -61,7 +61,7 @@ technical/risk/risk_observation/risk_officer/market→tecnico · committee/chair
 
 ```
 ┌ barra superior (#bcp-top, superficie, radio, sombra) ─────────────────────────────────────────┐
-│ ◉ Khipus      [ ⌘K  Busca una empresa o abre una pantalla… ]   Más ▾   (●●●●●) 🧪$50.218 ES ☾ FN │
+│ ◉ Khipus      [ ⌘K  Busca una empresa o abre una pantalla… ]   Tools ▾ (●●●●●) 🧪$50.218 ES ☾ FN │
 └────────────────────────────────────────────────────────────────────────────────────────────────┘
 ┌ flanco izq. ─────────┐ ┌ CHAT (columna central, 38 % ancho, 440–680 px) ┐ ┌ flanco der. ─────────┐
 │ ventanas en mosaico  │ │ encabezado: mascota Khipu · "5 agentes         │ │ ventanas en mosaico  │
@@ -71,7 +71,7 @@ technical/risk/risk_observation/risk_officer/market→tecnico · committee/chair
 │                      │ │ [ Pregúntale a Khipu …                 (◉) ]    │ │                      │
 └──────────────────────┘ └─────────────────────────────────────────────────┘ └──────────────────────┘
 ```
-- Sin fila de chips (#bcp-actions oculta): todo se abre con el chat, la paleta ⌘K o "Más ▾".
+- Sin fila de chips (#bcp-actions oculta): todo se abre con el chat, la paleta ⌘K o "Herramientas / Tools".
 - Estado vacío del chat (sin mensajes): mascota Khipu grande, "Khipus", "Pregúntale lo que quieras, como a un
   analista.", 4–6 sugerencias, las líneas vivas de hoy (_homeHyper/_homePulse) y la pila de agentes.
 - Ventanas: la PRIMERA respuesta abre en el flanco DERECHO, la siguiente en el IZQUIERDO, etc. (equilibrio por

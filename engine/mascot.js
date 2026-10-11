@@ -22,21 +22,14 @@
 (function () {
   'use strict';
 
+  // Del registro ÚNICO engine/agents_registry.js (window.KHIPU_AGENTS, se carga antes; limpieza
+  // 2026-10-11 — antes esta lista se repetía a mano en otros 5 archivos).
   // c: [luz arriba-izq, arriba-der, abajo-izq, abajo-der] — degradado de 4 esquinas como en el video
-  var AGENTS = [
-    { id: 'khipu', es: 'Khipu', en: 'Khipu', role_es: 'Te responde', role_en: 'Answers you',
-      c: ['#f07fa0', '#7a4ce8', '#ff8746', '#c23a8c'], seats: ['khipu', 'brain'] },
-    { id: 'analista', es: 'Analista', en: 'Analyst', role_es: 'Fundamentales', role_en: 'Fundamentals',
-      c: ['#7d8be6', '#5b81e4', '#4054cf', '#6b9ff4'], seats: ['fundamental', 'fundamentals', 'macro', 'valuation'] },
-    { id: 'radar', es: 'Radar', en: 'Radar', role_es: 'Noticias y eventos', role_en: 'News & events',
-      c: ['#f78189', '#f26570', '#e63e52', '#f6808a'], seats: ['news', 'sentiment', 'geopolitical', 'geo', 'events', 'crypto'] },
-    { id: 'cadena', es: 'Cadena', en: 'Chain', role_es: 'Cadena de suministro', role_en: 'Supply chain',
-      c: ['#4cb1ab', '#56b87c', '#1b9386', '#83cd70'], seats: ['supply_chain', 'chain', 'supply'] },
-    { id: 'tecnico', es: 'Técnico', en: 'Technical', role_es: 'Precio y momento', role_en: 'Price & momentum',
-      c: ['#f7cc63', '#f2bc3a', '#e6a117', '#f5c54a'], seats: ['technical', 'momentum', 'risk', 'risk_observation', 'risk_officer', 'market'] },
-    { id: 'comite', es: 'Comité', en: 'Committee', role_es: 'Decisiones', role_en: 'Decisions',
-      c: ['#bc78e5', '#9f60e5', '#7a3fe0', '#d88ae6'], seats: ['committee', 'chair', 'portfolio', 'president', 'quant', 'mandate', 'all'] },
-  ];
+  var AGENTS = (((window.KHIPU_AGENTS || {}).agents) || []).map(function (a) {
+    return { id: a.id, es: a.es, en: a.en, role_es: a.role_es, role_en: a.role_en, c: a.colors, ink: a.ink, seats: a.seats };
+  });
+  if (!AGENTS.length) AGENTS = [{ id: 'khipu', es: 'Khipu', en: 'Khipu', role_es: 'Te responde', role_en: 'Answers you',
+    c: ['#f07fa0', '#7a4ce8', '#ff8746', '#c23a8c'], ink: '#c23a8c', seats: ['khipu', 'brain'] }];   // registro no cargó
   var BY = {}; AGENTS.forEach(function (a) { BY[a.id] = a; a.seats.forEach(function (s) { BY[s] = a; }); });
 
   function lang() { var l = window.LANG; if (!l) { try { l = localStorage.getItem('eco_lang'); } catch (e) {} } return l === 'en' ? 'en' : 'es'; }
@@ -100,7 +93,7 @@
   }
 
   function agents() {
-    return AGENTS.map(function (a) { return { id: a.id, es: a.es, en: a.en, role_es: a.role_es, role_en: a.role_en, colors: a.c.slice(), seats: a.seats.slice() }; });
+    return AGENTS.map(function (a) { return { id: a.id, es: a.es, en: a.en, role_es: a.role_es, role_en: a.role_en, colors: a.c.slice(), ink: a.ink, seats: a.seats.slice() }; });
   }
   function name(id) { var a = of(id); return a ? (lang() === 'en' ? a.en : a.es) : String(id || ''); }
   function color(id) { var a = of(id); return a ? a.c[2] : '#8a8577'; }

@@ -77,6 +77,7 @@ WORLD MONITOR geopolítico: /api/world/\*.
 - [[core.khipu_chat.py]] — lo importa
 - [[core.ops_check.py]] — lo importa
 - [[core.portfolio_ai.py]] — lo importa
+- [[core.sim_agents.py]] — lo importa
 - [[core.space.py]] — lo importa
 - [[core.world_feeds.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
@@ -88,7 +89,7 @@ WORLD MONITOR geopolítico: /api/world/\*.
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_world_events` → [[API herramientas MCP]]
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 12 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -117,6 +118,8 @@ Grupos: [[API world]]
 
 ## Pruebas que lo cubren
 
+- [[tests.test_cleanup_nrs_parity.py]]
+- [[tests.test_cleanup_server.py]]
 - [[tests.test_gdelt_events.py]]
 - [[tests.test_gpr.py]]
 - [[tests.test_live_fundamentals.py]]
@@ -129,6 +132,7 @@ Grupos: [[API world]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
 - [[Sesión 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2 - TENSORES + AUTO-CONEXIÓN (sw v241)]]
 - [[Sesión 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)]]
 - [[Sesión 2026-10-05 (t) — ESTRECHOS Y PAÍSES - CURADO + EN VIVO (sw v226)]]
