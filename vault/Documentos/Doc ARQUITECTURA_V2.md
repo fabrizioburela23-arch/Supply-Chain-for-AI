@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/ARQUITECTURA_V2.md"
 lenguaje: "markdown"
-lineas: 1083
+lineas: 1117
 aliases: ["docs/ARQUITECTURA_V2.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/ARQUITECTURA_V2.md
 
-> Documento · capa [[Capa Documentación]] · 1.083 líneas · `docs/ARQUITECTURA_V2.md`
+> Documento · capa [[Capa Documentación]] · 1.117 líneas · `docs/ARQUITECTURA_V2.md`
 
 ## De qué trata
 
@@ -19,6 +19,7 @@ ARQUITECTURA v2 — Khipus como infraestructura de información y decisión — 
 ## Menciona
 
 - [[core.ai.py]]
+- [[core.ai_usage.py]]
 - [[core.entities.py]]
 - [[core.khipu_chat.py]]
 - [[core.scenario_engine.py]]

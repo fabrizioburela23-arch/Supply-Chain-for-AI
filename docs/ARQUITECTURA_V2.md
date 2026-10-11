@@ -29,7 +29,7 @@ Las fórmulas usan notación LaTeX (`$…$`): GitHub y Obsidian las dibujan.*
    tabla compacta con fuente y fecha. Meta: de ~10.000 tokens por pregunta a ~3.000, con mejores respuestas.
 6. **Embeddings (vectores de texto): sí, pero solo para TEXTO** (noticias, conclusiones, descripciones), en la
    Fase 2. Redes neuronales de grafos (GNN, GAT, transformers de grafos): **no todavía** — con 937 empresas y pocos
-   datos etiquetados aprenderían ruido. Lo que sí conviene (Fase 4) es AJUSTAR los ~10 números que hoy están
+   datos etiquetados aprenderían ruido. Lo que sí conviene (Fase 4) es AJUSTAR los ~12 números que hoy están
    puestos a mano en el motor de propagación usando eventos reales.
 7. **Agentes**: de los 9 que propones, solo 4 necesitan IA para razonar (Investigación, Mercado, Macro y Reporte
    como narrador). Riesgo, Cartera, Cumplimiento y Datos deben ser **servicios deterministas** (reglas y fórmulas
@@ -51,11 +51,11 @@ Las fórmulas usan notación LaTeX (`$…$`): GitHub y Obsidian las dibujan.*
 | Hecho | Valor medido (2026-10-11) | Consecuencia |
 |---|---|---|
 | Catálogo | 937 empresas, 2.510 vínculos (supply 1.001 · partner 756 · cloud 307 · invest 192 · fab 83 · license 63 · owns 51 · ppa 34 · deploy 19 · about 4) | El grafo es **pequeño**: $N\approx10^3$, $\lvert E\rvert\approx3\cdot10^3$ |
-| Vínculos de FLUJO | 1.558 filas, 1.526 pares distintos, densidad 0,18 % | La matriz es **muy dispersa** |
+| Vínculos de FLUJO | 1.558 filas, 1.526 pares distintos, densidad 0,17 % | La matriz es **muy dispersa** |
 | Base de producción | 1.294 objetos (≈216 que el repo no puede reconstruir) | Postgres es la fuente de verdad histórica |
-| Fechas reales en vínculos | 85 de 2.595 (el resto: centinela 2000-01-01); 58 de esas 85 con relaciones en español fuera del vocabulario | El "grafo temporal" es casi atemporal: **faltan datos**, no código |
+| Fechas reales en vínculos | 85 de 2.595 (2.510 del catálogo + 85 hechos temporales; el resto: centinela 2000-01-01); 58 de esas 85 con relaciones en español fuera del vocabulario | El "grafo temporal" es casi atemporal: **faltan datos**, no código |
 | Historia guardada | Precios, capitalización, fundamentales, NRS, posiciones: **ninguna** (solo en memoria; `PriceObserved` existe pero nada lo escribe) | No se puede responder nada "a lo largo del tiempo" salvo el grafo |
-| Radio espectral del grafo | $\rho(T)=0{,}893$ (todas las relaciones estructurales), $0{,}750$ (solo flujo); amortiguación $\alpha=0{,}6$ | $\alpha\rho=0{,}536<1$ → la propagación converge |
+| Radio espectral del grafo | $\rho(T)=0{,}893$ (todas las relaciones estructurales), $0{,}750$ (solo flujo); amortiguación $\alpha=0{,}6$ | sin factores activos $\alpha\rho=0{,}536<1$ (la versión lineal converge); con factores disparados puede superar 1 (sección 7) |
 | Motores de propagación | 4 (servidor, tensor Ψ, cliente statematrix, scenario_engine); choque en TSMC: 293 / 246 / 217 nodos | Respuestas distintas a la misma pregunta |
 | Velocidad (tras la limpieza) | 937 choques: 47 s (denso, matriz rehecha por choque) → **0,3 s** (disperso, matriz una vez) | El cálculo NO es el cuello de botella |
 | Tokens por acción | Chat ≈ 10k de entrada por pregunta (≈15,5k si va al modelo profundo); investigación STANDARD ≈ 14k por analista; comité ≈ 25-30k | Sin caché de prompt; el contexto crece en cada ronda |
@@ -185,10 +185,13 @@ $0{,}9\cdot0{,}9/6\approx13{,}5\,\%$ cuando con $w=6$ transmitiría ≈90 %. Hay
 $w\in[0,1]$ = "fracción del insumo del cliente que depende de este proveedor" (Fase 1, migración por eventos con
 revisión de Fabrizio).
 
-**Aristas probabilísticas**: la existencia de $e$ es Bernoulli($c_e$). Para operadores **lineales**
-$\mathbb{E}[f(A)]=f(\mathbb{E}[A])=f(C\odot W)$ — por eso multiplicar peso × confianza (lo que ya se hace) es
-correcto *solo* en el régimen lineal. El kernel real tiene $\min(1,\cdot)$ y umbral (no lineal): para escenarios de
-decisión se debe muestrear la existencia de aristas (Monte Carlo sobre $c_e$; extensión de `propagate_bands`).
+**Aristas probabilísticas**: la existencia de $e$ es Bernoulli($c_e$). Multiplicar peso × confianza (lo que ya se
+hace) es una **aproximación de campo medio de primer orden**, no un valor esperado exacto — ni siquiera sin el
+$\min(1,\cdot)$ y el umbral: la normalización por columna $\max(\sum,6)$ es un cociente de sumas aleatorias y los
+caminos que pasan dos veces por la misma arista usan $\mathbb{E}[A_e^2]=c\,w^2\neq c^2w^2$. Ejemplo: un cliente con
+dos proveedores de $w=6$, uno seguro ($c=1$) y otro dudoso ($c=0{,}3$): el código transmite $6/7{,}8=0{,}77$ desde
+el seguro; el valor esperado real es $0{,}3\cdot0{,}5+0{,}7\cdot1=0{,}85$. Para escenarios de decisión hay que
+**muestrear** la existencia de aristas (Monte Carlo sobre $c_e$; extensión de `propagate_bands`).
 
 ### 3.4 Lo que NO es nodo: el libro mayor
 
@@ -223,7 +226,8 @@ deduce de los nodos. Tres clases, con política distinta:
 3. Es ruidosa: el error estándar aproximado de $\hat\rho$ es $(1-\rho^2)/\sqrt{T}$; con $T=252$ días y $\rho=0{,}73$
    da $\approx0{,}029$ — dos "aristas" de 0,73 y 0,70 son estadísticamente iguales.
 4. Se comprime muchísimo con un modelo de factores (sección 9): $\Sigma=BFB^\top+D$ guarda $nk+k^2+n$ números en
-   vez de $n^2$ (con $n=568,\ k=10$: ≈6.400 vs 322.624, **50× menos**) y de ahí sale cualquier $\rho_{ij}$ en $O(k)$.
+   vez de las $n(n+1)/2$ entradas distintas de una matriz simétrica (con $n=568,\ k=10$: ≈6.350 vs 161.596,
+   **≈25× menos**), y de ahí sale cualquier $\rho_{ij}$ en $O(k^2)$ ($O(k)$ si los factores son ortogonales, como en PCA).
 
 **Regla de costo para guardar un θ derivado**: guardar si
 $q\cdot c_f > s\cdot|E_\theta| + u\cdot c_{\text{inv}}$ ($q$ consultas/día, $c_f$ costo de calcular, $s$ costo de
@@ -276,9 +280,9 @@ $\Psi$ (choques de todos contra todos, 0,3 s) conviene en caché por época del 
 
 | Tensor | Forma | Qué es | Densidad | Política |
 |---|---|---|---|---|
-| $\mathcal{A}$ | $R\times N\times N$ | adyacencia multi-relacional | 1.526 nnz / $9\cdot937^2$ (0,02 %) | ✔ CSR por relación, derivado del grafo |
+| $\mathcal{A}$ | $R\times N\times N$ | adyacencia multi-relacional | 3.128 no-ceros / $9\cdot937^2$ (0,04 %) | ✔ CSR por relación, derivado del grafo |
 | $\mathcal{X}$ | $T\times N\times d$ | panel de características (tiempo × empresa × rasgo) | denso | Fase 3; se arma desde las series |
-| $\mathcal{E}$ | $P\times n\times K$ | exposición cartera × activo × factor | **rango 1 por factor** | NUNCA se guarda: $\mathcal{E}_{p,i,k}=W_{p,i}B_{i,k}$ |
+| $\mathcal{E}$ | $P\times n\times K$ | exposición cartera × activo × factor | producto de matrices: $\mathcal{E}_{:,:,k}=W\,\text{diag}(B_{:,k})$ | NUNCA se guarda: $\mathcal{E}_{p,i,k}=W_{p,i}B_{i,k}$ |
 | $\mathcal{S}$ | $S\times N\times H$ | escenario × nodo × salto/horizonte | disperso | Fase 3: biblioteca de escenarios con versión |
 | $\mathcal{P}$ | $M\times H\times n$ | trayectorias Monte Carlo | denso, transitorio | en memoria (10.000×20×30 = 48 MB) |
 | $\mathcal{A}(t)$ | $T\times R\times N\times N$ | grafo dinámico | — | **nunca denso** (3,5 GB POR relación para 500 días); se reconstruye desde eventos |
@@ -286,7 +290,7 @@ $\Psi$ (choques de todos contra todos, 0,3 s) conviene en caché por época del 
 ### 6.2 Crítica a $T_{\text{asset},\text{sector},\text{country},\text{time},\text{metric}}$
 
 El sector y el país son **funciones** del activo: existen matrices indicadoras $S\in\{0,1\}^{n\times s}$ y
-$C\in\{0,1\}^{n\times c}$ con una sola fila activa (o pesos que suman 1). El tensor de 5 modos tiene entonces
+$C\in\{0,1\}^{n\times c}$ con un solo 1 por fila (o pesos por fila que suman 1). El tensor de 5 modos tiene entonces
 $\text{nnz}=n\cdot T\cdot M$ de $n\cdot s\cdot c\cdot T\cdot M$ celdas: con $s=13,\ c=136$ es **1.768 veces más
 grande de lo necesario y 99,94 % vacío**. Todo lo que ofrece se obtiene del tensor de 3 modos
 $\mathcal{X}\in\mathbb{R}^{n\times T\times M}$ por **contracción** con la indicadora:
@@ -323,11 +327,20 @@ local exacta que justifica cada número ante el usuario).
 ## 7. Grafo ↔ Matriz ↔ Tensor
 
 1. **Grafo → matriz**: $A_{ij}=w_{ij}$. $(A^k)_{ij}$ suma los caminos de largo $k$.
-2. **Propagación de choques como serie de Neumann**: con la matriz de transmisión normalizada
-   $T=\sum_r\alpha_rA_rD_r^{-1}$ ($D_r=\text{diag}(\max(\mathbf{1}^\top A_r,6))$), la versión lineal del kernel es
-   $$x=\sum_{k\ge1}\big(\alpha T^\top\big)^kx_0=(I-\alpha T^\top)^{-1}x_0-x_0,$$
-   convergente porque $\alpha\rho(T)=0{,}6\cdot0{,}893=0{,}536<1$. El kernel real corta en 6 saltos: la masa
-   lineal omitida es $(0{,}536)^7\approx1{,}3\,\%$ → **`max_hops=6` está justificado**; 8 saltos (cliente) no aporta.
+2. **Propagación de choques**: con la matriz de transmisión normalizada $T=\sum_r\alpha_rA_rD_r^{-1}$
+   ($D_r=\text{diag}(\max(\mathbf{1}^\top A_r,6))$) y la fragilidad $f$ (hiperaristas), el kernel del servidor hace
+   $$x^{(k)}=\text{umbral}_{0{,}01}\Big(\min\big(1,\ \alpha\,\text{diag}(f)\,T^\top x^{(k-1)}\big)\Big),\qquad
+   \text{impacto}=\max_{k\le6}x^{(k)}$$
+   — el **máximo** entre saltos, no la suma. Su "pariente lineal" sería la serie de Neumann
+   $\sum_k(\alpha\,\text{diag}(f)T^\top)^kx_0=(I-\alpha\,\text{diag}(f)T^\top)^{-1}x_0-x_0$, que converge si
+   $\alpha\,\rho(\text{diag}(f)T^\top)<1$. Sin factores activos ($f=1$): $0{,}6\cdot0{,}893=0{,}536$ y la cola lineal
+   desde el salto 7 sería $(0{,}536)^7/(1-0{,}536)\approx2{,}7\,\%$; pero $\rho$ solo da la tasa asintótica (la norma
+   $\lVert\alpha T^\top\rVert_\infty=2{,}65$ no acota nada en pocos saltos). **Lo que justifica `max_hops=6` es la
+   medición**: con fragilidad base, 6 y 12 saltos dan resultados idénticos en los 937 choques (por el umbral de 1 % y el
+   máximo). **Con factores disparados** $\alpha\rho(\text{diag}(f)T^\top)$ puede pasar de 1 (todos en crisis:
+   $\rho=2{,}63$, $\alpha\rho\approx1{,}58$) y con $f=2{,}5$ uniforme 266 de 937 choques cambian entre 6 y 12 saltos
+   (alcance medio 64 → 79 nodos): ahí 6 saltos es un **tope de modelado** explícito, no una cola despreciable.
+   Los 8 saltos del cliente (`statematrix.js`) son otra regla — se unifica en la Fase 1.
 3. **Matriz → tensor multi-relacional**: $T=\mathcal{A}'\times_1\alpha$ (contracción del modo de relación con el
    vector de criticidad $\alpha\in\mathbb{R}^R$, donde $\mathcal{A}'$ ya normalizó cada relación). Es decir: **el
    motor actual YA es álgebra tensorial**, solo que bien implementada como suma de matrices dispersas.
@@ -337,7 +350,7 @@ local exacta que justifica cada número ante el usuario).
 5. **$T_{ijtk}$ (relación × tiempo × métrica)**: solo para métricas DERIVADAS, p. ej. correlación rodante
    $\mathcal{C}\in\mathbb{R}^{T\times n\times n}$: 252 ventanas × 568² × 8 B ≈ 650 MB. **No se guarda**; se guardan los
    parámetros del modelo de factores por día ($nk+k^2+n\approx6{,}3$ mil números) y se reconstruye cualquier
-   rebanada en $O(n^2k)$ o un par en $O(k)$.
+   rebanada en $O(n^2k)$ o un par en $O(k^2)$.
 
 **¿Es sólida la separación "grafo = capa semántica, tensor = capa cuantitativa asociada"?** Sí, con tres
 condiciones que la hacen correcta y no solo bonita:
@@ -355,13 +368,18 @@ condiciones que la hacen correcta y no solo bonita:
 
 ### 8.1 Modelo
 
-Un **hecho** $f=(\text{sujeto},\text{predicado},\text{objeto},\theta,[t^{v}_{0},t^{v}_{1}),t^{k},s,c)$. El registro
+Un **hecho** se crea con un evento $f=(\text{sujeto},\text{predicado},\text{objeto},\theta,t^{v}_{0},t^{k},s,c)$. Su
+FIN no es un atributo de $f$: es OTRO evento $g$ (`LinkRemoved`) con su propia fecha de validez $t^{v}(g)$ y su propia
+fecha de registro $t^{k}(g)$; una **retracción** (corrección, `retracts_event_id`) borra $f$ hacia atrás. El registro
 $\mathcal{L}$ es append-only (ya lo es por convención en `events`; la Fase 2 lo blinda con un disparador como
 `broker_audit`). El grafo en un instante de validez $t$ visto con el conocimiento disponible en $\kappa$:
 
 $$
-G(t,\kappa)=\Big\{f\in\mathcal{L}:\ t^{v}_{0}(f)\le t<t^{v}_{1}(f),\ \ t^{k}(f)\le\kappa,\ \ \nexists\,g\in\mathcal{L}:\ g\ \text{retracta}\ f,\ t^{k}(g)\le\kappa\Big\}.
+G(t,\kappa)=\Big\{f:\ t^{v}_{0}(f)\le t,\ \ t^{k}(f)\le\kappa,\ \ \nexists\,g\ \text{que termine}\ f:\ t^{v}(g)\le t\ \wedge\ t^{k}(g)\le\kappa,\ \ \nexists\,r\ \text{que retracte}\ f:\ t^{k}(r)\le\kappa\Big\}.
 $$
+
+(Si el fin se tomara como propiedad del hecho, $G(t,t)$ "vería" finales que se registraron DESPUÉS de $t$: fuga de
+información futura justo en el caso de auditoría.)
 
 - $G(t,\text{hoy})$ = "¿cómo era el mundo en $t$ según lo que sabemos HOY?" — **existe** (`as_of_graph`).
 - $G(t,t)$ = "¿qué creíamos en $t$?" — **falta** (no hay consulta por $t^{k}$). Es la base de la auditoría de
@@ -379,7 +397,9 @@ $$
 
 con $w_{p,i}(t)$ del libro mayor (sección 3.4) y $s_{i,\text{tech}}(t)$ de la arista `in_sector` vigente en $t$.
 Costo: $O(252\cdot n_p)$ — trivial. **Falta el dato**: hoy las posiciones no tienen historia (último valor en
-`user_state`). Requisito Fase 1: foto diaria de posiciones.
+`user_state`). Requisito Fase 1: foto diaria de posiciones — que NO se puede rellenar hacia atrás (salvo cuentas de
+Alpaca, cuya historia de órdenes ejecutadas sí reconstruye las posiciones): P1 se podrá responder con 12 meses reales
+recién 12 meses después de empezar a guardar.
 
 **P2. "¿Qué relaciones existían en marzo pero desaparecieron en septiembre?"**
 
@@ -398,8 +418,11 @@ Con retornos diarios $r_t\in\mathbb{R}^n$ y ventana $W$:
 1. Matriz de correlación rodante $\hat C(t)$ (o su versión factorial).
 2. **Absorption ratio** (Kritzman et al., 2011): $AR(t)=\sum_{k\le K}\lambda_k(t)/\sum_k\lambda_k(t)$ — sube cuando
    el mercado se mueve "en bloque", y históricamente antecede a caídas.
-3. Pares que se acoplaron: $\{(i,j):\ \hat\rho_{ij}(t)-\hat\rho_{ij}(t-h)>z_{0.99}\cdot\text{SE}\}$, con
-   $\text{SE}\approx\sqrt{2}(1-\rho^2)/\sqrt{W}$.
+3. Pares que se acoplaron: transformar con Fisher $z_{ij}=\operatorname{artanh}\hat\rho_{ij}$ (varianza
+   $\approx1/(W-3)$), probar $z_{ij}(t)-z_{ij}(t-h)$ y **controlar la tasa de falsos descubrimientos**
+   (Benjamini-Hochberg): con 161.028 pares, un umbral fijo de 99 % daría ~1.600 "acoples" falsos por día. Si $h<W$ las
+   ventanas se solapan y las dos estimaciones no son independientes (la varianza de la diferencia es menor; usar
+   ventanas disjuntas o bootstrap por bloques).
 4. Restringido al grafo: ¿el acople ocurre entre vecinos de cadena ($\Psi_{ij}>0$)? Eso distingue "contagio por
    la cadena" de "pánico general" — **una señal que solo Khipus puede dar** porque solo Khipus tiene el grafo.
 
@@ -443,8 +466,8 @@ para el inversor en dólares).
 | Concentración | HHI $=\sum w_i^2$; contribución al riesgo $RC_i=w_i(\Sigma w)_i/\sigma_p$ (Euler) | — | ✔ |
 | Liquidez | ADV, días para liquidar $=\lvert q_i\rvert /(\beta\,\text{ADV}_i)$, spread de Corwin-Schultz (máx/mín) | $\mathbb{R}^n$ | ✗ (las velas tiran el volumen) |
 | Sensibilidad | $\partial\sigma_p/\partial w=\Sigma w/\sigma_p$; $\partial\,\text{P\&L}/\partial f=B^\top w$; griegas | — | griegas ✔ |
-| Escenarios | choque estructural → retorno: $r^{\text{esc}}_i=-\kappa\cdot\text{impacto}_i$ con $\kappa$ CALIBRADO en eventos históricos | $\mathbb{R}^n$ | grafo ✔, **traducción a P&L ✗** |
-| Monte Carlo | **simulación histórica filtrada** (FHS): $r^{(m)}_{t+h}=\sigma_{t+h}\,z^{(m)}$, $z$ remuestreado de residuos estandarizados | $\mathcal{P}\in\mathbb{R}^{M\times H\times n}$ | solo bandas del kernel ✔ |
+| Escenarios | choque estructural → retorno: $r^{\text{esc}}_i=-\kappa\cdot\text{impacto}_i$ (impacto $\in[0,1]$; el kernel lo devuelve en %) con $\kappa$ CALIBRADO en eventos históricos | $\mathbb{R}^n$ | grafo ✔, **traducción a P&L ✗** |
+| Monte Carlo | **simulación histórica filtrada** (FHS): se remuestrean FECHAS $s$ y se toma el vector completo de residuos estandarizados $z_s=D_s^{-1}r_s$ (conserva la correlación); $r^{(m)}_{t+h}=D^{(m)}_{t+h}z_{s}$ con la volatilidad de cada trayectoria actualizada por EWMA/GARCH (conserva el agrupamiento de volatilidad) | $\mathcal{P}\in\mathbb{R}^{M\times H\times n}$ | solo bandas del kernel ✔ |
 
 ### 9.3 Advertencias matemáticas que deciden el diseño
 
@@ -454,7 +477,7 @@ para el inversor en dólares).
    con 252 días, la muestral es aceptable (ya se usa así).
 2. **Los escenarios del grafo hoy no se traducen a dinero.** "TSMC cae: 293 empresas afectadas" no dice cuánto
    pierde TU cartera. Puente propuesto: $\Delta\text{P\&L}_p=\sum_i w_{p,i}\,V_p\,r^{\text{esc}}_i$ con
-   $r^{\text{esc}}_i=-\kappa\,\text{impacto}_i/100$ y $\kappa$ estimado por regresión sobre episodios reales (escasez
+   $r^{\text{esc}}_i=-\kappa\,\text{impacto}_i$ (impacto $\in[0,1]$) y $\kappa$ estimado por regresión sobre episodios reales (escasez
    de chips 2021, controles de exportación oct-2022, terremoto de Taiwán abr-2024) — con su intervalo de confianza
    mostrado al usuario.
 3. **Cierres sin ajustar** en el screener y en los indicadores técnicos de investigación producen saltos falsos
@@ -472,8 +495,8 @@ de covarianzas $\Sigma_t$ ($T\times n\times n$) **no** se guarda: se guardan los
 
 ## 10. Grafo + embeddings: técnica por técnica (sin IA "porque se puede")
 
-Contexto que decide todo: $N=937$, $\approx1.500$ aristas de flujo (1,6 por nodo y relación), **muy pocas
-etiquetas** (claims calificados por resultado: decenas). Los métodos profundos necesitan $10^4$-$10^6$ ejemplos.
+Contexto que decide todo: $N=937$, $\approx1.500$ aristas de flujo (1,6 por nodo; 0,23 por nodo y relación), **muy
+pocas etiquetas** (claims calificados por resultado: decenas hoy, pocos cientos en un año). Los métodos profundos necesitan $10^4$-$10^6$ ejemplos.
 
 | Técnica | Problema que resuelve | Datos que necesita | Costo | Ventaja real para Khipus | ¿Debe existir? |
 |---|---|---|---|---|---|
@@ -483,20 +506,25 @@ etiquetas** (claims calificados por resultado: decenas). Los métodos profundos 
 | **KG embeddings** (TransE, RotatE, ComplEx, RESCAL) | predicción de vínculos multi-relacional | tripletas (2.510) | $O(\lvert E\rvert \,d)$ por época | completar el grafo | Fase 4 como experimento: adoptar si +10 pts de Hit@10 sobre lo actual |
 | **Graph transformers** | atención global con codificación posicional | grafos grandes y muchas etiquetas | $O(N^2)$ | ninguna a esta escala | **No** |
 | **Embeddings de TEXTO** (no de grafo) | búsqueda semántica, deduplicar noticias y conclusiones, enlazar noticias a entidades | texto (noticias, claims, descripciones) | modelo local pequeño en CPU o API barata | **alta**: hoy "semántico" es comparar letras | **Sí — Fase 2**, con `pgvector` |
-| **GNN de propagación "aprendida"** | ajustar el kernel de choques | episodios históricos de choque + reacción de precios | ~10 parámetros | **alta**: el kernel actual YA es una GNN lineal con pesos a mano | **Sí — Fase 4**, pero como CALIBRACIÓN, no como red profunda |
+| **GNN de propagación "aprendida"** | ajustar el kernel de choques | episodios históricos de choque + reacción de precios | ~12 parámetros | **alta**: el kernel actual YA es una GNN lineal con pesos a mano | **Sí — Fase 4**, pero como CALIBRACIÓN, no como red profunda |
 
 **La observación clave**: el motor de propagación $x^{(k+1)}=\min\big(1,\ \alpha\,\text{diag}(f)\,T^\top x^{(k)}\big)$ es
 **una capa de red neuronal de grafos** con función de activación $\min(1,\cdot)$ y pesos fijados a mano: criticidad
 por relación $\alpha_r$ (9), amortiguación (1), piso de proveedor único (1), escala de fragilidad (1). En vez de una
-GNN profunda (miles de parámetros, sin datos), la Graph-ML correcta para Khipus es **estimar esos ~12 parámetros por
-máxima verosimilitud** sobre episodios reales:
+GNN profunda (miles de parámetros, sin datos), la Graph-ML correcta para Khipus es **estimar esos ~12 parámetros
+(junto con $\kappa$)** sobre episodios reales, por mínimos cuadrados penalizados (estimador MAP con prior centrado en
+los valores actuales):
 
 $$
-\hat\pi=\arg\min_\pi\sum_{\text{episodios }e}\sum_i\Big(r^{\text{obs}}_{e,i}-\big(-\kappa\cdot\text{impacto}_i(\pi;\text{choque}_e)\big)\Big)^2+\lambda\lVert\pi-\pi_0\rVert^2,
+(\hat\pi,\hat\kappa)=\arg\min_{\pi,\kappa}\sum_{\text{episodios }e}\sum_i\Big(r^{\text{obs}}_{e,i}+\kappa\cdot\text{impacto}_i(\pi;\text{choque}_e)\Big)^2+\lambda\lVert\pi-\pi_0\rVert^2 .
 $$
 
-con regularización hacia los valores actuales $\pi_0$. Doce parámetros con decenas de episodios es estadísticamente
-razonable; doce mil no.
+Tres cuidados: (1) **identificabilidad** — en el primer salto la predicción es $\kappa\cdot\alpha\cdot\alpha_r w/\text{col}$ y no
+cambia si $\kappa\to\kappa/c$, $\alpha_r\to c\,\alpha_r$: hay que fijar una normalización (p. ej. $\alpha_{\text{supply}}=1$);
+(2) la función objetivo no es suave (umbral, $\min$): optimizar sin derivadas (búsqueda en grilla o Nelder-Mead);
+(3) **sesgo de mirar el futuro** — calibrar un episodio de 2022 con aristas que hoy dicen "desde 2000" (fecha
+centinela) usa conocimiento posterior: solo aristas fechadas, o declarar el sesgo. Doce parámetros con decenas de
+episodios es razonable; doce mil no.
 
 ---
 
@@ -533,7 +561,7 @@ son profundos y el grafo tiene 10⁷+ aristas. Khipus está 3-4 órdenes de magn
   escrituras del navegador, nadie lo lee y deriva de Postgres.
 - **Objetivo largo plazo: E (híbrida mínima)** = Postgres (transaccional + eventos + vectores) + lago Parquet/DuckDB
   (analítica, backtests, Monte Carlo masivo) + un **trabajador de cálculo separado** del servidor web (hoy hay 1
-  worker de gunicorn: un cálculo pesado bloquea la app). Motores especializados (vectorial dedicado, grafo) **solo
+  worker de gunicorn con 12 hilos: un cálculo pesado no la bloquea, pero compite por el GIL y degrada la latencia de todo lo demás). Motores especializados (vectorial dedicado, grafo) **solo
   si se cruzan umbrales medibles**: > 10⁷ vectores o p95 de búsqueda > 100 ms; > 10⁷ aristas o recorridos > 4 saltos
   en línea.
 
@@ -636,10 +664,10 @@ Cada factor, con su justificación:
 
 | Factor | Definición | Por qué así |
 |---|---|---|
-| **Alcance / distancia / dependencia / causalidad** $\pi_Q(v)$ | PageRank personalizado desde $S_Q$ sobre el grafo de FLUJO orientado según la intención: $\pi=(1-\beta)e_{S_Q}+\beta P^\top\pi$; para "¿quién sufre si cae X?", directamente $\Psi[S_Q,v]$ (impacto propagado, ya calculado) | Une distancia, dirección causal (proveedor→cliente) y dependencia en un solo número con significado ("si X cae, v pierde 18 %"). Una distancia en saltos sola ignora que 1 salto débil importa menos que 2 fuertes |
+| **Alcance / distancia / dependencia / causalidad** $\pi_Q(v)$ | PageRank personalizado desde $S_Q$ sobre el grafo de FLUJO orientado según la intención: $\pi=(1-\beta)e_{S_Q}+\beta P^\top\pi$; para "¿quién sufre si cae X?", directamente $\Psi[v,S_Q]$ (impacto en $v$ de un choque en las semillas; convención del código: $\Psi[j,s]$ = afectado $j$, origen $s$) | Une distancia, dirección causal (proveedor→cliente) y dependencia en un solo número con significado ("si X cae, v pierde 18 %"). Una distancia en saltos sola ignora que 1 salto débil importa menos que 2 fuertes |
 | **Tema** $\text{sem}(v,Q)$ | coseno entre el embedding de la pregunta y el texto de $v$ (Fase 2); en Fase 1, 0 | Distingue "Nvidia + memoria" de "Nvidia + energía" |
 | **Frescura** | $\tau$ por tipo: noticias 3 días, filings 90 días, estructura $\infty$ | La estructura no envejece; las noticias sí |
-| **Impacto financiero** $I_v$ | en preguntas de cartera: $\lvert w_v\rvert \sigma_v$ (contribución al riesgo); en preguntas de empresa: capitalización en riesgo $(\Psi^\top c)_v$ normalizada | Lo que mueve dinero primero |
+| **Impacto financiero** $I_v$ | en preguntas de cartera: contribución de Euler al riesgo $w_v(\Sigma w)_v/\sigma_p$ (no $\lvert w_v\rvert\sigma_v$, que es riesgo aislado); en preguntas de empresa: capitalización en riesgo $(\Psi^\top c)_v$ normalizada | Lo que mueve dinero primero |
 | **Incertidumbre** $U_v$ | $1-c$ (confianza) o desacuerdo entre fuentes/claims | Lo incierto que importa debe MOSTRARSE (marcado), no esconderse; $\lambda_u$ pequeño |
 | **Centralidad** | entra vía $\pi_Q$ (PPR ya favorece nodos centrales alcanzables) | Evita contarla dos veces |
 
@@ -662,9 +690,10 @@ F(S)=\sum_{g\in\mathcal{F}}R(g\mid Q)\,\max_{f\in S}\text{sim}(f,g),
 $$
 (cada hecho candidato $g$ queda "cubierto" por el elemento más parecido elegido: un segundo hecho casi igual no suma).
 Para monótona submodular con mochila, **el mejor entre el voraz por cociente $\Delta F/\text{tok}$ y el mejor
-elemento individual** garantiza $\ge\tfrac12(1-1/e)\approx31{,}6\,\%$ del óptimo (Leskovec et al., 2007; con
-enumeración parcial se llega a $1-1/e$, Sviridenko 2004), en $O(|\mathcal{F}|^2)$ con evaluación perezosa — en la
-práctica, a centésimas del óptimo con $|\mathcal{F}|\approx10^2$. Lo descartado no desaparece: se resume con
+elemento individual** garantiza $\ge\tfrac12(1-1/e)\approx31{,}6\,\%$ del óptimo (Khuller, Moss y Naor 1999;
+Krause y Guestrin 2005; con enumeración parcial se llega a $1-1/e$, Sviridenko 2004). Costo: $k$ rondas × $|\mathcal{F}|$
+evaluaciones de $F$ de costo $O(|\mathcal{F}|)$ cada una, es decir $O(k\,|\mathcal{F}|^2)$, mucho menos con evaluación
+perezosa — trivial con $|\mathcal{F}|\approx10^2$, y en la práctica muy cerca del óptimo. Lo descartado no desaparece: se resume con
 **estadísticos suficientes** (conteo, peso total, máximo, distribución por país) — compresión con pérdida
 controlada.
 
@@ -676,7 +705,7 @@ la investigación).
 
 | Medida | Ahorro |
 |---|---|
-| Caché de prompt de Anthropic en el sistema + catálogo de herramientas (≈2,1k tokens fijos por paso) | el bloque cacheado se cobra ≈10 % → −1,9k tokens efectivos por paso |
+| Caché de prompt en el sistema + catálogo de herramientas (≈2,1k tokens fijos por paso) | con cuidado: el mínimo cacheable depende del modelo (Haiku 4.5, el nivel rápido de Claude, exige 4.096 tokens: un bloque de 2,1k NO se cachea ahí); el nivel rápido va primero a Gemini (caché propia); escribir en caché cuesta 1,25× y leer 0,1×. Ganancia real: en el nivel profundo (Sonnet 5.5) y agrupando más contenido estable; hoy `ai_usage` suma escrituras y lecturas en un solo número → separarlos antes de medir |
 | Números precalculados + tabla de hechos en vez de volcados JSON de herramientas (scratch de hasta 26k caracteres) | contexto de herramientas de ~6-7k a ~1,5-2k tokens |
 | Paso profundo que reescribe la respuesta → que solo el modelo profundo escriba, con el contexto ya armado | −1 llamada completa (≈ −5k tokens) en la ruta profunda |
 | Pool de evidencia compartido por (entidad, fuente, día) para los 4 analistas | noticias y perfil se traen 1 vez, no 4 |
@@ -743,7 +772,7 @@ Nada en la interfaz revela cómo se almacena (el agente nunca ve tablas, CSR ni 
 | `get_exposure` | cartera o entidad, dimensiones (sector, país, factor, país de proveedores, moneda) | vector de exposición por dimensión, top contribuyentes, exposición INDIRECTA vía $\Psi$ | ◐ partes en asesor y tensor → ✚ unificado |
 | `calculate_risk` | cartera, horizonte, método (hist/param/FHS), $\alpha$ | vol, VaR, CVaR, beta, contribución al riesgo, drawdown, backtest (Kupiec) | `get_risk_report` ✔ (+CVaR multi-día, FHS) |
 | `calculate_correlation` | ids, ventana, método (pearson/spearman/EWMA/contraído) | matriz + error estándar + cambios de régimen | ◐ dentro de risk_report → ✚ |
-| `run_scenario` | choque (entidad/factor/país/sector, tipo, severidad), horizonte, cartera opcional | impacto estructural por nodo (kernel ÚNICO) + **P&L estimado con bandas** + ganadores/perdedores | 3 motores distintos → ✚ uno |
+| `run_scenario` | choque (entidad/factor/país/sector, tipo, severidad), horizonte, cartera opcional | impacto estructural por nodo (kernel ÚNICO) + **P&L estimado con bandas** + ganadores/perdedores | 4 motores de propagación + reglas de escenario → ✚ uno |
 | `find_similar_entities` | id, espacio (estructural/financiero/semántico/combinado), k | vecinos con puntaje POR ESPACIO (explicable) | `tensor.peers` interno → ✚ |
 | `find_anomalies` | alcance (cartera/sector/universo), ventana, tipos (precio z, volumen, quiebre de correlación, cambio estructural, ráfaga de noticias) | anomalías ordenadas con su z y su línea base | ◐ umbral fijo 8 % → ✚ estadístico |
 | `project_portfolio` | cartera, horizonte, método (FHS/bootstrap), escenarios | cuantiles, probabilidad de pérdida > x, abanico de trayectorias; **"no es un pronóstico"** explícito | ✗ → ✚ |
@@ -772,7 +801,7 @@ Tu formulación capta lo esencial (el valor está en producir un contexto $C$ re
 **Versión propuesta**:
 
 $$
-K_\vartheta(\mathcal{L},Q,U,B)=\operatorname*{arg\,max}_{F\subseteq\mathcal{F}(G_{t},X_{t},Q)\cap\text{Perm}(U)}\Big[\sum_{f\in F}R_\vartheta(f\mid Q)-\mu\,\text{Red}(F)\Big]\ \ \text{s.a.}\ \ \text{tok}(F)\le B,
+K_\vartheta(\mathcal{L},Q,U,B)=\operatorname*{arg\,max}_{F\subseteq\mathcal{F}(G_{t},X_{t},Q)\cap\text{Perm}(U)}\ \sum_{g\in\mathcal{F}}R_\vartheta(g\mid Q)\max_{f\in F}\text{sim}(f,g)\ \ \text{s.a.}\ \ \text{tok}(F)\le B,
 $$
 
 $$
@@ -829,7 +858,9 @@ dato de entrenamiento.
 ```
  𝓛 ──Γ──► G_t=(V_t,E_t,φ,ψ)  ──build──►  {A_r ∈ R^{N×N}}_r (CSR) ──normalizar──► T = Σ_r α_r A_r D_r⁻¹
  │                                                                                   │
- │                                                     Ψ = max_k min(1,(αTᵀ)^k ⊙ f)  ◄┘  (6 saltos; αρ=0,54)
+ │        x⁽ᵏ⁾ = umbral(min(1, α·diag(f)·Tᵀ·x⁽ᵏ⁻¹⁾)),  impacto = max_k x⁽ᵏ⁾ (k ≤ 6)  ◄┘
+ │        Ψ[j,s] = impacto en j de un choque unitario en s   (hoy: tensor.py = 7 rel. de flujo, f=1;
+ │                                                            propagate = 9 rel. + f → se unifican)
  │
  └──Ξ──► X_t:  x_v^struct ∈ R^8 · x_v^fin ∈ R^14 · x_v^risk · x_v^sem ∈ R^384 (Fase 2)
           P ∈ R^{T×n} ──► R (retornos) ──► Σ = BFBᵀ + D (k≈10)  ──► VaR, CVaR, RC, ρ_ij en O(k)
@@ -1013,13 +1044,13 @@ resumida + caché de prompt).
 
 | # | Entregable | Archivos | Prueba que lo fija |
 |---|---|---|---|
-| 1 | **Series EOD**: tabla `eod_prices` + ingesta diaria (scheduler) de los 568 símbolos con `adjclose`, volumen y fuente; lectura única para riesgo, screener y técnicos | `core/prices_store.py`, `ontology/db._COLUMNAS_TARDIAS` | ingesta idempotente; split ajustado; sin red en tests |
+| 1 | **Series EOD**: tabla `eod_prices` + **relleno inicial de ≥ 5 años** de `adjclose`/volumen (la Fase 2 necesita ≥ 252 días y la calibración, episodios desde 2021) + ingesta diaria (scheduler) de los 568 símbolos con fuente; lectura única para riesgo, screener y técnicos | `core/prices_store.py`, `ontology/db._COLUMNAS_TARDIAS` | ingesta idempotente; split ajustado; sin red en tests |
 | 2 | **Fotos diarias**: `entity_daily` (NRS por términos, capitalización, fundamentales) y `positions_eod` | `core/daily_snapshots.py` | una fila por (entidad, día) |
 | 3 | **Instrumentos**: tabla + migración desde `mkt` (ADR y multi-bolsa marcados para revisión) | `core/instruments.py` | cada empresa cotizada → ≥ 1 instrumento |
 | 4 | **Kernel único**: el cliente (`statematrix.js`) usa el kernel del servidor (suma, no máximo; 6 saltos; umbral; tope de fragilidad) o lo replica con prueba de paridad; `scenario_engine` siembra choques y propaga con el kernel único | `engine/statematrix.js`, `core/scenario_engine.py` | paridad cliente↔servidor sobre 937 choques |
-| 5 | **Motor de contexto v1**: selección por $\Psi$/PPR (solo flujo), $R(v\mid Q)$ sin término semántico, empaquetado voraz con redundancia, tabla de hechos [F#]; lo usan chat, @agente, investigación (parte de grafo) y MCP | `core/context_engine.py` | presupuesto respetado; cero aristas partner como "proveedor" |
+| 5 | **Motor de contexto v1**: selección por $\Psi$/PPR (solo flujo), $R(v\mid Q)$ sin término semántico, empaquetado voraz de cobertura ponderada bajo presupuesto (13.4), tabla de hechos [F#]; lo usan chat, @agente, investigación (parte de grafo) y MCP | `core/context_engine.py` | presupuesto respetado; cero aristas partner como "proveedor" |
 | 6 | **11 operaciones MCP** con contrato común, `detail` y `max_chars` | `mcp_server/tools.py`, `protocol.py` | tamaño `brief` acotado; esquema validado |
-| 7 | **Caché de prompt** (Anthropic) en sistema + catálogo; un catálogo de herramientas para chat y MCP; el modelo profundo escribe una sola vez | `core/ai.py`, `core/khipu_chat.py` | tokens medidos antes/después en `ai_usage` |
+| 7 | **Caché de prompt** donde el modelo lo permita (nivel profundo; prefijo estable ≥ mínimo del modelo) + `ai_usage` con escrituras y lecturas de caché SEPARADAS; un catálogo de herramientas para chat y MCP; el modelo profundo escribe una sola vez | `core/ai.py`, `core/ai_usage.py`, `core/khipu_chat.py` | costo medido antes/después con cache_read/cache_write separados |
 | 8 | **Puerta de calidad de datos**: detector de dirección por texto ("usa", "uses", "co-fundó…") + escala de pesos única → lista de revisión para Fabrizio (nada se cambia sin su marca) | `scripts/audit_graph.py` | trinquete de la línea base |
 
 **NO en la Fase 1**: base de grafos o vectorial, embeddings, descomposiciones tensoriales, GNN, datos intradía,
@@ -1039,7 +1070,8 @@ para tener algo que modelar.
 ### 20.3 Fase 3 — Tensores y operaciones avanzadas
 
 Panel $\mathcal{X}$ (tiempo × empresa × rasgo) con CP/Tucker exploratorio (regímenes); biblioteca de escenarios
-$\mathcal{S}$ versionada; **escenario → P&L** con $\kappa$ calibrado en episodios reales y bandas; Monte Carlo FHS con
+$\mathcal{S}$ versionada; **escenario → P&L** con un $\kappa$ PROVISIONAL (episodios reales, bandas anchas; se
+re-estima junto con el kernel en la Fase 4); Monte Carlo FHS con
 choques de cadena; optimizador media-CVaR con costos y rotación; modelo de liquidez (ADV, días para liquidar);
 lago Parquet + DuckDB para backtests.
 **NO**: guardar tensores, tensor-train, optimización con pronósticos de retorno de la IA. *Por qué*: los tensores
@@ -1048,11 +1080,12 @@ estimación de $\mu$).
 
 ### 20.4 Fase 4 — Graph ML / modelos especializados
 
-Calibración por máxima verosimilitud de los ~12 parámetros del kernel (sección 10); experimento KG-embeddings vs
+Calibración conjunta de los ~12 parámetros del kernel y de $\kappa$ (sección 10, con normalización fija y solo
+aristas fechadas); experimento KG-embeddings vs
 `suggest_links` (adoptar solo con +10 pts de Hit@10); GraphSAGE para empresas nuevas solo si supera; pesos de
 $R(v\mid Q)$ aprendidos de la retroalimentación del usuario (aprendizaje de ranking).
 **NO**: graph transformers, modelos profundos de punta a punta. *Por qué*: las etiquetas disponibles se cuentan en
-cientos, no en millones.
+decenas o pocos cientos, no en millones.
 
 ### 20.5 Fase 5 — Sistema completo de inteligencia financiera
 
@@ -1071,7 +1104,8 @@ complejidad operativa cuesta más que cualquier ganancia.
 - **Vector**: una lista de números que describe algo en un momento (margen, deuda, volatilidad…).
 - **Matriz**: una tabla de números; la del grafo dice cuánto depende cada empresa de cada otra.
 - **Tensor**: una tabla de más de dos dimensiones (por ejemplo empresa × rasgo × mes). Solo se arma para calcular.
-- **Disperso**: casi todo cero; se guarda solo lo que no es cero (por eso el motor ahora es 10× más rápido).
+- **Disperso**: casi todo cero; se guarda solo lo que no es cero (por eso cada choque ahora es ~10× más rápido y las
+  métricas de red, ~150×).
 - **Bitemporal**: guardar cuándo algo fue verdad Y cuándo lo supimos.
 - **Embedding**: convertir un texto en un vector para buscar por significado y no por letras.
 - **Modelo de factores**: explicar los movimientos de 568 acciones con ~10 fuerzas comunes; ahorra memoria y da

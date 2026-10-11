@@ -87,7 +87,7 @@
   {"id": "docs/AGENT_SECURITY.md", "label": "docs/AGENT_SECURITY.md", "layer": "docs", "lines": 27, "note": "Documentos/Doc AGENT_SECURITY", "path": "docs/AGENT_SECURITY.md", "type": "doc"},
   {"id": "docs/ARCHITECTURE.md", "label": "docs/ARCHITECTURE.md", "layer": "docs", "lines": 319, "note": "Documentos/Doc ARCHITECTURE", "path": "docs/ARCHITECTURE.md", "type": "doc"},
   {"id": "docs/ARQUITECTURA_CAPAS.md", "label": "docs/ARQUITECTURA_CAPAS.md", "layer": "docs", "lines": 68, "note": "Documentos/Doc ARQUITECTURA_CAPAS", "path": "docs/ARQUITECTURA_CAPAS.md", "type": "doc"},
-  {"id": "docs/ARQUITECTURA_V2.md", "label": "docs/ARQUITECTURA_V2.md", "layer": "docs", "lines": 1083, "note": "Documentos/Doc ARQUITECTURA_V2", "path": "docs/ARQUITECTURA_V2.md", "type": "doc"},
+  {"id": "docs/ARQUITECTURA_V2.md", "label": "docs/ARQUITECTURA_V2.md", "layer": "docs", "lines": 1117, "note": "Documentos/Doc ARQUITECTURA_V2", "path": "docs/ARQUITECTURA_V2.md", "type": "doc"},
   {"id": "docs/AUDITORIA.md", "label": "docs/AUDITORIA.md", "layer": "docs", "lines": 114, "note": "Documentos/Doc AUDITORIA", "path": "docs/AUDITORIA.md", "type": "doc"},
   {"id": "docs/BROKERAGE.md", "label": "docs/BROKERAGE.md", "layer": "docs", "lines": 334, "note": "Documentos/Doc BROKERAGE", "path": "docs/BROKERAGE.md", "type": "doc"},
   {"id": "docs/CLAIM_MODEL.md", "label": "docs/CLAIM_MODEL.md", "layer": "docs", "lines": 47, "note": "Documentos/Doc CLAIM_MODEL", "path": "docs/CLAIM_MODEL.md", "type": "doc"},
