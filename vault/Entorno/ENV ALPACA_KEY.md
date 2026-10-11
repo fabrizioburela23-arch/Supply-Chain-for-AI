@@ -1,0 +1,29 @@
+---
+tipo: "variable"
+capa: "Infraestructura"
+nombre: "ALPACA_KEY"
+documentada: true
+tags: ["capa/infraestructura", "tipo/variable"]
+---
+
+# ALPACA_KEY
+
+> Variable de entorno · se configura en Railway (Variables). Aquí solo el **nombre**, nunca el valor.
+
+## La leen
+
+- [[brokerage.alpaca.py]]
+- [[core.http.py]] _(en una lista de nombres, p. ej. para tapar secretos en logs)_
+- [[server.py]]
+
+## Pruebas que la fijan o nombran
+
+- [[tests.test_brokerage.py]]
+- [[tests.test_mcp.py]]
+- [[tests.test_overnight3_diag_bilingual.py]]
+- [[tests.test_phase3.py]]
+- [[tests.test_security.py]]
+
+## ¿Está documentada en CLAUDE.md?
+
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].

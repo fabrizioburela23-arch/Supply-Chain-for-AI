@@ -1,0 +1,142 @@
+{
+  "centerStrength": 0.45,
+  "close": false,
+  "collapse-color-groups": false,
+  "collapse-display": true,
+  "collapse-filter": false,
+  "collapse-forces": true,
+  "colorGroups": [
+    {
+      "color": {
+        "a": 1,
+        "rgb": 12035816
+      },
+      "query": "tag:#tipo/sesion"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 14267228
+      },
+      "query": "tag:#tipo/variable"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 2783446
+      },
+      "query": "tag:#capa/interfaz"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 15427636
+      },
+      "query": "tag:#capa/chat-agentes"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 1814394
+      },
+      "query": "tag:#capa/investigacion"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 15573248
+      },
+      "query": "tag:#capa/comite"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 15236004
+      },
+      "query": "tag:#capa/ontologia"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 10204444
+      },
+      "query": "tag:#capa/cuantitativo"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 6443222
+      },
+      "query": "tag:#capa/datos-vivo"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 14895432
+      },
+      "query": "tag:#capa/dinero"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 1287110
+      },
+      "query": "tag:#capa/mcp-api"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 11748804
+      },
+      "query": "tag:#capa/voz"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 5394766
+      },
+      "query": "tag:#capa/infraestructura"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 9133620
+      },
+      "query": "tag:#capa/datos-catalogo"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 10131859
+      },
+      "query": "tag:#capa/pruebas"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 12171441
+      },
+      "query": "tag:#capa/documentacion"
+    },
+    {
+      "color": {
+        "a": 1,
+        "rgb": 8223862
+      },
+      "query": "tag:#capa/otros"
+    }
+  ],
+  "hideUnresolved": true,
+  "lineSizeMultiplier": 1,
+  "linkDistance": 180,
+  "linkStrength": 1,
+  "nodeSizeMultiplier": 1.1,
+  "repelStrength": 12,
+  "scale": 0.6,
+  "search": "",
+  "showArrow": true,
+  "showAttachments": false,
+  "showOrphans": true,
+  "showTags": false,
+  "textFadeMultiplier": 0
+}

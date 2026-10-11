@@ -9,6 +9,44 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO (sin cambios en la app; sw.js sin tocar)
+
+Pedido de Fabrizio: "conectar este proyecto a un Obsidian o Graphify para que sea más fácil analizar y trabajar en
+el proyecto". En vez de una herramienta externa, un generador PROPIO, gratis y sin red:
+- `scripts/build_vault.py` (solo biblioteca estándar, determinista, sin IA; correrlo dos veces = bytes idénticos)
+  escribe `vault/`: una nota por módulo (para qué sirve, API pública, depende de / lo usan, orden de carga en
+  app.html, rutas que define y que llama, variables de entorno —SOLO nombres—, pruebas que lo cubren, sesiones que lo
+  mencionan), por grupo de API (pantalla → ruta → módulo) + `API herramientas MCP`, por variable de entorno, por
+  sesión de este archivo y por documento; capas (MOC) coloreadas en el grafo de Obsidian (`.obsidian/graph.json`);
+  `00 Mapa de Khipus` (portada), `01 Reporte del grafo` (cosas sueltas, con la heurística explicada) y
+  `02 Cómo usar esta bóveda` (paso a paso para Fabrizio). Además `vault/_grafo/graph.json` (nodos + aristas
+  imports/uses_global/calls_endpoint/defines_endpoint/tested_by/reads_env/mentions_in_session/loads_script/
+  references_file) y `vault/_grafo/mapa.html` (mapa interactivo autocontenido, d3 7.8.5 de cdnjs, claro/oscuro,
+  buscador, filtros por tipo y capa, panel de conexiones; probado en 1440 y 390 px).
+- `tests/test_vault.py`: el generador corre y `--check` pasa (bóveda vieja = suite roja), toda fuente tiene nota,
+  todo [[enlace]] resuelve, nombres válidos en Windows, cero secretos (patrones + valores reales), el mapa solo
+  carga d3 de cdnjs. `.gitignore`: de `vault/.obsidian/` solo se versionan `app.json` y `graph.json` (el generador
+  los crea si faltan; después son de Fabrizio: solo refresca los colores de capa). `vault` en `.dockerignore`.
+- Revisión adversarial del generador (mismo día): sin importaciones falsas por palabras sueltas ('server',
+  'matrix' → solo textos con puntos o dentro de import_module/__import__/sys.modules.get); la prueba de la bóveda
+  no cuenta como llamador ni cobertura; `var API = '/api/brokerage'` se une a las rutas relativas que arma
+  clients.js; claves de objeto y texto del HTML no son "usos" de globales; colores de capa distintos en Obsidian;
+  grupos de API con la capa de su prefijo (trade/portfolio → Dinero, voice → Voz, quote/crypto/news → En vivo);
+  las sesiones enlazan rutas sin extensión (`core/decide.chat_plan`).
+- REGLA (también en CLAUDE.md → Arquitectura): `python scripts/build_vault.py` antes de commitear cambios de
+  código/docs. Notas personales en `vault/Mis notas/` (el generador no la toca).
+- Primer reporte (cosas sueltas para revisar, nada se borró): el panel de trading de app.html pide
+  `/api/chart/<ticker>` que NO existe (su gráfico intradía nunca se dibuja; existe `/api/candles/<t>`);
+  `core/ai_usage.py` aún clasifica un prefijo viejo `/api/bixby`; 11 rutas sin ningún llamador (p. ej.
+  `/api/research/agents|budget|events`, `/api/ontology/graph`, `/api/tensor/status|eval`, `/api/voice/voices`,
+  `/api/trade/diag`);
+  ~63 variables que el código lee y CLAUDE.md no lista (+ `OPENAI_KEY` solo en docker-compose y
+  `GUNICORN_MAX_REQUESTS_JITTER` solo en el Dockerfile); 27 módulos sin prueba (los más grandes: temporal-graph.js,
+  spacemonitor.js, worldmonitor.js, universe2d.js, globe.js); ~42 exportaciones `window.*` que ningún otro archivo usa.
+- PENDIENTE Fabrizio: instalar Obsidian (obsidian.md) y abrir la carpeta `vault` como bóveda (ver la nota 02).
+
+---
+
 # SESIÓN 2026-10-10 — NOCHE: IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)
 
 Fabrizio pagó Claude/Gemini/ElevenLabs (y Jev pronto). Workflow de 9 agentes (6 constructores + 2 revisores + corrector;

@@ -23,3 +23,9 @@ Thumbs.db
 
 # salida local del dry-run de reconciliación (G3)
 reconcile_out/
+
+# Bóveda de Obsidian (vault/): de .obsidian/ solo se versionan app.json y graph.json; el resto
+# (workspace*.json, cache, appearance.json, core-plugins*.json, plugins/…) es de cada PC
+vault/.obsidian/*
+!vault/.obsidian/app.json
+!vault/.obsidian/graph.json

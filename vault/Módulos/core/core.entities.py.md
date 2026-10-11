@@ -1,0 +1,77 @@
+---
+tipo: "modulo"
+capa: "Ontología y grafo temporal"
+ruta: "core/entities.py"
+lenguaje: "python"
+lineas: 273
+aliases: ["core/entities.py"]
+tags: ["capa/ontologia", "tipo/modulo"]
+---
+
+# core/entities.py
+
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 273 líneas · `core/entities.py`
+
+## Para qué sirve
+
+Phase 1 · M2: identidad de entidad en el servidor.
+
+## API pública
+
+- `norm(txt)` — minúsculas + sin acentos + sin puntuación + espacios colapsados. _(línea 52)_
+- `strip_suffix(txt)` — Quita sufijos societarios finales ('nvidia corporation' → 'nvidia'). _(línea 62)_
+- `parse_ticker(raw)` — El campo `ticker` del catálogo mezcla símbolo y bolsa: 'RGTI · Nasdaq', 'IBM · NYSE (división)'. Devuelve (simbolo, bolsa) — solo la parte … _(línea 70)_
+- `external_ids(node)` — Identificadores externos estructurados de un nodo del catálogo. `mkt` es el símbolo limpio; `ticker` trae símbolo + bolsa mezclados. _(línea 86)_
+- `get_index(force=…, snapshot_path=…)` _(línea 166)_
+- `entity_ids_for(eid)` — [eid] + los ids VIEJOS (alias del catálogo) que hoy apuntan a eid. Revisión G1b/G1d: lo guardado con un id que luego se fusionó (claims de … _(línea 177)_
+- `resolve(texto, umbral=…)` — Resuelve un texto libre a una entidad del grafo. _(línea 202)_
+- `resolve_many(textos, umbral=…)` — Resuelve una lista; devuelve (resueltos {texto: info}, no_resueltos[]). _(línea 264)_
+
+**Internas** (empiezan con `_`): `_build_index`
+
+## Depende de
+
+- [[data.grafo_v0.json]] — lo nombra por su ruta
+
+## Lo usan
+
+- [[core.agents_api.py]] — lo importa
+- [[core.khipu_chat.py]] — lo importa
+- [[core.live_caps.py]] — lo importa
+- [[core.live_facts.py]] — lo importa
+- [[core.portfolio_advisor.py]] — lo importa
+- [[core.portfolio_ai.py]] — lo importa
+- [[core.space.py]] — lo importa
+- [[matrix.tensor.py]] — lo importa
+- [[mcp_server.tools.py]] — lo importa
+- [[ontology.agents.py]] — lo importa
+- [[ontology.api.py]] — lo importa
+- [[research.api.py]] — lo importa
+- [[research.auto_events.py]] — lo importa
+- [[research.committee.py]] — lo importa
+- [[research.committee_api.py]] — lo importa
+- [[research.context.py]] — lo importa
+- [[research.outcomes.py]] — lo importa
+- [[research.router.py]] — lo importa
+- [[research.runner.py]] — lo importa
+- herramienta MCP `get_committee_memo` → [[API herramientas MCP]]
+- herramienta MCP `get_company` → [[API herramientas MCP]]
+- herramienta MCP `get_ontology_object` → [[API herramientas MCP]]
+- herramienta MCP `get_research` → [[API herramientas MCP]]
+- herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
+- herramienta MCP `run_committee` → [[API herramientas MCP]]
+- herramienta MCP `run_research` → [[API herramientas MCP]]
+- herramienta MCP `search_companies` → [[API herramientas MCP]]
+
+_Además lo importan 3 pruebas (lista abajo)._
+
+## Pruebas que lo cubren
+
+- [[tests.test_committee_os_narr.py]]
+- [[tests.test_entities.py]]
+- [[tests.test_repair_review2.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-09-27 (b) — Nombres - búsqueda por nombre legal + etiquetas legibles (sw v137)]]
+- [[Sesión 2026-09-22 al 24 — PHASE 1 Live Investment Graph COMPLETA + velocidad + 3D temporal]]

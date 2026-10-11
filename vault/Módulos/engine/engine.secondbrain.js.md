@@ -1,0 +1,45 @@
+---
+tipo: "modulo"
+capa: "Ontología y grafo temporal"
+ruta: "engine/secondbrain.js"
+lenguaje: "javascript"
+lineas: 231
+aliases: ["engine/secondbrain.js"]
+tags: ["capa/ontologia", "tipo/modulo"]
+---
+
+# engine/secondbrain.js
+
+> Módulo · capa [[Capa Ontología y grafo temporal]] · 231 líneas · `engine/secondbrain.js`
+
+## Para qué sirve
+
+Second Brain de 5 capas para Khipu Finance Al seleccionar una empresa, abre un panel con 5 capas de conocimiento: 1. Mercado (precio + sparkline + NRS) 2. Noticias 3. Tesis (catalizadores + riesgos + IA) 4. Simulación (presets de escenario) 5. Red (betweenness + cascada + desglose NRS)
+
+## API pública (globales que define)
+
+`window.SecondBrain`
+
+## Depende de
+
+- [[app.html]] — usa `DataLayer`, `LINKS`, `NODE_BY_ID`, `V8detail`, `_secondBrain`, `activateStress`, `catColor`, `computeDownstream`, `computeNRS`, `computeNRSBreakdown` y 8 más
+- [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
+
+Se carga en [[app.html]] en la posición **35 de 93** (línea 7808), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
+
+## Lo usan
+
+- [[app.html]] — lo carga con `<script>` (posición 35)
+- [[app.html]] — usa `SecondBrain`
+
+## Endpoints que llama
+
+- `GET /api/candles/<ticker>` → [[server.py]] ([[API candles]])
+
+## Pruebas que lo cubren
+
+- [[tests.test_server_smoke.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-07-05 — Etapa 1 — Limpieza masiva - COMPLETA (4 batches publicados)]]

@@ -1,0 +1,70 @@
+---
+tipo: "datos"
+capa: "Datos del catálogo"
+ruta: "data/grafo_v0.json"
+lenguaje: "json"
+lineas: 45342
+aliases: ["data/grafo_v0.json"]
+tags: ["capa/datos-catalogo", "tipo/datos"]
+---
+
+# data/grafo_v0.json
+
+> Datos · capa [[Capa Datos del catálogo]] · 45.342 líneas · `data/grafo_v0.json`
+
+## Para qué sirve
+
+Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que el navegador)
+
+## Qué datos contiene
+
+| Clave | Tipo | Tamaño / valor |
+|---|---|---|
+| `exported_at` | fecha | `2026-10-06T04:19:20.593Z` |
+| `counts` | objeto | 8 |
+| `nodes` | lista | 937 |
+| `links` | lista | 2.510 |
+| `node_id_alias` | objeto | 93 |
+| `legal_names` | objeto | 159 |
+| `categories` | objeto | 108 |
+| `sectors9` | objeto | 13 |
+| `cat_to_sector` | objeto | 108 |
+| `preipo_intel` | objeto | 14 |
+| `temporal_facts` | lista | 105 |
+| `ontology` | objeto | 4 |
+
+## Depende de
+
+_Nada interno._
+
+## Lo usan
+
+- [[core.entities.py]] — lo nombra por su ruta
+- [[core.screener.py]] — lo nombra por su ruta
+- [[core.semantic.py]] — lo nombra por su ruta
+- [[core.sim_agents.py]] — lo nombra por su ruta
+- [[core.world.py]] — lo nombra por su ruta
+- [[matrix.tensor.py]] — lo nombra por su ruta
+- [[mcp_server.tools.py]] — lo nombra por su ruta
+- [[ontology.reconcile.py]] — lo nombra por su ruta
+- [[scripts.audit_graph.py]] — lo nombra por su ruta
+- [[scripts.ingest_multicapa.py]] — lo nombra por su ruta
+- [[scripts.migrate_v0_to_ontology.py]] — lo nombra por su ruta
+
+## Pruebas que lo cubren
+
+- [[tests.test_entities.py]]
+- [[tests.test_graph_audit.py]]
+- [[tests.test_khipu_chat.py]]
+- [[tests.test_khipus_os_chat.py]]
+- [[tests.test_ontology.py]]
+- [[tests.test_repair_graph.py]]
+- [[tests.test_server_smoke.py]]
+- [[tests.test_world.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2 - TENSORES + AUTO-CONEXIÓN (sw v241)]]
+- [[Sesión 2026-10-04 (h) — MISIÓN DE REPARACIÓN P0 INVESTIGACIÓN (R1-R6, sw v201)]]
+- [[Sesión 2026-07-06 — Etapa 2 — Datos limpios - COMPLETA (5 batches publicados)]]
+- [[Sesión 2026-07-10 — modo máximo (feedback - perfeccionar Khipu, 555 empresas, vivo, 3D)]]

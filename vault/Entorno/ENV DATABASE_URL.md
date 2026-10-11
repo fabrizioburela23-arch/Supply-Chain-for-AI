@@ -1,0 +1,62 @@
+---
+tipo: "variable"
+capa: "Infraestructura"
+nombre: "DATABASE_URL"
+documentada: true
+tags: ["capa/infraestructura", "tipo/variable"]
+---
+
+# DATABASE_URL
+
+> Variable de entorno · se configura en Railway (Variables). Aquí solo el **nombre**, nunca el valor.
+
+## La leen
+
+- [[core.http.py]] _(en una lista de nombres, p. ej. para tapar secretos en logs)_
+- [[ontology.db.py]]
+- [[scripts.audit_graph.py]]
+- [[scripts.migrate_v0_to_ontology.py]]
+- [[scripts.reconcile_v0_to_ontology.py]]
+
+## Pruebas que la fijan o nombran
+
+- [[tests.test_agent_dudosos.py]]
+- [[tests.test_ai_usage.py]]
+- [[tests.test_brokerage.py]]
+- [[tests.test_committee_os_narr.py]]
+- [[tests.test_graph_api.py]]
+- [[tests.test_infra.py]]
+- [[tests.test_ingest_news.py]]
+- [[tests.test_matrix.py]]
+- [[tests.test_mcp.py]]
+- [[tests.test_ontology.py]]
+- [[tests.test_ontology_actions.py]]
+- [[tests.test_ontology_agents.py]]
+- [[tests.test_ontology_alerts.py]]
+- [[tests.test_phase3.py]]
+- [[tests.test_portfolio_persist.py]]
+- [[tests.test_portfolio_reports.py]]
+- [[tests.test_provenance.py]]
+- [[tests.test_reconcile.py]]
+- [[tests.test_repair_committee.py]]
+- [[tests.test_repair_graph.py]]
+- [[tests.test_repair_ontology.py]]
+- [[tests.test_repair_ontology_review.py]]
+- [[tests.test_repair_ops.py]]
+- [[tests.test_repair_research.py]]
+- [[tests.test_repair_review2.py]]
+- [[tests.test_research.py]]
+- [[tests.test_security.py]]
+- [[tests.test_server_smoke.py]]
+- [[tests.test_tensor_autolink.py]]
+
+## ¿Está documentada en CLAUDE.md?
+
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
+
+## Mencionada en sesiones
+
+- [[Sesión 2026-09-22 al 24 — PHASE 1 Live Investment Graph COMPLETA + velocidad + 3D temporal]]
+- [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]]
+- [[Sesión 2026-07-07 — Etapa 3 — Motor de matrices + hiperaristas - NÚCLEO COMPLETO]]
+- [[Sesión 2026-10-03 — VISIÓN PRÓXIMA ETAPA (pedido, NO es parte de Phase 3)]]

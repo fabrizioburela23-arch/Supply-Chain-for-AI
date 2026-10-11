@@ -1,0 +1,14 @@
+{
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "Mis notas/adjuntos",
+  "newFileFolderPath": "Mis notas",
+  "newFileLocation": "folder",
+  "newLinkFormat": "shortest",
+  "promptDelete": true,
+  "readableLineLength": true,
+  "showLineNumber": false,
+  "useMarkdownLinks": false,
+  "userIgnoreFilters": [
+    "_grafo/"
+  ]
+}

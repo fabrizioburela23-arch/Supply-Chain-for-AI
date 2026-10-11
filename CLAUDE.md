@@ -17,6 +17,17 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 
 ## Arquitectura
 
+- **BÓVEDA OBSIDIAN + GRAFO DEL CÓDIGO (2026-10-11)**: `vault/` es el repo visto como bóveda de Obsidian
+  (una nota por módulo, grupo de API → módulo → quién la llama, herramienta MCP, variable de entorno —SOLO
+  nombres— y sesión de este ESTADO; capas con colores; `01 Reporte del grafo` = cosas sueltas: sin pruebas,
+  globales/rutas sin uso, variables sin documentar) + `vault/_grafo/graph.json` y `mapa.html` (mapa
+  interactivo, d3 de cdnjs). La genera `python scripts/build_vault.py` (determinista, stdlib, sin IA ni red;
+  la tabla de capas `REGLAS_CAPA` vive ahí). REGLA: regenerarla antes de commitear cambios que agreguen/quiten/
+  renombren módulos, endpoints o variables de entorno — y como `tests/test_vault.py` corre `--check` (bóveda
+  vieja = suite roja), en la práctica antes de todo commit que toque código o docs. Conflicto de merge dentro de
+  `vault/` → NO resolver a mano: quedarse con cualquiera de los dos lados y regenerar. No editar notas generadas;
+  lo personal va en `vault/Mis notas/` (el generador no la toca); `.obsidian/app.json`/`graph.json` se crean si
+  faltan y después son de Fabrizio (solo se refrescan los colores de capa). `vault` está en .dockerignore.
 - `app.html` (~12,300 líneas): TODA la UI en un archivo, 8 bloques `<script>`
   inline. Tabs: map, market, analysis, geo, simulation, space, terminal,
   canvas, tkg (◈ Grafo Temporal — ya SIN botón de pestaña: se abre como vista

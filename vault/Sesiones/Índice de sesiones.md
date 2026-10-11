@@ -1,0 +1,96 @@
+---
+tipo: "indice"
+capa: "Documentación"
+tags: ["capa/documentacion", "tipo/indice"]
+---
+
+# Índice de sesiones
+
+86 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+
+- [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]] — 13 archivos
+- [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]] — 21 archivos
+- [[Sesión 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)]] — 10 archivos
+- [[Sesión 2026-10-06 (v) — MARCA, TOOLS E INVOCAR (sw v249) + GEMINI 3.8 CON RESPALDOS]] — 0 archivos
+- [[Sesión 2026-10-06 (iv) — JEV AL MANDO DEL CHAT (sw v248)]] — 2 archivos
+- [[Sesión 2026-10-06 (iii) — HABILIDADES PROPIAS DE CADA AGENTE (sw v247)]] — 8 archivos
+- [[Sesión 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)]] — 8 archivos
+- [[Sesión 2026-10-06 (hh) — CANVAS NIVEL POWER BI - COLOR VALIDADO + INTERACCIÓN (sw v244)]] — 2 archivos
+- [[Sesión 2026-10-06 (gg) — DIRECCIONES AL REVÉS + PESO DE LICENCIAS + PISO DEL KERNEL]] — 6 archivos
+- [[Sesión 2026-10-06 (ff) — ONTOLOGÍA NIVEL 2 - TENSORES + AUTO-CONEXIÓN (sw v241)]] — 8 archivos
+- [[Sesión 2026-10-06 (ee) — MAPA POR CAPITALIZACIÓN EN VIVO + HOME CON CADA CARTERA (sw v240)]] — 0 archivos
+- [[Sesión 2026-10-05 (dd) — RENDIMIENTO DE MI CARTERA COMO GRÁFICO SIN IA (sw v238-v239)]] — 4 archivos
+- [[Sesión 2026-10-05 (cc) — GRÁFICOS - DATOS EN VIVO + MÁS PREGUNTAS SIN IA (sw v237)]] — 4 archivos
+- [[Sesión 2026-10-05 (bb) — SIMULACIÓN IA SIMPLE CON DATOS EN VIVO (sw v235)]] — 2 archivos
+- [[Sesión 2026-10-05 (aa) — FUNDAMENTALES EN VIVO DE TODO EL GRAFO (sw v234)]] — 5 archivos
+- [[Sesión 2026-10-05 (z) — SIMULACIÓN CON CONTEXTO EN VIVO + RÓTULOS DE ORIGEN (sw v233)]] — 2 archivos
+- [[Sesión 2026-10-05 (y) — NRS ACOTADO + BÚSQUEDA DEL MAPA (sw v232)]] — 4 archivos
+- [[Sesión 2026-10-05 (x) — CIFRAS VIEJAS - VERIFICADAS - EN VIVO (sw v231)]] — 3 archivos
+- [[Sesión 2026-10-05 (w) — REVISIÓN DEL WORLD MONITOR CON DATOS REALES (sw v229)]] — 0 archivos
+- [[Sesión 2026-10-05 (v) — ABRE MI CUENTA OFRECE BRÓKER + TUS CARTERAS (sw v228)]] — 0 archivos
+- [[Sesión 2026-10-05 (u) — ÍNDICE GPR (Caldara-Iacoviello) EN VIVO (sw v227)]] — 1 archivos
+- [[Sesión 2026-10-05 (t) — ESTRECHOS Y PAÍSES - CURADO + EN VIVO (sw v226)]] — 1 archivos
+- [[Sesión 2026-10-05 (s) — CARTERA CONTEXTO, AGENTE QUIÉN RESPONDE (sw v225)]] — 1 archivos
+- [[Sesión 2026-10-05 (r) — RESPUESTA ENFOCADA EN LA CARTERA + UN ANALISTA CONCRETO SOBRE TU]] — 1 archivos
+- [[Sesión 2026-10-05 (q) — COMITÉ DE CARTERA GEOPOLÍTICA EN VIVO (sw v223)]] — 3 archivos
+- [[Sesión 2026-10-05 (p) — GEOPOLÍTICA - CAPAS EN PAUSA REVIVIDAS + RIESGO PAÍS + CORTES]] — 3 archivos
+- [[Sesión 2026-10-05 (o) — AGENTES CON CHIP EN EL CHAT - EL COMITÉ DE CARTERA RESPONDE AHÍ]] — 3 archivos
+- [[Sesión 2026-10-05 (n) — GEOPOLÍTICA CON FUENTES OFICIALES (sw v216)]] — 6 archivos
+- [[Sesión 2026-10-05 (m) — EL COMITÉ ANALIZA TODAS LAS POSICIONES (sw v215)]] — 4 archivos
+- [[Sesión 2026-10-05 (l) — CARTERAS QUE DESAPARECÍAN + COMITÉ DE CARTERA REGISTRADO (sw v214)]] — 2 archivos
+- [[Sesión 2026-10-05 (k) — OPCIONES FIJAS Y MENÚ - EN EL CHAT (sw v213)]] — 2 archivos
+- [[Sesión 2026-10-05 (j) — COMANDOS Y AGENTES EN EL CHAT (sw v212)]] — 3 archivos
+- [[Sesión 2026-10-04 (i) — MISIÓN DE REPARACIÓN P1 GRAFO + P2 WORLD MONITOR Y OPERACIÓN]] — 3 archivos
+- [[Sesión 2026-10-04 (h) — MISIÓN DE REPARACIÓN P0 INVESTIGACIÓN (R1-R6, sw v201)]] — 13 archivos
+- [[Sesión 2026-10-04 (g) — KHIPU COMO ASISTENTE - ANALISTAS EN EL CHAT, PROMPT, MEMORIA]] — 5 archivos
+- [[Sesión 2026-10-04 (f) — EXPECTING VALUE EN INVESTIGAR - JSON ESTRICTO + MENSAJES PARA]] — 2 archivos
+- [[Sesión 2026-10-04 (e) — INICIO DE LA CABINA REDISEÑADO + FEED SIN NOTICIAS VIEJAS]] — 1 archivos
+- [[Sesión 2026-10-04 (d) — ESCRITORIO - ORDEN AUTOMÁTICO + FIJAR A LOS COSTADOS (sw v189)]] — 1 archivos
+- [[Sesión 2026-10-04 (c) — JEV (TYPESAFE) EN MODO SOMBRA - PORTERO DEL CHAT (sw v188)]] — 4 archivos
+- [[Sesión 2026-10-04 (b) — ESCRITORIO - REVISIÓN ADVERSARIAL Y CORRECCIONES (sw v187)]] — 2 archivos
+- [[Sesión 2026-10-04 — ESCRITORIO KHIPU K1 - VENTANAS DENTRO DE LA CABINA (sw v186)]] — 3 archivos
+- [[Sesión 2026-10-03 (g) — SINCRONIZACIÓN ENTRE DISPOSITIVOS (sw v184)]] — 3 archivos
+- [[Sesión 2026-10-03 (f) — PANEL DE TRADING BILINGÜE Y MÓVIL + APROBACIÓN DEL COMITÉ CON]] — 3 archivos
+- [[Sesión 2026-10-03 (e) — RESPUESTAS CORTADAS + HERRAMIENTA DE ESCENARIOS EN EL CHAT]] — 3 archivos
+- [[Sesión 2026-10-03 (d) — KHIPU YA NO FILTRA SU BORRADOR EL AGENTE REDACTA SIEMPRE]] — 1 archivos
+- [[Sesión 2026-10-03 (c) — TERMINAL REDISEÑADA + POP-UPS DE COMPRA-VENTA (sw v182)]] — 6 archivos
+- [[Sesión 2026-10-03 (b) — REPORTES DE CARTERA, PREGÚNTALE A TU CARTERA, NOTICIAS DE TU]] — 5 archivos
+- [[Sesión 2026-10-03 — GASTO DE IA, SIM. ESTRUCTURAL, AVATARES, CANVAS, COMITÉ DE CARTERA]] — 14 archivos
+- [[Sesión 2026-10-02 (noche) — ANÁLISIS MÁS PROFUNDO + CONCLUSIONES EN TODAS PARTES (sw v179)]] — 5 archivos
+- [[Sesión 2026-10-02 (b) — COMITÉ CON ANÁLISIS REAL DE IA + INVESTIGACIÓN QUE NO SE CAE]] — 4 archivos
+- [[Sesión 2026-10-02 — SALA DEL COMITÉ - PUESTOS + DEBATE EN VIVO (sw v175)]] — 3 archivos
+- [[Sesión 2026-09-30 al 10-02 — MONITORES, RIESGO FÁCIL, ASISTENTE, CEREBRO DE KHIPU]] — 6 archivos
+- [[Sesión 2026-09-30 — PHASE 3 + WORLD MONITOR + CORRETAJE + MCP + ENDURECIMIENTO (sw v170)]] — 11 archivos
+- [[Sesión 2026-09-29 (día) — REPORTE DE RIESGO - VaR + VEGA-KAPPA (sw v164)]] — 4 archivos
+- [[Sesión 2026-09-29 (noche) — TODO EN VIVO + AUDITORÍA DE DATOS FALSOS (sw v161)]] — 5 archivos
+- [[Sesión 2026-09-28 (e) — PHASE 2 - AGENT RESEARCH SWARM (sw v153)]] — 5 archivos
+- [[Sesión 2026-09-28 (d) — Valuación de PRIVADAS en vivo (sw v152)]] — 3 archivos
+- [[Sesión 2026-09-28 (c) — DOSSIER PARA TODAS LAS EMPRESAS + DATOS EN VIVO (sw v151)]] — 7 archivos
+- [[Sesión 2026-09-28 (b) — Estado en bolsa VERIFICADO (sw v142-143)]] — 7 archivos
+- [[Sesión 2026-09-28 — X-Ray pulido (sw v139)]] — 6 archivos
+- [[Sesión 2026-09-27 (c) — Feed global Lo último en el grafo (sw v138)]] — 2 archivos
+- [[Sesión 2026-09-27 (b) — Nombres - búsqueda por nombre legal + etiquetas legibles (sw v137)]] — 5 archivos
+- [[Sesión 2026-09-27 — La app en el TELÉFONO (sw v136)]] — 3 archivos
+- [[Sesión 2026-09-25 — El Grafo Temporal se fusiona con el mapa principal]] — 2 archivos
+- [[Sesión 2026-09-22 al 24 — PHASE 1 Live Investment Graph COMPLETA + velocidad + 3D temporal]] — 15 archivos
+- [[Sesión 2026-09-21 — Limpieza estructural - Track A Fase 2 + Track B completos]] — 9 archivos
+- [[Sesión 2026-08-02 — Expansión multicapa COMPLETA (olas 1-6) - 949 nodos, 13 sectores, 70]] — 4 archivos
+- [[Sesión 2026-08-01 — Prompt frontend+IA (Cowork) - Tracks C y D implementados]] — 5 archivos
+- [[Sesión 2026-07-19 — Motor de matrices DISPERSAS + centralidad]] — 5 archivos
+- [[Sesión 2026-07-14 — (madrugada, autónoma) — víspera de la demo app en v95]] — 1 archivos
+- [[Sesión 2026-07 — REDISEÑO MAYOR — mapa único con capas + motor de matrices]] — 1 archivos
+- [[Sesión 2026-07-03 — Etapa 0 — Seguridad y cimientos - CÓDIGO COMPLETO]] — 1 archivos
+- [[Sesión 2026-07-05 — Etapa 1 — Limpieza masiva - COMPLETA (4 batches publicados)]] — 5 archivos
+- [[Sesión 2026-07-06 — Etapa 2 — Datos limpios - COMPLETA (5 batches publicados)]] — 5 archivos
+- [[Sesión 2026-07-07 — Etapa 3 — Motor de matrices + hiperaristas - NÚCLEO COMPLETO]] — 5 archivos
+- [[Sesión 2026-07 — Ampliaciones (tras feedback simulaciones muy cerradas, más info)]] — 9 archivos
+- [[Sesión 2026-07-10 — modo máximo (feedback - perfeccionar Khipu, 555 empresas, vivo, 3D)]] — 13 archivos
+- [[Sesión 2026-07-12 — Etapa H — Feedback 7 - explicabilidad + regla bilingüe + cripto]] — 5 archivos
+- [[Sesión 2026-07-12 — Etapas I+J — Feedback 8 + Expediente Cripto (sw v76)]] — 6 archivos
+- [[Sesión 2026-07-12 — Etapa K — Burbujas cripto + universo 2D + caso Opera (sw v77)]] — 3 archivos
+- [[Sesión 2026-07-12 — Etapa L — Universo 2D como motor PRINCIPAL (sw v78)]] — 2 archivos
+- [[Sesión 2026-07-13 — Etapa M — Trading cripto en papel, integrado en Khipu (sw v80)]] — 4 archivos
+- [[Sesión 2026-07-13 — Etapa N — CAUSA RAÍZ del 3D no da ENCONTRADA Y CORREGIDA (sw v84)]] — 2 archivos
+- [[Sesión 2026-07-13 — Etapa O — Khipus Finance AI - 9 frentes + rebrand + Cabina inicial]] — 5 archivos
+- [[Sesión 2026-10-03 — Cierre de Phase 3]] — 2 archivos
+- [[Sesión 2026-10-03 — VISIÓN PRÓXIMA ETAPA (pedido, NO es parte de Phase 3)]] — 3 archivos

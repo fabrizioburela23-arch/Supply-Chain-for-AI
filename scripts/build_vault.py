@@ -18,10 +18,11 @@ Uso:
   python scripts/build_vault.py --check   regenera en memoria; sale 1 y lista las
                                           diferencias si vault/ está desactualizada
 
-El generador es dueño de las notas 00/01/02, de las carpetas Capas/ Módulos/ API/
-Entorno/ Sesiones/ Pruebas/ Documentos/ _grafo/ y de .obsidian/app.json +
-.obsidian/graph.json. Cualquier otra carpeta (p. ej. "Mis notas/") es del usuario
-y no se toca nunca.
+El generador es dueño de las notas 00/01/02 y de las carpetas Capas/ Módulos/ API/
+Entorno/ Sesiones/ Pruebas/ Documentos/ _grafo/. .obsidian/app.json y
+.obsidian/graph.json los crea si faltan; si ya existen son de la persona (Obsidian
+los reescribe al mover controles): solo refresca los colores de capa del grafo.
+Cualquier otra carpeta (p. ej. "Mis notas/") es del usuario y no se toca nunca.
 """
 import argparse
 import ast
@@ -58,6 +59,8 @@ ENV_INFRA_FILES = ['Dockerfile', 'docker-compose.yml', 'railway.toml', '.github/
 # 2. LA TABLA DE CAPAS (única fuente: cambiar aquí y regenerar)
 # ════════════════════════════════════════════════════════════════════════════
 # clave → (nombre visible, etiqueta, color en Obsidian, estilo en el mapa, descripción)
+# El color de Obsidian es PLANO (no hay anillos): cada capa lleva un tono distinto (verde agua / verde lima,
+# azul / celeste, naranja / marrón…). mapa.html usa en cambio 8 ranuras + relleno o anillo.
 # estilo en el mapa: (ranura de color s1..s8 | n1/n2 = gris, relleno 'fill' | 'ring')
 CAPAS = [
     ('interfaz', 'Interfaz (Khipus OS)', 'capa/interfaz', '#2a78d6', ('s1', 'fill'),
@@ -70,20 +73,20 @@ CAPAS = [
      'El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera.'),
     ('ontologia', 'Ontología y grafo temporal', 'capa/ontologia', '#e87ba4', ('s5', 'fill'),
      'La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.'),
-    ('cuant', 'Cuantitativo (matrices, tensores, riesgo)', 'capa/cuantitativo', '#008300', ('s6', 'fill'),
+    ('cuant', 'Cuantitativo (matrices, tensores, riesgo)', 'capa/cuantitativo', '#9bb51c', ('s6', 'fill'),
      'Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.'),
     ('vivo', 'Datos en vivo (cotizaciones, mundo, espacio, fundamentales)', 'capa/datos-vivo', '#6250d6',
      ('s7', 'fill'),
      'Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.'),
     ('dinero', 'Dinero (carteras, trading, corretaje)', 'capa/dinero', '#e34948', ('s8', 'fill'),
      'Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana.'),
-    ('mcp', 'MCP y API', 'capa/mcp-api', '#184f95', ('s1', 'ring'),
+    ('mcp', 'MCP y API', 'capa/mcp-api', '#13a3c6', ('s1', 'ring'),
      'El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas.'),
-    ('voz', 'Voz', 'capa/voz', '#a3401a', ('s2', 'ring'),
+    ('voz', 'Voz', 'capa/voz', '#b345c4', ('s2', 'ring'),
      'Khipu por voz: ElevenLabs (servidor y navegador) y el orbe.'),
     ('infra', 'Infraestructura', 'capa/infraestructura', '#52514e', ('n1', 'fill'),
      'La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.'),
-    ('catalogo', 'Datos del catálogo', 'capa/datos-catalogo', '#0f7a55', ('s3', 'ring'),
+    ('catalogo', 'Datos del catálogo', 'capa/datos-catalogo', '#8b5e34', ('s3', 'ring'),
      'El catálogo curado de empresas y vínculos (nodes/*.js), el snapshot data/grafo_v0.json y sus generadores.'),
     ('pruebas', 'Pruebas', 'capa/pruebas', '#9a9993', ('n2', 'fill'),
      'Las pruebas automáticas (pytest) que vigilan cada parte.'),
@@ -153,6 +156,12 @@ REGLAS_CAPA = [
     ('app.html', 'interfaz'), ('engine/*', 'interfaz'),
 ]
 
+# Este mismo generador (y su prueba) nombra rutas y archivos en sus textos como DATOS: no cuenta como "uso"
+# (ni llamadas a rutas, ni referencias, ni cobertura de pruebas).
+ANALYSIS_EXCLUDE = {'scripts/build_vault.py', 'tests/test_vault.py'}
+# Pruebas excluidas del análisis: lo único que cubren de verdad.
+TEST_SCOPE = {'tests/test_vault.py': {'scripts/build_vault.py'}}
+
 # nodes/*.js que son CÓDIGO (el resto son datos)
 NODES_CODE = {'nodes/merge_graph.js'}
 
@@ -180,6 +189,8 @@ GENERIC_NAMES = {
     'format', 'color', 'size', 'width', 'height', 'label', 'title', 'body', 'view', 'mode', 'lang', 'resize',
     'refresh', 'apply', 'save', 'fetchJSON', 'escape', 'toast', 'debounce', 'throttle', 'clamp', 'sleep', 'now',
     'cache', 'config', 'sum', 'max', 'min', 'avg', 'pct', 'num', 'money', 'fmtNum', 'fmtPct', 'tr', 'L', 'T',
+    'selected', 'sim', 'svg', 'zoom', 'root', 'legend', 'tooltip', 'canvas', 'ctx', 'scale', 'tip', 'g', 'el',
+    'path', 'nodeG', 'linkG', 'width', 'height', 'margin', 'color', 'colors', 'labels', 'chart', 'charts', 'timer',
 }
 
 DECL_WORDS = {'function', 'class', 'var', 'let', 'const'}
@@ -228,8 +239,11 @@ def safe_name(s, limit=96):
     s = _FORBIDDEN.sub(' ', s)
     s = ''.join(ch for ch in s if ch.isalnum() or ch in ' -—–(),.+&\'_')
     s = re.sub(r'\s+', ' ', s).strip(' .-')
+    s = re.sub(r'\s+([,)])', r'\1', re.sub(r'\(\s+', '(', s))
     if len(s) > limit:
         s = s[:limit].rsplit(' ', 1)[0].rstrip(' .-—,')
+        if s.count('(') > s.count(')'):
+            s = s[:s.rfind('(')].rstrip(' .-—,')
     return s or 'sin nombre'
 
 
@@ -242,7 +256,7 @@ def prose(s):
     s = s.replace('*', r'\*').replace('$', r'\$').replace('==', '= =')
     if s.count('`') % 2:
         s = s.replace('`', "'")
-    if s[:1] in '-+>|' or re.match(r'\d+\.\s', s):
+    if s and (s[0] in '-+>|' or re.match(r'\d+\.\s', s)):
         s = '\\' + s
     return s
 
@@ -327,29 +341,44 @@ _TPL_STOP = re.compile(r'[`\\]|\$\{')
 
 
 class JSScan:
+    """code = fuente sin comentarios (con cadenas); code_ns = además sin el TEXTO de las cadenas
+    (quedan comillas vacías; el código dentro de ${…} se conserva); code_cs = como code_ns pero con las
+    cadenas '…'/"…" intactas (para seguir concatenaciones sin que una /regex/ confunda)."""
+
     def __init__(self, src):
         self.src = src
         self.out = []
+        self.ns = []
+        self.cs = []
         self.strings = []
+        self.templates = []
         self.top = []
         self._code(0, nested=False)
         self.code = ''.join(self.out)
+        self.code_ns = ''.join(self.ns)
+        self.code_cs = ''.join(self.cs)
+
+    def _emit(self, tok, ns=None, cs=None):
+        self.out.append(tok)
+        n_ = tok if ns is None else ns
+        self.ns.append(n_)
+        self.cs.append(n_ if cs is None else cs)
 
     def _code(self, i, nested):
-        src, n, out = self.src, len(self.src), self.out
+        src, n = self.src, len(self.src)
         depth = 0
         prev = None
         while i < n:
             m = _TOK.match(src, i)
             kind, tok = m.lastgroup, m.group()
             if kind == 'ws':
-                out.append(tok)
+                self._emit(tok)
             elif kind == 'lc':
                 pass
             elif kind == 'bc':
-                out.append(' ')
+                self._emit(' ')
             elif kind in ('sq', 'dq'):
-                out.append(tok)
+                self._emit(tok, '""', tok)
                 body = tok[1:-1] if len(tok) >= 2 and tok[-1] == tok[0] else tok[1:]
                 self.strings.append(body)
                 prev = ('s', '')
@@ -362,69 +391,72 @@ class JSScan:
                         (prev[0] == 'w' and prev[1] in RX_PREV_WORDS):
                     r = _RX.match(src, i)
                     if r:
-                        out.append(r.group())
+                        self._emit(r.group(), '/x/')
                         prev = ('r', '')
                         i = r.end()
                         continue
-                out.append('/')
+                self._emit('/')
                 prev = ('p', '/')
             elif kind == 'id':
                 if not nested and depth == 0 and prev and prev[0] == 'w' and prev[1] in DECL_WORDS:
                     self.top.append(tok)
-                out.append(tok)
+                self._emit(tok)
                 prev = ('w', tok)
             elif kind == 'num':
-                out.append(tok)
+                self._emit(tok)
                 prev = ('n', tok)
             else:
                 if tok == '{':
                     depth += 1
                 elif tok == '}':
                     if depth == 0 and nested:
-                        out.append('}')
+                        self._emit('}')
                         return i + 1
                     depth = max(0, depth - 1)
-                out.append(tok)
+                self._emit(tok)
                 prev = ('p', tok)
             i = m.end()
         return n
 
     def _template(self, i):
-        src, n, out = self.src, len(self.src), self.out
-        out.append('`')
+        src, n = self.src, len(self.src)
+        self._emit('`')
         j = i + 1
         parts = []
         while j < n:
             m = _TPL_STOP.search(src, j)
             if not m:
                 parts.append(src[j:])
-                out.append(src[j:])
+                self._emit(src[j:], '')
                 j = n
                 break
             seg = src[j:m.start()]
             parts.append(seg)
-            out.append(seg)
+            self._emit(seg, '')
             t = m.group()
             if t == '\\':
                 esc = src[m.start():m.start() + 2]
                 parts.append(esc)
-                out.append(esc)
+                self._emit(esc, '')
                 j = m.start() + 2
             elif t == '`':
-                out.append('`')
+                self._emit('`')
                 j = m.end()
                 break
             else:
-                out.append('${')
+                self._emit('${')
                 parts.append('◊')
                 j = self._code(m.end(), nested=True)
         self.strings.append(''.join(parts))
+        self.templates.append(''.join(parts))
         return j
 
 
 _ID_RX = re.compile(r'[A-Za-z_$][\w$]*')
 _WIN_DEF = re.compile(r'(?<![\w$.])(?:window|globalThis)\.([A-Za-z_$][\w$]*)\s*(?:=(?![=>])|\|\|=|\?\?=|&&=)')
 _WIN_DEF2 = re.compile(r'''(?<![\w$.])window\[\s*['"]([A-Za-z_$][\w$]*)['"]\s*\]\s*=(?!=)''')
+_WIN_READ = re.compile(r'(?<![\w$.])(?:window|globalThis|self)\.([A-Za-z_$][\w$]*)(?![\w$])'
+                       r'(?!\s*(?:=(?![=>])|\|\|=|\?\?=|&&=))')
 _WIN_DEF3 = re.compile(r'''defineProperty\(\s*window\s*,\s*['"]([A-Za-z_$][\w$]*)['"]''')
 _LOCAL_DECL = re.compile(r'(?:\bfunction\s*\*?\s*|\bclass\s+|\b(?:var|let|const)\s+)([A-Za-z_$][\w$]*)')
 _PARAMS = re.compile(r'\bfunction\s*\*?\s*[\w$]*\s*\(([^)]*)\)')
@@ -434,8 +466,22 @@ _CATCH = re.compile(r'\bcatch\s*\(\s*([A-Za-z_$][\w$]*)')
 _DESTR = re.compile(r'\b(?:var|let|const)\s*[\{\[]([^}\]]*)[\}\]]')
 
 
-def js_identifiers(code_text):
-    """(identificadores sueltos, identificadores leídos como window.X)"""
+def _is_object_key(code_text, s, e):
+    """¿El identificador en [s, e) es la CLAVE de un objeto ({ LINKS: … } / , clave: …)? Entonces no es un uso."""
+    j = e
+    n = len(code_text)
+    while j < n and code_text[j] in ' \t\r\n':
+        j += 1
+    if j >= n or code_text[j] != ':' or code_text[j + 1:j + 2] == ':':
+        return False
+    k = s - 1
+    while k >= 0 and code_text[k] in ' \t\r\n':
+        k -= 1
+    return k >= 0 and code_text[k] in '{,'
+
+
+def js_identifiers(code_text, skip_keys=False):
+    """(identificadores sueltos, identificadores leídos como window.X). skip_keys: sin las claves de objetos."""
     bare, win = set(), set()
     for m in _ID_RX.finditer(code_text):
         s = m.start()
@@ -449,6 +495,8 @@ def js_identifiers(code_text):
             pre = code_text[max(0, k - 10):k]
             if pre.endswith('window') or pre.endswith('globalThis') or pre.endswith('self'):
                 win.add(name)
+            continue
+        if skip_keys and _is_object_key(code_text, s, m.end()):
             continue
         bare.add(name)
     return bare, win
@@ -472,6 +520,10 @@ def js_header(text):
     if t.startswith('#!'):
         t = t.split('\n', 1)[1] if '\n' in t else ''
     t = t.lstrip()
+    # cabecera dentro de un IIFE: (function(){ 'use strict'; /* … */
+    m = re.match(r'(?:\(\s*function\s*\([^)]*\)\s*\{\s*)?(?:[\'"]use strict[\'"];?\s*)?', t)
+    if m and m.end() and t[m.end():].lstrip().startswith(('/*', '//')):
+        t = t[m.end():].lstrip()
     if t.startswith('/*'):
         end = t.find('*/')
         body = t[2:end if end >= 0 else len(t)]
@@ -491,7 +543,8 @@ def js_header(text):
         s = re.sub(r'^\*+\s?', '', s)
         if re.fullmatch(r'[=\-─━*_#~]{3,}', s):
             s = ''
-        s = re.sub(r'\s*[=─━]{4,}\s*$', '', s)
+        s = re.sub(r'\s*[=─━]{2,}\s*$', '', s)
+        s = re.sub(r'^[=─━\-]{2,}\s*', '', s)
         out.append(s)
     return '\n'.join(out).strip()
 
@@ -557,8 +610,7 @@ _ENV_DIRECT = {'os.getenv', 'getenv', 'os.environ.get', 'environ.get', 'os.envir
 
 def analyze_py(path, text):
     info = {'defs': [], 'imports': [], 'strings': [], 'routes': [], 'env': [], 'has_main': False,
-            'docstring': '', 'tools': [], 'helpers': {}, 'env_helper_calls': [], 'fn_index': {},
-            'parse_error': None}
+            'docstring': '', 'tools': [], 'helpers': {}, 'parse_error': None, 'dyn': []}
     try:
         tree = ast.parse(text)
     except SyntaxError as e:  # pragma: no cover
@@ -571,7 +623,6 @@ def analyze_py(path, text):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             info['defs'].append({'name': node.name, 'kind': 'función', 'sig': _sig(node),
                                  'doc': first_paragraph(ast.get_docstring(node) or '', 140), 'line': node.lineno})
-            info['fn_index'][node.name] = node
         elif isinstance(node, ast.ClassDef):
             info['defs'].append({'name': node.name, 'kind': 'clase', 'sig': '',
                                  'doc': first_paragraph(ast.get_docstring(node) or '', 140), 'line': node.lineno})
@@ -579,6 +630,18 @@ def analyze_py(path, text):
             t = node.test
             if isinstance(t, ast.Compare) and isinstance(t.left, ast.Name) and t.left.id == '__name__':
                 info['has_main'] = True
+
+    # UNA sola pasada por el árbol + mapa de padres (antes: varias pasadas = lento)
+    nodes = list(ast.walk(tree))
+    parent = {}
+    for n in nodes:
+        for c in ast.iter_child_nodes(n):
+            parent[id(c)] = n
+
+    def _up(n):
+        while id(n) in parent:
+            n = parent[id(n)]
+            yield n
 
     # constantes de módulo que son tuplas/listas de nombres (para os.getenv(n) en bucle)
     const_lists = {}
@@ -591,7 +654,7 @@ def analyze_py(path, text):
     # blueprints → prefijo
     prefixes = {'app': ''}
     skip_ids = set()
-    for node in ast.walk(tree):
+    for node in nodes:
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call) and \
                 _call_name(node.value.func) in ('Blueprint', 'flask.Blueprint'):
             pref = ''
@@ -610,7 +673,7 @@ def analyze_py(path, text):
         return default
 
     # rutas (decoradores y add_url_rule), en cualquier nivel
-    for node in ast.walk(tree):
+    for node in nodes:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             for d in node.decorator_list:
                 if not isinstance(d, ast.Call) or not isinstance(d.func, ast.Attribute):
@@ -653,8 +716,8 @@ def analyze_py(path, text):
             info['routes'].append({'path': prefixes.get(obj, '') + p, 'methods': _methods(node, ['GET']),
                                    'func': fname, 'line': node.lineno, 'bp': obj})
 
-    # importaciones
-    for node in ast.walk(tree):
+    # importaciones (también las perezosas dentro de funciones)
+    for node in nodes:
         if isinstance(node, ast.Import):
             for a in node.names:
                 info['imports'].append((a.name, None, node.lineno))
@@ -662,30 +725,23 @@ def analyze_py(path, text):
             for a in node.names:
                 info['imports'].append((node.module, a.name, node.lineno))
 
-    # ayudantes de entorno: def f(name, ...): ... os.getenv(name ...)
-    for fn in [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]:
-        params = [x.arg for x in fn.args.posonlyargs + fn.args.args]
-        for sub in ast.walk(fn):
-            if isinstance(sub, ast.Call) and _call_name(sub.func) in _ENV_DIRECT and sub.args and \
-                    isinstance(sub.args[0], ast.Name) and sub.args[0].id in params:
-                info['helpers'][fn.name] = params.index(sub.args[0].id)
-
-    # cadenas (sin las que DEFINEN rutas) + lecturas de entorno
+    # cadenas (sin las que DEFINEN rutas ni los docstrings) + lecturas de entorno
     docstring_ids = set()
-    for node in ast.walk(tree):
+    for node in nodes:
         if isinstance(node, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and node.body:
             b0 = node.body[0]
             if isinstance(b0, ast.Expr) and _const_str(b0.value) is not None:
                 docstring_ids.add(id(b0.value))
     seen_parts = set()
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.JoinedStr, ast.BinOp)):
+    for node in nodes:
+        if isinstance(node, (ast.JoinedStr, ast.BinOp)) and id(node) not in seen_parts:
             r = _render_str(node)
             if r is not None and id(node) not in skip_ids and '◊' in r:
                 info['strings'].append(r)
                 for sub in ast.walk(node):
                     seen_parts.add(id(sub))
-    for node in ast.walk(tree):
+    helper_calls = []
+    for node in nodes:
         s = _const_str(node)
         if s is not None and id(node) not in skip_ids and id(node) not in docstring_ids and id(node) not in seen_parts:
             info['strings'].append(s)
@@ -701,15 +757,19 @@ def analyze_py(path, text):
                     if r and r[0].isupper():
                         info['env'].append((r.replace('◊', '{X}'), 'código', node.lineno))
                 elif isinstance(a0, ast.Name):
-                    # bucle: for n in ('A','B') / for n in CONSTANTE
-                    names = _loop_names(tree, node, a0.id, const_lists)
-                    for nm2 in names:
+                    # ¿ayudante? def f(name, …): … os.getenv(name)
+                    for anc in _up(node):
+                        if isinstance(anc, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                            params = [x.arg for x in anc.args.posonlyargs + anc.args.args]
+                            if a0.id in params:
+                                info['helpers'][anc.name] = params.index(a0.id)
+                            break
+                    # ¿bucle? for n in ('A','B') / for n in CONSTANTE
+                    for nm2 in _loop_names(_up(node), a0.id, const_lists):
                         info['env'].append((nm2, 'lista', node.lineno))
             short = cn.rsplit('.', 1)[-1]
-            if short in info['helpers'] or cn in info['helpers']:
-                pass  # se resuelve abajo (los ayudantes pueden definirse después)
             if node.args and short:
-                info['env_helper_calls'].append((short, [_const_str(a) for a in node.args], node.lineno))
+                helper_calls.append((short, [_const_str(a) for a in node.args], node.lineno))
         if isinstance(node, ast.Subscript) and _call_name(node.value) in ('os.environ', 'environ'):
             nm = _const_str(node.slice)
             if nm is not None:
@@ -719,7 +779,7 @@ def analyze_py(path, text):
             nm = _const_str(node.left)
             if nm is not None:
                 info['env'].append((nm, 'código', node.lineno))
-    for short, args, line in info['env_helper_calls']:
+    for short, args, line in helper_calls:
         if short in info['helpers']:
             k = info['helpers'][short]
             if k < len(args) and args[k] and re.fullmatch(r'[A-Z][A-Z0-9_]+', args[k]):
@@ -738,24 +798,67 @@ def analyze_py(path, text):
                     info['tools'].append({'name': _const_str(d.args[0]) or '?', 'title': _const_str(d.args[1]) or '',
                                           'scope': _const_str(d.args[2]) or '?', 'read_only': ro,
                                           'func': node.name, 'line': node.lineno})
+    info['dyn'] = sorted(set(dyn_module_refs(tree, info['strings'])))
     info['_tree'] = tree
     return info
 
 
-def _loop_names(tree, call, var, const_lists):
-    """Nombres constantes sobre los que itera la variable `var` alrededor de la llamada."""
-    for node in ast.walk(tree):
+_DOTTED_MOD = re.compile(r'[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)+')
+_DYN_IMPORT_CALLS = {'import_module', '__import__', '_module', 'find_spec'}
+
+
+def dyn_module_refs(root, strings=None):
+    """Textos que nombran un módulo para importarlo en tiempo de ejecución (importación «dinámica»).
+
+    Una palabra suelta ('server', 'research', 'matrix') es casi siempre otra cosa (una categoría, una clave
+    de dict, un alcance): solo cuenta si va DENTRO de una llamada que importa — importlib.import_module(x),
+    __import__(x), sys.modules.get(x) / sys.modules[x], _module(x), monkeypatch.setitem(sys.modules, x, …) — o
+    es el primer elemento de una tupla (módulo, '…_bp') de blueprints. Un texto con puntos ('core.world')
+    cuenta en cualquier lugar (`strings`; si no se dan, todos los textos bajo `root`)."""
+    out = []
+    if strings is None:
+        strings = [s for s in (_const_str(n) for n in ast.walk(root)) if s is not None]
+    out.extend(s for s in strings if _DOTTED_MOD.fullmatch(s))
+    for n in ast.walk(root):
+        if isinstance(n, ast.Call):
+            cn = _call_name(n.func) or ''
+            short = cn.rsplit('.', 1)[-1]
+            if (short in _DYN_IMPORT_CALLS or cn.endswith('modules.get')) and n.args:
+                s = _const_str(n.args[0])
+                if s:
+                    out.append(s)
+            elif short == 'setitem' and len(n.args) >= 2 and (_call_name(n.args[0]) or '').endswith('modules'):
+                s = _const_str(n.args[1])
+                if s:
+                    out.append(s)
+        elif isinstance(n, ast.Subscript) and (_call_name(n.value) or '') in ('sys.modules', 'modules'):
+            s = _const_str(n.slice)
+            if s:
+                out.append(s)
+        elif isinstance(n, ast.Tuple) and len(n.elts) == 2:
+            a, b = _const_str(n.elts[0]), _const_str(n.elts[1])
+            if a and b and b.endswith('_bp'):
+                out.append(a)
+    return out
+
+
+def _loop_names(ancestors, var, const_lists):
+    """Nombres constantes sobre los que itera la variable `var` (bucle o comprensión que rodea la llamada)."""
+    for node in ancestors:
         gens = []
         if isinstance(node, (ast.For, ast.AsyncFor)):
-            gens = [(node.target, node.iter, node)]
+            gens = [(node.target, node.iter)]
         elif isinstance(node, (ast.GeneratorExp, ast.ListComp, ast.SetComp, ast.DictComp)):
-            gens = [(g.target, g.iter, node) for g in node.generators]
-        for tgt, it, owner in gens:
-            if isinstance(tgt, ast.Name) and tgt.id == var and any(x is call for x in ast.walk(owner)):
+            gens = [(g.target, g.iter) for g in node.generators]
+        for tgt, it in gens:
+            if isinstance(tgt, ast.Name) and tgt.id == var:
                 if isinstance(it, (ast.Tuple, ast.List, ast.Set)):
                     return [s for s in (_const_str(e) for e in it.elts) if s]
                 if isinstance(it, ast.Name) and it.id in const_lists:
                     return list(const_lists[it.id])
+                return []
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):
+            return []
     return []
 
 
@@ -852,11 +955,13 @@ def endpoint_ref(s):
     if not isinstance(s, str):
         return None
     s = s.strip()
+    if s.startswith('◊/'):          # `${base}/api/…` o f'{BASE}/api/…': la base es el servidor
+        s = s[1:]
     if not s.startswith(ENDPOINT_ROOTS):
         return None
     if not re.match(r'^/(?:api|v1|mcp|oauth|\.well-known)(?:[/?◊]|$)', s):
         return None
-    s = re.split(r'[?#\s]', s, 1)[0]
+    s = re.split(r'[?#\s]', s, maxsplit=1)[0]
     if re.search(r'[\'"<>{}\\]', s.replace('◊', '')):
         return None
     return s
@@ -876,16 +981,16 @@ def _seg_ok(ref_seg, route_seg):
     return ref_seg == route_seg
 
 
-def match_routes(ref, routes_by_path):
-    """Rutas que un literal puede estar llamando. Exacto; o prefijo si el literal
-    termina en '/' (se concatena algo) o es una base como '/api/brokerage'."""
+def match_routes(ref, routes_by_path, prefix=True):
+    """Rutas que un literal puede estar llamando. Exacto; o (prefix=True) prefijo si el
+    literal termina en '/' (se concatena algo) o es una base como '/api/brokerage'."""
     rs = _segs(ref)
     exact = []
     for path in routes_by_path:
         ps = _segs(path)
         if len(ps) == len(rs) and all(_seg_ok(a, b) for a, b in zip(rs, ps)):
             exact.append(path)
-    if exact and not ref.endswith('/'):
+    if (exact and not ref.endswith('/')) or not prefix:
         return sorted(exact)
     if len(rs) < 2:
         return sorted(exact)
@@ -895,6 +1000,10 @@ def match_routes(ref, routes_by_path):
         if len(ps) > len(rs) and all(_seg_ok(a, b) for a, b in zip(rs, ps)):
             pref.append(path)
     return sorted(set(exact) | set(pref))
+
+
+_PATH_TOKEN = re.compile(r'(?<![\w.-])((?:[\w-]+/)+[\w.-]+\.(?:py|js|html|json))(?![\w-])')
+_QUOTED_BASE = re.compile(r'''(?<=['"/])([\w.-]+\.(?:py|js|html|json))(?=['"])''')
 
 
 def build_model():
@@ -910,7 +1019,18 @@ def build_model():
 
     # ── análisis por archivo ─────────────────────────────────────────────────
     for path, f in files.items():
-        if f['ext'] == 'py':
+        if f['ext'] == 'json':
+            try:
+                d = json.loads(f['text'])
+            except ValueError:
+                d = None
+            doc = ''
+            if isinstance(d, dict):
+                doc = next((d[k] for k in ('_doc', 'description') if isinstance(d.get(k), str)), '')
+                if not doc and isinstance(d.get('source'), str):
+                    doc = 'Generado desde ' + d['source']
+            f['purpose'] = first_paragraph(doc) or 'Archivo de datos JSON.'
+        elif f['ext'] == 'py':
             f['py'] = analyze_py(path, f['text'])
             f['purpose'] = strip_self_path(first_paragraph(f['py']['docstring']), path)
         elif f['ext'] == 'js':
@@ -921,8 +1041,6 @@ def build_model():
             f['purpose'] = ''
         elif f['ext'] == 'md':
             f['purpose'] = _md_purpose(f['text'])
-        else:
-            f['purpose'] = ''
 
     edges = []  # (src_id, dst_id, type, detail)
     M.edges = edges
@@ -937,7 +1055,7 @@ def build_model():
             dst = _resolve_import(mods, module, name)
             if dst and dst != path:
                 imp[path][dst].add(name or module)
-        for s in f['py']['strings']:
+        for s in f['py']['dyn']:
             if s in mods and mods[s] != path:
                 dyn[path].add(mods[s])
                 imp[path][mods[s]].add('(dinámico: ' + s + ')')
@@ -970,18 +1088,39 @@ def build_model():
     calls = defaultdict(lambda: defaultdict(set))  # file → route path → refs
     unmatched = defaultdict(set)
     for path, f in files.items():
-        if path == 'sw.js' or f['role'] in ('doc', 'data'):
+        if path == 'sw.js' or path in ANALYSIS_EXCLUDE or f['role'] in ('doc', 'data'):
             continue
         strs = f['py']['strings'] if f['ext'] == 'py' else (f['js']['strings'] if 'js' in f else [])
-        for s in strs:
-            ref = endpoint_ref(s)
-            if not ref:
+        refs_here = sorted({r for r in (endpoint_ref(x) for x in strs) if r})
+        # el Python del servidor no se llama a sí mismo por HTTP: ahí solo cuentan coincidencias
+        # EXACTAS (una tabla de prefijos como ('/api/research', 'research') no es una llamada)
+        loose = f['ext'] != 'py' or f['role'] == 'test' or path.startswith('scripts/')
+        # rutas RELATIVAS del mismo archivo ('/clients/' + id + '/audit' → '/clients/◊/audit') para unirlas a
+        # una base como var API = '/api/brokerage'
+        rel = f['js']['rel'] if 'js' in f else relative_refs([x for x in strs if x.startswith('◊/')])
+        for ref in refs_here:
+            exact = match_routes(ref, routes_by_path, prefix=False)
+            if loose and not exact and not ref.endswith('/') and '◊' not in ref and len(_segs(ref)) >= 2 \
+                    and match_routes(ref, routes_by_path, prefix=True):
+                # una BASE: solo cuenta lo que el archivo arma sobre ella; si no arma nada (la pasa a otro
+                # módulo) vale como prefijo de todas sus rutas, salvo en pruebas (ahí son textos de aserción)
+                hits = defaultdict(set)
+                for r in rel:
+                    for h in match_routes(ref + r, routes_by_path, prefix=r.endswith('/')):
+                        hits[h].add(ref + r)
+                if not hits and not rel and f['role'] != 'test':
+                    for h in match_routes(ref, routes_by_path, prefix=True):
+                        hits[h].add(ref)
+                for h, rs in hits.items():
+                    calls[path][h] |= rs
                 continue
-            hits = match_routes(ref, routes_by_path)
+            hits = match_routes(ref, routes_by_path, prefix=loose)
             if hits:
                 for h in hits:
                     calls[path][h].add(ref)
-            elif f['role'] != 'test':
+            elif not loose and match_routes(ref, routes_by_path, prefix=True):
+                pass        # el servidor nombra un PREFIJO (tabla de rutas → función): ni llamada ni error
+            elif f['role'] != 'test' and ref.startswith('/api/') and len(_segs(ref)) >= 2:
                 unmatched[path].add(ref)
     M.calls = calls
     M.unmatched_calls = unmatched
@@ -990,7 +1129,8 @@ def build_model():
     definers = defaultdict(set)  # nombre → archivos
     explicit = defaultdict(set)  # nombre → archivos (window.X explícito)
     for path, f in files.items():
-        if 'js' not in f:
+        # solo lo que corre en la PÁGINA define globales (scripts/*.js corren en Node; sw.js en su propio worker)
+        if 'js' not in f or f['role'] == 'test' or path.startswith('scripts/') or path == 'sw.js':
             continue
         for nm in f['js']['win_defs']:
             definers[nm].add(path)
@@ -1002,31 +1142,46 @@ def build_model():
         if nm in BROWSER_GLOBALS:
             del definers[nm]
             explicit.pop(nm, None)
+    # definidor PRINCIPAL: quien la declara de nivel superior (const NODES / function switchTab);
+    # los que solo hacen window.X = X (re-exportar) o la envuelven son secundarios.
+    primary = {}
+    for nm, defs in definers.items():
+        tops = {d for d in defs if nm in files[d]['js']['top']}
+        primary[nm] = tops or set(defs)
     M.definers = definers
+    M.primary = primary
     M.explicit = explicit
     uses = defaultdict(lambda: defaultdict(set))  # usuario → definidor → nombres
     for path, f in files.items():
-        if 'js' not in f:
+        if 'js' not in f or f['role'] == 'test' or path.startswith('scripts/') or path == 'sw.js':
             continue
         js = f['js']
-        for nm, defs in definers.items():
-            if path in defs and len(defs) == 1:
+        for nm, defs in primary.items():
+            if path in defs:
                 continue
-            via_win = nm in js['win']
-            if not via_win:
-                if nm not in js['bare'] or nm in GENERIC_NAMES or len(nm) < 3:
+            if nm not in js['win']:
+                if nm in GENERIC_NAMES or len(nm) < 3:
                     continue
-                if nm in js['local'] and path not in defs:
+                if nm in explicit:
+                    # window.X exportada: vale nombrarla en CÓDIGO (no como clave de objeto) o usarla dentro de
+                    # un texto/HTML como X( · X.algo · window.X (onclick="X(…)"); la palabra suelta en un texto
+                    # o en el HTML ("KHIPU&gt;", 'KHIPU TRADING') no es un uso
+                    if nm not in js['bare_code'] and nm not in js['str_uses']:
+                        continue
+                else:
+                    # global de nivel superior (const/function del script): solo código real o X( en un texto
+                    if len(nm) < 4 or (nm not in js['bare_code'] and nm not in js['str_calls']):
+                        continue
+                if nm in js['local'] and path not in definers[nm]:
                     continue
             for d in defs:
-                if d != path:
-                    uses[path][d].add(nm)
+                uses[path][d].add(nm)
     M.uses = uses
 
     # menciones de globales fuera de JS (Python del servidor y pruebas)
     py_text_ids = {}
     for path, f in files.items():
-        if f['ext'] == 'py':
+        if f['ext'] == 'py' and path not in ANALYSIS_EXCLUDE:
             py_text_ids[path] = set(_ID_RX.findall(' '.join(f['py']['strings'])))
     M.py_text_ids = py_text_ids
 
@@ -1036,7 +1191,7 @@ def build_model():
     # ── referencias a archivos por su ruta ───────────────────────────────────
     refs = defaultdict(set)
     for path, f in files.items():
-        if path == 'sw.js' or f['role'] in ('doc', 'test', 'data'):
+        if path == 'sw.js' or path in ANALYSIS_EXCLUDE or f['role'] in ('doc', 'test', 'data'):
             continue
         strs = f['py']['strings'] if f['ext'] == 'py' else (f['js']['strings'] if 'js' in f else [])
         for s in strs:
@@ -1062,15 +1217,21 @@ def build_model():
     for tpath, tf in files.items():
         if tf['role'] != 'test':
             continue
+        if tpath in ANALYSIS_EXCLUDE:
+            for p in sorted(TEST_SCOPE.get(tpath, ())):
+                if p in files:
+                    tested[p].add(tpath)
+            continue
         covered = set()
         if tf['ext'] == 'py':
             for module, name, _ln in tf['py']['imports']:
                 dst = _resolve_import(mods, module, name)
                 if dst:
                     covered.add(dst)
-            for s in tf['py']['strings']:
+            for s in tf['py']['dyn']:
                 if s in mods:
                     covered.add(mods[s])
+            for s in tf['py']['strings']:
                 mm = re.match(r'^([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)+)', s)
                 if mm:
                     parts = mm.group(1).split('.')
@@ -1081,15 +1242,22 @@ def build_model():
                             break
                         parts.pop()
         text = tf['text']
-        for p, f in files.items():
-            if f['role'] in ('test', 'doc') or p in covered:
-                continue
-            if re.search(r'(?<![\w.-])' + re.escape(p) + r'(?![\w-])', text):
-                covered.add(p)
-                continue
-            b = os.path.basename(p)
-            if M.unique_base.get(b) == p and len(b) >= 6 and re.search(r'''['"/]''' + re.escape(b) + r'''['"]''', text):
-                covered.add(p)
+        # rutas escritas (engine/x.js, también dentro de ROOT + '/engine/x.js') …
+        for tok in _PATH_TOKEN.findall(text):
+            parts = tok.split('/')
+            for k in range(len(parts)):
+                cand = '/'.join(parts[k:])
+                if cand in files:
+                    covered.add(cand)
+                    break
+        # … o el nombre de archivo entre comillas ('cockpit.js', os.path.join(ROOT, 'engine', 'x.js'))
+        for b in _QUOTED_BASE.findall(text):
+            if b in M.unique_base:
+                covered.add(M.unique_base[b])
+        # … o llama por HTTP a una ruta que el módulo define
+        for rpath in M.calls.get(tpath, {}):
+            for r in routes_by_path[rpath]:
+                covered.add(r['file'])
         for p in covered:
             if p != tpath and files[p]['role'] not in ('test', 'doc'):
                 tested[p].add(tpath)
@@ -1115,7 +1283,7 @@ def build_model():
     test_env = defaultdict(set)
     env_names = set(env_readers) | set(infra_env)
     for tpath, tf in files.items():
-        if tf['role'] == 'test' and tf['ext'] == 'py':
+        if tf['role'] == 'test' and tf['ext'] == 'py' and tpath not in ANALYSIS_EXCLUDE:
             ss = set(tf['py']['strings'])
             for nm in env_names:
                 if nm in ss:
@@ -1145,20 +1313,146 @@ def build_model():
     return M
 
 
+def _window_aliases(code_text):
+    """Nombres que el archivo usa como sinónimo de window (var W = window; (function (root){…})(window))."""
+    al = set(re.findall(r'\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:window|globalThis)\s*[;,\n)]', code_text))
+    if re.search(r'\}\)\(\s*(?:window|globalThis|this|typeof window[^)]*)\)\s*;?\s*$', code_text.rstrip()):
+        m = re.match(r'\s*(?:[\'"]use strict[\'"];?\s*)?\(\s*function\s*\(\s*([A-Za-z_$][\w$]*)', code_text)
+        if m:
+            al.add(m.group(1))
+    changed = True
+    while changed:
+        changed = False
+        for a in sorted(al):
+            for b in re.findall(r'\b(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*' + re.escape(a) + r'\s*[;,\n]',
+                                code_text):
+                if b not in al:
+                    al.add(b)
+                    changed = True
+    return sorted(al - {'window', 'globalThis'})
+
+
 def _analyze_js(text):
     sc = JSScan(text)
+    aliases = _window_aliases(sc.code)
+    if aliases:
+        rx = re.compile(r'(?<![\w$.])(?:' + '|'.join(re.escape(a) for a in aliases) + r')\.')
+        sc.code = rx.sub('window.', sc.code)
+        sc.code_ns = rx.sub('window.', sc.code_ns)
     bare, win = js_identifiers(sc.code)
+    bare_code, _w = js_identifiers(sc.code_ns, skip_keys=True)
     defs = set(_WIN_DEF.findall(sc.code)) | set(_WIN_DEF2.findall(sc.code)) | set(_WIN_DEF3.findall(sc.code))
+    joined = '\n'.join(sc.strings)
     return {'code': sc.code, 'strings': sc.strings, 'top': sorted(set(sc.top)), 'win_defs': sorted(defs),
-            'bare': bare, 'win': win, 'local': js_local_decls(sc.code), 'scripts': [], 'blocks': []}
+            'bare': bare, 'bare_code': bare_code, 'str_calls': set(_STR_CALL.findall(joined)),
+            'str_uses': _str_uses(joined), 'rel': relative_refs(js_concat_chains(sc.code_cs) + sc.templates),
+            'win': win, 'local': js_local_decls(sc.code_ns), 'scripts': [], 'blocks': [],
+            'str_ids': set(_ID_RX.findall(joined)), 'win_reads': set(_WIN_READ.findall(sc.code))}
 
 
+_STR_CALL = re.compile(r'(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(')
+# usos dentro de un TEXTO (onclick="X(…)", "X.open()", "window.X"): no basta con nombrar la palabra
+_STR_USE = re.compile(r'(?<![\w$.])([A-Za-z_$][\w$]*)\s*(?:\(|\.[A-Za-z_$])|(?<![\w$.])window\.([A-Za-z_$][\w$]*)')
+_JS_STR = re.compile(r"""'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*\"""")
+_JS_OPERAND_ID = re.compile(r'[A-Za-z_$][\w$]*(?:\s*\.\s*[A-Za-z_$][\w$]*)*')
+
+
+def _str_uses(text):
+    out = set()
+    for a, b in _STR_USE.findall(text):
+        out.add(a or b)
+    return out
+
+
+def js_concat_chains(code):
+    """Concatenaciones que arman una ruta RELATIVA: '/clients/' + id + '/audit' → '/clients/◊/audit' y
+    API + '/status' → '◊/status'. Un texto en medio de una cadena ('/audit' tras + id +) no se cuenta solo."""
+    out = []
+    n = len(code)
+
+    def ws(i):
+        while i < n and code[i] in ' \t\r\n':
+            i += 1
+        return i
+
+    def back_ws(i):
+        while i >= 0 and code[i] in ' \t\r\n':
+            i -= 1
+        return i
+
+    for m in _JS_STR.finditer(code):
+        body = m.group()[1:-1]
+        if not body.startswith('/') or body.startswith(ENDPOINT_ROOTS):
+            continue
+        prefix = ''
+        k = back_ws(m.start() - 1)
+        if k >= 0 and code[k] == '+' and (k == 0 or code[k - 1] != '+'):
+            # ¿qué hay antes del +? solo vale un nombre simple (API, this.base) que ABRE la cadena
+            j = back_ws(k - 1)
+            e = j + 1
+            while j >= 0 and (code[j].isalnum() or code[j] in '_$.'):
+                j -= 1
+            name = code[j + 1:e]
+            if not name or not _JS_OPERAND_ID.fullmatch(name):
+                continue
+            jj = back_ws(j)
+            if jj >= 0 and code[jj] == '+':
+                continue
+            prefix = '◊'
+        parts = [prefix, body]
+        i = m.end()
+        while True:
+            j = ws(i)
+            if j >= n or code[j] != '+' or code[j + 1:j + 2] in ('+', '='):
+                break
+            j = ws(j + 1)
+            sm = _JS_STR.match(code, j)
+            if sm:
+                parts.append(sm.group()[1:-1])
+                i = sm.end()
+                continue
+            k, depth = j, 0
+            while k < n:
+                c = code[k]
+                if c in '\'"':
+                    q = _JS_STR.match(code, k)
+                    k = q.end() if q else k + 1
+                    continue
+                if c in '([{':
+                    depth += 1
+                elif c in ')]}':
+                    if depth == 0:
+                        break
+                    depth -= 1
+                elif depth == 0 and c in '+,;?:`':
+                    break
+                k += 1
+            if k == j:
+                break
+            parts.append('◊')
+            i = k
+        out.append(''.join(parts))
+    return out
+
+
+def relative_refs(chains):
+    """Rutas relativas limpias ('/clients/◊/audit') a partir de las cadenas armadas."""
+    out = set()
+    for s in chains:
+        s = s[1:] if s.startswith('◊/') else s
+        s = re.split(r'[?#\s]', s, maxsplit=1)[0]
+        if not re.match(r'^/[A-Za-z_◊]', s) or s.startswith(ENDPOINT_ROOTS) or len(s) > 120:
+            continue
+        if re.search(r'[\'"<>{}\\=]', s.replace('◊', '')):
+            continue
+        out.add(s)
+    return sorted(out)
 _SCRIPT_RX = re.compile(r'<script\b([^>]*)>([\s\S]*?)</script\s*>', re.I)
 
 
 def _analyze_html(text):
-    codes, strings, top, defs = [], [], [], set()
-    scripts, blocks = [], []
+    codes, codes_ns, strings, top, defs = [], [], [], [], set()
+    scripts, blocks, chains = [], [], []
     markup = []
     last = 0
     for m in _SCRIPT_RX.finditer(text):
@@ -1173,7 +1467,9 @@ def _analyze_html(text):
             continue
         sc = JSScan(body)
         codes.append(sc.code)
+        codes_ns.append(sc.code_ns)
         strings.extend(sc.strings)
+        chains.extend(js_concat_chains(sc.code_cs) + sc.templates)
         top.extend(sc.top)
         defs |= set(_WIN_DEF.findall(sc.code)) | set(_WIN_DEF2.findall(sc.code)) | set(_WIN_DEF3.findall(sc.code))
         n_lines = body.count('\n') + 1
@@ -1187,6 +1483,10 @@ def _analyze_html(text):
     for q in re.findall(r'''["'`](/(?:api|v1|mcp|oauth|\.well-known)[^"'`\s]*)["'`]''', mk):
         strings.append(q)
     bare, win = js_identifiers(code_all)
+    # bare_code = solo CÓDIGO (sin el texto de cadenas ni el HTML); en textos y HTML vale X( / X.algo / window.X
+    bare_code, _w = js_identifiers('\n'.join(codes_ns), skip_keys=True)
+    str_calls = set(_STR_CALL.findall('\n'.join(strings) + '\n' + mk))
+    str_uses = _str_uses('\n'.join(strings) + '\n' + mk)
     tabs = []
     for m in re.finditer(r'<button[^>]*\bclass="tab[^"]*"[^>]*>([\s\S]*?)</button>', text):
         tag = m.group(0)
@@ -1199,7 +1499,10 @@ def _analyze_html(text):
                      'id': tid.group(1) if tid else '', 'label': label})
     title = re.search(r'<title>([^<]*)</title>', text)
     return {'code': code_all, 'strings': strings, 'top': sorted(set(top)), 'win_defs': sorted(defs),
-            'bare': bare, 'win': win, 'local': js_local_decls('\n'.join(codes)), 'scripts': scripts,
+            'bare': bare, 'bare_code': bare_code, 'str_calls': str_calls, 'str_uses': str_uses,
+            'rel': relative_refs(chains), 'win': win,
+            'local': js_local_decls('\n'.join(codes_ns)), 'scripts': scripts,
+            'str_ids': set(_ID_RX.findall('\n'.join(strings) + '\n' + mk)), 'win_reads': set(_WIN_READ.findall(code_all)),
             'blocks': blocks, 'tabs': tabs, 'title': title.group(1).strip() if title else ''}
 
 
@@ -1248,10 +1551,20 @@ def parse_claude_env_block(text):
 
 
 def env_documented(M, name):
+    if name in M.claude_block:
+        return True
     if '{X}' in name:
         pre = name.split('{X}')[0]
-        return re.search(re.escape(pre) + r'[<{*]', M.claude_text) is not None
+        return any(b.startswith(pre) for b in M.claude_block) or \
+            re.search(re.escape(pre) + r'[<{*]', M.claude_text) is not None
     return re.search(r'(?<![A-Z0-9_])' + re.escape(name) + r'(?![A-Z0-9_])', M.claude_text) is not None
+
+
+def env_is_read(M, name):
+    """¿Alguien la lee? (directo, por patrón f'PREFIJO_{x}' o en despliegue)"""
+    if name in M.env_readers or name in M.infra_env:
+        return True
+    return any(n.endswith('{X}') and name.startswith(n[:-3]) for n in M.env_readers)
 
 
 def _mcp_tools(f, mods):
@@ -1273,10 +1586,11 @@ def _mcp_tools(f, mods):
                     d = _resolve_import(mods, sub.module, a.name)
                     if d:
                         found.add(d)
-            elif isinstance(sub, ast.Constant) and isinstance(sub.value, str) and sub.value in mods:
-                found.add(mods[sub.value])
             elif isinstance(sub, ast.Call) and isinstance(sub.func, ast.Name) and sub.func.id in top_fns:
                 called.add(sub.func.id)
+        for s in dyn_module_refs(fn):
+            if s in mods:
+                found.add(mods[s])
         return found, called
 
     cache = {}
@@ -1306,6 +1620,9 @@ def _mcp_tools(f, mods):
 _MENTION_PATH = re.compile(r'(?<![\w/.-])((?:[\w-]+/)*[\w.-]+\.(?:py|js|html|json|md))(?![\w])')
 _MENTION_DOT = re.compile(r'(?<![\w.])((?:core|research|ontology|matrix|mcp_server|brokerage|scripts)'
                           r'(?:\.[a-z_][a-z0-9_]*)+)')
+# ruta SIN extensión: core/decide.chat_plan · matrix/engine · research/ask_agent · engine/statematrix
+_MENTION_NOEXT = re.compile(r'(?<![\w/.-])((?:core|research|ontology|matrix|mcp_server|brokerage|engine|scripts|nodes|sim)'
+                            r'(?:/[A-Za-z_][\w-]*)+)(?![\w/-])')
 
 
 def _mentions(text, files, unique_base, mods):
@@ -1320,6 +1637,12 @@ def _mentions(text, files, unique_base, mods):
             tail = p.split('/', 1)[1] if p.startswith(('./', '../')) else None
             if tail and tail in files:
                 out.add(tail)
+    for m in _MENTION_NOEXT.finditer(text):
+        p = m.group(1)
+        for ext in ('.py', '.js'):
+            if p + ext in files:
+                out.add(p + ext)
+                break
     for m in _MENTION_DOT.finditer(text):
         parts = m.group(1).split('.')
         while len(parts) > 1:
@@ -1351,22 +1674,36 @@ def parse_sessions(text):
                 end = j
                 break
         body = '\n'.join(lines[i + 1:end]).strip('\n')
-        dm = re.search(r'20\d\d-\d\d(?:-\d\d)?', title)
-        date = dm.group(0) if dm else ''
-        rest = title
-        rest = re.sub(r'^SESI[ÓO]N\s*', '', rest, flags=re.I)
-        rest = rest.replace(date, '', 1).strip() if date else rest
-        rest = re.sub(r'^[\s—\-–:·]+', '', rest)
+        dm = re.search(r'(20\d\d-\d\d(?:-\d\d)?)(\s*(?:/|→|->)\s*(\d\d(?:-\d\d)?))?', title)
+        date = dm.group(1) if dm else ''
+        date_shown = (date + ' al ' + dm.group(3)) if dm and dm.group(3) else date
+        if dm and dm.group(2):
+            title = title.replace(dm.group(0), date, 1)
+        rest = re.sub(r'^SESI[ÓO]N\s*', '', title, flags=re.I)
+        if date:
+            d = re.escape(date)
+            rest = re.sub(r'\(\s*' + d + r'\s*[,;]\s*', '(', rest, count=1)
+            rest = re.sub(r'\(\s*' + d + r'\s*\)', '', rest, count=1)
+            rest = rest.replace(date, '', 1)
         rest = re.sub(r'\(\s*\)', '', rest).strip()
+        tag = re.match(r'^(\([^)]{1,12}\))\s*[—\-–:·]*\s*', rest)   # "(ii) — TÍTULO" → etiqueta junto a la fecha
+        if tag:
+            date_tag = tag.group(1)
+            rest = rest[tag.end():]
+        else:
+            date_tag = ''
+        rest = re.sub(r'^[\s—\-–:·]+', '', rest).strip()
+        rest = re.sub(r'\s+([,;)])', r'\1', rest)
         summary_lines = [ln.strip() for ln in body.split('\n') if ln.strip() and ln.strip() != '---'
                          and not ln.strip().startswith('#')]
         summary = ' '.join(summary_lines[:4])
-        sessions.append({'heading': title, 'date': date, 'title': rest or title, 'line': i + 1,
+        sessions.append({'heading': title, 'date': date, 'date_shown': date_shown, 'tag': date_tag, 'title': rest or title, 'line': i + 1,
                          'lines': end - i, 'body': body, 'summary': first_paragraph(summary, 520),
                          'order': len(sessions)})
     used = set()
     for s in sessions:
-        base = safe_name('Sesión ' + (s['date'] + ' — ' if s['date'] else '') + s['title'], 90)
+        head = ' '.join(x for x in ('Sesión', s['date_shown'], s['tag']) if x)
+        base = safe_name(head + ' — ' + s['title'], 90)
         name, n = base, 2
         while name.lower() in used:
             name = f'{base} ({n})'
@@ -1432,6 +1769,38 @@ def _build_edges(M):
 # ════════════════════════════════════════════════════════════════════════════
 # 9. DERIVADOS: agrupaciones, grados, cosas sueltas
 # ════════════════════════════════════════════════════════════════════════════
+# Capa de cada grupo de API por su prefijo (/api/<segmento>/…): el dinero, la voz y los datos en vivo que
+# server.py define no son "Infraestructura". Si el segmento no está, manda la capa del módulo que la define.
+API_CAPA = {
+    'trade': 'dinero', 'portfolio': 'dinero', 'portfolio-ai': 'dinero', 'portfolio-report': 'dinero',
+    'brokerage': 'dinero',
+    'voice': 'voz',
+    'quote': 'vivo', 'quotes': 'vivo', 'candles': 'vivo', 'scalp': 'vivo', 'crypto': 'vivo', 'news': 'vivo',
+    'market': 'vivo', 'marketstack': 'vivo', 'fundamentals': 'vivo', 'findossier': 'vivo', 'dossier': 'vivo',
+    'company': 'vivo', 'earnings': 'vivo', 'insiders': 'vivo', 'investors': 'vivo', 'ipo_calendar': 'vivo',
+    'macro': 'vivo', 'world': 'vivo', 'geo': 'vivo', 'space': 'vivo', 'space2': 'vivo', 'supply-chain': 'vivo',
+    'ws-key': 'vivo', 'ws-token': 'vivo',
+    'portfolio-risk': 'cuant', 'options': 'cuant', 'matrix': 'cuant', 'tensor': 'cuant', 'sim': 'cuant',
+    'screener': 'cuant',
+    'research': 'investigacion', 'deep': 'investigacion',
+    'committee': 'comite',
+    'ontology': 'ontologia', 'grafo': 'ontologia', 'vocabulary': 'ontologia',
+    'khipu': 'chat', 'agents': 'chat', 'decide': 'chat', 'canvas': 'chat',
+    'mcp': 'mcp',
+    'ai': 'infra', 'health': 'infra', 'diag': 'infra', 'diagnostics': 'infra', 'ops': 'infra', 'user-state': 'infra',
+}
+
+
+def api_group_layer(M, g, rs):
+    seg = _segs(rs[0]['path'])[1] if rs[0]['path'].startswith('/api/') and len(_segs(rs[0]['path'])) > 1 else ''
+    if seg in API_CAPA:
+        return API_CAPA[seg]
+    if 'MCP' in g or g == 'API v1 (pública)':
+        return 'mcp'
+    files_ = sorted({r['file'] for r in rs})
+    return M.files[files_[0]]['layer']
+
+
 def api_group(path):
     if path.startswith('/api/'):
         seg = _segs(path)[1] if len(_segs(path)) > 1 else 'raíz'
@@ -1444,8 +1813,9 @@ def api_group(path):
 
 
 def route_is_external(path):
+    # …/oauth/callback: la llama el proveedor (Alpaca) al volver del login, no la app
     return path in ROUTE_EXTERNAL_EXACT or path.startswith(ROUTE_EXTERNAL_PREFIXES) or \
-        path.startswith(ROUTE_STATIC_PREFIXES) or path == '/mcp'
+        path.startswith(ROUTE_STATIC_PREFIXES) or path == '/mcp' or path.endswith('/oauth/callback')
 
 
 def derive(M):
@@ -1463,6 +1833,10 @@ def derive(M):
         r['group'] = api_group(r['path'])
         groups[r['group']].append(r)
     M.groups = dict(sorted(groups.items()))
+    for g, rs in M.groups.items():
+        lay = api_group_layer(M, g, rs)
+        for r in rs:
+            r['layer'] = lay
     # usuarios inversos
     M.imported_by = defaultdict(set)
     for src, dsts in M.imports.items():
@@ -1495,11 +1869,12 @@ def derive(M):
     route_file = {r['id']: r['file'] for r in M.routes}
     pairs = set()
     for (a, b, t, _d) in M.edges:
-        if t in ('imports', 'uses_global', 'loads_script', 'references_file') and a in files and b in files:
+        if a not in files or files[a]['role'] in ('test', 'doc'):
+            continue        # las pruebas cubren, no acoplan (y los nodos que no son archivos no cuentan)
+        if t in ('imports', 'uses_global', 'loads_script', 'references_file') and b in files:
             pairs.add((a, b))
-        elif t == 'calls_endpoint' and a in files and b in route_file and route_file[b] != a:
-            if files[a]['role'] != 'test':
-                pairs.add((a, route_file[b]))
+        elif t == 'calls_endpoint' and b in route_file and route_file[b] != a:
+            pairs.add((a, route_file[b]))
     for a, b in pairs:
         deg_out[a] += 1
         deg_in[b] += 1
@@ -1650,9 +2025,14 @@ def _dep_sections(M, p):
         out.append(txt + '.\n')
     out.append('## Lo usan\n')
     users = []
+    if p in M.loaded_at:
+        users.append(f"- {link('app.html')} — lo carga con `<script>` (posición {M.loaded_at[p] + 1})")
+    test_importers = 0
     for u in sorted(M.imported_by.get(p, ())):
-        tag = ' _(prueba)_' if M.files[u]['role'] == 'test' else ''
-        users.append(f'- {_flink(M, u)} — lo importa{tag}')
+        if M.files[u]['role'] == 'test':
+            test_importers += 1
+            continue
+        users.append(f'- {_flink(M, u)} — lo importa')
     for u in sorted(M.used_by.get(p, ())):
         names = sorted(M.uses[u][p])
         users.append(f"- {_flink(M, u)} — usa {', '.join(code(n) for n in names[:8])}"
@@ -1661,8 +2041,10 @@ def _dep_sections(M, p):
         users.append(f'- {_flink(M, u)} — lo nombra por su ruta')
     for t in M.tool_users.get(p, []):
         users.append(f"- herramienta MCP {code(t['name'])} → {link('API herramientas MCP')}")
-    out.append('\n'.join(users) + '\n' if users else '_Nadie dentro del repo (ver_ ' + link('01 Reporte del grafo') +
+    out.append('\n'.join(users) + '\n' if users else '_Nadie dentro de la app (ver_ ' + link('01 Reporte del grafo') +
                '_)._\n')
+    if test_importers:
+        out.append(f'_Además lo importan {test_importers} pruebas (lista abajo)._\n')
     return out
 
 
@@ -1824,8 +2206,7 @@ def _test_sections(M, p):
 def note_api_group(M, g):
     rs = M.groups[g]
     files_ = sorted({r['file'] for r in rs})
-    layer = M.files[files_[0]]['layer'] if len(files_) == 1 else (
-        'mcp' if 'MCP' in g else M.files[rs[0]['file']]['layer'])
+    layer = rs[0]['layer']
     out = [fm({'tipo': 'api', 'capa': CAPA[layer][1], 'rutas': len(rs), 'tags': tags_for(layer, 'api')})]
     out.append(f'# {g}\n')
     pref = sorted({'/'.join(r['path'].split('/')[:3]) for r in rs})
@@ -1936,10 +2317,10 @@ def note_session(M, s, prev, nxt):
         out.append('## Variables que menciona\n')
         out.append(', '.join(link(env_note(nm)) for nm in s['envs']) + '\n')
     nav = []
-    if nxt:
-        nav.append('← anterior en el archivo: ' + link(nxt['note']))
-    if prev:
-        nav.append('siguiente en el archivo: ' + link(prev['note']) + ' →')
+    if nxt:   # más abajo en ESTADO.md = más antigua
+        nav.append('← más antigua: ' + link(nxt['note']))
+    if prev:  # más arriba = más nueva
+        nav.append('más nueva: ' + link(prev['note']) + ' →')
     if nav:
         out.append(' · '.join(nav) + '\n')
     return '\n'.join(out)
@@ -2079,12 +2460,15 @@ def note_howto(M):
                '- Cada punto es una nota; las líneas son conexiones reales del código. Ya viene **coloreado por capa**:\n')
     out.append('| Color | Capa |\n|---|---|')
     names = {'#2a78d6': 'azul', '#eb6834': 'naranja', '#1baf7a': 'verde agua', '#eda100': 'amarillo',
-             '#e87ba4': 'rosa', '#008300': 'verde', '#6250d6': 'violeta', '#e34948': 'rojo',
-             '#184f95': 'azul oscuro', '#a3401a': 'marrón', '#52514e': 'gris oscuro', '#0f7a55': 'verde oscuro',
+             '#e87ba4': 'rosa', '#9bb51c': 'verde lima', '#6250d6': 'violeta', '#e34948': 'rojo',
+             '#13a3c6': 'celeste', '#b345c4': 'morado', '#52514e': 'gris oscuro', '#8b5e34': 'marrón',
              '#9a9993': 'gris', '#b9b8b1': 'gris claro', '#7d7c76': 'gris medio'}
     for c in CAPAS:
         out.append(f"| {names.get(c[3], c[3])} | {capa_link(c[0])} |")
     out.append('| lila | sesiones de trabajo |\n| arena | variables de entorno |\n')
+    out.append('- Si quieres **tus propios colores** (por ejemplo resaltar una nota), agrégalos en el panel '
+               '**Groups** del grafo con otra búsqueda: se respetan y ganan a los de capa. Los colores de las capas '
+               'los repone el generador.\n')
     out.append('- **Filtrar**: en el grafo abre el panel **Filters** (arriba a la derecha) y escribe en la caja de '
                'búsqueda:\n'
                '  - `path:Módulos` → solo el código\n'
@@ -2099,7 +2483,8 @@ def note_howto(M):
                'qué rutas define o llama, qué variables lee, qué pruebas la cubren y en qué sesiones se mencionó.\n')
     out.append('## 5. El mapa interactivo (sin Obsidian)\n')
     out.append('Dentro de `vault/_grafo/` está **`mapa.html`**: ábrelo con doble clic y se abre en el navegador '
-               '(necesita internet la primera vez para cargar la librería de dibujo). Tiene buscador, filtros por '
+               '(necesita internet cada vez que lo abres, para cargar la librería de dibujo; sin conexión muestra '
+               'un aviso). Tiene buscador, filtros por '
                'capa y al tocar un punto muestra sus conexiones. Funciona también en el teléfono.\n')
     out.append('## 6. Cómo se actualiza\n')
     out.append('**Lo actualiza Claude en cada cambio**: antes de guardar cambios en el código corre '
@@ -2129,17 +2514,23 @@ def note_report(M, R):
                'código sin pruebas, módulos o rutas que nadie usa, variables sin documentar.\n')
     out.append('> [!info] Cómo se decide "nadie lo usa" (heurística, revisar antes de borrar nada)\n'
                '> - **Python**: cuenta como uso cualquier `import`/`from … import` (también dentro de funciones) y el '
-               'nombre del módulo escrito como texto exacto (`importlib.import_module("core.world")`, listas de '
-               'blueprints de server.py). Son puertas de entrada (no se reportan): `server.py`, los scripts de '
+               'nombre del módulo con puntos escrito como texto (`importlib.import_module("core.world")`, la lista '
+               'de blueprints de server.py). Una palabra suelta (`"server"`, `"research"`) solo cuenta dentro de '
+               '`import_module(…)`, `__import__(…)` o `sys.modules.get(…)`: si no, es una categoría o una clave, no '
+               'una importación. Son puertas de entrada (no se reportan): `server.py`, los scripts de '
                '`scripts/`, todo módulo con `if __name__ == "__main__"`, los `__init__.py` y `tests/conftest.py`.\n'
-               '> - **JavaScript**: una global es `window.X = …` (o `Object.defineProperty(window, "X")`). Cuenta como '
-               'uso que otro archivo (JS o app.html, incluidos los `onclick="…"` dentro de textos) escriba `X` o '
-               '`window.X`, que el mismo archivo la lea como `window.X` o la ponga en un texto, o que el Python del '
-               'servidor la nombre. No detecta accesos dinámicos (`window[nombre]`).\n'
+               '> - **JavaScript**: una global es `window.X = …` (o `Object.defineProperty(window, "X")`). Para las '
+               'conexiones del grafo cuenta como uso que otro archivo escriba `X` en su código (no como clave de un '
+               'objeto `{ X: … }`) o `window.X`, o la use dentro de un texto/HTML como `X(…)`, `X.algo` o `window.X` '
+               '(los `onclick="…"`); la palabra suelta en un texto no cuenta. Para la lista de "nadie la usa" se es más '
+               'generoso (cualquier mención, también del Python del servidor), así que lo que aparece ahí casi seguro '
+               'sobra. No detecta accesos dinámicos (`window[nombre]`).\n'
                '> - **Rutas**: cuenta como llamada cualquier texto que empiece por `/api`, `/v1`, `/mcp`… en JS, '
-               'Python del servidor, scripts o pruebas; un texto que termina en `/` (o una base como '
-               '`/api/brokerage`) se trata como prefijo de las rutas que siguen. Las rutas externas (`/v1/*` '
-               'monetizada, `/mcp`, OAuth, `/api/health` de Railway, archivos estáticos) no se reportan.\n'
+               'Python del servidor, scripts o pruebas; un texto que termina en `/` se trata como prefijo de las rutas '
+               'que siguen. Una base como `var API = "/api/brokerage"` se une a las rutas relativas que el mismo '
+               'archivo arma (`"/clients/" + id + "/audit"` → `/api/brokerage/clients/<id>/audit`); solo si el '
+               'archivo no arma ninguna vale como prefijo de todas. Las rutas externas (`/v1/*` monetizada, `/mcp`, '
+               'OAuth y su `…/oauth/callback`, `/api/health` de Railway, archivos estáticos) no se reportan.\n'
                '> - **Pruebas**: un módulo está cubierto si una prueba lo importa o escribe su ruta (`engine/x.js`) '
                'o su nombre de archivo entre comillas.\n')
     out.append('## Conteos\n')
@@ -2166,12 +2557,15 @@ def note_report(M, R):
     if R['py_test_only']:
         out.append(f"**Solo los importan las pruebas** ({len(R['py_test_only'])}): " +
                    ', '.join(_flink(M, p) for p in R['py_test_only']) + '\n')
-    out.append(f"## Globales JS que nadie usa ({len(R['js_orphans'])})\n")
+    out.append(f"## Globales window.* que ningún otro archivo usa ({len(R['js_orphans'])})\n")
+    out.append('Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo" dice sí, la función '
+               'sí trabaja (solo sobra la exportación); si dice no, es candidata a código muerto.\n')
     if R['js_orphans']:
-        out.append('| Global | Definida en | ¿La nombra alguna prueba? |\n|---|---|---|')
-        for nm, defs, in_tests in R['js_orphans']:
+        out.append('| Global | Definida en | ¿Se usa dentro de su archivo? | ¿La nombra alguna prueba? |\n'
+                   '|---|---|---|---|')
+        for nm, defs, in_tests, internal in R['js_orphans']:
             out.append(f"| {tcode('window.' + nm)} | {', '.join(_flink(M, d) for d in defs)} | "
-                       f"{'sí (solo pruebas)' if in_tests else 'no'} |")
+                       f"{'sí' if internal else '**no**'} | {'sí (solo pruebas)' if in_tests else 'no'} |")
         out.append('')
     else:
         out.append('_Ninguna._\n')
@@ -2194,7 +2588,12 @@ def note_report(M, R):
             out.append(f'| {_flink(M, p)} | {tcode(ref)} |')
         out.append('')
     out.append(f"## Variables leídas en el código que faltan en CLAUDE.md ({len(R['env_undoc'])})\n")
+    out.append('Se pueden configurar en Railway pero nadie las anotó en la lista de CLAUDE.md.\n')
     out.append(', '.join(link(env_note(n)) for n in R['env_undoc']) + '\n' if R['env_undoc'] else '_Ninguna._\n')
+    if R['env_deploy_only']:
+        out.append(f"Solo aparecen en archivos de despliegue (Dockerfile, docker-compose.yml, workflows) y no en "
+                   f"CLAUDE.md ({len(R['env_deploy_only'])}): " +
+                   ', '.join(link(env_note(n)) for n in R['env_deploy_only']) + '\n')
     if R['env_list_only']:
         out.append(f"Solo aparecen en listas de nombres (p. ej. la lista de secretos que se tapan en los logs) "
                    f"({len(R['env_list_only'])}): " + ', '.join(link(env_note(n)) for n in R['env_list_only']) + '\n')
@@ -2260,14 +2659,10 @@ def report_data(M):
                 continue
             js = f['js']
             if path in all_defs:
-                if nm in js['win']:
-                    # lectura window.X que no sea solo la asignación
-                    reads = len(re.findall(r'(?<![\w$.])(?:window|globalThis|self)\.' + re.escape(nm) +
-                                           r'(?![\w$])(?!\s*(?:=(?![=>])|\|\|=|\?\?=|&&=))', js['code']))
-                    if reads:
-                        used = True
-                        break
-                if any(re.search(r'(?<![\w$])' + re.escape(nm) + r'(?![\w$])', s) for s in js['strings']):
+                if nm in js['win_reads']:   # lectura window.X que no es la asignación
+                    used = True
+                    break
+                if nm in js['str_ids']:
                     used = True
                     break
                 continue
@@ -2281,7 +2676,16 @@ def report_data(M):
             continue
         in_tests = any(nm in ids for p2, ids in M.py_text_ids.items() if files[p2]['role'] == 'test') or \
             any(nm in files[p2]['text'] for p2 in files if files[p2]['role'] == 'test' and files[p2]['ext'] == 'js')
-        js_orph.append((nm, defs, in_tests))
+        internal = False
+        for d in defs:
+            c = files[d]['js']['code']
+            e = re.escape(nm)
+            bare_n = len(re.findall(r'(?<![\w$.])' + e + r'(?![\w$])', c))
+            decl = len(re.findall(r'\b(?:function|var|let|const|class)\s+' + e + r'(?![\w$])', c))
+            export = len(re.findall(r'\bwindow\.' + e + r'\s*=\s*' + e + r'(?![\w$])', c))
+            if bare_n - decl - export > 0:
+                internal = True
+        js_orph.append((nm, defs, in_tests, internal))
     R['js_orphans'] = js_orph
     dead, test_only_r = [], []
     for r in M.routes:
@@ -2294,21 +2698,22 @@ def report_data(M):
             test_only_r.append(r)
     R['dead_routes'], R['test_only_routes'] = dead, test_only_r
     R['broken_calls'] = sorted((p, ref) for p, refs in M.unmatched_calls.items() for ref in refs)
-    undoc, list_only = [], []
+    undoc, list_only, deploy_only = [], [], []
     for nm in sorted(M.env_readers):
         kinds = set().union(*M.env_readers[nm].values())
         if env_documented(M, nm):
             continue
-        if kinds == {'lista'} and nm not in M.infra_env:
+        if kinds == {'lista'}:
             list_only.append(nm)
         else:
             undoc.append(nm)
     for nm in sorted(M.infra_env):
-        if nm not in M.env_readers and not env_documented(M, nm) and nm not in undoc and nm != 'PORT':
-            undoc.append(nm)
+        if nm not in M.env_readers and not env_documented(M, nm) and nm != 'PORT':
+            deploy_only.append(nm)
     R['env_undoc'] = sorted(undoc)
     R['env_list_only'] = list_only
-    R['env_unread'] = sorted(nm for nm in M.claude_block if nm not in M.env_readers and nm not in M.infra_env)
+    R['env_deploy_only'] = deploy_only
+    R['env_unread'] = sorted(nm for nm in M.claude_block if not env_is_read(M, nm))
     shell = set()
     if 'sw.js' in files:
         for s in JSScan(files['sw.js']['text']).strings:
@@ -2353,7 +2758,7 @@ def graph_data(M):
                       'note': note_path(M, p)})
     for r in M.routes:
         nodes.append({'id': r['id'], 'label': ','.join(r['methods']) + ' ' + r['path'],
-                      'layer': M.files[r['file']]['layer'], 'type': 'endpoint', 'lines': None, 'path': r['file'],
+                      'layer': r['layer'], 'type': 'endpoint', 'lines': None, 'path': r['file'],
                       'note': 'API/' + r['group']})
     for t in M.tools:
         nodes.append({'id': t['id'], 'label': 'MCP ' + t['name'], 'layer': 'mcp', 'type': 'endpoint',
@@ -2436,8 +2841,39 @@ def obsidian_files():
         'lineSizeMultiplier': 1, 'collapse-forces': True, 'centerStrength': 0.45, 'repelStrength': 12,
         'linkStrength': 1, 'linkDistance': 180, 'scale': 0.6, 'close': False,
     }
-    dump = lambda d: json.dumps(d, ensure_ascii=False, indent=2, sort_keys=True) + '\n'  # noqa: E731
-    return {'.obsidian/app.json': dump(app), '.obsidian/graph.json': dump(graph)}
+    return {'.obsidian/app.json': _dump_cfg(app), '.obsidian/graph.json': _dump_cfg(graph)}
+
+
+def _dump_cfg(d):
+    return json.dumps(d, ensure_ascii=False, indent=2, sort_keys=True) + '\n'
+
+
+def _managed_group(g):
+    q = str(g.get('query', '')) if isinstance(g, dict) else ''
+    return q.startswith('tag:#capa/') or q in ('tag:#tipo/sesion', 'tag:#tipo/variable')
+
+
+def merge_obsidian_config(rel, old_text, new_text):
+    """Configuración de Obsidian que YA existe → lo que hay que escribir (None = no tocar).
+
+    La persona mueve controles del grafo y Obsidian reescribe estos archivos: eso se respeta. app.json no se
+    toca nunca; en graph.json solo se refrescan los grupos de color de las capas (los suyos propios — otra
+    búsqueda — se conservan ANTES de los de capa, así ganan) y se agregan las claves que falten."""
+    if rel != '.obsidian/graph.json':
+        return None
+    try:
+        old = json.loads(old_text)
+    except ValueError:
+        return new_text
+    if not isinstance(old, dict):
+        return new_text
+    new = json.loads(new_text)
+    merged = dict(old)
+    for k, v in new.items():
+        merged.setdefault(k, v)
+    mine = [g for g in old.get('colorGroups') or [] if isinstance(g, dict) and not _managed_group(g)]
+    merged['colorGroups'] = mine + new['colorGroups']
+    return None if merged == old else _dump_cfg(merged)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -2481,8 +2917,6 @@ def build_vault():
     put('Sesiones/Índice de sesiones.md', note_session_index(M))
     put('Pruebas/Índice de pruebas.md', note_test_index(M))
     for c in CAPAS:
-        if c[0] == 'otros' and not R['otros']:
-            continue
         put(f'Capas/{capa_note_name(c[0])}.md', note_layer(M, c[0]))
     put('00 Mapa de Khipus.md', note_home(M))
     put('01 Reporte del grafo.md', note_report(M, R))
@@ -2521,7 +2955,12 @@ def existing_owned(vault_dir):
     return found
 
 
+OBSIDIAN_CONFIG = ('.obsidian/app.json', '.obsidian/graph.json')
+
+
 def diff_vault(out, vault_dir):
+    """Diferencias entre lo generado y vault/. La configuración de Obsidian solo tiene que EXISTIR:
+    Obsidian la reescribe cuando la persona mueve un control del grafo, y eso no es "bóveda vieja"."""
     problems = []
     have = existing_owned(vault_dir)
     for rel in sorted(out):
@@ -2529,7 +2968,9 @@ def diff_vault(out, vault_dir):
         if not os.path.isfile(fp):
             problems.append('falta: ' + rel)
             continue
-        with open(fp, encoding='utf-8', newline='') as fh:
+        if rel in OBSIDIAN_CONFIG:
+            continue
+        with open(fp, encoding='utf-8') as fh:   # saltos universales: un checkout CRLF (Windows) no cuenta
             if fh.read() != out[rel]:
                 problems.append('distinto: ' + rel)
     for rel in sorted(have - set(out)):
@@ -2546,8 +2987,13 @@ def write_vault(out, vault_dir):
         os.makedirs(os.path.dirname(fp), exist_ok=True)
         old = None
         if os.path.isfile(fp):
-            with open(fp, encoding='utf-8', newline='') as fh:
+            with open(fp, encoding='utf-8') as fh:
                 old = fh.read()
+        if rel in OBSIDIAN_CONFIG and old is not None:
+            # ya existe: es de la persona (Obsidian la reescribe al mover controles); solo se fusiona
+            text = merge_obsidian_config(rel, old, text)
+            if text is None:
+                continue
         if old != text:
             with open(fp, 'w', encoding='utf-8', newline='\n') as fh:
                 fh.write(text)
@@ -2719,7 +3165,7 @@ code{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;backgrou
 <main>
   <canvas id="cv" aria-label="Grafo del código de Khipus" role="img"></canvas>
   <div id="tip"></div>
-  <div class="hint">Toca un punto para ver sus conexiones · rueda o pellizco para acercar · arrastra para moverte</div>
+  <div class="hint">Toca un punto para ver sus conexiones · rueda o pellizco para acercar · arrastra para moverte · doble clic para encuadrar</div>
   <aside id="panel" aria-live="polite">
     <div class="hd"><h2 id="pTitle"></h2><button class="x" id="pClose" type="button" aria-label="Cerrar">✕</button></div>
     <div class="bd" id="pBody"></div>
@@ -2794,10 +3240,15 @@ D.layers.forEach(function(L, k){
   var sw = document.createElement('span'); sw.className = 'sw' + (L.style === 'ring' ? ' ring' : '');
   b.appendChild(sw);
   var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = L.name; b.appendChild(nm);
-  var c = document.createElement('span'); c.className = 'n'; c.textContent = lcount[k]; b.appendChild(c);
+  var c = document.createElement('span'); c.className = 'n'; b.appendChild(c);
   b.onclick = function(){ layerOn[k] = !layerOn[k]; b.setAttribute('aria-pressed', String(layerOn[k])); refresh(); };
   layersEl.appendChild(b); layerBtns.push(b);
 });
+function layerCounts(){
+  var cnt = D.layers.map(function(){ return 0; });
+  nodes.forEach(function(n){ if (typeOn[n.type]) cnt[n.layer]++; });
+  layerBtns.forEach(function(b, k){ if (b) b.querySelector('.n').textContent = cnt[k]; });
+}
 function paintSwatches(){
   layerBtns.forEach(function(b, k){ if (!b) return; var sw = b.querySelector('.sw'); var c = css[D.layers[k].slot];
     if (D.layers[k].style === 'ring') { sw.style.borderColor = c; } else { sw.style.background = c; } });
@@ -2813,18 +3264,33 @@ if (window.innerWidth > 720) document.getElementById('layersBox').open = true;
 var canvas = document.getElementById('cv'), ctx = canvas.getContext('2d');
 var W = 0, H = 0, dpr = 1, transform = d3.zoomIdentity;
 var nl = D.layers.length;
-var anchor = D.layers.map(function(L, k){ var a = (k / nl) * Math.PI * 2 - Math.PI / 2; return {x: Math.cos(a) * 420, y: Math.sin(a) * 300}; });
+var stageR = document.querySelector('main').getBoundingClientRect();
+var portrait = stageR.height > stageR.width * 1.15;          /* teléfono vertical: capas en un óvalo alto */
+var RX = portrait ? 250 : 420, RY = portrait ? 470 : 300;
+var anchor = D.layers.map(function(L, k){ var a = (k / nl) * Math.PI * 2 - Math.PI / 2; return {x: Math.cos(a) * RX, y: Math.sin(a) * RY}; });
 nodes.forEach(function(n){ var a = anchor[n.layer]; n.x = a.x + (Math.random() - .5) * 140; n.y = a.y + (Math.random() - .5) * 140; });
 var sim = d3.forceSimulation().alphaDecay(0.035).velocityDecay(0.45)
-  .force('charge', d3.forceManyBody().strength(function(n){ return -14 - radius(n) * 3; }).distanceMax(380))
-  .force('link', d3.forceLink().id(function(n){ return n.i; }).distance(function(l){ return l.type === 'tested_by' ? 46 : 34; }).strength(0.05))
-  .force('x', d3.forceX(function(n){ return anchor[n.layer].x; }).strength(0.055))
-  .force('y', d3.forceY(function(n){ return anchor[n.layer].y; }).strength(0.055))
+  .force('charge', d3.forceManyBody().strength(function(n){ return -16 - radius(n) * 3; }).distanceMax(360))
+  .force('link', d3.forceLink().id(function(n){ return n.i; }).distance(function(l){ return l.type === 'tested_by' ? 46 : 36; }).strength(0.035))
+  .force('x', d3.forceX(function(n){ return anchor[n.layer].x; }).strength(0.085))
+  .force('y', d3.forceY(function(n){ return anchor[n.layer].y; }).strength(0.085))
   .force('collide', d3.forceCollide(function(n){ return radius(n) + 1.5; }))
-  .on('tick', schedule);
+  .on('tick', function(){ schedule(); if (!touched && sim.alpha() < 0.09) fit(false); });
+var touched = false;
+function fit(animate){
+  if (!vis.length || !W) return;
+  var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  vis.forEach(function(n){ var r = radius(n); x0 = Math.min(x0, n.x - r); y0 = Math.min(y0, n.y - r); x1 = Math.max(x1, n.x + r); y1 = Math.max(y1, n.y + r); });
+  var pad = W < 720 ? 18 : 40, k = Math.min((W - pad * 2) / Math.max(1, x1 - x0), (H - pad * 2) / Math.max(1, y1 - y0), 2.2);
+  var t = d3.zoomIdentity.translate(W / 2 - (x0 + x1) / 2 * k, H / 2 - (y0 + y1) / 2 * k).scale(k);
+  touched = true;
+  if (animate) d3.select(canvas).transition().duration(500).call(zoom.transform, t);
+  else d3.select(canvas).call(zoom.transform, t);
+}
 var vis = [], vlinks = [];
 function refresh(){
   vis = nodes.filter(visible);
+  layerCounts();
   var on = {}; vis.forEach(function(n){ on[n.i] = 1; });
   vlinks = links.filter(function(l){
     if (!on[l.s] || !on[l.t]) return false;
@@ -2896,7 +3362,7 @@ function shortLabel(n){
   if (n.type === 'module' || n.type === 'data' || n.type === 'test' || n.type === 'page'){ var p = n.label.split('/'); return p[p.length - 1]; }
   return n.label.length > 42 ? n.label.slice(0, 40) + '…' : n.label;
 }
-var zoom = d3.zoom().scaleExtent([0.15, 8]).on('zoom', function(ev){ transform = ev.transform; schedule(); });
+var zoom = d3.zoom().scaleExtent([0.15, 8]).on('zoom', function(ev){ transform = ev.transform; if (ev.sourceEvent) touched = true; schedule(); });
 d3.select(canvas).call(zoom).on('dblclick.zoom', null);
 function toGraph(ev){ var r = canvas.getBoundingClientRect(); return transform.invert([ev.clientX - r.left, ev.clientY - r.top]); }
 function pick(ev){ var p = toGraph(ev); var n = sim.find(p[0], p[1], 14 / transform.k + 4); return n || null; }
@@ -2910,6 +3376,7 @@ canvas.addEventListener('mousemove', function(ev){
 });
 canvas.addEventListener('mouseleave', function(){ hover = null; document.getElementById('tip').style.display = 'none'; schedule(); });
 canvas.addEventListener('click', function(ev){ var n = pick(ev); if (n) select(n, false); else closePanel(); });
+canvas.addEventListener('dblclick', function(){ fit(true); });
 
 // ── panel ──
 var panel = document.getElementById('panel');
@@ -2944,7 +3411,9 @@ function select(n, center){
   a.style.fontSize = '12px'; a.style.color = 'var(--focus)'; body.appendChild(a);
   var groups = {};
   adjOut[n.i].forEach(function(l){ if (l.type === 'via_endpoint') return; (groups['o:' + l.type] = groups['o:' + l.type] || []).push(nodes[l.t]); });
-  adjIn[n.i].forEach(function(l){ if (l.type === 'via_endpoint') return; (groups['i:' + l.type] = groups['i:' + l.type] || []).push(nodes[l.s]); });
+  adjIn[n.i].forEach(function(l){ if (l.type === 'via_endpoint') return;
+    if (l.type === 'imports' && nodes[l.s].type === 'test') return;   /* ya salen en "Probado por" */
+    (groups['i:' + l.type] = groups['i:' + l.type] || []).push(nodes[l.s]); });
   var keys = Object.keys(groups).sort();
   if (!keys.length) body.appendChild(el('p', 'grp', 'Sin conexiones'));
   keys.forEach(function(k){

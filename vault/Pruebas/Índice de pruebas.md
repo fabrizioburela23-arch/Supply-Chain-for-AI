@@ -1,0 +1,123 @@
+---
+tipo: "indice"
+capa: "Pruebas"
+tags: ["capa/pruebas", "tipo/indice"]
+---
+
+# Índice de pruebas
+
+111 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+
+| Prueba | Funciones test_ | Módulos que cubre |
+|---|---|---|
+| [[tests.__init__.py]] | 0 | 0 |
+| [[tests.conftest.py]] | 0 | 1 |
+| [[tests.js.localcharts_intents.js]] | 0 | 1 |
+| [[tests.js.localcharts_pfperf.js]] | 0 | 1 |
+| [[tests.test_agent_dudosos.py]] | 2 | 5 |
+| [[tests.test_ai_gemini_fast.py]] | 8 | 3 |
+| [[tests.test_ai_json.py]] | 4 | 2 |
+| [[tests.test_ai_usage.py]] | 6 | 7 |
+| [[tests.test_analytics.py]] | 6 | 3 |
+| [[tests.test_ask_agent.py]] | 16 | 8 |
+| [[tests.test_brokerage.py]] | 48 | 11 |
+| [[tests.test_bulk_import.py]] | 6 | 1 |
+| [[tests.test_canvas.py]] | 23 | 2 |
+| [[tests.test_canvas_charts.py]] | 4 | 2 |
+| [[tests.test_chat_commands.py]] | 3 | 1 |
+| [[tests.test_chat_portfolio_agent.py]] | 3 | 5 |
+| [[tests.test_client_hardening.py]] | 18 | 5 |
+| [[tests.test_committee_os_narr.py]] | 19 | 15 |
+| [[tests.test_committee_os_pf_apply.py]] | 2 | 1 |
+| [[tests.test_committee_os_pf_tokens.py]] | 9 | 2 |
+| [[tests.test_committee_os_ui.py]] | 11 | 4 |
+| [[tests.test_company_data.py]] | 28 | 3 |
+| [[tests.test_decide.py]] | 8 | 3 |
+| [[tests.test_entities.py]] | 13 | 4 |
+| [[tests.test_gdelt_events.py]] | 4 | 2 |
+| [[tests.test_gpr.py]] | 3 | 2 |
+| [[tests.test_graph_api.py]] | 15 | 8 |
+| [[tests.test_graph_audit.py]] | 7 | 5 |
+| [[tests.test_infra.py]] | 57 | 16 |
+| [[tests.test_ingest_news.py]] | 12 | 7 |
+| [[tests.test_investigador.py]] | 7 | 4 |
+| [[tests.test_jev_router.py]] | 7 | 8 |
+| [[tests.test_khipu_chat.py]] | 30 | 7 |
+| [[tests.test_khipus_os_chat.py]] | 15 | 6 |
+| [[tests.test_khipus_os_fixes_perf.py]] | 8 | 1 |
+| [[tests.test_khipus_os_fixes_server.py]] | 20 | 13 |
+| [[tests.test_khipus_os_fixes_shell.py]] | 11 | 3 |
+| [[tests.test_khipus_os_fixes_windows.py]] | 10 | 4 |
+| [[tests.test_khipus_os_integration.py]] | 5 | 7 |
+| [[tests.test_khipus_os_perf.py]] | 16 | 6 |
+| [[tests.test_khipus_os_server.py]] | 24 | 12 |
+| [[tests.test_khipus_os_shell.py]] | 13 | 4 |
+| [[tests.test_khipus_os_windows.py]] | 19 | 4 |
+| [[tests.test_live_caps.py]] | 5 | 3 |
+| [[tests.test_live_facts_entities.py]] | 1 | 1 |
+| [[tests.test_live_fundamentals.py]] | 3 | 2 |
+| [[tests.test_live_labels_misc.py]] | 6 | 5 |
+| [[tests.test_localcharts_intents.py]] | 2 | 1 |
+| [[tests.test_map_search_reset.py]] | 2 | 1 |
+| [[tests.test_matrix.py]] | 12 | 9 |
+| [[tests.test_matrix_sparse.py]] | 19 | 1 |
+| [[tests.test_mcp.py]] | 60 | 19 |
+| [[tests.test_merge_graph_alias.py]] | 1 | 2 |
+| [[tests.test_numbers_guard.py]] | 6 | 2 |
+| [[tests.test_ontology.py]] | 12 | 8 |
+| [[tests.test_ontology_actions.py]] | 17 | 5 |
+| [[tests.test_ontology_agents.py]] | 7 | 7 |
+| [[tests.test_ontology_alerts.py]] | 5 | 6 |
+| [[tests.test_overnight2_fixer_review.py]] | 9 | 6 |
+| [[tests.test_overnight2_scenes_tokens.py]] | 12 | 5 |
+| [[tests.test_overnight2_sistema_shell.py]] | 12 | 2 |
+| [[tests.test_overnight3_diag_bilingual.py]] | 10 | 8 |
+| [[tests.test_overnight3_fixer_voice_race.py]] | 5 | 1 |
+| [[tests.test_overnight3_mic_voice_state.py]] | 15 | 6 |
+| [[tests.test_overnight3_toast_tokens.py]] | 14 | 7 |
+| [[tests.test_overnight_ai_routing.py]] | 31 | 9 |
+| [[tests.test_overnight_fixes_review.py]] | 20 | 15 |
+| [[tests.test_overnight_ui_dossier_clients.py]] | 12 | 5 |
+| [[tests.test_overnight_ui_portfolios_risk.py]] | 9 | 3 |
+| [[tests.test_overnight_ui_small_panels.py]] | 13 | 7 |
+| [[tests.test_overnight_ui_xray_research.py]] | 10 | 8 |
+| [[tests.test_overnight_voice_client.py]] | 13 | 1 |
+| [[tests.test_overnight_voice_server.py]] | 26 | 4 |
+| [[tests.test_phase3.py]] | 41 | 15 |
+| [[tests.test_pickers.py]] | 1 | 1 |
+| [[tests.test_portfolio_advisor.py]] | 2 | 1 |
+| [[tests.test_portfolio_ai.py]] | 24 | 4 |
+| [[tests.test_portfolio_persist.py]] | 3 | 7 |
+| [[tests.test_portfolio_reports.py]] | 5 | 5 |
+| [[tests.test_provenance.py]] | 16 | 7 |
+| [[tests.test_providers.py]] | 17 | 6 |
+| [[tests.test_quotes_live.py]] | 18 | 5 |
+| [[tests.test_reconcile.py]] | 5 | 8 |
+| [[tests.test_repair_committee.py]] | 18 | 13 |
+| [[tests.test_repair_graph.py]] | 28 | 22 |
+| [[tests.test_repair_logs.py]] | 4 | 2 |
+| [[tests.test_repair_ontology.py]] | 9 | 4 |
+| [[tests.test_repair_ontology_review.py]] | 23 | 10 |
+| [[tests.test_repair_ops.py]] | 6 | 12 |
+| [[tests.test_repair_prices.py]] | 5 | 4 |
+| [[tests.test_repair_research.py]] | 43 | 17 |
+| [[tests.test_repair_review2.py]] | 9 | 16 |
+| [[tests.test_repair_risk.py]] | 10 | 1 |
+| [[tests.test_repair_world.py]] | 7 | 2 |
+| [[tests.test_research.py]] | 23 | 15 |
+| [[tests.test_risk_easy.py]] | 5 | 4 |
+| [[tests.test_risk_options.py]] | 6 | 3 |
+| [[tests.test_scenario_live.py]] | 1 | 1 |
+| [[tests.test_sec.py]] | 5 | 2 |
+| [[tests.test_security.py]] | 59 | 14 |
+| [[tests.test_server_smoke.py]] | 24 | 12 |
+| [[tests.test_sim_agents.py]] | 6 | 2 |
+| [[tests.test_space2.py]] | 16 | 1 |
+| [[tests.test_tensor.py]] | 8 | 6 |
+| [[tests.test_tensor_autolink.py]] | 2 | 6 |
+| [[tests.test_vault.py]] | 19 | 1 |
+| [[tests.test_verified_valuations.py]] | 1 | 2 |
+| [[tests.test_vocabulary.py]] | 12 | 3 |
+| [[tests.test_world.py]] | 39 | 4 |
+| [[tests.test_world_feeds.py]] | 11 | 3 |
+| [[tests.world_feed_fixtures.py]] | 0 | 1 |

@@ -9,6 +9,7 @@
 .env.*
 !.env.example
 tests
+vault
 **/__pycache__
 **/*.pyc
 **/*.pyo
