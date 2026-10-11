@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-27"
-ruta: "docs/ESTADO.md#L1423"
+ruta: "docs/ESTADO.md#L1432"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-27 (b) — Nombres: búsqueda por nombre legal + etiquetas legibles (sw v137)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1423 (20 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1432 (20 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

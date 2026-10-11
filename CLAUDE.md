@@ -14,6 +14,10 @@ Desplegado en Railway (push a `main` auto-deploya, ~2 min).
 **Al iniciar una sesión de trabajo: lee `docs/ESTADO.md`** — es la memoria
 entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 `docs/AUDITORIA.md` = inventario de dónde vive cada dato.
+**Arquitectura objetivo: `docs/ARQUITECTURA_V2.md`** (2026-10-11) — grafo = identidad/relaciones, vectores = estado,
+tensores = solo cálculo derivado y versionado; Postgres como única base (sin base de grafos ni vectorial aparte);
+un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupuesto). Antes de construir algo
+"avanzado", ver su sección 19 (qué NO hacer) y la Fase 1 (20.1, orden de implementación).
 
 ## Arquitectura
 

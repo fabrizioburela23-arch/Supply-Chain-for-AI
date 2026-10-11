@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L448"
+ruta: "docs/ESTADO.md#L457"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (v) — "ABRE MI CUENTA" OFRECE BRÓKER + TUS CARTERAS (sw v228)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 448 (7 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 457 (7 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

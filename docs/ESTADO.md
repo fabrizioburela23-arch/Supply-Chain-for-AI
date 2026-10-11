@@ -56,6 +56,15 @@ código + el reporte de la bóveda. Hecho, cada arreglo con su prueba:
 Qué hacer en Railway (Fabrizio): borrar `AI_MODEL` y `AI_ORDER` si existen (ya no deciden nada / solo afectan al nivel
 rápido). Nada más cambia de configuración.
 
+**Diseño de la arquitectura v2** (mismo día, después de la limpieza): `docs/ARQUITECTURA_V2.md` responde las 18
+secciones del pedido (grafo heterogéneo bitemporal, valores θ(t) afirmados/derivados/modelados, vectores por familia
+con fusión tardía, tensores útiles vs redundantes, Grafo↔Matriz↔Tensor con la serie de Neumann (αρ=0,54 justifica 6
+saltos), capa financiera completa, Graph-ML técnica por técnica, almacenamiento A-E → C (Postgres) ahora y E mínima a
+largo plazo, pipeline almacenamiento≠cálculo, motor de contexto con $R(v\mid Q)$ y empaquetado submodular, agentes
+(5 de 9 deterministas), las 11 operaciones MCP, $K$ reformulada con lazo de aprendizaje, arquitectura final con
+diagramas y ficha por componente, crítica en 12 puntos y Fases 1-5 con qué NO hacer). Próximo paso: Fase 1 en el
+orden de su sección 20.1 (empieza por la tabla de precios EOD), solo con el OK de Fabrizio.
+
 ---
 
 # SESIÓN 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO (sin cambios en la app; sw.js sin tocar)

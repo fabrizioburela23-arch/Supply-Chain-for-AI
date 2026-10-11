@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-06"
-ruta: "docs/ESTADO.md#L273"
+ruta: "docs/ESTADO.md#L282"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-06 (gg) — DIRECCIONES AL REVÉS + PESO DE LICENCIAS + PISO DEL KERNEL (sw v242)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 273 (35 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 282 (35 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

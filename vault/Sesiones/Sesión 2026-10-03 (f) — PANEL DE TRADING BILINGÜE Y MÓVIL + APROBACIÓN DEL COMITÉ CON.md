@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-03"
-ruta: "docs/ESTADO.md#L890"
+ruta: "docs/ESTADO.md#L899"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-03 (f) — PANEL DE TRADING BILINGÜE Y MÓVIL + APROBACIÓN DEL COMITÉ CON POP-UP (sw v183)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 890 (9 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 899 (9 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

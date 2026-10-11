@@ -8,7 +8,7 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 # SESIÓN 2026-10-11 (b) — LIMPIEZA "QUE NO QUEDEN COSAS SUELTAS" (sw v254)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (49 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 12 (58 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -22,6 +22,7 @@ Pedido de Fabrizio (antes de la nueva arquitectura): "incorporar este sistema en
 - [[core.agents_registry.py]]
 - [[core.khipu_chat.py]]
 - [[core.world.py]]
+- [[Doc ARQUITECTURA_V2]]
 - [[engine.agents_registry.js]]
 - [[engine.committee.js]]
 - [[engine.khipu_chat.js]]

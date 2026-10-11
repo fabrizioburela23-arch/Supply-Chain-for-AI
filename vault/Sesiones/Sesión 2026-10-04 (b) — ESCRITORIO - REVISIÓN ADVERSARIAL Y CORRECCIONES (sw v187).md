@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L806"
+ruta: "docs/ESTADO.md#L815"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 (b) — ESCRITORIO: REVISIÓN ADVERSARIAL Y CORRECCIONES (sw v187)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 806 (31 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 815 (31 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
