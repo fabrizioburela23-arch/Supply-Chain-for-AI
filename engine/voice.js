@@ -2,8 +2,9 @@
 // Cliente WebSocket de ElevenLabs Agents (Conversational AI). Khipu es el "Jarvis de las
 // finanzas": escucha por micrófono, responde por voz, y puede controlar la terminal.
 //
-// Depende de app.html: Keys, BASE, NODES, NODE_BY_ID, MKT, selected, stressId,
-//   stressAffected, activateStress, jumpTo, computeNRS, catLabel, toast, LANG, activeTab
+// Depende de app.html: BASE, NODES, NODE_BY_ID, LINKS, MKT, computeNRS(+Breakdown), NRS_FLOW_TYPES,
+//   quotePx, toast, LANG — y de Khipus OS: BixbyCockpit (chatVoice, stage, screens/openScreen, title),
+//   KhipuDesk, KhipuOSWin, KhipuChat. Contrato de herramientas: el bloque «CONTRATO DE VOZ v2» de abajo.
 //
 // PROTOCOLO (verificado oct-2026 contra los SDK oficiales @elevenlabs/client 1.27 y
 // @elevenlabs/types 0.24 — se mantiene el WebSocket crudo con URL firmada: es lo
@@ -36,11 +37,22 @@ function _voiceLang() {
 }
 
 // Tope (s) que el agente espera cada herramienta — ESPEJO de _VOICE_TOOL_TIMEOUTS en
-// server.py (un test los compara). Respondemos SIEMPRE ~1.5 s antes para que
-// ElevenLabs nunca vea un timeout (el agente quedaba mudo o decía "falló").
-const VOICE_TOOL_TIMEOUT_S = { ask_khipu_brain: 60, run_agent_simulation: 90, deep_research: 90,
-  get_news: 20, show_insights: 15, place_paper_trade: 45, get_portfolio_status: 45, get_space_summary: 20 };
+// server.py (un test los compara; contrato de voz v2, 2026-10-11). Respondemos SIEMPRE ~1.5 s antes
+// para que ElevenLabs nunca vea un timeout (el agente quedaba mudo o decía "falló").
+const VOICE_TOOL_TIMEOUT_S = { ask_khipu_brain: 60, open_company: 15, get_company_info: 15, run_agent_simulation: 90,
+  quick_thesis: 90, show_opportunities: 15, place_order: 45, get_account_status: 45, get_space_summary: 20 };
 const VOICE_TOOL_TIMEOUT_DEFAULT_S = 10;
+// Nombres RETIRADOS (alias): el tope con el que un agente aún sin re-sincronizar los tiene registrados
+// (los que no figuran usaban 10 s). Solo para responder a tiempo durante un despliegue; no se declaran.
+const VOICE_ALIAS_TIMEOUT_S = { deep_research: 90, get_news: 20, show_insights: 15, place_paper_trade: 45, get_portfolio_status: 45 };
+
+// Intensidad de una simulación en vivo (1..100 %; 0, vacía o inválida = 100 = caída total) — la MISMA
+// regla que engine/cockpit.js (_simSev): la voz y la ventana muestran la misma intensidad.
+function _voiceSimSev(v) {
+  v = Math.round(+v);
+  if (!isFinite(v) || v <= 0) return 100;
+  return Math.max(1, Math.min(100, v));
+}
 
 // Precio de una cotización por el contrato único (window.quotePx: live numérico o close).
 function _voicePx(q) {
@@ -623,77 +635,63 @@ const BixbyVoice = {
     this.ws.send(JSON.stringify(msg));
   },
 
+  // [CONTEXT_UPDATE] silencioso para el agente (contrato de voz v2): lo que hay EN PANTALLA en Khipus OS.
+  // Ya no hay "pestaña activa": todo se abre como ventana junto al chat.
   _buildContext() {
-    const sel = (typeof selected !== 'undefined' && selected) ? NODE_BY_ID[selected] : null;
-    const positions = Object.entries((typeof MKT !== 'undefined' && MKT.pos) || {});
-    const hasStress = typeof stressId !== 'undefined' && !!stressId;
-
-    let topRisk = [];
-    if (typeof computeNRS === 'function' && typeof NODES !== 'undefined') {
-      try {
-        topRisk = NODES.map(n => ({ id: n.id, label: n.label, ticker: n.mkt || null, nrs: computeNRS(n.id) }))
-          .sort((a, b) => b.nrs - a.nrs).slice(0, 10);
-      } catch {}
-    }
-
-    let selLinks = [];
-    if (sel && typeof LINKS !== 'undefined') {
-      try {
-        selLinks = LINKS.filter(l => lid(l.source) === sel.id || lid(l.target) === sel.id)
-          .slice(0, 8).map(l => ({
-            from: NODE_BY_ID[lid(l.source)]?.label,
-            to: NODE_BY_ID[lid(l.target)]?.label,
-            type: l.type || l.rel,
-          }));
-      } catch {}
-    }
-
-    const portfolio = positions.map(([id, p]) => {
-      const n = NODE_BY_ID[id];
-      const q = n?.mkt ? ((typeof MKT !== 'undefined') ? MKT.quotes[n.mkt] : null) : null;
-      return {
-        id, label: n?.label || id, ticker: n?.mkt || null,
-        shares: p.sh, buy_price: p.bp,
-        current_price: _voicePx(q),
-        nrs: typeof computeNRS === 'function' ? computeNRS(id) : null,
-      };
-    });
-
-    // Category breakdown
-    const cats = {};
-    if (typeof NODES !== 'undefined') NODES.forEach(n => { cats[n.cat] = (cats[n.cat] || 0) + 1; });
-
+    const W = (typeof window !== 'undefined') ? window : {};
+    const D = W.KhipuDesk, ck = W.BixbyCockpit;
+    const titles = [];
+    let focused = null;
+    try {
+      if (D && D.active && D.active() && D.list) {
+        const fid = D.focused ? D.focused() : null;
+        D.list().forEach(w => {
+          if (!w || w.min) return;
+          let t = '';
+          try {
+            const el = document.querySelector && document.querySelector('.kd-win[data-id="' + w.id + '"] .kd-name');
+            t = (el && el.textContent) ? el.textContent : '';
+          } catch (e) {}
+          if (!t) t = this._title(w.kind);
+          t = String(t || w.kind).slice(0, 60);
+          if (titles.length < 8) titles.push(t);
+          if (w.id === fid) focused = t;
+        });
+      }
+    } catch (e) {}
+    let sel = null;
+    try { sel = (W._liveSelectedNode && W._liveSelectedNode()) || ((typeof selected !== 'undefined') ? selected : null); } catch (e) { sel = null; }
+    const sn = sel ? ((W.NODE_BY_ID || {})[sel] || null) : null;
+    let inv = null;
+    try {
+      const id = (ck && ck.invoked) ? ck.invoked() : null;
+      if (id) inv = (W.KhipuChat && W.KhipuChat.agentName) ? W.KhipuChat.agentName(id) : id;
+    } catch (e) {}
+    let mode = 'simple';
+    try { if (W.KhipuAgentPrefs && W.KhipuAgentPrefs.mode && W.KhipuAgentPrefs.mode() === 'pro') mode = 'pro'; } catch (e) {}
     return {
-      app: 'Khipu Finance', assistant: 'Khipu',
-      active_tab: (typeof activeTab !== 'undefined') ? activeTab : null,
-      language: _voiceLang(),
-      total_nodes: (typeof NODES !== 'undefined') ? NODES.length : 0,
-      total_links: (typeof LINKS !== 'undefined') ? LINKS.length : 0,
-      categories: cats,
-      selected_company: sel ? (function () {
-        const m = (window.NODE_META || {})[sel.id] || {};
-        const sq = (sel.mkt && typeof MKT !== 'undefined') ? MKT.quotes[sel.mkt] : null;
-        return {
-          id: sel.id, label: sel.label, ticker: sel.mkt || null,
-          category: typeof catLabel === 'function' ? catLabel(sel.cat) : sel.cat,
-          nrs: typeof computeNRS === 'function' ? computeNRS(sel.id) : null,
-          price: _voicePx(sq),
-          role: sel.role || null,
-          // la ficha completa: Khipu debe saber lo que la pantalla muestra
-          employees: m.employees || null, founded: m.founded || null,
-          revenue: m.revenue_2025 || null, market_cap_billions: m.mktcap_b || null,
-          geo_risk: m.geo_risk || null, country: sel.country || null,
-          margin_pct: sel.margin != null ? Math.round(sel.margin * 100) : null,
-          growth: sel.growth || null,
-          supply_chain_links: selLinks,
-        };
-      })() : null,
-      portfolio,
-      portfolio_count: positions.length,
-      stress_active: hasStress,
-      stressed_company: hasStress ? { id: stressId, label: NODE_BY_ID[stressId]?.label } : null,
-      top_risk_companies: topRisk,
+      app: 'Khipus Finance Intelligence', interface: 'Khipus OS', lang: _voiceLang(),
+      open_windows: titles, focused_window: focused,
+      selected_company: sn ? { id: sn.id, label: sn.label, ticker: sn.mkt || null,
+        nrs: (typeof computeNRS === 'function') ? computeNRS(sn.id) : null } : null,
+      invoked_agent: inv, explain_mode: mode, money_mode: this._moneyMode(),
     };
+  },
+
+  // ¿con qué dinero se opera AHORA? 'live' / 'paper' (cuenta del bróker ya leída, sin pedir PIN),
+  // 'practice' (solo carteras de práctica) o 'none'. Nunca se adivina "simulado".
+  _moneyMode() {
+    try {
+      const c = window.__tradeAcctCache;
+      if (c && c.data && typeof c.data.paper === 'boolean') return c.data.paper ? 'paper' : 'live';
+    } catch (e) {}
+    try {
+      const raw = localStorage.getItem('kh_portfolios');
+      const v = raw ? JSON.parse(raw) : null;
+      const list = Array.isArray(v) ? v : (v && Array.isArray(v.portfolios) ? v.portfolios : (v && typeof v === 'object' ? Object.keys(v) : []));
+      if (list.length) return 'practice';
+    } catch (e) {}
+    return 'none';
   },
 
   _handleMessage(msg) {
@@ -731,10 +729,11 @@ const BixbyVoice = {
       case 'agent_response': {
         const text = msg.agent_response_event?.agent_response || '';
         if (text) {
-          // El usuario NUNCA debe ver los tokens internos ([XRAY:...], [NAV:...])
+          // solo la píldora: el usuario NUNCA ve tokens internos. El viejo enrutador de tokens de texto
+          // ([NAV:]/[XRAY:]/…) se retiró (2026-10-11): las instrucciones los prohíben y las herramientas de
+          // cliente hacen todo (contrato de voz v2).
           const clean = this._cleanSpeech(text);
           if (clean) this._showOverlay('Khipu: ' + clean.slice(0, 80), 'speak');
-          this._onAgentResponse(text);
         }
         break;
       }
@@ -856,88 +855,6 @@ const BixbyVoice = {
     this.audioQueue = [];
   },
 
-  _onAgentResponse(text) {
-    const nav      = text.match(/\[NAV:([A-Za-z0-9_]+)\]/);
-    const stress   = text.match(/\[STRESS:([A-Za-z0-9_]+)\]/);
-    const sim      = text.match(/\[SIM:([a-z_]+)\]/);
-    const tab      = text.match(/\[TAB:([a-z]+)\]/);
-    const chart    = text.match(/\[CHART:([A-Za-z0-9._^[\]]+)\]/);
-    const trade    = text.match(/\[TRADE:([A-Za-z0-9._^[\]]+)\]/);
-    const terminal = text.match(/\[TERMINAL:([A-Za-z0-9._^[\]]+)\]/);
-    const sb       = text.match(/\[SECOND_BRAIN:([A-Za-z0-9_]+)\]/);
-    const canvas   = text.match(/\[CANVAS:([^\]]+)\]/);
-    const nrsTop   = /\[NRS_TOP\]/.test(text);
-    const filter   = text.match(/\[FILTER:([A-Za-z0-9_]+)\]/);
-    const xray     = text.match(/\[XRAY:([A-Za-z0-9_]+)\]/);
-    const compare  = text.match(/\[COMPARE:([A-Za-z0-9_]+),([A-Za-z0-9_]+)\]/);
-    const shock    = text.match(/\[SHOCK:([A-Za-z0-9_]+)(?::([a-z]+))?\]/);
-    const opps     = /\[OPPS\]/.test(text);
-    const insights = /\[INSIGHTS\]/.test(text);
-
-    if (tab) this._defer(() => this._show('tab', tab[1]));
-    if (nav) {
-      const n = this._resolveNode(nav[1]);
-      if (n) this._defer(() => this._show('graph', n.id));
-    }
-    if (stress) {
-      const n = this._resolveNode(stress[1]);
-      if (n) this._defer(() => this._show('stress', n.id));
-    }
-    if (sim && window.nexusCore?.runPreset) window.nexusCore.runPreset(sim[1]);
-    if (chart) {
-      const n = this._resolveNode(chart[1]);
-      if (n) this._defer(() => this._show('chart', { id: n.id, ticker: n.mkt }));
-    }
-    if (trade) {
-      const n = this._resolveNode(trade[1]);
-      if (n?.mkt) this._defer(() => this._show('trade', { id: n.id, ticker: n.mkt, label: n.label }));
-    }
-    if (terminal) {
-      this._defer(() => this._show('terminal', { ticker: terminal[1] }));
-    }
-    if (sb) {
-      const n = this._resolveNode(sb[1]);
-      if (n) this._defer(() => this._show('secondbrain', n.id));
-    }
-    if (canvas) {
-      this._defer(() => this._show('canvas', canvas[1].trim()));
-    }
-    if (nrsTop) this._defer(() => this._show('insights'));
-    if (filter) {
-      const catKey = filter[1].toLowerCase();
-      const match = (typeof CATS !== 'undefined') ? Object.entries(CATS).find(([k]) => k === catKey || k.includes(catKey)) : null;
-      if (match && typeof setFilter === 'function') setFilter(match[0]);
-    }
-    // ── Tokens nuevos (X-Ray, comparar, shock/sim en vivo, oportunidades, insights) ──
-    if (xray) {
-      const n = this._resolveNode(xray[1]);
-      if (n) this._defer(() => this._show('xray', n.id));
-    }
-    if (compare) {
-      const a = this._resolveNode(compare[1]);
-      const b = this._resolveNode(compare[2]);
-      if (a && b) this._defer(() => this._show('compare', { a: a.id, b: b.id }));
-    }
-    if (shock && window.KhipuState) {
-      const n = this._resolveNode(shock[1]);
-      if (n) {
-        const kind = ['collapse', 'demand', 'price', 'sanction'].includes(shock[2]) ? shock[2] : 'collapse';
-        const dir = kind === 'demand' ? 'up' : 'down';
-        this._defer(() => {
-          try {
-            const r = window.KhipuState.simulate({ [n.id]: { salud: 0 } }, [], 8, 0.6, false, { direction: dir, kind });
-            this._show('sim', { id: n.id, kind, after: () => {
-              if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
-            } });
-          } catch (_) {}
-        });
-      }
-    }
-    if (opps || insights) {
-      this._defer(() => this._show('insights'));
-    }
-  },
-
   // Quita los tokens de comando internos del texto hablado/mostrado.
   // Khipu los emite para actuar, pero el usuario jamás debe verlos ni oírlos.
   _cleanSpeech(text) {
@@ -1011,6 +928,7 @@ const BixbyVoice = {
     let params = {};
     try { params = typeof parameters === 'string' ? JSON.parse(parameters || '{}') : (parameters || {}); }
     catch (e) { params = {}; }
+    if (!params || typeof params !== 'object') params = {};
     // UNA sola respuesta por llamada, SIEMPRE antes del tope del agente: si la
     // acción tarda más, se responde "sigue en pantalla" (antes ElevenLabs veía
     // un timeout y Khipu se quedaba mudo o decía que había fallado).
@@ -1032,8 +950,11 @@ const BixbyVoice = {
         }));
       }
     };
-    const limitS = VOICE_TOOL_TIMEOUT_S[tool_name] || VOICE_TOOL_TIMEOUT_DEFAULT_S;
-    guard = setTimeout(() => respond(tool_name === 'place_paper_trade'
+    // tope: el del contrato (VOICE_TOOL_TIMEOUT_S) o, para un nombre RETIRADO, el que el agente viejo
+    // aún tiene registrado (VOICE_ALIAS_TIMEOUT_S) — así un agente desactualizado nunca ve un timeout
+    const limitS = VOICE_TOOL_TIMEOUT_S[tool_name] || VOICE_ALIAS_TIMEOUT_S[tool_name] || VOICE_TOOL_TIMEOUT_DEFAULT_S;
+    const isOrder = tool_name === 'place_order' || tool_name === 'place_paper_trade';
+    guard = setTimeout(() => respond(isOrder
       ? { success: false, pending: true, error: _voiceL(
         'La orden sigue en proceso: mírala en pantalla antes de repetirla (repetirla no la duplica).',
         'The order is still in progress: check the screen before repeating it (repeating will not duplicate it).') }
@@ -1048,436 +969,687 @@ const BixbyVoice = {
     }
   },
 
+  // ═══ CONTRATO DE VOZ v2 (2026-10-11): 17 herramientas para Khipus OS ═══
+  // Las respuestas van al chat del CENTRO y cada pantalla se abre como VENTANA a su lado. Los nombres de
+  // herramienta son INTERNOS (nunca se dicen); los textos para el usuario son bilingües (_voiceL) y nunca
+  // llevan tokens de cita ([E1], [S2]…). Los nombres RETIRADOS siguen como ALIAS (un agente o un navegador
+  // desactualizado durante un despliegue sigue funcionando); no se declaran a ElevenLabs.
   _dispatchTool(tool_name, params, respond) {
+    params = params || {};
+    const P = (extra) => Object.assign({}, params, extra);
+    const run = (p) => Promise.resolve(p).then(respond).catch(e => respond({ success: false,
+      error: _voiceL('No pude completar esa acción: ', "I couldn't complete that action: ") + ((e && e.message) || e) }));
     switch (tool_name) {
-      case 'navigate_to_company': {
-        const n = this._resolveAny(params);
-        if (n) {
-          respond({ success: true, company: n.label, ticker: n.mkt });  // responde YA
-          this._defer(() => {                                            // visual diferido
-            this._show('graph', n.id);   // Cabina o mapa, siempre AL FRENTE
-            if (window.khipuGraph3D?.active) window.khipuGraph3D.selectNode(n.id);
-            this._updateContextSoon();
-          });
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'run_stress_test': {
-        const n = this._resolveAny(params);
-        if (n && typeof activateStress === 'function') {
-          // LATENCIA (feedback Fabrizio): responder YA para que Khipu hable sin
-          // esperar la cascada; el conteo real se manda luego por contextual_update.
-          respond({ success: true, company: n.label,
-            note: 'Ejecutando el estrés en el mapa; los efectos aparecen en pantalla.' });
-          this._defer(() => {
-            try { this._show('stress', n.id); } catch {}
-            setTimeout(() => {
-              try {
-                const cascade = (typeof stressAffected !== 'undefined') ? stressAffected.size : 0;
-                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                  this.ws.send(JSON.stringify({ type: 'contextual_update',
-                    text: `[STRESS] ${n.label}: ${cascade} empresas afectadas (${Math.round(cascade / NODES.length * 100)}%).` }));
-                }
-              } catch (e) {}
-            }, 600);
-          });
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'run_simulation': {
-        const preset = window.ScenarioBuilder?.PRESETS?.[params.scenario_id];
-        if (preset && window.nexusCore) {
-          respond({ success: true, message: 'Simulation starting...', scenario: preset.title });
-          // El preset se pinta en la pestaña Simulación; si la Cabina la tapa,
-          // la cerramos para que el resultado quede VISIBLE (muestra-en-pantalla).
-          this._defer(() => {
-            try { if (window.BixbyCockpit?.isOpen && window.BixbyCockpit.isOpen()) window.BixbyCockpit.close(); } catch (e) {}
-          });
-          setTimeout(() => window.nexusCore.runPreset(params.scenario_id), 500);
-        } else respond({ success: false, error: 'Unknown scenario' });
-        break;
-      }
-      case 'get_portfolio_risk': {
-        const ids = Object.keys((MKT && MKT.pos) || {});
-        const scores = ids.map(id => {
-          const v = typeof computeNRS === 'function' ? computeNRS(id) : 50;
-          return { label: NODE_BY_ID[id]?.label || id, nrs: v };
-        });
-        const avg = scores.length ? Math.round(scores.reduce((s, x) => s + x.nrs, 0) / scores.length) : 0;
-        respond({ portfolio_count: scores.length, avg_nrs: avg,
-          companies: scores.map(x => ({ label: x.label, nrs: x.nrs, level: x.nrs >= 70 ? 'high' : x.nrs >= 40 ? 'medium' : 'low' })) });
-        break;
-      }
-      case 'get_company_info': {
-        // TODO lo que la app sabe de la empresa — Khipu nunca debe decir
-        // "no sé" si el dato está en la ficha (feedback real: empleados de TSMC)
-        const n = this._resolveAny(params);
-        if (n) {
-          const q = (typeof MKT !== 'undefined' && n.mkt) ? MKT.quotes[n.mkt] : null;
-          const meta = (window.NODE_META || {})[n.id] || {};
-          let inDeg = 0, outDeg = 0;
-          try {
-            (window.LINKS || []).forEach(l => {
-              const s = lid(l.source), t = lid(l.target);
-              if (t === n.id) inDeg++;
-              if (s === n.id) outDeg++;
-            });
-          } catch (e) {}
-          respond({
-            id: n.id, label: n.label, ticker: n.mkt || null,
-            category: (typeof catLabel === 'function') ? catLabel(n.cat) : n.cat,
-            country: n.country || n.loc || null,
-            price: _voicePx(q),
-            change_pct: (_voicePx(q) && q?.prev) ? ((_voicePx(q) - q.prev) / q.prev * 100).toFixed(2) : null,
-            nrs_risk: (typeof computeNRS === 'function') ? computeNRS(n.id) : null,
-            role: n.role || null,
-            supplies: n.supplies || null,
-            moat: n.moat || null,
-            growth: n.growth || null,
-            margin_pct: n.margin != null ? Math.round(n.margin * 100) : null,
-            employees: meta.employees || null,
-            founded: meta.founded || null,
-            revenue: meta.revenue_2025 || null,
-            market_cap_billions: meta.mktcap_b || null,
-            geo_risk: meta.geo_risk || null,
-            description: meta.desc || null,
-            suppliers_count: inDeg, customers_count: outDeg,
-            is_preipo: !!n.preipo,
-          });
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'get_risk_score': {
-        const n = this._resolveAny(params);
-        if (n && typeof computeNRS === 'function') {
-          try {
-            const nrs = computeNRS(n.id);
-            respond({ success: true, company: n.label, nrs,
-              level: nrs >= 70 ? 'high' : nrs >= 40 ? 'medium' : 'low' });
-          } catch(e) { respond({ success: false, error: e.message }); }
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'switch_tab': {
-        const validTabs = ['map', 'market', 'analysis', 'geo', 'simulation', 'space', 'terminal', 'canvas', 'tkg', 'guia', 'crypto'];
-        const t = params.tab || '';
-        if (!validTabs.includes(t)) { respond({ success: false, error: `Tab inválida: ${t}` }); break; }
-        respond({ success: true, tab: t });
-        // _surface enruta: Cabina abierta → escenario propio; cerrada →
-        // switchTab con overlays cerrados (antes quedaba tapado y "no hacía nada").
-        this._defer(() => this._show('tab', t));
-        break;
-      }
-      case 'show_chart': {
-        const n = this._resolveAny(params);
-        if (n?.mkt) {
-          respond({ success: true, company: n.label, ticker: n.mkt });
-          this._defer(() => this._show('chart', { id: n.id, ticker: n.mkt }));
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'open_terminal': {
-        const n = this._resolveAny(params);
-        if (n?.mkt) {
-          respond({ success: true, company: n.label, ticker: n.mkt, action: 'Terminal abierta en pantalla' });
-          this._defer(() => this._show('terminal', { ticker: n.mkt }));
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'place_trade': {
-        const n = this._resolveAny(params);
-        if (n?.mkt && typeof openTradeModal === 'function') {
-          this._defer(() => this._show('trade', { id: n.id, ticker: n.mkt, label: n.label }));
-          respond({ success: true, company: n.label, ticker: n.mkt, note: 'Modal de trading abierto — el usuario debe confirmar la orden' });
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      // ── Trading Khipu (Etapa M): orden por voz con confirmación explícita ──
-      case 'place_paper_trade': {
-        // NUNCA envía sin confirmed=true — ver _toolPlacePaperTrade
-        this._toolPlacePaperTrade(params)
-          .then(respond)
-          .catch(e => respond({ success: false, error: 'trade tool error: ' + ((e && e.message) || e) }));
-        break;
-      }
-      case 'get_portfolio_status': {
-        this._toolPortfolioStatus(params)
-          .then(respond)
-          .catch(e => respond({ success: false, error: 'portfolio tool error: ' + ((e && e.message) || e) }));
-        break;
-      }
-      case 'ask_khipu_brain': {
-        // El MISMO cerebro con herramientas del chat (POST /api/khipu/chat):
-        // consulta datos reales de la app y devuelve una respuesta con fuentes.
-        const q = String((params && (params.question || params.query)) || '').trim();
-        if (!q || !window.KhipuChat || !window.KhipuChat.send) {
-          respond({ success: false, error: 'brain unavailable' });
-          break;
-        }
-        window.KhipuChat.send(q, { timeout: 55000 }).then(d => {
-          // abre en pantalla la primera acción útil (X-Ray, mapa…) sin tapar la voz
-          try { const a = (d.actions || [])[0]; if (a && window.KhipuChat.runAction) window.KhipuChat.runAction(a); } catch (e) {}
-          respond({
-            success: true,
-            answer: String(d.answer || '').replace(/\*\*/g, '').slice(0, 2500),
-            sources: (d.sources || []).slice(0, 5),
-            consulted: (d.tools_used || []).map(t => t.name).slice(0, 6),
-          });
-        }).catch(e => respond({ success: false, error: 'brain error: ' + ((e && e.message) || e) }));
-        break;
-      }
-      case 'get_space_summary': {
-        this._toolSpaceSummary(params)
-          .then(respond)
-          .catch(e => respond({ success: false, error: 'space tool error: ' + ((e && e.message) || e) }));
-        break;
-      }
-      case 'get_market_summary': {
-        const quotes = Object.entries((typeof MKT !== 'undefined' ? MKT.quotes : {}) || {})
-          .filter(([, q]) => _voicePx(q))
-          .map(([t, q]) => ({
-            ticker: t,
-            price: _voicePx(q),
-            change_pct: (_voicePx(q) && q.prev) ? ((_voicePx(q) - q.prev) / q.prev * 100).toFixed(2) : null,
-          }));
-        respond({ total_tickers: quotes.length, quotes });
-        break;
-      }
-      case 'list_companies': {
-        const catFilter = (params.category || '').toLowerCase();
-        const filtered = NODES.filter(n =>
-          !catFilter ||
-          n.cat === params.category ||
-          (typeof catLabel === 'function' && catLabel(n.cat).toLowerCase().includes(catFilter))
-        ).slice(0, params.limit || 50);
-        respond({
-          count: filtered.length,
-          companies: filtered.map(n => ({
-            id: n.id, label: n.label, ticker: n.mkt || null,
-            category: typeof catLabel === 'function' ? catLabel(n.cat) : n.cat,
-          })),
-        });
-        break;
-      }
-      case 'get_supply_chain_links': {
-        const n = this._resolveAny(params);
-        if (n) {
-          const allLinks = (typeof LINKS !== 'undefined' ? LINKS : [])
-            .filter(l => lid(l.source) === n.id || lid(l.target) === n.id);
-          const upstream   = allLinks.filter(l => lid(l.target) === n.id)
-            .map(l => ({ company: NODE_BY_ID[lid(l.source)]?.label, type: l.type || l.rel }));
-          const downstream = allLinks.filter(l => lid(l.source) === n.id)
-            .map(l => ({ company: NODE_BY_ID[lid(l.target)]?.label, type: l.type || l.rel }));
-          respond({
-            company: n.label, ticker: n.mkt || null,
-            upstream_count: upstream.length, downstream_count: downstream.length,
-            upstream: upstream.slice(0, 15), downstream: downstream.slice(0, 15),
-          });
-        } else respond(this._notFound(params.ticker || params.company_name || params.company_id));
-        break;
-      }
-      case 'get_nrs_top10': {
-        if (typeof computeNRS !== 'function') { respond({ success: false, error: 'NRS no disponible' }); break; }
-        const top = NODES.map(n => ({
-          id: n.id, label: n.label, ticker: n.mkt || null, nrs: computeNRS(n.id),
-        })).sort((a, b) => b.nrs - a.nrs).slice(0, 10);
-        respond({ companies: top });
-        break;
-      }
-      case 'open_second_brain': {
-        const n = this._resolveAny(params);
-        if (n) {
-          this._defer(() => this._show('secondbrain', n.id));
-          respond({ success: true, company: n.label });
-        } else respond(this._notFound(params.ticker || params.company_name || params.company_id));
-        break;
-      }
-      case 'get_news': {
-        const n = this._resolveAny(params);
-        if (n?.mkt) {
-          const base = (typeof BASE !== 'undefined') ? BASE : '';
-          fetch(`${base}/api/news/${n.mkt}`)
-            .then(r => r.json())
-            .then(data => {
-              const articles = Array.isArray(data) ? data.slice(0, 5) : [];
-              respond({
-                success: true, company: n.label, ticker: n.mkt,
-                articles: articles.map(a => ({ headline: a.headline, source: a.source, sentiment: a.sentiment })),
-              });
-            })
-            .catch(() => respond({ success: false, error: 'Error fetching news' }));
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      // ── Herramientas nuevas (2026-07): X-Ray, sim en vivo, comparar, insights ──
-      case 'open_xray': {
-        const n = this._resolveAny(params);
-        if (n && (window.openXRay || window.BixbyCockpit)) {
-          respond({ success: true, company: n.label });
-          this._defer(() => this._show('xray', n.id));
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'run_live_simulation': {
-        // params: {ticker/company_name, kind?: collapse|demand|price|sanction, severity?}
-        const n = this._resolveAny(params);
-        if (n && window.KhipuState) {
-          const kind = ['collapse', 'demand', 'price', 'sanction'].includes(params.kind) ? params.kind : 'collapse';
-          const dir = kind === 'demand' ? 'up' : 'down';
-          const sev = Math.max(0, Math.min(100, +params.severity || 100));
-          try {
-            const r = window.KhipuState.simulate({ [n.id]: { salud: 1 - sev / 100 } }, [], 8, 0.6, false, { direction: dir, kind });
-            let affected = 0, top = [];
-            r.impact.forEach((v, id) => { if (id !== n.id) { affected++; top.push({ id, v }); } });
-            top.sort((a, b) => b.v - a.v);
-            respond({ success: true, company: n.label, kind, direction: dir, affected,
-              most_impacted: top.slice(0, 5).map(x => ({ company: (NODE_BY_ID[x.id] || {}).label || x.id, impact_pct: Math.round(x.v) })) });
-            this._defer(() => this._show('sim', { id: n.id, kind, after: () => {
-              if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
-            } }));
-          } catch (e) { respond({ success: false, error: 'sim failed' }); }
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
-      }
-      case 'compare_companies': {
-        const a = this._resolveNode(params.a || params.company_a), b = this._resolveNode(params.b || params.company_b);
-        if (a && b && (window.openCompare || window.BixbyCockpit)) {
-          const nrsA = computeNRS ? computeNRS(a.id) : 50, nrsB = computeNRS ? computeNRS(b.id) : 50;
-          respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB,
-            lower_risk: nrsA < nrsB ? a.label : b.label });
-          this._defer(() => this._show('compare', { a: a.id, b: b.id }));
-        } else respond(this._notFound(!a ? (params.a || params.company_a) : (params.b || params.company_b)));
-        break;
-      }
-      case 'get_opportunities': {
-        // empresas resilientes con potencial (mismo criterio que los insights)
-        const opps = NODES.map(n => {
-          const nrs = computeNRS ? computeNRS(n.id) : 50;
-          const g = (n.growth || '').toLowerCase();
-          const growth = g.indexOf('🟢') >= 0 ? 2 : g.indexOf('🟡') >= 0 ? 1 : 0;
-          const margin = n.margin != null ? n.margin : 0;
-          return { label: n.label, nrs, margin: Math.round(margin * 100), score: growth * 22 + Math.min(30, margin * 60) + (50 - nrs) * 0.5, growth, marginRaw: margin };
-        }).filter(x => x.nrs < 55 && x.growth >= 1 && x.marginRaw > 0.15).sort((a, b) => b.score - a.score).slice(0, 6);
-        respond({ success: true, count: opps.length, opportunities: opps.map(o => ({ company: o.label, nrs: o.nrs, margin_pct: o.margin })) });
-        this._defer(() => this._show('insights'));
-        break;
-      }
+      // ── las 17 del contrato ──
+      case 'ask_khipu_brain': return this._toolBrain(params, respond);
+      case 'open_company': return this._toolOpenCompany(params, respond);
+      case 'get_company_info': return run(this._toolCompanyInfo(params));
+      case 'open_screen': return respond(this._toolOpenScreen(params));
+      case 'compare_companies': return this._toolCompare(params, respond);
+      case 'run_live_simulation': return this._toolLiveSim(params, respond);
+      case 'run_agent_simulation': return this._toolAgentSim(params, respond);
+      case 'show_opportunities': return this._toolOpportunities(params, respond);
+      case 'create_visualization': return this._toolVisualize(params, respond);
+      case 'quick_thesis': return this._toolQuickThesis(params, respond);
+      case 'deep_search': return this._toolDeepSearch(params, respond);
+      case 'place_order': return run(this._toolPlaceOrder(params));      // NUNCA envía sin confirmed=true
+      case 'open_order_ticket': return this._toolOrderTicket(params, respond);
+      case 'get_account_status': return run(this._toolAccountStatus(params));
+      case 'get_space_summary': return run(this._toolSpaceSummary(params));
       case 'run_guided_demo': {
-        // La demostración se narra SOLA en pantalla (y con voz del navegador si
-        // no hay voz premium hablando) → Khipu responde corto y se calla.
-        respond({ success: true,
-          note: 'Demostración guiada en marcha; se narra sola en pantalla. Di UNA frase corta y quédate en silencio.' });
+        // la demostración se narra SOLA en pantalla → Khipu dice una frase corta y se calla
+        respond({ success: true, note: _voiceL(
+          'Demostración guiada en marcha; se narra sola en pantalla. Di UNA frase corta y quédate en silencio.',
+          'Guided demo running; it narrates itself on screen. Say ONE short sentence and stay quiet.') });
         this._defer(() => { try { if (window.BixbyCockpit) window.BixbyCockpit.demo(); } catch (e) {} });
-        break;
+        return;
       }
-      case 'show_insights': case 'show_matrices': {
-        // Khipu NARRA lo que ve el hipergrafo: corre la simulación en vivo
-        // (factores activos + cascada) y responde con un resumen hablado,
-        // además de abrir el panel. Guarda de tiempo → nunca cuelga a ElevenLabs.
-        let answered = false;
-        const done = (r) => { if (!answered) { answered = true; respond(r); } };
-        this._defer(() => this._show('insights'));
-        const guard = setTimeout(() => done({ success: true,
-          note: 'Abriendo los insights del hipergrafo en pantalla.' }), 2600);
-        try {
-          fetch('/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tier: 'fast' }) })
-            .then(r => r.json())
-            .then(d => {
-              clearTimeout(guard);
-              if (!d || d.available === false) return done({ success: true, note: 'Insights en pantalla.' });
-              done({ success: true,
-                active_factors: (d.factors || []).map(f => f.label),
-                top_insights: (d.insights || []).slice(0, 3).map(i => ({ title: i.title, detail: i.detail, kind: i.kind })),
-                cascade_trigger: d.trigger || null,
-                most_affected: (d.cascade || []).slice(0, 3).map(c => ({ name: c.name, impact: c.impact })),
-                nodes_reached: d.affected || 0,
-                note: 'Narra estos insights del hipergrafo en 2-3 frases, nombrando empresas; recuerda que es análisis, no asesoría.' });
-            })
-            .catch(() => { clearTimeout(guard); done({ success: true, note: 'Insights en pantalla.' }); });
-        } catch (e) { clearTimeout(guard); done({ success: true }); }
-        break;
-      }
-      case 'create_visualization': {
-        // dibuja un gráfico/tabla por IA (Canvas) con lo que pida el usuario
-        const q = (params.query || params.description || '').trim();
-        if (!q) { respond({ success: false, error: 'query required' }); break; }
-        respond({ success: true, rendering: q });
-        this._defer(() => this._show('canvas', q));
-        break;
-      }
+      case 'control_interface': return respond(this._toolControl(params));
+
+      // ── ALIAS de nombres retirados → el manejador nuevo más parecido ──
       case 'open_cockpit': {
-        respond({ success: true });
-        this._defer(() => { if (window.BixbyCockpit) window.BixbyCockpit.open(); });
-        break;
+        const ok = this._osOpen();
+        return respond(ok ? { success: true, opened: 'Khipus OS' }
+          : { success: false, error: _voiceL('Khipus OS no está disponible.', 'Khipus OS is not available.') });
       }
-      case 'open_dossier': {
-        // dossier financiero estilo investingvisuals (ingresos/dilución/FCF/ROE…)
-        // _show('dossier') lo sube POR ENCIMA de la Cabina si está abierta
-        // (z 6500 vs 7000 — antes quedaba atrás y "no se veía").
-        const n = this._resolveAny(params);
-        if (n && n.mkt) {
-          respond({ success: true, company: n.label, ticker: n.mkt });
-          this._defer(() => this._show('dossier', n.mkt));
-        } else respond(this._notFound(params.ticker || params.company_name));
-        break;
+      case 'switch_tab': return respond(this._toolOpenScreen({ screen: params.tab || params.screen }));
+      case 'show_chart': case 'open_terminal': return this._toolOpenCompany(P({ view: 'chart' }), respond);
+      case 'navigate_to_company': return this._toolOpenCompany(P({ view: 'map' }), respond);
+      case 'open_xray': case 'open_second_brain': return this._toolOpenCompany(P({ view: 'xray' }), respond);
+      case 'open_dossier': return this._toolOpenCompany(P({ view: 'dossier' }), respond);
+      case 'get_supply_chain_links': return this._toolOpenCompany(P({ view: 'supply_chain' }), respond);
+      case 'get_risk_score': return respond(this._toolRiskScore(params));
+      case 'get_news': {
+        const who = String(params.company_name || params.ticker || params.company || '').trim();
+        return this._toolBrain({ agent: 'radar', question: who
+          ? _voiceL('Últimas noticias de ' + who, 'Latest news on ' + who)
+          : _voiceL('Últimas noticias relevantes del mercado', 'Latest relevant market news') }, respond);
       }
-      case 'deep_analysis': {
-        // Capa 4: investigación profunda multi-paso — el resultado se pinta
-        // en el escenario de la Cabina (tarda 30-90s; Khipu avisa y espera)
-        const q = (params.question || '').trim();
-        if (!q) { respond({ success: false, error: 'question required' }); break; }
-        respond({ success: true, started: true, eta_seconds: 60 });
-        this._defer(() => this._show('deep', q));
-        break;
+      case 'get_market_summary': return respond(this._toolOpenScreen({ screen: 'market' }));
+      case 'get_portfolio_risk': return respond(this._toolOpenScreen({ screen: 'risk' }));
+      case 'list_companies': {
+        const cat = String(params.category || params.sector || '').trim();
+        return this._toolBrain({ question: cat
+          ? _voiceL('Lista las principales empresas de ' + cat + ' en el catálogo', 'List the main ' + cat + ' companies in the catalog')
+          : _voiceL('¿Qué empresas principales hay en el catálogo?', 'Which main companies are in the catalog?') }, respond);
       }
-      // ── Simulación POR AGENTES (motor interno, desde la terminal de Khipu) ──
-      // Corre en el servidor (varios agentes debaten) y se MUESTRA en la Cabina.
-      // Khipu narra el consenso y los mayores impactos.
-      case 'run_agent_simulation': {
-        const scenario = String(params.scenario || params.query || '').trim();
-        if (!scenario) { respond({ success: false, error: 'scenario required' }); break; }
-        const seedNames = Array.isArray(params.companies) ? params.companies
-          : (Array.isArray(params.seeds) ? params.seeds : []);
-        const seedIds = [];
-        seedNames.forEach(c => { const nn = this._resolveNode(c); if (nn && seedIds.indexOf(nn.id) < 0) seedIds.push(nn.id); });
-        const lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es');
-        if (!window._runAgentSim) { respond({ success: false, error: 'agent simulation not available' }); break; }
-        window._runAgentSim(scenario, seedIds, lang)
-          .then(d => {
-            if (!d || d.ok === false) { respond({ success: false, error: (d && d.error) || 'simulation failed' }); return; }
-            const impacts = Array.isArray(d.impacts) ? d.impacts.slice(0, 5).map(x => ({
-              company: x.label || x.id, pct: x.pct, why: x.rationale })) : [];
-            const agents = Array.isArray(d.agents) ? d.agents.map(a => a && a.name).filter(Boolean) : [];
-            respond({ success: true, on_screen: true,
-              narrative: String(d.narrative || '').slice(0, 700),
-              top_impacts: impacts, agents });
-          })
-          .catch(e => respond({ success: false, error: 'agent sim error: ' + ((e && e.message) || e) }));
-        break;
-      }
-      // ── Investigación profunda (más allá del nodo): sector, competidores,
-      // geopolítica, chokepoints y tesis. Se MUESTRA en la Cabina. ──
-      case 'deep_research': {
-        const n = this._resolveAny(params);
-        if (!n) { respond(this._notFound(params.company || params.company_name || params.ticker)); break; }
-        const lang = (typeof LANG !== 'undefined') ? LANG : (localStorage.getItem('eco_lang') || 'es');
-        if (!window._openDeepResearch) { respond({ success: false, error: 'deep research not available' }); break; }
-        window._openDeepResearch(n.id, lang)
-          .then(d => {
-            if (!d || d.ok === false) { respond({ success: false, error: (d && d.error) || 'research failed' }); return; }
-            respond({ success: true, on_screen: true, company: n.label,
-              thesis: String(d.thesis || '').slice(0, 500),
-              sector: String(d.sector || '').slice(0, 300),
-              competitors: Array.isArray(d.competitors) ? d.competitors.slice(0, 6) : [],
-              chokepoints: Array.isArray(d.chokepoints) ? d.chokepoints.slice(0, 5) : [] });
-          })
-          .catch(e => respond({ success: false, error: 'research error: ' + ((e && e.message) || e) }));
-        break;
-      }
+      case 'get_opportunities': case 'show_insights': case 'show_matrices': return this._toolOpportunities(params, respond);
+      case 'get_nrs_top10': return this._toolOpportunities(params, respond, { highest_risk: this._topRisk(10) });
+      case 'run_stress_test': return this._toolLiveSim(P({ kind: 'collapse', severity: 100 }), respond);
+      case 'run_simulation': return this._toolAgentSim({ preset: params.scenario_id || params.preset || params.scenario }, respond);
+      case 'deep_research': return this._toolQuickThesis(params, respond);
+      case 'deep_analysis': return this._toolDeepSearch(params, respond);
+      case 'place_paper_trade': return run(this._toolPlaceOrder(params));
+      case 'place_trade': return this._toolOrderTicket(params, respond);
+      case 'get_portfolio_status': return run(this._toolAccountStatus(params));
       default:
-        respond({ success: false, error: `Unknown tool: ${tool_name}` });
+        respond({ success: false, error: _voiceL(`Herramienta desconocida: ${tool_name}`, `Unknown tool: ${tool_name}`) });
     }
+  },
+
+  // ── ayudantes de las herramientas ──
+  _ck() { return (typeof window !== 'undefined' && window.BixbyCockpit) || null; },
+  // abre Khipus OS si está cerrado (entrar nunca cuelga la voz; SALIR sí — por eso ninguna herramienta lo cierra)
+  _osOpen() {
+    const ck = this._ck();
+    if (!ck || !ck.open) return false;
+    try { if (!ck.isOpen || !ck.isOpen()) ck.open(); return true; } catch (e) { return false; }
+  },
+  // una ventana del OS (abre el OS si hace falta); sin la Cabina, el camino clásico de siempre
+  _osStage(kind, arg) {
+    const ck = this._ck();
+    if (ck && ck.stage) {
+      try {
+        if (ck.isOpen && !ck.isOpen() && ck.open) ck.open({ kind, arg });
+        else ck.stage(kind, arg);
+        return true;
+      } catch (e) { return false; }
+    }
+    return this._show(kind, arg);
+  },
+  _nodes() { return (typeof window !== 'undefined' && window.NODES) || ((typeof NODES !== 'undefined') ? NODES : []); },
+  _label(id) { const n = ((typeof window !== 'undefined' && window.NODE_BY_ID) || {})[id]; return (n && n.label) || String(id); },
+  // título VISIBLE de una ventana en el idioma de la app (el mismo que muestra su barra)
+  _title(kind, arg, label) {
+    const ck = this._ck();
+    try {
+      if (ck && ck.title) {
+        const t = String(ck.title(kind, arg) || '');
+        if (t && t !== kind && t.indexOf(kind + ' ·') !== 0) return t;
+      }
+    } catch (e) {}
+    const lab = label || '';
+    if (kind === 'glance') return lab ? _voiceL(lab + ' en una mirada', lab + ' at a glance') : _voiceL('En una mirada', 'At a glance');
+    if (kind === 'supplychain') return lab ? _voiceL('Cadena de suministro de ' + lab, lab + ' supply chain') : _voiceL('Cadena de suministro', 'Supply chain');
+    const SIM = { collapse: ['Caída simulada', 'Simulated failure'], demand: ['Auge de demanda', 'Demand boom'],
+      price: ['Shock de precio', 'Price shock'], sanction: ['Sanción', 'Sanction'] };
+    const M = { xray: ['X-Ray', 'X-Ray'], graph: ['Grafo', 'Graph'], terminal: ['Terminal', 'Terminal'], compare: ['Comparar', 'Compare'],
+      insights: ['Oportunidades', 'Opportunities'], canvas: ['Gráfico', 'Chart'], research: ['Tesis rápida', 'Quick thesis'],
+      deep: ['Búsqueda profunda', 'Deep search'], agentsim: ['Simulación por agentes', 'Agent simulation'], broker: ['Mi cuenta', 'My account'] };
+    const m = (kind === 'sim' && arg && SIM[arg.kind]) ? SIM[arg.kind] : (M[kind] || SIM[kind === 'sim' ? 'collapse' : ''] || [kind, kind]);
+    const base = _voiceL(m[0], m[1]);
+    let extra = lab;
+    if (!extra && (kind === 'deep' || kind === 'canvas') && typeof arg === 'string') extra = arg.slice(0, 40);
+    return extra ? base + ' · ' + extra : base;
+  },
+  // quita lo que el agente no debe leer en voz alta: negritas y tokens de cita ([E1], [S2, S3], [C1][F2]…)
+  _voiceClean(s, max) {
+    let t = String(s == null ? '' : s)
+      .replace(/\*\*/g, '')
+      .replace(/\s*\[(?:[A-Z]{1,2}\d+[a-z]?)(?:\s*[,;\/–-]\s*[A-Z]{0,2}\d+[a-z]?)*\]/g, '')
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/ +([.,;:!?])/g, '$1')
+      .trim();
+    return max ? t.slice(0, max) : t;
+  },
+  _voiceList(arr, n, max) {
+    return (Array.isArray(arr) ? arr : []).slice(0, n).map(x => this._voiceClean(
+      (x && typeof x === 'object') ? (x.name || x.label || x.company || x.title || x.text || '') : x, max || 200)).filter(Boolean);
+  },
+  _nrsLevel(v) {
+    if (v == null || !isFinite(v)) return null;
+    return v >= 70 ? _voiceL('alto', 'high') : v >= 40 ? _voiceL('medio', 'medium') : _voiceL('bajo', 'low');
+  },
+  // proveedores / clientes = SOLO relaciones de FLUJO (G4a), pares distintos, más pesados primero
+  _flow(id) {
+    const W = (typeof window !== 'undefined') ? window : {};
+    const FT = W.NRS_FLOW_TYPES || { supply: 1, fab: 1, cloud: 1, license: 1, ppa: 1, owns: 1, deploy: 1 };
+    const canon = (x) => { try { return W._canonId ? W._canonId(x) : x; } catch (e) { return x; } };
+    const lidf = (x) => (x && typeof x === 'object') ? x.id : x;
+    const sup = new Map(), cus = new Map();
+    (W.LINKS || []).forEach(l => {
+      if (!l || !FT[l.type || 'supply']) return;
+      const s = canon(lidf(l.source)), t = canon(lidf(l.target));
+      if (!s || !t || s === t) return;
+      const w = +l.w || 0;
+      if (t === id) sup.set(s, Math.max(sup.get(s) || 0, w));
+      if (s === id) cus.set(t, Math.max(cus.get(t) || 0, w));
+    });
+    const out = (m) => Array.from(m.entries()).sort((a, b) => b[1] - a[1]).map(e => this._label(e[0]));
+    return { suppliers: out(sup), customers: out(cus) };
+  },
+  // precio SOLO si MKT.quotes lo tiene (window.quotePx); con fuente, fecha y si es en vivo
+  _livePx(n) {
+    if (!n || !n.mkt) return null;
+    const q = (typeof MKT !== 'undefined' && MKT && MKT.quotes) ? MKT.quotes[n.mkt] : null;
+    const v = _voicePx(q);
+    if (v == null) return null;
+    let live = false;
+    try { live = window.quoteIsLive ? !!window.quoteIsLive(q) : (typeof q.live === 'number' && isFinite(q.live)); } catch (e) { live = false; }
+    return { value: v, currency: q.currency || null, as_of: q.as_of || null, src: q.src || null, live };
+  },
+  _companyFacts(n) {
+    const nrs = (typeof computeNRS === 'function') ? computeNRS(n.id) : null;
+    let terms = [];
+    try {
+      const b = window.computeNRSBreakdown ? window.computeNRSBreakdown(n.id) : null;
+      if (b && Array.isArray(b.terms)) terms = b.terms.map(t => ({ key: t.key, val: t.val, max: t.max }));
+    } catch (e) { terms = []; }
+    const fl = this._flow(n.id);
+    const f = { nrs, nrs_level: this._nrsLevel(nrs), nrs_terms: terms, suppliers: fl.suppliers.slice(0, 3), customers: fl.customers.slice(0, 3) };
+    const px = this._livePx(n);
+    if (px) f.price = px;
+    return f;
+  },
+  _topRisk(k) {
+    if (typeof computeNRS !== 'function') return [];
+    const NB = window.NODE_BY_ID || {};
+    return this._nodes().filter(n => n && (!NB[n.id] || NB[n.id].id === n.id))
+      .map(n => ({ company: n.label, nrs: computeNRS(n.id) })).sort((a, b) => b.nrs - a.nrs).slice(0, k);
+  },
+  _actionTitle(a) {
+    if (!a || !a.type) return '';
+    const lab = (x) => { const n = this._resolveNode(x); return n ? n.label : ''; };
+    switch (a.type) {
+      case 'open_xray': return this._title('xray', a.arg, lab(a.arg));
+      case 'navigate': case 'stress': return this._title('graph', a.arg, lab(a.arg));
+      case 'compare': return this._title('compare', a.arg);
+      case 'chart': return this._title('canvas', a.arg);
+      case 'agent_sim': return this._title('agentsim', { scenario: a.arg });
+      case 'broker': return this._title('broker');
+      case 'open_window': return (a.arg && a.arg.kind) ? this._title(a.arg.kind, { id: a.arg.id }, lab(a.arg.id)) : '';
+    }
+    try { return (window.KhipuChat && window.KhipuChat.actionLabel) ? window.KhipuChat.actionLabel(a) : ''; } catch (e) { return ''; }
+  },
+
+  // ── 1) ask_khipu_brain: LA herramienta por defecto ──
+  _toolBrain(params, respond) {
+    let q = String((params && (params.question || params.query)) || '').trim();
+    const AG = { analista: 'analista', fundamental: 'analista', analyst: 'analista', radar: 'radar', noticias: 'radar', news: 'radar',
+      cadena: 'cadena', chain: 'cadena', tecnico: 'tecnico', technical: 'tecnico', comite: 'comite', committee: 'comite' };
+    const TOK = { analista: '@fundamental', radar: '@noticias', cadena: '@cadena', tecnico: '@tecnico', comite: '@comite' };
+    const ag = AG[String((params && params.agent) || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()];
+    if (q && ag && q.charAt(0) !== '@') q = TOK[ag] + ': ' + q;     // el servidor lo enruta a esa mascota
+    const K = window.KhipuChat;
+    if (!q) { respond({ success: false, error: _voiceL('No entendí la pregunta: dímela de nuevo.', 'I did not catch the question: please say it again.') }); return; }
+    if (!K || !K.send) { respond({ success: false, error: _voiceL('El cerebro de Khipu no está disponible ahora.', "Khipu's brain is not available right now.") }); return; }
+    const ck = this._ck();
+    const D = window.KhipuDesk;
+    const inOS = !!(ck && ck.chatVoice && ck.isOpen && ck.isOpen() && (!D || !D.enabled || D.enabled()));
+    let p;
+    if (inOS) {
+      // Khipus OS: el turno se ve en el chat del centro como uno escrito (y abre las ventanas igual)
+      p = ck.chatVoice(q, { timeout: 55000 }).then(d => { d = d || {}; return { d, opened: Array.isArray(d.opened) ? d.opened : [] }; });
+    } else {
+      // vista clásica / OS cerrado: el mismo cerebro; se abre su primera acción
+      p = window.KhipuChat.send(q, { timeout: 55000 }).then(d => {
+        d = d || {};
+        const opened = [];
+        try {
+          const a = (d.actions || [])[0];
+          if (a && window.KhipuChat.runAction && window.KhipuChat.runAction(a)) { const t = this._actionTitle(a); if (t) opened.push(t); }
+        } catch (e) {}
+        return { d, opened };
+      });
+    }
+    p.then(({ d, opened }) => {
+      // quién trabajó (nombres de las mascotas que aportaron; nunca nombres de herramientas)
+      const used = Array.isArray(d.agents_used) ? d.agents_used.filter(a => a && a.agent && a.ok !== false) : [];
+      const nonK = used.filter(a => a.agent !== 'khipu');
+      const names = [];
+      (nonK.length ? nonK : used).forEach(a => {
+        let nm = a.agent;
+        try { if (K.agentName) nm = K.agentName(a.agent); } catch (e) {}
+        if (nm && names.indexOf(nm) < 0) names.push(nm);
+      });
+      respond({
+        success: true,
+        answer: this._voiceClean(d.answer, 2500),
+        agents: names,
+        sources: (Array.isArray(d.sources) ? d.sources : []).slice(0, 5).map(s => ({
+          label: this._voiceClean((s && (s.label || s.title || s.name || s.source)) || '', 120), as_of: (s && s.as_of) || null })),
+        opened,
+      });
+    }).catch(e => respond({ success: false, error: _voiceL('No pude consultar a Khipu: ', 'I could not reach Khipu: ') + ((e && e.message) || e) }));
+  },
+
+  // ── 2) open_company: una empresa en la vista pedida, como ventana ──
+  _toolOpenCompany(params, respond) {
+    const n = this._resolveAny(params);
+    if (!n) { respond(this._notFound(params.company_name || params.ticker || params.company_id)); return; }
+    const W = window;
+    let view = String(params.view || 'glance').toLowerCase().replace(/[\s-]+/g, '_');
+    view = { supplychain: 'supply_chain', chain: 'supply_chain', graph: 'map', terminal: 'chart', price: 'chart' }[view] || view;
+    if (['glance', 'xray', 'supply_chain', 'map', 'chart', 'dossier', 'research', 'committee'].indexOf(view) < 0) view = 'glance';
+    const listed = !!n.mkt;
+    const out = { success: true, company: n.label, ticker: n.mkt || null, listed, view, opened: '', facts: this._companyFacts(n) };
+    const glance = () => {
+      if (W.KhipuOSWin && W.KhipuOSWin.open && W.KhipuOSWin.open('glance', { id: n.id })) return;
+      this._osStage('xray', n.id);
+    };
+    let go = null;
+    switch (view) {
+      case 'glance':
+        out.opened = this._title('glance', { id: n.id }, n.label); go = glance; break;
+      case 'xray':
+        out.opened = this._title('xray', n.id, n.label); go = () => this._osStage('xray', n.id); break;
+      case 'supply_chain':
+        if (W.KhipuOSWin && W.KhipuOSWin.open) {
+          out.opened = this._title('supplychain', { id: n.id }, n.label);
+          go = () => { if (!W.KhipuOSWin.open('supplychain', { id: n.id })) this._osStage('graph', n.id); };
+        } else { out.opened = this._title('graph', n.id, n.label); go = () => this._osStage('graph', n.id); }
+        out.suppliers_count = this._flow(n.id).suppliers.length;
+        out.customers_count = this._flow(n.id).customers.length;
+        break;
+      case 'map':
+        out.opened = this._title('graph', n.id, n.label);
+        go = () => { this._osStage('graph', n.id); if (W.khipuGraph3D?.active) W.khipuGraph3D.selectNode(n.id); };
+        break;
+      case 'chart':
+        if (listed) { out.opened = this._title('terminal', { ticker: n.mkt }, n.label); go = () => this._osStage('terminal', { ticker: n.mkt }); }
+        else {
+          out.note = _voiceL(n.label + ' no cotiza en bolsa: no tiene gráfico de precio. Abrí su resumen.',
+            n.label + ' is not publicly traded: it has no price chart. I opened its summary instead.');
+          out.opened = this._title('glance', { id: n.id }, n.label); go = glance;
+        }
+        break;
+      case 'dossier':   // funciona también para privadas (ficha + dueño + noticias)
+        out.opened = 'Dossier · ' + n.label; go = () => { this._osOpen(); this._show('dossier', n.mkt || n.id); }; break;
+      case 'research':
+        if (!(W.KhipuResearch && W.KhipuResearch.open)) { respond({ success: false, error: _voiceL('La investigación con evidencia no está disponible ahora.', 'Evidence-based research is not available right now.') }); return; }
+        out.opened = _voiceL('Investigación con evidencia · ', 'Evidence-based research · ') + n.label;
+        out.note = _voiceL('Muestra las conclusiones que ya existen; lanzar un estudio nuevo es un clic del usuario.',
+          "It shows the conclusions that already exist; starting a new study is the user's click.");
+        go = () => { this._osOpen(); W.KhipuResearch.open(n.id); };
+        break;
+      case 'committee':
+        if (!(W.KhipuCommittee && W.KhipuCommittee.open)) { respond({ success: false, error: _voiceL('El comité de inversión no está disponible ahora.', 'The investment committee is not available right now.') }); return; }
+        out.opened = _voiceL('Comité de inversión · ', 'Investment committee · ') + n.label;
+        out.note = _voiceL('El comité propone; toda orden espera la aprobación humana.', 'The committee proposes; every order waits for human approval.');
+        go = () => { this._osOpen(); W.KhipuCommittee.open(n.id); };
+        break;
+    }
+    respond(out);   // responde YA; la ventana se abre fuera del hilo del audio
+    this._defer(() => { try { if (go) go(); } catch (e) {} this._updateContextSoon(); });
+  },
+
+  // ── 3) get_company_info: datos al instante, sin abrir nada ──
+  async _toolCompanyInfo(params) {
+    const n = this._resolveAny(params);
+    if (!n) return this._notFound(params.company_name || params.ticker || params.company_id);
+    const W = window;
+    const listed = !!n.mkt;
+    let live = null, liveNote = null;
+    if (listed && W.KhipuLive && W.KhipuLive.profile) {
+      let timer = null;
+      const p = await Promise.race([
+        Promise.resolve(W.KhipuLive.profile(n.mkt)).catch(() => null),
+        new Promise(res => { timer = setTimeout(() => res(null), 9000); }),
+      ]);
+      clearTimeout(timer);
+      if (p && p.available && (p.price != null || p.market_cap_usd_b != null)) {
+        live = { price: p.price != null ? +p.price : null, market_cap_b: p.market_cap_usd_b != null ? +p.market_cap_usd_b : null,
+          currency: p.currency || null, change_pct: p.change_pct != null ? +p.change_pct : null, as_of: p.as_of || null, src: p.source || null };
+      }
+    }
+    if (listed && !live) {
+      liveNote = _voiceL('El dato de mercado en vivo no está disponible ahora; no doy precios ni capitalización viejos.',
+        'Live market data is unavailable right now; I will not quote stale prices or market cap.');
+    }
+    const meta = (W.NODE_META || {})[n.id] || {};
+    const S9 = W.SECTORS9 || {}, C2S = W.CAT_TO_SECTOR || {};
+    const sec = S9[C2S[n.cat]];
+    const fl = this._flow(n.id);
+    const nrs = (typeof computeNRS === 'function') ? computeNRS(n.id) : null;
+    let terms = [];
+    try { const b = W.computeNRSBreakdown ? W.computeNRSBreakdown(n.id) : null; if (b && Array.isArray(b.terms)) terms = b.terms.map(t => ({ key: t.key, val: t.val, max: t.max })); } catch (e) {}
+    const out = {
+      success: true, company: n.label, ticker: n.mkt || null, listed,
+      listing_status: (n.listing && n.listing.status) || (listed ? 'public' : 'private'),
+      live, nrs, nrs_level: this._nrsLevel(nrs), nrs_terms: terms,
+      suppliers_count: fl.suppliers.length, customers_count: fl.customers.length,
+      top_suppliers: fl.suppliers.slice(0, 3), top_customers: fl.customers.slice(0, 3),
+      catalog_role: n.role || null, catalog_moat: n.moat || null, catalog_growth: n.growth || null,
+      catalog_margin_pct: n.margin != null ? Math.round(n.margin * 100) : null,
+      catalog_country: n.country || n.loc || null,
+      catalog_sector: (sec && sec.label) || ((typeof catLabel === 'function') ? catLabel(n.cat) : (n.cat || null)),
+      catalog_employees: meta.employees || null, catalog_founded: meta.founded || null, catalog_revenue: meta.revenue_2025 || null,
+      catalog_description: meta.desc || null,
+      catalog_note: _voiceL('Los campos catalog_* son del catálogo, sin fecha: pueden estar desactualizados.',
+        'The catalog_* fields come from the catalog, undated: they may be outdated.'),
+    };
+    if (liveNote) out.live_note = liveNote;
+    if (!listed) {
+      const e = ((W.PRIVATE_VALUATIONS || {}).entries || {})[n.id];
+      if (e && +e.valuation_usd_b > 0) out.private_valuation = { value_usd_b: +e.valuation_usd_b, label: e.label || null, as_of: e.as_of || null, source: e.source_url || null };
+    }
+    return out;
+  },
+
+  // ── 4) open_screen: cualquier pantalla de Herramientas, como ventana ──
+  _toolOpenScreen(params) {
+    const ALLOWED = ['graph', 'market', 'terminal', 'geo', 'space', 'simulation', 'crypto', 'tkg', 'portfolios', 'broker', 'committee',
+      'risk', 'clients', 'scalp', 'insights', 'screener', 'canvas', 'agents', 'brief', 'guia', 'sistema', 'mcp', 'universe'];
+    const ALIAS = { map: 'graph', mapa: 'graph', analysis: 'insights', opportunities: 'insights', portfolio: 'portfolios',
+      account: 'broker', guide: 'guia', system: 'sistema', temporal: 'tkg', chart: 'canvas' };
+    const raw = String((params && (params.screen || params.tab)) || '').toLowerCase().trim();
+    const id = ALIAS[raw] || raw;
+    const ck = this._ck();
+    const list = (ck && ck.screens) ? (ck.screens() || []) : [];
+    const hit = list.filter(x => x && x.id === id)[0];
+    if (!raw || ALLOWED.indexOf(id) < 0 || (ck && ck.screens && !hit)) {
+      const avail = list.filter(x => x && ALLOWED.indexOf(x.id) >= 0).map(x => _voiceL(x.es, x.en));
+      return { success: false, error: _voiceL('No tengo esa pantalla' + (raw ? ' («' + raw + '»)' : '') + '.', 'There is no such screen' + (raw ? ' ("' + raw + '")' : '') + '.'),
+        available: avail };
+    }
+    if (ck && ck.openScreen) {
+      this._osOpen();
+      let ok = false;
+      try { ok = !!ck.openScreen(id); } catch (e) { ok = false; }
+      if (!ok) return { success: false, error: _voiceL('No pude abrir esa pantalla.', 'I could not open that screen.') };
+      this._updateContextSoon();
+      return { success: true, opened: _voiceL(hit.es, hit.en) };
+    }
+    // sin Khipus OS (no debería pasar): la pestaña clásica equivalente
+    const TAB = { graph: 'map', insights: 'analysis' };
+    const ok = this._show('tab', TAB[id] || id);
+    return ok ? { success: true, opened: id } : { success: false, error: _voiceL('No pude abrir esa pantalla.', 'I could not open that screen.') };
+  },
+
+  // ── 5) compare_companies ──
+  _toolCompare(params, respond) {
+    const a = this._resolveNode(params.company_a || params.a), b = this._resolveNode(params.company_b || params.b);
+    if (!a || !b) { respond(this._notFound(!a ? (params.company_a || params.a) : (params.company_b || params.b))); return; }
+    const nrsA = (typeof computeNRS === 'function') ? computeNRS(a.id) : null, nrsB = (typeof computeNRS === 'function') ? computeNRS(b.id) : null;
+    const lower = (nrsA == null || nrsB == null || nrsA === nrsB) ? 'tie' : (nrsA < nrsB ? a.label : b.label);
+    respond({ success: true, a: a.label, b: b.label, nrs_a: nrsA, nrs_b: nrsB, lower_risk: lower,
+      opened: this._title('compare', { a: a.id, b: b.id }, a.label + ' vs ' + b.label) });
+    this._defer(() => { this._osStage('compare', { a: a.id, b: b.id }); this._updateContextSoon(); });
+  },
+
+  // ── 6) run_live_simulation: shock/auge sobre la cadena, con la MISMA intensidad que la ventana ──
+  _toolLiveSim(params, respond) {
+    const n = this._resolveAny(params);
+    if (!n) { respond(this._notFound(params.company_name || params.ticker)); return; }
+    const KS = window.KhipuState;
+    if (!KS || !KS.simulate) { respond({ success: false, error: _voiceL('El motor de simulación no está disponible.', 'The simulation engine is not available.') }); return; }
+    const kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(params.kind) >= 0 ? params.kind : 'collapse';
+    const dir = kind === 'demand' ? 'up' : 'down';
+    const sev = _voiceSimSev(params.severity);
+    let r;
+    try {
+      const shock = {}; shock[n.id] = { salud: 1 - sev / 100 };
+      r = KS.simulate(shock, [], 8, 0.6, false, { direction: dir, kind });
+    } catch (e) { respond({ success: false, error: _voiceL('La simulación falló.', 'The simulation failed.') }); return; }
+    const arr = [];
+    try { r.impact.forEach((v, id) => { if (id !== n.id && v > 0) arr.push({ id, v }); }); } catch (e) {}
+    arr.sort((x, y) => y.v - x.v);
+    const out = { success: true, company: n.label, kind, severity: sev, affected: arr.length,
+      most_impacted: arr.slice(0, 5).map(x => ({ company: this._label(x.id), impact_pct: Math.round(x.v) })),
+      hypothetical: true,
+      note: _voiceL('Escenario hipotético simulado sobre la cadena: no son precios reales.', 'Simulated hypothetical scenario on the chain: not real prices.'),
+      opened: this._title('sim', { id: n.id, kind, severity: sev }, n.label) };
+    try {
+      if (window.xrayComputeWinners) {
+        const o = {}; o[n.id] = 100; arr.forEach(x => { o[x.id] = x.v; });
+        const w = window.xrayComputeWinners(n.id, o) || [];
+        if (w.length) out.winners = w.slice(0, 3).map(x => ({ company: this._label(x.id), gain_pct: x.up }));
+      }
+    } catch (e) {}
+    respond(out);
+    this._defer(() => {
+      const ck = this._ck();
+      if (ck && ck.stage) this._osStage('sim', { id: n.id, kind, severity: sev });
+      else this._show('sim', { id: n.id, kind, after: () => { if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); } });
+      this._updateContextSoon();
+    });
+  },
+
+  // ── 7) run_agent_simulation: escenario abierto o preset; nunca cierra el OS ──
+  _toolAgentSim(params, respond) {
+    const PR = (window.ScenarioBuilder && window.ScenarioBuilder.PRESETS) || {};
+    const pid = String(params.preset || '').trim();
+    let scenario = String(params.scenario || params.query || '').trim();
+    let seedNames = Array.isArray(params.companies) ? params.companies
+      : (typeof params.companies === 'string' ? params.companies.split(/[,;]| y | and /) : (Array.isArray(params.seeds) ? params.seeds : []));
+    if (pid) {
+      const p = PR[pid];
+      if (!p) {
+        respond({ success: false, error: _voiceL('No conozco ese escenario.', 'I do not know that scenario.'), available: Object.keys(PR) });
+        return;
+      }
+      scenario = (String(p.title || '') + '. ' + String(p.description || '') + ' ' + String(p.question || '')).trim();
+      if (!seedNames.length && Array.isArray(p.nodeIds)) seedNames = p.nodeIds;
+    }
+    if (!scenario) { respond({ success: false, error: _voiceL('Dime qué escenario quieres simular.', 'Tell me which scenario to simulate.') }); return; }
+    const seedIds = [];
+    seedNames.forEach(c => { const nn = this._resolveNode(String(c || '').trim()); if (nn && seedIds.indexOf(nn.id) < 0) seedIds.push(nn.id); });
+    if (!window._runAgentSim) { respond({ success: false, error: _voiceL('La simulación por agentes no está disponible.', 'Agent simulation is not available.') }); return; }
+    const opened = this._title('agentsim', { scenario });
+    window._runAgentSim(scenario, seedIds, _voiceLang())
+      .then(d => {
+        if (!d || d.ok === false) { respond({ success: false, error: (d && d.error) || _voiceL('La simulación falló.', 'The simulation failed.') }); return; }
+        const impacts = Array.isArray(d.impacts) ? d.impacts.slice(0, 5).map(x => ({
+          company: x.label || x.id, pct: x.pct, why: this._voiceClean(x.rationale, 240) })) : [];
+        const agents = Array.isArray(d.agents) ? d.agents.map(a => a && a.name).filter(Boolean) : [];
+        respond({ success: true, on_screen: true, hypothetical: true, narrative: this._voiceClean(d.narrative, 700),
+          top_impacts: impacts, agents, opened });
+      })
+      .catch(e => respond({ success: false, error: _voiceL('Error en la simulación: ', 'Simulation error: ') + ((e && e.message) || e) }));
+  },
+
+  // ── 8) show_opportunities: ventana "Oportunidades" + lo que ve el hipergrafo ──
+  _toolOpportunities(params, respond, extra) {
+    this._defer(() => { this._osStage('insights'); this._updateContextSoon(); });
+    const en = _voiceLang() === 'en';
+    let resilient = [];
+    if (typeof computeNRS === 'function') {
+      resilient = this._nodes().map(n => {
+        const nrs = computeNRS(n.id);
+        const g = String(n.growth || '').toLowerCase();
+        const growth = g.indexOf('🟢') >= 0 ? 2 : g.indexOf('🟡') >= 0 ? 1 : 0;
+        const margin = n.margin != null ? n.margin : 0;
+        return { company: n.label, nrs, growth, margin, score: growth * 22 + Math.min(30, margin * 60) + (50 - nrs) * 0.5 };
+      }).filter(x => x.nrs < 55 && x.growth >= 1 && x.margin > 0.15).sort((a, b) => b.score - a.score).slice(0, 5)
+        .map(x => ({ company: x.company, nrs: x.nrs }));
+    }
+    const base = { success: true, resilient,
+      note: _voiceL('Es análisis, no asesoría financiera; la decisión es tuya.', 'This is analysis, not financial advice; the decision is yours.'),
+      catalog_note: _voiceL('Las resilientes salen del NRS y del crecimiento/margen del catálogo (sin fecha; puede estar desactualizado).',
+        'Resilient companies come from NRS and catalog growth/margin (undated; may be outdated).'),
+      opened: this._title('insights') };
+    if (extra) Object.assign(base, extra);
+    let done = false, g = null;
+    const finish = (ins) => {
+      if (done) return; done = true; clearTimeout(g);
+      respond(Object.assign({ insights: ins || [] }, base));
+    };
+    g = setTimeout(() => finish([]), 12000);
+    let p = null;
+    try {
+      const ck = this._ck();
+      if (ck && ck.matrixInsights) p = ck.matrixInsights(en);
+      else {
+        const base_ = (typeof BASE !== 'undefined') ? BASE : '';
+        p = fetch(base_ + '/api/matrix/insights', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lang: en ? 'en' : 'es', tier: 'fast' }) }).then(r => r.json()).catch(() => null);
+      }
+    } catch (e) { p = null; }
+    if (!p) { finish([]); return; }
+    Promise.resolve(p).then(d => {
+      if (!d || d.available === false || d.error) { finish([]); return; }
+      finish((d.insights || []).slice(0, 3).map(i => ({ title: this._voiceClean(i && i.title, 160), text: this._voiceClean(i && (i.detail || i.text), 400) })));
+    }).catch(() => finish([]));
+  },
+
+  // ── 9) create_visualization: ventana "Gráfico" ──
+  _toolVisualize(params, respond) {
+    const q = String(params.query || params.description || '').trim();
+    if (!q) { respond({ success: false, error: _voiceL('Dime qué gráfico quieres ver.', 'Tell me which chart you want to see.') }); return; }
+    respond({ success: true, opened: this._title('canvas', q),
+      note: _voiceL('El gráfico se dibuja en pantalla; descríbelo solo en general (no recibes sus datos).',
+        'The chart is drawn on screen; describe it only in general terms (you do not receive its data).') });
+    this._defer(() => { this._osStage('canvas', q); this._updateContextSoon(); });
+  },
+
+  // ── 10) quick_thesis: "Tesis rápida" (una respuesta de IA, sin evidencia citada) ──
+  _toolQuickThesis(params, respond) {
+    const n = this._resolveAny(params);
+    if (!n) { respond(this._notFound(params.company_name || params.company || params.ticker)); return; }
+    if (!window._openDeepResearch) { respond({ success: false, error: _voiceL('La tesis rápida no está disponible.', 'The quick thesis is not available.') }); return; }
+    const opened = this._title('research', { id: n.id }, n.label);
+    window._openDeepResearch(n.id, _voiceLang())
+      .then(d => {
+        if (!d || d.ok === false) { respond({ success: false, error: (d && d.error) || _voiceL('La tesis falló.', 'The thesis failed.') }); return; }
+        respond({ success: true, on_screen: true, company: n.label,
+          thesis: this._voiceClean(d.thesis, 600), sector: this._voiceClean(d.sector, 300),
+          competitors: this._voiceList(d.competitors, 6, 80), geopolitics: this._voiceClean(d.geopolitics, 300),
+          chokepoints: this._voiceList(d.chokepoints, 5, 160), risks: this._voiceList(d.risks, 5, 160),
+          note: _voiceL('Es UNA respuesta de IA sin evidencia citada (para eso está la Investigación con evidencia).',
+            'It is ONE AI answer without cited evidence (Evidence-based research is for that).'),
+          opened });
+      })
+      .catch(e => respond({ success: false, error: _voiceL('Error en la tesis: ', 'Thesis error: ') + ((e && e.message) || e) }));
+  },
+
+  // ── 11) deep_search: "Búsqueda profunda" (30-90 s, una a la vez) ──
+  _toolDeepSearch(params, respond) {
+    const q = String(params.question || params.query || '').trim();
+    if (!q) { respond({ success: false, error: _voiceL('Dime qué quieres que investigue a fondo.', 'Tell me what to research in depth.') }); return; }
+    const opened = this._title('deep', q);
+    if (!this._show('deep', q)) { respond({ success: false, error: _voiceL('La búsqueda profunda no está disponible.', 'Deep search is not available.') }); return; }
+    const ok = { success: true, started: true, eta_seconds: 60, opened };
+    const ck = this._ck();
+    let st = null;
+    try { st = (ck && ck.deepStart) ? ck.deepStart() : null; } catch (e) { st = null; }
+    if (!st || typeof st.then !== 'function') { respond(ok); this._updateContextSoon(); return; }
+    let done = false, g = null;
+    const fin = (r) => { if (done) return; done = true; clearTimeout(g); respond(r); };
+    g = setTimeout(() => fin(ok), 6000);
+    st.then(res => {
+      if (res && res.busy) fin({ success: false, busy: true, opened, error: _voiceL(
+        'Ya hay una búsqueda profunda en curso; intenta de nuevo en un minuto.',
+        'There is already a deep search running; try again in a minute.') });
+      else if (res && res.error) fin({ success: false, error: String(res.error) });
+      else fin(ok);
+    }, () => fin(ok));
+    this._updateContextSoon();
+  },
+
+  // ── 12) place_order: la MISMA seguridad de dos pasos (sin confirmed=true NADA se envía) ──
+  async _toolPlaceOrder(params) {
+    const r = await this._toolPlacePaperTrade(params);
+    if (r && typeof r === 'object' && 'paper' in r) r.mode = r.paper === true ? 'paper' : r.paper === false ? 'live' : 'unknown';
+    return r;
+  },
+
+  // ── 13) open_order_ticket: el ticket manual (nunca envía nada) ──
+  _toolOrderTicket(params, respond) {
+    const n = this._resolveAny(params);
+    if (!n) { respond(this._notFound(params.company_name || params.ticker)); return; }
+    if (!n.mkt) { respond({ success: false, error: _voiceL(n.label + ' no cotiza en bolsa: no tiene ticket de orden.', n.label + ' is not publicly traded: it has no order ticket.') }); return; }
+    const note = _voiceL('No se envía nada: el usuario revisa y confirma en pantalla (la cuenta puede ser simulada o de dinero real; la pantalla lo dice).',
+      'Nothing is sent: the user reviews and confirms on screen (the account may be simulated or real money; the screen says which).');
+    if (typeof openTradeModal === 'function' || typeof window.openTradeModal === 'function') {
+      respond({ success: true, company: n.label, ticker: n.mkt, opened: _voiceL('Ticket de orden · ', 'Order ticket · ') + n.label, note });
+      this._defer(() => this._show('trade', { id: n.id, ticker: n.mkt, label: n.label }));
+      return;
+    }
+    if (window._openBrokerStage) {
+      respond({ success: true, company: n.label, ticker: n.mkt, opened: this._title('broker'), note });
+      this._defer(() => window._openBrokerStage({}));
+      return;
+    }
+    respond({ success: false, error: _voiceL('El módulo de órdenes no está cargado.', 'The order module is not loaded.') });
+  },
+
+  // ── 14) get_account_status: la cuenta del bróker ("Mi cuenta") con su modo REAL ──
+  async _toolAccountStatus(params) {
+    const r = await this._toolPortfolioStatus(params);
+    if (r && typeof r === 'object' && 'paper' in r) r.mode = r.paper === true ? 'paper' : r.paper === false ? 'live' : 'unknown';
+    return r;
+  },
+
+  // ── 17) control_interface: Khipus OS por voz (nunca sale del OS: eso colgaría la voz) ──
+  _toolControl(params) {
+    const a = String((params && params.action) || '').toLowerCase().trim();
+    const ck = this._ck(), W = window;
+    const ok = (es, en) => ({ success: true, done: _voiceL(es, en) });
+    const no = (es, en) => ({ success: false, error: _voiceL(es, en) });
+    const isDark = () => { try { return !!(document.body && document.body.classList && document.body.classList.contains('dark')); } catch (e) { return false; } };
+    const desk = () => { const D = W.KhipuDesk; return (D && D.active && D.active()) ? D : null; };
+    const KNOWN = ['new_conversation', 'arrange_windows', 'close_all_windows', 'minimize_all_windows', 'simple_mode', 'pro_mode',
+      'light_theme', 'dark_theme', 'spanish', 'english'];
+    if (KNOWN.indexOf(a) < 0) return no('No conozco esa acción de la interfaz.', 'I do not know that interface action.');
+    this._osOpen();
+    try {
+      switch (a) {
+        case 'new_conversation':
+          if (ck && ck.newConversation) ck.newConversation();
+          else if (W.KhipuChat && W.KhipuChat.clear) W.KhipuChat.clear();
+          else return no('No pude empezar una conversación nueva.', 'I could not start a new conversation.');
+          return ok('Empecé una conversación nueva.', 'Started a new conversation.');
+        case 'arrange_windows': {
+          const D = desk(); if (!D || !D.arrange) return no('No hay ventanas para ordenar.', 'There are no windows to arrange.');
+          D.arrange(true); return ok('Ordené las ventanas.', 'Arranged the windows.');
+        }
+        case 'close_all_windows': {
+          const D = desk(); if (!D || !D.closeAll) return no('No hay ventanas abiertas.', 'There are no open windows.');
+          D.closeAll(); return ok('Cerré todas las ventanas; el chat sigue aquí.', 'Closed all windows; the chat is still here.');
+        }
+        case 'minimize_all_windows': {
+          const D = desk(); if (!D || !D.list || !D.minimize) return no('No hay ventanas abiertas.', 'There are no open windows.');
+          D.list().forEach(w => { if (w && !w.min) { try { D.minimize(w.id); } catch (e) {} } });
+          return ok('Minimicé todas las ventanas; siguen en la barra de abajo.', 'Minimized all windows; they are in the bottom bar.');
+        }
+        case 'simple_mode': case 'pro_mode': {
+          if (!W.KhipuAgentPrefs || !W.KhipuAgentPrefs.set) return no('No pude cambiar el modo.', 'I could not change the mode.');
+          W.KhipuAgentPrefs.set({ mode: a === 'pro_mode' ? 'pro' : 'simple' });
+          return a === 'pro_mode' ? ok('Modo Pro: respuestas más densas, con cifras y rangos.', 'Pro mode: denser answers, with figures and ranges.')
+            : ok('Modo Simple: lenguaje llano y una conclusión clara.', 'Simple mode: plain language and a clear conclusion.');
+        }
+        case 'light_theme': case 'dark_theme': {
+          const want = a === 'dark_theme';
+          if (isDark() !== want) {
+            if (ck && ck.toggleTheme) ck.toggleTheme();
+            else if (document.body && document.body.classList) document.body.classList.toggle('dark', want);
+          }
+          return want ? ok('Tema oscuro.', 'Dark theme.') : ok('Tema claro.', 'Light theme.');
+        }
+        case 'spanish': case 'english': {
+          const want = a === 'english' ? 'en' : 'es';
+          if (_voiceLang() !== want) {
+            if (ck && ck.toggleLang) ck.toggleLang();
+            else { try { localStorage.setItem('eco_lang', want); } catch (e) {} }
+          }
+          return want === 'en' ? { success: true, done: 'The app is now in English.' } : { success: true, done: 'La app quedó en español.' };
+        }
+      }
+    } catch (e) {
+      return no('No pude hacer ese cambio.', 'I could not make that change.');
+    }
+    return no('No conozco esa acción de la interfaz.', 'I do not know that interface action.');
+  },
+
+  // alias get_risk_score (retirado): el NRS al instante, sin ventana
+  _toolRiskScore(params) {
+    const n = this._resolveAny(params);
+    if (!n) return this._notFound(params.company_name || params.ticker);
+    if (typeof computeNRS !== 'function') return { success: false, error: _voiceL('El NRS no está disponible ahora.', 'NRS is not available right now.') };
+    const nrs = computeNRS(n.id);
+    let terms = [];
+    try { const b = window.computeNRSBreakdown ? window.computeNRSBreakdown(n.id) : null; if (b && Array.isArray(b.terms)) terms = b.terms.map(t => ({ key: t.key, val: t.val, max: t.max })); } catch (e) {}
+    return { success: true, company: n.label, nrs, nrs_level: this._nrsLevel(nrs), nrs_terms: terms };
   },
 
   // ── Trading Khipu (Etapa M) ────────────────────────────────────────────────
@@ -1674,6 +1846,15 @@ const BixbyVoice = {
     } catch (e) {
       return { success: false, error: en ? 'Could not load space data.' : 'No pude cargar los datos de espacio.' };
     }
+    const nextL0 = Array.isArray(lch) ? lch[0] : ((lch && Array.isArray(lch.launches)) ? lch.launches[0] : null);
+    // SOLO conteos EN VIVO de CelesTrak: si el servidor cayó al respaldo sintético ('fallback') se dice que
+    // no hay dato — nunca se leen cifras inventadas como si fueran reales
+    if (!tle || tle.source !== 'celestrak') {
+      return { success: false, unavailable: true, source: (tle && tle.source) || null,
+        next_launch: (nextL0 && nextL0.name) || null,
+        error: en ? 'Live satellite counts (CelesTrak) are unavailable right now; I will not give fallback figures.'
+          : 'Los conteos de satélites en vivo (CelesTrak) no están disponibles ahora; no doy cifras de respaldo.' };
+    }
     const cons = (tle && Array.isArray(tle.constellations) ? tle.constellations : []).filter(function (c) { return (c.count || 0) > 0; });
     if (!cons.length) return { success: false, error: en ? 'No satellite data right now.' : 'Sin datos de satélites ahora mismo.' };
     const total = (tle && tle.total_real) || cons.reduce(function (s, c) { return s + (c.count || 0); }, 0);
@@ -1707,7 +1888,8 @@ const BixbyVoice = {
     return {
       success: true, total_satellites: total, constellations: list,
       focus: focus ? { name: focus.name, count: focus.count } : null,
-      next_launch: nextL ? nextL.name : null, source: (tle && tle.source) || 'celestrak', summary,
+      next_launch: nextL ? nextL.name : null, source: tle.source,
+      as_of: tle.as_of || tle.fetched_at || null, fetched_at: new Date().toISOString(), summary,
     };
   },
 

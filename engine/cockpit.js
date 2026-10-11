@@ -1616,10 +1616,21 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       return n ? n.label : id;
     } catch (e) { return ''; }
   }
+  // la ventana de una simulación se titula por su TIPO (antes toda simulación decía "Caída simulada",
+  // también un auge de demanda): título de la ventana, barra de tareas y lo que la voz dice que abrió
+  var SIM_TITLE = { collapse: ['Caída simulada', 'Simulated failure'], demand: ['Auge de demanda', 'Demand boom'],
+                    price: ['Shock de precio', 'Price shock'], sanction: ['Sanción', 'Sanction'] };
+  // severidad de una simulación (1..100 %; 0, vacía o inválida = 100 = caída total) — la MISMA regla en engine/voice.js
+  function _simSev(v) {
+    v = Math.round(+v);
+    if (!isFinite(v) || v <= 0) return 100;
+    return Math.max(1, Math.min(100, v));
+  }
   function winTitle(kind, arg) {
     var sp = _custom[kind];
     if (sp && typeof sp.title === 'function') { try { var tt = sp.title(arg); if (tt) return String(tt); } catch (e) {} }
     var m = KIND_META[kind]; var base = m ? (ckLang() === 'en' ? m[2] : m[1]) : kind;
+    if (kind === 'sim' && arg && typeof arg === 'object' && SIM_TITLE[arg.kind]) base = SIM_TITLE[arg.kind][ckLang() === 'en' ? 1 : 0];
     var extra = _argLabel(kind, arg);
     return extra ? base + ' · ' + extra : base;
   }
@@ -2453,11 +2464,14 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var n = resolveNode(arg.id); if (!n) { stageNotFound(s, arg.id || ''); return; }
     var kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(arg.kind) >= 0 ? arg.kind : 'collapse';
     var dir = kind === 'demand' ? 'up' : 'down';
+    var sev = _simSev(arg.severity);
     var kindLabel = { collapse: L('Corte / caída', 'Outage / collapse'), demand: L('Auge de demanda', 'Demand boom'), price: L('Shock de precio', 'Price shock'), sanction: L('Sanción', 'Sanction') }[kind];
     // tinte de la escena: relleno vivo (barras, puntos) + tinta AA (cifras y títulos)
     var tint = dir === 'up' ? OS.good : OS.bad, tintInk = dir === 'up' ? OS.goodInk : OS.badInk;
     if (!window.KhipuState || !window.KhipuState.simulate) { s.innerHTML = backBar() + '<div class="bcp-loading">' + L('Motor de simulación no disponible', 'Simulation engine unavailable') + '</div>'; return; }
-    var shock = {}; shock[n.id] = (kind === 'demand') ? { salud: 100 } : { salud: 0 };
+    // el shock es la intensidad del evento en TODOS los tipos (salud 0..1 = 1 − severidad): antes el auge de
+    // demanda pasaba salud 100 → el motor lo recortaba a 1 = sin daño → "Sin propagación" siempre
+    var shock = {}; shock[n.id] = { salud: 1 - sev / 100 };
     var r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
     var impacts = {}; if (r && r.impact) r.impact.forEach(function (v, k) { if (k !== n.id && v > 0) impacts[k] = v; });
     var arr = Object.keys(impacts).map(function (k) { return { id: k, v: impacts[k] }; }).sort(function (a, b) { return b.v - a.v; });
@@ -2502,8 +2516,9 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       '<div class="bcp-inner">' +
         '<div class="bcp-simhd"><span class="big">' + esc(n.label) + '</span>' +
           '<span class="kind" style="color:' + tintInk + ';' + _tint(tint, 14) + '">' + esc(kindLabel) + '</span>' +
+          '<span class="sub kos-sim-sev" data-sev="' + sev + '">' + L('Intensidad ', 'Intensity ') + sev + '%</span>' +
           '<span class="sub">' + arr.length + ' ' + L('empresas movidas', 'companies moved') + '</span>' +
-          '<button type="button" class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\')">⚡ ' + L('Ver en el mapa', 'See on the map') + '</button></div>' +
+          '<button type="button" class="bcp-back" style="margin-left:auto" onclick="window._cockpitMapSim(\'' + esc(n.id) + '\',\'' + kind + '\',' + sev + ')">⚡ ' + L('Ver en el mapa', 'See on the map') + '</button></div>' +
         '<div class="bcp-grid3">' +
           '<div class="bcp-stat"><b style="color:' + tintInk + '">' + arr.length + '</b><span>' + L('empresas afectadas', 'companies affected') + '</span></div>' +
           '<div class="bcp-stat"><b style="color:' + tintInk + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>' + L('golpe máximo', 'max hit') + '</span></div>' +
@@ -3405,7 +3420,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
   };
 
   // ── Búsqueda profunda (Capa 4, pregunta libre): planear→reunir→simular→sintetizar ──
-  var _deepTimer = null;
+  var _deepTimer = null, _deepStart = null;
 
   function stageDeep(s, question) {
     if (_deepTimer) { clearInterval(_deepTimer); _deepTimer = null; }
@@ -3420,14 +3435,32 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     if (!question) return;
     setStateL('think', 'Investigando', 'Researching');
 
-    fetch((window.BASE || '') + '/api/deep/analyze', {
+    // _deepStart: cómo arrancó (la voz lo lee para decir "ya hay una búsqueda en curso" en vez de "empecé")
+    _deepStart = fetch((window.BASE || '') + '/api/deep/analyze', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question: question }),
-    }).then(function (r) { return r.json(); }).then(function (d) {
-      if (d.error) { renderDeepError(d.error); return; }
-      _deepTimer = setInterval(pollDeep, 2500);
-      pollDeep();
-    }).catch(function () { renderDeepError(L('No se pudo conectar con el servidor', 'Could not reach the server')); });
+      body: JSON.stringify({ question: question, lang: ckLang() }),   // la síntesis sigue el idioma de la app
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        d = d || {};
+        if (r.status === 409 || d.status === 'busy') {
+          // ya corre otra búsqueda (una a la vez): se dice y se muestra el avance de ESA
+          var el = document.getElementById('bcp-deep-result');
+          if (el) el.innerHTML = '<div class="bcp-loading still">⏳ ' + esc(L('Ya hay una búsqueda profunda en curso; te muestro su avance. Pide la tuya en un minuto.',
+            'A deep search is already running; showing its progress. Ask yours again in a minute.')) + '</div>';
+          _deepTimer = setInterval(pollDeep, 2500);
+          pollDeep();
+          return { busy: true, status: r.status };
+        }
+        if (d.error) { renderDeepError(d.error); return { error: String(d.error), status: r.status }; }
+        _deepTimer = setInterval(pollDeep, 2500);
+        pollDeep();
+        return { started: true, status: r.status };
+      });
+    }).catch(function () {
+      var m = L('No se pudo conectar con el servidor', 'Could not reach the server');
+      renderDeepError(m);
+      return { error: m, status: 0 };
+    });
 
     function renderDeepError(msg) {
       var el = document.getElementById('bcp-deep-result');
@@ -3949,6 +3982,83 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       setState('', L('Listo', 'Ready'));
     });
   }
+  // título visible de la ventana que abre una acción del cerebro (lo que la voz dice que abrió)
+  function _actionTitle(a) {
+    if (!a || !a.type) return '';
+    switch (a.type) {
+      case 'open_xray': return winTitle('xray', a.arg);
+      case 'navigate': case 'stress': return winTitle('graph', a.arg);
+      case 'compare': return winTitle('compare', a.arg);
+      case 'chart': return winTitle('canvas', a.arg);
+      case 'agent_sim': return winTitle('agentsim', { scenario: a.arg });
+      case 'broker': return winTitle('broker');
+      case 'open_window': return (a.arg && a.arg.kind) ? winTitle(a.arg.kind, { id: a.arg.id }) : '';
+    }
+    try { return (window.KhipuChat && window.KhipuChat.actionLabel) ? window.KhipuChat.actionLabel(a) : ''; } catch (e) { return ''; }
+  }
+  // qué ventanas abre SOLA una respuesta (mismas reglas que fillReply: ventanas de los agentes + 1.ª acción)
+  function _openedBy(pend, d, auto) {
+    var K = window.KhipuChat, out = [];
+    var plan = (pend && pend._kcPlan) || [];
+    plan.forEach(function (w) { var t = winTitle(w.kind, w.arg); if (t && out.indexOf(t) < 0) out.push(t); });
+    if (!auto || !K || !K.AUTO) return out;
+    var acts = (Array.isArray(d && d.actions) ? d.actions : []).filter(function (a) { return !(a && a.type === 'chart' && typeof a.arg === 'string'); });
+    var first = acts.filter(function (a) { return a && K.AUTO[a.type]; })[0];
+    if (first && plan.length && first.type === 'open_xray') first = null;
+    if (first && first.type === 'open_window' && plan.some(function (w) { return first.arg && w.kind === first.arg.kind; })) first = null;
+    var ft = first ? _actionTitle(first) : '';
+    if (ft && out.indexOf(ft) < 0) out.push(ft);
+    return out;
+  }
+  // PREGUNTA HABLADA (voz de Khipu, 2026-10-11): el turno se ve en el chat del centro EXACTAMENTE como uno
+  // escrito (burbuja tuya marcada 🎙, "pensando" con los agentes, respuesta con lo que aportó cada uno,
+  // ventanas automáticas con las mismas reglas) y la promesa entrega la respuesta a la voz para que la diga.
+  function chatVoice(text, opts) {
+    opts = opts || {};
+    text = String(text || '').trim();
+    var K = window.KhipuChat;
+    if (!text) return Promise.reject(new Error(L('No entendí la pregunta.', 'I did not catch the question.')));
+    if (!K || !K.send || !K.appendUser || !K.appendPending || !K.fillReply) {
+      return Promise.reject(new Error(L('El chat de Khipu no está disponible.', 'Khipu chat is unavailable.')));
+    }
+    if (!open) openCockpit();
+    _ensureThread();
+    var th = chatThread();
+    var u = K.appendUser(th, text, window.KhipuPick && window.KhipuPick.agentOf ? window.KhipuPick.agentOf(text) : null);
+    try {
+      if (u && u.classList) {
+        u.classList.add('kc-voice');
+        u.setAttribute('data-voice', '1');
+        var mk = document.createElement('span');
+        mk.className = 'kc-vmark';
+        mk.setAttribute('role', 'img');
+        mk.setAttribute('aria-label', L('Pregunta dicha por voz', 'Question asked by voice'));
+        mk.setAttribute('title', L('Dicho por voz', 'Said by voice'));
+        mk.style.cssText = 'margin-right:6px;font-size:.9em;opacity:.8';
+        mk.textContent = '🎙';
+        u.insertBefore(mk, u.firstChild);
+      }
+    } catch (e) {}
+    _ensureThread();
+    var pend = K.appendPending(th);
+    setStateL('think', 'Pensando', 'Thinking');
+    var so = { pending: pend };
+    if (opts.timeout > 0) so.timeout = opts.timeout;
+    return K.send(text, so).then(function (d) {
+      d = d || {};
+      // misma regla que lo escrito: en el celular / "solo chat" la ventana nueva taparía la respuesta → botones
+      var auto = (window.innerWidth || 1024) > 760 && !(chatCentered() && !isCentered());
+      K.fillReply(pend, d, { onAction: runChatAction, autoRun: auto, retry: true });
+      var rb = pend.querySelector && pend.querySelector('.kc-retry'); if (rb) rb.addEventListener('click', function () { chatAsk(text); });
+      setState('', L('Listo', 'Ready'));
+      try { d.opened = _openedBy(pend, d, auto); } catch (e) { d.opened = []; }
+      return d;
+    }, function (e) {
+      try { K.fillError(pend, (e && e.message) || String(e)); } catch (x) {}
+      setState('', L('Listo', 'Ready'));
+      throw e;
+    });
+  }
   // agente con chip (💼 comité de cartera): responde EN el hilo, sin abrir pantallas
   function chatAgent(text, route) {
     var K = window.KhipuChat;
@@ -4072,17 +4182,24 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
   }
 
   // "ver en el mapa" desde una simulación del escenario
-  window._cockpitMapSim = function (id, kind) {
-    close();
-    var n = resolveNode(id); if (!n) return;
+  // Khipus OS (2026-10-11): ya NO cierra el OS (cerrarlo colgaba la voz que lo había encendido): abre la
+  // ventana del mapa en la empresa y re-colorea con la MISMA simulación (tipo + intensidad) de la ventana
+  window._cockpitMapSim = function (id, kind, severity) {
+    var n = resolveNode(id); if (!n) return false;
+    kind = ['collapse', 'demand', 'price', 'sanction'].indexOf(kind) >= 0 ? kind : 'collapse';
     var dir = kind === 'demand' ? 'up' : 'down';
+    var sev = _simSev(severity), r = null;
     try {
-      var shock = {}; shock[n.id] = (kind === 'demand') ? { salud: 100 } : { salud: 0 };
-      var r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
-      if (typeof switchTab === 'function') switchTab('map');
-      if (typeof jumpTo === 'function') jumpTo(n.id);
-      if (window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir);
-    } catch (e) {}
+      var shock = {}; shock[n.id] = { salud: 1 - sev / 100 };
+      r = window.KhipuState.simulate(shock, [], 8, 0.6, false, { direction: dir, kind: kind });
+    } catch (e) { r = null; }
+    if (!open) openCockpit();
+    stage('graph', n.id);
+    // el mapa se asienta y centra (stageGraph ~220 ms); después se pinta la onda
+    setTimeout(function () {
+      try { if (r && r.impact && window._liveRecolorByImpact) window._liveRecolorByImpact(r.impact, dir); } catch (e) {}
+    }, 420);
+    return true;
   };
 
   // ══ abrir / cerrar ══
@@ -4369,6 +4486,17 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       stage('agentsim', { scenario: String(scenario || ''), seeds: extractSeeds(String(scenario || '')) });
     },
     chat: function (text) { if (!open) openCockpit(); chatAsk(String(text || '')); },
+    // voz (engine/voice.js): pregunta hablada → turno en el chat del centro; resuelve con la respuesta
+    chatVoice: chatVoice,
+    // título VISIBLE de una ventana (idioma actual) — la voz dice lo que abrió con el nombre de la pantalla
+    title: function (kind, arg) { return winTitle(kind, arg); },
+    // ¿cómo arrancó la última búsqueda profunda? → Promise<{started}|{busy}|{error}> (null si no hubo)
+    deepStart: function () { return _deepStart; },
+    // insights del hipergrafo (misma promesa en caché que pinta la ventana Oportunidades)
+    matrixInsights: function (en) { return _matrixInsights(!!en); },
+    newConversation: _newConversation,
+    toggleTheme: _toggleTheme,
+    toggleLang: _toggleLang,
     setState: setState,
     demo: demoStart,
     demoStop: demoStop,
