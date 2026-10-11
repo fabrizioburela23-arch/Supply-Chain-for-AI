@@ -32,7 +32,8 @@ def _r(*p):
 # Contrato v2: tabla de topes (server _VOICE_TOOL_TIMEOUTS == voice.js VOICE_TOOL_TIMEOUT_S)
 CONTRACT_TIMEOUTS = {'ask_khipu_brain': 60, 'open_company': 15, 'get_company_info': 15, 'run_agent_simulation': 90,
                      'quick_thesis': 90, 'show_opportunities': 15, 'place_order': 45, 'get_account_status': 45,
-                     'get_space_summary': 20}
+                     'get_space_summary': 20,
+                     'run_guided_demo': 30}   # el recorrido de 1 minuto (2026-10-11) pide 30 s en el servidor
 TOOLS = ['ask_khipu_brain', 'open_company', 'get_company_info', 'open_screen', 'compare_companies', 'run_live_simulation',
          'run_agent_simulation', 'show_opportunities', 'create_visualization', 'quick_thesis', 'deep_search', 'place_order',
          'open_order_ticket', 'get_account_status', 'get_space_summary', 'run_guided_demo', 'control_interface']

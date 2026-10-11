@@ -40,7 +40,8 @@ function _voiceLang() {
 // server.py (un test los compara; contrato de voz v2, 2026-10-11). Respondemos SIEMPRE ~1.5 s antes
 // para que ElevenLabs nunca vea un timeout (el agente quedaba mudo o decía "falló").
 const VOICE_TOOL_TIMEOUT_S = { ask_khipu_brain: 60, open_company: 15, get_company_info: 15, run_agent_simulation: 90,
-  quick_thesis: 90, show_opportunities: 15, place_order: 45, get_account_status: 45, get_space_summary: 20 };
+  quick_thesis: 90, show_opportunities: 15, place_order: 45, get_account_status: 45, get_space_summary: 20,
+  run_guided_demo: 30 };
 const VOICE_TOOL_TIMEOUT_DEFAULT_S = 10;
 // Nombres RETIRADOS (alias): el tope con el que un agente aún sin re-sincronizar los tiene registrados
 // (los que no figuran usaban 10 s). Solo para responder a tiempo durante un despliegue; no se declaran.
@@ -997,6 +998,12 @@ const BixbyVoice = {
       case 'get_account_status': return run(this._toolAccountStatus(params));
       case 'get_space_summary': return run(this._toolSpaceSummary(params));
       case 'run_guided_demo': {
+        // pedir que PARE nunca la re-arranca (el recorrido con start/next/stop es otro trabajo en curso)
+        if (String(params.action || '').toLowerCase() === 'stop') {
+          try { if (window.BixbyCockpit && window.BixbyCockpit.demoStop) window.BixbyCockpit.demoStop(); } catch (e) {}
+          respond({ success: true, stopped: true });
+          return;
+        }
         // la demostración se narra SOLA en pantalla → Khipu dice una frase corta y se calla
         respond({ success: true, note: _voiceL(
           'Demostración guiada en marcha; se narra sola en pantalla. Di UNA frase corta y quédate en silencio.',
