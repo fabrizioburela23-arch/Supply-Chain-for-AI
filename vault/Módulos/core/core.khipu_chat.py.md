@@ -99,7 +99,7 @@ _Además lo importan 18 pruebas (lista abajo)._
 
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
-| `POST` | `/api/khipu/chat` | `chat_endpoint` | [[core.ai_usage.py]], [[engine.khipu_chat.js]], 3 pruebas |
+| `POST` | `/api/khipu/chat` | `chat_endpoint` | [[core.ai_usage.py]], [[engine.khipu_chat.js]], 4 pruebas |
 | `GET` | `/api/khipu/chat/progress/<req_id>` | `chat_progress_endpoint` | [[engine.khipu_chat.js]], 1 prueba |
 | `GET` | `/api/khipu/tools` | `tools_endpoint` | 1 prueba |
 
@@ -125,6 +125,7 @@ Grupos: [[API khipu]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_research.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_voice_os_client.py]]
 
 ## Mencionado en sesiones de trabajo
 

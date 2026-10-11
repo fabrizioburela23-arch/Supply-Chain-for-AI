@@ -25,11 +25,11 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 - [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`
 - [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **56 de 91** (línea 7891), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
+Se carga en [[app.html]] en la posición **57 de 92** (línea 7892), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 56)
+- [[app.html]] — lo carga con `<script>` (posición 57)
 - [[app.html]] — usa `KhipuSpend`
 
 ## Endpoints que llama

@@ -30,11 +30,11 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **42 de 91** (línea 7826), después de [[nodes.ontology_facts.js]] y antes de [[engine.temporal-graph.js]].
+Se carga en [[app.html]] en la posición **43 de 92** (línea 7827), después de [[nodes.ontology_facts.js]] y antes de [[engine.temporal-graph.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 42)
+- [[app.html]] — lo carga con `<script>` (posición 43)
 - [[engine.khipu_chat.js]] — usa `LEGAL_NAMES`
 - [[engine.resolve.js]] — usa `LEGAL_NAMES`
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta

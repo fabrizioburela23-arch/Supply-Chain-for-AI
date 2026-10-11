@@ -47,4 +47,3 @@ tags: ["capa/dinero", "tipo/capa"]
 | usa a | [[Capa Datos del catálogo]] | 2 |
 | usa a | [[Capa Investigación]] | 2 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 1 |
-| la usa | [[Capa Voz]] | 1 |

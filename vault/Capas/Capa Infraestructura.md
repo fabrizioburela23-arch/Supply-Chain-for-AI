@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Infraestructura"
-archivos: 18
+archivos: 19
 tags: ["capa/infraestructura", "tipo/capa"]
 ---
 
@@ -9,13 +9,13 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**18 archivos · 13.065 líneas.** Volver al [[00 Mapa de Khipus]].
+**19 archivos · 13.173 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 5.890 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[server.py]] — 5.959 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
 - [[scripts.build_vault.py]] — 3.476 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.ai.py]] — 1.085 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.ai_usage.py]] — 553 líneas · CONTROL DE GASTO DE IA (registro, límites y reporte).
@@ -31,6 +31,7 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.logjson.py]] — 81 líneas · O2 (misión de reparación 2026-10-04): logs estructurados.
 - [[core.config.py]] — 80 líneas · variables de entorno compartidas entre server y ontology.
 - [[core.agents_registry.py]] — 56 líneas · el registro de agentes del lado Python (limpieza 2026-10-11).
+- [[core.tour.py]] — 39 líneas · el guion del recorrido de un minuto, lado Python (voz para Khipus OS, 2026-10-11).
 - [[core.__init__.py]] — 13 líneas · helpers compartidos entre server.py (Flask) y ontology/ (agentes).
 - [[scripts.__init__.py]] — 0 líneas
 

@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **14 de 91** (línea 1449), después de [[nodes.preipo_intel.js]] y antes de [[nodes.private_valuations.js]].
+Se carga en [[app.html]] en la posición **14 de 92** (línea 1449), después de [[nodes.preipo_intel.js]] y antes de [[nodes.private_valuations.js]].
 
 ## Lo usan
 

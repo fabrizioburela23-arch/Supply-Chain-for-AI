@@ -29,11 +29,11 @@ BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez 
 - [[engine.resolve.js]] — usa `_surface`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **67 de 91** (línea 7917), después de [[engine.layers.js]] y antes de [[engine.compare.js]].
+Se carga en [[app.html]] en la posición **68 de 92** (línea 7918), después de [[engine.layers.js]] y antes de [[engine.compare.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 67)
+- [[app.html]] — lo carga con `<script>` (posición 68)
 - [[engine.cockpit.js]] — usa `_briefOpen`
 
 ## Endpoints que llama

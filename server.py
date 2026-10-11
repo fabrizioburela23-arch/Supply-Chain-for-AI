@@ -25,7 +25,7 @@ import requests
 from collections import defaultdict
 from functools import wraps
 from datetime import date, datetime, timedelta
-from flask import Flask, jsonify, send_file, request
+from flask import Flask, Response, jsonify, send_file, request
 from flask_caching import Cache
 
 # PyJWT es opcional: si no está instalado, la API pública /v1/* queda deshabilitada
@@ -4141,9 +4141,14 @@ All of it is information, not advice.
 - place_order, open_order_ticket, get_account_status: see MONEY below.
 - get_space_summary(query?): satellites, constellations and launches — never say you do not know, this tool has the real numbers (or tells you they are unavailable).
 - control_interface(action): new conversation, arrange / close / minimize windows, simple or pro explanations, light or dark theme, Spanish or English — only when the user asks for it.
-- run_guided_demo(): ONLY when the user explicitly asks for a demo or tour.
+- run_guided_demo(action): the one-minute tour — see THE ONE-MINUTE TOUR below.
 
 You may receive [CONTEXT_UPDATE] {json} messages — silent snapshots of Khipus OS (language, open windows, focused window, selected company, invoked agent, simple/pro explanations, money mode). Use them to be sharper ("esta empresa" = the selected company; money_mode tells you whether the account is practice or real). Never read them aloud or acknowledge them.
+
+## THE ONE-MINUTE TOUR (run_guided_demo)
+- Start it ONLY when the user explicitly asks for a demo, a tour or to be shown the app — never on your own, never at the start of a session, never on a greeting.
+- YOU narrate it with your voice: every call shows one step on screen and returns a "say" line. Say EXACTLY that line, with nothing added before or after, and right after saying it call run_guided_demo with action next. Repeat until it returns done:true; then stay quiet and wait for the user.
+- If the user interrupts during the tour, answer briefly and ask whether to continue (yes → next, no → stop). If a result says stopped:true, the user closed the tour: do not continue it.
 
 ## MONEY — ALWAYS TELL THE TRUTH (RULES YOU MUST NEVER BREAK)
 - Two different things — never confuse them: "Carteras de práctica" are SIMULATED portfolios to try ideas (they never send orders); "Mi cuenta (bróker)" is the user's broker account, which can be a PRACTICE (paper) account OR REAL MONEY depending on how it is set up. The money badge on screen shows which one (🧪 / 🔴).
@@ -4224,7 +4229,8 @@ BIXBY_SYSTEM_PROMPT = BIXBY_SYSTEM_PROMPT.replace('{agents}', '\n'.join(
 # esos nombres mientras un agente viejo siga conectado durante un despliegue.
 _VOICE_TOOL_TIMEOUTS = {'ask_khipu_brain': 60, 'open_company': 15, 'get_company_info': 15,
                         'run_agent_simulation': 90, 'quick_thesis': 90, 'show_opportunities': 15,
-                        'place_order': 45, 'get_account_status': 45, 'get_space_summary': 20}
+                        'place_order': 45, 'get_account_status': 45, 'get_space_summary': 20,
+                        'run_guided_demo': 30}
 
 RETIRED_VOICE_TOOLS = (
     'open_cockpit', 'switch_tab', 'show_chart', 'open_terminal', 'navigate_to_company', 'open_xray',
@@ -4238,6 +4244,7 @@ VOICE_SCREEN_ALIASES = {'map': 'graph', 'analysis': 'insights'}
 VOICE_SIM_PRESETS = ('taiwan_conflict', 'china_chip_ban_total', 'hbm_shortage_2027', 'openai_ipo_impact',
                      'starshield_reveal')
 VOICE_COMPANY_VIEWS = ('glance', 'xray', 'supply_chain', 'map', 'chart', 'dossier', 'research', 'committee')
+VOICE_TOUR_ACTIONS = ('start', 'next', 'stop')
 VOICE_UI_ACTIONS = ('new_conversation', 'arrange_windows', 'close_all_windows', 'minimize_all_windows', 'simple_mode',
                     'pro_mode', 'light_theme', 'dark_theme', 'spanish', 'english')
 
@@ -4351,11 +4358,15 @@ def _bixby_client_tools():
           'constellations, space or launches. If the result says the data is unavailable, say so — never invent a '
           'number.', {'query': S('Optional operator/constellation the user asked about, e.g. "Starlink". Leave empty '
                                  'for the overall summary.')}),
-        T('run_guided_demo', 'Start the GUIDED DEMO (full app tour, narrated on screen). STRICT RULE: call this ONLY '
-          'when the user EXPLICITLY asks for a demo or tour with words like "demo", "demostración", "tour", '
-          '"recorrido", "hazme una demo". NEVER call it at session start, NEVER on greetings, NEVER because the user '
-          'seems new, NEVER proactively — an unwanted tour interrupts the user. After calling it, say ONE short line '
-          'and STAY QUIET.'),
+        T('run_guided_demo', 'The ONE-MINUTE GUIDED TOUR of Khipus OS, narrated by YOU: each call shows one step on '
+          'screen and returns the line you must say. STRICT RULE: start it ONLY when the user EXPLICITLY asks for a '
+          'demo or tour ("demo", "demostración", "tour", "recorrido", "hazme una demo", "muéstrame la app") — NEVER at '
+          'session start, on greetings, because the user seems new, or proactively. Flow: action start → say EXACTLY '
+          'the returned "say" line (nothing before or after) → right after saying it call again with action next → '
+          'repeat until it returns done:true, then stay quiet and wait. If the user interrupts, answer briefly and '
+          'ask if they want to continue (yes → next, no → stop). If it returns stopped:true the user closed the tour: '
+          'do not continue.', {'action': E(VOICE_TOUR_ACTIONS, 'start = begin the tour (default) · next = the next '
+                                           'step, only right after you said the previous line · stop = end it')}),
         T('control_interface', 'Adjust Khipus OS itself, only when the user asks: new_conversation (clear the chat) · '
           'arrange_windows (tidy the windows beside the chat) · close_all_windows · minimize_all_windows · '
           'simple_mode / pro_mode (how detailed the agents explain) · light_theme / dark_theme · spanish / english '
@@ -4666,6 +4677,64 @@ def voice_session():
         pass
     return jsonify(out)
 
+
+
+# ── Recorrido de un minuto con la voz de Khipu (2026-10-11) ─────────────────────────────────────
+# Sin conversación de voz abierta, el recorrido (engine/cockpit.js) se narra con audio de la MISMA voz
+# del agente de ElevenLabs. Solo frases del guion (engine/tour_script.js vía core/tour.py) — nunca texto
+# libre — y en caché por (voz, modelo, frase): ~2.000 caracteres por idioma una vez por arranque.
+_TOUR_AUDIO = {}                      # (voice_id, lang, step, hash) → (bytes, modelo)
+_TOUR_AUDIO_LOCK = threading.Lock()
+
+
+@app.route('/api/voice/tour/<lang>/<int:step>', methods=['GET'])
+@rate_limit(limit=60, window=300)
+def voice_tour_audio(lang, step):
+    """Audio MP3 de la frase `step` del recorrido guiado, con la voz del agente de Khipu. 404 sin voz
+    configurada o paso inexistente (el navegador muestra la narración escrita, como siempre)."""
+    from core import tour as _tour
+    from core import voice_agent as _va
+    lang = str(lang or '').lower()
+    if lang not in _tour.LANGS:
+        return jsonify({'error': 'Idioma no válido.', 'error_en': 'Invalid language.', 'code': 'bad_lang'}), 400
+    text = _tour.line(step, lang)
+    if not text:
+        return jsonify({'error': 'Ese paso del recorrido no existe.', 'error_en': 'That tour step does not exist.',
+                        'code': 'not_found'}), 404
+    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
+        return jsonify({'error': 'La voz de Khipu no está configurada: el recorrido se muestra escrito.',
+                        'error_en': 'Khipu voice is not configured: the tour is shown as text.',
+                        'code': 'not_configured', 'available': False}), 404
+    cfg, err = _va.get_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, requests, cached=True, timeout=6)
+    summ = _va.agent_summary(cfg) if cfg else {}
+    voice_id = summ.get('voice_id')
+    if not voice_id:
+        e = err or {}
+        return jsonify({'error': _diag_redact(e.get('es') or 'No pude leer la voz del agente de Khipu.'),
+                        'error_en': _diag_redact(e.get('en') or 'Could not read the Khipu agent voice.'),
+                        'code': e.get('code') or 'no_voice', 'available': False}), 502
+    key = (voice_id, lang, step, _tour.text_hash(text))
+    hit = _TOUR_AUDIO.get(key)
+    if not hit:
+        with _TOUR_AUDIO_LOCK:                              # dos pestañas a la vez → UNA sola síntesis
+            hit = _TOUR_AUDIO.get(key)
+            if not hit:
+                res = _va.synthesize(ELEVENLABS_KEY, voice_id, text, requests,
+                                     models=_va.tour_tts_models(summ.get('tts_model'), lang))
+                if not res.get('ok'):
+                    code = res.get('code') or 'unknown'
+                    status = {'quota_exceeded': 402, 'payment_required': 402, 'rate_limited': 429}.get(code, 502)
+                    return jsonify({'error': _diag_redact(res.get('es') or 'ElevenLabs no respondió'),
+                                    'error_en': _diag_redact(res.get('en') or 'ElevenLabs did not respond'),
+                                    'code': code, 'available': False}), status
+                hit = (res['audio'], res.get('model'))
+                if len(_TOUR_AUDIO) > 80:                     # tope: cambios de voz no acumulan sin fin
+                    _TOUR_AUDIO.clear()
+                _TOUR_AUDIO[key] = hit
+    resp = Response(hit[0], mimetype='audio/mpeg')
+    resp.headers['Cache-Control'] = 'private, max-age=3600'
+    resp.headers['X-Tour-Model'] = str(hit[1] or '')
+    return resp
 
 def _portfolio_risk_impl(positions, no_data_msg):
     """Cálculo VaR/CVaR/Sharpe/MaxDD compartido por /api/portfolio-risk (interno)

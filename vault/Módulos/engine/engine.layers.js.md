@@ -24,11 +24,11 @@ SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "to
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **66 de 91** (línea 7916), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
+Se carga en [[app.html]] en la posición **67 de 92** (línea 7917), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 66)
+- [[app.html]] — lo carga con `<script>` (posición 67)
 
 ## Pruebas que lo cubren
 

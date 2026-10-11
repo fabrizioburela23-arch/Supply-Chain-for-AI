@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 2116
+lineas: 2298
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 2.116 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 2.298 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -20,28 +20,35 @@ Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agen
 
 `window.BixbyVoice`, `window.KhipuVoiceAudio`, `window.__bixbyEnergy`, `window.__lastTradeExec`, `window.__tradeAcctCache`, `window.__tradeInflight`, `window._executeTradeOrder`, `window._openBrokerStage`, `window._resolveTradeSymbol`, `window._tradeAccountInfo`
 
-De nivel superior (globales del script): `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`
+De nivel superior (globales del script): `VOICE_ALIAS_TIMEOUT_S`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `NODE_BY_ID`, `_liveRecolorByImpact`, `_openSecondBrain`, `_termOpenTicker`, `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous` y 15 más
+- [[app.html]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `_canonId`, `_liveRecolorByImpact`, `_liveSelectedNode`, `_openSecondBrain` y 19 más
 - [[engine.cockpit.js]] — usa `BixbyCockpit`, `_computePortfolioSummary`, `_openDeepResearch`, `_runAgentSim`
+- [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.compare.js]] — usa `openCompare`
+- [[engine.desktop.js]] — usa `KhipuDesk`
 - [[engine.fincard.js]] — usa `openFinCard`
 - [[engine.khipu_chat.js]] — usa `KhipuChat`
+- [[engine.live.js]] — usa `KhipuLive`
+- [[engine.mascot.js]] — usa `KhipuAgentPrefs`
 - [[engine.orb.js]] — usa `BixbyOrb`
+- [[engine.oswindows.js]] — usa `KhipuOSWin`
+- [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.toast.js]] — usa `KhipuToast`
-- [[engine.xray.js]] — usa `openXRay`
-- [[nodes.nodes_seed.js]] — usa `CATS`, `NODES`, `NODE_META`
+- [[engine.xray.js]] — usa `openXRay`, `xrayComputeWinners`
+- [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
+- [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **33 de 91** (línea 7817), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **34 de 92** (línea 7818), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 33)
+- [[app.html]] — lo carga con `<script>` (posición 34)
 - [[app.html]] — usa `BixbyVoice`
 - [[engine.cockpit.js]] — usa `BixbyVoice`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 - [[engine.command_center.js]] — usa `BixbyVoice`
@@ -51,7 +58,6 @@ Se carga en [[app.html]] en la posición **33 de 91** (línea 7817), después de
 ## Endpoints que llama
 
 - `GET /api/matrix/<rel_type>` → [[matrix.api.py]] ([[API matrix]])
-- `GET /api/news/<ticker>` → [[server.py]] ([[API news]])
 - `GET /api/space/launches` → [[server.py]] ([[API space]])
 - `GET /api/space/tle` → [[server.py]] ([[API space]])
 - `GET /api/trade/account` → [[server.py]] ([[API trade]])
@@ -59,7 +65,6 @@ Se carga en [[app.html]] en la posición **33 de 91** (línea 7817), después de
 - `GET /api/trade/positions/detail` → [[server.py]] ([[API trade]])
 - `GET /api/voice/bixby-prompt` → [[server.py]] ([[API voice]])
 - `POST /api/matrix/insights` → [[matrix.api.py]] ([[API matrix]])
-- `POST /api/news/portfolio` → [[core.portfolio_reports_api.py]] ([[API news]])
 - `POST /api/trade/order` → [[server.py]] ([[API trade]])
 - `POST /api/voice/session` → [[server.py]] ([[API voice]])
 
@@ -72,6 +77,8 @@ Se carga en [[app.html]] en la posición **33 de 91** (línea 7817), después de
 - [[tests.test_overnight_voice_client.py]]
 - [[tests.test_overnight_voice_server.py]]
 - [[tests.test_server_smoke.py]]
+- [[tests.test_voice_os_client.py]]
+- [[tests.test_voice_tour.py]]
 
 ## Mencionado en sesiones de trabajo
 

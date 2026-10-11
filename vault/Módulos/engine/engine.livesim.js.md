@@ -27,11 +27,11 @@ SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges e
 - [[engine.toast.js]] — usa `khipuActor`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **65 de 91** (línea 7915), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
+Se carga en [[app.html]] en la posición **66 de 92** (línea 7916), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 65)
+- [[app.html]] — lo carga con `<script>` (posición 66)
 - [[engine.command_center.js]] — usa `_lsToggle`
 
 ## Endpoints que llama

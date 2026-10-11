@@ -62,7 +62,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 15 pruebas (lista abajo)._
+_Además lo importan 16 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -112,6 +112,7 @@ _Además lo importan 15 pruebas (lista abajo)._
 - [[tests.test_repair_ops.py]]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_security.py]]
+- [[tests.test_voice_tour.py]]
 
 ## Mencionado en sesiones de trabajo
 

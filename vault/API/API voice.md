@@ -1,13 +1,13 @@
 ---
 tipo: "api"
 capa: "Voz"
-rutas: 7
+rutas: 8
 tags: ["capa/voz", "tipo/api"]
 ---
 
 # API voice
 
-> 7 rutas · definidas en [[server.py]] · prefijo `/api/voice`
+> 8 rutas · definidas en [[server.py]] · prefijo `/api/voice`
 
 Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
@@ -19,4 +19,5 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/voice/bixby-prompt` | `bixby_system_prompt` | [[server.py]] | [[engine.voice.js]], 3 pruebas |
 | `POST` | `/api/voice/session` | `voice_session` | [[server.py]] | [[engine.voice.js]], 2 pruebas |
 | `GET,POST` | `/api/voice/sync-agent` | `voice_sync_agent` | [[server.py]] | 2 pruebas |
+| `GET` | `/api/voice/tour/<lang>/<int:step>` | `voice_tour_audio` | [[server.py]] | 1 prueba |
 | `GET` | `/api/voice/voices` | `voice_voices` | [[server.py]] | 1 prueba |

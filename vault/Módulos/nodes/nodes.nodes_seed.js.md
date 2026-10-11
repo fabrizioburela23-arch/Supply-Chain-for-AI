@@ -32,7 +32,7 @@ De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `C
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **2 de 91** (línea 1437) y antes de [[nodes.nodes_expand.js]].
+Se carga en [[app.html]] en la posición **2 de 92** (línea 1437) y antes de [[nodes.nodes_expand.js]].
 
 ## Lo usan
 
@@ -63,7 +63,7 @@ Se carga en [[app.html]] en la posición **2 de 91** (línea 1437) y antes de [[
 - [[engine.temporal-graph.js]] — usa `NODE_META`
 - [[engine.termdata.js]] — usa `NODES`, `NODE_META`
 - [[engine.universe2d.js]] — usa `CATS`, `CAT_TO_SECTOR`, `SECTORS9`
-- [[engine.voice.js]] — usa `CATS`, `NODES`, `NODE_META`
+- [[engine.voice.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[engine.worldmonitor.js]] — usa `NODES`
 - [[engine.xray.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[nodes.meta_fill.js]] — usa `NODE_META`

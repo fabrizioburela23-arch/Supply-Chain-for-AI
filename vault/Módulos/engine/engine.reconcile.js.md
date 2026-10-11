@@ -26,11 +26,11 @@ G3 (misión de reparación 2026-10-04) 🩺 Diagnóstico → "Grafo: base vs cat
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **75 de 91** (línea 7925), después de [[engine.explain.js]] y antes de [[nodes.crypto_intel.js]].
+Se carga en [[app.html]] en la posición **76 de 92** (línea 7926), después de [[engine.explain.js]] y antes de [[nodes.crypto_intel.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 75)
+- [[app.html]] — lo carga con `<script>` (posición 76)
 - [[app.html]] — usa `KhipuReconcile`
 
 ## Endpoints que llama

@@ -63,6 +63,7 @@ _Nada interno._
 - [[tests.test_ontology.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_server_smoke.py]]
+- [[tests.test_voice_tour.py]]
 - [[tests.test_world.py]]
 
 ## Mencionado en sesiones de trabajo

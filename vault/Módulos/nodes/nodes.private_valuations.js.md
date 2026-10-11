@@ -31,13 +31,14 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **15 de 91** (línea 1450), después de [[nodes.listing_status.js]] y antes de [[nodes.links_all.js]].
+Se carga en [[app.html]] en la posición **15 de 92** (línea 1450), después de [[nodes.listing_status.js]] y antes de [[nodes.links_all.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 15)
 - [[app.html]] — usa `PRIVATE_VALUATIONS`
 - [[engine.fincard.js]] — usa `PRIVATE_VALUATIONS`
+- [[engine.voice.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `PRIVATE_VALUATIONS`
 - [[mcp_server.tools.py]] — lo nombra por su ruta
 - [[scripts.build_private_valuations.py]] — lo nombra por su ruta

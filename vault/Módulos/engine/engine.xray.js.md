@@ -36,11 +36,11 @@ X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled qu
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **48 de 91** (línea 7832), después de [[engine.guide.js]] y antes de [[engine.research.js]].
+Se carga en [[app.html]] en la posición **49 de 92** (línea 7833), después de [[engine.guide.js]] y antes de [[engine.research.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 48)
+- [[app.html]] — lo carga con `<script>` (posición 49)
 - [[app.html]] — usa `openXRay`
 - [[engine.cockpit.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayComputeWinners`, `xrayEnsureStyles`
 - [[engine.command_center.js]] — usa `openXRay`
@@ -50,7 +50,7 @@ Se carga en [[app.html]] en la posición **48 de 91** (línea 7832), después de
 - [[engine.resolve.js]] — usa `openXRay`
 - [[engine.spacemonitor.js]] — usa `openXRay`
 - [[engine.termdata.js]] — usa `openXRay`
-- [[engine.voice.js]] — usa `openXRay`
+- [[engine.voice.js]] — usa `openXRay`, `xrayComputeWinners`
 - [[engine.worldmonitor.js]] — usa `openXRay`
 
 ## Endpoints que llama

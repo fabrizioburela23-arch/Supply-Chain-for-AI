@@ -61,6 +61,6 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 | la usa | [[Capa MCP y API]] | 3 |
 | la usa | [[Capa Ontología y grafo temporal]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
-| la usa | [[Capa Voz]] | 1 |
+| la usa | [[Capa Voz]] | 2 |
 | usa a | [[Capa Investigación]] | 1 |
 | usa a | [[Capa Voz]] | 1 |

@@ -26,11 +26,12 @@ MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de 
 - [[engine.insights.js]] — usa `renderKhipuInsights`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **84 de 91** (línea 7934), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
+Se carga en [[app.html]] en la posición **85 de 92** (línea 7935), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 84)
+- [[app.html]] — lo carga con `<script>` (posición 85)
+- [[engine.voice.js]] — usa `KhipuLive`
 - [[engine.xray.js]] — usa `KhipuLive`
 
 ## Endpoints que llama

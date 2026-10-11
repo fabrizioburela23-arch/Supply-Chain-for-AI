@@ -52,3 +52,4 @@ tags: ["capa/investigacion", "tipo/capa"]
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |
+| la usa | [[Capa Voz]] | 1 |

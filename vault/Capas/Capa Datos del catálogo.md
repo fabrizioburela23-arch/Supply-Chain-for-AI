@@ -58,4 +58,4 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 | la usa | [[Capa Chat y agentes]] | 10 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa MCP y API]] | 2 |
-| la usa | [[Capa Voz]] | 1 |
+| la usa | [[Capa Voz]] | 2 |

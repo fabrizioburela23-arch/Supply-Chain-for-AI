@@ -32,11 +32,11 @@ Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada h
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **43 de 91** (línea 7827), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
+Se carga en [[app.html]] en la posición **44 de 92** (línea 7828), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 43)
+- [[app.html]] — lo carga con `<script>` (posición 44)
 - [[app.html]] — usa `initTKGTab`
 - [[engine.cockpit.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.command_center.js]] — usa `__tkgOpenObj`

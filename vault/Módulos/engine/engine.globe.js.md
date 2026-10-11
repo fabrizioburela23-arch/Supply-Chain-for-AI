@@ -26,11 +26,11 @@ MOTOR GLOBO UNIFICADO (Track A, Fase 1 del prompt 2026-08). Fusión de engine/ge
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **36 de 91** (línea 7820), después de [[engine.geo_coords.js]] y antes de [[engine.canvas-data.js]].
+Se carga en [[app.html]] en la posición **37 de 92** (línea 7821), después de [[engine.geo_coords.js]] y antes de [[engine.canvas-data.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 36)
+- [[app.html]] — lo carga con `<script>` (posición 37)
 - [[engine.spacemonitor.js]] — usa `KhipuGlobe`
 - [[engine.worldmonitor.js]] — usa `KhipuGlobe`
 

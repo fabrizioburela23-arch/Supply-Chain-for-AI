@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Interfaz (Khipus OS)"
-archivos: 15
+archivos: 16
 tags: ["capa/interfaz", "tipo/capa"]
 ---
 
@@ -9,11 +9,11 @@ tags: ["capa/interfaz", "tipo/capa"]
 
 > Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos.
 
-**15 archivos · 24.716 líneas.** Volver al [[00 Mapa de Khipus]].
+**16 archivos · 24.765 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[app.html]] — 12.662 líneas
+- [[app.html]] — 12.663 líneas
 - [[engine.cockpit.js]] — 4.524 líneas · CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUELVE la pantalla. - Arriba: el orbe/logo de Khipu + estado (escuchando / …
 - [[engine.oswindows.js]] — 1.506 líneas · VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.graph3d.js]] — 1.216 líneas · Motor de visualización 3D Three.js para Khipu Finance Renderiza los 450+ nodos como esferas en el espacio, con tamaño por market cap, links de …
@@ -28,6 +28,7 @@ tags: ["capa/interfaz", "tipo/capa"]
 - [[engine.layers.js]] — 133 líneas · SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "todo o nada": enciendes/apagas información como capas. Cada capa = un …
 - [[engine.nav4.js]] — 118 líneas · NAVEGACIÓN DE 4 PESTAÑAS (simplificación pedida por Fabrizio) Las 10 pestañas se agrupan bajo 4 primarias: 🗺️ Mapa → map · geo · space · tkg · …
 - [[engine.agents_registry.js]] — 78 líneas · EL registro de agentes de Khipus (limpieza 2026-10-11)
+- [[engine.tour_script.js]] — 48 líneas · EL guion del recorrido de un minuto (voz para Khipus OS, 2026-10-11)
 
 ## Conexiones con otras capas
 
@@ -44,11 +45,11 @@ tags: ["capa/interfaz", "tipo/capa"]
 | la usa | [[Capa Ontología y grafo temporal]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |
 | la usa | [[Capa Comité]] | 8 |
+| la usa | [[Capa Voz]] | 8 |
 | usa a | [[Capa Comité]] | 6 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | usa a | [[Capa Infraestructura]] | 6 |
 | la usa | [[Capa Infraestructura]] | 5 |
-| la usa | [[Capa Voz]] | 5 |
 | la usa | [[Capa Investigación]] | 4 |
 | usa a | [[Capa Investigación]] | 4 |
 | usa a | [[Capa Voz]] | 4 |

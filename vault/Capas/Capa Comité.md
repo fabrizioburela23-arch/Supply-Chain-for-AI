@@ -41,3 +41,4 @@ tags: ["capa/comite", "tipo/capa"]
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 3 |
 | la usa | [[Capa MCP y API]] | 2 |
 | la usa | [[Capa Infraestructura]] | 1 |
+| la usa | [[Capa Voz]] | 1 |

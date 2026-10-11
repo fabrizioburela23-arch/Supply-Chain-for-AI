@@ -442,6 +442,56 @@ def adopt_shared_voice(key, public_owner_id, voice_id, name, http, timeout=12) -
 
 
 # ── Herramientas (recursos /v1/convai/tools) ────────────────────────────────
+# ── Audio del recorrido guiado (voz para Khipus OS, 2026-10-11) ──────────────────────────────────
+# El recorrido de un minuto se narra con la MISMA voz del agente (su voice_id) cuando no hay una
+# conversación abierta. Solo frases fijas del guion (core/tour.py); el servidor las guarda en caché.
+TOUR_TTS_FALLBACKS = ('eleven_multilingual_v2', 'eleven_flash_v2_5')
+
+
+def tour_tts_models(agent_model, language='es'):
+    """Modelos a probar para el audio del recorrido: primero el del agente (misma voz y estilo) si sirve para
+    ese idioma, luego los multilingües estables. El de solo inglés nunca narra en español."""
+    out = []
+    m = str(agent_model or '').strip()
+    if m and not (str(language or 'es').lower() != 'en' and m in TTS_ENGLISH_ONLY):
+        out.append(TTS_DEPRECATED.get(m, m))
+    for f in TOUR_TTS_FALLBACKS:
+        if f not in out:
+            out.append(f)
+    return out
+
+
+def synthesize(key, voice_id, text, http, *, models=TOUR_TTS_FALLBACKS, output_format='mp3_44100_128',
+               timeout=25) -> dict:
+    """Texto → audio MP3 con la voz `voice_id` (POST /v1/text-to-speech/{voice_id}). Prueba los modelos en
+    orden y solo pasa al siguiente si ElevenLabs rechaza el MODELO (400/422); clave, cuota, límite o caída
+    cortan ahí. → {ok, audio: bytes, content_type, model} | {ok: False, …error traducido}. Nunca lanza."""
+    if not (key and voice_id and text):
+        return {'ok': False, 'code': 'not_configured', 'es': 'La voz de Khipu no está configurada.',
+                'en': 'Khipu voice is not configured.'}
+    if not re.match(r'^[A-Za-z0-9_-]{4,64}$', str(voice_id)):
+        return {'ok': False, 'code': 'bad_voice', 'es': 'La voz del agente no es válida.',
+                'en': 'The agent voice is not valid.'}
+    last = None
+    for model in (models or TOUR_TTS_FALLBACKS):
+        try:
+            r = http.post(f'{EL_API}/v1/text-to-speech/{voice_id}', params={'output_format': output_format},
+                          headers={**_hdr(key, True), 'Accept': 'audio/mpeg'},
+                          json={'text': str(text)[:600], 'model_id': model}, timeout=timeout)
+        except Exception as e:  # noqa: BLE001
+            return {'ok': False, **_exc_err(e)}
+        sc = getattr(r, 'status_code', 0)
+        audio = getattr(r, 'content', b'') or b''
+        if sc < 400 and audio:
+            return {'ok': True, 'audio': audio, 'content_type': 'audio/mpeg', 'model': model}
+        last = {'ok': False, **_http_err(r)} if sc >= 400 else {'ok': False, 'code': 'empty_audio',
+                                                                'es': 'ElevenLabs devolvió un audio vacío.',
+                                                                'en': 'ElevenLabs returned empty audio.'}
+        if sc not in (400, 422):
+            break
+    return last or {'ok': False, 'code': 'unknown', 'es': 'No se pudo generar el audio.', 'en': 'Could not create the audio.'}
+
+
 def list_tools(key, http, max_pages=5, timeout=12):
     """→ ({tool_id: tool_config}, err|None). Todas las del workspace (paginado)."""
     out, cursor = {}, None

@@ -36,6 +36,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_security.py]]
 - [[tests.test_server_smoke.py]]
 - [[tests.test_voice_os_server.py]]
+- [[tests.test_voice_tour.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

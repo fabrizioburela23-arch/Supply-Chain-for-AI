@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **28 de 91** (línea 7812), después de [[engine.toast.js]] y antes de [[engine.mascot.js]].
+Se carga en [[app.html]] en la posición **28 de 92** (línea 7812), después de [[engine.toast.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 
@@ -44,6 +44,7 @@ Se carga en [[app.html]] en la posición **28 de 91** (línea 7812), después de
 - [[tests.test_overnight_ui_dossier_clients.py]]
 - [[tests.test_overnight_ui_portfolios_risk.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
+- [[tests.test_voice_os_client.py]]
 
 ## Mencionado en sesiones de trabajo
 
