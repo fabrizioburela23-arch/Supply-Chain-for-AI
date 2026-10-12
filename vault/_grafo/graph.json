@@ -370,7 +370,7 @@
   {"id": "tests/test_voice_tour_drive.py", "label": "tests/test_voice_tour_drive.py", "layer": "pruebas", "lines": 627, "note": "Pruebas/tests.test_voice_tour_drive.py", "path": "tests/test_voice_tour_drive.py", "type": "test"},
   {"id": "tests/test_voice_tour_narrator.py", "label": "tests/test_voice_tour_narrator.py", "layer": "pruebas", "lines": 1037, "note": "Pruebas/tests.test_voice_tour_narrator.py", "path": "tests/test_voice_tour_narrator.py", "type": "test"},
   {"id": "tests/test_world.py", "label": "tests/test_world.py", "layer": "pruebas", "lines": 765, "note": "Pruebas/tests.test_world.py", "path": "tests/test_world.py", "type": "test"},
-  {"id": "tests/test_world_feeds.py", "label": "tests/test_world_feeds.py", "layer": "pruebas", "lines": 175, "note": "Pruebas/tests.test_world_feeds.py", "path": "tests/test_world_feeds.py", "type": "test"},
+  {"id": "tests/test_world_feeds.py", "label": "tests/test_world_feeds.py", "layer": "pruebas", "lines": 185, "note": "Pruebas/tests.test_world_feeds.py", "path": "tests/test_world_feeds.py", "type": "test"},
   {"id": "tests/world_feed_fixtures.py", "label": "tests/world_feed_fixtures.py", "layer": "pruebas", "lines": 73, "note": "Pruebas/tests.world_feed_fixtures.py", "path": "tests/world_feed_fixtures.py", "type": "test"},
   {"id": "endpoint:GET /", "label": "GET /", "layer": "infra", "lines": null, "note": "API/API páginas y archivos estáticos", "path": "server.py", "type": "endpoint"},
   {"id": "endpoint:GET,OPTIONS /.well-known/oauth-authorization-server", "label": "GET,OPTIONS /.well-known/oauth-authorization-server", "layer": "mcp", "lines": null, "note": "API/API MCP transporte y OAuth", "path": "mcp_server/oauth.py", "type": "endpoint"},

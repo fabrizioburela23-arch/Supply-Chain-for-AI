@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_world_feeds.py"
 lenguaje: "python"
-lineas: 175
+lineas: 185
 aliases: ["tests/test_world_feeds.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_world_feeds.py
 
-> Prueba · capa [[Capa Pruebas]] · 175 líneas · `tests/test_world_feeds.py`
+> Prueba · capa [[Capa Pruebas]] · 185 líneas · `tests/test_world_feeds.py`
 
 ## Qué prueba
 

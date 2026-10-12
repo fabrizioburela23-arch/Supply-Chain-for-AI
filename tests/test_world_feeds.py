@@ -5,6 +5,8 @@ import os
 import sys
 from datetime import datetime, timezone
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core import world as W  # noqa: E402
@@ -24,6 +26,14 @@ def _fake(fail=()):
 
 def setup_function(_):
     W._reset_cache()
+
+
+@pytest.fixture(autouse=True)
+def _reloj_fijo(monkeypatch):
+    """Las fixtures son de principios de octubre de 2026 (tifón del 5-oct, apagón del 4-oct): con el reloj real, al
+    pasar 7 días quedaban fuera de la ventana de 7 d y la prueba caducaba sola (falló el 12-oct sin cambio de código).
+    Reloj fijo = la prueba mide la lógica, no la fecha del día."""
+    monkeypatch.setattr(W, '_now', lambda: datetime(2026, 10, 6, 12, tzinfo=timezone.utc).timestamp())
 
 
 def test_portwatch_caida_medida_y_estrechos_del_grafo():
