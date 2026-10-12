@@ -43,9 +43,11 @@ def test_tecnico_tendencia_y_fuerza_relativa():
 
 
 def test_pares_mediana_y_prima():
-    me = {'available': True, 'pe_trailing': 40, 'gross_margin': 0.7, 'operating_margin': 0.4}
-    peers = [('A', {'available': True, 'pe_trailing': 20, 'gross_margin': 0.5, 'market_cap_usd_b': 100}),
-             ('B', {'available': True, 'pe_trailing': 30, 'gross_margin': 0.6, 'market_cap_usd_b': 50}),
+    # perfil en vivo: márgenes en PORCENTAJE (contrato de core/company_data; Bloque 0 L2-19 — antes el
+    # test pasaba fracciones 0.7/0.5/0.6 y _as_pct las adivinaba por tamaño)
+    me = {'available': True, 'pe_trailing': 40, 'gross_margin': 70.0, 'operating_margin': 40.0}
+    peers = [('A', {'available': True, 'pe_trailing': 20, 'gross_margin': 50.0, 'market_cap_usd_b': 100}),
+             ('B', {'available': True, 'pe_trailing': 30, 'gross_margin': 60.0, 'market_cap_usd_b': 50}),
              ('C', {'available': False})]
     r, txt = peer_table('X', me, peers)
     assert r['peers'] == ['A', 'B'] and r['pe_trailing']['median'] == 25

@@ -189,6 +189,7 @@ _A_SCALE = re.compile(r'\s?(' + _SCALE_WORD + r')', re.I)
 _A_GLUED = re.compile(r'(' + _GLUED_CUR + r')')
 _A_CUR = re.compile(r'\s?(?:' + _SCALE_WORD + r'\s*(?:de\s+)?)?' + _CUR_WORD, re.I)
 _B_CUR = re.compile(_CUR_PRE + r'\s?[-−–]?\s?$', re.I)
+_LABEL_CUT = re.compile(r'[,;|·{}\[\]()\n]')
 MAX_SOURCE_CHARS = 250_000      # ~60k tokens: más que cualquier prompt real (chat ≈ 40k car.); acota el costo
 _HAS_WORD = re.compile(r'[a-z$€£¥₩₹₽_]')
 
@@ -412,7 +413,7 @@ class Facts:
             line_start = max(txt.rfind('\n', max(0, s - 240), s) + 1, s - 240)   # acotado: lineal
             before = txt[max(line_start, s - 40):s]
             low = before.lower()
-            low30 = low[-30:]
+            low30 = _LABEL_CUT.split(low)[-1][-30:]          # el rótulo PROPIO: tras la última , ; | { [ ( …
             sg = mt.group('sg')
             sign = '-' if sg in ('-', '−', '–') else '+' if sg == '+' else None
             tok = mt.group(g)

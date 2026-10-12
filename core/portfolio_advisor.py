@@ -124,13 +124,18 @@ def analyze(positions, profile=None, lang='es', risk_fn=None, board_fn=None, cas
                 'excluded': rep.get('excluded', [])}
     bidx, bitems = (board_fn or _board_index)()
     by_sym = {p['symbol']: p for p in listed}
-    total = float(rep['portfolio_value_usd']) + max(0.0, _f(cash_usd, 0.0))
+    invested = float(rep['portfolio_value_usd'])
+    total = invested + max(0.0, _f(cash_usd, 0.0))
     rows = []
     for rp in rep['positions']:
         meta = by_sym.get(rp['symbol'], {})
         b = bidx.get(meta.get('entity_id')) or {}
         w = rp['value_usd'] / total * 100 if total else 0
-        rows.append({**rp, 'weight_pct': round(w, 2), 'entity_id': meta.get('entity_id'), 'label': meta.get('label') or rp['symbol'],
+        # L2-17: risk_contrib_pct (core/risk_report) es la parte del riesgo de lo INVERTIDO →
+        # se compara con el peso sobre lo invertido, no con el peso sobre invertido + efectivo
+        w_inv = rp['value_usd'] / invested * 100 if invested else 0
+        rows.append({**rp, 'weight_pct': round(w, 2), 'weight_invested_pct': round(w_inv, 2),
+                     'entity_id': meta.get('entity_id'), 'label': meta.get('label') or rp['symbol'],
                      'sector': meta.get('sector'), 'country': meta.get('country'),
                      'conviction': b.get('overall_conviction'), 'best_for': b.get('best_for'),
                      'best_against': b.get('best_against'), 'memo': b.get('memo'),
@@ -176,11 +181,11 @@ def analyze(positions, profile=None, lang='es', risk_fn=None, board_fn=None, cas
                 f"{r['label']} is {r['weight_pct']:.1f}% of your portfolio; for a {P['en'].lower()} profile the prudent cap is {P['max_position']:.0f}%.",
                 [f"peso {r['weight_pct']:.1f} %"])
             seen.add(r['symbol'])
-        elif r['risk_contrib_pct'] > 25 and r['risk_contrib_pct'] > 2 * r['weight_pct']:
+        elif r['risk_contrib_pct'] > 25 and r['risk_contrib_pct'] > 2 * r['weight_invested_pct']:
             to = round(max(r['weight_pct'] * 0.6, 1.0), 2)
             act('reduce', r, to, 2,
-                f"{r['label']} es {r['weight_pct']:.1f} % del dinero pero aporta {r['risk_contrib_pct']:.0f} % del riesgo (se mueve mucho: {r['vol_ann_pct']:.0f} % al año).",
-                f"{r['label']} is {r['weight_pct']:.1f}% of the money but drives {r['risk_contrib_pct']:.0f}% of the risk (it moves a lot: {r['vol_ann_pct']:.0f}% a year).",
+                f"{r['label']} es {r['weight_invested_pct']:.1f} % de lo invertido pero aporta {r['risk_contrib_pct']:.0f} % del riesgo (se mueve mucho: {r['vol_ann_pct']:.0f} % al año).",
+                f"{r['label']} is {r['weight_invested_pct']:.1f}% of the invested money but drives {r['risk_contrib_pct']:.0f}% of the risk (it moves a lot: {r['vol_ann_pct']:.0f}% a year).",
                 [f"contribución al riesgo {r['risk_contrib_pct']:.0f} %", f"volatilidad {r['vol_ann_pct']:.0f} %"])
             seen.add(r['symbol'])
     # 3) sector concentrado

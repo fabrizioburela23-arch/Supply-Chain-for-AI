@@ -119,7 +119,7 @@ def fundamental_ratios(fin, profile=None):
     for key, label in (('roic', 'ROIC'), ('roe', 'ROE')):
         _p, v = _last_two(_series(fin, key))
         if v is not None and v[1] is not None:
-            val = v[1] * 100 if abs(v[1]) < 5 else v[1]
+            val = v[1] * 100        # L2-19: company_data entrega roe/roic en FRACCIÓN (contrato), sin adivinar por tamaño
             out[key + '_pct'] = round(val, 1)
             parts.append(f'{label} {round(val, 1)} % ({v[0]})')
     sh = [(y, v) for y, v in _series(fin, 'shares') if v]
@@ -226,8 +226,11 @@ def _median(vs):
 
 
 def _as_pct(v):
-    v = _f(v)
-    return None if v is None else (v * 100 if abs(v) <= 2 else v)
+    """L2-19: el perfil en vivo (core/company_data, _PROFILE_KEYS) ya trae márgenes y
+    crecimiento en PORCENTAJE (25.3 = 25,3 %). Antes se adivinaba la unidad por el
+    tamaño (×100 si |v| ≤ 2): un margen real de 1,5 % salía 150 % y un crecimiento de
+    250 % expresado como 2,5 quedaba en 2,5 %. Ahora se respeta el contrato."""
+    return _f(v)
 
 
 def peer_table(entity_label, entity_profile, peers):
