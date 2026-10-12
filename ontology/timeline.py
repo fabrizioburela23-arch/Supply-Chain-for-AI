@@ -38,6 +38,8 @@ _T = {
         'unlink_in': 'Relación terminada: {other} {rel} esta empresa',
         'action': 'Acción: {name}',
         'price': 'Precio observado',
+        'status': 'Vínculo {status} con {other}',
+        'status_names': {'confirmed': 'confirmado', 'rejected': 'rechazado', 'proposed': 'propuesto'},
         'news': 'Noticia',
         'fields': 'campos',
     },
@@ -50,6 +52,8 @@ _T = {
         'unlink_in': 'Relation ended: {other} {rel} this company',
         'action': 'Action: {name}',
         'price': 'Price observed',
+        'status': 'Link {status} with {other}',
+        'status_names': {'confirmed': 'confirmed', 'rejected': 'rejected', 'proposed': 'proposed'},
         'news': 'News',
         'fields': 'fields',
     },
@@ -102,6 +106,10 @@ def _titulo(ev, object_id, etiquetas, t):
         return t['action'].format(name=nombre), str(detalle)[:240]
     if tipo == 'PriceObserved':
         return t['price'], str(p.get('price') or p.get('close') or '')
+    if tipo == 'LinkStatusChanged':        # INFRA_OPERATIVA paso 3: Confirmar/RechazarVinculo
+        otro_id = ev.target_id if ev.object_id == object_id else ev.object_id
+        st = t['status_names'].get(p.get('status'), p.get('status') or '?')
+        return t['status'].format(status=st, other=etiquetas.get(otro_id, otro_id or '?')), str(p.get('by') or '')
     return tipo, ''
 
 

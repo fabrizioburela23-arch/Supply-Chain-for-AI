@@ -339,6 +339,17 @@ def on_schema_init():
 
 
 # ── LISTEN khipu_graph (escritores fuera del proceso) ───────────────────────
+def _redact(text):
+    """Los errores de conexión pueden traer host/usuario de la base: se tapan antes de mostrarlos."""
+    try:
+        from core.http import redact_secrets
+        from ontology.db import DATABASE_URL
+        out = redact_secrets(str(text), extra=(DATABASE_URL,), limit=400)
+    except Exception:  # noqa: BLE001
+        out = str(text)
+    import re
+    return re.sub(r'(\w+://)[^/\s@]*@', r'\1•••@', out)
+
 def _dsn():
     from ontology.db import DATABASE_URL
     url = DATABASE_URL or ''
@@ -383,7 +394,7 @@ def _listen_loop():
                         pass
         except Exception as e:  # noqa: BLE001
             _STATS['listen_errors'] += 1
-            _LISTENER.update(connected=False, last_error=f'{type(e).__name__}: {str(e)[:160]}')
+            _LISTENER.update(connected=False, last_error=_redact(f'{type(e).__name__}: {e}')[:160])
             time.sleep(backoff)
             backoff = min(60.0, backoff * 2)
         finally:

@@ -117,8 +117,9 @@ def _loop():
                            last_build_at=time.time())
         except Exception as e:  # noqa: BLE001
             with _COND:
+                from core.hotviews.signals import _redact
                 _ST.update(failures=_ST['failures'] + 1, consecutive_failures=_ST['consecutive_failures'] + 1,
-                           last_error=f'{type(e).__name__}: {str(e)[:200]}', last_error_at=time.time(),
+                           last_error=_redact(f'{type(e).__name__}: {e}')[:200], last_error_at=time.time(),
                            dirty=True)
                 wait = 0.0 if _ST['demand'] > 0 else min(60.0, 2.0 ** min(6, _ST['consecutive_failures']))
             log.warning('hotviews: construcción falló (%s); se conserva la generación anterior', type(e).__name__)
@@ -183,7 +184,7 @@ def ensure(min_version=None, lineage=None, timeout=2.0):
     `timeout` s. None si no llegó a tiempo (la ruta calcula directo y lo marca source:'direct')."""
     from core.hotviews import registry
     g = registry.generation()
-    if _satisfies(g, min_version, lineage) and not (min_version is None and g is None):
+    if _satisfies(g, min_version, lineage):
         return g
     deadline = time.time() + max(0.0, float(timeout))
     with _COND:
