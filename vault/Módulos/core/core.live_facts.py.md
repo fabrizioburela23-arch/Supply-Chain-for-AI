@@ -37,12 +37,13 @@ DATOS EN VIVO para toda llamada de IA.
 - [[core.sim_agents.py]] — lo importa
 - [[research.committee.py]] — lo importa
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_ask_agent.py]]
 - [[tests.test_block0_numbers.py]]
+- [[tests.test_block0_review.py]]
 - [[tests.test_jev_router.py]]
 - [[tests.test_khipus_os_fixes_server.py]]
 - [[tests.test_khipus_os_server.py]]

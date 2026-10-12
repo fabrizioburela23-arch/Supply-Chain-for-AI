@@ -561,9 +561,13 @@ entre modelos no se reintenta (salta al instante) y los saturados van al final 3
 server.py y ontology/agents.py importan de core/ — no redefinir en el server.
 **GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito "todo en vivo, los datos
 falsos perjudican al inversionista")**: `_ai_complete` añade NUMBERS_RULE al
-system y verifica (core/numbers.py) que toda cifra de dinero/precio de la
-respuesta esté en el input; si no → 1 reintento con feedback y, si persiste,
-la marca "(⚠ cifra no verificada)". `_ai_complete_raw` = sin guardián (solo
+system y verifica (core/numbers.py) que toda cifra de la respuesta esté en los DATOS del prompt (no en el system ni
+en sus ejemplos); si no → 1 reintento con feedback y, si persiste,
+la marca "(⚠ cifra no verificada)" en el tramo exacto. BLOQUE 0 (2026-10-12): compara por TIPO (dinero, %, múltiplos,
+indicadores) con tolerancia por la precisión mostrada (precio ≤0,5 %), entiende "233,95 USD", "dólares", €/£/¥/NT$/S/
+y separadores es/en, respeta el signo, exime fechas/años/condicionales y no tiene regex cuadráticas (50k dígitos
+0,05 s). La simulación por agentes solo revisa dinero. Las cifras DERIVADAS (sumas, distancia al máximo) se marcan:
+la IA debe copiar, no calcular. `_ai_complete_raw` = sin guardián (solo
 lo usa el guardián). research/ usa check_numbers (rechazo estricto). Para que
 la IA dé cifras correctas, `core/live_facts.py` anexa a TODO prompt un
 bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-05"
-ruta: "docs/ESTADO.md#L639"
+ruta: "docs/ESTADO.md#L652"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-05 (o) — AGENTES CON CHIP EN EL CHAT: EL COMITÉ DE CARTERA RESPONDE AHÍ (sw v218)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 639 (17 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 652 (17 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

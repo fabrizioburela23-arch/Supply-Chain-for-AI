@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-06"
-ruta: "docs/ESTADO.md#L2025"
+ruta: "docs/ESTADO.md#L2038"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa 2 — Datos limpios: ✅ COMPLETA (2026-07-06, 5 batches publicados)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2025 (35 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2038 (35 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

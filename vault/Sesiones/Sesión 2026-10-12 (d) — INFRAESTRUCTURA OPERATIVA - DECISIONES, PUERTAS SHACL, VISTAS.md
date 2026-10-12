@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L25"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA: DECISIONES, PUERTAS SHACL, VISTAS RÁPIDAS, GOBERNANZA
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (19 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 25 (19 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,4 +18,4 @@ Pedidos de Fabrizio: "implementar hot path views para tomar decisiones en tiempo
 
 - [[Doc INFRA_OPERATIVA]]
 
-← más antigua: [[Sesión 2026-10-12 (c) — AUDITORÍA - QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN]]
+← más antigua: [[Sesión 2026-10-12 (c) — AUDITORÍA - QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN]] · más nueva: [[Sesión 2026-10-12 (e) — BLOQUE 0 DE BRECHAS_V2 - CIFRAS Y PUBLICACIÓN SEGURAS]] →
