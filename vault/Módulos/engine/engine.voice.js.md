@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 2845
+lineas: 3024
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 2.845 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 3.024 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -20,7 +20,7 @@ Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agen
 
 `window.BixbyVoice`, `window.KhipuVoiceAudio`, `window.__bixbyEnergy`, `window.__lastTradeExec`, `window.__tradeAcctCache`, `window.__tradeInflight`, `window._executeTradeOrder`, `window._openBrokerStage`, `window._resolveTradeSymbol`, `window._tradeAccountInfo`
 
-De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`, `TOUR_AUDIO_GAP_MS`, `VOICE_ALIAS_TIMEOUT_S`, `VOICE_ORDER_PREVIEW_MS`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
+De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`, `TOUR_AUDIO_GAP_MS`, `TOUR_DRIVE_GAP_MS`, `TOUR_SPEECH_CPS`, `TOUR_TAG_RE`, `VOICE_ALIAS_TIMEOUT_S`, `VOICE_ORDER_PREVIEW_MS`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
 
 ## Depende de
 
@@ -81,10 +81,12 @@ Se carga en [[app.html]] en la posición **34 de 92** (línea 7820), después de
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour.py]]
 - [[tests.test_voice_tour_client.py]]
+- [[tests.test_voice_tour_drive.py]]
 - [[tests.test_voice_tour_narrator.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)]]
 - [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
 - [[Sesión 2026-07-14 — (madrugada, autónoma) — víspera de la demo app en v95]]

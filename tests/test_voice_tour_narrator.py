@@ -758,15 +758,17 @@ async function main() {
   const R = {};
   const uaN = (ws) => ws.sent.filter(m => m.type === 'user_activity').length;
   async function opened(E) { const N = await narrate(E); const ws = E.sockets[E.sockets.length - 1]; ws._open(); ws._msg(META('pcm_16000', 'pcm_16000')); return { N, ws }; }
-  {   // vigía: el agente empieza y se calla → a los ~35 s cuelga; el recorrido sigue en pantalla (no 30 min de user_activity)
+  {   // vigía: el agente empieza y se calla (ni siquiera dice la frase 1) → a los ~35 s cuelga; el recorrido sigue en
+      // pantalla (no 30 min de user_activity). Si SÍ dice la frase 1 y después se calla, la app le manda [TOUR 2/N]
+      // (tests/test_voice_tour_drive.py cubre el reenvío y el recorrido local).
     const E = env({ session: S }); const { rec } = fakeTour(E, STEPS);
     const { ws } = await opened(E);
     await call(E, ws, 'run_guided_demo', { action: 'start' });
-    spoke(E, ws, 0.3);
     await E.advance(30000);
     R.stall30 = { connected: E.V.isConnected, closed: !!ws.closed };
     await E.advance(300000);
     R.stall = { connected: E.V.isConnected, closed: ws.closed || null, ua: uaN(ws), attached: rec.attached.slice(),
+                tags: ws.sent.filter(m => m.type === 'user_message' && /^\[TOUR /.test(m.text)).length,
                 listenOnly: E.V.isListenOnly(), toasts: E.toasts.slice(), local: rec.start.filter(o => o && o.fallback).length };
     R.errStall = E.errors;
   }
@@ -924,6 +926,7 @@ def test_stalled_agent_does_not_keep_a_paid_session_open(RV):
     s = RV['stall']
     assert s['connected'] is False and s['closed'] and s['closed']['code'] == 1000
     assert s['ua'] == 0                                                  # ni un user_activity: el vigía cuelga
+    assert s['tags'] == 0                                                # la frase 1 nunca sonó: la app no avanza
     assert s['attached'] == [False] and s['local'] == 0                  # el recorrido sigue en pantalla, solo
     assert s['toasts'] == [ES_DROP]
     ln = RV['longNext']

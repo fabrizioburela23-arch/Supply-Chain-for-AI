@@ -384,7 +384,9 @@ def V():
 
 def test_voice_start_is_voice_led_and_idempotent(V):
     assert V['start'] == [{'success': True, 'step': 1, 'of': 3, 'say': 'Uno.',
-                           'note': 'Say exactly the "say" line, then call run_guided_demo with action next.'}]
+                           'note': 'Say exactly the "say" line and nothing else. The app then sends you each next line as a '
+                                   'message that starts with [TOUR n/N]: say exactly the text after the tag, nothing else, '
+                                   'and do not call any tool for it.'}]   # la APP marca el ritmo (test_voice_tour_drive.py)
     assert V['startAgain'][0]['step'] == 1 and V['startAgain'][0]['say'] == 'Uno.'
     assert V['startCalls'] == [{'voice': True}]                          # el segundo start no reinicia
     assert 'tour' not in V['ctxOff'] and V['ctxOn']['tour'] == {'on': True, 'step': 1, 'of': 3}

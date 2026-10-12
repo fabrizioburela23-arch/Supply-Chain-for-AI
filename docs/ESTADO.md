@@ -9,6 +9,20 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)
+
+Fabrizio: "solo dice el primer paso y se queda ahí". Con el conector de ElevenLabs se leyó la conversación real
+(conv_0201m4qaefs2ed1ryxhjan5nvese, LLM gemini-2.5-flash, TTS eleven_flash_v2_5): el agente llamó `start`, dijo la frase
+1 exacta y TERMINÓ su turno sin pedir `next`; nadie habló (sesión de solo escuchar) y el recorrido quedó quieto.
+- Ahora LA APP MARCA EL RITMO: cuando la frase terminó de sonar, voice.js avanza la pantalla y le manda la siguiente
+  como mensaje "[TOUR n/N] <frase>"; el agente solo la dice. Si no la dice en 8 s → la reenvía una vez; si sigue
+  callado → recorrido local (solo escuchar) o pausa con aviso (con micrófono). Si el agente sí llama `next`, se respeta
+  (una sola entrega por paso, nunca salta uno). Instrucciones y descripción de run_guided_demo con el protocolo nuevo
+  (llegan en cada sesión: el navegador manda las instrucciones como override).
+- Revisión (2 lentes): 6 hallazgos, todos arreglados con prueba. tests/test_voice_tour_drive.py.
+
+---
+
 # SESIÓN 2026-10-12 — EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (sw v256)
 
 Fabrizio: "Cuando aprieto «Ver el recorrido en un minuto», usa la voz antigua. Solo cuando se lo pido por voz, usa la

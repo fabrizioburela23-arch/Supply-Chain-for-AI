@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-14"
-ruta: "docs/ESTADO.md#L1866"
+ruta: "docs/ESTADO.md#L1880"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-07-14 (madrugada, autónoma) — víspera de la demo · app en v95
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1866 (42 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1880 (42 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

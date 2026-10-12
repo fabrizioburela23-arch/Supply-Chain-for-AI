@@ -56,6 +56,20 @@ const NARRATE_START_MS = 9000, NARRATE_TOTAL_MS = 20000;
 // vigía: sin herramienta ni audio del agente durante 35 s (tras sonar lo último) → cuelga, el recorrido sigue solo
 // (más que el ~25 s que un `next` espera a que termine la frase); 1,5 s para que el AudioContext suene
 const NARRATE_STALL_MS = 35000, NARRATE_AUDIO_CHECK_MS = 1500;
+// LA APP MARCA EL RITMO del recorrido narrado (2026-10-12 b): el LLM del agente dice la frase de `start` y termina su
+// turno SIN llamar `next` (transcripción real: se quedaba en el paso 1). Cuando la frase del paso k terminó de SONAR
+// (llegó audio después de entregarla, lo agendado ya sonó —margen 0,15 s— y no llega audio hace TOUR_DRIVE_QUIET_MS)
+// y no hay ningún run_guided_demo en curso, se espera TOUR_DRIVE_GAP_MS, la pantalla pasa al paso k+1 y se le manda
+// al agente `[TOUR k+1/N] <frase>` (user_message). Sin audio a los TOUR_LINE_WAIT_MS → se reenvía UNA vez; otra vez
+// nada → solo escuchar: cuelga y sigue el recorrido local; con micrófono: pausa. TOUR_SELF_INTERRUPT_MS: una
+// `interruption` justo después de nuestro mensaje la provocó él, no el usuario (no pausa).
+const TOUR_DRIVE_GAP_MS = 600, TOUR_DRIVE_QUIET_MS = 600, TOUR_LINE_WAIT_MS = 8000, TOUR_DRIVE_TICK_MS = 150,
+  TOUR_SELF_INTERRUPT_MS = 1500;
+// un "¡Claro!" dicho junto con el start puede llegar DESPUÉS del resultado: hasta que sonó al menos una parte de la
+// frase (TOUR_LINE_MIN_FRAC de lo que dura a TOUR_SPEECH_CPS letras por segundo, tope TOUR_LINE_MIN_CAP_S) no cuenta
+// como dicha, salvo que pase TOUR_SHORT_GRACE_MS en silencio (nunca se traba: una frase de verdad corta igual sigue)
+const TOUR_SPEECH_CPS = 15, TOUR_LINE_MIN_FRAC = 0.35, TOUR_LINE_MIN_CAP_S = 2, TOUR_SHORT_GRACE_MS = 2500;
+const TOUR_TAG_RE = /^\s*\[TOUR \d+\/\d+\]/;
 const VOICE_TOOL_TIMEOUT_DEFAULT_S = 10;
 // Nombres RETIRADOS (alias): el tope con el que un agente aún sin re-sincronizar los tiene registrados
 // (los que no figuran usaban 10 s). Solo para responder a tiempo durante un despliegue; no se declaran.
@@ -431,6 +445,7 @@ const BixbyVoice = {
     if (sess !== this._sess) return;           // socket viejo (ya hubo reintento o disconnect)
     clearTimeout(this._initTimer);
     this._tourDetach();
+    this._driveStop();                         // el ritmo de la app se va con la sesión
     const hadMeta = this._metaReceived;
     const errEv = this._lastErrorEvent || {};
     const reason = String(ev.reason || '');
@@ -541,6 +556,7 @@ const BixbyVoice = {
 
   disconnect() {
     this._tourDetach();                 // un recorrido narrado por la voz sigue solo en pantalla
+    this._driveStop();                  // y la app deja de marcarle el ritmo al agente
     this._narrClear();                  // la sesión del recorrido (solo escuchar) termina aquí
     this._sess++;                       // invalida eventos pendientes del socket actual
     this._closingByUser = true;
@@ -845,6 +861,8 @@ const BixbyVoice = {
       }
       case 'user_transcript': {
         const t = msg.user_transcription_event?.user_transcript || '';
+        // el eco de nuestro propio `[TOUR n/N] …` (si ElevenLabs lo devolviera) no es el usuario hablando
+        if (t && TOUR_TAG_RE.test(t)) break;
         if (t) this._showOverlay(_voiceL('Tú: ', 'You: ') + t.slice(0, 80), 'think');   // 'think' ya enciende setBixbyThinking
         if (t) this._tourPauseIfVoice();
         break;
@@ -857,7 +875,8 @@ const BixbyVoice = {
         if (id > this._lastInterruptId) this._lastInterruptId = id;
         this._stopScheduled();
         this._setState('listen');
-        this._tourPauseIfVoice();
+        // la provocó nuestro `[TOUR n/N]` recién enviado (no el usuario): el recorrido no se pausa
+        if (!(this._driveSentAt != null && this._nowMs() - this._driveSentAt < TOUR_SELF_INTERRUPT_MS)) this._tourPauseIfVoice();
         break;
       }
       case 'ping': {
@@ -943,6 +962,7 @@ const BixbyVoice = {
     if (start < now + 0.02) start = now + 0.02;  // colchón anti-glitch si nos atrasamos
     try { src.start(start); } catch { return; }
     this._playCursor = start + buffer.duration;
+    this._audioSec = (this._audioSec || 0) + buffer.duration;   // el recorrido: cuánto de la frase llegó a sonar
     this.isPlaying = true;
     (this._activeSources || (this._activeSources = [])).push(src);
     src.onended = () => {
@@ -1084,15 +1104,16 @@ const BixbyVoice = {
     // un timeout y Khipu se quedaba mudo o decía que había fallado).
     let answered = false;
     let guard = null;
+    const ws0 = this.ws;                 // el resultado va SOLO al socket por el que llegó la llamada
     const respond = (result) => {
       if (answered) return;
       answered = true;
       clearTimeout(guard);
-      if (this.ws?.readyState === WebSocket.OPEN) {
+      if (ws0 && ws0 === this.ws && ws0.readyState === WebSocket.OPEN) {
         let txt;
         try { txt = typeof result === 'string' ? result : JSON.stringify(result == null ? { success: true } : result); }
         catch (e) { txt = '{"success":false}'; }
-        this.ws.send(JSON.stringify({
+        ws0.send(JSON.stringify({
           type: 'client_tool_result',
           tool_call_id,
           result: txt,          // el API exige STRING
@@ -2068,9 +2089,11 @@ const BixbyVoice = {
   },
 
   // ═══ EL RECORRIDO DE UN MINUTO narrado con la voz de Khipu (2026-10-11) ═══
-  // engine/cockpit.js pinta cada paso (BixbyCockpit.tour) desde el guion único window.KHIPU_TOUR; aquí el agente
-  // dice EXACTAMENTE la frase `say` y pide `next`. `next` responde recién cuando terminó de SONAR la frase anterior
-  // (el audio del agente va por delante del reloj: _playCursor) y siempre antes del tope de 30 s.
+  // engine/cockpit.js pinta cada paso (BixbyCockpit.tour) desde el guion único window.KHIPU_TOUR. El agente empieza
+  // (run_guided_demo start → dice la frase `say`) y desde ahí LA APP MARCA EL RITMO (_driveTick): cuando la frase
+  // terminó de sonar, pasa la pantalla y le manda `[TOUR n/N] <frase>`. `next` sigue sirviendo (reanudar tras una
+  // pausa, o LLMs que encadenan): responde recién cuando terminó de SONAR la frase anterior (el audio del agente va
+  // por delante del reloj: _playCursor) y siempre antes del tope de 30 s.
   _tour() {
     const ck = (typeof window !== 'undefined') ? window.BixbyCockpit : null;
     return (ck && ck.tour && typeof ck.tour.start === 'function') ? ck.tour : null;
@@ -2088,26 +2111,143 @@ const BixbyVoice = {
   // · algo de ESTA frase llegó a sonar (audio después de la última frase entregada); si no llegó nada, se espera
   //   TOUR_NO_AUDIO_MS desde el pedido (el `next` puede llegar antes que el audio de la frase);
   // · no llega audio hace TOUR_AUDIO_GAP_MS (un hueco entre trozos no es el final: _playCursor vuelve a 0).
-  _speechDrained(calledAt) {
+  _speechDrained(calledAt, needAudio) {
     const ctx = this.audioCtx;
     if (!ctx) return true;
     if (((this._playCursor || 0) - ctx.currentTime) > 0.15) return false;
     if (calledAt == null) return true;
     const now = this._nowMs(), last = this._lastAudioAt == null ? -Infinity : this._lastAudioAt;
-    if (this._tourSaidAt != null && last < this._tourSaidAt) return now - calledAt >= TOUR_NO_AUDIO_MS;
+    // needAudio: la frase la mandó la app ([TOUR n/N]) y aún no sonó → se espera a que suene (hasta el tope)
+    if (this._tourSaidAt != null && last < this._tourSaidAt) return needAudio ? false : now - calledAt >= TOUR_NO_AUDIO_MS;
     return now - last >= TOUR_AUDIO_GAP_MS;
   },
-  _waitSpeechDrained(maxMs, calledAt) {
+  _waitSpeechDrained(maxMs, calledAt, needAudio, noAudioMs) {
     return new Promise(resolve => {
       const t0 = Date.now();
       let waited = 0;
       const tick = () => {
-        if (this._speechDrained(calledAt) || waited >= maxMs || Date.now() - t0 >= maxMs) { resolve(); return; }
+        if (this._speechDrained(calledAt, needAudio) || waited >= maxMs || Date.now() - t0 >= maxMs) { resolve('drained'); return; }
+        // la frase pedida no empezó a sonar en noAudioMs → 'noaudio' (el que llama decide; no se sigue esperando)
+        if (noAudioMs && waited >= noAudioMs && this._tourSaidAt != null &&
+            (this._lastAudioAt == null || this._lastAudioAt < this._tourSaidAt)) { resolve('noaudio'); return; }
         waited += 150;
         setTimeout(tick, 150);
       };
       tick();
     });
+  },
+  // ── LA APP MARCA EL RITMO (contrato 2026-10-12 b) ──
+  // _drive = la ÚLTIMA frase entregada: { sess, i (paso, base 0), by: 'tool' (respuesta de run_guided_demo) | 'msg'
+  // ([TOUR n/N]), at (cuándo), text, sends (mensajes de este paso, máx 2), readyAt (desde cuándo ya sonó) }.
+  // Una entrega por paso: la marca quien la hace (start/next del agente o el bucle) y nunca dos.
+  _tourPendingN() {
+    const p = this._tourPend;
+    return (p && p.sess === this._sess) ? p.n : 0;
+  },
+  _tourPendAdd(d) {
+    const p = this._tourPend;
+    if (!p || p.sess !== this._sess) this._tourPend = { sess: this._sess, n: 0 };
+    this._tourPend.n = Math.max(0, this._tourPend.n + d);
+  },
+  _driveMark(i, by, text, say) {
+    const now = this._nowMs();
+    const line = String(say || '');
+    this._drive = { sess: this._sess, i: i, by: by, at: now, text: text || '', sends: by === 'msg' ? 1 : 0, readyAt: null,
+      sec0: this._audioSec || 0,
+      minSec: Math.min(TOUR_LINE_MIN_CAP_S, TOUR_LINE_MIN_FRAC * line.length / TOUR_SPEECH_CPS) };
+    this._driveUnsaid = null;                     // una entrega nueva: la frase "no dicha" de antes ya no cuenta
+    this._tourSaidAt = now;
+    this._narrKick();                             // cada entrega cuenta como "el recorrido sigue vivo"
+    this._driveArm();
+  },
+  _driveArm() {
+    if (this._driveT) return;
+    this._driveT = setTimeout(() => { this._driveT = 0; this._driveTick(); }, TOUR_DRIVE_TICK_MS);
+  },
+  _driveStop() {
+    clearTimeout(this._driveT); this._driveT = 0;
+    this._drive = null;
+    this._driveUnsaid = null;                     // (_driveGiveUp la vuelve a poner DESPUÉS de detener)
+  },
+  _driveSend(text) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    try {
+      this.ws.send(JSON.stringify({ type: 'user_message', text: text }));
+      this._driveSentAt = this._nowMs();
+      return true;
+    } catch (e) { return false; }
+  },
+  _driveTick() {
+    const d = this._drive;
+    if (!d || d.sess !== this._sess || !this.isConnected || !this.ws || this.ws.readyState !== WebSocket.OPEN) { this._driveStop(); return; }
+    const T = this._tour();
+    let st = null;
+    try { st = T ? T.state() : null; } catch (e) { st = null; }
+    if (!st || !st.on || !st.voice) { this._driveStop(); return; }   // terminó, se cerró o sigue con sus tiempos
+    // en pausa (el usuario habló) o con un run_guided_demo en curso: el agente manda; el bucle espera
+    if (st.paused || this._tourPendingN() > 0) { d.readyAt = null; this._driveArm(); return; }
+    const now = this._nowMs();
+    if (st.i !== d.i) {                           // la pantalla cambió por otro camino: esa frase cuenta como entregada
+      this._driveMark(st.i, 'tool');
+      return;
+    }
+    const last = this._lastAudioAt == null ? -Infinity : this._lastAudioAt;
+    if (last < d.at) {                            // la frase aún no empezó a sonar
+      d.readyAt = null;
+      if (d.by === 'msg' && now - d.at >= TOUR_LINE_WAIT_MS) {
+        if (d.sends < 2 && this._driveSend(d.text)) {   // el MISMO mensaje, una sola vez más
+          d.sends += 1; d.at = now; this._tourSaidAt = now; this._narrKick();
+        } else { this._driveGiveUp(T); return; }
+      }
+      this._driveArm();
+      return;
+    }
+    const ctx = this.audioCtx;
+    const left = ctx ? (this._playCursor || 0) - ctx.currentTime : 0;
+    if (left > 0.15 || now - last < TOUR_DRIVE_QUIET_MS) { d.readyAt = null; this._driveArm(); return; }
+    // sonó muy poco para esta frase (p. ej. solo el "¡Claro!" de antes): se espera un poco más a que llegue
+    if (((this._audioSec || 0) - (d.sec0 || 0)) < (d.minSec || 0) && now - last < TOUR_SHORT_GRACE_MS) {
+      d.readyAt = null; this._driveArm(); return;
+    }
+    if (d.readyAt == null) d.readyAt = now;
+    if (now - d.readyAt < TOUR_DRIVE_GAP_MS) { this._driveArm(); return; }
+    // la frase del paso k ya sonó entera: la app avanza
+    if (st.i + 1 >= st.of) { this._driveFinish(T); return; }
+    let r = null;
+    try { r = T.next(); } catch (e) { r = null; }
+    if (!r || r.done || !r.say) { if (r && r.done) this._driveFinished(); else this._driveStop(); return; }
+    const text = '[TOUR ' + r.step + '/' + r.of + '] ' + r.say;
+    this._driveSend(text);
+    this._driveMark(r.step - 1, 'msg', text, r.say);
+    this._updateContextSoon();
+  },
+  // la última frase ya sonó: fin del recorrido (solo escuchar → cuelga tras la frase; con micrófono → sigue la charla)
+  _driveFinish(T) {
+    try { T.next(); } catch (e) {}
+    this._driveFinished();
+  },
+  _driveFinished() {
+    this._driveStop();
+    this._updateContextSoon();
+    if (!this._listenOnly && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      try { this.ws.send(JSON.stringify({ type: 'contextual_update', text: '[CONTEXT_UPDATE] {"tour":"finished"}' })); } catch (e) {}
+    }
+    this._narrateEnded();
+  },
+  // el agente no dijo la frase ni con el reenvío: solo escuchar → cuelga y el recorrido sigue LOCAL desde este paso
+  // (voiceAttached(false): clips → texto, con el aviso de siempre); con micrófono → pausa (el "sí" del usuario → next)
+  _driveGiveUp(T) {
+    const d = this._drive;
+    this._driveStop();
+    if (this._listenOnly) { this._listenOnlyFail('stalled'); return; }
+    // esa frase NUNCA sonó: al reanudar (`next` tras el "sí") se repite este paso en vez de saltarlo
+    this._driveUnsaid = d ? { sess: this._sess, i: d.i } : null;
+    this._tourSeq = (this._tourSeq || 0) + 1;
+    try { T.pause(); } catch (e) {}
+    this._updateContextSoon();
+    this._notice(_voiceL('Khipu no siguió con el recorrido: quedó en pausa. Dile «sigue» para continuar.',
+      'Khipu did not go on with the tour: it is paused. Tell him "go on" to continue.'), 'info', 'kh-tour-hand',
+      _voiceL('Recorrido de un minuto', 'One-minute tour'));
   },
   _toolTour(params, respond0) {
     // cada respuesta del recorrido cuenta como "el agente sigue vivo" (vigía de la sesión de solo escuchar)
@@ -2135,6 +2275,7 @@ const BixbyVoice = {
       return;
     }
     if (action === 'stop') {
+      this._driveStop();
       try { T.stop('voice'); } catch (e) {}
       respond({ success: true, stopped: true });
       this._narrateEnded();
@@ -2144,7 +2285,14 @@ const BixbyVoice = {
       let st = null;
       try { st = T.state(); } catch (e) { st = null; }
       let r = null;
-      if (st && st.on && st.voice && st.say) r = { step: st.i + 1, of: st.of, say: st.say };   // idempotente
+      if (st && st.on && st.voice && st.say) {
+        r = { step: st.i + 1, of: st.of, say: st.say };   // idempotente
+        // en pausa (el usuario habló) y el agente retoma con start: se reanuda en el paso actual (si no, el bucle
+        // quedaba quieto para siempre)
+        if (st.paused && typeof T.resume === 'function') {
+          try { const rr = T.resume(); if (rr && rr.say) r = rr; } catch (e) {}
+        }
+      }
       else if (st && st.on && st.say && this._narrFbSess === this._sess) {
         // el respaldo del botón ya va en pantalla (esta conversación, con micrófono): la voz lo toma en el paso
         // actual, sin volver al paso 1
@@ -2156,40 +2304,69 @@ const BixbyVoice = {
         return respond({ success: false, error: _voiceL('El recorrido no está disponible ahora.', 'The tour is not available right now.') });
       }
       this._updateContextSoon();
-      this._tourSaidAt = this._nowMs();
+      this._driveMark(r.step - 1, 'tool', '', r.say);   // la frase de este paso la entrega la herramienta (no un [TOUR])
       this._narrateStarted();
       return respond({ success: true, step: r.step, of: r.of, say: r.say,
-        note: 'Say exactly the "say" line, then call run_guided_demo with action next.' });
+        note: 'Say exactly the "say" line and nothing else. The app then sends you each next line as a message that starts with [TOUR n/N]: say exactly the text after the tag, nothing else, and do not call any tool for it.' });
     }
-    // next
+    // next (algunos LLM sí encadenan; y es el "sí, sigue" tras una pausa)
     if (!this._tourOn()) { respond(closed); this._narrateEnded(); return; }
     // el recorrido corre en pantalla con sus propios tiempos (p. ej. lo empezó la interfaz): la voz lo toma, para que
     // no avancen a la vez el agente y los temporizadores
     if (!this._tourVoiceLed()) { try { T.voiceAttached(true); } catch (e) {} }
     const seq = this._tourSeq || 0;
     const limitMs = Math.max(2000, (VOICE_TOOL_TIMEOUT_S.run_guided_demo || 30) * 1000 - 5000);   // ~25 s
-    this._waitSpeechDrained(limitMs, this._nowMs()).then(() => {
-      if (!this._tourOn()) { respond(closed); this._narrateEnded(); return; }
+    // la frase del paso actual la mandó la app ([TOUR n/N]) y aún no sonó: NO se avanza por encima de ella; se
+    // espera a que suene y termine y se devuelve la SIGUIENTE (nunca dos entregas de un paso ni un paso saltado)
+    let needAudio = false;
+    try {
+      const d = this._drive, st0 = T.state();
+      needAudio = !!(d && d.sess === this._sess && d.by === 'msg' && st0 && d.i === st0.i &&
+        (this._lastAudioAt == null || this._lastAudioAt < d.at));
+    } catch (e) { needAudio = false; }
+    this._tourPendAdd(1);                         // mientras tanto el bucle de la app no manda nada
+    const sess = this._sess;
+    const respondNext = (r) => { if (sess === this._sess) this._tourPendAdd(-1); return respond(r); };
+    // needAudio y el agente no dice nada en TOUR_NO_AUDIO_MS: respondió al [TOUR] con `next` EN VEZ de decir la frase
+    // (espera el resultado para hablar) → se le devuelve la frase ACTUAL, sin avanzar (antes: 25 s mudo y paso saltado)
+    this._waitSpeechDrained(limitMs, this._nowMs(), needAudio, needAudio ? TOUR_NO_AUDIO_MS : 0).then((why) => {
+      // la llamada era de una sesión que ya se cerró: no toca el recorrido de ahora (respond va por SU socket)
+      if (sess !== this._sess) { respond(closed); return; }
+      if (!this._tourOn()) { respondNext(closed); this._narrateEnded(); return; }
       if ((this._tourSeq || 0) !== seq) {
         // mientras esperaba, el usuario habló/interrumpió (en pausa) o se cortó la voz: NO se avanza
-        if (!this._tourVoiceLed()) return respond(closed);
+        if (!this._tourVoiceLed()) return respondNext(closed);
         let st0 = null;
         try { st0 = T.state(); } catch (e) { st0 = null; }
         this._updateContextSoon();
-        return respond({ success: true, paused: true, step: st0 ? st0.i + 1 : null, of: st0 ? st0.of : null,
+        return respondNext({ success: true, paused: true, step: st0 ? st0.i + 1 : null, of: st0 ? st0.of : null,
           note: 'The user interrupted: answer briefly and ask whether to continue (yes → action next, no → action stop).' });
       }
       let r = null;
-      try { r = T.next(); } catch (e) { r = null; }
-      if (!r || r.done) {
+      const un = this._driveUnsaid;
+      this._driveUnsaid = null;
+      let cur = null;
+      try { cur = T.state(); } catch (e) { cur = null; }
+      const d1 = this._drive;
+      if (why === 'noaudio' && cur && cur.on && cur.say && d1 && d1.sess === this._sess && d1.by === 'msg' && d1.i === cur.i) {
         this._updateContextSoon();
-        respond({ success: true, done: true, note: 'Tour finished: stay quiet and wait.' });
+        this._driveMark(cur.i, 'tool', '', cur.say);   // la entrega la herramienta: el bucle no reenvía el [TOUR]
+        return respondNext({ success: true, step: cur.i + 1, of: cur.of, say: cur.say });
+      }
+      if (un && un.sess === this._sess && cur && cur.i === un.i && typeof T.resume === 'function') {
+        try { r = T.resume(); } catch (e) { r = null; }   // reanuda la frase que no llegó a sonar (sin saltarla)
+      }
+      if (!r) { try { r = T.next(); } catch (e) { r = null; } }
+      if (!r || r.done) {
+        this._driveStop();
+        this._updateContextSoon();
+        respondNext({ success: true, done: true, note: 'Tour finished: stay quiet and wait.' });
         this._narrateEnded();                    // solo escuchaba: termina la última frase y cuelga
         return;
       }
       this._updateContextSoon();
-      this._tourSaidAt = this._nowMs();
-      respond({ success: true, step: r.step, of: r.of, say: r.say });
+      this._driveMark(r.step - 1, 'tool', '', r.say);   // este paso lo entregó la herramienta: el bucle no manda [TOUR]
+      respondNext({ success: true, step: r.step, of: r.of, say: r.say });
     });
   },
   // pedido desde la interfaz con la voz conectada: que el agente lo narre (manda run_guided_demo start)
@@ -2409,6 +2586,8 @@ const BixbyVoice = {
 
   // el usuario cerró el recorrido (✕ / Esc): el agente deja de narrar; los `next` siguientes → stopped:true
   tourClosed() {
+    this._tourSeq = (this._tourSeq || 0) + 1;     // un `next` que estaba esperando no avanza un recorrido nuevo
+    this._driveStop();
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
     let ok = false;
     try {

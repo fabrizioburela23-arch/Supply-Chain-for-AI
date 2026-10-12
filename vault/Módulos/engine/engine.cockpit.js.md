@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 4983
+lineas: 4991
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.983 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.991 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -109,6 +109,7 @@ Se carga en [[app.html]] en la posición **84 de 92** (línea 7936), después de
 - [[tests.test_voice_os_server.py]]
 - [[tests.test_voice_tour.py]]
 - [[tests.test_voice_tour_client.py]]
+- [[tests.test_voice_tour_drive.py]]
 - [[tests.test_voice_tour_narrator.py]]
 
 ## Mencionado en sesiones de trabajo

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L26"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 — EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (sw v256)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 26 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,4 +18,4 @@ Fabrizio: "Cuando aprieto «Ver el recorrido en un minuto», usa la voz antigua.
 
 - [[tests.test_voice_tour_narrator.py]]
 
-← más antigua: [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
+← más antigua: [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]] · más nueva: [[Sesión 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)]] →

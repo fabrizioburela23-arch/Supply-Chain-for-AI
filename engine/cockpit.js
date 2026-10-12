@@ -4888,6 +4888,13 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     _tourPaintCtl();
   }
 
+  // reanuda el paso ACTUAL sin avanzar (la voz lo pausó porque el agente no dijo esa frase: se repite, no se salta)
+  function tourResume() {
+    if (!_demo.on) return null;
+    if (_demo.voice && _demo.paused) { _demo.paused = false; _tourPaintCtl(); }
+    return _tourResult();
+  }
+
   // la conversación de voz se une (true) o se cortó (false) a mitad del recorrido
   function tourVoiceAttached(on) {
     if (!_demo.on) return;
@@ -4923,6 +4930,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     next: function () { return demoNext(); },
     stop: function (reason) { demoStop(reason == null ? 'user' : reason); },
     pause: tourPause,
+    resume: tourResume,
     state: tourState,
     voiceAttached: tourVoiceAttached,
     clipUrl: function (i) { return _tourClipUrl(+i || 0); },

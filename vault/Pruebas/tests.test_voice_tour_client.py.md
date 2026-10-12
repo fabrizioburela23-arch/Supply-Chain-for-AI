@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_voice_tour_client.py"
 lenguaje: "python"
-lineas: 856
+lineas: 858
 aliases: ["tests/test_voice_tour_client.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_voice_tour_client.py
 
-> Prueba · capa [[Capa Pruebas]] · 856 líneas · `tests/test_voice_tour_client.py`
+> Prueba · capa [[Capa Pruebas]] · 858 líneas · `tests/test_voice_tour_client.py`
 
 ## Qué prueba
 

@@ -276,6 +276,11 @@ un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupues
     hablando; 🎙 en esa sesión = hablarle (`upgradeToMic`, mismo socket); vigía de 35 s y respaldo local (9 s/20 s).
     NO mandar `user_activity` (ElevenLabs no deja hablar al agente ~2 s tras cada uno). Los clips son solo respaldo y
     usan la voz REAL (`voice_agent.tour_voice`: variante del idioma + ajustes + modelo) con ETag/no-cache.
+    LA APP MARCA EL RITMO (2026-10-12 b, conversación real: el agente decía la frase 1 y terminaba su turno sin pedir
+    `next` → "solo dice el primer paso"): tras `start`, cuando la frase terminó de sonar, voice.js avanza la pantalla y le
+    manda la siguiente como `user_message` "[TOUR n/N] <frase>" (bucle `_driveTick`, máx. 2 envíos por paso, luego
+    respaldo local / pausa); si el agente llama `next` igual, una sola entrega por paso. Nunca volver a depender de que
+    el modelo encadene herramientas solo.
   - **Habilidades por agente (2026-10-06)**: `research/agent_skills.py` — al hablarle a un agente (@cadena,
     @tecnico…) responde DESDE SU ROL con su paquete en vivo (`skill_packet`: evidencia E# + extras S#: Cadena =
     tensor/países/riesgo/eventos; Técnico = indicadores; Fundamental = estados/ratios/pares…) sin exigir

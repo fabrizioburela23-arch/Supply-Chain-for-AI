@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-11"
-ruta: "docs/ESTADO.md#L66"
+ruta: "docs/ESTADO.md#L80"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-11 (b) — LIMPIEZA "QUE NO QUEDEN COSAS SUELTAS" (sw v254)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 66 (58 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 80 (58 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

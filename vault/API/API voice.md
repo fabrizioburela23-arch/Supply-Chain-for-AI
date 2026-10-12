@@ -19,5 +19,5 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/voice/bixby-prompt` | `bixby_system_prompt` | [[server.py]] | [[engine.voice.js]], 4 pruebas |
 | `POST` | `/api/voice/session` | `voice_session` | [[server.py]] | [[engine.voice.js]], 3 pruebas |
 | `GET,POST` | `/api/voice/sync-agent` | `voice_sync_agent` | [[server.py]] | 2 pruebas |
-| `GET` | `/api/voice/tour/<lang>/<int:step>` | `voice_tour_audio` | [[server.py]] | [[engine.cockpit.js]], 3 pruebas |
+| `GET` | `/api/voice/tour/<lang>/<int:step>` | `voice_tour_audio` | [[server.py]] | [[engine.cockpit.js]], 4 pruebas |
 | `GET` | `/api/voice/voices` | `voice_voices` | [[server.py]] | 1 prueba |
