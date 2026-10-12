@@ -18,6 +18,10 @@ entre sesiones (qué se construyó, decisiones tomadas, qué falta).
 tensores = solo cálculo derivado y versionado; Postgres como única base (sin base de grafos ni vectorial aparte);
 un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupuesto). Antes de construir algo
 "avanzado", ver su sección 19 (qué NO hacer) y la Fase 1 (20.1, orden de implementación).
+**Brechas verificadas: `docs/BRECHAS_V2.md`** (2026-10-12) — 99 hallazgos medidos en el código contra la v2 (4 críticos:
+7 motores de contagio con 164-315 empresas para el mismo choque, guardián de cifras que deja pasar "233,95 USD" y ±15 %,
+sin historia de precios/FX/posiciones, ordenes por 3 caminos con controles distintos), lo que necesita decidir
+Fabrizio (sección 2) y el orden de trabajo (bloques 0-5, sección 3). Empezar por ahí antes de la Fase 1.
 
 ## Arquitectura
 

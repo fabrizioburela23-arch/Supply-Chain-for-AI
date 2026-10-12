@@ -21,17 +21,17 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 | Líneas de código | 108.856 |
 | Archivos de datos del catálogo | 28 |
 | Archivos de prueba | 124 |
-| Documentos | 24 |
+| Documentos | 25 |
 | Rutas HTTP | 228 |
 | Grupos de API | 57 |
 | Herramientas MCP | 23 |
 | Variables de entorno | 159 |
-| Sesiones de trabajo | 90 |
+| Sesiones de trabajo | 91 |
 | Aristas `calls_endpoint` | 552 |
 | Aristas `defines_endpoint` | 251 |
 | Aristas `imports` | 1.012 |
 | Aristas `loads_script` | 78 |
-| Aristas `mentions_in_session` | 490 |
+| Aristas `mentions_in_session` | 491 |
 | Aristas `reads_env` | 219 |
 | Aristas `references_file` | 50 |
 | Aristas `tested_by` | 749 |

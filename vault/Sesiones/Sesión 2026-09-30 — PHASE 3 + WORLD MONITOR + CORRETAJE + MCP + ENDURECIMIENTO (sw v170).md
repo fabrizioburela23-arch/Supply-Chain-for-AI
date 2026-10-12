@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-09-30"
-ruta: "docs/ESTADO.md#L1172"
+ruta: "docs/ESTADO.md#L1188"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-09-30 — PHASE 3 + WORLD MONITOR + CORRETAJE + MCP + ENDURECIMIENTO (sw v170)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 1172 (38 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 1188 (38 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

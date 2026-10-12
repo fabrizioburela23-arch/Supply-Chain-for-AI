@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-04"
-ruta: "docs/ESTADO.md#L914"
+ruta: "docs/ESTADO.md#L930"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-04 — ESCRITORIO KHIPU K1: VENTANAS DENTRO DE LA CABINA (sw v186)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 914 (42 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 930 (42 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

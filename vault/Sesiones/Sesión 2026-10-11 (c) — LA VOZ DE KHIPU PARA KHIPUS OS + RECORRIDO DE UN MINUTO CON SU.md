@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-11"
-ruta: "docs/ESTADO.md#L44"
+ruta: "docs/ESTADO.md#L60"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU VOZ (sw v255)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 44 (36 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 60 (36 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

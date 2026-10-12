@@ -9,6 +9,22 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-12 (c) — AUDITORÍA: QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN (docs/BRECHAS_V2.md)
+
+Fabrizio: "dime qué te falta para que la estructura esté bien tanto en código como matemáticamente". Auditoría de 5
+lentes (motores de contagio, matemática financiera, datos/tiempo, contexto IA/MCP, código), cada uno verificado por un
+escéptico que volvió a medir: 99 hallazgos (4 críticos, 27 altos), 0 refutados. Lo bueno medido: Black-Scholes, VaR,
+Kupiec, ERC, radio espectral, NRS único, denso=disperso, 1.942 pruebas verdes. Los 5 problemas de fondo: 7 motores de
+contagio (164-315 empresas para el mismo choque en TSMC; factores en escala 0-10 divididos por 5 → golpe al 160 %),
+guardián de cifras débil ("233,95 USD" no se detecta; ±15 % contra todo el prompt; solo dinero), sin historia de
+precios/FX/posiciones (FX de hoy para toda la historia), datos del grafo (dos escalas de peso, 97 % sin fecha,
+direcciones invertidas, empresa = acción) y tres caminos de órdenes con controles distintos + despliegue sin CI.
+Plan: bloque 0 (cifras y despliegue seguros) → 1 (un solo kernel) → 2 (memoria de números, Fase 1 #1-3) → 3 (un solo
+camino de órdenes) → 4 (motor de contexto + MCP + caché) → 5 (calidad de datos con revisión de Fabrizio). Las 15
+decisiones que necesita Fabrizio están en la sección 2 del documento.
+
+---
+
 # SESIÓN 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)
 
 Fabrizio: "solo dice el primer paso y se queda ahí". Con el conector de ElevenLabs se leyó la conversación real
