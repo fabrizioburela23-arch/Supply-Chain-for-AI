@@ -24,7 +24,7 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **75 de 92** (línea 7925), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **75 de 92** (línea 7927), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-11"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L48"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-11 (b) — LIMPIEZA "QUE NO QUEDEN COSAS SUELTAS" (sw v254)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (58 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 48 (58 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -40,4 +40,4 @@ Pedido de Fabrizio (antes de la nueva arquitectura): "incorporar este sistema en
 
 [[ENV AI_ORDER]], [[ENV MATRIX_ENGINE]]
 
-← más antigua: [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]]
+← más antigua: [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]] · más nueva: [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]] →

@@ -301,6 +301,10 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
 .kos-empty-h .sub{display:block;font-size:17px;font-weight:600;letter-spacing:.01em;color:var(--os-ink-2);margin-top:6px}
 .kos-empty-p{font-size:15px;color:var(--os-ink-2);margin:8px 0 22px;line-height:1.5}
 .kos-sugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 0 20px}
+.kos-tourlink{margin:10px 0 0;text-align:center}
+.kos-tour{border:0;background:none;cursor:pointer;font:inherit;font-size:13px;font-weight:600;padding:6px 10px;border-radius:999px;
+  color:var(--os-accent,#4C8DF6);text-decoration:underline;text-underline-offset:3px}
+.kos-tour:hover{background:var(--os-surface-2,#1F2029)}
 .kos-chip{border:0;background:var(--os-surface-2);color:var(--os-ink);font-size:13.5px;line-height:1.3;padding:9px 14px;border-radius:999px;
   cursor:pointer;text-align:left;transition:background .14s,transform .14s}
 .kos-chip:hover{background:var(--os-surface-3);transform:translateY(-1px)}
@@ -540,7 +544,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
 .bcp-cascrow .pv{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;width:44px;text-align:right;flex:none;color:var(--os-bad-ink,#F47C7C)}
 .bcp-hyper-foot{font-size:11px;color:var(--os-ink-2,#A6A8B5);margin:9px 2px 0}
 /* ── MODO DEMOSTRACIÓN — Khipu (su mascota) maneja la app y va narrando ── */
-#bcp-demo{position:absolute;left:0;right:0;bottom:74px;z-index:12;padding:0 22px;
+#bcp-ov.kh-tour-sheet .kd-win .kd-body{padding-bottom:var(--kh-tour-room,0px)}
+#bcp-demo{position:absolute;left:0;right:0;bottom:74px;z-index:8500;padding:0 22px;
   pointer-events:none;animation:bcpDemoIn .3s ease}
 @keyframes bcpDemoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .bcp-demobox{pointer-events:auto;max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:14px;
@@ -564,6 +569,25 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
 .bcp-demodot{width:6px;height:6px;border-radius:50%;background:var(--os-surface-3,#2A2B36);transition:all .2s}
 .bcp-demodot.on{background:var(--os-accent,#4C8DF6)}
 .bcp-demodot.done{background:var(--os-accent,#4C8DF6);opacity:.45}
+.bcp-demobtn[hidden]{display:none}
+#bcp-demo.incol{padding:0 6px}
+/* en la columna del chat: controles en la fila de la etiqueta, la frase usa TODO el ancho */
+#bcp-demo.incol .bcp-demobox{max-width:none;display:grid;grid-template-columns:34px minmax(0,1fr) auto;column-gap:12px;row-gap:4px;
+  align-items:center;padding:10px 12px}
+#bcp-demo.incol .bcp-demotxtwrap{display:contents}
+#bcp-demo.incol .bcp-demoav{grid-column:1;grid-row:1 / span 2;align-self:start}
+#bcp-demo.incol .bcp-demolabel{grid-column:2;grid-row:1;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bcp-demo.incol .bcp-democtl{grid-column:3;grid-row:1}
+#bcp-demo.incol .bcp-demotxt{grid-column:2 / 4;grid-row:2}
+#bcp-demo.incol .bcp-demobtn{width:30px;height:30px}
+/* la frase se escribe letra a letra SIN cambiar de alto (la columna del chat ya le cedió ese lugar) */
+.bcp-demotxt{position:relative}
+.bcp-demoghost{visibility:hidden}
+.bcp-demotype{position:absolute;left:0;top:0;right:0}
+.bcp-demostate{font-weight:700;letter-spacing:.02em;text-transform:none;color:var(--os-accent,#4C8DF6);margin-left:4px}
+#bcp-demo.paused .bcp-demostate{color:var(--os-ink-2,#A6A8B5)}
+#bcp-demo.paused .bcp-demoav::after{animation:none;opacity:0}
+.bcp-demosr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:700px){.bcp-demodots{display:none}.bcp-demotxt{font-size:12.5px}#bcp-demo{padding:0 12px}}
 @media(prefers-reduced-motion:reduce){.bcp-demoav::after,.bcp-demotxt .cur{animation:none}}
 /* simulación por agentes (motor interno) — impactos por empresa con motivo */
@@ -892,6 +916,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     else { try { localStorage.setItem('eco_lang', ckLang() === 'en' ? 'es' : 'en'); } catch (e) {} }
     relabelShell();
     _paintHome(true);
+    _tourRelang();   // el recorrido sigue en el idioma nuevo (barra, frase actual y clips)
     if (_popFor) _popClose();
     if (palIsOpen()) palRender();
   }
@@ -1331,6 +1356,17 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     _paintMic(snap);
     _paintVoicePill(snap);
     _voiceErrToast(snap);
+    _tourHushForVoice(d.state);
+  }
+  // la voz se conecta a mitad de un recorrido narrado aquí: el clip se calla (si no, entra al micrófono)
+  function _tourHushForVoice(st) {
+    if (!_demo.on || _demo.voice || !(st === 'connecting' || _voiceLive(st))) return;
+    _demoSilence();
+    var a = _demo.audio;
+    if (a && !a.paused) {
+      _tourAudioStop();
+      if (!_demo.paused) _tourSchedule(_demoDur((_demo.steps[_demo.i] || {}).say));
+    }
   }
   // el aviso de error de voice.js (toast() de app.html) queda DEBAJO de Khipus OS: con la Cabina abierta el
   // motivo se muestra en una notificación de KhipuToast (una sola: los errores repetidos la actualizan)
@@ -1513,7 +1549,9 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       _curKind = kind;
       _placeThread(kind);
       opts = opts || {};
-      if (_demo.on) { opts.solo = true; opts.max = true; }   // la demostración: una ventana a la vez, grande
+      // el recorrido: una ventana a la vez; en pantallas anchas va AL LADO del chat (no maximizada),
+      // en pantallas chicas / solo chat, encima
+      if (_demo.on) { opts.solo = true; if (!isCentered()) opts.max = true; }
       _noteEntity(kind, arg);
       return D.open(kind, arg, opts);
     }
@@ -1801,6 +1839,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       '<h2 class="kos-empty-h">Khipus <span class="sub">Finance Intelligence</span></h2>' +
       '<p class="kos-empty-p">' + esc(L('Pregúntale lo que quieras, como a un analista.', 'Ask anything, the way you would ask an analyst.')) + '</p>' +
       '<div class="kos-sugg">' + sugg.map(function (q) { return '<button type="button" class="kos-chip" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + '</div>' +
+      '<p class="kos-tourlink"><button type="button" class="kos-tour" data-q="demo">▶ ' + esc(L('Ver el recorrido de un minuto', 'Watch the one-minute tour')) + '</button></p>' +
       '<div id="bcp-home-hyper" class="bcp-live"></div>' +
       '<div id="bcp-home-pulse" class="bcp-live"></div>' +
       '<div class="kos-agrow"></div>';
@@ -1808,6 +1847,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     e.addEventListener('click', function (ev) {
       var c = ev.target.closest && ev.target.closest('.kos-chip');
       if (c) { ask(c.getAttribute('data-q')); return; }
+      if (ev.target.closest && ev.target.closest('.kos-tour')) { demoStart(); return; }   // clic = gesto: el audio puede sonar
       var a = ev.target.closest && ev.target.closest('.kos-ag');
       if (a) {
         var id = a.getAttribute('data-ag');
@@ -1929,6 +1969,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var A = [
       { ic: dark ? '☀️' : '🌙', label: dark ? L('Tema claro', 'Light theme') : L('Tema oscuro', 'Dark theme'), k: 'tema theme claro oscuro light dark apariencia', run: _toggleTheme, keep: true },
       { ic: '🌐', label: ckLang() === 'en' ? 'Cambiar a español' : 'Switch to English', k: 'idioma language english espanol ingles spanish', run: _toggleLang, keep: true },
+      { ic: '▶', label: L('Ver el recorrido de un minuto', 'Watch the one-minute tour'), k: 'recorrido tour demo demostracion guiado guided minuto minute', run: function () { demoStart(); } },
     ];
     if (mode) A.push({ ic: '◐', label: mode === 'pro' ? L('Modo Simple (lenguaje llano)', 'Simple mode (plain language)') : L('Modo Pro (cifras y rangos)', 'Pro mode (figures and ranges)'),
       k: 'modo simple pro mode explicacion', run: function () { _setMode(mode === 'pro' ? 'simple' : 'pro'); _paintChatHeader(); } });
@@ -4286,67 +4327,67 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     }
     if (_curKind && _curKind !== 'empty') stage('empty');   // Cabina clásica: Esc vuelve al inicio
   }, true);
-  /* ══ MODO DEMOSTRACIÓN ═══════════════════════════════════════════════════
-     Khipu maneja la app SOLO y va narrando lo que hace, paso a paso — para
-     enseñar el producto (inversionistas) sin depender de ElevenLabs:
-     - la narración SIEMPRE se ve ESCRITA en pantalla (máquina de escribir), así
-       funciona aunque no haya voz premium contratada;
-     - además la lee la voz NATIVA del navegador (speechSynthesis, gratis). Si
-       la voz premium ya está conversando (mic encendido), se calla para no
-       pisarla → el día que ElevenLabs esté activo, el demo no cambia.
-     Controles: pausar/seguir · siguiente · silenciar · salir (Esc). ══ */
-  // muted:true por defecto — la narración VISUAL es el show; la voz del
-  // navegador (robótica) solo si el usuario la pide con 🔇→🔊. Con la voz
-  // premium de ElevenLabs activa, jamás se le habla encima.
-  var _demo = { on: false, i: -1, t: null, typer: null, paused: false, muted: true, steps: [] };
+  /* ══ EL RECORRIDO DE UN MINUTO (Khipus OS + la voz de Khipu, 2026-10-11) ════
+     Khipu maneja Khipus OS y va narrando, paso a paso. El GUION es UNO solo: window.KHIPU_TOUR
+     (engine/tour_script.js; el servidor genera el audio de esas mismas frases). Aquí no hay texto narrado.
+     Tres formas de narrarlo, por prioridad:
+     a) VOZ EN VIVO (_demo.voice): la conversación de voz está abierta → el agente lo narra con su voz
+        (engine/voice.js: run_guided_demo start/next/stop). Aquí NUNCA avanza solo: voice.js llama tour.next().
+     b) CLIPS PREMIUM: sin conversación, cada frase suena con la MISMA voz del agente
+        (GET /api/voice/tour/<lang>/<paso>) en UN <audio> reutilizable; avanza al terminar cada clip.
+     c) SOLO TEXTO: sin voz contratada (404/402/429/5xx/red) → subtítulos; 🔊 usa la voz del navegador.
+     Con la voz conectada o conectándose JAMÁS suena un clip ni speechSynthesis (eco en el micrófono).
+     La narración SIEMPRE se ve escrita (aria-live). En pantallas anchas la ventana del paso va AL LADO del
+     chat (no maximizada: esa es la idea de Khipus OS); en pantallas chicas, encima. Esc / ✕ salen. ══ */
+  var _demo = { on: false, i: -1, t: null, cap: null, typer: null, paused: false, muted: true, steps: [],
+                voice: false, premium: false, lang: 'es', tok: 0, gen: 0, audio: null, clips: {},
+                clipTok: -1, handT: null, muteNext: false };
+  var TOUR_CLIP_WAIT_MS = 3500, TOUR_CLIP_GAP_MS = 700, TOUR_CLIP_CAP_MS = 20000, TOUR_HAND_MS = 8000;
 
   function _demoNode(name) {
     try { var n = resolveNode(name); return n ? n.id : null; } catch (e) { return null; }
   }
+  function _tourScript() {
+    var T = window.KHIPU_TOUR;
+    return (T && Array.isArray(T.steps)) ? T.steps : [];
+  }
+  function _tourVersion() { var T = window.KHIPU_TOUR; return String((T && T.version) || '1'); }
 
+  // lo que muestra cada paso (act.kind del guion) — nunca lanza: una empresa que no existe → el mapa
+  function _tourAct(a) {
+    a = a || {};
+    var k = a.kind, id = a.company ? _demoNode(a.company) : null;
+    if (k === 'empty') { if (deskActive()) desk().closeAll(); stage('empty'); return; }
+    if (k === 'graph' || k === 'insights' || k === 'broker') { stage(k); return; }
+    if (k === 'glance') {
+      if (!id) { stage('graph'); return; }
+      var W = window.KhipuOSWin, ok = false;
+      try { ok = !!(W && W.open && W.open('glance', { id: id })); } catch (e) { ok = false; }
+      if (!ok) stage('xray', id);
+      return;
+    }
+    if (k === 'xray') { if (id) stage('xray', id); else stage('graph'); return; }
+    if (k === 'sim') { if (id) stage('sim', { id: id, kind: a.sim || 'collapse', severity: 100 }); else stage('graph'); return; }
+    if (k === 'agents') { if (!_runScreen('agents')) stage('empty'); return; }
+    stage('graph');
+  }
+
+  // pasos = el guion en el idioma de la interfaz (sin texto propio)
   function demoSteps() {
-    var en = ckLang() === 'en';
-    var nvda = _demoNode('Nvidia'), tsmc = _demoNode('TSMC');
-    return en ? [
-      { say: "I'm Khipu. I watch nearly a thousand companies across the AI supply chain — chips, cloud, space and nuclear. Let me show you what I do in one minute.",
-        act: function () { stage('empty'); } },
-      { say: "This is the live map. Every dot is a company; every line is a real dependency — who fabricates for whom, who provides the cloud, who sells the power.",
-        act: function () { stage('graph'); } },
-      { say: "I can take any company apart. Here's Nvidia: what it depends on, who depends on it, and how fragile that makes it.",
-        act: function () { if (nvda) stage('xray', nvda); else stage('graph'); } },
-      { say: "Now the important part. What happens if TSMC falls? I shock it and propagate the damage through the whole chain, hop by hop.",
-        act: function () { if (tsmc) stage('sim', { id: tsmc, kind: 'collapse' }); else stage('graph'); } },
-      { say: "And this is what I see on my own: the active systemic factors and who they hit. It isn't a dashboard — it's a simulation running live.",
-        act: function () { stage('insights'); } },
-      { say: "I also follow the market and crypto in real time, so the graph and the prices are the same story.",
-        act: function () { stage('market'); } },
-      { say: "And you can invest from right here, on a simulated account, without leaving my screen.",
-        act: function () { stage('broker'); } },
-      { say: "That's Khipu. Ask me anything: “break down Nvidia”, “what if TSMC falls?”, “show me opportunities”.",
-        act: function () { stage('empty'); } },
-    ] : [
-      { say: 'Soy Khipu. Vigilo casi mil empresas de la cadena de la inteligencia artificial: chips, nube, espacio y nuclear. Te muestro en un minuto lo que hago.',
-        act: function () { stage('empty'); } },
-      { say: 'Este es el mapa vivo. Cada punto es una empresa; cada línea, una dependencia real: quién le fabrica a quién, quién le da la nube, quién le vende la energía.',
-        act: function () { stage('graph'); } },
-      { say: 'Puedo desarmar cualquier empresa. Aquí Nvidia: de quién depende, quién depende de ella, y qué tan frágil la deja eso.',
-        act: function () { if (nvda) stage('xray', nvda); else stage('graph'); } },
-      { say: 'Ahora lo importante. ¿Qué pasa si cae TSMC? Le pego el golpe y lo propago por toda la cadena, salto por salto.',
-        act: function () { if (tsmc) stage('sim', { id: tsmc, kind: 'collapse' }); else stage('graph'); } },
-      { say: 'Y esto es lo que veo yo solo: los factores sistémicos activos y a quién golpean. No es un tablero: es una simulación corriendo en vivo.',
-        act: function () { stage('insights'); } },
-      { say: 'También sigo el mercado y el cripto en tiempo real, para que el grafo y los precios cuenten la misma historia.',
-        act: function () { stage('market'); } },
-      { say: 'Y puedes invertir desde aquí mismo, en cuenta simulada, sin salir de mi pantalla.',
-        act: function () { stage('broker'); } },
-      { say: 'Eso es Khipu. Pregúntame lo que quieras: «desármame Nvidia», «¿qué pasa si cae TSMC?», «muéstrame oportunidades».',
-        act: function () { stage('empty'); } },
-    ];
+    var lang = ckLang() === 'en' ? 'en' : 'es';
+    return _tourScript().map(function (s, i) {
+      var act = (s && s.act) || { kind: 'empty' };
+      return { id: (s && s.id) || ('s' + i), kind: act.kind, say: String((s && (s[lang] || s.es)) || ''),
+               act: function () { _tourAct(act); } };
+    });
   }
 
   function _demoDur(text) {
     // tiempo suficiente para leer/escuchar la frase y ver el resultado en pantalla
     return Math.max(5200, Math.min(12000, 3200 + String(text || '').length * 55));
+  }
+  function _tourVoiceOn() {   // ¿la voz está conectada o conectándose? (entonces nada suena aquí)
+    try { return _voiceBusy(); } catch (e) { return false; }
   }
 
   function _demoSilence() {
@@ -4354,30 +4395,160 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
   }
 
   function _demoSpeak(text) {
-    if (_demo.muted) return;
-    try {   // si la voz premium está conversando (o conectándose), NO la pisamos
-      if (_voiceBusy()) return;
-    } catch (e) {}
+    if (_demo.muted || _demo.voice || _demo.premium) return;   // la voz del navegador: solo en modo texto y si la pidió
+    if (_tourVoiceOn()) return;                                  // la voz de Khipu está conversando: no le hablamos encima
     try {
-      if (!window.speechSynthesis) return;
+      if (!window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') return;
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = ckLang() === 'en' ? 'en-US' : 'es-ES';
+      u.lang = _demo.lang === 'en' ? 'en-US' : 'es-ES';
       u.rate = 1.02;
       window.speechSynthesis.speak(u);
     } catch (e) {}
+  }
+
+  // ── clips con la voz del agente ──
+  function _tourClipUrl(i) {
+    return '/api/voice/tour/' + (_demo.lang === 'en' ? 'en' : 'es') + '/' + i + '?v=' + encodeURIComponent(_tourVersion());
+  }
+  // Promise<url|null>; el primer fallo apaga los clips para el resto del recorrido. El clip se descarga una vez
+  // (el servidor lo sintetiza y lo guarda; el navegador lo guarda en su caché HTTP, max-age) y el <audio> lo
+  // reproduce desde la MISMA URL: la CSP de la app (default-src 'self', sin media-src) BLOQUEA blob: — con
+  // object URLs ningún clip sonaba en producción.
+  function _tourClip(i) {
+    if (_demo.clips[i]) return _demo.clips[i];
+    var gen = _demo.gen, url = _tourClipUrl(i);
+    var p = (!_demo.premium || typeof fetch !== 'function') ? Promise.resolve(null)
+      : fetch(url, { credentials: 'same-origin' }).then(function (r) {
+          var ct = (r && r.headers && r.headers.get) ? String(r.headers.get('content-type') || '') : '';
+          if (!r || !r.ok || !/audio/i.test(ct)) return null;
+          return r.blob().then(function (b) { return (b && b.size) ? url : null; });
+        }).catch(function () { return null; });
+    p = p.then(function (u) {
+      if (gen !== _demo.gen) return null;
+      if (!u && _demo.premium) _tourNoClips();
+      return u;
+    });
+    _demo.clips[i] = p;
+    return p;
+  }
+  // el clip del paso `start` (0 al empezar) primero; los demás de a uno, en segundo plano
+  function _tourPrefetch(start) {
+    var gen = _demo.gen, n = _demo.steps.length;
+    function from(i) {
+      if (i >= n || gen !== _demo.gen || !_demo.premium) return;
+      _tourClip(i).then(function (u) { if (u) from(i + 1); });
+    }
+    from(Math.max(0, start || 0));
+  }
+  // sin voz premium (no configurada, cuota, red, clip que no se puede reproducir…): subtítulos, en silencio.
+  // `broken` = falló el clip de ESTE paso (no suena nada).
+  function _tourNoClips(broken) {
+    if (!_demo.premium) return;
+    _demo.premium = false;
+    var a = _demo.audio;
+    // falló OTRO clip (en segundo plano) mientras el de este paso suena: que termine; el silencio empieza en el
+    // paso siguiente (antes: 🔇 con la voz sonando, y "activar sonido" ponía la voz del navegador ENCIMA)
+    if (!broken && a && !a.paused && !a.ended && !a.error && _demo.clipTok === _demo.tok) _demo.muteNext = true;
+    else _demo.muted = true;
+    _tourPaintCtl();
+  }
+  function _tourAudioStop() {
+    clearTimeout(_demo.cap); _demo.cap = null;
+    var a = _demo.audio;
+    if (!a) return;
+    a.onended = null; a.onerror = null;
+    try { a.pause(); } catch (e) {}
+  }
+  function _tourRevoke() {   // suelta el clip cargado y la lista de clips (son URLs del servidor: nada que liberar)
+    var a = _demo.audio;
+    if (a) { try { a.removeAttribute('src'); a.load(); } catch (e) {} }
+    _demo.clips = {}; _demo.clipTok = -1; _demo.muteNext = false;
+  }
+  function _tourEnsureAudio() {
+    if (_demo.audio) return _demo.audio;
+    try {
+      if (typeof Audio === 'function') { _demo.audio = new Audio(); _demo.audio.preload = 'auto'; }
+    } catch (e) { _demo.audio = null; }
+    return _demo.audio;
+  }
+  function _tourSchedule(ms) {
+    clearTimeout(_demo.t);
+    var tok = _demo.tok;
+    _demo.t = setTimeout(function () { if (tok === _demo.tok) demoNext(); }, ms);
+  }
+  // reproduce el clip del paso actual; avanza al terminar (+0,7 s), tope 20 s
+  function _tourPlay(url) {
+    var a = _demo.audio, tok = _demo.tok, st = _demo.steps[_demo.i] || {};
+    if (!a || !url || _tourVoiceOn()) { _tourSchedule(_demoDur(st.say)); return; }
+    _tourAudioStop();
+    var fallback = function () { if (tok === _demo.tok && _demo.on && !_demo.paused) _tourSchedule(_demoDur(st.say)); };
+    // el clip no se puede reproducir (bloqueado, formato, autoplay…): el resto del recorrido va con subtítulos —
+    // no se reintenta en cada paso ni queda 🔊 sin sonido. Un AbortError es solo el corte del paso (⏭/⏸).
+    var fail = function (e) {
+      if (tok !== _demo.tok) return;
+      clearTimeout(_demo.cap); _demo.cap = null;
+      if (!(e && e.name === 'AbortError')) { try { a.pause(); } catch (x) {} _tourNoClips(true); }
+      fallback();
+    };
+    a.onended = function () { if (tok === _demo.tok && _demo.on && !_demo.paused) { clearTimeout(_demo.cap); _demo.cap = null; _tourSchedule(TOUR_CLIP_GAP_MS); } };
+    a.onerror = function () { fail(null); };
+    try {
+      if (a.getAttribute('src') !== url) a.src = url;
+      try { a.currentTime = 0; } catch (e) {}
+      _demo.clipTok = tok;
+      var p = a.play();
+      if (p && typeof p.catch === 'function') p.catch(fail);
+    } catch (e) { fail(e); return; }
+    clearTimeout(_demo.cap);
+    _demo.cap = setTimeout(function () { if (tok === _demo.tok && _demo.on && !_demo.paused) demoNext(); }, TOUR_CLIP_CAP_MS);
+  }
+  // cómo suena el paso actual (b o c); en voz en vivo no hace nada (manda el agente)
+  function _tourNarrate() {
+    if (!_demo.on || _demo.voice) return;
+    var st = _demo.steps[_demo.i]; if (!st) return;
+    if (_demo.muteNext) { _demo.muteNext = false; _demo.muted = true; _tourPaintCtl(); }
+    clearTimeout(_demo.t); _demo.t = null;
+    if (_demo.premium && !_demo.muted && !_tourVoiceOn()) {
+      var tok = _demo.tok, idx = _demo.i, settled = false;
+      var wait = setTimeout(function () {   // el clip no llegó a tiempo: este paso va solo con texto
+        if (settled || tok !== _demo.tok) return;
+        settled = true;
+        if (!_demo.paused) _tourSchedule(_demoDur(st.say));
+      }, TOUR_CLIP_WAIT_MS);
+      _tourClip(idx).then(function (u) {
+        if (settled || tok !== _demo.tok || !_demo.on) return;
+        settled = true; clearTimeout(wait);
+        if (_demo.paused) return;
+        if (u && _demo.premium && !_demo.muted) _tourPlay(u);
+        else _tourSchedule(_demoDur(st.say));
+      });
+      return;
+    }
+    _demoSpeak(st.say);
+    if (!_demo.paused) _tourSchedule(_demoDur(st.say));
   }
 
   function _demoType(text) {
     var el = document.getElementById('bcp-demotxt');
     if (!el) return;
     clearInterval(_demo.typer);
+    var vis = el.querySelector('.bcp-demotype'), sr = el.querySelector('.bcp-demosr'), gh = el.querySelector('.bcp-demoghost');
+    if (!vis || !sr || !gh) {
+      el.textContent = '';
+      gh = document.createElement('span'); gh.className = 'bcp-demoghost'; gh.setAttribute('aria-hidden', 'true');
+      vis = document.createElement('span'); vis.className = 'bcp-demotype'; vis.setAttribute('aria-hidden', 'true');
+      sr = document.createElement('span'); sr.className = 'bcp-demosr';
+      el.appendChild(gh); el.appendChild(vis); el.appendChild(sr);
+    }
+    gh.textContent = text;   // invisible: reserva el alto de la frase entera (la barra no crece mientras se escribe)
+    sr.textContent = text;   // lectores de pantalla: la frase entera, una vez (aria-live del contenedor)
     var i = 0;
-    el.textContent = '';
+    vis.textContent = '';
     _demo.typer = setInterval(function () {
       if (i >= text.length) { clearInterval(_demo.typer); _demo.typer = null; return; }
       i += 1;
-      el.textContent = text.slice(0, i);   // textContent → nunca inyecta HTML
+      vis.textContent = text.slice(0, i);   // textContent → nunca inyecta HTML
     }, 16);
   }
 
@@ -4390,86 +4561,314 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     d.innerHTML = h;
   }
 
+  // controles según el modo: con la voz en vivo el agente lleva el ritmo y la voz (solo ✕)
+  function _tourPaintCtl() {
+    var wrap = document.getElementById('bcp-demo'); if (!wrap) return;
+    wrap.classList.toggle('voice', !!_demo.voice);
+    wrap.classList.toggle('paused', !!_demo.paused);
+    ['bcp-demopause', 'bcp-demonext', 'bcp-demomute'].forEach(function (id) {
+      var b = document.getElementById(id); if (b) b.hidden = !!_demo.voice;
+    });
+    var p = document.getElementById('bcp-demopause');
+    if (p) { p.textContent = _demo.paused ? '▶' : '⏸'; var tp = _demo.paused ? L('Seguir', 'Resume') : L('Pausar', 'Pause'); p.title = tp; p.setAttribute('aria-label', tp); }
+    var m = document.getElementById('bcp-demomute');
+    if (m) { m.textContent = _demo.muted ? '🔇' : '🔊'; var tm = _demo.muted ? L('Activar sonido', 'Unmute') : L('Silenciar', 'Mute'); m.title = tm; m.setAttribute('aria-label', tm); }
+    var st = document.getElementById('bcp-demostate');
+    if (st) {
+      st.textContent = _demo.paused ? L('en pausa', 'paused')
+        : _demo.voice ? L('con la voz de Khipu', "in Khipu's voice") : '';
+    }
+  }
+
   function _demoRenderBar() {
     var ov = ensureShell();
     var old = document.getElementById('bcp-demo');
     if (old) old.remove();
-    var en = ckLang() === 'en';
     var wrap = document.createElement('div');
     wrap.id = 'bcp-demo';
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute('aria-label', L('Recorrido guiado', 'Guided tour'));
+    function btn(id, ic, t) { return '<button type="button" class="bcp-demobtn" id="' + id + '" title="' + esc(t) + '" aria-label="' + esc(t) + '">' + ic + '</button>'; }
     wrap.innerHTML =
       '<div class="bcp-demobox">' +
         '<div class="bcp-demoav">' + _mascot('khipu', 34, { state: 'talk' }) + '</div>' +   // Khipu narra: su mascota, no un orbe
         '<div class="bcp-demotxtwrap">' +
-          '<div class="bcp-demolabel">' + (en ? 'GUIDED DEMO' : 'DEMOSTRACIÓN GUIADA') + '</div>' +
-          '<div class="bcp-demotxt" id="bcp-demotxt"></div>' +
+          '<div class="bcp-demolabel">' + esc(L('RECORRIDO DE UN MINUTO', 'ONE-MINUTE TOUR')) +
+            ' <span class="bcp-demostate" id="bcp-demostate"></span></div>' +
+          '<div class="bcp-demotxt" id="bcp-demotxt" aria-live="polite" aria-atomic="true"></div>' +
         '</div>' +
         '<div class="bcp-democtl">' +
-          '<span class="bcp-demodots" id="bcp-demodots"></span>' +
-          '<button class="bcp-demobtn" id="bcp-demopause" title="' + (en ? 'Pause' : 'Pausar') + '">⏸</button>' +
-          '<button class="bcp-demobtn" id="bcp-demonext" title="' + (en ? 'Next' : 'Siguiente') + '">⏭</button>' +
-          '<button class="bcp-demobtn" id="bcp-demomute" title="' + (en ? 'Mute' : 'Silenciar') + '">' + (_demo.muted ? '🔇' : '🔊') + '</button>' +
-          '<button class="bcp-demobtn" id="bcp-demoexit" title="' + (en ? 'Exit' : 'Salir') + '">✕</button>' +
+          '<span class="bcp-demodots" id="bcp-demodots" aria-hidden="true"></span>' +
+          btn('bcp-demopause', '⏸', L('Pausar', 'Pause')) +
+          btn('bcp-demonext', '⏭', L('Siguiente', 'Next')) +
+          btn('bcp-demomute', _demo.muted ? '🔇' : '🔊', L('Silenciar', 'Mute')) +
+          btn('bcp-demoexit', '✕', L('Salir del recorrido', 'Exit the tour')) +
         '</div>' +
       '</div>';
     ov.appendChild(wrap);
     wrap.querySelector('#bcp-demopause').addEventListener('click', demoToggle);
     wrap.querySelector('#bcp-demonext').addEventListener('click', function () { demoNext(); });
     wrap.querySelector('#bcp-demomute').addEventListener('click', demoMute);
-    wrap.querySelector('#bcp-demoexit').addEventListener('click', function () { demoStop(); });
+    wrap.querySelector('#bcp-demoexit').addEventListener('click', function () { demoStop('user'); });
+    _tourPaintCtl();
+    _tourPlaceBar();
   }
 
-  function demoStart() {
+  // Khipus OS (pantalla ancha o celular): la barra va en la columna del chat, justo ENCIMA de donde se escribe (no
+  // tapa las ventanas de los costados ni el campo, 🎙 y enviar), y el chat le cede ese alto (nada clicable queda
+  // debajo: sugerencias, mascotas). Cabina clásica: abajo a lo ancho (CSS).
+  function _tourChatRoom(px) {
+    var body = document.querySelector('#kd-center .kos-chatbody');
+    if (body) body.style.marginBottom = px ? px + 'px' : '';
+    // pantallas chicas: la ventana del recorrido es una hoja ENCIMA del chat y la barra flota sobre su final →
+    // el cuerpo de la ventana gana ese mismo espacio abajo para que nada quede tapado (se puede desplazar)
+    var ov = document.getElementById('bcp-ov');
+    if (ov) {
+      var sheet = !!px && !isCentered();
+      ov.classList.toggle('kh-tour-sheet', sheet);
+      if (sheet) ov.style.setProperty('--kh-tour-room', px + 'px'); else ov.style.removeProperty('--kh-tour-room');
+    }
+  }
+  function _tourPlaceBar() {
+    var wrap = document.getElementById('bcp-demo'), ov = document.getElementById('bcp-ov');
+    _tourChatRoom(0);
+    if (!wrap || !ov) return;
+    wrap.classList.remove('incol');
+    wrap.style.left = wrap.style.right = wrap.style.bottom = wrap.style.width = '';
+    var col = document.getElementById('kd-center'), bw = document.getElementById('bcp-barwrap');
+    if (!col || !bw || !col.contains(bw)) return;
+    var o = ov.getBoundingClientRect(), c = col.getBoundingClientRect(), b = bw.getBoundingClientRect();
+    if (!c.width || !b.height) return;
+    wrap.classList.add('incol');
+    wrap.style.left = Math.round(c.left - o.left) + 'px';
+    wrap.style.right = 'auto';
+    wrap.style.width = Math.round(c.width) + 'px';
+    wrap.style.bottom = Math.max(8, Math.round(o.bottom - b.top + 6)) + 'px';
+    var h = wrap.getBoundingClientRect().height;
+    if (h) _tourChatRoom(Math.round(h + 6));
+  }
+  try { window.addEventListener('resize', function () { if (_demo.on) _tourPlaceBar(); }); } catch (e) {}
+
+  // la interfaz cambió de idioma a mitad del recorrido: guion, barra y clips en el idioma nuevo
+  function _tourLangSync() {
+    if (!_demo.on) return false;
+    var lang = ckLang() === 'en' ? 'en' : 'es';
+    if (lang === _demo.lang) return false;
+    _demo.lang = lang;
+    _demo.steps = demoSteps();
+    if (_demo.premium) {                 // los clips son por idioma: los del idioma viejo no sirven
+      _tourAudioStop();
+      _demo.gen += 1;
+      _tourRevoke();
+      _tourPrefetch(Math.max(0, _demo.i));
+    }
+    _demoRenderBar();
+    return true;
+  }
+  function _tourRelang() {
+    if (!_tourLangSync()) return;
+    var st = _demo.steps[_demo.i]; if (!st) return;
+    _demo.tok += 1;                      // lo pendiente del idioma viejo (clip, tiempo) ya no cuenta
+    clearTimeout(_demo.t); _demo.t = null;
+    _demoSilence();
+    _demoDots(_demo.steps.length, _demo.i);
+    _demoType(st.say);
+    _tourPaintCtl();
+    _tourPlaceBar();
+    if (!_demo.voice && !_demo.paused) _tourNarrate();
+    try { if (window.BixbyVoice && window.BixbyVoice._updateContextSoon && window.BixbyVoice.isConnected) window.BixbyVoice._updateContextSoon(); } catch (e) {}
+  }
+
+  function _tourResult() {
+    var st = _demo.steps[_demo.i];
+    return st ? { step: _demo.i + 1, of: _demo.steps.length, say: st.say } : null;
+  }
+
+  // arranca el recorrido (opts.voice: lo narra el agente; opts.textOnly: sin audio). Devuelve el paso 1 o null.
+  function _tourBegin(opts) {
+    opts = opts || {};
+    clearTimeout(_demo.handT); _demo.handT = null;
+    var steps = demoSteps();
+    if (!steps.length) return null;
+    if (_demo.on) _tourHalt();
     if (!open) openCockpit();
     ensureShell();
-    _demo.on = true; _demo.i = -1; _demo.paused = false;
-    _demo.steps = demoSteps();
+    _demo.gen += 1;
+    _demo.on = true; _demo.i = -1; _demo.paused = false; _demo.steps = steps;
+    _demo.lang = ckLang() === 'en' ? 'en' : 'es';
+    _demo.voice = !!opts.voice;
+    _demo.premium = !_demo.voice && !opts.textOnly && !_tourVoiceOn() && !!_tourEnsureAudio() && typeof fetch === 'function';
+    _demo.muted = !_demo.premium;            // con clips suena por defecto; solo texto: en silencio (🔊 lo pide)
+    _demo.muteNext = false;
     _demoRenderBar();
-    demoNext();
+    if (_demo.premium) _tourPrefetch(0);
+    return _tourGo(0);
   }
 
-  function demoNext() {
-    if (!_demo.on) return;
+  // muestra el paso i (o termina) y decide cómo se narra
+  function _tourGo(i) {
+    if (!_demo.on) return null;
     clearTimeout(_demo.t); _demo.t = null;
-    _demo.i += 1;
-    if (_demo.i >= _demo.steps.length) return demoStop(true);
+    _tourAudioStop(); _demoSilence();
+    if (i >= _demo.steps.length) { demoStop('finished'); return { done: true }; }
+    _tourLangSync();                          // cambió el idioma por otro camino (botón de la app): el paso nuevo ya va en él
+    _demo.i = Math.max(0, i);
+    _demo.tok += 1;
+    if (_demo.voice) _demo.paused = false;   // con la voz en vivo, "siguiente" también reanuda
     var st = _demo.steps[_demo.i];
-    try { if (st.act) st.act(); } catch (e) {}
-    // stage() re-dibuja el escenario, no el overlay — pero re-montamos por si acaso
+    try { if (st.act) st.act(); } catch (e) { try { console.warn('[Khipus OS] recorrido:', e); } catch (x) {} }
+    if (!_demo.on) return null;               // un paso pudo cerrar Khipus OS
+    // stage() re-dibuja ventanas, no la barra — pero re-montamos por si acaso
     if (!document.getElementById('bcp-demo')) _demoRenderBar();
     _demoDots(_demo.steps.length, _demo.i);
     _demoType(st.say);
-    _demoSpeak(st.say);
-    if (!_demo.paused) {
-      _demo.t = setTimeout(function () { demoNext(); }, st.t || _demoDur(st.say));
+    _tourPaintCtl();
+    _tourPlaceBar();
+    _tourNarrate();
+    try { if (window.BixbyVoice && window.BixbyVoice._updateContextSoon && window.BixbyVoice.isConnected) window.BixbyVoice._updateContextSoon(); } catch (e) {}
+    return _tourResult();
+  }
+
+  // inicio desde la interfaz (enlace, paleta, "demo" en el chat): con la voz conectada se lo pasa al agente
+  function demoStart() {
+    // Khipu ya lo está narrando con su voz: pedirlo de nuevo desde la interfaz no lo reemplaza por uno con
+    // temporizadores (el agente seguiría llamando `next` sobre él y pantalla y voz se desfasarían)
+    if (_demo.on && _demo.voice) { _tourPlaceBar(); return _tourResult(); }
+    var V = window.BixbyVoice;
+    if (V && V.isConnected && typeof V.requestTour === 'function' && !_demo.on) {
+      var sent = false;
+      try { sent = !!V.requestTour(); } catch (e) { sent = false; }
+      if (sent) {
+        if (!open) openCockpit();
+        try {
+          if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ id: 'kh-tour-hand', kind: 'info',
+            title: L('Recorrido de un minuto', 'One-minute tour'),
+            body: L('Khipu te va a mostrar la app con su voz…', 'Khipu is going to show you the app in his voice…'), timeout: 6000 });
+        } catch (e) {}
+        clearTimeout(_demo.handT);
+        // si el agente no lo empieza en 8 s, va aquí SOLO con texto (nada suena: el micrófono está abierto)
+        _demo.handT = setTimeout(function () { _demo.handT = null; if (!_demo.on) _tourBegin({ textOnly: true }); }, TOUR_HAND_MS);
+        return null;
+      }
     }
+    return _tourBegin({});
+  }
+
+  function demoNext() {
+    if (!_demo.on) return { done: true };
+    return _tourGo(_demo.i + 1);
   }
 
   function demoToggle() {
-    if (!_demo.on) return;
+    if (!_demo.on || _demo.voice) return;
     _demo.paused = !_demo.paused;
-    var b = document.getElementById('bcp-demopause');
-    if (b) b.textContent = _demo.paused ? '▶' : '⏸';
-    if (_demo.paused) { clearTimeout(_demo.t); _demo.t = null; _demoSilence(); }
-    else { _demo.t = setTimeout(function () { demoNext(); }, 1500); }
+    if (_demo.paused) {
+      clearTimeout(_demo.t); _demo.t = null; clearTimeout(_demo.cap); _demo.cap = null;
+      try { if (_demo.audio) _demo.audio.pause(); } catch (e) {}
+      _demoSilence();
+    } else {
+      var a = _demo.audio, tok = _demo.tok;
+      if (a && _demo.premium && !_demo.muted && _demo.clipTok === tok && a.getAttribute('src') && !a.ended && !_tourVoiceOn()) {
+        try { var p = a.play(); if (p && p.catch) p.catch(function () { if (tok === _demo.tok) _tourSchedule(1500); }); } catch (e) { _tourSchedule(1500); }
+        _demo.cap = setTimeout(function () { if (tok === _demo.tok && _demo.on && !_demo.paused) demoNext(); }, TOUR_CLIP_CAP_MS);
+      } else _tourSchedule(1500);
+    }
+    _tourPaintCtl();
   }
 
   function demoMute() {
+    if (!_demo.on || _demo.voice) return;
+    _demo.muteNext = false;   // el usuario decide desde ahora
     _demo.muted = !_demo.muted;
-    var b = document.getElementById('bcp-demomute');
-    if (b) b.textContent = _demo.muted ? '🔇' : '🔊';
-    if (_demo.muted) _demoSilence();
+    if (_demo.muted) {
+      _demoSilence();
+      var a = _demo.audio;
+      if (a && !a.paused) {   // el clip se corta: el paso sigue con el tiempo de lectura
+        _tourAudioStop();
+        if (!_demo.paused) _tourSchedule(_demoDur((_demo.steps[_demo.i] || {}).say));
+      }
+    } else if (!_demo.paused) {
+      if (!_demo.premium) _tourAudioStop();   // la voz del navegador nunca suena ENCIMA de un clip
+      _tourNarrate();         // vuelve a sonar el paso actual (clip o voz del navegador)
+    }
+    _tourPaintCtl();
   }
 
-  function demoStop(finished) {
+  // corta timers y audio sin tocar ventanas
+  function _tourHalt() {
     _demo.on = false;
+    _demo.tok += 1; _demo.gen += 1;
     clearTimeout(_demo.t); _demo.t = null;
     clearInterval(_demo.typer); _demo.typer = null;
+    _tourAudioStop();
+    _tourRevoke();
     _demoSilence();
+  }
+
+  // reason: 'finished' (o true) = terminó → cierra sus ventanas y vuelve al chat; 'voice' = lo cortó el agente;
+  // cualquier otro (✕, Esc, cerrar Khipus OS) = el usuario → si lo narraba la voz, se le avisa al agente
+  function demoStop(reason) {
+    clearTimeout(_demo.handT); _demo.handT = null;
+    var wasOn = _demo.on, wasVoice = _demo.voice;
+    var finished = reason === true || reason === 'finished';
+    _tourHalt();
+    _demo.voice = false; _demo.paused = false;
     var el = document.getElementById('bcp-demo');
     if (el) el.remove();
-    if (finished === true) { if (deskActive()) desk().closeAll(); stage('empty'); }
+    _tourChatRoom(0);
+    if (wasOn && wasVoice && !finished && reason !== 'voice') {
+      try { if (window.BixbyVoice && window.BixbyVoice.tourClosed) window.BixbyVoice.tourClosed(); } catch (e) {}
+    }
+    if (finished && wasOn && open) { if (deskActive()) desk().closeAll(); stage('empty'); }
   }
+
+  // la voz se pausa (el usuario la interrumpió): el próximo next() reanuda
+  function tourPause() {
+    if (!_demo.on) return;
+    if (!_demo.voice) { if (!_demo.paused) demoToggle(); return; }
+    _demo.paused = true;
+    _tourPaintCtl();
+  }
+
+  // la conversación de voz se une (true) o se cortó (false) a mitad del recorrido
+  function tourVoiceAttached(on) {
+    if (!_demo.on) return;
+    if (on) {
+      if (_demo.voice) return;
+      _demo.voice = true; _demo.paused = false;
+      clearTimeout(_demo.t); _demo.t = null; _tourAudioStop(); _demoSilence();
+      _demo.premium = false; _demo.muted = true; _demo.muteNext = false;
+      _tourPaintCtl();
+      return;
+    }
+    if (!_demo.voice) return;
+    // sigue desde el paso actual con tiempos propios: clips si hay voz premium, si no solo texto
+    _demo.voice = false; _demo.paused = false;
+    // (el estado de la voz aún puede decir "conectada" en este instante: cada paso vuelve a mirarlo antes de sonar)
+    _demo.premium = !!_tourEnsureAudio() && typeof fetch === 'function';
+    _demo.muted = !_demo.premium; _demo.muteNext = false;
+    _demo.clips = {};
+    if (_demo.premium) _tourPrefetch(_demo.i + 1);
+    _tourPaintCtl();
+    // la frase actual ya la dijo (o la estaba diciendo) el agente: solo el tiempo de lectura
+    _tourSchedule(_demoDur((_demo.steps[_demo.i] || {}).say));
+  }
+
+  function tourState() {
+    var st = _demo.steps[_demo.i];
+    return { on: !!_demo.on, i: _demo.i, of: _demo.steps.length, voice: !!_demo.voice, paused: !!_demo.paused,
+             premium: !!_demo.premium, say: (_demo.on && st) ? st.say : null };
+  }
+
+  var tourApi = {
+    start: function (opts) { return _tourBegin(opts || {}); },
+    next: function () { return demoNext(); },
+    stop: function (reason) { demoStop(reason == null ? 'user' : reason); },
+    pause: tourPause,
+    state: tourState,
+    voiceAttached: tourVoiceAttached,
+    clipUrl: function (i) { return _tourClipUrl(+i || 0); },
+  };
 
   window.BixbyCockpit = {
     invoke: function (id) { invokeAgent(id); return _inv; },
@@ -4498,9 +4897,11 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     toggleTheme: _toggleTheme,
     toggleLang: _toggleLang,
     setState: setState,
+    // el recorrido de un minuto: demo() = inicio desde la interfaz (con la voz conectada se lo pasa al agente)
     demo: demoStart,
-    demoStop: demoStop,
+    demoStop: function (reason) { demoStop(reason); },
     isDemo: function () { return !!_demo.on; },
+    tour: tourApi,                                    // {start, next, stop, pause, state, voiceAttached} — engine/voice.js
     // ── Khipus OS (contrato §3.1 de docs/KHIPUS_OS.md) ──
     registerKind: registerKind,                       // ventanas nativas de otros módulos
     isCentered: isCentered,                           // ¿chat al centro con ventanas en los flancos?

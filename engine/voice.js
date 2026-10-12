@@ -42,6 +42,11 @@ function _voiceLang() {
 const VOICE_TOOL_TIMEOUT_S = { ask_khipu_brain: 60, open_company: 15, get_company_info: 15, run_agent_simulation: 90,
   quick_thesis: 90, show_opportunities: 15, place_order: 45, get_account_status: 45, get_space_summary: 20,
   run_guided_demo: 30 };
+// cuánto vale el resumen leído de una orden para el sí verbal (place_order confirmed=true)
+const VOICE_ORDER_PREVIEW_MS = 3 * 60 * 1000;
+// recorrido narrado: hueco entre trozos de audio que NO cuenta como fin de la frase, y espera máxima cuando
+// el `next` llega antes que el audio de la frase
+const TOUR_AUDIO_GAP_MS = 700, TOUR_NO_AUDIO_MS = 4000;
 const VOICE_TOOL_TIMEOUT_DEFAULT_S = 10;
 // Nombres RETIRADOS (alias): el tope con el que un agente aún sin re-sincronizar los tiene registrados
 // (los que no figuran usaban 10 s). Solo para responder a tiempo durante un despliegue; no se declaran.
@@ -379,6 +384,7 @@ const BixbyVoice = {
   _onSocketClose(ev, sess) {
     if (sess !== this._sess) return;           // socket viejo (ya hubo reintento o disconnect)
     clearTimeout(this._initTimer);
+    this._tourDetach();
     const hadMeta = this._metaReceived;
     const errEv = this._lastErrorEvent || {};
     const reason = String(ev.reason || '');
@@ -479,6 +485,7 @@ const BixbyVoice = {
   },
 
   disconnect() {
+    this._tourDetach();                 // un recorrido narrado por la voz sigue solo en pantalla
     this._sess++;                       // invalida eventos pendientes del socket actual
     this._closingByUser = true;
     clearTimeout(this._initTimer);
@@ -670,13 +677,18 @@ const BixbyVoice = {
     } catch (e) {}
     let mode = 'simple';
     try { if (W.KhipuAgentPrefs && W.KhipuAgentPrefs.mode && W.KhipuAgentPrefs.mode() === 'pro') mode = 'pro'; } catch (e) {}
-    return {
+    const ctx = {
       app: 'Khipus Finance Intelligence', interface: 'Khipus OS', lang: _voiceLang(),
       open_windows: titles, focused_window: focused,
       selected_company: sn ? { id: sn.id, label: sn.label, ticker: sn.mkt || null,
         nrs: (typeof computeNRS === 'function') ? computeNRS(sn.id) : null } : null,
       invoked_agent: inv, explain_mode: mode, money_mode: this._moneyMode(),
     };
+    try {   // el recorrido de un minuto, solo mientras está en marcha
+      const T = this._tour(), ts = T ? T.state() : null;
+      if (ts && ts.on) ctx.tour = { on: true, step: ts.i + 1, of: ts.of };
+    } catch (e) {}
+    return ctx;
   },
 
   // ¿con qué dinero se opera AHORA? 'live' / 'paper' (cuenta del bróker ya leída, sin pedir PIN),
@@ -686,6 +698,10 @@ const BixbyVoice = {
       const c = window.__tradeAcctCache;
       if (c && c.data && typeof c.data.paper === 'boolean') return c.data.paper ? 'paper' : 'live';
     } catch (e) {}
+    // sin la cuenta leída (no hay PIN guardado): el modo del bróker sale de /api/trade/status (público, sin PIN).
+    // Se pide en segundo plano y el próximo CONTEXT_UPDATE lo lleva; 'practice' NUNCA reemplaza a un bróker real.
+    if (typeof this._brokerPaper === 'boolean') return this._brokerPaper ? 'paper' : 'live';
+    this._primeBrokerMode();
     try {
       const raw = localStorage.getItem('kh_portfolios');
       const v = raw ? JSON.parse(raw) : null;
@@ -693,6 +709,18 @@ const BixbyVoice = {
       if (list.length) return 'practice';
     } catch (e) {}
     return 'none';
+  },
+
+  _primeBrokerMode() {
+    if (this._brokerModeP || typeof window === 'undefined' || typeof window._tradeStatusInfo !== 'function') return;
+    try {
+      this._brokerModeP = Promise.resolve(window._tradeStatusInfo()).then(s => {
+        if (s && typeof s.paper === 'boolean' && s.paper !== this._brokerPaper) {
+          this._brokerPaper = s.paper;
+          try { this._updateContextSoon(); } catch (e) {}
+        }
+      }).catch(() => {}).then(() => { setTimeout(() => { this._brokerModeP = null; }, 60000); });
+    } catch (e) { this._brokerModeP = null; }
   },
 
   _handleMessage(msg) {
@@ -720,6 +748,7 @@ const BixbyVoice = {
         if (ev.event_id != null && +ev.event_id < this._lastInterruptId) break;
         const chunk = ev.audio_base_64;
         if (chunk) {
+          this._lastAudioAt = this._nowMs();   // el recorrido: ¿ya empezó a sonar la frase? ¿sigue llegando audio?
           // suena la voz del agente → "Hablando" (una vez por respuesta; al terminar vuelve a "Escuchando")
           if (this.state !== 'speaking') this._setState('speak');
           else if (window.setBixbyThinking) window.setBixbyThinking(false);
@@ -748,6 +777,7 @@ const BixbyVoice = {
       case 'user_transcript': {
         const t = msg.user_transcription_event?.user_transcript || '';
         if (t) this._showOverlay(_voiceL('Tú: ', 'You: ') + t.slice(0, 80), 'think');   // 'think' ya enciende setBixbyThinking
+        if (t) this._tourPauseIfVoice();
         break;
       }
       case 'client_tool_call':
@@ -758,6 +788,7 @@ const BixbyVoice = {
         if (id > this._lastInterruptId) this._lastInterruptId = id;
         this._stopScheduled();
         this._setState('listen');
+        this._tourPauseIfVoice();
         break;
       }
       case 'ping': {
@@ -889,7 +920,48 @@ const BixbyVoice = {
   _resolveAny(params) {
     params = params || {};
     return this._resolveNode(params.ticker) || this._resolveNode(params.company_name)
-      || this._resolveNode(params.company_id) || null;
+      || this._resolveNode(params.company_id)
+      || this._resolveNode(params.company) || null;   // `company`: esquema de los nombres RETIRADOS (deep_research…)
+  },
+
+  // ¿la pregunta NOMBRA una empresa del catálogo? (nombre, id, nombre legal o alias EXACTOS dentro de la frase;
+  // ticker solo si viene en MAYÚSCULAS: "now", "net", "arm"… son palabras comunes). Sin empresa, la mención
+  // @agente no sirve (el servidor pregunta "¿sobre qué empresa?" o responde sobre la última que viste).
+  _namesCompany(q) {
+    const W = (typeof window !== 'undefined') ? window : {};
+    const NODES = Array.isArray(W.NODES) ? W.NODES : [];
+    if (!NODES.length) return null;
+    const R = W.KhipuResolve;
+    const norm = (x) => {
+      try { if (R && R.norm) return R.norm(x); } catch (e) {}
+      return String(x == null ? '' : x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    };
+    if (!this._nameIdx || this._nameIdx.n !== NODES.length) {
+      const names = Object.create(null), tick = Object.create(null);
+      const NB = W.NODE_BY_ID || {};
+      const add = (k, n) => { k = norm(k); if (k.replace(/\s/g, '').length >= 3 && n && !names[k]) names[k] = n; };
+      NODES.forEach(n => {
+        if (!n || !n.id) return;
+        add(n.label, n); add(n.id, n);
+        const raw = String(n.label || ''), i = raw.indexOf('(');
+        if (i > 0) add(raw.slice(0, i), n);
+        if (n.mkt) tick[String(n.mkt)] = n;
+      });
+      try { Object.keys(W.LEGAL_NAMES || {}).forEach(k => add(k, NB[W.LEGAL_NAMES[k]])); } catch (e) {}
+      this._nameIdx = { n: NODES.length, names, tick };
+    }
+    const { names, tick } = this._nameIdx;
+    const raw = String(q || '').split(/[\s¿?¡!.,;:"«»“”()]+/).filter(Boolean);
+    for (const w of raw) if (w.length >= 2 && w === w.toUpperCase() && tick[w]) return tick[w];
+    const words = norm(q).split(' ').filter(Boolean);
+    for (let len = Math.min(5, words.length); len >= 1; len--) {
+      for (let i = 0; i + len <= words.length; i++) {
+        const hit = names[words.slice(i, i + len).join(' ')];
+        if (hit) return hit;
+      }
+    }
+    return null;
   },
 
   // Respuesta bilingüe de "no encontrado" CON sugerencias, para que Khipu
@@ -997,20 +1069,7 @@ const BixbyVoice = {
       case 'open_order_ticket': return this._toolOrderTicket(params, respond);
       case 'get_account_status': return run(this._toolAccountStatus(params));
       case 'get_space_summary': return run(this._toolSpaceSummary(params));
-      case 'run_guided_demo': {
-        // pedir que PARE nunca la re-arranca (el recorrido con start/next/stop es otro trabajo en curso)
-        if (String(params.action || '').toLowerCase() === 'stop') {
-          try { if (window.BixbyCockpit && window.BixbyCockpit.demoStop) window.BixbyCockpit.demoStop(); } catch (e) {}
-          respond({ success: true, stopped: true });
-          return;
-        }
-        // la demostración se narra SOLA en pantalla → Khipu dice una frase corta y se calla
-        respond({ success: true, note: _voiceL(
-          'Demostración guiada en marcha; se narra sola en pantalla. Di UNA frase corta y quédate en silencio.',
-          'Guided demo running; it narrates itself on screen. Say ONE short sentence and stay quiet.') });
-        this._defer(() => { try { if (window.BixbyCockpit) window.BixbyCockpit.demo(); } catch (e) {} });
-        return;
-      }
+      case 'run_guided_demo': return this._toolTour(params, respond);   // el recorrido de un minuto, narrado por Khipu
       case 'control_interface': return respond(this._toolControl(params));
 
       // ── ALIAS de nombres retirados → el manejador nuevo más parecido ──
@@ -1186,7 +1245,10 @@ const BixbyVoice = {
       cadena: 'cadena', chain: 'cadena', tecnico: 'tecnico', technical: 'tecnico', comite: 'comite', committee: 'comite' };
     const TOK = { analista: '@fundamental', radar: '@noticias', cadena: '@cadena', tecnico: '@tecnico', comite: '@comite' };
     const ag = AG[String((params && params.agent) || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()];
-    if (q && ag && q.charAt(0) !== '@') q = TOK[ag] + ': ' + q;     // el servidor lo enruta a esa mascota
+    // el servidor lo enruta a esa mascota — SOLO si la pregunta nombra una empresa: las mascotas responden sobre UNA
+    // empresa; una pregunta general (noticias del mercado, un conflicto…) va al cerebro, que tiene las herramientas
+    // del mundo (antes: "¿Sobre qué empresa?" o la respuesta sobre la última empresa que el usuario miró)
+    if (q && ag && q.charAt(0) !== '@' && this._namesCompany(q)) q = TOK[ag] + ': ' + q;
     const K = window.KhipuChat;
     if (!q) { respond({ success: false, error: _voiceL('No entendí la pregunta: dímela de nuevo.', 'I did not catch the question: please say it again.') }); return; }
     if (!K || !K.send) { respond({ success: false, error: _voiceL('El cerebro de Khipu no está disponible ahora.', "Khipu's brain is not available right now.") }); return; }
@@ -1361,6 +1423,14 @@ const BixbyVoice = {
     }
     if (ck && ck.openScreen) {
       this._osOpen();
+      // el Universo 3D se abre y se cierra con el MISMO botón (segundo toque = cerrar): si ya está a la vista,
+      // pedirlo de nuevo no lo cierra
+      if (id === 'universe') {
+        try {
+          const uo = (typeof document !== 'undefined') ? document.getElementById('uni-ov') : null;
+          if (uo && uo.style.display !== 'none') return { success: true, opened: _voiceL(hit.es, hit.en), already_open: true };
+        } catch (e) {}
+      }
       let ok = false;
       try { ok = !!ck.openScreen(id); } catch (e) { ok = false; }
       if (!ok) return { success: false, error: _voiceL('No pude abrir esa pantalla.', 'I could not open that screen.') };
@@ -1680,7 +1750,15 @@ const BixbyVoice = {
     const res = await window._resolveTradeSymbol(q);
     if (!res.ok) return { success: false, error: res.error, did_you_mean: res.suggestions || [] };
 
-    const side = /^(sell|vend|venta)/i.test(String(params.side || '')) ? 'sell' : 'buy';
+    // lado EXPLÍCITO: comprar o vender; cualquier otra cosa ('short', 'cerrar', 'salir', un error…) NO se adivina
+    // (antes todo lo que no era "vender" pasaba a COMPRA: la orden contraria a lo que el usuario pidió)
+    const sideRaw = String(params.side || '').trim().toLowerCase();
+    const side = /^(buy|compr)/.test(sideRaw) ? 'buy' : /^(sell|vend|venta)/.test(sideRaw) ? 'sell' : '';
+    if (!side) {
+      return { success: false, needs_side: true, error: en
+        ? `Buy or sell? Tell me which one for ${res.label}.`
+        : `¿Comprar o vender? Dime cuál para ${res.label}.` };
+    }
     let notional = (params.amount_usd != null && params.amount_usd !== '') ? Number(params.amount_usd)
       : (params.notional_usd != null && params.notional_usd !== '') ? Number(params.notional_usd)
       : (params.notional != null && params.notional !== '') ? Number(params.notional) : null;
@@ -1722,7 +1800,16 @@ const BixbyVoice = {
     if (notional != null) orderObj.notional = notional; else orderObj.qty = qty;
 
     const confirmed = params.confirmed === true || params.confirmed === 'true';
-    if (!confirmed) {
+    // el sí verbal vale SOLO para la orden cuyo resumen se acaba de leer: mismo activo, lado y monto, hace menos de
+    // VOICE_ORDER_PREVIEW_MS, y no pasó de papel/desconocido a DINERO REAL entretanto. Un confirmed=true sin ese
+    // resumen (error del modelo, "compra 100, confirmado" en una sola frase, texto inyectado en una respuesta)
+    // vuelve a ser un resumen: NADA se envía.
+    const orderKey = [res.symbol, side, notional != null ? 'usd:' + notional : 'qty:' + qty].join('|');
+    const pv = this._orderPreview;
+    const previewOk = !!(pv && pv.key === orderKey && (Date.now() - pv.at) <= VOICE_ORDER_PREVIEW_MS
+      && !(paper === false && pv.paper !== false));
+    if (!confirmed || !previewOk) {
+      this._orderPreview = { key: orderKey, at: Date.now(), paper };
       // tarjeta de confirmación visual en la Cabina (también se puede confirmar
       // con un clic) + resumen hablable para el sí verbal. NADA se envía aquí.
       this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({ confirm: orderObj }); });
@@ -1733,10 +1820,13 @@ const BixbyVoice = {
       const summary = en
         ? `${mode}: ${verb} ${amountTxt} of ${res.label} (${res.symbol}). Do you confirm?`
         : `${mode}: ${verb} ${amountTxt} de ${res.label} (${res.symbol}). ¿Confirmas?`;
-      return { success: false, needs_confirmation: true, summary, symbol: res.symbol, side, amount_usd: notional, qty, paper };
+      const out = { success: false, needs_confirmation: true, summary, symbol: res.symbol, side, amount_usd: notional, qty, paper };
+      if (confirmed) out.note = 'Nothing was sent: this order had no summary read to the user yet. Read this summary and ask for an explicit yes before calling again with confirmed=true.';
+      return out;
     }
 
-    // confirmed=true → enviar de verdad (con guard anti-doble-envío compartido)
+    // confirmed=true tras SU resumen → enviar de verdad (con guard anti-doble-envío compartido); el sí se usa una vez
+    this._orderPreview = null;
     const r = await window._executeTradeOrder(orderObj);
     this._defer(() => { if (window._openBrokerStage) window._openBrokerStage({}); });
     if (!r.ok) return { success: false, error: r.error };
@@ -1900,6 +1990,147 @@ const BixbyVoice = {
     };
   },
 
+  // ═══ EL RECORRIDO DE UN MINUTO narrado con la voz de Khipu (2026-10-11) ═══
+  // engine/cockpit.js pinta cada paso (BixbyCockpit.tour) desde el guion único window.KHIPU_TOUR; aquí el agente
+  // dice EXACTAMENTE la frase `say` y pide `next`. `next` responde recién cuando terminó de SONAR la frase anterior
+  // (el audio del agente va por delante del reloj: _playCursor) y siempre antes del tope de 30 s.
+  _tour() {
+    const ck = (typeof window !== 'undefined') ? window.BixbyCockpit : null;
+    return (ck && ck.tour && typeof ck.tour.start === 'function') ? ck.tour : null;
+  },
+  _tourOn() {
+    const T = this._tour();
+    try { const s = T ? T.state() : null; return !!(s && s.on); } catch (e) { return false; }
+  },
+  _tourVoiceLed() {
+    const T = this._tour();
+    try { const s = T ? T.state() : null; return !!(s && s.on && s.voice); } catch (e) { return false; }
+  },
+  _nowMs() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); },
+  // ¿ya terminó de sonar la frase que Khipu estaba diciendo? Lo agendado ya sonó (margen 0,15 s) Y además:
+  // · algo de ESTA frase llegó a sonar (audio después de la última frase entregada); si no llegó nada, se espera
+  //   TOUR_NO_AUDIO_MS desde el pedido (el `next` puede llegar antes que el audio de la frase);
+  // · no llega audio hace TOUR_AUDIO_GAP_MS (un hueco entre trozos no es el final: _playCursor vuelve a 0).
+  _speechDrained(calledAt) {
+    const ctx = this.audioCtx;
+    if (!ctx) return true;
+    if (((this._playCursor || 0) - ctx.currentTime) > 0.15) return false;
+    if (calledAt == null) return true;
+    const now = this._nowMs(), last = this._lastAudioAt == null ? -Infinity : this._lastAudioAt;
+    if (this._tourSaidAt != null && last < this._tourSaidAt) return now - calledAt >= TOUR_NO_AUDIO_MS;
+    return now - last >= TOUR_AUDIO_GAP_MS;
+  },
+  _waitSpeechDrained(maxMs, calledAt) {
+    return new Promise(resolve => {
+      const t0 = Date.now();
+      let waited = 0;
+      const tick = () => {
+        if (this._speechDrained(calledAt) || waited >= maxMs || Date.now() - t0 >= maxMs) { resolve(); return; }
+        waited += 150;
+        setTimeout(tick, 150);
+      };
+      tick();
+    });
+  },
+  _toolTour(params, respond) {
+    const ck = window.BixbyCockpit;
+    const T = this._tour();
+    let action = String((params && params.action) || 'start').toLowerCase().trim();
+    if (action !== 'start' && action !== 'next' && action !== 'stop') action = 'start';
+    const closed = { success: false, stopped: true, note: 'The tour was closed; do not continue it.' };
+    if (!T) {
+      // Cabina vieja en caché (sin BixbyCockpit.tour): la demostración de antes, que se narra sola
+      if (action === 'stop') {
+        try { if (ck && ck.demoStop) ck.demoStop('voice'); } catch (e) {}
+        return respond({ success: true, stopped: true });
+      }
+      if (action === 'next') return respond(closed);
+      if (!ck || typeof ck.demo !== 'function') {
+        return respond({ success: false, error: _voiceL('El recorrido no está disponible ahora.', 'The tour is not available right now.') });
+      }
+      respond({ success: true, note: _voiceL(
+        'Recorrido en marcha; se narra solo en pantalla. Di UNA frase corta y quédate en silencio.',
+        'Tour running; it narrates itself on screen. Say ONE short sentence and stay quiet.') });
+      this._defer(() => { try { ck.demo(); } catch (e) {} });
+      return;
+    }
+    if (action === 'stop') {
+      try { T.stop('voice'); } catch (e) {}
+      return respond({ success: true, stopped: true });
+    }
+    if (action === 'start') {
+      let st = null;
+      try { st = T.state(); } catch (e) { st = null; }
+      let r = null;
+      if (st && st.on && st.voice && st.say) r = { step: st.i + 1, of: st.of, say: st.say };   // idempotente
+      else { try { r = T.start({ voice: true }); } catch (e) { r = null; } }
+      if (!r || !r.say) {
+        return respond({ success: false, error: _voiceL('El recorrido no está disponible ahora.', 'The tour is not available right now.') });
+      }
+      this._updateContextSoon();
+      this._tourSaidAt = this._nowMs();
+      return respond({ success: true, step: r.step, of: r.of, say: r.say,
+        note: 'Say exactly the "say" line, then call run_guided_demo with action next.' });
+    }
+    // next
+    if (!this._tourOn()) return respond(closed);
+    // el recorrido corre en pantalla con sus propios tiempos (p. ej. lo empezó la interfaz): la voz lo toma, para que
+    // no avancen a la vez el agente y los temporizadores
+    if (!this._tourVoiceLed()) { try { T.voiceAttached(true); } catch (e) {} }
+    const seq = this._tourSeq || 0;
+    const limitMs = Math.max(2000, (VOICE_TOOL_TIMEOUT_S.run_guided_demo || 30) * 1000 - 5000);   // ~25 s
+    this._waitSpeechDrained(limitMs, this._nowMs()).then(() => {
+      if (!this._tourOn()) return respond(closed);
+      if ((this._tourSeq || 0) !== seq) {
+        // mientras esperaba, el usuario habló/interrumpió (en pausa) o se cortó la voz: NO se avanza
+        if (!this._tourVoiceLed()) return respond(closed);
+        let st0 = null;
+        try { st0 = T.state(); } catch (e) { st0 = null; }
+        this._updateContextSoon();
+        return respond({ success: true, paused: true, step: st0 ? st0.i + 1 : null, of: st0 ? st0.of : null,
+          note: 'The user interrupted: answer briefly and ask whether to continue (yes → action next, no → action stop).' });
+      }
+      let r = null;
+      try { r = T.next(); } catch (e) { r = null; }
+      if (!r || r.done) {
+        this._updateContextSoon();
+        return respond({ success: true, done: true, note: 'Tour finished: stay quiet and wait.' });
+      }
+      this._updateContextSoon();
+      this._tourSaidAt = this._nowMs();
+      respond({ success: true, step: r.step, of: r.of, say: r.say });
+    });
+  },
+  // pedido desde la interfaz con la voz conectada: que el agente lo narre (manda run_guided_demo start)
+  requestTour() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    try {
+      this.ws.send(JSON.stringify({ type: 'user_message',
+        text: _voiceL('Hazme el recorrido guiado de un minuto.', 'Give me the one-minute guided tour.') }));
+      return true;
+    } catch (e) { return false; }
+  },
+  // el usuario cerró el recorrido (✕ / Esc): el agente deja de narrar; los `next` siguientes → stopped:true
+  tourClosed() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    try {
+      this.ws.send(JSON.stringify({ type: 'contextual_update', text: '[CONTEXT_UPDATE] {"tour":"closed by the user"}' }));
+      return true;
+    } catch (e) { return false; }
+  },
+  // el usuario habló o interrumpió → el recorrido narrado por la voz queda en pausa
+  _tourPauseIfVoice() {
+    if (!this._tourVoiceLed()) return;
+    this._tourSeq = (this._tourSeq || 0) + 1;   // un `next` que estaba esperando ya no avanza
+    try { this._tour().pause(); } catch (e) {}
+  },
+  // la conversación se cortó → el recorrido sigue en pantalla con sus propios tiempos
+  _tourDetach() {
+    if (!this._tourVoiceLed()) return;
+    this._tourSeq = (this._tourSeq || 0) + 1;
+    try { this._tour().voiceAttached(false); } catch (e) {}
+  },
+
   // Ejecuta una acción visual pesada FUERA del hilo crítico del WebSocket, para
   // no bloquear el procesamiento/agendado del audio mientras Khipu habla.
   // OJO: requestAnimationFrame se CONGELA en pestañas ocultas. Si la pestaña
@@ -2013,6 +2244,7 @@ const BixbyVoice = {
   // "Khipu — conectando…" para siempre).
   _fail(text) {
     clearTimeout(this._initTimer);
+    this._tourDetach();
     this.isConnected = false;
     this._metaReceived = false;
     this._releasePre();

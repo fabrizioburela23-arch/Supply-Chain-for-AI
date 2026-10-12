@@ -229,10 +229,20 @@ async function main() {
     const brainAg = {};
     for (const [ag, tok] of [['analista', '@fundamental'], ['radar', '@noticias'], ['tecnico', '@tecnico'], ['comite', '@comite'], ['Técnico', '@tecnico']]) {
       rec.chatVoice.length = 0;
-      await call(E, ws, 'ask_khipu_brain', { question: 'hola', agent: ag });
+      await call(E, ws, 'ask_khipu_brain', { question: '¿y Nvidia?', agent: ag });
       brainAg[ag] = rec.chatVoice[0] && rec.chatVoice[0][0];
     }
     R.brainAgents = brainAg;
+    // sin empresa en la pregunta, la mención @agente NO se agrega (iría a "¿sobre qué empresa?" o a la última que viste)
+    const brainGen = {};
+    for (const [ag, q] of [['radar', 'Últimas noticias relevantes del mercado'], ['radar', '¿qué noticias hay sobre el conflicto en Taiwán?'],
+                           ['comite', '¿qué piensa el equipo?'], ['radar', 'what is new now on the net'], ['radar', '¿qué pasa con tsmc hoy?'],
+                           ['tecnico', '¿cómo viene NVDA?'], ['cadena', 'proveedores de Microsoft']]) {
+      rec.chatVoice.length = 0;
+      await call(E, ws, 'ask_khipu_brain', { question: q, agent: ag });
+      brainGen[ag + ' | ' + q] = rec.chatVoice[0] && rec.chatVoice[0][0];
+    }
+    R.brainGeneral = brainGen;
     R.brainEmpty = (await call(E, ws, 'ask_khipu_brain', { question: '  ' })).body;
     // open_company: cada vista
     const views = {};
@@ -292,6 +302,9 @@ async function main() {
     R.orderPrevStage = rec.stage.slice();
     R.orderConf = (await call(E, ws, 'place_order', { symbol_or_name: 'NVIDIA', side: 'buy', notional_usd: 100, confirmed: true })).body;
     R.orderConfPosts = rec.trade.filter(t => t[0] === '/api/trade/order' && t[1] === 'POST').length;
+    // el sí se usa UNA vez: otro confirmed=true igual vuelve a ser un resumen
+    R.orderConfAgain = (await call(E, ws, 'place_order', { symbol_or_name: 'NVIDIA', side: 'buy', notional_usd: 100, confirmed: true })).body;
+    R.orderConfAgainPosts = rec.trade.filter(t => t[0] === '/api/trade/order' && t[1] === 'POST').length;
     E.surfaces.length = 0; rec.stage.length = 0; rec.trade.length = 0;
     R.ticket = (await call(E, ws, 'open_order_ticket', { company_name: 'NVIDIA' })).body;
     R.ticketStage = rec.stage.slice(); R.ticketPosts = rec.trade.filter(t => t[0] === '/api/trade/order').length;
@@ -354,6 +367,63 @@ async function main() {
     R.newsAfter = ws.sent.filter(x => x.tool_call_id === id).map(x => JSON.parse(x.result));
     R.errors = E.errors;
   }
+  // ═══ D) dinero: confirmed=true SIN su resumen no envía; lado explícito; modo del bróker sin PIN ═══
+  {
+    const E = makeEnv({ session: S }); const rec = osFakes(E); const ws = await session(E);
+    const posts = () => rec.trade.filter(t => t[0] === '/api/trade/order' && t[1] === 'POST').length;
+    R.d = {};
+    R.d.noPrev = (await call(E, ws, 'place_order', { symbol_or_name: 'NVIDIA', side: 'buy', notional_usd: 100, confirmed: true })).body;
+    R.d.noPrevPosts = posts();
+    R.d.aliasNoPrev = (await call(E, ws, 'place_paper_trade', { symbol_or_name: 'TSMC', side: 'sell', amount_usd: 300, confirmed: 'true' })).body;
+    R.d.aliasNoPrevPosts = posts();
+    // resumen de $100 → "sí" con OTRO monto: no se envía
+    await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'buy', notional_usd: 100, confirmed: false });
+    R.d.otherAmount = (await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'buy', notional_usd: 1000, confirmed: true })).body;
+    R.d.otherAmountPosts = posts();
+    // resumen viejo (más de 3 min) → no vale
+    await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'buy', notional_usd: 100, confirmed: false });
+    if (E.V._orderPreview) E.V._orderPreview.at -= 4 * 60 * 1000;
+    R.d.stale = (await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'buy', notional_usd: 100, confirmed: true })).body;
+    R.d.stalePosts = posts();
+    // resumen → sí con los MISMOS parámetros → se envía una vez
+    R.d.okPrev = (await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'buy', notional_usd: 100, confirmed: false })).body;
+    R.d.ok = (await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'buy', notional_usd: 100, confirmed: true })).body;
+    R.d.okPosts = posts();
+    // lado: nada que no sea comprar o vender se adivina
+    R.d.sides = {};
+    for (const sd of ['short', 'close', 'cerrar', 'liquidar', '', 'comprar', 'Venta', 'BUY']) {
+      R.d.sides[sd] = (await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: sd, notional_usd: 200, confirmed: false })).body;
+    }
+    R.d.shortConf = (await call(E, ws, 'place_order', { symbol_or_name: 'AMD', side: 'short', notional_usd: 200, confirmed: true })).body;
+    R.d.finalPosts = posts();
+    // money_mode: con carteras de práctica y SIN la cuenta leída, el modo real del bróker sale de /api/trade/status
+    E.ctx.localStorage.setItem('kh_portfolios', JSON.stringify([{ id: 'p1' }]));
+    E.ctx.__tradeAcctCache = null;
+    let n0 = ws.sent.length; E.V.updateContext();
+    R.d.mmBefore = JSON.parse(ws.sent.slice(n0)[0].text.slice('[CONTEXT_UPDATE] '.length)).money_mode;
+    E.ctx._tradeStatusInfo = () => Promise.resolve({ pin_set: true, paper: false });
+    n0 = ws.sent.length; E.V.updateContext();
+    await E.advance(600);
+    R.d.mm = ws.sent.slice(n0).filter(m => m.type === 'contextual_update').map(m => JSON.parse(m.text.slice('[CONTEXT_UPDATE] '.length)).money_mode);
+    // el alias viejo deep_research mandaba {company}
+    R.d.dr = (await call(E, ws, 'deep_research', { company: 'NVIDIA' })).body;
+    R.d.drCalls = rec.thesis.slice();
+    // get_news sin empresa → al cerebro sin @noticias
+    rec.chatVoice.length = 0;
+    await call(E, ws, 'get_news', {});
+    R.d.newsGeneral = rec.chatVoice[0] && rec.chatVoice[0][0];
+    // Universo 3D: si ya está a la vista, pedirlo no lo cierra (el mismo botón abre y cierra)
+    const scr0 = E.ctx.BixbyCockpit.screens;
+    E.ctx.BixbyCockpit.screens = () => scr0().concat([{ id: 'universe', es: 'Universo 3D', en: '3D universe' }]);
+    E.els['uni-ov'] = { id: 'uni-ov', style: { display: 'block' } };
+    rec.screens.length = 0;
+    R.d.uniOpen = (await call(E, ws, 'open_screen', { screen: 'universe' })).body;
+    R.d.uniOpenCalls = rec.screens.slice();
+    E.els['uni-ov'].style.display = 'none';
+    R.d.uniClosed = (await call(E, ws, 'open_screen', { screen: 'universe' })).body;
+    R.d.uniClosedCalls = rec.screens.slice();
+    R.errorsD = E.errors;
+  }
   // ═══ C) OS cerrado (vista clásica) + inglés + cuenta de papel ═══
   {
     const E = makeEnv({ session: S, lang: 'en' }); const rec = osFakes(E, { osOpen: false, paper: true }); const ws = await session(E);
@@ -385,7 +455,7 @@ def R():
     assert p.returncode == 0, p.stderr[-3000:]
     out = json.loads(p.stdout)
     assert 'fatal' not in out, out.get('fatal')
-    assert out['errors'] == [] and out['errorsC'] == [], (out['errors'], out['errorsC'])
+    assert out['errors'] == [] and out['errorsC'] == [] and out['errorsD'] == [], (out['errors'], out['errorsC'], out['errorsD'])
     return out
 
 
@@ -413,8 +483,8 @@ def test_brain_in_os_goes_to_center_chat_with_agent_prefix(R):
     assert len(body['sources']) == 5 and set(body['sources'][0]) == {'label', 'as_of'}
     assert body['opened'] == ['NVIDIA en una mirada']
     _clean_text(b['raw'])
-    assert R['brainAgents'] == {'analista': '@fundamental: hola', 'radar': '@noticias: hola', 'tecnico': '@tecnico: hola',
-                                'comite': '@comite: hola', 'Técnico': '@tecnico: hola'}
+    assert R['brainAgents'] == {'analista': '@fundamental: ¿y Nvidia?', 'radar': '@noticias: ¿y Nvidia?', 'tecnico': '@tecnico: ¿y Nvidia?',
+                                'comite': '@comite: ¿y Nvidia?', 'Técnico': '@tecnico: ¿y Nvidia?'}
     e = R['brainEmpty']
     assert e['success'] is False and 'pregunta' in e['error']
 
@@ -554,6 +624,54 @@ def test_place_order_preview_sends_nothing_and_says_real_money(R):
     assert R['orderConfPosts'] == 1 and c['success'] is True and c['mode'] == 'live' and 'DINERO REAL' in c['summary']
     pp = R['orderPaper']
     assert pp['needs_confirmation'] and pp['mode'] == 'paper' and 'PAPER' in pp['summary'] and R['orderPaperPosts'] == 0
+    a2 = R['orderConfAgain']                                                    # el sí se usó: otro confirmed=true = resumen
+    assert a2['needs_confirmation'] is True and a2['success'] is False and R['orderConfAgainPosts'] == 1
+
+
+def test_place_order_confirmed_without_its_summary_sends_nothing(R):
+    d = R['d']
+    for k in ('noPrev', 'aliasNoPrev', 'otherAmount', 'stale'):
+        b = d[k]
+        assert b['success'] is False and b['needs_confirmation'] is True, (k, b)
+        assert 'Nothing was sent' in b['note'] and b['mode'] == 'live' and 'DINERO REAL' in b['summary'], (k, b)
+    assert d['noPrevPosts'] == 0 and d['aliasNoPrevPosts'] == 0 and d['otherAmountPosts'] == 0 and d['stalePosts'] == 0
+    assert d['okPrev']['needs_confirmation'] is True and 'note' not in d['okPrev']
+    assert d['ok']['success'] is True and d['okPosts'] == 1                       # resumen → sí con lo mismo → UNA orden
+
+
+def test_place_order_side_is_never_guessed(R):
+    sides = R['d']['sides']
+    for sd in ('short', 'close', 'cerrar', 'liquidar', ''):
+        b = sides[sd]
+        assert b['success'] is False and b.get('needs_side') is True and 'needs_confirmation' not in b, (sd, b)
+        assert b['error'] == '¿Comprar o vender? Dime cuál para AMD.'
+    assert sides['comprar']['side'] == 'buy' and sides['BUY']['side'] == 'buy' and sides['Venta']['side'] == 'sell'
+    assert R['d']['shortConf'].get('needs_side') is True and R['d']['finalPosts'] == 1   # 'short' confirmado tampoco envía
+
+
+def test_money_mode_uses_the_broker_flag_not_the_practice_portfolios(R):
+    d = R['d']
+    assert d['mmBefore'] == 'practice'                                          # sin NADA del bróker: solo las carteras
+    assert d['mm'] and d['mm'][-1] == 'live', d['mm']                            # /api/trade/status (sin PIN) dice real → 'live'
+
+
+def test_retired_deep_research_company_param_general_news_and_universe(R):
+    d = R['d']
+    assert d['dr']['success'] is True and d['drCalls'] == [['nvidia', 'es']]
+    assert d['newsGeneral'] == 'Últimas noticias relevantes del mercado'
+    assert d['uniOpen']['success'] is True and d['uniOpenCalls'] == []         # ya abierto: no se toca (no se cierra)
+    assert d['uniClosed']['success'] is True and d['uniClosedCalls'] == ['universe']
+
+
+def test_brain_agent_mention_only_with_a_company(R):
+    g = R['brainGeneral']
+    assert g['radar | Últimas noticias relevantes del mercado'] == 'Últimas noticias relevantes del mercado'
+    assert g['radar | ¿qué noticias hay sobre el conflicto en Taiwán?'] == '¿qué noticias hay sobre el conflicto en Taiwán?'
+    assert g['comite | ¿qué piensa el equipo?'] == '¿qué piensa el equipo?'
+    assert g['radar | what is new now on the net'] == 'what is new now on the net'      # palabras, no tickers
+    assert g['radar | ¿qué pasa con tsmc hoy?'] == '@noticias: ¿qué pasa con tsmc hoy?'
+    assert g['tecnico | ¿cómo viene NVDA?'] == '@tecnico: ¿cómo viene NVDA?'
+    assert g['cadena | proveedores de Microsoft'] == '@cadena: proveedores de Microsoft'
 
 
 def test_order_ticket_and_account_status(R):
@@ -802,3 +920,12 @@ def test_navegador_ingles_titulo_y_control_de_interfaz(browser):
     assert pg.evaluate('BixbyCockpit.isOpen()') is True                     # nunca sale del OS
     assert not errs, errs
     c.close()
+
+
+def test_zoom_del_mapa_ignora_transformaciones_no_finitas():
+    """control_interface minimize_all_windows justo después de abrir el mapa: la transición del zoom de d3 daba
+    translate(NaN,NaN) (~20-30 errores en la consola). El manejador ignora ese fotograma."""
+    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    i = html.index("const zoom = d3.zoom().scaleExtent([.3,3.5])")
+    line = html[i:html.index('\n', i)]
+    assert 'isFinite(t.x)&&isFinite(t.y)&&isFinite(t.k)' in line and "root.attr('transform',t)" in line

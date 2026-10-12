@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Pruebas"
-archivos: 121
+archivos: 122
 tags: ["capa/pruebas", "tipo/capa"]
 ---
 
@@ -9,6 +9,6 @@ tags: ["capa/pruebas", "tipo/capa"]
 
 > Las pruebas automáticas (pytest) que vigilan cada parte.
 
-**121 archivos · 34.821 líneas.** Volver al [[00 Mapa de Khipus]].
+**122 archivos · 35.844 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Lista completa: [[Índice de pruebas]].

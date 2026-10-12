@@ -56,6 +56,6 @@ tags: ["capa/datos-catalogo", "tipo/capa"]
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 11 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 11 |
 | la usa | [[Capa Chat y agentes]] | 10 |
+| la usa | [[Capa Voz]] | 3 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | la usa | [[Capa MCP y API]] | 2 |
-| la usa | [[Capa Voz]] | 2 |

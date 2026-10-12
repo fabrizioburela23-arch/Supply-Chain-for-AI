@@ -36,3 +36,7 @@ _Además lo importan 1 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_voice_tour.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]

@@ -2980,7 +2980,9 @@ regionLayer.raise().style('pointer-events','none');
 // engine/maptime.js inserta su capa ⚡ Eventos entre enlaces y nodos
 window._mapLayers = { root, linkLayer, nodeLayer };
 
-const zoom = d3.zoom().scaleExtent([.3,3.5]).on('zoom',e=>root.attr('transform',e.transform));
+// la transición del zoom puede dar NaN si el svg se colapsa a 0×0 a mitad de camino (ventana minimizada/oculta):
+// ese fotograma se ignora en vez de escribir translate(NaN,NaN) (decenas de errores en la consola)
+const zoom = d3.zoom().scaleExtent([.3,3.5]).on('zoom',e=>{const t=e.transform; if(isFinite(t.x)&&isFinite(t.y)&&isFinite(t.k)) root.attr('transform',t);});
 svg.call(zoom);
 svg.on('dblclick.zoom',null);
 

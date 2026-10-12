@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-87 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+88 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]] — 5 archivos
 - [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]] — 19 archivos
 - [[Sesión 2026-10-11 — BÓVEDA DE OBSIDIAN + MAPA DEL CÓDIGO]] — 13 archivos
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]] — 21 archivos

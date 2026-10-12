@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 2298
+lineas: 2537
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 2.298 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 2.537 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -20,7 +20,7 @@ Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agen
 
 `window.BixbyVoice`, `window.KhipuVoiceAudio`, `window.__bixbyEnergy`, `window.__lastTradeExec`, `window.__tradeAcctCache`, `window.__tradeInflight`, `window._executeTradeOrder`, `window._openBrokerStage`, `window._resolveTradeSymbol`, `window._tradeAccountInfo`
 
-De nivel superior (globales del script): `VOICE_ALIAS_TIMEOUT_S`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
+De nivel superior (globales del script): `TOUR_AUDIO_GAP_MS`, `VOICE_ALIAS_TIMEOUT_S`, `VOICE_ORDER_PREVIEW_MS`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
 
 ## Depende de
 
@@ -40,11 +40,12 @@ De nivel superior (globales del script): `VOICE_ALIAS_TIMEOUT_S`, `VOICE_TOOL_TI
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[engine.xray.js]] — usa `openXRay`, `xrayComputeWinners`
+- [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **34 de 92** (línea 7818), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **34 de 92** (línea 7820), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
@@ -79,9 +80,11 @@ Se carga en [[app.html]] en la posición **34 de 92** (línea 7818), después de
 - [[tests.test_server_smoke.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour.py]]
+- [[tests.test_voice_tour_client.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
 - [[Sesión 2026-07-14 — (madrugada, autónoma) — víspera de la demo app en v95]]
 - [[Sesión 2026-07-05 — Etapa 1 — Limpieza masiva - COMPLETA (4 batches publicados)]]

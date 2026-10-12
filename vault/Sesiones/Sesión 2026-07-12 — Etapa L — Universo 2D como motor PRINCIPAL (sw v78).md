@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-07-12"
-ruta: "docs/ESTADO.md#L2386"
+ruta: "docs/ESTADO.md#L2422"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # Etapa L — 🪐 Universo 2D como motor PRINCIPAL (2026-07-12, sw v78)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 2386 (27 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 2422 (27 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

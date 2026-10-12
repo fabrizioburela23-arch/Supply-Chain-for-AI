@@ -29,7 +29,7 @@ Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/
 - [[nodes.crypto_intel.js]] — usa `CRYPTO_CATS`, `CRYPTO_INTEL`
 - [[nodes.crypto_intel2.js]] — usa `CRYPTO_INTEL`
 
-Se carga en [[app.html]] en la posición **79 de 92** (línea 7929), después de [[nodes.crypto_intel2.js]] y antes de [[engine.portfolios.js]].
+Se carga en [[app.html]] en la posición **79 de 92** (línea 7931), después de [[nodes.crypto_intel2.js]] y antes de [[engine.portfolios.js]].
 
 ## Lo usan
 

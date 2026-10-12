@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_voice_os_server.py"
 lenguaje: "python"
-lineas: 133
+lineas: 153
 aliases: ["tests/test_voice_os_server.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_voice_os_server.py
 
-> Prueba · capa [[Capa Pruebas]] · 133 líneas · `tests/test_voice_os_server.py`
+> Prueba · capa [[Capa Pruebas]] · 153 líneas · `tests/test_voice_os_server.py`
 
 ## Qué prueba
 
 Voz para Khipus OS (2026-10-11), lado servidor — contrato v2 de las herramientas de Khipu (voz).
 
-**8** funciones `test_…`.
+**10** funciones `test_…`.
 
 ## Cubre
 

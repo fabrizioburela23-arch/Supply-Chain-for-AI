@@ -28,7 +28,7 @@ REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **52 de 92** (línea 7887), después de [[engine.research.js]] y antes de [[engine.worldmonitor.js]].
+Se carga en [[app.html]] en la posición **52 de 92** (línea 7889), después de [[engine.research.js]] y antes de [[engine.worldmonitor.js]].
 
 ## Lo usan
 

@@ -26,7 +26,7 @@ SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
 - [[engine.mascot.js]] — usa `KhipuAgentPrefs`
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 
-Se carga en [[app.html]] en la posición **60 de 92** (línea 7895), después de [[engine.pfreports.js]] y antes de [[engine.clients.js]].
+Se carga en [[app.html]] en la posición **60 de 92** (línea 7897), después de [[engine.pfreports.js]] y antes de [[engine.clients.js]].
 
 ## Lo usan
 

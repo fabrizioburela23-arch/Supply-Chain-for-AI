@@ -222,3 +222,22 @@ def test_solo_frases_del_guion():
     assert [r.rule for r in rules] == ['/api/voice/tour/<lang>/<int:step>'] and rules[0].methods >= {'GET'}
     assert 'POST' not in rules[0].methods
     assert 'api.elevenlabs.io' not in open(os.path.join(ROOT, 'server.py'), encoding='utf-8').read()
+
+
+def test_guion_no_promete_lo_que_la_pantalla_no_muestra_y_cabe_en_un_minuto():
+    by = {s['act']['kind']: s for s in tour.STEPS}
+    # la insignia de ARRIBA muestra las carteras de práctica hasta que se escribe el PIN (y en el celular no está):
+    # el modo práctica / dinero real lo dice SIEMPRE el resumen de la orden
+    money = by['broker']
+    for bad in ('insignia', 'arriba', 'badge', 'on top'):
+        assert bad not in money['es'] and bad not in money['en'], bad
+    assert 'resumen' in money['es'] and 'summary' in money['en']
+    # "en una mirada" siempre muestra el precio con su fuente y lo más fuerte a favor y en contra; las dependencias
+    # solo cuando no hay memo ni pizarra
+    g = by['glance']
+    assert 'depende' not in g['es'] and 'depends' not in g['en']
+    assert 'fuente' in g['es'] and 'a favor y en contra' in g['es'] and 'source' in g['en'] and 'for and against' in g['en']
+    # "de un minuto": ~150 palabras habladas (≈150 por minuto)
+    for lang in ('es', 'en'):
+        words = sum(len(s[lang].split()) for s in tour.STEPS)
+        assert words <= 155, (lang, words)

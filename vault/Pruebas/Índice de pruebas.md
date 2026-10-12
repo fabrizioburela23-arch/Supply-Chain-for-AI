@@ -6,7 +6,7 @@ tags: ["capa/pruebas", "tipo/indice"]
 
 # Índice de pruebas
 
-121 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
+122 archivos de prueba. Correr todo: `python -m pytest tests/ -q`.
 
 | Prueba | Funciones test_ | Módulos que cubre |
 |---|---|---|
@@ -125,9 +125,10 @@ tags: ["capa/pruebas", "tipo/indice"]
 | [[tests.test_vault.py]] | 19 | 1 |
 | [[tests.test_verified_valuations.py]] | 1 | 2 |
 | [[tests.test_vocabulary.py]] | 12 | 3 |
-| [[tests.test_voice_os_client.py]] | 27 | 9 |
-| [[tests.test_voice_os_server.py]] | 8 | 4 |
-| [[tests.test_voice_tour.py]] | 13 | 11 |
+| [[tests.test_voice_os_client.py]] | 33 | 10 |
+| [[tests.test_voice_os_server.py]] | 10 | 4 |
+| [[tests.test_voice_tour.py]] | 14 | 11 |
+| [[tests.test_voice_tour_client.py]] | 25 | 11 |
 | [[tests.test_world.py]] | 39 | 4 |
 | [[tests.test_world_feeds.py]] | 11 | 3 |
 | [[tests.world_feed_fixtures.py]] | 0 | 1 |

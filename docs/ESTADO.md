@@ -9,6 +9,42 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU VOZ (sw v255)
+
+Pedidos de Fabrizio: "modifica esto para el nuevo interfaz" (las instrucciones de la voz de ElevenLabs) y "que en el
+tour de 1 minuto se actualice igual y que se una a la voz de Khipu". Las instrucciones solas no bastaban: las 31
+herramientas de la voz eran de la interfaz vieja (abrían "pestañas", decían SIEMPRE "dinero de papel" aunque la cuenta
+del bróker puede ser real, sus respuestas no aparecían en el chat del centro, la simulación de demanda daba cero y
+`_cockpitMapSim` cerraba Khipus OS).
+- **Contrato v2 = 17 herramientas** (server.py `_bixby_client_tools`; espejo en engine/voice.js): ask_khipu_brain
+  (con `agent` = mascota; la pregunta y la respuesta salen en el chat central vía `BixbyCockpit.chatVoice`),
+  open_company (glance/xray/supply_chain/map/chart/dossier/research/committee), get_company_info, open_screen
+  (`VOICE_SCREENS` = ids del menú Herramientas con su nombre visible, test contra cockpit.js), compare, simulación en
+  vivo (severidad real para todo tipo), simulación por agentes (+ presets), oportunidades, gráfico, tesis rápida,
+  búsqueda profunda, place_order / get_account_status (`mode` papel|real de la cuenta REAL; el sí verbal solo vale
+  para el resumen que se acaba de leer, ≤3 min, mismo activo/lado/monto), boleta de orden (no envía nada), espacio,
+  recorrido y control_interface (nunca saca de Khipus OS).
+- **Retiradas** (25, `RETIRED_VOICE_TOOLS`): cada sync las SUELTA del agente de ElevenLabs (`ensure_tools(retired_names)`;
+  no borra recursos ni webhooks del dueño); el 🩺 avisa si siguen conectadas; voice.js conserva alias.
+- **Instrucciones nuevas** (BIXBY_SYSTEM_PROMPT): Khipus OS (chat central, ventanas, menú Herramientas con nombres
+  reales), los tres productos de investigación, agentes del registro único, dinero con la verdad (money_mode
+  paper/live/practice/none; si no sabe, pregunta a la cuenta) y el recorrido.
+- **Recorrido de un minuto**: guion ÚNICO `engine/tour_script.js` (9 pasos, ~55 s, ES/EN; lo lee `core/tour.py`).
+  Con la voz conectada lo NARRA el agente con su voz (`run_guided_demo` start→next…→done; `next` espera a que termine
+  de sonar la frase anterior; interrumpir pausa; ✕ avisa al agente). Sin conversación, cada frase suena con la MISMA
+  voz del agente (`GET /api/voice/tour/<lang>/<paso>` → MP3, solo frases del guion, caché en el servidor; URL del
+  mismo origen porque la CSP bloquea blob:). Sin voz configurada → escrito, como antes. Ventanas AL LADO del chat
+  (no maximizadas), barra dentro de la columna del chat, enlace "▶ Ver el recorrido de un minuto" en la portada.
+- Revisión adversarial (5 lentes) → 22 hallazgos, 21 arreglados con prueba (incluido el zoom del mapa que escribía
+  translate(NaN,NaN) al minimizar), 0 refutados. Pruebas nuevas: test_voice_os_server, test_voice_os_client,
+  test_voice_tour, test_voice_tour_client.
+
+Qué pasa al desplegar: el servidor arranca y sincroniza solo el agente de ElevenLabs (instrucciones + 17 herramientas,
+suelta las viejas). Para forzarlo: 🩺 → Voz → Sincronizar. El audio del recorrido gasta ~1.000 caracteres de ElevenLabs
+por idioma la primera vez tras cada arranque (después sale de la caché).
+
+---
+
 # SESIÓN 2026-10-11 (b) — LIMPIEZA "QUE NO QUEDEN COSAS SUELTAS" (sw v254)
 
 Pedido de Fabrizio (antes de la nueva arquitectura): "incorporar este sistema en Khipus después de limpiar lo

@@ -131,3 +131,23 @@ def test_instrucciones_hablan_de_ventanas_y_chat_central():
     assert 'CENTER of the screen' in p and 'WINDOW beside the chat' in p
     assert 'SHORT SUMMARY' in p                                          # la respuesta completa queda escrita
     assert 'switch_tab(' not in p and 'tab:' not in p
+
+
+def test_place_order_acepta_cantidad_y_no_obliga_a_inventar_dolares():
+    po = _specs()['place_order']['parameters']
+    assert po['properties']['qty']['type'] == 'number'
+    assert 'notional_usd' not in po['required'] and 'qty' not in po['required']    # monto en dólares O cantidad
+    assert set(po['required']) == {'symbol_or_name', 'side', 'confirmed'}
+
+
+def test_instrucciones_mencion_de_agente_solo_con_empresa_y_modo_del_dinero():
+    p = server.BIXBY_SYSTEM_PROMPT
+    tools = p[p.index('## YOUR TOOLS'):p.index('## THE ONE-MINUTE TOUR')]
+    assert 'Add agent ONLY when the question is about ONE specific company' in tools
+    assert 'go WITHOUT agent' in tools and "ALWAYS write the company's name in the question" in tools
+    assert 'news and events → radar' not in p                              # antes: toda pregunta de noticias → @noticias
+    # 'practice' = solo las carteras de práctica: el modo del bróker NO se sabe → preguntar, nunca adivinar
+    assert 'money_mode tells you whether the account is practice or real' not in p
+    assert "broker account's mode is NOT known" in tools and 'call get_account_status before telling' in tools
+    money = p[p.index('## MONEY'):p.index('## DOMAIN KNOWLEDGE')]
+    assert 'The money badge on screen shows which one' not in money and 'never guess "practice"' in money

@@ -31,7 +31,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **77 de 92** (línea 7927), después de [[engine.reconcile.js]] y antes de [[nodes.crypto_intel2.js]].
+Se carga en [[app.html]] en la posición **77 de 92** (línea 7929), después de [[engine.reconcile.js]] y antes de [[nodes.crypto_intel2.js]].
 
 ## Lo usan
 

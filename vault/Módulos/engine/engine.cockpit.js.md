@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 4524
+lineas: 4925
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.524 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 4.925 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -38,6 +38,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.mascot.js]] — usa `KhipuAgentPrefs`, `KhipuMascot`
 - [[engine.mcpconnect.js]] — usa `KhipuMCP`
 - [[engine.orb.js]] — usa `BixbyOrb`
+- [[engine.oswindows.js]] — usa `KhipuOSWin`
 - [[engine.pickers.js]] — usa `KhipuPick`
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 - [[engine.research.js]] — usa `KhipuResearch`
@@ -50,7 +51,7 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayComputeWinners`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **84 de 92** (línea 7934), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **84 de 92** (línea 7936), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
@@ -76,6 +77,7 @@ Se carga en [[app.html]] en la posición **84 de 92** (línea 7934), después de
 - `GET /api/screener/growth` → [[server.py]] ([[API screener]])
 - `GET /api/trade/history` → [[server.py]] ([[API trade]])
 - `GET /api/trade/positions/detail` → [[server.py]] ([[API trade]])
+- `GET /api/voice/tour/<lang>/<int:step>` → [[server.py]] ([[API voice]])
 - `POST /api/canvas/generate` → [[server.py]] ([[API canvas]])
 - `POST /api/deep/analyze` → [[server.py]] ([[API deep]])
 - `POST /api/matrix/insights` → [[matrix.api.py]] ([[API matrix]])
@@ -106,9 +108,11 @@ Se carga en [[app.html]] en la posición **84 de 92** (línea 7934), después de
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_os_server.py]]
 - [[tests.test_voice_tour.py]]
+- [[tests.test_voice_tour_client.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
 - [[Sesión 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)]]
 - [[Sesión 2026-10-06 (ii) — KHIPUS OS v1 (sw v245)]]

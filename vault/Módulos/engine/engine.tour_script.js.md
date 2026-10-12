@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **29 de 92** (línea 7813), después de [[engine.agents_registry.js]] y antes de [[engine.mascot.js]].
+Se carga en [[app.html]] en la posición **29 de 92** (línea 7815), después de [[engine.agents_registry.js]] y antes de [[engine.mascot.js]].
 
 ## Lo usan
 
@@ -33,3 +33,8 @@ Se carga en [[app.html]] en la posición **29 de 92** (línea 7813), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_voice_tour.py]]
+- [[tests.test_voice_tour_client.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
