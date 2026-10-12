@@ -945,10 +945,10 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
     if not verify_numbers:
         return _ai_complete_raw(system, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
     from core.live_facts import live_facts_block
-    from core.numbers import ESTIMATE_FEATURES, KINDS, NUMBERS_RULE, mark_unsupported, unsupported_in
+    from core.numbers import ESTIMATE_FEATURES, KINDS, NUMBERS_RULE, facts_from_text, mark_unsupported, unsupported_in
     if live_facts:   # cifras CORRECTAS, en vivo (el chat lo calcula UNA vez por pregunta y lo pasa en el prompt)
         prompt = (prompt or '') + live_facts_block(prompt)
-    source = prompt or ''
+    source = facts_from_text(prompt or '')     # los hechos se leen UNA vez (respuesta, reintento y marca)
     kinds = KINDS
     try:
         from core.ai_usage import current as _usage_ctx
@@ -971,7 +971,7 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
                 text, used, bad = text2, used2, bad2
         except Exception as e:  # noqa: BLE001
             log.warning('guardián de cifras: reintento falló (%s)', str(e)[:80])
-        text = mark_unsupported(text, bad, kinds)
+        text = mark_unsupported(text, bad, kinds, facts=source)
     return text, used
 
 

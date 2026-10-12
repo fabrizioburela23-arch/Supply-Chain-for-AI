@@ -321,8 +321,13 @@ class ContextBuilder:
                 ex = ', '.join(f'{k}={p[k]}' for k in keys if p.get(k) is not None)
                 if p.get('market_cap_usd_b') is not None:
                     ex = f"CAPITALIZACIÓN ACTUAL EN VIVO: {p['market_cap_usd_b']} miles de millones USD · " + ex
+                # la referencia dice el proveedor REAL del perfil (L2-08): un perfil de Finnhub citado con una URL de
+                # Yahoo se contaba como la misma fuente que los estados financieros de Yahoo
+                _src = str(p.get('source') or '').lower()
+                _ref = (f'https://finnhub.io/quote/{mkt}' if 'finnhub' in _src
+                        else f'https://finance.yahoo.com/quote/{mkt}')
                 add('market', f'Perfil de mercado EN VIVO {mkt} ({p.get("source")}) a {p.get("as_of")}', ex,
-                    reference=f'https://finance.yahoo.com/quote/{mkt}', published_at=p.get('as_of'),
+                    reference=_ref, published_at=p.get('as_of'),
                     reliability=0.85, source_kind='primary')
             else:
                 # sin perfil: al menos la capitalización en vivo (Yahoo) — sin ella el

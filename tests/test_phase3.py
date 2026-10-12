@@ -489,17 +489,19 @@ def test_aprobar_crea_preview_en_corretaje_y_rechazar(db):
     class Off(LLMProvider):
         def available(self):
             return False
-    broker = _FakeBroker(position={'symbol': 'AVGO', 'qty': 10, 'avg_entry_price': 150, 'market_value': 2000.0,
+    # Bloque 0 (revisión): decide() ve el objetivo REDUCIDO (2,5 % sin historial validado); con 2k (2 % = 80 %
+    # del objetivo) ya no es ADD → posición de 1,5k (qty 10 × 150)
+    broker = _FakeBroker(position={'symbol': 'AVGO', 'qty': 10, 'avg_entry_price': 150, 'market_value': 1500.0,
                                    'unrealized_pl': 0, 'unrealized_plpc': 0})
     with session_scope() as s:
         _fresh_entity_claims(s, 'Broadcom')
         m = run_committee(s, 'Broadcom', 'pytest', client_id='cli-1', provider=Off(), deps=dict(DEPS, brokerage=broker))
-        assert m['decision'] == 'ADD' and m['sizing']['notional'] == 500         # C6: objetivo 2.5k − 2k actuales
+        assert m['decision'] == 'ADD' and m['sizing']['notional'] == 1000        # C6: objetivo 2.5k − 1.5k actuales
         out = approve_memo(s, m['memo_id'], 'fabrizio', brokerage=broker)
         assert out['ok'] and out['memo']['status'] == 'approved' and out['memo']['preview_id'] == 'pv-1'
         call = broker.calls[-1]
         assert call['source'] == 'committee' and call['proposal_id'] == m['memo_id'] and call['side'] == 'buy'
-        assert call['notional'] == 500 and call['symbol'] == 'AVGO' and call['requested_by'] == 'fabrizio'
+        assert call['notional'] == 1000 and call['symbol'] == 'AVGO' and call['requested_by'] == 'fabrizio'
         again = approve_memo(s, m['memo_id'], 'fabrizio', brokerage=broker)
         assert not again['ok'] and again['code'] == 'bad_status'
         # sin cliente: aprobación registrada, ninguna orden
