@@ -933,19 +933,32 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
                  timeout_s=None, live_facts=True):
     """Llamada de IA con GUARDIÁN DE CIFRAS (2026-09-28, pedido explícito:
     "necesito que todo esté en vivo; los datos falsos perjudican la tesis").
-    Toda cifra de dinero de la respuesta debe estar en el input (system+prompt);
-    si no: 1 reintento con el error como feedback y, si persiste, la cifra se
-    MARCA "(⚠ cifra no verificada)". verify_numbers=False solo para diagnóstico."""
+    Toda cifra que la respuesta presente como dato (dinero, precio, %, múltiplo,
+    RSI/NRS…) debe estar en los DATOS del mensaje; si no: 1 reintento con el
+    error como feedback y, si persiste, la cifra se MARCA "(⚠ cifra no verificada)".
+    Bloque 0 (2026-10-12, L4-M1): la fuente es SOLO el prompt (datos, resultados de
+    herramientas, DATOS EN VIVO, la pregunta) — el system prompt trae reglas y
+    ejemplos («233,95 USD») que NO respaldan nada — y cada cifra se compara con
+    datos de su mismo tipo y tolerancia de redondeo (core/numbers.py).
+    verify_numbers: True (todo; solo dinero en funciones que estiman por diseño,
+    numbers.ESTIMATE_FEATURES) · 'money' (solo dinero) · False (diagnóstico)."""
     if not verify_numbers:
         return _ai_complete_raw(system, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
     from core.live_facts import live_facts_block
-    from core.numbers import NUMBERS_RULE, mark_unsupported, unsupported_in
+    from core.numbers import ESTIMATE_FEATURES, KINDS, NUMBERS_RULE, mark_unsupported, unsupported_in
     if live_facts:   # cifras CORRECTAS, en vivo (el chat lo calcula UNA vez por pregunta y lo pasa en el prompt)
         prompt = (prompt or '') + live_facts_block(prompt)
-    source = f'{system or ""}\n{prompt or ""}'
+    source = prompt or ''
+    kinds = KINDS
+    try:
+        from core.ai_usage import current as _usage_ctx
+        if verify_numbers == 'money' or _usage_ctx().get('feature') in ESTIMATE_FEATURES:
+            kinds = ('money',)
+    except Exception:  # noqa: BLE001 — el contexto de uso nunca rompe la llamada
+        pass
     sys2 = (system or '') + NUMBERS_RULE
     text, used = _ai_complete_raw(sys2, prompt, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
-    bad = unsupported_in(text, source)
+    bad = unsupported_in(text, source, kinds)
     if bad:
         log.warning('guardián de cifras: %s sin respaldo → reintento', bad)
         try:
@@ -953,12 +966,12 @@ def _ai_complete(system, prompt, max_tokens=1000, tier='fast', model=None, verif
                   '. Reescribe la respuesta completa (mismo formato) usando SOLO cifras de los datos dados, '
                   'o sin esas cifras.')
             text2, used2 = _ai_complete_raw(sys2, fb, max_tokens, tier, model, want_json=want_json, timeout_s=timeout_s)
-            bad2 = unsupported_in(text2, source)
+            bad2 = unsupported_in(text2, source, kinds)
             if len(bad2) <= len(bad):
                 text, used, bad = text2, used2, bad2
         except Exception as e:  # noqa: BLE001
             log.warning('guardián de cifras: reintento falló (%s)', str(e)[:80])
-        text = mark_unsupported(text, bad)
+        text = mark_unsupported(text, bad, kinds)
     return text, used
 
 

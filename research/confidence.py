@@ -18,6 +18,7 @@ NO es "el LLM dijo 0.91". Se combina, con pesos explícitos y guardados:
 Topes: una sola referencia → ≤ 0.6; nunca > 0.95. Todo queda en
 `confidence_components` para auditar (docs/CLAIM_MODEL.md).
 """
+import re
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 
@@ -61,16 +62,41 @@ def _is_external(item):
     return ref.startswith('http://') or ref.startswith('https://')
 
 
+# Bloque 0 (L2-08): la independencia se cuenta por PROVEEDOR, no por endpoint ni por
+# tipo de evidencia — Yahoo estados (…/financials) + Yahoo perfil (…/quote) son UNA
+# fuente; www.reuters.com == reuters.com. Hosts conocidos → nombre del proveedor.
+_PROVIDER_HOSTS = {'yahoo.com': 'yahoo', 'finnhub.io': 'finnhub', 'financialmodelingprep.com': 'fmp',
+                   'alphavantage.co': 'alphavantage', 'sec.gov': 'sec', 'marketstack.com': 'marketstack',
+                   'gdeltproject.org': 'gdelt'}
+_SECOND_LEVEL = {'co', 'com', 'org', 'net', 'gov', 'ac', 'edu', 'ne', 'or', 'go'}
+
+
+def _registrable(host):
+    """news.reuters.com → reuters.com · www.bbc.co.uk → bbc.co.uk · query1.finance.yahoo.com → yahoo.com."""
+    host = (host or '').lower().split('@')[-1].split(':')[0].strip('.')
+    if host.startswith('www.'):
+        host = host[4:]
+    parts = [p for p in host.split('.') if p]
+    if len(parts) >= 3 and parts[-2] in _SECOND_LEVEL and len(parts[-1]) == 2:
+        return '.'.join(parts[-3:])
+    return '.'.join(parts[-2:])
+
+
 def _key(item):
-    ref = str(item.get('reference') or item.get('ref') or '')
+    """Proveedor de la evidencia (la unidad de independencia)."""
+    ref = str(item.get('reference') or item.get('ref') or '').strip()
     if ref.startswith('khipus:'):
         return 'khipus'                     # catálogo + grafo + ratios + pares = UNA referencia interna
     try:
         host = urlparse(ref).netloc
         if host:
-            return item.get('source_type', '') + ':' + host
+            reg = _registrable(host)
+            return _PROVIDER_HOSTS.get(reg, reg)
     except Exception:  # noqa: BLE001
         pass
+    m = ref.split(':', 1)
+    if len(m) == 2 and m[0] and re.fullmatch(r'[a-z0-9_]+', m[0].lower()):
+        return m[0].lower()                 # 'yahoo:financials:NVDA', 'fmp:financials:X' → proveedor
     return item.get('source_type', '') + ':' + ref
 
 

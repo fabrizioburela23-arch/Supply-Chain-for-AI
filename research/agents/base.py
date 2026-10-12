@@ -117,7 +117,7 @@ def salvage(obj, valid_refs, evidence):
     """Limpia en el lugar un resultado casi válido. Devuelve los errores que
     persisten (lista vacía = rescatado). Las claims descartadas se anotan en
     unresolved_questions para que quede rastro."""
-    from core.numbers import evidence_numbers, unsupported_money
+    from core.numbers import evidence_numbers, unsupported_figures
     valid = {r.upper() for r in valid_refs}
     vals = evidence_numbers(evidence)
     keep, dropped = [], []
@@ -126,13 +126,13 @@ def salvage(obj, valid_refs, evidence):
         c.counter_evidence_refs = [r for r in c.counter_evidence_refs
                                    if r.upper() in valid and r not in c.evidence_refs]
         txt = ' '.join(filter(None, [c.statement_es, c.statement_en, c.reasoning_summary, c.object]))
-        if not c.evidence_refs or unsupported_money(txt, vals):
+        if not c.evidence_refs or unsupported_figures(txt, vals):     # mismo criterio que check_numbers
             dropped.append(c.statement_es[:120])
             continue
         keep.append(c)
     obj.claims = keep
     for fld in ('summary_es', 'summary_en'):
-        if unsupported_money(getattr(obj, fld, '') or '', vals):
+        if unsupported_figures(getattr(obj, fld, '') or '', vals):
             setattr(obj, fld, '(resumen omitido: citaba cifras sin respaldo)' if fld == 'summary_es'
                     else '(summary omitted: it cited unsupported figures)')
     if dropped:

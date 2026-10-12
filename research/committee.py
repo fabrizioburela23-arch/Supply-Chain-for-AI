@@ -12,7 +12,11 @@ run_committee(session, entity_id, requested_by, client_id=None, provider=None)
   2. NÚCLEO CUANTITATIVO (determinista, auditable; ver docs/PHASE3.md):
        peso_i       = confianza_calibrada_i × (fiabilidad_agente_i ÷ 0.5)
                       (sin historial la fiabilidad es 0.5 → ×1; historial perfecto → hasta ×2)
-       convicción_h = 100 · Σ peso_i·signo_i / (Σ peso_i + W0) · (1 − ½·cuota_en_contradicción)
+       por AGENTE a (Bloque 0, L2-06 — las claims de un mismo analista comparten
+       evidencia y están correlacionadas: valen UNA voz, no N):
+         peso_a     = media de sus peso_i en el horizonte
+         postura_a  = Σ peso_i·signo_i / Σ peso_i   (−1..1)
+       convicción_h = 100 · Σ_a peso_a·postura_a / (Σ_a peso_a + W0) · (1 − ½·cuota_en_contradicción)
        global       = promedio de las convicciones por horizonte (pesos por horizonte)
        tamaño       = patrimonio × presupuesto_de_riesgo / volatilidad_anual
                       (tope: max_position del mandato, exposición actual y poder de compra)
@@ -146,7 +150,13 @@ def _ttl_hours():
 def conviction_by_horizon(claims, contradicted_ids=(), calib=None, reliab=None):
     """claims: [{id, agent_type, stance, horizon, confidence}] (activas).
     calib(agent_type, raw) → calibrada · reliab(agent_type) → fiabilidad 0-1.
-    Devuelve {horizonte: {...}} y la convicción global."""
+    Devuelve {horizonte: {...}} y la convicción global (escala −100..100).
+
+    L2-06: se agrega POR ANALISTA. Dentro de un horizonte, cada agente es UNA voz:
+    su peso es la MEDIA de los pesos de sus claims (confianza calibrada × fiabilidad)
+    y su postura la media de los signos ponderada por esos pesos. Luego se suman
+    las voces con W0 como antes. Con una claim por agente da lo mismo que antes;
+    4 claims de un solo agente ya no pesan como 4 analistas de acuerdo."""
     calib = calib or (lambda a, r: r)
     reliab = reliab or (lambda a: 0.5)
     contradicted = set(contradicted_ids or ())
@@ -157,29 +167,41 @@ def conviction_by_horizon(claims, contradicted_ids=(), calib=None, reliab=None):
         rel = float(reliab(c['agent_type']))
         w = cal * (rel / PRIOR_REL)
         sgn = SIGN.get(c['stance'], 0)
-        row = by.setdefault(h, {'claims': [], 'net': 0.0, 'weight_sum': 0.0, 'contra_weight': 0.0,
-                                'n_pos': 0, 'n_neg': 0, 'n_other': 0})
+        row = by.setdefault(h, {'claims': [], 'agents': {}, 'n_pos': 0, 'n_neg': 0, 'n_other': 0})
         row['claims'].append({'id': c['id'], 'agent_type': c['agent_type'], 'stance': c['stance'],
                               'confidence': round(float(c['confidence']), 4), 'calibrated': round(cal, 4),
                               'reliability': round(rel, 4), 'weight': round(w, 4),
                               'contradicted': c['id'] in contradicted})
-        row['net'] += w * sgn
-        row['weight_sum'] += w
+        ag = row['agents'].setdefault(c['agent_type'], {'n': 0, 'w_sum': 0.0, 'net': 0.0, 'contra': 0.0})
+        ag['n'] += 1
+        ag['w_sum'] += w
+        ag['net'] += w * sgn
         if c['id'] in contradicted:
-            row['contra_weight'] += w
+            ag['contra'] += w
         row['n_pos' if sgn > 0 else 'n_neg' if sgn < 0 else 'n_other'] += 1
     out = {}
     num = den = 0.0
     for h, r in by.items():
-        ws = r['weight_sum']
-        share = (r['contra_weight'] / ws) if ws > 0 else 0.0
+        net = ws = contra = 0.0
+        agents_out = {}
+        for a, g in r['agents'].items():
+            w_a = g['w_sum'] / g['n']                                   # una voz por analista
+            stance_a = (g['net'] / g['w_sum']) if g['w_sum'] > 0 else 0.0
+            contra_a = (g['contra'] / g['w_sum']) if g['w_sum'] > 0 else 0.0
+            net += w_a * stance_a
+            ws += w_a
+            contra += w_a * contra_a
+            agents_out[a] = {'n_claims': g['n'], 'weight': round(w_a, 4), 'stance': round(stance_a, 4),
+                             'contra_share': round(contra_a, 4)}
+        share = (contra / ws) if ws > 0 else 0.0
         penalty = 1.0 - CONTRA_PENALTY * share
-        raw = (r['net'] / (ws + W0)) if (ws + W0) > 0 else 0.0
+        raw = (net / (ws + W0)) if (ws + W0) > 0 else 0.0
         score = max(-100.0, min(100.0, 100.0 * raw * penalty))
-        out[h] = {'score': round(score, 1), 'n_claims': len(r['claims']), 'n_pos': r['n_pos'],
-                  'n_neg': r['n_neg'], 'n_other': r['n_other'], 'net_weight': round(r['net'], 4),
+        out[h] = {'score': round(score, 1), 'n_claims': len(r['claims']), 'n_agents': len(agents_out),
+                  'n_pos': r['n_pos'], 'n_neg': r['n_neg'], 'n_other': r['n_other'], 'net_weight': round(net, 4),
                   'weight_sum': round(ws, 4), 'w0': W0, 'contra_share': round(share, 4),
                   'penalty': round(penalty, 4), 'horizon_weight': HZ_WEIGHTS.get(h, 0.0),
+                  'aggregation': 'per_agent', 'agents': agents_out,
                   'claims': sorted(r['claims'], key=lambda x: -x['weight'])}
         hw = HZ_WEIGHTS.get(h, 0.0)
         if hw > 0:
@@ -320,18 +342,29 @@ def compute_sizing(decision, vol_ann_pct, mandate, equity=None, current_value=0.
     límites en US$ del corretaje — máximo por orden y lo que queda del límite
     diario — para que la previsualización no salga bloqueada por tamaño.
     Vender/reducir por convicción NO necesita volatilidad: se usa la posición.
-    validated=False (C6): sin historial validado el presupuesto de riesgo se
-    reduce a UNVALIDATED_FACTOR → el peso objetivo cae a la mitad."""
+    validated=False (C6): sin historial validado el peso objetivo cae a la MITAD.
+    Orden explícito (Bloque 0, L2-05): 1) TAMAÑO = presupuesto de riesgo ÷ vol;
+    2) MITAD (× UNVALIDATED_FACTOR) si no está validado; 3) TOPE por posición,
+    que también se reduce a la mitad — si no, con vol baja el tope dejaba el
+    tamaño igual que validado (vol 10 %: 10 % y 10 %). Así el peso objetivo no
+    validado es SIEMPRE la mitad del validado. Campos: raw_weight_pct (1),
+    unvalidated_factor y halved_weight_pct (2), cap_pct (3), target_weight_pct."""
     mandate = dict(mandate)
-    if not validated:
-        mandate['risk_budget'] = float(mandate['risk_budget']) * UNVALIDATED_FACTOR
-    tw, raw_w = target_weight(vol_ann_pct, mandate)
+    factor = 1.0 if validated else UNVALIDATED_FACTOR
+    _tw_full, raw_w = target_weight(vol_ann_pct, mandate)                  # 1) tamaño (presupuesto completo)
+    halved = raw_w * factor if raw_w is not None else None                 # 2) mitad si no validado
+    cap = mandate['max_position'] * factor                                 # 3) tope (también a la mitad)
+    tw = min(halved, cap) if halved is not None else None
     vol_used = None if vol_ann_pct is None else max(float(vol_ann_pct) / 100.0, mandate['min_vol'])
     s = {'method': 'volatility-targeting', 'decision': decision, 'vol_ann_pct': vol_ann_pct,
          'vol_used_pct': round(vol_used * 100, 2) if vol_used is not None else None,
          'risk_budget_pct': round(mandate['risk_budget'] * 100, 3),
          'max_position_pct': round(mandate['max_position'] * 100, 3),
          'raw_weight_pct': round(raw_w * 100, 3) if raw_w is not None else None,
+         'unvalidated_factor': factor,
+         'halved_weight_pct': round(halved * 100, 3) if halved is not None else None,
+         'cap_pct': round(cap * 100, 3),
+         'sizing_order': ['size', 'halve', 'cap'],
          'target_weight_pct': round(tw * 100, 3) if tw is not None else None,
          'capped_by': None, 'equity': equity, 'current_value': round(current_value or 0.0, 2),
          'current_qty': current_qty or 0.0, 'current_weight_pct': None, 'side': ACTIONABLE.get(decision),
@@ -342,10 +375,6 @@ def compute_sizing(decision, vol_ann_pct, mandate, equity=None, current_value=0.
     es, en = s['steps_es'], s['steps_en']
     if not validated:
         s['capped_by'] = 'unvalidated'
-        es.append(f'Sin historial validado (ningún analista llega a las calificaciones mínimas): el presupuesto de '
-                  f'riesgo se reduce a la mitad → {s["risk_budget_pct"]:.1f} %.')
-        en.append(f'No validated track record (no analyst reaches the minimum scored calls): the risk budget is '
-                  f'cut in half → {s["risk_budget_pct"]:.1f}%.')
     cur = float(current_value or 0.0)
     exit_only = decision == 'SELL' or (decision == 'TRIM' and trim_reason != 'overweight')
     if tw is None:
@@ -358,12 +387,19 @@ def compute_sizing(decision, vol_ann_pct, mandate, equity=None, current_value=0.
     else:
         es.append(f"Volatilidad anual {vol_ann_pct:.1f} %" + (f" (mínimo usado {s['vol_used_pct']:.0f} %)" if vol_used * 100 > vol_ann_pct + 1e-9 else ''))
         en.append(f"Annual volatility {vol_ann_pct:.1f}%" + (f" (floor used {s['vol_used_pct']:.0f}%)" if vol_used * 100 > vol_ann_pct + 1e-9 else ''))
-        es.append(f"Peso objetivo = presupuesto de riesgo {s['risk_budget_pct']:.1f} % ÷ volatilidad {s['vol_used_pct']:.1f} % = {s['raw_weight_pct']:.2f} %")
-        en.append(f"Target weight = risk budget {s['risk_budget_pct']:.1f}% ÷ volatility {s['vol_used_pct']:.1f}% = {s['raw_weight_pct']:.2f}%")
-        if raw_w > tw + 1e-12:
+        es.append(f"1) Tamaño = presupuesto de riesgo {s['risk_budget_pct']:.1f} % ÷ volatilidad {s['vol_used_pct']:.1f} % = {s['raw_weight_pct']:.2f} %")
+        en.append(f"1) Size = risk budget {s['risk_budget_pct']:.1f}% ÷ volatility {s['vol_used_pct']:.1f}% = {s['raw_weight_pct']:.2f}%")
+        if not validated:
+            es.append(f"2) Sin historial validado (ningún analista llega a las calificaciones mínimas): el tamaño se reduce "
+                      f"a la mitad → {s['halved_weight_pct']:.2f} %, y el tope por posición también "
+                      f"({s['max_position_pct']:.1f} % → {s['cap_pct']:.1f} %).")
+            en.append(f"2) No validated track record (no analyst reaches the minimum scored calls): the size is cut in "
+                      f"half → {s['halved_weight_pct']:.2f}%, and so is the per-position cap "
+                      f"({s['max_position_pct']:.1f}% → {s['cap_pct']:.1f}%).")
+        if halved > tw + 1e-12:
             s['capped_by'] = 'max_position'
-            es.append(f"Tope del mandato: máx. {s['max_position_pct']:.1f} % por posición → {s['target_weight_pct']:.2f} %")
-            en.append(f"Mandate cap: max {s['max_position_pct']:.1f}% per position → {s['target_weight_pct']:.2f}%")
+            es.append(f"3) Tope del mandato: máx. {s['cap_pct']:.1f} % por posición → {s['target_weight_pct']:.2f} %")
+            en.append(f"3) Mandate cap: max {s['cap_pct']:.1f}% per position → {s['target_weight_pct']:.2f}%")
         if equity is None:
             s['per_10k'] = round(tw * 10000.0)
             es.append(f"Sin cliente: referencia ilustrativa = ${s['per_10k']:,.0f} por cada $10,000 de cartera.")
@@ -395,7 +431,7 @@ def compute_sizing(decision, vol_ann_pct, mandate, equity=None, current_value=0.
         notional = cur
         s['qty'] = current_qty or None
     if decision in ('BUY', 'ADD'):
-        room = max(0.0, mandate['max_position'] * eq - cur)
+        room = max(0.0, cap * eq - cur)                     # el tope ya reducido si no está validado
         if notional > room:
             notional, s['capped_by'] = room, 'max_position'
             es.append(f"Limitado por el tope del mandato: ${room:,.0f}")
@@ -545,18 +581,26 @@ REGLAS INNEGOCIABLES
 
 
 def _money_check(obj, evidence_items):
-    """Adaptador a core.numbers.check_numbers (mismo guardián que los agentes)."""
+    """Adaptador a core.numbers.check_numbers (mismo guardián que los agentes).
+    Bloque 0 (L2-04): tesis, riesgos, disenso, notas y conclusiones se revisan con
+    TODAS las cifras (dinero, %, múltiplos, RSI…); los falsadores son UMBRALES
+    ("si el margen cae por debajo de 60 %"), no hechos → en ellos solo dinero."""
     from core.numbers import check_numbers
+
+    def _adapter(parts, with_summary):
+        return SimpleNamespace(
+            claims=[SimpleNamespace(statement_es=p, statement_en='', reasoning_summary='', object='')
+                    for p in parts if p],
+            summary_es=obj.summary_es if with_summary else '', summary_en=obj.summary_en if with_summary else '')
     parts = [t.thesis_es + ' ' + t.thesis_en for t in obj.thesis]
     parts += [r.risk_es + ' ' + r.risk_en for r in obj.key_risks]
     parts += [d.view_es + ' ' + d.view_en for d in obj.dissent]
-    parts += list(obj.falsifiers_es) + list(obj.falsifiers_en)
     parts += [obj.chair_note_es or '', obj.chair_note_en or '']
     parts += [k.text_es + ' ' + k.text_en for k in obj.key_conclusions]
-    adapter = SimpleNamespace(
-        claims=[SimpleNamespace(statement_es=p, statement_en='', reasoning_summary='', object='') for p in parts if p],
-        summary_es=obj.summary_es, summary_en=obj.summary_en)
-    return check_numbers(adapter, evidence_items)
+    falsifiers = list(obj.falsifiers_es) + list(obj.falsifiers_en)
+    return (check_numbers(_adapter(parts, True), evidence_items) +
+            [e.replace('claim[', 'falsifier[') for e in
+             check_numbers(_adapter(falsifiers, False), evidence_items, kinds=('money',))])
 
 
 def chair_checks(obj, valid_refs, quant_decision, min_date, max_date, evidence_items, agent_types):

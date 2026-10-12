@@ -34,7 +34,8 @@ del guardián:
       magnitud grande (B/T/millones): máx(1 %, media unidad del último dígito
                        mostrado) con techo del 10 % (15 % con "~"):
                        "5,7 billones" respalda 5,712e12; "$1T" respalda 1,05T.
-      porcentaje: máx(media unidad, 0,05 pp, 0,5 % relativo) (10 % con "~").
+      porcentaje: máx(una unidad del último dígito —redondeo o truncado: "55 %"
+                  por 55,8—, 0,05 pp, 0,5 % relativo) (10 % con "~").
       múltiplo / indicador: máx(media unidad, 1 %) (10 % con "~").
       "más de X" / "menos de X": X ≤ dato ≤ 2X / X/2 ≤ dato ≤ X.
   · Fuente: SOLO los datos del mensaje (prompt: bloque DATOS EN VIVO,
@@ -63,7 +64,7 @@ from bisect import bisect_left
 # de otro número/palabra y nunca termina antes de un separador+dígito ("12" de "12.5").
 _NEND = r'(?![.,]?\d)'
 _NUM = (r'(?<![\w.,])(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?' + _NEND + r'|\d+(?:[.,]\d+)?' + _NEND + r')')
-_SIGN = r'(?:(?<![\w)\]])(?P<sg>[-−–+])\s?)?'
+_SIGN = r'(?:(?<![\w)\]%])(?P<sg>[-−–+])\s?)?'      # "10-12", "3%-5%": guion de rango, no signo
 
 # escalas en palabra (el orden importa: "mil millones" antes que "millones" y "mil")
 _SCALES = (
@@ -139,19 +140,38 @@ _POS = re.compile(
 _AFTER_NEG = re.compile(r'^\W{0,3}(?:a\s+la\s+baja|lower|down)(?![\w])', re.I)
 _AFTER_POS = re.compile(r'^\W{0,3}(?:al\s+alza|higher|up)(?![\w])', re.I)
 
-# rótulos de los DATOS (ventana antes del número, en minúsculas)
-_MONEY_HINT = re.compile(
-    r'(?:price|precio|(?<![a-z])px|close|cierre|prev|open|high|(?<![a-z])low|cotiza|valor|value|(?<![a-z])cap|valuaci|'
-    r'valuation|revenue|ingres|ventas|sales|deuda|debt|cash|caja|efectivo|fcf|flujo|(?<![a-z])eps|bpa|dividend|ebitda|income|beneficio|ganancia|'
-    r'utilidad|target|objetivo|usd|eur|monto|amount|notional|equity|patrimonio|costo|cost|var95|var_|p&l|pnl|'
-    r'p[eé]rdida|loss|profit|compr|vend|bought|sold|invert|invest|pag[oó]|paid|saldo|balance|buying_power|'
-    r'week52|52w|ronda|(?<![a-z])round|recaud|raised)', re.I)
-_PCT_HINT = re.compile(
-    r'(?:pct|percent|porcentaje|margin|margen|growth|crecim|change|cambio|variaci|yield|rendim|retorno|return|'
-    r'(?<![a-z])(?:roe|roic|peso|share|cuota|tasa|rate|prob)|drawdown|ca[ií]da|volatil|vol_|weight|'
-    r'(?<![a-z])dp(?![a-z])|chg|upside|downside|impact|aporte|contrib)', re.I)
-_MULT_HINT = re.compile(r'(?:(?<![a-z])p/?e(?![a-z])|(?<![a-z])per(?![a-z])|pe_|ev/?_?ebitda|ev_to|p/?_?fcf|'
-                        r'm[uú]ltiplo|multiple|deuda/ebitda|debt_to|debt/|price_to|p/s|p/b|peg)', re.I)
+# rótulos de los DATOS (ventana antes del número, en minúsculas). Se buscan como
+# SUBCADENAS (rápido, en C) o como palabras/prefijos de palabra; nada de
+# alternancias gigantes por cada número de un prompt de 40k caracteres.
+_MONEY_SUB = ('price', 'precio', 'close', 'cierre', 'prev', 'open', 'high', 'cotiza', 'valor', 'value', 'valuaci',
+              'valuation', 'revenue', 'ingres', 'ventas', 'sales', 'deuda', 'debt', 'cash', 'caja', 'efectivo', 'fcf',
+              'flujo', 'bpa', 'dividend', 'ebitda', 'income', 'beneficio', 'ganancia', 'utilidad', 'target',
+              'objetivo', 'usd', 'eur', 'monto', 'amount', 'notional', 'equity', 'patrimonio', 'costo', 'cost',
+              'var95', 'var_', 'p&l', 'pnl', 'pérdida', 'perdida', 'loss', 'profit', 'compr', 'vend', 'bought',
+              'sold', 'invert', 'invest', 'pagó', 'paid', 'saldo', 'balance', 'buying_power', 'week52', '52w',
+              'ronda', 'recaud', 'raised', '$', '€', '£', '¥')
+_MONEY_WPRE = ('px', 'low', 'cap', 'eps', 'round', 'pago')
+_PCT_SUB = ('pct', 'percent', 'porcentaje', 'margin', 'margen', 'growth', 'crecim', 'change', 'cambio', 'variaci',
+            'yield', 'rendim', 'retorno', 'return', 'drawdown', 'caida', 'caída', 'volatil', 'vol_', 'weight',
+            'impact', 'aporte', 'contrib', 'upside', 'downside', 'chg', '%')
+_PCT_WPRE = ('roe', 'roic', 'peso', 'share', 'cuota', 'tasa', 'rate', 'prob')
+_PCT_WORD = ('dp',)
+_MULT_SUB = ('pe_', 'ev/ebitda', 'ev_ebitda', 'ev_to', 'p/fcf', 'p_fcf', 'precio/fcf', 'price/fcf', 'múltiplo',
+             'multiplo', 'multiple', 'deuda/ebitda', 'debt_to', 'debt/', 'price_to', 'p/s', 'p/b', 'p/e', 'peg')
+_MULT_WORD = ('pe', 'per')
+_WORD_RX = re.compile(r'[a-záéíóúñ_]+')
+
+
+def _hints(low30):
+    """(dinero, porcentaje, múltiplo): ¿el rótulo antes del número lo tipa?"""
+    words = _WORD_RX.findall(low30)
+    money = any(h in low30 for h in _MONEY_SUB) or any(w.startswith(_MONEY_WPRE) for w in words)
+    pct = (any(h in low30 for h in _PCT_SUB) or any(w.startswith(_PCT_WPRE) for w in words)
+           or any(w in _PCT_WORD for w in words))
+    mult = any(h in low30 for h in _MULT_SUB) or any(w in _MULT_WORD for w in words)
+    return money, pct, mult
+
+
 _B_KEY = re.compile(r'(?:_b|_bn|_usd_b|_billions?)["\']?\s*[:=]\s*["\']?$', re.I)
 _M_KEY = re.compile(r'(?:_usd_m|_m_usd|_mm|_millions?)["\']?\s*[:=]\s*["\']?$', re.I)
 _HEADER_SCALE = (
@@ -160,6 +180,17 @@ _HEADER_SCALE = (
     (re.compile(r'\([^)\n]*(?:millones|millions|usd\s?m|mm)\b[^)\n]*\)|\b(?:en|in)\s+(?:millones|millions)\b',
                 re.I), 1e6),
 )
+
+# patrones de contexto de los DATOS (precompilados: se evalúan por cada número)
+_A_TAGGED = re.compile(r'[^\d\n]{0,32}?\(⚠')
+_A_PCT = re.compile(r'\s?(?:%|por\s?ciento|percent|pp(?![\w])|p\.\s?p\.|puntos|points)', re.I)
+_A_MULT = re.compile(r'\s?(?:x|×)(?![\w])')
+_A_SCALE = re.compile(r'\s?(' + _SCALE_WORD + r')', re.I)
+_A_GLUED = re.compile(r'(' + _GLUED_CUR + r')')
+_A_CUR = re.compile(r'\s?(?:' + _SCALE_WORD + r'\s*(?:de\s+)?)?' + _CUR_WORD, re.I)
+_B_CUR = re.compile(_CUR_PRE + r'\s?[-−–]?\s?$', re.I)
+MAX_SOURCE_CHARS = 250_000      # ~60k tokens: más que cualquier prompt real (chat ≈ 40k car.); acota el costo
+_HAS_WORD = re.compile(r'[a-z$€£¥₩₹₽_]')
 
 KINDS = ('money', 'pct', 'mult', 'score')
 # funciones cuyo TRABAJO es estimar (la simulación por agentes inventa impactos %
@@ -354,7 +385,7 @@ class Facts:
                 rows = self.mult + self.score.get(key, [])
             else:
                 rows = getattr(self, name)
-            uniq = sorted({(abs(c), s) for c, s in rows})
+            uniq = sorted({(abs(c), s) for c, s in rows}, key=lambda t: (t[0], t[1] or ''))
             self._idx[ck] = ([a for a, _s in uniq], [s_ for _a, s_ in uniq])
         return self._idx[ck]
 
@@ -369,65 +400,69 @@ class Facts:
         return len(self.money) + len(self.pct) + len(self.mult) + len(self.plain)
 
     def add_text(self, txt):
-        txt = _DATE_RX.sub(' ', txt or '')
+        txt = _DATE_RX.sub(' ', (txt or '')[:MAX_SOURCE_CHARS])
+        g = None
         for mt in _SRC_NUM.finditer(txt):
-            s, e = mt.start(_num_group(mt)), mt.end(_num_group(mt))
+            if g is None:
+                g = _num_group(mt)
+            s, e = mt.start(g), mt.end(g)
             after = txt[e:e + 40]
-            if re.match(r'[^\d\n]{0,32}?\(⚠', after):
+            if _A_TAGGED.match(after):
                 continue                       # cifra ya marcada ⚠ (historial): no respalda nada
             line_start = max(txt.rfind('\n', max(0, s - 240), s) + 1, s - 240)   # acotado: lineal
             before = txt[max(line_start, s - 40):s]
             low = before.lower()
+            low30 = low[-30:]
             sg = mt.group('sg')
             sign = '-' if sg in ('-', '−', '–') else '+' if sg == '+' else None
-            tok = mt.group(_num_group(mt))
+            tok = mt.group(g)
             cands = _cands(tok)
             if not cands:
                 continue
-            has_dec = bool(re.search(r'[.,]', tok))
-            if re.match(r'\s?(?:%|por\s?ciento|percent|pp(?![\w])|p\.\s?p\.|puntos|points)', after, re.I):
-                for v, _h in cands:
-                    self.pct.append((v, sign))
+            if _A_PCT.match(after):
+                self.pct.extend((v, sign) for v, _h in cands)
                 self._keyed(before, cands, sign)
                 continue
-            if re.match(r'\s?(?:x|×)(?![\w])', after):
-                for v, _h in cands:
-                    self.mult.append((v, sign))
+            if _A_MULT.match(after):
+                self.mult.extend((v, sign) for v, _h in cands)
                 self._keyed(before, cands, sign)
                 continue
-            sc = re.match(r'\s?(' + _SCALE_WORD + r')', after, re.I) or re.match(r'(' + _GLUED_CUR + r')', after)
+            sc = _A_SCALE.match(after) or _A_GLUED.match(after)
             scale = _scale_of(sc.group(1)) if sc else None
-            if scale is None and _B_KEY.search(low):
+            if scale is None and _B_KEY.search(low[-24:]):
                 scale = 1e9
-            elif scale is None and _M_KEY.search(low):
+            elif scale is None and _M_KEY.search(low[-24:]):
                 scale = 1e6
-            cur = bool(re.search(_CUR_PRE + r'\s?[-−–]?\s?$', before, re.I)) or bool(
-                re.match(r'\s?(?:' + _SCALE_WORD + r'\s*(?:de\s+)?)?' + _CUR_WORD, after, re.I))
-            money_hint = bool(_MONEY_HINT.search(low[-30:]))
+            worded = _HAS_WORD.search(low) is not None          # sin letras ni símbolos: sin rótulos
+            cur = bool(worded and _B_CUR.search(before[-9:])) or bool(_A_CUR.match(after))
+            money_hint, pct_hint, mult_hint = _hints(low30) if worded else (False, False, False)
             header = None
             line_before = txt[line_start:s]
-            for rx, mul in _HEADER_SCALE:
-                if rx.search(line_before):
-                    header = mul
-                    break
+            if not scale and ('(' in line_before or ' in' in line_before or ' en' in line_before):
+                for rx, mul in _HEADER_SCALE:
+                    if rx.search(line_before):
+                        header = mul
+                        break
+            plain = bool(re.search(r'[.,]', tok)) or sum(ch.isdigit() for ch in tok) >= 4
             for v, _h in cands:
                 if scale:
                     self.money.append((v * scale, sign))
-                if cur or money_hint or scale:
+                elif cur or money_hint:
                     self.money.append((v, sign))
-                if header and not scale:
+                if header:
                     self.money.append((v * header, sign))
                 if v >= 1e6:
                     self.money.append((v, sign))
-                if _PCT_HINT.search(low[-30:]):
+                if pct_hint:
                     self.pct.append((v, sign))
                     if abs(v) <= 1.5 and re.search(r'[.,]\d', tok):
                         self.pct.append((v * 100, sign))      # fracción rotulada: 0,75 → 75 %
-                if _MULT_HINT.search(low[-30:]):
+                if mult_hint:
                     self.mult.append((v, sign))
-                if has_dec or len(re.sub(r'\D', '', tok)) >= 4:
+                if plain:
                     self.plain.append((v, sign))
-            self._keyed(before, cands, sign)
+            if worded:
+                self._keyed(before, cands, sign)
         return self
 
     def _keyed(self, before, cands, sign):
@@ -471,7 +506,7 @@ def _tol(kind, c, half, approx):
     if kind == 'price':
         return max(0.005 * a, min(half, (0.05 if approx else 0.02) * a))
     if kind == 'pct':
-        return max(half, 0.10 * a, 0.5) if approx else max(half, 0.005 * a, 0.05)
+        return max(2 * half, 0.10 * a, 0.5) if approx else max(2 * half, 0.005 * a, 0.05)   # redondeo o truncado
     return max(half, 0.10 * a) if approx else max(half, 0.01 * a)      # múltiplo / indicador
 
 
@@ -490,12 +525,20 @@ def _close(m, v, half, c, sign, kind):
     return abs(a - v) <= _tol(kind, c, half, m.approx) + 1e-12
 
 
-def _near(idx, lo, hi):
+def _near(idx, v, lo, hi, k=48):
+    """Datos dentro de [lo, hi], del más cercano a v hacia afuera (máx. k por lado):
+    costo acotado aunque los datos tengan miles de cifras parecidas."""
     vals, signs = idx
-    i = bisect_left(vals, lo)
-    while i < len(vals) and vals[i] <= hi:
-        yield vals[i], signs[i]
-        i += 1
+    i = bisect_left(vals, v)
+    left, right, n = i - 1, i, 0
+    while n < k and (left >= 0 and vals[left] >= lo or right < len(vals) and vals[right] <= hi):
+        if right < len(vals) and vals[right] <= hi:
+            yield vals[right], signs[right]
+            right += 1
+        if left >= 0 and vals[left] >= lo:
+            yield vals[left], signs[left]
+            left -= 1
+        n += 1
 
 
 def _window(v, half):
@@ -511,23 +554,23 @@ def supported(m, facts):
         lo, hi = _window(v, half)
         if m.kind == 'money':
             kind = 'money_big' if m.big else 'price'
-            if any(_close(m, v, half, c, s, kind) for c, s in _near(facts.index('money'), lo, hi)):
+            if any(_close(m, v, half, c, s, kind) for c, s in _near(facts.index('money'), v, lo, hi)):
                 return True
             if not m.big and not m.ineq and any(_sign_ok(m.pol, s) for _c, s in
-                                                _near(facts.index('plain'), v - half - 1e-12, v + half + 1e-12)):
+                                                _near(facts.index('plain'), v, v - half - 1e-12, v + half + 1e-12)):
                 return True                     # número sin rótulo: solo a la precisión mostrada
         elif m.kind == 'pct':
-            if any(_close(m, v, half, c, s, 'pct') for c, s in _near(facts.index('pct'), lo, hi)):
+            if any(_close(m, v, half, c, s, 'pct') for c, s in _near(facts.index('pct'), v, lo, hi)):
                 return True
             if not m.ineq and any(_sign_ok(m.pol, s) and c != int(c) for c, s in
-                                  _near(facts.index('plain'), v - half - 1e-12, v + half + 1e-12)):
+                                  _near(facts.index('plain'), v, v - half - 1e-12, v + half + 1e-12)):
                 return True
-        elif m.kind == 'mult':
-            if any(_close(m, v, half, c, s, 'mult') for c, s in _near(facts.index('mult', m.key), lo, hi)):
+        elif m.kind in ('mult', 'score'):
+            idx = facts.index('mult', m.key) if m.kind == 'mult' else facts.index('score', m.key)
+            if any(_close(m, v, half, c, s, m.kind) for c, s in _near(idx, v, lo, hi)):
                 return True
-        elif m.kind == 'score':
-            if any(_close(m, v, half, c, s, 'score') for c, s in _near(facts.index('score', m.key), lo, hi)):
-                return True
+            if not m.ineq and any(True for _c in _near(facts.index('plain'), v, v - half - 1e-12, v + half + 1e-12)):
+                return True                     # "beta S&P 500 1.21": rótulo lejos → precisión mostrada
     return False
 
 
