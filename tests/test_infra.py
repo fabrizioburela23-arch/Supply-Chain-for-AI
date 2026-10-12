@@ -1206,6 +1206,14 @@ def test_metrics_presupuesto_y_ocupado_sirven_la_ultima_lectura(db, monkeypatch,
     real = E.compute_metrics
     monkeypatch.setattr(E, 'compute_metrics', lambda s, as_of=None: calls.append(as_of) or real(s, as_of=as_of))
     c = _client()
+    # INFRA_OPERATIVA paso 4: "ahora" sale de la vista Impact (los choques ya calculados en lote): ni
+    # compute_metrics ni presupuesto — y los mismos números (tests/test_hot_views_parity.py)
+    r = c.get('/api/matrix/metrics')
+    assert r.status_code == 200 and 'stale' not in r.get_json()
+    assert r.get_json()['view']['source'] == 'pg' and calls == []
+    # el camino directo (vistas apagadas o atrasadas sin llegar a tiempo) conserva presupuesto/ocupado/stale
+    monkeypatch.setattr(M, '_hot', lambda scope, as_of=None: None)
+    monkeypatch.setattr(M, '_LAST_METRICS', {})
     r = c.get('/api/matrix/metrics')
     assert r.status_code == 200 and 'stale' not in r.get_json()
     for _ in range(5):                               # lo cacheado no gasta presupuesto

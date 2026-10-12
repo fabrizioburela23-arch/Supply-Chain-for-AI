@@ -56,7 +56,7 @@ def insights_env(monkeypatch):
     monkeypatch.setattr(M, '_TTL_CACHE', {})
     monkeypatch.setattr(M, '_INFLIGHT', {})
     monkeypatch.setattr(M, '_db', lambda: _fake_scope)
-    monkeypatch.setattr(E, '_graph_epoch', lambda s: 'EPOCH-FIX3')
+    monkeypatch.setattr(E, 'graph_key', lambda s: 'EPOCH-FIX3')
     calls = {'build': 0, 'narrate': 0, 'persist': 0}
 
     def build_matrices(s, as_of=None):

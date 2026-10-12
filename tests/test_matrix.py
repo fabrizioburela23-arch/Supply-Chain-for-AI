@@ -161,7 +161,9 @@ def test_insights_history_guarda_una_fila_por_epoca(db):
 
 
 def test_insights_history_nueva_fila_cuando_cambia_el_grafo(db):
-    """Un cambio real del grafo (época nueva) SÍ debe dejar una fila nueva."""
+    """Un cambio ECONÓMICO del grafo (versión nueva) SÍ deja una fila nueva; una nota NO (INFRA_OPERATIVA
+    paso 2: la versión se toma al confirmar y solo la mueven los eventos económicos — antes, con
+    MAX(recorded_at), cualquier nota o noticia re-narraba los insights)."""
     import server
     from ontology.db import session_scope
     from ontology.models import InsightSnapshot
@@ -174,10 +176,17 @@ def test_insights_history_nueva_fila_cuando_cambia_el_grafo(db):
     client.post('/api/matrix/insights', json={'lang': 'es'})
     antes = client.get('/api/matrix/insights/history').get_json()['count']
 
-    # escribir en la ontología mueve MAX(recorded_at) = la época del grafo
+    # una nota NO es un cambio del grafo económico: misma versión → sin fila nueva
     with session_scope() as s:
         execute_action(s, 'AnotarObjeto',
-                       {'object_id': 'TSMC', 'texto': 'nota que cambia la época'}, actor='pytest')
+                       {'object_id': 'TSMC', 'texto': 'nota que ya no cambia la versión'}, actor='pytest')
+    client.post('/api/matrix/insights', json={'lang': 'es'})
+    assert client.get('/api/matrix/insights/history').get_json()['count'] == antes
+
+    # marcar riesgo sobre una empresa SÍ es económico (ObjectUpdated de una Company) → versión nueva
+    with session_scope() as s:
+        execute_action(s, 'MarcarRiesgo',
+                       {'company_id': 'TSMC', 'nivel': 80, 'razon': 'cambio que mueve la versión'}, actor='pytest')
 
     client.post('/api/matrix/insights', json={'lang': 'es'})
     despues = client.get('/api/matrix/insights/history').get_json()['count']

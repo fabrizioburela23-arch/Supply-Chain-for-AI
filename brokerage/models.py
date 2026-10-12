@@ -175,13 +175,19 @@ END $$
 
 
 def _safe_ddl(connection, sql):
+    """Un paso de DDL en su SAVEPOINT (patrón generalizado en core/ledger_ddl.safe_ddl, INFRA_OPERATIVA
+    paso 1: events, kh_tx_versions y hot_view_builds usan el mismo mecanismo con kh_append_only)."""
     try:
-        with connection.begin_nested():
-            connection.execute(text(sql))
-        return True
-    except Exception as e:  # noqa: BLE001
-        log.warning('brokerage: DDL de esquema no aplicado (%s)', type(e).__name__)
-        return False
+        from core.ledger_ddl import safe_ddl
+        return safe_ddl(connection, sql)
+    except ImportError:   # core/ no disponible (no debería pasar): mismo comportamiento de siempre
+        try:
+            with connection.begin_nested():
+                connection.execute(text(sql))
+            return True
+        except Exception as e:  # noqa: BLE001
+            log.warning('brokerage: DDL de esquema no aplicado (%s)', type(e).__name__)
+            return False
 
 
 @event.listens_for(Base.metadata, 'after_create')

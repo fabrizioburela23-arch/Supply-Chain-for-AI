@@ -306,6 +306,10 @@ def proponer_vinculo(session, inp: ProponerVinculoInput, actor):
 
 
 def _resolver_vinculo(session, inp: ResolverVinculoInput, actor, resolution):
+    """Confirmar / Rechazar un vínculo. INFRA_OPERATIVA paso 3 (W5, GV-02): el estado ya NO se escribe a mano
+    en link.properties — se emite el evento `LinkStatusChanged` (económico: mueve graph_version) y
+    `_materialize` lo aplica a la fila; el replay (as_of) lo reproduce por su valid_from. El rechazo además
+    cierra el intervalo con un LinkRemoved, como antes."""
     try:
         link_uuid = uuid.UUID(inp.link_id)
     except ValueError:
@@ -313,10 +317,16 @@ def _resolver_vinculo(session, inp: ResolverVinculoInput, actor, resolution):
     link = session.get(LinkRecord, link_uuid)
     if not link:
         raise ActionError(f'vínculo no encontrado: {inp.link_id}')
-    props = dict(link.properties or {})
-    props['status'] = resolution
-    props[f'{resolution}_by'] = actor
-    link.properties = props
+    from ontology.service import _creation_event_for
+    if link.event_id is None:                 # fila heredada (anterior a G2): se empareja con su creación
+        cev = _creation_event_for(session, link)
+        if cev is not None:
+            link.event_id = cev.id
+    now = _utcnow()
+    st = apply_event(session, 'LinkStatusChanged', {
+        'status': resolution, 'link_id': inp.link_id, 'rel_type': link.rel_type,
+        'creation_event_id': str(link.event_id) if link.event_id else None, 'by': actor,
+    }, valid_from=now, source='manual', actor=actor, object_id=link.source_id, target_id=link.target_id)
     if resolution == 'rejected':
         # El cierre va como EVENTO (no mutación directa): sin LinkRemoved en el
         # log, el replay as_of mostraba los vínculos rechazados como vigentes
@@ -325,18 +335,17 @@ def _resolver_vinculo(session, inp: ResolverVinculoInput, actor, resolution):
             'rel_type': link.rel_type,
             'properties': {'reason': 'rejected', 'rejected_by': actor,
                            'link_id': inp.link_id},
-        }, valid_from=_utcnow(), source='manual', actor=actor,
+        }, valid_from=now, source='manual', actor=actor,
             object_id=link.source_id, target_id=link.target_id)
-    from ontology.service import _creation_event_for
-    cev = _creation_event_for(session, link) if link.event_id is None else None
-    if cev is not None:
-        link.event_id = cev.id
     _log_action(session, 'ConfirmarVinculo' if resolution == 'confirmed' else 'RechazarVinculo',
                 link.source_id, link.target_id, {'link_id': inp.link_id, 'resolution': resolution,
                                                   # G6b: el replay (as_of) aplica la confirmación a ESTA creación
-                                                  'creation_event_id': str(link.event_id) if link.event_id else None},
+                                                  'creation_event_id': str(link.event_id) if link.event_id else None,
+                                                  # paso 3: el estado lo lleva este evento (el replay ya no
+                                                  # deduce el estado desde el ActionExecuted)
+                                                  'status_event_id': str(st.id)},
                 actor)
-    return {'link_id': inp.link_id, 'status': resolution}
+    return {'link_id': inp.link_id, 'status': resolution, 'status_event_id': str(st.id)}
 
 
 def _link_by_id(session, link_id):

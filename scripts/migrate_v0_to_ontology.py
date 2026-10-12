@@ -277,12 +277,20 @@ def remigrate_flag_warning():
 
 
 def reset_graph_tables(engine, log=print):
-    """DROP SOLO de RESET_TABLES (en orden de FKs). No toca ninguna otra tabla."""
+    """DROP SOLO de RESET_TABLES (en orden de FKs). No toca ninguna otra tabla.
+
+    INFRA_OPERATIVA paso 1: `events` es append-only en la BASE (disparador kh_append_only: UPDATE,
+    DELETE y TRUNCATE fallan). Esta es la ÚNICA puerta que la vacía: un DROP de la tabla entera —el
+    disparador se va con ella y `init_schema` lo vuelve a crear antes de migrar—, protegida por
+    check_reset_allowed (nombre EXACTO de la base, nunca con broker_* con filas). Es una ruptura de
+    linaje: el OID de `events` cambia y las vistas rápidas (core/hotviews) lo detectan y se reconstruyen.
+    El contador kh_versions NO se borra: la versión del grafo nunca retrocede."""
     from ontology.models import Base
     tables = [Base.metadata.tables[t] for t in RESET_TABLES if t in Base.metadata.tables]
     Base.metadata.drop_all(engine, tables=tables)
     log(f"⚠️  --reset: borradas SOLO {', '.join(t.name for t in tables)} "
-        f"(corretaje, MCP, research, alertas y propuestas se conservan)")
+        f"(corretaje, MCP, research, alertas y propuestas se conservan) — ruptura de linaje del "
+        f"registro de eventos (el disparador append-only se recrea en init_schema)")
 
 
 def run_migration(reset=False, dry_run=False, graph_path=None, log=print, confirm_db=None):

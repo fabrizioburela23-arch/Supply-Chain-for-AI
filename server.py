@@ -250,6 +250,15 @@ try:
 except Exception as _e:  # noqa: BLE001
     log.warning('Motor de matrices no registrado (opcional): %s', _e)
 
+# ── Vistas de camino crítico (INFRA_OPERATIVA paso 4) — /api/hot/* ───────────
+# GraphCore + Impact construidos UNA vez por versión del grafo (Postgres o, sin base, el snapshot) por un
+# solo hilo; /api/matrix/{status,impact,metrics,factors,factor/fire} delegan en ellas. Nunca /v1/*.
+try:
+    from core.hotviews.api import hot_bp
+    app.register_blueprint(hot_bp)
+except Exception as _e:  # noqa: BLE001
+    log.warning('Vistas rápidas no registradas (opcional): %s', _e)
+
 # ── Ontología nivel 2 (tensores; sin BD) — /api/tensor/* ─────────────────────
 try:
     from matrix.tensor_api import tensor_bp
@@ -499,6 +508,19 @@ try:
         _sched.register('live_fundamentals', _lf.refresh, every_s=300, run_at_start=True)
     except Exception as _e:  # noqa: BLE001
         log.warning('scheduler: live_fundamentals no registrado (%s)', type(_e).__name__)
+    try:   # INFRA_OPERATIVA paso 4: precalentar las vistas rápidas al arrancar (incluida la importación de
+        # scipy) y, cada 30 s, comparar kh_versions con lo conocido por si se perdió un aviso (LISTEN/NOTIFY)
+        from core.hotviews import builder as _hv_builder, signals as _hv_signals
+
+        def _hot_views_tick():
+            _hv_builder.start(eager=True)
+            try:
+                return _hv_signals.poll()
+            except Exception as _pe:  # noqa: BLE001
+                return {'poll_error': type(_pe).__name__}
+        _sched.register('hot_views', _hot_views_tick, every_s=30, run_at_start=True)
+    except Exception as _e:  # noqa: BLE001
+        log.warning('scheduler: hot_views no registrado (%s)', type(_e).__name__)
     try:   # O1: humo 5 min tras cada arranque (= tras cada deploy) y luego 1×/día, guardado en ops_checks
         from core.ops_check import scheduled as _ops_scheduled, FIRST_AFTER_BOOT_S as _OPS_FIRST
         _sched.register('ops_daily_check', _ops_scheduled, every_s=_OPS_FIRST, run_at_start=False)
@@ -676,6 +698,21 @@ def _add_cors_for_public_api(resp):
         resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
         resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-KHIPU-Key'
         resp.headers['Access-Control-Max-Age'] = '86400'
+    return resp
+
+
+@app.after_request
+def _add_graph_version_header(resp):
+    """§4.1: toda respuesta /api lleva la versión del grafo que el proceso conoce (en memoria, sin ir a la
+    base) para que el cliente invalide su caché. Las rutas de vistas ya ponen la de SU generación."""
+    try:
+        if request.path.startswith('/api/') and 'X-Khipu-Graph-Version' not in resp.headers:
+            from core.hotviews.signals import known as _hv_known
+            _v = _hv_known().get('v')
+            if _v:
+                resp.headers['X-Khipu-Graph-Version'] = str(_v)
+    except Exception:  # noqa: BLE001
+        pass
     return resp
 
 
@@ -1362,14 +1399,45 @@ def _diag_ontologia():
             _when = last_ev.recorded_at.strftime("%Y-%m-%d %H:%M UTC")
             lineage = f' · último evento: {_when} ({last_ev.source})'
             lineage_en = f' · last event: {_when} ({last_ev.source})'
-        return _diag_card(f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.{lineage}',
-                          f'Ontology active — {n_obj} objects, {n_link} links, {n_ev} events.{lineage_en}',
-                          configured=True, ok=True)
+        hot_es, hot_en, hot = _diag_hot_views()
+        return _diag_card(f'Ontología activa — {n_obj} objetos, {n_link} vínculos, {n_ev} eventos.{lineage}{hot_es}',
+                          f'Ontology active — {n_obj} objects, {n_link} links, {n_ev} events.{lineage_en}{hot_en}',
+                          configured=True, ok=True, hot_views=hot)
     except Exception as e:  # noqa: BLE001
         red = _diag_redact(e)
         return _diag_card('Ontología configurada pero no conecta: ' + red,
                           'Ontology is set up but does not connect: ' + red,
                           _db_error_fix(red), configured=True, ok=False)
+
+
+def _diag_hot_views():
+    """Línea del 🩺 para las vistas rápidas (INFRA_OPERATIVA paso 4): generación, edad, ms de construcción,
+    atraso y registro append-only. (texto ES, texto EN, dict)."""
+    try:
+        from core import ledger_ddl
+        from core.hotviews import builder, registry
+        g = registry.generation()
+        st = builder.state()
+        ao = 'events append-only' if ledger_ddl.STATE.get('ready') else 'events SIN disparador append-only'
+        ao_en = 'events append-only' if ledger_ddl.STATE.get('ready') else 'events WITHOUT append-only trigger'
+        if g is None:
+            return (f' · Vistas rápidas: preparándose · {ao}', f' · Fast views: warming up · {ao_en}',
+                    {'warming': True, 'builder': st, 'append_only': ledger_ddl.STATE.get('ready')})
+        lag_v, stale = registry.lag(g)
+        age = int(time.time() - g.built_ts)
+        ms = (g.build_ms or {}).get('total')
+        es = (f' · Vistas rápidas: {g.id}, edad {age} s, construcción {ms} ms'
+              f'{", ATRASADA " + str(lag_v) + " versión(es)" if lag_v else ""} · {ao}')
+        en = (f' · Fast views: {g.id}, age {age} s, build {ms} ms'
+              f'{", BEHIND by " + str(lag_v) + " version(s)" if lag_v else ""} · {ao_en}')
+        if st.get('last_error') and (st.get('last_error_at') or 0) > g.built_ts:
+            es += f' · último error: {st["last_error"][:80]}'
+            en += f' · last error: {st["last_error"][:80]}'
+        return es, en, {'generation': g.id, 'graph_version': g.graph_version, 'age_s': age, 'build_ms': g.build_ms,
+                        'lag_versions': lag_v, 'stale': stale, 'source': g.source,
+                        'append_only': ledger_ddl.STATE.get('ready')}
+    except Exception as e:  # noqa: BLE001
+        return '', '', {'error': type(e).__name__}
 
 
 def _diag_grafo():

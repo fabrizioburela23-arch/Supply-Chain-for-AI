@@ -213,13 +213,73 @@ def _db():
     return session_scope
 
 
+# ── Vistas rápidas (INFRA_OPERATIVA paso 4) ─────────────────────────────────
+# /status, /impact, /metrics, /factors y /factor/fire (sin as_of) DELEGAN en core/hotviews: misma forma JSON,
+# mismos números (mismo kernel; tests/test_hot_views_parity.py), sin reconstruir las matrices en cada pedido
+# (68 ms → ~1,5 ms en /impact; /metrics de ~0,5-50 s → < 1 ms). Lectura propia garantizada: se lee la
+# versión de la base (una lectura por PK) y, si la vista va atrás, se pide una construcción y se espera
+# hasta HOT_WAIT_S; si no llega, se calcula DIRECTO como antes y se marca view.source = 'direct'.
+HOT_WAIT_S = _env_num('HOT_WAIT_S', 2.0, 0.0, 10.0)
+
+
+def _hot(scope, as_of=None):
+    """La generación de vistas que cubre la versión ACTUAL de la base, o None (→ cálculo directo)."""
+    if as_of is not None or os.getenv('HOTVIEWS', 'on').lower() in ('off', '0', 'false', 'no'):
+        return None
+    try:
+        from core.hotviews import builder, signals
+        with scope() as s:
+            r = signals.read_db_version(s)
+        if r is None or r[1] is None:
+            return None
+        return builder.ensure(min_version=r[0], lineage=r[1], timeout=HOT_WAIT_S)
+    except Exception:  # noqa: BLE001 — sin vistas, el camino de siempre
+        log.debug('vistas rápidas no disponibles', exc_info=True)
+        return None
+
+
+def _view_meta(name, g, scope=None):
+    """Sobre `view` para las rutas que delegan (o el del cálculo directo)."""
+    from core.hotviews import registry, signals
+    if g is not None:
+        return registry.meta(name, g)
+    rel, label = signals.release_hash()
+    k = signals.known()
+    return {'name': name, 'generation': None, 'graph_version': k.get('v'), 'release': rel, 'release_label': label,
+            'built_at': datetime.now(timezone.utc).isoformat(timespec='milliseconds'), 'age_ms': 0,
+            'source': 'direct', 'stale': False, 'lag_versions': 0, 'method': 'propagate@1'}
+
+
+def _with_view(payload, name, g):
+    """jsonify(payload + view) con la cabecera X-Khipu-Graph-Version."""
+    try:
+        meta = _view_meta(name, g)
+    except Exception:  # noqa: BLE001
+        meta = None
+    resp = jsonify({**payload, 'view': meta} if meta else payload)
+    if meta and meta.get('graph_version') is not None:
+        resp.headers['X-Khipu-Graph-Version'] = str(meta['graph_version'])
+    return resp
+
+
 @matrix_bp.get('/status')
 def matrix_status():
     scope = _db()
     if scope is None:
         return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
-    from matrix.engine import (REL_TYPES, _graph_epoch, active_factors,
-                               build_matrices, node_index, spectral_radius)
+    from matrix.engine import (REL_TYPES, active_factors, build_matrices, graph_key,
+                               node_index, spectral_radius)
+    g = _hot(scope)
+    if g is not None:
+        core = g.views['graph_core']
+        out = {'available': True, 'objects': len(core.ids), 'rel_types': REL_TYPES,
+               'active_factors': [{'id': f['id'], 'label': f['label'], 'severity': f['severity'],
+                                   'members': len(f['members'])} for f in core.factors]}
+        if core.rho:
+            out['spectral_radius'] = core.rho['rho']
+            out['damping_rho'] = core.rho['damping_rho']
+            out['systemically_stable'] = core.rho['stable']
+        return _with_view(out, 'graph_core', g)
     with scope() as s:
         idx, ids = node_index(s)
         factors = active_factors(s)
@@ -227,7 +287,7 @@ def matrix_status():
         # TTL): así un cambio de peso o de severidad de un Factor invalida el
         # ρ/estabilidad cacheados (la clave por nº de nodos + ids de factor NO
         # capturaba esos cambios → estabilidad rancia hasta el TTL).
-        ck = 'spectral:' + _graph_epoch(s)
+        ck = 'spectral:' + graph_key(s)
         sr = _ttl_get(ck, ttl=60)
         if sr is None:
             try:
@@ -247,7 +307,7 @@ def matrix_status():
         out['spectral_radius'] = sr['rho']
         out['damping_rho'] = sr['damping_rho']
         out['systemically_stable'] = sr['stable']
-    return jsonify(out)
+    return _with_view(out, 'graph_core', None)
 
 
 @matrix_bp.get('/<rel_type>')
@@ -313,15 +373,25 @@ def matrix_impact():
     as_of, bad = _as_of_norm(body.get('as_of') or None)
     if bad:
         return bad
-    with scope() as s:
-        mats, idx, ids = build_matrices(s, as_of=as_of)
-        factors = active_factors(s, as_of=as_of)
-        frag = fragility(idx, factors)
+    g = _hot(scope, as_of)
+    dt = None
+    if g is not None:            # vista: matrices, factores, fragilidad y Tᵀ ya calculados (misma versión)
+        core = g.views['graph_core']
+        mats, idx, ids, factors, frag = core.mats, core.idx, core.ids, core.factors, core.frag
+        dt = core.dt if not kw['rel_weights'] else None      # pesos propios → Tᵀ propia
+    else:
+        with scope() as s:
+            mats, idx, ids = build_matrices(s, as_of=as_of)
+            factors = active_factors(s, as_of=as_of)
+            frag = fragility(idx, factors)
     unknown = [x for x in shock if x not in idx]
     if len(unknown) == len(shock):
         return jsonify({'error': f'ningún id del shock existe: {unknown[:5]}'}), 400
     shock_ids = [x for x in shock if x in idx]
-    impacts, cascade = propagate(mats, idx, ids, shock_ids, frag=frag, **kw)
+    if dt is not None:
+        impacts, cascade = propagate(mats, idx, ids, shock_ids, frag=frag, dt=dt, **kw)
+    else:
+        impacts, cascade = propagate(mats, idx, ids, shock_ids, frag=frag, **kw)
     out = {'shock': shock, 'as_of': as_of,
            'impacts': impacts, 'cascade': cascade,
            'affected': len(impacts) - len(shock),
@@ -350,7 +420,9 @@ def matrix_impact():
                     'reason': 'busy',
                     'error': 'Motor ocupado con otro cálculo pesado: bandas omitidas, reintenta en un minuto',
                     'error_en': 'Engine busy with another heavy computation: bands skipped, retry in a minute'}
-    return jsonify(out)
+    if as_of is not None:
+        return jsonify(out)          # viaje en el tiempo: fuera de las vistas (V7 AsOf llega en el paso 23)
+    return _with_view(out, 'impact', g)
 
 
 @matrix_bp.post('/simulations')
@@ -508,7 +580,7 @@ def matrix_insights():
     scope = _db()
     if scope is None:
         return jsonify({'available': False, 'reason': 'DATABASE_URL no configurada'}), 503
-    from matrix.engine import _graph_epoch
+    from matrix.engine import graph_key
     body = request.get_json(silent=True) or {}
     if not isinstance(body, dict):
         body = {}
@@ -523,9 +595,10 @@ def matrix_insights():
             if isinstance(manual_shock, list) else None
 
     with scope() as s:
-        # Clave cacheada por ÉPOCA del grafo → un alta/baja/cambio de peso o de
-        # Factor invalida los insights (antes solo TTL 180s → datos rancios).
-        epoch = _graph_epoch(s)
+        # Clave cacheada por VERSIÓN del grafo (graph_key: contador tomado al confirmar + linaje + release,
+        # INFRA_OPERATIVA paso 2) → un alta/baja/cambio de peso, de Factor o ConfirmarVinculo invalida los
+        # insights; una noticia o una nota ya NO (antes: MAX(recorded_at), que se movía con todo).
+        epoch = graph_key(s)
     ck = f'insights:{epoch}:{as_of or "now"}:{lang}:{tier}'
     if manual_shock:
         return jsonify({**_insights_build(scope, epoch, ck, as_of, lang, tier, manual_shock), **tier_note})
@@ -702,13 +775,16 @@ def _insights_tier(requested):
 
 
 def _persist_insight(scope, epoch, as_of, lang, payload):
-    """Guarda el insight en el historial, UNA fila por época del grafo.
+    """Guarda el insight en el historial, UNA fila por versión del grafo (clave graph_key en la columna
+    `graph_epoch`, que conserva su nombre por compatibilidad; dedupe = (versión+release, as_of, lang)).
 
     Solo para lecturas del estado real (los shocks manuales son exploración,
     no historia). Nunca debe tumbar la respuesta: si el guardado falla, el
     usuario igual recibe su insight."""
     from ontology.models import InsightSnapshot
     from sqlalchemy import select
+    if str(epoch).startswith('vol-'):
+        return          # sin contador de versión (base vieja): no hay clave estable → no se ensucia la historia
     try:
         with scope() as s:
             dup = s.scalars(select(InsightSnapshot).where(
@@ -774,13 +850,19 @@ def matrix_metrics():
     as_of, bad = _as_of_norm(request.args.get('as_of') or None)
     if bad:
         return bad
-    from matrix.engine import (_graph_epoch, build_matrices, compute_metrics,
+    from matrix.engine import (build_matrices, compute_metrics, graph_key,
                                spectral_radius)
     slot = as_of or 'now'
+    g = _hot(scope, as_of)
+    if g is not None:            # vista Impact: los 937 choques ya calculados en lote → < 1 ms, sin presupuesto
+        from core.hotviews.views import impact as _impact_view
+        payload = _impact_view.metrics_payload(g.views['graph_core'], g.views['impact'])
+        _LAST_METRICS['now'] = payload
+        return _with_view(payload, 'impact', g)
     with scope() as s:
-        # Cacheado por ÉPOCA del grafo → un cambio estructural invalida las
+        # Cacheado por VERSIÓN del grafo → un cambio económico invalida las
         # métricas (antes solo TTL 300s → chokepoints/cascada/ρ rancios).
-        ck = f'metrics:{_graph_epoch(s)}:{slot}'
+        ck = f'metrics:{graph_key(s)}:{slot}'
     hit = _ttl_get(ck, ttl=METRICS_TTL_S)
     if hit is not None:
         return jsonify(hit)
@@ -836,6 +918,10 @@ def matrix_factors():
     as_of, bad = _as_of_norm(request.args.get('as_of') or None)
     if bad:
         return bad
+    g = _hot(scope, as_of)
+    if g is not None:
+        return _with_view({'available': True, 'as_of': None, 'factors': g.views['graph_core'].factors},
+                          'graph_core', g)
     with scope() as s:
         factors = active_factors(s, as_of=as_of)
     return jsonify({'available': True, 'as_of': as_of, 'factors': factors})
@@ -870,9 +956,14 @@ def matrix_factor_fire():
         magnitude = None if mag_raw is None else _num(body, 'magnitude', 1.0, 0.0, MAGNITUDE_MAX)
     except _BadParam as e:
         return _bad_param(str(e))
-    with scope() as s:
-        mats, idx, ids = build_matrices(s)
-        factors = active_factors(s)
+    g = _hot(scope)
+    if g is not None:
+        core = g.views['graph_core']
+        mats, idx, ids, factors = core.mats, core.idx, core.ids, core.factors
+    else:
+        with scope() as s:
+            mats, idx, ids = build_matrices(s)
+            factors = active_factors(s)
     target = next((f for f in factors if f['id'] == fid), None)
     if target is None:
         return jsonify({'error': f'factor no activo o inexistente: {fid}',
@@ -900,7 +991,7 @@ def matrix_factor_fire():
     rho_cri = spectral_radius(mats, factors_crisis, idx, damping=damping)
     top = sorted(((k, v) for k, v in impacts.items() if k not in target['members']),
                  key=lambda x: -x[1])[:15]
-    return jsonify({
+    return _with_view({
         'factor': {'id': fid, 'label': target['label'],
                    'severity_latente': target['severity'],
                    'severity_crisis': crisis,
@@ -912,7 +1003,7 @@ def matrix_factor_fire():
         'impacts': impacts, 'cascade': cascade,
         'affected': len(impacts) - len(shock_ids),
         'top_contagio': [{'id': k, 'impact': round(v, 1)} for k, v in top],
-    })
+    }, 'graph_core', g)
 
 
 @matrix_bp.get('/parity')

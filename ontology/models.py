@@ -18,7 +18,7 @@ import enum
 import uuid
 
 from sqlalchemy import (
-    Column, String, Text, DateTime, Float, Boolean, Integer, Index, ForeignKey, func,
+    CHAR, Column, String, Text, DateTime, Float, Boolean, Integer, Index, ForeignKey, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import declarative_base
@@ -33,11 +33,21 @@ class EventType(str, enum.Enum):
     LINK_REMOVED = 'LinkRemoved'
     PRICE_OBSERVED = 'PriceObserved'
     ACTION_EXECUTED = 'ActionExecuted'  # reservado para Fase 2 (Acciones)
+    # INFRA_OPERATIVA paso 3 (2026-10-12): ConfirmarVinculo/RechazarVinculo ya NO mutan link.properties a
+    # mano: emiten este evento (payload {status, link_id, creation_event_id, by}) y _materialize aplica el
+    # estado a la fila; el replay (as_of) lo reproduce por su valid_from. Es económico: mueve graph_version.
+    LINK_STATUS_CHANGED = 'LinkStatusChanged'
 
 
 class Event(Base):
     """Tabla append-only. NUNCA se hace UPDATE/DELETE sobre filas existentes —
-    una corrección es un evento nuevo con su propio valid_from."""
+    una corrección es un evento nuevo con su propio valid_from.
+
+    Desde INFRA_OPERATIVA paso 1 (2026-10-12) la BASE lo impone: el disparador `events_no_modify` /
+    `events_no_truncate` (función kh_append_only, core/ledger_ddl.py) rechaza UPDATE, DELETE y TRUNCATE
+    también desde una consola. Columnas de solo-DDL (no mapeadas): `txid` (xid8, transacción que lo
+    escribió → versión del grafo vía kh_tx_versions) y `seq` (orden total de inserción). NULL en ambas =
+    evento anterior a la migración (versión 0)."""
     __tablename__ = 'events'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -57,6 +67,8 @@ class Event(Base):
     # ningún documento, y forzarlos a inventar uno sería peor que no tenerlo.
     source_id = Column(String(120), nullable=True, index=True)
     confidence = Column(Float, nullable=True)        # 0-1; None = no declarada
+    # κ de configuración (gobernanza, paso 9 del plan): NULL hasta que exista un release aprobado.
+    release_hash = Column(CHAR(64), nullable=True)
 
     __table_args__ = (
         Index('ix_events_object_validity', 'object_id', 'valid_from', 'valid_to'),
@@ -134,9 +146,12 @@ class InsightSnapshot(Base):
     ensuciarían la ontología con conclusiones en vez de observaciones.
 
     Se guarda UNA fila por cambio real: la clave de deduplicación es
-    (graph_epoch, as_of, lang). Como graph_epoch = MAX(recorded_at) de events,
-    dos lecturas del mismo grafo no generan filas nuevas — la historia queda
-    siendo "qué cambió y cuándo", no un log de cada visita.
+    (graph_epoch, as_of, lang). Desde INFRA_OPERATIVA paso 2 (2026-10-12) la
+    columna `graph_epoch` (nombre conservado por compatibilidad) guarda la CLAVE
+    DEL GRAFO `g{graph_version}.l{linaje}.r{release[:8]}`: el contador que se
+    toma al confirmar (kh_versions) + el release. Ya no es MAX(recorded_at):
+    una noticia o una nota no mueven la versión (no dejan fila), un cambio
+    económico (vínculo, peso, factor, ConfirmarVinculo) sí.
     """
     __tablename__ = 'insight_snapshots'
 

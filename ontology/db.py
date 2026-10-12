@@ -135,6 +135,12 @@ _COLUMNAS_TARDIAS = (
     ('links', 'event_id', 'UUID'),
     # limpieza 2026-10-11 — preguntas abiertas del analista fuera de `errors`
     ('agent_runs', 'open_questions', 'JSONB'),
+    # INFRA_OPERATIVA paso 1 (2026-10-12) — registro de eventos inmutable. Se añaden SIN default (no se
+    # reescribe la tabla ni se inventa un txid para los eventos viejos: quedan NULL = "antes de la
+    # migración", versión 0 del grafo); core/ledger_ddl.ensure_events pone el DEFAULT después.
+    ('events', 'txid', 'XID8'),            # → BIGINT en Postgres < 13 (ver init_schema)
+    ('events', 'seq', 'BIGINT'),
+    ('events', 'release_hash', 'CHAR(64)'),
 )
 
 
@@ -198,8 +204,14 @@ def init_schema(retries=6, delay=2.0):
                 existentes = {(t, c) for t, c in conn.execute(text(
                     "SELECT table_name, column_name FROM information_schema.columns "
                     "WHERE table_schema = current_schema()")).all()}
+                try:     # xid8 existe desde Postgres 13 (Railway usa 16); en una base vieja, bigint
+                    _pgv = int(conn.execute(text('SHOW server_version_num')).scalar())
+                except Exception:  # noqa: BLE001
+                    _pgv = None
                 for tabla, columna, tipo in _COLUMNAS_TARDIAS:
                     if (tabla, columna) not in existentes:
+                        if tipo == 'XID8' and _pgv is not None and _pgv < 130000:
+                            tipo = 'BIGINT'
                         conn.execute(text(f'ALTER TABLE {tabla} ADD COLUMN IF NOT EXISTS {columna} {tipo}'))
                 indices = {n for (n,) in conn.execute(text(
                     "SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()")).all()}
@@ -207,6 +219,19 @@ def init_schema(retries=6, delay=2.0):
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_events_source_id ON events (source_id)'))
                 if 'ix_links_event_id' not in indices:   # G5: la retracción dirigida busca por event_id
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_links_event_id ON links (event_id)'))
+
+            # Paso 1 de INFRA_OPERATIVA: events append-only (disparador), contador de versión del grafo,
+            # bitácora de vistas, DEFAULT de txid/seq e índice parcial. Idempotente y nunca lanza.
+            try:
+                from core import ledger_ddl
+                ledger_ddl.ensure_all(engine)
+            except Exception as e:  # noqa: BLE001
+                log.warning('init_schema: ledger_ddl no aplicado (%s)', type(e).__name__)
+            try:   # un esquema re-creado (tests, re-migración) es otro linaje: las vistas lo releen
+                from core.hotviews import signals as _hv_signals
+                _hv_signals.on_schema_init()
+            except Exception:  # noqa: BLE001
+                pass
 
             if intento > 1:
                 log.warning('init_schema: OK en el intento %d (la base tardó en arrancar)', intento)

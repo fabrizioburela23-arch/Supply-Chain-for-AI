@@ -192,11 +192,12 @@ def node_index(session, as_of=None):
     fila/columna fantasma en las matrices — con Notas, Tesis y sobre todo
     Noticias persistidas, eso habría inflado el grafo en silencio.
 
-    Cacheado por (época del grafo, as_of): a escala grande, reconstruir el
+    Cacheado por (clave del grafo, as_of): a escala grande, reconstruir el
     índice desde Postgres en CADA request es el cuello de botella real, no la
-    matemática (spec §"Estabilidad estructural"). La época cambia con cualquier
-    escritura de eventos → invalida sin tocar nada más."""
-    ck = ('nodeidx', _graph_epoch(session), as_of or 'now')
+    matemática (spec §"Estabilidad estructural"). La clave (graph_key: versión
+    tomada al confirmar + linaje + release) cambia con cada escritura ECONÓMICA
+    → invalida sin tocar nada más."""
+    ck = ('nodeidx', graph_key(session), as_of or 'now')
     hit = _cache_get(ck)
     if hit is not None:
         return hit
@@ -477,6 +478,65 @@ def propagate(mats, idx, ids, shock_ids, magnitude=1.0, damping=0.6,
     return impacts, order
 
 
+def propagate_block(DT, frag, X0, damping=0.6, max_hops=6, threshold=0.01, nonlinear=False):
+    """EL MISMO kernel que `propagate`, en LOTE: cada columna de X0 (n×k) es un choque independiente.
+    Las operaciones son las del bucle, en el mismo orden y elemento a elemento (csr @ matriz acumula cada
+    (i, k) en el mismo orden que csr @ vector), así que el resultado es IDÉNTICO al de `propagate` columna
+    por columna (tests/test_hot_views_parity.py lo exige en los 937 choques). Devuelve (total n×k float64,
+    first_hop n×k int8: salto en que cada nodo se alcanzó por primera vez; 0 = origen o no alcanzado).
+    No implementa `eps` (corte por convergencia): en lote cada columna corre hasta max_hops o hasta
+    quedar en cero (una columna en cero sigue en cero: Tᵀ·0 = 0)."""
+    X0 = np.asarray(X0, dtype=float)
+    if X0.ndim == 1:
+        X0 = X0[:, None]
+    n, k = X0.shape
+    fcol = (frag if frag is not None else np.ones(n))[:, None]
+    total = X0.copy()
+    reached = X0 != 0
+    first = np.zeros((n, k), dtype=np.int8)
+    cur = X0
+    for hop in range(1, max_hops + 1):
+        cur = damping * np.asarray(DT @ cur) * fcol
+        if nonlinear:
+            cur = 1.0 - np.exp(-cur)
+        cur = np.minimum(cur, 1.0)
+        cur[cur < threshold] = 0.0
+        if not cur.any():
+            break
+        newly = (cur > 0) & ~reached
+        first[newly] = hop
+        reached |= newly
+        total = np.maximum(total, cur)
+    return total, first
+
+
+def propagate_many(mats, idx, ids, sources, magnitude=1.0, damping=0.6, max_hops=6, threshold=0.01,
+                   rel_weights=None, frag=None, nonlinear=False, dt=None, chunk=128):
+    """Choques de UN nodo para cada id de `sources`, en lote (vistas rápidas, INFRA_OPERATIVA §4.4).
+    Devuelve {source_id: (impacts, hops)} con `impacts` EXACTAMENTE como `propagate(...)[0]` (dict id→pct
+    redondeado igual: round(float(min(1, x))·100, 2)) y `hops` = {id: salto de primera llegada} (lo mismo
+    que {o['id']: o['hop']} de la cascada de `propagate`). 46 ms en lote contra 268-357 ms del bucle (MAP 3)."""
+    n = len(ids)
+    DT = dt if dt is not None else _transpose_csr(_dependency_matrix(mats, rel_weights))
+    cols = [idx[s] for s in sources if s in idx]
+    out = {}
+    for start in range(0, len(cols), max(1, int(chunk))):
+        part = cols[start:start + chunk]
+        X0 = np.zeros((n, len(part)))
+        for c, i in enumerate(part):
+            X0[i, c] = magnitude
+        total, first = propagate_block(DT, frag, X0, damping=damping, max_hops=max_hops,
+                                       threshold=threshold, nonlinear=nonlinear)
+        for c, i in enumerate(part):
+            col = total[:, c]
+            nz = np.nonzero(col > 0)[0]
+            impacts = {ids[j]: round(float(min(1.0, col[j])) * 100, 2) for j in nz.tolist()}
+            fh = first[:, c]
+            hops = {ids[j]: int(fh[j]) for j in np.nonzero(fh)[0].tolist()}
+            out[ids[i]] = (impacts, hops)
+    return out
+
+
 def dependency_transpose(mats, rel_weights=None):
     """Tᵀ lista para `propagate(..., dt=…)`: se calcula UNA vez y se reutiliza en todos los choques."""
     return _transpose_csr(_dependency_matrix(mats, rel_weights))
@@ -665,36 +725,25 @@ def compute_metrics(session, as_of=None):
     return metrics, factors
 
 
-# ── caché en proceso del índice/matrices con invalidación por época ─────────
-# A escala grande NO se puede reconstruir el índice ni las matrices desde cero
-# en cada request. Se cachean por "época del grafo" = MAX(recorded_at) de events
-# (consulta indexada barata) que cambia con CUALQUIER escritura → invalidación
-# automática y correcta, sin listeners frágiles. TTL como respaldo.
+# ── caché en proceso del índice/matrices con invalidación por VERSIÓN del grafo ──
+# INFRA_OPERATIVA paso 2 (2026-10-12): adiós a _graph_epoch (= MAX(recorded_at) de 4 tipos de evento). Tenía
+# tres defectos medidos (MAP 3 §3): se movía con noticias/simulaciones/notas (sobre-invalidación, 410-435 ms
+# por /metrics), NO se movía con ConfirmarVinculo (sub-invalidación) y no seguía el orden de confirmación
+# (carrera entre dos transacciones). La clave ahora es graph_key(): el contador kh_versions que el hook
+# before_commit incrementa SOLO con eventos económicos (core/hotviews/signals.py) + linaje + release.
 _CACHE = {}
 _CACHE_MAX = 24
 
 
-# Solo los eventos que cambian la ESTRUCTURA del grafo mueven la época. Se
-# EXCLUYE PriceObserved (se escribe muy seguido con la ingesta de precios) y
-# ActionExecuted: el índice, las matrices, las métricas y ρ(T) NO dependen del
-# precio → incluirlo haría trillar la caché sin ninguna razón de correctitud.
-_STRUCTURAL_EVENTS = ('ObjectCreated', 'ObjectUpdated', 'LinkCreated', 'LinkRemoved')
-
-
-def _graph_epoch(session):
-    """Token que cambia con cualquier cambio ESTRUCTURAL del grafo (MAX
-    recorded_at de eventos de objetos/links). Barato (índices sobre event_type y
-    recorded_at). Captura altas/bajas de nodos y links, cambios de peso y de
-    severidad/coeficiente de Factores (todo pasa por ObjectUpdated/LinkCreated)
-    sin enumerar nada. Si falla, época volátil → no cachea de más."""
+def graph_key(session):
+    """Clave de caché derivada del grafo: `g{graph_version}.l{linaje}.r{release[:8]}`. Una lectura por PK
+    (~0,05 ms, sin degradarse con millones de eventos). Sin contador (base vieja/caída) → clave volátil:
+    no cachea de más."""
     try:
-        from ontology.models import Event
-        v = session.execute(select(Event.recorded_at)
-                            .where(Event.event_type.in_(_STRUCTURAL_EVENTS))
-                            .order_by(Event.recorded_at.desc()).limit(1)).scalar()
-        return v.isoformat() if v is not None else '0'
+        from core.hotviews.signals import graph_key as _gk
+        return _gk(session)
     except Exception:  # noqa: BLE001
-        return _utcnow().isoformat()
+        return 'vol-' + _utcnow().isoformat()
 
 
 def _cache_get(key):

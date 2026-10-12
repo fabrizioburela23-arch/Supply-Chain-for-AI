@@ -15,6 +15,14 @@ from sqlalchemy import select, or_, and_, func
 
 from ontology.models import Event, ObjectRecord, LinkRecord, EventType
 
+# INFRA_OPERATIVA paso 2: la versión del grafo se toma AL CONFIRMAR (hook before_commit sobre toda Session);
+# apply_event solo marca los ids que toca un evento económico. Nunca rompe la importación.
+try:
+    from core.hotviews import signals as _hv_signals
+    _hv_signals.install()
+except Exception:  # noqa: BLE001
+    _hv_signals = None
+
 
 class OntologyError(ValueError):
     pass
@@ -128,6 +136,8 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
     if event_type == EventType.LINK_CREATED.value and object_id and target_id and valid_to is None:
         payload = _dedup_link_payload(session, payload or {}, object_id, target_id, valid_from)
 
+    prev_type = _hv_signals.pre_type(session, event_type, object_id) if _hv_signals else None
+
     ev = Event(
         id=uuid.uuid4(), event_type=event_type, object_id=object_id, target_id=target_id,
         payload=payload or {}, valid_from=valid_from, valid_to=valid_to,
@@ -143,6 +153,8 @@ def apply_event(session, event_type, payload, valid_from, source, actor,
     session.flush()  # para tener ev.recorded_at si hiciera falta, y detectar errores de constraint ya
 
     _materialize(session, ev)
+    if _hv_signals is not None:
+        _hv_signals.mark(session, ev, prev_type)     # económico → graph_version+1 al confirmar
     return ev
 
 
@@ -399,11 +411,48 @@ def _materialize(session, ev):
         for link in session.scalars(q).all():
             link.valid_to = ev.valid_from
 
+    elif ev.event_type == EventType.LINK_STATUS_CHANGED.value:
+        _apply_link_status(session, ev)
+
     elif ev.event_type == EventType.PRICE_OBSERVED.value:
         pass  # se consulta vía events; no toca objects/links (evita hinchar la tabla materializada)
 
     # ActionExecuted (Fase 2): se registra el evento; su efecto de dominio (si
     # crea/edita otro objeto) se modela con eventos ObjectCreated/Updated aparte.
+
+
+LINK_STATUSES = ('proposed', 'confirmed', 'rejected')
+
+
+def _apply_link_status(session, ev):
+    """LinkStatusChanged (INFRA_OPERATIVA paso 3): el estado de UNA fila de links (la creada por
+    `creation_event_id`; si no hay, la de `link_id`) pasa a `status`, con `<status>_by`. Es la ÚNICA forma
+    de cambiar el estado de un vínculo: la fila materializada es una proyección del registro."""
+    p = ev.payload or {}
+    status = p.get('status')
+    if status not in LINK_STATUSES:
+        raise OntologyError(f'LinkStatusChanged: status inválido {status!r} (válidos: {", ".join(LINK_STATUSES)})')
+    rows = []
+    cid = p.get('creation_event_id')
+    if cid:
+        try:
+            rows = session.scalars(select(LinkRecord).where(LinkRecord.event_id == uuid.UUID(str(cid)))).all()
+        except ValueError:
+            raise OntologyError(f'creation_event_id inválido: {cid}')
+    if not rows and p.get('link_id'):
+        try:
+            r = session.get(LinkRecord, uuid.UUID(str(p['link_id'])))
+        except ValueError:
+            raise OntologyError(f'link_id inválido: {p.get("link_id")}')
+        rows = [r] if r is not None else []
+    if not rows:
+        raise OntologyError('LinkStatusChanged: no hay fila de links para ese creation_event_id/link_id')
+    by = p.get('by') or ev.actor
+    for r in rows:
+        props = dict(r.properties or {})
+        props['status'] = status
+        props[f'{status}_by'] = by
+        r.properties = props
 
 
 def get_object(session, object_id):
@@ -509,22 +558,31 @@ def _links_active_at(session, as_of_dt):
         if is_genesis(ev.valid_from):
             row['valid_from_known'] = False
         active.append(row)
-    # G6b: ConfirmarVinculo cambia el estado de la fila materializada; el replay
-    # lo aplica desde su ActionExecuted (creation_event_id) para que as_of y el
-    # presente coincidan (p. ej. el descuento por "no verificado" en las matrices).
+    # Estado de los vínculos (paso 3 de INFRA_OPERATIVA): LinkStatusChanged con valid_from ≤ as_of, en orden
+    # de registro (el último manda). Ya no "filtra el futuro": un vínculo confirmado HOY no aparece
+    # confirmado en una foto de ayer. Compatibilidad G6b: los ConfirmarVinculo ANTERIORES a este evento
+    # (ActionExecuted sin status_event_id, base de producción) se siguen aplicando como antes.
     if active:
-        conf = {}
+        status = {}
         for a in session.scalars(select(Event).where(
                 Event.event_type == 'ActionExecuted',
                 Event.payload['action'].astext == 'ConfirmarVinculo')).all():
-            cid = (a.payload or {}).get('creation_event_id')
-            if cid:
-                conf[_uuid_str(cid)] = a.actor
-        if conf:
+            pa = a.payload or {}
+            cid = pa.get('creation_event_id')
+            if cid and not pa.get('status_event_id'):
+                status[_uuid_str(cid)] = ('confirmed', a.actor)
+        for e in session.scalars(select(Event).where(
+                Event.event_type == EventType.LINK_STATUS_CHANGED.value,
+                Event.valid_from <= as_of_dt).order_by(Event.recorded_at, Event.id)).all():
+            pe = e.payload or {}
+            cid = pe.get('creation_event_id')
+            if cid and pe.get('status') in LINK_STATUSES:
+                status[_uuid_str(cid)] = (pe['status'], pe.get('by') or e.actor)
+        if status:
             for row in active:
-                who = conf.get(row['event_id'])
-                if who is not None:
-                    row['properties'] = dict(row['properties'] or {}, status='confirmed', confirmed_by=who)
+                st = status.get(row['event_id'])
+                if st is not None:
+                    row['properties'] = dict(row['properties'] or {}, status=st[0], **{f'{st[0]}_by': st[1]})
     return active
 
 
