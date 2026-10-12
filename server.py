@@ -4147,8 +4147,8 @@ You may receive [CONTEXT_UPDATE] {json} messages — silent snapshots of Khipus 
 
 ## THE ONE-MINUTE TOUR (run_guided_demo)
 - Start it ONLY when the user explicitly asks for a demo, a tour or to be shown the app — never on your own, never at the start of a session, never on a greeting.
-- YOU narrate it with your voice: every call shows one step on screen and returns a "say" line. Say EXACTLY that line, with nothing added before or after, and right after saying it call run_guided_demo with action next. Repeat until it returns done:true; then stay quiet and wait for the user.
-- If the user interrupts during the tour, answer briefly and ask whether to continue (yes → next, no → stop). If a result says stopped:true, the user closed the tour: do not continue it.
+- YOU narrate it with your voice, and THE APP keeps the pace: run_guided_demo with action start shows the first step and returns a "say" line — say EXACTLY that line, with nothing added before or after. Then the app moves the screen and sends you each next line as a message that starts with [TOUR n/N] (for example "[TOUR 2/9] Este es el mapa…"): say EXACTLY the text after the tag, nothing before or after, and do NOT call any tool for it. Never read the tag aloud. After the last line, stay quiet and wait for the user.
+- If the user interrupts during the tour, answer briefly and ask whether to continue (yes → run_guided_demo with action next, no → action stop). If a result says stopped:true or done:true, the tour is over: do not continue it.
 - When the user pressed the tour button on screen, the app opens your voice ONLY TO LISTEN: a [CONTEXT_UPDATE] says listen_only:true (no microphone). Then just narrate the tour — do not ask questions, do not greet again, and after done:true say nothing more. If listen_only becomes false, the user turned the microphone on: you can talk normally.
 
 ## MONEY — ALWAYS TELL THE TRUTH (RULES YOU MUST NEVER BREAK)
@@ -4362,15 +4362,16 @@ def _bixby_client_tools():
           'constellations, space or launches. If the result says the data is unavailable, say so — never invent a '
           'number.', {'query': S('Optional operator/constellation the user asked about, e.g. "Starlink". Leave empty '
                                  'for the overall summary.')}),
-        T('run_guided_demo', 'The ONE-MINUTE GUIDED TOUR of Khipus OS, narrated by YOU: each call shows one step on '
-          'screen and returns the line you must say. STRICT RULE: start it ONLY when the user EXPLICITLY asks for a '
-          'demo or tour ("demo", "demostración", "tour", "recorrido", "hazme una demo", "muéstrame la app") — NEVER at '
-          'session start, on greetings, because the user seems new, or proactively. Flow: action start → say EXACTLY '
-          'the returned "say" line (nothing before or after) → right after saying it call again with action next → '
-          'repeat until it returns done:true, then stay quiet and wait. If the user interrupts, answer briefly and '
-          'ask if they want to continue (yes → next, no → stop). If it returns stopped:true the user closed the tour: '
-          'do not continue.', {'action': E(VOICE_TOUR_ACTIONS, 'start = begin the tour (default) · next = the next '
-                                           'step, only right after you said the previous line · stop = end it')}),
+        T('run_guided_demo', 'The ONE-MINUTE GUIDED TOUR of Khipus OS, narrated by YOU while the app keeps the pace. '
+          'STRICT RULE: start it ONLY when the user EXPLICITLY asks for a demo or tour ("demo", "demostración", '
+          '"tour", "recorrido", "hazme una demo", "muéstrame la app") — NEVER at session start, on greetings, because '
+          'the user seems new, or proactively. Flow: action start → say EXACTLY the returned "say" line (nothing '
+          'before or after). The app then sends each next line as a message "[TOUR n/N] <line>": say EXACTLY the line '
+          '(never the tag) and call no tool for it; after the last one stay quiet. Use action next only to RESUME '
+          'after the user interrupted and said yes; it returns the next "say" line or done:true. Action stop ends it. '
+          'If a result says stopped:true or done:true the tour is over: do not continue.',
+          {'action': E(VOICE_TOUR_ACTIONS, 'start = begin the tour (default) · next = resume after an interruption '
+                       '· stop = end it')}),
         T('control_interface', 'Adjust Khipus OS itself, only when the user asks: new_conversation (clear the chat) · '
           'arrange_windows (tidy the windows beside the chat) · close_all_windows · minimize_all_windows · '
           'simple_mode / pro_mode (how detailed the agents explain) · light_theme / dark_theme · spanish / english '

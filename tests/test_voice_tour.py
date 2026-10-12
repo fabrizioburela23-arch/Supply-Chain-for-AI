@@ -294,3 +294,14 @@ def test_tour_voice_sin_ajustes_ni_variantes():
 def test_instrucciones_saben_de_la_sesion_solo_para_escuchar():
     p = server.BIXBY_SYSTEM_PROMPT
     assert 'listen_only:true' in p and 'do not ask questions' in p and 'after done:true say nothing more' in p
+
+
+def test_instrucciones_la_app_marca_el_ritmo_del_recorrido():
+    """Conversación real de ElevenLabs (2026-10-12): el agente dijo la frase 1 y terminó su turno sin pedir `next`
+    → el recorrido se quedaba en el paso 1. Ahora la app avanza y le manda cada frase como "[TOUR n/N] …"."""
+    p = server.BIXBY_SYSTEM_PROMPT
+    tour_sec = p[p.index('## THE ONE-MINUTE TOUR'):p.index('## MONEY')]
+    assert '[TOUR n/N]' in tour_sec and 'do NOT call any tool for it' in tour_sec and 'Never read the tag aloud' in tour_sec
+    assert 'right after saying it call run_guided_demo with action next' not in p          # el diseño que se trababa
+    d = {t['name']: t for t in server._bixby_client_tools()}['run_guided_demo']['description']
+    assert '[TOUR n/N] <line>' in d and 'RESUME' in d and 'right after saying it call again with action next' not in d
