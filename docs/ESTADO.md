@@ -9,6 +9,25 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA: DECISIONES, PUERTAS SHACL, VISTAS RÁPIDAS, GOBERNANZA
+
+Pedidos de Fabrizio: "implementar hot path views para tomar decisiones en tiempo real sin sacrificar la riqueza del grafo
+… y sigue con el plan hasta acabar" y "transformar el grafo en infraestructura operativa: 1. Objetos de Decisión,
+2. Puertas SHACL, 3. Hot Path Views, 4. Gobernanza — prioriza auditabilidad, velocidad y trazabilidad".
+- 6 mapas medidos (lectores del grafo, decisiones en tiempo real, escrituras/invalidación, registros de decisión,
+  validaciones + banco SHACL, versionado/replay) → 2 diseños → juez → `docs/INFRA_OPERATIVA.md`.
+- Medido: pySHACL 50-100 ms por grafo foco (lento para tiempo real); el MISMO TTL compilado a Python 0,01-0,3 ms con 0
+  diferencias en 3.000 casos → SHACL = fuente de las reglas, validadores compilados en producción, pySHACL en CI.
+  `/api/matrix/impact` 68 ms → < 2 ms con la dependencia precalculada; 13 cargadores distintos del snapshot.
+- Hoy: `events` acepta UPDATE/DELETE (sin disparador), el actor es texto libre (cualquier nombre con el PIN), ninguna
+  decisión anota versión de reglas/kernel, órdenes de la casa sin fila en broker_orders.
+- Plan: 26 pasos desplegables (§10); los primeros (registro inmutable, graph_version al confirmar, vistas v1) no
+  necesitan decisiones; D1-D7 nuevas para Fabrizio (aprobador único con PIN, Railway no fija números, retención…).
+- Incidente de proceso: dos flujos de agentes respondieron la pregunta de Neo4j en vez de su tarea; se relanzaron con el
+  mandato textual de Fabrizio en `user_mandate` (citar SIEMPRE el pedido literal en los prompts de los agentes).
+
+---
+
 # SESIÓN 2026-10-12 (c) — AUDITORÍA: QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN (docs/BRECHAS_V2.md)
 
 Fabrizio: "dime qué te falta para que la estructura esté bien tanto en código como matemáticamente". Auditoría de 5

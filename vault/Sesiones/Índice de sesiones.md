@@ -6,8 +6,9 @@ tags: ["capa/documentacion", "tipo/indice"]
 
 # Índice de sesiones
 
-91 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
+92 sesiones de trabajo leídas de [[Doc ESTADO]], en el orden del archivo (lo más nuevo arriba).
 
+- [[Sesión 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA - DECISIONES, PUERTAS SHACL, VISTAS]] — 1 archivos
 - [[Sesión 2026-10-12 (c) — AUDITORÍA - QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN]] — 1 archivos
 - [[Sesión 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)]] — 2 archivos
 - [[Sesión 2026-10-12 — EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (sw v256)]] — 1 archivos

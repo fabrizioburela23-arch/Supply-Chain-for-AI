@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "research/committee.py"
 lenguaje: "python"
-lineas: 2215
+lineas: 2259
 aliases: ["research/committee.py"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # research/committee.py
 
-> Módulo · capa [[Capa Comité]] · 2.215 líneas · `research/committee.py`
+> Módulo · capa [[Capa Comité]] · 2.259 líneas · `research/committee.py`
 
 ## Para qué sirve
 
@@ -18,46 +18,46 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 
 ## API pública
 
-- `validation_status(agent_types, table)` — C6: ¿cada analista presente tiene historial suficiente (≥ MIN_N finales)? {status: validated|partial|unvalidated, validated, min_n, … _(línea 84)_
-- `quorum_check(present)` — C7: fundamental obligatorio + al menos MIN_AGENTS de QUORUM_POOL con conclusiones. _(línea 112)_
-- `conviction_by_horizon(claims, contradicted_ids=…, calib=…, reliab=…)` — claims: [{id, agent_type, stance, horizon, confidence}] (activas). calib(agent_type, raw) → calibrada · reliab(agent_type) → fiabilidad … _(línea 146)_
-- `agent_views(conv)` — Postura neta ponderada de cada agente (todas las horizontes con peso). _(línea 192)_
-- `mandate_from(client)` — Normaliza el mandato del cliente (brokerage) → fracciones. Claves aceptadas (en %): risk_budget_pct, max_position_pct, min_vol_pct; listas … _(línea 215)_
-- `alpaca_symbol(symbol)` — Ticker del catálogo (Yahoo) → símbolo de Alpaca: MOG-A → MOG.A; NVDA igual. _(línea 256)_
-- `decide(overall, investable=…, insufficient=…, has_position=…, current_w=…, target_w=…, blocked=…, tradable=…, quorum=…)` — Decisión por umbrales fijos. Devuelve (decisión, motivo_es, motivo_en). tradable=False (cotiza fuera de EE.UU.: Alpaca no la opera) → una … _(línea 263)_
-- `target_weight(vol_ann_pct, mandate)` — Peso objetivo por volatilidad: presupuesto_de_riesgo / vol (tope del mandato). _(línea 307)_
-- `compute_sizing(decision, vol_ann_pct, mandate, equity=…, current_value=…, current_qty=…, price=…, buying_power=…, trim_reason=…, price_is_usd=…, validated=…)` — Tamaño de la orden (determinista) con la cuenta en texto es/en. Topes, en orden: mandato (máx. por posición), poder de compra y los límites … _(línea 316)_
-- clase `ThesisItem` _(línea 447)_
-- clase `RiskItem` _(línea 462)_
-- clase `DissentItem` _(línea 468)_
-- clase `ConclusionItem` _(línea 475)_
-- clase `ChairMemo` _(línea 481)_
-- `chair_checks(obj, valid_refs, quant_decision, min_date, max_date, evidence_items, agent_types)` _(línea 562)_
-- `brokerage_service()` — brokerage.service si está instalado y disponible; si no, None. _(línea 622)_
-- `build_package(label, symbol, claims_by_id, conv, overall, rels, live, risk, sizing, decision, reason_es, client)` — Paquete NUMERADO para el presidente + items para el guardián de cifras. _(línea 725)_
-- `deterministic_memo(label, decision, reason_es, reason_en, conv, overall, claims_by_id, cref, views, rels, risk, review_date, ai_error=…, ai_error_en=…)` — Memo SIN IA: plantillas sobre los números del núcleo (siempre disponible). _(línea 791)_
-- `progress_set(memo_id, stage, **extra)` _(línea 915)_
-- `progress_say(memo_id, *msgs)` — Publica mensajes de la sala del comité (research/deliberation) EN VIVO. _(línea 930)_
-- `progress_get(memo_id)` _(línea 946)_
-- `progress_clear(memo_id)` _(línea 959)_
-- `run_committee(session, entity_id, requested_by, client_id=…, provider=…, deps=…, memo_id=…)` — Corre el comité completo y persiste el memo. Devuelve el memo (dict). _(línea 964)_
-- `memo_dict(m, redact_client=…)` _(línea 1636)_
-- `falsified_in_memo(session, m)` — C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable). _(línea 1679)_
-- `get_memo(session, memo_id, redact_client=…)` _(línea 1693)_
-- `latest_memo(session, entity_id, redact_client=…)` _(línea 1701)_
-- `list_memos(session, entity_id=…, limit=…)` _(línea 1709)_
-- `approve_memo(session, memo_id, actor, note=…, brokerage=…)` — Aprobación HUMANA (la ruta exige PIN). Con cliente y decisión accionable crea una PREVISUALIZACIÓN de orden en brokerage … _(línea 1752)_
-- `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — Rechazo humano. Si el memo ya tenía una orden esperando aprobación en Clientes, se RETIRA (brokerage.reject_preview) — si no, un humano … _(línea 1857)_
-- `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 1905)_
-- `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 1919)_
-- `fail_memo(session, memo_id, error, error_en=…)` _(línea 1940)_
-- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 1949)_
-- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 1978)_
-- `release_run_slot()` _(línea 1983)_
-- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 1990)_
-- `invalidate_board_cache()` _(línea 2034)_
-- `board(session, limit=…)` _(línea 2064)_
-- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2175)_
+- `validation_status(agent_types, table)` — C6: ¿cada analista presente tiene historial suficiente (≥ MIN_N finales)? {status: validated|partial|unvalidated, validated, min_n, … _(línea 88)_
+- `quorum_check(present)` — C7: fundamental obligatorio + al menos MIN_AGENTS de QUORUM_POOL con conclusiones. _(línea 116)_
+- `conviction_by_horizon(claims, contradicted_ids=…, calib=…, reliab=…)` — claims: [{id, agent_type, stance, horizon, confidence}] (activas). calib(agent_type, raw) → calibrada · reliab(agent_type) → fiabilidad … _(línea 150)_
+- `agent_views(conv)` — Postura neta ponderada de cada agente (todas las horizontes con peso). _(línea 214)_
+- `mandate_from(client)` — Normaliza el mandato del cliente (brokerage) → fracciones. Claves aceptadas (en %): risk_budget_pct, max_position_pct, min_vol_pct; listas … _(línea 237)_
+- `alpaca_symbol(symbol)` — Ticker del catálogo (Yahoo) → símbolo de Alpaca: MOG-A → MOG.A; NVDA igual. _(línea 278)_
+- `decide(overall, investable=…, insufficient=…, has_position=…, current_w=…, target_w=…, blocked=…, tradable=…, quorum=…)` — Decisión por umbrales fijos. Devuelve (decisión, motivo_es, motivo_en). tradable=False (cotiza fuera de EE.UU.: Alpaca no la opera) → una … _(línea 285)_
+- `target_weight(vol_ann_pct, mandate)` — Peso objetivo por volatilidad: presupuesto_de_riesgo / vol (tope del mandato). _(línea 329)_
+- `compute_sizing(decision, vol_ann_pct, mandate, equity=…, current_value=…, current_qty=…, price=…, buying_power=…, trim_reason=…, price_is_usd=…, validated=…)` — Tamaño de la orden (determinista) con la cuenta en texto es/en. Topes, en orden: mandato (máx. por posición), poder de compra y los límites … _(línea 338)_
+- clase `ThesisItem` _(línea 483)_
+- clase `RiskItem` _(línea 498)_
+- clase `DissentItem` _(línea 504)_
+- clase `ConclusionItem` _(línea 511)_
+- clase `ChairMemo` _(línea 517)_
+- `chair_checks(obj, valid_refs, quant_decision, min_date, max_date, evidence_items, agent_types)` _(línea 606)_
+- `brokerage_service()` — brokerage.service si está instalado y disponible; si no, None. _(línea 666)_
+- `build_package(label, symbol, claims_by_id, conv, overall, rels, live, risk, sizing, decision, reason_es, client)` — Paquete NUMERADO para el presidente + items para el guardián de cifras. _(línea 769)_
+- `deterministic_memo(label, decision, reason_es, reason_en, conv, overall, claims_by_id, cref, views, rels, risk, review_date, ai_error=…, ai_error_en=…)` — Memo SIN IA: plantillas sobre los números del núcleo (siempre disponible). _(línea 835)_
+- `progress_set(memo_id, stage, **extra)` _(línea 959)_
+- `progress_say(memo_id, *msgs)` — Publica mensajes de la sala del comité (research/deliberation) EN VIVO. _(línea 974)_
+- `progress_get(memo_id)` _(línea 990)_
+- `progress_clear(memo_id)` _(línea 1003)_
+- `run_committee(session, entity_id, requested_by, client_id=…, provider=…, deps=…, memo_id=…)` — Corre el comité completo y persiste el memo. Devuelve el memo (dict). _(línea 1008)_
+- `memo_dict(m, redact_client=…)` _(línea 1680)_
+- `falsified_in_memo(session, m)` — C8: conclusiones de ESTE memo que el mercado ya falsó (regla verificable). _(línea 1723)_
+- `get_memo(session, memo_id, redact_client=…)` _(línea 1737)_
+- `latest_memo(session, entity_id, redact_client=…)` _(línea 1745)_
+- `list_memos(session, entity_id=…, limit=…)` _(línea 1753)_
+- `approve_memo(session, memo_id, actor, note=…, brokerage=…)` — Aprobación HUMANA (la ruta exige PIN). Con cliente y decisión accionable crea una PREVISUALIZACIÓN de orden en brokerage … _(línea 1796)_
+- `reject_memo(session, memo_id, actor, reason=…, brokerage=…)` — Rechazo humano. Si el memo ya tenía una orden esperando aprobación en Clientes, se RETIRA (brokerage.reject_preview) — si no, un humano … _(línea 1901)_
+- `memo_allows_order(session, memo_id, preview_id=…)` — SEGUNDO CANDADO (lo llama brokerage.service._execute antes de enviar una orden source='committee'): solo se envía si su memo está … _(línea 1949)_
+- `mark_executed(session, memo_id, order=…, actor=…)` — Para el módulo de corretaje: la orden del memo se ejecutó. Nunca espera un bloqueo (SKIP LOCKED): la llama el corretaje con su orden … _(línea 1963)_
+- `fail_memo(session, memo_id, error, error_en=…)` _(línea 1984)_
+- `create_placeholder(session, entity_id, requested_by, client_id=…)` — Fila 'running' para correr el comité en segundo plano (la API la consulta). _(línea 1993)_
+- `acquire_run_slot()` — Cupo para correr un comité (no bloquea). False → responder 429. _(línea 2022)_
+- `release_run_slot()` _(línea 2027)_
+- `recent_memo(session, entity_id, client_id=…, now=…)` — Memo reutilizable para el mismo (entidad, cliente): uno que sigue deliberando, o uno propuesto hace menos de REUSE_DONE_MIN. Los 'running' … _(línea 2034)_
+- `invalidate_board_cache()` _(línea 2078)_
+- `board(session, limit=…)` _(línea 2108)_
+- `refresh_targets(session, max_n=…, stale_days=…, entities=…)` — Qué empresas investigar al pulsar «Actualizar» en la Pizarra: las pedidas, o las de investigación más vieja (> stale_days), o — pizarra … _(línea 2219)_
 
 **Internas** (empiezan con `_`): `_now`, `_ttl_hours`, `_frac`, `_usd_or_none`, `_decide_core`, `_downgrade_reason`, `_schema_hint`, `_money_check`, `_default_risk`, `_default_live`, `_bounded`, `_daily_used`, `_same_symbol`, `_client_context`, `_fmt_pct`, `_audit`, `_resolve_entity`, `_dominant_horizon`, `_run_committee`, `_ai_ready`, `_entity_node`, `_entity_listed`, `_unlisted_tech_lines`, `_room_names`, `_mascot_voice`, `_research_request_lines`, `_auto_research`, `_seat_run`, `_run_debate`, `_src_dict`, `_evidence_rows`, `_top_evidence`, `_chair`, `_scrub`, `_redact_audit`, `_client_mode`, `_lock_memo`, `_err`, `_preview_error`, `_max_concurrent`, `_board_fingerprint`, `_board_uncached`, `_prefer_canonical`, `_entity_ids_for`
 
@@ -92,7 +92,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - herramienta MCP `get_conclusions_board` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 12 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -101,6 +101,8 @@ _Además lo importan 10 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_block0_committee.py]]
+- [[tests.test_block0_numbers.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_committee_os_narr.py]]

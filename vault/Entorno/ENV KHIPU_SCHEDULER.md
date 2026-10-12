@@ -17,6 +17,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.conftest.py]]
+- [[tests.test_block0_ci.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

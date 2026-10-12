@@ -22,6 +22,11 @@ un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupues
 7 motores de contagio con 164-315 empresas para el mismo choque, guardián de cifras que deja pasar "233,95 USD" y ±15 %,
 sin historia de precios/FX/posiciones, ordenes por 3 caminos con controles distintos), lo que necesita decidir
 Fabrizio (sección 2) y el orden de trabajo (bloques 0-5, sección 3). Empezar por ahí antes de la Fase 1.
+**Infraestructura operativa: `docs/INFRA_OPERATIVA.md`** (2026-10-12) — los 4 pilares pedidos por Fabrizio: Objetos de
+Decisión (libro mayor append-only con cadena de hashes, `core/decisions.py`), Puertas SHACL (TTL versionados compilados a
+validadores Python de 0,01-0,3 ms; pySHACL solo como oráculo en CI), Hot Path Views (vistas en memoria versionadas por
+`graph_version` tomado al confirmar, `/api/hot/*`, UN kernel) y Gobernanza (artefactos con hash, release aprobado con PIN,
+G(t,κ) y replay). Plan de 26 pasos desplegables en su §10; decisiones nuevas D1-D7.
 
 ## Arquitectura
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ai.py"
 lenguaje: "python"
-lineas: 1085
+lineas: 1098
 aliases: ["core/ai.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ai.py
 
-> Módulo · capa [[Capa Infraestructura]] · 1.085 líneas · `core/ai.py`
+> Módulo · capa [[Capa Infraestructura]] · 1.098 líneas · `core/ai.py`
 
 ## Para qué sirve
 
@@ -32,17 +32,17 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - `gemini_state()` — Para el 🩺 / salud: orden actual de modelos y cuáles están saturados ahora. _(línea 675)_
 - `provider_order(tier=…)` — Orden de la cascada para el nivel ('fast'|'deep'). Profundo: AI_ORDER_DEEP > claude,gemini,nvidia (la AI_ORDER vieja se IGNORA a propósito: … _(línea 895)_
 - `ai_route_state()` — Para 🩺 / salud / MCP: el orden EFECTIVO por nivel, de dónde sale y qué modelo usa cada uno. _(línea 904)_
-- `strip_reasoning(text)` — Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…) escriben en &lt;think>…&lt;/think>. Si el bloque quedó sin cerrar (se … _(línea 1043)_
+- `strip_reasoning(text)` — Quita el "razonamiento oculto" que algunos modelos (NVIDIA/DeepSeek, Qwen…) escriben en &lt;think>…&lt;/think>. Si el bloque quedó sin cerrar (se … _(línea 1056)_
 
 **Internas** (empiezan con `_`): `_env_num`, `_is_background`, `_ai_slot`, `_small`, `_mono`, `_sleep`, `_transient_wait_s`, `_retry_transient`, `_definitive_kind`, `_open_circuit`, `_close_circuit`, `_note_error`, `_guarded`, `_redact`, `_usage`, `_claude_version`, `_status_of`, `_param_rejected`, `_complete_claude`, `_complete_claude_inner`, `_complete_gemini`, `_NetDown`, `_gemini_post`, `_gemini_major`, `_GeminiHTTP`, `_gemini_models`, `_gemini_mark`, `_complete_gemini_inner`, `_gemini_dead`, `_gemini_mark_dead`, `_gemini_once`, `_complete_nvidia`, `_complete_nvidia_inner`, `_ai_configured`, `_parse_order`, `_legacy_order`, `_order_source`, `_ai_complete`, `_ai_complete_raw`, `_ai_json`, `_extract_json`
 
 ## Depende de
 
-- [[core.ai_usage.py]] — importa `ai_usage`
+- [[core.ai_usage.py]] — importa `ai_usage`, `current`
 - [[core.config.py]] — importa `AI_MODEL_DEEP`, `AI_MODEL_FAST`, `AI_ORDER`, `AI_ORDER_DEEP_DEFAULT`, `AI_ORDER_EXPLICIT`, `AI_ORDER_FAST_DEFAULT`, `CLAUDE`, `GEMINI_FALLBACK_MODEL` …
 - [[core.http.py]] — importa `redact_secrets`
 - [[core.live_facts.py]] — importa `live_facts_block`
-- [[core.numbers.py]] — importa `NUMBERS_RULE`, `mark_unsupported`, `unsupported_in`
+- [[core.numbers.py]] — importa `ESTIMATE_FEATURES`, `KINDS`, `NUMBERS_RULE`, `mark_unsupported`, `unsupported_in`
 
 ## Lo usan
 
@@ -64,7 +64,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[server.py]] — lo importa
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 
-_Además lo importan 21 pruebas (lista abajo)._
+_Además lo importan 22 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -91,6 +91,7 @@ _Además lo importan 21 pruebas (lista abajo)._
 - [[tests.test_ai_gemini_fast.py]]
 - [[tests.test_ai_json.py]]
 - [[tests.test_ai_usage.py]]
+- [[tests.test_block0_numbers.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_jev_router.py]]

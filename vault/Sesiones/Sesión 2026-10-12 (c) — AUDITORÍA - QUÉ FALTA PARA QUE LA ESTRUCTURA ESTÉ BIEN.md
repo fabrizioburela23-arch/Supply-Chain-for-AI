@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L31"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (c) — AUDITORÍA: QUÉ FALTA PARA QUE LA ESTRUCTURA ESTÉ BIEN (docs/BRECHAS_V2.md)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (16 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 31 (16 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -18,4 +18,4 @@ Fabrizio: "dime qué te falta para que la estructura esté bien tanto en código
 
 - [[Doc BRECHAS_V2]]
 
-← más antigua: [[Sesión 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)]]
+← más antigua: [[Sesión 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)]] · más nueva: [[Sesión 2026-10-12 (d) — INFRAESTRUCTURA OPERATIVA - DECISIONES, PUERTAS SHACL, VISTAS]] →

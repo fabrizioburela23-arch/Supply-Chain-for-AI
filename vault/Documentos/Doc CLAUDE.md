@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 651
+lineas: 656
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 651 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 656 líneas · `CLAUDE.md`
 
 ## De qué trata
 
@@ -59,6 +59,7 @@ Khipus Finance Intelligence — CLAUDE.md — Terminal financiero (estilo Bloomb
 - [[Doc AUDITORIA]]
 - [[Doc BRECHAS_V2]]
 - [[Doc BROKERAGE]]
+- [[Doc INFRA_OPERATIVA]]
 - [[Doc INVERSION_TERCEROS]]
 - [[Doc JEV]]
 - [[Doc KHIPUS_OS]]

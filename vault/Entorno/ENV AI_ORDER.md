@@ -18,6 +18,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_ai_usage.py]]
+- [[tests.test_block0_numbers.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_numbers_guard.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]

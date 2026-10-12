@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "core/portfolio_advisor.py"
 lenguaje: "python"
-lineas: 363
+lineas: 368
 aliases: ["core/portfolio_advisor.py"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # core/portfolio_advisor.py
 
-> Módulo · capa [[Capa Comité]] · 363 líneas · `core/portfolio_advisor.py`
+> Módulo · capa [[Capa Comité]] · 368 líneas · `core/portfolio_advisor.py`
 
 ## Para qué sirve
 
@@ -19,7 +19,7 @@ COMITÉ DE CARTERA: analiza una cartera completa y da ACCIONES CONCRETAS como co
 ## API pública
 
 - `analyze(positions, profile=…, lang=…, risk_fn=…, board_fn=…, cash_usd=…)` — Devuelve el análisis completo (sin IA). risk_fn/board_fn inyectables (tests). _(línea 105)_
-- `explain(analysis, lang=…)` — Explicación en lenguaje simple (IA, con guardián de cifras) o determinista. _(línea 320)_
+- `explain(analysis, lang=…)` — Explicación en lenguaje simple (IA, con guardián de cifras) o determinista. _(línea 325)_
 
 **Internas** (empiezan con `_`): `_f`, `_resolve_positions`, `_board_index`, `_sector_label`
 
@@ -39,10 +39,11 @@ COMITÉ DE CARTERA: analiza una cartera completa y da ACCIONES CONCRETAS como co
 - [[core.portfolio_report.py]] — lo importa
 - [[research.committee_api.py]] — lo importa
 
-_Además lo importan 3 pruebas (lista abajo)._
+_Además lo importan 4 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_block0_committee.py]]
 - [[tests.test_chat_portfolio_agent.py]]
 - [[tests.test_portfolio_advisor.py]]
 - [[tests.test_portfolio_persist.py]]

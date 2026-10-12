@@ -23,7 +23,7 @@ la interfaz Agent.
 
 ## Depende de
 
-- [[core.numbers.py]] — importa `check_numbers`, `evidence_numbers`, `unsupported_money`
+- [[core.numbers.py]] — importa `check_numbers`, `evidence_numbers`, `unsupported_figures`
 - [[research.context.py]] — importa `render_context`
 - [[research.llm.py]] — importa `RoutedProvider`, `route_for`
 - [[research.schemas.py]] — importa `AgentResearchResult`, `check_refs`, `json_schema_hint`

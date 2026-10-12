@@ -60,7 +60,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[research.runner.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 9 pruebas (lista abajo)._
+_Además lo importan 10 pruebas (lista abajo)._
 
 ## Endpoints que llama
 
@@ -87,6 +87,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 
 - [[tests.test_ai_gemini_fast.py]]
 - [[tests.test_ai_usage.py]]
+- [[tests.test_block0_numbers.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_decide.py]]
 - [[tests.test_khipus_os_fixes_server.py]]

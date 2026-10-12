@@ -22,6 +22,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[tests.test_agent_dudosos.py]]
 - [[tests.test_ai_usage.py]]
+- [[tests.test_block0_ci.py]]
 - [[tests.test_brokerage.py]]
 - [[tests.test_committee_os_narr.py]]
 - [[tests.test_graph_api.py]]

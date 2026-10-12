@@ -49,6 +49,7 @@ _Además lo importan 1 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_block0_ci.py]]
 - [[tests.test_repair_ops.py]]
 
 ## Mencionado en sesiones de trabajo
