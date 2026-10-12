@@ -4143,12 +4143,13 @@ All of it is information, not advice.
 - control_interface(action): new conversation, arrange / close / minimize windows, simple or pro explanations, light or dark theme, Spanish or English — only when the user asks for it.
 - run_guided_demo(action): the one-minute tour — see THE ONE-MINUTE TOUR below.
 
-You may receive [CONTEXT_UPDATE] {json} messages — silent snapshots of Khipus OS (language, open windows, focused window, selected company, invoked agent, simple/pro explanations, money mode). Use them to be sharper ("esta empresa" = the selected company; money_mode: "paper" or "live" = the broker account ("Mi cuenta") is practice (paper) or REAL money; "practice" = only the simulated practice portfolios are known and the broker account's mode is NOT known; "none" = nothing known. Unless it is "paper" or "live", call get_account_status before telling the user whether their account is practice or real). Never read them aloud or acknowledge them.
+You may receive [CONTEXT_UPDATE] {json} messages — silent snapshots of Khipus OS (language, open windows, focused window, selected company, invoked agent, simple/pro explanations, money mode, listen_only during a tour started from the button). Use them to be sharper ("esta empresa" = the selected company; money_mode: "paper" or "live" = the broker account ("Mi cuenta") is practice (paper) or REAL money; "practice" = only the simulated practice portfolios are known and the broker account's mode is NOT known; "none" = nothing known. Unless it is "paper" or "live", call get_account_status before telling the user whether their account is practice or real). Never read them aloud or acknowledge them.
 
 ## THE ONE-MINUTE TOUR (run_guided_demo)
 - Start it ONLY when the user explicitly asks for a demo, a tour or to be shown the app — never on your own, never at the start of a session, never on a greeting.
 - YOU narrate it with your voice: every call shows one step on screen and returns a "say" line. Say EXACTLY that line, with nothing added before or after, and right after saying it call run_guided_demo with action next. Repeat until it returns done:true; then stay quiet and wait for the user.
 - If the user interrupts during the tour, answer briefly and ask whether to continue (yes → next, no → stop). If a result says stopped:true, the user closed the tour: do not continue it.
+- When the user pressed the tour button on screen, the app opens your voice ONLY TO LISTEN: a [CONTEXT_UPDATE] says listen_only:true (no microphone). Then just narrate the tour — do not ask questions, do not greet again, and after done:true say nothing more. If listen_only becomes false, the user turned the microphone on: you can talk normally.
 
 ## MONEY — ALWAYS TELL THE TRUTH (RULES YOU MUST NEVER BREAK)
 - Two different things — never confuse them: "Carteras de práctica" are SIMULATED portfolios to try ideas (they never send orders); "Mi cuenta (bróker)" is the user's broker account, which can be a PRACTICE (paper) account OR REAL MONEY depending on how it is set up. Every order summary and the "Mi cuenta" window show which one (🧪 / 🔴); if you do not know it, call get_account_status — never guess "practice".
@@ -4708,22 +4709,34 @@ def voice_tour_audio(lang, step):
         return jsonify({'error': 'La voz de Khipu no está configurada: el recorrido se muestra escrito.',
                         'error_en': 'Khipu voice is not configured: the tour is shown as text.',
                         'code': 'not_configured', 'available': False}), 404
-    cfg, err = _va.get_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, requests, cached=True, timeout=6)
-    summ = _va.agent_summary(cfg) if cfg else {}
-    voice_id = summ.get('voice_id')
+    # la voz QUE USA el agente en ese idioma, con sus ajustes y su modelo (2026-10-12: el botón sonaba a la "voz
+    # vieja"); lectura fresca (≤60 s) para que un cambio de voz en ElevenLabs se oiga enseguida
+    cfg, err = _va.get_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, requests, cached=True, timeout=6, max_age=60)
+    tv = _va.tour_voice(cfg, lang) if cfg else {}
+    voice_id = tv.get('voice_id')
     if not voice_id:
         e = err or {}
         return jsonify({'error': _diag_redact(e.get('es') or 'No pude leer la voz del agente de Khipu.'),
                         'error_en': _diag_redact(e.get('en') or 'Could not read the Khipu agent voice.'),
                         'code': e.get('code') or 'no_voice', 'available': False}), 502
-    key = (voice_id, lang, step, _tour.text_hash(text))
+    settings = tv.get('voice_settings') or {}
+    sig = hashlib.sha1(json.dumps([voice_id, tv.get('models'), settings, _tour.text_hash(text)],
+                                  sort_keys=True).encode('utf-8')).hexdigest()[:20]
+    etag = f'"{sig}"'
+    # el navegador revalida SIEMPRE (no-cache + ETag): misma voz → 304 sin bajar nada; voz nueva → audio nuevo
+    if etag in [t.strip() for t in str(request.headers.get('If-None-Match') or '').split(',')]:
+        resp = Response(status=304)
+        resp.headers['ETag'] = etag
+        resp.headers['Cache-Control'] = 'private, no-cache'
+        return resp
+    key = (sig, lang, step)
     hit = _TOUR_AUDIO.get(key)
     if not hit:
         with _TOUR_AUDIO_LOCK:                              # dos pestañas a la vez → UNA sola síntesis
             hit = _TOUR_AUDIO.get(key)
             if not hit:
-                res = _va.synthesize(ELEVENLABS_KEY, voice_id, text, requests,
-                                     models=_va.tour_tts_models(summ.get('tts_model'), lang))
+                res = _va.synthesize(ELEVENLABS_KEY, voice_id, text, requests, models=tv.get('models'),
+                                     voice_settings=settings)
                 if not res.get('ok'):
                     code = res.get('code') or 'unknown'
                     status = {'quota_exceeded': 402, 'payment_required': 402, 'rate_limited': 429}.get(code, 502)
@@ -4735,7 +4748,8 @@ def voice_tour_audio(lang, step):
                     _TOUR_AUDIO.clear()
                 _TOUR_AUDIO[key] = hit
     resp = Response(hit[0], mimetype='audio/mpeg')
-    resp.headers['Cache-Control'] = 'private, max-age=3600'
+    resp.headers['Cache-Control'] = 'private, no-cache'
+    resp.headers['ETag'] = etag
     resp.headers['X-Tour-Model'] = str(hit[1] or '')
     return resp
 

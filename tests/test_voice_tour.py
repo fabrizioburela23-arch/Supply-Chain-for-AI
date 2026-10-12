@@ -120,6 +120,8 @@ def test_modelos_del_audio():
     assert va.tour_tts_models('eleven_flash_v2', 'es') == ['eleven_multilingual_v2', 'eleven_flash_v2_5']   # solo inglés
     assert va.tour_tts_models('eleven_turbo_v2_5', 'en')[0] == 'eleven_flash_v2_5'                       # deprecado
     assert va.tour_tts_models(None, 'es') == list(va.TOUR_TTS_FALLBACKS)
+    # el modelo de conversación del agente tiene otro nombre en el API de texto a voz: se prueba ese primero
+    assert va.tour_tts_models('eleven_v3_conversational', 'es')[:2] == ['eleven_v3', 'eleven_v3_conversational']
 
 
 # ── endpoint de audio ────────────────────────────────────────────────────────
@@ -135,15 +137,21 @@ class _R:
 
 
 class FakeEL:
-    def __init__(self, tts_model='eleven_v4', voice='voz_khipu_1', reject_models=(), fail=None):
+    def __init__(self, tts_model='eleven_v4', voice='voz_khipu_1', reject_models=(), fail=None, tts_extra=None,
+                 presets=None):
         self.tts_model, self.voice, self.reject, self.fail = tts_model, voice, set(reject_models), fail
+        self.tts_extra, self.presets = dict(tts_extra or {}), presets
         self.posts = []
+        self.agent_reads = 0
 
     def get(self, url, params=None, headers=None, timeout=None, **_):
         assert headers.get('xi-api-key') == KEY
         if url.endswith(f'/v1/convai/agents/{AGENT}'):
-            return _R(200, {'agent_id': AGENT, 'conversation_config': {
-                'tts': {'model_id': self.tts_model, 'voice_id': self.voice}, 'agent': {'prompt': {}}}})
+            self.agent_reads += 1
+            cc = {'tts': {'model_id': self.tts_model, 'voice_id': self.voice, **self.tts_extra}, 'agent': {'prompt': {}}}
+            if self.presets is not None:
+                cc['language_presets'] = self.presets
+            return _R(200, {'agent_id': AGENT, 'conversation_config': cc})
         return _R(404, {'detail': 'Not Found'})
 
     def post(self, url, params=None, json=None, headers=None, timeout=None, **_):
@@ -182,9 +190,13 @@ def test_audio_con_la_voz_del_agente_y_en_cache(client, monkeypatch):
     r = client.get('/api/voice/tour/es/0')
     assert r.status_code == 200 and r.mimetype == 'audio/mpeg' and r.data.startswith(b'ID3')
     assert fake.posts == [{'voice': 'voz_khipu_1', 'text': tour.STEPS[0]['es'], 'model_id': 'eleven_v4'}]
-    assert r.headers['X-Tour-Model'] == 'eleven_v4' and 'max-age' in r.headers['Cache-Control']
+    # el navegador REVALIDA siempre (no-cache + ETag): una voz cambiada nunca se queda guardada una hora
+    assert r.headers['X-Tour-Model'] == 'eleven_v4' and r.headers['Cache-Control'] == 'private, no-cache'
+    assert r.headers['ETag'].startswith('"') and 'max-age' not in r.headers['Cache-Control']
     r2 = client.get('/api/voice/tour/es/0')
     assert r2.status_code == 200 and r2.data == r.data and len(fake.posts) == 1     # caché: no se paga dos veces
+    r3 = client.get('/api/voice/tour/es/0', headers={'If-None-Match': r.headers['ETag']})
+    assert r3.status_code == 304 and not r3.data and len(fake.posts) == 1           # misma voz → 304, nada que bajar
     client.get(f'/api/voice/tour/en/{len(tour.STEPS) - 1}')
     assert fake.posts[-1]['text'] == tour.STEPS[-1]['en']
 
@@ -241,3 +253,44 @@ def test_guion_no_promete_lo_que_la_pantalla_no_muestra_y_cabe_en_un_minuto():
     for lang in ('es', 'en'):
         words = sum(len(s[lang].split()) for s in tour.STEPS)
         assert words <= 155, (lang, words)
+
+
+
+# ── 2026-10-12: el botón sonaba a la "voz vieja" — el audio usa la voz REAL del agente ──
+def test_audio_usa_la_voz_del_idioma_y_los_ajustes_del_agente(client, monkeypatch):
+    fake = FakeEL(tts_model='eleven_v3_conversational', voice='voz_base',
+                  tts_extra={'stability': 0.35, 'similarity_boost': 0.8, 'speed': 1.08, 'optimize_streaming_latency': 3},
+                  presets={'en': {'overrides': {'tts': {'voice_id': 'voz_ingles'}}}})
+    _wire(monkeypatch, fake)
+    assert client.get('/api/voice/tour/es/1').status_code == 200
+    p = fake.posts[-1]
+    assert p['voice'] == 'voz_base' and p['model_id'] == 'eleven_v3'
+    assert p['voice_settings'] == {'stability': 0.35, 'similarity_boost': 0.8, 'speed': 1.08}
+    assert client.get('/api/voice/tour/en/1').status_code == 200
+    assert fake.posts[-1]['voice'] == 'voz_ingles'                              # la voz de la variante en inglés
+
+
+def test_cambio_de_voz_en_elevenlabs_se_oye_sin_esperar_la_cache(client, monkeypatch):
+    import time as _time
+    fake = FakeEL(voice='voz_vieja')
+    _wire(monkeypatch, fake)
+    r1 = client.get('/api/voice/tour/es/2')
+    assert fake.posts[-1]['voice'] == 'voz_vieja'
+    fake.voice = 'voz_nueva'                                                   # Fabrizio cambia la voz en ElevenLabs
+    real = _time.time
+    monkeypatch.setattr(va.time, 'time', lambda: real() + 61)                  # pasa un minuto (no los 10 de antes)
+    r2 = client.get('/api/voice/tour/es/2', headers={'If-None-Match': r1.headers['ETag']})
+    assert r2.status_code == 200 and fake.posts[-1]['voice'] == 'voz_nueva'    # ETag distinto → audio nuevo
+    assert r2.headers['ETag'] != r1.headers['ETag']
+
+
+def test_tour_voice_sin_ajustes_ni_variantes():
+    tv = va.tour_voice({'conversation_config': {'tts': {'voice_id': 'v1', 'model_id': 'eleven_flash_v2_5',
+                                                        'stability': True}}}, 'es')
+    assert tv == {'voice_id': 'v1', 'models': ['eleven_flash_v2_5', 'eleven_multilingual_v2'], 'voice_settings': {}}
+    assert va.tour_voice({}, 'es')['voice_id'] is None
+
+
+def test_instrucciones_saben_de_la_sesion_solo_para_escuchar():
+    p = server.BIXBY_SYSTEM_PROMPT
+    assert 'listen_only:true' in p and 'do not ask questions' in p and 'after done:true say nothing more' in p

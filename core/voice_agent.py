@@ -291,13 +291,15 @@ def _sleep(seconds):                 # inyectable en tests
     time.sleep(seconds)
 
 
-def get_agent(key, agent_id, http, *, cached=True, timeout=8):
-    """→ (cfg | None, err | None). Caché 10 min (la usa /api/voice/session)."""
+def get_agent(key, agent_id, http, *, cached=True, timeout=8, max_age=None):
+    """→ (cfg | None, err | None). Caché 10 min (la usa /api/voice/session); `max_age` (s) pide una lectura más
+    fresca (el audio del recorrido: si Fabrizio cambia la voz en ElevenLabs, en ≤1 min ya suena la nueva)."""
     now = time.time()
     if cached:
+        ttl = AGENT_CACHE_TTL if max_age is None else min(AGENT_CACHE_TTL, max(0, max_age))
         with _AGENT_LOCK:
             hit = _AGENT_CACHE.get(agent_id)
-            if hit and now - hit[0] < AGENT_CACHE_TTL:
+            if hit and now - hit[0] < ttl:
                 return hit[1], None
     try:
         r = http.get(f'{EL_API}/v1/convai/agents/{agent_id}', headers=_hdr(key), timeout=timeout)
@@ -448,21 +450,50 @@ def adopt_shared_voice(key, public_owner_id, voice_id, name, http, timeout=12) -
 TOUR_TTS_FALLBACKS = ('eleven_multilingual_v2', 'eleven_flash_v2_5')
 
 
+# los modelos "de conversación" del agente tienen otro nombre en el API de texto a voz
+TOUR_TTS_REST_NAME = {'eleven_v3_conversational': 'eleven_v3'}
+
+
 def tour_tts_models(agent_model, language='es'):
-    """Modelos a probar para el audio del recorrido: primero el del agente (misma voz y estilo) si sirve para
-    ese idioma, luego los multilingües estables. El de solo inglés nunca narra en español."""
+    """Modelos a probar para el audio del recorrido: primero el del agente (misma voz y estilo; con su nombre del
+    API de texto a voz si es uno de conversación) si sirve para ese idioma, luego los multilingües estables. El de
+    solo inglés nunca narra en español."""
     out = []
     m = str(agent_model or '').strip()
     if m and not (str(language or 'es').lower() != 'en' and m in TTS_ENGLISH_ONLY):
-        out.append(TTS_DEPRECATED.get(m, m))
+        m = TTS_DEPRECATED.get(m, m)
+        if m in TOUR_TTS_REST_NAME:
+            out.append(TOUR_TTS_REST_NAME[m])
+        out.append(m)
     for f in TOUR_TTS_FALLBACKS:
         if f not in out:
             out.append(f)
     return out
 
 
+def tour_voice(cfg, language='es') -> dict:
+    """La voz que el agente USA en una conversación en `language` (2026-10-12: el botón del recorrido sonaba a la
+    "voz vieja"): la de la variante de ese idioma (language_presets[lang].overrides.tts.voice_id) si existe, si no
+    la principal; sus ajustes (estabilidad, parecido, velocidad) y su modelo. → {voice_id, models, voice_settings}."""
+    cc = _cc(cfg)
+    tts = cc.get('tts') or {}
+    lang = str(language or 'es').lower()
+    voice = tts.get('voice_id')
+    presets = cc.get('language_presets') or {}
+    pre = presets.get(lang) if isinstance(presets, dict) else None
+    ptts = ((((pre or {}).get('overrides') or {}).get('tts')) or {}) if isinstance(pre, dict) else {}
+    if isinstance(ptts, dict) and ptts.get('voice_id'):
+        voice = ptts['voice_id']
+    settings = {}
+    for k in ('stability', 'similarity_boost', 'speed'):
+        v = ptts.get(k) if isinstance(ptts, dict) and ptts.get(k) is not None else tts.get(k)
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            settings[k] = float(v)
+    return {'voice_id': voice, 'models': tour_tts_models(tts.get('model_id'), lang), 'voice_settings': settings}
+
+
 def synthesize(key, voice_id, text, http, *, models=TOUR_TTS_FALLBACKS, output_format='mp3_44100_128',
-               timeout=25) -> dict:
+               timeout=25, voice_settings=None) -> dict:
     """Texto → audio MP3 con la voz `voice_id` (POST /v1/text-to-speech/{voice_id}). Prueba los modelos en
     orden y solo pasa al siguiente si ElevenLabs rechaza el MODELO (400/422); clave, cuota, límite o caída
     cortan ahí. → {ok, audio: bytes, content_type, model} | {ok: False, …error traducido}. Nunca lanza."""
@@ -477,7 +508,9 @@ def synthesize(key, voice_id, text, http, *, models=TOUR_TTS_FALLBACKS, output_f
         try:
             r = http.post(f'{EL_API}/v1/text-to-speech/{voice_id}', params={'output_format': output_format},
                           headers={**_hdr(key, True), 'Accept': 'audio/mpeg'},
-                          json={'text': str(text)[:600], 'model_id': model}, timeout=timeout)
+                          json={'text': str(text)[:600], 'model_id': model,
+                                **({'voice_settings': dict(voice_settings)} if voice_settings else {})},
+                          timeout=timeout)
         except Exception as e:  # noqa: BLE001
             return {'ok': False, **_exc_err(e)}
         sc = getattr(r, 'status_code', 0)
