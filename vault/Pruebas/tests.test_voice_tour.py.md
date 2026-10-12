@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_voice_tour.py"
 lenguaje: "python"
-lineas: 243
+lineas: 296
 aliases: ["tests/test_voice_tour.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_voice_tour.py
 
-> Prueba · capa [[Capa Pruebas]] · 243 líneas · `tests/test_voice_tour.py`
+> Prueba · capa [[Capa Pruebas]] · 296 líneas · `tests/test_voice_tour.py`
 
 ## Qué prueba
 
 Recorrido de un minuto para Khipus OS con la voz de Khipu (2026-10-11), lado servidor y guion.
 
-**14** funciones `test_…`.
+**18** funciones `test_…`.
 
 ## Cubre
 

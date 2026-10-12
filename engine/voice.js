@@ -47,6 +47,15 @@ const VOICE_ORDER_PREVIEW_MS = 3 * 60 * 1000;
 // recorrido narrado: hueco entre trozos de audio que NO cuenta como fin de la frase, y espera máxima cuando
 // el `next` llega antes que el audio de la frase
 const TOUR_AUDIO_GAP_MS = 700, TOUR_NO_AUDIO_MS = 4000;
+// el botón «Ver el recorrido de un minuto» con la voz REAL de Khipu (2026-10-12): sesión de SOLO ESCUCHAR (sin
+// micrófono). Si el agente no empieza el recorrido (run_guided_demo start) a los 9 s de abrir el socket —o a los
+// 20 s del clic, si el socket ni abre— va el recorrido local (clips → texto). SIN user_activity: ElevenLabs no deja
+// hablar al agente ~2 s tras cada uno (pausas en la narración); durante el recorrido el turno es del agente (encadena
+// herramientas) y el vigía de abajo cuelga una sesión trabada.
+const NARRATE_START_MS = 9000, NARRATE_TOTAL_MS = 20000;
+// vigía: sin herramienta ni audio del agente durante 35 s (tras sonar lo último) → cuelga, el recorrido sigue solo
+// (más que el ~25 s que un `next` espera a que termine la frase); 1,5 s para que el AudioContext suene
+const NARRATE_STALL_MS = 35000, NARRATE_AUDIO_CHECK_MS = 1500;
 const VOICE_TOOL_TIMEOUT_DEFAULT_S = 10;
 // Nombres RETIRADOS (alias): el tope con el que un agente aún sin re-sincronizar los tiene registrados
 // (los que no figuran usaban 10 s). Solo para responder a tiempo durante un despliegue; no se declaran.
@@ -183,8 +192,22 @@ const BixbyVoice = {
 
   getState() {
     return { state: this.state, text: this.stateText, error: this.state === 'error' ? this.lastError : '',
-             connected: !!this.isConnected, connecting: this.isConnecting() };
+             connected: !!this.isConnected, connecting: this.isConnecting(), listenOnly: !!this._listenOnly };
   },
+  // ¿la sesión de voz abierta (o conectándose) es la del recorrido, de SOLO ESCUCHAR (sin micrófono)?
+  isListenOnly() { return !!this._listenOnly; },
+  // ¿la voz de Khipu está contratada? (/api/health). En app.html `Keys` vive DENTRO del IIFE de v8 y solo se
+  // expone como window.V8.Keys (un `Keys` global no existe: leerlo así dejaba el botón con los clips viejos).
+  isConfigured() {
+    try {
+      const W = (typeof window !== 'undefined') ? window : null;
+      const K = (W && W.V8 && W.V8.Keys) || ((typeof Keys !== 'undefined') ? Keys : null);
+      if (K && typeof K.has === 'function') return !!K.has('elevenlabs');
+    } catch (e) {}
+    return false;
+  },
+  // ¿el botón del recorrido está esperando a que el agente lo empiece? (la sesión que solo termina su frase, no)
+  narrationPending() { return !!(this._narr && !this._narr.done && !this._narr.started); },
 
   // ¿hay un intento de conexión VIVO? (uno ya cancelado no cuenta; un reintento agendado sí; y también
   // el saludo del WebSocket: connect() ya terminó pero el socket aún no abrió — antes toggle() abría
@@ -205,7 +228,7 @@ const BixbyVoice = {
     try {
       if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
         window.dispatchEvent(new CustomEvent('khipu:voice', { detail: {
-          state, prev, text: this.stateText, error: state === 'error' ? this.stateText : '' } }));
+          state, prev, text: this.stateText, error: state === 'error' ? this.stateText : '', listenOnly: !!this._listenOnly } }));
       }
     } catch (e) {}
   },
@@ -218,6 +241,8 @@ const BixbyVoice = {
   },
 
   async toggle() {
+    // sesión del recorrido (solo escuchar): tocar el micrófono = HABLARLE (se suma el micrófono), no colgar
+    if (this._listenOnly && (this.isConnected || this.isConnecting())) return this.upgradeToMic();
     (this.isConnected || this.isConnecting()) ? this.disconnect() : await this.connect();
   },
 
@@ -225,6 +250,8 @@ const BixbyVoice = {
 
   async connect(opts) {
     opts = opts || {};
+    // pedir la conversación normal con la sesión del recorrido abierta → se le suma el micrófono (mismo socket)
+    if (!opts.listenOnly && this._listenOnly && (this.isConnected || this.isConnecting())) return this.upgradeToMic();
     // ya hay un intento vivo, o su socket está saludando (uno cancelado no bloquea)
     if (this._connSess === this._sess && (this._connecting || this._handshaking())) return;
     clearTimeout(this._retryTimer); this._retryTimer = 0;
@@ -259,9 +286,19 @@ const BixbyVoice = {
     this.init();
     try { if (this.audioCtx && this.audioCtx.state !== 'running' && this.audioCtx.state !== 'closed') this.audioCtx.resume(); } catch (e) {}
 
+    // el recorrido de un minuto con la voz de Khipu: SOLO ESCUCHAR → ni micrófono ni su permiso (sin eco)
+    this._listenOnly = !!opts.listenOnly;
+    let stream = null;
+    if (this._listenOnly) {
+      this._showOverlay(_voiceL('Conectando con la voz de Khipu…', "Connecting to Khipu's voice…"), 'connect');
+      return this._connectSession(opts, sess, null);
+    }
+
+    // reintento de la sesión del recorrido a la que el usuario le sumó el micrófono: el del clic ya está abierto
+    if (opts.keepPre && this._preStream) return this._connectSession(opts, sess, this._preStream);
+
     // ── Paso 2: micrófono (también en el gesto: Chrome Android / Safari iOS) ──
     this._showOverlay(_voiceL('Khipu — pidiendo micrófono…', 'Khipu — requesting microphone…'), 'connect');
-    let stream = null;
     if (!(typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
       this._fail(_voiceL('Este navegador no da acceso al micrófono aquí (¿la página no es HTTPS?).',
         'This browser gives no microphone access here (is the page not HTTPS?).'));
@@ -290,9 +327,12 @@ const BixbyVoice = {
         return;
       }
     }
+    return this._connectSession(opts, sess, stream);
+  },
 
+  async _connectSession(opts, sess, stream) {
     // ── Paso 3: credenciales del server (la clave NUNCA llega al navegador) ──
-    this._showOverlay(_voiceL('Khipu — conectando…', 'Khipu — connecting…'), 'connect');
+    if (!this._listenOnly) this._showOverlay(_voiceL('Khipu — conectando…', 'Khipu — connecting…'), 'connect');
     const base = (typeof BASE !== 'undefined') ? BASE : '';
     let agentPref = null;
     try { agentPref = localStorage.getItem('elevenlabs_agent_id'); } catch (e) {}
@@ -361,6 +401,12 @@ const BixbyVoice = {
       this.isConnected = true;
       this._showOverlay(_voiceL('Khipu — iniciando sesión…', 'Khipu — starting session…'), 'connect');
       this._sendInitContext(override);
+      // recorrido con la voz de Khipu: si el agente no lo empieza en 9 s → el recorrido local
+      if (this._narr && !this._narr.started) {
+        const n = this._narr;
+        clearTimeout(this._narrTimer);
+        this._narrTimer = setTimeout(() => { if (this._narr === n && !n.started) this._narrateFallback('no_start'); }, NARRATE_START_MS);
+      }
       // El micrófono arranca con conversation_initiation_metadata (antes NO se puede mandar audio)
       clearTimeout(this._initTimer);
       this._initTimer = setTimeout(() => {
@@ -399,7 +445,10 @@ const BixbyVoice = {
     if (!cleanEnd) this._stopScheduled();
     this._orbOff();
     if (this._closingByUser) { this._releasePre(); this._hideOverlay(); return; }
+    // sesión del recorrido (solo escuchar) cerrada limpia ANTES de que el agente lo empiece → el recorrido local
+    if (cleanEnd && this.narrationPending()) { this._narrateFallback('closed'); return; }
     if (cleanEnd) {
+      this._narrClear();
       this._releasePre();
       const ctx = this.audioCtx;
       const left = (ctx && this._playCursor) ? Math.max(0, this._playCursor - ctx.currentTime) : 0;
@@ -418,12 +467,18 @@ const BixbyVoice = {
       try { sessionStorage.setItem('kh_voice_no_override', '1'); } catch (e) {}
       this._releasePre();
       this._showOverlay(_voiceL('Khipu — reintentando sin ajustes de idioma…', 'Khipu — retrying without language overrides…'), 'connect');
-      this._retryLater(() => this.connect({ noOverride: true, auto: true }), 50);
+      // se lee AL REINTENTAR (no al cerrar): si en esos 50 ms tocó 🎙, el reintento ya es con micrófono (y reusa
+      // el que pidió en el clic)
+      this._retryLater(() => {
+        const lo = !!this._listenOnly;
+        this.connect({ noOverride: true, auto: true, listenOnly: lo, keepPre: !lo && !!this._preStream });
+      }, 50);
       return;
     }
     // caída de red a mitad de conversación → 1 reconexión automática por minuto
     const transient = [1001, 1006, 1012, 1013].indexOf(ev.code) >= 0;
-    if (hadMeta && transient && !errEv.error_type && this._canAutoReconnect()) {
+    // (la sesión de solo escuchar no se reconecta: el recorrido sigue en pantalla con sus tiempos)
+    if (hadMeta && transient && !errEv.error_type && !this._listenOnly && this._canAutoReconnect()) {
       this._releasePre();
       this._showOverlay(_voiceL('Khipu — se cortó la conexión, reconectando…', 'Khipu — connection dropped, reconnecting…'), 'connect');
       this._retryLater(() => this.connect({ auto: true, noOverride: !override }), 600);
@@ -486,6 +541,7 @@ const BixbyVoice = {
 
   disconnect() {
     this._tourDetach();                 // un recorrido narrado por la voz sigue solo en pantalla
+    this._narrClear();                  // la sesión del recorrido (solo escuchar) termina aquí
     this._sess++;                       // invalida eventos pendientes del socket actual
     this._closingByUser = true;
     clearTimeout(this._initTimer);
@@ -684,6 +740,7 @@ const BixbyVoice = {
         nrs: (typeof computeNRS === 'function') ? computeNRS(sn.id) : null } : null,
       invoked_agent: inv, explain_mode: mode, money_mode: this._moneyMode(),
     };
+    if (this._listenOnly) ctx.listen_only = true;   // el usuario solo escucha el recorrido (sin micrófono)
     try {   // el recorrido de un minuto, solo mientras está en marcha
       const T = this._tour(), ts = T ? T.state() : null;
       if (ts && ts.on) ctx.tour = { on: true, step: ts.i + 1, of: ts.of };
@@ -734,12 +791,23 @@ const BixbyVoice = {
         this._conversationId = m.conversation_id || null;
         this._outFmt = VoiceAudio.parseFormat(m.agent_output_audio_format || 'pcm_16000');
         this._inFmt = VoiceAudio.parseFormat(m.user_input_audio_format || 'pcm_16000');
+        if (this._listenOnly) {
+          // SOLO ESCUCHAR: sin micrófono; se le pide el recorrido al agente (lo narra con run_guided_demo)
+          this._showOverlay(this._narrateText(), 'listen');
+          this._orbOn();
+          this._narrCheckAudio();                     // ¿el navegador deja sonar la voz? (autoplay / iOS)
+          this.updateContext();                       // listen_only:true ANTES del pedido
+          if (this._narr && !this._narr.asked) { this._narr.asked = true; this.requestTour(); }
+          break;
+        }
         this._showOverlay(_voiceL('🎙️ Khipu te escucha — habla', '🎙️ Khipu is listening — speak'), 'listen');
         if (this._preStream) {
           this._startMicWithStream(this._preStream);
           this._preStream = null;
         }
         this._orbOn();   // arranca/alimenta el orbe de voz de la Cabina
+        // el botón del recorrido abrió esta sesión y el usuario le sumó el micrófono antes de la metadata
+        if (this._narr && !this._narr.asked && !this._narr.done) { this._narr.asked = true; this.requestTour(); }
         break;
       }
       case 'audio': {
@@ -749,6 +817,7 @@ const BixbyVoice = {
         const chunk = ev.audio_base_64;
         if (chunk) {
           this._lastAudioAt = this._nowMs();   // el recorrido: ¿ya empezó a sonar la frase? ¿sigue llegando audio?
+          if (this._listenOnly) this._narrKick();   // el agente sigue narrando
           // suena la voz del agente → "Hablando" (una vez por respuesta; al terminar vuelve a "Escuchando")
           if (this.state !== 'speaking') this._setState('speak');
           else if (window.setBixbyThinking) window.setBixbyThinking(false);
@@ -801,14 +870,19 @@ const BixbyVoice = {
       case 'agent_tool_response': {
         // herramienta de sistema end_call: el agente cuelga → dejar terminar la frase y cerrar
         const tr = msg.agent_tool_response || {};
-        if (tr.tool_name === 'end_call') this._endAfterSpeech();
+        if (tr.tool_name === 'end_call') {
+          // colgó ANTES de empezar el recorrido del botón: igual hay recorrido (el local)
+          if (this.narrationPending()) this._narrateFallback('closed');
+          if (this.isConnected) this._endAfterSpeech();
+        }
         break;
       }
       case 'error': {
         const ev = msg.error_event || {};
         this._lastErrorEvent = ev;
         try { console.warn('[Khipu voz] ElevenLabs error:', ev.error_type, ev.message || ev.reason || ''); } catch (e) {}
-        if (ev.error_type === 'max_duration_exceeded') this._setStatus(this._closeText({}, true, ev), true, 'error');
+        // (solo escuchando no hay micrófono que tocar: el cierre lo avisa _listenOnlyFail, una vez)
+        if (ev.error_type === 'max_duration_exceeded' && !this._listenOnly) this._setStatus(this._closeText({}, true, ev), true, 'error');
         break;
       }
       default:
@@ -817,11 +891,14 @@ const BixbyVoice = {
   },
 
   // end_call: cerrar cuando termine de sonar lo agendado (máx 8 s)
-  _endAfterSpeech() {
+  // onlyListen: solo si la sesión sigue siendo de SOLO ESCUCHAR al vencer (el usuario pudo sumarle el micrófono)
+  _endAfterSpeech(onlyListen) {
     const ctx = this.audioCtx;
     const left = (ctx && this._playCursor) ? Math.max(0, this._playCursor - ctx.currentTime) : 0;
     clearTimeout(this._endTimer);
-    this._endTimer = setTimeout(() => { if (this.isConnected) this.disconnect(); }, Math.min(8000, left * 1000 + 400));
+    this._endTimer = setTimeout(() => {
+      if (this.isConnected && (!onlyListen || this._listenOnly)) this.disconnect();
+    }, Math.min(8000, left * 1000 + 400));
   },
 
   // Reproducción SIN CORTES: cada chunk se agenda contiguo al anterior usando un
@@ -2032,7 +2109,10 @@ const BixbyVoice = {
       tick();
     });
   },
-  _toolTour(params, respond) {
+  _toolTour(params, respond0) {
+    // cada respuesta del recorrido cuenta como "el agente sigue vivo" (vigía de la sesión de solo escuchar)
+    const respond = (r) => { this._narrKick(); return respond0(r); };
+    this._narrKick();
     const ck = window.BixbyCockpit;
     const T = this._tour();
     let action = String((params && params.action) || 'start').toLowerCase().trim();
@@ -2056,31 +2136,40 @@ const BixbyVoice = {
     }
     if (action === 'stop') {
       try { T.stop('voice'); } catch (e) {}
-      return respond({ success: true, stopped: true });
+      respond({ success: true, stopped: true });
+      this._narrateEnded();
+      return;
     }
     if (action === 'start') {
       let st = null;
       try { st = T.state(); } catch (e) { st = null; }
       let r = null;
       if (st && st.on && st.voice && st.say) r = { step: st.i + 1, of: st.of, say: st.say };   // idempotente
+      else if (st && st.on && st.say && this._narrFbSess === this._sess) {
+        // el respaldo del botón ya va en pantalla (esta conversación, con micrófono): la voz lo toma en el paso
+        // actual, sin volver al paso 1
+        try { T.voiceAttached(true); } catch (e) {}
+        r = { step: st.i + 1, of: st.of, say: st.say };
+      }
       else { try { r = T.start({ voice: true }); } catch (e) { r = null; } }
       if (!r || !r.say) {
         return respond({ success: false, error: _voiceL('El recorrido no está disponible ahora.', 'The tour is not available right now.') });
       }
       this._updateContextSoon();
       this._tourSaidAt = this._nowMs();
+      this._narrateStarted();
       return respond({ success: true, step: r.step, of: r.of, say: r.say,
         note: 'Say exactly the "say" line, then call run_guided_demo with action next.' });
     }
     // next
-    if (!this._tourOn()) return respond(closed);
+    if (!this._tourOn()) { respond(closed); this._narrateEnded(); return; }
     // el recorrido corre en pantalla con sus propios tiempos (p. ej. lo empezó la interfaz): la voz lo toma, para que
     // no avancen a la vez el agente y los temporizadores
     if (!this._tourVoiceLed()) { try { T.voiceAttached(true); } catch (e) {} }
     const seq = this._tourSeq || 0;
     const limitMs = Math.max(2000, (VOICE_TOOL_TIMEOUT_S.run_guided_demo || 30) * 1000 - 5000);   // ~25 s
     this._waitSpeechDrained(limitMs, this._nowMs()).then(() => {
-      if (!this._tourOn()) return respond(closed);
+      if (!this._tourOn()) { respond(closed); this._narrateEnded(); return; }
       if ((this._tourSeq || 0) !== seq) {
         // mientras esperaba, el usuario habló/interrumpió (en pausa) o se cortó la voz: NO se avanza
         if (!this._tourVoiceLed()) return respond(closed);
@@ -2094,7 +2183,9 @@ const BixbyVoice = {
       try { r = T.next(); } catch (e) { r = null; }
       if (!r || r.done) {
         this._updateContextSoon();
-        return respond({ success: true, done: true, note: 'Tour finished: stay quiet and wait.' });
+        respond({ success: true, done: true, note: 'Tour finished: stay quiet and wait.' });
+        this._narrateEnded();                    // solo escuchaba: termina la última frase y cuelga
+        return;
       }
       this._updateContextSoon();
       this._tourSaidAt = this._nowMs();
@@ -2110,16 +2201,227 @@ const BixbyVoice = {
       return true;
     } catch (e) { return false; }
   },
+  // ═══ EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (2026-10-12) ═══
+  // «▶ Ver el recorrido de un minuto» sin conversación abierta: se abre una sesión de SOLO ESCUCHAR (el mismo
+  // /api/voice/session + URL firmada + _openSocket que connect(), SIN getUserMedia ni user_audio_chunk: no pide
+  // permiso de micrófono ni hay eco) y, con la metadata, se le pide el recorrido al agente → lo narra con
+  // run_guided_demo y suena EXACTAMENTE como Khipu en una conversación (los clips del servidor sonaban a "la voz
+  // vieja"). Llamar DENTRO del clic (el AudioContext se crea/reanuda en el gesto). Devuelve Promise<'voice' (el
+  // agente lo empezó) | 'local' (va el recorrido local) | 'requested' (conversación con micrófono ya abierta) |
+  // 'unavailable' | 'busy' | 'cancelled'>. El micrófono (toggle) durante esta sesión = HABLARLE (upgradeToMic).
+  narrateTour() {
+    if (this._narr && !this._narr.done) return this._narr.promise;              // doble clic: el mismo pedido
+    if (this.isConnected && !this._listenOnly) return Promise.resolve(this.requestTour() ? 'requested' : 'unavailable');
+    // la sesión de solo escuchar de un recorrido que YA terminó (o se cerró) solo está dejando sonar su última
+    // frase: se cuelga ya y se pide uno nuevo (antes el clic no hacía nada)
+    if (this._listenOnly && (this.isConnected || this.isConnecting()) && !this._tourOn()) this.disconnect();
+    if (this.isConnecting() || this.isConnected) return Promise.resolve('busy');
+    let resolve = null;
+    const promise = new Promise(r => { resolve = r; });
+    const n = this._narr = { started: false, done: false, asked: false, resolve, promise };
+    clearTimeout(this._narrCap);
+    this._audioSessionPlayback();   // iPhone: que suene aunque el interruptor de silencio esté puesto (en el gesto)
+    // el socket ni abre (red, servidor colgado): igual nunca deja al usuario sin recorrido
+    this._narrCap = setTimeout(() => { if (this._narr === n && !n.started) this._narrateFallback('timeout'); }, NARRATE_TOTAL_MS);
+    try {
+      const p = this.connect({ listenOnly: true });   // su parte síncrona (AudioContext) corre aquí, en el gesto
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+    } catch (e) { this._narrateFallback('error'); }
+    return promise;
+  },
+  _narrateText() {
+    return _voiceL('Khipu narra el recorrido — toca 🎙 para hablarle', 'Khipu is narrating the tour — tap 🎙 to talk to him');
+  },
+  // el agente empezó el recorrido (run_guided_demo start): ya no hace falta el recorrido local
+  _narrateStarted() {
+    const n = this._narr;
+    if (!n || n.done) return;
+    n.started = true; n.done = true; this._narr = null;
+    clearTimeout(this._narrTimer); this._narrTimer = 0;
+    clearTimeout(this._narrCap); this._narrCap = 0;
+    try { const T = window.KhipuToast; if (T && T.dismiss) T.dismiss('kh-tour-hand'); } catch (e) {}
+    if (this._listenOnly) { this._narrStartedSess = this._sess; this._narrKick(); }   // vigía: si el agente se calla
+    try { n.resolve('voice'); } catch (e) {}
+  },
+  // terminó (done), lo cortó el agente (stop) o lo cerró el usuario (✕/Esc): si solo escuchaba, se deja terminar
+  // la última frase (máx 8 s) y se cuelga. Si el usuario le sumó el micrófono, la conversación sigue.
+  // Un `next`/`stop` ANTES de `start` (el agente se confundió) no deja al usuario sin nada: va el recorrido local.
+  _narrateEnded(byUser) {
+    if (this.narrationPending()) {
+      if (byUser) { if (this._listenOnly) this.disconnect(); else this._narrClear(); }
+      else this._narrateFallback('closed');
+      return;
+    }
+    this._narrWatchStop();
+    if (this._listenOnly) this._endAfterSpeech(true);
+  },
+  // VIGÍA de la sesión de solo escuchar ya empezada: si el agente deja de narrar (ni herramienta ni audio en
+  // NARRATE_STALL_MS después de que terminó de sonar lo último) se cuelga y el recorrido sigue en pantalla con
+  // sus tiempos. Sin esto, una sesión trabada quedaba abierta (y cobrando) hasta el tope de ElevenLabs.
+  _narrKick() {
+    if (!this._listenOnly || !this.isConnected || this._narrStartedSess !== this._sess) return;
+    clearTimeout(this._narrWatch);
+    const sess = this._sess;
+    const check = () => {
+      this._narrWatch = 0;
+      if (sess !== this._sess || !this._listenOnly || !this.isConnected) return;
+      const ctx = this.audioCtx;
+      const left = (ctx && this._playCursor) ? Math.max(0, this._playCursor - ctx.currentTime) : 0;
+      if (left > 0.05) { this._narrWatch = setTimeout(check, Math.min(NARRATE_STALL_MS, left * 1000 + 200)); return; }
+      this._listenOnlyFail('stalled');
+    };
+    this._narrWatch = setTimeout(check, NARRATE_STALL_MS);
+  },
+  _narrWatchStop() { clearTimeout(this._narrWatch); this._narrWatch = 0; },
+  // iOS Safari (16.4+): sin micrófono la página queda en la categoría 'ambient', que el interruptor de silencio
+  // CALLA (los clips viejos iban por <audio>, que sí suena). 'playback' = suena como un reproductor. Se restaura
+  // al colgar y ANTES de pedir el micrófono (la conversación necesita grabar).
+  _audioSessionPlayback() {
+    try {
+      const as = (typeof navigator !== 'undefined') ? navigator.audioSession : null;
+      if (!as || this._asPrev != null) return;
+      this._asPrev = as.type || 'auto';
+      as.type = 'playback';
+    } catch (e) { this._asPrev = null; }
+  },
+  _audioSessionRestore() {
+    if (this._asPrev == null) return;
+    const prev = this._asPrev; this._asPrev = null;
+    try { navigator.audioSession.type = prev; } catch (e) {}
+  },
+  // el navegador no dejó sonar el AudioContext (autoplay, interrupción de iOS): no se narra un recorrido mudo
+  _narrCheckAudio() {
+    const ctx = this.audioCtx;
+    if (!ctx || ctx.state === 'running') return;
+    try { const p = ctx.resume(); if (p && typeof p.catch === 'function') p.catch(() => {}); } catch (e) {}
+    const sess = this._sess;
+    clearTimeout(this._narrAudioT);
+    this._narrAudioT = setTimeout(() => {
+      this._narrAudioT = 0;
+      if (sess !== this._sess || !this._listenOnly || !ctx || ctx.state === 'running') return;
+      if (this.narrationPending()) this._narrateFallback('muted');
+      else this._listenOnlyFail('muted');
+    }, NARRATE_AUDIO_CHECK_MS);
+  },
+  // no se pudo (sesión 4xx/5xx, sin ElevenLabs, cuota, el socket se cerró antes de la metadata, override_error tras
+  // su reintento, o el agente no lo empezó a tiempo) → se cierra la sesión de solo escuchar y va el recorrido LOCAL
+  // (clips → texto), UNA vez y solo si no hay ya un recorrido en marcha.
+  _narrateFallback(why) {
+    const n = this._narr;
+    if (!n || n.done || n.started) return false;
+    const listenOnly = !!this._listenOnly;        // si ya le sumó el micrófono, la conversación sigue abierta
+    n.done = true; this._narr = null;
+    clearTimeout(this._narrTimer); this._narrTimer = 0;
+    clearTimeout(this._narrCap); this._narrCap = 0;
+    if (listenOnly) this.disconnect();            // ANTES del recorrido local: con la voz "conectada" no suena ningún clip
+    const live = !!this.isConnected;              // conversación con micrófono abierta: solo texto (sin eco)
+    if (live) {
+      // la voz SÍ está conectada (el usuario le sumó el micrófono): no es un fallo; si el agente lo empieza tarde,
+      // toma este mismo recorrido en su paso actual (_toolTour start)
+      this._narrFbSess = this._sess;
+      this._notice(_voiceL('El recorrido va en pantalla; puedes seguir hablándole a Khipu.',
+        'The tour runs on screen; you can keep talking to Khipu.'), 'info', 'kh-tour-hand',
+        _voiceL('Recorrido de un minuto', 'One-minute tour'));
+    } else if (why === 'muted') {
+      this._notice(_voiceL('El navegador no dejó sonar la voz de Khipu: el recorrido sigue en texto.',
+        "The browser didn't let Khipu's voice play: the tour goes on as text."), 'info', 'kh-tour-hand',
+        _voiceL('Recorrido de un minuto', 'One-minute tour'));
+    } else {
+      this._notice(_voiceL('No se pudo conectar la voz en vivo de Khipu: el recorrido sigue sin ella.',
+        "Couldn't connect Khipu's live voice: the tour goes on without it."), 'info', 'kh-tour-hand',
+        _voiceL('Recorrido de un minuto', 'One-minute tour'));
+    }
+    const T = this._tour();
+    let on = false;
+    try { const st = T ? T.state() : null; on = !!(st && st.on); } catch (e) { on = false; }
+    if (T && !on) { try { T.start((live || why === 'muted') ? { fallback: true, textOnly: true } : { fallback: true }); } catch (e) {} }
+    try { n.resolve('local'); } catch (e) {}
+    return true;
+  },
+  // fin de la sesión del recorrido (colgar, fallo, reemplazo): timers fuera
+  _narrClear() {
+    clearTimeout(this._narrTimer); this._narrTimer = 0;
+    clearTimeout(this._narrCap); this._narrCap = 0;
+    clearTimeout(this._narrAudioT); this._narrAudioT = 0;
+    this._narrWatchStop(); this._narrStartedSess = 0;
+    this._audioSessionRestore();
+    this._listenOnly = false;
+    const n = this._narr; this._narr = null;
+    if (n && !n.done) { n.done = true; try { n.resolve(n.started ? 'voice' : 'cancelled'); } catch (e) {} }
+  },
+  // la sesión de solo escuchar falló: sin la pantalla de error de la conversación (no hay micrófono que reintentar)
+  _listenOnlyFail(text) {
+    if (this.narrationPending()) { this._narrateFallback(text === 'muted' ? 'muted' : 'error'); return; }
+    const touring = this._tourOn();
+    this.disconnect();                            // el recorrido narrado sigue en pantalla con sus tiempos (_tourDetach)
+    if (touring) {
+      this._notice(text === 'muted'
+        ? _voiceL('El navegador no dejó sonar la voz de Khipu: el recorrido sigue en texto.',
+          "The browser didn't let Khipu's voice play: the tour goes on as text.")
+        : _voiceL('Se cortó la voz de Khipu: el recorrido sigue en pantalla.',
+          "Khipu's voice dropped: the tour goes on on screen."), 'info', 'kh-tour-hand',
+        _voiceL('Recorrido de un minuto', 'One-minute tour'));
+    }
+    try { console.warn('[Khipu voz] recorrido:', text); } catch (e) {}
+  },
+  // 🎙 durante la sesión del recorrido = HABLARLE: el micrófono se pide DENTRO de este clic y se suma al MISMO socket
+  async upgradeToMic() {
+    const sess = this._sess;
+    this._audioSessionRestore();                  // iPhone: la conversación graba (play-and-record), no 'playback'
+    const md = (typeof navigator !== 'undefined' && navigator.mediaDevices) ? navigator.mediaDevices : null;
+    if (!md || typeof md.getUserMedia !== 'function') {
+      this._notice(_voiceL('Este navegador no da acceso al micrófono aquí (¿la página no es HTTPS?).',
+        'This browser gives no microphone access here (is the page not HTTPS?).'), 'error', 'kh-voice-mic', _voiceL('Micrófono', 'Microphone'));
+      return false;
+    }
+    let stream = null;
+    try {
+      stream = await md.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
+        video: false,
+      });
+    } catch (e) {
+      // sigue solo escuchando; el motivo, el mismo texto bilingüe de siempre
+      if (sess === this._sess && this._listenOnly) this._notice(this._micErrorText(e), 'error', 'kh-voice-mic', _voiceL('Micrófono', 'Microphone'));
+      return false;
+    }
+    if (sess !== this._sess || !this._listenOnly) { this._stopTracks(stream); return false; }   // ya colgó
+    this._listenOnly = false;
+    this._narrWatchStop();                        // ya puede hablarle: los tiempos de ElevenLabs vuelven a mandar
+    try { if (this.audioCtx && this.audioCtx.state !== 'running' && this.audioCtx.state !== 'closed') this.audioCtx.resume(); } catch (e) {}
+    if (this._metaReceived && this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this._startMicWithStream(stream);           // → "Khipu te escucha — habla"
+    } else {
+      this._releasePre(); this._preStream = stream;   // arranca con la metadata
+      this._emitVoice(this.state, this.stateText);
+    }
+    this._updateContextSoon();                    // listen_only ya no va
+    return true;
+  },
+  // aviso corto y bilingüe (KhipuToast; sin él, el toast() de app.html) — nunca texto crudo
+  _notice(text, kind, id, title) {
+    try {
+      const T = (typeof window !== 'undefined') ? window.KhipuToast : null;
+      if (T && typeof T.show === 'function') { T.show({ id: id, kind: kind || 'info', title: title || 'Khipu', body: text, timeout: 7000 }); return; }
+    } catch (e) {}
+    try { if (typeof toast === 'function') toast(text); } catch (e) {}
+  },
+
   // el usuario cerró el recorrido (✕ / Esc): el agente deja de narrar; los `next` siguientes → stopped:true
   tourClosed() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return false;
+    let ok = false;
     try {
       this.ws.send(JSON.stringify({ type: 'contextual_update', text: '[CONTEXT_UPDATE] {"tour":"closed by the user"}' }));
-      return true;
-    } catch (e) { return false; }
+      ok = true;
+    } catch (e) { ok = false; }
+    this._narrateEnded(true);                    // solo escuchaba el recorrido: termina la frase y cuelga
+    return ok;
   },
   // el usuario habló o interrumpió → el recorrido narrado por la voz queda en pausa
   _tourPauseIfVoice() {
+    // solo escuchando no hay micrófono con el que contestar "¿sigo?": el recorrido no se pausa
+    if (this._listenOnly) return;
     if (!this._tourVoiceLed()) return;
     this._tourSeq = (this._tourSeq || 0) + 1;   // un `next` que estaba esperando ya no avanza
     try { this._tour().pause(); } catch (e) {}
@@ -2179,8 +2481,10 @@ const BixbyVoice = {
   },
   // estado interno → estado PÚBLICO (getState / evento 'khipu:voice')
   _PUBLIC_STATE: { connect: 'connecting', listen: 'listening', speak: 'speaking', think: 'thinking', error: 'error' },
+  // sesión del recorrido (solo escuchar): no dice "Escuchando" — el usuario no está hablando con él
+  _NARRATE_LABEL: ['NARRANDO', 'NARRATING', 'Narrando', 'Narrating'],
   _setState(state, text) {
-    const lab = this._STATE_LABELS[state];
+    const lab = (state === 'listen' && this._listenOnly) ? this._NARRATE_LABEL : this._STATE_LABELS[state];
     if (!lab) return;
     const en = _voiceLang() === 'en';
     // setBixbyThinking (app.html) escribe "PENSANDO" fijo en la insignia: va ANTES para que la
@@ -2243,6 +2547,8 @@ const BixbyVoice = {
   // (antes un fallo antes de abrir el socket dejaba el micrófono encendido y
   // "Khipu — conectando…" para siempre).
   _fail(text) {
+    if (this._listenOnly) { this._listenOnlyFail(text); return; }   // sesión del recorrido: recorrido local, sin error de voz
+    const narrPending = !!(this._narr && !this._narr.done && !this._narr.started);
     clearTimeout(this._initTimer);
     this._tourDetach();
     this.isConnected = false;
@@ -2263,6 +2569,8 @@ const BixbyVoice = {
         if (this.state === 'error') this._emitVoice('off');   // el aviso de error se apaga solo (12 s)
       }
     }, 12000);
+    // la sesión del botón del recorrido (ya con micrófono) falló antes de empezarlo: igual hay recorrido
+    if (narrPending) this._narrateFallback('error');
   },
 };
 

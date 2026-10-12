@@ -270,6 +270,12 @@ un solo kernel, un solo NRS, un solo motor de contexto ($R(v\mid Q)$ + presupues
     (`run_guided_demo` start/next/stop, `BixbyCockpit.tour`), sin conversación suena con la MISMA voz del agente
     (`GET /api/voice/tour/<lang>/<paso>`: solo frases del guion, caché) y sin voz queda escrito. Nunca reintroducir el
     texto del recorrido dentro de cockpit.js ni "cuenta simulada" fija (puede ser dinero real).
+    BOTÓN DEL RECORRIDO (2026-10-12, "usa la voz antigua"): con la voz contratada (`BixbyVoice.isConfigured()` lee
+    `window.V8.Keys`, NO un `Keys` global que no existe) abre una sesión de SOLO ESCUCHAR (`BixbyVoice.narrateTour()`,
+    sin micrófono, `user_message` con el pedido, CONTEXT_UPDATE `listen_only:true`) y narra el AGENTE — la misma voz que
+    hablando; 🎙 en esa sesión = hablarle (`upgradeToMic`, mismo socket); vigía de 35 s y respaldo local (9 s/20 s).
+    NO mandar `user_activity` (ElevenLabs no deja hablar al agente ~2 s tras cada uno). Los clips son solo respaldo y
+    usan la voz REAL (`voice_agent.tour_voice`: variante del idioma + ajustes + modelo) con ETag/no-cache.
   - **Habilidades por agente (2026-10-06)**: `research/agent_skills.py` — al hablarle a un agente (@cadena,
     @tecnico…) responde DESDE SU ROL con su paquete en vivo (`skill_packet`: evidencia E# + extras S#: Cadena =
     tensor/países/riesgo/eventos; Técnico = indicadores; Fundamental = estados/ratios/pares…) sin exigir

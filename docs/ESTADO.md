@@ -9,6 +9,24 @@ está conectado).
 
 ---
 
+# SESIÓN 2026-10-12 — EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (sw v256)
+
+Fabrizio: "Cuando aprieto «Ver el recorrido en un minuto», usa la voz antigua. Solo cuando se lo pido por voz, usa la
+voz nueva." Causas: (1) el botón SIEMPRE tocaba los clips del servidor — `isConfigured()` buscaba un `Keys` global que
+en la app real no existe (está en `V8.Keys`); (2) los clips usaban solo la voz principal, sin los ajustes del agente,
+con el nombre de modelo de conversación, y quedaban guardados 1 h en el navegador / 10 min en el servidor.
+- El botón ahora abre una sesión de voz de SOLO ESCUCHAR (`BixbyVoice.narrateTour`): sin micrófono, le pide el
+  recorrido al agente con `user_message` y el AGENTE lo narra (mismo camino que pedirlo hablando → misma voz). 🎙
+  durante el recorrido = hablarle (mismo socket). Al terminar cuelga solo. Respaldo local (clips → texto) si la voz no
+  conecta en 9 s / 20 s, si el navegador no deja sonar el audio o si el agente se traba (vigía de 35 s).
+- Sin `user_activity` (pausaba al agente ~2 s cada vez). iPhone: `navigator.audioSession.type='playback'` mientras
+  narra (Safari 16.4+); en iOS más viejo el interruptor de silencio puede callarlo (queda el recorrido en pantalla).
+- Clips de respaldo con la voz REAL (`voice_agent.tour_voice`: variante del idioma, estabilidad/parecido/velocidad,
+  eleven_v3_conversational → eleven_v3) y `no-cache` + ETag: un cambio de voz en ElevenLabs se oye en ≤1 min.
+- Revisión (3 lentes): 12 hallazgos, 9 arreglados con prueba (el crítico: isConfigured). tests/test_voice_tour_narrator.py.
+
+---
+
 # SESIÓN 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU VOZ (sw v255)
 
 Pedidos de Fabrizio: "modifica esto para el nuevo interfaz" (las instrucciones de la voz de ElevenLabs) y "que en el

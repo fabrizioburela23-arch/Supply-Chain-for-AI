@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 2537
+lineas: 2845
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 2.537 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 2.845 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -20,11 +20,11 @@ Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agen
 
 `window.BixbyVoice`, `window.KhipuVoiceAudio`, `window.__bixbyEnergy`, `window.__lastTradeExec`, `window.__tradeAcctCache`, `window.__tradeInflight`, `window._executeTradeOrder`, `window._openBrokerStage`, `window._resolveTradeSymbol`, `window._tradeAccountInfo`
 
-De nivel superior (globales del script): `TOUR_AUDIO_GAP_MS`, `VOICE_ALIAS_TIMEOUT_S`, `VOICE_ORDER_PREVIEW_MS`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
+De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`, `TOUR_AUDIO_GAP_MS`, `VOICE_ALIAS_TIMEOUT_S`, `VOICE_ORDER_PREVIEW_MS`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `_canonId`, `_liveRecolorByImpact`, `_liveSelectedNode`, `_openSecondBrain` y 19 más
+- [[app.html]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8`, `_canonId`, `_liveRecolorByImpact`, `_liveSelectedNode` y 20 más
 - [[engine.cockpit.js]] — usa `BixbyCockpit`, `_computePortfolioSummary`, `_openDeepResearch`, `_runAgentSim`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.compare.js]] — usa `openCompare`
@@ -81,6 +81,7 @@ Se carga en [[app.html]] en la posición **34 de 92** (línea 7820), después de
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour.py]]
 - [[tests.test_voice_tour_client.py]]
+- [[tests.test_voice_tour_narrator.py]]
 
 ## Mencionado en sesiones de trabajo
 

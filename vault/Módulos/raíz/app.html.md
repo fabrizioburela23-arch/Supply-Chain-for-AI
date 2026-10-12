@@ -256,7 +256,7 @@ Además declara **250** funciones/constantes de nivel superior en sus bloques in
 - [[engine.timeline3d.js]] — usa `LANG`, `NODE_BY_ID`, `getLinkColorHex`
 - [[engine.toast.js]] — usa `LANG`, `_tradeFetch`, `_tradeStatusInfo`
 - [[engine.universe2d.js]] — usa `LANG`, `_diag`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `jumpTo`
-- [[engine.voice.js]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `_canonId`, `_liveRecolorByImpact` y 21 más
+- [[engine.voice.js]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8`, `_canonId` y 22 más
 - [[engine.worldmonitor.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `goMap`, `nexusCore` y 1 más
 - [[engine.xray.js]] — usa `DataLayer`, `KhipuLive`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_openSecondBrain`, `activateStress` y 10 más
 - [[sim.scenario_builder.js]] — usa `BASE`, `NODE_BY_ID`, `quotePx`
@@ -339,6 +339,7 @@ Además declara **250** funciones/constantes de nivel superior en sus bloques in
 - [[tests.test_verified_valuations.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour.py]]
+- [[tests.test_voice_tour_narrator.py]]
 
 ## Mencionado en sesiones de trabajo
 

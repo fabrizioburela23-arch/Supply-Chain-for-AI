@@ -1289,11 +1289,13 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     thinking: ['Pensando', 'Thinking'],
     error: ['Error de voz', 'Voice error'],
     unavailable: ['Voz no disponible', 'Voice unavailable'],
+    narrating: ['Khipu narra el recorrido', 'Khipu is narrating the tour'],   // sesión de solo escuchar (sin micrófono)
   };
   var VOICE_HINT = {
     connecting: ['toca para cancelar', 'tap to cancel'],
     live: ['toca para colgar', 'tap to hang up'],
     error: ['toca para reintentar', 'tap to retry'],
+    talk: ['toca 🎙 para hablarle', 'tap 🎙 to talk to him'],
   };
   var _micMissing = false;   // se tocó el micrófono sin voice.js cargada → "Voz no disponible" (error del botón)
   var _micOwned = false;   // la voz la encendió ESTE micrófono → cerrar la Cabina la cuelga (como antes)
@@ -1307,7 +1309,13 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       s = { state: V.isConnected ? 'listening' : V._connecting ? 'connecting' : 'off', error: '' };
     }
     return { state: s.state, error: s.error || '', connected: !!V.isConnected,
-             connecting: typeof V.isConnecting === 'function' ? !!V.isConnecting() : !!V._connecting };
+             connecting: typeof V.isConnecting === 'function' ? !!V.isConnecting() : !!V._connecting,
+             listenOnly: !!s.listenOnly };
+  }
+  // ¿la voz abierta es la del recorrido (solo escuchar, sin micrófono)? Tocar 🎙 entonces = hablarle, no colgar
+  function _voiceListenOnly() {
+    var V = window.BixbyVoice;
+    try { return !!(V && typeof V.isListenOnly === 'function' && V.isListenOnly()); } catch (e) { return false; }
   }
   // ¿la voz está viva, conectándose o reintentando? (tocar = colgar/cancelar; la demo no le habla encima)
   function _voiceBusy() {
@@ -1324,10 +1332,11 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     btn.classList.toggle('err', st === 'error');
     btn.setAttribute('data-voice', st);
     btn.setAttribute('aria-pressed', (live || st === 'connecting') ? 'true' : 'false');
-    var lab = st === 'error' && !window.BixbyVoice ? VOICE_LBL.unavailable : VOICE_LBL[st];
+    var lo = !!snap.listenOnly && (live || st === 'connecting');
+    var lab = st === 'error' && !window.BixbyVoice ? VOICE_LBL.unavailable : (lo && st !== 'speaking') ? VOICE_LBL.narrating : VOICE_LBL[st];
     var t = L(lab[0], lab[1]);
     if (st === 'error' && snap.error && window.BixbyVoice) t += ': ' + snap.error;
-    var h = st === 'connecting' ? VOICE_HINT.connecting : live ? VOICE_HINT.live : (st === 'error' && window.BixbyVoice) ? VOICE_HINT.error : null;
+    var h = lo ? VOICE_HINT.talk : st === 'connecting' ? VOICE_HINT.connecting : live ? VOICE_HINT.live : (st === 'error' && window.BixbyVoice) ? VOICE_HINT.error : null;
     if (h) t += ' — ' + L(h[0], h[1]);
     btn.setAttribute('title', t);
     btn.setAttribute('aria-label', t);
@@ -1337,6 +1346,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     var el = document.getElementById('bcp-state'); if (!el) return;
     var st = snap.state, lab = VOICE_LBL[st];
     if (st === 'connecting') setState('conn', L(lab[0], lab[1]));
+    else if (st === 'listening' && snap.listenOnly) setState('live', L(VOICE_LBL.narrating[0], VOICE_LBL.narrating[1]));
     else if (st === 'listening' || st === 'speaking') setState('live', L(lab[0], lab[1]));
     else if (st === 'thinking') setState('think', L(lab[0], lab[1]));
     else if (st === 'error') {
@@ -1386,6 +1396,13 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
       return;
     }
     _micMissing = false;
+    // la voz está narrando el recorrido (solo escuchar): tocar = HABLARLE (se suma el micrófono), no colgar
+    if (_voiceListenOnly()) {
+      _micOwned = true;
+      try { var pu = V.upgradeToMic ? V.upgradeToMic() : V.toggle(); if (pu && typeof pu.catch === 'function') pu.catch(function () { _paintMic(); }); } catch (e) {}
+      _paintMic();
+      return;
+    }
     try {
       // encendido, conectando o reintentando → colgar/cancelar; apagado o con error → conectar
       var busy = _voiceBusy();
@@ -4278,6 +4295,7 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     open = false;
     // la voz que encendió este micrófono (encendida O conectándose) se cuelga al cerrar
     if (_micOwned && window.BixbyVoice && window.BixbyVoice.stop && _voiceBusy()) window.BixbyVoice.stop();
+    else if (_voiceListenOnly() && window.BixbyVoice.stop) window.BixbyVoice.stop();   // la voz del recorrido se va con él
     _micOwned = false;
     _paintMic();
   }
@@ -4317,6 +4335,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     if (palIsOpen()) { e.preventDefault(); e.stopPropagation(); palClose(); return; }
     if (_popIsOpen()) { e.preventDefault(); e.stopPropagation(); _popClose(); return; }
     if (_demo.on) { e.stopPropagation(); demoStop(); return; }
+    // "Conectando con la voz de Khipu…" (el recorrido aún no empezó): Esc lo cancela
+    if (_voiceListenOnly()) { e.stopPropagation(); try { window.BixbyVoice.stop(); } catch (er) {} return; }
     if (!_osOnTop()) return;
     var t = e.target;
     if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''))) return;   // no borrar lo que escribes
@@ -4687,6 +4707,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
   // arranca el recorrido (opts.voice: lo narra el agente; opts.textOnly: sin audio). Devuelve el paso 1 o null.
   function _tourBegin(opts) {
     opts = opts || {};
+    // respaldo de la voz (engine/voice.js narrateTour): si ya hay un recorrido en marcha, no se reinicia
+    if (opts.fallback && _demo.on) return _tourResult();
     clearTimeout(_demo.handT); _demo.handT = null;
     var steps = demoSteps();
     if (!steps.length) return null;
@@ -4735,6 +4757,11 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     // temporizadores (el agente seguiría llamando `next` sobre él y pantalla y voz se desfasarían)
     if (_demo.on && _demo.voice) { _tourPlaceBar(); return _tourResult(); }
     var V = window.BixbyVoice;
+    // la voz del recorrido ya se está conectando (doble clic): no se arma otro
+    if (!_demo.on && _voiceListenOnly() && _voiceNarrPending(V)) { if (!open) openCockpit(); return null; }
+    // la sesión de solo escuchar de un recorrido que ya terminó (o se cerró con ✕) solo deja sonar su última
+    // frase: se cuelga ya y este clic arma uno nuevo (antes el clic no hacía nada)
+    if (!_demo.on && _voiceListenOnly()) { try { V.stop(); } catch (e) {} }
     if (V && V.isConnected && typeof V.requestTour === 'function' && !_demo.on) {
       var sent = false;
       try { sent = !!V.requestTour(); } catch (e) { sent = false; }
@@ -4751,7 +4778,38 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
         return null;
       }
     }
+    // sin conversación: lo narra el AGENTE en una sesión de SOLO ESCUCHAR → suena EXACTAMENTE como Khipu cuando
+    // conversa (los clips del servidor sonaban a "la voz vieja"). narrateTour va PRIMERO, dentro del clic (gesto:
+    // el audio puede sonar); si la voz no arranca, voice.js abre el recorrido local (clips → texto) una sola vez.
+    if (!_demo.on && V && typeof V.narrateTour === 'function' && !_voiceBusy() && _voiceConfigured(V)) {
+      var np = null;
+      try { np = V.narrateTour(); } catch (e) { np = null; }
+      if (np) {
+        if (!open) openCockpit();
+        try {
+          if (window.KhipuToast && window.KhipuToast.show) window.KhipuToast.show({ id: 'kh-tour-hand', kind: 'info',
+            title: L('Recorrido de un minuto', 'One-minute tour'),
+            body: L('Conectando con la voz de Khipu…', "Connecting to Khipu's voice…"), timeout: 9000 });
+        } catch (e) {}
+        if (typeof np.then === 'function') {
+          np.then(function (r) {
+            if ((r === 'unavailable' || r === 'busy') && !_demo.on) _tourBegin({ fallback: true });
+            // cancelado (Esc, cerrar Khipus OS): fuera el "Conectando con la voz de Khipu…"
+            if (r === 'cancelled') { try { if (window.KhipuToast && window.KhipuToast.dismiss) window.KhipuToast.dismiss('kh-tour-hand'); } catch (e) {} }
+          }, function () {});
+        }
+        return null;
+      }
+    }
     return _tourBegin({});
+  }
+  // ¿el botón del recorrido está esperando a que el agente lo empiece? (voice.js vieja sin narrationPending: sí)
+  function _voiceNarrPending(V) {
+    try { return !(V && typeof V.narrationPending === 'function') || !!V.narrationPending(); } catch (e) { return true; }
+  }
+  // ¿la voz de Khipu está contratada? (voice.js lo lee de /api/health); sin ese dato → recorrido local
+  function _voiceConfigured(V) {
+    try { return typeof V.isConfigured === 'function' && !!V.isConfigured(); } catch (e) { return false; }
   }
 
   function demoNext() {

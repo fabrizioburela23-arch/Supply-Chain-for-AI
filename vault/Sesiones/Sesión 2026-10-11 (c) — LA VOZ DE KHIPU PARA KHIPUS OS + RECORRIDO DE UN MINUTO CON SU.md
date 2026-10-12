@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-11"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L30"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU VOZ (sw v255)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (36 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 30 (36 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -22,4 +22,4 @@ Pedidos de Fabrizio: "modifica esto para el nuevo interfaz" (las instrucciones d
 - [[engine.voice.js]]
 - [[server.py]]
 
-← más antigua: [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]]
+← más antigua: [[Sesión 2026-10-11 (b) — LIMPIEZA QUE NO QUEDEN COSAS SUELTAS (sw v254)]] · más nueva: [[Sesión 2026-10-12 — EL BOTÓN DEL RECORRIDO CON LA VOZ REAL DE KHIPU (sw v256)]] →
