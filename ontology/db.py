@@ -147,7 +147,9 @@ _COLUMNAS_TARDIAS = (
 def schema_outdated(engine=None):
     """¿Falta alguna de las columnas tardías? Permite detectar una base con el
     esquema viejo SIN tener que provocar el error en una consulta real."""
-    from sqlalchemy import inspect
+    import warnings
+
+    from sqlalchemy import exc as sa_exc, inspect
     try:
         insp = inspect(engine or _get_engine())
         existentes = set(insp.get_table_names())
@@ -155,7 +157,9 @@ def schema_outdated(engine=None):
         for tabla, columna, _tipo in _COLUMNAS_TARDIAS:
             if tabla not in existentes:
                 continue          # la tabla aún no existe: create_all la hará completa
-            cols = {c['name'] for c in insp.get_columns(tabla)}
+            with warnings.catch_warnings():      # events.txid es xid8: el inspector no conoce el tipo (inocuo)
+                warnings.simplefilter('ignore', sa_exc.SAWarning)
+                cols = {c['name'] for c in insp.get_columns(tabla)}
             if columna not in cols:
                 faltan.append(f'{tabla}.{columna}')
         return faltan
