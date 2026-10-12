@@ -42,7 +42,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.config.py]] — importa `AI_MODEL_DEEP`, `AI_MODEL_FAST`, `AI_ORDER`, `AI_ORDER_DEEP_DEFAULT`, `AI_ORDER_EXPLICIT`, `AI_ORDER_FAST_DEFAULT`, `CLAUDE`, `GEMINI_FALLBACK_MODEL` …
 - [[core.http.py]] — importa `redact_secrets`
 - [[core.live_facts.py]] — importa `live_facts_block`
-- [[core.numbers.py]] — importa `ESTIMATE_FEATURES`, `KINDS`, `NUMBERS_RULE`, `mark_unsupported`, `unsupported_in`
+- [[core.numbers.py]] — importa `ESTIMATE_FEATURES`, `KINDS`, `NUMBERS_RULE`, `facts_from_text`, `mark_unsupported`, `unsupported_in`
 
 ## Lo usan
 
@@ -64,7 +64,7 @@ cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[server.py]] — lo importa
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 
-_Además lo importan 22 pruebas (lista abajo)._
+_Además lo importan 23 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -92,6 +92,7 @@ _Además lo importan 22 pruebas (lista abajo)._
 - [[tests.test_ai_json.py]]
 - [[tests.test_ai_usage.py]]
 - [[tests.test_block0_numbers.py]]
+- [[tests.test_block0_review.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_infra.py]]
 - [[tests.test_jev_router.py]]

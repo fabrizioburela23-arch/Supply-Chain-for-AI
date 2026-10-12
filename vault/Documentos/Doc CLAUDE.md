@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "CLAUDE.md"
 lenguaje: "markdown"
-lineas: 656
+lineas: 660
 aliases: ["CLAUDE.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # CLAUDE.md
 
-> Documento · capa [[Capa Documentación]] · 656 líneas · `CLAUDE.md`
+> Documento · capa [[Capa Documentación]] · 660 líneas · `CLAUDE.md`
 
 ## De qué trata
 

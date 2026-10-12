@@ -9,13 +9,13 @@ tags: ["capa/investigacion", "tipo/capa"]
 
 > El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud.
 
-**21 archivos · 5.023 líneas.** Volver al [[00 Mapa de Khipus]].
+**21 archivos · 5.029 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[research.runner.py]] — 994 líneas · ejecución de un ResearchJob (vertical slice → general).
 - [[engine.research.js]] — 591 líneas · PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
-- [[research.context.py]] — 572 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
+- [[research.context.py]] — 577 líneas · ContextBuilder: NO se manda el grafo entero al LLM.
 - [[research.models.py]] — 401 líneas · tablas de la capa DERIVED CLAIMS (Phase 2).
 - [[research.api.py]] — 324 líneas · blueprint /api/research/\* (Phase 2).
 - [[research.llm.py]] — 301 líneas · abstracción de proveedor de modelos (no acoplada a nadie).
@@ -24,7 +24,7 @@ tags: ["capa/investigacion", "tipo/capa"]
 - [[research.falsifiers.py]] — 184 líneas · falsadores ESTRUCTURADOS y verificables (C8, misión de reparación 2026-10-04).
 - [[core.sec.py]] — 143 líneas · SEC EDGAR como EVIDENCIA PRIMARIA (Phase 2).
 - [[research.contradictions.py]] — 143 líneas · detección INICIAL de tensiones entre claims.
-- [[research.agents.base.py]] — 141 líneas · la interfaz Agent.
+- [[research.agents.base.py]] — 142 líneas · la interfaz Agent.
 - [[research.confidence.py]] — 137 líneas · confianza de una claim (metodología conf-v2).
 - [[research.schemas.py]] — 134 líneas · contrato de la salida de un agente (Pydantic v2).
 - [[research.router.py]] — 133 líneas · evento → relevancia → agentes (Phase 2 event-driven).

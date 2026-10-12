@@ -9,11 +9,11 @@ tags: ["capa/comite", "tipo/capa"]
 
 > El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera.
 
-**8 archivos · 6.551 líneas.** Volver al [[00 Mapa de Khipus]].
+**8 archivos · 6.575 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
-- [[research.committee.py]] — 2.259 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
+- [[research.committee.py]] — 2.283 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - [[engine.committee.js]] — 1.239 líneas · PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
 - [[research.outcomes.py]] — 716 líneas · PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - [[research.committee_api.py]] — 688 líneas · blueprint /api/committee/\* (PHASE 3).
