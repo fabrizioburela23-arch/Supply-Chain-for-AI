@@ -11,6 +11,7 @@
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -30,7 +31,7 @@ def _r(p):
 
 
 SRC = _r(COCKPIT_PATH)
-HTML = _r(os.path.join(ROOT, 'app.html'))
+HTML = app_source()
 
 
 def _rule(css, selector):

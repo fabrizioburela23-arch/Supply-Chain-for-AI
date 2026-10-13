@@ -10,6 +10,7 @@ Red simulada en todos los tests (ninguna llamada real).
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -437,7 +438,7 @@ def test_ruta_pausa_de_ia_bilingue(monkeypatch):
 
 
 # ── 8. la tarjeta REAL (app.html _diagTexts) pinta bien lo que manda el servidor, en ES y en EN ──────────
-_HTML = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+_HTML = app_source()
 _DIAG_JS = _HTML[_HTML.index('/* ── Estado del Sistema — diagnóstico en vivo'):_HTML.index('window.openDiagnostics = async function')]
 _HARNESS = r"""
 const vm = require('vm');

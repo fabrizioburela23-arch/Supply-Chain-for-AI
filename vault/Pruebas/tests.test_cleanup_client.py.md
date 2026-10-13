@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cleanup_client.py"
 lenguaje: "python"
-lineas: 101
+lineas: 102
 aliases: ["tests/test_cleanup_client.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cleanup_client.py
 
-> Prueba · capa [[Capa Pruebas]] · 101 líneas · `tests/test_cleanup_client.py`
+> Prueba · capa [[Capa Pruebas]] · 102 líneas · `tests/test_cleanup_client.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Limpieza 2026-10-11 ("que no queden cosas sueltas"), lado cliente. Cada prueba f
 
 ## Cubre
 
-- [[app.html]]
 - [[engine.cockpit.js]]
 - [[engine.graph3d.js]]
 - [[engine.hypergraph.js]]

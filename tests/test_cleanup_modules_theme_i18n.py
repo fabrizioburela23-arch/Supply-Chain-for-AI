@@ -21,6 +21,7 @@ Dos niveles: estático (siempre) y navegador (Playwright + Chromium, si hay).
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -38,7 +39,7 @@ def _r(*p):
 FILES = ['spacemonitor', 'worldmonitor', 'crypto', 'livesim', 'compare', 'layers', 'matrixview', 'termdata', 'live']
 SRC = {f: _r('engine', f + '.js') for f in FILES}
 COCKPIT = _r('engine', 'cockpit.js')
-HTML = _r('app.html')
+HTML = app_source()
 
 HEX_RE = re.compile(r'#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b')
 

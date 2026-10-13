@@ -36,7 +36,7 @@ Se carga en [[app.html]] en la posición **15 de 97** (línea 1450), después de
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 15)
-- [[app.html]] — usa `PRIVATE_VALUATIONS`
+- [[engine.app_main.js]] — usa `PRIVATE_VALUATIONS`
 - [[engine.fincard.js]] — usa `PRIVATE_VALUATIONS`
 - [[engine.voice.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `PRIVATE_VALUATIONS`

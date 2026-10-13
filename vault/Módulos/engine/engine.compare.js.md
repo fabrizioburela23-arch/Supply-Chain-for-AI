@@ -22,11 +22,11 @@ COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos emp
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `LINKS`, `NODE_BY_ID`, `computeNRS`, `computeNRSBreakdown`, `sectorName`
+- [[engine.app_main.js]] — usa `LANG`, `LINKS`, `NODE_BY_ID`, `computeNRS`, `computeNRSBreakdown`, `sectorName`
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **71 de 97** (línea 7930), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
+Se carga en [[app.html]] en la posición **71 de 97** (línea 3128), después de [[engine.brief.js]] y antes de [[engine.matrixview.js]].
 
 ## Lo usan
 

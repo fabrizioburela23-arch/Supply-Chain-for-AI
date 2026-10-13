@@ -22,15 +22,16 @@ Universo 2D: respaldo TOTAL del mapa 3D sin WebGL.
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `_diag`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `jumpTo`
+- [[engine.app_coordinator.js]] — usa `_diag`
+- [[engine.app_main.js]] — usa `LANG`, `computeNRS`, `computeNodeRadius`, `getCatColorHex`, `jumpTo`
 - [[nodes.nodes_seed.js]] — usa `CATS`, `CAT_TO_SECTOR`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **32 de 97** (línea 7825), después de [[engine.mascot.js]] y antes de [[engine.resolve.js]].
+Se carga en [[app.html]] en la posición **32 de 97** (línea 3023), después de [[engine.mascot.js]] y antes de [[engine.resolve.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 32)
-- [[app.html]] — usa `KhipuUniverse2D`
+- [[engine.app_coordinator.js]] — usa `KhipuUniverse2D`
 
 ## Pruebas que lo cubren
 

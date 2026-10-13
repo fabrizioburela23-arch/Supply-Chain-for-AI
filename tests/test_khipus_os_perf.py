@@ -8,6 +8,7 @@
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -19,7 +20,7 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NODE = shutil.which('node')
-HTML = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+HTML = app_source()
 BRIEF = open(os.path.join(ROOT, 'engine', 'brief.js'), encoding='utf-8').read()
 HOTCLIENT = open(os.path.join(ROOT, 'engine', 'hotclient.js'), encoding='utf-8').read()
 

@@ -39,7 +39,7 @@ Se carga en [[app.html]] en la posición **12 de 97** (línea 1447), después de
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 12)
-- [[app.html]] — usa `LINKS_MULTICAPA`, `NODES_MULTICAPA`
+- [[engine.app_main.js]] — usa `LINKS_MULTICAPA`, `NODES_MULTICAPA`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 - [[scripts.ingest_multicapa.py]] — lo nombra por su ruta

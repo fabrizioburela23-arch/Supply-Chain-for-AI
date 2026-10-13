@@ -61,7 +61,7 @@ _Además lo importan 9 pruebas (lista abajo)._
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
 | `GET` | `/api/matrix/<rel_type>` | `matrix_get` | [[engine.cockpit.js]], [[engine.khipu_lang.js]], [[engine.livesim.js]], [[engine.voice.js]], [[engine.worldmonitor.js]], 13 pruebas |
-| `POST` | `/api/matrix/factor/fire` | `matrix_factor_fire` | [[app.html]], [[engine.khipu_lang.js]], 4 pruebas |
+| `POST` | `/api/matrix/factor/fire` | `matrix_factor_fire` | [[engine.app_coordinator.js]], [[engine.khipu_lang.js]], 4 pruebas |
 | `GET` | `/api/matrix/factors` | `matrix_factors` | [[engine.khipu_lang.js]], 5 pruebas |
 | `POST` | `/api/matrix/impact` | `matrix_impact` | [[engine.worldmonitor.js]], 7 pruebas |
 | `POST` | `/api/matrix/insights` | `matrix_insights` | [[engine.cockpit.js]], [[engine.voice.js]], 4 pruebas |

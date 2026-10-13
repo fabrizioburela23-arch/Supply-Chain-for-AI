@@ -45,10 +45,10 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
+| usa a | [[Capa Interfaz (Khipus OS)]] | 25 |
 | usa a | [[Capa Infraestructura]] | 21 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 20 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 19 |
 | la usa | [[Capa Infraestructura]] | 17 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
 | usa a | [[Capa Datos del catálogo]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | usa a | [[Capa Ontología y grafo temporal]] | 9 |

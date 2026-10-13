@@ -22,9 +22,9 @@ _No define globales (código encapsulado)._
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`
+- [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **69 de 97** (línea 7928), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
+Se carga en [[app.html]] en la posición **69 de 97** (línea 3126), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
 
 ## Lo usan
 

@@ -22,15 +22,16 @@ tags: ["capa/interfaz", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`, `_tradePinStored`
+- [[app.html]] — usa `_tradeFetch`, `_tradePinStored`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.explain.js]] — usa `explainChip`
 
-Se carga en [[app.html]] en la posición **80 de 97** (línea 7939), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
+Se carga en [[app.html]] en la posición **80 de 97** (línea 3137), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 80)
-- [[app.html]] — usa `KhipuAudit`
+- [[engine.app_main.js]] — usa `KhipuAudit`
 
 ## Endpoints que llama
 

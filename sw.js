@@ -3,7 +3,7 @@
    CACHE va en la línea 6 (regla de despliegue #1: bump vN → vN+1 en cada
    cambio de JS/HTML). server.py (_sw_version) lee SOLO los primeros 2048
    caracteres para inyectar ?v=N en los <script src> — no la bajes. */
-const CACHE = 'khipu-finance-v266';
+const CACHE = 'khipu-finance-v268';
 /* Reglas (auditoría estructural 2026-09-30, hallazgo #3 — incidente real: un
    502 HTML de Railway quedó guardado y se servía offline → "Unexpected token
    '<'", y /api/health cacheado devolvía {server:true} ocultando el aviso):
@@ -49,6 +49,9 @@ const SHELL = ['/', '/app.html',
   '/engine/timeline3d.js', '/engine/maptime.js', '/engine/khipu_lang.js', '/engine/guide.js', '/engine/xray.js', '/engine/research.js', '/engine/riskreport.js', '/engine/worldmonitor.js', '/engine/spacemonitor.js', '/engine/committee.js', '/engine/aispend.js', '/engine/pfcommittee.js', '/engine/pfreports.js', '/engine/toast.js', '/engine/agents_registry.js', '/engine/tour_script.js', '/engine/mascot.js', '/engine/sync.js', '/engine/clients.js', '/engine/mcpconnect.js', '/engine/insights.js', '/engine/hotclient.js', '/engine/statematrix.js', '/engine/livesim.js', '/engine/layers.js', '/engine/brief.js', '/engine/compare.js', '/engine/matrixview.js', '/engine/nav4.js', '/engine/oswindows.js', '/engine/khipu_chat.js', '/engine/desktop.js', '/engine/cockpit.js', '/engine/live.js', '/engine/localcharts.js', '/engine/fincard.js', '/engine/termdata.js', '/engine/explain.js', '/engine/pickers.js', '/engine/reconcile.js', '/engine/governance.js', '/engine/audit.js', '/engine/pricehist.js', '/engine/crypto.js', '/engine/portfolios.js',
   '/nodes/crypto_intel.js', '/nodes/crypto_intel2.js',
   '/sim/scenario_builder.js',
+  // G5-06: el JS propio que antes iba inline en app.html (mismo orden de carga)
+  '/engine/app_main.js', '/engine/app_coordinator.js', '/engine/app_trade_panel.js',
+  '/engine/app_preflight.js', '/engine/app_canvas.js', '/engine/app_scatter.js',
 ];
 
 const NAV_TIMEOUT_MS = 10000;
@@ -130,6 +133,21 @@ let degradedUntil = 0;
 const DEGRADED_MS = 60000;
 function degraded() { return Date.now() < degradedUntil; }
 
+// G5-06: el JS propio del shell vive en /engine/app_*.js (antes iba inline). Si
+// alguno no tiene NINGUNA copia guardada (ni su ?v= exacta ni otra), ese shell no
+// arrancaría (franja roja sobre una app vacía): se trata como "sin shell guardado"
+// → se espera a la red o sale la página offline. Caso: su precarga falló (allSettled
+// lo esconde) o un app_*.js nuevo aún no bajó, y el server cae. (La subida
+// v266→v267 la atiende todavía el SW v266, que no tiene este chequeo.)
+function shellCanBoot(html) {
+  const re = /<script src="(engine\/app_[a-z0-9_]+\.js[^"]*)"/g;
+  const refs = [];
+  let m;
+  while ((m = re.exec(html))) refs.push('/' + m[1]);
+  return Promise.all(refs.map(u => caches.match(u).then(x => x || caches.match(u, { ignoreSearch: true }))))
+    .then(found => found.every(Boolean));
+}
+
 // Shell guardado con la marca __KHIPU_STALE_SHELL (la app muestra el aviso).
 // Conserva las cabeceras de la copia guardada (CSP, frame-ancestors,
 // X-Frame-Options, nosniff…): sin ellas la página de emergencia quedaba
@@ -137,7 +155,8 @@ function degraded() { return Date.now() < degradedUntil; }
 function staleShell() {
   return caches.match(SHELL_KEY).then(m => m || caches.match('/app.html')).then(m => {
     if (!m) return null;
-    return m.text().then(html => {
+    return m.text().then(html => shellCanBoot(html).then(ok => ok ? html : null)).then(html => {
+      if (html === null) return null;
       const mark = '<script>window.__KHIPU_STALE_SHELL=1</script>';
       const out = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, h => h + mark) : mark + html;
       const headers = new Headers(m.headers);

@@ -22,7 +22,7 @@ SPACE MONITOR (pestaña 🚀 Espacio).
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `quotePx`, `switchTab`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `quotePx`, `switchTab`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[engine.globe.js]] — usa `KhipuGlobe`
@@ -30,12 +30,12 @@ SPACE MONITOR (pestaña 🚀 Espacio).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`, `sectorOf`
 
-Se carga en [[app.html]] en la posición **56 de 97** (línea 7900), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
+Se carga en [[app.html]] en la posición **56 de 97** (línea 3098), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 56)
-- [[app.html]] — usa `KhipuSpace`
+- [[engine.app_coordinator.js]] — usa `KhipuSpace`
 
 ## Endpoints que llama
 

@@ -6,6 +6,7 @@
   · el reporte de riesgo muestra la fuente de los datos en el idioma elegido (source_es / source_en).
 """
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -24,7 +25,7 @@ def test_factor_fire_usa_la_escala_del_servidor():
     src = _read('engine/khipu_lang.js')
     assert 'severity_crisis / 5)' not in src
     assert 'r.factor.severity_scale' in src and 'Math.min(100' in src
-    app = _read('app.html')
+    app = app_source()
     assert 'severity_crisis)}/5)' not in app and 'r.factor.severity_scale || 5' in app
 
 

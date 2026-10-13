@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/quote/<ticker>` | `quote` | [[server.py]] | [[app.html]], 2 pruebas |
+| `GET` | `/api/quote/<ticker>` | `quote` | [[server.py]] | [[engine.app_main.js]], 2 pruebas |

@@ -36,7 +36,7 @@ Se carga en [[app.html]] en la posición **9 de 97** (línea 1444), después de 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 9)
-- [[app.html]] — usa `LINKS_EXPAND5`, `NODES_EXPAND5`
+- [[engine.app_main.js]] — usa `LINKS_EXPAND5`, `NODES_EXPAND5`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 

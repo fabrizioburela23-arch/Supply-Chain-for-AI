@@ -191,8 +191,22 @@ Módulos nuevos: `core/voice_api.py` (todo /api/voice/* y el prompt de voz), `co
   `vault/` → NO resolver a mano: quedarse con cualquiera de los dos lados y regenerar. No editar notas generadas;
   lo personal va en `vault/Mis notas/` (el generador no la toca); `.obsidian/app.json`/`graph.json` se crean si
   faltan y después son de Fabrizio (solo se refrescan los colores de capa). `vault` está en .dockerignore.
-- `app.html` (~12,650 líneas): TODA la UI en un archivo, 10 bloques `<script>`
-  inline. Tabs: map, market, analysis, geo, simulation, space, terminal,
+- `app.html` (~3,460 líneas): el HTML/CSS de TODA la UI, 4 bloques `<script>`
+  inline + su JS propio en `engine/app_*.js` (G5-06, 2026-10-13: PARTIDO SIN CAMBIAR COMPORTAMIENTO — cada archivo
+  es, byte a byte, un bloque inline de antes, cargado con `<script src="engine/app_X.js"></script>` EXACTAMENTE donde
+  estaba; scripts clásicos que comparten el ámbito global como antes, NUNCA defer/async/module). Orden:
+  `app_main.js` (núcleo: i18n, tema, NRS, mapa d3, pestañas, precios, 🩺, arranque) → … → `app_coordinator.js`
+  (Coordinator + Análisis/Terminal/Simulación) → `app_trade_panel.js` → `app_preflight.js` → `app_canvas.js` →
+  `app_scatter.js` (lista fija en tests/test_app_split.py). Siguen INLINE a propósito: el 1.º bloque (arranque de
+  emergencia + seguridad compartida + franja "servidor no disponible": debe correr aunque falle un archivo externo),
+  el orbe (diminuto), el vigía de /api/health (red de seguridad del servidor caído) y la insignia de 👥 Clientes
+  (diminuta); el CSS sigue inline (/engine se sirve como JS y el ?v= solo versiona .js). Código nuevo de app.html
+  va al engine/app_*.js que corresponda, NUNCA a un bloque inline nuevo. Las pruebas leen el texto de antes con
+  `tests/_app_source.app_source()` (vuelve a poner cada archivo en su `<script>`); solo las del orden de carga,
+  el SHELL de sw.js y la cuenta de bloques leen app.html crudo. Esos archivos van con ?v=N INMUTABLES (antes iban en
+  el HTML, siempre fresco): editarlos = subir CACHE de sw.js Y añadir una entrada a `tests/app_js_fingerprint.json`
+  (la prueba imprime las huellas; sin las dos cosas la suite falla). Un shell guardado sin copia de sus app_*.js no
+  se sirve offline (sw.js `shellCanBoot` → página offline). Tabs: map, market, analysis, geo, simulation, space, terminal,
   canvas, crypto, portfolios, tkg (◈ Grafo Temporal — ya SIN botón de pestaña: se abre como vista
   desde ⏱ del mapa, engine/maptime.js), guia (❓ Guía). La MISMA lista vive en core/khipu_chat.TABS
   (lo que el chat puede abrir; tests/test_cleanup_server.py las compara).
@@ -513,7 +527,7 @@ Módulos nuevos: `core/voice_api.py` (todo /api/voice/* y el prompt de voz), `co
 
 - `computeNRS(nodeId)` → NUMBER 0-100, NO objeto. Memoizado (`_nrsCache`);
   llamar `window._invalidateNRS()` si LINKS cambia. **UNA fórmula (limpieza 2026-10-11)**: cliente =
-  `_nrsTerms` (app.html; computeNRS y computeNRSBreakdown la usan; secondbrain.js lee el desglose);
+  `_nrsTerms` (engine/app_main.js; computeNRS y computeNRSBreakdown la usan; secondbrain.js lee el desglose);
   Python = `core/world.client_nrs` (servidor `_compute_server_nrs`, MCP y `portfolio_ai.nrs` delegan ahí,
   con el grado de la ontología o del catálogo). Margen acotado [0,20] en las dos; redondeo como JS.
   tests/test_cleanup_nrs_parity.py corre la del navegador sobre TODO el catálogo y exige el mismo número
@@ -648,8 +662,8 @@ nuevas en command_center: xray, compare, insights, livesim.
    `git checkout main && git merge --ff-only` → push AMBAS ramas (con
    retry/backoff) → volver a la rama.
 4. Verificar antes de commit: `node --check` en cada .js tocado;
-   `py_compile` de los .py tocados; los 10 bloques inline de app.html con
-   `new vm.Script()`; `pytest tests/ -q` (~1.800 tests; los de ontología se
+   `py_compile` de los .py tocados; `node --check` de cada engine/app_*.js y los 4
+   bloques inline que quedan en app.html con `new vm.Script()` (tests/test_app_split.py lo hace); `pytest tests/ -q` (~1.800 tests; los de ontología se
    auto-saltan sin DATABASE_URL). En la PC de Fabrizio (Windows) hay entorno
    completo instalado (2026-07): Python 3.11
    (`C:\Users\Dell\AppData\Local\Programs\Python\Python311\python.exe`) y
@@ -800,7 +814,7 @@ bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:
 - Olvidar el bump de sw.js → los usuarios ven código viejo.
 - Panel de pestaña fuera de `.app` → pantalla negra.
 - Usar `/v1/*` para features internas → colisiona con la API monetizada.
-- `getCatColorHex()`/`getLinkColorHex()` viven en app.html (~:2191) y son las
+- `getCatColorHex()`/`getLinkColorHex()` viven en engine/app_main.js (antes inline en app.html) y son las
   ÚNICAS definiciones: la copia de graph3d.js se borró en Track A Fase 2
   porque pisaba a la de app.html en silencio. No reintroducirla.
 - Atributos SVG no resuelven `var(--css)` — usar hex directo.
@@ -831,7 +845,7 @@ bloque "DATOS EN VIVO" (capitalización+precio del perfil en vivo; privadas:
   nuevo, evaluar fusionarlo con uno existente (pidió esto explícitamente).
 - **REGLA BILINGÜE (2026-07-12, pedido explícito)**: TODO texto de UI nuevo
   debe existir en español E inglés, conmutado por el botón de idioma
-  (`LANG`/`t()`/`I18N` en app.html; módulos engine/* usan su propio dict
+  (`LANG`/`t()`/`I18N` en engine/app_main.js; módulos engine/* usan su propio dict
   {es,en} leyendo `window.LANG` o `localStorage.eco_lang`). Nunca shippear
   strings solo en un idioma.
 - **EXPLICABILIDAD (2026-07-12)**: la app la usan inversionistas NO expertos —

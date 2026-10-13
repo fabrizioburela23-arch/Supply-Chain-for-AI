@@ -22,7 +22,8 @@ Fase 4 del roadmap de ontología: lenguaje de comandos KHIPU, corto y componible
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_tradeErrText`, `_tradeFetch`, `switchTab`
+- [[app.html]] — usa `_tradeErrText`, `_tradeFetch`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `switchTab`
 - [[engine.clients.js]] — usa `KhipuClients`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.maptime.js]] — usa `KhipuMapTime`
@@ -33,7 +34,7 @@ Fase 4 del roadmap de ontología: lenguaje de comandos KHIPU, corto y componible
 - [[engine.temporal-graph.js]] — usa `__tkgSetDate`
 - [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **49 de 97** (línea 7842), después de [[engine.maptime.js]] y antes de [[engine.guide.js]].
+Se carga en [[app.html]] en la posición **49 de 97** (línea 3040), después de [[engine.maptime.js]] y antes de [[engine.guide.js]].
 
 ## Lo usan
 

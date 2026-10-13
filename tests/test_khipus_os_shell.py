@@ -5,6 +5,7 @@ comportamiento en node vm (geometría de los flancos, registro de ventanas nativ
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -96,7 +97,7 @@ def test_clave_nueva_kh_desk_flank_sin_tocar_kh_desk_layout():
 
 
 def test_aterriza_siempre_en_khipus_os_salvo_vista_clasica():
-    h = _r('app.html')
+    h = app_source()
     i = h.index('(function boot(){')
     blk = h[i:h.index('/* ---- Contadores animados', i)]
     assert "sessionStorage.getItem('kh_os_classic') === '1'" in blk
@@ -255,7 +256,8 @@ def test_marca_tools_e_invocar():
     s = open(os.path.join(root, 'engine', 'cockpit.js'), encoding='utf-8').read()
     app = open(os.path.join(root, 'app.html'), encoding='utf-8').read()
     assert 'Khipus<span class="sub">Finance Intelligence</span>' in s and '<title>Khipus Finance Intelligence · 2026</title>' in app
-    assert 'Khipus Finance AI' not in app and 'family=Nunito:wght@' in app
+    # el «no» mira TODO el texto de antes (G5-06: el JS de app.html vive en engine/app_*.js, p. ej. APP_NAME)
+    assert 'Khipus Finance AI' not in app_source() and 'family=Nunito:wght@' in app
     assert "L('Herramientas', 'Tools')" in s and 'SVG.tools' in s and "L('Más', 'More')" not in s
     # invocar: la mascota en la barra, el token del agente se antepone al enviar, ✕ lo despide
     assert '<span id="kos-inv" hidden></span>' in s and "invokeAgent(id);" in s

@@ -24,7 +24,10 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8`, `__tradeAcctCache`, `_canonId`, `_liveRecolorByImpact` y 16 más
+- [[app.html]] — usa `_tradeFetch`, `_tradeStatusInfo`, `setBixbyThinking`
+- [[engine.app_coordinator.js]] — usa `_openSecondBrain`, `_termOpenTicker`, `khipuGraph3D`
+- [[engine.app_main.js]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8`, `_canonId`, `_liveRecolorByImpact`, `_liveSelectedNode` y 8 más
+- [[engine.app_trade_panel.js]] — usa `__tradeAcctCache`, `openTradeModal`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`, `_computePortfolioSummary`, `_openDeepResearch`, `_runAgentSim`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.compare.js]] — usa `openCompare`
@@ -45,7 +48,7 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **36 de 97** (línea 7829), después de [[engine.trade.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **36 de 97** (línea 3027), después de [[engine.trade.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 

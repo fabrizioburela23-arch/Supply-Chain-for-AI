@@ -7,6 +7,7 @@ deliberation.py, ask_agent.py, runner.py, agents_api.py) y "@radar"/"@analista" 
 navegador."""
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import subprocess
 
@@ -95,7 +96,7 @@ def test_no_quedan_copias_a_mano():
 
 
 def test_se_carga_antes_que_las_mascotas_y_queda_en_cache():
-    html = _read('app.html')
+    html = app_source()
     assert html.index('src="engine/agents_registry.js"') < html.index('src="engine/mascot.js"')
     assert "'/engine/agents_registry.js'" in _read('sw.js')
     src = _read('engine/agents_registry.js')

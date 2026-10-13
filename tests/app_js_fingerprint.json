@@ -1,0 +1,32 @@
+{
+ "_doc": [
+  "G5-06: huella de engine/app_*.js. Estos archivos se sirven con ?v=<N de sw.js> e INMUTABLES 1 año (y el SW",
+  "sirve su copia exacta): cambiarlos SIN subir CACHE de sw.js deja a los usuarios con el JS viejo bajo el HTML nuevo.",
+  "Al editar un engine/app_*.js: 1) sube CACHE en sw.js (vN -> vN+1); 2) AÑADE al final de 'history' una entrada",
+  "nueva con ese CACHE y las huellas que imprime tests/test_app_split.py. Nunca edites una entrada vieja."
+ ],
+ "history": [
+  {
+   "cache": "khipu-finance-v267",
+   "sha256": {
+    "engine/app_main.js": "951e24440d72ae8ebdbdb84d5f9fd41ec77069a034628ac8f1b65ab56b6bdd30",
+    "engine/app_coordinator.js": "2c031775ac8c62a641d179cf55bc90682361b87b7c38e8cd1a89ac7bdbd600ae",
+    "engine/app_trade_panel.js": "b9f9c7ec157329c445d084de60d199d9ceb1f599406b5557b69f3b2b5f80f80d",
+    "engine/app_preflight.js": "ba6b1b8bfdbe22e6b09258a435bdc3fc37e94ed96985ecb3c2dbbe7b4819536e",
+    "engine/app_canvas.js": "b910533e8bf8c61c9c22ec17421aa1e3ff1a3d38a3921368e69b1674a9c4deb3",
+    "engine/app_scatter.js": "103fbb53a73acf71ac28e2c90ec8ec7cd18334b508b164f7bc257d6ffbe8e1b9"
+   }
+  },
+  {
+   "cache": "khipu-finance-v268",
+   "sha256": {
+    "engine/app_main.js": "db00345220d27c31b248e3afea7de057914695b145ed21e2a348b3b70d8d9526",
+    "engine/app_coordinator.js": "2c031775ac8c62a641d179cf55bc90682361b87b7c38e8cd1a89ac7bdbd600ae",
+    "engine/app_trade_panel.js": "b9f9c7ec157329c445d084de60d199d9ceb1f599406b5557b69f3b2b5f80f80d",
+    "engine/app_preflight.js": "ba6b1b8bfdbe22e6b09258a435bdc3fc37e94ed96985ecb3c2dbbe7b4819536e",
+    "engine/app_canvas.js": "b910533e8bf8c61c9c22ec17421aa1e3ff1a3d38a3921368e69b1674a9c4deb3",
+    "engine/app_scatter.js": "103fbb53a73acf71ac28e2c90ec8ec7cd18334b508b164f7bc257d6ffbe8e1b9"
+   }
+  }
+ ]
+}

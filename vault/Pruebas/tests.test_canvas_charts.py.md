@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_canvas_charts.py"
 lenguaje: "python"
-lineas: 57
+lineas: 58
 aliases: ["tests/test_canvas_charts.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_canvas_charts.py
 
-> Prueba · capa [[Capa Pruebas]] · 57 líneas · `tests/test_canvas_charts.py`
+> Prueba · capa [[Capa Pruebas]] · 58 líneas · `tests/test_canvas_charts.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Canvas nivel Power BI (2026-10-06): paleta validada, tooltip/cruz al pasar el mo
 
 ## Cubre
 
-- [[app.html]]
 - [[engine.localcharts.js]]
 
 ## Mencionado en sesiones de trabajo

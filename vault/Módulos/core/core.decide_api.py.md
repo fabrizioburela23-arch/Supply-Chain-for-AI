@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "core/decide_api.py"
 lenguaje: "python"
-lineas: 25
+lineas: 28
 aliases: ["core/decide_api.py"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # core/decide_api.py
 
-> Módulo · capa [[Capa Chat y agentes]] · 25 líneas · `core/decide_api.py`
+> Módulo · capa [[Capa Chat y agentes]] · 28 líneas · `core/decide_api.py`
 
 ## Para qué sirve
 
@@ -19,11 +19,11 @@ tags: ["capa/chat-agentes", "tipo/modulo"]
 ## API pública
 
 - `status()` _(línea 13)_
-- `shadow()` _(línea 20)_
+- `shadow()` _(línea 23)_
 
 ## Depende de
 
-- [[core.decide.py]] — importa `available`, `shadow_mode`, `shadow_report`
+- [[core.decide.py]] — importa `available`, `control_features`, `shadow_mode`, `shadow_report`
 - [[core.http.py]] — importa `rate_limit`
 - [[core.pin.py]] — importa `require_operator`
 
@@ -36,13 +36,13 @@ tags: ["capa/chat-agentes", "tipo/modulo"]
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
 | `GET` | `/api/decide/shadow` | `shadow` | [[engine.aispend.js]] |
-| `GET` | `/api/decide/status` | `status` | [[engine.aispend.js]] |
+| `GET` | `/api/decide/status` | `status` | [[engine.aispend.js]], 1 prueba |
 
 Grupos: [[API decide]]
 
 ## Pruebas que lo cubren
 
-_Ninguna prueba lo importa ni menciona su ruta._
+- [[tests.test_jev_status_label.py]]
 
 ## Mencionado en sesiones de trabajo
 

@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L52"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (k) — FASE 2+ LOTE I: rutas con decisión, CSP estricta, riesgo robusto, escenario → dinero, archivos partidos — sw v266
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (25 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 52 (25 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -32,4 +32,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 
 [[ENV AI_MODEL_DEEP]], [[ENV AI_ORDER]], [[ENV CSP_REPORT_ONLY]], [[ENV GEMINI_FALLBACK_MODEL]]
 
-← más antigua: [[Sesión 2026-10-13 (j) — ESPACIO - VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265]]
+← más antigua: [[Sesión 2026-10-13 (j) — ESPACIO - VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265]] · más nueva: [[Sesión 2026-10-13 (l) — APP.HTML PARTIDO SIN CAMBIAR NADA (G5-06) — sw v267]] →

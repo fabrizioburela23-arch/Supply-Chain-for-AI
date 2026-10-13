@@ -146,7 +146,10 @@
     if (!j) h += '<span class="sp-mut">' + L('cargando…', 'loading…') + '</span></div>';
     else if (!j.available) h += '</div><div class="sp-mut">' + L('No conectado. Para activarlo, agrega en Railway la variable TYPESAFE_API_KEY. Arranca en modo sombra: decide, pero no manda.', 'Not connected. To enable it, add the TYPESAFE_API_KEY variable on Railway. It starts in shadow mode: it decides but does not act.') + '</div>';
     else {
-      h += '<span class="sp-pill ai">' + (j.shadow ? L('MODO SOMBRA', 'SHADOW MODE') : L('ACTIVO', 'ACTIVE')) + '</span></div>' +
+      var ctl = j.control_features || [];
+      var ctlLab = ctl.map(function (c) { return c === 'chat_gate' ? L('el chat', 'the chat') : c; }).join(', ');
+      h += '<span class="sp-pill ' + (ctl.length ? 'good' : 'ai') + '">' + (ctl.length ? L('ACTIVO · manda en ', 'ACTIVE · in control of ') + esc(ctlLab)
+        : (j.shadow ? L('MODO SOMBRA · solo compara', 'SHADOW MODE · compares only') : L('ACTIVO', 'ACTIVE'))) + '</span></div>' +
         '<div class="sp-mut" style="margin:4px 0 6px">' + esc(isEn() ? j.note_en : j.note_es) + '</div>';
       if (j._pin) h += '<div class="sp-warn">' + L('Pon tu PIN de operador (🔒 Límites) para ver el acuerdo por función.', 'Enter your operator PIN (🔒 Limits) to see agreement per feature.') + '</div>';
       else if (!(j.features || []).length) h += '<div class="sp-mut">' + L('Aún sin decisiones registradas: pregúntale algo a Khipu y vuelve.', 'No decisions recorded yet: ask Khipu something and come back.') + '</div>';
@@ -165,7 +168,7 @@
     fetch(base + '/api/decide/status').then(function (r) { return r.json(); }).then(function (st) {
       if (!st.available) { S.jev = st; paint(); return; }
       var p = typeof window._tradeFetch === 'function' ? window._tradeFetch(base + '/api/decide/shadow?days=' + S.days, {}, false) : fetch(base + '/api/decide/shadow?days=' + S.days);
-      return p.then(function (r) { return r.json().then(function (j) { if (!r.ok) j = { available: true, shadow: st.shadow, _pin: true, note_es: '', note_en: '' }; S.jev = j; paint(); }); });
+      return p.then(function (r) { return r.json().then(function (j) { if (!r.ok) j = { available: true, shadow: st.shadow, _pin: true, note_es: '', note_en: '' }; if (!j.control_features) j.control_features = st.control_features || []; S.jev = j; paint(); }); });
     }).catch(function () { S.jev = { available: false }; paint(); });
   }
 

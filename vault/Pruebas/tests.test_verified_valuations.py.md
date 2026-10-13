@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_verified_valuations.py"
 lenguaje: "python"
-lineas: 54
+lineas: 55
 aliases: ["tests/test_verified_valuations.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_verified_valuations.py
 
-> Prueba · capa [[Capa Pruebas]] · 54 líneas · `tests/test_verified_valuations.py`
+> Prueba · capa [[Capa Pruebas]] · 55 líneas · `tests/test_verified_valuations.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Una sola valuación por empresa privada (2026-10-05): la auditoría encontró An
 
 ## Cubre
 
-- [[app.html]]
 - [[nodes.private_valuations.js]]
 
 ## Mencionado en sesiones de trabajo

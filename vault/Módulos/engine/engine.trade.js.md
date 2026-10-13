@@ -22,12 +22,13 @@ TRADING COMPARTIDO del navegador (lote I4, G5-07: salió TAL CUAL de engine/voic
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous`, `_tradeOrderId`, `_tradeOrderIsDup`, `_tradeOrderSettle`
+- [[app.html]] — usa `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous`, `_tradeOrderId`, `_tradeOrderIsDup`, `_tradeOrderSettle`
+- [[engine.app_main.js]] — usa `LANG`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.resolve.js]] — usa `KhipuResolve`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **35 de 97** (línea 7828), después de [[engine.orb.js]] y antes de [[engine.voice.js]].
+Se carga en [[app.html]] en la posición **35 de 97** (línea 3026), después de [[engine.orb.js]] y antes de [[engine.voice.js]].
 
 ## Lo usan
 

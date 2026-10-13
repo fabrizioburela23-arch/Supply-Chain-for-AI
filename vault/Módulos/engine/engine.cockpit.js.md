@@ -22,7 +22,10 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_cvRenderCard`, `_ensureMapSettled`, `_go3D`, `_liveRecolorByImpact`, `_liveSelectedNode`, `_termOpenTicker` y 19 más
+- [[app.html]] — usa `_tradeErrText`, `_tradeFetch`, `_tradePinSave`, `_tradePinStored`, `_tradeStatusInfo`, `registerBixbyOrb`, `setBixbyThinking`
+- [[engine.app_canvas.js]] — usa `_cvRenderCard`
+- [[engine.app_coordinator.js]] — usa `_go3D`, `_termOpenTicker`, `initSimTab`, `initSpaceTab`, `initTerminalTab`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_ensureMapSettled`, `_liveRecolorByImpact`, `_liveSelectedNode`, `catLabel`, `computeNRS`, `fetchQuotes` y 6 más
 - [[engine.brief.js]] — usa `_briefOpen`
 - [[engine.canvas-data.js]] — usa `canvasEnrichData`
 - [[engine.clients.js]] — usa `KhipuClients`
@@ -52,12 +55,13 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **89 de 97** (línea 7948), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **89 de 97** (línea 3146), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 89)
 - [[app.html]] — usa `BixbyCockpit`
+- [[engine.app_main.js]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
 - [[engine.command_center.js]] — usa `BixbyCockpit`, `_openBrokerConfirm`, `_parseTradeCommand`
 - [[engine.crypto.js]] — usa `BixbyCockpit`

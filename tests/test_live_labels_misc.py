@@ -1,6 +1,7 @@
 """Cifras que el texto daba como actuales (2026-10-05): cripto (supply/dominancia de jul-2026), Insights (margen sin
 origen), Guía ("949 empresas" fijo). Ahora: dato vivo arriba, origen rotulado y conteos del catálogo cargado."""
 import os
+from tests._app_source import app_source  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -30,7 +31,7 @@ def test_mapa_tamano_de_privadas_usa_valuacion_verificada_y_tooltip_ingresos_en_
     import shutil
     import subprocess
     node = shutil.which('node')
-    s = _r('app.html')
+    s = app_source()
     fn = re.search(r'function computeNodeRadius\(nodeId\) \{.*?\n\}\n', s, re.S).group(0)
     js = ("const window={NODE_META:{OpenAI:{mktcap_b:852},Synopsys:{mktcap_b:80}},MKT:null};"
           "const NODE_BY_ID={OpenAI:{id:'OpenAI'},Synopsys:{id:'Synopsys'}};const SHARES_OUTSTANDING_B={};"
@@ -45,7 +46,7 @@ def test_mapa_tamano_de_privadas_usa_valuacion_verificada_y_tooltip_ingresos_en_
 
 
 def test_mapa_etiquetas_solo_las_mas_grandes_y_se_redimensiona_con_caps_en_vivo():
-    s = _r('app.html')
+    s = app_source()
     assert 'const LBL_MAX = 90;' in s and "function _lblOn(d){ return !!d.big || computeNodeRadius(d.id) >= _lblMinR; }" in s
     assert "window.addEventListener('khipu:livecaps'" in s and 'function _resizeNodesByCap(){' in s
     assert 'computeNodeRadius(d.id) < 13' not in s     # la regla vieja llenaría el mapa de nombres

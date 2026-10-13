@@ -22,7 +22,7 @@ tags: ["capa/dinero", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `fetchQuotes`
+- [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `fetchQuotes`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.resolve.js]] — usa `KhipuResolve`
@@ -31,12 +31,12 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **85 de 97** (línea 7944), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
+Se carga en [[app.html]] en la posición **85 de 97** (línea 3142), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 85)
-- [[app.html]] — usa `KhipuPortfolios`
+- [[engine.app_main.js]] — usa `KhipuPortfolios`
 - [[engine.cockpit.js]] — usa `KhipuPortfolios`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolios`
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolios`

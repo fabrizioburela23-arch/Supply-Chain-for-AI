@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/ipo_calendar` | `ipo_calendar` | [[server.py]] | [[app.html]] |
+| `GET` | `/api/ipo_calendar` | `ipo_calendar` | [[server.py]] | [[engine.app_main.js]] |

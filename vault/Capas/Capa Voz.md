@@ -22,17 +22,17 @@ tags: ["capa/voz", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Interfaz (Khipus OS)]] | 8 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 10 |
 | usa a | [[Capa Infraestructura]] | 7 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 5 |
 | usa a | [[Capa Datos del catálogo]] | 3 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 3 |
 | la usa | [[Capa Infraestructura]] | 2 |
 | usa a | [[Capa Chat y agentes]] | 2 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 2 |
 | la usa | [[Capa Chat y agentes]] | 1 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 1 |
 | usa a | [[Capa Comité]] | 1 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 1 |
 | usa a | [[Capa Investigación]] | 1 |
 | usa a | [[Capa Ontología y grafo temporal]] | 1 |

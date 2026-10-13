@@ -22,7 +22,8 @@ WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `goMap`, `nexusCore`, `switchTab`
+- [[engine.app_coordinator.js]] — usa `nexusCore`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `goMap`, `switchTab`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[engine.globe.js]] — usa `KhipuGlobe`
@@ -30,12 +31,12 @@ WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **55 de 97** (línea 7899), después de [[engine.riskreport.js]] y antes de [[engine.spacemonitor.js]].
+Se carga en [[app.html]] en la posición **55 de 97** (línea 3097), después de [[engine.riskreport.js]] y antes de [[engine.spacemonitor.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 55)
-- [[app.html]] — usa `KhipuWorld`
+- [[engine.app_main.js]] — usa `KhipuWorld`
 - [[engine.khipu_chat.js]] — usa `KhipuWorld`
 
 ## Endpoints que llama

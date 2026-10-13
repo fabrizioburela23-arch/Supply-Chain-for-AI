@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_neo4j_retirado.py"
 lenguaje: "python"
-lineas: 83
+lineas: 84
 aliases: ["tests/test_neo4j_retirado.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_neo4j_retirado.py
 
-> Prueba · capa [[Capa Pruebas]] · 83 líneas · `tests/test_neo4j_retirado.py`
+> Prueba · capa [[Capa Pruebas]] · 84 líneas · `tests/test_neo4j_retirado.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Neo4j se RETIRÓ el 2026-10-13 (decisión #6 de Fabrizio, docs/BRECHAS_V2.md §2
 
 ## Cubre
 
-- [[app.html]]
 - [[engine.temporal-graph.js]]
 - [[server.py]]
 

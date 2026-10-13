@@ -12,6 +12,7 @@ Esta prueba es estática (lee el código, sin red ni base) y vigila que no vuelv
 Se excluyen docs/, vault/ (generada) y tests/ (que lo nombran para vigilarlo).
 """
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import sys
 
@@ -79,5 +80,5 @@ def test_cliente_sin_siembra_ni_insignia_neo4j():
         assert bad not in js, bad
     # la insignia nativa sigue, en los dos idiomas (regla bilingüe)
     assert "storeNative: { es: 'memoria: nativa', en: 'memory: native' }" in js
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     assert 'neo4j' not in html.lower()

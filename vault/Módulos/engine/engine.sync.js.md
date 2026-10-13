@@ -22,11 +22,11 @@ SINCRONIZACIÓN ENTRE DISPOSITIVOS (carteras, perfil, posiciones)
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `MKT`, `renderMarket`
+- [[engine.app_main.js]] — usa `BASE`, `MKT`, `renderMarket`
 - [[engine.mascot.js]] — usa `KhipuAgentPrefs`
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 
-Se carga en [[app.html]] en la posición **62 de 97** (línea 7906), después de [[engine.pfreports.js]] y antes de [[engine.clients.js]].
+Se carga en [[app.html]] en la posición **62 de 97** (línea 3104), después de [[engine.pfreports.js]] y antes de [[engine.clients.js]].
 
 ## Lo usan
 

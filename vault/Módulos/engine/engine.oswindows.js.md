@@ -22,7 +22,7 @@ VENTANAS NATIVAS de Khipus OS (2026-10-06)
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_canonId`, `loadLiveQuotes`, `quoteAge`, `quoteAgoText`, `quotePx`, `quoteSrcChip` y 1 más
+- [[engine.app_main.js]] — usa `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_canonId`, `loadLiveQuotes`, `quoteAge`, `quoteAgoText`, `quotePx`, `quoteSrcChip` y 1 más
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.explain.js]] — usa `explainMetric`, `explainRegister`
@@ -32,7 +32,7 @@ VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **86 de 97** (línea 7945), después de [[engine.portfolios.js]] y antes de [[engine.khipu_chat.js]].
+Se carga en [[app.html]] en la posición **86 de 97** (línea 3143), después de [[engine.portfolios.js]] y antes de [[engine.khipu_chat.js]].
 
 ## Lo usan
 

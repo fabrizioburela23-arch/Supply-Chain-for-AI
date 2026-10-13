@@ -22,7 +22,7 @@ opciones FIJAS en vez de texto libre (pedido de Fabrizio 2026-10-05: "donde se e
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `NODE_BY_ID`
+- [[engine.app_main.js]] — usa `LANG`, `NODE_BY_ID`
 - [[engine.khipu_chat.js]] — usa `KhipuChat`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.resolve.js]] — usa `KhipuResolve`
@@ -30,7 +30,7 @@ opciones FIJAS en vez de texto libre (pedido de Fabrizio 2026-10-05: "donde se e
 - [[nodes.crypto_intel2.js]] — usa `CRYPTO_INTEL`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **57 de 97** (línea 7901), después de [[engine.spacemonitor.js]] y antes de [[engine.committee.js]].
+Se carga en [[app.html]] en la posición **57 de 97** (línea 3099), después de [[engine.spacemonitor.js]] y antes de [[engine.committee.js]].
 
 ## Lo usan
 

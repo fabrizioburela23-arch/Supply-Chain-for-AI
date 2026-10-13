@@ -22,7 +22,9 @@ Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del heade
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_cvRenderCard`, `_openSecondBrain`, `activateStress`, `canvasGenerate`, `computeNRS`, `jumpTo` y 2 más
+- [[engine.app_canvas.js]] — usa `_cvRenderCard`, `canvasGenerate`
+- [[engine.app_coordinator.js]] — usa `_openSecondBrain`, `nexusCore`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `switchTab`
 - [[engine.canvas-data.js]] — usa `canvasEnrichData`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`, `_openBrokerConfirm`, `_parseTradeCommand`
 - [[engine.compare.js]] — usa `openCompare`
@@ -36,7 +38,7 @@ Khipu Command Center (Khipu Finance) UN SOLO Khipu: el botón original del heade
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **91 de 97** (línea 7950), después de [[engine.live.js]] y antes de [[sim.scenario_builder.js]].
+Se carga en [[app.html]] en la posición **91 de 97** (línea 3148), después de [[engine.live.js]] y antes de [[sim.scenario_builder.js]].
 
 ## Lo usan
 

@@ -3,6 +3,7 @@ misma ficha ($965B verificada, "$350B (2025)" y "$60B" del catálogo) y la de $6
 app.html:applyVerifiedValuations hace que NODE_META, PREIPO_INTEL e INVEST_PATH usen nodes/private_valuations.js."""
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -14,7 +15,7 @@ NODE = shutil.which('node')
 
 
 def _fn():
-    h = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    h = app_source()
     m = re.search(r'function applyVerifiedValuations\(\)\{[\s\S]*?\n\}\n', h)
     assert m, 'applyVerifiedValuations no está en app.html'
     return m.group(0)

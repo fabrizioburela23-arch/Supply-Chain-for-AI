@@ -22,7 +22,8 @@ Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada h
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `SERVER_MODE`, `_tradeErrText`, `_tradeFetch`, `catLabel`, `computeNRS` y 5 más
+- [[app.html]] — usa `_tradeErrText`, `_tradeFetch`, `safeUrl`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `SERVER_MODE`, `catLabel`, `computeNRS`, `fetchQuotes`, `getCatColorHex` y 2 más
 - [[engine.timeline3d.js]] — usa `KhipuTimeline3D`
 - [[engine.toast.js]] — usa `khipuActor`
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
@@ -32,12 +33,12 @@ Grafo de Conocimiento Temporal (Khipus AI Finance) Reemplaza la vista 3D. Cada h
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **46 de 97** (línea 7839), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
+Se carga en [[app.html]] en la posición **46 de 97** (línea 3037), después de [[nodes.legal_names.js]] y antes de [[engine.timeline3d.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 46)
-- [[app.html]] — usa `initTKGTab`
+- [[engine.app_main.js]] — usa `initTKGTab`
 - [[engine.cockpit.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.command_center.js]] — usa `__tkgOpenObj`
 - [[engine.khipu_lang.js]] — usa `__tkgSetDate`

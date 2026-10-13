@@ -17,25 +17,25 @@ Lo calcula `scripts/build_vault.py` leyendo el código (sin IA). Sirve para enco
 
 | Qué | Cuántos |
 |---|---|
-| Archivos de código (Python, JS, HTML) | 224 |
-| Líneas de código | 132.923 |
+| Archivos de código (Python, JS, HTML) | 230 |
+| Líneas de código | 132.954 |
 | Archivos de datos del catálogo | 28 |
-| Archivos de prueba | 197 |
+| Archivos de prueba | 201 |
 | Documentos | 29 |
 | Rutas HTTP | 255 |
 | Grupos de API | 61 |
 | Herramientas MCP | 32 |
 | Variables de entorno | 157 |
-| Sesiones de trabajo | 104 |
-| Aristas `calls_endpoint` | 700 |
+| Sesiones de trabajo | 106 |
+| Aristas `calls_endpoint` | 709 |
 | Aristas `defines_endpoint` | 287 |
-| Aristas `imports` | 1.987 |
-| Aristas `loads_script` | 83 |
-| Aristas `mentions_in_session` | 540 |
+| Aristas `imports` | 2.014 |
+| Aristas `loads_script` | 89 |
+| Aristas `mentions_in_session` | 560 |
 | Aristas `reads_env` | 220 |
 | Aristas `references_file` | 60 |
-| Aristas `tested_by` | 1.454 |
-| Aristas `uses_global` | 354 |
+| Aristas `tested_by` | 1.451 |
+| Aristas `uses_global` | 423 |
 
 ## Nodos "dios" (más conectados)
 
@@ -43,28 +43,28 @@ Conexiones de código entre archivos (importa, usa globales, carga, nombra, llam
 
 | Archivo | Total | Entran | Salen | Capa |
 |---|---|---|---|---|
-| [[app.html]] | 147 | 56 | 91 | [[Capa Interfaz (Khipus OS)]] |
-| [[server.py]] | 93 | 26 | 67 | [[Capa Infraestructura]] |
+| [[app.html]] | 114 | 24 | 90 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.app_main.js]] | 106 | 61 | 45 | [[Capa Interfaz (Khipus OS)]] |
+| [[server.py]] | 98 | 31 | 67 | [[Capa Infraestructura]] |
 | [[ontology.db.py]] | 54 | 45 | 9 | [[Capa Ontología y grafo temporal]] |
-| [[engine.cockpit.js]] | 44 | 12 | 32 | [[Capa Interfaz (Khipus OS)]] |
+| [[engine.cockpit.js]] | 48 | 13 | 35 | [[Capa Interfaz (Khipus OS)]] |
+| [[nodes.nodes_seed.js]] | 41 | 41 | 0 | [[Capa Datos del catálogo]] |
 | [[core.governance.py]] | 38 | 33 | 5 | [[Capa Infraestructura]] |
 | [[core.__init__.py]] | 37 | 37 | 0 | [[Capa Infraestructura]] |
 | [[core.http.py]] | 37 | 35 | 2 | [[Capa Infraestructura]] |
 | [[core.decisions.py]] | 36 | 29 | 7 | [[Capa Infraestructura]] |
 | [[mcp_server.tools.py]] | 35 | 6 | 29 | [[Capa MCP y API]] |
-| [[nodes.nodes_seed.js]] | 35 | 35 | 0 | [[Capa Datos del catálogo]] |
+| [[engine.app_coordinator.js]] | 34 | 16 | 18 | [[Capa Interfaz (Khipus OS)]] |
 | [[core.khipu_chat.py]] | 32 | 6 | 26 | [[Capa Chat y agentes]] |
 | [[core.identity.py]] | 31 | 29 | 2 | [[Capa Infraestructura]] |
+| [[engine.resolve.js]] | 31 | 19 | 12 | [[Capa Chat y agentes]] |
+| [[engine.voice.js]] | 30 | 4 | 26 | [[Capa Voz]] |
 | [[ontology.api.py]] | 30 | 8 | 22 | [[Capa Ontología y grafo temporal]] |
 | [[research.committee.py]] | 29 | 9 | 20 | [[Capa Comité]] |
 | [[ontology.models.py]] | 28 | 25 | 3 | [[Capa Ontología y grafo temporal]] |
-| [[engine.resolve.js]] | 27 | 18 | 9 | [[Capa Chat y agentes]] |
-| [[engine.voice.js]] | 27 | 4 | 23 | [[Capa Voz]] |
-| [[research.committee_api.py]] | 27 | 7 | 20 | [[Capa Comité]] |
-| [[core.world.py]] | 26 | 17 | 9 | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] |
-| [[research.runner.py]] | 26 | 8 | 18 | [[Capa Investigación]] |
+| [[engine.toast.js]] | 27 | 24 | 3 | [[Capa Interfaz (Khipus OS)]] |
 
-## Módulos sin pruebas (24)
+## Módulos sin pruebas (23)
 
 Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 
@@ -93,46 +93,42 @@ Código (no datos) que ninguna prueba importa ni nombra. Ordenado por tamaño.
 | [[scripts.build_private_valuations.py]] | 71 | [[Capa Datos del catálogo]] |
 | [[scripts.build_listing_status.py]] | 63 | [[Capa Datos del catálogo]] |
 | [[scripts.link_origins.js]] | 56 | [[Capa Ontología y grafo temporal]] |
-| [[core.decide_api.py]] | 25 | [[Capa Chat y agentes]] |
 
 ## Módulos Python que nadie importa (0)
 
 _Ninguno._
 
-## Globales window.* que ningún otro archivo usa (29)
+## Globales window.* que ningún otro archivo usa (26)
 
 Se exportan a `window` pero nadie más las lee. Si "se usa dentro de su archivo" dice sí, la función sí trabaja (solo sobra la exportación); si dice no, es candidata a código muerto.
 
 | Global | Definida en | ¿Se usa dentro de su archivo? | ¿La nombra alguna prueba? |
 |---|---|---|---|
-| `window.APP_NAME` | [[app.html]] | **no** | no |
-| `window.ASSISTANT_NAME` | [[app.html]] | **no** | no |
+| `window.APP_NAME` | [[engine.app_main.js]] | **no** | no |
+| `window.ASSISTANT_NAME` | [[engine.app_main.js]] | **no** | no |
 | `window.DESC_FILL` | [[nodes.meta_fill.js]] | sí | no |
-| `window.KhipuLiveCaps` | [[app.html]] | **no** | no |
-| `window.KhipuLiveFund` | [[app.html]] | **no** | no |
+| `window.KhipuLiveCaps` | [[engine.app_main.js]] | **no** | no |
+| `window.KhipuLiveFund` | [[engine.app_main.js]] | **no** | no |
 | `window.KhipuVoiceAudio` | [[engine.voice.js]] | **no** | sí (solo pruebas) |
 | `window.META_CHINA` | [[nodes.nodes_china.js]] | sí | no |
 | `window.META_FILL` | [[nodes.meta_fill.js]] | sí | no |
-| `window.OntologyAlerts` | [[app.html]] | sí | no |
+| `window.OntologyAlerts` | [[engine.app_main.js]] | sí | no |
 | `window._briefAutoAllowed` | [[engine.brief.js]] | **no** | sí (solo pruebas) |
-| `window._buildNrsDegree` | [[app.html]] | sí | sí (solo pruebas) |
-| `window._lblOn` | [[app.html]] | sí | sí (solo pruebas) |
-| `window._mapState` | [[app.html]] | **no** | sí (solo pruebas) |
-| `window._resizeNodesByCap` | [[app.html]] | sí | sí (solo pruebas) |
+| `window._buildNrsDegree` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
+| `window._lblOn` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
+| `window._mapState` | [[engine.app_main.js]] | **no** | sí (solo pruebas) |
+| `window._resizeNodesByCap` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
 | `window._smGlobe` | [[engine.spacemonitor.js]] | **no** | no |
 | `window._wmGlobe` | [[engine.worldmonitor.js]] | **no** | no |
-| `window.applyVerifiedValuations` | [[app.html]] | sí | sí (solo pruebas) |
+| `window.applyVerifiedValuations` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
 | `window.buildScenarioSeed` | [[sim.scenario_builder.js]] | sí | no |
-| `window.closePropuestas` | [[app.html]] | **no** | sí (solo pruebas) |
-| `window.initCanvasTab` | [[app.html]] | sí | no |
-| `window.khJSON` | [[app.html]] | sí | no |
+| `window.closePropuestas` | [[engine.app_main.js]] | **no** | sí (solo pruebas) |
 | `window.linkTrust` | [[nodes.merge_graph.js]] | sí | sí (solo pruebas) |
-| `window.loadFredMacro` | [[app.html]] | sí | no |
-| `window.loadInvestor13F` | [[app.html]] | sí | no |
-| `window.loadTradeFlows` | [[app.html]] | sí | no |
-| `window.openTradePanelFn` | [[app.html]] | sí | no |
-| `window.renderNrsTop10` | [[app.html]] | sí | no |
-| `window.settleGraph` | [[app.html]] | sí | sí (solo pruebas) |
+| `window.loadFredMacro` | [[engine.app_coordinator.js]] | sí | no |
+| `window.loadInvestor13F` | [[engine.app_coordinator.js]] | sí | no |
+| `window.loadTradeFlows` | [[engine.app_coordinator.js]] | sí | no |
+| `window.openTradePanelFn` | [[engine.app_trade_panel.js]] | sí | no |
+| `window.settleGraph` | [[engine.app_main.js]] | sí | sí (solo pruebas) |
 | `window.xrayImpact` | [[engine.xray.js]] | **no** | sí (solo pruebas) |
 
 ## Rutas definidas que nadie llama (9)

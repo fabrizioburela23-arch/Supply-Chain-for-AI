@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/supply-chain/trade-flows` | `trade_flows` | [[server.py]] | [[app.html]] |
+| `GET` | `/api/supply-chain/trade-flows` | `trade_flows` | [[server.py]] | [[engine.app_coordinator.js]] |

@@ -22,10 +22,11 @@ MODO EN VIVO (Etapa D, 2026-07) La app se mantiene relevante SOLA: 1) Latido de 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_showUpdatePill`, `_tradeFetch`
+- [[app.html]] — usa `_tradeFetch`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `_appVersion`, `_showUpdatePill`
 - [[sw.js]] — lo nombra por su ruta
 
-Se carga en [[app.html]] en la posición **90 de 97** (línea 7949), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
+Se carga en [[app.html]] en la posición **90 de 97** (línea 3147), después de [[engine.cockpit.js]] y antes de [[engine.command_center.js]].
 
 ## Lo usan
 

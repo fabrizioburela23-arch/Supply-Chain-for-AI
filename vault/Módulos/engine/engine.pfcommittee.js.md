@@ -22,7 +22,8 @@ tags: ["capa/comite", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_tradeFetch`
+- [[app.html]] — usa `_tradeFetch`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.explain.js]] — usa `explainMetric`
 - [[engine.mascot.js]] — usa `KhipuMascot`
@@ -32,7 +33,7 @@ tags: ["capa/comite", "tipo/modulo"]
 - [[engine.sync.js]] — usa `KhipuSync`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **60 de 97** (línea 7904), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
+Se carga en [[app.html]] en la posición **60 de 97** (línea 3102), después de [[engine.aispend.js]] y antes de [[engine.pfreports.js]].
 
 ## Lo usan
 

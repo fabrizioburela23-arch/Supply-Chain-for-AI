@@ -22,17 +22,18 @@ tags: ["capa/mcp-api", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `_tradeFetch`, `closeSistema`
+- [[app.html]] — usa `_tradeFetch`
+- [[engine.app_main.js]] — usa `LANG`, `closeSistema`
 - [[engine.clients.js]] — usa `KhipuClients`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **64 de 97** (línea 7908), después de [[engine.clients.js]] y antes de [[engine.insights.js]].
+Se carga en [[app.html]] en la posición **64 de 97** (línea 3106), después de [[engine.clients.js]] y antes de [[engine.insights.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 64)
-- [[app.html]] — usa `KhipuMCP`
+- [[engine.app_main.js]] — usa `KhipuMCP`
 - [[engine.cockpit.js]] — usa `KhipuMCP`
 - [[engine.khipu_lang.js]] — usa `KhipuMCP`
 

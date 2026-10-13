@@ -22,7 +22,10 @@ RESOLUTOR DE EMPRESAS + SUPERFICIE DE RESULTADOS (2026-07) Feedback real de Fabr
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `NODE_BY_ID`, `_openSecondBrain`, `_termOpenTicker`, `activateStress`, `canvasGenerate`, `closeSistema`, `jumpTo`, `loadStockChart`, `openTradeModal` y 1 más
+- [[engine.app_canvas.js]] — usa `canvasGenerate`
+- [[engine.app_coordinator.js]] — usa `_openSecondBrain`, `_termOpenTicker`
+- [[engine.app_main.js]] — usa `LANG`, `NODE_BY_ID`, `activateStress`, `closeSistema`, `jumpTo`, `loadStockChart`, `switchTab`
+- [[engine.app_trade_panel.js]] — usa `openTradeModal`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.compare.js]] — usa `openCompare`
 - [[engine.fincard.js]] — usa `openFinCard`
@@ -32,12 +35,12 @@ RESOLUTOR DE EMPRESAS + SUPERFICIE DE RESULTADOS (2026-07) Feedback real de Fabr
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`, `RESOLVE_STOPWORDS`, `VOICE_ALIASES`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_ID_ALIAS`
 
-Se carga en [[app.html]] en la posición **33 de 97** (línea 7826), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
+Se carga en [[app.html]] en la posición **33 de 97** (línea 3024), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 33)
-- [[app.html]] — usa `KhipuResolve`, `_surface`
+- [[engine.app_coordinator.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.brief.js]] — usa `_surface`
 - [[engine.cockpit.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.command_center.js]] — usa `KhipuResolve`, `_surface`

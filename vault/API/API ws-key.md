@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `POST` | `/api/ws-key` | `ws_key` | [[server.py]] | [[app.html]], [[server.py]], 1 prueba |
+| `POST` | `/api/ws-key` | `ws_key` | [[server.py]] | [[engine.app_main.js]], [[server.py]], 1 prueba |

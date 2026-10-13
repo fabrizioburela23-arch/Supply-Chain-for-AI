@@ -7,6 +7,7 @@ el MISMO número que la de Python, empresa por empresa."""
 import inspect
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import subprocess
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,7 +21,7 @@ def _node(script, payload):
 
 
 def _client_src():
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     i = html.index('let _nrsDegree = null;')
     j = html.index('window.computeNRSBreakdown = computeNRSBreakdown;', i)
     return html[i:j] + 'window.computeNRS = computeNRS; window.computeNRSBreakdown = computeNRSBreakdown;'

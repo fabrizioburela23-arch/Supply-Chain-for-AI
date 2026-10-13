@@ -54,12 +54,12 @@ tags: ["capa/ontologia", "tipo/capa"]
 | usa a | [[Capa Infraestructura]] | 37 |
 | usa a | [[Capa Datos del catálogo]] | 33 |
 | la usa | [[Capa Investigación]] | 15 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 13 |
 | la usa | [[Capa MCP y API]] | 13 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 13 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 11 |
 | la usa | [[Capa Chat y agentes]] | 10 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 9 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 9 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |
 | la usa | [[Capa Comité]] | 6 |
 | usa a | [[Capa Investigación]] | 4 |

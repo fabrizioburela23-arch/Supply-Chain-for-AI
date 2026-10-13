@@ -36,12 +36,12 @@ Rutas y herramientas: [[Índice de la API]] · [[API herramientas MCP]].
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 8 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | la usa | [[Capa Infraestructura]] | 4 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 4 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 4 |
 | la usa | [[Capa Chat y agentes]] | 3 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 3 |
 | usa a | [[Capa Comité]] | 3 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 3 |
 | usa a | [[Capa Investigación]] | 3 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 2 |
 | la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 1 |
 | la usa | [[Capa Ontología y grafo temporal]] | 1 |
 | usa a | [[Capa Datos del catálogo]] | 1 |

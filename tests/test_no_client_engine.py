@@ -16,6 +16,7 @@ Tres niveles:
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -34,7 +35,7 @@ def _r(*p):
 
 
 def _client_sources():
-    out = {'app.html': _r('app.html')}
+    out = {'app.html': app_source()}
     for fn in sorted(os.listdir(os.path.join(ROOT, 'engine'))):
         if fn.endswith('.js'):
             out['engine/' + fn] = _r('engine', fn)
@@ -65,7 +66,7 @@ def test_statematrix_solo_anima():
 def test_sin_cifras_inventadas_ni_parametros_propios():
     xr = _r('engine', 'xray.js')
     assert '= 55;' not in xr and 'impacts[aid]' not in xr
-    app = _r('app.html')
+    app = app_source()
     assert '4, 0.85' not in app and 'salud: 0.2' not in app
     # nada de "+min(45, gains×14) %" de ganadores inventados
     for name, src in _client_sources().items():
@@ -115,7 +116,7 @@ def test_textos_nuevos_bilingues():
     for es, en in (('sin conexión', 'offline'), ('se están preparando', 'warming up'),
                    ('auge de demanda', 'Demand booms'), ('Elige al menos una empresa', 'Pick at least one company')):
         assert es in hc and en in hc, (es, en)
-    app = _r('app.html')
+    app = app_source()
     assert len(re.findall(r'\bst_wait:', app)) == 2 and len(re.findall(r'\bst_err:', app)) == 2      # ES y EN
     ex = _r('engine', 'explain.js')
     assert 'impact_sum: {' in ex and "'¿Qué son" in ex and "'What are" in ex   # el "?" de las métricas nuevas

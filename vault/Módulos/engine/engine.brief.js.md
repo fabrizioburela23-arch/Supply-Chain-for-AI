@@ -22,14 +22,14 @@ BRIEF MATINAL (te recibe con la inteligencia del día) Al abrir la app (una vez 
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `switchTab`
+- [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `computeNRS`, `jumpTo`, `switchTab`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.resolve.js]] — usa `_surface`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **70 de 97** (línea 7929), después de [[engine.layers.js]] y antes de [[engine.compare.js]].
+Se carga en [[app.html]] en la posición **70 de 97** (línea 3127), después de [[engine.layers.js]] y antes de [[engine.compare.js]].
 
 ## Lo usan
 

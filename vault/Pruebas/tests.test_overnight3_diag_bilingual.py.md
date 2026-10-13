@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight3_diag_bilingual.py"
 lenguaje: "python"
-lineas: 496
+lineas: 497
 aliases: ["tests/test_overnight3_diag_bilingual.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight3_diag_bilingual.py
 
-> Prueba · capa [[Capa Pruebas]] · 496 líneas · `tests/test_overnight3_diag_bilingual.py`
+> Prueba · capa [[Capa Pruebas]] · 497 líneas · `tests/test_overnight3_diag_bilingual.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Overnight 3 (2026-10-10) — 🩺 Sistema bilingüe en el SERVIDOR.
 
 ## Cubre
 
-- [[app.html]]
 - [[core.ai.py]]
 - [[core.config.py]]
 - [[core.quotes.py]]

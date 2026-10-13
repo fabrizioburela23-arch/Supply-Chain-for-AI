@@ -36,7 +36,7 @@ Se carga en [[app.html]] en la posición **14 de 97** (línea 1449), después de
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 14)
-- [[app.html]] — usa `LISTING_STATUS`
+- [[engine.app_main.js]] — usa `LISTING_STATUS`
 - [[scripts.build_listing_status.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 

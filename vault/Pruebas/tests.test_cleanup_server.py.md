@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cleanup_server.py"
 lenguaje: "python"
-lineas: 231
+lineas: 232
 aliases: ["tests/test_cleanup_server.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cleanup_server.py
 
-> Prueba · capa [[Capa Pruebas]] · 231 líneas · `tests/test_cleanup_server.py`
+> Prueba · capa [[Capa Pruebas]] · 232 líneas · `tests/test_cleanup_server.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Limpieza 2026-10-11 ("que no queden cosas sueltas"), lado servidor. Cada prueba 
 
 ## Cubre
 
-- [[app.html]]
 - [[core.agents_registry.py]]
 - [[core.ai.py]]
 - [[core.ai_usage.py]]

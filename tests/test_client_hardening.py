@@ -17,6 +17,7 @@ Se salta si no hay `node` (≥18: Response/Headers globales).
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -29,7 +30,7 @@ pytestmark = pytest.mark.skipif(not NODE, reason='node no instalado')
 
 
 def _client_block():
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     start = html.index('/* ── Seguridad compartida del cliente')
     end = html.index('</script>', start)
     return html[start:end]
@@ -263,7 +264,7 @@ def test_stale_shell_banner_first_block(app_res):
 def test_trade_panel_checks_duplicate_before_success():
     """El panel, la voz y cripto miran el duplicado ANTES del éxito (un 200
     con duplicate:true trae id/status y antes se anunciaba como orden nueva)."""
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     i = html.index('window.submitTradePanelOrder = async function')
     body = html[i:html.index('async function _tpLoadAccount', i)]
     assert body.index('_tradeOrderIsDup(st, d)') < body.index('r.ok && d && (d.id || d.status)')
@@ -280,7 +281,7 @@ def test_trade_panel_checks_duplicate_before_success():
 
 
 def test_datalayer_health_has_timeout():
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     i = html.index('async health(){')
     body = html[i:html.index('async _json(', i)]
     assert 'AbortController' in body and 'signal' in body and '6000' in body
@@ -422,6 +423,18 @@ const SEC = { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': Stri
   r = await sw2.dispatch('/', 'navigate');
   out.offlinePage = { status: r.status, xfo: r.headers.get('x-frame-options'), csp: r.headers.get('content-security-policy'),
                       bilingual: /Servidor no disponible/.test(await r.text()) };
+  // ── G5-06: shell guardado que carga /engine/app_*.js SIN ninguna copia → no arrancaría → página offline ──
+  const SPLIT = '<!doctype html><html><head><meta charset="utf-8"></head><body><script src="engine/app_main.js?v=' + VER +
+                '"></script><script src="engine/app_scatter.js?v=' + VER + '"></script></body></html>';
+  const sw3 = boot(() => Promise.reject(new TypeError('x')));
+  const c3 = await sw3.caches.open('khipu-finance-v' + VER);
+  await c3.put('/', resp(SPLIT, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
+  const nav3 = async () => { const x = await sw3.dispatch('/', 'navigate'); return { status: x.status, stale: (await x.text()).includes('__KHIPU_STALE_SHELL=1') }; };
+  out.splitShell = { none: await nav3() };
+  await c3.put('/engine/app_main.js?v=' + VER, resp('main', { status: 200 }));
+  out.splitShell.partial = await nav3();                                         // falta app_scatter → sigue sin arrancar
+  await (await sw3.caches.open('khipu-finance-v1')).put('/engine/app_scatter.js?v=1', resp('old', { status: 200 }));
+  out.splitShell.all = await nav3();                                             // copia de otra ?v= cuenta (igual que handleStatic)
   // ── CDN: solo lo bueno (opaca solo la CSS de Google Fonts) ──
   mode = 'up';
   await sw.dispatch('https://cdnjs.cloudflare.com/bad/lib.js', 'no-cors');
@@ -480,6 +493,15 @@ def test_sw_degraded_mode_serves_cache_immediately(sw_res):
 def test_sw_offline_page_has_security_headers(sw_res):
     o = sw_res['offlinePage']
     assert o['status'] == 503 and o['xfo'] == 'DENY' and "frame-ancestors 'none'" in o['csp'] and o['bilingual']
+
+
+def test_sw_stale_shell_needs_its_app_js(sw_res):
+    """G5-06 (revisión): el núcleo de la app vive en /engine/app_*.js. Un shell guardado sin copia de alguno de ellos
+    (subida desde v266 + server caído antes de bajarlos) ya no se sirve como app vacía: página offline bilingüe."""
+    s = sw_res['splitShell']
+    assert s['none'] == {'status': 503, 'stale': False}, s
+    assert s['partial'] == {'status': 503, 'stale': False}, s
+    assert s['all'] == {'status': 200, 'stale': True}, s
 
 
 def test_sw_cdn_caches_only_good_responses(sw_res):

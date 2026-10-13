@@ -22,12 +22,12 @@ El Grafo Temporal en 3D, donde la PROFUNDIDAD ES EL TIEMPO.
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `NODE_BY_ID`, `getLinkColorHex`
+- [[engine.app_main.js]] — usa `LANG`, `NODE_BY_ID`, `getLinkColorHex`
 - [[nodes.ontology_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **47 de 97** (línea 7840), después de [[engine.temporal-graph.js]] y antes de [[engine.maptime.js]].
+Se carga en [[app.html]] en la posición **47 de 97** (línea 3038), después de [[engine.temporal-graph.js]] y antes de [[engine.maptime.js]].
 
 ## Lo usan
 

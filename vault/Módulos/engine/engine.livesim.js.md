@@ -22,12 +22,12 @@ SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges e
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `_liveRecolorByImpact`, `_liveResetColors`, `_liveSelectedNode`, `_liveTintLinks`, `jumpTo`, `sectorName`
+- [[engine.app_main.js]] — usa `LANG`, `MKT`, `NODE_BY_ID`, `_liveRecolorByImpact`, `_liveResetColors`, `_liveSelectedNode`, `_liveTintLinks`, `jumpTo`, `sectorName`
 - [[engine.statematrix.js]] — usa `KhipuState`
 - [[engine.toast.js]] — usa `khipuActor`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **68 de 97** (línea 7927), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
+Se carga en [[app.html]] en la posición **68 de 97** (línea 3125), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
 
 ## Lo usan
 

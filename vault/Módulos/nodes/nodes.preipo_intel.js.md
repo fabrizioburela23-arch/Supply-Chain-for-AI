@@ -36,7 +36,7 @@ Se carga en [[app.html]] en la posición **13 de 97** (línea 1448), después de
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 13)
-- [[app.html]] — usa `PREIPO_INTEL`
+- [[engine.app_main.js]] — usa `PREIPO_INTEL`
 - [[engine.fincard.js]] — usa `PREIPO_INTEL`
 - [[engine.portfolios.js]] — usa `PREIPO_INTEL`
 - [[engine.temporal-graph.js]] — usa `PREIPO_INTEL`

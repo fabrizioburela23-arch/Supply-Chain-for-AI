@@ -7,6 +7,7 @@ noticias sin perfil en vivo y permisos que no coincidían · §13 el chat no pod
 import inspect
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 from types import SimpleNamespace
 
@@ -38,7 +39,7 @@ def test_respaldo_del_vocabulario_es_copia_exacta_del_json():
 def test_listas_de_relaciones_del_cliente_y_scripts_coinciden_con_el_json():
     rt = _vocab_json()
     flow = {k for k, v in rt.items() if v.get('structural') and v.get('flow')}
-    html = _read('app.html')
+    html = app_source()
     m = re.search(r'const NRS_FLOW_TYPES = \{([^}]*)\}', html)
     assert m and set(re.findall(r'(\w+)\s*:', m.group(1))) == flow
     from scripts import audit_graph
@@ -84,7 +85,7 @@ def test_noticias_recibe_perfil_en_vivo_y_permisos_salen_de_agent_needs():
 # ── §13 pestañas del chat ────────────────────────────────────────────────────
 def test_pestanas_del_chat_son_las_de_app_html():
     from core.khipu_chat import TABS
-    html = _read('app.html')
+    html = app_source()
     tabs_html = set(re.findall(r'data-tab="([a-z_]+)"', html))
     assert set(TABS) == tabs_html | {'tkg'}
     body = html[html.index('function switchTab(tab){'):html.index('function switchTab(tab){') + 4000]

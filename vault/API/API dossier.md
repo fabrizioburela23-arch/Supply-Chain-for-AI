@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/dossier/<ticker>` | `dossier` | [[server.py]] | [[app.html]], 1 prueba |
+| `GET` | `/api/dossier/<ticker>` | `dossier` | [[server.py]] | [[engine.app_coordinator.js]], 1 prueba |

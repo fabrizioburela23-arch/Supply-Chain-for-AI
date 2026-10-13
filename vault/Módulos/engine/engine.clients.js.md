@@ -22,13 +22,14 @@ tags: ["capa/dinero", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `_tradeFetch`, `_tradePinStored`
+- [[app.html]] — usa `_tradeFetch`, `_tradePinStored`
+- [[engine.app_main.js]] — usa `LANG`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.pickers.js]] — usa `KhipuPick`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **63 de 97** (línea 7907), después de [[engine.sync.js]] y antes de [[engine.mcpconnect.js]].
+Se carga en [[app.html]] en la posición **63 de 97** (línea 3105), después de [[engine.sync.js]] y antes de [[engine.mcpconnect.js]].
 
 ## Lo usan
 

@@ -22,7 +22,8 @@ PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `NODE_BY_ID`, `_tradeFetch`, `_tradePinStored`, `safeUrl`
+- [[app.html]] — usa `_tradeFetch`, `_tradePinStored`, `safeUrl`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
 - [[engine.clients.js]] — usa `KhipuClients`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.mascot.js]] — usa `KhipuMascot`
@@ -31,7 +32,7 @@ PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **58 de 97** (línea 7902), después de [[engine.pickers.js]] y antes de [[engine.aispend.js]].
+Se carga en [[app.html]] en la posición **58 de 97** (línea 3100), después de [[engine.pickers.js]] y antes de [[engine.aispend.js]].
 
 ## Lo usan
 

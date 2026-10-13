@@ -19,6 +19,7 @@ Cada prueba reproduce un hallazgo verificado y falla con el código anterior:
 import copy
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -407,7 +408,7 @@ def test_mensaje_de_trust_coincide_con_la_politica():
 
 # ═════════════════════ 8) cliente ═════════════════════
 def test_stressai_no_inventa_sin_resultado_del_motor():
-    app = _r('app.html')
+    app = app_source()
     i = app.index('const StressAI = {')
     run = app[i:i + 2600]
     assert 'stressRes' in run and 'r.ok' in run and 'stressId===id' in run

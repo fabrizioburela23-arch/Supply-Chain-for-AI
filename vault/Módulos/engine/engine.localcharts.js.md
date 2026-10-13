@@ -22,18 +22,19 @@ CANVAS: ROUTER DE INTENCIÓN + GRÁFICOS SIN IA (Etapa G 2026-07-11 · Etapa I 2
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_selectedNode`, `computeNRS`, `computeNRSBreakdown`, `cvCol`, `quotePx` y 1 más
+- [[engine.app_canvas.js]] — usa `cvCol`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_selectedNode`, `computeNRS`, `computeNRSBreakdown`, `quotePx`, `switchTab`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolioCommittee`
 - [[engine.resolve.js]] — usa `KhipuResolve`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **74 de 97** (línea 7933), después de [[engine.nav4.js]] y antes de [[engine.fincard.js]].
+Se carga en [[app.html]] en la posición **74 de 97** (línea 3131), después de [[engine.nav4.js]] y antes de [[engine.fincard.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 74)
-- [[app.html]] — usa `KhipuLocalCharts`
+- [[engine.app_canvas.js]] — usa `KhipuLocalCharts`
 - [[engine.cockpit.js]] — usa `KhipuLocalCharts`
 
 ## Endpoints que llama

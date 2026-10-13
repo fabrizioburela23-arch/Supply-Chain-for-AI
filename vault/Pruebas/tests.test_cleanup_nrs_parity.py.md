@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cleanup_nrs_parity.py"
 lenguaje: "python"
-lineas: 80
+lineas: 81
 aliases: ["tests/test_cleanup_nrs_parity.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cleanup_nrs_parity.py
 
-> Prueba · capa [[Capa Pruebas]] · 80 líneas · `tests/test_cleanup_nrs_parity.py`
+> Prueba · capa [[Capa Pruebas]] · 81 líneas · `tests/test_cleanup_nrs_parity.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Limpieza 2026-10-11 (§2 del inventario de "cosas sueltas"): el NRS tenía 5 cop
 
 ## Cubre
 
-- [[app.html]]
 - [[core.live_fundamentals.py]]
 - [[core.portfolio_ai.py]]
 - [[core.world.py]]

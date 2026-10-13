@@ -22,7 +22,8 @@ DOSSIER FINANCIERO de una empresa (Etapa G, 2026-07-11) Estilo investingvisuals 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `NODE_BY_ID`, `_openDossier`
+- [[engine.app_coordinator.js]] — usa `_openDossier`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.resolve.js]] — usa `KhipuResolve`
@@ -31,12 +32,12 @@ DOSSIER FINANCIERO de una empresa (Etapa G, 2026-07-11) Estilo investingvisuals 
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 
-Se carga en [[app.html]] en la posición **75 de 97** (línea 7934), después de [[engine.localcharts.js]] y antes de [[engine.termdata.js]].
+Se carga en [[app.html]] en la posición **75 de 97** (línea 3132), después de [[engine.localcharts.js]] y antes de [[engine.termdata.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 75)
-- [[app.html]] — usa `openFinCard`
+- [[engine.app_coordinator.js]] — usa `openFinCard`
 - [[engine.cockpit.js]] — usa `openFinCard`
 - [[engine.khipu_chat.js]] — usa `openFinCard`
 - [[engine.resolve.js]] — usa `openFinCard`

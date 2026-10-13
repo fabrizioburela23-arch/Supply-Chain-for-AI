@@ -16,6 +16,7 @@ Ahora:
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 
 import pytest
@@ -32,7 +33,7 @@ TOAST = _r('engine', 'toast.js')
 LOADING = _r('engine', 'loading.js')
 XRAY = _r('engine', 'xray.js')
 COCKPIT = _r('engine', 'cockpit.js')
-HTML = _r('app.html')
+HTML = app_source()
 
 
 def _strip_var_fallbacks(src):

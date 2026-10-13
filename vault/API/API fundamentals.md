@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/fundamentals/<ticker>` | `fundamentals` | [[server.py]] | [[app.html]], [[engine.khipu_lang.js]], [[engine.termdata.js]], 1 prueba |
+| `GET` | `/api/fundamentals/<ticker>` | `fundamentals` | [[server.py]] | [[engine.app_coordinator.js]], [[engine.app_main.js]], [[engine.khipu_lang.js]], [[engine.termdata.js]], 1 prueba |

@@ -22,19 +22,19 @@ EL TIEMPO DENTRO DEL MAPA PRINCIPAL (2026-09-25) Fabrizio: "el grafo temporal y 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `NODE_BY_ID`, `_mapLayers`, `computeNodeRadius`, `getLinkColorHex`, `jumpTo`, `refreshStyles`, `selectNode` y 1 más
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `NODE_BY_ID`, `_mapLayers`, `computeNodeRadius`, `getLinkColorHex`, `jumpTo`, `refreshStyles`, `selectNode` y 1 más
 - [[engine.temporal-graph.js]] — usa `__tkgSetDate`, `initTKGTab`
 - [[nodes.ontology.js]] — usa `ONTOLOGY`
 - [[nodes.ontology_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts.js]] — usa `TEMPORAL_SEED_FACTS`
 - [[nodes.temporal_seed_facts2.js]] — usa `TEMPORAL_SEED_FACTS`
 
-Se carga en [[app.html]] en la posición **48 de 97** (línea 7841), después de [[engine.timeline3d.js]] y antes de [[engine.khipu_lang.js]].
+Se carga en [[app.html]] en la posición **48 de 97** (línea 3039), después de [[engine.timeline3d.js]] y antes de [[engine.khipu_lang.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 48)
-- [[app.html]] — usa `KhipuMapTime`, `_mapTimePaint`
+- [[engine.app_main.js]] — usa `KhipuMapTime`, `_mapTimePaint`
 - [[engine.khipu_lang.js]] — usa `KhipuMapTime`
 
 ## Endpoints que llama

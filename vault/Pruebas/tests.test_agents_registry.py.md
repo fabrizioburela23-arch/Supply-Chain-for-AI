@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_agents_registry.py"
 lenguaje: "python"
-lineas: 102
+lineas: 103
 aliases: ["tests/test_agents_registry.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_agents_registry.py
 
-> Prueba · capa [[Capa Pruebas]] · 102 líneas · `tests/test_agents_registry.py`
+> Prueba · capa [[Capa Pruebas]] · 103 líneas · `tests/test_agents_registry.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Registro ÚNICO de agentes (limpieza 2026-10-11, §1 del inventario de "cosas su
 
 ## Cubre
 
-- [[app.html]]
 - [[core.agents_api.py]]
 - [[core.agents_registry.py]]
 - [[core.khipu_chat.py]]

@@ -510,9 +510,10 @@ CSP_REPORT_ONLY        = os.getenv('CSP_REPORT_ONLY', 'false').lower() == 'true'
 
 # Content-Security-Policy: restringe el origen de los scripts a los CDNs reales
 # que usa la app (d3 y three.js desde cdnjs, chart.js desde jsdelivr) y bloquea
-# framing, plugins y manipulación de <base>. 'unsafe-inline' sigue: los 10 bloques
-# inline de app.html y miles de onclick/estilos inline (G5-06: app.html no se
-# parte todavía; nonces/hashes después). upgrade-insecure-requests se añade
+# framing, plugins y manipulación de <base>. 'unsafe-inline' sigue: los 4 bloques
+# inline que quedan en app.html, el marcador del shell viejo que inyecta sw.js y
+# miles de onclick/estilos inline (G5-06, 2026-10-13: el resto del JS de app.html
+# vive en engine/app_*.js, mismo origen = 'self'; nonces/hashes después). upgrade-insecure-requests se añade
 # aparte, solo bajo HTTPS (no rompe dev local).
 # G5-09 (lote I1): SIN 'unsafe-eval' (grep eval/new Function/setTimeout(texto) en
 # app.html, engine/, nodes/, sim/ y en d3/three/chart/satellite → 0 usados; el

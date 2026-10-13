@@ -22,9 +22,9 @@ BixbyOrb: el orbe de voz de Khipu.
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`
+- [[engine.app_main.js]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **34 de 97** (línea 7827), después de [[engine.resolve.js]] y antes de [[engine.trade.js]].
+Se carga en [[app.html]] en la posición **34 de 97** (línea 3025), después de [[engine.resolve.js]] y antes de [[engine.trade.js]].
 
 ## Lo usan
 

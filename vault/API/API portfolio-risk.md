@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `POST` | `/api/portfolio-risk` | `api_portfolio_risk_internal` | [[server.py]] | [[app.html]] |
+| `POST` | `/api/portfolio-risk` | `api_portfolio_risk_internal` | [[server.py]] | [[engine.app_coordinator.js]] |

@@ -22,19 +22,20 @@ Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/
 
 ## Depende de
 
-- [[app.html]] — usa `LANG`, `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous`, `_tradeOrderId`, `_tradeOrderIsDup`, `_tradeOrderSettle`, `_tradePinStored`, `t`
+- [[app.html]] — usa `_tradeErrText`, `_tradeFetch`, `_tradeOrderAmbiguous`, `_tradeOrderId`, `_tradeOrderIsDup`, `_tradeOrderSettle`, `_tradePinStored`
+- [[engine.app_main.js]] — usa `LANG`, `t`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.resolve.js]] — usa `_surface`
 - [[engine.toast.js]] — usa `KhipuToast`
 - [[nodes.crypto_intel.js]] — usa `CRYPTO_CATS`, `CRYPTO_INTEL`
 - [[nodes.crypto_intel2.js]] — usa `CRYPTO_INTEL`
 
-Se carga en [[app.html]] en la posición **84 de 97** (línea 7943), después de [[nodes.crypto_intel2.js]] y antes de [[engine.portfolios.js]].
+Se carga en [[app.html]] en la posición **84 de 97** (línea 3141), después de [[nodes.crypto_intel2.js]] y antes de [[engine.portfolios.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 84)
-- [[app.html]] — usa `KhipuCrypto`
+- [[engine.app_main.js]] — usa `KhipuCrypto`
 - [[engine.cockpit.js]] — usa `KhipuCrypto`
 
 ## Endpoints que llama

@@ -30,7 +30,7 @@ _Conteos aproximados por patrón de texto (no se ejecuta el JavaScript)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **45 de 97** (línea 7838), después de [[nodes.ontology_facts.js]] y antes de [[engine.temporal-graph.js]].
+Se carga en [[app.html]] en la posición **45 de 97** (línea 3036), después de [[nodes.ontology_facts.js]] y antes de [[engine.temporal-graph.js]].
 
 ## Lo usan
 

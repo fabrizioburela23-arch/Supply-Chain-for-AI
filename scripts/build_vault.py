@@ -108,7 +108,7 @@ REGLAS_CAPA = [
     ('research/agent_skills.py', 'chat'), ('research/ask_agent.py', 'chat'),
     ('engine/khipu_chat.js', 'chat'), ('engine/command_center.js', 'chat'), ('engine/khipu_lang.js', 'chat'),
     ('engine/resolve.js', 'chat'), ('engine/localcharts.js', 'chat'), ('engine/canvas-data.js', 'chat'),
-    ('engine/pickers.js', 'chat'),
+    ('engine/pickers.js', 'chat'), ('engine/app_canvas.js', 'chat'),
     # Comité
     ('research/committee*.py', 'comite'), ('research/debate.py', 'comite'), ('research/deliberation.py', 'comite'),
     ('research/outcomes.py', 'comite'), ('core/portfolio_advisor.py', 'comite'),
@@ -131,12 +131,12 @@ REGLAS_CAPA = [
     ('core/scenario_pnl.py', 'cuant'), ('scripts/calibrate_kernel.py', 'cuant'),
     ('engine/statematrix.js', 'cuant'), ('engine/hotclient.js', 'cuant'), ('engine/livesim.js', 'cuant'), ('engine/matrixview.js', 'cuant'),
     ('engine/insights.js', 'cuant'), ('engine/riskreport.js', 'cuant'), ('engine/compare.js', 'cuant'),
-    ('sim/*', 'cuant'),
+    ('sim/*', 'cuant'), ('engine/app_preflight.js', 'cuant'),
     # Dinero
     ('brokerage/*', 'dinero'), ('core/trading_agent.py', 'dinero'), ('engine/trade.js', 'dinero'),
     ('core/portfolio_ai.py', 'dinero'), ('core/portfolio_report.py', 'dinero'),
     ('core/portfolio_reports_api.py', 'dinero'), ('engine/clients.js', 'dinero'),
-    ('engine/portfolios.js', 'dinero'), ('engine/pfreports.js', 'dinero'),
+    ('engine/portfolios.js', 'dinero'), ('engine/pfreports.js', 'dinero'), ('engine/app_trade_panel.js', 'dinero'),
     # MCP y API
     ('mcp_server/*', 'mcp'), ('engine/mcpconnect.js', 'mcp'), ('scripts/smoke_mcp.py', 'mcp'),
     # Datos en vivo
@@ -161,7 +161,9 @@ REGLAS_CAPA = [
     ('scripts/fetch_ledger_anchor.py', 'infra'),
     ('engine/aispend.js', 'infra'), ('engine/sync.js', 'infra'),
     # Interfaz
-    ('app.html', 'interfaz'), ('engine/*', 'interfaz'),
+    # G5-06: el JS que era inline en app.html (engine/app_*.js); canvas/preflight/trade_panel van arriba en su capa
+    ('app.html', 'interfaz'), ('engine/app_main.js', 'interfaz'), ('engine/app_coordinator.js', 'interfaz'),
+    ('engine/app_scatter.js', 'interfaz'), ('engine/*', 'interfaz'),
 ]
 
 # Este mismo generador (y su prueba) nombra rutas y archivos en sus textos como DATOS: no cuenta como "uso"

@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/candles/<ticker>` | `candles` | [[server.py]] | [[app.html]], [[engine.fincard.js]], [[engine.localcharts.js]], [[engine.secondbrain.js]] |
+| `GET` | `/api/candles/<ticker>` | `candles` | [[server.py]] | [[engine.app_coordinator.js]], [[engine.app_main.js]], [[engine.app_trade_panel.js]], [[engine.fincard.js]], [[engine.localcharts.js]], [[engine.secondbrain.js]] |

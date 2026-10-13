@@ -314,8 +314,8 @@ disparador append-only. Lo que queda, en el orden en que lo haría:
    historia (la descarga de 5 años) y, si hay base, con el grafo tal como se conocía en cada episodio (hoy se marca
    «mirada adelante» y nunca queda 'ok').
 5. 🔶 **Dividir los archivos gigantes** (G5-05/06/07) — lote I4: `server.py` 6.382 → 4.940 (voz y agente de trading a
-   sus módulos), `voice.js` 3.084 → 2.817 (`engine/trade.js`); `cockpit.js` y `app.html` siguen enteros (motivo en G5-06
-   y G5-07 de la tabla).
+   sus módulos), `voice.js` 3.084 → 2.817 (`engine/trade.js`); `app.html` 12.682 → 3.463 líneas (2026-10-13: su JS a
+   engine/app_*.js byte a byte, G5-06); `cockpit.js` sigue entero (motivo en G5-07 de la tabla).
 
 ---
 
@@ -324,7 +324,7 @@ disparador append-only. Lo que queda, en el orden en que lo haría:
 Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PIN** (activar una versión) · 🔶 parcial ·
 👤 necesita tu decisión o revisión (#n de BRECHAS §2) · ⬜ abierto (Fase 2+ o pendiente).
 
-**Resumen (recontado de la tabla tras el lote I y su revisión): ✅ 58 cerrados · 🟡 17 listos, esperan tu PIN · 🔶 12 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 2 abiertos (total 99).** De los 17 🟡: 14 son del motor 2.0.0 (activado en producción con tu PIN el 2026-10-13: allí ya cuentan como ✅), 2 de policy.risk 2.0.0 (L2-14, L2-18) y 1 del motor 2.1.0 (PROP-08). L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
+**Resumen (recontado de la tabla tras el lote I y su revisión; G5-06 pasó a ✅ el 2026-10-13): ✅ 59 cerrados · 🟡 17 listos, esperan tu PIN · 🔶 11 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 2 abiertos (total 99).** De los 17 🟡: 14 son del motor 2.0.0 (activado en producción con tu PIN el 2026-10-13: allí ya cuentan como ✅), 2 de policy.risk 2.0.0 (L2-14, L2-18) y 1 del motor 2.1.0 (PROP-08). L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
 
 | Id | Qué era | Estado | Evidencia (código / prueba) |
 |---|---|---|---|
@@ -407,10 +407,10 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | G5-02 | Se desplegaba sin pruebas | ✅ | .github/workflows/ci.yml (test_block0_ci) + «Wait for CI» activado en Railway por Fabrizio (2026-10-13) |
 | G5-03 | statematrix.js decía «idéntica» y no lo era | ✅ | test_no_client_engine |
 | G5-05 | server.py gigante | ✅ | Lote I4: 6.382 → 4.940 líneas. La voz (`/api/voice/*`, prompt y contrato de herramientas) vive en `core/voice_api.py` y el agente de trading (`/api/trade/agent/*`) en `core/trading_agent.py`, movidos TAL CUAL (la config sigue en server.py y se lee en cada llamada; server.py re-exporta los nombres que leen el 🩺 y las pruebas). Prueba: `tests/test_voice_agent_split.py` |
-| G5-06 | app.html gigante | 🔶 | NO se parte todavía (decisión del lote I4): sus 10 bloques inline comparten globales y orden de carga con ~60 archivos de engine/ y ~150 pruebas leen su texto; partirlo sin un empaquetador es alto riesgo y bajo valor hoy. Se le quitaron restos sin uso (G5-15). Plan: sacar un bloque por vez cuando haya CSP con nonces |
+| G5-06 | app.html gigante | ✅ (parcial a propósito) | 2026-10-13 (pedido de Fabrizio: «sigue con app.html, con cuidado»): 6 de sus 10 bloques inline (96 % del JS, ~535 KB) pasaron a engine/app_main.js, app_coordinator.js, app_trade_panel.js, app_preflight.js, app_canvas.js y app_scatter.js, BYTE A BYTE y cargados con un `<script src>` clásico en el MISMO lugar (mismo orden, mismo ámbito global; no hace falta nonce: es 'self'); app.html 12.682 → 3.463 líneas. Siguen inline: el 1.º bloque (arranque de emergencia + seguridad + franja de servidor caído), el vigía de /api/health, el orbe y la insignia de Clientes (diminutos) y TODO el CSS (/engine se sirve como JS y el ?v= solo versiona .js). Pruebas: tests/_app_source.app_source() reconstruye el texto de antes (verificado igual byte a byte); tests/test_app_split.py fija orden, SHELL y compilación |
 | G5-07 | cockpit.js y voice.js gigantes | 🔶 | voice.js 3.084 → 2.817 (el trading compartido salió a `engine/trade.js`). cockpit.js (5.011) NO se partió: es UN solo cierre (IIFE) cuyas piezas comparten estado; la única pieza sin dependencias es el CSS estático (555 líneas) y moverlo obliga a tocar ~14 arneses de prueba que cargan cockpit.js solo |
 | G5-08 | Tres copias del código que envía órdenes en el navegador | ✅ | test_order_single_path |
-| G5-09 | CSP débil con el PIN en localStorage | ✅ | Lote I1: sin 'unsafe-eval' y connect-src cerrado a los hosts reales; 'unsafe-inline' sigue (10 bloques inline) (test_csp_estricta) |
+| G5-09 | CSP débil con el PIN en localStorage | ✅ | Lote I1: sin 'unsafe-eval' y connect-src cerrado a los hosts reales; 'unsafe-inline' sigue (4 bloques inline tras G5-06 + manejadores on*=) (test_csp_estricta) |
 | G5-10 | El agente de trading se apagaba en silencio | ✅ | queda apagado con aviso y su configuración guardada (test_trading_agent_ledger; decisión #14 por defecto) |
 | G5-11 | Tres mecanismos de migración sin versión | 🔶 | columnas tardías + safe_ddl (idempotentes); sigue sin número de versión de esquema |
 | G5-12 | Neo4j cableado; la UI no lee Postgres | 🔶 | Neo4j retirado (#6, test_neo4j_retirado); la UI sigue dibujando el catálogo y no /api/ontology/graph (#7) |

@@ -22,7 +22,9 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_liveSelectedNode`, `_selectedNode`, `activeTab`, `jumpTo`, `nexusCore`, `safeUrl` y 1 más
+- [[app.html]] — usa `safeUrl`
+- [[engine.app_coordinator.js]] — usa `nexusCore`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `_liveSelectedNode`, `_selectedNode`, `activeTab`, `jumpTo`, `switchTab`
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.desktop.js]] — usa `KhipuDesk`
@@ -39,7 +41,7 @@ EL CHAT de Khipu (texto), compartido por la Cabina (engine/cockpit.js) y el Comm
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 
-Se carga en [[app.html]] en la posición **87 de 97** (línea 7946), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
+Se carga en [[app.html]] en la posición **87 de 97** (línea 3144), después de [[engine.oswindows.js]] y antes de [[engine.desktop.js]].
 
 ## Lo usan
 

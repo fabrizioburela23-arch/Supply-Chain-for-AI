@@ -22,16 +22,17 @@ tags: ["capa/interfaz", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`
+- [[app.html]] — usa `_tradeFetch`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **81 de 97** (línea 7940), después de [[engine.audit.js]] y antes de [[nodes.crypto_intel.js]].
+Se carga en [[app.html]] en la posición **81 de 97** (línea 3138), después de [[engine.audit.js]] y antes de [[nodes.crypto_intel.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 81)
-- [[app.html]] — usa `KhipuPriceHistory`
+- [[engine.app_main.js]] — usa `KhipuPriceHistory`
 
 ## Endpoints que llama
 

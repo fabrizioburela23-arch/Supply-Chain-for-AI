@@ -1,6 +1,7 @@
 """Canvas nivel Power BI (2026-10-06): paleta validada, tooltip/cruz al pasar el mouse, vista de tabla y CSV."""
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -9,7 +10,7 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NODE = shutil.which('node')
-HTML = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+HTML = app_source()
 
 
 def test_paleta_validada_y_sin_ciclos():

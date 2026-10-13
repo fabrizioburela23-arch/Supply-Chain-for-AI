@@ -24,15 +24,17 @@ De nivel superior (globales del script): `_sbEn`, `_sbFlow`, `_sbL`
 
 ## Depende de
 
-- [[app.html]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `_secondBrain`, `activateStress`, `catColor`, `computeNRS` y 10 más
+- [[app.html]] — usa `safeUrl`
+- [[engine.app_coordinator.js]] — usa `_secondBrain`, `nexusCore`
+- [[engine.app_main.js]] — usa `DataLayer`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8detail`, `activateStress`, `catColor`, `computeNRS`, `computeNRSBreakdown` y 7 más
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **37 de 97** (línea 7830), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
+Se carga en [[app.html]] en la posición **37 de 97** (línea 3028), después de [[engine.voice.js]] y antes de [[engine.geo_coords.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 37)
-- [[app.html]] — usa `SecondBrain`
+- [[engine.app_coordinator.js]] — usa `SecondBrain`
 
 ## Endpoints que llama
 

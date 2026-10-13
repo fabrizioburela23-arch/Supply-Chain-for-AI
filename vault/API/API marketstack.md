@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/marketstack` | `marketstack_proxy` | [[server.py]] | [[app.html]] |
+| `GET` | `/api/marketstack` | `marketstack_proxy` | [[server.py]] | [[engine.app_main.js]] |

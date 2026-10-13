@@ -9,14 +9,14 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**45 archivos · 25.388 líneas.** Volver al [[00 Mapa de Khipus]].
+**45 archivos · 25.413 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 4.877 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
-- [[scripts.build_vault.py]] — 3.487 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
+- [[server.py]] — 4.878 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[scripts.build_vault.py]] — 3.489 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
 - [[core.replay.py]] — 1.436 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.governance.py]] — 1.109 líneas · EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan).
@@ -35,8 +35,8 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.impls.py]] — 334 líneas · IMPLEMENTACIONES RETENIDAS (docs/INFRA_OPERATIVA.md §5.2 «Implementaciones retenidas»; paso 24).
 - [[core.ai_calls.py]] — 317 líneas · registro append-only de CADA pedido a la IA (docs/INFRA_OPERATIVA.md §2.6, paso 21; GV-11).
 - [[core.retention.py]] — 312 líneas · PURGA POR RETENCIÓN del libro (docs/INFRA_OPERATIVA.md §2.7; paso 26; decisión D3).
-- [[engine.aispend.js]] — 283 líneas · 💰 GASTO DE IA (🩺 Sistema → pestaña "Gasto IA")
-- [[sw.js]] — 277 líneas · Khipu Finance — Service Worker Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / CACHE va en la línea 6 (regla de despliegue #1: …
+- [[sw.js]] — 296 líneas · Khipu Finance — Service Worker Servido por server.py en /sw.js con cabecera Service-Worker-Allowed: / CACHE va en la línea 6 (regla de despliegue #1: …
+- [[engine.aispend.js]] — 286 líneas · 💰 GASTO DE IA (🩺 Sistema → pestaña "Gasto IA")
 - [[core.governance_lint.py]] — 270 líneas · EL lint de los artefactos de gobernanza (docs/INFRA_OPERATIVA.md §5.2; pasos 9 y 25).
 - [[scripts.build_shapes.py]] — 265 líneas · compila las formas SHACL a IR (docs/INFRA_OPERATIVA.md §3.3; paso 10).
 - [[core.pin.py]] — 260 líneas · verificación ÚNICA del PIN de operador (X-Trade-Pin).
@@ -67,22 +67,22 @@ Variables de entorno: [[Índice de variables de entorno]].
 |---|---|---|
 | la usa | [[Capa Ontología y grafo temporal]] | 37 |
 | usa a | [[Capa Ontología y grafo temporal]] | 37 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 31 |
-| la usa | [[Capa Chat y agentes]] | 30 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 28 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 32 |
+| la usa | [[Capa Chat y agentes]] | 31 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 29 |
 | la usa | [[Capa Investigación]] | 27 |
 | la usa | [[Capa Comité]] | 22 |
 | la usa | [[Capa MCP y API]] | 22 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 21 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 17 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 12 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 11 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 9 |
 | la usa | [[Capa Voz]] | 7 |
 | usa a | [[Capa Chat y agentes]] | 7 |
 | usa a | [[Capa Investigación]] | 7 |
 | usa a | [[Capa Comité]] | 6 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 5 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 6 |
 | usa a | [[Capa MCP y API]] | 4 |
 | usa a | [[Capa Voz]] | 2 |
 | la usa | [[Capa Datos del catálogo]] | 1 |

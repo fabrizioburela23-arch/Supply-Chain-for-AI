@@ -46,9 +46,9 @@ _Además lo importan 1 pruebas (lista abajo)._
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
 | `POST` | `/api/trade/agent/config` | `agent_config` | 2 pruebas |
-| `POST` | `/api/trade/agent/start` | `agent_start` | [[app.html]], 3 pruebas |
-| `GET` | `/api/trade/agent/status` | `agent_status` | [[app.html]], 3 pruebas |
-| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[app.html]], 2 pruebas |
+| `POST` | `/api/trade/agent/start` | `agent_start` | [[engine.app_trade_panel.js]], 3 pruebas |
+| `GET` | `/api/trade/agent/status` | `agent_status` | [[engine.app_trade_panel.js]], 3 pruebas |
+| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[engine.app_trade_panel.js]], 2 pruebas |
 
 Grupos: [[API trade]]
 

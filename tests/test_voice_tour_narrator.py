@@ -21,6 +21,7 @@ Se salta lo que necesite `node` o Chromium si no están.
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -744,7 +745,7 @@ ES_ONSCREEN = 'El recorrido va en pantalla; puedes seguir hablándole a Khipu.'
 def test_isconfigured_reads_the_health_flag_the_way_app_html_exposes_it():
     """app.html declara `const Keys` DENTRO del IIFE de v8 y solo lo publica como V8.Keys: un `Keys` global no
     existe en la app real (por eso el botón seguía tocando los clips viejos)."""
-    app = _r('app.html')
+    app = app_source()
     iife = app.index("var V8 = {};")
     assert app.index('(function(){', iife) < app.index('const Keys = {', iife)       # Keys queda dentro del IIFE
     assert 'V8.Keys=Keys;' in app

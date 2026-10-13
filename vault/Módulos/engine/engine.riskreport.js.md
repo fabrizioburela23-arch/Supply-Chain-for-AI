@@ -22,13 +22,13 @@ REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `DataLayer`, `LANG`, `MKT`, `NODE_BY_ID`
+- [[engine.app_main.js]] — usa `BASE`, `DataLayer`, `LANG`, `MKT`, `NODE_BY_ID`
 - [[engine.explain.js]] — usa `explainChip`, `explainRegister`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **54 de 97** (línea 7898), después de [[engine.research.js]] y antes de [[engine.worldmonitor.js]].
+Se carga en [[app.html]] en la posición **54 de 97** (línea 3096), después de [[engine.research.js]] y antes de [[engine.worldmonitor.js]].
 
 ## Lo usan
 

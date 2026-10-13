@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/ws-token` | `ws_token` | [[server.py]] | [[app.html]], 1 prueba |
+| `GET` | `/api/ws-token` | `ws_token` | [[server.py]] | [[engine.app_main.js]], 1 prueba |

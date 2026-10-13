@@ -22,7 +22,8 @@ X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled qu
 
 ## Depende de
 
-- [[app.html]] — usa `DataLayer`, `KhipuLive`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_openSecondBrain`, `activateStress`, `computeNRS`, `computeNRSBreakdown` y 7 más
+- [[engine.app_coordinator.js]] — usa `_openSecondBrain`
+- [[engine.app_main.js]] — usa `DataLayer`, `KhipuLive`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `computeNRSBreakdown`, `fillLiveMcap` y 6 más
 - [[engine.cockpit.js]] — usa `BixbyCockpit`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.compare.js]] — usa `openCompare`
@@ -35,12 +36,12 @@ X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled qu
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **51 de 97** (línea 7844), después de [[engine.guide.js]] y antes de [[engine.research.js]].
+Se carga en [[app.html]] en la posición **51 de 97** (línea 3042), después de [[engine.guide.js]] y antes de [[engine.research.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 51)
-- [[app.html]] — usa `openXRay`
+- [[engine.app_main.js]] — usa `openXRay`
 - [[engine.cockpit.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[engine.command_center.js]] — usa `openXRay`
 - [[engine.insights.js]] — usa `openXRay`

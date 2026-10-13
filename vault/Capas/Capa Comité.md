@@ -28,9 +28,9 @@ tags: ["capa/comite", "tipo/capa"]
 |---|---|---|
 | usa a | [[Capa Infraestructura]] | 22 |
 | usa a | [[Capa Investigación]] | 15 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 10 |
 | la usa | [[Capa Chat y agentes]] | 9 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 8 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 8 |
 | la usa | [[Capa Infraestructura]] | 6 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 6 |
 | usa a | [[Capa Chat y agentes]] | 6 |

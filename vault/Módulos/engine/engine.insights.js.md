@@ -22,17 +22,17 @@ INSIGHTS AUTOMÁTICOS (Etapa 5, piel NEXUS) Genera tarjetas de lectura desde la 
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `sectorName`, `switchTab`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `MKT`, `NODE_BY_ID`, `activateStress`, `computeNRS`, `jumpTo`, `sectorName`, `switchTab`
 - [[engine.explain.js]] — usa `explainMetric`
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **66 de 97** (línea 7925), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
+Se carga en [[app.html]] en la posición **66 de 97** (línea 3123), después de [[engine.mcpconnect.js]] y antes de [[engine.statematrix.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 66)
-- [[app.html]] — usa `renderInsightsHistory`, `renderKhipuInsights`
+- [[engine.app_main.js]] — usa `renderInsightsHistory`, `renderKhipuInsights`
 - [[engine.resolve.js]] — usa `renderKhipuInsights`
 
 ## Endpoints que llama

@@ -14,4 +14,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
 | `GET` | `/api/quotes` | `batch_quotes` | [[server.py]] | [[engine.canvas-data.js]], 2 pruebas |
-| `POST` | `/api/quotes/live` | `quotes_live` | [[server.py]] | [[app.html]], [[engine.worldmonitor.js]], 1 prueba |
+| `POST` | `/api/quotes/live` | `quotes_live` | [[server.py]] | [[engine.app_main.js]], [[engine.worldmonitor.js]], 1 prueba |

@@ -9,6 +9,7 @@ Con node: la tarjeta del diagnóstico elige detail_en / fixes[].en / fix_en en i
 (la voz ya lo hace), cae al texto original si no, y no repite el «— QUÉ HACER:» que el detalle de la voz ya trae."""
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -17,7 +18,7 @@ import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NODE = shutil.which('node')
-HTML = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+HTML = app_source()
 
 
 def _css_section():

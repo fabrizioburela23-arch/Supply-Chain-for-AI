@@ -22,18 +22,18 @@ PHASE 2 · INVESTIGACIÓN IA (Agent Research Swarm)
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `NODE_BY_ID`, `jumpTo`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `NODE_BY_ID`, `jumpTo`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **52 de 97** (línea 7845), después de [[engine.xray.js]] y antes de [[engine.riskreport.js]].
+Se carga en [[app.html]] en la posición **52 de 97** (línea 3043), después de [[engine.xray.js]] y antes de [[engine.riskreport.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 52)
-- [[app.html]] — usa `KhipuResearch`
+- [[engine.app_main.js]] — usa `KhipuResearch`
 - [[engine.cockpit.js]] — usa `KhipuResearch`
 - [[engine.committee.js]] — usa `KhipuResearch`
 - [[engine.khipu_chat.js]] — usa `KhipuResearch`

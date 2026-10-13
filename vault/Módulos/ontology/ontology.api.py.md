@@ -92,34 +92,34 @@ _Además lo importan 6 pruebas (lista abajo)._
 
 | Método | Ruta | Función | Lo llaman |
 |---|---|---|---|
-| `GET` | `/api/ontology/actions` | `actions_list` | [[app.html]], 1 prueba |
+| `GET` | `/api/ontology/actions` | `actions_list` | [[engine.app_main.js]], 1 prueba |
 | `POST` | `/api/ontology/actions/<action_type>` | `actions_execute` | [[engine.khipu_lang.js]], [[engine.temporal-graph.js]], 5 pruebas |
 | `GET` | `/api/ontology/agents/brief` | `agents_brief` | 2 pruebas |
 | `POST` | `/api/ontology/agents/cycle` | `agents_cycle` | [[engine.live.js]], 2 pruebas |
-| `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[app.html]], 2 pruebas |
-| `GET` | `/api/ontology/agents/proposals` | `agents_proposals_list` | [[app.html]], 2 pruebas |
-| `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[app.html]], 3 pruebas |
-| `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[app.html]], 2 pruebas |
-| `POST` | `/api/ontology/agents/run` | `agents_run` | [[app.html]], 2 pruebas |
+| `POST` | `/api/ontology/agents/investigar` | `agents_investigar` | [[engine.app_main.js]], 2 pruebas |
+| `GET` | `/api/ontology/agents/proposals` | `agents_proposals_list` | [[engine.app_main.js]], 2 pruebas |
+| `POST` | `/api/ontology/agents/proposals/<proposal_id>/approve` | `agents_proposal_approve` | [[engine.app_main.js]], 3 pruebas |
+| `POST` | `/api/ontology/agents/proposals/<proposal_id>/reject` | `agents_proposal_reject` | [[engine.app_main.js]], 2 pruebas |
+| `POST` | `/api/ontology/agents/run` | `agents_run` | [[engine.app_main.js]], 2 pruebas |
 | `GET` | `/api/ontology/alerts` | `alerts_list` | [[engine.khipu_lang.js]], 4 pruebas |
 | `POST` | `/api/ontology/alerts` | `alerts_create` | [[engine.khipu_lang.js]], 4 pruebas |
-| `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[app.html]], 3 pruebas |
-| `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[app.html]], 3 pruebas |
+| `DELETE` | `/api/ontology/alerts/<alert_id>` | `alerts_delete` | [[engine.app_main.js]], 3 pruebas |
+| `GET` | `/api/ontology/alerts/check` | `alerts_check` | [[engine.app_main.js]], 3 pruebas |
 | `POST` | `/api/ontology/bulk/import` | `bulk_import_route` | 2 pruebas |
 | `POST` | `/api/ontology/events` | `events_create` | 3 pruebas |
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | 1 prueba |
-| `GET` | `/api/ontology/feed` | `global_feed_route` | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
+| `GET` | `/api/ontology/feed` | `global_feed_route` | [[engine.app_main.js]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | — |
 | `GET` | `/api/ontology/graph` | `graph` | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]], 1 prueba |
-| `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[app.html]], [[engine.temporal-graph.js]], 4 pruebas |
+| `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[engine.app_main.js]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>` | `objects_get` | [[engine.fincard.js]], [[engine.temporal-graph.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/history` | `objects_history` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/links` | `objects_links` | [[engine.fincard.js]] |
 | `GET` | `/api/ontology/objects/<object_id>/news` | `object_news` | [[engine.fincard.js]], 1 prueba |
 | `GET` | `/api/ontology/objects/<object_id>/provenance` | `object_provenance` | [[engine.fincard.js]], 1 prueba |
-| `GET` | `/api/ontology/objects/<object_id>/timeline` | `object_timeline` | [[app.html]], [[engine.fincard.js]], [[engine.temporal-graph.js]], 2 pruebas |
+| `GET` | `/api/ontology/objects/<object_id>/timeline` | `object_timeline` | [[engine.app_main.js]], [[engine.fincard.js]], [[engine.temporal-graph.js]], 2 pruebas |
 | `POST` | `/api/ontology/reconcile/apply` | `reconcile_apply` | [[engine.reconcile.js]], 3 pruebas |
 | `GET` | `/api/ontology/reconcile/plan` | `reconcile_plan` | [[engine.reconcile.js]], 3 pruebas |
 | `POST` | `/api/ontology/reconcile/rollback` | `reconcile_rollback` | [[engine.reconcile.js]], 3 pruebas |

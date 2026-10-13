@@ -11,6 +11,7 @@ Garantiza (docs/INFRA_OPERATIVA.md §8.1-§8.2 y §9):
   · el cliente manda X-Khipu-Channel desde _tradeFetch (app.html), la voz ('voice') y cripto ('crypto').
 """
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import sys
 import uuid
@@ -143,7 +144,7 @@ def test_mcp_ata_el_principal_a_la_peticion():
 
 
 def test_cliente_manda_el_canal():
-    html = _read('app.html')
+    html = app_source()
     i = html.index('window._tradeFetch = async function')
     block = html[html.index('function send(url, o, pin, timeout'):i + 2000]
     assert "opts.headers['X-Khipu-Channel']" in block and "'X-Khipu-Pin-Source'" in block

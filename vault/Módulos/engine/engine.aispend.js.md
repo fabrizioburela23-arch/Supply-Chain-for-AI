@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "engine/aispend.js"
 lenguaje: "javascript"
-lineas: 283
+lineas: 286
 aliases: ["engine/aispend.js"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # engine/aispend.js
 
-> Módulo · capa [[Capa Infraestructura]] · 283 líneas · `engine/aispend.js`
+> Módulo · capa [[Capa Infraestructura]] · 286 líneas · `engine/aispend.js`
 
 ## Para qué sirve
 
@@ -22,15 +22,16 @@ tags: ["capa/infraestructura", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`
+- [[app.html]] — usa `_tradeFetch`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.toast.js]] — usa `khipuActor`
 
-Se carga en [[app.html]] en la posición **59 de 97** (línea 7903), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
+Se carga en [[app.html]] en la posición **59 de 97** (línea 3101), después de [[engine.committee.js]] y antes de [[engine.pfcommittee.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 59)
-- [[app.html]] — usa `KhipuSpend`
+- [[engine.app_main.js]] — usa `KhipuSpend`
 
 ## Endpoints que llama
 
@@ -42,6 +43,7 @@ Se carga en [[app.html]] en la posición **59 de 97** (línea 7903), después de
 ## Pruebas que lo cubren
 
 - [[tests.test_cleanup_dialogs.py]]
+- [[tests.test_jev_status_label.py]]
 - [[tests.test_overnight_ui_small_panels.py]]
 
 ## Mencionado en sesiones de trabajo

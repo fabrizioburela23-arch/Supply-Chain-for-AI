@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/macro/fred` | `macro_fred` | [[server.py]] | [[app.html]] |
+| `GET` | `/api/macro/fred` | `macro_fred` | [[server.py]] | [[engine.app_coordinator.js]] |

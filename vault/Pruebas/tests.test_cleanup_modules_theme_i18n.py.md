@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_cleanup_modules_theme_i18n.py"
 lenguaje: "python"
-lineas: 498
+lineas: 499
 aliases: ["tests/test_cleanup_modules_theme_i18n.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_cleanup_modules_theme_i18n.py
 
-> Prueba · capa [[Capa Pruebas]] · 498 líneas · `tests/test_cleanup_modules_theme_i18n.py`
+> Prueba · capa [[Capa Pruebas]] · 499 líneas · `tests/test_cleanup_modules_theme_i18n.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Limpieza 2026-10-11 — nueve módulos que seguían con la piel NEXUS (paleta os
 
 ## Cubre
 
-- [[app.html]]
 - [[engine.cockpit.js]]
 - [[engine.desktop.js]]
 - [[engine.globe.js]]

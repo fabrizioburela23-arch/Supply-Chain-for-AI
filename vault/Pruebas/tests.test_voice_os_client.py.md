@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_voice_os_client.py"
 lenguaje: "python"
-lineas: 1012
+lineas: 1013
 aliases: ["tests/test_voice_os_client.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_voice_os_client.py
 
-> Prueba · capa [[Capa Pruebas]] · 1.012 líneas · `tests/test_voice_os_client.py`
+> Prueba · capa [[Capa Pruebas]] · 1.013 líneas · `tests/test_voice_os_client.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ la voz de Khipu dentro de Khipus OS (contrato de herramientas v2, 2026-10-11).
 
 ## Cubre
 
-- [[app.html]]
 - [[core.khipu_chat.py]]
 - [[engine.agents_registry.js]]
 - [[engine.cockpit.js]]

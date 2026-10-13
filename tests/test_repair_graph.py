@@ -18,6 +18,7 @@ Sin red. Los tests con base se saltan sin DATABASE_URL:
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import subprocess
 import sys
 from datetime import date, datetime, timezone
@@ -413,7 +414,7 @@ process.stdout.write(JSON.stringify(Object.fromEntries(m)));
 def _nrs_degree_block():
     """El bloque de app.html que define el grado del NRS (desde la lista de
     tipos de flujo hasta su exposición en window), tal cual se sirve."""
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     i = html.index('const NRS_FLOW_TYPES')
     j = html.index('window._buildNrsDegree = _buildNrsDegree;', i)
     return html[i:j + len('window._buildNrsDegree = _buildNrsDegree;')]
@@ -573,7 +574,7 @@ def test_g4_revision_nrs_del_chat_y_de_carteras_es_el_de_la_app():
 def test_g1c_revision_nrs_de_un_id_viejo_es_el_del_canonico():
     """Revisión adversarial: NODE_BY_ID['SouthernCompany'] ya lleva a SouthernCo,
     pero computeNRS/selectNode usaban el id viejo para el grado (0 vínculos)."""
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     i = html.index('let _nrsDegree = null;')
     j = html.index('window.computeNRSBreakdown = computeNRSBreakdown;', i)
     src = html[i:j] + 'window.computeNRS = computeNRS;'

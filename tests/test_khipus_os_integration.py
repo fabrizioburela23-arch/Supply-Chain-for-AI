@@ -1,5 +1,6 @@
 """Khipus OS v1 — integración (2026-10-06): lo que se ajustó al unir las 5 piezas."""
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,6 +37,6 @@ def test_carteras_se_abren_dentro_del_os():
 
 
 def test_arranque_sin_espera_fija_y_feed_una_vez():
-    html = _r('app.html')
+    html = app_source()
     assert 'setTimeout(tryLand, 60);' in html and 'setTimeout(tryLand, 850);' not in html
     assert "if(force && this._lang===lang && Date.now()-this._t<5000) return;" in html

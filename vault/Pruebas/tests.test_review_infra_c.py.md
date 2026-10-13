@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_review_infra_c.py"
 lenguaje: "python"
-lineas: 503
+lineas: 504
 aliases: ["tests/test_review_infra_c.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_review_infra_c.py
 
-> Prueba · capa [[Capa Pruebas]] · 503 líneas · `tests/test_review_infra_c.py`
+> Prueba · capa [[Capa Pruebas]] · 504 líneas · `tests/test_review_infra_c.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ revisión de los pasos 9-13 (gobernanza, puertas, ancla/dinero, cliente único).
 
 ## Cubre
 
-- [[app.html]]
 - [[core.__init__.py]]
 - [[core.decisions.py]]
 - [[core.governance.py]]

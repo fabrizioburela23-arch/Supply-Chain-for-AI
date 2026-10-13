@@ -5,6 +5,7 @@ cambiaba de idioma · §11 el 🩺 decía "Claude = IA principal" · §16 códig
 intradía del panel de operaciones llamaba a una ruta inexistente."""
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import subprocess
 
@@ -15,7 +16,7 @@ def _read(rel):
     return open(os.path.join(ROOT, rel), encoding='utf-8').read()
 
 
-HTML = _read('app.html')
+HTML = app_source()
 CK = _read('engine/cockpit.js')
 
 

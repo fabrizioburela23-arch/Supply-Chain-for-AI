@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-12"
-ruta: "docs/ESTADO.md#L357"
+ruta: "docs/ESTADO.md#L397"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 357 (14 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 397 (14 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

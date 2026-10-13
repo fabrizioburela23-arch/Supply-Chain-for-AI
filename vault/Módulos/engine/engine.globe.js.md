@@ -22,11 +22,11 @@ MOTOR GLOBO UNIFICADO (Track A, Fase 1 del prompt 2026-08). Fusión de engine/ge
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LINKS`, `computeNRS`
+- [[engine.app_main.js]] — usa `BASE`, `LINKS`, `computeNRS`
 - [[engine.geo_coords.js]] — usa `GeoCoords`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **39 de 97** (línea 7832), después de [[engine.geo_coords.js]] y antes de [[engine.canvas-data.js]].
+Se carga en [[app.html]] en la posición **39 de 97** (línea 3030), después de [[engine.geo_coords.js]] y antes de [[engine.canvas-data.js]].
 
 ## Lo usan
 

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ops_identity.py"
 lenguaje: "python"
-lineas: 263
+lineas: 264
 aliases: ["tests/test_ops_identity.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ops_identity.py
 
-> Prueba · capa [[Capa Pruebas]] · 263 líneas · `tests/test_ops_identity.py`
+> Prueba · capa [[Capa Pruebas]] · 264 líneas · `tests/test_ops_identity.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ INFRA_OPERATIVA paso 5: QUIÉN actúa sale de la autenticación, no del texto li
 
 ## Cubre
 
-- [[app.html]]
 - [[brokerage.api.py]]
 - [[brokerage.models.py]]
 - [[brokerage.service.py]]

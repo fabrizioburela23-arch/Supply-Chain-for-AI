@@ -13,6 +13,7 @@ Se salta lo que necesite `node` o Chromium si no están.
 """
 import json
 import os
+from tests._app_source import app_source  # noqa: E402
 import re
 import shutil
 import subprocess
@@ -997,7 +998,7 @@ def test_navegador_ingles_titulo_y_control_de_interfaz(browser):
 def test_zoom_del_mapa_ignora_transformaciones_no_finitas():
     """control_interface minimize_all_windows justo después de abrir el mapa: la transición del zoom de d3 daba
     translate(NaN,NaN) (~20-30 errores en la consola). El manejador ignora ese fotograma."""
-    html = open(os.path.join(ROOT, 'app.html'), encoding='utf-8').read()
+    html = app_source()
     i = html.index("const zoom = d3.zoom().scaleExtent([.3,3.5])")
     line = html[i:html.index('\n', i)]
     assert 'isFinite(t.x)&&isFinite(t.y)&&isFinite(t.k)' in line and "root.attr('transform',t)" in line

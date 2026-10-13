@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_live_labels_misc.py"
 lenguaje: "python"
-lineas: 59
+lineas: 60
 aliases: ["tests/test_live_labels_misc.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_live_labels_misc.py
 
-> Prueba · capa [[Capa Pruebas]] · 59 líneas · `tests/test_live_labels_misc.py`
+> Prueba · capa [[Capa Pruebas]] · 60 líneas · `tests/test_live_labels_misc.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Cifras que el texto daba como actuales (2026-10-05): cripto (supply/dominancia d
 
 ## Cubre
 
-- [[app.html]]
 - [[engine.cockpit.js]]
 - [[engine.crypto.js]]
 - [[engine.guide.js]]

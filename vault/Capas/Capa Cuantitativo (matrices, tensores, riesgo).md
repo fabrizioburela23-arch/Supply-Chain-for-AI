@@ -1,7 +1,7 @@
 ---
 tipo: "capa"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
-archivos: 21
+archivos: 22
 tags: ["capa/cuantitativo", "tipo/capa"]
 ---
 
@@ -9,7 +9,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 > Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones.
 
-**21 archivos · 9.268 líneas.** Volver al [[00 Mapa de Khipus]].
+**22 archivos · 9.410 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -31,6 +31,7 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 - [[engine.matrixview.js]] — 207 líneas · LAS 9 MATRICES dentro de la app (pestaña Análisis) Calcula en el navegador las 9 matrices de relación desde window.LINKS y las dibuja: …
 - [[core.screener.py]] — 199 líneas · Screener de crecimiento explosivo: /api/screener/\*.
 - [[engine.compare.js]] — 168 líneas · COMPARAR DOS EMPRESAS lado a lado (decidir entre 2) Overlay NEXUS: elige dos empresas y ve enfrentadas su NRS (término a término), sector, país, …
+- [[engine.app_preflight.js]] — 142 líneas · Preflight debounce wiring
 - [[matrix.tensor_api.py]] — 114 líneas · /api/tensor/\*: la ontología nivel 2 (matrix/tensor.py) por HTTP.
 - [[engine.statematrix.js]] — 73 líneas · ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) Paso 13 de INFRA_OPERATIVA (2026-10-13): el navegador ya NO propaga …
 - [[matrix.__init__.py]] — 20 líneas · el motor de matrices de Khipus (Etapa 3, 2026-07).
@@ -39,14 +40,14 @@ tags: ["capa/cuantitativo", "tipo/capa"]
 
 | Dirección | Capa | Conexiones |
 |---|---|---|
-| usa a | [[Capa Infraestructura]] | 31 |
+| usa a | [[Capa Infraestructura]] | 32 |
+| la usa | [[Capa Interfaz (Khipus OS)]] | 18 |
 | la usa | [[Capa Infraestructura]] | 15 |
-| la usa | [[Capa Interfaz (Khipus OS)]] | 14 |
-| usa a | [[Capa Interfaz (Khipus OS)]] | 12 |
+| usa a | [[Capa Interfaz (Khipus OS)]] | 14 |
 | usa a | [[Capa Ontología y grafo temporal]] | 11 |
 | la usa | [[Capa Chat y agentes]] | 9 |
+| usa a | [[Capa Datos del catálogo]] | 9 |
 | la usa | [[Capa MCP y API]] | 8 |
-| usa a | [[Capa Datos del catálogo]] | 8 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 8 |
 | la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 4 |
 | la usa | [[Capa Comité]] | 3 |

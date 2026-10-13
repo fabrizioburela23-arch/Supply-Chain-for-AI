@@ -9,6 +9,46 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-13 (m) — app.html PARTIDO + 2 arreglos visibles — sw v268
+
+- app.html 12.682 → 3.463 líneas: 6 de 10 bloques <script> movidos BYTE A BYTE a engine/app_main.js, app_coordinator.js,
+  app_trade_panel.js, app_preflight.js, app_canvas.js y app_scatter.js, cada uno en el MISMO lugar (sin defer/async). Quedan
+  inline: el bloque 1 (arranque de emergencia, seguridad del cliente, franja «servidor no disponible»), el 4 (vigía de
+  /api/health), el orbe (3,9 KB) y la insignia de clientes (0,7 KB). CSS sin tocar. Paridad en Chromium antes/después:
+  mismas 1.654 globales, mismos 458/549 ids, 0 errores, 11 pestañas, OS, idioma/tema y SIN SERVIDOR (shell en caché).
+  tests/_app_source.py reconstruye el texto viejo para las pruebas; tests/app_js_fingerprint.json obliga a subir sw.js
+  al cambiar un engine/app_*.js; sw.js `shellCanBoot` no usa un shell en caché si le falta su JS.
+- Arreglo: la ventana de Mercado decía «Error al obtener precios: Keys is not defined» (fetchQuotes usaba `Keys` fuera del
+  IIFE de V8) → ahora window.V8.Keys (tests/test_market_keys_scope.py).
+- Arreglo: 💰 Gasto IA decía «MODO SOMBRA» aunque Jev ya manda en el chat → «ACTIVO · manda en el chat»
+  (/api/decide/status expone control_features; tests/test_jev_status_label.py).
+
+# SESIÓN 2026-10-13 (l) — APP.HTML PARTIDO SIN CAMBIAR NADA (G5-06) — sw v267
+
+- Fabrizio: «si, sigue con app.html, con cuidado». app.html 12.682 → 3.463 líneas (766 KB → 231 KB): 6 de sus 10
+  bloques `<script>` inline (96 % del JS) pasaron BYTE A BYTE a engine/app_main.js (núcleo), app_coordinator.js,
+  app_trade_panel.js, app_preflight.js, app_canvas.js y app_scatter.js, cada uno con un `<script src>` clásico en el
+  MISMO lugar (mismo orden, mismo ámbito global; el servidor les pone ?v=N y van al SHELL de sw.js).
+- Siguen INLINE a propósito: el 1.º bloque (arranque de emergencia + seguridad + franja "servidor no disponible": debe
+  correr aunque falle un archivo), el vigía de /api/health, el orbe y la insignia de 👥 Clientes (diminutos) y TODO el
+  CSS (/engine se sirve como JS y el ?v= solo versiona .js: moverlo era riesgo sin ganancia).
+- Comprobado: volver a pegar los archivos da el app.html de antes IDÉNTICO byte a byte; Chromium antes/después: las
+  mismas globales (conjunto idéntico), 937/2.510, 8.843 elementos, 0 errores, 11 pestañas, idioma, 🩺, panel de trading, Canvas; servidor
+  colgado con shell viejo: igual que antes (franja roja, app completa desde el caché del SW).
+- Pruebas: tests/_app_source.app_source() reconstruye el texto de antes (25 archivos de prueba lo usan, nada se
+  debilitó); tests/test_app_split.py fija orden, SHELL, `node --check` y vm.Script de los 4 inline; la bóveda tiene
+  capas para los 6 archivos. Regla nueva: código de app.html va al engine/app_*.js que toque, NUNCA a un bloque inline.
+- Revisión (3 hallazgos, arreglados): (1) el JS movido ahora se cachea 1 año → `tests/app_js_fingerprint.json` +
+  test_app_split: cambiar un engine/app_*.js sin subir sw.js = suite roja; (2) shell guardado sin copia de sus app_*.js (precarga
+  fallida, archivo nuevo) + server caído: arrancaba vacío → sw.js `shellCanBoot` sirve la página offline. La ventana
+  ÚNICA v266→v267 (manda aún el SW v266, que no tiene ese chequeo) queda como riesgo conocido: solo si el server cae
+  justo entre el HTML y los 6 archivos; se ve la franja roja y basta recargar con el server arriba; (3) la prueba
+  de la marca volvía a mirar solo app.html → ahora mira todo el texto (app_source()).
+- PENDIENTE (aparte, ya pasaba antes): a veces se ve un instante el cargador en color crema antes del tema oscuro.
+- PENDIENTE (aparte, ya pasaba antes del corte; visto en la prueba antes/después): `fetchQuotes` (engine/app_main.js)
+  llama a `Keys.has('marketstack')`, pero `Keys` es local del bloque V8 → "Keys is not defined" en Mercado y el
+  respaldo Marketstack nunca corre. Arreglo aparte: `window.V8.Keys`.
+
 # SESIÓN 2026-10-13 (k) — FASE 2+ LOTE I: rutas con decisión, CSP estricta, riesgo robusto, escenario → dinero, archivos partidos — sw v266
 
 - Fabrizio: «ya esta todo, sigue» (activó kernel.params 2.0.0 con su PIN: TSMC 253 empresas; puso Sonnet 5.5 en los dos

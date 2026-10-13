@@ -37,7 +37,12 @@ Se carga en [[app.html]] en la posición **2 de 97** (línea 1437) y antes de [[
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 2)
-- [[app.html]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS` y 4 más
+- [[engine.app_canvas.js]] — usa `NODES`
+- [[engine.app_coordinator.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
+- [[engine.app_main.js]] — usa `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `COUNTRIES`, `INVEST_PATH`, `LOGO_DOMAIN`, `NODES`, `NODE_ID_ALIAS` y 4 más
+- [[engine.app_preflight.js]] — usa `NODES`
+- [[engine.app_scatter.js]] — usa `NODE_META`
+- [[engine.app_trade_panel.js]] — usa `NODES`
 - [[engine.brief.js]] — usa `NODES`
 - [[engine.canvas-data.js]] — usa `NODES`
 - [[engine.cockpit.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`

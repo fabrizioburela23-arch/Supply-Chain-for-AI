@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_voice_tour_narrator.py"
 lenguaje: "python"
-lineas: 1037
+lineas: 1038
 aliases: ["tests/test_voice_tour_narrator.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_voice_tour_narrator.py
 
-> Prueba · capa [[Capa Pruebas]] · 1.037 líneas · `tests/test_voice_tour_narrator.py`
+> Prueba · capa [[Capa Pruebas]] · 1.038 líneas · `tests/test_voice_tour_narrator.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ el botón «▶ Ver el recorrido de un minuto» con la voz REAL de Khipu (2026-1
 
 ## Cubre
 
-- [[app.html]]
 - [[core.voice_api.py]]
 - [[engine.cockpit.js]]
 - [[engine.voice.js]]

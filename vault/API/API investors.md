@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/investors/13f/<ticker>` | `investors_13f` | [[server.py]] | [[app.html]] |
+| `GET` | `/api/investors/13f/<ticker>` | `investors_13f` | [[server.py]] | [[engine.app_coordinator.js]] |

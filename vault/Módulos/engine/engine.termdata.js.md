@@ -22,18 +22,19 @@ PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal t
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `_termOpenTicker`, `computeNRS`, `fillLiveMeta`, `liveCapDot`, `sectorName`
+- [[engine.app_coordinator.js]] — usa `_termOpenTicker`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`, `LINKS`, `MKT`, `NODE_BY_ID`, `computeNRS`, `fillLiveMeta`, `liveCapDot`, `sectorName`
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.fincard.js]] — usa `openFinCard`
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **76 de 97** (línea 7935), después de [[engine.fincard.js]] y antes de [[engine.explain.js]].
+Se carga en [[app.html]] en la posición **76 de 97** (línea 3133), después de [[engine.fincard.js]] y antes de [[engine.explain.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 76)
-- [[app.html]] — usa `TermData`
+- [[engine.app_coordinator.js]] — usa `TermData`
 
 ## Endpoints que llama
 

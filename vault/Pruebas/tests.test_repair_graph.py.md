@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_repair_graph.py"
 lenguaje: "python"
-lineas: 609
+lineas: 610
 aliases: ["tests/test_repair_graph.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_repair_graph.py
 
-> Prueba · capa [[Capa Pruebas]] · 609 líneas · `tests/test_repair_graph.py`
+> Prueba · capa [[Capa Pruebas]] · 610 líneas · `tests/test_repair_graph.py`
 
 ## Qué prueba
 
@@ -20,7 +20,6 @@ Misión de reparación · P1 Grafo y ontología (G4).
 
 ## Cubre
 
-- [[app.html]]
 - [[core.khipu_chat.py]]
 - [[core.portfolio_ai.py]]
 - [[core.world.py]]

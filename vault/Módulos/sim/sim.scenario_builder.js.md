@@ -24,16 +24,16 @@ De nivel superior (globales del script): `HISTORICAL_PRECEDENTS`, `STRUCTURAL_BA
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `NODE_BY_ID`, `quotePx`
+- [[engine.app_main.js]] — usa `BASE`, `NODE_BY_ID`, `quotePx`
 - [[nodes.nodes_seed.js]] — usa `NODE_META`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 
-Se carga en [[app.html]] en la posición **92 de 97** (línea 7951), después de [[engine.command_center.js]].
+Se carga en [[app.html]] en la posición **92 de 97** (línea 3149), después de [[engine.command_center.js]] y antes de [[engine.app_coordinator.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 92)
-- [[app.html]] — usa `ScenarioBuilder`, `buildLiveReportContext`
+- [[engine.app_coordinator.js]] — usa `ScenarioBuilder`, `buildLiveReportContext`
 - [[engine.voice.js]] — usa `ScenarioBuilder`
 
 ## Endpoints que llama
@@ -46,6 +46,7 @@ Se carga en [[app.html]] en la posición **92 de 97** (línea 7951), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_app_split.py]]
 - [[tests.test_scenario_live.py]]
 - [[tests.test_voice_os_server.py]]
 

@@ -22,10 +22,10 @@ ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) P
 
 ## Depende de
 
-- [[app.html]] — usa `MKT`, `NODE_BY_ID`, `computeNRS`, `quotePx`
+- [[engine.app_main.js]] — usa `MKT`, `NODE_BY_ID`, `computeNRS`, `quotePx`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **67 de 97** (línea 7926), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **67 de 97** (línea 3124), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 

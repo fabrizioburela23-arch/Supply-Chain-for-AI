@@ -22,12 +22,12 @@ Hipergrafos temporales agénticos para Khipu Finance Una hiper-arista conecta M�
 
 ## Depende de
 
-- [[app.html]] — usa `DataLayer`, `NODE_BY_ID`, `getCatColorHex`
+- [[engine.app_main.js]] — usa `DataLayer`, `NODE_BY_ID`, `getCatColorHex`
 
 ## Lo usan
 
-- [[app.html]] — usa `TemporalHypergraph`
-- [[app.html]] — lo nombra por su ruta
+- [[engine.app_coordinator.js]] — usa `TemporalHypergraph`
+- [[engine.app_coordinator.js]] — lo nombra por su ruta
 
 ## Pruebas que lo cubren
 

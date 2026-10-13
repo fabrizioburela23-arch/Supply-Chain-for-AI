@@ -289,9 +289,12 @@ def test_object_keys_and_markup_text_are_not_global_uses(bv, graph):
     assert 'LINKS' in bv.js_identifiers('return { a: LINKS };', skip_keys=True)[0]
     assert 'b' in bv.js_identifiers('var y = a ? b : c;', skip_keys=True)[0]     # ternario ≠ clave
     uses = _edges(graph, 'uses_global')
-    assert ('nodes/merge_graph.js', 'app.html') not in uses       # solo `return { LINKS: … }`
-    assert ('app.html', 'engine/khipu_lang.js') not in uses       # 'KHIPU&gt;' / 'KHIPU TRADING' son texto
-    assert ('app.html', 'nodes/merge_graph.js') in uses           # app.html sí llama buildKhipusGraph(…)
+    # G5-06: el JS que era inline en app.html vive en engine/app_*.js (LINKS y buildKhipusGraph(…) en app_main.js)
+    for host in ('app.html', 'engine/app_main.js'):
+        assert ('nodes/merge_graph.js', host) not in uses         # solo `return { LINKS: … }`
+    for host in ('app.html', 'engine/app_main.js', 'engine/app_coordinator.js'):
+        assert (host, 'engine/khipu_lang.js') not in uses         # 'KHIPU&gt;' / 'KHIPU TRADING' son texto
+    assert ('engine/app_main.js', 'nodes/merge_graph.js') in uses  # app_main.js sí llama buildKhipusGraph(…)
 
 
 def test_obsidian_config_is_merged_not_overwritten(bv):

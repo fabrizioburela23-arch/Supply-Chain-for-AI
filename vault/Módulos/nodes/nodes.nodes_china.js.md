@@ -37,7 +37,7 @@ Se carga en [[app.html]] en la posición **11 de 97** (línea 1446), después de
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 11)
-- [[app.html]] — usa `LINKS_CHINA`, `NODES_CHINA`
+- [[engine.app_main.js]] — usa `LINKS_CHINA`, `NODES_CHINA`
 - [[scripts.build_graph_review.py]] — lo nombra por su ruta
 - [[scripts.export_graph_v0.js]] — lo nombra por su ruta
 

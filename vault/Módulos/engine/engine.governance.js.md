@@ -22,16 +22,17 @@ tags: ["capa/interfaz", "tipo/modulo"]
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`
+- [[app.html]] — usa `_tradeFetch`
+- [[engine.app_main.js]] — usa `BASE`, `LANG`
 - [[engine.explain.js]] — usa `explainChip`
 - [[engine.toast.js]] — usa `KhipuToast`
 
-Se carga en [[app.html]] en la posición **79 de 97** (línea 7938), después de [[engine.reconcile.js]] y antes de [[engine.audit.js]].
+Se carga en [[app.html]] en la posición **79 de 97** (línea 3136), después de [[engine.reconcile.js]] y antes de [[engine.audit.js]].
 
 ## Lo usan
 
 - [[app.html]] — lo carga con `<script>` (posición 79)
-- [[app.html]] — usa `KhipuGovernance`
+- [[engine.app_main.js]] — usa `KhipuGovernance`
 
 ## Endpoints que llama
 
