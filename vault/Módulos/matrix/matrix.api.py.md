@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "matrix/api.py"
 lenguaje: "python"
-lineas: 1235
+lineas: 1240
 aliases: ["matrix/api.py"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # matrix/api.py
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 1.235 líneas · `matrix/api.py`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 1.240 líneas · `matrix/api.py`
 
 ## Para qué sirve
 
@@ -19,18 +19,18 @@ blueprint Flask del motor de matrices: /api/matrix/\*.
 ## API pública
 
 - `ledger_whatif(kind, params, impacts, g=…, extra=…, computed_on=…)` — Ficha `whatif.shock` / `whatif.factor_fire` (paso 20, §2.5; GV-10): un qué-pasaría-si que la persona LANZÓ (botón, comando, chat — no al … _(línea 301)_
-- `matrix_status()` _(línea 335)_
-- `matrix_get(rel_type)` _(línea 384)_
-- `matrix_impact()` — Body: {shock: [ids], magnitude?, damping?, max_hops?, rel_weights?, as_of?} → {impacts: {id: pct}, cascade: [{id, hop, impact}], … _(línea 414)_
-- `matrix_save_sim()` — Guarda una simulación en la ontología (objeto type='Simulation') → hereda fecha (recorded_at) e historial. Body: {actor, name, targets, … _(línea 506)_
-- `matrix_list_sims()` — Historial de simulaciones guardadas, más recientes primero. _(línea 557)_
-- `matrix_insights()` — El hipergrafo corre una simulación EN VIVO con los factores activos y la NARRA. Body: {as_of?, tier?='fast', lang?='es', shock?=[ids]}. Sin … _(línea 668)_
-- `ledger_insight(snap_id, graph_key, lang, payload, ledger=…, persisted=…)` — Ficha `insight.snapshot` (paso 20, async): UNA por fila nueva del historial (ya deduplicado por (versión del grafo + release, as_of, lang), … _(línea 932)_
-- `matrix_insights_history()` — Historial de insights: cómo fue cambiando la lectura de la red. _(línea 964)_
-- `matrix_metrics()` — Métricas por nodo (chokepoints, PageRank, ρ). PESADO sin caché (~50 s de CPU con el grafo completo): caché por época+as_of, presupuesto de … _(línea 996)_
-- `matrix_factors()` — Track B: detalle COMPLETO de los Factor activos — /status solo expone un conteo de members; el motor cliente (livesim) necesita el dict … _(línea 1065)_
-- `matrix_factor_fire()` — WHAT-IF de crisis: dispara UN factor a su severity_crisis SIN mutar la ontología (los factores viven LATENTES — severity 1.0 — para no … _(línea 1087)_
-- `matrix_parity()` — CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre AMBOS motores sobre los MISMOS datos y reporta la discrepancia … _(línea 1191)_
+- `matrix_status()` _(línea 340)_
+- `matrix_get(rel_type)` _(línea 389)_
+- `matrix_impact()` — Body: {shock: [ids], magnitude?, damping?, max_hops?, rel_weights?, as_of?} → {impacts: {id: pct}, cascade: [{id, hop, impact}], … _(línea 419)_
+- `matrix_save_sim()` — Guarda una simulación en la ontología (objeto type='Simulation') → hereda fecha (recorded_at) e historial. Body: {actor, name, targets, … _(línea 511)_
+- `matrix_list_sims()` — Historial de simulaciones guardadas, más recientes primero. _(línea 562)_
+- `matrix_insights()` — El hipergrafo corre una simulación EN VIVO con los factores activos y la NARRA. Body: {as_of?, tier?='fast', lang?='es', shock?=[ids]}. Sin … _(línea 673)_
+- `ledger_insight(snap_id, graph_key, lang, payload, ledger=…, persisted=…)` — Ficha `insight.snapshot` (paso 20, async): UNA por fila nueva del historial (ya deduplicado por (versión del grafo + release, as_of, lang), … _(línea 937)_
+- `matrix_insights_history()` — Historial de insights: cómo fue cambiando la lectura de la red. _(línea 969)_
+- `matrix_metrics()` — Métricas por nodo (chokepoints, PageRank, ρ). PESADO sin caché (~50 s de CPU con el grafo completo): caché por época+as_of, presupuesto de … _(línea 1001)_
+- `matrix_factors()` — Track B: detalle COMPLETO de los Factor activos — /status solo expone un conteo de members; el motor cliente (livesim) necesita el dict … _(línea 1070)_
+- `matrix_factor_fire()` — WHAT-IF de crisis: dispara UN factor a su severity_crisis SIN mutar la ontología (los factores viven LATENTES — severity 1.0 — para no … _(línea 1092)_
+- `matrix_parity()` — CORTE SEGURO denso↔disperso (spec §"Plan de despliegue seguro"): corre AMBOS motores sobre los MISMOS datos y reporta la discrepancia … _(línea 1196)_
 
 **Internas** (empiezan con `_`): `_kdef`, `_magnitude_max`, `_env_num`, `_BadParam`, `_Busy`, `_heavy_slot`, `_busy_response`, `_budget_response`, `_compute_allowed`, `_num`, `_bad_param`, `_as_of_norm`, `_as_of_error`, `_rel_weights`, `_ttl_get`, `_ttl_set`, `_db`, `_hot`, `_view_meta`, `_with_view`, `_read_version_rr`, `_age_days`, `_fallback_insights`, `_narrate_insights`, `_Flight`, `_flight_join`, `_flight_done`, `_insights_build`, `_insights_tier`, `_persist_insight`
 
@@ -40,6 +40,7 @@ blueprint Flask del motor de matrices: /api/matrix/\*.
 - [[core.ai.py]] — importa `_ai_complete`, `_extract_json`
 - [[core.ai_calls.py]] — importa `ai_calls`
 - [[core.decisions.py]] — importa `decisions`
+- [[core.governance.py]] — importa `governance`
 - [[core.http.py]] — importa `_client_ip`, `_rate_limit`, `rate_limit`
 - [[core.identity.py]] — importa `identity`
 - [[core.pin.py]] — importa `check`
@@ -53,7 +54,7 @@ blueprint Flask del motor de matrices: /api/matrix/\*.
 - [[core.replay.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 8 pruebas (lista abajo)._
+_Además lo importan 9 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -106,6 +107,7 @@ Grupos: [[API matrix]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_replay_determinism.py]]
+- [[tests.test_scenario_pnl.py]]
 
 ## Mencionado en sesiones de trabajo
 

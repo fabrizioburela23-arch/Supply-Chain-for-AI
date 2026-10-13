@@ -345,8 +345,61 @@ def test_rate_buckets_are_pruned():
 def test_trade_status_is_cached_30s(client, alpaca, nodb):
     for _ in range(3):
         d = client.get('/api/trade/status').get_json()
-        assert d['ok'] and d['paper'] is True and 'hint_en' in d
+        assert d['ok'] and 'hint_en' in d
     assert sum(1 for c in alpaca.calls if c[1].endswith('/v2/account')) == 1
+
+
+def test_trade_status_hides_paper_or_live_without_pin(client, alpaca, nodb):
+    """G5-18 (lote I1): sin PIN la respuesta no dice papel/real (ni la URL del bróker, que lo delata); con el PIN sí.
+    `pin_set` sigue público (el navegador lo necesita para no mandar órdenes sin PIN)."""
+    d = client.get('/api/trade/status').get_json()
+    assert 'paper' not in d and 'base' not in d and d['mode_hidden'] is True
+    assert d['pin_set'] is True and d['ok'] is True
+    d = client.get('/api/trade/status', headers=H()).get_json()
+    assert d['paper'] is True and d['pin_valid'] is True and 'mode_hidden' not in d and d['base']
+    d = client.get('/api/trade/status', headers=H(pin='mal')).get_json()
+    assert 'paper' not in d and d['pin_valid'] is False
+
+
+def test_trade_status_lockout_is_not_an_invalid_pin(client, alpaca, nodb):
+    """Revisión lote I: con el candado de PIN activo, check() devuelve 429 SIN comparar el PIN; antes el estado decía
+    pin_valid:false y el navegador BORRABA el PIN correcto guardado. Ahora: pin_locked, sin pin_valid."""
+    ip = '10.8.8.8'
+    for _ in range(12):
+        client.get('/api/trade/account', headers=H(pin='0000', ip=ip))
+    d = client.get('/api/trade/status', headers=H(ip=ip)).get_json()
+    assert d.get('pin_locked') is True and 'pin_valid' not in d and d['mode_hidden'] is True
+    assert 'paper' not in d
+
+
+def test_trade_status_error_hides_broker_host_without_pin(client, alpaca, nodb, monkeypatch):
+    """Revisión lote I: el texto de la excepción trae el host (paper-api vs api) → sin PIN solo el tipo."""
+    monkeypatch.setattr(server, 'ALPACA_BASE', 'https://api.alpaca.markets')
+    alpaca.raise_on_get = requests.exceptions.ConnectionError(
+        "HTTPSConnectionPool(host='api.alpaca.markets', port=443): Max retries exceeded")
+    d = client.get('/api/trade/status').get_json()
+    assert 'alpaca.markets' not in json.dumps(d) and d['error'] == 'ConnectionError' and d['mode_hidden']
+    d = client.get('/api/trade/status', headers=H()).get_json()
+    assert 'api.alpaca.markets' in d['error'] and d['paper'] is False
+
+
+def test_diagnostics_hides_paper_or_live_without_pin(client, alpaca, nodb, monkeypatch):
+    """G5-18 (revisión lote I): el 🩺 público tampoco dice papel/REAL del bróker; con el PIN sí. La caché guarda la
+    versión completa y se filtra en CADA pedido."""
+    monkeypatch.setattr(server, 'ALPACA_BASE', 'https://api.alpaca.markets')
+    server._DIAG_CACHE.update(ts=0.0, data=None)
+    for k in ('_diag_claude', '_diag_gemini', '_diag_nvidia', '_diag_elevenlabs', '_diag_finnhub', '_diag_yahoo',
+              '_diag_fmp', '_diag_grafo', '_diag_ontologia', '_diag_gobernanza'):     # sin red: solo Alpaca (falso)
+        monkeypatch.setattr(server, k, lambda: {'configured': False, 'ok': False, 'detail': 'x'})
+    for headers in ({}, None):
+        url = '/api/diagnostics?fresh=1' if headers == {} else '/api/diagnostics'
+        al = client.get(url).get_json()['services']['alpaca']
+        blob = json.dumps(al, ensure_ascii=False)
+        assert 'mode' not in al and al['mode_hidden'] is True and al['ok'] is True
+        assert 'REAL' not in blob and 'PAPEL' not in blob and 'live' not in blob
+    al = client.get('/api/diagnostics', headers=H()).get_json()['services']['alpaca']     # desde la caché, con PIN
+    assert al['mode'] == 'live' and 'REAL' in al['detail']
+    server._DIAG_CACHE.update(ts=0.0, data=None)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -520,7 +573,7 @@ def agent(monkeypatch, alpaca):
                  ('max_orders_per_cycle', 3), ('max_pos_pct', 5.0), ('stop_loss_pct', 3.0),
                  ('interval_min', 15), ('max_daily_loss_pct', 2.0), ('thread', None), ('status', 'stopped')):
         monkeypatch.setitem(server._AGENT, k, v)
-    monkeypatch.setattr(server, '_agent_analyze',
+    monkeypatch.setattr(server._trading_agent, '_agent_analyze',
                         lambda *a, **k: {'action': 'buy', 'confidence': 90, 'reason': 'test', 'size_pct': 2})
     return server._AGENT
 
@@ -636,7 +689,7 @@ def test_agent_start_is_single_threaded(client, alpaca, nodb, agent, no_rate, mo
         server._AGENT['status'] = 'running'
         release.wait(5)
         server._AGENT['status'] = 'stopped'
-    monkeypatch.setattr(server, '_agent_thread_fn', fake_loop)
+    monkeypatch.setattr(server._trading_agent, '_agent_thread_fn', fake_loop)
     results = []
     barrier = threading.Barrier(4)
 
@@ -1016,7 +1069,7 @@ def test_redaction_catches_prefixed_key_names_and_text_errors():
 def test_voice_admin_routes_need_operator_pin(client, monkeypatch):
     monkeypatch.setenv('ELEVENLABS_ALLOW_OVERRIDE', '1')
     called = []
-    monkeypatch.setattr(server, '_sync_bixby_agent', lambda: called.append(1) or {'ok': True})
+    monkeypatch.setattr(server._voice_api, '_sync_bixby_agent', lambda: called.append(1) or {'ok': True})
     for method, url in (('post', '/api/voice/adopt'), ('post', '/api/voice/agent-tune'),
                         ('get', '/api/voice/sync-agent'), ('post', '/api/voice/sync-agent')):
         r = getattr(client, method)(url, data='{}', headers=H(pin=None))

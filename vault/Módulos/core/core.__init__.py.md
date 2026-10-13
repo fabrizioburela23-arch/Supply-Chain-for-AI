@@ -61,18 +61,21 @@ _Nada interno._
 - [[research.context.py]] — lo importa
 - [[research.router.py]] — lo importa
 - [[scripts.build_shapes.py]] — lo importa
+- [[scripts.calibrate_kernel.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `calculate_correlation` → [[API herramientas MCP]]
+- herramienta MCP `find_anomalies` → [[API herramientas MCP]]
 - herramienta MCP `get_company` → [[API herramientas MCP]]
 - herramienta MCP `get_exposure` → [[API herramientas MCP]]
 - herramienta MCP `get_history` → [[API herramientas MCP]]
 - herramienta MCP `get_supply_chain` → [[API herramientas MCP]]
+- herramienta MCP `project_portfolio` → [[API herramientas MCP]]
 - herramienta MCP `run_committee` → [[API herramientas MCP]]
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 - herramienta MCP `search_companies` → [[API herramientas MCP]]
 
-_Además lo importan 31 pruebas (lista abajo)._
+_Además lo importan 34 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -92,6 +95,7 @@ _Además lo importan 31 pruebas (lista abajo)._
 - [[tests.test_hot_invalidation.py]]
 - [[tests.test_hot_review_fixes.py]]
 - [[tests.test_hot_views_parity.py]]
+- [[tests.test_kernel_monotone_edges.py]]
 - [[tests.test_kernel_monotone_severity.py]]
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_ledger_callsites_chat.py]]
@@ -106,4 +110,6 @@ _Además lo importan 31 pruebas (lista abajo)._
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]
 - [[tests.test_scenario_kernel.py]]
+- [[tests.test_scenario_pnl.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_tensor.py]]

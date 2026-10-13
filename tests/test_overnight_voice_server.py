@@ -519,6 +519,10 @@ def test_sync_reports_bad_key_without_writing():
 
 def test_sync_route_uses_new_sync(client, el, monkeypatch):
     monkeypatch.setenv('TRADE_PIN', PIN)
+    # el contrato con ElevenLabs no depende del libro (su decisión policy.change voice.agent y el 503 con el libro
+    # caído se prueban en tests/test_voice_agent_split.py): aquí, como sin base
+    import ontology.db as _odb
+    monkeypatch.setattr(_odb, 'ontology_available', lambda: False)
     r = client.post('/api/voice/sync-agent', headers={'X-Trade-Pin': PIN, 'Content-Type': 'application/json'})
     d = r.get_json()
     assert r.status_code == 200 and d['ok'] and d['mode'] == 'tool_ids'
@@ -547,6 +551,10 @@ def test_tts_and_llm_rules():
 # ════════════════════════════════════════════════════════════════════════════
 def test_agent_tune_validates_models(client, el, monkeypatch):
     monkeypatch.setenv('TRADE_PIN', PIN)
+    # el contrato con ElevenLabs no depende del libro (su decisión policy.change voice.agent y el 503 con el libro
+    # caído se prueban en tests/test_voice_agent_split.py): aquí, como sin base
+    import ontology.db as _odb
+    monkeypatch.setattr(_odb, 'ontology_available', lambda: False)
     monkeypatch.setenv('ELEVENLABS_ALLOW_OVERRIDE', 'yes')
     h = {'X-Trade-Pin': PIN, 'Content-Type': 'application/json'}
     for bad in ('eleven_turbo_v2_5', 'eleven_v3', 'gpt-4'):

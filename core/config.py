@@ -25,8 +25,9 @@ CLAUDE   = os.getenv('ANTHROPIC_KEY') or os.getenv('CLAUDE_KEY', '')
 # 2026-10-10 (Fabrizio pagó la API de Claude): el nivel PROFUNDO pasa a Claude Sonnet 5.5 (claude-sonnet-5-5,
 # mismo precio que Sonnet 5: 2/10 USD por millón; mejor en análisis y herramientas). OJO: Sonnet 5.5 rechaza
 # thinking 'disabled' (HTTP 400) — core/ai.claude_attempts arma los parámetros correctos por modelo.
-AI_MODEL_FAST = os.getenv('AI_MODEL_FAST') or 'claude-haiku-4-5'
-AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5-5'
+# .strip(): Railway guarda tal cual lo que se pega (2026-10-13 llegó 'claude-sonnet-5-5\n\n\n\n' → modelo inválido).
+AI_MODEL_FAST = (os.getenv('AI_MODEL_FAST') or '').strip() or 'claude-haiku-4-5'
+AI_MODEL_DEEP = (os.getenv('AI_MODEL_DEEP') or '').strip() or 'claude-sonnet-5-5'
 
 # ── Multi-proveedor de IA: alterna entre Claude, Google Gemini y NVIDIA NIM ──
 # Si un canal falla (o no tiene key), pasa al siguiente automáticamente.
@@ -40,13 +41,14 @@ AI_MODEL_DEEP = os.getenv('AI_MODEL_DEEP') or 'claude-sonnet-5-5'
 # con un modelo vigente del catálogo del proveedor. No hace falta tocar código
 # ni desplegar.
 GEMINI_KEY   = os.getenv('GEMINI_KEY') or os.getenv('GOOGLE_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')   # 2026-10-06: mejor calidad/precio (Fabrizio)
+GEMINI_MODEL = (os.getenv('GEMINI_MODEL') or '').strip() or 'gemini-3.8-flash'   # 2026-10-06: mejor calidad/precio (Fabrizio)
 # si Google satura (503/429/5xx) o retira (404) el principal, el MISMO pedido va a estos, en orden (lista con comas;
 # 'off' = sin respaldo). Cada modelo tiene su propia capacidad en Google: en la saturación del 5-6 oct-2026 3.8 y
 # 3.5 Flash daban 503 a la vez. 3.1 Pro: mejor calidad (2/12 USD por millón), solo como respaldo.
-GEMINI_FALLBACK_MODEL = os.getenv('GEMINI_FALLBACK_MODEL', 'gemini-3.5-flash,gemini-3.1-pro')   # 2.5-flash: retirado (404)
+# El id real del Pro es gemini-3.1-pro-preview (sin '-preview' Google responde 404 y quedaba como 'retirado').
+GEMINI_FALLBACK_MODEL = (os.getenv('GEMINI_FALLBACK_MODEL') or '').strip() or 'gemini-3.5-flash,gemini-3.1-pro-preview'   # 2.5-flash: retirado (404)
 NVIDIA_KEY   = os.getenv('NVIDIA_KEY') or os.getenv('NVIDIA_API_KEY', '')
-NVIDIA_MODEL = os.getenv('NVIDIA_MODEL', 'meta/llama-3.3-70b-instruct')
+NVIDIA_MODEL = (os.getenv('NVIDIA_MODEL') or '').strip() or 'meta/llama-3.3-70b-instruct'
 AI_ORDER     = [p.strip() for p in os.getenv('AI_ORDER', 'claude,gemini,nvidia').split(',') if p.strip()]
 # ── Orden de proveedores POR NIVEL (2026-10-10) ─────────────────────────────
 # · profundo (investigación, comité, tesis, respuesta final de análisis del chat):

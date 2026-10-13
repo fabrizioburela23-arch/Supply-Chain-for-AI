@@ -2,7 +2,7 @@
 tipo: "variable"
 capa: "Infraestructura"
 nombre: "AI_PER_USER_DAILY_USD"
-documentada: false
+documentada: true
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
@@ -16,7 +16,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## ¿Está documentada en CLAUDE.md?
 
-**No** — falta en [[Doc CLAUDE]].
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 

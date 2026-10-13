@@ -2,7 +2,7 @@
 tipo: "variable"
 capa: "Infraestructura"
 nombre: "CSP_REPORT_ONLY"
-documentada: false
+documentada: true
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
@@ -16,4 +16,8 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## ¿Está documentada en CLAUDE.md?
 
-**No** — falta en [[Doc CLAUDE]].
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
+
+## Mencionada en sesiones
+
+- [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]

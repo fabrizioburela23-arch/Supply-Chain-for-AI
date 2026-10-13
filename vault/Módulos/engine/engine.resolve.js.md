@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Chat y agentes"
 ruta: "engine/resolve.js"
 lenguaje: "javascript"
-lineas: 497
+lineas: 417
 aliases: ["engine/resolve.js"]
 tags: ["capa/chat-agentes", "tipo/modulo"]
 ---
 
 # engine/resolve.js
 
-> Módulo · capa [[Capa Chat y agentes]] · 497 líneas · `engine/resolve.js`
+> Módulo · capa [[Capa Chat y agentes]] · 417 líneas · `engine/resolve.js`
 
 ## Para qué sirve
 
@@ -27,12 +27,12 @@ RESOLUTOR DE EMPRESAS + SUPERFICIE DE RESULTADOS (2026-07) Feedback real de Fabr
 - [[engine.compare.js]] — usa `openCompare`
 - [[engine.fincard.js]] — usa `openFinCard`
 - [[engine.insights.js]] — usa `renderKhipuInsights`
-- [[engine.voice.js]] — usa `_openBrokerStage`
+- [[engine.trade.js]] — usa `_openBrokerStage`
 - [[engine.xray.js]] — usa `openXRay`
-- [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
+- [[nodes.legal_names.js]] — usa `LEGAL_NAMES`, `RESOLVE_STOPWORDS`, `VOICE_ALIASES`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_ID_ALIAS`
 
-Se carga en [[app.html]] en la posición **33 de 96** (línea 7842), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
+Se carga en [[app.html]] en la posición **33 de 97** (línea 7826), después de [[engine.universe2d.js]] y antes de [[engine.orb.js]].
 
 ## Lo usan
 
@@ -51,12 +51,14 @@ Se carga en [[app.html]] en la posición **33 de 96** (línea 7842), después de
 - [[engine.pickers.js]] — usa `KhipuResolve`
 - [[engine.portfolios.js]] — usa `KhipuResolve`
 - [[engine.spacemonitor.js]] — usa `_surface`
+- [[engine.trade.js]] — usa `KhipuResolve`
 - [[engine.voice.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.worldmonitor.js]] — usa `_surface`
 - [[engine.xray.js]] — usa `_surface`
 
 ## Pruebas que lo cubren
 
+- [[tests.test_alias_voz_paridad.py]]
 - [[tests.test_khipus_os_integration.py]]
 
 ## Mencionado en sesiones de trabajo

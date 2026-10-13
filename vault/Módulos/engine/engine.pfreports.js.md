@@ -27,11 +27,11 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[engine.mascot.js]] — usa `KhipuMascot`
 - [[engine.toast.js]] — usa `KhipuToast`, `khipuActor`
 
-Se carga en [[app.html]] en la posición **60 de 96** (línea 7920), después de [[engine.pfcommittee.js]] y antes de [[engine.sync.js]].
+Se carga en [[app.html]] en la posición **61 de 97** (línea 7905), después de [[engine.pfcommittee.js]] y antes de [[engine.sync.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 60)
+- [[app.html]] — lo carga con `<script>` (posición 61)
 - [[engine.pfcommittee.js]] — usa `KhipuPortfolioExtras`
 
 ## Endpoints que llama

@@ -9,6 +9,31 @@ estuvo conectado hasta su retiro el 2026-10-13, decisión #6).
 
 ---
 
+# SESIÓN 2026-10-13 (k) — FASE 2+ LOTE I: rutas con decisión, CSP estricta, riesgo robusto, escenario → dinero, archivos partidos — sw v266
+
+- Fabrizio: «ya esta todo, sigue» (activó kernel.params 2.0.0 con su PIN: TSMC 253 empresas; puso Sonnet 5.5 en los dos
+  niveles, AI_ORDER=claude,gemini,nvidia y GEMINI_FALLBACK_MODEL con gemini-3.1-pro-preview). core/config.py ahora hace
+  .strip() a las variables de modelo (AI_MODEL_DEEP llegó con 4 saltos de línea) y el respaldo Pro por defecto es
+  gemini-3.1-pro-preview (sin '-preview' Google da 404).
+- I1: CERO rutas de escritura sin decisión (tokens MCP y OAuth = policy.change sin secretos; revocar SIEMPRE revoca aunque
+  el libro caiga — la decisión va a la cola; /api/sim/agents = whatif.agent_sim; voz adopt/agent-tune/sync-agent =
+  policy.change voice.agent). /api/trade/status y /api/diagnostics ya NO dicen papel/real sin PIN (la UI muestra 🔴 ante la
+  duda). CSP sin 'unsafe-eval' y connect-src con lista cerrada (self, Finnhub WS, ElevenLabs, 5 CDN; emergencia
+  CSP_REPORT_ONLY=true). Alias de voz ÚNICOS en nodes/legal_names.js (VOICE_ALIASES) → snapshot → core/entities
+  ("en vidia" → Nvidia, puntaje 80 < umbral de escritura). Precios de IA con vigencia (Gemini 3.8 sube el 1-ene-2027).
+- I2: policy.risk 1.0.0 (números de hoy idénticos) + 2.0.0 (PIN): ventanas por par, Ledoit-Wolf, ≥120 días por posición,
+  Sharpe aritmético, ^IRX convertido; siempre a la vista: EWMA, VaR/CVaR a N días (Cornish-Fisher con dominio válido,
+  ventanas solapadas), días para vender (ADV real), griegas por subyacente con dividendos, "paridad de riesgo con topes",
+  deslistadas calificadas con su último precio. MCP find_anomalies y project_portfolio ("NO es un pronóstico").
+- I3: core/scenario_pnl.py + kernel.calibration@1.0.0: κ calibrado con 2 episodios reales (2022, 2024; 2021 sin datos) →
+  ajuste DÉBIL (R² 0,002) → la app dice "sin cifra en dinero" en vez de inventar (línea discreta en X-Ray, Cabina y
+  livesim solo con posiciones). kernel.params 2.1.0 (PIN) = choque monótono para vínculos que salen de la empresa caída.
+  ⏱ del mapa = viaje en el tiempo del SERVIDOR (/api/ontology/graph?as_of=&known_at=), respaldo rotulado sin base.
+- I4: server.py 6.382 → 4.940 líneas (core/voice_api.py, core/trading_agent.py), engine/trade.js (órdenes del navegador
+  fuera de voice.js), variables de entorno documentadas, globales muertas borradas, pruebas de navegador 60 → 33 s.
+- Revisión (4 lentes): 16 hallazgos, 16 arreglados. CIERRE_INFRA: ✅ 58 · 🟡 17 · 🔶 12 · 👤 10 · ⬜ 2.
+- PENDIENTE: recalibrar κ para el motor 2.0.0 (hoy dice "calibrada con otra versión"); cockpit.js y app.html sin partir.
+
 # SESIÓN 2026-10-13 (j) — ESPACIO: VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265
 
 - Fabrizio: «¿por qué la del espacio ya no tiene los satélites?». El código que DIBUJA no cambió; fallaba traer los datos

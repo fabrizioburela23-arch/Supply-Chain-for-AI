@@ -20,6 +20,7 @@ el recorrido de un minuto en Khipus OS, narrado con la voz de Khipu (2026-10-11)
 
 ## Cubre
 
+- [[core.voice_api.py]]
 - [[engine.agents_registry.js]]
 - [[engine.cockpit.js]]
 - [[engine.desktop.js]]
@@ -29,6 +30,7 @@ el recorrido de un minuto en Khipus OS, narrado con la voz de Khipu (2026-10-11)
 - [[engine.statematrix.js]]
 - [[engine.toast.js]]
 - [[engine.tour_script.js]]
+- [[engine.trade.js]]
 - [[engine.voice.js]]
 - [[server.py]]
 

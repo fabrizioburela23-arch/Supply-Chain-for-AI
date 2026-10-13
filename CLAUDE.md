@@ -166,6 +166,17 @@ cambian, nace `@2` (nunca editar `@1`). Toda etiqueta `impl` nueva va a STAMPS (
 `/audit`; MCP `replay_decision` (read); reloj `ledger_replay_sample` (1×/día UTC: 50 al azar + todas las de dinero →
 `audit.replay`; un 'differs' pone ⚖ Gobernanza del 🩺 en rojo). UI: 🩺 → 📋 Registro → ⚖ Auditoría (engine/audit.js,
 `openSistema('auditoria')`). Determinismo: ρ con `v0` fijo y factores en orden canónico (`_canonical_factors`).
+**FASE 2+ LOTE I (2026-10-13)**: rutas de escritura sin decisión = 0 (tests/test_cierre_infra.py; revocar tokens nunca
+depende del libro). `/api/trade/status` y `/api/diagnostics` sin PIN NO dicen papel/real (`mode_hidden`; UI 🔴 ante la
+duda). CSP sin 'unsafe-eval' y `connect-src` CERRADO (self, wss://ws.finnhub.io, *.elevenlabs.io, CDNs del SW): un host
+nuevo del navegador hay que añadirlo ahí (`CSP_REPORT_ONLY=true` = emergencia). Alias de voz ÚNICOS: `nodes/legal_names.js`
+(`VOICE_ALIASES`, `RESOLVE_STOPWORDS`) → snapshot → core/entities (`voice_alias` 80 < 85 de escritura). Precios de IA con
+vigencia (`core/ai_usage.PRICE_WINDOWS`). Riesgo: `core/risk_models.py` (EWMA, Ledoit-Wolf, covarianza por pares, Cornish-
+Fisher con `cf_valid`, VaR/CVaR a N días, Sharpe aritmético, ADV) + `policy.risk` (1.0.0 = números de hoy; 2.0.0 con PIN).
+Escenario → dinero: `core/scenario_pnl.py` + `kernel.calibration@*` (κ por versión del motor; con ajuste débil NO hay cifra)
++ `POST /api/hot/scenario_pnl` + `KhipuHot.pnlLine`. ⏱ del mapa = servidor (`/api/ontology/graph?as_of=&known_at=`).
+Módulos nuevos: `core/voice_api.py` (todo /api/voice/* y el prompt de voz), `core/trading_agent.py` (/api/trade/agent/*),
+`engine/trade.js` (`window._executeTradeOrder`, se carga ANTES de voice.js). Variables de modelo con `.strip()`.
 
 ## Arquitectura
 
@@ -681,6 +692,22 @@ HOTVIEWS (on), HOT_WAIT_S (2), HOTVIEWS_COALESCE_S (1), HOTVIEWS_LISTEN (on)  �
 PRICES_EOD (on), PRICES_REQ_INTERVAL_S (0.6)  ← historia de precios (core/prices_store: carga diaria tras las 22:00 UTC; el relleno de 5 años SOLO con PIN)
 GOV_RELEASE (vacío = el vigente de la base), <ARTEFACTO>=<semver> p. ej. KERNEL_PARAMS  ← SOLO eligen un release aprobado (D2)
 KHIPU_GATES (on; 'off' = emergencia: apaga las puertas SHACL en sombra)
+── G5-14 (lote I4, 2026-10-13): TODA variable que el código lee está aquí (la bóveda: 0 sin documentar) ──
+CLAUDE_KEY / ALPHA_VANTAGE_KEY / GOOGLE_API_KEY / NVIDIA_API_KEY / TYPESAFE_KEY  ← nombres ALTERNATIVOS de ANTHROPIC_KEY / AV_KEY / GEMINI_KEY / NVIDIA_KEY / TYPESAFE_API_KEY
+ANTHROPIC_ADMIN_KEY (gasto real de Claude en 💰), AI_PRICES_JSON (precios extra por modelo), AI_DAILY_LIMIT_USD (10), AI_MONTHLY_LIMIT_USD (150), AI_PER_USER_DAILY_USD (0 = sin tope)  ← 💰 Gasto IA (los límites con PIN mandan)
+AI_BUSY_WAIT_S (20), AI_CLAUDE_TIMEOUT_DEEP_S (110), GEMINI_HOT_S (180), GEMINI_THINKING (off)  ← IA: espera de cupo, tope del nivel profundo, pausa del modelo saturado, "pensar" en el nivel rápido
+DECIDE_ENABLED (on), TYPESAFE_API_URL  ← Jev: apagarlo sin borrar la clave / otra URL
+ELEVENLABS_LLM (vacío = el recomendado), BIXBY_AUTOSYNC (1; 0 = no sincronizar el agente de voz al arrancar)  ← voz
+CSP_ENABLED (true), CSP_REPORT_ONLY (false)  ← seguridad del navegador (emergencia)
+REDIS_URL (opcional: caché compartida), DB_POOL_TIMEOUT_S (10), DB_CONNECT_TIMEOUT_S (5), MATRIX_ENGINE (sparse|dense), MATRIX_BUSY_WAIT_S (3), INSIGHTS_INFLIGHT_WAIT_S (45), LIVE_DEADLINE_S (8)  ← estructura
+COMMITTEE_MAX_SEATS, RESEARCH_DEDUPE_MINUTES (30), RESEARCH_HEARTBEAT_STALE_MIN (3), RESEARCH_MAX_AGENTS_PER_JOB (4), INVESTIGADOR_AUTO (off), INVESTIGADOR_AUTO_CUTOFF_HORAS (6), TAVILY_KEY, SEC_USER_AGENT  ← investigación/comité
+MCP_RATE_PER_MIN (60), MCP_RESEARCH_PER_HOUR (10), MCP_TRADE_PER_HOUR (30), MCP_MAX_INFLIGHT (3), MCP_MAX_INFLIGHT_TOTAL (5), MCP_PIN_MAX_FAILS (10), MCP_PIN_LOCK_MIN (30), MCP_OAUTH_TTL_HOURS, MCP_STATIC_TOKEN, MCP_TRUSTED_PROXY_HOPS (1)  ← MCP
+COINGECKO_KEY, CLOUDFLARE_RADAR_TOKEN, SPACE_LL2_BASE, WORLD_GDELT_EVENTS (on), WORLD_GDELT_BACKFILL (on), WORLD_GDELT_EVENTS_BASE, WORLD_GPR_DAILY_URL, WORLD_GPR_MONTHLY_URL, WORLD_PORTWATCH_URL, WORLD_FEDREG_URL, WORLD_GDACS_URL, WORLD_ADVISORIES_URL  ← fuentes en vivo (URLs: solo si el proveedor se muda)
+RAILWAY_GIT_COMMIT_SHA, RAILWAY_PUBLIC_DOMAIN, RAILWAY_ENVIRONMENT, RAILWAY_ENVIRONMENT_NAME, RAILWAY_PROJECT_ID  ← las pone Railway solo (sello del código; URL del MCP; "estamos en producción")
+GUNICORN_MAX_REQUESTS_JITTER (0; solo Dockerfile) · OPENAI_KEY: solo un comentario de docker-compose (no se usa) · ANTHROPIC_API_KEY / TAVILY_API_KEY: solo en la lista de secretos que se tapan en los logs
+KHIPU_URL, SMOKE_RETRIES, GITHUB_OUTPUT, GITHUB_STEP_SUMMARY  ← SOLO scripts de GitHub Actions (humo del MCP, ancla del libro), no Railway
+KH_GUARD_TRACE  ← solo diagnóstico/pruebas de la guardia del libro
+(BROKERAGE_APPROVAL_TTL_MIN, RESEARCH_CALIBRATION_K, RESEARCH_OUTCOME_BAND: ya NO cambian números — viven en policy.*; el 🩺 avisa si siguen puestas)
 ```
 
 ## Multi-IA — HÍBRIDA (2026-07-12)

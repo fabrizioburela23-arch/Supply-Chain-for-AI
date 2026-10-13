@@ -119,7 +119,7 @@
 
   // sin cifras: el motor del servidor no respondió o no calcula este tipo de golpe → se DICE, no se inventa
   function clearPanel(msg) {
-    ['ls-sect', 'ls-vict', 'ls-win'].forEach(function (k) { var el = document.getElementById(k); if (el) el.innerHTML = ''; });
+    ['ls-sect', 'ls-vict', 'ls-win', 'ls-pnl'].forEach(function (k) { var el = document.getElementById(k); if (el) el.innerHTML = ''; });
     var st = document.getElementById('ls-stats');
     if (st) { st.style.display = 'block'; st.innerHTML = '<div class="ls-msg ls-err">' + esc(msg) + '</div>'; }
   }
@@ -168,7 +168,19 @@
     if (stats) { stats.style.display = ''; stats.innerHTML =
       '<div class="ls-cell"><b class="ls-c" style="--ls-c:' + ty.tint + '">' + r.reach_1 + '</b><span>' + (isUp ? L('benefician', 'benefit') : L('afectadas ≥1 %', 'affected ≥1%')) + '</span></div>' +
       '<div class="ls-cell"><b class="ls-c" style="--ls-c:' + ty.tint + '">' + fmtB(capExp) + '</b><span>' + L('cap movida', 'cap moved') + '</span></div>' +
-      '<div class="ls-cell"><b class="' + (isUp ? 'ls-up' : 'ls-down') + '">' + (portTotal ? (isUp ? '+' : '−') + Math.round(portHit / portTotal) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>'; }
+      '<div class="ls-cell"><b class="' + (isUp ? 'ls-up' : 'ls-down') + '">' + (portTotal ? (isUp ? '+' : '−') + Math.round(portHit / portTotal) + '%' : '—') + '</b><span>' + L('golpe medio a tu cartera', 'avg hit to your portfolio') + '</span></div>'; }
+    // batch I3: "Tu cartera: −X ± Y USD" — cifra del SERVIDOR (κ calibrado; débil → lo dice), solo con posiciones
+    if (stats && window.KhipuHot.pnlLine) {
+      var pnlEl = document.getElementById('ls-pnl');
+      if (!pnlEl) {
+        pnlEl = document.createElement('div');
+        pnlEl.id = 'ls-pnl'; pnlEl.className = 'ls-msg'; pnlEl.style.cssText = 'display:none;margin:4px 0 2px';
+        stats.parentNode.insertBefore(pnlEl, stats.nextSibling);
+      }
+      // record:false (revisión lote I): la decisión de la simulación sale de UN sitio (/api/hot/scenario con 2+
+      // semillas); antes cada ajuste del deslizador dejaba DOS whatif.shock si el usuario tenía posiciones
+      window.KhipuHot.pnlLine(pnlEl, { targets: targets.slice(), severity: severity, kind: ty.kind, record: false });
+    }
 
     var sect = document.getElementById('ls-sect');
     if (sect && window.SECTORS9) {

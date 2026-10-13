@@ -110,7 +110,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | 1 prueba |
 | `GET` | `/api/ontology/feed` | `global_feed_route` | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | — |
-| `GET` | `/api/ontology/graph` | `graph` | 2 pruebas |
+| `GET` | `/api/ontology/graph` | `graph` | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[engine.khipu_lang.js]], 1 prueba |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[app.html]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[engine.fincard.js]], 1 prueba |
@@ -145,6 +145,7 @@ Grupos: [[API ontology]]
 - [[tests.test_ingest_news.py]]
 - [[tests.test_ledger_callsites_committee.py]]
 - [[tests.test_ledger_core.py]]
+- [[tests.test_maptime_asof.py]]
 - [[tests.test_ontology_agents.py]]
 - [[tests.test_ontology_alerts.py]]
 - [[tests.test_ops_identity.py]]

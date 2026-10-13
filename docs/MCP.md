@@ -157,6 +157,8 @@ compacto, así que el tamaño total queda en ~2 × `max_chars`. Medido: `get_sup
 | `find_similar_entities` | Comparables con puntaje **por espacio**: `chain` (proveedores/clientes compartidos), `features` (rasgos estructurales), `category`; `combined` = 0,6/0,25/0,15 (la misma mezcla de los comparables de la app) | Tensor de flujo |
 | `calculate_correlation` | Correlación de retornos DIARIOS (Pearson o Spearman) entre 2-15 empresas/tickers, con días en común (`n_obs`) y **error estándar** de cada coeficiente | Historia propia (prices_eod) o Yahoo ajustado |
 | `get_history` | Cierres ajustados de una empresa/ticker (diario, semanal o mensual = último cierre del período) con `source`, `as_of`, moneda y si está ajustada | Historia propia (prices_eod) o Yahoo ajustado |
+| `find_anomalies` | Días **inusuales** de 1-30 empresas/tickers: z del retorno (y del log del volumen guardado) contra la volatilidad **EWMA ex-ante** (RiskMetrics, λ de `policy.risk`); marca \|z\| ≥ umbral en las últimas sesiones. Señal estadística, no una causa | Historia propia (prices_eod, volumen) o Yahoo ajustado |
+| `project_portfolio` | **Rango** de valores de una cartera a N días (bandas 5/25/50/75/95, lognormal, deriva 0 por defecto) con su covarianza EWMA o Ledoit-Wolf, en USD. Rotulado **"NOT A FORECAST"** | Historia propia o Yahoo ajustado (+ FX diario) |
 
 ### research — investigar (gasta presupuesto de IA)
 

@@ -307,162 +307,9 @@ def screener_growth():
         return jsonify({'error': str(e)[:160]}), 500
 
 
-# ── Voz de Khipu: diagnóstico y ajuste FINO del agente ElevenLabs ────────────
-# La lógica vive en core/voice_agent.py (contrato ElevenLabs oct-2026: herramientas
-# como recursos con tool_ids, get-signed-url, modelos TTS vigentes, overrides).
-from core.http import rate_limit as _rate_limit_voice  # noqa: E402 — `rate_limit` se importa más abajo
-
-
-@app.route('/api/voice/agent-diag')
-@_rate_limit_voice(limit=10, window=300)  # pública: 4-6 llamadas a ElevenLabs por pedido → sin bucles que gasten la cuota
-def voice_agent_diag():
-    """Diagnóstico ACCIONABLE de la voz: clave, saldo/plan, agente, LLM, voz,
-    modelo TTS, eventos, herramientas, prompt y overrides — con la lista de
-    arreglos en español e inglés. Solo lectura. Conserva los campos planos de
-    antes (voice_id, voice_name, tts_model, language, llm, first_message)."""
-    from core import voice_agent as _va
-    try:
-        d = _va.diagnose(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, http=requests,
-                         expected_tools=[t['name'] for t in _bixby_client_tools()],
-                         retired_tools=RETIRED_VOICE_TOOLS, prompt=BIXBY_SYSTEM_PROMPT, full=True)
-    except Exception as e:  # noqa: BLE001 — el diagnóstico jamás rompe
-        return jsonify({'ok': False, 'error': _diag_redact(e)[:160]})
-    # sin PIN: nada de datos de facturación (plan, caracteres usados/límite, renovación) — el 🩺 los ve por
-    # /api/diagnostics; aquí quedan solo los chequeos accionables
-    d.pop('subscription', None)
-    ag = d.get('agent') or {}
-    d.update({'name': ag.get('name'), 'voice_id': ag.get('voice_id'), 'voice_name': ag.get('voice_name'),
-              'tts_model': ag.get('tts_model'), 'language': ag.get('language'), 'llm': ag.get('llm'),
-              'first_message': ag.get('first_message')})
-    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
-        d['reason'] = 'ELEVENLABS_KEY/AGENT_ID no configurados'
-    return jsonify(d)
-
-
-# Rutas de administración de la voz: PIN de operador (core.pin.require_operator, mismo contador
-# anti-adivinanza que el trading). Sin TRADE_PIN configurado se permiten (modo desarrollo) con aviso en el log.
-from core.http import rate_limit as _rate_limit_early  # noqa: E402 — se importa de nuevo abajo
+# Rutas de administración de la voz (PIN de operador) → core/voice_api.py; `_require_operator` lo usan
+# también otras rutas de aquí (p. ej. /api/diag/recent).
 from core.pin import require_operator as _require_operator  # noqa: E402
-
-
-@app.route('/api/voice/voices')
-@_rate_limit_early(limit=20, window=3600)
-@_require_operator
-def voice_voices():
-    """Voces disponibles: las de la cuenta + las mejor valoradas EN ESPAÑOL de
-    la biblioteca compartida de ElevenLabs (para arreglar la 'voz rara': el
-    agente tenía una voz en inglés hablando español). Solo lectura, pero gasta
-    la clave del servidor y lista la cuenta → PIN de operador + límite
-    (limpieza 2026-10-11: antes era pública y sin límite)."""
-    if not ELEVENLABS_KEY:
-        return jsonify({'error': 'ELEVENLABS_KEY no configurada', 'error_en': 'ELEVENLABS_KEY is not set'}), 400
-    from core.voice_agent import list_voices
-    return jsonify(list_voices(ELEVENLABS_KEY, requests))
-
-
-# Rutas que REESCRIBEN el agente de ElevenLabs (voz, modelo, idioma, prompt):
-# además del candado ELEVENLABS_ALLOW_OVERRIDE exigen el PIN de operador
-# (core.pin.require_operator, mismo contador anti-adivinanza que el trading).
-# Sin TRADE_PIN configurado se permiten (modo desarrollo) con aviso en el log.
-
-_SAFE_PATH_SEG = re.compile(r'^[A-Za-z0-9_\-]{1,80}$')
-
-
-def _voice_override_off():
-    return jsonify({'error': 'ELEVENLABS_ALLOW_OVERRIDE no está activo',
-                    'error_en': 'ELEVENLABS_ALLOW_OVERRIDE is not enabled'}), 403
-
-
-@app.route('/api/voice/adopt', methods=['POST'])
-@_rate_limit_early(limit=10, window=3600)
-@_require_operator
-def voice_adopt():
-    """Adopta una voz de la biblioteca compartida a la cuenta (paso previo a
-    asignarla al agente). Mismo candado que agent-tune + PIN de operador. Body:
-    {public_owner_id, voice_id, name}."""
-    from core.voice_agent import override_env_on
-    if not override_env_on():
-        return _voice_override_off()
-    if not ELEVENLABS_KEY:
-        return jsonify({'error': 'ELEVENLABS_KEY no configurada', 'error_en': 'ELEVENLABS_KEY is not set'}), 400
-    b = request.get_json(silent=True)
-    b = b if isinstance(b, dict) else {}
-    po, vid, name = b.get('public_owner_id'), b.get('voice_id'), (b.get('name') or 'Khipu ES')
-    if not po or not vid:
-        return jsonify({'error': 'public_owner_id y voice_id requeridos',
-                        'error_en': 'public_owner_id and voice_id are required'}), 400
-    po, vid = str(po), str(vid)
-    if not (_SAFE_PATH_SEG.match(po) and _SAFE_PATH_SEG.match(vid)):    # van en la URL de ElevenLabs
-        return jsonify({'error': 'public_owner_id / voice_id inválidos',
-                        'error_en': 'invalid public_owner_id / voice_id'}), 400
-    from core.voice_agent import adopt_shared_voice
-    res = adopt_shared_voice(ELEVENLABS_KEY, po, vid, name, requests)
-    if not res.get('ok'):
-        err = res.get('error') or {}
-        return jsonify({'error': err.get('es') or err.get('message') or 'ElevenLabs falló',
-                        'error_en': err.get('en') or err.get('message') or 'ElevenLabs failed',
-                        'code': err.get('code'), 'http': err.get('http')}), 502
-    return jsonify(res)
-
-
-@app.route('/api/voice/agent-tune', methods=['POST'])
-@_rate_limit_early(limit=10, window=3600)
-@_require_operator
-def voice_agent_tune():
-    """Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere
-    ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que adopt) + PIN de operador.
-    Solo toca los campos enviados; valida el modelo contra la lista VIGENTE de
-    ElevenLabs (oct-2026: turbo_v2/_v2_5 deprecados; v3_conversational y v4)."""
-    from core import voice_agent as _va
-    if not _va.override_env_on():
-        return _voice_override_off()
-    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
-        return jsonify({'error': 'ELEVENLABS_KEY/AGENT_ID no configurados',
-                        'error_en': 'ELEVENLABS_KEY/AGENT_ID are not set'}), 400
-    body = request.get_json(silent=True)
-    body = body if isinstance(body, dict) else {}
-    tts = {}
-    if body.get('tts_model'):
-        m = str(body['tts_model']).strip()[:60]
-        if m not in _va.TTS_TUNABLE:
-            return jsonify({'error': f'modelo de voz no válido para agentes: {m}',
-                            'error_en': f'invalid TTS model for agents: {m}',
-                            'valid': list(_va.TTS_TUNABLE)}), 400
-        tts['model_id'] = m
-    if body.get('voice_id'):
-        vid = str(body['voice_id']).strip()[:60]
-        if not _SAFE_PATH_SEG.match(vid):
-            return jsonify({'error': 'voice_id inválido', 'error_en': 'invalid voice_id'}), 400
-        tts['voice_id'] = vid
-    agent = {}
-    if body.get('language'):
-        lang = str(body['language']).strip().lower()[:8]
-        if not re.match(r'^[a-z]{2}(-[a-z]{2})?$', lang):
-            return jsonify({'error': 'idioma inválido', 'error_en': 'invalid language'}), 400
-        agent['language'] = lang
-    if not tts and not agent:
-        return jsonify({'error': 'nada que ajustar (tts_model / voice_id / language)',
-                        'error_en': 'nothing to tune (tts_model / voice_id / language)'}), 400
-    patch = {'conversation_config': {}}
-    if tts:
-        patch['conversation_config']['tts'] = tts
-    if agent:
-        patch['conversation_config']['agent'] = agent
-    try:
-        r = requests.patch(f'{_va.EL_API}/v1/convai/agents/{ELEVENLABS_AGENT_ID}',
-                           headers={'xi-api-key': ELEVENLABS_KEY,
-                                    'Content-Type': 'application/json'},
-                           json=patch, timeout=12)
-        if not r.ok:
-            e = _va.classify_error(r.status_code, r.text)
-            e.update(_va.describe(e, 'agent'))
-            return jsonify({'error': e['es'], 'error_en': e['en'], 'code': e['code'],
-                            'fix_es': e.get('fix_es'), 'fix_en': e.get('fix_en'), 'body': r.text[:200]}), 502
-        _va.forget_agent(ELEVENLABS_AGENT_ID)
-        return jsonify({'ok': True, 'applied': patch})
-    except Exception as e:  # noqa: BLE001
-        return jsonify({'error': 'No se pudo contactar con ElevenLabs', 'error_en': 'Could not reach ElevenLabs',
-                        'detail': _diag_redact(e)[:160]}), 502
 
 # ── Re-migración de la ontología por variable de entorno (para Fabrizio) ──────
 # Poner REMIGRATE_ON_BOOT=<NOMBRE DE LA BASE> en Railway (el de
@@ -663,19 +510,30 @@ CSP_REPORT_ONLY        = os.getenv('CSP_REPORT_ONLY', 'false').lower() == 'true'
 
 # Content-Security-Policy: restringe el origen de los scripts a los CDNs reales
 # que usa la app (d3 y three.js desde cdnjs, chart.js desde jsdelivr) y bloquea
-# framing, plugins y manipulación de <base>. connect-src queda en https:/wss:
-# porque la app abre WebSockets directos a Finnhub/ElevenLabs y, en standalone,
-# el navegador habla directo con varias APIs. 'unsafe-inline' es necesario: la
-# app usa estilos y manejadores onclick inline en miles de elementos.
-# upgrade-insecure-requests se añade aparte, solo bajo HTTPS (no rompe dev local).
+# framing, plugins y manipulación de <base>. 'unsafe-inline' sigue: los 10 bloques
+# inline de app.html y miles de onclick/estilos inline (G5-06: app.html no se
+# parte todavía; nonces/hashes después). upgrade-insecure-requests se añade
+# aparte, solo bajo HTTPS (no rompe dev local).
+# G5-09 (lote I1): SIN 'unsafe-eval' (grep eval/new Function/setTimeout(texto) en
+# app.html, engine/, nodes/, sim/ y en d3/three/chart/satellite → 0 usados; el
+# new Function de d3-dsv solo corre con d3.csv*, que la app no usa) y connect-src
+# SOLO a los hosts que el navegador llama de verdad: el propio servidor; el
+# WebSocket de Finnhub (app.html LivePrices); la voz de ElevenLabs (URL firmada
+# wss://api[.región].elevenlabs.io que entrega /api/voice/session); y los CDNs que
+# el service worker (sw.js CDN_HOSTS) vuelve a pedir con fetch() — su CSP es la
+# de /sw.js, esta misma. data:/blob: para descargas generadas en el navegador.
+# Emergencia: CSP_REPORT_ONLY=true (avisa sin bloquear) o CSP_ENABLED=false.
+CSP_CONNECT_SRC = ("'self' data: blob: wss://ws.finnhub.io wss://*.elevenlabs.io https://*.elevenlabs.io "
+                   "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com "
+                   "https://fonts.googleapis.com https://fonts.gstatic.com")
 CONTENT_SECURITY_POLICY = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+    "script-src 'self' 'unsafe-inline' "
         "https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' data: https://fonts.gstatic.com; "
     "img-src 'self' data: blob: https:; "
-    "connect-src 'self' https: wss:; "
+    f"connect-src {CSP_CONNECT_SRC}; "
     "worker-src 'self' blob:; "
     "frame-src 'self'; "
     "frame-ancestors 'none'; "
@@ -1901,7 +1759,7 @@ def diagnostics():
     if not fresh and _DIAG_CACHE['data'] and (now - _DIAG_CACHE['ts'] < _DIAG_TTL):
         out = dict(_DIAG_CACHE['data'])
         out['cached'] = True
-        return jsonify(out)
+        return jsonify(_diag_view(out))
 
     services = {
         'claude':     _diag_claude(),
@@ -1993,7 +1851,31 @@ def diagnostics():
     }
     _DIAG_CACHE['ts'] = now
     _DIAG_CACHE['data'] = out
-    return jsonify(out)
+    return jsonify(_diag_view(out))
+
+
+def _diag_view(out):
+    """G5-18 (revisión lote I): el 🩺 dice papel o DINERO REAL del bróker SOLO con el PIN de operador; sin él, la
+    tarjeta de Alpaca queda neutra (configurado, si responde, la pista para arreglarlo) — igual que
+    /api/trade/status. Se filtra POR PEDIDO: la copia en caché guarda la versión completa."""
+    al = ((out or {}).get('services') or {}).get('alpaca')
+    if not isinstance(al, dict) or _operator_pin_ok('diagnostics')[0]:
+        return out
+    view = dict(out, services=dict(out['services']))
+    a = {k: v for k, v in al.items() if k not in ('mode', 'detail', 'detail_en')}
+    if not al.get('configured'):
+        es, en = 'ALPACA_KEY sin configurar — el bróker está apagado.', 'ALPACA_KEY not set — the broker is off.'
+    elif al.get('ok'):
+        es, en = 'Bróker conectado (pon tu PIN para ver si es papel o dinero real).', \
+                 'Broker connected (enter your PIN to see whether it is paper or real money).'
+    else:
+        es, en = 'El bróker no respondió bien (pon tu PIN para ver el detalle).', \
+                 'The broker did not answer correctly (enter your PIN to see the detail).'
+    if al.get('fix_es') and al.get('fix_en'):
+        es, en = f"{es} — QUÉ HACER: {al['fix_es']}", f"{en} — WHAT TO DO: {al['fix_en']}"
+    a.update(detail=es, detail_en=en, mode_hidden=True)
+    view['services']['alpaca'] = a
+    return view
 
 
 # ----------------------------------------------------------------------------
@@ -2637,7 +2519,7 @@ def trade_status():
     now = time.time()
     cached = _TRADE_STATUS_CACHE['data']
     if cached is not None and now - _TRADE_STATUS_CACHE['ts'] < _TRADE_STATUS_TTL_S:
-        return jsonify(dict(cached, cached=True))
+        return jsonify(_trade_status_view(dict(cached, cached=True)))
     info = {'key_set': bool(ALPACA_KEY), 'secret_set': bool(ALPACA_SECRET),
             'base': ALPACA_BASE, 'pin_set': bool(os.getenv('TRADE_PIN', '')), 'paper': _paper(),
             'trading_enabled': _house_trading_enabled()}
@@ -2665,10 +2547,50 @@ def trade_status():
         except Exception as e:  # noqa: BLE001
             info['ok'] = False
             info['error'] = _diag_redact(e)
+            info['error_type'] = type(e).__name__     # lo único del error que se ve SIN PIN (el texto delata el host)
             info['hint'] = 'No se pudo conectar con Alpaca — revisa ALPACA_BASE.'
             info['hint_en'] = 'Could not reach Alpaca — check ALPACA_BASE.'
     _TRADE_STATUS_CACHE.update(ts=now, data=info)
-    return jsonify(info)
+    return jsonify(_trade_status_view(dict(info)))
+
+
+# G5-18 (lote I1): papel o DINERO REAL (y la URL del bróker, que lo delata: paper-api vs api) SOLO con el PIN. Sin él
+# la respuesta es neutra: si hay claves, si el bróker contesta y la pista para arreglarlo. `pin_set` sigue siendo
+# público: el navegador lo necesita para no mandar órdenes sin PIN (y no dice nada de la cuenta).
+_TRADE_STATUS_PRIVATE = ('paper', 'base')
+
+
+def _operator_pin_ok(where):
+    """(ok, bloqueado): PIN válido en X-Trade-Pin; `bloqueado` = el candado de PIN está activo (429). Revisión
+    lote I: un candado NO es un PIN incorrecto — el cliente solo borra el PIN guardado ante invalid_pin."""
+    got = request.headers.get('X-Trade-Pin', '')
+    if not (got and os.getenv('TRADE_PIN', '')):
+        return False, False
+    from core import pin as _pin_mod
+    bad = _pin_mod.check(got, where=where)
+    if bad is None:
+        return True, False
+    return False, bool(isinstance(bad, tuple) and len(bad) > 1 and bad[1] == 429)
+
+
+def _trade_status_view(info):
+    got = request.headers.get('X-Trade-Pin', '')
+    if got and os.getenv('TRADE_PIN', ''):
+        ok, locked = _operator_pin_ok('trade_status')
+        if ok:
+            info['pin_valid'] = True
+            return info
+        if locked:
+            info['pin_locked'] = True        # ni válido ni inválido: el candado no compara el PIN
+        else:
+            info['pin_valid'] = False
+    for k in _TRADE_STATUS_PRIVATE:
+        info.pop(k, None)
+    if info.get('error'):                    # revisión lote I: el texto de la excepción trae el host (paper-api vs api)
+        info['error'] = info.pop('error_type', None) or 'error'
+    info.pop('error_type', None)
+    info['mode_hidden'] = True
+    return info
 
 
 @app.route('/api/trade/diag', methods=['GET'])
@@ -3392,6 +3314,11 @@ def sim_agents_route():
         if not isinstance(out, dict):
             raise ValueError('sim_agents.run devolvió un tipo inesperado')
         out.setdefault('ok', True)
+        try:                                # lote I1: whatif.agent_sim en la cola del libro (0 ms al usuario)
+            from core import decision_sites
+            decision_sites.agent_sim(scenario, seeds, lang, out)
+        except Exception:  # noqa: BLE001
+            pass
         return jsonify(out)
     except Exception as e:  # noqa: BLE001
         return jsonify({'ok': False,
@@ -4108,406 +4035,19 @@ def grafo_estado():
     return jsonify({'store': 'native'})
 
 
-# Pantallas del menú "Herramientas / Tools" que la voz puede abrir (ids de BixbyCockpit.screens() en
-# engine/cockpit.js, con el nombre VISIBLE — un test los compara). Las de una empresa (X-Ray, comparar,
-# investigación, tesis, simular) van por open_company / compare_companies / quick_thesis / run_live_simulation.
-VOICE_SCREENS = {
-    'graph': ('Mapa de la cadena', 'Supply-chain map'),
-    'market': ('Mercado', 'Market'),
-    'terminal': ('Terminal', 'Terminal'),
-    'geo': ('Geopolítica', 'Geopolitics'),
-    'space': ('Espacio', 'Space'),
-    'simulation': ('Simulación', 'Simulation'),
-    'crypto': ('Cripto', 'Crypto'),
-    'tkg': ('Grafo temporal', 'Temporal graph'),
-    'portfolios': ('Carteras de práctica', 'Practice portfolios'),
-    'broker': ('Mi cuenta (bróker)', 'My account (broker)'),
-    'committee': ('Comité de inversión', 'Investment committee'),
-    'risk': ('Riesgo de cartera', 'Portfolio risk'),
-    'clients': ('Clientes', 'Clients'),
-    'scalp': ('Scalping', 'Scalping'),
-    'insights': ('Oportunidades', 'Opportunities'),
-    'screener': ('Explosivas', 'Breakouts'),
-    'canvas': ('Gráfico a pedido', 'Chart on demand'),
-    'agents': ('Tus agentes', 'Your agents'),
-    'brief': ('Brief de hoy', 'Today’s brief'),
-    'guia': ('Guía', 'Guide'),
-    'sistema': ('Sistema', 'System'),
-    'mcp': ('Conectar IAs', 'Connect AIs'),
-    'universe': ('Universo 3D', '3D universe'),
-}
-# qué hay en cada pantalla (para que la voz elija bien; el nombre visible sale de VOICE_SCREENS)
-_VOICE_SCREEN_HINTS = {
-    'graph': 'the supply-chain graph, 13 macro-sectors, ⏱ time slider and events layer',
-    'market': 'live prices, positions and P&L',
-    'terminal': 'multi-chart price terminal',
-    'geo': 'World Monitor: live conflicts, disasters, sanctions and export controls on a globe, and who is exposed',
-    'space': 'Space Monitor: launches and satellites',
-    'simulation': 'war room: scenario presets and simulations',
-    'crypto': 'live top-100 crypto + the curated "Expediente Khipus" of the top 50',
-    'tkg': 'how the relations changed over time',
-    'portfolios': 'SIMULATED practice portfolios and their assistant — never real orders',
-    'broker': 'the broker account: practice (paper) or REAL money, positions and orders',
-    'committee': 'Investment Committee: conviction, memo and the conclusions board',
-    'risk': 'portfolio risk report (VaR) and option greeks',
-    'clients': 'brokerage clients and the approval queue',
-    'scalp': 'fast intraday trading view',
-    'insights': 'what the hypergraph sees now: insights, risks and the relation matrices',
-    'screener': 'breakout / momentum screener',
-    'canvas': 'charts drawn on demand',
-    'agents': 'the agent team (mascots), what each does and their preferences',
-    'brief': 'the daily intelligence summary',
-    'guia': 'help and how to use the app',
-    'sistema': 'system health, AI spend and the activity log',
-    'mcp': 'connect external AIs (Claude, ChatGPT…) to Khipus',
-    'universe': '3D universe view of the network',
-}
-
-# ── Khipu voice — system prompt for ElevenLabs agent configuration ──────────
-BIXBY_SYSTEM_PROMPT = """You are Khipu, the voice of Khipus Finance Intelligence — a Bloomberg + Palantir-style platform for the global semiconductor, AI, space, energy and nuclear supply chain: hundreds of curated companies and their typed relations (9 relation types) modeled as numeric matrices, plus macro layers. You are a full investment analyst who lives inside KHIPUS OS, the app's interface: you answer questions, open windows, run simulations and lead the agent team — all by silently calling your client tools.
-
-## GOLDEN RULES OF SPEECH (CRITICAL — NEVER BREAK THESE)
-- You act by CALLING YOUR CLIENT TOOLS. Tools are silent and instant.
-- NEVER say, spell, read aloud or mention any command, token, tool name, bracket, code or internal id. The user must never hear anything technical — no "open_company", no "[XRAY:...]", no "puedes escribir TSMC XRAY", no "@cadena". Nothing of the sort, ever.
-- NEVER tell the user to type a command, press a key or click a button to get something you can do yourself — just DO it with your tools and narrate the RESULT naturally. (Typing a PIN on screen and approving on screen are the only things the user does by hand.)
-- Speak like a sharp human analyst: "Te abrí la radiografía de Nvidia al lado del chat — su mayor riesgo es la dependencia de TSMC…". Never like a machine.
-- Company names: pass them to tools as plain names or tickers (e.g. "Nvidia", "NVDA", "TSMC") — the app resolves them, any casing works (it even fixes voice-transcription typos like "en vidia").
-- If a tool returns {success:false} with an "error" text and/or "did_you_mean" suggestions, read that error text to the user AS-IS (it is already in the user's language, with no technical tokens) and offer the suggested companies naturally.
-
-## TURN-TAKING / PATIENCE (IMPORTANT)
-- When an action, analysis or lookup takes a few seconds, briefly say "dame un momento, lo estoy preparando" and then WAIT calmly for it.
-- NEVER threaten to disconnect, and NEVER pressure the user about their silence. The user staying quiet while waiting for a result is completely normal — do NOT say things like "si no me respondes me desconecto". Just keep the conversation open patiently.
-- If a tool result comes back with pending:true, the work is still running and will appear on screen: say so briefly ("sigue cargando, en unos segundos lo verás en pantalla") — never say it failed, and never call the same tool again right away.
-- Keep spoken replies short and to the point.
-
-## KHIPUS OS — WHAT THE USER SEES
-- The conversation sits in the CENTER of the screen. What you ask the brain shows up there too: the user's spoken question, the agents working and the full answer with its sources. So SPEAK A SHORT SUMMARY — never read a long answer word by word; the details stay written in the chat.
-- Every screen opens as a WINDOW beside the chat (on the sides on wide screens, on top on small screens and phones). Windows can be moved, minimized, closed and arranged.
-- Top bar: the Khipus logo, the command palette (⌘K), the "Herramientas / Tools" menu where EVERY screen lives (groups Explorar, Invertir, Descubrir, Ayuda y sistema), the agent mascots, the money badge (the practice portfolios 🧪, or — once the trading PIN was typed — the broker account: 🧪 PAPER / 🔴 REAL money), the ES/EN switch and the light/dark switch.
-- Call screens and windows by their VISIBLE names, in the user's language. The screens of the Herramientas menu:
-{screens}
-- Windows about one company: "<empresa> en una mirada", X-Ray, Cadena de suministro, Dossier, Comparar, the simulation windows (Caída simulada, Auge de demanda, Shock de precio, Sanción), Tesis rápida, Investigación con evidencia and Comité.
-- Never take the user out of Khipus OS (there is an old classic view; do not send them there).
-
-## THE AGENTS — the team the user sees as mascots
-{agents}
-- The user can INVOKE an agent by tapping its mascot or writing its name with @. You can do the same: ask_khipu_brain with that agent, and it answers from its own role. When you say who found something, use the mascot's name.
-- The COMMITTEE (Comité) weighs every conclusion by its confidence and by each analyst's track record and computes a conviction from −100 to +100. It may PROPOSE buy / hold / sell, but it ALWAYS waits for human approval — never present a committee proposal as an executed order.
-
-## THREE KINDS OF RESEARCH — never mix up their names
-- "Investigación con evidencia": the analyst team writes conclusions with cited evidence, a horizon and a computed confidence (the "¿Por qué?" button shows the evidence). Open it with open_company and view research; starting a NEW study is the user's click on screen.
-- "Tesis rápida": ONE AI answer about one company (quick_thesis) — fast, without cited evidence.
-- "Búsqueda profunda": a free, complex question investigated in several steps, 30-90 seconds (deep_search).
-All of it is information, not advice.
-
-## YOUR TOOLS — when to call each (silently; results come back to you as data)
-- ask_khipu_brain(question, agent?): THE DEFAULT for any question that needs facts or analysis, and for follow-ups. Add agent ONLY when the question is about ONE specific company AND the user names a mascot or the question clearly belongs to one: news about that company → radar · its suppliers, customers, dependencies → cadena · its price and momentum → tecnico · its fundamentals and valuation → analista · "what does the committee / the team think of it" → comite. ALWAYS write the company's name in the question (for "esta empresa" use the selected company's name). General questions — market news, world events, conflicts, sectors, no single company — go WITHOUT agent: Khipu's brain has the news and world tools.
-- open_company(company_name, view): show ONE company. "Muéstrame X" → glance. Deep question about one company ("desármame X", "¿por qué X es riesgosa?", "¿qué pasa si cae?") → xray. Suppliers and customers → supply_chain. On the map → map. Price chart → chart. Financials and fundamentals → dossier. "¿Qué concluyeron los analistas?" → research. "¿Qué dice el comité de X?" → committee. Then narrate the 2-3 most interesting facts it returned.
-- get_company_info(company_name): a quick fact without opening anything (price, market cap, employees, founded, valuation…).
-- open_screen(screen): any screen of the Herramientas menu (market, geopolitics, space, crypto, practice portfolios, my account, committee, portfolio risk, opportunities, agents, guide, system…).
-- compare_companies(company_a, company_b): "compara X con Y".
-- run_live_simulation(company_name, kind, severity): "¿qué pasa si X cae / la sancionan / se dispara su demanda / sube su precio?" — kind collapse | demand | sanction | price.
-- run_agent_simulation(scenario or preset, companies?): open-ended "¿qué pasaría si…?" questions where a debate adds value, or a war-room preset (Taiwan conflict, total chip ban to China, HBM shortage 2027, OpenAI IPO, Starshield).
-- show_opportunities(): "¿dónde invierto?", "oportunidades", "¿qué ves en el grafo?", "¿qué está en riesgo?".
-- create_visualization(query): any chart or table — never ask the user to describe the format, just render something smart.
-- quick_thesis(company_name) and deep_search(question): see THREE KINDS OF RESEARCH.
-- place_order, open_order_ticket, get_account_status: see MONEY below.
-- get_space_summary(query?): satellites, constellations and launches — never say you do not know, this tool has the real numbers (or tells you they are unavailable).
-- control_interface(action): new conversation, arrange / close / minimize windows, simple or pro explanations, light or dark theme, Spanish or English — only when the user asks for it.
-- run_guided_demo(action): the one-minute tour — see THE ONE-MINUTE TOUR below.
-
-You may receive [CONTEXT_UPDATE] {json} messages — silent snapshots of Khipus OS (language, open windows, focused window, selected company, invoked agent, simple/pro explanations, money mode, listen_only during a tour started from the button). Use them to be sharper ("esta empresa" = the selected company; money_mode: "paper" or "live" = the broker account ("Mi cuenta") is practice (paper) or REAL money; "practice" = only the simulated practice portfolios are known and the broker account's mode is NOT known; "none" = nothing known. Unless it is "paper" or "live", call get_account_status before telling the user whether their account is practice or real). Never read them aloud or acknowledge them.
-
-## THE ONE-MINUTE TOUR (run_guided_demo)
-- Start it ONLY when the user explicitly asks for a demo, a tour or to be shown the app — never on your own, never at the start of a session, never on a greeting.
-- YOU narrate it with your voice, and THE APP keeps the pace: run_guided_demo with action start shows the first step and returns a "say" line — say EXACTLY that line, with nothing added before or after. Then the app moves the screen and sends you each next line as a message that starts with [TOUR n/N] (for example "[TOUR 2/9] Este es el mapa…"): say EXACTLY the text after the tag, nothing before or after, and do NOT call any tool for it. Never read the tag aloud. After the last line, stay quiet and wait for the user.
-- If the user interrupts during the tour, answer briefly and ask whether to continue (yes → run_guided_demo with action next, no → action stop). If a result says stopped:true or done:true, the tour is over: do not continue it.
-- When the user pressed the tour button on screen, the app opens your voice ONLY TO LISTEN: a [CONTEXT_UPDATE] says listen_only:true (no microphone). Then just narrate the tour — do not ask questions, do not greet again, and after done:true say nothing more. If listen_only becomes false, the user turned the microphone on: you can talk normally.
-
-## MONEY — ALWAYS TELL THE TRUTH (RULES YOU MUST NEVER BREAK)
-- Two different things — never confuse them: "Carteras de práctica" are SIMULATED portfolios to try ideas (they never send orders); "Mi cuenta (bróker)" is the user's broker account, which can be a PRACTICE (paper) account OR REAL MONEY depending on how it is set up. Every order summary and the "Mi cuenta" window show which one (🧪 / 🔴); if you do not know it, call get_account_status — never guess "practice".
-- place_order and get_account_status return "mode": paper = say it is a simulated operation with practice money; live = say clearly, before anything else, that it is REAL MONEY. Never call an order simulated unless the result says paper.
-- NEVER execute an order without explicit verbal confirmation. ALWAYS two steps: (1) place_order with confirmed=false returns a summary WITHOUT executing — read it (symbol, buy or sell, amount in dollars, practice or REAL money) and ask if they confirm. (2) ONLY after an explicit yes ("sí", "confirmo", "dale", "yes"), call place_order again with the SAME parameters and confirmed=true. Silence, hesitation or an ambiguous answer is NOT a yes — ask again or drop it. With REAL money, repeat the amount and the words "dinero real" in your question.
-- If a PIN is needed, the user types it on screen — never ask them to say it aloud and never repeat it.
-- open_order_ticket only opens the order ticket so the user decides on screen; nothing is sent.
-- Around a trade you execute exactly what the user asked and report the result — you never push them to trade. If they ask what to buy you may give a CAUTIOUS stance (see below), never a blunt "buy/sell".
-- If a tool returns an error message, read it to the user AS-IS (it is already user-friendly, in their language) and do NOT retry on your own.
-- Amounts are in US dollars (notional): minimum $1, maximum $100,000 per order.
-
-## DOMAIN KNOWLEDGE — DEEP EXPERTISE
-
-NRS (Network Risk Score): 0-100, HIGHER = RISKIER. Sum of: country geo-risk (0-30), supply-chain centrality (0-25, from how many supply relations it has), margin-based market risk (0-20), fundamentals (0-15: pre-IPO, weak growth), country concentration (0-10). >70=HIGH (red), 40-70=MEDIUM (yellow), <40=LOW (green). For a company's actual NRS use the app's tools — never quote an NRS from memory.
-
-Critical chokepoints (structural roles; for scores, prices or market caps use the app's live data, never memory):
-- TSMC: leading advanced foundry; Apple/NVIDIA/AMD/Qualcomm depend on it.
-- ASML: EUV lithography monopoly; no leading-edge nodes without them.
-- NVIDIA: dominant AI training GPU supplier.
-- SK Hynix: leading HBM supplier for AI accelerators.
-- Arm: CPU ISA licensed across mobile and many data-center chips.
-- Synopsys/Cadence: EDA duopoly; needed to design modern chips.
-
-Supply chains (know the full stack):
-- AI data center: NVIDIA GPU → TSMC fab → ASML litho → SK Hynix HBM → Broadcom switch
-- Smartphone: Apple/Qualcomm SoC → TSMC fab → ARM ISA → Sony camera → Samsung display
-- Space: SpaceX Falcon/Starship → Rocket Lab Electron → Maxar/Planet satellites → Iridium comms
-- Automotive AI: NXP/Renesas SoC → STMicro power → Mobileye vision → LiDAR (Luminar)
-- Quantum: IBM/IonQ/Rigetti systems → Oxford Instruments cryo → Keysight control
-
-Geopolitical risks (qualitative; quote numbers only from live data or sourced context):
-- Taiwan Strait: most leading-edge fab capacity (TSMC, UMC, ASE) is concentrated there. Conflict → global chip shortage
-- US-China: export controls on advanced AI GPUs to China; Huawei building an alternative stack (Ascend)
-- Rare earths: China dominates supply and processing; MP Materials/Lynas are US/AU alternatives
-- Korea: Samsung + SK Hynix concentrate most DRAM/HBM supply
-
-War-room presets (5; HYPOTHETICAL — outcomes come from running the simulation, never from memory):
-1. Taiwan Strait conflict — TSMC blockade and its cascade
-2. Total US chip export ban to China
-3. HBM memory shortage 2027
-4. OpenAI IPO and the AI ecosystem
-5. SpaceX Starshield defense program
-
-## ANALYST BEHAVIOR RULES
-- For ANY question that needs facts or analysis, call ask_khipu_brain FIRST and answer from what it returns (it has live data and sources); only answer from your own knowledge for pure definitions or small talk.
-- Never quote a price, market cap, NRS or valuation from memory — use the tools. When a figure comes with a date or a source and it matters, say it ("al cierre de ayer", "según el catálogo").
-- You are a financial analyst first, voice assistant second. Give real insight, not just navigation.
-- ACT FIRST, TALK SECOND: on almost every request, call the right tool immediately, then narrate what appeared on screen with 1-3 sentences of real insight. Never ask permission to open a window or look something up (orders are the exception: they always need the confirmation above).
-- "What if…" questions → run_live_simulation, then narrate: how many companies are affected and the 2-3 biggest victims, USING THE % THE SIMULATION RETURNED — always say they are simulated estimates of a hypothetical scenario, never real prices. If it returns barely_hit_rivals, you may say those rivals are barely hit (hit_pct is the DAMAGE they take, not a gain): NEVER state a gain % or say anyone "wins X %".
-- Multi-agent and war-room narration: describe the cascade ("TSMC absorbe el primer golpe, luego caen los fabless…"), the consensus and where the agents disagreed.
-- Confirm actions naturally and briefly: "Te la abrí al lado del chat…", "Mira el mapa — se tiñe en rojo…".
-- Be concise (2-3 sentences of analysis) — no over-explanation.
-- Match the user's language exactly (Spanish/English/mixed — follow their lead). Default to Spanish.
-- When asked investment questions, give a CAUTIOUS take WITH A STANCE — you may lean ("me inclinaría por… / sería cauto con TSMC porque…"), name the 2-3 key factors and a confidence level (alta/media/baja), but NEVER a blunt "compra/vende". ALWAYS close with a short reminder that this is analysis, not formal financial advice, and the decision is theirs. This soft-stance rule applies to stocks AND crypto.
-- You are a Bloomberg Terminal AI co-pilot for serious investors, not a general chatbot"""
-# Los agentes del prompt salen del registro ÚNICO (engine/agents_registry.js, limpieza 2026-10-11):
-# si cambia una mascota, la voz la conoce sin tocar este texto.
-from core.agents_registry import AGENTS as _REG_AGENTS, AGENT_NAMES as _REG_SEATS  # noqa: E402
-BIXBY_SYSTEM_PROMPT = BIXBY_SYSTEM_PROMPT.replace('{agents}', '\n'.join(
-    f"- {a['es']} / {a['en']} (agent: {a['id']}) — {a['role_en']}" + (
-        ' (analysts: ' + ', '.join(_REG_SEATS[x][2] for x in a['seats'] if x in _REG_SEATS) + ')'
-        if any(x in _REG_SEATS for x in a['seats']) else '')
-    for a in _REG_AGENTS if a['id'] != 'khipu')).replace('{screens}', '\n'.join(
-    f'- "{es}" / "{en}" — {_VOICE_SCREEN_HINTS[k]}' for k, (es, en) in VOICE_SCREENS.items()))
-
-
-# ── Khipu — client tools registradas en el agente de ElevenLabs vía API ──────
-# Cada entrada espeja un `case` de _handleToolCall en engine/voice.js.
-# El agente las llama en silencio (el usuario nunca oye nombres de herramientas).
-# Desde 2025-26 ElevenLabs las guarda como RECURSOS (/v1/convai/tools) y el agente
-# las referencia con tool_ids — core/voice_agent.ensure_tools las crea/actualiza.
-# response_timeout_secs (1-120): cuánto espera el agente la respuesta del navegador.
-# Las lentas (cerebro, sim por agentes, investigación) necesitan más que el default;
-# engine/voice.js responde SIEMPRE antes de ese tope (TOOL_TIMEOUT_S de allá).
-# Contrato v2 (2026-10-11, voz para Khipus OS): 17 herramientas en vez de 31. Las respuestas van al chat
-# CENTRAL y cada pantalla se abre como VENTANA; las viejas (pestañas, X-Ray suelto, "papel" fijo…) se
-# retiraron y la sincronización las SUELTA del agente (RETIRED_VOICE_TOOLS). voice.js conserva alias para
-# esos nombres mientras un agente viejo siga conectado durante un despliegue.
-_VOICE_TOOL_TIMEOUTS = {'ask_khipu_brain': 60, 'open_company': 15, 'get_company_info': 15,
-                        'run_agent_simulation': 90, 'quick_thesis': 90, 'show_opportunities': 15,
-                        'place_order': 45, 'get_account_status': 45, 'get_space_summary': 20,
-                        'run_guided_demo': 30}
-
-RETIRED_VOICE_TOOLS = (
-    'open_cockpit', 'switch_tab', 'show_chart', 'open_terminal', 'navigate_to_company', 'open_xray',
-    'open_second_brain', 'open_dossier', 'get_risk_score', 'get_supply_chain_links', 'get_news',
-    'get_market_summary', 'get_portfolio_risk', 'list_companies', 'get_opportunities', 'show_insights',
-    'run_stress_test', 'run_simulation', 'deep_research', 'deep_analysis', 'place_paper_trade', 'place_trade',
-    'get_portfolio_status', 'get_nrs_top10', 'show_matrices',
-)
-
-VOICE_SCREEN_ALIASES = {'map': 'graph', 'analysis': 'insights'}
-VOICE_SIM_PRESETS = ('taiwan_conflict', 'china_chip_ban_total', 'hbm_shortage_2027', 'openai_ipo_impact',
-                     'starshield_reveal')
-VOICE_COMPANY_VIEWS = ('glance', 'xray', 'supply_chain', 'map', 'chart', 'dossier', 'research', 'committee')
-VOICE_TOUR_ACTIONS = ('start', 'next', 'stop')
-VOICE_UI_ACTIONS = ('new_conversation', 'arrange_windows', 'close_all_windows', 'minimize_all_windows', 'simple_mode',
-                    'pro_mode', 'light_theme', 'dark_theme', 'spanish', 'english')
-
-
-def _bixby_client_tools():
-    def T(name, desc, props=None, required=None):
-        return {
-            'type': 'client', 'name': name, 'description': desc,
-            'expects_response': True,
-            'response_timeout_secs': _VOICE_TOOL_TIMEOUTS.get(name, 10),
-            'parameters': {'type': 'object',
-                           'properties': props or {},
-                           'required': required or []},
-        }
-    S = lambda d: {'type': 'string', 'description': d}  # noqa: E731
-    N = lambda d: {'type': 'number', 'description': d}  # noqa: E731
-    E = lambda vals, d: {'type': 'string', 'enum': list(vals), 'description': d}  # noqa: E731
-    company = {'company_name': S('Company name or ticker, any casing (e.g. "Nvidia", "NVDA", "tsmc")')}
-    team = [a for a in _REG_AGENTS if a['id'] != 'khipu']
-    agent_doc = '; '.join(f"{a['id']} = {a['es']} ({a['role_en']})" for a in team)
-    screens_doc = '; '.join(f'{k} = "{es}" ({_VOICE_SCREEN_HINTS[k]})' for k, (es, _en) in VOICE_SCREENS.items())
-    return [
-        T('ask_khipu_brain', 'THE DEFAULT TOOL FOR ANY QUESTION. Sends the question to the Khipus analyst brain — the '
-          'SAME brain as the center chat of Khipus OS: the user sees the question and the sourced answer appear in the '
-          'chat while you speak, and the brain may open the relevant window by itself. It LOOKS UP real data (company '
-          'profiles, supply chain, live prices and news, research conclusions with evidence, portfolio risk, '
-          'geopolitical and space events, committee memos, track record). Use it for every analysis/knowledge question '
-          'and for follow-ups. Optional agent: route the question to ONE mascot of the team when the user names it '
-          '("pregúntale a Cadena…") or the question is clearly theirs; comite = the whole team. Read the returned '
-          'answer aloud briefly (summarize long lists), never contradict its figures with your memory, and when '
-          '"agents" is not empty say which mascots worked on it. Read-only: it never places orders.',
-          {'question': S('The user question, in their own words, with enough context for follow-ups '
-                         '(e.g. "and who depends on TSMC?").'),
-           'agent': E([a['id'] for a in team], 'Optional mascot to ask: ' + agent_doc + '. Leave empty for Khipu.')},
-          ['question']),
-        T('open_company', 'Open ONE company in a window of Khipus OS and get its key facts to narrate. view: glance = '
-          '"<company> en una mirada" summary (default) · xray = X-Ray (NRS term by term, dependency threads and the '
-          'impact wave: who suffers and who WINS if it falls) · supply_chain = its suppliers and customers · map = the '
-          'supply-chain map centered on it · chart = price chart in the Terminal (listed companies only) · dossier = '
-          'the financial Dossier (statements; for private companies: owner, valuation, news) · research = '
-          '"Investigación con evidencia" (the analyst team\'s conclusions with cited evidence — it shows what exists; '
-          'starting a new study is the user\'s click) · committee = the Investment Committee on that company. Returns '
-          'NRS with its terms, top suppliers/customers and, when available, the price with its source and time.',
-          dict(company, view=E(VOICE_COMPANY_VIEWS, 'Which view to open (default glance).')), ['company_name']),
-        T('get_company_info', 'Instant facts about ONE company WITHOUT opening anything: live price and market cap '
-          'with source and time (listed companies), NRS risk with its terms, sector, country, role, moat, growth, '
-          'margin, employees / founded / revenue when known (catalog_* fields are undated: say "según el catálogo"), '
-          'number of suppliers and customers, listing status and, for private companies, the last VERIFIED valuation '
-          'with its date. ALWAYS call this before saying you do not know a fact about a company.',
-          company, ['company_name']),
-        T('open_screen', 'Open a screen of the "Herramientas / Tools" menu as a window of Khipus OS, beside the chat. '
-          'Screens: ' + screens_doc + '. Returns the visible title that opened.',
-          {'screen': E(list(VOICE_SCREENS), 'The screen to open.')}, ['screen']),
-        T('compare_companies', 'Compare two companies side by side in a window: the NRS risk of each and which one '
-          'carries lower risk.', {'company_a': S('First company name/ticker'), 'company_b': S('Second company name/ticker')},
-          ['company_a', 'company_b']),
-        T('run_live_simulation', 'HYPOTHETICAL what-if on the live supply-chain matrices: what happens to the network '
-          'if one company collapses, booms, suffers a price shock or is sanctioned. Opens the simulation window and '
-          'returns how many companies are affected, the most impacted (with %) and, for falls, the rivals that are '
-          'barely hit (barely_hit_rivals.hit_pct = the damage they take, NOT a gain; never state a gain %). Always '
-          'present the % as simulated estimates of a hypothetical scenario, never as real prices.',
-          dict(company, kind=E(('collapse', 'demand', 'price', 'sanction'),
-                               'collapse = the company falls · demand = demand boom · price = price shock · '
-                               'sanction = sanctions (default collapse)'),
-               severity=N('How strong the shock is, 1-100 (default 100 = total)')), ['company_name']),
-        T('run_agent_simulation', 'MULTI-AGENT simulation: several analyst agents debate an open-ended scenario and '
-          'project impacts on the supply chain (up to a minute; it appears on screen). Use for "¿qué pasaría si…?" '
-          'questions where a debate adds value, or for one of the war-room presets. Give scenario OR preset. Narrate '
-          'the consensus, the biggest impacts and where the agents disagreed — always hypothetical.',
-          {'scenario': S('The scenario in natural language, e.g. "China prohíbe exportar HBM"'),
-           'companies': S('Optional companies/tickers to center it on, comma-separated (e.g. "Nvidia, TSMC")'),
-           'preset': E(VOICE_SIM_PRESETS, 'Optional war-room preset: taiwan_conflict = Taiwan Strait conflict · '
-                       'china_chip_ban_total = total US chip export ban to China · hbm_shortage_2027 = HBM memory '
-                       'shortage · openai_ipo_impact = OpenAI IPO · starshield_reveal = SpaceX Starshield')}),
-        T('show_opportunities', 'Open the "Oportunidades" window and get what the system sees NOW: live insights of the '
-          'hypergraph (active systemic factors + supply-chain cascade) and the most resilient companies (low NRS + '
-          'growth + margin). Use for "¿dónde invierto?", "oportunidades", "¿qué ves en el grafo?", "¿qué está en '
-          'riesgo?". Narrate 2-3 insights naming companies; it is analysis, not advice.'),
-        T('create_visualization', 'Draw a chart or table on demand in a "Gráfico" window from a natural-language '
-          'description (e.g. "márgenes de Nvidia, TSMC y ASML", "precio de bitcoin del último año"). It is drawn on '
-          'screen: describe it only in general terms.',
-          {'query': S('What to chart, in natural language')}, ['query']),
-        T('quick_thesis', 'QUICK THESIS ("Tesis rápida") on one company: ONE AI answer with sector panorama, '
-          'competitors, geopolitical exposure, chokepoints, risks and an investment thesis, WITHOUT cited evidence. '
-          'Opens its window and returns the thesis to summarize. For conclusions WITH cited evidence use open_company '
-          'with view research instead.', company, ['company_name']),
-        T('deep_search', 'DEEP SEARCH ("Búsqueda profunda"): a free, complex investment question investigated in '
-          'several steps (plan → context → simulation → synthesis). Takes 30-90 seconds and the result appears in its '
-          'own window — tell the user you are investigating and it will appear shortly. Only one runs at a time.',
-          {'question': S('The complete question, in the user language')}, ['question']),
-        T('place_order', 'Buy or sell on the user\'s broker account ("Mi cuenta"). That account may be a PRACTICE '
-          '(paper) account or REAL money — every result says which in "mode" (paper | live). STRICT TWO STEPS: (1) '
-          'call with confirmed=false: it returns an order summary WITHOUT executing and shows it on screen; read the '
-          'summary aloud (symbol, buy/sell, amount, and whether it is simulated or REAL money) and ask for '
-          'confirmation. (2) ONLY after an explicit verbal yes, call again with the SAME parameters and '
-          'confirmed=true. If a PIN is needed the user types it on screen — never ask them to say it aloud. If it '
-          'returns an error, read it as-is and do not retry.', {
-              'symbol_or_name': S('Ticker, crypto pair or company/asset name, any casing (e.g. "NVDA", "Nvidia", '
-                                  '"BTC/USD", "bitcoin")'),
-              'side': E(('buy', 'sell'), 'buy or sell'),
-              'notional_usd': N('Amount in US dollars (e.g. 100 = $100). Min 1, max 100000. Give notional_usd OR '
-                                'qty.'),
-              'qty': N('Number of shares/units, when the user says a quantity instead of dollars (e.g. "vende mis 3 '
-                       'acciones" → 3). Give notional_usd OR qty, never invent the other.'),
-              'confirmed': {'type': 'boolean', 'description': 'false = preview only (returns the summary to read to '
-                            'the user). true = EXECUTE — only allowed after the user explicitly said yes to it.'},
-          }, ['symbol_or_name', 'side', 'confirmed']),
-        T('open_order_ticket', 'Open the KHIPU TRADING order ticket for a company so the user reviews and places the '
-          'order THEMSELVES on screen. Nothing is sent by this tool.', company, ['company_name']),
-        T('get_account_status', 'Status of the user\'s broker account ("Mi cuenta"): cash, equity, buying power, open '
-          'positions with P&L, and whether it is a practice (paper) account or REAL money ("mode"). Opens that '
-          'window. For the simulated practice portfolios open the "portfolios" screen instead.'),
-        T('get_space_summary', 'Satellite counts per constellation (Starlink, OneWeb, Planet Labs, Iridium, GPS) from '
-          'CelesTrak plus the next launch, with source and time. Use whenever the user asks about satellites, '
-          'constellations, space or launches. If the result says the data is unavailable, say so — never invent a '
-          'number.', {'query': S('Optional operator/constellation the user asked about, e.g. "Starlink". Leave empty '
-                                 'for the overall summary.')}),
-        T('run_guided_demo', 'The ONE-MINUTE GUIDED TOUR of Khipus OS, narrated by YOU while the app keeps the pace. '
-          'STRICT RULE: start it ONLY when the user EXPLICITLY asks for a demo or tour ("demo", "demostración", '
-          '"tour", "recorrido", "hazme una demo", "muéstrame la app") — NEVER at session start, on greetings, because '
-          'the user seems new, or proactively. Flow: action start → say EXACTLY the returned "say" line (nothing '
-          'before or after). The app then sends each next line as a message "[TOUR n/N] <line>": say EXACTLY the line '
-          '(never the tag) and call no tool for it; after the last one stay quiet. Use action next only to RESUME '
-          'after the user interrupted and said yes; it returns the next "say" line or done:true. Action stop ends it. '
-          'If a result says stopped:true or done:true the tour is over: do not continue.',
-          {'action': E(VOICE_TOUR_ACTIONS, 'start = begin the tour (default) · next = resume after an interruption '
-                       '· stop = end it')}),
-        T('control_interface', 'Adjust Khipus OS itself, only when the user asks: new_conversation (clear the chat) · '
-          'arrange_windows (tidy the windows beside the chat) · close_all_windows · minimize_all_windows · '
-          'simple_mode / pro_mode (how detailed the agents explain) · light_theme / dark_theme · spanish / english '
-          '(interface language).', {'action': E(VOICE_UI_ACTIONS, 'What to change')}, ['action']),
-    ]
-
-
-def _sync_bixby_agent():
-    """Empuja el cerebro de Khipu (system prompt + client tools + idioma) al
-    agente de ElevenLabs — así Fabrizio no configura nada a mano. Idempotente.
-
-    2026-10 (contrato ElevenLabs vigente, core/voice_agent.sync_agent): las
-    herramientas son RECURSOS (/v1/convai/tools) referenciados con tool_ids —
-    el viejo `prompt.tools` en línea está deprecado y el PATCH caía en silencio
-    a "solo prompt" (Khipu hablaba pero no podía abrir nada). Además repara:
-    TTS deprecado/solo-inglés (conservando la voz; ya NO baja eleven_v4 a
-    flash), LLM retirado, client_events sin client_tool_call y, con
-    ELEVENLABS_ALLOW_OVERRIDE, habilita los overrides de idioma/primer mensaje."""
-    from core import voice_agent as _va
-    try:
-        return _va.sync_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, BIXBY_SYSTEM_PROMPT,
-                              _bixby_client_tools(), http=requests, language='es',
-                              allow_overrides=_va.override_env_on(), retired_names=RETIRED_VOICE_TOOLS)
-    except Exception as e:  # noqa: BLE001
-        return {'ok': False, 'error': _diag_redact(e)[:300]}
-
-
-@app.route('/api/voice/sync-agent', methods=['GET', 'POST'])
-@rate_limit(limit=6, window=3600)
-@_require_operator
-def voice_sync_agent():
-    """Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH
-    del agente). PIN de operador: antes cualquiera podía dispararlo en bucle.
-    El autosync del arranque no pasa por aquí."""
-    res = _sync_bixby_agent()
-    return jsonify(res), (200 if res.get('ok') else 502)
-
-
-def _voice_autosync_log(res):
-    if res.get('ok'):
-        log.info('Khipu sincronizado con ElevenLabs (%s, tools=%s/%s, creadas=%d, tts=%s, llm=%s)',
-                 res.get('mode'), res.get('tools_registered'), res.get('tools_expected'),
-                 len(res.get('tools_created') or []), res.get('tts_change'), res.get('llm_fixed'))
-        if res.get('mode') != 'tool_ids':
-            log.warning('Khipu autosync: modo %s — las herramientas pueden no estar registradas (%s)',
-                        res.get('mode'), (res.get('tool_errors') or [])[:2])
-    else:
-        log.warning('Khipu autosync falló (la app sigue): %s', {k: res.get(k) for k in
-                    ('stage', 'code', 'error', 'status', 'detail')})
-
-
-# Auto-sync al arrancar (BIXBY_AUTOSYNC=0 para desactivar). En background para
-# no retrasar el boot; idempotente aunque los 2 workers de gunicorn lo llamen.
-if os.getenv('BIXBY_AUTOSYNC', '1').strip().lower() not in ('0', 'false', 'no'):
-    def _bixby_autosync():
-        time.sleep(4)
-        _voice_autosync_log(_sync_bixby_agent())
-    try:
-        if ELEVENLABS_KEY and ELEVENLABS_AGENT_ID:
-            threading.Thread(target=_bixby_autosync, daemon=True).start()
-    except Exception as _e:  # noqa: BLE001
-        log.warning('Khipu autosync no arrancó: %s', _e)
+# ── Voz de Khipu → core/voice_api.py (G5-05, lote I4) ──────────────────────────────────────────────────────────
+# /api/voice/* (diagnóstico, voces, adoptar, ajuste fino, sincronizar, prompt, sesión firmada, audio del recorrido),
+# BIXBY_SYSTEM_PROMPT y el contrato de herramientas viven allí. La config (ELEVENLABS_*) sigue aquí y el módulo la
+# lee en cada llamada. Se re-exportan los nombres que leen el 🩺 (/api/diagnostics) y las pruebas.
+import sys as _sys  # noqa: E402
+from core import voice_api as _voice_api  # noqa: E402
+from core.voice_api import (BIXBY_SYSTEM_PROMPT, RETIRED_VOICE_TOOLS, VOICE_COMPANY_VIEWS,  # noqa: E402,F401
+                            VOICE_SCREEN_ALIASES, VOICE_SCREENS, VOICE_SIM_PRESETS, VOICE_TOUR_ACTIONS,
+                            VOICE_UI_ACTIONS, _TOUR_AUDIO, _VOICE_TOOL_TIMEOUTS, _bixby_client_tools,
+                            _sync_bixby_agent, voice_agent_diag)
+_voice_api.bind(_sys.modules[__name__])
+app.register_blueprint(_voice_api.voice_bp)
+_voice_api.start_autosync()
 
 
 # ══ CAPA 4 — INVESTIGACIÓN PROFUNDA (arquitectura de 4 capas, 2026-07-10) ═══
@@ -4692,141 +4232,6 @@ def deep_status():
     return jsonify({'running': _deep_state['running'], 'question': _deep_state['question'],
                     'steps': _deep_state['steps'], 'result': _deep_state['result'],
                     'seconds': int(time.time() - _deep_state['started_at']) if _deep_state['started_at'] else 0})
-
-@app.route('/api/voice/bixby-prompt', methods=['GET'])
-def bixby_system_prompt():
-    """Returns Khipu's system prompt for ElevenLabs agent configuration."""
-    # allow_override: ELEVENLABS_ALLOW_OVERRIDE=true/1/yes (MISMO criterio que
-    # adopt/agent-tune; antes aquí solo valía "true" y con "1" el sync se
-    # activaba pero el navegador no). Desde 2026-10 /api/voice/session dice
-    # además QUÉ overrides permite el agente de verdad, y voice.js reintenta
-    # sin overrides si ElevenLabs cierra por override_error.
-    from core.voice_agent import override_env_on
-    allow_override = override_env_on()
-    return jsonify({
-        'system_prompt': BIXBY_SYSTEM_PROMPT,
-        'agent_name': 'Khipu',
-        'platform': 'Khipu Finance',
-        'allow_override': allow_override,
-    })
-
-
-# ── Khipu voice — sesión firmada de ElevenLabs ───────────────────────────────
-@app.route('/api/voice/session', methods=['POST'])
-@rate_limit(limit=40, window=600)
-def voice_session():
-    """URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides
-    permite el agente, para que el navegador no mande uno prohibido (ElevenLabs
-    cierra el socket con override_error). Errores en ES/EN con el arreglo.
-    Rate limit: cada sesión gasta minutos pagados de ElevenLabs."""
-    from core import voice_agent as _va
-    if not ELEVENLABS_KEY:
-        return jsonify({'error': 'La voz no está configurada en el servidor (falta ELEVENLABS_KEY).',
-                        'error_en': 'Voice is not configured on the server (ELEVENLABS_KEY missing).',
-                        'code': 'not_configured'}), 400
-    data = request.get_json(silent=True)
-    data = data if isinstance(data, dict) else {}
-    # el agente es el del server; el del navegador (preferencia vieja en
-    # localStorage) solo se acepta si el server no tiene uno.
-    agent_id = ELEVENLABS_AGENT_ID
-    if not agent_id:
-        cand = str(data.get('agent_id') or '').strip()
-        agent_id = cand if _SAFE_PATH_SEG.match(cand) else ''
-    if not agent_id:
-        return jsonify({'error': 'Falta ELEVENLABS_AGENT_ID en el servidor.',
-                        'error_en': 'ELEVENLABS_AGENT_ID is missing on the server.',
-                        'code': 'agent_missing'}), 400
-    res = _va.get_signed_url(ELEVENLABS_KEY, agent_id, requests)
-    if not res.get('ok'):
-        e = res.get('error') or {}
-        code = e.get('code') or 'unknown'
-        status = {'invalid_api_key': 502, 'missing_permissions': 502, 'quota_exceeded': 402,
-                  'payment_required': 402, 'unusual_activity': 402, 'not_found': 404,
-                  'rate_limited': 429}.get(code, 502)
-        return jsonify({'error': _diag_redact(e.get('es') or 'ElevenLabs no respondió'),
-                        'error_en': _diag_redact(e.get('en') or 'ElevenLabs did not respond'),
-                        'code': code, 'fix_es': e.get('fix_es'), 'fix_en': e.get('fix_en')}), status
-    out = {'signed_url': res['signed_url'], 'agent_id': agent_id,
-           'override_env': _va.override_env_on()}
-    try:
-        cfg, _err = _va.get_agent(ELEVENLABS_KEY, agent_id, requests, cached=True, timeout=4)
-        if cfg:
-            out.update(_va.session_hints(cfg))
-    except Exception:  # noqa: BLE001 — sin pistas, voice.js decide con override_env + reintento
-        pass
-    return jsonify(out)
-
-
-
-# ── Recorrido de un minuto con la voz de Khipu (2026-10-11) ─────────────────────────────────────
-# Sin conversación de voz abierta, el recorrido (engine/cockpit.js) se narra con audio de la MISMA voz
-# del agente de ElevenLabs. Solo frases del guion (engine/tour_script.js vía core/tour.py) — nunca texto
-# libre — y en caché por (voz, modelo, frase): ~2.000 caracteres por idioma una vez por arranque.
-_TOUR_AUDIO = {}                      # (voice_id, lang, step, hash) → (bytes, modelo)
-_TOUR_AUDIO_LOCK = threading.Lock()
-
-
-@app.route('/api/voice/tour/<lang>/<int:step>', methods=['GET'])
-@rate_limit(limit=60, window=300)
-def voice_tour_audio(lang, step):
-    """Audio MP3 de la frase `step` del recorrido guiado, con la voz del agente de Khipu. 404 sin voz
-    configurada o paso inexistente (el navegador muestra la narración escrita, como siempre)."""
-    from core import tour as _tour
-    from core import voice_agent as _va
-    lang = str(lang or '').lower()
-    if lang not in _tour.LANGS:
-        return jsonify({'error': 'Idioma no válido.', 'error_en': 'Invalid language.', 'code': 'bad_lang'}), 400
-    text = _tour.line(step, lang)
-    if not text:
-        return jsonify({'error': 'Ese paso del recorrido no existe.', 'error_en': 'That tour step does not exist.',
-                        'code': 'not_found'}), 404
-    if not (ELEVENLABS_KEY and ELEVENLABS_AGENT_ID):
-        return jsonify({'error': 'La voz de Khipu no está configurada: el recorrido se muestra escrito.',
-                        'error_en': 'Khipu voice is not configured: the tour is shown as text.',
-                        'code': 'not_configured', 'available': False}), 404
-    # la voz QUE USA el agente en ese idioma, con sus ajustes y su modelo (2026-10-12: el botón sonaba a la "voz
-    # vieja"); lectura fresca (≤60 s) para que un cambio de voz en ElevenLabs se oiga enseguida
-    cfg, err = _va.get_agent(ELEVENLABS_KEY, ELEVENLABS_AGENT_ID, requests, cached=True, timeout=6, max_age=60)
-    tv = _va.tour_voice(cfg, lang) if cfg else {}
-    voice_id = tv.get('voice_id')
-    if not voice_id:
-        e = err or {}
-        return jsonify({'error': _diag_redact(e.get('es') or 'No pude leer la voz del agente de Khipu.'),
-                        'error_en': _diag_redact(e.get('en') or 'Could not read the Khipu agent voice.'),
-                        'code': e.get('code') or 'no_voice', 'available': False}), 502
-    settings = tv.get('voice_settings') or {}
-    sig = hashlib.sha1(json.dumps([voice_id, tv.get('models'), settings, _tour.text_hash(text)],
-                                  sort_keys=True).encode('utf-8')).hexdigest()[:20]
-    etag = f'"{sig}"'
-    # el navegador revalida SIEMPRE (no-cache + ETag): misma voz → 304 sin bajar nada; voz nueva → audio nuevo
-    if etag in [t.strip() for t in str(request.headers.get('If-None-Match') or '').split(',')]:
-        resp = Response(status=304)
-        resp.headers['ETag'] = etag
-        resp.headers['Cache-Control'] = 'private, no-cache'
-        return resp
-    key = (sig, lang, step)
-    hit = _TOUR_AUDIO.get(key)
-    if not hit:
-        with _TOUR_AUDIO_LOCK:                              # dos pestañas a la vez → UNA sola síntesis
-            hit = _TOUR_AUDIO.get(key)
-            if not hit:
-                res = _va.synthesize(ELEVENLABS_KEY, voice_id, text, requests, models=tv.get('models'),
-                                     voice_settings=settings)
-                if not res.get('ok'):
-                    code = res.get('code') or 'unknown'
-                    status = {'quota_exceeded': 402, 'payment_required': 402, 'rate_limited': 429}.get(code, 502)
-                    return jsonify({'error': _diag_redact(res.get('es') or 'ElevenLabs no respondió'),
-                                    'error_en': _diag_redact(res.get('en') or 'ElevenLabs did not respond'),
-                                    'code': code, 'available': False}), status
-                hit = (res['audio'], res.get('model'))
-                if len(_TOUR_AUDIO) > 80:                     # tope: cambios de voz no acumulan sin fin
-                    _TOUR_AUDIO.clear()
-                _TOUR_AUDIO[key] = hit
-    resp = Response(hit[0], mimetype='audio/mpeg')
-    resp.headers['Cache-Control'] = 'private, no-cache'
-    resp.headers['ETag'] = etag
-    resp.headers['X-Tour-Model'] = str(hit[1] or '')
-    return resp
 
 def _portfolio_risk_impl(positions, no_data_msg):
     """Cálculo VaR/CVaR/Sharpe/MaxDD compartido por /api/portfolio-risk (interno)
@@ -5251,781 +4656,14 @@ def trade_flows():
     return _degraded(resp) if failed else resp
 
 
-# ── AI Trading Agent ─────────────────────────────────────────────────────────
-# Endurecimiento (auditoría estructural 2026-09-30, #11/#12/#21):
-#  · parámetros ACOTADOS (max_pos_pct 0.5-10, max_daily_loss_pct 0.5-5,
-#    stop_loss_pct 0.5-20, min_confidence 50-100, órdenes/ciclo 1-5,
-#    intervalo 5-1440 min) y mode ∈ {manual, auto}; arranque bajo lock (sin
-#    dos hilos a la vez);
-#  · modo AUTO (órdenes sin aprobación por orden) SOLO en cuenta de PAPEL: con
-#    dinero real se rechaza (403 'auto_live_refused') y el ciclo no envía nada;
-#  · interruptor BROKERAGE_TRADING_ENABLED=off → el agente no envía órdenes;
-#  · una orden que Alpaca RECHAZA (4xx/5xx) queda como ERROR, nunca como
-#    ejecutada; cada intento va a broker_audit (o al log sin base);
-#  · stop-loss cripto con time_in_force 'gtc' (Alpaca no acepta 'day' en
-#    cripto) y sin reenviar el cierre si ya hay uno pendiente;
-#  · universo saneado: solo acciones de EE.UU. operables en Alpaca (los
-#    tickers extranjeros del grafo se descartan; ya no van crudos a la URL).
-
-_AGENT: dict = {
-    'running': False,
-    'mode': 'manual',          # 'manual' | 'auto'
-    'interval_min': 15,
-    'universe': ['NVDA','TSM','AMD','INTC','ASML','AMAT','QCOM','AVGO','MU','TSLA'],
-    'max_pos_pct': 5.0,        # max % of equity per position
-    'max_daily_loss_pct': 2.0, # daily circuit-breaker
-    'stop_loss_pct': 3.0,      # per-position stop
-    'min_confidence': 65,      # umbral para ejecutar (antes hardcodeado)
-    'max_orders_per_cycle': 3, # freno duro anti-loop: máx órdenes nuevas por ciclo
-    'log': [],
-    'thread': None,
-    'last_run': None,
-    'status': 'stopped',
-    'daily_pnl_pct': 0.0,
-    'broker_error': None,      # último error de Alpaca (bilingüe) para diagnóstico
-    'pending_close': {},       # símbolo (sin '/') → ts del último cierre enviado
-}
-_AGENT_LOCK = threading.Lock()          # arranque/parada/config
-_AGENT_LOG_LOCK = threading.Lock()
-_AGENT_LOG_MAX = 100
-_AGENT_PENDING_CLOSE_S = 1800           # no reenviar un stop-loss en 30 min
-_AGENT_BOUNDS = {                        # clave → (mínimo, máximo, tipo)
-    'max_pos_pct': (0.5, 10.0, float),
-    'max_daily_loss_pct': (0.5, 5.0, float),
-    'stop_loss_pct': (0.5, 20.0, float),
-    'min_confidence': (50, 100, int),
-    'max_orders_per_cycle': (1, 5, int),
-    'interval_min': (5, 1440, int),
-}
-_AGENT_MODES = ('manual', 'auto')
-# Acciones de EE.UU. operables en Alpaca: 1-5 letras + clase opcional (BRK.B).
-# Deja fuera sufijos de bolsas extranjeras del grafo (8411.T, SAP.DE, 0700.HK…).
-_AGENT_SYM_RE = re.compile(r'^[A-Z]{1,5}(\.[A-C])?$')
-_TRADABLE_CACHE: dict = {}
-_AGENT_CFG_KEYS = ('mode', 'interval_min', 'max_pos_pct', 'max_daily_loss_pct', 'stop_loss_pct',
-                   'min_confidence', 'max_orders_per_cycle', 'universe')
-
-
-class _AgentOrderError(RuntimeError):
-    """Alpaca no aceptó la orden (o no respondió): NO cuenta como ejecutada."""
-
-
-def _agent_log(entry):
-    entry.setdefault('ts', time.strftime('%H:%M:%S'))
-    with _AGENT_LOG_LOCK:
-        _AGENT['log'].append(entry)
-        if len(_AGENT['log']) > _AGENT_LOG_MAX:
-            _AGENT['log'] = _AGENT['log'][-_AGENT_LOG_MAX:]
-
-
-def _agent_universe(raw):
-    """→ (símbolos operables, descartados). None si `raw` no es una lista."""
-    if not isinstance(raw, (list, tuple)):
-        return None, []
-    ok, skipped = [], []
-    for t in list(raw)[:60]:
-        sym = _safe_ticker(t)
-        if sym and _AGENT_SYM_RE.match(sym):
-            if sym not in ok:
-                ok.append(sym)
-        else:
-            skipped.append(str(t)[:16])
-    return ok[:30], skipped
-
-
-def _agent_parse(data):
-    """Valida y ACOTA la configuración → (cambios, avisos, (error_es, error_en)|None)."""
-    changes, notes = {}, []
-    for k, (lo, hi, typ) in _AGENT_BOUNDS.items():
-        if k not in data or data[k] is None or data[k] == '':
-            continue
-        try:
-            v = float(data[k])
-            if v != v or v in (float('inf'), float('-inf')):
-                raise ValueError
-        except (TypeError, ValueError):
-            return None, None, (f'{k} debe ser numérico', f'{k} must be numeric')
-        cv = min(hi, max(lo, v))
-        cv = int(round(cv)) if typ is int else float(cv)
-        if cv != v:
-            notes.append(f'{k}: {data[k]} → {cv}')
-        changes[k] = cv
-    if data.get('mode') not in (None, ''):
-        m = str(data['mode']).strip().lower()
-        if m not in _AGENT_MODES:
-            return None, None, ("mode debe ser 'manual' o 'auto'", "mode must be 'manual' or 'auto'")
-        changes['mode'] = m
-    if data.get('universe') not in (None, [], ''):
-        uni, skipped = _agent_universe(data['universe'])
-        if uni is None:
-            return None, None, ('universe debe ser una lista de tickers', 'universe must be a list of tickers')
-        if not uni:
-            return None, None, ('Ningún ticker del universo es una acción de EE.UU. operable en Alpaca',
-                                'No ticker in the universe is a US stock tradable on Alpaca')
-        changes['universe'] = uni
-        if skipped:
-            notes.append('descartados (no operables en Alpaca) · skipped (not tradable on Alpaca): '
-                         + ', '.join(skipped[:12]) + ('…' if len(skipped) > 12 else ''))
-    return changes, notes, None
-
-
-def _agent_config_view():
-    return {k: _AGENT[k] for k in _AGENT_CFG_KEYS}
-
-
-def _auto_live_refused():
-    log.warning('agente de trading: modo AUTO rechazado — la cuenta de Alpaca es de DINERO REAL')
-    _trade_audit('agent_config', {'outcome': 'rejected', 'reason': 'auto_live_refused'})
-    return _bad('El modo AUTO (órdenes sin tu aprobación una a una) solo se permite en la cuenta de PAPEL. '
-                'Con dinero real usa el modo manual (consejos) y opera tú.',
-                'AUTO mode (orders without your one-by-one approval) is only allowed on the PAPER account. '
-                'With real money use manual mode (advice) and place orders yourself.',
-                code='auto_live_refused', status=403)
-
-
-def _agent_exec_block(account=None):
-    """None si el agente puede enviar órdenes ahora; si no, el motivo (bilingüe).
-    `account` (/v2/account): si su account_number no es de papel ('PA…') se
-    bloquea aunque la URL parezca de papel."""
-    if not _house_trading_enabled():
-        return ('Interruptor general APAGADO (BROKERAGE_TRADING_ENABLED=off) · '
-                'Master switch OFF (BROKERAGE_TRADING_ENABLED=off)')
-    if not _paper() or _account_is_live(account) is True:
-        return 'Cuenta de DINERO REAL: el modo auto no envía órdenes · REAL-MONEY account: auto mode sends no orders'
-    return None
-
-
-def _agent_analyze(ticker: str, price: float, prev: float, sentiment: float) -> dict:
-    """Ask Claude to analyze one ticker and recommend action."""
-    pct = ((price - prev) / prev * 100) if prev else 0
-    prompt = (
-        f"You are a quantitative trading analyst. Analyze {ticker}:\n"
-        f"- Price: ${price:.2f} (prev close: ${prev:.2f}, change: {pct:+.2f}%)\n"
-        f"- News sentiment score: {sentiment:.2f} (range -10 to +10)\n\n"
-        f"Respond in JSON only, no markdown:\n"
-        f'{{ "action": "buy"|"sell"|"hold", "confidence": 0-100, '
-        f'"reason": "1-sentence reason", "size_pct": 1-5 }}'
-    )
-    try:
-        # Ruta a través de la cascada multi-proveedor (Sonnet 5 con pensamiento
-        # desactivado → respuesta inmediata; _extract_json tolera fences/prosa).
-        text, _model = _ai_complete(
-            'You are a quantitative trading analyst. Respond with a JSON object ONLY, no markdown.',
-            prompt, max_tokens=250, tier='fast')
-        out = _extract_json(text)
-        if isinstance(out, dict):
-            out['_model'] = _model          # paso 16: el modelo real queda en la decisión trade.agent_signal
-            return out
-        return {'action': 'hold', 'confidence': 0, 'reason': 'respuesta no-JSON', 'size_pct': 0}
-    except Exception as e:  # noqa: BLE001
-        return {'action': 'hold', 'confidence': 0, 'reason': _diag_redact(e)[:80], 'size_pct': 0}
-
-
-def _agent_clean_analysis(a):
-    """La IA puede devolver cualquier cosa: se normaliza sin reventar el ciclo."""
-    a = a if isinstance(a, dict) else {}
-    action = str(a.get('action') or 'hold').strip().lower()
-    if action not in ('buy', 'sell', 'hold'):
-        action = 'hold'
-    try:
-        confidence = int(float(a.get('confidence') or 0))
-    except (TypeError, ValueError):
-        confidence = 0
-    try:
-        size_pct = float(a.get('size_pct') or 0)
-        if size_pct != size_pct:
-            size_pct = 0.0
-    except (TypeError, ValueError):
-        size_pct = 0.0
-    return action, max(0, min(100, confidence)), str(a.get('reason') or '')[:200], \
-        max(0.0, min(size_pct, float(_AGENT['max_pos_pct'])))
-
-
-def _agent_get_positions() -> dict:
-    if not ALPACA_KEY:
-        return {}
-    try:
-        r = requests.get(f'{ALPACA_BASE}/v2/positions', headers=_alpaca_hdrs(), timeout=10)
-        if r.status_code == 200:
-            return {p['symbol']: p for p in r.json()}
-    except Exception:  # noqa: BLE001
-        pass
-    return {}
-
-
-def _agent_open_order_symbols():
-    """{símbolo sin '/': {lados}} de las órdenes ABIERTAS en Alpaca; None si no
-    se pudo leer. El LADO importa: una compra límite abierta (p. ej. 'comprar
-    la caída' GTC) NO es un cierre pendiente de una posición larga — antes
-    cualquier orden abierta del símbolo apagaba el stop-loss."""
-    try:
-        r = requests.get(f'{ALPACA_BASE}/v2/orders', params={'status': 'open', 'limit': 500},
-                         headers=_alpaca_hdrs(), timeout=10)
-        if r.status_code != 200:
-            return None
-        out = {}
-        for o in (r.json() or []):
-            if not isinstance(o, dict):
-                continue
-            sym = str(o.get('symbol') or '').replace('/', '').upper()
-            out.setdefault(sym, set()).add(str(o.get('side') or '').strip().lower())
-        return out
-    except Exception:  # noqa: BLE001
-        return None
-
-
-def _agent_get_account() -> dict:
-    if not ALPACA_KEY:
-        _AGENT['broker_error'] = 'ALPACA_KEY sin configurar · ALPACA_KEY not configured'
-        return {}
-    try:
-        r = requests.get(f'{ALPACA_BASE}/v2/account', headers=_alpaca_hdrs(), timeout=10)
-        if r.status_code == 200:
-            _AGENT['broker_error'] = None
-            return r.json() or {}
-        # Guardamos el status y un extracto del cuerpo para depurar (p.ej. 404 por
-        # base mal configurada, 401/403 por claves inválidas).
-        _AGENT['broker_error'] = f'Alpaca /v2/account HTTP {r.status_code}: {(r.text or "")[:120]}'
-    except Exception as e:  # noqa: BLE001
-        _AGENT['broker_error'] = f'Alpaca /v2/account: {_diag_redact(e)[:120]}'
-    return {}
-
-
-def _alpaca_tradable(sym):
-    """¿Alpaca opera este símbolo? Caché 24 h. Si no se puede verificar → True
-    (que Alpaca decida; su rechazo queda registrado como ERROR)."""
-    e = _TRADABLE_CACHE.get(sym)
-    if e and time.time() - e[0] < 86400:
-        return e[1]
-    try:
-        from urllib.parse import quote as _q
-        r = requests.get(f'{ALPACA_BASE}/v2/assets/{_q(sym, safe="")}', headers=_alpaca_hdrs(), timeout=8)
-        if r.status_code == 404:
-            ok = False
-        elif r.status_code == 200:
-            a = r.json() or {}
-            ok = bool(a.get('tradable')) and str(a.get('status') or 'active') == 'active'
-        else:
-            return True
-    except Exception:  # noqa: BLE001
-        return True
-    _TRADABLE_CACHE[sym] = (time.time(), ok)
-    return ok
-
-
-def _agent_principal():
-    """QUIÉN actúa en el hilo del agente: system:trading_agent (paso 5); fuera del hilo (pruebas) el mismo."""
-    from core import identity
-    cur = identity.current()
-    return cur if cur is not None and cur.id.startswith('system:') else identity.system('trading_agent')
-
-
-def _agent_signal_ctx(ticker, action, info):
-    """trade.agent_signal (INFRA_OPERATIVA paso 16): lo que el agente decidió y POR QUÉ (precio que vio, tono de
-    noticias, confianza, razón de la IA y su modelo, configuración vigente), escrito ANTES de actuar. Su hija es la
-    order.preview de la orden (si la hubo). Sin base → None (no hay libro)."""
-    try:
-        from ontology.db import ontology_available
-        if not ontology_available():
-            return None
-        from core import decisions
-        ctx = decisions.DecisionCtx('trade.agent_signal', _agent_principal(),
-                                    subject={'symbol': ticker, 'action': action, 'mode': _AGENT.get('mode')})
-        if info.get('price'):
-            ctx.quote({'ticker': ticker, 'px': info['price'], 'prev': info.get('prev'),
-                       'src': info.get('price_src') or 'finnhub', 'currency': 'USD',
-                       'as_of': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())})
-        if info.get('model'):
-            ctx.model = {'model': str(info['model'])[:80], 'agent': 'trading_agent'}
-        ctx.extra['agent_config'] = {k: v for k, v in _agent_config_view().items() if k != 'universe'}
-        ctx.output = {k: info.get(k) for k in ('action', 'confidence', 'reason', 'size_pct', 'sentiment', 'price',
-                                               'notional', 'skipped', 'stop_loss_pl_pct') if info.get(k) is not None}
-        return ctx
-    except Exception as e:  # noqa: BLE001
-        log.warning('agente: señal no preparada (%s)', type(e).__name__)
-        return None
-
-
-def _agent_record_signal(ctx, status):
-    """Señal SIN orden (consejo en modo manual, o una orden que el agente decidió no enviar): su propia transacción.
-    Nunca rompe el ciclo."""
-    if ctx is None:
-        return None
-    try:
-        from core import decisions
-        from ontology.db import session_scope
-        with session_scope() as s:
-            return decisions.record(s, ctx, status=status)
-    except Exception as e:  # noqa: BLE001
-        log.warning('agente: señal no registrada en el libro (%s)', type(e).__name__)
-        return None
-
-
-def _agent_order(order, action, detail, signal=None, checks_mode='house_today'):
-    """La orden del agente por EL camino único (brokerage.service.house_order, source='agent'): mismos controles,
-    client_order_id, broker_audit y decisiones (trade.agent_signal → order.preview → order.confirm → order.submit).
-    En papel no espera a nadie (el agente en AUTO lo encendió Fabrizio con su PIN); con dinero real quedaría
-    pendiente de aprobación (y AUTO ya está prohibido en real). → payload (id, status…) o _AgentOrderError."""
-    from brokerage import service as _bsvc
-    from core import identity
-    from ontology.db import ontology_available
-    coid = 'kh-agent-' + uuid.uuid4().hex[:24]
-    detail = dict(detail, client_order_id=coid, tif=order.get('time_in_force'))
-    kw = dict(notional=order.get('notional'), qty=order.get('qty'), order_type='market',
-              time_in_force=order.get('time_in_force'), client_order_id=coid, source='agent', channel='agent',
-              requested_by='agente-trading', checks_mode=checks_mode,
-              rationale=(signal.output.get('reason') if signal is not None and signal.output else None))
-    _bsvc.send_trace_begin()
-    try:
-        with identity.use(_agent_principal()):
-            if ontology_available():
-                from core import decisions
-                from ontology.db import session_scope
-                with session_scope() as s:
-                    sig_id = None
-                    if signal is not None:          # la señal ANTES de la orden (misma transacción)
-                        decisions.record(s, signal, status='executed')
-                        sig_id = signal.id
-                    res = _bsvc.house_order(s, order['symbol'], order['side'], parent_decision_id=sig_id, **kw)
-            else:
-                res = _bsvc.house_order(None, order['symbol'], order['side'], **kw)
-    except Exception as e:  # noqa: BLE001 — base/libro caídos (D4: falla cerrado)
-        sent = _bsvc.send_trace()
-        _trade_audit(action, dict(detail, outcome='unknown_error', error=type(e).__name__,
-                                  sent_to_broker=bool(sent)), actor='agente-trading')
-        if sent:   # revisión batch E: salió hacia Alpaca y no se pudo guardar → DESCONOCIDA, nunca «nada salió»
-            _bsvc.record_unknown_after_send(sent, 'agente-trading', type(e).__name__, source='agent')
-            err = _AgentOrderError(f'orden enviada con estado DESCONOCIDO (no se pudo guardar) · order sent, state '
-                                   f'UNKNOWN (could not be saved) ({type(e).__name__})')
-            err.unknown = True
-            _AGENT.setdefault('unknown_orders', {})[str(order.get('symbol') or '').replace('/', '').upper()] = \
-                time.time()
-            raise err from e
-        raise _AgentOrderError(f'no se pudo procesar la orden · the order could not be processed '
-                               f'({type(e).__name__})') from e
-    payload, st = _house_http(res)
-    ok = st == 200 and bool(payload.get('id'))
-    _trade_audit(action, dict(detail, outcome='submitted' if ok else ('pending_approval' if st == 202 else 'rejected'),
-                              http_status=st, code=None if ok else payload.get('code'),
-                              alpaca_order_id=payload.get('id') if ok else None,
-                              alpaca_status=payload.get('status') if ok else None,
-                              alpaca_message=None if ok else (str(payload.get('error') or '')[:140] or None),
-                              preview_id=payload.get('preview_id'), decision_id=payload.get('decision_id')),
-                 actor='agente-trading')
-    if not ok:
-        raise _AgentOrderError(f"{payload.get('error') or 'orden no enviada'} · "
-                               f"{payload.get('error_en') or 'order not sent'}"[:300])
-    return payload
-
-
-def _agent_place(ticker: str, side: str, notional: float, signal=None) -> dict:
-    """Orden market por monto (USD). Lanza _AgentOrderError si no se envió."""
-    return _agent_order({'symbol': ticker, 'side': side, 'notional': round(float(notional), 2),
-                         'time_in_force': 'gtc' if '/' in ticker else 'day'},     # cripto: Alpaca exige gtc/ioc
-                        'agent_order', {'symbol': ticker, 'side': side, 'notional': round(notional, 2)}, signal)
-
-
-def _agent_stop_losses(positions, block):
-    """Cierra las posiciones que superan el stop. Devuelve los símbolos tocados
-    (no se vuelve a operar sobre ellos en este ciclo)."""
-    touched = set()
-    now = time.time()
-    pend = _AGENT.setdefault('pending_close', {})
-    for k in [k for k, ts in pend.items() if now - ts > _AGENT_PENDING_CLOSE_S]:
-        pend.pop(k, None)
-    open_syms = None
-    for sym, p in list(positions.items()):
-        try:
-            pl_pct = float(p.get('unrealized_plpc') or 0) * 100
-            qty = float(p.get('qty') or 0)
-        except (TypeError, ValueError):
-            continue
-        if not qty or pl_pct > -_AGENT['stop_loss_pct']:
-            continue
-        key = str(sym).replace('/', '').upper()
-        close_side = 'sell' if qty > 0 else 'buy'
-        touched.add(sym)
-        if block:
-            _agent_log({'ticker': sym, 'level': 'warn',
-                        'msg': f'🛑 Stop-loss {pl_pct:.1f}% NO enviado · NOT sent — {block}'})
-            continue
-        if open_syms is None:
-            open_syms = _agent_open_order_symbols()
-        # Solo cuenta como "cierre pendiente" una orden abierta del lado que CIERRA
-        # (venta si es larga, compra si es corta); una del otro lado no apaga el stop.
-        if key in pend or (open_syms is not None and close_side in open_syms.get(key, ())):
-            _agent_log({'ticker': sym, 'level': 'info',
-                        'msg': '⏳ Stop-loss: ya hay un cierre pendiente — no se reenvía · close already pending'})
-            continue
-        is_crypto = str(p.get('asset_class') or '') == 'crypto' or '/' in str(sym)
-        from brokerage.service import crypto_pair as _crypto_pair
-        order = {'symbol': _crypto_pair(sym) if is_crypto else str(sym).upper(), 'qty': float(_num_str(abs(qty))),
-                 'side': close_side, 'time_in_force': 'gtc' if is_crypto else 'day'}
-        sig = _agent_signal_ctx(str(sym), close_side, {'action': close_side, 'stop_loss_pl_pct': round(pl_pct, 2),
-                                                       'reason': f'stop-loss {pl_pct:.1f}% '
-                                                                 f'(≤ -{_AGENT["stop_loss_pct"]}%)'})
-        try:
-            res = _agent_order(order, 'agent_stop_loss', {'symbol': sym, 'side': close_side,
-                                                          'qty': _num_str(abs(qty)), 'pl_pct': round(pl_pct, 2)},
-                               sig, checks_mode='house_reduce')   # salida: nunca frenada por el tope por orden
-            pend[key] = now
-            _agent_log({'ticker': sym, 'level': 'warn', 'order_id': str(res.get('id') or '')[:12],
-                        'msg': f'🛑 Stop-loss {pl_pct:.1f}% — orden de cierre enviada · close order sent '
-                               f'({res.get("status") or "accepted"})'})
-        except Exception as e:  # noqa: BLE001
-            if getattr(e, 'unknown', False):
-                pend[key] = now        # quizá ya salió: no reenviar otro cierre (podría abrir un corto)
-            _agent_log({'ticker': sym, 'level': 'error',
-                        'msg': f'Stop-loss error: {_diag_redact(e)[:160]}'})
-    return touched
-
-
-def _agent_run_cycle():
-    """One analysis + execution cycle for all tickers in universe."""
-    account = _agent_get_account()
-    equity = float(account.get('equity', 0) or 0)
-    if equity <= 0 and ALPACA_KEY:
-        be = _AGENT.get('broker_error') or 'Alpaca no devolvió capital · Alpaca returned no equity'
-        _agent_log({'level': 'warn',
-                    'msg': f'⚠️ No se pudo leer el capital de Alpaca · Could not read Alpaca equity — {be}'})
-        return
-
-    # P&L real del día desde Alpaca (equity vs cierre de ayer) — sin esto el
-    # circuit-breaker de abajo nunca puede saltar
-    last_equity = float(account.get('last_equity', 0) or 0)
-    if last_equity > 0:
-        _AGENT['daily_pnl_pct'] = (equity - last_equity) / last_equity * 100
-
-    # Circuit-breaker diario: bloquea ENTRADAS NUEVAS pero NUNCA la protección
-    # de salida (auditoría Track D 2026-08-01).
-    breaker_on = _AGENT['daily_pnl_pct'] <= -_AGENT['max_daily_loss_pct']
-    if breaker_on:
-        _agent_log({'level': 'warn',
-                    'msg': f'🛑 Daily loss limit hit ({_AGENT["daily_pnl_pct"]:.2f}%) — sin entradas nuevas; stop-loss sigue activo'})
-
-    auto = _AGENT['mode'] == 'auto'
-    block = _agent_exec_block(account) if auto else None
-    if block:
-        _agent_log({'level': 'warn', 'msg': f'⏸ Órdenes en pausa · Orders paused — {block}'})
-
-    positions = _agent_get_positions()
-    stopped = _agent_stop_losses(positions, block) if auto else set()
-    for sym in stopped:
-        positions.pop(sym, None)
-
-    # Con el breaker activo (o las órdenes en pausa) y en modo auto no hay nada
-    # que ejecutar: ahorramos además el costo de analizar 10-30 tickers con IA.
-    # En modo manual (solo consejos) se sigue analizando — el log asesor no
-    # abre posiciones.
-    if auto and (breaker_on or block):
-        _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
-        return
-
-    universe, _skipped = _agent_universe(_AGENT['universe'])
-    orders_this_cycle = 0
-    for ticker in universe or []:
-        if not _AGENT['running']:
-            break
-        price, prev, sentiment = 0.0, 0.0, 0.0
-        if FINNHUB:
-            data, err = _fetch_quote_raw(ticker, timeout=8)
-            if not err and isinstance(data, dict):
-                try:
-                    price = float(data.get('c') or 0)
-                    prev = float(data.get('pc') or 0)
-                except (TypeError, ValueError):
-                    price = 0.0
-
-        # lightweight GDELT sentiment
-        try:
-            gr = requests.get('https://api.gdeltproject.org/api/v2/doc/doc',
-                              params={'query': ticker, 'mode': 'tonechart', 'format': 'json', 'maxrecords': 5},
-                              timeout=6)
-            gdata = gr.json()
-            tones = [float(x.get('avgtone', 0) or 0) for x in (gdata.get('tonechart') or [])[:5]]
-            sentiment = sum(tones) / len(tones) if tones else 0.0
-        except Exception:  # noqa: BLE001
-            pass
-
-        if price <= 0:
-            continue
-
-        _raw = _agent_analyze(ticker, price, prev, sentiment)
-        action, confidence, reason, size_pct = _agent_clean_analysis(_raw)
-        sig = (_agent_signal_ctx(ticker, action, {'action': action, 'confidence': confidence, 'reason': reason,
-                                                  'size_pct': size_pct, 'sentiment': round(sentiment, 3),
-                                                  'price': price, 'prev': prev, 'price_src': 'finnhub',
-                                                  'model': (_raw or {}).get('_model') if isinstance(_raw, dict)
-                                                  else None})
-               if action != 'hold' else None)
-        entry = {
-            'ts': time.strftime('%H:%M:%S'),
-            'ticker': ticker,
-            'price': price,
-            'action': action,
-            'confidence': confidence,
-            'reason': reason,
-            'executed': False,
-            'level': 'info',
-        }
-
-        if auto and ALPACA_KEY and action != 'hold' and confidence >= _AGENT.get('min_confidence', 65):
-            # Endurecimientos (auditoría Track D): freno duro de órdenes por
-            # ciclo, no acumular por encima del tope en el mismo ticker, y no
-            # vender sin tenencia (evita shorts no intencionados con margen).
-            existing = positions.get(ticker) or {}
-            try:
-                existing_mv = abs(float(existing.get('market_value') or 0))
-            except (TypeError, ValueError):
-                existing_mv = 0.0
-            skip = None
-            if block:
-                skip = block
-            elif ticker in stopped:
-                skip = 'stop-loss en este ciclo · stop-loss this cycle'
-            elif time.time() - (_AGENT.get('unknown_orders') or {}).get(ticker.replace('/', '').upper(), 0) < \
-                    _AGENT_PENDING_CLOSE_S:
-                skip = 'orden anterior en estado desconocido · previous order in unknown state'
-            elif orders_this_cycle >= _AGENT.get('max_orders_per_cycle', 3):
-                skip = 'freno: tope de órdenes por ciclo'
-            elif size_pct <= 0:
-                skip = 'tamaño 0 · size 0'
-            elif action == 'buy' and equity > 0 and existing_mv >= equity * _AGENT['max_pos_pct'] / 100:
-                skip = f'posición ya en tope ({existing_mv / equity * 100:.1f}% ≥ {_AGENT["max_pos_pct"]}%)'
-            elif action == 'sell' and not existing:
-                skip = 'sin tenencia — no se abre corto'
-            elif not _alpaca_tradable(ticker):
-                skip = 'no operable en Alpaca · not tradable on Alpaca'
-            if skip:
-                entry['skipped'] = skip
-                if sig is not None:
-                    sig.output['skipped'] = skip
-                    _agent_record_signal(sig, 'noop')
-            else:
-                notional = equity * size_pct / 100
-                notional = max(1.0, min(notional, equity * _AGENT['max_pos_pct'] / 100, MAX_ORDER_USD))
-                if action == 'buy' and equity > 0:
-                    # que la orden no empuje la posición total por encima del tope
-                    room = equity * _AGENT['max_pos_pct'] / 100 - existing_mv
-                    notional = min(notional, max(1.0, room))
-                if sig is not None:
-                    sig.output['notional'] = round(notional, 2)
-                try:
-                    result = _agent_place(ticker, action, notional, sig)
-                    entry['executed'] = True
-                    entry['order_id'] = str(result.get('id') or '')[:12]
-                    entry['order_status'] = result.get('status')
-                    entry['notional'] = round(notional, 2)
-                    entry['level'] = 'success'
-                    orders_this_cycle += 1
-                except Exception as e:  # noqa: BLE001 — rechazo de Alpaca o red: ERROR, no ejecutada
-                    entry['exec_error'] = _diag_redact(e)[:160]
-                    entry['level'] = 'error'
-        elif sig is not None:          # consejo (modo manual) o señal por debajo del umbral: queda en el libro
-            sig.output['executed'] = False
-            _agent_record_signal(sig, 'recorded')
-
-        _agent_log(entry)
-
-    _AGENT['last_run'] = time.strftime('%Y-%m-%d %H:%M:%S')
-
-
-def _agent_thread_fn():
-    from core import identity as _identity
-    _AGENT['status'] = 'running'
-    _tok = _identity._CURRENT.set(_identity.system('trading_agent'))   # paso 5: el hilo actúa como system:…
-    try:
-        while _AGENT['running']:
-            try:
-                _agent_run_cycle()
-            except Exception as e:  # noqa: BLE001
-                _agent_log({'msg': f'Cycle error: {_diag_redact(e)}', 'level': 'error'})
-            lo, hi, _t = _AGENT_BOUNDS['interval_min']
-            interval = int(min(hi, max(lo, _AGENT['interval_min']))) * 60
-            for _ in range(interval):
-                if not _AGENT['running']:
-                    break
-                time.sleep(1)
-    finally:
-        _identity._CURRENT.reset(_tok)
-        _AGENT['status'] = 'stopped'
-
-
-# BRECHAS #14 (sin respuesta → lo recomendado): tras un despliegue el agente queda APAGADO con un aviso visible y SIN
-# perder su configuración. Cada encendido/apagado/cambio es una decisión policy.change (subject.policy =
-# trade.agent_config) en el libro append-only; la última se restaura al primer uso del panel del agente.
-_AGENT_RESTORE = {'done': False}
-_AGENT_NOTICE_ES = ('⏸ El agente quedó APAGADO tras una actualización de la app (no se reanuda solo). Tu configuración '
-                    'se conservó: pulsa Iniciar para volver a encenderlo.')
-_AGENT_NOTICE_EN = ('⏸ The agent was left OFF after an app update (it does not resume by itself). Your settings were '
-                    'kept: press Start to turn it on again.')
-
-
-def _agent_persist(running, reason, principal=None):
-    """policy.change del agente: configuración + ¿debería estar corriendo? Nunca rompe la ruta (sin base: nada)."""
-    try:
-        from ontology.db import ontology_available
-        if not ontology_available():
-            return None
-        from core import decisions, identity
-        from ontology.db import session_scope
-        p = principal
-        if p is None:
-            try:
-                p = identity.principal_from_request()
-            except Exception:  # noqa: BLE001
-                p = _agent_principal()
-        with session_scope() as s:
-            with decisions.decision_scope('policy.change', p, session=s,
-                                          subject={'policy': 'trade.agent_config'}) as ctx:
-                ctx.output = {'config': _agent_config_view(), 'running': bool(running), 'reason': reason,
-                              'paper': _paper()}
-                ctx.status = 'executed'
-        return str(ctx.id)
-    except Exception as e:  # noqa: BLE001
-        log.warning('agente: configuración no guardada en el libro (%s)', type(e).__name__)
-        return None
-
-
-def _agent_restore():
-    """Una vez por proceso (= por despliegue): la última configuración del libro vuelve a _AGENT (acotada por
-    _agent_parse); si el agente estaba corriendo, queda apagado con aviso y se anota el apagado (system)."""
-    if _AGENT_RESTORE['done']:
-        return
-    try:
-        from ontology.db import ontology_available
-        if not ontology_available():
-            _AGENT_RESTORE['done'] = True
-            return
-        from sqlalchemy import text
-        from ontology.db import session_scope
-        with session_scope() as s:
-            row = s.execute(text(
-                "SELECT output, recorded_at FROM decisions WHERE kind = 'policy.change' "
-                "AND subject @> CAST(:sub AS jsonb) ORDER BY seq DESC LIMIT 1"),
-                {'sub': json.dumps({'policy': 'trade.agent_config'})}).first()
-        _AGENT_RESTORE['done'] = True
-        if row is None or not isinstance(row[0], dict):
-            return
-        out = row[0]
-        cfg = out.get('config') or {}
-        changes, _notes, err = _agent_parse(cfg)
-        with _AGENT_LOCK:
-            if _AGENT['running']:            # ya lo encendieron en este proceso: manda lo de ahora
-                return
-            if not err and changes:
-                if changes.get('mode') == 'auto' and not _paper():
-                    changes['mode'] = 'manual'
-                _AGENT.update(changes)
-        if out.get('running'):
-            _AGENT['notice'] = {'es': _AGENT_NOTICE_ES, 'en': _AGENT_NOTICE_EN,
-                                'stopped_at': row[1].isoformat() if row[1] else None}
-            _agent_log({'level': 'warn', 'msg': _AGENT_NOTICE_ES + ' · ' + _AGENT_NOTICE_EN})
-            _agent_persist(False, 'stopped_by_restart', principal=_agent_principal())
-    except Exception as e:  # noqa: BLE001 — base caída: se reintenta en el próximo uso
-        log.warning('agente: no se restauró la configuración (%s)', type(e).__name__)
-
-
-@app.route('/api/trade/agent/start', methods=['POST'])
-@rate_limit(limit=10, window=60)
-@_trade_auth
-def agent_start():
-    if not ALPACA_KEY:
-        return _broker_missing_response()
-    data, bad = _json_object_body()
-    if bad:
-        return bad
-    changes, notes, err = _agent_parse(data)
-    if err:
-        return _bad(*err)
-    if changes.get('mode', _AGENT['mode']) == 'auto' and not _paper():
-        return _auto_live_refused()
-    _agent_restore()
-    with _AGENT_LOCK:
-        _AGENT.update(changes)
-        if _AGENT['running']:
-            return jsonify({'status': 'already_running', 'mode': _AGENT['mode'], 'notes': notes,
-                            'config': _agent_config_view()})
-        prev_t = _AGENT.get('thread')
-        if prev_t is not None and prev_t.is_alive():
-            return _bad('El agente aún se está deteniendo; reintenta en unos segundos',
-                        'The agent is still stopping; retry in a few seconds', code='agent_stopping', status=409)
-        _AGENT['running'] = True
-        _AGENT['daily_pnl_pct'] = 0.0
-        _AGENT.pop('notice', None)
-        t = threading.Thread(target=_agent_thread_fn, daemon=True, name='khipu-trading-agent')
-        _AGENT['thread'] = t
-        t.start()
-    _agent_persist(True, 'start')
-    _trade_audit('agent_start', {'outcome': 'started', **{k: v for k, v in _agent_config_view().items()
-                                                          if k != 'universe'},
-                                 'universe_n': len(_AGENT['universe'])})
-    return jsonify({'status': 'started', 'mode': _AGENT['mode'], 'paper': _paper(), 'notes': notes,
-                    'config': _agent_config_view()})
-
-
-@app.route('/api/trade/agent/stop', methods=['POST'])
-@rate_limit(limit=20, window=60)
-@_trade_auth
-def agent_stop():
-    _agent_restore()
-    with _AGENT_LOCK:
-        _AGENT['running'] = False
-    _agent_persist(False, 'stop')
-    _trade_audit('agent_stop', {'outcome': 'stopping'})
-    return jsonify({'status': 'stopping'})
-
-
-@app.route('/api/trade/agent/status', methods=['GET'])
-@rate_limit(limit=120, window=60)
-@_trade_auth
-def agent_status():
-    _agent_restore()
-    with _AGENT_LOG_LOCK:
-        recent = list(_AGENT['log'][-20:])
-    return jsonify({
-        'running': _AGENT['running'],
-        'status': _AGENT['status'],
-        'mode': _AGENT['mode'],
-        'interval_min': _AGENT['interval_min'],
-        'universe': _AGENT['universe'],
-        'max_pos_pct': _AGENT['max_pos_pct'],
-        'max_daily_loss_pct': _AGENT['max_daily_loss_pct'],
-        'stop_loss_pct': _AGENT['stop_loss_pct'],
-        'min_confidence': _AGENT.get('min_confidence', 65),
-        'max_orders_per_cycle': _AGENT.get('max_orders_per_cycle', 3),
-        'paper': _paper(),
-        'auto_allowed': _paper(),
-        'trading_enabled': _house_trading_enabled(),
-        'bounds': {k: [lo, hi] for k, (lo, hi, _t) in _AGENT_BOUNDS.items()},
-        'last_run': _AGENT['last_run'],
-        'daily_pnl_pct': _AGENT['daily_pnl_pct'],
-        'broker_error': _AGENT.get('broker_error'),
-        'notice': _AGENT.get('notice'),          # BRECHAS #14: apagado por una actualización (ES/EN)
-        'log': recent,
-    })
-
-
-@app.route('/api/trade/agent/config', methods=['POST'])
-@rate_limit(limit=20, window=60)
-@_trade_auth
-def agent_config():
-    data, bad = _json_object_body()
-    if bad:
-        return bad
-    changes, notes, err = _agent_parse(data)
-    if err:
-        return _bad(*err)
-    if changes.get('mode', _AGENT['mode']) == 'auto' and not _paper():
-        return _auto_live_refused()
-    _agent_restore()
-    with _AGENT_LOCK:
-        _AGENT.update(changes)
-    if changes:
-        _agent_persist(_AGENT['running'], 'config')
-        _trade_audit('agent_config', {'outcome': 'updated', **{k: v for k, v in changes.items() if k != 'universe'},
-                                      **({'universe_n': len(changes['universe'])} if 'universe' in changes else {})})
-    return jsonify({'status': 'updated', 'notes': notes, **_agent_config_view()})
+# ── AI Trading Agent → core/trading_agent.py (G5-05, lote I4) ─────────────────────────────────────────────────
+# /api/trade/agent/* y el ciclo del agente viven allí; usa la config y los ayudantes de la casa de aquí (bind).
+import sys as _sys  # noqa: E402
+from core import trading_agent as _trading_agent  # noqa: E402
+from core.trading_agent import (_AGENT, _AGENT_RESTORE, _TRADABLE_CACHE, _AgentOrderError,  # noqa: E402,F401
+                                _agent_order, _agent_run_cycle, _agent_universe)
+_trading_agent.bind(_sys.modules[__name__])
+app.register_blueprint(_trading_agent.trading_agent_bp)
 
 
 @app.route('/api/trade/history', methods=['GET'])

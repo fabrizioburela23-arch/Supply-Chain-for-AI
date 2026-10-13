@@ -131,7 +131,12 @@ def test_score_checkpoint_exceso_vs_spy_y_pendientes():
     fn = lambda s, since: short if s == 'NVDA' else SERIES['SPY']  # noqa: E731
     assert score_checkpoint(_bl(), cp, fn, today) is None
     late = score_checkpoint(_bl(), cp, fn, ANCHOR + timedelta(days=60))
-    assert late['result'] == 'n/a' and 'deslistada' in late['reason']
+    # L2-M2 (sesgo de supervivencia): ya no es n/a — se califica con el ÚLTIMO cierre negociable y se marca
+    assert late['result'] in ('hit', 'miss') and 'deslistada' in late['reason'] and late['terminal'] == 'delisted'
+    assert late['eval_date'] == max(short) and late['price_source'].startswith('delisted')
+    nothing = {k: v for k, v in SERIES['NVDA'].items() if k <= ANCHOR.isoformat()}       # ni un cierre tras partir
+    fn0 = lambda s, since: nothing if s == 'NVDA' else SERIES['SPY']  # noqa: E731
+    assert score_checkpoint(_bl(), cp, fn0, ANCHOR + timedelta(days=60))['result'] == 'n/a'
     # proveedor caído → pendiente
     assert score_checkpoint(_bl(), cp, lambda s, since: None, today) is None
     # no calificable → n/a con su motivo, sin pedir precios

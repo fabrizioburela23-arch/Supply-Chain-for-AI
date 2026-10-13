@@ -15,6 +15,8 @@
      KhipuHot.simulate({targets, kind, severity}) → la forma única que usan las pantallas (ver abajo)
      KhipuHot.stamp(view) / stampHTML(view)       "g18 · base · hace 3 s" (generación y edad, discreto)
      KhipuHot.rivals(shockIds, impact, max)       rivales del mismo rubro poco golpeados (SIN % inventado)
+     KhipuHot.pnlLine(el, {targets, severity, kind}) "Tu cartera: −X ± Y USD" con el κ calibrado del SERVIDOR
+                                                  (POST /api/hot/scenario_pnl); solo con posiciones; débil → sin cifra
 
    Caché pequeña por generación: cada respuesta trae `view.generation` (+ ETag y X-Khipu-Graph-Version); si
    cambia, se olvida todo lo guardado. Las lecturas GET se revalidan con If-None-Match (304) tras 60 s.
@@ -301,6 +303,119 @@
     return out.slice(0, max || 4);
   }
 
+  // ── escenario → DINERO (batch I3, L2-13): UNA línea discreta "Tu cartera: −X ± Y USD", SOLO con posiciones ──
+  // La cifra la calcula el SERVIDOR (POST /api/hot/scenario_pnl: el mismo kernel + κ calibrado de kernel.calibration);
+  // aquí solo se valora cada posición (acciones × precio en USD que ya muestra la app). Si la calibración es débil,
+  // falta o es de otro motor, el servidor lo dice y la línea lo dice: NUNCA un número calculado en el navegador.
+  var PNL_POS_CAP = 100;
+  function myPositions() {
+    var pos = null;
+    try { pos = (W.MKT && W.MKT.pos) || JSON.parse((W.localStorage && W.localStorage.getItem('eco_pos')) || '{}'); } catch (e) { pos = null; }
+    var NB = W.NODE_BY_ID || {}, Q = (W.MKT && W.MKT.quotes) || {};
+    var out = [], noPrice = 0;
+    Object.keys(pos || {}).forEach(function (id) {
+      var p = pos[id], sh = p ? Number(p.sh) : 0;
+      if (!(sh > 0)) return;
+      var n = NB[id], t = n && n.mkt ? String(n.mkt) : '';
+      var q = t ? Q[t] : null;
+      var px = q ? (typeof W.quotePx === 'function' ? W.quotePx(q) : Number(q.close)) : 0;
+      if (!(px > 0)) { noPrice++; return; }
+      out.push({ id: (n && n.id) || id, symbol: t, usd: Math.round(sh * px * 100) / 100 });
+    });
+    return { positions: out.slice(0, PNL_POS_CAP), no_price: noPrice, total: out.length + noPrice };
+  }
+  function scenarioPnl(opts) {
+    opts = opts || {};
+    var targets = (Array.isArray(opts.targets) ? opts.targets : (opts.id != null ? [opts.id] : [])).map(String).slice(0, 200);
+    var sev = clampSev(opts.severity == null ? 100 : opts.severity);
+    var mine = opts.positions ? { positions: opts.positions, no_price: 0 } : myPositions();
+    if (!targets.length) return Promise.resolve(err('no_targets', 'Elige al menos una empresa.', 'Pick at least one company.'));
+    if (!mine.positions.length) return Promise.resolve({ ok: true, data: { pnl: { status: 'no_positions' } }, no_price: mine.no_price });
+    var body = { shocks: targets.map(function (id) { return { id: id, magnitude: sev / 100 }; }), positions: mine.positions,
+      factors: 'active', record: opts.record !== false };
+    // sin caché propia: el resultado depende de TUS posiciones y sus precios (cambian); no es una vista del grafo
+    return request('POST', '/api/hot/scenario_pnl', body, null).then(function (res) {
+      if (res && res.ok) res.no_price = mine.no_price;
+      return res;
+    });
+  }
+  function fmtUsd(v) {
+    var n = Math.abs(Number(v) || 0), en = isEn();
+    var s = n >= 1e6 ? (n / 1e6).toLocaleString(en ? 'en-US' : 'es-PE', { maximumFractionDigits: 1 }) + (en ? 'M' : ' M')
+      : Math.round(n).toLocaleString(en ? 'en-US' : 'es-PE');
+    return s + ' USD';
+  }
+  function registerPnlExplain() {
+    if (typeof W.explainRegister !== 'function') return;
+    W.explainRegister('scenario_pnl', {
+      es: { t: '¿Cómo se pasa de "golpe" a dólares?',
+        b: 'El motor dice qué parte del suministro pierde cada empresa (el %). Para pasarlo a <b>dinero</b> hace falta un factor ' +
+           '<b>κ</b>: cuánto cae de verdad el precio de una empresa por cada punto de golpe.<br><br>' +
+           'κ se mide con <b>episodios reales</b> (propuestos: escasez de chips 2021, controles de exportación 2022, terremoto de Taiwán 2024): ' +
+           'se compara la caída de cada empresa frente al mercado con el golpe que el motor le da. El resultado es <b>−κ × golpe × lo que tienes</b>, ' +
+           'con una banda <b>±</b> (90 %) que suma la duda sobre κ y el ruido de cada acción.<br><br>' +
+           'Si esa medición es <b>débil</b> (pocos datos, el golpe no explica las caídas), Khipus <b>no da una cifra</b> y lo dice. Hoy es así: ' +
+           'con los datos disponibles el golpe del motor no predice las caídas de precio. <b>No es un pronóstico</b> ni una recomendación.' },
+      en: { t: 'How does a "hit" become dollars?',
+        b: 'The engine says what share of supply each company loses (the %). Turning it into <b>money</b> needs a factor <b>κ</b>: how much a ' +
+           'company\'s price really falls per point of hit.<br><br>' +
+           'κ is measured on <b>real episodes</b> (proposed: 2021 chip shortage, 2022 export controls, 2024 Taiwan earthquake): each company\'s ' +
+           'fall versus the market is compared with the hit the engine gives it. The result is <b>−κ × hit × what you hold</b>, with a <b>±</b> band ' +
+           '(90%) that adds the doubt about κ and each stock\'s noise.<br><br>' +
+           'If that measurement is <b>weak</b> (little data, the hit does not explain the falls), Khipus <b>gives no figure</b> and says so. That is the ' +
+           'case today: with the available data the engine\'s hit does not predict price falls. <b>Not a forecast</b> or a recommendation.' } });
+  }
+  function pnlLineHTML(res) {
+    if (!res || !res.ok) return '';
+    var p = (res.data && res.data.pnl) || {};
+    if (p.status === 'no_positions') return '';
+    var chip = (registerPnlExplain(), typeof W.explainChip === 'function') ? W.explainChip('scenario_pnl') : '';
+    var head = '<b>' + L('Tu cartera: ', 'Your portfolio: ') + '</b>';
+    var cal = p.calibration || {};
+    if (p.status === 'ok') {
+      var nEp = cal.n_episodes || 0;
+      var sign = p.pnl_usd < 0 ? '−' : (p.pnl_usd > 0 ? '+' : '');
+      var txt = sign + fmtUsd(p.pnl_usd).replace(' USD', '') + ' ± ' + fmtUsd(p.band_usd) +
+        ' <span style="opacity:.72">(' + L('estimación con ' + nEp + ' episodios', 'estimate from ' + nEp + ' episodes') + ')</span>';
+      if (p.extrapolated) txt += ' <span style="opacity:.72">· ' + L('fuera del rango medido', 'beyond the measured range') + '</span>';
+      // revisión lote I: posiciones sin precio en USD (aún sin cotización, privadas) o que el servidor no ubicó en el
+      // grafo NO están en la cifra → se dice cuántas (nunca una cartera parcial rotulada como «Tu cartera» a secas)
+      var left = (Number(res.no_price) || 0) + ((p.unmapped && p.unmapped.length) || 0);
+      if (left > 0) txt += ' <span style="opacity:.72">· ' + L('sin valorar: ' + left + (left === 1 ? ' posición' : ' posiciones'),
+        'not valued: ' + left + (left === 1 ? ' position' : ' positions')) + '</span>';
+      return head + txt + chip;
+    }
+    var why = p.status === 'weak' ? L('sin cifra en dinero: la calibración con episodios reales es débil', 'no money figure: the calibration on real episodes is weak')
+      : p.status === 'kernel_mismatch' ? L('sin cifra en dinero: la calibración es de otra versión del motor', 'no money figure: the calibration is for another engine version')
+        : L('sin cifra en dinero: todavía no está calibrado', 'no money figure: not calibrated yet');
+    return head + '<span style="opacity:.8">' + why + '</span>' + chip;
+  }
+  // pinta la línea en `el` (o la oculta) SIN bloquear a quien llama: la simulación ya se mostró
+  function pnlLine(el, opts) {
+    if (!el) return Promise.resolve(null);
+    opts = opts || {};
+    var spec = KINDS[opts.kind] || KINDS.collapse;
+    if (spec.direction !== 'down') { el.innerHTML = ''; el.style.display = 'none'; return Promise.resolve(null); }
+    var mine = myPositions();
+    var tok = {}; el._pnlTok = tok;
+    // posiciones sin cotización todavía (p. ej. al arrancar): se repinta UNA vez cuando llegan los precios
+    if (mine.no_price > 0 && typeof W.addEventListener === 'function') {
+      var again = function () {
+        W.removeEventListener('khipu:quotes', again);
+        if (el._pnlTok === tok && el.isConnected !== false) pnlLine(el, Object.assign({}, opts, { record: false }));
+      };
+      W.addEventListener('khipu:quotes', again);
+    }
+    if (!mine.positions.length) { el.innerHTML = ''; el.style.display = 'none'; return Promise.resolve(null); }
+    return scenarioPnl({ targets: opts.targets, severity: opts.severity, record: opts.record }).then(function (res) {
+      if (el._pnlTok !== tok) return res;
+      var h = pnlLineHTML(res);
+      el.innerHTML = h;
+      el.style.display = h ? '' : 'none';
+      return res;
+    });
+  }
+
   // ── sello de versión (discreto): generación y edad ──
   function ago(ms) {
     if (ms == null || !isFinite(ms)) return '';
@@ -335,6 +450,7 @@
     impact: impact, chokepoints: chokepoints, factors: factors, scenario: scenario, status: status,
     card: card, cardCached: cardCached, nrs: nrs,
     simulate: simulate, rivals: rivals, stamp: stamp, stampHTML: stampHTML,
+    scenarioPnl: scenarioPnl, pnlLine: pnlLine, pnlLineHTML: pnlLineHTML, myPositions: myPositions,
     kinds: function () { return Object.keys(KINDS); },
     kindSpec: function (k) { var s = KINDS[k]; return s ? { direction: s.direction, mapped: !!s.mapped, note: s.mapped ? L(s.note_es, s.note_en) : '' } : null; },
     lastView: function () { return _lastView; },

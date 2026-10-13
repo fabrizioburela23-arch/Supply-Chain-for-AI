@@ -25,6 +25,7 @@ Recorrido de un minuto para Khipus OS con la voz de Khipu (2026-10-11), lado ser
 - [[core.http.py]]
 - [[core.tour.py]]
 - [[core.voice_agent.py]]
+- [[core.voice_api.py]]
 - [[data.grafo_v0.json]]
 - [[engine.cockpit.js]]
 - [[engine.tour_script.js]]

@@ -122,7 +122,6 @@
     apply();
   }
 
-  window._layersApply = apply;   // re-aplicar tras un re-render del grafo
   // idioma: applyLang() (app.html) fija <html lang>; también 'khipu:lang' y cambios de otra pestaña
   try { new MutationObserver(relabel).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] }); } catch (e) {}
   window.addEventListener('khipu:lang', relabel);

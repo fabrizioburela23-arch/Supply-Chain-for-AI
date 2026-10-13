@@ -19,6 +19,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_ledger_callsites_chat.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_repair_ops.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

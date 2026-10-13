@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Comité"
 ruta: "research/outcomes.py"
 lenguaje: "python"
-lineas: 731
+lineas: 757
 aliases: ["research/outcomes.py"]
 tags: ["capa/comite", "tipo/modulo"]
 ---
 
 # research/outcomes.py
 
-> Módulo · capa [[Capa Comité]] · 731 líneas · `research/outcomes.py`
+> Módulo · capa [[Capa Comité]] · 757 líneas · `research/outcomes.py`
 
 ## Para qué sirve
 
@@ -36,26 +36,26 @@ PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - `last_on_or_before(series, keys, d, max_lag=…)` _(línea 345)_
 - `first_on_or_after(series, keys, d, max_lag=…)` — (fecha, precio) · 'gap' si el primer cierre está demasiado lejos · None si aún no existe. _(línea 355)_
 - `default_price_fn(symbol, since)` — Cierres diarios AJUSTADOS reales (Yahoo) que cubren desde `since`. _(línea 366)_
-- `judge(stance, excess, band)` _(línea 375)_
-- `score_checkpoint(b, cp, get_series, today)` — Devuelve dict con el resultado, o None si todavía no se puede calificar. _(línea 392)_
-- `session_in_progress(now)` — ¿La sesión de HOY todavía no cerró? (entonces la barra de hoy es un precio en curso). _(línea 449)_
-- `evaluate_due(session, now=…, price_fn=…, limit=…)` — Califica los checkpoints vencidos con PRECIOS REALES. Idempotente. price_fn(símbolo, desde: date) -> {'YYYY-MM-DD': cierre ajustado} | None. _(línea 455)_
-- `bucket_index(conf)` _(línea 560)_
-- `bucket_label(i)` _(línea 565)_
-- `stats(rows)` — rows: [(confianza, 1|0)] → n, aciertos, tasa, Brier y tramos de fiabilidad. _(línea 570)_
-- `reliability(hits, n, k=…)` — Fiabilidad del agente con encogimiento hacia 0.5 (neutral sin historia). _(línea 586)_
-- `track_record(session, agent_type=…)` — Historial por agente sobre checkpoints FINALES (+ señal temprana aparte). _(línea 592)_
-- `invalidate_cache()` _(línea 633)_
-- `calibration_table(session=…, force=…)` — {agent_type: {n, hits, buckets: [ [n, aciertos] × 5]}} (finales). Caché 10 min. _(línea 638)_
-- `calibration_detail(agent_type, raw, session=…, table=…, k=…)` — Confianza calibrada con su cuenta (auditable). _(línea 654)_
-- `calibrated_confidence(agent_type, raw, session=…, table=…, k=…)` — Número calibrado (0-1): (aciertos_tramo + k·cruda)/(n_tramo + k). _(línea 669)_
-- `agent_reliability(agent_type, session=…, table=…, k=…)` _(línea 674)_
-- `store_snapshot(session, now=…)` — Guarda la foto del historial (una fila por agente + global). _(línea 685)_
-- `snapshots(session, agent_type=…, limit=…)` _(línea 703)_
-- `outcomes_for_claim(session, claim_id)` _(línea 713)_
-- `recent_outcomes(session, limit=…, agent_type=…)` _(línea 722)_
+- `judge(stance, excess, band)` _(línea 383)_
+- `score_checkpoint(b, cp, get_series, today)` — Devuelve dict con el resultado, o None si todavía no se puede calificar. _(línea 400)_
+- `session_in_progress(now)` — ¿La sesión de HOY todavía no cerró? (entonces la barra de hoy es un precio en curso). _(línea 475)_
+- `evaluate_due(session, now=…, price_fn=…, limit=…)` — Califica los checkpoints vencidos con PRECIOS REALES. Idempotente. price_fn(símbolo, desde: date) -> {'YYYY-MM-DD': cierre ajustado} | None. _(línea 481)_
+- `bucket_index(conf)` _(línea 586)_
+- `bucket_label(i)` _(línea 591)_
+- `stats(rows)` — rows: [(confianza, 1|0)] → n, aciertos, tasa, Brier y tramos de fiabilidad. _(línea 596)_
+- `reliability(hits, n, k=…)` — Fiabilidad del agente con encogimiento hacia 0.5 (neutral sin historia). _(línea 612)_
+- `track_record(session, agent_type=…)` — Historial por agente sobre checkpoints FINALES (+ señal temprana aparte). _(línea 618)_
+- `invalidate_cache()` _(línea 659)_
+- `calibration_table(session=…, force=…)` — {agent_type: {n, hits, buckets: [ [n, aciertos] × 5]}} (finales). Caché 10 min. _(línea 664)_
+- `calibration_detail(agent_type, raw, session=…, table=…, k=…)` — Confianza calibrada con su cuenta (auditable). _(línea 680)_
+- `calibrated_confidence(agent_type, raw, session=…, table=…, k=…)` — Número calibrado (0-1): (aciertos_tramo + k·cruda)/(n_tramo + k). _(línea 695)_
+- `agent_reliability(agent_type, session=…, table=…, k=…)` _(línea 700)_
+- `store_snapshot(session, now=…)` — Guarda la foto del historial (una fila por agente + global). _(línea 711)_
+- `snapshots(session, agent_type=…, limit=…)` _(línea 729)_
+- `outcomes_for_claim(session, claim_id)` _(línea 739)_
+- `recent_outcomes(session, limit=…, agent_type=…)` _(línea 748)_
 
-**Internas** (empiezan con `_`): `_now`, `_policy`, `_ny_tz`, `_ny_datetime`, `_easter`, `_nth_weekday`, `_last_weekday`, `_observed`, `_sorted_keys`, `_na`, `_snapshot_today`
+**Internas** (empiezan con `_`): `_now`, `_policy`, `_ny_tz`, `_ny_datetime`, `_easter`, `_nth_weekday`, `_last_weekday`, `_observed`, `_sorted_keys`, `_terminal_close`, `_na`, `_snapshot_today`
 
 ## Depende de
 
@@ -79,7 +79,7 @@ PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - [[research.runner.py]] — lo importa
 - herramienta MCP `get_track_record` → [[API herramientas MCP]]
 
-_Además lo importan 6 pruebas (lista abajo)._
+_Además lo importan 7 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -89,6 +89,7 @@ _Además lo importan 6 pruebas (lista abajo)._
 - [[tests.test_ledger_review_fixes.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_repair_committee.py]]
+- [[tests.test_risk_robust.py]]
 
 ## Mencionado en sesiones de trabajo
 

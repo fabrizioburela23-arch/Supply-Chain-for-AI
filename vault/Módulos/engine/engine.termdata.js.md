@@ -28,11 +28,11 @@ PANEL DE DATOS de la Terminal (feedback de Fabrizio: "te pedí que la terminal t
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 
-Se carga en [[app.html]] en la posición **75 de 96** (línea 7950), después de [[engine.fincard.js]] y antes de [[engine.explain.js]].
+Se carga en [[app.html]] en la posición **76 de 97** (línea 7935), después de [[engine.fincard.js]] y antes de [[engine.explain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 75)
+- [[app.html]] — lo carga con `<script>` (posición 76)
 - [[app.html]] — usa `TermData`
 
 ## Endpoints que llama

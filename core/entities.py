@@ -163,6 +163,17 @@ def _build_index(snapshot_path=None, view=None):
             por_alias.setdefault(norm(nombre), can)
             por_alias.setdefault(strip_suffix(nombre), can)
 
+    # G5-19 (lote I1): alias de VOZ del navegador ("en vidia", "open ai", "taiwan semi") — la MISMA tabla que
+    # engine/resolve.js (nodes/legal_names.js → snapshot). Aparte de por_alias a propósito: el detector de
+    # entidades del contexto (core/context_engine) recorre por_alias sobre texto libre, y alias amplios como
+    # 'video' o 'applied' no deben marcar empresas en una frase. Aquí solo valen para el texto ENTERO.
+    por_voz = {}
+    for alias, destino in (snap.get('voice_aliases') or {}).items():
+        can = canonico(destino)
+        if can in nodos and norm(alias):
+            por_voz.setdefault(norm(alias), can)
+    stop = frozenset(snap.get('resolve_stopwords') or ())
+
     alias_inv = {}      # canónico → ids viejos que apuntan a él (entity_ids_for)
     for a in alias_tbl:
         alias_inv.setdefault(canonico(a), []).append(a)
@@ -170,6 +181,7 @@ def _build_index(snapshot_path=None, view=None):
     return {'nodos': nodos, 'por_id': por_id, 'por_ticker': por_ticker,
             'por_label': por_label, 'por_label_corto': por_label_corto,
             'por_alias': por_alias, 'alias_tbl': alias_tbl, 'alias_inv': alias_inv,
+            'por_voz': por_voz, 'stopwords': stop,
             'preipo_intel': snap.get('preipo_intel') or {}, 'generation': generation}
 
 
@@ -218,6 +230,7 @@ def resolve(texto, umbral=UMBRAL_BUSQUEDA):
     Escalera de mayor a menor certeza:
       100 id exacto · 98 ticker · 95 label exacto · 92 alias
       88 label sin sufijo societario ('NVIDIA Corporation' → Nvidia)
+      80 alias de voz del navegador ('en vidia' → Nvidia; solo búsqueda)
       70 prefijo único · 60 subcadena única
     """
     if not texto or not str(texto).strip():
@@ -256,6 +269,14 @@ def resolve(texto, umbral=UMBRAL_BUSQUEDA):
     if corto and corto in idx['por_label']:
         return hit(idx['por_label'][corto], 88, 'label_sufijo', corto)
 
+    # alias de voz (texto entero, sin palabras vacías del dictado): 80 = búsqueda sí, ESCRITURA (85) nunca
+    voz = idx.get('por_voz') or {}
+    if voz:
+        sin_stop = ' '.join(w for w in n.split() if w not in (idx.get('stopwords') or ())) or n
+        for k in (n, sin_stop):
+            if k in voz:
+                return hit(voz[k], 80, 'voice_alias', k)
+
     # Prefijo/subcadena SOLO si son inequívocos: dos candidatos = ninguno.
     # Un match ambiguo que se resuelve "a lo que salga" corrompe el grafo.
     if len(n) >= 4:
@@ -266,6 +287,12 @@ def resolve(texto, umbral=UMBRAL_BUSQUEDA):
         sub = {nid for k, nid in claves if n in k}
         if len(sub) == 1:
             return hit(sub.pop(), 60, 'subcadena', n)
+        # prefijo de un alias de voz ('taiwan semi' → 'taiwan semiconductor' → TSMC), solo si no hubo otro
+        # candidato y es inequívoco — mismo paso 5 que engine/resolve.js
+        if voz and not pref and not sub:
+            vp = {nid for k, nid in voz.items() if k.startswith(n)}
+            if len(vp) == 1:
+                return hit(vp.pop(), 70, 'voice_prefijo', n)
 
     return None
 

@@ -31,7 +31,7 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 | `GET` | `/api/ontology/events/<event_id>` | `event_detail` | [[ontology.api.py]] | 1 prueba |
 | `GET` | `/api/ontology/feed` | `global_feed_route` | [[ontology.api.py]] | [[app.html]], [[engine.khipu_lang.js]], 1 prueba |
 | `GET` | `/api/ontology/gates` | `gates_status` | [[ontology.api.py]] | — |
-| `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] | 2 pruebas |
+| `GET` | `/api/ontology/graph` | `graph` | [[ontology.api.py]] | [[engine.maptime.js]], 3 pruebas |
 | `GET` | `/api/ontology/graph/diff` | `graph_diff` | [[ontology.api.py]] | [[engine.khipu_lang.js]], 1 prueba |
 | `POST` | `/api/ontology/ingest/news` | `ingest_news` | [[ontology.api.py]] | [[app.html]], [[engine.temporal-graph.js]], 4 pruebas |
 | `GET` | `/api/ontology/objects` | `objects_list` | [[ontology.api.py]] | [[engine.fincard.js]], 1 prueba |

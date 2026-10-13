@@ -31,11 +31,12 @@ tablas del servidor MCP.
 
 ## Lo usan
 
+- [[mcp_server.api.py]] — lo importa
 - [[mcp_server.auth.py]] — lo importa
 - [[mcp_server.oauth.py]] — lo importa
 - [[ontology.db.py]] — lo importa
 
-_Además lo importan 7 pruebas (lista abajo)._
+_Además lo importan 9 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
@@ -45,4 +46,6 @@ _Además lo importan 7 pruebas (lista abajo)._
 - [[tests.test_mcp.py]]
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_ops.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_security.py]]
+- [[tests.test_voice_agent_split.py]]

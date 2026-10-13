@@ -64,8 +64,10 @@ QUIÉN actúa (docs/INFRA_OPERATIVA.md §1.2 paso 1, §2.2 y §8.1; paso 5 del p
 - [[core.replay.py]] — lo importa
 - [[core.retention.py]] — lo importa
 - [[core.scheduler.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
+- [[mcp_server.oauth.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 - [[ontology.actions.py]] — lo importa
 - [[ontology.agents.py]] — lo importa

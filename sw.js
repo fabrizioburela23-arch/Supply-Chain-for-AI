@@ -3,7 +3,7 @@
    CACHE va en la línea 6 (regla de despliegue #1: bump vN → vN+1 en cada
    cambio de JS/HTML). server.py (_sw_version) lee SOLO los primeros 2048
    caracteres para inyectar ?v=N en los <script src> — no la bajes. */
-const CACHE = 'khipu-finance-v265';
+const CACHE = 'khipu-finance-v266';
 /* Reglas (auditoría estructural 2026-09-30, hallazgo #3 — incidente real: un
    502 HTML de Railway quedó guardado y se servía offline → "Unexpected token
    '<'", y /api/health cacheado devolvía {server:true} ocultando el aviso):
@@ -41,7 +41,7 @@ const SHELL = ['/', '/app.html',
   '/nodes/nodes_expand5.js', '/nodes/meta_fill.js', '/nodes/nodes_china.js', '/nodes/nodes_multicapa.js',
   '/nodes/preipo_intel.js', '/nodes/listing_status.js', '/nodes/private_valuations.js',
   '/nodes/links_all.js', '/nodes/merge_graph.js', '/nodes/links_expand.js', '/nodes/links_connect.js',
-  '/engine/loading.js', '/engine/graph3d.js', '/engine/universe2d.js', '/engine/orb.js', '/engine/hypergraph.js', '/engine/resolve.js', '/engine/voice.js',
+  '/engine/loading.js', '/engine/graph3d.js', '/engine/universe2d.js', '/engine/orb.js', '/engine/hypergraph.js', '/engine/resolve.js', '/engine/trade.js', '/engine/voice.js',
   '/engine/secondbrain.js', '/engine/geo_coords.js', '/engine/globe.js',
   '/engine/canvas-data.js', '/engine/command_center.js',
   '/engine/temporal-graph.js', '/nodes/temporal_seed_facts.js',

@@ -13,4 +13,4 @@ Cómo seguir el camino: **pantalla (JS) → ruta → módulo que responde**.
 
 | Método | Ruta | Función | Módulo | Lo llaman |
 |---|---|---|---|---|
-| `GET` | `/api/diagnostics` | `diagnostics` | [[server.py]] | [[app.html]], [[core.ai_usage.py]], 1 prueba |
+| `GET` | `/api/diagnostics` | `diagnostics` | [[server.py]] | [[app.html]], [[core.ai_usage.py]], 2 pruebas |

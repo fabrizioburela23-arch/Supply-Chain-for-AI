@@ -2,7 +2,7 @@
 tipo: "variable"
 capa: "Infraestructura"
 nombre: "MATRIX_BUSY_WAIT_S"
-documentada: false
+documentada: true
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
@@ -20,4 +20,4 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## ¿Está documentada en CLAUDE.md?
 
-**No** — falta en [[Doc CLAUDE]].
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].

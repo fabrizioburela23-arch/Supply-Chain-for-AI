@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L266"
+ruta: "docs/ESTADO.md#L291"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 — INFRAESTRUCTURA OPERATIVA, PASOS 1-4 (registro inmutable, versión del grafo, vistas rápidas)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 266 (18 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 291 (18 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

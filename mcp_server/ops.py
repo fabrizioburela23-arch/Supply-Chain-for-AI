@@ -13,6 +13,10 @@ get_exposure; después find_similar_entities, calculate_correlation y get_histor
   calculate_correlation  correlación de retornos diarios (Pearson/Spearman) + error estándar, de la historia
                          propia de Khipus (prices_eod) o, si no la cubre, Yahoo ajustado (core/risk_report).
   get_history            serie de cierres ajustados con fuente y as_of (misma cascada), diaria/semanal/mensual.
+  find_anomalies         días inusuales: z del retorno (y del log del volumen guardado) contra la volatilidad EWMA
+                         EX-ANTE (RiskMetrics, λ de policy.risk) — batch I2.
+  project_portfolio      rango de valores de una cartera a N días (bandas de percentiles, lognormal, deriva 0) con su
+                         covarianza EWMA o Ledoit-Wolf — rotulado "no es un pronóstico" — batch I2.
 
 Este módulo lo importa mcp_server/tools.py al final (registro único de herramientas).
 """
@@ -133,6 +137,13 @@ def t_run_scenario(ctx, shocks=None, scenario=None, factors='active', top=25, po
                             'unmapped': [r['symbol'] for r in rows if r['id'] is None],
                             'note': 'loss = value × structural hit of that company; an UPPER-BOUND style structural '
                                     'estimate, not a P&L forecast'}
+        # batch I3 (L2-13): la traducción CALIBRADA (κ de kernel.calibration, con banda) — o, si el ajuste es débil,
+        # falta o es de otro motor, `status` lo dice y no hay cifra
+        from core import scenario_pnl
+        cal = scenario_pnl.translate(impacts, [{'id': r['id'], 'symbol': r['symbol'], 'usd': r['usd']} for r in rows])
+        out['portfolio']['calibrated'] = {k: cal.get(k) for k in (
+            'status', 'pnl_usd', 'band_usd', 'lo_usd', 'hi_usd', 'pnl_pct', 'extrapolated', 'note_en', 'calibration')
+            if k in cal}
     return out
 
 
@@ -484,3 +495,245 @@ def t_calculate_correlation(ctx, symbols, window='1y', method='pearson'):
             'missing': missing, 'uncertainty': 'sample correlation over the window; regimes change — check se and n',
             'source': 'Khipus prices_eod / Yahoo adjusted closes', 'as_of': _now_iso(),
             'known_at': datetime.now(timezone.utc).isoformat(timespec='seconds')}
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# find_anomalies y project_portfolio (BRECHAS L4-09: las 2 operaciones que faltaban; batch I2)
+# ════════════════════════════════════════════════════════════════════════════
+def _risk_pol():
+    from core.risk_report import risk_policy
+    return risk_policy()
+
+
+def ewma_zscores(x, lam=0.94, seed_n=25, demean=False):
+    """[(i, z_i)] de cada observación contra la desviación EWMA EX-ANTE (estimada solo con lo anterior; RiskMetrics).
+    demean=True: también una media EWMA ex-ante (para el log del volumen); False: media cero (retornos)."""
+    n = len(x)
+    if n <= seed_n + 1:
+        return []
+    head = x[:seed_n]
+    m = sum(head) / seed_n if demean else 0.0
+    v = sum((h - m) ** 2 for h in head) / seed_n
+    out = []
+    for i in range(seed_n, n):
+        if v > 0:
+            out.append((i, (x[i] - m) / math.sqrt(v)))
+        dev = x[i] - m
+        if demean:
+            m = lam * m + (1 - lam) * x[i]
+        v = lam * v + (1 - lam) * dev * dev
+    return out
+
+
+@tool('find_anomalies', 'Unusual moves (returns and volume)', 'read',
+      'Flags unusual DAILY moves of 1-30 companies/tickers: each return (and, when Khipus has stored volume, each '
+      'day\'s log-volume) is compared with its EWMA volatility estimated ONLY from the days before (RiskMetrics, '
+      'λ from the governance artifact policy.risk) → z-score. Returns the days with |z| ≥ threshold inside the '
+      'lookback window, ranked by |z|. Prices: Khipus\' own adjusted history first, Yahoo adjusted otherwise. '
+      'A statistical flag, not a cause: check news/events.',
+      {'symbols': {'type': 'array', 'minItems': 1, 'maxItems': 30,
+                   'items': {'type': 'string', 'minLength': 1, 'maxLength': 120}},
+       'window': {'type': 'string', 'enum': ['6mo', '1y', '2y'], 'default': '1y'},
+       'lookback_days': {'type': 'integer', 'minimum': 1, 'maximum': 120,
+                         'description': 'How many of the most recent sessions to scan (default from policy.risk).'},
+       'z_threshold': {'type': 'number', 'minimum': 1.5, 'maximum': 10,
+                       'description': '|z| at or above which a day is flagged (default from policy.risk).'}},
+      required=['symbols'], open_world=True)
+def t_find_anomalies(ctx, symbols, window='1y', lookback_days=None, z_threshold=None):
+    pol = _risk_pol()
+    lam = float(pol.get('ewma_lambda') or 0.94)
+    seed_n = int(pol.get('ewma_seed_days') or 25)
+    thr = float(z_threshold if z_threshold is not None else (pol.get('anomaly_z') or 3.0))
+    look = int(lookback_days if lookback_days is not None else (pol.get('anomaly_lookback_days') or 20))
+    items, missing, seen = [], [], set()
+    for raw in symbols:
+        sym, eid = _symbol_of(raw)
+        if not sym or sym in seen:
+            if not sym:
+                missing.append(str(raw)[:40])
+            continue
+        seen.add(sym)
+        try:
+            prices, cur, m = _series(sym, window)
+        except ToolError:
+            prices, cur, m = {}, None, {}
+        ds = sorted(prices)
+        if len(ds) < seed_n + 10:
+            missing.append(sym)
+            continue
+        rdates = ds[1:]
+        rets = [prices[ds[i]] / prices[ds[i - 1]] - 1.0 for i in range(1, len(ds))]
+        zr = {rdates[i]: z for i, z in ewma_zscores(rets, lam, seed_n)}
+        vol_meta, zv, vols = None, {}, {}
+        try:
+            from core import prices_store
+            vh = prices_store.volume_history(sym, window)
+        except Exception:  # noqa: BLE001
+            vh = None
+        if vh:
+            vols, vol_meta = vh
+            vd = sorted(d for d, v in vols.items() if v > 0)
+            lv = [math.log(vols[d]) for d in vd]
+            zv = {vd[i]: z for i, z in ewma_zscores(lv, lam, seed_n, demean=True)}
+        recent = rdates[-look:]
+        flags = []
+        for d in recent:
+            z1, z2 = zr.get(d), zv.get(d)
+            hit_r = z1 is not None and abs(z1) >= thr
+            hit_v = z2 is not None and z2 >= thr                  # volumen: solo lo INUSUALMENTE alto
+            if hit_r or hit_v:
+                i = rdates.index(d)
+                flags.append({'date': d, 'return_pct': round(rets[i] * 100, 2),
+                              'z_return': round(z1, 2) if z1 is not None else None,
+                              'volume': vols.get(d), 'z_volume': round(z2, 2) if z2 is not None else None,
+                              'kind': ('return+volume' if hit_r and hit_v else 'return' if hit_r else 'volume')})
+        flags.sort(key=lambda f: -max(abs(f['z_return'] or 0), abs(f['z_volume'] or 0)))
+        last = rdates[-1]
+        items.append({'symbol': sym, 'id': eid, 'currency': cur, 'anomalies': flags,
+                      'n_flagged': len(flags), 'max_abs_z': (max(max(abs(f['z_return'] or 0), abs(f['z_volume'] or 0))
+                                                                 for f in flags) if flags else 0.0),
+                      'latest': {'date': last, 'return_pct': round(rets[-1] * 100, 2),
+                                 'z_return': round(zr[last], 2) if last in zr else None,
+                                 'z_volume': round(zv[last], 2) if last in zv else None},
+                      'volume': ({'available': True, 'source': vol_meta.get('source'), 'as_of': vol_meta.get('as_of')}
+                                 if vol_meta else {'available': False,
+                                                   'reason': 'no stored daily volume for this range (prices_eod)'}),
+                      'source': m.get('source') or 'yahoo_live', 'as_of': m.get('as_of') or last,
+                      'n_returns': len(rets)})
+    if not items:
+        raise ToolError('no price history for any of the symbols', code='no_data', data={'missing': missing})
+    items.sort(key=lambda x: -x['max_abs_z'])
+    return {'items': items, 'missing': missing, 'window': window, 'lookback_days': look, 'z_threshold': thr,
+            'ewma_lambda': lam, 'policy': {'artifact': 'policy.risk', 'semver': pol.get('semver')},
+            'method': ('z = return / ex-ante EWMA volatility (zero mean, RiskMetrics); volume: z of log-volume vs '
+                       'ex-ante EWMA mean/variance (only unusually HIGH volume is flagged)'),
+            'uncertainty': ('statistical flag only — returns have fat tails, so |z| ≥ 3 happens more often than a '
+                            'normal curve says; it does not explain WHY (check news and graph events)'),
+            'source': 'Khipus prices_eod / Yahoo adjusted closes', 'as_of': _now_iso()}
+
+
+def _usd_series(sym, rng):
+    """({fecha: precio EN USD}, moneda, meta, fx_method) — FX diario alineado si existe, si no la tasa de hoy."""
+    from core import risk_report as rr
+    prices, cur, meta = _series(sym, rng)
+    if not prices:
+        return {}, cur, meta, None
+    c = str(cur or 'USD')
+    if c.upper() == 'USD':
+        return prices, cur, meta, 'usd'
+    try:
+        fxs = rr.fx_series(c, rng)
+    except Exception:  # noqa: BLE001
+        fxs = None
+    if fxs:
+        al = rr.align_fx(prices, fxs[0])
+        if len(al) >= 60:
+            return {d: prices[d] * al[d] for d in al}, cur, meta, 'daily'
+    from core.instruments import major_ccy
+    from core.quotes import _fx_to_usd
+    maj, mult = major_ccy(c)
+    rate = _fx_to_usd(maj)
+    if not rate:
+        return {}, cur, meta, None
+    return {d: p * rate * mult for d, p in prices.items()}, cur, meta, 'spot'
+
+
+@tool('project_portfolio', 'Portfolio value range over a horizon (not a forecast)', 'read',
+      'Projects the RANGE of values a portfolio [{symbol, usd} or {symbol, shares}] could have after N trading days, '
+      'from its own daily-return covariance (EWMA — RiskMetrics λ — or Ledoit-Wolf shrunk) on 1 year of adjusted '
+      'prices in USD: percentile bands (5/25/50/75/95) under a lognormal model with ZERO drift by default. It is a '
+      'risk range, NOT a forecast: past volatility, normal tails, no jumps.',
+      {'positions': {'type': 'array', 'minItems': 1, 'maxItems': 30, 'items': {'type': 'object', 'properties': {
+           'symbol': {'type': 'string', 'minLength': 1, 'maxLength': 40},
+           'usd': {'type': 'number', 'minimum': 0}, 'shares': {'type': 'number', 'minimum': 0}},
+           'required': ['symbol']}},
+       'horizon_days': {'type': 'integer', 'minimum': 1, 'maximum': 504, 'default': 21},
+       'covariance': {'type': 'string', 'enum': ['ewma', 'ledoit_wolf'], 'default': 'ewma'},
+       'drift': {'type': 'string', 'enum': ['zero', 'historical'], 'default': 'zero',
+                 'description': 'zero (honest default) or the historical mean daily return (backward-looking).'}},
+      required=['positions'], open_world=True)
+def t_project_portfolio(ctx, positions, horizon_days=21, covariance='ewma', drift='zero'):
+    from statistics import NormalDist
+
+    import numpy as np
+
+    from core import risk_models as rm
+    pol = _risk_pol()
+    h = max(1, min(int(horizon_days), int(pol.get('projection_max_days') or 504)))
+    pcts = [p for p in (pol.get('projection_percentiles') or [5, 25, 50, 75, 95]) if 0 < p < 100]
+    want, missing = {}, []
+    for p in positions[:30]:
+        sym, _eid = _symbol_of(p.get('symbol'))
+        if not sym:
+            missing.append({'symbol': str(p.get('symbol'))[:40], 'reason': 'no listed ticker'})
+            continue
+        w = want.setdefault(sym, {'usd': 0.0, 'shares': 0.0})
+        w['usd'] += float(p.get('usd') or 0)
+        w['shares'] += float(p.get('shares') or 0)
+    series, meta = {}, {}
+    for sym in want:
+        try:
+            s, cur, m, how = _usd_series(sym, '1y')
+        except ToolError:
+            s, cur, m, how = {}, None, {}, None
+        if len(s) < 61:
+            missing.append({'symbol': sym, 'reason': 'not enough price history (≥ 60 days)'})
+            continue
+        series[sym] = s
+        meta[sym] = {'currency': cur, 'fx': how, 'source': m.get('source') or 'yahoo_live',
+                     'as_of': m.get('as_of') or max(s)}
+    if not series:
+        raise ToolError('no price history for any position', code='no_data', data={'missing': missing})
+    syms = list(series)
+    common = sorted(set.intersection(*(set(series[s]) for s in syms)))
+    if len(common) < 61:
+        raise ToolError(f'only {len(common)} common days between the positions (≥ 61 needed)', code='no_data',
+                        data={'missing': missing})
+    last = common[-1]
+    vals = {s: want[s]['usd'] + want[s]['shares'] * series[s][last] for s in syms}
+    total = sum(vals.values())
+    if total <= 0:
+        raise InvalidParams('positions need usd or shares > 0')
+    wv = np.array([vals[s] / total for s in syms])
+    R = np.array([[math.log(series[s][common[i]] / series[s][common[i - 1]]) for s in syms]
+                  for i in range(1, len(common))])
+    if covariance == 'ledoit_wolf':
+        C, delta, _mu = rm.ledoit_wolf(R)
+        cov_meta = {'estimator': 'ledoit_wolf', 'shrinkage': round(float(delta), 4)}
+    else:
+        lam = float(pol.get('ewma_lambda') or 0.94)
+        C = rm.ewma_cov(R - R.mean(axis=0), lam, int(pol.get('ewma_seed_days') or 25))
+        cov_meta = {'estimator': 'ewma', 'lambda': lam}
+    var_d = float(wv @ C @ wv)
+    sig = math.sqrt(max(0.0, var_d))
+    mu = float(wv @ R.mean(axis=0)) if drift == 'historical' else 0.0
+    # revisión lote I: R son retornos LOG → su media YA es la deriva log (= aritmética − σ²/2); restar σ²/2 otra vez
+    # sesgaba toda la banda 'historical' hacia abajo (σ²·d/2: 11 % a un año con σ diaria de 3 %). Sin deriva (0),
+    # −σ²/2 es lo que hace a V una martingala (mediana = V·e^(−σ²d/2)).
+    m_log = mu if drift == 'historical' else -0.5 * var_d
+    nd = NormalDist()
+    days = sorted({d for d in (1, 5, 10, 21, 63, 126, 252, 504) if d < h} | {h})
+    bands = []
+    for d in days:
+        row = {'day': d}
+        for p in pcts:
+            z = nd.inv_cdf(p / 100.0)
+            row[f'p{p}_usd'] = round(total * math.exp(m_log * d + z * sig * math.sqrt(d)), 2)
+        bands.append(row)
+    end = bands[-1]
+    return {'value_usd': round(total, 2), 'as_of_prices': last, 'horizon_days': h, 'covariance': cov_meta,
+            'drift': drift, 'drift_daily_pct': round(mu * 100, 4),
+            'vol_daily_pct': round(sig * 100, 3), 'vol_ann_pct': round(sig * math.sqrt(252) * 100, 2),
+            'bands': bands,
+            'at_horizon': {k: v for k, v in end.items() if k != 'day'},
+            'weights': [{'symbol': s, 'usd': round(vals[s], 2), 'weight_pct': round(float(wv[i]) * 100, 2)}
+                        for i, s in enumerate(syms)],
+            'common_days': len(common) - 1, 'series': meta, 'missing': missing,
+            'policy': {'artifact': 'policy.risk', 'semver': pol.get('semver')},
+            'label': 'NOT A FORECAST — a range from past volatility',
+            'method': ('lognormal: V·exp(m·d + z·σ·√d) with σ² = wᵀΣw of daily LOG returns in USD over the '
+                       'common dates; m = −σ²/2 (zero drift, a martingale) or, with drift=historical, the mean daily '
+                       'LOG return (which already includes −σ²/2)'),
+            'uncertainty': ('assumes normal log-returns and a constant covariance: real crashes (fat tails, jumps, '
+                            'correlations going to 1) are worse than the 5th percentile more often than 5%'),
+            'source': 'Khipus prices_eod / Yahoo adjusted closes (+ daily FX when not USD)', 'as_of': _now_iso()}

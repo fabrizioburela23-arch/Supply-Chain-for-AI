@@ -21,9 +21,9 @@ el botón «▶ Ver el recorrido de un minuto» con la voz REAL de Khipu (2026-1
 ## Cubre
 
 - [[app.html]]
+- [[core.voice_api.py]]
 - [[engine.cockpit.js]]
 - [[engine.voice.js]]
-- [[server.py]]
 
 ## Rutas HTTP que llama
 

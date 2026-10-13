@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Datos del catálogo"
 ruta: "scripts/export_graph_v0.js"
 lenguaje: "javascript"
-lineas: 100
+lineas: 104
 aliases: ["scripts/export_graph_v0.js"]
 tags: ["capa/datos-catalogo", "tipo/modulo"]
 ---
 
 # scripts/export_graph_v0.js
 
-> Módulo · capa [[Capa Datos del catálogo]] · 100 líneas · `scripts/export_graph_v0.js`
+> Módulo · capa [[Capa Datos del catálogo]] · 104 líneas · `scripts/export_graph_v0.js`
 
 ## Para qué sirve
 
@@ -51,6 +51,7 @@ _Nadie dentro de la app (ver_ [[01 Reporte del grafo]]_)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_alias_voz_paridad.py]]
 - [[tests.test_graph_audit.py]]
 - [[tests.test_merge_graph_alias.py]]
 - [[tests.test_ontology.py]]

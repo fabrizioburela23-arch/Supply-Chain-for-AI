@@ -4,10 +4,16 @@
    da mucho por sí solo". Antes el tiempo vivía en una pestaña aparte con su
    propio grafo pequeño. Ahora el MISMO mapa de 949 nodos tiene:
 
-     ⏱ línea de tiempo  → la cadena tal como era en una fecha: las empresas
-                          aún no fundadas y los vínculos que aún no existían
-                          se apagan (fundación = NODE_META.founded; inicio de
-                          un vínculo = el hecho fechado más antiguo del par).
+     ⏱ línea de tiempo  → la cadena tal como era en una fecha. UNA regla, la
+                          del SERVIDOR (DT-M3, batch I3): con base de datos,
+                          lo vigente lo dice /api/ontology/graph?as_of=
+                          (+ known_at = "tal como se conocía en κ"); sin base
+                          (503) o sin conexión, la MISMA regla con la que la
+                          migración carga el catálogo, rotulada: un vínculo
+                          del catálogo cuenta "desde que se rastrea" (2000-01-01,
+                          GENESIS) y una empresa existe si tiene algún vínculo
+                          vigente. Antes se apagaban por fundación y por la
+                          fecha del par: otra regla que daba otro grafo.
      ⚡ capa Eventos     → los hechos fechados (sanciones, inversiones,
                           fábricas, competencia…) dibujados como líneas
                           punteadas entre las dos empresas, visibles solo
@@ -18,8 +24,9 @@
      ☰ Hechos / ⬗ 3D    → la lista de hechos y la vista 3D temporal siguen
                           existiendo, pero como VISTAS que se abren desde aquí.
 
-   Honestidad del dato: un vínculo sin fecha conocida NO se inventa una; se
-   considera presente siempre que sus dos empresas existan. Solo se dibujan
+   Honestidad del dato: un vínculo sin fecha conocida NO se inventa una; cuenta
+   "desde que se rastrea" (2000) y la barra dice SIEMPRE de dónde sale la foto
+   (base del servidor o regla del catálogo). Solo se dibujan
    eventos cuyos DOS extremos están en el mapa (los demás siguen en ☰ Hechos).
 
    Coste: nada se calcula hasta abrir ⏱. El filtro por fecha se aplica dentro
@@ -66,14 +73,25 @@
     return '#8e5aff';
   }
 
+  const GENESIS_MS = Date.UTC(2000, 0, 1);   // = ontology.service.GENESIS_SENTINEL ("desde que se rastrea")
+  const ASOF_DEBOUNCE_MS = 250;
+  const ASOF_FAIL_BASE_MS = 2000;     // tras un fallo, la MISMA foto se reintenta a los 2 s, 4 s, 8 s… (tope 60 s)
+  const ASOF_FAIL_MAX_MS = 60000;
+  const ASOF_CACHE_MAX = 36;
+
   const S = {
     active: false,     // ⏱ abierto → el filtro por fecha se aplica
     events: false,     // ⚡ capa de eventos visible
     dateMs: Date.now(),
     maxMs: Date.now(),
     built: false,
-    founded: {},       // id → ms de fundación
-    pairFrom: {},      // 'a|b' (ordenado) → ms del hecho más antiguo del par
+    linked: null,      // Set de empresas con algún vínculo del catálogo (regla de respaldo)
+    knownAt: null,     // κ opcional (ISO o versión del grafo): "tal como se conocía entonces"
+    mode: 'catalog',   // 'db' (servidor) | 'catalog' (sin base / sin conexión: regla de respaldo)
+    srv: null,         // {key, pairs:Set('a>b'), nodes:Set} de la última respuesta del servidor
+    cache: new Map(),  // 'YYYY-MM-DD|κ' → {pairs, nodes, counts}
+    inflight: null, timer: 0, noDb: false, err: null,
+    fails: new Map(),  // 'YYYY-MM-DD|κ' → {n, until}: una foto que falló NO se vuelve a pedir hasta su espera
     facts: [],         // hechos empresa↔empresa → línea punteada
     marks: [],         // hechos empresa↔concepto (EUV, Ley CHIPS, China…) → anillo en la empresa
     msel: null,
@@ -83,17 +101,14 @@
     raf: 0,
   };
 
-  function pairKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
-
   function build() {
     if (S.built) return;
     S.built = true;
-    const meta = window.NODE_META || {};
-    Object.keys(window.NODE_BY_ID || {}).forEach(k => {
-      const id = canon(k);
-      if (!id || S.founded[id] != null) return;
-      const y = parseInt(String((meta[id] && meta[id].founded) || ''), 10);
-      if (y > 1000 && y < 2100) S.founded[id] = Date.UTC(y, 0, 1);
+    S.linked = new Set();
+    (window.LINKS || []).forEach(l => {
+      const a = canon(lid(l.source)), b = canon(lid(l.target));
+      if (a) S.linked.add(a);
+      if (b) S.linked.add(b);
     });
     const seen = new Set();
     const concepts = {};
@@ -120,8 +135,6 @@
         return;
       }
       if (!a || !b || a === b) return;
-      const k = pairKey(a, b);
-      if (S.pairFrom[k] == null || from < S.pairFrom[k]) S.pairFrom[k] = from;
       const dedupe = a + '>' + b + '>' + (f.rel || '') + '>' + from;
       if (seen.has(dedupe)) return;
       seen.add(dedupe);
@@ -135,20 +148,114 @@
   }
 
   /* ── predicados que usa _refreshStylesCore (app.html) ─────────────────── */
+  // Con datos del servidor: lo que /api/ontology/graph?as_of= dice vigente. Sin base: la regla de respaldo
+  // (catalogNodeOk/catalogLinkOk), que es la MISMA con la que scripts/migrate_v0_to_ontology.py carga el catálogo.
   function nodeOk(id) {
     if (!S.active) return true;
-    const f = S.founded[id];
-    return f == null || f <= S.dateMs;
+    if (S.mode === 'db' && S.srv) return S.srv.nodes.has(canon(id) || id);
+    return catalogNodeOk(id);
   }
   function linkOk(l) {
     if (!S.active) return true;
-    const s = lid(l.source), t = lid(l.target);
-    if (!nodeOk(s) || !nodeOk(t)) return false;
-    const from = S.pairFrom[pairKey(s, t)];
-    return from == null || from <= S.dateMs;
+    const s = canon(lid(l.source)) || lid(l.source), t = canon(lid(l.target)) || lid(l.target);
+    if (S.mode === 'db' && S.srv) return S.srv.pairs.has(s + '>' + t) || S.srv.pairs.has(t + '>' + s);
+    return catalogLinkOk(s, t);
+  }
+  // regla de respaldo (sin base): vínculo del catálogo vigente desde GENESIS; empresa = extremo de algo vigente
+  function catalogLinkOk(s, t) {
+    return S.dateMs >= GENESIS_MS || datedPairOn(s, t);
+  }
+  function catalogNodeOk(id) {
+    const c = canon(id) || id;
+    if (S.dateMs >= GENESIS_MS && S.linked && S.linked.has(c)) return true;
+    return S.facts.some(f => factOn(f) && (f.a === c || f.b === c));
+  }
+  function datedPairOn(s, t) {
+    return S.facts.some(f => factOn(f) && ((f.a === s && f.b === t) || (f.a === t && f.b === s)));
   }
   function factOn(f) {
-    return f.from <= S.dateMs && (f.until == null || S.dateMs <= f.until);
+    return f.from <= S.dateMs && (f.until == null || S.dateMs < f.until);
+  }
+
+  /* ── el viaje en el tiempo del SERVIDOR (DT-M3) ───────────────────────── */
+  function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
+  function asofKey() { return isoDay(S.dateMs) + '|' + (S.knownAt || ''); }
+  function base() { return (typeof window.BASE === 'string' && window.BASE) ? window.BASE : ''; }
+  function asofUrl(day) {
+    return base() + '/api/ontology/graph?as_of=' + encodeURIComponent(day) +
+      (S.knownAt ? '&known_at=' + encodeURIComponent(S.knownAt) : '');
+  }
+  function digest(d) {
+    const pairs = new Set(), nodes = new Set();
+    (d.links || []).forEach(l => {
+      const a = canon(l.source) || l.source, b = canon(l.target) || l.target;
+      if (!a || !b) return;
+      pairs.add(a + '>' + b);
+      nodes.add(a); nodes.add(b);
+    });
+    (d.nodes || []).forEach(n => { if (n && n.id) nodes.add(canon(n.id) || n.id); });
+    return { pairs, nodes, counts: d.counts || null, as_of: d.as_of || null };
+  }
+  function useEntry(key, e) {
+    S.srv = Object.assign({ key }, e);
+    S.mode = 'db';
+    S.err = null;
+  }
+  // pide la foto de la fecha (con espera corta y UNA petición en vuelo); mientras llega se ve la anterior
+  function want() {
+    if (!S.active || S.noDb) return;
+    const key = asofKey();
+    if (S.srv && S.srv.key === key) return;
+    const hit = S.cache.get(key);
+    if (hit) { useEntry(key, hit); return; }
+    const f = S.fails.get(key);              // revisión lote I: una foto que falló espera (antes: 4 pedidos/s sin fin)
+    if (f && Date.now() < f.until) return;
+    // ▶ reproduciendo: el deslizador se mueve cada 160 ms < espera de 250 ms → la espera nunca vencía y se veía la
+    // foto de la fecha inicial. Durante la reproducción: UN pedido en vuelo, siempre por la fecha más nueva.
+    if (S.play) { if (!S.timer) fetchAsof(); return; }
+    if (S.timer) clearTimeout(S.timer);
+    S.timer = setTimeout(() => { S.timer = 0; fetchAsof(); }, ASOF_DEBOUNCE_MS);
+  }
+  function failed(key) {
+    const prev = S.fails.get(key);
+    const n = prev ? prev.n + 1 : 1;
+    S.fails.set(key, { n, until: Date.now() + Math.min(ASOF_FAIL_MAX_MS, ASOF_FAIL_BASE_MS * Math.pow(2, n - 1)) });
+    if (S.fails.size > ASOF_CACHE_MAX) S.fails.delete(S.fails.keys().next().value);
+  }
+  function fetchAsof() {
+    if (!S.active || S.noDb || S.inflight || typeof fetch !== 'function') return;
+    const key = asofKey(), day = key.split('|')[0];
+    S.inflight = key;
+    fetch(asofUrl(day), { headers: { Accept: 'application/json' } }).then(r => {
+      return r.json().catch(() => null).then(d => {
+        if (r.status === 503 && !(d && d.offline)) { S.noDb = true; return null; }   // sin base: regla de respaldo
+        if (r.status === 503) { S.err = L('sin conexión', 'offline'); failed(key); return null; }   // 503 del SW
+        if (!r.ok || !d) {
+          S.err = (isEn() ? (d && (d.error_en || d.error)) : (d && d.error)) || ('HTTP ' + r.status);
+          failed(key);
+          return null;
+        }
+        return d;
+      });
+    }).then(d => {
+      S.inflight = null;
+      if (d && Array.isArray(d.links)) {
+        const e = digest(d);
+        S.cache.set(key, e);
+        S.fails.delete(key);
+        if (S.cache.size > ASOF_CACHE_MAX) S.cache.delete(S.cache.keys().next().value);
+        if (key === asofKey()) useEntry(key, e);
+      }
+      if (S.noDb) { S.mode = 'catalog'; S.srv = null; }
+      schedule();
+      if (key !== asofKey()) want();       // el deslizador se movió mientras tanto
+    }).catch(() => {
+      S.inflight = null;                    // sin conexión: la regla de respaldo, rotulada
+      S.mode = 'catalog'; S.srv = null;
+      S.err = L('sin conexión', 'offline');
+      failed(key);
+      schedule();
+    });
   }
 
   /* ── capa de eventos ──────────────────────────────────────────────────── */
@@ -289,13 +396,29 @@
     const evN = S.facts.filter(factOn).length + S.marks.filter(factOn).length;
     const c = document.getElementById('mt-count');
     if (c) c.textContent = L(
-      `En ${fmt(S.dateMs)}: ${nOk} de ${ids.size} empresas ya existían y ${lOk} vínculos. ` +
-      `${evN} eventos vigentes${S.events ? '' : ' (actívalos con ⚡)'}. Lo apagado aún no existía.`,
-      `In ${fmt(S.dateMs)}: ${nOk} of ${ids.size} companies already existed, with ${lOk} links. ` +
-      `${evN} active events${S.events ? '' : ' (turn on with ⚡)'}. Dimmed = did not exist yet.`);
+      `En ${fmt(S.dateMs)}: ${nOk} de ${ids.size} empresas y ${lOk} vínculos vigentes. ` +
+      `${evN} eventos${S.events ? '' : ' (actívalos con ⚡)'}. Lo apagado no estaba vigente. `,
+      `In ${fmt(S.dateMs)}: ${nOk} of ${ids.size} companies and ${lOk} links in force. ` +
+      `${evN} events${S.events ? '' : ' (turn on with ⚡)'}. Dimmed = not in force. `) + sourceNote();
+  }
+
+  // de dónde sale la foto (siempre dicho): la base del servidor o la regla de respaldo del catálogo
+  function sourceNote() {
+    const pre = S.dateMs < GENESIS_MS
+      ? L(' Antes de 2000 solo cuentan los hechos con fecha: los vínculos sin fecha se rastrean desde 2000.',
+          ' Before 2000 only dated facts count: undated links are tracked from 2000.') : '';
+    if (S.mode === 'db' && S.srv) {
+      const stale = S.srv.key !== asofKey() ? L(' (actualizando…)', ' (updating…)') : '';
+      return L('Fuente: base de datos (viaje en el tiempo del servidor', 'Source: database (server time travel') +
+        (S.knownAt ? L(', tal como se conocía en ', ', as known at ') + S.knownAt : '') + ')' + stale + '.' + pre;
+    }
+    return L('Fuente: regla del catálogo (', 'Source: catalog rule (') +
+      (S.noDb ? L('sin base de datos', 'no database') : (S.err || L('esperando al servidor', 'waiting for the server'))) +
+      L('): la misma con la que se carga la base.', '): the same one used to load the database.') + pre;
   }
 
   function schedule() {
+    want();
     if (S.raf) return;
     S.raf = requestAnimationFrame(() => {
       S.raf = 0;
@@ -323,6 +446,7 @@
 
   function open() {
     build(); ensureBar();
+    if (!S.active) { S.noDb = false; S.fails.clear(); }   // al ABRIR: la base pudo volver (un 503 no es para siempre)
     S.active = true;
     const bar = document.getElementById('mt-bar'); if (bar) bar.classList.add('on');
     // el aviso "toca una empresa" del teléfono tapaba la barra
@@ -332,23 +456,32 @@
   }
   function close() {
     stopPlay();
-    S.active = false; S.events = false; S.dateMs = S.maxMs;
+    if (S.timer) { clearTimeout(S.timer); S.timer = 0; }
+    S.active = false; S.events = false; S.dateMs = S.maxMs; S.knownAt = null;
     const bar = document.getElementById('mt-bar'); if (bar) bar.classList.remove('on');
     const btn = document.getElementById('mt-btn'); if (btn) btn.classList.remove('on');
     schedule();
   }
   function toggle() { if (S.active) close(); else open(); }
 
-  // Para KHIPU "GRAPH ASOF <fecha>": mueve el MAPA a esa fecha.
-  function setDate(v) {
+  // Para KHIPU "GRAPH ASOF <fecha>": mueve el MAPA a esa fecha. opts.known_at (opcional, con base): la foto de esa
+  // fecha TAL COMO SE CONOCÍA en κ (ISO o versión del grafo) — G(t, κ) del servidor, paso 23.
+  function setDate(v, opts) {
     const ms = typeof v === 'number' ? v : Date.parse(v);
     if (ms == null || isNaN(ms)) return false;
     if (typeof window.switchTab === 'function') window.switchTab('map');
     open();
     stopPlay();
+    if (opts && Object.prototype.hasOwnProperty.call(opts, 'known_at')) setKnownAt(opts.known_at);
     S.dateMs = Math.max(MIN_MS, Math.min(S.maxMs, ms));
     schedule();
     return true;
+  }
+  function setKnownAt(k) {
+    S.knownAt = (k == null || k === '') ? null : String(k).slice(0, 40);
+    S.srv = null;
+    if (!S.noDb) S.mode = 'catalog';
+    schedule();
   }
 
   // Vistas del antiguo Grafo Temporal (lista de hechos / 3D / grafo), ahora
@@ -377,8 +510,11 @@
   }
 
   window.KhipuMapTime = {
-    open, close, toggle, setDate, relabel, paint, nodeOk, linkOk,
+    open, close, toggle, setDate, setKnownAt, relabel, paint, nodeOk, linkOk, togglePlay,
+    get playing() { return !!S.play; },
     get active() { return S.active; },
+    get source() { return S.mode === 'db' && S.srv ? 'db' : 'catalog'; },
+    get knownAt() { return S.knownAt; },
     get events() { return S.events; },
     get dateMs() { return S.dateMs; },
   };

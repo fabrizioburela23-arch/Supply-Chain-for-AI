@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/explain.js"
 lenguaje: "javascript"
-lineas: 390
+lineas: 419
 aliases: ["engine/explain.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/explain.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 390 líneas · `engine/explain.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 419 líneas · `engine/explain.js`
 
 ## Para qué sirve
 
@@ -24,11 +24,11 @@ EXPLICADOR DE MÉTRICAS para no expertos (2026-07-12). Feedback real: un inversi
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **76 de 96** (línea 7951), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
+Se carga en [[app.html]] en la posición **77 de 97** (línea 7936), después de [[engine.termdata.js]] y antes de [[engine.reconcile.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 76)
+- [[app.html]] — lo carga con `<script>` (posición 77)
 - [[app.html]] — usa `explainChip`, `explainMetric`
 - [[engine.audit.js]] — usa `explainChip`
 - [[engine.clients.js]] — usa `explainChip`, `explainRegister`
@@ -54,7 +54,9 @@ Se carga en [[app.html]] en la posición **76 de 96** (línea 7951), después de
 
 - [[tests.test_cierre_defectos.py]]
 - [[tests.test_no_client_engine.py]]
+- [[tests.test_options_greeks_totals.py]]
 - [[tests.test_repair_graph.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 
 ## Mencionado en sesiones de trabajo
 

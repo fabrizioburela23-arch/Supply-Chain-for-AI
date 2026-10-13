@@ -28,6 +28,7 @@ Overnight 2026-10-10 — arreglos de la revisión (fixer). Cada test fallaba ant
 - [[core.khipu_chat.py]]
 - [[core.live_facts.py]]
 - [[core.voice_agent.py]]
+- [[core.voice_api.py]]
 - [[engine.khipu_chat.js]]
 - [[engine.portfolios.js]]
 - [[engine.riskreport.js]]

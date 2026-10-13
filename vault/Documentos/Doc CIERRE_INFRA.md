@@ -3,14 +3,14 @@ tipo: "documento"
 capa: "Documentación"
 ruta: "docs/CIERRE_INFRA.md"
 lenguaje: "markdown"
-lineas: 422
+lineas: 429
 aliases: ["docs/CIERRE_INFRA.md"]
 tags: ["capa/documentacion", "tipo/documento"]
 ---
 
 # docs/CIERRE_INFRA.md
 
-> Documento · capa [[Capa Documentación]] · 422 líneas · `docs/CIERRE_INFRA.md`
+> Documento · capa [[Capa Documentación]] · 429 líneas · `docs/CIERRE_INFRA.md`
 
 ## De qué trata
 
@@ -18,6 +18,7 @@ CIERRE — infraestructura operativa y plan de BRECHAS v2 — \*Auditoría de ci
 
 ## Menciona
 
+- [[Doc CLAUDE]]
 - [[app.html]]
 - [[brokerage.service.py]]
 - [[core.ai_usage.py]]
@@ -27,19 +28,19 @@ CIERRE — infraestructura operativa y plan de BRECHAS v2 — \*Auditoría de ci
 - [[core.governance.py]]
 - [[core.impls.py]]
 - [[core.numbers.py]]
-- [[core.options.py]]
-- [[core.portfolio_ai.py]]
 - [[core.replay.py]]
-- [[core.risk_report.py]]
+- [[core.scenario_pnl.py]]
 - [[core.screener.py]]
+- [[core.trading_agent.py]]
+- [[core.voice_api.py]]
 - [[Doc INFRA_OPERATIVA]]
 - [[Doc REVISION_GRAFO]]
 - [[Doc REVISION_INSTRUMENTOS]]
 - [[engine.audit.js]]
 - [[engine.cockpit.js]]
 - [[engine.explain.js]]
-- [[engine.maptime.js]]
 - [[engine.statematrix.js]]
+- [[engine.trade.js]]
 - [[engine.voice.js]]
 - [[matrix.api.py]]
 - [[matrix.engine.py]]
@@ -52,6 +53,7 @@ CIERRE — infraestructura operativa y plan de BRECHAS v2 — \*Auditoría de ci
 - [[research.analytics.py]]
 - [[research.outcomes.py]]
 - [[scripts.audit_graph.py]]
+- [[scripts.calibrate_kernel.py]]
 - [[scripts.migrate_v0_to_ontology.py]]
 - [[server.py]]
 - [[sw.js]]
@@ -60,6 +62,7 @@ CIERRE — infraestructura operativa y plan de BRECHAS v2 — \*Auditoría de ci
 - [[tests.test_cierre_infra.py]]
 - [[tests.test_reconcile.py]]
 - [[tests.test_vault.py]]
+- [[tests.test_voice_agent_split.py]]
 
 ## Mencionado en sesiones de trabajo
 

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "matrix/engine.py"
 lenguaje: "python"
-lineas: 935
+lineas: 957
 aliases: ["matrix/engine.py"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # matrix/engine.py
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 935 líneas · `matrix/engine.py`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 957 líneas · `matrix/engine.py`
 
 ## Para qué sirve
 
@@ -29,17 +29,18 @@ construcción, modulación y propagación de matrices.
 - `fragility_cap()` — Tope de fragilidad POR NODO (`kernel.params.fragility_cap`; 1.0.0: 2.5). Con decenas de Factores latentes activos a la vez, la suma sin … _(línea 463)_
 - `fragility(idx, factors)` — Vector de FRAGILIDAD por nodo (1.0 baseline). Cada hiperarista activa aumenta la fragilidad de sus miembros: f = 1 + Σ coef·(severity/5), … _(línea 472)_
 - `modulate(mats, idx, factors)` — Compat: para el endpoint que muestra la matriz 'modulada', devuelve las matrices con las columnas de los miembros escaladas por su … _(línea 489)_
-- `propagate(mats, idx, ids, shock_ids, magnitude=…, damping=…, max_hops=…, threshold=…, rel_weights=…, frag=…, nonlinear=…, eps=…, dt=…, x0=…, direction=…)` — EL kernel de propagación: shock en `shock_ids` → impacto 0..1 por nodo. _(línea 561)_
-- `propagate_block(DT, frag, X0, damping=…, max_hops=…, threshold=…, nonlinear=…)` — EL MISMO kernel que `propagate`, en LOTE: cada columna de X0 (n×k) es un choque independiente. Las operaciones son las del bucle, en el … _(línea 627)_
-- `propagate_many(mats, idx, ids, sources, magnitude=…, damping=…, max_hops=…, threshold=…, rel_weights=…, frag=…, nonlinear=…, dt=…, chunk=…)` — Choques de UN nodo para cada id de `sources`, en lote (vistas rápidas, INFRA_OPERATIVA §4.4). Devuelve {source_id: (impacts, hops)} con … _(línea 660)_
-- `dependency_transpose(mats, rel_weights=…, direction=…)` — Tᵀ lista para `propagate(..., dt=…)`: se calcula UNA vez y se reutiliza en todos los choques. direction='up' (auge de demanda) solo si el … _(línea 688)_
-- `direction_up_enabled()` — ¿El release vigente calcula AUGES de demanda (cliente → proveedor) con el kernel? 1.0.0: no (la API lo dice con honestidad: 'unsupported'); … _(línea 696)_
-- `chokepoint_order(metrics, sums)` — Orden del ranking de cuellos de botella (kernel.params.chokepoint_rank_by). 1.0.0 'count': por cantidad de empresas golpeadas ≥ 1 % (orden … _(línea 702)_
-- `propagate_bands(mats, idx, ids, shock_ids, n_samples=…, seed=…, mag_sigma=…, frag_sigma=…, frag=…, **kw)` — BANDAS DE INCERTIDUMBRE Monte Carlo (spec §extensiones avanzadas, aditivo). Corre el kernel N veces perturbando la magnitud del shock y los … _(línea 712)_
-- `pagerank(agg, alpha=…, tol=…, max_iter=…, personalization=…)` — PageRank ponderado sobre el grafo de DEPENDENCIA (agg.T): un nodo es central si MUCHOS (transitivamente) dependen de él — alinea con el … _(línea 749)_
-- `spectral_radius(mats, factors=…, idx=…, rel_weights=…, damping=…)` — ρ(T): radio espectral de la matriz de transmisión EFECTIVA por hop (incluida la modulación por fragilidad si hay Factores activos). El … _(línea 793)_
-- `compute_metrics(session, as_of=…, known=…)` — Métricas por nodo: grado in/out ponderado, tamaño de cascada (¿a cuántos arrastra si cae?), ranking de chokepoints y PageRank (centralidad … _(línea 862)_
-- `graph_key(session)` — Clave de caché derivada del grafo: `g{graph_version}.l{linaje}.r{release[:8]}`. Una lectura por PK (~0,05 ms, sin degradarse con millones … _(línea 914)_
+- `persistent_source()` — ¿La fuente del choque PERSISTE en cada salto (PROP-08)? kernel.params 2.1.0 `propagation: 'persistent'`; 1.0.0 y 2.0.0 no traen la clave → … _(línea 551)_
+- `propagate(mats, idx, ids, shock_ids, magnitude=…, damping=…, max_hops=…, threshold=…, rel_weights=…, frag=…, nonlinear=…, eps=…, dt=…, x0=…, direction=…)` — EL kernel de propagación: shock en `shock_ids` → impacto 0..1 por nodo. _(línea 567)_
+- `propagate_block(DT, frag, X0, damping=…, max_hops=…, threshold=…, nonlinear=…)` — EL MISMO kernel que `propagate`, en LOTE: cada columna de X0 (n×k) es un choque independiente. Las operaciones son las del bucle, en el … _(línea 643)_
+- `propagate_many(mats, idx, ids, sources, magnitude=…, damping=…, max_hops=…, threshold=…, rel_weights=…, frag=…, nonlinear=…, dt=…, chunk=…)` — Choques de UN nodo para cada id de `sources`, en lote (vistas rápidas, INFRA_OPERATIVA §4.4). Devuelve {source_id: (impacts, hops)} con … _(línea 682)_
+- `dependency_transpose(mats, rel_weights=…, direction=…)` — Tᵀ lista para `propagate(..., dt=…)`: se calcula UNA vez y se reutiliza en todos los choques. direction='up' (auge de demanda) solo si el … _(línea 710)_
+- `direction_up_enabled()` — ¿El release vigente calcula AUGES de demanda (cliente → proveedor) con el kernel? 1.0.0: no (la API lo dice con honestidad: 'unsupported'); … _(línea 718)_
+- `chokepoint_order(metrics, sums)` — Orden del ranking de cuellos de botella (kernel.params.chokepoint_rank_by). 1.0.0 'count': por cantidad de empresas golpeadas ≥ 1 % (orden … _(línea 724)_
+- `propagate_bands(mats, idx, ids, shock_ids, n_samples=…, seed=…, mag_sigma=…, frag_sigma=…, frag=…, **kw)` — BANDAS DE INCERTIDUMBRE Monte Carlo (spec §extensiones avanzadas, aditivo). Corre el kernel N veces perturbando la magnitud del shock y los … _(línea 734)_
+- `pagerank(agg, alpha=…, tol=…, max_iter=…, personalization=…)` — PageRank ponderado sobre el grafo de DEPENDENCIA (agg.T): un nodo es central si MUCHOS (transitivamente) dependen de él — alinea con el … _(línea 771)_
+- `spectral_radius(mats, factors=…, idx=…, rel_weights=…, damping=…)` — ρ(T): radio espectral de la matriz de transmisión EFECTIVA por hop (incluida la modulación por fragilidad si hay Factores activos). El … _(línea 815)_
+- `compute_metrics(session, as_of=…, known=…)` — Métricas por nodo: grado in/out ponderado, tamaño de cascada (¿a cuántos arrastra si cae?), ranking de chokepoints y PageRank (centralidad … _(línea 884)_
+- `graph_key(session)` — Clave de caché derivada del grafo: `g{graph_version}.l{linaje}.r{release[:8]}`. Una lectura por PK (~0,05 ms, sin degradarse con millones … _(línea 936)_
 
 **Internas** (empiezan con `_`): `_P`, `_damage_rels`, `_utcnow`, `_use_sparse`, `_eff_weight`, `_issparse`, `_colsum`, `_rowsum`, `_scale_cols`, `_scale_rows`, `_transpose_csr`, `_active_factors_known`, `_canonical_factors`, `_iso_or_none`, `_dependency_matrix`, `_kp`, `_nonlinear`, `_spectral_power_iter`, `_cache_get`, `_cache_set`
 
@@ -67,7 +68,7 @@ construcción, modulación y propagación de matrices.
 - [[ontology.bulk_import.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 28 pruebas (lista abajo)._
+_Además lo importan 29 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -85,6 +86,7 @@ _Además lo importan 28 pruebas (lista abajo)._
 - [[tests.test_hot_views_parity.py]]
 - [[tests.test_impl_registry.py]]
 - [[tests.test_infra.py]]
+- [[tests.test_kernel_monotone_edges.py]]
 - [[tests.test_kernel_monotone_severity.py]]
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_khipus_os_fixes_server.py]]

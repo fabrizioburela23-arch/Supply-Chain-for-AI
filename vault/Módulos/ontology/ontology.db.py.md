@@ -64,6 +64,8 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[core.prices_store.py]] — lo importa
 - [[core.replay.py]] — lo importa
 - [[core.retention.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
+- [[core.voice_api.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.auth.py]] — lo importa
@@ -79,6 +81,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - [[research.runner.py]] — lo importa
 - [[scripts.audit_graph.py]] — lo importa
 - [[scripts.build_graph_review.py]] — lo importa
+- [[scripts.calibrate_kernel.py]] — lo importa
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[scripts.reconcile_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
@@ -101,7 +104,7 @@ conexión a Postgres (fuente única de verdad de la ontología).
 - herramienta MCP `run_research` → [[API herramientas MCP]]
 - herramienta MCP `submit_order` → [[API herramientas MCP]]
 
-_Además lo importan 72 pruebas (lista abajo)._
+_Además lo importan 78 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -152,6 +155,7 @@ _Además lo importan 72 pruebas (lista abajo)._
 - [[tests.test_ledger_guard.py]]
 - [[tests.test_ledger_privacy.py]]
 - [[tests.test_ledger_review_fixes.py]]
+- [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_no_client_engine.py]]
@@ -168,6 +172,7 @@ _Además lo importan 72 pruebas (lista abajo)._
 - [[tests.test_order_single_path.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_overnight_ai_routing.py]]
+- [[tests.test_overnight_voice_server.py]]
 - [[tests.test_phase3.py]]
 - [[tests.test_portfolio_persist.py]]
 - [[tests.test_portfolio_reports.py]]
@@ -188,6 +193,10 @@ _Además lo importan 72 pruebas (lista abajo)._
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_review_lists.py]]
 - [[tests.test_risk_on_history.py]]
+- [[tests.test_rutas_acceso_decision.py]]
+- [[tests.test_scenario_pnl.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor_autolink.py]]
 - [[tests.test_trading_agent_ledger.py]]
+- [[tests.test_voice_agent_split.py]]

@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ai_gemini_fast.py"
 lenguaje: "python"
-lineas: 191
+lineas: 192
 aliases: ["tests/test_ai_gemini_fast.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ai_gemini_fast.py
 
-> Prueba · capa [[Capa Pruebas]] · 191 líneas · `tests/test_ai_gemini_fast.py`
+> Prueba · capa [[Capa Pruebas]] · 192 líneas · `tests/test_ai_gemini_fast.py`
 
 ## Qué prueba
 

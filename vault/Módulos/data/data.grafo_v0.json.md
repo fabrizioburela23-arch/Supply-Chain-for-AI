@@ -3,14 +3,14 @@ tipo: "datos"
 capa: "Datos del catálogo"
 ruta: "data/grafo_v0.json"
 lenguaje: "json"
-lineas: 45342
+lineas: 45570
 aliases: ["data/grafo_v0.json"]
 tags: ["capa/datos-catalogo", "tipo/datos"]
 ---
 
 # data/grafo_v0.json
 
-> Datos · capa [[Capa Datos del catálogo]] · 45.342 líneas · `data/grafo_v0.json`
+> Datos · capa [[Capa Datos del catálogo]] · 45.570 líneas · `data/grafo_v0.json`
 
 ## Para qué sirve
 
@@ -20,12 +20,14 @@ Generado desde nodes/\*.js vía nodes/merge_graph.js (misma implementación que 
 
 | Clave | Tipo | Tamaño / valor |
 |---|---|---|
-| `exported_at` | fecha | `2026-10-06T04:19:20.593Z` |
+| `exported_at` | fecha | `2026-10-13T18:20:44.583Z` |
 | `counts` | objeto | 8 |
 | `nodes` | lista | 937 |
 | `links` | lista | 2.510 |
 | `node_id_alias` | objeto | 93 |
 | `legal_names` | objeto | 159 |
+| `voice_aliases` | objeto | 210 |
+| `resolve_stopwords` | lista | 14 |
 | `categories` | objeto | 108 |
 | `sectors9` | objeto | 13 |
 | `cat_to_sector` | objeto | 108 |
@@ -48,6 +50,7 @@ _Nada interno._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_alias_voz_paridad.py]]
 - [[tests.test_cleanup_nrs_parity.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_docs_facts.py]]
@@ -57,10 +60,12 @@ _Nada interno._
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_khipu_chat.py]]
 - [[tests.test_khipus_os_chat.py]]
+- [[tests.test_maptime_asof.py]]
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_repair_graph.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_server_smoke.py]]
 - [[tests.test_voice_tour.py]]
 - [[tests.test_world.py]]

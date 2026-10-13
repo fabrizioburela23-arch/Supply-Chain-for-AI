@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-13"
-ruta: "docs/ESTADO.md#L12"
+ruta: "docs/ESTADO.md#L37"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-13 (j) — ESPACIO: VUELVEN LOS SATÉLITES (arreglo urgente) — sw v265
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 12 (13 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 37 (13 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 
@@ -20,4 +20,4 @@ tags: ["capa/documentacion", "tipo/sesion"]
 - [[engine.spacemonitor.js]]
 - [[tests.test_space_satellites.py]]
 
-← más antigua: [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
+← más antigua: [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]] · más nueva: [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]] →

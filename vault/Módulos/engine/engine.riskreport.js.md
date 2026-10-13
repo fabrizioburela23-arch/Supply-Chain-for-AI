@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/riskreport.js"
 lenguaje: "javascript"
-lineas: 992
+lineas: 1033
 aliases: ["engine/riskreport.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/riskreport.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 992 líneas · `engine/riskreport.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 1.033 líneas · `engine/riskreport.js`
 
 ## Para qué sirve
 
@@ -28,11 +28,11 @@ REPORTE DE RIESGO DE CARTERA: VaR + Vega (Kappa).
 - [[engine.portfolios.js]] — usa `KhipuPortfolios`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **53 de 96** (línea 7913), después de [[engine.research.js]] y antes de [[engine.worldmonitor.js]].
+Se carga en [[app.html]] en la posición **54 de 97** (línea 7898), después de [[engine.research.js]] y antes de [[engine.worldmonitor.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 53)
+- [[app.html]] — lo carga con `<script>` (posición 54)
 - [[app.html]] — usa `KhipuRisk`
 - [[engine.cockpit.js]] — usa `KhipuRisk`
 - [[engine.khipu_chat.js]] — usa `KhipuRisk`
@@ -47,9 +47,11 @@ Se carga en [[app.html]] en la posición **53 de 96** (línea 7913), después de
 
 ## Pruebas que lo cubren
 
+- [[tests.test_options_greeks_totals.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_ui_portfolios_risk.py]]
 - [[tests.test_review_batch_e.py]]
+- [[tests.test_risk_robust.py]]
 
 ## Mencionado en sesiones de trabajo
 

@@ -1147,7 +1147,6 @@
     if (memo.status === 'rejected') return L('Comité: ', 'Committee: ') + dec + L(' — rechazado por ti · ', ' — rejected by you · ') + when;
     return L('Comité: ', 'Committee: ') + dec + ' · ' + when;
   }
-  window.KhipuOSWin_memoLine = memoLine;   // pruebas
   function tipHTML(it) {
     var v = +it.overall_conviction, by = it.by_horizon || {}, rows = '';
     ['SHORT_TERM', 'MEDIUM_TERM', 'LONG_TERM', 'STRUCTURAL', 'INTRADAY'].forEach(function (h) {

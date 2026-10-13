@@ -32,11 +32,11 @@ _Nada interno._
 - [[core.agents_api.py]] — lo importa
 - [[core.identity.py]] — lo importa
 - [[core.khipu_chat.py]] — lo importa
+- [[core.voice_api.py]] — lo importa
 - [[research.agent_skills.py]] — lo importa
 - [[research.ask_agent.py]] — lo importa
 - [[research.deliberation.py]] — lo importa
 - [[research.runner.py]] — lo importa
-- [[server.py]] — lo importa
 
 _Además lo importan 7 pruebas (lista abajo)._
 

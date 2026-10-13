@@ -70,7 +70,7 @@ function boot(store, opts) {
     localStorage: mkLS(store), document, location: { href: 'https://app.example/' }, URL,
     setTimeout, clearTimeout, console, Uint8Array, crypto: require('crypto').webcrypto,
     AbortController, Response, Headers,
-    fetch: async (url) => { fetchCalls++; return opts.fetch ? opts.fetch(url) : Promise.reject(new Error('offline')); },
+    fetch: async (url, o) => { fetchCalls++; return opts.fetch ? opts.fetch(url, o) : Promise.reject(new Error('offline')); },
     LANG: opts.lang, __KHIPU_STALE_SHELL: opts.stale ? 1 : undefined, BASE: '',
   };
   ctx.window = ctx;
@@ -161,6 +161,20 @@ function boot(store, opts) {
   const sy = boot({}, { fetch: async (u) => (/trade\/status/.test(u) ? { ok: true, json: async () => ({ pin_set: true, paper: true }) } : { status: 200, ok: true }) });
   const r = await sy.w._tradeFetch('/api/trade/order', { method: 'POST' }, false);
   out.synth = { status: r.status, code: (await r.json()).code, fetches: sy.fetches() };
+  // 6c) G5-18: el modo (papel/real) solo llega con el PIN → se manda el PIN GUARDADO; uno viejo (pin_valid:false)
+  //     se olvida; sin PIN `paper` es null
+  const seen = [];
+  const pstore = { khipu_trade_pin: '4321', khipu_trade_pin_exp: String(Date.now() + 3600e3) };
+  const sp = boot(pstore, { fetch: async (u, o) => { seen.push((o && o.headers && o.headers['X-Trade-Pin']) || null);
+    return { ok: true, json: async () => ({ pin_set: true, paper: true, pin_valid: true }) }; } });
+  const withPin = await sp.w._tradeStatusInfo();
+  const bstore = { khipu_trade_pin: 'viejo', khipu_trade_pin_exp: String(Date.now() + 3600e3) };
+  const sb = boot(bstore, { fetch: async () => ({ ok: true, json: async () => ({ pin_set: true, pin_valid: false, mode_hidden: true }) }) });
+  const badPin = await sb.w._tradeStatusInfo();
+  const sn = boot({}, { fetch: async (u, o) => { seen.push((o && o.headers && o.headers['X-Trade-Pin']) || null);
+    return { ok: true, json: async () => ({ pin_set: true, mode_hidden: true }) }; } });
+  const noPin = await sn.w._tradeStatusInfo();
+  out.modePin = { withPin, sent: seen, badPin, cleared: !('khipu_trade_pin' in bstore), noPin };
   // 7) franja con el shell viejo del SW: se pinta al instante (ES/EN)
   const bs = boot({}, { stale: true });
   const bn = bs.appended.find(e => e.id === 'srv-down');
@@ -233,6 +247,14 @@ def test_trade_status_gives_paper_without_pin(app_res):
     assert y['fetches'] == 1                     # solo /api/trade/status; la orden NO salió
 
 
+def test_trade_status_mode_only_with_stored_pin(app_res):
+    m = app_res['modePin']
+    assert m['withPin'] == {'pin_set': True, 'paper': True}
+    assert m['sent'] == ['4321', None]                       # PIN guardado → cabecera; sin PIN → nada (nunca se pide)
+    assert m['badPin'] == {'pin_set': True, 'paper': None} and m['cleared'] is True
+    assert m['noPin'] == {'pin_set': True, 'paper': None}
+
+
 def test_stale_shell_banner_first_block(app_res):
     b = app_res['banner']
     assert b['es'] and b['en'] and b['notWithoutFlag']
@@ -245,7 +267,8 @@ def test_trade_panel_checks_duplicate_before_success():
     i = html.index('window.submitTradePanelOrder = async function')
     body = html[i:html.index('async function _tpLoadAccount', i)]
     assert body.index('_tradeOrderIsDup(st, d)') < body.index('r.ok && d && (d.id || d.status)')
-    voice = open(os.path.join(ROOT, 'engine', 'voice.js'), encoding='utf-8').read()
+    # lote I4 (G5-07): el trading compartido salió de voice.js a engine/trade.js
+    voice = open(os.path.join(ROOT, 'engine', 'trade.js'), encoding='utf-8').read()
     j = voice.index('window._executeTradeOrder = async function')
     vb = voice[j:voice.index('window._openBrokerStage', j)]
     assert vb.index('_tradeOrderIsDup') < vb.index('r.ok && d && (d.id || d.status)')

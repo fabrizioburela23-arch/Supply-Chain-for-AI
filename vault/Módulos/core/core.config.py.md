@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/config.py"
 lenguaje: "python"
-lineas: 80
+lineas: 82
 aliases: ["core/config.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/config.py
 
-> Módulo · capa [[Capa Infraestructura]] · 80 líneas · `core/config.py`
+> Módulo · capa [[Capa Infraestructura]] · 82 líneas · `core/config.py`
 
 ## Para qué sirve
 
@@ -63,6 +63,7 @@ _Además lo importan 5 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_config_env_strip.py]]
 - [[tests.test_investigador.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
 - [[tests.test_overnight_ai_routing.py]]
@@ -70,3 +71,7 @@ _Además lo importan 5 pruebas (lista abajo)._
 - [[tests.test_providers.py]]
 - [[tests.test_quotes_live.py]]
 - [[tests.test_repair_prices.py]]
+
+## Mencionado en sesiones de trabajo
+
+- [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]

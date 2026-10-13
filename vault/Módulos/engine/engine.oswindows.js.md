@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/oswindows.js"
 lenguaje: "javascript"
-lineas: 1518
+lineas: 1517
 aliases: ["engine/oswindows.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/oswindows.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.518 líneas · `engine/oswindows.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 1.517 líneas · `engine/oswindows.js`
 
 ## Para qué sirve
 
@@ -18,7 +18,7 @@ VENTANAS NATIVAS de Khipus OS (2026-10-06)
 
 ## API pública (globales que define)
 
-`window.KhipuOSWin`, `window.KhipuOSWin_memoLine`
+`window.KhipuOSWin`
 
 ## Depende de
 
@@ -32,11 +32,11 @@ VENTANAS NATIVAS de Khipus OS (2026-10-06)
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`
 
-Se carga en [[app.html]] en la posición **85 de 96** (línea 7960), después de [[engine.portfolios.js]] y antes de [[engine.khipu_chat.js]].
+Se carga en [[app.html]] en la posición **86 de 97** (línea 7945), después de [[engine.portfolios.js]] y antes de [[engine.khipu_chat.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 85)
+- [[app.html]] — lo carga con `<script>` (posición 86)
 - [[engine.cockpit.js]] — usa `KhipuOSWin`
 - [[engine.khipu_chat.js]] — usa `KhipuOSWin`
 - [[engine.voice.js]] — usa `KhipuOSWin`

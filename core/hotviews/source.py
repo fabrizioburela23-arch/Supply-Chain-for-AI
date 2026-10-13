@@ -115,7 +115,7 @@ def load_pg():
 
 # ── grafo de lectura (paso 8) ───────────────────────────────────────────────
 CATALOG_KEYS = ('sectors9', 'categories', 'cat_to_sector', 'legal_names', 'preipo_intel', 'counts',
-                'exported_at', 'source')
+                'exported_at', 'source', 'voice_aliases', 'resolve_stopwords')
 
 
 def _catalog_meta(g, sha):

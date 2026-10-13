@@ -29,7 +29,7 @@ _Nada interno._
 
 ## Lo usan
 
-- [[server.py]] — lo importa
+- [[core.voice_api.py]] — lo importa
 
 _Además lo importan 1 pruebas (lista abajo)._
 

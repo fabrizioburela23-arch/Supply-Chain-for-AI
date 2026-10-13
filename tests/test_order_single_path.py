@@ -260,7 +260,7 @@ def test_close_and_agent_use_the_service_without_db(client, alpaca, nodb, spies,
                  ('daily_pnl_pct', 0.0), ('min_confidence', 65), ('max_orders_per_cycle', 3), ('max_pos_pct', 5.0),
                  ('stop_loss_pct', 3.0)):
         monkeypatch.setitem(server._AGENT, k, v)
-    monkeypatch.setattr(server, '_agent_analyze',
+    monkeypatch.setattr(server._trading_agent, '_agent_analyze',
                         lambda *a, **k: {'action': 'buy', 'confidence': 90, 'reason': 't', 'size_pct': 2})
     monkeypatch.setattr(server, 'FINNHUB', 'fh')
     monkeypatch.setattr(server, '_fetch_quote_raw', lambda t, timeout=8: ({'c': 100.0, 'pc': 99.0}, None))

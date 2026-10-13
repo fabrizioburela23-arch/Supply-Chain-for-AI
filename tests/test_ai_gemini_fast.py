@@ -96,7 +96,8 @@ def test_gemini_3_usa_niveles_de_pensamiento(monkeypatch):
 
 def test_precio_gemini_38():
     from core import ai_usage
-    assert ai_usage.price_for('gemini', 'gemini-3.8-flash') == (0.75, 3.75)
+    assert ai_usage.price_for('gemini', 'gemini-3.8-flash', at='2026-12-31') == (0.75, 3.75)   # lanzamiento
+    assert ai_usage.price_for('gemini', 'gemini-3.8-flash', at='2027-01-01') == (1.5, 7.5)     # L3-16: por fecha
 
 
 class _Err:

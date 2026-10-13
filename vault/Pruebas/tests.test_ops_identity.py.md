@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_ops_identity.py"
 lenguaje: "python"
-lineas: 262
+lineas: 263
 aliases: ["tests/test_ops_identity.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_ops_identity.py
 
-> Prueba · capa [[Capa Pruebas]] · 262 líneas · `tests/test_ops_identity.py`
+> Prueba · capa [[Capa Pruebas]] · 263 líneas · `tests/test_ops_identity.py`
 
 ## Qué prueba
 
@@ -32,6 +32,7 @@ INFRA_OPERATIVA paso 5: QUIÉN actúa sale de la autenticación, no del texto li
 - [[core.pin.py]]
 - [[core.scheduler.py]]
 - [[engine.crypto.js]]
+- [[engine.trade.js]]
 - [[engine.voice.js]]
 - [[mcp_server.api.py]]
 - [[ontology.actions.py]]

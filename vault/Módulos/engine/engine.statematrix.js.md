@@ -25,11 +25,11 @@ ESTADO VISUAL de la simulación (solo animación; SIN matemática de contagio) P
 - [[app.html]] — usa `MKT`, `NODE_BY_ID`, `computeNRS`, `quotePx`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`
 
-Se carga en [[app.html]] en la posición **66 de 96** (línea 7941), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
+Se carga en [[app.html]] en la posición **67 de 97** (línea 7926), después de [[engine.insights.js]] y antes de [[engine.livesim.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 66)
+- [[app.html]] — lo carga con `<script>` (posición 67)
 - [[engine.compare.js]] — usa `KhipuState`
 - [[engine.livesim.js]] — usa `KhipuState`
 
@@ -37,6 +37,7 @@ Se carga en [[app.html]] en la posición **66 de 96** (línea 7941), después de
 
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_repair_graph.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour_client.py]]
 

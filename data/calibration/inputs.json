@@ -1,0 +1,1205 @@
+{
+ "benchmark": {
+  "symbol": "SPY"
+ },
+ "created_at": "2026-10-13T18:46:11+00:00",
+ "episodes": [
+  {
+   "event_date": "2021-02-01",
+   "id": "chip_shortage_2021",
+   "label_en": "2021 chip shortage",
+   "label_es": "Escasez de chips 2021",
+   "note_en": "Gradual shock: approximate window (Feb-Apr 2021). Seeds = foundries, magnitude 0.3 assumed.",
+   "note_es": "Golpe gradual: ventana aproximada (feb-abr 2021). Semillas = fundiciones, magnitud 0,3 supuesta.",
+   "proposed": true,
+   "reach_1pct": 280,
+   "sample": [
+    {
+     "id": "Nvidia",
+     "impact_pct": 39.16,
+     "seed": false,
+     "symbol": "NVDA"
+    },
+    {
+     "id": "GF",
+     "impact_pct": 30.0,
+     "seed": true,
+     "symbol": "GFS"
+    },
+    {
+     "id": "Samsung",
+     "impact_pct": 30.0,
+     "seed": true,
+     "symbol": "SSNLF"
+    },
+    {
+     "id": "TSMC",
+     "impact_pct": 30.0,
+     "seed": true,
+     "symbol": "TSM"
+    },
+    {
+     "id": "Tesla",
+     "impact_pct": 28.02,
+     "seed": false,
+     "symbol": "TSLA"
+    },
+    {
+     "id": "Oracle",
+     "impact_pct": 23.77,
+     "seed": false,
+     "symbol": "ORCL"
+    },
+    {
+     "id": "Apple",
+     "impact_pct": 22.68,
+     "seed": false,
+     "symbol": "AAPL"
+    },
+    {
+     "id": "Nebius",
+     "impact_pct": 22.37,
+     "seed": false,
+     "symbol": "NBIS"
+    },
+    {
+     "id": "AMD",
+     "impact_pct": 21.23,
+     "seed": false,
+     "symbol": "AMD"
+    },
+    {
+     "id": "Lattice",
+     "impact_pct": 21.0,
+     "seed": false,
+     "symbol": "LSCC"
+    },
+    {
+     "id": "NXP",
+     "impact_pct": 20.52,
+     "seed": false,
+     "symbol": "NXPI"
+    },
+    {
+     "id": "SuperMicro",
+     "impact_pct": 20.5,
+     "seed": false,
+     "symbol": "SMCI"
+    },
+    {
+     "id": "Qualcomm",
+     "impact_pct": 18.17,
+     "seed": false,
+     "symbol": "QCOM"
+    },
+    {
+     "id": "Palantir",
+     "impact_pct": 10.89,
+     "seed": false,
+     "symbol": "PLTR"
+    },
+    {
+     "id": "Cognex",
+     "impact_pct": 8.03,
+     "seed": false,
+     "symbol": "CGNX"
+    },
+    {
+     "id": "Zebra_Technologies",
+     "impact_pct": 7.83,
+     "seed": false,
+     "symbol": "ZBRA"
+    },
+    {
+     "id": "MACOM",
+     "impact_pct": 6.0,
+     "seed": false,
+     "symbol": "MTSI"
+    },
+    {
+     "id": "CrowdStrike",
+     "impact_pct": 4.11,
+     "seed": false,
+     "symbol": "CRWD"
+    },
+    {
+     "id": "NRGEnergy",
+     "impact_pct": 2.73,
+     "seed": false,
+     "symbol": "NRG"
+    },
+    {
+     "id": "FactSet",
+     "impact_pct": 1.63,
+     "seed": false,
+     "symbol": "FDS"
+    }
+   ],
+   "seeds": [
+    {
+     "id": "TSMC",
+     "magnitude": 0.3
+    },
+    {
+     "id": "Samsung",
+     "magnitude": 0.3
+    },
+    {
+     "id": "GF",
+     "magnitude": 0.3
+    },
+    {
+     "id": "SMIC",
+     "magnitude": 0.3
+    }
+   ],
+   "t0": "2021-01-29",
+   "t1": "2021-04-30"
+  },
+  {
+   "event_date": "2022-10-07",
+   "id": "export_controls_2022",
+   "label_en": "US export controls, Oct 2022",
+   "label_es": "Controles de exportación EE. UU., oct-2022",
+   "note_en": "Seeds = China exposure of Nvidia/AMD/ASML; magnitude 0.25 assumed (not a data point).",
+   "note_es": "Semillas = exposición a China de Nvidia/AMD/ASML; magnitud 0,25 supuesta (no es un dato).",
+   "proposed": true,
+   "reach_1pct": 182,
+   "sample": [
+    {
+     "id": "AMD",
+     "impact_pct": 25.0,
+     "seed": true,
+     "symbol": "AMD"
+    },
+    {
+     "id": "ASML",
+     "impact_pct": 25.0,
+     "seed": true,
+     "symbol": "ASML"
+    },
+    {
+     "id": "Nvidia",
+     "impact_pct": 25.0,
+     "seed": true,
+     "symbol": "NVDA"
+    },
+    {
+     "id": "Oracle",
+     "impact_pct": 15.76,
+     "seed": false,
+     "symbol": "ORCL"
+    },
+    {
+     "id": "Nebius",
+     "impact_pct": 14.17,
+     "seed": false,
+     "symbol": "NBIS"
+    },
+    {
+     "id": "Samsung",
+     "impact_pct": 13.2,
+     "seed": false,
+     "symbol": "SSNLF"
+    },
+    {
+     "id": "HPE",
+     "impact_pct": 11.75,
+     "seed": false,
+     "symbol": "HPE"
+    },
+    {
+     "id": "CoreWeave",
+     "impact_pct": 10.94,
+     "seed": false,
+     "symbol": "CRWV"
+    },
+    {
+     "id": "SuperMicro",
+     "impact_pct": 10.83,
+     "seed": false,
+     "symbol": "SMCI"
+    },
+    {
+     "id": "Intel",
+     "impact_pct": 8.35,
+     "seed": false,
+     "symbol": "INTC"
+    },
+    {
+     "id": "Penguin_Solutions",
+     "impact_pct": 7.72,
+     "seed": false,
+     "symbol": "PENG"
+    },
+    {
+     "id": "Dell",
+     "impact_pct": 7.6,
+     "seed": false,
+     "symbol": "DELL"
+    },
+    {
+     "id": "Meta",
+     "impact_pct": 7.41,
+     "seed": false,
+     "symbol": "META"
+    },
+    {
+     "id": "Jabil",
+     "impact_pct": 5.0,
+     "seed": false,
+     "symbol": "JBL"
+    },
+    {
+     "id": "Samsara",
+     "impact_pct": 5.0,
+     "seed": false,
+     "symbol": "IOT"
+    },
+    {
+     "id": "SKHynix",
+     "impact_pct": 3.54,
+     "seed": false,
+     "symbol": "HXSCL"
+    },
+    {
+     "id": "lockheed-martin",
+     "impact_pct": 2.5,
+     "seed": false,
+     "symbol": "LMT"
+    },
+    {
+     "id": "NRGEnergy",
+     "impact_pct": 1.74,
+     "seed": false,
+     "symbol": "NRG"
+    },
+    {
+     "id": "DuPont_Electronics",
+     "impact_pct": 1.5,
+     "seed": false,
+     "symbol": "Q"
+    },
+    {
+     "id": "Newmark Group",
+     "impact_pct": 1.21,
+     "seed": false,
+     "symbol": "NMRK"
+    }
+   ],
+   "seeds": [
+    {
+     "id": "Nvidia",
+     "magnitude": 0.25
+    },
+    {
+     "id": "AMD",
+     "magnitude": 0.25
+    },
+    {
+     "id": "ASML",
+     "magnitude": 0.25
+    }
+   ],
+   "t0": "2022-10-06",
+   "t1": "2022-11-04"
+  },
+  {
+   "event_date": "2024-04-03",
+   "id": "taiwan_quake_2024",
+   "label_en": "Taiwan earthquake, Apr 2024",
+   "label_es": "Terremoto de Taiwán, abr-2024",
+   "note_en": "Seed = TSMC (brief fab stoppages); magnitude 0.1 assumed.",
+   "note_es": "Semilla = TSMC (paradas breves de fábricas); magnitud 0,1 supuesta.",
+   "proposed": true,
+   "reach_1pct": 187,
+   "sample": [
+    {
+     "id": "Nvidia",
+     "impact_pct": 12.83,
+     "seed": false,
+     "symbol": "NVDA"
+    },
+    {
+     "id": "TSMC",
+     "impact_pct": 10.0,
+     "seed": true,
+     "symbol": "TSM"
+    },
+    {
+     "id": "Tesla",
+     "impact_pct": 9.02,
+     "seed": false,
+     "symbol": "TSLA"
+    },
+    {
+     "id": "Oracle",
+     "impact_pct": 7.71,
+     "seed": false,
+     "symbol": "ORCL"
+    },
+    {
+     "id": "Apple",
+     "impact_pct": 7.56,
+     "seed": false,
+     "symbol": "AAPL"
+    },
+    {
+     "id": "Nebius",
+     "impact_pct": 7.27,
+     "seed": false,
+     "symbol": "NBIS"
+    },
+    {
+     "id": "SuperMicro",
+     "impact_pct": 6.35,
+     "seed": false,
+     "symbol": "SMCI"
+    },
+    {
+     "id": "AMD",
+     "impact_pct": 6.1,
+     "seed": false,
+     "symbol": "AMD"
+    },
+    {
+     "id": "Meta",
+     "impact_pct": 6.0,
+     "seed": false,
+     "symbol": "META"
+    },
+    {
+     "id": "CoreWeave",
+     "impact_pct": 5.77,
+     "seed": false,
+     "symbol": "CRWV"
+    },
+    {
+     "id": "STMicroelectronics",
+     "impact_pct": 5.44,
+     "seed": false,
+     "symbol": "STM"
+    },
+    {
+     "id": "MPWR",
+     "impact_pct": 5.0,
+     "seed": false,
+     "symbol": "MPWR"
+    },
+    {
+     "id": "HPE",
+     "impact_pct": 4.92,
+     "seed": false,
+     "symbol": "HPE"
+    },
+    {
+     "id": "Penguin_Solutions",
+     "impact_pct": 3.96,
+     "seed": false,
+     "symbol": "PENG"
+    },
+    {
+     "id": "PowerIntegrations",
+     "impact_pct": 3.0,
+     "seed": false,
+     "symbol": "POWI"
+    },
+    {
+     "id": "Baidu",
+     "impact_pct": 2.57,
+     "seed": false,
+     "symbol": "BIDU"
+    },
+    {
+     "id": "Samsara",
+     "impact_pct": 2.57,
+     "seed": false,
+     "symbol": "IOT"
+    },
+    {
+     "id": "Butterfly",
+     "impact_pct": 2.0,
+     "seed": false,
+     "symbol": "BFLY"
+    },
+    {
+     "id": "MaxLinear",
+     "impact_pct": 2.0,
+     "seed": false,
+     "symbol": "MXL"
+    },
+    {
+     "id": "Lenovo",
+     "impact_pct": 1.66,
+     "seed": false,
+     "symbol": "LNVGY"
+    }
+   ],
+   "seeds": [
+    {
+     "id": "TSMC",
+     "magnitude": 0.1
+    }
+   ],
+   "t0": "2024-04-02",
+   "t1": "2024-04-30"
+  }
+ ],
+ "factors": "active",
+ "graph": {
+  "lineage": "snap:c16c30a052f9",
+  "source": "snapshot"
+ },
+ "kernel_params": {
+  "artifact": "kernel.params@1.0.0",
+  "hash": "0b5a9d403d594388a99b54ab8cd927ede2542eb91bcd14f3178882b417b27e95",
+  "semver": "1.0.0"
+ },
+ "measure": "relative_drawdown",
+ "prices": {
+  "AAPL": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 147.5473,
+    "2022-09-30": 135.5517,
+    "2022-10-07": 137.4054,
+    "2022-10-14": 135.7282,
+    "2022-10-21": 144.4478,
+    "2022-10-28": 152.7555,
+    "2022-11-04": 135.9534,
+    "2024-03-22": 170.4221,
+    "2024-03-28": 169.6307,
+    "2024-04-05": 167.7513,
+    "2024-04-12": 174.6461,
+    "2024-04-19": 163.2206,
+    "2024-04-26": 167.4742
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "AMD": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 67.96,
+    "2022-09-30": 63.36,
+    "2022-10-07": 58.44,
+    "2022-10-14": 55.94,
+    "2022-10-21": 58.82,
+    "2022-10-28": 62.01,
+    "2022-11-04": 62.19,
+    "2024-03-22": 179.65,
+    "2024-03-28": 180.49,
+    "2024-04-05": 170.42,
+    "2024-04-12": 163.28,
+    "2024-04-19": 146.64,
+    "2024-04-26": 157.4
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "ASML": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 421.0636,
+    "2022-09-30": 400.9922,
+    "2022-10-07": 419.2486,
+    "2022-10-14": 366.0242,
+    "2022-10-21": 446.2517,
+    "2022-10-28": 472.2701,
+    "2022-11-04": 453.9187,
+    "2024-03-22": 960.0276,
+    "2024-03-28": 950.7305,
+    "2024-04-05": 959.6258,
+    "2024-04-12": 942.2762,
+    "2024-04-19": 842.0569,
+    "2024-04-26": 902.1503
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "BFLY": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 4.8,
+    "2022-09-30": 4.7,
+    "2022-10-07": 4.66,
+    "2022-10-14": 4.13,
+    "2022-10-21": 4.43,
+    "2022-10-28": 4.81,
+    "2022-11-04": 3.68,
+    "2024-03-22": 1.02,
+    "2024-03-28": 1.08,
+    "2024-04-05": 1.02,
+    "2024-04-12": 0.889,
+    "2024-04-19": 0.765,
+    "2024-04-26": 0.779
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "BIDU": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 118.75,
+    "2022-09-30": 117.49,
+    "2022-10-07": 120.44,
+    "2022-10-14": 100.29,
+    "2022-10-21": 91.23,
+    "2022-10-28": 78.54,
+    "2022-11-04": 85.2,
+    "2024-03-22": 102.18,
+    "2024-03-28": 105.28,
+    "2024-04-05": 106.49,
+    "2024-04-12": 97.54,
+    "2024-04-19": 95.05,
+    "2024-04-26": 100.52
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "CGNX": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "CRWD": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "CRWV": {
+   "adjusted": true,
+   "as_of": "2026-10-13",
+   "closes": {},
+   "currency": "USD",
+   "error": "no prices in the episode windows (listed later, or not available)",
+   "frequency": "weekly",
+   "source": "yahoo_live",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "DELL": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 32.7447,
+    "2022-09-30": 31.5002,
+    "2022-10-07": 31.8966,
+    "2022-10-14": 31.5831,
+    "2022-10-21": 34.2991,
+    "2022-10-28": 36.4492,
+    "2022-11-04": 36.3003,
+    "2024-03-22": 108.0524,
+    "2024-03-28": 109.8526,
+    "2024-04-05": 127.7683,
+    "2024-04-12": 113.3664,
+    "2024-04-19": 110.5843,
+    "2024-04-26": 120.8623
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "FDS": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "GFS": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "HPE": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 10.9666,
+    "2022-09-30": 10.8042,
+    "2022-10-07": 11.2371,
+    "2022-10-14": 11.3543,
+    "2022-10-21": 12.148,
+    "2022-10-28": 12.9777,
+    "2022-11-04": 12.8514,
+    "2024-03-22": 16.3934,
+    "2024-03-28": 16.7332,
+    "2024-04-05": 16.988,
+    "2024-04-12": 16.4406,
+    "2024-04-19": 15.846,
+    "2024-04-26": 16.2047
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "HXSCL": {
+   "adjusted": true,
+   "as_of": null,
+   "closes": {},
+   "currency": "USD",
+   "error": "no prices in the episode windows (listed later, or not available)",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "INTC": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 26.1833,
+    "2022-09-30": 24.5183,
+    "2022-10-07": 24.4707,
+    "2022-10-14": 24.6515,
+    "2022-10-21": 25.66,
+    "2022-10-28": 27.658,
+    "2022-11-04": 27.1926,
+    "2024-03-22": 42.1305,
+    "2024-03-28": 43.714,
+    "2024-04-05": 38.3104,
+    "2024-04-12": 35.3216,
+    "2024-04-19": 33.8469,
+    "2024-04-26": 31.5509
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "IOT": {
+   "adjusted": true,
+   "as_of": "2026-10-13",
+   "closes": {
+    "2022-09-23": 11.66,
+    "2022-09-30": 12.07,
+    "2022-10-07": 13.11,
+    "2022-10-14": 11.0,
+    "2022-10-21": 11.49,
+    "2022-10-28": 12.39,
+    "2022-11-04": 9.67,
+    "2024-03-22": 37.1,
+    "2024-03-28": 37.79,
+    "2024-04-05": 33.89,
+    "2024-04-12": 31.88,
+    "2024-04-19": 30.15,
+    "2024-04-26": 35.99
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "yahoo_live",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "JBL": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 55.6986,
+    "2022-09-30": 57.1545,
+    "2022-10-07": 59.6205,
+    "2022-10-14": 58.3528,
+    "2022-10-21": 61.938,
+    "2022-10-28": 64.7209,
+    "2022-11-04": 63.3641,
+    "2024-03-22": 130.595,
+    "2024-03-28": 133.3425,
+    "2024-04-05": 139.8329,
+    "2024-04-12": 133.4619,
+    "2024-04-19": 118.2114,
+    "2024-04-26": 117.7336
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "LMT": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 371.5955,
+    "2022-09-30": 347.5043,
+    "2022-10-07": 363.4002,
+    "2022-10-14": 350.3111,
+    "2022-10-21": 408.9646,
+    "2022-10-28": 436.1864,
+    "2022-11-04": 433.3076,
+    "2024-03-22": 417.5974,
+    "2024-03-28": 426.0172,
+    "2024-04-05": 426.4948,
+    "2024-04-12": 421.8307,
+    "2024-04-19": 434.4463,
+    "2024-04-26": 432.0299
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "LNVGY": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 12.9267,
+    "2022-09-30": 12.0289,
+    "2022-10-07": 12.0812,
+    "2022-10-14": 12.2206,
+    "2022-10-21": 13.0313,
+    "2022-10-28": 13.6589,
+    "2022-11-04": 13.9291,
+    "2024-03-22": 22.9019,
+    "2024-03-28": 21.3076,
+    "2024-04-05": 20.4413,
+    "2024-04-12": 19.3538,
+    "2024-04-19": 19.2892,
+    "2024-04-26": 21.1785
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "LSCC": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "META": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 139.078,
+    "2022-09-30": 134.3928,
+    "2022-10-07": 132.184,
+    "2022-10-14": 125.5575,
+    "2022-10-21": 128.7766,
+    "2022-10-28": 98.2589,
+    "2022-11-04": 89.9287,
+    "2024-03-22": 505.2812,
+    "2024-03-28": 481.4837,
+    "2024-04-05": 522.8914,
+    "2024-04-12": 507.5817,
+    "2024-04-19": 477.0118,
+    "2024-04-26": 439.5505
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "MPWR": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 359.5216,
+    "2022-09-30": 352.6263,
+    "2022-10-07": 351.85,
+    "2022-10-14": 300.0332,
+    "2022-10-21": 322.9626,
+    "2022-10-28": 336.5184,
+    "2022-11-04": 341.312,
+    "2024-03-22": 658.925,
+    "2024-03-28": 665.1807,
+    "2024-04-05": 642.4882,
+    "2024-04-12": 646.3374,
+    "2024-04-19": 580.8328,
+    "2024-04-26": 664.9942
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "MTSI": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "MXL": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 32.94,
+    "2022-09-30": 32.62,
+    "2022-10-07": 34.22,
+    "2022-10-14": 30.02,
+    "2022-10-21": 31.4,
+    "2022-10-28": 31.82,
+    "2022-11-04": 32.17,
+    "2024-03-22": 18.1,
+    "2024-03-28": 18.67,
+    "2024-04-05": 22.61,
+    "2024-04-12": 22.05,
+    "2024-04-19": 19.65,
+    "2024-04-26": 20.59
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "NBIS": {
+   "adjusted": true,
+   "as_of": "2026-10-13",
+   "closes": {},
+   "currency": "USD",
+   "error": "no prices in the episode windows (listed later, or not available)",
+   "frequency": "weekly",
+   "source": "yahoo_live",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "NMRK": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 8.2952,
+    "2022-09-30": 7.6762,
+    "2022-10-07": 7.9809,
+    "2022-10-14": 8.1047,
+    "2022-10-21": 8.1619,
+    "2022-10-28": 7.5905,
+    "2022-11-04": 7.4666,
+    "2024-03-22": 10.6481,
+    "2024-03-28": 10.8138,
+    "2024-04-05": 10.6773,
+    "2024-04-12": 10.0143,
+    "2024-04-19": 9.3317,
+    "2024-04-26": 9.517
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "NRG": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 36.9206,
+    "2022-09-30": 34.776,
+    "2022-10-07": 37.3658,
+    "2022-10-14": 37.2931,
+    "2022-10-21": 38.4926,
+    "2022-10-28": 40.5917,
+    "2022-11-04": 40.6192,
+    "2024-03-22": 64.6174,
+    "2024-03-28": 65.1176,
+    "2024-04-05": 70.0046,
+    "2024-04-12": 71.1205,
+    "2024-04-19": 67.311,
+    "2024-04-26": 70.0431
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "NVDA": {
+   "adjusted": true,
+   "as_of": "2026-10-13",
+   "closes": {
+    "2022-09-23": 12.4711,
+    "2022-09-30": 12.0955,
+    "2022-10-07": 12.0327,
+    "2022-10-14": 11.1867,
+    "2022-10-21": 12.4213,
+    "2022-10-28": 13.7844,
+    "2022-11-04": 14.1052,
+    "2024-03-22": 94.0209,
+    "2024-03-28": 90.0991,
+    "2024-04-05": 87.7578,
+    "2024-04-12": 87.9353,
+    "2024-04-19": 75.9833,
+    "2024-04-26": 87.4855
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "yahoo_live",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "NXPI": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "ORCL": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 61.0622,
+    "2022-09-30": 57.7702,
+    "2022-10-07": 59.8702,
+    "2022-10-14": 61.1479,
+    "2022-10-21": 69.1253,
+    "2022-10-28": 73.5562,
+    "2022-11-04": 72.263,
+    "2024-03-22": 123.8304,
+    "2024-03-28": 121.7179,
+    "2024-04-05": 121.0299,
+    "2024-04-12": 117.7361,
+    "2024-04-19": 111.6796,
+    "2024-04-26": 113.9447
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "PENG": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 16.27,
+    "2022-09-30": 15.87,
+    "2022-10-07": 14.19,
+    "2022-10-14": 12.88,
+    "2022-10-21": 13.49,
+    "2022-10-28": 13.75,
+    "2022-11-04": 14.54,
+    "2024-03-22": 26.1,
+    "2024-03-28": 26.32,
+    "2024-04-05": 25.75,
+    "2024-04-12": 19.54,
+    "2024-04-19": 16.92,
+    "2024-04-26": 18.34
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "PLTR": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "POWI": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 62.0726,
+    "2022-09-30": 61.001,
+    "2022-10-07": 62.2244,
+    "2022-10-14": 59.7396,
+    "2022-10-21": 62.0158,
+    "2022-10-28": 63.8651,
+    "2022-11-04": 62.7271,
+    "2024-03-22": 67.4862,
+    "2024-03-28": 68.8527,
+    "2024-04-05": 66.2641,
+    "2024-04-12": 65.475,
+    "2024-04-19": 60.5191,
+    "2024-04-26": 64.734
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "Q": {
+   "adjusted": true,
+   "as_of": "2026-10-13",
+   "closes": {},
+   "currency": "USD",
+   "error": "no prices in the episode windows (listed later, or not available)",
+   "frequency": "weekly",
+   "source": "yahoo_live",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "QCOM": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "SMCI": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 5.343,
+    "2022-09-30": 5.507,
+    "2022-10-07": 5.893,
+    "2022-10-14": 5.402,
+    "2022-10-21": 6.453,
+    "2022-10-28": 6.872,
+    "2022-11-04": 7.663,
+    "2024-03-22": 97.274,
+    "2024-03-28": 101.003,
+    "2024-04-05": 94.802,
+    "2024-04-12": 89.849,
+    "2024-04-19": 71.365,
+    "2024-04-26": 85.744
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "SPY": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 349.3522,
+    "2022-09-30": 339.1265,
+    "2022-10-07": 344.453,
+    "2022-10-14": 339.5537,
+    "2022-10-21": 355.3717,
+    "2022-10-28": 369.3571,
+    "2022-11-04": 357.3276,
+    "2024-03-22": 506.2621,
+    "2024-03-28": 508.0686,
+    "2024-04-05": 503.5618,
+    "2024-04-12": 496.1992,
+    "2024-04-19": 480.9592,
+    "2024-04-26": 493.6834
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "SSNLF": {
+   "adjusted": false,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 4854325046149120.0,
+    "2022-09-30": 40.5999,
+    "2022-10-07": 40.5999,
+    "2022-10-14": 40.5999,
+    "2022-10-21": 40.5999,
+    "2022-10-28": 40.5999,
+    "2022-11-04": 40.5999,
+    "2024-03-22": 14128491520.0,
+    "2024-03-28": 40.5999,
+    "2024-04-05": 40.5999,
+    "2024-04-12": 40.5999,
+    "2024-04-19": 40.5999,
+    "2024-04-26": 40.5999
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "STM": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 32.0892,
+    "2022-09-30": 29.8418,
+    "2022-10-07": 31.5587,
+    "2022-10-14": 29.5236,
+    "2022-10-21": 32.1277,
+    "2022-10-28": 30.8642,
+    "2022-11-04": 30.6135,
+    "2024-03-22": 42.1018,
+    "2024-03-28": 42.0435,
+    "2024-04-05": 40.7892,
+    "2024-04-12": 39.9433,
+    "2024-04-19": 37.5319,
+    "2024-04-26": 40.1864
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "TSLA": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 275.33,
+    "2022-09-30": 265.25,
+    "2022-10-07": 223.07,
+    "2022-10-14": 204.99,
+    "2022-10-21": 214.44,
+    "2022-10-28": 228.52,
+    "2022-11-04": 207.47,
+    "2024-03-22": 170.83,
+    "2024-03-28": 175.79,
+    "2024-04-05": 164.9,
+    "2024-04-12": 171.05,
+    "2024-04-19": 147.05,
+    "2024-04-26": 168.29
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "TSM": {
+   "adjusted": true,
+   "as_of": "2026-10-12",
+   "closes": {
+    "2022-09-23": 69.5559,
+    "2022-09-30": 64.556,
+    "2022-10-07": 65.6765,
+    "2022-10-14": 60.187,
+    "2022-10-21": 60.0269,
+    "2022-10-28": 58.3886,
+    "2022-11-04": 58.8311,
+    "2024-03-22": 136.22,
+    "2024-03-28": 131.8681,
+    "2024-04-05": 137.0148,
+    "2024-04-12": 138.1392,
+    "2024-04-19": 123.7747,
+    "2024-04-26": 134.0489
+   },
+   "currency": "USD",
+   "frequency": "weekly",
+   "source": "khipus_eod:yahoo",
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  },
+  "ZBRA": {
+   "closes": {},
+   "currency": null,
+   "error": "not fetched: the MCP history starts 2021-10-15 (5-year range), before this only the 2021 episode needs it",
+   "frequency": "weekly",
+   "source": null,
+   "via": "MCP get_history (Khipus production, weekly, range 5y) fetched 2026-10-13; window slices copied verbatim"
+  }
+ },
+ "prices_fetched_at": "2026-10-13T18:48:10+00:00",
+ "prices_note": "Weekly adjusted closes (last close of each week) from Khipus production (prices_eod, else Yahoo) via the read-only MCP get_history tool; only the window slices are stored. The 2021 episode has no prices in that range.",
+ "schema": "khipus.calibration.inputs/1"
+}

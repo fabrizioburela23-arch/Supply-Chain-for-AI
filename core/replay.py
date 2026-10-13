@@ -141,6 +141,7 @@ KIND_LABELS = {
     'alert.rule': ('Regla de alerta', 'Alert rule'), 'alert.fire': ('Alerta disparada', 'Alert fired'),
     'whatif.shock': ('Qué pasaría si (choque)', 'What-if (shock)'),
     'whatif.factor_fire': ('Qué pasaría si (factor de crisis)', 'What-if (crisis factor)'),
+    'whatif.agent_sim': ('Simulación por agentes', 'Agent simulation'),
     'simulation.save': ('Simulación guardada', 'Saved simulation'), 'insight.snapshot': ('Insights', 'Insights'),
     'chat.route': ('Chat: ruta', 'Chat: route'), 'chat.answer': ('Chat: respuesta', 'Chat: answer'),
     'mcp.tool_call': ('IA externa (MCP)', 'External AI (MCP)'),
@@ -529,7 +530,7 @@ def _replay_whatif_shock(run, session, arts):
     if gv is None:
         return
     with impls.under(arts):
-        if ep == '/api/hot/scenario':
+        if ep in ('/api/hot/scenario', '/api/hot/scenario_pnl'):   # scenario_pnl: el mismo choque + κ (no se repite el dinero)
             core = _graph(run, session, arts, None, gv)
             _view_check(run, session, gen, core)
             x0 = np.zeros(len(core.ids))

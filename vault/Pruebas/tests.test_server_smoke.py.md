@@ -21,6 +21,7 @@ Khipu Finance smoke tests No API keys required. Tests structure and static respo
 ## Cubre
 
 - [[core.quotes.py]]
+- [[core.voice_api.py]]
 - [[data.grafo_v0.json]]
 - [[engine.graph3d.js]]
 - [[engine.hypergraph.js]]

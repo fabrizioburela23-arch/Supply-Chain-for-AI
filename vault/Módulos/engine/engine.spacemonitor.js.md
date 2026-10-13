@@ -30,11 +30,11 @@ SPACE MONITOR (pestaña 🚀 Espacio).
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`, `sectorOf`
 
-Se carga en [[app.html]] en la posición **55 de 96** (línea 7915), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
+Se carga en [[app.html]] en la posición **56 de 97** (línea 7900), después de [[engine.worldmonitor.js]] y antes de [[engine.pickers.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 55)
+- [[app.html]] — lo carga con `<script>` (posición 56)
 - [[app.html]] — usa `KhipuSpace`
 
 ## Endpoints que llama

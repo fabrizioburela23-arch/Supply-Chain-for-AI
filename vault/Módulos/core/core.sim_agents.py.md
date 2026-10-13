@@ -35,15 +35,17 @@ Motor de simulación POR AGENTES (interno).
 
 ## Lo usan
 
+- [[core.decision_sites.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
 - [[tests.test_ai_usage.py]]
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_ops_single_source.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_scenario_kernel.py]]
 - [[tests.test_sim_agents.py]]
 

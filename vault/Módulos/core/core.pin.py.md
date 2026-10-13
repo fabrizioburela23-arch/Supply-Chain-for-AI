@@ -49,6 +49,8 @@ verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[core.ledger_api.py]] — lo importa
 - [[core.ops_check.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
+- [[core.voice_api.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[mcp_server.api.py]] — lo importa
 - [[mcp_server.auth.py]] — lo importa
@@ -58,7 +60,7 @@ verificación ÚNICA del PIN de operador (X-Trade-Pin).
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 22 pruebas (lista abajo)._
+_Además lo importan 23 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -93,6 +95,7 @@ _Además lo importan 22 pruebas (lista abajo)._
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_security.py]]
 - [[tests.test_trading_agent_ledger.py]]
+- [[tests.test_voice_agent_split.py]]
 
 ## Mencionado en sesiones de trabajo
 

@@ -19,6 +19,13 @@ Métricas (retornos diarios, días comunes a todas las posiciones):
   · backtest del VaR 95 % FUERA de muestra (ventana móvil) + prueba de Kupiec (D3);
     el conteo en muestra (siempre ≈5 %, tautológico) queda solo de referencia
 
+Batch I2 (BRECHAS L2-14/15/16/18; reglas en governance/artifacts/policy.risk@*.json, matemática en
+core/risk_models.py): AL LADO de lo anterior, volatilidad EWMA (RiskMetrics λ 0,94) y con contracción de
+Ledoit-Wolf, VaR/CVaR a h días con ventanas superpuestas, VaR normal a h días y Cornish-Fisher, Sharpe aritmético
+con ^IRX convertido de tasa de descuento a rendimiento equivalente, liquidez con el volumen REAL (ADV) y quién
+recorta la ventana. policy.risk 1.0.0 (vigente) deja cada número de antes IGUAL; 2.0.0 (`activation: pin`) cambia lo
+principal: covarianza pareada + Ledoit-Wolf (una posición corta queda fuera y se dice cuánto dinero), Sharpe aritmético.
+
 El VaR es una ESTIMACIÓN estadística basada en el pasado, no una predicción.
 """
 import math
@@ -53,7 +60,7 @@ def fetch_history(symbol, rng='1y', getter=None):
             out, cur, m = db
             _HIST_CACHE[key] = (time.time(), out, cur)
             _HIST_META[key] = {'adjusted': bool(m.get('adjusted', True)), 'tz': None, 'gmtoffset': None, 'n': len(out),
-                               'source': m.get('source'), 'as_of': m.get('as_of')}
+                               'source': m.get('source'), 'as_of': m.get('as_of'), 'adv': m.get('adv')}
             return out, cur
         from core.company_data import _get_json as getter
     data, err = getter(f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}',
@@ -83,8 +90,22 @@ def fetch_history(symbol, rng='1y', getter=None):
     if out:
         _HIST_CACHE[key] = (time.time(), out, cur)
         _HIST_META[key] = {'adjusted': adjusted, 'tz': meta.get('exchangeTimezoneName'), 'gmtoffset': off,
-                           'n': len(out), 'source': 'yahoo_live', 'as_of': max(out)}
+                           'n': len(out), 'source': 'yahoo_live', 'as_of': max(out), 'adv': _adv_of(ts, off, ind)}
     return out, cur
+
+
+def _adv_of(ts, off, ind):
+    """L2-16: volumen medio diario REAL de la misma respuesta de Yahoo (cierre × volumen, últimas 20 sesiones con
+    volumen). None si el proveedor no trae volumen — nunca se inventa."""
+    try:
+        from core.risk_models import adv_from_rows
+        q = (ind.get('quote') or [{}])[0] or {}
+        cl, vo = q.get('close') or [], q.get('volume') or []
+        rows = [(datetime.fromtimestamp(int(t) + off, tz=timezone.utc).strftime('%Y-%m-%d'), c, v)
+                for t, c, v in list(zip(ts, cl, vo))[-40:] if isinstance(c, (int, float)) and isinstance(v, (int, float))]
+        return adv_from_rows(rows)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def history_meta(symbol, rng='1y'):
@@ -239,18 +260,70 @@ def dimson_beta(y, b_lag, b_0, b_lead):
     return None if sol is None else sol[1] + sol[2] + sol[3]
 
 
-def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=None, nonsync=None):
+# ── política de riesgo (governance/artifacts/policy.risk@*.json) ─────────────
+_POLICY_CODE = {      # = policy.risk@1.0.0 (lo de HOY) si el release vigente todavía no trae el artefacto
+    'ewma_lambda': 0.94, 'ewma_seed_days': 25, 'pairwise_min_obs': 20, 'min_history_days': 60,
+    'window': 'intersection', 'covariance': 'sample', 'sharpe': 'geometric', 'rf_basis': 'discount',
+    'liquidity': {'adv_days': 20, 'participation': 0.2, 'flag_days': 5.0},
+}
+
+
+def risk_policy():
+    """Parámetros del release VIGENTE (policy.risk) + su versión. 1.0.0 = el reporte de hoy + métricas al lado;
+    2.0.0 (`activation: pin`) = ventana pareada, Ledoit-Wolf y Sharpe aritmético."""
+    out = dict(_POLICY_CODE)
+    sv = None
+    try:
+        from core import governance
+        out.update(governance.section('policy.risk'))
+        sv = governance.artifact_semver('policy.risk')
+    except Exception:  # noqa: BLE001 — sin artefacto: lo de hoy
+        pass
+    out['semver'] = sv
+    return out
+
+
+def _own_returns(h, fxs=None):
+    """{fecha: retorno} de UNA serie sobre SUS fechas (en USD si trae FX diario)."""
+    ds = sorted(h)
+    px = {d: h[d] * (fxs[d] if isinstance(fxs, dict) else 1.0) for d in ds}
+    return {ds[i]: px[ds[i]] / px[ds[i - 1]] - 1.0 for i in range(1, len(ds)) if px[ds[i - 1]]}
+
+
+def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=None, nonsync=None, policy=None):
     """histories: {sym: {date: price}} · shares: {sym: n} · fx: {sym: moneda→USD} — un número (tasa de hoy) o
     {fecha: tasa} (L2-01/L3-14: la serie en USD se arma FECHA A FECHA y el riesgo cambiario queda dentro).
     bench: {date: price} del S&P 500 (opcional). rf: tasa libre de riesgo anual
-    (decimal; D2: T-bill 13 semanas ^IRX) con su fuente. nonsync: símbolos cuya bolsa cierra en otro horario que
-    Nueva York (L2-M1 → beta de Dimson y varianza con 1 rezago). Devuelve el reporte (dict)."""
+    (decimal; D2: T-bill 13 semanas ^IRX, COTIZADA como tasa de descuento) con su fuente. nonsync: símbolos cuya
+    bolsa cierra en otro horario que Nueva York (L2-M1 → beta de Dimson y varianza con 1 rezago).
+    policy: parámetros de policy.risk (por defecto los del release vigente). Devuelve el reporte (dict)."""
+    import numpy as np
+
+    from core import risk_models as rm
+    pol = dict(policy) if policy is not None else risk_policy()
+    pairwise = pol.get('window') == 'pairwise'
+    use_lw = pol.get('covariance') == 'ledoit_wolf'
+    min_hist = int(pol.get('min_history_days') or 60)
     syms = [s for s in shares if histories.get(s)]
     if not syms:
         return {'ok': False, 'error': 'sin historia de precios para ninguna posición'}
     for s in syms:          # con FX diario, solo cuentan las fechas que tienen tasa
         if isinstance(fx.get(s), dict):
             histories = dict(histories, **{s: {d: p for d, p in histories[s].items() if fx[s].get(d)}})
+    own_days = {s: max(0, len(histories[s]) - 1) for s in syms}
+    # L2-14 (policy.risk 2.0.0): una posición con menos de `min_history_days` retornos NO recorta la ventana de las
+    # demás: queda fuera y se dice cuánto dinero no se midió
+    excluded_short = []
+    if pairwise:
+        for s in [x for x in syms if own_days[x] < min_hist]:
+            d = max(histories[s])
+            excluded_short.append({'symbol': s, 'history_days': own_days[s], 'min_history_days': min_hist,
+                                   'value_usd': round(shares[s] * histories[s][d] * (_fx_at(fx, s, d) or 0.0), 2),
+                                   'reason_code': 'short_history'})
+        syms = [s for s in syms if own_days[s] >= min_hist]
+        if not syms:
+            return {'ok': False, 'error': f'historia insuficiente en todas las posiciones (< {min_hist} días)',
+                    'excluded_short': excluded_short}
     common = sorted(set.intersection(*(set(histories[s]) for s in syms)))
     if len(common) < 60:
         return {'ok': False, 'error': f'historia común insuficiente ({len(common)} días; se necesitan ≥ 60)'}
@@ -275,6 +348,9 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
         ac1 = _cov(port[1:], port[:-1])
         sig_d = math.sqrt(max(sig_d ** 2, sig_d ** 2 + 2 * ac1))
     srt = sorted(port)
+    mom = rm.moments(port)
+    skew, exk = (mom[2], mom[3]) if mom else (0.0, 0.0)
+    over = rm.overlapping_returns(port, horizon)
 
     def var_block(conf):
         q = 1 - conf
@@ -283,22 +359,81 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
         cvar = -_mean(tail) if tail else hist
         param = -(mu_d - Z[conf] * sig_d)
         scale = math.sqrt(horizon)
-        return {'conf': conf,
-                'hist_1d_pct': round(hist * 100, 3), 'hist_1d_usd': round(hist * total, 2),
-                'param_1d_pct': round(param * 100, 3), 'param_1d_usd': round(param * total, 2),
-                'hist_nd_pct': round(hist * scale * 100, 3), 'hist_nd_usd': round(hist * scale * total, 2),
-                'cvar_1d_pct': round(cvar * 100, 3), 'cvar_1d_usd': round(cvar * total, 2)}
+        out = {'conf': conf,
+               'hist_1d_pct': round(hist * 100, 3), 'hist_1d_usd': round(hist * total, 2),
+               'param_1d_pct': round(param * 100, 3), 'param_1d_usd': round(param * total, 2),
+               'hist_nd_pct': round(hist * scale * 100, 3), 'hist_nd_usd': round(hist * scale * total, 2),
+               'cvar_1d_pct': round(cvar * 100, 3), 'cvar_1d_usd': round(cvar * total, 2)}
+        # L2-15 (al lado, sin tocar lo de arriba): normal a h días, Cornish-Fisher (asimetría/curtosis) y la
+        # simulación histórica con retornos COMPUESTOS de h días en ventanas superpuestas (VaR y CVaR)
+        pnd = rm.param_var(mu_d, sig_d, conf, horizon)
+        cf1 = rm.cf_var(mu_d, sig_d, skew, exk, conf, 1)
+        cfn = rm.cf_var(mu_d, sig_d, skew, exk, conf, horizon)
+        out.update({'param_nd_pct': round(pnd * 100, 3), 'param_nd_usd': round(pnd * total, 2),
+                    'cf_1d_pct': None if cf1 is None else round(cf1 * 100, 3),
+                    'cf_1d_usd': None if cf1 is None else round(cf1 * total, 2),
+                    'cf_nd_pct': None if cfn is None else round(cfn * 100, 3),
+                    'cf_nd_usd': None if cfn is None else round(cfn * total, 2)})
+        if cf1 is None or cfn is None:      # revisión lote I: fuera del dominio de Cornish-Fisher → se dice, sin cifra
+            out['cf_note'] = {'es': 'Cornish-Fisher no aplica: la asimetría/curtosis de esta cartera (p. ej. un salto '
+                                    'grande de un día) está fuera de su rango válido.',
+                              'en': 'Cornish-Fisher does not apply: this portfolio\'s skew/kurtosis (e.g. one large '
+                                    'one-day jump) is outside its valid range.'}
+        if len(over) >= 20:
+            hv, cv = rm.hist_var_cvar(over, conf)
+            out.update({'hist_nd_overlap_pct': round(hv * 100, 3), 'hist_nd_overlap_usd': round(hv * total, 2),
+                        'cvar_nd_pct': round(cv * 100, 3), 'cvar_nd_usd': round(cv * total, 2)})
+        else:
+            out.update({'hist_nd_overlap_pct': None, 'hist_nd_overlap_usd': None, 'cvar_nd_pct': None,
+                        'cvar_nd_usd': None})
+        return out
 
     v95, v99 = var_block(0.95), var_block(0.99)
 
     # covarianza, contribución al riesgo, correlaciones
-    cov = {a: {b: _cov(rets[a], rets[b]) for b in syms} for a in syms}
-    var_p = sum(w[a] * w[b] * cov[a][b] for a in syms for b in syms)
-    contrib = {a: (w[a] * sum(w[b] * cov[a][b] for b in syms) / var_p) if var_p > 0 else 0.0 for a in syms}
-    sd = {s: _std(rets[s]) for s in syms}
-    corr = {a: {b: round(cov[a][b] / (sd[a] * sd[b]), 3) if sd[a] and sd[b] else None for b in syms}
-            for a in syms}
-    divers = (sum(w[s] * sd[s] for s in syms) / sig_d) if sig_d else None
+    X = np.array([[rets[s][i] for s in syms] for i in range(n)])
+    lw = rm.ledoit_wolf(X)
+    wv = np.array([w[s] for s in syms])
+    vol_lw = math.sqrt(max(0.0, float(wv @ lw[0] @ wv))) * math.sqrt(TRADING_DAYS) if lw else None
+    model = None
+    if pairwise or use_lw:
+        # policy.risk 2.0.0: covarianza de CADA par sobre su propia ventana (o la común) + contracción de
+        # Ledoit-Wolf con la intensidad δ de la ventana común (nunca singular) + reparación a semidefinida
+        pcorr = None
+        if pairwise:
+            own = {s: _own_returns(histories[s], fx.get(s)) for s in syms}
+            base, nobs = rm.pairwise_cov(own, syms, int(pol.get('pairwise_min_obs') or 20))
+            pcorr, _n = rm.pairwise_corr(own, syms, int(pol.get('pairwise_min_obs') or 20))
+        else:
+            base = np.atleast_2d(np.cov(X.T, ddof=1))
+            nobs = np.full((len(syms), len(syms)), n)
+        delta = lw[1] if (use_lw and lw) else 0.0
+        sig_m, repaired = rm.nearest_psd(rm.shrink(base, delta) if delta else base)
+        var_m = float(wv @ sig_m @ wv)
+        sdm = np.sqrt(np.clip(np.diag(sig_m), 0, None))
+        sdb = np.sqrt(np.clip(np.diag(base), 0, None))
+        contrib = {a: (float(wv[i] * (sig_m @ wv)[i]) / var_m) if var_m > 0 else 0.0 for i, a in enumerate(syms)}
+        sd = {s: float(sdb[i]) for i, s in enumerate(syms)}
+        if pcorr is not None:       # revisión lote I: cada par con SU ventana (antes σ de otra ventana → |ρ| > 1)
+            corr = {a: {b: (round(float(pcorr[i, j]), 3) if np.isfinite(pcorr[i, j]) else None)
+                        for j, b in enumerate(syms)} for i, a in enumerate(syms)}
+        else:
+            corr = {a: {b: (round(float(base[i, j] / (sdb[i] * sdb[j])), 3) if sdb[i] and sdb[j] and nobs[i, j] > 1
+                            else None) for j, b in enumerate(syms)} for i, a in enumerate(syms)}
+        divers = (float(wv @ sdm) / math.sqrt(var_m)) if var_m > 0 else None
+        model = {'window': 'pairwise' if pairwise else 'common', 'estimator': 'ledoit_wolf' if delta else 'sample',
+                 'shrinkage': round(float(delta), 4), 'psd_repaired': bool(repaired),
+                 'vol_ann_pct': round(math.sqrt(max(0.0, var_m)) * math.sqrt(TRADING_DAYS) * 100, 2),
+                 'min_pair_days': int(nobs.min()) if nobs.size else None,
+                 'max_pair_days': int(nobs.max()) if nobs.size else None}
+    else:                       # policy.risk 1.0.0: EXACTAMENTE la cuenta de siempre (paridad de cifras)
+        cov = {a: {b: _cov(rets[a], rets[b]) for b in syms} for a in syms}
+        var_p = sum(w[a] * w[b] * cov[a][b] for a in syms for b in syms)
+        contrib = {a: (w[a] * sum(w[b] * cov[a][b] for b in syms) / var_p) if var_p > 0 else 0.0 for a in syms}
+        sd = {s: _std(rets[s]) for s in syms}
+        corr = {a: {b: round(cov[a][b] / (sd[a] * sd[b]), 3) if sd[a] and sd[b] else None for b in syms}
+                for a in syms}
+        divers = (sum(w[s] * sd[s] for s in syms) / sig_d) if sig_d else None
 
     # drawdown
     eq, peak, mdd, mdd_date = 1.0, 1.0, 0.0, None
@@ -349,40 +484,86 @@ def compute(histories, shares, fx, bench=None, horizon=10, rf=0.0, rf_source=Non
     # backtest del VaR 95 % fuera de muestra (D3) — el "en muestra" va dentro, de referencia
     backtest = rolling_backtest(port, srt, 0.95)
     worst = sorted(((port[i], common[i + 1]) for i in range(n)))[:5]
-    # D2: retorno anual COMPUESTO (lo que de verdad ganó quien mantuvo la cartera) y
-    # aritmético aparte (insumo del VaR paramétrico); Sharpe = (compuesto − rf) / vol
+    # D2: retorno anual COMPUESTO (lo que de verdad ganó quien mantuvo la cartera) y aritmético aparte.
+    # L2-18: Sharpe ARITMÉTICO (el estándar: media del exceso diario × 252 / σ·√252) con ^IRX convertido de tasa de
+    # descuento a rendimiento equivalente; policy.risk elige cuál es el principal (1.0.0 = el compuesto de hoy).
     vol_ann = sig_d * math.sqrt(TRADING_DAYS)
     ret_geom = (eq ** (TRADING_DAYS / n) - 1.0) if (n > 0 and eq > 0) else 0.0
     ret_arith = mu_d * TRADING_DAYS
     rf = float(rf or 0.0)
-    sharpe = round((ret_geom - rf) / vol_ann, 2) if vol_ann else None
+    basis = pol.get('rf_basis') or 'discount'
+    rf_head = rm.tbill_yield(rf, basis=basis)
+    rf_arith = rm.tbill_yield(rf, basis='bond_equivalent' if basis == 'discount' else basis)
+    sharpe_geom = round((ret_geom - rf_head) / vol_ann, 2) if vol_ann else None
+    sharpe_arith = round((mu_d - rf_arith / TRADING_DAYS) * TRADING_DAYS / vol_ann, 2) if vol_ann else None
+    arith_head = pol.get('sharpe') == 'arithmetic'
+    sharpe = sharpe_arith if arith_head else sharpe_geom
+    # L2-16: volatilidad EWMA (RiskMetrics, λ del artefacto) al lado de la muestral
+    lam = float(pol.get('ewma_lambda') or 0.94)
+    seed_n = int(pol.get('ewma_seed_days') or 25)
+    ev = rm.ewma_var(port, lam, seed_n)
+    vol_ewma = math.sqrt(ev) * math.sqrt(TRADING_DAYS) if ev else None
+    # ventana: quién la recortó (L2-14, informativo en 1.0.0 también)
+    starts = {s: min(histories[s]) for s in syms}
+    longest = max(own_days[s] for s in syms)
+    late = max(starts.values())
+    truncated_by = sorted(s for s in syms if starts[s] == late) if longest - n >= 10 else []
 
     if nonsync_info is not None:
         nonsync_info.update(vol_ann_same_day_pct=round(sig_same_day * math.sqrt(TRADING_DAYS) * 100, 2),
                             vol_method='var + 2·autocov(1) (bolsas en otro horario)')
-    positions = [{'symbol': s, 'shares': shares[s], 'price': round(histories[s][last], 4),
-                  'fx_to_usd': round(_fx_at(fx, s, last), 8), 'fx_method': 'daily' if isinstance(fx.get(s), dict)
-                  else 'spot',
-                  'value_usd': round(values[s], 2), 'weight_pct': round(w[s] * 100, 2),
-                  'vol_ann_pct': round(sd[s] * math.sqrt(TRADING_DAYS) * 100, 2),
-                  'risk_contrib_pct': round(contrib[s] * 100, 2)} for s in syms]
+    positions = []
+    for s in syms:
+        pe = rm.ewma_var(rets[s], lam, seed_n)
+        positions.append({'symbol': s, 'shares': shares[s], 'price': round(histories[s][last], 4),
+                          'fx_to_usd': round(_fx_at(fx, s, last), 8), 'fx_method': 'daily' if isinstance(fx.get(s), dict)
+                          else 'spot',
+                          'value_usd': round(values[s], 2), 'weight_pct': round(w[s] * 100, 2),
+                          'vol_ann_pct': round(sd[s] * math.sqrt(TRADING_DAYS) * 100, 2),
+                          'vol_ann_ewma_pct': round(math.sqrt(pe) * math.sqrt(TRADING_DAYS) * 100, 2) if pe else None,
+                          'history_days': own_days[s],
+                          'risk_contrib_pct': round(contrib[s] * 100, 2)})
     positions.sort(key=lambda p: -p['risk_contrib_pct'])
     hist_bins = _histogram(port, 30)
+    short_val = sum(x['value_usd'] for x in excluded_short)
     return {
         'ok': True, 'as_of': last, 'days': n, 'from': common[0], 'horizon_days': horizon,
         'portfolio_value_usd': round(total, 2),
         'vol_daily_pct': round(sig_d * 100, 3),
         'vol_ann_pct': round(vol_ann * 100, 2),
+        'vol_ann_ewma_pct': round(vol_ewma * 100, 2) if vol_ewma else None, 'ewma_lambda': lam,
+        'vol_ann_lw_pct': round(vol_lw * 100, 2) if vol_lw is not None else None,
+        'lw_shrinkage': round(lw[1], 4) if lw else None,
         'return_ann_pct': round(ret_geom * 100, 2),            # compuesto (geométrico)
         'return_arith_ann_pct': round(ret_arith * 100, 2),     # media diaria × 252
-        'sharpe': sharpe, 'risk_free_pct': round(rf * 100, 2),
+        'sharpe': sharpe, 'sharpe_geom': sharpe_geom, 'sharpe_arith': sharpe_arith,
+        'risk_free_pct': round(rf_head * 100, 2), 'risk_free_quote_pct': round(rf * 100, 2),
+        'risk_free_yield_pct': round(rf_arith * 100, 2),
+        'risk_free_basis': basis,
         'risk_free_source': rf_source or 'sin dato — 0 %',
-        'sharpe_method': '(retorno anual compuesto − tasa libre de riesgo) / volatilidad anual',
-        'var95': v95, 'var99': v99,
+        'sharpe_method': ('(media aritmética del exceso diario × 252) / volatilidad anual; ^IRX convertido a '
+                          'rendimiento equivalente' if arith_head else
+                          '(retorno anual compuesto − tasa libre de riesgo) / volatilidad anual'),
+        'sharpe_method_en': ('(arithmetic mean daily excess × 252) / annual volatility; ^IRX converted to equivalent '
+                             'yield' if arith_head else '(compounded annual return − risk-free rate) / annual volatility'),
+        'moments': {'skew': round(skew, 3), 'excess_kurtosis': round(exk, 3)},
+        'var95': v95, 'var99': v99, 'nd_windows': int(len(over)),
+        'nd_method': {'hist_nd': f'1 día × √{horizon}', 'param_nd': 'normal: μh − z·σ√h',
+                      'cf_nd': 'Cornish-Fisher (asimetría/√h, curtosis/h)',
+                      'hist_nd_overlap': f'retornos compuestos de {horizon} días en ventanas superpuestas '
+                                         f'(≈{max(1, len(over) // max(1, horizon))} independientes)'},
         'max_drawdown_pct': round(mdd * 100, 2), 'max_drawdown_date': mdd_date,
         'beta_spy': beta, 'corr_spy': corr_mkt, 'bench_overlap_days': overlap, 'aligned_dates': aligned,
         'nonsync_adjusted': bool(nonsync_info), 'nonsync': nonsync_info,
         'diversification_ratio': round(divers, 2) if divers else None,
+        'covariance_model': model,
+        'window': {'method': 'pairwise' if pairwise else 'intersection', 'from': common[0], 'to': last, 'days': n,
+                   'longest_history_days': longest, 'truncated_by': truncated_by, 'min_history_days': min_hist},
+        'excluded_short': excluded_short,
+        'excluded_value_pct': round(100.0 * short_val / (total + short_val), 2) if short_val > 0 else 0.0,
+        'risk_policy': {'artifact': 'policy.risk', 'semver': pol.get('semver'), 'window': pol.get('window'),
+                        'covariance': pol.get('covariance'), 'sharpe': pol.get('sharpe'),
+                        'rf_basis': basis, 'ewma_lambda': lam},
         'backtest95': backtest,
         'worst_days': [{'date': d, 'pct': round(r * 100, 2), 'usd': round(r * total, 2)} for r, d in worst],
         'positions': positions,
@@ -520,17 +701,36 @@ def build_report(positions, horizon=10, rng='1y', getter=None, fx_fn=None, max_p
             err = rep.get('error') or ''
             rep['error_code'] = ('short_history' if 'insuficiente' in err
                                  else 'zero_value' if 'cero' in err else 'data_unavailable')
+    for x in rep.get('excluded_short') or []:      # L2-14 (policy.risk 2.0.0): fuera, con su valor y por qué
+        excluded.append({'symbol': x['symbol'], 'label': labels.get(x['symbol'], x['symbol']),
+                         'reason': f"historia corta ({x['history_days']} días; se piden ≥ {x['min_history_days']}): "
+                                   'fuera del cálculo para no recortar la ventana de las demás',
+                         'reason_en': f"short history ({x['history_days']} days; ≥ {x['min_history_days']} needed): "
+                                      'left out so it does not trim the window of the others',
+                         'reason_code': 'short_history', 'value_usd': x['value_usd']})
     rep['excluded'] = excluded
     rep['labels'] = labels
     rep['converted'] = converted
     unadj = []
+    liq = risk_policy().get('liquidity') or _POLICY_CODE['liquidity']
+    from core.risk_models import liquidity as _liquidity
     for p in rep.get('positions') or []:
         m = history_meta(p['symbol'], rng) or {}
         p['adjusted'] = bool(m.get('adjusted', True))
         p['exchange_tz'] = m.get('tz')
         if not p['adjusted']:
             unadj.append(p['symbol'])
+        # L2-16: liquidez con el volumen REAL del proveedor (sin volumen → None, nunca se inventa)
+        adv = m.get('adv')
+        if adv and adv.get('adv_value'):
+            adv_usd = adv['adv_value'] * (p.get('fx_to_usd') or 1.0)
+            lq = _liquidity(p['value_usd'], adv_usd, float(liq.get('participation', 0.2)),
+                            float(liq.get('flag_days', 5.0)))
+            p['liquidity'] = dict(lq or {}, adv_usd=round(adv_usd, 2), adv_days=adv.get('n'), as_of=adv.get('as_of'))
+        else:
+            p['liquidity'] = None
     rep['unadjusted_symbols'] = unadj
+    rep['liquidity_flags'] = [p['symbol'] for p in rep.get('positions') or [] if (p.get('liquidity') or {}).get('flag')]
     # cada serie usada lleva su fuente y su fecha (BRECHAS bloque 2: la historia propia primero)
     series = {}
     for sym in list(shares) + [BENCH]:

@@ -30,6 +30,7 @@ Limpieza 2026-10-11 ("que no queden cosas sueltas"), lado servidor. Cada prueba 
 - [[core.semantic.py]]
 - [[core.sim_agents.py]]
 - [[core.voice_agent.py]]
+- [[core.voice_api.py]]
 - [[core.world.py]]
 - [[data.grafo_v0.json]]
 - [[matrix.engine.py]]

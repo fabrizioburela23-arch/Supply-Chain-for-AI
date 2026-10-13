@@ -4,8 +4,8 @@
 // texturas /vendor) estaba duplicado casi línea a línea en dos WebGL contexts.
 // Ahora se escribe UNA vez; las diferencias son CAPAS: 'companies' (empresas
 // por NRS + arcos + chokepoints + etiquetas) y 'satellites' (constelaciones
-// SGP4 en vivo). Compatibilidad: window.KhipuGeoGlobe y window.Planetarium
-// quedan como alias finos. Los dos archivos originales se borraron en Track A
+// SGP4 en vivo). (Los alias window.KhipuGeoGlobe / window.Planetarium se
+// borraron en el lote I4: nadie los usaba.) Los dos archivos originales se borraron en Track A
 // Fase 2: este es el único motor.
 //
 // 2026-09-30 · WORLD MONITOR (engine/worldmonitor.js): primitivas de capa
@@ -1031,18 +1031,7 @@
     }
   }
 
-  // ── Alias de compatibilidad (burn-in): new KhipuGeoGlobe(...).init().loadData()
-  //    y new Planetarium(...).init() + loadConstellations(data) sin cambios. ──
-  class KhipuGeoGlobe extends KhipuGlobe {
-    constructor(canvasId) { super(canvasId, { layers: ['companies'] }); }
-    loadData() { return this.loadCompanies(); }
-  }
-  class Planetarium extends KhipuGlobe {
-    constructor(canvasId) { super(canvasId, { layers: ['satellites'] }); }
-    loadConstellations(data) { return this.loadSatellites(data); }
-  }
-
+  // (lote I4, G5-15: los alias KhipuGeoGlobe / Planetarium se borraron — nadie los instanciaba desde que el
+  //  World Monitor y el Space Monitor usan KhipuGlobe directamente)
   window.KhipuGlobe = KhipuGlobe;
-  window.KhipuGeoGlobe = KhipuGeoGlobe;
-  window.Planetarium = Planetarium;
 })();

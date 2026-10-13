@@ -7,7 +7,7 @@ tags: ["tipo/inicio"]
 
 Bienvenido. Esta bóveda es un **mapa vivo del código de Khipus Finance AI**: cada archivo, ruta de la API, variable de entorno y sesión de trabajo es una nota, y los enlaces entre notas son las conexiones reales del código. La genera `scripts/build_vault.py` sin IA, leyendo el repositorio.
 
-**218 archivos de código (130.544 líneas) · 255 rutas HTTP · 30 herramientas MCP · 157 variables de entorno · 103 sesiones de trabajo.**
+**224 archivos de código (132.923 líneas) · 255 rutas HTTP · 32 herramientas MCP · 157 variables de entorno · 104 sesiones de trabajo.**
 
 Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Reporte del grafo]].
 
@@ -23,20 +23,20 @@ Empieza por [[02 Cómo usar esta bóveda]] y mira las cosas sueltas en [[01 Repo
 
 | Capa | Archivos | Líneas | De qué trata |
 |---|---|---|---|
-| [[Capa Interfaz (Khipus OS)]] | 19 | 26.440 | Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos. |
-| [[Capa Chat y agentes]] | 15 | 9.815 | El cerebro conversacional de Khipu, los agentes con su rol, el portero Jev y el lenguaje de comandos. |
+| [[Capa Interfaz (Khipus OS)]] | 19 | 26.457 | Lo que ves en pantalla: la Cabina / Khipus OS, ventanas, pestañas, mapa, avisos y estilos. |
+| [[Capa Chat y agentes]] | 15 | 9.737 | El cerebro conversacional de Khipu, los agentes con su rol, el portero Jev y el lenguaje de comandos. |
 | [[Capa Investigación]] | 21 | 5.264 | El enjambre de agentes que investiga: conclusiones (claims) con evidencia citada, cola de trabajos, salud. |
-| [[Capa Comité]] | 8 | 6.694 | El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera. |
-| [[Capa Ontología y grafo temporal]] | 32 | 13.316 | La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa. |
-| [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 18 | 7.874 | Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones. |
-| [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 27 | 14.537 | Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier. |
-| [[Capa Dinero (carteras, trading, corretaje)]] | 13 | 8.889 | Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana. |
-| [[Capa MCP y API]] | 11 | 5.569 | El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas. |
-| [[Capa Voz]] | 3 | 4.516 | Khipu por voz: ElevenLabs (servidor y navegador) y el orbe. |
-| [[Capa Infraestructura]] | 45 | 26.580 | La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización. |
-| [[Capa Datos del catálogo]] | 34 | 64.359 | El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores. |
-| [[Capa Pruebas]] | 185 | 53.636 | Las pruebas automáticas (pytest) que vigilan cada parte. |
-| [[Capa Documentación]] | 29 | 13.114 | Documentos del proyecto (CLAUDE.md, docs/\*.md) y las sesiones de trabajo de docs/ESTADO.md. |
+| [[Capa Comité]] | 8 | 6.720 | El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera. |
+| [[Capa Ontología y grafo temporal]] | 32 | 13.479 | La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa. |
+| [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 21 | 9.268 | Matemática del sistema: matrices y propagación de shocks, tensores, VaR, griegas, escenarios y simulaciones. |
+| [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 27 | 14.526 | Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier. |
+| [[Capa Dinero (carteras, trading, corretaje)]] | 15 | 10.007 | Carteras, órdenes y corretaje multi-cliente con Alpaca. Regla de oro: toda orden pasa por preview → confirmación humana. |
+| [[Capa MCP y API]] | 11 | 5.933 | El servidor MCP para IAs externas (herramientas, tokens kmcp_, OAuth) y la pantalla para conectarlas. |
+| [[Capa Voz]] | 4 | 5.090 | Khipu por voz: ElevenLabs (servidor y navegador) y el orbe. |
+| [[Capa Infraestructura]] | 45 | 25.388 | La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización. |
+| [[Capa Datos del catálogo]] | 34 | 64.681 | El catálogo curado de empresas y vínculos (nodes/\*.js), el snapshot data/grafo_v0.json y sus generadores. |
+| [[Capa Pruebas]] | 197 | 56.399 | Las pruebas automáticas (pytest) que vigilan cada parte. |
+| [[Capa Documentación]] | 29 | 13.175 | Documentos del proyecto (CLAUDE.md, docs/\*.md) y las sesiones de trabajo de docs/ESTADO.md. |
 
 ## Índices
 

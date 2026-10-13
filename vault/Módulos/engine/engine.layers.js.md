@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/layers.js"
 lenguaje: "javascript"
-lineas: 133
+lineas: 132
 aliases: ["engine/layers.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/layers.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 133 líneas · `engine/layers.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 132 líneas · `engine/layers.js`
 
 ## Para qué sirve
 
@@ -18,17 +18,17 @@ SISTEMA DE CAPAS DEL MAPA (petición día 1 de Fabrizio) El mapa deja de ser "to
 
 ## API pública (globales que define)
 
-`window._layersApply`
+_No define globales (código encapsulado)._
 
 ## Depende de
 
 - [[app.html]] — usa `LANG`
 
-Se carga en [[app.html]] en la posición **68 de 96** (línea 7943), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
+Se carga en [[app.html]] en la posición **69 de 97** (línea 7928), después de [[engine.livesim.js]] y antes de [[engine.brief.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 68)
+- [[app.html]] — lo carga con `<script>` (posición 69)
 
 ## Pruebas que lo cubren
 

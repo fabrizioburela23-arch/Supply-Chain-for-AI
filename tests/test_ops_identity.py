@@ -150,8 +150,9 @@ def test_cliente_manda_el_canal():
     assert "Object.assign({ channel: 'terminal' }, opts || {})" in html
     voice = _read('engine/voice.js')
     assert "window._executeTradeOrder(Object.assign({ channel: 'voice', readback: pv.summary || '' }, orderObj))" in voice
-    assert "body.readback_sha" in voice and "body.confirmed_at" in voice     # paso 16: prueba de lectura por voz
-    assert "channel: o.channel === 'voice' ? 'voice' : 'ui'" in voice
+    trade = _read('engine/trade.js')       # lote I4 (G5-07): _executeTradeOrder salió de voice.js a engine/trade.js
+    assert "body.readback_sha" in trade and "body.confirmed_at" in trade     # paso 16: prueba de lectura por voz
+    assert "channel: o.channel === 'voice' ? 'voice' : 'ui'" in trade
     crypto = _read('engine/crypto.js')
     assert crypto.count("channel: 'crypto'") >= 2
     m = re.search(r"const CACHE = 'khipu-finance-v(\d+)'", _read('sw.js'))

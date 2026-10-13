@@ -1,0 +1,518 @@
+{
+  "id": "kernel.calibration",
+  "semver": "1.0.0",
+  "kind": "calibration",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "status": "proposed",
+    "measure": "relative_drawdown",
+    "benchmark": "SPY",
+    "kernel_params_semver": "1.0.0",
+    "kernel_params_hash": "0b5a9d403d594388a99b54ab8cd927ede2542eb91bcd14f3178882b417b27e95",
+    "factors": "active",
+    "graph": {
+      "lineage": "snap:c16c30a052f9",
+      "source": "snapshot"
+    },
+    "episodes": [
+      {
+        "id": "chip_shortage_2021",
+        "label_es": "Escasez de chips 2021",
+        "label_en": "2021 chip shortage",
+        "event_date": "2021-02-01",
+        "t0": "2021-01-29",
+        "t1": "2021-04-30",
+        "seeds": [
+          {
+            "id": "TSMC",
+            "magnitude": 0.3
+          },
+          {
+            "id": "Samsung",
+            "magnitude": 0.3
+          },
+          {
+            "id": "GF",
+            "magnitude": 0.3
+          },
+          {
+            "id": "SMIC",
+            "magnitude": 0.3
+          }
+        ],
+        "note_es": "Golpe gradual: ventana aproximada (feb-abr 2021). Semillas = fundiciones, magnitud 0,3 supuesta.",
+        "note_en": "Gradual shock: approximate window (Feb-Apr 2021). Seeds = foundries, magnitude 0.3 assumed.",
+        "proposed": true,
+        "coverage": {
+          "sampled": 20,
+          "measured": 0
+        }
+      },
+      {
+        "id": "export_controls_2022",
+        "label_es": "Controles de exportación EE. UU., oct-2022",
+        "label_en": "US export controls, Oct 2022",
+        "event_date": "2022-10-07",
+        "t0": "2022-10-06",
+        "t1": "2022-11-04",
+        "seeds": [
+          {
+            "id": "Nvidia",
+            "magnitude": 0.25
+          },
+          {
+            "id": "AMD",
+            "magnitude": 0.25
+          },
+          {
+            "id": "ASML",
+            "magnitude": 0.25
+          }
+        ],
+        "note_es": "Semillas = exposición a China de Nvidia/AMD/ASML; magnitud 0,25 supuesta (no es un dato).",
+        "note_en": "Seeds = China exposure of Nvidia/AMD/ASML; magnitude 0.25 assumed (not a data point).",
+        "proposed": true,
+        "coverage": {
+          "sampled": 20,
+          "measured": 15
+        }
+      },
+      {
+        "id": "taiwan_quake_2024",
+        "label_es": "Terremoto de Taiwán, abr-2024",
+        "label_en": "Taiwan earthquake, Apr 2024",
+        "event_date": "2024-04-03",
+        "t0": "2024-04-02",
+        "t1": "2024-04-30",
+        "seeds": [
+          {
+            "id": "TSMC",
+            "magnitude": 0.1
+          }
+        ],
+        "note_es": "Semilla = TSMC (paradas breves de fábricas); magnitud 0,1 supuesta.",
+        "note_en": "Seed = TSMC (brief fab stoppages); magnitude 0.1 assumed.",
+        "proposed": true,
+        "coverage": {
+          "sampled": 20,
+          "measured": 18
+        }
+      }
+    ],
+    "rules": {
+      "min_points": 20,
+      "min_points_per_episode": 4,
+      "min_episodes": 2,
+      "min_t": 2.0,
+      "min_partial_r2": 0.1,
+      "band_z": 1.645
+    },
+    "inputs_file": "data/calibration/inputs.json",
+    "inputs_sha256": "fe604cdd6f7362ba0047c45da7dc6ded834aaa84666f246cf11636d0809f8884",
+    "price_sources": [
+      "?/weekly",
+      "khipus_eod:yahoo/weekly",
+      "yahoo_live/weekly"
+    ],
+    "fit": {
+      "status": "weak",
+      "n": 33,
+      "n_episodes": 2,
+      "episodes_used": [
+        "export_controls_2022",
+        "taiwan_quake_2024"
+      ],
+      "kappa": -0.070631,
+      "kappa_se": 0.306161,
+      "t": -0.2307,
+      "r2": 0.010014,
+      "partial_r2": 0.001771,
+      "resid_sd": 0.103373,
+      "impact_max": 0.25,
+      "intercepts": {
+        "export_controls_2022": -0.089181,
+        "taiwan_quake_2024": -0.103604
+      },
+      "per_episode": {
+        "export_controls_2022": {
+          "n": 15,
+          "kappa": -0.000131
+        },
+        "taiwan_quake_2024": {
+          "n": 18,
+          "kappa": -0.494873
+        }
+      },
+      "reasons": [
+        "kappa <= 0 (more impact did not mean a bigger fall)",
+        "t -0.2307 < 2.0",
+        "partial_r2 0.001771 < 0.1"
+      ]
+    },
+    "points": [
+      [
+        "chip_shortage_2021",
+        "NVDA",
+        0.3916,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "GFS",
+        0.3,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "SSNLF",
+        0.3,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "TSM",
+        0.3,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "TSLA",
+        0.2802,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "ORCL",
+        0.2377,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "AAPL",
+        0.2268,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "NBIS",
+        0.2237,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "AMD",
+        0.2123,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "LSCC",
+        0.21,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "NXPI",
+        0.2052,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "SMCI",
+        0.205,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "QCOM",
+        0.1817,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "PLTR",
+        0.1089,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "CGNX",
+        0.0803,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "ZBRA",
+        0.0783,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "MTSI",
+        0.06,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "CRWD",
+        0.0411,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "NRG",
+        0.0273,
+        null
+      ],
+      [
+        "chip_shortage_2021",
+        "FDS",
+        0.0163,
+        null
+      ],
+      [
+        "export_controls_2022",
+        "AMD",
+        0.25,
+        -0.118219
+      ],
+      [
+        "export_controls_2022",
+        "ASML",
+        0.25,
+        -0.088352
+      ],
+      [
+        "export_controls_2022",
+        "NVDA",
+        0.25,
+        -0.076299
+      ],
+      [
+        "export_controls_2022",
+        "ORCL",
+        0.1576,
+        0.0
+      ],
+      [
+        "export_controls_2022",
+        "NBIS",
+        0.1417,
+        null
+      ],
+      [
+        "export_controls_2022",
+        "SSNLF",
+        0.132,
+        null
+      ],
+      [
+        "export_controls_2022",
+        "HPE",
+        0.1175,
+        0.0
+      ],
+      [
+        "export_controls_2022",
+        "CRWV",
+        0.1094,
+        null
+      ],
+      [
+        "export_controls_2022",
+        "SMCI",
+        0.1083,
+        -0.020301
+      ],
+      [
+        "export_controls_2022",
+        "INTC",
+        0.0835,
+        -0.017375
+      ],
+      [
+        "export_controls_2022",
+        "PENG",
+        0.0772,
+        -0.204498
+      ],
+      [
+        "export_controls_2022",
+        "DELL",
+        0.076,
+        -0.003074
+      ],
+      [
+        "export_controls_2022",
+        "META",
+        0.0741,
+        -0.364936
+      ],
+      [
+        "export_controls_2022",
+        "JBL",
+        0.05,
+        0.0
+      ],
+      [
+        "export_controls_2022",
+        "IOT",
+        0.05,
+        -0.239649
+      ],
+      [
+        "export_controls_2022",
+        "HXSCL",
+        0.0354,
+        null
+      ],
+      [
+        "export_controls_2022",
+        "LMT",
+        0.025,
+        0.0
+      ],
+      [
+        "export_controls_2022",
+        "NRG",
+        0.0174,
+        0.0
+      ],
+      [
+        "export_controls_2022",
+        "Q",
+        0.015,
+        null
+      ],
+      [
+        "export_controls_2022",
+        "NMRK",
+        0.0121,
+        -0.092097
+      ],
+      [
+        "taiwan_quake_2024",
+        "NVDA",
+        0.1283,
+        -0.109135
+      ],
+      [
+        "taiwan_quake_2024",
+        "TSM",
+        0.1,
+        -0.008469
+      ],
+      [
+        "taiwan_quake_2024",
+        "TSLA",
+        0.0902,
+        -0.11634
+      ],
+      [
+        "taiwan_quake_2024",
+        "ORCL",
+        0.0771,
+        -0.036585
+      ],
+      [
+        "taiwan_quake_2024",
+        "AAPL",
+        0.0756,
+        -0.002229
+      ],
+      [
+        "taiwan_quake_2024",
+        "NBIS",
+        0.0727,
+        null
+      ],
+      [
+        "taiwan_quake_2024",
+        "SMCI",
+        0.0635,
+        -0.253611
+      ],
+      [
+        "taiwan_quake_2024",
+        "AMD",
+        0.061,
+        -0.141751
+      ],
+      [
+        "taiwan_quake_2024",
+        "META",
+        0.06,
+        -0.060491
+      ],
+      [
+        "taiwan_quake_2024",
+        "CRWV",
+        0.0577,
+        null
+      ],
+      [
+        "taiwan_quake_2024",
+        "STM",
+        0.0544,
+        -0.056991
+      ],
+      [
+        "taiwan_quake_2024",
+        "MPWR",
+        0.05,
+        -0.077587
+      ],
+      [
+        "taiwan_quake_2024",
+        "HPE",
+        0.0492,
+        -0.003366
+      ],
+      [
+        "taiwan_quake_2024",
+        "PENG",
+        0.0396,
+        -0.320908
+      ],
+      [
+        "taiwan_quake_2024",
+        "POWI",
+        0.03,
+        -0.071492
+      ],
+      [
+        "taiwan_quake_2024",
+        "BIDU",
+        0.0257,
+        -0.051356
+      ],
+      [
+        "taiwan_quake_2024",
+        "IOT",
+        0.0257,
+        -0.1572
+      ],
+      [
+        "taiwan_quake_2024",
+        "BFLY",
+        0.02,
+        -0.257686
+      ],
+      [
+        "taiwan_quake_2024",
+        "MXL",
+        0.02,
+        0.0
+      ],
+      [
+        "taiwan_quake_2024",
+        "LNVGY",
+        0.0166,
+        -0.069968
+      ]
+    ]
+  },
+  "changelog_es": "Calibración de κ (escenario → dinero) con episodios PROPUESTOS (BRECHAS #11). Ajuste DÉBIL o insuficiente (kappa <= 0 (more impact did not mean a bigger fall); t -0.2307 < 2.0; partial_r2 0.001771 < 0.1): la app NO da cifras en dinero y lo dice. Hace falta más historia o episodios mejores.",
+  "changelog_en": "κ calibration (scenario → money) on PROPOSED episodes (BRECHAS #11). WEAK or insufficient fit (kappa <= 0 (more impact did not mean a bigger fall); t -0.2307 < 2.0; partial_r2 0.001771 < 0.1): the app gives NO money figures and says so. It needs more history or better episodes."
+}

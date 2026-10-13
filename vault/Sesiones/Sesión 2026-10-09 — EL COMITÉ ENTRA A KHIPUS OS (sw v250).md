@@ -2,13 +2,13 @@
 tipo: "sesion"
 capa: "Documentación"
 fecha: "2026-10-09"
-ruta: "docs/ESTADO.md#L534"
+ruta: "docs/ESTADO.md#L559"
 tags: ["capa/documentacion", "tipo/sesion"]
 ---
 
 # SESIÓN 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)
 
-> Sesión de trabajo · `docs/ESTADO.md` línea 534 (23 líneas) · [[Índice de sesiones]]
+> Sesión de trabajo · `docs/ESTADO.md` línea 559 (23 líneas) · [[Índice de sesiones]]
 
 ## Resumen
 

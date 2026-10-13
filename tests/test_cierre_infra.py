@@ -55,6 +55,7 @@ CON_DECISION = {
     'POST /api/governance/ratify': 'governance.ratify',
     'POST /api/governance/validate': 'governance.validate',
     'POST /api/hot/scenario': 'whatif.shock (async)',
+    'POST /api/hot/scenario_pnl': 'whatif.shock (async; record:false solo en la vista automática del X-Ray)',
     'POST /api/khipu/chat': 'chat.answer + chat.route (async)',
     'POST /api/ledger/chain_ack': 'ledger.chain_ack',
     'POST /api/ledger/replay/<decision_id>': 'audit.replay (async) + decision_outcomes replay (paso 24)',
@@ -86,6 +87,18 @@ CON_DECISION = {
     'POST /api/trade/close': 'order.preview → order.confirm → order.submit',
     'POST /api/trade/order': 'order.preview → order.confirm → order.submit',
     'POST /mcp': 'mcp.tool_call (async; órdenes: order.* sync)',
+    # lote I4 (Fase 2+): la administración de la voz (ANTES de llamar a ElevenLabs; resultado en decision_outcomes)
+    'POST /api/voice/adopt': 'policy.change (voice.agent: ids públicos de la voz, nunca la clave)',
+    'POST /api/voice/agent-tune': 'policy.change (voice.agent: modelo/voz/idioma con el valor anterior si está en caché)',
+    'POST /api/voice/sync-agent': 'policy.change (voice.agent: huella del prompt + nombres de herramientas)',
+    # lote I1 (Fase 2+): las últimas brechas fuera de la voz
+    'POST /api/sim/agents': 'whatif.agent_sim (async)',
+    'POST /api/mcp/tokens': 'policy.change (mcp.tokens: id + alcances, nunca el secreto)',
+    'POST /api/mcp/tokens/<token_id>/revoke': 'policy.change (mcp.tokens)',
+    'POST /oauth/register': 'policy.change (mcp.oauth: cliente + alcances)',
+    'POST /oauth/authorize': 'policy.change (mcp.oauth: consentimiento tras el PIN; nunca el código)',
+    'POST /oauth/token': 'policy.change (mcp.oauth: canje sync; rotación del refresh async)',
+    'POST /oauth/revoke': 'policy.change (mcp.oauth)',
 }
 
 # ── 2. Rutas sin decisión, con su motivo ─────────────────────────────────────────────────────────────────────────
@@ -124,16 +137,8 @@ SIN_DECISION = {
     'POST /v1/auth/key': 'v1',
     'POST /v1/risk/portfolio': 'v1',
     # ── brechas abiertas (docs/CIERRE_INFRA.md §3) ──
-    'POST /api/sim/agents': 'brecha',                   # qué-pasaría-si por agentes sin whatif.*
-    'POST /api/mcp/tokens': 'brecha',                   # crear credencial MCP (puede tener scope trade)
-    'POST /api/mcp/tokens/<token_id>/revoke': 'brecha',
-    'POST /oauth/authorize': 'brecha',                  # alta de acceso de una IA externa por OAuth
-    'POST /oauth/register': 'brecha',
-    'POST /oauth/token': 'brecha',
-    'POST /oauth/revoke': 'brecha',
-    'POST /api/voice/adopt': 'brecha',                  # cambia la voz/config del agente de ElevenLabs
-    'POST /api/voice/agent-tune': 'brecha',
-    'POST /api/voice/sync-agent': 'brecha',
+    # (lote I1: /api/sim/agents, /api/mcp/tokens[/<id>/revoke] y /oauth/* ya dejan decisión → CON_DECISION)
+    # (lote I4: /api/voice/adopt|agent-tune|sync-agent ya dejan policy.change voice.agent → CON_DECISION)
     # 'POST /api/grafo/seed' (escribía en Neo4j) se BORRÓ el 2026-10-13 con Neo4j (decisión #6): brecha cerrada.
 }
 CATEGORIAS = {'lectura', 'ia', 'personal', 'sesion', 'telemetria', 'resultado', 'v1', 'brecha'}
@@ -256,6 +261,8 @@ H = {'X-Trade-Pin': PIN, 'X-Khipu-Owner': 'cierre-infra-owner-0001'}
 
 MUESTRA = [
     ('POST', '/api/hot/scenario', {'shocks': ['TSMC']}, 'whatif.shock'),
+    ('POST', '/api/hot/scenario_pnl', {'shocks': ['TSMC'], 'positions': [{'id': 'Nvidia', 'usd': 1000}]},
+     'whatif.shock'),
     ('POST', '/api/ontology/alerts', {'owner': 'cierre-infra-owner-0001',
                                       'rule': {'entity': 'Nvidia', 'metric': 'price', 'op': '>', 'value': 1000}},
      'alert.rule'),

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/cockpit.js"
 lenguaje: "javascript"
-lineas: 5007
+lineas: 5012
 aliases: ["engine/cockpit.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/cockpit.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.007 líneas · `engine/cockpit.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 5.012 líneas · `engine/cockpit.js`
 
 ## Para qué sirve
 
@@ -47,15 +47,16 @@ CABINA DE BIXBY · el modo pantalla completa Khipu deja de ser un botón: SE VUE
 - [[engine.riskreport.js]] — usa `KhipuRisk`
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`, `initTKGTab`
 - [[engine.toast.js]] — usa `KhipuToast`
-- [[engine.voice.js]] — usa `BixbyVoice`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
+- [[engine.trade.js]] — usa `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
+- [[engine.voice.js]] — usa `BixbyVoice`
 - [[engine.xray.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
+Se carga en [[app.html]] en la posición **89 de 97** (línea 7948), después de [[engine.desktop.js]] y antes de [[engine.live.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 88)
+- [[app.html]] — lo carga con `<script>` (posición 89)
 - [[app.html]] — usa `BixbyCockpit`
 - [[engine.brief.js]] — usa `BixbyCockpit`
 - [[engine.command_center.js]] — usa `BixbyCockpit`, `_openBrokerConfirm`, `_parseTradeCommand`
@@ -65,6 +66,7 @@ Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de
 - [[engine.localcharts.js]] — usa `BixbyCockpit`
 - [[engine.oswindows.js]] — usa `BixbyCockpit`
 - [[engine.resolve.js]] — usa `BixbyCockpit`
+- [[engine.trade.js]] — usa `BixbyCockpit`
 - [[engine.voice.js]] — usa `BixbyCockpit`, `_computePortfolioSummary`, `_openDeepResearch`, `_runAgentSim`
 - [[engine.xray.js]] — usa `BixbyCockpit`
 
@@ -77,7 +79,7 @@ Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de
 - `GET /api/screener/growth` → [[server.py]] ([[API screener]])
 - `GET /api/trade/history` → [[server.py]] ([[API trade]])
 - `GET /api/trade/positions/detail` → [[server.py]] ([[API trade]])
-- `GET /api/voice/tour/<lang>/<int:step>` → [[server.py]] ([[API voice]])
+- `GET /api/voice/tour/<lang>/<int:step>` → [[core.voice_api.py]] ([[API voice]])
 - `POST /api/canvas/generate` → [[server.py]] ([[API canvas]])
 - `POST /api/deep/analyze` → [[server.py]] ([[API deep]])
 - `POST /api/matrix/insights` → [[matrix.api.py]] ([[API matrix]])
@@ -106,6 +108,7 @@ Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de
 - [[tests.test_overnight_ui_dossier_clients.py]]
 - [[tests.test_overnight_ui_small_panels.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_space_satellites.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_os_server.py]]
@@ -116,6 +119,7 @@ Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]
 - [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]
 - [[Sesión 2026-10-09 — EL COMITÉ ENTRA A KHIPUS OS (sw v250)]]
@@ -127,4 +131,5 @@ Se carga en [[app.html]] en la posición **88 de 96** (línea 7963), después de
 - [[Sesión 2026-09-28 (c) — DOSSIER PARA TODAS LAS EMPRESAS + DATOS EN VIVO (sw v151)]]
 - [[Sesión 2026-09-28 — X-Ray pulido (sw v139)]]
 - [[Sesión 2026-07 — Ampliaciones (tras feedback simulaciones muy cerradas, más info)]]
-- [[Sesión 2026-10-03 — VISIÓN PRÓXIMA ETAPA (pedido, NO es parte de Phase 3)]]
+
+_…y 1 sesiones más antiguas._

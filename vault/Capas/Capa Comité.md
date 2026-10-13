@@ -9,14 +9,14 @@ tags: ["capa/comite", "tipo/capa"]
 
 > El comité de inversión: puestos, debate, convicción, tamaño, track record y comité de cartera.
 
-**8 archivos · 6.694 líneas.** Volver al [[00 Mapa de Khipus]].
+**8 archivos · 6.720 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
 - [[research.committee.py]] — 2.336 líneas · PHASE 3 · COMITÉ DE INVERSIÓN automatizado.
 - [[engine.committee.js]] — 1.239 líneas · PHASE 3 · COMITÉ DE INVERSIÓN (con aprobación humana)
+- [[research.outcomes.py]] — 757 líneas · PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - [[research.committee_api.py]] — 739 líneas · blueprint /api/committee/\* (PHASE 3).
-- [[research.outcomes.py]] — 731 líneas · PHASE 3 · ¿ACERTARON LOS AGENTES? (aprendizaje)
 - [[engine.pfcommittee.js]] — 550 líneas · 💼 COMITÉ DE CARTERA (pestaña "Mi cartera" del Comité)
 - [[research.debate.py]] — 385 líneas · DEBATE CON IA del comité (cada puesto razona de verdad).
 - [[core.portfolio_advisor.py]] — 368 líneas · COMITÉ DE CARTERA: analiza una cartera completa y da ACCIONES CONCRETAS como consejo (reducir, vender, añadir, diversificar).

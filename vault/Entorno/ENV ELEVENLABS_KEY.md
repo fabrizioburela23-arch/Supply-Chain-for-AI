@@ -23,6 +23,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_voice_server.py]]
 - [[tests.test_security.py]]
+- [[tests.test_voice_agent_split.py]]
 - [[tests.test_voice_tour.py]]
 
 ## ¿Está documentada en CLAUDE.md?

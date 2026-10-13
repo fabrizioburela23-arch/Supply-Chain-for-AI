@@ -184,6 +184,108 @@ def policy_change(session, policy, before, after, *, subject=None, task='policy'
     return ctx.id
 
 
+# ── acceso de IAs externas (MCP: tokens y OAuth; Fase 2+, lote I1) ────────────
+def _access_doc(d):
+    """Lo ÚNICO que el libro guarda de una credencial: ids, alcances, tipo y vencimiento. NUNCA el token, el
+    refresh token, el secreto del cliente ni el código de autorización (ni sus huellas: no hacen falta para auditar
+    quién dio qué poder)."""
+    keep = ('token_id', 'oauth_client_id', 'broker_client_id', 'scopes', 'kind', 'revoked', 'expires_at',
+            'auth_method', 'grant', 'redirect_hosts', 'action')
+    return clean({k: d[k] for k in keep if k in d and d[k] is not None})
+
+
+def access_change(session, policy, action, after, *, before=None, p=None, task='mcp_access'):
+    """policy.change para el acceso de IAs externas — `policy` ∈ mcp.tokens | mcp.oauth. Sync, MISMA sesión que el
+    alta/baja: si el libro no se escribe, la credencial tampoco (LedgerUnavailable → la ruta responde 503)."""
+    a = _access_doc(dict(after or {}, action=action))
+    b = _access_doc(dict(before, action=action)) if before is not None else None
+    subject = {k: a[k] for k in ('token_id', 'oauth_client_id', 'broker_client_id') if a.get(k)}
+    subject['action'] = action
+    return policy_change(session, policy, b, a, subject=subject, task=task, p=p)
+
+
+def access_revoke(session, policy, action, after, *, before=None, p=None, task='mcp_access'):
+    """Una BAJA (revocar un token, código reutilizado) QUITA poder: nunca se bloquea por el libro (revisión lote I:
+    con el libro caído un token filtrado seguía vivo). Intenta la ficha sync en un SAVEPOINT de la misma
+    transacción; si el libro no se escribe, la revocación se confirma igual y la ficha va por la cola async (si
+    tampoco entra, queda contada en decisions.STATS['async_dropped'], 🩺). Solo las ALTAS fallan cerrado."""
+    from core import decisions
+    try:
+        with session.begin_nested():
+            return access_change(session, policy, action, after, before=before, p=p, task=task)
+    except decisions.LedgerUnavailable as e:
+        log.warning('decision_sites: revocación %s/%s confirmada SIN ficha sync (%s); va por la cola async',
+                    policy, action, str(e)[:120])
+        if not access_change_async(policy, action, after, p=p, task=task):
+            with decisions._LOCK:
+                decisions.STATS['async_dropped'] += 1
+        return None
+
+
+def access_change_async(policy, action, after, *, p=None, task='mcp_access'):
+    """Igual que access_change pero DESPUÉS de responder (rotación de un refresh token: no da poder nuevo, así que no
+    suma latencia al endpoint del token). Nunca lanza."""
+    try:
+        from core import decisions
+        who = p or principal(task)
+    except Exception:  # noqa: BLE001
+        return False
+    a = _access_doc(dict(after or {}, action=action))
+    subject = {k: a[k] for k in ('token_id', 'oauth_client_id', 'broker_client_id') if a.get(k)}
+    subject.update(action=action, policy=policy)
+
+    def build():
+        ctx = decisions.DecisionCtx('policy.change', who, subject=clean(subject), durability='async')
+        ctx.output = clean({'policy': policy, 'before': None, 'after': a, 'changed': sorted(a)})
+        ctx.status = 'executed'
+        return ctx
+    try:
+        return bool(decisions.submit_async(build))
+    except Exception:  # noqa: BLE001
+        return False
+
+
+# ── simulación por agentes (POST /api/sim/agents; lote I1) ───────────────────
+def agent_sim(scenario, seeds, lang, out):
+    """whatif.agent_sim DESPUÉS de responder (0 ms al usuario; D3: 90 días): semillas, huella del escenario (el texto
+    va como blob de 90 días), quién fijó los % (kernel o IA), modelo y el top-50 de impactos con la huella del vector.
+    No es repetible (la IA narra): replay lo dirá 'not_replayable'. Nunca lanza; sin base no hace nada."""
+    try:
+        from core import decisions
+        who = principal('sim_agents')
+    except Exception:  # noqa: BLE001
+        return False
+    out = out if isinstance(out, dict) else {}
+    imp = {}
+    for i in out.get('impacts') or []:
+        if isinstance(i, dict) and i.get('id') is not None:
+            try:
+                imp[str(i['id'])[:80]] = float(i.get('pct') or 0)
+            except (TypeError, ValueError):
+                continue
+    seeds = [str(s)[:80] for s in (seeds or [])][:24]
+    meta = {k: out.get(k) for k in ('pct_source', 'kappa_pct', 'ai_pct_overridden') if out.get(k) is not None}
+
+    def build():
+        ctx = decisions.DecisionCtx('whatif.agent_sim', who, subject=clean({'entity_ids': seeds[:20]}))
+        ctx.params(endpoint='/api/sim/agents', seeds=seeds, lang=lang,
+                   scenario_sha=decisions.sha256_hex({'scenario': str(scenario or '')[:4000]}))
+        ctx.payload_blob(clean({'scenario': str(scenario or '')[:4000]}))
+        ctx.extra['engine'] = 'core.sim_agents'     # no es una implementación retenida (no repetible: narra la IA)
+        if out.get('model'):
+            ctx.model = {'model': str(out.get('model'))[:80]}
+        top = sorted(imp.items(), key=lambda kv: (-abs(kv[1]), kv[0]))[:50]
+        ctx.output = clean({'ok': bool(out.get('ok')), 'top': [[k, v] for k, v in top], 'n': len(imp),
+                            'content_sha': decisions.sha256_hex(imp), 'ai_used': bool(out.get('model')),
+                            'fallback': bool(out.get('fallback')), **meta})
+        ctx.status = 'executed' if out.get('ok') else 'failed'
+        return ctx
+    try:
+        return bool(decisions.submit_async(build))
+    except Exception:  # noqa: BLE001
+        return False
+
+
 # ── comité (paso 18) ─────────────────────────────────────────────────────────
 def memo_facts(memo, now=None):
     """Hechos del memo para la puerta G5 (core/gates/focus.memo_triples). Los topes salen del release vigente."""

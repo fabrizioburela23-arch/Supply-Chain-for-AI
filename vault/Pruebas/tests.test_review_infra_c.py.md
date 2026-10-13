@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_review_infra_c.py"
 lenguaje: "python"
-lineas: 499
+lineas: 503
 aliases: ["tests/test_review_infra_c.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_review_infra_c.py
 
-> Prueba · capa [[Capa Pruebas]] · 499 líneas · `tests/test_review_infra_c.py`
+> Prueba · capa [[Capa Pruebas]] · 503 líneas · `tests/test_review_infra_c.py`
 
 ## Qué prueba
 

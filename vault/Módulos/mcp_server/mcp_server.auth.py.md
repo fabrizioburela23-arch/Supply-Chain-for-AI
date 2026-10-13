@@ -66,7 +66,7 @@ tokens kmcp_…, alcances, límites por token y auditoría.
 - [[mcp_server.oauth.py]] — lo importa
 - [[mcp_server.tools.py]] — lo importa
 
-_Además lo importan 10 pruebas (lista abajo)._
+_Además lo importan 11 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -91,5 +91,6 @@ _Además lo importan 10 pruebas (lista abajo)._
 - [[tests.test_repair_graph.py]]
 - [[tests.test_repair_ops.py]]
 - [[tests.test_repair_review2.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_security.py]]
 - [[tests.test_tensor.py]]

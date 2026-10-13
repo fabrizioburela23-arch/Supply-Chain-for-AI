@@ -59,6 +59,7 @@ KINDS = frozenset((
     'audit.gates',
     'data.backfill',          # BRECHAS bloque 2: relleno de historia de precios a pedido del operador (PIN)
     'retention.migrate',      # paso 26: limpieza única de datos viejos (claves en texto plano de decision_shadow)
+    'whatif.agent_sim',       # lote I1: simulación por agentes (POST /api/sim/agents; async, 90 días, no repetible)
 ))
 SYNC_PREFIXES = ('order.', 'approval.', 'ontology.', 'proposal.', 'committee.', 'research.', 'claim.', 'alert.rule',
                  'reconcile.', 'policy.', 'governance.', 'trade.', 'audit.', 'retention.', 'ledger.')

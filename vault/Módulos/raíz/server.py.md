@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "server.py"
 lenguaje: "python"
-lineas: 6239
+lineas: 4877
 aliases: ["server.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # server.py
 
-> Módulo · capa [[Capa Infraestructura]] · 6.239 líneas · `server.py`
+> Módulo · capa [[Capa Infraestructura]] · 4.877 líneas · `server.py`
 
 ## Para qué sirve
 
@@ -19,107 +19,94 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 ## API pública
 
 - `screener_growth()` — Ranking de señales de crecimiento explosivo sobre TODO el universo cotizable del grafo (~410 símbolos, multi-bolsa). Momentum 5/20/60d + … _(línea 296)_
-- `voice_agent_diag()` — Diagnóstico ACCIONABLE de la voz: clave, saldo/plan, agente, LLM, voz, modelo TTS, eventos, herramientas, prompt y overrides — con la lista … _(línea 318)_
-- `voice_voices()` — Voces disponibles: las de la cuenta + las mejor valoradas EN ESPAÑOL de la biblioteca compartida de ElevenLabs (para arreglar la 'voz … _(línea 351)_
-- `voice_adopt()` — Adopta una voz de la biblioteca compartida a la cuenta (paso previo a asignarla al agente). Mismo candado que agent-tune + PIN de operador. … _(línea 379)_
-- `voice_agent_tune()` — Ajuste FINO del agente (modelo TTS / idioma / voice_id). Requiere ELEVENLABS_ALLOW_OVERRIDE=1 (mismo candado que adopt) + PIN de operador. … _(línea 411)_
-- `index()` _(línea 838)_
-- `service_worker()` _(línea 847)_
-- `manifest()` _(línea 865)_
-- `icon()` _(línea 883)_
-- `serve_nodes(filename)` _(línea 906)_
-- `serve_engine(filename)` _(línea 912)_
-- `serve_sim(filename)` _(línea 918)_
-- `vendor(name)` _(línea 945)_
-- `api_vocabulary()` — REGISTRO ÚNICO del vocabulario (tipos de objeto, tipos de relación con su criticidad, tipos de fuente). El cliente debe consumir ESTO en … _(línea 970)_
-- `api_vocabulary_unknown()` — Diagnóstico: valores vistos que NO están en el registro. La regla del proyecto es que nada se clasifique en silencio; si algo aparece aquí, … _(línea 996)_
-- `health()` _(línea 1038)_
-- `ai_debug()` — Depuración: ejecuta _ai_complete con un prompt real (tier configurable) y reporta AI_ORDER, los modelos resueltos y el error/modelo real — … _(línea 1824)_
-- `diagnostics()` _(línea 1898)_
-- `ws_token()` — Token corto (20 s, atado a la IP, un solo uso) para canjear por la key del WebSocket en /api/ws-key. Solo desde el mismo origen. _(línea 2053)_
-- `ws_key()` — Valida el session_token (fresco, misma IP, no usado) y devuelve la key del WebSocket: FINNHUB_WS_KEY si existe (recomendado), si no … _(línea 2070)_
-- `quote(ticker)` — Cotización de UN ticker por la MISMA cascada que /api/quotes/live (Finnhub→Yahoo, también EE.UU.; Yahoo no necesita key). Devuelve el … _(línea 2132)_
-- `market_quote(symbol)` _(línea 2161)_
-- `market_providers()` — Qué proveedores hay, cuáles están configurados y por qué no los que no. Honestidad de fuentes (spec §13): nada de fingir integraciones … _(línea 2178)_
-- `scalp_price(symbol)` — Precio spot RÁPIDO para el scalping. Acciones → Finnhub (c/pc); cripto (par con '/') → datos de Alpaca (misma key). Caché 2s: fresco para … _(línea 2198)_
-- `batch_quotes()` — Varios tickers (?symbols=A,B o ?tickers=A,B) por la MISMA cascada que /api/quotes/live. Mapa plano {T: fila + {c, pc, dp, t} crudos} — … _(línea 2230)_
-- `fin_dossier(ticker)` — Series anuales para el dossier financiero de una empresa (lo consumen engine/fincard.js, cockpit.js, termdata.js y localcharts.js): … _(línea 2252)_
-- `candles(ticker)` — OHLCV candles for charting, HONRANDO el timeframe (range/interval). _(línea 2280)_
-- `trade_account()` _(línea 2606)_
-- `trade_status()` — Diagnóstico PÚBLICO no sensible del bróker (sin PIN): NO expone claves ni datos de cuenta — solo si están configuradas, la base y el status … _(línea 2631)_
-- `trade_diag()` — Diagnóstico del broker Alpaca — SIN exponer claves. Prueba cada llamada (cuenta, posiciones, órdenes, activos cripto, reloj) y devuelve … _(línea 2677)_
-- `trade_crypto_assets()` — Activos cripto tradeables en Alpaca → {"assets":[{symbol,name}], "paper":bool}. _(línea 2773)_
-- `trade_close()` — Cierra por completo UNA posición (1-clic 'CLOSE' del scalping) por el camino único: una orden de mercado por TODA la cantidad … _(línea 2914)_
-- `trade_order()` — Orden de la cuenta de la casa por el camino ÚNICO (brokerage.service.house_order). Aquí solo se valida la FORMA del pedido (auditoría … _(línea 2967)_
-- `company_news(ticker)` _(línea 3083)_
-- `crypto_markets()` _(línea 3104)_
-- `crypto_detail(coin_id)` _(línea 3120)_
-- `crypto_history(coin_id)` _(línea 3134)_
-- `crypto_analyze()` — {id?, symbol?, lang, intel?} → análisis CAUTO. Contexto: precio/mercado en vivo (CoinGecko) + ficha estática opcional del cliente. Cache 10 … _(línea 3173)_
-- `thesis_quick()` — {id, lang} → informe estructurado que va MÁS ALLÁ de la empresa: sector, competidores, geopolítica, chokepoints de su cadena y una tesis. … _(línea 3261)_
-- `ai_usage_report()` _(línea 3335)_
-- `ai_usage_limits()` _(línea 3352)_
-- `sim_agents_route()` _(línea 3375)_
-- `earnings(ticker)` _(línea 3404)_
-- `fundamentals(ticker)` _(línea 3425)_
-- `insiders(ticker)` _(línea 3509)_
-- `ai_analyze()` _(línea 3528)_
-- `canvas_generate()` _(línea 3611)_
-- `marketstack_proxy()` _(línea 3724)_
-- `ipo_calendar()` — IPO calendar from Finnhub — last 90 days + next 30 days _(línea 3741)_
-- `space_launches()` — Próximos lanzamientos espaciales, mapeados a nodos de Khipu. Blindado para la demo: timeout corto + respaldo vacío si Launch Library está … _(línea 3763)_
-- `space_tle()` — Satélites reales por constelación (CelesTrak). Muestrea para rendimiento pero reporta los conteos REALES (con `as_of`; `stale` = copia de … _(línea 3816)_
-- `news_gdelt(company_name)` _(línea 3867)_
-- `dossier(ticker)` — Dossier de 5-6 años para la pestaña Análisis (app.html `_dossierRenderPanels`): ingresos, dilución, FCF, valuación, balance, márgenes, … _(línea 3920)_
-- `market_live_caps()` — Capitalización + precio EN VIVO de TODAS las cotizadas del grafo (lote Yahoo, caché 15 min, refresco en segundo plano). El cliente pisa con … _(línea 3945)_
-- `market_live_fundamentals()` — Fundamentales EN VIVO (margen, crecimiento, ingresos 12 m, empleados) de todas las cotizadas, refrescados por tandas en segundo plano … _(línea 3955)_
-- `company_live(ticker)` — Perfil EN VIVO de cualquier empresa cotizada (pedido 2026-09-28: "que la info se actualice en vivo"): precio y % del día, capitalización en … _(línea 3964)_
-- `company_valuation_news(name)` — Valuación de una PRIVADA según los titulares recientes (GDELT): la cifra citada, medio, fecha y si es ronda cerrada o negociación. Pedido … _(línea 3986)_
-- `company_research(ticker)` — Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza. _(línea 4044)_
-- `grafo_estado()` _(línea 4107)_
-- `voice_sync_agent()` — Sincroniza el agente de ElevenLabs con el cerebro definido aquí (PATCH del agente). PIN de operador: antes cualquiera podía dispararlo en … _(línea 4479)_
-- `deep_analyze()` — Arranca una investigación profunda (Capa 4). Una a la vez por worker. _(línea 4602)_
-- `client_diag()` _(línea 4651)_
-- `client_diag_recent()` _(línea 4670)_
-- `deep_status()` _(línea 4691)_
-- `bixby_system_prompt()` — Returns Khipu's system prompt for ElevenLabs agent configuration. _(línea 4697)_
-- `voice_session()` — URL firmada (un solo uso, la clave NUNCA sale del server) + qué overrides permite el agente, para que el navegador no mande uno prohibido … _(línea 4717)_
-- `voice_tour_audio(lang, step)` — Audio MP3 de la frase `step` del recorrido guiado, con la voz del agente de Khipu. 404 sin voz configurada o paso inexistente (el navegador … _(línea 4771)_
-- `portfolio_risk_report()` — REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución) con precios diarios REALES de 1 año. Body: {positions:[{symbol, … _(línea 4890)_
-- `portfolio_vega_report()` — REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad implícita EN VIVO del contrato. Body: {options:[{symbol, kind, … _(línea 4912)_
-- `options_chain(symbol)` — Vencimientos y strikes disponibles del subyacente (selectores de la UI). _(línea 4930)_
-- `api_portfolio_risk_internal()` — VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser). _(línea 4942)_
-- `generate_khipu_key(user_id, tier=…)` _(línea 4962)_
-- `validate_khipu_key(key)` _(línea 4967)_
-- `khipu_auth(min_tier=…)` _(línea 4976)_
-- `api_issue_key()` — Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise. _(línea 4998)_
-- `api_docs()` _(línea 5018)_
-- `api_nodes()` _(línea 5040)_
-- `api_node_live(node_id)` _(línea 5046)_
-- `api_portfolio_risk()` — VaR + CVaR del portfolio del cliente (Alpha Vantage históricos). Contrato público INTOCABLE — mismo cálculo compartido en … _(línea 5059)_
-- `quotes_live()` — Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]} (máx 150 por petición; el cliente recorre TODO el catálogo en … _(línea 5075)_
-- `macro_fred()` — Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS Returns last 30 data points per series. _(línea 5107)_
-- `investors_13f(ticker)` — Top institutional holders from SEC EDGAR 13F filings. Cached 24h. _(línea 5142)_
-- `trade_flows()` — UN Comtrade public preview API — bilateral semiconductor trade. ?reporter=USA&partner=CHN&product=8542 (optional filters) HS codes: 8541 … _(línea 5195)_
-- `agent_start()` _(línea 5932)_
-- `agent_stop()` _(línea 5970)_
-- `agent_status()` _(línea 5982)_
-- `agent_config()` _(línea 6012)_
-- `trade_history()` _(línea 6034)_
-- `portfolio_comment()` — Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen AGREGADO y anónimo desde el cliente (sin datos personales: solo … _(línea 6047)_
-- `portfolio_advice()` — CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un resumen ANÓNIMO de la cartera (papel) + candidatos del universo, … _(línea 6131)_
-- `trade_positions_detail()` _(línea 6210)_
+- `index()` _(línea 696)_
+- `service_worker()` _(línea 705)_
+- `manifest()` _(línea 723)_
+- `icon()` _(línea 741)_
+- `serve_nodes(filename)` _(línea 764)_
+- `serve_engine(filename)` _(línea 770)_
+- `serve_sim(filename)` _(línea 776)_
+- `vendor(name)` _(línea 803)_
+- `api_vocabulary()` — REGISTRO ÚNICO del vocabulario (tipos de objeto, tipos de relación con su criticidad, tipos de fuente). El cliente debe consumir ESTO en … _(línea 828)_
+- `api_vocabulary_unknown()` — Diagnóstico: valores vistos que NO están en el registro. La regla del proyecto es que nada se clasifique en silencio; si algo aparece aquí, … _(línea 854)_
+- `health()` _(línea 896)_
+- `ai_debug()` — Depuración: ejecuta _ai_complete con un prompt real (tier configurable) y reporta AI_ORDER, los modelos resueltos y el error/modelo real — … _(línea 1682)_
+- `diagnostics()` _(línea 1756)_
+- `ws_token()` — Token corto (20 s, atado a la IP, un solo uso) para canjear por la key del WebSocket en /api/ws-key. Solo desde el mismo origen. _(línea 1935)_
+- `ws_key()` — Valida el session_token (fresco, misma IP, no usado) y devuelve la key del WebSocket: FINNHUB_WS_KEY si existe (recomendado), si no … _(línea 1952)_
+- `quote(ticker)` — Cotización de UN ticker por la MISMA cascada que /api/quotes/live (Finnhub→Yahoo, también EE.UU.; Yahoo no necesita key). Devuelve el … _(línea 2014)_
+- `market_quote(symbol)` _(línea 2043)_
+- `market_providers()` — Qué proveedores hay, cuáles están configurados y por qué no los que no. Honestidad de fuentes (spec §13): nada de fingir integraciones … _(línea 2060)_
+- `scalp_price(symbol)` — Precio spot RÁPIDO para el scalping. Acciones → Finnhub (c/pc); cripto (par con '/') → datos de Alpaca (misma key). Caché 2s: fresco para … _(línea 2080)_
+- `batch_quotes()` — Varios tickers (?symbols=A,B o ?tickers=A,B) por la MISMA cascada que /api/quotes/live. Mapa plano {T: fila + {c, pc, dp, t} crudos} — … _(línea 2112)_
+- `fin_dossier(ticker)` — Series anuales para el dossier financiero de una empresa (lo consumen engine/fincard.js, cockpit.js, termdata.js y localcharts.js): … _(línea 2134)_
+- `candles(ticker)` — OHLCV candles for charting, HONRANDO el timeframe (range/interval). _(línea 2162)_
+- `trade_account()` _(línea 2488)_
+- `trade_status()` — Diagnóstico PÚBLICO no sensible del bróker (sin PIN): NO expone claves ni datos de cuenta — solo si están configuradas, la base y el status … _(línea 2513)_
+- `trade_diag()` — Diagnóstico del broker Alpaca — SIN exponer claves. Prueba cada llamada (cuenta, posiciones, órdenes, activos cripto, reloj) y devuelve … _(línea 2599)_
+- `trade_crypto_assets()` — Activos cripto tradeables en Alpaca → {"assets":[{symbol,name}], "paper":bool}. _(línea 2695)_
+- `trade_close()` — Cierra por completo UNA posición (1-clic 'CLOSE' del scalping) por el camino único: una orden de mercado por TODA la cantidad … _(línea 2836)_
+- `trade_order()` — Orden de la cuenta de la casa por el camino ÚNICO (brokerage.service.house_order). Aquí solo se valida la FORMA del pedido (auditoría … _(línea 2889)_
+- `company_news(ticker)` _(línea 3005)_
+- `crypto_markets()` _(línea 3026)_
+- `crypto_detail(coin_id)` _(línea 3042)_
+- `crypto_history(coin_id)` _(línea 3056)_
+- `crypto_analyze()` — {id?, symbol?, lang, intel?} → análisis CAUTO. Contexto: precio/mercado en vivo (CoinGecko) + ficha estática opcional del cliente. Cache 10 … _(línea 3095)_
+- `thesis_quick()` — {id, lang} → informe estructurado que va MÁS ALLÁ de la empresa: sector, competidores, geopolítica, chokepoints de su cadena y una tesis. … _(línea 3183)_
+- `ai_usage_report()` _(línea 3257)_
+- `ai_usage_limits()` _(línea 3274)_
+- `sim_agents_route()` _(línea 3297)_
+- `earnings(ticker)` _(línea 3331)_
+- `fundamentals(ticker)` _(línea 3352)_
+- `insiders(ticker)` _(línea 3436)_
+- `ai_analyze()` _(línea 3455)_
+- `canvas_generate()` _(línea 3538)_
+- `marketstack_proxy()` _(línea 3651)_
+- `ipo_calendar()` — IPO calendar from Finnhub — last 90 days + next 30 days _(línea 3668)_
+- `space_launches()` — Próximos lanzamientos espaciales, mapeados a nodos de Khipu. Blindado para la demo: timeout corto + respaldo vacío si Launch Library está … _(línea 3690)_
+- `space_tle()` — Satélites reales por constelación (CelesTrak). Muestrea para rendimiento pero reporta los conteos REALES (con `as_of`; `stale` = copia de … _(línea 3743)_
+- `news_gdelt(company_name)` _(línea 3794)_
+- `dossier(ticker)` — Dossier de 5-6 años para la pestaña Análisis (app.html `_dossierRenderPanels`): ingresos, dilución, FCF, valuación, balance, márgenes, … _(línea 3847)_
+- `market_live_caps()` — Capitalización + precio EN VIVO de TODAS las cotizadas del grafo (lote Yahoo, caché 15 min, refresco en segundo plano). El cliente pisa con … _(línea 3872)_
+- `market_live_fundamentals()` — Fundamentales EN VIVO (margen, crecimiento, ingresos 12 m, empleados) de todas las cotizadas, refrescados por tandas en segundo plano … _(línea 3882)_
+- `company_live(ticker)` — Perfil EN VIVO de cualquier empresa cotizada (pedido 2026-09-28: "que la info se actualice en vivo"): precio y % del día, capitalización en … _(línea 3891)_
+- `company_valuation_news(name)` — Valuación de una PRIVADA según los titulares recientes (GDELT): la cifra citada, medio, fecha y si es ronda cerrada o negociación. Pedido … _(línea 3913)_
+- `company_research(ticker)` — Descarga el 10-K/20-F más reciente de SEC EDGAR y Claude lo sintetiza. _(línea 3971)_
+- `grafo_estado()` _(línea 4034)_
+- `deep_analyze()` — Arranca una investigación profunda (Capa 4). Una a la vez por worker. _(línea 4142)_
+- `client_diag()` _(línea 4191)_
+- `client_diag_recent()` _(línea 4210)_
+- `deep_status()` _(línea 4231)_
+- `portfolio_risk_report()` — REPORTE DE RIESGO (VaR/CVaR/volatilidad/beta/correlaciones/contribución) con precios diarios REALES de 1 año. Body: {positions:[{symbol, … _(línea 4295)_
+- `portfolio_vega_report()` — REPORTE VEGA (Kappa) de opciones: griegas Black-Scholes con volatilidad implícita EN VIVO del contrato. Body: {options:[{symbol, kind, … _(línea 4317)_
+- `options_chain(symbol)` — Vencimientos y strikes disponibles del subyacente (selectores de la UI). _(línea 4335)_
+- `api_portfolio_risk_internal()` — VaR + CVaR del portfolio — endpoint interno sin JWT (para uso del browser). _(línea 4347)_
+- `generate_khipu_key(user_id, tier=…)` _(línea 4367)_
+- `validate_khipu_key(key)` _(línea 4372)_
+- `khipu_auth(min_tier=…)` _(línea 4381)_
+- `api_issue_key()` — Issue a Khipu Finance API key. Body: {user_id, tier}. Tiers: free/starter/pro/business/enterprise. _(línea 4403)_
+- `api_docs()` _(línea 4423)_
+- `api_nodes()` _(línea 4445)_
+- `api_node_live(node_id)` _(línea 4451)_
+- `api_portfolio_risk()` — VaR + CVaR del portfolio del cliente (Alpha Vantage históricos). Contrato público INTOCABLE — mismo cálculo compartido en … _(línea 4464)_
+- `quotes_live()` — Lote de cotizaciones en vivo. Body: {"tickers": ["NVDA","TSM","7203.T",…]} (máx 150 por petición; el cliente recorre TODO el catálogo en … _(línea 4480)_
+- `macro_fred()` — Fetch FRED series (free, no key). ?series=DXY,T10Y2Y,FEDFUNDS Returns last 30 data points per series. _(línea 4512)_
+- `investors_13f(ticker)` — Top institutional holders from SEC EDGAR 13F filings. Cached 24h. _(línea 4547)_
+- `trade_flows()` — UN Comtrade public preview API — bilateral semiconductor trade. ?reporter=USA&partner=CHN&product=8542 (optional filters) HS codes: 8541 … _(línea 4600)_
+- `trade_history()` _(línea 4672)_
+- `portfolio_comment()` — Comentario CAUTO de Khipu sobre el portafolio (papel). Recibe un resumen AGREGADO y anónimo desde el cliente (sin datos personales: solo … _(línea 4685)_
+- `portfolio_advice()` — CAPA PROACTIVA (elección de Fabrizio: 'sugiere y tú decides'). Dado un resumen ANÓNIMO de la cartera (papel) + candidatos del universo, … _(línea 4769)_
+- `trade_positions_detail()` _(línea 4848)_
 
-**Internas** (empiezan con `_`): `_response_status`, `_degraded`, `_cacheable_response`, `_neg_cache_key`, `_with_negative_cache`, `_cache_cached_ok_only`, `_voice_override_off`, `_ai_route_now`, `_ai_models_now`, `_clean_env`, `_norm_alpaca_base`, `_add_security_headers`, `_add_cors_for_public_api`, `_add_graph_version_header`, `_log_request`, `_redact_secrets_in_json`, `_secret_values_for_scan`, `_sw_version`, `_versioned_app_html`, `_js_cache_headers`, `_json_error`, `_research_brief`, `_diag_redact`, `_diag_card`, `_diag_model_name`, `_diag_ai_route`, `_diag_claude`, `_ai_error_fix`, `_ai_error_hint`, `_diag_gemini`, `_diag_nvidia`, `_diag_elevenlabs`, `_db_error_fix`, `_db_error_hint`, `_diag_ontologia`, `_diag_gobernanza`, `_diag_g3_bullets`, `_diag_hot_views`, `_diag_grafo`, `_diag_alpaca`, `_diag_finnhub`, `_diag_fmp`, `_diag_yahoo`, `_diag_research_fix`, `_security_warnings`, `_same_origin_request`, `_ws_forbidden`, `_ws_sig`, `_quote_raw_compat`, `_alpaca_hdrs`, `_trade_symbol`, `_paper`, `_account_is_live`, `_house_trading_enabled`, `_house_ledger_block`, `_trading_halted_response`, `_broker_missing_response`, `_trade_actor`, `_trade_audit`, `_alpaca_json` y 47 más
+**Internas** (empiezan con `_`): `_response_status`, `_degraded`, `_cacheable_response`, `_neg_cache_key`, `_with_negative_cache`, `_cache_cached_ok_only`, `_ai_route_now`, `_ai_models_now`, `_clean_env`, `_norm_alpaca_base`, `_add_security_headers`, `_add_cors_for_public_api`, `_add_graph_version_header`, `_log_request`, `_redact_secrets_in_json`, `_secret_values_for_scan`, `_sw_version`, `_versioned_app_html`, `_js_cache_headers`, `_json_error`, `_research_brief`, `_diag_redact`, `_diag_card`, `_diag_model_name`, `_diag_ai_route`, `_diag_claude`, `_ai_error_fix`, `_ai_error_hint`, `_diag_gemini`, `_diag_nvidia`, `_diag_elevenlabs`, `_db_error_fix`, `_db_error_hint`, `_diag_ontologia`, `_diag_gobernanza`, `_diag_g3_bullets`, `_diag_hot_views`, `_diag_grafo`, `_diag_alpaca`, `_diag_finnhub`, `_diag_fmp`, `_diag_yahoo`, `_diag_research_fix`, `_security_warnings`, `_diag_view`, `_same_origin_request`, `_ws_forbidden`, `_ws_sig`, `_quote_raw_compat`, `_alpaca_hdrs`, `_trade_symbol`, `_paper`, `_account_is_live`, `_house_trading_enabled`, `_house_ledger_block`, `_trading_halted_response`, `_broker_missing_response`, `_trade_actor`, `_trade_audit`, `_alpaca_json` y 23 más
 
 ## Depende de
 
 - [[brokerage.api.py]] — importa `(dinámico: brokerage.api)`
 - [[brokerage.risk.py]] — importa `trading_enabled`
-- [[brokerage.service.py]] — importa `audit`, `crypto_pair`, `poll_fills_job`, `service`
+- [[brokerage.service.py]] — importa `audit`, `poll_fills_job`, `service`
 - [[core.__init__.py]] — importa `builder`, `core.gates`, `hot_bp`, `known`, `registry`, `report`, `signals`
 - [[core.agents_api.py]] — importa `agents_bp`
-- [[core.agents_registry.py]] — importa `AGENTS`, `AGENT_NAMES`
 - [[core.ai.py]] — importa `_ai_complete`, `_ai_configured`, `_ai_json`, `_complete_gemini`, `_complete_nvidia`, `_extract_json`, `ai`, `ai_circuit_state` …
 - [[core.ai_usage.py]] — importa `ai_usage`
 - [[core.canvas_spec.py]] — importa `hints_prompt`, `sanitize_hints`, `validate_spec`
@@ -127,7 +114,8 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[core.company_data.py]] — importa `get_annual_financials`, `get_live_profile`, `get_valuation_news`, `to_dossier`, `to_findossier`
 - [[core.config.py]] — importa `AI_MODEL_DEEP`, `AI_MODEL_FAST`, `AI_ORDER`, `CLAUDE`, `FINNHUB`, `GEMINI_KEY`, `GEMINI_MODEL`, `HTTP_TIMEOUT` …
 - [[core.decide_api.py]] — importa `(dinámico: core.decide_api)`
-- [[core.decisions.py]] — importa `LedgerUnavailable`, `decisions`
+- [[core.decision_sites.py]] — importa `decision_sites`
+- [[core.decisions.py]] — importa `LedgerUnavailable`
 - [[core.geosit.py]] — importa `geo_bp`
 - [[core.governance.py]] — importa `governance`
 - [[core.governance_api.py]] — importa `(dinámico: core.governance_api)`
@@ -143,7 +131,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[core.logjson.py]] — importa `configure`
 - [[core.ops_check.py]] — importa `FIRST_AFTER_BOOT_S`, `ops_bp`, `scheduled`
 - [[core.options.py]] — importa `chain_meta`, `vega_report`
-- [[core.pin.py]] — importa `client_ip`, `insecure_production_secret`, `require_operator`, `require_pin`, `secret_key_default`
+- [[core.pin.py]] — importa `client_ip`, `insecure_production_secret`, `pin`, `require_operator`, `require_pin`, `secret_key_default`
 - [[core.portfolio_ai.py]] — importa `(dinámico: core.portfolio_ai)`
 - [[core.portfolio_reports_api.py]] — importa `(dinámico: core.portfolio_reports_api)`
 - [[core.prices_api.py]] — importa `(dinámico: core.prices_api)`
@@ -160,8 +148,9 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[core.semantic.py]] — importa `build_context`, `extract_companies`, `resolve_ids`
 - [[core.sim_agents.py]] — importa `sim_agents`
 - [[core.space.py]] — importa `(dinámico: core.space)`
-- [[core.tour.py]] — importa `tour`
-- [[core.voice_agent.py]] — importa `adopt_shared_voice`, `list_voices`, `override_env_on`, `voice_agent`
+- [[core.trading_agent.py]] — importa `_AGENT`, `_AGENT_RESTORE`, `_AgentOrderError`, `_TRADABLE_CACHE`, `_agent_order`, `_agent_run_cycle`, `_agent_universe`, `trading_agent`
+- [[core.voice_agent.py]] — importa `voice_agent`
+- [[core.voice_api.py]] — importa `BIXBY_SYSTEM_PROMPT`, `RETIRED_VOICE_TOOLS`, `VOICE_COMPANY_VIEWS`, `VOICE_SCREENS`, `VOICE_SCREEN_ALIASES`, `VOICE_SIM_PRESETS`, `VOICE_TOUR_ACTIONS`, `VOICE_UI_ACTIONS` …
 - [[core.world.py]] — importa `(dinámico: core.world)`, `world`
 - [[matrix.api.py]] — importa `matrix_bp`
 - [[matrix.engine.py]] — importa `active_factors`, `build_matrices`, `fragility`, `propagate`
@@ -187,7 +176,7 @@ Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inve
 - [[security_audit.py]] — lo importa
 - [[security_audit.py]] — lo nombra por su ruta
 
-_Además lo importan 60 pruebas (lista abajo)._
+_Además lo importan 65 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -211,7 +200,7 @@ _Además lo importan 60 pruebas (lista abajo)._
 | `GET` | `/api/deep/status` | `deep_status` | [[engine.cockpit.js]], 1 prueba |
 | `POST` | `/api/diag` | `client_diag` | [[app.html]] |
 | `GET` | `/api/diag/recent` | `client_diag_recent` | 1 prueba |
-| `GET` | `/api/diagnostics` | `diagnostics` | [[app.html]], [[core.ai_usage.py]], 1 prueba |
+| `GET` | `/api/diagnostics` | `diagnostics` | [[app.html]], [[core.ai_usage.py]], 2 pruebas |
 | `GET` | `/api/dossier/<ticker>` | `dossier` | [[app.html]], 1 prueba |
 | `GET` | `/api/earnings/<ticker>` | `earnings` | [[app.html]] |
 | `GET` | `/api/findossier/<ticker>` | `fin_dossier` | [[engine.cockpit.js]], [[engine.fincard.js]], [[engine.localcharts.js]], [[engine.termdata.js]], 2 pruebas |
@@ -240,33 +229,21 @@ _Además lo importan 60 pruebas (lista abajo)._
 | `POST` | `/api/quotes/live` | `quotes_live` | [[app.html]], [[engine.worldmonitor.js]], 1 prueba |
 | `GET` | `/api/scalp/price/<path:symbol>` | `scalp_price` | [[engine.cockpit.js]], 2 pruebas |
 | `GET` | `/api/screener/growth` | `screener_growth` | [[engine.cockpit.js]], 2 pruebas |
-| `POST` | `/api/sim/agents` | `sim_agents_route` | [[app.html]], [[core.ai_usage.py]], [[engine.cockpit.js]], 1 prueba |
+| `POST` | `/api/sim/agents` | `sim_agents_route` | [[app.html]], [[core.ai_usage.py]], [[core.decision_sites.py]], [[engine.cockpit.js]], 2 pruebas |
 | `GET` | `/api/space/launches` | `space_launches` | [[engine.voice.js]], 1 prueba |
 | `GET` | `/api/space/tle` | `space_tle` | [[engine.spacemonitor.js]], [[engine.voice.js]], 1 prueba |
 | `GET` | `/api/supply-chain/trade-flows` | `trade_flows` | [[app.html]] |
 | `POST` | `/api/thesis/quick` | `thesis_quick` | [[core.ai_usage.py]], [[engine.cockpit.js]], 2 pruebas |
-| `GET` | `/api/trade/account` | `trade_account` | [[app.html]], [[engine.voice.js]], 1 prueba |
-| `POST` | `/api/trade/agent/config` | `agent_config` | 1 prueba |
-| `POST` | `/api/trade/agent/start` | `agent_start` | [[app.html]], 2 pruebas |
-| `GET` | `/api/trade/agent/status` | `agent_status` | [[app.html]], 2 pruebas |
-| `POST` | `/api/trade/agent/stop` | `agent_stop` | [[app.html]], 1 prueba |
+| `GET` | `/api/trade/account` | `trade_account` | [[app.html]], [[engine.trade.js]], 1 prueba |
 | `POST` | `/api/trade/close` | `trade_close` | [[engine.cockpit.js]], 2 pruebas |
-| `GET` | `/api/trade/crypto/assets` | `trade_crypto_assets` | [[engine.crypto.js]], [[engine.voice.js]] |
+| `GET` | `/api/trade/crypto/assets` | `trade_crypto_assets` | [[engine.crypto.js]], [[engine.trade.js]] |
 | `GET` | `/api/trade/diag` | `trade_diag` | — |
 | `GET` | `/api/trade/history` | `trade_history` | [[app.html]], [[engine.cockpit.js]], [[engine.toast.js]], 2 pruebas |
-| `POST` | `/api/trade/order` | `trade_order` | [[app.html]], [[engine.crypto.js]], [[engine.voice.js]], 2 pruebas |
+| `POST` | `/api/trade/order` | `trade_order` | [[app.html]], [[engine.crypto.js]], [[engine.trade.js]], 2 pruebas |
 | `GET` | `/api/trade/positions/detail` | `trade_positions_detail` | [[app.html]], [[engine.cockpit.js]], [[engine.pfcommittee.js]], [[engine.voice.js]], 2 pruebas |
 | `GET` | `/api/trade/status` | `trade_status` | [[app.html]], 1 prueba |
-| `GET` | `/api/vocabulary` | `api_vocabulary` | 1 prueba |
+| `GET` | `/api/vocabulary` | `api_vocabulary` | 2 pruebas |
 | `GET` | `/api/vocabulary/unknown` | `api_vocabulary_unknown` | — |
-| `POST` | `/api/voice/adopt` | `voice_adopt` | 1 prueba |
-| `GET` | `/api/voice/agent-diag` | `voice_agent_diag` | 2 pruebas |
-| `POST` | `/api/voice/agent-tune` | `voice_agent_tune` | 2 pruebas |
-| `GET` | `/api/voice/bixby-prompt` | `bixby_system_prompt` | [[engine.voice.js]], 4 pruebas |
-| `POST` | `/api/voice/session` | `voice_session` | [[engine.voice.js]], 3 pruebas |
-| `GET,POST` | `/api/voice/sync-agent` | `voice_sync_agent` | 2 pruebas |
-| `GET` | `/api/voice/tour/<lang>/<int:step>` | `voice_tour_audio` | [[engine.cockpit.js]], 4 pruebas |
-| `GET` | `/api/voice/voices` | `voice_voices` | 1 prueba |
 | `POST` | `/api/ws-key` | `ws_key` | [[app.html]], 1 prueba |
 | `GET` | `/api/ws-token` | `ws_token` | [[app.html]], 1 prueba |
 | `GET` | `/docs` | `api_docs` | — |
@@ -282,7 +259,7 @@ _Además lo importan 60 pruebas (lista abajo)._
 | `POST` | `/v1/risk/portfolio` | `api_portfolio_risk` | 1 prueba |
 | `GET` | `/vendor/<path:name>` | `vendor` | — |
 
-Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API crypto]], [[API deep]], [[API diag]], [[API diagnostics]], [[API dossier]], [[API earnings]], [[API findossier]], [[API fundamentals]], [[API grafo]], [[API health]], [[API insiders]], [[API investors]], [[API ipo_calendar]], [[API macro]], [[API market]], [[API marketstack]], [[API news]], [[API options]], [[API portfolio]], [[API portfolio-risk]], [[API páginas y archivos estáticos]], [[API quote]], [[API quotes]], [[API scalp]], [[API screener]], [[API sim]], [[API space]], [[API supply-chain]], [[API thesis]], [[API trade]], [[API v1 (pública)]], [[API vocabulary]], [[API voice]], [[API ws-key]], [[API ws-token]]
+Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API crypto]], [[API deep]], [[API diag]], [[API diagnostics]], [[API dossier]], [[API earnings]], [[API findossier]], [[API fundamentals]], [[API grafo]], [[API health]], [[API insiders]], [[API investors]], [[API ipo_calendar]], [[API macro]], [[API market]], [[API marketstack]], [[API news]], [[API options]], [[API portfolio]], [[API portfolio-risk]], [[API páginas y archivos estáticos]], [[API quote]], [[API quotes]], [[API scalp]], [[API screener]], [[API sim]], [[API space]], [[API supply-chain]], [[API thesis]], [[API trade]], [[API v1 (pública)]], [[API vocabulary]], [[API ws-key]], [[API ws-token]]
 
 ## Endpoints que llama
 
@@ -299,7 +276,6 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[ENV ALPACA_SECRET]]
 - [[ENV ALPHA_VANTAGE_KEY]]
 - [[ENV AV_KEY]]
-- [[ENV BIXBY_AUTOSYNC]]
 - [[ENV BROKERAGE_TRADING_ENABLED]]
 - [[ENV CSP_ENABLED]]
 - [[ENV CSP_REPORT_ONLY]]
@@ -330,6 +306,7 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_cleanup_server.py]]
 - [[tests.test_client_hardening.py]]
 - [[tests.test_company_data.py]]
+- [[tests.test_csp_estricta.py]]
 - [[tests.test_gates_resulting_state.py]]
 - [[tests.test_governance.py]]
 - [[tests.test_governance_activation.py]]
@@ -357,7 +334,6 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_overnight2_fixer_review.py]]
 - [[tests.test_overnight2_scenes_tokens.py]]
 - [[tests.test_overnight3_diag_bilingual.py]]
-- [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight_fixes_review.py]]
 - [[tests.test_overnight_voice_server.py]]
 - [[tests.test_phase3.py]]
@@ -380,18 +356,21 @@ Grupos: [[API ai]], [[API candles]], [[API canvas]], [[API company]], [[API cryp
 - [[tests.test_review_infra_c.py]]
 - [[tests.test_risk_easy.py]]
 - [[tests.test_risk_options.py]]
+- [[tests.test_rutas_acceso_decision.py]]
+- [[tests.test_scenario_pnl.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_security.py]]
 - [[tests.test_server_smoke.py]]
 - [[tests.test_space_satellites.py]]
 - [[tests.test_trading_agent_ledger.py]]
+- [[tests.test_voice_agent_split.py]]
 - [[tests.test_voice_os_server.py]]
 - [[tests.test_voice_tour.py]]
 - [[tests.test_voice_tour_client.py]]
-- [[tests.test_voice_tour_drive.py]]
-- [[tests.test_voice_tour_narrator.py]]
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]
 - [[Sesión 2026-10-13 (i) — NEO4J RETIRADO (decisión 6 de Fabrizio) — sw v264]]
 - [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]

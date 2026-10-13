@@ -54,6 +54,7 @@ cotización cruda compartida (server rutas + agentes de alertas).
 - [[research.context.py]] — lo importa
 - [[server.py]] — lo importa
 - herramienta MCP `get_exposure` → [[API herramientas MCP]]
+- herramienta MCP `project_portfolio` → [[API herramientas MCP]]
 
 _Además lo importan 7 pruebas (lista abajo)._
 

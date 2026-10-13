@@ -18,6 +18,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 - [[tests.test_overnight_voice_server.py]]
 - [[tests.test_security.py]]
+- [[tests.test_voice_agent_split.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

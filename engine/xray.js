@@ -509,10 +509,13 @@
       '<div class="impact-grid" style="margin-bottom:11px">' +
         '<div class="icell hot"><b>' + res.reach_1 + '</b><span>' + L('empresas (≥1 %)', 'companies (≥1%)') + '</span></div>' +
         '<div class="icell hot"><b>$' + (totalCap >= 1000 ? (totalCap / 1000).toFixed(1) + 'T' : Math.round(totalCap) + 'B') + '</b><span>' + L('cap expuesta', 'exposed cap') + '</span></div>' +
-        '<div class="icell hot"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>' + L('tu cartera', 'your portfolio') + '</span></div>' +
+        '<div class="icell hot"><b>' + (portHit > 0 ? '−' + Math.round(portHit / Math.max(1, Object.keys(pos).length)) + '%' : '—') + '</b><span>' + L('golpe medio a tu cartera', 'avg hit to your portfolio') + '</span></div>' +
       '</div>' +
+      // batch I3: "Tu cartera: −X ± Y USD" — cifra del SERVIDOR (κ calibrado); solo con posiciones; débil → lo dice
+      '<div class="xr-pnl xr-lin" style="display:none;margin:-3px 0 10px"></div>' +
       '<div class="xr-h bad" style="margin:2px 0 6px">' + L('Quién sufre ↓', 'Who suffers ↓') + '</div>' + top + winHTML +
       '<div class="xr-lin" style="margin-top:8px">' + note + '</div>';
+    if (window.KhipuHot && window.KhipuHot.pnlLine) window.KhipuHot.pnlLine(el.querySelector('.xr-pnl'), { targets: [id], severity: 100, kind: 'collapse', record: false });
   }
 
   // UNA sola llamada al motor del servidor (antes: tres motores distintos —uno del navegador, el del servidor y una

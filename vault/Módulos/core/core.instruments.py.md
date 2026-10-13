@@ -40,10 +40,13 @@ EMPRESA ≠ INSTRUMENTO (docs/BRECHAS_V2.md L3-13; ARQUITECTURA_V2 §3.2, §17.3
 
 ## Lo usan
 
+- [[core.options.py]] — lo importa
 - [[core.prices_api.py]] — lo importa
 - [[core.prices_store.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
+- [[mcp_server.ops.py]] — lo importa
 - [[scripts.build_instrument_review.py]] — lo importa
+- herramienta MCP `project_portfolio` → [[API herramientas MCP]]
 
 _Además lo importan 3 pruebas (lista abajo)._
 

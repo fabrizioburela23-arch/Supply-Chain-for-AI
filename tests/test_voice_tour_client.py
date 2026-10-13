@@ -494,7 +494,7 @@ document.addEventListener('securitypolicyviolation', function (e) { window.__csp
 </script><button id="lang-toggle" style="display:none" onclick="window.LANG = window.LANG === 'en' ? 'es' : 'en'">lang</button></body></html>"""
 
 SCRIPTS = ('toast.js', 'agents_registry.js', 'mascot.js', 'desktop.js', 'khipu_chat.js', 'statematrix.js', 'tour_script.js',
-           'voice.js', 'cockpit.js', 'oswindows.js')
+           'trade.js', 'voice.js', 'cockpit.js', 'oswindows.js')
 
 
 def _wav(seconds=0.25, rate=8000):

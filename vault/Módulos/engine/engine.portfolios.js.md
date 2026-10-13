@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "engine/portfolios.js"
 lenguaje: "javascript"
-lineas: 1369
+lineas: 1371
 aliases: ["engine/portfolios.js"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # engine/portfolios.js
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.369 líneas · `engine/portfolios.js`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.371 líneas · `engine/portfolios.js`
 
 ## Para qué sirve
 
@@ -31,11 +31,11 @@ tags: ["capa/dinero", "tipo/modulo"]
 - [[nodes.nodes_seed.js]] — usa `NODES`, `NODE_META`
 - [[nodes.preipo_intel.js]] — usa `PREIPO_INTEL`
 
-Se carga en [[app.html]] en la posición **84 de 96** (línea 7959), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
+Se carga en [[app.html]] en la posición **85 de 97** (línea 7944), después de [[engine.crypto.js]] y antes de [[engine.oswindows.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 84)
+- [[app.html]] — lo carga con `<script>` (posición 85)
 - [[app.html]] — usa `KhipuPortfolios`
 - [[engine.cockpit.js]] — usa `KhipuPortfolios`
 - [[engine.khipu_chat.js]] — usa `KhipuPortfolios`

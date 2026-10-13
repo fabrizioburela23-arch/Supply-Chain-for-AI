@@ -708,6 +708,20 @@ def _size_and_measure(pid, name_es, name_en, method, chosen, hist, fx, curr, ben
         w0 = inverse_vol(vols)
     meta = {c['symbol']: c for c in chosen}
     w, relaxed = apply_caps(w0, meta, prof['max_name'], prof['max_sector'], prof['max_country'])
+    # L2-09: los topes por nombre/sector/país rompen la paridad de riesgo → se rotula con honestidad y se dice cuánto
+    # se apartan las contribuciones al riesgo (RC_i = w_i(Σw)_i/σ²) del reparto igual; HHI y n.º efectivo de nombres
+    rp_info = None
+    if method == 'risk_parity':
+        from core.risk_models import rc_dispersion
+        C = [[_cov(rets[a], rets[b]) for b in syms] for a in syms]
+        disp = rc_dispersion([w[s] for s in syms], C)
+        capped = max(abs(w[s] - w0.get(s, 0.0)) for s in syms) > 1e-6
+        if disp:
+            rp_info = {'capped': capped, 'target_pct': round(100.0 / len(syms), 2),
+                       'rc_min_pct': round(disp['min'] * 100, 2), 'rc_max_pct': round(disp['max'] * 100, 2),
+                       'rc_max_over_min': round(disp['max_over_min'], 2) if disp['max_over_min'] else None,
+                       'rc_cv': round(disp['cv'], 3) if disp['cv'] is not None else None,
+                       'hhi': round(disp['hhi'], 4), 'n_eff': round(disp['n_eff'], 2) if disp['n_eff'] else None}
     last = common[-1]
     price_usd = {s: hist[s][last] * fx[s] for s in syms}
     shares = {s: amount * w[s] / price_usd[s] for s in syms}
@@ -754,11 +768,26 @@ def _size_and_measure(pid, name_es, name_en, method, chosen, hist, fx, curr, ben
         'avg_nrs': round(sum(pz['nrs'] * pz['weight'] for pz in positions), 1),
         'days': rep['days'], 'from': rep['from'], 'as_of': rep['as_of'], 'amount_usd': amount,
     }
+    capped_rp = bool(rp_info and rp_info['capped'])
+    method_es = ('paridad de riesgo con topes' if capped_rp else 'paridad de riesgo') if method == 'risk_parity' \
+        else 'inversa de la volatilidad'
+    method_en = ('capped risk parity' if capped_rp else 'risk parity') if method == 'risk_parity' \
+        else 'inverse volatility'
+    if rp_info:
+        metrics['risk_parity'] = rp_info
     pf = {'id': pid, 'name': name_en if lang == 'en' else name_es, 'name_es': name_es, 'name_en': name_en,
-          'method': method, 'positions': positions, 'metrics': metrics,
+          'method': method, 'method_capped': capped_rp, 'method_label_es': method_es, 'method_label_en': method_en,
+          'positions': positions, 'metrics': metrics,
           'caps': {'max_name_pct': round(prof['max_name'] * 100), 'max_sector_pct': round(prof['max_sector'] * 100),
                    'max_country_pct': round(prof['max_country'] * 100), 'relaxed': relaxed},
           'top_corr': [{'a': a, 'b': b, 'corr': v} for v, a, b in pairs[:3]], 'notes': []}
+    if capped_rp:
+        pf['notes'].append({'es': f'Paridad de riesgo CON TOPES: los límites por nombre/sector/país mueven el reparto; '
+                                  f'cada empresa aporta entre {rp_info["rc_min_pct"]} % y {rp_info["rc_max_pct"]} % '
+                                  f'del riesgo (objetivo {rp_info["target_pct"]} %).',
+                            'en': f'CAPPED risk parity: the name/sector/country limits shift the split; each company '
+                                  f'brings between {rp_info["rc_min_pct"]}% and {rp_info["rc_max_pct"]}% of the risk '
+                                  f'(target {rp_info["target_pct"]}%).'})
     for k in relaxed:
         pf['notes'].append({'es': f'Tope por {"sector" if k == "sector" else "país"} relajado: tus temas no dan '
                                   f'para diversificar más.',
@@ -814,8 +843,11 @@ def deterministic_rationale(pf, p, lang):
     themes = ', '.join(theme_label(t, lang) for t in p['themes']) or ('all sectors of the graph' if en else 'todos los sectores del grafo')
     how = ('inverse volatility: the steadier names weigh more' if en else
            'inversa de la volatilidad: las más estables pesan más') if pf['method'] == 'inverse_vol' else \
-          ('risk parity: each name contributes a similar share of risk' if en else
-           'paridad de riesgo: cada empresa aporta un riesgo parecido')
+          (('capped risk parity: a similar share of risk per name, bent by the per-name/sector caps' if en else
+            'paridad de riesgo con topes: un riesgo parecido por empresa, ajustado por los topes por nombre/sector')
+           if pf.get('method_capped') else
+           ('risk parity: each name contributes a similar share of risk' if en else
+            'paridad de riesgo: cada empresa aporta un riesgo parecido'))
     why = {
         'diversificada': ('the best ranked by risk score (NRS), size and role in the supply chain, spread across sectors'
                           if en else 'las mejor puntuadas por riesgo (NRS), tamaño y papel en la cadena, repartidas entre sectores'),

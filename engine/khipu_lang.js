@@ -9,7 +9,7 @@
 //   NVDA DES · NVDA GP 1Y · NVDA SUP · NVDA CLI · NVDA RISK · NVDA SIM ·
 //   NVDA NEWS · NVDA FA · NVDA THESIS [texto]
 //   PORT VAR (reporte de riesgo) · PORT VEGA (griegas de opciones) · PORT PL
-//   GRAPH ASOF <YYYY-MM-DD> · GRAPH DIFF <Nd>
+//   GRAPH ASOF <YYYY-MM-DD> [KNOWN <κ>] · GRAPH DIFF <Nd>
 //   ALERT <TICKER> PX|NRS > <valor> · ALERT REGION <región> NEWS · ALERT LIST
 //   FACTOR LIST · FACTOR <id|texto> FIRE  (what-if de crisis, no muta nada)
 
@@ -318,7 +318,9 @@
       // El tiempo vive en el MAPA principal (engine/maptime.js); el panel
       // temporal viejo solo como respaldo si ese módulo no cargó.
       let ok = false;
-      if (window.KhipuMapTime) ok = window.KhipuMapTime.setDate(date);
+      // GRAPH ASOF <fecha> KNOWN <κ>: la foto de esa fecha tal como se conocía en κ (servidor, G(t, κ); DT-M3)
+      const known = (String(args[2] || '').toUpperCase() === 'KNOWN' && args[3]) ? String(args[3]) : null;
+      if (window.KhipuMapTime) ok = window.KhipuMapTime.setDate(date, known ? { known_at: known } : { known_at: null });
       else { if (typeof switchTab === 'function') switchTab('tkg'); ok = window.__tkgSetDate ? window.__tkgSetDate(date) : false; }
       return { answer: ok ? `Mapa movido a ${date} (⏱).` : 'No se pudo mover la línea de tiempo (¿fecha inválida?).', actions: [] };
     }

@@ -24,7 +24,7 @@ _No define globales (código encapsulado)._
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **29 de 96** (línea 7838), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
+Se carga en [[app.html]] en la posición **29 de 97** (línea 7822), después de [[engine.hotclient.js]] y antes de [[engine.tour_script.js]].
 
 ## Lo usan
 
@@ -45,6 +45,7 @@ Se carga en [[app.html]] en la posición **29 de 96** (línea 7838), después de
 - [[tests.test_overnight_ui_dossier_clients.py]]
 - [[tests.test_overnight_ui_portfolios_risk.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour_client.py]]
 

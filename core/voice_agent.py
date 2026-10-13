@@ -313,6 +313,14 @@ def get_agent(key, agent_id, http, *, cached=True, timeout=8, max_age=None):
     return cfg, None
 
 
+def cached_agent(agent_id):
+    """La configuración del agente SOLO si ya está en la caché (sin red; la usa la decisión de /api/voice/agent-tune
+    para anotar el valor ANTERIOR sin sumar latencia). None si no hay copia o venció."""
+    with _AGENT_LOCK:
+        hit = _AGENT_CACHE.get(agent_id)
+    return hit[1] if hit and time.time() - hit[0] < AGENT_CACHE_TTL else None
+
+
 def forget_agent(agent_id=None):
     with _AGENT_LOCK:
         if agent_id is None:
@@ -564,7 +572,7 @@ def _subset_equal(want, have) -> bool:
 
 
 def tool_payload(spec: dict) -> dict:
-    """Spec interna (la de server._bixby_client_tools) → tool_config de la API."""
+    """Spec interna (la de core/voice_api._bixby_client_tools) → tool_config de la API."""
     cfg = {'type': 'client', 'name': spec['name'], 'description': spec.get('description') or spec['name'],
            'expects_response': bool(spec.get('expects_response', True))}
     t = spec.get('response_timeout_secs')

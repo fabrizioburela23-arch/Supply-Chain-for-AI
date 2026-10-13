@@ -24,6 +24,7 @@ INFRA_OPERATIVA paso 16 (BRECHAS G5-10, MAP D #12, #14): el agente de trading de
 - [[brokerage.service.py]]
 - [[core.http.py]]
 - [[core.pin.py]]
+- [[core.trading_agent.py]]
 - [[ontology.db.py]]
 - [[ontology.models.py]]
 - [[research.models.py]]

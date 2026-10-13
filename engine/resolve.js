@@ -46,98 +46,17 @@
       .trim();
   }
 
-  // palabras vacías típicas de una frase dictada ("la empresa nvidia")
-  var STOP = { la: 1, el: 1, los: 1, las: 1, de: 1, del: 1, a: 1, al: 1, un: 1, una: 1, empresa: 1, compania: 1, company: 1, the: 1 };
+  // palabras vacías típicas de una frase dictada ("la empresa nvidia") y ALIAS de VOZ (transcripción en español:
+  // "en vidia" → Nvidia). G5-19 (lote I1): las DOS tablas viven en nodes/legal_names.js (window.RESOLVE_STOPWORDS /
+  // window.VOICE_ALIASES), que el exportador saca al snapshot → core/entities.py entiende lo MISMO que el navegador.
+  // Se leen al construir el índice (legal_names.js carga después de este archivo). Nunca copiarlas aquí.
+  function STOPW() { return window.RESOLVE_STOPWORDS || {}; }
 
   function stripStop(nq) {
-    var t = nq.split(' ').filter(function (w) { return !STOP[w]; });
+    var S = STOPW();
+    var t = nq.split(' ').filter(function (w) { return !S[w]; });
     return t.join(' ');
   }
-
-  // ── ALIAS de VOZ (transcripción en español; el usuario DICTA los nombres) ──
-  // clave = texto normalizado que puede salir del ASR · valor = id REAL del grafo
-  // (ids verificados contra nodes/*.js; los que no existan se ignoran solos).
-  var VOICE_ALIAS = {
-    // Nvidia — el caso que más falla en la transcripción
-    'nvidia': 'Nvidia', 'en vidia': 'Nvidia', 'envidia': 'Nvidia', 'invidia': 'Nvidia',
-    'nvidea': 'Nvidia', 'nbidia': 'Nvidia', 'video': 'Nvidia', 'nvdia': 'Nvidia', 'nvidia corporation': 'Nvidia',
-    // fabs / equipos
-    'tsmc': 'TSMC', 'taiwan semiconductor': 'TSMC', 'te ese eme ce': 'TSMC', 'tsm': 'TSMC',
-    'asml': 'ASML', 'a ese eme ele': 'ASML',
-    'intel': 'Intel', 'samsung': 'Samsung', 'samsun': 'Samsung', 'sansung': 'Samsung',
-    'global foundries': 'GF', 'globalfoundries': 'GF',
-    'umc': 'UMC', 'smic': 'SMIC', 'rapidus': 'Rapidus',
-    'applied materials': 'AMAT', 'applied': 'AMAT', 'amat': 'AMAT',
-    'lam research': 'Lam', 'lam': 'Lam', 'lam risech': 'Lam',
-    'kla': 'KLA', 'ka ele a': 'KLA',
-    'tokyo electron': 'TEL', 'tel': 'TEL',
-    'zeiss': 'Zeiss', 'zaiss': 'Zeiss', 'carl zeiss': 'Zeiss',
-    'nikon': 'Nikon', 'canon': 'Canon',
-    'teradyne': 'Teradyne', 'advantest': 'Advantest', 'entegris': 'Entegris',
-    'shin etsu': 'ShinEtsu', 'shinetsu': 'ShinEtsu', 'sumco': 'SUMCO',
-    'siltronic': 'Siltronic', 'global wafers': 'GlobalWafers',
-    // diseño / EDA / IP
-    'amd': 'AMD', 'a eme de': 'AMD',
-    'qualcomm': 'Qualcomm', 'cualcom': 'Qualcomm', 'qualcom': 'Qualcomm', 'kualcom': 'Qualcomm',
-    'broadcom': 'Broadcom', 'brodcom': 'Broadcom', 'broadcon': 'Broadcom',
-    'arm': 'ARM', 'a erre eme': 'ARM', 'arm holdings': 'ARM',
-    'cadence': 'Cadence', 'cadens': 'Cadence', 'kadence': 'Cadence',
-    'synopsys': 'Synopsys', 'sinopsis': 'Synopsys', 'synopsis': 'Synopsys', 'sinopsys': 'Synopsys',
-    'marvell': 'Marvell', 'marvel': 'Marvell',
-    'texas instruments': 'TexasInstruments', 'texas': 'TexasInstruments',
-    'nxp': 'NXP', 'infineon': 'Infineon',
-    'st micro': 'STMicroelectronics', 'st microelectronics': 'STMicroelectronics', 'stmicroelectronics': 'STMicroelectronics',
-    'renesas': 'Renesas', 'onsemi': 'onsemi', 'on semi': 'onsemi', 'wolfspeed': 'Wolfspeed',
-    'mobileye': 'Mobileye', 'kioxia': 'Kioxia',
-    'western digital': 'WesternDigital', 'seagate': 'Seagate',
-    // memoria
-    'micron': 'Micron', 'maicron': 'Micron',
-    'sk hynix': 'SKHynix', 'hynix': 'SKHynix', 'sk aynix': 'SKHynix', 'aynix': 'SKHynix',
-    'hinix': 'SKHynix', 'esca hynix': 'SKHynix',
-    // big tech / cloud
-    'apple': 'Apple', 'apel': 'Apple', 'aple': 'Apple',
-    'microsoft': 'Microsoft', 'micro soft': 'Microsoft', 'azure': 'Microsoft', 'asur': 'Microsoft',
-    'google': 'Alphabet', 'alphabet': 'Alphabet', 'alfabet': 'Alphabet', 'gugel': 'Alphabet', 'guguel': 'Alphabet', 'google cloud': 'Alphabet',
-    'meta': 'Meta', 'facebook': 'Meta', 'feisbuk': 'Meta',
-    'amazon': 'Amazon', 'aws': 'Amazon', 'amazon web services': 'Amazon', 'a doble u ese': 'Amazon',
-    'oracle': 'Oracle', 'orakle': 'Oracle', 'oracle cloud': 'Oracle',
-    'ibm': 'IBMQuantum', 'i be eme': 'IBMQuantum', 'ibm quantum': 'IBMQuantum',
-    'tesla': 'Tesla', 'palantir': 'Palantir', 'palantier': 'Palantir', 'palanter': 'Palantir',
-    'alibaba': 'AlibabaCloud', 'alibaba cloud': 'AlibabaCloud',
-    'huawei': 'Huawei', 'softbank': 'SoftBank', 'soft bank': 'SoftBank',
-    'coreweave': 'CoreWeave', 'core weave': 'CoreWeave', 'core wif': 'CoreWeave', 'corwif': 'CoreWeave',
-    'nebius': 'Nebius', 'equinix': 'Equinix', 'digital realty': 'DigitalRealty',
-    // labs de IA
-    'openai': 'OpenAI', 'open ai': 'OpenAI', 'openia': 'OpenAI', 'open ei': 'OpenAI', 'open i a': 'OpenAI', 'chatgpt': 'OpenAI', 'chat gpt': 'OpenAI',
-    'anthropic': 'Anthropic', 'antropic': 'Anthropic', 'antrophic': 'Anthropic', 'antropik': 'Anthropic', 'claude': 'Anthropic',
-    'xai': 'xAI', 'x ai': 'xAI', 'equis ai': 'xAI', 'equis a i': 'xAI', 'grok': 'xAI',
-    'mistral': 'Mistral', 'mistral ai': 'Mistral',
-    'deepseek': 'DeepSeek', 'deep seek': 'DeepSeek', 'dip sik': 'DeepSeek',
-    'perplexity': 'Perplexity', 'perplejity': 'Perplexity',
-    'hugging face': 'HuggingFace', 'huggingface': 'HuggingFace',
-    'databricks': 'Databricks', 'data bricks': 'Databricks',
-    'scale ai': 'ScaleAI', 'groq': 'Groq', 'cerebras': 'Cerebras',
-    // espacio / defensa / robots
-    'spacex': 'SpaceX', 'space x': 'SpaceX', 'espace x': 'SpaceX', 'espacex': 'SpaceX', 'espeis x': 'SpaceX',
-    'rocket lab': 'RocketLab', 'rocketlab': 'RocketLab',
-    'blue origin': 'BlueOrigin', 'anduril': 'Anduril',
-    'waymo': 'Waymo', 'figure': 'Figure', 'figure ai': 'Figure',
-    'boston dynamics': 'BostonDynamics',
-    // servidores / energía / nuclear
-    'super micro': 'SuperMicro', 'supermicro': 'SuperMicro',
-    'dell': 'Dell', 'hpe': 'HPE', 'hewlett packard': 'HPE',
-    'foxconn': 'Foxconn', 'hon hai': 'Foxconn', 'quanta': 'Quanta',
-    'vertiv': 'Vertiv', 'eaton': 'Eaton', 'schneider': 'Schneider',
-    'arista': 'Arista', 'cisco': 'Cisco', 'sisco': 'Cisco',
-    'constellation': 'Constellation', 'constellation energy': 'Constellation',
-    'cameco': 'Cameco', 'oklo': 'Oklo', 'nuscale': 'NuScale', 'nu scale': 'NuScale',
-    'terrapower': 'TerraPower', 'terra power': 'TerraPower',
-    'ge vernova': 'GEVernova', 'siemens energy': 'SiemensEnergy',
-    // óptica / networking
-    'coherent': 'Coherent', 'lumentum': 'Lumentum', 'corning': 'Corning',
-    'astera labs': 'Astera', 'astera': 'Astera', 'credo': 'Credo', 'ciena': 'Ciena',
-    'nokia': 'Nokia', 'ericsson': 'Ericsson',
-  };
 
   // ── Levenshtein con tope (corta temprano si se pasa de max) ───────────────
   function lev(a, b, max) {
@@ -191,7 +110,8 @@
     });
 
     var NB = window.NODE_BY_ID || {};
-    // alias de voz (solo si el id destino existe en el grafo)
+    // alias de voz (solo si el id destino existe en el grafo) — tabla compartida con el servidor
+    var VOICE_ALIAS = window.VOICE_ALIASES || {};
     Object.keys(VOICE_ALIAS).forEach(function (k) {
       var n = NB[VOICE_ALIAS[k]];
       if (n) add(norm(k), n, 85);

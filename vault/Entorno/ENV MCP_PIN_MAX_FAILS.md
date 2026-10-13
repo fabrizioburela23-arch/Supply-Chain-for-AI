@@ -2,7 +2,7 @@
 tipo: "variable"
 capa: "Infraestructura"
 nombre: "MCP_PIN_MAX_FAILS"
-documentada: false
+documentada: true
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
@@ -17,8 +17,9 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_mcp.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_security.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 
-**No** — falta en [[Doc CLAUDE]].
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].

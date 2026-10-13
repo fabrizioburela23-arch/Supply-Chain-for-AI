@@ -45,7 +45,7 @@ PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida[, 
     'claude': (3.0, 15.0, 3.75, 0.3),
     'gemini:gemini-2.5-pro': (1.25, 10.0), 'gemini:gemini-3-pro': (2.0, 12.0), 'gemini:gemini-2.5-flash-lite': (0.1, 0.4),
     'gemini:gemini-2.5-flash': (0.3, 2.5), 'gemini': (0.3, 2.5),
-    # precio de lanzamiento hasta el 31-dic-2026; desde el 1-ene-2027 sube a (1.5, 7.5) → actualizar aquí
+    # precio de LANZAMIENTO (hasta el 31-dic-2026); el de 2027 está en PRICE_WINDOWS y se aplica solo por fecha
     'gemini:gemini-3.8-flash': (0.75, 3.75), 'gemini:gemini-3.5-flash-lite': (0.3, 2.5), 'gemini:gemini-3.1-pro': (2.0, 12.0),
     # primer respaldo (GEMINI_FALLBACK_MODEL): sin esta fila se cobraba al genérico 0,3/2,5 — 5× menos de lo real
     # (agregadores, sept-2026, citando la página de precios de Google: 1,50 / 9,00)
@@ -55,6 +55,16 @@ PRICES = {   # prefijo de modelo → (USD por 1M tokens de entrada, de salida[, 
     # (sept-oct 2026; TypeSafe no lo publicó en una página que pudiéramos leer) → ESTIMADO; ajustar con
     # AI_PRICES_JSON {"typesafe:jev": [in, out]} cuando llegue la primera factura.
     'typesafe': (0.04, 0.0),
+}
+
+# L3-16 / G5-17 (lote I1): precios con FECHA DE VIGENCIA. Una fila de PRICES es el precio "de siempre" del prefijo;
+# una ventana (valid_from, valid_to, fila) lo reemplaza para las llamadas HECHAS en esas fechas (UTC, ambos extremos
+# incluidos; valid_to None = sin fin). cost_of/price_for eligen por la fecha de la llamada (`at`; por defecto, ahora):
+# el 1-ene-2027 el gasto de Gemini 3.8 se registra al precio nuevo sin que nadie edite nada, y una llamada vieja se
+# sigue valorando a su precio. AI_PRICES_JSON (env) sigue mandando sobre todo (emergencia).
+PRICE_WINDOWS = {
+    # Google: precio de lanzamiento de Gemini 3.8 Flash hasta el 31-dic-2026; desde el 1-ene-2027, 1,50 / 7,50
+    'gemini:gemini-3.8-flash': (('2027-01-01', None, (1.5, 7.5)),),
 }
 
 FEATURE_BY_PATH = (
@@ -114,8 +124,24 @@ def _today():
 CACHE_MULT = {'claude': (1.25, 0.1), 'gemini': (0.0, 0.1)}
 
 
-def _prices():
+def _day(at=None):
+    """Fecha (UTC, 'YYYY-MM-DD') de una llamada: datetime, date, ISO o None (= ahora)."""
+    if at is None:
+        return _now().date().isoformat()
+    if isinstance(at, datetime):
+        return (at if at.tzinfo else at.replace(tzinfo=timezone.utc)).astimezone(timezone.utc).date().isoformat()
+    if hasattr(at, 'isoformat'):
+        return at.isoformat()[:10]
+    return str(at)[:10]
+
+
+def _prices(at=None):
     p = dict(PRICES)
+    d = _day(at)
+    for k, wins in PRICE_WINDOWS.items():
+        for frm, to, row in wins:
+            if frm <= d and (to is None or d <= to):
+                p[k] = tuple(row)
     try:
         extra = json.loads(os.getenv('AI_PRICES_JSON', '') or '{}')
         for k, v in extra.items():
@@ -125,45 +151,47 @@ def _prices():
     return p
 
 
-def _price_row(provider, model):
+def _price_row(provider, model, at=None):
     m = str(model or provider or '').lower()
     # 'gemini-3.8-flash' empieza con 'gemini' pero NO con 'gemini:' → antes no se prefijaba y todo Gemini caía
     # al precio genérico (0,3/2,5) en 💰 Gasto IA
     if provider in ('gemini', 'nvidia', 'typesafe') and not m.startswith(provider + ':'):
         m = f'{provider}:{m}'
     best = None
-    for k, v in _prices().items():
+    table = _prices(at)
+    for k, v in table.items():
         if m.startswith(k) and (best is None or len(k) > len(best[0])):
             best = (k, v)
     if best:
         return best[1]
-    return _prices().get(provider, (3.0, 15.0))
+    return table.get(provider, (3.0, 15.0))
 
 
-def price_for(provider, model):
-    """(entrada, salida) USD por 1M tokens. Prefijo más largo que calce."""
-    return tuple(_price_row(provider, model)[:2])
+def price_for(provider, model, at=None):
+    """(entrada, salida) USD por 1M tokens vigentes el día `at` (por defecto hoy). Prefijo más largo que calce."""
+    return tuple(_price_row(provider, model, at)[:2])
 
 
-def cache_price_for(provider, model):
+def cache_price_for(provider, model, at=None):
     """(escritura, lectura) de caché, USD por 1M tokens (L4-06): los de la fila de PRICES o, si no los trae,
     los multiplicadores del proveedor (CACHE_MULT) sobre el precio de entrada."""
-    row = _price_row(provider, model)
+    row = _price_row(provider, model, at)
     if len(row) >= 4:
         return float(row[2]), float(row[3])
     w, r = CACHE_MULT.get(provider, (1.0, 1.0))
     return round(row[0] * w, 6), round(row[0] * r, 6)
 
 
-def cost_of(provider, model, tin, tout, cache_read=0, cache_write=0):
-    """Costo estimado. `tin` = TODOS los tokens de entrada; `cache_read`/`cache_write` son la parte de ellos que se
-    leyó de / se escribió en la caché del proveedor y se cobran a su propio precio."""
-    pin, pout = price_for(provider, model)
+def cost_of(provider, model, tin, tout, cache_read=0, cache_write=0, at=None):
+    """Costo estimado con los precios vigentes el día de la llamada (`at`; por defecto, ahora). `tin` = TODOS los
+    tokens de entrada; `cache_read`/`cache_write` son la parte de ellos que se leyó de / se escribió en la caché del
+    proveedor y se cobran a su propio precio."""
+    pin, pout = price_for(provider, model, at)
     cr, cw = max(0, int(cache_read or 0)), max(0, int(cache_write or 0))
     plain = max(0, int(tin or 0) - cr - cw)
     c = plain * pin / 1e6 + (tout or 0) * pout / 1e6
     if cr or cw:
-        pcw, pcr = cache_price_for(provider, model)
+        pcw, pcr = cache_price_for(provider, model, at)
         c += cw * pcw / 1e6 + cr * pcr / 1e6
     return round(c, 6)
 
@@ -427,13 +455,14 @@ def record(provider, model, tin, tout, ok=True, ms=None, estimated=False, cache_
         tin, tout = int(tin or 0), int(tout or 0)
         cr, cw = max(0, int(cache_read or 0)), max(0, int(cache_write or 0))
         ctx = current()
-        cost = cost_of(provider, model, tin, tout, cache_read=cr, cache_write=cw)
+        at = _now()       # L3-16: el precio es el vigente el día de ESTA llamada
+        cost = cost_of(provider, model, tin, tout, cache_read=cr, cache_write=cw, at=at)
         equiv = tin
         if cr or cw:      # entrada "a precio lleno equivalente" para el medidor (presupuesto de research)
-            pin = price_for(provider, model)[0]
-            equiv = int(round((cost - tout * price_for(provider, model)[1] / 1e6) * 1e6 / pin)) if pin else tin
+            pin, pout = price_for(provider, model, at)
+            equiv = int(round((cost - tout * pout / 1e6) * 1e6 / pin)) if pin else tin
         _meter_add(equiv, tout, raw_in=tin, cache_read=cr, cache_write=cw, cost=cost)
-        row = {'at': _now(), 'provider': provider, 'model': str(model or '')[:80], 'feature': ctx['feature'],
+        row = {'at': at, 'provider': provider, 'model': str(model or '')[:80], 'feature': ctx['feature'],
                'who': ctx['who'], 'tokens_in': tin, 'tokens_out': tout, 'cost_usd': cost,
                'estimated': bool(estimated), 'ok': bool(ok), 'ms': int(ms) if ms else None,
                'cache_read': cr, 'cache_write': cw}
@@ -560,6 +589,9 @@ def report(days=30, lang='es'):
             'today': round(max(0.0, s['daily_usd'] - spent_today), 4) if s.get('daily_usd') else None,
             'month': round(max(0.0, s['monthly_usd'] - spent_month), 4) if s.get('monthly_usd') else None},
         'prices': {k: list(v[:2]) for k, v in _prices().items()},
+        # L3-16: cambios de precio programados (el panel puede avisar "sube el 1-ene-2027")
+        'price_changes': [{'model': k, 'from': frm, 'to': to, 'prices': list(row[:2])}
+                          for k, wins in PRICE_WINDOWS.items() for frm, to, row in wins if (to or '9999') >= _day()],
         'cache_prices': {k: list(cache_price_for(k.split(':', 1)[0] if ':' in k else
                                                  ('claude' if k.startswith('claude') else k), k))
                          for k in _prices()},

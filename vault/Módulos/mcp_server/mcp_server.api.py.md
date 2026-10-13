@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/api.py"
 lenguaje: "python"
-lineas: 664
+lineas: 702
 aliases: ["mcp_server/api.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/api.py
 
-> Módulo · capa [[Capa MCP y API]] · 664 líneas · `mcp_server/api.py`
+> Módulo · capa [[Capa MCP y API]] · 702 líneas · `mcp_server/api.py`
 
 ## Para qué sirve
 
@@ -33,20 +33,22 @@ blueprint mcp_bp (transporte + administración).
 - `mcp_status()` _(línea 533)_
 - `mcp_tools_catalog()` _(línea 561)_
 - `mcp_tokens_list()` _(línea 567)_
-- `mcp_tokens_create()` _(línea 586)_
-- `mcp_tokens_revoke(token_id)` _(línea 618)_
-- `mcp_audit_list()` _(línea 639)_
+- `mcp_tokens_create()` _(línea 613)_
+- `mcp_tokens_revoke(token_id)` _(línea 648)_
+- `mcp_audit_list()` _(línea 677)_
 
-**Internas** (empiezan con `_`): `_ip`, `_origin_of`, `_allowed_origins`, `_request_hostname`, `_guard_origin_host`, `_cors`, `_rpc_http`, `_unauthorized`, `_backend_down`, `_authenticate`, `_new_session`, `_close_session`, `_session_state`, `_reject_constant`, `_mcp_post_body`, `_pin_guard`, `_actor`, `_brokerage_available`, `_secret_key_insecure`
+**Internas** (empiezan con `_`): `_ip`, `_origin_of`, `_allowed_origins`, `_request_hostname`, `_guard_origin_host`, `_cors`, `_rpc_http`, `_unauthorized`, `_backend_down`, `_authenticate`, `_new_session`, `_close_session`, `_session_state`, `_reject_constant`, `_mcp_post_body`, `_pin_guard`, `_actor`, `_brokerage_available`, `_secret_key_insecure`, `_ledger_token`, `_ledger_503`
 
 ## Depende de
 
 - [[brokerage.service.py]] — importa `(dinámico: brokerage.service)`
-- [[core.decisions.py]] — importa `decisions`
+- [[core.decision_sites.py]] — importa `decision_sites`
+- [[core.decisions.py]] — importa `LedgerUnavailable`, `decisions`
 - [[core.http.py]] — importa `rate_limit`
 - [[core.identity.py]] — importa `identity`
 - [[core.pin.py]] — importa `insecure_production_secret`
 - [[mcp_server.auth.py]] — importa `auth`
+- [[mcp_server.models.py]] — importa `McpToken`
 - [[mcp_server.oauth.py]] — importa `oauth`
 - [[mcp_server.protocol.py]] — importa `protocol`
 - [[mcp_server.tools.py]] — importa `tools`
@@ -57,7 +59,7 @@ blueprint mcp_bp (transporte + administración).
 - [[mcp_server.oauth.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 5 pruebas (lista abajo)._
+_Además lo importan 6 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -65,9 +67,9 @@ _Además lo importan 5 pruebas (lista abajo)._
 |---|---|---|---|
 | `GET` | `/api/mcp/audit` | `mcp_audit_list` | [[engine.mcpconnect.js]], 2 pruebas |
 | `GET` | `/api/mcp/status` | `mcp_status` | [[engine.mcpconnect.js]], 2 pruebas |
-| `GET` | `/api/mcp/tokens` | `mcp_tokens_list` | [[engine.mcpconnect.js]], 4 pruebas |
-| `POST` | `/api/mcp/tokens` | `mcp_tokens_create` | [[engine.mcpconnect.js]], 4 pruebas |
-| `POST` | `/api/mcp/tokens/<token_id>/revoke` | `mcp_tokens_revoke` | [[engine.mcpconnect.js]], 3 pruebas |
+| `GET` | `/api/mcp/tokens` | `mcp_tokens_list` | [[engine.mcpconnect.js]], 5 pruebas |
+| `POST` | `/api/mcp/tokens` | `mcp_tokens_create` | [[engine.mcpconnect.js]], 5 pruebas |
+| `POST` | `/api/mcp/tokens/<token_id>/revoke` | `mcp_tokens_revoke` | [[engine.mcpconnect.js]], 4 pruebas |
 | `GET` | `/api/mcp/tools` | `mcp_tools_catalog` | [[engine.mcpconnect.js]], 1 prueba |
 | `DELETE` | `/mcp` | `mcp_delete` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 2 pruebas |
 | `GET` | `/mcp` | `mcp_get` | [[core.ai_usage.py]], [[engine.mcpconnect.js]], [[mcp_server.oauth.py]], [[scripts.smoke_mcp.py]], [[server.py]], 2 pruebas |
@@ -103,4 +105,5 @@ Grupos: [[API MCP transporte y OAuth]], [[API mcp]]
 - [[tests.test_ops_review_steps568.py]]
 - [[tests.test_repair_ops.py]]
 - [[tests.test_repair_research.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_security.py]]

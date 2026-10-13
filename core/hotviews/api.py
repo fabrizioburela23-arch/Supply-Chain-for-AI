@@ -15,6 +15,8 @@ cabecera `X-Khipu-Graph-Version`. Leer NUNCA reconstruye: si la vista va atrasad
     GET  /api/hot/quote?symbols=NVDA,TSM             V4 cotización con sello {src, as_of, age_s, live, stale}
     POST /api/hot/scenario   {shocks:[{id, magnitude}]|[ids], factors:'active'|'none'|[ids], direction:'down',
                               damping?, max_hops?, top?}
+    POST /api/hot/scenario_pnl {shocks, positions:[{id|symbol, usd}], factors?, record?}  escenario → dinero con el κ
+                              calibrado (kernel.calibration); calibración débil/ausente → sin cifra (batch I3)
 """
 import math
 import time
@@ -312,6 +314,99 @@ def hot_scenario():
             'params': {'damping': damping, 'max_hops': int(hops), 'threshold': _kdef('THRESHOLD')},
             'compute_ms': round((time.perf_counter() - t0) * 1000, 3), **sc}
     return envelope('impact', data, g, etag=False)
+
+
+POSITIONS_CAP = 100
+
+
+@hot_bp.post('/scenario_pnl')
+@rate_limit(60, 300)
+def hot_scenario_pnl():
+    """Escenario → DINERO de una cartera (batch I3, L2-13): el MISMO kernel que /scenario siembra el golpe y
+    core/scenario_pnl traduce el impacto con el κ CALIBRADO de kernel.calibration (nunca se ajusta aquí). Si la
+    calibración es débil, falta o es de otro motor, `pnl.status` lo dice y NO hay cifra.
+    {shocks:[{id, magnitude}]|[ids], positions:[{id|symbol, usd}], factors:'active'|'none', record?:bool}"""
+    import numpy as np
+
+    from core import scenario_pnl as SP
+    from core.hotviews.views import impact
+    g = _gen()
+    if g is None:
+        return _warming()
+    core = g.views['graph_core']
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        body = {}
+    raw = body.get('shocks')
+    if not isinstance(raw, list) or not raw:
+        return _bad('shocks', 'shocks: lista de ids o de {id, magnitude} requerida',
+                    'shocks: list of ids or {id, magnitude} required')
+    pos_raw = body.get('positions')
+    if not isinstance(pos_raw, list):
+        return _bad('positions', 'positions: lista de {id|symbol, usd} requerida',
+                    'positions: list of {id|symbol, usd} required')
+    x0 = np.zeros(len(core.ids))
+    used, unknown = [], []
+    for it in raw[:SHOCKS_CAP]:
+        sid, mag = (it, 1.0) if isinstance(it, str) else ((it.get('id'), it.get('magnitude')) if isinstance(it, dict)
+                                                          else (None, None))
+        mag, bad = _num(mag, 1.0, 0.0, 1.0, 'magnitude')
+        if bad:
+            return bad
+        oid = core.resolve(str(sid or '')[:120])
+        if oid is None:
+            unknown.append(str(sid)[:120])
+            continue
+        x0[core.idx[oid]] = max(x0[core.idx[oid]], mag)
+        used.append({'id': oid, 'magnitude': mag})
+    if not used:
+        return jsonify({'error': 'ningún id del escenario existe', 'error_en': 'no scenario id exists',
+                        'unknown_ids': unknown[:20]}), 400
+    factors = body.get('factors', 'active')
+    if factors not in ('active', 'none'):
+        return _bad('factors', "factors: 'active' o 'none'", "factors: 'active' or 'none'")
+    tickers = _ticker_map_now()
+    positions = []
+    for p in pos_raw[:POSITIONS_CAP]:
+        if not isinstance(p, dict):
+            continue
+        usd, bad = _num(p.get('usd'), 0.0, 0.0, 1e12, 'usd')
+        if bad:
+            return bad
+        sym = str(p.get('symbol') or '').strip().upper()[:40] or None
+        oid = core.resolve(str(p.get('id') or '')[:120]) if p.get('id') else None
+        if oid is None and sym:
+            oid = tickers.get(sym.replace('/', '')) or core.resolve(sym)
+        positions.append({'id': oid, 'symbol': sym or p.get('id'), 'usd': usd})
+    t0 = time.perf_counter()
+    sc = impact.scenario(core, x0, factors=factors, top=1)
+    pnl = SP.translate(sc.get('impacts') or {}, positions)
+    ms = round((time.perf_counter() - t0) * 1000, 3)
+    if body.get('record', True) is not False:
+        try:   # ficha whatif.shock (async): lo pedido, la generación y la versión de κ (sin montos por posición)
+            from matrix.api import ledger_whatif
+            ledger_whatif('whatif.shock', {'shock': [u['id'] for u in used], 'shocks': used, 'factors': factors,
+                                           'direction': 'down', 'endpoint': '/api/hot/scenario_pnl',
+                                           'positions_n': len(positions)},
+                          sc.get('impacts') or {}, g, {'affected': sc.get('affected'),
+                                                      'pnl': {k: pnl.get(k) for k in ('status', 'pnl_usd', 'band_usd')},
+                                                      'calibration': (pnl.get('calibration') or {}).get('artifact')})
+        except Exception:  # noqa: BLE001
+            pass
+    data = {'shocks': used, 'unknown_ids': unknown, 'factors': factors, 'affected': sc.get('affected'),
+            'pnl': pnl, 'compute_ms': ms}
+    return envelope('impact', data, g, etag=False)
+
+
+def _ticker_map_now():
+    """{TICKER: id} de la generación de lectores YA publicada (nunca espera ni construye)."""
+    try:
+        from core.hotviews import hot
+        from core.hotviews.views.account import _ticker_map
+        v = hot.graph(wait=False)
+        return hot.cached('account.ticker_map', _ticker_map, view=v) if v is not None else {}
+    except Exception:  # noqa: BLE001
+        return {}
 
 
 # ── paso 14: V3 Card + NRS, V6 GeoRisk, V4 Quote con sello ─────────────────────────────────────────────────────

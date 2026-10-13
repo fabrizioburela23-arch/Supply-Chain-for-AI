@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Voz"
 ruta: "engine/voice.js"
 lenguaje: "javascript"
-lineas: 3078
+lineas: 2819
 aliases: ["engine/voice.js"]
 tags: ["capa/voz", "tipo/modulo"]
 ---
 
 # engine/voice.js
 
-> Módulo · capa [[Capa Voz]] · 3.078 líneas · `engine/voice.js`
+> Módulo · capa [[Capa Voz]] · 2.819 líneas · `engine/voice.js`
 
 ## Para qué sirve
 
@@ -18,13 +18,13 @@ Khipu, el asistente de voz de Khipu Finance Cliente WebSocket de ElevenLabs Agen
 
 ## API pública (globales que define)
 
-`window.BixbyVoice`, `window.KhipuVoiceAudio`, `window.__bixbyEnergy`, `window.__lastTradeExec`, `window.__tradeAcctCache`, `window.__tradeInflight`, `window._executeTradeOrder`, `window._openBrokerStage`, `window._resolveTradeSymbol`, `window._tradeAccountInfo`
+`window.BixbyVoice`, `window.KhipuVoiceAudio`, `window.__bixbyEnergy`
 
 De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`, `TOUR_AUDIO_GAP_MS`, `TOUR_DRIVE_GAP_MS`, `TOUR_SPEECH_CPS`, `TOUR_TAG_RE`, `VOICE_ALIAS_TIMEOUT_S`, `VOICE_ORDER_PREVIEW_MS`, `VOICE_TOOL_TIMEOUT_DEFAULT_S`, `VOICE_TOOL_TIMEOUT_S`, `VoiceAudio`, `_voiceL`, `_voiceLang`, `_voicePx`, `_voiceSimSev`
 
 ## Depende de
 
-- [[app.html]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8`, `_canonId`, `_liveRecolorByImpact`, `_liveSelectedNode` y 20 más
+- [[app.html]] — usa `BASE`, `KhipuLive`, `LANG`, `LINKS`, `NODE_BY_ID`, `NRS_FLOW_TYPES`, `V8`, `__tradeAcctCache`, `_canonId`, `_liveRecolorByImpact` y 16 más
 - [[engine.cockpit.js]] — usa `BixbyCockpit`, `_computePortfolioSummary`, `_openDeepResearch`, `_runAgentSim`
 - [[engine.committee.js]] — usa `KhipuCommittee`
 - [[engine.compare.js]] — usa `openCompare`
@@ -38,35 +38,32 @@ De nivel superior (globales del script): `NARRATE_STALL_MS`, `NARRATE_START_MS`,
 - [[engine.research.js]] — usa `KhipuResearch`
 - [[engine.resolve.js]] — usa `KhipuResolve`, `_surface`
 - [[engine.toast.js]] — usa `KhipuToast`
+- [[engine.trade.js]] — usa `__tradeAcctCache`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
 - [[engine.xray.js]] — usa `openXRay`
 - [[nodes.legal_names.js]] — usa `LEGAL_NAMES`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[nodes.private_valuations.js]] — usa `PRIVATE_VALUATIONS`
 - [[sim.scenario_builder.js]] — usa `ScenarioBuilder`
 
-Se carga en [[app.html]] en la posición **35 de 96** (línea 7844), después de [[engine.orb.js]] y antes de [[engine.secondbrain.js]].
+Se carga en [[app.html]] en la posición **36 de 97** (línea 7829), después de [[engine.trade.js]] y antes de [[engine.secondbrain.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 35)
+- [[app.html]] — lo carga con `<script>` (posición 36)
 - [[app.html]] — usa `BixbyVoice`
-- [[engine.cockpit.js]] — usa `BixbyVoice`, `_executeTradeOrder`, `_openBrokerStage`, `_resolveTradeSymbol`, `_tradeAccountInfo`
+- [[engine.cockpit.js]] — usa `BixbyVoice`
 - [[engine.command_center.js]] — usa `BixbyVoice`
 - [[engine.fincard.js]] — usa `BixbyVoice`
-- [[engine.resolve.js]] — usa `_openBrokerStage`
 
 ## Endpoints que llama
 
 - `GET /api/matrix/<rel_type>` → [[matrix.api.py]] ([[API matrix]])
 - `GET /api/space/launches` → [[server.py]] ([[API space]])
 - `GET /api/space/tle` → [[server.py]] ([[API space]])
-- `GET /api/trade/account` → [[server.py]] ([[API trade]])
-- `GET /api/trade/crypto/assets` → [[server.py]] ([[API trade]])
 - `GET /api/trade/positions/detail` → [[server.py]] ([[API trade]])
-- `GET /api/voice/bixby-prompt` → [[server.py]] ([[API voice]])
+- `GET /api/voice/bixby-prompt` → [[core.voice_api.py]] ([[API voice]])
 - `POST /api/matrix/insights` → [[matrix.api.py]] ([[API matrix]])
-- `POST /api/trade/order` → [[server.py]] ([[API trade]])
-- `POST /api/voice/session` → [[server.py]] ([[API voice]])
+- `POST /api/voice/session` → [[core.voice_api.py]] ([[API voice]])
 
 ## Pruebas que lo cubren
 
@@ -88,6 +85,7 @@ Se carga en [[app.html]] en la posición **35 de 96** (línea 7844), después de
 
 ## Mencionado en sesiones de trabajo
 
+- [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]
 - [[Sesión 2026-10-12 (b) — EL RECORRIDO DE VOZ YA NO SE QUEDA EN EL PASO 1 (sw v257)]]
 - [[Sesión 2026-10-11 (c) — LA VOZ DE KHIPU PARA KHIPUS OS + RECORRIDO DE UN MINUTO CON SU]]
 - [[Sesión 2026-10-10 — NOCHE - IA PAGADA, VOZ ELEVENLABS, PANTALLAS AL TEMA NUEVO (sw v251)]]

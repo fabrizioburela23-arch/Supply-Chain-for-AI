@@ -318,6 +318,11 @@ def ledger_whatif(kind, params, impacts, g=None, extra=None, computed_on=None):
             **({'factor_id': params['factor_id']} if params.get('factor_id') else {})})
         ctx.params(**{k: v for k, v in params.items() if k not in ('members',)})
         ctx.extra['impl'] = {'kernel': 'propagate@1'}         # paso 24: qué implementación retenida lo repite
+        try:   # batch I3: la versión de κ (escenario → dinero) vigente al calcular, citada como política
+            from core import governance as _gov
+            ctx.policy(*_gov.policy_ref('kernel.calibration'))
+        except Exception:  # noqa: BLE001 — sin el artefacto (código viejo) la ficha sigue igual
+            pass
         sha = decisions.sha256_hex(impacts)
         if gen:
             ctx.read_view('impact', gen, content_sha=sha)

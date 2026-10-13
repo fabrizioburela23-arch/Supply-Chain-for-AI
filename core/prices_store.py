@@ -352,8 +352,37 @@ def history(symbol, rng='1y', today=None):
     cur = next((r['currency'] for r in reversed(rows) if r['currency']), None)
     out = {r['date'].isoformat(): r['adj'] for r in rows if r['adj'] and r['adj'] > 0}
     adjusted = all(r.get('adjusted', True) for r in rows)      # una fila sin ajuste de Yahoo → serie NO ajustada
-    return out, cur, {'source': f'khipus_eod:{SOURCE}', 'as_of': rows[-1]['date'].isoformat(), 'adjusted': adjusted,
-                      'n': len(out), 'from': rows[0]['date'].isoformat()}
+    meta = {'source': f'khipus_eod:{SOURCE}', 'as_of': rows[-1]['date'].isoformat(), 'adjusted': adjusted,
+            'n': len(out), 'from': rows[0]['date'].isoformat()}
+    try:                     # L2-16: volumen medio diario REAL (cierre sin ajustar × volumen), sin volumen → no hay ADV
+        from core.risk_models import adv_from_rows
+        meta['adv'] = adv_from_rows([(r['date'].isoformat(), r['close'], r['volume']) for r in rows[-40:]])
+    except Exception:  # noqa: BLE001
+        meta['adv'] = None
+    return out, cur, meta
+
+
+def volume_history(symbol, rng='1y', today=None):
+    """({'YYYY-MM-DD': volumen}, meta{source, as_of, n}) desde prices_eod si cubre el rango; None si no hay base, no
+    cubre o el proveedor no trajo volumen (MCP find_anomalies; nunca se inventa). Nunca lanza."""
+    days = RANGE_DAYS.get(rng)
+    if not days or not db_on() or _reads_paused():
+        return None
+    today = today or _now().date()
+    start = today - timedelta(days=days)
+    try:
+        from ontology.db import session_scope
+        with session_scope() as s:
+            rows = load_series(s, str(symbol).upper()[:32], start=start)
+    except Exception as e:  # noqa: BLE001
+        _read_failed(e)
+        return None
+    if not _covers(rows, start, today, days):
+        return None
+    out = {r['date'].isoformat(): int(r['volume']) for r in rows if r.get('volume')}
+    if len(out) < 30:
+        return None
+    return out, {'source': f'khipus_eod:{SOURCE}', 'as_of': max(out), 'n': len(out)}
 
 
 def fx_history(ccy, rng='1y', today=None):

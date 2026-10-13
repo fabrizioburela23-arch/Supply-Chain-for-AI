@@ -101,7 +101,7 @@ CAPA = {c[0]: c for c in CAPAS}
 REGLAS_CAPA = [
     ('tests/*', 'pruebas'), ('docs/*', 'docs'), ('*.md', 'docs'),
     # Voz
-    ('core/voice_agent.py', 'voz'), ('engine/voice.js', 'voz'), ('engine/orb.js', 'voz'),
+    ('core/voice_agent.py', 'voz'), ('core/voice_api.py', 'voz'), ('engine/voice.js', 'voz'), ('engine/orb.js', 'voz'),
     # Chat y agentes
     ('core/khipu_chat.py', 'chat'), ('core/agents_api.py', 'chat'), ('core/decide.py', 'chat'),
     ('core/decide_api.py', 'chat'), ('core/semantic.py', 'chat'), ('core/canvas_spec.py', 'chat'),
@@ -125,13 +125,16 @@ REGLAS_CAPA = [
     ('engine/maptime.js', 'ontologia'), ('engine/reconcile.js', 'ontologia'),
     ('engine/secondbrain.js', 'ontologia'), ('engine/hypergraph.js', 'ontologia'),
     # Cuantitativo
-    ('matrix/*', 'cuant'), ('core/risk_report.py', 'cuant'), ('core/options.py', 'cuant'),
+    ('matrix/*', 'cuant'), ('core/risk_report.py', 'cuant'), ('core/risk_models.py', 'cuant'),
+    ('core/options.py', 'cuant'),
     ('core/scenario_engine.py', 'cuant'), ('core/sim_agents.py', 'cuant'), ('core/screener.py', 'cuant'),
+    ('core/scenario_pnl.py', 'cuant'), ('scripts/calibrate_kernel.py', 'cuant'),
     ('engine/statematrix.js', 'cuant'), ('engine/hotclient.js', 'cuant'), ('engine/livesim.js', 'cuant'), ('engine/matrixview.js', 'cuant'),
     ('engine/insights.js', 'cuant'), ('engine/riskreport.js', 'cuant'), ('engine/compare.js', 'cuant'),
     ('sim/*', 'cuant'),
     # Dinero
-    ('brokerage/*', 'dinero'), ('core/portfolio_ai.py', 'dinero'), ('core/portfolio_report.py', 'dinero'),
+    ('brokerage/*', 'dinero'), ('core/trading_agent.py', 'dinero'), ('engine/trade.js', 'dinero'),
+    ('core/portfolio_ai.py', 'dinero'), ('core/portfolio_report.py', 'dinero'),
     ('core/portfolio_reports_api.py', 'dinero'), ('engine/clients.js', 'dinero'),
     ('engine/portfolios.js', 'dinero'), ('engine/pfreports.js', 'dinero'),
     # MCP y API

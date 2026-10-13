@@ -3,17 +3,22 @@
   "_doc": "GENERADO por scripts/build_governance.py --write: no editar a mano. El release del repositorio es una PROPUESTA; manda el aprobado en la base (core/governance.py).",
   "release": {
     "semver": "1.0.0",
-    "release_hash": "e178f823f319fbe6bde5aa4487d5a85c9d62d4f3ed6d46385a3fa822213d054a",
+    "release_hash": "1d6ee563c827419a9351fdea0db28015359cc5e25e96d00eaef6e102675112d3",
     "artifacts": {
+      "kernel.calibration": {
+        "semver": "1.0.0",
+        "hash": "0fa0c53db56dddf0e95d94fa4d81d3f61a0e08335aed5452c1e0a9c7a88db189",
+        "file": "artifacts/kernel.calibration@1.0.0.json"
+      },
       "kernel.params": {
         "semver": "1.0.0",
         "hash": "0b5a9d403d594388a99b54ab8cd927ede2542eb91bcd14f3178882b417b27e95",
         "file": "artifacts/kernel.params@1.0.0.json"
       },
       "ledger.kinds": {
-        "semver": "3.0.0",
-        "hash": "23b79a935648d499e47601f98d5aed10ffe6b4cee69269d524e96ce6d94b9a91",
-        "file": "artifacts/ledger.kinds@3.0.0.json"
+        "semver": "4.0.0",
+        "hash": "68bd343e82d8fe4eb31fd735af8f2d22b58848cf0254b3843374cb086913e8f9",
+        "file": "artifacts/ledger.kinds@4.0.0.json"
       },
       "ledger.retention": {
         "semver": "1.0.0",
@@ -31,9 +36,9 @@
         "file": "artifacts/ontology.schema@1.0.0.json"
       },
       "ontology.shapes": {
-        "semver": "5.0.0",
-        "hash": "6735cdd6772af6664b7bbd5d5d5b58e0d828e6759542bf120c128b2e6fd10329",
-        "file": "artifacts/ontology.shapes@5.0.0.json"
+        "semver": "6.0.0",
+        "hash": "4a440319519cf4bbc68e5426cf565443a7f87e4ab9a584763b805897fabb6441",
+        "file": "artifacts/ontology.shapes@6.0.0.json"
       },
       "policy.auto_apply": {
         "semver": "1.0.0",
@@ -69,10 +74,22 @@
         "semver": "1.0.0",
         "hash": "e494eb4ecb110892e0723d960493ce0580b0522ff37128fda5cf538bba7f1f2e",
         "file": "artifacts/policy.numbers_guard@1.0.0.json"
+      },
+      "policy.risk": {
+        "semver": "1.0.0",
+        "hash": "7832bc4fee42f53c456165e30b5bae7acec2271fffb0138295162e2f46702774",
+        "file": "artifacts/policy.risk@1.0.0.json"
       }
     }
   },
   "available": [
+    {
+      "id": "kernel.calibration",
+      "semver": "1.0.0",
+      "hash": "0fa0c53db56dddf0e95d94fa4d81d3f61a0e08335aed5452c1e0a9c7a88db189",
+      "change_kind": "initial",
+      "file": "artifacts/kernel.calibration@1.0.0.json"
+    },
     {
       "id": "kernel.params",
       "semver": "1.0.0",
@@ -86,6 +103,14 @@
       "hash": "4e42387c8c8c9689353ec128e087bd5d187e4faaa0ba1be2f2a0f22067e52b6f",
       "change_kind": "major",
       "file": "artifacts/kernel.params@2.0.0.json",
+      "activation": "pin"
+    },
+    {
+      "id": "kernel.params",
+      "semver": "2.1.0",
+      "hash": "b05ebe87a659f6a7ab66b5f1ba0c35158064a47a023cba32d14452bd54c7d7e8",
+      "change_kind": "minor",
+      "file": "artifacts/kernel.params@2.1.0.json",
       "activation": "pin"
     },
     {
@@ -108,6 +133,13 @@
       "hash": "23b79a935648d499e47601f98d5aed10ffe6b4cee69269d524e96ce6d94b9a91",
       "change_kind": "major",
       "file": "artifacts/ledger.kinds@3.0.0.json"
+    },
+    {
+      "id": "ledger.kinds",
+      "semver": "4.0.0",
+      "hash": "68bd343e82d8fe4eb31fd735af8f2d22b58848cf0254b3843374cb086913e8f9",
+      "change_kind": "major",
+      "file": "artifacts/ledger.kinds@4.0.0.json"
     },
     {
       "id": "ledger.retention",
@@ -164,6 +196,13 @@
       "hash": "6735cdd6772af6664b7bbd5d5d5b58e0d828e6759542bf120c128b2e6fd10329",
       "change_kind": "major",
       "file": "artifacts/ontology.shapes@5.0.0.json"
+    },
+    {
+      "id": "ontology.shapes",
+      "semver": "6.0.0",
+      "hash": "4a440319519cf4bbc68e5426cf565443a7f87e4ab9a584763b805897fabb6441",
+      "change_kind": "major",
+      "file": "artifacts/ontology.shapes@6.0.0.json"
     },
     {
       "id": "policy.auto_apply",
@@ -250,6 +289,21 @@
       "hash": "e494eb4ecb110892e0723d960493ce0580b0522ff37128fda5cf538bba7f1f2e",
       "change_kind": "initial",
       "file": "artifacts/policy.numbers_guard@1.0.0.json"
+    },
+    {
+      "id": "policy.risk",
+      "semver": "1.0.0",
+      "hash": "7832bc4fee42f53c456165e30b5bae7acec2271fffb0138295162e2f46702774",
+      "change_kind": "initial",
+      "file": "artifacts/policy.risk@1.0.0.json"
+    },
+    {
+      "id": "policy.risk",
+      "semver": "2.0.0",
+      "hash": "1b653a7efc8aac0f8446f48c62ecc3c5b54b5a82c6323d59579bae36a7edce10",
+      "change_kind": "major",
+      "file": "artifacts/policy.risk@2.0.0.json",
+      "activation": "pin"
     }
   ]
 }

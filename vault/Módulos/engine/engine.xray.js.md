@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Interfaz (Khipus OS)"
 ruta: "engine/xray.js"
 lenguaje: "javascript"
-lineas: 666
+lineas: 669
 aliases: ["engine/xray.js"]
 tags: ["capa/interfaz", "tipo/modulo"]
 ---
 
 # engine/xray.js
 
-> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 666 líneas · `engine/xray.js`
+> Módulo · capa [[Capa Interfaz (Khipus OS)]] · 669 líneas · `engine/xray.js`
 
 ## Para qué sirve
 
@@ -35,11 +35,11 @@ X-RAY DE EMPRESA · "desarmar el alma" (Etapa 4, wow #1) Overlay NEXUS-styled qu
 - [[engine.temporal-graph.js]] — usa `__tkgOpenObj`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **50 de 96** (línea 7859), después de [[engine.guide.js]] y antes de [[engine.research.js]].
+Se carga en [[app.html]] en la posición **51 de 97** (línea 7844), después de [[engine.guide.js]] y antes de [[engine.research.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 50)
+- [[app.html]] — lo carga con `<script>` (posición 51)
 - [[app.html]] — usa `openXRay`
 - [[engine.cockpit.js]] — usa `buildXRayHTML`, `wireXRay`, `xrayEnsureStyles`
 - [[engine.command_center.js]] — usa `openXRay`
@@ -61,6 +61,7 @@ Se carga en [[app.html]] en la posición **50 de 96** (línea 7859), después de
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight3_toast_tokens.py]]
 - [[tests.test_overnight_ui_xray_research.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 
 ## Mencionado en sesiones de trabajo
 

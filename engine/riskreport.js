@@ -521,6 +521,7 @@
   function reasonText(e) {
     var c = e.reason_code || '', r = e.reason || '';
     if (!en()) return r;
+    if (c === 'short_history') return e.reason_en || 'short price history';
     if (c === 'no_history' || /historia/.test(r)) return 'not enough price history';
     if (c === 'no_fx' || /cambio/.test(r)) return 'no exchange rate to USD';
     if (/inválido/.test(r)) return 'invalid ticker';
@@ -543,13 +544,17 @@
     h += '<div class="cards">' +
       card(L('Valor de la cartera', 'Portfolio value'), usd(r.portfolio_value_usd), L('a precio de cierre', 'at closing price')) +
       card(L('Volatilidad anual', 'Annual volatility') + chip('vol_ann'), pct(r.vol_ann_pct, 1), L('diaria ', 'daily ') + pct(r.vol_daily_pct)) +
+      (r.vol_ann_ewma_pct != null ? card(L('Volatilidad reciente (EWMA)', 'Recent volatility (EWMA)') + chip('vol_ewma'), pct(r.vol_ann_ewma_pct, 1),
+        'λ ' + num(r.ewma_lambda, 2) + (r.vol_ann_lw_pct != null ? ' · Ledoit-Wolf ' + pct(r.vol_ann_lw_pct, 1) + chip('shrinkage') : '')) : '') +
       card('VaR 95% · 1 ' + L('día', 'day') + chip('var'), usd(v95.hist_1d_usd), pct(v95.hist_1d_pct) + ' · ' + L('paramétrico ', 'parametric ') + usd(v95.param_1d_usd) + chip('var_method')) +
       card('CVaR 95% · 1 ' + L('día', 'day') + chip('cvar'), usd(v95.cvar_1d_usd), pct(v95.cvar_1d_pct)) +
       card('VaR 99% · 1 ' + L('día', 'day'), usd(v99.hist_1d_usd), pct(v99.hist_1d_pct) + ' · CVaR ' + usd(v99.cvar_1d_usd)) +
       card('VaR 95% · ' + r.horizon_days + ' ' + L('días', 'days'), usd(v95.hist_nd_usd), pct(v95.hist_nd_pct) + ' (√' + r.horizon_days + ')') +
+      (v95.cvar_nd_usd != null || v95.cf_nd_usd != null ? card('CVaR 95% · ' + r.horizon_days + ' ' + L('días', 'days') + chip('var_nd'), usd(v95.cvar_nd_usd),
+        L('histórico superpuesto ', 'overlapping historical ') + usd(v95.hist_nd_overlap_usd) + ' · Cornish-Fisher ' + (v95.cf_nd_usd == null && v95.cf_note ? L('no aplica (fuera de su rango)', 'n/a (outside its valid range)') : usd(v95.cf_nd_usd))) : '') +
       card(L('Máxima caída', 'Max drawdown') + chip('drawdown'), pct(r.max_drawdown_pct, 1), r.max_drawdown_date ? L('fondo el ', 'trough on ') + r.max_drawdown_date : '') +
       card(L('Beta vs S&P 500', 'Beta vs S&P 500') + chip('beta'), r.beta_spy == null ? '—' : num(r.beta_spy, 2), r.corr_spy == null ? '' : L('correlación ', 'correlation ') + num(r.corr_spy, 2)) +
-      card('Sharpe' + chip('sharpe'), r.sharpe == null ? '—' : num(r.sharpe, 2), L('retorno anual compuesto ', 'compounded annual return ') + pct(r.return_ann_pct, 1) + (r.risk_free_pct != null ? ' − ' + L('tasa libre ', 'risk-free ') + pct(r.risk_free_pct, 2) : '')) +
+      sharpeCard(r) +
       card(L('Diversificación', 'Diversification') + chip('correlation'), r.diversification_ratio == null ? '—' : num(r.diversification_ratio, 2) + '×', L('1 = sin beneficio', '1 = no benefit')) +
       '</div>';
     var bt = r.backtest95;
@@ -565,6 +570,20 @@
         'En el último año la pérdida real superó el VaR 95% en ' + bt.breaches + ' de ' + bt.days + ' días (lo esperado es ~' + num(bt.expected, 1) + ').',
         'Over the last year the real loss exceeded the 95% VaR on ' + bt.breaches + ' of ' + bt.days + ' days (about ' + num(bt.expected, 1) + ' expected).')) + '</div>';
     }
+    var win = r.window;
+    if (win && win.truncated_by && win.truncated_by.length) {
+      h += '<div class="note">' + esc(L('La ventana empieza el ' + win.from + ' porque ' + win.truncated_by.join(', ') + ' cotiza desde entonces (la historia más larga tiene ' + win.longest_history_days + ' días; se usaron ' + win.days + ').',
+        'The window starts on ' + win.from + ' because ' + win.truncated_by.join(', ') + ' trades since then (the longest history has ' + win.longest_history_days + ' days; ' + win.days + ' were used).')) + '</div>';
+    }
+    if (r.excluded_value_pct > 0) {
+      h += '<div class="warn">' + esc(L(num(r.excluded_value_pct, 1) + '% de tu dinero quedó fuera del cálculo por historia corta.', num(r.excluded_value_pct, 1) + '% of your money was left out of the calculation for short history.')) + '</div>';
+    }
+    if (r.liquidity_flags && r.liquidity_flags.length) {
+      h += '<div class="warn">' + chip('liquidity') + ' ' + esc(L('Difíciles de vender rápido (más de 5 días al 20% del volumen diario): ', 'Hard to sell quickly (over 5 days at 20% of daily volume): ') + r.liquidity_flags.join(', ')) + '</div>';
+    }
+    if (r.risk_policy && r.risk_policy.semver) {
+      h += '<div class="note">' + esc(L('Reglas de cálculo: policy.risk ', 'Calculation rules: policy.risk ') + r.risk_policy.semver) + (r.covariance_model ? ' · ' + esc(L('covarianza ', 'covariance ') + (r.covariance_model.estimator === 'ledoit_wolf' ? 'Ledoit-Wolf δ ' + num(r.covariance_model.shrinkage, 2) : L('muestral', 'sample')) + ' · ' + (r.covariance_model.window === 'pairwise' ? L('ventana de cada par', 'each pair\'s window') : L('ventana común', 'common window'))) + chip('shrinkage') : '') + '</div>';
+    }
     if (r.unadjusted_symbols && r.unadjusted_symbols.length) {
       h += '<div class="warn">' + esc(L('Cierres SIN ajustar por dividendos/splits en: ' + r.unadjusted_symbols.join(', ') + ' (el proveedor no entregó la serie ajustada).', 'Closes NOT adjusted for dividends/splits in: ' + r.unadjusted_symbols.join(', ') + ' (the provider did not return the adjusted series).')) + '</div>';
     }
@@ -572,12 +591,13 @@
       '<div class="chartbox"><canvas id="krr-hist"></canvas></div><div class="note">' + esc(L('En rojo: días peores que el VaR 95%.', 'In red: days worse than the 95% VaR.')) + '</div></div>' +
       '<div class="sec"><h3>' + esc(L('Peores días reales', 'Worst real days')) + '</h3><div class="tcard"><table><tr><th>' + esc(L('Fecha', 'Date')) + '</th><th>%</th><th>USD</th></tr>' +
       (r.worst_days || []).map(function (d) { return '<tr><td>' + esc(d.date) + '</td><td class="bad">' + pct(d.pct) + '</td><td>' + usd(d.usd) + '</td></tr>'; }).join('') + '</table></div></div></div>';
-    var lab = r.labels || {};
-    h += '<div class="sec"><h3>' + esc(L('¿Quién pone el riesgo?', 'Who brings the risk?')) + chip('risk_contrib') + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Posición', 'Position')) + '</th><th>' + esc(L('Valor', 'Value')) + '</th><th>' + esc(L('Peso', 'Weight')) + '</th><th>' + esc(L('Aporte al riesgo', 'Risk share')) + '</th><th></th><th>' + esc(L('Vol. anual', 'Ann. vol')) + '</th></tr>' +
+    var lab = r.labels || {}, hasLiq = (r.positions || []).some(function (p) { return p.liquidity; });
+    h += '<div class="sec"><h3>' + esc(L('¿Quién pone el riesgo?', 'Who brings the risk?')) + chip('risk_contrib') + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Posición', 'Position')) + '</th><th>' + esc(L('Valor', 'Value')) + '</th><th>' + esc(L('Peso', 'Weight')) + '</th><th>' + esc(L('Aporte al riesgo', 'Risk share')) + '</th><th></th><th>' + esc(L('Vol. anual', 'Ann. vol')) + '</th>' + (hasLiq ? '<th>' + esc(L('Días p/ vender', 'Days to sell')) + chip('liquidity') + '</th>' : '') + '</tr>' +
       r.positions.map(function (p) {
         var hot = p.risk_contrib_pct > p.weight_pct * 1.3;
         return '<tr><td>' + esc(lab[p.symbol] || p.symbol) + ' <span class="mut">' + esc(p.symbol) + '</span></td><td>' + usd(p.value_usd) + '</td><td>' + pct(p.weight_pct, 1) + '</td><td' + (hot ? ' class="wtx"' : '') + '>' + pct(p.risk_contrib_pct, 1) + '</td>' +
-          '<td style="width:22%"><div class="bar"><i' + (hot ? ' class="hot"' : '') + ' style="width:' + Math.max(0, Math.min(100, p.risk_contrib_pct)) + '%"></i></div></td><td>' + pct(p.vol_ann_pct, 1) + '</td></tr>';
+          '<td style="width:22%"><div class="bar"><i' + (hot ? ' class="hot"' : '') + ' style="width:' + Math.max(0, Math.min(100, p.risk_contrib_pct)) + '%"></i></div></td><td>' + pct(p.vol_ann_pct, 1) + '</td>' +
+          (hasLiq ? '<td' + (p.liquidity && p.liquidity.flag ? ' class="wtx"' : '') + '>' + (p.liquidity ? num(p.liquidity.days_to_liquidate, 1) : '—') + '</td>' : '') + '</tr>';
       }).join('') + '</table></div><div class="note">' + esc(L('En ámbar: aporta mucho más riesgo que su peso en dinero.', 'Amber: brings far more risk than its money weight.')) + '</div></div>';
     if (r.converted && r.converted.length) {
       h += '<div class="sec"><h3>' + esc(L('Dólares → acciones', 'Dollars → shares')) + '</h3><div class="scroll tcard"><table><tr><th>' + esc(L('Empresa', 'Company')) + '</th><th>USD</th><th>' + esc(L('Precio de cierre', 'Closing price')) + '</th><th>' + esc(L('Acciones', 'Shares')) + '</th><th>' + esc(L('Fecha', 'Date')) + '</th></tr>' +
@@ -589,6 +609,16 @@
       'Nota: una cartera solo de acciones tiene Vega 0. La Vega mide la sensibilidad de OPCIONES a la volatilidad — está en la otra pestaña.',
       'Note: a stock-only portfolio has zero Vega. Vega measures OPTIONS sensitivity to volatility — see the other tab.')) + '</div>';
     return h;
+  }
+  // L2-18: el Sharpe principal lo elige policy.risk (1.0.0 = compuesto, el de siempre; 2.0.0 = aritmético); el otro va al lado
+  function sharpeCard(r) {
+    var arith = r.risk_policy && r.risk_policy.sharpe === 'arithmetic';
+    var sub = arith
+      ? L('promedio diario × 252 − tasa libre ', 'daily mean × 252 − risk-free ') + pct(r.risk_free_pct, 2)
+      : L('retorno anual compuesto ', 'compounded annual return ') + pct(r.return_ann_pct, 1) + (r.risk_free_pct != null ? ' − ' + L('tasa libre ', 'risk-free ') + pct(r.risk_free_pct, 2) : '');
+    var other = arith ? r.sharpe_geom : r.sharpe_arith;
+    if (other != null) sub += ' · ' + (arith ? L('compuesto ', 'compounded ') : L('aritmético ', 'arithmetic ')) + num(other, 2) + chip('sharpe_arith');
+    return card('Sharpe' + chip('sharpe'), r.sharpe == null ? '—' : num(r.sharpe, 2), sub);
   }
   function card(l, v, s) { return '<div class="card"><div class="l">' + l + '</div><div class="v">' + v + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; }
   function heatmap(r) {
@@ -779,9 +809,11 @@
     h += '<div class="detail"><div class="cards">' +
       card('Vega' + chip('vega'), usd(t.vega_usd), L('por +1 punto de volatilidad', 'per +1 volatility point')) +
       card(L('Valor de las opciones', 'Options value'), usd(t.value_usd), L('según el modelo', 'per the model')) +
-      card('Delta' + chip('delta'), (t.delta_shares >= 0 ? '+' : '') + num(t.delta_shares, 0) + ' ' + L('acc.', 'sh.'), L('equivalente en acciones', 'share equivalent')) +
+      (t.delta_shares != null
+        ? card('Delta' + chip('delta'), (t.delta_shares >= 0 ? '+' : '') + num(t.delta_shares, 0) + ' ' + L('acc.', 'sh.'), L('equivalente en acciones', 'share equivalent') + (t.dollar_delta_usd != null ? ' · ' + usd(t.dollar_delta_usd) + chip('dollar_delta') : ''))
+        : card(L('Delta en dólares', 'Dollar Delta') + chip('dollar_delta'), usd(t.dollar_delta_usd), L('varias empresas: por empresa abajo', 'several companies: per company below'))) +
       card('Theta' + chip('theta'), usd(t.theta_usd_day), L('por día que pasa', 'per day that passes')) +
-      card('Gamma' + chip('gamma'), num(t.gamma, 2), L('cambio de Delta por $1', 'Delta change per $1')) +
+      card('Gamma' + chip('gamma'), t.gamma == null ? '—' : num(t.gamma, 2), t.gamma == null ? L('solo por empresa (abajo)', 'per company only (below)') : L('cambio de Delta por $1', 'Delta change per $1')) +
       '</div>';
     h += '<div class="sec"><h3>' + esc(L('Si la volatilidad cambia…', 'If volatility changes…')) + '</h3><div class="tcard"><table><tr><th>' + esc(L('Cambio de volatilidad', 'Volatility change')) + '</th><th>' + esc(L('Ganancia / pérdida', 'Gain / loss')) + '</th></tr>' +
       r.vol_scenarios.map(function (s) { return '<tr><td>' + (s.shock_pts > 0 ? '+' : '') + s.shock_pts + ' ' + esc(L('puntos', 'points')) + '</td><td class="' + (s.pnl_usd >= 0 ? 'good' : 'bad') + '">' + usd(s.pnl_usd) + '</td></tr>'; }).join('') +
@@ -790,9 +822,15 @@
       r.positions.map(function (p) {
         return '<tr><td>' + esc(p.symbol + ' ' + p.kind.toUpperCase() + ' ' + p.strike + ' · ' + p.expiry + ' ×' + p.contracts) + '</td><td>' + p.days + '</td><td>' + usd(p.spot) + '</td><td title="' + esc(p.iv_source) + '">' + pct(p.iv_pct, 1) + (String(p.iv_source).indexOf('hist') === 0 ? '*' : '') + '</td><td>' + usd(p.model_price) + '</td><td>' + (p.market_mid == null ? '—' : usd(p.market_mid)) + '</td><td>' + usd(p.vega_usd) + '</td><td>' + num(p.delta_shares, 0) + '</td><td>' + num(p.gamma, 2) + '</td><td>' + usd(p.theta_usd_day) + '</td></tr>';
       }).join('') + '</table></div><div class="note">* ' + esc(L('volatilidad histórica de 1 año (el contrato no publica implícita).', '1-year historical volatility (the contract publishes no implied).')) +
-      ' · ' + esc(r.model) + ' · ' + esc(L('tasa libre de riesgo ', 'risk-free rate ')) + num(r.rate.value_pct, 2) + '% (' + esc(r.rate.source) + ')</div></div>';
+      ' · ' + esc(L(r.model, r.model_en || r.model)) + ' · ' + esc(L('tasa libre de riesgo ', 'risk-free rate ')) + num(r.rate.value_pct, 2) + '% (' + esc(r.rate.source) + ')' +
+      divNote(r) + (r.currencies && r.currencies.length ? ' · ' + esc(L('Opciones en ' + r.currencies.join(', ') + ' convertidas a USD con el tipo de cambio de hoy.', 'Options in ' + r.currencies.join(', ') + ' converted to USD at today\'s exchange rate.')) : '') + '</div></div>';
     h += greeksByUnderlying(r) + '</div>';
     return h;
+  }
+  function divNote(r) {
+    var q = (r.positions || []).filter(function (p) { return p.dividend_yield_pct > 0; });
+    if (!q.length) return '';
+    return ' · ' + esc(L('dividendo (q) usado: ', 'dividend yield (q) used: ') + q.map(function (p) { return p.symbol + ' ' + num(p.dividend_yield_pct, 2) + '%'; }).filter(function (x, i, a) { return a.indexOf(x) === i; }).join(', '));
   }
   function vegaSentences(r) {
     var t = r.totals, out = [], v = t.vega_usd, th = t.theta_usd_day, d = t.delta_shares;
@@ -804,7 +842,10 @@
     if (th < -0.005) out.push(L('Cada día que pasa, aunque nada cambie, <b>pierden unos ' + money(-th) + '</b> de valor (el "costo del tiempo").', 'Each day that passes, even if nothing changes, they <b>lose about ' + money(-th) + '</b> in value (the "cost of time").'));
     else if (th > 0.005) out.push(L('Cada día que pasa, aunque nada cambie, <b>ganan unos ' + money(th) + '</b> (cobras el paso del tiempo por haberlas vendido).', 'Each day that passes, even if nothing changes, they <b>gain about ' + money(th) + '</b> (you collect time decay because you sold them).'));
     out.push(L('Hoy valen unos <b>' + money(t.value_usd) + '</b> según el modelo.', 'Today they are worth about <b>' + money(t.value_usd) + '</b> per the model.'));
-    if (Math.abs(d) >= 1) out.push(d > 0
+    if (d == null && t.dollar_delta_usd != null && Math.abs(t.dollar_delta_usd) >= 1) out.push(t.dollar_delta_usd > 0
+      ? L('Frente a los precios, se comportan como tener <b>' + money(t.dollar_delta_usd) + '</b> en esas acciones (suma de varias empresas, en dólares).', 'Against the prices, they behave like holding <b>' + money(t.dollar_delta_usd) + '</b> of those stocks (several companies, in dollars).')
+      : L('Frente a los precios, se comportan como estar vendido en <b>' + money(-t.dollar_delta_usd) + '</b> de esas acciones (varias empresas, en dólares).', 'Against the prices, they behave like being short <b>' + money(-t.dollar_delta_usd) + '</b> of those stocks (several companies, in dollars).'));
+    if (d != null && Math.abs(d) >= 1) out.push(d > 0
       ? L('Frente al precio, se comportan como tener <b>' + num(d, 0) + ' acciones</b>: si la acción sube $1, ganas ~' + money(d) + '.', 'Against the price, they behave like holding <b>' + num(d, 0) + ' shares</b>: if the stock rises $1, you gain ~' + money(d) + '.')
       : L('Frente al precio, se comportan como estar vendido en <b>' + num(-d, 0) + ' acciones</b>: si la acción sube $1, pierdes ~' + money(-d) + '.', 'Against the price, they behave like being short <b>' + num(-d, 0) + ' shares</b>: if the stock rises $1, you lose ~' + money(-d) + '.'));
     var up = (r.vol_scenarios || []).filter(function (s) { return s.shock_pts === 10; })[0], dn = (r.vol_scenarios || []).filter(function (s) { return s.shock_pts === -10; })[0];

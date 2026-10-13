@@ -21,6 +21,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 
 import pytest
 
@@ -565,13 +566,38 @@ def browser():
         b.close()
 
 
-@pytest.mark.parametrize('lang', ['es', 'en'])
-def test_navegador_recorrido_entero_sin_que_el_agente_encadene(browser, lang):
-    from tests.test_voice_tour_client import TOUR, N
+@pytest.fixture(scope='module')
+def NEVER(browser):
+    """G5-20 (lote I4): los dos idiomas corren A LA VEZ, cada uno en su página y su contexto (nada compartido): el
+    MISMO recorrido entero con los MISMOS tiempos reales y las MISMAS comprobaciones, la mitad de reloj de pared
+    (antes ~30 s por idioma, en serie)."""
     from tests.test_voice_tour_narrator import _page
-    c, pg, errs, reqs = _page(browser, lang=lang, steps=0)              # el guion completo
-    pg.locator('#kos-empty [data-q="demo"]').click()
-    out = pg.evaluate(NEVER_CHAINS, {'lang': lang})
+    runs = {}
+    for lang in ('es', 'en'):
+        c, pg, errs, reqs = _page(browser, lang=lang, steps=0)          # el guion completo
+        pg.locator('#kos-empty [data-q="demo"]').click()
+        pg.evaluate('(args) => { const f = ' + NEVER_CHAINS + '; window.__nc = null; f(args).then('
+                    'o => { window.__nc = o; }, e => { window.__nc = { fatal: String((e && e.stack) || e) }; }); }',
+                    {'lang': lang})
+        runs[lang] = (c, pg, errs, reqs)
+    out = {}
+    for lang, (c, pg, errs, reqs) in runs.items():
+        res, t0 = None, time.time()
+        while res is None and time.time() - t0 < 90:              # sondeo desde aquí: la CSP de la página no
+            pg.wait_for_timeout(200)                                 # deja evaluar cadenas (wait_for_function)
+            res = pg.evaluate('() => window.__nc')
+        out[lang] = {'out': res or {'fatal': 'sin resultado en 90 s'}, 'gum': pg.evaluate('() => window.__gum'),
+                     'errs': errs, 'reqs': reqs}
+    for c, *_ in runs.values():
+        c.close()
+    return out
+
+
+@pytest.mark.parametrize('lang', ['es', 'en'])
+def test_navegador_recorrido_entero_sin_que_el_agente_encadene(NEVER, lang):
+    from tests.test_voice_tour_client import TOUR, N
+    out, errs, reqs = NEVER[lang]['out'], NEVER[lang]['errs'], NEVER[lang]['reqs']
+    assert 'fatal' not in out, out.get('fatal')
     assert out['socket'] is True and 'stuck' not in out, out
     assert out['start']['step'] == 1 and out['start']['of'] == N and out['start']['note'] == START_NOTE
     assert out['start']['say'] == TOUR['steps'][0][lang]
@@ -582,10 +608,9 @@ def test_navegador_recorrido_entero_sin_que_el_agente_encadene(browser, lang):
     assert out['hungUp'] is True and out['closed']['code'] == 1000
     assert out['after'] == {'tour': False, 'voice': 'off', 'sockets': 1}
     assert out['tools'] == 1 and out['chunks'] == 0
-    assert pg.evaluate('window.__gum') == 0
+    assert NEVER[lang]['gum'] == 0
     assert not [r for r in reqs if r.startswith('/api/voice/tour/')]
     assert not errs, errs
-    c.close()
 
 
 # ═══════════════════════ revisión 2026-10-12 c ═══════════════════════

@@ -81,6 +81,10 @@ function buildSnapshot(opts) {
   // Nombres legales/alternativos ("Taiwan Semiconductor" → TSMC): los lee
   // core/entities.py. Misma tabla que usa engine/resolve.js en el navegador.
   legal_names: W.LEGAL_NAMES || {},
+  // G5-19: alias de VOZ ("en vidia" → Nvidia) y palabras vacías del dictado, de nodes/legal_names.js — el
+  // servidor (core/entities.py) entiende lo mismo que engine/resolve.js (solo para BUSCAR, nunca para escribir).
+  voice_aliases: W.VOICE_ALIASES || {},
+  resolve_stopwords: Object.keys(W.RESOLVE_STOPWORDS || {}).sort(),
   categories: CATS,
   sectors9: g('SECTORS9'),
   cat_to_sector: CAT_TO_SECTOR,

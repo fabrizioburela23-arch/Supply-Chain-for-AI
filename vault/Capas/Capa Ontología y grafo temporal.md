@@ -9,7 +9,7 @@ tags: ["capa/ontologia", "tipo/capa"]
 
 > La fuente de verdad del grafo: eventos bitemporales en Postgres, acciones auditadas, reconciliación y el tiempo en el mapa.
 
-**32 archivos · 13.316 líneas.** Volver al [[00 Mapa de Khipus]].
+**32 archivos · 13.479 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -21,12 +21,12 @@ tags: ["capa/ontologia", "tipo/capa"]
 - [[scripts.build_graph_review.py]] — 799 líneas · LISTAS DE REVISIÓN DEL GRAFO para Fabrizio (BRECHAS_V2 bloque 5; decisiones #6 #7 #8 #10).
 - [[ontology.service.py]] — 762 líneas · lógica de negocio de la ontología.
 - [[scripts.audit_graph.py]] — 706 líneas · Auditoría automática del grafo (misión de reparación, G1).
+- [[engine.maptime.js]] — 525 líneas · EL TIEMPO DENTRO DEL MAPA PRINCIPAL (2026-09-25) Fabrizio: "el grafo temporal y el normal deberían ser uno; el temporal no da mucho por sí solo". …
 - [[scripts.migrate_v0_to_ontology.py]] — 503 líneas · Fase 1: migra data/grafo_v0.json (el snapshot congelado en Fase 0) a la ontología (Postgres, tabla events + vistas materializadas objects/links).
-- [[engine.maptime.js]] — 389 líneas · EL TIEMPO DENTRO DEL MAPA PRINCIPAL (2026-09-25) Fabrizio: "el grafo temporal y el normal deberían ser uno; el temporal no da mucho por sí solo". …
 - [[ontology.bitemporal.py]] — 356 líneas · G(t, κ): el grafo vigente en la fecha t TAL COMO SE CONOCÍA en κ (INFRA_OPERATIVA §5.5).
 - [[ontology.timeline.py]] — 334 líneas · Phase 1 · M5: la línea de tiempo de una entidad.
+- [[core.entities.py]] — 309 líneas · Phase 1 · M2: identidad de entidad en el servidor.
 - [[ontology.provenance.py]] — 285 líneas · Phase 1 · M1: procedencia de primera clase.
-- [[core.entities.py]] — 282 líneas · Phase 1 · M2: identidad de entidad en el servidor.
 - [[ontology.db.py]] — 275 líneas · conexión a Postgres (fuente única de verdad de la ontología).
 - [[engine.hypergraph.js]] — 273 líneas · Hipergrafos temporales agénticos para Khipu Finance Una hiper-arista conecta MÚLTIPLES nodos a la vez (un evento que afecta a N empresas) y tiene …
 - [[engine.reconcile.js]] — 257 líneas · G3 (misión de reparación 2026-10-04) 🩺 Diagnóstico → "Grafo: base vs catálogo". Muestra el dry-run de ontology/reconcile.py (GET …
@@ -52,18 +52,19 @@ tags: ["capa/ontologia", "tipo/capa"]
 |---|---|---|
 | la usa | [[Capa Infraestructura]] | 37 |
 | usa a | [[Capa Infraestructura]] | 37 |
-| usa a | [[Capa Datos del catálogo]] | 34 |
+| usa a | [[Capa Datos del catálogo]] | 33 |
 | la usa | [[Capa Investigación]] | 15 |
 | la usa | [[Capa MCP y API]] | 13 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 11 |
 | la usa | [[Capa Chat y agentes]] | 10 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 10 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 9 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 9 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 9 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 7 |
 | la usa | [[Capa Comité]] | 6 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 6 |
 | usa a | [[Capa Investigación]] | 4 |
 | usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 3 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 3 |
 | usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 2 |
+| la usa | [[Capa Voz]] | 1 |
 | usa a | [[Capa MCP y API]] | 1 |

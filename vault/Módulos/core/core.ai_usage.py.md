@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Infraestructura"
 ruta: "core/ai_usage.py"
 lenguaje: "python"
-lineas: 654
+lineas: 686
 aliases: ["core/ai_usage.py"]
 tags: ["capa/infraestructura", "tipo/modulo"]
 ---
 
 # core/ai_usage.py
 
-> Módulo · capa [[Capa Infraestructura]] · 654 líneas · `core/ai_usage.py`
+> Módulo · capa [[Capa Infraestructura]] · 686 líneas · `core/ai_usage.py`
 
 ## Para qué sirve
 
@@ -18,25 +18,25 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 
 ## API pública
 
-- clase `AIBudgetError` — Se alcanzó un límite de gasto: la llamada NO se hace (no cobra). _(línea 95)_
-- `price_for(provider, model)` — (entrada, salida) USD por 1M tokens. Prefijo más largo que calce. _(línea 143)_
-- `cache_price_for(provider, model)` — (escritura, lectura) de caché, USD por 1M tokens (L4-06): los de la fila de PRICES o, si no los trae, los multiplicadores del proveedor … _(línea 148)_
-- `cost_of(provider, model, tin, tout, cache_read=…, cache_write=…)` — Costo estimado. `tin` = TODOS los tokens de entrada; `cache_read`/`cache_write` son la parte de ellos que se leyó de / se escribió en la … _(línea 158)_
-- `ai_context(feature=…, who=…)` _(línea 173)_
-- `meter()` — Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque (incluido el "pensamiento" que el proveedor cobra como … _(línea 186)_
-- `current()` _(línea 221)_
-- `bind(fn)` — Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede la función/quién del hilo que la creó. _(línea 241)_
-- `default_settings()` _(línea 279)_
-- `settings()` _(línea 286)_
-- `save_settings(values, actor)` _(línea 304)_
-- `check(provider, max_tokens=…)` — Antes de cada llamada: ¿se pasó algún límite? → AIBudgetError (no se llama). _(línea 386)_
-- `record(provider, model, tin, tout, ok=…, ms=…, estimated=…, cache_read=…, cache_write=…)` — Después de cada respuesta del proveedor (también las que se descartan: se cobraron igual). `tin` = TODOS los tokens de entrada; … _(línea 422)_
-- `estimate_tokens(text)` _(línea 452)_
-- `flush()` _(línea 457)_
-- `report(days=…, lang=…)` _(línea 507)_
-- `anthropic_cost_report()` — Costo REAL facturado por Anthropic este mes (Usage & Cost Admin API). Requiere ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones). … _(línea 607)_
+- clase `AIBudgetError` — Se alcanzó un límite de gasto: la llamada NO se hace (no cobra). _(línea 105)_
+- `price_for(provider, model, at=…)` — (entrada, salida) USD por 1M tokens vigentes el día `at` (por defecto hoy). Prefijo más largo que calce. _(línea 170)_
+- `cache_price_for(provider, model, at=…)` — (escritura, lectura) de caché, USD por 1M tokens (L4-06): los de la fila de PRICES o, si no los trae, los multiplicadores del proveedor … _(línea 175)_
+- `cost_of(provider, model, tin, tout, cache_read=…, cache_write=…, at=…)` — Costo estimado con los precios vigentes el día de la llamada (`at`; por defecto, ahora). `tin` = TODOS los tokens de entrada; … _(línea 185)_
+- `ai_context(feature=…, who=…)` _(línea 201)_
+- `meter()` — Suma los tokens REALES que record() anota en ESTE hilo mientras dura el bloque (incluido el "pensamiento" que el proveedor cobra como … _(línea 214)_
+- `current()` _(línea 249)_
+- `bind(fn)` — Envuelve fn para que, al correr en OTRO hilo (ThreadPoolExecutor), herede la función/quién del hilo que la creó. _(línea 269)_
+- `default_settings()` _(línea 307)_
+- `settings()` _(línea 314)_
+- `save_settings(values, actor)` _(línea 332)_
+- `check(provider, max_tokens=…)` — Antes de cada llamada: ¿se pasó algún límite? → AIBudgetError (no se llama). _(línea 414)_
+- `record(provider, model, tin, tout, ok=…, ms=…, estimated=…, cache_read=…, cache_write=…)` — Después de cada respuesta del proveedor (también las que se descartan: se cobraron igual). `tin` = TODOS los tokens de entrada; … _(línea 450)_
+- `estimate_tokens(text)` _(línea 481)_
+- `flush()` _(línea 486)_
+- `report(days=…, lang=…)` _(línea 536)_
+- `anthropic_cost_report()` — Costo REAL facturado por Anthropic este mes (Usage & Cost Admin API). Requiere ANTHROPIC_ADMIN_KEY (sk-ant-admin…, solo organizaciones). … _(línea 639)_
 
-**Internas** (empiezan con `_`): `_now`, `_today`, `_prices`, `_price_row`, `_meter_add`, `_env_float`, `_add`, `_load_from_db`, `_spent`, `_ensure_writer`, `_agg_db`, `_cache_totals`, `_reset_for_tests`
+**Internas** (empiezan con `_`): `_now`, `_today`, `_day`, `_prices`, `_price_row`, `_meter_add`, `_env_float`, `_add`, `_load_from_db`, `_spent`, `_ensure_writer`, `_agg_db`, `_cache_totals`, `_reset_for_tests`
 
 ## Depende de
 
@@ -65,7 +65,7 @@ CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[research.runner.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 13 pruebas (lista abajo)._
+_Además lo importan 14 pruebas (lista abajo)._
 
 ## Endpoints que llama
 
@@ -92,6 +92,7 @@ _Además lo importan 13 pruebas (lista abajo)._
 
 - [[tests.test_ai_calls.py]]
 - [[tests.test_ai_gemini_fast.py]]
+- [[tests.test_ai_precios_vigencia.py]]
 - [[tests.test_ai_usage.py]]
 - [[tests.test_ai_usage_cache.py]]
 - [[tests.test_block0_numbers.py]]

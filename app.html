@@ -1509,8 +1509,8 @@ body:not(.dark) .toolbar{animation-delay:.06s}
    - window._tradeFetch(url, opts, interactive): header X-Trade-Pin. Nunca
      manda una petición SIN PIN a un server que lo exige (cada intento sin PIN
      cuenta para el bloqueo global de core/pin.py) → 401 sintético local.
-   - window._tradeStatusInfo(): /api/trade/status público → {pin_set, paper}
-     (el badge 🧪/🔴 se pinta sin PIN).
+   - window._tradeStatusInfo(): /api/trade/status → {pin_set, paper}; `paper` solo
+     llega con el PIN guardado (G5-18); sin PIN es null (cada pantalla: "ante la duda").
    - client_order_id (UUID) estable por orden: un reintento de la MISMA orden
      tras un error ambiguo (red/timeout/5xx) reusa el id — también tras
      recargar u otra pestaña (localStorage khipu_coid_pending, 24 h) → el
@@ -1579,19 +1579,27 @@ body:not(.dark) .toolbar{animation-delay:.06s}
   // es PÚBLICO (sin PIN) y dice pin_set y paper → el badge 🧪/🔴 se puede
   // pintar ANTES de tener el PIN. Caché 5 min; null = no se sabe (PIN: se
   // trata como "sí"; paper: el badge espera a /api/trade/account).
-  var _pinReq = { ts: 0, v: null, paper: null, p: null };
-  function _statusFresh() { return _pinReq.v !== null && Date.now() - _pinReq.ts < 300000; }
+  // G5-18 (lote I1): el servidor solo dice papel/real CON el PIN → se manda el PIN GUARDADO (nunca se pide aquí);
+  // sin PIN `paper` llega null y cada pantalla usa su regla de "ante la duda" hasta leer la cuenta con el PIN.
+  var _pinReq = { ts: 0, v: null, paper: null, p: null, withPin: false };
+  function _statusFresh() {
+    return _pinReq.v !== null && Date.now() - _pinReq.ts < 300000 &&
+      !(_pinReq.paper === null && !_pinReq.withPin && window._tradePinStored());
+  }
   window._tradeStatusInfo = function () {
     if (_statusFresh()) return Promise.resolve({ pin_set: _pinReq.v, paper: _pinReq.paper });
     if (_pinReq.p) return _pinReq.p;
     var ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var t = ac ? setTimeout(function () { ac.abort(); }, 5000) : null;
-    _pinReq.p = fetch((window.BASE || '') + '/api/trade/status', { cache: 'no-store', signal: ac ? ac.signal : undefined })
+    var pin = window._tradePinStored();
+    var hdr = pin ? { 'X-Trade-Pin': pin } : {};
+    _pinReq.p = fetch((window.BASE || '') + '/api/trade/status', { cache: 'no-store', headers: hdr, signal: ac ? ac.signal : undefined })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) {
         var v = (d && typeof d.pin_set === 'boolean') ? d.pin_set : null;
         var pp = (d && typeof d.paper === 'boolean') ? d.paper : null;
-        if (v !== null) { _pinReq.v = v; _pinReq.paper = pp; _pinReq.ts = Date.now(); }
+        if (pin && d && d.pin_valid === false) window._tradePinClear();   // PIN guardado viejo: se olvida
+        if (v !== null) { _pinReq.v = v; _pinReq.paper = pp; _pinReq.ts = Date.now(); _pinReq.withPin = !!(pin && pp !== null); }
         return v === null ? null : { pin_set: v, paper: pp };
       })
       .catch(function () { return null; })
@@ -4913,7 +4921,6 @@ function switchTab(tab){
 
 // Desde la ficha de una empresa → llevar a Carteras con la empresa lista para añadir.
 window.addToPortfolio = function(nodeId){
-  try { window._pfPendingAdd = nodeId; } catch(e){}
   switchTab('portfolios');
   const n = (window.NODE_BY_ID||{})[nodeId];
   if (typeof toast==='function' && n) toast((LANG==='en'?'Search "':'Busca «')+ (n.label||nodeId) +(LANG==='en'?'" here to add it to a portfolio.':'» aquí para añadirla a una cartera.'));
@@ -5154,7 +5161,6 @@ function renderPreipoPanel(d){
 /* ── Carteras editables: capa de usuario sobre el `port` estático ──────────── */
 var USER_PORTFOLIOS = JSON.parse(localStorage.getItem('eco_user_pf')||'{}');
 ['C1','C2'].forEach(k=>{ if(!USER_PORTFOLIOS[k]) USER_PORTFOLIOS[k]={add:[],rm:[]}; });
-function saveUserPF(){ localStorage.setItem('eco_user_pf', JSON.stringify(USER_PORTFOLIOS)); }
 function inPortfolio(n, pf){
   if(!n||!pf) return false;
   const u=USER_PORTFOLIOS[pf]||{add:[],rm:[]};
@@ -5162,26 +5168,6 @@ function inPortfolio(n, pf){
   if((n.port||'').includes(pf)) return true;             // estática
   return !!(u.add && u.add.indexOf(n.id)>=0);            // añadida por el usuario
 }
-window.togglePortfolio=function(id, pf){
-  const node=NODE_BY_ID[id]; if(!node) return;
-  const u=USER_PORTFOLIOS[pf]||(USER_PORTFOLIOS[pf]={add:[],rm:[]});
-  if(!u.add) u.add=[]; if(!u.rm) u.rm=[];
-  const wasIn=inPortfolio(node, pf);
-  const isStatic=(node.port||'').includes(pf);
-  if(wasIn){                                             // quitar
-    if(isStatic){ if(u.rm.indexOf(id)<0) u.rm.push(id); }
-    else { const i=u.add.indexOf(id); if(i>=0) u.add.splice(i,1); }
-  } else {                                               // añadir
-    if(isStatic){ const i=u.rm.indexOf(id); if(i>=0) u.rm.splice(i,1); }
-    else { if(u.add.indexOf(id)<0) u.add.push(id); }
-  }
-  saveUserPF();
-  if(typeof invalidateFilterCache==='function') invalidateFilterCache();
-  if(typeof refreshStyles==='function') refreshStyles();
-  if(typeof selected!=='undefined' && selected && typeof renderDetail==='function') renderDetail(selected);
-  if(typeof activeTab!=='undefined' && activeTab==='market' && typeof renderMarket==='function') renderMarket(true);
-  if(typeof toast==='function') toast((wasIn?(LANG==='en'?'Removed from ':'Quitada de '):(LANG==='en'?'Added to ':'Añadida a '))+pf);
-};
 
 function setStatus(msg){ document.getElementById('mk-status').textContent=msg; }
 
@@ -5923,7 +5909,6 @@ window.openDiagnostics = async function(fresh){
             'The live diagnostics need the Khipus server (Flask backend). If you just deployed, wait a minute and press ↻ Re-test.'));
   }
 };
-window.closeDiagnostics = function(){ window.closeSistema && window.closeSistema(); };
 
 /* ── Registro de Acciones (Fase 2 — ontología) ──────────────────────────── */
 function _registroActionMeta(a){
@@ -5979,7 +5964,6 @@ window.openRegistro = async function(fresh){
     body.innerHTML = _sysErrCard(_sysL('No se pudo cargar el registro', 'Could not load the log'), String(e.message||e), '');
   }
 };
-window.closeRegistro = function(){ window.closeSistema && window.closeSistema(); };
 (function(){ const f=$('registro-filter-actor'); if(f) f.addEventListener('keydown', e=>{ if(e.key==='Enter') window.openRegistro(true); }); })();
 
 /* ── Propuestas de Agentes (Fase 3 — ontología) ─────────────────────────── */
@@ -7841,6 +7825,7 @@ body:not(.dark) :not(.bcp-embed) > #terminal-panel{
 <script src="engine/universe2d.js"></script>
 <script src="engine/resolve.js"></script>
 <script src="engine/orb.js"></script>
+<script src="engine/trade.js"></script>
 <script src="engine/voice.js"></script>
 <script src="engine/secondbrain.js"></script>
 <script src="engine/geo_coords.js"></script>
@@ -10411,7 +10396,6 @@ function initSpaceTab() {
 
 // ── Globo geopolítico 3D → ahora es el World Monitor (engine/worldmonitor.js).
 // Alias de compatibilidad por si algún llamador externo aún lo usa.
-window._initGeoGlobe = function() { if (window.KhipuWorld) window.KhipuWorld.mount(); };
 
 // ── NexusCore: simulation orchestrator ───────────────────────────────────────
 window.nexusCore = {
@@ -10497,7 +10481,6 @@ window.nexusCore = {
     _startCountdown();
   }
 
-  window._refreshLiveData = refreshLiveData;
   setTimeout(_init, 3000);
 })();
 
@@ -12043,7 +12026,6 @@ function cvDownloadCSV(spec){
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=name;
   document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
 }
-window._cvRows = cvRows;
 
 /* ── TOOLTIP compartido: todo elemento con data-tip dentro de un gráfico muestra su valor al pasar el mouse ── */
 const cvTip=(function(){

@@ -1,0 +1,35 @@
+{
+  "id": "policy.risk",
+  "semver": "2.0.0",
+  "kind": "policy",
+  "change_kind": "major",
+  "parent": "policy.risk@1.0.0",
+  "activation": "pin",
+  "params": {
+    "ewma_lambda": 0.94,
+    "ewma_seed_days": 25,
+    "pairwise_min_obs": 20,
+    "liquidity": {
+      "adv_days": 20,
+      "participation": 0.2,
+      "flag_days": 5.0
+    },
+    "anomaly_z": 3.0,
+    "anomaly_lookback_days": 20,
+    "projection_percentiles": [
+      5,
+      25,
+      50,
+      75,
+      95
+    ],
+    "projection_max_days": 504,
+    "min_history_days": 120,
+    "window": "pairwise",
+    "covariance": "ledoit_wolf",
+    "sharpe": "arithmetic",
+    "rf_basis": "bond_equivalent"
+  },
+  "changelog_es": "Riesgo robusto (L2-14/L2-18): una acción con poca historia ya no recorta la ventana de toda la cartera — la covarianza usa la ventana de CADA par con contracción de Ledoit-Wolf (nunca singular, ni con 60 posiciones) y una posición con menos de 120 días se deja fuera y se dice cuánto dinero queda sin medir; Sharpe principal = aritmético (estándar) con ^IRX convertido de tasa de descuento a rendimiento equivalente. Cambian el aporte al riesgo, la diversificación y el Sharpe. Actívala con tu PIN tras ver «¿Qué cambia?»; deshacer = volver a 1.0.0.",
+  "changelog_en": "Robust risk (L2-14/L2-18): a stock with little history no longer trims the whole portfolio window — the covariance uses EACH pair's window with Ledoit-Wolf shrinkage (never singular, even with 60 positions) and a position with fewer than 120 days is left out, saying how much money is not measured; headline Sharpe = arithmetic (standard) with ^IRX converted from discount rate to equivalent yield. Risk contributions, diversification and Sharpe change. Activate it with your PIN after «What changes?»; undo = go back to 1.0.0."
+}

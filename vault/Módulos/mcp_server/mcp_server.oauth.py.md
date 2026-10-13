@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "MCP y API"
 ruta: "mcp_server/oauth.py"
 lenguaje: "python"
-lineas: 708
+lineas: 781
 aliases: ["mcp_server/oauth.py"]
 tags: ["capa/mcp-api", "tipo/modulo"]
 ---
 
 # mcp_server/oauth.py
 
-> Módulo · capa [[Capa MCP y API]] · 708 líneas · `mcp_server/oauth.py`
+> Módulo · capa [[Capa MCP y API]] · 781 líneas · `mcp_server/oauth.py`
 
 ## Para qué sirve
 
@@ -25,14 +25,17 @@ OAuth 2.1 mínimo (y correcto) para conectores remotos.
 - `valid_redirect_uri(uri)` _(línea 139)_
 - `protected_resource_metadata()` _(línea 178)_
 - `authorization_server_metadata()` _(línea 187)_
-- `register(bp)` _(línea 431)_
+- `register(bp)` _(línea 477)_
 
-**Internas** (empiezan con `_`): `_ttl_hours`, `_now`, `_base`, `_sign_key`, `_insecure_secret`, `_b64u`, `_b64u_dec`, `_json_err`, `_cors_public`, `_session`, `_get_client`, `_client_auth`, `_issue`, `_revoke_from_code`, `_page`, `_error_page`, `_request_error_page`, `_hidden`, `_redirect_page`, `_validate_auth_request`, `_broker_clients`, `_pin_step`, `_consent_step`
+**Internas** (empiezan con `_`): `_ttl_hours`, `_now`, `_base`, `_sign_key`, `_insecure_secret`, `_b64u`, `_b64u_dec`, `_json_err`, `_cors_public`, `_session`, `_get_client`, `_client_auth`, `_issue`, `_revoke_from_code`, `_ledger`, `_token_doc`, `_client_principal`, `_ledger_503_json`, `_page`, `_error_page`, `_request_error_page`, `_hidden`, `_redirect_page`, `_validate_auth_request`, `_broker_clients`, `_pin_step`, `_consent_step`
 
 ## Depende de
 
 - [[brokerage.service.py]] — importa `(dinámico: brokerage.service)`
+- [[core.decision_sites.py]] — importa `decision_sites`
+- [[core.decisions.py]] — importa `LedgerUnavailable`
 - [[core.http.py]] — importa `rate_limit`
+- [[core.identity.py]] — importa `identity`
 - [[core.pin.py]] — importa `insecure_production_secret`
 - [[mcp_server.api.py]] — importa `base_url`
 - [[mcp_server.auth.py]] — importa `auth`
@@ -53,11 +56,11 @@ _Además lo importan 1 pruebas (lista abajo)._
 | `GET,OPTIONS` | `/.well-known/oauth-authorization-server/mcp` | `_meta_as` | — |
 | `GET,OPTIONS` | `/.well-known/oauth-protected-resource` | `_meta_resource` | 1 prueba |
 | `GET,OPTIONS` | `/.well-known/oauth-protected-resource/mcp` | `_meta_resource` | [[mcp_server.api.py]], 1 prueba |
-| `GET` | `/oauth/authorize` | `oauth_authorize_get` | 2 pruebas |
-| `POST` | `/oauth/authorize` | `oauth_authorize_post` | 2 pruebas |
-| `OPTIONS,POST` | `/oauth/register` | `oauth_register` | 2 pruebas |
-| `OPTIONS,POST` | `/oauth/revoke` | `oauth_revoke` | 1 prueba |
-| `OPTIONS,POST` | `/oauth/token` | `oauth_token` | 1 prueba |
+| `GET` | `/oauth/authorize` | `oauth_authorize_get` | 3 pruebas |
+| `POST` | `/oauth/authorize` | `oauth_authorize_post` | 3 pruebas |
+| `OPTIONS,POST` | `/oauth/register` | `oauth_register` | 3 pruebas |
+| `OPTIONS,POST` | `/oauth/revoke` | `oauth_revoke` | 2 pruebas |
+| `OPTIONS,POST` | `/oauth/token` | `oauth_token` | 2 pruebas |
 
 Grupos: [[API MCP transporte y OAuth]]
 
@@ -82,4 +85,5 @@ Grupos: [[API MCP transporte y OAuth]]
 ## Pruebas que lo cubren
 
 - [[tests.test_mcp.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_security.py]]

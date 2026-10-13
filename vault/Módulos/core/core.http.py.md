@@ -51,6 +51,8 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[core.quotes.py]] — lo importa
 - [[core.risk_report.py]] — lo importa
 - [[core.space.py]] — lo importa
+- [[core.trading_agent.py]] — lo importa
+- [[core.voice_api.py]] — lo importa
 - [[core.world.py]] — lo importa
 - [[matrix.api.py]] — lo importa
 - [[matrix.tensor_api.py]] — lo importa
@@ -65,7 +67,7 @@ llamadas upstream saneadas y límite de tasa (compartidos entre server, ontology
 - [[research.outcomes.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 33 pruebas (lista abajo)._
+_Además lo importan 37 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -129,8 +131,12 @@ _Además lo importan 33 pruebas (lista abajo)._
 - [[tests.test_replay_determinism.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_rutas_acceso_decision.py]]
+- [[tests.test_scenario_pnl.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_security.py]]
 - [[tests.test_trading_agent_ledger.py]]
+- [[tests.test_voice_agent_split.py]]
 - [[tests.test_voice_tour.py]]
 
 ## Mencionado en sesiones de trabajo

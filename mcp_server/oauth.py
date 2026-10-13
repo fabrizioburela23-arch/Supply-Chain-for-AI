@@ -247,6 +247,13 @@ def _issue(s, row_or_none, client, scopes, broker_client_id, name, approved_by, 
         row.token_hash, row.token_prefix, row.expires_at = _auth.hash_secret(plain), plain[:10], exp
     row.refresh_hash = _auth.hash_secret(refresh)
     s.flush()
+    if row_or_none is None:          # poder NUEVO (canje del código aprobado con PIN): sync, misma transacción
+        _ledger(s, 'token', dict(_token_doc(row, client), grant='authorization_code'),
+                _client_principal(client, row.id))
+    else:                            # rotación del refresh token: mismo poder → después de responder
+        from core import decision_sites
+        decision_sites.access_change_async('mcp.oauth', 'refresh', dict(_token_doc(row, client), grant='refresh_token'),
+                                           p=_client_principal(client, row.id), task='mcp_oauth')
     return {'access_token': plain, 'token_type': 'Bearer', 'expires_in': _ttl_hours() * 3600,
             'refresh_token': refresh, 'scope': ' '.join(row.scopes or [])}
 
@@ -261,7 +268,46 @@ def _revoke_from_code(s, code_hash):
                  synchronize_session=False))
     if n:
         log.warning('mcp oauth: código reutilizado → %d token(s) revocado(s)', n)
+        try:                        # la revocación se confirma SIEMPRE (access_revoke: nunca LedgerUnavailable)
+            from core import decision_sites, identity
+            decision_sites.access_revoke(s, 'mcp.oauth', 'revoke_reused_code',
+                                         {'grant': 'authorization_code', 'revoked': True},
+                                         p=identity.system('oauth_code_reuse'), task='mcp_oauth')
+        except Exception:  # noqa: BLE001
+            pass
     return n
+
+
+# ── libro de decisiones (lote I1): policy.change (mcp.oauth) ─────────────────
+try:
+    from core.decisions import LedgerUnavailable as _LedgerUnavailable
+except Exception:  # noqa: BLE001
+    class _LedgerUnavailable(RuntimeError):
+        pass
+
+
+def _ledger(s, action, after, p, before=None):
+    """Alta de cliente, consentimiento, canje del código y revocación dejan su policy.change (mcp.oauth) en la MISMA
+    transacción: ids y alcances, NUNCA secretos, códigos ni tokens. Sin libro → LedgerUnavailable (nada se guarda)."""
+    from core import decision_sites
+    return decision_sites.access_change(s, 'mcp.oauth', action, after, before=before, p=p, task='mcp_oauth')
+
+
+def _token_doc(row, client):
+    exp = getattr(row, 'expires_at', None)
+    return {'token_id': row.id, 'oauth_client_id': client.client_id, 'scopes': list(row.scopes or []),
+            'broker_client_id': row.client_id, 'kind': row.kind, 'revoked': bool(row.revoked),
+            'expires_at': exp.isoformat() if exp else None}
+
+
+def _client_principal(client, token_id=None):
+    from core import identity
+    return identity.mcp(token_id or client.client_id, getattr(client, 'client_name', None), oauth=True)
+
+
+def _ledger_503_json():
+    return _json_err('temporarily_unavailable', 'The decision ledger is unavailable: nothing was changed', 503,
+                     desc_es='El libro de decisiones no está disponible: no se cambió nada')
 
 
 # ── páginas (bilingües) ─────────────────────────────────────────────────────
@@ -487,8 +533,15 @@ def register(bp):
                                      secret_hash=_auth.hash_secret(secret) if secret else None, scope=scope,
                                      meta={k: str(body.get(k))[:300] for k in ('client_uri', 'logo_uri', 'software_id',
                                                                                'software_version') if body.get(k)}))
+                from core import identity
+                _ledger(s, 'register', {'oauth_client_id': cid, 'scopes': scope.split(), 'auth_method': method,
+                                        'redirect_hosts': sorted({(urlparse(u).hostname or urlparse(u).scheme or '')[:120]
+                                                                  for u in uris})},
+                        identity.principal_from_request(declared=name, channel='mcp'))
         try:
             _auth.with_schema(_w)
+        except _LedgerUnavailable:
+            return _cors_public(_ledger_503_json())
         except Exception as e:  # noqa: BLE001
             log.warning('mcp oauth register: %s', e)
             return _cors_public(_json_err('server_error', 'could not register the client', 500))
@@ -602,6 +655,17 @@ def register(bp):
                         return _error_page('Este formulario ya se usó. Vuelve a conectar desde tu app.',
                                            'This form was already used. Reconnect from your app.', 409)
                     raise
+                # el consentimiento firmado solo existe tras el PIN del dueño (paso 'pin'): quien da el poder es el
+                # operador (D1), aunque esta petición ya no lleve el PIN
+                from core import identity
+                try:
+                    _ledger(s, 'authorize', {'oauth_client_id': client.client_id, 'scopes': scopes,
+                                             'broker_client_id': bcid, 'grant': 'consent'},
+                            identity.operator('mcp', declared='oauth consent'))
+                except _LedgerUnavailable:
+                    s.rollback()
+                    return _error_page('El libro de decisiones no está disponible: no se autorizó nada.',
+                                       'The decision ledger is unavailable: nothing was authorized.', 503)
             return _redirect_page(p['redirect_uri'], {'code': code, 'state': p.get('state'), 'iss': _base()})
         return _error_page('Solicitud inválida.', 'Invalid request.')
 
@@ -666,6 +730,8 @@ def register(bp):
                 return _json_err('unsupported_grant_type', 'use authorization_code or refresh_token')
         try:
             out = _auth.with_schema(_do)
+        except _LedgerUnavailable:
+            return _cors_public(_ledger_503_json())
         except Exception as e:  # noqa: BLE001
             log.warning('mcp oauth token: %s', e)
             return _cors_public(_json_err('server_error', 'token endpoint error', 500))
@@ -697,9 +763,16 @@ def register(bp):
                 if row is not None and row.oauth_client_id == client.client_id and not row.revoked:
                     row.revoked, row.revoked_at, row.revoked_by = True, _now(), f'oauth:{client.client_id}'[:120]
                     row.refresh_hash = None
+                    s.flush()
+                    doc = _token_doc(row, client)
+                    from core import decision_sites   # baja: se confirma aunque el libro esté caído
+                    decision_sites.access_revoke(s, 'mcp.oauth', 'revoke', doc, before=dict(doc, revoked=False),
+                                                 p=_client_principal(client, row.id), task='mcp_oauth')
                 return None
         try:
             r = _auth.with_schema(_do)
+        except _LedgerUnavailable:
+            r = _ledger_503_json()
         except Exception as e:  # noqa: BLE001
             log.warning('mcp oauth revoke: %s', e)
             r = None

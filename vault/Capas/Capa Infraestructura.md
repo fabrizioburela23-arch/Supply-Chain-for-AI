@@ -9,25 +9,25 @@ tags: ["capa/infraestructura", "tipo/capa"]
 
 > La base: server.py, IA en cascada y su gasto, PIN, HTTP saneado, reloj del servidor, service worker, sincronización.
 
-**45 archivos · 26.580 líneas.** Volver al [[00 Mapa de Khipus]].
+**45 archivos · 25.388 líneas.** Volver al [[00 Mapa de Khipus]].
 
 Variables de entorno: [[Índice de variables de entorno]].
 
 ## Archivos
 
-- [[server.py]] — 6.239 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
-- [[scripts.build_vault.py]] — 3.484 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
-- [[core.replay.py]] — 1.435 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
+- [[server.py]] — 4.877 líneas · Khipu Finance v1 Backend proxy ligero para el ecosistema de inteligencia de inversión.
+- [[scripts.build_vault.py]] — 3.487 líneas · BÓVEDA DE OBSIDIAN + GRAFO DE CONOCIMIENTO del repo (2026-10-11).
+- [[core.replay.py]] — 1.436 líneas · REPETIR UNA DECISIÓN (docs/INFRA_OPERATIVA.md §5.6; paso 24 del plan).
 - [[core.ai.py]] — 1.196 líneas · cascada multi-proveedor de IA (Claude → Gemini → NVIDIA).
 - [[core.governance.py]] — 1.109 líneas · EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan).
 - [[core.governance_flow.py]] — 1.016 líneas · FLUJO DE GOBERNANZA COMPLETO (docs/INFRA_OPERATIVA.md §5.3; paso 25 del plan).
-- [[core.decisions.py]] — 900 líneas · EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan).
+- [[core.decisions.py]] — 901 líneas · EL servicio de decisiones (docs/INFRA_OPERATIVA.md §2.2-§2.7; paso 6 del plan).
 - [[core.numbers.py]] — 869 líneas · guardián de CIFRAS (anti-alucinación numérica).
-- [[core.prices_store.py]] — 832 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, §20.1 #1-#3).
+- [[core.prices_store.py]] — 861 líneas · LA MEMORIA DE LOS NÚMEROS (docs/BRECHAS_V2.md bloque 2; ARQUITECTURA_V2 §9.1, §20.1 #1-#3).
+- [[core.decision_sites.py]] — 816 líneas · decisiones del COMITÉ, la INVESTIGACIÓN, las PROPUESTAS y las ALERTAS (docs/INFRA_OPERATIVA.md §2.5; pasos 18 y 19 del plan).
 - [[core.context_engine.py]] — 794 líneas · EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-10).
 - [[core.ledger.py]] — 729 líneas · sellado y verificación del libro (docs/INFRA_OPERATIVA.md §2.8; paso 6 del plan).
-- [[core.decision_sites.py]] — 714 líneas · decisiones del COMITÉ, la INVESTIGACIÓN, las PROPUESTAS y las ALERTAS (docs/INFRA_OPERATIVA.md §2.5; pasos 18 y 19 del plan).
-- [[core.ai_usage.py]] — 654 líneas · CONTROL DE GASTO DE IA (registro, límites y reporte).
+- [[core.ai_usage.py]] — 686 líneas · CONTROL DE GASTO DE IA (registro, límites y reporte).
 - [[core.ledger_guard.py]] — 450 líneas · GUARDIA DE PROYECCIONES «sin decisión no hay cambio» (docs/INFRA_OPERATIVA.md §2.1; paso 22).
 - [[core.governance_api.py]] — 381 líneas · /api/governance/\* (docs/INFRA_OPERATIVA.md §5.1; paso 9). Nunca bajo /v1/\*.
 - [[core.ledger_ddl.py]] — 372 líneas · DDL idempotente de los registros que SOLO crecen (docs/INFRA_OPERATIVA.md §2.1, §4.3).
@@ -53,8 +53,8 @@ Variables de entorno: [[Índice de variables de entorno]].
 - [[core.prices_api.py]] — 125 líneas · /api/prices/\* y /api/instruments/\* (BRECHAS bloque 2: la memoria de los números). Nunca /v1/\*.
 - [[core.scheduler.py]] — 116 líneas · tareas periódicas del SERVIDOR (misión de reparación 2026-10-04, R5).
 - [[scripts.fetch_ledger_anchor.py]] — 98 líneas · baja el ANCLA DIARIA pública del libro de decisiones y la guarda fuera de la base (docs/INFRA_OPERATIVA.md §2.8, paso 7, decisión D7). La corre el …
+- [[core.config.py]] — 82 líneas · variables de entorno compartidas entre server y ontology.
 - [[core.logjson.py]] — 81 líneas · O2 (misión de reparación 2026-10-04): logs estructurados.
-- [[core.config.py]] — 80 líneas · variables de entorno compartidas entre server y ontology.
 - [[scripts.build_impl_goldens.py]] — 74 líneas · salidas DORADAS de las implementaciones retenidas (core/impls.py; INFRA §5.2, paso 24).
 - [[core.agents_registry.py]] — 56 líneas · el registro de agentes del lado Python (limpieza 2026-10-11).
 - [[core.tour.py]] — 39 líneas · el guion del recorrido de un minuto, lado Python (voz para Khipus OS, 2026-10-11).
@@ -67,22 +67,22 @@ Variables de entorno: [[Índice de variables de entorno]].
 |---|---|---|
 | la usa | [[Capa Ontología y grafo temporal]] | 37 |
 | usa a | [[Capa Ontología y grafo temporal]] | 37 |
+| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 31 |
 | la usa | [[Capa Chat y agentes]] | 30 |
+| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 28 |
 | la usa | [[Capa Investigación]] | 27 |
-| la usa | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 24 |
-| la usa | [[Capa Dinero (carteras, trading, corretaje)]] | 23 |
 | la usa | [[Capa Comité]] | 22 |
+| la usa | [[Capa MCP y API]] | 22 |
 | la usa | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 21 |
 | usa a | [[Capa Datos en vivo (cotizaciones, mundo, espacio, fundamentales)]] | 17 |
-| la usa | [[Capa MCP y API]] | 16 |
-| usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 13 |
-| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 10 |
+| usa a | [[Capa Cuantitativo (matrices, tensores, riesgo)]] | 15 |
+| usa a | [[Capa Dinero (carteras, trading, corretaje)]] | 11 |
 | la usa | [[Capa Interfaz (Khipus OS)]] | 9 |
+| la usa | [[Capa Voz]] | 7 |
 | usa a | [[Capa Chat y agentes]] | 7 |
 | usa a | [[Capa Investigación]] | 7 |
 | usa a | [[Capa Comité]] | 6 |
 | usa a | [[Capa Interfaz (Khipus OS)]] | 5 |
 | usa a | [[Capa MCP y API]] | 4 |
+| usa a | [[Capa Voz]] | 2 |
 | la usa | [[Capa Datos del catálogo]] | 1 |
-| la usa | [[Capa Voz]] | 1 |
-| usa a | [[Capa Voz]] | 1 |

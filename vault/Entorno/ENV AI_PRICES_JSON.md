@@ -2,7 +2,7 @@
 tipo: "variable"
 capa: "Infraestructura"
 nombre: "AI_PRICES_JSON"
-documentada: false
+documentada: true
 tags: ["capa/infraestructura", "tipo/variable"]
 ---
 
@@ -16,11 +16,12 @@ tags: ["capa/infraestructura", "tipo/variable"]
 
 ## Pruebas que la fijan o nombran
 
+- [[tests.test_ai_precios_vigencia.py]]
 - [[tests.test_ai_usage_cache.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 
-**No** — falta en [[Doc CLAUDE]].
+Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 

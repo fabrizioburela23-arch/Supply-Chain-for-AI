@@ -1510,7 +1510,7 @@ def test_conclusions_board_tool(client, db, monkeypatch):
 # operaciones v2 que faltaban (BRECHAS L4-09, mcp_server/ops.py): solo lectura, scope read
 # ════════════════════════════════════════════════════════════════════════════
 V2_OPS = ('run_scenario', 'get_subgraph', 'get_exposure', 'find_similar_entities', 'calculate_correlation',
-          'get_history')
+          'get_history', 'find_anomalies', 'project_portfolio')
 
 
 def test_v2_ops_visibles_con_read_y_solo_lectura(client, nodb):
@@ -1554,6 +1554,16 @@ def test_run_scenario_usa_el_kernel_unico(client, nodb):
     assert d['error']['code'] == -32602                                     # shocks o scenario
     _, d = call_tool(client, nodb, 'run_scenario', {'shocks': [{'id': 'zzzz-no-existe', 'magnitude': 1}]})
     assert d['result']['isError'] is True and d['result']['structuredContent']['code'] == 'not_found'
+
+
+def test_run_scenario_traduccion_calibrada_honesta(client, nodb):
+    """batch I3 (L2-13): la cartera trae `calibrated` con el κ de kernel.calibration; hoy el ajuste es débil → SIN
+    cifra en dinero (status 'weak'), nunca un número inventado."""
+    _, d = call_tool(client, nodb, 'run_scenario', {'shocks': [{'id': 'TSMC', 'magnitude': 1}], 'top': 5,
+                                                    'positions': [{'symbol': 'NVDA', 'usd': 1000}]})
+    cal = d['result']['structuredContent']['portfolio']['calibrated']
+    assert cal['status'] == 'weak' and cal.get('pnl_usd') is None and cal['note_en']
+    assert cal['calibration']['artifact'] == 'kernel.calibration@1.0.0' and cal['calibration']['reasons']
 
 
 def test_get_subgraph_presupuesto_y_cola(client, nodb):
@@ -1646,3 +1656,68 @@ def test_get_history_y_correlacion(client, nodb, monkeypatch):
     assert 0 < r[('NVDA', 'AMD')]['se'] < 0.05 and sc['matrix'][0][0] == 1.0 and sc['n_obs'][0][1] == len(days) - 1
     from mcp_server.ops import correlation
     assert correlation([1, 2, 3, 4], [1, 4, 9, 16], 'spearman')[0] == pytest.approx(1.0)
+
+
+
+# ── batch I2: find_anomalies y project_portfolio (las 2 operaciones v2 que faltaban) ──────────────────────────────
+def test_find_anomalies_marca_el_salto_contra_la_ewma_ex_ante(client, nodb, monkeypatch):
+    import core.risk_report as rr
+    days = _fake_history(monkeypatch)
+    base = rr.fetch_history
+
+    def spiky(symbol, rng='1y', getter=None):
+        out, cur = base(symbol, rng, getter)
+        if symbol == 'NVDA' and out:
+            ds = sorted(out)
+            for d in ds[-3:]:                                   # +25 % hace 3 sesiones (y se mantiene)
+                out[d] *= 1.25
+        return out, cur
+    monkeypatch.setattr(rr, 'fetch_history', spiky)
+    _, d = call_tool(client, nodb, 'find_anomalies', {'symbols': ['Nvidia', 'AMD', 'ZZZZ'], 'lookback_days': 10})
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and sc['missing'] == ['ZZZZ'] and sc['z_threshold'] == 3.0
+    assert sc['ewma_lambda'] == 0.94 and sc['policy'] == {'artifact': 'policy.risk', 'semver': '1.0.0'}
+    top = sc['items'][0]
+    assert top['symbol'] == 'NVDA' and top['n_flagged'] == 1 and top['anomalies'][0]['kind'] == 'return'
+    a = top['anomalies'][0]
+    assert a['date'] == sorted(d.isoformat() for d in days)[-3] and a['z_return'] >= 3 and a['return_pct'] > 20
+    assert top['volume'] == {'available': False, 'reason': 'no stored daily volume for this range (prices_eod)'}
+    assert 'statistical flag only' in sc['uncertainty'] and sc['items'][1]['n_flagged'] == 0
+    from mcp_server.ops import ewma_zscores
+    x = [0.01 * (-1) ** i for i in range(60)] + [0.08]
+    z = dict(ewma_zscores(x, 0.94, 25))
+    assert z[60] == pytest.approx(8.0, rel=0.02) and all(abs(v) == pytest.approx(1.0, rel=1e-6) for k, v in z.items()
+                                                         if k < 60)
+
+
+def test_project_portfolio_bandas_lognormales_rotuladas(client, nodb, monkeypatch):
+    import math as _m
+
+    import numpy as np
+    _fake_history(monkeypatch)
+    args = {'positions': [{'symbol': 'NVDA', 'usd': 6000}, {'symbol': 'AMD', 'usd': 4000}], 'horizon_days': 21}
+    _, d = call_tool(client, nodb, 'project_portfolio', args)
+    sc = d['result']['structuredContent']
+    assert d['result']['isError'] is False and sc['label'].startswith('NOT A FORECAST')
+    assert sc['value_usd'] == 10000.0 and sc['covariance'] == {'estimator': 'ewma', 'lambda': 0.94}
+    end = sc['at_horizon']
+    assert end['p5_usd'] < end['p25_usd'] < end['p50_usd'] < end['p75_usd'] < end['p95_usd']
+    sig = sc['vol_daily_pct'] / 100
+    assert end['p50_usd'] == pytest.approx(10000 * _m.exp(-0.5 * sig ** 2 * 21), rel=1e-3)   # deriva 0: mediana
+    assert [b['day'] for b in sc['bands']] == [1, 5, 10, 21] and sc['policy']['semver'] == '1.0.0'
+    widths = [b['p95_usd'] - b['p5_usd'] for b in sc['bands']]
+    assert widths == sorted(widths)                                   # la banda se abre con el horizonte
+    _, d = call_tool(client, nodb, 'project_portfolio', dict(args, covariance='ledoit_wolf'))
+    lw = d['result']['structuredContent']
+    assert lw['covariance']['estimator'] == 'ledoit_wolf' and 0 <= lw['covariance']['shrinkage'] <= 1
+    _, d = call_tool(client, nodb, 'project_portfolio', {'positions': [{'symbol': 'ZZZZ', 'usd': 10}]})
+    assert d['result']['isError'] is True
+    _, d = call_tool(client, nodb, 'project_portfolio', dict(args, detail='summary'))
+    assert d['result']['structuredContent']['detail'] == 'summary'
+    # revisión lote I: con drift=historical la media de retornos LOG ya trae −σ²/2 → mediana = V·e^(μ_log·d) (antes
+    # se restaba σ²/2 otra vez y toda la banda quedaba sesgada hacia abajo)
+    _, d = call_tool(client, nodb, 'project_portfolio', dict(args, drift='historical'))
+    hs = d['result']['structuredContent']
+    mu = hs['drift_daily_pct'] / 100
+    assert hs['at_horizon']['p50_usd'] == pytest.approx(10000 * _m.exp(mu * 21), rel=2e-3)
+    assert 'already includes' in hs['method']

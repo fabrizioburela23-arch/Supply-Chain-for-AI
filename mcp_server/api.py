@@ -581,6 +581,33 @@ def mcp_tokens_list():
                         'detail': type(e).__name__}), 500
 
 
+try:
+    from core.decisions import LedgerUnavailable as _LedgerUnavailable
+except Exception:  # noqa: BLE001
+    class _LedgerUnavailable(RuntimeError):
+        pass
+
+
+def _ledger_token(s, action, row):
+    """policy.change (mcp.tokens): id del token, alcances, cuenta de corretaje y vencimiento — NUNCA el secreto."""
+    from core import decision_sites, identity
+    exp = getattr(row, 'expires_at', None)
+    after = {'token_id': row.id, 'scopes': list(row.scopes or []), 'broker_client_id': row.client_id,
+             'kind': row.kind, 'revoked': bool(row.revoked), 'oauth_client_id': row.oauth_client_id,
+             'expires_at': exp.isoformat() if exp else None}
+    if action == 'revoke':          # una baja QUITA poder: se confirma aunque el libro esté caído (access_revoke)
+        return decision_sites.access_revoke(s, 'mcp.tokens', action, after, before=dict(after, revoked=False),
+                                            p=identity.principal_from_request(), task='mcp_tokens')
+    return decision_sites.access_change(s, 'mcp.tokens', action, after, before=None,
+                                        p=identity.principal_from_request(), task='mcp_tokens')
+
+
+def _ledger_503():
+    return jsonify({'error': 'El libro de decisiones no está disponible: no se cambió nada',
+                    'error_en': 'The decision ledger is unavailable: nothing was changed',
+                    'code': 'ledger_unavailable'}), 503
+
+
 @mcp_bp.route('/api/mcp/tokens', methods=['POST'])
 @rate_limit(20, 60)
 def mcp_tokens_create():
@@ -595,9 +622,12 @@ def mcp_tokens_create():
             row, plain = _auth.create_token(s, body.get('name'), body.get('scopes') or ['read'],
                                             client_id=body.get('client_id'), created_by=_actor(body))
             d = _auth.token_dict(row, _auth._client_names(s, [row.client_id]))
+            _ledger_token(s, 'create', row)        # lote I1: policy.change (mcp.tokens) en la MISMA transacción
             return d, plain
     try:
         d, plain = _auth.with_schema(_c)
+    except _LedgerUnavailable:
+        return _ledger_503()
     except ValueError as e:
         return jsonify({'error': getattr(e, 'es', str(e)), 'error_en': getattr(e, 'en', str(e)),
                         'code': getattr(e, 'code', 'bad_request')}), 400
@@ -624,9 +654,17 @@ def mcp_tokens_revoke(token_id):
 
     def _r():
         with session_scope() as s:
-            return _auth.revoke_token(s, token_id, _actor(body))
+            from mcp_server.models import McpToken
+            row = s.get(McpToken, str(token_id or '')[:40])
+            was = None if row is None else bool(row.revoked)
+            res = _auth.revoke_token(s, token_id, _actor(body))
+            if row is not None and was is False and row.revoked:
+                _ledger_token(s, 'revoke', row)
+            return res
     try:
         res = _auth.with_schema(_r)
+    except _LedgerUnavailable:
+        return _ledger_503()
     except Exception as e:  # noqa: BLE001
         log.warning('mcp token revoke: %s', e)
         return jsonify({'error': 'no se pudo revocar el token', 'error_en': 'the token could not be revoked',

@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Cuantitativo (matrices, tensores, riesgo)"
 ruta: "engine/livesim.js"
 lenguaje: "javascript"
-lineas: 430
+lineas: 442
 aliases: ["engine/livesim.js"]
 tags: ["capa/cuantitativo", "tipo/modulo"]
 ---
 
 # engine/livesim.js
 
-> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 430 líneas · `engine/livesim.js`
+> Módulo · capa [[Capa Cuantitativo (matrices, tensores, riesgo)]] · 442 líneas · `engine/livesim.js`
 
 ## Para qué sirve
 
@@ -27,11 +27,11 @@ SIMULACIÓN EN VIVO v3 (abierta, no cerrada) Constructor de escenarios: eliges e
 - [[engine.toast.js]] — usa `khipuActor`
 - [[nodes.nodes_seed.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 
-Se carga en [[app.html]] en la posición **67 de 96** (línea 7942), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
+Se carga en [[app.html]] en la posición **68 de 97** (línea 7927), después de [[engine.statematrix.js]] y antes de [[engine.layers.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 67)
+- [[app.html]] — lo carga con `<script>` (posición 68)
 - [[engine.command_center.js]] — usa `_lsToggle`
 
 ## Endpoints que llama
@@ -44,6 +44,7 @@ Se carga en [[app.html]] en la posición **67 de 96** (línea 7942), después de
 
 - [[tests.test_cleanup_dialogs.py]]
 - [[tests.test_no_client_engine.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 
 ## Mencionado en sesiones de trabajo
 

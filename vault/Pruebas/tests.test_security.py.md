@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_security.py"
 lenguaje: "python"
-lineas: 1069
+lineas: 1122
 aliases: ["tests/test_security.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_security.py
 
-> Prueba · capa [[Capa Pruebas]] · 1.069 líneas · `tests/test_security.py`
+> Prueba · capa [[Capa Pruebas]] · 1.122 líneas · `tests/test_security.py`
 
 ## Qué prueba
 
 rutas de DINERO y endurecimiento estructural (auditoría 2026-09-30).
 
-**59** funciones `test_…`.
+**63** funciones `test_…`.
 
 ## Cubre
 
@@ -26,6 +26,8 @@ rutas de DINERO y endurecimiento estructural (auditoría 2026-09-30).
 - [[brokerage.service.py]]
 - [[core.http.py]]
 - [[core.pin.py]]
+- [[core.trading_agent.py]]
+- [[core.voice_api.py]]
 - [[mcp_server.api.py]]
 - [[mcp_server.auth.py]]
 - [[mcp_server.models.py]]
@@ -37,7 +39,7 @@ rutas de DINERO y endurecimiento estructural (auditoría 2026-09-30).
 
 ## Rutas HTTP que llama
 
-25 rutas, de los grupos: [[API MCP transporte y OAuth]], [[API brokerage]], [[API committee]], [[API health]], [[API mcp]], [[API news]], [[API scalp]], [[API trade]], [[API voice]], [[API ws-key]], [[API ws-token]]
+26 rutas, de los grupos: [[API MCP transporte y OAuth]], [[API brokerage]], [[API committee]], [[API diagnostics]], [[API health]], [[API mcp]], [[API news]], [[API scalp]], [[API trade]], [[API voice]], [[API ws-key]], [[API ws-token]]
 
 ## Variables de entorno que fija o nombra
 

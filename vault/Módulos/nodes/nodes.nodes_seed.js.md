@@ -32,7 +32,7 @@ De nivel superior (globales del script): `CATS`, `CATS_NEW`, `CAT_TO_SECTOR`, `C
 
 _Nada interno._
 
-Se carga en [[app.html]] en la posición **2 de 96** (línea 1437) y antes de [[nodes.nodes_expand.js]].
+Se carga en [[app.html]] en la posición **2 de 97** (línea 1437) y antes de [[nodes.nodes_expand.js]].
 
 ## Lo usan
 
@@ -50,7 +50,6 @@ Se carga en [[app.html]] en la posición **2 de 96** (línea 1437) y antes de [[
 - [[engine.insights.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 - [[engine.livesim.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
 - [[engine.localcharts.js]] — usa `CAT_TO_SECTOR`, `NODES`, `NODE_META`, `SECTORS9`
-- [[engine.maptime.js]] — usa `NODE_META`
 - [[engine.matrixview.js]] — usa `CAT_TO_SECTOR`, `NODES`, `SECTORS9`
 - [[engine.oswindows.js]] — usa `NODES`
 - [[engine.pickers.js]] — usa `NODES`

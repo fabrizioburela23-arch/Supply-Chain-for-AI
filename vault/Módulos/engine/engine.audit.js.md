@@ -25,11 +25,11 @@ tags: ["capa/interfaz", "tipo/modulo"]
 - [[app.html]] — usa `BASE`, `LANG`, `_tradeFetch`, `_tradePinStored`
 - [[engine.explain.js]] — usa `explainChip`
 
-Se carga en [[app.html]] en la posición **79 de 96** (línea 7954), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
+Se carga en [[app.html]] en la posición **80 de 97** (línea 7939), después de [[engine.governance.js]] y antes de [[engine.pricehist.js]].
 
 ## Lo usan
 
-- [[app.html]] — lo carga con `<script>` (posición 79)
+- [[app.html]] — lo carga con `<script>` (posición 80)
 - [[app.html]] — usa `KhipuAudit`
 
 ## Endpoints que llama

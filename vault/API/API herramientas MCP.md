@@ -1,18 +1,19 @@
 ---
 tipo: "api"
 capa: "MCP y API"
-herramientas: 30
+herramientas: 32
 tags: ["capa/mcp-api", "tipo/api"]
 ---
 
 # API herramientas MCP
 
-> 30 herramientas definidas en [[mcp_server.tools.py]] (y las v2 en [[mcp_server.ops.py]]) y servidas por [[mcp_server.api.py]] en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), **research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).
+> 32 herramientas definidas en [[mcp_server.tools.py]] (y las v2 en [[mcp_server.ops.py]]) y servidas por [[mcp_server.api.py]] en `POST /mcp` (JSON-RPC). Alcances: **read** (consultas), **research** (gasta presupuesto de IA), **trade** (solo PROPONE órdenes; siempre aprobación humana).
 
 | Herramienta | Alcance | Solo lectura | Función | Módulos que usa |
 |---|---|---|---|---|
 | `calculate_correlation` | read | sí | `t_calculate_correlation` | [[core.__init__.py]], [[core.entities.py]], [[core.risk_report.py]] |
 | `cancel_order` | trade | **no** | `t_cancel_order` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
+| `find_anomalies` | read | sí | `t_find_anomalies` | [[core.__init__.py]], [[core.entities.py]], [[core.prices_store.py]], [[core.risk_report.py]] |
 | `find_similar_entities` | read | sí | `t_find_similar_entities` | [[matrix.tensor.py]] |
 | `get_account` | trade | sí | `t_get_account` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 | `get_claim_evidence` | read | sí | `t_get_claim_evidence` | [[core.numbers.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.models.py]], [[ontology.provenance.py]], [[research.models.py]] |
@@ -35,10 +36,11 @@ tags: ["capa/mcp-api", "tipo/api"]
 | `get_world_events` | read | sí | `t_get_world_events` | [[core.gpr.py]], [[core.world.py]], [[mcp_server.contract.py]] |
 | `list_orders` | trade | sí | `t_list_orders` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 | `preview_order` | trade | **no** | `t_preview_order` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
+| `project_portfolio` | read | sí | `t_project_portfolio` | [[core.__init__.py]], [[core.entities.py]], [[core.instruments.py]], [[core.quotes.py]], [[core.risk_models.py]], [[core.risk_report.py]] |
 | `replay_decision` | read | sí | `t_replay_decision` | [[core.identity.py]], [[core.replay.py]], [[mcp_server.contract.py]] |
 | `run_committee` | research | **no** | `t_run_committee` | [[brokerage.service.py]], [[core.__init__.py]], [[core.entities.py]], [[core.identity.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.committee.py]] |
 | `run_research` | research | **no** | `t_run_research` | [[core.__init__.py]], [[core.ai.py]], [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.db.py]], [[ontology.vocabulary.py]], [[research.runner.py]] |
-| `run_scenario` | read | sí | `t_run_scenario` | [[core.__init__.py]], [[core.context_engine.py]], [[core.scenario_engine.py]], [[core.semantic.py]] |
+| `run_scenario` | read | sí | `t_run_scenario` | [[core.__init__.py]], [[core.context_engine.py]], [[core.scenario_engine.py]], [[core.scenario_pnl.py]], [[core.semantic.py]] |
 | `search_companies` | read | sí | `t_search_companies` | [[core.__init__.py]], [[core.entities.py]], [[mcp_server.contract.py]], [[ontology.vocabulary.py]] |
 | `submit_order` | trade | **no** | `t_submit_order` | [[brokerage.service.py]], [[mcp_server.contract.py]], [[ontology.db.py]] |
 

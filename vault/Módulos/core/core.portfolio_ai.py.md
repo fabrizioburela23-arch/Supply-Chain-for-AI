@@ -3,14 +3,14 @@ tipo: "modulo"
 capa: "Dinero (carteras, trading, corretaje)"
 ruta: "core/portfolio_ai.py"
 lenguaje: "python"
-lineas: 1266
+lineas: 1298
 aliases: ["core/portfolio_ai.py"]
 tags: ["capa/dinero", "tipo/modulo"]
 ---
 
 # core/portfolio_ai.py
 
-> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.266 líneas · `core/portfolio_ai.py`
+> Módulo · capa [[Capa Dinero (carteras, trading, corretaje)]] · 1.298 líneas · `core/portfolio_ai.py`
 
 ## Para qué sirve
 
@@ -33,13 +33,13 @@ ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
 - `score(c, prof_w, goal, max_deg, research)` _(línea 503)_
 - `research_signal(claims)` — {id: {net ∈ [-1,1], n, neg}} desde claims activos (confianza como peso). _(línea 518)_
 - `build_proposals(p, history_fn=…, fx_fn=…, caps=…, claims=…)` — Núcleo DETERMINISTA. `p` = validate_propose(...). Sin IA. _(línea 561)_
-- `deterministic_rationale(pf, p, lang)` _(línea 810)_
-- `propose(p, history_fn=…, fx_fn=…, caps=…, claims=…, use_ai=…)` _(línea 876)_
-- `validate_ask(body)` _(línea 930)_
-- `ask(a, history_fn=…, caps=…, claims=…)` _(línea 1107)_
-- `themes_endpoint()` _(línea 1214)_
-- `propose_endpoint()` _(línea 1226)_
-- `ask_endpoint()` _(línea 1250)_
+- `deterministic_rationale(pf, p, lang)` _(línea 839)_
+- `propose(p, history_fn=…, fx_fn=…, caps=…, claims=…, use_ai=…)` _(línea 908)_
+- `validate_ask(body)` _(línea 962)_
+- `ask(a, history_fn=…, caps=…, claims=…)` _(línea 1139)_
+- `themes_endpoint()` _(línea 1246)_
+- `propose_endpoint()` _(línea 1258)_
+- `ask_endpoint()` _(línea 1282)_
 
 **Internas** (empiezan con `_`): `_now`, `_cache_get`, `_cache_put`, `_key`, `_lang`, `_country`, `_norm`, `_bad`, `_history`, `_fx`, `_live_caps`, `_claims_for`, `_portfolio_report`, `_graph`, `_nodes`, `_as_list`, `_resolve_exclusions`, `_std`, `_cov`, `_waterfill`, `_pick`, `_size_and_measure`, `_risks`, `_ai_rationales`, `_entity_context`, `_pair_stats`, `_portfolio_ctx`, `_portfolio_text`, `_mentioned`, `_glossary`, `_deterministic_answer`
 
@@ -52,6 +52,7 @@ ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
 - [[core.live_caps.py]] — importa `get_caps`
 - [[core.live_facts.py]] — importa `detect_entities`
 - [[core.quotes.py]] — importa `_fx_to_usd`
+- [[core.risk_models.py]] — importa `rc_dispersion`
 - [[core.risk_report.py]] — importa `build_report`, `compute`, `fetch_history`
 - [[core.world.py]] — importa `client_nrs`
 - [[ontology.db.py]] — importa `ontology_available`, `session_scope`
@@ -62,7 +63,7 @@ ASISTENTE DE CARTERAS (💼 Carteras → 🤖 Asistente).
 - [[core.portfolio_advisor.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 4 pruebas (lista abajo)._
+_Además lo importan 5 pruebas (lista abajo)._
 
 ## Endpoints que define
 
@@ -80,6 +81,7 @@ Grupos: [[API portfolio-ai]]
 - [[tests.test_ops_single_source.py]]
 - [[tests.test_portfolio_ai.py]]
 - [[tests.test_repair_graph.py]]
+- [[tests.test_risk_robust.py]]
 
 ## Mencionado en sesiones de trabajo
 

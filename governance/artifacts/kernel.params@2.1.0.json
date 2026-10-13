@@ -1,0 +1,81 @@
+{
+  "id": "kernel.params",
+  "semver": "2.1.0",
+  "kind": "params",
+  "change_kind": "minor",
+  "parent": "kernel.params@2.0.0",
+  "activation": "pin",
+  "params": {
+    "rel_weights": {
+      "supply": 1.0,
+      "cloud": 0.9,
+      "fab": 1.0,
+      "license": 0.5,
+      "partner": 0.3,
+      "invest": 0.25,
+      "deploy": 0.4,
+      "owns": 0.6,
+      "ppa": 0.7
+    },
+    "sole_link_floor": 6.0,
+    "fragility_cap": 2.5,
+    "bulk_weight_factor": 0.5,
+    "bulk_sources": [
+      "gleif",
+      "wikidata"
+    ],
+    "unverified_conf": 0.3,
+    "magnitude": 1.0,
+    "damping": 0.6,
+    "max_hops": 6,
+    "threshold": 0.01,
+    "severity_divisor": 10.0,
+    "factor_latent_severity": 1.0,
+    "pagerank_alpha": 0.85,
+    "supplier_rels": [
+      "supply",
+      "fab",
+      "cloud",
+      "license",
+      "ppa"
+    ],
+    "tensor_n_peers": 15,
+    "tensor_w_peers": 0.7,
+    "tensor_w_cat": 0.3,
+    "damage_rels": [
+      "supply",
+      "fab",
+      "cloud",
+      "license",
+      "ppa",
+      "owns",
+      "deploy"
+    ],
+    "direction_up": true,
+    "nonlinear_mode": "amplify",
+    "factor_inputs_strict": true,
+    "fire_mode": "member_coef",
+    "fire_crisis_default_max": 10.0,
+    "chokepoint_rank_by": "sum",
+    "scenario_mode": "kernel",
+    "scenario_event_magnitude": {
+      "export_ban": 1.0,
+      "disruption": 1.0,
+      "import_ban": 0.5,
+      "boost": 0.8
+    },
+    "scenario_substitute_gain": 0.55,
+    "scenario_min_impact": 0.01,
+    "sim_pct_source": "kernel",
+    "scenario_kappa_pct": {
+      "mega": 12.0,
+      "mid": 20.0,
+      "small": 35.0
+    },
+    "propagation": "persistent"
+  },
+  "changelog_es": "MINOR sobre 2.0.0 (PROP-08, batch I3). Todo lo de 2.0.0 más una regla: la empresa que cae SIGUE emitiendo el golpe en cada salto (x_k = max(x_0, salto de x_{k-1})) hasta el punto fijo o el tope de saltos. Así el motor es monótono: agregar un vínculo que sale de la empresa que cae nunca baja el impacto de nadie (antes, en casos raros, lo bajaba hasta 3,8 puntos). Los impactos de 2.1.0 son iguales o mayores que los de 2.0.0. Entra en vigor SOLO cuando Fabrizio lo activa con su PIN; deshacer = activar 2.0.0 o 1.0.0. Las cifras de 1.0.0 y 2.0.0 no cambian.",
+  "changelog_en": "MINOR on top of 2.0.0 (PROP-08, batch I3). Everything in 2.0.0 plus one rule: the failing company KEEPS emitting the shock at every hop (x_k = max(x_0, hop of x_{k-1})) until the fixed point or the hop cap. The engine is therefore monotone: adding a link out of the failing company never lowers anyone's impact (before, in rare cases, it lowered it by up to 3.8 points). 2.1.0 impacts are equal to or higher than 2.0.0's. It takes effect ONLY when Fabrizio activates it with his PIN; undo = activate 2.0.0 or 1.0.0. The 1.0.0 and 2.0.0 numbers do not change.",
+  "summary_es": "Como 2.0.0, y además la empresa que cae sigue transmitiendo el golpe en cada paso: agregar un vínculo que SALE de la empresa que cae (con magnitud 1) nunca hace que alguien parezca menos golpeado. Un vínculo nuevo desde OTRA empresa golpeada todavía puede bajar un poco a sus clientes (reparte su peso).",
+  "summary_en": "Like 2.0.0, and the failing company keeps transmitting the shock at every step: adding a link OUT OF the failing company (at magnitude 1) never makes anyone look less hit. A new link from ANOTHER hit company can still lower its customers a little (it splits their weight)."
+}

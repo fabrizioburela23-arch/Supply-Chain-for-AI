@@ -87,8 +87,11 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[core.numbers.py]] — lo importa
 - [[core.replay.py]] — lo importa
 - [[core.retention.py]] — lo importa
+- [[core.risk_report.py]] — lo importa
 - [[core.scenario_engine.py]] — lo importa
+- [[core.scenario_pnl.py]] — lo importa
 - [[core.world.py]] — lo importa
+- [[matrix.api.py]] — lo importa
 - [[matrix.engine.py]] — lo importa
 - [[matrix.tensor.py]] — lo importa
 - [[ontology.agents.py]] — lo importa
@@ -99,10 +102,11 @@ EL registro de gobernanza (docs/INFRA_OPERATIVA.md §5.1-§5.4; paso 9 del plan)
 - [[research.committee.py]] — lo importa
 - [[research.outcomes.py]] — lo importa
 - [[scripts.build_governance.py]] — lo importa
+- [[scripts.calibrate_kernel.py]] — lo importa
 - [[scripts.migrate_v0_to_ontology.py]] — lo importa
 - [[server.py]] — lo importa
 
-_Además lo importan 20 pruebas (lista abajo)._
+_Además lo importan 23 pruebas (lista abajo)._
 
 ## Variables de entorno que lee (solo nombres)
 
@@ -119,6 +123,7 @@ _Además lo importan 20 pruebas (lista abajo)._
 - [[tests.test_governance_flow.py]]
 - [[tests.test_governance_seed_parity.py]]
 - [[tests.test_impl_registry.py]]
+- [[tests.test_kernel_monotone_edges.py]]
 - [[tests.test_kernel_monotone_severity.py]]
 - [[tests.test_kernel_reference_figures.py]]
 - [[tests.test_ledger_callsites_committee.py]]
@@ -129,7 +134,9 @@ _Además lo importan 20 pruebas (lista abajo)._
 - [[tests.test_retention_purge.py]]
 - [[tests.test_review_batch_g.py]]
 - [[tests.test_review_infra_c.py]]
+- [[tests.test_risk_robust.py]]
 - [[tests.test_scenario_kernel.py]]
+- [[tests.test_scenario_pnl.py]]
 
 ## Mencionado en sesiones de trabajo
 

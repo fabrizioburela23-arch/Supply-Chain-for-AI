@@ -53,8 +53,9 @@ EL motor de contexto (ARQUITECTURA_V2 §13; BRECHAS bloque 4: L4-01, L4-05, L4-1
 - herramienta MCP `get_subgraph` → [[API herramientas MCP]]
 - herramienta MCP `run_scenario` → [[API herramientas MCP]]
 
-_Además lo importan 1 pruebas (lista abajo)._
+_Además lo importan 2 pruebas (lista abajo)._
 
 ## Pruebas que lo cubren
 
+- [[tests.test_alias_voz_paridad.py]]
 - [[tests.test_context_engine.py]]

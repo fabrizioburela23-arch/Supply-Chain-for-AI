@@ -55,6 +55,7 @@ _Además lo importan 1 pruebas (lista abajo)._
 ## Pruebas que lo cubren
 
 - [[tests.test_infra.py]]
+- [[tests.test_maptime_asof.py]]
 - [[tests.test_matrix.py]]
 - [[tests.test_ontology.py]]
 - [[tests.test_ops_single_source.py]]

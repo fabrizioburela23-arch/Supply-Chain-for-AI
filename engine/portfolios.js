@@ -867,7 +867,9 @@
     d.portfolios.forEach(function (pf, i) {
       var m = pf.metrics || {};
       var name = en ? (pf.name_en || pf.name) : (pf.name_es || pf.name);
-      var method = pf.method === 'risk_parity' ? T('paridad de riesgo', 'risk parity') : T('inversa de la volatilidad', 'inverse volatility');
+      // L2-09: con topes por nombre/sector la paridad de riesgo ya no es exacta → el servidor la rotula «con topes»
+      var method = pf.method_label_es ? T(pf.method_label_es, pf.method_label_en || pf.method_label_es)
+        : (pf.method === 'risk_parity' ? T('paridad de riesgo', 'risk parity') : T('inversa de la volatilidad', 'inverse volatility'));
       var risks = (en ? pf.risks_en : pf.risks_es) || pf.risks || [];
       var rows = (pf.positions || []).map(function (p) {
         var w = (p.weight * 100);
@@ -886,7 +888,7 @@
       html += '<div class="kpf-card kpf-prop kpf-mt">' +
         '<div class="kpf-prop-h">' +
           '<div class="kpf-prop-n">' + (i + 1) + '. ' + esc(name) + '</div>' +
-          '<span class="kpf-src">' + esc(method) + (window.explainChip ? window.explainChip('pf_sizing') : '') + '</span>' +
+          '<span class="kpf-src">' + esc(method) + (window.explainChip ? window.explainChip(pf.method_capped ? 'rp_capped' : 'pf_sizing') : '') + '</span>' +
         '</div>' +
         '<div class="kpf-tiles">' +
           metricTile(T('Volatilidad anual', 'Annual volatility'), (m.vol_ann_pct != null ? m.vol_ann_pct.toFixed(1) + '%' : '—'), 'vol_ann') +

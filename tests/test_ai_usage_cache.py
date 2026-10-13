@@ -30,14 +30,14 @@ def usage(monkeypatch):
 def test_price_for_sigue_siendo_entrada_y_salida(usage):
     assert usage.price_for('claude', 'claude-sonnet-5-5') == (2.0, 10.0)
     assert usage.price_for('claude', 'claude-opus-5-5') == (4.0, 20.0)
-    assert usage.price_for('gemini', 'gemini-3.8-flash') == (0.75, 3.75)
+    assert usage.price_for('gemini', 'gemini-3.8-flash', at='2026-10-13') == (0.75, 3.75)
 
 
 def test_precios_de_cache_por_modelo_y_por_proveedor(usage):
     assert usage.cache_price_for('claude', 'claude-sonnet-5-5') == (2.5, 0.2)
     assert usage.cache_price_for('claude', 'claude-opus-5-5') == (5.0, 0.2)          # lectura 0,05×
     assert usage.cache_price_for('claude', 'claude-haiku-4-5') == (1.25, 0.1)
-    w, r = usage.cache_price_for('gemini', 'gemini-3.8-flash')                       # sin fila propia
+    w, r = usage.cache_price_for('gemini', 'gemini-3.8-flash', at='2026-10-13')      # sin fila propia
     assert w == 0.0 and r == pytest.approx(0.075)
     assert usage.cache_price_for('nvidia', 'meta/llama') == (0.0, 0.0)
 

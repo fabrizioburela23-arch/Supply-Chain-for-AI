@@ -223,6 +223,10 @@ def test_el_salto_debe_ser_del_tamano_declarado(repo_copy, semver, kind):
 
 def test_major_bien_declarado_pasa(repo_copy):
     from scripts import build_governance as B
+    # la copia reemplaza kernel.params@2.0.0 por uno falso: sus hijas reales (2.1.0, batch I3) ya no son su MINOR
+    for f in (repo_copy / 'artifacts').glob('kernel.params@2.*.json'):
+        if f.name != 'kernel.params@2.0.0.json':
+            f.unlink()
     _kernel_version(repo_copy, '2.0.0', change_kind='major', parent='kernel.params@1.0.0')
     assert B.semver_problems(B.G.scan_repo()) == []
 

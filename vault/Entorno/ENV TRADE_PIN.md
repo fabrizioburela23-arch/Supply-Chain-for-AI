@@ -49,8 +49,10 @@ tags: ["capa/infraestructura", "tipo/variable"]
 - [[tests.test_repair_review2.py]]
 - [[tests.test_replay_determinism.py]]
 - [[tests.test_review_batch_g.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 - [[tests.test_security.py]]
 - [[tests.test_trading_agent_ledger.py]]
+- [[tests.test_voice_agent_split.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

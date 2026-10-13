@@ -17,6 +17,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_mcp.py]]
+- [[tests.test_rutas_acceso_decision.py]]
 
 ## ¿Está documentada en CLAUDE.md?
 

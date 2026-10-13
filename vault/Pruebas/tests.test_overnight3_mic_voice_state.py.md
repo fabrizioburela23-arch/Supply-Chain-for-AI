@@ -20,12 +20,12 @@ el micrófono de la Cabina refleja el estado REAL de la voz.
 
 ## Cubre
 
+- [[core.voice_api.py]]
 - [[engine.cockpit.js]]
 - [[engine.desktop.js]]
 - [[engine.mascot.js]]
 - [[engine.toast.js]]
 - [[engine.voice.js]]
-- [[server.py]]
 
 ## Rutas HTTP que llama
 

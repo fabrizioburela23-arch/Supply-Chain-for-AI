@@ -116,16 +116,20 @@ gobernanza, OAuth…) se clasificaron leyendo su código y sus pruebas. Resultad
   (`/api/user-state`, reportes de cartera), sesiones técnicas (`/api/voice/session`, `/api/ws-key`), el chequeo de
   salud `/api/ops/check` (telemetría: escribe su propia fila de control, no toca el libro) o la API pública `/v1/*`
   (intocable);
-- **10 cambian algo y NO dejan ficha** (brechas; eran 11 — la 11.ª, `POST /api/grafo/seed`, se borró con Neo4j).
-  Ninguna toca el grafo ni el dinero. Están fijadas en
-  `tests/test_cierre_infra.py`: una ruta nueva sin ficha rompe la CI, y esta lista solo puede achicarse.
+- **0 cambian algo sin ficha** (lote I, 2026-10-13): las 10 brechas de abajo ya dejan su ficha (eran 11 — la 11.ª,
+  `POST /api/grafo/seed`, se borró con Neo4j). `tests/test_cierre_infra.py` sigue vigilando: una ruta nueva sin ficha
+  rompe la CI. Revisión del lote I: REVOCAR una credencial (a mano, `/oauth/revoke` o código reutilizado) se confirma
+  aunque el libro esté caído — quita poder; su ficha va por la cola y, si se pierde, queda contada en el 🩺
+  (`decision_sites.access_revoke`; test_rutas_acceso_decision::test_token_revoke_commits_even_when_ledger_down). Solo las
+  ALTAS fallan cerrado (503). Y `/api/voice/agent-tune` deja ficha aunque la caché diga «sin cambio»
+  (test_voice_agent_split::test_agent_tune_igual_a_la_cache_igual_deja_ficha).
 
 | Ruta | Qué cambia sin ficha | Tipo de ficha que le falta |
 |---|---|---|
-| `POST /api/sim/agents` | simulación por agentes (qué-pasaría-si con IA) | `whatif.*` |
-| `POST /api/mcp/tokens`, `POST /api/mcp/tokens/<token_id>/revoke` | crea/revoca credenciales para IAs externas (pueden tener permiso de órdenes) | nueva (p. ej. `policy.change mcp.tokens`) |
-| `POST /oauth/authorize`, `POST /oauth/register`, `POST /oauth/token`, `POST /oauth/revoke` | alta y acceso de IAs externas por OAuth | ídem |
-| `POST /api/voice/adopt`, `POST /api/voice/agent-tune`, `POST /api/voice/sync-agent` | cambia la voz, instrucciones y herramientas del agente de ElevenLabs | `policy.change voice.agent` |
+| ~~`POST /api/sim/agents`~~ | ✅ lote I1: `whatif.agent_sim` después de responder (90 días; no repetible) | `whatif.agent_sim` |
+| ~~`POST /api/mcp/tokens`, `POST /api/mcp/tokens/<token_id>/revoke`~~ | ✅ lote I1: `policy.change mcp.tokens` (id, alcances; NUNCA el secreto) | `policy.change mcp.tokens` |
+| ~~`POST /oauth/authorize`, `POST /oauth/register`, `POST /oauth/token`, `POST /oauth/revoke`~~ | ✅ lote I1: `policy.change mcp.oauth` (la rotación del refresh, async) (test_rutas_acceso_decision) | `policy.change mcp.oauth` |
+| ~~`POST /api/voice/adopt`, `POST /api/voice/agent-tune`, `POST /api/voice/sync-agent`~~ | ✅ cerrada en el lote I4: `policy.change voice.agent` ANTES de llamar a ElevenLabs (nunca la clave); si falla, `decision_outcomes` 'error'; libro caído → 503 | `policy.change voice.agent` |
 
 Además, 1 tipo de ficha del vocabulario (`core/decisions.KINDS`) no lo escribe ningún código: `reconcile.plan` (ver el
 plan es una lectura; también fijado en la prueba, que solo deja achicar esa lista). La guardia de la base
@@ -204,8 +208,8 @@ muestra debajo del veredicto y la etiqueta tiene su «?» (`audit_approx` en `en
 
 Menores ya conocidos y verificados de nuevo: el servidor no entiende «en vidia» / «open ai» / «taiwan semi»
 (`core.entities.resolve` → None; G5-19); el precio de Gemini 3.8 cambia el 1-ene-2027 y está escrito a mano
-(`core/ai_usage.py:48`; L3-16/G5-17); la función de órdenes del navegador sigue dentro de `engine/voice.js:2959`
-(M-code-04; ya pasa por el camino único).
+(`core/ai_usage.py:48`; L3-16/G5-17); la función de órdenes del navegador salió de voice.js a `engine/trade.js` en el lote I4
+(M-code-04; ya pasaba por el camino único).
 
 ---
 
@@ -298,17 +302,20 @@ de `/v1/risk/portfolio`, #13 recalificar predicciones con un método v2, #15 si 
 Ya hecho de lo que estaba en "Fase 2+": el grafo bitemporal G(t, κ), la historia de propiedades, Δθ en el diff y el
 disparador append-only. Lo que queda, en el orden en que lo haría:
 
-1. **Cerrar las 10 brechas que quedan** (≈1 día, sin decisiones tuyas): credenciales MCP y OAuth
-   (`policy.change mcp.tokens`), voz (`policy.change voice.agent`) y simulación por agentes (`whatif.*`). Los defectos
-   E1-E8 ya están cerrados (sección 4).
+1. ✅ **Cerrar las 10 brechas que quedan** — hecho en el lote I (credenciales MCP/OAuth, voz, simulación por agentes;
+   §3). La revisión del lote I además: revocar nunca se bloquea por el libro; el 🩺 público y el estado del bróker ya no
+   dicen papel/real sin PIN; la voz dice DINERO REAL si no sabe el modo.
 2. **Tus dos clics grandes**: motor 2.0.0 y descarga de 5 años (sección 6).
-3. **Riesgo con estadística robusta** (L2-14/15/16): EWMA, contracción de Ledoit-Wolf (hoy con muchas posiciones la
-   covarianza queda singular), excluir posiciones con poca historia, CVaR a varios días. Necesita la historia del paso 2.
-4. **Escenario → pérdida en dinero calibrada** (L2-13, PROP-16): ajustar κ con episodios reales (#11) y con la historia;
-   recién ahí "TSMC cae" se traduce a "tu cartera pierde X ± Y".
-5. **Dividir los archivos gigantes** (G5-05/06/07): `server.py` 6.529 líneas, `app.html` 12.700, `cockpit.js` 5.007,
-   `voice.js` 3.078 — crecieron en este ciclo. Empezar por sacar de `server.py` el agente de trading y las rutas de voz
-   a sus blueprints (con pruebas), y dejar `app.html` para el final.
+3. 🟡 **Riesgo con estadística robusta** (L2-14/15/16/18) — hecho en el lote I2 como policy.risk 2.0.0 (espera tu PIN;
+   EWMA, Ledoit-Wolf, h días y Cornish-Fisher ya van al lado con 1.0.0). Revisión: correlaciones nunca > 1 y
+   Cornish-Fisher sin cifra fuera de su dominio. Falta el modelo de factores.
+4. 🔶 **Escenario → pérdida en dinero calibrada** (L2-13, PROP-16) — hecho en el lote I3 (kernel.calibration@1.0.0), pero
+   el ajuste es DÉBIL: la app no da cifra y lo dice. Pendiente: recalibrar para el motor vigente (2.0.0) con más
+   historia (la descarga de 5 años) y, si hay base, con el grafo tal como se conocía en cada episodio (hoy se marca
+   «mirada adelante» y nunca queda 'ok').
+5. 🔶 **Dividir los archivos gigantes** (G5-05/06/07) — lote I4: `server.py` 6.382 → 4.940 (voz y agente de trading a
+   sus módulos), `voice.js` 3.084 → 2.817 (`engine/trade.js`); `cockpit.js` y `app.html` siguen enteros (motivo en G5-06
+   y G5-07 de la tabla).
 
 ---
 
@@ -317,7 +324,7 @@ disparador append-only. Lo que queda, en el orden en que lo haría:
 Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PIN** (activar una versión) · 🔶 parcial ·
 👤 necesita tu decisión o revisión (#n de BRECHAS §2) · ⬜ abierto (Fase 2+ o pendiente).
 
-**Resumen: ✅ 44 cerrados · 🟡 14 listos, esperan tu PIN · 🔶 8 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 23 abiertos (total 99).** Si activas el motor 2.0.0, los 14 🟡 pasan a ✅. L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
+**Resumen (recontado de la tabla tras el lote I y su revisión): ✅ 58 cerrados · 🟡 17 listos, esperan tu PIN · 🔶 12 parciales · 👤 10 esperan tu decisión o revisión · ⬜ 2 abiertos (total 99).** De los 17 🟡: 14 son del motor 2.0.0 (activado en producción con tu PIN el 2026-10-13: allí ya cuentan como ✅), 2 de policy.risk 2.0.0 (L2-14, L2-18) y 1 del motor 2.1.0 (PROP-08). L2-M3 (topes por sector, país y cadena) es 👤 #1: sus reglas ya corren en sombra con ontology.shapes 5.0.0, pero ninguna versión existente las hace bloquear hasta que fijes esos topes.
 
 | Id | Qué era | Estado | Evidencia (código / prueba) |
 |---|---|---|---|
@@ -334,11 +341,11 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | PROP-14 | Pesos en dos escalas (400 vínculos) | 👤 #8 | lista de revisión en docs/REVISION_GRAFO.md (test_review_lists); nada aplicado |
 | PROP-17 | Auge de demanda sin piso de proveedor único | 🟡 | 2.0.0: direction_up con SOLE_LINK_FLOOR (test_kernel_reference_figures::test_auge_up_con_piso); con 1.0.0 la UI no muestra cifras de auge |
 | PROP-18 | Motores leyendo grafos distintos | ✅ | un solo grafo en el servidor: hot.graph() (test_ops_single_source) |
-| PROP-08 | Kernel no monótono al agregar aristas | ⬜ | sin cambio en 1.0.0 ni 2.0.0 (x0 sigue sin persistir, matrix/engine.py propagate) |
+| PROP-08 | Kernel no monótono al agregar aristas | 🟡 | kernel.params 2.1.0 (PIN): la empresa que cae sigue emitiendo → un vínculo que SALE de ella nunca baja a nadie; uno desde OTRA empresa golpeada sí puede (dicho en el resumen, revisión I) (test_kernel_monotone_edges) |
 | PROP-12 | Sin tope de fragilidad en el cliente | ✅ | el cliente ya no calcula; el servidor mantiene FRAGILITY_CAP 2,5 del artefacto (con 2.0.0 ρ 1,21 → 0,91) |
 | PROP-13 | Cabina y X-Ray sin factores | ✅ | todas las pantallas leen el kernel del servidor con factores (test_no_client_engine::test_las_pantallas_leen_el_motor_del_servidor) |
 | PROP-15 | «Estrés severo» atenuaba | 🟡 | 2.0.0: nonlinear_mode=amplify (test_kernel_monotone_severity::test_estres_severo_amplifica_en_2_0_0_y_satura_en_1_0_0) |
-| PROP-16 | Parámetros del kernel sin calibrar | ⬜ | Fase 4: ya existe la tabla de precios, falta la historia (descarga de 5 años) y la calibración |
+| PROP-16 | Parámetros del kernel sin calibrar | 🔶 | Lote I3: κ (escenario → dinero) se calibra con scripts/calibrate_kernel.py y queda en kernel.calibration (test_scenario_pnl::test_artefacto_reproducible_y_debil_hoy); los parámetros del contagio siguen sin calibrar |
 | PROP-19 | La regla escrita del kernel no coincidía con el código | ✅ | docstring corregido y probado (test_kernel_monotone_severity::test_regla_escrita_suma_dentro_del_salto_maximo_entre_saltos) |
 | PROP-20 | Severidad 0 y coeficiente 0 mal tratados | 🟡 | 2.0.0: factor_inputs_strict (test_kernel_monotone_severity::test_entradas_de_factores_cero_y_ausente); 1.0.0 los conserva |
 | L2-01 | FX de hoy aplicado a toda la historia | ✅ | FX diario fx_daily + align_fx (test_risk_on_history); la historia larga llega con la descarga de 5 años |
@@ -349,23 +356,23 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | L2-06 | Convicción contaba claims, no analistas | ✅ | test_block0_committee |
 | L2-07 | Banda fija ±2 % y Brier sobre algo que no es probabilidad | 👤 #13 | research/outcomes.py sin método v2 |
 | L2-08 | Dos endpoints de Yahoo = dos fuentes | ✅ | fuentes por proveedor (test_block0_committee, test_block0_review) |
-| L2-10 | Totales de griegas mezclan subyacentes; sin dividendos | ⬜ | core/options.py:196-207 sigue sumando delta de todos; q=0 |
+| L2-10 | Totales de griegas mezclan subyacentes; sin dividendos | ✅ | Lote I2: totales por subyacente (delta en dólares para el total), q de Yahoo, opciones en otra moneda rotuladas (test_options_greeks_totals) |
 | L2-11 | RSI simple en vez de Wilder | ✅ | test_rsi_wilder |
 | L2-12 | Sin tabla de precios EOD | ✅ | prices_eod + carga diaria (test_prices_eod); 5 años solo con tu PIN |
-| L2-13 | Choques del grafo no se traducen a dinero | ⬜ | Fase 2; necesita episodios (#11) y la historia de precios |
-| L2-14 | Una posición corta recorta la ventana de toda la cartera | ⬜ | core/risk_report.py:254 sigue con la intersección de fechas |
-| L2-M2 | Deslistadas quedan n/a (sesgo de supervivencia) | ⬜ | research/outcomes.py:403 sigue en n/a |
+| L2-13 | Choques del grafo no se traducen a dinero | 🔶 | Lote I3: core/scenario_pnl + kernel.calibration@1.0.0 (episodios PROPUESTOS #11, reproducible) → «Tu cartera: −X ± Y USD» en X-Ray / Cabina / en vivo / MCP run_scenario; hoy el ajuste es DÉBIL → sin cifra y lo dice; un ajuste con el grafo de hoy para episodios viejos nunca queda 'ok' (revisión I) (test_scenario_pnl, test_scenario_pnl_browser). Falta: más historia y recalibrar para el kernel vigente |
+| L2-14 | Una posición corta recorta la ventana de toda la cartera | 🟡 | policy.risk 2.0.0 (PIN): ventana de CADA par + Ledoit-Wolf + fuera las posiciones con < 120 días (dicho, con su dinero); correlación de cada par con SU ventana, nunca > 1 (revisión I) (test_risk_robust::test_l2_14_con_2_0_0_…, ::test_correlacion_pareada_usa_los_momentos_de_su_ventana_y_nunca_pasa_de_1); 1.0.0 vigente dice quién recorta |
+| L2-M2 | Deslistadas quedan n/a (sesgo de supervivencia) | ✅ | Lote I2: se califican con el último cierre, marcadas «delisted» (test_risk_robust::test_suspendida_al_vencimiento_se_califica_con_el_ultimo_cierre) |
 | L2-M3 | Cada compra se dimensiona sola (sin correlación/sector) | 👤 #1 | reglas de sector/país/cadena con la vista AccountRisk escritas (governance/shapes/order.ttl; test_gates_orders_parity): solo CORREN EN SOMBRA cuando actives ontology.shapes 5.0.0 + policy.gates 1.1.0, y la regla de sector compara contra `kh:maxSectorWeight`, un tope que no existe hasta que respondas #1. Ninguna versión hace bloquear las puertas de órdenes (policy.gates 2.0.0 bloquea solo las de la ontología): bloquear necesita una versión nueva de policy.gates/policy.broker_risk con tus topes |
 | L2-03 | Cierres sin ajustar en técnicos y screener | ✅ | adjclose en core/screener.py:83 y research/analytics.py (test_rsi_wilder) |
-| L2-09 | Topes rompen la paridad de riesgo pero se rotula risk_parity | ⬜ | core/portfolio_ai.py:704 sin cambio |
-| L2-15 | CVaR/VaR solo a 1 día | ⬜ | Fase 2 |
-| L2-16 | Faltan EWMA, Ledoit-Wolf, factores, liquidez | ⬜ | Fase 3 |
+| L2-09 | Topes rompen la paridad de riesgo pero se rotula risk_parity | ✅ | Lote I2: «paridad de riesgo con topes» + dispersión residual (test_risk_robust::test_paridad_de_riesgo_con_topes_se_rotula_con_honestidad) |
+| L2-15 | CVaR/VaR solo a 1 día | ✅ | Lote I2: VaR/CVaR a h días con ventanas superpuestas + Cornish-Fisher, rotulados; fuera de su dominio Cornish-Fisher no da cifra (revisión I) (test_risk_robust::test_retornos_superpuestos_y_cvar_a_h_dias_por_fuerza_bruta, ::test_cornish_fisher_fuera_de_su_dominio_no_publica_cifra) |
+| L2-16 | Faltan EWMA, Ledoit-Wolf, factores, liquidez | 🔶 | Lote I2: EWMA (λ de policy.risk), Ledoit-Wolf y liquidez con volumen real (sin volumen no se inventa) AL LADO de lo de hoy (test_risk_robust::test_1_0_0_agrega_metricas_sin_tocar_las_de_hoy, ::test_liquidez_con_volumen_real_y_sin_volumen_no_se_inventa); falta el modelo de factores |
 | L2-17 | Contribución al riesgo vs peso con bases distintas | ✅ | test_block0_committee (portfolio_advisor) |
-| L2-18 | Sharpe con retorno geométrico | ⬜ | core/risk_report.py:358 sigue geométrico |
+| L2-18 | Sharpe con retorno geométrico | 🟡 | Lote I2: Sharpe aritmético con ^IRX convertido ya va al lado; es el principal con policy.risk 2.0.0 (PIN) (test_risk_robust::test_sharpe_aritmetico_y_tbill) |
 | L2-19 | Se adivinaba si un ratio venía en % o fracción | ✅ | test_analytics, test_block0_committee |
 | L3-01 | No existía ninguna tabla de historia | ✅ | prices_eod, fx_daily, metrics_eod, positions_eod, instruments (test_prices_eod, append-only) |
 | DT-M1 | Las fechas «since» del catálogo no llegan a valid_from | 👤 #10 | scripts/migrate_v0_to_ontology.py:391 guarda since solo como propiedad |
-| DT-M3 | Dos viajes en el tiempo incompatibles (mapa vs servidor) | 🔶 | servidor G(t,κ) listo (test_bitemporal); el deslizador del mapa (engine/maptime.js) sigue con su regla por fundación |
+| DT-M3 | Dos viajes en el tiempo incompatibles (mapa vs servidor) | ✅ | Lote I3: el ⏱ del mapa usa /api/ontology/graph?as_of= (+ known_at); sin base, UNA regla rotulada; revisión I: sin reintentos sin fin, ▶ anima con la base, un 503 pasajero no queda para siempre (test_maptime_asof) |
 | L3-02 | 27 vínculos fechados entran como supply | 👤 #8 | lista en docs/REVISION_GRAFO.md |
 | L3-04 | 97 % de vínculos con fecha centinela | 👤 #10 | fechas propuestas en docs/REVISION_GRAFO.md; nada aplicado |
 | L3-05 | No existía G(t,κ) | ✅ | ontology/bitemporal.py, ?known_at= (test_bitemporal, test_bitemporal_review) |
@@ -381,7 +388,7 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | L3-08 | events append-only solo por convención | ✅ | disparador kh_append_only (test_ops_events_append_only) |
 | L3-15 | Órdenes sin tabla de ejecuciones; posiciones sin historia | ✅ | broker_fills + positions_eod (test_trading_agent_ledger, test_prices_eod) |
 | L3-10 | Neo4j recibe escrituras y nadie lo lee | ✅ | retirado el 2026-10-13 por tu decisión #6: sin driver, sin `NEO4J_*`, sin `POST /api/grafo/seed`; el Grafo Temporal es nativo (test_neo4j_retirado) |
-| L3-16 | Precio de IA sin fecha de vigencia | ⬜ | core/ai_usage.py:48 (Gemini 3.8 sube el 1-ene-2027; hay que editar a mano) |
+| L3-16 | Precio de IA sin fecha de vigencia | ✅ | Lote I1: core/ai_usage.PRICES con ventanas valid_from/valid_to; cada llamada se valora a su fecha (Gemini 3.8 sube sola el 1-ene-2027) (test_ai_precios_vigencia) |
 | L4-02 | El guardián no veía «233,95 USD» | ✅ | test_block0_numbers, corpus 102 respuestas |
 | L4-M1 | El guardián aceptaba ±15 % contra todo el prompt | ✅ | test_block0_numbers |
 | L4-01 | Sin motor de contexto único | ✅ | core/context_engine.py (test_context_engine) |
@@ -395,15 +402,15 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | L4-10 | Compactación sin relevancia | ✅ | test_context_engine |
 | L4-11 | Sin pool de evidencia compartido | ✅ | test_context_engine |
 | L4-M2 | scenario_engine usa el grado total | 🟡 | 2.0.0 (test_scenario_kernel) |
-| L4-12 | La voz repite cifras sin guardián | 🔶 | órdenes por voz con lectura confirmada (readback_sha); las cifras habladas siguen sin guardián |
+| L4-12 | La voz repite cifras sin guardián | 🔶 | Lote I1: el resultado de ask_khipu_brain / get_company_info trae solo cifras con guardián + `say_figures` («dilas EXACTAMENTE») (test_voice_os_client::test_brain_and_company_info_tell_the_agent_to_say_figures_exactly); lo que el agente de voz pronuncia no se verifica después |
 | G5-01 | Tres caminos de órdenes con controles distintos | ✅ | todo por brokerage.service (test_order_single_path) |
 | G5-02 | Se desplegaba sin pruebas | ✅ | .github/workflows/ci.yml (test_block0_ci) + «Wait for CI» activado en Railway por Fabrizio (2026-10-13) |
 | G5-03 | statematrix.js decía «idéntica» y no lo era | ✅ | test_no_client_engine |
-| G5-05 | server.py gigante | ⬜ | 6.529 líneas (antes 5.977): creció |
-| G5-06 | app.html gigante | ⬜ | 12.700 líneas (antes 12.665) |
-| G5-07 | cockpit.js y voice.js gigantes | ⬜ | 5.007 y 3.078 líneas |
+| G5-05 | server.py gigante | ✅ | Lote I4: 6.382 → 4.940 líneas. La voz (`/api/voice/*`, prompt y contrato de herramientas) vive en `core/voice_api.py` y el agente de trading (`/api/trade/agent/*`) en `core/trading_agent.py`, movidos TAL CUAL (la config sigue en server.py y se lee en cada llamada; server.py re-exporta los nombres que leen el 🩺 y las pruebas). Prueba: `tests/test_voice_agent_split.py` |
+| G5-06 | app.html gigante | 🔶 | NO se parte todavía (decisión del lote I4): sus 10 bloques inline comparten globales y orden de carga con ~60 archivos de engine/ y ~150 pruebas leen su texto; partirlo sin un empaquetador es alto riesgo y bajo valor hoy. Se le quitaron restos sin uso (G5-15). Plan: sacar un bloque por vez cuando haya CSP con nonces |
+| G5-07 | cockpit.js y voice.js gigantes | 🔶 | voice.js 3.084 → 2.817 (el trading compartido salió a `engine/trade.js`). cockpit.js (5.011) NO se partió: es UN solo cierre (IIFE) cuyas piezas comparten estado; la única pieza sin dependencias es el CSS estático (555 líneas) y moverlo obliga a tocar ~14 arneses de prueba que cargan cockpit.js solo |
 | G5-08 | Tres copias del código que envía órdenes en el navegador | ✅ | test_order_single_path |
-| G5-09 | CSP débil con el PIN en localStorage | ⬜ | server.py:691 sigue con unsafe-inline/unsafe-eval |
+| G5-09 | CSP débil con el PIN en localStorage | ✅ | Lote I1: sin 'unsafe-eval' y connect-src cerrado a los hosts reales; 'unsafe-inline' sigue (10 bloques inline) (test_csp_estricta) |
 | G5-10 | El agente de trading se apagaba en silencio | ✅ | queda apagado con aviso y su configuración guardada (test_trading_agent_ledger; decisión #14 por defecto) |
 | G5-11 | Tres mecanismos de migración sin versión | 🔶 | columnas tardías + safe_ddl (idempotentes); sigue sin número de versión de esquema |
 | G5-12 | Neo4j cableado; la UI no lee Postgres | 🔶 | Neo4j retirado (#6, test_neo4j_retirado); la UI sigue dibujando el catálogo y no /api/ontology/graph (#7) |
@@ -412,11 +419,11 @@ Leyenda: ✅ cerrado (con su prueba) · 🟡 listo en el código, **espera tu PI
 | M-code-03 | /api/trade/close sin controles | ✅ | test_order_single_path::test_close_leaves_the_same_trail |
 | G5-04 | Pesos y lista de flujo copiados a mano en el cliente | ✅ | statematrix sin pesos; NRS_FLOW_TYPES comparado con vocabulary.json (test_cleanup_server) |
 | G5-13 | Mapa sin pruebas de comportamiento | ⬜ | 25 módulos sin pruebas (vault/01 Reporte del grafo.md; engine/audit.js de este lote ya tiene la suya en tests/test_cierre_defectos.py) |
-| G5-14 | Variables de entorno sin documentar | ⬜ | 64 (antes 63) según la bóveda |
-| G5-15 | Globales y rutas sin uso | ⬜ | 9 rutas y 40 globales según la bóveda |
+| G5-14 | Variables de entorno sin documentar | ✅ | 0 según la bóveda (lote I4: bloque de CLAUDE.md + `.env.example`) |
+| G5-15 | Globales y rutas sin uso | 🔶 | Lote I4: borrados (sin ningún llamador en engine/, app.html, pruebas, MCP ni scripts) `togglePortfolio` + `saveUserPF`, `closeDiagnostics`, `closeRegistro`, `_initGeoGlobe`, `_refreshLiveData`, `_cvRows`, `_pfPendingAdd`, `_layersApply`, `KhipuOSWin_memoLine` y los alias `KhipuGeoGlobe`/`Planetarium`. Se quedan: las 9 rutas (diagnóstico de operador o API documentada: /api/ontology/gates, /api/prices/eod, /api/research/agents|budget|events, /api/tensor/eval|status, /api/trade/diag, /api/vocabulary/unknown), `APP_NAME`/`ASSISTANT_NAME` (marca, nombre provisional), `_smGlobe`/`_wmGlobe` (manija de depuración), `KhipuLiveCaps`/`KhipuLiveFund` (módulos que arrancan solos) y las que sí se usan dentro de su archivo |
 | G5-16 | 37 selectores de idioma propios | ⬜ | Fase 3 |
-| G5-17 | Precio de Gemini con vencimiento a mano | ⬜ | igual que L3-16 |
-| G5-18 | SECRET_KEY por defecto; /api/trade/status sin PIN | 🔶 #2 | aviso fuerte en producción (server.py:666); /api/trade/status sigue diciendo papel/real sin PIN; confirma SECRET_KEY en Railway |
-| G5-19 | El servidor no entiende alias de voz («en vidia») | ⬜ | verificado: core.entities.resolve("en vidia") → None |
-| G5-20 | Dos pruebas de navegador de 30 s | ⬜ | Fase 3 |
-| M-code-04 | La función de órdenes del navegador vive en voice.js | ⬜ | engine/voice.js:2959 window._executeTradeOrder (ya pasa por el servicio único) |
+| G5-17 | Precio de Gemini con vencimiento a mano | ✅ | igual que L3-16 (test_ai_precios_vigencia) |
+| G5-18 | SECRET_KEY por defecto; /api/trade/status sin PIN | ✅ | Lotes I1 + revisión I: sin PIN, `/api/trade/status` y el 🩺 público (`/api/diagnostics`, tarjeta del bróker) ya no dicen papel/real ni el host del bróker (ni en el texto de un error); un candado de PIN ya no borra el PIN correcto guardado (test_security::test_trade_status_hides_paper_or_live_without_pin, ::test_diagnostics_hides_paper_or_live_without_pin, ::test_trade_status_error_hides_broker_host_without_pin, ::test_trade_status_lockout_is_not_an_invalid_pin). Aviso fuerte de SECRET_KEY en producción; confirma SECRET_KEY en Railway (§6) |
+| G5-19 | El servidor no entiende alias de voz («en vidia») | ✅ | Lote I1: UNA tabla de alias compartida; core.entities.resolve("en vidia") → Nvidia (test_alias_voz_paridad) |
+| G5-20 | Dos pruebas de navegador de 30 s | ✅ | Lote I4: los dos idiomas corren a la vez en dos páginas (mismas comprobaciones, mismos tiempos reales): ~60 s → ~33 s |
+| M-code-04 | La función de órdenes del navegador vive en voice.js | ✅ | Lote I4: `engine/trade.js` (se carga antes que voice.js; en SHELL de sw.js); voz, Cabina y command_center la llaman igual |

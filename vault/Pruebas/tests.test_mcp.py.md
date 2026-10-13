@@ -3,20 +3,20 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_mcp.py"
 lenguaje: "python"
-lineas: 1648
+lineas: 1723
 aliases: ["tests/test_mcp.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_mcp.py
 
-> Prueba · capa [[Capa Pruebas]] · 1.648 líneas · `tests/test_mcp.py`
+> Prueba · capa [[Capa Pruebas]] · 1.723 líneas · `tests/test_mcp.py`
 
 ## Qué prueba
 
 servidor MCP (mcp_server/): protocolo, auth, alcances, herramientas, flujo de trading con aprobación humana, auditoría y OAuth.
 
-**66** funciones `test_…`.
+**69** funciones `test_…`.
 
 ## Cubre
 

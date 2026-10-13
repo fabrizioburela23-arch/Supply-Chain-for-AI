@@ -55,6 +55,7 @@ _Además lo importan 3 pruebas (lista abajo)._
 - [[tests.test_brokerage.py]]
 - [[tests.test_mcp.py]]
 - [[tests.test_order_single_path.py]]
+- [[tests.test_voice_agent_split.py]]
 
 ## Mencionado en sesiones de trabajo
 

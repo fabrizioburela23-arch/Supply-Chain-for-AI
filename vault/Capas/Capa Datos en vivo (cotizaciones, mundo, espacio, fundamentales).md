@@ -9,7 +9,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 
 > Todo lo que llega de afuera en vivo: precios, fundamentales, World Monitor, Space Monitor, noticias y el Dossier.
 
-**27 archivos · 14.537 líneas.** Volver al [[00 Mapa de Khipus]].
+**27 archivos · 14.526 líneas.** Volver al [[00 Mapa de Khipus]].
 
 ## Archivos
 
@@ -18,7 +18,7 @@ tags: ["capa/datos-vivo", "tipo/capa"]
 - [[core.company_data.py]] — 1.332 líneas · estados financieros anuales y perfil EN VIVO de cualquier empresa cotizada del mundo (Dossier, 2026-09-28).
 - [[engine.worldmonitor.js]] — 1.326 líneas · WORLD MONITOR geopolítico (pestaña 🌐 Geopolítica).
 - [[engine.fincard.js]] — 1.202 líneas · DOSSIER FINANCIERO de una empresa (Etapa G, 2026-07-11) Estilo investingvisuals que pidió Fabrizio: una tarjeta con small-multiples de indicadores …
-- [[engine.globe.js]] — 1.048 líneas · MOTOR GLOBO UNIFICADO (Track A, Fase 1 del prompt 2026-08). Fusión de engine/geoglobe.js + engine/planetarium.js: el boilerplate Three.js …
+- [[engine.globe.js]] — 1.037 líneas · MOTOR GLOBO UNIFICADO (Track A, Fase 1 del prompt 2026-08). Fusión de engine/geoglobe.js + engine/planetarium.js: el boilerplate Three.js …
 - [[engine.crypto.js]] — 989 líneas · Pestaña ₿ Cripto (Fase 1 módulo de datos + Expediente). - Datos VIVOS: /api/crypto/\* (server → core/providers/coingecko.py). - Capa ESTÁTICA: …
 - [[core.space.py]] — 640 líneas · SPACE MONITOR (pestaña 🚀 Espacio): /api/space2/\*.
 - [[core.world_feeds.py]] — 632 líneas · fuentes OFICIALES nuevas del World Monitor (2026-10-05).

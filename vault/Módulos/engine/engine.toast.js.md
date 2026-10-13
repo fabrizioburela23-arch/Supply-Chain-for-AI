@@ -24,7 +24,7 @@ NOTIFICACIONES y CONFIRMACIÓN de órdenes (pedido de Fabrizio 2026-10-02: "que 
 
 - [[app.html]] — usa `LANG`, `_tradeFetch`, `_tradeStatusInfo`
 
-Se carga en [[app.html]] en la posición **27 de 96** (línea 7836), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
+Se carga en [[app.html]] en la posición **27 de 97** (línea 7820), después de [[engine.loading.js]] y antes de [[engine.hotclient.js]].
 
 ## Lo usan
 
@@ -48,6 +48,7 @@ Se carga en [[app.html]] en la posición **27 de 96** (línea 7836), después de
 - [[engine.reconcile.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.research.js]] — usa `KhipuToast`, `khipuActor`
 - [[engine.temporal-graph.js]] — usa `khipuActor`
+- [[engine.trade.js]] — usa `KhipuToast`
 - [[engine.voice.js]] — usa `KhipuToast`
 
 ## Endpoints que llama
@@ -60,6 +61,7 @@ Se carga en [[app.html]] en la posición **27 de 96** (línea 7836), después de
 - [[tests.test_no_client_engine.py]]
 - [[tests.test_overnight3_mic_voice_state.py]]
 - [[tests.test_overnight3_toast_tokens.py]]
+- [[tests.test_scenario_pnl_browser.py]]
 - [[tests.test_voice_os_client.py]]
 - [[tests.test_voice_tour_client.py]]
 

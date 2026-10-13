@@ -2598,12 +2598,16 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
           '<div class="bcp-stat"><b style="color:' + tintInk + '">' + (arr[0] ? Math.round(arr[0].v) + '%' : '—') + '</b><span>' + L('golpe máximo', 'max hit') + '</span></div>' +
           '<div class="bcp-stat"><b style="color:' + OS.goodInk + '">' + winners.length + '</b><span>' + L('rivales', 'rivals') + '</span></div>' +
         '</div>' +
+        // batch I3: "Tu cartera: −X ± Y USD" (servidor, κ calibrado; débil → lo dice) — solo con posiciones
+        '<div class="kos-sim-pnl" style="display:none;margin:2px 0 12px;font-size:12.5px;color:' + OS.ink2 + '"></div>' +
         '<div class="bcp-two">' +
           '<div><div class="bcp-lh" style="color:' + tintInk + '">' + (dir === 'up' ? L('Quién se beneficia ↑', 'Who benefits ↑') : L('Quién sufre ↓', 'Who suffers ↓')) + '</div>' + victimRows + '</div>' +
           '<div><div class="bcp-lh" style="color:' + OS.goodInk + '">' + L('Quién podría ganar ↑ (rivales poco golpeados)', 'Who could gain ↑ (barely hit rivals)') + '</div>' + winRows +
             '<div class="bcp-lh" style="margin-top:18px">' + L('Por sector', 'By sector') + '</div>' + secRowsHTML + '</div>' +
         '</div>' +
       '</div>';
+    // record:false como el X-Ray: que haya o no ficha en el libro no depende de si el usuario tiene posiciones
+    if (window.KhipuHot.pnlLine) window.KhipuHot.pnlLine(s.querySelector('.kos-sim-pnl'), { targets: [n.id], severity: sev, kind: kind, record: false });
   }
 
   /* ══ SCREENER DE EXPLOSIVAS — la tesis de la app ("spotear empresas con
@@ -2768,7 +2772,8 @@ body.dark #bcp-ov,body.dark .kos-themed,#bcp-ov .kd-legacy-dark{--os-good-ink:#2
     // NUNCA queda sin 🧪/🔴 (la cuenta, cuando llegue, manda sobre éste).
     if (window._tradeStatusInfo) window._tradeStatusInfo().then(function (s) {
       var e2 = document.getElementById('bcp-bk-cbadge');
-      if (e2 && s && typeof s.paper === 'boolean' && !(_bkAcct && typeof _bkAcct.paper === 'boolean')) e2.innerHTML = badgeHTML(s.paper);
+      // sin PIN guardado el servidor ya no dice el modo (G5-18): ante la duda, DINERO REAL (como toast.resolveMode)
+      if (e2 && !(_bkAcct && typeof _bkAcct.paper === 'boolean')) e2.innerHTML = badgeHTML(s && typeof s.paper === 'boolean' ? s.paper : false);
     }).catch(function () {});
   }
   function fmtUsd(v) { return '$' + (Number(v) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 }); }

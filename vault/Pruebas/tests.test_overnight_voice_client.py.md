@@ -3,14 +3,14 @@ tipo: "prueba"
 capa: "Pruebas"
 ruta: "tests/test_overnight_voice_client.py"
 lenguaje: "python"
-lineas: 375
+lineas: 379
 aliases: ["tests/test_overnight_voice_client.py"]
 tags: ["capa/pruebas", "tipo/prueba"]
 ---
 
 # tests/test_overnight_voice_client.py
 
-> Prueba · capa [[Capa Pruebas]] · 375 líneas · `tests/test_overnight_voice_client.py`
+> Prueba · capa [[Capa Pruebas]] · 379 líneas · `tests/test_overnight_voice_client.py`
 
 ## Qué prueba
 
@@ -20,4 +20,5 @@ engine/voice.js contra el protocolo de ElevenLabs Agents (oct-2026), ejecutado e
 
 ## Cubre
 
+- [[engine.trade.js]]
 - [[engine.voice.js]]

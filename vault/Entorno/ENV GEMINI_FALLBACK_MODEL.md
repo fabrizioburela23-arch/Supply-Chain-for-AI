@@ -17,6 +17,7 @@ tags: ["capa/infraestructura", "tipo/variable"]
 ## Pruebas que la fijan o nombran
 
 - [[tests.test_ai_gemini_fast.py]]
+- [[tests.test_config_env_strip.py]]
 - [[tests.test_repair_research.py]]
 
 ## ¿Está documentada en CLAUDE.md?
@@ -25,4 +26,5 @@ Sí — en la lista **Variables de entorno** de [[Doc CLAUDE]].
 
 ## Mencionada en sesiones
 
+- [[Sesión 2026-10-13 (k) — FASE 2+ LOTE I - rutas con decisión, CSP estricta, riesgo]]
 - [[Sesión 2026-10-06 (v) — MARCA, TOOLS E INVOCAR (sw v249) + GEMINI 3.8 CON RESPALDOS]]

@@ -24,8 +24,11 @@ NODE = shutil.which('node')
 pytestmark = pytest.mark.skipif(not NODE, reason='node no instalado')
 
 HARNESS = r"""
-const vm = require('vm'), fs = require('fs');
+const vm = require('vm'), fs = require('fs'), path = require('path');
 const VOICE = fs.readFileSync(process.argv[1], 'utf8');
+// lote I4 (G5-07): el trading compartido (place_order/get_account_status) vive en engine/trade.js y se carga ANTES
+const TRADE_PATH = path.join(path.dirname(process.argv[1]), 'trade.js');
+const TRADE = fs.existsSync(TRADE_PATH) ? fs.readFileSync(TRADE_PATH, 'utf8') : '';
 
 function makeEnv(opts) {
   opts = opts || {};
@@ -119,6 +122,7 @@ function makeEnv(opts) {
   ctx._surface = (k, a) => { surfaces.push([k, a]); return true; };
   if (opts.lang) ctx.LANG = opts.lang;
   vm.createContext(ctx);
+  if (TRADE) vm.runInContext(TRADE, ctx, { filename: 'trade.js' });
   vm.runInContext(VOICE, ctx, { filename: 'voice.js' });
   const V = ctx.BixbyVoice;
   return { ctx, V, sockets, ctxs, tracks, fetches, toasts, surfaces, errors, advance, els,

@@ -446,6 +446,13 @@ async function main() {
     R.unknownEn = (await call(E, ws, 'nope_tool', {})).body;
     R.errorsC = E.errors;
   }
+  // ═══ D) modo DESCONOCIDO (sin PIN guardado el estado ya no dice papel/real, G5-18) → ante la duda, DINERO REAL ═══
+  {
+    const E = makeEnv({ session: S }); const rec = osFakes(E, { paper: null }); const ws = await session(E);
+    E.ctx._tradeStatusInfo = () => Promise.resolve({ pin_set: true, paper: null });
+    R.orderUnknown = (await call(E, ws, 'place_order', { symbol_or_name: 'NVIDIA', side: 'buy', notional_usd: 500 })).body;
+    R.orderUnknownPosts = rec.trade.filter(t => t[0] === '/api/trade/order').length;
+  }
   process.stdout.write(JSON.stringify(R));
   process.exit(0);
 }
@@ -644,6 +651,13 @@ def test_place_order_preview_sends_nothing_and_says_real_money(R):
     assert pp['needs_confirmation'] and pp['mode'] == 'paper' and 'PAPER' in pp['summary'] and R['orderPaperPosts'] == 0
     a2 = R['orderConfAgain']                                                    # el sí se usó: otro confirmed=true = resumen
     assert a2['needs_confirmation'] is True and a2['success'] is False and R['orderConfAgainPosts'] == 1
+
+
+def test_place_order_unknown_mode_says_real_money(R):
+    """Revisión lote I: sin PIN el modo es desconocido → el resumen hablado dice DINERO REAL (nunca solo «Orden»)."""
+    u = R['orderUnknown']
+    assert u['needs_confirmation'] is True and u['paper'] is None and u['mode'] == 'unknown'
+    assert u['summary'].startswith('Orden con DINERO REAL') and 'PIN' in u['summary'] and R['orderUnknownPosts'] == 0
 
 
 def test_place_order_confirmed_without_its_summary_sends_nothing(R):
@@ -890,7 +904,7 @@ def _page(browser, lang='es'):
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('http://khipu.test/')
     for p in ('toast.js', 'agents_registry.js', 'hotclient.js', 'mascot.js', 'desktop.js', 'khipu_chat.js', 'statematrix.js',
-              'voice.js', 'cockpit.js'):
+              'trade.js', 'voice.js', 'cockpit.js'):
         pg.add_script_tag(content=_r('engine', p))
     pg.evaluate('BixbyCockpit.open()')
     pg.wait_for_timeout(250)
@@ -987,3 +1001,12 @@ def test_zoom_del_mapa_ignora_transformaciones_no_finitas():
     i = html.index("const zoom = d3.zoom().scaleExtent([.3,3.5])")
     line = html[i:html.index('\n', i)]
     assert 'isFinite(t.x)&&isFinite(t.y)&&isFinite(t.k)' in line and "root.attr('transform',t)" in line
+
+
+# ── L4-12 (lote I1): el agente de voz recibe la orden de repetir las cifras TAL CUAL ──
+def test_brain_and_company_info_tell_the_agent_to_say_figures_exactly(R):
+    es = R['brain']['body']['say_figures']
+    assert 'EXACTAMENTE' in es and 'no redondees' in es and 'answer' in es
+    assert 'EXACTLY' in R['brainClassic']['say_figures']                    # vista clásica, en inglés
+    for i in (R['info'], R['infoPriv']):
+        assert 'EXACTAMENTE' in i['say_figures'] and 'si falta un dato' in i['say_figures']

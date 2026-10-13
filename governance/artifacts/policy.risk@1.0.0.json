@@ -1,0 +1,34 @@
+{
+  "id": "policy.risk",
+  "semver": "1.0.0",
+  "kind": "policy",
+  "change_kind": "initial",
+  "parent": null,
+  "params": {
+    "ewma_lambda": 0.94,
+    "ewma_seed_days": 25,
+    "pairwise_min_obs": 20,
+    "liquidity": {
+      "adv_days": 20,
+      "participation": 0.2,
+      "flag_days": 5.0
+    },
+    "anomaly_z": 3.0,
+    "anomaly_lookback_days": 20,
+    "projection_percentiles": [
+      5,
+      25,
+      50,
+      75,
+      95
+    ],
+    "projection_max_days": 504,
+    "min_history_days": 60,
+    "window": "intersection",
+    "covariance": "sample",
+    "sharpe": "geometric",
+    "rf_basis": "discount"
+  },
+  "changelog_es": "Bootstrap 1.0.0 (batch I2): el reporte de riesgo de HOY (ventana = días comunes a todas las posiciones, ≥60; covarianza muestral; Sharpe con retorno compuesto y ^IRX tal cual) + métricas NUEVAS que solo se agregan al lado: volatilidad EWMA (λ 0,94, RiskMetrics), volatilidad con contracción de Ledoit-Wolf, VaR/CVaR a 10 días con ventanas superpuestas, VaR Cornish-Fisher, Sharpe aritmético, liquidez por volumen real (ADV 20 días, vender al 20 %, aviso > 5 días). Ningún número que ya ves cambia.",
+  "changelog_en": "Bootstrap 1.0.0 (batch I2): TODAY's risk report (window = days common to every position, ≥60; sample covariance; Sharpe on compounded return and ^IRX as quoted) + NEW side-by-side metrics: EWMA volatility (λ 0.94, RiskMetrics), Ledoit-Wolf shrunk volatility, 10-day VaR/CVaR from overlapping windows, Cornish-Fisher VaR, arithmetic Sharpe, liquidity from real volume (20-day ADV, selling 20%, flag > 5 days). No number you already see changes."
+}

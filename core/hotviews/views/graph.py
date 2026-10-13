@@ -174,7 +174,8 @@ def build(data):
     v.links = links
     v.alias = MappingProxyType(alias)
     meta = {k: freeze(cat.get(k)) for k in ('sectors9', 'categories', 'cat_to_sector', 'legal_names',
-                                              'preipo_intel', 'counts', 'exported_at', 'source', 'snapshot_sha')}
+                                              'preipo_intel', 'counts', 'exported_at', 'source', 'snapshot_sha',
+                                              'voice_aliases', 'resolve_stopwords')}
     v.catalog = FrozenDict(meta)
     v.flow_degree = MappingProxyType(dict(vocab.flow_degree(links)))
     cids = cat.get('catalog_ids') or frozenset()
@@ -189,7 +190,8 @@ def build(data):
     h.update(json.dumps([nodes, links, sorted(alias.items())], sort_keys=True, default=str).encode())
     v.content_sha = h.hexdigest()
     snap = {'nodes': nodes, 'links': links, 'node_id_alias': v.alias}
-    for k in ('sectors9', 'categories', 'cat_to_sector', 'legal_names', 'preipo_intel', 'counts', 'exported_at'):
+    for k in ('sectors9', 'categories', 'cat_to_sector', 'legal_names', 'preipo_intel', 'counts', 'exported_at',
+              'voice_aliases', 'resolve_stopwords'):
         snap[k] = meta[k] if meta[k] is not None else (FrozenDict() if k not in ('exported_at',) else None)
     v._snapshot = MappingProxyType(snap)
     v.build_ms = round((time.perf_counter() - t0) * 1000, 1)

@@ -548,6 +548,12 @@ def _kp(magnitude=None, damping=None, max_hops=None, threshold=None):
             _P('max_hops') if max_hops is None else max_hops, _P('threshold') if threshold is None else threshold)
 
 
+def persistent_source():
+    """¿La fuente del choque PERSISTE en cada salto (PROP-08)? kernel.params 2.1.0 `propagation: 'persistent'`;
+    1.0.0 y 2.0.0 no traen la clave → 'hop' (el origen solo existe en el salto 0, como siempre)."""
+    return _P('propagation', 'hop') == 'persistent'
+
+
 def _nonlinear(cur):
     """La opción `nonlinear` (estrés severo). 1.0.0 'saturate': 1−e^(−x) — ATENÚA siempre (PROP-15: se llamaba
     'estrés severo' y bajaba los impactos; se conserva idéntica para repetir decisiones viejas). 2.0.0 'amplify':
@@ -571,6 +577,11 @@ def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
       · x_0 solo existe en el salto 0 (el origen no re-emite); umbral = THRESHOLD (debajo → 0); tope 1 por salto;
       · T = Σ_r α_r · A_r / max(Σ columna, SOLE_LINK_FLOOR) sobre las relaciones que transmiten daño (damage_rels).
     (Antes este texto decía "el MÁXIMO por cualquier ruta, no la suma" — falso: el cliente copió esa frase.)
+    PROP-08 (kernel.params 2.1.0, `propagation: 'persistent'`, solo con PIN): la fuente PERSISTE —
+      x_k = max(x_0, clamp₁(umbral(damping · diag(frag) · Tᵀ · x_{k-1}))) — iterado hasta max_hops o hasta el punto
+      fijo (x_k == x_{k-1}). Es monótono (x_k ≥ x_{k-1}) y acotado; con magnitud 1, AGREGAR un vínculo que sale de la
+      empresa que cae nunca baja el impacto de nadie (tests/test_kernel_monotone_edges.py). Sin la clave ('hop', 1.0.0
+      y 2.0.0) el cálculo es el de siempre, idéntico bit a bit.
     `frag`: vector de fragilidad por hiperaristas (de fragility()); si None, sin modulación. Devuelve (impactos
     dict id→pct 0..100, orden de cascada). Funciona con matrices densas o dispersas (Tᵀ se precalcula UNA vez).
     `x0` {id: magnitud 0..1}: magnitud POR semilla (p. ej. factor disparado: magnitud × coeficiente del miembro,
@@ -601,6 +612,7 @@ def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
     order = []
     reached = set(np.nonzero(x)[0].tolist())
     cur = x
+    persistent = persistent_source()
     for hop in range(1, max_hops + 1):
         prev = cur
         cur = damping * (DT @ cur) * fvec
@@ -608,7 +620,11 @@ def propagate(mats, idx, ids, shock_ids, magnitude=None, damping=None,
             cur = _nonlinear(cur)        # 1.0.0 satura (atenúa) · 2.0.0 amplifica (PROP-15)
         cur = np.minimum(cur, 1.0)
         cur[cur < threshold] = 0.0
-        if not cur.any():
+        if persistent:
+            cur = np.maximum(x, cur)     # PROP-08: la fuente re-emite en cada salto (monótono)
+            if np.array_equal(cur, prev):
+                break                    # punto fijo: los saltos siguientes darían exactamente lo mismo
+        elif not cur.any():
             break
         newly = [int(i) for i in np.argsort(-cur)
                  if cur[i] > 0 and i not in reached]
@@ -642,13 +658,19 @@ def propagate_block(DT, frag, X0, damping=None, max_hops=None, threshold=None, n
     reached = X0 != 0
     first = np.zeros((n, k), dtype=np.int8)
     cur = X0
+    persistent = persistent_source()
     for hop in range(1, max_hops + 1):
+        prev = cur
         cur = damping * np.asarray(DT @ cur) * fcol
         if nonlinear:
             cur = _nonlinear(cur)
         cur = np.minimum(cur, 1.0)
         cur[cur < threshold] = 0.0
-        if not cur.any():
+        if persistent:
+            cur = np.maximum(X0, cur)    # PROP-08 (2.1.0): misma regla que `propagate`
+            if np.array_equal(cur, prev):
+                break
+        elif not cur.any():
             break
         newly = (cur > 0) & ~reached
         first[newly] = hop

@@ -372,6 +372,14 @@ def default_price_fn(symbol, since):
     return hist or None
 
 
+def _terminal_close(series, keys, anchor, due):
+    """(fecha, precio) del ÚLTIMO cierre ANTES del vencimiento y DESPUÉS de la fecha de partida, o None (L2-M2)."""
+    i = bisect.bisect_left(keys, due.isoformat()) - 1
+    if i < 0 or keys[i] <= anchor.isoformat():
+        return None
+    return keys[i], float(series[keys[i]])
+
+
 def judge(stance, excess, band):
     if stance == 'positive':
         return 'hit' if excess > band else 'miss'
@@ -407,10 +415,21 @@ def score_checkpoint(b, cp, get_series, today):
     ks, kb = _sorted_keys(s), _sorted_keys(bs)
     p0, b0 = last_on_or_before(s, ks, anchor), last_on_or_before(bs, kb, anchor)
     p1, b1 = first_on_or_after(s, ks, due), first_on_or_after(bs, kb, due)
+    terminal = None
+    if p1 is None and b1 not in (None, 'gap') and late > GIVE_UP_DAYS:
+        # L2-M2 (sesgo de supervivencia): la serie de la ACCIÓN terminó antes del vencimiento (deslistada, comprada o
+        # suspendida) pero el índice sigue → se califica con su ÚLTIMO cierre negociable (quien la tenía quedó con
+        # ese valor), marcado 'delisted'; antes quedaba n/a y un acierto/fallo extremo salía del historial
+        p1, terminal = _terminal_close(s, ks, anchor, due), 'delisted'
+    elif p1 == 'gap' and b1 not in (None, 'gap'):
+        # suspendida alrededor del vencimiento: el último cierre negociable ANTES del vencimiento
+        p1, terminal = _terminal_close(s, ks, anchor, due), 'suspended'
     if p1 is None or b1 is None:
         if late > GIVE_UP_DAYS:
-            return _na('no hay cierre después del vencimiento (¿suspendida o deslistada?)',
-                       'no close after the due date (suspended or delisted?)')
+            return _na('no hay ningún cierre después de la fecha de partida (¿suspendida o deslistada?)'
+                       if terminal else 'no hay cierre después del vencimiento (¿suspendida o deslistada?)',
+                       'no close at all after the start date (suspended or delisted?)'
+                       if terminal else 'no close after the due date (suspended or delisted?)')
         return None
     if p1 == 'gap' or b1 == 'gap':
         return _na('hueco en la serie de precios alrededor del vencimiento',
@@ -431,16 +450,23 @@ def score_checkpoint(b, cp, get_series, today):
     verdict = {'hit': 'acierto', 'miss': 'fallo'}.get(res, 'n/a')
     bench = b.benchmark_symbol or BENCH
     local = not is_us_listing(b.symbol)
+    term_es = {'delisted': f' · [deslistada] la serie terminó el {p1[0]}: se usó su ÚLTIMO cierre negociable',
+               'suspended': f' · [suspendida] sin cotización al vencimiento: se usó el último cierre ({p1[0]})'}
+    term_en = {'delisted': f' · [delisted] the series ended on {p1[0]}: its LAST tradable close was used',
+               'suspended': f' · [suspended] no quote at the due date: the last close ({p1[0]}) was used'}
     reason = (f'{b.symbol} {r * 100:+.2f} % vs {bench} {rb * 100:+.2f} % → exceso '
               f'{ex * 100:+.2f} % (banda ±{b.band * 100:.1f} %) · postura {_STANCE_ES.get(b.stance, b.stance)} → {verdict}'
-              + (' · retorno en moneda local (sin ajuste cambiario)' if local else ''))
+              + (' · retorno en moneda local (sin ajuste cambiario)' if local else '') + term_es.get(terminal, ''))
     reason_en = (f'{b.symbol} {r * 100:+.2f}% vs {bench} {rb * 100:+.2f}% → excess '
                  f'{ex * 100:+.2f}% (band ±{b.band * 100:.1f}%) · {b.stance} stance → {res}'
-                 + (' · local-currency return (not FX-adjusted)' if local else ''))
+                 + (' · local-currency return (not FX-adjusted)' if local else '') + term_en.get(terminal, ''))
+    src = ('delisted: último cierre negociable' if terminal == 'delisted' else
+           'suspended: último cierre antes del vencimiento' if terminal == 'suspended' else
+           'cierres diarios ajustados' + (' (moneda local)' if local else ''))
     return {'result': res, 'reason': reason, 'reason_en': reason_en, 'base_date': p0[0], 'base_price': p0[1],
             'eval_date': p1[0], 'eval_price': p1[1], 'bench_base_price': b0[1], 'bench_eval_price': b1[1],
             'asset_return': round(r, 6), 'bench_return': round(rb, 6), 'excess_return': round(ex, 6),
-            'price_source': 'cierres diarios ajustados' + (' (moneda local)' if local else '')}
+            'price_source': src, 'terminal': terminal}
 
 
 CLOSE_BUFFER_MIN = 30      # el cierre de hoy cuenta desde las 16:30 de Nueva York

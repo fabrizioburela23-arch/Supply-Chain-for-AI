@@ -73,7 +73,7 @@ def agent(monkeypatch, alpaca):
                  ('stop_loss_pct', 3.0), ('interval_min', 15), ('max_daily_loss_pct', 2.0), ('thread', None),
                  ('status', 'stopped')):
         monkeypatch.setitem(server._AGENT, k, v)
-    monkeypatch.setattr(server, '_agent_analyze', lambda *a, **k: {
+    monkeypatch.setattr(server._trading_agent, '_agent_analyze', lambda *a, **k: {
         'action': 'buy', 'confidence': 91, 'reason': 'demanda de IA', 'size_pct': 2, '_model': 'claude-haiku-4-5'})
     return server._AGENT
 
@@ -120,7 +120,7 @@ def test_manual_mode_is_advice_only(agent, alpaca, monkeypatch):
 
 def test_skipped_order_is_a_noop_signal(agent, alpaca, monkeypatch):
     monkeypatch.setitem(agent, 'universe', ['MU'])
-    monkeypatch.setattr(server, '_agent_analyze', lambda *a, **k: {'action': 'sell', 'confidence': 95,
+    monkeypatch.setattr(server._trading_agent, '_agent_analyze', lambda *a, **k: {'action': 'sell', 'confidence': 95,
                                                                     'reason': 'caro', 'size_pct': 2})
     server._agent_run_cycle()                      # vender sin tenencia: el agente no abre cortos
     assert not alpaca.posts()
@@ -166,7 +166,7 @@ def test_agent_needs_a_human_unless_paper():
 def test_config_is_persisted_and_the_agent_stays_off_after_a_deploy(agent, alpaca, monkeypatch):
     """BRECHAS #14 (por defecto): encendido + configuración en el libro; un despliegue (proceso nuevo) lo deja
     APAGADO con aviso bilingüe y la MISMA configuración."""
-    monkeypatch.setattr(server, '_agent_thread_fn', lambda: None)
+    monkeypatch.setattr(server._trading_agent, '_agent_thread_fn', lambda: None)
     monkeypatch.setitem(agent, 'running', False)
     monkeypatch.setitem(server._AGENT_RESTORE, 'done', True)
     c = server.app.test_client()
